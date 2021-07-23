@@ -43,6 +43,11 @@ global function RegisterForDamageDeathCallbacks
 global function CodeCallback_OnInventoryChanged
 global function CodeCallback_OnEntityChangedTeam
 
+
+// Made by JustANormalUser#3770 lolololol
+global function AddEntityCallback_OnDealtDamage
+global function RemoveEntityCallback_OnDealtDamage
+
 global function AddEntityCallback_OnDamaged
 global function RemoveEntityCallback_OnDamaged
 global function AddEntityCallback_OnPostDamaged
@@ -74,6 +79,7 @@ struct
 	table<string, array< void functionref( entity, var ) > > classDamageCallbacks
 	table<string, array< void functionref( entity, var ) > > classDamageFinalCallbacks
 	table<string, array< void functionref( entity, var ) > > classPostDamageCallbacks
+	table<entity, array< void functionref( entity, var ) > > entityDealtDamageCallbacks
 	array< void functionref( entity ) > playerInventoryChangedCallbacks
 } file
 
@@ -101,6 +107,10 @@ void function CodeCallback_DamageEntity( entity ent, var damageInfo )
 	// Added via AddEntityCallback_OnDamaged
 	foreach ( callbackFunc in ent.e.entDamageCallbacks )
 		callbackFunc( ent, damageInfo )
+
+	foreach ( callback in file.entityDealtDamageCallbacks[ DamageInfo_GetAttacker( damageInfo ) ] )
+		callback( ent, damageInfo )
+
 	#if VERBOSE_DAMAGE_PRINTOUTS
 		printt( "    after AddEntityCallback_OnDamaged() callbacks:", DamageInfo_GetDamage( damageInfo ) )
 	#endif
@@ -247,6 +257,30 @@ void function SendEntityKilledEvent( entity ent, var damageInfo )
 //=====================================================================================
 // Utility functions
 //=====================================================================================
+
+// START OF MODDED FUNCTIONS //
+
+void function AddEntityCallback_OnDealtDamage( entity ent, void functionref( entity, var ) callbackFunc )
+{
+	if ( !( ent in file.entityDealtDamageCallbacks ) )
+		file.entityDealtDamageCallbacks[ent] <- []
+
+	file.classDamageCallbacks[ent].append( callbackFunc )
+	ent.SetDamageNotifications( true )
+}
+
+void function RemoveEntityCallback_OnDealtDamage( entity ent, void functionref( entity ent, var damageInfo ) callbackFunc )
+{
+	int index = file.entityDealtDamageCallbacks.find( callbackFunc )
+
+	Assert( index != -1, "Requested DamageCallback " + string( callbackFunc ) + " to be removed not found! " )
+	file.entityDealtDamageCallbacks.fastremove( index )
+
+	if ( ent.e.entDamageCallbacks.len() == 0 && ent.e.entPostDamageCallbacks.len() == 0 && file.entityDealtDamageCallbacks[ent].len() == 0 )
+		ent.SetDamageNotifications( false )
+}
+
+// END OF MODDED FUNCTIONS //
 
 void function AddDamageCallback( string className, void functionref( entity, var ) callbackFunc )
 {
@@ -551,7 +585,7 @@ void function RemoveEntityCallback_OnDamaged( entity ent, void functionref( enti
 	Assert( index != -1, "Requested DamageCallback " + string( callbackFunc ) + " to be removed not found! " )
 	ent.e.entDamageCallbacks.fastremove( index )
 
-	if ( ent.e.entDamageCallbacks.len() == 0 && ent.e.entPostDamageCallbacks.len() == 0 )
+	if ( ent.e.entDamageCallbacks.len() == 0 && ent.e.entPostDamageCallbacks.len() == 0 && file.entityDealtDamageCallbacks[ent].len() == 0)
 		ent.SetDamageNotifications( false )
 }
 
@@ -570,7 +604,7 @@ void function RemoveEntityCallback_OnPostDamaged( entity ent, void functionref( 
 	Assert( index != -1, "Requested PostDamageCallback " + string( callbackFunc ) + " to be removed not found! " )
 	ent.e.entPostDamageCallbacks.fastremove( index )
 
-	if ( ent.e.entPostDamageCallbacks.len() == 0 && ent.e.entDamageCallbacks.len() == 0 )
+	if ( ent.e.entDamageCallbacks.len() == 0 && ent.e.entPostDamageCallbacks.len() == 0 && file.entityDealtDamageCallbacks[ent].len() == 0)
 		ent.SetDamageNotifications( false )
 }
 
