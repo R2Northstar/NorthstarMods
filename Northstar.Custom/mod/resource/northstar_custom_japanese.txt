@@ -1,0 +1,68 @@
+"lang"
+{
+    "Language" "japanese"
+    "Tokens"
+    {    
+        "PL_sbox" "サンドボックス"
+        "PL_sbox_lobby" "サンドボックスロビー"
+        "PL_sbox_desc" "サンドボックス"
+        "PL_sbox_abbr" "SBOX"
+        "GAMEMODE_SBOX" "サンドボックス"
+        
+        "PL_gg" "ガンゲーム"
+        "PL_gg_lobby" "ガンゲームロビー"
+        "PL_gg_desc" "全ての銃でキルを取り、勝利しろ。"
+        "PL_gg_abbr" "GG"
+        "GAMEMODE_GG" "ガンゲーム"
+        
+        "PL_tt" "タイタンタグ"
+        "PL_tt_lobby" "タイタンタグロビー"
+        "PL_tt_desc" "タイタンでポイントを稼げ。敵のタイタンを破壊し自分のタイタンを確保しろ。"
+        "PL_tt_abbr" "TT"
+        "GAMEMODE_TT" "タイタンタグ"
+        
+        "PL_inf" "インフェクション"
+        "PL_inf_lobby" "インフェクションロビー"
+        "PL_inf_desc" "生存者はインフェクターから逃げろ。インフェクターは生存者を殺せ。"
+        "PL_inf_abbr" "INF"
+        "GAMEMODE_INF" "インフェクション"
+        "INFECTION_YOU_ARE_INFECTED" "インフェクトされた！"
+        "INFECTION_KILL_SURVIVORS" "残りの生存者をインフェクトしろ！"
+        "INFECTION_FIRST_INFECTED" "%s1 が最初にインフェクトされた！"
+        "INFECTION_LAST_SURVIVOR" "%s1 が最後の生き残りだ！"
+        "INFECTION_KILL_LAST_SURVIVOR" "時間切れ前に残り生存者をインフェクトしろ！" 
+        "INFECTION_YOU_ARE_LAST_SURVIVOR" "お前が最後の生き残りだ！"
+        "INFECTION_SURVIVE_LAST_SURVIVOR" "生きろ。"
+        
+      
+        "PL_fw" "フロンティア戦争"
+        "PL_fw_lobby" "フロンティア戦争ロビー"
+        "PL_fw_desc" "敵のハーベスターを破壊し、自分のハーベスターを守れ！" 
+        "PL_fw_abbr" "FW"
+        
+        "GAMEMODE_kr" "強化キルレース"
+        "PL_kr" "強化キルレース"
+        "PL_kr_lobby" "強化キルレースロビー"
+        "PL_kr_desc" "旗を拾い、キルレースを開始しろ。キルでポイントを上げ、キルレースの時間を延ばせ。最高記録者が勝利する"
+        "PL_kr_abbr" "KR"
+        "SCOREBOARD_KR_RECORD" "キル記録"
+        "KR_NEW_RACER" "%s1 がキルレーサーだ！"
+        "KR_YOU_ARE_NEW_RACER" "お前がキルレーサーだ！"
+        "KR_YOU_SET_NEW_RECORD" "新キル記録だ！"
+        "KR_FLAG_INCOMING" "旗が間もなく到来！"
+        "KR_COLLECT_FLAG" "旗を拾い、キル記録を残せ！"
+        "KR_ENEMY_KILLRACE_OVER" "%s1 のキルレースが終わった"
+        "KR_YOUR_KILLRACE_OVER" "キルレース終了"
+        "KR_YOUR_KILLRACE_SCORE" "キル記録： %s1"
+    
+        "GAMEMODE_fastball" "ファストボール"
+        "PL_fastball" "ファストボール"
+        "PL_fastball_lobby" "ファストボールロビー"
+        "PL_fastball_desc" "敵パイロットを倒せ。コントロールパネルをハックし味方をリスポーンしろ！"
+        "PL_fastball_abbr" "FB"
+        "FASTBALL_PANEL_CAPTURED" "%s1 がパネル %s2 を制圧した！"
+        "SCOREBOARD_FASTBALL_HACKS" "制圧パネル"
+        
+        "GAMEMODE_ctf_comp" "コンプCTF"
+    }
+}
