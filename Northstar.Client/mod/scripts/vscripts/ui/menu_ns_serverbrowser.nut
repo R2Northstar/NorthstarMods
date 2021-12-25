@@ -330,13 +330,12 @@ void function ThreadedAuthAndConnectToServer( string password = "" )
 			ReloadMods()
 		
 		dialogData.header = "#MATCHMAKING_TITLE_CONNECTING"
-		dialogData.message = "#MATCHMAKING_MATCH_CONNECTING"
+		dialogData.message = "#NS_SERVERBROWSER_CONNECTING"
 		OpenDialog(dialogData)
 		NSConnectToAuthedServer()
 	}
 	else
 	{	
-
 		dialogData.header = "#ERROR"
 		dialogData.message = "Authentication Failed"
 		dialogData.image = $"ui/menu/common/dialog_error"
