@@ -330,7 +330,7 @@ void function ThreadedAuthAndConnectToServer( string password = "" )
 			ReloadMods()
 		
 		dialogData.header = "#MATCHMAKING_TITLE_CONNECTING"
-		dialogData.message = "MATCHMAKING_MATCH_CONNECTING"
+		dialogData.message = "#MATCHMAKING_MATCH_CONNECTING"
 		OpenDialog(dialogData)
 		NSConnectToAuthedServer()
 	}
