@@ -191,7 +191,16 @@ string function FormatServerDescription( int server )
 	if( NSServerRequiresPassword( server ) ) {
 		ret += "Password Protected\n"
 	} else {
-		ret += NSGetServerPing( server ) + " | Pending: " + NSIsGettingPing( server ) + "\n"
+		int ping = NSGetServerPing( server )
+		if(NSIsGettingPing( server )) {
+		ret += "Ping: Pending...\n"
+		} else {
+			if(ping == -1) {
+				ret +=  "Ping: Unknown\n"
+			} else {
+				ret += "Ping: " + ping + "ms\n"
+			}
+		}
 	}
 	ret += format( "%i/%i players\n", NSGetServerPlayerCount( server ), NSGetServerMaxPlayerCount( server ) )
 	ret += NSGetServerDescription( server ) + "\n\n"
