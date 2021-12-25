@@ -518,12 +518,26 @@ void function OnPlayFDButton_Activate( var button ) // repurposed for launching 
 
 void function TryAuthWithLocalServer()
 {
+	DialogData dialogData
+	dialogData.showSpinner = true
+
 	while ( NSIsAuthenticatingWithServer() )
+	{
+		dialogData.header = "#MATCHMAKING_TITLE_CONNECTING"
+		dialogData.message = "#MENU_MAIN_AUTHENTICATING"
+		OpenDialog(dialogData)
 		WaitFrame()
-		
+	}
+
 	if ( NSWasAuthSuccessful() )
+	{
+		dialogData.header = "#MATCHMAKING_TITLE_CONNECTING"
+		dialogData.message = "#MENU_MAIN_CONNECTING"
+		OpenDialog(dialogData)
 		NSCompleteAuthWithLocalServer()
+	}
 	
+
 	if ( GetConVarString( "mp_gamemode" ) == "solo" )
 		SetConVarString( "mp_gamemode", "tdm" )
 
