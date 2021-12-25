@@ -133,7 +133,7 @@ void function UpdateShownPage()
 		
 		Hud_SetEnabled( serverButtons[ i ], true )
 		Hud_SetVisible( serverButtons[ i ], true )
-		if( NSServerRequiresPassword( server ) ) {
+		if( NSServerRequiresPassword( serverIndex ) ) {
 			SetButtonRuiText( serverButtons[ i ], "[PWD] " + NSGetServerName( serverIndex ) )
 		} else {
 			SetButtonRuiText( serverButtons[ i ], NSGetServerName( serverIndex ) )
