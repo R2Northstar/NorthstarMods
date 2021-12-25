@@ -135,10 +135,7 @@ void function UpdateShownPage()
 		return
 	}
 	
-	// this trycatch likely isn't necessary, but i can't test whether this'll error on higher pagecounts and want to go sleep
-	try
-	{
-	for ( int i = 0; ( file.page * BUTTONS_PER_PAGE ) + i < NSGetServerCount() && i < serverButtons.len(); i++ )
+	for ( int i = 0; ( file.page * BUTTONS_PER_PAGE ) + i < NSGetServerCount() - 1 && i < serverButtons.len(); i++ )
 	{
 		int serverIndex = ( file.page * BUTTONS_PER_PAGE ) + i
 		
@@ -146,8 +143,6 @@ void function UpdateShownPage()
 		Hud_SetVisible( serverButtons[ i ], true )
 		SetButtonRuiText( serverButtons[ i ], NSGetServerName( serverIndex ) )
 	}
-	}
-	catch(ex) {}
 }
 
 void function OnServerFocused( var button )
@@ -266,11 +261,31 @@ void function OnServerSelected( var button )
 			}
 		}
 	}
-		
+	DialogData dialogData
+	dialogData.header = Localize( "#NS_SERVERBROWSER_JOIN", NSGetServerName( file.lastSelectedServer ) )
+	dialogData.message = Localize( "#NS_SERVERBROWSER_CONFIRMATIONJOIN", NSGetServerName( file.lastSelectedServer ) )
+
 	if ( NSServerRequiresPassword( serverIndex ) )
-		AdvanceMenu( GetMenu( "ConnectWithPasswordMenu" ) )
+	{
+		dialogData.message = Localize( "#NS_SERVERBROWSER_CONFIRMATIONJOIN_ISPASSWORDPROTECTED", NSGetServerName( file.lastSelectedServer ) )
+		AddDialogButton( dialogData, "#YES", AdvancePasswordMenu)
+	}
 	else
-		thread ThreadedAuthAndConnectToServer()
+	{
+		AddDialogButton( dialogData, "#YES", AdvanceAuthAndConnect)
+	}
+	AddDialogButton( dialogData, "#NO" )
+	OpenDialog(dialogData)
+}
+
+void function AdvanceAuthAndConnect()
+{
+	thread ThreadedAuthAndConnectToServer()
+}
+
+void function AdvancePasswordMenu()
+{
+	AdvanceMenu( GetMenu( "ConnectWithPasswordMenu" ) )
 }
 
 void function ThreadedAuthAndConnectToServer( string password = "" )
@@ -281,9 +296,17 @@ void function ThreadedAuthAndConnectToServer( string password = "" )
 	print( "trying to authenticate with server " + NSGetServerName( file.lastSelectedServer ) + " with password " + password )
 	NSTryAuthWithServer( file.lastSelectedServer, password )
 	
+	DialogData dialogData
+
 	while ( NSIsAuthenticatingWithServer() )
+	{
+		dialogData.header = "#MATCHMAKING_TITLE_CONNECTING"
+		dialogData.message = "#MENU_MAIN_AUTHENTICATING"
+		dialogData.showSpinner = true
+		OpenDialog(dialogData)
 		WaitFrame()
-	
+	}
+
 	if ( NSWasAuthSuccessful() )
 	{
 		bool modsChanged
@@ -306,15 +329,19 @@ void function ThreadedAuthAndConnectToServer( string password = "" )
 		if ( modsChanged )
 			ReloadMods()
 		
+		dialogData.header = "#MATCHMAKING_TITLE_CONNECTING"
+		dialogData.message = "MATCHMAKING_MATCH_CONNECTING"
+		OpenDialog(dialogData)
 		NSConnectToAuthedServer()
 	}
 	else
 	{	
-		DialogData dialogData
+
 		dialogData.header = "#ERROR"
 		dialogData.message = "Authentication Failed"
 		dialogData.image = $"ui/menu/common/dialog_error"
-	
+		dialogData.showSpinner = false
+
 		#if PC_PROG
 			AddDialogButton( dialogData, "#DISMISS" )
 		
