@@ -135,7 +135,7 @@ void function UpdateShownPage()
 		return
 	}
 	
-	for ( int i = 0; ( file.page * BUTTONS_PER_PAGE ) + i < NSGetServerCount() - 1 && i < serverButtons.len(); i++ )
+	for ( int i = 0; ( file.page * BUTTONS_PER_PAGE ) + i < NSGetServerCount() && i < serverButtons.len(); i++ )
 	{
 		int serverIndex = ( file.page * BUTTONS_PER_PAGE ) + i
 		
