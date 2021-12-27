@@ -7,20 +7,29 @@ void function AddNorthstarConnectWithPasswordMenu()
 
 void function InitConnectWithPasswordMenu()
 {
-	AddMenuEventHandler( GetMenu( "ConnectWithPasswordMenu" ), eUIEvent.MENU_OPEN, OnConnectWithPasswordMenuOpened )
-	AddMenuFooterOption( GetMenu( "ConnectWithPasswordMenu" ), BUTTON_B, "#B_BUTTON_BACK", "#BACK" )
+	var menu = GetMenu( "ConnectWithPasswordMenu" )
+	AddMenuEventHandler( menu , eUIEvent.MENU_OPEN, OnConnectWithPasswordMenuOpened )
+	AddMenuFooterOption( menu , BUTTON_B, "#B_BUTTON_BACK", "#BACK" )
 
-	AddButtonEventHandler( Hud_GetChild( GetMenu( "ConnectWithPasswordMenu" ), "ConnectButton" ), UIE_CLICK, ConnectWithPassword )
-	RegisterButtonPressedCallback( KEY_ENTER, ConnectWithPassword )
+	AddButtonEventHandler( Hud_GetChild( menu , "ConnectButton" ), UIE_CLICK, ConnectWithPassword )
+
+	// Add focus lost (enter) handler
+	Hud_AddEventHandler( Hud_GetChild( menu , "EnterPasswordBox" ), UIE_LOSE_FOCUS, ConnectWithPassword )
 }
 
 void function OnConnectWithPasswordMenuOpened()
 {
 	UI_SetPresentationType( ePresentationType.KNOWLEDGEBASE_SUB )
 
-	Hud_SetText( Hud_GetChild( GetMenu( "ConnectWithPasswordMenu" ), "Title" ), "#MENU_TITLE_CONNECT_PASSWORD" )
-	Hud_SetText( Hud_GetChild( GetMenu( "ConnectWithPasswordMenu" ), "ConnectButton" ), "#MENU_CONNECT_MENU_CONNECT" )
-	Hud_SetText( Hud_GetChild( GetMenu( "ConnectWithPasswordMenu" ), "EnterPasswordBox" ), "" )
+	var menu = GetMenu( "ConnectWithPasswordMenu" )
+
+	// set texts
+	Hud_SetText( Hud_GetChild( menu, "Title" ), "#MENU_TITLE_CONNECT_PASSWORD" )
+	Hud_SetText( Hud_GetChild( menu, "ConnectButton" ), "#MENU_CONNECT_MENU_CONNECT" )
+	Hud_SetText( Hud_GetChild( menu, "EnterPasswordBox" ), "" )
+
+	// Request focus on password menu
+	Hud_SetFocused( Hud_GetChild( menu , "EnterPasswordBox" ) )
 }
 
 void function ConnectWithPassword( var button )
