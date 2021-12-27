@@ -29,10 +29,21 @@ void function InitServerBrowserMenu()
 		AddButtonEventHandler( button, UIE_GET_FOCUS, OnServerFocused )
 		AddButtonEventHandler( button, UIE_CLICK, OnServerSelected )
 	}
+
+	Hud_AddEventHandler(Hud_GetChild( menu, "FilterBox"), UIE_CHANGE, OnFilterChanged)
+}
+
+void function OnFilterChanged ( var element ) {
+	string pattern = Hud_GetUTF8Text( element )
+	print("Filter changed: " + pattern)
+	NSSetServerBrowserPattern(pattern)
+
+	UpdateShownPage()
 }
 
 void function OnServerBrowserMenuOpened()
 {
+	Hud_SetText( Hud_GetChild( GetMenu( "ServerBrowserMenu" ), "FilterBox" ), NSGetServerBrowserPattern() )
 	Hud_SetText( Hud_GetChild( GetMenu( "ServerBrowserMenu" ), "Title" ), "#MENU_TITLE_SERVER_BROWSER" )
 	UI_SetPresentationType( ePresentationType.KNOWLEDGEBASE_MAIN )
 	
@@ -281,7 +292,7 @@ void function ThreadedAuthAndConnectToServer( string password = "" )
 	if ( NSIsAuthenticatingWithServer() )
 		return
 
-	print( "trying to authenticate with server " + NSGetServerName( file.lastSelectedServer ) + " with password " + password )
+	print( "trying to authenticate with server " + file.lastSelectedServer + " (" + NSGetServerName( file.lastSelectedServer ) + ") with password " + password )
 	NSTryAuthWithServer( file.lastSelectedServer, password )
 	
 	while ( NSIsAuthenticatingWithServer() )

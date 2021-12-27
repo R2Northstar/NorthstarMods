@@ -59,6 +59,31 @@ resource/ui/menus/mods_browse.menu
 		//	tabPosition		"0"
 		//}
 
+		FilterBox
+		{
+			ControlName				TextEntry
+			InheritProperties		RuiSmallButton
+			visible					1
+			enabled					1
+			textHidden				0
+			editable				1
+			maxchars				32
+			NumericInputOnly		0
+			textAlignment			"east"
+			font 					DefaultBold_53
+			allowRightClickMenu		1
+			allowSpecialCharacters	1
+			unicode					0
+			paintborder		        0
+			
+			pin_to_sibling			ButtonRowAnchor
+			pin_corner_to_sibling	TOP_LEFT
+			pin_to_sibling_corner	TOP_LEFT
+
+			navUp					BtnServer15
+			navDown					BtnServer1
+		}
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 		BtnServer1
@@ -67,12 +92,12 @@ resource/ui/menus/mods_browse.menu
 			InheritProperties		RuiSmallButton
 			classname 				ServerButton
 			scriptID				0
-			navUp					BtnServer15
+			navUp					FilterBox
 			navDown					BtnServer2
 
-			pin_to_sibling				ButtonRowAnchor
+			pin_to_sibling				FilterBox
 			pin_corner_to_sibling		TOP_LEFT
-			pin_to_sibling_corner		TOP_LEFT
+			pin_to_sibling_corner		BOTTOM_LEFT
 		}
 		BtnServer2
 		{
@@ -241,7 +266,7 @@ resource/ui/menus/mods_browse.menu
 			pin_corner_to_sibling	TOP_LEFT
 			pin_to_sibling_corner	BOTTOM_LEFT
 			navUp					BtnServer14
-			navDown					BtnServer1
+			navDown					FilterBox
 		}
 		
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
