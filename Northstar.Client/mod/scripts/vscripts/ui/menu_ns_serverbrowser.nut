@@ -6,6 +6,7 @@ const int BUTTONS_PER_PAGE = 15
 struct {
 	int page = 0
 	int lastSelectedServer = 0
+	bool serverListRequestFailed = false
 } file
 
 void function AddNorthstarServerBrowserMenu()
@@ -52,6 +53,7 @@ void function RefreshServers( var button )
 		return
 
 	file.page = 0
+	file.serverListRequestFailed = false
 	NSClearRecievedServerList()
 	NSRequestServerList()
 
@@ -101,7 +103,8 @@ void function WaitForServerListRequest()
 	while ( NSIsRequestingServerList() )
 		WaitFrame()
 
-	if ( !NSMasterServerConnectionSuccessful() )
+	file.serverListRequestFailed = !NSMasterServerConnectionSuccessful()
+	if ( file.serverListRequestFailed )
 		SetButtonRuiText( serverButtons[ 0 ], "#NS_SERVERBROWSER_CONNECTIONFAILED" )
 	else
 		UpdateShownPage()
@@ -127,30 +130,32 @@ void function UpdateShownPage()
 	Hud_SetVisible( Hud_GetChild( menu, "NextModeIcon" ), false )
 	Hud_SetVisible( Hud_GetChild( menu, "NextGameModeName" ), false )
 
-	for ( int i = 0; ( file.page * BUTTONS_PER_PAGE ) + i < NSGetServerCount() - 1 && i < serverButtons.len(); i++ )
-	{
-		int serverIndex = ( file.page * BUTTONS_PER_PAGE ) + i
-
-		Hud_SetEnabled( serverButtons[ i ], true )
-		Hud_SetVisible( serverButtons[ i ], true )
-		if( NSServerRequiresPassword( serverIndex ) ) {
-			SetButtonRuiText( serverButtons[ i ], "[PWD] " + NSGetServerName( serverIndex ) )
-		} else {
-			SetButtonRuiText( serverButtons[ i ], NSGetServerName( serverIndex ) )
-		}
-	}
-
 	if ( NSGetServerCount() == 0 )
 	{
 		Hud_SetEnabled( serverButtons[ 0 ], true )
 		Hud_SetVisible( serverButtons[ 0 ], true )
 		SetButtonRuiText( serverButtons[ 0 ], "#NS_SERVERBROWSER_NOSERVERS" )
+		return
 	}
+
+	// this trycatch likely isn't necessary, but i can't test whether this'll error on higher pagecounts and want to go sleep
+	try
+	{
+	for ( int i = 0; ( file.page * BUTTONS_PER_PAGE ) + i < NSGetServerCount() && i < serverButtons.len(); i++ )
+	{
+		int serverIndex = ( file.page * BUTTONS_PER_PAGE ) + i
+
+		Hud_SetEnabled( serverButtons[ i ], true )
+		Hud_SetVisible( serverButtons[ i ], true )
+		SetButtonRuiText( serverButtons[ i ], NSGetServerName( serverIndex ) )
+	}
+	}
+	catch(ex) {}
 }
 
 void function OnServerFocused( var button )
 {
-	if ( NSIsRequestingServerList() || !NSMasterServerConnectionSuccessful() || NSGetServerCount() == 0 )
+	if ( NSIsRequestingServerList() || NSGetServerCount() == 0 || file.serverListRequestFailed )
 		return
 
 	var menu = GetMenu( "ServerBrowserMenu" )
@@ -160,7 +165,6 @@ void function OnServerFocused( var button )
 	Hud_SetVisible( Hud_GetChild( menu, "LabelDetails" ), true )
 	var textRui = Hud_GetRui( Hud_GetChild( menu, "LabelDetails" ) )
 	RuiSetGameTime( textRui, "startTime", -99999.99 ) // make sure it skips the whole animation for showing this
-
 	RuiSetString( textRui, "messageText", FormatServerDescription( serverIndex ) )
 
 	// map name/image
@@ -189,14 +193,14 @@ string function FormatServerDescription( int server )
 
 	ret += NSGetServerName( server ) + "\n"
 	if( NSServerRequiresPassword( server ) ) {
-		ret += "Password Protected\n"
+			ret += "Password Protected\n"
 	} else {
 		int ping = NSGetServerPing( server )
-		if(NSIsGettingPing( server )) {
-		ret += "Ping: Pending...\n"
+		if(NSIsServerPingPending( server )) {
+		ret += "Ping: ...\n"
 		} else {
 			if(ping == -1) {
-				ret +=  "Ping: Unknown\n"
+				ret +=  "Ping: ?\n"
 			} else {
 				ret += "Ping: " + ping + "ms\n"
 			}
@@ -214,7 +218,7 @@ string function FormatServerDescription( int server )
 
 void function OnServerSelected( var button )
 {
-	if ( NSIsRequestingServerList() || !NSMasterServerConnectionSuccessful() || NSGetServerCount() == 0 )
+	if ( NSIsRequestingServerList() || NSGetServerCount() == 0 || file.serverListRequestFailed )
 		return
 
 	int serverIndex = file.page * BUTTONS_PER_PAGE + int ( Hud_GetScriptID( button ) )
