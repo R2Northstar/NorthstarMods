@@ -451,6 +451,7 @@ void function GameStateEnter_SwitchingSides_Threaded()
 
 void function PlayerWatchesSwitchingSidesKillReplay( entity player, bool doReplay, float replayLength )
 {
+	player.EndSignal( "OnDestroy" )
 	player.FreezeControlsOnServer()
 
 	ScreenFadeToBlackForever( player, SWITCHING_SIDES_DELAY_REPLAY ) // automatically cleared 
@@ -717,18 +718,21 @@ void function SetWinner( int team, string winningReason = "", string losingReaso
 	else
 		file.announceRoundWinnerLosingSubstr = GetStringID( losingReason )
 	
-	if ( IsRoundBased() )
-	{	
-		if ( team != TEAM_UNASSIGNED )
-		{
-			GameRules_SetTeamScore( team, GameRules_GetTeamScore( team ) + 1 )
-			GameRules_SetTeamScore2( team, GameRules_GetTeamScore2( team ) + 1 )
+	if ( GamePlayingOrSuddenDeath() )
+	{
+		if ( IsRoundBased() )
+		{	
+			if ( team != TEAM_UNASSIGNED )
+			{
+				GameRules_SetTeamScore( team, GameRules_GetTeamScore( team ) + 1 )
+				GameRules_SetTeamScore2( team, GameRules_GetTeamScore2( team ) + 1 )
+			}
+			
+			SetGameState( eGameState.WinnerDetermined )
 		}
-		
-		SetGameState( eGameState.WinnerDetermined )
+		else
+			SetGameState( eGameState.WinnerDetermined )
 	}
-	else
-		SetGameState( eGameState.WinnerDetermined )
 }
 
 void function AddTeamScore( int team, int amount )
