@@ -1,0 +1,216 @@
+"lang"
+{
+	"Language" "tchinese" //WIP
+	"Tokens"
+	{	
+		"MENU_LAUNCH_NORTHSTAR" "啟動Northstar"
+		"MENU_TITLE_MODS" "Mod管理"
+		"RELOAD_MODS" "重新載入Mod"
+
+		"DIALOG_TITLE_INSTALLED_NORTHSTAR" "感謝安裝Northstar！"
+		"AUTHENTICATION_AGREEMENT_DIALOG_TEXT" "為了使Northstar工作，本客戶端將使用Northstar的主服務器進行驗證。此操作將會發送你的Origin令牌至主服務器，我們承諾將不會存儲此令牌或將其另做它用。
+同意請點擊是。這項選擇可以在Mod菜單內于任意時間修改。"
+		"BACK_AUTHENTICATION_AGREEMENT" "驗證許可"
+		"AUTHENTICATION_AGREEMENT" "驗證許可"
+		"AUTHENTICATION_AGREEMENT_RESTART" "你需要重啟Titanfall 2來使本選項生效。"
+		
+		"MENU_TITLE_SERVER_BROWSER" "服務器瀏覽器"
+		"NS_SERVERBROWSER_NOSERVERS" "未找到服務器"
+		"NS_SERVERBROWSER_WAITINGFORSERVERS" "正在獲取服務器中..."
+		"NS_SERVERBROWSER_CONNECTIONFAILED" "連接失敗！"
+		"REFRESH_SERVERS" "刷新"
+
+		"MENU_TITLE_CONNECT_PASSWORD" "用密碼連接"
+		"MENU_CONNECT_MENU_CONNECT" "連接"
+	
+		"PRIVATE_MATCH_PAGE_PREV" "上一頁"
+		"PRIVATE_MATCH_PAGE_NEXT" "下一頁"
+		
+		"MENU_MATCH_SETTINGS" "比賽設置"
+		"MENU_MATCH_SETTINGS_SUBMENU" "%s1設置"
+		
+		"PRIVATE_MATCH_SINGLEPLAYER_LEVEL" "%s1 （單人遊戲）"
+		
+		// fra hint for private match menu, because fra only has PL_fra_desc in vanilla
+		"PL_fra_hint" "你正在單人遊戲。殺死敵人來取得勝利。收集三枚電池即可召喚泰坦。"
+		
+		// mode settings
+		"MODE_SETTING_CATEGORY_PILOT" "鐵馭"
+		"MODE_SETTING_CATEGORY_TITAN" "泰坦"
+		"MODE_SETTING_CATEGORY_RIFF" "突變"
+		"MODE_SETTING_CATEGORY_MATCH" "比賽"
+		
+		"classic_mp" "經典多人"
+		"run_epilogue" "撤離環節"
+		"scorelimit" "分數限制"
+		"roundscorelimit" "分數限制（回合制）"
+		"timelimit" "時間限制"
+		"roundtimelimit" "時間限制（回合制）"
+		
+		"pilot_health_multiplier" "生命值倍率"
+		"respawn_delay" "重生延遲"
+		"boosts_enabled" "助推器"
+		"earn_meter_pilot_overdrive" "助推器過載"
+		"earn_meter_pilot_multiplier" "助推器倍率"
+		
+		"earn_meter_titan_multiplier" "泰坦助推器倍率"
+		"aegis_upgrades" "神盾升級"
+		"infinite_doomed_state" "無限即毀狀態"
+		"titan_shield_regen" "護盾重生"
+		
+		"riff_floorislava" "無法觸地"
+		"featured_mode_all_holopilot" "驚世欺詐"
+		"featured_mode_all_grapple" "進擊抓鉤"
+		"featured_mode_all_phase" "暗影維度"
+		"featured_mode_all_ticks" "炸蛛世界"
+		"featured_mode_tactikill" "戰術擊殺"
+		"featured_mode_amped_tacticals" "強力道具"
+		"featured_mode_rocket_arena" "火箭戰場"
+		"featured_mode_shotguns_snipers" "鬥陣火拼"
+		"iron_rules" "鋼鐵泰坦規則"
+		
+		"cp_amped_capture_points" "強力搶點"
+		"coliseum_loadouts_enabled" "競技場裝備"
+		
+		// northstar.custom localisation is just deciding not to work, so putting it here for now
+		"PL_sbox" "沙盒"
+		"PL_sbox_lobby" "沙盒大廳"
+		"PL_sbox_desc" "就像GMOD但不好玩"
+		"PL_sbox_abbr" "SBOX"
+		"GAMEMODE_SBOX" "沙盒"
+		
+		"PL_gg" "槍王"
+		"PL_gg_lobby" "槍王大廳"
+		"PL_gg_desc" "用每種武器獲得一次擊殺來取勝。"
+		"PL_gg_hint" "用每種武器獲得一次擊殺來取勝。"
+		"PL_gg_abbr" "GG"
+		"GAMEMODE_GG" "槍王"
+		
+		"PL_tt" "爭奪泰坦"
+		"PL_tt_lobby" "爭奪泰坦大廳"
+		"PL_tt_desc" "在泰坦裡殺敵才能得分，消滅敵人的泰坦來獲得你自己的泰坦。"
+		"PL_tt_hint" "在泰坦裡殺敵才能得分，消滅敵人的泰坦來獲得你自己的泰坦。"
+		"PL_tt_abbr" "TT"
+		"GAMEMODE_TT" "爭奪泰坦"
+		
+		"PL_inf" "感染"
+		"PL_inf_lobby" "感染大廳"
+		"PL_inf_desc" "在僵尸災變下存活。倖存者將會在被殺後感染。"
+		"PL_inf_hint" "在僵尸災變下存活。倖存者將會在被殺後感染。"
+		"PL_inf_abbr" "INF"
+		"GAMEMODE_INF" "感染"
+		"INFECTION_YOU_ARE_INFECTED" "你已被感染！"
+		"INFECTION_KILL_SURVIVORS" "感染所有剩餘的倖存者。"
+		"INFECTION_FIRST_INFECTED" "%s1是首個感染者。"
+		"INFECTION_LAST_SURVIVOR" "%s1是最後的倖存者！"
+		"INFECTION_KILL_LAST_SURVIVOR" "在時間用盡前感染他們！"
+		"INFECTION_YOU_ARE_LAST_SURVIVOR" "你是最後的倖存者！"
+		"INFECTION_SURVIVE_LAST_SURVIVOR" "活下來。"
+		
+		"PL_hs" "捉迷藏"
+		"PL_hs_lobby" "捉迷藏大廳"
+		"PL_hs_desc" "躲藏者躲避，尋覓者要找出他們。"
+		"PL_hs_hint" "躲藏者躲避，尋覓者要找出他們。"
+		"PL_hs_abbr" "HS"
+		"GAMEMODE_hs" "捉迷藏"
+		"HIDEANDSEEK_YOU_ARE_SEEKER" "你是一名尋覓者"
+		"HIDEANDSEEK_SEEKER_DESC" "找出躲藏者並近戰。\n你將在%s1秒後出生"
+		"HIDEANDSEEK_YOU_ARE_HIDER" "你是一名躲藏者"
+		"HIDEANDSEEK_HIDER_DESC" "躲開尋覓者的追捕。"
+		"HIDEANDSEEK_SEEKERS_INCOMING" "尋覓者出動中"
+		"HIDEANDSEEK_DONT_GET_FOUND" "別被發現了！"
+		"HIDEANDSEEK_GET_LAST_HIDER" "%s1是最後的躲藏者"
+		"HIDEANDSEEK_YOU_ARE_LAST_HIDER" "你是最後的躲藏者"
+		"HIDEANDSEEK_GOT_STIM" "你被發現了，不要被對手抓住！"
+		"hideandseek_balance_teams" "自動平衡躲藏者/尋覓者"
+		"hideandseek_hiding_time" "躲藏階段" 
+		
+		// these are defined in r1_english but titan war is a shit name so i'm changing it to another one that was referenced in development
+		"GAMEMODE_fw" "前線戰爭"
+		"PL_fw" "前線戰爭"
+		"PL_fw_lobby" "前線戰爭大廳"
+		"PL_fw_desc" "破壞敵人的採集機，保護你們的採集機"
+		"PL_fw_abbr" "FW"
+		
+		"GAMEMODE_kr" "強殺競賽"
+		"PL_kr" "強殺競賽"
+		"PL_kr_lobby" "強殺競賽大廳"
+		"PL_kr_desc" "通過擊殺來延長你的擊殺時長。收集旗幟可開始。設下最高的擊殺記錄來取勝。"
+		"PL_kr_hint" "通過擊殺來延長你的擊殺時長。收集旗幟可開始。設下最高的擊殺記錄來取勝。"
+		"PL_kr_abbr" "KR"
+		"SCOREBOARD_KR_RECORD" "擊殺記錄"
+		"KR_NEW_RACER" "%s1是目前的強殺射手"
+		"KR_YOU_ARE_NEW_RACER" "你是目前的強殺射手"
+		"KR_YOU_SET_NEW_RECORD" "創造了新的擊殺記錄！"
+		"KR_FLAG_INCOMING" "旗幟接近中"
+		"KR_COLLECT_FLAG" "收集旗幟來成為強殺射手！"
+		"KR_ENEMY_KILLRACE_OVER" "%s1的強殺已結束"
+		"KR_YOUR_KILLRACE_OVER" "你的強殺已結束"
+		"KR_YOUR_KILLRACE_SCORE" "你獲得了%s1次擊殺。"
+	
+		"GAMEMODE_fastball" "Fastball"
+		"PL_fastball" "Fastball"
+		"PL_fastball_lobby" "Fastball Lobby"
+		"PL_fastball_desc" "Permadeath. Hack control panels to win rounds and respawn your teammates."
+		"PL_fastball_hint" "Permadeath. Hack control panels to win rounds and respawn your teammates."
+		"PL_fastball_abbr" "FB"
+		"FASTBALL_PANEL_CAPTURED" "%s1 captured panel %s2"
+		"SCOREBOARD_FASTBALL_HACKS" "Panels Captured"
+		
+		"GAMEMODE_ctf_comp" "Competitive CTF"
+		
+		// mode settings
+		"MODE_SETTING_CATEGORY_PROMODE" "Promode"
+		"MODE_SETTING_CATEGORY_BLEEDOUT" "Pilot Bleedout"
+		
+		"custom_air_accel_pilot" "Air Acceleration"
+		"promode_enable" "Promode Weapons"
+		"fp_embark_enabled" "Firstperson embarks/executions"
+		"classic_rodeo" "Classic Rodeo"
+		"oob_timer_enabled" "Out of Bounds Timer"
+		"riff_instagib" "Instagib Mode"
+		
+		"riff_player_bleedout" "Pilot Bleedout"
+		"player_bleedout_forceHolster" "Holster weapons when downed"
+		"player_bleedout_forceDeathOnTeamBleedout" "Die on team bleedout"
+		"player_bleedout_bleedoutTime" "Bleedout time"
+		"player_bleedout_firstAidTime" "First aid time"
+		"player_bleedout_firstAidTimeSelf" "Self-res time"
+		"player_bleedout_firstAidHealPercent" "First aid health percentage"
+		"player_bleedout_aiBleedingPlayerMissChance" "Downed AI miss chance"
+		
+		// coop stuff
+		"PL_sp_coop" "(UNFINISHED) Singleplayer Coop"
+		"PL_sp_coop_lobby" "Singleplayer Coop Lobby"
+		"PL_sp_coop_desc" "Play through the singleplayer campaign with friends"
+		"PL_sp_coop_hint" "Play through the singleplayer campaign with friends"
+		"PL_sp_coop_abbr" "SP"
+		
+		"SP_TRAINING" "The Pilot's Gauntlet"
+		"SP_TRAINING_CLASSIC_DESC" "Captain Lastimosa's training simulation."
+		
+		"SP_CRASHSITE" "BT-7274"
+		"SP_CRASHSITE_CLASSIC_DESC" "Jack Cooper meets BT-7274."
+		
+		"SP_SEWERS1" "Blood and Rust"
+		"SP_SEWERS1_CLASSIC_DESC" "Cooper and BT set out to rendezvous with Major Anderson."
+		
+		"SP_BOOMTOWN_START" "Into the Abyss"
+		"SP_BOOMTOWN_START_CLASSIC_DESC" "An underground shortcut yields unexpected consequences."
+		
+		"SP_HUB_TIMESHIFT" "Effect and Cause"
+		"SP_HUB_TIMESHIFT_CLASSIC_DESC" "A strange phenomenon is discovered at Major Anderson's coordinates."
+		
+		"SP_BEACON" "The Beacon"
+		"SP_BEACON_CLASSIC_DESC" "Cooper and BT attempt to inform the remaining fleet of the IMC's plans."
+		
+		"SP_TDAY" "Trial by Fire"
+		"SP_TDAY_CLASSIC_DESC" "Cooper's Titan skills are put to the test in an all-out battle to capture the Ark"
+		
+		"SP_S2S" "The Ark"
+		"SP_S2S_CLASSIC_DESC" "Cooper and BT go ship to ship in pursuit of the Ark."
+		
+		"SP_SKYWAY_V1" "The Fold Weapon"
+		"SP_SKYWAY_V1_CLASSIC_DESC" "BT and Cooper are captured by Kuben Blisk."
+	}
+}
