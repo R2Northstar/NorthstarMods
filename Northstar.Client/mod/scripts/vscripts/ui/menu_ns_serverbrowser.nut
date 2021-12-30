@@ -439,7 +439,7 @@ void function OnHitDummyTop(var button) {
 	if (file.scrollOffset < 0)	{
 		// was at top already
 		file.scrollOffset = 0
-		Hud_SetFocused(Hud_GetChild(file.menu, "BtnServerNameTab"))
+		Hud_SetFocused(Hud_GetChild(file.menu, "BtnFiltersClear"))
 	} else {
 		// only update if list position changed
 		UpdateShownPage()
