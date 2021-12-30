@@ -64,6 +64,10 @@ void function OnPlayerKilled( entity victim, entity attacker, var damageInfo )
 			AddTeamScore( attacker.GetTeam(), 1 )
 			attacker.AddToPlayerGameStat( PGS_ASSAULT_SCORE, 1 )
 			UpdateLoadout( attacker )
+
+			//last kill of the match (usually the winning kill) will be the replay, prevents
+			//black screen if the game ends in a draw			
+			SetRoundWinningKillReplayAttacker(attacker)
 		}
 		
 		if ( DamageInfo_GetDamageSourceIdentifier( damageInfo ) == eDamageSourceId.human_execution )
