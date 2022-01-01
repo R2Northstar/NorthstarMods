@@ -2,6 +2,7 @@ global function GamemodeInfection_Init
 
 struct {
 	bool hasHadFirstInfection = false
+	bool hasHadLastInfection = false
 	array<entity> playersToNotifyOfInfection
 } file
 
@@ -10,6 +11,7 @@ void function GamemodeInfection_Init()
 	SetSpawnpointGamemodeOverride( FFA )
 	SetLoadoutGracePeriodEnabled( false ) // prevent modifying loadouts with grace period
 	SetWeaponDropsEnabled( false )
+	SetShouldUseRoundWinningKillReplay( true )
 	Riff_ForceTitanAvailability( eTitanAvailability.Never )
 	Riff_ForceBoostAvailability( eBoostAvailability.Disabled )
 	ClassicMP_ForceDisableEpilogue( true )
@@ -28,7 +30,7 @@ void function InfectionInitPlayer( entity player )
 	if ( GetGameState() < eGameState.Playing )
 		SetTeam( player, INFECTION_TEAM_SURVIVOR )
 	else
-		InfectPlayer( player )
+		InfectPlayer( player, player )
 }
 
 void function SelectFirstInfected()
@@ -43,23 +45,23 @@ void function SelectFirstInfectedDelayed()
 	array<entity> players = GetPlayerArray()
 	entity infected = players[ RandomInt( players.len() ) ]
 	
-	InfectPlayer( infected )
+	InfectPlayer( infected, infected )
 	RespawnInfected( infected )
 }
 
 void function InfectionOnPlayerKilled( entity victim, entity attacker, var damageInfo )
 {
-	if ( !victim.IsPlayer() || GetGameState() != eGameState.Playing )
+	if ( !victim.IsPlayer() || !attacker.IsPlayer() || GetGameState() != eGameState.Playing )
 		return
 		
 	if ( victim.GetTeam() == INFECTION_TEAM_SURVIVOR )
-		InfectPlayer( victim )
+		InfectPlayer( victim, attacker )
 	
 	if ( attacker.IsPlayer() )
 		attacker.SetPlayerGameStat( PGS_ASSAULT_SCORE, attacker.GetPlayerGameStat( PGS_ASSAULT_SCORE ) + 1 )
 }
 
-void function InfectPlayer( entity player )
+void function InfectPlayer( entity player, entity attacker )
 {
 	SetTeam( player, INFECTION_TEAM_INFECTED )
 	player.SetPlayerGameStat( PGS_ASSAULT_SCORE, 0 ) // reset kills
@@ -68,8 +70,13 @@ void function InfectPlayer( entity player )
 	// check how many survivors there are
 	array<entity> survivors = GetPlayerArrayOfTeam( INFECTION_TEAM_SURVIVOR )
 	if ( survivors.len() == 0 )
+	{
+		SetRespawnsEnabled( false )
+		SetKillcamsEnabled( false )
+		SetRoundWinningKillReplayAttacker(attacker)
 		SetWinner( INFECTION_TEAM_INFECTED )
-	else if ( survivors.len() == 1 )
+	}
+	else if ( survivors.len() == 1 && !file.hasHadLastInfection )
 		SetLastSurvivor( survivors[ 0 ] )
 		
 	if ( !file.hasHadFirstInfection )
@@ -175,12 +182,20 @@ void function SetLastSurvivor( entity player )
 	
 	if ( GameTime_TimeLeftSeconds() > 45 )
 		SetServerVar( "gameEndTime", Time() + 45.0 )
+	
+	file.hasHadLastInfection = true
 }
 
 int function TimeoutCheckSurvivors()
 {
-	if ( GetPlayerArrayOfTeam( INFECTION_TEAM_SURVIVOR ).len() > 0 )
+	array<entity> survivors = GetPlayerArrayOfTeam( INFECTION_TEAM_SURVIVOR )
+	if ( survivors.len() > 0 )
+	{
+		SetRespawnsEnabled( false )
+		SetKillcamsEnabled( false )
+		SetRoundWinningKillReplayAttacker(survivors[ 0 ])
 		return INFECTION_TEAM_SURVIVOR
+	}
 		
 	return INFECTION_TEAM_INFECTED
 }

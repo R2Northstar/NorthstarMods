@@ -21,10 +21,12 @@ void function GamemodeSpeedball_Init()
 	
 	AddSpawnCallbackEditorClass( "script_ref", "info_speedball_flag", CreateFlag )
 	
+	AddCallback_GameStateEnter( eGameState.Prematch, CreateFlagIfNoFlagSpawnpoint )
 	AddCallback_GameStateEnter( eGameState.Playing, ResetFlag )
 	AddCallback_OnTouchHealthKit( "item_flag", OnFlagCollected )
 	AddCallback_OnPlayerKilled( OnPlayerKilled )
 	SetTimeoutWinnerDecisionFunc( TimeoutCheckFlagHolder )
+	AddCallback_OnRoundEndCleanup ( ResetFlag )
 
 	ClassicMP_SetCustomIntro( ClassicMP_DefaultNoIntro_Setup, ClassicMP_DefaultNoIntro_GetLength() )
 	ClassicMP_ForceDisableEpilogue( true )
@@ -103,12 +105,29 @@ void function DropFlag()
 	file.flag.ClearParent()
 	file.flag.SetAngles( < 0, 0, 0 > )
 	SetGlobalNetEnt( "flagCarrier", file.flag )
-	EmitSoundOnEntityOnlyToPlayer( file.flagCarrier, file.flagCarrier, "UI_CTF_1P_FlagDrop" )
+	
+	if ( IsValid( file.flagCarrier ) )
+		EmitSoundOnEntityOnlyToPlayer( file.flagCarrier, file.flagCarrier, "UI_CTF_1P_FlagDrop" )
 	
 	foreach ( entity player in GetPlayerArray() )
 		MessageToPlayer( player, eEventNotifications.SPEEDBALL_FlagDropped, file.flagCarrier )
 	
 	file.flagCarrier = null
+}
+
+void function CreateFlagIfNoFlagSpawnpoint()
+{
+	if ( IsValid( file.flag ) )
+		return
+	
+	foreach ( entity hardpoint in GetEntArrayByClass_Expensive( "info_hardpoint" ) )
+	{
+		if ( hardpoint.kv.hardpointGroup == "B" )
+		{
+			CreateFlag( hardpoint )
+			return
+		}
+	}
 }
 
 void function ResetFlag()
