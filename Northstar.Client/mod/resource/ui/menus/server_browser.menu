@@ -437,6 +437,7 @@ resource/ui/menus/mods_browse.menu
 			pin_to_sibling_corner		TOP_RIGHT
 			navDown						BtnServer1
 			navRight 					BtnServerPlayersTab
+			navUp						BtnFiltersClear
 		}
 
 		BtnServerName0
@@ -683,8 +684,9 @@ resource/ui/menus/mods_browse.menu
 			pin_corner_to_sibling		TOP_LEFT
 			pin_to_sibling_corner		TOP_RIGHT
 			navDown						BtnServer1
-			navLeft 		BtnServerNameTab
-			navRight 		BtnServerMapTab
+			navLeft 					BtnServerNameTab
+			navRight 					BtnServerMapTab
+			navUp						BtnFiltersClear
 		}
 
 		BtnServerPlayers1
@@ -925,12 +927,13 @@ resource/ui/menus/mods_browse.menu
 
 			scriptID		999
 
-			pin_to_sibling					BtnServerPlayersTab
+			pin_to_sibling				BtnServerPlayersTab
 			pin_corner_to_sibling		TOP_LEFT
 			pin_to_sibling_corner		TOP_RIGHT
 			navDown						BtnServer1
-			navLeft BtnServerPlayersTab
-			navRight BtnServerGamemodeTab
+			navLeft 					BtnServerPlayersTab
+			navRight 					BtnServerGamemodeTab
+			navUp						BtnFiltersClear
 		}
 
 		BtnServerMap1
@@ -1162,20 +1165,21 @@ resource/ui/menus/mods_browse.menu
 		// Gamemode
 		BtnServerGamemodeTab
 		{
-			ControlName							RuiButton
-			InheritProperties				RuiSmallButton
-			labelText 							"#GAMEMODE_COLUMN"
-			wide 										150
-			xpos 										4
+			ControlName					RuiButton
+			InheritProperties			RuiSmallButton
+			labelText 					"#GAMEMODE_COLUMN"
+			wide 						150
+			xpos 						4
 
-			scriptID		999
+			scriptID					999
 
-			pin_to_sibling					BtnServerMapTab
+			pin_to_sibling				BtnServerMapTab
 			pin_corner_to_sibling		TOP_LEFT
 			pin_to_sibling_corner		TOP_RIGHT
 			navDown						BtnServer1
-			navLeft BtnServerMapTab
-			navRight BtnServerLatencyTab
+			navLeft 					BtnServerMapTab
+			navRight 					BtnServerLatencyTab
+			navUp						BtnFiltersClear
 		}
 
 		BtnServerGamemode1
@@ -1407,20 +1411,21 @@ resource/ui/menus/mods_browse.menu
 		// Latency
 		BtnServerLatencyTab
 		{
-			ControlName							RuiButton
-			InheritProperties				RuiSmallButton
-			labelText 							"#LATENCY_COLUMN"
-			wide 										110
-			xpos 										4
+			ControlName					RuiButton
+			InheritProperties			RuiSmallButton
+			labelText 					"#LATENCY_COLUMN"
+			wide 						110
+			xpos 						4
 
-			scriptID		999
+			scriptID					999
 
-			pin_to_sibling					BtnServerGamemodeTab
+			pin_to_sibling				BtnServerGamemodeTab
 			pin_corner_to_sibling		TOP_LEFT
 			pin_to_sibling_corner		TOP_RIGHT
 			navDown						BtnServer1
-			navLeft BtnServerGamemodeTab
-			navLeft BtnServerJoin
+			navLeft 					BtnServerGamemodeTab
+			navRight 					BtnServerJoin
+			navUp						BtnFiltersClear
 		}
 
 		BtnServerLatency1
@@ -2300,15 +2305,15 @@ resource/ui/menus/mods_browse.menu
 
 	BtnFiltersClear
 	{
-		ControlName							RuiButton
-		InheritProperties				RuiSmallButton
+		ControlName				RuiButton
+		InheritProperties		RuiSmallButton
 		labelText				"#CLEAR_FILTERS"
-		wide 100
-		xpos		-17
-		ypos 		-57
-		zpos 90
+		wide 					100
+		xpos					-17
+		ypos 					-57
+		zpos 					90
 
-		scriptID			999
+		scriptID				999
 
 		pin_to_sibling			FilterPanel
 		pin_corner_to_sibling	TOP_RIGHT
