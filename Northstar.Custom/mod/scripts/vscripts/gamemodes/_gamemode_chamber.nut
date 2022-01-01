@@ -18,7 +18,8 @@ void function GamemodeChamber_Init()
 	AddCallback_OnClientConnected( ChamberInitPlayer )
 	AddCallback_OnPlayerKilled( ChamberOnPlayerKilled )
 	AddCallback_OnPlayerRespawned( UpdateLoadout )
-
+	
+	AddCallback_GameStateEnter( eGameState.WinnerDetermined, OnWinnerDetermined )
 }
 
 void function ChamberInitPlayer( entity player )
@@ -97,4 +98,10 @@ void function SetAmmo( entity player )
     WaitFrame()
 	if ( IsValid( player ) )
 		PlayerEarnMeter_SetMode( player, eEarnMeterMode.DISABLED )
+}
+
+void function OnWinnerDetermined()
+{
+	SetRespawnsEnabled( false )
+	SetKillcamsEnabled( false )
 }
