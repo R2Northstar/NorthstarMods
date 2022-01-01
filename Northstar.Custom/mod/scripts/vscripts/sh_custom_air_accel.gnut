@@ -8,7 +8,7 @@ void function CustomAirAccelVars_Init()
 	
 	#if SERVER
 		AddCallback_OnPlayerRespawned( ApplyCustomPlayerAirAccel )
-		AddCallback_OnPilotBecomesTitan( ApplyCustomPlayerAirAccelFromTitan ) // not sure if necessary but assuming it is
+		AddCallback_OnTitanBecomesPilot( ApplyCustomPlayerAirAccelFromTitan ) // airaccel is reset after player leaves their titan
 	#endif
 }
 
