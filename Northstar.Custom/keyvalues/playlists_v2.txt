@@ -742,7 +742,7 @@ playlists
 			}
 			gamemodes
 			{
-				chamber
+				hidden
 				{
 					maps
 					{
