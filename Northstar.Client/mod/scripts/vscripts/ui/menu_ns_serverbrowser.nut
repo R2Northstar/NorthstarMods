@@ -1023,14 +1023,16 @@ void function ThreadedAuthAndConnectToServer( string password = "" )
 	}
 	else
 	{
-		dialogData.header = "#ERROR"
-		dialogData.message = "Authentication Failed"
-		dialogData.image = $"ui/menu/common/dialog_error"
+		CloseAllDialogs()
+		DialogData dialogData2
+		dialogData2.header = "#ERROR"
+		dialogData2.message = "Authentication Failed"
+		dialogData2.image = $"ui/menu/common/dialog_error"
 
 		#if PC_PROG
-			AddDialogButton( dialogData, "#DISMISS" )
+			AddDialogButton( dialogData2, "#DISMISS" )
 
-			AddDialogFooter( dialogData, "#A_BUTTON_SELECT" )
+			AddDialogFooter( dialogData2, "#A_BUTTON_SELECT" )
 		#endif // PC_PROG
 		AddDialogFooter( dialogData, "#B_BUTTON_DISMISS_RUI" )
 
