@@ -107,6 +107,12 @@ void function AnimateBuddy( entity buddy )
 	
 	buddy.WaitSignal( "fastball_release" )
 	wait 5.0
+	
+	// clear any players off bt to avoid potential crash which can supposedly happen even though i've never seen it happen
+	foreach ( entity player in GetPlayerArray() )
+		if ( player.GetParent() == buddy )
+			player.ClearParent()
+	
 	buddy.Destroy()
 }
 
@@ -127,10 +133,7 @@ void function FastballPlayer( entity player )
 
 	player.EndSignal( "OnDeath" )
 		
-	// do this here so it's in OnThreadEnd 
-	var oldVisibility = player.kv.VisibilityFlags 
-		
-	OnThreadEnd( function() : ( player, oldVisibility )
+	OnThreadEnd( function() : ( player )
 	{
 		if ( IsValid( player ) )
 		{
@@ -140,7 +143,7 @@ void function FastballPlayer( entity player )
 			player.DeployWeapon()
 			player.PlayerCone_Disable()
 			player.ClearInvulnerable()
-			player.kv.VisibilityFlags = oldVisibility // restore visibility
+			player.kv.VisibilityFlags = ENTITY_VISIBLE_TO_EVERYONE // restore visibility
 		}
 	})
 	

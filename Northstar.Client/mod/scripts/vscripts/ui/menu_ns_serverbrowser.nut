@@ -11,7 +11,6 @@ global function UpdateMouseDeltaBuffer
 const int BUTTONS_PER_PAGE = 15
 const float DOUBLE_CLICK_TIME_MS = 0.2 // unsure what the ideal value is
 
-
 struct {
 	int deltaX = 0
 	int deltaY = 0
@@ -91,6 +90,36 @@ void function AddNorthstarServerBrowserMenu()
 	AddMenu( "ServerBrowserMenu", $"resource/ui/menus/server_browser.menu", InitServerBrowserMenu, "#MENU_SERVER_BROWSER" )
 }
 
+void function UpdatePrivateMatchModesAndMaps()
+{
+	array<string> realMaps = [ "mp_lobby" ]
+	realMaps.extend( GetPrivateMatchMaps() )
+
+	foreach ( int enum_, string map in realMaps )
+	{
+		if ( filterArguments.filterMaps.find( map ) != -1 )
+			continue
+			
+		filterArguments.filterMaps.append( map )
+		
+		string localized = GetMapDisplayName( map )
+		Hud_DialogList_AddListItem( Hud_GetChild( file.menu, "SwtBtnSelectMap" ) , localized, string( enum_ + 1 ) )
+	}		
+	
+	array<string> realModes = [ "private_match" ]
+	realModes.extend( GetPrivateMatchModes() )
+	
+	foreach( int enum_, string mode in realModes )
+	{
+		string localized = GetGameModeDisplayName( mode )
+		if ( filterArguments.filterGamemodes.find( localized ) != -1 )
+			continue
+		
+		filterArguments.filterGamemodes.append( localized )
+		Hud_DialogList_AddListItem( Hud_GetChild( file.menu, "SwtBtnSelectGamemode" ) , localized, string( enum_ + 1 ) )
+	}
+}
+
 void function InitServerBrowserMenu()
 {
 	file.menu = GetMenu( "ServerBrowserMenu" )
@@ -103,7 +132,7 @@ void function InitServerBrowserMenu()
 	file.serversMap = GetElementsByClassname( file.menu, "ServerMap" )
 	file.serversGamemode = GetElementsByClassname( file.menu, "ServerGamemode" )
 	file.serversLatency = GetElementsByClassname( file.menu, "ServerLatency" )
-
+  
 	// Create filter arrays
 	filterArguments.filterMaps.extend(GetPrivateMatchMaps())
 	filterArguments.filterMaps.insert(0, "SWITCH_ANY")
@@ -351,6 +380,8 @@ void function OnCloseServerBrowserMenu()
 
 void function OnServerBrowserMenuOpened()
 {
+
+	UpdatePrivateMatchModesAndMaps()
 	Hud_SetText( Hud_GetChild( file.menu, "Title" ), "#MENU_TITLE_SERVER_BROWSER" )
 	UI_SetPresentationType( ePresentationType.KNOWLEDGEBASE_MAIN )
 
@@ -732,6 +763,7 @@ void function UpdateShownPage()
 
 	if ( NSGetServerCount() == 0 )
 	{
+
 		Hud_SetEnabled( file.serverButtons[ 0 ], true )
 		Hud_SetVisible( file.serverButtons[ 0 ], true )
 		Hud_SetText( file.serversName[ 0 ], "#NS_SERVERBROWSER_NOSERVERS" )
@@ -793,7 +825,6 @@ void function DisplayFocusedServerInfo( int scriptID)
 	int serverIndex = file.scrollOffset + scriptID
 	if (serverIndex < 0) serverIndex = 0
 
-
 	Hud_SetVisible( Hud_GetChild( menu, "BtnServerDescription" ), true )
 	Hud_SetVisible( Hud_GetChild( menu, "BtnServerMods" ), true )
 	Hud_SetVisible( Hud_GetChild( menu, "BtnServerJoin" ), true )
@@ -803,6 +834,7 @@ void function DisplayFocusedServerInfo( int scriptID)
 	//RuiSetGameTime( textRui, "startTime", -99999.99 ) // make sure it skips the whole animation for showing this
 	Hud_SetText( Hud_GetChild( menu, "LabelDescription" ), NSGetServerDescription( file.serversArrayFiltered[ serverIndex ].serverIndex ) + "\n\nRequired Mods:\n" + FillInServerModsLabel( file.serversArrayFiltered[ serverIndex ].serverIndex ))
 	//Hud_SetText( Hud_GetChild( menu, "LabelMods" ), FillInServerModsLabel( file.serversArrayFiltered[ serverIndex ].serverIndex ) )
+
 
 	// map name/image/server name
 	string map = file.serversArrayFiltered[ serverIndex ].serverMap
@@ -846,6 +878,7 @@ void function OnServerSelected( var button )
 
 	DialogData dialogData
 	int serverIndex = file.focusedServerIndex
+
 	file.lastSelectedServer = serverIndex
 
 	// check mods
@@ -932,6 +965,7 @@ void function AdvancePasswordMenu()
 	AdvanceMenu( GetMenu( "ConnectWithPasswordMenu" ) )
 }
 
+
 void function ThreadedAuthAndConnectToServer( string password = "" )
 {
 	if ( NSIsAuthenticatingWithServer() )
@@ -949,6 +983,7 @@ void function ThreadedAuthAndConnectToServer( string password = "" )
 	AddDialogButton( dialogData, "#CANCEL", CancelConnect )
 	AddDialogFooter( dialogData, "#A_BUTTON_SELECT" )
 	OpenDialog( dialogData )
+
 
 	while ( NSIsAuthenticatingWithServer() && !file.cancelConnection)
 	{

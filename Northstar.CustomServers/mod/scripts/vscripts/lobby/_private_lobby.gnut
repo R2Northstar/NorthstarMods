@@ -37,12 +37,12 @@ void function SetupPrivateMatchUIVarsWhenReady()
 
 bool function ClientCommandCallback_PrivateMatchLaunch( entity player, array<string> args )
 {
+	if ( GetConVarBool( "ns_private_match_only_host_can_start" ) )
+		if ( !NSIsPlayerIndexLocalPlayer( player.GetPlayerIndex() ) )
+			return true
+
 	if ( file.startState == ePrivateMatchStartState.STARTING ) 
 	{
-		if ( GetConVarBool( "ns_private_match_only_host_can_start" ) )
-			if ( !NSIsPlayerIndexLocalPlayer( player.GetPlayerIndex() ) )
-				return true
-	
 		// cancel start if we're already mid-countdown
 		file.startState = ePrivateMatchStartState.READY
 		SetUIVar( level, "privatematch_starting", ePrivateMatchStartState.READY )
@@ -123,8 +123,8 @@ void function StartMatch()
 	SetUIVar( level, "privatematch_starting", ePrivateMatchStartState.STARTING )
 	
 	// start countdown
-	SetUIVar( level, "gameStartTime", Time() + 15 ) 
-	float countdownEndTime = Time() + 15.0
+	SetUIVar( level, "gameStartTime", Time() + GetConVarFloat( "ns_private_match_countdown_length" ) ) 
+	float countdownEndTime = Time() + GetConVarFloat( "ns_private_match_countdown_length" )
 	
 	// can't use start here because we need to check stuff
 	while ( Time() < countdownEndTime )
@@ -159,7 +159,7 @@ void function StartMatch()
 	
 	SetConVarString( "ns_private_match_last_map", file.map )
 	SetConVarString( "ns_private_match_last_mode", file.mode )
-	SetConVarBool( "ns_should_return_to_lobby", true ) // potentially temp?
+	//SetConVarBool( "ns_should_return_to_lobby", true ) // potentially temp?
 	
 	string mode = file.mode
 	if ( !( mode in GAMETYPE_TEXT ) )
@@ -206,7 +206,7 @@ bool function ClientCommandCallback_PrivateMatchSetPlaylistVarOverride( entity p
 	if ( GetConVarInt( "ns_private_match_only_host_can_change_settings" ) >= 1 )
 		if ( !NSIsPlayerIndexLocalPlayer( player.GetPlayerIndex() ) )
 			return true
-	
+		
 	bool found = false
 	foreach ( string category in GetPrivateMatchSettingCategories() )
 	{
