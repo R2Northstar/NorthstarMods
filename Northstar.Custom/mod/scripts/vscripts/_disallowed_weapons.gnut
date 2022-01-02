@@ -50,5 +50,5 @@ void function ReplacePlayerWeapons( entity player )
 
 void function ReplacePlayerWeaponsForLoadoutChange ( entity player, PilotLoadoutDef loadout )
 {
-	ReplacePlayerLoadout( player )
+	ReplacePlayerWeapons( player )
 }
