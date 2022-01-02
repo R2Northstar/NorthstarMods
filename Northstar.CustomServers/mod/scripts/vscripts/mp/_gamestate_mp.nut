@@ -39,7 +39,9 @@ struct {
 		
 	bool roundWinningKillReplayTrackPilotKills = true 
 	bool roundWinningKillReplayTrackTitanKills = false
-		
+	
+	bool gameWonThisFrame
+	bool hasKillForGameWonThisFrame
 	float roundWinningKillReplayTime
 	entity roundWinningKillReplayVictim
 	entity roundWinningKillReplayAttacker
@@ -183,6 +185,10 @@ void function GameStateEnter_Prematch()
 
 void function StartGameWithoutClassicMP()
 {
+	foreach ( entity player in GetPlayerArray() )
+		if ( IsAlive( player ) )
+			player.Die()
+
 	WaitFrame() // wait for callbacks to finish
 	
 	// need these otherwise game will complain
@@ -278,7 +284,7 @@ void function GameStateEnter_WinnerDetermined_Threaded()
 
 	entity replayAttacker = file.roundWinningKillReplayAttacker
 	bool doReplay = Replay_IsEnabled() && IsRoundWinningKillReplayEnabled() && IsValid( replayAttacker )
-				 && Time() - file.roundWinningKillReplayTime <= ROUND_WINNING_KILL_REPLAY_LENGTH_OF_REPLAY
+				 && Time() - file.roundWinningKillReplayTime <= ROUND_WINNING_KILL_REPLAY_LENGTH_OF_REPLAY && winningTeam != TEAM_UNASSIGNED
  	
 	float replayLength = 2.0 // extra delay if no replay
 	if ( doReplay )
@@ -451,6 +457,7 @@ void function GameStateEnter_SwitchingSides_Threaded()
 
 void function PlayerWatchesSwitchingSidesKillReplay( entity player, bool doReplay, float replayLength )
 {
+	player.EndSignal( "OnDestroy" )
 	player.FreezeControlsOnServer()
 
 	ScreenFadeToBlackForever( player, SWITCHING_SIDES_DELAY_REPLAY ) // automatically cleared 
@@ -536,12 +543,22 @@ void function ForceFadeToBlack( entity player )
 void function OnPlayerKilled( entity victim, entity attacker, var damageInfo )
 {
 	if ( !GamePlayingOrSuddenDeath() )
-		return
+	{
+		if ( file.gameWonThisFrame )
+		{
+			if ( file.hasKillForGameWonThisFrame )
+				return
+		}
+		else
+			return
+	}
 
 	// set round winning killreplay info here if we're tracking pilot kills
 	// todo: make this not count environmental deaths like falls, unsure how to prevent this
 	if ( file.roundWinningKillReplayTrackPilotKills && victim != attacker && attacker != svGlobal.worldspawn && IsValid( attacker ) )
 	{
+		if ( file.gameWonThisFrame )
+			file.hasKillForGameWonThisFrame = true
 		file.roundWinningKillReplayTime = Time()
 		file.roundWinningKillReplayVictim = victim
 		file.roundWinningKillReplayAttacker = attacker
@@ -549,6 +566,12 @@ void function OnPlayerKilled( entity victim, entity attacker, var damageInfo )
 		file.roundWinningKillReplayTimeOfDeath = Time()
 		file.roundWinningKillReplayHealthFrac = GetHealthFrac( attacker )
 	}
+
+	if ( ( Riff_EliminationMode() == eEliminationMode.Titans || Riff_EliminationMode() == eEliminationMode.PilotsTitans ) && victim.IsTitan() ) // need an extra check for this
+		OnTitanKilled( victim, damageInfo )	
+
+	if ( !GamePlayingOrSuddenDeath() )
+		return
 
 	// note: pilotstitans is just win if enemy team runs out of either pilots or titans
 	if ( IsPilotEliminationBased() || GetGameState() == eGameState.SuddenDeath )
@@ -574,21 +597,28 @@ void function OnPlayerKilled( entity victim, entity attacker, var damageInfo )
 				SetWinner( GetOtherTeam( victim.GetTeam() ), "#GAMEMODE_ENEMY_PILOTS_ELIMINATED", "#GAMEMODE_FRIENDLY_PILOTS_ELIMINATED" )
 		}
 	}
-	
-	if ( ( Riff_EliminationMode() == eEliminationMode.Titans || Riff_EliminationMode() == eEliminationMode.PilotsTitans ) && victim.IsTitan() ) // need an extra check for this
-		OnTitanKilled( victim, damageInfo )
 }
 
 void function OnTitanKilled( entity victim, var damageInfo )
 {
 	if ( !GamePlayingOrSuddenDeath() )
-		return
+	{
+		if ( file.gameWonThisFrame )
+		{
+			if ( file.hasKillForGameWonThisFrame )
+				return
+		}
+		else
+			return
+	}
 
 	// set round winning killreplay info here if we're tracking titan kills
 	// todo: make this not count environmental deaths like falls, unsure how to prevent this
 	entity attacker = DamageInfo_GetAttacker( damageInfo )
 	if ( file.roundWinningKillReplayTrackTitanKills && victim != attacker && attacker != svGlobal.worldspawn && IsValid( attacker ) )
 	{
+		if ( file.gameWonThisFrame )
+			file.hasKillForGameWonThisFrame = true
 		file.roundWinningKillReplayTime = Time()
 		file.roundWinningKillReplayVictim = victim
 		file.roundWinningKillReplayAttacker = attacker
@@ -596,6 +626,9 @@ void function OnTitanKilled( entity victim, var damageInfo )
 		file.roundWinningKillReplayTimeOfDeath = Time()
 		file.roundWinningKillReplayHealthFrac = GetHealthFrac( attacker )
 	}
+	
+	if ( !GamePlayingOrSuddenDeath() )
+		return
 
 	// note: pilotstitans is just win if enemy team runs out of either pilots or titans
 	if ( IsTitanEliminationBased() )
@@ -701,11 +734,15 @@ void function SetRoundWinningKillReplayAttacker( entity attacker )
 	file.roundWinningKillReplayTime = Time()
 	file.roundWinningKillReplayHealthFrac = GetHealthFrac( attacker )
 	file.roundWinningKillReplayAttacker = attacker
+	file.roundWinningKillReplayTimeOfDeath = Time()
 }
 
 void function SetWinner( int team, string winningReason = "", string losingReason = "" )
 {	
 	SetServerVar( "winningTeam", team )
+	
+	file.gameWonThisFrame = true
+	thread UpdateGameWonThisFrameNextFrame()
 	
 	if ( winningReason.len() == 0 )
 		file.announceRoundWinnerWinningSubstr = 0
@@ -717,18 +754,28 @@ void function SetWinner( int team, string winningReason = "", string losingReaso
 	else
 		file.announceRoundWinnerLosingSubstr = GetStringID( losingReason )
 	
-	if ( IsRoundBased() )
-	{	
-		if ( team != TEAM_UNASSIGNED )
-		{
-			GameRules_SetTeamScore( team, GameRules_GetTeamScore( team ) + 1 )
-			GameRules_SetTeamScore2( team, GameRules_GetTeamScore2( team ) + 1 )
+	if ( GamePlayingOrSuddenDeath() )
+	{
+		if ( IsRoundBased() )
+		{	
+			if ( team != TEAM_UNASSIGNED )
+			{
+				GameRules_SetTeamScore( team, GameRules_GetTeamScore( team ) + 1 )
+				GameRules_SetTeamScore2( team, GameRules_GetTeamScore2( team ) + 1 )
+			}
+			
+			SetGameState( eGameState.WinnerDetermined )
 		}
-		
-		SetGameState( eGameState.WinnerDetermined )
+		else
+			SetGameState( eGameState.WinnerDetermined )
 	}
-	else
-		SetGameState( eGameState.WinnerDetermined )
+}
+
+void function UpdateGameWonThisFrameNextFrame()
+{
+	WaitFrame()
+	file.gameWonThisFrame = false
+	file.hasKillForGameWonThisFrame = false
 }
 
 void function AddTeamScore( int team, int amount )

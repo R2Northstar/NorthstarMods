@@ -1607,7 +1607,6 @@ resource/ui/menus/mods_browse.menu
 				pin_corner_to_sibling		TOP_LEFT
 				pin_to_sibling_corner		TOP_LEFT
     }
-
 		YDivider3
     {
         ControlName			ImagePanel
@@ -1913,6 +1912,7 @@ resource/ui/menus/mods_browse.menu
 		image 					"vgui/scrollarrowup"
 		visible					1
 
+
 		pin_to_sibling					ServerDetailsPanel
 		pin_corner_to_sibling		TOP_RIGHT
 		pin_to_sibling_corner		TOP_LEFT
@@ -1943,6 +1943,7 @@ resource/ui/menus/mods_browse.menu
 		ypos -604
 		zpos 2
 		image 					"vgui/scrollarrowdown"
+
 		pin_to_sibling					ServerDetailsPanel
 		pin_corner_to_sibling		TOP_RIGHT
 		pin_to_sibling_corner		TOP_LEFT
@@ -1981,6 +1982,7 @@ resource/ui/menus/mods_browse.menu
 		pin_to_sibling					BtnServerLatencyTab
 		pin_corner_to_sibling		TOP_RIGHT
 		pin_to_sibling_corner		TOP_RIGHT
+
 	}
 
 	BtnServerListSlider
@@ -1991,6 +1993,7 @@ resource/ui/menus/mods_browse.menu
 		wide 					35
 		tall 					562
 		xpos 					-2
+
 		ypos 					-40
 		zpos					0
 
@@ -2012,7 +2015,6 @@ resource/ui/menus/mods_browse.menu
 
 		scaleImage 1
 		image 					"vgui/scrollbarbase"
-
 		visible					1
 		zpos					-1
 

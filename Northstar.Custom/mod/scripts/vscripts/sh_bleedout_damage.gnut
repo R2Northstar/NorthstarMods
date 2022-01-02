@@ -12,6 +12,12 @@ struct {
 void function BleedoutDamage_PreInit()
 {
 	AddCallback_OnRegisteringCustomNetworkVars( Bleedout_RegisterRemoteFunctions )
+	
+	#if CLIENT
+		// because playlist var overrides fucking suck, they aren't actually updated by this point
+		// client bleedout can be inited late enough that we can just init it on local player spawn
+		AddCallback_LocalClientPlayerSpawned( InitClientBleedoutForLocalPlayer )
+	#endif
 }
 
 void function Bleedout_RegisterRemoteFunctions()
@@ -43,9 +49,9 @@ void function BleedoutDamage_Init()
 	AddPrivateMatchModeSettingArbitrary( "#MODE_SETTING_CATEGORY_BLEEDOUT", "player_bleedout_aiBleedingPlayerMissChance", DEFAULT_AI_BLEEDING_PLAYER_MISS_CHANCE.tostring() )
 	
 	#if CLIENT
-		// because playlist var overrides fucking suck, they aren't actually updated by this point
-		// client bleedout can be inited late enough that we can just init it on local player spawn
-		AddCallback_LocalClientPlayerSpawned( InitClientBleedoutForLocalPlayer )
+		// manually register signals here: defensive fix so we don't crash
+		RegisterSignal( "Bleedout_OnRevive" )
+		RegisterSignal( "Bleedout_StopFirstAid" )
 	#elseif SERVER
 		// sh_riff_settings should set this correctly on server
 		if ( !Riff_PlayerBleedout() )
@@ -114,7 +120,7 @@ void function HandleDamageForBleedout( entity player, var damageInfo )
 void function OnPlayerBleedoutBegin( entity player )
 {
 	file.bleedingPlayers.append( player )
-	EmitSoundOnEntity( player, "Player_Death_Begin" )
+	EmitSoundOnEntityOnlyToPlayer( player, player, "Player_Death_Begin" )
 	
 	thread PlayerBleedoutGracePeriod( player )
 
@@ -134,7 +140,7 @@ void function PlayerBleedoutGracePeriod( entity player )
 	})
 	
 	player.SetInvulnerable()
-	wait 2.5
+	wait 0.25
 }
 
 void function TrackPlayerBleedout( entity player )
