@@ -29,6 +29,7 @@ struct
 	array<var> spotlightButtons
 
 	bool installing = false
+	bool cancelConnection = false
 } file
 
 const DEBUG_PERMISSIONS = false
@@ -278,12 +279,6 @@ void function UpdatePlayButton( var button )
 				message = "#CONTACTING_RESPAWN_SERVERS"
 				file.mpButtonActivateFunc = null
 			}
-			
-			bool hasNonVanillaMods = false
-			if ( hasNonVanillaMods )
-			{
-				// todo: make this disable non-vanilla mods
-			}
 			else
 				file.mpButtonActivateFunc = LaunchMP
 			
@@ -422,7 +417,21 @@ void function UpdatePlayButton( var button )
 			}
 			else
 			{
-				file.mpButtonActivateFunc = LaunchMP
+				// restrict non-vanilla players from accessing official servers
+				bool hasNonVanillaMods = false
+				foreach ( string modName in NSGetModNames() )
+				{
+					if ( NSIsModEnabled( modName ) && NSIsModRequiredOnClient( modName ) )
+					{
+						hasNonVanillaMods = true
+						break
+					}
+				}
+				
+				if ( hasNonVanillaMods )
+					file.mpButtonActivateFunc = null
+				else
+					file.mpButtonActivateFunc = LaunchMP
 			}
 
 			isLocked = file.mpButtonActivateFunc == null ? true : false
@@ -494,9 +503,9 @@ void function TryUnlockNorthstarButton()
 	// unlock "Launch Northstar" button until you're authed with masterserver, are allowing insecure auth, or 7.5 seconds have passed
 	float time = Time()
 	
-	while ( Time() < time + 7.5 || GetConVarInt( "ns_has_agreed_to_send_token" ) != NS_AGREED_TO_SEND_TOKEN )
+	while ( GetConVarInt( "ns_has_agreed_to_send_token" ) != NS_AGREED_TO_SEND_TOKEN )
 	{
-		if ( NSIsMasterServerAuthenticated() || GetConVarBool( "ns_auth_allow_insecure" ) )
+		if ( ( NSIsMasterServerAuthenticated() && IsStryderAllowingMP() ) || GetConVarBool( "ns_auth_allow_insecure" ) )
 			break
 			
 		WaitFrame()
@@ -520,29 +529,41 @@ void function TryAuthWithLocalServer()
 {
 	DialogData dialogData
 	dialogData.showSpinner = true
+	dialogData.header = "#MATCHMAKING_TITLE_CONNECTING"
+	dialogData.message = "#NS_MENU_MAIN_AUTHENTICATING"
+	AddDialogButton( dialogData, "#CANCEL", CancelConnect )
+	AddDialogFooter( dialogData, "#A_BUTTON_SELECT" )
+	OpenDialog(dialogData)
 
 	while ( NSIsAuthenticatingWithServer() )
 	{
-		dialogData.header = "#MATCHMAKING_TITLE_CONNECTING"
-		dialogData.message = "#MENU_MAIN_AUTHENTICATING"
-		OpenDialog(dialogData)
 		WaitFrame()
+	}
+
+	if( file.cancelConnection && !NSIsAuthenticatingWithServer() )
+	{
+		file.cancelConnection = false
+		return
 	}
 
 	if ( NSWasAuthSuccessful() )
 	{
 		dialogData.header = "#MATCHMAKING_TITLE_CONNECTING"
-		dialogData.message = "#MENU_MAIN_CONNECTING"
+		dialogData.message = "#NS_MENU_MAIN_CONNECTING"
 		OpenDialog(dialogData)
 		NSCompleteAuthWithLocalServer()
 	}
 	
-
 	if ( GetConVarString( "mp_gamemode" ) == "solo" )
 		SetConVarString( "mp_gamemode", "tdm" )
 
 	ClientCommand( "setplaylist tdm" )
 	ClientCommand( "map mp_lobby" )
+}
+
+void function CancelConnect()
+{
+	file.cancelConnection = true
 }
 
 void function OnPlayMPButton_Activate( var button )
