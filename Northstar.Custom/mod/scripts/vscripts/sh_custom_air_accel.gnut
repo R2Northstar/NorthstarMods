@@ -24,4 +24,9 @@ void function ApplyCustomPlayerAirAccelFromTitan( entity player, entity titan )
 {
 	player.kv.airAcceleration = GetCurrentPlaylistVarInt( "custom_air_accel_pilot", int( player.GetPlayerSettingsField( "airAcceleration" ) ) )
 }
+
+void function ApplyCustomPlayerAirAccelOnLoadoutChange( entity player, PilotLoadoutDef loadout ) 
+{
+	player.kv.airAcceleration = GetCurrentPlaylistVarInt( "custom_air_accel_pilot", int( player.GetPlayerSettingsField( "airAcceleration" ) ) )
+}
 #endif
