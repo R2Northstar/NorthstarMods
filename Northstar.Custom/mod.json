@@ -38,10 +38,48 @@
 		
 		{
 			"Path": "weapons/mp_weapon_peacekraber.nut",
-			"RunOn": "( CLIENT || SERVER ) && MP",
+			"RunOn": "( CLIENT || SERVER ) && MP"
 		},
 		
-		// fortwar
+		{
+			"Path": "gamemodes/sh_gamemode_chamber.nut",
+			"RunOn": "( CLIENT || SERVER ) && MP",
+			"ClientCallback": {
+				"Before": "Sh_GamemodeChamber_Init"
+			},
+
+			"ServerCallback": {
+				"Before": "Sh_GamemodeChamber_Init"
+			}
+		},
+		{
+			"Path": "gamemodes/_gamemode_chamber.nut",
+			"RunOn": "SERVER && MP"
+		},
+		{
+			"Path": "gamemodes/cl_gamemode_chamber.nut",
+			"RunOn": "CLIENT && MP"
+		},
+		{
+			"Path": "gamemodes/sh_gamemode_hidden.nut",
+			"RunOn": "( CLIENT || SERVER ) && MP",
+			"ClientCallback": {
+				"Before": "Sh_GamemodeHidden_Init"
+			},
+
+			"ServerCallback": {
+				"Before": "Sh_GamemodeHidden_Init"
+			}
+		},
+		{
+			"Path": "gamemodes/_gamemode_hidden.nut",
+			"RunOn": "SERVER && MP"
+		},
+		{
+			"Path": "gamemodes/cl_gamemode_hidden.nut",
+			"RunOn": "CLIENT && MP"
+		},
+		
 		{
 			"Path": "gamemodes/sh_gamemode_fw_custom.nut",
 			"RunOn": "( CLIENT || SERVER ) && MP",
@@ -62,7 +100,6 @@
 			"RunOn": "CLIENT && MP"
 		},
 		
-		// gungame
 		{
 			"Path": "gamemodes/sh_gamemode_gg.gnut",
 			"RunOn": "( CLIENT || SERVER ) && MP",
@@ -83,7 +120,6 @@
 			"RunOn": "CLIENT && MP"
 		},
 		
-		// titan tag
 		{
 			"Path": "gamemodes/sh_gamemode_tt.gnut",
 			"RunOn": "( CLIENT || SERVER ) && MP",
@@ -104,12 +140,11 @@
 			"RunOn": "CLIENT && MP"
 		},
 		
-		// infection
 		{
 			"Path": "gamemodes/sh_gamemode_inf.gnut",
 			"RunOn": "( CLIENT || SERVER ) && MP",
 			"ClientCallback": {
-				"Before": "Sh_GamemodeInfection_Init",
+				"Before": "Sh_GamemodeInfection_Init"
 			},
 			
 			"ServerCallback": {
@@ -125,7 +160,6 @@
 			"RunOn": "CLIENT && MP"
 		},
 		
-		// arena
 		{
 			"Path": "_droppod_spawn.gnut",
 			"RunOn": "SERVER && MP",
@@ -169,7 +203,6 @@
 			"RunOn": "CLIENT && MP"
 		},
 		
-		// amped killrace
 		{
 			"Path": "gamemodes/sh_gamemode_kr.gnut",
 			"RunOn": "( CLIENT || SERVER ) && MP",
@@ -190,7 +223,6 @@
 			"RunOn": "CLIENT && MP"
 		},
 		
-		// fastball
 		{
 			"Path": "gamemodes/sh_gamemode_fastball.gnut",
 			"RunOn": "( CLIENT || SERVER ) && MP",
@@ -215,7 +247,6 @@
 			"RunOn": "CLIENT && MP"
 		},
 		
-		// hide and seek
 		{
 			"Path": "gamemodes/sh_gamemode_hs.gnut",
 			"RunOn": "( CLIENT || SERVER ) && MP",
@@ -236,7 +267,6 @@
 			"RunOn": "CLIENT && MP"
 		},
 		
-		// ctf comp
 		{
 			"Path": "gamemodes/sh_gamemode_ctf_comp.gnut",
 			"RunOn": "( CLIENT || SERVER ) && MP",
@@ -263,7 +293,6 @@
 			}
 		},
 		
-		// riffs, playlist vars etc
 		{
 			"Path": "gamemodes/sh_riff_instagib.gnut",
 			"RunOn": "( CLIENT || SERVER ) && MP",
@@ -359,7 +388,6 @@
 		}
 	],
 	
-	// todo this bit of the format
 	"Maps": [
 		{
 			"Name": "mp_skyway_v1",
