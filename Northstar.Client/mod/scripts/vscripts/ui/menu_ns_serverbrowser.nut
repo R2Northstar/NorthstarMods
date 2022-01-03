@@ -4,7 +4,6 @@ untyped
 global function AddNorthstarServerBrowserMenu
 global function ThreadedAuthAndConnectToServer
 
-global function UpdateMouseDeltaBuffer
 
 // Stop peeking
 
@@ -100,22 +99,22 @@ void function UpdatePrivateMatchModesAndMaps()
 	{
 		if ( filterArguments.filterMaps.find( map ) != -1 )
 			continue
-			
+
 		filterArguments.filterMaps.append( map )
-		
+
 		string localized = GetMapDisplayName( map )
 		Hud_DialogList_AddListItem( Hud_GetChild( file.menu, "SwtBtnSelectMap" ) , localized, string( enum_ + 1 ) )
-	}		
-	
+	}
+
 	array<string> realModes = [ "private_match" ]
 	realModes.extend( GetPrivateMatchModes() )
-	
+
 	foreach( int enum_, string mode in realModes )
 	{
 		string localized = GetGameModeDisplayName( mode )
 		if ( filterArguments.filterGamemodes.find( localized ) != -1 )
 			continue
-		
+
 		filterArguments.filterGamemodes.append( localized )
 		Hud_DialogList_AddListItem( Hud_GetChild( file.menu, "SwtBtnSelectGamemode" ) , localized, string( enum_ + 1 ) )
 	}
@@ -124,6 +123,8 @@ void function UpdatePrivateMatchModesAndMaps()
 void function InitServerBrowserMenu()
 {
 	file.menu = GetMenu( "ServerBrowserMenu" )
+
+	AddMouseMovementCaptureHandler( UpdateMouseDeltaBuffer )
 
 	// Get menu stuff
 	file.serverButtons = GetElementsByClassname( file.menu, "ServerButton" )
@@ -136,7 +137,7 @@ void function InitServerBrowserMenu()
 
 	filterArguments.filterMaps = [ "SWITCH_ANY" ]
 	Hud_DialogList_AddListItem( Hud_GetChild( file.menu, "SwtBtnSelectMap" ), "SWITCH_ANY", "0" )
-	
+
 	filterArguments.filterGamemodes = [ "SWITCH_ANY" ]
 	Hud_DialogList_AddListItem( Hud_GetChild( file.menu, "SwtBtnSelectGamemode" ), "SWITCH_ANY", "0" )
 

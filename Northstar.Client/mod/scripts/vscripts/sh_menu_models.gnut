@@ -209,10 +209,13 @@
 #if UI
 	const MOUSE_ROTATE_MULTIPLIER = 25.0
 
+	array< void functionref( int, int ) > MouseMovementCaptureFunctionsArray
+
 	global function UpdateUIMapSupportsMenuModels
 	global function RunMenuClientFunction
 	global function UI_SetPresentationType
 
+	global function AddMouseMovementCaptureHandler
 	global function UICodeCallback_MouseMovementCapture
 #endif // UI
 
@@ -2892,6 +2895,18 @@
 		}
 	}
 
+	void function AddMouseMovementCaptureHandler( void functionref( int, int ) func )
+	{
+		MouseMovementCaptureFunctionsArray.append( func )
+	}
+
+	void function UpdateMouseMovementCaptureFunctions( int deltaX, int deltaY )
+	{
+		foreach ( f in MouseMovementCaptureFunctionsArray ) {
+			f( deltaX, deltaY )
+		}
+	}
+
 	void function UICodeCallback_MouseMovementCapture( var capturePanel, int deltaX, int deltaY )
 	{
 		float screenScaleXModifier = 1920.0 / GetScreenSize()[0] // 1920 is base screen width
@@ -2901,7 +2916,7 @@
 		float screenScaleYModifier = 1080.0 / GetScreenSize()[1] // 1920 is base screen width
 		float mouseYRotationDelta = deltaY * screenScaleYModifier * MOUSE_ROTATE_MULTIPLIER
 
-		UpdateMouseDeltaBuffer( deltaX, deltaY )
+		UpdateMouseMovementCaptureFunctions( deltaX, deltaY )
 
 		RunMenuClientFunction( "UpdateMouseRotateDelta", mouseXRotateDelta, mouseYRotationDelta )
 	}
