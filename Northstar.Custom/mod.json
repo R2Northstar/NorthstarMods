@@ -414,7 +414,7 @@
 			"Path": "ump/ump_dialog.nut",
 			"RunOn": "( SERVER || UI )",
 			"UICallback": {
-				"Before": "UMP_Dialog_PreInit",
+				"Before": "UMP_Dialog_PreInit"
 			},
 			"ServerCallback": {
 				"Before": "UMP_Dialog_PreInit"
@@ -424,7 +424,7 @@
 			"Path": "ump/ump_announcement.nut",
 			"RunOn": "( SERVER || CLIENT )",
 			"ClientCallback": {
-				"Before": "UMP_Announcement_PreInit",
+				"Before": "UMP_Announcement_PreInit"
 			},
 			"ServerCallback": {
 				"Before": "UMP_Announcement_PreInit"
