@@ -1,0 +1,61 @@
+global function Test_PreInit
+
+void function Test_PreInit()
+{
+	UMP_RPC_RegisterFunction("SCB_RPC_Test")
+#if SERVER || UI
+	UMP_RPC_SetFunctionCallback("SCB_RPC_Test", SCB_RPC_Test)
+#endif
+
+#if SERVER
+	AddClientCommandCallback("rpc_test", ClientCommand_RPCTest)
+
+	AddClientCommandCallback("dialog_test", ClientCommand_DialogTest)
+#endif
+}
+
+#if SERVER
+bool function ClientCommand_RPCTest(entity player, array<string> args)
+{
+	printt("RPCTest sending to", player)
+	UMP_RPC_CallUIFunction(player, "SCB_RPC_Test", 1, "hi")
+
+	return true
+}
+
+bool function ClientCommand_DialogTest(entity player, array<string> args)
+{
+	printt("DialogTest sending to", player)
+
+	UMPDialogData data
+
+	data.header = "Important"
+	data.message = "hi"
+
+	UMP_AddDialogButton(data, "press me", void function(entity player, string text) {
+		player.Die()
+	})
+
+	UMP_OpenDialog(player, data)
+
+	return true
+}
+#endif
+
+#if SERVER
+void function SCB_RPC_Test(entity ornull player, array<var> arguments)
+{
+	printt("Server Test from", player, "!")
+	PrintTable(arguments)
+}
+#endif
+
+#if UI
+void function SCB_RPC_Test(entity ornull player, array<var> arguments)
+{
+	printt("UI Test!")
+	PrintTable(arguments)
+
+	UMP_RPC_CallServerFunction("SCB_RPC_Test", 3, 2, 1, "go")
+}
+#endif

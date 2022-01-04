@@ -1,0 +1,61 @@
+global function UMP_PreInit
+global function UMP_ArrayToTable
+global function UMP_TableToArray
+
+global enum eUMPUIElementProperty
+{
+	POSITION = 0,
+	ROTATION,
+	VISIBILITY,
+	_count
+}
+
+void function UMP_PreInit()
+{
+	UMP_RegisterRPC()
+}
+
+void function UMP_RegisterRPC()
+{
+	// Element API - Server -> UI
+	UMP_RPC_RegisterFunction("UMP_UI_CreateElement")
+	UMP_RPC_RegisterFunction("UMP_UI_UpdateElement")
+	UMP_RPC_RegisterFunction("UMP_UI_DestroyElement")
+	// Element API - UI -> Server
+	UMP_RPC_RegisterFunction("UMP_SV_ElementCallback")
+
+	// Dialog API - Server -> UI
+	UMP_RPC_RegisterFunction("UMP_UI_CreateDialog")
+	// Dialog API - UI -> Server
+	UMP_RPC_RegisterFunction("UMP_SV_DialogCallback")
+
+	// Announcement API - Server -> Client
+	UMP_RPC_RegisterFunction("UMP_CL_CreateAnnouncement")
+}
+
+table<var, var> function UMP_ArrayToTable(array<var> data, int startIndex = 0, int tableLength = 0)
+{
+	// key, value
+	if (tableLength != 0) tableLength *= 2;
+	else tableLength = data.len() - startIndex;
+
+	table<var, var> result
+	
+	for (int i = startIndex; i < (startIndex + tableLength); i += 2) {
+		result[data[i]] <- data[i + 1]
+	}
+
+	return result
+}
+
+array<var> function UMP_TableToArray(table<var, var> data)
+{
+	array<var> result
+
+	foreach (key, val in data) {
+		result.append(key)
+		result.append(val)
+	}
+
+	return result
+}

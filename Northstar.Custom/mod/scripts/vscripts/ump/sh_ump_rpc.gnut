@@ -1,0 +1,458 @@
+untyped
+
+// Script settings
+const bool RPC_DEBUG = false
+
+// const bool RPC_SV_RATELIMIT = true
+// const int RPC_SV_RATELIMIT_TIMEOUT = 0.1
+
+// Max concurrent RPC states
+const int MAX_STATES = 100000
+
+// User API
+global function UMP_RPC_RegisterFunction
+global function UMP_RPC_SetFunctionCallback
+#if SERVER
+	global function UMP_RPC_CallClientFunction
+	global function UMP_RPC_CallUIFunction
+#endif
+#if CLIENT || UI
+	global function UMP_RPC_CallServerFunction
+#endif
+
+// Server -> Client/UI
+#if CLIENT || UI
+	global function SCB_UMP_RPC_CreateState
+	global function SCB_UMP_RPC_ArgumentData
+	global function SCB_UMP_RPC_StringData
+	global function SCB_UMP_RPC_FinishState
+#endif
+
+// Service functions
+#if CLIENT || SERVER
+	global function UMP_RPC_PreInit
+#endif
+
+global function EscapeString
+global function UnescapeString
+
+global typedef RPCCallbackType void functionref(entity ornull, array<var>)
+
+struct CallState {
+	array<var> arguments
+
+	RPCCallbackType callback
+
+	string __tempStringForAppend = ""
+}
+
+struct
+{
+	int poolIdIndex = 1
+	table<string, int> functionToPoolId
+	table<int, RPCCallbackType> poolIdToFunction
+	table<int, string> poolIdToFunctionName
+
+	table<int, CallState> callStates
+} file
+
+void function RPCLog(...)
+{
+#if RPC_DEBUG
+	if ( vargc <= 0 )
+		return
+
+	var msg = vargv[0]
+	for ( int i = 1; i < vargc; i++ )
+		msg = (msg + " " + vargv[i])
+
+	printt("[RPC]", msg)
+#endif
+}
+
+void function UMP_RPC_RegisterFunction(string name)
+{
+	file.functionToPoolId[name] <- file.poolIdIndex
+	file.poolIdToFunctionName[file.poolIdIndex] <- name
+
+	file.poolIdIndex++
+}
+
+void function UMP_RPC_SetFunctionCallback(string name, RPCCallbackType func)
+{
+	if (!(name in file.functionToPoolId)) {
+		RPCLog("Attempted to set a function callback for a non-existent function", name)
+		return
+	}
+
+	int index = file.functionToPoolId[name]
+	file.poolIdToFunction[index] <- func
+}
+
+#if SERVER
+void function SendRPCData(void functionref(entity, string, ...) callFunc, entity player, string stateString, string name, array<var> arguments)
+{
+	if (!(name in file.functionToPoolId)) {
+		RPCLog("Attempted to send an unregistered RPC", name, "to player", player)
+		return
+	}
+
+	int functionId = file.functionToPoolId[name]
+	int stateId = RandomInt(MAX_STATES)
+
+	RPCLog("Creating state", stateString, stateId, "for function", name, "for player", player)
+
+	callFunc(player, "SCB_UMP_RPC_CreateState", stateId, functionId)
+
+	bool functionref(var) SendArgument = bool function(var data) : (callFunc, stateId, name, player) {
+		switch (type(data)) {
+		case "asset":
+			string dataStr = string(data)
+			dataStr = dataStr.slice(2, dataStr.len() - 1)
+			for (int spos = 1; spos < dataStr.len(); spos++)
+				callFunc(player, "SCB_UMP_RPC_StringData", stateId, dataStr[spos], false, true)
+			callFunc(player, "SCB_UMP_RPC_StringData", stateId, -1, true, true)
+			break
+		case "string":
+			for (int spos = 0; spos < data.len(); spos++)
+				callFunc(player, "SCB_UMP_RPC_StringData", stateId, data[spos], false, false)
+			callFunc(player, "SCB_UMP_RPC_StringData", stateId, -1, true, false)
+			break
+		case "bool":
+		case "float":
+		case "int":
+		case "null":
+			callFunc(player, "SCB_UMP_RPC_ArgumentData", stateId, data)
+			break
+		default:
+			RPCLog("RPC", name, "-", "Argument of type", type(data), "is unsupported.")
+			return false
+			break
+		}
+
+		return true
+	}
+
+	foreach (data in arguments) {
+		RPCLog("Sending argument", data, "on state", stateString, stateId, "for player", player)
+
+		switch (type(data)) {
+		case "table":
+			table<var, var> dataTable
+			foreach (key, val in data)
+				dataTable[key] <- val
+			array<var> dataArray = UMP_TableToArray(dataTable)
+			foreach (val in dataArray)
+				if (!SendArgument(val))
+					return
+			break
+		case "array":
+			foreach (val in data)
+				if (!SendArgument(val))
+					return
+			break
+		default:
+			if (!SendArgument(data))
+				return
+			break
+		}
+	}
+	
+	RPCLog("Finishing state", stateString, stateId, "for player", player)
+
+	callFunc(player, "SCB_UMP_RPC_FinishState", stateId)
+}
+
+void function UMP_RPC_CallClientFunction(entity player, string name, ...)
+{
+	if (!IsValid(player) || IsDisconnected(player)) {
+		RPCLog("Attempted to send Client RPC", name, "to invalid/disconnected player", player)
+		return
+	}
+
+	array<var> args
+	for (int i = 0; i < vargc; i++)
+		args.append(vargv[i])
+
+	SendRPCData(Remote_CallFunction_NonReplay, player, "CLIENT", name, args)
+}
+
+void function UMP_RPC_CallUIFunction(entity player, string name, ...)
+{
+	if (!IsValid(player) || IsDisconnected(player)) {
+		RPCLog("Attempted to send UI RPC", name, "to invalid/disconnected player", player)
+		return
+	}
+
+	array<var> args
+	for (int i = 0; i < vargc; i++)
+		args.append(vargv[i])
+
+	SendRPCData(Remote_CallFunction_UI, player, "UI", name, args)
+}
+#endif
+
+string function EscapeString(string text)
+{
+	string result = ""
+	for (int i = 0; i < text.len(); i++) {
+		var char = text[i]
+
+		if (char <= 0x20)
+			result += format("%%%X", char)
+		else
+			result += format("%c", text[i])
+	}
+	return result
+}
+
+string function UnescapeString(string text)
+{
+	for (int c = 0x20; c > 0; c--) {
+		string escaped = format("%%%X", c)
+		string unescaped = format("%c", c)
+
+		while (text.find(escaped) != null)
+			text = StringReplace(text, escaped, unescaped)
+	}
+
+	return text
+}
+
+#if CLIENT || UI
+void function UMP_RPC_CallServerFunction(string name, ...)
+{
+#if UI
+	if (!IsConnected()) {
+		RPCLog("Attempted to send an RPC", name, "to server while disconnected")
+		return
+	}
+#endif
+	
+	if (!(name in file.functionToPoolId)) {
+		RPCLog("Attempted to send an unregistered RPC", name, "to server")
+		return
+	}
+
+	int functionId = file.functionToPoolId[name]
+	string args = ""
+
+	for (int i = 0; i < vargc; i++) {
+		var data = vargv[i]
+
+		RPCLog("Sending argument", data, "for function", name)
+
+		args += " "
+
+		switch (type(data)) {
+		case "string":
+			args += "s" + EscapeString(string(data))
+			break
+		case "bool":
+		case "float":
+		case "int":
+			args += type(data).slice(0, 1) + data.tostring()
+			break
+		case "null":
+			args += "n"
+			break
+		default:
+			RPCLog("RPC", name, "-", "Argument of type", type(data), "is unsupported.")
+			return
+			break
+		}
+	}
+
+	string cmd = "rpc " + functionId + args
+	RPCLog("Resulting command:", cmd)
+	
+#if UI
+	ClientCommand(cmd)
+#elseif CLIENT
+	GetLocalClientPlayer().ClientCommand(cmd)
+#endif
+}
+#endif
+
+#if CLIENT || SERVER
+void function UMP_RPC_PreInit()
+{
+	AddCallback_OnRegisteringCustomNetworkVars( UMP_RPC_RegisterRemoteFunctions )
+
+#if SERVER
+	AddClientCommandCallback("rpc", ClientCommand_rpc)
+#endif
+}
+
+void function UMP_RPC_RegisterRemoteFunctions()
+{
+	Remote_RegisterFunction( "SCB_UMP_RPC_CreateState" )
+	Remote_RegisterFunction( "SCB_UMP_RPC_ArgumentData" )
+	Remote_RegisterFunction( "SCB_UMP_RPC_StringData" )
+	Remote_RegisterFunction( "SCB_UMP_RPC_FinishState" )
+}
+#endif
+
+#if SERVER
+bool function ClientCommand_rpc(entity player, array<string> arguments)
+{
+	if (!IsValid(player))
+		return true
+
+// #if RPC_SV_RATELIMIT
+// 	if (Time() - player.p.rpcLastMessageTime < RPC_SV_RATELIMIT_TIMEOUT)
+// 		return true
+
+// 	player.p.rpcLastMessageTime = Time()
+// #endif
+
+	// rpc fid <args>
+	if (arguments.len() < 1)
+		return true
+
+	int functionId = int(arguments[0])
+	if (functionId == 0)
+		return true
+
+	if (!(functionId in file.poolIdToFunction)) {
+		RPCLog("Incorrect function ID", functionId, "sent by player", player)
+		return true
+	}
+
+	array<var> argumentsUnpacked = []
+
+	for (int i = 1; i < arguments.len(); i++) {
+		string packed = arguments[i]
+
+		string type = packed.slice(0, 1)
+		string data = packed.slice(1)
+
+		/*if (packed.len() < 2) {
+			RPCLog("Incorrect argument type", packed, "for function", functionId, "sent by player", player)
+			return true
+		}*/
+
+		switch (type) {
+		case "s":
+			argumentsUnpacked.append(UnescapeString(data))
+			break
+		case "i":
+			argumentsUnpacked.append(int(data))
+			break
+		case "f":
+			argumentsUnpacked.append(float(data))
+			break
+		case "n":
+			argumentsUnpacked.append(null)
+			break
+		}
+	}
+
+	RPCLog("Calling function", file.poolIdToFunctionName[functionId], "by request of player", player, "with the following arguments:")
+#if RPC_DEBUG
+	PrintTable(argumentsUnpacked)
+#endif
+
+	file.poolIdToFunction[functionId](player, argumentsUnpacked)
+
+	return true
+}
+#endif
+
+#if CLIENT || UI
+void function SCB_UMP_RPC_CreateState(stateId, functionId)
+{
+	if (type(stateId) != "int" || type(functionId) != "int") {
+		RPCLog("Incorrect parameters passed to CreateState:", stateId, functionId)
+		return
+	}
+
+	expect int(stateId)
+	expect int(functionId)
+
+	if (!(functionId in file.poolIdToFunction)) {
+		RPCLog("Function", functionId, "was not found in registered function pool.")
+		return
+	}
+
+	CallState newState
+	newState.callback = file.poolIdToFunction[functionId]
+	file.callStates[stateId] <- newState
+}
+
+void function SCB_UMP_RPC_ArgumentData(stateId, argument)
+{
+	if (type(stateId) != "int") {
+		RPCLog("Incorrect parameters passed to ArgumentData:", stateId, argument)
+		return
+	}
+
+	expect int(stateId)
+
+	if (!(stateId in file.callStates)) {
+		RPCLog("ArgumentData: State", stateId, "does not exist.")
+		return
+	}
+
+	file.callStates[stateId].arguments.append(argument)
+}
+
+void function SCB_UMP_RPC_StringData(stateId, stringCharacter, isFinal, isAsset)
+{
+	if (type(stateId) != "int" || type(stringCharacter) != "int") {
+		RPCLog("Incorrect parameters passed to ArgumentData:", stateId, stringCharacter, isFinal)
+		return
+	}
+
+	expect int(stateId)
+
+	if (!(stateId in file.callStates)) {
+		RPCLog("StringData: State", stateId, "does not exist.")
+		return
+	}
+
+	if (stringCharacter >= 0)
+		file.callStates[stateId].__tempStringForAppend += format("%c", stringCharacter)
+
+	if (isFinal) {
+		string value = file.callStates[stateId].__tempStringForAppend
+
+		if (isAsset) {
+			while (value.find("\\n") != null)
+				value = StringReplace(value, "\\n", "")
+
+			while (value.find("\n") != null)
+				value = StringReplace(value, "\n", "")
+
+			while (value.find("\"") != null)
+				value = StringReplace(value, "\"", "")
+
+			var valueAsset = compilestring("return $\"" + value + "\"")()
+			expect asset(valueAsset)
+
+			file.callStates[stateId].arguments.append(valueAsset)
+		} else {
+			file.callStates[stateId].arguments.append(value)
+		}
+		
+		file.callStates[stateId].__tempStringForAppend = ""
+	}
+}
+
+void function SCB_UMP_RPC_FinishState(stateId)
+{
+	if (type(stateId) != "int") {
+		RPCLog("Incorrect parameters passed to FinishState:", stateId)
+		return
+	}
+
+	expect int(stateId)
+
+	if (!(stateId in file.callStates)) {
+		RPCLog("FinishState: State", stateId, "does not exist.")
+		return
+	}
+
+	file.callStates[stateId].callback(null, file.callStates[stateId].arguments)
+}
+#endif

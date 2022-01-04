@@ -1,7 +1,7 @@
 {
 	"Name" : "Northstar.Custom",
 	"Description": "(ideally) Polished custom content for Northstar",
-	"Version": "1.0.0",
+	"Version": "2.0.0",
 	"LoadPriority": 1,
 	"RequiredOnClient": true,
 	
@@ -384,6 +384,60 @@
 			
 			"ServerCallback": {
 				"After": "CustomPilotCollision_InitPlaylistVars"
+			}
+		},
+
+		{
+			"Path": "ump/sh_ump_rpc.gnut",
+			"RunOn": "( CLIENT || SERVER || UI )",
+			"ClientCallback": {
+				"Before": "UMP_RPC_PreInit"
+			},
+			"ServerCallback": {
+				"Before": "UMP_RPC_PreInit"
+			}
+		},
+		{
+			"Path": "ump/sh_ump.gnut",
+			"RunOn": "( SERVER || CLIENT || UI )",
+			"ClientCallback": {
+				"Before": "UMP_PreInit"
+			},
+			"UICallback": {
+				"Before": "UMP_PreInit"
+			},
+			"ServerCallback": {
+				"Before": "UMP_PreInit"
+			}
+		},
+		{
+			"Path": "ump/ump_dialog.nut",
+			"RunOn": "( SERVER || UI )",
+			"UICallback": {
+				"Before": "UMP_Dialog_PreInit",
+			},
+			"ServerCallback": {
+				"Before": "UMP_Dialog_PreInit"
+			}
+		},
+		{
+			"Path": "ump/ump_announcement.nut",
+			"RunOn": "( SERVER || CLIENT )",
+			"ClientCallback": {
+				"Before": "UMP_Announcement_PreInit",
+			},
+			"ServerCallback": {
+				"Before": "UMP_Announcement_PreInit"
+			}
+		},
+		{
+			"Path": "ump/sh_ump_test.gnut",
+			"RunOn": "( SERVER || UI ) && DEV",
+			"UICallback": {
+				"Before": "Test_PreInit"
+			},
+			"ServerCallback": {
+				"Before": "Test_PreInit"
 			}
 		}
 	],
