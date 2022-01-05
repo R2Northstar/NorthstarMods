@@ -462,7 +462,7 @@ void function BatteryThiefHighlight( entity player )
 			if ( !IsValid( player ) )
 				return
 
-			if ( Hightlight_HasEnemyHighlight( player, "battery_thief" ) )
+			if ( Highlight_HasEnemyHighlight( player, "battery_thief" ) )
 				Highlight_ClearEnemyHighlight( player )
 		}
 	)
