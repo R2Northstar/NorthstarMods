@@ -248,14 +248,14 @@ void function SliderBarUpdate()
 		FlushMouseDeltaBuffer()
 		return
 	}
-
+	var sliderBackground = Hud_GetChild( file.menu , "BtnServerListSliderBackground" )
 	var sliderButton = Hud_GetChild( file.menu , "BtnServerListSlider" )
 	var sliderPanel = Hud_GetChild( file.menu , "BtnServerListSliderPanel" )
 	var movementCapture = Hud_GetChild( file.menu , "MouseMovementCapture" )
 
 	Hud_SetFocused(sliderButton)
 
-	float minYPos = -40.0 * (GetScreenSize()[1] / 1080.0)
+	float minYPos = -35.0 * (GetScreenSize()[1] / 1080.0)
 	float maxHeight = 562.0  * (GetScreenSize()[1] / 1080.0)
 	float maxYPos = minYPos - (maxHeight - Hud_GetHeight( sliderPanel ))
 	float useableSpace = (maxHeight - Hud_GetHeight( sliderPanel ))
@@ -266,13 +266,14 @@ void function SliderBarUpdate()
 	local pos =	Hud_GetPos(sliderButton)[1]
 	local newPos = pos - mouseDeltaBuffer.deltaY
 	FlushMouseDeltaBuffer()
+	int thing = -35 * (GetScreenSize()[0] / GetScreenSize()[1])
 
 	if ( newPos < maxYPos ) newPos = maxYPos
 	if ( newPos > minYPos ) newPos = minYPos
 
-	Hud_SetPos( sliderButton , 2, newPos )
-	Hud_SetPos( sliderPanel , -35, newPos )
-	Hud_SetPos( movementCapture , 2, newPos )
+	Hud_SetPos( sliderButton , 0, newPos )
+	Hud_SetPos( sliderPanel , 0, newPos )
+	Hud_SetPos( movementCapture , 0, newPos )
 
 	file.scrollOffset = -int( ( (newPos - minYPos) / useableSpace ) * (file.serversArrayFiltered.len() - 15) )
 	UpdateShownPage()
@@ -298,22 +299,26 @@ void function UpdateListSliderHeight( float servers )
 
 void function UpdateListSliderPosition( int servers )
 {
+	var sliderBackground = Hud_GetChild( file.menu , "BtnServerListSliderBackground" )
 	var sliderButton = Hud_GetChild( file.menu , "BtnServerListSlider" )
 	var sliderPanel = Hud_GetChild( file.menu , "BtnServerListSliderPanel" )
 	var movementCapture = Hud_GetChild( file.menu , "MouseMovementCapture" )
 
-	float minYPos = -40.0 * (GetScreenSize()[1] / 1080.0)
+	float minYPos = -35.0 * (GetScreenSize()[1] / 1080.0)
 	float useableSpace = (562.0 * (GetScreenSize()[1] / 1080.0) - Hud_GetHeight( sliderPanel ))
 
 	float jump = minYPos - (useableSpace / ( float( servers ) - 15.0 ) * file.scrollOffset)
 
-	//jump = jump * (GetScreenSize()[1] / 1080.0)
+	//jump = jump * (GetScreenSize()[1] / 1080.0)s
+	//jump = jump * (GetScreenSize()[1] / 1080.0)s
 
 	if ( jump > minYPos ) jump = minYPos
 
-	Hud_SetPos( sliderButton , 2, jump )
-	Hud_SetPos( sliderPanel , -35, jump )
-	Hud_SetPos( movementCapture , 2, jump )
+	int thing = -35 * (GetScreenSize()[0] / GetScreenSize()[1])
+
+	Hud_SetPos( sliderButton , 0, jump )
+	Hud_SetPos( sliderPanel , 0, jump )
+	Hud_SetPos( movementCapture , 0, jump )
 }
 
 void function OnScrollDown( var button )
@@ -964,7 +969,6 @@ void function AdvancePasswordMenu()
 {
 	AdvanceMenu( GetMenu( "ConnectWithPasswordMenu" ) )
 }
-
 
 void function ThreadedAuthAndConnectToServer( string password = "" )
 {

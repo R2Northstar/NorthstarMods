@@ -1949,7 +1949,7 @@ resource/ui/menus/mods_browse.menu
 		pin_to_sibling_corner		TOP_LEFT
 	}
 
-	BtnServerListDownArrowPanel
+	BtnServerListSliderBackground
 	{
 		ControlName				ImagePanel
 		wide 35
@@ -1966,7 +1966,7 @@ resource/ui/menus/mods_browse.menu
 		pin_to_sibling_corner		TOP_RIGHT
 	}
 
-	BtnServerListSliderBackground
+	BtnServerListDownArrowPanel
 	{
 		ControlName				ImagePanel
 		wide 35
@@ -2010,7 +2010,6 @@ resource/ui/menus/mods_browse.menu
 		ControlName				ImagePanel
 		wide 35
 		tall 300
-		xpos -35
 		ypos -35
 
 		scaleImage 1
@@ -2020,7 +2019,7 @@ resource/ui/menus/mods_browse.menu
 
 		pin_to_sibling					BtnServerListUpArrowPanel
 		pin_corner_to_sibling		TOP_RIGHT
-		pin_to_sibling_corner		TOP_LEFT
+		pin_to_sibling_corner		TOP_RIGHT
 	}
 
 	// sh_menu_models.gnut has a global function which gets called when
