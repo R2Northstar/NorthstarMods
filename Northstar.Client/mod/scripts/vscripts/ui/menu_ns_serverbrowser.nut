@@ -255,8 +255,8 @@ void function SliderBarUpdate()
 
 	Hud_SetFocused(sliderButton)
 
-	float minYPos = -35.0 * (GetScreenSize()[1] / 1080.0)
-	float maxHeight = 562.0  * (GetScreenSize()[1] / 1080.0)
+	float minYPos = -20.0 * (GetScreenSize()[1] / 1080.0)
+	float maxHeight = 600.0  * (GetScreenSize()[1] / 1080.0)
 	float maxYPos = minYPos - (maxHeight - Hud_GetHeight( sliderPanel ))
 	float useableSpace = (maxHeight - Hud_GetHeight( sliderPanel ))
 
@@ -266,7 +266,6 @@ void function SliderBarUpdate()
 	local pos =	Hud_GetPos(sliderButton)[1]
 	local newPos = pos - mouseDeltaBuffer.deltaY
 	FlushMouseDeltaBuffer()
-	int thing = -35 * (GetScreenSize()[0] / GetScreenSize()[1])
 
 	if ( newPos < maxYPos ) newPos = maxYPos
 	if ( newPos > minYPos ) newPos = minYPos
@@ -285,7 +284,7 @@ void function UpdateListSliderHeight( float servers )
 	var sliderPanel = Hud_GetChild( file.menu , "BtnServerListSliderPanel" )
 	var movementCapture = Hud_GetChild( file.menu , "MouseMovementCapture" )
 
-	float maxHeight = 562.0 * (GetScreenSize()[1] / 1080.0)
+	float maxHeight = 600.0 * (GetScreenSize()[1] / 1080.0)
 
 	float height = maxHeight * (15.0 / servers )
 
@@ -304,8 +303,8 @@ void function UpdateListSliderPosition( int servers )
 	var sliderPanel = Hud_GetChild( file.menu , "BtnServerListSliderPanel" )
 	var movementCapture = Hud_GetChild( file.menu , "MouseMovementCapture" )
 
-	float minYPos = -35.0 * (GetScreenSize()[1] / 1080.0)
-	float useableSpace = (562.0 * (GetScreenSize()[1] / 1080.0) - Hud_GetHeight( sliderPanel ))
+	float minYPos = -20.0 * (GetScreenSize()[1] / 1080.0)
+	float useableSpace = (600.0 * (GetScreenSize()[1] / 1080.0) - Hud_GetHeight( sliderPanel ))
 
 	float jump = minYPos - (useableSpace / ( float( servers ) - 15.0 ) * file.scrollOffset)
 

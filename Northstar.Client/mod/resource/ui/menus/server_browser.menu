@@ -1904,10 +1904,10 @@ resource/ui/menus/mods_browse.menu
 	BtnServerListUpArrow
 	{
 		ControlName					RuiButton
-		wide 35
-		tall 35
+		wide 20
+		tall 20
 		xpos 2
-		ypos 2
+		ypos 0
 		zpos 2
 		image 					"vgui/scrollarrowup"
 		visible					1
@@ -1921,8 +1921,9 @@ resource/ui/menus/mods_browse.menu
 	BtnServerListUpArrowPanel
 	{
 		ControlName				ImagePanel
-		wide 35
-		tall 35
+		wide 20
+		tall 20
+		ypos -2
 		xpos 35
 		zpos 1
 		scaleImage				1
@@ -1937,8 +1938,8 @@ resource/ui/menus/mods_browse.menu
 	BtnServerListDownArrow
 	{
 		ControlName					RuiButton
-		wide 35
-		tall 35
+		wide 20
+		tall 20
 		xpos 2
 		ypos -604
 		zpos 2
@@ -1952,9 +1953,9 @@ resource/ui/menus/mods_browse.menu
 	BtnServerListSliderBackground
 	{
 		ControlName				ImagePanel
-		wide 35
+		wide 20
 		tall 600
-		ypos -35
+		ypos -20
 		zpos -2
 		scaleImage				1
 		image 					"vgui/scrollbackground"
@@ -1969,10 +1970,10 @@ resource/ui/menus/mods_browse.menu
 	BtnServerListDownArrowPanel
 	{
 		ControlName				ImagePanel
-		wide 35
-		tall 35
+		wide 20
+		tall 20
 		xpos 35
-		ypos -600
+		ypos -602
 		zpos 0
 		scaleImage				1
 		image 					"vgui/scrollarrowdown"
@@ -1990,11 +1991,11 @@ resource/ui/menus/mods_browse.menu
 		ControlName					RuiButton
 		//InheritProperties		RuiSmallButton
 		//labelText						"V"
-		wide 					35
+		wide 					20
 		tall 					562
 		xpos 					-2
 
-		ypos 					-40
+		ypos 					-20
 		zpos					0
 
 		image           "vgui/hud/white"
@@ -2008,9 +2009,9 @@ resource/ui/menus/mods_browse.menu
 	BtnServerListSliderPanel
 	{
 		ControlName				ImagePanel
-		wide 35
+		wide 20
 		tall 300
-		ypos -35
+		ypos -20
 
 		scaleImage 1
 		image 					"vgui/scrollbarbase"
@@ -2028,10 +2029,10 @@ resource/ui/menus/mods_browse.menu
 	MouseMovementCapture
 	{
 			ControlName					CMouseMovementCapturePanel
-			wide 								40
+			wide 								30 // probably best to leave this a bit wide lol
 			tall 								562
 			xpos 								-2
-			ypos 								-40
+			ypos 								-25
 			zpos								1
 
 			pin_to_sibling					ServerDetailsPanel
