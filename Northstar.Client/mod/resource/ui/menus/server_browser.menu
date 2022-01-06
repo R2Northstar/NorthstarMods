@@ -1904,7 +1904,7 @@ resource/ui/menus/mods_browse.menu
 	BtnServerListUpArrow
 	{
 		ControlName					RuiButton
-		wide 20
+		wide 2
 		tall 20
 		xpos 2
 		ypos 0
@@ -1941,7 +1941,7 @@ resource/ui/menus/mods_browse.menu
 		wide 20
 		tall 20
 		xpos 2
-		ypos -604
+		ypos -624
 		zpos 2
 		image 					"vgui/scrollarrowdown"
 
@@ -1954,7 +1954,7 @@ resource/ui/menus/mods_browse.menu
 	{
 		ControlName				ImagePanel
 		wide 20
-		tall 600
+		tall 622
 		ypos -20
 		zpos -2
 		scaleImage				1
@@ -1973,7 +1973,7 @@ resource/ui/menus/mods_browse.menu
 		wide 20
 		tall 20
 		xpos 35
-		ypos -602
+		ypos -624
 		zpos 0
 		scaleImage				1
 		image 					"vgui/scrollarrowdown"
@@ -1992,7 +1992,7 @@ resource/ui/menus/mods_browse.menu
 		//InheritProperties		RuiSmallButton
 		//labelText						"V"
 		wide 					20
-		tall 					562
+		tall 					641
 		xpos 					-2
 
 		ypos 					-20
@@ -2030,7 +2030,7 @@ resource/ui/menus/mods_browse.menu
 	{
 			ControlName					CMouseMovementCapturePanel
 			wide 								30 // probably best to leave this a bit wide lol
-			tall 								562
+			tall 								641
 			xpos 								-2
 			ypos 								-25
 			zpos								1
