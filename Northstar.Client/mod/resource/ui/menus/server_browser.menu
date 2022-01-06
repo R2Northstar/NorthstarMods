@@ -1904,7 +1904,7 @@ resource/ui/menus/mods_browse.menu
 	BtnServerListUpArrow
 	{
 		ControlName					RuiButton
-		wide 2
+		wide 20
 		tall 20
 		xpos 2
 		ypos 0
