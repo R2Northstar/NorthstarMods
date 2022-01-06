@@ -323,7 +323,7 @@ void function UpdateListSliderPosition( int servers )
 void function OnScrollDown( var button )
 {
 	if (file.serversArrayFiltered.len() <= 15) return
-	file.scrollOffset += 5
+	file.scrollOffset += 7
 	if (file.scrollOffset + BUTTONS_PER_PAGE > file.serversArrayFiltered.len()) {
 		file.scrollOffset = file.serversArrayFiltered.len() - BUTTONS_PER_PAGE
 	}
@@ -333,7 +333,7 @@ void function OnScrollDown( var button )
 
 void function OnScrollUp( var button )
 {
-	file.scrollOffset -= 5
+	file.scrollOffset -= 7
 	if (file.scrollOffset < 0) {
 		file.scrollOffset = 0
 	}
