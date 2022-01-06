@@ -41,13 +41,16 @@ void function UpdateVisibleModes()
 	}
 		
 	array<string> modesArray = GetPrivateMatchModes()
-	modesArray.remove(0) // remove the "SWITCH_ANY" mode (I don't think this is used) (humble opinion)
+	if(GetGameModeDisplayName( modesArray[ 0 ] ) == "")
+		modesArray.remove(0)  // remove the "SWITCH_ANY" mode (I don't think this is used) (humble opinion)
+
 	for ( int i = 0; i < MODES_PER_PAGE; i++ )
 	{
 		if ( i + ( file.currentModePage * MODES_PER_PAGE ) >= modesArray.len() )
 			break
 		
 		int modeIndex = i + ( file.currentModePage * MODES_PER_PAGE )
+
 		SetButtonRuiText( buttons[ i ], GetGameModeDisplayName( modesArray[ modeIndex ] ) )
 		
 		Hud_SetEnabled( buttons[ i ], true )		
