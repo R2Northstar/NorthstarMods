@@ -134,16 +134,16 @@ void function InitServerBrowserMenu()
 	file.serversLatency = GetElementsByClassname( file.menu, "ServerLatency" )
   
 	// Create filter arrays
-	filterArguments.filterMaps.extend(GetPrivateMatchMaps())
-	filterArguments.filterMaps.insert(0, "SWITCH_ANY")
-	filterArguments.filterMaps.append("mp_lobby")
+	// filterArguments.filterMaps.extend(GetPrivateMatchMaps())
+	// filterArguments.filterMaps.insert(0, "SWITCH_ANY")
+	// filterArguments.filterMaps.append("mp_lobby")
 
 	foreach ( int enum_, string map in filterArguments.filterMaps )
 		Hud_DialogList_AddListItem( Hud_GetChild( file.menu, "SwtBtnSelectMap" ) , map, string( enum_ ) )
 
 
-	filterArguments.filterGamemodes = GetPrivateMatchModes()
-	filterArguments.filterGamemodes.insert(0, "SWITCH_ANY")
+	// filterArguments.filterGamemodes = GetPrivateMatchModes()
+	// filterArguments.filterGamemodes.insert(0, "SWITCH_ANY")
 
 	// GetGameModeDisplayName( mode ) requires server talk even if it can be entirely client side
 	foreach ( int enum_, string mode in filterArguments.filterGamemodes )
@@ -966,6 +966,7 @@ void function AdvanceAuthAndConnect()
 
 void function AdvancePasswordMenu()
 {
+	OnCloseServerBrowserMenu()
 	AdvanceMenu( GetMenu( "ConnectWithPasswordMenu" ) )
 }
 
