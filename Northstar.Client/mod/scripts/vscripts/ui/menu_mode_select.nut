@@ -41,6 +41,7 @@ void function UpdateVisibleModes()
 	}
 		
 	array<string> modesArray = GetPrivateMatchModes()
+	modesArray.remove(0) // remove the "SWITCH_ANY" mode (I don't think this is used) (humble opinion)
 	for ( int i = 0; i < MODES_PER_PAGE; i++ )
 	{
 		if ( i + ( file.currentModePage * MODES_PER_PAGE ) >= modesArray.len() )
