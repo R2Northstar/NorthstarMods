@@ -107,8 +107,11 @@ void function UpdatePrivateMatchModesAndMaps()
 	}		
 	
 	array<string> realModes = [ "private_match" ]
-	realModes.extend( GetPrivateMatchModes() )
-	
+
+	foreach(string mode in GetPrivateMatchModes())
+	{
+		realModes.append(mode)
+	}
 	foreach( int enum_, string mode in realModes )
 	{
 		string localized = GetGameModeDisplayName( mode )
@@ -141,10 +144,8 @@ void function InitServerBrowserMenu()
 	foreach ( int enum_, string map in filterArguments.filterMaps )
 		Hud_DialogList_AddListItem( Hud_GetChild( file.menu, "SwtBtnSelectMap" ) , map, string( enum_ ) )
 
-
-	filterArguments.filterGamemodes = GetPrivateMatchModes()
 	filterArguments.filterGamemodes.insert(0, "SWITCH_ANY")
-
+	
 	// GetGameModeDisplayName( mode ) requires server talk even if it can be entirely client side
 	foreach ( int enum_, string mode in filterArguments.filterGamemodes )
 		Hud_DialogList_AddListItem( Hud_GetChild( file.menu, "SwtBtnSelectGamemode" ) , mode, string( enum_ ) )
@@ -724,8 +725,7 @@ void function CheckGamemode( serverStruct t )
 	if (filterArguments.filterGamemode != "SWITCH_ANY" && filterArguments.filterGamemode == t.serverGamemode)
 	{
 		file.serversArrayFiltered.append( t )
-	}
-	else if (filterArguments.filterGamemode == "SWITCH_ANY")
+	} else if (filterArguments.filterGamemode == "SWITCH_ANY")
 	{
 		file.serversArrayFiltered.append( t )
 	}
