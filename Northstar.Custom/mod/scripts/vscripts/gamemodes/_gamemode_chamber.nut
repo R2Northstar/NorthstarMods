@@ -22,6 +22,10 @@ void function ChamberInitPlayer( entity player )
 	UpdateLoadout( player )
 }
 
+int function GetChamberWingmanN(){
+	return GetCurrentPlaylistVarInt( "chamber_wingman_n", 0 )
+}
+
 void function ChamberOnPlayerKilled( entity victim, entity attacker, var damageInfo )
 {
 	if ( !victim.IsPlayer() || GetGameState() != eGameState.Playing || attacker == victim)
@@ -29,7 +33,7 @@ void function ChamberOnPlayerKilled( entity victim, entity attacker, var damageI
 
 	if ( attacker.IsPlayer() )
 	{
-		if ( DamageInfo_GetDamageSourceIdentifier( damageInfo ) == eDamageSourceId.mp_weapon_wingman_n )
+		if ( (DamageInfo_GetDamageSourceIdentifier( damageInfo ) == eDamageSourceId.mp_weapon_wingman_n) || (DamageInfo_GetDamageSourceIdentifier( damageInfo ) == eDamageSourceId.mp_weapon_wingman) )
 		{
 			attacker.SetPlayerGameStat( PGS_ASSAULT_SCORE, attacker.GetPlayerGameStat( PGS_ASSAULT_SCORE ) + 1 )
 			AddTeamScore( attacker.GetTeam(), 1 )
@@ -82,7 +86,7 @@ void function UpdateLoadout( entity player )
 			player.TakeWeaponNow( weapon.GetWeaponClassName() )
 
 		array<string> mods = ["one_in_the_chamber"]
-		player.GiveWeapon( "mp_weapon_wingman_n", mods)
+		player.GiveWeapon( (GetChamberWingmanN() ? "mp_weapon_wingman_n" : "mp_weapon_wingman"), mods)
 		player.GiveOffhandWeapon( "melee_pilot_kunai", OFFHAND_MELEE )
 
 		thread SetAmmo( player )
