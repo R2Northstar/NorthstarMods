@@ -8,7 +8,7 @@ global function ThreadedAuthAndConnectToServer
 // Stop peeking
 
 const int BUTTONS_PER_PAGE = 15
-const float DOUBLE_CLICK_TIME_MS = 0.2 // unsure what the ideal value is
+const float DOUBLE_CLICK_TIME_MS = 0.3 // unsure what the ideal value is
 
 
 struct {
