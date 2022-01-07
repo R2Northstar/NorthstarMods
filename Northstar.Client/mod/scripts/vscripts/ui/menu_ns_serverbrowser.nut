@@ -173,10 +173,10 @@ void function InitServerBrowserMenu()
 
 
 	AddButtonEventHandler( Hud_GetChild( file.menu, "BtnServerNameTab"), UIE_CLICK, SortServerListByName_Activate )
-	AddButtonEventHandler( Hud_GetChild( file.menu, "BtnServerPlayersTab"), UIE_CLICK, SortServerListByPlayers )
-	AddButtonEventHandler( Hud_GetChild( file.menu, "BtnServerMapTab"), UIE_CLICK, SortServerListByMap )
-	AddButtonEventHandler( Hud_GetChild( file.menu, "BtnServerGamemodeTab"), UIE_CLICK, SortServerListByGamemode )
-	AddButtonEventHandler( Hud_GetChild( file.menu, "BtnServerLatencyTab"), UIE_CLICK, SortServerListByLatency )
+	AddButtonEventHandler( Hud_GetChild( file.menu, "BtnServerPlayersTab"), UIE_CLICK, SortServerListByPlayers_Activate )
+	AddButtonEventHandler( Hud_GetChild( file.menu, "BtnServerMapTab"), UIE_CLICK, SortServerListByMap_Activate )
+	AddButtonEventHandler( Hud_GetChild( file.menu, "BtnServerGamemodeTab"), UIE_CLICK, SortServerListByGamemode_Activate )
+	AddButtonEventHandler( Hud_GetChild( file.menu, "BtnServerLatencyTab"), UIE_CLICK, SortServerListByLatency_Activate )
 
 
 	AddButtonEventHandler( Hud_GetChild( file.menu, "SwtBtnSelectMap"), UIE_CHANGE, FilterAndUpdateList )
@@ -575,19 +575,19 @@ void function FilterAndUpdateList( var n )
 			break
 		case 2:
 			filterDirection.serverPlayers = !filterDirection.serverPlayers
-			SortServerListByPlayers(0)
+			SortServerListByPlayers_Activate(0)
 			break
 		case 3:
 			filterDirection.serverMap = !filterDirection.serverMap
-			SortServerListByMap(0)
+			SortServerListByMap_Activate(0)
 			break
 		case 5:	// 4 skipped cause it doesn't work respawn pls fix
 			filterDirection.serverGamemode = !filterDirection.serverGamemode
-			SortServerListByGamemode(0)
+			SortServerListByGamemode_Activate(0)
 			break
 		case 6:
 			filterDirection.serverLatency = !filterDirection.serverLatency
-			SortServerListByLatency(0)
+			SortServerListByLatency_Activate(0)
 			break
 		default:
 			printt( "How the f did you get here" )
@@ -1076,7 +1076,7 @@ void function SortServerListByName_Activate ( var button )
 }
 
 
-void function SortServerListByPlayers( var button )
+void function SortServerListByPlayers_Activate( var button )
 {
 	filterDirection.sortingBy = 2
 
@@ -1087,7 +1087,7 @@ void function SortServerListByPlayers( var button )
 	UpdateShownPage()
 }
 
-void function SortServerListByMap( var button )
+void function SortServerListByMap_Activate( var button )
 {
 	filterDirection.sortingBy = 3
 
@@ -1098,7 +1098,7 @@ void function SortServerListByMap( var button )
 	UpdateShownPage()
 }
 
-void function SortServerListByGamemode( var button )
+void function SortServerListByGamemode_Activate( var button )
 {
 	filterDirection.sortingBy = 5
 
@@ -1109,7 +1109,7 @@ void function SortServerListByGamemode( var button )
 	UpdateShownPage()
 }
 
-void function SortServerListByLatency( var button )
+void function SortServerListByLatency_Activate( var button )
 {
 	filterDirection.sortingBy = 5
 
