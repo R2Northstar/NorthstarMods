@@ -440,16 +440,20 @@ bool function IsFilterPanelElementFocused() {
 }
 
 void function OnKeyTabPressed(var button) {
-	// toggle focus between server list and filter panel
-	if (IsFilterPanelElementFocused()) {
-		// print("Switching focus from filter panel to server list")
-		Hud_SetFocused(Hud_GetChild(file.menu, "BtnServer1"))
+	try
+	{
+		// toggle focus between server list and filter panel
+		if (IsFilterPanelElementFocused()) {
+			// print("Switching focus from filter panel to server list")
+			Hud_SetFocused(Hud_GetChild(file.menu, "BtnServer1"))
+		}
+		else {
+			// print("Switching focus from server list to filter panel")
+			Hud_SetFocused(Hud_GetChild(file.menu, "BtnServerSearch"))
+			HideServerInfo()
+		}
 	}
-	else {
-		// print("Switching focus from server list to filter panel")
-		Hud_SetFocused(Hud_GetChild(file.menu, "BtnServerSearch"))
-		HideServerInfo()
-	}
+	catch ( ex ) {}
 }
 
 void function OnHitDummyTop(var button) {
