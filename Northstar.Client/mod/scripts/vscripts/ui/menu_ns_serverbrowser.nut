@@ -172,7 +172,7 @@ void function InitServerBrowserMenu()
 	AddButtonEventHandler( Hud_GetChild( file.menu, "BtnFiltersClear"), UIE_CLICK, OnBtnFiltersClear_Activate )
 
 
-	AddButtonEventHandler( Hud_GetChild( file.menu, "BtnServerNameTab"), UIE_CLICK, SortServerListByName )
+	AddButtonEventHandler( Hud_GetChild( file.menu, "BtnServerNameTab"), UIE_CLICK, SortServerListByName_Activate )
 	AddButtonEventHandler( Hud_GetChild( file.menu, "BtnServerPlayersTab"), UIE_CLICK, SortServerListByPlayers )
 	AddButtonEventHandler( Hud_GetChild( file.menu, "BtnServerMapTab"), UIE_CLICK, SortServerListByMap )
 	AddButtonEventHandler( Hud_GetChild( file.menu, "BtnServerGamemodeTab"), UIE_CLICK, SortServerListByGamemode )
@@ -571,7 +571,7 @@ void function FilterAndUpdateList( var n )
 			break
 		case 1:
 			filterDirection.serverName = !filterDirection.serverName
-			SortServerListByName(0)
+			SortServerListByName_Activate(0)
 			break
 		case 2:
 			filterDirection.serverPlayers = !filterDirection.serverPlayers
@@ -1014,52 +1014,73 @@ void function ThreadedAuthAndConnectToServer( string password = "" )
 //////////////////////////////////////
 // Shadow realm
 //////////////////////////////////////
-void function SortServerListByName( var button )
+int function ServerSortLogic ( serverStruct a, serverStruct b)
+{
+	var aTemp
+	var bTemp
+
+	var type = GetFocus()
+	bool direction
+
+	// We can hard code this cause adding entire columns isn't as easy
+	switch ( Hud_GetHudName( type ) ) {
+		case "BtnServerNameTab":
+			aTemp = a.serverName.tolower()
+			bTemp = b.serverName.tolower()
+			direction = filterDirection.serverName
+			break;
+		case "BtnServerPlayersTab":
+			aTemp = a.serverPlayers
+			bTemp = b.serverPlayers
+			direction = filterDirection.serverPlayers
+			break;
+		case "BtnServerGamemodeTab":
+			aTemp = Localize(a.serverGamemode).tolower()
+			bTemp = Localize(b.serverGamemode).tolower()
+			direction = filterDirection.serverGamemode
+			break;
+		case "BtnServerMapTab":
+			aTemp = Localize(a.serverMap).tolower()
+			bTemp = Localize(b.serverMap).tolower()
+			direction = filterDirection.serverMap
+			break;
+		case "BtnServerLatencyTab":
+			aTemp = a.serverLatency
+			bTemp = b.serverLatency
+			direction = filterDirection.serverLatency
+			break;
+		default:
+			return 0
+	}
+
+	int invert = direction == true ? 1 : -1
+
+	if ( aTemp > bTemp )
+		return 1 * invert
+
+	if ( aTemp < bTemp )
+		return -1 * invert
+
+	return 0
+}
+
+void function SortServerListByName_Activate ( var button )
 {
 	filterDirection.sortingBy = 1
 
-	int n = file.serversArrayFiltered.len() - 1
-
-	serverStruct tempServer
-
-	for ( int i = 0; i < n; i++)
-	{
-		for ( int j = 0; j < n - 1; j++)
-		{
-			if ( file.serversArrayFiltered[ j ].serverName < file.serversArrayFiltered[ j + 1 ].serverName && filterDirection.serverName || file.serversArrayFiltered[ j ].serverName > file.serversArrayFiltered[ j + 1 ].serverName && !filterDirection.serverName)
-			{
-				tempServer = file.serversArrayFiltered[ j ]
-				file.serversArrayFiltered[ j ] = file.serversArrayFiltered[ j + 1 ]
-				file.serversArrayFiltered[ j + 1 ] = tempServer
-			}
-		}
-	}
+	file.serversArrayFiltered.sort( ServerSortLogic )
 
 	filterDirection.serverName = !filterDirection.serverName
 
 	UpdateShownPage()
 }
 
+
 void function SortServerListByPlayers( var button )
 {
 	filterDirection.sortingBy = 2
 
-	int n = file.serversArrayFiltered.len() - 1
-
-	serverStruct tempServer
-
-	for ( int i = 0; i < n; i++)
-	{
-		for ( int j = 0; j < n - 1; j++)
-		{
-			if ( file.serversArrayFiltered[ j ].serverPlayers < file.serversArrayFiltered[ j + 1 ].serverPlayers && filterDirection.serverPlayers || file.serversArrayFiltered[ j ].serverPlayers > file.serversArrayFiltered[ j + 1 ].serverPlayers && !filterDirection.serverPlayers)
-			{
-				tempServer = file.serversArrayFiltered[ j ]
-				file.serversArrayFiltered[ j ] = file.serversArrayFiltered[ j + 1 ]
-				file.serversArrayFiltered[ j + 1 ] = tempServer
-			}
-		}
-	}
+	file.serversArrayFiltered.sort( ServerSortLogic )
 
 	filterDirection.serverPlayers = !filterDirection.serverPlayers
 
@@ -1070,22 +1091,7 @@ void function SortServerListByMap( var button )
 {
 	filterDirection.sortingBy = 3
 
-	int n = file.serversArrayFiltered.len() - 1
-
-	serverStruct tempServer
-
-	for ( int i = 0; i < n; i++)
-	{
-		for ( int j = 0; j < n - 1; j++)
-		{
-			if ( Localize(file.serversArrayFiltered[ j ].serverMap) < Localize(file.serversArrayFiltered[ j + 1 ].serverMap) && filterDirection.serverMap || Localize(file.serversArrayFiltered[ j ].serverMap) > Localize(file.serversArrayFiltered[ j + 1 ].serverMap) && !filterDirection.serverMap)
-			{
-				tempServer = file.serversArrayFiltered[ j ]
-				file.serversArrayFiltered[ j ] = file.serversArrayFiltered[ j + 1 ]
-				file.serversArrayFiltered[ j + 1 ] = tempServer
-			}
-		}
-	}
+	file.serversArrayFiltered.sort( ServerSortLogic )
 
 	filterDirection.serverMap = !filterDirection.serverMap
 
@@ -1096,22 +1102,7 @@ void function SortServerListByGamemode( var button )
 {
 	filterDirection.sortingBy = 5
 
-	int n = file.serversArrayFiltered.len() - 1
-
-	serverStruct tempServer
-
-	for ( int i = 0; i < n; i++)
-	{
-		for ( int j = 0; j < n - 1; j++)
-		{
-			if ( Localize(file.serversArrayFiltered[ j ].serverGamemode) < Localize(file.serversArrayFiltered[ j + 1 ].serverGamemode) && filterDirection.serverGamemode || Localize(file.serversArrayFiltered[ j ].serverGamemode) > Localize(file.serversArrayFiltered[ j + 1 ].serverGamemode) && !filterDirection.serverGamemode)
-			{
-				tempServer = file.serversArrayFiltered[ j ]
-				file.serversArrayFiltered[ j ] = file.serversArrayFiltered[ j + 1 ]
-				file.serversArrayFiltered[ j + 1 ] = tempServer
-			}
-		}
-	}
+	file.serversArrayFiltered.sort( ServerSortLogic )
 
 	filterDirection.serverGamemode = !filterDirection.serverGamemode
 
@@ -1122,22 +1113,7 @@ void function SortServerListByLatency( var button )
 {
 	filterDirection.sortingBy = 5
 
-	int n = file.serversArrayFiltered.len() - 1
-
-	serverStruct tempServer
-
-	for ( int i = 0; i < n; i++)
-	{
-		for ( int j = 0; j < n - 1; j++)
-		{
-			if ( file.serversArrayFiltered[ j ].serverLatency < file.serversArrayFiltered[ j + 1 ].serverLatency && filterDirection.serverLatency || file.serversArrayFiltered[ j ].serverLatency > file.serversArrayFiltered[ j + 1 ].serverLatency && !filterDirection.serverLatency)
-			{
-				tempServer = file.serversArrayFiltered[ j ]
-				file.serversArrayFiltered[ j ] = file.serversArrayFiltered[ j + 1 ]
-				file.serversArrayFiltered[ j + 1 ] = tempServer
-			}
-		}
-	}
+	file.serversArrayFiltered.sort( ServerSortLogic )
 
 	filterDirection.serverLatency = !filterDirection.serverLatency
 
