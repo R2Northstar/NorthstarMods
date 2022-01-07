@@ -252,7 +252,7 @@ Premi Sì se sei d'accordo. Questa scelta può essere modificata in qualsiasi mo
    		"SWITCH_ANY" "Qualsiasi"
 
   		"CONNECTING" "Connessione in corso..."
-		  
+		
   		"INGAME_PLAYERS" "Players:"
 		"TOTAL_SERVERS" "Server:"
 	}
