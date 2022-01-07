@@ -420,23 +420,12 @@ bool function IsFilterPanelElementFocused() {
 	var focusedElement = GetFocus();
 	var name = Hud_GetHudName(focusedElement);
 
-	print(name)
-
-	// kinda sucks but just check if any of the filter elements
-	// has focus. would be nice to have tags or sth here
-	bool match = (name == "FilterPanel") ||
-				 (name == "BtnSearchLabel") ||
-				 (name == "BtnServerSearch") ||
-				 (name == "SwtBtnSelectMap") ||
-				 (name == "SwtBtnSelectGamemode") ||
-				 (name == "SwtBtnHideFull") ||
-				 (name == "SwtBtnHideEmpty") ||
-				 (name == "SwtBtnHideProtected") ||
-				 (name == "BtnFiltersClear") ||
-				 (name == "BtnDummyAfterFilterClear");
+	foreach (element in GetElementsByClassname( file.menu, "FilterPanelChild")) {
+		if ( element == focusedElement ) return true
+	}
 
 
-	return match;
+	return false;
 }
 
 void function OnKeyTabPressed(var button) {
