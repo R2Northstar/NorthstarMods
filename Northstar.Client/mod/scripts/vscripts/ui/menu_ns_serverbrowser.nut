@@ -124,7 +124,7 @@ void function InitServerBrowserMenu()
 {
 	file.menu = GetMenu( "ServerBrowserMenu" )
 
-	AddMouseMovementCaptureHandler( UpdateMouseDeltaBuffer )
+	AddMouseMovementCaptureHandler( file.menu, UpdateMouseDeltaBuffer )
 
 	// Get menu stuff
 	file.serverButtons = GetElementsByClassname( file.menu, "ServerButton" )

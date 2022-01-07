@@ -2,9 +2,9 @@
 // Model tracking and save/Clear functions are temp. We already update the client knowledge of loadouts. Derive from that.
 // Move the struct off the player?
 
-#if CLIENT && MP
+//#if CLIENT && MP
 	untyped
-#endif //client && MP
+//#endif //client && MP
 
 #if CLIENT
 	const float CARD_TAG_SCALE = 0.0 // update to match same const in hud_defs.rui
@@ -207,9 +207,12 @@
 #endif // CLIENT && MP
 
 #if UI
-	const MOUSE_ROTATE_MULTIPLIER = 25.0
+	struct
+	{
+		table MouseMovementCaptureFunctionsTable = {}
+	} file
 
-	array< void functionref( int, int ) > MouseMovementCaptureFunctionsArray
+	const MOUSE_ROTATE_MULTIPLIER = 25.0
 
 	global function UpdateUIMapSupportsMenuModels
 	global function RunMenuClientFunction
@@ -2895,16 +2898,16 @@
 		}
 	}
 
-	void function AddMouseMovementCaptureHandler( void functionref( int, int ) func )
+	void function AddMouseMovementCaptureHandler( var menu, void functionref( int, int ) func )
 	{
-		MouseMovementCaptureFunctionsArray.append( func )
+		file.MouseMovementCaptureFunctionsTable.rawset( menu, func )
 	}
 
 	void function UpdateMouseMovementCaptureFunctions( int deltaX, int deltaY )
 	{
-		foreach ( f in MouseMovementCaptureFunctionsArray ) {
-			f( deltaX, deltaY )
-		}
+		var activeMenu = GetActiveMenu()
+		if ( file.MouseMovementCaptureFunctionsTable.rawin( activeMenu ) )
+			file.MouseMovementCaptureFunctionsTable.rawget( activeMenu )(deltaX, deltaY)
 	}
 
 	void function UICodeCallback_MouseMovementCapture( var capturePanel, int deltaX, int deltaY )
