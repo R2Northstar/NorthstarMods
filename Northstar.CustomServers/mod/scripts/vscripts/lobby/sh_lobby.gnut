@@ -122,27 +122,22 @@ void function AddPrivateMatchModeSettingArbitrary( string category, string playl
 
 void function AddPrivateMatchModeSettingEnum( string category, string playlistVar, array< string > enums, string defaultValue, string localizedName = "" )
 {
-	table< string, string > pairs
-	for ( int i = 0; i < enums.len(); i++ )
-		pairs[ enums[ i ] ] <- i.tostring()
-		
-	AddPrivateMatchModeSettingEnumEx( category, playlistVar, pairs, defaultValue, localizedName )
+	AddPrivateMatchModeSettingEnumEx( category, playlistVar, enums, defaultValue, localizedName )
 }
 
 void function AddPrivateMatchModeSettingEnumUIHack( string category, string playlistVar, string serializedEnumPairs, string defaultValue, string localizedName )
 {
-	// this fucking sucks, but RunUIScript won't take tables, so we serialize to a string
-	// we use \n as a delimeter and basically serialize to an array
 	array< string > serializedArray = split( serializedEnumPairs, "\n" )
-	table< string, string > enumPairs
+	array< string > enums
 
-	for ( int i = 0; i < serializedArray.len(); i += 2 )
-		enumPairs[ serializedArray[ i ] ] <- serializedArray[ i + 1 ]
+	for ( int i = 0; i < serializedArray.len(); i += 2 ) {
+		enums.append(serializedArray[ i ])
+	}
 		
-	AddPrivateMatchModeSettingEnumEx( category, playlistVar, enumPairs, defaultValue, localizedName )
+	AddPrivateMatchModeSettingEnumEx( category, playlistVar, enums, defaultValue, localizedName )
 }
 
-void function AddPrivateMatchModeSettingEnumEx( string category, string playlistVar, table< string, string > enumPairs, string defaultValue, string localizedName = "" )
+void function AddPrivateMatchModeSettingEnumEx( string category, string playlistVar, table< string, string > enums, string defaultValue, string localizedName = "" )
 {
 	if ( localizedName == "" )
 		localizedName = "#" + playlistVar
@@ -167,12 +162,11 @@ void function AddPrivateMatchModeSettingEnumEx( string category, string playlist
 		setting.defaultValue = defaultValue
 		setting.localizedName = localizedName
 		setting.isEnumSetting = true
-		//setting.enumValuePairs = enumPairs
+		//setting.enumValuePairs = enums
 		
-		foreach ( string name, string value in enumPairs )
-		{
-			setting.enumNames.append( name )
-			setting.enumValues.append( value )
+		for (int i = 0; i < enums.len();i++) {
+			setting.enumNames.append(enums[i]) 
+			setting.enumValues.append(i.tostring())
 		}
 		
 		file.customMatchSettingsByCategory[ category ].append( setting )
@@ -182,8 +176,9 @@ void function AddPrivateMatchModeSettingEnumEx( string category, string playlist
 		// call this on ui too so the client and ui states are the same
 		// note: RunUIScript can't take tables, so manually serialize ( sucks, but just how it is ), using \n as a delimeter since i dont believe its ever used in vars
 		string serializedString
-		foreach ( string k, string v in enumPairs )
-			serializedString += k + "\n" + v + "\n"
+		for (int i = 0; i < enums.len();i++) {
+			serializedString += enums[i] + "\n" + i + "\n"
+		}
 		
 		RunUIScript( "AddPrivateMatchModeSettingEnumUIHack", category, playlistVar, serializedString, defaultValue, localizedName )
 	#endif
