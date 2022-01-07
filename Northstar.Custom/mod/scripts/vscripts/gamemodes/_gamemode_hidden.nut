@@ -87,7 +87,7 @@ void function RespawnHidden(entity player)
 	if (player.GetTeam() != TEAM_IMC )
 		return
 
-	// scale health of the hidden, with 50 as base health
+	// scale health of the hidden, with 80 as base health
 	player.SetMaxHealth( 80 + ( (GetPlayerArrayOfTeam( TEAM_MILITIA ).len() + 1 ) * 20) )
 	player.SetHealth( 80 + ( (GetPlayerArrayOfTeam( TEAM_MILITIA ).len() + 1 ) * 20) )
 
@@ -102,7 +102,7 @@ void function RespawnHidden(entity player)
 		player.TakeWeaponNow( weapon.GetWeaponClassName() )
 
 	player.GiveWeapon("mp_weapon_wingman_n")
-	player.GiveOffhandWeapon( "melee_pilot_emptyhanded", OFFHAND_MELEE )
+	player.GiveOffhandWeapon( "melee_pilot_kunai", OFFHAND_MELEE )
 	player.GiveOffhandWeapon( "mp_weapon_grenade_sonar", OFFHAND_SPECIAL );
 	thread UpdateLoadout(player)
 	thread GiveArcGrenade(player)
@@ -130,10 +130,9 @@ void function HiddenOnPlayerKilled( entity victim, entity attacker, var damageIn
 
 void function UpdateLoadout( entity player )
 {
-	string p2016 = "mp_weapon_wingman_n"
 	foreach ( entity weapon in player.GetMainWeapons() )
 	{
-		if (weapon.GetWeaponClassName() == p2016)
+		if (weapon.GetWeaponClassName() == "mp_weapon_wingman_n")
 		{
         	weapon.SetWeaponPrimaryAmmoCount(0)
         	weapon.SetWeaponPrimaryClipCount(weapon.GetWeaponPrimaryClipCountMax())
@@ -167,15 +166,14 @@ void function PredatorMain()
 				vector playerVelV = player.GetVelocity()
 				float playerVel
 				playerVel = sqrt(playerVelV.x * playerVelV.x + playerVelV.y * playerVelV.y + playerVelV.z * playerVelV.z)
-				float playerVelNormal = playerVel * 0.068544
-				if (playerVel/300 < 1.3)
+				if (playerVel < 450)
 				{
 					player.SetCloakFlicker(0, 0)
 					player.kv.VisibilityFlags = 0
 				}
 				else
 				{
-					player.SetCloakFlicker(0.2 , 1 )
+					player.SetCloakFlicker( 0.2 , 1 )
 					player.kv.VisibilityFlags = 0
 					float waittime = RandomFloat(0.5)
 					wait waittime
