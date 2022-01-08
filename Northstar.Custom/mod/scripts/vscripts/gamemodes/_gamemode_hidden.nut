@@ -65,7 +65,7 @@ void function UpdateSurvivorsLoadout()
 
 		try {
 			player.GiveOffhandWeapon("mp_ability_cloak", OFFHAND_SPECIAL )
-			player.GiveOffhandWeapon("mp_weapon_grenade_emp", OFFHAND_ORDNANCE )
+			thread GiveArcGrenade(player) // prevent arc spamming
 			player.GiveOffhandWeapon( "melee_pilot_emptyhanded", OFFHAND_MELEE )
 		} catch (ex) {}
 	}
@@ -111,7 +111,7 @@ void function RespawnHidden(entity player)
 void function GiveArcGrenade(entity player)
 {
 	wait 45.0
-	if (IsAlive(player) || player != null)
+	if (IsAlive(player) && player != null)
 		player.GiveOffhandWeapon( "mp_weapon_grenade_emp", OFFHAND_ORDNANCE );
 }
 
@@ -134,8 +134,8 @@ void function UpdateLoadout( entity player )
 	{
 		if (weapon.GetWeaponClassName() == "mp_weapon_wingman_n")
 		{
-        	weapon.SetWeaponPrimaryAmmoCount(0)
-        	weapon.SetWeaponPrimaryClipCount(weapon.GetWeaponPrimaryClipCountMax())
+			weapon.SetWeaponPrimaryAmmoCount(0)
+			weapon.SetWeaponPrimaryClipCount(weapon.GetWeaponPrimaryClipCountMax())
 		}
 	}
 	WaitFrame()
