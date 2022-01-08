@@ -406,14 +406,15 @@ void function RespawnAsPilot( entity player )
 	player.RespawnPlayer( FindSpawnPoint( player, false, ( ShouldStartSpawn( player ) || Flag( "ForceStartSpawn" ) ) && !IsFFAGame() ) )
 }
 
-void function RespawnAsTitan( entity player, bool manualPosition = false )
+void function RespawnAsTitan( entity player, bool manualPosition = false, TitanLoadoutDef ornull titanLoadoutCustom = null )
 {
 	player.Signal( "PlayerRespawnStarted" )
 
 	player.isSpawning = true
 	entity spawnpoint = FindSpawnPoint( player, true, ( ShouldStartSpawn( player ) || Flag( "ForceStartSpawn" ) ) && !IsFFAGame() )
 
-	TitanLoadoutDef titanLoadout = GetTitanLoadoutForPlayer( player )
+	// +ratio this is awesome
+	TitanLoadoutDef titanLoadout = titanLoadoutCustom ? expect TitanLoadoutDef( titanLoadoutCustom ) : GetTitanLoadoutForPlayer( player )
 	
 	asset model = GetPlayerSettingsAssetForClassName( titanLoadout.setFile, "bodymodel" )
 	Attachment warpAttach = GetAttachmentAtTimeFromModel( model, "at_hotdrop_01", "offset", spawnpoint.GetOrigin(), spawnpoint.GetAngles(), 0 )

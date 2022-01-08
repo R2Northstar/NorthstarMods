@@ -1,0 +1,96 @@
+global function Sh_GamemodeTGG_Init
+global function GetTitanGunGameWeapons
+
+global const string GAMEMODE_TGG = "tgg"
+
+global struct TitanGunGameWeapon
+{
+	string weapon
+    string core
+	array<string> mods
+}
+
+struct {
+	array<TitanGunGameWeapon> weapons
+} file
+
+void function Sh_GamemodeTGG_Init()
+{
+	AddCallback_OnCustomGamemodesInit( CreateGamemodeTGG )
+}
+
+void function CreateGamemodeTGG()
+{
+	GameMode_Create( GAMEMODE_TGG )
+	GameMode_SetName( GAMEMODE_TGG, "#GAMEMODE_TGG" )
+	GameMode_SetDesc( GAMEMODE_TGG, "#PL_tgg_desc" )
+	GameMode_SetGameModeAnnouncement( GAMEMODE_TGG, "ffa_modeDesc" )
+	GameMode_SetDefaultTimeLimits( GAMEMODE_TGG, 10, 0.0 )
+	GameMode_AddScoreboardColumnData( GAMEMODE_TGG, "#SCOREBOARD_TITAN_KILLS", PGS_TITAN_KILLS, 2 )
+	GameMode_AddScoreboardColumnData( GAMEMODE_TGG, "#SCOREBOARD_TITAN_DAMAGE", PGS_ASSAULT_SCORE, 6 )
+	GameMode_SetColor( GAMEMODE_TGG, [147, 204, 57, 255] )
+	
+	AddPrivateMatchMode( GAMEMODE_TGG )
+
+    // plasma railgun
+    TitanGunGameWeapon tggRailgun = { weapon = "mp_titanweapon_sniper", core = "mp_titancore_flight_core", ...}
+    file.weapons.append(tggRailgun)
+
+    // xo16
+    TitanGunGameWeapon tggXO16 = { weapon = "mp_titanweapon_xo16_vanguard", core = "mp_titancore_amp_core", ...}
+    file.weapons.append(tggXO16)
+
+    // predator cannon
+    TitanGunGameWeapon tggPredCannon = { weapon = "mp_titanweapon_predator_cannon", core = "mp_titancore_siege_mode", ...}
+    file.weapons.append(tggPredCannon)
+
+    // leadwall
+    TitanGunGameWeapon tggLeadwall = { weapon = "mp_titanweapon_leadwall", core = "mp_titancore_shift_core", ...}
+    file.weapons.append(tggLeadwall)
+
+    // particle accelerator
+    TitanGunGameWeapon tggParticleAccel = { weapon = "mp_titanweapon_particle_accelerator", core = "mp_titancore_laser_cannon", ...}
+    file.weapons.append(tggParticleAccel)
+
+    // meteor
+    TitanGunGameWeapon tggMeteor = { weapon = "mp_titanweapon_meteor", core = "mp_titancore_flame_wave", ...}
+    file.weapons.append(tggMeteor)
+
+    // 40mm
+    TitanGunGameWeapon tgg40mm = { weapon = "mp_titanweapon_sticky_40mm", core = "mp_titancore_salvo_core", ...}
+    file.weapons.append(tgg40mm)
+
+    // quad rocket
+    TitanGunGameWeapon tggRocketeer = { weapon = "mp_titanweapon_rocketeer_rocketstream", core = "mp_titancore_flight_core", ...}
+    file.weapons.append(tggRocketeer)
+
+    // melee
+    TitanGunGameWeapon tggMelee = { weapon = "melee_titan_punch_ion", mods = [ "allow_as_primary" ], core = "mp_titancore_dash_core", ...}
+    file.weapons.append(tggMelee)
+
+    // mgl
+    TitanGunGameWeapon tggMGL = { weapon = "mp_weapon_mgl", ...}
+    file.weapons.append(tggMGL)
+
+	GameMode_SetDefaultScoreLimits( GAMEMODE_TGG, 20, 0)
+
+	#if SERVER
+		GameMode_AddServerInit( GAMEMODE_TGG, GamemodeTGG_Init )
+		GameMode_AddServerInit( GAMEMODE_TGG, GamemodeFFAShared_Init )
+		GameMode_SetPilotSpawnpointsRatingFunc( GAMEMODE_TGG, RateSpawnpoints_Generic )
+		GameMode_SetTitanSpawnpointsRatingFunc( GAMEMODE_TGG, RateSpawnpoints_Generic )
+	#elseif CLIENT
+		GameMode_AddClientInit( GAMEMODE_TGG, ClGamemodeTGG_Init )
+		GameMode_AddClientInit( GAMEMODE_TGG, GamemodeFFAShared_Init )
+		GameMode_AddClientInit( GAMEMODE_TGG, ClGamemodeTGG_Init )
+	#endif
+	#if !UI
+		GameMode_SetScoreCompareFunc( GAMEMODE_TGG, CompareAssaultScore )
+		GameMode_AddSharedInit( GAMEMODE_TGG, GamemodeFFA_Dialogue_Init )
+	#endif
+}
+
+array<TitanGunGameWeapon> function GetTitanGunGameWeapons()
+{
+	return file.weapons
+}
