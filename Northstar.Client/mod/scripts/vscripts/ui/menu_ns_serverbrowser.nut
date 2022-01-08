@@ -28,6 +28,17 @@ struct {
 	string filterGamemode
 } filterArguments
 
+
+enum sortingBy
+{
+	NONE,
+	NAME,
+	PLAYERS,
+	MAP,
+	GAMEMODE,
+	LATENCY
+}
+
 struct {
 	// true = alphabeticaly false = reverse
 	bool serverName = true
@@ -566,30 +577,29 @@ void function FilterAndUpdateList( var n )
 
 	FilterServerList()
 
-	printt(filterDirection.sortingBy)
 
 	switch ( filterDirection.sortingBy )
 	{
-		case 0:
+		case sortingBy.NONE:
 			UpdateShownPage()
 			break
-		case 1:
+		case sortingBy.NAME:
 			filterDirection.serverName = !filterDirection.serverName
 			SortServerListByName_Activate(0)
 			break
-		case 2:
+		case sortingBy.PLAYERS:
 			filterDirection.serverPlayers = !filterDirection.serverPlayers
 			SortServerListByPlayers_Activate(0)
 			break
-		case 3:
+		case sortingBy.MAP:
 			filterDirection.serverMap = !filterDirection.serverMap
 			SortServerListByMap_Activate(0)
 			break
-		case 5:	// 4 skipped cause it doesn't work respawn pls fix
+		case sortingBy.GAMEMODE:
 			filterDirection.serverGamemode = !filterDirection.serverGamemode
 			SortServerListByGamemode_Activate(0)
 			break
-		case 6:
+		case sortingBy.LATENCY:
 			filterDirection.serverLatency = !filterDirection.serverLatency
 			SortServerListByLatency_Activate(0)
 			break
@@ -1027,27 +1037,27 @@ int function ServerSortLogic ( serverStruct a, serverStruct b)
 
 	// We can hard code this cause adding entire columns isn't as easy
 	switch ( filterDirection.sortingBy ) {
-		case 1:
+		case sortingBy.NAME:
 			aTemp = a.serverName.tolower()
 			bTemp = b.serverName.tolower()
 			direction = filterDirection.serverName
 			break;
-		case 2:
+		case sortingBy.PLAYERS:
 			aTemp = a.serverPlayers
 			bTemp = b.serverPlayers
 			direction = filterDirection.serverPlayers
 			break;
-		case 3:
+		case sortingBy.MAP:
 			aTemp = Localize(a.serverMap).tolower()
 			bTemp = Localize(b.serverMap).tolower()
 			direction = filterDirection.serverMap
 			break;
-		case 5:
+		case sortingBy.GAMEMODE:
 			aTemp = Localize(a.serverGamemode).tolower()
 			bTemp = Localize(b.serverGamemode).tolower()
 			direction = filterDirection.serverGamemode
 			break;
-		case 6:
+		case sortingBy.LATENCY:
 			aTemp = a.serverLatency
 			bTemp = b.serverLatency
 			direction = filterDirection.serverLatency
@@ -1069,7 +1079,7 @@ int function ServerSortLogic ( serverStruct a, serverStruct b)
 
 void function SortServerListByName_Activate ( var button )
 {
-	filterDirection.sortingBy = 1
+	filterDirection.sortingBy = sortingBy.NAME
 
 	file.serversArrayFiltered.sort( ServerSortLogic )
 
@@ -1081,7 +1091,7 @@ void function SortServerListByName_Activate ( var button )
 
 void function SortServerListByPlayers_Activate( var button )
 {
-	filterDirection.sortingBy = 2
+	filterDirection.sortingBy = sortingBy.PLAYERS
 
 	file.serversArrayFiltered.sort( ServerSortLogic )
 
@@ -1092,7 +1102,7 @@ void function SortServerListByPlayers_Activate( var button )
 
 void function SortServerListByMap_Activate( var button )
 {
-	filterDirection.sortingBy = 3
+	filterDirection.sortingBy = sortingBy.MAP
 
 	file.serversArrayFiltered.sort( ServerSortLogic )
 
@@ -1103,7 +1113,7 @@ void function SortServerListByMap_Activate( var button )
 
 void function SortServerListByGamemode_Activate( var button )
 {
-	filterDirection.sortingBy = 5
+	filterDirection.sortingBy = sortingBy.GAMEMODE
 
 	file.serversArrayFiltered.sort( ServerSortLogic )
 
@@ -1114,7 +1124,7 @@ void function SortServerListByGamemode_Activate( var button )
 
 void function SortServerListByLatency_Activate( var button )
 {
-	filterDirection.sortingBy = 6
+	filterDirection.sortingBy = sortingBy.LATENCY
 
 	file.serversArrayFiltered.sort( ServerSortLogic )
 
