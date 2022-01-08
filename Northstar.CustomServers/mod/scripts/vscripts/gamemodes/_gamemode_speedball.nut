@@ -23,6 +23,7 @@ void function GamemodeSpeedball_Init()
 	
 	AddCallback_GameStateEnter( eGameState.Prematch, CreateFlagIfNoFlagSpawnpoint )
 	AddCallback_GameStateEnter( eGameState.Playing, ResetFlag )
+	AddCallback_GameStateEnter( eGameState.WinnerDetermined,GamemodeSpeedball_OnWinnerDetermined)
 	AddCallback_OnTouchHealthKit( "item_flag", OnFlagCollected )
 	AddCallback_OnPlayerKilled( OnPlayerKilled )
 	SetTimeoutWinnerDecisionFunc( TimeoutCheckFlagHolder )
