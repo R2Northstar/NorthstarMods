@@ -279,10 +279,12 @@ void function UpdateListSliderHeight( float servers )
 	var movementCapture = Hud_GetChild( file.menu , "MouseMovementCapture" )
 
 	float maxHeight = 562.0 * (GetScreenSize()[1] / 1080.0)
+	float minHeight = 80.0 * (GetScreenSize()[1] / 1080.0)
 
 	float height = maxHeight * (15.0 / servers )
 
 	if ( height > maxHeight ) height = maxHeight
+	if ( height < minHeight ) height = minHeight
 
 	Hud_SetHeight( sliderButton , height )
 	Hud_SetHeight( sliderPanel , height )
