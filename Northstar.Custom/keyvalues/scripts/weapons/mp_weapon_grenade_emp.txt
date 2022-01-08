@@ -1,0 +1,10 @@
+WeaponData
+{
+	Mods
+	{
+        	hidden
+		{
+            		"regen_ammo_refill_rate" "32"
+		}
+	}
+}
