@@ -566,6 +566,8 @@ void function FilterAndUpdateList( var n )
 
 	FilterServerList()
 
+	printt(filterDirection.sortingBy)
+
 	switch ( filterDirection.sortingBy )
 	{
 		case 0:
@@ -1021,32 +1023,31 @@ int function ServerSortLogic ( serverStruct a, serverStruct b)
 	var aTemp
 	var bTemp
 
-	var type = GetFocus()
 	bool direction
 
 	// We can hard code this cause adding entire columns isn't as easy
-	switch ( Hud_GetHudName( type ) ) {
-		case "BtnServerNameTab":
+	switch ( filterDirection.sortingBy ) {
+		case 1:
 			aTemp = a.serverName.tolower()
 			bTemp = b.serverName.tolower()
 			direction = filterDirection.serverName
 			break;
-		case "BtnServerPlayersTab":
+		case 2:
 			aTemp = a.serverPlayers
 			bTemp = b.serverPlayers
 			direction = filterDirection.serverPlayers
 			break;
-		case "BtnServerGamemodeTab":
-			aTemp = Localize(a.serverGamemode).tolower()
-			bTemp = Localize(b.serverGamemode).tolower()
-			direction = filterDirection.serverGamemode
-			break;
-		case "BtnServerMapTab":
+		case 3:
 			aTemp = Localize(a.serverMap).tolower()
 			bTemp = Localize(b.serverMap).tolower()
 			direction = filterDirection.serverMap
 			break;
-		case "BtnServerLatencyTab":
+		case 5:
+			aTemp = Localize(a.serverGamemode).tolower()
+			bTemp = Localize(b.serverGamemode).tolower()
+			direction = filterDirection.serverGamemode
+			break;
+		case 6:
 			aTemp = a.serverLatency
 			bTemp = b.serverLatency
 			direction = filterDirection.serverLatency
@@ -1113,7 +1114,7 @@ void function SortServerListByGamemode_Activate( var button )
 
 void function SortServerListByLatency_Activate( var button )
 {
-	filterDirection.sortingBy = 5
+	filterDirection.sortingBy = 6
 
 	file.serversArrayFiltered.sort( ServerSortLogic )
 
