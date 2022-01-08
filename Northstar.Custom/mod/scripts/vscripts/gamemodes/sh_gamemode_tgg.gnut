@@ -65,7 +65,7 @@ void function CreateGamemodeTGG()
     file.weapons.append(tggRocketeer)
 
     // melee
-    TitanGunGameWeapon tggMelee = { weapon = "melee_titan_punch_ion", mods = [ "allow_as_primary" ], core = "mp_titancore_dash_core", ...}
+    TitanGunGameWeapon tggMelee = { weapon = "melee_titan_sword", ...}
     file.weapons.append(tggMelee)
 
     // mgl

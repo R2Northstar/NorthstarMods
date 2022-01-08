@@ -249,7 +249,7 @@ playlists
 				name #PL_tffa
 				lobbytitle #PL_tffa_lobby
 				description #PL_tffa_desc
-				abbreviation #PL_tffa_abbr
+				abbreviation #PL_sbox_abbr
 				
 				scorelimit 20
 				max_players 10
@@ -268,7 +268,7 @@ playlists
 				description #PL_tgg_desc
 				abbreviation #PL_tgg_abbr
 				
-				scorelimit 11
+				scorelimit 10
 				max_players 10
 				max_teams 10
 				classic_mp 1

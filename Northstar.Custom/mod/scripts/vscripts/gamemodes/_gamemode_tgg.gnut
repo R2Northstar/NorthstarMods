@@ -6,6 +6,7 @@ const float TFFAIntroLength = 15.0
 
 void function GamemodeTGG_Init()
 {
+    SetSpawnpointGamemodeOverride( FFA )
 	//Riff_ForceSetSpawnAsTitan( eSpawnAsTitan.Always )
 	Riff_ForceTitanExitEnabled( eTitanExitEnabled.Never )
 	TrackTitanDamageInPlayerGameStat( PGS_ASSAULT_SCORE )
@@ -16,7 +17,6 @@ void function GamemodeTGG_Init()
 	Riff_ForceBoostAvailability( eBoostAvailability.Disabled )
 
 	ClassicMP_SetCustomIntro( TFFAIntroSetup, TFFAIntroLength )
-	
 	AddCallback_OnPlayerKilled( AddTeamScoreForPlayerKilled ) // dont have to track autotitan kills since you cant leave your titan in this mode
 	AddCallback_OnPilotBecomesTitan( OnPlayerRespawned ) // I have no idea why this wasn't working with normal respawn callback, might be now though
     SetKillcamsEnabled( false )
@@ -39,13 +39,15 @@ void function OnPlayerRespawned_Threaded( entity player )
 
     // ultra fucking hacky jesus
     int currentWeaponIndex = GameRules_GetTeamScore( player.GetTeam() )
-    if(currentWeaponIndex == 9)
+    if(currentWeaponIndex == 8)
     {
         WaitFrame()
         player.Server_SetDodgePower( 100.0 )
 		player.SetPowerRegenRateScale( 6.5 )
         player.GiveOffhandWeapon("melee_titan_sword", OFFHAND_MELEE, ["super_charged"] )
         player.SetActiveWeaponByName("melee_titan_sword")
+        GivePassive( player, ePassives.PAS_FUSION_CORE )
+		GivePassive( player, ePassives.PAS_SHIFT_CORE )
     }
 }
 
@@ -101,37 +103,49 @@ void function PlayerWatchesTFFAIntroIntermissionCam( entity player )
 
 void function UpdateLivingTitanLoadout( entity player )
 {
+    if( GetGameState() == eGameState.WinnerDetermined)
+        return
+
     int currentWeaponIndex = GameRules_GetTeamScore( player.GetTeam() )
 	array<TitanGunGameWeapon> weapons = GetTitanGunGameWeapons()
 	
 	if ( currentWeaponIndex >= weapons.len() )
 		currentWeaponIndex = weapons.len() - 1
 		
-	if ( currentWeaponIndex > 10 ) // play end of game music for special weapons
+	if ( currentWeaponIndex > 9) // play end of game music for special weapons
 		PlayMusicToAll( eMusicPieceID.LEVEL_LAST_MINUTE ) // this *shouldn't* overlap if done multiple times
 	
 	TitanGunGameWeapon weapon = weapons[ currentWeaponIndex ]
 	
-    if( currentWeaponIndex == 10 )
+    if( currentWeaponIndex == 9 )
     {
-        thread TitanEjectPlayer( player, true )
+        thread TitanEjectPlayer( player, false )
+        EmitSoundOnEntity( player, "autoEjectNotice" )
         return
     }
 
 	foreach ( entity weapon in player.GetMainWeapons() )
 		player.TakeWeaponNow( weapon.GetWeaponClassName() )
-	
-    player.GiveWeapon( weapon.weapon, weapon.mods )
 
-    if( currentWeaponIndex == 9 )
+    if( currentWeaponIndex == 8 )
     {
-        WaitFrame()
+        player.GiveWeapon( "mp_titanweapon_sniper" )
         player.Server_SetDodgePower( 100.0 )
 		player.SetPowerRegenRateScale( 6.5 )
         player.GiveOffhandWeapon("melee_titan_sword", OFFHAND_MELEE, ["super_charged"] )
         player.SetActiveWeaponByName("melee_titan_sword")
+        GivePassive( player, ePassives.PAS_FUSION_CORE )
+		GivePassive( player, ePassives.PAS_SHIFT_CORE )
+    } else {
+        player.GiveWeapon( weapon.weapon, weapon.mods )
     }
 }
+
+// void function EjectTGGPlayer( entity player )
+// {
+//     Wa // might be execution race condition thing lol
+//     thread TitanEjectPlayer( player )
+// }
 
 TitanLoadoutDef function CreateTGGTitanLoadout( entity player )
 {
@@ -140,7 +154,7 @@ TitanLoadoutDef function CreateTGGTitanLoadout( entity player )
     TitanLoadoutDef loadout = GetTitanLoadoutForPlayer( player )
     loadout.setFile = possibleChassis.getrandom()
     loadout.passive2 = ""
-    if(weapon.weapon == "melee_titan_punch_ion")
+    if(weapon.weapon == "melee_titan_sword")
     {
         loadout.primary = "mp_titanweapon_sniper"
     } else 
@@ -159,7 +173,7 @@ TitanGunGameWeapon function GetTitanGunGameWeapon( entity player )
     if ( currentWeaponIndex >= weapons.len() )
 		currentWeaponIndex = weapons.len() - 1 // can someone explain what this does
 		
-	if ( currentWeaponIndex > 10 ) // play end of game music for special weapons
+	if ( currentWeaponIndex > 8 ) // play end of game music for special weapons
 		PlayMusicToAll( eMusicPieceID.LEVEL_LAST_MINUTE )
 
     TitanGunGameWeapon weapon = weapons[ currentWeaponIndex ]
@@ -169,12 +183,16 @@ TitanGunGameWeapon function GetTitanGunGameWeapon( entity player )
 
 void function AddTeamScoreForPlayerKilled( entity victim, entity attacker, var damageInfo )
 {
-	if ( victim != attacker && victim.IsTitan() && attacker.IsPlayer() && GetGameState() == eGameState.Playing )
+	if ( victim != attacker && GetGameState() == eGameState.Playing)
 	{
-		AddTeamScore( attacker.GetTeam(), 1 )
-		// why isn't this PGS_SCORE? odd game
-		attacker.AddToPlayerGameStat( PGS_ASSAULT_SCORE, 1 )
-        UpdateLivingTitanLoadout( attacker )
+        if ((victim.IsTitan() && attacker.IsPlayer()) || (attacker.IsPlayer() && victim.IsPlayer()))
+        {
+		    AddTeamScore( attacker.GetTeam(), 1 )
+		    // why isn't this PGS_SCORE? odd game
+		    attacker.AddToPlayerGameStat( PGS_ASSAULT_SCORE, 1 )
+            UpdateLivingTitanLoadout( attacker )
+        }
+        print("wtf")
 	}
 
     thread ScuffedRespawnVictimWithTitanLoadout( victim)
@@ -184,9 +202,9 @@ void function ScuffedRespawnVictimWithTitanLoadout( entity player )
 {
     wait 4
     int currentWeaponIndex = GameRules_GetTeamScore( player.GetTeam() )
-    if(!IsAlive( player ))
+    if(!IsAlive( player ) || (GetGameState() != eGameState.WinnerDetermined))
     {
-        if (currentWeaponIndex == 10)
+        if (currentWeaponIndex >= 9)
             player.RespawnPlayer( null )
         else
             RespawnAsTitan( player, false , CreateTGGTitanLoadout( player ) )
