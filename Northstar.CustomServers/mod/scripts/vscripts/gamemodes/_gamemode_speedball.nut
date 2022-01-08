@@ -147,3 +147,9 @@ int function TimeoutCheckFlagHolder()
 		
 	return file.flagCarrier.GetTeam()
 }
+
+void function GamemodeSpeedball_OnWinnerDetermined()
+{
+	if(IsValid(file.flagCarrier))
+		file.flagCarrier.AddToPlayerGameStat( PGS_ASSAULT_SCORE, 1 )
+}
