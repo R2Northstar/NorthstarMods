@@ -16,12 +16,22 @@ void function GamemodeTGG_Init()
 	Riff_ForceBoostAvailability( eBoostAvailability.Disabled )
 
 	ClassicMP_SetCustomIntro( TGGIntroSetup, TGGIntroLength )
+    AddCallback_OnClientConnected( OnPlayerRespawnedTwo ) // fuck
 	AddCallback_OnPlayerKilled( AddTeamScoreForPlayerKilled ) // dont have to track autotitan kills since you cant leave your titan in this mode
 	AddCallback_OnPilotBecomesTitan( OnPlayerRespawned ) // I have no idea why this wasn't working with normal respawn callback, might be now though
     SetKillcamsEnabled( false )
 }
 
 void function OnPlayerRespawned( entity player, entity titan )
+{
+    //UpdateLivingTitanLoadout( player )
+    foreach ( entity weapon in player.GetOffhandWeapons() )
+		player.TakeWeaponNow( weapon.GetWeaponClassName() )
+
+    thread OnPlayerRespawned_Threaded( player )
+}
+
+void function OnPlayerRespawnedTwo( entity player )
 {
     //UpdateLivingTitanLoadout( player )
     foreach ( entity weapon in player.GetOffhandWeapons() )
@@ -146,6 +156,9 @@ TitanLoadoutDef function CreateTGGTitanLoadout( entity player )
     TitanGunGameWeapon weapon = GetTitanGunGameWeapon( player )
     TitanLoadoutDef loadout = GetTitanLoadoutForPlayer( player )
     loadout.setFile = possibleChassis.getrandom()
+    loadout.special = ""
+    loadout.antirodeo = ""
+    loadout.passive1 = ""
     loadout.passive2 = ""
     if(weapon.weapon == "melee_titan_sword")
     {
@@ -155,6 +168,7 @@ TitanLoadoutDef function CreateTGGTitanLoadout( entity player )
         loadout.primary = weapon.weapon
     }
     loadout.coreAbility = weapon.core
+    PrintTitanLoadout( loadout )
     return loadout
 }
 

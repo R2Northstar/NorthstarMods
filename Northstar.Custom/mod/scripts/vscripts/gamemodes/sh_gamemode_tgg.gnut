@@ -32,13 +32,13 @@ void function CreateGamemodeTGG()
 	
 	AddPrivateMatchMode( GAMEMODE_TGG )
 
-    // plasma railgun
-    TitanGunGameWeapon tggRailgun = { weapon = "mp_titanweapon_sniper", core = "mp_titancore_flight_core", ...}
-    file.weapons.append(tggRailgun)
-
     // xo16
     TitanGunGameWeapon tggXO16 = { weapon = "mp_titanweapon_xo16_vanguard", core = "mp_titancore_amp_core", ...}
     file.weapons.append(tggXO16)
+
+    // plasma railgun
+    TitanGunGameWeapon tggRailgun = { weapon = "mp_titanweapon_sniper", core = "mp_titancore_flight_core", ...}
+    file.weapons.append(tggRailgun)
 
     // predator cannon
     TitanGunGameWeapon tggPredCannon = { weapon = "mp_titanweapon_predator_cannon", core = "mp_titancore_siege_mode", ...}
