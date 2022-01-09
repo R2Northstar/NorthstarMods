@@ -1,8 +1,7 @@
 untyped
-// literally just ttdm paste
 global function GamemodeTGG_Init
 
-const float TFFAIntroLength = 15.0
+const float TGGIntroLength = 15.0
 
 void function GamemodeTGG_Init()
 {
@@ -16,7 +15,7 @@ void function GamemodeTGG_Init()
 	Riff_ForceTitanAvailability( eTitanAvailability.Never )
 	Riff_ForceBoostAvailability( eBoostAvailability.Disabled )
 
-	ClassicMP_SetCustomIntro( TFFAIntroSetup, TFFAIntroLength )
+	ClassicMP_SetCustomIntro( TGGIntroSetup, TGGIntroLength )
 	AddCallback_OnPlayerKilled( AddTeamScoreForPlayerKilled ) // dont have to track autotitan kills since you cant leave your titan in this mode
 	AddCallback_OnPilotBecomesTitan( OnPlayerRespawned ) // I have no idea why this wasn't working with normal respawn callback, might be now though
     SetKillcamsEnabled( false )
@@ -51,39 +50,39 @@ void function OnPlayerRespawned_Threaded( entity player )
     }
 }
 
-void function TFFAIntroSetup()
+void function TGGIntroSetup()
 {
 	// this should show intermission cam for 15 sec in prematch, before spawning players as titans
-	AddCallback_GameStateEnter( eGameState.Prematch, TFFAIntroStart )
-	AddCallback_OnClientConnected( TFFAIntroShowIntermissionCam )
+	AddCallback_GameStateEnter( eGameState.Prematch, TGGIntroStart )
+	AddCallback_OnClientConnected( TGGIntroShowIntermissionCam )
 }
 
-void function TFFAIntroStart()
+void function TGGIntroStart()
 {
-	thread TFFAIntroStartThreaded()
+	thread TGGIntroStartThreaded()
 }
 
-void function TFFAIntroStartThreaded()
+void function TGGIntroStartThreaded()
 {
 	ClassicMP_OnIntroStarted()
 
 	foreach ( entity player in GetPlayerArray() )
-		TFFAIntroShowIntermissionCam( player )
+		TGGIntroShowIntermissionCam( player )
 		
-	wait TFFAIntroLength
+	wait TGGIntroLength
 	
 	ClassicMP_OnIntroFinished()
 }
 
-void function TFFAIntroShowIntermissionCam( entity player )
+void function TGGIntroShowIntermissionCam( entity player )
 {
 	if ( GetGameState() != eGameState.Prematch )
 		return
 	
-	thread PlayerWatchesTFFAIntroIntermissionCam( player )
+	thread PlayerWatchesTGGIntroIntermissionCam( player )
 }
 
-void function PlayerWatchesTFFAIntroIntermissionCam( entity player )
+void function PlayerWatchesTGGIntroIntermissionCam( entity player )
 {
 	ScreenFadeFromBlack( player )
 
@@ -94,7 +93,7 @@ void function PlayerWatchesTFFAIntroIntermissionCam( entity player )
 	player.SetObserverModeStaticAngles( intermissionCam.GetAngles() )
 	player.StartObserverMode( OBS_MODE_STATIC_LOCKED )
 
-	wait TFFAIntroLength
+	wait TGGIntroLength
 	
 	RespawnAsTitan( player, false , CreateTGGTitanLoadout( player))
 
@@ -141,15 +140,9 @@ void function UpdateLivingTitanLoadout( entity player )
     }
 }
 
-// void function EjectTGGPlayer( entity player )
-// {
-//     Wa // might be execution race condition thing lol
-//     thread TitanEjectPlayer( player )
-// }
-
 TitanLoadoutDef function CreateTGGTitanLoadout( entity player )
 {
-    array<string> possibleChassis = ["titan_atlas_tone_prime", "titan_atlas_tracker", "titan_atlas_ion_prime", "titan_atlas_stickybomb"]
+    array<string> possibleChassis = ["titan_atlas_tone_prime", "titan_atlas_tracker", "titan_atlas_ion_prime", "titan_atlas_stickybomb", "titan_atlas_vanguard"]
     TitanGunGameWeapon weapon = GetTitanGunGameWeapon( player )
     TitanLoadoutDef loadout = GetTitanLoadoutForPlayer( player )
     loadout.setFile = possibleChassis.getrandom()
