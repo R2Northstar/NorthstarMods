@@ -144,7 +144,7 @@ void function InitServerBrowserMenu()
 	AddMenuEventHandler( file.menu, eUIEvent.MENU_CLOSE, OnCloseServerBrowserMenu )
 	AddMenuEventHandler( file.menu, eUIEvent.MENU_OPEN, OnServerBrowserMenuOpened )
 	AddMenuFooterOption( file.menu, BUTTON_B, "#B_BUTTON_BACK", "#BACK" )
-	AddMenuFooterOption( file.menu, BUTTON_Y, "#Y_REFRESH_SERVERS", "#REFRESH_SERVERS", RefreshServers )
+	AddMenuFooterOption( file.menu, BUTTON_Y, "#Y_BUTTON_REFRESH_SERVERS", "#REFRESH_SERVERS", RefreshServers )
 
 	// Setup server buttons
 	var width = 1120.0  * (GetScreenSize()[1] / 1080.0)
@@ -684,7 +684,8 @@ void function FilterServerList()
 		{
 			if ( filterArguments.useSearch )
 			{
-				string sName = tempServer.serverName.tolower()
+				string sName = tempServer.serverName.tolower() + " " + Localize(GetMapDisplayName(tempServer.serverMap)).tolower() + " " + tempServer.serverMap.tolower() + " " + tempServer.serverGamemode.tolower() + " " + Localize(tempServer.serverGamemode).tolower()
+
 				string sTerm = filterArguments.searchTerm.tolower()
 
 				if ( sName.find(sTerm) != null)
