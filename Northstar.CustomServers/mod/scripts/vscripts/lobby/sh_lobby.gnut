@@ -137,7 +137,7 @@ void function AddPrivateMatchModeSettingEnumUIHack( string category, string play
 	AddPrivateMatchModeSettingEnumEx( category, playlistVar, enums, defaultValue, localizedName )
 }
 
-void function AddPrivateMatchModeSettingEnumEx( string category, string playlistVar, table< string, string > enums, string defaultValue, string localizedName = "" )
+void function AddPrivateMatchModeSettingEnumEx( string category, string playlistVar, array< string > enums, string defaultValue, string localizedName = "" )
 {
 	if ( localizedName == "" )
 		localizedName = "#" + playlistVar
