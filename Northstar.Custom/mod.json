@@ -11,7 +11,7 @@
 		},
 		{
 			"Name": "ns_disallowed_tactical_replacement",
-			"DefaultValue": "mp_ability_grapple"
+			"DefaultValue": ""
 		},
 		{
 			"Name": "ns_disallowed_weapons",
