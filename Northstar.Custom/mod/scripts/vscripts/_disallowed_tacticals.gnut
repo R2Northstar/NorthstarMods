@@ -1,4 +1,4 @@
-global function disallowedTacticals_Init
+global function DisallowedTacticals_Init
 
 struct {
     array<string> disallowedTacticals
@@ -6,7 +6,7 @@ struct {
     string disallowedTacticalReplacement
 } file
 
-void function disallowedTacticals_Init()
+void function DisallowedTacticals_Init()
 {
     UpdateDisallowedTacticalList()
     AddCallback_OnPlayerRespawned( ReplacePlayerTactical )
@@ -31,16 +31,18 @@ void function ReplacePlayerTactical( entity player )
 	UpdateDisallowedTacticalList()
 	if ( file.disallowedTacticals.len() == 0 )
 		return
+    array<entity> offhand = player.GetOffhandWeapons()
 
+    if ( file.disallowedTacticals.contains( offhand[1].GetWeaponClassName() ) )
+    {
+        player.TakeOffhandWeapon( 1 )
+        if ( file.disallowedTacticalReplacement != ""){
+            player.GiveOffhandWeapon( file.disallowedTacticalReplacement, OFFHAND_SPECIAL )
+            SendHudMessage( player, "Restricted tactical was replaced", -1, 0.4, 255, 255, 255, 255, 0.15, 3.0, 0.5 )
+        }
+        else { SendHudMessage( player, "Restricted tactical was removed", -1, 0.4, 255, 255, 255, 255, 0.15, 3.0, 0.5 ) }
+    }
 
-	foreach ( entity tactical in player.GetOffhandWeapons() )
-	{
-		if ( file.disallowedTacticals.contains( tactical.GetWeaponClassName() ) )
-		{
-			player.TakeWeaponNow( tactical.GetWeaponClassName() )
-			player.GiveWeapon( file.disallowedTacticalReplacement )
-		}
-	}
 }
 
 void function ReplacePlayerTacticalForLoadoutChange( entity player, PilotLoadoutDef loadout )
