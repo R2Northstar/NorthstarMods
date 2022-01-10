@@ -16,7 +16,7 @@ void function disallowedTacticals_Init()
 void function UpdateDisallowedTacticalList()
 {
     string cvar = GetConVarString( "ns_disallowed_tacticals" )
-    if ( file.isallowedTacticalsStringLastVal == cvar )
+    if ( file.disallowedTacticalsStringLastVal == cvar )
         return
 
     file.disallowedTacticals = split( cvar, "," )
@@ -39,7 +39,6 @@ void function ReplacePlayerTactical( entity player )
 		{
 			player.TakeWeaponNow( tactical.GetWeaponClassName() )
 			player.GiveWeapon( file.disallowedTacticalReplacement )
-			hadDisallowedWeapon = true
 		}
 	}
 }
