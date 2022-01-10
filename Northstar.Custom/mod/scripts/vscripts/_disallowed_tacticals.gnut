@@ -1,4 +1,4 @@
-global function disallowedTacticals
+global function disallowedTacticals_Init
 
 struct {
     array<string> disallowedTacticals
