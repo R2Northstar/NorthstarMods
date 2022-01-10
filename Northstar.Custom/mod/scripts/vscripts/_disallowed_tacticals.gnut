@@ -1,0 +1,50 @@
+global function disallowedTacticals
+
+struct {
+    array<string> disallowedTacticals
+    string disallowedTacticalsStringLastVal
+    string disallowedTacticalReplacement
+} file
+
+void function disallowedTacticals_Init()
+{
+    UpdateDisallowedTacticalList()
+    AddCallback_OnPlayerRespawned( ReplacePlayerTactical )
+    AddCallback_OnPlayerGetsNewPilotLoadout( ReplacePlayerTacticalForLoadoutChange )
+}
+
+void function UpdateDisallowedTacticalList()
+{
+    string cvar = GetConVarStrnig( "ns_disallowed_tacticals" )
+    if ( file.isallowedTacticalsStringLastVal == cvar )
+        return
+
+    file.disallowedTacticals = split( cvar, "," )
+    foreach ( string tactical in file.disallowedTacticals )
+        StringReplace( tactical, " ", "" )
+
+    file.disallowedTacticalReplacement = GetConVarString( "ns_disallowed_tactical_replacement")
+}
+
+void function ReplacePlayerTactical( entity player )
+{
+	UpdateDisallowedTacticalList()
+	if ( file.disallowedTacticals.len() == 0 )
+		return
+
+
+	foreach ( entity tactical in player.GetOffhandWeapons() )
+	{
+		if ( file.disallowedTacticals.contains( weapon.GetWeaponClassName() ) )
+		{
+			player.TakeWeaponNow( tactical.GetWeaponClassName() )
+			player.GiveWeapon( file.disallowedTacticalReplacement )
+			hadDisallowedWeapon = true
+		}
+	}
+}
+
+void function ReplacePlayerTacticalsForLoadoutChange( entity player, PilotLoadoutDef loadout )
+{
+	ReplacePlayerTactical( player )
+}
