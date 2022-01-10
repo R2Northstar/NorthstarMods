@@ -44,7 +44,7 @@ void function ReplacePlayerTactical( entity player )
 	}
 }
 
-void function ReplacePlayerTacticalsForLoadoutChange( entity player, PilotLoadoutDef loadout )
+void function ReplacePlayerTacticalForLoadoutChange( entity player, PilotLoadoutDef loadout )
 {
 	ReplacePlayerTactical( player )
 }
