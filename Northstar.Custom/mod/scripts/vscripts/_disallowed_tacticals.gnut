@@ -15,7 +15,7 @@ void function disallowedTacticals_Init()
 
 void function UpdateDisallowedTacticalList()
 {
-    string cvar = GetConVarStrnig( "ns_disallowed_tacticals" )
+    string cvar = GetConVarString( "ns_disallowed_tacticals" )
     if ( file.isallowedTacticalsStringLastVal == cvar )
         return
 
