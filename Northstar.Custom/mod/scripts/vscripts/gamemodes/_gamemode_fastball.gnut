@@ -97,12 +97,60 @@ void function GamemodeFastball_Init()
 		< 8, 825, 1096 >, < 0, -90.00, 0 > ,
 		< 740 , -600, 960 >, < 0, 0, 0 >  
 	])
+	
+	FastballAddBuddySpawnForLevel( "mp_crashsite3", TEAM_MILITIA, < -6364.65,  -1291.28, 822.02>, <0, -19.17, 0> ) 
+	FastballAddBuddySpawnForLevel( "mp_crashsite3", TEAM_IMC, < -2455.29, 821.52, 539.21>, <0, -179.21, 0> )
+	FastballAddPanelSpawnsForLevel( "mp_crashsite3", [
+		< -672.27, -2786, 931.17 >, < 0, -45, 0 >,
+		< -3770, -990, 985 >, < 10, 80.00, 20 >,
+		< -6190.25, 1658.51, 1400.03 >, < 0, 144, 0 >  
+	])
+	
+	FastballAddBuddySpawnForLevel( "mp_rise", TEAM_MILITIA, < -3885.97, 35.11, 704.03>, <0, 11.86, 0> ) 
+	FastballAddBuddySpawnForLevel( "mp_rise", TEAM_IMC, < 2206.76, 1869.08, 453.9>, <0, -165.77, 0> )
+	FastballAddPanelSpawnsForLevel( "mp_rise", [
+		< 141, 2484.71, 296.03 >, < 0, 0, 0 >,
+		< -448.54, 1091.42, 545.03 >, < 0, 0, 0 >,
+		< -2097, 1050, 320.03 >, < 0, 180, 0 >
+	]) 
 
 	//Current BT fast ball points are good
 	FastballAddPanelSpawnsForLevel( "mp_colony02", [
 		< 1374, 559, 60 >, < 0, 0.00, 0 > ,
 		< -87, 1630, 22 >, < 0, 90.00, 0 >,
 		< -2167 , 448, 54 >, <0 , 90, 0 >  
+	])
+
+	FastballAddBuddySpawnForLevel( "mp_glitch", TEAM_MILITIA, < -4450, -629, 320 >, < 0, 0, 0 > )
+	FastballAddBuddySpawnForLevel( "mp_glitch", TEAM_IMC, < 4100, 890, 320>, < 0, 180, 0 > )
+	FastballAddPanelSpawnsForLevel( "mp_glitch", [
+		< 2703, 2170, 25 >, < 0, 0.00, 0 >,
+		< -192, 129, -55 >, < 0, 90.00, 0 >,
+		< -3088, -1905, 25 >, < 0, -180.00, 0 >
+	])
+
+	FastballAddBuddySpawnForLevel( "mp_relic02", TEAM_MILITIA, < 4504, -3500, 150 >, < 0, -170, 0 > )
+	FastballAddBuddySpawnForLevel( "mp_relic02", TEAM_IMC, < -4505, -3750, 367>, < 0, 10, 0 > )
+	FastballAddPanelSpawnsForLevel( "mp_relic02", [
+		< -2258, -5286, 356 >, < 0, 0.00, 0 >,
+		< -32, -2600, -75 >, < 0, 90.00, 0 >,
+		< 2028, -5332, 128 >, < 0, 90.00, 0 >
+	])
+
+	FastballAddBuddySpawnForLevel( "mp_homestead", TEAM_MILITIA, < -3848.19.00, -2521, -25>, < 0, 0, 0 > )
+	FastballAddBuddySpawnForLevel( "mp_homestead", TEAM_IMC, < 6000, 1560, -137 >, < 0, -150, 0 > )
+	FastballAddPanelSpawnsForLevel( "mp_homestead", [
+		< 3672, -696, -10 >, < 0, 100.00, 0 > ,
+		< 1101, -911, 145 >, < -8, 40.00, 0 >,
+		< -1585 , -953, -79 >, <0, 135.00, 0 >  
+	])
+
+	FastballAddBuddySpawnForLevel( "mp_drydock", TEAM_MILITIA, < -4, -4350, 144 >, < 0, 80, 0 > )
+	FastballAddBuddySpawnForLevel( "mp_drydock", TEAM_IMC, < 679, 4674, 200>, < 0, -90, 0 > )
+	FastballAddPanelSpawnsForLevel( "mp_drydock", [
+		< 1726, 2290, 256 >, < 0, 0.00, 0 >,
+		< 100, 63, 265 >, < 0, 180.00, 0 >,
+		< -752, -863, 408>, <0, 180.00, 0 >
 	])
 }
 
