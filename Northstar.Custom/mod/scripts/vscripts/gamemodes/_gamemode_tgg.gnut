@@ -33,11 +33,7 @@ void function OnPlayerBecomesTitan( entity player, entity titan )
 
 void function OnPlayerConnected( entity player )
 {
-    //UpdateLivingTitanLoadout( player )
-    foreach ( entity weapon in player.GetOffhandWeapons() )
-		player.TakeWeaponNow( weapon.GetWeaponClassName() )
-
-    thread OnPlayerRespawned_Threaded( player )
+    RespawnAsTitan( player, false , CreateTGGTitanLoadout( player ))
 }
 
 void function OnPlayerRespawned_Threaded( entity player )
@@ -105,7 +101,7 @@ void function PlayerWatchesTGGIntroIntermissionCam( entity player )
 
 	wait TGGIntroLength
 	
-	RespawnAsTitan( player, false , CreateTGGTitanLoadout( player))
+	RespawnAsTitan( player, false , CreateTGGTitanLoadout( player) )
 
     TryGameModeAnnouncement( player )
 }
