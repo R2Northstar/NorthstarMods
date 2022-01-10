@@ -35,7 +35,7 @@ void function ReplacePlayerTactical( entity player )
 
 	foreach ( entity tactical in player.GetOffhandWeapons() )
 	{
-		if ( file.disallowedTacticals.contains( weapon.GetWeaponClassName() ) )
+		if ( file.disallowedTacticals.contains( tactical.GetWeaponClassName() ) )
 		{
 			player.TakeWeaponNow( tactical.GetWeaponClassName() )
 			player.GiveWeapon( file.disallowedTacticalReplacement )
