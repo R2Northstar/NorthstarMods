@@ -85,7 +85,7 @@ void function SetModMenuNameText( var button )
 void function OnModMenuButtonPressed( var button )
 {
 	string modName = NSGetModNames()[ int ( Hud_GetScriptID( button ) ) ]
-	if ( ( modName == "Northstar.Client" ||  modName == "Northstar.Coop" || modName == "Northstar.Custom" || modName == "Northstar.CustomServers") && NSIsModEnabled( modName ) )
+	if ( ( modName == "Northstar.Client" ||  modName == "Northstar.Coop" || modName == "Northstar.CustomServers") && NSIsModEnabled( modName ) )
 	{
 		file.currentMod = modName
 		file.currentButton = button
