@@ -95,7 +95,7 @@ void function ScoreEvent_PlayerKilled( entity victim, entity attacker, var damag
 	
 	// have to do this early before we reset victim's player killstreaks
 	// nemesis when you kill a player that is dominating you
-	if ( attacker.IsPlayer() && attacker in victim.p.playerKillStreaks && victim.p.playerKillStreaks[ attacker ] == NEMESIS_KILL_REQUIREMENT )
+	if ( attacker.IsPlayer() && attacker in victim.p.playerKillStreaks && victim.p.playerKillStreaks[ attacker ] >= NEMESIS_KILL_REQUIREMENT )
 		AddPlayerScore( attacker, "Nemesis" )
 	
 	// reset killstreaks on specific players
@@ -108,7 +108,7 @@ void function ScoreEvent_PlayerKilled( entity victim, entity attacker, var damag
 	if ( !attacker.IsPlayer() )
 		return
 
-
+	attacker.p.numberOfDeathsSinceLastKill = 0 // since they got a kill, remove the comeback trigger
 	// pilot kill
 	AddPlayerScore( attacker, "KillPilot", victim )
 	
@@ -145,9 +145,14 @@ void function ScoreEvent_PlayerKilled( entity victim, entity attacker, var damag
 		attacker.p.playerKillStreaks[ victim ]++
 	
 	// dominating
-	if ( attacker.p.playerKillStreaks[ victim ] == DOMINATING_KILL_REQUIREMENT )
+	if ( attacker.p.playerKillStreaks[ victim ] >= DOMINATING_KILL_REQUIREMENT )
 		AddPlayerScore( attacker, "Dominating" )
 	
+	if ( Time() - attacker.s.lastKillTime > CASCADINGKILL_REQUIREMENT_TIME )
+	{
+		attacker.s.currentTimedKillstreak = 0 // reset first before kill
+		attacker.s.lastKillTime = Time()
+	}
 	
 	// timed killstreaks
 	if ( Time() - attacker.s.lastKillTime <= CASCADINGKILL_REQUIREMENT_TIME )
@@ -158,11 +163,9 @@ void function ScoreEvent_PlayerKilled( entity victim, entity attacker, var damag
 			AddPlayerScore( attacker, "DoubleKill" )
 		else if ( attacker.s.currentTimedKillstreak == TRIPLEKILL_REQUIREMENT_KILLS )
 			AddPlayerScore( attacker, "TripleKill" )
-		else if ( attacker.s.currentTimedKillstreak == MEGAKILL_REQUIREMENT_KILLS )
+		else if ( attacker.s.currentTimedKillstreak >= MEGAKILL_REQUIREMENT_KILLS )
 			AddPlayerScore( attacker, "MegaKill" )
 	}
-	else
-		attacker.s.currentTimedKillstreak = 0 // reset if a kill took too long
 	
 	attacker.s.lastKillTime = Time()
 }

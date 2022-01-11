@@ -15,6 +15,7 @@ global function SetRoundWinningKillReplayAttacker
 global function SetWinner
 global function SetTimeoutWinnerDecisionFunc
 global function AddTeamScore
+global function GetWinningTeamWithFFASupport
 
 global function GameState_GetTimeLimitOverride
 global function IsRoundBasedGameOver
@@ -39,7 +40,9 @@ struct {
 		
 	bool roundWinningKillReplayTrackPilotKills = true 
 	bool roundWinningKillReplayTrackTitanKills = false
-		
+	
+	bool gameWonThisFrame
+	bool hasKillForGameWonThisFrame
 	float roundWinningKillReplayTime
 	entity roundWinningKillReplayVictim
 	entity roundWinningKillReplayAttacker
@@ -229,10 +232,7 @@ void function GameStateEnter_Playing_Threaded()
 			if ( file.timeoutWinnerDecisionFunc != null )
 				winningTeam = file.timeoutWinnerDecisionFunc()
 			else
-				winningTeam = GetWinningTeam()
-			
-			if ( winningTeam == -1 )
-				winningTeam = TEAM_UNASSIGNED 
+				winningTeam = GetWinningTeamWithFFASupport()
 			
 			if ( file.switchSidesBased && !file.hasSwitchedSides && !IsRoundBased() ) // in roundbased modes, we handle this in setwinner
 				SetGameState( eGameState.SwitchingSides )
@@ -262,9 +262,7 @@ void function GameStateEnter_WinnerDetermined()
 void function GameStateEnter_WinnerDetermined_Threaded()
 {
 	// do win announcement
-	int winningTeam = GetWinningTeam()
-	if ( winningTeam == -1 )
-		winningTeam = TEAM_UNASSIGNED
+	int winningTeam = GetWinningTeamWithFFASupport()
 		
 	foreach ( entity player in GetPlayerArray() )
 	{
@@ -282,7 +280,7 @@ void function GameStateEnter_WinnerDetermined_Threaded()
 
 	entity replayAttacker = file.roundWinningKillReplayAttacker
 	bool doReplay = Replay_IsEnabled() && IsRoundWinningKillReplayEnabled() && IsValid( replayAttacker )
-				 && Time() - file.roundWinningKillReplayTime <= ROUND_WINNING_KILL_REPLAY_LENGTH_OF_REPLAY
+				 && Time() - file.roundWinningKillReplayTime <= ROUND_WINNING_KILL_REPLAY_LENGTH_OF_REPLAY && winningTeam != TEAM_UNASSIGNED
  	
 	float replayLength = 2.0 // extra delay if no replay
 	if ( doReplay )
@@ -332,9 +330,7 @@ void function GameStateEnter_WinnerDetermined_Threaded()
 		int roundsPlayed = expect int ( GetServerVar( "roundsPlayed" ) )
 		SetServerVar( "roundsPlayed", roundsPlayed + 1 )
 		
-		int winningTeam = GetWinningTeam()
-		if ( winningTeam == -1 )
-			winningTeam = TEAM_UNASSIGNED 
+		int winningTeam = GetWinningTeamWithFFASupport()
 		
 		int highestScore = GameRules_GetTeamScore( winningTeam )
 		int roundScoreLimit = GameMode_GetRoundScoreLimit( GAMETYPE )
@@ -541,12 +537,22 @@ void function ForceFadeToBlack( entity player )
 void function OnPlayerKilled( entity victim, entity attacker, var damageInfo )
 {
 	if ( !GamePlayingOrSuddenDeath() )
-		return
+	{
+		if ( file.gameWonThisFrame )
+		{
+			if ( file.hasKillForGameWonThisFrame )
+				return
+		}
+		else
+			return
+	}
 
 	// set round winning killreplay info here if we're tracking pilot kills
 	// todo: make this not count environmental deaths like falls, unsure how to prevent this
 	if ( file.roundWinningKillReplayTrackPilotKills && victim != attacker && attacker != svGlobal.worldspawn && IsValid( attacker ) )
 	{
+		if ( file.gameWonThisFrame )
+			file.hasKillForGameWonThisFrame = true
 		file.roundWinningKillReplayTime = Time()
 		file.roundWinningKillReplayVictim = victim
 		file.roundWinningKillReplayAttacker = attacker
@@ -554,6 +560,12 @@ void function OnPlayerKilled( entity victim, entity attacker, var damageInfo )
 		file.roundWinningKillReplayTimeOfDeath = Time()
 		file.roundWinningKillReplayHealthFrac = GetHealthFrac( attacker )
 	}
+
+	if ( ( Riff_EliminationMode() == eEliminationMode.Titans || Riff_EliminationMode() == eEliminationMode.PilotsTitans ) && victim.IsTitan() ) // need an extra check for this
+		OnTitanKilled( victim, damageInfo )	
+
+	if ( !GamePlayingOrSuddenDeath() )
+		return
 
 	// note: pilotstitans is just win if enemy team runs out of either pilots or titans
 	if ( IsPilotEliminationBased() || GetGameState() == eGameState.SuddenDeath )
@@ -579,21 +591,28 @@ void function OnPlayerKilled( entity victim, entity attacker, var damageInfo )
 				SetWinner( GetOtherTeam( victim.GetTeam() ), "#GAMEMODE_ENEMY_PILOTS_ELIMINATED", "#GAMEMODE_FRIENDLY_PILOTS_ELIMINATED" )
 		}
 	}
-	
-	if ( ( Riff_EliminationMode() == eEliminationMode.Titans || Riff_EliminationMode() == eEliminationMode.PilotsTitans ) && victim.IsTitan() ) // need an extra check for this
-		OnTitanKilled( victim, damageInfo )
 }
 
 void function OnTitanKilled( entity victim, var damageInfo )
 {
 	if ( !GamePlayingOrSuddenDeath() )
-		return
+	{
+		if ( file.gameWonThisFrame )
+		{
+			if ( file.hasKillForGameWonThisFrame )
+				return
+		}
+		else
+			return
+	}
 
 	// set round winning killreplay info here if we're tracking titan kills
 	// todo: make this not count environmental deaths like falls, unsure how to prevent this
 	entity attacker = DamageInfo_GetAttacker( damageInfo )
 	if ( file.roundWinningKillReplayTrackTitanKills && victim != attacker && attacker != svGlobal.worldspawn && IsValid( attacker ) )
 	{
+		if ( file.gameWonThisFrame )
+			file.hasKillForGameWonThisFrame = true
 		file.roundWinningKillReplayTime = Time()
 		file.roundWinningKillReplayVictim = victim
 		file.roundWinningKillReplayAttacker = attacker
@@ -601,6 +620,9 @@ void function OnTitanKilled( entity victim, var damageInfo )
 		file.roundWinningKillReplayTimeOfDeath = Time()
 		file.roundWinningKillReplayHealthFrac = GetHealthFrac( attacker )
 	}
+	
+	if ( !GamePlayingOrSuddenDeath() )
+		return
 
 	// note: pilotstitans is just win if enemy team runs out of either pilots or titans
 	if ( IsTitanEliminationBased() )
@@ -706,11 +728,15 @@ void function SetRoundWinningKillReplayAttacker( entity attacker )
 	file.roundWinningKillReplayTime = Time()
 	file.roundWinningKillReplayHealthFrac = GetHealthFrac( attacker )
 	file.roundWinningKillReplayAttacker = attacker
+	file.roundWinningKillReplayTimeOfDeath = Time()
 }
 
 void function SetWinner( int team, string winningReason = "", string losingReason = "" )
 {	
 	SetServerVar( "winningTeam", team )
+	
+	file.gameWonThisFrame = true
+	thread UpdateGameWonThisFrameNextFrame()
 	
 	if ( winningReason.len() == 0 )
 		file.announceRoundWinnerWinningSubstr = 0
@@ -739,6 +765,13 @@ void function SetWinner( int team, string winningReason = "", string losingReaso
 	}
 }
 
+void function UpdateGameWonThisFrameNextFrame()
+{
+	WaitFrame()
+	file.gameWonThisFrame = false
+	file.hasKillForGameWonThisFrame = false
+}
+
 void function AddTeamScore( int team, int amount )
 {
 	GameRules_SetTeamScore( team, GameRules_GetTeamScore( team ) + amount )
@@ -760,6 +793,35 @@ void function AddTeamScore( int team, int amount )
 void function SetTimeoutWinnerDecisionFunc( int functionref() callback )
 {
 	file.timeoutWinnerDecisionFunc = callback
+}
+
+int function GetWinningTeamWithFFASupport()
+{
+	if ( !IsFFAGame() )
+		return GameScore_GetWinningTeam()
+	else
+	{
+		// custom logic for calculating ffa winner as GameScore_GetWinningTeam doesn't handle this
+		int winningTeam = TEAM_UNASSIGNED
+		int winningScore = 0
+		
+		foreach ( entity player in GetPlayerArray() )
+		{
+			int currentScore = GameRules_GetTeamScore( player.GetTeam() )
+			
+			if ( currentScore == winningScore )
+				winningTeam = TEAM_UNASSIGNED // if 2 teams are equal, return TEAM_UNASSIGNED
+			else if ( currentScore > winningScore )
+			{
+				winningTeam = player.GetTeam()
+				winningScore = currentScore
+			}
+		}
+		
+		return winningTeam
+	}
+	
+	unreachable
 }
 
 // idk

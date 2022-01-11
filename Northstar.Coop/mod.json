@@ -1,6 +1,6 @@
 {
 	"Name" : "Northstar.Coop",
-	"Description" : "Allows the singleplayer campaign to be played in multiplayer",
+	"Description" : "[WIP] Allows the singleplayer campaign to be played in multiplayer",
 
 	"LoadPriority": 0,
 
@@ -20,6 +20,6 @@
 			"ServerCallback": {
 				"After": "SingleplayerCoopLobby_Init"
 			}
-		},
-	],
+		}
+	]
 }
