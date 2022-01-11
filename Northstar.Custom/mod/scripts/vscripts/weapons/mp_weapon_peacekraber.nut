@@ -60,6 +60,11 @@ void function CrosshairCycle() {
 	int chargeLevel;
 	float chargeFrac;
 	while (isWeaponActive) {
+		if (!IsValid( clientWeapon ))
+		{
+			isWeaponActive = false
+			continue
+		}
 		chargeLevel = clientWeapon.GetWeaponChargeLevel();
 		chargeFrac = clientWeapon.GetWeaponChargeFraction();
 		RuiSetFloat3(rui, "teamColor", colors[chargeLevel]);
