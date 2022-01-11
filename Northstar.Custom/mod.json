@@ -97,7 +97,7 @@
         {
             "Path": "gamemodes/_gamemode_pilot.nut",
             "RunOn": "SERVER && MP"
-        }
+        },
 
 		{
 			"Path": "gamemodes/sh_gamemode_fw_custom.nut",
