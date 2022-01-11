@@ -21,6 +21,7 @@ WeaponData
 	"OnWeaponActivate"								"OnWeaponActivate_peacekraber"
 	"OnWeaponDeactivate"							"OnWeaponDeactivate_peacekraber"
 	"OnWeaponPrimaryAttack"							"OnWeaponPrimaryAttack_peacekraber"
+	"OnWeaponOwnerChanged"							"OnWeaponOwnerChanged_weapon_peacekraber"
 	"OnWeaponChargeLevelIncreased"					"OnWeaponChargeLevelIncreased_titanweapon_sniper"
 	"OnWeaponNpcPrimaryAttack"						"OnWeaponNpcPrimaryAttack_peacekraber"
 
