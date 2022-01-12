@@ -880,34 +880,74 @@ string function FillInServerModsLabel( int server )
 	return ret
 }
 
+void function ErrorDialogButton( string message )
+{
+	DialogData dialogData
+	dialogData.header = "#ERROR"
+	dialogData.message = message
+	dialogData.image = $"ui/menu/common/dialog_error"
+
+	#if PC_PROG
+		AddDialogButton( dialogData, "#DISMISS" )
+
+		AddDialogFooter( dialogData, "#A_BUTTON_SELECT" )
+	#endif // PC_PROG
+	AddDialogFooter( dialogData, "#B_BUTTON_DISMISS_RUI" )
+	
+	OpenDialog( dialogData )
+}
+
 
 void function OnServerSelected( var button )
 {
 	if ( NSIsRequestingServerList() || NSGetServerCount() == 0 || file.serverListRequestFailed )
 		return
+	
+	ToggleConnectingHUD( true )
+	
+	thread CanJoinServer( file.focusedServerIndex )
+}
 
-	int serverIndex = file.focusedServerIndex
+void function CanJoinServer( serverIndex )
+{
+	string name = NSGetServerName(serverIndex)
+	
+	NSClearRecievedServerList()
+	NSRequestServerList()
+	
+	while ( NSIsRequestingServerList() )
+		WaitFrame()
+	
+	if ( !NSMasterServerConnectionSuccessful() )	return
+	
+	for ( int i = 0; i < NSGetServerCount(); i++ ) {
+		if ( NSGetServerName(i) == name && NSGetServerPlayerCount(i) != NSGetServerMaxPlayerCount(i) )
+		{
+			file.lastSelectedServer = i
+			UpdateModsAndJoinServer()
+			return
+		}
+	}
+	
+	ToggleConnectingHUD( false )
+	ErrorDialogButton( "#SERVER_FULL" )
+}
 
-	file.lastSelectedServer = serverIndex
+void function UpdateModsAndJoinServer()
+{
+	if ( NSIsRequestingServerList() || NSGetServerCount() == 0 || file.serverListRequestFailed )
+		return
+
+	int serverIndex = file.lastSelectedServer
+		
 
 	// check mods
 	for ( int i = 0; i < NSGetServerRequiredModsCount( serverIndex ); i++ )
 	{
 		if ( !NSGetModNames().contains( NSGetServerRequiredModName( serverIndex, i ) ) )
 		{
-			DialogData dialogData
-			dialogData.header = "#ERROR"
-			dialogData.message = "Missing mod \"" + NSGetServerRequiredModName( serverIndex, i ) + "\" v" + NSGetServerRequiredModVersion( serverIndex, i )
-			dialogData.image = $"ui/menu/common/dialog_error"
-
-			#if PC_PROG
-				AddDialogButton( dialogData, "#DISMISS" )
-
-				AddDialogFooter( dialogData, "#A_BUTTON_SELECT" )
-			#endif // PC_PROG
-			AddDialogFooter( dialogData, "#B_BUTTON_DISMISS_RUI" )
-
-			OpenDialog( dialogData )
+			
+			ErrorDialogButton( "Missing mod \"" + NSGetServerRequiredModName( serverIndex, i ) + "\" v" + NSGetServerRequiredModVersion( serverIndex, i ) )
 
 			return
 		}
@@ -931,19 +971,7 @@ void function OnServerSelected( var button )
 
 			if ( semverFail )
 			{
-				DialogData dialogData
-				dialogData.header = "#ERROR"
-				dialogData.message = "Server has mod \"" + NSGetServerRequiredModName( serverIndex, i ) + "\" v" + NSGetServerRequiredModVersion( serverIndex, i ) + " while we have v" + NSGetModVersionByModName( NSGetServerRequiredModName( serverIndex, i ) )
-				dialogData.image = $"ui/menu/common/dialog_error"
-
-				#if PC_PROG
-					AddDialogButton( dialogData, "#DISMISS" )
-
-					AddDialogFooter( dialogData, "#A_BUTTON_SELECT" )
-				#endif // PC_PROG
-				AddDialogFooter( dialogData, "#B_BUTTON_DISMISS_RUI" )
-
-				OpenDialog( dialogData )
+				ErrorDialogButton( "Server has mod \"" + NSGetServerRequiredModName( serverIndex, i ) + "\" v" + NSGetServerRequiredModVersion( serverIndex, i ) + " while we have v" + NSGetModVersionByModName( NSGetServerRequiredModName( serverIndex, i ) ) )
 
 				return
 			}
@@ -959,7 +987,6 @@ void function OnServerSelected( var button )
 		thread ThreadedAuthAndConnectToServer()
 }
 
-
 void function ThreadedAuthAndConnectToServer( string password = "" )
 {
 	if ( NSIsAuthenticatingWithServer() )
@@ -968,7 +995,6 @@ void function ThreadedAuthAndConnectToServer( string password = "" )
 	print( "trying to authenticate with server " + NSGetServerName( file.lastSelectedServer ) + " with password " + password )
 	NSTryAuthWithServer( file.lastSelectedServer, password )
 
-	ToggleConnectingHUD( true )
 
 	while ( NSIsAuthenticatingWithServer() && !file.cancelConnection)
 	{
@@ -1010,19 +1036,7 @@ void function ThreadedAuthAndConnectToServer( string password = "" )
 	}
 	else
 	{
-		DialogData dialogData
-		dialogData.header = "#ERROR"
-		dialogData.message = "Authentication Failed"
-		dialogData.image = $"ui/menu/common/dialog_error"
-
-		#if PC_PROG
-			AddDialogButton( dialogData, "#DISMISS" )
-
-			AddDialogFooter( dialogData, "#A_BUTTON_SELECT" )
-		#endif // PC_PROG
-		AddDialogFooter( dialogData, "#B_BUTTON_DISMISS_RUI" )
-
-		OpenDialog( dialogData )
+		ErrorDialogButton( "Authentication Failed" )
 	}
 }
 
