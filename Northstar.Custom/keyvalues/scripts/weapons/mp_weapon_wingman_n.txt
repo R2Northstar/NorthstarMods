@@ -4,9 +4,9 @@ WeaponData
 	{
         	one_in_the_chamber
 		{
-            damage_near_value "9999"
-            damage_far_value "9999"
-		    damage_very_far_value "9999"
+            		damage_near_value "9999"
+            		damage_far_value "9999"
+		    	damage_very_far_value "9999"
 		}
 		sns
 		{
