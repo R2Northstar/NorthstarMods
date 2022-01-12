@@ -1,0 +1,261 @@
+"lang"
+{
+	"Language" "english"
+	"Tokens"
+	{
+		// This file needs to be encoded as UTF-16 LE
+		
+		"MENU_LAUNCH_NORTHSTAR" "Pokreni Northstar"
+		"MENU_TITLE_MODS" "Modovi"
+		"RELOAD_MODS" "Osveži modove"
+
+		"DIALOG_TITLE_INSTALLED_NORTHSTAR" "Hvala što ste instalirali Northstar!"
+		"AUTHENTICATION_AGREEMENT_DIALOG_TEXT" "Da bi Northstar radio, on mora da se autenticira pomocu glavnog servera. Da se ovo uradi mora da se pošalje vas Origin Token glovnom serveru, Nece biti sačuvan ili korišćen za bilo koje druge svrhe.
+Kliknite Da ako se slažete sa ovim. Ova opcija se može promeniti u meni modova bilo kada."
+		"BACK_AUTHENTICATION_AGREEMENT" "Ugovor o Autentikaciji"
+		"AUTHENTICATION_AGREEMENT" "Ugovor o Autentikaciji"
+		"AUTHENTICATION_AGREEMENT_RESTART" "Moraćete ponovo pokrenuti Titanfall 2 da ovaj izbor počne dejstvovati."
+		
+		"MENU_TITLE_SERVER_BROWSER" "Pretraživač Servera"
+		"NS_SERVERBROWSER_NOSERVERS" "Nijedan server nije nađen"
+		"NS_SERVERBROWSER_WAITINGFORSERVERS" "Čekamo za Servere..."
+		"NS_SERVERBROWSER_CONNECTIONFAILED" "Veza Neuspešna!"
+		"REFRESH_SERVERS" "Osveži"
+
+		"MENU_TITLE_CONNECT_PASSWORD" "Poveži se sa šifrom"
+		"MENU_CONNECT_MENU_CONNECT" "Poveži se"
+	
+		"PRIVATE_MATCH_PAGE_PREV" "Prošla Stranica"
+		"PRIVATE_MATCH_PAGE_NEXT" "Sledeća Stranica"
+		
+		"MENU_MATCH_SETTINGS" "Opcije za Igru"
+		"MENU_MATCH_SETTINGS_SUBMENU" "%s1 Opcije"
+		
+		"PRIVATE_MATCH_SINGLEPLAYER_LEVEL" "%s1 (Samostalna Igra)"
+		
+		// fra hint for private match menu, because fra only has PL_fra_desc in vanilla
+		"PL_fra_hint" "Igraš sam/solo. Ubijajte neprijatelje da bi pobedili. Sakupite 3 baterije za Titanfall."
+		
+		// mode settings
+		"MODE_SETTING_CATEGORY_PILOT" "Pilot"
+		"MODE_SETTING_CATEGORY_TITAN" "Titan"
+		"MODE_SETTING_CATEGORY_RIFF" "Rifovi"
+		"MODE_SETTING_CATEGORY_MATCH" "Igra"
+		
+		"classic_mp" "Klasičan MP"
+		"run_epilogue" "Pokrenuti Epilog"
+		"scorelimit" "Granica Poena"
+		"roundscorelimit" "Granica Poena (Na osnovu runde)"
+		"timelimit" "Granica Vremena"
+		"roundtimelimit" "Granica Vremena (Na osnovu runde)"
+		
+		"pilot_health_multiplier" "Health Množilac"
+		"respawn_delay" "Respawn Zakašnjenje"
+		"boosts_enabled" "Boosts"
+		"earn_meter_pilot_overdrive" "Boost metar overdrive"
+		"earn_meter_pilot_multiplier" "Pilot boost metar množilac"
+		
+		"earn_meter_titan_multiplier" "Titan boost meter množilac"
+		"aegis_upgrades" "Aegis Nadogradnje"
+		"infinite_doomed_state" "Beskonačno Sudbina Stanje"
+		"titan_shield_regen" "Regenisanje Oklopa"
+		
+		"riff_floorislava" "Opasna Zemlja"
+		"featured_mode_all_holopilot" "Veliko Prevarenje"
+		"featured_mode_all_grapple" "Napad na Titanfall"
+		"featured_mode_all_phase" "Otherside"
+		"featured_mode_all_ticks" "Ljuto"
+		"featured_mode_tactikill" "TaktiUbistvo"
+		"featured_mode_amped_tacticals" "Pojačane Taktike"
+		"featured_mode_rocket_arena" "Arena Raketa"
+		"featured_mode_shotguns_snipers" "Naoružan i Opasan"
+		"iron_rules" "Pravila Gvozdenog Titana"
+		
+		"cp_amped_capture_points" "Pojačani Hardpointovi"
+		"coliseum_loadouts_enabled" "Koloseum Loadoutovi"
+		
+		// northstar.custom localisation is just deciding not to work, so putting it here for now
+		"PL_sbox" "Sandbox"
+		"PL_sbox_lobby" "Sandbox Lobby"
+		"PL_sbox_desc" "Kao gmod ali gore"
+		"PL_sbox_abbr" "SBOX"
+		"GAMEMODE_SBOX" "Sandbox"
+		
+		"PL_gg" "Igra Oružanjem"
+		"PL_gg_lobby" "Igra Oružanjem Priprema"
+		"PL_gg_desc" "Ubijte sa svakom puškom da bi pobedili."
+		"PL_gg_hint" "Ubijte sa svakom puškom da bi pobedili."
+		"PL_gg_abbr" "IO"
+		"GAMEMODE_GG" "Igra Oružanjem"
+		
+		"PL_tt" "Titan Označenje"
+		"PL_tt_lobby" "Titan Označenje Priprema"
+		"PL_tt_desc" "Osvoji poene kada si u tvom titanu. Uništi titana da bi dobio svojeg."
+		"PL_tt_hint" "Osvoji poene kada si u tvom titanu. Uništi titana da bi dobio svojeg."
+		"PL_tt_abbr" "TO"
+		"GAMEMODE_TT" "Titan Označenje"
+		
+		"PL_chamber" "Jedan u Šaržeru"
+		"PL_chamber_lobby" "Jedan u Šaržeru Priprema"
+		"PL_chamber_desc" "Jedan Pogodak, Jedno Ubistvo. Dobijete jos jedan metak u Šaržeru kada ubijete nekoga."
+		"PL_chamber_hint" "Jedan Pogodak, Jedno Ubistvo. Dobijete jos jedan metak u Šaržeru kada ubijete nekoga."
+		"PL_chamber_abbr" "ŠARŽER"
+		"GAMEMODE_CHAMBER" "Jedan u Šaržeru"
+
+		"PL_hidden" "Sakriven"
+		"PL_hidden_lobby" "Sakriven Priprema"
+		"PL_hidden_desc" "Neko je sakriven. Oni love."
+		"PL_hidden_hint" "Neko je sakriven. Oni love."
+		"PL_hidden_abbr" "SKRIVEN"
+		"GAMEMODE_HIDDEN" "Sakriven"
+		"HIDDEN_YOU_ARE_HIDDEN" "Ti si Sakriven!"
+		"HIDDEN_KILL_SURVIVORS" "Ubijte Preživele."
+		"HIDDEN_FIRST_HIDDEN" "%s1 je Sakriven."
+		
+		"PL_inf" "Infekcija"
+		"PL_inf_lobby" "Infekcija Priprema"
+		"PL_inf_desc" "Preživi Infekciju. Preživljači su inficirani kada umru."
+		"PL_inf_hint" "Preživi Infekciju. Preživljači su inficirani kada umru."
+		"PL_inf_abbr" "INF"
+		"GAMEMODE_INF" "Infekcija"
+		"INFECTION_YOU_ARE_INFECTED" "Bio si inficiran!"
+		"INFECTION_KILL_SURVIVORS" "Inficirajte sve preostale preživljače."
+		"INFECTION_FIRST_INFECTED" "%s1 je prvi Inficiran."
+		"INFECTION_LAST_SURVIVOR" "%s1 je Zadnji Preživljač!"
+		"INFECTION_KILL_LAST_SURVIVOR" "Inficirajte ih pre nego što vreme isteče!"
+		"INFECTION_YOU_ARE_LAST_SURVIVOR" "Vi ste Zadnji Preživljač!"
+		"INFECTION_SURVIVE_LAST_SURVIVOR" "Preživite."
+		
+		"PL_hs" "Žmurke"
+		"PL_hs_lobby" "Žmurke Priprema"
+		"PL_hs_desc" "Sakriveni se kriju, Tražilac pokušava da ih nađe."
+		"PL_hs_hint" "Sakriveni se kriju, Tražilac pokušava da ih nađe."
+		"PL_hs_abbr" "ŽM"
+		"GAMEMODE_hs" "Žmurke"
+		"HIDEANDSEEK_YOU_ARE_SEEKER" "Ti si Tražilac"
+		"HIDEANDSEEK_SEEKER_DESC" "Nađi skrivene i udari ih.\nTi ćeš se stvoriti u %s1 sekundi"
+		"HIDEANDSEEK_YOU_ARE_HIDER" "Ti si Skriven"
+		"HIDEANDSEEK_HIDER_DESC" "Sakrij se od Tragača."
+		"HIDEANDSEEK_SEEKERS_INCOMING" "SPREMAN ILI NE STIŽU"
+		"HIDEANDSEEK_DONT_GET_FOUND" "Nemoj da te nađu!"
+		"HIDEANDSEEK_GET_LAST_HIDER" "%s1 je zadnji Skriven"
+		"HIDEANDSEEK_YOU_ARE_LAST_HIDER" "Vi ste zadnji Skriven"
+		"HIDEANDSEEK_GOT_STIM" "Vi ste stimovani! Nemoj da te uhvate!"
+		"hideandseek_balance_teams" "Autobalansiraj Skrivene/Tragače"
+		"hideandseek_hiding_time" "Vreme za Skrivanje"
+		
+		// these are defined in r1_english but titan war is a shit name so i'm changing it to another one that was referenced in development
+		"GAMEMODE_fw" "Granični Rat"
+		"PL_fw" "Granični Rat"
+		"PL_fw_lobby" "Granični Rat Priprema"
+		"PL_fw_desc" "Rasturi neprijateljov harvester i žaštiti svoj"
+		"PL_fw_abbr" "GR"
+		
+		"GAMEMODE_kr" "Pojačana Trka Ubistva"
+		"PL_kr" "Pojačana Trka Ubistva"
+		"PL_kr_lobby" "Pojačana Trka Ubistva Priprema"
+		"PL_kr_desc" "Get kills to increase the length of your killrace. Collect the flag to start it. Set the kill record to win."
+		"PL_kr_hint" "Get kills to increase the length of your killrace. Collect the flag to start it. Set the kill record to win."
+		"PL_kr_abbr" "TU"
+		"SCOREBOARD_KR_RECORD" "Rekord Ubistva"
+		"KR_NEW_RACER" "%s1 je Pojačani Ubistvo-Trkač"
+		"KR_YOU_ARE_NEW_RACER" "Vi ste Pojačani Ubistvo-Trkač"
+		"KR_YOU_SET_NEW_RECORD" "Stavili ste novi rekord ubistva!"
+		"KR_FLAG_INCOMING" "Zastava Dolazi"
+		"KR_COLLECT_FLAG" "Sakupi je da postaneš Ubistvo-Trkač!"
+		"KR_ENEMY_KILLRACE_OVER" "%s1's Trka Ubistva je završena"
+		"KR_YOUR_KILLRACE_OVER" "Vaša Trka Ubistva je završena"
+		"KR_YOUR_KILLRACE_SCORE" "Imali ste %s1 Ubistva."
+	
+		"GAMEMODE_fastball" "BrzaLopta"
+		"PL_fastball" "BrzaLopta"
+		"PL_fastball_lobby" "BrzaLopta Priprema"
+		"PL_fastball_desc" "Trajna Smrt. Hakuj kontrol panele da pobedite runde i respawnujete vaše saigrače."
+		"PL_fastball_hint" "Trajna Smrt. Hakuj kontrol panele da pobedite runde i respawnujete vaše saigrače."
+		"PL_fastball_abbr" "BL"
+		"FASTBALL_PANEL_CAPTURED" "%s1 su osvojili %s2"
+		"SCOREBOARD_FASTBALL_HACKS" "Panel osvojen"
+		
+		"GAMEMODE_ctf_comp" "Takmičarsko Osvajanje Zastave"
+		
+		// mode settings
+		"MODE_SETTING_CATEGORY_PROMODE" "Promod"
+		"MODE_SETTING_CATEGORY_BLEEDOUT" "Krvarenje Pilota"
+		
+		"custom_air_accel_pilot" "Aceleracija U Vazduhu"
+		"no_pilot_collision" "Sudar Pilota"
+		"promode_enable" "Promod Oružija"
+		"fp_embark_enabled" "Ukrcanja/Executioni iz prvog lica"
+		"classic_rodeo" "Klasično Jahanje Titana"
+		"oob_timer_enabled" "Van Granica Timer"
+		"riff_instagib" "Instagib Mod"
+		
+		"riff_player_bleedout" "Iskrvarenje Pilota"
+		"player_bleedout_forceHolster" "Kada oboren oružija su u futroli za oružije"
+		"player_bleedout_forceDeathOnTeamBleedout" "Smrt kada ceo tim iskrvari"
+		"player_bleedout_bleedoutTime" "Vreme Iskrvarenja"
+		"player_bleedout_firstAidTime" "Vreme za prvu pomoć"
+		"player_bleedout_firstAidTimeSelf" "Vreme za samostalnu prvu pomoć"
+		"player_bleedout_firstAidHealPercent" "Koliko prva pomoć vraća healt-a (U Procentima)"
+		"player_bleedout_aiBleedingPlayerMissChance" "Šansa promašaja oborenog AI"
+		
+		// coop stuff
+		"PL_sp_coop" "(Nezavršeno) Kampanja Zajedno"
+		"PL_sp_coop_lobby" "Kampanja Zajedno Priprema"
+		"PL_sp_coop_desc" "Igraj kroz kampanju sa prijateljima"
+		"PL_sp_coop_hint" "Igraj kroz kampanju sa prijateljima"
+		"PL_sp_coop_abbr" "SP"
+		
+		"SP_TRAINING" "Pilotova Rukavica"
+		"SP_TRAINING_CLASSIC_DESC" "Kapetan Lastimosova trening simulacija."
+		
+		"SP_CRASHSITE" "BT-7274"
+		"SP_CRASHSITE_CLASSIC_DESC" "Jack Cooper upozna BT-7274."
+		
+		"SP_SEWERS1" "Krv I Rđa"
+		"SP_SEWERS1_CLASSIC_DESC" "Cooper i BT krenu na randevu sa Major Andersonom."
+		
+		"SP_BOOMTOWN_START" "U Provaliji"
+		"SP_BOOMTOWN_START_CLASSIC_DESC" "Podzemna prečica koja sadrži neočekivane posledice."
+		
+		"SP_HUB_TIMESHIFT" "Efekt i Uzrok"
+		"SP_HUB_TIMESHIFT_CLASSIC_DESC" "Čudna pojava je otkrivena kod Major Andersonovih kordinata."
+		
+		"SP_BEACON" "Beacon"
+		"SP_BEACON_CLASSIC_DESC" "Cooper i BT pokušaju da obaveste poslednje Flote o IMC-ovim planovima."
+		
+		"SP_TDAY" "Suđenje Vatrom"
+		"SP_TDAY_CLASSIC_DESC" "Cooper-ove Titan veštine su stavljene na testu u sveopštoj borbi da osvoji Ark"
+		
+		"SP_S2S" "Ark"
+		"SP_S2S_CLASSIC_DESC" "Cooper i BT idu od brod do broda u potrazi Ark-a."
+		
+		"SP_SKYWAY_V1" "Preklopno Oružije"
+		"SP_SKYWAY_V1_CLASSIC_DESC" "BT i Cooper su zarobljeni od Kuben Blisk."
+
+		// Better.Serverbrowser
+		"SERVERS_COLUMN" "Serveri"
+		"PLAYERS_COLUMN" "Igrači"
+		"MAP_COLUMN" "Mapa"
+		"GAMEMODE_COLUMN" "Mod Igre"
+		"LATENCY_COLUMN" "Latency"
+		"SEARCHBAR_LABEL" "Potraži:"
+		"MAP_FILTER" "Mapa"
+		"GAMEMODE_FILTER" "Mod Igre"
+		"HIDE_FULL_FILTER" "Sakrij Pune Servere"
+		"HIDE_EMPTY_FILTER" "Sakrij Prazne Servere"
+		"HIDE_PROT_FILTER" "Sakrij Zaštićene Servere"
+		"SERVER_DESCRIPTION" "Deskripcija"
+		"SERVER_MODS" "Modovi"
+		"CLEAR_FILTERS" "Izbriši"
+		"JOIN_BUTTON" "Udji"
+
+		"SWITCH_YES" "Da"
+		"SWITCH_NO" "Ne"
+		"SWITCH_ANY" "Bilo koje"
+
+		"CONNECTING" "Povezivanje..."
+		"INGAME_PLAYERS" "Igrači:"
+		"TOTAL_SERVERS" "Serveri:"
+	}
+}
