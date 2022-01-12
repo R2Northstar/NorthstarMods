@@ -6,6 +6,14 @@
 	"RequiredOnClient": true,
 	"ConVars": [
 		{
+			"Name": "ns_disallowed_tacticals",
+			"DefaultValue": ""
+		},
+		{
+			"Name": "ns_disallowed_tactical_replacement",
+			"DefaultValue": ""
+		},
+		{
 			"Name": "ns_disallowed_weapons",
 			"DefaultValue": ""
 		},
@@ -351,6 +359,13 @@
 			"RunOn": "SERVER && MP",
 			"ServerCallback": {
 				"After": "DisallowedWeapons_Init"
+			}
+		},
+		{
+			"Path": "_disallowed_tacticals.gnut",
+			"RunOn": "SERVER && MP",
+			"ServerCallback": {
+				"After": "DisallowedTacticals_Init"
 			}
 		},
 		{
