@@ -19,7 +19,7 @@ void function CreateGamemodeSNS()
 	GameMode_SetDefaultTimeLimits( GAMEMODE_SNS, 15, 0.0 )
 	GameMode_AddScoreboardColumnData( GAMEMODE_SNS, "#SCOREBOARD_SCORE", PGS_ASSAULT_SCORE, 2 )
 	GameMode_AddScoreboardColumnData( GAMEMODE_SNS, "#SCOREBOARD_PILOT_KILLS", PGS_PILOT_KILLS, 2 )
-	GameMode_AddScoreboardColumnData( GAMEMODE_SNS, "Bankrupts", PGS_TITAN_KILLS, 2 )
+	GameMode_AddScoreboardColumnData( GAMEMODE_SNS, "#SCOREBOARD_BANKRUPTS", PGS_TITAN_KILLS, 2 )
 	GameMode_SetColor( GAMEMODE_SNS, [147, 204, 57, 255] )
 
 	AddPrivateMatchMode( GAMEMODE_SNS ) // add to private lobby modes
