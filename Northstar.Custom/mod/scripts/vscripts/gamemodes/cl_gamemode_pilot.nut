@@ -5,8 +5,6 @@ global function ServerCallback_PilotDamageTaken
 global function ServerCallback_ShowPilotHealthUI
 global function ServerCallback_HidePilotHealthUI
 
-global var healthRui
-
 void function ClGamemodePilot_Init()
 {
     // add ffa gamestate asset
@@ -95,7 +93,6 @@ void function ServerCallback_ShowPilotHealthUI(int healthPerSegment = 20)
 	entity player = GetLocalViewPlayer()
 	if ( file.healthRui == null ) {
 		file.healthRui = CreateCockpitRui( $"ui/ajax_cockpit_base.rpak" )
-		healthRui = file.healthRui
 
 		RuiTrackFloat3( file.healthRui, "playerOrigin", player, RUI_TRACK_ABSORIGIN_FOLLOW )
 		RuiTrackFloat3( file.healthRui, "playerEyeAngles", player, RUI_TRACK_EYEANGLES_FOLLOW )
