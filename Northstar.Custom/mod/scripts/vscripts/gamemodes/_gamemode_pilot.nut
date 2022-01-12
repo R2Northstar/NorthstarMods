@@ -3,6 +3,7 @@ global function GamemodePilot_Init
 
 void function GamemodePilot_Init()
 {
+	PrecacheWeapon("mp_weapon_grenade_sonar_pilot")
 	SetShouldUseRoundWinningKillReplay( true )
 	SetLoadoutGracePeriodEnabled( false ) // prevent modifying loadouts with grace period
 	SetWeaponDropsEnabled( false )
@@ -19,7 +20,6 @@ void function GamemodePilot_Init()
 	AddCallback_GameStateEnter( eGameState.Playing, SelectFirstPilot )
 	AddCallback_GameStateEnter( eGameState.Postmatch, RemovePilot )
 	SetTimeoutWinnerDecisionFunc( TimeoutCheckSurvivors )
-	
 
 	thread PredatorMain()
 
@@ -64,7 +64,8 @@ void function UpdateSurvivorsLoadout()
 			continue;
 		
 		player.SetPlayerSettingsWithMods( player.GetPlayerSettings(), [ "disable_wallrun", "disable_doublejump"])
-
+		player.kv.airacceleration = 50
+		
 		foreach ( entity weapon in player.GetMainWeapons() )
 			player.TakeWeaponNow( weapon.GetWeaponClassName() )
 
@@ -95,10 +96,10 @@ void function RespawnPilot(entity player)
 	if (player.GetTeam() != TEAM_IMC )
 		return
 
-	// scale health of the Pilot, with 50 as base health
-	player.SetMaxHealth( 100 + ( (GetPlayerArrayOfTeam( TEAM_MILITIA ).len() + 1 ) * 30) )
-	player.SetHealth( 100 + ( (GetPlayerArrayOfTeam( TEAM_MILITIA ).len() + 1 ) * 30) )
-
+	// Add pilot shield
+	player.SetShieldHealthMax( 25 + ( (GetPlayerArrayOfTeam( TEAM_MILITIA ).len() + 1 ) * 25) )
+	player.SetShieldHealth( 25 + ( (GetPlayerArrayOfTeam( TEAM_MILITIA ).len() + 1 ) * 25) )
+	PilotHealthCheck( player )
 	print(player.GetMaxHealth())
 
 	if ( !player.IsMechanical() )
@@ -113,7 +114,7 @@ void function RespawnPilot(entity player)
 
 	player.GiveWeapon("mp_weapon_wingman_n")
 	player.GiveOffhandWeapon( "melee_pilot_emptyhanded", OFFHAND_MELEE )
-	player.GiveOffhandWeapon( "mp_weapon_grenade_sonar", OFFHAND_SPECIAL )
+	player.GiveOffhandWeapon( "mp_weapon_grenade_sonar_pilot", OFFHAND_SPECIAL )
 	player.GiveOffhandWeapon( "mp_ability_grapple", OFFHAND_RIGHT )
 	thread UpdateLoadout(player)
 	thread GiveArcGrenade(player)
@@ -128,6 +129,7 @@ void function GiveArcGrenade(entity player)
 
 void function PilotOnPlayerKilled( entity victim, entity attacker, var damageInfo )
 {
+	Remote_CallFunction_NonReplay( victim, "ServerCallback_HidePilotHealthUI")
 	if ( !victim.IsPlayer() || GetGameState() != eGameState.Playing )
 		return
 
@@ -136,7 +138,6 @@ void function PilotOnPlayerKilled( entity victim, entity attacker, var damageInf
 		// increase kills by 1
 		attacker.SetPlayerGameStat( PGS_ASSAULT_SCORE, attacker.GetPlayerGameStat( PGS_ASSAULT_SCORE ) + 1 )
 	}
-
 }
 
 void function UpdateLoadout( entity player )
@@ -199,35 +200,50 @@ void function PredatorMain()
 					continue
 				player.SetCloakFlicker(0.2 , 1 )
 				player.kv.VisibilityFlags = 0
-				float waittime = RandomFloat(0.5)
+				float waittime = 1.0
 				wait waittime
 				player.kv.VisibilityFlags = ENTITY_VISIBLE_TO_EVERYONE
 			}
+			foreach (entity player in GetPlayerArray())
+			{
+				if (player == null || !IsValid(player) || !IsAlive(player) || player.GetTeam() != TEAM_MILITIA)
+					continue
+				entity grunt = player
+				string conversationType = ""
+				float waittime = RandomFloat(20.0)
+				wait waittime
+				Remote_CallFunction_NonReplay( player, "ServerCallback_PlayGruntChatterMP", GetConversationIndex( conversationType ), grunt.GetEncodedEHandle() )
+			}
 		}
-	}
-}
-
-void function CheckHealth(entity player, var damageInfo)
-{
-	foreach (entity player in GetPlayerArray())
-	{
-		if (player.GetTeam() != TEAM_IMC || player == null || player.GetMaxHealth() == 50)
-			continue
-
-		float maxHealthCap = 50
-
-    	float damage = DamageInfo_GetDamage( damageInfo )
-   		float newMaxHealth = player.GetMaxHealth() - damage
-
-    	player.SetMaxHealth( max( maxHealthCap, newMaxHealth ) )
-		print(player.GetMaxHealth())
 	}
 }
 
 int function TimeoutCheckSurvivors()
 {
 	if ( GetPlayerArrayOfTeam( TEAM_MILITIA ).len() > 0 )
-		return TEAM_IMC
+		return TEAM_MILITIA
 
-	return TEAM_MILITIA
+	return TEAM_IMC
+}
+
+void function PilotHealthCheck( entity player )
+{
+	Remote_CallFunction_NonReplay( player, "ServerCallback_ShowPilotHealthUI" )
+	print("Running UI Script")
+}
+
+void function CheckHealth(entity player, var damageInfo)
+{
+	if (player.GetTeam() != TEAM_IMC || player == null || !IsValid(player) || !IsAlive(player) )
+		return
+	thread FlickerOnDamage( player )
+}
+
+void function FlickerOnDamage( entity player )
+{
+	player.SetCloakFlicker(0.2 , 1 )
+	player.kv.VisibilityFlags = 0
+	float waittime = RandomFloat(0.5)
+	wait waittime
+	player.kv.VisibilityFlags = ENTITY_VISIBLE_TO_EVERYONE
 }

@@ -221,6 +221,10 @@
 			"Path": "gamemodes/cl_gamemode_arena.gnut",
 			"RunOn": "CLIENT && MP"
 		},
+		{
+            "Path": "weapons/mp_weapon_grenade_sonar_pilot.nut",
+            "RunOn": "CLIENT || SERVER"
+        },
 		
 		{
 			"Path": "gamemodes/sh_gamemode_kr.gnut",

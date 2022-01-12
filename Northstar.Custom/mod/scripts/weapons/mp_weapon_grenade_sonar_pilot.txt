@@ -1,0 +1,5 @@
+#base "mp_weapon_grenade_sonar.txt"
+WeaponData
+{
+    "OnProjectileIgnite" "OnProjectileIgnite_weapon_grenade_sonar_pilot"
+}

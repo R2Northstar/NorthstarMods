@@ -12,8 +12,8 @@ void function Sh_GamemodePilot_Init()
 void function CreateGamemodePilot()
 {
 	GameMode_Create( GAMEMODE_PILOT )
-	GameMode_SetName( GAMEMODE_PILOT, "The Pilot" )
-	GameMode_SetDesc( GAMEMODE_PILOT, "There is one Pilot, and many grunts. Together, grunts can take down a pilot. Alone? The Pilot will destroy you." )
+	GameMode_SetName( GAMEMODE_PILOT, "#GAMEMODE_PILOT" )
+	GameMode_SetDesc( GAMEMODE_PILOT, "#PL_pilot_desc" )
 	GameMode_SetGameModeAnnouncement( GAMEMODE_PILOT, "ffa_modeDesc" )
 	GameMode_SetDefaultTimeLimits( GAMEMODE_PILOT, 5, 0.0 )
 	GameMode_AddScoreboardColumnData( GAMEMODE_PILOT, "#SCOREBOARD_SCORE", PGS_ASSAULT_SCORE, 2 )
@@ -41,4 +41,7 @@ void function PilotRegisterNetworkVars()
 
 	Remote_RegisterFunction( "ServerCallback_YouArePilot" )
 	Remote_RegisterFunction( "ServerCallback_AnnouncePilot" )
+	Remote_RegisterFunction( "ServerCallback_PilotDamageTaken" )
+	Remote_RegisterFunction( "ServerCallback_ShowPilotHealthUI" )
+	Remote_RegisterFunction( "ServerCallback_HidePilotHealthUI" )
 }
