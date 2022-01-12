@@ -44,4 +44,5 @@ void function PilotRegisterNetworkVars()
 	Remote_RegisterFunction( "ServerCallback_PilotDamageTaken" )
 	Remote_RegisterFunction( "ServerCallback_ShowPilotHealthUI" )
 	Remote_RegisterFunction( "ServerCallback_HidePilotHealthUI" )
+	Remote_RegisterFunction( "ServerCallback_PlayGruntPlayerChatterMP" )
 }

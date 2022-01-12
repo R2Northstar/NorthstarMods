@@ -4,6 +4,8 @@ global function ServerCallback_AnnouncePilot
 global function ServerCallback_PilotDamageTaken
 global function ServerCallback_ShowPilotHealthUI
 global function ServerCallback_HidePilotHealthUI
+global function ServerCallback_PlayGruntPlayerChatterMP
+global function GenerateGruntPlayerChatterMPAlias
 
 void function ClGamemodePilot_Init()
 {
@@ -151,3 +153,31 @@ void function PilotHealthChangedThink( entity player )
 	}
 }
 
+void function ServerCallback_PlayGruntPlayerChatterMP( int conversationIndex, int gruntPlayerEHandle  )
+{
+    entity gruntPlayer = GetEntityFromEncodedEHandle( gruntPlayerEHandle )
+    string conversationName = GetConversationName( conversationIndex )
+
+    entity player = GetLocalClientPlayer()
+
+    if ( !ShouldPlayBattleChatter( conversationName, player, gruntPlayer ) )
+        return
+
+    int priority = GetConversationPriority( conversationName )
+
+    string alias = GenerateGruntPlayerChatterMPAlias( gruntPlayer, conversationName )
+
+    PlayOneLinerConversationOnEntWithPriority( conversationName, alias, gruntPlayer, priority ) //Could just do an EmitSound here without worrying about priority etc, but done for the sake of consistency
+}
+
+string function GenerateGruntPlayerChatterMPAlias( entity gruntPlayer, string conversationName  )
+{
+    int voiceIndex = (gruntPlayer.GetPlayerNetInt( "battleChatterVoiceIndex" ) % 6) + 1
+    string alias = GetAliasFromConversation( conversationName )
+    string result
+    if ( alias.slice( 0, 3 ) == "bc_" )
+        result = "diag_imc_grunt" + voiceIndex + "_" + alias
+    else
+        result = alias
+    return result
+}

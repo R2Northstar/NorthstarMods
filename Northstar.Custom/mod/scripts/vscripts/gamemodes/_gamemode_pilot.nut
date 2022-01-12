@@ -1,5 +1,7 @@
 global function GamemodePilot_Init
-
+global function PlayGruntPlayerChatterMPLine
+global function VoicePlayback
+global function CheckLOS
 
 void function GamemodePilot_Init()
 {
@@ -53,6 +55,7 @@ void function SelectFirstPilotDelayed()
 	PlayMusicToAll( eMusicPieceID.GAMEMODE_1 )
 
 	thread UpdateSurvivorsLoadout()
+	thread VoicePlayback()
 }
 
 void function UpdateSurvivorsLoadout()
@@ -204,16 +207,29 @@ void function PredatorMain()
 				wait waittime
 				player.kv.VisibilityFlags = ENTITY_VISIBLE_TO_EVERYONE
 			}
-			foreach (entity player in GetPlayerArray())
-			{
-				if (player == null || !IsValid(player) || !IsAlive(player) || player.GetTeam() != TEAM_MILITIA)
-					continue
-				entity grunt = player
-				string conversationType = ""
-				float waittime = RandomFloat(20.0)
-				wait waittime
-				Remote_CallFunction_NonReplay( player, "ServerCallback_PlayGruntChatterMP", GetConversationIndex( conversationType ), grunt.GetEncodedEHandle() )
-			}
+		}
+	}
+}
+
+void function VoicePlayback()
+{
+	while (true) 
+	{
+		wait 1.0
+		
+		array<entity> enemyLosPlayers
+		enemyLosPlayers = GetPlayerArrayOfTeam( TEAM_IMC )
+
+		foreach (entity player in GetPlayerArray())
+		{
+			if (player == null || !IsValid(player) || !IsAlive(player) || player.GetTeam() != TEAM_MILITIA)
+				continue
+			foreach (entity enemyPlayer in enemyLosPlayers)
+				if ( CheckLOS( player, enemyPlayer ) )
+				{
+					PlayGruntPlayerChatterMPLine( player, "bc_spotenemypilot" )
+				}
+			
 		}
 	}
 }
@@ -246,4 +262,30 @@ void function FlickerOnDamage( entity player )
 	float waittime = RandomFloat(0.5)
 	wait waittime
 	player.kv.VisibilityFlags = ENTITY_VISIBLE_TO_EVERYONE
+}
+
+void function PlayGruntPlayerChatterMPLine( entity gruntPlayer, string conversationType )
+{
+    foreach ( entity player in GetPlayerArray() )
+        if ( ShouldPlayBattleChatter( conversationType, player, gruntPlayer ) )
+            Remote_CallFunction_Replay( player, "ServerCallback_PlayGruntPlayerChatterMP", GetConversationIndex( conversationType ), gruntPlayer.GetEncodedEHandle() )
+}
+
+bool function CheckLOS(entity player, entity playerToSee) {
+    vector playerToSeeOrigin = playerToSee.GetOrigin()
+    float dist = 1000.0
+
+    // check fov, constant here is stolen from every other place this is done
+    if ( VectorDot_PlayerToOrigin( player, playerToSeeOrigin ) > 0.8 )
+        return false
+
+    // check distance, constant here is basically arbitrary
+    if ( Distance( player.GetOrigin(), playerToSeeOrigin ) > dist )
+        return false
+
+    // check actual los
+    if ( TraceLineSimple( player.EyePosition(), playerToSeeOrigin + < 0, 0, 48 >, player ) == 1.0 )
+        return true
+
+    return false
 }
