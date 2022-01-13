@@ -1,0 +1,256 @@
+#base "combo_buttons.res"
+resource/ui/menus/private_lobby.menu
+{
+	menu
+	{
+		ControlName				Frame
+		xpos					0
+		ypos					0
+		zpos					3
+		wide					f0
+		tall					f0
+		autoResize						0
+		pinCorner							0
+		visible								1
+		enabled								1
+		PaintBackgroundType		0
+		infocus_bgcolor_override	"0 0 0 0"
+		outoffocus_bgcolor_override	"0 0 0 0"
+
+    Vignette
+    {
+        ControlName             ImagePanel
+        InheritProperties       MenuVignette
+    }
+
+		MenuTitle
+		{
+			ControlName					Label
+			InheritProperties		MenuTitle
+			labelText						"#PRIVATE_LOBBY"
+		}
+
+		ImgTopBar
+		{
+			ControlName				ImagePanel
+			InheritProperties		MenuTopBar
+		}
+
+		MatchmakingStatus
+		{
+			ControlName				CNestedPanel
+			wide					f0
+			tall					f0
+			visible					1
+			controlSettingsFile		"resource/ui/menus/panels/matchmaking_status.res"
+		}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    Screen
+    {
+        ControlName		ImagePanel
+				wide					f0
+				tall					f0
+        visible				1
+        scaleImage		1
+        fillColor			"0 0 0 0"
+        drawColor			"0 0 0 0"
+    }
+
+		CallsignCard
+		{
+			ControlName				RuiPanel
+			rui                     "ui/callsign_basic.rpak"
+			pin_to_sibling          Screen
+      pin_corner_to_sibling		TOP_RIGHT
+      pin_to_sibling_corner		TOP_RIGHT
+      xpos										-96
+      ypos										-166
+			wide                    320
+			tall                    172
+			visible						1
+			scaleImage				1
+			image					vgui/white
+            fillColor               "255 255 255 255"
+			zpos -1
+		}
+
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+		ButtonRowAnchor
+		{
+			ControlName				Label
+			labelText				""
+
+			xpos                    96
+			ypos                    215
+		}
+
+		StartMatchButton
+		{
+			ControlName				RuiButton
+			InheritProperties		RuiStartMatchButton
+			visible					1
+			tabposition             1
+			ypos                    10
+
+			navRight                ListFriendlies
+
+			pin_to_sibling			ButtonRowAnchor
+			pin_corner_to_sibling	BOTTOM_LEFT
+			pin_to_sibling_corner	TOP_LEFT
+		}
+
+		NextMapImage
+		{
+			ControlName				RuiPanel
+			wide					500
+			tall					288
+			visible					0
+			scaleImage				1
+			image					""
+			zpos -1
+
+			rui                     "ui/basic_menu_image.rpak"
+
+			pin_to_sibling			ButtonRowAnchor
+			pin_corner_to_sibling	TOP_LEFT
+			pin_to_sibling_corner	BOTTOM_LEFT
+
+			ypos                    435
+		}
+		NextMapName
+		{
+			ControlName				Label
+			pin_to_sibling			NextMapImage
+			pin_corner_to_sibling	BOTTOM_RIGHT
+			pin_to_sibling_corner	BOTTOM_RIGHT
+
+			xpos                    -12
+			ypos                    0
+
+			auto_wide_tocontents 	1
+			auto_tall_tocontents	1
+			labelText				""
+			font					Default_43_DropShadow
+			allcaps					1
+			fgcolor_override		"255 255 255 255"
+		}
+		NextGameModeName
+		{
+			ControlName				Label
+			pin_to_sibling			NextMapName
+			pin_corner_to_sibling	BOTTOM_RIGHT
+			pin_to_sibling_corner	TOP_RIGHT
+
+			ypos					-8
+
+			auto_wide_tocontents 	1
+			auto_tall_tocontents	1
+			labelText				""
+			use_proportional_insets	1
+			textinsetx 				2
+			font					Default_28_DropShadow
+			allcaps					1
+			fgcolor_override		"255 255 255 255"
+		}
+		NextModeIcon
+		{
+			ControlName				RuiPanel
+			wide					72
+			tall					72
+			visible					0
+			scaleImage				1
+			image					""
+
+			rui                     "ui/basic_image_add.rpak"
+
+			pin_to_sibling			NextGameModeName
+			pin_corner_to_sibling	BOTTOM_RIGHT
+			pin_to_sibling_corner	TOP_RIGHT
+		}
+
+		LobbyChatBox [$WINDOWS]
+		{
+			ControlName				CBaseHudChat
+			InheritProperties		ChatBox
+
+			destination				"match"
+			messageModeAlwaysOn		1
+
+			pin_to_sibling			NextMapImage
+			pin_corner_to_sibling	TOP_LEFT
+			pin_to_sibling_corner	TOP_RIGHT
+
+			xpos					200
+			ypos 					-1
+		}
+		
+		BottomPanel
+		{
+			ControlName					RuiPanel
+			wide 					1200
+			tall 					288
+
+			rui 					"ui/control_options_description.rpak"
+
+			pin_to_sibling				ButtonRowAnchor
+			pin_corner_to_sibling	TOP_LEFT
+			pin_to_sibling_corner	BOTTOM_LEFT
+
+			ypos                    435
+			zpos 										-1
+		}
+		
+		PlayerPanel
+		{
+			ControlName					RuiPanel
+			wide 					500
+			tall 					813
+
+			rui 					"ui/control_options_description.rpak"
+
+			pin_to_sibling			BottomPanel
+			pin_corner_to_sibling	TOP_LEFT
+			pin_to_sibling_corner	TOP_RIGHT
+			
+			xpos										2
+			ypos                    525
+			zpos 										-1
+		}
+		
+		MatchSettings
+		{
+			ControlName				RuiPanel
+			InheritProperties		MenuTooltipLarge
+
+			rui                     "ui/private_settings_description.rpak"
+
+			pin_to_sibling				PlayerPanel
+			pin_corner_to_sibling	TOP_LEFT
+			pin_to_sibling_corner	TOP_LEFT
+			xpos 502
+			ypos 0
+			
+			wide 500
+			tall 524
+
+			visible 0
+		}
+		
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+		ButtonTooltip
+		{
+			ControlName				CNestedPanel
+			InheritProperties		ButtonTooltip
+		}
+
+		FooterButtons
+		{
+			ControlName				CNestedPanel
+			InheritProperties       FooterButtons
+		}
+	}
+}

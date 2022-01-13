@@ -171,22 +171,22 @@ void function InitPrivateMatchMenu()
 	file.matchStatusRuis = GetElementsByClassnameForMenus( "MatchmakingStatusRui", uiGlobal.allMenus )
 	file.MMDevStringElems = GetElementsByClassnameForMenus( "MMDevStringClass", uiGlobal.allMenus )
 
-	file.friendlyPlayersPanel = Hud_GetChild( menu, "MatchFriendliesPanel" )
-	file.enemyPlayersPanel = Hud_GetChild( menu, "MatchEnemiesPanel" )
+	//file.friendlyPlayersPanel = Hud_GetChild( menu, "MatchFriendliesPanel" )
+	//file.enemyPlayersPanel = Hud_GetChild( menu, "MatchEnemiesPanel" )
 
-	file.listFriendlies = Hud_GetChild( file.friendlyPlayersPanel, "ListFriendlies" )
-	file.listEnemies = Hud_GetChild( file.enemyPlayersPanel, "ListEnemies" )
+	//file.listFriendlies = Hud_GetChild( file.friendlyPlayersPanel, "ListFriendlies" )
+	//file.listEnemies = Hud_GetChild( file.enemyPlayersPanel, "ListEnemies" )
 
-	file.friendlyTeamBackgroundPanel = Hud_GetChild( file.friendlyPlayersPanel, "LobbyFriendlyTeamBackground" )
-	file.enemyTeamBackgroundPanel = Hud_GetChild( file.enemyPlayersPanel, "LobbyEnemyTeamBackground" )
+	//file.friendlyTeamBackgroundPanel = Hud_GetChild( file.friendlyPlayersPanel, "LobbyFriendlyTeamBackground" )
+	//file.enemyTeamBackgroundPanel = Hud_GetChild( file.enemyPlayersPanel, "LobbyEnemyTeamBackground" )
 
 #if PC_PROG
-	var panelSize = Hud_GetSize( file.enemyPlayersPanel )
-	Hud_SetSize( Hud_GetChild( menu, "LobbyChatBox" ), panelSize[0], panelSize[1] )
+	var panelSize = Hud_GetSize( Hud_GetChild( menu, "NextMapImage" ) )
+	Hud_SetSize( Hud_GetChild( menu, "LobbyChatBox" ), panelSize[0], panelSize[1]-2 )
 #endif // #if PC_PROG
 
-	file.friendlyTeamBackground = Hud_GetChild( file.friendlyTeamBackgroundPanel, "TeamBackground" )
-	file.enemyTeamBackground = Hud_GetChild( file.enemyTeamBackgroundPanel, "TeamBackground" )
+	//file.friendlyTeamBackground = Hud_GetChild( file.friendlyTeamBackgroundPanel, "TeamBackground" )
+	//file.enemyTeamBackground = Hud_GetChild( file.enemyTeamBackgroundPanel, "TeamBackground" )
 
 	file.teamSlotBackgrounds = GetElementsByClassnameForMenus( "LobbyTeamSlotBackgroundClass", uiGlobal.allMenus )
 	file.teamSlotBackgroundsNeutral = GetElementsByClassnameForMenus( "LobbyTeamSlotBackgroundNeutralClass", uiGlobal.allMenus )
@@ -196,7 +196,7 @@ void function InitPrivateMatchMenu()
 
 	file.callsignCard = Hud_GetChild( menu, "CallsignCard" )
 
-	file.spectatorLabel = Hud_GetChild( menu, "SpectatorLabel" )
+	//file.spectatorLabel = Hud_GetChild( menu, "SpectatorLabel" )
 
 	file.matchSettingsPanel = Hud_GetChild( menu, "MatchSettings" )
 
@@ -691,10 +691,10 @@ function UpdateLobby()
 			Hud_Hide( file.matchSettingsPanel )
 		}
 
-		if ( GetUIPlayer() && GetPersistentVar( "privateMatchState" ) == 1 )
+		/*if ( GetUIPlayer() && GetPersistentVar( "privateMatchState" ) == 1 )
 			Hud_SetVisible( file.spectatorLabel, true )
 		else
-			Hud_SetVisible( file.spectatorLabel, false )
+			Hud_SetVisible( file.spectatorLabel, false )*/
 
 		WaitFrameOrUntilLevelLoaded()
 	}
