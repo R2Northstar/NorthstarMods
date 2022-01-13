@@ -918,7 +918,17 @@ void function CanJoinServer( serverIndex )
 	while ( NSIsRequestingServerList() )
 		WaitFrame()
 	
-	if ( !NSMasterServerConnectionSuccessful() )	return
+	file.serverListRequestFailed = !NSMasterServerConnectionSuccessful()
+	if ( file.serverListRequestFailed )
+	{
+		Hud_SetText( file.serversName[ 0 ], "#NS_SERVERBROWSER_CONNECTIONFAILED" )
+	}
+	else
+	{
+		FilterAndUpdateList(0)
+	}
+		
+	if ( file.serverListRequestFailed )	return
 	
 	for ( int i = 0; i < NSGetServerCount(); i++ ) {
 		if ( NSGetServerName(i) == name && NSGetServerPlayerCount(i) != NSGetServerMaxPlayerCount(i) )
