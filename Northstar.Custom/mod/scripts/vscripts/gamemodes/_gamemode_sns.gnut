@@ -1,7 +1,6 @@
 global function SNS_Init
 
 struct {
-	//// CHANGE ME
 	string score_leader_highlight = "enemy_boss_bounty" // highlight effect applied to person in 1st place
 	string offhand_weapon = "mp_weapon_thermite_grenade" // offhand weapon
 
@@ -11,7 +10,6 @@ struct {
 	int offhand_kill_value = 10
 	int reset_kill_value = 5
 	int melee_kill_value = 5
-	//// STOP CHANGING ME
 } file
 
 
@@ -74,8 +72,8 @@ void function OnPlayerKilled( entity victim, entity attacker, var damageInfo )
 			attacker.AddToPlayerGameStat( PGS_ASSAULT_SCORE, file.offhand_kill_value )
 		}
 
-        if (attacker == GetWinningPlayer())
-            SetHighlight( attacker )
+		if (attacker == GetWinningPlayer())
+			SetHighlight( attacker )
 	}
 }
 
@@ -109,8 +107,8 @@ void function OnPlayerRespawned( entity player )
 	player.GiveOffhandWeapon( file.offhand_weapon, OFFHAND_RIGHT )
 	player.GiveOffhandWeapon( "mp_weapon_grenade_sonar", OFFHAND_LEFT )
 
-    if (player == GetWinningPlayer())
-        SetHighlight( player )
+	if (player == GetWinningPlayer())
+		SetHighlight( player )
 
 	thread OnPlayerRespawned_Threaded( player )
 }
@@ -126,21 +124,21 @@ void function OnPlayerRespawned_Threaded( entity player )
 
 entity function GetWinningPlayer() 
 {
-    entity bestplayer
+	entity bestplayer
 
-    foreach ( entity player in GetPlayerArray() ) {
-        if (bestplayer == null)
-            bestplayer = player
-        
-        if (GameRules_GetTeamScore(player.GetTeam()) > GameRules_GetTeamScore(bestplayer.GetTeam()))
-            bestplayer = player
-    }
+	foreach ( entity player in GetPlayerArray() ) {
+		if (bestplayer == null)
+			bestplayer = player
+		
+		if (GameRules_GetTeamScore(player.GetTeam()) > GameRules_GetTeamScore(bestplayer.GetTeam()))
+			bestplayer = player
+	}
 
-    return bestplayer
+	return bestplayer
 }
 
 void function SetHighlight(entity player) {
-    foreach ( entity player in GetPlayerArray() )
-        Highlight_ClearEnemyHighlight(player)
-    Highlight_SetEnemyHighlight( player, file.score_leader_highlight )
+	foreach ( entity player in GetPlayerArray() )
+		Highlight_ClearEnemyHighlight(player)
+	Highlight_SetEnemyHighlight( player, file.score_leader_highlight )
 }
