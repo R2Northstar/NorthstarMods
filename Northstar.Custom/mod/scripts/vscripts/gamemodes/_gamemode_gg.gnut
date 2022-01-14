@@ -63,7 +63,10 @@ void function OnPlayerKilled( entity victim, entity attacker, var damageInfo )
 		{
 			AddTeamScore( attacker.GetTeam(), 1 )
 			attacker.AddToPlayerGameStat( PGS_ASSAULT_SCORE, 1 )
-			UpdateLoadout( attacker )
+			// example: "ASpoonPlaysGames got a kill with the softball"
+			string message = attacker.GetPlayerName() + " got a kill with the " + DamageInfo_GetDamageSourceIdentifier( damageInfo )
+			UpdateLoadoutForTeam( attacker )
+			
 		}
 		
 		if ( DamageInfo_GetDamageSourceIdentifier( damageInfo ) == eDamageSourceId.human_execution )
@@ -76,8 +79,33 @@ void function OnPlayerKilled( entity victim, entity attacker, var damageInfo )
 			{
 				AddTeamScore( victim.GetTeam(), -1 ) // get absolutely fucking destroyed lol
 				victim.AddToPlayerGameStat( PGS_ASSAULT_SCORE, -1 )
+				UpdateLoadoutForTeam( victim ) 
 			}
 		}
+	}
+}
+
+void function SendHudMessageToTeam( entity player, string message )
+{
+	// sends a hud message to everybody on the same team as the player, except the player
+	int team = player.GetTeam()
+	foreach ( entity teamPlayer in GetPlayerArrayOfTeam( team ) )
+	{
+		if (teamPlayer == player)
+			return
+		// message should be near the top of the screen and green, should hold for 2 seconds, then fade out over 0.15 seconds
+		SendHudMessage( teamPlayer, message, -1, 0.2, 0, 255, 0, 0, 0, 2, 0.15 )
+	}
+}
+
+void function UpdateLoadoutForTeam( entity player )
+{
+	// updates guns for everybody on the same team as the player
+	int team = player.GetTeam()
+	foreach ( entity teamPlayer in GetPlayerArrayOfTeam( team ) )
+	{
+		if (teamPlayer.IsAlive()) // don't try and give guns to dead people (not sure if game cares about this tbh, but its just a precaution)
+			UpdateLoadout( teamPlayer )
 	}
 }
 
