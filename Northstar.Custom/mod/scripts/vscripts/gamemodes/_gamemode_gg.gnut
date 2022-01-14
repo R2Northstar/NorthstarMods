@@ -65,6 +65,7 @@ void function OnPlayerKilled( entity victim, entity attacker, var damageInfo )
 			attacker.AddToPlayerGameStat( PGS_ASSAULT_SCORE, 1 )
 			// example: "ASpoonPlaysGames got a kill with the softball"
 			string message = attacker.GetPlayerName() + " got a kill with the " + DamageInfo_GetDamageSourceIdentifier( damageInfo )
+			SendHudMessageToTeam( attacker, message )
 			UpdateLoadoutForTeam( attacker )
 			
 		}
