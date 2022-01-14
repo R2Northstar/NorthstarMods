@@ -1,0 +1,56 @@
+global function Sv_TGGEarnMeter_SetWeaponIcon
+global function Sv_TGGEarnMeter_SetFinalIcon
+global function Sv_TGGEarnMeter_SetPercentage
+global function Sv_TGGEarnMeter_AddPercentage
+global function AddCallback_TGGEarnMeterFull
+
+struct
+{
+	array< bool functionref( entity ) > onTGGEarnMeterFullCallbacks
+} file
+
+void function Sv_TGGEarnMeter_SetWeaponIcon( entity player, string weaponReference )
+{
+	Remote_CallFunction_Replay( player, "ServerCallback_TGGEarnMeter_SetWeaponIcon", eDamageSourceId[weaponReference] )
+}
+
+void function Sv_TGGEarnMeter_SetFinalIcon( entity player )
+{
+	Remote_CallFunction_Replay( player, "ServerCallback_TGGEarnMeter_SetWeaponIcon", -1 )
+}
+
+void function Sv_TGGEarnMeter_SetPercentage( entity player, float percentage )
+{
+	player.SetPlayerNetFloat( "titanGunGameLevelPercentage", clamp(percentage, 0.0, 1.0) )
+
+	thread CheckPercentage( player )
+}
+
+void function Sv_TGGEarnMeter_AddPercentage( entity player, float percentage )
+{
+	Sv_TGGEarnMeter_SetPercentage(player, player.GetPlayerNetFloat( "titanGunGameLevelPercentage") + percentage)
+}
+
+void function AddCallback_TGGEarnMeterFull( bool functionref( entity ) callbackFunc )
+{
+	Assert( !file.onTGGEarnMeterFullCallbacks.contains( callbackFunc ), "Already added " + FunctionToString( callbackFunc ) + " with AddCallback_TGGEarnMeterFull" )
+
+	file.onTGGEarnMeterFullCallbacks.append( callbackFunc )
+}
+
+void function CheckPercentage( entity player )
+{
+	float percentage = player.GetPlayerNetFloat( "titanGunGameLevelPercentage")
+
+	if ( percentage < 1.0 )
+		return
+
+	wait 0.2
+
+	bool lastWeapon = false
+	foreach ( callbackFunc in file.onTGGEarnMeterFullCallbacks )
+		lastWeapon = callbackFunc( player )
+
+	if ( !lastWeapon )
+		Sv_TGGEarnMeter_SetPercentage(player, 0.0)
+}

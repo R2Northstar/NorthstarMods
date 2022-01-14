@@ -1,0 +1,16 @@
+global function Sh_TGGEarnMeter_Init
+
+void function Sh_TGGEarnMeter_Init()
+{
+	AddCallback_OnRegisteringCustomNetworkVars( RegisterSharedNetwork )
+}
+
+void function RegisterSharedNetwork()
+{
+	RegisterNetworkedVariable( "titanGunGameLevelPercentage", SNDC_PLAYER_EXCLUSIVE, SNVT_FLOAT_RANGE, 0.0, 0.0, 1.0 )
+    Remote_RegisterFunction( "ServerCallback_TGGEarnMeter_SetWeaponIcon" )
+
+    #if CLIENT
+    	Cl_TGGEarnMeter_RegisterNetwork()
+    #endif
+}

@@ -17,6 +17,9 @@ struct {
 void function Sh_GamemodeTGG_Init()
 {
 	AddCallback_OnCustomGamemodesInit( CreateGamemodeTGG )
+
+    if( GAMETYPE != GAMEMODE_TGG )
+        Sh_TGGEarnMeter_Init()
 }
 
 void function CreateGamemodeTGG()
@@ -31,18 +34,21 @@ void function CreateGamemodeTGG()
 	GameMode_SetColor( GAMEMODE_TGG, [147, 204, 57, 255] )
 	
 	AddPrivateMatchMode( GAMEMODE_TGG )
+    AddPrivateMatchModeSettingArbitrary( "#GAMEMODE_tgg", "tgg_kill_reward", "1.0" )
+	AddPrivateMatchModeSettingArbitrary( "#GAMEMODE_tgg", "tgg_assist_reward", "0.34" ) // one third
+	AddPrivateMatchModeSettingArbitrary( "#GAMEMODE_tgg", "tgg_execution_reward", "1.0" ) // unused i just dont feel like editing cpone's code
 
     // xo16
     TitanGunGameWeapon tggXO16 = { weapon = "mp_titanweapon_xo16_vanguard", core = "mp_titancore_amp_core", ...}
     file.weapons.append(tggXO16)
 
-    // plasma railgun
-    TitanGunGameWeapon tggRailgun = { weapon = "mp_titanweapon_sniper", core = "mp_titancore_flight_core", ...}
-    file.weapons.append(tggRailgun)
-
     // predator cannon
     TitanGunGameWeapon tggPredCannon = { weapon = "mp_titanweapon_predator_cannon", core = "mp_titancore_siege_mode", ...}
     file.weapons.append(tggPredCannon)
+    
+    // plasma railgun
+    TitanGunGameWeapon tggRailgun = { weapon = "mp_titanweapon_sniper", core = "mp_titancore_flight_core", ...}
+    file.weapons.append(tggRailgun)
 
     // leadwall
     TitanGunGameWeapon tggLeadwall = { weapon = "mp_titanweapon_leadwall", core = "mp_titancore_shift_core", ...}

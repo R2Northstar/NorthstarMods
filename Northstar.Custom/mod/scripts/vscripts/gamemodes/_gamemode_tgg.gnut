@@ -19,41 +19,9 @@ void function GamemodeTGG_Init()
     AddCallback_OnClientConnected( OnPlayerConnected ) // fuck
 	AddCallback_OnPlayerKilled( AddTeamScoreForPlayerKilled ) // dont have to track autotitan kills since you cant leave your titan in this mode
 	AddCallback_OnPilotBecomesTitan( OnPlayerBecomesTitan ) // I have no idea why this wasn't working with normal respawn callback, might be now though
+    AddCallback_TGGEarnMeterFull( OnTGGEarnMeterFilled )
+
     SetKillcamsEnabled( false )
-}
-
-void function OnPlayerBecomesTitan( entity player, entity titan )
-{
-    //UpdateLivingTitanLoadout( player )
-    foreach ( entity weapon in player.GetOffhandWeapons() )
-		player.TakeWeaponNow( weapon.GetWeaponClassName() )
-
-    thread OnPlayerRespawned_Threaded( player )
-}
-
-void function OnPlayerConnected( entity player )
-{
-    RespawnAsTitan( player, false , CreateTGGTitanLoadout( player ))
-}
-
-void function OnPlayerRespawned_Threaded( entity player )
-{
-	WaitFrame()
-	if ( IsValid( player ) )
-		PlayerEarnMeter_SetMode( player, eEarnMeterMode.DISABLED )
-
-    // ultra fucking hacky jesus
-    int currentWeaponIndex = GameRules_GetTeamScore( player.GetTeam() )
-    if(currentWeaponIndex == 8)
-    {
-        WaitFrame()
-        player.Server_SetDodgePower( 100.0 )
-		player.SetPowerRegenRateScale( 6.5 )
-        player.GiveOffhandWeapon("melee_titan_sword", OFFHAND_MELEE, ["super_charged"] )
-        player.SetActiveWeaponByName("melee_titan_sword")
-        GivePassive( player, ePassives.PAS_FUSION_CORE )
-		GivePassive( player, ePassives.PAS_SHIFT_CORE )
-    }
 }
 
 void function TGGIntroSetup()
@@ -100,10 +68,63 @@ void function PlayerWatchesTGGIntroIntermissionCam( entity player )
 	player.StartObserverMode( OBS_MODE_STATIC_LOCKED )
 
 	wait TGGIntroLength
-	
 	RespawnAsTitan( player, false , CreateTGGTitanLoadout( player) )
 
     TryGameModeAnnouncement( player )
+}
+
+void function OnPlayerBecomesTitan( entity player, entity titan )
+{
+    Sv_TGGEarnMeter_SetWeaponIcon( player, GetTitanGunGameWeapon( player ).weapon )
+    foreach ( entity weapon in player.GetOffhandWeapons() )
+		player.TakeWeaponNow( weapon.GetWeaponClassName() )
+
+    thread OnPlayerRespawned_Threaded( player )
+}
+
+void function OnPlayerConnected( entity player )
+{
+    if( GetGameState() == eGameState.Playing )
+        thread RespawnAsTitan( player, false , CreateTGGTitanLoadout( player ))
+}
+
+void function OnPlayerRespawned_Threaded( entity player )
+{
+	WaitFrame()
+	if ( IsValid( player ) )
+		PlayerEarnMeter_SetMode( player, eEarnMeterMode.DISABLED )
+
+    // ultra fucking hacky jesus
+    int currentWeaponIndex = GameRules_GetTeamScore( player.GetTeam() )
+    if(currentWeaponIndex == 8)
+    {
+        WaitFrame()
+        player.Server_SetDodgePower( 100.0 )
+		player.SetPowerRegenRateScale( 6.5 )
+        player.GiveOffhandWeapon("melee_titan_sword", OFFHAND_MELEE, ["super_charged"] )
+        player.SetActiveWeaponByName("melee_titan_sword")
+        GivePassive( player, ePassives.PAS_FUSION_CORE )
+		GivePassive( player, ePassives.PAS_SHIFT_CORE )
+    }
+}
+
+bool function OnTGGEarnMeterFilled( entity player )
+{
+	AddTeamScore( player.GetTeam(), 1 )
+	player.AddToPlayerGameStat( PGS_TITAN_KILLS, 1 )
+	UpdateLivingTitanLoadout( player )
+
+	int currentScore = GameRules_GetTeamScore( player.GetTeam() )
+	int maxScore = GetGunGameWeapons().len()
+
+	return currentScore >= maxScore
+}
+
+void function Reward( entity player, entity victim, string scoreEvent, float percentageReward )
+{
+	percentageReward = clamp(percentageReward, 0.0, 1.0)
+	Sv_TGGEarnMeter_AddPercentage( player, percentageReward )
+	Remote_CallFunction_NonReplay( player, "ServerCallback_ScoreEvent", GetScoreEvent(scoreEvent).eventId, 0, eEventDisplayType.MEDAL, victim.GetEncodedEHandle(), 0.0, percentageReward)
 }
 
 void function UpdateLivingTitanLoadout( entity player )
@@ -121,13 +142,22 @@ void function UpdateLivingTitanLoadout( entity player )
 		PlayMusicToAll( eMusicPieceID.LEVEL_LAST_MINUTE ) // this *shouldn't* overlap if done multiple times
 	
 	TitanGunGameWeapon weapon = weapons[ currentWeaponIndex ]
-	
+	Sv_TGGEarnMeter_SetWeaponIcon( player, weapon.weapon )
+    if ( currentWeaponIndex > 9 )
+        return
+
     if( currentWeaponIndex == 9 )
     {
-        thread TitanEjectPlayer( player, false )
-        EmitSoundOnEntity( player, "autoEjectNotice" )
+        EmitSoundOnEntity( player, "autoEjectNotice" ) // should be changed when autoeject VA gets fixed (apply the passive to the player ideally just b4 eject)
+        thread TitanEjectPlayer( player, true )
         return
     }
+
+    // discount upgrade core heal fx
+    EmitSoundOnEntityExceptToPlayer( player, player, "Titan_Monarch_Smart_Core_Activated_3P" )
+	EmitSoundOnEntityOnlyToPlayer( player, player, "Titan_Monarch_Smart_Core_Activated_1P" )
+	entity soul = player.GetTitanSoul()
+	soul.SetShieldHealth( player.GetShieldHealthMax() )
 
 	foreach ( entity weapon in player.GetMainWeapons() )
 		player.TakeWeaponNow( weapon.GetWeaponClassName() )
@@ -146,11 +176,56 @@ void function UpdateLivingTitanLoadout( entity player )
     }
 }
 
+void function AddTeamScoreForPlayerKilled( entity victim, entity attacker, var damageInfo )
+{
+	if ( victim != attacker && GetGameState() == eGameState.Playing)
+	{
+        if ((victim.IsTitan() && attacker.IsPlayer()) || (attacker.IsPlayer() && victim.IsPlayer()))
+        {
+            float percentageReward = GetCurrentPlaylistVarFloat( "tgg_kill_reward", 1.0 )
+			string scoreEvent = "KillTitan"
+
+		    AddTeamScore( attacker.GetTeam(), 1 )
+		    attacker.AddToPlayerGameStat( PGS_ASSAULT_SCORE, 1 )
+
+            UpdateLivingTitanLoadout( attacker )
+        }
+	}
+
+    table<int, bool> alreadyAssisted
+	foreach( DamageHistoryStruct attackerInfo in victim.e.recentDamageHistory )
+	{
+		if( attackerInfo.attacker != attacker && !alreadyAssisted[attackerInfo.attacker.GetEncodedEHandle()] )
+		{
+			if ( attackerInfo.damageSourceId != eDamageSourceId.melee_pilot_emptyhanded ) {
+				alreadyAssisted[attackerInfo.attacker.GetEncodedEHandle()] <- true
+				Reward( attackerInfo.attacker, victim, "TitanAssist", GetCurrentPlaylistVarFloat( "tgg_assist_reward", 0.34 ) )
+			}
+		}
+	}
+
+    thread ForcedRespawnPlayerWithTitanLoadout( victim )
+}
+
+void function ForcedRespawnPlayerWithTitanLoadout( entity player )
+{
+    wait 4
+    int currentWeaponIndex = GameRules_GetTeamScore( player.GetTeam() )
+    if(!IsAlive( player ) || (GetGameState() != eGameState.WinnerDetermined))
+    {
+        if (currentWeaponIndex >= 9)
+            player.RespawnPlayer( null )
+        else
+            thread RespawnAsTitan( player, false , CreateTGGTitanLoadout( player ) )
+    }
+}
+
 TitanLoadoutDef function CreateTGGTitanLoadout( entity player )
 {
     array<string> possibleChassis = ["titan_atlas_tone_prime", "titan_atlas_tracker", "titan_atlas_ion_prime", "titan_atlas_stickybomb", "titan_atlas_vanguard"]
     TitanGunGameWeapon weapon = GetTitanGunGameWeapon( player )
     TitanLoadoutDef loadout = GetTitanLoadoutForPlayer( player )
+    loadout.titanClass = "ion" // no ronin prime crash
     loadout.setFile = possibleChassis.getrandom()
     loadout.special = "" // these empty strings dont even fucking arghh
     loadout.antirodeo = ""
@@ -164,6 +239,7 @@ TitanLoadoutDef function CreateTGGTitanLoadout( entity player )
         loadout.primary = weapon.weapon
     }
     loadout.coreAbility = weapon.core
+    printt("--TGG LOADOUT--")
     PrintTitanLoadout( loadout )
     return loadout
 }
@@ -182,34 +258,4 @@ TitanGunGameWeapon function GetTitanGunGameWeapon( entity player )
     TitanGunGameWeapon weapon = weapons[ currentWeaponIndex ]
 
     return weapon
-}
-
-void function AddTeamScoreForPlayerKilled( entity victim, entity attacker, var damageInfo )
-{
-	if ( victim != attacker && GetGameState() == eGameState.Playing)
-	{
-        if ((victim.IsTitan() && attacker.IsPlayer()) || (attacker.IsPlayer() && victim.IsPlayer()))
-        {
-		    AddTeamScore( attacker.GetTeam(), 1 )
-		    // why isn't this PGS_SCORE? odd game
-		    attacker.AddToPlayerGameStat( PGS_ASSAULT_SCORE, 1 )
-            UpdateLivingTitanLoadout( attacker )
-        }
-        print("wtf")
-	}
-
-    thread ScuffedRespawnVictimWithTitanLoadout( victim)
-}
-
-void function ScuffedRespawnVictimWithTitanLoadout( entity player )
-{
-    wait 4
-    int currentWeaponIndex = GameRules_GetTeamScore( player.GetTeam() )
-    if(!IsAlive( player ) || (GetGameState() != eGameState.WinnerDetermined))
-    {
-        if (currentWeaponIndex >= 9)
-            player.RespawnPlayer( null )
-        else
-            RespawnAsTitan( player, false , CreateTGGTitanLoadout( player ) )
-    }
 }

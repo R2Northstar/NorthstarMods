@@ -322,6 +322,18 @@
 			"Path": "gamemodes/cl_gamemode_tgg.gnut",
 			"RunOn": "CLIENT && MP"
 		},
+		{
+			"Path": "gamemodes/gg_earn_meter/sh_tgg_earn_meter.gnut",
+			"RunOn": "( CLIENT || SERVER ) && MP"
+		},
+		{
+			"Path": "gamemodes/gg_earn_meter/_tgg_earn_meter.gnut",
+			"RunOn": "SERVER && MP"
+		},
+		{
+			"Path": "gamemodes/gg_earn_meter/cl_tgg_earn_meter.gnut",
+			"RunOn": "CLIENT && MP"
+		},
 
 		{
 			"Path": "sh_3psequence_to_1p_hacks.gnut",
