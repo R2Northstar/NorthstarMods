@@ -8,6 +8,9 @@
 		"MENU_LAUNCH_NORTHSTAR" "Launch Northstar"
 		"MENU_TITLE_MODS" "Mods"
 		"RELOAD_MODS" "Reload Mods"
+		"WARNING" "Warning"
+		"CORE_MOD_DISABLE_WARNING"  "Disabling core mods can break your client!"
+		"DISABLE" "Disable"
 
 		"DIALOG_TITLE_INSTALLED_NORTHSTAR" "Thanks for installing Northstar!"
 		"AUTHENTICATION_AGREEMENT_DIALOG_TEXT" "For Northstar to work, it needs to authenticate using the Northstar master server. This will require sending your origin token to the master server, it will not be stored or used for any other purposes.
@@ -112,6 +115,17 @@ Press Yes if you agree to this. This choice can be changed in the mods menu at a
 		"HIDDEN_YOU_ARE_HIDDEN" "You are The Hidden!"
 		"HIDDEN_KILL_SURVIVORS" "Kill all survivors."
 		"HIDDEN_FIRST_HIDDEN" "%s1 is the The Hidden."
+
+		"PL_sns" "Sticks and Stones"
+        "PL_sns_lobby" "Sticks and Stones Lobby"
+        "PL_sns_desc" "Free For All. Use Pulse Blades and Executions to Reset Enemy Score"
+        "PL_sns_abbr" "SNS"
+        "GAMEMODE_SNS" "Sticks and Stones"
+        "SCOREBOARD_BANKRUPTS" "Bankrupts"
+        "SNS_LEADER_BANKRUPT" "Score Leader Bankrupt!"
+        "SNS_LEADER_BANKRUPT_SUB" "%s1 Was Reset By %s2"
+        "SNS_BANKRUPT" "Bankrupt!"
+        "SNS_BANKRUPT_SUB" "Your Score Was Reset By %s1"
 		
 		"PL_inf" "Infection"
 		"PL_inf_lobby" "Infection Lobby"
@@ -126,8 +140,8 @@ Press Yes if you agree to this. This choice can be changed in the mods menu at a
 		"INFECTION_KILL_LAST_SURVIVOR" "Infect them before time runs out!"
 		"INFECTION_YOU_ARE_LAST_SURVIVOR" "You are the Last Survivor!"
 		"INFECTION_SURVIVE_LAST_SURVIVOR" "Survive."
-
-        "PL_tffa" "Titan Free for All"
+		
+		"PL_tffa" "Titan Free for All"
 		"PL_tffa_lobby" "Titan Free for All Lobby"
 		"PL_tffa_desc" "Every pilot for themselves, destroy all enemy titans."
 		"PL_tffa_hint" "Every pilot for themselves, destroy all enemy titans."
