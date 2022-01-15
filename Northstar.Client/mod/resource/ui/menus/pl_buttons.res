@@ -1,7 +1,7 @@
 resource/ui/menus/pl_buttons.res
 {
-  Cock
+  PlayerListButton
   {
-    wide  300
+    
   }
 }
