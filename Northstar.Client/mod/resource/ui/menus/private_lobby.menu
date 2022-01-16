@@ -246,7 +246,7 @@ resource/ui/menus/private_lobby.menu
 		{
 			ControlName				RuiButton
 			InheritProperties		RuiSmallButton
-			classname 				PlayerButton
+			classname 				FriendlyPlayerButton
 			scriptID				11
 			wide 							456
 			labelText					"TEAM_MILITIA"
@@ -260,7 +260,7 @@ resource/ui/menus/private_lobby.menu
 		{
 			ControlName				RuiButton
 			InheritProperties		RuiSmallButton
-			classname 				PlayerButton
+			classname 				FriendlyPlayerButton
 			scriptID				11
 			wide 							456
 			labelText					"cock"
@@ -274,7 +274,7 @@ resource/ui/menus/private_lobby.menu
 		{
 			ControlName				RuiButton
 			InheritProperties		RuiSmallButton
-			classname 				PlayerButton
+			classname 				FriendlyPlayerButton
 			scriptID				11
 			wide 							456
 			labelText					"cock"
@@ -288,7 +288,7 @@ resource/ui/menus/private_lobby.menu
 		{
 			ControlName				RuiButton
 			InheritProperties		RuiSmallButton
-			classname 				PlayerButton
+			classname 				FriendlyPlayerButton
 			scriptID				11
 			wide 							456
 			labelText					"cock"
@@ -302,7 +302,7 @@ resource/ui/menus/private_lobby.menu
 		{
 			ControlName				RuiButton
 			InheritProperties		RuiSmallButton
-			classname 				PlayerButton
+			classname 				FriendlyPlayerButton
 			scriptID				11
 			wide 							456
 			labelText					"cock"
@@ -316,7 +316,7 @@ resource/ui/menus/private_lobby.menu
 		{
 			ControlName				RuiButton
 			InheritProperties		RuiSmallButton
-			classname 				PlayerButton
+			classname 				FriendlyPlayerButton
 			scriptID				11
 			wide 							456
 			labelText					"cock"
@@ -330,7 +330,7 @@ resource/ui/menus/private_lobby.menu
 		{
 			ControlName				RuiButton
 			InheritProperties		RuiSmallButton
-			classname 				PlayerButton
+			classname 				FriendlyPlayerButton
 			scriptID				11
 			wide 							456
 			labelText					"cock"
@@ -344,7 +344,7 @@ resource/ui/menus/private_lobby.menu
 		{
 			ControlName				RuiButton
 			InheritProperties		RuiSmallButton
-			classname 				PlayerButton
+			classname 				FriendlyPlayerButton
 			scriptID				11
 			wide 							456
 			labelText					"cock"
@@ -358,7 +358,7 @@ resource/ui/menus/private_lobby.menu
 		{
 			ControlName				RuiButton
 			InheritProperties		RuiSmallButton
-			classname 				PlayerButton
+			classname 				FriendlyPlayerButton
 			scriptID				11
 			wide 							456
 			labelText					"cock"
@@ -372,7 +372,7 @@ resource/ui/menus/private_lobby.menu
 		{
 			ControlName				RuiButton
 			InheritProperties		RuiSmallButton
-			classname 				PlayerButton
+			classname 				FriendlyPlayerButton
 			scriptID				11
 			wide 							456
 			labelText					"cock"
@@ -386,7 +386,7 @@ resource/ui/menus/private_lobby.menu
 		{
 			ControlName				RuiButton
 			InheritProperties		RuiSmallButton
-			classname 				PlayerButton
+			classname 				EnemyPlayerButton
 			scriptID				11
 			wide 							456
 			labelText					"TEAM_IMC"
@@ -400,7 +400,7 @@ resource/ui/menus/private_lobby.menu
 		{
 			ControlName				RuiButton
 			InheritProperties		RuiSmallButton
-			classname 				PlayerButton
+			classname 				EnemyPlayerButton
 			scriptID				11
 			wide 							456
 			labelText					"cock"
@@ -414,7 +414,7 @@ resource/ui/menus/private_lobby.menu
 		{
 			ControlName				RuiButton
 			InheritProperties		RuiSmallButton
-			classname 				PlayerButton
+			classname 				EnemyPlayerButton
 			scriptID				11
 			wide 							456
 			labelText					"cock"
@@ -428,7 +428,7 @@ resource/ui/menus/private_lobby.menu
 		{
 			ControlName				RuiButton
 			InheritProperties		RuiSmallButton
-			classname 				PlayerButton
+			classname 				EnemyPlayerButton
 			scriptID				11
 			wide 							456
 			labelText					"cock"
@@ -442,7 +442,7 @@ resource/ui/menus/private_lobby.menu
 		{
 			ControlName				RuiButton
 			InheritProperties		RuiSmallButton
-			classname 				PlayerButton
+			classname 				EnemyPlayerButton
 			scriptID				11
 			wide 							456
 			labelText					"cock"
@@ -456,7 +456,7 @@ resource/ui/menus/private_lobby.menu
 		{
 			ControlName				RuiButton
 			InheritProperties		RuiSmallButton
-			classname 				PlayerButton
+			classname 				EnemyPlayerButton
 			scriptID				11
 			wide 							456
 			labelText					"cock"
@@ -470,7 +470,7 @@ resource/ui/menus/private_lobby.menu
 		{
 			ControlName				RuiButton
 			InheritProperties		RuiSmallButton
-			classname 				PlayerButton
+			classname 				EnemyPlayerButton
 			scriptID				11
 			wide 							456
 			labelText					"cock"
@@ -484,7 +484,7 @@ resource/ui/menus/private_lobby.menu
 		{
 			ControlName				RuiButton
 			InheritProperties		RuiSmallButton
-			classname 				PlayerButton
+			classname 				EnemyPlayerButton
 			scriptID				11
 			wide 							456
 			labelText					"cock"
@@ -498,7 +498,7 @@ resource/ui/menus/private_lobby.menu
 		{
 			ControlName				RuiButton
 			InheritProperties		RuiSmallButton
-			classname 				PlayerButton
+			classname 				EnemyPlayerButton
 			scriptID				11
 			wide 							456
 			labelText					"cock"
@@ -512,7 +512,7 @@ resource/ui/menus/private_lobby.menu
 		{
 			ControlName				RuiButton
 			InheritProperties		RuiSmallButton
-			classname 				PlayerButton
+			classname 				EnemyPlayerButton
 			scriptID				11
 			wide 							456
 			labelText					"cock"

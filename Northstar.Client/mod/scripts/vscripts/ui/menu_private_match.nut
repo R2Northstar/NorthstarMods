@@ -64,6 +64,9 @@ struct
 	var matchSettingsPanel
 
 	ComboStruct &lobbyComboStruct
+	
+	array<var> friendlyPlayerButtonsArray
+	array<var> enemyPlayerButtonsArray
 } file
 
 const table<asset> mapImages =
@@ -155,6 +158,18 @@ void function InitPrivateMatchMenu()
 {
 	var menu = GetMenu( "PrivateLobbyMenu" )
 	file.menu = menu
+	
+	
+	foreach ( b in GetElementsByClassname( file.menu, "FriendlyPlayerButton") )
+		file.friendlyPlayerButtonsArray.append( b )
+	
+	foreach ( b in GetElementsByClassname( file.menu, "EnemyPlayerButton") )
+		file.enemyPlayerButtonsArray.append( b )
+	
+	HideAllFriendlyPlayers()
+	HideAllEnemyPlayers()
+	
+	
 
 	AddMenuEventHandler( menu, eUIEvent.MENU_OPEN, OnPrivateMatchMenu_Open )
 	AddMenuEventHandler( menu, eUIEvent.MENU_CLOSE, OnLobbyMenu_Close )
@@ -225,6 +240,17 @@ void function InitPrivateMatchMenu()
 	#endif
 }
 
+void function HideAllEnemyPlayers()
+{
+	foreach ( p in file.enemyPlayerButtonsArray )
+		Hud_SetVisible( p, false )
+}
+
+void function HideAllFriendlyPlayers()
+{
+	foreach ( p in file.friendlyPlayerButtonsArray )
+		Hud_SetVisible( p, false )
+}
 
 void function OnSelectMapButton_Activate( var button )
 {
