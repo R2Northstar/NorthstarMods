@@ -135,7 +135,6 @@ Press Yes if you agree to this. This choice can be changed in the mods menu at a
 		"melee_kill_value" "Melee Kill Value"
 		"reset_pulse_blade_cooldown_on_pulse_blade_kill" "Kill Cooldown Resets"
 
-
 		"PL_inf" "Infection"
 		"PL_inf_lobby" "Infection Lobby"
 		"PL_inf_desc" "Survive the infection. Survivors are infected when killed."
