@@ -57,11 +57,18 @@ void function InfectionOnPlayerKilled( entity victim, entity attacker, var damag
 	if ( victim.GetTeam() == INFECTION_TEAM_SURVIVOR )
 		InfectPlayer( victim, attacker )
 
-	if ( attacker.IsPlayer() )
+	if (attacker.IsPlayer())
+	{
+		SetRoundWinningKillReplayAttacker(attacker)
 		attacker.SetPlayerGameStat( PGS_ASSAULT_SCORE, attacker.GetPlayerGameStat( PGS_ASSAULT_SCORE ) + 1 )
+	}
+	else
+	{
+		SetRoundWinningKillReplayAttacker(player) // everybody now gets to witness you dying to the game
+	}
 }
 
-void function InfectPlayer( entity player, entity attacker )
+void function InfectPlayer( entity player )
 {
 	SetTeam( player, INFECTION_TEAM_INFECTED )
 	player.SetPlayerGameStat( PGS_ASSAULT_SCORE, 0 ) // reset kills
@@ -69,20 +76,7 @@ void function InfectPlayer( entity player, entity attacker )
 	// check how many survivors there are
 	array<entity> survivors = GetPlayerArrayOfTeam( INFECTION_TEAM_SURVIVOR )
 	if ( survivors.len() == 0 )
-	{
-		SetRespawnsEnabled( false )
-		SetKillcamsEnabled( false )
-		if (attacker.IsPlayer())
-		{
-			SetRoundWinningKillReplayAttacker(attacker)
-		}
-		else
-		{
-			SetRoundWinningKillReplayAttacker(player) // everybody now gets to witness you dying to the game
-		}
-
 		SetWinner( INFECTION_TEAM_INFECTED )
-	}
 	else if ( survivors.len() == 1 && !file.hasHadLastInfection )
 		SetLastSurvivor( survivors[ 0 ] )
 
@@ -120,25 +114,31 @@ void function RespawnInfected( entity player )
 
 	// stats for infected
 	StimPlayer( player, 9999.9 ) // can't do endless since we don't get the visual effect in endless
-	player.kv.airAcceleration = 2500
 
 	// scale health with num of infected, with 50 as base health
 	player.SetMaxHealth( ( GetPlayerArrayOfTeam( INFECTION_TEAM_SURVIVOR ).len() + 1 ) * 10 )
 
-	// set loadout 
+	// set loadout
 	foreach ( entity weapon in player.GetMainWeapons() )
 		player.TakeWeaponNow( weapon.GetWeaponClassName() )
 
 	foreach ( entity weapon in player.GetOffhandWeapons() )
 		player.TakeWeaponNow( weapon.GetWeaponClassName() )
-	
+
 	// TEMP: give archer so player so player has a weapon which lets them use offhands
 	// need to replace this with a custom empty weapon at some point
 	//player.GiveWeapon( "mp_weapon_rocket_launcher" )
 	player.GiveWeapon( "mp_weapon_mgl" )
 	player.GiveOffhandWeapon( "melee_pilot_emptyhanded", OFFHAND_MELEE )
 
+	thread GiveAirAccel(player)
 	thread PlayInfectedSounds( player )
+}
+
+void function GiveAirAccel(entity player)
+{
+	WaitFrame()
+	player.kv.airAcceleration = 2500 // prevents sh_custom_air_accel from not giving infected air acceleration.
 }
 
 void function PlayInfectedSounds( entity player )
