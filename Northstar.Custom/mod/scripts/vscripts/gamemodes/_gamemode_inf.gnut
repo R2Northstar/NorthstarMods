@@ -75,6 +75,7 @@ void function InfectPlayer( entity player )
 	SetTeam( player, INFECTION_TEAM_INFECTED )
 	player.SetPlayerGameStat( PGS_ASSAULT_SCORE, 0 ) // reset kills
 	file.playersToNotifyOfInfection.append( player )
+
 	// check how many survivors there are
 	array<entity> survivors = GetPlayerArrayOfTeam( INFECTION_TEAM_SURVIVOR )
 	if ( survivors.len() == 0 )
@@ -188,10 +189,10 @@ void function SetLastSurvivor( entity player )
 	Highlight_SetEnemyHighlight( player, "enemy_sonar" )
 	if ( SpawnPoints_GetTitan().len() > 0 )
 		thread CreateTitanForPlayerAndHotdrop( player, GetTitanReplacementPoint( player, false ) )
-	
+
 	if ( GameTime_TimeLeftSeconds() > 45 )
 		SetServerVar( "gameEndTime", Time() + 45.0 )
-	
+
 	file.hasHadLastInfection = true
 }
 
