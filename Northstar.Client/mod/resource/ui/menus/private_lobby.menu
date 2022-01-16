@@ -93,7 +93,7 @@ resource/ui/menus/private_lobby.menu
 			InheritProperties		RuiStartMatchButton
 			visible					1
 			tabposition             1
-			ypos                    -3
+			ypos                    10
 
 			navRight                ListFriendlies
 
@@ -203,20 +203,42 @@ resource/ui/menus/private_lobby.menu
 			zpos 										-1
 		}
 		
-		PlayerPanel
+		FriendlyPlayersPanel
 		{
-			ControlName					RuiPanel
+			ControlName					ImagePanel
 			wide 					456
-			tall 					800
+			tall 					400
 
-			rui 					"ui/control_options_description.rpak"
+			//rui 					"ui/control_options_description.rpak"
+			image           "vgui/hud/white"
+			drawColor       "21 119 216 64"
+			scaleImage							1
 
 			pin_to_sibling			BottomPanel
 			pin_corner_to_sibling	TOP_LEFT
 			pin_to_sibling_corner	TOP_RIGHT
 			
 			xpos										2
-			ypos                    512
+			ypos                    514
+			zpos 										-1
+		}
+		
+		EnemyPlayersPanel
+		{
+			ControlName					ImagePanel
+			wide 					456
+			tall 					400
+
+			//rui 					"ui/control_options_description.rpak"
+			image           "vgui/hud/white"
+			drawColor				"255 80 0 64"
+			scaleImage			1
+
+			pin_to_sibling			FriendlyPlayersPanel
+			pin_corner_to_sibling	TOP_LEFT
+			pin_to_sibling_corner	BOTTOM_LEFT
+			
+			ypos                    2
 			zpos 										-1
 		}
 		
@@ -229,7 +251,7 @@ resource/ui/menus/private_lobby.menu
 			wide 							456
 			labelText					"TEAM_MILITIA"
 
-			pin_to_sibling			PlayerPanel
+			pin_to_sibling			FriendlyPlayersPanel
 			pin_corner_to_sibling	TOP_LEFT
 			pin_to_sibling_corner	TOP_LEFT
 		}
@@ -369,9 +391,9 @@ resource/ui/menus/private_lobby.menu
 			wide 							456
 			labelText					"TEAM_IMC"
 
-			pin_to_sibling			BtnPlayer10
+			pin_to_sibling			EnemyPlayersPanel
 			pin_corner_to_sibling	TOP_LEFT
-			pin_to_sibling_corner	BOTTOM_LEFT
+			pin_to_sibling_corner	TOP_LEFT
 		}
 		
 		BtnPlayer12
@@ -521,112 +543,40 @@ resource/ui/menus/private_lobby.menu
 		}
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-		BtnServerListUpArrow
-		{
-			ControlName					RuiButton
-			InheritProperties		RuiSmallButton
-			//labelText						"A"
-			wide 40
-			tall 40
-			xpos 2
-			ypos 2
 	
-			image           "vgui/hud/white"
-			drawColor       "255 255 255 128"
-	
-			pin_to_sibling					PlayerPanel
-			pin_corner_to_sibling		TOP_LEFT
-			pin_to_sibling_corner		TOP_RIGHT
-		}
-	
-		BtnServerListUpArrowPanel
-		{
-			ControlName				RuiPanel
-			wide 40
-			tall 40
-			xpos 2
-			ypos 2
-	
-			rui 					"ui/control_options_description.rpak"
-	
-			visible					1
-			zpos					-1
-	
-			pin_to_sibling					PlayerPanel
-			pin_corner_to_sibling		TOP_LEFT
-			pin_to_sibling_corner		TOP_RIGHT
-		}
-	
-		BtnServerListDownArrow
-		{
-			ControlName					RuiButton
-			InheritProperties		RuiSmallButton
-			//labelText						"V"
-			wide 40
-			tall 40
-			xpos 2
-			ypos -760
-	
-			image           "vgui/hud/white"
-			drawColor       "255 255 255 128"
-	
-			pin_to_sibling					PlayerPanel
-			pin_corner_to_sibling		TOP_LEFT
-			pin_to_sibling_corner		TOP_RIGHT
-		}
-	
-		BtnServerListDownArrowPanel
-		{
-			ControlName				RuiPanel
-			wide 40
-			tall 40
-			xpos 2
-			ypos -760
-	
-			rui 					"ui/control_options_description.rpak"
-	
-			visible					1
-			zpos					-1
-	
-			pin_to_sibling					PlayerPanel
-			pin_corner_to_sibling		TOP_LEFT
-			pin_to_sibling_corner		TOP_RIGHT
-		}
-	
-		BtnServerListSlider
+		FriendlyPanelListSliderPanel
 		{
 			ControlName					RuiButton
 			InheritProperties		RuiSmallButton
 			//labelText						"V"
 			wide 					40
-			tall 					562
+			tall 					400
 			xpos 					2
-			ypos 					-40
+			ypos 					0
 			zpos					0
 	
 			image           "vgui/hud/white"
 			drawColor       "255 255 255 128"
 	
-			pin_to_sibling					PlayerPanel
+			pin_to_sibling					FriendlyPlayersPanel
 			pin_corner_to_sibling		TOP_LEFT
 			pin_to_sibling_corner		TOP_RIGHT
 		}
 	
-		BtnServerListSliderPanel
+		FriendlyPanelListSliderPanel
 		{
 			ControlName				RuiPanel
 			wide 40
-			tall 562
+			tall 400
 			xpos 2
-			ypos -40
+			ypos 0
 	
 			rui 					"ui/control_options_description.rpak"
 	
 			visible					1
 			zpos					-1
 	
-			pin_to_sibling					PlayerPanel
+			pin_to_sibling					FriendlyPlayersPanel
 			pin_corner_to_sibling		TOP_LEFT
 			pin_to_sibling_corner		TOP_RIGHT
 		}
@@ -634,16 +584,71 @@ resource/ui/menus/private_lobby.menu
 		// sh_menu_models.gnut has a global function which gets called when
 		// left mouse button gets called while hovering and has mouse
 		// deltaX; deltaY which we can yoink for ourselfes
-		MouseMovementCapture
+		FriendlyPanelListSliderMouseMovementCapture
 		{
 				ControlName					CMouseMovementCapturePanel
 				wide 								40
-				tall 								562
+				tall 								404
 				xpos 								2
-				ypos 								-40
+				ypos 								0
 				zpos								1
 	
-				pin_to_sibling					PlayerPanel
+				pin_to_sibling					FriendlyPlayersPanel
+				pin_corner_to_sibling		TOP_LEFT
+				pin_to_sibling_corner		TOP_RIGHT
+		}
+		
+		
+		EnemyPanelListSliderPanel
+		{
+			ControlName					RuiButton
+			InheritProperties		RuiSmallButton
+			//labelText						"V"
+			wide 					40
+			tall 					400
+			xpos 					2
+			ypos 					0
+			zpos					0
+	
+			image           "vgui/hud/white"
+			drawColor       "255 255 255 128"
+	
+			pin_to_sibling					EnemyPlayersPanel
+			pin_corner_to_sibling		TOP_LEFT
+			pin_to_sibling_corner		TOP_RIGHT
+		}
+	
+		EnemyPanelListSliderPanel
+		{
+			ControlName				RuiPanel
+			wide 40
+			tall 400
+			xpos 2
+			ypos 0
+	
+			rui 					"ui/control_options_description.rpak"
+	
+			visible					1
+			zpos					-1
+	
+			pin_to_sibling					EnemyPlayersPanel
+			pin_corner_to_sibling		TOP_LEFT
+			pin_to_sibling_corner		TOP_RIGHT
+		}
+	
+		// sh_menu_models.gnut has a global function which gets called when
+		// left mouse button gets called while hovering and has mouse
+		// deltaX; deltaY which we can yoink for ourselfes
+		EnemyPanelListSliderMouseMovementCapture
+		{
+				ControlName					CMouseMovementCapturePanel
+				wide 								40
+				tall 								400
+				xpos 								2
+				ypos 								0
+				zpos								1
+	
+				pin_to_sibling					EnemyPlayersPanel
 				pin_corner_to_sibling		TOP_LEFT
 				pin_to_sibling_corner		TOP_RIGHT
 		}
