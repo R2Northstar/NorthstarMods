@@ -44,7 +44,7 @@ resource/ui/menus/private_lobby.menu
 			visible					1
 			controlSettingsFile		"resource/ui/menus/panels/matchmaking_status.res"
 		}
-
+		
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     Screen
     {
@@ -93,7 +93,7 @@ resource/ui/menus/private_lobby.menu
 			InheritProperties		RuiStartMatchButton
 			visible					1
 			tabposition             1
-			ypos                    10
+			ypos                    -3
 
 			navRight                ListFriendlies
 
@@ -206,8 +206,8 @@ resource/ui/menus/private_lobby.menu
 		PlayerPanel
 		{
 			ControlName					RuiPanel
-			wide 					500
-			tall 					813
+			wide 					456
+			tall 					800
 
 			rui 					"ui/control_options_description.rpak"
 
@@ -216,7 +216,7 @@ resource/ui/menus/private_lobby.menu
 			pin_to_sibling_corner	TOP_RIGHT
 			
 			xpos										2
-			ypos                    525
+			ypos                    512
 			zpos 										-1
 		}
 		
@@ -224,15 +224,282 @@ resource/ui/menus/private_lobby.menu
 		{
 			ControlName				RuiButton
 			InheritProperties		RuiSmallButton
-			classname 				ServerButton
+			classname 				PlayerButton
 			scriptID				11
 			wide 							456
-			labelText					"cock"
+			labelText					"TEAM_MILITIA"
 
 			pin_to_sibling			PlayerPanel
 			pin_corner_to_sibling	TOP_LEFT
 			pin_to_sibling_corner	TOP_LEFT
 		}
+		
+		BtnPlayer2
+		{
+			ControlName				RuiButton
+			InheritProperties		RuiSmallButton
+			classname 				PlayerButton
+			scriptID				11
+			wide 							456
+			labelText					"cock"
+
+			pin_to_sibling			BtnPlayer1
+			pin_corner_to_sibling	TOP_LEFT
+			pin_to_sibling_corner	BOTTOM_LEFT
+		}
+		
+		BtnPlayer3
+		{
+			ControlName				RuiButton
+			InheritProperties		RuiSmallButton
+			classname 				PlayerButton
+			scriptID				11
+			wide 							456
+			labelText					"cock"
+
+			pin_to_sibling			BtnPlayer2
+			pin_corner_to_sibling	TOP_LEFT
+			pin_to_sibling_corner	BOTTOM_LEFT
+		}
+		
+		BtnPlayer4
+		{
+			ControlName				RuiButton
+			InheritProperties		RuiSmallButton
+			classname 				PlayerButton
+			scriptID				11
+			wide 							456
+			labelText					"cock"
+
+			pin_to_sibling			BtnPlayer3
+			pin_corner_to_sibling	TOP_LEFT
+			pin_to_sibling_corner	BOTTOM_LEFT
+		}
+		
+		BtnPlayer5
+		{
+			ControlName				RuiButton
+			InheritProperties		RuiSmallButton
+			classname 				PlayerButton
+			scriptID				11
+			wide 							456
+			labelText					"cock"
+
+			pin_to_sibling			BtnPlayer4
+			pin_corner_to_sibling	TOP_LEFT
+			pin_to_sibling_corner	BOTTOM_LEFT
+		}
+		
+		BtnPlayer6
+		{
+			ControlName				RuiButton
+			InheritProperties		RuiSmallButton
+			classname 				PlayerButton
+			scriptID				11
+			wide 							456
+			labelText					"cock"
+
+			pin_to_sibling			BtnPlayer5
+			pin_corner_to_sibling	TOP_LEFT
+			pin_to_sibling_corner	BOTTOM_LEFT
+		}
+		
+		BtnPlayer7
+		{
+			ControlName				RuiButton
+			InheritProperties		RuiSmallButton
+			classname 				PlayerButton
+			scriptID				11
+			wide 							456
+			labelText					"cock"
+
+			pin_to_sibling			BtnPlayer6
+			pin_corner_to_sibling	TOP_LEFT
+			pin_to_sibling_corner	BOTTOM_LEFT
+		}
+		
+		BtnPlayer8
+		{
+			ControlName				RuiButton
+			InheritProperties		RuiSmallButton
+			classname 				PlayerButton
+			scriptID				11
+			wide 							456
+			labelText					"cock"
+
+			pin_to_sibling			BtnPlayer7
+			pin_corner_to_sibling	TOP_LEFT
+			pin_to_sibling_corner	BOTTOM_LEFT
+		}
+		
+		BtnPlayer9
+		{
+			ControlName				RuiButton
+			InheritProperties		RuiSmallButton
+			classname 				PlayerButton
+			scriptID				11
+			wide 							456
+			labelText					"cock"
+
+			pin_to_sibling			BtnPlayer8
+			pin_corner_to_sibling	TOP_LEFT
+			pin_to_sibling_corner	BOTTOM_LEFT
+		}
+		
+		BtnPlayer10
+		{
+			ControlName				RuiButton
+			InheritProperties		RuiSmallButton
+			classname 				PlayerButton
+			scriptID				11
+			wide 							456
+			labelText					"cock"
+
+			pin_to_sibling			BtnPlayer9
+			pin_corner_to_sibling	TOP_LEFT
+			pin_to_sibling_corner	BOTTOM_LEFT
+		}
+		
+		BtnPlayer11
+		{
+			ControlName				RuiButton
+			InheritProperties		RuiSmallButton
+			classname 				PlayerButton
+			scriptID				11
+			wide 							456
+			labelText					"TEAM_IMC"
+
+			pin_to_sibling			BtnPlayer10
+			pin_corner_to_sibling	TOP_LEFT
+			pin_to_sibling_corner	BOTTOM_LEFT
+		}
+		
+		BtnPlayer12
+		{
+			ControlName				RuiButton
+			InheritProperties		RuiSmallButton
+			classname 				PlayerButton
+			scriptID				11
+			wide 							456
+			labelText					"cock"
+
+			pin_to_sibling			BtnPlayer11
+			pin_corner_to_sibling	TOP_LEFT
+			pin_to_sibling_corner	BOTTOM_LEFT
+		}
+		
+		BtnPlayer13
+		{
+			ControlName				RuiButton
+			InheritProperties		RuiSmallButton
+			classname 				PlayerButton
+			scriptID				11
+			wide 							456
+			labelText					"cock"
+
+			pin_to_sibling			BtnPlayer12
+			pin_corner_to_sibling	TOP_LEFT
+			pin_to_sibling_corner	BOTTOM_LEFT
+		}
+		
+		BtnPlayer14
+		{
+			ControlName				RuiButton
+			InheritProperties		RuiSmallButton
+			classname 				PlayerButton
+			scriptID				11
+			wide 							456
+			labelText					"cock"
+
+			pin_to_sibling			BtnPlayer13
+			pin_corner_to_sibling	TOP_LEFT
+			pin_to_sibling_corner	BOTTOM_LEFT
+		}
+		
+		BtnPlayer15
+		{
+			ControlName				RuiButton
+			InheritProperties		RuiSmallButton
+			classname 				PlayerButton
+			scriptID				11
+			wide 							456
+			labelText					"cock"
+
+			pin_to_sibling			BtnPlayer14
+			pin_corner_to_sibling	TOP_LEFT
+			pin_to_sibling_corner	BOTTOM_LEFT
+		}
+		
+		BtnPlayer16
+		{
+			ControlName				RuiButton
+			InheritProperties		RuiSmallButton
+			classname 				PlayerButton
+			scriptID				11
+			wide 							456
+			labelText					"cock"
+
+			pin_to_sibling			BtnPlayer15
+			pin_corner_to_sibling	TOP_LEFT
+			pin_to_sibling_corner	BOTTOM_LEFT
+		}
+		
+		BtnPlayer17
+		{
+			ControlName				RuiButton
+			InheritProperties		RuiSmallButton
+			classname 				PlayerButton
+			scriptID				11
+			wide 							456
+			labelText					"cock"
+
+			pin_to_sibling			BtnPlayer16
+			pin_corner_to_sibling	TOP_LEFT
+			pin_to_sibling_corner	BOTTOM_LEFT
+		}
+		
+		BtnPlayer18
+		{
+			ControlName				RuiButton
+			InheritProperties		RuiSmallButton
+			classname 				PlayerButton
+			scriptID				11
+			wide 							456
+			labelText					"cock"
+
+			pin_to_sibling			BtnPlayer17
+			pin_corner_to_sibling	TOP_LEFT
+			pin_to_sibling_corner	BOTTOM_LEFT
+		}
+		
+		BtnPlayer19
+		{
+			ControlName				RuiButton
+			InheritProperties		RuiSmallButton
+			classname 				PlayerButton
+			scriptID				11
+			wide 							456
+			labelText					"cock"
+
+			pin_to_sibling			BtnPlayer18
+			pin_corner_to_sibling	TOP_LEFT
+			pin_to_sibling_corner	BOTTOM_LEFT
+		}
+		
+		BtnPlayer20
+		{
+			ControlName				RuiButton
+			InheritProperties		RuiSmallButton
+			classname 				PlayerButton
+			scriptID				11
+			wide 							456
+			labelText					"cock"
+
+			pin_to_sibling			BtnPlayer19
+			pin_corner_to_sibling	TOP_LEFT
+			pin_to_sibling_corner	BOTTOM_LEFT
+		}
+		
 		
 		MatchSettings
 		{
@@ -252,7 +519,134 @@ resource/ui/menus/private_lobby.menu
 
 			visible 0
 		}
-		
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+		BtnServerListUpArrow
+		{
+			ControlName					RuiButton
+			InheritProperties		RuiSmallButton
+			//labelText						"A"
+			wide 40
+			tall 40
+			xpos 2
+			ypos 2
+	
+			image           "vgui/hud/white"
+			drawColor       "255 255 255 128"
+	
+			pin_to_sibling					PlayerPanel
+			pin_corner_to_sibling		TOP_LEFT
+			pin_to_sibling_corner		TOP_RIGHT
+		}
+	
+		BtnServerListUpArrowPanel
+		{
+			ControlName				RuiPanel
+			wide 40
+			tall 40
+			xpos 2
+			ypos 2
+	
+			rui 					"ui/control_options_description.rpak"
+	
+			visible					1
+			zpos					-1
+	
+			pin_to_sibling					PlayerPanel
+			pin_corner_to_sibling		TOP_LEFT
+			pin_to_sibling_corner		TOP_RIGHT
+		}
+	
+		BtnServerListDownArrow
+		{
+			ControlName					RuiButton
+			InheritProperties		RuiSmallButton
+			//labelText						"V"
+			wide 40
+			tall 40
+			xpos 2
+			ypos -760
+	
+			image           "vgui/hud/white"
+			drawColor       "255 255 255 128"
+	
+			pin_to_sibling					PlayerPanel
+			pin_corner_to_sibling		TOP_LEFT
+			pin_to_sibling_corner		TOP_RIGHT
+		}
+	
+		BtnServerListDownArrowPanel
+		{
+			ControlName				RuiPanel
+			wide 40
+			tall 40
+			xpos 2
+			ypos -760
+	
+			rui 					"ui/control_options_description.rpak"
+	
+			visible					1
+			zpos					-1
+	
+			pin_to_sibling					PlayerPanel
+			pin_corner_to_sibling		TOP_LEFT
+			pin_to_sibling_corner		TOP_RIGHT
+		}
+	
+		BtnServerListSlider
+		{
+			ControlName					RuiButton
+			InheritProperties		RuiSmallButton
+			//labelText						"V"
+			wide 					40
+			tall 					562
+			xpos 					2
+			ypos 					-40
+			zpos					0
+	
+			image           "vgui/hud/white"
+			drawColor       "255 255 255 128"
+	
+			pin_to_sibling					PlayerPanel
+			pin_corner_to_sibling		TOP_LEFT
+			pin_to_sibling_corner		TOP_RIGHT
+		}
+	
+		BtnServerListSliderPanel
+		{
+			ControlName				RuiPanel
+			wide 40
+			tall 562
+			xpos 2
+			ypos -40
+	
+			rui 					"ui/control_options_description.rpak"
+	
+			visible					1
+			zpos					-1
+	
+			pin_to_sibling					PlayerPanel
+			pin_corner_to_sibling		TOP_LEFT
+			pin_to_sibling_corner		TOP_RIGHT
+		}
+	
+		// sh_menu_models.gnut has a global function which gets called when
+		// left mouse button gets called while hovering and has mouse
+		// deltaX; deltaY which we can yoink for ourselfes
+		MouseMovementCapture
+		{
+				ControlName					CMouseMovementCapturePanel
+				wide 								40
+				tall 								562
+				xpos 								2
+				ypos 								-40
+				zpos								1
+	
+				pin_to_sibling					PlayerPanel
+				pin_corner_to_sibling		TOP_LEFT
+				pin_to_sibling_corner		TOP_RIGHT
+		}
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 		ButtonTooltip
