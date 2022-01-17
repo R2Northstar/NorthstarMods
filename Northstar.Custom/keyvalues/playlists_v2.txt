@@ -280,7 +280,7 @@ playlists
 		}
 		pvb
 		{
-			inherit default
+			inherit defaults
 			vars
 			{
 				name #PL_pvb
@@ -294,7 +294,7 @@ playlists
 				pilot_health_multiplier 2
 				timelimit 3
 
-				gamemode_score_hint #GAMEMODE_SCORE_HINT_FFA
+				gamemode_score_hint #GAMEMODE_SCORE_HINT_TDM
 			}
 		}
 	}
@@ -893,9 +893,9 @@ playlists
 				classic_mp 1
 				mixtape_timeout 120
 				visible 0
-				
+
 				gamemode_score_hint #GAMEMODE_SCORE_HINT_FFA
-			}	
+			}
 			gamemodes
 			{
 				sns
