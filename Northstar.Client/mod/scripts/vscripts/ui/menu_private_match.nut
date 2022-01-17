@@ -154,6 +154,7 @@ asset function GetMapImageForMapName( string mapName )
 }
 
 
+
 void function InitPrivateMatchMenu()
 {
 	var menu = GetMenu( "PrivateLobbyMenu" )

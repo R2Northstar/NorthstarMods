@@ -65,6 +65,14 @@
 			"UICallback": {
 				"Before": "AddNorthstarCustomMatchSettingsMenu"
 			}
+		},
+		
+		{
+			"Path": "client/cl_menu_private_match.nut",
+			"RunOn": "CLIENT",
+			"ClientCallback": {
+				"After": "Cl_InitPrivateMatchMenu",
+			}
 		}
 	],
 	
