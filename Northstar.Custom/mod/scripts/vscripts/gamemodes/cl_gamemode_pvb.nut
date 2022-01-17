@@ -32,7 +32,6 @@ void function ClGamemodePVB_Init()
 
 void function ServerCallback_YouAreBoss()
 {
-	// heavily based on mfd code
 	entity localPlayer = GetLocalViewPlayer()
 
 	StartParticleEffectOnEntity( localPlayer.GetCockpit(), GetParticleSystemIndex( $"P_MFD" ), FX_PATTACH_ABSORIGIN_FOLLOW, -1 )
@@ -64,7 +63,7 @@ void function ServerCallback_AnnounceBoss( int survivorEHandle )
 
 void function ServerCallback_YouAreAmped()
 {
-	// heavily based on mfd code
+	// fix this later
 	entity localPlayer = GetLocalViewPlayer()
 
 	StartParticleEffectOnEntity( localPlayer.GetCockpit(), GetParticleSystemIndex( $"P_MFD" ), FX_PATTACH_ABSORIGIN_FOLLOW, -1 )
