@@ -49,15 +49,15 @@
 			"RunOn": "( CLIENT || SERVER ) && MP"
 		},
 		{
-			"Path": "gamemodes/sh_gamemode_chamber.nut",
-			"RunOn": "( CLIENT || SERVER ) && MP",
-			"ClientCallback": {
-				"Before": "Sh_GamemodeChamber_Init"
-			},
-			"ServerCallback": {
-				"Before": "Sh_GamemodeChamber_Init"
-			}
-		},
+            "Path": "gamemodes/sh_gamemode_pvb.nut",
+            "RunOn": "( CLIENT || SERVER ) && MP",
+            "ServerCallback": {
+                "Before": "Sh_GamemodePVB_Init"
+            },
+            "ClientCallback": {
+                "Before": "Sh_GamemodePVB_Init"
+            }
+        },
 		{
 			"Path": "gamemodes/_gamemode_chamber.nut",
 			"RunOn": "SERVER && MP"
@@ -123,7 +123,7 @@
 		},
 		{
 			"Path": "gamemodes/gg_earn_meter/sh_gg_earn_meter.gnut",
-			"RunOn": "( CLIENT || SERVER ) && MP",
+			"RunOn": "( CLIENT || SERVER ) && MP"
 		},
 		{
 			"Path": "gamemodes/gg_earn_meter/_gg_earn_meter.gnut",
@@ -414,6 +414,24 @@
 			},
 			"ServerCallback": {
 				"After": "CustomPilotCollision_InitPlaylistVars"
+			}
+		},
+		{
+			"Path": "gamemodes/_gamemode_pvb.nut",
+			"RunOn": "SERVER && MP"
+		},
+        {
+            "Path": "gamemodes/cl_gamemode_pvb.nut",
+            "RunOn": "CLIENT && MP"
+        },
+		{
+			"Path": "gamemodes/sh_gamemode_chamber.nut",
+			"RunOn": "( CLIENT || SERVER ) && MP",
+			"ClientCallback": {
+				"Before": "Sh_GamemodeChamber_Init"
+			},
+			"ServerCallback": {
+				"Before": "Sh_GamemodeChamber_Init"
 			}
 		}
 	],
