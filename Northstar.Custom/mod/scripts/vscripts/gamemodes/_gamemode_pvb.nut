@@ -85,7 +85,7 @@ void function MakePlayerAmped(entity player)
 
 	player.SetPlayerGameStat( PGS_ASSAULT_SCORE, 0 ) // reset kills
 	RespawnAmped( player )
-	SendHudMessage( player, "You are the Amped", -1, 0.2, 255, 255, 255, 0, 0.15, 8, 1 )
+	Remote_CallFunction_NonReplay( player, "ServerCallback_YouAreAmped" )
 }
 
 void function RespawnBoss(entity player)
