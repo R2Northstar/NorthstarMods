@@ -16,7 +16,7 @@ void function CreateGamemodePVB()
     GameMode_SetDesc( GAMEMODE_PVB, "#PL_pvb_desc" )
 	GameMode_SetGameModeAnnouncement( GAMEMODE_PVB, "ffa_modeDesc" )
 	GameMode_SetDefaultTimeLimits( GAMEMODE_PVB, 3, 0.0 )
-	GameMode_AddScoreboardColumnData( GAMEMODE_PVB, "#SCOREBOARD_SCORE", PGS_ASSAULT_SCORE, 2 )
+	GameMode_AddScoreboardColumnData( GAMEMODE_PVB, "#PVB_BOSS_DMG", PGS_ASSAULT_SCORE, 4 )
 	GameMode_AddScoreboardColumnData( GAMEMODE_PVB, "#SCOREBOARD_PILOT_KILLS", PGS_PILOT_KILLS, 2 )
 	GameMode_SetColor( GAMEMODE_PVB, [147, 204, 57, 255] )
 
