@@ -1,6 +1,6 @@
 global function Sh_GamemodePVB_Init
 
-global const GAMEMODE_PVB = "PVB"
+global const GAMEMODE_PVB = "pvb"
 
 void function Sh_GamemodePVB_Init()
 {
