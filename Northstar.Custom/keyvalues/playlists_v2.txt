@@ -294,7 +294,7 @@ playlists
 				pilot_health_multiplier 2
 				timelimit 3
 
-				gamemode_score_hint #GAMEMODE_SCORE_HINT_TDM
+				gamemode_score_hint #GAMEMODE_SCORE_HINT_LTS
 			}
 		}
 	}
@@ -936,10 +936,15 @@ playlists
 				lobbytitle #PL_pvb_lobby
 				description #PL_pvb_desc
 				abbreviation #PL_pvb_abbr
-				image ps
+				image lts
 				//mixtape_slot 7
 				mixtape_timeout 120
 				visible 0
+				max_players 16
+				max_teams 2
+				classic_mp 1
+				pilot_health_multiplier 2
+				timelimit 3
 			}
 			gamemodes
 			{
@@ -959,7 +964,6 @@ playlists
 						mp_angel_city 1
 						mp_colony02 1
 						mp_glitch 1
-						mp_lf_stacks 1
 						mp_lf_stacks 1
 						mp_lf_deck 1
 						mp_lf_meadow 1
