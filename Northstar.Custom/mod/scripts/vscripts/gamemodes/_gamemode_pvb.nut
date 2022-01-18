@@ -120,7 +120,6 @@ void function RespawnAmped(entity player)
 void function MakePlayer( entity player )
 {
 	SetTeam( player, TEAM_MILITIA )
-	player.SetPlayerGameStat( PGS_ASSAULT_SCORE, 0 ) // reset kills
 
 	// check how many bosses there are
 	//array<entity> bosses = GetPlayerArrayOfTeam( TEAM_IMC )
