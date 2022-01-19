@@ -1,11 +1,13 @@
+const FX_SHIELD_GAIN_SCREEN		= $"P_xo_shield_up"
+
 global function ClGamemodeTGG_Init
+global function ServerCallback_TGG_PlayUpgradeFX
 
 void function ClGamemodeTGG_Init()
 {
 	// register gamestate asset, this is default so not necessary but doing it anyway
 	ClGameState_RegisterGameStateAsset( $"ui/gamestate_info_ffa.rpak" )
-
-	PrecacheWeapon( "melee_titan_sword" )
+	PrecacheParticleSystem( FX_SHIELD_GAIN_SCREEN )
 
 	// add music for mode, this is copied directly from the attrition/tdm music registered in cl_music.gnut
 	RegisterLevelMusicForTeam( eMusicPieceID.LEVEL_INTRO, "music_mp_pilothunt_intro_flyin", TEAM_IMC )
@@ -29,4 +31,15 @@ void function ClGamemodeTGG_Init()
 	AddCallback_GameStateEnter( eGameState.Postmatch, DisplayPostMatchTop3 )
 
 	Cl_GGEarnMeter_Init()
+}
+
+void function ServerCallback_TGG_PlayUpgradeFX()
+{
+	entity player = GetLocalViewPlayer()
+	if( IsValid(player) )
+	{
+		entity cockpit = player.GetCockpit()
+		if ( IsValid( cockpit ) )
+			StartParticleEffectOnEntity( cockpit, GetParticleSystemIndex( FX_SHIELD_GAIN_SCREEN	), FX_PATTACH_ABSORIGIN_FOLLOW, -1 )
+	}
 }

@@ -73,9 +73,26 @@ void function PlayerWatchesTGGIntroIntermissionCam( entity player )
     TryGameModeAnnouncement( player )
 }
 
+TitanGunGameWeapon function GetCurrentEarnMeterIcon( entity player )
+{
+    int currentWeaponIndex = GameRules_GetTeamScore( player.GetTeam() )
+    array<TitanGunGameWeapon> weapons = GetTitanGunGameWeapons()
+
+    if ( currentWeaponIndex >= weapons.len() )
+		currentWeaponIndex = weapons.len() - 1 
+
+    TitanGunGameWeapon weapon = weapons[ currentWeaponIndex + 1 ]
+
+    return weapon
+}
+
 void function OnPlayerBecomesTitan( entity player, entity titan )
 {
-    Sv_GGEarnMeter_SetWeaponIcon( player, GetTitanGunGameWeapon( player ).weapon )
+    string nextWeapon = GetCurrentEarnMeterIcon( player ).weapon
+    if( nextWeapon == "melee_titan_sword" )
+        Sv_GGEarnMeter_SetWeaponIcon( player, "mp_titancore_shift_core" )
+    else
+        Sv_GGEarnMeter_SetWeaponIcon( player, nextWeapon )
     foreach ( entity weapon in player.GetOffhandWeapons() )
 		player.TakeWeaponNow( weapon.GetWeaponClassName() )
 
@@ -141,7 +158,6 @@ void function UpdateLivingTitanLoadout( entity player )
 		PlayMusicToAll( eMusicPieceID.LEVEL_LAST_MINUTE ) // this *shouldn't* overlap if done multiple times
 	
 	TitanGunGameWeapon weapon = weapons[ currentWeaponIndex ]
-	Sv_GGEarnMeter_SetWeaponIcon( player, weapon.weapon )
     if ( currentWeaponIndex > 9 )
         return
 
@@ -155,8 +171,9 @@ void function UpdateLivingTitanLoadout( entity player )
     // discount upgrade core heal fx
     EmitSoundOnEntityExceptToPlayer( player, player, "Titan_Monarch_Smart_Core_Activated_3P" )
 	EmitSoundOnEntityOnlyToPlayer( player, player, "Titan_Monarch_Smart_Core_Activated_1P" )
+    Remote_CallFunction_Replay( player, "ServerCallback_TGG_PlayUpgradeFX" )
 	entity soul = player.GetTitanSoul()
-	soul.SetShieldHealth( player.GetShieldHealthMax() )
+	soul.SetShieldHealth( soul.GetShieldHealthMax() )
 
 	foreach ( entity weapon in player.GetMainWeapons() )
 		player.TakeWeaponNow( weapon.GetWeaponClassName() )
@@ -173,6 +190,12 @@ void function UpdateLivingTitanLoadout( entity player )
     } else {
         player.GiveWeapon( weapon.weapon, weapon.mods )
     }
+
+    string nextWeapon = GetCurrentEarnMeterIcon( player ).weapon
+    if( nextWeapon == "melee_titan_sword" )
+        Sv_GGEarnMeter_SetWeaponIcon( player, "mp_titancore_shift_core" )
+    else
+        Sv_GGEarnMeter_SetWeaponIcon( player, nextWeapon )
 }
 
 void function AddTeamScoreForPlayerKilled( entity victim, entity attacker, var damageInfo )
@@ -187,20 +210,19 @@ void function AddTeamScoreForPlayerKilled( entity victim, entity attacker, var d
 		    AddTeamScore( attacker.GetTeam(), 1 )
 		    attacker.AddToPlayerGameStat( PGS_ASSAULT_SCORE, 1 )
 
-            UpdateLivingTitanLoadout( attacker )
+            Reward( attacker, victim, scoreEvent, percentageReward)
         }
-	}
 
-    table<int, bool> alreadyAssisted
-	foreach( DamageHistoryStruct attackerInfo in victim.e.recentDamageHistory )
-	{
-		if( attackerInfo.attacker != attacker && !alreadyAssisted[attackerInfo.attacker.GetEncodedEHandle()] )
-		{
-			if ( attackerInfo.damageSourceId != eDamageSourceId.melee_pilot_emptyhanded ) {
-				alreadyAssisted[attackerInfo.attacker.GetEncodedEHandle()] <- true
-				Reward( attackerInfo.attacker, victim, "TitanAssist", GetCurrentPlaylistVarFloat( "tgg_assist_reward", 0.34 ) )
-			}
-		}
+        table<int, bool> alreadyAssisted
+	    foreach( DamageHistoryStruct attackerInfo in victim.GetTitanSoul().e.recentDamageHistory )
+	    {   
+		    bool exists = attackerInfo.attacker.GetEncodedEHandle() in alreadyAssisted ? true : false
+		    if( attackerInfo.attacker != attacker && !exists )
+		    {
+			    alreadyAssisted[attackerInfo.attacker.GetEncodedEHandle()] <- true
+                Reward( attackerInfo.attacker, victim, "TitanAssist", GetCurrentPlaylistVarFloat( "tgg_assist_reward", 0.5 ) )
+		    }
+	    }
 	}
 
     thread ForcedRespawnPlayerWithTitanLoadout( victim )
@@ -249,7 +271,7 @@ TitanGunGameWeapon function GetTitanGunGameWeapon( entity player )
     array<TitanGunGameWeapon> weapons = GetTitanGunGameWeapons()
 
     if ( currentWeaponIndex >= weapons.len() )
-		currentWeaponIndex = weapons.len() - 1 // can someone explain what this does
+		currentWeaponIndex = weapons.len() - 1
 		
 	if ( currentWeaponIndex > 8 ) // play end of game music for special weapons
 		PlayMusicToAll( eMusicPieceID.LEVEL_LAST_MINUTE )

@@ -30,6 +30,8 @@ void function CreateGGEarnMeterUI( entity player )
 	RuiSetFloat( file.earnMeterRui, "earnedStartFrac", 0.0 )
 	RuiSetInt( file.earnMeterRui, "meterMode", 5 )
 
+	RuiSetImage( file.earnMeterRui, "goalBuildingIcon", $"" )
+	RuiSetImage( file.earnMeterRui, "goalReadyIcon", $"" )
 	RuiTrackFloat( file.earnMeterRui, "earnedFrac", player, RUI_TRACK_SCRIPT_NETWORK_VAR, GetNetworkedVariableIndex( "gunGameLevelPercentage" ) )
 }
 
