@@ -18,9 +18,6 @@ void function Sh_GamemodeGG_Init()
 {
 	// create custom gamemode
 	AddCallback_OnCustomGamemodesInit( CreateGamemodeGG )
-
-	if ( GAMETYPE != GAMEMODE_GG )
-		Sh_GGEarnMeter_Init()
 }
 
 void function CreateGamemodeGG()
@@ -38,7 +35,6 @@ void function CreateGamemodeGG()
 	AddPrivateMatchModeSettingArbitrary( "#GAMEMODE_gg", "gg_kill_reward", "1.0" )
 	AddPrivateMatchModeSettingArbitrary( "#GAMEMODE_gg", "gg_assist_reward", "0.0" )
 	AddPrivateMatchModeSettingArbitrary( "#GAMEMODE_gg", "gg_execution_reward", "1.0" )
-
 	// setup guns
 
 	// smgs

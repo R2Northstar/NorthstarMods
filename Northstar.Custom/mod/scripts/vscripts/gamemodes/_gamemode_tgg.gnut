@@ -19,7 +19,7 @@ void function GamemodeTGG_Init()
     AddCallback_OnClientConnected( OnPlayerConnected ) // fuck
 	AddCallback_OnPlayerKilled( AddTeamScoreForPlayerKilled ) // dont have to track autotitan kills since you cant leave your titan in this mode
 	AddCallback_OnPilotBecomesTitan( OnPlayerBecomesTitan ) // I have no idea why this wasn't working with normal respawn callback, might be now though
-    AddCallback_TGGEarnMeterFull( OnTGGEarnMeterFilled )
+    AddCallback_GGEarnMeterFull( OnTGGEarnMeterFilled )
 
     SetKillcamsEnabled( false )
 }
@@ -75,7 +75,7 @@ void function PlayerWatchesTGGIntroIntermissionCam( entity player )
 
 void function OnPlayerBecomesTitan( entity player, entity titan )
 {
-    Sv_TGGEarnMeter_SetWeaponIcon( player, GetTitanGunGameWeapon( player ).weapon )
+    Sv_GGEarnMeter_SetWeaponIcon( player, GetTitanGunGameWeapon( player ).weapon )
     foreach ( entity weapon in player.GetOffhandWeapons() )
 		player.TakeWeaponNow( weapon.GetWeaponClassName() )
 
@@ -91,9 +91,8 @@ void function OnPlayerConnected( entity player )
 void function OnPlayerRespawned_Threaded( entity player )
 {
 	WaitFrame()
-	if ( IsValid( player ) )
+    if ( IsValid( player ) )
 		PlayerEarnMeter_SetMode( player, eEarnMeterMode.DISABLED )
-
     // ultra fucking hacky jesus
     int currentWeaponIndex = GameRules_GetTeamScore( player.GetTeam() )
     if(currentWeaponIndex == 8)
@@ -123,7 +122,7 @@ bool function OnTGGEarnMeterFilled( entity player )
 void function Reward( entity player, entity victim, string scoreEvent, float percentageReward )
 {
 	percentageReward = clamp(percentageReward, 0.0, 1.0)
-	Sv_TGGEarnMeter_AddPercentage( player, percentageReward )
+	Sv_GGEarnMeter_AddPercentage( player, percentageReward )
 	Remote_CallFunction_NonReplay( player, "ServerCallback_ScoreEvent", GetScoreEvent(scoreEvent).eventId, 0, eEventDisplayType.MEDAL, victim.GetEncodedEHandle(), 0.0, percentageReward)
 }
 
@@ -142,7 +141,7 @@ void function UpdateLivingTitanLoadout( entity player )
 		PlayMusicToAll( eMusicPieceID.LEVEL_LAST_MINUTE ) // this *shouldn't* overlap if done multiple times
 	
 	TitanGunGameWeapon weapon = weapons[ currentWeaponIndex ]
-	Sv_TGGEarnMeter_SetWeaponIcon( player, weapon.weapon )
+	Sv_GGEarnMeter_SetWeaponIcon( player, weapon.weapon )
     if ( currentWeaponIndex > 9 )
         return
 

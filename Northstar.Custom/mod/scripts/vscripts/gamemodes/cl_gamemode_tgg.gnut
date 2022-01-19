@@ -28,5 +28,5 @@ void function ClGamemodeTGG_Init()
 	
 	AddCallback_GameStateEnter( eGameState.Postmatch, DisplayPostMatchTop3 )
 
-	Cl_TGGEarnMeter_Init()
+	Cl_GGEarnMeter_Init()
 }
