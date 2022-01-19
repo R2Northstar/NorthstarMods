@@ -1,5 +1,7 @@
 global function Sh_GGEarnMeter_Init
 
+bool shouldRegister = true
+
 void function Sh_GGEarnMeter_Init()
 {
 	AddCallback_OnRegisteringCustomNetworkVars( RegisterSharedNetwork )
@@ -7,10 +9,14 @@ void function Sh_GGEarnMeter_Init()
 
 void function RegisterSharedNetwork()
 {
-	RegisterNetworkedVariable( "gunGameLevelPercentage", SNDC_PLAYER_EXCLUSIVE, SNVT_FLOAT_RANGE, 0.0, 0.0, 1.0 )
-    Remote_RegisterFunction( "ServerCallback_GGEarnMeter_SetWeaponIcon" )
+    if (shouldRegister) // prevents registering multiple times which would be bad
+    {
+	    RegisterNetworkedVariable( "gunGameLevelPercentage", SNDC_PLAYER_EXCLUSIVE, SNVT_FLOAT_RANGE, 0.0, 0.0, 1.0 )
+        shouldRegister = false
+        Remote_RegisterFunction( "ServerCallback_GGEarnMeter_SetWeaponIcon" )
 
-    #if CLIENT
-    	Cl_GGEarnMeter_RegisterNetwork()
-    #endif
+        #if CLIENT
+        	Cl_GGEarnMeter_RegisterNetwork()
+        #endif
+    }
 }
