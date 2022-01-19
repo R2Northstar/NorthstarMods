@@ -129,6 +129,11 @@ Press Yes if you agree to this. This choice can be changed in the mods menu at a
 		"SNS_LEADER_BANKRUPT_SUB" "%s1 Was Reset By %s2"
 		"SNS_BANKRUPT" "Bankrupt!"
 		"SNS_BANKRUPT_SUB" "Your Score Was Reset By %s1"
+		"wme_kill_value" "Wingman Elite Kill Value"
+		"offhand_kill_value" "Offhand Kill Value"
+		"reset_kill_value" "Pulse/Execution Kill Value"
+		"melee_kill_value" "Melee Kill Value"
+		"reset_pulse_blade_cooldown_on_pulse_blade_kill" "Kill Cooldown Resets"
 
 		"PL_inf" "Infection"
 		"PL_inf_lobby" "Infection Lobby"
@@ -143,6 +148,13 @@ Press Yes if you agree to this. This choice can be changed in the mods menu at a
 		"INFECTION_KILL_LAST_SURVIVOR" "Infect them before time runs out!"
 		"INFECTION_YOU_ARE_LAST_SURVIVOR" "You are the Last Survivor!"
 		"INFECTION_SURVIVE_LAST_SURVIVOR" "Survive."
+
+		"PL_tffa" "Titan Free for All"
+		"PL_tffa_lobby" "Titan Free for All Lobby"
+		"PL_tffa_desc" "Every pilot for themselves, destroy all enemy titans."
+		"PL_tffa_hint" "Every pilot for themselves, destroy all enemy titans."
+		"PL_tffa_abbr" "TFFA"
+		"GAMEMODE_TFFA" "Titan Free for All"
 
 		"PL_pvb" "Pilots vs Boss"
 		"PL_pvb_lobby" "Pilots vs Boss Lobby"
@@ -160,12 +172,6 @@ Press Yes if you agree to this. This choice can be changed in the mods menu at a
 		"PVB_BOSS_KILL_AMPED" "Focus On Killing the Amped, They're stronger than the rest."
 		"PVB_AMPED_KILL_BOSS" "Permanent Stim Applied, Destroy the Boss."
 
-		"PL_tffa" "Titan Free for All"
-		"PL_tffa_lobby" "Titan Free for All Lobby"
-		"PL_tffa_desc" "Every pilot for themselves, destroy all enemy titans."
-		"PL_tffa_hint" "Every pilot for themselves, destroy all enemy titans."
-		"PL_tffa_abbr" "TFFA"
-		"GAMEMODE_TFFA" "Titan Free for All"
 
 		"PL_hs" "Hide and Seek"
 		"PL_hs_lobby" "Hide and Seek Lobby"
@@ -298,5 +304,12 @@ Press Yes if you agree to this. This choice can be changed in the mods menu at a
 		"CONNECTING" "Connecting..."
 		"INGAME_PLAYERS" "Players:"
 		"TOTAL_SERVERS" "Servers:"
+    
+    
+		// Mods menu
+		"SHOW" "Show"
+		"SHOW_ALL" "All"
+		"SHOW_ONLY_ENABLED" "Only Enabled"
+		"SHOW_ONLY_DISABLED" "Only Disabled"
 	}
 }
