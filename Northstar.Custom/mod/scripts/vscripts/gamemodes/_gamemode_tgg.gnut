@@ -76,12 +76,13 @@ void function PlayerWatchesTGGIntroIntermissionCam( entity player )
 TitanGunGameWeapon function GetCurrentEarnMeterIcon( entity player )
 {
     int currentWeaponIndex = GameRules_GetTeamScore( player.GetTeam() )
+    currentWeaponIndex += 1
     array<TitanGunGameWeapon> weapons = GetTitanGunGameWeapons()
 
     if ( currentWeaponIndex >= weapons.len() )
 		currentWeaponIndex = weapons.len() - 1 
 
-    TitanGunGameWeapon weapon = weapons[ currentWeaponIndex + 1 ]
+    TitanGunGameWeapon weapon = weapons[ currentWeaponIndex ]
 
     return weapon
 }
@@ -149,15 +150,15 @@ void function UpdateLivingTitanLoadout( entity player )
         return
 
     int currentWeaponIndex = GameRules_GetTeamScore( player.GetTeam() )
-	array<TitanGunGameWeapon> weapons = GetTitanGunGameWeapons()
+	array<TitanGunGameWeapon> ggWeapons = GetTitanGunGameWeapons()
 	
-	if ( currentWeaponIndex >= weapons.len() )
-		currentWeaponIndex = weapons.len() - 1
+	if ( currentWeaponIndex >= ggWeapons.len() )
+		currentWeaponIndex = ggWeapons.len() - 1
 		
 	if ( currentWeaponIndex > 9) // play end of game music for special weapons
 		PlayMusicToAll( eMusicPieceID.LEVEL_LAST_MINUTE ) // this *shouldn't* overlap if done multiple times
 	
-	TitanGunGameWeapon weapon = weapons[ currentWeaponIndex ]
+	TitanGunGameWeapon ggWeapon = ggWeapons[ currentWeaponIndex ]
     if ( currentWeaponIndex > 9 )
         return
 
@@ -188,7 +189,7 @@ void function UpdateLivingTitanLoadout( entity player )
         GivePassive( player, ePassives.PAS_FUSION_CORE )
 		GivePassive( player, ePassives.PAS_SHIFT_CORE )
     } else {
-        player.GiveWeapon( weapon.weapon, weapon.mods )
+        player.GiveWeapon( ggWeapon.weapon, ggWeapon.mods )
     }
 
     string nextWeapon = GetCurrentEarnMeterIcon( player ).weapon
@@ -206,9 +207,6 @@ void function AddTeamScoreForPlayerKilled( entity victim, entity attacker, var d
         {
             float percentageReward = GetCurrentPlaylistVarFloat( "tgg_kill_reward", 1.0 )
 			string scoreEvent = "KillTitan"
-
-		    AddTeamScore( attacker.GetTeam(), 1 )
-		    attacker.AddToPlayerGameStat( PGS_ASSAULT_SCORE, 1 )
 
             Reward( attacker, victim, scoreEvent, percentageReward)
         }
