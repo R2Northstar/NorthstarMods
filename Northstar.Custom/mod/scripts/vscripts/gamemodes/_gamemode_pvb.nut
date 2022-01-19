@@ -94,8 +94,8 @@ void function RespawnBoss(entity player)
 	SetTeam( player, TEAM_IMC )
 	RespawnAsTitan( player, false )
 	player.SetTitanDisembarkEnabled(false)
-	player.SetMaxHealth(15000 * GetPlayerArray().len())
-	player.SetHealth(15000 * GetPlayerArray().len())
+	player.SetMaxHealth(20000 * GetPlayerArray().len())
+	player.SetHealth(20000 * GetPlayerArray().len())
 }
 
 void function RespawnAmped(entity player)
