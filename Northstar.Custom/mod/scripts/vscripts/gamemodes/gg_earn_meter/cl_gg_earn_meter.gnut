@@ -1,7 +1,6 @@
 global function Cl_GGEarnMeter_Init
 global function Cl_GGEarnMeter_RegisterNetwork
 global function ServerCallback_GGEarnMeter_SetWeaponIcon
-global function SetEarnMeterRuiImage
 
 const float FILL_ANIM_DURATION = 0.2
 
@@ -80,10 +79,4 @@ void function ServerCallback_GGEarnMeter_SetWeaponIcon( int damageSourceId )
 
 	RuiSetImage( file.earnMeterRui, "goalBuildingIcon", weaponImage )
 	RuiSetImage( file.earnMeterRui, "goalReadyIcon", weaponImage )
-}
-
-void function SetEarnMeterRuiImage(asset image)
-{
-	RuiSetImage( file.earnMeterRui, "goalBuildingIcon", image )
-	RuiSetImage( file.earnMeterRui, "goalReadyIcon", image )
 }

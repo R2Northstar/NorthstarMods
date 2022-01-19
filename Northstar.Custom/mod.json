@@ -312,25 +312,6 @@
 			"RunOn": "CLIENT && MP"
 		},
 		{
-			"Path": "gamemodes/_gamemode_spd.nut",
-			"RunOn": "SERVER && MP"
-		},
-		{
-			"Path": "gamemodes/cl_gamemode_spd.nut",
-			"RunOn": "CLIENT && MP"
-		},
-		{
-			"Path": "gamemodes/sh_gamemode_spd.nut",
-			"RunOn": "( CLIENT || SERVER ) && MP",
-			"ClientCallback": {
-				"Before": "SH_GamemodeSpd_init"
-			},
-			"ServerCallback": {
-				"Before": "SH_GamemodeSpd_init"
-			}
-		},
-
-		{
 			"Path": "sh_3psequence_to_1p_hacks.gnut",
 			"RunOn": "( CLIENT || SERVER ) && MP",
 			"ClientCallback": {
