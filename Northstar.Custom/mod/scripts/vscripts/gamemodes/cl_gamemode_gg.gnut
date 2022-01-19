@@ -1,5 +1,9 @@
 global function ClGamemodeGG_Init
 
+global function ServerCallback_GGDemotion
+global function ServerCallback_GGPromotion
+global function ServerCallback_GGGeneric
+
 void function ClGamemodeGG_Init()
 {
 	// add ffa gamestate asset
@@ -25,4 +29,96 @@ void function ClGamemodeGG_Init()
 	RegisterLevelMusicForTeam( eMusicPieceID.LEVEL_LAST_MINUTE, "music_mp_freeagents_lastminute", TEAM_MILITIA )
 
 	Cl_GGEarnMeter_Init()
+}
+
+void function ServerCallback_GGDemotion( int EncodedEHandle )
+{
+	entity localPlayer = GetLocalViewPlayer()
+	entity teamPlayer = GetEntityFromEncodedEHandle( EncodedEHandle )
+
+	StartParticleEffectOnEntity( localPlayer.GetCockpit(), GetParticleSystemIndex( $"P_MFD" ), FX_PATTACH_ABSORIGIN_FOLLOW, -1 )
+	EmitSoundOnEntity( localPlayer, "UI_InGame_MarkedForDeath_PlayerMarked"  )
+	HideEventNotification()
+	AnnouncementData announcement = Announcement_Create( "#GG_DEMOTION" )
+
+	if ( localPlayer == teamPlayer ) // different message for the player who is at fault is handled here now
+	{
+		Announcement_SetSubText( announcement, "#GG_BLAME_YOURSELF") 
+	}
+	else
+	{
+		Announcement_SetSubText( announcement, Localize("#GG_BLAME", teamPlayer.GetPlayerName() ) )
+	}
+	
+	Announcement_SetTitleColor( announcement, <1,0,0> ) // <red,green,blue> (ratios i assume)
+	Announcement_SetPurge( announcement, true )
+	Announcement_SetPriority( announcement, 200 ) //Be higher priority than Titanfall ready indicator etc
+	Announcement_SetSoundAlias( announcement, SFX_HUD_ANNOUNCE_QUICK )
+	Announcement_SetStyle( announcement, ANNOUNCEMENT_STYLE_QUICK )
+	AnnouncementFromClass( localPlayer, announcement )
+}
+
+void function ServerCallback_GGPromotion( int EncodedEHandle )
+{
+	entity localPlayer = GetLocalViewPlayer()
+	entity teamPlayer = GetEntityFromEncodedEHandle( EncodedEHandle )
+
+	// i think this handles the screen effect, if so i'm going to disable it for promotion announcements, else we might get a lot of visual clutter
+	//StartParticleEffectOnEntity( localPlayer.GetCockpit(), GetParticleSystemIndex( $"P_MFD" ), FX_PATTACH_ABSORIGIN_FOLLOW, -1 )
+
+	EmitSoundOnEntity( localPlayer, "UI_InGame_MarkedForDeath_PlayerMarked"  )
+	HideEventNotification()
+	AnnouncementData announcement = Announcement_Create( "#GG_PROMOTION" )
+
+	if ( localPlayer == teamPlayer ) // different message for the player who is at fault is handled here now
+	{
+		//Announcement_SetSubText( announcement, "#GG_THANK_YOURSELF") // idk if i like having subtext when you are the one who levelled up the meter
+	}
+	else
+	{
+		Announcement_SetSubText( announcement, Localize("#GG_THANK", teamPlayer.GetPlayerName() ) )
+	}
+	
+	Announcement_SetTitleColor( announcement, <0,0.3,1> ) // this should give a light blue?
+	Announcement_SetPurge( announcement, true )	
+	Announcement_SetPriority( announcement, 200 ) //Be higher priority than Titanfall ready indicator etc
+	Announcement_SetSoundAlias( announcement, SFX_HUD_ANNOUNCE_QUICK )
+	Announcement_SetStyle( announcement, ANNOUNCEMENT_STYLE_QUICK )
+	AnnouncementFromClass( localPlayer, announcement )
+}
+
+void function ServerCallback_GGGeneric( int EncodedEHandle, int messageType )
+{
+	entity localPlayer = GetLocalViewPlayer()
+	entity teamPlayer = GetEntityFromEncodedEHandle( EncodedEHandle )
+	string teamPlayerName = teamPlayer.GetPlayerName()
+
+	if (teamPlayer == localPlayer) // so we get something like "You committed suicide" instead of "ASpoonPlaysGames committed suicide" for the person who died
+	{
+		teamPlayerName = Localize( "#GG_YOU" )
+	}
+	
+	HideEventNotification()
+	string message = ""
+
+
+	// 0 - suicide, 1 - executed
+	switch (messageType)
+	{
+		case 0:
+			message = Localize( "#GG_SUICIDE", teamPlayerName )
+			break
+		case 1:
+			message = Localize( "#GG_EXECUTION", teamPlayerName)
+	}
+
+	AnnouncementData announcement = Announcement_Create( "#GG_PROMOTION" )
+
+	
+	Announcement_SetTitleColor( announcement, <1,1,1> )
+	Announcement_SetPurge( announcement, true )	
+	Announcement_SetPriority( announcement, 210 ) // Interrupts the normal announcements (shouldn't have to except to prevent announcement collision)
+	Announcement_SetSoundAlias( announcement, SFX_HUD_ANNOUNCE_QUICK )
+	Announcement_SetStyle( announcement, ANNOUNCEMENT_STYLE_QUICK )
+	AnnouncementFromClass( localPlayer, announcement )
 }

@@ -49,9 +49,10 @@ void function OnPlayerKilled( entity victim, entity attacker, var damageInfo )
 
 	if ( attacker == victim ) // suicide
 	{
-		string message = victim.GetPlayerName() + " committed suicide."
 		foreach ( entity player in GetPlayerArray() )
-			SendHudMessage( player, message, -1, 0.4, 255, 0, 0, 0, 0, 3, 0.15 )
+			
+			Remote_CallFunction_NonReplay( player, "ServerCallback_GGGeneric", victim.GetEncodedEHandle(), 0)
+
 
 		DeRank( victim )
 	}
@@ -66,7 +67,10 @@ void function OnPlayerKilled( entity victim, entity attacker, var damageInfo )
 			{
 				string message = victim.GetPlayerName() + " got executed."
 				foreach ( entity player in GetPlayerArray() )
-					SendHudMessage( player, message, -1, 0.4, 255, 0, 0, 0, 0, 3, 0.15 )
+					if ( player.GetTeam() != victim.GetTeam() )
+					{
+						Remote_CallFunction_NonReplay( player, "ServerCallback_GGGeneric", victim.GetEncodedEHandle(), 1)
+					}
 
 				DeRank( victim )
 
@@ -83,10 +87,13 @@ void function OnPlayerKilled( entity victim, entity attacker, var damageInfo )
 	{
 		if( attackerInfo.attacker != attacker && !alreadyAssisted[attackerInfo.attacker.GetEncodedEHandle()] )
 		{
-			if ( attackerInfo.damageSourceId != eDamageSourceId.melee_pilot_emptyhanded ) {
+			if ( attackerInfo.damageSourceId != eDamageSourceId.melee_pilot_emptyhanded ) { // makes sure that we don't give assists for melees, not strictly necessary for vanilla, but if mods change melee dmg it could be useful
 				alreadyAssisted[attackerInfo.attacker.GetEncodedEHandle()] <- true
-
-				Reward( attackerInfo.attacker, victim, "PilotAssist", GetCurrentPlaylistVarFloat( "gg_assist_reward", 0.0 ) )
+				
+				if (attackerInfo.attacker.GetTeam() == attacker.GetTeam())
+					Reward( attackerInfo.attacker, victim, "PilotAssist", 0 ) // dont give extra meter to the team for a teammate assisting the kill
+				else
+					Reward( attackerInfo.attacker, victim, "PilotAssist", GetCurrentPlaylistVarFloat( "gg_assist_reward", 0.0 ) )
 			}
 		}
 	}
@@ -101,13 +108,18 @@ void function Reward( entity player, entity victim, string scoreEvent, float per
 
 void function DeRank( entity player )
 {
-	Sv_GGEarnMeter_SetPercentage( player, 0.0 )
+	foreach ( entity teamPlayer in GetPlayerArrayOfTeam( player.GetTeam() ) )
+	{
+		Sv_GGEarnMeter_SetPercentage( teamPlayer, 0.0 ) // set earn meter bar for all members of team
+	}
 
+	SendDerankAnnouncementToTeam( player )
+	
 	if ( GameRules_GetTeamScore( player.GetTeam() ) != 0 )
 	{
 		AddTeamScore( player.GetTeam(), -1 ) // get absolutely fucking destroyed lol
 		player.AddToPlayerGameStat( PGS_ASSAULT_SCORE, -1 )
-		UpdateLoadout( player )
+		UpdateLoadoutForTeam( player )
 	}
 }
 
@@ -116,11 +128,52 @@ bool function OnGGEarnMeterFilled( entity player )
 	AddTeamScore( player.GetTeam(), 1 )
 	player.AddToPlayerGameStat( PGS_ASSAULT_SCORE, 1 )
 	UpdateLoadout( player )
+	SendRankUpAnnouncementToTeam( player )
 
 	int currentScore = GameRules_GetTeamScore( player.GetTeam() )
 	int maxScore = GetGunGameWeapons().len()
 
 	return currentScore >= maxScore
+}
+
+void function UpdateLoadoutForTeam( entity player ) // calls UpdateLoadout on every member of the same team as the player
+{
+	foreach ( entity teamPlayer in GetPlayerArrayOfTeam( player.GetTeam() ) )
+	{
+		UpdateLoadout( teamPlayer )
+	}
+}
+
+void function SendDerankAnnouncementToTeam( entity player )
+{
+	foreach ( entity teamPlayer in GetPlayerArrayOfTeam( player.GetTeam() ) )
+	{
+		// currently useless, but im keeping it here in case we want to send unique messages to the player and their team
+		// this is now being handled in cl_gamemode_gg, still keeping it here though in case we want to split it into 2 remote functions at some point
+		if ( teamPlayer == player ) 
+		{
+			Remote_CallFunction_NonReplay( teamPlayer, "ServerCallback_GGDemotion", player.GetEncodedEHandle() )
+		}
+		else
+		{
+			Remote_CallFunction_NonReplay( teamPlayer, "ServerCallback_GGDemotion", player.GetEncodedEHandle() )
+		}
+	}
+}
+
+void function SendRankUpAnnouncementToTeam( entity player )
+{
+	foreach ( entity teamPlayer in GetPlayerArrayOfTeam( player.GetTeam() ) )
+	{
+		if ( teamPlayer == player )
+		{
+			Remote_CallFunction_NonReplay( teamPlayer, "ServerCallback_GGPromotion", player.GetEncodedEHandle() )
+		}
+		else
+		{		
+			Remote_CallFunction_NonReplay( teamPlayer, "ServerCallback_GGPromotion", player.GetEncodedEHandle() )
+		}
+	}
 }
 
 void function UpdateLoadout( entity player )
