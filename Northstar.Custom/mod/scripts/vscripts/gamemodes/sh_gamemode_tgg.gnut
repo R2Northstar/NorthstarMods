@@ -35,7 +35,6 @@ void function CreateGamemodeTGG()
 
 	AddPrivateMatchModeSettingArbitrary( "#GAMEMODE_tgg", "tgg_kill_reward", "1.0" )
 	AddPrivateMatchModeSettingArbitrary( "#GAMEMODE_tgg", "tgg_assist_reward", "0.5" )
-	AddPrivateMatchModeSettingArbitrary( "#GAMEMODE_tgg", "tgg_execution_reward", "0.0" )
 
 	AddPrivateMatchMode( GAMEMODE_TGG )
 

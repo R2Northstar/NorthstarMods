@@ -161,6 +161,8 @@ Press Yes if you agree to this. This choice can be changed in the mods menu at a
 		"PL_tgg_hint" "Get a kill with each gun to win, destroy all enemy titans."
 		"PL_tgg_abbr" "TGG"
 		"GAMEMODE_TGG" "Titan Bash"
+		"tgg_kill_reward" "Kill Percentage Reward"
+		"tgg_assist_reward" "Assist Percentage Reward"
         
 		"PL_hs" "Hide and Seek"
 		"PL_hs_lobby" "Hide and Seek Lobby"
