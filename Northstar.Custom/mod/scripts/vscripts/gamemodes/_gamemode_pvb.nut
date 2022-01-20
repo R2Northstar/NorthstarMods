@@ -107,9 +107,9 @@ void function RespawnAmped(entity player)
 	//	wait 2.0
 	//	RespawnAsTitan( player, false )
 	//	wait 1.0
-	foreach ( entity weapon in player.GetMainWeapons() )
-		player.TakeWeaponNow( weapon.GetWeaponClassName() )
-	player.GiveWeapon("mp_weapon_arena3")
+	//foreach ( entity weapon in player.GetMainWeapons() )
+	//	player.TakeWeaponNow( weapon.GetWeaponClassName() )
+	//player.GiveWeapon("mp_weapon_arena3")
 	player.SetMaxHealth(500)
 	player.SetHealth(500)
 	Highlight_SetEnemyHighlight( player, "enemy_sonar" )
