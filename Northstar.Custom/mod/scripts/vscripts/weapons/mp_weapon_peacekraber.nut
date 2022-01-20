@@ -174,6 +174,7 @@ function FireWeaponPlayerAndNPC( WeaponPrimaryAttackParams attackParams, bool pl
 			}
 		}
 	}
+	weapon.SetWeaponChargeFraction( 0 ) // after we fire the peacekeeper loses its "choke"
 
 	return 1
 }
