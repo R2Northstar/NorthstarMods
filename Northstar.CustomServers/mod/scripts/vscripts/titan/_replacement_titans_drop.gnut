@@ -1,7 +1,7 @@
 global function ReplacementTitansDrop_Init
 global function GetTitanReplacementPoint
 global function HullTraceDropPoint
-global function DebugTitanSpawn
+global function DebugTitanfall
 global function TitanFindDropNodes
 global function TitanHulldropSpawnpoint
 
@@ -41,12 +41,12 @@ void function AddDroppoint( entity ent )
 	AddToScriptManagedEntArray( file.replacementSpawnpointsID, ent )
 }
 
-void function DebugTitanSpawn()
+void function DebugTitanfall()
 {
-	thread DebugTitanSpawnThread()
+	thread DebugTitanfallThread()
 }
 
-void function DebugTitanSpawnThread()
+void function DebugTitanfallThread()
 {
 	entity player = GetPlayerArray()[0]
 
