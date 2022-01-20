@@ -172,7 +172,6 @@ Press Yes if you agree to this. This choice can be changed in the mods menu at a
 		"PVB_BOSS_KILL_AMPED" "Focus On Killing the Amped, They're stronger than the rest."
 		"PVB_AMPED_KILL_BOSS" "Permanent Stim Applied, Destroy the Boss."
 
-
 		"PL_hs" "Hide and Seek"
 		"PL_hs_lobby" "Hide and Seek Lobby"
 		"PL_hs_desc" "Hiders hide, seekers try to find them."
@@ -304,8 +303,7 @@ Press Yes if you agree to this. This choice can be changed in the mods menu at a
 		"CONNECTING" "Connecting..."
 		"INGAME_PLAYERS" "Players:"
 		"TOTAL_SERVERS" "Servers:"
-    
-    
+
 		// Mods menu
 		"SHOW" "Show"
 		"SHOW_ALL" "All"
