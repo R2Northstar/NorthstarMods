@@ -73,8 +73,8 @@ void function MakePlayerBoss(entity player)
 	if (player == null)
 		return;
 
-	player.SetPlayerGameStat( PGS_ASSAULT_SCORE, 0 ) // reset kills
 	RespawnBoss( player )
+	player.SetPlayerGameStat( PGS_ASSAULT_SCORE, 0 ) // reset kills
 	Remote_CallFunction_NonReplay( player, "ServerCallback_YouAreBoss" )
 }
 
