@@ -10,7 +10,7 @@ void function GamemodePVB_Init()
 	SetRespawnsEnabled( true )
 	SetKillcamsEnabled( false )
 	Riff_ForceTitanAvailability( eTitanAvailability.Never )
-	//Riff_ForceBoostAvailability( eBoostAvailability.Disabled )
+	Riff_ForceBoostAvailability( eBoostAvailability.Disabled )
 	Riff_ForceSetEliminationMode( eEliminationMode.Pilots )
 
 	ClassicMP_SetCustomIntro( ClassicMP_DefaultNoIntro_Setup, ClassicMP_DefaultNoIntro_GetLength() )
@@ -146,11 +146,13 @@ void function BossOnPlayerKilled( entity victim, entity attacker, var damageInfo
 
 int function TimeoutCheckBoss()
 {
+	SetRespawnsEnabled( false )
+
 	if ( GetPlayerArrayOfTeam( TEAM_IMC ).len() > 0 )
 	{
-		SetRespawnsEnabled( false )
-		SetRoundWinningKillReplayAttacker(GetPlayerArrayOfTeam( TEAM_IMC )[0])
 		return TEAM_IMC
+	} else {
+		return TEAM_MILITIA
 	}
 
 	return TEAM_MILITIA
