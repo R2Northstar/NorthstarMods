@@ -30,9 +30,13 @@ void function GamemodeCP_Init()
 	RegisterSignal( "HardpointCaptureStart" )
 	ScoreEvent_SetupEarnMeterValuesForMixedModes()
 
-	AddCallback_OnPlayerKiled(GamemodeCP_OnPlayerKilled)
+	AddCallback_OnPlayerKilled(GamemodeCP_OnPlayerKilled)
 	AddCallback_EntitiesDidLoad( SpawnHardpoints )
 	AddCallback_GameStateEnter( eGameState.Playing, StartHardpointThink )
+
+
+
+
 
 	ScoreEvent_SetEarnMeterValues("ControlPointCapture",0.1,0.1)
 	ScoreEvent_SetEarnMeterValues("ControlPointHold",0.02,0.02)
@@ -47,8 +51,8 @@ void function GamemodeCP_Init()
 }
 void function GamemodeCP_OnPlayerKilled(entity victim, entity attacker, var damageInfo)
 {
-	HardpointStruct attackerCP = null;
-	HardpointStruct victimCP = null;
+	HardpointStruct attackerCP
+	HardpointStruct victimCP
 
 	foreach(HardpointStruct hardpoint in file.hardpoints)
 	{
@@ -63,7 +67,7 @@ void function GamemodeCP_OnPlayerKilled(entity victim, entity attacker, var dama
 			attackerCP = hardpoint
 	}
 
-	if((victimCP!=null)&&(attackerCP!=null))
+	if((victimCP.hardpoint!=null)&&(attackerCP.hardpoint!=null))
 	{
 		if(victimCP==attackerCP)
 		{
@@ -77,9 +81,9 @@ void function GamemodeCP_OnPlayerKilled(entity victim, entity attacker, var dama
 			}
 		}
 	}
-	else if((victimCP!=null))//siege or snipe
+	else if((victimCP.hardpoint!=null))//siege or snipe
 	{
-		printt("Distance: ",Distance(victim.GetOrigin(),attacker.GetOrigin()))
+
 		if(Distance(victim.GetOrigin(),attacker.GetOrigin())>=1875)//1875 inches(units) are 47.625 meters
 		{
 			AddPlayerScore( attacker , "HardpointSnipe", victim )
@@ -88,7 +92,7 @@ void function GamemodeCP_OnPlayerKilled(entity victim, entity attacker, var dama
 			AddPlayerScore( attacker , "HardpointSiege", victim )
 		}
 	}
-	else if(attackerCP!=null)//Perimeter Defense
+	else if(attackerCP.hardpoint!=null)//Perimeter Defense
 	{
 		if(attackerCP.hardpoint.GetTeam()==attacker.GetTeam())
 			AddPlayerScore( attacker , "HardpointPerimeterDefense", victim)
@@ -216,12 +220,37 @@ void function StartHardpointThink()
 		thread HardpointThink( hardpoint )
 }
 
+void function CapturePointForTeam(HardpointStruct hardpoint, int Team)
+{
+
+	SetHardpointState(hardpoint,CAPTURE_POINT_STATE_CAPTURED)
+	SetTeam( hardpoint.hardpoint, Team )
+	SetTeam( hardpoint.prop, Team )
+	EmitSoundOnEntityToTeamExceptPlayer( hardpoint.hardpoint, "hardpoint_console_captured", Team, null )
+	GamemodeCP_VO_Captured( hardpoint.hardpoint )
+	if(Team==TEAM_MILITIA)
+	{
+		foreach(entity player in hardpoint.militiaCappers)
+		{
+			AddPlayerScore(player,"ControlPointCapture")
+		}
+	}
+	else
+	{
+		foreach(entity player in hardpoint.imcCappers)
+		{
+			AddPlayerScore(player,"ControlPointCapture")
+		}
+	}
+}
+
 void function HardpointThink( HardpointStruct hardpoint )
 {
 	entity hardpointEnt = hardpoint.hardpoint
 
 	float lastTime = Time()
 	float lastScoreTime = Time()
+	bool hasBeenAmped = false
 
 	WaitFrame() // wait a frame so deltaTime is never zero
 
@@ -305,27 +334,13 @@ void function HardpointThink( HardpointStruct hardpoint )
 		else if(cappingTeam==TEAM_UNASSIGNED)//nobody on point
 		{
 
-			switch(GetHardpointState(hardpoint))
+			if((GetHardpointState(hardpoint)==CAPTURE_POINT_STATE_AMPED)||(GetHardpointState(hardpoint)==CAPTURE_POINT_STATE_AMPING))
 			{
-				case CAPTURE_POINT_STATE_UNASSIGNED:
-					SetHardpointCaptureProgress(hardpoint,max(0.0,GetHardpointCaptureProgress(hardpoint)-(deltaTime/CAPTURE_DURATION_CAPTURE)))
-					if(GetHardpointCaptureProgress(hardpoint)==0.0)
-					{
-						SetHardpointState(hardpoint,CAPTURE_POINT_STATE_UNASSIGNED)
-						SetHardpointCappingTeam(hardpoint,TEAM_UNASSIGNED)
-					}
-					break
-				case CAPTURE_POINT_STATE_CAPTURED:
-					SetHardpointCappingTeam(hardpoint,hardpointEnt.GetTeam())
-					SetHardpointCaptureProgress(hardpoint,min(1.0,GetHardpointCaptureProgress(hardpoint)+(deltaTime/CAPTURE_DURATION_CAPTURE)))
-					break
-				case CAPTURE_POINT_STATE_AMPED:
-				case CAPTURE_POINT_STATE_AMPING:
-					SetHardpointCappingTeam(hardpoint,hardpointEnt.GetTeam())
-					SetHardpointCaptureProgress(hardpoint,max(1.0,GetHardpointCaptureProgress(hardpoint)-(deltaTime/HARDPOINT_AMPED_DELAY)))
-					if(GetHardpointCaptureProgress(hardpoint)<=1.001)
-						SetHardpointState(hardpoint,CAPTURE_POINT_STATE_CAPTURED)
-					break
+				SetHardpointCappingTeam(hardpoint,hardpointEnt.GetTeam())
+				SetHardpointCaptureProgress(hardpoint,max(1.0,GetHardpointCaptureProgress(hardpoint)-(deltaTime/HARDPOINT_AMPED_DELAY)))
+				if(GetHardpointCaptureProgress(hardpoint)<=1.001)
+					SetHardpointState(hardpoint,CAPTURE_POINT_STATE_CAPTURED)
+
 			}
 		}
 		else if(hardpointEnt.GetTeam()==TEAM_UNASSIGNED)
@@ -336,11 +351,8 @@ void function HardpointThink( HardpointStruct hardpoint )
 				SetHardpointCappingTeam(hardpoint,cappingTeam)
 				if(GetHardpointCaptureProgress(hardpoint)>=1.0)
 				{
-					SetHardpointState(hardpoint,CAPTURE_POINT_STATE_CAPTURED)
-					SetTeam( hardpointEnt, cappingTeam )
-					SetTeam( hardpoint.prop, cappingTeam )
-					EmitSoundOnEntityToTeamExceptPlayer( hardpointEnt, "hardpoint_console_captured", cappingTeam, null )
-					GamemodeCP_VO_Captured( hardpointEnt )
+					CapturePointForTeam(hardpoint,cappingTeam)
+					hasBeenAmped = false
 				}
 			}
 			else if(GetHardpointCappingTeam(hardpoint)==cappingTeam)
@@ -348,11 +360,8 @@ void function HardpointThink( HardpointStruct hardpoint )
 				SetHardpointCaptureProgress( hardpoint,min(1.0, GetHardpointCaptureProgress( hardpoint ) + ( deltaTime / CAPTURE_DURATION_CAPTURE * capperAmount) ) )
 				if(GetHardpointCaptureProgress(hardpoint)>=1.0)
 				{
-					SetHardpointState(hardpoint,CAPTURE_POINT_STATE_CAPTURED)
-					SetTeam( hardpointEnt, cappingTeam )
-					SetTeam( hardpoint.prop, cappingTeam )
-					EmitSoundOnEntityToTeamExceptPlayer( hardpointEnt, "hardpoint_console_captured", cappingTeam, null )
-					GamemodeCP_VO_Captured( hardpointEnt )
+					CapturePointForTeam(hardpoint,cappingTeam)
+					hasBeenAmped = false
 				}
 			}
 			else
@@ -363,11 +372,8 @@ void function HardpointThink( HardpointStruct hardpoint )
 					SetHardpointCappingTeam(hardpoint,cappingTeam)
 					if(GetHardpointCaptureProgress(hardpoint)>=1)
 					{
-						SetHardpointState(hardpoint,CAPTURE_POINT_STATE_CAPTURED)
-						SetTeam( hardpointEnt, cappingTeam )
-						SetTeam( hardpoint.prop, cappingTeam )
-						EmitSoundOnEntityToTeamExceptPlayer( hardpointEnt, "hardpoint_console_captured", cappingTeam, null )
-						GamemodeCP_VO_Captured( hardpointEnt )
+						CapturePointForTeam(hardpoint,cappingTeam)
+						hasBeenAmped = false
 					}
 				}
 
@@ -384,11 +390,8 @@ void function HardpointThink( HardpointStruct hardpoint )
 			if(GetHardpointCaptureProgress(hardpoint)<=0.0)
 			{
 				SetHardpointCaptureProgress(hardpoint,1.0)
-				SetTeam( hardpointEnt, cappingTeam )
-				SetTeam( hardpoint.prop, cappingTeam )
-				SetHardpointState(hardpoint,CAPTURE_POINT_STATE_CAPTURED)
-				EmitSoundOnEntityToTeamExceptPlayer( hardpointEnt, "hardpoint_console_captured", cappingTeam, null )
-				GamemodeCP_VO_Captured( hardpointEnt )
+				CapturePointForTeam(hardpoint,cappingTeam)
+				hasBeenAmped = false
 			}
 		}
 		else if(hardpointEnt.GetTeam()==cappingTeam)
@@ -409,6 +412,24 @@ void function HardpointThink( HardpointStruct hardpoint )
 					// can't use the dialogue functions here because for some reason GamemodeCP_VO_Amped isn't global?
 					PlayFactionDialogueToTeam( "amphp_youAmped" + hardpointEnt.kv.hardpointGroup, cappingTeam )
 					PlayFactionDialogueToTeam( "amphp_enemyAmped" + hardpointEnt.kv.hardpointGroup, GetOtherTeam( cappingTeam ) )
+					if(!hasBeenAmped){
+						hasBeenAmped=true
+						if(cappingTeam==TEAM_MILITIA)
+						{
+							foreach(entity player in hardpoint.militiaCappers)
+							{
+								AddPlayerScore(player,"ControlPointAmped")
+							}
+						}
+						else
+						{
+							foreach(entity player in hardpoint.imcCappers)
+							{
+								AddPlayerScore(player,"ControlPointAmped")
+							}
+						}
+					}
+
 				}
 			}
 		}
