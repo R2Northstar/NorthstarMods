@@ -30,11 +30,72 @@ void function GamemodeCP_Init()
 	RegisterSignal( "HardpointCaptureStart" )
 	ScoreEvent_SetupEarnMeterValuesForMixedModes()
 
+	AddCallback_OnPlayerKiled(GamemodeCP_OnPlayerKilled)
 	AddCallback_EntitiesDidLoad( SpawnHardpoints )
 	AddCallback_GameStateEnter( eGameState.Playing, StartHardpointThink )
-}
 
-void function RateSpawnpoints_CP( int checkClass, array<entity> spawnpoints, int team, entity player ) 
+	ScoreEvent_SetEarnMeterValues("ControlPointCapture",0.1,0.1)
+	ScoreEvent_SetEarnMeterValues("ControlPointHold",0.02,0.02)
+	ScoreEvent_SetEarnMeterValues("ControlPointAmped",0.2,0.15)
+	ScoreEvent_SetEarnMeterValues("ControlPointAmpedHold",0.05,0.05)
+	ScoreEvent_SetEarnMeterValues("HardpointAssault",0.10,0.15)
+	ScoreEvent_SetEarnMeterValues("HardpointDefense",0.5,0.10)
+	ScoreEvent_SetEarnMeterValues("HardpointPerimeterDefense",0.1,0.12)
+	ScoreEvent_SetEarnMeterValues("HardpointSiege",0.1,0.15)
+	ScoreEvent_SetEarnMeterValues("HardpointSnipe",0.1,0.15)
+
+}
+void function GamemodeCP_OnPlayerKilled(entity victim, entity attacker, var damageInfo)
+{
+	HardpointStruct attackerCP = null;
+	HardpointStruct victimCP = null;
+
+	foreach(HardpointStruct hardpoint in file.hardpoints)
+	{
+		if(hardpoint.imcCappers.contains(victim))
+			victimCP = hardpoint
+		if(hardpoint.militiaCappers.contains(victim))
+			victimCP = hardpoint
+
+		if(hardpoint.imcCappers.contains(attacker))
+			attackerCP = hardpoint
+		if(hardpoint.militiaCappers.contains(attacker))
+			attackerCP = hardpoint
+	}
+
+	if((victimCP!=null)&&(attackerCP!=null))
+	{
+		if(victimCP==attackerCP)
+		{
+			if(victimCP.hardpoint.GetTeam()==victim.GetTeam())
+			{
+				AddPlayerScore( attacker, "HardpointAssault", victim )
+			}
+			else if(victimCP.hardpoint.GetTeam()==attacker.GetTeam())
+			{
+				AddPlayerScore( attacker , "HardpointDefense", victim )
+			}
+		}
+	}
+	else if((victimCP!=null))//siege or snipe
+	{
+		printt("Distance: ",Distance(victim.GetOrigin(),attacker.GetOrigin()))
+		if(Distance(victim.GetOrigin(),attacker.GetOrigin())>=1875)//1875 inches(units) are 47.625 meters
+		{
+			AddPlayerScore( attacker , "HardpointSnipe", victim )
+		}
+		else{
+			AddPlayerScore( attacker , "HardpointSiege", victim )
+		}
+	}
+	else if(attackerCP!=null)//Perimeter Defense
+	{
+		if(attackerCP.hardpoint.GetTeam()==attacker.GetTeam())
+			AddPlayerScore( attacker , "HardpointPerimeterDefense", victim)
+	}
+
+}
+void function RateSpawnpoints_CP( int checkClass, array<entity> spawnpoints, int team, entity player )
 {
 	if ( HasSwitchedSides() )
 		team = GetOtherTeam( team )
