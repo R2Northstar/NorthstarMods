@@ -97,6 +97,10 @@ void function OnPlayerBecomesTitan( entity player, entity titan )
     foreach ( entity weapon in player.GetOffhandWeapons() )
 		player.TakeWeaponNow( weapon.GetWeaponClassName() )
 
+    TitanGunGameWeapon ggWeapon = GetTitanGunGameWeapon( player )
+    if( ggWeapon.weapon != "melee_titan_sword" )
+        player.GiveOffhandWeapon( ggWeapon.secondary, OFFHAND_LEFT )
+
     thread OnPlayerRespawned_Threaded( player )
 }
 
@@ -155,7 +159,7 @@ void function UpdateLivingTitanLoadout( entity player )
 	if ( currentWeaponIndex >= ggWeapons.len() )
 		currentWeaponIndex = ggWeapons.len() - 1
 		
-	if ( currentWeaponIndex > 9) // play end of game music for special weapons
+	if ( currentWeaponIndex > 8) // play end of game music for special weapons
 		PlayMusicToAll( eMusicPieceID.LEVEL_LAST_MINUTE ) // this *shouldn't* overlap if done multiple times
 	
 	TitanGunGameWeapon ggWeapon = ggWeapons[ currentWeaponIndex ]
@@ -165,7 +169,20 @@ void function UpdateLivingTitanLoadout( entity player )
     if( currentWeaponIndex == 9 )
     {
         EmitSoundOnEntity( player, "autoEjectNotice" ) // should be changed when autoeject VA gets fixed (apply the passive to the player ideally just b4 eject)
-        thread TitanEjectPlayer( player, true )
+        var eject = TitanEjectPlayer( player, true )
+        OnThreadEnd(
+            function() : ( player, ggWeapon )
+            {
+                foreach ( entity weapon in player.GetMainWeapons() )
+		            player.TakeWeaponNow( weapon.GetWeaponClassName() )
+
+	            foreach ( entity weapon in player.GetOffhandWeapons() )
+		            player.TakeWeaponNow( weapon.GetWeaponClassName() )
+
+                player.GiveOffhandWeapon( ggWeapon.offhand , OFFHAND_RIGHT, ggWeapon.offhandMods)
+                player.GiveWeapon( ggWeapon.weapon, ggWeapon.primaryMods)
+            }
+        )
         return
     }
 
@@ -178,8 +195,10 @@ void function UpdateLivingTitanLoadout( entity player )
 
 	foreach ( entity weapon in player.GetMainWeapons() )
 		player.TakeWeaponNow( weapon.GetWeaponClassName() )
+    foreach ( entity weapon in player.GetOffhandWeapons() )
+		player.TakeWeaponNow( weapon.GetWeaponClassName() )
 
-    if( currentWeaponIndex == 8 )
+    if( ggWeapon.weapon == "melee_titan_sword" )
     {
         player.GiveWeapon( "mp_titanweapon_sniper" )
         player.Server_SetDodgePower( 100.0 )
@@ -189,7 +208,8 @@ void function UpdateLivingTitanLoadout( entity player )
         GivePassive( player, ePassives.PAS_FUSION_CORE )
 		GivePassive( player, ePassives.PAS_SHIFT_CORE )
     } else {
-        player.GiveWeapon( ggWeapon.weapon, ggWeapon.mods )
+        player.GiveWeapon( ggWeapon.weapon )
+        player.GiveOffhandWeapon( ggWeapon.secondary, OFFHAND_LEFT )
     }
 
     string nextWeapon = GetCurrentEarnMeterIcon( player ).weapon
@@ -209,18 +229,24 @@ void function AddTeamScoreForPlayerKilled( entity victim, entity attacker, var d
 			string scoreEvent = "KillTitan"
 
             Reward( attacker, victim, scoreEvent, percentageReward)
+            SoulTitanCore_SetNextAvailableTime( attacker.GetTitanSoul(), 0.0 ) // try to avoid to titan cores as it crashes
         }
 
-        table<int, bool> alreadyAssisted
-	    foreach( DamageHistoryStruct attackerInfo in victim.GetTitanSoul().e.recentDamageHistory )
-	    {   
-		    bool exists = attackerInfo.attacker.GetEncodedEHandle() in alreadyAssisted ? true : false
-		    if( attackerInfo.attacker != attacker && !exists )
-		    {
-			    alreadyAssisted[attackerInfo.attacker.GetEncodedEHandle()] <- true
-                Reward( attackerInfo.attacker, victim, "TitanAssist", GetCurrentPlaylistVarFloat( "tgg_assist_reward", 0.5 ) )
-		    }
-	    }
+        // no fucking assists if pilot get owned
+        if( IsValid(victim.GetTitanSoul()) )
+        {
+            table<int, bool> alreadyAssisted
+	        foreach( DamageHistoryStruct attackerInfo in victim.GetTitanSoul().e.recentDamageHistory )
+	        {   
+		        bool exists = attackerInfo.attacker.GetEncodedEHandle() in alreadyAssisted ? true : false
+		        if( attackerInfo.attacker != attacker && attackerInfo.attacker != victim && !exists )
+		        {
+			        alreadyAssisted[attackerInfo.attacker.GetEncodedEHandle()] <- true
+                    Reward( attackerInfo.attacker, victim, "TitanAssist", GetCurrentPlaylistVarFloat( "tgg_assist_reward", 0.5 ) )
+		        }
+	        }
+        }
+
 	}
 
     thread ForcedRespawnPlayerWithTitanLoadout( victim )
@@ -233,10 +259,25 @@ void function ForcedRespawnPlayerWithTitanLoadout( entity player )
     if(!IsAlive( player ) || (GetGameState() != eGameState.WinnerDetermined))
     {
         if (currentWeaponIndex >= 9)
-            player.RespawnPlayer( null )
+            RespawnTGGPilot( player )
         else
             thread RespawnAsTitan( player, false , CreateTGGTitanLoadout( player ) )
     }
+}
+
+void function RespawnTGGPilot( entity player )
+{
+    player.RespawnPlayer( null )
+    foreach ( entity weapon in player.GetMainWeapons() )
+		player.TakeWeaponNow( weapon.GetWeaponClassName() )
+
+	foreach ( entity weapon in player.GetOffhandWeapons() )
+		player.TakeWeaponNow( weapon.GetWeaponClassName() )
+
+    TitanGunGameWeapon weapon = GetTitanGunGameWeapon( player )
+
+    player.GiveOffhandWeapon( weapon.offhand , OFFHAND_RIGHT, weapon.offhandMods)
+    player.GiveWeapon( weapon.weapon, weapon.primaryMods)
 }
 
 TitanLoadoutDef function CreateTGGTitanLoadout( entity player )
@@ -249,14 +290,11 @@ TitanLoadoutDef function CreateTGGTitanLoadout( entity player )
     loadout.special = "" // these empty strings dont even fucking arghh
     loadout.antirodeo = ""
     loadout.passive1 = ""
-    loadout.passive2 = "" 
-    if(weapon.weapon == "melee_titan_sword")
-    {
+    loadout.passive2 = ""
+    if( weapon.weapon == "melee_titan_sword" )
         loadout.primary = "mp_titanweapon_sniper"
-    } else 
-    {
+    else 
         loadout.primary = weapon.weapon
-    }
     loadout.coreAbility = weapon.core
     printt("--TGG LOADOUT--")
     PrintTitanLoadout( loadout )

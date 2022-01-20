@@ -7,7 +7,11 @@ global struct TitanGunGameWeapon
 {
 	string weapon
     string core
-	array<string> mods
+	array<string> primaryMods
+    string offhand
+    array<string> offhandMods
+    string secondary
+    array<string> secondaryMods
 }
 
 struct {
@@ -39,43 +43,43 @@ void function CreateGamemodeTGG()
 	AddPrivateMatchMode( GAMEMODE_TGG )
 
     // xo16
-    TitanGunGameWeapon tggXO16 = { weapon = "mp_titanweapon_xo16_vanguard", core = "mp_titancore_amp_core", ...}
+    TitanGunGameWeapon tggXO16 = { weapon = "mp_titanweapon_xo16_vanguard", secondary = "mp_titanweapon_stun_laser", ...}
     file.weapons.append(tggXO16)
 
     // predator cannon
-    TitanGunGameWeapon tggPredCannon = { weapon = "mp_titanweapon_predator_cannon", core = "mp_titancore_siege_mode", ...}
+    TitanGunGameWeapon tggPredCannon = { weapon = "mp_titanweapon_predator_cannon", secondary = "mp_titanability_gun_shield", ...}
     file.weapons.append(tggPredCannon)
     
     // plasma railgun
-    TitanGunGameWeapon tggRailgun = { weapon = "mp_titanweapon_sniper", core = "mp_titancore_flight_core", ...}
+    TitanGunGameWeapon tggRailgun = { weapon = "mp_titanweapon_sniper", secondary = "mp_titanability_tether_trap",  ...}
     file.weapons.append(tggRailgun)
 
     // leadwall
-    TitanGunGameWeapon tggLeadwall = { weapon = "mp_titanweapon_leadwall", core = "mp_titancore_shift_core", ...}
+    TitanGunGameWeapon tggLeadwall = { weapon = "mp_titanweapon_leadwall", secondary = "mp_titanability_basic_block", ...}
     file.weapons.append(tggLeadwall)
 
     // particle accelerator
-    TitanGunGameWeapon tggParticleAccel = { weapon = "mp_titanweapon_particle_accelerator", core = "mp_titancore_laser_cannon", ...}
+    TitanGunGameWeapon tggParticleAccel = { weapon = "mp_titanweapon_particle_accelerator", secondary = "mp_titanability_laser_trip",  ...}
     file.weapons.append(tggParticleAccel)
 
     // meteor
-    TitanGunGameWeapon tggMeteor = { weapon = "mp_titanweapon_meteor", core = "mp_titancore_flame_wave", ...}
+    TitanGunGameWeapon tggMeteor = { weapon = "mp_titanweapon_meteor", secondary = "mp_titanweapon_heat_shield", ...}
     file.weapons.append(tggMeteor)
 
     // 40mm
-    TitanGunGameWeapon tgg40mm = { weapon = "mp_titanweapon_sticky_40mm", core = "mp_titancore_salvo_core", ...}
+    TitanGunGameWeapon tgg40mm = { weapon = "mp_titanweapon_sticky_40mm", secondary = "mp_titanability_particle_wall", ...}
     file.weapons.append(tgg40mm)
 
     // quad rocket
-    TitanGunGameWeapon tggRocketeer = { weapon = "mp_titanweapon_rocketeer_rocketstream", core = "mp_titancore_flight_core", ...}
+    TitanGunGameWeapon tggRocketeer = { weapon = "mp_titanweapon_rocketeer_rocketstream", secondary = "mp_titanability_rocketeer_ammo_swap", ...}
     file.weapons.append(tggRocketeer)
 
-    // melee
+    // sword core
     TitanGunGameWeapon tggMelee = { weapon = "melee_titan_sword", ...}
     file.weapons.append(tggMelee)
 
-    // mgl
-    TitanGunGameWeapon tggMGL = { weapon = "mp_weapon_mgl", ...}
+    // pilot
+    TitanGunGameWeapon tggMGL = { weapon = "mp_weapon_mgl", offhand = "mp_weapon_grenade_sonar", offhandMods = ["amped_tacticals"], primaryMods = ["at_unlimited_ammo"] ...}
     file.weapons.append(tggMGL)
 
 	GameMode_SetDefaultScoreLimits( GAMEMODE_TGG, 20, 0)
