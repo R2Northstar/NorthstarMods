@@ -21,9 +21,8 @@ struct {
 void function Sh_GamemodeTGG_Init()
 {
 	AddCallback_OnCustomGamemodesInit( CreateGamemodeTGG )
-    AddCallback_OnRegisteringCustomNetworkVars( InfectionRegisterNetworkVars )
-	if ( GAMETYPE != GAMEMODE_TGG )
-		Sh_GGEarnMeter_Init()
+    AddCallback_OnRegisteringCustomNetworkVars( TGGRegisterNetworkVars )
+	Sh_GGEarnMeter_Init( GAMEMODE_TGG )
 }
 
 void function CreateGamemodeTGG()
@@ -100,7 +99,7 @@ void function CreateGamemodeTGG()
 	#endif
 }
 
-void function InfectionRegisterNetworkVars()
+void function TGGRegisterNetworkVars()
 {
     if ( GAMETYPE != GAMEMODE_TGG )
 		return

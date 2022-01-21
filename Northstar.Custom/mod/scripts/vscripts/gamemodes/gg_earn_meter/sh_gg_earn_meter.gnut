@@ -17,7 +17,7 @@ void function RegisterSharedNetwork()
     if ( GAMETYPE != file.gamemode )
         return
 
-	  RegisterNetworkedVariable( "gunGameLevelPercentage", SNDC_PLAYER_EXCLUSIVE, SNVT_FLOAT_RANGE, 0.0, 0.0, 1.0 )
+	RegisterNetworkedVariable( "gunGameLevelPercentage", SNDC_PLAYER_EXCLUSIVE, SNVT_FLOAT_RANGE, 0.0, 0.0, 1.0 )
     Remote_RegisterFunction( "ServerCallback_GGEarnMeter_SetWeaponIcon" )
 
     #if CLIENT

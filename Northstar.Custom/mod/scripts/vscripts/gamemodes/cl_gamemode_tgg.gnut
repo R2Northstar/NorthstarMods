@@ -3,6 +3,10 @@ const FX_SHIELD_GAIN_SCREEN		= $"P_xo_shield_up"
 global function ClGamemodeTGG_Init
 global function ServerCallback_TGG_PlayUpgradeFX
 
+struct {
+	int lastScore = -1
+} file
+
 void function ClGamemodeTGG_Init()
 {
 	// register gamestate asset, this is default so not necessary but doing it anyway
@@ -30,7 +34,7 @@ void function ClGamemodeTGG_Init()
 	
 	AddCallback_GameStateEnter( eGameState.Postmatch, DisplayPostMatchTop3 )
 
-	Cl_GGEarnMeter_Init()
+	Cl_GGEarnMeter_Init( ClGamemodeTGG_GetWeaponIcon, ClGamemodeTGG_ShouldChangeWeaponIcon )
 }
 
 void function ServerCallback_TGG_PlayUpgradeFX()
@@ -42,4 +46,35 @@ void function ServerCallback_TGG_PlayUpgradeFX()
 		if ( IsValid( cockpit ) )
 			StartParticleEffectOnEntity( cockpit, GetParticleSystemIndex( FX_SHIELD_GAIN_SCREEN	), FX_PATTACH_ABSORIGIN_FOLLOW, -1 )
 	}
+}
+
+asset function ClGamemodeTGG_GetWeaponIcon()
+{
+	int weaponIndex = GameRules_GetTeamScore( GetLocalViewPlayer().GetTeam() ) + 1
+
+	array<TitanGunGameWeapon> weapons = GetTitanGunGameWeapons()
+
+	if ( weaponIndex >= weapons.len() )
+		return RandomFloat( 1 ) > 0.1 ? $"rui/menu/boosts/boost_icon_random" : $"rui/faction/faction_logo_mrvn"
+
+	TitanGunGameWeapon nextWeapon = weapons[ weaponIndex ]
+
+	if( nextWeapon.weapon == "melee_titan_sword")
+		return GetWeaponInfoFileKeyFieldAsset_WithMods_Global( "mp_titancore_shift_core", nextWeapon.primaryMods, "hud_icon" )
+
+	return GetWeaponInfoFileKeyFieldAsset_WithMods_Global( nextWeapon.weapon, nextWeapon.primaryMods, "hud_icon" )
+}
+
+// Because of our easter egg we have to include the optional test function so that we don't get a flickering icon.
+bool function ClGamemodeTGG_ShouldChangeWeaponIcon()
+{
+	int currentScore = GameRules_GetTeamScore( GetLocalViewPlayer().GetTeam() )
+
+	if ( file.lastScore != currentScore )
+	{
+		file.lastScore = currentScore
+		return true
+	}
+
+	return false
 }

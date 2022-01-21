@@ -73,27 +73,27 @@ void function PlayerWatchesTGGIntroIntermissionCam( entity player )
     TryGameModeAnnouncement( player )
 }
 
-TitanGunGameWeapon function GetCurrentEarnMeterIcon( entity player )
-{
-    int currentWeaponIndex = GameRules_GetTeamScore( player.GetTeam() )
-    currentWeaponIndex += 1
-    array<TitanGunGameWeapon> weapons = GetTitanGunGameWeapons()
+// TitanGunGameWeapon function GetCurrentEarnMeterIcon( entity player )
+// {
+//     int currentWeaponIndex = GameRules_GetTeamScore( player.GetTeam() )
+//     currentWeaponIndex += 1
+//     array<TitanGunGameWeapon> weapons = GetTitanGunGameWeapons()
 
-    if ( currentWeaponIndex >= weapons.len() )
-		currentWeaponIndex = weapons.len() - 1 
+//     if ( currentWeaponIndex >= weapons.len() )
+// 		currentWeaponIndex = weapons.len() - 1 
 
-    TitanGunGameWeapon weapon = weapons[ currentWeaponIndex ]
+//     TitanGunGameWeapon weapon = weapons[ currentWeaponIndex ]
 
-    return weapon
-}
+//     return weapon
+// }
 
 void function OnPlayerBecomesTitan( entity player, entity titan )
 {
-    string nextWeapon = GetCurrentEarnMeterIcon( player ).weapon
-    if( nextWeapon == "melee_titan_sword" )
-        Sv_GGEarnMeter_SetWeaponIcon( player, "mp_titancore_shift_core" )
-    else
-        Sv_GGEarnMeter_SetWeaponIcon( player, nextWeapon )
+    // string nextWeapon = GetCurrentEarnMeterIcon( player ).weapon
+    // if( nextWeapon == "melee_titan_sword" )
+    //     ServerCallback_GGEarnMeter_SetWeaponIcon( player, "mp_titancore_shift_core" )
+    // else
+    //     ServerCallback_GGEarnMeter_SetWeaponIcon( player, nextWeapon )
     foreach ( entity weapon in player.GetOffhandWeapons() )
 		player.TakeWeaponNow( weapon.GetWeaponClassName() )
 
@@ -212,11 +212,11 @@ void function UpdateLivingTitanLoadout( entity player )
         player.GiveOffhandWeapon( ggWeapon.secondary, OFFHAND_LEFT )
     }
 
-    string nextWeapon = GetCurrentEarnMeterIcon( player ).weapon
-    if( nextWeapon == "melee_titan_sword" )
-        Sv_GGEarnMeter_SetWeaponIcon( player, "mp_titancore_shift_core" )
-    else
-        Sv_GGEarnMeter_SetWeaponIcon( player, nextWeapon )
+    // string nextWeapon = GetCurrentEarnMeterIcon( player ).weapon
+    // if( nextWeapon == "melee_titan_sword" )
+    //     ServerCallback_GGEarnMeter_SetWeaponIcon( player, "mp_titancore_shift_core" )
+    // else
+    //     ServerCallback_GGEarnMeter_SetWeaponIcon( player, nextWeapon )
 }
 
 void function AddTeamScoreForPlayerKilled( entity victim, entity attacker, var damageInfo )
