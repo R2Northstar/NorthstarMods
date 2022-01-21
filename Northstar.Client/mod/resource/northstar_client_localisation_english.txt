@@ -4,6 +4,7 @@
 	"Tokens"
 	{
 		// This file needs to be encoded as UTF-16 LE
+
 		"MENU_LAUNCH_NORTHSTAR" "Launch Northstar"
 		"MENU_TITLE_MODS" "Mods"
 		"RELOAD_MODS" "Reload Mods"
@@ -295,5 +296,12 @@ Press Yes if you agree to this. This choice can be changed in the mods menu at a
 		"CONNECTING" "Connecting..."
 		"INGAME_PLAYERS" "Players:"
 		"TOTAL_SERVERS" "Servers:"
+    
+    
+		// Mods menu
+		"SHOW" "Show"
+		"SHOW_ALL" "All"
+		"SHOW_ONLY_ENABLED" "Only Enabled"
+		"SHOW_ONLY_DISABLED" "Only Disabled"
 	}
 }

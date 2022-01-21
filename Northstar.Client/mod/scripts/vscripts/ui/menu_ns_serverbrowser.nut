@@ -8,7 +8,7 @@ global function ThreadedAuthAndConnectToServer
 // Stop peeking
 
 const int BUTTONS_PER_PAGE = 15
-const float DOUBLE_CLICK_TIME_MS = 0.3 // unsure what the ideal value is
+const float DOUBLE_CLICK_TIME_MS = 0.4 // unsure what the ideal value is
 
 
 struct {
@@ -785,6 +785,8 @@ void function OnServerButtonFocused( var button )
 {
 	int scriptID = int (Hud_GetScriptID(button))
 	file.serverButtonFocusedID = scriptID
+	if ( file.serversArrayFiltered.len() > 0 )
+		file.focusedServerIndex = file.serversArrayFiltered[ file.scrollOffset + scriptID ].serverIndex
 	DisplayFocusedServerInfo(scriptID);
 
 }
@@ -802,7 +804,6 @@ void function CheckDoubleClick(int scriptID, bool wasClickNav)
 	if ( NSGetServerCount() == 0 ) return
 
 
-	file.focusedServerIndex = file.serversArrayFiltered[ file.scrollOffset + scriptID ].serverIndex
 	int serverIndex = file.scrollOffset + scriptID
 
 	bool sameServer = false
@@ -827,7 +828,7 @@ void function DisplayFocusedServerInfo( int scriptID)
 {
 	if (scriptID == 999 || scriptID == -1 || scriptID == 16) return
 
-	if ( NSIsRequestingServerList() || NSGetServerCount() == 0 || file.serverListRequestFailed )
+	if ( NSIsRequestingServerList() || NSGetServerCount() == 0 || file.serverListRequestFailed || file.serversArrayFiltered.len() == 0)
 		return
 
 	var menu = GetMenu( "ServerBrowserMenu" )
@@ -842,9 +843,7 @@ void function DisplayFocusedServerInfo( int scriptID)
 	// text panels
 	Hud_SetVisible( Hud_GetChild( menu, "LabelDescription" ), true )
 	Hud_SetVisible( Hud_GetChild( menu, "LabelMods" ), false )
-	//RuiSetGameTime( textRui, "startTime", -99999.99 ) // make sure it skips the whole animation for showing this
 	Hud_SetText( Hud_GetChild( menu, "LabelDescription" ), NSGetServerDescription( file.serversArrayFiltered[ serverIndex ].serverIndex ) + "\n\nRequired Mods:\n" + FillInServerModsLabel( file.serversArrayFiltered[ serverIndex ].serverIndex ))
-	//Hud_SetText( Hud_GetChild( menu, "LabelMods" ), FillInServerModsLabel( file.serversArrayFiltered[ serverIndex ].serverIndex ) )
 
 	// map name/image/server name
 	string map = file.serversArrayFiltered[ serverIndex ].serverMap
