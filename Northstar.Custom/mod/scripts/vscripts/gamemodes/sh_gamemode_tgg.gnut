@@ -91,7 +91,6 @@ void function CreateGamemodeTGG()
 	#elseif CLIENT
 		GameMode_AddClientInit( GAMEMODE_TGG, ClGamemodeTGG_Init )
 		GameMode_AddClientInit( GAMEMODE_TGG, GamemodeFFAShared_Init )
-		GameMode_AddClientInit( GAMEMODE_TGG, ClGamemodeTGG_Init )
 	#endif
 	#if !UI
 		GameMode_SetScoreCompareFunc( GAMEMODE_TGG, CompareAssaultScore )

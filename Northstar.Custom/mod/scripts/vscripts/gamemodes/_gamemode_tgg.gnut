@@ -168,8 +168,8 @@ void function UpdateLivingTitanLoadout( entity player )
 
     if( currentWeaponIndex == 9 )
     {
-        EmitSoundOnEntity( player, "autoEjectNotice" ) // should be changed when autoeject VA gets fixed (apply the passive to the player ideally just b4 eject)
-        var eject = TitanEjectPlayer( player, true )
+        EmitSoundOnEntityOnlyToPlayer( player, player, "autoEjectNotice" ) // should be changed when autoeject VA gets fixed (apply the passive to the player ideally just b4 eject)
+        var eject = TitanEjectPlayer( player, true ) // doesn't seem to like playing the eject anims, just make it instant
         OnThreadEnd(
             function() : ( player, ggWeapon )
             {
@@ -181,6 +181,8 @@ void function UpdateLivingTitanLoadout( entity player )
 
                 player.GiveOffhandWeapon( ggWeapon.offhand , OFFHAND_RIGHT, ggWeapon.offhandMods)
                 player.GiveWeapon( ggWeapon.weapon, ggWeapon.primaryMods)
+                if ( IsValid( player ) )
+		            thread OnTGGEjectThreaded( player )
             }
         )
         return
@@ -219,34 +221,37 @@ void function UpdateLivingTitanLoadout( entity player )
     //     ServerCallback_GGEarnMeter_SetWeaponIcon( player, nextWeapon )
 }
 
+void function OnTGGEjectThreaded( entity player )
+{
+    WaitFrame()
+    PlayerEarnMeter_SetMode( player, eEarnMeterMode.DISABLED )
+}
+
 void function AddTeamScoreForPlayerKilled( entity victim, entity attacker, var damageInfo )
 {
 	if ( victim != attacker && GetGameState() == eGameState.Playing)
 	{
-        if ((victim.IsTitan() && attacker.IsPlayer()) || (attacker.IsPlayer() && victim.IsPlayer()))
+        if ( (victim.IsTitan() && attacker.IsPlayer()) || (attacker.IsPlayer() && victim.IsPlayer()) )
         {
             float percentageReward = GetCurrentPlaylistVarFloat( "tgg_kill_reward", 1.0 )
 			string scoreEvent = "KillTitan"
 
             Reward( attacker, victim, scoreEvent, percentageReward)
-            SoulTitanCore_SetNextAvailableTime( attacker.GetTitanSoul(), 0.0 ) // try to avoid to titan cores as it crashes
+            if( IsValid(attacker.GetTitanSoul()) )
+                SoulTitanCore_SetNextAvailableTime( attacker.GetTitanSoul(), 0.0 ) // try to avoid to titan cores as it crashes
         }
 
-        // no fucking assists if pilot get owned
-        if( IsValid(victim.GetTitanSoul()) )
-        {
-            table<int, bool> alreadyAssisted
-	        foreach( DamageHistoryStruct attackerInfo in victim.GetTitanSoul().e.recentDamageHistory )
-	        {   
-		        bool exists = attackerInfo.attacker.GetEncodedEHandle() in alreadyAssisted ? true : false
-		        if( attackerInfo.attacker != attacker && attackerInfo.attacker != victim && !exists )
-		        {
-			        alreadyAssisted[attackerInfo.attacker.GetEncodedEHandle()] <- true
-                    Reward( attackerInfo.attacker, victim, "TitanAssist", GetCurrentPlaylistVarFloat( "tgg_assist_reward", 0.5 ) )
-		        }
-	        }
-        }
 
+        table<int, bool> alreadyAssisted
+	    foreach( DamageHistoryStruct attackerInfo in victim.GetTitanSoul().e.recentDamageHistory )
+	    {   
+		    bool exists = attackerInfo.attacker.GetEncodedEHandle() in alreadyAssisted ? true : false
+		    if( attackerInfo.attacker != attacker && attackerInfo.attacker != victim && !exists )
+		    {
+			    alreadyAssisted[attackerInfo.attacker.GetEncodedEHandle()] <- true
+                Reward( attackerInfo.attacker, victim, "TitanAssist", GetCurrentPlaylistVarFloat( "tgg_assist_reward", 0.5 ) )
+		    }
+	    }
 	}
 
     thread ForcedRespawnPlayerWithTitanLoadout( victim )
