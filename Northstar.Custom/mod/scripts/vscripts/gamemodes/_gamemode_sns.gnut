@@ -30,7 +30,7 @@ void function SNS_Init()
 	AddCallback_GameStateEnter( eGameState.WinnerDetermined, OnWinnerDetermined )
 
 	file.reset_pulse_blade_cooldown_on_pulse_blade_kill = GetCurrentPlaylistVarInt( "reset_pulse_blade_cooldown_on_pulse_blade_kill", 1 ) == 1
-	file.softball_enabled = GetCurrentPlaylistVarInt( "softball_enabled", 1 ) == 1
+	file.softball_enabled = GetCurrentPlaylistVarInt( "softball_enabled", 0 ) == 1
 	file.wme_kill_value = GetCurrentPlaylistVarInt( "wme_kill_value", 10 )
 	file.softball_kill_value = GetCurrentPlaylistVarInt( "softball_kill_value", 10 )
 	file.offhand_kill_value = GetCurrentPlaylistVarInt( "offhand_kill_value", 10 )
