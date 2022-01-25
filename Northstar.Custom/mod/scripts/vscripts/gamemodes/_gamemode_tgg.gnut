@@ -93,13 +93,15 @@ void function AddTGGCorePercentage( entity victim, var damageInfo )
     if( !victim.IsTitan() )
         return
 
-
     float damage = DamageInfo_GetDamage( damageInfo )
     float playlistVar = GetCurrentPlaylistVarFloat( "tgg_titandamage_reward", 0.0001 )
     float percentageReward = damage * playlistVar
     string scoreEvent = "DamageTitan"
 
     entity attacker = DamageInfo_GetAttacker( damageInfo )
+
+    if( attacker.IsTitan() )
+        SoulTitanCore_SetNextAvailableTime( attacker.GetTitanSoul(), 0.0 ) // ~~try to avoid to titan cores as it crashes~~. this may not be an issue anymore but I don't particularly want cores anyway
 
     Reward( attacker, victim, scoreEvent, percentageReward)
 }
@@ -176,17 +178,15 @@ bool function OnTGGEarnMeterFilled( entity player )
 		GivePassive( player, ePassives.PAS_SHIFT_CORE )
     }
 
-    foreach ( entity weapon in player.GetMainWeapons() )
-		player.TakeWeaponNow( weapon.GetWeaponClassName() )
-
-	foreach ( entity weapon in player.GetOffhandWeapons() )
-		player.TakeWeaponNow( weapon.GetWeaponClassName() )
-
     // FUCK YOU POWERSHOT SCRIPTS CUNT
     if( currentScore == TGG_LEGION_SCORE )
         player.SetModel( $"models/titans/heavy/titan_heavy_deadbolt.mdl" )
     else if(currentScore == TGG_LEGION_SCORE + 1)
         player.SetModel( $"models/titans/medium/titan_medium_ajax.mdl")
+
+	TakeAllWeapons( player )
+	TakeAllPassives( player )
+	soul.passives = arrayofsize( GetNumPassives(), false ) //Clear out passives on soul
 
     GiveTitanLoadout( player, CreateTGGTitanLoadout( player ) )
 	return currentScore >= maxScore

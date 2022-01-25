@@ -70,31 +70,31 @@ void function CreateGamemodeTGG()
     file.loadoutInfos.append( tggLegion )
 
     // Ronin
-    TitanGunGameLoadoutInfo tggRonin = { index = 3, iconWeaponName = "mp_titanweapon_xo16_vanguard", ... }
+    TitanGunGameLoadoutInfo tggRonin = { index = 3, iconWeaponName = "mp_titanweapon_leadwall", ... }
     file.loadoutInfos.append( tggRonin )
 
     // Northstar
-    TitanGunGameLoadoutInfo tggNorthstar = { index = 2, iconWeaponName = "mp_titanweapon_xo16_vanguard", ... }
+    TitanGunGameLoadoutInfo tggNorthstar = { index = 2, iconWeaponName = "mp_titanweapon_sniper", ... }
     file.loadoutInfos.append( tggNorthstar )
 
     // Tone
-    TitanGunGameLoadoutInfo tggTone = { index = 4, iconWeaponName = "mp_titanweapon_xo16_vanguard", ... }
+    TitanGunGameLoadoutInfo tggTone = { index = 4, iconWeaponName = "mp_titanweapon_sticky_40mm", ... }
     file.loadoutInfos.append( tggTone )
 
     // Scorch
-    TitanGunGameLoadoutInfo tggScorch = { index = 1, iconWeaponName = "mp_titanweapon_xo16_vanguard", ... }
+    TitanGunGameLoadoutInfo tggScorch = { index = 1, iconWeaponName = "mp_titanweapon_meteor", ... }
     file.loadoutInfos.append( tggScorch )
 
     // Brute
-    TitanGunGameLoadoutInfo tggBrute = { index = 0, isBrute = true, iconWeaponName = "mp_titanweapon_xo16_vanguard", ... }
+    TitanGunGameLoadoutInfo tggBrute = { index = 0, isBrute = true, iconWeaponName = "mp_titanweapon_rocketeer_rocketstream", ... }
     file.loadoutInfos.append( tggBrute )
 
     // Sword Core
-    TitanGunGameLoadoutInfo tggSwordCore = { index = 0, isSwordCore = true, iconWeaponName = "mp_titancore_shift_core" ... }
+    TitanGunGameLoadoutInfo tggSwordCore = { index = 0, isSwordCore = true, iconWeaponName = "mp_titancore_shift_core", ... }
     file.loadoutInfos.append( tggSwordCore )
 
     // Pilot
-    TitanGunGameLoadoutInfo tggPilot = { index = 0, isPilot = true, iconWeaponName = "mp_titanweapon_xo16_vanguard", ... }
+    TitanGunGameLoadoutInfo tggPilot = { index = 0, isPilot = true, iconWeaponName = "mp_weapon_mgl", ... }
     file.loadoutInfos.append( tggPilot )
 
 
