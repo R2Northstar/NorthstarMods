@@ -1,6 +1,9 @@
 untyped
 global function GamemodeTGG_Init
 
+const int TGG_LEGION_SCORE = 1
+const int TGG_SWORDCORE_SCORE = 8
+const int TGG_EJECT_SCORE = 9
 const float TGGIntroLength = 15.0
 
 void function GamemodeTGG_Init()
@@ -20,7 +23,7 @@ void function GamemodeTGG_Init()
 	AddCallback_OnPlayerKilled( AddTeamScoreForPlayerKilled ) // dont have to track autotitan kills since you cant leave your titan in this mode
 	AddCallback_OnPilotBecomesTitan( OnPlayerBecomesTitan ) // I have no idea why this wasn't working with normal respawn callback, might be now though
     AddCallback_GGEarnMeterFull( OnTGGEarnMeterFilled )
-
+    AddPostDamageCallback( "player", AddTGGCorePercentage )
     SetKillcamsEnabled( false )
 }
 
@@ -73,35 +76,32 @@ void function PlayerWatchesTGGIntroIntermissionCam( entity player )
     TryGameModeAnnouncement( player )
 }
 
-// TitanGunGameWeapon function GetCurrentEarnMeterIcon( entity player )
-// {
-//     int currentWeaponIndex = GameRules_GetTeamScore( player.GetTeam() )
-//     currentWeaponIndex += 1
-//     array<TitanGunGameWeapon> weapons = GetTitanGunGameWeapons()
-
-//     if ( currentWeaponIndex >= weapons.len() )
-// 		currentWeaponIndex = weapons.len() - 1 
-
-//     TitanGunGameWeapon weapon = weapons[ currentWeaponIndex ]
-
-//     return weapon
-// }
-
 void function OnPlayerBecomesTitan( entity player, entity titan )
 {
-    // string nextWeapon = GetCurrentEarnMeterIcon( player ).weapon
-    // if( nextWeapon == "melee_titan_sword" )
-    //     ServerCallback_GGEarnMeter_SetWeaponIcon( player, "mp_titancore_shift_core" )
-    // else
-    //     ServerCallback_GGEarnMeter_SetWeaponIcon( player, nextWeapon )
-    foreach ( entity weapon in player.GetOffhandWeapons() )
-		player.TakeWeaponNow( weapon.GetWeaponClassName() )
+    // foreach ( entity weapon in player.GetOffhandWeapons() )
+	// 	player.TakeWeaponNow( weapon.GetWeaponClassName() )
 
-    TitanGunGameWeapon ggWeapon = GetTitanGunGameWeapon( player )
-    if( ggWeapon.weapon != "melee_titan_sword" )
-        player.GiveOffhandWeapon( ggWeapon.secondary, OFFHAND_LEFT )
+    // TitanGunGameWeapon ggWeapon = GetTitanGunGameWeapon( player )
+    // if( ggWeapon.weapon != "melee_titan_sword" )
+    //     player.GiveOffhandWeapon( ggWeapon.secondary, OFFHAND_LEFT )
 
     thread OnPlayerRespawned_Threaded( player )
+}
+
+void function AddTGGCorePercentage( entity victim, var damageInfo )
+{
+    if( !victim.IsTitan() )
+        return
+
+
+    float damage = DamageInfo_GetDamage( damageInfo )
+    float playlistVar = GetCurrentPlaylistVarFloat( "tgg_titandamage_reward", 0.0001 )
+    float percentageReward = damage * playlistVar
+    string scoreEvent = "DamageTitan"
+
+    entity attacker = DamageInfo_GetAttacker( damageInfo )
+
+    Reward( attacker, victim, scoreEvent, percentageReward)
 }
 
 void function OnPlayerConnected( entity player )
@@ -122,7 +122,7 @@ void function OnPlayerRespawned_Threaded( entity player )
         WaitFrame()
         player.Server_SetDodgePower( 100.0 )
 		player.SetPowerRegenRateScale( 6.5 )
-        player.GiveOffhandWeapon("melee_titan_sword", OFFHAND_MELEE, ["super_charged"] )
+        //player.GiveOffhandWeapon("melee_titan_sword", OFFHAND_MELEE, ["super_charged"] )
         player.SetActiveWeaponByName("melee_titan_sword")
         GivePassive( player, ePassives.PAS_FUSION_CORE )
 		GivePassive( player, ePassives.PAS_SHIFT_CORE )
@@ -132,12 +132,63 @@ void function OnPlayerRespawned_Threaded( entity player )
 bool function OnTGGEarnMeterFilled( entity player )
 {
 	AddTeamScore( player.GetTeam(), 1 )
-	player.AddToPlayerGameStat( PGS_TITAN_KILLS, 1 )
-	UpdateLivingTitanLoadout( player )
+	//player.AddToPlayerGameStat( PGS_TITAN_KILLS, 1 )
+
+    // discount upgrade core heal fx
+    EmitSoundOnEntityExceptToPlayer( player, player, "Titan_Monarch_Smart_Core_Activated_3P" )
+	EmitSoundOnEntityOnlyToPlayer( player, player, "Titan_Monarch_Smart_Core_Activated_1P" )
+    Remote_CallFunction_Replay( player, "ServerCallback_TGG_PlayUpgradeFX" )
+	entity soul = player.GetTitanSoul()
+	soul.SetShieldHealth( soul.GetShieldHealthMax() )
 
 	int currentScore = GameRules_GetTeamScore( player.GetTeam() )
 	int maxScore = GetGunGameWeapons().len()
 
+    if( currentScore == TGG_EJECT_SCORE ) {
+        EmitSoundOnEntityOnlyToPlayer( player, player, "autoEjectNotice" ) // should be changed when autoeject VA gets fixed (apply the passive to the player ideally just b4 eject)
+        var eject = TitanEjectPlayer( player, true ) // doesn't seem to like playing the eject anims, just make it instant
+        OnThreadEnd(
+            function() : ( player )
+            {
+                TitanGunGameLoadoutInfo ggWeapon = GetTGGLoadoutInformation( player )
+
+                foreach ( entity weapon in player.GetMainWeapons() )
+		            player.TakeWeaponNow( weapon.GetWeaponClassName() )
+
+	            foreach ( entity weapon in player.GetOffhandWeapons() )
+		            player.TakeWeaponNow( weapon.GetWeaponClassName() )
+
+                player.GiveOffhandWeapon( ggWeapon.pilotOffhand , OFFHAND_LEFT, ggWeapon.pilotOffhandMods)
+                player.GiveWeapon( ggWeapon.pilotWeapon, ggWeapon.pilotWeaponMods)
+                if ( IsValid( player ) )
+		            thread OnTGGEjectThreaded( player )
+                
+                return false
+            }
+        )
+    } else if( currentScore == TGG_SWORDCORE_SCORE )
+    {
+        player.Server_SetDodgePower( 100.0 )
+		player.SetPowerRegenRateScale( 6.5 )
+        //player.GiveOffhandWeapon("melee_titan_sword", OFFHAND_MELEE, ["super_charged"] )
+        player.SetActiveWeaponByName("melee_titan_sword")
+        GivePassive( player, ePassives.PAS_FUSION_CORE )
+		GivePassive( player, ePassives.PAS_SHIFT_CORE )
+    }
+
+    foreach ( entity weapon in player.GetMainWeapons() )
+		player.TakeWeaponNow( weapon.GetWeaponClassName() )
+
+	foreach ( entity weapon in player.GetOffhandWeapons() )
+		player.TakeWeaponNow( weapon.GetWeaponClassName() )
+
+    // FUCK YOU POWERSHOT SCRIPTS CUNT
+    if( currentScore == TGG_LEGION_SCORE )
+        player.SetModel( $"models/titans/heavy/titan_heavy_deadbolt.mdl" )
+    else if(currentScore == TGG_LEGION_SCORE + 1)
+        player.SetModel( $"models/titans/medium/titan_medium_ajax.mdl")
+
+    GiveTitanLoadout( player, CreateTGGTitanLoadout( player ) )
 	return currentScore >= maxScore
 }
 
@@ -150,69 +201,43 @@ void function Reward( entity player, entity victim, string scoreEvent, float per
 
 void function UpdateLivingTitanLoadout( entity player )
 {
-    if( GetGameState() == eGameState.WinnerDetermined)
-        return
+    // if( GetGameState() == eGameState.WinnerDetermined)
+    //     return
 
-    int currentWeaponIndex = GameRules_GetTeamScore( player.GetTeam() )
-	array<TitanGunGameWeapon> ggWeapons = GetTitanGunGameWeapons()
+    // int currentWeaponIndex = GameRules_GetTeamScore( player.GetTeam() )
+	// array<TitanGunGameWeapon> ggWeapons = GetTitanGunGameWeapons()
 	
-	if ( currentWeaponIndex >= ggWeapons.len() )
-		currentWeaponIndex = ggWeapons.len() - 1
+	// if ( currentWeaponIndex >= ggWeapons.len() )
+	// 	currentWeaponIndex = ggWeapons.len() - 1
 		
-	if ( currentWeaponIndex > 8) // play end of game music for special weapons
-		PlayMusicToAll( eMusicPieceID.LEVEL_LAST_MINUTE ) // this *shouldn't* overlap if done multiple times
 	
-	TitanGunGameWeapon ggWeapon = ggWeapons[ currentWeaponIndex ]
-    if ( currentWeaponIndex > 9 )
-        return
+	// TitanGunGameWeapon ggWeapon = ggWeapons[ currentWeaponIndex ]
+    // if ( currentWeaponIndex > 9 )
+    //     return
 
-    if( currentWeaponIndex == 9 )
-    {
-        EmitSoundOnEntityOnlyToPlayer( player, player, "autoEjectNotice" ) // should be changed when autoeject VA gets fixed (apply the passive to the player ideally just b4 eject)
-        var eject = TitanEjectPlayer( player, true ) // doesn't seem to like playing the eject anims, just make it instant
-        OnThreadEnd(
-            function() : ( player, ggWeapon )
-            {
-                foreach ( entity weapon in player.GetMainWeapons() )
-		            player.TakeWeaponNow( weapon.GetWeaponClassName() )
+    // if( currentWeaponIndex == 9 )
+    // {
 
-	            foreach ( entity weapon in player.GetOffhandWeapons() )
-		            player.TakeWeaponNow( weapon.GetWeaponClassName() )
+    // }
 
-                player.GiveOffhandWeapon( ggWeapon.offhand , OFFHAND_RIGHT, ggWeapon.offhandMods)
-                player.GiveWeapon( ggWeapon.weapon, ggWeapon.primaryMods)
-                if ( IsValid( player ) )
-		            thread OnTGGEjectThreaded( player )
-            }
-        )
-        return
-    }
+	// foreach ( entity weapon in player.GetMainWeapons() )
+	// 	player.TakeWeaponNow( weapon.GetWeaponClassName() )
+    // foreach ( entity weapon in player.GetOffhandWeapons() )
+	// 	player.TakeWeaponNow( weapon.GetWeaponClassName() )
 
-    // discount upgrade core heal fx
-    EmitSoundOnEntityExceptToPlayer( player, player, "Titan_Monarch_Smart_Core_Activated_3P" )
-	EmitSoundOnEntityOnlyToPlayer( player, player, "Titan_Monarch_Smart_Core_Activated_1P" )
-    Remote_CallFunction_Replay( player, "ServerCallback_TGG_PlayUpgradeFX" )
-	entity soul = player.GetTitanSoul()
-	soul.SetShieldHealth( soul.GetShieldHealthMax() )
-
-	foreach ( entity weapon in player.GetMainWeapons() )
-		player.TakeWeaponNow( weapon.GetWeaponClassName() )
-    foreach ( entity weapon in player.GetOffhandWeapons() )
-		player.TakeWeaponNow( weapon.GetWeaponClassName() )
-
-    if( ggWeapon.weapon == "melee_titan_sword" )
-    {
-        player.GiveWeapon( "mp_titanweapon_sniper" )
-        player.Server_SetDodgePower( 100.0 )
-		player.SetPowerRegenRateScale( 6.5 )
-        player.GiveOffhandWeapon("melee_titan_sword", OFFHAND_MELEE, ["super_charged"] )
-        player.SetActiveWeaponByName("melee_titan_sword")
-        GivePassive( player, ePassives.PAS_FUSION_CORE )
-		GivePassive( player, ePassives.PAS_SHIFT_CORE )
-    } else {
-        player.GiveWeapon( ggWeapon.weapon )
-        player.GiveOffhandWeapon( ggWeapon.secondary, OFFHAND_LEFT )
-    }
+    // if( ggWeapon.weapon == "melee_titan_sword" )
+    // {
+    //     player.GiveWeapon( "mp_titanweapon_sniper" )
+    //     player.Server_SetDodgePower( 100.0 )
+	// 	player.SetPowerRegenRateScale( 6.5 )
+    //     player.GiveOffhandWeapon("melee_titan_sword", OFFHAND_MELEE, ["super_charged"] )
+    //     player.SetActiveWeaponByName("melee_titan_sword")
+    //     GivePassive( player, ePassives.PAS_FUSION_CORE )
+	// 	GivePassive( player, ePassives.PAS_SHIFT_CORE )
+    // } else {
+    //     player.GiveWeapon( ggWeapon.weapon )
+    //     player.GiveOffhandWeapon( ggWeapon.secondary, OFFHAND_LEFT )
+    // }
 
     // string nextWeapon = GetCurrentEarnMeterIcon( player ).weapon
     // if( nextWeapon == "melee_titan_sword" )
@@ -233,12 +258,12 @@ void function AddTeamScoreForPlayerKilled( entity victim, entity attacker, var d
 	{
         if ( (victim.IsTitan() && attacker.IsPlayer()) || (attacker.IsPlayer() && victim.IsPlayer()) )
         {
-            float percentageReward = GetCurrentPlaylistVarFloat( "tgg_kill_reward", 1.0 )
+            float percentageReward = GetCurrentPlaylistVarFloat( "tgg_kill_reward", 0.30 )
 			string scoreEvent = "KillTitan"
 
             Reward( attacker, victim, scoreEvent, percentageReward)
             if( IsValid(attacker.GetTitanSoul()) )
-                SoulTitanCore_SetNextAvailableTime( attacker.GetTitanSoul(), 0.0 ) // try to avoid to titan cores as it crashes
+                SoulTitanCore_SetNextAvailableTime( attacker.GetTitanSoul(), 0.0 ) // ~~try to avoid to titan cores as it crashes~~. this may not be an issue anymore but I don't particularly want cores anyway
         }
 
 
@@ -249,24 +274,28 @@ void function AddTeamScoreForPlayerKilled( entity victim, entity attacker, var d
 		    if( attackerInfo.attacker != attacker && attackerInfo.attacker != victim && !exists )
 		    {
 			    alreadyAssisted[attackerInfo.attacker.GetEncodedEHandle()] <- true
-                Reward( attackerInfo.attacker, victim, "TitanAssist", GetCurrentPlaylistVarFloat( "tgg_assist_reward", 0.5 ) )
+                Reward( attackerInfo.attacker, victim, "TitanAssist", GetCurrentPlaylistVarFloat( "tgg_assist_reward", 0.15 ) )
 		    }
 	    }
 	}
 
-    thread ForcedRespawnPlayerWithTitanLoadout( victim )
+    thread HackyForcedRespawn( victim )
 }
 
-void function ForcedRespawnPlayerWithTitanLoadout( entity player )
+void function HackyForcedRespawn( entity player )
 {
-    wait 4
+    wait 4 // literally just imitating normal respawn times :terror:
+
+    if( GetGameState() == eGameState.WinnerDetermined)
+        return
+        
     int currentWeaponIndex = GameRules_GetTeamScore( player.GetTeam() )
-    if(!IsAlive( player ) || (GetGameState() != eGameState.WinnerDetermined))
+    if( !IsAlive( player ) && GetGameState() != eGameState.WinnerDetermined )
     {
         if (currentWeaponIndex >= 9)
             RespawnTGGPilot( player )
         else
-            thread RespawnAsTitan( player, false , CreateTGGTitanLoadout( player ) )
+            thread RespawnAsTitan( player, false, CreateTGGTitanLoadout( player ) )
     }
 }
 
@@ -279,45 +308,86 @@ void function RespawnTGGPilot( entity player )
 	foreach ( entity weapon in player.GetOffhandWeapons() )
 		player.TakeWeaponNow( weapon.GetWeaponClassName() )
 
-    TitanGunGameWeapon weapon = GetTitanGunGameWeapon( player )
+    TitanGunGameLoadoutInfo tggLoadoutInfo = GetTGGLoadoutInformation( player )
 
-    player.GiveOffhandWeapon( weapon.offhand , OFFHAND_RIGHT, weapon.offhandMods)
-    player.GiveWeapon( weapon.weapon, weapon.primaryMods)
+    player.GiveOffhandWeapon( tggLoadoutInfo.pilotOffhand , OFFHAND_LEFT, tggLoadoutInfo.pilotOffhandMods )
+    player.GiveWeapon( tggLoadoutInfo.pilotWeapon, tggLoadoutInfo.pilotWeaponMods )
 }
 
 TitanLoadoutDef function CreateTGGTitanLoadout( entity player )
 {
+    int skin = GetTitanLoadoutForPlayer( player ).skinIndex
+    int camo = GetTitanLoadoutForPlayer( player ).camoIndex
+    bool shouldUseSkinIndex = skin > 0
+
+    entity soul = player.GetTitanSoul()
+
     array<string> possibleChassis = ["titan_atlas_tone_prime", "titan_atlas_tracker", "titan_atlas_ion_prime", "titan_atlas_stickybomb", "titan_atlas_vanguard"]
-    TitanGunGameWeapon weapon = GetTitanGunGameWeapon( player )
-    TitanLoadoutDef loadout = GetTitanLoadoutForPlayer( player )
-    loadout.titanClass = "ion" // no ronin prime crash
-    loadout.setFile = possibleChassis.getrandom()
-    loadout.special = "" // these empty strings dont even fucking arghh
-    loadout.antirodeo = ""
-    loadout.passive1 = ""
-    loadout.passive2 = ""
-    if( weapon.weapon == "melee_titan_sword" )
-        loadout.primary = "mp_titanweapon_sniper"
-    else 
-        loadout.primary = weapon.weapon
-    loadout.coreAbility = weapon.core
-    printt("--TGG LOADOUT--")
-    PrintTitanLoadout( loadout )
+    TitanGunGameLoadoutInfo tggLoadoutInfo = GetTGGLoadoutInformation( player )
+    TitanLoadoutDef loadout = GetDefaultTitanLoadout( tggLoadoutInfo.index )
+    // loadout.titanClass = "ion" // i don't actually know if this bug still roams around but i don't want pain
+
+    if( IsValid(soul) )
+        loadout.setFile = soul.soul.titanLoadout.setFile
+    else
+        loadout.setFile = possibleChassis.getrandom()
+
+    loadout.passive1 = "pas_mobility_dash_capacity" // default loadouts stink
+    loadout.melee = ""
+    if( shouldUseSkinIndex )
+        loadout.skinIndex = skin
+    else
+        loadout.camoIndex = camo
+
+    if( tggLoadoutInfo.isSwordCore || tggLoadoutInfo.isBrute )
+        loadout = GetTGGSpecialLoadout( player, loadout )
+
     return loadout
 }
 
-TitanGunGameWeapon function GetTitanGunGameWeapon( entity player )
+TitanLoadoutDef function GetTGGSpecialLoadout( entity player, TitanLoadoutDef loadout )
 {
-    int currentWeaponIndex = GameRules_GetTeamScore( player.GetTeam() )
-    array<TitanGunGameWeapon> weapons = GetTitanGunGameWeapons()
+    TitanGunGameLoadoutInfo tggLoadoutInfo = GetTGGLoadoutInformation( player )
 
-    if ( currentWeaponIndex >= weapons.len() )
-		currentWeaponIndex = weapons.len() - 1
-		
-	if ( currentWeaponIndex > 8 ) // play end of game music for special weapons
+    if( tggLoadoutInfo.isBrute )
+    {
+        loadout.special = tggLoadoutInfo.bruteDefensive // these empty strings dont even fucking arghh
+        loadout.antirodeo = tggLoadoutInfo.bruteUtility
+        loadout.passive2 = ""
+        loadout.ordnance = tggLoadoutInfo.bruteOffensive
+        loadout.primary = tggLoadoutInfo.bruteWeapon
+    } else if( tggLoadoutInfo.isSwordCore )
+    {
+        loadout.special = ""
+        loadout.antirodeo = ""
+        loadout.passive2 = ""
+        loadout.ordnance = ""
+        loadout.primary = tggLoadoutInfo.bruteWeapon
+        loadout.melee = tggLoadoutInfo.swordCoreWeapon
+    }
+
+    return loadout
+}
+
+TitanGunGameLoadoutInfo function GetTGGLoadoutInformation( entity player )
+{
+    int currentIndex = GameRules_GetTeamScore( player.GetTeam() )
+    array<TitanGunGameLoadoutInfo> loadoutInfos = GetTitanGunGameWeapons()
+
+    if( currentIndex >= loadoutInfos.len() )
+		currentIndex = loadoutInfos.len() - 1
+
+	if( currentIndex > 8 ) // play end of game music for scary last stuff :terror: (copilot suggest :terror: wtf)
 		PlayMusicToAll( eMusicPieceID.LEVEL_LAST_MINUTE )
 
-    TitanGunGameWeapon weapon = weapons[ currentWeaponIndex ]
+    TitanGunGameLoadoutInfo loadoutInfo = loadoutInfos[ currentIndex ]
 
-    return weapon
+    if( currentIndex == 7 )
+        loadoutInfo.isBrute = true
+    else if( currentIndex == 8 )
+        loadoutInfo.isSwordCore = true
+    else if( currentIndex == 9 )
+        loadoutInfo.isPilot = true
+
+    return loadoutInfo
 }

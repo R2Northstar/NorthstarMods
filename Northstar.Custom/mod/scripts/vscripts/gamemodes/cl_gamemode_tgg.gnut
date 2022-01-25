@@ -52,17 +52,14 @@ asset function ClGamemodeTGG_GetWeaponIcon()
 {
 	int weaponIndex = GameRules_GetTeamScore( GetLocalViewPlayer().GetTeam() ) + 1
 
-	array<TitanGunGameWeapon> weapons = GetTitanGunGameWeapons()
+	array<TitanGunGameLoadoutInfo> weapons = GetTitanGunGameWeapons()
 
 	if ( weaponIndex >= weapons.len() )
 		return RandomFloat( 1 ) > 0.1 ? $"rui/menu/boosts/boost_icon_random" : $"rui/faction/faction_logo_mrvn"
 
-	TitanGunGameWeapon nextWeapon = weapons[ weaponIndex ]
+	TitanGunGameLoadoutInfo nextWeapon = weapons[ weaponIndex ]
 
-	if( nextWeapon.weapon == "melee_titan_sword")
-		return GetWeaponInfoFileKeyFieldAsset_WithMods_Global( "mp_titancore_shift_core", nextWeapon.primaryMods, "hud_icon" )
-
-	return GetWeaponInfoFileKeyFieldAsset_WithMods_Global( nextWeapon.weapon, nextWeapon.primaryMods, "hud_icon" )
+	return GetWeaponInfoFileKeyFieldAsset_WithMods_Global( nextWeapon.iconWeaponName, [], "hud_icon" )
 }
 
 // Because of our easter egg we have to include the optional test function so that we don't get a flickering icon.

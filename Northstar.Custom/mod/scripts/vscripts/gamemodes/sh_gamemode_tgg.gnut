@@ -3,19 +3,34 @@ global function GetTitanGunGameWeapons
 
 global const string GAMEMODE_TGG = "tgg"
 
-global struct TitanGunGameWeapon
+// can be moved to playlist vars later if anyone feels like it
+global struct TitanGunGameLoadoutInfo
 {
-	string weapon
-    string core
-	array<string> primaryMods
-    string offhand
-    array<string> offhandMods
-    string secondary
-    array<string> secondaryMods
+	int index
+    bool isBrute = false
+    bool isSwordCore = false
+    bool isPilot = false
+
+    string iconWeaponName
+
+    // terror
+    string bruteWeapon = "mp_titanweapon_rocketeer_rocketstream"
+    string bruteDefensive = "mp_titanability_tether_trap"
+    string bruteOffensive = "mp_titanweapon_dumbfire_rockets"
+    string bruteUtility = "mp_titanability_rocketeer_ammo_swap"
+
+    //string swordCoreIcon = "mp_titancore_shift_core"
+    string swordCoreWeapon = "melee_titan_sword"
+    array<string> swordCoreMods = [ "super_charged" ]
+
+    string pilotWeapon = "mp_weapon_mgl"
+    array<string> pilotWeaponMods = [ "at_unlimited_ammo" ]
+    string pilotOffhand = "mp_weapon_grenade_sonar"
+    array<string> pilotOffhandMods = [ "amped_tacticals" ]
 }
 
 struct {
-	array<TitanGunGameWeapon> weapons
+	array<TitanGunGameLoadoutInfo> loadoutInfos
 } file
 
 void function Sh_GamemodeTGG_Init()
@@ -36,50 +51,52 @@ void function CreateGamemodeTGG()
 	GameMode_AddScoreboardColumnData( GAMEMODE_TGG, "#SCOREBOARD_TITAN_DAMAGE", PGS_ASSAULT_SCORE, 6 )
 	GameMode_SetColor( GAMEMODE_TGG, [147, 204, 57, 255] )
 
-	AddPrivateMatchModeSettingArbitrary( "#GAMEMODE_tgg", "tgg_kill_reward", "1.0" )
-	AddPrivateMatchModeSettingArbitrary( "#GAMEMODE_tgg", "tgg_assist_reward", "0.5" )
+	AddPrivateMatchModeSettingArbitrary( "#GAMEMODE_tgg", "tgg_kill_reward", "0.30" )
+	AddPrivateMatchModeSettingArbitrary( "#GAMEMODE_tgg", "tgg_assist_reward", "0.15" )
+    AddPrivateMatchModeSettingArbitrary( "#GAMEMODE_tgg", "tgg_titandamage_reward", "0.0001" )
 
 	AddPrivateMatchMode( GAMEMODE_TGG )
 
-    // xo16
-    TitanGunGameWeapon tggXO16 = { weapon = "mp_titanweapon_xo16_vanguard", secondary = "mp_titanweapon_stun_laser", ...}
-    file.weapons.append(tggXO16)
+    // Ion
+    TitanGunGameLoadoutInfo tggIon = { index = 0, iconWeaponName = "mp_titanweapon_particle_accelerator", ... }
+    file.loadoutInfos.append( tggIon )
 
-    // predator cannon
-    TitanGunGameWeapon tggPredCannon = { weapon = "mp_titanweapon_predator_cannon", secondary = "mp_titanability_gun_shield", ...}
-    file.weapons.append(tggPredCannon)
-    
-    // plasma railgun
-    TitanGunGameWeapon tggRailgun = { weapon = "mp_titanweapon_sniper", secondary = "mp_titanability_tether_trap",  ...}
-    file.weapons.append(tggRailgun)
+    // Legion
+    TitanGunGameLoadoutInfo tggLegion = { index = 5, iconWeaponName = "mp_titanweapon_predator_cannon", ... }
+    file.loadoutInfos.append( tggLegion )
 
-    // leadwall
-    TitanGunGameWeapon tggLeadwall = { weapon = "mp_titanweapon_leadwall", secondary = "mp_titanability_basic_block", ...}
-    file.weapons.append(tggLeadwall)
+    // Monarch
+    TitanGunGameLoadoutInfo tggMonarch = { index = 6, iconWeaponName = "mp_titanweapon_xo16_vanguard", ... }
+    file.loadoutInfos.append( tggLegion )
 
-    // particle accelerator
-    TitanGunGameWeapon tggParticleAccel = { weapon = "mp_titanweapon_particle_accelerator", secondary = "mp_titanability_laser_trip",  ...}
-    file.weapons.append(tggParticleAccel)
+    // Ronin
+    TitanGunGameLoadoutInfo tggRonin = { index = 3, iconWeaponName = "mp_titanweapon_xo16_vanguard", ... }
+    file.loadoutInfos.append( tggRonin )
 
-    // meteor
-    TitanGunGameWeapon tggMeteor = { weapon = "mp_titanweapon_meteor", secondary = "mp_titanweapon_heat_shield", ...}
-    file.weapons.append(tggMeteor)
+    // Northstar
+    TitanGunGameLoadoutInfo tggNorthstar = { index = 2, iconWeaponName = "mp_titanweapon_xo16_vanguard", ... }
+    file.loadoutInfos.append( tggNorthstar )
 
-    // 40mm
-    TitanGunGameWeapon tgg40mm = { weapon = "mp_titanweapon_sticky_40mm", secondary = "mp_titanability_particle_wall", ...}
-    file.weapons.append(tgg40mm)
+    // Tone
+    TitanGunGameLoadoutInfo tggTone = { index = 4, iconWeaponName = "mp_titanweapon_xo16_vanguard", ... }
+    file.loadoutInfos.append( tggTone )
 
-    // quad rocket
-    TitanGunGameWeapon tggRocketeer = { weapon = "mp_titanweapon_rocketeer_rocketstream", secondary = "mp_titanability_rocketeer_ammo_swap", ...}
-    file.weapons.append(tggRocketeer)
+    // Scorch
+    TitanGunGameLoadoutInfo tggScorch = { index = 1, iconWeaponName = "mp_titanweapon_xo16_vanguard", ... }
+    file.loadoutInfos.append( tggScorch )
 
-    // sword core
-    TitanGunGameWeapon tggMelee = { weapon = "melee_titan_sword", ...}
-    file.weapons.append(tggMelee)
+    // Brute
+    TitanGunGameLoadoutInfo tggBrute = { index = 0, isBrute = true, iconWeaponName = "mp_titanweapon_xo16_vanguard", ... }
+    file.loadoutInfos.append( tggBrute )
 
-    // pilot
-    TitanGunGameWeapon tggMGL = { weapon = "mp_weapon_mgl", offhand = "mp_weapon_grenade_sonar", offhandMods = ["amped_tacticals"], primaryMods = ["at_unlimited_ammo"] ...}
-    file.weapons.append(tggMGL)
+    // Sword Core
+    TitanGunGameLoadoutInfo tggSwordCore = { index = 0, isSwordCore = true, iconWeaponName = "mp_titancore_shift_core" ... }
+    file.loadoutInfos.append( tggSwordCore )
+
+    // Pilot
+    TitanGunGameLoadoutInfo tggPilot = { index = 0, isPilot = true, iconWeaponName = "mp_titanweapon_xo16_vanguard", ... }
+    file.loadoutInfos.append( tggPilot )
+
 
 	GameMode_SetDefaultScoreLimits( GAMEMODE_TGG, 20, 0)
 
@@ -106,7 +123,7 @@ void function TGGRegisterNetworkVars()
     Remote_RegisterFunction( "ServerCallback_TGG_PlayUpgradeFX" )
 }
 
-array<TitanGunGameWeapon> function GetTitanGunGameWeapons()
+array<TitanGunGameLoadoutInfo> function GetTitanGunGameWeapons()
 {
-	return file.weapons
+	return file.loadoutInfos
 }
