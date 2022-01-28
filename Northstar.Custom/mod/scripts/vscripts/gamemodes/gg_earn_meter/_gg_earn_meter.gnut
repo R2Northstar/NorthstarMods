@@ -43,13 +43,8 @@ void function CheckQueue( entity player )
 {
 	file.checkingQueue = true
 
-	print("start checking")
-
 	while ( file.rewardQueue.len() > 0 )
 	{
-
-		print("check")
-
 		RewardStruct reward = file.rewardQueue.remove(0)
 
 		float newValue = reward.amount
