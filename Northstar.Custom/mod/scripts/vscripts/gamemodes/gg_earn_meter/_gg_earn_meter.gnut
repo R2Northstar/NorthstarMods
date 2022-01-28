@@ -69,7 +69,9 @@ void function CheckQueue( entity player )
 			keepFull = callbackFunc( player )
 
 		if ( !keepFull )
-			Sv_GGEarnMeter_SetPercentage(player, 0.0)
+			player.SetPlayerNetFloat( "gunGameLevelPercentage", 0.0 )
+
+		wait 0.2
 	}
 
 	file.checkingQueue = false
