@@ -3957,16 +3957,6 @@ string function ReloadScripts()
 	return ( "reloaded server scripts" )
 }
 
-void function SetGameEndTime(float seconds)
-{
-	SetServerVar( "gameEndTime", Time() + seconds )
-}
-
-void function SetRoundEndTime(float seconds)
-{
-	SetServerVar( "roundEndTime", Time() + seconds )
-}
-
 int function GameTime_TimeLimitSeconds()
 {
 	if ( IsRoundBased() )
@@ -4402,3 +4392,17 @@ bool function PlayerHasTitan( entity player )
 
 	return false
 }
+
+#if SERVER
+void function RespawnedProtect( entity player , float time ){
+	if( IsDemigod( player ) )
+	{
+		DisableDemigod( player );
+	}
+	else{
+		EnableDemigod( player )
+		wait time
+		DisableDemigod( player );
+	}
+}
+#endif
