@@ -2,21 +2,87 @@ global function Sv_GGEarnMeter_SetPercentage
 global function Sv_GGEarnMeter_AddPercentage
 global function AddCallback_GGEarnMeterFull
 
+enum RewardType
+{
+	SET,
+	ADD
+}
+
+struct RewardStruct
+{
+	float amount = 0.0
+	int type = RewardType.ADD
+}
+
 struct
 {
-	array< bool functionref( entity ) > onGGEarnMeterFullCallbacks
+	array< bool functionref( entity ) > onGGEarnMeterFullCallbacks,
+	array< RewardStruct > rewardQueue, // Because we have delayed reward handling, let's queue things so that everything gets handled eventually.
+	bool checkingQueue = false
 } file
+
+void function AddReward( entity player, float amount, int type )
+{
+	RewardStruct reward
+	reward.amount = amount
+	reward.type = type
+
+	file.rewardQueue.append( reward )
+
+	TryCheckQueue( player )
+}
+
+void function TryCheckQueue( entity player )
+{
+	if ( !file.checkingQueue ) {
+		thread CheckQueue( player )
+	}
+}
+
+void function CheckQueue( entity player )
+{
+	file.checkingQueue = true
+
+	print("start checking")
+
+	while ( file.rewardQueue.len() > 0 )
+	{
+
+		print("check")
+
+		RewardStruct reward = file.rewardQueue.remove(0)
+
+		float newValue = reward.amount
+		if ( reward.type == RewardType.ADD )
+			newValue += player.GetPlayerNetFloat( "gunGameLevelPercentage")
+		newValue = clamp( newValue, 0.0, 1.0 )
+
+		player.SetPlayerNetFloat( "gunGameLevelPercentage", newValue )
+
+		wait 0.2
+
+		if ( (newValue * 100) < 99 ) // To try and catch fun rounding issues.
+			continue
+
+		bool keepFull = false
+		foreach ( callbackFunc in file.onGGEarnMeterFullCallbacks )
+			keepFull = callbackFunc( player )
+
+		if ( !keepFull )
+			Sv_GGEarnMeter_SetPercentage(player, 0.0)
+	}
+
+	file.checkingQueue = false
+}
 
 void function Sv_GGEarnMeter_SetPercentage( entity player, float percentage )
 {
-	player.SetPlayerNetFloat( "gunGameLevelPercentage", clamp(percentage, 0.0, 1.0) )
-
-	thread CheckPercentage( player )
+	AddReward( player, percentage, RewardType.SET )
 }
 
 void function Sv_GGEarnMeter_AddPercentage( entity player, float percentage )
 {
-	Sv_GGEarnMeter_SetPercentage(player, player.GetPlayerNetFloat( "gunGameLevelPercentage") + percentage)
+	AddReward( player, percentage, RewardType.ADD )
 }
 
 void function AddCallback_GGEarnMeterFull( bool functionref( entity ) callbackFunc )
@@ -24,21 +90,4 @@ void function AddCallback_GGEarnMeterFull( bool functionref( entity ) callbackFu
 	Assert( !file.onGGEarnMeterFullCallbacks.contains( callbackFunc ), "Already added " + FunctionToString( callbackFunc ) + " with AddCallback_GGEarnMeterFull" )
 
 	file.onGGEarnMeterFullCallbacks.append( callbackFunc )
-}
-
-void function CheckPercentage( entity player )
-{
-	float percentage = player.GetPlayerNetFloat( "gunGameLevelPercentage")
-
-	if ( percentage < 1.0 )
-		return
-
-	wait 0.2
-
-	bool lastWeapon = false
-	foreach ( callbackFunc in file.onGGEarnMeterFullCallbacks )
-		lastWeapon = callbackFunc( player )
-
-	if ( !lastWeapon )
-		Sv_GGEarnMeter_SetPercentage(player, 0.0)
 }
