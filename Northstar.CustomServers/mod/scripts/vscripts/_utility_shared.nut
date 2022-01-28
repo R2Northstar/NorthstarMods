@@ -4067,3 +4067,17 @@ bool function IsTitanPrimeTitan( entity titan )
 	return  Dev_GetPlayerSettingByKeyField_Global( setFile, "isPrime" ) == 1
 
 }
+
+#if SERVER
+void function RespawnedProtect( entity player , float time ){
+	if( IsDemigod( player ) )
+	{
+		DisableDemigod( player );
+	}
+	else{
+		EnableDemigod( player )
+		wait time
+		DisableDemigod( player );
+	}
+}
+#endif
