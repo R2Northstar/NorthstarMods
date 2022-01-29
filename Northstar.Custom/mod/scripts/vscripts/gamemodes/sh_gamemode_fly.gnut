@@ -14,8 +14,8 @@ void function Sh_GamemodeFlyswatter_Init()
 void function CreateGamemodeFlyswatter()
 {
 	GameMode_Create( GAMEMODE_FLYSWATTER )
-	GameMode_SetName( GAMEMODE_FLYSWATTER, "Flyswatter" )
-	GameMode_SetDesc( GAMEMODE_FLYSWATTER, "Permadeath. Punch fast pilots or rodeo powerful titans" )
+	GameMode_SetName( GAMEMODE_FLYSWATTER, "#PL_fly" )
+	GameMode_SetDesc( GAMEMODE_FLYSWATTER, "#PL_fly_desc" )
 	GameMode_SetGameModeAnnouncement( GAMEMODE_FLYSWATTER, "ffa_modeDesc" )
 	GameMode_SetColor( GAMEMODE_FLYSWATTER, [147, 204, 57, 255] )
 

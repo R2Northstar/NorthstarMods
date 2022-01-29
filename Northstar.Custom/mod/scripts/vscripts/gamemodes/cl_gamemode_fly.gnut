@@ -25,10 +25,8 @@ void function ServerCallback_AnnounceFlyswatterRole()
 {
 	if ( GetLocalViewPlayer().GetTeam() == FLYSWATTER_TEAM_FLY )
 	{
-		//AnnouncementData announcement = Announcement_Create( "#FLYSWATTER_YOU_ARE_FLY" )
-		//Announcement_SetSubText( announcement, "#FLYSWATTER_FLY_GOAL")
-		AnnouncementData announcement = Announcement_Create( "You are a fly!" )
-		Announcement_SetSubText( announcement, "Rodeo titans and don't get punched!" )
+		AnnouncementData announcement = Announcement_Create( "#FLYSWATTER_YOU_ARE_FLY" )
+		Announcement_SetSubText( announcement, "#FLYSWATTER_FLY_GOAL")
 		Announcement_SetTitleColor( announcement, <0,0,1> )
 		Announcement_SetPurge( announcement, true )
 		Announcement_SetPriority( announcement, 200 )
@@ -38,8 +36,8 @@ void function ServerCallback_AnnounceFlyswatterRole()
 	}
 	else
 	{
-		AnnouncementData announcement = Announcement_Create( "You are a swatter!" )
-		Announcement_SetSubText( announcement, "Don't let flies rodeo you! Swat any before they get close and aid fellow swatters" )
+		AnnouncementData announcement = Announcement_Create( "#FLYSWATTER_YOU_ARE_SWATTER" )
+		Announcement_SetSubText( announcement, "#FLYSWATTER_SWATTER_GOAL")
 		Announcement_SetTitleColor( announcement, <0,0,1> )
 		Announcement_SetPurge( announcement, true )
 		Announcement_SetPriority( announcement, 200 )
@@ -53,12 +51,12 @@ void function ServerCallback_AnnounceLastFly( int flyEHandle )
 {
 	entity player = GetEntityFromEncodedEHandle( flyEHandle )
 
-	string announcementString = Localize( "%s1 is the last fly!", player.GetPlayerName() )
-	string announcementSubString = "Don't let them get away!"
+	string announcementString = Localize( "#FLYSWATTER_LAST_FLY", player.GetPlayerName() )
+	string announcementSubString = "#FLYSWATTER_KILL_LAST_FLY"
 	if ( player == GetLocalViewPlayer() )
 	{
-		announcementString = "You are the last fly!"
-		announcementSubString = "Survive. Evade. Resist."
+		announcementString = "#FLYSWATTER_YOU_ARE_LAST_FLY"
+		announcementSubString = "#FLYSWATTER_SURVIVE_LAST_FLY"
 	}
 
 	AnnouncementData announcement = Announcement_Create( announcementString )
@@ -74,15 +72,15 @@ void function ServerCallback_AnnounceLastSwatter( int titanEHandle )
 {
 	entity player = GetEntityFromEncodedEHandle( titanEHandle )
 
-	string announcementString = Localize( "%s1 is the last swatter!", player.GetPlayerName() )
-	string announcementSubString = "Catch them off guard!"
+	string announcementString = Localize( "#FLYSWATTER_LAST_SWATTER", player.GetPlayerName() )
+	string announcementSubString = "#FLYSWATTER_KILL_LAST_SWATTER"
     if(GetPlayerArrayOfTeam( FLYSWATTER_TEAM_FLY ).len() > 1) {
-        announcementSubString = Localize("%s1 minds think better than one. Work together!", GetPlayerArrayOfTeam( FLYSWATTER_TEAM_FLY ).len())
+        announcementSubString = Localize("#FLYSWATTER_KILL_LAST_SWATTER_MANY", GetPlayerArrayOfTeam( FLYSWATTER_TEAM_FLY ).len())
     }
 	if ( player == GetLocalViewPlayer() )
 	{
-		announcementString = "You are the last swatter!"
-		announcementSubString = "Survive."
+		announcementString = "#FLYSWATTER_YOU_ARE_LAST_SWATTER"
+		announcementSubString = "#FLYSWATTER_SURVIVE_LAST_SWATTER"
 	}
 
 	AnnouncementData announcement = Announcement_Create( announcementString )
