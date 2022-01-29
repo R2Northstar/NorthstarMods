@@ -87,7 +87,7 @@ Press Yes if you agree to this. This choice can be changed in the mods menu at a
 		"PL_fly_desc" "Permadeath. Punch fast pilots or rodeo powerful titans"
 		"PL_fly_hint" "Melee-only Pilots vs Titans based on rodeo"
 		"PL_fly_abbr" "FLY"
-		"GAMEMODE_FLY" "Flyswatter"
+		"flyswatter_balance_teams" "Balance teams"
 		"FLYSWATTER_YOU_ARE_FLY" "You are a fly!"
 		"FLYSWATTER_FLY_GOAL" "Rodeo titans and don't get punched!"
 		"FLYSWATTER_YOU_ARE_SWATTER" "You are a swatter!"

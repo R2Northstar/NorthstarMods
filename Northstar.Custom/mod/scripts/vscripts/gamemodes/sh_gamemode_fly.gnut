@@ -21,7 +21,7 @@ void function CreateGamemodeFlyswatter()
 
     GameMode_SetDefaultTimeLimits( GAMEMODE_FLYSWATTER, 5, 0.0 )
 	GameMode_AddScoreboardColumnData( GAMEMODE_FLYSWATTER, "#SCOREBOARD_KILLS", PGS_ASSAULT_SCORE, 2 )
-	AddPrivateMatchModeSettingEnum( "#GAMEMODE_fly", "flyswatter_balance_teams", [ "Disabled", "Enabled" ], "1" )
+	AddPrivateMatchModeSettingEnum( "#PL_fly", "flyswatter_balance_teams", [ "Disabled", "Enabled" ], "1" )
 
 	AddPrivateMatchMode( GAMEMODE_FLYSWATTER ) // add to private lobby modes
 
