@@ -1,3 +1,4 @@
+global function Sv_GGEarnMeter_Init
 global function Sv_GGEarnMeter_SetPercentage
 global function Sv_GGEarnMeter_AddPercentage
 global function AddCallback_GGEarnMeterFull
@@ -17,9 +18,20 @@ struct RewardStruct
 struct
 {
 	array< bool functionref( entity ) > onGGEarnMeterFullCallbacks,
-	array< RewardStruct > rewardQueue, // Because we have delayed reward handling, let's queue things so that everything gets handled eventually.
-	bool checkingQueue = false
+	table< entity, array< RewardStruct > > rewardQueue, // Because we have delayed reward handling, let's queue things so that everything gets handled eventually.
+	table< entity, bool > checkingQueue
 } file
+
+void function Sv_GGEarnMeter_Init()
+{
+	AddCallback_OnClientConnected( Sv_GGEarnMeter_OnClientConnected )
+}
+
+void function Sv_GGEarnMeter_OnClientConnected( entity player )
+{
+	file.rewardQueue[ player ] <- []
+	file.checkingQueue[ player ] <- false
+}
 
 void function AddReward( entity player, float amount, int type )
 {
@@ -27,25 +39,27 @@ void function AddReward( entity player, float amount, int type )
 	reward.amount = amount
 	reward.type = type
 
-	file.rewardQueue.append( reward )
+	file.rewardQueue[player].append( reward )
 
 	TryCheckQueue( player )
 }
 
 void function TryCheckQueue( entity player )
 {
-	if ( !file.checkingQueue ) {
+	if ( !file.checkingQueue[player] ) {
 		thread CheckQueue( player )
 	}
 }
 
 void function CheckQueue( entity player )
 {
-	file.checkingQueue = true
+	player.EndSignal( "OnDestroy" ) // If the player disconnects or stops existing for some reason, stop doing shit with it so the server doesn't break.
 
-	while ( file.rewardQueue.len() > 0 )
+	file.checkingQueue[player] = true
+
+	while ( file.rewardQueue[player].len() > 0 && IsValid(player) )
 	{
-		RewardStruct reward = file.rewardQueue.remove(0)
+		RewardStruct reward = file.rewardQueue[player].remove(0)
 
 		float newValue = reward.amount
 		if ( reward.type == RewardType.ADD )
@@ -69,7 +83,7 @@ void function CheckQueue( entity player )
 		wait 0.2
 	}
 
-	file.checkingQueue = false
+	file.checkingQueue[player] = false
 }
 
 void function Sv_GGEarnMeter_SetPercentage( entity player, float percentage )
