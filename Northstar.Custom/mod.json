@@ -48,6 +48,25 @@
 			"Path": "weapons/mp_weapon_peacekraber.nut",
 			"RunOn": "( CLIENT || SERVER ) && MP"
 		},
+
+		{
+            "Path": "gamemodes/sh_gamemode_fly.gnut",
+            "RunOn": "(SERVER || CLIENT) && MP",
+            "ServerCallback": {
+                "Before": "Sh_GamemodeFlyswatter_Init"
+            },
+            "ClientCallback": {
+                "Before": "Sh_GamemodeFlyswatter_Init"
+            }
+        },
+        {
+            "Path": "gamemodes/cl_gamemode_fly.gnut",
+            "RunOn": "CLIENT && MP"
+        },
+        {
+            "Path": "gamemodes/_gamemode_fly.gnut",
+            "RunOn": "SERVER && MP"
+        },
 		{
 			"Path": "gamemodes/sh_gamemode_chamber.nut",
 			"RunOn": "( CLIENT || SERVER ) && MP",

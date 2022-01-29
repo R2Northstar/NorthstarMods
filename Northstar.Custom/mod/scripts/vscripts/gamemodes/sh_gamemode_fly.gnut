@@ -1,0 +1,48 @@
+global function Sh_GamemodeFlyswatter_Init
+
+global const string GAMEMODE_FLYSWATTER = "fly"
+global const int FLYSWATTER_TEAM_SWATTER = TEAM_IMC
+global const int FLYSWATTER_TEAM_FLY = TEAM_MILITIA
+
+void function Sh_GamemodeFlyswatter_Init()
+{
+	// create custom gamemode
+	AddCallback_OnCustomGamemodesInit( CreateGamemodeFlyswatter )
+	AddCallback_OnRegisteringCustomNetworkVars( FlyswatterRegisterNetworkVars )
+}
+
+void function CreateGamemodeFlyswatter()
+{
+	GameMode_Create( GAMEMODE_FLYSWATTER )
+	GameMode_SetName( GAMEMODE_FLYSWATTER, "Flyswatter" )
+	GameMode_SetDesc( GAMEMODE_FLYSWATTER, "Permadeath. Punch fast pilots or rodeo powerful titans" )
+	GameMode_SetGameModeAnnouncement( GAMEMODE_FLYSWATTER, "ffa_modeDesc" )
+	GameMode_SetColor( GAMEMODE_FLYSWATTER, [147, 204, 57, 255] )
+
+    GameMode_SetDefaultTimeLimits( GAMEMODE_FLYSWATTER, 5, 0.0 )
+	GameMode_AddScoreboardColumnData( GAMEMODE_FLYSWATTER, "#SCOREBOARD_KILLS", PGS_ASSAULT_SCORE, 2 )
+	AddPrivateMatchModeSettingEnum( "#GAMEMODE_fly", "flyswatter_balance_teams", [ "Disabled", "Enabled" ], "1" )
+
+	AddPrivateMatchMode( GAMEMODE_FLYSWATTER ) // add to private lobby modes
+
+	#if SERVER
+		GameMode_AddServerInit( GAMEMODE_FLYSWATTER, GamemodeFlyswatter_Init )
+		GameMode_SetPilotSpawnpointsRatingFunc( GAMEMODE_FLYSWATTER, RateSpawnpoints_Generic )
+		GameMode_SetTitanSpawnpointsRatingFunc( GAMEMODE_FLYSWATTER, RateSpawnpoints_Generic )
+	#elseif CLIENT
+		GameMode_AddClientInit( GAMEMODE_FLYSWATTER, ClGamemodeFlyswatter_Init )
+	#endif
+	#if !UI
+		GameMode_SetScoreCompareFunc( GAMEMODE_FLYSWATTER, CompareAssaultScore )
+	#endif
+}
+
+void function FlyswatterRegisterNetworkVars()
+{
+	if ( GAMETYPE != GAMEMODE_FLYSWATTER )
+		return
+
+	Remote_RegisterFunction( "ServerCallback_AnnounceFlyswatterRole" )
+	Remote_RegisterFunction( "ServerCallback_AnnounceLastFly" )
+    Remote_RegisterFunction( "ServerCallback_AnnounceLastSwatter" )
+}

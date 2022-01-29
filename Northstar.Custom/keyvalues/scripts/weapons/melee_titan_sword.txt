@@ -1,0 +1,12 @@
+WeaponData
+{
+    Mods
+    {
+        melee_only
+        {
+        	"fire_mode"   "offhand_melee_hybrid"
+        	"attack_button_presses_melee" "1"
+		"offhand_transition_has_attach_detach_anim_events"    "0"
+        }
+    }
+}

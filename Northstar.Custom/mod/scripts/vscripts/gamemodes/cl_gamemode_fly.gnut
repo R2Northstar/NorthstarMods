@@ -1,0 +1,96 @@
+global function ClGamemodeFlyswatter_Init
+global function ServerCallback_AnnounceFlyswatterRole
+global function ServerCallback_AnnounceLastFly
+global function ServerCallback_AnnounceLastSwatter
+
+// Hello, reader!
+// You'll find a bunch of strings formatted as #PLACEHOLDER. These can be found two directories back
+//      in mod/resource/northstar_custom_<language>.txt
+
+void function ClGamemodeFlyswatter_Init()
+{
+	// we'll probably need more tracks in the future but for now all i need is intro and outro
+	/*RegisterLevelMusicForTeam( eMusicPieceID.LEVEL_INTRO, "music_beacon_8a_jumpingsuccess", TEAM_MILITIA )
+	RegisterLevelMusicForTeam( eMusicPieceID.LEVEL_INTRO, "music_beacon_8a_jumpingsuccess", TEAM_IMC )
+	RegisterLevelMusicForTeam( eMusicPieceID.LEVEL_WIN, "music_mp_freeagents_outro_lose", TEAM_MILITIA )
+	RegisterLevelMusicForTeam( eMusicPieceID.LEVEL_WIN, "music_mp_freeagents_outro_lose", TEAM_IMC )
+	RegisterLevelMusicForTeam( eMusicPieceID.LEVEL_DRAW, "music_mp_freeagents_outro_lose", TEAM_MILITIA )
+	RegisterLevelMusicForTeam( eMusicPieceID.LEVEL_DRAW, "music_mp_freeagents_outro_lose", TEAM_IMC )
+	RegisterLevelMusicForTeam( eMusicPieceID.LEVEL_LOSS, "music_mp_freeagents_outro_lose", TEAM_MILITIA )
+	RegisterLevelMusicForTeam( eMusicPieceID.LEVEL_LOSS, "music_mp_freeagents_outro_lose", TEAM_IMC )*/
+}
+
+// i stole all of this lmfao
+void function ServerCallback_AnnounceFlyswatterRole()
+{
+	if ( GetLocalViewPlayer().GetTeam() == FLYSWATTER_TEAM_FLY )
+	{
+		//AnnouncementData announcement = Announcement_Create( "#FLYSWATTER_YOU_ARE_FLY" )
+		//Announcement_SetSubText( announcement, "#FLYSWATTER_FLY_GOAL")
+		AnnouncementData announcement = Announcement_Create( "You are a fly!" )
+		Announcement_SetSubText( announcement, "Rodeo titans and don't get punched!" )
+		Announcement_SetTitleColor( announcement, <0,0,1> )
+		Announcement_SetPurge( announcement, true )
+		Announcement_SetPriority( announcement, 200 )
+		Announcement_SetSoundAlias( announcement, SFX_HUD_ANNOUNCE_QUICK )
+		Announcement_SetStyle( announcement, ANNOUNCEMENT_STYLE_QUICK )
+		AnnouncementFromClass( GetLocalViewPlayer(), announcement )
+	}
+	else
+	{
+		AnnouncementData announcement = Announcement_Create( "You are a swatter!" )
+		Announcement_SetSubText( announcement, "Don't let flies rodeo you! Swat any before they get close and aid fellow swatters" )
+		Announcement_SetTitleColor( announcement, <0,0,1> )
+		Announcement_SetPurge( announcement, true )
+		Announcement_SetPriority( announcement, 200 )
+		Announcement_SetSoundAlias( announcement, SFX_HUD_ANNOUNCE_QUICK )
+		Announcement_SetStyle( announcement, ANNOUNCEMENT_STYLE_QUICK )
+		AnnouncementFromClass( GetLocalViewPlayer(), announcement )
+	}
+}
+
+void function ServerCallback_AnnounceLastFly( int flyEHandle )
+{
+	entity player = GetEntityFromEncodedEHandle( flyEHandle )
+
+	string announcementString = Localize( "%s1 is the last fly!", player.GetPlayerName() )
+	string announcementSubString = "Don't let them get away!"
+	if ( player == GetLocalViewPlayer() )
+	{
+		announcementString = "You are the last fly!"
+		announcementSubString = "Survive. Evade. Resist."
+	}
+
+	AnnouncementData announcement = Announcement_Create( announcementString )
+	Announcement_SetSubText( announcement, announcementSubString )
+	Announcement_SetTitleColor( announcement, <1,0,0> )
+	Announcement_SetPurge( announcement, true )
+	Announcement_SetPriority( announcement, 201 )
+	Announcement_SetSoundAlias( announcement, SFX_HUD_ANNOUNCE_QUICK )
+	Announcement_SetStyle( announcement, ANNOUNCEMENT_STYLE_QUICK )
+	AnnouncementFromClass( GetLocalViewPlayer(), announcement )
+}
+void function ServerCallback_AnnounceLastSwatter( int titanEHandle )
+{
+	entity player = GetEntityFromEncodedEHandle( titanEHandle )
+
+	string announcementString = Localize( "%s1 is the last swatter!", player.GetPlayerName() )
+	string announcementSubString = "Catch them off guard!"
+    if(GetPlayerArrayOfTeam( FLYSWATTER_TEAM_FLY ).len() > 1) {
+        announcementSubString = Localize("%s1 minds think better than one. Work together!", GetPlayerArrayOfTeam( FLYSWATTER_TEAM_FLY ).len())
+    }
+	if ( player == GetLocalViewPlayer() )
+	{
+		announcementString = "You are the last swatter!"
+		announcementSubString = "Survive."
+	}
+
+	AnnouncementData announcement = Announcement_Create( announcementString )
+	Announcement_SetSubText( announcement, announcementSubString )
+	Announcement_SetTitleColor( announcement, <1,0,0> )
+	Announcement_SetPurge( announcement, true )
+	Announcement_SetPriority( announcement, 200 )
+	Announcement_SetSoundAlias( announcement, SFX_HUD_ANNOUNCE_QUICK )
+	Announcement_SetStyle( announcement, ANNOUNCEMENT_STYLE_QUICK )
+	AnnouncementFromClass( GetLocalViewPlayer(), announcement )
+}

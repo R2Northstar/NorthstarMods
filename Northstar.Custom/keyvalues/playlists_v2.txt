@@ -2,6 +2,25 @@ playlists
 {
 	Gamemodes
 	{
+		fly
+		{
+			inherit defaults
+			vars
+			{
+				name #PL_fly
+				lobbytitle #PL_fly_lobby
+				description #PL_fly_desc
+				hint #PL_fly_hint
+				abbreviation #PL_fly_abbr
+
+				max_players 16
+				max_teams 2
+				classic_mp 1
+				timelimit 15
+
+				gamemode_score_hint #GAMEMODE_SCORE_HINT_TDM
+			}
+		}
 		sbox
 		{
 			inherit defaults
@@ -281,6 +300,56 @@ playlists
 	}
 	Playlists
 	{
+		fly
+		{
+			inherit defaults
+			vars
+			{
+				name #PL_fly
+				lobbytitle #PL_fly_lobby
+				description #PL_fly_desc
+				hint #PL_fly_hint
+				abbreviation #PL_fly_abbr
+
+				image ffa
+				max_players 16
+				max_teams 2
+				classic_mp 1
+				timelimit 15
+
+				gamemode_score_hint #GAMEMODE_SCORE_HINT_TDM
+			}
+			gamemodes
+			{
+				fly
+				{
+					maps
+					{
+					    mp_forwardbase_kodai 1
+						mp_grave 1
+						mp_homestead 1
+						mp_thaw 1
+						mp_black_water_canal 1
+						mp_eden 1
+						mp_drydock 1
+						mp_crashsite3 1
+						mp_complex3 1
+						mp_angel_city 1
+						mp_colony02 1
+						mp_glitch 1
+						mp_lf_stacks 1
+						mp_lf_deck 1
+						mp_lf_meadow 1
+						mp_lf_traffic 1
+						mp_lf_township 1
+						mp_lf_uma 1
+						mp_relic02 1
+						mp_wargames 1
+						mp_rise 1
+					}
+				}
+			}
+		}
 		gg
 		{
 			inherit defaults

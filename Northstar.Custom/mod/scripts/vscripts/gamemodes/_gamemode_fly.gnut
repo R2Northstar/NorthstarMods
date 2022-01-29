@@ -1,0 +1,158 @@
+global function GamemodeFlyswatter_Init
+
+struct {
+	bool autobalance
+} file
+/*
+	NO GRACE PERIOD
+	NO WEAPON DROPS
+	NO RESPAWNING
+	NO TITANFALL
+	NO EPILOGUE
+	YES BOOSTS
+*/
+void function GamemodeFlyswatter_Init()
+{
+	SetSpawnpointGamemodeOverride( FFA ) // Sets FFA spawning
+	SetLoadoutGracePeriodEnabled( false ) // No grace period (no changing weapons before match)
+	SetRespawnsEnabled( false )
+	Riff_ForceTitanAvailability( eTitanAvailability.Never )
+
+	TrackTitanDamageInPlayerGameStat( PGS_ASSAULT_SCORE )
+	Riff_ForceTitanExitEnabled( eTitanExitEnabled.Never )
+
+	ClassicMP_SetCustomIntro( GamemodeFlyswatterIntroSetup, 0.0 ) // stolen to some degree from hide and seek
+	ClassicMP_ForceDisableEpilogue( true )
+
+	AddCallback_OnPlayerRespawned( ThreadedSetupFlyswatterPlayer )
+	AddCallback_OnPlayerKilled( CheckWinner )
+	SetTimeoutWinnerDecisionFunc( TitanWin )
+	file.autobalance = GetCurrentPlaylistVarInt( "flyswatter_balance_teams", 1 ) == 1
+}
+
+void function GamemodeFlyswatterIntroSetup()
+{
+	AddCallback_GameStateEnter( eGameState.Prematch, FlyswatterIntroPrematch )
+	AddCallback_OnClientConnected( AddPlayerToFlyswatterIntro )
+}
+
+void function FlyswatterIntroPrematch()
+{
+	ClassicMP_OnIntroStarted()
+
+	foreach ( entity player in GetPlayerArray() )
+		AddPlayerToFlyswatterIntro( player )
+
+	// this intro is mostly done in playing, so just finish the intro up now and we can do fully custom logic from here
+	wait 2.5
+	ClassicMP_OnIntroFinished()
+}
+
+void function AddPlayerToFlyswatterIntro( entity player )
+{
+	if ( GetGameState() < eGameState.Prematch) // || Time() - file.hidingStartTime > file.hidingTime )
+		return
+
+	if ( file.autobalance )
+	{
+		int wantedSwatters = int( max( 1, GetPlayerArray().len() / 4 ) )
+
+		if ( GetPlayerArrayOfTeam( FLYSWATTER_TEAM_SWATTER ).len() < wantedSwatters )
+			SetTeam( player, FLYSWATTER_TEAM_SWATTER )
+		else
+			SetTeam( player, FLYSWATTER_TEAM_FLY )
+	}
+
+	ScreenFadeFromBlack( player, 1.0, 0.75 )
+	if(GetPlayerArray().len() == 1) SetTeam(GetPlayerArray()[0], FLYSWATTER_TEAM_SWATTER)
+
+	if ( player.GetTeam() == FLYSWATTER_TEAM_FLY )
+	{
+		thread RespawnAsPilot( player )
+	}
+	else
+		thread RespawnAsTitan( player )
+
+	thread RoleAnnounce( player )
+}
+
+void function RoleAnnounce( entity player )
+{
+	wait 2
+	Remote_CallFunction_NonReplay( player, "ServerCallback_AnnounceFlyswatterRole" )
+}
+
+void function ThreadedSetupFlyswatterPlayer(entity player)
+{
+	thread SetupFlyswatterPlayer(player)
+}
+
+void function SetupFlyswatterPlayer( entity player )
+{
+	foreach ( entity weapon in player.GetMainWeapons() )
+		player.TakeWeapon( weapon.GetWeaponClassName() )
+
+	foreach ( entity weapon in player.GetOffhandWeapons() )
+		player.TakeWeapon( weapon.GetWeaponClassName() )
+
+	player.GiveOffhandWeapon( "melee_pilot_emptyhanded", OFFHAND_MELEE )
+	player.SetActiveWeaponByName( "melee_pilot_emptyhanded" )
+
+	Highlight_SetFriendlyHighlight( player, "sp_friendly_pilot" )
+
+	if ( player.GetTeam() == FLYSWATTER_TEAM_FLY )
+	{
+		player.TakeWeapon( player.GetMeleeWeapon().GetWeaponClassName() )
+		player.GiveOffhandWeapon("mp_ability_grapple", OFFHAND_LEFT)
+		player.kv.airAcceleration = 2500
+		StimPlayer( player, 9999.9 ) // can't do endless since we don't get the visual effect in endless
+	} else {
+		wait 1
+		entity titan = GetPlayerTitanInMap(player)
+		titan.SetMaxHealth(4000)
+		foreach ( entity weapon in titan.GetMainWeapons() )
+			titan.TakeWeapon( weapon.GetWeaponClassName() )
+
+		foreach ( entity weapon in titan.GetOffhandWeapons() )
+			titan.TakeWeapon( weapon.GetWeaponClassName() )
+
+		titan.GiveOffhandWeapon("melee_titan_sword",OFFHAND_MELEE)
+		titan.GetOffhandWeapon( OFFHAND_MELEE ).AddMod( "melee_only" )
+		titan.SetActiveWeaponByName( "melee_titan_sword")
+
+		Highlight_SetEnemyHighlight( titan, "enemy_sonar" )
+	}
+}
+
+void function CheckWinner( entity victim, entity attacker, var damageInfo ) {
+	array<entity> fliesInfo = GetPlayerArrayOfTeam(FLYSWATTER_TEAM_FLY)
+	array<entity> swatterInfo = GetPlayerArrayOfTeam(FLYSWATTER_TEAM_SWATTER)
+	int fliesAlive
+	int swattersAlive
+	foreach (entity player in fliesInfo)
+		if(IsAlive(player)) fliesAlive++
+	foreach (entity player in swatterInfo)
+		if(IsAlive(player)) swattersAlive++
+
+	if (fliesAlive < 1) {
+		SetWinner(FLYSWATTER_TEAM_SWATTER)
+	} else if (swattersAlive < 1) {
+		SetWinner(FLYSWATTER_TEAM_FLY)
+	}
+
+	else if (fliesAlive == 1 && victim.GetTeam() == FLYSWATTER_TEAM_FLY) {
+		entity player = fliesInfo[0]
+		foreach ( entity otherPlayer in GetPlayerArray() )
+			Remote_CallFunction_NonReplay( otherPlayer, "ServerCallback_AnnounceLastFly", player.GetEncodedEHandle() )
+
+	} else if (swattersAlive == 1 && victim.GetTeam() == FLYSWATTER_TEAM_SWATTER) {
+		entity player = swatterInfo[0]
+		foreach ( entity otherPlayer in GetPlayerArray() )
+			Remote_CallFunction_NonReplay( otherPlayer, "ServerCallback_AnnounceLastSwatter", player.GetEncodedEHandle() )
+
+	}
+}
+
+int function TitanWin() {
+	return FLYSWATTER_TEAM_SWATTER // titans win if time runs out
+}
