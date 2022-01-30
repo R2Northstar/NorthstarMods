@@ -117,6 +117,14 @@
 		{
 			"Path": "lobby/sh_private_lobby_modes_init.gnut",
 			"RunOn": "( SERVER || CLIENT ) && MP"
+		},
+
+		{
+			"Path": "_respawned_protect.gnut",
+			"RunOn": "SERVER && MP",
+			"ServerCallback": {
+				"Before": "RespawnedProtect_Init"
+			}
 		}
 	]
 }

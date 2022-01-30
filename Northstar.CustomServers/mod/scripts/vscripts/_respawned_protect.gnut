@@ -1,0 +1,37 @@
+global function RespawnedProtect_Init
+
+void function RespawnedProtect_Init(){
+	AddCallback_OnPlayerRespawned( OnPlayerRespawned )
+}
+
+void function OnPlayerRespawned( entity player )
+{
+	thread RespawnedProtect(player,GetCurrentPlaylistVarFloat("respawnedprotect",0.0))
+}
+
+void function RespawnedProtect( entity player , float time ){
+	OnThreadEnd(
+		function() : ( player )
+		{
+			//cancel protect if player attack
+			if( IsDemigod( player ) )
+			{
+				DisableDemigod( player );
+			}
+		}
+	)
+	
+	player.EndSignal( "OnPrimaryAttack" )
+
+	if( IsDemigod( player ) )
+	{
+		DisableDemigod( player );
+	}
+	else{
+		//start protect
+		EnableDemigod( player )
+		wait time
+		//cancel protect
+		DisableDemigod( player );
+	}
+}
