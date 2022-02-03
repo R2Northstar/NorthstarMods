@@ -69,7 +69,10 @@ void function InitMainMenu()
 #endif // CONSOLE_PROG
 
 void function OnMainMenu_Open()
-{
+{	
+	string playerName
+	playerName = GetConVarString("name")
+	SetConVarString("ns_auth_player_name",playerName)
 	Signal( uiGlobal.signalDummy, "EndOnMainMenu_Open" )
 	EndSignal( uiGlobal.signalDummy, "EndOnMainMenu_Open" )
 
@@ -91,7 +94,7 @@ void function OnMainMenu_Open()
 		ClientCommand( "map " + Dev_CommandLineParmValue( "+map" ) )
 		Dev_CommandLineRemoveParm( "+map" )
 	}
-	
+
 	// do agree to ns remote auth dialog
 	if ( !GetConVarBool( "ns_has_agreed_to_send_token" ) )
 		NorthstarMasterServerAuthDialog()
@@ -134,7 +137,7 @@ void function NorthstarMasterServerAuthDialog()
 {
 	// todo: this should be in localisation
 	DialogData dialogData
-	dialogData.header = "#DIALOG_TITLE_INSTALLED_NORTHSTAR" 
+	dialogData.header = "#DIALOG_TITLE_INSTALLED_NORTHSTAR"
 	dialogData.image = $"rui/menu/fd_menu/upgrade_northstar_chassis"
 	dialogData.message = "#AUTHENTICATION_AGREEMENT_DIALOG_TEXT"
 	AddDialogButton( dialogData, "#YES", NorthstarMasterServerAuthDialogAgree )
@@ -146,11 +149,11 @@ void function NorthstarMasterServerAuthDialogAgree()
 {
 	int oldValue = GetConVarInt( "ns_has_agreed_to_send_token" )
 	SetConVarInt( "ns_has_agreed_to_send_token", NS_AGREED_TO_SEND_TOKEN )
-	
+
 	if ( oldValue != 0 && oldValue != NS_AGREED_TO_SEND_TOKEN )
 	{
 		DialogData dialogData
-		dialogData.header = "#DIALOG_TITLE_INSTALLED_NORTHSTAR" 
+		dialogData.header = "#DIALOG_TITLE_INSTALLED_NORTHSTAR"
 		dialogData.image = $"rui/menu/fd_menu/upgrade_northstar_chassis"
 		dialogData.message = "#AUTHENTICATION_AGREEMENT_RESTART"
 		AddDialogButton( dialogData, "#OK" )
@@ -162,11 +165,11 @@ void function NorthstarMasterServerAuthDialogDisagree()
 {
 	int oldValue = GetConVarInt( "ns_has_agreed_to_send_token" )
 	SetConVarInt( "ns_has_agreed_to_send_token", NS_DISAGREED_TO_SEND_TOKEN )
-	
+
 	if ( oldValue != 0 && oldValue != NS_DISAGREED_TO_SEND_TOKEN )
 	{
 		DialogData dialogData
-		dialogData.header = "#DIALOG_TITLE_INSTALLED_NORTHSTAR" 
+		dialogData.header = "#DIALOG_TITLE_INSTALLED_NORTHSTAR"
 		dialogData.image = $"rui/menu/fd_menu/upgrade_northstar_chassis"
 		dialogData.message = "#AUTHENTICATION_AGREEMENT_RESTART"
 		AddDialogButton( dialogData, "#OK" )
@@ -648,8 +651,8 @@ void function UpdateTrialLabel()
 	//bool isTrialVersion
 	//bool lastIsTrialVersion = Script_IsRunningTrialVersion()
 
-	Hud_SetColor( file.trialLabel, 101, 109, 207, 255 )
-	Hud_SetText( file.trialLabel, "+ NORTHSTAR" )
+	Hud_SetColor( file.trialLabel, 254, 20, 37, 255 )//254, 20, 37
+	Hud_SetText( file.trialLabel, "+ NorthStarCN" )
 	Hud_SetVisible( file.trialLabel, true )
 
 	//while ( GetTopNonDialogMenu() == file.menu )

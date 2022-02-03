@@ -1,0 +1,6 @@
+{
+	"Name" : "Chinese Chat",
+	"Description" : "Support use Simplified Chinese to chat",
+	"Version": "1.0.0",
+	"LoadPriority": 0
+}

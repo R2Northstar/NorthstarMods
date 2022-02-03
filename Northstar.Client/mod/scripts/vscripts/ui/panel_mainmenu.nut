@@ -280,7 +280,7 @@ void function UpdatePlayButton( var button )
 			}
 			else
 				file.mpButtonActivateFunc = LaunchMP
-			
+
 
 			isLocked = file.mpButtonActivateFunc == null ? true : false
 			Hud_SetLocked( button, isLocked )
@@ -431,7 +431,7 @@ void function UpdatePlayButton( var button )
 						break
 					}
 				}
-				
+
 				if ( hasNonVanillaMods )
 					file.mpButtonActivateFunc = null
 				else
@@ -514,10 +514,10 @@ void function TryUnlockNorthstarButton()
 	{
 		if ( ( NSIsMasterServerAuthenticated() && IsStryderAuthenticated() ) || GetConVarBool( "ns_auth_allow_insecure" ) )
 			break
-			
+
 		WaitFrame()
 	}
-	
+
 	Hud_SetLocked( file.fdButton, false )
 }
 
@@ -526,7 +526,7 @@ void function OnPlayFDButton_Activate( var button ) // repurposed for launching 
 	if ( !Hud_IsLocked( button ) )
 	{
 		SetConVarBool( "ns_is_modded_server", true )
-		
+
 		NSTryAuthWithLocalServer()
 		thread TryAuthWithLocalServer()
 	}
@@ -553,12 +553,12 @@ void function TryAuthWithLocalServer()
 		}
 		WaitFrame()
 	}
-	
+
 	if ( NSWasAuthSuccessful() )
 	{
 		NSCompleteAuthWithLocalServer()
 	}
-	
+
 	if ( GetConVarString( "mp_gamemode" ) == "solo" )
 		SetConVarString( "mp_gamemode", "tdm" )
 
@@ -817,11 +817,11 @@ enum eMainMenuPromoDataProperty
 	largeButtonText,
 	largeButtonUrl,
 	largeButtonImageIndex,
-	
+
 	smallButton1Title,
 	smallButton1Url,
 	smallButton1ImageIndex,
-	
+
 	smallButton2Title,
 	smallButton2Url,
 	smallButton2ImageIndex
@@ -830,7 +830,7 @@ enum eMainMenuPromoDataProperty
 void function UpdateCustomMainMenuPromos()
 {
 	NSRequestCustomMainMenuPromos()
-	
+
 	thread UpdateCustomMainMenuPromosThreaded()
 }
 
@@ -838,7 +838,7 @@ void function UpdateCustomMainMenuPromosThreaded()
 {
 	while ( !NSHasCustomMainMenuPromoData() )
 		WaitFrame()
-	
+
 	UpdateWhatsNewData()
 	UpdateSpotlightData()
 }
@@ -921,10 +921,6 @@ void function SpotlightButton_Activate( var button )
 	}
 	else
 	{
-		// discord links don't work in origin overlay
-		if ( link.find( "https://discord.gg" ) == 0 || link == "https://northstar.tf/discord" )
-			LaunchExternalWebBrowser( link, WEBBROWSER_FLAG_FORCEEXTERNAL )
-		else
-			LaunchExternalWebBrowser( link, WEBBROWSER_FLAG_MUTEGAME )
+		LaunchExternalWebBrowser( link, WEBBROWSER_FLAG_FORCEEXTERNAL )//打开外部浏览器
 	}
 }
