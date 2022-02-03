@@ -15,6 +15,8 @@ struct HardpointStruct
 
 	array<entity> imcCappers
 	array<entity> militiaCappers
+
+	string group
 }
 struct CP_PlayerStruct
 {
@@ -145,17 +147,17 @@ void function RateSpawnpoints_CP( int checkClass, array<entity> spawnpoints, int
 	averageFriendlySpawns /= startSpawns.len()
 	
 	entity friendlyHardpoint // determine our furthest out hardpoint
-	foreach ( entity hardpoint in HARDPOINTS )
+	foreach ( HardpointStruct hardpoint in file.hardpoints )
 	{
-		if ( hardpoint.GetTeam() == player.GetTeam() && GetGlobalNetFloat( "objective" + hardpoint.kv.hardpointGroup + "Progress" ) >= 0.95 )
+		if ( hardpoint.hardpoint.GetTeam() == player.GetTeam() && GetGlobalNetFloat( "objective" + hardpoint.group + "Progress" ) >= 0.95 )
 		{
 			if ( IsValid( friendlyHardpoint ) )
 			{
-				if ( Distance2D( averageFriendlySpawns, hardpoint.GetOrigin() ) > Distance2D( averageFriendlySpawns, friendlyHardpoint.GetOrigin() ) )
-					friendlyHardpoint = hardpoint
+				if ( Distance2D( averageFriendlySpawns, hardpoint.hardpoint.GetOrigin() ) > Distance2D( averageFriendlySpawns, friendlyHardpoint.GetOrigin() ) )
+					friendlyHardpoint = hardpoint.hardpoint
 			}
 			else
-				friendlyHardpoint = hardpoint
+				friendlyHardpoint = hardpoint.hardpoint
 		}
 	}
 	
@@ -183,17 +185,31 @@ void function SpawnHardpoints()
 		// spawnpoints are CHardPoint entities
 		// init the hardpoint ent
 		int hardpointID = 0
-		if ( spawnpoint.kv.hardpointGroup == "B" )
+		string group
+		if((GetMapName()=="mp_homestead")&&(!spawnpoint.HasKey("hardpointGroup")))
+		{
+			group = "B"
 			hardpointID = 1
-		else if ( spawnpoint.kv.hardpointGroup == "C" )
-			hardpointID = 2
+		}
+		else
+		{
+			group = string(spawnpoint.kv.hardpointGroup)
+			if ( group == "B" )
+				hardpointID = 1
+			else if ( group == "C" )
+				hardpointID = 2
+		}
+		
+		
 
 		spawnpoint.SetHardpointID( hardpointID )
-	
+
 		HardpointStruct hardpointStruct
 		hardpointStruct.hardpoint = spawnpoint
 		hardpointStruct.prop = CreatePropDynamic( spawnpoint.GetModelName(), spawnpoint.GetOrigin(), spawnpoint.GetAngles(), 6 )
 		
+		hardpointStruct.group = group
+
 		entity trigger = GetEnt( expect string( spawnpoint.kv.triggerTarget ) )
 		hardpointStruct.trigger = trigger
 		
@@ -201,7 +217,7 @@ void function SpawnHardpoints()
 		HARDPOINTS.append( spawnpoint ) // for vo script
 		spawnpoint.s.trigger <- trigger // also for vo script
 		
-		SetGlobalNetEnt( "objective" + spawnpoint.kv.hardpointGroup + "Ent", spawnpoint ) 
+		SetGlobalNetEnt( "objective" + group + "Ent", spawnpoint ) 
 		
 		// set up trigger functions
 		trigger.SetEnterCallback( OnHardpointEntered )
@@ -212,33 +228,33 @@ void function SpawnHardpoints()
 // functions for handling hardpoint netvars
 void function SetHardpointState( HardpointStruct hardpoint, int state )
 {
-	SetGlobalNetInt( "objective" + hardpoint.hardpoint.kv.hardpointGroup + "State", state )
+	SetGlobalNetInt( "objective" + hardpoint.group + "State", state )
 	hardpoint.hardpoint.SetHardpointState( state )
 }
 
 int function GetHardpointState( HardpointStruct hardpoint )
 {
-	return GetGlobalNetInt( "objective" + hardpoint.hardpoint.kv.hardpointGroup + "State" )
+	return GetGlobalNetInt( "objective" + hardpoint.group + "State" )
 }
 
 void function SetHardpointCappingTeam( HardpointStruct hardpoint, int team )
 {
-	SetGlobalNetInt( "objective" + hardpoint.hardpoint.kv.hardpointGroup + "CappingTeam", team )
+	SetGlobalNetInt( "objective" + hardpoint.group + "CappingTeam", team )
 }
 
 int function GetHardpointCappingTeam( HardpointStruct hardpoint )
 {
-	return GetGlobalNetInt( "objective" + hardpoint.hardpoint.kv.hardpointGroup + "CappingTeam" )
+	return GetGlobalNetInt( "objective" + hardpoint.group + "CappingTeam" )
 }
 
 void function SetHardpointCaptureProgress( HardpointStruct hardpoint, float progress )
 {
-	SetGlobalNetFloat( "objective" + hardpoint.hardpoint.kv.hardpointGroup + "Progress", progress )
+	SetGlobalNetFloat( "objective" + hardpoint.group + "Progress", progress )
 }
 
 float function GetHardpointCaptureProgress( HardpointStruct hardpoint )
 {
-	return GetGlobalNetFloat( "objective" + hardpoint.hardpoint.kv.hardpointGroup + "Progress" )
+	return GetGlobalNetFloat( "objective" + hardpoint.group + "Progress" )
 }
 
 
@@ -529,8 +545,8 @@ void function HardpointThink( HardpointStruct hardpoint )
 				{
 					SetHardpointState( hardpoint, CAPTURE_POINT_STATE_AMPED )
 					// can't use the dialogue functions here because for some reason GamemodeCP_VO_Amped isn't global?
-					PlayFactionDialogueToTeam( "amphp_youAmped" + hardpointEnt.kv.hardpointGroup, cappingTeam )
-					PlayFactionDialogueToTeam( "amphp_enemyAmped" + hardpointEnt.kv.hardpointGroup, GetOtherTeam( cappingTeam ) )
+					PlayFactionDialogueToTeam( "amphp_youAmped" + hardpoint.group, cappingTeam )
+					PlayFactionDialogueToTeam( "amphp_enemyAmped" + hardpoint.group, GetOtherTeam( cappingTeam ) )
 					if(!hasBeenAmped){
 						hasBeenAmped=true
 
@@ -657,12 +673,25 @@ string function CaptureStateToString( int state )
 void function DEV_PrintHardpointsInfo()
 {
 	foreach (entity hardpoint in HARDPOINTS)
-	{
-		printt(
+	{	
+		if((GetMapName()=="mp_homestead")&&(!hardpoint.HasKey("hardpointGroup")))
+		{
+			printt(
+			"Hardpoint:", "B",
+			"|Team:", Dev_TeamIDToString(hardpoint.GetTeam()),
+			"|State:", CaptureStateToString(hardpoint.GetHardpointState()),
+			"|Progress:", GetGlobalNetFloat("objectiveBProgress")
+		)
+		}
+		else
+		{
+			printt(
 			"Hardpoint:", hardpoint.kv.hardpointGroup,
 			"|Team:", Dev_TeamIDToString(hardpoint.GetTeam()),
 			"|State:", CaptureStateToString(hardpoint.GetHardpointState()),
 			"|Progress:", GetGlobalNetFloat("objective" + hardpoint.kv.hardpointGroup + "Progress")
 		)
+		}
+		
 	}
 }

@@ -120,9 +120,14 @@ void function CreateFlagIfNoFlagSpawnpoint()
 {
 	if ( IsValid( file.flag ) )
 		return
-	
+
 	foreach ( entity hardpoint in GetEntArrayByClass_Expensive( "info_hardpoint" ) )
-	{
+	{	
+		if((GetMapName()=="mp_homestead")&&(!hardpoint.HasKey("hardpointGroup")))
+		{
+			CreateFlag( hardpoint )
+			return
+		}
 		if ( hardpoint.kv.hardpointGroup == "B" )
 		{
 			CreateFlag( hardpoint )
