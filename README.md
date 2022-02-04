@@ -1,5 +1,4 @@
 # NorthstarMods
-[Build Status](https://github.com/R2Northstar/NorthstarLauncher/actions/workflows/ci.yml/badge.svg)
 
 [Squirrel](http://www.squirrel-lang.org/squirreldoc/reference/index.html) scripts used to recreate server-side gamelogic and add [custom content](https://r2northstar.gitbook.io/r2northstar-wiki/using-northstar/gamemodes) to the game. 
 
