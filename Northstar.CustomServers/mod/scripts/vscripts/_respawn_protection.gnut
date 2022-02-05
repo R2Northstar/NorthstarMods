@@ -21,6 +21,8 @@ void function RespawnProtection( entity player , float time ){
 		}
 	)
 	
+	player.EndSignal( "OnDeath" )
+	player.EndSignal( "OnDestroy" )
 	player.EndSignal( "OnPrimaryAttack" )
 
 	if( IsDemigod( player ) )
