@@ -11,7 +11,7 @@ void function RiffFloorIsLava_Init()
 
 bool function VerifyFloorIsLavaSpawnpoint( entity spawnpoint, int team )
 {
-	return spawnpoint.GetOrigin().z > GetLethalFogTop()
+	return ( ( spawnpoint.GetOrigin().z > GetLethalFogTop() ) && ( (GetLethalFogTop() + 300 ) > spawnpoint.GetOrigin().z ) ) // Spawns must be between the fog and 300 over the fog
 }
 
 void function InitLavaFogController( entity fogController )
@@ -36,7 +36,7 @@ void function CreateCustomSpawns_Threaded()
 {
 	WaitEndFrame() // wait for spawns to clear
 	
-	float raycastTop = GetLethalFogTop() + 2500.0
+	float raycastTop = GetLethalFogTop() + 3500.0 // Tested this extensivly at this level and did not notice anything worse. Raised to guarantee no objects at this height.
 	array< vector > raycastPositions
 	foreach ( entity hardpoint in GetEntArrayByClass_Expensive( "info_hardpoint" ) )
 	{
