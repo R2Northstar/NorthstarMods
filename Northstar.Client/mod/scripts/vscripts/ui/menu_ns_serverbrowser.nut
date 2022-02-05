@@ -688,17 +688,25 @@ void function FilterServerList()
 
 		totalPlayers += tempServer.serverPlayers
 
-
 		// Branchless programming ;)
 		if (!(filterArguments.hideEmpty && tempServer.serverPlayers == 0) && !(filterArguments.hideFull && tempServer.serverPlayers == tempServer.serverPlayersMax) && !(filterArguments.hideProtected && tempServer.serverProtected))
 		{
 			if ( filterArguments.useSearch )
 			{
 				string sName = tempServer.serverName.tolower() + " " + Localize(GetMapDisplayName(tempServer.serverMap)).tolower() + " " + tempServer.serverMap.tolower() + " " + tempServer.serverGamemode.tolower() + " " + Localize(tempServer.serverGamemode).tolower()
-
 				string sTerm = filterArguments.searchTerm.tolower()
 
-				if ( sName.find(sTerm) != null)
+				bool containsTag = false;
+				foreach(term in split(sTerm, " ")) {
+					foreach(tag in split(NSGetServerTags( i ), " ")) {
+						if(tag.find(term)) {
+							containsTag = true;
+							break;
+						}
+					}
+				}
+
+				if ( sName.find(sTerm) != null || containsTag)
 				{
 					if (filterArguments.filterMap != "SWITCH_ANY" && filterArguments.filterMap == tempServer.serverMap)
 					{
@@ -844,7 +852,7 @@ void function DisplayFocusedServerInfo( int scriptID)
 	// text panels
 	Hud_SetVisible( Hud_GetChild( menu, "LabelDescription" ), true )
 	Hud_SetVisible( Hud_GetChild( menu, "LabelMods" ), false )
-	Hud_SetText( Hud_GetChild( menu, "LabelDescription" ), NSGetServerDescription( file.serversArrayFiltered[ serverIndex ].serverIndex ) + "\n\nRequired Mods:\n" + FillInServerModsLabel( file.serversArrayFiltered[ serverIndex ].serverIndex ))
+	Hud_SetText( Hud_GetChild( menu, "LabelDescription" ), NSGetServerDescription( file.serversArrayFiltered[ serverIndex ].serverIndex ) + "\n\nTags: " + NSGetServerTags( file.serversArrayFiltered[ serverIndex ].serverIndex ) + "\n\nRequired Mods:\n" + FillInServerModsLabel( file.serversArrayFiltered[ serverIndex ].serverIndex ))
 
 	// map name/image/server name
 	string map = file.serversArrayFiltered[ serverIndex ].serverMap
