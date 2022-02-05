@@ -1,15 +1,15 @@
-global function RespawnedProtect_Init
+global function RespawnProtection_Init
 
-void function RespawnedProtect_Init(){
+void function RespawnProtection_Init(){
 	AddCallback_OnPlayerRespawned( OnPlayerRespawned )
 }
 
 void function OnPlayerRespawned( entity player )
 {
-	thread RespawnedProtect(player,GetCurrentPlaylistVarFloat("respawnedprotect",0.0))
+	thread RespawnProtection(player,GetCurrentPlaylistVarFloat("respawnprotection",0.0))
 }
 
-void function RespawnedProtect( entity player , float time ){
+void function RespawnProtection( entity player , float time ){
 	OnThreadEnd(
 		function() : ( player )
 		{

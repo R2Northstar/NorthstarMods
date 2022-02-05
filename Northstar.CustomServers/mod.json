@@ -120,10 +120,10 @@
 		},
 
 		{
-			"Path": "_respawned_protect.gnut",
+			"Path": "_respawn_protection.gnut",
 			"RunOn": "SERVER && MP",
 			"ServerCallback": {
-				"Before": "RespawnedProtect_Init"
+				"Before": "RespawnProtection_Init"
 			}
 		}
 	]
