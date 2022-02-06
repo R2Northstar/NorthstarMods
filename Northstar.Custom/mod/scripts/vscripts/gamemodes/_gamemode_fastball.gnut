@@ -83,8 +83,8 @@ void function GamemodeFastball_Init()
 		< 3595.96, -4568.04, 2376.03 >, < 0, -135, 0 >
 	])
 
-	FastballAddBuddySpawnForLevel( "mp_complex3", TEAM_MILITIA, < -7800.67, -800.02, 510.02 >, < 0, 45.00, 0 > )
-	FastballAddBuddySpawnForLevel( "mp_complex3", TEAM_IMC, < -550.95, -1626, 380 >, < 0, -127, 0 > )
+	FastballAddBuddySpawnForLevel( "mp_complex3", TEAM_MILITIA, < -7800.67, -800.02, 560.02 >, < 0, 45.00, 0 > )
+	FastballAddBuddySpawnForLevel( "mp_complex3", TEAM_IMC, < -795.621, -1516.19, 574.965>, < 0, -162, 0 > )
 	FastballAddPanelSpawnsForLevel( "mp_complex3", [
 		< -3642.70, -3391.82, 645.00 >, < 0, -135.0, 0 >,
 		< -4429.40, -2001.04, 697.64 >, < 0, -90.00, 0 >,
