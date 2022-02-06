@@ -4402,3 +4402,11 @@ bool function PlayerHasTitan( entity player )
 
 	return false
 }
+
+void function SetEntitySettings( entity ent , table settings )
+{
+	foreach( key , value in settings )
+	{
+		ent.kv[key] = value
+	}
+}
