@@ -140,6 +140,13 @@ Press Yes if you agree to this. This choice can be changed in the mods menu at a
 		"sns_reset_pulse_blade_cooldown_on_pulse_blade_kill" "Kill Cooldown Resets"
 		"sns_softball_enabled" "Softball Enabled"
 
+		"PL_hh" "Headhunter"
+		"PL_hh_lobby" "Headhunter Lobby"
+		"PL_hh_desc" "Permadeath. Deposit batteries dropped on kill to a zone to respawn teammates."
+		"PL_hh_abbr" "HH"
+		"GAMEMODE_HH" "Headhunter"
+		"SCOREBOARD_REVIVES" "Revives"
+
 		"PL_inf" "Infection"
 		"PL_inf_lobby" "Infection Lobby"
 		"PL_inf_desc" "Survive the infection. Survivors are infected when killed."

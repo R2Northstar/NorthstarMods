@@ -1,0 +1,45 @@
+globalize_all_functions
+
+global const string GAMEMODE_HH = "hh"
+
+void function HHMode_Init()
+{
+	AddCallback_OnCustomGamemodesInit( CreateGamemodeHH )
+	AddCallback_OnRegisteringCustomNetworkVars( HHRegisterNetworkVars )
+}
+
+
+void function CreateGamemodeHH()
+{
+ 	GameMode_Create( GAMEMODE_HH )
+	GameMode_SetName( GAMEMODE_HH, "#GAMEMODE_HH" )
+	GameMode_SetDesc( GAMEMODE_HH, "#PL_hh_desc" )
+	GameMode_SetGameModeAnnouncement( GAMEMODE_HH, "grnc_modeDesc" )
+	GameMode_SetDefaultTimeLimits( GAMEMODE_HH, 3, 0 )
+	GameMode_SetDefaultScoreLimits( GAMEMODE_HH, 5, 0 )
+	GameMode_AddScoreboardColumnData( GAMEMODE_HH, "#SCOREBOARD_REVIVES", PGS_ASSAULT_SCORE, 2 )
+	GameMode_AddScoreboardColumnData( GAMEMODE_HH, "#SCOREBOARD_PILOT_KILLS", PGS_PILOT_KILLS, 2 )
+	GameMode_AddScoreboardColumnData( GAMEMODE_HH, "#SCOREBOARD_DEATHS", PGS_DEATHS, 2 )
+	GameMode_SetColor( GAMEMODE_HH, [147, 204, 57, 255] )
+
+	AddPrivateMatchMode( GAMEMODE_HH ) // add to private lobby modes
+
+	#if SERVER
+		GameMode_AddServerInit( GAMEMODE_HH, GamemodeHH_Init )
+		GameMode_SetPilotSpawnpointsRatingFunc( GAMEMODE_HH, RateSpawnpoints_Generic )
+		GameMode_SetTitanSpawnpointsRatingFunc( GAMEMODE_HH, RateSpawnpoints_Generic )
+	#elseif CLIENT
+		GameMode_AddClientInit( GAMEMODE_HH, ClGamemodeHH_Init )
+	#endif
+	#if !UI
+		GameMode_SetScoreCompareFunc( GAMEMODE_HH, CompareAssaultScore )
+	#endif
+}
+
+void function HHRegisterNetworkVars()
+{
+	if ( GAMETYPE != GAMEMODE_HH )
+		return
+	Remote_RegisterFunction( "ServerCallback_HeadhunterUpdateRui" )
+	Remote_RegisterFunction( "ServerCallback_HeadhunterRespawnPlayer" )
+}

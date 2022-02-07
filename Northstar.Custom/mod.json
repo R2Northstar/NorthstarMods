@@ -265,6 +265,24 @@
 			"RunOn": "CLIENT && MP"
 		},
 		{
+			"Path": "gamemodes/sh_gamemode_hh.gnut",
+			"RunOn": "( SERVER || CLIENT ) && MP",
+			"ServerCallback": {
+				"Before": "HHMode_Init"
+			},
+			"ClientCallback": {
+				"Before": "HHMode_Init"
+			}
+		},
+		{
+			"Path": "gamemodes/cl_gamemode_hh.gnut",
+			"RunOn": "CLIENT && MP"
+		},
+		{
+			"Path": "gamemodes/_gamemode_hh.gnut",
+			"RunOn": "SERVER && MP"
+		},
+		{
 			"Path": "gamemodes/sh_gamemode_hs.gnut",
 			"RunOn": "( CLIENT || SERVER ) && MP",
 			"ClientCallback": {

@@ -1,0 +1,62 @@
+global function ClGamemodeHH_Init
+global function ServerCallback_HeadhunterUpdateRui
+global function ServerCallback_HeadhunterRespawnPlayer
+
+struct {
+	var panelARui
+	var panelBRui
+	var panelCRui
+} file
+
+void function ClGamemodeHH_Init()
+{
+	ClGameState_RegisterGameStateAsset( $"ui/gamestate_info_lts.rpak" )
+
+	RegisterLevelMusicForTeam( eMusicPieceID.LEVEL_INTRO, "Music_Beacon_14_BTThrowThruFirstCrane", TEAM_MILITIA )
+	RegisterLevelMusicForTeam( eMusicPieceID.LEVEL_INTRO, "Music_Beacon_14_BTThrowThruFirstCrane", TEAM_MILITIA )
+	
+	AddCallback_OnClientScriptInit( HeadhunterCreateRui )
+	AddCallback_GameStateEnter( eGameState.Postmatch, DisplayPostMatchTop3 )
+}
+
+void function HeadhunterCreateRui( entity player )
+{
+	file.panelARui = CreateCockpitRui( $"ui/cp_hardpoint_marker.rpak", 200 )
+	file.panelBRui = CreateCockpitRui( $"ui/cp_hardpoint_marker.rpak", 200 )
+	file.panelCRui = CreateCockpitRui( $"ui/cp_hardpoint_marker.rpak", 200 )
+
+}
+
+void function ServerCallback_HeadhunterUpdateRui( int panelHandle, int id )
+{
+	entity panel = GetEntityFromEncodedEHandle( panelHandle )
+	var rui
+	if ( id == 0 )
+		rui = file.panelARui
+	else if ( id == 1 )
+		rui = file.panelBRui
+	else if ( id == 2 )
+		rui = file.panelCRui
+
+	RuiSetInt( rui, "hardpointId", id )
+	RuiTrackFloat3( rui, "pos", panel, RUI_TRACK_OVERHEAD_FOLLOW )
+	RuiSetInt( rui, "viewerTeam", GetLocalClientPlayer().GetTeam() )
+	RuiTrackInt( rui, "hardpointTeamRelation", panel, RUI_TRACK_TEAM_RELATION_VIEWPLAYER )
+	
+	RuiSetBool( rui, "isVisible", true )
+}
+
+void function ServerCallback_HeadhunterRespawnPlayer()
+{
+	thread HeadhunterRespawnPlayerEffects_Threaded()
+}
+
+void function HeadhunterRespawnPlayerEffects_Threaded()
+{
+	entity player = GetLocalViewPlayer()
+	
+	while ( !IsAlive( player ) )
+		WaitFrame()
+		
+	StartParticleEffectOnEntity( player.GetCockpit(), GetParticleSystemIndex( $"P_pod_screen_lasers_OUT" ), FX_PATTACH_ABSORIGIN_FOLLOW, -1 )
+}

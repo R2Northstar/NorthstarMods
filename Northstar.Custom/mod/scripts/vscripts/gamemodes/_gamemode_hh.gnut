@@ -1,0 +1,282 @@
+untyped
+global function GamemodeHH_Init
+
+const array<string> btmaps = ["mp_angel_city", "mp_colony02", "mp_thaw", "mp_glitch", "mp_wargames", "mp_drydock", "mp_eden", "mp_black_water_canal", "mp_grave", "mp_complex3", "mp_homestead", "mp_forwardbase_kodai", "mp_crashsite3", "mp_rise"]
+
+struct {
+	array<entity> goals
+	array<vector> spawnoffsets = [Vector(0,50,10), Vector(0,-50,10), Vector(50,0,10), Vector(-50,-0,10)] // some sort of spawn checking in the future
+} file
+
+void function GamemodeHH_Init()
+{
+	// used for intro
+	if (btmaps.contains(GetMapName())) 
+	{
+		PrecacheModel( $"models/titans/buddy/titan_buddy.mdl" )
+		PrecacheParticleSystem( $"P_BT_eye_SM" )
+		ClassicMP_SetCustomIntro( GamemodeFastballIntroSetup, 14.5 )
+		AddBTSpawn() 
+	}
+	
+	// used for respawn
+	PrecacheParticleSystem( $"P_pod_screen_lasers_OUT" )
+	
+	SetShouldUseRoundWinningKillReplay( true )
+	SetRoundBased( true )
+	SetRespawnsEnabled( false )
+	Riff_ForceTitanAvailability( eTitanAvailability.Never )
+	Riff_ForceSetEliminationMode( eEliminationMode.Pilots )
+	ScoreEvent_SetupEarnMeterValuesForMixedModes()
+
+	ClassicMP_ForceDisableEpilogue( true )
+	PrecacheModel($"models/robots/mobile_hardpoint/mobile_hardpoint.mdl")
+
+	AddCallback_OnPlayerKilled( OnPlayerKilled )
+	AddCallback_GameStateEnter( eGameState.WinnerDetermined, RemoveBatts )
+	AddCallback_GameStateEnter(eGameState.Playing, StartHHThink)
+	AddCallback_GameStateEnter( eGameState.Prematch, CreateEndgoals )
+	SetTimeoutWinnerDecisionFunc( HeadhunterDecideWinner )
+	
+	AddCallback_OnClientConnected( SetClientRui )
+
+	PilotBattery_SetMaxCount( 99 )
+}
+
+void function StartHHThink() {
+	thread HHThink()
+}
+
+void function HHThink() {
+	while(true) 
+	{
+		foreach (entity player in GetPlayerArray())
+		{
+			if (!PlayerHasBattery(player))
+				continue
+			foreach (entity goal in file.goals) 
+			{
+				if (DistanceSqr(player.GetOrigin(), goal.GetOrigin()) <= 30000.0) 
+				{
+					array<entity> possPlayers
+					foreach ( entity deadPlayer in GetPlayerArrayOfTeam( player.GetTeam() ) )
+						if ( !IsAlive( deadPlayer ) )
+							possPlayers.append(deadPlayer)
+					if (possPlayers.len() > 0) 
+					{
+						entity chosen = possPlayers[RandomInt(possPlayers.len())]
+						if (!IsAlive(chosen)) {
+							chosen.SetOrigin(goal.GetOrigin() + file.spawnoffsets[RandomInt(file.spawnoffsets.len())])
+							chosen.RespawnPlayer( null )
+							Remote_CallFunction_NonReplay(chosen, "ServerCallback_HeadhunterRespawnPlayer")
+							StimPlayer( chosen, 2 )
+							Rodeo_RemoveBatteryOffPlayer(player)
+							EmitSoundOnEntityOnlyToPlayer( player, player, "UI_TitanBattery_Pilot_Give_TitanBattery" )
+							player.AddToPlayerGameStat( PGS_ASSAULT_SCORE, 1 )
+						}
+					}
+				}
+			} 
+		}
+
+		wait 0.1
+	}
+}
+
+void function RemoveBatts() {
+	foreach (entity player in GetPlayerArray())
+		Rodeo_RemoveAllBatteriesOffPlayer( player )   
+	foreach ( entity battery in GetEntArrayByClass_Expensive( "item_titan_battery" ) )
+		battery.Destroy()
+}
+
+void function OnPlayerKilled( entity victim, entity attacker, var damageInfo )
+{
+	if ( victim != attacker && victim.IsPlayer() && attacker.IsPlayer() && GetGameState() == eGameState.Playing )
+	{
+		entity batt = Rodeo_CreateBatteryPack()
+		batt.SetOrigin( victim.GetOrigin() + < 0, 0, batt.GetBoundingMaxs().z * 2 > )
+		batt.SetVelocity( < 0, 0, 1 > )
+		vector baseVelocity = victim.GetVelocity()
+		baseVelocity.z = 0
+		batt.SetVelocity( baseVelocity + AnglesToForward( <0, RandomInt( 360.0 ), 0 > ) * 100 + <0,0,1> ) //stole from rodeo code
+
+		SetTeam(batt, 0)
+		Highlight_SetNeutralHighlight( batt, "health_pickup" )
+	}
+}
+
+void function SetClientRui( entity player )
+{
+	thread SetClientRuiThread(player)
+}
+
+void function SetClientRuiThread(entity player) 
+{
+	while (!(file.goals.len() > 2))
+		wait 0.5
+
+	if (!IsValid(player))
+		return
+	
+	int k = 0
+	while (!(k > 2)) {
+		for (int i = 0; i < file.goals.len(); i++) 
+		{
+			if (!PlayerInRenderDistance(file.goals[i])) // why the FUCK does this work
+				continue
+			Remote_CallFunction_NonReplay( player, "ServerCallback_HeadhunterUpdateRui", file.goals[i].GetEncodedEHandle(), i )
+			k++
+		}
+		wait 0.1
+	}
+}
+
+bool function PlayerInRenderDistance(entity origin) 
+{
+	if (!IsValid(origin))
+		return false
+	foreach (entity player in GetPlayerArray()) 
+	{
+		if (Distance(player.GetOrigin(), origin.GetOrigin()) < 7500) 
+			return true
+	}
+	return false
+}
+
+void function CreateEndgoals() {
+	RemoveBatts()
+	foreach (entity goal in file.goals)
+		if (IsValid(goal))
+			goal.Destroy()
+
+	file.goals.clear()
+
+	foreach ( entity hardpoint in GetEntArrayByClass_Expensive( "info_hardpoint" ) )
+	{
+		string gamemodeKey = "gamemode_cp"
+		if ( hardpoint.HasKey( gamemodeKey ) && (hardpoint.kv[gamemodeKey] == "0" || hardpoint.kv[gamemodeKey] == "") )
+		{
+			hardpoint.Destroy() //respawn bros just put a shit ton of hardpoint spots outside of eden
+			continue
+		}
+		 
+		entity Prop = CreateEntity( "prop_dynamic" )
+		Prop.SetValueForModelKey( $"models/robots/mobile_hardpoint/mobile_hardpoint.mdl" )
+		Prop.kv.solid = SOLID_VPHYSICS
+		Prop.kv.rendercolor = "81 130 151"
+		Prop.kv.contents = int(Prop.kv.contents)
+		Prop.SetAngles( Vector( 0, 0, 0 ) )
+		Prop.SetBlocksRadiusDamage( true )
+		SetTeam( Prop, 0)
+		file.goals.append(Prop)
+		Prop.SetOrigin( hardpoint.GetOrigin() + GetPointOffset(file.goals.len() - 1)) //ghetto ass spawn fix
+		DispatchSpawn( Prop )
+
+		Prop.SetTitle( "Goal")
+		Highlight_SetNeutralHighlight( Prop, "hunted_friendly" )
+
+	}
+
+	foreach (entity player in GetPlayerArray())
+		SetClientRui(player)
+}
+
+vector function GetPointOffset(int index) 
+{
+	string mapname = GetMapName()
+	if (mapname == "mp_forwardbase_kodai" && index == 1) //holy shit this code
+		return < -200, 25, 20>
+	if (mapname == "mp_grave" && index == 2)
+		return < -200, 0, 35>
+	if (mapname == "mp_grave" && index == 0)
+		return < 40, -20, -340>
+	if (mapname == "mp_homestead" && index == 0)
+		return < 20, -50, 0>
+	if (mapname == "mp_thaw" && index == 1)
+		return < 140, 0, 0>
+	if (mapname == "mp_black_water_canal" && index == 1)
+		return < 0, -50, 5>
+	if (mapname == "mp_drydock" && index == 0)
+		return < 0, 40, 0>
+	if (mapname == "mp_drydock" && index == 2)
+		return < 50, -50, 0>
+	if (mapname == "mp_angel_city" && index == 2)
+		return < 100, 0, 0>
+	if (mapname == "mp_angel_city" && index == 1)
+		return < 75, -75, 0>
+	if (mapname == "mp_colony02" && index == 2)
+		return < 0, 50, 0>
+	if (mapname == "mp_lf_meadow" && index == 2)
+		return <50, 0, 0>
+	if (mapname == "mp_lf_traffic" && index == 0)
+		return <0, 0, 15>
+	
+	return <0, 0, 0>
+}
+ 
+int function HeadhunterDecideWinner()
+{
+	int militiaPlayers
+	int imcPlayers
+	
+	foreach ( entity player in GetPlayerArray() )
+	{
+		if (IsAlive(player) && player.GetTeam() == TEAM_MILITIA)
+			militiaPlayers++
+		else if (IsAlive(player) && player.GetTeam() == TEAM_IMC)
+			imcPlayers++
+	}
+	
+	if ( militiaPlayers > imcPlayers )
+		return TEAM_MILITIA
+	else if ( imcPlayers > militiaPlayers )
+		return TEAM_IMC
+		
+	return TEAM_UNASSIGNED
+}
+
+void function AddBTSpawn() {
+	//fix side switching
+	FastballAddBuddySpawnForLevel( "mp_angel_city", TEAM_IMC, < 2281.39, -3333.06, 200.031 >, < 0, 91.23, 0 > )
+	FastballAddBuddySpawnForLevel( "mp_angel_city", TEAM_MILITIA, < -4139.57, 4684.4, 41.0313 >, <0, -14.326, 0 > )
+
+	FastballAddBuddySpawnForLevel( "mp_thaw", TEAM_MILITIA, < 2049.29, -4085.22, -274.839 >, < 0, 89.2991, 0 > )
+	FastballAddBuddySpawnForLevel( "mp_thaw", TEAM_IMC, < 834.484, 2664.28, -380.515 >, < 0.532141, -90.875, -0.542593 > )
+	
+	FastballAddBuddySpawnForLevel( "mp_wargames", TEAM_MILITIA, < -4848.87, 682.17, -127.969 >, < 0, 0, 0 > )
+	FastballAddBuddySpawnForLevel( "mp_wargames", TEAM_IMC, < 2960.78, 1229.36, -127.969 >, < 7.89891e-005, 146.505, 1.38387e-005 > )
+	
+	FastballAddBuddySpawnForLevel( "mp_eden", TEAM_MILITIA, < -2404.4, 1738.07, 167.767 >, <0, -40.0894, 0> )
+	FastballAddBuddySpawnForLevel( "mp_eden", TEAM_IMC, < 5248.01, 414.698, 77.1051 >, < 0, 180, 0 > )
+	
+	FastballAddBuddySpawnForLevel( "mp_black_water_canal", TEAM_MILITIA, < 1222.88, -5050.63, -187.763 >, < 0, 45, 0 > )
+	FastballAddBuddySpawnForLevel( "mp_black_water_canal", TEAM_IMC, < -235.375, 4736.75, -255.969 >, < 0, -90, 0 > )
+	
+	FastballAddBuddySpawnForLevel( "mp_grave", TEAM_MILITIA, < 11026.8, -5163.18, 1885.64 >, < 0, 155.05, 0 > )
+	FastballAddBuddySpawnForLevel( "mp_grave", TEAM_IMC, < -1952, -3120, 1993.33 >, < 0, 0, 0 > )
+
+	FastballAddBuddySpawnForLevel( "mp_complex3", TEAM_MILITIA, < -7800.67, -800.02, 560.02 >, < 0, 45.00, 0 > )
+	FastballAddBuddySpawnForLevel( "mp_complex3", TEAM_IMC, < -795.621, -1516.19, 574.965>, < 0, -162, 0 > ) //bro bt be in the wall tho
+
+	FastballAddBuddySpawnForLevel( "mp_forwardbase_kodai", TEAM_MILITIA, < -3200.00, 1461, 1000>, < 0, 0, 0 > )
+	FastballAddBuddySpawnForLevel( "mp_forwardbase_kodai", TEAM_IMC, < 3000, 1243, 944 >, < 0, 180, 0 > )
+	
+	FastballAddBuddySpawnForLevel( "mp_crashsite3", TEAM_MILITIA, < -6364.65,  -1291.28, 822.02>, <0, -19.17, 0> ) 
+	FastballAddBuddySpawnForLevel( "mp_crashsite3", TEAM_IMC, < -2455.29, 821.52, 539.21>, <0, -179.21, 0> )
+
+	FastballAddBuddySpawnForLevel( "mp_rise", TEAM_MILITIA, < -3885.97, 35.11, 704.03>, <0, 11.86, 0> ) 
+	FastballAddBuddySpawnForLevel( "mp_rise", TEAM_IMC, < 2206.76, 1869.08, 453.9>, <0, -165.77, 0> )
+
+	FastballAddBuddySpawnForLevel( "mp_glitch", TEAM_MILITIA, < -4450, -629, 320 >, < 0, 0, 0 > )
+	FastballAddBuddySpawnForLevel( "mp_glitch", TEAM_IMC, < 4100, 890, 320>, < 0, 180, 0 > )
+
+	FastballAddBuddySpawnForLevel( "mp_relic02", TEAM_MILITIA, < 4504, -3500, 150 >, < 0, -170, 0 > )
+	FastballAddBuddySpawnForLevel( "mp_relic02", TEAM_IMC, < -4505, -3750, 367>, < 0, 10, 0 > )
+
+	FastballAddBuddySpawnForLevel( "mp_homestead", TEAM_MILITIA, < -3848.19.00, -2521, -25>, < 0, 0, 0 > )
+	FastballAddBuddySpawnForLevel( "mp_homestead", TEAM_IMC, < 6000, 1560, -137 >, < 0, -150, 0 > )
+
+	FastballAddBuddySpawnForLevel( "mp_drydock", TEAM_MILITIA, < -4, -4350, 144 >, < 0, 80, 0 > )
+	FastballAddBuddySpawnForLevel( "mp_drydock", TEAM_IMC, < 679, 4674, 200>, < 0, -90, 0 > )
+}
