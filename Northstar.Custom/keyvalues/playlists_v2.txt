@@ -179,7 +179,7 @@ playlists
 				
 				gamemode_score_hint #GAMEMODE_SCORE_HINT_TDM
 			}
-        }
+        	}
 		ctf_comp
 		{
 			inherit defaults

@@ -170,7 +170,7 @@ void function CreateEndgoals() {
 		Prop.SetBlocksRadiusDamage( true )
 		SetTeam( Prop, 0)
 		file.goals.append(Prop)
-		Prop.SetOrigin( hardpoint.GetOrigin() + GetPointOffset(file.goals.len() - 1)) //ghetto ass spawn fix
+		Prop.SetOrigin( hardpoint.GetOrigin() + GetPointOffset(file.goals.len() - 1))
 		DispatchSpawn( Prop )
 
 		Prop.SetTitle( "Goal")
@@ -185,7 +185,7 @@ void function CreateEndgoals() {
 vector function GetPointOffset(int index) 
 {
 	string mapname = GetMapName()
-	if (mapname == "mp_forwardbase_kodai" && index == 1) //holy shit this code
+	if (mapname == "mp_forwardbase_kodai" && index == 1)
 		return < -200, 25, 20>
 	if (mapname == "mp_grave" && index == 2)
 		return < -200, 0, 35>
@@ -237,7 +237,6 @@ int function HeadhunterDecideWinner()
 }
 
 void function AddBTSpawn() {
-	//fix side switching
 	FastballAddBuddySpawnForLevel( "mp_angel_city", TEAM_IMC, < 2281.39, -3333.06, 200.031 >, < 0, 91.23, 0 > )
 	FastballAddBuddySpawnForLevel( "mp_angel_city", TEAM_MILITIA, < -4139.57, 4684.4, 41.0313 >, <0, -14.326, 0 > )
 
