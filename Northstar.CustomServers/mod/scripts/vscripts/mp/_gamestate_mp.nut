@@ -97,7 +97,7 @@ void function SetGameState( int newState )
 
 void function GameState_EntitiesDidLoad()
 {
-	if ( GetClassicMPMode() )
+	if ( GetClassicMPMode() || ClassicMP_ShouldTryIntroAndEpilogueWithoutClassicMP() )
 		ClassicMP_SetupIntro()
 }
 
@@ -180,7 +180,7 @@ void function GameStateEnter_Prematch()
 	SetServerVar( "gameEndTime", Time() + timeLimit + ClassicMP_GetIntroLength() )
 	SetServerVar( "roundEndTime", Time() + ClassicMP_GetIntroLength() + GameMode_GetRoundTimeLimit( GAMETYPE ) * 60 )
 	
-	if ( !GetClassicMPMode() )
+	if ( !GetClassicMPMode() && !ClassicMP_ShouldTryIntroAndEpilogueWithoutClassicMP() )
 		thread StartGameWithoutClassicMP()
 }
 
@@ -487,7 +487,6 @@ void function PlayerWatchesSwitchingSidesKillReplay( entity player, bool doRepla
 	player.SetPredictionEnabled( true )
 	player.ClearReplayDelay()
 	player.ClearViewEntity()
-	player.UnfreezeControlsOnServer()
 }
 
 
@@ -670,14 +669,16 @@ void function CleanUpEntitiesForRoundEnd()
 		
 		if ( IsAlive( player ) )
 			player.Die( svGlobal.worldspawn, svGlobal.worldspawn, { damageSourceId = eDamageSourceId.round_end } )
-		
-		if ( IsAlive( player.GetPetTitan() ) )
-			player.GetPetTitan().Destroy()
 	}
 	
 	foreach ( entity npc in GetNPCArray() )
-		if ( IsValid( npc ) )
-			npc.Destroy() // need this because getnpcarray includes the pettitans we just killed at this point
+	{
+		if ( !IsValid( npc ) )
+			continue
+	
+		// kill rather than destroy, as destroying will cause issues with children which is an issue especially for dropships and titans
+		npc.Die( svGlobal.worldspawn, svGlobal.worldspawn, { damageSourceId = eDamageSourceId.round_end } )
+	}
 	
 	// destroy weapons
 	ClearDroppedWeapons()
