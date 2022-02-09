@@ -1,0 +1,64 @@
+resource/ui/menus/map_select.menu
+{
+	menu
+	{
+		ControlName				Frame
+		xpos					0
+		ypos					0
+		zpos					3
+		wide					f0
+		tall					f0
+		autoResize				0
+		pinCorner				0
+		visible					1
+		enabled					1
+		PaintBackgroundType		0
+		infocus_bgcolor_override	"0 0 0 0"
+		outoffocus_bgcolor_override	"0 0 0 0"
+
+		MenuTitle
+		{
+			ControlName				Label
+			InheritProperties		MenuTitle
+			labelText				"#SELECT_MAP"
+		}
+
+		ButtonRowAnchor
+		{
+			ControlName				Label
+			labelText				""
+
+			xpos                    96
+      ypos                    160
+		}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+		MapsGridPanel
+		{
+			ControlName				CNestedPanel
+			zpos					200
+			wide					1003
+			tall					828
+			visible					1
+			controlSettingsFile		"resource/ui/menus/panels/map_grid.res"
+
+			pin_to_sibling				ButtonRowAnchor
+			pin_corner_to_sibling		TOP_LEFT
+			pin_to_sibling_corner		TOP_LEFT
+		}
+		
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+		
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+		FooterButtons
+		{
+			ControlName				CNestedPanel
+			InheritProperties       FooterButtons
+		}
+	}
+}
