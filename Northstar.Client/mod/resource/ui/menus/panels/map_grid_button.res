@@ -3,8 +3,8 @@
 	MapImage
   {
     ControlName				RuiPanel
-    wide					250
-    tall					144
+    wide					286
+    tall					165
     visible				1
     scaleImage		1
     zpos          0
@@ -17,7 +17,7 @@
   {
     ControlName				Label
     zpos 					2
-    wide 					250
+    wide 					286
     xpos          4
     ypos          -4
 
@@ -36,7 +36,7 @@
   MapNameBackground
 	{
 		ControlName				RuiPanel
-		wide 250
+		wide 286
 		tall 34
 
 		rui 					"ui/knowledgebase_panel.rpak"
@@ -53,19 +53,19 @@
   {
     ControlName				   RuiButton
     InheritProperties		RuiSmallButton
-    wide 							250
-    tall              144
+    wide 							286
+    tall              165
   }
   
   MapNameLockedForeground
 	{
 		ControlName				RuiPanel
-		wide 250
-		tall 144
+		wide 286
+		tall 165
 
 		rui 					"ui/knowledgebase_panel.rpak"
 
-		visible					1
+		visible					0
 		zpos					5
     
     //bgcolor_override		"255 255 255 255"
@@ -76,14 +76,14 @@
 		pin_to_sibling_corner	  TOP_LEFT
 	}
   
-  Image
+  MapLockedImage
 	{
 		ControlName				ImagePanel
 		xpos					71
 		ypos					0      // 18 to center vertically, looks weird tho
 		wide					108
 		tall					108
-		visible					1
+		visible					0
 		scaleImage				1
 		image 					"ui/menu/common/locked_icon"
 	}
