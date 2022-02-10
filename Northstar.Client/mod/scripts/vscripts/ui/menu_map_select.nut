@@ -38,6 +38,7 @@ void function InitMapsMenu()
 	
 	//RuiSetImage( Hud_GetRui( Hud_GetChild( menu, "NextMapImage" ) ), "basicImage", GetMapImageForMapName( "mp_forwardbase_kodai" ) )
 	GetMapButtonMenu()
+	RuiSetImage( Hud_GetRui( Hud_GetChild( file.menu, "NextMapImage" ) ), "basicImage", GetMapImageForMapName( "mp_forwardbase_kodai" ) )
 }
 
 
