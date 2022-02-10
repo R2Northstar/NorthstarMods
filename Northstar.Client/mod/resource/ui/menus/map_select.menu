@@ -9,13 +9,19 @@ resource/ui/menus/map_select.menu
 		wide					f0
 		tall					f0
 		autoResize				0
-		pinCorner				0
 		visible					1
 		enabled					1
+		pinCorner				0
 		PaintBackgroundType		0
 		infocus_bgcolor_override	"0 0 0 0"
 		outoffocus_bgcolor_override	"0 0 0 0"
-
+		
+		Vignette
+		{
+				ControlName             ImagePanel
+				InheritProperties       MenuVignette
+		}
+		
 		MenuTitle
 		{
 			ControlName				Label
@@ -38,8 +44,8 @@ resource/ui/menus/map_select.menu
 		{
 			ControlName				CNestedPanel
 			zpos					200
-			wide					1003
-			tall					828
+			wide					803
+			tall					728
 			visible					1
 			controlSettingsFile		"resource/ui/menus/panels/map_grid.res"
 
@@ -50,18 +56,95 @@ resource/ui/menus/map_select.menu
 		
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+		
 		FilterPanel
 		{
 			ControlName				RuiPanel
-			wide 904
-			tall 134
+			wide 							904
+			tall 							134
 			xpos              96
       ypos              828
 	
 			rui 					"ui/control_options_description.rpak"
 	
 			visible					1
-			zpos					-1
+		}
+		
+		BtnSearchLabel
+		{
+			ControlName					RuiButton
+			InheritProperties		RuiSmallButton
+			labelText			"#SEARCHBAR_LABEL"
+			textAlignment west
+			classname 			FilterPanelChild
+	
+			wide					500
+			xpos -17
+			ypos -17
+	
+			wrap					1
+			visible				1
+			zpos					998
+	
+			pin_to_sibling				FilterPanel
+			pin_corner_to_sibling		TOP_LEFT
+			pin_to_sibling_corner		TOP_LEFT
+		}
+	
+		BtnServerSearch
+		{
+			ControlName				TextEntry
+			classname 			FilterPanelChild
+			zpos					999
+			xpos 					-400
+			ypos 					-5
+			wide					390
+			tall					30
+			textHidden				0
+			editable				1
+			font 					Default_21
+			allowRightClickMenu		0
+			allowSpecialCharacters	0
+			unicode					0
+	
+			pin_to_sibling				BtnSearchLabel
+			pin_corner_to_sibling		TOP_LEFT
+			pin_to_sibling_corner		TOP_RIGHT
+		}
+		
+		SwtBtnSelectMap
+		{
+			ControlName					RuiButton
+			InheritProperties		SwitchButton
+			labelText						"#MAP_FILTER"
+			ConVar							"filter_map"
+			classname 			FilterPanelChild
+			wide    						500
+			zpos 								998
+	
+			pin_to_sibling BtnSearchLabel
+			pin_corner_to_sibling		TOP_LEFT
+			pin_to_sibling_corner		BOTTOM_LEFT
+	
+			navUp					BtnServerSearch
+			navDown					SwtBtnSelectGamemode
+		}
+		
+		BtnFiltersClear
+		{
+			ControlName							RuiButton
+			InheritProperties				RuiSmallButton
+			labelText				"#CLEAR_FILTERS"
+			wide 100
+			xpos		-17
+			ypos 		-57
+			zpos 90
+	
+			scriptID			1999
+	
+			pin_to_sibling			FilterPanel
+			pin_corner_to_sibling	TOP_RIGHT
+			pin_to_sibling_corner	BOTTOM_RIGHT
 		}
 	
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
