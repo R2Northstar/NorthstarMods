@@ -15,6 +15,9 @@ global const C_PLAYFX_LOOP		= 2
 
 global const MUTEALLFADEIN 		= 2
 
+global const KV	= 0
+global const NV	= 1
+
 global struct ZipLine
 {
 	entity start
@@ -4403,10 +4406,23 @@ bool function PlayerHasTitan( entity player )
 	return false
 }
 
-void function SetEntitySettings( entity ent , table settings )
+void function SetEntitySettings( entity ent , table settings ,string optional )
 {
-	foreach( key , value in settings )
-	{
-		ent.kv[key] = value
+	//ui is only for level,such as level.ui.gameStartTime
+	switch( optional ){
+		case KV:
+			foreach( key , value in settings )
+			{
+				ent.kv[key] = value
+			}
+			break
+		case NV:
+			foreach( key , value in settings )
+			{
+				ent.nv[key] = value
+			}
+			break
+		default:
+			break
 	}
 }
