@@ -299,5 +299,9 @@ Press Yes if you agree to this. This choice can be changed in the mods menu at a
 		"SHOW_ALL" "All"
 		"SHOW_ONLY_ENABLED" "Only Enabled"
 		"SHOW_ONLY_DISABLED" "Only Disabled"
+    
+		// Maps menu
+		"SHOW_ONLY_OFFICIAL" "Only Official"
+		"SHOW_ONLY_CUSTOM" "Only Custom"
 	}
 }
