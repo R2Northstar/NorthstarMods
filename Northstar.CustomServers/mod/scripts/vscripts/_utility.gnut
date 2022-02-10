@@ -4406,7 +4406,7 @@ bool function PlayerHasTitan( entity player )
 	return false
 }
 
-void function SetEntitySettings( entity ent , table settings ,string optional )
+void function SetEntitySettings( entity ent , table settings ,int optional )
 {
 	//ui is only for level,such as level.ui.gameStartTime
 	switch( optional ){
