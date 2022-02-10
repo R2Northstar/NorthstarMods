@@ -1,7 +1,7 @@
 untyped
 global function GamemodeHH_Init
 
-const array<string> btmaps = ["mp_angel_city", "mp_colony02", "mp_thaw", "mp_glitch", "mp_wargames", "mp_drydock", "mp_eden", "mp_black_water_canal", "mp_grave", "mp_complex3", "mp_homestead", "mp_forwardbase_kodai", "mp_crashsite3", "mp_rise"]
+const array<string> btmaps = ["mp_angel_city", "mp_colony02", "mp_thaw", "mp_glitch", "mp_wargames", "mp_drydock", "mp_eden", "mp_black_water_canal", "mp_grave", "mp_complex3", "mp_homestead", "mp_forwardbase_kodai", "mp_crashsite3", "mp_rise", "mp_relic02"]
 
 struct {
 	array<entity> goals
