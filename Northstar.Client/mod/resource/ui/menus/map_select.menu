@@ -158,8 +158,8 @@ resource/ui/menus/map_select.menu
 		{
 			ControlName				RuiPanel
 			xpos					1002
-			ypos					158
-			tall					784
+			ypos					160
+			tall					782
 			wide 					810
 			rui 					"ui/control_options_description.rpak"
 			wrap					1
@@ -274,7 +274,6 @@ resource/ui/menus/map_select.menu
 			wide 40
 			tall 40
 			xpos 2
-			ypos 2
 	
 			rui 					"ui/control_options_description.rpak"
 	
@@ -294,7 +293,6 @@ resource/ui/menus/map_select.menu
 			wide 40
 			tall 40
 			xpos 2
-			ypos 2
 			zpos 999
 	
 			image           "vgui/hud/white"
@@ -348,9 +346,9 @@ resource/ui/menus/map_select.menu
 			InheritProperties		RuiSmallButton
 			//labelText						"V"
 			wide 					40
-			tall 					586
+			tall 					584
 			xpos 					2
-			ypos 					-40
+			ypos 					-42
 			zpos					0
 	
 			image           "vgui/hud/white"
@@ -365,9 +363,9 @@ resource/ui/menus/map_select.menu
 		{
 			ControlName				RuiPanel
 			wide 40
-			tall 586
+			tall 584
 			xpos 2
-			ypos -40
+			ypos -42
 	
 			rui 					"ui/control_options_description.rpak"
 	
@@ -383,9 +381,9 @@ resource/ui/menus/map_select.menu
 		{
 				ControlName					CMouseMovementCapturePanel
 				wide 								40
-				tall 								586
+				tall 								584
 				xpos 								2
-				ypos 								-40
+				ypos 								-42
 				zpos								1
 	
 				pin_to_sibling					MapDetailsPanel
