@@ -146,6 +146,8 @@ Press Yes if you agree to this. This choice can be changed in the mods menu at a
 		"PL_hh_abbr" "HH"
 		"GAMEMODE_HH" "Headhunter"
 		"SCOREBOARD_REVIVES" "Revives"
+		"HH_RESPAWN" "Respawned"
+		"HH_RESPAWN_SUB" "You were respawned by %s1. Go out there and be somebody!"
 
 		"PL_inf" "Infection"
 		"PL_inf_lobby" "Infection Lobby"

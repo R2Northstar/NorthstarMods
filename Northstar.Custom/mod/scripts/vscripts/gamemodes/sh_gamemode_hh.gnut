@@ -42,4 +42,5 @@ void function HHRegisterNetworkVars()
 		return
 	Remote_RegisterFunction( "ServerCallback_HeadhunterUpdateRui" )
 	Remote_RegisterFunction( "ServerCallback_HeadhunterRespawnPlayer" )
+	Remote_RegisterFunction( "ServerCallback_HeadhunterLastPlayer" )
 }

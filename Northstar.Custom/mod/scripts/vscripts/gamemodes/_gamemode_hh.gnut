@@ -68,7 +68,7 @@ void function HHThink() {
 						if (!IsAlive(chosen)) {
 							chosen.SetOrigin(goal.GetOrigin() + file.spawnoffsets[RandomInt(file.spawnoffsets.len())])
 							chosen.RespawnPlayer( null )
-							Remote_CallFunction_NonReplay(chosen, "ServerCallback_HeadhunterRespawnPlayer")
+							Remote_CallFunction_NonReplay(chosen, "ServerCallback_HeadhunterRespawnPlayer", player.GetEncodedEHandle())
 							StimPlayer( chosen, 2 )
 							Rodeo_RemoveBatteryOffPlayer(player)
 							EmitSoundOnEntityOnlyToPlayer( player, player, "UI_TitanBattery_Pilot_Give_TitanBattery" )
@@ -104,6 +104,11 @@ void function OnPlayerKilled( entity victim, entity attacker, var damageInfo )
 		SetTeam(batt, 0)
 		Highlight_SetNeutralHighlight( batt, "health_pickup" )
 	}
+
+	if ( victim.IsPlayer() && GetGameState() == eGameState.Playing ) //yoinked from lf
+		if ( GetPlayerArrayOfTeam_Alive( victim.GetTeam() ).len() == 1 )
+			foreach ( entity player in GetPlayerArray() )
+				Remote_CallFunction_NonReplay( player, "ServerCallback_HeadhunterLastPlayer", player.GetTeam() != victim.GetTeam() )
 }
 
 void function SetClientRui( entity player )

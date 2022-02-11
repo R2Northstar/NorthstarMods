@@ -1,6 +1,7 @@
 global function ClGamemodeHH_Init
 global function ServerCallback_HeadhunterUpdateRui
 global function ServerCallback_HeadhunterRespawnPlayer
+global function ServerCallback_HeadhunterLastPlayer
 
 struct {
 	var panelARui
@@ -46,12 +47,12 @@ void function ServerCallback_HeadhunterUpdateRui( int panelHandle, int id )
 	RuiSetBool( rui, "isVisible", true )
 }
 
-void function ServerCallback_HeadhunterRespawnPlayer()
+void function ServerCallback_HeadhunterRespawnPlayer(int reviverEHandle)
 {
-	thread HeadhunterRespawnPlayerEffects_Threaded()
+	thread HeadhunterRespawnPlayerEffects_Threaded(GetEntityFromEncodedEHandle(reviverEHandle))
 }
 
-void function HeadhunterRespawnPlayerEffects_Threaded()
+void function HeadhunterRespawnPlayerEffects_Threaded(entity reviver)
 {
 	entity player = GetLocalViewPlayer()
 	
@@ -59,4 +60,35 @@ void function HeadhunterRespawnPlayerEffects_Threaded()
 		WaitFrame()
 		
 	StartParticleEffectOnEntity( player.GetCockpit(), GetParticleSystemIndex( $"P_pod_screen_lasers_OUT" ), FX_PATTACH_ABSORIGIN_FOLLOW, -1 )
+
+	if (IsValid(reviver)) 
+	{
+		string name = reviver.GetPlayerName() //they might be null after wait lol
+		wait 0.5
+		AnnouncementData announcement = Announcement_Create( "#HH_RESPAWN" )
+		Announcement_SetSubText( announcement, Localize( "#HH_RESPAWN_SUB", name ))
+		Announcement_SetTitleColor( announcement, <0,1,0> )
+		Announcement_SetPurge( announcement, true )
+		Announcement_SetPriority( announcement, 200 ) //Be higher priority than Titanfall ready indicator etc
+		Announcement_SetSoundAlias( announcement, SFX_HUD_ANNOUNCE_QUICK )
+		Announcement_SetStyle( announcement, ANNOUNCEMENT_STYLE_QUICK )
+		AnnouncementFromClass( GetLocalViewPlayer(), announcement )
+	}
+}
+
+void function ServerCallback_HeadhunterLastPlayer( bool isEnemy )
+{
+	entity locPlayer = GetLocalClientPlayer()
+	if ( !IsValid( locPlayer ) )
+		return
+
+	if ( isEnemy )
+	{
+		AnnouncementMessageSweep( GetLocalClientPlayer(), "#GAMEMODE_SPEEDBALL_LAST_ONE_LEFT_ENEMY", "", TEAM_COLOR_FRIENDLY )
+	}
+	else
+	{
+		AnnouncementMessageSweep( GetLocalClientPlayer(), "#GAMEMODE_SPEEDBALL_LAST_ONE_LEFT", "", TEAM_COLOR_ENEMY )
+	}
+
 }
