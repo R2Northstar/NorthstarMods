@@ -303,7 +303,7 @@ void function SliderBarUpdate()
 	Hud_SetFocused(sliderButton)
 
 	float minYPos = -42.0 * (GetScreenSize()[1] / 1080.0)
-	float maxHeight = 584.0  * (GetScreenSize()[1] / 1080.0)
+	float maxHeight = 582.0  * (GetScreenSize()[1] / 1080.0)
 	float maxYPos = minYPos - (maxHeight - Hud_GetHeight( sliderPanel ))
 	float useableSpace = ( maxHeight - Hud_GetHeight( sliderPanel ))
 
@@ -333,7 +333,7 @@ void function UpdateListSliderHeight()
 	
 	float maps = float ( file.mapsArrayFiltered.len() / 3 )
 
-	float maxHeight = 584.0 * (GetScreenSize()[1] / 1080.0)
+	float maxHeight = 582.0 * (GetScreenSize()[1] / 1080.0)
 	float minHeight = 80.0 * (GetScreenSize()[1] / 1080.0)
 
 	float height = maxHeight * ( float( BUTTONS_PER_PAGE ) / maps )
@@ -359,7 +359,7 @@ void function UpdateListSliderPosition()
 	float maps = float ( file.mapsArrayFiltered.len() / 3 + 1 )
 
 	float minYPos = -42.0 * (GetScreenSize()[1] / 1080.0)
-	float useableSpace = (584.0 * (GetScreenSize()[1] / 1080.0) - Hud_GetHeight( sliderPanel ))
+	float useableSpace = (582.0 * (GetScreenSize()[1] / 1080.0) - Hud_GetHeight( sliderPanel ))
 
 	float jump = minYPos - ( useableSpace / ( maps - float( BUTTONS_PER_PAGE ) ) * file.scrollOffset )
 
