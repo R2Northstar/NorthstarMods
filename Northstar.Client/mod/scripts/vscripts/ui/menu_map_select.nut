@@ -18,6 +18,7 @@ struct {
 	int mapsPerPage = 21
 	int currentMapPage
 	
+	array< var > gridButtons
 	array< string > mapsArrayFiltered
 	
 	int scrollOffset = 0
@@ -42,6 +43,9 @@ void function MenuMapSelect_Init()
 void function InitMapsMenu()
 {
 	file.menu = GetMenu( "MapsMenu" )
+	
+	AddMouseMovementCaptureHandler( file.menu, UpdateMouseDeltaBuffer )
+	
 
 	AddMenuEventHandler( file.menu, eUIEvent.MENU_CLOSE, OnCloseMapsMenu )
 	AddMenuEventHandler( file.menu, eUIEvent.MENU_OPEN, OnOpenMapsMenu )
@@ -59,6 +63,9 @@ void function InitMapsMenu()
 	//AddButtonEventHandler( Hud_GetChild( file.menu, "BtnFiltersClear"), UIE_CLICK, OnBtnFiltersClear_Activate )
 	
 	RuiSetString( Hud_GetRui( Hud_GetChild( file.menu, "SwtBtnShowMaps")), "buttonText", "")
+	
+	file.gridButtons = GetElementsByClassname( file.menu, "MapGridButtons" )
+	
 	
 	FilterMapsArray()
 }
@@ -78,6 +85,7 @@ void function OnOpenMapsMenu()
 	UpdateMapsGrid()
 	UpdateMapsInfo()
 	UpdateListSliderHeight()
+	UpdateListSliderPosition()
 	UpdateNextMapInfo()
 }
 
@@ -96,12 +104,14 @@ void function UpdateNextMapInfo()
 
 void function UpdateMapsGrid()
 {	
+	HideAllMapButtons()
+	
 	array< string > mapsArray = file.mapsArrayFiltered
-	array< var > GridButtons = GetElementsByClassname( file.menu, "MapGridButtons" )
+	
 	
 	int trueOffset = file.scrollOffset * 3
 	
-	foreach ( int _index,  var element in GridButtons )
+	foreach ( int _index,  var element in file.gridButtons )
 	{
 		if ( ( _index + trueOffset ) >= mapsArray.len() ) return
 		
@@ -110,6 +120,8 @@ void function UpdateMapsGrid()
 		
 		RuiSetImage( Hud_GetRui( mapImage ), "basicImage", GetMapImageForMapName( mapsArray[ _index + trueOffset ] ) )
 		Hud_SetText( mapName, GetMapDisplayName( mapsArray[ _index + trueOffset ] ) )
+		
+		MakeMapButtonVisible( element )
 	}
 }
 
@@ -117,9 +129,21 @@ void function FilterMapsArray()
 {
 	file.mapsArrayFiltered.clear()
 	
-	foreach( string map in GetPrivateMatchMaps() )
+	foreach ( string map in GetPrivateMatchMaps() )
 		file.mapsArrayFiltered.append( map )
 	
+}
+
+void function HideAllMapButtons()
+{
+	foreach ( var element in file.gridButtons )
+		Hud_SetVisible( element, false )
+}
+
+// :trol:
+void function MakeMapButtonVisible( var element )
+{
+	Hud_SetVisible( element, true )
 }
 
 //////////////////////////////
@@ -159,7 +183,7 @@ void function SliderBarUpdate()
 	float maxYPos = minYPos - (maxHeight - Hud_GetHeight( sliderPanel ))
 	float useableSpace = ( maxHeight - Hud_GetHeight( sliderPanel ))
 
-	float jump = minYPos - ( useableSpace / (  ceil( file.mapsArrayFiltered.len() / 4 )))
+	float jump = minYPos - ( useableSpace / (  file.mapsArrayFiltered.len() / 3 + 1 ))
 
 	// got local from official respaw scripts, without untyped throws an error
 	local pos =	Hud_GetPos(sliderButton)[1]
@@ -173,7 +197,7 @@ void function SliderBarUpdate()
 	Hud_SetPos( sliderPanel , 2, newPos )
 	Hud_SetPos( movementCapture , 2, newPos )
 
-	file.scrollOffset = -int( ( (newPos - minYPos) / useableSpace ) * ( file.mapsArrayFiltered.len() - BUTTONS_PER_PAGE) )
+	file.scrollOffset = -int( ( (newPos - minYPos) / useableSpace ) * ( file.mapsArrayFiltered.len() / 3 + 1 - BUTTONS_PER_PAGE) )
 	UpdateMapsGrid()
 }
 
@@ -183,12 +207,12 @@ void function UpdateListSliderHeight()
 	var sliderPanel = Hud_GetChild( file.menu , "BtnMapGridSliderPanel" )
 	var movementCapture = Hud_GetChild( file.menu , "MouseMovementCapture" )
 	
-	float maps = float ( file.mapsArrayFiltered.len() )
+	float maps = float ( file.mapsArrayFiltered.len() / 3 )
 
 	float maxHeight = 584.0 * (GetScreenSize()[1] / 1080.0)
 	float minHeight = 80.0 * (GetScreenSize()[1] / 1080.0)
 
-	float height = maxHeight * ( float( BUTTONS_PER_PAGE ) / ceil( maps / 4 ) )
+	float height = maxHeight * ( float( BUTTONS_PER_PAGE ) / maps )
 
 	if ( height > maxHeight ) height = maxHeight
 	if ( height < minHeight ) height = minHeight
@@ -205,7 +229,7 @@ void function UpdateListSliderPosition()
 	var sliderPanel = Hud_GetChild( file.menu , "BtnMapGridSliderPanel" )
 	var movementCapture = Hud_GetChild( file.menu , "MouseMovementCapture" )
 	
-	float maps = float ( file.mapsArrayFiltered.len() )
+	float maps = float ( file.mapsArrayFiltered.len() / 3 + 1 )
 
 	float minYPos = -40.0 * (GetScreenSize()[1] / 1080.0)
 	float useableSpace = (584.0 * (GetScreenSize()[1] / 1080.0) - Hud_GetHeight( sliderPanel ))
@@ -225,11 +249,12 @@ void function OnDownArrowSelected( var button )
 {
 	if ( file.mapsArrayFiltered.len() <= BUTTONS_PER_PAGE ) return
 	file.scrollOffset += 1
-	if (file.scrollOffset + BUTTONS_PER_PAGE > file.mapsArrayFiltered.len()) {
-		file.scrollOffset = file.mapsArrayFiltered.len() - BUTTONS_PER_PAGE
+	if ((file.scrollOffset + BUTTONS_PER_PAGE) * 3 > file.mapsArrayFiltered.len()) {
+		file.scrollOffset = (file.mapsArrayFiltered.len() - BUTTONS_PER_PAGE * 3) / 3 + 1
 	}
 	UpdateMapsGrid()
 	UpdateListSliderPosition()
+	printt(file.scrollOffset)
 }
 
 
