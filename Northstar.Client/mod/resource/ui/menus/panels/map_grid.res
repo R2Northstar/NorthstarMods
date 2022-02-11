@@ -54,7 +54,7 @@
 		ypos					2
 		
 		Classname			MapGridButtons
-		scriptID			0
+		scriptID			3
 		
 		controlSettingsFile	"resource/ui/menus/panels/map_grid_button.res"
 		
@@ -71,7 +71,7 @@
 		xpos					2
 		
 		Classname			MapGridButtons
-		scriptID			1
+		scriptID			4
 		
 		controlSettingsFile	"resource/ui/menus/panels/map_grid_button.res"
 		
@@ -88,7 +88,7 @@
 		xpos					2
 		
 		Classname			MapGridButtons
-		scriptID			2
+		scriptID			5
 		
 		controlSettingsFile	"resource/ui/menus/panels/map_grid_button.res"
 		
@@ -105,7 +105,7 @@
 		ypos					2
 		
 		Classname			MapGridButtons
-		scriptID			0
+		scriptID			6
 		
 		controlSettingsFile	"resource/ui/menus/panels/map_grid_button.res"
 		
@@ -122,7 +122,7 @@
 		xpos					2
 		
 		Classname			MapGridButtons
-		scriptID			1
+		scriptID			7
 		
 		controlSettingsFile	"resource/ui/menus/panels/map_grid_button.res"
 		
@@ -139,7 +139,7 @@
 		xpos					2
 		
 		Classname			MapGridButtons
-		scriptID			2
+		scriptID			8
 		
 		controlSettingsFile	"resource/ui/menus/panels/map_grid_button.res"
 		
@@ -156,7 +156,7 @@
 		ypos					2
 		
 		Classname			MapGridButtons
-		scriptID			0
+		scriptID			9
 		
 		controlSettingsFile	"resource/ui/menus/panels/map_grid_button.res"
 		
@@ -173,7 +173,7 @@
 		xpos					2
 		
 		Classname			MapGridButtons
-		scriptID			1
+		scriptID			10
 		
 		controlSettingsFile	"resource/ui/menus/panels/map_grid_button.res"
 		
@@ -190,7 +190,7 @@
 		xpos					2
 		
 		Classname			MapGridButtons
-		scriptID			2
+		scriptID			11
 		
 		controlSettingsFile	"resource/ui/menus/panels/map_grid_button.res"
 		

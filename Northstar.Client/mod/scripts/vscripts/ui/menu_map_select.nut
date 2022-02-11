@@ -27,6 +27,12 @@ struct {
 } file
 
 
+// TODO:
+//  - update map desc width and height in final
+
+
+
+
 // note: this does have a scrolling system in vanilla, but it's honestly really weird and jank and i don't like it
 // so for parity with menu_mode_select i'm removing it in favour of a page system
 // fuck you respawn, too lazy to make a good menu or what ^
@@ -50,9 +56,7 @@ void function InitMapsMenu()
 	AddMenuEventHandler( file.menu, eUIEvent.MENU_CLOSE, OnCloseMapsMenu )
 	AddMenuEventHandler( file.menu, eUIEvent.MENU_OPEN, OnOpenMapsMenu )
 
-	//AddEventHandlerToButtonClass( menu, "MapButtonClass", UIE_GET_FOCUS, MapButton_Focused )
-	//AddEventHandlerToButtonClass( menu, "MapButtonClass", UIE_LOSE_FOCUS, MapButton_LostFocus )
-	//AddEventHandlerToButtonClass( menu, "MapButtonClass", UIE_CLICK, MapButton_Activate )
+	
 
 	AddMenuFooterOption( file.menu, BUTTON_A, "#A_BUTTON_SELECT" )
 	AddMenuFooterOption( file.menu, BUTTON_B, "#B_BUTTON_BACK", "#BACK" )
@@ -60,11 +64,22 @@ void function InitMapsMenu()
 	AddButtonEventHandler( Hud_GetChild( file.menu, "BtnMapGridUpArrow"), UIE_CLICK, OnUpArrowSelected )
 	AddButtonEventHandler( Hud_GetChild( file.menu, "BtnMapGridDownArrow"), UIE_CLICK, OnDownArrowSelected )
 	
-	//AddButtonEventHandler( Hud_GetChild( file.menu, "BtnFiltersClear"), UIE_CLICK, OnBtnFiltersClear_Activate )
+	AddButtonEventHandler( Hud_GetChild( file.menu, "BtnFiltersClear"), UIE_CLICK, OnBtnFiltersClear_Activate )
 	
-	RuiSetString( Hud_GetRui( Hud_GetChild( file.menu, "SwtBtnShowMaps")), "buttonText", "")
+	AddButtonEventHandler( Hud_GetChild( file.menu, "SwtBtnHideLocked"), UIE_CHANGE, OnFiltersChanged )
+	AddButtonEventHandler( Hud_GetChild( file.menu, "BtnMapsSearch"), UIE_CHANGE, OnFiltersChanged )
+	
+	RuiSetString( Hud_GetRui( Hud_GetChild( file.menu, "SwtBtnhideLocked")), "buttonText", "")
 	
 	file.gridButtons = GetElementsByClassname( file.menu, "MapGridButtons" )
+	
+	// uhh
+	foreach ( var mapButton in file.gridButtons )
+	{
+		var button = Hud_GetChild( mapButton, "MapButton" )
+		AddButtonEventHandler( button, UIE_CLICK, MapButton_Activate )
+		AddButtonEventHandler( button, UIE_GET_FOCUS, MapButton_Focus )
+	}
 	
 	
 	FilterMapsArray()
@@ -76,27 +91,91 @@ void function InitMapsMenu()
 void function OnCloseMapsMenu()
 {
 	Signal( uiGlobal.signalDummy, "OnCloseMapsMenu" )
+	
+	try
+	{
+		DeregisterButtonPressedCallback(MOUSE_WHEEL_UP , OnScrollUp)
+		DeregisterButtonPressedCallback(MOUSE_WHEEL_DOWN , OnScrollDown)
+		//DeregisterButtonPressedCallback(KEY_TAB , OnKeyTabPressed)
+	}
+	catch ( ex ) {}
 }
 
 void function OnOpenMapsMenu()
 {
+	RefreshList()
+	
+	RegisterButtonPressedCallback(MOUSE_WHEEL_UP , OnScrollUp)
+	RegisterButtonPressedCallback(MOUSE_WHEEL_DOWN , OnScrollDown)
+	//RegisterButtonPressedCallback(KEY_TAB , OnKeyTabPressed)
+}
+
+void function RefreshList()
+{
 	file.scrollOffset = 0
 	FilterMapsArray()
 	UpdateMapsGrid()
-	UpdateMapsInfo()
+	if ( file.mapsArrayFiltered.len() != 0 )
+		UpdateMapsInfo( file.mapsArrayFiltered[0] )
 	UpdateListSliderHeight()
 	UpdateListSliderPosition()
 	UpdateNextMapInfo()
 }
 
-void function UpdateMapsInfo()
+void function OnFiltersChanged( var button )
 {
-	RuiSetImage( Hud_GetRui( Hud_GetChild( file.menu, "NextMapImage" ) ), "basicImage", GetMapImageForMapName( "mp_forwardbase_kodai" ) )
+	FilterMapsArray()
+	RefreshList()
+}
+
+void function MapButton_Activate( var button )
+{
+	if ( !AmIPartyLeader() && GetPartySize() > 1 )
+		return
+
+	int mapID = int( Hud_GetScriptID( Hud_GetParent( button ) ) )
+	string mapName = file.mapsArrayFiltered[ mapID + file.scrollOffset * 3 ]
+	
+	if ( IsLocked( mapName ) )
+		return
+	
+	printt( mapName, mapID )
+
+	UpdateMapsInfo( mapName )
+	ClientCommand( "SetCustomMap " + mapName )
+	CloseActiveMenu()
+}
+
+void function MapButton_Focus( var button )
+{
+	int mapID = int( Hud_GetScriptID( Hud_GetParent( button ) ) )
+	string mapName = file.mapsArrayFiltered[ mapID + file.scrollOffset * 3 ]
+
+	UpdateMapsInfo( mapName )
+}
+
+void function OnBtnFiltersClear_Activate( var button )
+{
+	Hud_SetText( Hud_GetChild( file.menu, "BtnMapsSearch" ), "" )
+
+	SetConVarInt( "filter_map_hide_locked", 0 )
+	
+	RefreshList()
+}
+
+void function UpdateMapsInfo( string map )
+{
+	RuiSetImage( Hud_GetRui( Hud_GetChild( file.menu, "NextMapImage" ) ), "basicImage", GetMapImageForMapName( map ) )
+	Hud_SetText( Hud_GetChild( file.menu, "NextMapDescription" ), GetMapDisplayDesc( map ) )
+	Hud_SetText( Hud_GetChild( file.menu, "NextMapName" ), GetMapDisplayName( map ) )
 }
 
 void function UpdateNextMapInfo()
 {
 	array< string > mapsArray = file.mapsArrayFiltered
+	
+	if( !mapsArray.len() )
+		return
 	
 	var nextMapName = Hud_GetChild( file.menu, "NextMapName" )
 	Hud_SetText( nextMapName, GetMapDisplayName( mapsArray[ 0 ] ) )
@@ -118,8 +197,13 @@ void function UpdateMapsGrid()
 		var mapImage = Hud_GetChild( element, "MapImage" )
 		var mapName = Hud_GetChild( element, "MapName" )
 		
-		RuiSetImage( Hud_GetRui( mapImage ), "basicImage", GetMapImageForMapName( mapsArray[ _index + trueOffset ] ) )
-		Hud_SetText( mapName, GetMapDisplayName( mapsArray[ _index + trueOffset ] ) )
+		string name = mapsArray[ _index + trueOffset ]
+		
+		RuiSetImage( Hud_GetRui( mapImage ), "basicImage", GetMapImageForMapName( name ) )
+		Hud_SetText( mapName, GetMapDisplayName( name ) )
+		
+		if ( IsLocked( name ) )
+			LockMapButton( element )
 		
 		MakeMapButtonVisible( element )
 	}
@@ -129,21 +213,72 @@ void function FilterMapsArray()
 {
 	file.mapsArrayFiltered.clear()
 	
-	foreach ( string map in GetPrivateMatchMaps() )
-		file.mapsArrayFiltered.append( map )
+	string searchTerm = Hud_GetUTF8Text( Hud_GetChild( file.menu, "BtnMapsSearch" ) )
 	
+	bool useSearch =  searchTerm != ""
+	
+	bool hideLocked = bool( GetConVarInt( "filter_map_hide_locked" ) )
+	
+	foreach ( string map in GetPrivateMatchMaps() )
+	{
+		bool containsTerm = Localize( GetMapDisplayName( map ) ).tolower().find( searchTerm.tolower() ) == null ? false : true
+		
+		if ( hideLocked && !IsLocked( map ) && ( useSearch == true ? containsTerm : true ) )
+		{
+			file.mapsArrayFiltered.append( map )
+		}
+		else if ( !hideLocked && ( useSearch == true ? containsTerm : true ) )
+		{
+			file.mapsArrayFiltered.append( map )
+		}
+	}
 }
 
 void function HideAllMapButtons()
 {
 	foreach ( var element in file.gridButtons )
+	{
 		Hud_SetVisible( element, false )
+		
+		var mapButton = Hud_GetChild( element, "MapButton" )
+		var mapFG = Hud_GetChild( element, "MapNameLockedForeground" )
+		
+		Hud_SetLocked( mapButton, false )
+		Hud_SetVisible( mapFG, false )
+	}
 }
 
 // :trol:
 void function MakeMapButtonVisible( var element )
 {
 	Hud_SetVisible( element, true )
+}
+
+void function LockMapButton( var element )
+{
+	var mapButton = Hud_GetChild( element, "MapButton" )
+	var mapFG = Hud_GetChild( element, "MapNameLockedForeground" )
+	
+	Hud_SetVisible( mapButton, true )
+	Hud_SetVisible( mapFG, true )
+}
+
+bool function IsLocked( string map )
+{
+	
+	bool sp = map.find( "sp_" ) == 0
+	if ( sp )
+		return true
+
+	if ( IsItemInEntitlementUnlock( map ) && IsValid( GetUIPlayer() ) )
+	{
+		if ( IsItemLocked( GetUIPlayer(), map ) && GetCurrentPlaylistVarInt( map + "_available" , 0 ) == 0 )
+		{
+			return true
+		}
+	}
+	
+	return false
 }
 
 //////////////////////////////
@@ -166,7 +301,7 @@ void function FlushMouseDeltaBuffer()
 
 void function SliderBarUpdate()
 {
-	if ( file.mapsArrayFiltered.len() <= BUTTONS_PER_PAGE )
+	if ( file.mapsArrayFiltered.len() <= BUTTONS_PER_PAGE || file.mapsArrayFiltered.len() <= 12 )
 	{
 		FlushMouseDeltaBuffer()
 		return
@@ -179,7 +314,7 @@ void function SliderBarUpdate()
 	Hud_SetFocused(sliderButton)
 
 	float minYPos = -40.0 * (GetScreenSize()[1] / 1080.0)
-	float maxHeight = 584.0  * (GetScreenSize()[1] / 1080.0)
+	float maxHeight = 586.0  * (GetScreenSize()[1] / 1080.0)
 	float maxYPos = minYPos - (maxHeight - Hud_GetHeight( sliderPanel ))
 	float useableSpace = ( maxHeight - Hud_GetHeight( sliderPanel ))
 
@@ -209,7 +344,7 @@ void function UpdateListSliderHeight()
 	
 	float maps = float ( file.mapsArrayFiltered.len() / 3 )
 
-	float maxHeight = 584.0 * (GetScreenSize()[1] / 1080.0)
+	float maxHeight = 586.0 * (GetScreenSize()[1] / 1080.0)
 	float minHeight = 80.0 * (GetScreenSize()[1] / 1080.0)
 
 	float height = maxHeight * ( float( BUTTONS_PER_PAGE ) / maps )
@@ -225,6 +360,9 @@ void function UpdateListSliderHeight()
 
 void function UpdateListSliderPosition()
 {
+	if ( file.mapsArrayFiltered.len() == 12 )
+		return
+	
 	var sliderButton = Hud_GetChild( file.menu , "BtnMapGridSlider" )
 	var sliderPanel = Hud_GetChild( file.menu , "BtnMapGridSliderPanel" )
 	var movementCapture = Hud_GetChild( file.menu , "MouseMovementCapture" )
@@ -232,7 +370,7 @@ void function UpdateListSliderPosition()
 	float maps = float ( file.mapsArrayFiltered.len() / 3 + 1 )
 
 	float minYPos = -40.0 * (GetScreenSize()[1] / 1080.0)
-	float useableSpace = (584.0 * (GetScreenSize()[1] / 1080.0) - Hud_GetHeight( sliderPanel ))
+	float useableSpace = (586.0 * (GetScreenSize()[1] / 1080.0) - Hud_GetHeight( sliderPanel ))
 
 	float jump = minYPos - ( useableSpace / ( maps - float( BUTTONS_PER_PAGE ) ) * file.scrollOffset )
 
@@ -247,7 +385,7 @@ void function UpdateListSliderPosition()
 
 void function OnDownArrowSelected( var button )
 {
-	if ( file.mapsArrayFiltered.len() <= BUTTONS_PER_PAGE ) return
+	if ( file.mapsArrayFiltered.len() <= BUTTONS_PER_PAGE || file.mapsArrayFiltered.len() <= 12 ) return
 	file.scrollOffset += 1
 	if ((file.scrollOffset + BUTTONS_PER_PAGE) * 3 > file.mapsArrayFiltered.len()) {
 		file.scrollOffset = (file.mapsArrayFiltered.len() - BUTTONS_PER_PAGE * 3) / 3 + 1
@@ -270,10 +408,10 @@ void function OnUpArrowSelected( var button )
 
 void function OnScrollDown( var button )
 {
-	if ( file.mapsArrayFiltered.len() <= BUTTONS_PER_PAGE ) return
-	file.scrollOffset += 5
-	if (file.scrollOffset + BUTTONS_PER_PAGE > file.mapsArrayFiltered.len()) {
-		file.scrollOffset = file.mapsArrayFiltered.len() - BUTTONS_PER_PAGE
+	if ( file.mapsArrayFiltered.len() <= BUTTONS_PER_PAGE || file.mapsArrayFiltered.len() <= 12 ) return
+	file.scrollOffset += 2
+	if ((file.scrollOffset + BUTTONS_PER_PAGE) * 3 > file.mapsArrayFiltered.len()) {
+		file.scrollOffset = (file.mapsArrayFiltered.len() - BUTTONS_PER_PAGE * 3) / 3 + 1
 	}
 	UpdateMapsGrid()
 	UpdateListSliderPosition()
@@ -281,7 +419,7 @@ void function OnScrollDown( var button )
 
 void function OnScrollUp( var button )
 {
-	file.scrollOffset -= 5
+	file.scrollOffset -= 2
 	if (file.scrollOffset < 0) {
 		file.scrollOffset = 0
 	}

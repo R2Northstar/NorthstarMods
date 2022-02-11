@@ -29,7 +29,7 @@
 			"DefaultValue": "0"
 		},
 		{
-			"Name": "filter_map_creator",
+			"Name": "filter_map_hide_locked",
 			"DefaultValue": "0"
 		}
 	],
