@@ -250,7 +250,7 @@ resource/ui/menus/map_select.menu
 		{
 			ControlName				Label
 			textAlignment			north
-			tall					420
+			tall					500
 			wide 					460
 			ypos					-300
 			xpos 					-20

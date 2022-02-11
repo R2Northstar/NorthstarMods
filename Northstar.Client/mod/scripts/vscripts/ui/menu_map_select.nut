@@ -27,19 +27,8 @@ struct {
 } file
 
 
-// TODO:
-//  - update map desc width and height in final
 
 
-
-
-// note: this does have a scrolling system in vanilla, but it's honestly really weird and jank and i don't like it
-// so for parity with menu_mode_select i'm removing it in favour of a page system
-// fuck you respawn, too lazy to make a good menu or what ^
-
-// Important: 
-// ClientCommand( "SetCustomMap " + mapName )
-// CloseActiveMenu()
 
 void function MenuMapSelect_Init()
 {
