@@ -3,6 +3,7 @@ untyped
 global function GamemodeCP_Init
 global function RateSpawnpoints_CP
 global function DEV_PrintHardpointsInfo
+global function DEV_PrintPlayersOnHardpoint
 
 // needed for sh_gamemode_cp_dialogue
 global array<entity> HARDPOINTS
@@ -67,22 +68,46 @@ void function GamemodeCP_OnPlayerKilled(entity victim, entity attacker, var dama
 {
 	HardpointStruct attackerCP
 	HardpointStruct victimCP
-
+	CP_PlayerStruct victimStruct
 	if(!attacker.IsPlayer())
 		return
+
+	//hardpoint forever capped mitigation
+	
+	foreach(CP_PlayerStruct p in file.players)
+		if(p.player==victim)
+			victimStruct=p
 
 	foreach(HardpointStruct hardpoint in file.hardpoints)
 	{
 		if(hardpoint.imcCappers.contains(victim))
+		{
 			victimCP = hardpoint
+			thread removePlayerFromCapperArray_threaded(hardpoint.imcCappers,victim)
+		}
+			
 		if(hardpoint.militiaCappers.contains(victim))
+		{
 			victimCP = hardpoint
-
+			thread removePlayerFromCapperArray_threaded(hardpoint.militiaCappers,victim)
+		}
+			
 		if(hardpoint.imcCappers.contains(attacker))
 			attackerCP = hardpoint
 		if(hardpoint.militiaCappers.contains(attacker))
 			attackerCP = hardpoint
+
 	}
+	if(victimStruct.isOnHardpoint)
+		victimStruct.isOnHardpoint = false
+		
+	
+
+	//prevent medals form suicide
+	if(attacker==victim)
+		return
+	
+
 
 	if((victimCP.hardpoint!=null)&&(attackerCP.hardpoint!=null))
 	{
@@ -127,6 +152,15 @@ void function GamemodeCP_OnPlayerKilled(entity victim, entity attacker, var dama
 	}
 
 }
+
+void function removePlayerFromCapperArray_threaded(array<entity> capperArray,entity player)
+{	
+	
+	WaitFrame()
+	if(capperArray.contains(player))
+		capperArray.remove(capperArray.find(player))
+}
+
 
 void function RateSpawnpoints_CP( int checkClass, array<entity> spawnpoints, int team, entity player )
 {
@@ -678,5 +712,23 @@ void function DEV_PrintHardpointsInfo()
 			"|State:", CaptureStateToString(hardpoint.GetHardpointState()),
 			"|Progress:", GetGlobalNetFloat("objective" + hardpoint.kv.hardpointGroup + "Progress")
 		)
+	}
+}
+
+void function DEV_PrintPlayersOnHardpoint(string hardpointGroup)
+{
+	foreach(HardpointStruct hardpoint in file.hardpoints)
+	{
+		if(hardpoint.kv.hardpointGroup==hardpointGroup)
+		{
+			array<entity> allCappers
+			allCappers.extend(hardpoint.militiaCappers)
+			allCappers.extend(hardpoint.imcCappers)
+			printt("On Hardpoint ",hardpointGroup,"are the Players")
+			foreach(entity player in allCappers)
+			{
+				printt()
+			}
+		}
 	}
 }
