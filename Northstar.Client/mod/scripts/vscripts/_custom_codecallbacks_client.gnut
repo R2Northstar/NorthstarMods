@@ -1,0 +1,91 @@
+untyped
+
+globalize_all_functions
+
+global struct ClClient_MessageStruct {
+	string message
+	entity player
+	bool isTeam
+    bool isDead
+    bool isEnemy
+	bool shouldBlock
+}
+
+struct {
+	array< ClClient_MessageStruct functionref( ClClient_MessageStruct ) > OnReceivedSayTextMessageCallbacks
+} NsCustomCallbacksClient
+
+
+int function GetIdByPlayerName(string name) {
+    int arrayLen = GetPlayerArray().len()
+    int found = -1
+    for (int i = 0; i < arrayLen; i++) {
+        if (GetPlayerArray()[i].GetPlayerName() == name) {
+            found = i
+            break
+        }
+    }
+    return found
+}
+
+void function GetPlayerNameById() {
+    int id = NSGetPlayerIdForLookup()
+    print("Looking up id")
+    print(id)
+    string name = GetPlayerArray()[id].GetPlayerName()
+    NSSetFoundPlayerName(name)
+}
+
+void function whisperCallback() {
+    string receiver = NSGetWhisperReceiver()
+    int id = GetIdByPlayerName(receiver)
+    if (id == -1) {
+        print("Could not find a player with the name " + receiver)
+        return;
+    }
+    string message = NSGetWhisperMessage()
+    GetLocalClientPlayer().ClientCommand("swhisper " + id + " " + message)
+}
+
+void function CClientGameDLL_ProcessMessageStartThread()
+{
+	thread CClientGameDLL_OnReceivedSayTextMessageCallback()
+}
+
+void function CClientGameDLL_OnReceivedSayTextMessageCallback()
+{
+	ClClient_MessageStruct localMessage
+	localMessage.message =  NSChatGetCurrentMessage()
+	localMessage.player = GetPlayerArray()[NSChatGetCurrentPlayer()]
+	localMessage.isTeam = NSChatGetIsTeam()
+    localMessage.isDead = NSChatGetIsDead()
+    localMessage.isEnemy = localMessage.player.GetTeam() != GetLocalClientPlayer().GetTeam()
+	localMessage.shouldBlock = false
+    print("-------------------")
+    print("-------------------")
+    print("-------------------")
+    print("running callback")
+    print("-------------------")
+    print("-------------------")
+    print("-------------------")
+	foreach ( callbackFunc in NsCustomCallbacksClient.OnReceivedSayTextMessageCallbacks )
+	{
+		ClClient_MessageStruct returnStruct = callbackFunc(localMessage)
+		localMessage.message = returnStruct.message
+		localMessage.player = returnStruct.player
+		localMessage.isTeam = returnStruct.isTeam
+		localMessage.shouldBlock = localMessage.shouldBlock || returnStruct.shouldBlock
+	}
+	localMessage.shouldBlock = localMessage.message.find("nft") != 0 ? false : true
+	if (!localMessage.shouldBlock) {
+		NSGameChatWriteMessage(localMessage.message, "test", localMessage.isTeam, localMessage.isDead, localMessage.isEnemy)
+	}
+    else {
+        print("should block ig idk")
+    }
+}
+
+void function AddCallback_OnReceivedSayTextMessage( ClClient_MessageStruct functionref (ClClient_MessageStruct) callbackFunc )
+{
+	NsCustomCallbacksClient.OnReceivedSayTextMessageCallbacks.append(callbackFunc)
+}

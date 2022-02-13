@@ -28,6 +28,13 @@
 	],
 	"Scripts": [
 		{
+			"Path": "ns_whisper.gnut",
+			"RunOn": "SERVER && MP",
+			"ServerCallback": {
+				"After": "registerCommands"
+			}
+		},
+		{
 			"Path": "sh_northstar_custom_precache.gnut",
 			"RunOn": "( CLIENT || SERVER ) && MP",
 			"ClientCallback": {
