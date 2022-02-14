@@ -161,22 +161,6 @@ Press Yes if you agree to this. This choice can be changed in the mods menu at a
 		"PL_tffa_abbr" "TFFA"
 		"GAMEMODE_TFFA" "Titan Free for All"
 
-		"PL_pvb" "Pilots vs Boss"
-		"PL_pvb_lobby" "Pilots vs Boss Lobby"
-		"PL_pvb_desc" "A Random Pilot is chosen to be the Boss. Others have to fight against them"
-		"PL_pvb_hint" "A Random Pilot is chosen to be the Boss. Others have to fight against them"
-		"PL_pvb_abbr" "PvB"
-		"GAMEMODE_PVB" "Pilots vs Boss"
-		"PVB_BOSS_DMG" "Boss Damage"
-		"PVB_YOU_ARE_BOSS" "You are the Boss!"
-		"PVB_YOU_ARE_AMPED" "You are the Amped Pilot!"
-		"PVB_BOSS_IS" "%s1 is the Boss!"
-		"PVB_AMPED_IS" "%s1 is the Amped Pilot!"
-		"PVB_KILL_PILOTS" "Kill every Pilot"
-		"PVB_KILL_BOSS" "Destroy the Boss"
-		"PVB_BOSS_KILL_AMPED" "Focus On Killing the Amped, They're stronger than the rest."
-		"PVB_AMPED_KILL_BOSS" "Permanent Stim Applied, Destroy the Boss."
-
 		"PL_hs" "Hide and Seek"
 		"PL_hs_lobby" "Hide and Seek Lobby"
 		"PL_hs_desc" "Hiders hide, seekers try to find them."
@@ -308,6 +292,7 @@ Press Yes if you agree to this. This choice can be changed in the mods menu at a
 		"CONNECTING" "Connecting..."
 		"INGAME_PLAYERS" "Players: ^6BA6C400%s1"
 		"TOTAL_SERVERS" "Servers: ^C46C6C00%s1"
+
 
 		// Mods menu
 		"SHOW" "Show"
