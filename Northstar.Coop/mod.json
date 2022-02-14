@@ -3,12 +3,7 @@
 	"Description" : "[WIP] Allows the singleplayer campaign to be played in multiplayer",
 
 	"LoadPriority": 1,
-	"ConVars": [
-		{
-			"Name": "dof_enable",
-			"DefaultValue": "0"
-		}
-	],
+
 	"Scripts": [
 		{
 			"Path": "sh_sp_coop.gnut",
