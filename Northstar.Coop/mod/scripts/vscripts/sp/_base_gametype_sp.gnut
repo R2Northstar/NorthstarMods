@@ -259,6 +259,16 @@ void function TryGameModeAnnouncement( entity player )
 
 }
 
+void function Coop_LoadMapFromStartPoint(string mapname,int startindex)
+{
+	ExecuteLoadingClientCommands_SetStartPoint( mapName, startindex )
+	ServerCommand( "map " + mapName )
+	foreach(player in GetPlayerArray())
+	{
+		player.SetOrigin(GetPlayerByIndex(0).GetOrigin())
+	}
+}
+
 void function Coop_ReloadCurrentMapFromStartPoint(int startindex)
 {
 	string mapName = GetMapName()
