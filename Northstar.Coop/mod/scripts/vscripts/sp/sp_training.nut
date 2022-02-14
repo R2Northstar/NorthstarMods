@@ -4383,8 +4383,8 @@ void function Training_MeetOG( entity player )
 		thread OutroDifficultyPopup( player, 2.5 )
 
 		// load next level
-		// NOTE this does a screen fade already
-		PickStartPoint( "sp_crashsite", "LevelStart" )
+		GameRules_ChangeMap( "sp_crashsite", GAMETYPE )
+
 	}
 
 	// don't ever progress from here to the dev functions beyond
