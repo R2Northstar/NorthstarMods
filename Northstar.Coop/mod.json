@@ -3,18 +3,23 @@
 	"Description": "[WIP] Allows the singleplayer campaign to be played in multiplayer",
 	"Version": "1.5.0",
 	"LoadPriority": 0,
+
 	"ConVars": [
 		{
-			"Name": "dof_enable",
-			"DefaultValue": "0"
+			"Name": "grant_admin",
+			"DefaultValue": "xamionex" // edit this to add admins or UID
 		},
 		{
-			"Name": "m_invert_pitch",
-			"DefaultValue": "0"
+			"Name": "announce_color",
+			"DefaultValue": "255,255,0" // edit this to change announce rgb color
 		},
 		{
-			"Name": "autosprint_type",
-			"DefaultValue": "0"
+			"Name": "autoannounce_color",
+			"DefaultValue": "255,255,0" // edit this to change autoannounce rgb color
+		},
+		{
+			"Name": "autoannounce",
+			"DefaultValue": "Enjoy your time on this server!" // edit this to change autoannounce, leave empty if desired.
 		}
 	],
 	"Scripts": [
@@ -22,7 +27,6 @@
 			"Path": "sh_sp_coop.gnut",
 			"RunOn": "SP"
 		},
-
 		{
 			"Path": "sh_sp_coop_lobby.gnut",
 			"RunOn": "( CLIENT || SERVER ) && MP",
@@ -32,6 +36,176 @@
 
 			"ServerCallback": {
 				"After": "SingleplayerCoopLobby_Init"
+			}
+		},
+		{
+			"Path": "/cmds/_gift_admin.gnut",
+			"RunOn": "( CLIENT || SERVER ) && MP || SP",
+			"ServerCallback": {
+				"After": "Gift_Admin_Init"
+			}
+		},
+		{
+			"Path": "/cmds/spawncmd.nut",
+			"RunOn": "( CLIENT || SERVER ) && MP || SP",
+			"ServerCallback": {
+				"After": "AddCommands",
+				"After": "registerFunctionsAfter"
+			}
+		},
+		{
+			"Path": "/cmds/announce.nut",
+			"RunOn": "( CLIENT || SERVER ) && MP || SP",
+			"ServerCallback": {
+				"After": "AnnounceCommand"
+			}
+		},
+		{
+			"Path": "/cmds/getid.nut",
+			"RunOn": "( CLIENT || SERVER ) && MP || SP",
+			"ServerCallback": {
+				"After": "getIDCommand"
+			}
+		},
+		{
+			"Path": "/cmds/checkplayername.nut",
+			"RunOn": "( CLIENT || SERVER ) && MP || SP"
+		},
+		{
+			"Path": "/cmds/health.nut",
+			"RunOn": "( CLIENT || SERVER ) && MP || SP",
+			"ServerCallback": {
+				"After": "HealthCommand"
+			}
+		},
+		{
+			"Path": "/cmds/predator.nut",
+			"RunOn": "( CLIENT || SERVER ) && MP || SP",
+			"ServerCallback": {
+				"After": "PredatorCommand"
+			}
+		},
+		{
+			"Path": "/cmds/gift.nut",
+			"RunOn": "( CLIENT || SERVER ) && MP || SP",
+			"ServerCallback": {
+				"After": "GiftCommand"
+			}
+		},
+		{
+			"Path": "/cmds/getteam.nut",
+			"RunOn": "( CLIENT || SERVER ) && MP || SP",
+			"ServerCallback": {
+				"After": "getTeamCommand"
+			}
+		},
+		{
+			"Path": "/cmds/freeze.nut",
+			"RunOn": "( CLIENT || SERVER ) && MP || SP",
+			"ServerCallback": {
+				"After": "FreezeCommand"
+			}
+		},
+		{
+			"Path": "/cmds/slay.nut",
+			"RunOn": "( CLIENT || SERVER ) && MP || SP",
+			"ServerCallback": {
+				"After": "SlayCommand"
+			}
+		},
+		{
+			"Path": "/cmds/sonar.nut",
+			"RunOn": "( CLIENT || SERVER ) && MP || SP",
+			"ServerCallback": {
+				"After": "SonarCommand"
+			}
+		},
+		{
+			"Path": "/cmds/bubbleshield.nut",
+			"RunOn": "( CLIENT || SERVER ) && MP || SP",
+			"ServerCallback": {
+				"After": "BubbleShieldCommand"
+			}
+		},
+		{
+			"Path": "/cmds/prop.nut",
+			"RunOn": "( CLIENT || SERVER ) && MP || SP",
+			"ServerCallback": {
+				"After": "PropCommand"
+			}
+		},
+		{
+			"Path": "/cmds/switchteams.nut",
+			"RunOn": "( CLIENT || SERVER ) && MP || SP",
+			"ServerCallback": {
+				"After": "STCommand"
+			}
+		},
+		{
+			"Path": "/cmds/titanfallcmd.nut",
+			"RunOn": "( CLIENT || SERVER ) && MP || SP",
+			"ServerCallback": {
+				"After": "TitanfallCommand"
+			}
+		},
+		{
+			"Path": "/cmds/vanish.nut",
+			"RunOn": "( CLIENT || SERVER ) && MP || SP",
+			"ServerCallback": {
+				"After": "VanishCommand"
+			}
+		},
+		{
+			"Path": "/cmds/shuffleteams.nut",
+			"RunOn": "( CLIENT || SERVER ) && MP || SP",
+			"ServerCallback": {
+				"After": "ShuffleTeamsCommand"
+			}
+		},
+		{
+			"Path": "/cmds/removeweapons.nut",
+			"RunOn": "( CLIENT || SERVER ) && MP || SP",
+			"ServerCallback": {
+				"After": "RemoveWeaponsCommand"
+			}
+		},
+		{
+			"Path": "/cmds/fly.nut",
+			"RunOn": "( CLIENT || SERVER ) && MP || SP",
+			"ServerCallback": {
+				"After": "FlyCommand"
+			}
+		},
+		{
+			"Path": "/cmds/teleport.nut",
+			"RunOn": "( CLIENT || SERVER ) && MP || SP",
+			"ServerCallback": {
+				"After": "TeleportCommand"
+			}
+		},
+		{
+			"Path": "/cmds/rearm.nut",
+			"RunOn": "( CLIENT || SERVER ) && MP || SP",
+			"ServerCallback": {
+				"After": "RearmCommand"
+			}
+		},
+		{
+			"Path": "/cmds/getmods.nut",
+			"RunOn": "( CLIENT || SERVER ) && MP || SP",
+			"ServerCallback": {
+				"After": "GetMod"
+			}
+		},
+		{
+			"Path": "/cmds/gift_weapons.nut",
+			"RunOn": "( CLIENT || SERVER ) && MP || SP"
+		},
+		{
+			"Path": "/cmds/weaponmod.nut",
+			"RunOn": "( CLIENT || SERVER ) && MP || SP",
+			"ServerCallback": {
+				"After": "Mod"
 			}
 		}
 	]
