@@ -1,0 +1,354 @@
+global function InitCombatPaths
+global function GetPathProgress
+global function GetPathChain
+global function GetPathGoalsInRange
+global function GetHighestPathGoal
+global function GetPointOnPath
+
+const MAX_PATH_DIST = 2000
+
+global struct PathProgress
+{
+	float pathDist
+	float offset
+	vector origin
+}
+
+global struct PathLink
+{
+	vector start
+	vector end
+	vector forward
+	vector right
+	float dist
+	float startDist
+	float endDist
+}
+
+global struct PathGoal
+{
+	vector origin
+	float radius = 500
+	float pathDist
+	float offset
+	int team
+	entity ent
+}
+
+global struct PathChain
+{
+	table<int, array<PathGoal> > pathGoals
+	table<int, array<PathGoal> > spawnPoints
+	array<PathGoal> spawnTriggers
+	array<PathLink> pathLinks
+}
+
+struct
+{
+	table<int, array<PathGoal> > pathGoals
+	table<int, array<PathGoal> > spawnPoints
+	array<PathGoal> spawnTriggers
+
+	table<entity,PathChain> pathChains
+
+} file
+
+void function InitCombatPaths()
+{
+	file.pathGoals[ TEAM_IMC ] <- []
+	file.pathGoals[ TEAM_MILITIA ] <- []
+	file.spawnPoints[ TEAM_IMC ] <- []
+	file.spawnPoints[ TEAM_MILITIA ] <- []
+
+	AddSpawnCallbackEditorClass( "script_ref", "script_combatpath_centerline", SetupCombatPathCenterLine )
+	AddSpawnCallbackEditorClass( "script_ref", "script_combatpath_enemy_reinforce", SetupCombatPath_GoalEnt_IMC )
+	AddSpawnCallbackEditorClass( "script_ref", "script_combatpath_friendlygoal", SetupCombatPath_GoalEnt_MIL )
+	AddSpawnCallbackEditorClass( "script_ref", "script_combatpath_spawnposition_imc", SetupCombatPath_SpawnPoint_IMC )
+	AddSpawnCallbackEditorClass( "script_ref", "script_combatpath_spawnposition_mil", SetupCombatPath_SpawnPoint_MIL )
+	AddSpawnCallbackEditorClass( "script_ref", "script_combatpath_spawntrigger", SetupCombatPath_SpawnTrigger )
+
+}
+
+
+struct CombatPathInstance
+{
+}
+
+void function SetupCombatPath_GoalEnt_IMC( entity goalEnt )
+{
+	AddGoalEntToFileTeamArray( file.pathGoals, goalEnt, TEAM_IMC )
+}
+
+void function SetupCombatPath_GoalEnt_MIL( entity goalEnt )
+{
+	AddGoalEntToFileTeamArray( file.pathGoals, goalEnt, TEAM_MILITIA )
+}
+
+void function SetupCombatPath_SpawnPoint_IMC( entity goalEnt )
+{
+	AddGoalEntToFileTeamArray( file.spawnPoints, goalEnt, TEAM_IMC )
+}
+
+void function SetupCombatPath_SpawnPoint_MIL( entity goalEnt )
+{
+	AddGoalEntToFileTeamArray( file.spawnPoints, goalEnt, TEAM_MILITIA )
+}
+
+void function SetupCombatPath_SpawnTrigger( entity goalEnt )
+{
+	PathGoal pathGoal = GetPathGoalFromGoalEnt( goalEnt )
+	pathGoal.ent = goalEnt
+	file.spawnTriggers.append( pathGoal )
+}
+
+
+
+PathGoal function GetPathGoalFromGoalEnt( entity goalEnt )
+{
+	PathGoal pathGoal
+	pathGoal.origin = goalEnt.GetOrigin()
+	if ( goalEnt.HasKey( "script_goal_radius" ) )
+	{
+		float radius = float( goalEnt.kv.script_goal_radius )
+		Assert( radius > 50, "goal at " + goalEnt.GetOrigin() + " has too small radius" )
+		pathGoal.radius = radius
+	}
+	return pathGoal
+}
+
+void function AddGoalEntToFileTeamArray( table<int, array<PathGoal> > pathGoals, entity goalEnt, int team )
+{
+	PathGoal pathGoal = GetPathGoalFromGoalEnt( goalEnt )
+	pathGoal.team = team
+	pathGoals[ team ].append( pathGoal )
+	pathGoal.ent = goalEnt
+}
+
+void function SetupCombatPathCenterLine( entity path )
+{
+	// is this the start of the path?
+	if ( !path.HasKey( "path_start" ) )
+		return
+	if ( path.kv.path_start != "1" )
+		return
+
+	thread SetupCombatPathFromStart( path )
+}
+
+void function SetupCombatPathFromStart( entity pathStart )
+{
+	array<PathLink> pathLinks
+
+	float currentDist = 0
+	int max = 20
+	entity lastEnt = pathStart
+	for ( int i = 0; i < max; i++ )
+	{
+		entity nextEnt = lastEnt.GetLinkEnt()
+		if ( !IsValid( nextEnt ) )
+			break
+
+		PathLink pathLink
+		pathLink.start = lastEnt.GetOrigin()
+		pathLink.end = nextEnt.GetOrigin()
+		pathLink.forward = Normalize( pathLink.end - pathLink.start )
+		vector angles = VectorToAngles( pathLink.forward )
+		pathLink.right = AnglesToRight( angles )
+		float dist = Distance( pathLink.start, pathLink.end )
+		pathLink.dist = dist
+		pathLink.startDist = currentDist
+		pathLink.endDist = currentDist + dist
+		currentDist = pathLink.endDist
+
+		pathLinks.append( pathLink )
+		lastEnt = nextEnt
+	}
+
+	Assert( pathLinks.len() > 1 && pathLinks.len() < max, "Path was too short or it looped" )
+
+	WaitEndFrame() // wait for the goal ents to be put into file struct
+
+	PathChain pathChain
+	file.pathChains[ pathStart ] <- pathChain
+	pathChain.pathGoals = GetTeamArrayOfPathGoalsOnPathLinks( file.pathGoals, pathLinks )
+	pathChain.spawnPoints = GetTeamArrayOfPathGoalsOnPathLinks( file.spawnPoints, pathLinks )
+	pathChain.spawnTriggers = GetPathGoalsOnPathLinks( file.spawnTriggers, pathLinks )
+	pathChain.pathLinks = pathLinks
+}
+
+PathProgress ornull function GetPathProgress( PathChain pathChain, vector origin )
+{
+	return GetPathProgressOnPathLinks( pathChain.pathLinks, origin )
+}
+
+table< int, array<PathGoal> > function GetTeamArrayOfPathGoalsOnPathLinks( table< int, array<PathGoal> > teamPathGoals, array<PathLink> pathLinks )
+{
+	table< int, array<PathGoal> > foundteamPathGoals
+	foreach ( team, pathGoalsArray in teamPathGoals )
+	{
+		foundteamPathGoals[ team ] <- GetPathGoalsOnPathLinks( pathGoalsArray, pathLinks )
+	}
+	return foundteamPathGoals
+}
+
+
+array<PathGoal> function GetPathGoalsOnPathLinks( array<PathGoal> pathGoals, array<PathLink> pathLinks )
+{
+	array<PathGoal> foundGoals
+
+	for ( int i = 0; i < pathGoals.len(); i++ )
+	{
+		PathGoal pathGoal = pathGoals[i]
+		PathProgress ornull pathProgress = GetPathProgressOnPathLinks( pathLinks, pathGoal.origin )
+		if ( pathProgress == null )
+			continue
+
+		expect PathProgress( pathProgress )
+		pathGoal.pathDist = pathProgress.pathDist
+		pathGoal.offset = pathProgress.offset
+		foundGoals.append( pathGoal )
+	}
+
+	foundGoals.sort( SortGoalArrayByPathDist )
+
+	return foundGoals
+}
+
+int function SortGoalArrayByPathDist( PathGoal a, PathGoal b )
+{
+	if ( a.pathDist < b.pathDist )
+		return -1
+	if ( a.pathDist > b.pathDist )
+		return 1
+	return 0
+}
+
+PathProgress ornull function GetPathProgressOnPathLinks( array<PathLink> pathLinks, vector origin )
+{
+	PathLink ornull bestPathLink
+	float lowestDistFromPathFound = MAX_PATH_DIST
+	float found_progressOnLine
+	float found_distFromLine
+	vector found_origin
+
+	bool pastLastPath
+
+	foreach ( pathLink in pathLinks )
+	{
+		float distanceAlongPath = DistanceAlongVector( origin, pathLink.start, pathLink.forward )
+
+		bool foundChoice = false
+
+		// on the line?
+		if ( distanceAlongPath < 0 )
+		{
+			bool oldPastLastPath = pastLastPath
+			pastLastPath = false
+			if ( oldPastLastPath )
+				foundChoice = true
+			else
+				continue
+		}
+		else if ( distanceAlongPath > pathLink.dist )
+		{
+			pastLastPath = true
+			continue
+		}
+
+		pastLastPath = false
+
+		vector posOnLine = pathLink.start + pathLink.forward * distanceAlongPath
+		float distFromPath = Distance2D( posOnLine, origin )
+
+		// too far from the line?
+		if ( distFromPath >= MAX_PATH_DIST )
+			continue
+
+		// not as close as to other path?
+		if ( distFromPath >= lowestDistFromPathFound )
+			continue
+
+		bestPathLink = pathLink
+		lowestDistFromPathFound = distFromPath
+		found_progressOnLine = distanceAlongPath
+		found_distFromLine = distFromPath
+		found_origin = posOnLine
+
+		// which side of the line?
+		float rightDot = DotProduct( pathLink.right, pathLink.start - origin )
+		if ( rightDot > 0 )
+			found_distFromLine *= -1
+		if ( foundChoice )
+			break
+	}
+
+	if ( bestPathLink == null )
+		return
+	expect PathLink( bestPathLink )
+	Assert ( lowestDistFromPathFound < MAX_PATH_DIST )
+
+	PathProgress pathProgress
+	pathProgress.pathDist = found_progressOnLine + bestPathLink.startDist
+	pathProgress.offset = found_distFromLine
+	pathProgress.origin = found_origin
+
+	return pathProgress
+}
+
+PathChain function GetPathChain( entity ent )
+{
+	Assert( ent in file.pathChains, ent + " is not a path start, needs path_start 1" )
+	return file.pathChains[ ent ]
+}
+
+array<PathGoal> function GetPathGoalsInRange( array<PathGoal> pathGoals, float min, float max )
+{
+	array<PathGoal> foundPathGoals
+
+	foreach ( pathGoal in pathGoals )
+	{
+		if ( min > pathGoal.pathDist )
+			continue
+
+		// sorted, so we can safely exit
+		if ( pathGoal.pathDist > max )
+			return foundPathGoals
+
+		foundPathGoals.append( pathGoal )
+	}
+
+	return foundPathGoals
+}
+
+PathGoal ornull function GetHighestPathGoal( array<PathGoal> pathGoals, float min, float max )
+{
+	PathGoal ornull foundPathGoal = null
+
+	foreach ( pathGoal in pathGoals )
+	{
+		if ( min > pathGoal.pathDist )
+			continue
+
+		if ( pathGoal.pathDist > max )
+			break
+
+		foundPathGoal = pathGoal
+	}
+
+	return foundPathGoal
+}
+
+vector function GetPointOnPath( PathChain pathChain, float pathDist )
+{
+	foreach ( index, pathLink in pathChain.pathLinks )
+	{
+		if ( pathDist > pathLink.endDist )
+			continue
+
+		pathDist -= pathLink.startDist
+		return pathLink.start + pathLink.forward * pathDist
+	}
+
+	Assert( 0, "Path dist " + pathDist + " exceeds length of pathChain" )
+	unreachable
+}

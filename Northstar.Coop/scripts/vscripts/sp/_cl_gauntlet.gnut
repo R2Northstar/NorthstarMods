@@ -1,0 +1,820 @@
+global function Gauntlet_ClientInit
+
+global function ScriptCallback_EnableGauntlet
+global function ScriptCallback_DisableGauntlet
+global function ScriptCallback_Gauntlet_StartRun
+global function ScriptCallback_Gauntlet_AbortRun
+global function ScriptCallback_Gauntlet_FinishRun
+global function ScriptCallback_Gauntlet_SetEnemyInfo
+global function ScriptCallback_Gauntlet_SetGhostDuration
+global function ScriptCallback_Gauntlet_SetActiveGhostID
+global function ScriptCallback_GauntletResultsDisplay_SetRandomTip
+global function ScriptCallback_HideLeaderboard
+global function ScriptCallback_ShowLeaderboard
+global function ScriptCallback_RefreshLeaderboard
+global function Gauntlet_SetLeaderboardEntry
+global function Gauntlet_UpdateActiveGhostForLeaderboard
+global function Gauntlet_SetResultsDisplayTip
+
+global function Gauntlet_StartSplash
+global function Gauntlet_FinishSplash
+
+struct
+{
+	var gauntletPlayerHUD = null
+
+	array<string> gauntletTips
+} file
+
+void function Gauntlet_ClientInit()
+{
+	AddCreateCallback( "player", Gauntlet_OnClientPlayerCreated )
+
+	file.gauntletTips.append( "#GAUNTLET_TIP_0" )
+	file.gauntletTips.append( "#GAUNTLET_TIP_1" )
+	file.gauntletTips.append( "#GAUNTLET_TIP_2" )
+	file.gauntletTips.append( "#GAUNTLET_TIP_3" )
+	file.gauntletTips.append( "#GAUNTLET_TIP_4" )
+	file.gauntletTips.append( "#GAUNTLET_TIP_5" )
+	file.gauntletTips.append( "#GAUNTLET_TIP_6" )
+	file.gauntletTips.append( "#GAUNTLET_TIP_7" )
+	file.gauntletTips.append( "#GAUNTLET_TIP_8" )
+	file.gauntletTips.append( "#GAUNTLET_TIP_9" )
+}
+
+
+void function Gauntlet_OnClientPlayerCreated( entity player )
+{
+	thread Gauntlet_OnClientPlayerCreated_Think( player )
+}
+
+void function Gauntlet_OnClientPlayerCreated_Think( entity player )
+{
+	player.EndSignal( "OnDestroy" )
+
+	FlagWait( "EntitiesDidLoad" )
+
+	// now that ents have loaded, set up the ents for all gauntlets and initialize displays
+	foreach ( gauntlet in GetGauntlets() )
+	{
+		InitGauntlet( gauntlet )
+
+		if ( gauntlet.startEnabled )
+			Client_EnableGauntlet( gauntlet )
+	}
+}
+
+void function ScriptCallback_EnableGauntlet( int gauntletID )
+{
+	GauntletInfo gauntlet = GetGauntletByID( gauntletID )
+	Client_EnableGauntlet( gauntlet )
+}
+
+void function ScriptCallback_DisableGauntlet( int gauntletID )
+{
+	GauntletInfo gauntlet = GetGauntletByID( gauntletID )
+	Client_DisableGauntlet( gauntlet )
+}
+
+void function Client_EnableGauntlet( GauntletInfo gauntlet )
+{
+	if ( gauntlet.isEnabled )
+		return
+
+	gauntlet.isEnabled = true
+
+	Gauntlet_CreateStartingLineDisplay( gauntlet )
+	Gauntlet_CreateResultsDisplays( gauntlet )
+
+	if ( gauntlet.showLeaderboard )
+		Gauntlet_CreateLeaderboards( gauntlet )
+}
+
+void function Client_DisableGauntlet( GauntletInfo gauntlet )
+{
+	if ( !gauntlet.isEnabled )
+		return
+
+	gauntlet.isEnabled = false
+
+	Gauntlet_DestroyStartingLineDisplay( gauntlet )
+	Gauntlet_DestroyFinishLineDisplay( gauntlet )
+	Gauntlet_DestroyResultsDisplays( gauntlet )
+	Gauntlet_DestroyLeaderboards( gauntlet )
+}
+
+
+void function ScriptCallback_HideLeaderboard( int gauntletID )
+{
+	GauntletInfo gauntlet = GetGauntletByID( gauntletID )
+
+	if ( !gauntlet.hasLeaderboard )
+		return
+
+	if ( !gauntlet.showLeaderboard )
+		return
+
+	gauntlet.showLeaderboard = false
+	Gauntlet_DestroyLeaderboards( gauntlet )
+}
+
+void function ScriptCallback_ShowLeaderboard( int gauntletID )
+{
+	GauntletInfo gauntlet = GetGauntletByID( gauntletID )
+
+	if ( !gauntlet.hasLeaderboard )
+		return
+
+	if ( gauntlet.showLeaderboard )
+		return
+
+	gauntlet.showLeaderboard = true
+	Gauntlet_CreateLeaderboards( gauntlet )
+}
+
+
+void function ScriptCallback_RefreshLeaderboard( int gauntletID )
+{
+	GauntletInfo gauntlet = GetGauntletByID( gauntletID )
+	Gauntlet_RefreshLeaderboard( gauntlet )
+}
+
+void function ScriptCallback_Gauntlet_SetEnemyInfo( int gauntletID, int numEnemies, int enemiesKilled )
+{
+	GauntletInfo gauntlet = GetGauntletByID( gauntletID )
+	gauntlet.enemiesKilled 	= enemiesKilled
+
+	// update gauntlet HUD
+	if ( file.gauntletPlayerHUD != null )
+	{
+		RuiSetInt( file.gauntletPlayerHUD, "numEnemies", numEnemies )
+		RuiSetInt( file.gauntletPlayerHUD, "enemiesKilled", enemiesKilled )
+	}
+
+	// update results display
+	if ( gauntlet.hasResultsDisplay )
+	{
+		Gauntlet_ResultsDisplay_UpdateNumEnemies( gauntlet, numEnemies )
+		Gauntlet_ResultsDisplay_UpdateEnemiesKilled( gauntlet, enemiesKilled)
+	}
+}
+
+void function ScriptCallback_Gauntlet_StartRun( int gauntletID )
+{
+	GauntletInfo gauntlet = GetGauntletByID( gauntletID )
+
+	entity player = GetLocalViewPlayer()
+	player.Signal( "Gauntlet_RunStarted" )
+
+	gauntlet.player = player
+	Gauntlet_SetRunFinished( gauntlet, false )
+
+	Gauntlet_StartSplash( gauntlet )
+
+	Gauntlet_DestroyStartingLineDisplay( gauntlet )
+	Gauntlet_CreateFinishLineDisplay( gauntlet )
+
+	CreateGauntletPlayerHUD( gauntlet )
+	thread GauntletPlayer_TrackSpeed( gauntlet )
+
+	// update results display
+	Gauntlet_ResultsDisplay_SetStartTime( gauntlet, Time() )
+}
+
+
+struct GauntletPlayerSpeedTracker
+{
+	float startTime 	= -1
+	float topSpeed 		= 0.0
+	float avgSpeed 		= 0.0
+	float highSpeedTime = 0.0
+	int highSpeedKills 	= 0
+	float totalHours 	= 0.0
+	float totalMiles 	= 0.0
+}
+
+const float MPH_TO_KPH_SCALAR = 1.60934
+const float HIGH_SPEED_THRESHOLD_KPH = 30.0
+const float HIGH_SPEED_THRESHOLD_MPH = HIGH_SPEED_THRESHOLD_KPH / MPH_TO_KPH_SCALAR
+const float SPEEDOMETER_PLAYERPOS_Z_SCALAR 	= 0.25  // how much of the Z axis position change to include in the MPH calculation
+const float SPEEDOMETER_ARC_MAX_SPEED_MPH 	= 27.5
+const float SPEEDOMETER_ARC_MAX_SPEED_KPH 	= SPEEDOMETER_ARC_MAX_SPEED_MPH * MPH_TO_KPH_SCALAR
+const float SPEEDOMETER_MAX_INCHES_PER_TICK = 128.0
+
+void function GauntletPlayer_TrackSpeed( GauntletInfo gauntlet )
+{
+	entity player = gauntlet.player
+	player.EndSignal( "OnDestroy" )
+	player.EndSignal( "Gauntlet_RunStopped" )
+
+	RuiTrackFloat3( file.gauntletPlayerHUD, "playerPos", player, RUI_TRACK_ABSORIGIN_FOLLOW )
+
+	const float inchesPerMile 	= 63360.0
+	const float secondsPerHour 	= 3600.0
+
+	const bool useMetric = true
+	RuiSetBool( file.gauntletPlayerHUD, "useMetric", useMetric )
+
+	GauntletPlayerSpeedTracker tracker
+	tracker.startTime = Time()
+
+	OnThreadEnd(
+	function() : ( player, gauntlet, tracker )
+		{
+			if ( !gauntlet.runFinished || tracker.totalHours <= 0 )  // if run was ultra short (canceled right after start), totalHours is zero
+				return
+
+			if ( IsValid( player ) && file.gauntletPlayerHUD != null )
+			{
+				float avgSpeed = tracker.totalMiles / tracker.totalHours
+
+				float avgSpeedKPH = avgSpeed * MPH_TO_KPH_SCALAR
+				float topSpeedKPH = tracker.topSpeed * MPH_TO_KPH_SCALAR
+				tracker.avgSpeed = avgSpeedKPH
+				tracker.topSpeed = topSpeedKPH
+
+				printt( "Run avgSpeed", tracker.avgSpeed, "kph" )
+				printt( "Run topSpeed", tracker.topSpeed, "kph" )
+				printt( "Run total time", Time() - tracker.startTime, "secs" )
+				printt( "Run highSpeedTime", tracker.highSpeedTime )
+				printt( "Run highSpeedKills", tracker.highSpeedKills )
+
+				float highSpeedPercent = (tracker.highSpeedTime / (Time() - tracker.startTime)) * 100
+				printt( "Run highSpeedPercent", highSpeedPercent )
+
+				if ( tracker.avgSpeed >= 0 )
+					Gauntlet_ResultsDisplay_SetAvgSpeed( gauntlet, tracker.avgSpeed )
+
+				if ( tracker.topSpeed >= 0 )
+					Gauntlet_ResultsDisplay_SetTopSpeed( gauntlet, tracker.topSpeed )
+
+				if ( highSpeedPercent >= 0 )
+					Gauntlet_ResultsDisplay_SetHighSpeedPercent( gauntlet, highSpeedPercent )
+
+				if ( tracker.highSpeedKills >= 0 )
+					Gauntlet_ResultsDisplay_SetHighSpeedKills( gauntlet, tracker.highSpeedKills)
+			}
+		}
+	)
+
+	//printt( "CLIENT SPEEDO STARTING:", Time() )
+
+	vector lastPos = player.GetOrigin()
+	float lastTime = Time()
+	int lastEnemiesKilled = 0
+
+	float tickWait = 0.1
+
+	int numTicks = 0
+
+	while ( 1 )
+	{
+		wait tickWait
+		numTicks++
+
+		float lastTickDuration = 0
+		if ( lastTime > 0 )
+			lastTickDuration = Time() - lastTime
+
+		//printt( "last tick duration:", lastTickDuration )
+
+		vector currPos = player.GetOrigin()
+
+		vector playerPos_adjusted 		= <currPos.x, currPos.y, currPos.z * SPEEDOMETER_PLAYERPOS_Z_SCALAR>
+		vector lastPlayerPos_adjusted 	= <lastPos.x, lastPos.y, lastPos.z * SPEEDOMETER_PLAYERPOS_Z_SCALAR>
+		float inchesSinceLastTick = Distance( playerPos_adjusted, lastPlayerPos_adjusted )
+
+		// if player gets teleported or we just started, don't count it
+		// - HACK re numTicks- first tick always seems to calculate an artificially high distance traveled
+		if ( inchesSinceLastTick <= SPEEDOMETER_MAX_INCHES_PER_TICK && lastTickDuration > 0 && numTicks > 1 )
+		{
+			int enemiesKilledThisTick = 0
+			if ( lastEnemiesKilled < gauntlet.enemiesKilled )
+			{
+				enemiesKilledThisTick = gauntlet.enemiesKilled - lastEnemiesKilled
+				lastEnemiesKilled = gauntlet.enemiesKilled
+			}
+
+			float milesSinceLastTick = inchesSinceLastTick / inchesPerMile
+			float hoursSinceLastTick = lastTickDuration / secondsPerHour
+
+			tracker.totalHours += hoursSinceLastTick
+			tracker.totalMiles += milesSinceLastTick
+
+			float avgSpeedMPH_sinceLastTick = milesSinceLastTick / hoursSinceLastTick
+			//printt( "Tick", numTicks, "inchesSinceLastTick:", inchesSinceLastTick, "lastTickDuration:", lastTickDuration )
+			//printt( "avg speed:", avgSpeedMPH_sinceLastTick * MPH_TO_KPH_SCALAR, "kph, hoursSinceLastTick:", hoursSinceLastTick )
+
+			if ( avgSpeedMPH_sinceLastTick >= tracker.topSpeed )
+			{
+				tracker.topSpeed = avgSpeedMPH_sinceLastTick
+				//printt( "!!!!!!!! NEW TOP SPEED:", tracker.topSpeed * MPH_TO_KPH_SCALAR, "kph" )
+			}
+
+			if ( avgSpeedMPH_sinceLastTick > HIGH_SPEED_THRESHOLD_MPH )
+			{
+				tracker.highSpeedTime += lastTickDuration
+				tracker.highSpeedKills += enemiesKilledThisTick
+			}
+		}
+		else
+		{
+			#if DEV
+			if ( inchesSinceLastTick > SPEEDOMETER_MAX_INCHES_PER_TICK )
+				printt( "CLIENT SPEEDO couldn't track player because inchesSinceLastTick was too high:", inchesSinceLastTick )
+
+			if ( lastTickDuration <= 0 )
+				printt( "CLIENT SPEEDO couldn't track player because lastTickDuration was 0 or less" )
+			#endif
+		}
+
+		lastPos = currPos
+		lastTime = Time()
+	}
+}
+
+void function ScriptCallback_Gauntlet_AbortRun( int gauntletID )
+{
+	GauntletInfo gauntlet = GetGauntletByID( gauntletID )
+
+	Gauntlet_RunFinished_Common( gauntlet )
+
+	if ( gauntlet.hasResultsDisplay )
+	{
+		Gauntlet_ResultsDisplay_SetStartTime( gauntlet, RUI_BADGAMETIME )
+	}
+
+	Gauntlet_DestroyPlayerHUD()
+}
+
+void function ScriptCallback_Gauntlet_FinishRun( int gauntletID, float elapsedTime, float bestTime, float enemiesMissedTimePenalty )
+{
+	GauntletInfo gauntlet = GetGauntletByID( gauntletID )
+
+	Gauntlet_FinishSplash( gauntlet )
+
+	Gauntlet_RunFinished_Common( gauntlet )
+
+	gauntlet.bestTime = bestTime
+
+	Gauntlet_SetRunFinished( gauntlet, true )
+
+	thread Gauntlet_FinishRun_PlayerHUD_Think( elapsedTime, bestTime, enemiesMissedTimePenalty )
+
+	Gauntlet_PostRun_ResultsDisplayUpdate( gauntlet, gauntlet.runFinished, elapsedTime, bestTime, enemiesMissedTimePenalty )
+}
+
+void function Gauntlet_RunFinished_Common( GauntletInfo gauntlet )
+{
+	if ( IsAlive( gauntlet.player ) )
+		gauntlet.player.Signal( "Gauntlet_RunStopped" )
+
+	Gauntlet_CreateStartingLineDisplay( gauntlet )
+	Gauntlet_DestroyFinishLineDisplay( gauntlet )
+	RemoveAllRagdolls()  // cleans up any downed enemies
+}
+
+void function Gauntlet_FinishRun_PlayerHUD_Think( float elapsedTime, float bestTime, float enemiesMissedTimePenalty )
+{
+	if ( file.gauntletPlayerHUD == null )
+		return
+
+	// update player HUD
+	RuiSetBool( file.gauntletPlayerHUD, "runFinished", true )
+	RuiSetFloat( file.gauntletPlayerHUD, "finalTime", elapsedTime )
+	RuiSetFloat( file.gauntletPlayerHUD, "bestTime", bestTime )
+	RuiSetFloat( file.gauntletPlayerHUD, "enemiesMissedTimePenalty", enemiesMissedTimePenalty )
+
+	bool isNewBestTime = (elapsedTime == bestTime)
+
+	float waitBeforeDestroy = 4.0
+
+	entity player = GetLocalViewPlayer()
+	player.EndSignal( "OnDeath" )
+	player.EndSignal( "Gauntlet_RunStarted" )
+
+	wait waitBeforeDestroy
+	Gauntlet_DestroyPlayerHUD()
+}
+
+void function CreateGauntletPlayerHUD( GauntletInfo gauntlet )
+{
+	Gauntlet_DestroyPlayerHUD()
+
+	file.gauntletPlayerHUD = RuiCreate( $"ui/gauntlet_hud.rpak", clGlobal.topoCockpitHud, RUI_DRAW_COCKPIT, 0 )
+	RuiSetGameTime( file.gauntletPlayerHUD, "startTime", Time() )
+
+	if ( gauntlet.bestTime > 0 )
+		RuiSetFloat( file.gauntletPlayerHUD, "bestTime", gauntlet.bestTime )
+}
+
+void function Gauntlet_DestroyPlayerHUD()
+{
+	if ( file.gauntletPlayerHUD != null )
+		RuiDestroyIfAlive( file.gauntletPlayerHUD )
+
+	file.gauntletPlayerHUD = null
+}
+
+void function Gauntlet_SetGenericTips( GauntletInfo gauntlet )
+{
+	Assert( IsClient() )
+
+	file.gauntletTips.randomize()
+	gauntlet.resultsDisplayTips = file.gauntletTips
+}
+
+void function Gauntlet_DestroySplashRUI( GauntletInfo gauntlet )
+{
+	if ( gauntlet.splashRUI != null )
+		RuiDestroyIfAlive( gauntlet.splashRUI )
+
+	gauntlet.splashRUI = null
+}
+
+void function Gauntlet_StartSplash( GauntletInfo gauntlet, float duration = 1.8 )
+{
+	Gauntlet_DestroySplashRUI( gauntlet )
+
+	var splashRUI = RuiCreate( $"ui/gauntlet_splash.rpak", clGlobal.topoCockpitHud, RUI_DRAW_COCKPIT, 0 )
+	RuiSetFloat( splashRUI, "duration", duration )
+	RuiSetString( splashRUI, "message", "#GAUNTLET_START_TEXT")
+
+	gauntlet.splashRUI = splashRUI
+}
+
+void function Gauntlet_FinishSplash( GauntletInfo gauntlet, float duration = 1.8 )
+{
+	Gauntlet_DestroySplashRUI( gauntlet )
+
+	var splashRUI = RuiCreate( $"ui/gauntlet_splash.rpak", clGlobal.topoCockpitHud, RUI_DRAW_COCKPIT, 0 )
+	RuiSetFloat( splashRUI, "duration", duration )
+	RuiSetString( splashRUI, "message", "#GAUNTLET_FINISH_TEXT")
+
+	gauntlet.splashRUI = splashRUI
+}
+
+void function Gauntlet_CreateStartingLineDisplay( GauntletInfo gauntlet )
+{
+	Gauntlet_DestroyStartingLineDisplay( gauntlet )
+
+	if ( gauntlet.startDisplayTopology == null )
+	{
+		float width 	= 60
+		float height 	= 30
+
+		if ( gauntlet.startDisplayScale != 1.0 )
+		{
+			width *= gauntlet.startDisplayScale
+			height *= gauntlet.startDisplayScale
+		}
+
+		entity ent = gauntlet.startDisplaySpot
+		vector org = ent.GetOrigin()
+		vector ang = ent.GetAngles()
+
+		gauntlet.startDisplayTopology = Gauntlet_CreateRUITopology( org, ang, width, height )
+	}
+
+	gauntlet.startDisplayRUI = RuiCreate( $"ui/gauntlet_starting_line.rpak", gauntlet.startDisplayTopology, RUI_DRAW_WORLD, 0 )
+	RuiSetString( gauntlet.startDisplayRUI, "displayText", "#GAUNTLET_START_TEXT" )
+}
+
+void function Gauntlet_DestroyStartingLineDisplay( GauntletInfo gauntlet )
+{
+	if ( gauntlet.startDisplayRUI != null )
+		RuiDestroyIfAlive( gauntlet.startDisplayRUI )
+
+	gauntlet.startDisplayRUI = null
+}
+
+void function Gauntlet_CreateFinishLineDisplay( GauntletInfo gauntlet )
+{
+	Gauntlet_DestroyFinishLineDisplay( gauntlet )
+
+	if ( gauntlet.finishDisplayTopology == null )
+	{
+		float width 	= 60
+		float height 	= 30
+
+		if ( gauntlet.finishDisplayScale != 1.0 )
+		{
+			width *= gauntlet.finishDisplayScale
+			height *= gauntlet.finishDisplayScale
+		}
+
+		entity ent = gauntlet.finishDisplaySpot
+		vector org = ent.GetOrigin()
+		vector ang = ent.GetAngles()
+
+		gauntlet.finishDisplayTopology = Gauntlet_CreateRUITopology( org, ang, width, height )
+	}
+
+	gauntlet.finishDisplayRUI = RuiCreate( $"ui/gauntlet_starting_line.rpak", gauntlet.finishDisplayTopology, RUI_DRAW_WORLD, 0 )
+	RuiSetString( gauntlet.finishDisplayRUI, "displayText", "#GAUNTLET_FINISH_TEXT" )
+}
+
+void function Gauntlet_DestroyFinishLineDisplay( GauntletInfo gauntlet )
+{
+	if ( gauntlet.finishDisplayRUI != null )
+		RuiDestroyIfAlive( gauntlet.finishDisplayRUI )
+
+	gauntlet.finishDisplayRUI = null
+}
+
+var function Gauntlet_CreateRUITopology( vector org, vector ang, float width, float height )
+{
+	// adjust so the RUI is drawn with the org as its center point
+	org += ( (AnglesToRight( ang )*-1) * (width*0.5) )
+	org += ( AnglesToUp( ang ) * (height*0.5) )
+
+	// right and down vectors that get added to base org to create the display size
+	vector right = ( AnglesToRight( ang ) * width )
+	vector down = ( (AnglesToUp( ang )*-1) * height )
+
+	//DebugDrawAngles( org, ang, 10000 )
+	//DebugDrawAngles( org + right, ang, 10000 )
+	//DebugDrawAngles( org + down, ang, 10000 )
+
+	var topo = RuiTopology_CreatePlane( org, right, down, true )
+	return topo
+}
+
+
+// ======================================
+// ============ LEADERBOARDS ============
+// ======================================
+void function Gauntlet_CreateLeaderboards( GauntletInfo gauntlet )
+{
+	if ( !gauntlet.hasLeaderboard )
+		return
+
+	Gauntlet_DestroyLeaderboards( gauntlet )
+
+	foreach ( GauntletWorldspaceDisplay displayInfo in gauntlet.leaderboardDisplays )
+	{
+		if ( displayInfo.topology == null )
+		{
+			entity topleft = displayInfo.cornerEnt_topLeft
+			entity bottomright = displayInfo.cornerEnt_bottomRight
+
+			Assert( topleft.GetOrigin().z > bottomright.GetOrigin().z, "topleft leaderboard ent at " + topleft.GetOrigin() + " needs to be higher than bottomright" )
+
+			// a = height, b = width, c = hypotenuse
+			// b = squareroot(cSquared-aSquared)
+			float height = fabs( topleft.GetOrigin().z - bottomright.GetOrigin().z )
+			float c = Distance( topleft.GetOrigin(), bottomright.GetOrigin() )
+			float width = sqrt( (c*c) - (height*height) )
+
+			vector org = topleft.GetOrigin()
+			vector ang = topleft.GetAngles()
+			// right and down vectors that get added to base org to create the display size
+			vector right = ( (AnglesToRight( ang )) * width )
+			vector down = ( (AnglesToUp( ang )*-1) * height )
+
+			displayInfo.topology = RuiTopology_CreatePlane( org, right, down, true )
+		}
+
+		displayInfo.rui = RuiCreate( $"ui/gauntlet_leaderboard.rpak", displayInfo.topology, RUI_DRAW_WORLD, 0 )
+	}
+
+	Gauntlet_RefreshLeaderboard( gauntlet )
+}
+
+void function Gauntlet_DestroyLeaderboards( GauntletInfo gauntlet )
+{
+	foreach ( displayInfo in gauntlet.leaderboardDisplays )
+	{
+		if ( displayInfo.rui != null )
+			RuiDestroyIfAlive( displayInfo.rui )
+
+		displayInfo.rui = null
+	}
+}
+
+void function ScriptCallback_Gauntlet_SetGhostDuration( int gauntletID, int ghostID, float duration )
+{
+	GauntletInfo gauntlet = GetGauntletByID( gauntletID )
+	GauntletGhost ghost = Gauntlet_GetGhostByID( gauntlet, ghostID )
+
+	Gauntlet_SetGhostDuration( gauntlet, ghost, duration )
+}
+
+void function ScriptCallback_Gauntlet_SetActiveGhostID( int gauntletID, int ghostID )
+{
+	GauntletInfo gauntlet = GetGauntletByID( gauntletID )
+	Gauntlet_SetActiveGhostID( gauntlet, ghostID )
+}
+
+void function Gauntlet_SetLeaderboardEntry( GauntletInfo gauntlet, int leaderboardIdx, GauntletGhost ghost )
+{
+	bool highlightName = false
+	if ( GauntletGhost_IsPlayerGhost( ghost ) )
+		highlightName = true
+
+	foreach ( displayInfo in gauntlet.leaderboardDisplays )
+	{
+		string nameArg = "entry" + leaderboardIdx + "Name"
+		string timeArg = "entry" + leaderboardIdx + "Time"
+
+		RuiSetString( displayInfo.rui, nameArg, ghost.displayName )
+		RuiSetFloat( displayInfo.rui, timeArg, ghost.duration )
+
+		if ( highlightName )
+			RuiSetInt( displayInfo.rui, "highlightNameIdx", leaderboardIdx )
+	}
+}
+
+void function Gauntlet_UpdateActiveGhostForLeaderboard( GauntletInfo gauntlet, int ghostID )
+{
+	if ( !gauntlet.hasLeaderboard )
+		return
+
+	if ( !gauntlet.showLeaderboard )
+		return
+
+	int leaderboardIdx = -1
+	if ( ghostID != -1 )
+		leaderboardIdx = Gauntlet_GetLeaderboardPosition_ForGhostID( gauntlet, ghostID )
+
+	foreach ( displayInfo in gauntlet.leaderboardDisplays )
+	{
+		RuiSetInt( displayInfo.rui, "activeEntryIdx", leaderboardIdx )
+	}
+}
+
+
+// ==========================================
+// ============ RESULTS DISPLAYS ============
+// ==========================================
+void function Gauntlet_CreateResultsDisplays( GauntletInfo gauntlet )
+{
+	if ( !gauntlet.hasResultsDisplay )
+		return
+
+	Gauntlet_DestroyResultsDisplays( gauntlet )
+
+	foreach ( GauntletWorldspaceDisplay displayInfo in gauntlet.resultsDisplays )
+	{
+		if ( displayInfo.topology == null )
+		{
+			entity topleft = displayInfo.cornerEnt_topLeft
+			entity bottomright = displayInfo.cornerEnt_bottomRight
+
+			Assert( topleft.GetOrigin().z > bottomright.GetOrigin().z, "topleft results display ent at " + topleft.GetOrigin() + " needs to be higher than bottomright" )
+
+			// a = height, b = width, c = hypotenuse
+			// b = squareroot(cSquared-aSquared)
+			float height = fabs( topleft.GetOrigin().z - bottomright.GetOrigin().z )
+			float c = Distance( topleft.GetOrigin(), bottomright.GetOrigin() )
+			float width = sqrt( (c*c) - (height*height) )
+
+			vector org = topleft.GetOrigin()
+			vector ang = topleft.GetAngles()
+			// right and down vectors that get added to base org to create the display size
+			vector right = ( (AnglesToRight( ang )) * width )
+			vector down = ( (AnglesToUp( ang )*-1) * height )
+
+			displayInfo.topology = RuiTopology_CreatePlane( org, right, down, true )
+		}
+
+		displayInfo.rui = RuiCreate( $"ui/gauntlet_results_display.rpak", displayInfo.topology, RUI_DRAW_WORLD, 0 )
+	}
+
+	Gauntlet_ResultsDisplay_SetRandomTip( gauntlet )
+}
+
+void function Gauntlet_DestroyResultsDisplays( GauntletInfo gauntlet )
+{
+	foreach ( displayInfo in gauntlet.resultsDisplays )
+	{
+		if ( displayInfo.rui != null )
+			RuiDestroyIfAlive( displayInfo.rui )
+
+		displayInfo.rui = null
+	}
+}
+
+void function Gauntlet_SetResultsDisplayTip( GauntletInfo gauntlet, string tip )
+{
+	if ( !gauntlet.hasResultsDisplay )
+		return
+
+	Gauntlet_ResultsDisplay_SetTip( gauntlet, tip )
+}
+
+void function ScriptCallback_GauntletResultsDisplay_SetRandomTip( int gauntletID )
+{
+	GauntletInfo gauntlet = GetGauntletByID( gauntletID )
+	Gauntlet_ResultsDisplay_SetRandomTip( gauntlet )
+}
+
+void function Gauntlet_ResultsDisplay_SetRandomTip( GauntletInfo gauntlet )
+{
+	if ( !gauntlet.hasResultsDisplay )
+		return
+
+	if ( !gauntlet.resultsDisplayTips.len() )
+		Gauntlet_SetGenericTips( gauntlet )
+
+	gauntlet.resultsDisplayTipsIdx++
+	if ( gauntlet.resultsDisplayTipsIdx >= gauntlet.resultsDisplayTips.len() )
+		gauntlet.resultsDisplayTipsIdx = 0
+
+	string tip = gauntlet.resultsDisplayTips[gauntlet.resultsDisplayTipsIdx]
+
+	Gauntlet_ResultsDisplay_SetTip( gauntlet, tip )
+}
+
+void function Gauntlet_PostRun_ResultsDisplayUpdate( GauntletInfo gauntlet, bool runFinished, float elapsedTime, float bestTime, float enemiesMissedTimePenalty )
+{
+	Gauntlet_SetRunFinished( gauntlet, true )
+
+	Gauntlet_ResultsDisplay_SetFinalTime( gauntlet, elapsedTime )
+	Gauntlet_ResultsDisplay_SetBestTime( gauntlet, bestTime )
+	Gauntlet_ResultsDisplay_SetEnemiesMissedTimePenalty( gauntlet, enemiesMissedTimePenalty )
+
+	Gauntlet_ResultsDisplay_SetRandomTip( gauntlet )
+}
+
+void function Gauntlet_SetRunFinished( GauntletInfo gauntlet, bool isFinished )
+{
+	gauntlet.runFinished = true
+
+	Gauntlet_ResultsDisplay_SetRunFinished( gauntlet, isFinished )
+}
+
+void function Gauntlet_ResultsDisplay_SetRunFinished( GauntletInfo gauntlet, bool isFinished )
+{
+	foreach ( displayInfo in gauntlet.resultsDisplays )
+		RuiSetBool( displayInfo.rui, "runFinished", isFinished )
+}
+
+void function Gauntlet_ResultsDisplay_SetStartTime( GauntletInfo gauntlet, float startTime )
+{
+	foreach ( displayInfo in gauntlet.resultsDisplays )
+		RuiSetGameTime( displayInfo.rui, "startTime", startTime )
+}
+
+void function Gauntlet_ResultsDisplay_SetFinalTime( GauntletInfo gauntlet, float elapsedTime )
+{
+	foreach ( displayInfo in gauntlet.resultsDisplays )
+		RuiSetFloat( displayInfo.rui, "finalTime", elapsedTime )
+}
+
+void function Gauntlet_ResultsDisplay_SetBestTime( GauntletInfo gauntlet, float bestTime )
+{
+	foreach ( displayInfo in gauntlet.resultsDisplays )
+		RuiSetFloat( displayInfo.rui, "bestTime", bestTime )
+}
+
+void function Gauntlet_ResultsDisplay_SetEnemiesMissedTimePenalty( GauntletInfo gauntlet, float enemiesMissedTimePenalty )
+{
+	foreach ( displayInfo in gauntlet.resultsDisplays )
+		RuiSetFloat( displayInfo.rui, "enemiesMissedTimePenalty", enemiesMissedTimePenalty )
+}
+
+void function Gauntlet_ResultsDisplay_SetTip( GauntletInfo gauntlet, string tipString )
+{
+	foreach ( displayInfo in gauntlet.resultsDisplays )
+	{
+		RuiSetString( displayInfo.rui, "tipString", tipString )
+		RuiSetGameTime( displayInfo.rui, "tipResetTime", Time() )
+	}
+}
+
+void function Gauntlet_ResultsDisplay_UpdateNumEnemies( GauntletInfo gauntlet, int numEnemies )
+{
+	foreach ( displayInfo in gauntlet.resultsDisplays )
+		RuiSetInt( displayInfo.rui, "numEnemies", numEnemies )
+}
+
+void function Gauntlet_ResultsDisplay_UpdateEnemiesKilled( GauntletInfo gauntlet, int enemiesKilled )
+{
+	foreach ( displayInfo in gauntlet.resultsDisplays )
+		RuiSetInt( displayInfo.rui, "enemiesKilled", enemiesKilled )
+}
+
+void function Gauntlet_ResultsDisplay_SetAvgSpeed( GauntletInfo gauntlet, float avgSpeed )
+{
+	foreach ( displayInfo in gauntlet.resultsDisplays )
+		RuiSetFloat( displayInfo.rui, "avgSpeed", avgSpeed )
+}
+
+void function Gauntlet_ResultsDisplay_SetTopSpeed( GauntletInfo gauntlet, float topSpeed )
+{
+	foreach ( displayInfo in gauntlet.resultsDisplays )
+		RuiSetFloat( displayInfo.rui, "topSpeed", topSpeed )
+}
+
+void function Gauntlet_ResultsDisplay_SetHighSpeedPercent( GauntletInfo gauntlet, float highSpeedPercent )
+{
+	foreach ( displayInfo in gauntlet.resultsDisplays )
+		RuiSetFloat( displayInfo.rui, "highSpeedPercent", highSpeedPercent )
+}
+
+void function Gauntlet_ResultsDisplay_SetHighSpeedKills( GauntletInfo gauntlet, int highSpeedKills )
+{
+	foreach ( displayInfo in gauntlet.resultsDisplays )
+		RuiSetInt( displayInfo.rui, "highSpeedKills", highSpeedKills )
+}

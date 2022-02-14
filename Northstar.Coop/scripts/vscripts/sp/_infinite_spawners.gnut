@@ -1,0 +1,237 @@
+untyped
+
+global function InfiniteSpawners_Init
+
+global function StartInfiniteSpawner  // continuously spawn with debounce
+global function StartInfiniteSpawner_RespawnOnDeath // guy respawns after he dies
+global function StartInfiniteSpawner_OnArray_RespawnOnDeath  // already have the array
+global function StartInfiniteSpawner_SpawnInOrderThenRandomWithDebounce // spawn in the order of the array, then randomly with debounce
+global function StartInfiniteDropshipSpawner_SpawnAndRefillWhenTeamNotNear // spawn more guys from dropship
+global function StopInfiniteSpawner // stop the infinite spawner
+
+global struct InfiniteSpawner
+{
+	int totalSpawned
+	array<entity> spawned
+}
+
+void function InfiniteSpawners_Init()
+{
+	RegisterSignal( "StopInfiniteSpawner" )
+	RegisterSignal( "InfiniteSpawnerGuyDied" )
+}
+
+void function GuyAlertsInfiniteSpawnerOnDeath( InfiniteSpawner infiniteSpawner, entity guy )
+{
+	Assert( IsAlive( guy ) )
+	guy.WaitSignal( "OnDeath" )
+	Signal( infiniteSpawner, "InfiniteSpawnerGuyDied" )
+}
+
+InfiniteSpawner function StartInfiniteSpawner_SpawnInOrderThenRandomWithDebounce( array<entity> spawners, float minDebounce, float maxDebounce )
+{
+	InfiniteSpawner infiniteSpawner
+	thread InfiniteSpawner_SpawnInOrderThenRandomWithDebounce( infiniteSpawner, spawners, minDebounce, maxDebounce )
+	return infiniteSpawner
+}
+
+entity function SpawnFromInfiniteSpawner( InfiniteSpawner infiniteSpawner, entity spawner )
+{
+	entity guy = spawner.SpawnEntity()
+	DispatchSpawn( guy )
+	infiniteSpawner.spawned.append( guy )
+	infiniteSpawner.totalSpawned++
+	return guy
+}
+
+function InfiniteSpawner_SpawnInOrderThenRandomWithDebounce( InfiniteSpawner infiniteSpawner, array<entity> spawners, float minDebounce, float maxDebounce )
+{
+	EndSignal( infiniteSpawner, "StopInfiniteSpawner" )
+
+	foreach ( spawner in spawners )
+	{
+		entity guy = SpawnFromInfiniteSpawner( infiniteSpawner, spawner )
+		WaitSignal( guy, "OnDeath", "OnDestroy", "OnLeeched" )
+		wait RandomFloatRange( minDebounce, maxDebounce )
+	}
+
+	for ( ;; )
+	{
+		entity spawner = spawners.getrandom()
+		entity guy = SpawnFromInfiniteSpawner( infiniteSpawner, spawner )
+		WaitSignal( guy, "OnDeath", "OnDestroy", "OnLeeched" )
+		wait RandomFloatRange( minDebounce, maxDebounce )
+	}
+}
+
+InfiniteSpawner function StartInfiniteSpawner_OnArray_RespawnOnDeath( array<entity> spawners )
+{
+	InfiniteSpawner infiniteSpawner
+
+	foreach ( spawner in spawners )
+		thread Spawn_RespawnOnDeath( infiniteSpawner, spawner )
+
+	return infiniteSpawner
+}
+
+InfiniteSpawner function StartInfiniteSpawner_RespawnOnDeath( string name )
+{
+	array< entity > spawners = GetSpawnerArrayByScriptName( name )
+
+	return StartInfiniteSpawner_OnArray_RespawnOnDeath( spawners )
+}
+
+void function Spawn_RespawnOnDeath( InfiniteSpawner infiniteSpawner, entity spawner )
+{
+	EndSignal( infiniteSpawner, "StopInfiniteSpawner" )
+
+	for ( ;; )
+	{
+		entity guy = SpawnFromInfiniteSpawner( infiniteSpawner, spawner )
+		if ( IsAlive( guy ) )
+			guy.WaitSignal( "OnDeath" )
+
+		wait 2
+	}
+}
+
+void function SpawnInfinitelyUntilStop( InfiniteSpawner infiniteSpawner, array<entity> spawners, float delay = 0, float rate = 2 )
+{
+	EndSignal( infiniteSpawner, "StopInfiniteSpawner" )
+	wait delay
+
+	for ( ;; )
+	{
+		foreach ( spawner in spawners )
+		{
+			SpawnFromInfiniteSpawner( infiniteSpawner, spawner )
+		}
+
+		wait rate
+	}
+}
+
+void function StopInfiniteSpawner( InfiniteSpawner infiniteSpawner )
+{
+	Signal( infiniteSpawner, "StopInfiniteSpawner" )
+}
+
+
+InfiniteSpawner function StartInfiniteSpawner( string name, float delay = 0, float rate = 2 )
+{
+	InfiniteSpawner infiniteSpawner
+	array<entity> spawners = GetSpawnerArrayByScriptName( name )
+	thread SpawnInfinitelyUntilStop( infiniteSpawner, spawners, delay, rate )
+	return infiniteSpawner
+}
+
+InfiniteSpawner function StartInfiniteDropshipSpawner_SpawnAndRefillWhenTeamNotNear( array<entity> spawners, int team, entity spawnEnt )
+{
+	InfiniteSpawner infiniteSpawner
+	thread InfiniteSpawner_SpawnAndReplaceWithSoldiersByDropship( infiniteSpawner, spawners, team, spawnEnt )
+	return infiniteSpawner
+}
+
+void function InfiniteSpawner_SpawnAndReplaceWithSoldiersByDropship( InfiniteSpawner infiniteSpawner, array<entity> spawners, int team, entity spawnEnt )
+{
+	EndSignal( infiniteSpawner, "StopInfiniteSpawner" )
+
+	vector spawnEntOrigin = spawnEnt.GetOrigin()
+
+	array<entity> guys
+	string squadName
+
+	foreach ( spawner in spawners )
+	{
+		entity guy = SpawnFromInfiniteSpawner( infiniteSpawner, spawner )
+		guys.append( guy )
+		thread GuyAlertsInfiniteSpawnerOnDeath( infiniteSpawner, guy )
+		Assert( squadName == "" || squadName == expect string( guy.kv.squadname ) )
+		squadName = expect string( guy.kv.squadname )
+	}
+
+	Assert( squadName != "" )
+
+	const dist = 1000.0
+
+	for ( ;; )
+	{
+		if ( guys.len() >= 4 )
+		{
+			WaitSignal( infiniteSpawner, "InfiniteSpawnerGuyDied" )
+			ArrayRemoveDead( guys )
+			continue
+		}
+
+		/*
+		wait 2
+
+		bool tooClose = false
+		array<entity> players = GetPlayerArrayOfTeam( team )
+		foreach ( player in players )
+		{
+			if ( Distance( player.GetOrigin(), spawnEntOrigin ) < dist )
+			{
+				tooClose = true
+				break
+			}
+		}
+
+		if ( tooClose )
+			continue
+
+		array<entity> titans = GetAllLivingTitans( team )
+		foreach ( titan in titans )
+		{
+			if ( Distance( titan.GetOrigin(), spawnEntOrigin ) < dist )
+			{
+				tooClose = true
+				break
+			}
+		}
+
+		if ( tooClose )
+			continue
+		*/
+
+		// bring more guys in by dropship
+		array<entity> moreGuys = DropshipSoldersWithSquadname( spawnEnt.GetOrigin(), 0, squadName )
+		foreach ( guy in moreGuys )
+		{
+			thread GuyAlertsInfiniteSpawnerOnDeath( infiniteSpawner, guy )
+			guys.append( guy )
+		}
+	}
+}
+
+array<entity> function DropshipSoldersWithSquadname( vector origin, float yaw, string squadName )
+{
+	CallinData drop
+	InitCallinData( drop )
+	drop.origin 		= origin
+	drop.yaw 			= yaw
+	drop.dist 			= 768
+	drop.team 			= TEAM_IMC
+	drop.squadname 		= squadName
+	SetCallinStyle( drop, eDropStyle.ZIPLINE_NPC )
+	thread RunDropshipDropoff( drop )
+
+	array<entity> soldierEntities = []
+	if ( drop.success )
+	{
+		// get the guys that spawned
+		local results = WaitSignal( drop, "OnDropoff" )
+		Assert( "guys" in results )
+
+		if ( results.guys )
+		{
+			foreach ( guy in results.guys )
+			{
+				soldierEntities.append( expect entity( guy ) )
+			}
+		}
+	}
+
+	return soldierEntities
+}
+

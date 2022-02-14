@@ -1,0 +1,21 @@
+
+IsTestMap: false
+
+When: "SERVER"
+Scripts:
+[
+	sp/sp_training.nut
+]
+
+When: "CLIENT"
+Scripts:
+[
+	sp/cl_sp_training.nut
+]
+
+When: "SERVER || CLIENT"
+Scripts:
+[
+	sp/sh_sp_training.gnut
+	sp/autoprecache/SP_TRAINING_AutoPrecache.nut
+]

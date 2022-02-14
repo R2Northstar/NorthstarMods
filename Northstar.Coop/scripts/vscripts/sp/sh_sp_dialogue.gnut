@@ -1,0 +1,1317 @@
+#if CLIENT
+	untyped
+	const CONVERSATION_TIMEOUT	 					= 7.0
+	const CONVERSATION_INTRO_DURATION 				= 1.0
+	const CONVERSATION_TEXT_REMOVE_DURATION 		= 0.75
+	const CONVERSATION_TEXT_REMOVE_DURATION_TIMEOUT = 1.0
+
+	const DEBUG_QUEUE_PRINTS = false
+
+	const BT_EYE_GLOW = $"P_BT_eye_SM"
+#endif
+
+global function RegisterDialogue
+global function RegisterRadioDialogue
+global function SPDialogueInit
+global function GetBuddyTitanDialogueEnt
+
+#if SERVER
+	global function PlayDialogue
+	global function PlayBTDialogue
+	global function PlayGabbyDialogue
+	global function StopDialogue
+	global function PlayDialogueForPlayer
+	global function IsDialoguePlaying
+	global function PlayerConversation
+	global function StopConversation
+	global function StopConversationNow
+	global function AddConversationCallback
+
+	global function CodeCallback_OnServerAnimEvent
+
+	global function Dev_TestAllConversations
+#endif //SERVER
+
+global function IsConversationPlaying
+
+#if CLIENT
+	global function ServerCallback_PlayDialogueOnEntity
+	global function ServerCallback_PlayDialogueAtPosition
+	global function ServerCallback_AbortCurrentDialogue
+	global function ServerCallback_PlayerConversation
+	global function ServerCallback_StopConversation
+
+	global function QueueAndWait
+	global function RemoveFromQueue
+#endif //CLIENT
+
+struct DialogueData
+{
+	string name
+	string alias
+	int priority
+	int cutoffRule 	// not used yet
+	string radioDisplayName
+	int team
+	bool radioIntercept
+}
+
+struct BTConversation
+{
+	string name
+	string btStartAlias
+	string response_A_player_text
+	string response_A_player_alias
+	string response_A_bt_respond_alias
+	string response_B_player_text
+	string response_B_player_alias
+	string response_B_bt_respond_alias
+	string player_closing_alias_A
+	string player_closing_alias_B
+	bool player_closer_played = false
+	bool response_A_ends_conversation = false
+	bool response_B_ends_conversation = false
+	bool allowReplay = false
+	string waveformName
+	int waveformTeam
+	string nextConversationA
+	string nextConversationB
+	bool response_A_available = true
+	bool response_B_available = true
+	bool response_A_wasSelected = false
+	bool response_B_wasSelected = false
+	array<void functionref( int )> callbackFuncs
+}
+
+global struct QueueItem
+{
+	int priority
+	int cutoffRule
+	float timeAdded = -1
+	bool active = false
+	string debugRef = ""
+	bool success = true
+}
+
+struct
+{
+	array<DialogueData> registeredDialog
+	array<string> registeredDialogIDs
+	bool dialoguePlaying
+	array<BTConversation> registeredConversations
+	array<string> registeredConversationIDs
+	int conversationsPlaying
+	int abortConversation
+	array<QueueItem> queue
+	var currentDialoguePlayingHandle
+	table<string,asset> callerIDs
+	table<int,bool> waitingOnDialogue
+} file
+
+// Play priorities
+global const PRIORITY_NO_QUEUE 	= 0		// Plays the dialogue right away, avoiding the queue.
+global const PRIORITY_HIGH 		= 20			// Enters the queue with the highest of priorities, only other items in queue of same priority will play first
+global const PRIORITY_NORMAL 	= 10
+global const PRIORITY_LOW 		= 5
+global const PRIORITY_LOWEST 	= 1
+
+// Cutoff rules
+global const CUTOFF_NEVER = 0			// This dialogue will always finish, it cannot be cutoff when something with higher priority plays over it.
+//global const CUTOFF_ALLOWED = 0			// This dialogue will always finish, it cannot be cutoff when something with higher priority plays over it.
+
+const CONVERSATION_STOP_GRACEFUL = 0
+const CONVERSATION_STOP_IMMEDIATE = 1
+
+void function RegisterDialogue( string name, string alias, int priority )
+{
+	RegisterDialogueLine( name, alias, priority, "", 0, false )
+}
+
+void function RegisterRadioDialogue( string name, string alias, int priority, string radioDisplayName, int team, bool radioIntercept = false )
+{
+	RegisterDialogueLine( name, alias, priority, radioDisplayName, team, radioIntercept )
+}
+
+void function RegisterDialogueLine( string name, string alias, int priority, string radioDisplayName, int team, bool radioIntercept )
+{
+	if ( !DoesAliasExist( alias ) )
+		CodeWarning( "Dialogue " + alias + " can't be registered because the alias does not exist" )
+
+	DialogueData data
+	data.name = name
+	data.alias = alias
+	data.priority = priority
+	data.cutoffRule = CUTOFF_NEVER
+	data.radioDisplayName = radioDisplayName
+	data.team = team
+	data.radioIntercept = radioIntercept
+
+	file.registeredDialog.append( data )
+
+	Assert( file.registeredDialogIDs.find( name ) == -1, "Tried to register dialogue name twice: " + name )
+	file.registeredDialogIDs.append( name )
+
+	Assert( file.registeredDialog.len() == file.registeredDialogIDs.len() )
+}
+
+void function RegisterPlayerConversation( BTConversation conversation )
+{
+	Assert( conversation.name != "" )
+	Assert( conversation.response_A_player_text != "" )
+	Assert( conversation.response_A_player_alias != "" )
+
+	if ( conversation.waveformName != "" )
+		Assert( conversation.waveformTeam >= 0 && conversation.waveformTeam <= 3 )
+
+	file.registeredConversations.append( conversation )
+
+	Assert( file.registeredConversationIDs.find( conversation.name ) == -1 )
+	file.registeredConversationIDs.append( conversation.name )
+
+	Assert( file.registeredConversations.len() == file.registeredConversationIDs.len() )
+}
+
+#if SERVER
+void function Dev_TestAllConversations()
+{
+	Assert( GetBugReproNum() == 1010 )
+	Assert( GetPlayerArray().len() > 0 )
+	entity player = GetPlayerArray()[0]
+	Assert( IsAlive( player ) )
+	EndSignal( player, "OnDeath" )
+
+	foreach( BTConversation conversation in file.registeredConversations )
+	{
+		thread PlayerConversation( conversation.name, player )
+		wait 3.0
+		StopConversationNow( player )
+	}
+}
+#endif //SERVER
+
+void function SPDialogueInit()
+{
+	#if SERVER
+		RegisterSignal( "DialogueFinishedForID" )
+		RegisterSignal( "ConversationFinishedForID" )
+		RegisterSignal( "ConversationChoiceForID" )
+		RegisterSignal( "AllDialogueFinished" )
+		RegisterSignal( "ConversationEnded" )
+		RegisterSignal( "fireSalvo" )
+		AddClientCommandCallback( "DialogueFinishedForID", ClientCommand_DialogueFinishedForID )
+		AddClientCommandCallback( "ConversationFinishedForID", ClientCommand_ConversationFinishedForID )
+		AddClientCommandCallback( "ConversationChoiceForID", ClientCommand_ConversationChoiceForID )
+		AddClientCommandCallback( "AllDialogueFinished", ClientCommand_AllDialogueFinished )
+	#endif // SERVER
+
+	#if CLIENT
+		RegisterSignal( "QueueUpdated" )
+		RegisterSignal( "NextInQueue" )
+		RegisterSignal( "RemovedFromQueue" )
+		RegisterSignal( "DialogueChoice1" )
+		RegisterSignal( "DialogueChoice2" )
+		RegisterSignal( "DialogueChoiceTimeout" )
+		RegisterSignal( "AbortConversationImmediately" )
+		RegisterSignal( "AbortCurrentDialogue" )
+		RegisterConCommandTriggeredCallback( "+scriptCommand1", Pressed_Choice1 )
+		RegisterConCommandTriggeredCallback( "+scriptCommand2", Pressed_Choice2 )
+		PrecacheParticleSystem( BT_EYE_GLOW )
+
+		thread QueueThink()
+	#endif
+
+	var dataTable = GetDataTable( $"datatable/bt_player_conversations.rpak" )
+	int rows = GetDatatableRowCount( dataTable )
+	for ( int i = 0 ; i < rows ; i++ )
+	{
+		string mapName = GetDataTableString( dataTable, i, 0 )
+
+		if ( mapName != GetMapName() && GetBugReproNum() != 1010 )
+			continue
+
+		BTConversation conversation
+		conversation.name 							= GetDataTableString( dataTable, i, 1 )
+		conversation.btStartAlias 					= GetDataTableString( dataTable, i, 2 )
+		conversation.response_A_player_text 		= GetDataTableString( dataTable, i, 3 )
+		conversation.response_A_player_alias 		= GetDataTableString( dataTable, i, 4 )
+		conversation.response_A_bt_respond_alias 	= GetDataTableString( dataTable, i, 5 )
+		conversation.response_B_player_text 		= GetDataTableString( dataTable, i, 6 )
+		conversation.response_B_player_alias 		= GetDataTableString( dataTable, i, 7 )
+		conversation.response_B_bt_respond_alias 	= GetDataTableString( dataTable, i, 8 )
+		conversation.player_closing_alias_A			= GetDataTableString( dataTable, i, 9 )
+		conversation.player_closing_alias_B			= GetDataTableString( dataTable, i, 10 )
+		conversation.response_A_ends_conversation 	= GetDataTableBool( dataTable, i, 11 )
+		conversation.response_B_ends_conversation 	= GetDataTableBool( dataTable, i, 12 )
+		conversation.allowReplay 					= GetDataTableBool( dataTable, i, 13 )
+		conversation.waveformName 					= GetDataTableString( dataTable, i, 14 )
+		conversation.waveformTeam 					= GetDataTableInt( dataTable, i, 15 )
+		conversation.nextConversationA 				= GetDataTableString( dataTable, i, 16 )
+		conversation.nextConversationB 				= GetDataTableString( dataTable, i, 17 )
+		conversation.response_A_available = conversation.response_A_player_text != ""
+		conversation.response_B_available = conversation.response_B_player_text != ""
+
+		if ( GetBugReproNum() == 1010 )
+			conversation.btStartAlias = ""
+
+		RegisterPlayerConversation( conversation )
+	}
+}
+
+BTConversation function GetPlayerConversationByName( string name )
+{
+	int convID = GetPlayerConversationID_ByName( name )
+	return file.registeredConversations[convID]
+}
+
+int function GetPlayerConversationID_ByName( string name )
+{
+	Assert( file.registeredConversationIDs.find( name ) >= 0, "Conversation " + name + " is not registered" )
+	return file.registeredConversationIDs.find( name )
+}
+
+entity function GetBuddyTitanDialogueEnt( entity buddyTitan )
+{
+	entity dialogueEnt
+	entity titanSoul = buddyTitan.GetTitanSoul()
+	if ( titanSoul )
+		dialogueEnt = titanSoul.GetTitanSoulNetEnt( "dialogueEnt" )
+	return dialogueEnt
+}
+
+#if SERVER
+
+	// called by code when an animation does { event AE_SV_VSCRIPT_CALLBACK FrameNumber "some string" }
+	// and by a script function OnFootstep, apparently.
+	void function CodeCallback_OnServerAnimEvent( entity ent, string eventName )
+	{
+		PerfStart( PerfIndexServer.CB_OnServerAnimEvent )
+		if ( HasAnimEvent( ent, eventName ) )
+			thread RunAnimEventCallbacks( ent, eventName )
+
+		if ( eventName in svGlobal.globalAnimEventCallbacks )
+		{
+			thread svGlobal.globalAnimEventCallbacks[ eventName ]( ent )
+			PerfEnd( PerfIndexServer.CB_OnServerAnimEvent )
+			return
+		}
+
+
+		// couldn't find this eventName on the ent or the global anim events,
+		// so try breaking it down. If we didn't find it, it means
+		// script needs to handle the event, even if it is just to
+		// do nothing with it
+
+		array<string> tokens = split( eventName, ":" )
+		string tokenName = tokens[0]
+
+		switch ( tokenName )
+		{
+			case "worldsound":
+				GlobalAnimEventWithStringParameter_WorldSound( ent, tokens[1] )
+				break
+
+			case "signal":
+				SendSignalFromTokens( ent, tokens )
+				break
+
+			case "flagset":
+				GlobalAnimEventWithStringParameter_FlagSet( ent, tokens[1] )
+				break
+
+			case "dialogue":
+				// Make sure that animation triggered dialogue uses the correct priority and skips the queue
+				string name = tokens[1]
+				Assert( file.registeredDialogIDs.find( name ) >= 0, "Dialogue line " + name + " is not registered" )
+				int aliasID = file.registeredDialogIDs.find( name )
+				DialogueData data = file.registeredDialog[ aliasID ]
+				Assert( data.priority == PRIORITY_NO_QUEUE, "Dialogue " + name + " triggered via qc must use PRIORITY_NO_QUEUE" )
+				thread PlayDialogue( name, ent )
+				break
+
+			case "fireViperSalvo":
+				int value = tokens[1].tointeger()
+				ent.Signal( "fireSalvo", { num = value } )
+				break
+
+			case "conversation":
+				thread PlayerConversation( tokens[1], GetPlayerArray()[0], ent )
+				break
+		}
+
+		PerfEnd( PerfIndexServer.CB_OnServerAnimEvent )
+	}
+
+	void function PlayDialogue( string name, entity speaker, float delay = 0 )
+	{
+		array<entity> players = GetPlayerArray_Alive()
+		for ( int i = players.len() - 1 ; i >= 0 ; i-- )
+		{
+			if ( i > 0 )
+				thread PlayDialogueForPlayer( name, players[i], speaker, delay )
+			else
+				waitthread PlayDialogueForPlayer( name, players[i], speaker, delay )
+		}
+	}
+
+	void function PlayBTDialogue( string name, float delay = 0 )
+	{
+		array<entity> players = GetPlayerArray_Alive()
+		for ( int i = players.len() - 1 ; i >= 0 ; i-- )
+		{
+			entity speaker
+			entity petTitan = players[i].GetPetTitan()
+			if ( IsValid( petTitan ) )
+				speaker = GetBuddyTitanDialogueEnt( petTitan )
+			else
+				speaker = GetBuddyTitanDialogueEnt( players[i] )
+
+			// Catch issues like BT is not created yet so the dialogue ent doesn't exist yet. In this case we just use the player for sound position, which gives us the same result anyhow.
+			if ( !IsValid( speaker ) )
+				speaker = players[i]
+
+			if ( i > 0 )
+				thread PlayDialogueForPlayer( name, players[i], speaker, delay )
+			else
+				waitthread PlayDialogueForPlayer( name, players[i], speaker, delay )
+		}
+	}
+
+	void function PlayGabbyDialogue( string name, entity speaker, string anim = "face_generic_talker_flat" )
+	{
+		speaker.EndSignal( "OnDestroy" )
+
+		//for the next game we shouldn't have variants of dialogue and functionality should be done through a CSV - Chad
+		speaker.Anim_ScriptedAddGestureSequence( anim, false )
+		PlayDialogue( name, speaker )
+		speaker.Anim_ScriptedRemoveAllGestures()
+	}
+
+	void function StopDialogue()
+	{
+		array<entity> players = GetPlayerArray_Alive()
+		foreach ( player in players )
+			Remote_CallFunction_NonReplay( player, "ServerCallback_AbortCurrentDialogue" )
+	}
+
+	void function PlayDialogueForPlayer( string name, entity player, entity speaker, float delay = 0 )
+	{
+		if ( !IsValid( speaker ) || !IsValid( player ) )
+			return
+		EndSignal( speaker, "OnDestroy" )
+		EndSignal( player, "OnDestroy" )
+
+		Assert( file.registeredDialogIDs.find( name ) >= 0, "Dialogue line " + name + " is not registered" )
+		Assert( player.IsPlayer(), "Tried to play dialogue " + name + " to a non-player" )
+
+		if ( delay > 0 )
+			wait delay
+
+		int aliasID = file.registeredDialogIDs.find( name )
+
+		file.dialoguePlaying = true
+
+		OnThreadEnd(
+		function() : ( aliasID )
+			{
+				file.dialoguePlaying = false
+				if ( aliasID in file.waitingOnDialogue )
+					delete file.waitingOnDialogue[aliasID]
+			}
+		)
+
+		if ( !(aliasID in file.waitingOnDialogue) )
+			file.waitingOnDialogue[aliasID] <- true
+
+		if ( speaker.IsNPC() || speaker.IsPlayer() || speaker.GetClassName() == "script_mover_lightweight" )
+		{
+			// Players and NPCs will be on the client so we can play on the entity
+			Remote_CallFunction_NonReplay( player, "ServerCallback_PlayDialogueOnEntity", aliasID, speaker.GetEncodedEHandle() )
+		}
+		else
+		{
+			// Other entities like info_targets may not be on the client so we just send the position to emit the sound from (might make this better later)
+			vector pos = speaker.GetOrigin()
+			Remote_CallFunction_NonReplay( player, "ServerCallback_PlayDialogueAtPosition", aliasID, pos.x, pos.y, pos.z )
+		}
+
+		while( true )
+		{
+			table signalData = WaitSignal( level, "DialogueFinishedForID", "AllDialogueFinished" )
+			if ( string( signalData.signal ) == "AllDialogueFinished" )
+				break
+			if ( int( signalData.aliasID ) == aliasID )
+				break
+			if ( !(aliasID in file.waitingOnDialogue) )
+				break
+		}
+	}
+
+	void function PlayerConversation( string name, entity player, entity speaker = null )
+	{
+		if ( !IsValid( player ) )
+			return
+		EndSignal( player, "OnDeath" )
+
+		int speakerEHandle = -1
+		if ( speaker != null )
+		{
+			Assert( IsValid( speaker ) )
+			speakerEHandle = speaker.GetEncodedEHandle()
+		}
+
+		Assert( player.IsPlayer(), "Tried to play conversation " + name + " to a non-player" )
+
+		int conversationID = GetPlayerConversationID_ByName( name )
+
+		//Assert( !file.conversationsPlaying, "Tried to play conversation " + name + " but a conversation is already in progress" )
+
+		file.conversationsPlaying++
+
+		OnThreadEnd(
+		function() : ()
+			{
+				file.conversationsPlaying--
+			}
+		)
+
+		Remote_CallFunction_NonReplay( player, "ServerCallback_PlayerConversation", conversationID, speakerEHandle )
+
+		array<int> choices
+		while( true )
+		{
+			table signalData = WaitSignal( level, "ConversationFinishedForID", "AllDialogueFinished" )
+			//PrintTable( signalData )
+			if ( string( signalData.signal ) == "AllDialogueFinished" )
+				break
+
+			if ( int( signalData.aliasID ) == conversationID )
+			{
+				if ( signalData.choice1 != -1 )
+					choices.append( int( signalData.choice1 ) )
+				if ( signalData.choice2 != -1 )
+					choices.append( int( signalData.choice2 ) )
+				break
+			}
+		}
+
+		printt( "Conversation Ended" )
+		Signal( player, "ConversationEnded" )
+	}
+
+	void function StopConversation( entity player )
+	{
+		StopConversationWithStopType( player, CONVERSATION_STOP_GRACEFUL )
+	}
+
+	void function StopConversationNow( entity player )
+	{
+		StopConversationWithStopType( player, CONVERSATION_STOP_IMMEDIATE )
+	}
+
+	void function StopConversationWithStopType( entity player, int stopType )
+	{
+		Assert( player.IsPlayer(), "Tried to stop conversation on a non-player" )
+		Assert( stopType == CONVERSATION_STOP_GRACEFUL || stopType == CONVERSATION_STOP_IMMEDIATE )
+
+		if ( file.conversationsPlaying == 0 )
+			return
+
+		Remote_CallFunction_NonReplay( player, "ServerCallback_StopConversation", stopType )
+	}
+
+	void function AddConversationCallback( string name, void functionref( int ) callbackFunc )
+	{
+		BTConversation data = GetPlayerConversationByName( name )
+		data.callbackFuncs.append( callbackFunc )
+	}
+
+	bool function ClientCommand_DialogueFinishedForID( entity player, array<string> args )
+	{
+		string aliasID = args[ 0 ]
+		table signalData = { aliasID = aliasID }
+		if ( aliasID.tointeger() in file.waitingOnDialogue )
+			delete file.waitingOnDialogue[aliasID.tointeger()]
+		Signal( level, "DialogueFinishedForID", signalData )
+		return true
+	}
+
+	bool function ClientCommand_AllDialogueFinished( entity player, array<string> args )
+	{
+		// This happens when a save is loaded. Server will be waiting to hear back from client that a dialogue alias is finished but client was reset, so we tell the server the line has stopped playing
+		Signal( level, "AllDialogueFinished" )
+		return true
+	}
+
+	bool function ClientCommand_ConversationFinishedForID( entity player, array<string> args )
+	{
+		table signalData = {}
+
+		signalData.aliasID <- args[ 0 ]
+
+		signalData.choice1 <- -1
+		if ( args.len() >= 2 )
+			signalData.choice1 = args[1]
+
+		signalData.choice2 <- -1
+		if ( args.len() >= 3 )
+			signalData.choice2 = args[2]
+
+		Signal( level, "ConversationFinishedForID", signalData )
+		return true
+	}
+
+	bool function ClientCommand_ConversationChoiceForID( entity player, array<string> args )
+	{
+		Assert( args.len() == 2 )
+		int conversationID 	= args[ 0 ].tointeger()
+		int choice 			= args[ 1 ].tointeger()
+
+		BTConversation convoData = file.registeredConversations[conversationID]
+		foreach ( callbackFunc in convoData.callbackFuncs )
+		{
+			thread callbackFunc( choice )
+		}
+
+		return true
+	}
+
+	bool function IsDialoguePlaying()
+	{
+		return file.dialoguePlaying
+	}
+
+	bool function IsConversationPlaying()
+	{
+		return file.conversationsPlaying > 0
+	}
+
+#endif //SERVER
+
+
+
+
+
+
+#if CLIENT
+
+	QueueItem function QueueAndWait( int priority, int cutoffRule, string debugRef = "" )
+	{
+		// Creates an ID and adds it to the queue. Waits until that ID is up to be played or canceled and returns the result
+
+		// Create queue item
+		QueueItem queueItem
+		queueItem.priority = priority
+		queueItem.cutoffRule = cutoffRule
+		queueItem.timeAdded = Time()
+		queueItem.debugRef = debugRef
+
+		// Instant priority items don't use the queue. This may changed based on our needs though, if we need this line to cut off whatever is playing
+		if ( priority == PRIORITY_NO_QUEUE )
+			return queueItem
+
+		// Add it to the queue
+		_AddToQueue( queueItem )
+
+		// Wait for it to be up in the queue
+		table result = WaitSignal( queueItem, "NextInQueue", "RemovedFromQueue" )
+		//PrintTable( result )
+
+		queueItem.success = ( result.signal == "NextInQueue" )
+		//printt( "queueItem.success:", queueItem.success )
+
+		// Return the queue item back to the caller so it can removed it
+		return queueItem
+	}
+
+	void function _AddToQueue( QueueItem queueItem )
+	{
+		Assert( !file.queue.contains( queueItem ) )
+
+		file.queue.append( queueItem )
+		file.queue.sort( QueueSort )
+
+		// Remove anything in the queue that is lower priority
+		if ( file.queue.len() > 1 )
+		{
+			for ( int i = file.queue.len() - 1 ; i >= 0 ; i-- )
+			{
+				if ( file.queue[i].priority >= queueItem.priority )
+					continue
+
+				RemoveFromQueue( file.queue[i] )
+
+				if ( i == 0 )
+					AbortCurrentDialogue()
+			}
+		}
+
+		// Tell the queue think function that we have added something in case it was sleeping
+		Signal( level, "QueueUpdated" )
+	}
+
+	void function RemoveFromQueue( QueueItem queueItem )
+	{
+		// Call this to tell the queue that you are done with the current item and it should move onto the next
+		Signal( queueItem, "RemovedFromQueue" )
+		if ( file.queue.contains( queueItem ) )
+			file.queue.removebyvalue( queueItem )
+	}
+
+	int function QueueSort( QueueItem queueItem1, QueueItem queueItem2 )
+	{
+		if ( queueItem1.active )
+			return -1
+		if ( queueItem2.active )
+			return 1
+
+		if ( queueItem1.priority > queueItem2.priority )
+			return -1
+		if ( queueItem1.priority < queueItem2.priority )
+			return 1
+
+		if ( queueItem1.timeAdded < queueItem2.timeAdded )
+			return -1
+		if ( queueItem1.timeAdded > queueItem2.timeAdded )
+			return 1
+
+		return 0
+	}
+
+	void function QueueThink()
+	{
+		QueueItem currentItem
+		while( true )
+		{
+			if ( file.queue.len() == 0 )
+			{
+				if ( DEBUG_QUEUE_PRINTS )
+					printt( "Queue empty - waiting for signal" )
+				WaitSignal( level, "QueueUpdated" )
+				continue
+			}
+
+			currentItem = file.queue[0]
+			Signal( currentItem, "NextInQueue" )
+
+			// Todo: This shouldn't be here, it should be in the dialogue thread because queue is generic, can be used for non-dialogue stuff. Don't want to move it now, but should move next game.
+			CancelBossConversation()
+
+			currentItem.active = true
+			if ( DEBUG_QUEUE_PRINTS )
+				printt( "waiting for script to clear the queue current item" )
+			while( file.queue.len() > 0 && currentItem == file.queue[0] )
+			{
+				if ( DEBUG_QUEUE_PRINTS )
+				{
+					printt( "Queue:" )
+					foreach( int i, QueueItem queueItem in file.queue )
+					{
+						if ( queueItem.active )
+							printt( "  ", i, queueItem.timeAdded, "PRIORITY", queueItem.priority, queueItem.debugRef, "ACTIVE!" )
+						else
+							printt( "  ", i, queueItem.timeAdded, "PRIORITY", queueItem.priority, queueItem.debugRef )
+					}
+				}
+				WaitFrame()
+			}
+		}
+	}
+
+	void function ServerCallback_PlayDialogueOnEntity( int aliasID, int speakerEHandle )
+	{
+		entity speaker = GetEntityFromEncodedEHandle( speakerEHandle )
+		thread PlayDialogueAndNotifyServer( aliasID, speaker )
+	}
+
+	void function ServerCallback_PlayDialogueAtPosition( int aliasID, float x, float y, float z )
+	{
+		thread PlayDialogueAndNotifyServer( aliasID, null, x, y, z )
+	}
+
+	void function PlayDialogueAndNotifyServer( int aliasID, entity speaker, float x = 0, float y = 0, float z = 0 )
+	{
+		Assert( aliasID < file.registeredDialogIDs.len() )
+		Assert( aliasID < file.registeredDialog.len() )
+
+		DialogueData data = file.registeredDialog[ aliasID ]
+
+		if ( DEBUG_QUEUE_PRINTS )
+		{
+			printt( "Dialogue Added to Queue" )
+			printt( "  name:", data.name )
+		}
+
+		QueueItem queueItem = QueueAndWait( data.priority, data.cutoffRule, data.name )
+
+		// The queue wait is not successful it if was removed before it got in turn (caused by higher priority lines taking over)
+		if ( !queueItem.success )
+			return
+
+		/*
+		printt( "#################################" )
+		printt( "Playing Dialogue" )
+		printt( "  name:", data.name )
+		printt( "  alias:", data.alias )
+		printt( "  priority:", data.priority )
+		printt( "#################################" )
+		*/
+		// shortened to one line to reduce console spam- slayback
+		printt( "Playing Dialogue: name:", data.name, " || alias:", data.alias, " || priority:", data.priority )
+
+		float duration = GetSoundDuration( data.alias )
+		var waveformRUI
+
+		if ( data.radioDisplayName != "" )
+		{
+			waveformRUI = CreateWaveform( data.radioDisplayName, data.team, duration, null, data.radioIntercept )
+		}
+
+		if ( IsValid( speaker ) )
+		{
+			EndSignal( speaker, "OnDeath" )
+			EndSignal( speaker, "OnDestroy" )
+		}
+
+		entity player = GetLocalClientPlayer()
+		EndSignal( player, "AbortCurrentDialogue" )
+
+		OnThreadEnd(
+		function() : ( player, aliasID, waveformRUI, queueItem )
+			{
+				// Notify the server that the alias finished playing
+				if ( IsValid( player ) )
+					player.ClientCommand( "DialogueFinishedForID " + aliasID )
+				if ( IsValid ( waveformRUI ) )
+					thread DestroyWaveform( waveformRUI )
+				file.currentDialoguePlayingHandle = null
+				RemoveFromQueue( queueItem )
+			}
+		)
+
+		vector pos = < x, y, z >
+
+		if ( IsValid( speaker ) )
+		{
+			if ( SpeakerIsBuddy( speaker, player ) )
+				thread BuddyTitanEyeFlash( player.GetPetTitan(), duration )
+
+			if ( speaker == player.GetPetTitan() )
+			{
+				speaker = GetBuddyTitanDialogueEnt( speaker )
+				Assert( speaker )
+			}
+
+			file.currentDialoguePlayingHandle = EmitSoundOnEntity( speaker, data.alias )
+		}
+		else if ( pos != < 0, 0, 0 > )
+		{
+			file.currentDialoguePlayingHandle = EmitSoundAtPosition( TEAM_UNASSIGNED, pos, data.alias )
+		}
+
+		wait duration
+	}
+
+	bool function SpeakerIsBuddy( entity speaker, entity player )
+	{
+		if ( !IsValid( player.GetPetTitan() ) )
+			return false
+
+		if ( speaker == player.GetPetTitan() )
+			return true
+
+		if ( speaker == GetBuddyTitanDialogueEnt( player.GetPetTitan() ) )
+			return true
+
+		return false
+	}
+
+	void function ServerCallback_AbortCurrentDialogue()
+	{
+		AbortCurrentDialogue()
+	}
+
+	void function AbortCurrentDialogue()
+	{
+		if ( file.currentDialoguePlayingHandle != null )
+		{
+			StopSound( file.currentDialoguePlayingHandle )
+			Signal( GetLocalClientPlayer(), "AbortCurrentDialogue" )
+		}
+	}
+
+	void function ServerCallback_PlayerConversation( int conversationID, int speakerEHandle )
+	{
+		file.abortConversation = -1
+		thread PlayConversationAndNotifyServer( conversationID, speakerEHandle )
+	}
+
+	void function ServerCallback_StopConversation( int stopType )
+	{
+		string stopTypeString = stopType == CONVERSATION_STOP_GRACEFUL ? "CONVERSATION_STOP_GRACEFUL" : "CONVERSATION_STOP_IMMEDIATE"
+
+		printt( "STOPING CONVERSATION with StopType", stopTypeString )
+
+		file.abortConversation = stopType
+		if ( stopType == CONVERSATION_STOP_IMMEDIATE )
+			Signal( level, "AbortConversationImmediately" )
+	}
+
+	void function ResetAbortConversation()
+	{
+		WaitFrame()
+		file.abortConversation = -1
+	}
+
+	void function PlayConversationAndNotifyServer( int conversationID, int speakerEHandle, bool queue = true )
+	{
+		Assert( conversationID < file.registeredConversationIDs.len() )
+		Assert( conversationID < file.registeredConversations.len() )
+
+		entity speaker = null
+		if ( speakerEHandle != -1 )
+		{
+			speaker = GetEntityFromEncodedEHandle( speakerEHandle )
+			Assert( IsValid( speaker ), "Conversation can't play on the client because it can't find entity with encoded eHandle " + speakerEHandle )
+		}
+
+		BTConversation data = file.registeredConversations[ conversationID ]
+
+		// Check that new choices are available
+		Assert( data.response_A_available || data.response_B_available, "Tried to play conversation " + data.name + " with no choices remaining. This is probably because the conversation already ran once. To allow this, set \"Allow Replay\" to true in the datatable." )
+
+		QueueItem queueItem
+		if ( queue )
+			queueItem = QueueAndWait( PRIORITY_NORMAL, CUTOFF_NEVER, data.name )
+
+		printt( "#################################" )
+		printt( "Playing Conversation" )
+		printt( "  name:", data.name )
+		printt( "  speaker:", speaker )
+		printt( "#################################" )
+
+		entity player = GetLocalClientPlayer()
+		Assert( IsValid( player ) )
+
+		EndSignal( player, "OnDeath" )
+		EndSignal( player, "OnDestroy" )
+		EndSignal( level, "AbortConversationImmediately" )
+		if ( IsValid( speaker ) )
+			EndSignal( speaker, "OnDeath" ) // We only end signal if the user specified a custom speaker. If it's BT we don't do this because BT can die mid conversation if player embarks, but we still want to continue the conversation
+
+		array<int> choicesPicked
+
+		// Keeps track of what entity is playing a sound and what alias it is so we can stop it later if we need to
+		table currentLineData
+		currentLineData.speaker <- null
+		currentLineData.alias <- ""
+
+		table ruiTable
+		ruiTable.rui <- null
+		ruiTable.waveformRUI <- null
+
+		file.conversationsPlaying++
+		ResetAbilityBindings( player, player.GetPlayerClass() )
+
+		OnThreadEnd(
+		function() : ( player, conversationID, choicesPicked, currentLineData, queueItem, ruiTable )
+			{
+				file.conversationsPlaying--
+
+				// Notify the server that the alias finished playing
+				if ( IsValid( player ) )
+				{
+					ResetAbilityBindings( player, player.GetPlayerClass() )
+
+					string command = "ConversationFinishedForID " + conversationID
+					foreach( int choice in choicesPicked )
+						command += " " + choice.tostring()
+
+					//printt( "Sending client command ", command )
+					player.ClientCommand( command )
+				}
+
+				if ( file.abortConversation == CONVERSATION_STOP_IMMEDIATE )
+				{
+					if ( IsValid( ruiTable.rui ) )
+						RuiDestroyIfAlive( ruiTable.rui )
+
+					if ( ruiTable.waveformRUI != null )
+					{
+						thread DestroyWaveform_Immediate( ruiTable.waveformRUI )
+						ruiTable.waveformRUI = null
+					}
+				}
+
+				// If we are stopping the conversation immediately we must stop the current playing sound alias, and also destroy the RUI that may be up
+				if ( file.abortConversation == CONVERSATION_STOP_IMMEDIATE && IsValid( currentLineData.speaker ) && currentLineData.alias != "" )
+					StopSoundOnEntity( currentLineData.speaker, currentLineData.alias )
+
+				//printt( "Removing conversation from queue" )
+				RemoveFromQueue( queueItem )
+
+				thread ResetAbortConversation()
+			}
+		)
+
+		//###########################
+		// Play BT line if it exists
+		//###########################
+
+		float duration
+		if ( data.btStartAlias != "" )
+		{
+			duration = GetSoundDuration( data.btStartAlias )
+			if ( speakerEHandle == -1 )
+			{
+				speaker = player.GetPetTitan()
+				if ( !IsValid( speaker ) )
+					speaker = player
+			}
+			if ( SpeakerIsBuddy( speaker, player ) )
+				thread BuddyTitanEyeFlash( player.GetPetTitan(), duration )
+
+			speaker = GetConversationSpeakerEntityIfBT( player, speaker )
+
+			currentLineData.speaker = speaker
+			currentLineData.alias = data.btStartAlias
+
+			ruiTable.waveformRUI = null
+			if ( data.waveformName != "" )
+				ruiTable.waveformRUI = CreateWaveform( data.waveformName, data.waveformTeam, duration )
+
+			EmitSoundOnEntity( speaker, data.btStartAlias )
+			wait duration
+
+			if ( ruiTable.waveformRUI != null )
+			{
+				thread DestroyWaveform( ruiTable.waveformRUI )
+				ruiTable.waveformRUI = null
+			}
+		}
+
+		if ( file.abortConversation != -1 )
+			return
+
+		int choice
+		var soundObj
+		while( true )
+		{
+			//###########################
+			// Wait for player response
+			//###########################
+
+			choice = GetConversationChoice( player, data, ruiTable )
+			choicesPicked.append( choice )
+			if ( choice == 0 )
+			{
+				DoConversationCallbacks( player, conversationID, choice )
+				return
+			}
+
+			//###########################
+			// Player speaks choice
+			//###########################
+
+			wait 0.2
+
+			string responseAlias = choice == 1 ? data.response_A_player_alias : data.response_B_player_alias
+			duration = GetSoundDuration( responseAlias )
+			currentLineData.speaker = player
+			currentLineData.alias = responseAlias
+			soundObj = EmitSoundOnEntity( player, responseAlias )
+			WaitSignal( soundObj, "OnSoundFinished" )
+
+			DoConversationCallbacks( player, conversationID, choice )
+
+			//###############################
+			// BT Responds to players choice
+			//###############################
+
+			wait 0.2
+
+			responseAlias = choice == 1 ? data.response_A_bt_respond_alias : data.response_B_bt_respond_alias
+			if ( responseAlias != "" )
+			{
+				duration = GetSoundDuration( responseAlias )
+				if ( speakerEHandle == -1 )
+				{
+					speaker = player.GetPetTitan()
+				}
+
+				if ( !IsValid( speaker ) )
+					speaker = player
+
+				Assert( IsValid( speaker ) )
+				if ( SpeakerIsBuddy( speaker, player ) )
+					thread BuddyTitanEyeFlash( player.GetPetTitan(), duration )
+
+				speaker = GetConversationSpeakerEntityIfBT( player, speaker )
+
+				currentLineData.speaker = speaker
+				currentLineData.alias = responseAlias
+
+				ruiTable.waveformRUI = null
+				if ( data.waveformName != "" )
+					ruiTable.waveformRUI = CreateWaveform( data.waveformName, data.waveformTeam, duration )
+
+				soundObj = EmitSoundOnEntity( speaker, responseAlias )
+				WaitSignal( soundObj, "OnSoundFinished" )
+
+				if ( ruiTable.waveformRUI != null )
+				{
+					thread DestroyWaveform( ruiTable.waveformRUI )
+					ruiTable.waveformRUI = null
+				}
+			}
+
+			if ( file.abortConversation != -1 )
+				return
+
+			//################################
+			// Player closing line, if exists
+			//################################
+
+			string closingLine = choice == 1 ? data.player_closing_alias_A : data.player_closing_alias_B
+			if ( data.player_closer_played && data.player_closing_alias_A == data.player_closing_alias_B )
+				closingLine = ""
+			if ( closingLine != "" )
+			{
+				wait 0.2
+				data.player_closer_played = true
+				duration = GetSoundDuration( closingLine )
+				currentLineData.speaker = player
+				currentLineData.alias = closingLine
+				soundObj = EmitSoundOnEntity( player, closingLine )
+				WaitSignal( soundObj, "OnSoundFinished" )
+			}
+
+			if ( file.abortConversation != -1 )
+				return
+
+			//##################################################
+			// Return if we only let the player make one choice
+			//##################################################
+
+			if ( choice == 1 && data.response_A_ends_conversation )
+				break
+
+			if ( choice == 2 && data.response_B_ends_conversation )
+				break
+
+			// return if no more responses are available
+			if ( !data.response_A_available && !data.response_B_available )
+				break
+		}
+
+		// Auto start the next conversation if one is specified
+		if ( choice == 1 && data.nextConversationA != "" )
+		{
+			Assert( file.registeredConversationIDs.contains( data.nextConversationA ), "Tried to use nextConversationA to invalid conversation name" )
+			int nextConversationID = file.registeredConversationIDs.find( data.nextConversationA )
+			PlayConversationAndNotifyServer( nextConversationID, speakerEHandle, false )
+		}
+		else if ( choice == 2 && data.nextConversationB != "" )
+		{
+			Assert( file.registeredConversationIDs.contains( data.nextConversationB ), "Tried to use nextConversationB to invalid conversation name" )
+			int nextConversationID = file.registeredConversationIDs.find( data.nextConversationB )
+			PlayConversationAndNotifyServer( nextConversationID, speakerEHandle, false )
+		}
+	}
+
+	entity function GetConversationSpeakerEntityIfBT( entity player, entity speaker )
+	{
+		//Todo: this was a late fix, but next game should be combined with the same fix that was done for dialogue
+		if ( speaker == player || speaker == player.GetPetTitan() )
+		{
+			entity petTitan = player.GetPetTitan()
+			if ( IsValid( petTitan ) )
+				speaker = GetBuddyTitanDialogueEnt( petTitan )
+			else
+				speaker = GetBuddyTitanDialogueEnt( player )
+
+			if ( !IsValid( speaker ) )
+				speaker = player
+
+			Assert( speaker )
+		}
+
+		return speaker
+	}
+
+	bool function IsConversationPlaying()
+	{
+		return file.conversationsPlaying > 0
+	}
+
+	void function DoConversationCallbacks( entity player, int conversationID, int choice )
+	{
+		//##################################################
+		// Notify server per choice ( for callbacks )
+		//##################################################
+		if ( !IsValid( player ) )
+			return
+
+		string command = "ConversationChoiceForID " + conversationID + " " + choice.tostring()
+		player.ClientCommand( command )
+	}
+
+	int function GetConversationChoice( entity player, BTConversation data, table ruiTable )
+	{
+		//###################################
+		// Show the options RUI
+		//###################################
+
+		// RUI Choice Box
+		ruiTable.rui = RuiCreate( $"ui/conversation.rpak", clGlobal.topoFullScreen, RUI_DRAW_HUD, 0 )
+		RuiSetFloat( ruiTable.rui, "startTime", Time() )
+		RuiSetFloat( ruiTable.rui, "introDuration", CONVERSATION_INTRO_DURATION )
+		RuiSetFloat( ruiTable.rui, "timer", CONVERSATION_TIMEOUT )
+		RuiSetResolutionToScreenSize( ruiTable.rui )
+
+		int numChoices = 0
+
+		if ( data.response_A_player_text != "" )
+		{
+			numChoices++
+			RuiSetString( ruiTable.rui, "text1", data.response_A_player_text )
+			RuiSetBool( ruiTable.rui, "choice1Available", data.response_A_available )
+			RuiSetBool( ruiTable.rui, "choice1WasSelected", data.response_A_wasSelected )
+		}
+		if ( data.response_B_player_text != "" )
+		{
+			numChoices++
+			RuiSetString( ruiTable.rui, "text2", data.response_B_player_text )
+			RuiSetBool( ruiTable.rui, "choice2Available", data.response_B_available )
+			RuiSetBool( ruiTable.rui, "choice2WasSelected", data.response_B_wasSelected )
+		}
+
+		RuiSetInt( ruiTable.rui, "numChoices", numChoices )
+
+		EmitSoundOnEntity( player, "UI_PlayerDialogue_Selection" )
+
+		//###########################################
+		// Wait for user selection or timeout
+		//###########################################
+
+		table results
+		if ( data.response_A_available && data.response_B_available )
+		{
+			printt( "Waiting for A or B" )
+			thread DialogueChoiceTimeout( player, "DialogueChoice1", "DialogueChoice2" )
+			results = WaitSignal( player, "DialogueChoice1", "DialogueChoice2", "DialogueChoiceTimeout" )
+		}
+		else if ( data.response_A_available )
+		{
+			printt( "Waiting for A" )
+			thread DialogueChoiceTimeout( player, "DialogueChoice1" )
+			results = WaitSignal( player, "DialogueChoice1", "DialogueChoiceTimeout" )
+		}
+		else if ( data.response_B_available )
+		{
+			printt( "Waiting for B" )
+			thread DialogueChoiceTimeout( player, "DialogueChoice2" )
+			results = WaitSignal( player, "DialogueChoice2", "DialogueChoiceTimeout" )
+		}
+
+		//#################################################
+		// User has made selection or timed out, handle it
+		//#################################################
+
+		int choice
+		float responseDuration = 0.0
+		switch( results.signal )
+		{
+			case "DialogueChoice1":
+				choice = 1
+				responseDuration = GetSoundDuration( data.response_A_player_alias )
+
+				if ( !data.allowReplay )
+					data.response_A_available = false
+
+				data.response_A_wasSelected = true
+				break
+
+			case "DialogueChoice2":
+				choice = 2
+				responseDuration = GetSoundDuration( data.response_B_player_alias )
+
+				if ( !data.allowReplay )
+					data.response_B_available = false
+
+				data.response_B_wasSelected = true
+				break
+
+			case "DialogueChoiceTimeout":
+			default:
+				choice = 0
+
+				if ( !data.allowReplay )
+				{
+					data.response_A_available = false
+					data.response_B_available = false
+				}
+
+				break
+		}
+
+		float textFadeOutDuration = choice == 0 ? CONVERSATION_TEXT_REMOVE_DURATION_TIMEOUT : CONVERSATION_TEXT_REMOVE_DURATION
+
+		// Tell the RUI we have made a selection, or lack of one.
+		RuiSetFloat( ruiTable.rui, "choiceMadeTime", Time() )
+		RuiSetFloat( ruiTable.rui, "choiceDuration", responseDuration )
+		RuiSetFloat( ruiTable.rui, "textRemoveDuration", textFadeOutDuration )
+		RuiSetInt( ruiTable.rui, "choiceMade", choice )
+
+		if ( choice == 0 )
+			EmitSoundOnEntity( player, "UI_PlayerDialogue_Notification" )
+		else
+			EmitSoundOnEntity( player, "ui_holotutorial_Analyzingfinish" )
+
+		return choice
+	}
+
+	void function DialogueChoiceTimeout( entity player, cancelTimeoutSignal_A = "", cancelTimeoutSignal_B = "" )
+	{
+		EndSignal( player, "OnDeath" )
+		EndSignal( player, "OnDestroy" )
+		if ( cancelTimeoutSignal_A != "" )
+			EndSignal( player, cancelTimeoutSignal_A )
+		if ( cancelTimeoutSignal_B != "" )
+			EndSignal( player, cancelTimeoutSignal_B )
+
+		wait CONVERSATION_INTRO_DURATION + CONVERSATION_TIMEOUT
+
+		if ( IsValid( player ) )
+			Signal( player, "DialogueChoiceTimeout" )
+	}
+
+	void function Pressed_Choice1( entity player )
+	{
+		Signal( player, "DialogueChoice1" )
+	}
+
+	void function Pressed_Choice2( entity player )
+	{
+		Signal( player, "DialogueChoice2" )
+	}
+
+	void function BuddyTitanEyeFlash( entity bt, float duration )
+	{
+		EndSignal( bt, "OnDestroy" )
+		EndSignal( level, "AbortConversationImmediately" )
+
+		int effectIndex = GetParticleSystemIndex( BT_EYE_GLOW )
+		int attachID = bt.LookupAttachment( "EYEGLOW" )
+		int fxID = StartParticleEffectOnEntity( bt, effectIndex, FX_PATTACH_POINT_FOLLOW, attachID )
+
+		OnThreadEnd(
+			function() : ( fxID )
+			{
+				EffectStop( fxID, true, true )
+			}
+		)
+
+		wait duration
+	}
+
+#endif // CLIENT

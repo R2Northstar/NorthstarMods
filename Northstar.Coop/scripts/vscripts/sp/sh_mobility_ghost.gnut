@@ -1,0 +1,694 @@
+#if CLIENT
+	untyped
+	const SCAN_ENVIRONMENT_EFFECT = $"P_ar_holopulse_CP"
+
+	global function Pressed_ActivateMobilityGhost
+#endif
+
+global function MobilityGhost_Init
+
+const GHOST_SCREEN_EFFECT = $"P_holo_screespace"
+const HINT_FADE_TIME = 0.2
+
+#if SERVER
+const LOCATION_WORLD_EFFECT = $"overhead_icon_ai_friendly"
+const ANALYZING_WORLD_EFFECT = $"TDP_wave"
+#endif
+
+#if SP
+	const float HINT_SHOW_DELAY_MASTER = 7.0
+	const float HINT_SHOW_DELAY_HARD = 5.5
+	const float HINT_SHOW_DELAY_NORMAL = 3.5
+	const float HINT_SHOW_DELAY_EASY = 1.0
+	const HINT_SHOW_DELAY_ANALYZED = 1.0
+	const HINT_STEP1_DURATION = 3.0
+	const HINT_STEP2_DURATION = 1.5
+#elseif MP
+	const HINT_SHOW_DELAY = 2.0
+	const HINT_SHOW_DELAY_ANALYZED = 1.0
+	const HINT_STEP1_DURATION = 0.75
+	const HINT_STEP2_DURATION = 0.75
+#endif
+
+
+#if SERVER
+
+global function AddMobilityGhost
+global function AddMobilityGhostWithCallback
+global function ShowMobilityGhost
+global function SetMobilityGhostDisplayDists
+global function SetMobilityGhostAnalyzedByPlayer
+global function SetMobilityGhostIgnoreSpeed
+
+global const PILOT_GHOST_MODEL = $"models/humans/heroes/mlt_hero_jack.mdl"
+global const PILOT_GHOST_WEAPON_MODEL = $"models/weapons/rspn101/w_rspn101.mdl"
+global const GHOST_FLASH_EFFECT = $"P_ar_holopilot_flash"
+global const GHOST_TRAIL_EFFECT = $"P_ar_holopilot_trail"
+const GHOST_HINT_DIST_SHOW = 400 * 400 //  SOUPY TEST 250 * 250 detault
+const GHOST_HINT_DIST_HIDE = 425 * 425 //  SOUPY TEST 270 * 270 detault
+const HINT_ACTIVATE_DEBOUNCE_TIME = 3.0
+
+struct MobilityGhostStruct
+{
+	asset animation
+	var recordedAnim
+	vector refOrigin
+	float showDistSqrd = GHOST_HINT_DIST_SHOW
+	float hideDistSqrd = GHOST_HINT_DIST_HIDE
+	float duration
+	string enabledFlag
+	string waitSignal
+	void functionref( entity, entity ) callbackFunc
+	array<entity> analyzedByPlayers
+	entity worldEffect
+	bool ignoreSpeed
+}
+
+struct
+{
+	int ghostSpawnParticleIndex
+	array<MobilityGhostStruct> ghostHints
+} file
+
+#endif // SERVER
+
+#if CLIENT
+
+struct
+{
+	var colorCorrection
+	var buttonHintRUI
+} file
+
+#endif // CLIENT
+
+void function MobilityGhost_Init()
+{
+	#if SERVER
+
+		PrecacheModel( PILOT_GHOST_MODEL )
+		PrecacheModel( PILOT_GHOST_WEAPON_MODEL )
+		PrecacheParticleSystem( GHOST_FLASH_EFFECT )
+		PrecacheParticleSystem( GHOST_TRAIL_EFFECT )
+		PrecacheParticleSystem( GHOST_SCREEN_EFFECT )
+		PrecacheParticleSystem( LOCATION_WORLD_EFFECT )
+		PrecacheParticleSystem( ANALYZING_WORLD_EFFECT )
+
+		RegisterSignal( "animRecordingSignal" )
+
+		AddClientCommandCallback( "ActivateMobilityGhost", ShowMobilityGhostButtonPressed )
+
+		file.ghostSpawnParticleIndex = 0
+
+		AddSpawnCallback( "player", MonitorForMobilityHints )
+
+	#endif // SERVER
+
+	#if CLIENT
+
+		file.colorCorrection = ColorCorrection_Register( "materials/correction/mobility_ghost_recorder.raw" )
+		RegisterEntityVarChangeCallback( "player", "displayMobilityGhostHint", DisplayMobilityGhostHintChanged )
+		RegisterEntityVarChangeCallback( "player", "displayMobilityGhostAnim", DisplayMobilityGhostAnimChanged )
+
+		PrecacheParticleSystem( SCAN_ENVIRONMENT_EFFECT )
+
+		RegisterSignal( "StopMobilityGhostScreenEffect" )
+		RegisterSignal( "HidingGhostRui" )
+
+	#endif // CLIENT
+}
+
+#if SERVER
+
+int function AddMobilityGhost( asset animation, string enabledFlag = "", string waitSignal = "" )
+{
+	return _AddMobilityGhostInternal( animation, enabledFlag, waitSignal, null )
+}
+
+int function AddMobilityGhostWithCallback( asset animation, void functionref( entity, entity ) callbackFunc, string enabledFlag = "", string waitSignal = "" )
+{
+	return _AddMobilityGhostInternal( animation, enabledFlag, waitSignal, callbackFunc )
+}
+
+int function _AddMobilityGhostInternal( asset animation, string enabledFlag, string waitSignal, void functionref( entity, entity ) callbackFunc )
+{
+	MobilityGhostStruct data
+	data.animation = animation
+	data.recordedAnim = LoadRecordedAnimation( animation )
+	data.refOrigin = GetRecordedAnimationStartForRefPoint( data.recordedAnim, < 0, 0, 0 >, < 0, 0, 0 > )
+	data.duration = GetRecordedAnimationDuration( data.recordedAnim )
+	data.enabledFlag = enabledFlag
+	data.waitSignal = waitSignal
+	data.callbackFunc = callbackFunc
+	//data.worldEffect = StartParticleEffectInWorld_ReturnEntity( GetParticleSystemIndex( LOCATION_WORLD_EFFECT ), data.refOrigin, <0,0,0> )
+
+	file.ghostHints.append( data )
+
+	return file.ghostHints.len() - 1	// return the index of the new ghost hint
+}
+
+void function SetMobilityGhostDisplayDists( int index, float showDist, float hideDist )
+{
+	file.ghostHints[ index ].showDistSqrd = showDist * showDist
+	file.ghostHints[ index ].hideDistSqrd = hideDist * hideDist
+}
+
+void function SetMobilityGhostAnalyzedByPlayer( int index, entity player )
+{
+	file.ghostHints[ index ].analyzedByPlayers.append( player )
+}
+
+void function SetMobilityGhostIgnoreSpeed( int index, bool ignoreSpeed = true )
+{
+	file.ghostHints[ index ].ignoreSpeed = ignoreSpeed
+}
+
+void function MonitorForMobilityHints( entity player )
+{
+	thread MonitorForMobilityHintsThink( player )
+}
+
+void function MonitorForMobilityHintsThink( entity player )
+{
+	EndSignal( player, "OnDestroy" )
+
+	float lastTime = Time()
+	float elapsedTime
+	while( true )
+	{
+		WaitFrame()
+
+		elapsedTime = Time() - lastTime
+		lastTime = Time()
+
+		if ( !IsAlive( player ) || player.p.showingMobilityGhost )
+		{
+			player.p.timeNearMobilityGhostHint = 0.0
+			continue
+		}
+
+		bool nearHint = false
+		foreach( MobilityGhostStruct data in file.ghostHints )
+		{
+			float showDistSqrd = data.showDistSqrd
+			if ( ShouldDisplayHint( player, data, showDistSqrd ) )
+			{
+				nearHint = true
+				player.p.timeNearMobilityGhostHint += elapsedTime
+
+				// Don't show the hint if the player is moving really fast
+				if ( Length( player.GetVelocity() ) >= 200 && data.ignoreSpeed == false )
+					player.p.timeNearMobilityGhostHint = 0.0
+
+				bool analyzed = data.analyzedByPlayers.contains( player )
+				float delay = analyzed ? HINT_SHOW_DELAY_ANALYZED : GetHintShowDelay()
+				if ( player.p.timeNearMobilityGhostHint >= delay )
+				{
+					waitthread DisplayHint( player, data )
+					player.p.timeNearMobilityGhostHint = 0.0
+				}
+			}
+		}
+
+		if ( !nearHint )
+			player.p.timeNearMobilityGhostHint = 0.0
+	}
+}
+
+float function GetHintShowDelay()
+{
+	#if SP
+		switch( GetSpDifficulty() )
+		{
+			case DIFFICULTY_MASTER:
+				return HINT_SHOW_DELAY_MASTER
+			case DIFFICULTY_HARD:
+				return HINT_SHOW_DELAY_HARD
+			case DIFFICULTY_NORMAL:
+				return HINT_SHOW_DELAY_NORMAL
+			default:
+				return HINT_SHOW_DELAY_EASY
+		}
+	#elseif MP
+		return HINT_SHOW_DELAY
+	#endif
+	return 3.0
+}
+
+bool function StoodStillNearHint( entity player, MobilityGhostStruct data )
+{
+	return true
+}
+
+bool function ShouldDisplayHint( entity player, MobilityGhostStruct data, float maxDist )
+{
+	if ( !IsAlive( player ) )
+		return false
+
+	if ( player.p.showingMobilityGhost )
+		return false
+
+	if ( data.enabledFlag != "" && !Flag( data.enabledFlag ) )
+		return false
+
+	if ( player.IsTitan() )
+		return false
+
+	if ( player.ContextAction_IsActive() )
+		return false
+
+	if ( player.p.controllingTurret )
+		return false
+
+	if ( GetBugReproNum() == 1234 )
+	{
+		DebugDrawText( data.refOrigin + <0,0,10>, string(data.animation), true, 0.1 )
+		DebugDrawSphere( data.refOrigin, 25.0, 255, 0, 0, true, 0.1 )
+	}
+
+	if ( DistanceSqr( player.GetOrigin(), data.refOrigin ) > maxDist )
+		return false
+
+	#if SP
+		if ( IsConversationPlaying() )
+			return false
+
+		if ( !IsPlayerSafeFromNPCs( player ) )
+			return false
+
+		if ( !IsPlayerSafeFromProjectiles( player, player.GetOrigin() ) )
+			return false
+	#endif
+
+	TraceResults trace = TraceLine( player.EyePosition(), data.refOrigin + <0,0,45>, null, TRACE_MASK_BLOCKLOS, TRACE_COLLISION_GROUP_NONE )
+	return trace.fraction >= 1.0
+}
+
+void function DisplayHint( entity player, MobilityGhostStruct data )
+{
+	//thread DisplayAnalyzeLines( player, data )
+/*
+	// Display an effect only to this player that shows up while hint is up
+	entity analyzeEffect = StartParticleEffectInWorld_ReturnEntity( GetParticleSystemIndex( ANALYZING_WORLD_EFFECT ), data.refOrigin, <0,0,0> )
+	analyzeEffect.kv.VisibilityFlags = ENTITY_VISIBLE_TO_OWNER
+	analyzeEffect.SetOwner( player )
+*/
+	// Display ghost model that fades in
+	entity analyzeGhost
+	entity analyzeGhostWeapon
+
+	#if SP
+		analyzeGhost = CreatePropScript( PILOT_GHOST_MODEL, data.refOrigin, < 0, 0, 0 >, 0, 99999 )
+		analyzeGhost.kv.skin = PILOT_SKIN_INDEX_GHOST
+		analyzeGhost.kv.rendercolor = "94 174 255" //Blue
+		analyzeGhost.kv.VisibilityFlags = ENTITY_VISIBLE_TO_OWNER
+		analyzeGhost.kv.rendermode = 3
+		analyzeGhost.kv.renderamt = 0
+		analyzeGhost.SetFootstepType( "holopath" )
+		analyzeGhost.SetOwner( player )
+
+		analyzeGhostWeapon = CreatePropScript( PILOT_GHOST_WEAPON_MODEL, data.refOrigin, < 0, 0, 0 >, 0, 99999 )
+		analyzeGhostWeapon.kv.skin = WEAPON_SKIN_INDEX_GHOST
+		analyzeGhostWeapon.kv.rendercolor = "94 174 255" //Blue
+		analyzeGhostWeapon.kv.VisibilityFlags = ENTITY_VISIBLE_TO_OWNER
+		analyzeGhostWeapon.kv.rendermode = 3
+		analyzeGhostWeapon.kv.renderamt = 0
+		analyzeGhostWeapon.SetOwner( player )
+		analyzeGhostWeapon.SetParent( analyzeGhost, "PROPGUN", false )
+	#endif // SP
+
+	OnThreadEnd(
+		function() : ( player, data, analyzeGhost, analyzeGhostWeapon )
+		{
+			if ( !data.analyzedByPlayers.contains( player ) && player.nv.displayMobilityGhostHint <= Time() )
+				data.analyzedByPlayers.append( player )
+			player.nv.displayMobilityGhostHint = 0.0
+			//if ( IsValid( analyzeEffect ) )
+			//	EffectStop( analyzeEffect )
+			if ( IsValid( analyzeGhost ) )
+				analyzeGhost.Dissolve( ENTITY_DISSOLVE_CHAR, < 0, 0, 0 >, 0 )
+			if ( IsValid( analyzeGhostWeapon ) )
+				analyzeGhostWeapon.Dissolve( ENTITY_DISSOLVE_CHAR, < 0, 0, 0 >, 0 )
+		}
+	)
+
+	#if SP
+		analyzeGhost.Hide()
+		analyzeGhostWeapon.Hide()
+		analyzeGhost.PlayRecordedAnimation( data.recordedAnim, < 0, 0, 0 >, < 0, 0, 0 > )
+		printt( "Playing mobility prep ghost anim " + data.animation )
+		analyzeGhost.SetRecordedAnimationPlaybackRate( 0.001 )
+		wait 0.2
+		analyzeGhost.Show()
+		analyzeGhostWeapon.Show()
+	#endif // SP
+
+	player.nv.mobilityGhostAnalyzed = data.analyzedByPlayers.contains( player )
+	float startTime = Time()
+	float hintDisplayTime
+	if ( player.nv.mobilityGhostAnalyzed )
+		hintDisplayTime = startTime
+	else
+		hintDisplayTime = startTime + HINT_STEP1_DURATION + HINT_STEP2_DURATION
+	player.nv.displayMobilityGhostHint = hintDisplayTime
+
+	// Keep it up until the conditions are not met anymore
+	float hideDistSqrd = data.hideDistSqrd
+	while( ShouldDisplayHint( player, data, hideDistSqrd ) )
+	{
+		#if SP
+			// Update the ghost alpha over time
+			float alpha = GraphCapped( Time(), startTime, hintDisplayTime, 0.0, 128.0 )
+			float flickerChance = floor( GraphCapped( Time(), startTime, hintDisplayTime, 2, 10 ) )
+			if ( flickerChance < 10 && RandomInt(flickerChance) == 0 )
+				alpha = 0.0
+			analyzeGhost.kv.renderamt = alpha
+			analyzeGhostWeapon.kv.renderamt = alpha
+		#endif // SP
+		WaitFrame()
+	}
+}
+
+bool function ShowMobilityGhostButtonPressed( entity player, array<string> args )
+{
+	if ( player.nv.displayMobilityGhostHint > 0.0 && player.nv.displayMobilityGhostHint <= Time() && !player.p.showingMobilityGhost && IsAlive( player ) )
+		thread ShowMobilityGhost( player )
+	return true
+}
+
+void function ShowMobilityGhost( entity player, int ghostHintIndex = -1 )
+{
+	// Get the closest mobility ghost struct
+	MobilityGhostStruct data
+
+	if ( ghostHintIndex >= 0 )
+	{
+		data = file.ghostHints[ ghostHintIndex ]
+	}
+	else
+	{
+		float closestDist = 999999
+		foreach( MobilityGhostStruct _data in file.ghostHints )
+		{
+			float d = DistanceSqr( _data.refOrigin, player.GetOrigin() )
+			if ( d > closestDist )
+				continue
+			closestDist = d
+			data = _data
+		}
+	}
+
+	// temp fix for not finding any data close by when this function is called from level script.
+	if ( data.animation == $"" )
+		return
+
+	player.p.showingMobilityGhost = true
+	player.nv.displayMobilityGhostHint = 0.0
+	player.nv.displayMobilityGhostAnim = true
+
+	// do this for when the ghost is started through level script
+	if ( !data.analyzedByPlayers.contains( player ) )
+		data.analyzedByPlayers.append( player )
+
+	EmitSoundOnEntity( player, "Pilot_PathHologram_Activated_1P" )
+
+	wait 0.5
+
+	// Create ghost model
+	entity ghost = CreatePropScript( PILOT_GHOST_MODEL, data.refOrigin, < 0, 0, 0 >, 0, 99999 )
+	ghost.kv.skin = PILOT_SKIN_INDEX_GHOST
+	ghost.kv.rendercolor = "94 174 255" //Blue
+	ghost.kv.VisibilityFlags = ENTITY_VISIBLE_TO_OWNER
+	ghost.Hide()
+	ghost.SetFootstepType( "holopath" )
+	ghost.SetOwner( player )
+
+	entity weapon = CreatePropScript( PILOT_GHOST_WEAPON_MODEL, data.refOrigin, < 0, 0, 0 >, 0, 99999 )
+	weapon.kv.skin = WEAPON_SKIN_INDEX_GHOST
+	weapon.kv.rendercolor = "94 174 255" //Blue
+	weapon.kv.VisibilityFlags = ENTITY_VISIBLE_TO_OWNER
+	weapon.Hide()
+	weapon.SetOwner( player )
+	weapon.SetParent( ghost, "PROPGUN", false )
+
+	EndSignal( player, "OnDeath" )
+	OnThreadEnd(
+	function() : ( ghost, weapon )
+		{
+			if ( IsValid( ghost ) )
+			{
+				EmitSoundAtPosition( TEAM_UNASSIGNED, ghost.GetOrigin(), "PathHologram_Dematerialized_3P" )
+				StopSoundOnEntity( ghost, "PathHologram_Sustain_Loop_3P" )
+				ghost.Dissolve( ENTITY_DISSOLVE_CHAR, < 0, 0, 0 >, 0 )
+			}
+			if ( IsValid( weapon ) )
+				weapon.Dissolve( ENTITY_DISSOLVE_CHAR, < 0, 0, 0 >, 0 )
+		}
+	)
+
+	// Play the animation
+	ghost.PlayRecordedAnimation( data.recordedAnim, < 0, 0, 0 >, < 0, 0, 0 > )
+	printt( "Playing mobility ghost run anim " + data.animation )
+	ghost.SetRecordedAnimationPlaybackRate( 0.01 )
+
+	WaitFrame()
+
+	EmitSoundOnEntity( ghost, "PathHologram_Materialized_3P" )
+
+	// Ghost spawn effects
+	int attachIndex = ghost.LookupAttachment( "CHESTFOCUS" )
+	StartParticleEffectOnEntity( ghost, GetParticleSystemIndex( GHOST_TRAIL_EFFECT ), FX_PATTACH_POINT_FOLLOW, attachIndex )
+
+	wait 0.5
+
+	StartParticleEffectOnEntity( ghost, GetParticleSystemIndex( GHOST_FLASH_EFFECT ), FX_PATTACH_POINT, attachIndex )
+
+	ghost.Show()
+	weapon.Show()
+
+	EmitSoundOnEntity( ghost, "PathHologram_Sustain_Loop_3P" )
+
+	if ( data.callbackFunc != null )
+		thread data.callbackFunc( ghost, weapon )
+
+	if ( data.waitSignal != "" )
+		WaitSignal( level, data.waitSignal )
+
+	ghost.SetRecordedAnimationPlaybackRate( 1.0 )
+
+	if ( data.duration > HINT_ACTIVATE_DEBOUNCE_TIME )
+		wait HINT_ACTIVATE_DEBOUNCE_TIME
+	else
+		wait data.duration
+
+	// Allow player to see the hint again
+	player.p.showingMobilityGhost = false
+	player.nv.displayMobilityGhostAnim = false
+
+	if ( data.duration > HINT_ACTIVATE_DEBOUNCE_TIME )
+		wait data.duration - HINT_ACTIVATE_DEBOUNCE_TIME
+}
+
+void function DisplayAnalyzeLines( entity player, MobilityGhostStruct data )
+{
+	//############################################
+	// Create a temp ghost to get the path points
+	//############################################
+
+	entity ghost = CreatePropScript( PILOT_GHOST_MODEL, data.refOrigin, < 0, 0, 0 >, 0, 99999 )
+	ghost.kv.VisibilityFlags = ENTITY_VISIBLE_TO_OWNER
+	ghost.Hide()
+	ghost.SetOwner( player )
+
+	//##########################################
+	// Calcualte the points along the animation
+	//##########################################
+
+	array<vector> points
+	float playbackRate = 2.0
+	ghost.PlayRecordedAnimation( data.recordedAnim, < 0, 0, 0 >, < 0, 0, 0 > )
+	ghost.SetRecordedAnimationPlaybackRate( playbackRate )
+	float endTime = Time() + ( data.duration / playbackRate )
+	while( Time() <= endTime )
+	{
+		points.append( ghost.GetWorldSpaceCenter() )
+		//DebugDrawSphere( ghost.GetOrigin(), 15.0, 255, 0, 0, true, 10.0 )
+		WaitFrame()
+	}
+	points.append( ghost.GetWorldSpaceCenter() )
+	//DebugDrawSphere( ghost.GetOrigin(), 15.0, 255, 0, 0, true, 10.0 )
+
+	//for( int i = 1 ; i < points.len() ; i++ )
+	//	DebugDrawLine( points[i-1], points[i], 255, 255, 0, true, 10.0 )
+
+	// Delete the ghost, he is no longer needed
+	ghost.Destroy()
+
+	//####################################
+	// Debug lines analyze the topography
+	//####################################
+
+	float timeBetweenPoints = HINT_STEP1_DURATION / points.len()
+	//timeBetweenPoints *= 5.0
+	float lineHideTime = Time() + HINT_STEP1_DURATION
+	for( int i = 0 ; i < points.len() - 1 ; i++ )
+	{
+		vector start = points[i]
+		vector end = points[i + 1]
+
+		thread DrawFeelersFromPoint( start, end, timeBetweenPoints, 2, lineHideTime )
+
+		wait timeBetweenPoints
+
+		float lineDuration = lineHideTime - Time()
+		if ( lineDuration > 0.0 )
+			DebugDrawLine( start, end, 125, 125, 125, false, lineDuration )
+	}
+}
+
+void function DrawFeelersFromPoint( vector pointA, vector pointB, float duration, float subFeelers, float lineHideTime )
+{
+	//DebugDrawSphere( pointA, 25.0, 255, 0, 0, true, 3.0 )
+	float endTime = Time() + duration
+	float maxOffset = 0.0
+	float maxTraceDist = 1500.0
+	int numFeelers = 10
+
+	while( Time() <= endTime && numFeelers > 0 )
+	{
+		vector start = pointA
+		vector vec = Normalize( pointB - pointA )
+		vector dir = ApplyVectorSpread( vec, RandomFloat( 180 ) )
+		vector end = start + ( dir * maxTraceDist )
+
+		TraceResults result = TraceLine( start, end, null, TRACE_MASK_SOLID, TRACE_COLLISION_GROUP_NONE )
+		if ( result.fraction < 1.0 )
+		{
+			float lineTime = min( endTime - Time(), lineHideTime - Time() )
+			if ( lineTime > 0.0 )
+				DebugDrawLine( start, end, 100, 100, 100, false, lineTime )
+			if ( subFeelers > 0 )
+				thread DrawFeelersFromPoint( result.endPos, pointB, duration, subFeelers - 1, lineHideTime )
+		}
+
+		wait RandomFloatRange( 0.05, 0.1 )
+	}
+}
+
+#endif // SERVER
+
+#if CLIENT
+
+function Pressed_ActivateMobilityGhost( entity player )
+{
+	if ( player.IsTitan() )
+		return
+
+	if ( IsWatchingReplay() )
+		return
+
+	if ( !IsAlive( player ) )
+		return
+
+	if ( player.nv.displayMobilityGhostHint == 0.0 )
+		return
+
+	if ( player.nv.displayMobilityGhostHint > Time() )
+		return
+
+	player.ClientCommand( "ActivateMobilityGhost" )
+}
+
+function DisplayMobilityGhostHintChanged( player, newValue, oldValue )
+{
+	expect entity( player )
+	if ( newValue > 0.0 )
+	{
+		thread ShowGhostRui( player )
+	}
+	else if ( IsValid( file.buttonHintRUI ) )
+	{
+		Signal( player, "HidingGhostRui" )
+		RuiDestroyIfAlive( file.buttonHintRUI )
+	}
+}
+
+function ShowGhostRui( entity player )
+{
+	EndSignal( player, "HidingGhostRui" )
+	EndSignal( player, "OnDeath" )
+
+	OnThreadEnd(
+		function() : ( player )
+		{
+			if ( IsValid( player ) )
+				StopSoundOnEntity( player, "UI_HoloTutorial_AnalyzingData" )
+		}
+	)
+
+	file.buttonHintRUI = RuiCreate( $"ui/mobility_ghost_hint.rpak", clGlobal.topoFullScreen, RUI_DRAW_HUD, 0 )
+	RuiSetFloat( file.buttonHintRUI, "startTime", Time() )
+	RuiSetFloat( file.buttonHintRUI, "fadeInDuration", HINT_FADE_TIME )
+	if ( !player.nv.mobilityGhostAnalyzed )
+	{
+		RuiSetFloat( file.buttonHintRUI, "stage1Duration", HINT_STEP1_DURATION )
+		RuiSetFloat( file.buttonHintRUI, "stage2Duration", HINT_STEP2_DURATION )
+		EmitSoundOnEntity( player, "UI_HoloTutorial_AnalyzingData" )
+		wait HINT_STEP1_DURATION + HINT_STEP2_DURATION
+	}
+	RuiSetResolutionToScreenSize( file.buttonHintRUI )
+	EmitSoundOnEntity( player, "UI_HoloTutorial_AnalyzingFinish" )
+}
+
+function DisplayMobilityGhostAnimChanged( player, newValue, oldValue )
+{
+	if ( newValue == true )
+	{
+		int scanEffectIndex = GetParticleSystemIndex( SCAN_ENVIRONMENT_EFFECT )
+		int particleIndex = StartParticleEffectInWorldWithHandle( scanEffectIndex, player.GetOrigin(), <0,0,0> )
+		EffectSetControlPointVector( particleIndex, 1, <2.5,50,0> )
+
+		ColorCorrection_SetExclusive( file.colorCorrection, true )
+		ColorCorrection_SetWeight( file.colorCorrection, 0.0 ) //Changed from 0.25 to zero because it made the glows look bad.
+
+		//EmitSoundOnEntity( player, "Pilot_PhaseShift_Activate_1P" )
+		//EmitSoundOnEntity( player, "Pilot_PhaseShift_Loop_1P" )
+
+		entity cockpit = expect entity( player.GetCockpit() )
+		if ( IsValid( cockpit ) )
+		{
+			int fxHandle = StartParticleEffectOnEntity( cockpit, GetParticleSystemIndex( GHOST_SCREEN_EFFECT ), FX_PATTACH_ABSORIGIN_FOLLOW, -1 )
+			thread ScreenEffectThink( expect entity( player ), fxHandle, cockpit )
+		}
+	}
+	else
+	{
+		ColorCorrection_SetWeight( file.colorCorrection, 0.0 )
+		ColorCorrection_SetExclusive( file.colorCorrection, false )
+
+		Signal( player, "StopMobilityGhostScreenEffect" )
+
+		//StopSoundOnEntity( player, "Pilot_PhaseShift_Loop_1P" )
+		//EmitSoundOnEntity( player, "Pilot_PhaseShift_End_1P" )
+	}
+}
+
+function ScreenEffectThink( entity player, int fxHandle, entity cockpit )
+{
+	EndSignal( player, "OnDeath" )
+	EndSignal( cockpit, "OnDestroy" )
+
+	OnThreadEnd(
+		function() : ( fxHandle )
+		{
+			if ( !EffectDoesExist( fxHandle ) )
+				return
+
+			EffectStop( fxHandle, false, true )
+		}
+	)
+
+	WaitSignal( player, "StopMobilityGhostScreenEffect" )
+}
+
+#endif // CLIENT

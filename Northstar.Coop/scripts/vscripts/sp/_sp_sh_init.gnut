@@ -1,0 +1,415 @@
+global function SPMP_Shared_Init
+#if DEV && SERVER
+global function LeveledWeaponDump
+#endif
+
+void function SPMP_Shared_Init()
+{
+//	Settings_Init()
+	GAMETYPE = "solo"
+
+	Shared_SP_Init()
+}
+
+void function Shared_SP_Init()
+{
+	ShCommonModels_Init()
+	Utility_Shared_Init()
+	CodeCallbacksShared_Init()
+	Flags_Init()
+	RemoteFunctions_Init()
+	DamageTypes_Init()
+	WeaponUtility_Init()
+	PassivesShared_Init()
+	ShUtilityAll_Init()
+	Anim_Aliases_Init()
+	MinimapShared_Init()
+	NetworkMarkerShared_Init()
+	PlayerLeechingShared_Init()
+	InitWeaponScripts()
+	Death_Package_Init()
+	TitanSoul_Init()
+	TitanShared_Init()
+	TitanFastball_Init()
+	Highlight_Init()
+	FlightpathShared_Init()
+	StimShared_Init()
+	Crane_Init()
+	MobilityGhost_Init()
+	SPObjectiveInit()
+	SPObjectiveStringsInit()
+	SPDialogueInit()
+	DialogueShared_Init()
+	SonarShared_Init()
+	TitanEmbark_Init()
+	IonEnergy_Init()
+
+	if ( IsTestMap() )
+		PrecacheSPWeapons()
+
+#if DEV
+	PrecacheWeapon( "weapon_cubemap" )
+#endif
+	DeathHints_Init()
+
+	ProtoBatteryCharger_Init()
+
+	ShAIBossTitan_Init()
+	Sh_EarnMeter_Init()
+	RemoteTurrets_Init()
+
+	Gauntlet_SharedInit()
+	ShTitanOSConversations_Init()
+	OnscreenHints_Init()
+
+	#if SERVER
+	Server_SP_Init()
+	#elseif CLIENT
+	Client_SP_Init()
+	#endif
+}
+
+#if SERVER
+void function Server_SP_Init()
+{
+	CodeCallback_Init()
+	AddCallback_EntitiesDidLoad( ShSp_EntitiesDidLoad )
+	Utility_Init()
+	#if DEV
+	AutoPrecache_Init()
+	#endif
+	Anim_Init()
+	Viewcone_Init()
+	UIVars_Init()
+//	MenuCallbacks_Init()
+	TitanTransfer_Init()
+	TitanNPC_Init()
+	TitanNpcBehavior_Init()
+	ToneController_Init()
+	DropPodFireteam_Init()
+	Objective_Init()
+
+	StartPoint_Init()
+
+	GruntChatter_Init()
+	Gauntlet_ServerInit()
+	PainDeathSounds_Init()
+
+	SPDifficulty_Init()
+	SPUtility_Init()
+	SpInitLoadouts()
+	Pickups_Init()
+	PickupAmmo_Init()
+	ArcConnectors_Init()
+	InfiniteSpawners_Init()
+	ReplacementTitans_Init()
+
+	BaseGametype_Init()
+	RiffSettings_Init()
+	AiUtility_Init()
+	InitSharedStartPoints()
+
+	GameState_Init()
+
+	Music_Init()
+
+	TitanTether_Init()
+
+	AiSoldiers_Init()
+	AiSpawn_Init()
+
+	AiPilots_Init()
+	AiDrone_Init()
+	AiSpectre_Init()
+	AiStalker_Init()
+	AiSuperspectre_Init()
+	AiGunship_Init()
+	SuicideSpectres_Init()
+	AiMarvins_Init()
+	ControlPanel_Init()
+	//AiTurret_Init()
+	AiTurretSentry_Init()
+	SpectreRack_Init()
+	LoadoutCrate_Init()
+	TitanCommands_Init()
+	//#if DEVSCRIPTS
+	//MortarTitans_Init()
+	//#endif
+
+	ClassTitan_Init()
+	ClassWallrun_Init()
+
+	HealthRegen_Init()
+	EmpTitans_Init()
+
+	PlayerCloak_Init()
+	ParticleWall_Init()
+	Smokescreen_Init()
+
+	ScriptMovers_Init()
+
+	TitanHotdrop_Init()
+
+	Zipline_Init()
+	Passives_Init()
+
+	Leeching_Init()
+	PlayerLeeching_Init()
+
+	TitanHealth_Init()
+
+	ChargeBall_Precache()
+
+	MarvinJobs_Init()
+	MarvinFaces_Init()
+	TriggerFunctions_Init()
+	TriggerFunctionsSP_Init()
+	SpawnFunctions_Init()
+	GoblinDropship_Init()
+
+	FriendlyFollowerInit()
+	SPDropship_Init()
+
+	Melee_Init()
+	Rodeo_Init()
+	AiPersonalShield()
+
+	SpShWeaponsInit()
+	GamemodeSp_Init()
+
+	ATTurrets_Init()
+	AIBossTitan_Init()
+
+	SniperSpectres_Init()
+	CloakDrone_Init()
+	InitCombatPaths()
+	InitSaveGame()
+
+	Sv_EarnMeter_Init()
+	Sv_EarnMeterSP_Init()
+
+	TitanHints_Init()
+	InitDestroyableGenerator()
+
+	SP_IntroScreen_Init()
+
+	SP_TitanWeaponPickups_Init()
+}
+
+void function ShSp_EntitiesDidLoad()
+{
+	LeveledScriptedWeapons leveledScriptedWeapons = GetAllLeveledScriptWeapons()
+
+	// we have to spawn the weapons manually because spawn callbacks for pre-placed entities have already passed
+	foreach ( ent in leveledScriptedWeapons.infoTargets )
+	{
+		CreateScriptWeapon( ent )
+	}
+
+	// add spawn callbacks in case anybody is spawning from a spawner. Could happen.
+	foreach ( weaponName, _ in leveledScriptedWeapons.foundScriptWeapons )
+	{
+		AddSpawnCallbackEditorClass( "info_target", weaponName, CreateScriptWeapon )
+	}
+}
+#endif // SERVER
+
+#if CLIENT
+void function Client_SP_Init()
+{
+	ClAutoPrecache_Init()
+	ClMelee_Init()
+	CLUtilityMenu_Init()
+	CLAnnouncement_Init()
+	CLEventNotification_Init()
+	CLUtilitySplash_Init()
+	ClientCodeCallbacks_Init()
+	ClRodeo_Init()
+	RiffSettings_Init()
+	SpShWeaponsInit()
+	Cl_Sentry_Turrets_Init()
+	ClTitanCockpit_Init()
+	ClDataKnife_Init()
+	CLLoadoutCrate_Init()
+	SmartAmmoClient_Init()
+	CLGoblinDropship_Init()
+	ClIntroscreen_Init()
+	ClPlayerADSDofInit()
+	ClPlayer_Init()
+	ClWeaponFlyout_Init()
+	ClDroppedWeaponFlyout_Init()
+	ClTitanHud_Init()
+	ClTitanCommands_Init()
+	ClObjective_Init()
+	ClMainHud_Init()
+	ClSuicideSpectres_Init()
+	ClTripleHealthInit()
+	CinematicIntroScreen_Init()
+	ClRespawnselect_SP_Init()
+
+	ClGamemodeSp_Init()
+	ClSpHud_Init()
+	ClWeaponStatus_Init()
+
+	ClScreenfade_Init()
+
+	ClIndicatorsHud_Init()
+	ClHealthHud_Init()
+	ClScoreboardPrecache_Init()
+	ClScoreboard_Init()
+	ClScoreboardSp_Init()
+	ClReplacementTitanHud_Init()
+	ClDialogue_Init()
+	ClEntityCreationFunctions_Init()
+
+	ClCrowDropship_Init()
+	ClCrowDropshipHero_Init()
+	ClDraconis_Init()
+	ClGoblinDropship_Init()
+	ClGoblinDropshipHero_Init()
+	ClPhantomFighter_Init()
+	ClWidow_Init()
+	ClCrowDropshipXS_Init()
+
+	Cl_EarnMeter_Init()
+	CLAIBossTitan_Init()
+
+	ClControlPanel_Init()
+	ClSpectre_Init()
+	ClStalker_Init()
+	ClSuperSpectre_Init()
+	ClDrone_Init()
+	ClGunship_Init()
+	ClAiTurret_Init()
+	CL_ToneHUD_Init()
+	PerfInitLabels()
+
+	GruntChatter_SharedInit()
+	ClTitanHints_Init()
+
+	Gauntlet_ClientInit()
+
+	CL_TitanWeaponPickup_Init()
+	ClTitanCockpitSounds_Init()
+
+}
+#endif // CLIENT
+
+#if DEV && SERVER
+void function LeveledWeaponDump()
+{
+	DevTextBufferClear()
+
+	printt( "PRINTING WEAPONS" )
+	DevTextBufferWrite( "// AUTO GENERATED FILE, DO NOT EDIT.\n\n" )
+	array<string> allWeapons = GetAllSPWeapons()
+	array<string> weapons
+	DisablePrecacheErrors()
+	wait 0.5
+	foreach ( weaponName in allWeapons )
+	{
+		PrecacheWeapon( weaponName )
+		if ( !GetWeaponInfoFileKeyField_Global( weaponName, "leveled_pickup" ) )
+			continue
+
+		weapons.append( weaponName )
+	}
+
+	weapons.sort( SortStringAlphabetize )
+
+	var modtable = GetDataTable( $"datatable/pilot_weapon_mods.rpak" )
+
+	foreach ( weaponName in weapons )
+	{
+		var modelName
+		var modelName1 = GetWeaponInfoFileKeyField_Global( weaponName, "droppedmodel" )
+		var modelName2 = GetWeaponInfoFileKeyField_Global( weaponName, "playermodel" )
+		if ( modelName1 != null )
+			modelName = modelName1
+		else
+			modelName = modelName2
+
+		DevTextBufferWrite( "entityDef " + weaponName + "\n" )
+		DevTextBufferWrite( "{\n" )
+		DevTextBufferWrite( "	\"editor_var angles\"         \"This entity's orientation in the world. Pitch is rotation around the Y axis, yaw is the rotation around the Z axis, roll is the rotation around the X axis.\"\n" )
+		DevTextBufferWrite( "	\"angles\"                    \"0 0 0\"	\n" )
+		DevTextBufferWrite( "\n" )
+		DevTextBufferWrite( "	\"editor_usage\"              \"A player can pick up this weapon\"	\n" )
+		DevTextBufferWrite( "	\"editor_color\"              \"1 1 1\"	\n" )
+		DevTextBufferWrite( "	\"editor_mins\"               \"-8 -8 -8\"	\n" )
+		DevTextBufferWrite( "	\"editor_maxs\"               \"8 8 8\"	\n" )
+		DevTextBufferWrite( "	\"editor_vmf\"                \"1\"	\n" )
+		DevTextBufferWrite( "	\"editor_displayFolder\"      \"weapons\"	\n" )
+		DevTextBufferWrite( "\n" )
+		DevTextBufferWrite( "	\"editor_var script_group\"   \"Extra info for script\"	\n" )
+		DevTextBufferWrite( "	\"script_group\"              \"\"	\n" )
+		DevTextBufferWrite( "\n" )
+		DevTextBufferWrite( "	\"editor_var script_noteworthy\"  \"Extra info for script\"	\n" )
+		DevTextBufferWrite( "	\"script_noteworthy\"         \"\"	\n" )
+		DevTextBufferWrite( "\n" )
+		DevTextBufferWrite( "	\"editor_var script_name\"    \"Script-gettable entity name\"	\n" )
+		DevTextBufferWrite( "	\"script_name\"               \"\"	\n" )
+		DevTextBufferWrite( "\n" )
+		DevTextBufferWrite( "	\"editor_var model\"                     \"" + modelName + "\"	\n" )
+		DevTextBufferWrite( "	\"model\"                     \"" + modelName + "\"	\n" )
+		DevTextBufferWrite( "\n" )
+		DevTextBufferWrite( "	\"editor_var script_weapon\"  \"Name of weapon to be\"	\n" )
+		DevTextBufferWrite( "	\"script_weapon\"             \"" + weaponName + "\"	\n" )
+		DevTextBufferWrite( "\n" )
+		DevTextBufferWrite( "	\"editor_bool start_constrained\" \"Should the weapon spawn constrained?\"	\n" )
+		DevTextBufferWrite( "	\"start_constrained\"             \"\"	\n" )
+		DevTextBufferWrite( "\n" )
+
+		string allowedMods = "Available Mods: \\n"
+		bool hasMods = false
+		for ( int i=0; i<GetDatatableRowCount( modtable ); i++ )
+		{
+			string weapon = GetDataTableString( modtable, i, GetDataTableColumnByName( modtable, "weapon" ) )
+			if ( weapon == weaponName )
+		 	{
+		 		allowedMods += GetDataTableString( modtable, i, GetDataTableColumnByName( modtable, "mod" ) ) + " \\n"
+		 		hasMods = true
+		 	}
+		}
+
+		string modsString = "List of mods to apply (separated by spaces)"
+		if ( hasMods )
+		{
+			modsString += "\\n"
+			modsString += allowedMods
+		}
+
+		DevTextBufferWrite( "	\"editor_var script_mods\"    \""+modsString+"\"	\n" )
+		DevTextBufferWrite( "	\"script_mods\"               \"\"	\n" )
+		DevTextBufferWrite( "}\n" )
+		DevTextBufferWrite( "\n" )
+	}
+
+	string filename
+
+	// Write to the file
+	filename = "def/leveled_weapons.def"
+	DevP4Checkout( filename )
+	DevTextBufferDumpToFile( filename )
+	DevP4Add( filename )
+
+
+	DevTextBufferClear()
+	DevTextBufferWrite( "// AUTO GENERATED FILE, DO NOT EDIT.\n\n" )
+	foreach ( weaponName in weapons )
+	{
+		if ( !GetWeaponInfoFileKeyField_Global( weaponName, "leveled_pickup" ) )
+			continue
+
+		DevTextBufferWrite( "@PointClass alias(info_target) partition(\"script\") = " + weaponName + " []\n" )
+	}
+
+	filename = "../bin/r2_weapons.fgd"
+	DevP4Checkout( filename )
+	DevTextBufferDumpToFile( filename )
+	DevP4Add( filename )
+
+	wait 0.2
+	RestorePrecacheErrors()
+}
+#endif

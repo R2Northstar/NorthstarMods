@@ -1,0 +1,849 @@
+
+global function Crane_Init
+
+#if SERVER
+
+global function SetCraneYaw
+global function GetCraneYaw
+global function SetCraneEnabled
+global function WaitTillCraneUsed
+global function CraneAllowRotationLeft
+global function CraneAllowRotationRight
+
+const CRANE_SPEED_ROTATION = 100.0
+const CRANE_SPEED_INOUT = 1.0
+
+const CRANE_ROTATE_INPUT_SPEED = 10.0
+const CRANE_INOUT_INPUT_SPEED = 10.0
+
+const SWAY_OUT_WAVER_RATE = 0.4
+const SWAY_OUT_MAX = 0.2
+const SWAY_OUT_VARIANCE = 0.05
+
+const SWAY_SIDE_WAVER_RATE = 0.4
+const SWAY_SIDE_MAX = 0.8
+const SWAY_SIDE_VARIANCE = 0.2
+
+const ROTATION = 0
+const INOUT = 1
+//const UPDOWN = 2
+
+const ANALOG_CONTROL = true
+
+const CARGO_ATTACHMENT = "CARGO_ATTACH"
+const CRANE_MONITOR_MODEL = $"models/beacon/beacon_crane_monitor.mdl"
+const CRANE_MONITOR_MODEL_LARGE = $"models/beacon/crane_room_monitor_console.mdl"
+const BASE_COLLISION_MODEL = $"models/beacon/beacon_crane_base_phys.mdl"
+
+const FX_STATUS_USABLE = $"runway_light_green"
+const FX_STATUS_NOTUSABLE = $"runway_light_red"
+
+const CRANE_MODEL_TALL = $"models/levels_terrain/sp_beacon/beacon_crane_tall.mdl"
+
+struct CraneStruct
+{
+	entity model
+	entity collisionModel
+	entity button
+	entity statusLight
+	entity mover
+	bool inUse
+	float startingYaw
+	bool allowRotation
+	bool allowRotationLeft
+	bool allowRotationRight
+	bool allowInOut
+	bool enabled
+	bool rotationMaxedLeft
+	bool rotationMaxedRight
+
+	float cargoDistanceMin
+	float cargoDistanceMax
+	float cargoHeightMin
+	float cargoHeightMax
+	float cargoBaseHeight
+
+	int poseMoveUp
+	int poseMoveIn
+	int poseLowerWires
+	int poseSwayOut
+	int poseSwaySide
+
+	float[2] movement
+	float[2] rawInput
+	int[2] lastMoveDirection
+
+	string rotateSound
+	string servosStopSound
+}
+
+struct
+{
+	array<CraneStruct> cranes
+	array<entity> cargoNodes
+} file
+
+#endif // SERVER
+
+void function Crane_Init()
+{
+	RegisterOnscreenHint( "CraneControlsHint", "#CRANE_OPERATION_HINT_GAMEPAD", "#CRANE_OPERATION_HINT_KEYBOARD" )
+	RegisterOnscreenHint( "CraneControlsHintSouthPaw", "#CRANE_OPERATION_HINT_GAMEPAD_SOUTHPAW", "#CRANE_OPERATION_HINT_KEYBOARD" )
+
+	#if SERVER
+		RegisterSignal( "CraneUnsetUsable" )
+		RegisterSignal( "StopUsingCrane" )
+		RegisterSignal( "SwayToStop" )
+
+		PrecacheModel( BASE_COLLISION_MODEL )
+		PrecacheModel( CRANE_MONITOR_MODEL )
+
+		PrecacheParticleSystem( FX_STATUS_USABLE )
+		PrecacheParticleSystem( FX_STATUS_NOTUSABLE )
+
+		AddCallback_EntitiesDidLoad( CraneEntitiesLoaded )
+
+		AddSpawnCallbackEditorClass( "prop_dynamic", "script_crane", ScriptCraneInit )
+		AddSpawnCallbackEditorClass( "info_target", "script_crane_cargo", ScriptCraneCargoInit )
+	#endif // SERVER
+}
+
+#if SERVER
+
+void function ScriptCraneInit( entity model )
+{
+	CraneStruct crane
+	crane.model = model
+	crane.collisionModel = CreatePropDynamic( BASE_COLLISION_MODEL, model.GetOrigin(), model.GetAngles(), 6 )
+	crane.startingYaw = model.GetAngles().y
+	crane.allowRotation = model.kv.enable_rotation == "1"
+	crane.allowRotationLeft = crane.allowRotation
+	crane.allowRotationRight = 	crane.allowRotation
+	crane.allowInOut = model.kv.enable_inout == "1"
+	crane.enabled = true
+
+	if ( model.GetModelName() == CRANE_MODEL_TALL )
+	{
+		crane.rotateSound = "DishCrane_Servos_Rotate_LP"
+		crane.servosStopSound = "DishCrane_Servos_Stop"
+	}
+	else
+	{
+		crane.rotateSound = "Crane_Servos_Rotate_LP"
+		crane.servosStopSound = "Crane_Servos_Stop"
+	}
+
+	thread CreateCraneButton( crane )
+	ScriptCraneGetLimits( crane )
+	CreateCraneMover( crane )
+
+	file.cranes.append( crane )
+}
+
+void function ScriptCraneCargoInit( entity node )
+{
+	file.cargoNodes.append( node )
+}
+
+void function SetCraneYaw( entity craneModel, float yaw )
+{
+	CraneStruct crane = GetCraneStructFromEnt( craneModel )
+	Assert( IsValid( crane.mover ) )
+	crane.mover.SetAngles( < 0, yaw, 0 > )
+}
+
+float function GetCraneYaw( entity craneModel )
+{
+	CraneStruct crane = GetCraneStructFromEnt( craneModel )
+	Assert( IsValid( crane.mover ) )
+	return ClampAngle( crane.mover.GetAngles().y )
+}
+
+void function SetCraneEnabled( entity craneModel, bool enabled )
+{
+	CraneStruct crane = GetCraneStructFromEnt( craneModel )
+	crane.enabled = enabled
+	SetCraneUsable( crane, enabled )
+}
+
+void function CraneAllowRotationLeft( entity craneModel, bool enabled )
+{
+	CraneStruct crane = GetCraneStructFromEnt( craneModel )
+	crane.allowRotationLeft = enabled
+}
+
+void function CraneAllowRotationRight( entity craneModel, bool enabled )
+{
+	CraneStruct crane = GetCraneStructFromEnt( craneModel )
+	crane.allowRotationRight = enabled
+}
+
+void function WaitTillCraneUsed( entity craneModel )
+{
+	CraneStruct crane = GetCraneStructFromEnt( craneModel )
+	while( !crane.inUse )
+		WaitFrame()
+}
+
+CraneStruct function GetCraneStructFromEnt( entity ent )
+{
+	foreach( CraneStruct crane in file.cranes )
+	{
+		if ( crane.model == ent )
+			return crane
+	}
+	CraneStruct emptyCrane
+	return emptyCrane
+}
+
+void function ScriptCraneGetLimits( CraneStruct crane )
+{
+	if ( crane.model.HasKey( "static_model" ) && crane.model.kv.static_model == "1" )
+	{
+		Assert( crane.allowInOut == false, "Crane at " + crane.model.GetOrigin() + " uses 'static_model' and only supports rotation but the crane has 'allow_inout' checked." )
+		return
+	}
+
+	vector baseOrigin = crane.model.GetOrigin()
+	vector baseAngles = crane.model.GetAngles()
+	vector forward = AnglesToForward( baseAngles )
+	vector up = AnglesToUp( baseAngles )
+
+	//DebugDrawLine( baseOrigin, baseOrigin + (forward * 50), 0, 255, 255, true, 9999 )
+
+	// Get neutral position
+	Attachment attachment = crane.model.Anim_GetAttachmentAtTime( "pose_neutral", CARGO_ATTACHMENT, 0.0 )
+	int attachIdx = crane.model.LookupAttachment( CARGO_ATTACHMENT )
+	vector attachPos = crane.model.GetAttachmentOrigin( attachIdx )
+	vector attachFixOffset = Vector( 0, 0, attachPos.z - attachment.position.z )
+	vector vecToNeutral = attachment.position - baseOrigin + attachFixOffset
+
+	attachment = crane.model.Anim_GetAttachmentAtTime( "pose_crane_in", CARGO_ATTACHMENT, 0.0 )
+	vector vecToCraneIn = attachment.position - baseOrigin + attachFixOffset
+
+	attachment = crane.model.Anim_GetAttachmentAtTime( "pose_crane_up", CARGO_ATTACHMENT, 0.0 )
+	vector vecToCraneUp = attachment.position - baseOrigin + attachFixOffset
+
+	attachment = crane.model.Anim_GetAttachmentAtTime( "pose_wires_down", CARGO_ATTACHMENT, 0.0 )
+	vector vecToWiresDown = attachment.position - baseOrigin + attachFixOffset
+
+	float neutralForwardOffset = DotProduct( vecToNeutral, forward )
+	float neutralUpOffset = DotProduct( vecToNeutral, up )
+	float craneInForwardOffset = DotProduct( vecToCraneIn, forward )
+	float craneUpUpOffset = DotProduct( vecToCraneUp, up )
+	float wiresDownUpOffset = DotProduct( vecToWiresDown, up )
+
+	crane.cargoDistanceMin = craneInForwardOffset
+	crane.cargoDistanceMax = neutralForwardOffset
+	crane.cargoHeightMin = wiresDownUpOffset
+	crane.cargoHeightMax = craneUpUpOffset
+	crane.cargoBaseHeight = neutralUpOffset
+
+	// Store pose parameter index
+	crane.poseMoveUp = crane.model.LookupPoseParameterIndex( "move_up" )
+	crane.poseMoveIn = crane.model.LookupPoseParameterIndex( "move_in" )
+	crane.poseLowerWires = crane.model.LookupPoseParameterIndex( "lower_wires" )
+	crane.poseSwayOut = crane.model.LookupPoseParameterIndex( "sway_out" )
+	crane.poseSwaySide = crane.model.LookupPoseParameterIndex( "sway_side" )
+
+	//DebugDrawLine( baseOrigin + ( forward * neutralForwardOffset ) + ( up * neutralUpOffset ), baseOrigin + ( forward * craneOutForwardOffset ) + ( up * neutralUpOffset ), 255, 255, 0, true, 9999 )
+	//DebugDrawLine( baseOrigin + ( forward * neutralForwardOffset ) + ( up * neutralUpOffset ), baseOrigin + ( forward * neutralForwardOffset ) + ( up * wiresDownUpOffset ), 255, 255, 0, true, 9999 )
+	//DebugDrawLine( baseOrigin + ( forward * craneOutForwardOffset ) + ( up * neutralUpOffset ), baseOrigin + ( forward * craneOutForwardOffset ) + ( up * wiresDownUpOffset ), 255, 255, 0, true, 9999 )
+	//DebugDrawLine( baseOrigin + ( forward * neutralForwardOffset ) + ( up * wiresDownUpOffset ), baseOrigin + ( forward * craneOutForwardOffset ) + ( up * wiresDownUpOffset ), 255, 255, 0, true, 9999 )
+	//DebugDrawLine( baseOrigin + ( forward * neutralForwardOffset ) + ( up * craneUpUpOffset ), baseOrigin + ( forward * craneOutForwardOffset ) + ( up * craneUpUpOffset ), 0, 255, 255, true, 9999 )
+	//DebugDrawLine( baseOrigin + ( forward * neutralForwardOffset ) + ( up * craneUpUpOffset ), baseOrigin + ( forward * neutralForwardOffset ) + ( up * neutralUpOffset ), 0, 255, 255, true, 9999 )
+	//DebugDrawLine( baseOrigin + ( forward * craneOutForwardOffset ) + ( up * craneUpUpOffset ), baseOrigin + ( forward * craneOutForwardOffset ) + ( up * neutralUpOffset ), 0, 255, 255, true, 9999 )
+
+	//crane.model.SetPoseParameter( crane.model.LookupPoseParameterIndex( "move_up" ), 1.0 )
+	//crane.model.SetPoseParameter( crane.model.LookupPoseParameterIndex( "move_in" ), 1.0 )
+	//crane.model.SetPoseParameter( crane.model.LookupPoseParameterIndex( "lower_wires" ), 1.0 )
+}
+
+void function CraneEntitiesLoaded()
+{
+	foreach( CraneStruct crane in file.cranes )
+	{
+		// Get the closest cargo to the crane
+		entity cargoNode = GetClosest2D( file.cargoNodes, crane.model.GetOrigin() )
+		Assert( IsValid( cargoNode ), "Crane at " + crane.model.GetOrigin() + " doesn't have a script_crane_cargo within reach" )
+		file.cargoNodes.fastremovebyvalue( cargoNode )
+
+		// Make sure cargo node targets some geo
+		array<entity> linkedEnts = cargoNode.GetLinkEntArray()
+		Assert( linkedEnts.len() > 0, "script_crane_cargo needs to link to geo, models, or other entities" )
+
+		LinkCargoToCrane( crane, cargoNode )
+
+		if ( crane.allowRotation )
+			thread CraneOperation_UpdateRotation( crane )
+		if ( crane.allowInOut )
+			thread CraneOperation_UpdateInOut( crane )
+
+		// Hack to fix weird animation issue
+		//crane.model.Anim_Play( "sway_left" )
+		crane.model.Code_Anim_Stop()
+
+		if ( crane.allowRotation || crane.allowInOut )
+			SetCraneUsable( crane, true )
+		else
+			SetCraneUsable( crane, false )
+	}
+}
+
+void function LinkCargoToCrane( CraneStruct crane, entity cargoNode )
+{
+	if ( !crane.model.HasKey( "static_model" ) || crane.model.kv.static_model == "0" )
+	{
+		// Make sure the cargo is within valid forward range
+		vector vecToCargo = cargoNode.GetOrigin() - crane.model.GetOrigin()
+
+		// Check that distance forward is valid
+		vector craneForward = AnglesToForward( crane.model.GetAngles() )
+		float distanceForward = Distance2D( crane.model.GetOrigin(), cargoNode.GetOrigin() )
+		Assert( distanceForward >= crane.cargoDistanceMin, "script_crane_cargo at " + cargoNode.GetOrigin() + " is too close to the crane. The crane arm can't retract enough to grab it" )
+		Assert( distanceForward <= crane.cargoDistanceMax, "script_crane_cargo at " + cargoNode.GetOrigin() + " is too far from the crane. The crane arm can't extend enough to grab it" )
+
+		// Check that height is valid
+		vector craneUp = AnglesToUp( crane.model.GetAngles() )
+		float distanceUp = DotProduct( craneUp, vecToCargo )
+		Assert( distanceUp <= crane.cargoHeightMax, "script_crane_cargo at " + cargoNode.GetOrigin() + " is too high above the crane. The crane arm can't go high enough to grab it" )
+		Assert( distanceUp >= crane.cargoHeightMin, "script_crane_cargo at " + cargoNode.GetOrigin() + " is too low above the crane. The crane arm and wires can't go low enough enough to grab it" )
+
+		// Check that rotation to crab it is within valid rotation range
+		float yawToCargo = VectorToAngles( FlattenVector( vecToCargo ) ).y
+		float yawDiffToCargo = ClampAngle180( crane.startingYaw - yawToCargo )
+		float minYaw = float( crane.model.kv.rotation_degrees_left )
+		float maxYaw = float( crane.model.kv.rotation_degrees_right )
+		Assert( yawDiffToCargo <= fabs(maxYaw), "script_crane_cargo at " + cargoNode.GetOrigin() + " can't be grabbed by the crane because the crane isn't allowed to rotate enough. Move the cargo within its min/max rotation degrees." )
+		Assert( yawDiffToCargo >= -fabs(minYaw), "script_crane_cargo at " + cargoNode.GetOrigin() + " can't be grabbed by the crane because the crane isn't allowed to rotate enough. Move the cargo within its min/max rotation degrees." )
+
+		// Rotate the crane to the cargo
+		crane.mover.SetAngles( Vector( 0, yawToCargo, 0 ) )
+
+		// Extend the crane arm to reach the cargo
+		float moveInFrac = GraphCapped( distanceForward, crane.cargoDistanceMin, crane.cargoDistanceMax, 1.0, 0.0 )
+		crane.model.SetPoseParameter( crane.poseMoveIn, moveInFrac )
+
+		// Move the crane arm up, or the wires down so we connect with the cargo
+		float craneUpFrac = GraphCapped( distanceUp, crane.cargoBaseHeight, crane.cargoHeightMax, 0.0, 1.0 )
+		float wiresDownFrac = GraphCapped( distanceUp, crane.cargoBaseHeight, crane.cargoHeightMin, 0.0, 1.0 )
+		crane.model.SetPoseParameter( crane.poseMoveUp, craneUpFrac )
+		crane.model.SetPoseParameter( crane.poseLowerWires, wiresDownFrac )
+
+		// Rotate the clamp so it lines up with the cargo
+		int attachIdx = crane.model.LookupAttachment( CARGO_ATTACHMENT )
+		float attachYaw = crane.model.GetAttachmentAngles( attachIdx ).y
+		float cargoYaw = cargoNode.GetAngles().y
+		float cargoAngleDiff = AngleDiff( attachYaw, cargoYaw )
+		float rotateFrac = 0.0
+		if ( cargoAngleDiff > 0 )
+			rotateFrac = GraphCapped( cargoAngleDiff, 0.0, 180.0, 0.0, 1.0 )
+		else if ( cargoAngleDiff < 0 )
+			rotateFrac = GraphCapped( cargoAngleDiff, 0.0, -180.0, 1.0, 0.0 )
+		int poseRotateClamp = crane.model.LookupPoseParameterIndex( "rotate_clamp" )
+		crane.model.SetPoseParameter( poseRotateClamp, rotateFrac )
+	}
+
+	//printt( "cargoAngleDiff:", cargoAngleDiff )
+	//printt( "rotateFrac:", rotateFrac )
+
+	// Now we can link the cargo to the crane
+	string attachName = CARGO_ATTACHMENT
+	if ( crane.model.HasKey( "static_model" ) && crane.model.kv.static_model == "1" )
+		attachName = ""
+
+	bool setPushers = ( !cargoNode.HasKey( "linkedEntsArePushers" ) || cargoNode.kv.linkedEntsArePushers == "1" )
+
+	//printt( "#################################################" )
+	//printt( "SETTING UP PUSHERS ON CRANE", crane.model )
+	//printt( "#################################################" )
+
+	cargoNode.SetParent( crane.model, attachName, true )
+	array<entity> linkedEnts = cargoNode.GetLinkEntArray()
+	foreach( entity linkedEnt in linkedEnts )
+	{
+		linkedEnt.SetParent( crane.model, attachName, true )
+		if ( !setPushers )
+			continue
+		if ( !linkedEnt.IsTriggerBox() )
+		{
+			//printt( "#################################################" )
+			//printt( "SETTING PUSHER ON LINKED CRANE ENTITY:", linkedEnt, "classname:", linkedEnt.GetClassName() )
+			//printt( "#################################################" )
+			linkedEnt.SetPusher( true )
+		}
+	}
+}
+
+void function CreateCraneButton( CraneStruct crane )
+{
+	if ( crane.model.HasKey( "use_linked_panel" ) && crane.model.kv.use_linked_panel == "1" )
+	{
+		// Use linked panel
+		crane.button = crane.model.GetLinkEnt()
+		Assert( IsValid( crane.button ), "You put 'use_linked_panel' on crane at " + crane.model.GetOrigin() + " but it doesn't link to a panel model" )
+		asset craneMonitorModelUsed = crane.button.GetModelName()
+		Assert( craneMonitorModelUsed == CRANE_MONITOR_MODEL || craneMonitorModelUsed == CRANE_MONITOR_MODEL_LARGE, "Crane panel at " + crane.button.GetOrigin() + " needs to use model: " + CRANE_MONITOR_MODEL )
+	}
+	else
+	{
+		// Create and attach a panel
+		crane.button = CreatePropDynamic( CRANE_MONITOR_MODEL, null, null, 2 )
+		crane.button.SetParent( crane.model, "MONITOR_ATTACH", false )
+	}
+
+	crane.button.SetUsableByGroup( "pilot" )
+	crane.button.SetUsePrompts( "#CRANE_OPERATION_USE_HINT_HOLD" , "#CRANE_OPERATION_USE_HINT_PRESS" )
+
+	int contextId = 0
+	crane.button.Highlight_SetFunctions( contextId, 0, true, HIGHLIGHT_OUTLINE_INTERACT_BUTTON, 1, 0, false )
+	crane.button.Highlight_SetParam( contextId, 0, HIGHLIGHT_COLOR_INTERACT )
+	crane.button.Highlight_SetCurrentContext( contextId )
+
+	WaitFrame()
+
+	int tagID = crane.button.LookupAttachment( "STATUS_LIGHT" )
+	crane.statusLight = PlayLoopFXOnEntity( FX_STATUS_NOTUSABLE, crane.button, "STATUS_LIGHT" )
+}
+
+void function CreateCraneMover( CraneStruct crane )
+{
+	crane.mover = CreateScriptMover( crane.model.GetOrigin(), crane.model.GetAngles() )
+	crane.model.SetParent( crane.mover, "", true )
+	crane.collisionModel.SetParent( crane.mover, "", false )
+	crane.mover.SetPusher( true )
+}
+
+void function SetCraneUsable( CraneStruct crane, bool usable )
+{
+	int tagID = crane.button.LookupAttachment( "STATUS_LIGHT" )
+	if ( usable && crane.enabled )
+	{
+		crane.button.SetUsable()
+		crane.button.Highlight_ShowInside( 0 )
+		crane.button.Highlight_ShowOutline( 0 )
+
+		if ( IsValid( crane.statusLight ) )
+			crane.statusLight.Destroy()
+		crane.statusLight = PlayLoopFXOnEntity( FX_STATUS_USABLE, crane.button, "STATUS_LIGHT" )
+
+		thread CraneWaitForUser( crane )
+	}
+	else
+	{
+		Signal( crane, "CraneUnsetUsable" )
+		crane.button.UnsetUsable()
+		crane.button.Highlight_HideInside( 0 )
+		crane.button.Highlight_HideOutline( 0 )
+
+		if ( IsValid( crane.statusLight ) )
+			crane.statusLight.Destroy()
+		crane.statusLight = PlayLoopFXOnEntity( FX_STATUS_NOTUSABLE, crane.button, "STATUS_LIGHT" )
+	}
+}
+
+void function CraneWaitForUser( CraneStruct crane )
+{
+	EndSignal( crane, "CraneUnsetUsable" )
+
+	entity player
+	while( true )
+	{
+		table results = crane.button.WaitSignal( "OnPlayerUse" )
+		//printt( "Panel Used" )
+		player = expect entity( results.player )
+		//printt( "player:", player )
+		if ( !IsValid( player ) )
+		{
+			//printt( "player not valid" )
+			continue
+		}
+		if ( !player.IsPlayer() )
+		{
+			//printt( "User not a player" )
+			continue
+		}
+		break
+	}
+
+	thread PlayerUseCrane( crane, player )
+}
+
+void function PlayerUseCrane( CraneStruct crane, entity player )
+{
+	//printt( "Player uses crane" )
+	EndSignal( player, "OnDeath" )
+
+	SetCraneUsable( crane, false )
+	crane.inUse = true
+	crane.button.NotSolid()
+
+	player.ForceStand()
+	player.DisableWeapon()
+	player.SetParent( crane.button, "PLAYER_ATTACH", false, 0.25 )
+	ViewConeSmall( player )
+
+	EmitSoundOnEntity( crane.model, "Crane_Startup" )
+	EmitSoundOnEntity( crane.model, "Crane_Engine_Idle_LP" )
+
+	// 0 is left stick, 1 is right
+	if ( GetConVarInt( "joy_movement_stick" ) == 0 )
+		DisplayOnscreenHint( player, "CraneControlsHint" )
+	else
+		DisplayOnscreenHint( player, "CraneControlsHintSouthPaw" )
+
+	thread CraneOperation_UpdateControlInputs( crane, player )
+
+	// Button input to get off the crane
+	AddButtonPressedPlayerInputCallback( player, IN_DUCK, PlayerStopUsingCrane )
+	AddButtonPressedPlayerInputCallback( player, IN_USE, PlayerStopUsingCrane )
+	AddButtonPressedPlayerInputCallback( player, IN_DUCKTOGGLE, PlayerStopUsingCrane )
+	AddButtonPressedPlayerInputCallback( player, IN_USE_AND_RELOAD, PlayerStopUsingCrane )
+
+	OnThreadEnd(
+	function() : ( player, crane )
+		{
+			SetCraneUsable( crane, true )
+			crane.button.Solid()
+
+			if ( IsValid( player ) )
+			{
+				RemoveButtonPressedPlayerInputCallback( player, IN_DUCK, PlayerStopUsingCrane )
+				RemoveButtonPressedPlayerInputCallback( player, IN_USE, PlayerStopUsingCrane )
+				RemoveButtonPressedPlayerInputCallback( player, IN_DUCKTOGGLE, PlayerStopUsingCrane )
+				RemoveButtonPressedPlayerInputCallback( player, IN_USE_AND_RELOAD, PlayerStopUsingCrane )
+				ClearOnscreenHint( player )
+			}
+		}
+	)
+
+	WaitSignal( player, "StopUsingCrane" )
+	EmitSoundOnEntity( crane.model, "Crane_Shutdown" )
+	StopSoundOnEntity( crane.model, "Crane_Engine_Idle_LP" )
+
+	// Put player back to normal movement
+	player.PlayerCone_Disable()
+	player.UnforceStand()
+	player.EnableWeapon()
+	player.ClearParent()
+	int attachIdx = crane.button.LookupAttachment( "PLAYER_DETACH" )
+	player.SetOrigin( crane.button.GetAttachmentOrigin( attachIdx ) )
+	player.SetAngles( crane.button.GetAttachmentAngles( attachIdx ) )
+
+	if ( IsValid( player ) )
+		ClearOnscreenHint( player )
+
+	// Don't turn off crane logic for a bit, we want the crane to finish its deceleration and animations before stopping them
+	wait 2.0
+	crane.inUse = false
+
+}
+
+void function PlayerStopUsingCrane( entity player )
+{
+	Signal( player, "StopUsingCrane" )
+}
+
+void function CraneOperation_UpdateControlInputs( CraneStruct crane, entity player )
+{
+	EndSignal( crane.model, "OnDestroy" )
+	EndSignal( player, "OnDestroy" )
+	EndSignal( player, "StopUsingCrane" )
+
+	OnThreadEnd(
+	function() : ( crane )
+		{
+			crane.movement[ROTATION] = 0.0
+			crane.movement[INOUT] = 0.0
+		}
+	)
+
+	while( crane.inUse )
+	{
+		if ( crane.allowRotation )
+		{
+			float input = player.GetInputAxisRight()
+			if ( ANALOG_CONTROL )
+			{
+				if ( input < 0 )
+					input = -1
+				else if ( input > 0 )
+					input = 1
+			}
+
+			if ( Crane_ShouldUpdateRotation( crane, input ) )
+			{
+				UpdateMovementWithAccelDecel( crane, input, ROTATION, CRANE_ROTATE_INPUT_SPEED )
+			}
+			else
+			{
+				// set these back to zero if we aren't updating on purpose- otherwise UpdateMovementWithAccelDecel will create a blend out from incorrect old data
+				crane.movement[ROTATION] = 0
+				crane.rawInput[ROTATION] = 0
+			}
+		}
+
+		if ( crane.allowInOut )
+		{
+			float input = player.GetInputAxisForward() * -1.0
+			UpdateMovementWithAccelDecel( crane, input, INOUT, CRANE_INOUT_INPUT_SPEED )
+		}
+
+		WaitFrame()
+	}
+}
+
+bool function Crane_ShouldUpdateRotation( CraneStruct crane, float input )
+{
+	if ( input == 0 && (crane.rotationMaxedLeft || crane.rotationMaxedRight) )
+		return false
+
+	if ( input > 0 && !crane.allowRotationRight )
+		return false
+
+	if ( input < 0 && !crane.allowRotationLeft )
+		return false
+
+	return true
+}
+
+float function FrameTime_HACK()
+{
+	// This script used to use FrameTime(), which returns the server frame time instead of the script frame time.
+	// Then we changed the server frame rate but not the script frame rate, so everything got faster.
+	// This is a hack to keep the old behavior.
+	return 0.01666667
+}
+
+void function UpdateMovementWithAccelDecel( CraneStruct crane, float input, int movementAxis, float speed )
+{
+	// Get cranes current movement
+	float currentMovement = crane.movement[movementAxis]
+	float goalMovement = input
+	float newMovement = currentMovement
+	float change = FrameTime_HACK() * speed
+	if ( goalMovement > currentMovement )
+		newMovement = min( currentMovement + change, goalMovement )
+	else if ( goalMovement < currentMovement )
+		newMovement = max( currentMovement - change, goalMovement )
+
+	//printt( "newMovement:", newMovement )
+	crane.movement[movementAxis] = newMovement
+	crane.rawInput[movementAxis] = input
+}
+
+void function CraneOperation_UpdateRotation( CraneStruct crane )
+{
+	float minYaw = float( crane.model.kv.rotation_degrees_left )
+	float maxYaw = float( crane.model.kv.rotation_degrees_right )
+	float rotateSpeed = CRANE_SPEED_ROTATION * float( crane.model.kv.rotation_speed_scale )
+
+	int lastMoveDirection = 0
+	int newMoveDirection = 0
+	bool stopping = false
+
+	while( true )
+	{
+		while( !crane.inUse )
+		{
+			WaitFrame()
+		}
+
+		while( crane.inUse )
+		{
+			//##################################################
+			// Figure out how much to rotate based on the input
+			//##################################################
+			float input = crane.movement[ROTATION]
+			float currentYaw = crane.mover.GetAngles().y
+			float amountToRotate = FrameTime_HACK() * rotateSpeed * -input //* accel
+			float maxRotate = FrameTime_HACK() * rotateSpeed
+
+			//#############################
+			// First determine if actually rotating
+			//#############################
+			vector newAngle
+			if ( amountToRotate != 0 )
+			{
+				// Calculate new yaw this frame based on input, speed, and frame time
+				float newYaw = currentYaw + amountToRotate
+				newAngle = Vector( 0, ClampAngle( newYaw ), 0 )
+
+				// Don't let the crane rotate past it's allowed limits
+				float angDif = AngleDiff( crane.startingYaw, newAngle.y )
+				if ( angDif > fabs(minYaw) || angDif < -fabs(maxYaw) )
+					amountToRotate = 0.0
+
+				// Don't want CraneOperation_UpdateControlInputs() to update if the crane is already max rotated to one side
+				if ( angDif > fabs(minYaw) && !crane.rotationMaxedLeft )
+					crane.rotationMaxedLeft = true
+				else if ( angDif <= fabs(minYaw) && crane.rotationMaxedLeft )
+					crane.rotationMaxedLeft = false
+
+				if ( angDif < -fabs(maxYaw) && !crane.rotationMaxedRight )
+					crane.rotationMaxedRight = true
+				else if ( angDif >= -fabs(maxYaw) && crane.rotationMaxedRight )
+					crane.rotationMaxedRight = false
+
+				CreateShakeRumbleOnly( crane.button.GetOrigin(), 10, 5, 0.2, 256 )
+			}
+
+			//#############################
+			// Sway outward while rotating
+			//#############################
+
+			if ( crane.poseSwayOut > 0 )
+			{
+				float maxSwayOut = GraphCapped( GetPulseFrac( SWAY_OUT_WAVER_RATE ), 0.0, 1.0, SWAY_OUT_MAX - SWAY_OUT_VARIANCE, SWAY_OUT_MAX + SWAY_OUT_VARIANCE )
+				float swayOutFrac = GraphCapped( fabs( amountToRotate ), 0.0, maxRotate, 0.0, maxSwayOut )
+				float currentPoseFrac = crane.model.GetPoseParameter( crane.poseSwayOut )
+				float maxChange = FrameTime_HACK()
+				swayOutFrac = clamp( swayOutFrac, currentPoseFrac - maxChange, currentPoseFrac + maxChange )
+				crane.model.SetPoseParameterOverTime( crane.poseSwayOut, swayOutFrac, 0.11 )
+			}
+
+			//##################
+			// Sway left/right
+			//##################
+
+			if ( crane.poseSwaySide > 0 )
+			{
+				float maxSwaySide = GraphCapped( GetPulseFrac( SWAY_SIDE_WAVER_RATE ), 0.0, 1.0, SWAY_SIDE_MAX - SWAY_SIDE_VARIANCE, SWAY_SIDE_MAX + SWAY_SIDE_VARIANCE )
+				float swaySideFrac = GraphCapped( amountToRotate, -maxRotate, maxRotate, -maxSwaySide, maxSwaySide )
+				float currentPoseFrac = crane.model.GetPoseParameter( crane.poseSwaySide )
+				float maxChange = FrameTime_HACK() * 2.0
+				swaySideFrac = clamp( swaySideFrac, currentPoseFrac - maxChange, currentPoseFrac + maxChange )
+
+				if ( crane.rawInput[ROTATION] == 0 || amountToRotate == 0 )
+				{
+					if ( !stopping )
+					{
+						//printt( "Sway to Stop" )
+						thread SwayToStop( crane )
+						stopping = true
+					}
+				}
+				else
+				{
+					Signal( crane.model, "SwayToStop" )
+					crane.model.SetPoseParameterOverTime( crane.poseSwaySide, swaySideFrac, 0.11 )
+					stopping = false
+				}
+			}
+
+			//##################################################
+
+			// Do the rotation
+			if ( amountToRotate != 0 )
+			{
+				crane.mover.NonPhysicsRotateTo( newAngle, 0.1, 0.0, 0.0 )
+				//printt( "newAngle:", newAngle )
+			}
+
+			// Keep track of the direction we are moving
+			if ( amountToRotate < 0 )
+				newMoveDirection = 1
+			else if ( amountToRotate > 0 )
+				newMoveDirection = -1
+			else
+				newMoveDirection = 0
+
+			// Animation & Sound
+			if ( newMoveDirection != lastMoveDirection )
+			{
+				StopSoundOnEntity( crane.model, crane.rotateSound )
+				StopSoundOnEntity( crane.model, crane.servosStopSound )
+
+				if ( newMoveDirection == -1 )
+				{
+					EmitSoundOnEntity( crane.model, crane.rotateSound )
+					//crane.model.Anim_Play( "sway_right" )
+				}
+				else if ( newMoveDirection == 1 )
+				{
+					EmitSoundOnEntity( crane.model, crane.rotateSound )
+					//crane.model.Anim_Play( "sway_left" )
+				}
+				else
+				{
+					EmitSoundOnEntity( crane.model, crane.servosStopSound )
+					CreateShakeRumbleOnly( crane.button.GetOrigin(), 100, 50, 1.0, 256 )
+					//if ( lastMoveDirection == -1 )
+					//	crane.model.Anim_Play( "sway_right_stop" )
+					//else if ( lastMoveDirection == 1 )
+					//	crane.model.Anim_Play( "sway_left_stop" )
+				}
+			}
+
+			lastMoveDirection = newMoveDirection
+
+			WaitFrame()
+		}
+
+		StopSoundOnEntity( crane.model, crane.rotateSound )
+		StopSoundOnEntity( crane.model, crane.servosStopSound )
+	}
+}
+
+void function CraneOperation_UpdateInOut( CraneStruct crane )
+{
+	int poseIndex = crane.model.LookupPoseParameterIndex( "move_in" )
+	float poseFrac = crane.model.GetPoseParameter( poseIndex )
+
+	while( true )
+	{
+		float input = crane.movement[INOUT]
+		float amountToSlide = FrameTime_HACK() * CRANE_SPEED_INOUT * input
+
+		if ( amountToSlide == 0 )
+		{
+			WaitFrame()
+			continue
+		}
+
+		poseFrac = clamp( poseFrac + amountToSlide, 0.0, 1.0 )
+		crane.model.SetPoseParameterOverTime( poseIndex, poseFrac, 0.11 )
+
+		WaitFrame()
+	}
+}
+
+void function SwayToStop( CraneStruct crane )
+{
+	Signal( crane.model, "SwayToStop" )
+	EndSignal( crane.model, "SwayToStop" )
+
+	float startFrac = crane.model.GetPoseParameter( crane.poseSwaySide )
+	float nextFrac
+	bool alt = startFrac > 0
+
+	while( true )
+	{
+		nextFrac = fabs( startFrac ) * 0.5
+		if ( nextFrac < 0.0 )
+			nextFrac = 0.0
+		if ( alt )
+			nextFrac *= -1
+		alt = !alt
+
+		float moveStartTime = Time()
+		float moveTime = 1.5//fabs( fabs( startFrac ) - fabs( nextFrac ) ) * 4.0
+		float easeInOutTime = moveTime * 0.25
+		float moveEndTime = moveStartTime + moveTime
+		while( Time() <= moveEndTime )
+		{
+			float interpolate = Interpolate( moveStartTime, moveTime, easeInOutTime, easeInOutTime )
+			float f = GraphCapped( interpolate, 0.0, 1.0, startFrac, nextFrac )
+			crane.model.SetPoseParameterOverTime( crane.poseSwaySide, f, 0.11 )
+			WaitFrame()
+		}
+		startFrac = nextFrac
+
+		if ( nextFrac == 0.0 )
+			return
+
+		WaitFrame()
+	}
+}
+
+#endif // SERVER

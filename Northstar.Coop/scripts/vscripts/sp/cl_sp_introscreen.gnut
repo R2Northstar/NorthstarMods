@@ -1,0 +1,47 @@
+global function ClShowIntroScreen
+
+struct
+{
+	var rui
+} file
+
+void function ClShowIntroScreen()
+{
+	if ( file.rui != null )
+		return
+
+	file.rui = RuiCreate( $"ui/sp_introscreen.rpak", clGlobal.topoFullScreen, RUI_DRAW_HUD, 10000 )
+	string levelName = GetMapName()
+	var dataTable = GetDataTable( $"datatable/sp_introscreen.rpak" )
+	int row = GetDataTableRowMatchingStringValue( dataTable, GetDataTableColumnByName( dataTable, "level" ), levelName )
+	Assert( row != -1, "Tried to show intro screen on a level that has no intro screen" )
+
+	printt( row )
+
+	if ( row != -1 )
+	{
+		RuiSetFloat( file.rui, "textFadeDelay", GetDataTableFloat( dataTable, row, GetDataTableColumnByName( dataTable, "textFadeDelay" ) ) )
+		RuiSetFloat( file.rui, "textFadeTime", GetDataTableFloat( dataTable, row, GetDataTableColumnByName( dataTable, "textFadeTime" ) ) )
+		RuiSetFloat( file.rui, "bgFadeDelay", GetDataTableFloat( dataTable, row, GetDataTableColumnByName( dataTable, "bgFadeDelay" ) ) )
+		printt( GetDataTableString( dataTable, row, GetDataTableColumnByName( dataTable, "level" ) ) )
+		printt( GetDataTableFloat( dataTable, row, GetDataTableColumnByName( dataTable, "bgFadeDelay" ) ) )
+		printt( GetDataTableFloat( dataTable, row, GetDataTableColumnByName( dataTable, "bgFadeTime" ) ) )
+		RuiSetFloat( file.rui, "bgFadeTime", GetDataTableFloat( dataTable, row, GetDataTableColumnByName( dataTable, "bgFadeTime" ) ) )
+		RuiSetFloat( file.rui, "quoteFadeDelay", GetDataTableFloat( dataTable, row, GetDataTableColumnByName( dataTable, "quoteFadeDelay" ) ) )
+		RuiSetFloat( file.rui, "quoteFadeTime", GetDataTableFloat( dataTable, row, GetDataTableColumnByName( dataTable, "quoteFadeTime" ) ) )
+		RuiSetString( file.rui, "messageText", GetDataTableString( dataTable, row, GetDataTableColumnByName( dataTable, "title" ) ) )
+		RuiSetString( file.rui, "quoteText", GetDataTableString( dataTable, row, GetDataTableColumnByName( dataTable, "quote" ) ) )
+		RuiSetString( file.rui, "quoteSource", GetDataTableString( dataTable, row, GetDataTableColumnByName( dataTable, "quoteSource" ) ) )
+	}
+
+	if ( file.rui == null )
+		return
+
+	RuiSetGameTime( file.rui, "fadeTime", Time() )
+	file.rui = null
+
+	row = GetDataTableRowMatchingStringValue( dataTable, GetDataTableColumnByName( dataTable, "level" ), levelName )
+	float delay = GetDataTableFloat( dataTable, row, GetDataTableColumnByName( dataTable, "bgFadeDelay" ) ) + GetDataTableFloat( dataTable, row, GetDataTableColumnByName( dataTable, "bgFadeTime" ) )
+	wait delay
+	ClearCrosshairPriority( crosshairPriorityLevel.PREMATCH )
+}

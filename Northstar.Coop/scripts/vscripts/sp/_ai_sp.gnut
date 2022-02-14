@@ -1,0 +1,12 @@
+global function SetProficiency
+global function SPMP_UpdateNPCProficiency
+
+void function SetProficiency( entity soldier )
+{
+	SetProficiencyFromSPDifficulty( soldier )
+}
+
+void function SPMP_UpdateNPCProficiency( entity ent )
+{
+	UpdateNPCForSpDifficulty( ent )
+}

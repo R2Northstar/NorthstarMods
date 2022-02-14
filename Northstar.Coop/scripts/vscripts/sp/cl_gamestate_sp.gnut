@@ -1,0 +1,174 @@
+untyped
+
+global function ClGamemodeSp_Init
+
+global function WaittillGameStateOrHigher
+global function ServerCallback_ScreenShakeOzone
+global function ClientCodeCallback_OnPlayerActiveBurnCardIndexChanged
+
+global function IsAmmoFullWeapon
+global function HideAmmoFullFlyout
+global function UpdateAmmoFullFlyout
+
+const NO_AMMO_DURATION = 5.0
+
+struct
+{
+	float lastObitTime = 0.0
+	var ammoFullRui
+	var lastAmmoFullWeapon
+} file
+
+void function ClientCodeCallback_OnPlayerActiveBurnCardIndexChanged( entity player, int oldActiveBurnCardIndex )
+{
+
+}
+
+void function ClGamemodeSp_Init()
+{
+	RegisterSignal( "GameStateChanged" )
+	RegisterServerVarChangeCallback( "gameState", SpGameStateChanged )
+
+	AddEventNotificationCallback( eEventNotifications.WEAP_GotAmmo, DisplayGotAmmo )
+	AddEventNotificationCallback( eEventNotifications.WEAP_AmmoFull, DisplayAmmoFull )
+}
+
+//TODO: BETTER WAY TO DO THIS?
+void function SpGameStateChanged()
+{
+	clGlobal.levelEnt.Signal( "GameStateChanged" )
+}
+
+function WaittillGameStateOrHigher( state )
+{
+	for ( ;; )
+	{
+		if ( GetGameState() >= state )
+			return
+		clGlobal.levelEnt.WaitSignal( "GameStateChanged" )
+	}
+}
+
+//droppod stuff
+function ServerCallback_ScreenShakeOzone()
+{
+	thread ScreenShakeOzoneThread()
+}
+
+function ScreenShakeOzoneThread()
+{
+	local amplitude, frequency, duration
+	local direction = Vector( 0,0,0 )
+	//build up to ozone entry
+	amplitude 	= 1.0
+	frequency 	= 50
+	duration 	= 0.2
+
+	local downamp = 5.0
+	local max 	= 40
+	local ramp 	= downamp / max
+	for ( int i = 1; i <= max; i++ )
+	{
+		amplitude 	= ramp * i
+		ClientScreenShake( amplitude, frequency, duration, direction )
+		wait 0.1
+	}
+
+	//ramp down from entry
+	amplitude 	= downamp
+	frequency 	= 25
+	duration 	= 1.0
+	ClientScreenShake( amplitude, frequency, duration, direction )
+}
+
+void function DisplayAmmoFull( entity weapon, var ammoRecieved )
+{
+	// if ( Time() - file.lastObitTime < 1.5 )
+	// 	return
+
+	if ( !IsValid( weapon ) )
+		return
+
+	if ( !PlayerCanUseWeapon( GetLocalViewPlayer(), weapon.GetWeaponClass() ) )
+		return
+
+	if ( !PlayerHasWeapon( GetLocalViewPlayer(), weapon.GetWeaponClassName() ) )
+		return
+
+	if ( IsCurrentlyFocusedWeapon( weapon ) )
+	{
+		HideAmmoFullFlyout()
+		return
+	}
+
+	// Obituary_Print_Generic( "#HUD_AMMO_FULL", expect string( weapon.GetWeaponInfoFileKeyField( "shortprintname" ) ), <255, 255, 255>, <255, 255, 255> )
+	// file.lastObitTime = Time()
+
+	UpdateAmmoFullFlyout( expect string( weapon.GetWeaponInfoFileKeyField( "shortprintname" ) ), "#HUD_FLYOUT_AMMO_FULL_HINT", weapon )
+}
+
+void function UpdateAmmoFullFlyout( string title, string subtitle, entity weapon )
+{
+	if ( file.ammoFullRui == null )
+	{
+		file.ammoFullRui = RuiCreate( $"ui/ammo_full_flyout.rpak", clGlobal.topoFullScreen, RUI_DRAW_HUD, 0 )
+	}
+
+	RuiSetResolutionToScreenSize( file.ammoFullRui )
+	RuiSetString( file.ammoFullRui, "title", title )
+	RuiSetString( file.ammoFullRui, "descriptionText", subtitle )
+	RuiTrackFloat3( file.ammoFullRui, "pos", weapon, RUI_TRACK_ABSORIGIN_FOLLOW )
+	RuiSetGameTime( file.ammoFullRui, "startTime", Time() )
+	RuiSetFloat( file.ammoFullRui, "duration", NO_AMMO_DURATION )
+
+	if ( GetLocalViewPlayer().IsTitan() )
+	{
+		RuiSetFloat( file.ammoFullRui, "minDist", 600 )
+		RuiSetFloat( file.ammoFullRui, "maxDist", 800 )
+	}
+	else
+	{
+		RuiSetFloat( file.ammoFullRui, "minDist", 100 )
+		RuiSetFloat( file.ammoFullRui, "maxDist", 200 )
+	}
+
+	if ( weapon.GetModelName() == RODEO_BATTERY_MODEL )
+		RuiSetFloat3( file.ammoFullRui, "anchorOffset", <0,0,48> )
+	else
+		RuiSetFloat3( file.ammoFullRui, "anchorOffset", <0,0,8> )
+
+	file.lastAmmoFullWeapon = weapon
+}
+
+bool function IsAmmoFullWeapon( entity ent )
+{
+	return file.lastAmmoFullWeapon == ent
+}
+
+void function HideAmmoFullFlyout()
+{
+	if ( file.ammoFullRui == null )
+		return
+
+	RuiSetGameTime( file.ammoFullRui, "startTime", 0 )
+}
+
+void function DisplayGotAmmo( entity weapon, var ammoRecieved )
+{
+	if ( !IsValid( weapon ) )
+		return
+
+	int pos = 2
+
+	var rui = CreateCockpitRui( $"ui/ability_hud_ammo.rpak" )
+
+	if ( weapon.IsWeaponOffhand() )
+	{
+		pos = 1
+		RuiSetImage( rui, "icon", weapon.GetWeaponInfoFileKeyFieldAsset( "hud_icon" ) )
+		RuiSetBool( rui, "isOffhand", true )
+	}
+
+	RuiSetInt( rui, "xPos", pos )
+	RuiSetGameTime( rui, "startTime", Time() )
+}

@@ -1,0 +1,151 @@
+global function SP_TitanWeaponPickups_Init
+global function CreateTitanWeaponPickupHintTrigger
+global function SPTitanLoadoutPickup
+global function SPTitanLoadout_UnlockLoadout
+global function SPTitanLoadout_UnlockLoadoutWithCeremony
+
+const float TITAN_WEAPON_PICKUP_TRIGGER_RADIUS = 650
+const float TITAN_WEAPON_PICKUP_TRIGGER_HEIGHT = 256
+
+struct
+{
+	entity weaponSpot
+} file
+
+
+void function SP_TitanWeaponPickups_Init()
+{
+	file.weaponSpot = CreateEntity( "info_target" )
+	file.weaponSpot.kv.spawnflags = SF_INFOTARGET_ALWAYS_TRANSMIT_TO_CLIENT
+	DispatchSpawn( file.weaponSpot )
+
+	FlagInit( "FirstTitanLoadoutAcquired" )
+
+	AddCallback_EntitiesDidLoad( EntitiesDidLoad )
+}
+
+
+void function EntitiesDidLoad()
+{
+	file.weaponSpot.SetOrigin( <0,0,0> )
+	SetGlobalNetEnt( "SP_titanLoadoutPickupSpot", file.weaponSpot )
+}
+
+
+bool function SPTitanLoadoutPickup( entity player, entity weapon )
+{
+	if ( !player.IsTitan() )
+	{
+		float displayTime = 3.0
+		DisplayOnscreenHint( player, "loadout_pickup_needs_embark", displayTime )
+		wait displayTime
+		return false
+	}
+
+	// Give the weapon and do the unlock ceremony
+	CodeCallback_WeaponLoadoutPickup( player, weapon )
+
+	return true
+}
+
+
+void function SPTitanLoadout_UnlockLoadout( entity player, string weaponName )
+{
+	int loadoutIndex = GetSPTitanLoadoutIndexForWeapon( weaponName )
+	Assert( loadoutIndex >= 0 )
+
+	if ( !IsBTLoadoutUnlocked( loadoutIndex ) )
+		SetBTLoadoutUnlocked( loadoutIndex )
+
+	// Delete all the other weapons of this type in the level
+	SPTitanLoadout_RemoveOwnedLoadoutPickupsInLevel( [ weaponName ] )
+
+	// Achievement for unlocking them all
+	array<string> unlockedLoadouts = GetSPTitanLoadoutsUnlocked()
+	if ( unlockedLoadouts.len() >= GetSPTitanLoadoutMax() )
+		UnlockAchievement( player, achievements.TITAN_LOADOUTS )
+}
+
+
+void function SPTitanLoadout_UnlockLoadoutWithCeremony( entity player, string weaponName )
+{
+	SPTitanLoadout_UnlockLoadout( player, weaponName )
+	DoUnlockCeremony( player, weaponName )
+}
+
+
+void function DoUnlockCeremony( entity player, string weaponName )
+{
+	int loadoutIndex = GetSPTitanLoadoutIndexForWeapon( weaponName )
+	int firstLoadoutIndex = GetSPTitanLoadoutIndexForWeapon( SP_FIRST_TITAN_LOADOUT_KIT )
+	bool isFirstLoadout
+
+	// This only happens in sp_sewers, so make sure it never happens elsewhere
+	if ( loadoutIndex == firstLoadoutIndex && GetMapName() == "sp_sewers1" )
+		isFirstLoadout = true
+
+	Remote_CallFunction_UI( player, "ServerCallback_UnlockedNewSPTitanLoadout", loadoutIndex )
+
+	CheckPoint_Silent()
+
+	Remote_CallFunction_NonReplay( player, "ServerCallback_NewTitanLoadout", loadoutIndex )
+
+	if ( isFirstLoadout )
+	{
+		FlagSet( "FirstTitanLoadoutAcquired" )
+		return
+	}
+
+	// Skip for first titan loadout...it is custom handled in the level script
+	wait 2.0
+
+	var dataTable = GetDataTable( $"datatable/titan_properties.rpak" )
+	int row = GetDataTableRowMatchingStringValue( dataTable, GetDataTableColumnByName( dataTable, "primary" ), weaponName )
+	Assert( row != -1, "DoUnlockCeremony: No loadout for weapon " + weaponName )
+
+	// Disabled temporarily for Bug 182894
+	// TODO: Hook this into the dialog system
+	//string dialogLine = GetDataTableString( dataTable, row, GetDataTableColumnByName( dataTable, "dialogHint" ) )
+	//EmitSoundOnEntity( player, dialogLine )
+}
+
+
+void function CreateTitanWeaponPickupHintTrigger( entity weapon )
+{
+	weapon.EndSignal( "OnDestroy" )
+
+	entity trig = CreateEntity( "trigger_cylinder" )
+	trig.SetRadius( TITAN_WEAPON_PICKUP_TRIGGER_RADIUS )
+	trig.SetAboveHeight( TITAN_WEAPON_PICKUP_TRIGGER_HEIGHT )
+	trig.SetBelowHeight( TITAN_WEAPON_PICKUP_TRIGGER_HEIGHT )
+	trig.SetOrigin( weapon.GetOrigin() )
+	trig.SetEnterCallback( TitanWeaponPickupTriggerEnter )
+	trig.SetLeaveCallback( TitanWeaponPickupTriggerLeave )
+	trig.SetParent( weapon )
+
+	SetTeam( trig, TEAM_ANY )
+	DispatchSpawn( trig )
+	trig.SearchForNewTouchingEntity()
+
+	WaitForever()
+}
+
+
+void function TitanWeaponPickupTriggerEnter( entity trigger, entity ent )
+{
+	if ( !ent.IsPlayer() )
+		return
+
+	file.weaponSpot.SetOrigin( trigger.GetOrigin() )
+	level.nv.SP_titanLoadoutPickupSpotVisible = true
+}
+
+
+void function TitanWeaponPickupTriggerLeave( entity trigger, entity ent )
+{
+	if ( !ent.IsPlayer() )
+		return
+
+	file.weaponSpot.SetOrigin( <0,0,0> )
+	level.nv.SP_titanLoadoutPickupSpotVisible = false
+}

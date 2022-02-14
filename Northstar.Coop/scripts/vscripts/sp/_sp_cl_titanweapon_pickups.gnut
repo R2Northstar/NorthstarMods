@@ -1,0 +1,53 @@
+global function CL_TitanWeaponPickup_Init
+global function UpdateTitanLoadoutPickupVisibility
+
+struct
+{
+	var pickupTrackerRui
+	entity weaponSpot
+} file
+
+
+void function CL_TitanWeaponPickup_Init()
+{
+	file.pickupTrackerRui = RuiCreate( $"ui/new_bt_loadout_flyout.rpak", clGlobal.topoFullScreen, RUI_DRAW_HUD, 0 )
+	RuiSetBool( file.pickupTrackerRui, "isVisible", false )
+	RuiSetResolutionToScreenSize( file.pickupTrackerRui )
+
+	RegisterServerVarChangeCallback( "SP_titanLoadoutPickupSpotVisible", UpdateTitanLoadoutPickupVisibility )
+}
+
+
+void function UpdateTitanLoadoutPickupVisibility()
+{
+	file.weaponSpot = GetGlobalNetEnt( "SP_titanLoadoutPickupSpot" )
+
+	if ( ShouldShowFlyout() )
+	{
+		RuiSetBool( file.pickupTrackerRui, "isVisible", true )
+		RuiTrackFloat3( file.pickupTrackerRui, "pos", file.weaponSpot, RUI_TRACK_ABSORIGIN_FOLLOW )
+	}
+	else
+	{
+		RuiSetBool( file.pickupTrackerRui, "isVisible", false )
+	}
+}
+
+
+bool function ShouldShowFlyout()
+{
+	if ( expect bool( level.nv.SP_titanLoadoutPickupSpotVisible ) == false )
+		return false
+
+	if ( !IsValid( file.weaponSpot ) )
+		return false
+
+	if ( file.weaponSpot.GetOrigin() == <0,0,0> )
+		return false
+
+	entity player = GetLocalClientPlayer()
+	if ( !PlayerCanSee( player, file.weaponSpot, true, 90 ) )
+		return false
+
+	return true
+}

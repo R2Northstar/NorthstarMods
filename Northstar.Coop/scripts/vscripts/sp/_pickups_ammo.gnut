@@ -1,0 +1,245 @@
+untyped
+
+global function OnNPCKilled_DropAmmo
+global function PickupAmmo_Init
+global function NpcDropsAmmo
+
+struct AmmoPickup
+{
+	int grenadeAmmo
+	int clips
+	string pickupSound
+	string tint
+	asset model
+	int functionref( entity ) giveAmmoFunc
+	int countPerDrop // how many drops on death?
+	float launchVel
+
+}
+
+struct
+{
+	int nextAmmoDrop
+	int nextGrenadeDrop
+	table<string, AmmoPickup> ammoPickups
+} file
+
+void function PickupAmmo_Init()
+{
+	AmmoPickup grenades
+	grenades.pickupSound 	= "player.ammoPickup"
+	grenades.model	 		= $"models/weapons/grenades/m20_f_grenade_projectile.mdl"
+	grenades.tint 			= "tint_pickup_grenades"
+	grenades.giveAmmoFunc	= AddRoundToOrdnance
+	grenades.launchVel 		= 100
+	grenades.countPerDrop 	= 2
+	file.ammoPickups[ "pickup_grenades" ] <- grenades
+
+	AmmoPickup bullets
+	bullets.pickupSound 	= "player.ammoPickup"
+	bullets.model	 		= $"models/gameplay/health_pickup_small.mdl"
+	bullets.tint 			= "tint_pickup_bullets"
+	bullets.giveAmmoFunc	= AddTwoClipToMainWeapons
+	bullets.launchVel 		= 200
+	bullets.countPerDrop 	= 1
+	file.ammoPickups[ "pickup_bullets" ] <- bullets
+
+	foreach ( pickup in file.ammoPickups )
+	{
+		PrecacheModel( pickup.model )
+	}
+
+	file.nextAmmoDrop = RandomInt( 5 )
+	file.nextGrenadeDrop = 5
+
+	AddCallback_EntitiesDidLoad( EntitiesDidLoad_Pickups )
+
+	//AddSpawnCallbackEditorClass( "script_ref", "script_pickup_grenades", CreateEditorPickup_Grenades )
+	//AddSpawnCallbackEditorClass( "script_ref", "script_pickup_ammo", CreateEditorPickup_Ammo )
+}
+
+void function EntitiesDidLoad_Pickups()
+{
+	if ( shGlobal.proto_npcsDropGrenades )
+	{
+		AddDeathCallback( "npc_soldier", OnNPCKilled_DropGrenade )
+		//AddDeathCallback( "npc_soldier", OnNPCKilled_DropAmmo )
+		//AddDeathCallback( "npc_spectre", OnNPCKilled_DropAmmo )
+	}
+
+	RegisterSignal( "PickedUpAmmo" )
+}
+
+void function CreateEditorPickup_Ammo( entity ent )
+{
+	CreateAmmoPickup( ent.GetOrigin(), ent.GetAngles(), file.ammoPickups[ "pickup_bullets" ] )
+	ent.Destroy()
+}
+
+void function CreateEditorPickup_Grenades( entity ent )
+{
+	CreateAmmoPickup( ent.GetOrigin(), ent.GetAngles(), file.ammoPickups[ "pickup_grenades" ] )
+	ent.Destroy()
+}
+
+void function OnNPCKilled_DropGrenade( entity npc, var damageInfo )
+{
+	entity attacker = DamageInfo_GetAttacker( damageInfo )
+
+	if ( !IsValid( attacker ) )
+		return
+
+	// for reload scripts
+	OnNPCKilled_DropGrenade_Internal( npc, attacker, damageInfo )
+}
+
+void function OnNPCKilled_DropAmmo( entity npc, var damageInfo )
+{
+	entity attacker = DamageInfo_GetAttacker( damageInfo )
+
+	if ( !IsValid( attacker ) )
+		return
+
+	// for reload scripts
+	OnNPCKilled_DropAmmo_Internal( npc, attacker, damageInfo )
+}
+
+void function OnNPCKilled_DropGrenade_Internal( entity npc, entity attacker, var damageInfo )
+{
+	string grenadeWeaponName = expect string( npc.kv.grenadeWeaponName )
+	if ( grenadeWeaponName == "" )
+		return
+
+	file.nextAmmoDrop--
+
+	float chance = GraphCapped( file.nextAmmoDrop, 4, 0, 35, 85 )
+	if ( RandomInt( 100 ) > chance )
+		return
+
+	file.nextAmmoDrop = 5
+
+	vector angles = npc.GetAngles()
+	angles.x = 0
+
+	vector forward = AnglesToForward( angles )
+
+	vector origin = npc.GetWorldSpaceCenter() + forward * 16
+
+	int count
+	int ammo = expect int( GetWeaponInfoFileKeyField_GlobalNotNull( grenadeWeaponName, "ammo_default_total" ) )
+	if ( ammo >= 4 )
+		count = 1
+	else
+		count = RandomIntRange( 1, 4 )
+
+	for ( int i = 0; i < count; i++ )
+	{
+		entity weapon = CreateWeaponEntityByNameWithPhysics( grenadeWeaponName, origin, angles )
+	}
+}
+
+
+void function OnNPCKilled_DropAmmo_Internal( entity npc, entity attacker, var damageInfo )
+{
+	if ( npc.GetTeam() != TEAM_IMC )
+		return
+
+	file.nextAmmoDrop--
+	if ( IsSpectre( npc ) || IsStalker( npc ) )
+		file.nextAmmoDrop-- // more ammo to kill, more ammo to drop
+
+	float chance = GraphCapped( file.nextAmmoDrop, 4, 0, 25, 85 )
+
+	if ( RandomInt( 100 ) > chance )
+		return
+
+	file.nextAmmoDrop = 5
+
+	NpcDropsAmmo( npc )
+}
+
+void function NpcDropsAmmo( entity npc )
+{
+	vector angles = npc.GetAngles()
+	angles.x = 0
+
+	vector forward = AnglesToForward( angles )
+
+	vector origin = npc.GetWorldSpaceCenter() + forward * 16
+
+	string pickupType
+
+	/* AIs dropping grenades is deprecated
+	// grenades are rarer
+	file.nextGrenadeDrop--
+	float chance = GraphCapped( file.nextGrenadeDrop, 5, 0, 10, 90 )
+
+	if ( RandomInt( 100 ) < chance )
+	{
+		pickupType = "pickup_grenades"
+		file.nextGrenadeDrop = 5
+	}
+	else
+	{
+		pickupType = "pickup_bullets"
+	}
+	*/
+	pickupType = "pickup_bullets"
+
+	AmmoPickup pickup = file.ammoPickups[ pickupType ]
+
+	for ( int i = 0; i < pickup.countPerDrop; i++ )
+	{
+		entity ammo = CreateAmmoPickup( origin, angles, pickup )
+		//EmitSoundOnEntity( ammo, "Pilot_HealthPack_Drop" )
+		ammo.Fire( "Kill", "", 180 )
+	}
+}
+
+entity function CreateAmmoPickup( vector origin, vector angles, AmmoPickup pickup )
+{
+	entity ent = CreatePropPhysics( pickup.model, origin, angles )
+	Highlight_SetNeutralHighlight( ent, pickup.tint )
+	ent.NotSolid()
+	ent.SetFadeDistance( 5000 )
+
+	angles = AnglesCompose( angles, < 0,RandomInt(360),0> )
+	angles = AnglesCompose( angles, < RandomFloatRange( -35, -55 ),0,0> )
+	vector forward = AnglesToForward( angles )
+	ent.SetVelocity( forward * pickup.launchVel )
+
+	ent.SetAngularVelocity( RandomFloatRange( 300, 500 ), RandomFloatRange( -100, 100 ), 0 )
+
+	thread AmmoPickupWaitsForPickup( ent, pickup )
+	return ent
+}
+
+void function AmmoPickupWaitsForPickup( entity ent, AmmoPickup ammoPickup )
+{
+	ent.EndSignal( "OnDestroy" )
+	OnThreadEnd(
+	function() : ( ent )
+		{
+			if ( IsValid( ent ) )
+				ent.Destroy()
+		}
+	)
+
+	for ( ;; )
+	{
+		entity player = WaitUntilPlayerPicksUp( ent )
+		if ( !IsAlive( player ) )
+			return
+
+		// reward ammo
+		if ( ammoPickup.giveAmmoFunc( player ) > 0 )
+		{
+			player.Signal( "PickedUpAmmo" )
+			EmitSoundOnEntity( player, ammoPickup.pickupSound )
+			return
+		}
+
+		WaitFrame()
+	}
+}
+

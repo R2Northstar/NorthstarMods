@@ -1,0 +1,263 @@
+untyped
+
+globalize_all_functions
+
+
+struct mainThreadStruct
+{
+	void functionref( entity ) main
+	void functionref( entity ) setup
+}
+
+struct
+{
+	array<string> musicTracksPlaying
+
+} file;
+
+
+void function SPUtility_Init()
+{
+    RegisterSignal( "AssaultTimeOut" )
+}
+
+bool function ClientCommand_OnDevnetBugScreenshot( entity player, array<string> args )
+{
+	return true
+}
+
+void function DevMenuRestartLevel( value )
+{
+	ServerCommand( "bug_reproNum " + value )
+	ServerCommand( "reload" )
+}
+
+void function TeleportPlayerAndBT( string playerSpawnScriptName, string titanSpawnScriptName = "" )
+{
+	entity playerSpawn = GetEntByScriptName( playerSpawnScriptName )
+
+	foreach ( player in GetPlayerArray() )
+	{
+		entity titanSpawn
+		if ( titanSpawnScriptName != "" )
+			titanSpawn = GetEntByScriptName( titanSpawnScriptName )
+
+		player.SetOrigin( playerSpawn.GetOrigin() )
+		player.SetAngles( playerSpawn.GetAngles() )
+
+		entity titan = player.GetPetTitan()
+		if ( IsValid( titanSpawn ) && IsValid( titan ) )
+		{
+			titan.SetOrigin( titanSpawn.GetOrigin() )
+			titan.SetAngles( titanSpawn.GetAngles() )
+		}
+	}
+}
+
+void function PlayMusic( string track )
+{
+	printt( "#################################" )
+	printt( "Playing Music" )
+	printt( "  Track:", track )
+	printt( "#################################" )
+	file.musicTracksPlaying.append( track )
+
+	foreach( entity player in GetPlayerArray() )
+	{
+		EmitSoundOnEntity( player, track )
+	}
+}
+
+void function PlayMusicThatCantBeStopped( string track )
+{
+	printt( "#################################" )
+	printt( "Playing Unstoppable Music" )
+	printt( "  Track:", track )
+	printt( "#################################" )
+
+	//do not add to file.musicTracksPlaying because we never want it to be stopped by other funcs
+	foreach( entity player in GetPlayerArray() )
+	{
+		EmitSoundOnEntity( player, track )
+	}
+}
+
+void function StopMusic( float fadeTime = 2.0 )
+{
+	array<string> tracks = clone file.musicTracksPlaying
+	foreach( entity player in GetPlayerArray() )
+	{
+		foreach( string track in tracks )
+		{
+			StopMusicTrack( track, fadeTime )
+		}
+	}
+}
+
+bool function IsMusicTrackPlaying( string track )
+{
+	return file.musicTracksPlaying.contains( track )
+}
+
+void function StopMusicTrack( string track, float fadeTime = 2.0 )
+{
+	printt( "#################################" )
+	printt( "Stopping music track:", track )
+	printt( "#################################" )
+
+	foreach( entity player in GetPlayerArray() )
+	{
+		//StopSoundOnEntity( player, file.lastMusicTrack )
+		FadeOutSoundOnEntity( player, track, fadeTime )
+	}
+
+	file.musicTracksPlaying.fastremovebyvalue( track )
+}
+void function CodeCallback_OnClientSendingPersistenceToNewServer( entity player )
+{
+}
+
+
+TitanLoadoutDef function GetTitanLoadoutForPlayer( entity player )
+{
+	return GetTitanLoadoutForCurrentMap()
+}
+
+
+bool function PlayerProgressionAllowed( entity player = null )
+{
+	return false
+}
+
+
+void function RefreshWeaponHighlights( entity player )
+{
+	// foreach ( weapon in GetWeaponArray( true ) )
+	// {
+	// 	Remote_CallFunction_Replay( player, "ServerCallback_RefreshWeaponHighlights", weapon.GetEncodedEHandle() )
+	// }
+}
+
+// similar to sh_mobility_ghost
+entity function CreateGhost( vector refOrigin, string ghostName = "", bool startHidden = false )
+{
+	// Create ghost model
+	entity ghost = CreatePropScript( PILOT_GHOST_MODEL, refOrigin, < 0, 0, 0 >, 0, 99999 )
+	ghost.kv.skin = PILOT_SKIN_INDEX_GHOST
+	ghost.kv.rendercolor = "94 174 255" //Blue
+	ghost.kv.VisibilityFlags = ENTITY_VISIBLE_TO_EVERYONE
+	ghost.SetFootstepType( "holopath" )
+
+	int helmetDecalGroupIdx = ghost.FindBodyGroup( "decal" )
+	ghost.SetBodygroup( helmetDecalGroupIdx, 1 )  // 1 = no decal
+
+	if ( ghostName != "" )
+		ghost.SetTitle( ghostName )
+
+	entity weapon = CreatePropPhysics( PILOT_GHOST_WEAPON_MODEL, refOrigin, < 0, 0, 0 > )
+	weapon.kv.skin = WEAPON_SKIN_INDEX_GHOST
+	weapon.kv.rendercolor = "94 174 255" //Blue
+	weapon.kv.VisibilityFlags = ENTITY_VISIBLE_TO_EVERYONE
+	weapon.SetParent( ghost, "PROPGUN", false )
+
+	ghost.e.attachedEnts.append( weapon )
+
+	thread __GhostReveal( ghost, weapon )
+
+	return ghost
+}
+
+entity function Ghost_GetWeaponEnt( entity ghostEnt )
+{
+	entity weaponEnt = ghostEnt.e.attachedEnts[0]
+	Assert( IsValid( weaponEnt ) )
+	return weaponEnt
+}
+
+void function __GhostReveal( entity ghost, entity weapon )
+{
+	ghost.EndSignal( "OnDestroy" )
+
+	// Ghost spawn effects
+	HideGhost( ghost )
+
+	int attachIndex = ghost.LookupAttachment( "CHESTFOCUS" )
+
+	entity trailFX = StartParticleEffectOnEntity_ReturnEntity( ghost, GetParticleSystemIndex( GHOST_TRAIL_EFFECT ), FX_PATTACH_POINT_FOLLOW, attachIndex )
+	ghost.e.fxArray.append( trailFX )
+
+	wait 0.5
+
+	entity flashFX = StartParticleEffectOnEntity_ReturnEntity( ghost, GetParticleSystemIndex( GHOST_FLASH_EFFECT ), FX_PATTACH_POINT, attachIndex )
+
+	ShowGhost( ghost )
+}
+
+void function DissolveGhost( entity ghost, string dissolveSFX = "Object_Dissolve" )
+{
+	if ( !IsValid( ghost ) )
+		return
+
+	foreach ( ent in ghost.e.fxArray )
+	{
+		if ( IsValid( ent ) )
+			EntFireByHandle( ent, "Stop", "", 0, null, null )
+	}
+
+	foreach ( ent in ghost.e.attachedEnts )
+	{
+		if ( IsValid( ent ) )
+		{
+			ent.Dissolve( ENTITY_DISSOLVE_CHAR, < 0, 0, 0 >, 0 )
+
+			if ( GetBugReproNum() == 162769 )
+				ent.Destroy()
+		}
+	}
+
+	if ( dissolveSFX != "" )
+		EmitSoundAtPosition( TEAM_UNASSIGNED, ghost.GetOrigin(), dissolveSFX )
+
+	ghost.Dissolve( ENTITY_DISSOLVE_CHAR, < 0, 0, 0 >, 0 )
+
+	if ( GetBugReproNum() == 162769 )
+		ghost.Destroy()
+}
+
+void function HideGhost( entity ghost )
+{
+	foreach ( ent in ghost.e.attachedEnts )
+		ent.Hide()
+
+	ghost.Hide()
+}
+
+void function ShowGhost( entity ghost )
+{
+	foreach ( ent in ghost.e.attachedEnts )
+		ent.Show()
+
+	ghost.Show()
+}
+
+
+// Used in Timeshift and Boomtown to see if a teleport target pos will result in the player hull being stuck in geo.
+bool function PlayerPosInSolid( entity player, vector targetPos )
+{
+	int solidMask = TRACE_MASK_PLAYERSOLID
+	vector mins
+	vector maxs
+	int collisionGroup = TRACE_COLLISION_GROUP_PLAYER
+	local ignoreEnts = []
+	ignoreEnts.append( player ) //in case we want to check player's current pos
+	TraceResults result
+
+	mins = player.GetPlayerMins()
+	maxs = player.GetPlayerMaxs()
+	result = TraceHull( targetPos, targetPos + Vector( 0, 0, 1), mins, maxs, ignoreEnts, solidMask, collisionGroup )
+	if ( result.startSolid )
+		return true
+
+	return false
+
+}

@@ -1,0 +1,196 @@
+untyped
+
+global function AddTriggeredPlayerFollower
+global function RemoveTriggeredPlayerFollower
+global function TriggerFriendlyThink
+global function FriendlyFollowerInit
+global function BTAutoFriendlyFollower
+
+struct
+{
+	bool btAutoFollower = true
+} file
+
+function FriendlyFollowerInit()
+{
+	Assert( IsSingleplayer() )
+	AddTriggerEditorClassFunc( "trigger_friendly", TriggerFriendlyThink )
+	AddTriggerEditorClassFunc( "trigger_friendly_follow", TriggerFriendlyThink )
+	AddSoulTransferFunc( FriendlySoulTransfer )
+}
+
+void function FriendlySoulTransfer( entity soul, entity titan, entity oldTitan )
+{
+	thread FriendlySoulTransfer_Thread( soul, titan, oldTitan )
+}
+
+void function FriendlySoulTransfer_Thread( entity soul, entity titan, entity oldTitan )
+{
+	if ( soul.IsMarkedForDeletion() )
+		return
+
+	soul.EndSignal( "OnDestroy" )
+	WaitEndFrame() // wait for soul ownership to finish transfering, because trigger-friendly-followers uses soul, and at this point in the frame the soul is still owned by player
+
+	entity player = soul.GetBossPlayer()
+
+	if ( IsValid( player ) && file.btAutoFollower )
+		AddTriggeredPlayerFollower( player, soul )
+}
+
+function AddTriggeredPlayerFollower( entity player, entity npc )
+{
+	Assert( player.IsPlayer() )
+	Assert( IsValid( npc ) )
+	Assert( npc.IsNPC() || IsSoul( npc ) )
+	if ( npc.IsTitan() )
+		npc = npc.GetTitanSoul()
+
+	AddToScriptManagedEntArray( player.p.npcFollowersArrayID, npc )
+
+	// follower may have been added after trigger was set
+	if ( IsValid( player.p.lastFriendlyTriggerTouched ) )
+		TriggerFriendlyTrigger( player.p.lastFriendlyTriggerTouched, player )
+}
+
+function RemoveTriggeredPlayerFollower( entity player, entity npc )
+{
+	Assert( player.IsPlayer() )
+	if ( !IsValid( npc ) )
+		return
+
+	entity soul = npc
+	if ( !IsSoul( npc ) )
+		soul = npc.GetTitanSoul()
+
+	if ( IsValid( soul ) )
+		RemoveFromScriptManagedEntArray( player.p.npcFollowersArrayID, soul )
+}
+
+void function BTAutoFriendlyFollower( entity player, bool autoFollower )
+{
+	file.btAutoFollower = autoFollower
+	if ( !autoFollower )
+	{
+		entity titan = player.GetPetTitan()
+		if ( IsValid( titan ) )
+			RemoveTriggeredPlayerFollower( player, titan )
+	}
+}
+
+void function TriggerFriendlyThink( entity trigger )
+{
+	trigger.EndSignal( "OnDestroy" )
+
+	string editorClass = GetEditorClass( trigger )
+	if ( editorClass == "trigger_friendly" )
+	{
+		if ( trigger.GetLinkEntArray().len() == 0 )
+			Assert( trigger.GetLinkEntArray().len() == 1, "trigger_friendly at " + trigger.GetOrigin() + " does not link to an info_move_target" )
+		else
+			Assert( trigger.GetLinkEntArray().len() == 1, "trigger_friendly at " + trigger.GetOrigin() + " links to more than one info_move_target" )
+	}
+	else if ( editorClass == "trigger_friendly_follow" )
+	{
+		Assert( trigger.GetLinkEntArray().len() == 0, "trigger_friendly_follow at " + trigger.GetOrigin() + " should not link to any entities" )
+	}
+
+	for ( ;; )
+	{
+		table results = trigger.WaitSignal( "OnTrigger" )
+		entity player = expect entity( results.activator )
+		if ( !IsValid( player ) )
+			continue
+		if ( !player.IsPlayer() )
+			continue
+
+		entity lastFriendlyTriggerTouched = player.p.lastFriendlyTriggerTouched
+		if ( lastFriendlyTriggerTouched != null )
+		{
+			// already the active trigger
+			if ( AllNPCSUsingLatestFriendlyTrigger( player, trigger ) )
+				continue
+
+			if ( trigger != lastFriendlyTriggerTouched )
+			{
+				// still touching another friendly trigger
+				if ( lastFriendlyTriggerTouched.IsTouching( player ) )
+					continue
+			}
+		}
+
+		player.p.lastFriendlyTriggerTouched = trigger
+
+		TriggerFriendlyTrigger( trigger, player )
+	}
+}
+
+void function TriggerFriendlyTrigger( entity trigger, entity player )
+{
+	printt( "#############################" )
+	printt( "TriggerFriendlyTrigger", player )
+
+	string editorClass = GetEditorClass( trigger )
+	entity moveTarget
+	float followRadius
+	if ( editorClass == "trigger_friendly" )
+		moveTarget = trigger.GetLinkEnt()
+	else if ( editorClass == "trigger_friendly_follow" )
+		followRadius = float( trigger.kv.follow_radius )
+
+	array<entity> followers = GetScriptManagedEntArray( player.p.npcFollowersArrayID )
+	printt( "  Followers:", followers.len() )
+	foreach ( ent in followers )
+	{
+		if ( !IsValid( ent ) )
+			continue
+
+		entity npc
+		if ( IsSoul( ent ) )
+			npc = ent.GetTitan()
+		else
+			npc = ent
+
+		if ( IsAlive( npc ) && npc.IsNPC() )
+		{
+			if ( !npc.ai.enableFriendlyFollower )
+				continue
+
+			if ( editorClass == "trigger_friendly" )
+			{
+				npc.DisableBehavior( "follow" )
+				npc.EnableBehavior( "assault" )
+				thread AssaultMoveTarget( npc, moveTarget )
+			}
+			else if ( editorClass == "trigger_friendly_follow" )
+			{
+				npc.DisableBehavior( "assault" )
+				npc.EnableBehavior( "follow" )
+			}
+
+			npc.ai.lastFriendlyTrigger = trigger
+		}
+	}
+
+	printt( "#############################" )
+}
+
+bool function AllNPCSUsingLatestFriendlyTrigger( entity player, entity trigger )
+{
+	array<entity> followers = GetScriptManagedEntArray( player.p.npcFollowersArrayID )
+	foreach ( ent in followers )
+	{
+		entity npc
+		if ( IsSoul( ent ) )
+			npc = ent.GetTitan()
+		else
+			npc = ent
+
+		if ( !IsValid( npc ) )
+			continue
+
+		if ( npc.IsNPC() && IsAlive( npc ) && npc.ai.lastFriendlyTrigger != trigger )
+			return false
+	}
+	return true
+}

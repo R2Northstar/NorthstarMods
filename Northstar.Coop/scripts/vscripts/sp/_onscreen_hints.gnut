@@ -1,0 +1,300 @@
+global function OnscreenHints_Init
+global function RegisterOnscreenHint
+global function GetOnscreenHint_ByID
+global function GetOnscreenHint_ByAlias
+
+#if SERVER
+global function DisplayOnscreenHint
+global function ClearOnscreenHint
+global function OnscreenHint_DisplayAfterDelay
+global function OnscreenHint_DisplayUntilFlag
+global function OnscreenHint_NagUntilFlag
+#endif
+
+#if CLIENT
+global function ScriptCallback_UpdateOnscreenHint
+global function ScriptCallback_DisplayOnscreenHint
+global function ScriptCallback_ClearOnscreenHint
+global function DisplayOnscreenHint
+global function DestroyOnscreenHint
+#endif
+
+global struct OnscreenHint
+{
+	int id
+	string alias
+	string locStringGamepad
+	string locStringKBM
+	string stringArg1
+	string stringArg2
+	bool adsFade = true
+}
+
+struct
+{
+	#if CLIENT
+	var onscreenHintRUI
+	#endif
+
+	array<OnscreenHint> onscreenHints
+} file
+
+void function OnscreenHints_Init()
+{
+	RegisterSignal( "DisplayingOnscreenHint" )
+
+	#if SERVER
+	RegisterSignal( "CancelDelayedOnscreenHint" )
+	#endif
+
+	#if DEV
+	RegisterOnscreenHint( "test_hint", "Lorem ipsum dolor sit amet, consectetur adipiscing elit...", "[KBM] Lorem ipsum dolor sit amet, consectetur adipiscing elit..." )
+	#endif
+
+	RegisterOnscreenHint( "loadout_pickup_needs_embark", "#HUD_SP_BT_LOADOUT_TITAN_REQUIRED_HINT" )
+}
+
+// ===========================
+// ========= SHARED ==========
+// ===========================
+void function RegisterOnscreenHint( string alias, string locStringGamepad, string locStringKBM = "" )
+{
+	#if DEV
+	foreach ( hint in file.onscreenHints )
+		Assert( hint.alias != alias, "onscreen hint already registered with alias: " + alias )
+	#endif
+
+	OnscreenHint newHint
+	newHint.id = file.onscreenHints.len()
+	newHint.alias = alias
+	newHint.locStringGamepad = locStringGamepad
+	newHint.locStringKBM = locStringKBM
+
+	file.onscreenHints.append( newHint )
+}
+
+OnscreenHint function GetOnscreenHint_ByID( int hintID )
+{
+	OnscreenHint returnHint
+
+	bool foundIt = false
+	foreach ( hint in file.onscreenHints )
+	{
+		if ( hint.id == hintID )
+		{
+			returnHint = hint
+			foundIt = true
+			break
+		}
+	}
+	Assert( foundIt, "Couldn't find onscreen hint info with ID " + hintID )
+
+	return returnHint
+}
+
+OnscreenHint function GetOnscreenHint_ByAlias( string hintAlias )
+{
+	OnscreenHint returnHint
+
+	bool foundIt = false
+	foreach ( hint in file.onscreenHints )
+	{
+		if ( hint.alias == hintAlias )
+		{
+			returnHint = hint
+			foundIt = true
+			break
+		}
+	}
+	Assert( foundIt, "Couldn't find onscreen hint info with alias " + hintAlias )
+
+	return returnHint
+}
+
+
+// ================================
+// ========= SERVER ONLY ==========
+// ================================
+#if SERVER
+void function DisplayOnscreenHint( entity player, string hintAlias, float duration = -1, bool displayCentered = false, bool drawAboveScreenFade = false )
+{
+	Signal( player, "DisplayingOnscreenHint" )
+
+	OnscreenHint hint = GetOnscreenHint_ByAlias( hintAlias )
+	Remote_CallFunction_Replay( player, "ScriptCallback_DisplayOnscreenHint", hint.id, duration, displayCentered, drawAboveScreenFade )
+}
+
+void function ClearOnscreenHint( entity player )
+{
+	Signal( player, "CancelDelayedOnscreenHint" )
+	Remote_CallFunction_Replay( player, "ScriptCallback_ClearOnscreenHint" )
+}
+
+void function OnscreenHint_DisplayAfterDelay( entity player, string hintAlias, float duration = -1, float delayTime = -1 )
+{
+	EndSignal( player, "OnDestroy" )
+	Signal( player, "DisplayingOnscreenHint" )
+	EndSignal( player, "DisplayingOnscreenHint" )
+	EndSignal( player, "CancelDelayedOnscreenHint" )
+
+	if ( delayTime > 0 )
+		wait delayTime
+
+	thread DisplayOnscreenHint( player, hintAlias, duration )
+}
+
+void function OnscreenHint_DisplayUntilFlag( entity player, string hintAlias, string flagName, float delayTime = 0.0, bool displayCentered = false, bool drawAboveScreenFade = false )
+{
+	EndSignal( player, "OnDestroy" )
+
+	if ( delayTime > 0 )
+		wait delayTime
+
+	if ( Flag( flagName ) )
+		return
+
+	OnThreadEnd(
+	function() : ( player )
+		{
+			if ( IsValid( player ) )
+				ClearOnscreenHint( player )
+		}
+	)
+
+	DisplayOnscreenHint( player, hintAlias, -1, displayCentered, drawAboveScreenFade )
+
+	FlagWait( flagName )
+}
+
+
+void function OnscreenHint_NagUntilFlag( entity player, string hintAlias, string flagName, float nagInterval, float nagDuration )
+{
+	EndSignal( player, "OnDestroy" )
+
+	if ( Flag( flagName ) )
+		return
+
+	FlagEnd( flagName )
+
+	OnThreadEnd(
+	function() : ( player )
+		{
+			if ( IsValid( player ) )
+				ClearOnscreenHint( player )
+		}
+	)
+
+	float nextNagTime = Time() + nagInterval
+
+	while ( !Flag( flagName ) )
+	{
+		if ( Time() > nextNagTime )
+		{
+			DisplayOnscreenHint( player, hintAlias, nagDuration )
+			wait nagDuration
+			nextNagTime = Time() + nagInterval
+		}
+
+		wait 0.1
+	}
+}
+
+#endif //SERVER
+
+
+
+// ================================
+// ========= CLIENT ONLY ==========
+// ================================
+#if CLIENT
+void function ScriptCallback_DisplayOnscreenHint( int hintID, float duration = -1, bool displayCentered = false, bool drawAboveScreenFade = false )
+{
+	Cl_DisplayOnscreenHint_ByID( hintID, duration, displayCentered, drawAboveScreenFade )
+}
+
+void function Cl_DisplayOnscreenHint_ByID( int hintID, float duration = -1, bool displayCentered = false, bool drawAboveScreenFade = false )
+{
+	OnscreenHint hintInfo = GetOnscreenHint_ByID( hintID )
+	thread DisplayOnscreenHint( hintInfo, duration, displayCentered, drawAboveScreenFade )
+}
+
+void function DisplayOnscreenHint( OnscreenHint hintInfo, float duration = -1, bool displayCentered = false, bool drawAboveScreenFade = false )
+{
+	entity player = GetLocalViewPlayer()
+	DestroyOnscreenHint()
+	Signal( player, "DisplayingOnscreenHint" )
+	EndSignal( player, "DisplayingOnscreenHint" )
+
+	EmitSoundOnEntity( player, "training_scr_message_fade_in" )
+
+	var onscreenHintRUI
+	if ( !drawAboveScreenFade )
+		onscreenHintRUI = RuiCreate( $"ui/sp_onscreen_hint.rpak", clGlobal.topoCockpitHud, RUI_DRAW_COCKPIT, 0 )
+	else
+		onscreenHintRUI = CreateFullscreenRui( $"ui/sp_onscreen_hint.rpak", RUI_SORT_SCREENFADE + 100 )
+
+	RuiSetResolutionToScreenSize( onscreenHintRUI )
+
+	RuiSetString( onscreenHintRUI, "locStringGamepad", hintInfo.locStringGamepad )
+	if ( hintInfo.locStringKBM != "" )
+	{
+		RuiSetString( onscreenHintRUI, "locStringKBM", hintInfo.locStringKBM )
+		RuiSetBool( onscreenHintRUI, "hasLocStringKBM", true )
+	}
+
+	RuiSetString( onscreenHintRUI, "stringArg1", hintInfo.stringArg1 )
+	RuiSetString( onscreenHintRUI, "stringArg2", hintInfo.stringArg2 )
+	RuiSetFloat( onscreenHintRUI, "duration", duration )
+	RuiSetBool( onscreenHintRUI, "displayCentered", displayCentered )
+	RuiSetBool( onscreenHintRUI, "adsFade", hintInfo.adsFade )
+
+	file.onscreenHintRUI = onscreenHintRUI
+
+	ScriptCallback_UpdateOnscreenHint()
+
+	// if duration, wait and then manually clear the hint
+	if ( duration > 0 )
+	{
+		wait duration
+		thread Cl_ClearOnscreenHint()
+	}
+}
+
+void function ScriptCallback_UpdateOnscreenHint()
+{
+	if( file.onscreenHintRUI == null )
+		return
+
+	if ( IsPickupFlyoutValid() || IsWeaponFlyoutVisible() )
+		RuiSetBool( file.onscreenHintRUI, "weaponFlyoutOnscreen", true )
+	else
+		RuiSetBool( file.onscreenHintRUI, "weaponFlyoutOnscreen", false )
+}
+
+void function ScriptCallback_ClearOnscreenHint()
+{
+	thread Cl_ClearOnscreenHint()
+}
+
+void function Cl_ClearOnscreenHint()
+{
+	entity player = GetLocalViewPlayer()
+	EndSignal( player, "DisplayingOnscreenHint" )
+
+	EmitSoundOnEntity( player, "training_scr_message_fade_out" )
+
+	if ( file.onscreenHintRUI != null )
+		RuiSetBool( file.onscreenHintRUI, "forceFadeOut", true )
+
+	wait 1.0  // HACK wait for RUI to fade out before cleaning it up
+	DestroyOnscreenHint()
+}
+
+void function DestroyOnscreenHint()
+{
+	if ( file.onscreenHintRUI != null )
+		RuiDestroyIfAlive( file.onscreenHintRUI )
+
+	file.onscreenHintRUI = null
+}
+#endif //CLIENT

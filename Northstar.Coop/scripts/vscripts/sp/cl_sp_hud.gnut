@@ -1,0 +1,199 @@
+global function ClSpHud_Init
+
+global function ServerCallback_TitanDied
+global function ServerCallback_NewTitanLoadout
+global function ServerCallback_WhereIsTitan
+global function ServerCallback_FriendlyFire_MissionFailure
+global function ServerCallback_UpdateDifficulty
+
+global function BeginIntroSequence
+global function IntroInProgress
+
+struct
+{
+	bool introInProgress = false
+} file
+
+void function ClSpHud_Init()
+{
+	if ( IsLobby() )
+		return
+
+	AddCallback_OnPlayerLifeStateChanged( CallbackUpdatePlayerStatusCounts )
+
+	AddCreateMainHudCallback( SpMainHud )
+	AddCreatePilotCockpitCallback( SpCockpit )
+	AddCreateTitanCockpitCallback( SpCockpit )
+
+	level.spHeroes <- [ null, null, null, null ]
+
+	level.indexedFaceIcons <- [ null, null, null, null ]
+	level.oldObjectiveIndex <- 0
+
+}
+
+void function CallbackUpdatePlayerStatusCounts( entity player, int oldLifeState, int newLifeState )
+{
+	thread UpdatePlayerStatusCountsOnWaveSpawnFinished( player, oldLifeState, newLifeState )
+}
+
+void function UpdatePlayerStatusCountsOnWaveSpawnFinished( entity player, int oldLifeState, int newLifeState )
+{
+	if ( newLifeState != LIFE_ALIVE )
+		return
+
+	player.EndSignal( "OnDestroy" )
+	player.EndSignal( "OnDeath" )
+
+	wait 0.5
+
+	while( player.GetParent() && player.GetParent().GetClassName() == "npc_dropship" )
+		wait 1.0
+
+	UpdatePlayerStatusCounts()
+}
+
+
+/************************************************************************************************\
+
+##    ##  #######  ##    ##          ######   #######   ######  ##    ## ########  #### ########
+###   ## ##     ## ###   ##         ##    ## ##     ## ##    ## ##   ##  ##     ##  ##     ##
+####  ## ##     ## ####  ##         ##       ##     ## ##       ##  ##   ##     ##  ##     ##
+## ## ## ##     ## ## ## ## ####### ##       ##     ## ##       #####    ########   ##     ##
+##  #### ##     ## ##  ####         ##       ##     ## ##       ##  ##   ##         ##     ##
+##   ### ##     ## ##   ###         ##    ## ##     ## ##    ## ##   ##  ##         ##     ##
+##    ##  #######  ##    ##          ######   #######   ######  ##    ## ##        ####    ##
+
+\************************************************************************************************/
+void function SpMainHud( var mainVGUI, entity player )
+{
+}
+
+/************************************************************************************************\
+
+ ######   #######   ######  ##    ## ########  #### ########
+##    ## ##     ## ##    ## ##   ##  ##     ##  ##     ##
+##       ##     ## ##       ##  ##   ##     ##  ##     ##
+##       ##     ## ##       #####    ########   ##     ##
+##       ##     ## ##       ##  ##   ##         ##     ##
+##    ## ##     ## ##    ## ##   ##  ##         ##     ##
+ ######   #######   ######  ##    ## ##        ####    ##
+
+\************************************************************************************************/
+void function SpCockpit( entity cockpit, entity player )
+{
+	ServerCallback_UpdateDifficulty()
+	Assert( cockpit.e.mainVGUI )
+	entity vgui = cockpit.e.mainVGUI
+	// entity panel = vgui.GetPanel()
+}
+
+void function ServerCallback_WhereIsTitan()
+{
+	entity player = GetLocalViewPlayer()
+	AnnouncementData announcement = Announcement_Create( "#WHERE_IS_TITAN" )
+	Announcement_SetSoundAlias( announcement,  "UI_InGame_CoOp_TryAgain" )
+	Announcement_SetDuration( announcement, 5.5 )
+	Announcement_SetPurge( announcement, true )
+	AnnouncementFromClass( player, announcement )
+}
+
+void function ServerCallback_FriendlyFire_MissionFailure()
+{
+	AnnouncementData announcement = Announcement_Create( "#MISSION_FAILURE_FRIENDLY_FIRE" )
+	Announcement_SetSubText( announcement, "#MISSION_FAILURE_FRIENDLY_FIRE_SUB" )
+	Announcement_SetSoundAlias( announcement,  "UI_InGame_CoOp_HarvesterDefenseFailed" )
+	Announcement_SetPurge( announcement, true )
+	entity player = GetLocalViewPlayer()
+	AnnouncementFromClass( player, announcement )
+}
+
+void function ServerCallback_TitanDied( int method )
+{
+	AnnouncementData announcement
+	switch ( method )
+	{
+		case eDamageSourceId.fall:
+			announcement = Announcement_Create( "#TITAN_DIED_FALLING" )
+			break
+
+		default:
+			announcement = Announcement_Create( "#TITAN_DIED_GENERIC" )
+			//Announcement_SetSubText( announcement, GetObitFromDamageSourceID( method ) )
+	}
+
+	entity player = GetLocalViewPlayer()
+	AnnouncementFromClass( player, announcement )
+}
+
+void function ServerCallback_NewTitanLoadout( int loadoutIndex )
+{
+	AnnouncementData announcement
+
+	string announceString1 = Localize( "#HUD_SP_NEW_TITAN_LOADOUT_TITLE")
+	string announceString2 = Localize( GetSPTitanLoadoutForIndex_Title( loadoutIndex ) )
+	string announceString = announceString1 + "\"" + announceString2 + "\""
+
+	announcement = Announcement_Create( announceString )
+
+	Announcement_SetSubText( announcement, "#HUD_SP_NEW_TITAN_LOADOUT_DESC" )
+	Announcement_SetSoundAlias( announcement, "HUD_center_announcement_SP_New_Titan_Loadout_1P" )
+
+	entity player = GetLocalViewPlayer()
+	AnnouncementFromClass( player, announcement )
+}
+
+void function ServerCallback_UpdateDifficulty()
+{
+	#if DEV
+	if ( !Dev_CommandLineHasParm( "-nodif" ) )
+	{
+		string msg
+
+		switch ( GetConVarInt( "sp_difficulty" ) )
+		{
+			// cone and aim patterns dictate how long it takes npcs to aim at a freshly visible target
+			case DIFFICULTY_EASY:
+				msg = "easy"
+				break
+			case DIFFICULTY_NORMAL:
+				msg = "normal"
+				break
+			case DIFFICULTY_HARD:
+				msg = "hard"
+				break
+			case DIFFICULTY_MASTER:
+				msg = "master"
+				break
+		}
+
+		if ( IsTestMap() )
+			msg = "Test map, " + msg
+
+		var reminder = HudElement( "Dev_Reminder" )
+		Hud_Show( reminder )
+		Hud_SetText( reminder, msg )
+	}
+	#endif
+}
+
+void function BeginIntroSequence()
+{
+	thread BeginIntroSequence_Internal()
+}
+
+void function BeginIntroSequence_Internal()
+{
+	entity player = GetLocalViewPlayer()
+	player.EndSignal( "OnDeath" )
+	file.introInProgress = true
+	UpdateMainHudVisibility( player )
+	wait 12.0 // derived from sp_level_title.rui
+	file.introInProgress = false
+	UpdateMainHudVisibility( player )
+}
+
+bool function IntroInProgress()
+{
+	return file.introInProgress
+}

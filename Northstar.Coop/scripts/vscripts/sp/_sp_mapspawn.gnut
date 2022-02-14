@@ -1,0 +1,255 @@
+untyped
+
+global function SPMP_MapSpawn_Init
+global function InitMobilityDifficulty
+
+void function SPMP_MapSpawn_Init() // original script entry point
+{
+	printl( "Code Script: _sp_mapspawn" )
+
+	svGlobal.npcsSpawnedThisFrame_scriptManagedArray[ TEAM_IMC ] <- CreateScriptManagedEntArray()
+	svGlobal.npcsSpawnedThisFrame_scriptManagedArray[ TEAM_MILITIA ] <- CreateScriptManagedEntArray()
+
+	level.spawnActions <- {} // these run after all initial spawn functions have run
+	svGlobal.levelEnt = CreateEntity( "info_landmark" )
+	SetTargetName( svGlobal.levelEnt, "Level Ent"  )
+	DispatchSpawn( svGlobal.levelEnt )
+	level.isTestmap <- false
+
+	FlagInit( "EntitiesDidLoad" )
+	FlagInit( "PlayerDidSpawn" )
+
+	level.privateMatchForcedEnd <- null
+	level.defenseTeam <- TEAM_IMC
+
+	level.onRodeoStartedCallbacks <- [] // runs when a player starts rodeoing a titan
+	level.onRodeoEndedCallbacks <- [] // runs when a player stops rodeoing a titan
+
+	FlagInit( "FireteamAutoSpawn" )
+	FlagInit( "DebugFoundEnemy" )
+	FlagInit( "OldAnimRefStyle" )
+	FlagInit( "EarlyCatch" )
+	FlagInit( "ForceStartSpawn" )
+	FlagInit( "IgnoreStartSpawn" )
+	FlagInit( "ReadyToStartMatch" ) // past waiting for players, in prematch
+
+	#if DEV
+		FlagInit( "ShowExplosionRadius" )  // temp HACK
+	#endif
+
+	RegisterSignal( "OnChangedPlayerClass" )
+	RegisterSignal( "_disconnectedInternal" )
+	RegisterSignal( "TeamChange" )
+	RegisterSignal( "LeftClass" )
+	RegisterSignal( "forever" )
+	RegisterSignal( "waitOver" )
+	RegisterSignal( "HitSky" )
+
+	AddCallback_EntitiesDidLoad( ActivateSkyBox )
+
+	#if DEV
+		ModelViewer_Init()
+		thread AINFileIsUpToDateCheck()
+		thread NavmeshUpToDateCheck()
+		AddSpawnCallbackEditorClass( "info_target", "info_debug_text", DevDebugText )
+	#endif
+
+	AddSpawnCallback( "trigger_hurt", InitDamageTriggers )
+	AddSpawnCallback( "info_particle_system", ParticleSystemInit )
+
+	AddCallback_OnPlayerRespawned( InitMobilityDifficulty )
+
+	AddSpawnCallbackEditorClass( "func_brush", 					"func_brush_navmesh_separator", NavmeshSeparatorThink )
+	AddSpawnCallbackEditorClass( "script_mover_lightweight", 	"script_soundeffect", 			ScriptedSoundEffectThink )
+
+	Assert( GetCurrentPlaylistGamemodesCount(), "No gamemodes in current playlist!" )
+
+	AddSpawnCallback( "player", MP_PlayerPostInit )
+	AddSpawnCallback( "npc_crow", NPC_NoTarget )
+
+	if ( GetCurrentPlaylistVarInt( "script_leak", 0 ) )
+	{
+		thread ScriptLeakDetector()
+	}
+
+	PrecacheModel( $"models/weapons/rspn101/ptpov_rspn101.mdl" )
+
+	// red and green lights for script_switches
+	PrecacheParticleSystem( $"runway_light_green" )
+	PrecacheParticleSystem( $"runway_light_red" )
+
+	level.isTestmap = IsTestMap()
+
+	SPMP_Shared_Init()
+
+	LevelTransitionStruct ornull trans = GetLevelTransitionStruct()
+	if ( trans != null )
+	{
+		expect LevelTransitionStruct( trans )
+		SelectDifficulty( trans.difficulty )
+	}
+}
+
+
+void function ActivateSkyBox()
+{
+	entity skycam = GetEnt( SKYBOXLEVEL )
+	if ( skycam )
+		skycam.Fire( "ActivateSkybox" )
+}
+
+void function InitMobilityDifficulty( entity player )
+{
+	int difficulty = 1 // expect int( player.GetPersistentVar( "sp_mobility_difficulty" ) )
+
+	array<entity> ents
+	ents.extend( GetEntArrayByClass_Expensive( "func_brush" ) )
+	ents.extend( GetEntArrayByClass_Expensive( "prop_dynamic" ) )
+	ents.extend( GetEntArrayByClass_Expensive( "prop_script" ) )
+	ents.extend( GetEntArrayByClass_Expensive( "trigger_hurt" ) )
+	ents.extend( GetEntArrayByClass_Expensive( "trigger_multiple" ) )
+
+	foreach( entity ent in ents )
+	{
+		if ( !EntityValidForMobilityDifficulty( ent, difficulty ) )
+			ent.Destroy()
+	}
+}
+
+bool function EntityValidForMobilityDifficulty( entity ent, int difficulty )
+{
+	string key
+	if ( difficulty == 0 )
+		key = "mobility_1_easy"
+	else if ( difficulty == 1 )
+		key = "mobility_2_normal"
+	else
+		key = "mobility_3_hard"
+
+	if ( !ent.HasKey( key ) )
+		return true
+
+	return ent.GetValueForKey( key ) == "1"
+}
+
+void function ParticleSystemInit( entity self )
+{
+	// Effects are often played at long distances and many effects were not showing up once hibernation was turned on by default
+	self.DisableHibernation()
+
+	if ( !self.HasKey( "script_flag" ) )
+		return
+
+	string flag = string( self.kv.script_flag )
+	if ( flag == "" )
+		return
+
+	if ( self.HasKey( "start_active" ) && self.kv.start_active == "1" )
+		FlagInit( flag, true )
+	else
+		FlagInit( flag )
+
+	thread ParticleSystemFlagThink( self, flag )
+}
+
+void function ParticleSystemFlagThink( entity self, string flag )
+{
+	bool playEndCap = false
+	if ( self.HasKey( "playEndCap" ) )
+		playEndCap = self.kv.playEndCap == "1"
+
+	float startDelay = 0
+	if ( self.HasKey( "start_delay" ) )
+		startDelay = float( self.kv.start_delay )
+
+	float stopDelay = 0
+	if ( self.HasKey( "stop_delay" ) )
+		stopDelay = float( self.kv.stop_delay )
+
+	bool flagReverse = false
+	if ( self.HasKey( "flag_reverse" ) )
+		flagReverse = self.kv.flag_reverse == "1"
+
+	while( IsValid( self ) )
+	{
+		if ( !Flag( flag ) )
+		{
+			FlagWait( flag )
+			if ( flagReverse )
+				waitthread ParticleSystemStop( self, playEndCap, stopDelay )
+			else
+				waitthread ParticleSystemStart( self, startDelay )
+		}
+
+		if ( Flag( flag ) )
+		{
+			FlagWaitClear( flag )
+			if ( flagReverse )
+				waitthread ParticleSystemStart( self, startDelay )
+			else
+				waitthread ParticleSystemStop( self, playEndCap, stopDelay )
+		}
+	}
+}
+
+void function ParticleSystemStart( entity self, float delay )
+{
+	if ( delay > 0 )
+		wait delay
+	self.Fire( "Start" )
+}
+
+void function ParticleSystemStop( entity self, bool playEndCap, float delay )
+{
+	if ( delay > 0 )
+		wait delay
+
+	if ( playEndCap )
+		self.Fire( "StopPlayEndCap" )
+	else
+		self.Fire( "Stop" )
+}
+
+void function ScriptedSoundEffectThink( entity ent )
+{
+	EndSignal( ent, "OnDestroy" )
+
+	string flag
+	bool startActive = ent.HasKey( "start_active" ) && ent.kv.start_active == "1"
+	string soundAlias = string( ent.kv.soundName )
+	float fadeinDuration = float( ent.kv.fadein_duration )
+	float fadeoutDuration = float( ent.kv.fadeout_duration )
+
+	Assert( soundAlias != "" )
+
+	if ( ent.HasKey( "script_flag" ) && ent.kv.script_flag != "" )
+	{
+		flag = string( ent.kv.script_flag )
+		FlagInit( flag, startActive )
+	}
+
+	wait 0.2
+
+	if ( startActive && flag == "" )
+		EmitSoundOnEntity( ent, soundAlias )
+
+	if ( flag == "" )
+		return
+
+	while( IsValid( ent ) )
+	{
+		if ( Flag( flag ) )
+		{
+			EmitSoundOnEntity( ent, soundAlias )
+			FlagWaitClear( flag )
+		}
+		else
+		{
+			if ( fadeoutDuration > 0 )
+				FadeOutSoundOnEntity( ent, soundAlias, fadeoutDuration )
+			else
+				StopSoundOnEntity( ent, soundAlias )
+			FlagWait( flag )
+		}
+	}
+}

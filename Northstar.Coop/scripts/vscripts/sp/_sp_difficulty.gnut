@@ -1,0 +1,537 @@
+global function SPDifficulty_Init
+
+global function UpdateNPCForSpDifficulty
+
+global function SPMP_Callback_ForceAIMissPlayer
+global function UpdateSpDifficulty
+global function GetSpDifficulty
+global function GetDamageScalarByDifficulty
+global function SetProficiencyFromSPDifficulty
+global function SelectDifficulty
+global function GetLowestDifficultyThisMap
+global function UpdateMercTitanHealthForDifficulty
+
+const float FRIENDLY_TVT_DAMAGE_SCALE = 0.2 // scale damage dealt by militia npc titans against IMC
+const float BT_TVT_DAMAGE_SCALE = 0.5 // scale damage dealt by BT npc against IMC titans
+const float PLAYER_TITAN_PVT_OUT_OF_VIEW_DAMAGE_FORGIVENESS = 0.4 // damage is multiplied by this amount for out of view enemies dealing damage to player (as titan)
+const float MFP_CHANCE_TO_HIT = 0.5 // Extra chance to miss if player is fast.
+const float DIFFICULTY_EASY_DAMAGE_SCALAR = 0.5 // damage against player is multiplied by this number on Easy.
+const float DIFFICULTY_NORMAL_DAMAGE_SCALAR = 1 // damage against player is multiplied by this number on Normal.
+const float DIFFICULTY_HARD_DAMAGE_SCALAR = 1.5 // damage against player is multiplied by this number on Hard.
+const float DIFFICULTY_MASTER_DAMAGE_SCALAR = 1.9 // damage against player is multiplied by this number on Master.
+const float PLAYER_TITAN_DAMAGE_SCALAR = 1 // damage against player titan multiplied by this
+const float DIFFICULTY_MASTER_BOSS_HEALTH_SCALAR = 2.0 // boss health is scaled by this amount
+
+struct
+{
+	int lowestDifficulty = 999
+	float maxDamagePerHit
+} file
+
+void function UpdateSpDifficulty( entity player )
+{
+	int difficulty = GetSpDifficulty()
+	switch ( difficulty )
+	{
+		// cone and aim patterns dictate how long it takes npcs to aim at a freshly visible target
+		case DIFFICULTY_EASY:
+			NPCSetAimConeFocusParams( 8, 3.5 )
+			NPCSetAimPatternFocusParams( 5, 2.5, 0.2 )
+			NPCSetReacquireParams( 2.5, 2 )
+			file.maxDamagePerHit = 40
+			printt( "SP_Difficulty is: easy" )
+			break
+		case DIFFICULTY_NORMAL:
+			NPCSetAimConeFocusParams( 6, 3 )
+			NPCSetAimPatternFocusParams( 5, 2.5, 0.2 )
+			NPCSetReacquireParams( 3, 2.5 )
+			file.maxDamagePerHit = 60
+			printt( "SP_Difficulty is: normal" )
+			break
+		case DIFFICULTY_HARD:
+			NPCSetAimConeFocusParams( 3, 2.0 )
+			NPCSetAimPatternFocusParams( 3, 0.5, 0.8 )
+			NPCSetReacquireParams( 4, 3 )
+			file.maxDamagePerHit = 70
+			printt( "SP_Difficulty is: hard" )
+			break
+		case DIFFICULTY_MASTER:
+			NPCSetAimConeFocusParams( 0.2, 1.0 )
+			NPCSetAimPatternFocusParams( 0.2, 0.1, 0.8 )
+			NPCSetReacquireParams( 5, 3.5 )
+			file.maxDamagePerHit = 80
+			printt( "SP_Difficulty is: master" )
+			break
+
+		default:
+			Assert( 0, "Unknown difficulty " + difficulty )
+	}
+
+	if ( IsAlive( player ) && IsPilot( player ) )
+		ScaleHealthForDifficulty( player, difficulty )
+
+	array<entity> npcs = GetNPCArray()
+	foreach ( npc in npcs )
+	{
+		UpdateNPCForSpDifficulty( npc )
+	}
+
+	if ( DevStartPoints() )
+	{
+		foreach ( player in GetPlayerArray() )
+		{
+			Remote_CallFunction_NonReplay( player, "ServerCallback_UpdateDifficulty" )
+		}
+	}
+}
+
+
+void function SPDifficulty_Init()
+{
+	Assert( !IsMultiplayer() )
+
+	AddDamageCallback( "npc_titan", NPCTitan_OnDamaged )
+	AddDamageCallback( "player", SpPlayer_OnDamaged )
+
+	// titans are easier when player is doomed
+	AddSpawnCallback( "npc_titan", NPCTitan_OnSpawned )
+	AddCallback_OnTitanDoomed( OnTitanDoomed )
+	AddClientCommandCallback( "ClientCommand_RequestSPDifficultyChange", ClientCommand_RequestSPDifficultyChange )
+
+	file.lowestDifficulty = GetSpDifficulty()
+}
+
+void function NPCTitan_OnSpawned( entity titan )
+{
+	titan.SetNPCFlag( NPC_NO_WEAPON_DROP, true )
+
+	foreach ( p in GetPlayerArray() )
+	{
+		entity playerTitan = GetTitanFromPlayer( p )
+		if ( IsAlive( playerTitan ) && GetDoomedState( playerTitan ) )
+		{
+			titan.kv.WeaponProficiency = titan.ai.playerDoomedProficiency
+		}
+	}
+}
+
+void function OnTitanDoomed( entity titan, var damageInfo )
+{
+	if ( titan.IsPlayer() || titan.GetBossPlayer() != null )
+	{
+		LowerNPCTitanProficiency()
+	}
+}
+
+void function NPCTitan_OnDamaged( entity titan, var damageInfo )
+{
+	if ( DamageInfo_GetForceKill( damageInfo ) )
+		return
+
+	if ( titan.GetTeam() == TEAM_IMC )
+	{
+		entity attacker = DamageInfo_GetAttacker( damageInfo )
+		if ( attacker.IsNPC() && attacker.IsTitan() )
+		{
+			if ( IsAlive( attacker.GetBossPlayer() ) )
+				DamageInfo_ScaleDamage( damageInfo, BT_TVT_DAMAGE_SCALE )
+			else
+				DamageInfo_ScaleDamage( damageInfo, FRIENDLY_TVT_DAMAGE_SCALE ) // friendly titan only does 20% damage
+		}
+	}
+	else
+	{
+		if ( IsAlive( titan.GetBossPlayer() ) )
+		{
+			// its BT! Scale incoming damage so BT doesn't die right away
+			float healthRatio = float( titan.GetHealth() ) / titan.GetMaxHealth()
+			float scale = GraphCapped( healthRatio, 0.4, 0.7, 0.20, 1.00 )
+			DamageInfo_ScaleDamage( damageInfo, scale )
+		}
+	}
+}
+
+void function SpPlayer_OnDamaged( entity player, var damageInfo )
+{
+	// reduce incoming damage if you recently loaded a save
+	DamageInfo_ScaleDamage( damageInfo, LoadSaveTimeDamageMultiplier() )
+
+	entity attacker = DamageInfo_GetAttacker( damageInfo )
+	if ( attacker == player )
+		return
+
+	if ( player.IsTitan() )
+	{
+		ScaleDamageToPlayerByDifficulty( damageInfo )
+
+		DamageInfo_ScaleDamage( damageInfo, PLAYER_TITAN_DAMAGE_SCALAR )
+
+		if ( IsHumanSized( attacker ) )
+		{
+			if ( !PlayerCanSee( player, attacker, false, 70 ) || GetDoomedState( player ) )
+			{
+				DamageInfo_ScaleDamage( damageInfo, PLAYER_TITAN_PVT_OUT_OF_VIEW_DAMAGE_FORGIVENESS )
+			}
+		}
+	}
+	else
+	{
+		ScaleDamageToPlayerByDifficulty( damageInfo )
+
+		if ( !DamageAlwaysLethal( damageInfo ) )
+		{
+			float recentDamage = GetTotalDamageTakenInTime( player, 0.25 )
+			float maxDamageAllowed = max( 5, file.maxDamagePerHit - recentDamage )
+
+
+			// make it possible to beat a Titan
+			if ( DamageInfo_GetDamage( damageInfo ) > maxDamageAllowed )
+			{
+				DamageInfo_SetDamage( damageInfo, maxDamageAllowed )
+			}
+		}
+	}
+}
+
+void function LowerNPCTitanProficiency()
+{
+	array<entity> npcs = GetNPCArrayOfTeam( TEAM_IMC )
+	foreach ( ai in npcs )
+	{
+		if ( IsAlive( ai ) )
+		{
+			if ( !ai.IsTitan() )
+				continue
+
+			printt( ai + ": lowering proficiency to: " + ai.ai.playerDoomedProficiency )
+			ai.kv.WeaponProficiency = ai.ai.playerDoomedProficiency
+		}
+	}
+}
+
+void function RestoreNPCTitanProficiency()
+{
+	array<entity> npcs = GetNPCArrayOfTeam( TEAM_IMC )
+	foreach ( ai in npcs )
+	{
+		if ( IsAlive( ai ) )
+		{
+			if ( !ai.IsTitan() )
+				continue
+
+			ai.kv.WeaponProficiency = ai.ai.defaultProficiency
+		}
+	}
+}
+
+void function ScaleDamageToPlayerByDifficulty( var damageInfo )
+{
+	int difficulty = GetSpDifficulty()
+	float scalar
+
+	switch ( difficulty )
+	{
+		case DIFFICULTY_EASY:
+			scalar = DIFFICULTY_EASY_DAMAGE_SCALAR
+			break
+
+		case DIFFICULTY_NORMAL:
+			scalar = DIFFICULTY_NORMAL_DAMAGE_SCALAR
+			break
+
+		case DIFFICULTY_HARD:
+			scalar = DIFFICULTY_HARD_DAMAGE_SCALAR
+			break
+
+		case DIFFICULTY_MASTER:
+			scalar = DIFFICULTY_MASTER_DAMAGE_SCALAR
+			break
+
+		default:
+			return
+	}
+
+	DamageInfo_ScaleDamage( damageInfo, scalar )
+}
+
+float function GetDamageScalarByDifficulty()
+{
+	int difficulty = GetSpDifficulty()
+	float scalar = DIFFICULTY_NORMAL_DAMAGE_SCALAR
+
+	switch ( difficulty )
+	{
+		case DIFFICULTY_EASY:
+			scalar = DIFFICULTY_EASY_DAMAGE_SCALAR
+			break
+
+		case DIFFICULTY_NORMAL:
+			scalar = DIFFICULTY_NORMAL_DAMAGE_SCALAR
+			break
+
+		case DIFFICULTY_HARD:
+			scalar = DIFFICULTY_HARD_DAMAGE_SCALAR
+			break
+
+		case DIFFICULTY_MASTER:
+			scalar = DIFFICULTY_MASTER_DAMAGE_SCALAR
+			break
+	}
+
+	return scalar
+}
+
+int function GetSpDifficulty()
+{
+	int difficulty = GetConVarInt( "sp_difficulty" )
+	return int( clamp( difficulty, DIFFICULTY_EASY, DIFFICULTY_MASTER ) )
+}
+
+void function ScaleHealthForDifficulty( entity player, int difficulty )
+{
+	float scale = 1.0
+	switch ( difficulty )
+	{
+		case 0:
+			//scale = 1.5
+			break
+		case 1:
+			//scale = 1.25
+			break
+		case 2:
+		case 3:
+			break
+	}
+	ScaleHealth( player, scale )
+}
+
+void function SetTitanProficiency( entity npcTitan )
+{
+	if ( npcTitan.GetAIClass() == AIC_TITAN_BUDDY )
+	{
+		npcTitan.kv.WeaponProficiency = eWeaponProficiency.VERYGOOD
+	}
+	else
+	{
+		// should be difficulty based numbers
+		int difficulty = GetSpDifficulty()
+		switch ( difficulty )
+		{
+			case DIFFICULTY_EASY:
+				if ( !IsBossTitan( npcTitan ) )
+					npcTitan.kv.WeaponProficiency = eWeaponProficiency.POOR
+				else
+					npcTitan.kv.WeaponProficiency = eWeaponProficiency.GOOD
+				break
+
+			case DIFFICULTY_NORMAL:
+				if ( !IsBossTitan( npcTitan ) )
+					npcTitan.kv.WeaponProficiency = eWeaponProficiency.AVERAGE
+				else
+					npcTitan.kv.WeaponProficiency = eWeaponProficiency.VERYGOOD
+				break
+
+			case DIFFICULTY_HARD:
+				if ( !IsBossTitan( npcTitan ) )
+					npcTitan.kv.WeaponProficiency = eWeaponProficiency.GOOD
+				else
+					npcTitan.kv.WeaponProficiency = eWeaponProficiency.PERFECT
+				break
+
+			case DIFFICULTY_MASTER:
+				if ( !IsBossTitan( npcTitan ) )
+					npcTitan.kv.WeaponProficiency = eWeaponProficiency.PERFECT
+				else
+					npcTitan.kv.WeaponProficiency = eWeaponProficiency.PERFECT // tuned to not be exact perfect
+				break
+		}
+
+		if ( npcTitan.HasKey( "ProficiencyAdjust" ) )
+		{
+			int proficiencyAdjust = int( npcTitan.kv.ProficiencyAdjust )
+			int weaponProficiency = int( npcTitan.kv.WeaponProficiency )
+			int newProf = int( clamp( weaponProficiency + proficiencyAdjust, eWeaponProficiency.POOR, eWeaponProficiency.PERFECT ) )
+
+			// printt( npcTitan )
+			// printt( npcTitan.kv.WeaponProficiency )
+			// printt( newProf )
+
+			npcTitan.kv.WeaponProficiency = newProf
+		}
+	}
+
+	int weaponProficiency = int( npcTitan.kv.WeaponProficiency )
+
+	npcTitan.ai.playerDoomedProficiency = int( clamp( weaponProficiency - 1, eWeaponProficiency.POOR, eWeaponProficiency.PERFECT ) )
+	npcTitan.ai.defaultProficiency = weaponProficiency
+}
+
+void function UpdateNPCForSpDifficulty( entity npc )
+{
+	if ( npc.IsTitan() )
+	{
+		SetTitanProficiency( npc )
+		UpdateMercTitanHealthForDifficulty( npc )
+
+		return
+	}
+
+	SetProficiencyFromSPDifficulty( npc )
+}
+
+void function UpdateMercTitanHealthForDifficulty( entity npc )
+{
+	if ( IsMercTitan( npc ) && HasSoul( npc ) && !GetDoomedState( npc ) )
+	{
+		printt( "updating boss health: " + npc.GetTitle() )
+		printt( "old health: " + npc.GetMaxHealth() )
+		float healthFrac = GetHealthFrac( npc )
+		string playerSettings = GetSoulPlayerSettings( npc.GetTitanSoul() )
+		float health = GetPlayerSettingsFieldForClassName_Health( playerSettings )
+		if ( GetSpDifficulty() == DIFFICULTY_MASTER )
+		{
+			npc.SetMaxHealth( health * DIFFICULTY_MASTER_BOSS_HEALTH_SCALAR )
+		}
+		else
+		{
+			npc.SetMaxHealth( health )
+		}
+		npc.SetHealth( npc.GetMaxHealth() * healthFrac )
+		printt( "new health: " + npc.GetMaxHealth() )
+	}
+}
+
+bool function SPMP_Callback_ForceAIMissPlayer( entity npc, entity player )
+{
+	entity weapon = npc.GetActiveWeapon()
+	if ( !IsValid( weapon ) )
+		return false
+
+/*
+	float recentDamage = TotalDamageOverTime_BlendedOut( player, 1.5, 3.0 )
+
+	float damageMissChance = GraphCapped( recentDamage, 20, 100, 0.0, 1.0 )
+	if ( RandomFloat( 1.0 ) < damageMissChance )
+		return true
+*/
+	if ( player.IsTitan() )
+		return false
+
+	if ( !IsFastPilot( player ) )
+		return false
+
+	float chanceToHit = MFP_CHANCE_TO_HIT
+
+/*
+	switch ( GetSpDifficulty() )
+	{
+		case DIFFICULTY_EASY:
+			if ( IsAndroidNPC( npc ) )
+				chanceToHit = 0.25
+			else
+				chanceToHit = 0.1
+			break
+
+		case DIFFICULTY_NORMAL:
+			chanceToHit = 0.5
+			break
+
+		case DIFFICULTY_HARD:
+			chanceToHit = 0.5
+			break
+
+		case DIFFICULTY_MASTER:
+			chanceToHit = 0.5
+			break
+
+		case 3:
+			//  miss player moving perpendicular to us
+
+			vector velocity = player.GetVelocity()
+			float speed = Length( velocity )
+			if ( speed < 200 )
+				return false
+
+			vector entDif = npc.GetOrigin() - player.GetOrigin()
+			float dist = Length( entDif )
+			entDif = Normalize( entDif )
+			velocity = Normalize( velocity )
+			float dot = DotProduct( entDif, velocity )
+
+			if ( dot > 0.8 )
+				return false
+
+			chanceToHit = GraphCapped( dist, 400, 800, 95, 10 )
+			float speedMultiplier = GraphCapped( speed, 200, 400, 1.0, 0.5 )
+			chanceToHit *= speedMultiplier
+			break
+*/
+//	}
+
+	return RandomFloat( 1.0 ) >= chanceToHit
+}
+
+void function SetProficiencyFromSPDifficulty( entity soldier )
+{
+	entity enemy = soldier.GetEnemy()
+	int weaponProficiency = eWeaponProficiency.GOOD
+
+	if ( IsAlive( enemy ) && enemy.IsPlayer() && !IsValidRocketTarget( enemy ) )
+	{
+		switch ( GetSpDifficulty() )
+		{
+			case DIFFICULTY_EASY:
+				weaponProficiency 			= eWeaponProficiency.POOR
+				break
+
+			case DIFFICULTY_NORMAL:
+				weaponProficiency 			= eWeaponProficiency.AVERAGE
+				break
+
+			case DIFFICULTY_HARD:
+				weaponProficiency 			= eWeaponProficiency.GOOD
+				break
+
+			case DIFFICULTY_MASTER:
+				weaponProficiency 			= eWeaponProficiency.PERFECT
+				soldier.kv.accuracyMultiplier = 8
+				break
+		}
+	}
+
+	soldier.kv.WeaponProficiency = weaponProficiency
+}
+
+void function SelectDifficulty( int difficulty )
+{
+	array<entity> players = GetPlayerArray()
+	if ( !players.len() )
+		return
+
+	printt( "Set difficulty to " + difficulty )
+	SetConVarInt( "sp_difficulty", difficulty )
+
+	file.lowestDifficulty = minint( file.lowestDifficulty, difficulty )
+
+	foreach ( player in players )
+	{
+		UpdateSpDifficulty( player )
+	}
+}
+
+
+bool function ClientCommand_RequestSPDifficultyChange( entity player, array<string> args )
+{
+	int difficulty
+	if ( args.len() != 1 )
+		return false
+	difficulty = int( args[0] )
+	SelectDifficulty( difficulty )
+	return true
+}
+
+
+int function GetLowestDifficultyThisMap()
+{
+	return file.lowestDifficulty
+}

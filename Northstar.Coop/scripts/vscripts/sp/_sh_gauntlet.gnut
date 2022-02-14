@@ -1,0 +1,639 @@
+global function Gauntlet_SharedInit
+global function Gauntlet_Create
+global function Gauntlet_SetStartpoint
+global function Gauntlet_SetStartTrig
+global function Gauntlet_SetFinishTrig
+global function Gauntlet_SetSpawners
+global function Gauntlet_SetCheckpoints
+global function Gauntlet_SetStartDisplaySpot
+global function Gauntlet_SetFinishDisplaySpot
+global function Gauntlet_SetResultsDisplaySpot
+global function Gauntlet_SetLeaderboardSpot
+global function Gauntlet_SetLeaderboardEnabled
+global function Gauntlet_SetStartEnabled
+global function Gauntlet_SetGhostAttractSpot
+global function Gauntlet_AddGhost
+global function Gauntlet_GetPlayerGhost
+global function Gauntlet_GetGhostByFileName
+global function Gauntlet_GetGhostByID
+global function Gauntlet_SetGhostDuration
+global function Gauntlet_SetActiveGhostID
+global function Gauntlet_RefreshActiveGhostID
+global function Gauntlet_GetActiveGhost
+global function Gauntlet_HasActiveGhost
+global function Gauntlet_GetLeaderboard
+global function Gauntlet_RefreshLeaderboard
+global function Gauntlet_ClearActiveGhost
+global function GauntletGhost_IsPlayerGhost
+global function Gauntlet_GetLeaderboardPosition_ForGhostID
+global function InitGauntlet
+global function GetGauntlets
+global function GetGauntletByID
+
+global const int GAUNTLET_LEADERBOARD_MAX_ENTRIES = 10
+global const string GHOST_NAME_PLAYER 	= "training_gauntlet_player"
+
+global struct GauntletGhost
+{
+	int 	id
+	string 	fileName
+	string 	displayName
+	asset 	fileAsset
+	bool 	showOnLeaderboard
+	int 	leaderboardIdx = -1
+	float 	duration
+}
+
+#if CLIENT
+global struct GauntletWorldspaceDisplay
+{
+	int 	id = -1
+
+	entity 	cornerEnt_topLeft
+	entity 	cornerEnt_bottomRight
+
+	var 	topology
+	var 	rui
+}
+#endif //CLIENT
+
+
+global struct GauntletInfo
+{
+	#if SERVER
+		// world ents
+		string trigStart_name
+		string trigFinish_name
+		entity trigStart
+		entity trigStart2
+		entity trigFinish
+
+		string ghostAttractSpot_name
+		entity ghostAttractSpot
+
+		string startpoint_name
+		entity startpoint
+
+		string spawners_name
+		array<entity> spawners
+		array<entity> spawned
+
+		string checkpoints_name
+		array<entity> checkpoints
+		int checkpointsHit
+
+		// current status info
+		bool isActive = false
+		entity signalEnt
+
+		// active run info
+		float startTime
+
+		float lastRunTime
+		bool allGhostsDefeated = false
+		bool lastRunDefeatedGhost = false
+		bool lastRunBestTime = false
+	#endif
+
+	#if CLIENT
+		float startDisplayScale = 1.0
+		float finishDisplayScale = 1.0
+
+		string startDisplaySpot_name
+		string finishDisplaySpot_name
+		entity startDisplaySpot
+		entity finishDisplaySpot
+
+		var startDisplayTopology
+		var finishDisplayTopology
+		var startDisplayRUI
+		var finishDisplayRUI
+
+		var splashRUI
+
+		array<string> resultsDisplayTips
+		int resultsDisplayTipsIdx = -1
+
+		array<GauntletWorldspaceDisplay> resultsDisplays
+		array<GauntletWorldspaceDisplay> leaderboardDisplays
+
+	#endif
+
+	int id
+	string name
+	entity player
+
+	bool hasResultsDisplay
+	string resultsDisplay_topleft_name
+	string resultsDisplay_bottomright_name
+
+	bool hasLeaderboard
+	bool showLeaderboard = true
+	string leaderboardSpot_name
+
+	bool isInited = false
+	bool startEnabled = true
+	bool isEnabled = false
+
+	table<int,GauntletGhost> ghosts
+	array<GauntletGhost> leaderboard
+	int activeGhostID = -1
+	bool hasPlayerGhost = false
+
+	int enemiesKilled = 0
+	bool runFinished = false
+
+	float bestTime = -1.0
+}
+
+
+struct
+{
+	table<int,GauntletInfo> gauntlets
+} file
+
+
+void function Gauntlet_SharedInit()
+{
+	RegisterSignal( "DisableGauntlet" )
+	RegisterSignal( "Gauntlet_RunStarted" )
+	RegisterSignal( "Gauntlet_RunStopped" )
+}
+
+
+GauntletInfo function Gauntlet_Create( string gauntletName )
+{
+	Assert( !GauntletNameAlreadyUsed( gauntletName ), "Already set up a gauntlet with name " + gauntletName )
+
+	GauntletInfo gauntlet
+
+	gauntlet.name = gauntletName
+	gauntlet.id = file.gauntlets.len()
+
+	file.gauntlets[ gauntlet.id ] <- gauntlet
+
+	return gauntlet
+}
+
+void function Gauntlet_SetStartpoint( GauntletInfo gauntlet, string startpointName )
+{
+	#if SERVER
+		gauntlet.startpoint_name = startpointName
+	#endif
+}
+
+void function Gauntlet_SetStartTrig( GauntletInfo gauntlet, string startTrigName )
+{
+	#if SERVER
+		gauntlet.trigStart_name = startTrigName
+	#endif
+}
+
+void function Gauntlet_SetFinishTrig( GauntletInfo gauntlet, string finishTrigName )
+{
+	#if SERVER
+		gauntlet.trigFinish_name = finishTrigName
+	#endif
+}
+
+void function Gauntlet_SetSpawners( GauntletInfo gauntlet, string spawnersName )
+{
+	#if SERVER
+		gauntlet.spawners_name = spawnersName
+	#endif
+}
+
+void function Gauntlet_SetCheckpoints( GauntletInfo gauntlet, string checkpointsName )
+{
+	#if SERVER
+	gauntlet.checkpoints_name = checkpointsName
+	#endif
+}
+
+void function Gauntlet_SetStartDisplaySpot( GauntletInfo gauntlet, string startDisplaySpotName, float startDisplayScale = 1.0 )
+{
+	#if CLIENT
+	gauntlet.startDisplaySpot_name = startDisplaySpotName
+
+	Assert( startDisplayScale > 0 )
+	gauntlet.startDisplayScale = startDisplayScale
+	#endif
+}
+
+void function Gauntlet_SetFinishDisplaySpot( GauntletInfo gauntlet, string finishDisplaySpotName, float finishDisplayScale = 1.0 )
+{
+	#if CLIENT
+	gauntlet.finishDisplaySpot_name = finishDisplaySpotName
+
+	Assert( finishDisplayScale > 0 )
+	gauntlet.finishDisplayScale = finishDisplayScale
+	#endif
+}
+
+void function Gauntlet_SetResultsDisplaySpot( GauntletInfo gauntlet, string resultsDisplaySpot_topleft )
+{
+	gauntlet.resultsDisplay_topleft_name = resultsDisplaySpot_topleft
+}
+
+void function Gauntlet_SetLeaderboardSpot( GauntletInfo gauntlet, string leaderboardSpot_name )
+{
+	gauntlet.leaderboardSpot_name = leaderboardSpot_name
+	gauntlet.hasLeaderboard = true
+}
+
+void function Gauntlet_SetLeaderboardEnabled( GauntletInfo gauntlet, bool showLeaderboard )
+{
+	gauntlet.showLeaderboard = showLeaderboard
+}
+
+void function Gauntlet_SetGhostAttractSpot( GauntletInfo gauntlet, string ghostAttractSpotName )
+{
+	#if SERVER
+	gauntlet.ghostAttractSpot_name = ghostAttractSpotName
+	#endif
+}
+
+void function Gauntlet_SetStartEnabled( GauntletInfo gauntlet, bool startEnabled )
+{
+	gauntlet.startEnabled = startEnabled
+}
+
+
+// when entities load on the server and client, this function gets run
+void function InitGauntlet( GauntletInfo gauntlet )
+{
+	Assert( !gauntlet.isInited, "tried to init gauntlet that is already inited" )
+
+	// SERVER ONLY ENTITIES SETUP
+	#if SERVER
+		gauntlet.startpoint = GetEntByScriptName( gauntlet.startpoint_name )
+		gauntlet.trigFinish = GetEntByScriptName( gauntlet.trigFinish_name )
+
+		gauntlet.trigStart = GetEntByScriptName( gauntlet.trigStart_name )
+		gauntlet.trigStart2 = gauntlet.trigStart.GetLinkEnt()
+		Assert( IsValid( gauntlet.trigStart2 ), "gauntlet start trigger must target another identical trigger that is placed closer to the inside of this gauntlet: " + gauntlet.trigStart_name )
+
+		array<entity> noHibernate
+		noHibernate.append( gauntlet.startpoint )
+		noHibernate.append( gauntlet.trigStart )
+		noHibernate.append( gauntlet.trigFinish )
+
+		if ( gauntlet.spawners_name != "" )
+		{
+			gauntlet.spawners = GetSpawnerArrayByScriptName( gauntlet.spawners_name )
+			Assert( gauntlet.spawners.len() )
+		}
+
+		if ( gauntlet.checkpoints_name != "" )
+		{
+			gauntlet.checkpoints = GetEntArrayByScriptName( gauntlet.checkpoints_name )
+			Assert( gauntlet.checkpoints.len() )
+		}
+
+		if ( gauntlet.ghostAttractSpot_name != "" )
+		{
+			gauntlet.ghostAttractSpot = GetEntByScriptName( gauntlet.ghostAttractSpot_name )
+			noHibernate.append( gauntlet.ghostAttractSpot )
+		}
+
+		foreach ( ent in noHibernate )
+		{
+			ent.DisableHibernation()
+		}
+	#endif //SERVER
+
+
+	// CLIENT ONLY ENTITIES SETUP
+	#if CLIENT
+	gauntlet.startDisplaySpot 	= GetEntByScriptName( gauntlet.startDisplaySpot_name )
+	gauntlet.finishDisplaySpot 	= GetEntByScriptName( gauntlet.finishDisplaySpot_name )
+	#endif //CLIENT
+
+	// RESULTS DISPLAY SETUP
+	InitGauntlet_ResultsDisplayEnts( gauntlet )
+	InitGauntlet_Leaderboard( gauntlet )
+
+	gauntlet.isInited = true
+}
+
+void function InitGauntlet_ResultsDisplayEnts( GauntletInfo gauntlet )
+{
+	if ( gauntlet.resultsDisplay_topleft_name == "" )
+		return
+
+	gauntlet.hasResultsDisplay = true
+
+	array<entity> toplefts = GetEntArrayByScriptName( gauntlet.resultsDisplay_topleft_name )
+
+	foreach ( int idx, topleft in toplefts )
+	{
+		entity bottomright = topleft.GetLinkEnt()
+		Assert ( bottomright != null, "Gauntlet results display topleft ent must link to a bottomright ent." )
+
+		#if SERVER
+			// Server must do this for client to be able to find the linked ents when it runs this function later
+			topleft.EnableNetworkedEntityLinks()
+			bottomright.EnableNetworkedEntityLinks()
+		#elseif CLIENT
+			GauntletWorldspaceDisplay displayInfo
+
+			displayInfo.id 						= gauntlet.resultsDisplays.len()
+			displayInfo.cornerEnt_topLeft 		= topleft
+			displayInfo.cornerEnt_bottomRight 	= bottomright
+
+			gauntlet.resultsDisplays.append( displayInfo )
+		#endif
+	}
+}
+
+void function InitGauntlet_Leaderboard( GauntletInfo gauntlet )
+{
+	if ( !gauntlet.hasLeaderboard )
+		return
+
+	array<entity> toplefts = GetEntArrayByScriptName( gauntlet.leaderboardSpot_name )
+
+	foreach ( int idx, topleft in toplefts )
+	{
+		entity bottomright = topleft.GetLinkEnt()
+		Assert ( bottomright != null, "Gauntlet leaderboard topleft ent must link to a bottomright ent." )
+
+		#if SERVER
+			// Server must do this for client to be able to find the linked ents when it runs this function later
+			topleft.EnableNetworkedEntityLinks()
+			bottomright.EnableNetworkedEntityLinks()
+		#elseif CLIENT
+			GauntletWorldspaceDisplay displayInfo
+
+			displayInfo.id 						= gauntlet.leaderboardDisplays.len()
+			displayInfo.cornerEnt_topLeft 		= topleft
+			displayInfo.cornerEnt_bottomRight 	= bottomright
+
+			gauntlet.leaderboardDisplays.append( displayInfo )
+		#endif
+	}
+}
+
+table<int, GauntletInfo> function GetGauntlets()
+{
+	return file.gauntlets
+}
+
+GauntletInfo function GetGauntletByID( int gauntletID )
+{
+	GauntletInfo gauntlet
+	bool foundOne = false
+
+	foreach ( g in GetGauntlets() )
+	{
+		if ( g.id == gauntletID )
+		{
+			gauntlet = g
+			foundOne = true
+			break
+		}
+	}
+
+	Assert( foundOne, "Couldn't find gauntlet with ID " + gauntletID )
+
+	return gauntlet
+}
+
+GauntletGhost function Gauntlet_GetGhostByFileName( GauntletInfo gauntlet, string ghostFileName )
+{
+	GauntletGhost ghost
+
+	foreach ( g in gauntlet.ghosts )
+	{
+		if ( ghostFileName == g.fileName )
+		{
+			ghost = g
+			break
+		}
+	}
+
+	Assert ( ghost.fileName != "" )
+	return ghost
+}
+
+GauntletGhost function Gauntlet_GetGhostByID( GauntletInfo gauntlet, int ghostID )
+{
+	GauntletGhost ghost
+	bool foundOne = false
+
+	foreach ( g in gauntlet.ghosts )
+	{
+		if ( g.id == ghostID )
+		{
+			ghost = g
+			foundOne = true
+			break
+		}
+	}
+
+	Assert( foundOne, "Couldn't find ghost with ID " + ghostID )
+
+	return ghost
+}
+
+bool function GauntletNameAlreadyUsed( string gauntletName )
+{
+	bool foundIt = false
+	foreach ( gauntlet in file.gauntlets )
+	{
+		if ( gauntlet.name == gauntletName )
+		{
+			foundIt = true
+			break
+		}
+	}
+
+	return foundIt
+}
+
+GauntletGhost function Gauntlet_AddGhost( GauntletInfo gauntlet, string fileName, string displayName, asset fileAsset, bool showOnLeaderboard = false )
+{
+	GauntletGhost ghost
+
+	Assert ( !Gauntlet_GhostFileNameInUse( gauntlet, fileName ), "Gauntlet ghost already set up with fileName " + fileName )
+
+	ghost.fileName 			= fileName
+	ghost.displayName 		= displayName
+
+	if ( !GauntletGhost_IsPlayerGhost( ghost ) )
+	{
+		ghost.fileAsset = fileAsset
+
+		#if SERVER
+			var rec = LoadRecordedAnimation( ghost.fileAsset)
+			float duration = GetRecordedAnimationDuration( rec )
+			Gauntlet_SetGhostDuration( gauntlet, ghost, duration )
+		#endif
+	}
+
+	ghost.id = gauntlet.ghosts.len()
+	gauntlet.ghosts[ ghost.id ] <- ghost
+
+	ghost.showOnLeaderboard = showOnLeaderboard
+	if ( showOnLeaderboard )
+		Gauntlet_AddGhostToLeaderboard( gauntlet, ghost )
+
+	return ghost
+}
+
+bool function GauntletGhost_IsPlayerGhost( GauntletGhost ghost )
+{
+	return ghost.fileName == GHOST_NAME_PLAYER
+}
+
+GauntletGhost function Gauntlet_GetPlayerGhost( GauntletInfo gauntlet )
+{
+	return Gauntlet_GetGhostByFileName( gauntlet, GHOST_NAME_PLAYER )
+}
+
+void function Gauntlet_SetGhostDuration( GauntletInfo gauntlet, GauntletGhost ghost, float duration )
+{
+	ghost.duration = duration
+
+	#if SERVER
+	foreach ( player in GetPlayerArray() )
+		Remote_CallFunction_Replay( player, "ScriptCallback_Gauntlet_SetGhostDuration", gauntlet.id, ghost.id, ghost.duration )
+	#endif
+
+	if ( gauntlet.hasLeaderboard )
+		Gauntlet_RefreshLeaderboard( gauntlet )
+}
+
+bool function Gauntlet_GhostFileNameInUse( GauntletInfo gauntlet, string ghostFileName )
+{
+	foreach ( ghost in gauntlet.ghosts )
+		if ( ghost.fileName == ghostFileName )
+			return true
+
+	return false
+}
+
+void function Gauntlet_SetActiveGhostID( GauntletInfo gauntlet, int ghostID )
+{
+	if ( !gauntlet.hasLeaderboard )
+		return
+
+	if ( gauntlet.activeGhostID == ghostID )
+		return
+
+	gauntlet.activeGhostID = ghostID
+
+	Gauntlet_RefreshActiveGhostID( gauntlet )
+}
+
+void function Gauntlet_RefreshActiveGhostID( GauntletInfo gauntlet )
+{
+	#if SERVER
+		foreach ( player in GetPlayerArray() )
+			Remote_CallFunction_Replay( player, "ScriptCallback_Gauntlet_SetActiveGhostID", gauntlet.id, gauntlet.activeGhostID )
+	#endif
+
+	#if CLIENT
+		Gauntlet_UpdateActiveGhostForLeaderboard( gauntlet, gauntlet.activeGhostID )
+	#endif
+}
+
+void function Gauntlet_ClearActiveGhost( GauntletInfo gauntlet )
+{
+	Gauntlet_SetActiveGhostID( gauntlet, -1 )
+}
+
+GauntletGhost function Gauntlet_GetActiveGhost( GauntletInfo gauntlet )
+{
+	Assert ( gauntlet.activeGhostID != -1, "Gauntlet has no active ghost" )
+
+	return gauntlet.ghosts[ gauntlet.activeGhostID ]
+}
+
+bool function Gauntlet_HasActiveGhost( GauntletInfo gauntlet )
+{
+	return gauntlet.activeGhostID != -1
+}
+
+void function Gauntlet_AddGhostToLeaderboard( GauntletInfo gauntlet, GauntletGhost ghost )
+{
+	Assert( !gauntlet.leaderboard.contains( ghost ) )
+
+	gauntlet.leaderboard.append( ghost )
+}
+
+void function Gauntlet_RefreshLeaderboard( GauntletInfo gauntlet )
+{
+	if ( !gauntlet.hasLeaderboard )
+		return
+
+	Gauntlet_SortLeaderboard( gauntlet )
+	array<GauntletGhost> leaderboard = Gauntlet_GetLeaderboard( gauntlet )
+
+	int maxEntries = GAUNTLET_LEADERBOARD_MAX_ENTRIES
+	int numEntriesAdded = 0
+	foreach ( idx, ghost in leaderboard )
+	{
+		if ( numEntriesAdded >= maxEntries )
+			break
+
+		Assert ( ghost.showOnLeaderboard, "Ghost with showOnLeaderboard set to false somehow got into the leaderboard array." )
+
+		#if CLIENT
+		if ( gauntlet.showLeaderboard )
+			Gauntlet_SetLeaderboardEntry( gauntlet, idx, ghost )
+		#endif
+
+		numEntriesAdded++
+	}
+
+	#if SERVER
+	foreach ( player in GetPlayerArray() )
+		Remote_CallFunction_Replay( player, "ScriptCallback_RefreshLeaderboard", gauntlet.id )
+	#endif
+}
+
+void function Gauntlet_SortLeaderboard( GauntletInfo gauntlet )
+{
+	gauntlet.leaderboard.sort( SortFunc_GauntletLeaderboard )
+}
+
+int function SortFunc_GauntletLeaderboard( GauntletGhost ghost1, GauntletGhost ghost2 )
+{
+	if ( ghost1.duration > ghost2.duration )
+		return 1
+	else if ( ghost1.duration < ghost2.duration )
+		return -1
+
+	// fallback for identical durations: whichever was added first
+	if ( ghost1.id > ghost2.id )
+		return 1
+	else
+		return -1
+
+	return 0
+}
+
+array<GauntletGhost> function Gauntlet_GetLeaderboard( GauntletInfo gauntlet )
+{
+	Assert( gauntlet.hasLeaderboard )
+	return gauntlet.leaderboard
+}
+
+int function Gauntlet_GetLeaderboardPosition_ForGhostID( GauntletInfo gauntlet, int ghostID )
+{
+	int leaderboardIdx = -1
+
+	array<GauntletGhost> leaderboard = Gauntlet_GetLeaderboard( gauntlet )
+	foreach ( idx, leaderboardGhost in leaderboard )
+	{
+		if ( leaderboardGhost.id == ghostID )
+		{
+			leaderboardIdx = idx
+			break
+		}
+	}
+	Assert( leaderboardIdx != -1, "couldn't find leaderboard ghost with ID: " + ghostID )
+
+	return leaderboardIdx
+}

@@ -1,0 +1,823 @@
+global function Training_SharedInit
+global function GetTrainingGauntlet
+
+global function GetDefaultTitanfallGlitchAnim
+global function GetTitanfallGlitchAnims
+global function GetTitanfallGlitchTwinAnims
+
+global function GetStopwatchDisplayStrings
+
+#if SERVER
+global function GetDialogueGroup
+global function DialogueGroup_GetNextLine
+#if DEV
+global function DEV_DialogueGroup_TestPlay
+#endif //DEV
+#endif //SERVER
+
+global const bool INSTALL_DELAY_TEST = false
+
+global const int INPUT_TYPE_CONTROLLER 	= 0
+global const int INPUT_TYPE_KBM 		= 1
+
+global const int NUM_GAUNTLET_FAILS_BEFORE_FORCED_PROGRESS = 4
+global const float TRAINING_GAUNTLET_MAX_TIME_TO_PROGRESS = 120.0
+global const float REC_DIFF_GAUNTLET_TIME_NORMAL 	= 105.0
+global const float REC_DIFF_GAUNTLET_TIME_HARD 		= 51.0
+//global const float REC_DIFF_GAUNTLET_TIME_MASTER 	= 40.0
+
+global const asset BUDDY_MODEL = $"models/titans/buddy/titan_buddy.mdl"
+global const asset EMPTY_MODEL = $"models/dev/empty_model.mdl"
+
+// TODO data files
+global const string GHOST_NAME_FIRSTRUN = "training_record_gauntlet_firstrun"
+global const string GHOST_NAME_CHAL_WIP = "training_record_gauntlet_challenge_wip"
+global const string GHOST_NAME_CHAL_01 = "training_record_gauntlet_gamesager"
+global const string GHOST_NAME_CHAL_02 = "training_record_gauntlet_hakik"
+global const string GHOST_NAME_CHAL_03 = "training_record_gauntlet_challenge_fu"
+global const string GHOST_NAME_CHAL_04 = "training_record_gauntlet_challenge_01"
+global const string GHOST_NAME_CHAL_05 = "training_record_gauntlet_challenge_grenier"
+global const string GHOST_NAME_CHAL_06 = "training_record_gauntlet_challenge_04"
+global const string GHOST_NAME_CHAL_07 = "training_record_gauntlet_challenge_05"
+global const string GHOST_NAME_CHAL_08 = "training_record_gauntlet_challenge_07"
+global const string GHOST_NAME_CHAL_09 = "training_record_gauntlet_challenge_08"
+
+global const string GHOST_NAME_ALIAS_LASTIMOSA 	= GHOST_NAME_CHAL_04
+global const string GHOST_NAME_ALIAS_ANDERSON 	= GHOST_NAME_CHAL_06
+global const string GHOST_NAME_ALIAS_BRIGGS 	= GHOST_NAME_CHAL_07
+
+global struct DialogueGroup
+{
+	array<string> lines
+	int lineIdx = 0
+
+	bool allPlayed = false
+}
+
+global struct StopwatchDisplayStrings
+{
+	string mins
+	string secs
+	string ms
+}
+
+struct
+{
+	#if SERVER
+	table<string,DialogueGroup> dialogueGroups
+	#endif //SERVER
+
+	GauntletInfo& trainingGauntlet
+
+	array<string> glitchAnims_titan
+	array<string> glitchAnims_titanTwin
+	string glitchAnim_default
+} file
+
+void function Training_SharedInit()
+{
+	#if SERVER && DEV
+	MarkNPCForAutoPrecache( "npc_soldier_specialist_militia" )
+	#endif
+
+	PrecacheWeapon( "mp_weapon_car" ) // for anderson
+	PrecacheWeapon( "mp_weapon_rspn101" )
+	PrecacheWeapon( "mp_weapon_hemlok" )
+	PrecacheWeapon( "mp_weapon_hemlok_smg" )
+	PrecacheWeapon( "mp_weapon_car" )
+	PrecacheWeapon( "mp_weapon_vinson" )
+	PrecacheWeapon( "mp_weapon_g2" )
+	PrecacheWeapon( "mp_weapon_shotgun" )
+	PrecacheWeapon( "mp_weapon_mastiff" )
+	PrecacheWeapon( "mp_weapon_semipistol" )
+
+	PrecacheModel( EMPTY_MODEL )
+	SP_TRAINING_AutoPrecache()
+
+	Training_SetupGauntlet()
+	Training_SetupDialogue()
+	Training_SetupOnscreenHints()
+
+	SetupTitanfallGlitchAnims()
+}
+
+
+// ======================================
+// ========= TRAINING GAUNTLET ==========
+// ======================================
+void function Training_SetupGauntlet()
+{
+	GauntletInfo gauntlet = Gauntlet_Create( "training_gauntlet" )
+
+	Gauntlet_SetStartpoint( 			gauntlet, "gauntlet_startpoint" )
+	Gauntlet_SetStartTrig( 				gauntlet, "trig_gauntlet_start" )
+	Gauntlet_SetFinishTrig( 			gauntlet, "trig_gauntlet_finish" )
+	Gauntlet_SetSpawners( 				gauntlet, "gauntlet_enemy_spawner" )
+	//Gauntlet_SetCheckpoints( 			gauntlet, "trig_gauntlet_checkpoint" )
+	Gauntlet_SetStartDisplaySpot( 		gauntlet, "gauntlet_startDisplaySpot", 2.2 )
+	Gauntlet_SetFinishDisplaySpot( 		gauntlet, "gauntlet_finishDisplaySpot", 2.0 )
+	Gauntlet_SetResultsDisplaySpot( 	gauntlet, "gauntlet_results_display_topleft" )
+	Gauntlet_SetLeaderboardSpot( 		gauntlet, "gauntlet_leaderboard_topleft" )
+	Gauntlet_SetLeaderboardEnabled( 	gauntlet, false )
+	Gauntlet_SetGhostAttractSpot( 		gauntlet, "gauntlet_ghost_spot" )
+
+	// TODO data files
+	Gauntlet_AddGhost( gauntlet, GHOST_NAME_FIRSTRUN, 	"#GAUNTLET_GHOST_NAME_FIRSTRUN", 	$"anim_recording/training_record_gauntlet_firstrun.rpak" )
+	Gauntlet_AddGhost( gauntlet, GHOST_NAME_CHAL_WIP, 	"#GAUNTLET_GHOST_NAME_CHAL_WIP", 	$"anim_recording/training_record_gauntlet_challenge_wip.rpak" )
+
+	// challenge ghosts
+	// HACK -  don't forget to update GHOST_NAME_ALIAS if a hero position changes
+	Gauntlet_AddGhost( gauntlet, GHOST_NAME_CHAL_01, 	"#GAUNTLET_GHOST_NAME_GAMESAGER", 	$"anim_recording/training_record_gauntlet_gamesager.rpak", 			true )
+	Gauntlet_AddGhost( gauntlet, GHOST_NAME_CHAL_02, 	"#GAUNTLET_GHOST_NAME_HAKIK", 		$"anim_recording/training_record_gauntlet_hakik.rpak", 				true )
+	//Gauntlet_AddGhost( gauntlet, GHOST_NAME_CHAL_02, 	"#GAUNTLET_GHOST_NAME_ROYCE", 		$"anim_recording/training_record_gauntlet_royce.rpak", 				true )
+	Gauntlet_AddGhost( gauntlet, GHOST_NAME_CHAL_03, 	"#GAUNTLET_GHOST_NAME_FU", 			$"anim_recording/training_record_gauntlet_challenge_fu.rpak", 		true )
+	Gauntlet_AddGhost( gauntlet, GHOST_NAME_CHAL_04, 	"#GAUNTLET_GHOST_NAME_LASTIMOSA", 	$"anim_recording/training_record_gauntlet_challenge_01.rpak", 		true )
+	Gauntlet_AddGhost( gauntlet, GHOST_NAME_CHAL_05, 	"#GAUNTLET_GHOST_NAME_GRENIER", 	$"anim_recording/training_record_gauntlet_challenge_grenier.rpak", 	true )
+	Gauntlet_AddGhost( gauntlet, GHOST_NAME_CHAL_06, 	"#GAUNTLET_GHOST_NAME_ANDERSON", 	$"anim_recording/training_record_gauntlet_challenge_04.rpak", 		true )
+	Gauntlet_AddGhost( gauntlet, GHOST_NAME_CHAL_07, 	"#GAUNTLET_GHOST_NAME_BRIGGS", 		$"anim_recording/training_record_gauntlet_challenge_05.rpak", 		true )
+	Gauntlet_AddGhost( gauntlet, GHOST_NAME_CHAL_08, 	"#GAUNTLET_GHOST_NAME_DIONNE", 		$"anim_recording/training_record_gauntlet_challenge_07.rpak", 		true )
+	Gauntlet_AddGhost( gauntlet, GHOST_NAME_CHAL_09, 	"#GAUNTLET_GHOST_NAME_MILLER", 		$"anim_recording/training_record_gauntlet_challenge_08.rpak", 		true )
+
+	// special player ghost
+	GauntletGhost playerGhost = Gauntlet_AddPlayerGhost( gauntlet )
+	Gauntlet_SetGhostDuration( gauntlet, playerGhost, TRAINING_GAUNTLET_MAX_TIME_TO_PROGRESS )
+
+	file.trainingGauntlet = gauntlet
+}
+
+GauntletInfo function GetTrainingGauntlet()
+{
+	return file.trainingGauntlet
+}
+
+
+// HACK having this in shared file breaks the autobuild... it wants to include the anim recording asset in common.rson for some reason
+GauntletGhost function Gauntlet_AddPlayerGhost( GauntletInfo gauntlet )
+{
+	GauntletGhost playerGhost = Gauntlet_AddGhost( gauntlet, GHOST_NAME_PLAYER, "#GAUNTLET_GHOST_NAME_COOPER", $"anim_recording/training_record_gauntlet_firstrun.rpak", true )
+	gauntlet.hasPlayerGhost = true
+	return playerGhost
+}
+
+
+
+// ======================================
+// ========= TRAINING DIALOGUE ==========
+// ======================================
+void function trd( string scriptAlias, string soundAlias, int priority = PRIORITY_NO_QUEUE )
+{
+	RegisterDialogue( scriptAlias, soundAlias, priority )
+}
+
+void function Training_SetupDialogue()
+{
+	// ======= POD INTRO =======
+	// "Here we go, Rifleman Cooper."
+	trd( "og_pod_startup" ,"diag_sp_intro_TR101_01_01_mcor_og" )
+
+	// "Ah, hell. Ship must've power cycled the sim pod since last time. We'll have to recalibrate it."
+	trd( "og_pod_startup_2", "diag_sp_intro_TR101_03_01a_mcor_og" )
+
+	// [Pod internal speaker processed version] "Ah, hell. Ship must've power cycled the sim pod since last time. We'll have to recalibrate it."
+	trd( "og_pod_startup_2_tech_test", "diag_sp_intro_TR101_03_01_mcor_og" )
+
+	// "We have to calibrate the pod. It won't boot up until you look at both of those lights."
+	trd( "og_pod_calibrate", "diag_sp_intro_TR101_04_01_mcor_og" )
+
+	// "Just look at the lights and follow the instructions."
+	trd( "og_invert_hint", "diag_sp_intro_TR101_05_01_mcor_og" )
+
+	DialogueGroup ogInvertConfirm = AddDialogueGroup( "ogInvertConfirm" )
+	// "Does that feel right to you, Cooper?"
+	trd( "og_invert_confirm_1", "diag_sp_intro_TR101_07_01_mcor_og" )
+	ogInvertConfirm.lines.append( "og_invert_confirm_1" )
+
+	// "How about now? Feel alright?"
+	trd( "og_invert_confirm_2", "diag_sp_intro_TR101_08_01_mcor_og" )
+	ogInvertConfirm.lines.append( "og_invert_confirm_2" )
+
+	// "You sure?"
+	trd( "og_invert_confirm_3", "diag_sp_intro_TR101_09_01_mcor_og" )
+
+	// "Alright, we're good to go."
+	trd( "og_invert_complete", "diag_sp_intro_TR101_10_01_mcor_og" )
+
+	// "Setting the neural link."
+	trd( "og_neural_link", "diag_sp_addtional_TR411_21_mcor_og" )
+
+	//Not quite the same as a Titan link, but it's similar.
+	trd( "og_neural_link_2", "diag_sp_addtional_TR411_21a_mcor_og" )
+
+	// "Let's see how much you remember from last time."
+	trd( "og_how_much_you_remember", "diag_sp_addtional_TR411_20_mcor_og" )
+
+	// "To learn new skills, we need to be in the right state of mind."
+	trd( "og_simulation_starting", "diag_sp_skinSwap_TR111_05_01_mcor_og" )
+
+
+	// ======= BASIC MOVEMENT =======
+
+	// "Ah. Much better."
+	trd( "og_basicmovement_start", "diag_sp_addtional_TR411_69_mcor_og" )
+
+	// "Technically, I'm not supposed to be training you. But in you, I see potential. Besides, we're at war. Who's got time for classes, eh?"
+	trd( "og_not_supposed_to_train", "diag_sp_addtional_TR411_65_mcor_og" )
+
+	// "Cmon, schedule's tight today." [MOVE NAG]
+	trd( "og_move_nag", "diag_sp_movement_TR121_04_01_mcor_og" )
+
+	// "Here you go, up and over."
+	trd( "og_jump_hint_1", "diag_sp_movement_TR121_03_01_mcor_og" )
+
+	// "Don't need the jump kit for this one."
+	trd( "og_jump_hint_2", "diag_sp_movement_TR121_02_01_mcor_og" )
+
+	// "Here you go, up and over."
+	trd( "og_jump_nag", "diag_sp_movement_TR121_03_01_mcor_og" )
+
+	// "Cmon, schedule's tight today." [JUMP NAG]
+	trd( "og_jump_nag_2", "diag_sp_movement_TR121_04_01_mcor_og" )
+
+
+	// "Let's pick up the pace. Enabling jumpkit assist."
+	trd( "og_autosprint_on", "diag_sp_movement_TR121_05_01_mcor_og" )
+
+	// "Jumpkits operate on the principle of relaxed stability."
+	trd( "og_sprint_lore_2", "diag_sp_addtional_TR411_53_mcor_og" )
+
+	// "Once your jumpkit calibrates to your movement style, enhanced mobility becomes second nature."
+	trd( "og_sprint_lore_3", "diag_sp_movement_TR121_08_01_mcor_og" )
+
+
+
+	// ======= ZEN GARDEN =======
+	// "Beautiful, isn't it?"
+	trd( "og_zengarden_intro_1", "diag_sp_addtional_TR401_01_02_mcor_og" )
+
+	// "It's inspired by my home planet of Harmony."
+	trd( "og_zengarden_intro_2", "diag_sp_addtional_TR401_02_01_mcor_og" )
+
+	// "This is where I grew up."
+	trd( "og_zengarden_intro_3", "diag_sp_addtional_TR401_03_01_mcor_og" )
+
+	// "This is what we are fighting for, Cooper."
+	trd( "og_whywefight_1", "diag_sp_addtional_TR401_04_01_mcor_og" )
+
+	// "A world that's not metal and smoke."
+	trd( "og_whywefight_2", "diag_sp_addtional_TR401_05_01_mcor_og" )
+
+	// "The freedom to live in peace and prosperity."
+	trd( "og_whywefight_3", "diag_sp_addtional_TR401_06_01_mcor_og" )
+
+	// "Let's make sure your jump kit is primed. Basic wallrun here, give it a try."
+	trd( "og_wallrun_hint", "diag_sp_zen_TR131_05_01_mcor_og" )
+
+	// "Same routine as last time- watch the ghost pilot, and try to follow along."
+	trd( "og_wallrun_follow_ghost", "diag_sp_zen_TR131_06_01_mcor_og" )
+
+	// "Good! Now you're moving."
+	trd( "og_wallrun_done", "diag_sp_zen_TR131_10_01_mcor_og" )
+
+	// "Under here. Stay low."
+	trd( "og_crouch_hint", "diag_sp_zen_TR131_11_01_mcor_og" )
+
+	// "Crouch underneath, and we'll keep moving."
+	trd( "og_crouch_nag_1", "diag_sp_zen_TR131_12_01_mcor_og" )
+
+	// "You need to get low here."
+	trd( "og_crouch_nag_2", "diag_sp_zen_TR131_13_01_mcor_og" )
+
+	// "We've retaken over a quarter of Frontier space since the Battle of Demeter. The Militia's better organized now. More people join everyday to fight the IMC. People like you."
+	trd( "og_taking_back_frontier", "diag_sp_addtional_TR401_07_01_mcor_og" )
+
+	// "We used to just run and hide from them. But now we chase them."
+	trd( "og_taking_back_frontier_2", "diag_sp_addtional_TR411_70_mcor_og" )
+
+	// "Simple double jump. Follow the ghost"
+	trd( "og_doublejump_hint", "diag_sp_zen_TR131_14_01_mcor_og" )
+
+
+
+	// ======= FIRING RANGE =======
+	// DEPRECATED
+	// "Now that you're warmed up, it's time to go hot. Let's put some rounds downrange."
+	//trd( "og_firingrange_approach", "diag_sp_range_TR141_01_01_mcor_og" )
+
+	// "We need guns."
+	trd( "og_needguns", "diag_sp_range_TR141_02_01_mcor_og" )
+
+	// "That never gets old."
+	//trd( "og_needguns_punchline", "diag_sp_range_TR141_03_01_mcor_og" )
+
+	// "In combat, things never go as you expect."
+	trd( "og_firingrange_approach_2", "diag_sp_addtional_TR411_26_mcor_og" )
+
+	// "No plan survives first contact."
+	trd( "og_firingrange_approach_3", "diag_sp_addtional_TR411_26a_mcor_og" )
+
+	// "You must be ready to use any weapon you can find on the field."
+	trd( "og_firingrange_approach_4", "diag_sp_addtional_TR411_27_mcor_og" )
+
+	// "These are just a few of the weapons I've come across out there."
+	trd( "og_firingrange_approach_5", "diag_sp_addtional_TR411_28_mcor_og" )
+
+	// "Time to hit the range."
+	trd( "og_firingrange_intro", "diag_sp_range_TR141_06_01_mcor_og" )
+
+	// "I'm over here at the range, Cooper."
+	trd( "og_firingrange_attract_nag", "diag_sp_range_TR141_07_01_mcor_og" )
+
+	// "Load your weapon."
+	trd( "og_reload_hint", "diag_sp_range_TR141_08_01_mcor_og" )
+
+	// "Swap in a fresh mag."
+	trd( "og_reload_nag", "diag_sp_range_TR141_09_01_mcor_og" )
+
+	// DEPRECATED
+	DialogueGroup shootTargetsNag = AddDialogueGroup( "shootTargetsNag" )
+	// "Gotta take 'em all out before we can move on."
+	trd( "og_shoot_targets_nag", "diag_sp_range_TR141_11_01_mcor_og" )
+	shootTargetsNag.lines.append( "og_shoot_targets_nag" )
+
+	// "Just aim, take a breath, and squeeze the trigger."
+	trd( "og_shoot_targets_hint", "diag_sp_range_TR141_10_01_mcor_og" )
+	shootTargetsNag.lines.append( "og_shoot_targets_hint" )
+
+	// "In the real world, the targets don't just stand still. They shoot back."
+	trd( "og_targets_shoot_back", "diag_sp_addtional_TR411_34_mcor_og" )
+	shootTargetsNag.lines.append( "og_targets_shoot_back" )
+
+	// "To get more precision, aim down the sights of your weapon."
+	trd( "og_ads_hint", "diag_sp_range_TR141_14_01_mcor_og" )
+
+	// "Aim down the sights when engaging more distant targets."
+	trd( "og_ads_nag_1", "diag_sp_range_TR141_15_01_mcor_og" )
+
+	// "You can focus more tightly on your targets if you aim down the sights."
+	trd( "og_ads_nag_2", "diag_sp_range_TR141_16_01_mcor_og" )
+
+	// "Use a different weapon this time. Grab another one off the rack."
+	trd( "og_weaponswap_hint", "diag_sp_range_TR141_18_01_mcor_og" )
+
+	// "Switch to a different weapon."
+	trd( "og_weaponswap_nag", "diag_sp_range_TR141_19_01_mcor_og" )
+
+	// "Good. Practice more if you want, then head to the Gauntlet."
+	trd( "og_moving_to_gauntlet_hint", "diag_sp_range_TR141_23_01_mcor_og" )
+
+	// "Practice as much as you want then meet me at the gauntlet."
+	trd( "og_moving_to_gauntlet_nag_1", "diag_sp_addtional_TR411_31_mcor_og" )
+
+	// "When you're done there, we'll run the Gauntlet."
+	trd( "og_moving_to_gauntlet_nag_2", "diag_sp_range_TR141_25_01_mcor_og" )
+
+	// "Next up is the Gauntlet. Cmon over when you're ready."
+	trd( "og_moving_to_gauntlet_nag_3", "diag_sp_range_TR141_24_01_mcor_og" )
+
+
+	// ======= GAUNTLET =======
+	// "Alright. Got a new gauntlet for you to run today."
+	trd( "og_gauntlet_intro", "diag_sp_gauntlet_TR151_28_01_mcor_og" )
+
+	// "Par time is a minute-forty-five."
+	//trd( "og_gauntlet_firstrun_timetobeat_1", "diag_sp_gauntlet_TR151_30_01_mcor_og" )
+
+	// "Gotta do better than that to continue."
+	trd( "og_gauntlet_firstrun_timetobeat_2", "diag_sp_gauntlet_TR151_33_01_mcor_og" )
+
+	// "Follow the ghost, or find your own path."
+	trd( "og_gauntlet_ghost_hint", "diag_sp_gauntlet_TR151_02_01_mcor_og" )
+
+
+	DialogueGroup firstRunGauntletLore = AddDialogueGroup( "firstRunGauntletLore" )
+	// "Pilots have to strike a balance in combat. Speed is paramount, but you must also hit your targets."
+	trd( "og_gauntlet_first_run_gauntlet_lore_1", "diag_sp_gauntlet_TR151_03_01_mcor_og" )
+	firstRunGauntletLore.lines.append( "og_gauntlet_first_run_gauntlet_lore_1" )
+
+	// "The Gauntlet is where we practice those skills, until they're second nature."
+	trd( "og_gauntlet_first_run_gauntlet_lore_2", "diag_sp_gauntlet_TR151_04_01_mcor_og" )
+	firstRunGauntletLore.lines.append( "og_gauntlet_first_run_gauntlet_lore_2" )
+
+
+	DialogueGroup gauntletHints_wallrun = AddDialogueGroup( "gauntletHints_wallrun" )
+	// "Remember, you're a Pilot. You move faster when you're wallrunning."
+	trd( "og_gauntlet_hint_wallrun_1", "diag_sp_gauntlet_TR151_34_01_mcor_og" )
+	gauntletHints_wallrun.lines.append( "og_gauntlet_hint_wallrun_1" )
+	// "Running on the ground is always gonna be slower than wallrunning."
+	trd( "og_gauntlet_hint_wallrun_2", "diag_sp_gauntlet_TR151_35_01_mcor_og" )
+	gauntletHints_wallrun.lines.append( "og_gauntlet_hint_wallrun_2" )
+
+	// "Give it a try."
+	trd( "og_gauntlet_hint_wallrun_capper", "diag_sp_gauntlet_TR151_36_01_mcor_og" )
+
+
+	DialogueGroup firstRunFailed = AddDialogueGroup( "firstRunFailed" )
+	// "The first run of the day is always the toughest."
+	trd( "og_gauntlet_firstrun_failed_1", "diag_sp_addtional_TR411_36_mcor_og" )
+	firstRunFailed.lines.append( "og_gauntlet_firstrun_failed_1" )
+
+	// "Too slow! I know you can do better. Give it another try."
+	trd( "og_gauntlet_firstrun_failed_2", "diag_sp_gauntlet_TR151_10_01_mcor_og" )
+	firstRunFailed.lines.append( "og_gauntlet_firstrun_failed_2" )
+
+	// "You can do this."
+	trd( "og_gauntlet_firstrun_failed_3", "diag_sp_addtional_TR411_35_mcor_og" )
+	firstRunFailed.lines.append( "og_gauntlet_firstrun_failed_3" )
+
+
+	// "Nice run! See the results board on the wall? You set a new Best Time."
+	trd( "og_gauntlet_firstrun_passed", "diag_sp_gauntlet_TR151_11_01_mcor_og" )
+
+	// DEPRECATED
+	// "Top Pilots will always try to improve their times with different loadouts, or taking different routes through the Gauntlet."
+	//trd( "og_gauntlet_post_firstrun_hint_1", "diag_sp_gauntlet_TR151_12_01_mcor_og" )
+
+	//Everyone has different strengths and weaknesses, so be sure to run this a few times with different weapons.
+	trd( "og_gauntlet_post_firstrun_hint_1", "diag_sp_addtional_TR411_33_mcor_og" )
+
+	// "Look at the results board for more tips on how to improve."
+	trd( "og_gauntlet_post_firstrun_hint_2", "diag_sp_gauntlet_TR151_13_01_mcor_og" )
+
+
+	// ======= GAUNTLET CHALLENGE =======
+	// "Now that you're warmed up: if you want a REAL challenge, you can race against other Pilot ghosts."
+	trd( "og_gauntlet_leaderboard_hint_1", "diag_sp_gauntlet_TR151_14_01_mcor_og" )
+
+	// "Word of warning, though- the Pilots who recorded these ghosts are the best in the SRS."
+	trd( "og_gauntlet_leaderboard_hint_2", "diag_sp_gauntlet_TR151_15_01_mcor_og" )
+
+	// "If you can beat them, you'll be halfway to being a real Pilot."
+	trd( "og_gauntlet_leaderboard_hint_3", "diag_sp_gauntlet_TR151_15_05_mcor_og" )
+
+	// "Go ahead and run the Gauntlet as much as you want."
+	trd( "og_gauntlet_player_can_keep_trying", "diag_sp_gauntlet_TR151_26_01_mcor_og" )
+
+	// "When you're done, I've got something special to show you."
+	trd( "og_post_gauntlet_progression_tip", "diag_sp_gauntlet_TR151_27_01_mcor_og" )
+
+
+	// ======= GAUNTLET CHALLENGE FEEDBACK =======
+	DialogueGroup notBestTime = AddDialogueGroup( "notBestTime" )
+	// "Okay, okay. Not bad."
+	trd( "og_gauntlet_feedback_not_best_time_5", "diag_sp_gauntlet_TR151_43_01_mcor_og" )
+	notBestTime.lines.append( "og_gauntlet_feedback_not_best_time_5" )
+
+	// "Just try to get a little better each time."
+	trd( "og_gauntlet_feedback_not_best_time_7", "diag_sp_gauntlet_TR151_45_01_mcor_og" )
+	notBestTime.lines.append( "og_gauntlet_feedback_not_best_time_7" )
+
+	// "No shame in losing. The real shame would be to stop trying."
+	trd( "og_gauntlet_feedback_not_best_time_1", "diag_sp_gauntlet_TR151_16_01_mcor_og" )
+	notBestTime.lines.append( "og_gauntlet_feedback_not_best_time_1" )
+
+	// "Practice makes perfect."
+	trd( "og_gauntlet_feedback_not_best_time_6", "diag_sp_gauntlet_TR151_44_01_mcor_og" )
+	notBestTime.lines.append( "og_gauntlet_feedback_not_best_time_6" )
+
+	// "Trust me, Cooper, there's always someone faster out there. You just have to be more persistent."
+	trd( "og_gauntlet_feedback_not_best_time_2", "diag_sp_gauntlet_TR151_17_01_mcor_og" )
+	notBestTime.lines.append( "og_gauntlet_feedback_not_best_time_2" )
+
+	// "Keep working at it. Nobody gets better by giving up."
+	trd( "og_gauntlet_feedback_not_best_time_3", "diag_sp_gauntlet_TR151_18_01_mcor_og" )
+	notBestTime.lines.append( "og_gauntlet_feedback_not_best_time_3" )
+
+	// "Each success is built on a thousand failures. Don't quit now."
+	trd( "og_gauntlet_feedback_not_best_time_4", "diag_sp_gauntlet_TR151_19_01_mcor_og" )
+	notBestTime.lines.append( "og_gauntlet_feedback_not_best_time_4" )
+
+
+	DialogueGroup newBestTime = AddDialogueGroup( "newBestTime" )
+	// "[impressed whistle] You were flying that time."
+	trd( "og_gauntlet_feedback_new_best_time_1", "diag_sp_gauntlet_TR151_42_01_mcor_og" )
+	newBestTime.lines.append( "og_gauntlet_feedback_new_best_time_1" )
+
+	// "That's your fastest run yet."
+	trd( "og_gauntlet_feedback_new_best_time_2", "diag_sp_gauntlet_TR151_41_01_mcor_og" )
+	newBestTime.lines.append( "og_gauntlet_feedback_new_best_time_2" )
+
+	// "New personal best."
+	trd( "og_gauntlet_feedback_new_best_time_3", "diag_sp_gauntlet_TR151_40_01_mcor_og" )
+	newBestTime.lines.append( "og_gauntlet_feedback_new_best_time_3" )
+
+	// "New best time!"
+	trd( "og_gauntlet_feedback_new_best_time_4", "diag_sp_gauntlet_TR151_39_01_mcor_og" )
+	newBestTime.lines.append( "og_gauntlet_feedback_new_best_time_4" )
+
+
+	DialogueGroup defeatedGhost = AddDialogueGroup( "defeatedGhost" )
+	// "Not bad, not bad. I bet the next ghost up gives you some trouble, though."
+	trd( "og_gauntlet_feedback_beat_ghost_generic_1", "diag_sp_gauntlet_TR151_20_01_mcor_og" )
+	defeatedGhost.lines.append( "og_gauntlet_feedback_beat_ghost_generic_1" )
+
+	// "Getting faster and faster! Hell, don't stop now. Keep challenging yourself."
+	trd( "og_gauntlet_feedback_beat_ghost_generic_2", "diag_sp_gauntlet_TR151_21_01_mcor_og" )
+	defeatedGhost.lines.append( "og_gauntlet_feedback_beat_ghost_generic_2" )
+
+	// "Another one down! This is where the true Pilots separate themselves from the contenders."
+	trd( "og_gauntlet_feedback_beat_ghost_generic_3", "diag_sp_gauntlet_TR151_22_01_mcor_og" )
+	defeatedGhost.lines.append( "og_gauntlet_feedback_beat_ghost_generic_3" )
+
+	// "Good luck, Cooper. That one's insane. Don't kill yourself trying to beat it."
+	//trd( "og_gauntlet_unlocked_leaderboard_entry_0", "diag_sp_gauntlet_TR151_23_01_mcor_og" )
+
+	// "You just beat Commander Briggs. Might not stay that way for long though, she's very competitive."
+	trd( "og_gauntlet_unlocked_leaderboard_entry_briggs", "diag_sp_addtional_TR411_44a_mcor_og" )
+
+	// "Heh. Can't wait to tell Anderson about that. Son of a bitch..."
+	trd( "og_gauntlet_unlocked_leaderboard_entry_anderson", "diag_sp_addtional_TR411_45_mcor_og" )
+
+	// "Hey - that was my best time! I must be getting slow."
+	trd( "og_gauntlet_unlocked_leaderboard_entry_og", "diag_sp_addtional_TR411_46_mcor_og" )
+
+	DialogueGroup clearedLeaderboard = AddDialogueGroup( "clearedLeaderboard" )
+	// "I'm real impressed. Even fully trained Pilots have trouble against the best of those ghosts."
+	trd( "og_gauntlet_feedback_leaderboard_cleared_1", "diag_sp_gauntlet_TR151_24_01_mcor_og" )
+	clearedLeaderboard.lines.append( "og_gauntlet_feedback_leaderboard_cleared_1" )
+
+	// "You cleaned me out, Cooper! I got no more challenges for you here."
+	trd( "og_gauntlet_feedback_leaderboard_cleared_2", "diag_sp_gauntlet_TR151_25_01_mcor_og" )
+	clearedLeaderboard.lines.append( "og_gauntlet_feedback_leaderboard_cleared_2" )
+
+
+	// ======= TITANFALL =======
+	// "But first- We're gonna need a little more space."
+	trd( "og_titanfall_area_transition", "diag_sp_titan_TR161_06_01_mcor_og" )
+
+	// "Go ahead- call in your first Titan."
+	trd( "og_titanfall_hint", "diag_sp_titan_TR161_07_01_mcor_og" )
+
+	DialogueGroup callInTitan = AddDialogueGroup( "callInTitan" )
+	// "Titan's ready. Call it in."
+	trd( "og_titanfall_nag_1", "diag_sp_titan_TR161_08_01_mcor_og" )
+	callInTitan.lines.append( "og_titanfall_nag_1" )
+
+	// "Titan's ready to drop. On your mark."
+	trd( "og_titanfall_nag_2", "diag_sp_titan_TR161_09_01_mcor_og" )
+	callInTitan.lines.append( "og_titanfall_nag_2" )
+
+	// "Look up, to the sky- there he is."
+	trd( "og_titanfall_look_up", "diag_sp_titan_TR161_10_01_mcor_og" )
+
+	// "That's my partner, BT. He's a Vanguard-class."
+	trd( "og_titanfall_bt_lore", "diag_sp_addtional_TR411_41_mcor_og" )
+
+	// "The first Titan chassis we designed ourselves. One we didn't have to steal from the IMC."
+	trd( "og_titanfall_bt_lore_2", "diag_sp_addtional_TR411_42a_mcor_og" )
+
+	// "Homegrown Militia technology."
+	trd( "og_titanfall_bt_lore_3", "diag_sp_addtional_TR411_43_mcor_og" )
+
+	// "Eh? Hang on a sec..."
+	trd( "og_titanfall_glitch_start", "diag_sp_titan_TR161_12_01_mcor_og" )
+
+	// DEPRECATED
+	// "What? You sure? ...Copy. I'll meet you in five."
+	//diag_sp_titan_TR161_13_01_mcor_og
+
+	// DEPRECATED
+	// "Alright Rifleman, the real world needs us. Sounds like it's about to hit the fan. I'm pulling you out."
+	//trd( "og_titanfall_glitch_reax", "diag_sp_titan_TR161_14_01_mcor_og" )
+
+	// "Alright Rifleman, the real world needs us. Sounds like someone got the intel wrong. The planet's armed to the teeth!"
+	//trd( "og_titanfall_glitch_reax", "diag_sp_addtional_TR411_66_mcor_og" )
+
+	// "Heh, figures- intel's always wrong."
+	//trd( "og_titanfall_glitch_reax_2", "diag_sp_addtional_TR411_67_mcor_og" )
+
+	// "Alright Rifleman, sounds like it's about to hit the fan."
+	trd( "og_hit_the_fan", "diag_sp_titan_TR161_14a_01_mcor_og" )
+
+	// "I'm pulling you out."
+	trd( "og_pulling_you_out", "diag_sp_addtional_TR411_68_mcor_og" )
+
+
+	// ======= POD OUTRO =======
+	// "Prepare for Typhon atmospheric entry in less than three minutes."
+	trd( "announce_simpod_shutdown_1", "diag_sp_addtional_TR411_07_mcor_shipPA" )
+
+	// "Powering down all non-essential systems."
+	trd( "announce_simpod_shutdown_2", "diag_sp_outro_TR171_01_01_mcor_shipPA" )
+
+	// "All personnel to battle stations."
+	trd( "announce_simpod_shutdown_3", "diag_sp_outro_TR171_02_01_mcor_shipPA" )
+
+	// "This is not a drill."
+	trd( "announce_simpod_shutdown_4", "diag_sp_outro_TR171_03_01_mcor_shipPA" )
+
+
+	// "Cooper! Ready up!"
+	trd( "grunt_closed_pod_yell_at_player", "diag_sp_outro_TR171_04_01_mcor_sgtMcCarthy" )
+
+	// "Easy Cole, he just left VR. Needs a minute to decompress. He'll be ready to go... trust me."
+	trd( "og_closed_pod_respond_to_grunt", "diag_sp_outro_TR171_04_01_mcor_og" )
+
+	// "Yes sir."
+	trd( "grunt_yes_sir", "diag_sp_addtional_TR411_47_mcor_gcaptain" )
+
+
+	// ======= MEET OG =======
+	// "Heads up- they're killin' us. Tryin' to, anyway."
+	trd( "og_outro_pod_opens_1", "diag_sp_meetOG_TR181_01_01_mcor_og" )
+
+	// "Good session in there. You'll get the hang of it someday."
+	trd( "og_outro_pod_opens_2", "diag_sp_meetOG_TR181_02_01_mcor_og" )
+
+	// "We'll make a Pilot out of you yet, Rifleman, but not today. No time."
+	trd( "og_outro_pod_opens_3", "diag_sp_meetOG_TR181_03_01_mcor_og" )
+
+	// "Lastimosa!"
+	trd( "pilot_greets_og", "diag_sp_meetOG_TR181_04_01_mcor_anderson" )
+
+	// "Anderson."
+	trd( "og_greets_pilot", "diag_sp_meetOG_TR181_05_01_mcor_og" )
+
+	// "You son of a bitch! See you down there."
+	trd( "pilot_walking_away", "diag_sp_meetOG_TR181_07_01_mcor_anderson" )
+
+	// "We're going to see a new planet today. Maybe even die on it."
+	trd( "og_outro_peptalk_1", "diag_sp_meetOG_TR181_08_01_mcor_og" )
+
+	// "See you down there, Cooper. Good luck."
+	trd( "og_outro_peptalk_3", "diag_sp_meetOG_TR181_09_01_mcor_og" )
+
+	// "Get your ass out of the sim pod, Cooper. Meet at the dropship."
+	//trd( "grunt_outro_orders_player", "diag_sp_addtional_TR411_50_mcor_gcaptain" )
+
+
+	// ======= TECH TEST =======
+	// "Loading the sim pod for the tech test."
+	trd( "techtest_1", "diag_sp_addtional_TR411_58_mcor_og" )
+
+	// "All set, Cooper? Let's get back to the real world."
+	trd( "techtest_2", "diag_sp_addtional_TR411_57_mcor_og" )
+
+
+	// ======= WAITING AT GAUNTLET WHILE GAME INSTALLS =======
+	DialogueGroup installWait = AddDialogueGroup( "installWait" )
+	// "Looking good, Cooper. You’ll make it out of the Rifle Battalions one day."
+	trd( "install_wait_1", "diag_sp_addtional_TR401_12_01_mcor_og" )
+	installWait.lines.append( "install_wait_1" )
+
+	//"As a Rifleman, you won't be equipped with a Jumpkit on the field, but in here, we can make anything happen."
+	trd( "install_wait_2", "diag_sp_addtional_TR401_12_01_mcor_og" )
+	installWait.lines.append( "install_wait_2" )
+
+	// "Gear up. You never know what you’re gonna face, so be prepared. Always have a backup plan."
+	trd( "install_wait_3", "diag_sp_addtional_TR401_11_01_mcor_og" )
+	installWait.lines.append( "install_wait_3" )
+}
+
+
+// ====================================
+// ========= DIALOGUE GROUPS ==========
+// ====================================
+DialogueGroup function AddDialogueGroup( string groupName )
+{
+	DialogueGroup newGroup
+
+	#if SERVER
+	Assert( !(groupName in file.dialogueGroups), "Duplicate groupName " + groupName )
+	file.dialogueGroups[ groupName ] <- newGroup
+	#endif
+
+	return newGroup
+}
+
+#if SERVER
+DialogueGroup function GetDialogueGroup( string groupName )
+{
+	Assert( groupName in file.dialogueGroups, "Dialogue group named " + groupName + " not found" )
+	return file.dialogueGroups[ groupName ]
+}
+
+string function DialogueGroup_GetNextLine( DialogueGroup group )
+{
+	Assert( group.lines.len(), "DialogueGroup has no lines" )
+	Assert( group.lineIdx < group.lines.len() )
+
+	string nextLine = group.lines[group.lineIdx]
+
+	group.lineIdx++
+	if ( group.lineIdx >= group.lines.len() )
+	{
+		group.allPlayed = true
+		group.lineIdx = 0
+	}
+
+	return nextLine
+}
+
+#if DEV
+string function DEV_DialogueGroup_TestPlay( entity player, string groupName )
+{
+	DialogueGroup group = GetDialogueGroup( groupName )
+
+	string line = DialogueGroup_GetNextLine( group )
+	thread PlayDialogue( line, player )
+	return groupName + " / " + line
+}
+#endif //DEV
+#endif //SERVER
+
+
+
+void function SetupTitanfallGlitchAnims()
+{
+	file.glitchAnim_default = "bt_hotdrop_glitch_descent_end_idle"
+
+	array<string> titanAnims = []
+	titanAnims.append( "bt_hotdrop_glitch_freeze_idle_2" )
+	titanAnims.append( "bt_hotdrop_glitch_descent_idle_pose_3" )
+	titanAnims.append( "bt_hotdrop_glitch_descent_idle_pose_1" )
+	titanAnims.append( "bt_hotdrop_glitch_freeze_idle_2" )
+	titanAnims.append( "bt_hotdrop_glitch_descent_idle_pose_2" )
+	titanAnims.append( "bt_hotdrop_glitch_descent_idle_pose_3" )
+	titanAnims.append( "bt_hotdrop_glitch_descent_idle_pose_1" )
+	file.glitchAnims_titan = titanAnims
+
+	//file.glitchAnims_titanTwin = titanAnims  // for testing with just one set of anims
+
+	array<string> twinAnims = []
+	twinAnims.append( "bt_hotdrop_glitch_freeze_idle_2" )
+	twinAnims.append( "bt_hotdrop_glitch_descent_idle_pose_1" )
+	twinAnims.append( "bt_hotdrop_glitch_descent_idle_pose_3" )
+	twinAnims.append( "bt_hotdrop_glitch_descent_idle_pose_1" )
+	twinAnims.append( "bt_hotdrop_glitch_freeze_idle_2" )
+	twinAnims.append( "bt_hotdrop_glitch_descent_idle_pose_2" )
+	twinAnims.append( "bt_hotdrop_glitch_descent_idle_pose_1" )
+	file.glitchAnims_titanTwin = twinAnims
+}
+
+string function GetDefaultTitanfallGlitchAnim()
+{
+	return file.glitchAnim_default
+}
+
+array<string> function GetTitanfallGlitchAnims()
+{
+	return file.glitchAnims_titan
+}
+
+array<string> function GetTitanfallGlitchTwinAnims()
+{
+	return file.glitchAnims_titanTwin
+}
+
+
+void function Training_SetupOnscreenHints()
+{
+	RegisterOnscreenHint( "invert_look_at_lights", 				"#TRAINING_HINT_INVERT_LOOK" )
+	RegisterOnscreenHint( "invert_look_at_lights_again", 		"#TRAINING_HINT_INVERT_LOOK_CONFIRM" )
+	RegisterOnscreenHint( "invert_look_at_lights_1_left", 		"#TRAINING_HINT_INVERT_LOOK_1_LEFT" )
+	RegisterOnscreenHint( "invert_look_at_lights_again_1_left", "#TRAINING_HINT_INVERT_LOOK_CONFIRM_1_LEFT" )
+	RegisterOnscreenHint( "invert_look_at_lights_0_left", 		"#TRAINING_HINT_INVERT_LOOK_0_LEFT" )
+	RegisterOnscreenHint( "invert_look_at_lights_again_0_left", "#TRAINING_HINT_INVERT_LOOK_CONFIRM_0_LEFT" )
+	RegisterOnscreenHint( "move_hint", 							"#TRAINING_HINT_MOVE" )
+	RegisterOnscreenHint( "jump_hint", 							"#TRAINING_HINT_JUMP" )
+	RegisterOnscreenHint( "sprint_button_hint", 				"#TRAINING_HINT_SPRINT_BUTTON", 				"#TRAINING_HINT_SPRINT_BUTTON_KBM" )
+	RegisterOnscreenHint( "autosprint_hint", 					"#TRAINING_HINT_AUTOSPRINT_ENABLED" )
+	RegisterOnscreenHint( "autosprint_available", 				"#TRAINING_HINT_AUTOSPRINT_AVAILABLE" )
+	//RegisterOnscreenHint( "wallrun_hint", 					"#TRAINING_HINT_WALLRUN" )
+	RegisterOnscreenHint( "wallrun_hint", 						"#TRAINING_WALLRUN_REMINDER" )
+	RegisterOnscreenHint( "crouch_hint", 						"#TRAINING_HINT_CROUCH" )
+	RegisterOnscreenHint( "doublejump_hint", 					"#TRAINING_HINT_DOUBLEJUMP" )
+	RegisterOnscreenHint( "ads_hint", 							"#TRAINING_HINT_ADS_KBM", 						"#TRAINING_HINT_ADS_KBM")
+	RegisterOnscreenHint( "firingrange_dmg_targets_hint", 		"#TRAINING_HINT_FIRINGRANGE_DMG_TARGETS" )
+	RegisterOnscreenHint( "weapon_pickup_hint", 				"#TRAINING_HINT_WEAPON_PICKUP", 				"#TRAINING_HINT_WEAPON_PICKUP_KBM" )
+	RegisterOnscreenHint( "weapon_swap_hint", 					"#TRAINING_HINT_WEAPON_SWAP" )
+	RegisterOnscreenHint( "reload_hint", 						"#TRAINING_HINT_RELOAD", 						"#TRAINING_HINT_RELOAD_KBM" )
+	RegisterOnscreenHint( "gauntlet_first_run_progression_hint", "#TRAINING_HINT_GAUNTLET_FIRSTRUN_PROG" )
+	RegisterOnscreenHint( "gauntlet_wallrun_hint", 				"#TRAINING_HINT_GAUNTLET_WALLRUN" )
+	RegisterOnscreenHint( "gauntlet_restart_hint", 				"#TRAINING_HINT_GAUNTLET_RESTART" )
+	RegisterOnscreenHint( "gauntlet_install_hint", 				"#TRAINING_HINT_INSTALLING" )
+	RegisterOnscreenHint( "titanfall_hint", 					"#TRAINING_HINT_TITANFALL" )
+	RegisterOnscreenHint( "conversation_hint", 					"#TRAINING_HINT_CONVERSATION", 					"#TRAINING_HINT_CONVERSATION_KBM" )
+
+	RegisterOnscreenHint( "hint_diff_0", 						"#TRAINING_HINT_DIFF_EASY" )
+	RegisterOnscreenHint( "hint_diff_1", 						"#TRAINING_HINT_DIFF_REGULAR" )
+	RegisterOnscreenHint( "hint_diff_2", 						"#TRAINING_HINT_DIFF_HARD" )
+	RegisterOnscreenHint( "hint_diff_3", 						"#TRAINING_HINT_DIFF_MASTER" )
+
+	OnscreenHint firstRunHint = GetOnscreenHint_ByAlias( "gauntlet_first_run_progression_hint" )
+	StopwatchDisplayStrings strings = GetStopwatchDisplayStrings( TRAINING_GAUNTLET_MAX_TIME_TO_PROGRESS )
+	firstRunHint.stringArg1 = strings.mins
+	firstRunHint.stringArg2 = strings.secs
+}
+
+
+// double digit stopwatch style time formatting
+// - given totalTime (seconds), returns a table of strings formatted with leading zeroes if below 10
+StopwatchDisplayStrings function GetStopwatchDisplayStrings( float totalTime )
+{
+	int totalTimeMins 	= max( ( floor( totalTime / 60.0 ) ), 0 ).tointeger()
+	int totalTimeSecs 	= max( ( totalTime ) % 60, 0 ).tointeger()
+	int totalTimeMS 	= (totalTime % floor(totalTime) * 100 ).tointeger()
+
+	StopwatchDisplayStrings timeStrings
+	timeStrings.mins 	= totalTimeMins >= 10 ? string( totalTimeMins ) : "0" + string( totalTimeMins )
+	timeStrings.secs 	= totalTimeSecs >= 10 ? string( totalTimeSecs ) : "0" + string( totalTimeSecs )
+	timeStrings.ms 		= totalTimeMS >= 10 ? string( totalTimeMS ) : "0" + string( totalTimeMS )
+
+	return timeStrings
+}

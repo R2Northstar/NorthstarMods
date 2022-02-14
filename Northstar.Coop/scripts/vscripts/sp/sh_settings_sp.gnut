@@ -1,0 +1,8 @@
+global function SpSharedInit
+
+void function SpSharedInit()
+{
+	shGlobal.proto_pilotHealthRegenDisabled = false
+	shGlobal.proto_pilotHealthPickupsEnabled = false
+	shGlobal.proto_npcsDropGrenades = true
+}
