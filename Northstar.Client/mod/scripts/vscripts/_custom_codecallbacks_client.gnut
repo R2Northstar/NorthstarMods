@@ -36,17 +36,6 @@ void function GetPlayerNameById() {
     NSSetFoundPlayerName(name)
 }
 
-void function whisperCallback() {
-    string receiver = NSGetWhisperReceiver()
-    int id = GetIdByPlayerName(receiver)
-    if (id == -1) {
-        print("Could not find a player with the name " + receiver)
-        return;
-    }
-    string message = NSGetWhisperMessage()
-    GetLocalClientPlayer().ClientCommand("swhisper " + id + " " + message)
-}
-
 void function CClientGameDLL_ProcessMessageStartThread()
 {
 	thread CClientGameDLL_OnReceivedSayTextMessageCallback()
