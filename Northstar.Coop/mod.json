@@ -1,19 +1,27 @@
 {
 	"Name": "Northstar.Coop",
 	"Description": "[WIP] Allows the singleplayer campaign to be played in multiplayer",
-	"Version": "0.0.0",
+	"Version": "1.5.0",
 	"LoadPriority": 0,
+	"ConVars": [
+		{
+			"Name": "dof_enable",
+			"DefaultValue": "0"
+		}
+	],
 	"Scripts": [
 		{
 			"Path": "sh_sp_coop.gnut",
 			"RunOn": "SP"
 		},
+
 		{
 			"Path": "sh_sp_coop_lobby.gnut",
 			"RunOn": "( CLIENT || SERVER ) && MP",
 			"ClientCallback": {
 				"After": "SingleplayerCoopLobby_Init"
 			},
+
 			"ServerCallback": {
 				"After": "SingleplayerCoopLobby_Init"
 			}
