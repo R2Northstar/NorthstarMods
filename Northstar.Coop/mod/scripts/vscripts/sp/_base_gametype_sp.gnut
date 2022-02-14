@@ -259,10 +259,10 @@ void function TryGameModeAnnouncement( entity player )
 
 }
 
-void function Coop_LoadMapFromStartPoint(string mapname,int startindex)
+void function Coop_LoadMapFromStartPoint(string mapName,int startindex)
 {
 	ExecuteLoadingClientCommands_SetStartPoint( mapName, startindex )
-	ServerCommand( "map " + mapName )
+	GameRules_ChangeMap( mapName, GAMETYPE )
 	foreach(player in GetPlayerArray())
 	{
 		player.SetOrigin(GetPlayerByIndex(0).GetOrigin())
@@ -274,7 +274,7 @@ void function Coop_ReloadCurrentMapFromStartPoint(int startindex)
 	string mapName = GetMapName()
 	ExecuteLoadingClientCommands_SetStartPoint( mapName, startindex )
 	//ClientCommand( GetPlayerByIndex(0) , "map " + mapName )
-	ServerCommand( "map " + mapName )
+	GameRules_ChangeMap( mapName, GAMETYPE )
 	foreach(player in GetPlayerArray())
 	{
 		player.SetOrigin(GetPlayerByIndex(0).GetOrigin())
@@ -371,7 +371,7 @@ void function CodeCallback_OnClientConnectionStarted( entity player )
 }
 
 void function Respawn(entity player)
-{	
+{
 	printl("Respawning player:" + player.GetPlayerName())
 	if(player != null){
 	//player.s.inPostDeath = false
@@ -388,11 +388,11 @@ void function Respawn(entity player)
 }
 
 void function DoHudDisplayForDeadPlayerThenReloadServer( entity player )
-{	
+{
 	printl("DoHudDisplayForDeadPlayerThenReloadServer Called!")
 	array<entity> players = GetPlayerArray()
 	string Coop_Dead_Player = player.GetPlayerName()
-		foreach (entity p in players){	
+		foreach (entity p in players){
 				if (p != null){
 				SendHudMessage( p , Coop_Dead_Player + "Fucked up, laugh at them." , -1, 0.4, 255, 255, 0, 0, 0.15, 6, 0.15 )
 				//ClientCommand( p , "RespawnNowSP" )
@@ -402,8 +402,8 @@ void function DoHudDisplayForDeadPlayerThenReloadServer( entity player )
 	//ServerCommand( "reload" )
 	//player.Signal( "OnRespawned" )
 	//player.EndSignal( "OnDestroy" )
-	
-	
+
+
 	//player.RespawnPlayer(null)
 	player.WaitSignal("RespawnNow")
 	Respawn(player)
@@ -416,13 +416,13 @@ void function DoHudDisplayForDeadPlayerThenReloadServer( entity player )
 
 
 void function CodeCallback_OnPlayerKilled( entity player, var damageInfo )
-{	
+{
 	thread DoHudDisplayForDeadPlayerThenReloadServer( player )
 	thread PostDeathThread_SP( player, damageInfo )
-	
-	
+
+
 	//thread DoHudDisplayForDeadPlayerThenReloadServer( player )
-	
+
 }
 
 function PostDeathThread_SP( entity player, damageInfo )
@@ -430,7 +430,7 @@ function PostDeathThread_SP( entity player, damageInfo )
 	printl("PostDeathThread_SP Called!")
 	array<entity> players = GetPlayerArray()
 	string Coop_Dead_Player = player.GetPlayerName()
-		foreach (entity p in players){	
+		foreach (entity p in players){
 				if (p != null){
 				SendHudMessage( p , Coop_Dead_Player + "Fucked up, laugh at them." , -1, 0.4, 255, 255, 0, 0, 0.15, 6, 0.15 )
 				//ClientCommand( p , "RespawnNowSP" )
@@ -482,11 +482,6 @@ function PostDeathThread_SP( entity player, damageInfo )
 
 	bool showedDeathHint = ShowDeathHintSP( player, damageInfo )
 	printl("AfterShowDeathHint"+showedDeathHint)
-	
-	
-	
-	
-	
 	CodeCallback_OnPlayerRespawned(player)
 	int damageSource = DamageInfo_GetDamageSourceIdentifier( damageInfo )
 	if ( damageSource != eDamageSourceId.fall )
@@ -498,7 +493,7 @@ function PostDeathThread_SP( entity player, damageInfo )
 			player.SetObserverTarget( null )
 	}
 
-	
+
 
 
 	//ReloadForMissionFailure( reloadExtraDelay )
@@ -506,7 +501,7 @@ function PostDeathThread_SP( entity player, damageInfo )
 	//player.RespawnPlayer(null)
 	//DoHudDisplayForDeadPlayerThenReloadServer( player )
 	//ScreenFadeFromBlack( player, 1.0, 0.75 )
-	
+
 }
 
 
