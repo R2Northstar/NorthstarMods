@@ -7,6 +7,14 @@
 		{
 			"Name": "dof_enable",
 			"DefaultValue": "0"
+		},
+		{
+			"Name": "m_invert_pitch",
+			"DefaultValue": "0"
+		},
+		{
+			"Name": "autosprint_type",
+			"DefaultValue": "0"
 		}
 	],
 	"Scripts": [
