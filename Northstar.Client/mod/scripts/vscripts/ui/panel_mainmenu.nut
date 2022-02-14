@@ -526,7 +526,6 @@ void function OnPlayFDButton_Activate( var button ) // repurposed for launching 
 	if ( !Hud_IsLocked( button ) )
 	{
 		SetConVarBool( "ns_is_modded_server", true )
-
 		NSTryAuthWithLocalServer()
 		thread TryAuthWithLocalServer()
 	}
@@ -776,7 +775,9 @@ void function TrackInstallProgress()
 
 bool function IsStryderAuthenticated()
 {
-	return GetConVarInt( "mp_allowed" ) != -1
+	// We don't actually need to wait for Stryder response, because we don't care about it anyway
+	return true
+	//return GetConVarInt( "mp_allowed" ) != -1
 }
 
 bool function IsStryderAllowingMP()
