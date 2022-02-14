@@ -69,7 +69,8 @@ void function InitMainMenu()
 #endif // CONSOLE_PROG
 
 void function OnMainMenu_Open()
-{	
+{
+	SetConVarString("communities_hostname","")
 	Signal( uiGlobal.signalDummy, "EndOnMainMenu_Open" )
 	EndSignal( uiGlobal.signalDummy, "EndOnMainMenu_Open" )
 
