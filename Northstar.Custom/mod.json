@@ -1,7 +1,7 @@
 {
 	"Name": "Northstar.Custom",
 	"Description": "Custom content for Northstar: extra weapons, gamemodes, etc.",
-	"Version": "1.1.0",
+	"Version": "1.4.0",
 	"LoadPriority": 1,
 	"RequiredOnClient": true,
 	"ConVars": [
@@ -47,24 +47,6 @@
 		{
 			"Path": "weapons/mp_weapon_peacekraber.nut",
 			"RunOn": "( CLIENT || SERVER ) && MP"
-		},
-		{
-			"Path": "gamemodes/sh_gamemode_pvb.nut",
-			"RunOn": "( CLIENT || SERVER ) && MP",
-			"ClientCallback": {
-				"Before": "Sh_GamemodePVB_Init"
-			},
-			"ServerCallback": {
-				"Before": "Sh_GamemodePVB_Init"
-			}
-		},
-		{
-			"Path": "gamemodes/_gamemode_pvb.nut",
-			"RunOn": "SERVER && MP"
-		},
-		{
-			"Path": "gamemodes/cl_gamemode_pvb.nut",
-			"RunOn": "CLIENT && MP"
 		},
 		{
 			"Path": "gamemodes/sh_gamemode_chamber.nut",
@@ -120,7 +102,6 @@
 			"Path": "gamemodes/_gamemode_sns.gnut",
 			"RunOn": "SERVER && MP"
 		},
-
 		{
 			"Path": "gamemodes/sh_gamemode_fw_custom.nut",
 			"RunOn": "( CLIENT || SERVER ) && MP",
