@@ -20,7 +20,7 @@ global function ClientCommand_OpenDifficultyMenu
 global function CodeCallback_PlayerHasBeenConnectedForDuration
 global function OnPlayerKilled_DeathNotify
 global function GetSPLevelEnumForMapname
-global function Respawn
+global function RespawnPlayer
 global function Coop_GetLevelTransition
 global function Coop_ReloadCurrentMapFromStartPoint
 struct
@@ -30,6 +30,12 @@ struct
 	int slideKills = 0
 	float lastMultiKillStartTime = 0.0
 	int multiKillCount = 0
+	int dof_enable = 0
+	int m_invert_pitch = 0
+	int joy_inverty = 0
+	int joy_movement_stick = 0
+	int autosprint_type = 0
+	int hud_setting_showTips = 0
 } file
 
 void function BaseGametype_Init_MPSP()
@@ -370,7 +376,7 @@ void function CodeCallback_OnClientConnectionStarted( entity player )
 	thread PilotHealthRegenThinkSP( player )
 }
 
-void function Respawn(entity player)
+void function RespawnPlayer(entity player)
 {
 	printl("Respawning player:" + player.GetPlayerName())
 	if(player != null){
@@ -406,7 +412,7 @@ void function DoHudDisplayForDeadPlayerThenReloadServer( entity player )
 
 	//player.RespawnPlayer(null)
 	player.WaitSignal("RespawnNow")
-	Respawn(player)
+	RespawnPlayer(player)
 
 	CodeCallback_OnPlayerRespawned(player)
 	//player.EndSignal( "RespawnNow" )
@@ -432,8 +438,9 @@ function PostDeathThread_SP( entity player, damageInfo )
 	string Coop_Dead_Player = player.GetPlayerName()
 		foreach (entity p in players){
 				if (p != null){
-				SendHudMessage( p , Coop_Dead_Player + "Fucked up, laugh at them." , -1, 0.4, 255, 255, 0, 0, 0.15, 6, 0.15 )
+				SendHudMessage( p , Coop_Dead_Player + " Fucked up, laugh at them." , -1, 0.4, 255, 255, 0, 0, 0.15, 6, 0.15 )
 				//ClientCommand( p , "RespawnNowSP" )
+				RespawnPlayer( p )
 				}
 			}
 	if ( player.p.watchingPetTitanKillReplay )
