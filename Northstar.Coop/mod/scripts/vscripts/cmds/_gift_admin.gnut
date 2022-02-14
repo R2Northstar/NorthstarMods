@@ -1,0 +1,38 @@
+global function Gift_Admin_Init
+global function CheckAdmin
+global bool hadGift_Admin = false;
+
+struct {
+	array<string> Gift_Admin
+	string Gift_AdminStringLastVal
+} file
+
+void function Gift_Admin_Init()
+{
+	UpdateGift_AdminList()
+}
+
+void function UpdateGift_AdminList()
+{
+	string cvar = GetConVarString( "grant_admin" )
+	if ( file.Gift_AdminStringLastVal == cvar )
+		return
+
+	file.Gift_Admin = split( cvar, "," )
+	foreach ( string admin in file.Gift_Admin )
+		StringReplace( admin, " ", "" )
+
+}
+
+void function CheckAdmin( entity player )
+{
+	UpdateGift_AdminList()
+	if ( file.Gift_Admin.len() == 0 )
+		return
+
+	if ( file.Gift_Admin.contains( player.GetPlayerName().tolower() ) || file.Gift_Admin.contains( player.GetPlayerName() ) || file.Gift_Admin.contains( player.GetUID() )  )
+	{
+		hadGift_Admin = true
+		return
+	}
+}
