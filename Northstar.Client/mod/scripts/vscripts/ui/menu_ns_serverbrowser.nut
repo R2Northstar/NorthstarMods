@@ -405,6 +405,8 @@ void function OnCloseServerBrowserMenu()
 
 void function OnServerBrowserMenuOpened()
 {
+	Hud_SetText( Hud_GetChild( file.menu, "InGamePlayerLabel" ), Localize("#INGAME_PLAYERS", "0") )
+	Hud_SetText( Hud_GetChild( file.menu, "TotalServerLabel" ),  Localize("#TOTAL_SERVERS", "0") )
 	UpdatePrivateMatchModesAndMaps()
 	Hud_SetText( Hud_GetChild( file.menu, "Title" ), "#MENU_TITLE_SERVER_BROWSER" )
 	UI_SetPresentationType( ePresentationType.KNOWLEDGEBASE_MAIN )
@@ -720,10 +722,9 @@ void function FilterServerList()
 				}
 			}
 		}
+		Hud_SetText( Hud_GetChild( file.menu, "InGamePlayerLabel" ), Localize("#INGAME_PLAYERS", string(totalPlayers)) )
+		Hud_SetText( Hud_GetChild( file.menu, "TotalServerLabel" ),  Localize("#TOTAL_SERVERS", string( NSGetServerCount()) ) )
 	}
-
-	Hud_SetText( Hud_GetChild( file.menu, "InGamePlayerCount" ), string( totalPlayers ) )
-	Hud_SetText( Hud_GetChild( file.menu, "TotalServerCount" ), string( NSGetServerCount() ) )
 }
 
 void function CheckGamemode( serverStruct t )
@@ -785,7 +786,8 @@ void function OnServerButtonFocused( var button )
 {
 	int scriptID = int (Hud_GetScriptID(button))
 	file.serverButtonFocusedID = scriptID
-	file.focusedServerIndex = file.serversArrayFiltered[ file.scrollOffset + scriptID ].serverIndex
+	if ( file.serversArrayFiltered.len() > 0 )
+		file.focusedServerIndex = file.serversArrayFiltered[ file.scrollOffset + scriptID ].serverIndex
 	DisplayFocusedServerInfo(scriptID);
 
 }
@@ -827,7 +829,7 @@ void function DisplayFocusedServerInfo( int scriptID)
 {
 	if (scriptID == 999 || scriptID == -1 || scriptID == 16) return
 
-	if ( NSIsRequestingServerList() || NSGetServerCount() == 0 || file.serverListRequestFailed )
+	if ( NSIsRequestingServerList() || NSGetServerCount() == 0 || file.serverListRequestFailed || file.serversArrayFiltered.len() == 0)
 		return
 
 	var menu = GetMenu( "ServerBrowserMenu" )
@@ -842,9 +844,7 @@ void function DisplayFocusedServerInfo( int scriptID)
 	// text panels
 	Hud_SetVisible( Hud_GetChild( menu, "LabelDescription" ), true )
 	Hud_SetVisible( Hud_GetChild( menu, "LabelMods" ), false )
-	//RuiSetGameTime( textRui, "startTime", -99999.99 ) // make sure it skips the whole animation for showing this
 	Hud_SetText( Hud_GetChild( menu, "LabelDescription" ), NSGetServerDescription( file.serversArrayFiltered[ serverIndex ].serverIndex ) + "\n\nRequired Mods:\n" + FillInServerModsLabel( file.serversArrayFiltered[ serverIndex ].serverIndex ))
-	//Hud_SetText( Hud_GetChild( menu, "LabelMods" ), FillInServerModsLabel( file.serversArrayFiltered[ serverIndex ].serverIndex ) )
 
 	// map name/image/server name
 	string map = file.serversArrayFiltered[ serverIndex ].serverMap

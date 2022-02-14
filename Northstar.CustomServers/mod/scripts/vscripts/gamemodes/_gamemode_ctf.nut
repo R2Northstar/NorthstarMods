@@ -179,6 +179,13 @@ void function OnPlayerKilled( entity victim, entity attacker, var damageInfo )
 	}
 }
 
+void function SetupFlagMinimapIcon( entity flag )
+{
+	flag.Minimap_AlwaysShow( TEAM_IMC, null )
+	flag.Minimap_AlwaysShow( TEAM_MILITIA, null )
+	flag.Minimap_SetAlignUpright( true )
+}
+
 void function CreateFlags()
 {	
 	if ( IsValid( file.imcFlagSpawn ) )
@@ -221,6 +228,7 @@ void function CreateFlags()
 		flag.SetModel( CTF_FLAG_MODEL )
 		flag.SetOrigin( spawn.GetOrigin() + < 0, 0, base.GetBoundingMaxs().z * 2 > ) // ensure flag doesn't spawn clipped into geometry
 		flag.SetVelocity( < 0, 0, 1 > )
+		SetFlagStateForTeam( flag.GetTeam(), eFlagState.None ) // reset flag state to prevent half-time oddities
 		
 		flag.s.canTake <- true
 		flag.s.playersReturning <- []
@@ -244,6 +252,7 @@ void function CreateFlags()
 		{
 			file.imcFlagSpawn = base
 			file.imcFlag = flag
+			SetupFlagMinimapIcon( file.imcFlag )
 			file.imcFlagReturnTrigger = returnTrigger
 			
 			SetGlobalNetEnt( "imcFlag", file.imcFlag )
@@ -253,6 +262,7 @@ void function CreateFlags()
 		{
 			file.militiaFlagSpawn = base
 			file.militiaFlag = flag
+			SetupFlagMinimapIcon( file.militiaFlag )
 			file.militiaFlagReturnTrigger = returnTrigger
 			
 			SetGlobalNetEnt( "milFlag", file.militiaFlag )
@@ -334,7 +344,7 @@ void function DropFlagIfPhased( entity player, entity flag )
 		DropFlag( player, true )
 	})
 	
-	while( flag.GetParent() == player )
+	while( IsValid( flag ) && flag.GetParent() == player )
 		WaitFrame()
 }
 
