@@ -31,6 +31,10 @@
 	],
 	"Scripts": [
 		{
+			"Path": "ui/urihandler.nut",
+			"RunOn": "UI"
+		},
+		{
 			"Path": "ui/menu_ns_modmenu.nut",
 			"RunOn": "UI",
 			"UICallback": {

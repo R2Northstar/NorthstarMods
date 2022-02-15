@@ -23,6 +23,16 @@ global const int NS_NOT_DECIDED_TO_SEND_TOKEN = 0
 global const int NS_AGREED_TO_SEND_TOKEN = 1
 global const int NS_DISAGREED_TO_SEND_TOKEN = 2
 
+void function ShowURIDialogMainMenu() {
+    DialogData dialogData
+	dialogData.header = "Invite received"
+	dialogData.image = $"rui/menu/fd_menu/upgrade_northstar_chassis"
+	dialogData.message = "#INVITE_RECEIVED"
+	AddDialogButton( dialogData, "#YES", NSAcceptInvite)
+	AddDialogButton( dialogData, "#NO", NSDeclineInvite)
+	OpenDialog( dialogData )
+}
+
 void function InitMainMenu()
 {
 	RegisterSignal( "EndOnMainMenu_Open" )
@@ -91,10 +101,12 @@ void function OnMainMenu_Open()
 		ClientCommand( "map " + Dev_CommandLineParmValue( "+map" ) )
 		Dev_CommandLineRemoveParm( "+map" )
 	}
-	
+
 	// do agree to ns remote auth dialog
 	if ( !GetConVarBool( "ns_has_agreed_to_send_token" ) )
 		NorthstarMasterServerAuthDialog()
+
+	thread inviteLoop()
 
 #if PC_PROG
 	ActivatePanel( GetPanel( "MainMenuPanel" ) )
@@ -128,13 +140,14 @@ void function OnMainMenu_Open()
 
 		WaitFrame()
 	}
+
 }
 
 void function NorthstarMasterServerAuthDialog()
 {
 	// todo: this should be in localisation
 	DialogData dialogData
-	dialogData.header = "#DIALOG_TITLE_INSTALLED_NORTHSTAR" 
+	dialogData.header = "#DIALOG_TITLE_INSTALLED_NORTHSTAR"
 	dialogData.image = $"rui/menu/fd_menu/upgrade_northstar_chassis"
 	dialogData.message = "#AUTHENTICATION_AGREEMENT_DIALOG_TEXT"
 	AddDialogButton( dialogData, "#YES", NorthstarMasterServerAuthDialogAgree )
@@ -146,11 +159,11 @@ void function NorthstarMasterServerAuthDialogAgree()
 {
 	int oldValue = GetConVarInt( "ns_has_agreed_to_send_token" )
 	SetConVarInt( "ns_has_agreed_to_send_token", NS_AGREED_TO_SEND_TOKEN )
-	
+
 	if ( oldValue != 0 && oldValue != NS_AGREED_TO_SEND_TOKEN )
 	{
 		DialogData dialogData
-		dialogData.header = "#DIALOG_TITLE_INSTALLED_NORTHSTAR" 
+		dialogData.header = "#DIALOG_TITLE_INSTALLED_NORTHSTAR"
 		dialogData.image = $"rui/menu/fd_menu/upgrade_northstar_chassis"
 		dialogData.message = "#AUTHENTICATION_AGREEMENT_RESTART"
 		AddDialogButton( dialogData, "#OK" )
@@ -162,11 +175,11 @@ void function NorthstarMasterServerAuthDialogDisagree()
 {
 	int oldValue = GetConVarInt( "ns_has_agreed_to_send_token" )
 	SetConVarInt( "ns_has_agreed_to_send_token", NS_DISAGREED_TO_SEND_TOKEN )
-	
+
 	if ( oldValue != 0 && oldValue != NS_DISAGREED_TO_SEND_TOKEN )
 	{
 		DialogData dialogData
-		dialogData.header = "#DIALOG_TITLE_INSTALLED_NORTHSTAR" 
+		dialogData.header = "#DIALOG_TITLE_INSTALLED_NORTHSTAR"
 		dialogData.image = $"rui/menu/fd_menu/upgrade_northstar_chassis"
 		dialogData.message = "#AUTHENTICATION_AGREEMENT_RESTART"
 		AddDialogButton( dialogData, "#OK" )
@@ -668,4 +681,15 @@ void function UpdateTrialLabel()
 void function OpenSinglePlayerDevMenu( var button )
 {
 	AdvanceMenu( GetMenu( "SinglePlayerDevMenu" ) )
+}
+
+void function inviteLoop() {
+	while (true) {
+		if (NSHasStoredURI()) {
+			print("FOUND")
+			ShowURIDialogMainMenu()
+			NSRemoveStoredURI()
+		}
+		WaitFrame()
+	}
 }
