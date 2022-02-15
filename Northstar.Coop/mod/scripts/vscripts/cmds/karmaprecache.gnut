@@ -1,7 +1,0 @@
-untyped
-global function KarmaPrecache
-
-void function KarmaPrecache()
-{
-	PrecacheWeapon( "mp_weapon_sniper_broken" )
-}
