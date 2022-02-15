@@ -611,6 +611,18 @@ void function HardpointThink( HardpointStruct hardpoint )
 				AddTeamScore( hardpointEnt.GetTeam(), 1 )
 		}
 
+		foreach(entity player in hardpoint.imcCappers)
+		{
+			if(DistanceSqr(player.GetOrigin(),hardpointEnt.GetOrigin())>1200000)
+				hardpoint.imcCappers.remove(hardpoint.imcCappers.find(player))
+		}
+		foreach(entity player in hardpoint.militiaCappers)
+		{
+			if(DistanceSqr(player.GetOrigin(),hardpointEnt.GetOrigin())>1200000)
+				hardpoint.militiaCappers.remove(hardpoint.militiaCappers.find(player))
+		}
+
+
 		lastTime = currentTime
 		WaitFrame()
 	}
