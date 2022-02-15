@@ -203,7 +203,7 @@ void function AddPlayerDidLoad( void functionref( entity ) playerDidLoadFunc )
 void function PickStartPoint( string mapName, string startPointEnum, LevelTransitionStruct ornull trans = null )
 {
 	array<entity> players = GetPlayerArray()
-	if ( HumanPlayers( players ) != 1 )
+	if ( HumanPlayers( players ) == 0 )
 		return
 
 	foreach ( entity player in players )
