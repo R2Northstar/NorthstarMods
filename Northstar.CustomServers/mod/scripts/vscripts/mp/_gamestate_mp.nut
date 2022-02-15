@@ -666,7 +666,7 @@ void function CleanUpEntitiesForRoundEnd()
 	foreach ( entity player in GetPlayerArray() )
 	{
 		ClearTitanAvailable( player )
-		
+		player.SetPlayerNetInt( "batteryCount", 0 ) 
 		if ( IsAlive( player ) )
 			player.Die( svGlobal.worldspawn, svGlobal.worldspawn, { damageSourceId = eDamageSourceId.round_end } )
 	}
