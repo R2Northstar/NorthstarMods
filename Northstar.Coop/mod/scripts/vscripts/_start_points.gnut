@@ -1,0 +1,400 @@
+global function StartPoint_Init
+global function AddStartPoint
+global function AddPlayerDidLoad
+global function PickStartPoint
+global function PickStartPoint_NoFadeOut_NoPilotWeaponCarryover
+global function GetStartPoint
+global function PlayerTransitionsToLevel
+global function GetCurrentStartPoint
+global function UpdatePauseMenuMissionLog
+global function MarkThisLevelAsCompleted
+global function GetMapLoadStartPoint
+global function GetCurrentStartPointIndex
+
+global const float SP_LEVEL_TRANSITION_FADETIME = 1.5
+global const float SP_LEVEL_TRANSITION_HOLDTIME = 3.0
+
+struct StartPoint
+{
+	void functionref( entity ) main
+	void functionref( entity ) setup
+	void functionref( entity ) skipFunc
+	string startPointEnum
+}
+
+struct
+{
+	string mapLoadStartPoint
+	string currentStartPoint
+	array<StartPoint> startPointsArray
+	void functionref( entity ) playerDidLoadFunc
+
+} file
+
+
+void function StartPoint_Init()
+{
+	if ( !IsLobby() )
+		AddCallback_EntitiesDidLoad( StartPoints_EntitiesDidLoad )
+
+	FlagInit( "ShowAlternateMissionLog" )
+}
+
+string function GetCurrentStartPoint()
+{
+	return file.currentStartPoint
+}
+
+int function GetCurrentStartPointIndex()
+{
+	return GetStartPointIndexFromName( GetMapName(), GetCurrentStartPoint() )
+}
+
+
+void function UpdateCurrentStartPoint( string map )
+{
+	string startPointName
+
+	LevelTransitionStruct ornull trans = GetLevelTransitionStruct()
+	if ( trans )
+	{
+		Assert( startPointName == "", "Map has level transition and -startpoint" )
+
+		expect LevelTransitionStruct( trans )
+		if ( trans.startPointIndex < file.startPointsArray.len()  )
+			startPointName = file.startPointsArray[ trans.startPointIndex ].startPointEnum
+	}
+	else
+	{
+		if ( DevStartPoints() && Dev_CommandLineHasParm( STARTPOINT_DEV_STRING ) )
+		{
+			printt( "    #################    " )
+			printt( "  #####################  " )
+			printt( "#########################" )
+			array<StartPointCSV> startPointsForMap = GetStartPointsForMap( map )
+			printt( "#  Start Points for Map:" )
+			foreach ( int i, StartPointCSV startpoint in startPointsForMap )
+			{
+				printt( "#   (" + i + ") " + startpoint.name )
+			}
+			printt( "#" )
+
+			string commandLineValue = Dev_CommandLineParmValue( STARTPOINT_DEV_STRING )
+			if ( commandLineValue != "" )
+			{
+				int startPointIndex = commandLineValue.tointeger()
+				if ( startPointIndex >= 0 && startPointIndex < startPointsForMap.len() )
+				{
+					startPointName = startPointsForMap[ startPointIndex ].name
+					printt( "#  Using Start Point: (" + startPointIndex.tostring() + ") " + startPointName )
+				}
+			}
+			printt( "#########################" )
+			printt( "  #####################  " )
+			printt( "    #################    " )
+		}
+		else
+		{
+			int startPointIndex = GetConVarInt( "sp_startpoint" )
+			if ( startPointIndex < file.startPointsArray.len()  )
+				startPointName = file.startPointsArray[ startPointIndex ].startPointEnum
+		}
+	}
+
+	if ( MapHasStartPoint( map, startPointName ) )
+	{
+		SetCurrentStartPoint( startPointName )
+		return
+	}
+
+	// insure a start point is always set
+	array<StartPointCSV> startPointsForMap = GetStartPointsForMap( map )
+	if ( startPointsForMap.len() )
+	{
+		SetCurrentStartPoint( startPointsForMap[0].name )
+	}
+}
+
+void function SetCurrentStartPoint( string startPointName )
+{
+	file.currentStartPoint = startPointName
+	level.nv.startPointIndex = GetStartPointIndexFromName( GetMapName(), GetCurrentStartPoint() )
+}
+
+void function StartPoints_EntitiesDidLoad()
+{
+	string map = GetMapName()
+	UpdateCurrentStartPoint( map )
+
+	entity player = expect entity( svGlobal.levelEnt.WaitSignal( "PlayerDidSpawn" ).player )
+
+	player.EndSignal( "OnDestroy" )
+
+	if ( file.playerDidLoadFunc != null )
+		thread file.playerDidLoadFunc( player )
+
+	string startName = GetCurrentStartPoint()
+
+	file.mapLoadStartPoint = startName
+	if ( file.mapLoadStartPoint == "" )
+	{
+		array<StartPointCSV> startPointsForMap = GetStartPointsForMap( map )
+		if ( startPointsForMap.len() > 0 )
+			file.mapLoadStartPoint = startPointsForMap[0].name
+	}
+
+	int startIndex = GetStartPointIndexFromName( map, startName )
+
+	//ScreenFade( player, 0, 0, 0, 255, 3.0, 1.0, FFADE_IN | FFADE_PURGE )
+
+	for ( int i = 0; i < startIndex && i < file.startPointsArray.len(); i++ )
+	{
+		StartPoint startPoint = file.startPointsArray[ i ]
+		if ( startPoint.skipFunc != null )
+			thread startPoint.skipFunc( player )
+	}
+
+	if ( startIndex >= file.startPointsArray.len() )
+		return
+
+	StartPoint startPoint = file.startPointsArray[startIndex]
+	if ( startPoint.setup != null )
+	{
+		SetCurrentStartPoint( startPoint.startPointEnum )
+		waitthread startPoint.setup( player )
+	}
+
+	for ( int i = startIndex; i < file.startPointsArray.len(); i++ )
+	{
+		StartPoint startPoint = file.startPointsArray[ i ]
+		SetCurrentStartPoint( startPoint.startPointEnum )
+		waitthread startPoint.main( player )
+	}
+}
+
+void function AddStartPoint( string startPointEnum, void functionref( entity ) mainFunc, void functionref( entity ) setupFunc = null, void functionref( entity ) skipFunc = null )
+{
+	bool foundStart
+	foreach ( start in GetStartPointsForMap( GetMapName() ) )
+	{
+		if ( start.name == startPointEnum )
+		{
+			foundStart = true
+			break
+		}
+	}
+	Assert( foundStart, "Start " + startPointEnum + " for map " + GetMapName() + " does not exist. Add it to startpoints.csv datatable and rebake in bakery." )
+
+	StartPoint startPoint
+	startPoint.main = mainFunc
+	startPoint.setup = setupFunc
+	startPoint.skipFunc = skipFunc
+	startPoint.startPointEnum = startPointEnum
+
+	file.startPointsArray.append( startPoint )
+}
+
+void function AddPlayerDidLoad( void functionref( entity ) playerDidLoadFunc )
+{
+	Assert( file.playerDidLoadFunc == null, "Can currently only have one playerDidLoad func" )
+	file.playerDidLoadFunc = playerDidLoadFunc
+}
+
+void function PickStartPoint( string mapName, string startPointEnum, LevelTransitionStruct ornull trans = null )
+{
+	array<entity> players = GetPlayerArray()
+	if ( HumanPlayers( players ) != 1 )
+		return
+
+	foreach ( entity player in players )
+	{
+		ScreenFade( player, 0, 0, 1, 255, SP_LEVEL_TRANSITION_FADETIME, (SP_LEVEL_TRANSITION_HOLDTIME + 1), FFADE_OUT | FFADE_PURGE )
+		MuteAll( player, 4 )
+	}
+
+	// work around for bug where these client commands don't always take effect in time
+	ExecuteLoadingClientCommands_SetStartPoint( mapName, GetStartPointIndexFromName( mapName, startPointEnum ) )
+
+	wait SP_LEVEL_TRANSITION_FADETIME + SP_LEVEL_TRANSITION_HOLDTIME
+
+	entity player = players[0]
+
+	if ( trans == null )
+	{
+		LevelTransitionStruct newTrans
+		trans = newTrans
+	}
+
+	expect LevelTransitionStruct( trans )
+
+	PopulateLevelTransWithLoadouts( player, trans )
+	PlayerTransitionsToLevel( player, mapName, startPointEnum, trans )
+}
+
+void function PickStartPoint_NoFadeOut_NoPilotWeaponCarryover( string mapName, string startPointEnum, LevelTransitionStruct ornull trans = null )
+{
+	array<entity> players = GetPlayerArray()
+	if ( HumanPlayers( players ) != 1 )
+		return
+
+	entity player = players[0]
+
+	if ( trans == null )
+	{
+		LevelTransitionStruct newTrans
+		trans = newTrans
+	}
+
+	expect LevelTransitionStruct( trans )
+
+	PlayerTransitionsToLevel( player, mapName, startPointEnum, trans )
+}
+
+void function PlayerTransitionsToLevel( entity player, string mapName, string startPointEnum, LevelTransitionStruct trans )
+{
+	trans.startPointIndex = GetStartPointIndexFromName( mapName, startPointEnum )
+	trans.difficulty = GetConVarInt( "sp_difficulty" )
+	trans.titan_unlocksBitfield = GetBTLoadoutsUnlockedBitfield()
+	trans.levelID = GetSPLevelEnumForMapname( GetMapName() )
+
+	// can't carry battery to the next level, only across mid-level transitions.
+	if ( StartPointHasDetente( mapName, startPointEnum ) )
+		trans.pilotHasBattery = false
+
+	Assert( trans.startPointIndex != -1, "Couldn't find start point " + startPointEnum )
+
+	MarkThisLevelAsCompleted( player )
+
+	ExecuteLoadingClientCommands_SetStartPoint( mapName, trans.startPointIndex )
+
+	printt( "ChangeLevel " + mapName + " " + startPointEnum )
+	ChangeLevel( mapName, trans )
+}
+
+int function HumanPlayers( array<entity> players )
+{
+	int playerCount = 0
+	foreach ( player in players )
+	{
+		if ( player.IsBot() )
+			continue
+
+		playerCount++
+	}
+	return playerCount
+}
+
+string function GetStartPoint()
+{
+	return GetCurrentStartPoint()
+}
+
+void function UpdatePauseMenuMissionLog( entity player )
+{
+	bool showAltLog = Flag( "ShowAlternateMissionLog")
+	Remote_CallFunction_UI( player, "ServerCallback_UI_UpdateMissionLog", showAltLog )
+}
+
+void function MarkThisLevelAsCompleted( entity player )
+{
+	var dataTable = GetDataTable( $"datatable/sp_levels.rpak" )
+	string mapName = GetMapName()
+	string startPoint = GetMapLoadStartPoint()
+	int numRows = GetDatatableRowCount( dataTable )
+
+	int difficulty = GetLowestDifficultyThisMap()
+
+	for ( int i=0; i<numRows; i++ )
+	{
+		string levelBsp = GetDataTableString( dataTable, i, GetDataTableColumnByName( dataTable, "level" ) )
+		string levelStart = GetDataTableString( dataTable, i, GetDataTableColumnByName( dataTable, "startPoint" ) )
+
+		if ( levelBsp == mapName && levelStart == startPoint )
+		{
+			if ( difficulty >= DIFFICULTY_MASTER )
+			{
+				#if DEV
+				printt( "Setting this level as master completed" )
+				printt( "BSP: " + levelBsp )
+				printt( "Start Point: " + levelStart )
+				#endif
+
+				SetLevelBitfieldAsCompleted( "sp_missionMasterCompletion", i )
+			}
+
+			if ( difficulty >= DIFFICULTY_HARD )
+			{
+				#if DEV
+				printt( "Setting this level as hard completed" )
+				printt( "BSP: " + levelBsp )
+				printt( "Start Point: " + levelStart )
+				#endif
+
+				SetLevelBitfieldAsCompleted( "sp_missionHardCompletion", i )
+			}
+
+			if ( difficulty >= DIFFICULTY_NORMAL )
+			{
+				#if DEV
+				printt( "Setting this level as normal completed" )
+				printt( "BSP: " + levelBsp )
+				printt( "Start Point: " + levelStart )
+				#endif
+
+				SetLevelBitfieldAsCompleted( "sp_missionNormalCompletion", i )
+			}
+
+			if ( difficulty >= DIFFICULTY_EASY )
+			{
+				#if DEV
+				printt( "Setting this level as easy completed" )
+				printt( "BSP: " + levelBsp )
+				printt( "Start Point: " + levelStart )
+				#endif
+
+				SetLevelBitfieldAsCompleted( "sp_missionEasyCompletion", i )
+			}
+			break
+		}
+	}
+
+	// Check Completed All Levels Achievement
+	int normalCompleted = 0
+	int hardCompleted = 0
+	int masterCompleted = 0
+	for ( int i=0; i<numRows; i++ )
+	{
+		int levelNum = GetDataTableInt( dataTable, i, GetDataTableColumnByName( dataTable, "levelNum" ) )
+
+		// always count training as master completed
+		if ( GetCompletedDifficultyForBSPNum( i, "sp_missionMasterCompletion" ) || levelNum == 0 )
+			masterCompleted++
+		if ( GetCompletedDifficultyForBSPNum( i, "sp_missionHardCompletion" ) || levelNum == 0 )
+			hardCompleted++
+		if ( GetCompletedDifficultyForBSPNum( i, "sp_missionNormalCompletion" ) || levelNum == 0 )
+			normalCompleted++
+	}
+
+	if ( normalCompleted >= numRows )
+		UnlockAchievement( player, achievements.COMPLETE_NORMAL )
+
+	if ( hardCompleted >= numRows )
+		UnlockAchievement( player, achievements.COMPLETE_HARD )
+
+	if ( masterCompleted >= numRows )
+		UnlockAchievement( player, achievements.COMPLETE_MASTER )
+}
+
+void function SetLevelBitfieldAsCompleted( string pvar, int bitIndex )
+{
+	int bitField = GetConVarInt( pvar )
+
+	bitField = bitField | (1 << bitIndex)
+
+	SetConVarInt( pvar, bitField )
+}
+
+string function GetMapLoadStartPoint()
+{
+	return file.mapLoadStartPoint
+}
