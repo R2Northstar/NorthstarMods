@@ -30,12 +30,6 @@ struct
 	int slideKills = 0
 	float lastMultiKillStartTime = 0.0
 	int multiKillCount = 0
-	int dof_enable = 0
-	int m_invert_pitch = 0
-	int joy_inverty = 0
-	int joy_movement_stick = 0
-	int autosprint_type = 0
-	int hud_setting_showTips = 0
 } file
 
 void function BaseGametype_Init_MPSP()

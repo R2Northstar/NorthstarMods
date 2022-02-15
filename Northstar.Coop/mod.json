@@ -4,6 +4,32 @@
 	"Version": "1.5.0",
 	"LoadPriority": 0,
 
+	"ConVars": [
+		{
+			"Name": "dof_enable",
+			"DefaultValue": ""
+		},
+		{
+			"Name": "m_invert_pitch",
+			"DefaultValue": ""
+		},
+		{
+			"Name": "joy_inverty",
+			"DefaultValue": ""
+		},
+		{
+			"Name": "autosprint_type",
+			"DefaultValue": ""
+		},
+		{
+			"Name": "joy_movement_stick",
+			"DefaultValue": ""
+		},
+		{
+			"Name": "hud_setting_showTips",
+			"DefaultValue": ""
+		}
+	],
 	"Scripts": [
 		{
 			"Path": "sh_sp_coop.gnut",
