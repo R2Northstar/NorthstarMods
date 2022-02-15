@@ -39,6 +39,10 @@
 			"RunOn": "CLIENT"
 		},
 		{
+			"Path": "chat.gnut",
+			"RunOn": "CLIENT"
+		},
+		{
 			"Path": "ui/menu_ns_modmenu.nut",
 			"RunOn": "UI",
 			"UICallback": {

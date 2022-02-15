@@ -20,7 +20,6 @@ void function CServerGameDLL_ProcessMessageStartThread()
 
 void function CServerGameDLL_OnReceivedSayTextMessageCallback()
 {
-
 	ClServer_MessageStruct localMessage
 	localMessage.message =  NSChatGetCurrentMessage()
 	localMessage.player = GetPlayerByIndex(NSChatGetCurrentPlayer())
@@ -34,12 +33,9 @@ void function CServerGameDLL_OnReceivedSayTextMessageCallback()
 		localMessage.isTeam = returnStruct.isTeam
 		localMessage.shouldBlock = localMessage.shouldBlock || returnStruct.shouldBlock
 	}
-	localMessage.shouldBlock = localMessage.message.find("nft") != 0 ? false : true
+
 	if (!localMessage.shouldBlock) {
-		NSChatBroadcastText(localMessage.player.GetPlayerIndex(), localMessage.message, localMessage.isTeam)
-	}
-	else {
-		NSSendMessage(-1, localMessage.player.GetPlayerIndex(), "Hey, don't say that!", false, false, 2)
+		NSSendMessage(localMessage.player.GetPlayerIndex(), localMessage.message, localMessage.isTeam)
 	}
 }
 

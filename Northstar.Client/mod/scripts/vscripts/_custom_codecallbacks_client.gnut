@@ -1,13 +1,14 @@
 untyped
 
-globalize_all_functions
+global function CHudChat_ProcessMessageStartThread
+global function AddCallback_OnReceivedSayTextMessage
 
 global struct ClClient_MessageStruct {
 	string message
 	entity player
 	bool isTeam
     bool isDead
-    bool isEnemy
+    bool isWhisper
 	bool shouldBlock
 }
 
@@ -15,62 +16,93 @@ struct {
 	array< ClClient_MessageStruct functionref( ClClient_MessageStruct ) > OnReceivedSayTextMessageCallbacks
 } NsCustomCallbacksClient
 
+void function OnReceivedMessage(ClClient_MessageStruct localMessage) {
+    if (localMessage.player != null)
+    {
+        foreach (callbackFunc in NsCustomCallbacksClient.OnReceivedSayTextMessageCallbacks)
+        {
+            localMessage = callbackFunc(localMessage)
 
-int function GetIdByPlayerName(string name) {
-    int arrayLen = GetPlayerArray().len()
-    int found = -1
-    for (int i = 0; i < arrayLen; i++) {
-        if (GetPlayerArray()[i].GetPlayerName() == name) {
-            found = i
-            break
+            if (localMessage.shouldBlock)
+            {
+                return
+            }
         }
     }
-    return found
-}
 
-void function GetPlayerNameById() {
-    int id = NSGetPlayerIdForLookup()
-    print("Looking up id")
-    print(id)
-    string name = GetPlayerArray()[id].GetPlayerName()
-    NSSetFoundPlayerName(name)
-}
+    NSChatWriteRaw(1, "\n")
 
-void function CClientGameDLL_ProcessMessageStartThread()
-{
-	thread CClientGameDLL_OnReceivedSayTextMessageCallback()
-}
+    if (localMessage.player == null) NSChatWrite(1, "\x1b[95m")
+    else
+    {
+        bool isFriendly = localMessage.player.GetTeam() == GetLocalClientPlayer().GetTeam()
 
-void function CClientGameDLL_OnReceivedSayTextMessageCallback()
-{
-	ClClient_MessageStruct localMessage
-	localMessage.message =  NSChatGetCurrentMessage()
-	localMessage.player = GetPlayerArray()[NSChatGetCurrentPlayer()]
-	localMessage.isTeam = NSChatGetIsTeam()
-    localMessage.isDead = NSChatGetIsDead()
-    localMessage.isEnemy = localMessage.player.GetTeam() != GetLocalClientPlayer().GetTeam()
-	localMessage.shouldBlock = false
-    print("-------------------")
-    print("-------------------")
-    print("-------------------")
-    print("running callback")
-    print("-------------------")
-    print("-------------------")
-    print("-------------------")
-	foreach ( callbackFunc in NsCustomCallbacksClient.OnReceivedSayTextMessageCallbacks )
-	{
-		ClClient_MessageStruct returnStruct = callbackFunc(localMessage)
-		localMessage.message = returnStruct.message
-		localMessage.player = returnStruct.player
-		localMessage.isTeam = returnStruct.isTeam
-		localMessage.shouldBlock = localMessage.shouldBlock || returnStruct.shouldBlock
-	}
-	localMessage.shouldBlock = localMessage.message.find("nft") != 0 ? false : true
-	if (!localMessage.shouldBlock) {
-		NSGameChatWriteMessage(localMessage.message, "test", localMessage.isTeam, localMessage.isDead, localMessage.isEnemy)
-	}
+        if (isFriendly) NSChatWrite(1, "\x1b[111m")
+        else NSChatWrite(1, "\x1b[112m")
+    }
+
+    if (localMessage.isWhisper) NSChatWriteRaw(1, Localize("#HUD_CHAT_WHISPER_PREFIX"))
+    if (localMessage.isDead) NSChatWriteRaw(1, Localize("#HUD_CHAT_DEAD_PREFIX"))
+    if (localMessage.isTeam) NSChatWriteRaw(1, Localize("#HUD_CHAT_TEAM_PREFIX"))
+
+    if (localMessage.player == null) 
+    {
+        NSChatWriteRaw(1, Localize("#HUD_CHAT_SERVER_PREFIX") + " ")
+    }
     else {
-        print("should block ig idk")
+        NSChatWriteRaw(1, localMessage.player.GetPlayerName())
+        NSChatWriteRaw(1, ": ")
+    }
+
+    NSChatWrite(1, "\x1b[0m")
+
+    NSChatWrite(1, localMessage.message)
+}
+
+void function CHudChat_ProcessMessageStartThread()
+{
+	thread CHudChat_OnReceivedSayTextMessageCallback()
+}
+
+void function CHudChat_OnReceivedSayTextMessageCallback()
+{
+    int fromPlayerIndex = NSChatGetCurrentPlayer()
+    entity fromPlayer = null
+
+    if (fromPlayerIndex >= 0 && fromPlayerIndex < GetPlayerArray().len())
+    {
+        fromPlayer = GetPlayerArray()[fromPlayerIndex]
+    }
+
+    string message = NSChatGetCurrentMessage()
+    bool isTeam = NSChatGetIsTeam()
+    bool isDead = NSChatGetIsDead()
+    int messageType = NSChatGetCurrentType()
+
+    if (messageType == 0 || messageType == 1)
+    {
+        ClClient_MessageStruct localMessage
+        localMessage.message = message
+        localMessage.player = fromPlayer
+        localMessage.isTeam = isTeam
+        localMessage.isDead = isDead
+        localMessage.isWhisper = false
+        localMessage.shouldBlock = false
+        OnReceivedMessage(localMessage)
+        return
+    }
+
+    if (messageType == 2)
+    {
+        ClClient_MessageStruct localMessage
+        localMessage.message = message
+        localMessage.player = fromPlayer
+        localMessage.isTeam = isTeam
+        localMessage.isDead = isDead
+        localMessage.isWhisper = true
+        localMessage.shouldBlock = false
+        OnReceivedMessage(localMessage)
+        return
     }
 }
 
