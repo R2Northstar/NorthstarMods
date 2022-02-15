@@ -284,7 +284,7 @@ void function PostDeathThread_MP( entity player, var damageInfo ) // based on ga
 	table<int, bool> alreadyAssisted
 	foreach( DamageHistoryStruct attackerInfo in player.e.recentDamageHistory )
 	{
-                if (!IsValid(attacker))
+                if (!IsValid(attacker) || !IsValid(attackerInfo.attacker))
                         continue
 		bool exists = attackerInfo.attacker.GetEncodedEHandle() in alreadyAssisted ? true : false
 		if( attackerInfo.attacker != attacker && !exists )
