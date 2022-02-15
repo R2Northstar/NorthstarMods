@@ -12,15 +12,15 @@ function Chat_Impersonate(entity player, string text, bool isTeamChat) {
     NSSendMessage(player.GetPlayerIndex(), text, isTeamChat)
 }
 
-// Sends a whisper message from one player that is only shown to another.
-function Chat_Whisper(entity fromPlayer, entity toPlayer, string text) {
+// Sends a whisper message from one player that is only shown to another. Will be shown as a whisper if whisper is set.
+function Chat_PrivateMessage(entity fromPlayer, entity toPlayer, string text, bool whisper) {
     NSBroadcastMessage(
         fromPlayer.GetPlayerIndex(),
         toPlayer.GetPlayerIndex(),
         text,
         false,
         false,
-        eMessageType.WHISPER
+        whisper ? eMessageType.WHISPER : eMessageType.CHAT
     )
 }
 
