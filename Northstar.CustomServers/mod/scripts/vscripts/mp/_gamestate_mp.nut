@@ -676,7 +676,6 @@ void function CleanUpEntitiesForRoundEnd()
 	{
 		if ( !IsValid( npc ) )
 			continue
-		PROTO_CleanupTrackedProjectiles( npc )
 		// kill rather than destroy, as destroying will cause issues with children which is an issue especially for dropships and titans
 		npc.Die( svGlobal.worldspawn, svGlobal.worldspawn, { damageSourceId = eDamageSourceId.round_end } )
 	}
