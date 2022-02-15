@@ -46,7 +46,6 @@ void function CreateCustomSpawns_Threaded()
 	else
 		raycastTop = raycastTop + 2650
 
-		print( "\n\n\n\n\n\n				RAYCASTTOP:" + raycastTop + "\n\n\n\n\n\n" ) // this has to be higher than what you want to spawn on. May spawn in wall if lower than some rooftops
 
 	array< vector > raycastPositions
 	foreach ( entity hardpoint in GetEntArrayByClass_Expensive( "info_hardpoint" ) )
