@@ -715,20 +715,3 @@ void function DEV_PrintHardpointsInfo()
 	}
 }
 
-void function DEV_PrintPlayersOnHardpoint(string hardpointGroup)
-{
-	foreach(HardpointStruct hardpoint in file.hardpoints)
-	{
-		if(hardpoint.kv.hardpointGroup==hardpointGroup)
-		{
-			array<entity> allCappers
-			allCappers.extend(hardpoint.militiaCappers)
-			allCappers.extend(hardpoint.imcCappers)
-			printt("On Hardpoint ",hardpointGroup,"are the Players")
-			foreach(entity player in allCappers)
-			{
-				printt()
-			}
-		}
-	}
-}
