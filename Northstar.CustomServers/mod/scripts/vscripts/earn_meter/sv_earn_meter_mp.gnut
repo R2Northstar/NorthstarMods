@@ -136,9 +136,8 @@ void function EarnMeterMP_PlayerLifeThink( entity player )
 				EarnMeterMP_ReplaceReward( player, pilotReward, pilotRewardFrac )
 			else if ( desiredEarnMeterMode == eEarnMeterMode.CORE ) // Replace the pilot's earn meter reward with smoke when they enter their titan.
 			{
-				float smokeFrac = PlayerEarnMeter_GetSmokeFrac( player )
-				EarnMeterMP_ReplaceReward( player, EarnObject_GetByRef( "core_electric_smoke" ), smokeFrac )
-				if( SoulTitanCore_GetNextAvailableTime( player.GetTitanSoul() ) >= smokeFrac )
+				EarnMeterMP_ReplaceReward( player, EarnObject_GetByRef( "core_electric_smoke" ), CORE_SMOKE_FRAC )
+				if( SoulTitanCore_GetNextAvailableTime( player.GetTitanSoul() ) >= CORE_SMOKE_FRAC )
 					PlayerEarnMeter_SetRewardUsed( player )
 			}
 			else if ( desiredEarnMeterMode == eEarnMeterMode.CORE_ACTIVE ) // Enables smoke after core use (doesn't show up during active, so looks fine)
