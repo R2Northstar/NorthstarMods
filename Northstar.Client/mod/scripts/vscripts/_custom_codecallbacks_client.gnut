@@ -6,6 +6,7 @@ global function AddCallback_OnReceivedSayTextMessage
 global struct ClClient_MessageStruct {
 	string message
 	entity player
+    string playerName
 	bool isTeam
     bool isDead
     bool isWhisper
@@ -22,7 +23,6 @@ void function OnReceivedMessage(ClClient_MessageStruct localMessage) {
         foreach (callbackFunc in NsCustomCallbacksClient.OnReceivedSayTextMessageCallbacks)
         {
             localMessage = callbackFunc(localMessage)
-
             if (localMessage.shouldBlock)
             {
                 return
@@ -45,12 +45,12 @@ void function OnReceivedMessage(ClClient_MessageStruct localMessage) {
     if (localMessage.isDead) NSChatWriteRaw(1, Localize("#HUD_CHAT_DEAD_PREFIX"))
     if (localMessage.isTeam) NSChatWriteRaw(1, Localize("#HUD_CHAT_TEAM_PREFIX"))
 
-    if (localMessage.player == null) 
+    if (localMessage.player == null)
     {
         NSChatWriteRaw(1, Localize("#HUD_CHAT_SERVER_PREFIX") + " ")
     }
     else {
-        NSChatWriteRaw(1, localMessage.player.GetPlayerName())
+        NSChatWriteRaw(1, localMessage.playerName)
         NSChatWriteRaw(1, ": ")
     }
 
@@ -84,6 +84,7 @@ void function CHudChat_OnReceivedSayTextMessageCallback()
         ClClient_MessageStruct localMessage
         localMessage.message = message
         localMessage.player = fromPlayer
+        localMessage.playerName = fromPlayer.GetPlayerName()
         localMessage.isTeam = isTeam
         localMessage.isDead = isDead
         localMessage.isWhisper = false
@@ -97,6 +98,7 @@ void function CHudChat_OnReceivedSayTextMessageCallback()
         ClClient_MessageStruct localMessage
         localMessage.message = message
         localMessage.player = fromPlayer
+        localMessage.playerName = fromPlayer.GetPlayerName()
         localMessage.isTeam = isTeam
         localMessage.isDead = isDead
         localMessage.isWhisper = true
