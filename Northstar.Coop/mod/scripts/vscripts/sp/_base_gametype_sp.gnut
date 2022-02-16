@@ -444,8 +444,9 @@ void function DoHudDisplayForDeadPlayerThenReloadServer( entity player )
 
 void function CodeCallback_OnPlayerKilled( entity player, var damageInfo )
 {
-	thread DoHudDisplayForDeadPlayerThenReloadServer( player )
-	thread PostDeathThread_SP( player, damageInfo )
+		thread PostDeathThread_SP( player, damageInfo )
+
+		thread DoHudDisplayForDeadPlayerThenReloadServer( player )
 
 }
 
