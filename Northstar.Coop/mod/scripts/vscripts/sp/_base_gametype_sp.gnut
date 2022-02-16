@@ -298,6 +298,7 @@ void function Coop_GetLevelTransition(string coop_mapname)
 }
 
 void function Coop_MapChange()
+{
 	bool changeOnNextIteration = false
 
 	for ( int i = 0; i < GetCurrentPlaylistGamemodesCount(); i++ )
@@ -317,7 +318,7 @@ void function Coop_MapChange()
 			}
 		}
 	}
-	
+}
 void function CodeCallback_OnClientConnectionStarted( entity player )
 {
 	// not a real player?
@@ -393,17 +394,21 @@ void function CodeCallback_OnClientConnectionStarted( entity player )
 void function RespawnPlayer(entity player)
 {
 	printl("Respawning player:" + player.GetPlayerName())
-	if(player != null){
-	//player.s.inPostDeath = false
-	//player.s.respawnSelectionDone = true
-	//player.Signal( "RespawnNow" )
-	player.RespawnPlayer(null)
-	ScreenFadeFromBlack( player, 0.0, 0.0 )
-	//#if CLIENT
-	//thread MainHud_TurnOn_RUI( true )
-	//#endif
-	ClientCommand(player,"script_client thread MainHud_TurnOn_RUI( true )")
-	//player.EndSignal( "RespawnNow" )
+	if ( !IsAlive( player ) ){
+		// player.s.inPostDeath = false
+		// player.s.respawnSelectionDone = true
+		// player.Signal( "RespawnNow" )
+		player.RespawnPlayer(null)
+		ScreenFadeFromBlack( player, 0.0, 0.0 )
+		// #if CLIENT
+		// thread MainHud_TurnOn_RUI( true )
+		// #endif
+		ClientCommand(player,"script_client thread MainHud_TurnOn_RUI( true )")
+		// player.EndSignal( "RespawnNow" )
+
+		player.SetOrigin( GetSaveOrigin() )
+		player.SetAngles( GetSaveOrigin() )
+
 	}
 }
 
@@ -440,9 +445,6 @@ void function CodeCallback_OnPlayerKilled( entity player, var damageInfo )
 	thread DoHudDisplayForDeadPlayerThenReloadServer( player )
 	thread PostDeathThread_SP( player, damageInfo )
 
-
-	//thread DoHudDisplayForDeadPlayerThenReloadServer( player )
-
 }
 
 function PostDeathThread_SP( entity player, damageInfo )
@@ -454,7 +456,6 @@ function PostDeathThread_SP( entity player, damageInfo )
 				if (p != null){
 				SendHudMessage( p , Coop_Dead_Player + " Fucked up, laugh at them." , -1, 0.4, 255, 255, 0, 0, 0.15, 6, 0.15 )
 				//ClientCommand( p , "RespawnNowSP" )
-				RespawnPlayer( p )
 				}
 			}
 	if ( player.p.watchingPetTitanKillReplay )
@@ -518,8 +519,8 @@ function PostDeathThread_SP( entity player, damageInfo )
 
 
 	//ReloadForMissionFailure( reloadExtraDelay )
-	//ClientCommand(player,"CC_RespawnPlayer")
-	//player.RespawnPlayer(null)
+	// ClientCommand(player,"CC_RespawnPlayer")
+	// player.RespawnPlayer(null)
 	//DoHudDisplayForDeadPlayerThenReloadServer( player )
 	//ScreenFadeFromBlack( player, 1.0, 0.75 )
 
