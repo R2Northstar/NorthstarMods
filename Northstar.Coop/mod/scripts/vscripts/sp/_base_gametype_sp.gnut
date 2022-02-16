@@ -401,11 +401,12 @@ void function RespawnPlayer(entity player)
 	//player.s.respawnSelectionDone = true
 	//player.Signal( "RespawnNow" )
 	player.RespawnPlayer(null)
+	ClientCommand(player,"script_client thread MainHud_TurnOn_RUI( true )")
 	ScreenFadeFromBlack( player, 0.0, 0.0 )
 	//#if CLIENT
 	//thread MainHud_TurnOn_RUI( true )
 	//#endif
-	ClientCommand(player,"script_client thread MainHud_TurnOn_RUI( true )")
+	
 	//player.EndSignal( "RespawnNow" )
 	}
 }
@@ -440,8 +441,9 @@ void function DoHudDisplayForDeadPlayerThenReloadServer( entity player )
 
 void function CodeCallback_OnPlayerKilled( entity player, var damageInfo )
 {
-	thread DoHudDisplayForDeadPlayerThenReloadServer( player )
-	thread PostDeathThread_SP( player, damageInfo )
+		thread PostDeathThread_SP( player, damageInfo )
+
+		thread DoHudDisplayForDeadPlayerThenReloadServer( player )
 
 
 	//thread DoHudDisplayForDeadPlayerThenReloadServer( player )
