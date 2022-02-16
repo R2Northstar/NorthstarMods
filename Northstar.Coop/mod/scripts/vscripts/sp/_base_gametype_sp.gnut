@@ -23,6 +23,7 @@ global function GetSPLevelEnumForMapname
 global function RespawnPlayer
 global function Coop_GetLevelTransition
 global function Coop_ReloadCurrentMapFromStartPoint
+global function Coop_MapChange
 struct
 {
 	float lastObitMsgTime = 0.0
@@ -312,13 +313,14 @@ void function Coop_MapChange()
 					GameRules_ChangeMap( GetCurrentPlaylistGamemodeByIndexMapByIndex( i, j ), GetCurrentPlaylistGamemodeByIndex( i ) )
 					return
 				}
-			
+
 				if ( GetCurrentPlaylistGamemodeByIndexMapByIndex( i, j ) == GetMapName() )
 					changeOnNextIteration = true // change to next map/mode we iterate over
 			}
 		}
 	}
 }
+
 void function CodeCallback_OnClientConnectionStarted( entity player )
 {
 	// not a real player?
