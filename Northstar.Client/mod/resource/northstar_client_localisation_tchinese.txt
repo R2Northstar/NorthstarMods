@@ -40,8 +40,8 @@
 
 		"MENU_MATCH_SETTINGS" "比賽設定"
 		"MENU_MATCH_SETTINGS_SUBMENU" "%s1 設定"
-
-		"PRIVATE_MATCH_SINGLEPLAYER_LEVEL" "%s1 （單人）"
+		
+		"PRIVATE_MATCH_SINGLEPLAYER_LEVEL" "%s1 （戰役）"
 
 		// fra hint for private match menu, because fra only has PL_fra_desc in vanilla
 		"PL_fra_hint" "混戰。收集3枚電池來呼叫泰坦。"
@@ -65,7 +65,7 @@
 		"earn_meter_pilot_overdrive" "泰坦/强化數值超載"
 		"earn_meter_pilot_multiplier" "鐵馭强化數值倍率"
 
-		"earn_meter_titan_multiplier" "泰坦强化數值倍率"
+		"earn_meter_titan_multiplier" "核心值倍率"
 		"aegis_upgrades" "神盾升級"
 		"infinite_doomed_state" "無限毀滅狀態"//一代
 		"titan_shield_regen" "護盾發生器"//一代
@@ -166,21 +166,21 @@
 
 		"PL_hs" "追迷藏"
 		"PL_hs_lobby" "Hide and Seek Lobby追迷藏大廳"
-		"PL_hs_desc" "藏起來，不要被鬼抓到！"
-		"PL_hs_hint" "藏起來，不要被鬼抓到！"
+		"PL_hs_desc" 躲藏者在時間內躲起來，尋覓者找出他們。"
+		"PL_hs_hint" "躲藏者在時間內躲起來，尋覓者找出他們。"
 		"PL_hs_abbr" "HS追迷藏"
 		"GAMEMODE_hs" "追迷藏"
-		"HIDEANDSEEK_YOU_ARE_SEEKER" "你是鬼"
-		"HIDEANDSEEK_SEEKER_DESC" "找到人類並近戰攻擊他們。\n你將在 %s1 秒后空降"
-		"HIDEANDSEEK_YOU_ARE_HIDER" "你是人類"
-		"HIDEANDSEEK_HIDER_DESC" "快躲起來"
-		"HIDEANDSEEK_SEEKERS_INCOMING" "鬼來咯"
-		"HIDEANDSEEK_DONT_GET_FOUND" "不要被抓到！"
-		"HIDEANDSEEK_GET_LAST_HIDER" "%s1 是最後的人類"
-		"HIDEANDSEEK_YOU_ARE_LAST_HIDER" "你是最後的人類"
+		"HIDEANDSEEK_YOU_ARE_SEEKER" "你是一名尋覓者"
+		"HIDEANDSEEK_SEEKER_DESC" "找出躲藏者並使用近戰。\n你將在 %s1 秒后空降"
+		"HIDEANDSEEK_YOU_ARE_HIDER" "你是一名躲藏者"
+		"HIDEANDSEEK_HIDER_DESC" "躲開尋覓者的追捕。"
+		"HIDEANDSEEK_SEEKERS_INCOMING" "尋覓者出動中"
+		"HIDEANDSEEK_DONT_GET_FOUND" "別被發現了！"
+		"HIDEANDSEEK_GET_LAST_HIDER" "%s1 是最後的躲藏者"
+		"HIDEANDSEEK_YOU_ARE_LAST_HIDER" "你是最後的躲藏者"
 		"HIDEANDSEEK_GOT_STIM" "You are stimmed! Don't get caught!你獲取興奮劑了！不要被抓住！"
-		"hideandseek_balance_teams" "自動平衡 人類/鬼"
-		"hideandseek_hiding_time" "躲藏準備時間"
+		"hideandseek_balance_teams" "自動平衡 躲藏者/尋覓者"
+		"hideandseek_hiding_time" "躲藏階段時間" 
 
 		// these are defined in r1_english but titan war is a shit name so i'm changing it to another one that was referenced in development
 		"GAMEMODE_fw" "Frontier War邊境戰爭"
@@ -214,7 +214,7 @@
 		"FASTBALL_PANEL_CAPTURED" "%s1 入侵了操控台 %s2"
 		"SCOREBOARD_FASTBALL_HACKS" "入侵操控台數"
 
-		"GAMEMODE_ctf_comp" "Competitive CTF競技奪旗"//血量125，勝利旗幟數5變6
+		"GAMEMODE_ctf_comp" "競技奪旗"
 
 		// mode settings
 		"MODE_SETTING_CATEGORY_PROMODE" "進階平衡"
@@ -222,11 +222,11 @@
 
 		"custom_air_accel_pilot" "空中漂移加速"
 		"no_pilot_collision" "取消鐵馭間碰撞" // WIP
-		"promode_enable" "Promode Weapons"
+		"promode_enable" "進階平衡武器"
 		"fp_embark_enabled" "第一人稱上機/處決"//最好不要打開，上機、處決時按esc打開配置界面會崩潰，崩潰不影響其他人
 		"classic_rodeo" "經典訓牛術"//一代
 		"oob_timer_enabled" "出界計時器"
-		"riff_instagib" "一击必杀模式"//1HP，武器击杀轮换
+		"riff_instagib" "瞬殺模式
 
 		"riff_player_bleedout" "鐵馭流血模式"
 		"player_bleedout_forceHolster" "倒地無法使用武器"
