@@ -68,10 +68,12 @@ void function CHudChat_OnReceivedSayTextMessageCallback()
 {
     int fromPlayerIndex = NSChatGetCurrentPlayer()
     entity fromPlayer = null
+    string fromPlayerName = ""
 
     if (fromPlayerIndex >= 0 && fromPlayerIndex < GetPlayerArray().len())
     {
-        fromPlayer = GetPlayerArray()[fromPlayerIndex]
+        fromPlayer = GetEntByIndex(fromPlayerIndex + 1)
+        fromPlayerName = fromPlayer.GetPlayerName()
     }
 
     string message = NSChatGetCurrentMessage()
@@ -84,7 +86,7 @@ void function CHudChat_OnReceivedSayTextMessageCallback()
         ClClient_MessageStruct localMessage
         localMessage.message = message
         localMessage.player = fromPlayer
-        localMessage.playerName = fromPlayer.GetPlayerName()
+        localMessage.playerName = fromPlayerName
         localMessage.isTeam = isTeam
         localMessage.isDead = isDead
         localMessage.isWhisper = false
@@ -98,7 +100,7 @@ void function CHudChat_OnReceivedSayTextMessageCallback()
         ClClient_MessageStruct localMessage
         localMessage.message = message
         localMessage.player = fromPlayer
-        localMessage.playerName = fromPlayer.GetPlayerName()
+        localMessage.playerName = fromPlayerName
         localMessage.isTeam = isTeam
         localMessage.isDead = isDead
         localMessage.isWhisper = true
