@@ -667,6 +667,7 @@ void function CleanUpEntitiesForRoundEnd()
 	{
 		ClearTitanAvailable( player )
 		PROTO_CleanupTrackedProjectiles( player )
+		player.SetPlayerNetInt( "batteryCount", 0 ) 
 		if ( IsAlive( player ) )
 			player.Die( svGlobal.worldspawn, svGlobal.worldspawn, { damageSourceId = eDamageSourceId.round_end } )
 	}
@@ -675,7 +676,6 @@ void function CleanUpEntitiesForRoundEnd()
 	{
 		if ( !IsValid( npc ) )
 			continue
-	
 		// kill rather than destroy, as destroying will cause issues with children which is an issue especially for dropships and titans
 		npc.Die( svGlobal.worldspawn, svGlobal.worldspawn, { damageSourceId = eDamageSourceId.round_end } )
 	}
