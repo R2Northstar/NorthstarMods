@@ -423,6 +423,7 @@ void function DoHudDisplayForDeadPlayerThenReloadServer( entity player )
 				if (p != null){
 				SendHudMessage( p , Coop_Dead_Player + "Fucked up, laugh at them." , -1, 0.4, 255, 255, 0, 0, 0.15, 6, 0.15 )
 				//ClientCommand( p , "RespawnNowSP" )
+				RespawnPlayer(p)
 				}
 			}
 	//wait 3.0
@@ -432,8 +433,8 @@ void function DoHudDisplayForDeadPlayerThenReloadServer( entity player )
 
 
 	//player.RespawnPlayer(null)
-	player.WaitSignal("RespawnNow")
-	RespawnPlayer(player)
+	// player.WaitSignal("RespawnNow")
+	// RespawnPlayer(player)
 
 	CodeCallback_OnPlayerRespawned(player)
 	//player.EndSignal( "RespawnNow" )
