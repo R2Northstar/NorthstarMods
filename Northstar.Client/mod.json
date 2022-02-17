@@ -73,6 +73,10 @@
 		{
 			"Path": "ui/controller_prompts.nut",
 			"RunOn": "UI"
+		},
+		{
+			"Path": "client/cl_channelCallback.gnut",
+			"RunOn": "CLIENT"
 		}
 	],
 	"Localisation": [

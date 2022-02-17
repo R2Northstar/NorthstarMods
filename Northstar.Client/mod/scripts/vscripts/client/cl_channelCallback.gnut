@@ -1,0 +1,19 @@
+global function ServerCallback_ChannelCallbackFunction
+global function AddChannelCallbackFunction
+
+struct {
+ table< int, void functionref(int, int, int, int) > clientCallBackFunctions
+} file
+
+//Make sure the channel you use isn't already in use by northstar or a mod
+void function ServerCallback_ChannelCallbackFunction(int channel, int one, int two, int three, int four) 
+{
+  try {
+      file.clientCallBackFunctions[channel](one, two, three, four)
+  } catch(exception) {}
+}
+
+void function AddChannelCallbackFunction(int channel, void functionref(int, int, int, int) func) 
+{
+    file.clientCallBackFunctions[channel] <- func
+}

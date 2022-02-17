@@ -914,6 +914,9 @@ function RemoteFunctions_Init()
 	RegisterNetworkedVariable( "burn_numTurrets", SNDC_PLAYER_GLOBAL, SNVT_INT )
 	RegisterNetworkedVariable( "burn_turretLimit", SNDC_GLOBAL, SNVT_INT, 5 )
 
+	//Channel Callback
+	Remote_RegisterFunction( "ServerCallback_ChannelCallbackFunction" )
+
 	#if CLIENT
 		//RegisterNetworkedVariableChangeCallback_time( "t", Changed )
 		RegisterNetworkedVariableChangeCallback_int( "upgradeCount", NetworkedVarChangedCallback_UpdateVanguardRUICoreStatus )
