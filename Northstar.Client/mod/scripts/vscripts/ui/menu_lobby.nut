@@ -113,6 +113,11 @@ struct
 
 	bool isFDMode = false
 	bool shouldAutoOpenFDMenu = false
+
+
+	// quick play things
+	var quickPlayButton
+	array<string> joinedServers
 } file
 
 void function MenuLobby_Init()
@@ -245,6 +250,10 @@ void function SetupComboButtonTest( var menu )
 		file.lobbyButtons.append( file.findGameButton )
 		Hud_SetLocked( file.findGameButton, true )
 		Hud_AddEventHandler( file.findGameButton, UIE_CLICK, OpenServerBrowser )
+
+		file.quickPlayButton = AddComboButton( comboStruct, headerIndex, buttonIndex++, "#MENU_TITLE_QUICK_PLAY" )
+		file.lobbyButtons.append( file.quickPlayButton )
+		Hud_AddEventHandler( file.quickPlayButton, UIE_CLICK, QuickPlaySearch )
 	}
 	else
 	{
@@ -1626,3 +1635,152 @@ void function Lobby_SetFDModeBasedOnSearching( string playlistToSearch )
 
 	Lobby_SetFDMode( isFDMode )
 }
+
+
+// QUICK PLAY THINGS
+
+void function QuickPlaySearch( var button )
+{
+	if ( !NSIsRequestingServerList() )
+	{
+		NSClearRecievedServerList()
+		NSRequestServerList()
+	}
+	thread QuickPlaySearch_Threaded( button )
+}
+
+void function QuickPlaySearch_Threaded( var button )
+{
+	// wait for request to complete
+	while ( NSIsRequestingServerList() )
+		WaitFrame()
+
+	// auth and connect
+	if ( NSIsAuthenticatingWithServer() )
+		return
+	int serverIndex = -1
+	array<int> serverIndices
+
+	// iterate through servers and make array of valid servers
+
+	for (int i = 0; i < NSGetServerCount(); i++ )
+	{
+		int playerCount = NSGetServerPlayerCount(i)
+		int maxPlayerCount = NSGetServerMaxPlayerCount(i)
+		// check if full or empty
+		if ( playerCount >= maxPlayerCount || playerCount <= 0 )
+			continue
+		// check if password
+		if ( NSServerRequiresPassword(i) )
+			continue
+		// check if name matches list of previous servers
+		if ( file.joinedServers.contains( NSGetServerName(i) ) )
+			continue
+		// check mods
+		if ( !CheckMods(i) )
+			continue
+		// add to array
+		serverIndices.append(i)
+	}
+
+	// temp - we should be filtering and sorting here
+
+
+	if (serverIndices.len() == 0)
+		return
+
+	serverIndex = serverIndices[0]
+
+
+	// auth and connect - mostly stolen from serverbrowser code
+	print( "trying to authenticate with server " + NSGetServerName( serverIndex ))
+	NSTryAuthWithServer( serverIndex, "" )
+
+	
+
+	while ( NSIsAuthenticatingWithServer()) // need a check to see if we should cancel
+	{
+		WaitFrame()
+	}
+
+	if ( NSWasAuthSuccessful() )
+	{
+		bool modsChanged
+
+		array<string> requiredMods
+		for ( int i = 0; i < NSGetServerRequiredModsCount( serverIndex ); i++ )
+			requiredMods.append( NSGetServerRequiredModName( serverIndex, i ) )
+
+		// unload mods we don't need, load necessary ones and reload mods before connecting
+		foreach ( string mod in NSGetModNames() )
+		{
+			if ( NSIsModRequiredOnClient( mod ) )
+			{
+				modsChanged = modsChanged || NSIsModEnabled( mod ) != requiredMods.contains( mod )
+				NSSetModEnabled( mod, requiredMods.contains( mod ) )
+			}
+		}
+
+		// only actually reload if we need to since the uiscript reset on reload lags hard
+		if ( modsChanged )
+			ReloadMods()
+		NSConnectToAuthedServer()
+	}
+	else
+	{
+		printt("auth failed")
+	}
+}
+
+bool function CheckMods( int serverIndex )
+{
+	// check mods
+	for ( int i = 0; i < NSGetServerRequiredModsCount( serverIndex ); i++ )
+	{
+		if ( !NSGetModNames().contains( NSGetServerRequiredModName( serverIndex, i ) ) )
+		{
+			DialogData dialogData
+			dialogData.header = "#ERROR"
+			dialogData.message = "Missing mod \"" + NSGetServerRequiredModName( serverIndex, i ) + "\" v" + NSGetServerRequiredModVersion( serverIndex, i )
+			dialogData.image = $"ui/menu/common/dialog_error"
+
+			#if PC_PROG
+				AddDialogButton( dialogData, "#DISMISS" )
+
+				AddDialogFooter( dialogData, "#A_BUTTON_SELECT" )
+			#endif // PC_PROG
+			AddDialogFooter( dialogData, "#B_BUTTON_DISMISS_RUI" )
+
+			OpenDialog( dialogData )
+
+			return false
+		}
+		else
+		{
+			// this uses semver https://semver.org
+			array<string> serverModVersion = split( NSGetServerRequiredModVersion( serverIndex, i ), "." )
+			array<string> clientModVersion = split( NSGetModVersionByModName( NSGetServerRequiredModName( serverIndex, i ) ), "." )
+
+			bool semverFail = false
+			// if server has invalid semver don't bother checking
+			if ( serverModVersion.len() == 3 )
+			{
+				// bad client semver
+				if ( clientModVersion.len() != serverModVersion.len() )
+					semverFail = true
+				// major version, don't think we should need to check other versions
+				else if ( clientModVersion[ 0 ] != serverModVersion[ 0 ] )
+					semverFail = true
+			}
+
+			if ( semverFail )
+			{
+				return false
+			}
+
+			
+		}
+	}
+	return true
+}
+// QUICK PLAY THINGS END
