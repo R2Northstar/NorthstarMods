@@ -966,6 +966,7 @@ void function ThreadedAuthAndConnectToServer( string password = "" )
 		return
 
 	print( "trying to authenticate with server " + NSGetServerName( file.lastSelectedServer ) + " with password " + password )
+
 	NSTryAuthWithServer( file.lastSelectedServer, password )
 
 	ToggleConnectingHUD( true )
@@ -984,6 +985,17 @@ void function ThreadedAuthAndConnectToServer( string password = "" )
 	}
 
 	file.cancelConnection = false
+	NSUpdateServerInfo(
+		NSGetServerID(file.lastSelectedServer),
+		NSGetServerName(file.lastSelectedServer),
+		password,
+		NSGetServerPlayerCount(file.lastSelectedServer),
+		NSGetServerMaxPlayerCount(file.lastSelectedServer),
+		NSGetServerMap(file.lastSelectedServer),
+		Localize(GetMapDisplayName(NSGetServerMap(file.lastSelectedServer))),
+		NSGetServerPlaylist(file.lastSelectedServer),
+		Localize(GetPlaylistDisplayName(NSGetServerPlaylist(file.lastSelectedServer)))
+	)
 
 	if ( NSWasAuthSuccessful() )
 	{
@@ -1006,6 +1018,7 @@ void function ThreadedAuthAndConnectToServer( string password = "" )
 		// only actually reload if we need to since the uiscript reset on reload lags hard
 		if ( modsChanged )
 			ReloadMods()
+
 		NSConnectToAuthedServer()
 	}
 	else
