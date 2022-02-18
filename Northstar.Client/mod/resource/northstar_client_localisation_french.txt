@@ -95,6 +95,9 @@ Choisissez Oui si vous êtes d'accord. Ce choix peut être modifié à tout inst
 		"PL_gg_hint" "Obtenez une nouvelle arme à chaque frag.\nTuez un pilote avec chaque arme pour gagner."
 		"PL_gg_abbr" "GG"
 		"GAMEMODE_GG" "Gun game"
+		"gg_kill_reward" "Récompense pourcentage de frags"
+		"gg_assist_reward" "Récompense pourcentage d'assistances"
+		"gg_execution_reward" "Récompense pourcentage d'exécutions"
 
 		"PL_tt" "Titan tag"
 		"PL_tt_lobby" "Lobby: Titan tag"
