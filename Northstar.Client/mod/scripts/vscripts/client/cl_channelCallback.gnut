@@ -10,10 +10,19 @@ void function ServerCallback_ChannelCallbackFunction(int channel, int one, int t
 {
   try {
       file.clientCallBackFunctions[channel](one, two, three, four)
-  } catch(exception) {}
+  } catch(exception) {
+      print("No callback function for channel: " + channel)
+  }
 }
 
 void function AddChannelCallbackFunction(int channel, void functionref(int, int, int, int) func) 
 {
+  if(null == file.clientCallBackFunctions[channel]) 
+  {
     file.clientCallBackFunctions[channel] <- func
+  } 
+  else 
+  {
+    throw "The callback channel " + channel + " is already in use";
+  }
 }
