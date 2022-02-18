@@ -1541,15 +1541,6 @@ bool function DoPrematchWarpSound()
 	return GetCurrentPlaylistVarInt( "pick_loadout_warp_sound", 1 ) == 1
 }
 
-#if SERVER
-//Make sure the channel you use isn't already in use by northstar or a mod
-void function Remote_CallChannel(entity player, int channel, int one = 0, int two = 0, int three = 0, int four = 0) 
-{
-	Remote_CallFunction_Replay( player, "ServerCallback_ChannelCallbackFunction", channel, one, two, three, four)
-}
-#endif
-
-
 int function GetIntFromString( string inString )
 {
 	if ( inString.len() > 0 )

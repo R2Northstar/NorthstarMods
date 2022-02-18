@@ -1,0 +1,61 @@
+global function Init_ChannelCallback
+
+#if SERVER
+global function Remote_CallChannel
+#endif
+
+#if CLIENT
+global function AddChannelCallbackFunction
+global function ServerCallback_ChannelCallbackFunction
+
+struct {
+ table< int, void functionref(int, int, int, int) > clientCallBackFunctions
+} file
+#endif
+
+void function Init_ChannelCallback() 
+{
+    AddCallback_OnRegisteringCustomNetworkVars( Register_ChannelCallbackFunction )
+}
+
+void function Register_ChannelCallbackFunction() 
+{
+    Remote_RegisterFunction( "ServerCallback_ChannelCallbackFunction" )
+}
+
+/////////////////////////////////////////////////////////////////////////////////
+///Client
+/////Make sure the channel you use isn't already in use by northstar or a mod
+/////////////////////////////////////////////////////////////////////////////////
+#if CLIENT
+void function ServerCallback_ChannelCallbackFunction(int channel, int dataOne, int dataTwo, int dataThree, int dataFour) 
+{
+  try {
+      file.clientCallBackFunctions[channel](dataOne, dataTwo, dataThree, dataFour)
+  } catch(exception) {
+      print("No callback function for channel: " + channel)
+  }
+}
+
+void function AddChannelCallbackFunction(int channel, void functionref(int, int, int, int) func) 
+{
+  if(null == file.clientCallBackFunctions[channel]) 
+  {
+    file.clientCallBackFunctions[channel] <- func
+  } 
+  else 
+  {
+    throw "The callback channel " + channel + " is already in use";
+  }
+}
+#endif
+
+/////////////////////////////////////////////////////////////////////////////////
+///SERVER
+/////////////////////////////////////////////////////////////////////////////////
+#if SERVER
+void function Remote_CallChannel(entity player, int channel, int one = 0, int two = 0, int three = 0, int four = 0) 
+{
+	Remote_CallFunction_Replay( player, "ServerCallback_ChannelCallbackFunction", channel, one, two, three, four)
+}
+#endif

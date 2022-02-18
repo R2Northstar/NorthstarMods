@@ -414,6 +414,16 @@
 			"ServerCallback": {
 				"After": "CustomPilotCollision_InitPlaylistVars"
 			}
+		},
+		{
+			"Path": "sh_channelCallback.gnut",
+			"RunOn": "CLIENT || SERVER ",
+			"ServerCallback": {
+				"Before":"Init_ChannelCallback"
+			},
+			"ClientCallback": {
+				"Before": "Init_ChannelCallback"
+			}
 		}
 	],
 	"Maps": [
