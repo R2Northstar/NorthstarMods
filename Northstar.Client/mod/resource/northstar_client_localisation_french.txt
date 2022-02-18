@@ -293,5 +293,14 @@ Choisissez Oui si vous êtes d'accord. Ce choix peut être modifié à tout inst
 		"CONNECTING" "Connexion..."
 		"INGAME_PLAYERS" "Joueurs : ^6BA6C400%s1"
 		"TOTAL_SERVERS" "Serveurs : ^C46C6C00%s1"
+
+		// Mods menu
+		"SHOW" "Afficher"
+		"SHOW_ALL" "Tous"
+		"SHOW_ONLY_ENABLED" "Mods activés"
+		"SHOW_ONLY_DISABLED" "Mods désactivés"
+    
+		// Maps menu
+		"HIDE_LOCKED" "Cacher les cartes verrouillées"
 	}
 }
