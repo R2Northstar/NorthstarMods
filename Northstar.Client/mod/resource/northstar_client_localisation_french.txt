@@ -19,6 +19,9 @@ Choisissez Oui si vous êtes d'accord. Ce choix peut être modifié à tout inst
 		"AUTHENTICATION_AGREEMENT" "Accord d'authentification"
 		"AUTHENTICATION_AGREEMENT_RESTART" "Vous devrez relancer le jeu pour que votre choix soit pris en compte."
 
+		"DIALOG_AUTHENTICATING_MASTERSERVER" "Connexion au serveur maître."
+		"AUTHENTICATIONAGREEMENT_NO" "Vous avez choisi de ne pas vous authentifier à Northstar. Vous pouvez lire l'accord de connexion dans le menu des mods."
+
 		"MENU_TITLE_SERVER_BROWSER" "Navigateur de serveurs"
 		"NS_SERVERBROWSER_NOSERVERS" "Aucun serveur trouvé."
 		"NS_SERVERBROWSER_UNKNOWNMODE" "Mode inconnu"
