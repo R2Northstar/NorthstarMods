@@ -55,6 +55,7 @@ Choisissez Oui si vous êtes d'accord. Ce choix peut être modifié à tout inst
 		"roundscorelimit" "Limite de score (manche)"
 		"timelimit" "Limite de temps"
 		"roundtimelimit" "Limite de temps (manche)"
+		"respawnprotection" "Temps protection réapparition"
 
 		"pilot_health_multiplier" "Multiplicateur de santé"
 		"respawn_delay" "Délai de réapparition"
