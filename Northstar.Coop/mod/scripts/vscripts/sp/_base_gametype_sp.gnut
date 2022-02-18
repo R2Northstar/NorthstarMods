@@ -23,7 +23,6 @@ global function GetSPLevelEnumForMapname
 global function RespawnPlayer
 global function Coop_GetLevelTransition
 global function Coop_ReloadCurrentMapFromStartPoint
-global function Coop_MapChange
 struct
 {
 	float lastObitMsgTime = 0.0
@@ -32,6 +31,11 @@ struct
 	float lastMultiKillStartTime = 0.0
 	int multiKillCount = 0
 } file
+
+struct
+{
+	table<entity,vector> SaveLocations
+} SAVES
 
 void function BaseGametype_Init_MPSP()
 {
@@ -313,14 +317,13 @@ void function Coop_MapChange()
 					GameRules_ChangeMap( GetCurrentPlaylistGamemodeByIndexMapByIndex( i, j ), GetCurrentPlaylistGamemodeByIndex( i ) )
 					return
 				}
-
+			
 				if ( GetCurrentPlaylistGamemodeByIndexMapByIndex( i, j ) == GetMapName() )
 					changeOnNextIteration = true // change to next map/mode we iterate over
 			}
 		}
 	}
 }
-
 void function CodeCallback_OnClientConnectionStarted( entity player )
 {
 	// not a real player?
@@ -395,19 +398,47 @@ void function CodeCallback_OnClientConnectionStarted( entity player )
 
 void function RespawnPlayer(entity player)
 {
-	printl("Respawning player:" + player.GetPlayerName())
-	if(player != null){
-	//player.s.inPostDeath = false
-	//player.s.respawnSelectionDone = true
-	//player.Signal( "RespawnNow" )
-	player.RespawnPlayer(null)
-	ClientCommand(player,"script_client thread MainHud_TurnOn_RUI( true )")
-	ScreenFadeFromBlack( player, 0.0, 0.0 )
-	//#if CLIENT
-	//thread MainHud_TurnOn_RUI( true )
-	//#endif
-	
-	//player.EndSignal( "RespawnNow" )
+	wait( 0.1 )
+	if ( !IsAlive( player ) ){
+		
+		printl("Respawning player:" + player.GetPlayerName())
+
+		if (GetPlayerArray().len() == 1){
+			print("player")
+
+			// EmitSoundOnEntityOnlyToPlayer( player, player, "1_second_fadeout" )
+			
+			wait(1)
+			GameRules_ChangeMap( GetMapName() , "coop" )
+				
+		}
+		else{
+			print("players")
+			wait(1)
+			// EmitSoundOnEntityOnlyToPlayer( player, player, "4_second_fadeout" )
+			while( !IsAlive( player ) ) 
+			{
+				foreach( p in GetPlayerArray() )
+				{
+					// closestEnm = GetClosest( GetNPCArray(), player.GetOrigin() )
+
+					if (p != player && p.IsOnGround() )
+					{
+						player.s.inPostDeath = false
+						player.s.respawnSelectionDone = true
+						player.RespawnPlayer(null)
+						ClientCommand(player,"script_client thread MainHud_TurnOn_RUI( true )")
+						ScreenFadeFromBlack( player, 0.0, 0.0 )
+						player.SetOrigin( p.GetOrigin() )
+					}
+				}
+				wait(0.5)
+			}
+		}
+		
+
+		
+
 	}
 }
 
@@ -420,6 +451,7 @@ void function DoHudDisplayForDeadPlayerThenReloadServer( entity player )
 				if (p != null){
 				SendHudMessage( p , Coop_Dead_Player + "Fucked up, laugh at them." , -1, 0.4, 255, 255, 0, 0, 0.15, 6, 0.15 )
 				//ClientCommand( p , "RespawnNowSP" )
+				thread RespawnPlayer(p)
 				}
 			}
 	//wait 3.0
@@ -429,10 +461,10 @@ void function DoHudDisplayForDeadPlayerThenReloadServer( entity player )
 
 
 	//player.RespawnPlayer(null)
-	player.WaitSignal("RespawnNow")
-	RespawnPlayer(player)
+	// player.WaitSignal("RespawnNow")
+	// RespawnPlayer(player)
 
-	CodeCallback_OnPlayerRespawned(player)
+	// CodeCallback_OnPlayerRespawned(player)
 	//player.EndSignal( "RespawnNow" )
 	//player.EndSignal( "OnRespawned" )
 	//player.EndSignal( "RespawnNow" )
@@ -441,12 +473,8 @@ void function DoHudDisplayForDeadPlayerThenReloadServer( entity player )
 
 void function CodeCallback_OnPlayerKilled( entity player, var damageInfo )
 {
-		thread PostDeathThread_SP( player, damageInfo )
-
-		thread DoHudDisplayForDeadPlayerThenReloadServer( player )
-
-
-	//thread DoHudDisplayForDeadPlayerThenReloadServer( player )
+	thread DoHudDisplayForDeadPlayerThenReloadServer( player )
+	thread PostDeathThread_SP( player, damageInfo )
 
 }
 
@@ -459,7 +487,6 @@ function PostDeathThread_SP( entity player, damageInfo )
 				if (p != null){
 				SendHudMessage( p , Coop_Dead_Player + " Fucked up, laugh at them." , -1, 0.4, 255, 255, 0, 0, 0.15, 6, 0.15 )
 				//ClientCommand( p , "RespawnNowSP" )
-				RespawnPlayer( p )
 				}
 			}
 	if ( player.p.watchingPetTitanKillReplay )
@@ -523,9 +550,9 @@ function PostDeathThread_SP( entity player, damageInfo )
 
 
 	//ReloadForMissionFailure( reloadExtraDelay )
-	//ClientCommand(player,"CC_RespawnPlayer")
-	//player.RespawnPlayer(null)
-	//DoHudDisplayForDeadPlayerThenReloadServer( player )
+	// ClientCommand(player,"CC_RespawnPlayer")
+	// player.RespawnPlayer(null)
+	// DoHudDisplayForDeadPlayerThenReloadServer( player )
 	//ScreenFadeFromBlack( player, 1.0, 0.75 )
 
 }
@@ -546,6 +573,11 @@ function FinalPlayerUpdate( entity player )
 /*------------------------------------------------------------------------
 DUMPSITE FROM OTHER FILES
 --------------------------------------------------------------------------*/
+
+bool function ClientCommand_AllDialogueFinished( entity player, array<string> args )
+{
+	return true
+}
 
 string function CreateNoSpawnArea( int blockSpecificTeam, int blockEnemiesOfTeam, vector origin, float timeout, float length, width = null, angles = null )
 {
@@ -577,7 +609,7 @@ void function CodeCallback_PlayerHasBeenConnectedForDuration( entity player, flo
 
 void function OnPlayerKilled_DeathNotify( entity player, entity attacker, var damageInfo )
 {
-	//EmitSoundOnEntity( player, "Player_Death_Begin" )
+	// EmitSoundOnEntity( player, "Player_Death_Begin" )
 }
 
 void function CodeCallback_WeaponDropped( entity weapon )
