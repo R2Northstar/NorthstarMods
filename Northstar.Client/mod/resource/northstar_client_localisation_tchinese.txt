@@ -57,7 +57,8 @@
 		"scorelimit" "分數限制"
 		"roundscorelimit" "分數限制 (每回合)"
 		"timelimit" "時間限制"
-		"roundtimelimit" "時間限制 (每回合)"
+		"roundtimelimit" "時間限制（每回合）"
+		"respawnprotection" "重生保護時間"
 
 		"pilot_health_multiplier" "生命值倍率"
 		"respawn_delay" "重生延遲"
