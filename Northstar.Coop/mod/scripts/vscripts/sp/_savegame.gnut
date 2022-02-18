@@ -16,10 +16,6 @@ global function SafeToSpawnAtOrigin
 global function JustLoadedFromCheckpoint
 global function GetFirstPlayer
 
-// added globalized function
-global function GetSaveOrigin
-global function GetSaveAngles
-
 const float LAST_SAVE_DEBOUNCE = 4.0
 const float TITAN_SAFE_DIST = 1200
 const SAVE_DEBUG = true
@@ -67,20 +63,6 @@ void function InitSaveGame()
 	AddClientCommandCallback( "RestartFromLevelTransition", RestartFromLevelTransition )
 	AddClientCommandCallback( "RespawnNowSP", RespawnNowSP )
 }
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-//                                Added stuff
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-// need this to make respawn work
-vector function GetSaveOrigin()
-{
-	return file.saveOrigin
-}
-vector function GetSaveAngles()
-{
-	return file.saveAngles
-}
-
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // GLOBAL COMMANDS
