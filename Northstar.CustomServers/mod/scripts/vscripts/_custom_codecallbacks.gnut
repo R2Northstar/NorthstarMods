@@ -1,6 +1,7 @@
 untyped
 
-globalize_all_functions
+global function AddCallback_OnReceivedSayTextMessage
+global function NSSetupChathooksServer
 
 global struct ClServer_MessageStruct {
 	string message
@@ -20,23 +21,29 @@ void function CServerGameDLL_ProcessMessageStartThread(int playerIndex, string m
 
 void function CServerGameDLL_OnReceivedSayTextMessageCallback(int playerIndex, string message, bool isTeam)
 {
+	entity player = GetPlayerByIndex(playerIndex)
+	if (player == null) {
+		print("Ignored chat message from invalid player index " + playerIndex + ": " + message)
+		return
+	}
+
 	ClServer_MessageStruct localMessage
 	localMessage.message = message
-	localMessage.player = GetPlayerByIndex(playerIndex)
+	localMessage.player = player
 	localMessage.isTeam = isTeam
 	localMessage.shouldBlock = false
 	foreach ( callbackFunc in NsCustomCallbacks.OnReceivedSayTextMessageCallbacks )
 	{
 		ClServer_MessageStruct returnStruct = callbackFunc(localMessage)
 		localMessage.message = returnStruct.message
-		localMessage.player = returnStruct.player
 		localMessage.isTeam = returnStruct.isTeam
-		localMessage.shouldBlock = localMessage.shouldBlock || returnStruct.shouldBlock
+		if (localMessage.shouldBlock)
+		{
+			return
+		}
 	}
 
-	if (!localMessage.shouldBlock) {
-		NSSendMessage(localMessage.player.GetPlayerIndex(), localMessage.message, localMessage.isTeam)
-	}
+	NSSendMessage(player.GetPlayerIndex(), localMessage.message, localMessage.isTeam)
 }
 
 void function AddCallback_OnReceivedSayTextMessage( ClServer_MessageStruct functionref (ClServer_MessageStruct) callbackFunc )

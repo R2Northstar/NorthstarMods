@@ -1,6 +1,5 @@
 untyped
 
-global function CHudChat_ProcessMessageStartThread
 global function AddCallback_OnReceivedSayTextMessage
 global function NSSetupChathooksClient
 
@@ -23,7 +22,12 @@ void function OnReceivedMessage(ClClient_MessageStruct localMessage) {
     {
         foreach (callbackFunc in NsCustomCallbacksClient.OnReceivedSayTextMessageCallbacks)
         {
-            localMessage = callbackFunc(localMessage)
+            ClClient_MessageStruct returnStruct = callbackFunc(localMessage)
+            localMessage.message = returnStruct.message
+            localMessage.playerName = returnStruct.playerName
+            localMessage.isTeam = returnStruct.isTeam
+            localMessage.isDead = returnStruct.isDead
+            localMessage.isWhisper = returnStruct.isWhisper
             if (localMessage.shouldBlock)
             {
                 return
@@ -73,6 +77,11 @@ void function CHudChat_OnReceivedSayTextMessageCallback(int fromPlayerIndex, str
     if (fromPlayerIndex >= 0 && fromPlayerIndex < GetPlayerArray().len())
     {
         fromPlayer = GetEntByIndex(fromPlayerIndex + 1)
+        if (fromPlayer == null) {
+            print("Ignored chat message from invalid player index " + fromPlayerIndex + ": " + message)
+            return
+        }
+
         fromPlayerName = fromPlayer.GetPlayerName()
     }
 
