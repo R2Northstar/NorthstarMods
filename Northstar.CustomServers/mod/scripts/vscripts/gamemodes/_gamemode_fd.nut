@@ -1,23 +1,16 @@
 global function GamemodeFD_Init
 global function RateSpawnpoints_FD
 global function useHarvesterShieldBoost
+global function spawnSmokes
+global function waveStart
+global function startHarvester
 
-
-struct HarvesterStruct {
-	entity harvester
-	entity particleBeam
-	entity particleShield
-	entity rings
-	float lastDamage
-	bool shieldBoost
-	
-}
+global HarvesterStruct harvesterStruct
 
 struct {
 	array<entity> aiSpawnpoints
 	array<entity> smokePoints
 	array<entity> routeNodes
-	HarvesterStruct harvester
 	table<string,float> harvesterDamageSource
 	bool haversterWasDamaged
 }file
@@ -25,8 +18,10 @@ struct {
 void function GamemodeFD_Init()
 {
 	PrecacheModel( MODEL_ATTRITION_BANK )
+	PrecacheParticleSystem($"P_smokescreen_FD")
 	AddCallback_EntitiesDidLoad(LoadEntities)
 	AddDamageCallback("prop_script",OnDamagedPropScript)
+
 }
 
 void function RateSpawnpoints_FD(int _0, array<entity> _1, int _2, entity _3)
@@ -36,23 +31,40 @@ void function RateSpawnpoints_FD(int _0, array<entity> _1, int _2, entity _3)
 
 bool function useHarvesterShieldBoost() //returns true when acturally used
 {
-	if(file.harvester.harvester.GetShieldHealth()<file.harvester.harvester.GetShieldHealthMax())
+	if(harvesterStruct.harvester.GetShieldHealth()<harvesterStruct.harvester.GetShieldHealthMax())
 	{
 		thread useHarvesterShieldBoost_threaded()
-		return true
+			return true
 	}
 	return false
 }
-bool function useHarvesterShieldBoost_threaded()
+void function useHarvesterShieldBoost_threaded()
 {
-	file.harvester.shieldBoost = true
+	harvesterStruct.shieldBoost = true
 	wait 5
-	file.Harvester.shieldBoost = false
+	harvesterStruct.shieldBoost = false
 }
 
 void function spawnSmokes()
-{
-	
+{	
+	entity owner = GetPlayerArray()[0]
+	foreach(entity pos in file.smokePoints)
+	{
+		SmokescreenStruct smokescreen
+		smokescreen.smokescreenFX = $"P_smokescreen_FD"
+		smokescreen.ownerTeam = owner.GetTeam()
+		smokescreen.damageSource = eDamageSourceId.mp_weapon_grenade_electric_smoke
+		smokescreen.deploySound1p = "explo_electric_smoke_impact"
+		smokescreen.deploySound3p = "explo_electric_smoke_impact"
+		smokescreen.isElectric = false
+		smokescreen.origin = pos.GetOrigin()+<0,0,150>
+		smokescreen.angles = pos.GetAngles()
+		smokescreen.lifetime = 30
+		smokescreen.fxXYRadius = 150
+		smokescreen.fxZRadius = 120
+		smokescreen.fxOffsets = [ <120.0, 0.0, 0.0>,<0.0, 120.0, 0.0>, <0.0, 0.0, 0.0>,<0.0, -120.0, 0.0>,< -120.0, 0.0, 0.0>, <0.0, 100.0, 0.0>]
+		Smokescreen(smokescreen)
+	}
 }
 
 
@@ -85,24 +97,38 @@ vector function getShopPosition()
 void function waveStart()
 {
 	file.haversterWasDamaged = false
+	array<int> enemys = [eFD_AITypeIDs.TITAN,eFD_AITypeIDs.GRUNT,-1,-1,-1,-1,-1,-1,-1]
+	
+	SetGlobalNetInt("FD_currentWave",2)
+	SetGlobalNetBool("FD_waveActive",true)
+	SetGlobalNetInt(FD_GetAINetIndex_byAITypeID( eFD_AITypeIDs.TITAN), 69)
+	SetGlobalNetInt(FD_GetAINetIndex_byAITypeID( eFD_AITypeIDs.GRUNT), 420)
+
+	foreach(entity player in GetPlayerArray())
+	{
+		
+		Remote_CallFunction_NonReplay(player,"ServerCallback_FD_AnnouncePreParty",enemys[0],enemys[1],enemys[2],enemys[3],enemys[4],enemys[5],enemys[6],enemys[7],enemys[8])
+	}
+
+
 }
 
 
 void function OnDamagedPropScript(entity prop,var damageInfo)
 {	
 	
-	if(!IsValid(file.harvester.harvester))
+	if(!IsValid(harvesterStruct.harvester))
 		return
 	
 	if(!IsValid(prop))
 		return
 	
-	if(file.harvester.harvester!=prop)
+	if(harvesterStruct.harvester!=prop)
 		return
 	
-	if(structHarvester.shieldBoost)
+	if(harvesterStruct.shieldBoost)
 	{
-		harvester.SetShieldHealth(harvester.GetShieldHealthMax())
+		prop.SetShieldHealth(prop.GetShieldHealthMax())
 		return
 	}
 
@@ -119,14 +145,16 @@ void function OnDamagedPropScript(entity prop,var damageInfo)
 	if ( !attacker )
 		return
 	//TODO Log damage source for round lose screen
-	file.harvester.lastDamage = Time()
+	harvesterStruct.lastDamage = Time()
 	if(prop.GetShieldHealth()==0)
 	{
 		float newHealth = prop.GetHealth()-damageAmount
 		if(newHealth<0)
-		{
+		{	
+			EmitSoundAtPosition(TEAM_UNASSIGNED,harvesterStruct.harvester.GetOrigin(),"coop_generator_destroyed")
 			newHealth=0
-			file.harvester.rings.Destroy()
+			harvesterStruct.rings.Destroy()
+			
 		}
 			
 
@@ -138,17 +166,24 @@ void function OnDamagedPropScript(entity prop,var damageInfo)
 	
 }
 
-void function HarvesterThink(HarvesterStruct structHarvester)
+void function HarvesterThink()
 {	
-	entity harvester = structHarvester.harvester
-	entity particleBeam = structHarvester.particleBeam
-	entity particleShield = structHarvester.particleShield
-	
+	entity harvester = harvesterStruct.harvester
 
+	
+	EmitSoundOnEntity(harvester,"coop_generator_startup")
 	float lastTime = Time()
-	WaitFrame()
-
+	wait 4
+	int lastShieldHealth = 6000
+	HarvesterStruct temp = startHarvesterFX(harvesterStruct)
+	harvesterStruct.particleBeam = temp.particleBeam
+	harvesterStruct.particleShield = temp.particleShield
+	wait 5
+	EmitSoundOnEntity(harvester,"coop_generator_ambient_healthy")
 	
+	entity particleBeam = harvesterStruct.particleBeam
+	entity particleShield = harvesterStruct.particleShield
+
 
 	while(IsAlive(harvester)){
 		float currentTime = Time()
@@ -157,27 +192,61 @@ void function HarvesterThink(HarvesterStruct structHarvester)
 		EffectSetControlPointVector( particleShield, 1, shieldColor )
 		vector beamColor = GraphCappedVector(harvester.GetHealth(), 0, harvester.GetMaxHealth(), TEAM_COLOR_ENEMY, TEAM_COLOR_FRIENDLY)
 		EffectSetControlPointVector( particleBeam, 1, beamColor )
-		if(((currentTime-structHarvester.lastDamage)>=GENERATOR_SHIELD_REGEN_DELAY)&&(harvester.GetShieldHealth()<harvester.GetShieldHealthMax()))
+		if(((currentTime-harvesterStruct.lastDamage)>=GENERATOR_SHIELD_REGEN_DELAY)&&(harvester.GetShieldHealth()<harvester.GetShieldHealthMax()))
 		{	
-			printt((currentTime-structHarvester.lastDamage))
+			printt((currentTime-harvesterStruct.lastDamage))
+			if(harvester.GetShieldHealth()==0)
+				EmitSoundOnEntity(harvester,"coop_generator_shieldrecharge_start")
+				EmitSoundOnEntity(harvester,"coop_generator_shieldrecharge_resume")
 			float newShieldHealth = (harvester.GetShieldHealthMax()/GENERATOR_SHIELD_REGEN_TIME*deltaTime)+harvester.GetShieldHealth()
 			if(newShieldHealth>=harvester.GetShieldHealthMax())
 			{
+				StopSoundOnEntity(harvester,"coop_generator_shieldrecharge_resume")
 				harvester.SetShieldHealth(harvester.GetShieldHealthMax())
+				EmitSoundOnEntity(harvester,"coop_generator_shieldrecharge_end")
+				
 			}
 			else
 			{
 				harvester.SetShieldHealth(newShieldHealth)
 			}
 		}
+		if((lastShieldHealth>0)&&(harvester.GetShieldHealth()==0))
+			EmitSoundOnEntity(harvester,"coop_generator_shielddown")
+		lastShieldHealth = harvester.GetShieldHealth()
 		lastTime = currentTime
 		WaitFrame()
 	}
 	
 }
+void function startHarvester(){
+	
+	thread HarvesterThink()
+	thread HarvesterAlarm()
+
+}
+
+
+void function HarvesterAlarm()
+{
+	while(IsAlive(harvesterStruct.harvester))
+	{
+		if(harvesterStruct.harvester.GetShieldHealth()==0)
+		{
+			EmitSoundOnEntity(harvesterStruct.harvester,"coop_generator_underattack_alarm")
+			wait 2.5
+		}
+		else
+		{
+			WaitFrame()
+		}
+	}
+}
 
 void function LoadEntities() 
 {	
+	SetGlobalNetInt("FD_totalWaves",5)
+	SetGlobalNetInt("FD_restartsRemaining",2)
 	CreateBoostStoreLocation(TEAM_MILITIA,getShopPosition(),<0,0,0>)
 	OpenBoostStores()
 
@@ -192,39 +261,11 @@ void function LoadEntities()
 		if(info_target.HasKey("editorclass")){
 			switch(info_target.kv.editorclass){
 				case"info_fd_harvester":
-					entity harvester = CreateEntity( "prop_script" )
-					harvester.SetValueForModelKey( $"models/props/generator_coop/generator_coop.mdl" )
-					harvester.SetOrigin( info_target.GetOrigin() )
-					harvester.SetAngles( info_target.GetAngles() )
-					harvester.kv.solid = SOLID_VPHYSICS
+					HarvesterStruct ret = SpawnHarvester(info_target.GetOrigin(),info_target.GetAngles(),25000,6000,TEAM_IMC)
+					harvesterStruct.harvester = ret.harvester
+					harvesterStruct.rings = ret.rings
+					harvesterStruct.lastDamage = ret.lastDamage
 					
-					harvester.SetMaxHealth(25000)
-					harvester.SetHealth(25000)
-					harvester.SetShieldHealthMax(6000)
-					harvester.SetShieldHealth(6000)
-					SetTeam(harvester,TEAM_IMC)
-					DispatchSpawn( harvester )
-					
-					SetGlobalNetEnt("FD_activeHarvester",harvester)
-					
-					// entity blackbox = CreatePropDynamic(MODEL_HARVESTER_TOWER_COLLISION,info_target.GetOrigin(),info_target.GetAngles(),6)
-					// blackbox.Hide()
-					// blackbox.kv.CollisionGroup = TRACE_COLLISION_GROUP_PLAYER					
-					
-					entity rings = CreatePropDynamic(MODEL_HARVESTER_TOWER_RINGS,info_target.GetOrigin(),info_target.GetAngles(),6)
-					thread PlayAnim( rings, "generator_cycle_fast" )
-					
-					entity Harvester_Beam = StartParticleEffectOnEntity_ReturnEntity(harvester,GetParticleSystemIndex(FX_HARVESTER_BEAM),FX_PATTACH_ABSORIGIN_FOLLOW,0)
-					EffectSetControlPointVector( Harvester_Beam, 1, < 126.0, 188.0, 236.0 > )
-					entity Harvester_Shield = StartParticleEffectOnEntity_ReturnEntity(harvester,GetParticleSystemIndex(FX_HARVESTER_OVERSHIELD),FX_PATTACH_ABSORIGIN_FOLLOW,0)
-					EffectSetControlPointVector( Harvester_Shield, 1, < 126.0, 188.0, 236.0 > )
-
-					file.harvester.harvester = harvester
-					file.harvester.particleBeam = Harvester_Beam
-					file.harvester.particleShield = Harvester_Shield
-					file.harvester.lastDamage = Time()
-					file.harvester.rings = rings
-					thread HarvesterThink(file.harvester)
 					break
 				case"info_fd_mode_model":
 					entity prop = CreatePropDynamic( info_target.GetModelName(), info_target.GetOrigin(), info_target.GetAngles(), 6 )
