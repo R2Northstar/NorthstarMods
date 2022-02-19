@@ -36,7 +36,11 @@
 	"Scripts": [
 		{
 			"Path": "_custom_codecallbacks_client.gnut",
-			"RunOn": "CLIENT"
+			"RunOn": "CLIENT",
+			"ClientCallback": {
+				"Before": "NSSetupChathooksClient",
+				"After": "NSSetupChathooksClient"
+			}
 		},
 		{
 			"Path": "chat.gnut",

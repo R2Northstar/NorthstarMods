@@ -2,6 +2,7 @@ untyped
 
 global function CHudChat_ProcessMessageStartThread
 global function AddCallback_OnReceivedSayTextMessage
+global function NSSetupChathooksClient
 
 global struct ClClient_MessageStruct {
 	string message
@@ -59,14 +60,13 @@ void function OnReceivedMessage(ClClient_MessageStruct localMessage) {
     NSChatWrite(1, localMessage.message)
 }
 
-void function CHudChat_ProcessMessageStartThread()
+void function CHudChat_ProcessMessageStartThread(int playerIndex, string message, bool isTeam, bool isDead, int messageType)
 {
-	thread CHudChat_OnReceivedSayTextMessageCallback()
+	thread CHudChat_OnReceivedSayTextMessageCallback(playerIndex, message, isTeam, isDead, messageType)
 }
 
-void function CHudChat_OnReceivedSayTextMessageCallback()
+void function CHudChat_OnReceivedSayTextMessageCallback(int fromPlayerIndex, string message, bool isTeam, bool isDead, int messageType)
 {
-    int fromPlayerIndex = NSChatGetCurrentPlayer()
     entity fromPlayer = null
     string fromPlayerName = ""
 
@@ -75,11 +75,6 @@ void function CHudChat_OnReceivedSayTextMessageCallback()
         fromPlayer = GetEntByIndex(fromPlayerIndex + 1)
         fromPlayerName = fromPlayer.GetPlayerName()
     }
-
-    string message = NSChatGetCurrentMessage()
-    bool isTeam = NSChatGetIsTeam()
-    bool isDead = NSChatGetIsDead()
-    int messageType = NSChatGetCurrentType()
 
     if (messageType == 0 || messageType == 1)
     {
@@ -113,4 +108,8 @@ void function CHudChat_OnReceivedSayTextMessageCallback()
 void function AddCallback_OnReceivedSayTextMessage( ClClient_MessageStruct functionref (ClClient_MessageStruct) callbackFunc )
 {
 	NsCustomCallbacksClient.OnReceivedSayTextMessageCallbacks.append(callbackFunc)
+}
+
+void function NSSetupChathooksClient() {
+    getroottable().rawset("CHudChat_ProcessMessageStartThread", CHudChat_ProcessMessageStartThread)
 }

@@ -13,17 +13,17 @@ struct {
 	array< ClServer_MessageStruct functionref( ClServer_MessageStruct ) > OnReceivedSayTextMessageCallbacks
 } NsCustomCallbacks
 
-void function CServerGameDLL_ProcessMessageStartThread()
+void function CServerGameDLL_ProcessMessageStartThread(int playerIndex, string message, bool isTeam)
 {
-	thread CServerGameDLL_OnReceivedSayTextMessageCallback()
+	thread CServerGameDLL_OnReceivedSayTextMessageCallback(playerIndex, message, isTeam)
 }
 
-void function CServerGameDLL_OnReceivedSayTextMessageCallback()
+void function CServerGameDLL_OnReceivedSayTextMessageCallback(int playerIndex, string message, bool isTeam)
 {
 	ClServer_MessageStruct localMessage
-	localMessage.message =  NSChatGetCurrentMessage()
-	localMessage.player = GetPlayerByIndex(NSChatGetCurrentPlayer())
-	localMessage.isTeam = NSChatGetIsTeam()
+	localMessage.message = message
+	localMessage.player = GetPlayerByIndex(playerIndex)
+	localMessage.isTeam = isTeam
 	localMessage.shouldBlock = false
 	foreach ( callbackFunc in NsCustomCallbacks.OnReceivedSayTextMessageCallbacks )
 	{
@@ -42,4 +42,8 @@ void function CServerGameDLL_OnReceivedSayTextMessageCallback()
 void function AddCallback_OnReceivedSayTextMessage( ClServer_MessageStruct functionref (ClServer_MessageStruct) callbackFunc )
 {
 	NsCustomCallbacks.OnReceivedSayTextMessageCallbacks.append(callbackFunc)
+}
+
+void function NSSetupChathooksServer() {
+	getroottable().rawset("CServerGameDLL_ProcessMessageStartThread", CServerGameDLL_ProcessMessageStartThread)
 }

@@ -49,7 +49,10 @@
 	"Scripts": [
 		{
 			"Path": "_custom_codecallbacks.gnut",
-			"RunOn": "SERVER"
+			"RunOn": "SERVER",
+			"ServerCallback": {
+				"Before": "NSSetupChathooksServer"
+			}
 		},
 		{
 			"Path": "_chat.gnut",
