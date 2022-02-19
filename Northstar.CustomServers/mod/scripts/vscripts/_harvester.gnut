@@ -1,1 +1,57 @@
-//fuck
+global function SpawnHarvester
+global function startHarvesterFX
+
+global struct HarvesterStruct {
+	entity harvester
+	entity particleBeam
+	entity particleShield
+	entity rings
+	float lastDamage
+	bool shieldBoost
+	
+}
+
+HarvesterStruct function SpawnHarvester(vector origin,vector angles,int health,int shieldHealth,int team)
+{
+    entity harvester = CreateEntity( "prop_script" )
+    harvester.SetValueForModelKey( $"models/props/generator_coop/generator_coop.mdl" )
+    harvester.SetOrigin( origin )
+    harvester.SetAngles( angles )
+    harvester.kv.solid = SOLID_VPHYSICS
+    
+    harvester.SetMaxHealth(health)
+    harvester.SetHealth(health)
+    harvester.SetShieldHealthMax(shieldHealth)
+    harvester.SetShieldHealth(shieldHealth)
+    SetTeam(harvester,team)
+    DispatchSpawn( harvester )
+    
+    SetGlobalNetEnt("FD_activeHarvester",harvester)
+    
+    // entity blackbox = CreatePropDynamic(MODEL_HARVESTER_TOWER_COLLISION,info_target.GetOrigin(),info_target.GetAngles(),6)
+    // blackbox.Hide()
+    // blackbox.kv.CollisionGroup = TRACE_COLLISION_GROUP_PLAYER					
+    
+    entity rings = CreatePropDynamic(MODEL_HARVESTER_TOWER_RINGS,origin,angles,6)
+    thread PlayAnim( rings, "generator_cycle_fast" )
+    
+    
+    
+    HarvesterStruct ret
+    ret.harvester = harvester
+    ret.lastDamage = Time()
+    ret.rings = rings
+    
+    return ret
+}
+
+HarvesterStruct function startHarvesterFX(HarvesterStruct harvester)
+{
+    entity Harvester_Beam = StartParticleEffectOnEntity_ReturnEntity(harvester.harvester,GetParticleSystemIndex(FX_HARVESTER_BEAM),FX_PATTACH_ABSORIGIN_FOLLOW,0)
+    EffectSetControlPointVector( Harvester_Beam, 1, < 126.0, 188.0, 236.0 > )
+    entity Harvester_Shield = StartParticleEffectOnEntity_ReturnEntity(harvester.harvester,GetParticleSystemIndex(FX_HARVESTER_OVERSHIELD),FX_PATTACH_ABSORIGIN_FOLLOW,0)
+    EffectSetControlPointVector( Harvester_Shield, 1, < 126.0, 188.0, 236.0 > )
+    harvester.particleBeam = Harvester_Beam
+    harvester.particleShield = Harvester_Shield
+    return harvester
+}
