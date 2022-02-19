@@ -78,6 +78,7 @@
 
 		"cp_amped_capture_points" "強化據點"
 		"coliseum_loadouts_enabled" "競技場裝備"
+		"switch_team_tip" "只有處於死亡狀態時才能切換隊伍, 您的自動泰坦也將一同死亡"
 
 		// northstar.custom localisation is just deciding not to work, so putting it here for now
 		"PL_sbox" "沙盒"

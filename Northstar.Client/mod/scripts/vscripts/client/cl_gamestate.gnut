@@ -387,6 +387,11 @@ void function TEMP_UpdateRuiScores( entity player )
 
 	RuiSetFloat( file.gamestate_info, "rightTeamScore", float( GameRules_GetTeamScore( enemyTeam ) ) )
 
+	string factionChoice = GetFactionChoice( player )
+	ItemDisplayData displayData = GetItemDisplayData( factionChoice )
+	asset factionLogo = displayData.image
+	RuiSetImage( file.gamestate_info, "factionImage", factionLogo )
+
 	//Run any gamemode specific score bar logic (e.g. the bonus segment on the scorebar in bounty hunt ). No special logic is run by default.
 	file.gameModeScoreBarUpdateRules( file.gamestate_info )
 

@@ -81,6 +81,7 @@ Press Yes if you agree to this. This choice can be changed in the mods menu at a
 
 		"cp_amped_capture_points" "Amped Hardpoints"
 		"coliseum_loadouts_enabled" "Coliseum Loadouts"
+		"switch_team_tip" "You can only switch teams when you die, and your automatic Titans will die together"
 
 		// northstar.custom localisation is just deciding not to work, so putting it here for now
 		"PL_sbox" "Sandbox"
