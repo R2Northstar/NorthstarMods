@@ -4413,6 +4413,12 @@ bool function ClientCommand_SwitchTeam( entity player, array<string> args )
 {
 	if( !IsValid( player ) )
 		return false
+		
+	if( GetGameState() != eGameState.Playing )
+	{
+		SendHudMessage( player, "#RESPAWNSELECT_NOT_READY", -1, 0.33, 192, 255, 0, 255, 0.0, 3.0, 0.0 )
+		return false
+	}
 
 	int PlayerTeam = player.GetTeam()
 	int EnemyTeam = GetEnemyTeam( PlayerTeam )
