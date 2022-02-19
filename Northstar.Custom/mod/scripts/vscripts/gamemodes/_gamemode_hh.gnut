@@ -4,6 +4,7 @@ global function GamemodeHH_Init
 const array<string> btmaps = ["mp_angel_city", "mp_colony02", "mp_thaw", "mp_glitch", "mp_wargames", "mp_drydock", "mp_eden", "mp_black_water_canal", "mp_grave", "mp_complex3", "mp_homestead", "mp_forwardbase_kodai", "mp_crashsite3", "mp_rise", "mp_relic02"]
 
 struct {
+	bool hasmadespawns = false
 	array<entity> goals
 	array<vector> spawnoffsets = [Vector(0,50,10), Vector(0,-50,10), Vector(50,0,10), Vector(-50,-0,10)] // some sort of spawn checking in the future
 } file
@@ -151,6 +152,13 @@ bool function PlayerInRenderDistance(entity origin)
 
 void function CreateEndgoals() {
 	RemoveBatts()
+
+	foreach (entity player in GetPlayerArray())
+		thread Spawnmsg(player)
+
+	if (file.hasmadespawns)
+		return
+
 	foreach (entity goal in file.goals)
 		if (IsValid(goal))
 			goal.Destroy()
@@ -175,16 +183,13 @@ void function CreateEndgoals() {
 		Prop.SetBlocksRadiusDamage( true )
 		SetTeam( Prop, 0)
 		file.goals.append(Prop)
-		Prop.SetOrigin( hardpoint.GetOrigin() + GetPointOffset(file.goals.len() - 1))
+		Prop.SetOrigin( hardpoint.GetOrigin() + GetPointOffset(file.goals.len() - 1)) //ghetto ass spawn fix
 		DispatchSpawn( Prop )
 
 		Prop.SetTitle( "Goal")
 		Highlight_SetNeutralHighlight( Prop, "hunted_friendly" )
-
 	}
-
-	foreach (entity player in GetPlayerArray())
-		SetClientRui(player)
+	file.hasmadespawns = true
 }
 
 vector function GetPointOffset(int index) 
