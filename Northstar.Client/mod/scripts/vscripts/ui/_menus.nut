@@ -198,7 +198,7 @@ bool function UICodeCallback_LevelLoadingStarted( string levelname )
 
 	// kill lingering postgame summary since persistent data may not be available at this point
 	Signal( uiGlobal.signalDummy, "PGDisplay" )
-
+	uiGlobal.isLoading = true
 #if CONSOLE_PROG
 	if ( !Console_IsSignedIn() )
 		return false
@@ -211,9 +211,6 @@ bool function UICodeCallback_LevelLoadingStarted( string levelname )
 bool function UICodeCallback_UpdateLoadingLevelName( string levelname )
 {
 	printt( "UICodeCallback_UpdateLoadingLevelName: " + levelname )
-
-	NSUpdateGameStateUI(levelname, Localize(GetMapDisplayName(levelname)), GetConVarString("mp_gamemode"), Localize(GetPlaylistDisplayName(GetConVarString("mp_gamemode"))), false)
-
 #if CONSOLE_PROG
 	if ( !Console_IsSignedIn() )
 		return false
@@ -238,11 +235,14 @@ void function UICodeCallback_LevelLoadingFinished( bool error )
 
 	uiGlobal.loadingLevel = ""
 	Signal( uiGlobal.signalDummy, "LevelFinishedLoading" )
+	uiGlobal.isLoading = false
 }
 
 void function UICodeCallback_LevelInit( string levelname )
 {
 	Assert( IsConnected() )
+
+	uiGlobal.isLoading = false
 
 	StopVideo()
 
@@ -357,6 +357,7 @@ void function UICodeCallback_LevelInit( string levelname )
 
 void function UICodeCallback_LevelShutdown()
 {
+
 	Signal( uiGlobal.signalDummy, "LevelShutdown" )
 
 	printt( "UICodeCallback_LevelShutdown: " + uiGlobal.loadedLevel )

@@ -985,6 +985,7 @@ void function ThreadedAuthAndConnectToServer( string password = "" )
 	}
 
 	file.cancelConnection = false
+	NSSetLoading(true)
 	NSUpdateServerInfo(
 		NSGetServerID(file.lastSelectedServer),
 		NSGetServerName(file.lastSelectedServer),

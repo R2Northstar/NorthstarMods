@@ -5,9 +5,18 @@ int secondHighestScore = 0
 int ourScore = 0
 
 globalize_all_functions
+
+void function OnPrematchStart() {
+    if (GetServerVar("roundBased"))
+        NSUpdateTimeInfo(level.nv.roundEndTime - Time())
+    else
+        NSUpdateTimeInfo(level.nv.gameEndTime - Time())
+}
+
 void function NSUpdateGameStateClientStart() {
+    AddCallback_GameStateEnter( eGameState.Prematch, OnPrematchStart )
     thread NSUpdateGameStateLoopClient()
-    //NSUpdateServerInfoReload(GetCurrentPlaylistVarInt("max_players", 0))
+    OnPrematchStart()
 }
 
 void function NSUpdateGameStateLoopClient() {
@@ -25,7 +34,7 @@ void function NSUpdateGameStateLoopClient() {
         }
         int limit = GetServerVar("roundBased") ? GetCurrentPlaylistVarInt("roundscorelimit", 0) : GetCurrentPlaylistVarInt("scorelimit", 0)
         NSUpdateGameStateClient(GetPlayerArray().len(), ourScore, secondHighestScore, highestScore, GetServerVar("roundBased"), limit)
-
+        OnPrematchStart()
         wait 1.0
     }
 }
