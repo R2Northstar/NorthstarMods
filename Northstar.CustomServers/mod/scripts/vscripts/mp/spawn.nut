@@ -578,7 +578,7 @@ entity function DecideSpawnZone_Generic( array<entity> spawnzones, int team )
 		foreach ( entity player in GetPlayerArray() )
 		{
 			// couldn't get IsTouching, GetTouchingEntities or enter callbacks to work in testing, so doing this
-			if ( player.GetTeam() != team && spawnStateSpawnzones.activeTeamSpawnzones[ team ].ContainsPoint( player.GetOrigin() ) )
+			if ( player.GetTeam() != team && spawnStateSpawnzones.activeTeamSpawnzones[ team ].ContainsPoint( player.GetOrigin() ) || player.IsTraversing() || player.IsWallHanging() || player.IsWallRunning() )
 				break
 		}
 		
@@ -610,7 +610,7 @@ entity function DecideSpawnZone_Generic( array<entity> spawnzones, int team )
 			foreach ( entity player in GetPlayerArray() )
 			{
 				// couldn't get IsTouching, GetTouchingEntities or enter callbacks to work in testing, so doing this
-				if ( player.GetTeam() != team && spawnzone.ContainsPoint( player.GetOrigin() ) )
+				if ( player.GetTeam() != team && spawnzone.ContainsPoint( player.GetOrigin() ) || player.IsTraversing() || player.IsWallHanging() || player.IsWallRunning() )
 				{
 					spawnzoneEvil = true
 					break
@@ -723,7 +723,7 @@ entity function DecideSpawnZone_CTF( array<entity> spawnzones, int team )
 		foreach ( entity player in enemyPlayers )
 		{
 			// couldn't get IsTouching, GetTouchingEntities or enter callbacks to work in testing, so doing this
-			if ( spawnzone.ContainsPoint( player.GetOrigin() ) )
+			if ( spawnzone.ContainsPoint( player.GetOrigin() ) || player.IsTraversing() || player.IsWallHanging() || player.IsWallRunning() )
 			{
 				spawnzoneEvil = true
 				break
