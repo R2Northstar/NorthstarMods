@@ -20,6 +20,8 @@ global function ServerRestartMission
 global function DisableFriendlyHighlight
 global function EnableFriendlyHighlight
 global function SP_PlayerLastSlideTime
+global function CreatePetTitanAtLocation
+global function CreatePetTitan
 
 //global function CodeCallback_Ping
 
@@ -228,11 +230,6 @@ void function SpPlayerConnecting( entity player )
 	// player.s.meleeSlowMoEndTime <- 0.0
 	
 	player.p.connectTime = Time()
-	//if ( GetPlayerArray().len() > 1 )
-	//{
-	//	CodeWarning( "Can't play SP with more or less than 1 player" )
-	//	return
-	//}
 	
 	SetTeam( player, TEAM_MILITIA )
 	InitPassives( player )
@@ -321,7 +318,7 @@ void function TrackPlayerLastSlideTime( entity player )
 	}
 }
 
-void function CreatePetTitan( entity player )
+void function CreatePetTitan( entity player)
 {
 	Assert( IsValid( file.spPetTitanStart ) )
 	// Player is in his Titan, don't create a titan
@@ -336,7 +333,30 @@ void function CreatePetTitan( entity player )
 	// Make a pet titan at the spawn point
 	TitanLoadoutDef loadout = GetTitanLoadoutForCurrentMap()
 	entity titanStart = file.spPetTitanStart
+
 	entity titan = CreateAutoTitanForPlayer_FromTitanLoadout( player, loadout, titanStart.GetOrigin(), titanStart.GetAngles() )
+	DispatchSpawn( titan )
+	player.SetPetTitan( titan )
+
+	titan.DisableHibernation()
+}
+
+void function CreatePetTitanAtLocation( entity player, vector origin, vector angles)
+{
+	Assert( IsValid( file.spPetTitanStart ) )
+	// Player is in his Titan, don't create a titan
+	if ( player.IsTitan() )
+		return
+
+	// Player already has a pet titan, don't create one
+	entity petTitan = player.GetPetTitan()
+	if ( IsValid( petTitan ) )
+		return
+
+	// Get loadout for map
+	TitanLoadoutDef loadout = GetTitanLoadoutForCurrentMap()
+
+	entity titan = CreateAutoTitanForPlayer_FromTitanLoadout( player, loadout, origin, angles )
 	DispatchSpawn( titan )
 	player.SetPetTitan( titan )
 
