@@ -483,22 +483,57 @@ entity function GetBestSaveLocationEnt( array<entity> safeLocations )
 	return null
 }
 
+// overiding this to remove some of the triggers
 void function WriteRestoreLocationFromEntity( entity safeLocation )
 {
 	Assert( safeLocation != null )
-	entity player = GetFirstPlayer()
-	Assert( IsAlive( player ), "Tried to save while player was dead" )
 
-	if ( IsPilot( player ) )
+	entity player
+	
+	foreach ( p in GetPlayerArray() )
 	{
-		file.saveStoredWeapons = StoreWeapons( player )
+		if ( IsAlive( p ) )
+			continue
+		if ( IsPilot( p ) )
+		{
+			file.saveStoredWeapons = StoreWeapons( p )
+
+			player = p
+			break
+		}
+		else
+		{
+			array<entity> weapons = p.GetMainWeapons()
+			Assert( weapons.len() == 1, "Player had multiple titan weapons" )
+			file.storedTitanWeapon = weapons[0].GetWeaponClassName()
+
+			player = p
+			break
+		}
 	}
-	else
-	{
-		array<entity> weapons = player.GetMainWeapons()
-		Assert( weapons.len() == 1, "Player had multiple titan weapons" )
-		file.storedTitanWeapon = weapons[0].GetWeaponClassName()
+
+	printl("=========================================")
+	printl("New checkpoint :" + safeLocation.GetOrigin())
+	printl("=========================================")
+
+	foreach( p in GetPlayerArray() ){
+		if (p != player){
+			wait(0.01)
+			p.SetOrigin( safeLocation.GetOrigin() )
+			
+			// well I am that boththred to make this work rn
+			// if ( save.nextCheckpointAsPilot[ save.currentPilotBoolId ] )
+			// 	TitanBecomesPilot( player, player.GetTitan() )
+			// else
+			// 	PilotBecomesTitan( player, player.GetTitan() )
+
+			p.SetHealth( p.GetMaxHealth() )
+			SendHudMessage( p , "You were teleported the next checkpoint" , -1, 0.4, 255, 255, 0, 0, 0.15, 6, 0.15 )
+		}
+		p.kv.CollisionGroup = TRACE_COLLISION_GROUP_PLAYER
 	}
+	
+	NewSaveLocation( safeLocation.GetOrigin() + <0,0,SAVE_SPAWN_VOFFSET> )
 
 	file.saveOrigin = safeLocation.GetOrigin() + <0,0,SAVE_SPAWN_VOFFSET>
 	file.saveAngles = safeLocation.GetAngles()

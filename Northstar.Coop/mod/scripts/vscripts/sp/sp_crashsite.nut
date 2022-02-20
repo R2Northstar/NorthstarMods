@@ -831,7 +831,7 @@ void function EscapePodFriendlies( entity player )
 		escapePodHelper.Solid()
 	}
 
-	escapePodGuy.SetNoTarget( false ) // error here
+	// escapePodGuy.SetNoTarget( false ) // error here
 	escapePodGuy.ClearInvulnerable()
 	escapePodHelper.ClearInvulnerable()
 }

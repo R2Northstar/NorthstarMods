@@ -6363,7 +6363,8 @@ void function MaltaDrone_StressSounds()
 	{
 		float newroll = file.malta.model.GetAngles().z
 		bool newSign = newroll > 0
-
+		
+		// unitl we know how to disable sounds on death this should stay like this
 		// if ( newSign != oldSign )
 		// 	EmitSoundOnEntity( file.player, "s2s_ship_stress_mid_v1" )
 
@@ -6754,6 +6755,18 @@ void function Malta_RackRunners_Think( entity guy )
 
 void function MaltaBayCheckReadyForLift( entity door, entity player )
 {
+	// tp all players to the player enterign the elevator 
+	foreach( p in GetPlayerArray() ){
+		if (p != player){
+			wait(0.01)
+			p.SetOrigin( player.GetOrigin() )
+
+			p.SetHealth( p.GetMaxHealth() )
+			SendHudMessage( p , "You were teleported into the elevator" , -1, 0.4, 255, 255, 0, 0, 0.15, 6, 0.15 )
+		}
+		p.kv.CollisionGroup = TRACE_COLLISION_GROUP_PLAYER
+	}
+
 	if ( Flag( "MaltaBayLiftGuySpawn" ) )
 		return
 	FlagEnd( "MaltaBayLiftGuySpawn" )
@@ -18561,9 +18574,9 @@ void function PlayerFallingDeath( entity player )
 	{
 	FlagWait( "PlayerFallingDeathFlag" )
 	
-	// this just brakes it
+	// this just brakes it, so I added a try cacth
 	// level.nv.ShipTitles = SHIPTITLES_NONE
-	// player.Die()
+	player.Die()
 
 	if ( player.IsTitan() )
 	{
