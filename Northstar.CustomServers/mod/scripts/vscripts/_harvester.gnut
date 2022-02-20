@@ -1,5 +1,6 @@
 global function SpawnHarvester
-global function startHarvesterFX
+global function generateBeamFX
+global function generateShieldFX
 
 global struct HarvesterStruct {
 	entity harvester
@@ -45,13 +46,18 @@ HarvesterStruct function SpawnHarvester(vector origin,vector angles,int health,i
     return ret
 }
 
-HarvesterStruct function startHarvesterFX(HarvesterStruct harvester)
+HarvesterStruct function generateBeamFX(HarvesterStruct harvester)
 {
     entity Harvester_Beam = StartParticleEffectOnEntity_ReturnEntity(harvester.harvester,GetParticleSystemIndex(FX_HARVESTER_BEAM),FX_PATTACH_ABSORIGIN_FOLLOW,0)
-    EffectSetControlPointVector( Harvester_Beam, 1, < 126.0, 188.0, 236.0 > )
-    entity Harvester_Shield = StartParticleEffectOnEntity_ReturnEntity(harvester.harvester,GetParticleSystemIndex(FX_HARVESTER_OVERSHIELD),FX_PATTACH_ABSORIGIN_FOLLOW,0)
-    EffectSetControlPointVector( Harvester_Shield, 1, < 126.0, 188.0, 236.0 > )
+    EffectSetControlPointVector( Harvester_Beam, 1, GetShieldTriLerpColor(0.0) )
     harvester.particleBeam = Harvester_Beam
+    return harvester
+}
+
+HarvesterStruct function generateShieldFX(HarvesterStruct harvester)
+{
+    entity Harvester_Shield = StartParticleEffectOnEntity_ReturnEntity(harvester.harvester,GetParticleSystemIndex(FX_HARVESTER_OVERSHIELD),FX_PATTACH_ABSORIGIN_FOLLOW,0)
+    EffectSetControlPointVector( Harvester_Shield, 1, GetShieldTriLerpColor(0.0) )
     harvester.particleShield = Harvester_Shield
     return harvester
 }

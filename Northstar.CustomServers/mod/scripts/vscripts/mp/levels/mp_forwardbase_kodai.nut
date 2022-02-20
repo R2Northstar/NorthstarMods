@@ -25,3 +25,10 @@ void function FixBatterySpawns( entity spawn )
 	if ( powerupDef.spawnFunc() )
 		spawn.SetOrigin( BATTERY_SPAWNS[file.batteryIndex++] )
 }
+global function CodeCallback_MapInit
+
+void function CodeCallback_MapInit()
+{
+    if(GameRules_GetGameMode()=="fd")
+        initFrontierDefenseData()
+}
