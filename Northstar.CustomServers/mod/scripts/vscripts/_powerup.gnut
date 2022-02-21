@@ -5,19 +5,6 @@ struct {
 	array<entity> powerupSpawns
 } file
 
-const table< string, array<vector> > LTSBatterySpawns = {
-	mp_forwardbase_kodai = [
-		< 3960, 1215.04, 942 >,
-		< 31, 462.459, 797 >,
-		< -4150.21, 693.654, 1123 >
-	],
-	mp_angel_city = [
-		< -1444.55, -1108.55, 127 >,
-		< -730, 644, 121 >,
-		< 535, 2657.67, 119 >
-	]
-}
-
 void function PowerUps_Init()
 {
 	SH_PowerUp_Init()
@@ -34,16 +21,9 @@ void function AddPowerupSpawn( entity spawnpoint )
 
 void function RespawnPowerups()
 {
-	string map = GetMapName()
-	bool editSpawns = GAMETYPE == LAST_TITAN_STANDING && map in LTSBatterySpawns
-	int index = 0
-
 	foreach ( entity spawnpoint in file.powerupSpawns )
 	{
 		PowerUp powerupDef = GetPowerUpFromItemRef( expect string( spawnpoint.kv.powerUpType ) )
-		if ( editSpawns && index < LTSBatterySpawns[map].len() && powerupDef.spawnFunc() )
-			spawnpoint.SetOrigin( LTSBatterySpawns[map][index++] )
-
 		thread PowerupSpawnerThink( spawnpoint, powerupDef )
 	}
 }
