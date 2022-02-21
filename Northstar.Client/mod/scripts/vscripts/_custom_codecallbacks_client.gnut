@@ -28,11 +28,13 @@ void function OnReceivedMessage(ClClient_MessageStruct localMessage) {
             localMessage.isTeam = returnStruct.isTeam
             localMessage.isDead = returnStruct.isDead
             localMessage.isWhisper = returnStruct.isWhisper
-            if (localMessage.shouldBlock)
-            {
-                return
-            }
+            localMessage.shouldBlock = localMessage.shouldBlock || returnStruct.shouldBlock
         }
+    }
+
+    if (localMessage.shouldBlock)
+    {
+        return
     }
 
     NSChatWriteRaw(1, "\n")

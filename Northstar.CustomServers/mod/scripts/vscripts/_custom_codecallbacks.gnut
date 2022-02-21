@@ -37,10 +37,12 @@ void function CServerGameDLL_OnReceivedSayTextMessageCallback(int playerIndex, s
 		ClServer_MessageStruct returnStruct = callbackFunc(localMessage)
 		localMessage.message = returnStruct.message
 		localMessage.isTeam = returnStruct.isTeam
-		if (localMessage.shouldBlock)
-		{
-			return
-		}
+		localMessage.shouldBlock = localMessage.shouldBlock || returnStruct.shouldBlock
+	}
+
+	if (localMessage.shouldBlock)
+	{
+		return
 	}
 
 	NSSendMessage(player.GetPlayerIndex(), localMessage.message, localMessage.isTeam)
