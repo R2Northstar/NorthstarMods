@@ -4441,7 +4441,7 @@ bool function ClientCommand_SwitchTeam( entity player, array<string> args )
 		return false
 	}
 
-	if( EnemyTeamCount - PlayerTeamCount > 1 )
+	if( EnemyTeamCount - PlayerTeamCount >= 1 )
 	{
 		SendHudMessage( player, "#PRIVATE_MATCH_NOT_READY_TEAMS", -1, 0.33, 192, 255, 0, 255, 0.0, 3.0, 0.0 )
 		return false
@@ -4449,14 +4449,14 @@ bool function ClientCommand_SwitchTeam( entity player, array<string> args )
 	
 	if( IsAlive( player ) )
 	{
-		SendHudMessage( player, "#CONVO_S2S_WELLIMNOTDEAD", -1, 0.33, 192, 255, 0, 255, 0.0, 3.0, 0.0 )
+		SendHudMessage( player, "#switch_team_tip", -1, 0.33, 192, 255, 0, 255, 0.0, 3.0, 0.0 )
 		return false
 		//player.Die( svGlobal.worldspawn, svGlobal.worldspawn, { damageSourceId = eDamageSourceId.team_switch } )
 	}
 
 	if( IsValid( PetTitan ) && player.IsTitan() )
 	{
-		SendHudMessage( player, "#CONVO_S2S_WELLIMNOTDEAD", -1, 0.33, 192, 255, 0, 255, 0.0, 3.0, 0.0 )
+		SendHudMessage( player, "#switch_team_tip", -1, 0.33, 192, 255, 0, 255, 0.0, 3.0, 0.0 )
 		return false
 	}
 	else if( IsValid( PetTitan ) && !player.IsTitan() )
