@@ -28,7 +28,7 @@ void function EMPTitanThinkConstant( entity titan )
 	titan.EndSignal( "StopEMPField" )
 
 	//We don't want pilots accidently rodeoing an electrified titan.
-	DisableTitanRodeo( titan )
+	// DisableTitanRodeo( titan )
 
 	//Used to identify this titan as an arc titan
 	SetTargetName( titan, "empTitan" )

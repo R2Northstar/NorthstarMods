@@ -24,14 +24,18 @@ HarvesterStruct function SpawnHarvester(vector origin,vector angles,int health,i
     harvester.SetHealth(health)
     harvester.SetShieldHealthMax(shieldHealth)
     harvester.SetShieldHealth(shieldHealth)
+    harvester.EnableAttackableByAI( 30, 0, AI_AP_FLAG_NONE )
+    //harvester.SetIsValidAIMeleeTarget(false)
     SetTeam(harvester,team)
     DispatchSpawn( harvester )
     
     SetGlobalNetEnt("FD_activeHarvester",harvester)
     
-    // entity blackbox = CreatePropDynamic(MODEL_HARVESTER_TOWER_COLLISION,info_target.GetOrigin(),info_target.GetAngles(),6)
-    // blackbox.Hide()
-    // blackbox.kv.CollisionGroup = TRACE_COLLISION_GROUP_PLAYER					
+    entity blackbox = CreatePropDynamic(MODEL_HARVESTER_TOWER_COLLISION,origin,angles,0)
+    blackbox.Hide()
+    blackbox.Solid()
+    // blackbox.kv.CollisionGroup = TRACE_COLLISION_GROUP_PLAYER
+    ToggleNPCPathsForEntity( blackbox, false )				
     
     entity rings = CreatePropDynamic(MODEL_HARVESTER_TOWER_RINGS,origin,angles,6)
     thread PlayAnim( rings, "generator_cycle_fast" )
