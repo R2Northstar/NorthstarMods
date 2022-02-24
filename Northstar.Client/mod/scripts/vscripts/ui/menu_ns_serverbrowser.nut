@@ -665,6 +665,7 @@ void function WaitForServerListRequest()
 	else
 	{
 		FilterAndUpdateList(0)
+		Hud_SetFocused(Hud_GetChild(file.menu, "BtnServer1"))
 	}
 }
 
