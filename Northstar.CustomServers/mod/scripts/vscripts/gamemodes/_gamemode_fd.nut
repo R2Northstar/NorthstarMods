@@ -56,6 +56,7 @@ struct {
 	array<entity> routeNodes
 	table<string,float> harvesterDamageSource
 	bool haversterWasDamaged
+	array<entity> spawnedNPCs
 }file
 
 void function GamemodeFD_Init()
@@ -68,7 +69,23 @@ void function GamemodeFD_Init()
 	AddClientCommandCallback("FD_UseHarvesterShieldBoost",useShieldBoost)
 	RegisterSignal("FD_ReachedHarvester")
 	RegisterSignal("OnFailedToPath")
+	AddDeathCallback("npc_titan",OnNpcDeath)
+	AddDeathCallback("npc_stalker",OnNpcDeath)
+	AddDeathCallback("npc_spectre",OnNpcDeath)
+	AddDeathCallback("npc_super_spectre",OnNpcDeath)
+	AddDeathCallback("npc_soldier",OnNpcDeath)
+	AddDeathCallback("npc_frag_drone",OnNpcDeath)
+	AddDeathCallback("npc_drone",OnNpcDeath)
+	
+}
 
+void function OnNpcDeath( entity ent, var damageInfo ){
+	int findIndex = file.spawnedNPCs.find( ent )
+	if ( findIndex != -1 )
+	{
+		file.spawnedNPCs.remove( findIndex )
+	}
+	printt("callback")
 }
 
 void function RateSpawnpoints_FD(int _0, array<entity> _1, int _2, entity _3){}
@@ -629,8 +646,9 @@ void function spawnArcTitan(SmokeEvent smokeEvent,SpawnEvent spawnEvent,WaitEven
 {
 	entity npc = CreateArcTitan(TEAM_IMC,spawnEvent.origin,spawnEvent.angles)
 	thread titanNav_thread(npc,spawnEvent.route)
+	SetSpawnOption_Titanfall(npc)
 	DispatchSpawn(npc)
-	thread NPCTitanHotdrops(npc,true)
+	file.spawnedNPCs.append(npc)	
 	thread EMPTitanThinkConstant(npc)
 }
 
@@ -644,20 +662,22 @@ void function waitForTime(SmokeEvent smokeEvent,SpawnEvent spawnEvent,WaitEvent 
 
 void function waitUntilLessThanAmountAlive(SmokeEvent smokeEvent,SpawnEvent spawnEvent,WaitEvent waitEvent,SoundEvent soundEvent)
 {	
-	int aliveTitans = GetEntArrayByClass_Expensive("npc_titan").len()
-	while(aliveTitans>waitEvent.amount.tointeger())
+	int aliveTitans = file.spawnedNPCs.len()
+	int testamount = waitEvent.amount.tointeger()
+	while(aliveTitans>testamount)
 	{
-		printt("Titans alive",aliveTitans,waitEvent.amount.tointeger())
+		printt("Titans alive",aliveTitans,testamount)
 		WaitFrame()
-		aliveTitans = GetEntArrayByClass_Expensive("npc_titan").len()
+		aliveTitans = file.spawnedNPCs.len()
 		
 	}
-		
+	printt("Titans alive end",aliveTitans,testamount)
 }
 
 void function spawnSuperSpectre(SmokeEvent smokeEvent,SpawnEvent spawnEvent,WaitEvent waitEvent,SoundEvent soundEvent)
 {
 	entity npc = CreateSuperSpectre(TEAM_IMC,spawnEvent.origin,spawnEvent.angles)
+	SetSpawnOption_Titanfall(npc)
 	DispatchSpawn(npc)
 }
 
@@ -692,9 +712,10 @@ void function spawnNukeTitan(SmokeEvent smokeEvent,SpawnEvent spawnEvent,WaitEve
 	entity npc = CreateNPCTitan("titan_ogre",TEAM_IMC, spawnEvent.origin, spawnEvent.angles)
 	SetSpawnOption_AISettings(npc,"npc_titan_ogre_minigun_nuke")
 	thread titanNav_thread(npc,spawnEvent.route)
+	SetSpawnOption_Titanfall(npc)
 	DispatchSpawn(npc)
+	file.spawnedNPCs.append(npc)
 	
-	thread NPCTitanHotdrops(npc,true)
 	NukeTitanThink(npc,fd_harvester.harvester)
 }
 
