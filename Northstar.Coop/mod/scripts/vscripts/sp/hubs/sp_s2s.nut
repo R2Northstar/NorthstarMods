@@ -63,6 +63,9 @@ struct AirBattleStruct
 
 struct MyFile
 {
+	// spawnpointWidow
+	ShipStruct& SpawnPointWidow
+
 	entity player
 	ShipStruct& playerWidow
 	vector playerWidow_scrOffset
@@ -512,6 +515,9 @@ void function PlayerSpawned( entity player )
 	thread PlayerWindFX( player )
 	thread PlayerFallingDeath( player )
 	thread Init_StreamingClient( player )
+
+	// spawning the spawning point widow 
+	thread Init_ArkSpawnPoint()
 }
 
 void function OnLoadSaveGame( entity player )
@@ -6755,17 +6761,8 @@ void function Malta_RackRunners_Think( entity guy )
 
 void function MaltaBayCheckReadyForLift( entity door, entity player )
 {
-	// tp all players to the player enterign the elevator 
-	foreach( p in GetPlayerArray() ){
-		if (p != player){
-			wait(0.01)
-			p.SetOrigin( player.GetOrigin() )
-
-			p.SetHealth( p.GetMaxHealth() )
-			SendHudMessage( p , "You were teleported into the elevator" , -1, 0.4, 255, 255, 0, 0, 0.15, 6, 0.15 )
-		}
-		p.kv.CollisionGroup = TRACE_COLLISION_GROUP_PLAYER
-	}
+	// tp all players to the player enterign the elevator
+	thread TeleportAllExpectOne( player.GetOrigin(), player )
 
 	if ( Flag( "MaltaBayLiftGuySpawn" ) )
 		return
@@ -12037,6 +12034,17 @@ void function Reunited_Main( entity player )
 	bt.ClearParent()
 	bt.Anim_Stop()
 	oldRef.Destroy()
+
+	// spawn bt for other players
+	foreach( p in GetPlayerArray() )
+	{
+		if( p == player )
+			continue
+		CreatePetTitanAtLocation( bt, player.GetOrigin(), bt.GetAngles() )
+		entity titan = player.GetPetTitan()
+		if ( titan != null )
+			titan.kv.alwaysAlert = false
+	}
 
 	entity node = GetEntByScriptName( "BTReunionNode" )
 	bt.SetParent( node )
@@ -18592,4 +18600,37 @@ void function PlayerFallingDeath( entity player )
 	}
 	catch( exception ){
 	}
+}
+
+/*
+███████╗██████╗  █████╗ ██╗    ██╗███╗   ██╗██████╗  ██████╗ ██╗███╗   ██╗████████╗    ██╗      ██████╗  ██████╗ ██╗ ██████╗
+██╔════╝██╔══██╗██╔══██╗██║    ██║████╗  ██║██╔══██╗██╔═══██╗██║████╗  ██║╚══██╔══╝    ██║     ██╔═══██╗██╔════╝ ██║██╔════╝
+███████╗██████╔╝███████║██║ █╗ ██║██╔██╗ ██║██████╔╝██║   ██║██║██╔██╗ ██║   ██║       ██║     ██║   ██║██║  ███╗██║██║     
+╚════██║██╔═══╝ ██╔══██║██║███╗██║██║╚██╗██║██╔═══╝ ██║   ██║██║██║╚██╗██║   ██║       ██║     ██║   ██║██║   ██║██║██║     
+███████║██║     ██║  ██║╚███╔███╔╝██║ ╚████║██║     ╚██████╔╝██║██║ ╚████║   ██║       ███████╗╚██████╔╝╚██████╔╝██║╚██████╗
+╚══════╝╚═╝     ╚═╝  ╚═╝ ╚══╝╚══╝ ╚═╝  ╚═══╝╚═╝      ╚═════╝ ╚═╝╚═╝  ╚═══╝   ╚═╝       ╚══════╝ ╚═════╝  ╚═════╝ ╚═╝ ╚═════╝                                                                                                                          
+*/
+
+void function Init_ArkSpawnPoint()
+{
+	wait(10)
+	entity player0 = GetPlayerArray()[0]
+	vector origin = player0.GetOrigin() 
+
+	ShipStruct widow = SpawnWidowLight( CLVec( origin ) )
+	ClearShipBehavior( widow, eBehavior.ENEMY_ONBOARD )
+
+	SetMaxSpeed( 	widow, START2_MAXSPEED )
+	SetMaxAcc( 		widow, START2_MAXACC )
+	SetMaxPitch( 	widow, START2_MAXPITCH )
+
+	// AddShipEventCallback( widow, eShipEvents.PLAYER_INCABIN_START, PlayerWidowPlayerInCabinStart )
+	// AddShipEventCallback( widow, eShipEvents.PLAYER_INCABIN_END, PlayerWidowPlayerInCabinEnd )
+
+	widow.model.Anim_Play( "wd_doors_open_idle_R" )
+	widow.model.Anim_DisableUpdatePosition()
+	widow.model.Anim_DisableAnimDelta()
+	widow.model.SetInvulnerable()
+
+	file.SpawnPointWidow = widow
 }

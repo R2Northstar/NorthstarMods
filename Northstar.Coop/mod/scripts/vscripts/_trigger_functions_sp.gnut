@@ -857,7 +857,7 @@ void function LevelTransitionTrigger( entity trigger )
 
 	PickStartPoint( level, startPoint )
 
-	// script GameRules_ChangeMap("sp_s2s","coop")
+	GameRules_ChangeMap( "sp_s2s",GAMETYPE )
 }
 
 void function TestDevSpawnPoint()

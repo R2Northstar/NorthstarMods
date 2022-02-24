@@ -21,7 +21,6 @@ global function DisableFriendlyHighlight
 global function EnableFriendlyHighlight
 global function SP_PlayerLastSlideTime
 global function CreatePetTitanAtLocation
-global function CreatePetTitan
 
 //global function CodeCallback_Ping
 

@@ -492,8 +492,9 @@ void function WriteRestoreLocationFromEntity( entity safeLocation )
 	
 	foreach ( p in GetPlayerArray() )
 	{
-		if ( IsAlive( p ) )
+		if ( !IsAlive( p ) )
 			continue
+		player = p
 		if ( IsPilot( p ) )
 		{
 			file.saveStoredWeapons = StoreWeapons( p )
@@ -516,22 +517,7 @@ void function WriteRestoreLocationFromEntity( entity safeLocation )
 	printl("New checkpoint :" + safeLocation.GetOrigin())
 	printl("=========================================")
 
-	foreach( p in GetPlayerArray() ){
-		if (p != player){
-			wait(0.01)
-			p.SetOrigin( safeLocation.GetOrigin() )
-			
-			// well I am that boththred to make this work rn
-			// if ( save.nextCheckpointAsPilot[ save.currentPilotBoolId ] )
-			// 	TitanBecomesPilot( player, player.GetTitan() )
-			// else
-			// 	PilotBecomesTitan( player, player.GetTitan() )
-
-			p.SetHealth( p.GetMaxHealth() )
-			SendHudMessage( p , "You were teleported the next checkpoint" , -1, 0.4, 255, 255, 0, 0, 0.15, 6, 0.15 )
-		}
-		p.kv.CollisionGroup = TRACE_COLLISION_GROUP_PLAYER
-	}
+	thread TeleportAllExpectOne( safeLocation.GetOrigin(), player )
 	
 	NewSaveLocation( safeLocation.GetOrigin() + <0,0,SAVE_SPAWN_VOFFSET> )
 

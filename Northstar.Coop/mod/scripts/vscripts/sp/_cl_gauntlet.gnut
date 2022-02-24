@@ -83,11 +83,11 @@ void function Client_EnableGauntlet( GauntletInfo gauntlet )
 
 	gauntlet.isEnabled = true
 
-	Gauntlet_CreateStartingLineDisplay( gauntlet )
-	Gauntlet_CreateResultsDisplays( gauntlet )
+	// Gauntlet_CreateStartingLineDisplay( gauntlet )
+	// Gauntlet_CreateResultsDisplays( gauntlet )
 
-	if ( gauntlet.showLeaderboard )
-		Gauntlet_CreateLeaderboards( gauntlet )
+	// if ( gauntlet.showLeaderboard )
+	// 	Gauntlet_CreateLeaderboards( gauntlet )
 }
 
 void function Client_DisableGauntlet( GauntletInfo gauntlet )
@@ -97,10 +97,10 @@ void function Client_DisableGauntlet( GauntletInfo gauntlet )
 
 	gauntlet.isEnabled = false
 
-	Gauntlet_DestroyStartingLineDisplay( gauntlet )
-	Gauntlet_DestroyFinishLineDisplay( gauntlet )
-	Gauntlet_DestroyResultsDisplays( gauntlet )
-	Gauntlet_DestroyLeaderboards( gauntlet )
+	// Gauntlet_DestroyStartingLineDisplay( gauntlet )
+	// Gauntlet_DestroyFinishLineDisplay( gauntlet )
+	// Gauntlet_DestroyResultsDisplays( gauntlet )
+	// Gauntlet_DestroyLeaderboards( gauntlet )
 }
 
 
@@ -700,7 +700,7 @@ void function Gauntlet_SetResultsDisplayTip( GauntletInfo gauntlet, string tip )
 	if ( !gauntlet.hasResultsDisplay )
 		return
 
-	Gauntlet_ResultsDisplay_SetTip( gauntlet, tip )
+	// Gauntlet_ResultsDisplay_SetTip( gauntlet, tip )
 }
 
 void function ScriptCallback_GauntletResultsDisplay_SetRandomTip( int gauntletID )
