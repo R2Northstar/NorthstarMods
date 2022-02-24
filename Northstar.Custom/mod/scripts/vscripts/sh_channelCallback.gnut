@@ -39,14 +39,15 @@ void function ServerCallback_ChannelCallbackFunction(int channel, int dataOne, i
 
 void function AddChannelCallbackFunction(int channel, void functionref(int, int, int, int) func) 
 {
-  if(null == file.clientCallBackFunctions[channel]) 
-  {
+  try {
+    if(file.clientCallBackFunctions[channel] != null) {
+      print("")
+    }
+  } catch (exception) {
     file.clientCallBackFunctions[channel] <- func
-  } 
-  else 
-  {
-    throw "The callback channel " + channel + " is already in use";
+    return
   }
+  throw "The callback channel " + channel + " is already in use";
 }
 #endif
 
@@ -58,4 +59,4 @@ void function Remote_CallChannel(entity player, int channel, int one = 0, int tw
 {
 	Remote_CallFunction_Replay( player, "ServerCallback_ChannelCallbackFunction", channel, one, two, three, four)
 }
-#endif
+#endif 
