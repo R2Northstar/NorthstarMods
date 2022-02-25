@@ -785,6 +785,9 @@ void function UpdateShownPage()
 
 void function OnServerButtonFocused( var button )
 {
+	if (file.scrollOffset < 0)
+		file.scrollOffset = 0
+	
 	int scriptID = int (Hud_GetScriptID(button))
 	file.serverButtonFocusedID = scriptID
 	if ( file.serversArrayFiltered.len() > 0 )
