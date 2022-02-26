@@ -84,12 +84,15 @@ table<string, bool> VortexIgnoreClassnames = {
 	["mp_ability_grapple"] = true,
 	["mp_ability_shifter"] = true,
 }
-bool function RegisterNewVortexIgnoreClassname(string classname, bool shouldignore){
-	if(!(classname in VortexIgnoreClassnames)){
+bool function RegisterNewVortexIgnoreClassname(string classname, bool shouldignore)
+{
+	if(!(classname in VortexIgnoreClassnames))
+	{
 		VortexIgnoreClassnames[classname] <- shouldignore
-		return true}
-	return false
+		return true
 	}
+	return false
+}
 table vortexImpactWeaponInfo
 
 const DEG_COS_60 = cos( 60 * DEG_TO_RAD )
