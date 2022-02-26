@@ -5,6 +5,7 @@ global function Vortex_Init
 global function CreateVortexSphere
 global function DestroyVortexSphereFromVortexWeapon
 global function EnableVortexSphere
+global function RegisterNewVortexIgnoreClassname
 #if SERVER
 global function ValidateVortexImpact
 global function TryVortexAbsorb
@@ -78,12 +79,17 @@ global const VORTEX_REFIRE_ROCKET				= "rocket"
 global const VORTEX_REFIRE_GRENADE				= "grenade"
 global const VORTEX_REFIRE_GRENADE_LONG_FUSE	= "grenade_long_fuse"
 
-const VortexIgnoreClassnames = {
+table<string, bool> VortexIgnoreClassnames = {
 	["mp_titancore_flame_wave"] = true,
 	["mp_ability_grapple"] = true,
 	["mp_ability_shifter"] = true,
 }
-
+bool function RegisterNewVortexIgnoreClassname(string classname, bool shouldignore){
+	if(!(classname in VortexIgnoreClassnames)){
+		VortexIgnoreClassnames[classname] <- shouldignore
+		return true}
+	return false
+	}
 table vortexImpactWeaponInfo
 
 const DEG_COS_60 = cos( 60 * DEG_TO_RAD )
