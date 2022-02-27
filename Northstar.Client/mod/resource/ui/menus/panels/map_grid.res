@@ -3,27 +3,28 @@
 	GridInfo0x0
 	{
 		ControlName CNestedPanel
-		wide 					286
-    tall 					165
+		wide 286
+		tall 165
 		
 		Classname			MapGridInfo
 		scriptID			0
 		
-		controlSettingsFile	"resource/ui/menus/panels/map_grid_button.res"
+		controlSettingsFile "resource/ui/menus/panels/map_grid_button.res"
 	}
 	
 	GridInfo1x0
 	{
 		ControlName CNestedPanel
-		wide 					286
-    tall 					165
-		xpos					2
+		wide 286
+		tall 165
+		xpos 2
 		
 		Classname			MapGridInfo
 		scriptID			1
 		
-		controlSettingsFile	"resource/ui/menus/panels/map_grid_button.res"
+		controlSettingsFile "resource/ui/menus/panels/map_grid_button.res"
 		
+
 		pin_to_sibling					GridInfo0x0
 		pin_corner_to_sibling		TOP_LEFT
 		pin_to_sibling_corner		TOP_RIGHT
@@ -32,15 +33,16 @@
 	GridInfo2x0
 	{
 		ControlName CNestedPanel
-		wide 					286
-    tall 					165
-		xpos					2
-		
+		wide 286
+		tall 165
+		xpos 2
+
 		Classname			MapGridInfo
 		scriptID			2
 		
-		controlSettingsFile	"resource/ui/menus/panels/map_grid_button.res"
+		controlSettingsFile "resource/ui/menus/panels/map_grid_button.res"
 		
+    
 		pin_to_sibling					GridInfo1x0
 		pin_corner_to_sibling		TOP_LEFT
 		pin_to_sibling_corner		TOP_RIGHT
@@ -49,15 +51,16 @@
 	GridInfo0x1
 	{
 		ControlName CNestedPanel
-		wide 					286
-    tall 					165
-		ypos					2
+		wide 286
+		tall 165
+		ypos 2
 		
 		Classname			MapGridInfo
 		scriptID			3
 		
-		controlSettingsFile	"resource/ui/menus/panels/map_grid_button.res"
+		controlSettingsFile "resource/ui/menus/panels/map_grid_button.res"
 		
+    
 		pin_to_sibling					GridInfo0x0
 		pin_corner_to_sibling		TOP_LEFT
 		pin_to_sibling_corner		BOTTOM_LEFT
@@ -66,15 +69,16 @@
 	GridInfo1x1
 	{
 		ControlName CNestedPanel
-		wide 					286
-    tall 					165
-		xpos					2
+		wide 286
+		tall 165
+		xpos 2
 		
 		Classname			MapGridInfo
 		scriptID			4
 		
-		controlSettingsFile	"resource/ui/menus/panels/map_grid_button.res"
+		controlSettingsFile "resource/ui/menus/panels/map_grid_button.res"
 		
+
 		pin_to_sibling					GridInfo0x1
 		pin_corner_to_sibling		TOP_LEFT
 		pin_to_sibling_corner		TOP_RIGHT
@@ -83,15 +87,17 @@
 	GridInfo2x1
 	{
 		ControlName CNestedPanel
-		wide 					286
-    tall 					165
-		xpos					2
+		wide 286
+		tall 165
+		xpos 2
 		
+
 		Classname			MapGridInfo
 		scriptID			5
 		
-		controlSettingsFile	"resource/ui/menus/panels/map_grid_button.res"
+		controlSettingsFile "resource/ui/menus/panels/map_grid_button.res"
 		
+
 		pin_to_sibling					GridInfo1x1
 		pin_corner_to_sibling		TOP_LEFT
 		pin_to_sibling_corner		TOP_RIGHT
@@ -100,15 +106,17 @@
 	GridInfo0x2
 	{
 		ControlName CNestedPanel
-		wide 					286
-    tall 					165
-		ypos					2
+		wide 286
+		tall 165
+		ypos 2
 		
+
 		Classname			MapGridInfo
 		scriptID			6
 		
-		controlSettingsFile	"resource/ui/menus/panels/map_grid_button.res"
+		controlSettingsFile "resource/ui/menus/panels/map_grid_button.res"
 		
+
 		pin_to_sibling					GridInfo0x1
 		pin_corner_to_sibling		TOP_LEFT
 		pin_to_sibling_corner		BOTTOM_LEFT
@@ -117,15 +125,17 @@
 	GridInfo1x2
 	{
 		ControlName CNestedPanel
-		wide 					286
-    tall 					165
-		xpos					2
+		wide 286
+		tall 165
+		xpos 2
 		
+
 		Classname			MapGridInfo
 		scriptID			7
 		
-		controlSettingsFile	"resource/ui/menus/panels/map_grid_button.res"
+		controlSettingsFile "resource/ui/menus/panels/map_grid_button.res"
 		
+
 		pin_to_sibling					GridInfo0x2
 		pin_corner_to_sibling		TOP_LEFT
 		pin_to_sibling_corner		TOP_RIGHT
@@ -134,15 +144,17 @@
 	GridInfo2x2
 	{
 		ControlName CNestedPanel
-		wide 					286
-    tall 					165
-		xpos					2
+		wide 286
+		tall 165
+		xpos 2
 		
+
 		Classname			MapGridInfo
 		scriptID			8
 		
-		controlSettingsFile	"resource/ui/menus/panels/map_grid_button.res"
+		controlSettingsFile "resource/ui/menus/panels/map_grid_button.res"
 		
+
 		pin_to_sibling					GridInfo1x2
 		pin_corner_to_sibling		TOP_LEFT
 		pin_to_sibling_corner		TOP_RIGHT
@@ -151,15 +163,17 @@
 	GridInfo0x3
 	{
 		ControlName CNestedPanel
-		wide 					286
-    tall 					165
-		ypos					2
+		wide 286
+		tall 165
+		ypos 2
 		
+
 		Classname			MapGridInfo
 		scriptID			9
 		
-		controlSettingsFile	"resource/ui/menus/panels/map_grid_button.res"
+		controlSettingsFile "resource/ui/menus/panels/map_grid_button.res"
 		
+
 		pin_to_sibling					GridInfo0x2
 		pin_corner_to_sibling		TOP_LEFT
 		pin_to_sibling_corner		BOTTOM_LEFT
@@ -168,15 +182,17 @@
 	GridInfo1x3
 	{
 		ControlName CNestedPanel
-		wide 					286
-    tall 					165
-		xpos					2
+		wide 286
+		tall 165
+		xpos 2
 		
+
 		Classname			MapGridInfo
 		scriptID			10
 		
-		controlSettingsFile	"resource/ui/menus/panels/map_grid_button.res"
+		controlSettingsFile "resource/ui/menus/panels/map_grid_button.res"
 		
+
 		pin_to_sibling					GridInfo0x3
 		pin_corner_to_sibling		TOP_LEFT
 		pin_to_sibling_corner		TOP_RIGHT
@@ -185,15 +201,17 @@
 	GridInfo2x3
 	{
 		ControlName CNestedPanel
-		wide 					286
-    tall 					165
-		xpos					2
+		wide 286
+		tall 165
+		xpos 2
 		
+
 		Classname			MapGridInfo
 		scriptID			11
 		
-		controlSettingsFile	"resource/ui/menus/panels/map_grid_button.res"
+		controlSettingsFile "resource/ui/menus/panels/map_grid_button.res"
 		
+
 		pin_to_sibling					GridInfo1x3
 		pin_corner_to_sibling		TOP_LEFT
 		pin_to_sibling_corner		TOP_RIGHT
