@@ -214,7 +214,7 @@
 		navDown GridButton0x1
 		navRight GridButton1x0
 		navUp DummyTop
-  }
+	}
 	
 	GridButton1x0
 	{
@@ -235,7 +235,7 @@
 		navRight GridButton2x0
 		navLeft GridButton0x0
 		navUp DummyTop
-  }
+	}
 	
 	GridButton2x0
 	{
@@ -255,7 +255,7 @@
 		navDown GridButton2x1
 		navLeft GridButton1x0
 		navUp DummyTop
-  }
+	}
 	
 	GridButton0x1
 	{
@@ -275,7 +275,7 @@
 		navUp GridButton0x0
 		navRight GridButton1x1
 		navDown GridButton0x2
-  }
+	}
 	
 	GridButton1x1
 	{
@@ -296,7 +296,7 @@
 		navDown GridButton1x2
 		navRight GridButton2x1
 		navLeft GridButton0x1
-  }
+	}
 	
 	GridButton2x1
 	{
@@ -316,7 +316,7 @@
 		navUp GridButton2x0
 		navDown GridButton2x2
 		navLeft GridButton1x1
-  }
+	}
 	
 	GridButton0x2
 	{
@@ -336,7 +336,7 @@
 		navUp GridButton0x1
 		navDown GridButton0x3
 		navRight GridButton1x2
-  }
+	}
 	
 	GridButton1x2
 	{
@@ -357,7 +357,7 @@
 		navDown GridButton1x3
 		navRight GridButton2x2
 		navLeft GridButton0x2
-  }
+	}
 	
 	GridButton2x2
 	{
@@ -377,7 +377,7 @@
 		navUp GridButton2x1
 		navDown GridButton2x3
 		navLeft GridButton1x2
-  }
+	}
 	
 	GridButton0x3
 	{
@@ -397,7 +397,7 @@
 		navUp GridButton0x2
 		navRight GridButton1x3
 		navDown DummyBottom
-  }
+	}
 	
 	GridButton1x3
 	{
@@ -418,7 +418,7 @@
 		navRight GridButton2x3
 		navLeft GridButton0x3
 		navDown DummyBottom
-  }
+	}
 	
 	GridButton2x3
 	{
@@ -438,7 +438,7 @@
 		navUp GridButton2x2
 		navLeft GridButton1x3
 		navDown DummyBottom
-  }
+	}
 
 //--------------------------------------------------------------------
 	
