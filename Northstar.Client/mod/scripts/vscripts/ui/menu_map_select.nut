@@ -128,19 +128,24 @@ void function OnHitDummyTop( var button )
 
 void function OnHitDummyBottom( var button )
 {
-	if ( file.mapsArrayFiltered.len() <= BUTTONS_PER_PAGE || file.mapsArrayFiltered.len() <= 12 ) return
+	if ( file.mapsArrayFiltered.len() <= BUTTONS_PER_PAGE || file.mapsArrayFiltered.len() <= 12 )
+		return
+		
 	file.scrollOffset += 1
-	if ((file.scrollOffset + BUTTONS_PER_PAGE) * 3 > file.mapsArrayFiltered.len()) {
+	
+	if ((file.scrollOffset + BUTTONS_PER_PAGE) * 3 > file.mapsArrayFiltered.len())
 		file.scrollOffset = (file.mapsArrayFiltered.len() - BUTTONS_PER_PAGE * 3) / 3 + 1
-	}
+	
 	UpdateMapsGrid()
 	UpdateListSliderPosition()
 	UpdateNextMapInfo()
 	
 	int scriptID = file.lastSelectedID
+	
 	if( scriptID > file.mapsArrayFiltered.len() - 1 - file.scrollOffset * 3 )
 		scriptID = file.mapsArrayFiltered.len() - file.scrollOffset * 3 - 1
-		
+	
+	
 	var lastButton = file.gridButtons[ scriptID ]
 	
 	Hud_SetFocused( lastButton )

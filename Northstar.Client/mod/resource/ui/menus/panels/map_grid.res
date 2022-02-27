@@ -202,14 +202,14 @@
 //--------------------------------------------------------------------
 	
 	GridButton0x0
-  {
-    ControlName				   RuiButton
-    InheritProperties		RuiSmallButton
-    wide 							286
-    tall              165
+	{
+		ControlName RuiButton
+		InheritProperties RuiSmallButton
+		wide 286
+		tall 165
 		
-		Classname			MapGridButtons
-		scriptID			0
+		Classname MapGridButtons
+		scriptID 0
 		
 		navDown GridButton0x1
 		navRight GridButton1x0
@@ -217,19 +217,19 @@
   }
 	
 	GridButton1x0
-  {
-    ControlName				   RuiButton
-    InheritProperties		RuiSmallButton
-    wide 							286
-    tall              165
-		xpos					2
+	{
+		ControlName RuiButton
+		InheritProperties RuiSmallButton
+		wide 286
+		tall 165
+		xpos 2
 		
-		Classname			MapGridButtons
-		scriptID			1
+		Classname MapGridButtons
+		scriptID 1
 		
-		pin_to_sibling					GridButton0x0
-		pin_corner_to_sibling		TOP_LEFT
-		pin_to_sibling_corner		TOP_RIGHT
+		pin_to_sibling GridButton0x0
+		pin_corner_to_sibling TOP_LEFT
+		pin_to_sibling_corner TOP_RIGHT
 		
 		navDown GridButton1x1
 		navRight GridButton2x0
@@ -238,19 +238,19 @@
   }
 	
 	GridButton2x0
-  {
-    ControlName				   RuiButton
-    InheritProperties		RuiSmallButton
-		wide 					286
-    tall 					165
-		xpos					2
+	{
+		ControlName RuiButton
+		InheritProperties RuiSmallButton
+		wide 286
+		tall 165
+		xpos 2
 		
-		Classname			MapGridButtons
-		scriptID			2
+		Classname MapGridButtons
+		scriptID 2
 		
-		pin_to_sibling					GridButton1x0
-		pin_corner_to_sibling		TOP_LEFT
-		pin_to_sibling_corner		TOP_RIGHT
+		pin_to_sibling GridButton1x0
+		pin_corner_to_sibling TOP_LEFT
+		pin_to_sibling_corner TOP_RIGHT
 		
 		navDown GridButton2x1
 		navLeft GridButton1x0
@@ -258,19 +258,19 @@
   }
 	
 	GridButton0x1
-  {
-    ControlName				   RuiButton
-    InheritProperties		RuiSmallButton
-		wide 					286
-    tall 					165
-		ypos					2
+	{
+		ControlName RuiButton
+		InheritProperties RuiSmallButton
+		wide 286
+		tall 165
+		ypos 2
 		
-		Classname			MapGridButtons
-		scriptID			3
+		Classname MapGridButtons
+		scriptID 3
 		
-		pin_to_sibling					GridInfo0x0
-		pin_corner_to_sibling		TOP_LEFT
-		pin_to_sibling_corner		BOTTOM_LEFT
+		pin_to_sibling GridInfo0x0
+		pin_corner_to_sibling TOP_LEFT
+		pin_to_sibling_corner BOTTOM_LEFT
 		
 		navUp GridButton0x0
 		navRight GridButton1x1
@@ -278,19 +278,19 @@
   }
 	
 	GridButton1x1
-  {
-    ControlName				   RuiButton
-    InheritProperties		RuiSmallButton
-    wide 							286
-    tall              165
-		xpos					2
+	{
+		ControlName RuiButton
+		InheritProperties RuiSmallButton
+		wide 286
+		tall 165
+		xpos 2
 		
-		Classname			MapGridButtons
-		scriptID			4
+		Classname MapGridButtons
+		scriptID 4
 		
-		pin_to_sibling					GridButton0x1
-		pin_corner_to_sibling		TOP_LEFT
-		pin_to_sibling_corner		TOP_RIGHT
+		pin_to_sibling GridButton0x1
+		pin_corner_to_sibling TOP_LEFT
+		pin_to_sibling_corner TOP_RIGHT
 		
 		navUp GridButton1x0
 		navDown GridButton1x2
@@ -299,19 +299,19 @@
   }
 	
 	GridButton2x1
-  {
-    ControlName				   RuiButton
-    InheritProperties		RuiSmallButton
-		wide 					286
-    tall 					165
-		xpos					2
+	{
+		ControlName RuiButton
+		InheritProperties RuiSmallButton
+		wide 286
+		tall 165
+		xpos 2
 		
-		Classname			MapGridButtons
-		scriptID			5
+		Classname MapGridButtons
+		scriptID 5
 		
-		pin_to_sibling					GridButton1x1
-		pin_corner_to_sibling		TOP_LEFT
-		pin_to_sibling_corner		TOP_RIGHT
+		pin_to_sibling GridButton1x1
+		pin_corner_to_sibling TOP_LEFT
+		pin_to_sibling_corner TOP_RIGHT
 		
 		navUp GridButton2x0
 		navDown GridButton2x2
@@ -319,19 +319,19 @@
   }
 	
 	GridButton0x2
-  {
-    ControlName				   RuiButton
-    InheritProperties		RuiSmallButton
-		wide 					286
-    tall 					165
-		ypos					2
+	{
+		ControlName RuiButton
+		InheritProperties RuiSmallButton
+		wide 286
+		tall 165
+		ypos 2
 		
-		Classname			MapGridButtons
-		scriptID			6
+		Classname MapGridButtons
+		scriptID 6
 		
-		pin_to_sibling					GridInfo0x1
-		pin_corner_to_sibling		TOP_LEFT
-		pin_to_sibling_corner		BOTTOM_LEFT
+		pin_to_sibling GridInfo0x1
+		pin_corner_to_sibling TOP_LEFT
+		pin_to_sibling_corner BOTTOM_LEFT
 		
 		navUp GridButton0x1
 		navDown GridButton0x3
@@ -339,19 +339,19 @@
   }
 	
 	GridButton1x2
-  {
-    ControlName				   RuiButton
-    InheritProperties		RuiSmallButton
-    wide 							286
-    tall              165
-		xpos					2
+	{
+		ControlName RuiButton
+		InheritProperties RuiSmallButton
+		wide 286
+		tall 165
+		xpos 2
 		
-		Classname			MapGridButtons
-		scriptID			7
+		Classname MapGridButtons
+		scriptID 7
 		
-		pin_to_sibling					GridButton0x2
-		pin_corner_to_sibling		TOP_LEFT
-		pin_to_sibling_corner		TOP_RIGHT
+		pin_to_sibling GridButton0x2
+		pin_corner_to_sibling TOP_LEFT
+		pin_to_sibling_corner TOP_RIGHT
 		
 		navUp GridButton1x1
 		navDown GridButton1x3
@@ -360,19 +360,19 @@
   }
 	
 	GridButton2x2
-  {
-    ControlName				   RuiButton
-    InheritProperties		RuiSmallButton
-		wide 					286
-    tall 					165
-		xpos					2
+	{
+		ControlName RuiButton
+		InheritProperties RuiSmallButton
+		wide 286
+		tall 165
+		xpos 2
 		
-		Classname			MapGridButtons
-		scriptID			8
+		Classname MapGridButtons
+		scriptID 8
 		
-		pin_to_sibling					GridButton1x2
-		pin_corner_to_sibling		TOP_LEFT
-		pin_to_sibling_corner		TOP_RIGHT
+		pin_to_sibling GridButton1x2
+		pin_corner_to_sibling TOP_LEFT
+		pin_to_sibling_corner TOP_RIGHT
 		
 		navUp GridButton2x1
 		navDown GridButton2x3
@@ -380,19 +380,19 @@
   }
 	
 	GridButton0x3
-  {
-    ControlName				   RuiButton
-    InheritProperties		RuiSmallButton
-		wide 					286
-    tall 					165
-		ypos					2
+	{
+		ControlName RuiButton
+		InheritProperties RuiSmallButton
+		wide 286
+		tall 165
+		ypos 2
 		
-		Classname			MapGridButtons
-		scriptID			9
+		Classname MapGridButtons
+		scriptID 9
 		
-		pin_to_sibling					GridInfo0x2
-		pin_corner_to_sibling		TOP_LEFT
-		pin_to_sibling_corner		BOTTOM_LEFT
+		pin_to_sibling GridInfo0x2
+		pin_corner_to_sibling TOP_LEFT
+		pin_to_sibling_corner BOTTOM_LEFT
 		
 		navUp GridButton0x2
 		navRight GridButton1x3
@@ -400,19 +400,19 @@
   }
 	
 	GridButton1x3
-  {
-    ControlName				   RuiButton
-    InheritProperties		RuiSmallButton
-    wide 							286
-    tall              165
-		xpos					2
+	{
+		ControlName RuiButton
+		InheritProperties RuiSmallButton
+		wide 286
+		tall 165
+		xpos 2
 		
-		Classname			MapGridButtons
-		scriptID			10
+		Classname MapGridButtons
+		scriptID 10
 		
-		pin_to_sibling					GridButton0x3
-		pin_corner_to_sibling		TOP_LEFT
-		pin_to_sibling_corner		TOP_RIGHT
+		pin_to_sibling GridButton0x3
+		pin_corner_to_sibling TOP_LEFT
+		pin_to_sibling_corner TOP_RIGHT
 		
 		navUp GridButton1x2
 		navRight GridButton2x3
@@ -421,19 +421,19 @@
   }
 	
 	GridButton2x3
-  {
-    ControlName				   RuiButton
-    InheritProperties		RuiSmallButton
-		wide 					286
-    tall 					165
-		xpos					2
+	{
+		ControlName RuiButton
+		InheritProperties RuiSmallButton
+		wide 286
+		tall 165
+		xpos 2
 		
-		Classname			MapGridButtons
-		scriptID			11
+		Classname MapGridButtons
+		scriptID 11
 		
-		pin_to_sibling					GridButton1x3
-		pin_corner_to_sibling		TOP_LEFT
-		pin_to_sibling_corner		TOP_RIGHT
+		pin_to_sibling GridButton1x3
+		pin_corner_to_sibling TOP_LEFT
+		pin_to_sibling_corner TOP_RIGHT
 		
 		navUp GridButton2x2
 		navLeft GridButton1x3
@@ -444,17 +444,17 @@
 	
 	DummyTop
 	{
-		ControlName				   RuiButton
-		InheritProperties		RuiSmallButton
-		wide 					0
-		tall 					0
+		ControlName RuiButton
+		InheritProperties RuiSmallButton
+		wide 0
+		tall 0
 	}
 	
 	DummyBottom
 	{
 		ControlName				   RuiButton
 		InheritProperties		RuiSmallButton
-		wide 					0
-		tall 					0
+		wide 0
+		tall 0
 	}
 }
