@@ -84,14 +84,21 @@ table<string, bool> VortexIgnoreClassnames = {
 	["mp_ability_grapple"] = true,
 	["mp_ability_shifter"] = true,
 }
-bool function RegisterNewVortexIgnoreClassname(string classname, bool shouldignore)
+void function RegisterNewVortexIgnoreClassnames(table<string, bool> classTable)
 {
-	if(!(classname in VortexIgnoreClassnames))
+	foreach(string classname, bool shouldignore in classTable)
 	{
-		VortexIgnoreClassnames[classname] <- shouldignore
-		return true
+		RegisterNewVortexIgnoreClassname(classname, shouldignore)
 	}
-	return false
+}
+void function RegisterNewVortexIgnoreClassname(string classname, bool shouldignore)
+{
+	if(classname in VortexIgnoreClassnames)
+	{
+		VortexIgnoreClassnames[classname] = shouldignore
+		return
+	}
+	VortexIgnoreClassnames[classname] <- shouldignore
 }
 table vortexImpactWeaponInfo
 
