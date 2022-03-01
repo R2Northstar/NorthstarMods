@@ -127,6 +127,12 @@ bool function EvacEpiloguePlayerCanBoard( entity dropship, entity player )
 	// can't board a dropship on a different team
 	if ( dropship.GetTeam() != player.GetTeam() )
 		return false
+	// can't board a dropship while being a titan
+	if ( player.IsTitan() )
+		return false
+	// can't board a dropship while in disembark animation
+	if ( IsPlayerDisembarking( player ) )
+		return false
 	
 	// check if there are any free slots on the dropship, if there are then they can board
 	foreach ( entity player in dropship.s.evacSlots )
