@@ -6,6 +6,7 @@ global function CreateVortexSphere
 global function DestroyVortexSphereFromVortexWeapon
 global function EnableVortexSphere
 global function RegisterNewVortexIgnoreClassname
+global function RegisterNewVortexIgnoreClassnames
 #if SERVER
 global function ValidateVortexImpact
 global function TryVortexAbsorb
