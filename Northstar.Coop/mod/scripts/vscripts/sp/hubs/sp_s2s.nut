@@ -6761,9 +6761,6 @@ void function Malta_RackRunners_Think( entity guy )
 
 void function MaltaBayCheckReadyForLift( entity door, entity player )
 {
-	// tp all players to the player enterign the elevator
-	thread TeleportAllExpectOne( player.GetOrigin(), player )
-
 	if ( Flag( "MaltaBayLiftGuySpawn" ) )
 		return
 	FlagEnd( "MaltaBayLiftGuySpawn" )
@@ -6836,6 +6833,9 @@ void function MaltaGuns_Setup( entity player )
 
 	PlayerSetStartPoint( player, lift.upPos )
 	player.SetAngles(<0,0,0>)
+
+	// tp all players to the player enterign the elevator
+	thread TeleportAllExpectOne( lift.upPos.GetOrigin(), player )
 }
 
 void function MaltaGuns_Skip( entity player )

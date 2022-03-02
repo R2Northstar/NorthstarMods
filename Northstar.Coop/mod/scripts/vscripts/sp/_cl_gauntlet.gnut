@@ -335,191 +335,191 @@ void function GauntletPlayer_TrackSpeed( GauntletInfo gauntlet )
 
 void function ScriptCallback_Gauntlet_AbortRun( int gauntletID )
 {
-	GauntletInfo gauntlet = GetGauntletByID( gauntletID )
+	// GauntletInfo gauntlet = GetGauntletByID( gauntletID )
 
-	Gauntlet_RunFinished_Common( gauntlet )
+	// Gauntlet_RunFinished_Common( gauntlet )
 
-	if ( gauntlet.hasResultsDisplay )
-	{
-		Gauntlet_ResultsDisplay_SetStartTime( gauntlet, RUI_BADGAMETIME )
-	}
+	// if ( gauntlet.hasResultsDisplay )
+	// {
+	// 	Gauntlet_ResultsDisplay_SetStartTime( gauntlet, RUI_BADGAMETIME )
+	// }
 
-	Gauntlet_DestroyPlayerHUD()
+	// Gauntlet_DestroyPlayerHUD()
 }
 
 void function ScriptCallback_Gauntlet_FinishRun( int gauntletID, float elapsedTime, float bestTime, float enemiesMissedTimePenalty )
 {
-	GauntletInfo gauntlet = GetGauntletByID( gauntletID )
+	// GauntletInfo gauntlet = GetGauntletByID( gauntletID )
 
-	Gauntlet_FinishSplash( gauntlet )
+	// Gauntlet_FinishSplash( gauntlet )
 
-	Gauntlet_RunFinished_Common( gauntlet )
+	// Gauntlet_RunFinished_Common( gauntlet )
 
-	gauntlet.bestTime = bestTime
+	// gauntlet.bestTime = bestTime
 
-	Gauntlet_SetRunFinished( gauntlet, true )
+	// Gauntlet_SetRunFinished( gauntlet, true )
 
-	thread Gauntlet_FinishRun_PlayerHUD_Think( elapsedTime, bestTime, enemiesMissedTimePenalty )
+	// thread Gauntlet_FinishRun_PlayerHUD_Think( elapsedTime, bestTime, enemiesMissedTimePenalty )
 
-	Gauntlet_PostRun_ResultsDisplayUpdate( gauntlet, gauntlet.runFinished, elapsedTime, bestTime, enemiesMissedTimePenalty )
+	// Gauntlet_PostRun_ResultsDisplayUpdate( gauntlet, gauntlet.runFinished, elapsedTime, bestTime, enemiesMissedTimePenalty )
 }
 
 void function Gauntlet_RunFinished_Common( GauntletInfo gauntlet )
 {
-	if ( IsAlive( gauntlet.player ) )
-		gauntlet.player.Signal( "Gauntlet_RunStopped" )
+	// if ( IsAlive( gauntlet.player ) )
+	// 	gauntlet.player.Signal( "Gauntlet_RunStopped" )
 
-	Gauntlet_CreateStartingLineDisplay( gauntlet )
-	Gauntlet_DestroyFinishLineDisplay( gauntlet )
-	RemoveAllRagdolls()  // cleans up any downed enemies
+	// Gauntlet_CreateStartingLineDisplay( gauntlet )
+	// Gauntlet_DestroyFinishLineDisplay( gauntlet )
+	// RemoveAllRagdolls()  // cleans up any downed enemies
 }
 
 void function Gauntlet_FinishRun_PlayerHUD_Think( float elapsedTime, float bestTime, float enemiesMissedTimePenalty )
 {
-	if ( file.gauntletPlayerHUD == null )
-		return
+	// if ( file.gauntletPlayerHUD == null )
+	// 	return
 
-	// update player HUD
-	RuiSetBool( file.gauntletPlayerHUD, "runFinished", true )
-	RuiSetFloat( file.gauntletPlayerHUD, "finalTime", elapsedTime )
-	RuiSetFloat( file.gauntletPlayerHUD, "bestTime", bestTime )
-	RuiSetFloat( file.gauntletPlayerHUD, "enemiesMissedTimePenalty", enemiesMissedTimePenalty )
+	// // update player HUD
+	// RuiSetBool( file.gauntletPlayerHUD, "runFinished", true )
+	// RuiSetFloat( file.gauntletPlayerHUD, "finalTime", elapsedTime )
+	// RuiSetFloat( file.gauntletPlayerHUD, "bestTime", bestTime )
+	// RuiSetFloat( file.gauntletPlayerHUD, "enemiesMissedTimePenalty", enemiesMissedTimePenalty )
 
-	bool isNewBestTime = (elapsedTime == bestTime)
+	// bool isNewBestTime = (elapsedTime == bestTime)
 
-	float waitBeforeDestroy = 4.0
+	// float waitBeforeDestroy = 4.0
 
-	entity player = GetLocalViewPlayer()
-	player.EndSignal( "OnDeath" )
-	player.EndSignal( "Gauntlet_RunStarted" )
+	// entity player = GetLocalViewPlayer()
+	// player.EndSignal( "OnDeath" )
+	// player.EndSignal( "Gauntlet_RunStarted" )
 
-	wait waitBeforeDestroy
-	Gauntlet_DestroyPlayerHUD()
+	// wait waitBeforeDestroy
+	// Gauntlet_DestroyPlayerHUD()
 }
 
 void function CreateGauntletPlayerHUD( GauntletInfo gauntlet )
 {
-	Gauntlet_DestroyPlayerHUD()
+	// Gauntlet_DestroyPlayerHUD()
 
-	file.gauntletPlayerHUD = RuiCreate( $"ui/gauntlet_hud.rpak", clGlobal.topoCockpitHud, RUI_DRAW_COCKPIT, 0 )
-	RuiSetGameTime( file.gauntletPlayerHUD, "startTime", Time() )
+	// file.gauntletPlayerHUD = RuiCreate( $"ui/gauntlet_hud.rpak", clGlobal.topoCockpitHud, RUI_DRAW_COCKPIT, 0 )
+	// RuiSetGameTime( file.gauntletPlayerHUD, "startTime", Time() )
 
-	if ( gauntlet.bestTime > 0 )
-		RuiSetFloat( file.gauntletPlayerHUD, "bestTime", gauntlet.bestTime )
+	// if ( gauntlet.bestTime > 0 )
+	// 	RuiSetFloat( file.gauntletPlayerHUD, "bestTime", gauntlet.bestTime )
 }
 
 void function Gauntlet_DestroyPlayerHUD()
 {
-	if ( file.gauntletPlayerHUD != null )
-		RuiDestroyIfAlive( file.gauntletPlayerHUD )
+	// if ( file.gauntletPlayerHUD != null )
+	// 	RuiDestroyIfAlive( file.gauntletPlayerHUD )
 
-	file.gauntletPlayerHUD = null
+	// file.gauntletPlayerHUD = null
 }
 
 void function Gauntlet_SetGenericTips( GauntletInfo gauntlet )
 {
-	Assert( IsClient() )
+	// Assert( IsClient() )
 
-	file.gauntletTips.randomize()
-	gauntlet.resultsDisplayTips = file.gauntletTips
+	// file.gauntletTips.randomize()
+	// gauntlet.resultsDisplayTips = file.gauntletTips
 }
 
 void function Gauntlet_DestroySplashRUI( GauntletInfo gauntlet )
 {
-	if ( gauntlet.splashRUI != null )
-		RuiDestroyIfAlive( gauntlet.splashRUI )
+	// if ( gauntlet.splashRUI != null )
+	// 	RuiDestroyIfAlive( gauntlet.splashRUI )
 
-	gauntlet.splashRUI = null
+	// gauntlet.splashRUI = null
 }
 
 void function Gauntlet_StartSplash( GauntletInfo gauntlet, float duration = 1.8 )
 {
-	Gauntlet_DestroySplashRUI( gauntlet )
+	// Gauntlet_DestroySplashRUI( gauntlet )
 
-	var splashRUI = RuiCreate( $"ui/gauntlet_splash.rpak", clGlobal.topoCockpitHud, RUI_DRAW_COCKPIT, 0 )
-	RuiSetFloat( splashRUI, "duration", duration )
-	RuiSetString( splashRUI, "message", "#GAUNTLET_START_TEXT")
+	// var splashRUI = RuiCreate( $"ui/gauntlet_splash.rpak", clGlobal.topoCockpitHud, RUI_DRAW_COCKPIT, 0 )
+	// RuiSetFloat( splashRUI, "duration", duration )
+	// RuiSetString( splashRUI, "message", "#GAUNTLET_START_TEXT")
 
-	gauntlet.splashRUI = splashRUI
+	// gauntlet.splashRUI = splashRUI
 }
 
 void function Gauntlet_FinishSplash( GauntletInfo gauntlet, float duration = 1.8 )
 {
-	Gauntlet_DestroySplashRUI( gauntlet )
+	// Gauntlet_DestroySplashRUI( gauntlet )
 
-	var splashRUI = RuiCreate( $"ui/gauntlet_splash.rpak", clGlobal.topoCockpitHud, RUI_DRAW_COCKPIT, 0 )
-	RuiSetFloat( splashRUI, "duration", duration )
-	RuiSetString( splashRUI, "message", "#GAUNTLET_FINISH_TEXT")
+	// var splashRUI = RuiCreate( $"ui/gauntlet_splash.rpak", clGlobal.topoCockpitHud, RUI_DRAW_COCKPIT, 0 )
+	// RuiSetFloat( splashRUI, "duration", duration )
+	// RuiSetString( splashRUI, "message", "#GAUNTLET_FINISH_TEXT")
 
-	gauntlet.splashRUI = splashRUI
+	// gauntlet.splashRUI = splashRUI
 }
 
 void function Gauntlet_CreateStartingLineDisplay( GauntletInfo gauntlet )
 {
-	Gauntlet_DestroyStartingLineDisplay( gauntlet )
+	// Gauntlet_DestroyStartingLineDisplay( gauntlet )
 
-	if ( gauntlet.startDisplayTopology == null )
-	{
-		float width 	= 60
-		float height 	= 30
+	// if ( gauntlet.startDisplayTopology == null )
+	// {
+	// 	float width 	= 60
+	// 	float height 	= 30
 
-		if ( gauntlet.startDisplayScale != 1.0 )
-		{
-			width *= gauntlet.startDisplayScale
-			height *= gauntlet.startDisplayScale
-		}
+	// 	if ( gauntlet.startDisplayScale != 1.0 )
+	// 	{
+	// 		width *= gauntlet.startDisplayScale
+	// 		height *= gauntlet.startDisplayScale
+	// 	}
 
-		entity ent = gauntlet.startDisplaySpot
-		vector org = ent.GetOrigin()
-		vector ang = ent.GetAngles()
+	// 	entity ent = gauntlet.startDisplaySpot
+	// 	vector org = ent.GetOrigin()
+	// 	vector ang = ent.GetAngles()
 
-		gauntlet.startDisplayTopology = Gauntlet_CreateRUITopology( org, ang, width, height )
-	}
+	// 	gauntlet.startDisplayTopology = Gauntlet_CreateRUITopology( org, ang, width, height )
+	// }
 
-	gauntlet.startDisplayRUI = RuiCreate( $"ui/gauntlet_starting_line.rpak", gauntlet.startDisplayTopology, RUI_DRAW_WORLD, 0 )
-	RuiSetString( gauntlet.startDisplayRUI, "displayText", "#GAUNTLET_START_TEXT" )
+	// gauntlet.startDisplayRUI = RuiCreate( $"ui/gauntlet_starting_line.rpak", gauntlet.startDisplayTopology, RUI_DRAW_WORLD, 0 )
+	// RuiSetString( gauntlet.startDisplayRUI, "displayText", "#GAUNTLET_START_TEXT" )
 }
 
 void function Gauntlet_DestroyStartingLineDisplay( GauntletInfo gauntlet )
 {
-	if ( gauntlet.startDisplayRUI != null )
-		RuiDestroyIfAlive( gauntlet.startDisplayRUI )
+	// if ( gauntlet.startDisplayRUI != null )
+	// 	RuiDestroyIfAlive( gauntlet.startDisplayRUI )
 
-	gauntlet.startDisplayRUI = null
+	// gauntlet.startDisplayRUI = null
 }
 
 void function Gauntlet_CreateFinishLineDisplay( GauntletInfo gauntlet )
 {
-	Gauntlet_DestroyFinishLineDisplay( gauntlet )
+	// Gauntlet_DestroyFinishLineDisplay( gauntlet )
 
-	if ( gauntlet.finishDisplayTopology == null )
-	{
-		float width 	= 60
-		float height 	= 30
+	// if ( gauntlet.finishDisplayTopology == null )
+	// {
+	// 	float width 	= 60
+	// 	float height 	= 30
 
-		if ( gauntlet.finishDisplayScale != 1.0 )
-		{
-			width *= gauntlet.finishDisplayScale
-			height *= gauntlet.finishDisplayScale
-		}
+	// 	if ( gauntlet.finishDisplayScale != 1.0 )
+	// 	{
+	// 		width *= gauntlet.finishDisplayScale
+	// 		height *= gauntlet.finishDisplayScale
+	// 	}
 
-		entity ent = gauntlet.finishDisplaySpot
-		vector org = ent.GetOrigin()
-		vector ang = ent.GetAngles()
+	// 	entity ent = gauntlet.finishDisplaySpot
+	// 	vector org = ent.GetOrigin()
+	// 	vector ang = ent.GetAngles()
 
-		gauntlet.finishDisplayTopology = Gauntlet_CreateRUITopology( org, ang, width, height )
-	}
+	// 	gauntlet.finishDisplayTopology = Gauntlet_CreateRUITopology( org, ang, width, height )
+	// }
 
-	gauntlet.finishDisplayRUI = RuiCreate( $"ui/gauntlet_starting_line.rpak", gauntlet.finishDisplayTopology, RUI_DRAW_WORLD, 0 )
-	RuiSetString( gauntlet.finishDisplayRUI, "displayText", "#GAUNTLET_FINISH_TEXT" )
+	// gauntlet.finishDisplayRUI = RuiCreate( $"ui/gauntlet_starting_line.rpak", gauntlet.finishDisplayTopology, RUI_DRAW_WORLD, 0 )
+	// RuiSetString( gauntlet.finishDisplayRUI, "displayText", "#GAUNTLET_FINISH_TEXT" )
 }
 
 void function Gauntlet_DestroyFinishLineDisplay( GauntletInfo gauntlet )
 {
-	if ( gauntlet.finishDisplayRUI != null )
-		RuiDestroyIfAlive( gauntlet.finishDisplayRUI )
+	// if ( gauntlet.finishDisplayRUI != null )
+	// 	RuiDestroyIfAlive( gauntlet.finishDisplayRUI )
 
-	gauntlet.finishDisplayRUI = null
+	// gauntlet.finishDisplayRUI = null
 }
 
 var function Gauntlet_CreateRUITopology( vector org, vector ang, float width, float height )
@@ -546,101 +546,101 @@ var function Gauntlet_CreateRUITopology( vector org, vector ang, float width, fl
 // ======================================
 void function Gauntlet_CreateLeaderboards( GauntletInfo gauntlet )
 {
-	if ( !gauntlet.hasLeaderboard )
-		return
+	// if ( !gauntlet.hasLeaderboard )
+	// 	return
 
-	Gauntlet_DestroyLeaderboards( gauntlet )
+	// Gauntlet_DestroyLeaderboards( gauntlet )
 
-	foreach ( GauntletWorldspaceDisplay displayInfo in gauntlet.leaderboardDisplays )
-	{
-		if ( displayInfo.topology == null )
-		{
-			entity topleft = displayInfo.cornerEnt_topLeft
-			entity bottomright = displayInfo.cornerEnt_bottomRight
+	// foreach ( GauntletWorldspaceDisplay displayInfo in gauntlet.leaderboardDisplays )
+	// {
+	// 	if ( displayInfo.topology == null )
+	// 	{
+	// 		entity topleft = displayInfo.cornerEnt_topLeft
+	// 		entity bottomright = displayInfo.cornerEnt_bottomRight
 
-			Assert( topleft.GetOrigin().z > bottomright.GetOrigin().z, "topleft leaderboard ent at " + topleft.GetOrigin() + " needs to be higher than bottomright" )
+	// 		Assert( topleft.GetOrigin().z > bottomright.GetOrigin().z, "topleft leaderboard ent at " + topleft.GetOrigin() + " needs to be higher than bottomright" )
 
-			// a = height, b = width, c = hypotenuse
-			// b = squareroot(cSquared-aSquared)
-			float height = fabs( topleft.GetOrigin().z - bottomright.GetOrigin().z )
-			float c = Distance( topleft.GetOrigin(), bottomright.GetOrigin() )
-			float width = sqrt( (c*c) - (height*height) )
+	// 		// a = height, b = width, c = hypotenuse
+	// 		// b = squareroot(cSquared-aSquared)
+	// 		float height = fabs( topleft.GetOrigin().z - bottomright.GetOrigin().z )
+	// 		float c = Distance( topleft.GetOrigin(), bottomright.GetOrigin() )
+	// 		float width = sqrt( (c*c) - (height*height) )
 
-			vector org = topleft.GetOrigin()
-			vector ang = topleft.GetAngles()
-			// right and down vectors that get added to base org to create the display size
-			vector right = ( (AnglesToRight( ang )) * width )
-			vector down = ( (AnglesToUp( ang )*-1) * height )
+	// 		vector org = topleft.GetOrigin()
+	// 		vector ang = topleft.GetAngles()
+	// 		// right and down vectors that get added to base org to create the display size
+	// 		vector right = ( (AnglesToRight( ang )) * width )
+	// 		vector down = ( (AnglesToUp( ang )*-1) * height )
 
-			displayInfo.topology = RuiTopology_CreatePlane( org, right, down, true )
-		}
+	// 		displayInfo.topology = RuiTopology_CreatePlane( org, right, down, true )
+	// 	}
 
-		displayInfo.rui = RuiCreate( $"ui/gauntlet_leaderboard.rpak", displayInfo.topology, RUI_DRAW_WORLD, 0 )
-	}
+	// 	displayInfo.rui = RuiCreate( $"ui/gauntlet_leaderboard.rpak", displayInfo.topology, RUI_DRAW_WORLD, 0 )
+	// }
 
-	Gauntlet_RefreshLeaderboard( gauntlet )
+	// Gauntlet_RefreshLeaderboard( gauntlet )
 }
 
 void function Gauntlet_DestroyLeaderboards( GauntletInfo gauntlet )
 {
-	foreach ( displayInfo in gauntlet.leaderboardDisplays )
-	{
-		if ( displayInfo.rui != null )
-			RuiDestroyIfAlive( displayInfo.rui )
+	// foreach ( displayInfo in gauntlet.leaderboardDisplays )
+	// {
+	// 	if ( displayInfo.rui != null )
+	// 		RuiDestroyIfAlive( displayInfo.rui )
 
-		displayInfo.rui = null
-	}
+	// 	displayInfo.rui = null
+	// }
 }
 
 void function ScriptCallback_Gauntlet_SetGhostDuration( int gauntletID, int ghostID, float duration )
 {
-	GauntletInfo gauntlet = GetGauntletByID( gauntletID )
-	GauntletGhost ghost = Gauntlet_GetGhostByID( gauntlet, ghostID )
+	// GauntletInfo gauntlet = GetGauntletByID( gauntletID )
+	// GauntletGhost ghost = Gauntlet_GetGhostByID( gauntlet, ghostID )
 
-	Gauntlet_SetGhostDuration( gauntlet, ghost, duration )
+	// Gauntlet_SetGhostDuration( gauntlet, ghost, duration )
 }
 
 void function ScriptCallback_Gauntlet_SetActiveGhostID( int gauntletID, int ghostID )
 {
-	GauntletInfo gauntlet = GetGauntletByID( gauntletID )
-	Gauntlet_SetActiveGhostID( gauntlet, ghostID )
+	// GauntletInfo gauntlet = GetGauntletByID( gauntletID )
+	// Gauntlet_SetActiveGhostID( gauntlet, ghostID )
 }
 
 void function Gauntlet_SetLeaderboardEntry( GauntletInfo gauntlet, int leaderboardIdx, GauntletGhost ghost )
 {
-	bool highlightName = false
-	if ( GauntletGhost_IsPlayerGhost( ghost ) )
-		highlightName = true
+	// bool highlightName = false
+	// if ( GauntletGhost_IsPlayerGhost( ghost ) )
+	// 	highlightName = true
 
-	foreach ( displayInfo in gauntlet.leaderboardDisplays )
-	{
-		string nameArg = "entry" + leaderboardIdx + "Name"
-		string timeArg = "entry" + leaderboardIdx + "Time"
+	// foreach ( displayInfo in gauntlet.leaderboardDisplays )
+	// {
+	// 	string nameArg = "entry" + leaderboardIdx + "Name"
+	// 	string timeArg = "entry" + leaderboardIdx + "Time"
 
-		RuiSetString( displayInfo.rui, nameArg, ghost.displayName )
-		RuiSetFloat( displayInfo.rui, timeArg, ghost.duration )
+	// 	RuiSetString( displayInfo.rui, nameArg, ghost.displayName )
+	// 	RuiSetFloat( displayInfo.rui, timeArg, ghost.duration )
 
-		if ( highlightName )
-			RuiSetInt( displayInfo.rui, "highlightNameIdx", leaderboardIdx )
-	}
+	// 	if ( highlightName )
+	// 		RuiSetInt( displayInfo.rui, "highlightNameIdx", leaderboardIdx )
+	// }
 }
 
 void function Gauntlet_UpdateActiveGhostForLeaderboard( GauntletInfo gauntlet, int ghostID )
 {
-	if ( !gauntlet.hasLeaderboard )
-		return
+	// if ( !gauntlet.hasLeaderboard )
+	// 	return
 
-	if ( !gauntlet.showLeaderboard )
-		return
+	// if ( !gauntlet.showLeaderboard )
+	// 	return
 
-	int leaderboardIdx = -1
-	if ( ghostID != -1 )
-		leaderboardIdx = Gauntlet_GetLeaderboardPosition_ForGhostID( gauntlet, ghostID )
+	// int leaderboardIdx = -1
+	// if ( ghostID != -1 )
+	// 	leaderboardIdx = Gauntlet_GetLeaderboardPosition_ForGhostID( gauntlet, ghostID )
 
-	foreach ( displayInfo in gauntlet.leaderboardDisplays )
-	{
-		RuiSetInt( displayInfo.rui, "activeEntryIdx", leaderboardIdx )
-	}
+	// foreach ( displayInfo in gauntlet.leaderboardDisplays )
+	// {
+	// 	RuiSetInt( displayInfo.rui, "activeEntryIdx", leaderboardIdx )
+	// }
 }
 
 
@@ -649,50 +649,50 @@ void function Gauntlet_UpdateActiveGhostForLeaderboard( GauntletInfo gauntlet, i
 // ==========================================
 void function Gauntlet_CreateResultsDisplays( GauntletInfo gauntlet )
 {
-	if ( !gauntlet.hasResultsDisplay )
-		return
+	// if ( !gauntlet.hasResultsDisplay )
+	// 	return
 
-	Gauntlet_DestroyResultsDisplays( gauntlet )
+	// Gauntlet_DestroyResultsDisplays( gauntlet )
 
-	foreach ( GauntletWorldspaceDisplay displayInfo in gauntlet.resultsDisplays )
-	{
-		if ( displayInfo.topology == null )
-		{
-			entity topleft = displayInfo.cornerEnt_topLeft
-			entity bottomright = displayInfo.cornerEnt_bottomRight
+	// foreach ( GauntletWorldspaceDisplay displayInfo in gauntlet.resultsDisplays )
+	// {
+	// 	if ( displayInfo.topology == null )
+	// 	{
+	// 		entity topleft = displayInfo.cornerEnt_topLeft
+	// 		entity bottomright = displayInfo.cornerEnt_bottomRight
 
-			Assert( topleft.GetOrigin().z > bottomright.GetOrigin().z, "topleft results display ent at " + topleft.GetOrigin() + " needs to be higher than bottomright" )
+	// 		Assert( topleft.GetOrigin().z > bottomright.GetOrigin().z, "topleft results display ent at " + topleft.GetOrigin() + " needs to be higher than bottomright" )
 
-			// a = height, b = width, c = hypotenuse
-			// b = squareroot(cSquared-aSquared)
-			float height = fabs( topleft.GetOrigin().z - bottomright.GetOrigin().z )
-			float c = Distance( topleft.GetOrigin(), bottomright.GetOrigin() )
-			float width = sqrt( (c*c) - (height*height) )
+	// 		// a = height, b = width, c = hypotenuse
+	// 		// b = squareroot(cSquared-aSquared)
+	// 		float height = fabs( topleft.GetOrigin().z - bottomright.GetOrigin().z )
+	// 		float c = Distance( topleft.GetOrigin(), bottomright.GetOrigin() )
+	// 		float width = sqrt( (c*c) - (height*height) )
 
-			vector org = topleft.GetOrigin()
-			vector ang = topleft.GetAngles()
-			// right and down vectors that get added to base org to create the display size
-			vector right = ( (AnglesToRight( ang )) * width )
-			vector down = ( (AnglesToUp( ang )*-1) * height )
+	// 		vector org = topleft.GetOrigin()
+	// 		vector ang = topleft.GetAngles()
+	// 		// right and down vectors that get added to base org to create the display size
+	// 		vector right = ( (AnglesToRight( ang )) * width )
+	// 		vector down = ( (AnglesToUp( ang )*-1) * height )
 
-			displayInfo.topology = RuiTopology_CreatePlane( org, right, down, true )
-		}
+	// 		displayInfo.topology = RuiTopology_CreatePlane( org, right, down, true )
+	// 	}
 
-		displayInfo.rui = RuiCreate( $"ui/gauntlet_results_display.rpak", displayInfo.topology, RUI_DRAW_WORLD, 0 )
-	}
+	// 	displayInfo.rui = RuiCreate( $"ui/gauntlet_results_display.rpak", displayInfo.topology, RUI_DRAW_WORLD, 0 )
+	// }
 
-	Gauntlet_ResultsDisplay_SetRandomTip( gauntlet )
+	// Gauntlet_ResultsDisplay_SetRandomTip( gauntlet )
 }
 
 void function Gauntlet_DestroyResultsDisplays( GauntletInfo gauntlet )
 {
-	foreach ( displayInfo in gauntlet.resultsDisplays )
-	{
-		if ( displayInfo.rui != null )
-			RuiDestroyIfAlive( displayInfo.rui )
+	// foreach ( displayInfo in gauntlet.resultsDisplays )
+	// {
+	// 	if ( displayInfo.rui != null )
+	// 		RuiDestroyIfAlive( displayInfo.rui )
 
-		displayInfo.rui = null
-	}
+	// 	displayInfo.rui = null
+	// }
 }
 
 void function Gauntlet_SetResultsDisplayTip( GauntletInfo gauntlet, string tip )

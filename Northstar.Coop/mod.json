@@ -45,6 +45,20 @@
 			"ServerCallback": {
 				"After": "SingleplayerCoopLobby_Init"
 			}
+		},
+		{
+			"Path": "_widow_utility.nut",
+			"RunOn": "SP",
+			"ServerCallback": {
+				"After": "CheckpointShipInit"
+			}
+		},
+		{
+			"Path": "_triggers.nut",
+			"RunOn": "SP",
+			"ServerCallback": {
+				"After": "Init_triggers"
+			}
 		}
 	]
 }
