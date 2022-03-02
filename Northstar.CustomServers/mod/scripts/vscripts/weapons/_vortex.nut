@@ -94,11 +94,6 @@ void function RegisterNewVortexIgnoreClassnames(table<string, bool> classTable)
 }
 void function RegisterNewVortexIgnoreClassname(string classname, bool shouldignore)
 {
-	if(classname in VortexIgnoreClassnames)
-	{
-		VortexIgnoreClassnames[classname] = shouldignore
-		return
-	}
 	VortexIgnoreClassnames[classname] <- shouldignore
 }
 table vortexImpactWeaponInfo
