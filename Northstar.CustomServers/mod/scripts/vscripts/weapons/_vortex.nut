@@ -489,7 +489,8 @@ function Vortex_HandleElectricDamage( entity ent, entity attacker, damage, entit
 // this function handles all incoming vortex impact events
 bool function TryVortexAbsorb( entity vortexSphere, entity attacker, vector origin, int damageSourceID, entity weapon, string weaponName, string impactType, entity projectile = null, damageType = null, reflect = false )
 {
-	if ( weaponName in VortexIgnoreClassnames )
+	if ( weaponName in VortexIgnoreClassnames && VortexIgnoreClassnames[weaponName] )
+		return false
 		if ( VortexIgnoreClassnames[weaponName] == true )
 			return false
 
