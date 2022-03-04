@@ -256,5 +256,22 @@ Premi Sì se sei d'accordo. Questa scelta può essere modificata in qualsiasi mo
 
 		"INGAME_PLAYERS" "Players: ^6BA6C400%s1"
 		"TOTAL_SERVERS" "Server: ^C46C6C00%s1"
+
+		// In-game chat
+		"HUD_CHAT_WHISPER_PREFIX" "[WHISPER]"
+		"HUD_CHAT_SERVER_PREFIX" "[SERVER]"
+
+		"NS_INVITE_MENU_HEADER"          		"Inviti"
+		"NS_INVITE_GENERATE_SERVER_BUTTON"   	"Crea Invito Server"
+		"NS_INVITE_GENERATE_PARTY_BUTTON"    	""Crea Invito Gruppo"
+		"NS_INVITE_JOIN_BUTTON"              	"Accetta invito"
+		"NS_INVITE_JOIN_HEADER"           		"Accetta invito"
+		"NS_INVITE_JOIN_BODY"             		"Hai ricevuto un invito per questo server: %s1 \nVuoi entrare nel server?"
+		"NS_PARTY_INVITE_HEADER"          		"Entra nel Gruppo"
+		"NS_PARTY_INVITE_BODY"            		"Sei stato invitato in un gruppo da: %s1 \nVuoi entrare nel gruppo?"
+		"NS_INVITE_GENERATE_FAILURE_HEADER"     "Creazione dell'invito non riuscito"
+		"NS_INVITE_GENERATE_FAILURE_BODY"	    "Un Errore è occorso nel provare a creare un invito: %s1"
+		"NS_INVITE_GENERATE_SUCCESS_HEADER"     "Invito Creato"
+		"NS_INVITE_GENERATE_SUCCESS_BODY"       "Il tuo Invito è stato copiato negli appunti"
 	}
 }

@@ -299,8 +299,25 @@ Choisissez Oui si vous êtes d'accord. Ce choix peut être modifié à tout inst
 		"SHOW_ALL" "Tous"
 		"SHOW_ONLY_ENABLED" "Mods activés"
 		"SHOW_ONLY_DISABLED" "Mods désactivés"
-    
+
 		// Maps menu
 		"HIDE_LOCKED" "Cacher les cartes verrouillées"
+
+		// In-game chat
+		"HUD_CHAT_WHISPER_PREFIX" "[WHISPER]"
+		"HUD_CHAT_SERVER_PREFIX" "[SERVER]"
+
+		"NS_INVITE_MENU_HEADER"          		"Invitations"
+		"NS_INVITE_GENERATE_SERVER_BUTTON"   	"Inviter dans le serveur"
+		"NS_INVITE_GENERATE_PARTY_BUTTON"    	"Inviter dans le groupe"
+		"NS_INVITE_JOIN_BUTTON"              	"Rejoindre"
+		"NS_INVITE_JOIN_HEADER"           		"Rejoindre"
+		"NS_INVITE_JOIN_BODY"             		"Vous avez reçu une invitation à rejoindre le serveur suivant : %s1 \nVoulez-vous le rejoindre ?"
+		"NS_PARTY_INVITE_HEADER"          		"Rejoindre le groupe"
+		"NS_PARTY_INVITE_BODY"            		"%s1 vous a invité à rejoindre un groupe \nVoulez-vous le rejoindre ?"
+		"NS_INVITE_GENERATE_FAILURE_HEADER"     "La création de l'invitation a échoué"
+		"NS_INVITE_GENERATE_FAILURE_BODY"	    "Une erreur est survenue en essayant de créer une invitation: %s1"
+		"NS_INVITE_GENERATE_SUCCESS_HEADER"     "Invitation créé"
+		"NS_INVITE_GENERATE_SUCCESS_BODY"       "Invitation copiée dans le presse-papiers"
 	}
 }

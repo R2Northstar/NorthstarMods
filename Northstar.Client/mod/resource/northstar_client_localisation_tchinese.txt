@@ -306,5 +306,22 @@
 		// In-game chat
 		"HUD_CHAT_WHISPER_PREFIX" "[悄悄話]"
 		"HUD_CHAT_SERVER_PREFIX" "[伺服器]"
+
+		// In-game chat
+		"HUD_CHAT_WHISPER_PREFIX" "[WHISPER]"
+		"HUD_CHAT_SERVER_PREFIX" "[SERVER]"
+
+		"NS_INVITE_MENU_HEADER"          		"邀請"
+		"NS_INVITE_GENERATE_SERVER_BUTTON"   	"建立伺服器邀請"
+		"NS_INVITE_GENERATE_PARTY_BUTTON"    	"建立派對邀請"
+		"NS_INVITE_JOIN_BUTTON"              	"接受邀請"
+		"NS_INVITE_JOIN_HEADER"           		"接受邀請"
+		"NS_INVITE_JOIN_BODY"             		"你已被邀請加入： %s1 \n是否接受?"
+		"NS_PARTY_INVITE_HEADER"          		"接受派對邀請"
+		"NS_PARTY_INVITE_BODY"            		"你已被 %s1 邀請加入派對\n是否接受?"
+		"NS_INVITE_GENERATE_FAILURE_HEADER"     ""
+		"NS_INVITE_GENERATE_FAILURE_BODY"	    ""
+		"NS_INVITE_GENERATE_SUCCESS_HEADER"     ""
+		"NS_INVITE_GENERATE_SUCCESS_BODY"       ""
 	}
 }
