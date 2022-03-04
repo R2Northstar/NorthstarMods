@@ -198,7 +198,9 @@ void function StartGameWithoutClassicMP()
 	
 	foreach ( entity player in GetPlayerArray() )
 	{
-		RespawnAsPilot( player )
+		if ( !IsPrivateMatchSpectator( player ) )
+			RespawnAsPilot( player )
+			
 		ScreenFadeFromBlack( player, 0 )
 	}
 	
@@ -393,7 +395,7 @@ void function PlayerWatchesRoundWinningKillReplay( entity player, float replayLe
 	else
 		wait replayLength
 		
-	player.SetPredictionEnabled( true )
+	//player.SetPredictionEnabled( true ) doesn't seem needed, as native code seems to set this on respawn
 	player.ClearReplayDelay()
 	player.ClearViewEntity()
 	player.UnfreezeControlsOnServer()
@@ -484,7 +486,7 @@ void function PlayerWatchesSwitchingSidesKillReplay( entity player, bool doRepla
 	else
 		wait SWITCHING_SIDES_DELAY_REPLAY // extra delay if no replay
 	
-	player.SetPredictionEnabled( true )
+	//player.SetPredictionEnabled( true ) doesn't seem needed, as native code seems to set this on respawn
 	player.ClearReplayDelay()
 	player.ClearViewEntity()
 }
