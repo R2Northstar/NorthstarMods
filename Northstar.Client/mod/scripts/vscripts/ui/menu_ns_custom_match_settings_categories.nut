@@ -1,5 +1,5 @@
 global function AddNorthstarCustomMatchSettingsCategoryMenu
-global function AddCustomCategory
+global function AddCustomPrivateMatchSettingsCategory
 
 struct {
 	int count = 0
@@ -72,7 +72,7 @@ void function ResetMatchSettingsToDefault( var button )
 	ClientCommand( "ResetMatchSettingsToDefault" )
 }
 
-void function AddCustomCategory(string menuLocalization, string menuName) 
+void function AddCustomPrivateMatchSettingsCategory(string menuLocalization, string menuName) 
 {
 	file.count++
 	file.customCategoryMenus.append(menuName)
