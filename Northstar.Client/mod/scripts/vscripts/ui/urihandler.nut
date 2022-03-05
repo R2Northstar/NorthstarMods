@@ -4,10 +4,10 @@ globalize_all_functions
 
 void function ShowURIDialog() {
     DialogData dialogData
-	dialogData.header = "#NS_PARTY_INVITE_HEADER"
+	dialogData.header = "#NS_INVITE_JOIN_HEADER"
 	dialogData.image = $"rui/menu/fd_menu/upgrade_northstar_chassis"
 	dialogData.message = Localize("#NS_INVITE_JOIN_BODY", "SERVERNAME")
-	AddDialogButton( dialogData, "#YES", NSAcceptInvite)
+	AddDialogButton( dialogData, "#YES", void function(){TryJoinInvite("")})
 	AddDialogButton( dialogData, "#NO", NSDeclineInvite)
 	OpenDialog( dialogData )
 }
@@ -62,7 +62,5 @@ void function GenerateJoinDialog( bool succes ) {
 }
 
 void function TryJoinInvite( var unused ) {
-	var result = NSTryJoinInvite(Hud_GetUTF8Text(Hud_GetChild( GetMenu( "JoinInviteMenu" ), "EnterInviteBox")))
-	if (result == null)
-		GenerateJoinDialog(false)
+	NSTryJoinInvite(Hud_GetUTF8Text(Hud_GetChild( GetMenu( "JoinInviteMenu" ), "EnterInviteBox")))
 }
