@@ -319,9 +319,9 @@
 		"NS_INVITE_JOIN_BODY"             		"你已被邀請加入： %s1 \n是否接受?"
 		"NS_PARTY_INVITE_HEADER"          		"接受派對邀請"
 		"NS_PARTY_INVITE_BODY"            		"你已被 %s1 邀請加入派對\n是否接受?"
-		"NS_INVITE_GENERATE_FAILURE_HEADER"     ""
-		"NS_INVITE_GENERATE_FAILURE_BODY"	    ""
-		"NS_INVITE_GENERATE_SUCCESS_HEADER"     ""
-		"NS_INVITE_GENERATE_SUCCESS_BODY"       ""
+		"NS_INVITE_GENERATE_FAILURE_HEADER"     "Failed to create invite"
+		"NS_INVITE_GENERATE_FAILURE_BODY"	    "An error occurred when trying to create an invite: %s1"
+		"NS_INVITE_GENERATE_SUCCESS_HEADER"     "Invite created"
+		"NS_INVITE_GENERATE_SUCCESS_BODY"       "The invite has been copied to your clipboard"
 	}
 }
