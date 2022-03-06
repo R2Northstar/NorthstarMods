@@ -491,8 +491,6 @@ bool function TryVortexAbsorb( entity vortexSphere, entity attacker, vector orig
 {
 	if ( weaponName in VortexIgnoreClassnames && VortexIgnoreClassnames[weaponName] )
 		return false
-		if ( VortexIgnoreClassnames[weaponName] == true )
-			return false
 
 	entity vortexWeapon = vortexSphere.GetOwnerWeapon()
 	entity owner = vortexWeapon.GetWeaponOwner()
