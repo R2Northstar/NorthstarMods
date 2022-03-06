@@ -7,7 +7,7 @@ void function ShowURIDialog() {
 	dialogData.header = "#NS_INVITE_JOIN_HEADER"
 	dialogData.image = $"rui/menu/fd_menu/upgrade_northstar_chassis"
 	dialogData.message = Localize("#NS_INVITE_JOIN_BODY", "SERVERNAME")
-	AddDialogButton( dialogData, "#YES", void function(){TryJoinInvite("")})
+	AddDialogButton( dialogData, "#YES", NSAcceptInvite)
 	AddDialogButton( dialogData, "#NO", NSDeclineInvite)
 	OpenDialog( dialogData )
 }
