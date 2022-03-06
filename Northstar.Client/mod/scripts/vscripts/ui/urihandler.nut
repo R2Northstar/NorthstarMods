@@ -22,8 +22,8 @@ void function GenerateInviteSuccesDialog( DialogData randomParamIGuess ) {
 	OpenDialog( dialogData )
 }
 
-void function GenerateServerInvite( var unused ) {
-	int res = NSGenerateServerInvite()
+void function doGenerateServerInvite(bool link) {
+	int res = NSGenerateServerInvite(link)
 	if (res == 0) {
 		DialogData dialogData
 		dialogData.header = "#NS_INVITE_GENERATE_FAILURE_HEADER"
@@ -42,6 +42,10 @@ void function GenerateServerInvite( var unused ) {
 
 		OpenDialog( dialogData )
 	}
+}
+
+void function GenerateServerInvite( var unused ) {
+	doGenerateServerInvite(true)
 }
 
 void function GenerateJoinDialog( bool succes ) {
