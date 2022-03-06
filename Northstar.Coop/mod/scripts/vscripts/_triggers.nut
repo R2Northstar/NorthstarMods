@@ -1,6 +1,9 @@
 global function NewSaveLocation
 global function TeleportAllExpectOne
 global function Init_triggers
+global function GetSaveLocation
+global function SetShip
+global function GetShip
 
 struct
 {
@@ -241,12 +244,12 @@ vector function GetSaveLocation()
 	return save.lastSave
 }
 
-WidowStruct function SetShipLocation()
+void function SetShip( WidowStruct widow )
 {
-	return save.ArkSaveShip
+	save.ArkSaveShip = widow
 }
 
-WidowStruct function GetShipLocation()
+WidowStruct function GetShip()
 {
 	return save.ArkSaveShip
 }

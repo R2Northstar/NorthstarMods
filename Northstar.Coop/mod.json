@@ -48,14 +48,14 @@
 		},
 		{
 			"Path": "_widow_utility.nut",
-			"RunOn": "SP",
+			"RunOn": "( CLIENT || SERVER ) && SP",
 			"ServerCallback": {
 				"After": "CheckpointShipInit"
 			}
 		},
 		{
 			"Path": "_triggers.nut",
-			"RunOn": "SP",
+			"RunOn": "( CLIENT || SERVER ) && SP",
 			"ServerCallback": {
 				"After": "Init_triggers"
 			}

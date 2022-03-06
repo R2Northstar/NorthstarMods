@@ -1,5 +1,4 @@
 //actually useful stuff
-global function RespawnInShip
 global function CheckpointShipInit
 
 
@@ -50,27 +49,6 @@ global struct WidowStruct
 ╚═╝╚═╝  ╚═══╝╚═╝   ╚═╝
 */
 
-void function RespawnInShip( entity player )
-{
-	if (GetPlayerArray().len() == 1){
-		wait(1)
-		GameRules_ChangeMap( GetMapName() , GAMETYPE )
-		return
-	}
-
-	wait(3)
-
-	vector ShipLocation = save.ArkSaveShip.ship.GetOrigin()
-
-	player.s.inPostDeath = false
-	player.s.respawnSelectionDone = true
-	player.RespawnPlayer(null)
-	ClientCommand(player,"script_client thread MainHud_TurnOn_RUI( true )")
-	ScreenFadeFromBlack( player, 0.0, 0.0 )
-	player.SetOrigin( ShipLocation + <0,0,300> )
-
-}
-
 
 void function CheckpointShipInit()
 {
@@ -83,11 +61,12 @@ void function CheckpointShipInit()
 				break
 			WaitFrame()
 		}
-		save.ArkSaveShip = CreateWidow( GetPlayerArray()[0], GetPlayerArray()[0].GetOrigin() + <0,0,500>, <0,90,0> )
+		SetShip( CreateWidow( GetPlayerArray()[0], GetPlayerArray()[0].GetOrigin() + <0,0,500>, <0,90,0> ) )
 		wait( 5 )
-		TeleportWidow( save.ArkSaveShip, GetPlayerArray()[0].GetOrigin() + <0,0,500>, <0,90,0> )
-		OpenDoorR( save.ArkSaveShip )
-		OpenDoorL( save.ArkSaveShip )
+		TeleportWidow( GetShip(), GetPlayerArray()[0].GetOrigin() + <0,0,500>, <0,90,0> )
+		// OpenDoorR( GetShip() )
+		// OpenDoorL( GetShip() )
+
 
 	}
 }

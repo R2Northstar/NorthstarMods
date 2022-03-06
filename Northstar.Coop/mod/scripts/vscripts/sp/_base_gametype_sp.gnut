@@ -409,14 +409,7 @@ void function CodeCallback_OnClientConnectionStarted( entity player )
 
 void function RespawnPlayer(entity player)
 {
-	if ( "sp_s2s" == GetMapName() ) 
-	{
-		thread RespawnInShip( player )
-		return
-	}
-		
-
-	wait( 0.1 )
+	wait( 1 )
 	if ( !IsAlive( player ) ){
 		
 		printl("Respawning player:" + player.GetPlayerName())
@@ -429,7 +422,23 @@ void function RespawnPlayer(entity player)
 				
 		}
 		else{
-			wait(1)
+			if ( "sp_s2s" == GetMapName() ) 
+			{
+				try{
+				player.s.inPostDeath = false
+				player.s.respawnSelectionDone = true
+				player.RespawnPlayer(null)
+				ClientCommand(player,"script_client thread MainHud_TurnOn_RUI( true )")
+				ScreenFadeFromBlack( player, 0.0, 0.0 )
+				player.SetOrigin( GetShip().ship.GetOrigin() + <0,0,300> )
+				}
+				catch( exception ){
+					wait( 1 )
+					thread RespawnPlayer( player )
+				}
+			}
+
+			wait( 1 )
 			// EmitSoundOnEntityOnlyToPlayer( player, player, "4_second_fadeout" )
 			while( !IsAlive( player ) ) 
 			{
@@ -460,36 +469,10 @@ void function RespawnPlayer(entity player)
 						}
 						catch( exception ){
 							return
-						}
-						
-					}
-					if (!IsAlive( p ))
-					{
-						NotZeroAlivePlayers = true
+						}	
 					}
 				}
-				wait(0.1)
-				if (!NotZeroAlivePlayers)
-				{
-					try{
-						printl("============================")
-						printl("respawning all players")
-						printl("============================")
-						player.s.inPostDeath = false
-						player.s.respawnSelectionDone = true
-						player.RespawnPlayer(null)
-						ClientCommand(player,"script_client thread MainHud_TurnOn_RUI( true )")
-						ScreenFadeFromBlack( player, 0.0, 0.0 )
-						player.SetOrigin( GetSaveLocation() )
-
-						OnTimeShiftGiveGlove( player )
-					}
-					catch( exception ){
-						return
-					}
-				}
-
-				wait(0.4)
+				wait(0.5)
 			}
 		}
 	}
@@ -657,8 +640,6 @@ void function OnTimeShiftGiveGlove( entity player )
  ╚═════╝    ╚═╝   ╚═╝  ╚═╝╚══════╝╚═╝  ╚═╝    ╚═╝     ╚═╝╚══════╝╚══════╝╚══════╝
 */
 
-
-
 // so everyone gets the timeshift abilty
 function ServerCallback_TimeDeviceAcquired()
 {
@@ -675,8 +656,6 @@ function ServerCallback_TimeDeviceAcquired()
 		viewModel.SetSkin( 1 )
 	}
 }
-
-// GiveTimeshiftAbility( player )
 
 // this function doesn't seam to exits but its still called in blood and rust
 void function SewerSplit_PlayerCollectableThink()
