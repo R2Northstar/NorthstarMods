@@ -2,6 +2,7 @@ global function AiGameModes_Init
 
 global function SpawnDropShip
 global function SpawnDropPod
+global function SpawnReaper
 
 global function GetValidIntroDropShipSpawn
 
@@ -46,7 +47,7 @@ void function SpawnDropShip( vector pos, vector rot, int team, int count, void f
   }
 	
   if ( squadHandler != null )
-  	squadHandler( squadName )
+  	thread squadHandler( squadName )
 }
 
 
@@ -85,7 +86,17 @@ void function SpawnDropPod( vector pos, vector rot, int team, string content /*(
   guys[ guys.len() - 1 ].WaitSignal( "npc_deployed" )
   
   if ( squadHandler != null )
-    squadHandler( squadName )
+    thread squadHandler( squadName )
+}
+
+void function SpawnReaper( vector pos, vector rot, int team, void functionref( entity reaper ) reaperHandler = null )
+{
+  entity reaper = CreateNPC( "npc_super_spectre", team, pos, rot )
+  DispatchSpawn( reaper )
+  thread SuperSpectre_WarpFall( reaper )
+  
+  if ( reaperHandler != null )
+    thread reaperHandler( reaper )
 }
 
 //------------------------------------------------------
