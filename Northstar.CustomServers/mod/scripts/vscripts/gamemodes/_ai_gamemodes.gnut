@@ -1,6 +1,93 @@
 global function AiGameModes_Init
 
+global function SpawnDropShip
+global function SpawnDropPod
+
+struct
+{
+  array< string > gruntWeapons = [ "mp_weapon_rspn101", "mp_weapon_dmr", "mp_weapon_r97", "mp_weapon_lmg" ]
+  array< string > spectreWeapons = [ "mp_weapon_hemlok_smg", "mp_weapon_doubletake", "mp_weapon_mastiff" ]
+} file
+
 void function AiGameModes_Init()
 {
 
+}
+
+//------------------------------------------------------
+
+void function SpawnDropShip( vector pos, vector rot, int team, int count, void functionref( string squad ) squadHandler = null )
+{  
+	string squadName = MakeSquadName( team, UniqueString( "" ) )
+
+	CallinData drop
+	drop.origin 		= pos
+	drop.yaw 			  = rot.y
+	drop.dist 			= 768
+	drop.team 			= team
+	drop.squadname 	= squadName
+	SetDropTableSpawnFuncs( drop, CreateSoldier, count )
+	SetCallinStyle( drop, eDropStyle.ZIPLINE_NPC )
+  
+  thread RunDropshipDropoff( drop )
+  
+  WaitSignal( drop, "OnDropoff" )
+  
+  array< entity > guys = GetNPCArrayBySquad( squadName )
+  
+  foreach ( guy in guys )
+  {
+    ReplaceWeapon( guy, file.gruntWeapons[ RandomInt( file.gruntWeapons.len() ) ], [] )
+  }
+	
+  if ( squadHandler != null )
+  	squadHandler( squadName )
+}
+
+
+void function SpawnDropPod( vector pos, vector rot, int team, string content /*( ͡° ͜ʖ ͡°)*/, void functionref( string squad ) squadHandler = null )
+{
+  string squadName = MakeSquadName( team, UniqueString( "" ) )
+  array<entity> guys
+  
+  entity pod = CreateDropPod( pos, <0,0,0> )
+  
+  InitFireteamDropPod( pod )
+  
+  waitthread LaunchAnimDropPod( pod, "pod_testpath", pos, rot )
+  
+  for (int i = 0; i < 4 ;i++ )
+  {
+    entity npc = CreateNPC( content, team, pos,<0,0,0> )
+    DispatchSpawn( npc )
+    SetSquad( npc, squadName )
+    
+    switch ( content )
+    {
+      case "npc_soldier":
+        ReplaceWeapon( npc, file.gruntWeapons[ RandomInt( file.gruntWeapons.len() ) ], [] )
+        break
+      case "npc_spectre":
+        ReplaceWeapon( npc, file.spectreWeapons[ RandomInt( file.spectreWeapons.len() ) ], [] )
+        break
+    }
+    
+    guys.append( npc )
+  }
+  
+  ActivateFireteamDropPod( pod, guys )
+  
+  guys[ guys.len() - 1 ].WaitSignal( "npc_deployed" )
+  
+  if ( squadHandler != null )
+    squadHandler( squadName )
+}
+
+//------------------------------------------------------
+
+void function ReplaceWeapon( entity guy, string weapon, array<string> mods )
+{
+	guy.TakeActiveWeapon()
+	guy.GiveWeapon( weapon, mods )
+	guy.SetActiveWeaponByName( weapon )
 }
