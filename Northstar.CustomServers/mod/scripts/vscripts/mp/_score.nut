@@ -164,7 +164,7 @@ void function ScoreEvent_PlayerKilled( entity victim, entity attacker, var damag
 		else if ( attacker.s.currentTimedKillstreak == TRIPLEKILL_REQUIREMENT_KILLS )
 			AddPlayerScore( attacker, "TripleKill" )
 		else if ( attacker.s.currentTimedKillstreak >= MEGAKILL_REQUIREMENT_KILLS )
-			AddPlayerScore( attacker, "MegaKill" )
+			AddPlayerScore( attacker, "MegaKill", attacker )
 	}
 	
 	attacker.s.lastKillTime = Time()
