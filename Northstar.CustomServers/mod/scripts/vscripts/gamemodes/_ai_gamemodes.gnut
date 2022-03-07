@@ -3,6 +3,11 @@ global function AiGameModes_Init
 global function SpawnDropShip
 global function SpawnDropPod
 
+global function GetValidIntroDropShipSpawn
+
+
+const INTRO_DROPSHIP_CUTOFF = 2000
+
 struct
 {
   array< string > gruntWeapons = [ "mp_weapon_rspn101", "mp_weapon_dmr", "mp_weapon_r97", "mp_weapon_lmg" ]
@@ -90,4 +95,22 @@ void function ReplaceWeapon( entity guy, string weapon, array<string> mods )
 	guy.TakeActiveWeapon()
 	guy.GiveWeapon( weapon, mods )
 	guy.SetActiveWeaponByName( weapon )
+}
+
+//------------------------------------------------------
+
+array<entity> function GetValidIntroDropShipSpawn( array<entity> introNodes )
+{
+  array<entity> introShipSpawns
+  
+  foreach ( node in introNodes )
+  {
+    entity closestNode = GetClosest( GetZiplineDropshipSpawns(), node.GetOrigin() )
+    SetTeam( closestNode, node.GetTeam() )
+    
+    if ( Distance( closestNode.GetOrigin(), node.GetOrigin() ) < INTRO_DROPSHIP_CUTOFF )
+      introShipSpawns.append( closestNode )
+  }
+  
+  return introShipSpawns
 }
