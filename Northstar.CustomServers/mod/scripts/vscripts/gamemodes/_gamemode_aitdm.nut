@@ -2,6 +2,21 @@ global function GamemodeAITdm_Init
 
 const SQUADS_PER_TEAM = 3
 
+const REAPERS_PER_TEAM = 2
+
+const LEVEL_SPECTRES = 125
+const LEVEL_STALKERS = 380
+const LEVEL_REAPERS = 500
+
+struct
+{
+  // Due to team based escalation everything is an array
+  array< int > levels = [ LEVEL_SPECTRES, LEVEL_SPECTRES ]
+  array< array< string > > podEntities = [ [ "npc_soldier" ], [ "npc_soldier" ] ]
+  array< bool > reapers = [ false, false ]
+} file
+
+
 void function GamemodeAITdm_Init()
 {
   AddCallback_GameStateEnter( eGameState.Prematch, OnPrematchStart )
@@ -123,7 +138,109 @@ void function SpawnIntroBatch( int team )
   
   wait 15
   
-  //thread Spawner( team )
+  thread Spawner( team )
+}
+
+// Populates the match
+void function Spawner( int team )
+{
+  int index = team == TEAM_MILITIA ? 0 : 1
+  
+  for ( ;; )
+  {
+    Escalate( team )
+    
+    
+    int count = GetNPCArrayOfTeam( team ).len()
+    
+    int reaper_count = GetNPCArrayEx( "npc_super_spectre", team, -1, <0,0,0>, -1 ).len()
+    
+    // REAPERS
+    if ( file.reapers[ index ] )
+    {
+      array< entity > points = SpawnPoints_GetDropPod()
+      if ( reaper_count < REAPERS_PER_TEAM )
+      {
+        entity node = points[ GetSpawnPointIndex( points, team ) ]
+        waitthread SpawnReaper( node.GetOrigin(), node.GetAngles(), team )
+      }
+    }
+    
+    // NORMAL SPAWNS
+    if ( count < SQUADS_PER_TEAM * 4 - 2 )
+    {
+      string ent = file.podEntities[ index ][ RandomInt( file.podEntities[ index ].len() ) ]
+      
+      // Prefer dropship when spawning grunts
+      if ( ent == "npc_soldier" )
+      {
+        array< entity > points = GetZiplineDropshipSpawns()
+        if ( RandomInt( points.len() / 4 ) )
+        {
+          entity node = points[ GetSpawnPointIndex( points, team ) ]
+          waitthread SpawnDropShip( node.GetOrigin(), node.GetAngles(), team, 4, SquadHandler )
+          continue
+        }
+      }
+      
+      array< entity > points = SpawnPoints_GetDropPod()
+      entity node = points[ GetSpawnPointIndex( points, team ) ]
+      waitthread SpawnDropPod( node.GetOrigin(), node.GetAngles(), team, ent, SquadHandler )
+      
+    }
+    WaitFrame()
+  }
+}
+
+// Based on points tries to balance match
+void function Escalate( int team )
+{
+  int score = GameRules_GetTeamScore( team )
+  int index = team == TEAM_MILITIA ? 1 : 0
+  // This does the "Enemy x incomig" text
+  string defcon = team == TEAM_MILITIA ? "IMCdefcon" : "MILdefcon"
+  
+  if ( score < file.levels[ index ] )
+    return
+  
+  switch ( file.levels[ index ] )
+  {
+    case LEVEL_SPECTRES:
+      file.levels[ index ] = LEVEL_STALKERS
+      file.podEntities[ index ].append( "npc_spectre" )
+      SetGlobalNetInt( defcon, 2 )
+      return
+    case LEVEL_STALKERS:
+      file.levels[ index ] = LEVEL_REAPERS
+      file.podEntities[ index ].append( "npc_stalker" )
+      SetGlobalNetInt( defcon, 3 )
+      return
+    case LEVEL_REAPERS:
+      file.levels[ index ] = 9999
+      file.reapers[ index ] = true
+      SetGlobalNetInt( defcon, 4 )
+      return
+  }
+  
+  unreachable // hopefully
+}
+
+//------------------------------------------------------
+
+int function GetSpawnPointIndex( array< entity > points, int team )
+{
+  entity zone = DecideSpawnZone_Generic( points, team )
+  
+  // 20 Tries to get a random point close to the zone
+  for ( int i = 0; i < 20; i++ )
+  {
+    int index = RandomInt( points.len() )
+    
+    if ( Distance2D( points[ index ].GetOrigin(), zone.GetOrigin() ) < 6000 )
+      return index
+  }
+  
+  return RandomInt( points.len() )
 }
 
 //------------------------------------------------------
