@@ -282,5 +282,7 @@ Drücke Ja, um zuzustimmen. Du kannst diese Entscheidung jederzeit im Modmenü �
 		"NS_INVITE_GENERATE_FAILURE_BODY"	    "Ein Fehler beim Erstellen der Einladung ist aufgetreten: %s1"
 		"NS_INVITE_GENERATE_SUCCESS_HEADER"     "Einladung erstellt"
 		"NS_INVITE_GENERATE_SUCCESS_BODY"       "Die Einladung wurde in die Zwischenablage kopiert"
+		"NS_INVITE_JOIN_FAILURE_HEADER"  "Annehmen der Einladung fehlgeschlagen"
+		"NS_INVITE_JOIN_FAILURE_BODY"    "Der Einladung konnte nicht beigetreten werden. Für mehr Informationen lies die folgende Fehlermeldung: %s1"
 	}
 }
