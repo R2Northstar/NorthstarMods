@@ -24,7 +24,8 @@ void function OnPrematchStart()
 
 void function OnPlaying()
 {
-  thread SpawnIntroBatch()
+  thread SpawnIntroBatch( TEAM_MILITIA )
+  thread SpawnIntroBatch( TEAM_IMC )
 }
 
 void function OnPlayerConnected( entity player )
@@ -34,94 +35,83 @@ void function OnPlayerConnected( entity player )
 
 //------------------------------------------------------
 
-void function SpawnIntroBatch()
+void function HandleScoreEvent( entity victim, entity attacker, var damageInfo )
+{
+  if ( !( victim != attacker && attacker.IsPlayer() || attacker.IsTitan() && GetGameState() == eGameState.Playing ) )
+    return
+  
+  int score
+  string eventName
+  
+  if ( victim.IsNPC() && victim.GetClassName() != "npc_marvin" )
+  {
+    eventName = ScoreEventForNPCKilled( victim, damageInfo )
+    if ( eventName != "KillNPCTitan" )
+      score = ScoreEvent_GetPointValue( GetScoreEvent( eventName ) )
+  } // I dont like the brackets, but squirrel shits it self without them
+  
+  if ( victim.IsPlayer() )
+    score = 5
+  
+  // Player ejecting triggers this without the extra check
+  if ( victim.IsTitan() && victim.GetBossPlayer() != attacker )
+    score += 10
+  
+  AddTeamScore( attacker.GetTeam(), score )
+  attacker.AddToPlayerGameStat( PGS_ASSAULT_SCORE, score )
+  attacker.SetPlayerNetInt("AT_bonusPoints", attacker.GetPlayerGameStat( PGS_ASSAULT_SCORE ) )
+}
+
+//------------------------------------------------------
+
+void function SpawnIntroBatch( int team )
 {
   array<entity> dropPodNodes = GetEntArrayByClass_Expensive("info_spawnpoint_droppod_start")
   array<entity> dropShipNodes = GetValidIntroDropShipSpawn( dropPodNodes )  
   
-  array<entity> militiaPodNodes
-  array<entity> imcPodNodes
+  array<entity> podNodes
   
-  array<entity> militiaShipNodes
-  array<entity> imcShipNodes
+  array<entity> shipNodes
   
   // Sort per team
   foreach ( node in dropPodNodes )
   {
-    if ( node.GetTeam() == TEAM_MILITIA )
-      militiaPodNodes.append( node )
-    else
-      imcPodNodes.append( node )
-  }
-  
-  foreach ( node in dropShipNodes )
-  {
-    if ( node.GetTeam() == TEAM_MILITIA )
-      militiaShipNodes.append( node )
-    else
-      imcShipNodes.append( node )
+    if ( node.GetTeam() == team )
+      podNodes.append( node )
   }
   
   // Spawn logic
-  int militia_index = 0
-  int imc_index = 0
+  int startIndex = 0
   bool first = true
   entity node
   
-  int militiaPods = RandomInt( militiaPodNodes.len() + 1 )
-  int imcPods = RandomInt( imcPodNodes.len() + 1 )
+  int pods = RandomInt( podNodes.len() + 1 )
   
-  int militiaShips = militiaShipNodes.len()
-  int imcShips = imcShipNodes.len()
+  int ships = shipNodes.len()
   
   for ( int i = 0; i < SQUADS_PER_TEAM; i++ )
   {
-    // MILITIA
-    if ( militiaPods != 0 || militiaShips == 0 )
+    if ( pods != 0 || ships == 0 )
     {
       int index = i
       
-      if ( index > militiaPodNodes.len() - 1 )
-        index = RandomInt( militiaPodNodes.len() )
+      if ( index > podNodes.len() - 1 )
+        index = RandomInt( podNodes.len() )
       
-      node = militiaPodNodes[ index ]
-      thread SpawnDropPod( node.GetOrigin(), node.GetAngles(), TEAM_MILITIA, "npc_soldier", SquadHandler )
+      node = podNodes[ index ]
+      thread SpawnDropPod( node.GetOrigin(), node.GetAngles(), team, "npc_soldier", SquadHandler )
       
-      militiaPods--
+      pods--
     }
     else
     {
-      if ( militia_index == 0 ) 
-        militia_index = i // save where we started
+      if ( startIndex == 0 ) 
+        startIndex = i // save where we started
       
-      node = militiaShipNodes[ i - militia_index ]
-      thread SpawnDropShip( node.GetOrigin(), node.GetAngles(), TEAM_MILITIA, 4, SquadHandler )
+      node = shipNodes[ i - startIndex ]
+      thread SpawnDropShip( node.GetOrigin(), node.GetAngles(), team, 4, SquadHandler )
       
-      militiaShips--
-    }
-    
-    // IMC
-    if ( imcPods != 0 || imcShips == 0 )
-    {
-      int index = i
-      
-      if ( index > imcPodNodes.len() - 1 )
-        index = RandomInt( imcPodNodes.len() )
-      
-      node = imcPodNodes[ index ]
-      thread SpawnDropPod( node.GetOrigin(), node.GetAngles(), TEAM_IMC, "npc_soldier", SquadHandler )
-      
-      imcPods--
-    }
-    else
-    {
-      if ( imc_index == 0 ) 
-        imc_index = i // save where we started
-      
-      node = imcShipNodes[ i - imc_index ]
-      thread SpawnDropShip( node.GetOrigin(), node.GetAngles(), TEAM_IMC, 4, SquadHandler )
-      
-      imcShips--
+      ships--
     }
     
     // Vanilla has a delay after first spawn
@@ -132,8 +122,8 @@ void function SpawnIntroBatch()
   }
   
   wait 15
-  //thread Spawner( TEAM_MILITIA )
-  //thread Spawner( TEAM_IMC )
+  
+  //thread Spawner( team )
 }
 
 //------------------------------------------------------
@@ -195,33 +185,4 @@ void function ReaperHandler( entity reaper )
   {
     reaper.Minimap_AlwaysShow( 0, player )
   }
-}
-
-//------------------------------------------------------
-
-void function HandleScoreEvent( entity victim, entity attacker, var damageInfo )
-{
-  if ( !( victim != attacker && attacker.IsPlayer() || attacker.IsTitan() && GetGameState() == eGameState.Playing ) )
-    return
-  
-  int score
-  string eventName
-  
-  if ( victim.IsNPC() && victim.GetClassName() != "npc_marvin" )
-  {
-    eventName = ScoreEventForNPCKilled( victim, damageInfo )
-    if ( eventName != "KillNPCTitan" )
-      score = ScoreEvent_GetPointValue( GetScoreEvent( eventName ) )
-  } // I dont like the brackets, but squirrel shits it self without them
-  
-  if ( victim.IsPlayer() )
-    score = 5
-  
-  // Player ejecting triggers this without the extra check
-  if ( victim.IsTitan() && victim.GetBossPlayer() != attacker )
-    score += 10
-  
-  AddTeamScore( attacker.GetTeam(), score )
-  attacker.AddToPlayerGameStat( PGS_ASSAULT_SCORE, score )
-  attacker.SetPlayerNetInt("AT_bonusPoints", attacker.GetPlayerGameStat( PGS_ASSAULT_SCORE ) )
 }
