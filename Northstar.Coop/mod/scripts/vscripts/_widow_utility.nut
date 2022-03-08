@@ -18,6 +18,7 @@ global function FollowOnX
 global function FollowOnY
 global function FollowOnZ
 global function SpawnFollowingShip
+global function GetShip
 
 const vector OffsetFloor = < -200,0,100 >
 const vector OffsetCeiling = < -200,0,380 >
@@ -40,6 +41,11 @@ global struct WidowStruct
     bool following = false
 }
 
+struct
+{
+    array<WidowStruct> widows
+} RespawnWidows
+
 /*
 ██╗███╗   ██╗██╗████████╗
 ██║████╗  ██║██║╚══██╔══╝
@@ -48,12 +54,17 @@ global struct WidowStruct
 ██║██║ ╚████║██║   ██║   
 ╚═╝╚═╝  ╚═══╝╚═╝   ╚═╝
 */
-
-
 void function CheckpointShipInit()
 {
-    PrecacheModel( $"models/humans/heroes/mlt_hero_sarah.mdl" )
+    thread CheckpointShipInitThreaded()
+}
 
+void function CheckpointShipInitThreaded()
+{
+    #if SERVER
+
+    PrecacheModel( $"models/humans/heroes/mlt_hero_sarah.mdl" )
+    
 	if ( "sp_s2s" == GetMapName() )
 	{
 		for(;;){
@@ -61,14 +72,21 @@ void function CheckpointShipInit()
 				break
 			WaitFrame()
 		}
-		SetShip( CreateWidow( GetPlayerArray()[0], GetPlayerArray()[0].GetOrigin() + <0,0,500>, <0,90,0> ) )
+        wait( 0.5 )
+		WidowStruct widow = CreateWidow( <0,1000,1000>, <0,90,0> )
+        RespawnWidows.widows.append( widow )
+
 		wait( 5 )
-		TeleportWidow( GetShip(), GetPlayerArray()[0].GetOrigin() + <0,0,500>, <0,90,0> )
+		thread TeleportWidow( GetShip(), GetPlayerArray()[0].GetOrigin() + <0,0,500>)
 		// OpenDoorR( GetShip() )
 		// OpenDoorL( GetShip() )
-
-
+        GetShip().ship.Anim_Play( "wd_doors_opening" )
+        print( "-----------------------------" )
+        print( GetShip().ship.GetAngles() )
+        print( "-----------------------------" )
 	}
+
+    #endif
 }
 
 
@@ -82,11 +100,13 @@ void function CheckpointShipInit()
                                           
 */
 
-WidowStruct function CreateWidow( entity player, vector origin, vector angles )
+WidowStruct function CreateWidow( vector origin, vector angles )
 {
     WidowStruct ship
 
     ship.ship = CreateEntity( "prop_dynamic" )
+
+    print(  )
     
 	ship.ship.SetValueForModelKey( $"models/vehicle/widow/widow.mdl" )
 	ship.ship.kv.solid = SOLID_VPHYSICS
@@ -97,7 +117,7 @@ WidowStruct function CreateWidow( entity player, vector origin, vector angles )
 
 	ship.ship.SetBlocksRadiusDamage( true )
 	DispatchSpawn( ship.ship )
-    SetTeam( ship.ship, player.GetTeam() )
+    SetTeam( ship.ship, TEAM_MILITIA )
 
     ship.ship.Anim_Play( "wd_doors_closed_idle" )
 
@@ -254,9 +274,14 @@ entity function _CreateSarahProp( WidowStruct widow, vector origin, vector angle
                                                                                                 
 */
 
+WidowStruct function GetShip()
+{
+    return RespawnWidows.widows[0]
+}
+
 void function SpawnFollowingShip( entity player )
 {
-    WidowStruct widow = CreateWidow( player, <0,0,500> + player.GetOrigin(), <0,90,0> )
+    WidowStruct widow = CreateWidow( <0,0,500> + player.GetOrigin(), <0,90,0> )
 
     thread FollowOnX( widow, player )
 }
@@ -370,9 +395,10 @@ void function FollowOnX( WidowStruct widow, entity Target )
 {
     widow.following = true
     float TDistance
+    try{
     for(;;)
     {
-        if ( !widow.following )
+        if ( !widow.following && !IsValid( Target ) )
             break
             
         TDistance = Target.GetOrigin().x - widow.ship.GetOrigin().x
@@ -388,14 +414,18 @@ void function FollowOnX( WidowStruct widow, entity Target )
 
         WaitFrame()
     }
+    }
+    cacth( exception ){
+    }
 }
 void function FollowOnY( WidowStruct widow, entity Target )
 {
     widow.following = true
     float TDistance
+    try{
     for(;;)
     {
-        if ( !widow.following )
+        if ( !widow.following && !IsValid( Target ) )
             break
             
         TDistance = Target.GetOrigin().y - widow.ship.GetOrigin().y
@@ -411,14 +441,18 @@ void function FollowOnY( WidowStruct widow, entity Target )
 
         WaitFrame()
     }
+    }
+    cacth( exception ){
+    }
 }
 void function FollowOnZ( WidowStruct widow, entity Target )
 {
     widow.following = true
     float TDistance
+    try{
     for(;;)
     {
-        if ( !widow.following )
+        if ( !widow.following && !IsValid( Target ) )
             break
             
         TDistance = Target.GetOrigin().z - widow.ship.GetOrigin().z
@@ -433,6 +467,9 @@ void function FollowOnZ( WidowStruct widow, entity Target )
         }
 
         WaitFrame()
+    }
+    }
+    cacth( exception ){
     }
 }
 
@@ -500,7 +537,7 @@ void function TravelOnZ( WidowStruct widow, int ZDistance, int SpeedPerFrame )
     }
 }
 
-void function TeleportWidow( WidowStruct widow, vector destination, vector angles )
+void function TeleportWidow( WidowStruct widow, vector destination )
 {
     entity fx = PlayFX( FX_GUNSHIP_CRASH_EXPLOSION_EXIT, widow.ship.GetOrigin(), widow.ship.GetAngles() )
     fx.FXEnableRenderAlways()

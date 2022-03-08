@@ -2626,6 +2626,9 @@ void function Intro_Main( entity player )
 
 	entity bt = player.GetPetTitan()
 	Assert( IsValid( bt ) )
+	
+	// added stuff
+	FollowOnX( GetShip(), player )
 
 	ReplaceWeapon( file.rocketDummy[ TEAM_MILITIA ], "mp_weapon_rocket_launcher", [ "sp_s2s_settings" ] )
 	file.rocketDummy[ TEAM_MILITIA ].SetNoTarget( true )
@@ -3691,6 +3694,9 @@ void function BossIntro_BTCombatIdle( entity bt )
 	link.SetParent( node, "", true, 0 )
 	bt.SetParent( link, "REF", false, 0 )
 	bt.Anim_ScriptedPlay( "bt_s2s_widow_combat_idle" )
+	
+	// added stuff
+	GetShip().following = false
 }
 
 void function BossIntro_ConnectBarkerShip()
@@ -4874,6 +4880,10 @@ void function Barkership_Main( entity player )
 		{
 			ResetMaxSpeed( file.barkership, 0.5 )
 			ResetMaxAcc( file.barkership, 0.5 )
+
+			// added stuff
+			// thread TeleportWidow( GetShip(), GetPlayerArray()[0].GetOrigin() )
+			// thread TravelOnX( 1000, 0.5 )
 		}
 	)
 

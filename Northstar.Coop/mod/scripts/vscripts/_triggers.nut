@@ -2,8 +2,7 @@ global function NewSaveLocation
 global function TeleportAllExpectOne
 global function Init_triggers
 global function GetSaveLocation
-global function SetShip
-global function GetShip
+
 
 struct
 {
@@ -15,8 +14,6 @@ struct
 	bool BreakTriggers = false
 
 	vector lastSave = <0,0,0>
-
-	WidowStruct& ArkSaveShip
 } save
 
 /*
@@ -29,6 +26,11 @@ struct
 */
 
 void function Init_triggers()
+{
+	thread Init_triggersThreaded()
+}
+
+void function Init_triggersThreaded()
 {
 	switch ( GetMapName() )
 	{
@@ -242,16 +244,6 @@ void function NewSaveLocation( vector origin )
 vector function GetSaveLocation()
 {
 	return save.lastSave
-}
-
-void function SetShip( WidowStruct widow )
-{
-	save.ArkSaveShip = widow
-}
-
-WidowStruct function GetShip()
-{
-	return save.ArkSaveShip
 }
 
 void function TeleportAllExpectOne( vector origin, entity one )

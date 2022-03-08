@@ -395,7 +395,7 @@ void function IntroSectionCleanup( entity player )
 /////////////////////////////////////////////////////////////////////////////////////////
 void function AA_IntroSectionThread( entity player )
 {
-	entity player = GetPlayeArray()[0] // so it stays consistent
+	entity player = GetPlayerArray()[0] // so it stays consistent
 
 	AddCinematicFlag( player, CE_FLAG_HIDE_MAIN_HUD  )
 	Remote_CallFunction_Replay( player, "ServerCallback_LevelInfoText" )

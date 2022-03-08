@@ -106,7 +106,10 @@ void function CodeCallback_OnClientConnectionCompleted( entity player )
 	// Player was already positioned at info_player_start in SpPlayerConnecting.
 	// Don't reposition him, in case movers have already pushed him.
 	// No, will 
-	if ( GetSaveLocation() != <0,0,0>){
+	if ( "sp_s2s" == GetMapName() && GetPlayerArray()[0] != player && IsValid( GetShip().ship ) ){
+		player.SetOrigin( GetShip().ship.GetOrigin() + <0,0,200> )
+	}
+	else if ( GetSaveLocation() != <0,0,0> ){
 		player.SetOrigin( GetSaveLocation() )
 	}
 
@@ -434,6 +437,9 @@ void function RespawnPlayer(entity player)
 				}
 				catch( exception ){
 					wait( 1 )
+					print("------------------------")
+					print( GetShip().ship.GetOrigin() )
+					print("------------------------")
 					thread RespawnPlayer( player )
 				}
 			}
