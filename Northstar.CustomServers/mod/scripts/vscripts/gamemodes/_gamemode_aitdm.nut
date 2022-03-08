@@ -85,7 +85,7 @@ void function SpawnIntroBatch()
         index = RandomInt( militiaPodNodes.len() )
       
       node = militiaPodNodes[ index ]
-      thread SpawnDropPod( node.GetOrigin(), node.GetAngles(), TEAM_MILITIA, "npc_soldier" )
+      thread SpawnDropPod( node.GetOrigin(), node.GetAngles(), TEAM_MILITIA, "npc_soldier", SquadHandler )
       
       militiaPods--
     }
@@ -95,7 +95,7 @@ void function SpawnIntroBatch()
         militia_index = i // save where we started
       
       node = militiaShipNodes[ i - militia_index ]
-      thread SpawnDropShip( node.GetOrigin(), node.GetAngles(), TEAM_MILITIA, 4 )
+      thread SpawnDropShip( node.GetOrigin(), node.GetAngles(), TEAM_MILITIA, 4, SquadHandler )
       
       militiaShips--
     }
@@ -109,7 +109,7 @@ void function SpawnIntroBatch()
         index = RandomInt( imcPodNodes.len() )
       
       node = imcPodNodes[ index ]
-      thread SpawnDropPod( node.GetOrigin(), node.GetAngles(), TEAM_IMC, "npc_soldier" )
+      thread SpawnDropPod( node.GetOrigin(), node.GetAngles(), TEAM_IMC, "npc_soldier", SquadHandler )
       
       imcPods--
     }
@@ -119,7 +119,7 @@ void function SpawnIntroBatch()
         imc_index = i // save where we started
       
       node = imcShipNodes[ i - imc_index ]
-      thread SpawnDropShip( node.GetOrigin(), node.GetAngles(), TEAM_IMC, 4 )
+      thread SpawnDropShip( node.GetOrigin(), node.GetAngles(), TEAM_IMC, 4, SquadHandler )
       
       imcShips--
     }
@@ -134,6 +134,67 @@ void function SpawnIntroBatch()
   wait 15
   //thread Spawner( TEAM_MILITIA )
   //thread Spawner( TEAM_IMC )
+}
+
+//------------------------------------------------------
+
+void function SquadHandler( string squad )
+{
+  array< entity > guys
+  array< entity > points = GetEntArrayByClass_Expensive( "assault_assaultpoint" )
+  
+  vector point
+  
+  // We need to try catch this since some dropships fail to spawn
+  try
+  {
+    guys = GetNPCArrayBySquad( squad )
+    
+    point = points[ RandomInt( points.len() ) ].GetOrigin()
+    
+    array<entity> players = GetPlayerArrayOfEnemies( guys[0].GetTeam() )
+    
+    // Setup AI
+    foreach ( guy in guys )
+    {
+      guy.EnableNPCFlag( NPC_ALLOW_PATROL | NPC_ALLOW_INVESTIGATE | NPC_ALLOW_HAND_SIGNALS | NPC_ALLOW_FLEE )
+      guy.AssaultPoint( point )
+      guy.AssaultSetGoalRadius( 100 )
+      
+      // show on enemy radar
+      foreach ( player in players )
+    	{
+    		guy.Minimap_AlwaysShow( 0, player )
+    	}
+    }
+    
+    // Every 15 secs change AssaultPoint
+    for( ;; )
+    {
+      guys = GetNPCArrayBySquad( squad )
+      point = points[ RandomInt( points.len() ) ].GetOrigin()
+      
+      foreach ( guy in guys )
+      {
+        guy.AssaultPoint( point )
+      }
+      
+      wait 15
+    }
+  }
+  catch (ex)
+  {
+    printt("Squad doesn't exist or has been killed off")
+  }
+}
+
+void function ReaperHandler( entity reaper )
+{
+  array<entity> players = GetPlayerArrayOfEnemies( reaper.GetTeam() )
+  foreach ( player in players )
+  {
+    reaper.Minimap_AlwaysShow( 0, player )
+  }
 }
 
 //------------------------------------------------------
