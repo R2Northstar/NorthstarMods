@@ -44,6 +44,7 @@ void function SpawnDropShip( vector pos, vector rot, int team, int count, void f
   foreach ( guy in guys )
   {
     ReplaceWeapon( guy, file.gruntWeapons[ RandomInt( file.gruntWeapons.len() ) ], [] )
+    guy.EnableNPCFlag( NPC_ALLOW_PATROL | NPC_ALLOW_INVESTIGATE | NPC_ALLOW_HAND_SIGNALS | NPC_ALLOW_FLEE )
   }
 	
   if ( squadHandler != null )
@@ -78,6 +79,7 @@ void function SpawnDropPod( vector pos, vector rot, int team, string content /*(
         break
     }
     
+    npc.EnableNPCFlag( NPC_ALLOW_PATROL | NPC_ALLOW_INVESTIGATE | NPC_ALLOW_HAND_SIGNALS | NPC_ALLOW_FLEE )
     guys.append( npc )
   }
   
