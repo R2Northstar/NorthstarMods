@@ -61,9 +61,9 @@ void function HandleScoreEvent( entity victim, entity attacker, var damageInfo )
   if ( victim.IsNPC() && victim.GetClassName() != "npc_marvin" )
   {
     eventName = ScoreEventForNPCKilled( victim, damageInfo )
-    if ( eventName != "KillNPCTitan" )
+    if ( eventName != "KillNPCTitan"  && eventName != "" )
       score = ScoreEvent_GetPointValue( GetScoreEvent( eventName ) )
-  } // I dont like the brackets, but squirrel shits it self without them
+  }
   
   if ( victim.IsPlayer() )
     score = 5
