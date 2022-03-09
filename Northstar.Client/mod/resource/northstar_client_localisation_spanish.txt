@@ -124,21 +124,21 @@ Presiona Sí al estar de acuerdo. Esta opcion se puede cambiar en el menú de mo
 
 		"PL_sns" "Piedras y palos"
 		"PL_sns_lobby" "Vestíbulo de Piedras y palos"
-		"PL_sns_desc" "Free For All. Use Pulse Blades and Executions to Reset Enemy Score"
+		"PL_sns_desc" "Todos contra todos. Usa cuchillas de pulso y ejecucciones para reestablecer el puntaje del enemigo"
 		"PL_sns_abbr" "SNS"
 		"GAMEMODE_SNS" "Piedras y palos"
-		"SCOREBOARD_BANKRUPTS" "Bankrupt Kills"
-		"SNS_LEADER_BANKRUPT" "Score Leader Bankrupt!"
-		"SNS_LEADER_BANKRUPT_SUB" "%s1 Was Reset By %s2"
-		"SNS_BANKRUPT" "Bankrupt!"
-		"SNS_BANKRUPT_SUB" "Your Score Was Reset By %s1"
-		"sns_wme_kill_value" "Wingman Elite Kill Value"
-		"sns_softball_kill_value" "Softball Kill Value"
-		"sns_offhand_kill_value" "Offhand Kill Value"
-		"sns_reset_kill_value" "Pulse/Execution Kill Value"
-		"sns_melee_kill_value" "Melee Kill Value"
-		"sns_reset_pulse_blade_cooldown_on_pulse_blade_kill" "Kill Cooldown Resets"
-		"sns_softball_enabled" "Softball Enabled"
+		"SCOREBOARD_BANKRUPTS" "Eliminaciones de bancarrota"
+		"SNS_LEADER_BANKRUPT" "Lider de puntaje en bancarrota!"
+		"SNS_LEADER_BANKRUPT_SUB" "%s1 Fue reseteado por %s2"
+		"SNS_BANKRUPT" "Arruinado!"
+		"SNS_BANKRUPT_SUB" "Tu puntaje fue reseteado por %s1"
+		"sns_wme_kill_value" "Valor por eliminacion con Wingman Elite"
+		"sns_softball_kill_value" "Valor por eliminacion con Softball"
+		"sns_offhand_kill_value" "Valor por eliminacion con tacticas"
+		"sns_reset_kill_value" "Valor por eliminacion con Pulse/Ejecucción"
+		"sns_melee_kill_value" "Valor por eliminacion Melee"
+		"sns_reset_pulse_blade_cooldown_on_pulse_blade_kill" "Tiempo de reseteo de eliminación"
+		"sns_softball_enabled" "Softball Habilitada"
 
 		"PL_inf" "Infección"
 		"PL_inf_lobby" "Vestíbulo de Infección"
@@ -154,12 +154,12 @@ Presiona Sí al estar de acuerdo. Esta opcion se puede cambiar en el menú de mo
 		"INFECTION_YOU_ARE_LAST_SURVIVOR" "Eres el ultimo superviviente!"
 		"INFECTION_SURVIVE_LAST_SURVIVOR" "Sobrevive."
 
-		"PL_tffa" "Titan Free for All"
-		"PL_tffa_lobby" "Titan Free for All Lobby"
-		"PL_tffa_desc" "Every pilot for themselves, destroy all enemy titans."
-		"PL_tffa_hint" "Every pilot for themselves, destroy all enemy titans."
+		"PL_tffa" "Titan Todos contra Todos"
+		"PL_tffa_lobby" "Vestíbulo de Titan Todos contra Todos"
+		"PL_tffa_desc" "Cada piloto por su cuenta, destruye todos los titanes enemigos."
+		"PL_tffa_hint" "Cada piloto por su cuenta, destruye todos los titanes enemigos."
 		"PL_tffa_abbr" "TFFA"
-		"GAMEMODE_TFFA" "Titan Free for All"
+		"GAMEMODE_TFFA" "Titan Todos contra Todos"
 
 		"PL_hs" "Escondite"
 		"PL_hs_lobby" "Vestíbulo de Escondite"
@@ -299,5 +299,12 @@ Presiona Sí al estar de acuerdo. Esta opcion se puede cambiar en el menú de mo
 		"SHOW_ALL" "Todos"
 		"SHOW_ONLY_ENABLED" "Solo activados"
 		"SHOW_ONLY_DISABLED" "Solo desactivados"
+
+		// Maps menu
+		"HIDE_LOCKED" "Ocultar bloqueados"
+
+		// In-game chat
+		"HUD_CHAT_WHISPER_PREFIX" "[SUSURRO]"
+		"HUD_CHAT_SERVER_PREFIX" "[SERVIDOR]"
 	}
 }
