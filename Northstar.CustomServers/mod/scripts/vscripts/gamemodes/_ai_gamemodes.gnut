@@ -15,8 +15,8 @@ const INTRO_DROPSHIP_CUTOFF = 2000
 
 struct
 {
-  array< string > gruntWeapons = [ "mp_weapon_rspn101" ]
-  array< string > spectreWeapons = [ "mp_weapon_hemlok_smg" ]
+	array< string > gruntWeapons = [ "mp_weapon_rspn101" ]
+	array< string > spectreWeapons = [ "mp_weapon_hemlok_smg" ]
 } file
 
 void function AiGameModes_Init()
@@ -51,79 +51,80 @@ void function SpawnDropShip( vector pos, vector rot, int team, int count, void f
 	SetDropTableSpawnFuncs( drop, CreateSoldier, count )
 	SetCallinStyle( drop, eDropStyle.ZIPLINE_NPC )
   
-  thread RunDropshipDropoff( drop )
-  
-  WaitSignal( drop, "OnDropoff" )
-  
-  array< entity > guys = GetNPCArrayBySquad( squadName )
-  
-  foreach ( guy in guys )
-  {
-    ReplaceWeapon( guy, file.gruntWeapons[ RandomInt( file.gruntWeapons.len() ) ], [] )
-    guy.EnableNPCFlag( NPC_ALLOW_PATROL | NPC_ALLOW_INVESTIGATE | NPC_ALLOW_HAND_SIGNALS | NPC_ALLOW_FLEE )
-  }
+	thread RunDropshipDropoff( drop )
 	
-  if ( squadHandler != null )
-  	thread squadHandler( squadName )
+	WaitSignal( drop, "OnDropoff" )
+	
+	array< entity > guys = GetNPCArrayBySquad( squadName )
+	
+	foreach ( guy in guys )
+	{
+		ReplaceWeapon( guy, file.gruntWeapons[ RandomInt( file.gruntWeapons.len() ) ], [] )
+		guy.EnableNPCFlag( NPC_ALLOW_PATROL | NPC_ALLOW_INVESTIGATE | NPC_ALLOW_HAND_SIGNALS | NPC_ALLOW_FLEE )
+	}
+	
+	if ( squadHandler != null )
+		thread squadHandler( squadName )
 }
 
 
 void function SpawnDropPod( vector pos, vector rot, int team, string content /*( ͡° ͜ʖ ͡°)*/, void functionref( string squad ) squadHandler = null )
 {
-  string squadName = MakeSquadName( team, UniqueString( "" ) )
-  array<entity> guys
-  
-  entity pod = CreateDropPod( pos, <0,0,0> )
-  
-  InitFireteamDropPod( pod )
-  
-  waitthread LaunchAnimDropPod( pod, "pod_testpath", pos, rot )
-  
-  for (int i = 0; i < 4 ;i++ )
-  {
-    entity npc = CreateNPC( content, team, pos,<0,0,0> )
-    DispatchSpawn( npc )
-    SetSquad( npc, squadName )
-    
-    switch ( content )
-    {
-      case "npc_soldier":
-        ReplaceWeapon( npc, file.gruntWeapons[ RandomInt( file.gruntWeapons.len() ) ], [] )
-        break
-      case "npc_spectre":
-        ReplaceWeapon( npc, file.spectreWeapons[ RandomInt( file.spectreWeapons.len() ) ], [] )
-        break
-    }
-    
-    npc.EnableNPCFlag( NPC_ALLOW_PATROL | NPC_ALLOW_INVESTIGATE | NPC_ALLOW_HAND_SIGNALS | NPC_ALLOW_FLEE )
-    guys.append( npc )
-  }
-  
-  ActivateFireteamDropPod( pod, guys )
-  
-  guys[ guys.len() - 1 ].WaitSignal( "npc_deployed" )
-  
-  if ( squadHandler != null )
-    thread squadHandler( squadName )
+	string squadName = MakeSquadName( team, UniqueString( "" ) )
+	array<entity> guys
+	
+	entity pod = CreateDropPod( pos, <0,0,0> )
+	
+	InitFireteamDropPod( pod )
+	
+	waitthread LaunchAnimDropPod( pod, "pod_testpath", pos, rot )
+	
+	for ( int i = 0; i < 4 ;i++ )
+	{
+		entity npc = CreateNPC( content, team, pos,<0,0,0> )
+		DispatchSpawn( npc )
+		SetSquad( npc, squadName )
+		
+		switch ( content )
+		{
+			case "npc_soldier":
+			ReplaceWeapon( npc, file.gruntWeapons[ RandomInt( file.gruntWeapons.len() ) ], [] )
+			break
+			case "npc_spectre":
+			ReplaceWeapon( npc, file.spectreWeapons[ RandomInt( file.spectreWeapons.len() ) ], [] )
+			break
+		}
+		
+		npc.EnableNPCFlag( NPC_ALLOW_PATROL | NPC_ALLOW_INVESTIGATE | NPC_ALLOW_HAND_SIGNALS | NPC_ALLOW_FLEE )
+		guys.append( npc )
+	}
+	
+	ActivateFireteamDropPod( pod, guys )
+	
+	guys[ guys.len() - 1 ].WaitSignal( "npc_deployed" )
+	
+	if ( squadHandler != null )
+	thread squadHandler( squadName )
 }
 
 void function SpawnReaper( vector pos, vector rot, int team, void functionref( entity reaper ) reaperHandler = null )
 {
-  entity reaper = CreateNPC( "npc_super_spectre", team, pos, rot )
-  DispatchSpawn( reaper )
-  thread SuperSpectre_WarpFall( reaper )
-  
-  if ( reaperHandler != null )
-    thread reaperHandler( reaper )
+	entity reaper = CreateNPC( "npc_super_spectre", team, pos, rot )
+	DispatchSpawn( reaper )
+	thread SuperSpectre_WarpFall( reaper )
+	
+	if ( reaperHandler != null )
+		thread reaperHandler( reaper )
 }
 
 // TODO: finish this >.<
 void function SpawnTitan()
 {
-  entity titan = CreateNPC( "npc_titan", TEAM_BOTH, GetPlayerArray()[0].GetOrigin(), <0,0,0> )
-  titan.SetAISettings( "npc_titan_atlas_stickybomb_bounty" )
-  DispatchSpawn( titan )
+	entity titan = CreateNPC( "npc_titan", TEAM_BOTH, GetPlayerArray()[0].GetOrigin(), <0,0,0> )
+	titan.SetAISettings( "npc_titan_atlas_stickybomb_bounty" )
+	DispatchSpawn( titan )
 }
+
 //------------------------------------------------------
 
 void function ReplaceWeapon( entity guy, string weapon, array<string> mods )
@@ -137,16 +138,16 @@ void function ReplaceWeapon( entity guy, string weapon, array<string> mods )
 
 array<entity> function GetValidIntroDropShipSpawn( array<entity> introNodes )
 {
-  array<entity> introShipSpawns
-  
-  foreach ( node in introNodes )
-  {
-    entity closestNode = GetClosest( GetZiplineDropshipSpawns(), node.GetOrigin() )
-    SetTeam( closestNode, node.GetTeam() )
-    
-    if ( Distance( closestNode.GetOrigin(), node.GetOrigin() ) < INTRO_DROPSHIP_CUTOFF )
-      introShipSpawns.append( closestNode )
-  }
-  
-  return introShipSpawns
+	array<entity> introShipSpawns
+	
+	foreach ( node in introNodes )
+	{
+		entity closestNode = GetClosest( GetZiplineDropshipSpawns(), node.GetOrigin() )
+		SetTeam( closestNode, node.GetTeam() )
+		
+		if ( Distance( closestNode.GetOrigin(), node.GetOrigin() ) < INTRO_DROPSHIP_CUTOFF )
+			introShipSpawns.append( closestNode )
+	}
+	
+	return introShipSpawns
 }
