@@ -27,6 +27,9 @@ void function GamemodeAITdm_Init()
   
   AddCallback_OnClientConnected( OnPlayerConnected )
   
+  SetGruntWeapons( [ "mp_weapon_rspn101", "mp_weapon_dmr", "mp_weapon_r97", "mp_weapon_lmg" ] )
+  SetSpectreWeapons( [ "mp_weapon_hemlok_smg", "mp_weapon_doubletake", "mp_weapon_mastiff" ] )
+  
   ScoreEvent_SetupEarnMeterValuesForMixedModes()
 }
 
