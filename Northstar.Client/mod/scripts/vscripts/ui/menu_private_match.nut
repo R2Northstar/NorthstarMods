@@ -340,12 +340,6 @@ void function SetupComboButtons( var menu, var navUpButton, var navDownButton  )
 	var knbButton = AddComboButton( comboStruct, headerIndex, buttonIndex++, "#KNB_MENU_HEADER" )
 	Hud_AddEventHandler( knbButton, UIE_CLICK, AdvanceMenuEventHandler( GetMenu( "KnowledgeBaseMenu" ) ) )
 
-	var inviteJoinMenu = AddMenu( "JoinInviteMenu", $"resource/ui/menus/ns_joininvite.menu", null, "#MENU_CONNECT" )
-	file.inviteEntryBox = Hud_GetChild(inviteJoinMenu, "EnterInviteBox")
-	AddMenuFooterOption( inviteJoinMenu, BUTTON_B, "#B_BUTTON_BACK", "#BACK" )
-	var connectButton = Hud_GetChild( inviteJoinMenu, "ConnectButton")
-	Hud_AddEventHandler( connectButton, UIE_CLICK, TryJoinInviteLobby )
-
 	headerIndex++
 	buttonIndex = 0
 	var settingsHeader1 = AddComboButtonHeader( comboStruct, headerIndex, "#NS_INVITE_MENU_HEADER" )
@@ -848,10 +842,4 @@ void function OnPrivateMatchMenu_Open()
 {
 	Lobby_SetFDMode( false )
 	OnLobbyMenu_Open()
-}
-
-void function TryJoinInviteLobby( var unused ) {
-	var result = NSTryJoinInvite(Hud_GetUTF8Text(file.inviteEntryBox))
-	if (result == null)
-		GenerateJoinDialog(false)
 }

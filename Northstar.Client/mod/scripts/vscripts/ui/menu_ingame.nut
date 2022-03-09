@@ -122,8 +122,6 @@ void function InitInGameMPMenu()
 	Hud_SetVisible( dummyHeader2, false )
 	Hud_SetVisible( dummyButton2, false )
 
-	var inviteJoinMenu = AddMenu( "JoinInviteMenu", $"resource/ui/menus/ns_joininvite.menu", null, "#MENU_CONNECT" )
-
 	headerIndex++
 	buttonIndex = 0
 	var inviteHeader = AddComboButtonHeader( comboStruct, headerIndex, "#NS_INVITE_MENU_HEADER" )
@@ -131,10 +129,6 @@ void function InitInGameMPMenu()
 	Hud_AddEventHandler( joinInviteButton, UIE_CLICK, AdvanceMenuEventHandler( GetMenu( "JoinInviteMenu" ) ) )
 	var generateInviteButton = AddComboButton( comboStruct, headerIndex, buttonIndex++, "#NS_INVITE_GENERATE_SERVER_BUTTON" )
 	Hud_AddEventHandler( generateInviteButton, UIE_CLICK, GenerateServerInvite )
-
-	AddMenuFooterOption( inviteJoinMenu, BUTTON_B, "#B_BUTTON_BACK", "#BACK" )
-	var connectButton = Hud_GetChild( inviteJoinMenu, "ConnectButton")
-	Hud_AddEventHandler( connectButton, UIE_CLICK, TryJoinInvite )
 
 	//var dataCenterButton = AddComboButton( comboStruct, headerIndex, buttonIndex++, "#DATA_CENTER" )
 	//Hud_AddEventHandler( dataCenterButton, UIE_CLICK, OpenDataCenterDialog )

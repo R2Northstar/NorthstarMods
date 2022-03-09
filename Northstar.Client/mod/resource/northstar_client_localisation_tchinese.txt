@@ -324,6 +324,6 @@
 		"NS_INVITE_GENERATE_SUCCESS_HEADER"     "Invite created"
 		"NS_INVITE_GENERATE_SUCCESS_BODY"       "The invite has been copied to your clipboard"
 		"NS_INVITE_JOIN_FAILURE_HEADER"  "接受邀請失敗"
-		"NS_INVITE_JOIN_FAILURE_BODY"    "無法接受邀請,錯誤: %s1"
+		"NS_INVITE_JOIN_FAILURE_BODY"    "無法接受邀請,錯誤:\n%s1"
 	}
 }

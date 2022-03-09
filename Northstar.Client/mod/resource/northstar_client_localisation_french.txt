@@ -320,6 +320,6 @@ Choisissez Oui si vous êtes d'accord. Ce choix peut être modifié à tout inst
 		"NS_INVITE_GENERATE_SUCCESS_HEADER"     "Invitation créé"
 		"NS_INVITE_GENERATE_SUCCESS_BODY"       "Invitation copiée dans le presse-papiers"
 		"NS_INVITE_JOIN_FAILURE_HEADER"  "L'invitation a échoué"
-		"NS_INVITE_JOIN_FAILURE_BODY"    "L'invitation n'a pas pu aboutir (erreur : %s1)."
+		"NS_INVITE_JOIN_FAILURE_BODY"    "L'invitation n'a pas pu aboutir \n(erreur :%s1)."
 	}
 }
