@@ -55,6 +55,7 @@ Press Yes if you agree to this. This choice can be changed in the mods menu at a
 		"roundscorelimit" "Score Limit (round-based)"
 		"timelimit" "Time Limit"
 		"roundtimelimit" "Time Limit (round-based)"
+		"respawnprotection" "Respawn Protection Time"
 
 		"pilot_health_multiplier" "Health multiplier"
 		"respawn_delay" "Respawn Delay"
@@ -293,11 +294,17 @@ Press Yes if you agree to this. This choice can be changed in the mods menu at a
 		"INGAME_PLAYERS" "Players: ^6BA6C400%s1"
 		"TOTAL_SERVERS" "Servers: ^C46C6C00%s1"
 
-
 		// Mods menu
 		"SHOW" "Show"
 		"SHOW_ALL" "All"
 		"SHOW_ONLY_ENABLED" "Only Enabled"
 		"SHOW_ONLY_DISABLED" "Only Disabled"
+
+		// Maps menu
+		"HIDE_LOCKED" "Hide locked"
+
+		// In-game chat
+		"HUD_CHAT_WHISPER_PREFIX" "[WHISPER]"
+		"HUD_CHAT_SERVER_PREFIX" "[SERVER]"
 	}
 }

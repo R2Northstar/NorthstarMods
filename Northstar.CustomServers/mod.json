@@ -1,7 +1,7 @@
 {
 	"Name": "Northstar.CustomServers",
 	"Description": "Attempts to recreate the behaviour of vanilla Titanfall 2 servers, as well as changing some scripts to allow better support for mods",
-	"Version": "1.4.0",
+	"Version": "1.5.0",
 	"LoadPriority": 0,
 	"ConVars": [
 		{
@@ -16,6 +16,11 @@
 		{
 			"Name": "ns_should_return_to_lobby",
 			"DefaultValue": "1"
+		},
+		{
+			"Name": "ns_allow_spectators",
+			"DefaultValue": "0",
+			"Flags": 8192
 		},
 		{
 			"Name": "ns_private_match_last_mode",
@@ -49,6 +54,13 @@
 	"Scripts": [
 		{
 			"Path": "_custom_codecallbacks.gnut",
+			"RunOn": "SERVER",
+			"ServerCallback": {
+				"Before": "NSSetupChathooksServer"
+			}
+		},
+		{
+			"Path": "_chat.gnut",
 			"RunOn": "SERVER"
 		},
 		{
@@ -95,6 +107,13 @@
 			"RunOn": "SERVER && MP"
 		},
 		{
+			"Path": "mp/_spectator.gnut",
+			"RunOn": "SERVER && MP",
+			"ServerCallback": {
+				"After": "Spectator_Init"
+			}
+		},
+		{
 			"Path": "_loadouts_mp.gnut",
 			"RunOn": "SERVER && MP",
 			"ServerCallback": {
@@ -104,6 +123,14 @@
 		{
 			"Path": "lobby/sh_private_lobby_modes_init.gnut",
 			"RunOn": "( SERVER || CLIENT ) && MP"
+		},
+
+		{
+			"Path": "_respawn_protection.gnut",
+			"RunOn": "SERVER && MP",
+			"ServerCallback": {
+				"Before": "RespawnProtection_Init"
+			}
 		}
 	]
 }
