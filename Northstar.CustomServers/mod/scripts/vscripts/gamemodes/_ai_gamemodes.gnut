@@ -6,6 +6,7 @@ global function SetSpectreWeapons
 global function SpawnDropShip
 global function SpawnDropPod
 global function SpawnReaper
+global function SpawnTitan
 
 global function GetValidIntroDropShipSpawn
 
@@ -116,6 +117,13 @@ void function SpawnReaper( vector pos, vector rot, int team, void functionref( e
     thread reaperHandler( reaper )
 }
 
+// TODO: finish this >.<
+void function SpawnTitan()
+{
+  entity titan = CreateNPC( "npc_titan", TEAM_BOTH, GetPlayerArray()[0].GetOrigin(), <0,0,0> )
+  titan.SetAISettings( "npc_titan_atlas_stickybomb_bounty" )
+  DispatchSpawn( titan )
+}
 //------------------------------------------------------
 
 void function ReplaceWeapon( entity guy, string weapon, array<string> mods )
