@@ -265,8 +265,7 @@ void function SquadHandler( string squad )
     foreach ( guy in guys )
     {
       guy.EnableNPCFlag( NPC_ALLOW_PATROL | NPC_ALLOW_INVESTIGATE | NPC_ALLOW_HAND_SIGNALS | NPC_ALLOW_FLEE )
-      guy.AssaultPoint( point )
-      guy.AssaultSetGoalRadius( 100 )
+      guy.AssaultSetGoalRadius( 500 )
       
       // show on enemy radar
       foreach ( player in players )
@@ -286,7 +285,7 @@ void function SquadHandler( string squad )
         guy.AssaultPoint( point )
       }
       
-      wait 15
+      wait 5
     }
   }
   catch (ex)
