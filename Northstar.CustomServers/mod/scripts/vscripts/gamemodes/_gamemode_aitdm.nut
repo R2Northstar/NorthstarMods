@@ -148,6 +148,8 @@ void function SpawnIntroBatch( int team )
 // Populates the match
 void function Spawner( int team )
 {
+	svGlobal.levelEnt.EndSignal( "GameStateChanged" )
+
 	int index = team == TEAM_MILITIA ? 0 : 1
 	
 	while( true )
@@ -316,6 +318,9 @@ void function AITdm_CleanupBoredNPCThread( entity guy )
 	// track all ai that we spawn, ensure that they're never "bored" (i.e. stuck by themselves doing fuckall with nobody to see them) for too long
 	// if they are, kill them so we can free up slots for more ai to spawn
 	// we shouldn't ever kill ai if players would notice them die
+	
+	// NOTE: this partially covers up for the fact that we script ai alot less than vanilla probably does
+	// vanilla probably messes more with making ai assaultpoint to fights when inactive and stuff like that, we don't do this so much
 
 	guy.EndSignal( "OnDestroy" )
 	wait 15.0 // cover spawning time from dropship/pod + before we start cleaning up
