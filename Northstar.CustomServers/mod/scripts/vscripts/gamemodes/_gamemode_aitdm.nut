@@ -337,6 +337,8 @@ void function AITdm_CleanupBoredNPCThread( entity guy )
 			if ( !IsAlive( otherGuy ) )
 				continue
 		
+			failedChecks = false
+		
 			// don't kill if too close to anything
 			if ( Distance( otherGuy.GetOrigin(), guy.GetOrigin() ) < 2000.0 )
 				break
@@ -353,8 +355,7 @@ void function AITdm_CleanupBoredNPCThread( entity guy )
 					break
 			}
 			
-			// don't kill if any ai can see you
-			// note: CanSee could potentially be a bad call here, 
+			// don't kill if they can see any ai
 			if ( guy.CanSee( otherGuy ) )
 				break
 				
