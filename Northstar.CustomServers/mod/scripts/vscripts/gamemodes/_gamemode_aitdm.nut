@@ -157,13 +157,13 @@ void function Spawner( int team )
 		// TODO: this should possibly not count scripted npc spawns, probably only the ones spawned by this script
 		array<entity> npcs = GetNPCArrayOfTeam( team )
 		int count = npcs.len()
-		int reaper_count = GetNPCArrayEx( "npc_super_spectre", team, -1, <0,0,0>, -1 ).len()
+		int reaperCount = GetNPCArrayEx( "npc_super_spectre", team, -1, <0,0,0>, -1 ).len()
 		
 		// REAPERS
 		if ( file.reapers[ index ] )
 		{
 			array< entity > points = SpawnPoints_GetDropPod()
-			if ( reaper_count < REAPERS_PER_TEAM )
+			if ( reaperCount < REAPERS_PER_TEAM )
 			{
 				entity node = points[ GetSpawnPointIndex( points, team ) ]
 				waitthread SpawnReaper( node.GetOrigin(), node.GetAngles(), team )
@@ -214,11 +214,13 @@ void function Escalate( int team )
 			file.podEntities[ index ].append( "npc_spectre" )
 			SetGlobalNetInt( defcon, 2 )
 			return
+		
 		case LEVEL_STALKERS:
 			file.levels[ index ] = LEVEL_REAPERS
 			file.podEntities[ index ].append( "npc_stalker" )
 			SetGlobalNetInt( defcon, 3 )
 			return
+		
 		case LEVEL_REAPERS:
 			file.levels[ index ] = 9999
 			file.reapers[ index ] = true
@@ -283,7 +285,7 @@ void function SquadHandler( string squad )
 		}
 		
 		// Every 15 secs change AssaultPoint
-		for( ;; )
+		while ( true )
 		{
 			guys = GetNPCArrayBySquad( squad )
 			point = points[ RandomInt( points.len() ) ].GetOrigin()
