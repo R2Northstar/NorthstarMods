@@ -1,3 +1,4 @@
+untyped
 global function GamemodeAITdm_Init
 
 const SQUADS_PER_TEAM = 3
@@ -148,12 +149,12 @@ void function SpawnIntroBatch( int team )
 void function Spawner( int team )
 {
 	int index = team == TEAM_MILITIA ? 0 : 1
-	float lastCleanup = Time()
 	
 	while( true )
 	{
 		Escalate( team )
 		
+		// TODO: this should possibly not count scripted npc spawns, probably only the ones spawned by this script
 		array<entity> npcs = GetNPCArrayOfTeam( team )
 		int count = npcs.len()
 		int reaper_count = GetNPCArrayEx( "npc_super_spectre", team, -1, <0,0,0>, -1 ).len()
@@ -277,6 +278,8 @@ void function SquadHandler( string squad )
 			// show on enemy radar
 			foreach ( player in players )
 				guy.Minimap_AlwaysShow( 0, player )
+			
+			thread AITdm_CleanupBoredNPCThread( guy )
 		}
 		
 		// Every 15 secs change AssaultPoint
@@ -302,4 +305,68 @@ void function ReaperHandler( entity reaper )
 	array<entity> players = GetPlayerArrayOfEnemies( reaper.GetTeam() )
 	foreach ( player in players )
 		reaper.Minimap_AlwaysShow( 0, player )
+	
+	thread AITdm_CleanupBoredNPCThread( reaper )
+}
+
+void function AITdm_CleanupBoredNPCThread( entity guy )
+{
+	// track all ai that we spawn, ensure that they're never "bored" (i.e. stuck by themselves doing fuckall with nobody to see them) for too long
+	// if they are, kill them so we can free up slots for more ai to spawn
+	// we shouldn't ever kill ai if players would notice them die
+
+	guy.EndSignal( "OnDestroy" )
+	wait 15.0 // cover spawning time from dropship/pod + before we start cleaning up
+	
+	int cleanupFailures = 0 // when this hits 2, cleanup the npc
+	while ( cleanupFailures < 2 )
+	{
+		wait 10.0
+	
+		if ( guy.GetParent() != null )
+			continue // never cleanup while spawning
+	
+		array<entity> otherGuys = GetPlayerArray()
+		otherGuys.extend( GetNPCArrayOfTeam( GetOtherTeam( guy.GetTeam() ) ) )
+		
+		bool failedChecks = false
+		
+		foreach ( entity otherGuy in otherGuys )
+		{	
+			// skip dead people
+			if ( !IsAlive( otherGuy ) )
+				continue
+		
+			// don't kill if too close to anything
+			if ( Distance( otherGuy.GetOrigin(), guy.GetOrigin() ) < 2000.0 )
+				break
+			
+			// don't kill if ai or players can see them
+			if ( otherGuy.IsPlayer() )
+			{
+				if ( PlayerCanSee( otherGuy, guy, true, 135 ) )
+					break
+			}
+			else
+			{
+				if ( otherGuy.CanSee( guy ) )
+					break
+			}
+			
+			// don't kill if any ai can see you
+			// note: CanSee could potentially be a bad call here, 
+			if ( guy.CanSee( otherGuy ) )
+				break
+				
+			failedChecks = true
+		}
+		
+		if ( failedChecks )
+			cleanupFailures++
+		else
+			cleanupFailures--
+	}
+	
+	print( "cleaning up bored npc: " + guy + " from team " + guy.GetTeam() )
+	guy.Destroy()
 }
