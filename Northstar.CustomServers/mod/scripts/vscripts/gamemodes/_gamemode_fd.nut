@@ -45,30 +45,46 @@ global struct WaveEvent{
 }
 
 
+
 global HarvesterStruct fd_harvester
 global vector shopPosition
 global array<array<WaveEvent> > waveEvents
 global table<string,array<vector> > routes
+
+
+struct player_struct_fd{
+	bool diedThisRound
+	int scoreThisRound
+
+}
+
 
 struct {
 	array<entity> aiSpawnpoints
 	array<entity> smokePoints
 	array<entity> routeNodes
 	table<string,float> harvesterDamageSource
-	bool haversterWasDamaged
+	bool havesterWasDamaged
 	array<entity> spawnedNPCs
+	table<entity,player_struct_fd> players
 }file
 
 void function GamemodeFD_Init()
 {
 	PrecacheModel( MODEL_ATTRITION_BANK )
 	PrecacheParticleSystem($"P_smokescreen_FD")
+
+	RegisterSignal("FD_ReachedHarvester")
+	RegisterSignal("OnFailedToPath")
+
+
+
 	AddCallback_EntitiesDidLoad(LoadEntities)
 	AddDamageCallback("prop_script",OnDamagedPropScript)
 	AddCallback_GameStateEnter( eGameState.Playing,startMainGameLoop)
-	AddClientCommandCallback("FD_UseHarvesterShieldBoost",useShieldBoost)
-	RegisterSignal("FD_ReachedHarvester")
-	RegisterSignal("OnFailedToPath")
+	AddCallback_OnClientConnected(GamemodeFD_InitPlayer)
+	AddCallback_OnPlayerKilled(GamemodeFD_OnPlayerKilled)
+
 	AddDeathCallback("npc_titan",OnNpcDeath)
 	AddDeathCallback("npc_stalker",OnNpcDeath)
 	AddDeathCallback("npc_spectre",OnNpcDeath)
@@ -76,8 +92,24 @@ void function GamemodeFD_Init()
 	AddDeathCallback("npc_soldier",OnNpcDeath)
 	AddDeathCallback("npc_frag_drone",OnNpcDeath)
 	AddDeathCallback("npc_drone",OnNpcDeath)
-	
+
+	AddClientCommandCallback("FD_ToggleReady",ClientCommandCallbackToggleReady)
+	AddClientCommandCallback("FD_UseHarvesterShieldBoost",useShieldBoost)
 }
+
+void function GamemodeFD_OnPlayerKilled(entity victim, entity attacker, var damageInfo)
+{
+	file.players[victim].diedThisRound = true
+}
+
+void function GamemodeFD_InitPlayer(entity player){
+	player_struct_fd data
+	data.diedThisRound = false
+	data.scoreThisRound = 0
+	file.players[player] <- data
+}
+
+
 
 void function OnNpcDeath( entity ent, var damageInfo ){
 	int findIndex = file.spawnedNPCs.find( ent )
@@ -96,6 +128,7 @@ bool function useShieldBoost(entity player,array<string> args)
 	{	
 		fd_harvester.harvester.SetShieldHealth(fd_harvester.harvester.GetShieldHealthMax())
 		SetGlobalNetTime("FD_harvesterInvulTime",Time()+5)
+		MessageToTeam(TEAM_MILITIA,eEventNotifications.FD_PlayerHealedHarvester)
 		player.SetPlayerNetInt( "numHarvesterShieldBoost", player.GetPlayerNetInt( "numHarvesterShieldBoost" ) - 1 )
 	}
 	return true
@@ -110,7 +143,7 @@ void function mainGameLoop()
 {
 	startHarvester()
 	bool showShop = false
-	for(int i = 0;i<2;i++)//for(int i = 0;i<waveEvents.len();i++)
+	for(int i = 0;i<waveEvents.len();i++)
 	{
 		runWave(i,showShop)
 		showShop = true
@@ -223,37 +256,107 @@ array<int> function getEnemyTypesForWave(int wave)
 
 void function runWave(int waveIndex,bool shouldDoBuyTime)
 {	
+
+
+
+
 	SetGlobalNetInt("FD_currentWave",waveIndex)
-	file.haversterWasDamaged = false	
+	file.havesterWasDamaged = false
+	foreach(player_struct_fd player in file.players)
+	{
+		player.diedThisRound = false
+		player.scoreThisRound = 0
+	}	
 	array<int> enemys = getEnemyTypesForWave(waveIndex)
 	foreach(entity player in GetPlayerArray())
 	{
-		
 		Remote_CallFunction_NonReplay(player,"ServerCallback_FD_AnnouncePreParty",enemys[0],enemys[1],enemys[2],enemys[3],enemys[4],enemys[5],enemys[6],enemys[7],enemys[8])
 	}
 	if(shouldDoBuyTime)
 	{
-		SetGlobalNetTime("FD_nextWaveStartTime",Time()+75)
+		
 		OpenBoostStores()
-		wait 75
+		foreach(entity player in GetPlayerArray())
+			Remote_CallFunction_NonReplay(player,"ServerCallback_FD_NotifyStoreOpen")
+		while(Time()<GetGlobalNetTime("FD_nextWaveStartTime"))
+		{	
+			if(allPlayersReady())
+				SetGlobalNetTime("FD_nextWaveStartTime",Time())
+			WaitFrame()
+		}
+		
 		CloseBoostStores()
+		MessageToTeam(TEAM_MILITIA,eEventNotifications.FD_StoreClosing)
 	}
-	else
+	
+	//SetGlobalNetTime("FD_nextWaveStartTime",Time()+10)
+	wait 10
+	
+	foreach(entity player in GetPlayerArray())
 	{
-		//SetGlobalNetTime("FD_nextWaveStartTime",Time()+10)
-		wait 10
+		Remote_CallFunction_NonReplay(player,"ServerCallback_FD_ClearPreParty")
 	}
-	
 	SetGlobalNetBool("FD_waveActive",true)
+	MessageToTeam(TEAM_MILITIA,eEventNotifications.FD_AnnounceWaveStart)
 
 
-	
+	//main wave loop
 	foreach(WaveEvent event in waveEvents[waveIndex])
 	{
 		event.eventFunction(event.smokeEvent,event.spawnEvent,event.waitEvent,event.soundEvent)
 		
 	}
+	
+	wait 2
+	//wave end
 	SetGlobalNetBool("FD_waveActive",false)
+	MessageToTeam(TEAM_MILITIA,eEventNotifications.FD_AnnounceWaveEnd)
+	if(waveIndex<waveEvents.len())
+		SetGlobalNetTime("FD_nextWaveStartTime",Time()+75)
+	
+	//Player scoring
+	MessageToTeam(TEAM_MILITIA,eEventNotifications.FD_NotifyWaveBonusIncoming)
+	wait 2
+	foreach(entity player in GetPlayerArray())
+	{
+		AddPlayerScore(player,"FDTeamWave")
+		AddMoneyToPlayer(player,GetCurrentPlaylistVarInt("fd_money_per_round",600))
+		EmitSoundOnEntityOnlyToPlayer(player,player,"HUD_MP_BountyHunt_BankBonusPts_Deposit_Start_1P")
+	}
+	wait 1
+	int highestScore = 0;
+	entity highestScore_player = GetPlayerArray()[0]
+	foreach(entity player in GetPlayerArray())
+	{	
+		player_struct_fd data = file.players[player]
+		if(!data.diedThisRound)
+			AddPlayerScore(player,"FDDidntDie")
+			AddMoneyToPlayer(player,100)
+			EmitSoundOnEntityOnlyToPlayer(player,player,"HUD_MP_BountyHunt_BankBonusPts_Deposit_Start_1P")
+		if(highestScore<data.scoreThisRound)
+		{
+			highestScore = data.scoreThisRound
+			highestScore_player = player
+		}
+		
+	}
+	wait 1
+	AddPlayerScore(highestScore_player,"FDWaveMVP")
+	AddMoneyToPlayer(highestScore_player,100)
+	EmitSoundOnEntityOnlyToPlayer(highestScore_player,highestScore_player,"HUD_MP_BountyHunt_BankBonusPts_Deposit_Start_1P")
+	wait 1
+	foreach(entity player in GetPlayerArray())
+	{
+		if(!file.havesterWasDamaged)
+		{
+			AddPlayerScore(player,"FDTeamFlawlessWave")
+			AddMoneyToPlayer(player,100)
+			EmitSoundOnEntityOnlyToPlayer(player,player,"HUD_MP_BountyHunt_BankBonusPts_Deposit_Start_1P")
+		}
+	}
+	wait 10
+	
+	
 }
 
 void function OnDamagedPropScript(entity prop,var damageInfo)
@@ -301,7 +404,7 @@ void function OnDamagedPropScript(entity prop,var damageInfo)
 		}
 		
 		prop.SetHealth(newHealth)
-		file.haversterWasDamaged = true
+		file.havesterWasDamaged = true
 	}
 
 	
@@ -447,7 +550,11 @@ void function LoadEntities()
 
 
 void function titanNav_thread(entity titan, string routeName)
-{
+{	
+	titan.EndSignal( "OnDeath" )
+	titan.EndSignal( "OnDestroy" )
+
+
 	printt("Start NAV")
 	if((!titan.IsTitan())||(!titan.IsNPC()))
 		return
@@ -464,11 +571,12 @@ void function titanNav_thread(entity titan, string routeName)
 
 	foreach(entity node in routeArray)
 	{	
+		
 		if(Distance(fd_harvester.harvester.GetOrigin(),titan.GetOrigin())<Distance(fd_harvester.harvester.GetOrigin(),node.GetOrigin()))
 			continue
 		titan.AssaultPoint(node.GetOrigin())
 		int i = 0
-		while((Distance(titan.GetOrigin(),node.GetOrigin())>5000)&&IsAlive(titan))
+		while((Distance(titan.GetOrigin(),node.GetOrigin())>5000))
 		{
 			WaitFrame()
 			printt(Distance(titan.GetOrigin(),node.GetOrigin()))
@@ -483,6 +591,24 @@ void function titanNav_thread(entity titan, string routeName)
 	titan.Signal("FD_ReachedHarvester")
 }
 
+bool function allPlayersReady()
+{
+	foreach(entity player in GetPlayerArray())
+	{
+		if(!player.GetPlayerNetBool("FD_readyForNextWave"))
+			return false
+	}
+	return true
+}
+
+bool function ClientCommandCallbackToggleReady( entity player, array<string> args )
+{
+	if(args[0]=="true")
+		player.SetPlayerNetBool("FD_readyForNextWave",true)
+	if(args[0]=="flase")
+		player.SetPlayerNetBool("FD_readyForNextWave",false)
+	return true
+}
 /****************************************************************************************************************\
 ####### #     # ####### #     # #######     #####  ####### #     # ####### ######     #    ####### ####### ######  
 #       #     # #       ##    #    #       #     # #       ##    # #       #     #   # #      #    #     # #     # 
@@ -632,7 +758,7 @@ void function spawnSmoke(SmokeEvent smokeEvent,SpawnEvent spawnEvent,WaitEvent w
 	SmokescreenStruct smokescreen
 	smokescreen.smokescreenFX = $"P_smokescreen_FD"
 	smokescreen.isElectric = false
-	smokescreen.origin = smokeEvent.position
+	smokescreen.origin = smokeEvent.position + < 0 , 0, 150>
 	smokescreen.angles = <0,0,0>
 	smokescreen.lifetime = smokeEvent.lifetime
 	smokescreen.fxXYRadius = 150
@@ -647,6 +773,7 @@ void function spawnArcTitan(SmokeEvent smokeEvent,SpawnEvent spawnEvent,WaitEven
 	entity npc = CreateArcTitan(TEAM_IMC,spawnEvent.origin,spawnEvent.angles)
 	thread titanNav_thread(npc,spawnEvent.route)
 	SetSpawnOption_Titanfall(npc)
+	npc.DisableNPCFlag(NPC_ALLOW_INVESTIGATE | NPC_USE_SHOOTING_COVER|NPC_ALLOW_PATROL)
 	DispatchSpawn(npc)
 	file.spawnedNPCs.append(npc)	
 	thread EMPTitanThinkConstant(npc)
@@ -701,12 +828,14 @@ void function spawnGenericNPC(SmokeEvent smokeEvent,SpawnEvent spawnEvent,WaitEv
 	entity npc = CreateNPC( spawnEvent.npcClassName, TEAM_IMC, spawnEvent.origin, spawnEvent.angles )
 	DispatchSpawn(npc)
 }
+
 void function spawnGenericNPCTitanwithSettings(SmokeEvent smokeEvent,SpawnEvent spawnEvent,WaitEvent waitEvent,SoundEvent soundEvent)
 {
 	entity npc = CreateNPCTitan( spawnEvent.npcClassName, TEAM_IMC, spawnEvent.origin, spawnEvent.angles )
 	SetSpawnOption_AISettings( npc, spawnEvent.aiSettings)
 	DispatchSpawn(npc)
 }
+
 void function spawnNukeTitan(SmokeEvent smokeEvent,SpawnEvent spawnEvent,WaitEvent waitEvent,SoundEvent soundEvent)
 {
 	entity npc = CreateNPCTitan("titan_ogre",TEAM_IMC, spawnEvent.origin, spawnEvent.angles)
@@ -716,7 +845,7 @@ void function spawnNukeTitan(SmokeEvent smokeEvent,SpawnEvent spawnEvent,WaitEve
 	DispatchSpawn(npc)
 	file.spawnedNPCs.append(npc)
 	
-	NukeTitanThink(npc,fd_harvester.harvester)
+	//NukeTitanThink(npc,fd_harvester.harvester) //currently crashes game
 }
 
 /****************************************************************************************\
