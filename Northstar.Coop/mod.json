@@ -47,10 +47,10 @@
 			}
 		},
 		{
-			"Path": "_widow_utility.nut",
+			"Path": "_widow_utility.gnut",
 			"RunOn": "SERVER && SP",
 			"ServerCallback": {
-				"After": "CheckpointShipInit"
+				"Before": "CheckpointShipInit"
 			}
 		},
 		{

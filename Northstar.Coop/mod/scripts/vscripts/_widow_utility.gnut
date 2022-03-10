@@ -1,7 +1,6 @@
 //actually useful stuff
 global function CheckpointShipInit
 
-
 //stuff
 global function CreateWidow
 global function CloseDoorL
@@ -17,8 +16,10 @@ global function WarpOutThenDestroyShip
 global function FollowOnX
 global function FollowOnY
 global function FollowOnZ
-global function SpawnFollowingShip
-global function GetShip
+global function FollowOnZWOffset
+global function GetWidow
+global function SetPlayer0
+global function GetPlayer0
 
 const vector OffsetFloor = < -200,0,100 >
 const vector OffsetCeiling = < -200,0,380 >
@@ -44,6 +45,7 @@ global struct WidowStruct
 struct
 {
     array<WidowStruct> widows
+    entity player0
 } RespawnWidows
 
 /*
@@ -54,15 +56,20 @@ struct
 ██║██║ ╚████║██║   ██║   
 ╚═╝╚═╝  ╚═══╝╚═╝   ╚═╝
 */
+
 void function CheckpointShipInit()
+{
+    AddCallback_EntitiesDidLoad( EntitiesDidLoadTheSequel )
+    
+}
+
+void function EntitiesDidLoadTheSequel()
 {
     thread CheckpointShipInitThreaded()
 }
 
 void function CheckpointShipInitThreaded()
 {
-    #if SERVER
-
     PrecacheModel( $"models/humans/heroes/mlt_hero_sarah.mdl" )
     
 	if ( "sp_s2s" == GetMapName() )
@@ -77,16 +84,13 @@ void function CheckpointShipInitThreaded()
         RespawnWidows.widows.append( widow )
 
 		wait( 5 )
-		thread TeleportWidow( GetShip(), GetPlayerArray()[0].GetOrigin() + <0,0,500>)
-		// OpenDoorR( GetShip() )
-		// OpenDoorL( GetShip() )
-        GetShip().ship.Anim_Play( "wd_doors_opening" )
-        print( "-----------------------------" )
-        print( GetShip().ship.GetAngles() )
-        print( "-----------------------------" )
+		thread TeleportWidow( GetWidow(), GetPlayer0().GetOrigin() + <0,0,500>)
+        thread FollowOnY( GetWidow(), GetPlayer0().GetPetTitan() )
+        thread FollowOnX( GetWidow(), GetPlayer0().GetPetTitan() )
+		// OpenDoorR( GetWidow() )
+		// OpenDoorL( GetWidow() )
+        widow.ship.Anim_Play( "wd_doors_opening" )
 	}
-
-    #endif
 }
 
 
@@ -106,7 +110,9 @@ WidowStruct function CreateWidow( vector origin, vector angles )
 
     ship.ship = CreateEntity( "prop_dynamic" )
 
-    print(  )
+    print( "-----------------------------" )
+    print( ship.ship.GetAngles() )
+    print( "-----------------------------" )
     
 	ship.ship.SetValueForModelKey( $"models/vehicle/widow/widow.mdl" )
 	ship.ship.kv.solid = SOLID_VPHYSICS
@@ -274,16 +280,9 @@ entity function _CreateSarahProp( WidowStruct widow, vector origin, vector angle
                                                                                                 
 */
 
-WidowStruct function GetShip()
+WidowStruct function GetWidow()
 {
     return RespawnWidows.widows[0]
-}
-
-void function SpawnFollowingShip( entity player )
-{
-    WidowStruct widow = CreateWidow( <0,0,500> + player.GetOrigin(), <0,90,0> )
-
-    thread FollowOnX( widow, player )
 }
 
 
@@ -415,7 +414,7 @@ void function FollowOnX( WidowStruct widow, entity Target )
         WaitFrame()
     }
     }
-    cacth( exception ){
+    catch( exception ){
     }
 }
 void function FollowOnY( WidowStruct widow, entity Target )
@@ -442,7 +441,7 @@ void function FollowOnY( WidowStruct widow, entity Target )
         WaitFrame()
     }
     }
-    cacth( exception ){
+    catch( exception ){
     }
 }
 void function FollowOnZ( WidowStruct widow, entity Target )
@@ -469,7 +468,34 @@ void function FollowOnZ( WidowStruct widow, entity Target )
         WaitFrame()
     }
     }
-    cacth( exception ){
+    catch( exception ){
+    }
+}
+void function FollowOnZWOffset( WidowStruct widow, entity Target, float offsetz )
+{
+    widow.following = true
+    float TDistance
+    try{
+    for(;;)
+    {
+        if ( !widow.following && !IsValid( Target ) )
+            break
+            
+        TDistance = Target.GetOrigin().z - widow.ship.GetOrigin().z + offsetz
+        widow.ship.SetOrigin( widow.ship.GetOrigin() + Vector(0,0,TDistance) )
+        
+        foreach( player in GetPlayerArray() )
+        {
+            if ( DistanceSqr( player.GetOrigin(), widow.ship.GetOrigin() ) <= HullSize )
+            {
+                player.SetOrigin( player.GetOrigin() + Vector(0,0,TDistance) )
+            }
+        }
+
+        WaitFrame()
+    }
+    }
+    catch( exception ){
     }
 }
 
@@ -569,4 +595,14 @@ void function WarpOutThenDestroyShip( WidowStruct widow )
     CloseDoorL( widow )
     CloseDoorR( widow )
     widow.ship.Destroy()
+}
+
+void function SetPlayer0( entity player )
+{
+    RespawnWidows.player0 = player
+}
+
+entity function GetPlayer0()
+{
+    return RespawnWidows.player0
 }

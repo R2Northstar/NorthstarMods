@@ -1785,6 +1785,9 @@ const float START2_MAXACC 	= 100 * 1.75
 const float START2_MAXPITCH = 5
 void function Start2_Main( entity player )
 {
+	// added stuff
+	SetPlayer0( player )
+
 	level.nv.ShipTitles = SHIPTITLES_NOTRINITY
 	level.nv.ShipStreaming = SHIPSTREAMING_TRINITY
 
@@ -2626,9 +2629,6 @@ void function Intro_Main( entity player )
 
 	entity bt = player.GetPetTitan()
 	Assert( IsValid( bt ) )
-	
-	// added stuff
-	FollowOnX( GetShip(), player )
 
 	ReplaceWeapon( file.rocketDummy[ TEAM_MILITIA ], "mp_weapon_rocket_launcher", [ "sp_s2s_settings" ] )
 	file.rocketDummy[ TEAM_MILITIA ].SetNoTarget( true )
@@ -3696,7 +3696,7 @@ void function BossIntro_BTCombatIdle( entity bt )
 	bt.Anim_ScriptedPlay( "bt_s2s_widow_combat_idle" )
 	
 	// added stuff
-	GetShip().following = false
+	GetWidow().following = false
 }
 
 void function BossIntro_ConnectBarkerShip()
@@ -4880,10 +4880,6 @@ void function Barkership_Main( entity player )
 		{
 			ResetMaxSpeed( file.barkership, 0.5 )
 			ResetMaxAcc( file.barkership, 0.5 )
-
-			// added stuff
-			// thread TeleportWidow( GetShip(), GetPlayerArray()[0].GetOrigin() )
-			// thread TravelOnX( 1000, 0.5 )
 		}
 	)
 
@@ -5090,6 +5086,11 @@ void function Barkership_VO()
 
 	//You're welcome.
 	waitthreadsolo PlayDialogue( "diag_sp_widowFall_STS123_13_01_mcor_barker", file.player )
+
+	
+	// added stuff
+	waitthread TeleportWidow( GetWidow(), GetPlayer0().GetPetTitan().GetOrigin() + <0,0,1500> )
+	thread FollowOnZWOffset( GetWidow(), GetPlayer0().GetPetTitan(), 400.0 )
 }
 
 void function Barkership_flybys()
