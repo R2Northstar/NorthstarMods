@@ -42,9 +42,13 @@ void function OnPrematchStart()
 }
 
 void function OnPlaying()
-{
-	thread SpawnIntroBatch( TEAM_MILITIA )
-	thread SpawnIntroBatch( TEAM_IMC )
+{	
+	// don't run spawning code if ains and nms aren't up to date
+	if ( GetAINScriptVersion() == AIN_REV && GetNodeCount() != 0 )
+	{
+		thread SpawnIntroBatch( TEAM_MILITIA )
+		thread SpawnIntroBatch( TEAM_IMC )
+	}
 }
 
 void function OnPlayerConnected( entity player )
