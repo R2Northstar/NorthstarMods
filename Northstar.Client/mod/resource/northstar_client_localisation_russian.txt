@@ -250,9 +250,12 @@
 		"NS_INVITE_JOIN_BODY"             		"Вы получили приглашение на сервер: %s1 \nХотите ли Вы присоединится к нему?"
 		"NS_PARTY_INVITE_HEADER"          		"Приглашение в Группу"
 		"NS_PARTY_INVITE_BODY"            		"%s1 пригласил Вас в группу \nХотите ли вы присоединиться к ней?"
-		"NS_INVITE_GENERATE_FAILURE_HEADER"     "Failed to create invite"
-		"NS_INVITE_GENERATE_FAILURE_BODY"	    "An error occurred when trying to create an invite: %s1"
-		"NS_INVITE_GENERATE_SUCCESS_HEADER"     "Invite created"
-		"NS_INVITE_GENERATE_SUCCESS_BODY"       "The invite has been copied to your clipboard"
+		"NS_INVITE_GENERATE_FAILURE_HEADER"     "не удалось создать приглашение"
+		"NS_INVITE_GENERATE_FAILURE_BODY"	    "Произошла ошибка при попытке создать приглашение: %s1"
+		"NS_INVITE_GENERATE_SUCCESS_HEADER"     "Приглашение создано"
+		"NS_INVITE_GENERATE_SUCCESS_BODY"       "Приглашение скопировано в буфер обмена"
+		"NS_INVITE_JOIN_FAILURE_HEADER"  "Не удалось присоединиться к приглашению"
+		"NS_INVITE_JOIN_FAILURE_BODY"    "Не удалось присоединиться к приглашению. Cмотря приведенную ниже ошибку: \n%s1"
+
 	}
 }
