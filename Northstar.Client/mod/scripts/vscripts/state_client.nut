@@ -20,20 +20,25 @@ void function NSUpdateGameStateClientStart() {
 }
 
 void function NSUpdateGameStateLoopClient() {
-    while (true) {
-        foreach (player in GetPlayerArray()) {
-            if (GameRules_GetTeamScore(player.GetTeam()) >= highestScore) {
-                highestScore = GameRules_GetTeamScore(player.GetTeam())
+    while ( true )
+    {
+        foreach ( player in GetPlayerArray() )
+        {
+            if ( GameRules_GetTeamScore( player.GetTeam() ) >= highestScore )
+            {
+                highestScore = GameRules_GetTeamScore( player.GetTeam() )
             }
-            else if (GameRules_GetTeamScore(player.GetTeam()) > secondHighestScore) {
-                secondHighestScore = GameRules_GetTeamScore(player.GetTeam())
+            else if ( GameRules_GetTeamScore( player.GetTeam() ) > secondHighestScore )
+            {
+                secondHighestScore = GameRules_GetTeamScore( player.GetTeam() )
             }
         }
-        if (GetLocalClientPlayer() != null) {
-            ourScore = GameRules_GetTeamScore(GetLocalClientPlayer().GetTeam())
+        if ( GetLocalClientPlayer() != null )
+        {
+            ourScore = GameRules_GetTeamScore( GetLocalClientPlayer().GetTeam() )
         }
-        int limit = GetServerVar("roundBased") ? GetCurrentPlaylistVarInt("roundscorelimit", 0) : GetCurrentPlaylistVarInt("scorelimit", 0)
-        NSUpdateGameStateClient(GetPlayerArray().len(), ourScore, secondHighestScore, highestScore, GetServerVar("roundBased"), limit)
+        int limit = GetServerVar( "roundBased" ) ? GetCurrentPlaylistVarInt( "roundscorelimit", 0 ) : GetCurrentPlaylistVarInt( "scorelimit", 0 )
+        NSUpdateGameStateClient( GetPlayerArray().len(), ourScore, secondHighestScore, highestScore, GetServerVar( "roundBased" ), limit )
         OnPrematchStart()
         wait 1.0
     }
