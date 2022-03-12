@@ -679,15 +679,19 @@ void function OpenSinglePlayerDevMenu( var button )
 }
 
 void function inviteloop() {
-	while(isOnMainMenu) {
+	while(true) {
 		if (GetActiveLevel() != "") {
 			isOnMainMenu = false
 			NSSetOnMainMenu(false)
 		}
-		if(NSHasStoredURI()) {
+		if (!isOnMainMenu && GetActiveLevel() == "") {
+			isOnMainMenu = true
+			NSSetOnMainMenu(true)
+		}
+		if(NSHasStoredURI() && isOnMainMenu) {
 			ShowURIDialog()
 			NSRemoveStoredURI()
 		}
-		WaitFrame()
+		wait 1.0
 	}
 }

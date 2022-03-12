@@ -20,15 +20,28 @@ void function SetupInviteSystem() {
 
 void function ShowURIDialog() {
     DialogData dialogData
-	dialogData.header = "#NS_INVITE_JOIN_HEADER"
-	dialogData.image = $"rui/menu/fd_menu/upgrade_northstar_chassis"
-	dialogData.message = Localize("#NS_INVITE_JOIN_BODY", NSGetInviteServerName())
-	if (NSGetInviteShouldShowPasswordDialog())
-		AddDialogButton( dialogData, "#YES", ShowPasswordDialogBeforeJoin)
-	else
-		AddDialogButton( dialogData, "#YES", NSAcceptInvite)
-	AddDialogButton( dialogData, "#NO", NSDeclineInvite)
-	OpenDialog( dialogData )
+	if (NSRequestInviteServerInfo()) {
+		dialogData.header = "#NS_INVITE_JOIN_HEADER"
+		dialogData.image = $"rui/menu/fd_menu/upgrade_northstar_chassis"
+		dialogData.message = Localize("#NS_INVITE_JOIN_BODY", NSGetInviteServerName())
+		if (NSGetInviteShouldShowPasswordDialog())
+			AddDialogButton( dialogData, "#YES", ShowPasswordDialogBeforeJoin)
+		else
+			AddDialogButton( dialogData, "#YES", NSAcceptInvite)
+		AddDialogButton( dialogData, "#NO", NSDeclineInvite)
+		OpenDialog( dialogData )
+	}
+	else {
+		dialogData.header = "#NS_INVITE_JOIN_FAILURE_HEADER"
+		dialogData.image = $"rui/menu/fd_menu/upgrade_northstar_chassis"
+		dialogData.message = Localize("#NS_INVITE_JOIN_FAILURE_BODY", NSGetLastInviteError())
+		if (NSGetInviteShouldShowPasswordDialog())
+			AddDialogButton( dialogData, "#YES", ShowPasswordDialogBeforeJoin)
+		else
+			AddDialogButton( dialogData, "#YES", NSAcceptInvite)
+		AddDialogButton( dialogData, "#NO", NSDeclineInvite)
+		OpenDialog( dialogData )
+	}
 }
 
 void function ShowPasswordDialogBeforeJoin() {
