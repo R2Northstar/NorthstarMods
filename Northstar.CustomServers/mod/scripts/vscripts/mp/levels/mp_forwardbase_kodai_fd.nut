@@ -21,8 +21,8 @@ void function initFrontierDefenseData()
     // wave0.append(createSuperSpectreEvent(< -64,  964, 1456>,<0,0,0>,""))
 
     
-    wave0.append(createArcTitanEvent(< -12, 1720, 1456>,<0,0,0>,"hillRouteClose"))
-        
+    wave0.append(createMortarTitanEvent(< 1632, 4720, 944>,<0,0,0>))
+    wave0.append(createCloakDroneEvent(< 1632, 4720, 1200>,<0,0,0>))
     wave0.append(createWaitUntilAliveEvent(0))
     wave1.append(createArcTitanEvent(< -12, 1720, 1456>,<0,0,0>,"hillRouteClose"))
     wave1.append(createWaitUntilAliveEvent(0))
@@ -31,6 +31,8 @@ void function initFrontierDefenseData()
     //wave0.append(createArcTitanEvent(< -12, 1720, 1456>,<0,0,0>,"hillRouteClose"))
     //wave0.append(createDroppodStalkerEvent(< -12, 1720, 1456>,""))
 
+    waveEvents.append(wave0)
+    
     waveEvents.append(wave0)
     waveEvents.append(wave1)
     //waveEvents.append(wave2)
