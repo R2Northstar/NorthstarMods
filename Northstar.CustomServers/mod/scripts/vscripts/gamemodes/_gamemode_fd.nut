@@ -7,11 +7,13 @@ global function createWaitForTimeEvent
 global function createSuperSpectreEvent
 global function createDroppodGruntEvent
 global function createNukeTitanEvent
+global function createMortarTitanEvent
 global function createGenericSpawnEvent
 global function createGenericTitanSpawnWithAiSettingsEvent
 global function createDroppodStalkerEvent
 global function createDroppodSpectreMortarEvent
 global function createWaitUntilAliveEvent
+global function createCloakDroneEvent
 
 global struct SmokeEvent{
 	vector position
@@ -67,6 +69,7 @@ struct {
 	bool havesterWasDamaged
 	array<entity> spawnedNPCs
 	table<entity,player_struct_fd> players
+	entity harvester_info
 }file
 
 void function GamemodeFD_Init()
@@ -76,14 +79,17 @@ void function GamemodeFD_Init()
 
 	RegisterSignal("FD_ReachedHarvester")
 	RegisterSignal("OnFailedToPath")
-
+	SetRoundBased(true)
+	SetShouldUseRoundWinningKillReplay(false)
 
 
 	AddCallback_EntitiesDidLoad(LoadEntities)
 	AddDamageCallback("prop_script",OnDamagedPropScript)
+	AddCallback_GameStateEnter(eGameState.Prematch,FD_createHarvester)
 	AddCallback_GameStateEnter( eGameState.Playing,startMainGameLoop)
 	AddCallback_OnClientConnected(GamemodeFD_InitPlayer)
 	AddCallback_OnPlayerKilled(GamemodeFD_OnPlayerKilled)
+
 
 	AddDeathCallback("npc_titan",OnNpcDeath)
 	AddDeathCallback("npc_stalker",OnNpcDeath)
@@ -102,7 +108,8 @@ void function GamemodeFD_OnPlayerKilled(entity victim, entity attacker, var dama
 	file.players[victim].diedThisRound = true
 }
 
-void function GamemodeFD_InitPlayer(entity player){
+void function GamemodeFD_InitPlayer(entity player)
+{
 	player_struct_fd data
 	data.diedThisRound = false
 	data.scoreThisRound = 0
@@ -111,7 +118,8 @@ void function GamemodeFD_InitPlayer(entity player){
 
 
 
-void function OnNpcDeath( entity ent, var damageInfo ){
+void function OnNpcDeath( entity ent, var damageInfo )
+{
 	int findIndex = file.spawnedNPCs.find( ent )
 	if ( findIndex != -1 )
 	{
@@ -135,22 +143,30 @@ bool function useShieldBoost(entity player,array<string> args)
 }
 
 void function startMainGameLoop()
-{
+{	
 	thread mainGameLoop()
 }
 
 void function mainGameLoop()
-{
+{	
 	startHarvester()
+	
 	bool showShop = false
-	for(int i = 0;i<waveEvents.len();i++)
+	for(int i = GetGlobalNetInt("FD_currentWave");i<waveEvents.len();i++)
 	{
-		runWave(i,showShop)
+		if(!runWave(i,showShop))
+			break
 		showShop = true
 	}
-
+	if(IsAlive(fd_harvester.harvester))
+	{
+		//Game won code
+		SetWinner(TEAM_MILITIA)
+		return
+	}
+	//restart round
+	SetWinner(TEAM_IMC)
 }
-
 
 array<entity> function getRoute(string routeName)
 {	
@@ -254,7 +270,7 @@ array<int> function getEnemyTypesForWave(int wave)
 
 }
 
-void function runWave(int waveIndex,bool shouldDoBuyTime)
+bool function runWave(int waveIndex,bool shouldDoBuyTime)
 {	
 
 
@@ -291,22 +307,30 @@ void function runWave(int waveIndex,bool shouldDoBuyTime)
 	
 	//SetGlobalNetTime("FD_nextWaveStartTime",Time()+10)
 	wait 10
-	
+
 	foreach(entity player in GetPlayerArray())
 	{
 		Remote_CallFunction_NonReplay(player,"ServerCallback_FD_ClearPreParty")
+		player.SetPlayerNetBool("FD_readyForNextWave",false)
 	}
 	SetGlobalNetBool("FD_waveActive",true)
 	MessageToTeam(TEAM_MILITIA,eEventNotifications.FD_AnnounceWaveStart)
 
 
 	//main wave loop
+	
 	foreach(WaveEvent event in waveEvents[waveIndex])
 	{
 		event.eventFunction(event.smokeEvent,event.spawnEvent,event.waitEvent,event.soundEvent)
-		
+		if(!IsAlive(fd_harvester.harvester))
+			return false
+		waitUntilLessThanAmountAlive(0)
 	}
 	
+	
+	
+
+
 	wait 2
 	//wave end
 	SetGlobalNetBool("FD_waveActive",false)
@@ -344,9 +368,14 @@ void function runWave(int waveIndex,bool shouldDoBuyTime)
 	AddPlayerScore(highestScore_player,"FDWaveMVP")
 	AddMoneyToPlayer(highestScore_player,100)
 	EmitSoundOnEntityOnlyToPlayer(highestScore_player,highestScore_player,"HUD_MP_BountyHunt_BankBonusPts_Deposit_Start_1P")
+	foreach(entity player in GetPlayerArray())
+	{
+		Remote_CallFunction_NonReplay(player,"ServerCallback_FD_NotifyMVP",highestScore_player.GetEncodedEHandle())
+	}
 	wait 1
 	foreach(entity player in GetPlayerArray())
 	{
+		
 		if(!file.havesterWasDamaged)
 		{
 			AddPlayerScore(player,"FDTeamFlawlessWave")
@@ -355,7 +384,7 @@ void function runWave(int waveIndex,bool shouldDoBuyTime)
 		}
 	}
 	wait 10
-	
+	return true
 	
 }
 
@@ -409,6 +438,14 @@ void function OnDamagedPropScript(entity prop,var damageInfo)
 
 	
 	
+}
+
+void function FD_NPCCleanup()
+{
+	foreach(entity npc in file.spawnedNPCs){
+		if(IsValid(npc))
+			npc.Destroy()
+	}
 }
 
 void function HarvesterThink()
@@ -482,7 +519,6 @@ void function startHarvester()
 
 }
 
-
 void function HarvesterAlarm()
 {
 	while(IsAlive(fd_harvester.harvester))
@@ -501,21 +537,31 @@ void function HarvesterAlarm()
 void function initNetVars()
 {
 	SetGlobalNetInt("FD_totalWaves",waveEvents.len())
-	if(GetCurrentPlaylistVarInt("fd_difficulty",0)>=5)
-		SetGlobalNetInt("FD_restartsRemaining",0)
-	else	
-		SetGlobalNetInt("FD_restartsRemaining",2)
+	
+	if(!FD_HasRestarted())
+	{
+		bool showShop = false
+		SetGlobalNetInt("FD_currentWave",0)
+		if(GetCurrentPlaylistVarInt("fd_difficulty",0)>=5)
+			FD_SetNumAllowedRestarts(0)
+		else	
+			FD_SetNumAllowedRestarts(2)
+	}
 	
 }
 
+void function FD_createHarvester()
+{
+	HarvesterStruct ret = SpawnHarvester(file.harvester_info.GetOrigin(),file.harvester_info.GetAngles(),1,1,TEAM_IMC)//,25000,6000,TEAM_MILITIA)
+	fd_harvester.harvester = ret.harvester
+	fd_harvester.rings = ret.rings
+	fd_harvester.lastDamage = ret.lastDamage
+}
 
 void function LoadEntities() 
 {	
-	initNetVars()
+	
 	CreateBoostStoreLocation(TEAM_MILITIA,shopPosition,<0,0,0>)
-
-
-
 	foreach ( entity info_target in GetEntArrayByClass_Expensive("info_target") )
 	{
 		
@@ -525,16 +571,13 @@ void function LoadEntities()
 		if(info_target.HasKey("editorclass")){
 			switch(info_target.kv.editorclass){
 				case"info_fd_harvester":
-					HarvesterStruct ret = SpawnHarvester(info_target.GetOrigin(),info_target.GetAngles(),25000,6000,TEAM_MILITIA)
-					fd_harvester.harvester = ret.harvester
-					fd_harvester.rings = ret.rings
-					fd_harvester.lastDamage = ret.lastDamage
+					file.harvester_info = info_target
 					break
 				case"info_fd_mode_model":
 					entity prop = CreatePropDynamic( info_target.GetModelName(), info_target.GetOrigin(), info_target.GetAngles(), 6 )
 					break
 				case"info_fd_ai_position":
-					file.aiSpawnpoints.append(info_target)
+					AddStationaryAIPosition(info_target.GetOrigin(),int(info_target.kv.aiType))
 					break
 				case"info_fd_route_node":
 					file.routeNodes.append(info_target)
@@ -545,9 +588,9 @@ void function LoadEntities()
 			}
 		}
 	}
-	
+	ValidateAndFinalizePendingStationaryPositions()
+	initNetVars()
 }
-
 
 void function titanNav_thread(entity titan, string routeName)
 {	
@@ -609,6 +652,7 @@ bool function ClientCommandCallbackToggleReady( entity player, array<string> arg
 		player.SetPlayerNetBool("FD_readyForNextWave",false)
 	return true
 }
+
 /****************************************************************************************************************\
 ####### #     # ####### #     # #######     #####  ####### #     # ####### ######     #    ####### ####### ######  
 #       #     # #       ##    #    #       #     # #       ##    # #       #     #   # #      #    #     # #     # 
@@ -696,7 +740,7 @@ WaveEvent function createWaitForTimeEvent(float amount)
 WaveEvent function createWaitUntilAliveEvent(int amount)
 {
 	WaveEvent event
-	event.eventFunction = waitUntilLessThanAmountAlive
+	event.eventFunction = waitUntilLessThanAmountAliveEvent
 	event.waitEvent.amount = amount.tofloat()
 	return event
 }
@@ -740,7 +784,26 @@ WaveEvent function createNukeTitanEvent(vector origin,vector angles,string route
 	return event
 }
 
+WaveEvent function createMortarTitanEvent(vector origin,vector angles)
+{
+	WaveEvent event
+	event.eventFunction = spawnMortarTitan
+	event.spawnEvent.spawnType= eFD_AITypeIDs.TITAN_MORTAR
+	event.spawnEvent.spawnAmount = 1
+	event.spawnEvent.origin = origin
+	event.spawnEvent.angles = angles
+	return event
+}
 
+WaveEvent function createCloakDroneEvent(vector origin,vector angles){
+		WaveEvent event
+	event.eventFunction = fd_spawnCloakDrone
+	event.spawnEvent.spawnType= eFD_AITypeIDs.DRONE_CLOAK
+	event.spawnEvent.spawnAmount = 1
+	event.spawnEvent.origin = origin
+	event.spawnEvent.angles = angles
+	return event
+}
 
 /************************************************************************************************************\
 ####### #     # ####### #     # #######    ####### #     # #     #  #####  ####### ### ####### #     #  #####  
@@ -769,7 +832,8 @@ void function spawnSmoke(SmokeEvent smokeEvent,SpawnEvent spawnEvent,WaitEvent w
 }
 
 void function spawnArcTitan(SmokeEvent smokeEvent,SpawnEvent spawnEvent,WaitEvent waitEvent,SoundEvent soundEvent)
-{
+{	
+	PingMinimap(spawnEvent.origin.x, spawnEvent.origin.y, 4, 600, 150, 0)
 	entity npc = CreateArcTitan(TEAM_IMC,spawnEvent.origin,spawnEvent.angles)
 	thread titanNav_thread(npc,spawnEvent.route)
 	SetSpawnOption_Titanfall(npc)
@@ -781,28 +845,23 @@ void function spawnArcTitan(SmokeEvent smokeEvent,SpawnEvent spawnEvent,WaitEven
 
 void function waitForTime(SmokeEvent smokeEvent,SpawnEvent spawnEvent,WaitEvent waitEvent,SoundEvent soundEvent)
 {
-	wait waitEvent.amount
+	float waitUntil = Time() + waitEvent.amount
+	while(Time()<waitUntil)
+	{	
+		if(!IsAlive(fd_harvester.harvester))
+			break
+		WaitFrame()
+	}
 }
 
-
-
-
-void function waitUntilLessThanAmountAlive(SmokeEvent smokeEvent,SpawnEvent spawnEvent,WaitEvent waitEvent,SoundEvent soundEvent)
+void function waitUntilLessThanAmountAliveEvent(SmokeEvent smokeEvent,SpawnEvent spawnEvent,WaitEvent waitEvent,SoundEvent soundEvent)
 {	
-	int aliveTitans = file.spawnedNPCs.len()
-	int testamount = waitEvent.amount.tointeger()
-	while(aliveTitans>testamount)
-	{
-		printt("Titans alive",aliveTitans,testamount)
-		WaitFrame()
-		aliveTitans = file.spawnedNPCs.len()
-		
-	}
-	printt("Titans alive end",aliveTitans,testamount)
+	waitUntilLessThanAmountAlive(int(waitEvent.amount))
 }
 
 void function spawnSuperSpectre(SmokeEvent smokeEvent,SpawnEvent spawnEvent,WaitEvent waitEvent,SoundEvent soundEvent)
 {
+	PingMinimap(spawnEvent.origin.x, spawnEvent.origin.y, 4, 600, 150, 0)
 	entity npc = CreateSuperSpectre(TEAM_IMC,spawnEvent.origin,spawnEvent.angles)
 	SetSpawnOption_Titanfall(npc)
 	DispatchSpawn(npc)
@@ -810,42 +869,79 @@ void function spawnSuperSpectre(SmokeEvent smokeEvent,SpawnEvent spawnEvent,Wait
 
 void function spawnDroppodGrunts(SmokeEvent smokeEvent,SpawnEvent spawnEvent,WaitEvent waitEvent,SoundEvent soundEvent)
 {
+	PingMinimap(spawnEvent.origin.x, spawnEvent.origin.y, 4, 600, 150, 0)
 	thread CreateTrackedDroppodSoldier(spawnEvent.origin,TEAM_IMC)
 }
 
 void function spawnDroppodStalker(SmokeEvent smokeEvent,SpawnEvent spawnEvent,WaitEvent waitEvent,SoundEvent soundEvent)
-{
+{	
+	PingMinimap(spawnEvent.origin.x, spawnEvent.origin.y, 4, 600, 150, 0)
 	thread CreateTrackedDroppodStalker(spawnEvent.origin,TEAM_IMC)
 }
 
 void function spawnDroppodSpectreMortar(SmokeEvent smokeEvent,SpawnEvent spawnEvent,WaitEvent waitEvent,SoundEvent soundEvent)
-{
+{	
+	PingMinimap(spawnEvent.origin.x, spawnEvent.origin.y, 4, 600, 150, 0)
 	thread CreateTrackedDroppodSpectreMortar(spawnEvent.origin,TEAM_IMC)
 }
 
 void function spawnGenericNPC(SmokeEvent smokeEvent,SpawnEvent spawnEvent,WaitEvent waitEvent,SoundEvent soundEvent)
-{
+{	
+	PingMinimap(spawnEvent.origin.x, spawnEvent.origin.y, 4, 600, 150, 0)
 	entity npc = CreateNPC( spawnEvent.npcClassName, TEAM_IMC, spawnEvent.origin, spawnEvent.angles )
 	DispatchSpawn(npc)
 }
 
 void function spawnGenericNPCTitanwithSettings(SmokeEvent smokeEvent,SpawnEvent spawnEvent,WaitEvent waitEvent,SoundEvent soundEvent)
-{
+{	
+	PingMinimap(spawnEvent.origin.x, spawnEvent.origin.y, 4, 600, 150, 0)
 	entity npc = CreateNPCTitan( spawnEvent.npcClassName, TEAM_IMC, spawnEvent.origin, spawnEvent.angles )
 	SetSpawnOption_AISettings( npc, spawnEvent.aiSettings)
 	DispatchSpawn(npc)
+	file.spawnedNPCs.append(npc)
 }
 
 void function spawnNukeTitan(SmokeEvent smokeEvent,SpawnEvent spawnEvent,WaitEvent waitEvent,SoundEvent soundEvent)
 {
+	PingMinimap(spawnEvent.origin.x, spawnEvent.origin.y, 4, 600, 150, 0)
 	entity npc = CreateNPCTitan("titan_ogre",TEAM_IMC, spawnEvent.origin, spawnEvent.angles)
 	SetSpawnOption_AISettings(npc,"npc_titan_ogre_minigun_nuke")
 	thread titanNav_thread(npc,spawnEvent.route)
 	SetSpawnOption_Titanfall(npc)
+	npc.EnableNPCMoveFlag(NPCMF_WALK_ALWAYS)
 	DispatchSpawn(npc)
 	file.spawnedNPCs.append(npc)
+	thread NukeTitanThink(npc,fd_harvester.harvester)
 	
-	//NukeTitanThink(npc,fd_harvester.harvester) //currently crashes game
+}
+
+void function spawnMortarTitan(SmokeEvent smokeEvent,SpawnEvent spawnEvent,WaitEvent waitEvent,SoundEvent soundEvent)
+{
+	PingMinimap(spawnEvent.origin.x, spawnEvent.origin.y, 4, 600, 150, 0)
+	entity npc = CreateNPCTitan("titan_atlas",TEAM_IMC, spawnEvent.origin, spawnEvent.angles)
+	SetSpawnOption_AISettings(npc,"npc_titan_atlas_tracker_mortar")
+	SetSpawnOption_Titanfall(npc)
+	DispatchSpawn(npc)
+	file.spawnedNPCs.append(npc)
+	thread MortarTitanThink(npc,fd_harvester.harvester)
+	
+}
+
+void function spawnSniperTitan(SmokeEvent smokeEvent,SpawnEvent spawnEvent,WaitEvent waitEvent,SoundEvent soundEvent)
+{
+	PingMinimap(spawnEvent.origin.x, spawnEvent.origin.y, 4, 600, 150, 0)
+	entity npc = CreateNPCTitan("titan_stryder",TEAM_IMC, spawnEvent.origin, spawnEvent.angles)
+	SetSpawnOption_AISettings(npc,"npc_titan_atlas_tracker_mortar")
+	SetSpawnOption_Titanfall(npc)
+	DispatchSpawn(npc)
+	file.spawnedNPCs.append(npc)
+	thread MortarTitanThink(npc,fd_harvester.harvester)
+	
+}
+void function fd_spawnCloakDrone(SmokeEvent smokeEffect,SpawnEvent spawnEvent,WaitEvent waitEvent,SoundEvent soundEvent)
+{
+	entity npc = SpawnCloakDrone( TEAM_IMC, spawnEvent.origin, spawnEvent.angles, file.harvester_info.GetOrigin() )
+	file.spawnedNPCs.append(npc)
 }
 
 /****************************************************************************************\
@@ -937,4 +1033,28 @@ void function CreateTrackedDroppodStalker( vector origin, int team)
     }
     
     ActivateFireteamDropPod( pod, guys )
+}
+
+void function PingMinimap(float x, float y, float duration, float spreadRadius, float ringRadius, int colorIndex)
+{
+	foreach(entity player in GetPlayerArray())
+	{
+		Remote_CallFunction_NonReplay(player, "ServerCallback_FD_PingMinimap", x, y, duration, spreadRadius, ringRadius, colorIndex)
+	}
+}
+
+void function waitUntilLessThanAmountAlive(int amount)
+{
+	int aliveTitans = file.spawnedNPCs.len()
+	
+	while(aliveTitans>amount)
+	{
+		printt("Titans alive",aliveTitans,amount)
+		WaitFrame()
+		aliveTitans = file.spawnedNPCs.len()
+		if(!IsAlive(fd_harvester.harvester))
+			break
+		
+	}
+	printt("Titans alive end",aliveTitans,amount)
 }
