@@ -6,20 +6,23 @@ int ourScore = 0
 
 globalize_all_functions
 
-void function OnPrematchStart() {
-    if (GetServerVar("roundBased"))
-        NSUpdateTimeInfo(level.nv.roundEndTime - Time())
+void function OnPrematchStart()
+{
+    if (GetServerVar( "roundBased" ))
+        NSUpdateTimeInfo( level.nv.roundEndTime - Time() )
     else
-        NSUpdateTimeInfo(level.nv.gameEndTime - Time())
+        NSUpdateTimeInfo( level.nv.gameEndTime - Time() )
 }
 
-void function NSUpdateGameStateClientStart() {
+void function NSUpdateGameStateClientStart()
+{
     AddCallback_GameStateEnter( eGameState.Prematch, OnPrematchStart )
     thread NSUpdateGameStateLoopClient()
     OnPrematchStart()
 }
 
-void function NSUpdateGameStateLoopClient() {
+void function NSUpdateGameStateLoopClient()
+{
     while ( true )
     {
         foreach ( player in GetPlayerArray() )
