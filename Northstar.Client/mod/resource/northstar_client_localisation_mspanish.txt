@@ -294,7 +294,6 @@ Si estas de acuerdo con esto, presiona SI. Esta decision puede ser cambiada en e
 		"INGAME_PLAYERS" "Jugadores: ^6BA6C400%s1"
 		"TOTAL_SERVERS" "Servidores: ^C46C6C00%s1"
 
-
 		// Mods menu
 		"SHOW" "Mostrar"
 		"SHOW_ALL" "Todos"
