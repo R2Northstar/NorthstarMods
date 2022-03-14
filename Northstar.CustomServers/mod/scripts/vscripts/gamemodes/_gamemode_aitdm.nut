@@ -93,7 +93,6 @@ void function SpawnIntroBatch( int team )
 	array<entity> dropShipNodes = GetValidIntroDropShipSpawn( dropPodNodes )  
 	
 	array<entity> podNodes
-	
 	array<entity> shipNodes
 	
 	// Sort per team
@@ -102,6 +101,15 @@ void function SpawnIntroBatch( int team )
 		if ( node.GetTeam() == team )
 			podNodes.append( node )
 	}
+	
+	// If for some reason we're missing team nodes
+	// start spawner
+	if( podNodes.len() == 0 )
+	{
+		waitthread Spawner( team )
+		return
+	}
+	
 	
 	// Spawn logic
 	int startIndex = 0
@@ -119,7 +127,7 @@ void function SpawnIntroBatch( int team )
 			int index = i
 			
 			if ( index > podNodes.len() - 1 )
-			index = RandomInt( podNodes.len() )
+				index = RandomInt( podNodes.len() )
 			
 			node = podNodes[ index ]
 			thread SpawnDropPod( node.GetOrigin(), node.GetAngles(), team, "npc_soldier", SquadHandler )
