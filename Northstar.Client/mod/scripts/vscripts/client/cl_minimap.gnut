@@ -11,6 +11,8 @@ global function RegisterMinimapPackage
 
 global function Minimap_SetZoomScale
 global function Minimap_SetSizeScale
+global function Minimap_GetZoomScale
+global function Minimap_GetSizeScale
 global function Minimap_IsUsingLargeMinimap
 
 global function Minimap_Ping
@@ -926,7 +928,14 @@ void function Minimap_SetSizeScale( float scale )
 	}
 
 }
-
+float function Minimap_GetZoomScale()
+{
+	return file.file.minimapZoomScale
+}
+float function Minimap_GetSizeScale()
+{
+	return file.minimapSizeScale
+}
 bool function Minimap_IsUsingLargeMinimap()
 {
 	return file.minimapSizeScale > 1.0
