@@ -930,7 +930,7 @@ void function Minimap_SetSizeScale( float scale )
 }
 float function Minimap_GetZoomScale()
 {
-	return file.file.minimapZoomScale
+	return file.minimapZoomScale
 }
 float function Minimap_GetSizeScale()
 {
