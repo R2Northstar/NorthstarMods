@@ -1,12 +1,12 @@
 global function AiGameModes_Init
 
-global function SetGruntWeapons
-global function SetSpectreWeapons
+global function AiGameModes_SetGruntWeapons
+global function AiGameModes_SetSpectreWeapons
 
-global function SpawnDropShip
-global function SpawnDropPod
-global function SpawnReaper
-global function SpawnTitan
+global function AiGameModes_SpawnDropShip
+global function AiGameModes_SpawnDropPod
+global function AiGameModes_SpawnReaper
+global function AiGameModes_SpawnTitan
 
 global function GetValidIntroDropShipSpawn
 
@@ -26,19 +26,19 @@ void function AiGameModes_Init()
 
 //------------------------------------------------------
 
-void function SetGruntWeapons( array< string > weapons )
+void function AiGameModes_SetGruntWeapons( array< string > weapons )
 {
 	file.gruntWeapons = weapons
 }
 
-void function SetSpectreWeapons( array< string > weapons )
+void function AiGameModes_SetSpectreWeapons( array< string > weapons )
 {
 	file.spectreWeapons = weapons
 }
 
 //------------------------------------------------------
 
-void function SpawnDropShip( vector pos, vector rot, int team, int count, void functionref( string squad ) squadHandler = null )
+void function AiGameModes_SpawnDropShip( vector pos, vector rot, int team, int count, void functionref( string squad ) squadHandler = null )
 {  
 	string squadName = MakeSquadName( team, UniqueString( "" ) )
 
@@ -68,7 +68,7 @@ void function SpawnDropShip( vector pos, vector rot, int team, int count, void f
 }
 
 
-void function SpawnDropPod( vector pos, vector rot, int team, string content /*( ͡° ͜ʖ ͡°)*/, void functionref( string squad ) squadHandler = null )
+void function AiGameModes_SpawnDropPod( vector pos, vector rot, int team, string content /*( ͡° ͜ʖ ͡°)*/, void functionref( string squad ) squadHandler = null )
 {
 	string squadName = MakeSquadName( team, UniqueString( "" ) )
 	array<entity> guys
@@ -88,11 +88,12 @@ void function SpawnDropPod( vector pos, vector rot, int team, string content /*(
 		switch ( content )
 		{
 			case "npc_soldier":
-			ReplaceWeapon( npc, file.gruntWeapons[ RandomInt( file.gruntWeapons.len() ) ], [] )
-			break
+				ReplaceWeapon( npc, file.gruntWeapons[ RandomInt( file.gruntWeapons.len() ) ], [] )
+				break
+				
 			case "npc_spectre":
-			ReplaceWeapon( npc, file.spectreWeapons[ RandomInt( file.spectreWeapons.len() ) ], [] )
-			break
+				ReplaceWeapon( npc, file.spectreWeapons[ RandomInt( file.spectreWeapons.len() ) ], [] )
+				break
 		}
 		
 		npc.EnableNPCFlag( NPC_ALLOW_PATROL | NPC_ALLOW_INVESTIGATE | NPC_ALLOW_HAND_SIGNALS | NPC_ALLOW_FLEE )
@@ -104,12 +105,12 @@ void function SpawnDropPod( vector pos, vector rot, int team, string content /*(
 	guys[ guys.len() - 1 ].WaitSignal( "npc_deployed" )
 	
 	if ( squadHandler != null )
-	thread squadHandler( squadName )
+		thread squadHandler( squadName )
 }
 
-void function SpawnReaper( vector pos, vector rot, int team, void functionref( entity reaper ) reaperHandler = null )
+void function AiGameModes_SpawnReaper( vector pos, vector rot, int team, void functionref( entity reaper ) reaperHandler = null )
 {
-	entity reaper = CreateNPC( "npc_super_spectre", team, pos, rot )
+	entity reaper = CreateSuperSpectre( team, pos, rot )
 	DispatchSpawn( reaper )
 	thread SuperSpectre_WarpFall( reaper )
 	
@@ -117,12 +118,20 @@ void function SpawnReaper( vector pos, vector rot, int team, void functionref( e
 		thread reaperHandler( reaper )
 }
 
-// TODO: finish this >.<
-void function SpawnTitan()
+// including aisettings stuff specifically for at bounty titans
+void function AiGameModes_SpawnTitan( vector pos, vector rot, int team, string setFile, string aiSettings = "", void functionref( entity titan ) titanHandler = null )
 {
-	entity titan = CreateNPC( "npc_titan", TEAM_BOTH, GetPlayerArray()[0].GetOrigin(), <0,0,0> )
-	titan.SetAISettings( "npc_titan_atlas_stickybomb_bounty" )
+	entity titan = CreateNPCTitan( setFile, TEAM_BOTH, pos, rot )
+	SetSpawnOption_Titanfall( titan )
+	SetSpawnOption_Warpfall( titan )
+	
+	if ( aiSettings != "" )
+		SetSpawnOption_AISettings( titan, aiSettings )
+	
 	DispatchSpawn( titan )
+	
+	if ( titanHandler != null )
+		thread titanHandler( titan )
 }
 
 //------------------------------------------------------
