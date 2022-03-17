@@ -34,6 +34,21 @@
 		}
 	],
 	"Scripts": [
+
+		{
+			"Path": "ui/urihandler.nut",
+			"RunOn": "UI",
+			"UICallback": {
+				"Before": "SetupInviteSystem"
+			}
+		},
+		{
+			"Path": "ui/menu_ns_connect_password.nut",
+			"RunOn": "UI",
+			"UICallback": {
+				"Before": "AddNorthstarConnectWithPasswordMenu"
+			}
+		},
 		{
 			"Path": "_custom_codecallbacks_client.gnut",
 			"RunOn": "CLIENT",
@@ -54,17 +69,24 @@
 			}
 		},
 		{
+			"Path": "state_ui.nut",
+			"RunOn": "UI",
+			"UICallback": {
+				"After": "NSUpdateGameStateUIStart"
+			}
+		},
+		{
+			"Path": "state_client.nut",
+			"RunOn": "CLIENT",
+			"ClientCallback": {
+				"After": "NSUpdateGameStateClientStart"
+			}
+		},
+		{
 			"Path": "ui/menu_ns_serverbrowser.nut",
 			"RunOn": "UI",
 			"UICallback": {
 				"Before": "AddNorthstarServerBrowserMenu"
-			}
-		},
-		{
-			"Path": "ui/menu_ns_connect_password.nut",
-			"RunOn": "UI",
-			"UICallback": {
-				"Before": "AddNorthstarConnectWithPasswordMenu"
 			}
 		},
 		{
