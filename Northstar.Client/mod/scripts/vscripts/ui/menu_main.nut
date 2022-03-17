@@ -678,17 +678,28 @@ void function OpenSinglePlayerDevMenu( var button )
 	AdvanceMenu( GetMenu( "SinglePlayerDevMenu" ) )
 }
 
-void function inviteloop() {
-	while(true) {
-		if (GetActiveLevel() != "") {
+// About this code:
+// For some as-of-yet unknown reason, doing basically anything on the main menu
+// in terms of UI crashes the game when done from the outside.
+// This includes opening new dialog boxes
+// So instead, we have to do this awful solution where we are always looping
+// this thing, and checking if we're on main menu, and if we should display an invite
+void function inviteloop()
+{
+	while( true )
+	{
+		if ( GetActiveLevel() != "" )
+		{
 			isOnMainMenu = false
-			NSSetOnMainMenu(false)
+			NSSetOnMainMenu( false )
 		}
-		if (!isOnMainMenu && GetActiveLevel() == "") {
+		if (!isOnMainMenu && GetActiveLevel() == "")
+		{
 			isOnMainMenu = true
-			NSSetOnMainMenu(true)
+			NSSetOnMainMenu( true )
 		}
-		if(NSHasStoredURI() && isOnMainMenu) {
+		if( NSHasStoredURI() && isOnMainMenu )
+		{
 			ShowURIDialog()
 			NSRemoveStoredURI()
 		}

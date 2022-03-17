@@ -352,14 +352,6 @@ void function SetupComboButtonTest( var menu )
 	comboStruct.navUpButtonDisabled = true
 	comboStruct.navDownButton = file.genUpButton
 
-	headerIndex++
-	buttonIndex = 0
-	//var inviteHeader = AddComboButtonHeader( comboStruct, headerIndex, "#NS_GENERATE_INVITE_HEADER" )
-	//var joinInviteButton = AddComboButton( comboStruct, headerIndex, buttonIndex++, "#NS_JOIN_INVITE" )
-	//Hud_AddEventHandler( joinInviteButton, UIE_CLICK, AdvanceMenuEventHandler( GetMenu( "JoinInviteMenu" ) ) )
-	//var generateInviteButton = AddComboButton( comboStruct, headerIndex, buttonIndex++, "#NS_GENERATE_INVITE" )
-	//Hud_AddEventHandler( generateInviteButton, UIE_CLICK, GenerateServerInvite )
-
 	ComboButtons_Finalize( comboStruct )
 }
 
