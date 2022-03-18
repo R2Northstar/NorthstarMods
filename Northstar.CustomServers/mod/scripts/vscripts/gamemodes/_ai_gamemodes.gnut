@@ -112,7 +112,7 @@ void function AiGameModes_SpawnReaper( vector pos, vector rot, int team, void fu
 {
 	entity reaper = CreateSuperSpectre( team, pos, rot )
 	DispatchSpawn( reaper )
-	thread SuperSpectre_WarpFall( reaper )
+	//thread SuperSpectre_WarpFall( reaper )
 	
 	if ( reaperHandler != null )
 		thread reaperHandler( reaper )
