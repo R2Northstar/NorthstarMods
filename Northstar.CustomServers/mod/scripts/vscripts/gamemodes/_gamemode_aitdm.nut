@@ -64,7 +64,10 @@ void function HandleScoreEvent( entity victim, entity attacker, var damageInfo )
 	if ( !( victim != attacker && attacker.IsPlayer() || attacker.IsTitan() && GetGameState() == eGameState.Playing ) )
 		return
 	
-	int score
+	// Split score so we can check if we are over the score max
+	// without showing the wrong value on client
+	int teamScore
+	int playerScore
 	string eventName
 	
 	// Handle AI, marvins aren't setup so we check for them to prevent crash
@@ -74,19 +77,26 @@ void function HandleScoreEvent( entity victim, entity attacker, var damageInfo )
 		
 		// Titan kills get handled bellow this
 		if ( eventName != "KillNPCTitan"  && eventName != "" )
-			score = ScoreEvent_GetPointValue( GetScoreEvent( eventName ) )
+			playerScore = ScoreEvent_GetPointValue( GetScoreEvent( eventName ) )
 	}
 	
 	if ( victim.IsPlayer() )
-		score = 5
+		playerScore = 5
 	
 	// Player ejecting triggers this without the extra check
 	if ( victim.IsTitan() && victim.GetBossPlayer() != attacker )
-		score += 10
+		playerScore += 10
+	
+	
+	teamScore = playerScore
+	
+	// Check score so we dont go over max
+	if ( GameRules_GetTeamScore(attacker.GetTeam()) + teamScore > GetScoreLimit_FromPlaylist() )
+		teamScore = GetScoreLimit_FromPlaylist() - GameRules_GetTeamScore(attacker.GetTeam())
 	
 	// Add score + update network int to trigger the "Score +n" popup
-	AddTeamScore( attacker.GetTeam(), score )
-	attacker.AddToPlayerGameStat( PGS_ASSAULT_SCORE, score )
+	AddTeamScore( attacker.GetTeam(), teamScore )
+	attacker.AddToPlayerGameStat( PGS_ASSAULT_SCORE, playerScore )
 	attacker.SetPlayerNetInt("AT_bonusPoints", attacker.GetPlayerGameStat( PGS_ASSAULT_SCORE ) )
 }
 
@@ -94,6 +104,8 @@ void function HandleScoreEvent( entity victim, entity attacker, var damageInfo )
 // Spawner_Threaded is used to keep the match populated
 void function SpawnIntroBatch_Threaded( int team )
 {
+	
+	
 	array<entity> dropPodNodes = GetEntArrayByClass_Expensive( "info_spawnpoint_droppod_start" )
 	array<entity> dropShipNodes = GetValidIntroDropShipSpawn( dropPodNodes )  
 	
@@ -101,13 +113,44 @@ void function SpawnIntroBatch_Threaded( int team )
 	
 	array<entity> shipNodes
 	
-	// Sort per team
-	foreach ( node in dropPodNodes )
-	{
-		if ( node.GetTeam() == team )
-			podNodes.append( node )
-	}
 	
+	// mp_rise has weird droppod_start nodes, this gets around it
+	// To be more specific the teams aren't setup and some nodes are scattered in narnia
+	if( GetMapName() == "mp_rise" )
+	{
+		entity spawnPoint
+		
+		// Get a spawnpoint for team
+		foreach ( point in GetEntArrayByClass_Expensive( "info_spawnpoint_dropship_start" ) )
+		{
+			if ( point.HasKey( "gamemode_tdm" ) )
+				if ( point.kv[ "gamemode_tdm" ] == "0" )
+					continue
+			
+			if ( point.GetTeam() == team )
+			{
+				spawnPoint = point
+				break
+			}
+		}
+		
+		// Get nodes close enough to team spawnpoint
+		foreach ( node in dropPodNodes )
+		{
+			if ( node.HasKey("teamnum") && Distance2D( node.GetOrigin(), spawnPoint.GetOrigin()) < 2000 )
+				podNodes.append( node )
+		}
+	}
+	else
+	{
+		// Sort per team
+		foreach ( node in dropPodNodes )
+		{
+			if ( node.GetTeam() == team )
+				podNodes.append( node )
+		}
+	}
+
 	// Spawn logic
 	int startIndex = 0
 	bool first = true
@@ -275,16 +318,13 @@ int function GetSpawnPointIndex( array< entity > points, int team )
 // AI can also flee deeper into their zone suggesting someone spent way too much time on this
 void function SquadHandler( array<entity> guys )
 {
-	
-	array< entity > points = GetEntArrayByClass_Expensive( "assault_assaultpoint" )
+	//array< entity > points = GetEntArrayByClass_Expensive( "assault_assaultpoint" )
 	
 	vector point
 	
-	// We need to try catch this since some dropships fail to spawn
-	try
-	{
+	
 		
-		point = points[ RandomInt( points.len() ) ].GetOrigin()
+		//point = points[ RandomInt( points.len() ) ].GetOrigin()
 		
 		array<entity> players = GetPlayerArrayOfEnemies( guys[0].GetTeam() )
 		
@@ -299,7 +339,7 @@ void function SquadHandler( array<entity> guys )
 			foreach ( player in players )
 				guy.Minimap_AlwaysShow( 0, player )
 			
-			thread AITdm_CleanupBoredNPCThread( guy )
+			//thread AITdm_CleanupBoredNPCThread( guy )
 		}
 		
 		// Every 15 secs change AssaultPoint
@@ -312,11 +352,7 @@ void function SquadHandler( array<entity> guys )
 			
 			wait 15
 		}
-	}
-	catch ( ex )
-	{
-		printt( "Squad doesn't exist or has been killed off" )
-	}
+	
 }
 
 // Same as SquadHandler, just for reapers
