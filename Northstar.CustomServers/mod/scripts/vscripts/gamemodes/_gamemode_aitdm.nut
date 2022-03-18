@@ -104,8 +104,6 @@ void function HandleScoreEvent( entity victim, entity attacker, var damageInfo )
 // Spawner_Threaded is used to keep the match populated
 void function SpawnIntroBatch_Threaded( int team )
 {
-	
-	
 	array<entity> dropPodNodes = GetEntArrayByClass_Expensive( "info_spawnpoint_droppod_start" )
 	array<entity> dropShipNodes = GetValidIntroDropShipSpawn( dropPodNodes )  
 	
@@ -371,7 +369,7 @@ void function SquadHandler( array<entity> guys )
 			
 			guy.AssaultPoint( point )
 		}
-		wait 15
+		wait RandomFloatRange(5.0,15.0)
 	}
 }
 
