@@ -147,6 +147,9 @@ array<entity> function GetValidIntroDropShipSpawn( array<entity> introNodes )
 {
 	array<entity> introShipSpawns
 	
+	if ( GetZiplineDropshipSpawns().len() == 0 )
+		return []
+	
 	foreach ( node in introNodes )
 	{
 		entity closestNode = GetClosest( GetZiplineDropshipSpawns(), node.GetOrigin() )
