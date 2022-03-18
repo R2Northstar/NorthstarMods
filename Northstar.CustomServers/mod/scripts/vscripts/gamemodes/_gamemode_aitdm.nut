@@ -151,6 +151,9 @@ void function SpawnIntroBatch_Threaded( int team )
 		}
 	}
 
+	shipNodes = GetValidIntroDropShipSpawn( podNodes )
+
+
 	// Spawn logic
 	int startIndex = 0
 	bool first = true
@@ -318,41 +321,58 @@ int function GetSpawnPointIndex( array< entity > points, int team )
 // AI can also flee deeper into their zone suggesting someone spent way too much time on this
 void function SquadHandler( array<entity> guys )
 {
-	//array< entity > points = GetEntArrayByClass_Expensive( "assault_assaultpoint" )
+	// Not all maps have assaultpoints / have weird assault points ( looking at you ac )
+	// So we use enemies with a large radius
+	array< entity > points = GetNPCArrayOfEnemies( guys[0].GetTeam() )
+	
+	if ( points.len()  == 0 )
+		return
 	
 	vector point
+	point = points[ RandomInt( points.len() ) ].GetOrigin()
 	
+	array<entity> players = GetPlayerArrayOfEnemies( guys[0].GetTeam() )
 	
+	// Setup AI
+	foreach ( guy in guys )
+	{
+		guy.EnableNPCFlag( NPC_ALLOW_PATROL | NPC_ALLOW_INVESTIGATE | NPC_ALLOW_HAND_SIGNALS | NPC_ALLOW_FLEE )
+		guy.AssaultPoint( point )
+		guy.AssaultSetGoalRadius( 500 )
 		
-		//point = points[ RandomInt( points.len() ) ].GetOrigin()
+		// show on enemy radar
+		foreach ( player in players )
+			guy.Minimap_AlwaysShow( 0, player )
 		
-		array<entity> players = GetPlayerArrayOfEnemies( guys[0].GetTeam() )
-		
-		// Setup AI
+		//thread AITdm_CleanupBoredNPCThread( guy )
+	}
+	
+	// Every 15 secs change AssaultPoint
+	while ( true )
+	{	
 		foreach ( guy in guys )
 		{
-			guy.EnableNPCFlag( NPC_ALLOW_PATROL | NPC_ALLOW_INVESTIGATE | NPC_ALLOW_HAND_SIGNALS | NPC_ALLOW_FLEE )
-			guy.AssaultPoint( point )
-			guy.AssaultSetGoalRadius( 100 )
+			// Check if alive
+			if ( !IsAlive( guy ) )
+			{
+				guys.removebyvalue( guy )
+				continue
+			}
+			// Stop func if our squad has been killed off
+			if ( guys.len() == 0 )
+				return
 			
-			// show on enemy radar
-			foreach ( player in players )
-				guy.Minimap_AlwaysShow( 0, player )
-			
-			//thread AITdm_CleanupBoredNPCThread( guy )
-		}
-		
-		// Every 15 secs change AssaultPoint
-		while ( true )
-		{
+			// Get point and send guy to it
+			points = GetNPCArrayOfEnemies( guy.GetTeam() )
+			if ( points.len() == 0 )
+				continue
+				
 			point = points[ RandomInt( points.len() ) ].GetOrigin()
 			
-			foreach ( guy in guys )
-				guy.AssaultPoint( point )
-			
-			wait 15
+			guy.AssaultPoint( point )
 		}
-	
+		wait 15
+	}
 }
 
 // Same as SquadHandler, just for reapers
@@ -365,6 +385,8 @@ void function ReaperHandler( entity reaper )
 	thread AITdm_CleanupBoredNPCThread( reaper )
 }
 
+// Currently unused as this is handled by SquadHandler
+// May need to use this if my implementation falls apart
 void function AITdm_CleanupBoredNPCThread( entity guy )
 {
 	// track all ai that we spawn, ensure that they're never "bored" (i.e. stuck by themselves doing fuckall with nobody to see them) for too long
