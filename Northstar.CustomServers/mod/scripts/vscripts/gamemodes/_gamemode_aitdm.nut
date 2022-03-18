@@ -20,6 +20,8 @@ struct
 
 void function GamemodeAITdm_Init()
 {
+	SetSpawnpointGamemodeOverride( ATTRITION ) // use bounty hunt spawns as vanilla game has no spawns explicitly defined for aitdm
+
 	AddCallback_GameStateEnter( eGameState.Prematch, OnPrematchStart )
 	AddCallback_GameStateEnter( eGameState.Playing, OnPlaying )
 	
@@ -28,8 +30,8 @@ void function GamemodeAITdm_Init()
 		
 	AddCallback_OnClientConnected( OnPlayerConnected )
 	
-	SetGruntWeapons( [ "mp_weapon_rspn101", "mp_weapon_dmr", "mp_weapon_r97", "mp_weapon_lmg" ] )
-	SetSpectreWeapons( [ "mp_weapon_hemlok_smg", "mp_weapon_doubletake", "mp_weapon_mastiff" ] )
+	AiGameModes_SetGruntWeapons( [ "mp_weapon_rspn101", "mp_weapon_dmr", "mp_weapon_r97", "mp_weapon_lmg" ] )
+	AiGameModes_SetSpectreWeapons( [ "mp_weapon_hemlok_smg", "mp_weapon_doubletake", "mp_weapon_mastiff" ] )
 	
 	ScoreEvent_SetupEarnMeterValuesForMixedModes()
 }
@@ -93,6 +95,7 @@ void function SpawnIntroBatch( int team )
 	array<entity> dropShipNodes = GetValidIntroDropShipSpawn( dropPodNodes )  
 	
 	array<entity> podNodes
+	
 	array<entity> shipNodes
 	
 	// Sort per team
@@ -101,15 +104,6 @@ void function SpawnIntroBatch( int team )
 		if ( node.GetTeam() == team )
 			podNodes.append( node )
 	}
-	
-	// If for some reason we're missing team nodes
-	// start spawner
-	if( podNodes.len() == 0 )
-	{
-		waitthread Spawner( team )
-		return
-	}
-	
 	
 	// Spawn logic
 	int startIndex = 0
@@ -127,10 +121,10 @@ void function SpawnIntroBatch( int team )
 			int index = i
 			
 			if ( index > podNodes.len() - 1 )
-				index = RandomInt( podNodes.len() )
+			index = RandomInt( podNodes.len() )
 			
 			node = podNodes[ index ]
-			thread SpawnDropPod( node.GetOrigin(), node.GetAngles(), team, "npc_soldier", SquadHandler )
+			thread AiGameModes_SpawnDropPod( node.GetOrigin(), node.GetAngles(), team, "npc_soldier", SquadHandler )
 			
 			pods--
 		}
@@ -140,7 +134,7 @@ void function SpawnIntroBatch( int team )
 			startIndex = i // save where we started
 			
 			node = shipNodes[ i - startIndex ]
-			thread SpawnDropShip( node.GetOrigin(), node.GetAngles(), team, 4, SquadHandler )
+			thread AiGameModes_SpawnDropShip( node.GetOrigin(), node.GetAngles(), team, 4, SquadHandler )
 			
 			ships--
 		}
@@ -180,7 +174,7 @@ void function Spawner( int team )
 			if ( reaperCount < REAPERS_PER_TEAM )
 			{
 				entity node = points[ GetSpawnPointIndex( points, team ) ]
-				waitthread SpawnReaper( node.GetOrigin(), node.GetAngles(), team )
+				waitthread AiGameModes_SpawnReaper( node.GetOrigin(), node.GetAngles(), team )
 			}
 		}
 		
@@ -196,14 +190,14 @@ void function Spawner( int team )
 				if ( RandomInt( points.len() / 4 ) )
 				{
 					entity node = points[ GetSpawnPointIndex( points, team ) ]
-					waitthread SpawnDropShip( node.GetOrigin(), node.GetAngles(), team, 4, SquadHandler )
+					waitthread AiGameModes_SpawnDropShip( node.GetOrigin(), node.GetAngles(), team, 4, SquadHandler )
 					continue
 				}
 			}
 			
 			array< entity > points = SpawnPoints_GetDropPod()
 			entity node = points[ GetSpawnPointIndex( points, team ) ]
-			waitthread SpawnDropPod( node.GetOrigin(), node.GetAngles(), team, ent, SquadHandler )
+			waitthread AiGameModes_SpawnDropPod( node.GetOrigin(), node.GetAngles(), team, ent, SquadHandler )
 		}
 		
 		WaitFrame()
