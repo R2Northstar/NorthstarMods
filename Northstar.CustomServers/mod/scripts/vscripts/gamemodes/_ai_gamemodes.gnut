@@ -38,7 +38,7 @@ void function AiGameModes_SetSpectreWeapons( array< string > weapons )
 
 //------------------------------------------------------
 
-void function AiGameModes_SpawnDropShip( vector pos, vector rot, int team, int count, void functionref( string squad ) squadHandler = null )
+void function AiGameModes_SpawnDropShip( vector pos, vector rot, int team, int count, void functionref( array<entity> guys ) squadHandler = null )
 {  
 	string squadName = MakeSquadName( team, UniqueString( "" ) )
 
@@ -64,11 +64,11 @@ void function AiGameModes_SpawnDropShip( vector pos, vector rot, int team, int c
 	}
 	
 	if ( squadHandler != null )
-		thread squadHandler( squadName )
+		thread squadHandler( guys )
 }
 
 
-void function AiGameModes_SpawnDropPod( vector pos, vector rot, int team, string content /*( ͡° ͜ʖ ͡°)*/, void functionref( string squad ) squadHandler = null )
+void function AiGameModes_SpawnDropPod( vector pos, vector rot, int team, string content /*( ͡° ͜ʖ ͡°)*/, void functionref( array<entity> guys ) squadHandler = null )
 {
 	string squadName = MakeSquadName( team, UniqueString( "" ) )
 	array<entity> guys
@@ -105,7 +105,7 @@ void function AiGameModes_SpawnDropPod( vector pos, vector rot, int team, string
 	guys[ guys.len() - 1 ].WaitSignal( "npc_deployed" )
 	
 	if ( squadHandler != null )
-		thread squadHandler( squadName )
+		thread squadHandler( guys )
 }
 
 void function AiGameModes_SpawnReaper( vector pos, vector rot, int team, void functionref( entity reaper ) reaperHandler = null )
@@ -134,8 +134,7 @@ void function AiGameModes_SpawnTitan( vector pos, vector rot, int team, string s
 		thread titanHandler( titan )
 }
 
-//------------------------------------------------------
-
+// entity.ReplaceActiveWeapon gave grunts archers sometimes, this is my replacement for it
 void function ReplaceWeapon( entity guy, string weapon, array<string> mods )
 {
 	guy.TakeActiveWeapon()
@@ -143,8 +142,7 @@ void function ReplaceWeapon( entity guy, string weapon, array<string> mods )
 	guy.SetActiveWeaponByName( weapon )
 }
 
-//------------------------------------------------------
-
+// Checks if we can spawn a dropship at a node, this should guarantee dropship ziplines
 array<entity> function GetValidIntroDropShipSpawn( array<entity> introNodes )
 {
 	array<entity> introShipSpawns

@@ -270,15 +270,15 @@ void function AT_SpawnDroppodSquad( int camp, string aiType )
 	// add variation to spawns
 	wait RandomFloat( 1.0 )
 	
-	AiGameModes_SpawnDropPod( spawnpoint.GetOrigin(), spawnpoint.GetAngles(), BH_AI_TEAM, aiType, void function( string squad ) : ( camp, aiType ) 
+	AiGameModes_SpawnDropPod( spawnpoint.GetOrigin(), spawnpoint.GetAngles(), BH_AI_TEAM, aiType, void function( array<entity> guys ) : ( camp, aiType ) 
 	{
-		AT_HandleSquadSpawn( squad, camp, aiType )
+		AT_HandleSquadSpawn( guys, camp, aiType )
 	})
 }
 
-void function AT_HandleSquadSpawn( string squad, int camp, string aiType )
+void function AT_HandleSquadSpawn( array<entity> guys, int camp, string aiType )
 {
-	foreach ( entity guy in GetNPCArrayBySquad( squad ) )
+	foreach ( entity guy in guys )
 	{
 		guy.EnableNPCFlag( NPC_ALLOW_PATROL | NPC_ALLOW_INVESTIGATE | NPC_ALLOW_HAND_SIGNALS | NPC_ALLOW_FLEE )
 		

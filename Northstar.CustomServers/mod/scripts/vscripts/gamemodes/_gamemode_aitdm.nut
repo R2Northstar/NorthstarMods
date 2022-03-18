@@ -36,8 +36,7 @@ void function GamemodeAITdm_Init()
 	ScoreEvent_SetupEarnMeterValuesForMixedModes()
 }
 
-//------------------------------------------------------
-
+// Starts skyshow, this also requiers AINs but doesn't crash if they're missing
 void function OnPrematchStart()
 {
 	thread StratonHornetDogfightsIntense()
@@ -48,18 +47,18 @@ void function OnPlaying()
 	// don't run spawning code if ains and nms aren't up to date
 	if ( GetAINScriptVersion() == AIN_REV && GetNodeCount() != 0 )
 	{
-		thread SpawnIntroBatch( TEAM_MILITIA )
-		thread SpawnIntroBatch( TEAM_IMC )
+		thread SpawnIntroBatch_Threaded( TEAM_MILITIA )
+		thread SpawnIntroBatch_Threaded( TEAM_IMC )
 	}
 }
 
+// Sets up mode specific hud on client
 void function OnPlayerConnected( entity player )
 {
 	Remote_CallFunction_NonReplay( player, "ServerCallback_AITDM_OnPlayerConnected" )
 }
 
-//------------------------------------------------------
-
+// Used to handle both player and ai events
 void function HandleScoreEvent( entity victim, entity attacker, var damageInfo )
 {
 	if ( !( victim != attacker && attacker.IsPlayer() || attacker.IsTitan() && GetGameState() == eGameState.Playing ) )
@@ -68,9 +67,12 @@ void function HandleScoreEvent( entity victim, entity attacker, var damageInfo )
 	int score
 	string eventName
 	
+	// Handle AI, marvins aren't setup so we check for them to prevent crash
 	if ( victim.IsNPC() && victim.GetClassName() != "npc_marvin" )
 	{
 		eventName = ScoreEventForNPCKilled( victim, damageInfo )
+		
+		// Titan kills get handled bellow this
 		if ( eventName != "KillNPCTitan"  && eventName != "" )
 			score = ScoreEvent_GetPointValue( GetScoreEvent( eventName ) )
 	}
@@ -82,14 +84,15 @@ void function HandleScoreEvent( entity victim, entity attacker, var damageInfo )
 	if ( victim.IsTitan() && victim.GetBossPlayer() != attacker )
 		score += 10
 	
+	// Add score + update network int to trigger the "Score +n" popup
 	AddTeamScore( attacker.GetTeam(), score )
 	attacker.AddToPlayerGameStat( PGS_ASSAULT_SCORE, score )
 	attacker.SetPlayerNetInt("AT_bonusPoints", attacker.GetPlayerGameStat( PGS_ASSAULT_SCORE ) )
 }
 
-//------------------------------------------------------
-
-void function SpawnIntroBatch( int team )
+// When attrition starts both teams spawn ai on preset nodes, after that
+// Spawner_Threaded is used to keep the match populated
+void function SpawnIntroBatch_Threaded( int team )
 {
 	array<entity> dropPodNodes = GetEntArrayByClass_Expensive( "info_spawnpoint_droppod_start" )
 	array<entity> dropShipNodes = GetValidIntroDropShipSpawn( dropPodNodes )  
@@ -148,15 +151,17 @@ void function SpawnIntroBatch( int team )
 	
 	wait 15
 	
-	thread Spawner( team )
+	thread Spawner_Threaded( team )
 }
 
 // Populates the match
-void function Spawner( int team )
+void function Spawner_Threaded( int team )
 {
 	svGlobal.levelEnt.EndSignal( "GameStateChanged" )
 
+	// used to index into escalation arrays
 	int index = team == TEAM_MILITIA ? 0 : 1
+	
 	
 	while( true )
 	{
@@ -187,6 +192,8 @@ void function Spawner( int team )
 			if ( ent == "npc_soldier" )
 			{
 				array< entity > points = GetZiplineDropshipSpawns()
+				// Scale dropship spawns based on nodes avalible
+				// This needs to be done because complex exists
 				if ( RandomInt( points.len() / 4 ) )
 				{
 					entity node = points[ GetSpawnPointIndex( points, team ) ]
@@ -212,9 +219,11 @@ void function Escalate( int team )
 	// This does the "Enemy x incoming" text
 	string defcon = team == TEAM_MILITIA ? "IMCdefcon" : "MILdefcon"
 	
-	if ( score < file.levels[ index ] )
+	// Return if the team is under score threshold to escalate
+	if ( score < file.levels[ index ] || file.reapers[ index ] )
 		return
 	
+	// Based on score escalate a team
 	switch ( file.levels[ index ] )
 	{
 		case LEVEL_SPECTRES:
@@ -230,7 +239,6 @@ void function Escalate( int team )
 			return
 		
 		case LEVEL_REAPERS:
-			file.levels[ index ] = 9999
 			file.reapers[ index ] = true
 			SetGlobalNetInt( defcon, 4 )
 			return
@@ -239,8 +247,10 @@ void function Escalate( int team )
 	unreachable // hopefully
 }
 
-//------------------------------------------------------
 
+// Decides where to spawn ai
+// Each team has their "zone" where they and their ai spawns
+// These zones should swap based on which team is dominating where
 int function GetSpawnPointIndex( array< entity > points, int team )
 {
 	entity zone = DecideSpawnZone_Generic( points, team )
@@ -260,11 +270,12 @@ int function GetSpawnPointIndex( array< entity > points, int team )
 	return RandomInt( points.len() )
 }
 
-//------------------------------------------------------
-
-void function SquadHandler( string squad )
+// tells infantry where to go
+// In vanilla there seem to be preset paths ai follow to get to the other teams vone and capture it
+// AI can also flee deeper into their zone suggesting someone spent way too much time on this
+void function SquadHandler( array<entity> guys )
 {
-	array< entity > guys
+	
 	array< entity > points = GetEntArrayByClass_Expensive( "assault_assaultpoint" )
 	
 	vector point
@@ -272,7 +283,6 @@ void function SquadHandler( string squad )
 	// We need to try catch this since some dropships fail to spawn
 	try
 	{
-		guys = GetNPCArrayBySquad( squad )
 		
 		point = points[ RandomInt( points.len() ) ].GetOrigin()
 		
@@ -295,7 +305,6 @@ void function SquadHandler( string squad )
 		// Every 15 secs change AssaultPoint
 		while ( true )
 		{
-			guys = GetNPCArrayBySquad( squad )
 			point = points[ RandomInt( points.len() ) ].GetOrigin()
 			
 			foreach ( guy in guys )
@@ -310,6 +319,7 @@ void function SquadHandler( string squad )
 	}
 }
 
+// Same as SquadHandler, just for reapers
 void function ReaperHandler( entity reaper )
 {
 	array<entity> players = GetPlayerArrayOfEnemies( reaper.GetTeam() )
