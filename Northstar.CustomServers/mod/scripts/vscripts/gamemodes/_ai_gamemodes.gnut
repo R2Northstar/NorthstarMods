@@ -77,8 +77,6 @@ void function AiGameModes_SpawnDropPod( vector pos, vector rot, int team, string
 	
 	InitFireteamDropPod( pod )
 	
-	waitthread LaunchAnimDropPod( pod, "pod_testpath", pos, rot )
-	
 	for ( int i = 0; i < 4 ;i++ )
 	{
 		entity npc = CreateNPC( content, team, pos,<0,0,0> )
@@ -96,25 +94,29 @@ void function AiGameModes_SpawnDropPod( vector pos, vector rot, int team, string
 				break
 		}
 		
+		npc.SetParent( pod, "ATTACH", true )
+		
 		npc.EnableNPCFlag( NPC_ALLOW_PATROL | NPC_ALLOW_INVESTIGATE | NPC_ALLOW_HAND_SIGNALS | NPC_ALLOW_FLEE )
 		guys.append( npc )
 	}
 	
-	ActivateFireteamDropPod( pod, guys )
-	
-	guys[ guys.len() - 1 ].WaitSignal( "npc_deployed" )
-	
+	// The order here is different so we can show on minimap while were still falling
 	if ( squadHandler != null )
 		thread squadHandler( guys )
+		
+	waitthread LaunchAnimDropPod( pod, "pod_testpath", pos, rot )
+	
+	ActivateFireteamDropPod( pod, guys )
 }
 
-void function AiGameModes_SpawnReaper( vector pos, vector rot, int team, void functionref( entity reaper ) reaperHandler = null )
+void function AiGameModes_SpawnReaper( vector pos, vector rot, int team, string aiSettings = "", void functionref( entity reaper ) reaperHandler = null )
 {
 	entity reaper = CreateSuperSpectre( team, pos, rot )
 	SetSpawnOption_Titanfall( reaper )
 	SetSpawnOption_Warpfall( reaper )
 	
-	SetSpawnOption_AISettings( reaper, "npc_super_spectre_aitdm")
+	if ( aiSettings != "" )
+		SetSpawnOption_AISettings( reaper, aiSettings )
 	
 	DispatchSpawn( reaper )
 	

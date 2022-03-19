@@ -223,7 +223,7 @@ void function Spawner_Threaded( int team )
 			if ( reaperCount < REAPERS_PER_TEAM )
 			{
 				entity node = points[ GetSpawnPointIndex( points, team ) ]
-				waitthread AiGameModes_SpawnReaper( node.GetOrigin(), node.GetAngles(), team )
+				waitthread AiGameModes_SpawnReaper( node.GetOrigin(), node.GetAngles(), team, "npc_super_spectre_aitdm", ReaperHandler )
 			}
 		}
 		
