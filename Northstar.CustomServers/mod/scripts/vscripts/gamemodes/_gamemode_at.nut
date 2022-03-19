@@ -298,7 +298,7 @@ void function AT_SpawnReaper( int camp )
 	// add variation to spawns
 	wait RandomFloat( 1.0 )
 	
-	AiGameModes_SpawnReaper( spawnpoint.GetOrigin(), spawnpoint.GetAngles(), BH_AI_TEAM, void function( entity reaper ) : ( camp ) 
+	AiGameModes_SpawnReaper( spawnpoint.GetOrigin(), spawnpoint.GetAngles(), BH_AI_TEAM, "npc_super_spectre",void function( entity reaper ) : ( camp ) 
 	{
 		thread AT_WaitToUntrackNPC( reaper, camp, "npc_super_spectre" )
 	})
