@@ -380,7 +380,21 @@ void function ReaperHandler( entity reaper )
 	foreach ( player in players )
 		reaper.Minimap_AlwaysShow( 0, player )
 	
-	thread AITdm_CleanupBoredNPCThread( reaper )
+	reaper.AssaultSetGoalRadius( 500 )
+	
+	// Every 10 - 20 secs get a player and go to him
+	// Definetly not annoying or anything :)
+	while( IsAlive( reaper ) )
+	{
+		players = GetPlayerArrayOfEnemies( reaper.GetTeam() )
+		if ( players.len() != 0 )
+		{
+			entity player = GetClosest2D( players, reaper.GetOrigin() )
+			reaper.AssaultPoint( player.GetOrigin() )
+		}
+		wait RandomFloatRange(10.0,20.0)
+	}
+	// thread AITdm_CleanupBoredNPCThread( reaper )
 }
 
 // Currently unused as this is handled by SquadHandler
