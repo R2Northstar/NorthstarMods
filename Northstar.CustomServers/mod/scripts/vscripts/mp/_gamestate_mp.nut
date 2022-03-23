@@ -97,7 +97,7 @@ void function SetGameState( int newState )
 
 void function GameState_EntitiesDidLoad()
 {
-	if ( GetClassicMPMode() )
+	if ( GetClassicMPMode() || ClassicMP_ShouldTryIntroAndEpilogueWithoutClassicMP() )
 		ClassicMP_SetupIntro()
 }
 
@@ -180,7 +180,7 @@ void function GameStateEnter_Prematch()
 	SetServerVar( "gameEndTime", Time() + timeLimit + ClassicMP_GetIntroLength() )
 	SetServerVar( "roundEndTime", Time() + ClassicMP_GetIntroLength() + GameMode_GetRoundTimeLimit( GAMETYPE ) * 60 )
 	
-	if ( !GetClassicMPMode() )
+	if ( !GetClassicMPMode() && !ClassicMP_ShouldTryIntroAndEpilogueWithoutClassicMP() )
 		thread StartGameWithoutClassicMP()
 }
 
@@ -198,7 +198,9 @@ void function StartGameWithoutClassicMP()
 	
 	foreach ( entity player in GetPlayerArray() )
 	{
-		RespawnAsPilot( player )
+		if ( !IsPrivateMatchSpectator( player ) )
+			RespawnAsPilot( player )
+			
 		ScreenFadeFromBlack( player, 0 )
 	}
 	
@@ -393,7 +395,7 @@ void function PlayerWatchesRoundWinningKillReplay( entity player, float replayLe
 	else
 		wait replayLength
 		
-	player.SetPredictionEnabled( true )
+	//player.SetPredictionEnabled( true ) doesn't seem needed, as native code seems to set this on respawn
 	player.ClearReplayDelay()
 	player.ClearViewEntity()
 	player.UnfreezeControlsOnServer()
@@ -484,10 +486,9 @@ void function PlayerWatchesSwitchingSidesKillReplay( entity player, bool doRepla
 	else
 		wait SWITCHING_SIDES_DELAY_REPLAY // extra delay if no replay
 	
-	player.SetPredictionEnabled( true )
+	//player.SetPredictionEnabled( true ) doesn't seem needed, as native code seems to set this on respawn
 	player.ClearReplayDelay()
 	player.ClearViewEntity()
-	player.UnfreezeControlsOnServer()
 }
 
 
@@ -667,17 +668,19 @@ void function CleanUpEntitiesForRoundEnd()
 	foreach ( entity player in GetPlayerArray() )
 	{
 		ClearTitanAvailable( player )
-		
+		PROTO_CleanupTrackedProjectiles( player )
+		player.SetPlayerNetInt( "batteryCount", 0 ) 
 		if ( IsAlive( player ) )
 			player.Die( svGlobal.worldspawn, svGlobal.worldspawn, { damageSourceId = eDamageSourceId.round_end } )
-		
-		if ( IsAlive( player.GetPetTitan() ) )
-			player.GetPetTitan().Destroy()
 	}
 	
 	foreach ( entity npc in GetNPCArray() )
-		if ( IsValid( npc ) )
-			npc.Destroy() // need this because getnpcarray includes the pettitans we just killed at this point
+	{
+		if ( !IsValid( npc ) )
+			continue
+		// kill rather than destroy, as destroying will cause issues with children which is an issue especially for dropships and titans
+		npc.Die( svGlobal.worldspawn, svGlobal.worldspawn, { damageSourceId = eDamageSourceId.round_end } )
+	}
 	
 	// destroy weapons
 	ClearDroppedWeapons()
@@ -848,5 +851,9 @@ void function GiveTitanToPlayer( entity player )
 
 float function GetTimeLimit_ForGameMode()
 {
-	return 100.0
+	string mode = GameRules_GetGameMode()
+	string playlistString = "timelimit"
+
+	// default to 10 mins, because that seems reasonable
+	return GetCurrentPlaylistVarFloat( playlistString, 10 )
 }

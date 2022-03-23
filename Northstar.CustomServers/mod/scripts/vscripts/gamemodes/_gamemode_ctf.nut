@@ -40,6 +40,7 @@ void function CaptureTheFlag_Init()
 	AddCallback_OnPlayerKilled( OnPlayerKilled )
 	AddCallback_OnPilotBecomesTitan( DropFlagForBecomingTitan )
 	
+	SetSpawnZoneRatingFunc( DecideSpawnZone_CTF )
 	AddSpawnpointValidationRule( VerifyCTFSpawnpoint )
 	
 	RegisterSignal( "FlagReturnEnded" )
@@ -65,69 +66,7 @@ void function CaptureTheFlag_Init()
 
 void function RateSpawnpoints_CTF( int checkClass, array<entity> spawnpoints, int team, entity player ) 
 {
-	// ctf spawn algo iteration 4 i despise extistence
-	array<entity> startSpawns = SpawnPoints_GetPilotStart( team )
-	array<entity> enemyStartSpawns = SpawnPoints_GetPilotStart( GetOtherTeam( team ) )
-	array<entity> enemyPlayers = GetPlayerArrayOfTeam_Alive( team )
-	
-	// get average startspawn position and max dist between spawns
-	// could probably cache this, tbh, not like it should change outside of halftimes
-	vector averageFriendlySpawns
-	float averageFriendlySpawnDist
-	
-	int averageDistCount
-	
-	foreach ( entity spawn in startSpawns )
-	{
-		foreach ( entity otherSpawn in startSpawns )
-		{
-			float dist = Distance2D( spawn.GetOrigin(), otherSpawn.GetOrigin() )
-			averageFriendlySpawnDist += dist
-			averageDistCount++
-		}
-		
-		averageFriendlySpawns += spawn.GetOrigin()
-	}
-	
-	averageFriendlySpawns /= startSpawns.len()
-	averageFriendlySpawnDist /= averageDistCount
-	
-	// get average enemy startspawn position
-	vector averageEnemySpawns
-	
-	foreach ( entity spawn in enemyStartSpawns )
-		averageEnemySpawns += spawn.GetOrigin()
-	
-	averageEnemySpawns /= enemyStartSpawns.len()
-	
-	// from here, rate spawns
-	float baseDistance = Distance2D( averageFriendlySpawns, averageEnemySpawns )
-	float spawnIterations = ( baseDistance / averageFriendlySpawnDist ) / 2
-	
-	foreach ( entity spawn in spawnpoints )
-	{
-		// ratings should max/min out at 100 / -100
-		// start by prioritizing closer spawns, but not so much that enemies won't really affect them
-		float rating = 10 * ( 1.0 - Distance2D( averageFriendlySpawns, spawn.GetOrigin() ) / baseDistance )
-		float remainingZonePower = 1.0 // this is used to ensure that players that are in multiple zones at once shouldn't affect all those zones too hard
-	
-		for ( int i = 0; i < spawnIterations; i++ )
-		{
-			vector zonePos = averageFriendlySpawns + Normalize( averageEnemySpawns - averageFriendlySpawns ) * ( i * averageFriendlySpawnDist )
-			
-			float zonePower
-			foreach ( entity otherPlayer in enemyPlayers )
-				if ( Distance2D( otherPlayer.GetOrigin(), zonePos ) < averageFriendlySpawnDist )
-					zonePower += 1.0 / enemyPlayers.len()
-			
-			zonePower = min( zonePower, remainingZonePower )
-			remainingZonePower -= zonePower
-			// scale rating based on distance between spawn and zone, baring in mind max 100 rating
-			rating -= ( zonePower * 100 ) * ( 1.0 - Distance2D( spawn.GetOrigin(), zonePos ) / baseDistance )
-		}
-		
-		spawn.CalculateRating( checkClass, player.GetTeam(), rating, rating )
-	}
+	RateSpawnpoints_SpawnZones( checkClass, spawnpoints, team, player )
 }
 
 bool function VerifyCTFSpawnpoint( entity spawnpoint, int team )

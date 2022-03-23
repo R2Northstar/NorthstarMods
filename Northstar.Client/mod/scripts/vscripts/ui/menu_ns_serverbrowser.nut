@@ -8,7 +8,7 @@ global function ThreadedAuthAndConnectToServer
 // Stop peeking
 
 const int BUTTONS_PER_PAGE = 15
-const float DOUBLE_CLICK_TIME_MS = 0.3 // unsure what the ideal value is
+const float DOUBLE_CLICK_TIME_MS = 0.4 // unsure what the ideal value is
 
 
 struct {
@@ -156,7 +156,7 @@ void function InitServerBrowserMenu()
 	AddMenuEventHandler( file.menu, eUIEvent.MENU_CLOSE, OnCloseServerBrowserMenu )
 	AddMenuEventHandler( file.menu, eUIEvent.MENU_OPEN, OnServerBrowserMenuOpened )
 	AddMenuFooterOption( file.menu, BUTTON_B, "#B_BUTTON_BACK", "#BACK" )
-	AddMenuFooterOption( file.menu, BUTTON_Y, "#Y_BUTTON_REFRESH_SERVERS", "#REFRESH_SERVERS", RefreshServers )
+	AddMenuFooterOption( file.menu, BUTTON_Y, PrependControllerPrompts( BUTTON_Y, "#REFRESH_SERVERS" ), "#REFRESH_SERVERS", RefreshServers )
 
 	// Setup server buttons
 	var width = 1120.0  * (GetScreenSize()[1] / 1080.0)
@@ -405,6 +405,8 @@ void function OnCloseServerBrowserMenu()
 
 void function OnServerBrowserMenuOpened()
 {
+	Hud_SetText( Hud_GetChild( file.menu, "InGamePlayerLabel" ), Localize("#INGAME_PLAYERS", "0") )
+	Hud_SetText( Hud_GetChild( file.menu, "TotalServerLabel" ),  Localize("#TOTAL_SERVERS", "0") )
 	UpdatePrivateMatchModesAndMaps()
 	Hud_SetText( Hud_GetChild( file.menu, "Title" ), "#MENU_TITLE_SERVER_BROWSER" )
 	UI_SetPresentationType( ePresentationType.KNOWLEDGEBASE_MAIN )
@@ -490,7 +492,7 @@ void function OnHitDummyBottom(var button) {
 }
 
 void function OnHitDummyAfterFilterClear(var button) {
-	Hud_SetFocused(Hud_GetChild(file.menu, "BtnServer1"))
+	Hud_SetFocused(Hud_GetChild(file.menu, "BtnServerNameTab"))
 }
 
 
@@ -663,6 +665,7 @@ void function WaitForServerListRequest()
 	else
 	{
 		FilterAndUpdateList(0)
+		Hud_SetFocused(Hud_GetChild(file.menu, "BtnServer1"))
 	}
 }
 
@@ -720,10 +723,9 @@ void function FilterServerList()
 				}
 			}
 		}
+		Hud_SetText( Hud_GetChild( file.menu, "InGamePlayerLabel" ), Localize("#INGAME_PLAYERS", string(totalPlayers)) )
+		Hud_SetText( Hud_GetChild( file.menu, "TotalServerLabel" ),  Localize("#TOTAL_SERVERS", string( NSGetServerCount()) ) )
 	}
-
-	Hud_SetText( Hud_GetChild( file.menu, "InGamePlayerCount" ), string( totalPlayers ) )
-	Hud_SetText( Hud_GetChild( file.menu, "TotalServerCount" ), string( NSGetServerCount() ) )
 }
 
 void function CheckGamemode( serverStruct t )
@@ -783,8 +785,13 @@ void function UpdateShownPage()
 
 void function OnServerButtonFocused( var button )
 {
+	if (file.scrollOffset < 0)
+		file.scrollOffset = 0
+	
 	int scriptID = int (Hud_GetScriptID(button))
 	file.serverButtonFocusedID = scriptID
+	if ( file.serversArrayFiltered.len() > 0 )
+		file.focusedServerIndex = file.serversArrayFiltered[ file.scrollOffset + scriptID ].serverIndex
 	DisplayFocusedServerInfo(scriptID);
 
 }
@@ -802,7 +809,6 @@ void function CheckDoubleClick(int scriptID, bool wasClickNav)
 	if ( NSGetServerCount() == 0 ) return
 
 
-	file.focusedServerIndex = file.serversArrayFiltered[ file.scrollOffset + scriptID ].serverIndex
 	int serverIndex = file.scrollOffset + scriptID
 
 	bool sameServer = false
@@ -827,7 +833,7 @@ void function DisplayFocusedServerInfo( int scriptID)
 {
 	if (scriptID == 999 || scriptID == -1 || scriptID == 16) return
 
-	if ( NSIsRequestingServerList() || NSGetServerCount() == 0 || file.serverListRequestFailed )
+	if ( NSIsRequestingServerList() || NSGetServerCount() == 0 || file.serverListRequestFailed || file.serversArrayFiltered.len() == 0)
 		return
 
 	var menu = GetMenu( "ServerBrowserMenu" )
@@ -842,9 +848,7 @@ void function DisplayFocusedServerInfo( int scriptID)
 	// text panels
 	Hud_SetVisible( Hud_GetChild( menu, "LabelDescription" ), true )
 	Hud_SetVisible( Hud_GetChild( menu, "LabelMods" ), false )
-	//RuiSetGameTime( textRui, "startTime", -99999.99 ) // make sure it skips the whole animation for showing this
 	Hud_SetText( Hud_GetChild( menu, "LabelDescription" ), NSGetServerDescription( file.serversArrayFiltered[ serverIndex ].serverIndex ) + "\n\nRequired Mods:\n" + FillInServerModsLabel( file.serversArrayFiltered[ serverIndex ].serverIndex ))
-	//Hud_SetText( Hud_GetChild( menu, "LabelMods" ), FillInServerModsLabel( file.serversArrayFiltered[ serverIndex ].serverIndex ) )
 
 	// map name/image/server name
 	string map = file.serversArrayFiltered[ serverIndex ].serverMap
