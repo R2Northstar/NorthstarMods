@@ -40,6 +40,7 @@ global struct SoundEvent{
 
 global struct WaveEvent{
 	void functionref(SmokeEvent,SpawnEvent,WaitEvent,SoundEvent) eventFunction
+	bool shouldThread
 	SmokeEvent smokeEvent
 	SpawnEvent spawnEvent
 	WaitEvent waitEvent
@@ -56,8 +57,20 @@ global table<string,array<vector> > routes
 
 struct player_struct_fd{
 	bool diedThisRound
-	int scoreThisRound
-
+	float scoreThisRound
+	int totalMVPs
+	int mortarUnitsKilled
+	int moneySpend
+	int coresUsed
+	float longestTitanLife
+	int turretsRepaired
+	int moneyShared
+	float timeNearHarvester
+	float longestLife
+	int heals
+	int titanKills
+	float damageDealt
+	int harvesterHeals
 }
 
 
@@ -65,7 +78,7 @@ struct {
 	array<entity> aiSpawnpoints
 	array<entity> smokePoints
 	array<entity> routeNodes
-	table<string,float> harvesterDamageSource
+	array<float> harvesterDamageSource
 	bool havesterWasDamaged
 	array<entity> spawnedNPCs
 	table<entity,player_struct_fd> players
@@ -79,11 +92,13 @@ void function GamemodeFD_Init()
 
 	RegisterSignal("FD_ReachedHarvester")
 	RegisterSignal("OnFailedToPath")
+
 	SetRoundBased(true)
 	SetShouldUseRoundWinningKillReplay(false)
-
 	Riff_ForceBoostAvailability( eBoostAvailability.Disabled )
 	PlayerEarnMeter_SetEnabled(false)
+	SetShouldUsePickLoadoutScreen( true )
+
 
 	AddCallback_EntitiesDidLoad(LoadEntities)
 	AddDamageCallback("prop_script",OnDamagedPropScript)
@@ -91,7 +106,9 @@ void function GamemodeFD_Init()
 	AddCallback_GameStateEnter( eGameState.Playing,startMainGameLoop)
 	AddCallback_OnClientConnected(GamemodeFD_InitPlayer)
 	AddCallback_OnPlayerKilled(GamemodeFD_OnPlayerKilled)
-
+	AddCallback_OnRoundEndCleanup(FD_NPCCleanup)
+	AddDamageByCallback("player",FD_DamageByPlayerCallback)
+	
 
 	AddDeathCallback("npc_titan",OnNpcDeath)
 	AddDeathCallback("npc_stalker",OnNpcDeath)
@@ -100,14 +117,28 @@ void function GamemodeFD_Init()
 	AddDeathCallback("npc_soldier",OnNpcDeath)
 	AddDeathCallback("npc_frag_drone",OnNpcDeath)
 	AddDeathCallback("npc_drone",OnNpcDeath)
+	SetUsedCoreCallback(FD_UsedCoreCallback)
 
 	AddClientCommandCallback("FD_ToggleReady",ClientCommandCallbackToggleReady)
 	AddClientCommandCallback("FD_UseHarvesterShieldBoost",useShieldBoost)
+
+
+
 }
+
 
 void function GamemodeFD_OnPlayerKilled(entity victim, entity attacker, var damageInfo)
 {
 	file.players[victim].diedThisRound = true
+}
+
+void function FD_UsedCoreCallback(entity titan,entity weapon)
+{
+	if(!(titan in file.players))
+	{
+		return
+	}
+	file.players[titan].coresUsed += 1
 }
 
 void function GamemodeFD_InitPlayer(entity player)
@@ -116,9 +147,9 @@ void function GamemodeFD_InitPlayer(entity player)
 	data.diedThisRound = false
 	data.scoreThisRound = 0
 	file.players[player] <- data
+
+	
 }
-
-
 
 void function OnNpcDeath( entity ent, var damageInfo )
 {
@@ -127,7 +158,7 @@ void function OnNpcDeath( entity ent, var damageInfo )
 	{
 		file.spawnedNPCs.remove( findIndex )
 	}
-	printt("callback")
+	
 }
 
 void function RateSpawnpoints_FD(int _0, array<entity> _1, int _2, entity _3){}
@@ -140,6 +171,7 @@ bool function useShieldBoost(entity player,array<string> args)
 		SetGlobalNetTime("FD_harvesterInvulTime",Time()+5)
 		MessageToTeam(TEAM_MILITIA,eEventNotifications.FD_PlayerHealedHarvester)
 		player.SetPlayerNetInt( "numHarvesterShieldBoost", player.GetPlayerNetInt( "numHarvesterShieldBoost" ) - 1 )
+		file.players[player].harvesterHeals += 1
 	}
 	return true
 }
@@ -279,11 +311,12 @@ array<int> function getEnemyTypesForWave(int wave)
 bool function runWave(int waveIndex,bool shouldDoBuyTime)
 {	
 
-
-
-
 	SetGlobalNetInt("FD_currentWave",waveIndex)
 	file.havesterWasDamaged = false
+	for(int i = 0; i<20;i++)//Number of npc type ids
+	{
+		file.harvesterDamageSource.append(0.0)
+	}
 	foreach(player_struct_fd player in file.players)
 	{
 		player.diedThisRound = false
@@ -327,18 +360,51 @@ bool function runWave(int waveIndex,bool shouldDoBuyTime)
 	
 	foreach(WaveEvent event in waveEvents[waveIndex])
 	{
-		event.eventFunction(event.smokeEvent,event.spawnEvent,event.waitEvent,event.soundEvent)
+		if(event.shouldThread)
+			thread event.eventFunction(event.smokeEvent,event.spawnEvent,event.waitEvent,event.soundEvent)
+		else
+			event.eventFunction(event.smokeEvent,event.spawnEvent,event.waitEvent,event.soundEvent)
 		if(!IsAlive(fd_harvester.harvester))
-			return false
-		waitUntilLessThanAmountAlive(0)
+			break
+		
 	}
+	waitUntilLessThanAmountAlive_expensive(0)
 	if(!IsAlive(fd_harvester.harvester))
-	{
-
-	}
-	
-	if(!IsAlive(fd_harvester.harvester))
-	{
+	{	
+		float totalDamage = 0.0
+		array<float> highestDamage = [0.0,0.0,0.0]
+		array<int> highestDamageSource = [-1,-1,-1]
+		foreach(index,float damage in file.harvesterDamageSource)
+		{
+			totalDamage += damage
+			if(highestDamage[0]<damage)
+			{
+				highestDamage[2] = highestDamage[1]
+				highestDamageSource[2] = highestDamageSource[1]
+				highestDamage[1] = highestDamage[0]
+				highestDamageSource[1] = highestDamageSource[0]
+				highestDamageSource[0] = index
+				highestDamage[0] = damage
+			}
+			else if(highestDamage[1]<damage)
+			{
+				highestDamage[2] = highestDamage[1]
+				highestDamageSource[2] = highestDamageSource[1]
+				highestDamage[1] = damage
+				highestDamageSource[1] = index
+			}
+			else if(highestDamage[2]<damage)
+			{
+				highestDamage[2] = damage
+				highestDamageSource[2] = index
+			}
+		}
+		
+		foreach(entity player in GetPlayerArray())
+		{
+			Remote_CallFunction_NonReplay(player,"ServerCallback_FD_DisplayHarvesterKiller",GetGlobalNetInt("FD_restartsRemaining"),getHintForTypeId(highestDamageSource[0]),highestDamageSource[0],highestDamage[0]/totalDamage,highestDamageSource[1],highestDamage[1]/totalDamage,highestDamageSource[2],highestDamage[2]/totalDamage)
+		}
+			
 		if(GetGlobalNetInt("FD_restartsRemaining")>0)
 			FD_DecrementRestarts()
 		else
@@ -365,7 +431,7 @@ bool function runWave(int waveIndex,bool shouldDoBuyTime)
 		EmitSoundOnEntityOnlyToPlayer(player,player,"HUD_MP_BountyHunt_BankBonusPts_Deposit_Start_1P")
 	}
 	wait 1
-	int highestScore = 0;
+	float highestScore = 0;
 	entity highestScore_player = GetPlayerArray()[0]
 	foreach(entity player in GetPlayerArray())
 	{	
@@ -382,6 +448,7 @@ bool function runWave(int waveIndex,bool shouldDoBuyTime)
 		
 	}
 	wait 1
+	file.players[highestScore_player].totalMVPs += 1
 	AddPlayerScore(highestScore_player,"FDWaveMVP")
 	AddMoneyToPlayer(highestScore_player,100)
 	EmitSoundOnEntityOnlyToPlayer(highestScore_player,highestScore_player,"HUD_MP_BountyHunt_BankBonusPts_Deposit_Start_1P")
@@ -447,13 +514,17 @@ void function OnDamagedPropScript(entity prop,var damageInfo)
 	fd_harvester.lastDamage = Time()
 	if(prop.GetShieldHealth()==0)
 	{
+		int attackerID = FD_GetAITypeID_ByString(attacker.GetTargetName())
 		
+		file.harvesterDamageSource[attackerID] += damageAmount
+
+
 		float newHealth = prop.GetHealth()-damageAmount
 		if(newHealth<0)
 		{	
 			EmitSoundAtPosition(TEAM_UNASSIGNED,fd_harvester.harvester.GetOrigin(),"coop_generator_destroyed")
 			newHealth=0
-			fd_harvester.rings.Destroy()
+			fd_harvester.rings.Destroy()//TODO death animation
 		}
 		
 		prop.SetHealth(newHealth)
@@ -466,7 +537,7 @@ void function OnDamagedPropScript(entity prop,var damageInfo)
 
 void function FD_NPCCleanup()
 {
-	foreach(entity npc in file.spawnedNPCs){
+	foreach(entity npc in GetEntArrayByClass_Expensive("C_AI_BaseNPC")){
 		if(IsValid(npc))
 			npc.Destroy()
 	}
@@ -566,11 +637,22 @@ void function initNetVars()
 	{
 		bool showShop = false
 		SetGlobalNetInt("FD_currentWave",0)
-		if(GetCurrentPlaylistVarInt("fd_difficulty",0)>=5)
+		if(FD_IsDifficultyLevelOrHigher(eFDDifficultyLevel.INSANE))
 			FD_SetNumAllowedRestarts(0)
 		else	
 			FD_SetNumAllowedRestarts(2)
 	}
+	
+}
+
+void function FD_DamageByPlayerCallback(entity victim,var damageInfo)
+{	
+	entity player = DamageInfo_GetAttacker(damageInfo)
+	if(!(player in file.players))
+		return
+	float damage = DamageInfo_GetDamage(damageInfo)
+	file.players[player].damageDealt += damage
+	file.players[player].scoreThisRound += damage //TODO NOT HOW SCORE WORKS
 	
 }
 
@@ -622,7 +704,7 @@ void function LoadEntities()
 	initNetVars()
 }
 
-void function titanNav_thread(entity titan, string routeName)
+void function titanNav_thread(entity titan, string routeName,float nextDistance = 500.0)
 {	
 	titan.EndSignal( "OnDeath" )
 	titan.EndSignal( "OnDestroy" )
@@ -644,15 +726,16 @@ void function titanNav_thread(entity titan, string routeName)
 
 	foreach(entity node in routeArray)
 	{	
-		
+		if(!IsAlive(fd_harvester.harvester))
+			return
 		if(Distance(fd_harvester.harvester.GetOrigin(),titan.GetOrigin())<Distance(fd_harvester.harvester.GetOrigin(),node.GetOrigin()))
 			continue
 		titan.AssaultPoint(node.GetOrigin())
 		int i = 0
-		while((Distance(titan.GetOrigin(),node.GetOrigin())>500))
+		while((Distance(titan.GetOrigin(),node.GetOrigin())>nextDistance))
 		{
 			WaitFrame()
-			printt(Distance(titan.GetOrigin(),node.GetOrigin()))
+			//printt(Distance(titan.GetOrigin(),node.GetOrigin()))
 			// i++
 			// if(i>1200)
 			// {
@@ -678,9 +761,43 @@ bool function ClientCommandCallbackToggleReady( entity player, array<string> arg
 {
 	if(args[0]=="true")
 		player.SetPlayerNetBool("FD_readyForNextWave",true)
-	if(args[0]=="flase")
+	if(args[0]=="false")
 		player.SetPlayerNetBool("FD_readyForNextWave",false)
 	return true
+}
+
+int function getHintForTypeId(int typeId)
+{	
+	//this is maybe a bit of an naive aproch
+	switch(typeId)
+		{
+			case eFD_AITypeIDs.TITAN_NUKE:
+				return (348 +RandomIntRangeInclusive(0,1))
+			case eFD_AITypeIDs.TITAN_ARC:
+				return (350 +RandomIntRangeInclusive(0,1))
+			case eFD_AITypeIDs.TITAN_MORTAR:
+				return (352 +RandomIntRangeInclusive(0,1))
+			case eFD_AITypeIDs.GRUNT:
+				return 354
+			case eFD_AITypeIDs.SPECTRE:
+				return 355
+			case eFD_AITypeIDs.SPECTRE_MORTAR:
+				return (356 +RandomIntRangeInclusive(0,1))
+			case eFD_AITypeIDs.STALKER:
+				if(RandomIntRangeInclusive(0,1)==0)
+					return 358
+				else
+					return 361
+			case eFD_AITypeIDs.REAPER:
+				return (359 +RandomIntRangeInclusive(0,1))
+			case eFD_AITypeIDs.DRONE:
+				return 362
+			case eFD_AITypeIDs.TITAN_SNIPER:
+				return (371 +RandomIntRangeInclusive(0,2))
+			default:
+				return (363+RandomIntRangeInclusive(0,7))
+		}
+	unreachable
 }
 
 /****************************************************************************************************************\
@@ -697,6 +814,7 @@ WaveEvent function createSmokeEvent(vector position,float lifetime)
 {
 	WaveEvent event
 	event.eventFunction = spawnSmoke
+	event.shouldThread = true
 	event.smokeEvent.position = position
 	event.smokeEvent.lifetime = lifetime
 	return event
@@ -706,6 +824,7 @@ WaveEvent function createArcTitanEvent(vector origin,vector angles,string route)
 {
 	WaveEvent event
 	event.eventFunction = spawnArcTitan
+	event.shouldThread = true
 	event.spawnEvent.spawnType= eFD_AITypeIDs.TITAN_ARC
 	event.spawnEvent.spawnAmount = 1
 	event.spawnEvent.origin = origin
@@ -718,6 +837,7 @@ WaveEvent function createSuperSpectreEvent(vector origin,vector angles,string ro
 {
 	WaveEvent event
 	event.eventFunction = spawnSuperSpectre
+	event.shouldThread = true
 	event.spawnEvent.spawnType= eFD_AITypeIDs.REAPER
 	event.spawnEvent.spawnAmount = 1
 	event.spawnEvent.origin = origin
@@ -730,6 +850,7 @@ WaveEvent function createDroppodGruntEvent(vector origin,string route)
 {
 	WaveEvent event
 	event.eventFunction = spawnDroppodGrunts
+	event.shouldThread = true
 	event.spawnEvent.spawnType= eFD_AITypeIDs.GRUNT
 	event.spawnEvent.spawnAmount = 4
 	event.spawnEvent.origin = origin
@@ -741,6 +862,7 @@ WaveEvent function createDroppodStalkerEvent(vector origin,string route)
 {
 	WaveEvent event
 	event.eventFunction = spawnDroppodStalker
+	event.shouldThread = true
 	event.spawnEvent.spawnType= eFD_AITypeIDs.STALKER
 	event.spawnEvent.spawnAmount = 4
 	event.spawnEvent.origin = origin
@@ -752,6 +874,7 @@ WaveEvent function createDroppodSpectreMortarEvent(vector origin,string route)
 {
 	WaveEvent event
 	event.eventFunction = spawnDroppodSpectreMortar
+	event.shouldThread = true
 	event.spawnEvent.spawnType= eFD_AITypeIDs.SPECTRE_MORTAR
 	event.spawnEvent.spawnAmount = 4
 	event.spawnEvent.origin = origin
@@ -762,6 +885,7 @@ WaveEvent function createDroppodSpectreMortarEvent(vector origin,string route)
 WaveEvent function createWaitForTimeEvent(float amount)
 {
 	WaveEvent event
+	event.shouldThread = false
 	event.eventFunction = waitForTime
 	event.waitEvent.amount = amount
 	return event
@@ -771,6 +895,7 @@ WaveEvent function createWaitUntilAliveEvent(int amount)
 {
 	WaveEvent event
 	event.eventFunction = waitUntilLessThanAmountAliveEvent
+	event.shouldThread = false
 	event.waitEvent.amount = amount.tofloat()
 	return event
 }
@@ -779,6 +904,7 @@ WaveEvent function createGenericSpawnEvent(string npcClassName,vector origin,vec
 {
 	WaveEvent event
 	event.eventFunction = spawnGenericNPC
+	event.shouldThread = true
 	event.spawnEvent.npcClassName = npcClassName
 	event.spawnEvent.origin = origin
 	event.spawnEvent.angles = angles
@@ -792,6 +918,7 @@ WaveEvent function createGenericTitanSpawnWithAiSettingsEvent(string npcClassNam
 {
 	WaveEvent event
 	event.eventFunction = spawnGenericNPCTitanwithSettings
+	event.shouldThread = true
 	event.spawnEvent.npcClassName = npcClassName
 	event.spawnEvent.aiSettings = aiSettings
 	event.spawnEvent.origin = origin
@@ -806,6 +933,7 @@ WaveEvent function createNukeTitanEvent(vector origin,vector angles,string route
 {
 	WaveEvent event
 	event.eventFunction = spawnNukeTitan
+	event.shouldThread = true
 	event.spawnEvent.spawnType= eFD_AITypeIDs.TITAN_NUKE
 	event.spawnEvent.spawnAmount = 1
 	event.spawnEvent.origin = origin
@@ -818,6 +946,7 @@ WaveEvent function createMortarTitanEvent(vector origin,vector angles)
 {
 	WaveEvent event
 	event.eventFunction = spawnMortarTitan
+	event.shouldThread = true
 	event.spawnEvent.spawnType= eFD_AITypeIDs.TITAN_MORTAR
 	event.spawnEvent.spawnAmount = 1
 	event.spawnEvent.origin = origin
@@ -826,8 +955,9 @@ WaveEvent function createMortarTitanEvent(vector origin,vector angles)
 }
 
 WaveEvent function createCloakDroneEvent(vector origin,vector angles){
-		WaveEvent event
+	WaveEvent event
 	event.eventFunction = fd_spawnCloakDrone
+	event.shouldThread = true
 	event.spawnEvent.spawnType= eFD_AITypeIDs.DRONE_CLOAK
 	event.spawnEvent.spawnAmount = 1
 	event.spawnEvent.origin = origin
@@ -865,11 +995,11 @@ void function spawnArcTitan(SmokeEvent smokeEvent,SpawnEvent spawnEvent,WaitEven
 {	
 	PingMinimap(spawnEvent.origin.x, spawnEvent.origin.y, 4, 600, 150, 0)
 	entity npc = CreateArcTitan(TEAM_IMC,spawnEvent.origin,spawnEvent.angles)
-	thread titanNav_thread(npc,spawnEvent.route)
-	SetSpawnOption_Titanfall(npc)
-	npc.DisableNPCFlag(NPC_ALLOW_INVESTIGATE | NPC_USE_SHOOTING_COVER|NPC_ALLOW_PATROL)
+	file.spawnedNPCs.append(npc)
 	DispatchSpawn(npc)
-	file.spawnedNPCs.append(npc)	
+	npc.DisableNPCFlag(NPC_ALLOW_INVESTIGATE | NPC_USE_SHOOTING_COVER|NPC_ALLOW_PATROL)
+	SetSpawnOption_Titanfall(npc)
+	thread titanNav_thread(npc,spawnEvent.route)
 	thread EMPTitanThinkConstant(npc)
 }
 
@@ -992,7 +1122,7 @@ void function spawnSuperSpectre_threaded(entity npc)
 	wait 4.7
 	DispatchSpawn(npc)
 	thread SuperSpectre_WarpFall(npc)
-	thread Reaper_LaunchFragDrone_Think( npc, "npc_frag_drone_fd")
+	thread ReaperMinionLauncherThink(npc)
 }
 
 void function CreateTrackedDroppodSoldier( vector origin, int team)
@@ -1084,17 +1214,31 @@ void function PingMinimap(float x, float y, float duration, float spreadRadius, 
 }
 
 void function waitUntilLessThanAmountAlive(int amount)
-{
+{	
+	printt("start wait")
 	int aliveTitans = file.spawnedNPCs.len()
 	
 	while(aliveTitans>amount)
 	{
-		printt("Titans alive",aliveTitans,amount)
 		WaitFrame()
 		aliveTitans = file.spawnedNPCs.len()
 		if(!IsAlive(fd_harvester.harvester))
 			break
-		
+		printt("titans alive ", aliveTitans)
 	}
-	printt("Titans alive end",aliveTitans,amount)
+}
+
+void function waitUntilLessThanAmountAlive_expensive(int amount)
+{	
+	printt("start wait")
+	int aliveTitans = GetEntArrayByClassWildCard_Expensive("*npc*").len()
+	
+	while(aliveTitans>amount)
+	{
+		WaitFrame()
+		aliveTitans = GetEntArrayByClassWildCard_Expensive("*npc*").len()
+		if(!IsAlive(fd_harvester.harvester))
+			break
+		printt("titans alive ", aliveTitans)
+	}
 }
