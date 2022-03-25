@@ -1,5 +1,6 @@
 global function CodeCallback_MapInit
 
+
 struct {
 	int batteryIndex = 0
 } file
@@ -14,6 +15,9 @@ void function CodeCallback_MapInit()
 {
 	// Battery spawns (in LTS/Free Agents) are in old locations, so we move them to the proper locations
 	AddSpawnCallbackEditorClass( "script_ref", "script_power_up_other", FixBatterySpawns )
+	// Load Frontier Defense Data
+	if(GameRules_GetGameMode()=="fd")
+        initFrontierDefenseData()
 }
 
 void function FixBatterySpawns( entity spawn )
@@ -24,11 +28,4 @@ void function FixBatterySpawns( entity spawn )
 	PowerUp powerupDef = GetPowerUpFromItemRef( expect string( spawn.kv.powerUpType ) )
 	if ( powerupDef.spawnFunc() )
 		spawn.SetOrigin( BATTERY_SPAWNS[file.batteryIndex++] )
-}
-global function CodeCallback_MapInit
-
-void function CodeCallback_MapInit()
-{
-    if(GameRules_GetGameMode()=="fd")
-        initFrontierDefenseData()
 }
