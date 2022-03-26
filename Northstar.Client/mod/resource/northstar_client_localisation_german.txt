@@ -269,20 +269,5 @@ Drücke Ja, um zuzustimmen. Du kannst diese Entscheidung jederzeit im Modmenü �
 		// In-game chat
 		"HUD_CHAT_WHISPER_PREFIX" "[WHISPER]"
 		"HUD_CHAT_SERVER_PREFIX" "[SERVER]"
-
-		"NS_INVITE_MENU_HEADER"          		"Einladungen"
-		"NS_INVITE_GENERATE_SERVER_BUTTON"   	"Servereinladung erstellen"
-		"NS_INVITE_GENERATE_PARTY_BUTTON"    	"Gruppeneinladung erstellen"
-		"NS_INVITE_JOIN_BUTTON"              	"Einladung annehmen"
-		"NS_INVITE_JOIN_HEADER"           		"Einladung annehmen"
-		"NS_INVITE_JOIN_BODY"             		"Du hast eine Einladung für folgenden Server erhalten: %s1 \nWillst du dem Server beitreten?"
-		"NS_PARTY_INVITE_HEADER"          		"Gruppe beitreten"
-		"NS_PARTY_INVITE_BODY"            		"Du wurdest von %s1 in eine Gruppe eingeladen \nWillst du der Gruppe beitreten?"
-		"NS_INVITE_GENERATE_FAILURE_HEADER"     "Erstellen einer Einladung fehlgeschlagen"
-		"NS_INVITE_GENERATE_FAILURE_BODY"	    "Ein Fehler beim Erstellen der Einladung ist aufgetreten: %s1"
-		"NS_INVITE_GENERATE_SUCCESS_HEADER"     "Einladung erstellt"
-		"NS_INVITE_GENERATE_SUCCESS_BODY"       "Die Einladung wurde in die Zwischenablage kopiert"
-		"NS_INVITE_JOIN_FAILURE_HEADER"  "Annehmen der Einladung fehlgeschlagen"
-		"NS_INVITE_JOIN_FAILURE_BODY"    "Der Einladung konnte nicht beigetreten werden. Für mehr Informationen lies die folgende Fehlermeldung:\n%s1"
 	}
 }

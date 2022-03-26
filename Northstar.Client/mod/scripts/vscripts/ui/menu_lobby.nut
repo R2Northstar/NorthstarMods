@@ -90,8 +90,6 @@ struct
 	var faqButton
 	var dpadCommsButton
 
-	var inviteEntryBox
-
 	var genUpButton
 
 	array<var> lobbyButtons
@@ -163,7 +161,7 @@ void function Lobby_UpdateInboxButtons()
 	}
 	else
 	{
-		SetComboButtonHeaderTitle( menu, file.inboxHeaderIndex, Localize( "#NS_INVITE_MENU_HEADER" )  )
+		SetComboButtonHeaderTitle( menu, file.inboxHeaderIndex, Localize( "#MENU_HEADER_NETWORKS" )  )
 		ComboButton_SetText( file.inboxButton, Localize( "#MENU_TITLE_READ" ) )
 	}
 
@@ -236,10 +234,10 @@ void function SetupComboButtonTest( var menu )
 	int headerIndex = 0
 	int buttonIndex = 0
 	file.playHeader = AddComboButtonHeader( comboStruct, headerIndex, "#MENU_HEADER_PLAY" )
-
+	
 	bool isModded = IsNorthstarServer()
-
-
+	
+	
 	// this will be the server browser
 	if ( isModded )
 	{
@@ -264,12 +262,12 @@ void function SetupComboButtonTest( var menu )
 	else
 	{
 		file.inviteRoomButton = AddComboButton( comboStruct, headerIndex, buttonIndex++, "#MENU_TITLE_INVITE_ROOM" )
-		Hud_AddEventHandler( file.inviteRoomButton, UIE_CLICK, DoRoomInviteIfAllowed )
+		Hud_AddEventHandler( file.inviteRoomButton, UIE_CLICK, DoRoomInviteIfAllowed )	
 	}
 
 	file.inviteFriendsButton = AddComboButton( comboStruct, headerIndex, buttonIndex++, "#MENU_TITLE_INVITE_FRIENDS" )
 	Hud_AddEventHandler( file.inviteFriendsButton, UIE_CLICK, InviteFriendsIfAllowed )
-
+	
 	if ( isModded )
 	{
 		Hud_SetEnabled( file.inviteFriendsButton, false )
@@ -310,15 +308,23 @@ void function SetupComboButtonTest( var menu )
 
 	headerIndex++
 	buttonIndex = 0
-	file.networksHeader = AddComboButtonHeader( comboStruct, headerIndex, "#NS_INVITE_MENU_HEADER" )
+	file.networksHeader = AddComboButtonHeader( comboStruct, headerIndex, "#MENU_HEADER_NETWORKS" )
 	file.inboxHeaderIndex = headerIndex
-	var inviteJoinButton = AddComboButton( comboStruct, headerIndex, buttonIndex++, "#NS_INVITE_JOIN_BUTTON" )
-	Hud_AddEventHandler( inviteJoinButton, UIE_CLICK, AdvanceMenuEventHandler( GetMenu( "JoinInviteMenu" ) ) )
-	file.lobbyButtons.append( inviteJoinButton )
-	var inviteCreateButton = AddComboButton( comboStruct, headerIndex, buttonIndex++, "#NS_INVITE_GENERATE_SERVER_BUTTON" )
-	Hud_AddEventHandler( inviteCreateButton, UIE_CLICK, OnBrowseNetworksButton_Activate )
-	file.lobbyButtons.append( inviteCreateButton )
-	DisableButton(inviteCreateButton)
+	var networksInbox = AddComboButton( comboStruct, headerIndex, buttonIndex++, "#MENU_TITLE_INBOX" )
+	file.inboxButton = networksInbox
+	file.lobbyButtons.append( networksInbox )
+	Hud_AddEventHandler( networksInbox, UIE_CLICK, OnInboxButton_Activate )
+	var switchButton = AddComboButton( comboStruct, headerIndex, buttonIndex++, "#COMMUNITY_SWITCHCOMMUNITY" )
+	Hud_AddEventHandler( switchButton, UIE_CLICK, OnSwitchButton_Activate )
+	var browseButton = AddComboButton( comboStruct, headerIndex, buttonIndex++, "#COMMUNITY_BROWSE_NETWORKS" )
+	file.lobbyButtons.append( browseButton )
+	Hud_AddEventHandler( browseButton, UIE_CLICK, OnBrowseNetworksButton_Activate )
+	file.browseNetworkButton = browseButton
+	#if NETWORK_INVITE
+		file.inviteFriendsToNetworkButton = AddComboButton( comboStruct, headerIndex, buttonIndex++, "#INVITE_FRIENDS" )
+		file.lobbyButtons.append( file.inviteFriendsToNetworkButton )
+		Hud_AddEventHandler( file.inviteFriendsToNetworkButton, UIE_CLICK, OnInviteFriendsToNetworkButton_Activate )
+	#endif
 
 	headerIndex++
 	buttonIndex = 0
@@ -366,7 +372,6 @@ void function StartPrivateMatch( var button )
 		return
 
 	ClientCommand( "StartPrivateMatchSearch" )
-
 	NSSetLoading(true)
 	NSUpdateListenServer()
 }
@@ -638,7 +643,7 @@ void function OnLobbyMenu_Open()
 
 		TryUnlockSRSCallsign()
 
-		//Lobby_UpdateInboxButtons()
+		Lobby_UpdateInboxButtons()
 
 		if ( file.shouldAutoOpenFDMenu )
 		{
@@ -1235,7 +1240,7 @@ function UpdateLobbyUI()
 	thread UpdateMatchmakingStatus()
 	thread UpdateChatroomThread()
 	//thread UpdateInviteJoinButton()
-	//thread UpdateInviteFriendsToNetworkButton()
+	thread UpdateInviteFriendsToNetworkButton()
 	thread UpdatePlayerInfo()
 
 	if ( uiGlobal.menuToOpenFromPromoButton != null )
@@ -1245,7 +1250,7 @@ function UpdateLobbyUI()
 		if ( IsStoreMenu( uiGlobal.menuToOpenFromPromoButton ) )
 		{
 			string menuName = expect string( uiGlobal.menuToOpenFromPromoButton._name )
-
+			
 			void functionref() preOpenfunc = null
 			if ( uiGlobal.menuToOpenFromPromoButton == GetMenu( "StoreMenu_WeaponSkins" ) ) // Hardcoded special case for now
 				preOpenfunc = DefaultToDLC11WeaponWarpaintBundle

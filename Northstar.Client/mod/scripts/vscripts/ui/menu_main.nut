@@ -86,10 +86,6 @@ void function OnMainMenu_Open()
 
 	thread UpdateTrialLabel()
 
-	isOnMainMenu = true
-	NSSetOnMainMenu(true)
-	thread inviteloop()
-
 	// do +map stuff
 	if ( Dev_CommandLineHasParm( "+map" ) )
 	{
@@ -415,8 +411,6 @@ void function LaunchGame()
 		thread StartSearchForPartyServer()
 
 	uiGlobal.launching = eLaunching.FALSE
-	isOnMainMenu = false
-	NSSetOnMainMenu(false)
 }
 
 void function StartSearchForPartyServer()
@@ -676,33 +670,4 @@ void function UpdateTrialLabel()
 void function OpenSinglePlayerDevMenu( var button )
 {
 	AdvanceMenu( GetMenu( "SinglePlayerDevMenu" ) )
-}
-
-// About this code:
-// For some as-of-yet unknown reason, doing basically anything on the main menu
-// in terms of UI crashes the game when done from the outside.
-// This includes opening new dialog boxes
-// So instead, we have to do this awful solution where we are always looping
-// this thing, and checking if we're on main menu, and if we should display an invite
-void function inviteloop()
-{
-	while( true )
-	{
-		if ( GetActiveLevel() != "" )
-		{
-			isOnMainMenu = false
-			NSSetOnMainMenu( false )
-		}
-		if (!isOnMainMenu && GetActiveLevel() == "")
-		{
-			isOnMainMenu = true
-			NSSetOnMainMenu( true )
-		}
-		if( NSHasStoredURI() && isOnMainMenu )
-		{
-			ShowURIDialog()
-			NSRemoveStoredURI()
-		}
-		wait 1.0
-	}
 }

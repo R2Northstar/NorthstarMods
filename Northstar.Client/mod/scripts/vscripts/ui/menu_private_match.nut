@@ -57,8 +57,6 @@ struct
 	var selectModeButton
 	var matchSettingsButton
 
-	var inviteEntryBox
-
 	var callsignCard
 
 	var spectatorLabel
@@ -93,7 +91,7 @@ const table<asset> mapImages =
 	mp_rise = $"loadscreens/mp_rise_lobby",
 	mp_lf_township = $"loadscreens/mp_lf_township_lobby",
 	mp_lf_uma = $"loadscreens/mp_lf_uma_lobby",
-
+	
 	// not really sure if this should be here, whatever
 	// might be good to make this modular in the future?
 	sp_training = $"rui/menu/level_select/level_image1",
@@ -146,7 +144,7 @@ asset function GetMapImageForMapName( string mapName )
 {
 	if ( mapName in mapImages )
 		return mapImages[mapName]
-
+		
 	// no way to convert string => asset for dynamic stuff so
 	// pain
 	return expect asset ( compilestring( "return $\"loadscreens/" + mapName + "_lobby\"" )() )
@@ -339,14 +337,6 @@ void function SetupComboButtons( var menu, var navUpButton, var navDownButton  )
 	#endif
 	var knbButton = AddComboButton( comboStruct, headerIndex, buttonIndex++, "#KNB_MENU_HEADER" )
 	Hud_AddEventHandler( knbButton, UIE_CLICK, AdvanceMenuEventHandler( GetMenu( "KnowledgeBaseMenu" ) ) )
-
-	headerIndex++
-	buttonIndex = 0
-	var settingsHeader1 = AddComboButtonHeader( comboStruct, headerIndex, "#NS_INVITE_MENU_HEADER" )
-	var controlsButton1 = AddComboButton( comboStruct, headerIndex, buttonIndex++, "#NS_INVITE_JOIN_BUTTON" )
-	Hud_AddEventHandler( controlsButton1, UIE_CLICK, AdvanceMenuEventHandler( GetMenu( "JoinInviteMenu" ) ) )
-	var generateInviteButton = AddComboButton( comboStruct, headerIndex, buttonIndex++, "#NS_INVITE_GENERATE_SERVER_BUTTON" )
-	Hud_AddEventHandler( generateInviteButton, UIE_CLICK, GenerateServerInvite )
 
 	ComboButtons_Finalize( comboStruct )
 }
@@ -585,7 +575,7 @@ function UpdatePrivateMatchButtons()
 		Hud_SetLocked( file.selectMapButton, true )
 		Hud_SetLocked( file.selectModeButton, true )
 		Hud_SetLocked( file.matchSettingsButton, true )
-
+		
 		if ( !IsNorthstarServer() )
 			Hud_SetLocked( file.inviteFriendsButton, true )
 	}
@@ -650,17 +640,17 @@ function UpdateLobby()
 		int numPlaylistOverrides = GetPlaylistVarOverridesCount()
 		string playlistOverridesDesc = ""
 		for ( int varIdx = 0; varIdx < numPlaylistOverrides; ++varIdx )
-		{
+		{	
 			// temp fix for playlistoverrides that aren't handled by private match
 			string varName = GetPlaylistVarOverrideNameByIndex( varIdx )
-
+			
 			if ( varName in MatchSettings_PlaylistVarLabels )
 			{
 				float varOrigVal = float( GetCurrentPlaylistGamemodeByIndexVar( gamemodeIdx, varName, false ) )
 				float varOverrideVal = float( GetCurrentPlaylistGamemodeByIndexVar( gamemodeIdx, varName, true ) )
 				if ( varOrigVal == varOverrideVal && !IsNorthstarServer() ) // stuff seems to break outside of northstar servers since we dont always use private_match playlist
 					continue
-
+	
 				string label = Localize( MatchSettings_PlaylistVarLabels[varName] ) + ": "
 				string value = MatchSettings_FormatPlaylistVarValue( varName, varOverrideVal )
 				playlistOverridesDesc = playlistOverridesDesc + label + "`2" + value + " `0\n"
@@ -668,7 +658,7 @@ function UpdateLobby()
 			else
 			{
 				bool shouldBreak = false
-
+				
 				foreach ( string category in GetPrivateMatchSettingCategories( true ) )
 				{
 					foreach ( CustomMatchSettingContainer setting in GetPrivateMatchCustomSettingsForCategory( category ) )
@@ -679,12 +669,12 @@ function UpdateLobby()
 								playlistOverridesDesc += Localize( setting.localizedName ) + ": `2" + Localize( setting.enumNames[ setting.enumValues.find( expect string ( GetCurrentPlaylistVar( varName ) ) ) ] ) + "`0\n"
 							else
 								playlistOverridesDesc += Localize( setting.localizedName ) + ": `2" + GetCurrentPlaylistVar( varName ) + "`0\n"
-
+							
 							shouldBreak = true
 							break
 						}
 					}
-
+					
 					if ( shouldBreak )
 						break
 				}

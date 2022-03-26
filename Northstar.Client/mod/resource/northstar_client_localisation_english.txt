@@ -306,20 +306,5 @@ Press Yes if you agree to this. This choice can be changed in the mods menu at a
 		// In-game chat
 		"HUD_CHAT_WHISPER_PREFIX" "[WHISPER]"
 		"HUD_CHAT_SERVER_PREFIX" "[SERVER]"
-
-		"NS_INVITE_MENU_HEADER"          		"Invites"
-		"NS_INVITE_GENERATE_SERVER_BUTTON"   	"Create Server Invite"
-		"NS_INVITE_GENERATE_PARTY_BUTTON"    	"Create Party Invite"
-		"NS_INVITE_JOIN_BUTTON"					"Join Invite"
-		"NS_INVITE_JOIN_HEADER"					"Join Invite"
-		"NS_INVITE_JOIN_BODY"             		"You have received an invite to the following server: %s1 \nWould you like to join this server?"
-		"NS_PARTY_INVITE_HEADER"          		"Join Party"
-		"NS_PARTY_INVITE_BODY"            		"You have been invited to a party by %s1 \nWould you like to join this party?"
-		"NS_INVITE_GENERATE_FAILURE_HEADER"     "Failed to create invite"
-		"NS_INVITE_GENERATE_FAILURE_BODY"	    "An error occurred when trying to create an invite: %s1"
-		"NS_INVITE_GENERATE_SUCCESS_HEADER"     "Invite created"
-		"NS_INVITE_GENERATE_SUCCESS_BODY"       "The invite has been copied to your clipboard"
-		"NS_INVITE_JOIN_FAILURE_HEADER"  "Failed to join invite"
-		"NS_INVITE_JOIN_FAILURE_BODY"    "Could not join the invite. Please see the error below: \n%s1"
 	}
 }

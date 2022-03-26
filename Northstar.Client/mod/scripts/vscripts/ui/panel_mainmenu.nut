@@ -531,8 +531,6 @@ void function OnPlayFDButton_Activate( var button ) // repurposed for launching 
 		SetConVarString( "communities_hostname", "" ) // disable communities due to crash exploits that are still possible through it
 		NSTryAuthWithLocalServer()
 		thread TryAuthWithLocalServer()
-		isOnMainMenu = false
-		NSSetOnMainMenu(false)
 	}
 }
 

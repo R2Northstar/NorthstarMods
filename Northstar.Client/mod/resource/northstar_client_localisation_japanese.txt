@@ -262,20 +262,5 @@
 		// In-game chat
 		"HUD_CHAT_WHISPER_PREFIX" "[WHISPER]"
 		"HUD_CHAT_SERVER_PREFIX" "[SERVER]"
-
-		"NS_INVITE_MENU_HEADER"          		"招待"
-		"NS_INVITE_GENERATE_SERVER_BUTTON"   	"サーバー招待を作る""
-		"NS_INVITE_GENERATE_PARTY_BUTTON"    	"パーティー招待を作る"
-		"NS_INVITE_JOIN_BUTTON"              	"招待を受ける"
-		"NS_INVITE_JOIN_HEADER"           		"招待を受ける"
-		"NS_INVITE_JOIN_BODY"             		"サーバー名: %s1 \nから招待が受信されました。参加しますか?"
-		"NS_PARTY_INVITE_HEADER"          		"パーティーに参加"
-		"NS_PARTY_INVITE_BODY"            		"%s1 \nからパーティーへの招待が受信されました。参加しますか?"
-		"NS_INVITE_GENERATE_FAILURE_HEADER"    "招待状の作成に失敗しました"
-		"NS_INVITE_GENERATE_FAILURE_BODY"      "招待を作成しようとしたときにエラーが発生しました ％1"
-		"NS_INVITE_GENERATE_SUCCESS_HEADER"    "作成した招待"
-		"NS_INVITE_GENERATE_SUCCESS_BODY"      "招待状がクリップボードにコピーされました"
-		"NS_INVITE_JOIN_FAILURE_HEADER:  "招待に参加できませんでした"
-		:NS_INVITE_JOIN_FAILURE_BODY"    "招待に参加できませんでした。以下のエラーを参照してください ％s1"
 	}
 }

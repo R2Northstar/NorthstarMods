@@ -34,21 +34,6 @@
 		}
 	],
 	"Scripts": [
-
-		{
-			"Path": "ui/urihandler.nut",
-			"RunOn": "UI",
-			"UICallback": {
-				"Before": "SetupInviteSystem"
-			}
-		},
-		{
-			"Path": "ui/menu_ns_connect_password.nut",
-			"RunOn": "UI",
-			"UICallback": {
-				"Before": "AddNorthstarConnectWithPasswordMenu"
-			}
-		},
 		{
 			"Path": "_custom_codecallbacks_client.gnut",
 			"RunOn": "CLIENT",

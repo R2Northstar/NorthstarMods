@@ -310,20 +310,5 @@
 		// In-game chat
 		"HUD_CHAT_WHISPER_PREFIX" "[WHISPER]"
 		"HUD_CHAT_SERVER_PREFIX" "[SERVER]"
-
-		"NS_INVITE_MENU_HEADER"          		"邀請"
-		"NS_INVITE_GENERATE_SERVER_BUTTON"   	"建立伺服器邀請"
-		"NS_INVITE_GENERATE_PARTY_BUTTON"    	"建立派對邀請"
-		"NS_INVITE_JOIN_BUTTON"              	"接受邀請"
-		"NS_INVITE_JOIN_HEADER"           		"接受邀請"
-		"NS_INVITE_JOIN_BODY"             		"你已被邀請加入： %s1 \n是否接受?"
-		"NS_PARTY_INVITE_HEADER"          		"接受派對邀請"
-		"NS_PARTY_INVITE_BODY"            		"你已被 %s1 邀請加入派對\n是否接受?"
-		"NS_INVITE_GENERATE_FAILURE_HEADER"    "創建邀請失敗!"
-		"NS_INVITE_GENERATE_FAILURE_BODY"      "創建邀請時發生錯誤: %s1"
-		"NS_INVITE_GENERATE_SUCCESS_HEADER"    "邀請創建成功!"
-		"NS_INVITE_GENERATE_SUCCESS_BODY"      "邀請鏈接已複製到粘貼板"
-		"NS_INVITE_JOIN_FAILURE_HEADER"  "接受邀請失敗"
-		"NS_INVITE_JOIN_FAILURE_BODY"    "無法接受邀請,錯誤:\n%s1"
 	}
 }
