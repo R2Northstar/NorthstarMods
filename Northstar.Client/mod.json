@@ -54,6 +54,20 @@
 			}
 		},
 		{
+			"Path": "state_ui.nut",
+			"RunOn": "UI",
+			"UICallback": {
+				"After": "NSUpdateGameStateUIStart"
+			}
+		},
+		{
+			"Path": "state_client.nut",
+			"RunOn": "CLIENT",
+			"ClientCallback": {
+				"After": "NSUpdateGameStateClientStart"
+			}
+		},
+		{
 			"Path": "ui/menu_ns_serverbrowser.nut",
 			"RunOn": "UI",
 			"UICallback": {
