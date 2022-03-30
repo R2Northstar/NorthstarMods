@@ -146,16 +146,13 @@ void function CreateFlags()
 		if (!shouldSwap && SWAP_FLAG_MAPS.contains( GetMapName() ))
 			shouldSwap = !shouldSwap
 		
-		//printt("Flags will swap: " + shouldSwap)
 
 		int flagTeam = spawn.GetTeam()
-		//printt("Flag team before: " + flagTeam)
 		if ( shouldSwap )
 		{
 			flagTeam = GetOtherTeam( flagTeam )
 			SetTeam( spawn, flagTeam )
 		}
-		//printt("Flag team after: " + flagTeam)
 	
 		// create flag base
 		entity base = CreatePropDynamic( CTF_FLAG_BASE_MODEL, spawn.GetOrigin(), spawn.GetAngles(), 0 )
@@ -309,7 +306,7 @@ void function DropFlagIfPhased( entity player, entity flag )
 		if (GetGameState() == eGameState.Playing || GetGameState() == eGameState.SuddenDeath)
 			DropFlag( player, true )
 	})
-	
+	// the IsValid check is purely to prevent a crash due to a destroyed flag (epilogue)
 	while( IsValid(flag) && flag.GetParent() == player )
 		WaitFrame()
 }
