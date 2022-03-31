@@ -1,29 +1,59 @@
 untyped
 
+int highestScore = 0
+int secondHighestScore = 0
+int ourScore = 0
+
 globalize_all_functions
 
-void function NSUpdateGameStateUIStart()
+void function OnPrematchStart()
 {
-    thread NSUpdateGameStateLoopUI()
+    if (GetServerVar( "roundBased" ))
+        NSUpdateTimeInfo( level.nv.roundEndTime - Time() )
+    else
+        NSUpdateTimeInfo( level.nv.gameEndTime - Time() )
 }
 
-void function NSUpdateGameStateLoopUI()
+void function NSUpdateGameStateClientStart()
+{
+    #if MP
+    AddCallback_GameStateEnter( eGameState.Prematch, OnPrematchStart )
+    #endif
+    thread NSUpdateGameStateLoopClient()
+    OnPrematchStart()
+}
+
+void function NSUpdateGameStateLoopClient()
 {
     while ( true )
     {
+	if(GetConVarString( "mp_gamemode" ) == "solo")
+	{
+
+        NSUpdateGameStateClient( GetPlayerArray().len(), GetCurrentPlaylistVarInt( "max_players", 65535 ), 1, 1, 1, GetServerVar( "roundBased" ), 1 )
         wait 1.0
-        if ( uiGlobal.loadedLevel == "" )
+	}
+	else
+	{
+        foreach ( player in GetPlayerArray() )
         {
-            if ( uiGlobal.isLoading )
-                NSSetLoading( true )
-            else
+            if ( GameRules_GetTeamScore( player.GetTeam() ) >= highestScore )
             {
-                NSSetLoading( false )
-                NSUpdateGameStateUI( "", "", "", "", true, false )
+                highestScore = GameRules_GetTeamScore( player.GetTeam() )
             }
-            continue
+            else if ( GameRules_GetTeamScore( player.GetTeam() ) > secondHighestScore )
+            {
+                secondHighestScore = GameRules_GetTeamScore( player.GetTeam() )
+            }
         }
-        NSSetLoading( false )
-        NSUpdateGameStateUI( GetActiveLevel(), Localize( GetMapDisplayName( GetActiveLevel() ) ), GetConVarString( "mp_gamemode" ), Localize( GetPlaylistDisplayName( GetConVarString("mp_gamemode") ) ), IsFullyConnected(), false )
+        if ( GetLocalClientPlayer() != null )
+        {
+            ourScore = GameRules_GetTeamScore( GetLocalClientPlayer().GetTeam() )
+        }
+        int limit = GetServerVar( "roundBased" ) ? GetCurrentPlaylistVarInt( "roundscorelimit", 0 ) : GetCurrentPlaylistVarInt( "scorelimit", 0 )
+        NSUpdateGameStateClient( GetPlayerArray().len(), GetCurrentPlaylistVarInt( "max_players", 65535 ), ourScore, secondHighestScore, highestScore, GetServerVar( "roundBased" ), limit )        
+        OnPrematchStart()
+        wait 1.0
+    }
     }
 }
