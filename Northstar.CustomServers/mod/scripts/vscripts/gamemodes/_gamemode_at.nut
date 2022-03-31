@@ -2,7 +2,8 @@ global function GamemodeAt_Init
 global function RateSpawnpoints_AT
 
 const int BH_AI_TEAM = TEAM_BOTH
-const int BOUNTY_TITAN_KILL_VALUE = 500
+const int BOUNTY_TITAN_DAMAGE_POOL = 400 // Rewarded for damage
+const int BOUNTY_TITAN_KILL_REWARD = 100 // Rewarded for kill
 const float WAVE_STATE_TRANSITION_TIME = 5.0
 
 const array<string> VALID_BOUNTY_TITAN_SETTINGS = [
@@ -326,21 +327,36 @@ void function AT_SpawnBountyTitan( int camp )
 	string aisettings = GetTypeFromBossID( bountyID )
 	string titanClass = expect string( Dev_GetAISettingByKeyField_Global( aisettings, "npc_titan_player_settings" ) )
 	
+	
 	AiGameModes_SpawnTitan( spawnpoint.GetOrigin(), spawnpoint.GetAngles(), BH_AI_TEAM, titanClass, aisettings, void function( entity titan ) : ( camp, bountyID ) 
 	{
 		// set up titan-specific death/damage callbacks
-		AddEntityCallback_OnDamaged( titan, OnBountyDamaged )
+		AddEntityCallback_OnDamaged( titan, OnBountyDamaged)
 		AddEntityCallback_OnKilled( titan, OnBountyKilled )
-	
+		
+		titan.GetTitanSoul().soul.skipDoomState = true
 		// i feel like this should be localised, but there's nothing for it in r1_english?
 		titan.SetTitle( GetNameFromBossID( bountyID ) )
 		thread AT_WaitToUntrackNPC( titan, camp, "npc_titan" )
 	} )
 }
 
+// Tracked entities will require their own "wallet"
+// for titans it should be used for rounding error compenstation
+// for infantry it sould be used to store money if the npc kills a player
 void function OnBountyDamaged( entity titan, var damageInfo )
 {
+	entity attacker = DamageInfo_GetAttacker( damageInfo )
+	if ( !attacker.IsPlayer() )
+		attacker = GetLatestAssistingPlayerInfo( titan ).player
 	
+	if ( IsValid( attacker ) && attacker.IsPlayer() )
+	{
+			int reward = int ( BOUNTY_TITAN_DAMAGE_POOL * DamageInfo_GetDamage( damageInfo ) / titan.GetMaxHealth() )
+			printt ( titan.GetMaxHealth(), DamageInfo_GetDamage( damageInfo ) )
+			
+			AT_AddPlayerCash( attacker, reward )
+	}
 }
 
 void function OnBountyKilled( entity titan, var damageInfo )
@@ -350,7 +366,7 @@ void function OnBountyKilled( entity titan, var damageInfo )
 		attacker = GetLatestAssistingPlayerInfo( titan ).player
 	
 	if ( IsValid( attacker ) && attacker.IsPlayer() )
-		AT_AddPlayerCash( attacker, BOUNTY_TITAN_KILL_VALUE )
+		AT_AddPlayerCash( attacker, BOUNTY_TITAN_KILL_REWARD )
 }
 
 void function AT_WaitToUntrackNPC( entity guy, int camp, string aiType )
