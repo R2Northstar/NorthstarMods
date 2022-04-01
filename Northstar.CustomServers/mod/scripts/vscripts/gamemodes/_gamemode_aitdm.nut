@@ -64,6 +64,9 @@ void function HandleScoreEvent( entity victim, entity attacker, var damageInfo )
 	if ( !( victim != attacker && attacker.IsPlayer() || attacker.IsTitan() && GetGameState() == eGameState.Playing ) )
 		return
 	
+	if ( victim.GetOwner() != null && victim.GetOwner().GetUID() == attacker.GetUID() )
+		return
+	
 	// Split score so we can check if we are over the score max
 	// without showing the wrong value on client
 	int teamScore
@@ -342,6 +345,9 @@ void function SquadHandler( array<entity> guys )
 		foreach ( player in players )
 			guy.Minimap_AlwaysShow( 0, player )
 		
+		if( guy.GetClassName() == "npc_spectre" )
+			thread SpectreWatcher_Threaded( guy )
+		
 		//thread AITdm_CleanupBoredNPCThread( guy )
 	}
 	
@@ -371,6 +377,26 @@ void function SquadHandler( array<entity> guys )
 		}
 		wait RandomFloatRange(5.0,15.0)
 	}
+}
+
+// For some reason hacked spectres dont properly change teams
+// which leads to a bug where if you kill your own spectres you get 30 points
+void function SpectreWatcher_Threaded( entity spectre )
+{
+	// NOTE: This doesn't work :)
+	spectre.WaitSignal( "TeamChange" )
+	
+	entity hacker = spectre.GetOwner()
+	
+	printt("\n\n\n\n\n\n\naaaaaaaaaaaaaaaaaa\n\n\n\n\n")
+	
+	// Add score + update network int to trigger the "Score +n" popup
+	AddTeamScore( hacker.GetTeam(), 1 )
+	hacker.AddToPlayerGameStat( PGS_ASSAULT_SCORE, 1 )
+	hacker.SetPlayerNetInt("AT_bonusPoints", hacker.GetPlayerGameStat( PGS_ASSAULT_SCORE ) )
+	
+	// Can only hack once so we can return
+	return
 }
 
 // Same as SquadHandler, just for reapers
