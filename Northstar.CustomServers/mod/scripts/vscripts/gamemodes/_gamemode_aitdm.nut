@@ -61,10 +61,12 @@ void function OnPlayerConnected( entity player )
 // Used to handle both player and ai events
 void function HandleScoreEvent( entity victim, entity attacker, var damageInfo )
 {
-	if ( !( victim != attacker && attacker.IsPlayer() || attacker.IsTitan() && GetGameState() == eGameState.Playing ) )
+	// Basic checks
+	if ( !( victim != attacker && ( attacker.IsPlayer() || attacker.IsTitan() ) && GetGameState() == eGameState.Playing ) )
 		return
 	
-	if ( victim.GetOwner() != null && victim.GetOwner().GetUID() == attacker.GetUID() )
+	// Titan suicide point gain prevention
+	if ( victim.GetOwner() != attacker )
 		return
 	
 	// Split score so we can check if we are over the score max
