@@ -238,9 +238,7 @@ void function Spawner_Threaded( int team )
 			// Prefer dropship when spawning grunts
 			if ( ent == "npc_soldier" && points.len() != 0 )
 			{
-				// Scale dropship spawns based on nodes avalible
-				// This needs to be done because complex exists
-				if ( RandomInt( points.len() / 4 ) )
+				if ( RandomInt( points.len() ) )
 				{
 					entity node = points[ GetSpawnPointIndex( points, team ) ]
 					waitthread AiGameModes_SpawnDropShip( node.GetOrigin(), node.GetAngles(), team, 4, SquadHandler )
