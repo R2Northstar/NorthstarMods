@@ -62,12 +62,9 @@ void function OnPlayerConnected( entity player )
 void function HandleScoreEvent( entity victim, entity attacker, var damageInfo )
 {
 	// Basic checks
-	if ( !( victim != attacker && ( attacker.IsPlayer() || attacker.IsTitan() ) && GetGameState() == eGameState.Playing ) )
+	if ( victim == attacker || !( attacker.IsPlayer() || attacker.IsTitan() ) || GetGameState() != eGameState.Playing )
 		return
 	
-	// Titan suicide point gain prevention
-	if ( victim.GetOwner() != attacker )
-		return
 	
 	// Split score so we can check if we are over the score max
 	// without showing the wrong value on client
@@ -237,10 +234,10 @@ void function Spawner_Threaded( int team )
 		{
 			string ent = file.podEntities[ index ][ RandomInt( file.podEntities[ index ].len() ) ]
 			
+			array< entity > points = GetZiplineDropshipSpawns()
 			// Prefer dropship when spawning grunts
-			if ( ent == "npc_soldier" )
+			if ( ent == "npc_soldier" && points.len() != 0 )
 			{
-				array< entity > points = GetZiplineDropshipSpawns()
 				// Scale dropship spawns based on nodes avalible
 				// This needs to be done because complex exists
 				if ( RandomInt( points.len() / 4 ) )
@@ -251,7 +248,7 @@ void function Spawner_Threaded( int team )
 				}
 			}
 			
-			array< entity > points = SpawnPoints_GetDropPod()
+			points = SpawnPoints_GetDropPod()
 			entity node = points[ GetSpawnPointIndex( points, team ) ]
 			waitthread AiGameModes_SpawnDropPod( node.GetOrigin(), node.GetAngles(), team, ent, SquadHandler )
 		}
