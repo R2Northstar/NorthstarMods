@@ -30,6 +30,8 @@ void function GamemodeAITdm_Init()
 		
 	AddCallback_OnClientConnected( OnPlayerConnected )
 	
+	AddCallback_NPCLeeched( OnSpectreLeeched )
+	
 	AiGameModes_SetGruntWeapons( [ "mp_weapon_rspn101", "mp_weapon_dmr", "mp_weapon_r97", "mp_weapon_lmg" ] )
 	AiGameModes_SetSpectreWeapons( [ "mp_weapon_hemlok_smg", "mp_weapon_doubletake", "mp_weapon_mastiff" ] )
 	
@@ -75,7 +77,20 @@ void function HandleScoreEvent( entity victim, entity attacker, var damageInfo )
 	// Handle AI, marvins aren't setup so we check for them to prevent crash
 	if ( victim.IsNPC() && victim.GetClassName() != "npc_marvin" )
 	{
-		eventName = ScoreEventForNPCKilled( victim, damageInfo )
+		switch ( victim.GetClassName() )
+		{
+			case "npc_soldier":
+			case "npc_spectre":
+			case "npc_stalker":
+				playerScore = 1
+				break
+			case "npc_super_spectre":
+				playerScore = 3
+				break
+			default:
+				playerScore = 0
+				break
+		}
 		
 		// Titan kills get handled bellow this
 		if ( eventName != "KillNPCTitan"  && eventName != "" )
@@ -342,8 +357,6 @@ void function SquadHandler( array<entity> guys )
 		foreach ( player in players )
 			guy.Minimap_AlwaysShow( 0, player )
 		
-		if( guy.GetClassName() == "npc_spectre" )
-			thread SpectreWatcher_Threaded( guy )
 		
 		//thread AITdm_CleanupBoredNPCThread( guy )
 	}
@@ -376,24 +389,14 @@ void function SquadHandler( array<entity> guys )
 	}
 }
 
-// For some reason hacked spectres dont properly change teams
-// which leads to a bug where if you kill your own spectres you get 30 points
-void function SpectreWatcher_Threaded( entity spectre )
+// Award for hacking
+void function OnSpectreLeeched( entity spectre, entity player )
 {
-	// NOTE: This doesn't work :)
-	spectre.WaitSignal( "TeamChange" )
-	
-	entity hacker = spectre.GetOwner()
-	
-	printt("\n\n\n\n\n\n\naaaaaaaaaaaaaaaaaa\n\n\n\n\n")
-	
+	SetTeam( spectre, player.GetTeam())
 	// Add score + update network int to trigger the "Score +n" popup
-	AddTeamScore( hacker.GetTeam(), 1 )
-	hacker.AddToPlayerGameStat( PGS_ASSAULT_SCORE, 1 )
-	hacker.SetPlayerNetInt("AT_bonusPoints", hacker.GetPlayerGameStat( PGS_ASSAULT_SCORE ) )
-	
-	// Can only hack once so we can return
-	return
+	AddTeamScore( player.GetTeam(), 1 )
+	player.AddToPlayerGameStat( PGS_ASSAULT_SCORE, 1 )
+	player.SetPlayerNetInt("AT_bonusPoints", player.GetPlayerGameStat( PGS_ASSAULT_SCORE ) )
 }
 
 // Same as SquadHandler, just for reapers
