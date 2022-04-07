@@ -67,6 +67,9 @@ void function HandleScoreEvent( entity victim, entity attacker, var damageInfo )
 	if ( victim == attacker || !( attacker.IsPlayer() || attacker.IsTitan() ) || GetGameState() != eGameState.Playing )
 		return
 	
+	// Hacked spectre filter
+	if ( victim.GetOwner() == attacker )
+		return
 	
 	// Split score so we can check if we are over the score max
 	// without showing the wrong value on client
@@ -392,7 +395,8 @@ void function SquadHandler( array<entity> guys )
 // Award for hacking
 void function OnSpectreLeeched( entity spectre, entity player )
 {
-	SetTeam( spectre, player.GetTeam())
+	// Set Owner so we can filter in HandleScore
+	spectre.SetOwner( player )
 	// Add score + update network int to trigger the "Score +n" popup
 	AddTeamScore( player.GetTeam(), 1 )
 	player.AddToPlayerGameStat( PGS_ASSAULT_SCORE, 1 )
