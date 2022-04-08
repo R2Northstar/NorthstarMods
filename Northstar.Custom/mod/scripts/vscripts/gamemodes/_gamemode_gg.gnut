@@ -31,9 +31,7 @@ void function GamemodeGG_Init()
 void function OnPlayerDisconnected(entity player)
 {
 	// resetting a player's score when he leaves prevents a new player to join the leaver's team and having his points
-	while (GameRules_GetTeamScore(player.GetTeam()) > 0) {
-		AddTeamScore( player.GetTeam(), -1 )
-	}
+	AddTeamScore( player.GetTeam(), -GameRules_GetTeamScore( player.GetTeam() ) )
 }
 
 void function OnPlayerRespawned( entity player )
