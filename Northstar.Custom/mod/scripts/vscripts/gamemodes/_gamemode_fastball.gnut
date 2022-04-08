@@ -286,7 +286,7 @@ function FastballOnPanelHacked( panel, player )
 		{
 			deadPlayer.SetOrigin( panel.s.startOrigin )
 			deadPlayer.RespawnPlayer( null )
-			Remote_CallFunction_NonReplay( deadPlayer, "ServerCallback_FastballRespawnPlayer" ) 
+			// Remote_CallFunction_NonReplay( deadPlayer, "ServerCallback_FastballRespawnPlayer" ) temporarily disabled due to causing clientside crash
 		}
 	}
 }
