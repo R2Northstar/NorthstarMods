@@ -535,7 +535,8 @@ void function OnEnterPressed(arg)
 
 void function OnKeyRPressed(arg) 
 {
-	if (!IsSearchBarFocused()) {
+	if (!IsSearchBarFocused()) 
+	{
 		RefreshServers(0);
 	}
 }
