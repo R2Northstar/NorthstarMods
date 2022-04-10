@@ -1021,6 +1021,8 @@ void function ThreadedAuthAndConnectToServer( string password = "" )
 	if (file.cancelConnection)
 	{
 		file.cancelConnection = false
+		// re-focus server list
+		Hud_SetFocused( Hud_GetChild( file.menu, "BtnServer" + (file.serverButtonFocusedID + 1)) )
 		return
 	}
 
