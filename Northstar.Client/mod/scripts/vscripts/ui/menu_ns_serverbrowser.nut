@@ -541,7 +541,8 @@ void function OnKeyRPressed(arg)
 	}
 }
 
-bool function IsServerButtonFocused() {
+bool function IsServerButtonFocused() 
+{
 	var focusedElement = GetFocus();
 	var name = Hud_GetHudName(focusedElement);
 
