@@ -533,7 +533,8 @@ void function OnEnterPressed(arg)
 	}
 }
 
-void function OnKeyRPressed(arg) {
+void function OnKeyRPressed(arg) 
+{
 	if (!IsSearchBarFocused()) {
 		RefreshServers(0);
 	}
