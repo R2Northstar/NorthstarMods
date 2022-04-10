@@ -546,7 +546,8 @@ bool function IsServerButtonFocused()
 	var focusedElement = GetFocus();
 	var name = Hud_GetHudName(focusedElement);
 
-	foreach (element in GetElementsByClassname( file.menu, "ServerButton")) {
+	foreach (element in GetElementsByClassname( file.menu, "ServerButton")) 
+	{
 		if ( element == focusedElement ) return true
 	}
 
