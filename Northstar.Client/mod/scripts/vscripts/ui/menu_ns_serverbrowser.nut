@@ -527,7 +527,8 @@ void function OnUpArrowSelected( var button )
 void function OnEnterPressed(arg) 
 {
 	// only trigger if a server is focused
-	if (IsServerButtonFocused()) {
+	if (IsServerButtonFocused()) 
+	{
 		OnServerSelected(0)
 	}
 }
