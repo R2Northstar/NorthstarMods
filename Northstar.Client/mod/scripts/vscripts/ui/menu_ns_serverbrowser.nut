@@ -556,7 +556,8 @@ bool function IsServerButtonFocused()
 	return false;
 }
 
-bool function IsSearchBarFocused() {
+bool function IsSearchBarFocused() 
+{
 	return Hud_GetChild( file.menu, "BtnServerSearch") == GetFocus()
 }
 
