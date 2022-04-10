@@ -548,7 +548,8 @@ bool function IsServerButtonFocused()
 
 	foreach (element in GetElementsByClassname( file.menu, "ServerButton")) 
 	{
-		if ( element == focusedElement ) return true
+		if ( element == focusedElement ) 
+			return true
 	}
 
 
