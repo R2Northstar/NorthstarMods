@@ -164,7 +164,6 @@ void function InitServerBrowserMenu()
 	{
 		AddButtonEventHandler( button, UIE_CLICK, OnServerButtonClicked )
 		AddButtonEventHandler( button, UIE_GET_FOCUS, OnServerButtonFocused )
-		AddButtonEventHandler( button, UIE_LOSE_FOCUS, OnServerButtonFocusLost )
 		Hud_SetWidth( button , width )
 	}
 
@@ -457,6 +456,7 @@ void function OnKeyTabPressed(var button) {
 		}
 		else {
 			Hud_SetFocused(Hud_GetChild(file.menu, "BtnServerSearch"))
+			HideServerInfo()
 		}
 	}
 	catch ( ex ) {}
@@ -484,6 +484,7 @@ void function OnHitDummyBottom(var button) {
 		// was at bottom already
 		file.scrollOffset = file.serversArrayFiltered.len() - BUTTONS_PER_PAGE
 		Hud_SetFocused(Hud_GetChild(file.menu, "BtnServerSearch"))
+		HideServerInfo()
 	} else {
 		// only update if list position changed
 		UpdateShownPage()
@@ -611,6 +612,7 @@ void function FilterAndUpdateList( var n )
 	file.scrollOffset = 0
 	UpdateListSliderPosition( file.serversArrayFiltered.len() )
 
+	HideServerInfo()
 	FilterServerList()
 
 
@@ -828,10 +830,6 @@ void function OnServerButtonFocused( var button )
 		file.focusedServerIndex = file.serversArrayFiltered[ file.scrollOffset + scriptID ].serverIndex
 	DisplayFocusedServerInfo(scriptID);
 
-}
-
-void function OnServerButtonFocusLost( var button ) {
-	HideServerInfo()
 }
 
 void function OnServerButtonClicked(var button)
