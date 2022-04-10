@@ -524,7 +524,8 @@ void function OnUpArrowSelected( var button )
 ////////////////////////
 // Key Callbacks
 ////////////////////////
-void function OnEnterPressed(arg) {
+void function OnEnterPressed(arg) 
+{
 	// only trigger if a server is focused
 	if (IsServerButtonFocused()) {
 		OnServerSelected(0)
