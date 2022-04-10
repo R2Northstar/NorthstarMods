@@ -164,6 +164,7 @@ void function InitServerBrowserMenu()
 	{
 		AddButtonEventHandler( button, UIE_CLICK, OnServerButtonClicked )
 		AddButtonEventHandler( button, UIE_GET_FOCUS, OnServerButtonFocused )
+		AddButtonEventHandler( button, UIE_LOSE_FOCUS, OnServerButtonFocusLost )
 		Hud_SetWidth( button , width )
 	}
 
@@ -399,6 +400,8 @@ void function OnCloseServerBrowserMenu()
 		DeregisterButtonPressedCallback(MOUSE_WHEEL_UP , OnScrollUp)
 		DeregisterButtonPressedCallback(MOUSE_WHEEL_DOWN , OnScrollDown)
 		DeregisterButtonPressedCallback(KEY_TAB , OnKeyTabPressed)
+		DeregisterButtonPressedCallback(KEY_ENTER, OnEnterPressed)
+		DeregisterButtonPressedCallback(KEY_R, OnKeyRPressed)
 	}
 	catch ( ex ) {}
 }
@@ -425,6 +428,8 @@ void function OnServerBrowserMenuOpened()
 	RegisterButtonPressedCallback(MOUSE_WHEEL_UP , OnScrollUp)
 	RegisterButtonPressedCallback(MOUSE_WHEEL_DOWN , OnScrollDown)
 	RegisterButtonPressedCallback(KEY_TAB , OnKeyTabPressed)
+	RegisterButtonPressedCallback(KEY_ENTER, OnEnterPressed)
+	RegisterButtonPressedCallback(KEY_R, OnKeyRPressed)
 }
 
 ////////////////////////////
@@ -448,13 +453,10 @@ void function OnKeyTabPressed(var button) {
 	{
 		// toggle focus between server list and filter panel
 		if (IsFilterPanelElementFocused()) {
-			// print("Switching focus from filter panel to server list")
 			Hud_SetFocused(Hud_GetChild(file.menu, "BtnServer1"))
 		}
 		else {
-			// print("Switching focus from server list to filter panel")
 			Hud_SetFocused(Hud_GetChild(file.menu, "BtnServerSearch"))
-			HideServerInfo()
 		}
 	}
 	catch ( ex ) {}
@@ -516,6 +518,38 @@ void function OnUpArrowSelected( var button )
 	}
 	UpdateShownPage()
 	UpdateListSliderPosition( file.serversArrayFiltered.len() )
+}
+
+////////////////////////
+// Key Callbacks
+////////////////////////
+void function OnEnterPressed(arg) {
+	// only trigger if a server is focused
+	if (IsServerButtonFocused()) {
+		OnServerSelected(0)
+	}
+}
+
+void function OnKeyRPressed(arg) {
+	if (!IsSearchBarFocused()) {
+		RefreshServers(0);
+	}
+}
+
+bool function IsServerButtonFocused() {
+	var focusedElement = GetFocus();
+	var name = Hud_GetHudName(focusedElement);
+
+	foreach (element in GetElementsByClassname( file.menu, "ServerButton")) {
+		if ( element == focusedElement ) return true
+	}
+
+
+	return false;
+}
+
+bool function IsSearchBarFocused() {
+	return Hud_GetChild( file.menu, "BtnServerSearch") == GetFocus()
 }
 
 
@@ -794,6 +828,10 @@ void function OnServerButtonFocused( var button )
 		file.focusedServerIndex = file.serversArrayFiltered[ file.scrollOffset + scriptID ].serverIndex
 	DisplayFocusedServerInfo(scriptID);
 
+}
+
+void function OnServerButtonFocusLost( var button ) {
+	HideServerInfo()
 }
 
 void function OnServerButtonClicked(var button)

@@ -47,6 +47,8 @@ void function OnConnectWithPasswordMenuOpened()
 	Hud_SetText( file.connectButton, "#MENU_CONNECT_MENU_CONNECT" )
 	Hud_SetText( file.enterPasswordBox, "" )
 	Hud_SetText( file.enterPasswordDummy, "" )
+	Hud_SetFocused(Hud_GetChild( file.menu, "EnterPasswordBox"))
+
 }
 
 void function ConnectWithPassword( var button )
