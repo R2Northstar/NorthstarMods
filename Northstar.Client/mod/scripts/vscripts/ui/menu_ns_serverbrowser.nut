@@ -82,6 +82,9 @@ struct {
 	array<var> serversMap
 	array<var> serversGamemode
 	array<var> serversLatency
+
+    array<int> forceEnabled = []
+    array<int> forceDisabled = []
 } file
 
 
@@ -1004,9 +1007,57 @@ void function OnServerSelected( var button )
 		AdvanceMenu( GetMenu( "ConnectWithPasswordMenu" ) )
 	}
 	else
-		thread ThreadedAuthAndConnectToServer()
+    {
+        SetForcedMods()
+        if ( file.forceEnabled.len() || file.forceDisabled.len() )
+            ShowModStatusRequiredChangeMessage()
+        else
+            thread ThreadedAuthAndConnectToServer()
+    }
 }
 
+void function ShowModStatusRequiredChangeMessage()
+{
+    DialogData dialogData
+    dialogData.header = "Warning"
+    dialogData.message = "Some mods need to be enabled or disabled before joining the server"
+    dialogData.image = $"ui/menu/common/dialog_error"
+
+	AddDialogButton( dialogData, "#CANCEL" )
+    AddDialogButton( dialogData, "Reload mods and Continue", void function() {
+            // Instead of reloading all mods here, it's still done after auth to avoid unnecessary lags
+            thread ThreadedAuthAndConnectToServer()
+        } )
+
+	OpenDialog( dialogData )
+}
+
+void function SetForcedMods()
+{
+    array<string> requiredMods
+    for ( int i = 0; i < NSGetServerRequiredModsCount( file.lastSelectedServer ); i++ )
+        requiredMods.append( NSGetServerRequiredModName( file.lastSelectedServer, i ) )
+
+    // Track every mod that is required to get disabled / enabled in order to join
+    foreach ( int index, string mod in NSGetModNames() )
+    {
+        if ( NSIsModRequiredOnClient( mod ) )
+        {
+            bool modRequired = requiredMods.contains( mod )
+            if ( NSIsModEnabled( mod ) != modRequired )
+                if ( modRequired )
+                    file.forceEnabled.append( index )
+                else
+                    file.forceDisabled.append( index )
+        }
+    }
+    string statusModsString
+    for ( int i; i < file.forceEnabled.len(); i++ )
+        statusModsString += file.forceEnabled[i].tostring() + ( i == file.forceEnabled.len() - 1 ? ";" : "," )
+    for ( int i; i < file.forceDisabled.len(); i++ )
+        statusModsString += file.forceDisabled[i].tostring() + ( i == file.forceDisabled.len() - 1 ? "" : "," )
+    SetConVarString( "enabled_disabled_mods_pre_connect", statusModsString )
+}
 
 void function ThreadedAuthAndConnectToServer( string password = "" )
 {
