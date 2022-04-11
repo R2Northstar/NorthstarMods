@@ -1103,23 +1103,20 @@ void function ThreadedAuthAndConnectToServer( string password = "" )
 	{
 		bool modsChanged
 
-		array<string> requiredMods
-		for ( int i = 0; i < NSGetServerRequiredModsCount( file.lastSelectedServer ); i++ )
-			requiredMods.append( NSGetServerRequiredModName( file.lastSelectedServer, i ) )
+        foreach ( int modIndex in file.forceEnabled )
+        {
+            NSSetModEnabled( NSGetModNames()[ modIndex ], true )
+            modsChanged = true
+        }
+        foreach ( int modIndex in file.forceDisabled )
+        {
+            NSSetModEnabled( NSGetModNames()[ modIndex ], false )
+            modsChanged = true
+        }
 
-		// unload mods we don't need, load necessary ones and reload mods before connecting
-		foreach ( string mod in NSGetModNames() )
-		{
-			if ( NSIsModRequiredOnClient( mod ) )
-			{
-				modsChanged = modsChanged || NSIsModEnabled( mod ) != requiredMods.contains( mod )
-				NSSetModEnabled( mod, requiredMods.contains( mod ) )
-			}
-		}
-
-		// only actually reload if we need to since the uiscript reset on reload lags hard
-		if ( modsChanged )
-			ReloadMods()
+        // only actually reload if we need to since the uiscript reset on reload lags hard
+        if ( modsChanged )
+            ReloadMods()
 
 		NSConnectToAuthedServer()
 	}
