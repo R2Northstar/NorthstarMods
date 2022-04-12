@@ -26,6 +26,7 @@ void function CServerGameDLL_OnReceivedSayTextMessageCallback(int playerIndex, s
 		print("Ignored chat message from invalid player index " + playerIndex + ": " + message)
 		return
 	}
+	print("Received message from " + player + "(" + player.GetUID() + "): " + message)
 
 	ClServer_MessageStruct localMessage
 	localMessage.message = message
