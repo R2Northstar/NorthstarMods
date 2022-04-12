@@ -136,6 +136,47 @@ void function UpdatePrivateMatchModesAndMaps()
 
 void function InitServerBrowserMenu()
 {
+    // Listen for map unload to revert forced mod deactivation
+    AddUICallback_OnLevelInit( void function() // There's probably a better spot to put this into
+        {
+            WaitSignal( uiGlobal.signalDummy, "LevelShutdown" )
+            /*
+                Load order is "mp_lobby" -> "" -> "mp_lobby" -> "mp_map"
+                In order to not load required mods before actually joining the game, lobbies are ignored
+                This means that mods do not get re-enabled when leaving a pre match lobby
+            */
+            if ( uiGlobal.previousLevel != "mp_lobby")
+            {
+                bool enable
+                /*
+                    Only the index of a mod is stored.
+                    The string will look something like one of these:
+                    [1] 1,2,3;4,5,6 (enabled;disabled)
+                    [2] 1,2,3;      (enabled;)
+                    [3] 4,5,6       (disabled)
+                    If there are mods that have been enabled, they are seperated with a ";" from mods that have been disabled.
+                */
+                string storedStr = GetConVarString( "enabled_disabled_mods_pre_connect" )
+                if( !storedStr.contains(";") ) // In case no mods need to be disabled
+                    enable = true
+                array < string > changedMods = split( storedStr, ";" ) // Split combined string into lists of enabled/disabled indexes
+                foreach ( int idx, string rawChangedModsType in changedMods )
+                {
+                    array < string > rawModIndexList = split( rawChangedModsType, "," ) // Split list of enabled/disabled into seperate indexes
+                    foreach ( string rawModIndex in rawModIndexList )
+                    {
+                        NSSetModEnabled( NSGetModNames()[ rawModIndex.tointeger() ], idx != 0 || enable )
+                    }
+                }
+                if ( changedMods.len() ) // changedMods will be empty if nothing has been changed prior to connecting
+                {
+                    ReloadMods()
+                    SetConVarString( "enabled_disabled_mods_pre_connect", "" ) // Reset list
+                }
+            }
+        }
+    )
+
 	file.menu = GetMenu( "ServerBrowserMenu" )
 
 	AddMouseMovementCaptureHandler( file.menu, UpdateMouseDeltaBuffer )
@@ -527,31 +568,31 @@ void function OnUpArrowSelected( var button )
 ////////////////////////
 // Key Callbacks
 ////////////////////////
-void function OnEnterPressed(arg) 
+void function OnEnterPressed(arg)
 {
 	// only trigger if a server is focused
-	if (IsServerButtonFocused()) 
+	if (IsServerButtonFocused())
 	{
 		OnServerSelected(0)
 	}
 }
 
-void function OnKeyRPressed(arg) 
+void function OnKeyRPressed(arg)
 {
-	if (!IsSearchBarFocused()) 
+	if (!IsSearchBarFocused())
 	{
 		RefreshServers(0);
 	}
 }
 
-bool function IsServerButtonFocused() 
+bool function IsServerButtonFocused()
 {
 	var focusedElement = GetFocus();
 	var name = Hud_GetHudName(focusedElement);
 
-	foreach (element in GetElementsByClassname( file.menu, "ServerButton")) 
+	foreach (element in GetElementsByClassname( file.menu, "ServerButton"))
 	{
-		if ( element == focusedElement ) 
+		if ( element == focusedElement )
 			return true
 	}
 
@@ -559,7 +600,7 @@ bool function IsServerButtonFocused()
 	return false;
 }
 
-bool function IsSearchBarFocused() 
+bool function IsSearchBarFocused()
 {
 	return Hud_GetChild( file.menu, "BtnServerSearch") == GetFocus()
 }
@@ -834,7 +875,7 @@ void function OnServerButtonFocused( var button )
 {
 	if (file.scrollOffset < 0)
 		file.scrollOffset = 0
-	
+
 	int scriptID = int (Hud_GetScriptID(button))
 	file.serverButtonFocusedID = scriptID
 	if ( file.serversArrayFiltered.len() > 0 )
@@ -1018,9 +1059,16 @@ void function OnServerSelected( var button )
 
 void function ShowModStatusRequiredChangeMessage()
 {
+    string disabledString = format( "\n\nMods that will get disabled (%i):", file.forceDisabled.len() )
+    foreach ( mod in file.forceDisabled )
+        disabledString += "\n - " + NSGetModNames()[ mod ]
+    string enabledString = format( "\n\nMods that will get enabled (%i):", file.forceEnabled.len() )
+    foreach ( mod in file.forceEnabled )
+        enabledString += "\n - " + NSGetModNames()[ mod ]
+
     DialogData dialogData
     dialogData.header = "Warning"
-    dialogData.message = "Some mods need to be enabled or disabled before joining the server"
+    dialogData.message = "Some mods need to be enabled or disabled before joining the server" + disabledString + enabledString
     dialogData.image = $"ui/menu/common/dialog_error"
 
 	AddDialogButton( dialogData, "#CANCEL" )
@@ -1034,6 +1082,10 @@ void function ShowModStatusRequiredChangeMessage()
 
 void function SetForcedMods()
 {
+    // Make sure that lists are empty
+    file.forceEnabled = []
+    file.forceDisabled = []
+
     array<string> requiredMods
     for ( int i = 0; i < NSGetServerRequiredModsCount( file.lastSelectedServer ); i++ )
         requiredMods.append( NSGetServerRequiredModName( file.lastSelectedServer, i ) )
@@ -1051,11 +1103,11 @@ void function SetForcedMods()
                     file.forceDisabled.append( index )
         }
     }
+
     string statusModsString
-    for ( int i; i < file.forceEnabled.len(); i++ )
-        statusModsString += file.forceEnabled[i].tostring() + ( i == file.forceEnabled.len() - 1 ? ";" : "," )
-    for ( int i; i < file.forceDisabled.len(); i++ )
-        statusModsString += file.forceDisabled[i].tostring() + ( i == file.forceDisabled.len() - 1 ? "" : "," )
+    foreach ( int idx, array<int> list in [file.forceEnabled, file.forceDisabled])
+        for ( int i; i < list.len(); i++ )
+            statusModsString += list[i].tostring() + ( i == list.len() - 1 ? ( idx == 0 ? ";" : "") : "," )
     SetConVarString( "enabled_disabled_mods_pre_connect", statusModsString )
 }
 
