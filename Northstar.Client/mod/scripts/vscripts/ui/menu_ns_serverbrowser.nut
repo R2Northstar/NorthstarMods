@@ -239,12 +239,12 @@ void function InitServerBrowserMenu()
                 In order to not load required mods before actually joining the game, lobbies are ignored
                 This means that mods do not get re-enabled when leaving a pre match lobby
             */
-            if ( uiGlobal.previousLevel != "mp_lobby")
+            if ( uiGlobal.previousLevel != "mp_lobby" && ( uiGlobal.loadingLevel == "mp_lobby" || !uiGlobal.loadingLevel.len() ) )
             {
                 bool enable
                 string storedStr = GetConVarString( "enabled_disabled_mods_pre_connect" )
                 array < string > changedMods = split( storedStr, ";" )
-                if( !storedStr.contains(";") ) // In case no mods need to be disabled
+                if( storedStr.find(";") == -1 ) // In case no mods need to be disabled
                     enable = true
                 foreach ( int idx, string rawChangedModsType in changedMods )
                     foreach ( string rawModIndex in split( rawChangedModsType, "," ) )
