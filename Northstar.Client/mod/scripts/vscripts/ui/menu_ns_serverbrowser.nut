@@ -136,47 +136,6 @@ void function UpdatePrivateMatchModesAndMaps()
 
 void function InitServerBrowserMenu()
 {
-    // Listen for map unload to revert forced mod deactivation
-    AddUICallback_OnLevelInit( void function() // There's probably a better spot to put this into
-        {
-            WaitSignal( uiGlobal.signalDummy, "LevelShutdown" )
-            /*
-                Load order is "mp_lobby" -> "" -> "mp_lobby" -> "mp_map"
-                In order to not load required mods before actually joining the game, lobbies are ignored
-                This means that mods do not get re-enabled when leaving a pre match lobby
-            */
-            if ( uiGlobal.previousLevel != "mp_lobby")
-            {
-                bool enable
-                /*
-                    Only the index of a mod is stored.
-                    The string will look something like one of these:
-                    [1] 1,2,3;4,5,6 (enabled;disabled)
-                    [2] 1,2,3;      (enabled;)
-                    [3] 4,5,6       (disabled)
-                    If there are mods that have been enabled, they are seperated with a ";" from mods that have been disabled.
-                */
-                string storedStr = GetConVarString( "enabled_disabled_mods_pre_connect" )
-                if( !storedStr.contains(";") ) // In case no mods need to be disabled
-                    enable = true
-                array < string > changedMods = split( storedStr, ";" ) // Split combined string into lists of enabled/disabled indexes
-                foreach ( int idx, string rawChangedModsType in changedMods )
-                {
-                    array < string > rawModIndexList = split( rawChangedModsType, "," ) // Split list of enabled/disabled into seperate indexes
-                    foreach ( string rawModIndex in rawModIndexList )
-                    {
-                        NSSetModEnabled( NSGetModNames()[ rawModIndex.tointeger() ], idx != 0 || enable )
-                    }
-                }
-                if ( changedMods.len() ) // changedMods will be empty if nothing has been changed prior to connecting
-                {
-                    ReloadMods()
-                    SetConVarString( "enabled_disabled_mods_pre_connect", "" ) // Reset list
-                }
-            }
-        }
-    )
-
 	file.menu = GetMenu( "ServerBrowserMenu" )
 
 	AddMouseMovementCaptureHandler( file.menu, UpdateMouseDeltaBuffer )
@@ -270,6 +229,34 @@ void function InitServerBrowserMenu()
 
 	// UI was cut off on some aspect ratios; not perfect
 	UpdateServerInfoBasedOnRes()
+
+        // Listen for map unload to revert forced mod deactivation
+    AddUICallback_OnLevelInit( void function() // There's probably a better spot to put this into
+        {
+            WaitSignal( uiGlobal.signalDummy, "LevelShutdown" )
+            /*
+                Load order is "mp_lobby" -> "" -> "mp_lobby" -> "mp_map"
+                In order to not load required mods before actually joining the game, lobbies are ignored
+                This means that mods do not get re-enabled when leaving a pre match lobby
+            */
+            if ( uiGlobal.previousLevel != "mp_lobby")
+            {
+                bool enable
+                string storedStr = GetConVarString( "enabled_disabled_mods_pre_connect" )
+                array < string > changedMods = split( storedStr, ";" )
+                if( !storedStr.contains(";") ) // In case no mods need to be disabled
+                    enable = true
+                foreach ( int idx, string rawChangedModsType in changedMods )
+                    foreach ( string rawModIndex in split( rawChangedModsType, "," ) )
+                        NSSetModEnabled( NSGetModNames()[ rawModIndex.tointeger() ], idx == 0 )
+                if ( changedMods.len() )
+                {
+                    ReloadMods()
+                    SetConVarString( "enabled_disabled_mods_pre_connect", "" )
+                }
+            }
+        }
+    )
 }
 
 ////////////////////////////
@@ -1059,20 +1046,28 @@ void function OnServerSelected( var button )
 
 void function ShowModStatusRequiredChangeMessage()
 {
-    string disabledString = format( "\n\nMods that will get disabled (%i):", file.forceDisabled.len() )
-    foreach ( mod in file.forceDisabled )
-        disabledString += "\n - " + NSGetModNames()[ mod ]
-    string enabledString = format( "\n\nMods that will get enabled (%i):", file.forceEnabled.len() )
-    foreach ( mod in file.forceEnabled )
-        enabledString += "\n - " + NSGetModNames()[ mod ]
+    string disabledString
+    if ( file.forceDisabled.len() )
+    {
+        disabledString = format( "\n\n"+Localize( "#MODS_WILL_BE_DISABLED" ), file.forceDisabled.len() )
+        foreach ( mod in file.forceDisabled )
+            disabledString += "\n - " + NSGetModNames()[ mod ]
+    }
+    string enabledString
+    if ( file.forceEnabled.len() )
+    {
+        enabledString = format( "\n\n"+Localize( "#MODS_WILL_BE_ENABLED" ), file.forceEnabled.len() )
+        foreach ( mod in file.forceEnabled )
+            enabledString += "\n - " + NSGetModNames()[ mod ]
+    }
 
     DialogData dialogData
-    dialogData.header = "Warning"
-    dialogData.message = "Some mods need to be enabled or disabled before joining the server" + disabledString + enabledString
-    dialogData.image = $"ui/menu/common/dialog_error"
+    dialogData.header = "#INFO_MOD_CHANGE"
+    dialogData.message = Localize( "#ENABLE_DISABLE_MODS_TO_CONTINUE" ) + disabledString + enabledString
+    dialogData.image = $"rui/menu/common/unlock_random"
 
 	AddDialogButton( dialogData, "#CANCEL" )
-    AddDialogButton( dialogData, "Reload mods and Continue", void function() {
+    AddDialogButton( dialogData, "#RELOAD_AND_CONTINUE", void function() {
             // Instead of reloading all mods here, it's still done after auth to avoid unnecessary lags
             thread ThreadedAuthAndConnectToServer()
         } )
