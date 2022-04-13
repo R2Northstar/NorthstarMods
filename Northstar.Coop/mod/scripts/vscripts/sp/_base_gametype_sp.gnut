@@ -64,6 +64,9 @@ void function BaseGametype_Init_MPSP()
 
 	FlagInit( "WeaponDropsAllowed" )
 	FlagSet( "WeaponDropsAllowed" )
+
+	// thread DisableDeathBlur() // people keep complaning about the blur
+	// why not working :(
 }
 
 void function CodeCallback_OnWeaponAttack( entity player, entity weapon, string weaponName, int ammoUsed )
@@ -114,7 +117,7 @@ void function CodeCallback_OnClientConnectionCompleted( entity player )
 	}
 
 	OnTimeShiftGiveGlove( player )
-	
+
 	player.RespawnPlayer( null )
 	AddPlayerMovementEventCallback( player, ePlayerMovementEvents.BEGIN_WALLRUN, Callback_WallrunBegin )
 }
@@ -137,6 +140,7 @@ void function CodeCallback_OnClientDisconnected( entity player, string reason )
 		callbackFunc( player )
 	}
 
+	ServerCommand( "kick " + player.GetUID() )
 	player.Disconnected()
 	player.p.isDisconnected = true
 	player.CleanupMPClasses()
