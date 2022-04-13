@@ -1026,13 +1026,17 @@ void function Embark_DelayedFadeOut( entity player, entity titan, float delay )
 	entity soul = titan.GetTitanSoul()
 	if ( GetCurrentPlaylistVarInt( "fp_embark_enabled", 0 ) == 0 )
 	{
-		ScreenFadeToBlack( player, EMBARK_FADE_TIME, EMBARK_FADE_TIME + 0.2 ) // a little extra so we stay black
-		wait EMBARK_FADE_TIME
-	}
-	else if ( IsValid( soul.soul.armBadge ))
-	{
-		ScreenFadeToBlack( player, EMBARK_FADE_TIME, EMBARK_FADE_TIME + 0.2 ) // a little extra so we stay black
-		wait EMBARK_FADE_TIME
+		if ( !IsValid( soul.soul.armBadge ))
+		{
+			ScreenFadeToBlack( player, EMBARK_FADE_TIME, EMBARK_FADE_TIME + 0.2 ) // a little extra so we stay black
+			wait EMBARK_FADE_TIME
+		}
+		else
+		{
+			wait EMBARK_FADE_TIME - 0.2
+			ScreenFadeToBlack( player, 0.2, 0.4 )
+			wait 0.2
+		}
 	}
 	else
 	{
