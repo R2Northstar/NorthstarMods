@@ -32,21 +32,29 @@ void function InitServerRequiredModsMenu()
 	AddMenuFooterOption( file.menu, BUTTON_A, "#A_BUTTON_SELECT" )
 	AddMenuFooterOption( file.menu, BUTTON_B, "#B_BUTTON_BACK", "#BACK" )
 
-	AddMenuFooterOption( file.menu, BUTTON_SHOULDER_LEFT, "#PRIVATE_MATCH_PAGE_PREV", "#PRIVATE_MATCH_PAGE_PREV", CycleModesBack, IsNorthstarServer )
-	AddMenuFooterOption( file.menu, BUTTON_SHOULDER_RIGHT, "#PRIVATE_MATCH_PAGE_NEXT", "#PRIVATE_MATCH_PAGE_NEXT", CycleModesForward, IsNorthstarServer )
+	AddMenuFooterOption( file.menu, BUTTON_X, "%[X_BUTTON|]%" + Localize( "#RELOAD_MODS" ), "#RELOAD_MODS", void function( var button ) { thread void function() { ClientCommand( "disconnect" ); WaitFrame(); AdvanceMenu( GetMenu( "ModListMenu" ) ) }() } )
+	AddMenuFooterOption( file.menu, BUTTON_SHOULDER_LEFT, "#PRIVATE_MATCH_PAGE_PREV", "#PRIVATE_MATCH_PAGE_PREV", CycleModsBack )
+	AddMenuFooterOption( file.menu, BUTTON_SHOULDER_RIGHT, "#PRIVATE_MATCH_PAGE_NEXT", "#PRIVATE_MATCH_PAGE_NEXT", CycleModsForward )
 }
 
 void function OnOpenModListMenu()
 {
+	// Get every mod that is required on the server and not installed on client
 	file.missingMods = []
-	for ( int i = 0; i < NSGetServerRequiredModsCount( lastSelectedServer ); i++ )
+	for ( int i; i < NSGetServerRequiredModsCount( lastSelectedServer ); i++ )
 	{
 		if ( !NSGetModNames().contains( NSGetServerRequiredModName( lastSelectedServer, i ) ) )
 		{
 			modInfo m;
 			m.name = NSGetServerRequiredModName( lastSelectedServer, i )
 			m.version = NSGetServerRequiredModVersion( lastSelectedServer, i )
-			m.downloadLink = NSGetServerRequiredModDownloadLink(lastSelectedServer,i)
+			string link = NSGetServerRequiredModDownloadLink(lastSelectedServer,i)
+			if ( link.len() > 0 /* If no link is provided, don't add a protocol so the link stays empty */
+				&& link.find( "http://" ) != 0 && link.find( "https://" ) != 0 )
+				// for some reason links that don't have the http or https protocol launch in the origin browser
+				// defaulting to http in case someone hosts their mod on a http server. Most servers redirect to https anyways so it doesn't really matter this way.
+				link = "http://" + link
+			m.downloadLink = link
 			file.missingMods.append(m)
 		}
 	}
@@ -59,11 +67,12 @@ void function UpdateVisibleMods()
 	array<var> buttons = GetElementsByClassname( file.menu, "ModButton" )
 	foreach ( var button in buttons )
 	{
+		// Used buttons will be enabled later
 		Hud_SetEnabled( button, false )
 		Hud_SetVisible( button, false )
 	}
 
-	for ( int i = 0; i < MODS_PER_PAGE; i++ )
+	for ( int i; i < MODS_PER_PAGE; i++ )
 	{
 		if ( i + ( file.currentModPage * MODS_PER_PAGE ) >= file.missingMods.len() )
 			break
@@ -86,21 +95,31 @@ void function ModButton_GetFocus( var button )
 
 	Hud_SetText( focusModName, modInfo.name )
 	Hud_SetText( focusModVersion, modInfo.version )
-	Hud_SetText( focusModDownloadLink, modInfo.downloadLink )
-	Hud_SetColor( focusModDownloadLink, 141, 197, 84, 255 )
 
 	if ( !modInfo.downloadLink.len() )
+	{
+		// This is to restore the default after a mod with a link has been deselected
 		Hud_SetVisible( Hud_GetChild( file.menu, "FocusModHint" ), false )
+		Hud_SetColor( focusModDownloadLink, 251, 120, 5, 255 )
+		Hud_SetText( focusModDownloadLink, "The mod author has not specified where the mod is available for download. Ask the server administrator for more information" )
+
+	}
+	else
+	{
+		Hud_SetVisible( Hud_GetChild( file.menu, "FocusModHint" ), true )
+		Hud_SetColor( focusModDownloadLink, 141, 197, 84, 255 )
+		Hud_SetText( focusModDownloadLink, modInfo.downloadLink )
+	}
 }
 
 void function ModButton_Click( var button )
 {
-	string link = NSGetServerRequiredModDownloadLink( lastSelectedServer, int( Hud_GetScriptID( button ) ) + ( file.currentModPage * MODS_PER_PAGE ) )
-	if ( link.len() )
+	string link = file.missingMods[ int( Hud_GetScriptID( button ) ) + ( file.currentModPage * MODS_PER_PAGE ) ].downloadLink
+	if ( link.len() ) // Make sure a link has been provided
 		LaunchExternalWebBrowser( link, WEBBROWSER_FLAG_FORCEEXTERNAL )
 }
 
-void function CycleModesBack( var button )
+void function CycleModsBack( var button )
 {
 	if ( file.currentModPage == 0 )
 		return
@@ -109,7 +128,7 @@ void function CycleModesBack( var button )
 	UpdateVisibleMods()
 }
 
-void function CycleModesForward( var button )
+void function CycleModsForward( var button )
 {
 	if ( ( file.currentModPage + 1 ) * MODS_PER_PAGE >= file.missingMods.len() )
 		return

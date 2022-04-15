@@ -103,7 +103,7 @@
 			"Path": "ui/menu_required_mods.nut",
 			"RunOn": "UI",
 			"UICallback": {
-				"Before": "AddNorthstarServerBrowserMenu"
+				"Before": "AddServerRequiredModLinkMenu"
 			}
 		}
 	],
