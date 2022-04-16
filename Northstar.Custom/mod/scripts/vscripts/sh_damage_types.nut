@@ -682,7 +682,7 @@ void function RegisterWeaponDamageSources( table<string, string> newValueTable )
 			trgt++;
 		
 		table damageSourceID = expect table( getconsttable()["eDamageSourceId"] )
-        damageSourceID[ newVal ] <- trgt
+		damageSourceID[ newVal ] <- trgt
 		file.damageSourceIDToString[ trgt ] <- newVal
 		file.damageSourceIDToName[ trgt ] <- stringVal
 		trgt++;
