@@ -663,17 +663,20 @@ string function GetObitFromDamageSourceID( int damageSourceID )
 	return ""
 }
 
-void function RegisterWeaponDamageSource(string weaponRef, string damageSourceName) {
-	RegisterWeaponDamageSources({weaponRef = damageSourceName})
+void function RegisterWeaponDamageSource( string weaponRef, string damageSourceName )
+{
+	RegisterWeaponDamageSources( { weaponRef = damageSourceName } )
 }
 
 // Values are expected to be in a table containing the enum variable name and the string name, e.g.
 // {"mp_titanweapon_sniper" : "Plasma Railgun", "mp_titanweapon_meteor" : "T203 Thermite Launcher"}
 // Only works properly if used after the match starts, e.g. called in "after" callbacks.
-void function RegisterWeaponDamageSources(table<string, string> newValueTable) {
-	int trgt = file.damageSourceIDToString.len() - 1 //-1 accounts for invalid.
+void function RegisterWeaponDamageSources( table<string, string> newValueTable )
+{
+	int trgt = file.damageSourceIDToString.len() - 1 // -1 accounts for invalid.
 
-	foreach (newVal, stringVal in newValueTable) {
+	foreach ( newVal, stringVal in newValueTable )
+	{
 		// Don't replace existing enum values
 		while ( trgt in file.damageSourceIDToString ) 
 			trgt++;
