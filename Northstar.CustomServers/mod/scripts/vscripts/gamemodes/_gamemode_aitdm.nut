@@ -354,7 +354,7 @@ void function SquadHandler( array<entity> guys )
 	{
 		guy.EnableNPCFlag( NPC_ALLOW_PATROL | NPC_ALLOW_INVESTIGATE | NPC_ALLOW_HAND_SIGNALS | NPC_ALLOW_FLEE )
 		guy.AssaultPoint( point )
-		guy.AssaultSetGoalRadius( 500 )
+		guy.AssaultSetGoalRadius( 1600 ) // 1600 is minimum for npc_stalker, works fine for others
 		
 		// show on enemy radar
 		foreach ( player in players )
@@ -364,7 +364,7 @@ void function SquadHandler( array<entity> guys )
 		//thread AITdm_CleanupBoredNPCThread( guy )
 	}
 	
-	// Every 15 secs change AssaultPoint
+	// Every 5 - 15 secs change AssaultPoint
 	while ( true )
 	{	
 		foreach ( guy in guys )
