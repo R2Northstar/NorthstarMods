@@ -32,8 +32,16 @@ void function GamemodeAITdm_Init()
 	
 	AddCallback_NPCLeeched( OnSpectreLeeched )
 	
-	AiGameModes_SetGruntWeapons( [ "mp_weapon_rspn101", "mp_weapon_dmr", "mp_weapon_r97", "mp_weapon_lmg" ] )
-	AiGameModes_SetSpectreWeapons( [ "mp_weapon_hemlok_smg", "mp_weapon_doubletake", "mp_weapon_mastiff" ] )
+	if ( GetCurrentPlaylistVarInt( "aitdm_archer_grunts", 0 ) == 0 )
+	{
+		AiGameModes_SetGruntWeapons( [ "mp_weapon_rspn101", "mp_weapon_dmr", "mp_weapon_r97", "mp_weapon_lmg" ] )
+		AiGameModes_SetSpectreWeapons( [ "mp_weapon_hemlok_smg", "mp_weapon_doubletake", "mp_weapon_mastiff" ] )
+	}
+	else
+	{
+		AiGameModes_SetGruntWeapons( [ "mp_weapon_rocket_launcher" ] )
+		AiGameModes_SetSpectreWeapons( [ "mp_weapon_rocket_launcher" ] )
+	}
 	
 	ScoreEvent_SetupEarnMeterValuesForMixedModes()
 }

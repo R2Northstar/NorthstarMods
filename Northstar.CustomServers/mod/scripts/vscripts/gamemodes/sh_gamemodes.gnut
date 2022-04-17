@@ -256,6 +256,7 @@ void function GameModes_Init()
 	GameMode_AddScoreboardColumnData( gameMode, "#SCOREBOARD_GRUNT_KILLS", PGS_NPC_KILLS, 2 )
 	// GameMode_AddScoreboardColumnData( gameMode, "#SCOREBOARD_DEATHS", PGS_DEATHS, 2 )
 	GameMode_SetColor( gameMode, [200, 40, 40, 255] )
+	AddPrivateMatchModeSettingEnum( "#PL_aitdm", "aitdm_archer_grunts", [ "Disabled", "Enabled" ], "0"  )
 
 	gameMode = COLISEUM
 	GameMode_Create( gameMode )
