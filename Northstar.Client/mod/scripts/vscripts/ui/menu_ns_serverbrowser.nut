@@ -1110,9 +1110,9 @@ int function ServerSortLogic ( serverStruct a, serverStruct b)
 		case sortingBy.DEFAULT:
 			aTemp = a.serverPlayers
 			bTemp = b.serverPlayers
-			if (aTemp == a.serverPlayersMax)
+			if (aTemp + 1 >= a.serverPlayersMax)
 				aTemp = 0
-			if (bTemp == b.serverPlayersMax)
+			if (bTemp + 1 >= b.serverPlayersMax)
 				bTemp = 0
 			direction = filterDirection.serverName
 			break;
