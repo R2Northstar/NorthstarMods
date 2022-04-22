@@ -426,6 +426,8 @@ void function OnServerBrowserMenuOpened()
 		NSRequestServerList()
 	}
 
+	filterDirection.sortingBy = sortingBy.DEFAULT
+
 	thread WaitForServerListRequest()
 
 
