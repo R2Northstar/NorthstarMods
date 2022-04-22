@@ -1123,14 +1123,20 @@ int function ServerSortLogic ( serverStruct a, serverStruct b )
 
 	// We can hard code this cause adding entire columns isn't as easy
 	switch ( filterDirection.sortingBy ) 
-  {
+	{
 		case sortingBy.DEFAULT:
 			aTemp = a.serverPlayers
 			bTemp = b.serverPlayers
-			if (aTemp + 1 >= a.serverPlayersMax)
-				aTemp = 0
-			if (bTemp + 1 >= b.serverPlayersMax)
-				bTemp = 0
+			if (aTemp >= a.serverPlayersMax -1)
+				if (aTemp == a.serverPlayersMax)
+					aTemp = -2
+				else
+					aTemp = -1
+			if (bTemp >= b.serverPlayersMax - 1)
+				if (bTemp == b.serverPlayersMax)
+					bTemp = -2
+				else
+					bTemp = -1
 			direction = filterDirection.serverName
 			break;
 		case sortingBy.NAME:
