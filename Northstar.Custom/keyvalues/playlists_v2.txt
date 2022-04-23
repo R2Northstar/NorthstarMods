@@ -290,7 +290,9 @@ playlists
 				lobbytitle #PL_gg_lobby
 				description #PL_gg_desc
 				abbreviation #PL_gg_abbr
-				image varietypack
+				image custom
+				custom_thumbnail varietypack
+				custom_image ps
 				//mixtape_slot 7
 				mixtape_timeout 120
 				visible 0
@@ -474,7 +476,9 @@ playlists
 				description #PL_kr_desc
 				hint #PL_kr_hint
 				abbreviation #PL_kr_abbr
-				image ctf
+				image custom
+				custom_thumbnail cp
+				custom_image ctf
 				max_players 16
 				max_teams 16
 				classic_mp 1
@@ -523,7 +527,10 @@ playlists
 				description #PL_fastball_desc
 				hint #PL_fastball_hint
 				abbreviation #PL_fastball_abbr
-				image ffa
+				image custom
+				custom_thumbnail lts
+				custom_image "rui/callsigns/callsign_contest_09"
+
 				max_players 16
 				max_teams 2
 				classic_mp 1
@@ -678,7 +685,9 @@ playlists
 				description #PL_hs_desc
 				hint #PL_hs_hint
 				abbreviation #PL_hs_abbr
-				image tdm
+				image custom
+				custom_thumbnail mfd
+				custom_image tdm
 				timelimit 10
 				max_players 16
 				
@@ -732,7 +741,9 @@ playlists
 				lobbytitle #PL_chamber_lobby
 				description #PL_chamber_desc
 				abbreviation #PL_chamber_abbr
-				image ps
+				image custom
+				custom_thumbnail varietypack
+				custom_image ps
 				//mixtape_slot 7
 				mixtape_timeout 120
 				visible 0
@@ -828,7 +839,9 @@ playlists
 				lobbytitle #PL_tffa_lobby
 				description #PL_tffa_desc
 				hint #PL_tffa_hint
-				image lts
+				image custom
+				custom_thumbnail ffa
+				custom_image lts
 				abbreviation #PL_tffa_abbr
 				visible 0
 			}
@@ -867,7 +880,9 @@ playlists
 				description #PL_sns_desc
 				hint #PL_sns_desc
 				abbreviation #PL_sns_abbr
-				image ps
+				image custom
+				custom_thumbnail fw
+				custom_image ps
 				visible 0
 				
 				gamemode_score_hint #GAMEMODE_SCORE_HINT_FFA
