@@ -7,16 +7,15 @@ global function ThreadedAuthAndConnectToServer
 
 // Stop peeking
 
-const int BUTTONS_PER_PAGE = 15 // Number of servers we show
-const float DOUBLE_CLICK_TIME_MS = 0.4 // Max time between clicks for double click registering 
+const int BUTTONS_PER_PAGE = 15
+const float DOUBLE_CLICK_TIME_MS = 0.4 // unsure what the ideal value is
 
-// Stores mouse delta used for scroll bar
+
 struct {
 	int deltaX = 0
 	int deltaY = 0
 } mouseDeltaBuffer
 
-// Filters
 struct {
 	bool hideFull = false
 	bool hideEmpty = false
@@ -40,7 +39,6 @@ enum sortingBy
 	LATENCY
 }
 
-// Column sort direction, only one of these can be aplied at once
 struct {
 	// true = alphabeticaly false = reverse
 	bool serverName = true
@@ -64,7 +62,6 @@ struct serverStruct {
 }
 
 struct {
-	// UI state vars
 	var menu
 	int lastSelectedServer = 999
 	int focusedServerIndex = 0
@@ -75,11 +72,9 @@ struct {
 	int serverButtonFocusedID = 0
 	bool shouldFocus = true
 	bool cancelConnection = false
-	
-	// filtered array of servers
+
 	array<serverStruct> serversArrayFiltered
-	
-	// UI references
+
 	array<var> serverButtons
 	array<var> serversName
 	array<var> playerCountLabels
@@ -91,10 +86,9 @@ struct {
 
 
 
-bool function FloatsEqual( float arg1, float arg2, float epsilon )
+bool function floatCompareInRange(float arg1, float arg2, float tolerance)
 {
-	if ( fabs( arg1 - arg2 ) < epsilon ) return true
-	
+	if ( arg1 > arg2 - tolerance && arg1 < arg2 + tolerance) return true
 	return false
 }
 
@@ -165,7 +159,7 @@ void function InitServerBrowserMenu()
 	AddMenuFooterOption( file.menu, BUTTON_Y, PrependControllerPrompts( BUTTON_Y, "#REFRESH_SERVERS" ), "#REFRESH_SERVERS", RefreshServers )
 
 	// Setup server buttons
-	var width = 1120.0  * ( GetScreenSize()[1] / 1080.0 )
+	var width = 1120.0  * (GetScreenSize()[1] / 1080.0)
 	foreach ( var button in GetElementsByClassname( file.menu, "ServerButton" ) )
 	{
 		AddButtonEventHandler( button, UIE_CLICK, OnServerButtonClicked )
@@ -212,20 +206,20 @@ void function InitServerBrowserMenu()
 
 
 	// Hidden cause no need, if server descriptions become too long use this
-	Hud_SetEnabled( Hud_GetChild( file.menu, "BtnServerDescription"), false )
-	Hud_SetEnabled( Hud_GetChild( file.menu, "BtnServerMods"), false )
-	Hud_SetText( Hud_GetChild( file.menu, "BtnServerDescription"), "" )
-	Hud_SetText( Hud_GetChild( file.menu, "BtnServerMods"), "" )
+	Hud_SetEnabled( Hud_GetChild( file.menu, "BtnServerDescription"), false)
+	Hud_SetEnabled( Hud_GetChild( file.menu, "BtnServerMods"), false)
+	Hud_SetText( Hud_GetChild( file.menu, "BtnServerDescription"), "")
+	Hud_SetText( Hud_GetChild( file.menu, "BtnServerMods"), "")
 
 	// Unfinished features
 	Hud_SetLocked( Hud_GetChild( file.menu, "BtnServerLatencyTab" ), true )
 
 	// Rui is a pain
-	RuiSetString( Hud_GetRui( Hud_GetChild( file.menu, "SwtBtnHideFull") ), "buttonText", "" )
-	RuiSetString( Hud_GetRui( Hud_GetChild( file.menu, "SwtBtnHideEmpty") ), "buttonText", "" )
-	RuiSetString( Hud_GetRui( Hud_GetChild( file.menu, "SwtBtnHideProtected") ), "buttonText", "" )
-	RuiSetString( Hud_GetRui( Hud_GetChild( file.menu, "SwtBtnSelectMap") ), "buttonText", "" )
-	RuiSetString( Hud_GetRui( Hud_GetChild( file.menu, "SwtBtnSelectGamemode") ), "buttonText", "" )
+	RuiSetString( Hud_GetRui( Hud_GetChild( file.menu, "SwtBtnHideFull")), "buttonText", "")
+	RuiSetString( Hud_GetRui( Hud_GetChild( file.menu, "SwtBtnHideEmpty")), "buttonText", "")
+	RuiSetString( Hud_GetRui( Hud_GetChild( file.menu, "SwtBtnHideProtected")), "buttonText", "")
+	RuiSetString( Hud_GetRui( Hud_GetChild( file.menu, "SwtBtnSelectMap")), "buttonText", "")
+	RuiSetString( Hud_GetRui( Hud_GetChild( file.menu, "SwtBtnSelectGamemode")), "buttonText", "")
 
 
 	ToggleConnectingHUD(false)
@@ -237,7 +231,7 @@ void function InitServerBrowserMenu()
 ////////////////////////////
 // Slider
 ////////////////////////////
-void function UpdateMouseDeltaBuffer( int x, int y )
+void function UpdateMouseDeltaBuffer(int x, int y)
 {
 	mouseDeltaBuffer.deltaX += x
 	mouseDeltaBuffer.deltaY += y
@@ -254,7 +248,7 @@ void function FlushMouseDeltaBuffer()
 
 void function SliderBarUpdate()
 {
-	if ( file.serversArrayFiltered.len() <= BUTTONS_PER_PAGE )
+	if ( file.serversArrayFiltered.len() <= 15 )
 	{
 		FlushMouseDeltaBuffer()
 		return
@@ -264,17 +258,17 @@ void function SliderBarUpdate()
 	var sliderPanel = Hud_GetChild( file.menu , "BtnServerListSliderPanel" )
 	var movementCapture = Hud_GetChild( file.menu , "MouseMovementCapture" )
 
-	Hud_SetFocused( sliderButton )
+	Hud_SetFocused(sliderButton)
 
-	float minYPos = -40.0 * ( GetScreenSize()[1] / 1080.0 )
-	float maxHeight = 562.0  * ( GetScreenSize()[1] / 1080.0 )
-	float maxYPos = minYPos - ( maxHeight - Hud_GetHeight( sliderPanel ) )
-	float useableSpace = ( maxHeight - Hud_GetHeight( sliderPanel ) )
+	float minYPos = -40.0 * (GetScreenSize()[1] / 1080.0)
+	float maxHeight = 562.0  * (GetScreenSize()[1] / 1080.0)
+	float maxYPos = minYPos - (maxHeight - Hud_GetHeight( sliderPanel ))
+	float useableSpace = (maxHeight - Hud_GetHeight( sliderPanel ))
 
-	float jump = minYPos - ( useableSpace / ( float( file.serversArrayFiltered.len() ) ) )
+	float jump = minYPos - (useableSpace / ( float( file.serversArrayFiltered.len())))
 
 	// got local from official respaw scripts, without untyped throws an error
-	local pos =	Hud_GetPos( sliderButton )[1]
+	local pos =	Hud_GetPos(sliderButton)[1]
 	local newPos = pos - mouseDeltaBuffer.deltaY
 	FlushMouseDeltaBuffer()
 
@@ -285,7 +279,7 @@ void function SliderBarUpdate()
 	Hud_SetPos( sliderPanel , 2, newPos )
 	Hud_SetPos( movementCapture , 2, newPos )
 
-	file.scrollOffset = -int( ( ( newPos - minYPos ) / useableSpace ) * ( file.serversArrayFiltered.len() - BUTTONS_PER_PAGE ) )
+	file.scrollOffset = -int( ( (newPos - minYPos) / useableSpace ) * (file.serversArrayFiltered.len() - 15) )
 	UpdateShownPage()
 }
 
@@ -295,10 +289,10 @@ void function UpdateListSliderHeight( float servers )
 	var sliderPanel = Hud_GetChild( file.menu , "BtnServerListSliderPanel" )
 	var movementCapture = Hud_GetChild( file.menu , "MouseMovementCapture" )
 
-	float maxHeight = 562.0 * ( GetScreenSize()[1] / 1080.0 )
-	float minHeight = 80.0 * ( GetScreenSize()[1] / 1080.0 )
+	float maxHeight = 562.0 * (GetScreenSize()[1] / 1080.0)
+	float minHeight = 80.0 * (GetScreenSize()[1] / 1080.0)
 
-	float height = maxHeight * ( BUTTONS_PER_PAGE / servers )
+	float height = maxHeight * (15.0 / servers )
 
 	if ( height > maxHeight ) height = maxHeight
 	if ( height < minHeight ) height = minHeight
@@ -315,10 +309,12 @@ void function UpdateListSliderPosition( int servers )
 	var sliderPanel = Hud_GetChild( file.menu , "BtnServerListSliderPanel" )
 	var movementCapture = Hud_GetChild( file.menu , "MouseMovementCapture" )
 
-	float minYPos = -40.0 * ( GetScreenSize()[1] / 1080.0 )
-	float useableSpace = (562.0 * ( GetScreenSize()[1] / 1080.0 ) - Hud_GetHeight( sliderPanel ) )
+	float minYPos = -40.0 * (GetScreenSize()[1] / 1080.0)
+	float useableSpace = (562.0 * (GetScreenSize()[1] / 1080.0) - Hud_GetHeight( sliderPanel ))
 
-	float jump = minYPos - ( useableSpace / ( float( servers ) - BUTTONS_PER_PAGE ) * file.scrollOffset )
+	float jump = minYPos - (useableSpace / ( float( servers ) - 15.0 ) * file.scrollOffset)
+
+	//jump = jump * (GetScreenSize()[1] / 1080.0)
 
 	if ( jump > minYPos ) jump = minYPos
 
@@ -329,7 +325,7 @@ void function UpdateListSliderPosition( int servers )
 
 void function OnScrollDown( var button )
 {
-	if (file.serversArrayFiltered.len() <= BUTTONS_PER_PAGE) return
+	if (file.serversArrayFiltered.len() <= 15) return
 	file.scrollOffset += 5
 	if (file.scrollOffset + BUTTONS_PER_PAGE > file.serversArrayFiltered.len()) {
 		file.scrollOffset = file.serversArrayFiltered.len() - BUTTONS_PER_PAGE
@@ -341,7 +337,7 @@ void function OnScrollDown( var button )
 void function OnScrollUp( var button )
 {
 	file.scrollOffset -= 5
-	if ( file.scrollOffset < 0 ) {
+	if (file.scrollOffset < 0) {
 		file.scrollOffset = 0
 	}
 	UpdateShownPage()
@@ -353,7 +349,7 @@ void function OnScrollUp( var button )
 ////////////////////////////
 void function ToggleConnectingHUD( bool vis )
 {
-	foreach (e in GetElementsByClassname( file.menu, "connectingHUD" ) ) {
+	foreach (e in GetElementsByClassname(file.menu, "connectingHUD")) {
 		Hud_SetEnabled( e, vis )
 		Hud_SetVisible( e, vis )
 	}
@@ -373,7 +369,7 @@ void function ConnectingButton_Activate( var button )
 // This doesn't werk on some obscure resolutions, mostly really small 4:3
 void function UpdateServerInfoBasedOnRes()
 {
-	if ( FloatsEqual( float(GetScreenSize()[0] ) / float( GetScreenSize()[1] ) , 1.6, 0.07 ) ) // 16/10
+	if (floatCompareInRange(float(GetScreenSize()[0]) / float(GetScreenSize()[1]) , 1.6, 0.07)) // 16/10
 	{
 		Hud_SetWidth( Hud_GetChild(file.menu, "ServerName"), 392)
 		Hud_SetWidth( Hud_GetChild(file.menu, "NextMapImage"), 400)
@@ -382,7 +378,7 @@ void function UpdateServerInfoBasedOnRes()
 		Hud_SetWidth( Hud_GetChild(file.menu, "LabelDescription"), 360)
 		Hud_SetWidth( Hud_GetChild(file.menu, "ServerDetailsPanel"), 400)
 	}
-	if( FloatsEqual( float( GetScreenSize()[0] ) / float( GetScreenSize()[1] ) , 1.3, 0.055 ) ) // 4/3
+	if(floatCompareInRange(float(GetScreenSize()[0]) / float(GetScreenSize()[1]) , 1.3, 0.055)) // 4/3
 	{
 		Hud_SetWidth( Hud_GetChild(file.menu, "ServerName"), 292)
 		Hud_SetWidth( Hud_GetChild(file.menu, "NextMapImage"), 300)
@@ -400,19 +396,17 @@ void function OnCloseServerBrowserMenu()
 {
 	try
 	{
-		DeregisterButtonPressedCallback( MOUSE_WHEEL_UP , OnScrollUp )
-		DeregisterButtonPressedCallback( MOUSE_WHEEL_DOWN , OnScrollDown )
-		DeregisterButtonPressedCallback( KEY_TAB , OnKeyTabPressed )
-		DeregisterButtonPressedCallback( KEY_ENTER, OnEnterPressed )
-		DeregisterButtonPressedCallback( KEY_R, OnKeyRPressed )
+		DeregisterButtonPressedCallback(MOUSE_WHEEL_UP , OnScrollUp)
+		DeregisterButtonPressedCallback(MOUSE_WHEEL_DOWN , OnScrollDown)
+		DeregisterButtonPressedCallback(KEY_TAB , OnKeyTabPressed)
 	}
 	catch ( ex ) {}
 }
 
 void function OnServerBrowserMenuOpened()
 {
-	Hud_SetText( Hud_GetChild( file.menu, "InGamePlayerLabel" ), Localize( "#INGAME_PLAYERS", "0" ) )
-	Hud_SetText( Hud_GetChild( file.menu, "TotalServerLabel" ),  Localize( "#TOTAL_SERVERS", "0" ) )
+	Hud_SetText( Hud_GetChild( file.menu, "InGamePlayerLabel" ), Localize("#INGAME_PLAYERS", "0") )
+	Hud_SetText( Hud_GetChild( file.menu, "TotalServerLabel" ),  Localize("#TOTAL_SERVERS", "0") )
 	UpdatePrivateMatchModesAndMaps()
 	Hud_SetText( Hud_GetChild( file.menu, "Title" ), "#MENU_TITLE_SERVER_BROWSER" )
 	UI_SetPresentationType( ePresentationType.KNOWLEDGEBASE_MAIN )
@@ -428,23 +422,20 @@ void function OnServerBrowserMenuOpened()
 	thread WaitForServerListRequest()
 
 
-	RegisterButtonPressedCallback( MOUSE_WHEEL_UP , OnScrollUp )
-	RegisterButtonPressedCallback( MOUSE_WHEEL_DOWN , OnScrollDown )
-	RegisterButtonPressedCallback( KEY_TAB , OnKeyTabPressed )
-	RegisterButtonPressedCallback( KEY_ENTER, OnEnterPressed )
-	RegisterButtonPressedCallback( KEY_R, OnKeyRPressed )
+	RegisterButtonPressedCallback(MOUSE_WHEEL_UP , OnScrollUp)
+	RegisterButtonPressedCallback(MOUSE_WHEEL_DOWN , OnScrollDown)
+	RegisterButtonPressedCallback(KEY_TAB , OnKeyTabPressed)
 }
 
 ////////////////////////////
 // Arrow navigation fuckery
 ////////////////////////////
-bool function IsFilterPanelElementFocused()
-{
+bool function IsFilterPanelElementFocused() {
 	// get name of focused element
-	var focusedElement = GetFocus()
+	var focusedElement = GetFocus();
+	var name = Hud_GetHudName(focusedElement);
 
-	foreach ( element in GetElementsByClassname( file.menu, "FilterPanelChild" ) )
-	{
+	foreach (element in GetElementsByClassname( file.menu, "FilterPanelChild")) {
 		if ( element == focusedElement ) return true
 	}
 
@@ -452,78 +443,66 @@ bool function IsFilterPanelElementFocused()
 	return false;
 }
 
-void function OnKeyTabPressed( var button )
-{
+void function OnKeyTabPressed(var button) {
 	try
 	{
 		// toggle focus between server list and filter panel
-		if ( IsFilterPanelElementFocused() )
-		{
-			Hud_SetFocused( Hud_GetChild( file.menu, "BtnServer1" ) )
+		if (IsFilterPanelElementFocused()) {
+			// print("Switching focus from filter panel to server list")
+			Hud_SetFocused(Hud_GetChild(file.menu, "BtnServer1"))
 		}
-		else
-		{
-			Hud_SetFocused( Hud_GetChild( file.menu, "BtnServerSearch" ) )
+		else {
+			// print("Switching focus from server list to filter panel")
+			Hud_SetFocused(Hud_GetChild(file.menu, "BtnServerSearch"))
 			HideServerInfo()
 		}
 	}
 	catch ( ex ) {}
 }
 
-void function OnHitDummyTop( var button )
-{
+void function OnHitDummyTop(var button) {
 	file.scrollOffset -= 1
-	if ( file.scrollOffset < 0 )
-	{
+	if (file.scrollOffset < 0)	{
 		// was at top already
 		file.scrollOffset = 0
 		Hud_SetFocused(Hud_GetChild(file.menu, "BtnServerNameTab"))
-	}
-	else 
-	{
+	} else {
 		// only update if list position changed
 		UpdateShownPage()
 		UpdateListSliderPosition( file.serversArrayFiltered.len() )
-		DisplayFocusedServerInfo( file.serverButtonFocusedID )
-		Hud_SetFocused( Hud_GetChild( file.menu, "BtnServer1" ) )
+		DisplayFocusedServerInfo(file.serverButtonFocusedID)
+		Hud_SetFocused(Hud_GetChild(file.menu, "BtnServer1"))
 	}
 }
 
-void function OnHitDummyBottom( var button )
-{
+void function OnHitDummyBottom(var button) {
 	file.scrollOffset += 1
-	if ( file.scrollOffset + BUTTONS_PER_PAGE > file.serversArrayFiltered.len() )
+	if (file.scrollOffset + BUTTONS_PER_PAGE > file.serversArrayFiltered.len())
 	{
 		// was at bottom already
 		file.scrollOffset = file.serversArrayFiltered.len() - BUTTONS_PER_PAGE
-		Hud_SetFocused( Hud_GetChild( file.menu, "BtnServerSearch" ) )
-		HideServerInfo()
-	}
-	else
-	{
+		Hud_SetFocused(Hud_GetChild(file.menu, "BtnServerSearch"))
+	} else {
 		// only update if list position changed
 		UpdateShownPage()
 		UpdateListSliderPosition( file.serversArrayFiltered.len() )
-		DisplayFocusedServerInfo( file.serverButtonFocusedID )
-		Hud_SetFocused( Hud_GetChild( file.menu, "BtnServer15" ) )
+		DisplayFocusedServerInfo(file.serverButtonFocusedID)
+		Hud_SetFocused(Hud_GetChild(file.menu, "BtnServer15"))
 	}
 }
 
-void function OnHitDummyAfterFilterClear( var button )
-{
-	Hud_SetFocused( Hud_GetChild( file.menu, "BtnServerNameTab" ) )
+void function OnHitDummyAfterFilterClear(var button) {
+	Hud_SetFocused(Hud_GetChild(file.menu, "BtnServerNameTab"))
 }
 
 
 void function OnDownArrowSelected( var button )
 {
-	if ( file.serversArrayFiltered.len() <= BUTTONS_PER_PAGE ) return
+	if (file.serversArrayFiltered.len() <= 15) return
 	file.scrollOffset += 1
-	if ( file.scrollOffset + BUTTONS_PER_PAGE > file.serversArrayFiltered.len() )
-	{
+	if (file.scrollOffset + BUTTONS_PER_PAGE > file.serversArrayFiltered.len()) {
 		file.scrollOffset = file.serversArrayFiltered.len() - BUTTONS_PER_PAGE
 	}
-	
 	UpdateShownPage()
 	UpdateListSliderPosition( file.serversArrayFiltered.len() )
 }
@@ -532,55 +511,11 @@ void function OnDownArrowSelected( var button )
 void function OnUpArrowSelected( var button )
 {
 	file.scrollOffset -= 1
-	if ( file.scrollOffset < 0 )
-	{
+	if (file.scrollOffset < 0) {
 		file.scrollOffset = 0
 	}
-	
 	UpdateShownPage()
 	UpdateListSliderPosition( file.serversArrayFiltered.len() )
-}
-
-////////////////////////
-// Key Callbacks
-////////////////////////
-void function OnEnterPressed( arg ) 
-{
-	// only trigger if a server is focused
-	if ( IsServerButtonFocused() ) 
-	{
-		OnServerSelected(0)
-	}
-}
-
-void function OnKeyRPressed( arg ) 
-{
-	if ( !IsSearchBarFocused() ) 
-	{
-		RefreshServers(0);
-	}
-}
-
-bool function IsServerButtonFocused() 
-{
-	var focusedElement = GetFocus()
-	if ( focusedElement == null )
-		return false
-	
-	var name = Hud_GetHudName( focusedElement )
-
-	foreach ( element in GetElementsByClassname( file.menu, "ServerButton" ) ) 
-	{
-		if ( element == focusedElement ) 
-			return true
-	}
-
-	return false
-}
-
-bool function IsSearchBarFocused() 
-{
-	return Hud_GetChild( file.menu, "BtnServerSearch" ) == GetFocus()
 }
 
 
@@ -589,32 +524,31 @@ bool function IsSearchBarFocused()
 ////////////////////////////
 void function ShowServerDescription( var button )
 {
-	Hud_SetVisible( Hud_GetChild( file.menu, "LabelDescription" ), true )
-	Hud_SetVisible( Hud_GetChild( file.menu, "LabelMods" ), false )
+	Hud_SetVisible( Hud_GetChild( file.menu, "LabelDescription"), true)
+	Hud_SetVisible( Hud_GetChild( file.menu, "LabelMods"), false)
 }
 
 void function ShowServerMods( var button )
 {
-	Hud_SetVisible( Hud_GetChild( file.menu, "LabelDescription" ), false )
-	Hud_SetVisible( Hud_GetChild( file.menu, "LabelMods" ), true )
+	Hud_SetVisible( Hud_GetChild( file.menu, "LabelDescription"), false)
+	Hud_SetVisible( Hud_GetChild( file.menu, "LabelMods"), true)
 }
 
 ////////////////////////////
 // Server list; filter,update,...
 ////////////////////////////
-void function HideServerInfo()
-{
-	Hud_SetVisible( Hud_GetChild( file.menu, "BtnServerDescription" ), false )
-	Hud_SetVisible( Hud_GetChild( file.menu, "BtnServerMods" ), false )
-	Hud_SetVisible( Hud_GetChild( file.menu, "BtnServerJoin" ), false )
-	Hud_SetVisible( Hud_GetChild( file.menu, "LabelDescription" ), false )
-	Hud_SetVisible( Hud_GetChild( file.menu, "LabelMods" ), false )
-	Hud_SetVisible( Hud_GetChild( file.menu, "NextMapImage" ), false )
-	Hud_SetVisible( Hud_GetChild( file.menu, "NextMapBack" ), false )
-	Hud_SetVisible( Hud_GetChild( file.menu, "NextMapName" ), false )
-	Hud_SetVisible( Hud_GetChild( file.menu, "ServerName" ), false )
-	Hud_SetVisible( Hud_GetChild( file.menu, "NextModeIcon" ), false )
-	Hud_SetVisible( Hud_GetChild( file.menu, "NextGameModeName" ), false )
+void function HideServerInfo() {
+	Hud_SetVisible(Hud_GetChild(file.menu, "BtnServerDescription"), false)
+	Hud_SetVisible(Hud_GetChild(file.menu, "BtnServerMods"), false)
+	Hud_SetVisible(Hud_GetChild(file.menu, "BtnServerJoin"), false)
+	Hud_SetVisible(Hud_GetChild(file.menu, "LabelDescription"), false)
+	Hud_SetVisible(Hud_GetChild(file.menu, "LabelMods"), false)
+	Hud_SetVisible(Hud_GetChild(file.menu, "NextMapImage"), false)
+	Hud_SetVisible(Hud_GetChild(file.menu, "NextMapBack"), false)
+	Hud_SetVisible(Hud_GetChild(file.menu, "NextMapName"), false)
+	Hud_SetVisible(Hud_GetChild(file.menu, "ServerName"), false)
+	Hud_SetVisible(Hud_GetChild(file.menu, "NextModeIcon"), false)
+	Hud_SetVisible(Hud_GetChild(file.menu, "NextGameModeName"), false)
 }
 
 void function OnBtnFiltersClear_Activate( var button )
@@ -643,7 +577,6 @@ void function FilterAndUpdateList( var n )
 	file.scrollOffset = 0
 	UpdateListSliderPosition( file.serversArrayFiltered.len() )
 
-	HideServerInfo()
 	FilterServerList()
 
 
@@ -700,7 +633,8 @@ void function RefreshServers( var button )
 
 void function WaitForServerListRequest()
 {
-	for ( int i = 0; i < BUTTONS_PER_PAGE; i++)
+
+	for ( int i = 0; i < 15; i++)
 	{
 		Hud_SetVisible( file.serversProtected[ i ], false )
 		Hud_SetVisible( file.serverButtons[ i ], false )
@@ -711,9 +645,12 @@ void function WaitForServerListRequest()
 		Hud_SetText( file.serversLatency[ i ], "" )
 	}
 
+
 	HideServerInfo()
 
+
 	Hud_SetVisible( file.serversName[ 0 ], true )
+
 	Hud_SetText( file.serversName[ 0 ], "#NS_SERVERBROWSER_WAITINGFORSERVERS" )
 
 	// wait for request to complete
@@ -728,7 +665,7 @@ void function WaitForServerListRequest()
 	else
 	{
 		FilterAndUpdateList(0)
-		Hud_SetFocused( Hud_GetChild(file.menu, "BtnServer1" ) )
+		Hud_SetFocused(Hud_GetChild(file.menu, "BtnServer1"))
 	}
 }
 
@@ -748,27 +685,27 @@ void function FilterServerList()
 		tempServer.serverPlayers = NSGetServerPlayerCount( i )
 		tempServer.serverPlayersMax = NSGetServerMaxPlayerCount( i )
 		tempServer.serverMap = NSGetServerMap( i )
-		tempServer.serverGamemode = GetGameModeDisplayName( NSGetServerPlaylist ( i ) )
+		tempServer.serverGamemode = NSGetServerPlaylist( i )
 
 		totalPlayers += tempServer.serverPlayers
 
 
 		// Branchless programming ;)
-		if ( !( filterArguments.hideEmpty && tempServer.serverPlayers == 0 ) && !( filterArguments.hideFull && tempServer.serverPlayers == tempServer.serverPlayersMax ) && !( filterArguments.hideProtected && tempServer.serverProtected ) )
+		if (!(filterArguments.hideEmpty && tempServer.serverPlayers == 0) && !(filterArguments.hideFull && tempServer.serverPlayers == tempServer.serverPlayersMax) && !(filterArguments.hideProtected && tempServer.serverProtected))
 		{
 			if ( filterArguments.useSearch )
 			{
-				string sName = tempServer.serverName.tolower() + " " + Localize( GetMapDisplayName( tempServer.serverMap ) ).tolower() + " " + tempServer.serverMap.tolower() + " " + tempServer.serverGamemode.tolower() + " " + Localize( tempServer.serverGamemode ).tolower()
+				string sName = tempServer.serverName.tolower() + " " + Localize(GetMapDisplayName(tempServer.serverMap)).tolower() + " " + tempServer.serverMap.tolower() + " " + tempServer.serverGamemode.tolower() + " " + Localize(tempServer.serverGamemode).tolower()
 
 				string sTerm = filterArguments.searchTerm.tolower()
 
-				if ( sName.find( sTerm ) != null)
+				if ( sName.find(sTerm) != null)
 				{
-					if ( filterArguments.filterMap != "SWITCH_ANY" && filterArguments.filterMap == tempServer.serverMap )
+					if (filterArguments.filterMap != "SWITCH_ANY" && filterArguments.filterMap == tempServer.serverMap)
 					{
 						CheckGamemode( tempServer )
 					}
-					else if ( filterArguments.filterMap == "SWITCH_ANY" )
+					else if (filterArguments.filterMap == "SWITCH_ANY")
 					{
 						CheckGamemode( tempServer )
 					}
@@ -776,28 +713,28 @@ void function FilterServerList()
 			}
 			else
 			{
-				if ( filterArguments.filterMap != "SWITCH_ANY" && filterArguments.filterMap == tempServer.serverMap )
+				if (filterArguments.filterMap != "SWITCH_ANY" && filterArguments.filterMap == tempServer.serverMap)
 				{
 					CheckGamemode( tempServer )
 				}
-				else if ( filterArguments.filterMap == "SWITCH_ANY" )
+				else if (filterArguments.filterMap == "SWITCH_ANY")
 				{
 					CheckGamemode( tempServer )
 				}
 			}
 		}
-		Hud_SetText( Hud_GetChild( file.menu, "InGamePlayerLabel" ), Localize("#INGAME_PLAYERS", string( totalPlayers ) ) )
-		Hud_SetText( Hud_GetChild( file.menu, "TotalServerLabel" ),  Localize("#TOTAL_SERVERS", string( NSGetServerCount() ) ) )
+		Hud_SetText( Hud_GetChild( file.menu, "InGamePlayerLabel" ), Localize("#INGAME_PLAYERS", string(totalPlayers)) )
+		Hud_SetText( Hud_GetChild( file.menu, "TotalServerLabel" ),  Localize("#TOTAL_SERVERS", string( NSGetServerCount()) ) )
 	}
 }
 
 void function CheckGamemode( serverStruct t )
 {
-	if ( filterArguments.filterGamemode != "SWITCH_ANY" && filterArguments.filterGamemode == t.serverGamemode )
+	if (filterArguments.filterGamemode != "SWITCH_ANY" && filterArguments.filterGamemode == t.serverGamemode)
 	{
 		file.serversArrayFiltered.append( t )
 	}
-	else if ( filterArguments.filterGamemode == "SWITCH_ANY" )
+	else if (filterArguments.filterGamemode == "SWITCH_ANY")
 	{
 		file.serversArrayFiltered.append( t )
 	}
@@ -807,7 +744,7 @@ void function CheckGamemode( serverStruct t )
 void function UpdateShownPage()
 {
 
-	for ( int i = 0; i < BUTTONS_PER_PAGE; i++ )
+	for ( int i = 0; i < 15; i++)
 	{
 		Hud_SetVisible( file.serversProtected[ i ], false )
 		Hud_SetVisible( file.serverButtons[ i ], false )
@@ -818,7 +755,7 @@ void function UpdateShownPage()
 		Hud_SetText( file.serversLatency[ i ], "" )
 	}
 
-	int j = file.serversArrayFiltered.len() > BUTTONS_PER_PAGE ? BUTTONS_PER_PAGE : file.serversArrayFiltered.len()
+	int j = file.serversArrayFiltered.len() > 15 ? 15 : file.serversArrayFiltered.len()
 
 	for ( int i = 0; i < j; i++ )
 	{
@@ -848,26 +785,26 @@ void function UpdateShownPage()
 
 void function OnServerButtonFocused( var button )
 {
-	if ( file.scrollOffset < 0 )
+	if (file.scrollOffset < 0)
 		file.scrollOffset = 0
 	
-	int scriptID = int ( Hud_GetScriptID( button ) )
+	int scriptID = int (Hud_GetScriptID(button))
 	file.serverButtonFocusedID = scriptID
 	if ( file.serversArrayFiltered.len() > 0 )
 		file.focusedServerIndex = file.serversArrayFiltered[ file.scrollOffset + scriptID ].serverIndex
-	DisplayFocusedServerInfo( scriptID )
+	DisplayFocusedServerInfo(scriptID);
 
 }
 
 void function OnServerButtonClicked(var button)
 {
-	int scriptID = int ( Hud_GetScriptID( button ) )
+	int scriptID = int (Hud_GetScriptID(button))
 
-	DisplayFocusedServerInfo( scriptID )
-	CheckDoubleClick( scriptID, true )
+	DisplayFocusedServerInfo(scriptID)
+	CheckDoubleClick(scriptID, true)
 }
 
-void function CheckDoubleClick( int scriptID, bool wasClickNav )
+void function CheckDoubleClick(int scriptID, bool wasClickNav)
 {
 	if ( NSGetServerCount() == 0 ) return
 
@@ -875,31 +812,34 @@ void function CheckDoubleClick( int scriptID, bool wasClickNav )
 	int serverIndex = file.scrollOffset + scriptID
 
 	bool sameServer = false
-	if ( file.lastSelectedServer == serverIndex ) sameServer = true
+	if (file.lastSelectedServer == serverIndex) sameServer = true
 
 
 	file.serverSelectedTimeLast = file.serverSelectedTime
 	file.serverSelectedTime = Time()
 
+	printt(file.serverSelectedTime - file.serverSelectedTimeLast, file.lastSelectedServer, serverIndex)
+
 	file.lastSelectedServer = serverIndex
 
-	if ( wasClickNav && ( file.serverSelectedTime - file.serverSelectedTimeLast < DOUBLE_CLICK_TIME_MS ) && sameServer )
+
+	if (wasClickNav && (file.serverSelectedTime - file.serverSelectedTimeLast < DOUBLE_CLICK_TIME_MS) && sameServer)
 	{
 		OnServerSelected(0)
 	}
 }
 
-void function DisplayFocusedServerInfo( int scriptID )
+void function DisplayFocusedServerInfo( int scriptID)
 {
-	if ( scriptID == 999 || scriptID == -1 || scriptID == 16 ) return
+	if (scriptID == 999 || scriptID == -1 || scriptID == 16) return
 
-	if ( NSIsRequestingServerList() || NSGetServerCount() == 0 || file.serverListRequestFailed || file.serversArrayFiltered.len() == 0 )
+	if ( NSIsRequestingServerList() || NSGetServerCount() == 0 || file.serverListRequestFailed || file.serversArrayFiltered.len() == 0)
 		return
 
 	var menu = GetMenu( "ServerBrowserMenu" )
 
 	int serverIndex = file.scrollOffset + scriptID
-	if ( serverIndex < 0 ) serverIndex = 0
+	if (serverIndex < 0) serverIndex = 0
 
 
 	Hud_SetVisible( Hud_GetChild( menu, "BtnServerDescription" ), true )
@@ -908,7 +848,7 @@ void function DisplayFocusedServerInfo( int scriptID )
 	// text panels
 	Hud_SetVisible( Hud_GetChild( menu, "LabelDescription" ), true )
 	Hud_SetVisible( Hud_GetChild( menu, "LabelMods" ), false )
-	Hud_SetText( Hud_GetChild( menu, "LabelDescription" ), NSGetServerDescription( file.serversArrayFiltered[ serverIndex ].serverIndex ) + "\n\nRequired Mods:\n" + FillInServerModsLabel( file.serversArrayFiltered[ serverIndex ].serverIndex ) )
+	Hud_SetText( Hud_GetChild( menu, "LabelDescription" ), NSGetServerDescription( file.serversArrayFiltered[ serverIndex ].serverIndex ) + "\n\nRequired Mods:\n" + FillInServerModsLabel( file.serversArrayFiltered[ serverIndex ].serverIndex ))
 
 	// map name/image/server name
 	string map = file.serversArrayFiltered[ serverIndex ].serverMap
@@ -926,8 +866,9 @@ void function DisplayFocusedServerInfo( int scriptID )
 	RuiSetImage( Hud_GetRui( Hud_GetChild( menu, "NextModeIcon" ) ), "basicImage", GetPlaylistThumbnailImage( mode ) )
 	Hud_SetVisible( Hud_GetChild( menu, "NextGameModeName" ), true )
 
-	if ( mode.len() != 0 )
-		Hud_SetText( Hud_GetChild( menu, "NextGameModeName" ), mode )
+	string modeName = GetGameModeDisplayName( mode )
+	if ( modeName.len() != 0 )
+		Hud_SetText( Hud_GetChild( menu, "NextGameModeName" ), modeName )
 	else
 		Hud_SetText( Hud_GetChild( menu, "NextGameModeName" ), "#NS_SERVERBROWSER_UNKNOWNMODE" )
 }
@@ -1035,33 +976,31 @@ void function ThreadedAuthAndConnectToServer( string password = "" )
 
 	ToggleConnectingHUD( true )
 
-	while ( NSIsAuthenticatingWithServer() && !file.cancelConnection )
+	while ( NSIsAuthenticatingWithServer() && !file.cancelConnection)
 	{
 		WaitFrame()
 	}
 
 	ToggleConnectingHUD( false )
 
-	if ( file.cancelConnection )
+	if (file.cancelConnection)
 	{
 		file.cancelConnection = false
-		// re-focus server list
-		Hud_SetFocused( Hud_GetChild( file.menu, "BtnServer" + ( file.serverButtonFocusedID + 1 ) ) )
 		return
 	}
 
 	file.cancelConnection = false
-	NSSetLoading( true )
+	NSSetLoading(true)
 	NSUpdateServerInfo(
-		NSGetServerID( file.lastSelectedServer ),
-		NSGetServerName( file.lastSelectedServer ),
+		NSGetServerID(file.lastSelectedServer),
+		NSGetServerName(file.lastSelectedServer),
 		password,
-		NSGetServerPlayerCount( file.lastSelectedServer ),
-		NSGetServerMaxPlayerCount( file.lastSelectedServer ),
-		NSGetServerMap( file.lastSelectedServer ),
-		Localize( GetMapDisplayName( NSGetServerMap( file.lastSelectedServer ) ) ),
-		NSGetServerPlaylist( file.lastSelectedServer ),
-		Localize( GetPlaylistDisplayName( NSGetServerPlaylist( file.lastSelectedServer ) ) )
+		NSGetServerPlayerCount(file.lastSelectedServer),
+		NSGetServerMaxPlayerCount(file.lastSelectedServer),
+		NSGetServerMap(file.lastSelectedServer),
+		Localize(GetMapDisplayName(NSGetServerMap(file.lastSelectedServer))),
+		NSGetServerPlaylist(file.lastSelectedServer),
+		Localize(GetPlaylistDisplayName(NSGetServerPlaylist(file.lastSelectedServer)))
 	)
 
 	if ( NSWasAuthSuccessful() )
@@ -1082,11 +1021,7 @@ void function ThreadedAuthAndConnectToServer( string password = "" )
 			}
 		}
 
-		// only actually reload if we need to since the uiscript reset on reload lags hard
-		if ( modsChanged )
-			ReloadMods()
-
-		NSConnectToAuthedServer()
+		DelayedReloadModsAndConnect( modsChanged )
 	}
 	else
 	{
@@ -1106,10 +1041,22 @@ void function ThreadedAuthAndConnectToServer( string password = "" )
 	}
 }
 
+void function DelayedReloadModsAndConnect( bool modsChanged )
+{
+	// only actually reload if we need to since the uiscript reset on reload lags hard
+	if ( modsChanged )
+	{
+		ReloadMods()
+		wait 0.25
+	}
+
+	NSConnectToAuthedServer()
+}
+
 //////////////////////////////////////
 // Shadow realm
 //////////////////////////////////////
-int function ServerSortLogic ( serverStruct a, serverStruct b )
+int function ServerSortLogic ( serverStruct a, serverStruct b)
 {
 	var aTemp
 	var bTemp
@@ -1117,8 +1064,7 @@ int function ServerSortLogic ( serverStruct a, serverStruct b )
 	bool direction
 
 	// We can hard code this cause adding entire columns isn't as easy
-	switch ( filterDirection.sortingBy )
-	{
+	switch ( filterDirection.sortingBy ) {
 		case sortingBy.NAME:
 			aTemp = a.serverName.tolower()
 			bTemp = b.serverName.tolower()
@@ -1130,13 +1076,13 @@ int function ServerSortLogic ( serverStruct a, serverStruct b )
 			direction = filterDirection.serverPlayers
 			break;
 		case sortingBy.MAP:
-			aTemp = Localize( a.serverMap ).tolower()
-			bTemp = Localize( b.serverMap ).tolower()
+			aTemp = Localize(a.serverMap).tolower()
+			bTemp = Localize(b.serverMap).tolower()
 			direction = filterDirection.serverMap
 			break;
 		case sortingBy.GAMEMODE:
-			aTemp = Localize( a.serverGamemode ).tolower()
-			bTemp = Localize( b.serverGamemode ).tolower()
+			aTemp = Localize(a.serverGamemode).tolower()
+			bTemp = Localize(b.serverGamemode).tolower()
 			direction = filterDirection.serverGamemode
 			break;
 		case sortingBy.LATENCY:
