@@ -45,6 +45,24 @@
 			"ServerCallback": {
 				"After": "SingleplayerCoopLobby_Init"
 			}
+		},
+		{
+			"Path": "_triggers.nut",
+			"RunOn": "SERVER && SP",
+			"ServerCallback": {
+				"After": "Init_triggers"
+			}
+		},
+		{
+			"Path": "_respawns.nut",
+			"RunOn": "SERVER && SP",
+			"ServerCallback": {
+				"After": "AddMakeSpecifcRespawns"
+			}
+		},
+		{
+			"Path": "_utils_coop.nut",
+			"RunOn": "SERVER && SP"
 		}
 	]
 }

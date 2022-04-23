@@ -35,6 +35,8 @@ global function PlayerFallingDeath
 global function AnimCallback_ParentBeforeAnimating
 global function AnimCallback_ParentBeforeAnimating_MaltaWidow
 
+global function BT_WaitOnBarkerShip
+
 struct SkyBoxLandSection
 {
 	//lanes
@@ -63,11 +65,16 @@ struct AirBattleStruct
 
 struct MyFile
 {
+	// spawnpointWidow
+	ShipStruct& SpawnPointWidow
+
 	entity player
 	ShipStruct& playerWidow
 	vector playerWidow_scrOffset
 	ShipStruct& crow64
 	ShipStruct& sarahWidow
+	ShipStruct& respawnWidow
+	int respawnState = 0
 
 	ShipStruct& gibraltar
 	ShipStruct& barkership
@@ -1133,6 +1140,8 @@ void function PlayerDidLoad( entity player )
 //	ClientCommand( player, "moving_collision_accel_threshold 1000000" )
 	FastBallPlayerInit( player )
 
+	SetPlayer0( player )
+
 	entity bt = player.GetPetTitan()
 	Assert( IsValid( bt ) )
 	bt.SetInvulnerable()
@@ -1452,7 +1461,7 @@ void function SetupShips_Barker()
 void function SetupShips_Fastball1()
 {
 	file.barkership = SpawnBarkerShip()
-	file.barkership.triggerFallingDeath.Enable()
+	file.barkership.triggerFallingDeath.Disable()
 	delaythread( 1.0 ) BarkerShipShake()
 	SetMaxRoll( file.barkership, 20 )
 
@@ -2211,6 +2220,41 @@ void function ReplaceWeapon( entity guy, string weapon, array<string> mods )
 	guy.SetActiveWeaponByName( weapon )
 }
 
+void function SpawnRespawnWidow( LocalVec origin )
+{
+	//respawn WIDOW
+	ShipStruct widow = SpawnWidow( origin )
+	ClearShipBehavior( widow, eBehavior.ENEMY_ONBOARD )
+	widow.model.SetScriptName( "RS Widow" ) // S2S_CALLSIGN_SARAH
+
+	// AddShipEventCallback( widow, eShipEvents.PLAYER_ONHULL_START, PlayerWidowPlayerOnHullStart )
+	// AddShipEventCallback( widow, eShipEvents.PLAYER_ONHULL_END, PlayerWidowPlayerOnHullEnd )
+	
+	Highlight_SetFriendlyHighlight( widow.model, "friendly_ai" )
+	widow.model.Anim_Play( "wd_doors_open_idle_L" )
+	widow.model.Anim_DisableUpdatePosition()
+	widow.model.Anim_DisableAnimDelta()
+	widow.model.SetInvulnerable()
+
+	EnableScript( widow, "scr_pwidow_node_0", "BODY", file.playerWidow_scrOffset )
+
+	int fxID = GetParticleSystemIndex( FX_DECK_FLAP_WIND )
+	array<entity> fxNodes = GetEntArrayByScriptName( "startP_widow_windfx" )
+	foreach ( anchor in fxNodes )
+	{
+		int attachID = anchor.LookupAttachment( "REF" )
+		StartParticleEffectOnEntity( anchor, fxID, FX_PATTACH_POINT_FOLLOW, attachID )
+	}
+
+	file.respawnWidow = widow
+
+	AddFunctionForMapRespawn( GetMapName(), RespawnPlayer_s2s )
+
+	SetMaxRoll( widow, 10 )
+	WidowAnimateOpen( widow, "left" )
+	DisableHullCrossing( widow )
+}
+
 
 void function StartSetupPlayerWidow( entity player, LocalVec origin )
 {
@@ -2231,7 +2275,7 @@ void function StartSetupPlayerWidow( entity player, LocalVec origin )
 	widow.model.Anim_DisableUpdatePosition()
 	widow.model.Anim_DisableAnimDelta()
 	widow.model.SetInvulnerable()
-	widow.triggerFallingDeath.Enable()
+	widow.triggerFallingDeath.Disable()
 
 	EnableScript( widow, "scr_pwidow_node_0", "BODY", file.playerWidow_scrOffset )
 	PlayerSetStartPoint( player, GetEntByScriptName( "pWidowPlayerStart" ) )
@@ -3732,14 +3776,19 @@ void function BossIntro_StartIntro( entity player, entity titan, entity ref )
 	BossTitanIntroData defaultData = GetBossTitanIntroData( titan.ai.bossCharacterName )
 	defaultData.doCockpitDisplay = false
 	StartBossIntro( player, titan, defaultData )
-	player.Hide()
-	player.FreezeControlsOnServer()
-	player.DisableWeapon()
-	player.SetNoTarget( true )
-	player.SetInvulnerable()
-	titan.EnableNPCFlag( NPC_IGNORE_ALL )
 
-	AddCinematicFlag( player, CE_FLAG_INTRO )
+	foreach( entity p in GetPlayerArray() )
+	{
+		p.SetInvulnerable()
+		AddCinematicFlag( p, CE_FLAG_INTRO )
+		thread BossTitanPlayerView( p, titan, ref, "vehicle_driver_eyes" )
+		p.DisableWeapon()
+		p.Hide()
+		p.FreezeControlsOnServer()
+		p.SetNoTarget( true )
+	}
+
+	titan.EnableNPCFlag( NPC_IGNORE_ALL )
 
 	// Do special player view movement
 	FlagSet( "BossTitanViewFollow" )
@@ -3764,11 +3813,20 @@ void function BossIntro_EndIntro( entity player, entity titan )
 	// Return the player screen and movement back to normal
 	EndBossIntro( player, titan )
 
-	RemoveCinematicFlag( player, CE_FLAG_INTRO )
-	player.EnableWeapon()
-	player.UnfreezeControlsOnServer()
+	foreach( entity p in GetPlayerArray() )
+	{
+		if ( HasCinematicFlag( p, CE_FLAG_INTRO ) )
+		{
+			p.ClearInvulnerable()
+			EndBossIntro( p, titan )
+			RemoveCinematicFlag( p, CE_FLAG_INTRO )
+			p.UnfreezeControlsOnServer()
+			ClearPlayerAnimViewEntity( p )
+			p.SetInvulnerable()
+		}
+	}
+	
 	player.SetNoTarget( false )
-	ClearPlayerAnimViewEntity( player )
 
 	if ( IsValid( titan ) )
 	{
@@ -3820,6 +3878,8 @@ void function BossIntro_FireCore( entity viper, array<ShipStruct> ships, vector 
 
 		wait 0.1
 	}
+
+	wait 1.0
 }
 
 ShipStruct function BossIntro_SpawnBossTitan( vector delta )
@@ -3915,7 +3975,8 @@ void function FreeFall_Skip( entity player )
 	Assert( IsValid( bt ) )
 	bt.TakeActiveWeapon()
 
-	GivePlayerDefaultWeapons( player )
+	foreach( entity p in GetPlayerArray() )
+		GivePlayerDefaultWeapons( p )
 
 	level.nv.ShipStreaming = SHIPSTREAMING_BARKER
 	level.nv.ShipTitles = SHIPTITLES_EVERYTHING
@@ -3950,12 +4011,17 @@ void function FreeFall_Main( entity player )
 
 	entity node = CreateScriptMover( file.playerWidow.model.GetOrigin(), < 0,0,0 > )
 
-	float blendTime = 0.5
-	player.SetParent( node, "REF", false, blendTime )
-	player.DisableWeapon()
-	TakeAllWeapons( player )
-	player.ForceStand()
-	Melee_Disable( player )
+	FullyHidePlayers()
+
+	foreach( entity p in GetPlayerArray() )
+	{
+		float blendTime = 0.5
+		p.SetParent( node, "REF", false, blendTime )
+		p.DisableWeapon()
+		TakeAllWeapons( p )
+		p.ForceStand()
+		Melee_Disable( p )
+	}
 
 	vector fakeGravity = <0,0,-400>//<0,0,-450>
 	node.NonPhysicsMoveWithGravity( < -500,0,0>, fakeGravity )
@@ -3981,15 +4047,20 @@ void function FreeFall_Main( entity player )
 	shake.SetParent( player )
 
 	wait 1.6
-
-	thread Freefall_ViewCone( player )
+	
+	foreach( entity p in GetPlayerArray() )
+		thread Freefall_ViewCone( p )
 
 	wait 0.7
-	player.ClearAnimNearZ()
 
-	GivePlayerDefaultWeapons( player )
-	player.DeployWeapon()
+	foreach( entity p in GetPlayerArray() )
+	{
+		p.ClearAnimNearZ()
 
+		GivePlayerDefaultWeapons( p )
+		// p.DeployWeapon()
+	}
+	
 	wait 2.5
 
 	FlagSet( "FreeFall_VO_gotchakid" )
@@ -4133,14 +4204,17 @@ void function FreeFall_PlayerLands( entity player, entity land )
 	land.ClearParent()
 	land.SetOrigin( nOG )
 	land.SetParent( file.barkership.model, "", true, 0 )
-
-	float blendTime = 0.0
-	player.SetParent( land, "REF", false, blendTime )
-	player.DisableWeapon()
-
+	
 	EmitSoundOnEntityAfterDelay( file.player, "scr_s2s_player_land_on_barker", 0.1 )
-	player.SetAnimNearZ( 4 )
-	thread PlayFPSAnimShowProxy( player, "pt_s2s_lifeboats_land", "ptpov_s2s_lifeboats_land", land, "REF", ViewConeZero, 0 )
+	float blendTime = 0.0
+	foreach( entity p in GetPlayerArray() )
+	{
+		p.SetParent( land, "REF", false, blendTime )
+		p.DisableWeapon()
+
+		p.SetAnimNearZ( 4 )
+		thread PlayFPSAnimShowProxy( p, "pt_s2s_lifeboats_land", "ptpov_s2s_lifeboats_land", land, "REF", ViewConeZero, 0 )
+	}
 
 	delaythread( 0.5 ) BarkerShipShake()
 
@@ -4150,7 +4224,11 @@ void function FreeFall_PlayerLands( entity player, entity land )
 		player.ClearInvulnerable()
 
 	float health = player.GetMaxHealth() * 0.5
-	player.SetHealth( health.tointeger() )
+	foreach( entity p in GetPlayerArray() )
+	{
+		if ( IsAlive( p ) )
+			p.SetHealth( health.tointeger() )
+	}
 }
 
 void function GivePlayerDefaultWeapons( entity player )
@@ -4746,6 +4824,10 @@ void function BarkerShip_Skip( entity player )
 
 	level.nv.ShipTitles = SHIPTITLES_NOBARKER
 	FlagSet( "StartFastball1" )
+
+	SpawnRespawnWidow( WorldToLocalOrigin( file.malta.mover.GetOrigin() + <0,-15000,-1000> ) )
+	thread ShipIdleAtTargetEnt_Method2( file.respawnWidow, file.malta.mover, <0,0,0>, <0,0,0>, <1000,1500,1000> )
+	WidowAnimateOpen( file.respawnWidow, "left" )
 }
 
 void function MaltaReal_ShipGeoSettings( bool skipping = false )
@@ -4897,6 +4979,11 @@ void function Barkership_Main( entity player )
 
 	thread Barkership_SarahAnim1()
 
+	// now we spawn the respawn ship somewhere
+	SpawnRespawnWidow( WorldToLocalOrigin( file.barkership.mover.GetOrigin() + <0,-3000,-1000> ) )
+	thread ShipIdleAtTargetEnt_Method2( file.respawnWidow, file.barkership.mover, <0,0,0>, <0,0,0>, <500,-1500,500> )
+	WidowAnimateOpen( file.respawnWidow, "left" )
+
 	//Cooper, I need a Pilot on board the Malta to secure the deck now!
 	waitthreadsolo PlayDialogue( "diag_sp_barkerShip_STS151_11_01_mcor_sarah", player )
 	ResetMaxSpeed( file.barkership, 1.0 )
@@ -4912,28 +4999,40 @@ void function Barkership_Main( entity player )
 	thread Barkership_EnderVO( player, bt )
 
 	ResetMaxPitch( file.barkership )
+	
+	// move the respawn ship
+	ShipFlyToPos( file.respawnWidow, WorldToLocalOrigin( file.barkership.mover.GetOrigin() + < 0,1000,600> ) )
+	Enable_AfterBurner( file.respawnWidow )
 }
 
 void function BarkerShip_PlayerAnim( entity player, entity land )
 {
-	player.ClearAnimNearZ()
-	waitthread PlayFPSAnimShowProxy( player, "pt_s2s_end_fight_knockback", "ptpov_s2s_end_fight_knockback", land, "REF", ViewConeZero, 0 )
+	foreach( entity p in GetPlayerArray() )
+	{
+		p.ClearAnimNearZ()
+		waitthread PlayFPSAnimShowProxy( p, "pt_s2s_end_fight_knockback", "ptpov_s2s_end_fight_knockback", land, "REF", ViewConeZero, 0 )
+	}
 
 	entity node = player.GetParent()
-	player.ClearParent()
-	player.UnforceStand()
-	player.Anim_Stop()
-	player.Signal( "ScriptAnimStop" )
-	player.Signal( "FlightPanelAnimEnd" )
-	ClearPlayerAnimViewEntity( player )
-	player.DeployWeapon()
-	Melee_Enable( player )
+	foreach( entity p in GetPlayerArray() )
+	{
+		p.ClearParent()
+		p.UnforceStand()
+		p.Anim_Stop()
+		p.Signal( "ScriptAnimStop" )
+		p.Signal( "FlightPanelAnimEnd" )
+		ClearPlayerAnimViewEntity( p )
+		p.DeployWeapon()
+		Melee_Enable( p )
+	}
 	CheckPoint_ForcedSilent()
 
-	file.barkership.triggerFallingDeath.Enable()
+	file.barkership.triggerFallingDeath.Disable()
 
 	if ( IsValid( node ) )
 		node.Destroy()
+	
+	FullyShowPlayers()
 }
 
 void function Barkership_SarahAnim1()
@@ -5344,6 +5443,8 @@ void function Fastball_1_Main( entity player )
 	WaitSignal( bt, "FastballStarting" )
 	FlagSet( "Fastball_PickedUpPlayer" )
 
+	FullyHidePlayers()
+
 	ClearShipEventCallback( file.crow64, eShipEvents.PLAYER_ONHULL_START, Crow64PlayerOnHullStart )
 	ClearShipEventCallback( file.crow64, eShipEvents.PLAYER_ONHULL_END, Crow64PlayerOnHullEnd )
 	FlagClear( "PlayerInOrOnCrow64" )
@@ -5398,17 +5499,22 @@ void function Fastball_1_Main( entity player )
 	vector nOG = HackGetDeltaToRefOnPlane( target.GetOrigin(), player.GetAngles(), player, "pt_s2s_lifeboats_land", model.GetUpVector() )
 	node = CreateScriptMover( nOG, angles )
 	node.SetParent( file.crow64.model, "", true, 0 )
-	player.SetParent( node, "REF", false, blendTime )
-	player.DisableWeapon()
-	player.ForceStand()
+	foreach( entity p in GetPlayerArray() )
+	{
+		player.SetParent( node, "REF", false, blendTime )
+		player.DisableWeapon()
+		player.ForceStand()
+	}
 
 	StopMusic()
 	PlayMusic( "music_s2s_02_throw2blackbird64_land" )
 
 	EmitSoundOnEntityAfterDelay( file.player, "scr_s2s_player_land_on_crow", 0.1 )
-	player.SetAnimNearZ( 3 )
-	thread PlayFPSAnimShowProxy( player, "pt_s2s_lifeboats_land", "ptpov_s2s_lifeboats_land" , node, "REF", ViewConeSmall, blendTime, 0.2 )
-
+	foreach( entity p in GetPlayerArray() )
+	{
+		p.SetAnimNearZ( 3 )
+		thread PlayFPSAnimShowProxy( p, "pt_s2s_lifeboats_land", "ptpov_s2s_lifeboats_land" , node, "REF", ViewConeSmall, blendTime, 0.2 )
+	}
 	wait blendTime
 
 	level.nv.ShipStreaming = SHIPSTREAMING_MALTA
@@ -5422,18 +5528,23 @@ void function Fastball_1_Main( entity player )
 
 	WaittillAnimDone( player )
 	player.ClearAnimNearZ()
-
-	player.UnforceStand()
-	player.Anim_Stop()
-	player.Signal( "ScriptAnimStop" )
-	ClearPlayerAnimViewEntity( player )
-	player.ClearParent()
-	player.DeployWeapon()
+	
+	foreach( entity p in GetPlayerArray() )
+	{
+		p.UnforceStand()
+		p.Anim_Stop()
+		p.Signal( "ScriptAnimStop" )
+		ClearPlayerAnimViewEntity( p )
+		p.ClearParent()
+		p.DeployWeapon()
+	}
 
 	if ( IsValid( target ) )
 		target.Destroy()
 	if ( IsValid( node ) )
 		node.Destroy()
+	
+	FullyShowPlayers()
 }
 
 void function Fastball_DoObj( entity bt )
@@ -5562,11 +5673,18 @@ void function MaltaIntro_Setup( entity player )
 	HideName( file.gates )
 	HideName( file.droz )
 	HideName( file.davis )
+
+	// added stuff
+	TeleportAllExpectOne( file.crow64.model.GetOrigin() + <0,0,128>, player, false )
+	
+	MaltaIntro_PutRespawnShipOnStandBy()
 }
 
 void function MaltaIntro_Skip( entity player )
 {
 	level.nv.ShipTitles = SHIPTITLES_NOMALTA
+
+	MaltaIntro_PutRespawnShipOnStandBy()
 }
 
 void function MaltaIntro_Main( entity player )
@@ -5579,6 +5697,12 @@ void function MaltaIntro_Main( entity player )
 		level.nv.ShipStreaming = SHIPSTREAMING_MALTA
 		NonPhysicsMoveToLocal( file.airBattleNode, V_MALTAINTRO_AIRBATTLE, 1, 0.5, 0.5 )
 	}
+
+	// do movement of respawn ship to new location and tp all players
+	// added stuff
+	TeleportAllExpectOne( file.crow64.model.GetOrigin() + <0,0,128>, player, false )
+	
+	MaltaIntro_PutRespawnShipOnStandBy()
 
 	entity saveNode = CreateInfoTarget( player.GetOrigin() + <0,0,4>, player.GetAngles() )
 	saveNode.SetParent( file.crow64.mover )
@@ -5638,7 +5762,7 @@ void function MaltaIntro_Main( entity player )
 	EnableScript( file.malta, "scr_malta_node_1" )
 	EnableScript( file.malta, "scr_malta_node_1b" )
 	thread Crow64_CreatePilot()
-	file.crow64.triggerFallingDeath.Enable()
+	file.crow64.triggerFallingDeath.Disable()
 
 	//Spawn First guys
 	AddSpawnCallback_ScriptName( "malta_introGuys1", MaltaIntro_GuysThink )
@@ -5763,6 +5887,18 @@ void function MaltaIntro_Main( entity player )
 	}
 
 	FlagWait( "PlayerInDroneRoom" )
+}
+
+void function MaltaIntro_PutRespawnShipOnStandBy()
+{
+	if ( !IsValid( file.respawnWidow ) )
+	{
+		SpawnRespawnWidow( WorldToLocalOrigin( file.malta.mover.GetOrigin() + <0,-15000,-1000> ) )
+		WidowAnimateOpen( file.respawnWidow, "both" )
+		WidowAnimateOpen( file.respawnWidow, "left" )
+	}
+	
+	thread ShipIdleAtTargetEnt_Method2( file.respawnWidow, file.malta.mover, <0,0,0>, <0,0,0>, <6000,-4000,-1000> )
 }
 
 void function MaltaIntro_GuysReact( string name, string anim1, string anim2 )
@@ -6180,7 +6316,7 @@ void function MaltaDrone_Setup( entity player )
 
 void function MaltaDrone_Skip( entity player )
 {
-	file.malta.triggerFallingDeath.Enable()
+	file.malta.triggerFallingDeath.Disable()
 
 	thread MaltaDrone_StressSounds()
 	ShipGeoHide( file.malta, "GEO_CHUNK_EXTERIOR_ENGINE" )
@@ -6197,7 +6333,7 @@ void function MaltaDrone_Main( entity player )
 	file.davis.SetNoTarget( true )
 	file.droz.SetNoTarget( true )
 
-	file.malta.triggerFallingDeath.Enable()
+	file.malta.triggerFallingDeath.Disable()
 
 	StopMusic()
 	PlayMusic( "music_s2s_04_maltabattle" )
@@ -6274,7 +6410,7 @@ void function MaltaDrone_Main( entity player )
 
 	liftClip.Solid()
 	thread MaltaBay_ElevatorSwitch( player )
-	thread DroneLiftLoop()
+	// thread DroneLiftLoop()
 	delaythread ( CAGEDOORDELAY + SLIDEDOORTIME ) MaltaDrone_liftMusic()
 
 	EnableScript( file.malta, "scr_malta_node_2" )
@@ -6363,7 +6499,8 @@ void function MaltaDrone_StressSounds()
 	{
 		float newroll = file.malta.model.GetAngles().z
 		bool newSign = newroll > 0
-
+		
+		// unitl we know how to disable sounds on death this should stay like this
 		// if ( newSign != oldSign )
 		// 	EmitSoundOnEntity( file.player, "s2s_ship_stress_mid_v1" )
 
@@ -6391,6 +6528,12 @@ void function MaltaDrone_HandleNPCinLift()
 void function MaltaBay_HardBank( ShipStruct malta )
 {
 	wait 7
+	
+	if ( !IsValid(file.player) )
+	{
+		thread RestartMapWithDelay()
+		return
+	}
 
 	if ( !file.player.IsOnGround() )
 		file.player.WaitSignal( "PME_TouchGround" )
@@ -6423,10 +6566,16 @@ void function MaltaBay_ElevatorSwitch( entity player )
 	float radius = 2048
 	entity shake = CreateShake( file.player.GetOrigin(), amplitude, frequency, duration, radius )
 
-	vector delta = realLift.lift.GetOrigin() - fakeLift.lift.GetOrigin()
-	player.SetOrigin( player.GetOrigin() + delta )
+	// vector delta = realLift.lift.GetOrigin() - fakeLift.lift.GetOrigin()
+	// player.SetOrigin( player.GetOrigin() + delta )
 
 	LiftSendUp( realLift )
+
+	// added stuff
+	TeleportAllExpectOne( realLift.lift.GetOrigin() + <0,0,50>, null )
+
+	file.respawnState = 1
+	thread HandleRespawnPlayer_s2s()
 }
 
 void function MaltaBay_LiftVO( entity player )
@@ -6826,6 +6975,8 @@ void function MaltaGuns_Setup( entity player )
 
 	PlayerSetStartPoint( player, lift.upPos )
 	player.SetAngles(<0,0,0>)
+
+	MaltaGuns_PutRespawnShip()
 }
 
 void function MaltaGuns_Skip( entity player )
@@ -6838,10 +6989,15 @@ void function MaltaGuns_Skip( entity player )
 	GetEntByScriptName( "MaltaSideClip" ).Solid()
 	GetEntByScriptName( "MaltaSideClip" ).kv.CollisionGroup = TRACE_COLLISION_GROUP_BLOCK_WEAPONS//this it shootable but not have phys collision
 	DeleteTrinity()
+
+	MaltaGuns_PutRespawnShip()
 }
 
 void function MaltaGuns_Main( entity player )
 {
+	// If the ship is absent spawn it !
+	MaltaGuns_PutRespawnShip()
+
 	Objective_WayPointEneable( false )
 	bool silent = true
 	MaltaGunsObjective( silent )
@@ -7009,6 +7165,17 @@ void function MaltaGuns_Main( entity player )
 	file.gates.SetNoTarget( false )
 	file.davis.SetNoTarget( false )
 	file.droz.SetNoTarget( false )
+}
+
+void function MaltaGuns_PutRespawnShip()
+{
+	if ( !IsValid( file.respawnWidow ) )
+	{
+		SpawnRespawnWidow( WorldToLocalOrigin( file.malta.mover.GetOrigin() + <4000,0,0> ) )
+		WidowAnimateOpen( file.respawnWidow, "both" )
+		WidowAnimateOpen( file.respawnWidow, "left" )
+	}
+	// SetMaxSpeed( file.respawnWidow, 20 )
 }
 
 void function MaltaGuns_CrewAccuracy()
@@ -7269,11 +7436,18 @@ void function MaltaGuns_HardBank( ShipStruct malta )
 	while( 1 )
 	{
 		FlagWaitClear( "PlayerWallRunning" )
-
+		try
+		{
 		if ( !file.player.IsOnGround() )
 			file.player.WaitSignal( "PME_TouchGround" )
 		else
 			break
+		}
+		catch( exception )
+		{
+			Chat_ServerBroadcast( "smth broke in MaltaGuns_HardBank" )
+			break
+		}
 	}
 
 	if ( Flag( "playerOnGun3" ) )
@@ -8101,7 +8275,12 @@ void function MaltaWidow_Main( entity player )
 	data.additionalCheck = MakeSurePlayerIsInMaltaGunsArea
 	CheckPoint( data )
 
+	// added stuff
+	TeleportAllExpectOne( GetEntByScriptName( "maltaPlayerStart3" ).GetOrigin() + <0,0,50>, player )
+
 	thread MaltaWidow_EndSection( player )
+
+	file.respawnState = 2
 }
 
 bool function MakeSurePlayerIsInMaltaGunsArea( entity player )
@@ -8984,6 +9163,9 @@ void function MaltaHangar_Main( entity player )
 	FlagWait( "Hangar_LandDavis" )
 	FlagWait( "Hangar_LandDroz" )
 	FlagWait( "Hangar_LandGates" )
+
+	// added stuff
+	TeleportAllExpectOne( GetEntByScriptName( "maltaPlayerStart4" ).GetOrigin() + <0,0,50>, null )
 
 	HideHelmet( "dronehelmet" )
 	CleanupScript( "scr_malta_node_2" )
@@ -11894,6 +12076,16 @@ void function Reunited_Setup( entity player )
 	float delay = 2.0
 	delaythread( delay ) FlagSet( "MaltaOnCourse" )
 	delaythread( delay ) UseFlightPanelEnd( player, node )
+
+	file.respawnState = 3
+
+	foreach( entity p in GetPlayerArray() )
+	{
+		if ( !IsValid( p.GetPetTitan() ) )
+		{
+			CreatePetTitanAtLocationWithTf( p, file.malta.mover.GetOrigin() + <0,5000,1000>, p.GetAngles() )
+		}
+	}
 }
 
 void function Reunited_AnimSetup( entity player )
@@ -12312,6 +12504,10 @@ void function MaltaDeck_Main( entity player )
 	FlagInit( "DeckViperStage2" )
 	FlagInit( "DeckViperDoingCore" )
 	FlagInit( "DeckViperDoingRelocate" )
+
+	// Set new state for the respawn Widow
+	file.respawnState = 3
+	MaltaGuns_PutRespawnShip()
 
 	thread MaltaDeck_Flaps()
 
@@ -14527,7 +14723,7 @@ void function BossFight_Skip( entity player )
 	BossFight_BTVentFireFx( bt )
 
 	if ( IsValid( file.OLA.triggerFallingDeath ) )
-		file.OLA.triggerFallingDeath.Enable()
+		file.OLA.triggerFallingDeath.Disable()
 	GetEntByScriptName( "draconisOOB" ).Enable()
 }
 
@@ -14643,7 +14839,7 @@ void function BossFight_Main( entity player )
 	anchor.Destroy()
 	thread BossFight_DelayedWeaponDeploy( player )
 
-	file.OLA.triggerFallingDeath.Enable()
+	file.OLA.triggerFallingDeath.Disable()
 	GetEntByScriptName( "draconisOOB" ).Enable()
 
 	WaittillAnimDone( bt )
@@ -16616,6 +16812,7 @@ void function HackKnockback( entity bt, entity player, entity pNode )
 	sequence.hideProxy			= false
 
 	//thread FirstPersonSequence( sequence, player, pNode )
+	// foreach( entity p in GetPlayerArray() )
 	thread PlayFPSAnimShowProxy( player, "pt_s2s_sphere_player_protect", "ptpov_s2s_sphere_player_protect", pNode, "REF", ViewConeSmall, 0.0 )
 
 	entity node = GetEntByScriptName( "endBtGetup" )
@@ -18171,6 +18368,93 @@ void function Trailer_Bridge( entity player )
 	WaitForever()
 }
 
+void function RespawnPlayer_s2s( entity player  )
+{
+	if ( !IsValid( file.respawnWidow ) )
+		return
+
+	if ( file.respawnState == 0 )
+	{
+		if ( file.player == player )
+			return
+		player.SetOrigin( file.player.GetOrigin() )
+		DoRespawnPlayer( player, null )
+		return
+	}
+	else if ( file.respawnState == 3 )
+	{
+		if ( !IsValid( player.GetPetTitan() ) )
+		{
+			CreatePetTitanAtLocationWithTf( player, file.malta.mover.GetOrigin() + <0,5000,1000>, player.GetAngles() )
+			entity titan = player.GetPetTitan()
+			if ( titan != null )
+				titan.kv.alwaysAlert = false
+		}
+		else
+		{
+			entity titan = player.GetPetTitan()
+			titan.SetOrigin( file.malta.mover.GetOrigin() + <0,5000,1000> )
+		}
+	}
+
+	player.SetOrigin( file.respawnWidow.model.GetOrigin() + < -40,0,300> )
+	DoRespawnPlayer( player, null )
+	GivePlayerDefaultWeapons( player )
+
+	wait 0.01
+
+	player.SetVelocity( < 800,0,-50> )
+}
+
+void function HandleRespawnPlayer_s2s()
+{
+	vector RSpos
+	int lastState
+	bool moveCloser
+
+	while( IsValid( file.respawnWidow ) )
+	{
+		if ( lastState != file.respawnState )
+		{
+			switch( file.respawnState )
+			{
+				case 1:
+					RSpos = <4000,-4000,0>
+					lastState = file.respawnState
+					break
+				case 2:
+					RSpos = <3000,500,0>
+					lastState = file.respawnState
+					break
+				case 3:
+					RSpos = <1500,5000,1000>
+					lastState = file.respawnState
+					break
+					
+			}
+		}
+		
+		moveCloser = false
+		foreach( entity player in GetPlayerArray() )
+        {
+            if ( DistanceSqr( player.GetOrigin(), file.respawnWidow.mover.GetOrigin() ) <= 160000.0 )
+            {
+                moveCloser = true
+            }
+        }
+
+		if ( moveCloser )
+		{
+			thread ShipIdleAtTargetEnt_Method2( file.respawnWidow, file.malta.mover, <0,0,0>, <0,0,0>, RSpos )
+		}
+		else
+		{
+			thread ShipIdleAtTargetEnt_Method2( file.respawnWidow, file.malta.mover, <0,0,0>, <0,0,0>, RSpos + <2000,0,0> )
+		}
+		wait 0.05
+	}
+}
+
 
 #if DEV
 
@@ -18561,9 +18845,9 @@ void function PlayerFallingDeath( entity player )
 	{
 	FlagWait( "PlayerFallingDeathFlag" )
 	
-	// this just brakes it
+	// this just brakes it, so I added a try cacth
 	// level.nv.ShipTitles = SHIPTITLES_NONE
-	// player.Die()
+	player.Die()
 
 	if ( player.IsTitan() )
 	{

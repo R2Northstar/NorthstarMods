@@ -483,22 +483,42 @@ entity function GetBestSaveLocationEnt( array<entity> safeLocations )
 	return null
 }
 
+// overiding this to remove some of the triggers
 void function WriteRestoreLocationFromEntity( entity safeLocation )
 {
 	Assert( safeLocation != null )
-	entity player = GetFirstPlayer()
-	Assert( IsAlive( player ), "Tried to save while player was dead" )
 
-	if ( IsPilot( player ) )
+	entity player
+	
+	foreach ( p in GetPlayerArray() )
 	{
-		file.saveStoredWeapons = StoreWeapons( player )
+		if ( !IsAlive( p ) )
+			continue
+		player = p
+		if ( IsPilot( p ) )
+		{
+			file.saveStoredWeapons = StoreWeapons( p )
+
+			player = p
+			break
+		}
+		else
+		{
+			array<entity> weapons = p.GetMainWeapons()
+			Assert( weapons.len() == 1, "Player had multiple titan weapons" )
+			file.storedTitanWeapon = weapons[0].GetWeaponClassName()
+
+			player = p
+			break
+		}
 	}
-	else
-	{
-		array<entity> weapons = player.GetMainWeapons()
-		Assert( weapons.len() == 1, "Player had multiple titan weapons" )
-		file.storedTitanWeapon = weapons[0].GetWeaponClassName()
-	}
+
+	printl("=========================================")
+	printl("New checkpoint :" + safeLocation.GetOrigin())
+	printl("=========================================")
+	
+	thread TeleportAllExpectOne( safeLocation.GetOrigin(), player )
+	NewSaveLocation( safeLocation.GetOrigin() + <0,0,SAVE_SPAWN_VOFFSET> )
 
 	file.saveOrigin = safeLocation.GetOrigin() + <0,0,SAVE_SPAWN_VOFFSET>
 	file.saveAngles = safeLocation.GetAngles()

@@ -690,6 +690,9 @@ bool function ClientCommand_IntroOver( entity player, array<string> args )
 
 void function PlayerInEscapePod( entity player )
 {
+	
+	thread TeleportAllExpectOne( player.GetOrigin() + <0,0,5>, player )
+
 	player.EndSignal( "OnDestroy" )
 
 	Remote_CallFunction_Replay( player, "ServerCallback_WakingUpInEscapePod" )
@@ -791,6 +794,8 @@ void function PlayerInEscapePodViewCone( entity player )
 
 void function EscapePodFriendlies( entity player )
 {
+	thread TeleportAllExpectOne( player.GetOrigin() + <0,0,5>, player )
+
 	player.EndSignal( "OnDestroy" )
 
 	entity escapePod = GetEntByScriptName( "grunt_escape_pod" )
@@ -831,7 +836,7 @@ void function EscapePodFriendlies( entity player )
 		escapePodHelper.Solid()
 	}
 
-	escapePodGuy.SetNoTarget( false ) // error here
+	// escapePodGuy.SetNoTarget( false ) // error here
 	escapePodGuy.ClearInvulnerable()
 	escapePodHelper.ClearInvulnerable()
 }

@@ -12,7 +12,6 @@ global function ShouldEntTakeDamage_SPMP
 global function ShouldUseReplacementSpawn
 global function TryGameModeAnnouncement
 global function CodeCallback_OnClientConnectionStarted
-global function CodeCallback_OnPlayerKilled
 global function CreateNoSpawnArea
 global function DeleteNoSpawnArea
 global function IsSpawnpointValidDrop
@@ -20,13 +19,13 @@ global function ClientCommand_OpenDifficultyMenu
 global function CodeCallback_PlayerHasBeenConnectedForDuration
 global function OnPlayerKilled_DeathNotify
 global function GetSPLevelEnumForMapname
-global function RespawnPlayer
 global function Coop_GetLevelTransition
+global function Coop_LoadMapFromStartPoint
 global function Coop_ReloadCurrentMapFromStartPoint
 global function Coop_MapChange
-
-//added stuff idk
 global function ClientCommand_AllDialogueFinished
+global function OnTimeShiftGiveGlove
+global function Callback_WallrunBegin
 
 struct
 {
@@ -37,13 +36,7 @@ struct
 	int multiKillCount = 0
 } file
 
-struct
-{
-	array<bool> nextCheckpointAsPilot = []
-	int currentPilotBoolId = 0
-
-	vector lastSave = <0,0,0>
-} save
+array<string> CoopMaps = ["sp_training","sp_crashsite","sp_sewers1","sp_boomtown_start","sp_boomtown","sp_boomtown_end","sp_hub_timeshift","sp_timeshift_spoke02","sp_beacon","sp_beacon_spoke0","sp_tday","sp_s2s","sp_skyway_v1"]
 
 void function BaseGametype_Init_MPSP()
 {
@@ -70,8 +63,10 @@ void function BaseGametype_Init_MPSP()
 
 	FlagInit( "WeaponDropsAllowed" )
 	FlagSet( "WeaponDropsAllowed" )
-	
-	thread Init_triggers()
+
+	// thread DisableDeathBlur() // people keep complaning about the blur
+	// why not working :(
+	// SetConVarInt( "max_players", 8 )
 }
 
 void function CodeCallback_OnWeaponAttack( entity player, entity weapon, string weaponName, int ammoUsed )
@@ -111,14 +106,7 @@ void function CodeCallback_OnClientConnectionCompleted( entity player )
 
 	svGlobal.levelEnt.Signal( "PlayerDidSpawn", { player = player } )
 
-	// Player was already positioned at info_player_start in SpPlayerConnecting.
-	// Don't reposition him, in case movers have already pushed him.
-	// No, will 
-	if ( save.lastSave != <0,0,0>){
-		player.SetOrigin( save.lastSave )
-	}
-	player.RespawnPlayer( null )
-	AddPlayerMovementEventCallback( player, ePlayerMovementEvents.BEGIN_WALLRUN, Callback_WallrunBegin )
+	StartSpawn( player )
 }
 
 void function CodeCallback_OnClientDisconnected( entity player, string reason )
@@ -139,6 +127,7 @@ void function CodeCallback_OnClientDisconnected( entity player, string reason )
 		callbackFunc( player )
 	}
 
+	ServerCommand( "kick " + player.GetUID() )
 	player.Disconnected()
 	player.p.isDisconnected = true
 	player.CleanupMPClasses()
@@ -318,22 +307,27 @@ void function Coop_GetLevelTransition(string coop_mapname)
 void function Coop_MapChange()
 {
 	bool changeOnNextIteration = false
+	
 
-	for ( int i = 0; i < GetCurrentPlaylistGamemodesCount(); i++ )
+	// so playlists don't work in coop
+	foreach ( map in CoopMaps )
 	{
-		if ( GetCurrentPlaylistGamemodeByIndex( i ) == GAMETYPE )
+
+		if ( changeOnNextIteration )
 		{
-			for ( int j = 0; j < GetCurrentPlaylistGamemodeByIndexMapsCount( i ); j++ )
-			{
-				if ( changeOnNextIteration )
-				{
-					GameRules_ChangeMap( GetCurrentPlaylistGamemodeByIndexMapByIndex( i, j ), GetCurrentPlaylistGamemodeByIndex( i ) )
-					return
-				}
-			
-				if ( GetCurrentPlaylistGamemodeByIndexMapByIndex( i, j ) == GetMapName() )
-					changeOnNextIteration = true // change to next map/mode we iterate over
-			}
+			printl("==========================")
+			printl(" trying to change " + map )
+			printl("==========================")
+			GameRules_ChangeMap( map, GAMETYPE )// GetCurrentPlaylistGamemodeByIndexMapByIndex( i, j )
+			return
+		}
+	
+		if ( map == GetMapName() )// GetCurrentPlaylistGamemodeByIndexMapByIndex( i, j )
+		{
+			printl("==========================")
+			printl(" found current map " + !changeOnNextIteration)
+			printl("==========================")
+			changeOnNextIteration = true // change to next map/mode we iterate over
 		}
 	}
 }
@@ -409,201 +403,6 @@ void function CodeCallback_OnClientConnectionStarted( entity player )
 	thread PilotHealthRegenThinkSP( player )
 }
 
-void function RespawnPlayer(entity player)
-{
-	wait( 0.1 )
-	if ( !IsAlive( player ) ){
-		
-		printl("Respawning player:" + player.GetPlayerName())
-
-		if (GetPlayerArray().len() == 1){
-			// EmitSoundOnEntityOnlyToPlayer( player, player, "1_second_fadeout" )
-			
-			wait(1)
-			GameRules_ChangeMap( GetMapName() , "coop" )
-				
-		}
-		else{
-			wait(1)
-			// EmitSoundOnEntityOnlyToPlayer( player, player, "4_second_fadeout" )
-			while( !IsAlive( player ) ) 
-			{
-				bool NotZeroAlivePlayers = false
-				foreach( p in GetPlayerArray() )
-				{
-					// closestEnm = GetClosest( GetNPCArray(), player.GetOrigin() )
-
-					if (p != player && p.IsOnGround() )
-					{
-						try
-						{
-							player.s.inPostDeath = false
-							player.s.respawnSelectionDone = true
-							player.RespawnPlayer(null)
-							ClientCommand(player,"script_client thread MainHud_TurnOn_RUI( true )")
-							ScreenFadeFromBlack( player, 0.0, 0.0 )
-							player.SetOrigin( p.GetOrigin() )
-
-							if ( p.IsTitan() )
-							{
-								CreatePetTitanAtLocation( player, player.GetOrigin(), player.GetAngles() )
-								entity titan = player.GetPetTitan()
-								if ( titan != null )
-									titan.kv.alwaysAlert = false
-							}
-						}
-						catch( exception ){
-							return
-						}
-						
-					}
-					if (!IsAlive( p ))
-					{
-						NotZeroAlivePlayers = true
-					}
-				}
-				wait(0.1)
-				if (!NotZeroAlivePlayers)
-				{
-					try{
-						printl("============================")
-						printl("respawning all players")
-						printl("============================")
-						player.s.inPostDeath = false
-						player.s.respawnSelectionDone = true
-						player.RespawnPlayer(null)
-						ClientCommand(player,"script_client thread MainHud_TurnOn_RUI( true )")
-						ScreenFadeFromBlack( player, 0.0, 0.0 )
-						player.SetOrigin( save.lastSave )
-					}
-					catch( exception ){
-						return
-					}
-				}
-
-				wait(0.4)
-			}
-		}
-	}
-}
-
-void function DoHudDisplayForDeadPlayerThenReloadServer( entity player )
-{
-	printl("DoHudDisplayForDeadPlayerThenReloadServer Called!")
-
-	// array<entity> players = GetPlayerArray()
-	// string Coop_Dead_Player = player.GetPlayerName()
-	// 	foreach (entity p in players){
-	// 			if (p != null){
-	// 			SendHudMessage( p , Coop_Dead_Player + "Fucked up, laugh at them." , -1, 0.4, 255, 255, 0, 0, 0.15, 6, 0.15 )
-	// 			//ClientCommand( p , "RespawnNowSP" )
-	// 			}
-	//		}
-	//wait 3.0
-	//ServerCommand( "reload" )
-	//player.Signal( "OnRespawned" )
-	//player.EndSignal( "OnDestroy" )
-
-
-	//player.RespawnPlayer(null)
-	// player.WaitSignal("RespawnNow")
-	// RespawnPlayer(player)
-
-	// CodeCallback_OnPlayerRespawned(player)
-	//player.EndSignal( "RespawnNow" )
-	//player.EndSignal( "OnRespawned" )
-	//player.EndSignal( "RespawnNow" )
-}
-
-
-void function CodeCallback_OnPlayerKilled( entity player, var damageInfo )
-{
-	thread DoHudDisplayForDeadPlayerThenReloadServer( player )
-	thread PostDeathThread_SP( player, damageInfo )
-
-}
-
-function PostDeathThread_SP( entity player, damageInfo )
-{
-	printl("PostDeathThread_SP Called!")
-	array<entity> players = GetPlayerArray()
-	string Coop_Dead_Player = player.GetPlayerName()
-		foreach (entity p in players){
-				if (p != null){
-				SendHudMessage( p , Coop_Dead_Player + " Fucked up, laugh at them." , -1, 0.4, 255, 255, 0, 0, 0.15, 6, 0.15 )
-				}
-			}
-	if ( player.p.watchingPetTitanKillReplay )
-		return
-	
-	thread RespawnPlayer(player)
-
-	float timeOfDeath = Time()
-	player.p.postDeathThreadStartTime = Time()
-
-	Assert( IsValid( player ), "Not a valid player" )
-	printl("PreSignal:Ondestroy")
-	player.EndSignal( "OnDestroy" )
-	printl("AfterSignal:Ondestroy")
-	printl("PreSignal:OnRespawned")
-	player.EndSignal( "OnRespawned" )
-	printl("AfterSignal:OnRespawned")
-
-	player.p.deathOrigin = player.GetOrigin()
-	player.p.deathAngles = player.GetAngles()
-
-	player.s.inPostDeath = true
-	player.s.respawnSelectionDone = false
-
-	player.cloakedForever = false
-	player.stimmedForever = false
-	player.SetNoTarget( false )
-	player.SetNoTargetSmartAmmo( false )
-	player.ClearExtraWeaponMods()
-
-	entity attacker = DamageInfo_GetAttacker( damageInfo )
-	int methodOfDeath = DamageInfo_GetDamageSourceIdentifier( damageInfo )
-
-	player.p.rematchOrigin = player.p.deathOrigin
-	if ( IsValid( attacker ) && methodOfDeath == eDamageSourceId.titan_execution )
-	{
-		// execution can throw you out of the map
-		player.p.rematchOrigin = attacker.GetOrigin()
-	}
-
-	int attackerViewIndex = attacker.GetIndexForEntity()
-
-	player.SetPredictionEnabled( false )
-	player.Signal( "RodeoOver" )
-	printl("AfterSignal:RodeoOver")
-	player.ClearParent()
-	printl("ClearParent")
-
-	bool showedDeathHint = ShowDeathHintSP( player, damageInfo )
-	printl("AfterShowDeathHint"+showedDeathHint)
-	CodeCallback_OnPlayerRespawned(player)
-	int damageSource = DamageInfo_GetDamageSourceIdentifier( damageInfo )
-	if ( damageSource != eDamageSourceId.fall )
-	{
-		player.StartObserverMode( OBS_MODE_DEATHCAM )
-		if ( ShouldSetObserverTarget( attacker ) )
-			player.SetObserverTarget( attacker )
-		else
-			player.SetObserverTarget( null )
-	}
-
-
-
-
-	//ReloadForMissionFailure( reloadExtraDelay )
-	// ClientCommand(player,"CC_RespawnPlayer")
-	// player.RespawnPlayer(null)
-	// DoHudDisplayForDeadPlayerThenReloadServer( player )
-	//ScreenFadeFromBlack( player, 1.0, 0.75 )
-
-}
-
-
 
 
 function FinalPlayerUpdate( entity player )
@@ -616,144 +415,55 @@ function FinalPlayerUpdate( entity player )
 	player.s.ranFinalPlayerUpdate <- true
 }
 
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-//                                                Triggers                                                            //
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-
-void function Init_triggers()
+void function OnTimeShiftGiveGlove( entity player )
 {
-	switch ( GetMapName() )
+
+	if ( GetMapName() == "sp_timeshift_spoke02" && Flag( "PlayerPickedUpTimeshiftDevice" ) )
 	{
-		case "sp_training":
-			CreateGauntletTeleportBackTrigger()
-			CreateTeleportTrigger( < -6130,-11703,-255 >, 600.0, 100.0, 100.0, true ) // the tp out of the sim pod 
-			CreateTeleportTrigger( < -7465,314,144 >, 1000.0, 500.0, 100.0, true ) // the armory
-			CreateTeleportTrigger( < 1311,74,-2522.6 >, 500.0, 500.0, 100.0, true ) // fs titan call
-			CreateTeleportTrigger( < 10563,-10234.8,-6026.91 >, 500.0, 500.0, 100.0, true ) // the last time we see the sim pod
-			break
+		player.SetPlayerSettings( "pilot_solo_timeshift" )
+		if ( IsValid( player.GetOffhandWeapon( OFFHAND_SPECIAL ) ) )
+			player.TakeOffhandWeapon( OFFHAND_SPECIAL )
+		player.GiveOffhandWeapon( "mp_ability_timeshift", 1 )
 
-		// case "sp_crashsite":
-		// 	return eSPLevel.WILDS
-
-		case "sp_sewers1":
-			CreateTeleportTrigger( < 9468,1125,216.1 >, 1500.0, 2000.0, 100.0, false ) // the first time you enter the sewers as titan
-			CreateTeleportTrigger( < 9670,6809,784 >, 500.0, 1000.0, 100.0, true ) // the button closign door
-			CreateTeleportTrigger( < -891,1345,288.031 >, 500.0, 1000.0, 100.0, true ) // the door clsoing when you help militia grunts
-			break
-
-		// case "sp_boomtown_start":
-		// case "sp_boomtown":
-		// case "sp_boomtown_end":
-		// 	return eSPLevel.BOOM_TOWN
-
-		// case "sp_hub_timeshift":
-		// case "sp_timeshift_spoke02":
-		// 	return eSPLevel.TIME_SHIFT
-
-		// case "sp_beacon":
-		// case "sp_beacon_spoke0":
-		// 	return eSPLevel.BEACON
-
-		case "sp_tday":
-			CreateMapChangeTrigger( < 6683,12750,2432 >, 5000.0, 2000.0, 100.0)
-			CreateTeleportTrigger( < 1585,-3711,227.6 >, 1000.0, 2000.0, 100.0, true ) // the door
-			CreateTeleportTrigger( < -6622,3890,1920.6 >, 2000.0, 2000.0, 100.0, true ) // the elevator exit
-			CreateTeleportTrigger( < -6631,14697,2560.4 >, 2000.0, 2000.0, 100.0, true ) // the last run to the ship
-			break
-
-		// case "sp_s2s":
-		// 	return eSPLevel.SHIP2SHIP
-
-		// case "sp_skyway_v1":
-		// 	return eSPLevel.SKYWAY
-
-		// default:
-			
+		entity viewModel = player.GetFirstPersonProxy()
+		viewModel.SetSkin( 1 )
 	}
 	
-	// its here because when I do from the start the game crashes
-	wait( 10 )
-	save.lastSave = GetEnt( "info_player_start" ).GetOrigin()
 }
 
-void function CreateTeleportTrigger( vector origin, float radius, float top, float bottom, bool TpAsPilot )
+
+/*
+██████╗ ██╗   ██╗███╗   ███╗██████╗ ███████╗██╗████████╗███████╗    ███████╗██████╗  ██████╗ ███╗   ███╗
+██╔══██╗██║   ██║████╗ ████║██╔══██╗██╔════╝██║╚══██╔══╝██╔════╝    ██╔════╝██╔══██╗██╔═══██╗████╗ ████║
+██║  ██║██║   ██║██╔████╔██║██████╔╝███████╗██║   ██║   █████╗      █████╗  ██████╔╝██║   ██║██╔████╔██║
+██║  ██║██║   ██║██║╚██╔╝██║██╔═══╝ ╚════██║██║   ██║   ██╔══╝      ██╔══╝  ██╔══██╗██║   ██║██║╚██╔╝██║
+██████╔╝╚██████╔╝██║ ╚═╝ ██║██║     ███████║██║   ██║   ███████╗    ██║     ██║  ██║╚██████╔╝██║ ╚═╝ ██║
+╚═════╝  ╚═════╝ ╚═╝     ╚═╝╚═╝     ╚══════╝╚═╝   ╚═╝   ╚══════╝    ╚═╝     ╚═╝  ╚═╝ ╚═════╝ ╚═╝     ╚═╝
+                                                                                                        
+ ██████╗ ████████╗██╗  ██╗███████╗██████╗     ███████╗██╗██╗     ███████╗███████╗
+██╔═══██╗╚══██╔══╝██║  ██║██╔════╝██╔══██╗    ██╔════╝██║██║     ██╔════╝██╔════╝
+██║   ██║   ██║   ███████║█████╗  ██████╔╝    █████╗  ██║██║     █████╗  ███████╗
+██║   ██║   ██║   ██╔══██║██╔══╝  ██╔══██╗    ██╔══╝  ██║██║     ██╔══╝  ╚════██║
+╚██████╔╝   ██║   ██║  ██║███████╗██║  ██║    ██║     ██║███████╗███████╗███████║
+ ╚═════╝    ╚═╝   ╚═╝  ╚═╝╚══════╝╚═╝  ╚═╝    ╚═╝     ╚═╝╚══════╝╚══════╝╚══════╝
+*/
+
+// so everyone gets the timeshift abilty
+function ServerCallback_TimeDeviceAcquired()
 {
-	printl(" created Teleport trigger ")
+	FlagSet( "PlayerPickedUpTimeshiftDevice" )
 
-	array<entity> ents = []
-	entity trigger = _CreateScriptCylinderTriggerInternal( origin, radius, TRIG_FLAG_PLAYERONLY, ents, top, bottom )
+	foreach ( p in GetPlayerArray() )
+	{
+		p.SetPlayerSettings( "pilot_solo_timeshift" )
+		if ( IsValid( p.GetOffhandWeapon( OFFHAND_SPECIAL ) ) )
+			p.TakeOffhandWeapon( OFFHAND_SPECIAL )
+		p.GiveOffhandWeapon( "mp_ability_timeshift", 1 )
 
-	AddCallback_ScriptTriggerEnter( trigger, OnTeleportTriggered )
-
-	save.nextCheckpointAsPilot.append( TpAsPilot )
-}
-
-void function OnTeleportTriggered( entity trigger, entity player )
-{
-	printl("=========================================")
-	printl("New checkpoint :" + trigger.GetOrigin())
-	printl("=========================================")
-
-	foreach( p in GetPlayerArray() ){
-		if (p != player){
-			wait(0.01)
-			p.SetOrigin( trigger.GetOrigin() )
-			
-			// well I am that boththred to make this work rn
-			// if ( save.nextCheckpointAsPilot[ save.currentPilotBoolId ] )
-			// 	TitanBecomesPilot( player, player.GetTitan() )
-			// else
-			// 	PilotBecomesTitan( player, player.GetTitan() )
-
-			p.SetHealth( p.GetMaxHealth() )
-			SendHudMessage( p , "You were teleported the next checpoint" , -1, 0.4, 255, 255, 0, 0, 0.15, 6, 0.15 )
-		}
-		p.kv.CollisionGroup = TRACE_COLLISION_GROUP_PLAYER
+		entity viewModel = p.GetFirstPersonProxy()
+		viewModel.SetSkin( 1 )
 	}
-	
-	save.lastSave = trigger.GetOrigin()
-	save.currentPilotBoolId += 1
-
-	trigger.Destroy()
 }
-
-void function CreateMapChangeTrigger( vector origin, float radius, float top, float bottom)
-{
-	array<entity> ents = []
-	entity trigger = _CreateScriptCylinderTriggerInternal( origin, radius, TRIG_FLAG_PLAYERONLY, ents, top, bottom )
-
-	AddCallback_ScriptTriggerEnter( trigger, OnMapChangeTriggered )
-}
-
-void function OnMapChangeTriggered( entity trigger, entity player )
-{
-	printl("=========================================")
-	printl("Map change :" + trigger.GetOrigin())
-	printl("=========================================")
-	
-	trigger.Destroy()
-
-	wait( 3 )
-	Coop_MapChange()
-}
-
-void function CreateGauntletTeleportBackTrigger()
-{
-	array<entity> ents = []
-	entity trigger = _CreateScriptCylinderTriggerInternal( < 2263,7538,304 >, 100.0, TRIG_FLAG_PLAYERONLY, ents, 100.0, 100.0 )
-
-	AddCallback_ScriptTriggerEnter( trigger, OnTeleportBackTriggered )
-}
-
-void function OnTeleportBackTriggered( entity trigger, entity player )
-{
-	player.SetOrigin( < -5677,197,48 > )
-}
-
-/*------------------------------------------------------------------------
-DUMPSITE FROM OTHER FILES
---------------------------------------------------------------------------*/
 
 // this function doesn't seam to exits but its still called in blood and rust
 void function SewerSplit_PlayerCollectableThink()

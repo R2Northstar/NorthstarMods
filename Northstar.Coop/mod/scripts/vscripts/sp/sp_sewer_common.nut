@@ -88,7 +88,7 @@ void function ToxicTriggersSetup()
 
 void function Sewer_PlayerTookDamage( entity ent, var damageInfo )
 {
-	if ( !IsAlive( player ) )
+	if ( !IsAlive( ent ) )
 		return
 
 	entity attacker = DamageInfo_GetAttacker( damageInfo )
