@@ -12,7 +12,6 @@ global function ShouldEntTakeDamage_SPMP
 global function ShouldUseReplacementSpawn
 global function TryGameModeAnnouncement
 global function CodeCallback_OnClientConnectionStarted
-global function CodeCallback_OnPlayerKilled
 global function CreateNoSpawnArea
 global function DeleteNoSpawnArea
 global function IsSpawnpointValidDrop
@@ -20,13 +19,13 @@ global function ClientCommand_OpenDifficultyMenu
 global function CodeCallback_PlayerHasBeenConnectedForDuration
 global function OnPlayerKilled_DeathNotify
 global function GetSPLevelEnumForMapname
-global function RespawnPlayer
 global function Coop_GetLevelTransition
+global function Coop_LoadMapFromStartPoint
 global function Coop_ReloadCurrentMapFromStartPoint
 global function Coop_MapChange
-
-//added stuff idk
 global function ClientCommand_AllDialogueFinished
+global function OnTimeShiftGiveGlove
+global function Callback_WallrunBegin
 
 struct
 {
@@ -67,6 +66,7 @@ void function BaseGametype_Init_MPSP()
 
 	// thread DisableDeathBlur() // people keep complaning about the blur
 	// why not working :(
+	// SetConVarInt( "max_players", 8 )
 }
 
 void function CodeCallback_OnWeaponAttack( entity player, entity weapon, string weaponName, int ammoUsed )
@@ -106,20 +106,7 @@ void function CodeCallback_OnClientConnectionCompleted( entity player )
 
 	svGlobal.levelEnt.Signal( "PlayerDidSpawn", { player = player } )
 
-	// Player was already positioned at info_player_start in SpPlayerConnecting.
-	// Don't reposition him, in case movers have already pushed him.
-	// No, will
-	if ( "sp_s2s" == GetMapName() && GetPlayerArray()[0] != player && IsValid( GetWidow().ship ) ){
-		player.SetOrigin( GetWidow().ship.GetOrigin() + <0,0,200> )
-	}
-	else if ( GetSaveLocation() != <0,0,0> ){
-		player.SetOrigin( GetSaveLocation() )
-	}
-
-	OnTimeShiftGiveGlove( player )
-
-	player.RespawnPlayer( null )
-	AddPlayerMovementEventCallback( player, ePlayerMovementEvents.BEGIN_WALLRUN, Callback_WallrunBegin )
+	StartSpawn( player )
 }
 
 void function CodeCallback_OnClientDisconnected( entity player, string reason )
@@ -320,7 +307,9 @@ void function Coop_GetLevelTransition(string coop_mapname)
 void function Coop_MapChange()
 {
 	bool changeOnNextIteration = false
+	
 
+	// so playlists don't work in coop
 	foreach ( map in CoopMaps )
 	{
 
@@ -413,198 +402,6 @@ void function CodeCallback_OnClientConnectionStarted( entity player )
 
 	thread PilotHealthRegenThinkSP( player )
 }
-
-void function RespawnPlayer(entity player)
-{
-	wait( 1 )
-	if ( !IsAlive( player ) ){
-		
-		printl("Respawning player:" + player.GetPlayerName())
-
-		if (GetPlayerArray().len() == 1){
-			// EmitSoundOnEntityOnlyToPlayer( player, player, "1_second_fadeout" )
-			
-			wait(1)
-			GameRules_ChangeMap( GetMapName() , GAMETYPE )
-				
-		}
-		else{
-			if ( "sp_s2s" == GetMapName() ) 
-			{
-				try{
-				player.s.inPostDeath = false
-				player.s.respawnSelectionDone = true
-				player.RespawnPlayer(null)
-				ClientCommand(player,"script_client thread MainHud_TurnOn_RUI( true )")
-				ScreenFadeFromBlack( player, 0.0, 0.0 )
-				player.SetOrigin( GetWidow().ship.GetOrigin() + <0,0,300> )
-				}
-				catch( exception ){
-					wait( 1 )
-					print("------------------------")
-					print( GetWidow().ship.GetOrigin() )
-					print("------------------------")
-					thread RespawnPlayer( player )
-				}
-				return
-			}
-
-			wait( 1 )
-			// EmitSoundOnEntityOnlyToPlayer( player, player, "4_second_fadeout" )
-			while( !IsAlive( player ) ) 
-			{
-				bool NotZeroAlivePlayers = false
-				foreach( p in GetPlayerArray() )
-				{
-					// closestEnm = GetClosest( GetNPCArray(), player.GetOrigin() )
-
-					if (p != player && p.IsOnGround() )
-					{
-						try
-						{
-							player.s.inPostDeath = false
-							player.s.respawnSelectionDone = true
-							player.RespawnPlayer(null)
-							ClientCommand(player,"script_client thread MainHud_TurnOn_RUI( true )")
-							ScreenFadeFromBlack( player, 0.0, 0.0 )
-							player.SetOrigin( p.GetOrigin() )
-
-							if ( p.IsTitan() )
-							{
-								CreatePetTitanAtLocation( player, player.GetOrigin(), player.GetAngles() )
-								entity titan = player.GetPetTitan()
-								if ( titan != null )
-									titan.kv.alwaysAlert = false
-							}
-							OnTimeShiftGiveGlove( player )
-						}
-						catch( exception ){
-							return
-						}	
-					}
-				}
-				wait(0.5)
-			}
-		}
-	}
-}
-
-void function DoHudDisplayForDeadPlayerThenReloadServer( entity player )
-{
-	printl("DoHudDisplayForDeadPlayerThenReloadServer Called!")
-
-	// array<entity> players = GetPlayerArray()
-	// string Coop_Dead_Player = player.GetPlayerName()
-	// 	foreach (entity p in players){
-	// 			if (p != null){
-	// 			SendHudMessage( p , Coop_Dead_Player + "Fucked up, laugh at them." , -1, 0.4, 255, 255, 0, 0, 0.15, 6, 0.15 )
-	// 			//ClientCommand( p , "RespawnNowSP" )
-	// 			}
-	//		}
-	//wait 3.0
-	//ServerCommand( "reload" )
-	//player.Signal( "OnRespawned" )
-	//player.EndSignal( "OnDestroy" )
-
-
-	//player.RespawnPlayer(null)
-	// player.WaitSignal("RespawnNow")
-	// RespawnPlayer(player)
-
-	// CodeCallback_OnPlayerRespawned(player)
-	//player.EndSignal( "RespawnNow" )
-	//player.EndSignal( "OnRespawned" )
-	//player.EndSignal( "RespawnNow" )
-}
-
-
-void function CodeCallback_OnPlayerKilled( entity player, var damageInfo )
-{
-	thread DoHudDisplayForDeadPlayerThenReloadServer( player )
-	thread PostDeathThread_SP( player, damageInfo )
-
-}
-
-function PostDeathThread_SP( entity player, damageInfo )
-{
-	printl("PostDeathThread_SP Called!")
-	array<entity> players = GetPlayerArray()
-	string Coop_Dead_Player = player.GetPlayerName()
-		foreach (entity p in players){
-				if (p != null){
-				SendHudMessage( p , Coop_Dead_Player + " Fucked up, laugh at them." , -1, 0.4, 255, 255, 0, 0, 0.15, 6, 0.15 )
-				}
-			}
-	if ( player.p.watchingPetTitanKillReplay )
-		return
-	
-	thread RespawnPlayer(player)
-
-	float timeOfDeath = Time()
-	player.p.postDeathThreadStartTime = Time()
-
-	Assert( IsValid( player ), "Not a valid player" )
-	printl("PreSignal:Ondestroy")
-	player.EndSignal( "OnDestroy" )
-	printl("AfterSignal:Ondestroy")
-	printl("PreSignal:OnRespawned")
-	player.EndSignal( "OnRespawned" )
-	printl("AfterSignal:OnRespawned")
-
-	player.p.deathOrigin = player.GetOrigin()
-	player.p.deathAngles = player.GetAngles()
-
-	player.s.inPostDeath = true
-	player.s.respawnSelectionDone = false
-
-	player.cloakedForever = false
-	player.stimmedForever = false
-	player.SetNoTarget( false )
-	player.SetNoTargetSmartAmmo( false )
-	player.ClearExtraWeaponMods()
-
-	entity attacker = DamageInfo_GetAttacker( damageInfo )
-	int methodOfDeath = DamageInfo_GetDamageSourceIdentifier( damageInfo )
-
-	player.p.rematchOrigin = player.p.deathOrigin
-	if ( IsValid( attacker ) && methodOfDeath == eDamageSourceId.titan_execution )
-	{
-		// execution can throw you out of the map
-		player.p.rematchOrigin = attacker.GetOrigin()
-	}
-
-	int attackerViewIndex = attacker.GetIndexForEntity()
-
-	player.SetPredictionEnabled( false )
-	player.Signal( "RodeoOver" )
-	printl("AfterSignal:RodeoOver")
-	player.ClearParent()
-	printl("ClearParent")
-
-	bool showedDeathHint = ShowDeathHintSP( player, damageInfo )
-	printl("AfterShowDeathHint"+showedDeathHint)
-	CodeCallback_OnPlayerRespawned(player)
-	int damageSource = DamageInfo_GetDamageSourceIdentifier( damageInfo )
-	if ( damageSource != eDamageSourceId.fall )
-	{
-		player.StartObserverMode( OBS_MODE_DEATHCAM )
-		if ( ShouldSetObserverTarget( attacker ) )
-			player.SetObserverTarget( attacker )
-		else
-			player.SetObserverTarget( null )
-	}
-
-
-
-
-	//ReloadForMissionFailure( reloadExtraDelay )
-	// ClientCommand(player,"CC_RespawnPlayer")
-	// player.RespawnPlayer(null)
-	// DoHudDisplayForDeadPlayerThenReloadServer( player )
-	//ScreenFadeFromBlack( player, 1.0, 0.75 )
-
-}
-
 
 
 

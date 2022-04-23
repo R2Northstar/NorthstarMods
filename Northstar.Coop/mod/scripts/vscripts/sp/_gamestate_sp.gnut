@@ -21,6 +21,7 @@ global function DisableFriendlyHighlight
 global function EnableFriendlyHighlight
 global function SP_PlayerLastSlideTime
 global function CreatePetTitanAtLocation
+global function CreatePetTitanAtLocationWithTf
 
 //global function CodeCallback_Ping
 
@@ -362,6 +363,29 @@ void function CreatePetTitanAtLocation( entity player, vector origin, vector ang
 	titan.DisableHibernation()
 }
 
+void function CreatePetTitanAtLocationWithTf( entity player, vector origin, vector angles)
+{
+	Assert( IsValid( file.spPetTitanStart ) )
+	// Player is in his Titan, don't create a titan
+	if ( player.IsTitan() )
+		return
+
+	// Player already has a pet titan, don't create one
+	entity petTitan = player.GetPetTitan()
+	if ( IsValid( petTitan ) )
+		return
+
+	// Get loadout for map
+	TitanLoadoutDef loadout = GetTitanLoadoutForCurrentMap()
+
+	entity titan = CreateAutoTitanForPlayer_FromTitanLoadout( player, loadout, origin, angles )
+	SetSpawnOption_Titanfall( titan )
+	DispatchSpawn( titan )
+	player.SetPetTitan( titan )
+
+	titan.DisableHibernation()
+}
+
 /************************************************************************************************\
 
 ########     ###    ##      ##    ###     ######  ########
@@ -634,6 +658,9 @@ void function SoulDeath_ReloadOnPetTitanDeath_Thread( entity soul, var damageInf
 	entity player = soul.GetBossPlayer()
 
 	if ( !IsValid( player ) )
+		return
+	
+	if ( !player.hasConnected )
 		return
 
 	if ( !level.nv.replayDisabled )

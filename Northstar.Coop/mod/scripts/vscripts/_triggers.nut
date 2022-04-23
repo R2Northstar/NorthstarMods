@@ -1,8 +1,18 @@
+untyped
 global function NewSaveLocation
 global function TeleportAllExpectOne
 global function Init_triggers
 global function GetSaveLocation
+global function GetCheckPointInfo
+global function SetPlayer0
+global function GetPlayer0
 
+global struct CheckPointInfo
+{
+	vector pos
+	bool RsPilot
+	entity player0
+}
 
 struct
 {
@@ -14,6 +24,8 @@ struct
 	bool BreakTriggers = false
 
 	vector lastSave = <0,0,0>
+
+	entity player0
 } save
 
 /*
@@ -125,6 +137,18 @@ void function OnTeleportTriggered( entity trigger, entity player )
 	printl("=========================================")
 
 	thread TeleportAllExpectOne( trigger.GetOrigin(), player )
+	vector destination = trigger.GetOrigin()
+
+	foreach( entity p in GetPlayerArray() )
+	{
+		if ( p != player )
+		{
+			if ( save.nextCheckpointAsPilot[ save.currentPilotBoolId ] )
+				thread MakePlayerPilot( p, destination )
+			else
+				thread MakePlayerTitan( p, destination )
+		}
+	}
 	
 	save.lastSave = trigger.GetOrigin()
 	save.currentPilotBoolId += 1
@@ -246,35 +270,62 @@ vector function GetSaveLocation()
 	return save.lastSave
 }
 
-void function TeleportAllExpectOne( vector origin, entity one )
+void function TeleportAllExpectOne( vector destination, entity ornull ThisPlayer, bool display_notification = true )
 {
-	foreach( p in GetPlayerArray() ){
-		if (p != one){
+	foreach( entity player in GetPlayerArray() )
+	{
+		if ( player != ThisPlayer )
+		{
 			WaitFrame()
 			try
 			{
-				p.SetOrigin( origin )
-			
-				// well I am that boththred to make this work rn
-				// if ( save.nextCheckpointAsPilot[ save.currentPilotBoolId ] )
-					// entity soul = GetSoulFromPlayer( pilot )
-					// soul.Signal( "pilot_Disembark" )
-					// pilot.Signal( "pilot_Disembark" )
-					// thread PlayerWindFX( pilot )
-				// 	TitanBecomesPilot( player, player.GetTitan() )
-				// else
-					// entity soul = GetSoulFromPlayer( pilot )
-					// soul.Signal( "pilot_Embark" )
-					// pilot.Signal( "pilot_Embark" )
-					// thread PlayerWindFX( titan )
-				// 	PilotBecomesTitan( player, player.GetTitan() )
+				entity mover = CreateOwnedScriptMover( player )
+				player.SetParent( mover )
+				mover.MoveTo( destination, 0.5, 0, 0 )
+				PhaseShift( player, 0.1, 1 )
 
-				p.SetHealth( p.GetMaxHealth() )
-				SendHudMessage( p , "You were teleported the next checkpoint" , -1, 0.4, 255, 255, 0, 0, 0.15, 6, 0.15 )
-				p.kv.CollisionGroup = TRACE_COLLISION_GROUP_PLAYER
+				player.SetHealth( player.GetMaxHealth() )
+				if ( display_notification )
+					Chat_ServerPrivateMessage( player, "You are being moved the next checkpoint", false )
 			}
 			catch( exception ){}
 		}
 	}
-	one.kv.CollisionGroup = TRACE_COLLISION_GROUP_PLAYER
+
+	wait 0.6
+
+	foreach( entity player in GetPlayerArray() )
+	{
+		if ( player != ThisPlayer )
+		{
+			WaitFrame()
+			try
+			{
+				player.ClearParent()
+			}
+			catch( exception ){}
+		}
+	}
+}
+
+CheckPointInfo function GetCheckPointInfo()
+{
+	CheckPointInfo Info
+
+	if ( save.nextCheckpointAsPilot.len() != 0 )
+		Info.RsPilot = save.nextCheckpointAsPilot[ save.currentPilotBoolId ]
+	
+	Info.pos = save.lastSave
+	Info.player0 = save.player0
+	return Info
+}
+
+void function SetPlayer0( entity player )
+{
+    save.player0 = player
+}
+
+entity function GetPlayer0()
+{
+    return save.player0
 }
