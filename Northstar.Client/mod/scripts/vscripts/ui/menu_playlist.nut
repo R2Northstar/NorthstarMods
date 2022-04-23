@@ -64,53 +64,59 @@ bool function PlaylistButtonInit( var button, int elemNum )
 }
 
 asset function GetPlaylistImage( string playlistName )
-{
+{	
+	var dataTable = GetDataTable( $"datatable/playlist_items.rpak" )
+
 	string imageName = GetPlaylistVarOrUseValue( playlistName, "image", "default" )
 	asset levelImage
-	
+		
 	if ( imageName == "custom" )
 	{
-		string customImage = GetPlaylistVarOrUseValue( playlistName, "custom_image", "" )
+		imageName = GetPlaylistVarOrUseValue( playlistName, "custom_image", "" )
 		// ensure people aren't trying to do some fuckery with this
-		if ( customImage.find( "\"" ) != null )
-			customImage = ""
+		if ( imageName.find( "\"" ) != null )
+			imageName = ""
 		
-		// hell on earth
-		levelImage = expect asset( compilestring( "return $\"" + customImage + "\"" )() )
-	}
-	else
-	{
-		var dataTable = GetDataTable( $"datatable/playlist_items.rpak" )
-		int row = GetDataTableRowMatchingStringValue( dataTable, GetDataTableColumnByName( dataTable, "playlist" ), imageName )
-		levelImage = GetDataTableAsset( dataTable, row, GetDataTableColumnByName( dataTable, "image" ) )
+		// if this is in the datatable, use the datatable image rather than the raw path
+		if ( GetDataTableRowMatchingStringValue( dataTable, GetDataTableColumnByName( dataTable, "playlist" ), imageName ) == -1 )
+		{
+			// hell on earth
+			return expect asset( compilestring( "return $\"" + imageName + "\"" )() )
+		}
 	}
 
+	int row = GetDataTableRowMatchingStringValue( dataTable, GetDataTableColumnByName( dataTable, "playlist" ), imageName )
+	levelImage = GetDataTableAsset( dataTable, row, GetDataTableColumnByName( dataTable, "image" ) )
+	
 	return levelImage
 }
 
 asset function GetPlaylistThumbnailImage( string playlistName )
 {
+	var dataTable = GetDataTable( $"datatable/playlist_items.rpak" )
+
 	string imageName = GetPlaylistVarOrUseValue( playlistName, "image", playlistName )
 	asset levelImage
 	
 	if ( imageName == "custom" )
 	{
-		string customImage = GetPlaylistVarOrUseValue( playlistName, "custom_thumbnail", "" )
+		imageName = GetPlaylistVarOrUseValue( playlistName, "custom_thumbnail", "" )
 		// ensure people aren't trying to do some fuckery with this
-		if ( customImage.find( "\"" ) != null )
-			customImage = ""
+		if ( imageName.find( "\"" ) != null )
+			imageName = ""
 		
-		// hell on earth
-		levelImage = expect asset( compilestring( "return $\"" + customImage + "\"" )() )
+		// if this is in the datatable, use the datatable image rather than the raw path
+		if ( GetDataTableRowMatchingStringValue( dataTable, GetDataTableColumnByName( dataTable, "playlist" ), imageName ) == -1 )
+		{
+			// hell on earth
+			return expect asset( compilestring( "return $\"" + imageName + "\"" )() )
+		}
 	}
-	else
-	{
-		var dataTable = GetDataTable( $"datatable/playlist_items.rpak" )
-		int row = GetDataTableRowMatchingStringValue( dataTable, GetDataTableColumnByName( dataTable, "playlist" ), imageName )
-		if ( row == -1 )
-			row = GetDataTableRowMatchingStringValue( dataTable, GetDataTableColumnByName( dataTable, "playlist" ), "default" )
-		levelImage = GetDataTableAsset( dataTable, row, GetDataTableColumnByName( dataTable, "thumbnail" ) )
-	}
+
+	int row = GetDataTableRowMatchingStringValue( dataTable, GetDataTableColumnByName( dataTable, "playlist" ), imageName )
+	if ( row == -1 )
+		row = GetDataTableRowMatchingStringValue( dataTable, GetDataTableColumnByName( dataTable, "playlist" ), "default" )
+	levelImage = GetDataTableAsset( dataTable, row, GetDataTableColumnByName( dataTable, "thumbnail" ) )
 
 	return levelImage
 }
