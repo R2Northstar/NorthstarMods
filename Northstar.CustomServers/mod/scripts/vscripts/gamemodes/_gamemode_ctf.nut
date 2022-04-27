@@ -89,8 +89,8 @@ void function RateSpawnpoints_CTF( int checkClass, array<entity> spawnpoints, in
 		{
 			// determine the angles of the lines we need to be within to be rated here
 			// magic number gives roughly ~8deg from right mid to base on glitch
-			float ratingAnglePos = flagDist / 0.0026 
-			float ratingAngleNeg = flagDist / -0.0026 
+			float ratingAnglePos = flagDist * 0.0026 
+			float ratingAngleNeg = flagDist * -0.0026 
 			ratingAngleNeg = ( ( ( ratingAngleNeg % 360 ) + 360 ) % 360 ) // this is probably shit i just copied a negative modulo func
 			
 			// calc angle between our spawnpoint and frontline, check if it's within the previous 2 angles			
