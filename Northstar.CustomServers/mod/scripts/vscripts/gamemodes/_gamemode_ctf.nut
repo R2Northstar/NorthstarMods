@@ -84,7 +84,7 @@ void function RateSpawnpoints_CTF( int checkClass, array<entity> spawnpoints, in
 		// assume 150 is the max possible rating, with a range of 50-150 if within the initial rating radius, and 0-50 outside of it
 		float dist = Distance2D( spawnpoint.GetOrigin(), frontline.origin )
 		if ( dist <= initialRatingRad )
-			rating = 50 + ( ( ( initialRatingRad / dist ) - initialRatingRad ) * 100 )
+			rating = 50 + ( ( 1 - ( dist / initialRatingRad ) ) * 100 )
 		else
 		{
 			// determine the angles of the lines we need to be within to be rated here
@@ -97,7 +97,7 @@ void function RateSpawnpoints_CTF( int checkClass, array<entity> spawnpoints, in
 			float angle = atan2( spawnpoint.GetOrigin().y - frontline.origin.y, spawnpoint.GetOrigin().x - frontline.origin.x ) * ( 180 / PI )
 			if ( angle <= ratingAnglePos && angle <= ratingAngleNeg )
 				// max out at flagDist
-				rating = ( ( ( flagDist / dist ) - flagDist ) * 50 )
+				rating = ( ( 1 - ( dist / flagDist ) ) * 50 )
 		}
 		
 		spawnpoint.CalculateRating( checkClass, player.GetTeam(), rating, rating > 0 ? rating * 0.25 : rating )
