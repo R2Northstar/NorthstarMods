@@ -42,7 +42,6 @@ void function CaptureTheFlag_Init()
 	AddCallback_OnPilotBecomesTitan( DropFlagForBecomingTitan )
 	
 	SetSpawnZoneRatingFunc( DecideSpawnZone_CTF )
-	AddSpawnpointValidationRule( VerifyCTFSpawnpoint )
 	
 	RegisterSignal( "FlagReturnEnded" )
 	RegisterSignal( "ResetDropTimeout" )
@@ -67,33 +66,42 @@ void function CaptureTheFlag_Init()
 
 void function RateSpawnpoints_CTF( int checkClass, array<entity> spawnpoints, int team, entity player ) 
 {
-	RateSpawnpoints_SpawnZones( checkClass, spawnpoints, team, player )
-}
-
-bool function VerifyCTFSpawnpoint( entity spawnpoint, int team )
-{
-	// ensure spawnpoints aren't too close to enemy base
+	// get the player's frontline and try to spawn them there, then give less good ratings as we get away from the frontline in the direction of the player's base
+	Frontline frontline = GetFrontline( player.GetTeam() )
 	
-	if ( HasSwitchedSides() )
-		team = GetOtherTeam( team )
+	entity ourFlag = GetFlagForTeam( player.GetTeam() )
+	entity theirFlag = GetFlagForTeam( GetOtherTeam( player.GetTeam() ) )
+	float flagDist = Distance2D( ourFlag.GetOrigin(), theirFlag.GetOrigin() )
 	
-	array<entity> startSpawns = SpawnPoints_GetPilotStart( team )
-	array<entity> enemyStartSpawns = SpawnPoints_GetPilotStart( GetOtherTeam( team ) )
+	// dividing dist between flags by 3ish gives a good radius for the initial circle
+	// should this be based on the distance to the frontline? unsure, it probably should be based more on map size than spawn pos anyway
+	float initialRatingRad = flagDist / 2.75 / 2
 	
-	vector averageFriendlySpawns
-	vector averageEnemySpawns
-	
-	foreach ( entity spawn in startSpawns )
-		averageFriendlySpawns += spawn.GetOrigin()
-	
-	averageFriendlySpawns /= startSpawns.len()
-	
-	foreach ( entity spawn in enemyStartSpawns )
-		averageEnemySpawns += spawn.GetOrigin()
-	
-	averageEnemySpawns /= startSpawns.len()
-	
-	return Distance2D( spawnpoint.GetOrigin(), averageEnemySpawns ) / Distance2D( averageFriendlySpawns, averageEnemySpawns ) > 0.35
+	foreach ( entity spawnpoint in spawnpoints )
+	{
+		float rating
+				
+		// assume 150 is the max possible rating, with a range of 50-150 if within the initial rating radius, and 0-50 outside of it
+		float dist = Distance2D( spawnpoint.GetOrigin(), frontline.origin )
+		if ( dist <= initialRatingRad )
+			rating = 50 + ( ( ( initialRatingRad / dist ) - initialRatingRad ) * 100 )
+		else
+		{
+			// determine the angles of the lines we need to be within to be rated here
+			// magic number gives roughly ~8deg from right mid to base on glitch
+			float ratingAnglePos = flagDist / 0.0026 
+			float ratingAngleNeg = flagDist / -0.0026 
+			ratingAngleNeg = ( ( ( ratingAngleNeg % 360 ) + 360 ) % 360 ) // this is probably shit i just copied a negative modulo func
+			
+			// calc angle between our spawnpoint and frontline, check if it's within the previous 2 angles			
+			float angle = atan2( spawnpoint.GetOrigin().y - frontline.origin.y, spawnpoint.GetOrigin().x - frontline.origin.x ) * ( 180 / PI )
+			if ( angle <= ratingAnglePos && angle <= ratingAngleNeg )
+				// max out at flagDist
+				rating = ( ( ( flagDist / dist ) - flagDist ) * 50 )
+		}
+		
+		spawnpoint.CalculateRating( checkClass, player.GetTeam(), rating, rating > 0 ? rating * 0.25 : rating )
+	}
 }
 
 void function CTFInitPlayer( entity player )
