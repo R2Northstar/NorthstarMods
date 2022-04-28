@@ -315,13 +315,21 @@ void function ReloadMods()
 	ClientCommand( "reload_localization" )
 	ClientCommand( "loadPlaylists" )
 	
-	bool svCheatsOriginal = GetConVarBool( "sv_cheats" )	
-	SetConVarBool( "sv_cheats", true )
-	ClientCommand( "weapon_reparse" ) // weapon_reparse only works if a server is running and sv_cheats is 1, gotta figure this out eventually
-	SetConVarBool( "sv_cheats", svCheatsOriginal )
+	// do any logic that needs to be threaded off
+	thread ReloadModsThreaded() 
 	
 	// note: the logic for this seems really odd, unsure why it doesn't seem to update, since the same code seems to get run irregardless of whether we've read weapon data before
 	ClientCommand( "uiscript_reset" )
+}
+
+void function ReloadModsThreaded()
+{
+	bool originalCheatsValue = GetConVarBool( "sv_cheats" )
+	SetConVarBool( "sv_cheats", true )
+	
+	ClientCommand( "weapon_reparse" )
+	wait 0.1 // weapon_reparse takes a sec to start, we need to wait to ensure sv_cheats is still 0 by the time it gets run properly
+	SetConVarBool( "sv_cheats", originalCheatsValue )
 }
 
 void function OnAuthenticationAgreementButtonPressed( var button )
