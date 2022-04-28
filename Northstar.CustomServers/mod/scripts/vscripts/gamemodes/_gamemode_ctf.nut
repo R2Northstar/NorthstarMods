@@ -68,6 +68,7 @@ void function RateSpawnpoints_CTF( int checkClass, array<entity> spawnpoints, in
 {
 	// get the player's frontline and try to spawn them there, then give less good ratings as we get away from the frontline in the direction of the player's base
 	Frontline frontline = GetFrontline( player.GetTeam() )
+	frontline.origin = player.GetOrigin()
 	
 	entity ourFlag = GetFlagForTeam( player.GetTeam() )
 	entity theirFlag = GetFlagForTeam( GetOtherTeam( player.GetTeam() ) )
@@ -76,7 +77,9 @@ void function RateSpawnpoints_CTF( int checkClass, array<entity> spawnpoints, in
 	// dividing dist between flags by 3ish gives a good radius for the initial circle
 	// should this be based on the distance to the frontline? unsure, it probably should be based more on map size than spawn pos anyway
 	float initialRatingRad = flagDist / 2.75 / 2
-	float angleBetweenFlags = atan2( ourFlag.GetOrigin().y - theirFlag.GetOrigin().y, ourFlag.GetOrigin().x - theirFlag.GetOrigin().y ) * ( 180 / PI )
+	float angleBetweenFlags = atan2( theirFlag.GetOrigin().z - ourFlag.GetOrigin().z, theirFlag.GetOrigin().x - ourFlag.GetOrigin().x ) * ( 180 / PI )
+	
+	print( "ZAMN " + angleBetweenFlags )
 	
 	foreach ( entity spawnpoint in spawnpoints )
 	{
@@ -85,7 +88,10 @@ void function RateSpawnpoints_CTF( int checkClass, array<entity> spawnpoints, in
 		// assume 150 is the max possible rating, with a range of 50-150 if within the initial rating radius, and 0-50 outside of it
 		float dist = Distance2D( spawnpoint.GetOrigin(), frontline.origin )
 		if ( dist <= initialRatingRad )
+		{
 			rating = 50 + ( ( 1 - ( dist / initialRatingRad ) ) * 100 )
+			DebugDrawSphere( spawnpoint.GetOrigin(), 50, 255, 0, 0, false, 30.0, 16 )
+		}
 		else
 		{
 			// determine the angles of the lines we need to be within to be rated here
@@ -94,10 +100,13 @@ void function RateSpawnpoints_CTF( int checkClass, array<entity> spawnpoints, in
 			float ratingAngleNeg = -ratingAnglePos
 			
 			// calc angle between our spawnpoint and frontline, check if it's within the previous 2 angles			
-			float angle = ( atan2( spawnpoint.GetOrigin().y - frontline.origin.y, spawnpoint.GetOrigin().x - frontline.origin.x ) * ( 180 / PI ) ) - angleBetweenFlags
+			float angle = ( atan2( frontline.origin.z - spawnpoint.GetOrigin().z, frontline.origin.x - spawnpoint.GetOrigin().x ) * ( 180 / PI ) ) - angleBetweenFlags
 			if ( angle <= ratingAnglePos && angle >= ratingAngleNeg )
+			{
 				// max out at flagDist
 				rating = ( ( 1 - ( dist / flagDist ) ) * 50 )
+				DebugDrawSphere( spawnpoint.GetOrigin(), 50, 255, 200, 0, false, 30.0, 16 )
+			}
 		}
 		
 		spawnpoint.CalculateRating( checkClass, player.GetTeam(), rating, rating > 0 ? rating * 0.25 : rating )
