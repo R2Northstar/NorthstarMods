@@ -64,22 +64,23 @@ void function CaptureTheFlag_Init()
 	ScoreEvent_SetEarnMeterValues( "FlagReturn", 0.0, 0.20 )
 }
 
+const bool CTF_SPAWN_DEBUG = false
+
 void function RateSpawnpoints_CTF( int checkClass, array<entity> spawnpoints, int team, entity player ) 
 {
 	// get the player's frontline and try to spawn them there, then give less good ratings as we get away from the frontline in the direction of the player's base
 	Frontline frontline = GetFrontline( player.GetTeam() )
-	frontline.origin = player.GetOrigin()
 	
 	entity ourFlag = GetFlagForTeam( player.GetTeam() )
 	entity theirFlag = GetFlagForTeam( GetOtherTeam( player.GetTeam() ) )
 	float flagDist = Distance2D( ourFlag.GetOrigin(), theirFlag.GetOrigin() )
+	float frontlineDist = Distance2D( ourFlag.GetOrigin(), frontline.origin )
+	
+	float frontlineAngle = atan2( frontline.origin.y - ourFlag.GetOrigin().y, frontline.origin.x - ourFlag.GetOrigin().x ) * ( 180 / PI )
 	
 	// dividing dist between flags by 3ish gives a good radius for the initial circle
 	// should this be based on the distance to the frontline? unsure, it probably should be based more on map size than spawn pos anyway
-	float initialRatingRad = flagDist / 2.75 / 2
-	float angleBetweenFlags = atan2( theirFlag.GetOrigin().z - ourFlag.GetOrigin().z, theirFlag.GetOrigin().x - ourFlag.GetOrigin().x ) * ( 180 / PI )
-	
-	print( "ZAMN " + angleBetweenFlags )
+	float initialRatingRad = flagDist / 2.75 / 2	
 	
 	foreach ( entity spawnpoint in spawnpoints )
 	{
@@ -90,22 +91,24 @@ void function RateSpawnpoints_CTF( int checkClass, array<entity> spawnpoints, in
 		if ( dist <= initialRatingRad )
 		{
 			rating = 50 + ( ( 1 - ( dist / initialRatingRad ) ) * 100 )
-			DebugDrawSphere( spawnpoint.GetOrigin(), 50, 255, 0, 0, false, 30.0, 16 )
+			#if CTF_SPAWN_DEBUG
+				DebugDrawSphere( spawnpoint.GetOrigin(), 50, 255, 0, 0, false, 30.0, 16 )
+			#endif
 		}
 		else
 		{
-			// determine the angles of the lines we need to be within to be rated here
-			// magic number gives roughly ~8deg from right mid to base on glitch
-			float ratingAnglePos = flagDist * 0.0026 
-			float ratingAngleNeg = -ratingAnglePos
-			
-			// calc angle between our spawnpoint and frontline, check if it's within the previous 2 angles			
-			float angle = ( atan2( frontline.origin.z - spawnpoint.GetOrigin().z, frontline.origin.x - spawnpoint.GetOrigin().x ) * ( 180 / PI ) ) - angleBetweenFlags
-			if ( angle <= ratingAnglePos && angle >= ratingAngleNeg )
+			// calc angle between our spawnpoint and frontline	
+			float angle = ( atan2( frontline.origin.y - spawnpoint.GetOrigin().y, frontline.origin.x - spawnpoint.GetOrigin().x ) * ( 180 / PI ) ) - frontlineAngle			
+
+			// if it's <=1/3 of the distance between frontline and spawn, ensure it's within 65deg
+			// otherwise, just make sure its on the same side of the map
+			if ( ( angle <= 65 && angle >= -65 ) || ( angle <= 140 && angle >= -140 && Distance2D( spawnpoint.GetOrigin(), frontline.origin ) <= frontlineDist / 3 ) )
 			{
 				// max out at flagDist
-				rating = ( ( 1 - ( dist / flagDist ) ) * 50 )
-				DebugDrawSphere( spawnpoint.GetOrigin(), 50, 255, 200, 0, false, 30.0, 16 )
+				rating = ( ( 1 - ( Distance2D( spawnpoint.GetOrigin(), ourFlag.GetOrigin() ) / flagDist ) ) * 50 )
+				#if CTF_SPAWN_DEBUG
+					DebugDrawSphere( spawnpoint.GetOrigin(), 50, 255, 200, 0, false, 30.0, 16 )
+				#endif
 			}
 		}
 		
