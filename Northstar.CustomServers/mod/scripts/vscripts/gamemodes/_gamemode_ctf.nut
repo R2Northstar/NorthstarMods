@@ -80,7 +80,7 @@ void function RateSpawnpoints_CTF( int checkClass, array<entity> spawnpoints, in
 	
 	// dividing dist between flags by 3ish gives a good radius for the initial circle
 	// should this be based on the distance to the frontline? unsure, it probably should be based more on map size than spawn pos anyway
-	float initialRatingRad = flagDist / 2.75 / 2	
+	float initialRatingRad = flagDist / 3.25 / 2	
 	
 	foreach ( entity spawnpoint in spawnpoints )
 	{
@@ -90,7 +90,7 @@ void function RateSpawnpoints_CTF( int checkClass, array<entity> spawnpoints, in
 		float dist = Distance2D( spawnpoint.GetOrigin(), frontline.origin )
 		if ( dist <= initialRatingRad )
 		{
-			rating = 50 + ( ( 1 - ( dist / initialRatingRad ) ) * 100 )
+			rating = 50 + ( dist / initialRatingRad ) * 100
 			#if CTF_SPAWN_DEBUG
 				DebugDrawSphere( spawnpoint.GetOrigin(), 50, 255, 0, 0, false, 30.0, 16 )
 			#endif
@@ -102,12 +102,14 @@ void function RateSpawnpoints_CTF( int checkClass, array<entity> spawnpoints, in
 
 			// if it's <=1/3 of the distance between frontline and spawn, ensure it's within 65deg
 			// otherwise, just make sure its on the same side of the map
-			if ( ( angle <= 65 && angle >= -65 ) || ( angle <= 140 && angle >= -140 && Distance2D( spawnpoint.GetOrigin(), frontline.origin ) <= frontlineDist / 3 ) )
+			float frontlineSpawnDist = Distance2D( spawnpoint.GetOrigin(), frontline.origin )
+			
+			if ( ( angle <= 45 && angle >= -45 ) || ( angle <= 110 && angle >= -110 && frontlineSpawnDist <= frontlineDist / 3 ) && frontlineSpawnDist < frontlineDist )
 			{
-				// max out at flagDist
-				rating = ( ( 1 - ( Distance2D( spawnpoint.GetOrigin(), ourFlag.GetOrigin() ) / flagDist ) ) * 50 )
+				// max out at flagDist, rate better as we get closer
+				rating = ( ( 1 - ( Distance2D( spawnpoint.GetOrigin(), frontline.origin ) / frontlineDist ) ) * 50 )
 				#if CTF_SPAWN_DEBUG
-					DebugDrawSphere( spawnpoint.GetOrigin(), 50, 255, 200, 0, false, 30.0, 16 )
+					DebugDrawSphere( spawnpoint.GetOrigin(), 50, 255, 200, 255 - int( ( rating / 50 ) * 255 ), false, 30.0, 16 )
 				#endif
 			}
 		}
