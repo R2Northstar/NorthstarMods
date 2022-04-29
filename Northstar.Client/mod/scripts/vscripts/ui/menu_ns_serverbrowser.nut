@@ -1129,16 +1129,17 @@ int function ServerSortLogic ( serverStruct a, serverStruct b )
 		case sortingBy.DEFAULT:
 			aTemp = a.serverPlayers
 			bTemp = b.serverPlayers
-			if (aTemp >= a.serverPlayersMax -1)
-				if (aTemp == a.serverPlayersMax)
-					aTemp = -2
-				else
-					aTemp = -1
-			if (bTemp >= b.serverPlayersMax - 1)
-				if (bTemp == b.serverPlayersMax)
-					bTemp = -2
-				else
-					bTemp = -1
+
+			// `1000` is assumed to always be higher than `serverPlayersMax`
+			if (aTemp + 1 < a.serverPlayersMax)
+				aTemp = aTemp+2000
+			if (bTemp + 1 < b.serverPlayersMax)
+				bTemp = bTemp+2000
+			if (aTemp + 1 == a.serverPlayersMax)
+				aTemp = aTemp+1000
+			if (bTemp + 1 == b.serverPlayersMax)
+				bTemp = bTemp+1000
+
 			direction = filterDirection.serverName
 			break;
 		case sortingBy.NAME:
