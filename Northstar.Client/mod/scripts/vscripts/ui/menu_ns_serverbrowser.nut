@@ -1124,7 +1124,7 @@ int function ServerSortLogic ( serverStruct a, serverStruct b )
 	bool direction
 
 	// We can hard code this cause adding entire columns isn't as easy
-	switch ( filterDirection.sortingBy ) 
+	switch ( filterDirection.sortingBy )
 	{
 		case sortingBy.DEFAULT:
 			aTemp = a.serverPlayers
