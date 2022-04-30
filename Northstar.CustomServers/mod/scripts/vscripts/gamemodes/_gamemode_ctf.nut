@@ -86,7 +86,7 @@ void function RateSpawnpoints_CTF( int checkClass, array<entity> spawnpoints, in
 		if ( frontlineDistFrac > FRONTLINE_WEIGHT_THRESHOLD )
 		{
 			float fracAboveThreshold = frontlineDistFrac - FRONTLINE_WEIGHT_THRESHOLD
-			fracAboveThreshold *= fracAboveThreshold * 0.45
+			fracAboveThreshold *= fracAboveThreshold * 0.4
 			frontlineDistFrac = FRONTLINE_WEIGHT_THRESHOLD + fracAboveThreshold
 		}
 		
@@ -98,7 +98,9 @@ void function RateSpawnpoints_CTF( int checkClass, array<entity> spawnpoints, in
 		#endif
 	}
 	
+	float frontlineDistReal = Distance2D( ourFlag.GetOrigin(), frontline.origin )
 	float frontlineDist = Distance2D( ourFlag.GetOrigin(), weightedFrontline )
+	float frontlineAngleReal = atan2( frontline.origin.y - ourFlag.GetOrigin().y, frontline.origin.x - ourFlag.GetOrigin().x ) * ( 180 / PI )
 	float frontlineAngle = atan2( weightedFrontline.y - ourFlag.GetOrigin().y, weightedFrontline.x - ourFlag.GetOrigin().x ) * ( 180 / PI )
 	
 	// dividing dist between flags by 3ish gives a good radius for the initial circle
@@ -121,13 +123,14 @@ void function RateSpawnpoints_CTF( int checkClass, array<entity> spawnpoints, in
 		else
 		{
 			// calc angle between our spawnpoint and frontline	
+			float angleReal = ( atan2( frontline.origin.y - spawnpoint.GetOrigin().y, frontline.origin.x - spawnpoint.GetOrigin().x ) * ( 180 / PI ) ) - frontlineAngleReal
 			float angle = ( atan2( weightedFrontline.y - spawnpoint.GetOrigin().y, weightedFrontline.x - spawnpoint.GetOrigin().x ) * ( 180 / PI ) ) - frontlineAngle			
 
 			// if it's <=1/3 of the distance between frontline and spawn, ensure it's within 65deg
 			// otherwise, just make sure its on the same side of the map
 			float frontlineSpawnDist = Distance2D( spawnpoint.GetOrigin(), weightedFrontline )
 			
-			if ( ( angle <= 45 && angle >= -45 ) || ( angle <= 110 && angle >= -110 && frontlineSpawnDist <= frontlineDist / 3 ) && frontlineSpawnDist < frontlineDist )
+			if ( ( angleReal <= 50 && angleReal >= -50 ) || ( angle <= 110 && angle >= -110 && frontlineSpawnDist <= frontlineDistReal / 3 ) && frontlineSpawnDist < frontlineDist )
 			{
 				// max out at flagDist, rate better as we get closer
 				rating = ( ( 1 - ( Distance2D( spawnpoint.GetOrigin(), weightedFrontline ) / frontlineDist ) ) * 50 )
