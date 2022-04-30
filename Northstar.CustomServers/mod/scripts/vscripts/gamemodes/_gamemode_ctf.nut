@@ -70,24 +70,42 @@ void function RateSpawnpoints_CTF( int checkClass, array<entity> spawnpoints, in
 {
 	// get the player's frontline and try to spawn them there, then give less good ratings as we get away from the frontline in the direction of the player's base
 	Frontline frontline = GetFrontline( player.GetTeam() )
-	
+
 	entity ourFlag = GetFlagForTeam( player.GetTeam() )
 	entity theirFlag = GetFlagForTeam( GetOtherTeam( player.GetTeam() ) )
 	float flagDist = Distance2D( ourFlag.GetOrigin(), theirFlag.GetOrigin() )
-	float frontlineDist = Distance2D( ourFlag.GetOrigin(), frontline.origin )
 	
-	float frontlineAngle = atan2( frontline.origin.y - ourFlag.GetOrigin().y, frontline.origin.x - ourFlag.GetOrigin().x ) * ( 180 / PI )
+	// weight the frontline position to be closer to friendly base
+	// this is mainly done to avoid issues with frontline position being way too aggressive when people push enemy bases and that, making it pretty unfair for defending team
+	vector weightedFrontline = frontline.origin
+	{
+		const float FRONTLINE_WEIGHT_THRESHOLD = 0.35
+	
+		float frontlineAngle = atan2( frontline.origin.y - ourFlag.GetOrigin().y, frontline.origin.x - ourFlag.GetOrigin().x ) * ( 180 / PI )
+		float frontlineDistFrac = Distance2D( ourFlag.GetOrigin(), frontline.origin ) / flagDist
+		if ( frontlineDistFrac > FRONTLINE_WEIGHT_THRESHOLD )
+		{
+			float fracAboveThreshold = frontlineDistFrac - FRONTLINE_WEIGHT_THRESHOLD
+			fracAboveThreshold *= ( fracAboveThreshold / 0.05 ) * 0.01
+			frontlineDistFrac = FRONTLINE_WEIGHT_THRESHOLD + fracAboveThreshold
+		}
+		
+		weightedFrontline = ourFlag.GetOrigin() + AnglesToForward( < 0, frontlineAngle, 0 > ) * ( frontlineDistFrac * flagDist )
+	}
+	
+	float frontlineDist = Distance2D( ourFlag.GetOrigin(), weightedFrontline )
+	float frontlineAngle = atan2( weightedFrontline.y - ourFlag.GetOrigin().y, weightedFrontline.x - ourFlag.GetOrigin().x ) * ( 180 / PI )
 	
 	// dividing dist between flags by 3ish gives a good radius for the initial circle
 	// should this be based on the distance to the frontline? unsure, it probably should be based more on map size than spawn pos anyway
 	float initialRatingRad = flagDist / 3.25 / 2	
-	
+		
 	foreach ( entity spawnpoint in spawnpoints )
 	{
 		float rating
 				
 		// assume 150 is the max possible rating, with a range of 50-150 if within the initial rating radius, and 0-50 outside of it
-		float dist = Distance2D( spawnpoint.GetOrigin(), frontline.origin )
+		float dist = Distance2D( spawnpoint.GetOrigin(), weightedFrontline )
 		if ( dist <= initialRatingRad )
 		{
 			rating = 50 + ( dist / initialRatingRad ) * 100
@@ -98,16 +116,16 @@ void function RateSpawnpoints_CTF( int checkClass, array<entity> spawnpoints, in
 		else
 		{
 			// calc angle between our spawnpoint and frontline	
-			float angle = ( atan2( frontline.origin.y - spawnpoint.GetOrigin().y, frontline.origin.x - spawnpoint.GetOrigin().x ) * ( 180 / PI ) ) - frontlineAngle			
+			float angle = ( atan2( weightedFrontline.y - spawnpoint.GetOrigin().y, weightedFrontline.x - spawnpoint.GetOrigin().x ) * ( 180 / PI ) ) - frontlineAngle			
 
 			// if it's <=1/3 of the distance between frontline and spawn, ensure it's within 65deg
 			// otherwise, just make sure its on the same side of the map
-			float frontlineSpawnDist = Distance2D( spawnpoint.GetOrigin(), frontline.origin )
+			float frontlineSpawnDist = Distance2D( spawnpoint.GetOrigin(), weightedFrontline )
 			
 			if ( ( angle <= 45 && angle >= -45 ) || ( angle <= 110 && angle >= -110 && frontlineSpawnDist <= frontlineDist / 3 ) && frontlineSpawnDist < frontlineDist )
 			{
 				// max out at flagDist, rate better as we get closer
-				rating = ( ( 1 - ( Distance2D( spawnpoint.GetOrigin(), frontline.origin ) / frontlineDist ) ) * 50 )
+				rating = ( ( 1 - ( Distance2D( spawnpoint.GetOrigin(), weightedFrontline ) / frontlineDist ) ) * 50 )
 				#if CTF_SPAWN_DEBUG
 					DebugDrawSphere( spawnpoint.GetOrigin(), 50, 255, 200, 255 - int( ( rating / 50 ) * 255 ), false, 30.0, 16 )
 				#endif
