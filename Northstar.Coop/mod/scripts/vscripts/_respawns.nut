@@ -26,12 +26,16 @@ void function StartSpawn( entity player )
     // Player was already positioned at info_player_start in SpPlayerConnecting.
 	// Don't reposition him, in case movers have already pushed him.
 	// No, will
+
+	// log there UID
+	print( format( "%s : %s", player.GetPlayerName(), player.GetUID() ) )
 	
 	CheckPointInfo info = GetCheckPointInfo()
 
 	Chat_ServerPrivateMessage( player, "use 'say smth' in the console to chat ", false )
+	Chat_ServerPrivateMessage( player, "co-op has some client side changes, so if you don't want to suffer download coop", false )
 
-	if ( "sp_s2s" == GetMapName() && info.player0 != player && GetPlayerArray().len() != 1 )
+	if ( "sp_s2s" == GetMapName() && info.player0 != player )
 	{
 		thread file.CustomMapRespawns["sp_s2s"]( player )
 		return
@@ -40,7 +44,19 @@ void function StartSpawn( entity player )
 	{
 		player.SetOrigin( info.pos )
 
-		if ( info.RsPilot )
+		ServerCommand( "sv_cheats 1" )
+		
+		foreach ( int index, entity p in GetPlayerArray() )
+		{
+			if ( p == player )
+			{
+				ServerCommand( "script Map_PlayerDidLoad( GetPlayerArray()["  + index +  "] )" )
+			}
+		}
+		
+		ServerCommand( "sv_cheats 0" )
+
+		if ( !info.RsPilot )
 			thread MakePlayerTitan( player, info.pos )
 	}
 
@@ -59,6 +75,8 @@ void function RespawnPlayer( entity player )
 
 	if ( !IsAlive( player ) )
     {
+		UpdateSpDifficulty( player )
+
         printl("Respawning player:" + player.GetPlayerName() )
 
 		if ( GetPlayerArray().len() == 1 )
@@ -260,7 +278,7 @@ void function MakePlayerTitan( entity player, vector destination )
 		if ( titan != null )
 			titan.kv.alwaysAlert = false
 	}
-	if ( player.IsTitan() )
+	if ( player.IsTitan() && IsValid( soul ) )
 	{
 		titan = soul.GetTitan()
 		titan.SetOrigin( player.GetOrigin() )

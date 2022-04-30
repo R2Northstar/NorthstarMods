@@ -7,6 +7,9 @@ global function GetCheckPointInfo
 global function SetPlayer0
 global function GetPlayer0
 
+// global trigger function
+global function OnTeleportTriggered
+
 global struct CheckPointInfo
 {
 	vector pos
@@ -122,7 +125,7 @@ void function CreateTeleportTrigger( vector origin, float radius, float top, flo
 	printl("=========================================")
 
 	array<entity> ents = []
-	entity trigger = _CreateScriptCylinderTriggerInternal( origin, radius, TRIG_FLAG_PLAYERONLY, ents, top, bottom )
+	entity trigger = _CreateScriptCylinderTriggerInternal( origin, radius, TRIG_FLAG_PLAYERONLY  | TRIG_FLAG_ONCE, ents, top, bottom )
 
 	AddCallback_ScriptTriggerEnter( trigger, OnTeleportTriggered )
 	// AddCallback_ScriptTriggerLeave( trigger, OnTeleportTriggered )
@@ -135,31 +138,34 @@ void function OnTeleportTriggered( entity trigger, entity player )
 	printl("=========================================")
 	printl("New checkpoint :" + trigger.GetOrigin())
 	printl("=========================================")
-
-	thread TeleportAllExpectOne( trigger.GetOrigin(), player )
-	vector destination = trigger.GetOrigin()
-
-	foreach( entity p in GetPlayerArray() )
-	{
-		if ( p != player )
-		{
-			if ( save.nextCheckpointAsPilot[ save.currentPilotBoolId ] )
-				thread MakePlayerPilot( p, destination )
-			else
-				thread MakePlayerTitan( p, destination )
-		}
-	}
 	
+	vector destination = trigger.GetOrigin()
+	waitthread TeleportAllExpectOne( destination, player )
+	wait 2
+	
+	// super broken
+// 	foreach( entity p in GetPlayerArray() )
+// 	{
+// 		if ( p != player )
+// 		{
+// 			if ( save.nextCheckpointAsPilot[ save.currentPilotBoolId ] )
+// 				thread MakePlayerPilot( p, destination )
+// 			else
+// 				thread MakePlayerTitan( p, destination )
+// 		}
+// 	}
+
+	if ( !IsValid( trigger ) )
+		return
+
 	save.lastSave = trigger.GetOrigin()
 	save.currentPilotBoolId += 1
-
-	trigger.Destroy()
 }
 
 void function CreateMapChangeTrigger( vector origin, float radius, float top, float bottom)
 {
 	array<entity> ents = []
-	entity trigger = _CreateScriptCylinderTriggerInternal( origin, radius, TRIG_FLAG_PLAYERONLY, ents, top, bottom )
+	entity trigger = _CreateScriptCylinderTriggerInternal( origin, radius, TRIG_FLAG_PLAYERONLY | TRIG_FLAG_PLAYERONLY  | TRIG_FLAG_ONCE, ents, top, bottom )
 
 	AddCallback_ScriptTriggerEnter( trigger, OnMapChangeTriggered )
 }
@@ -221,7 +227,7 @@ void function CreatePlayerLockBreakerTrigger(  vector origin, float radius, floa
 	printl("=========================================")
 
 	array<entity> ents = []
-	entity trigger = _CreateScriptCylinderTriggerInternal( origin, radius, TRIG_FLAG_PLAYERONLY, ents, top, bottom )
+	entity trigger = _CreateScriptCylinderTriggerInternal( origin, radius, TRIG_FLAG_PLAYERONLY  | TRIG_FLAG_ONCE, ents, top, bottom )
 
 	AddCallback_ScriptTriggerEnter( trigger, OnPlayerLockBreakerTriggered )
 }
@@ -279,6 +285,7 @@ void function TeleportAllExpectOne( vector destination, entity ornull ThisPlayer
 			WaitFrame()
 			try
 			{
+				MakeInvincible( player )
 				entity mover = CreateOwnedScriptMover( player )
 				player.SetParent( mover )
 				mover.MoveTo( destination, 0.5, 0, 0 )
@@ -286,7 +293,7 @@ void function TeleportAllExpectOne( vector destination, entity ornull ThisPlayer
 
 				player.SetHealth( player.GetMaxHealth() )
 				if ( display_notification )
-					Chat_ServerPrivateMessage( player, "You are being moved the next checkpoint", false )
+					Chat_ServerPrivateMessage( player, "You are being moved to the next checkpoint", false )
 			}
 			catch( exception ){}
 		}
@@ -302,6 +309,7 @@ void function TeleportAllExpectOne( vector destination, entity ornull ThisPlayer
 			try
 			{
 				player.ClearParent()
+				ClearInvincible( player )
 			}
 			catch( exception ){}
 		}

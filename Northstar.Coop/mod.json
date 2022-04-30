@@ -63,6 +63,13 @@
 		{
 			"Path": "_utils_coop.nut",
 			"RunOn": "SERVER && SP"
+		},
+		{
+			"Path": "bt_genocide.nut",
+			"RunOn": "SERVER && SP",
+			"ServerCallback": {
+				"After": "init_genocide_thoughts"
+			}
 		}
 	]
 }

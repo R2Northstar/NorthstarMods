@@ -1,4 +1,5 @@
 global function CodeCallback_MapInit
+global function Map_PlayerDidLoad
 
 #if DEV
 global function skyboxchange
@@ -224,6 +225,7 @@ void function CodeCallback_MapInit()
 	PrecacheModel( SAFETY_BATON_MODEL )
 	PrecacheModel( MARVIN_MODEL )
 	PrecacheModel( DATA_KNIFE_MODEL )
+	// PrecacheModel( $"models/weapons/arms/pov_mlt_hero_jack.mdl" )
 
 	LoudspeakerVO_Setup()
 	Training_SharedInit()
@@ -346,18 +348,31 @@ void function EntitiesDidLoad()
 	file.skycam_glitch = GetEnt( "skybox_cam_glitch" )
 }
 
+void function Map_PlayerDidLoad( entity player )
+{
+	Training_PlayerDidLoad( player )
+}
 
 void function Training_PlayerDidLoad( entity player )
 {
-	player.SetNoTarget( true )
-	SetGlobalForcedDialogueOnly( true )
+	if ( file.player == null )
+	{
+		SetPlayer0( player )
 
-	AddButtonPressedPlayerInputCallback( player, IN_JUMP, Training_ButtonPressedJump )
-	AddButtonPressedPlayerInputCallback( player, IN_ATTACK, Training_ButtonPressedAttack )
+		player.SetNoTarget( true )
+		SetGlobalForcedDialogueOnly( true )
 
-	file.envArt_colorCorrectionEnt = GetEnt( "color_correction_1" )
+		AddButtonPressedPlayerInputCallback( player, IN_JUMP, Training_ButtonPressedJump )
+		AddButtonPressedPlayerInputCallback( player, IN_ATTACK, Training_ButtonPressedAttack )
 
-	file.player = player
+		file.envArt_colorCorrectionEnt = GetEnt( "color_correction_1" )
+
+		file.player = player
+
+		Training_WeaponPickups_Init( player )
+	}
+
+	thread TakeAmmoFromPlayerASAP( player )
 
 	EnableDemigod( player )
 
@@ -365,10 +380,10 @@ void function Training_PlayerDidLoad( entity player )
 
 	player.SetSkyCamera( file.skycam_default )
 
-	Training_WeaponPickups_Init( player )
 	player.PreventWeaponDestroyNoAmmo()  // makes it so when player swaps empty weapon for another pickup, doesn't destroy empty weapon
-
-	thread Training_PlayerQuickdeathSFX( player )
+	
+	if ( file.player == null )
+		thread Training_PlayerQuickdeathSFX( player )
 
 	DisableFriendlyHighlight()
 }
@@ -457,8 +472,11 @@ void function DEV_PodIntro( entity player )
 
 void function Training_PodIntro( entity player )
 {
-	player.EndSignal( "OnDestroy" )
+	NewSaveLocation( player.GetOrigin() )
+	
 
+	player.SetOrigin( GetPlayer0().GetOrigin() )
+	player.EndSignal( "OnDestroy" )
 	player.SetExtraWeaponMods( [ "low_ammo_disable" ] )
 	SetWeaponHUDEnabled( player, false )
 
@@ -471,10 +489,13 @@ void function Training_PodIntro( entity player )
 		{
 			if ( IsValid( player ) )
 			{
-				player.Anim_Stop()
-				ClearPlayerAnimViewEntity( player )
-				player.ClearParent()
-				player.UnforceStand()
+				foreach( player in GetPlayerArray() )
+				{
+					player.Anim_Stop()
+					ClearPlayerAnimViewEntity( player )
+					player.ClearParent()
+					player.UnforceStand()
+				}
 
 				Training_EnvArtColorCorrection_SetEnabled( true )
 			}
@@ -490,7 +511,7 @@ void function Training_PodIntro( entity player )
 			}
 		}
 	)
-
+	
 	// NORMAL LEVEL START
 	SetDoF_Hangar( player )
 
@@ -506,7 +527,6 @@ void function Training_PodIntro( entity player )
 	wait 4.2  // matches fade time in sp_introscreen data
 
 	thread PodIntro_BackgroundSkits( player )
-
 
 	player.Signal( "PodIntro_OG_StartPodAnim" )
 
@@ -528,7 +548,7 @@ void function Training_PodIntro( entity player )
 	podSequence.thirdPersonAnim 		= "trainingpod_doors_close"
 	podSequence.thirdPersonAnimIdle 	= "trainingpod_doors_close_idle"
 	podSequence.renderWithViewModels 	= true
-
+	
 	entity viewmodel = player.GetFirstPersonProxy()
 
 	if ( !HasAnimEvent( viewmodel, "PlaySound_SimPod_DoorShut" ) )
@@ -554,7 +574,7 @@ void function Training_PodIntro( entity player )
 
 	// "Not quite the same as a Titan link, but it's similar."
 	waitthread PlayDialogue( "og_neural_link_2", player )
-
+	
 	thread TrainingPod_Interior_BootSequence( player )
 
 	// "To learn new skills, we need to be in the right state of mind."
@@ -564,8 +584,9 @@ void function Training_PodIntro( entity player )
 	printt( "POD SEQUENCE DONE" )
 
 	wait 2.0  // timed to match the screen effect white screen flash
-
-	SetDoF_Default( player )
+	
+	foreach( player in GetPlayerArray() )
+		SetDoF_Default( player )
 }
 
 void function PlaySound_SimPod_DoorShut( entity playerFirstPersonProxy  ) //Hack, needed for wargames but has unfortunate side effect for Training. 
@@ -699,17 +720,15 @@ void function PodIntro_MeetOG( entity player )
 void function PodIntro_OG_Slaps_Pod( entity ogPilot )
 {
 	array<entity> players = GetPlayerArray()
-	if ( !players.len() )
-		return
-
-	entity player = players[0]
-	if ( !IsValid( player ) )
+	if ( players.len() == 0 )
 		return
 
 	float shakeDuration = 0.45
 	float shakeAmplitude = 0.14
 	float screenBlurFrac = 0
-	SimpleScreenShake( player, shakeDuration, shakeAmplitude, screenBlurFrac )
+
+	foreach ( entity player in players )
+		SimpleScreenShake( player, shakeDuration, shakeAmplitude, screenBlurFrac )
 }
 
 void function LookTraining( entity player )
@@ -859,9 +878,12 @@ void function TrainingPod_PlayerSequence_DoorsOpenIdle( entity player, bool doPl
 	int attachID = pod.LookupAttachment( podAttach )
 	vector podRefOrg = pod.GetAttachmentOrigin( attachID )
 	vector podRefAng = pod.GetAttachmentAngles( attachID )
-	player.SetOrigin( podRefOrg )
-	player.SetAngles( podRefAng )
-	player.ForceStand()
+	foreach ( entity p in GetPlayerArray() )
+	{
+		p.SetOrigin( podRefOrg )
+		p.SetAngles( podRefAng )
+		p.ForceStand()
+	}
 
 	player.DisableWeapon()
 
@@ -1039,8 +1061,9 @@ void function Training_BasicMovement( entity player )
 	entity ogStart = GetEntByScriptName( "basic_movement_og_start" )
 	entity og = Training_SpawnOGPilot( ogStart )
 
-	player.SetPlayerSettingsWithMods( TRAINING_PLAYER_SETTINGS, [ "disable_doublejump", "disable_wallrun" ] )
-	player.ForceAutoSprintOff()
+	foreach( entity p in GetPlayerArray() )
+		p.SetPlayerSettingsWithMods( TRAINING_PLAYER_SETTINGS, [ "disable_doublejump", "disable_wallrun" ] )
+	// player.ForceAutoSprintOff()
 
 	entity playerStart = GetEntByScriptName( "startpoint_basic_movement" )
 	waitthread PlayerAndOGTeleport_Fancy( player, playerStart.GetOrigin(), "basic_movement_og_start", playerStart.GetAngles() )
@@ -1112,7 +1135,7 @@ void function BasicMovement_Sprint( entity player )
 
 	wait 2.5  // let the VO play a bit before showing the hint
 
-	player.UnforceAutoSprint()
+	// player.UnforceAutoSprint()
 	thread BasicMovement_SprintHint_Think( player )
 
 	wait endVOTime - Time()
@@ -1219,8 +1242,11 @@ void function BasicMovement_DelayedWeaponDeploy( entity player, float delay )
 	player.EndSignal( "OnDestroy" )
 
 	wait delay
-	player.EnableWeaponWithSlowDeploy()
-	thread TakeAmmoFromPlayerASAP( player )
+	foreach( player in GetPlayerArray() )
+	{
+		player.EnableWeaponWithSlowDeploy()
+		thread TakeAmmoFromPlayerASAP( player )
+	}
 }
 
 
@@ -1256,8 +1282,9 @@ void function Training_ZenGarden( entity player )
 	OpenZenGardenExitDoor()
 
 	FlagWait( "BasicMovement_PlayerReachedOpenArea" )
-
-	player.SetPlayerSettingsWithMods( TRAINING_PLAYER_SETTINGS, ["disable_doublejump"] )
+	
+	foreach( entity p in GetPlayerArray() )
+		p.SetPlayerSettingsWithMods( TRAINING_PLAYER_SETTINGS, ["disable_doublejump"] )
 
 	CheckPoint_Silent()
 
@@ -1266,8 +1293,9 @@ void function Training_ZenGarden( entity player )
 	waitthread Training_ZenGarden_Wallrun( player )
 
 	waitthread Training_ZenGarden_Crouch( player )
-
-	player.SetPlayerSettingsWithMods( TRAINING_PLAYER_SETTINGS, [] )
+	
+	foreach( entity p in GetPlayerArray() )
+		p.SetPlayerSettingsWithMods( TRAINING_PLAYER_SETTINGS, [] )
 
 	CheckPoint_Silent()
 
@@ -1555,7 +1583,7 @@ void function Training_Setup_FiringRange( entity player )
 	entity ogStart = GetEntByScriptName( "firingrange_og_needguns_start_sitting" )
 	entity og = Training_SpawnOGPilot( ogStart )
 	Training_OG_Idles_Sitting( ogStart )
-
+	
 	thread TakeAmmoFromPlayerASAP( player )
 
 	TeleportPlayerAndBT( "startpoint_firing_range" )
@@ -6399,21 +6427,27 @@ void function NPC_EnableArrivals( entity npc )
 void function PlayerAndOGTeleport_Fancy( entity player, vector destPos, string ogTeleportSpotName, vector destAng = < -1, -1, -1 > )
 {
 	EndSignal( player, "OnDeath" )
-	thread FancyTeleport_EffectsAndSound( player, destPos )
+	foreach( entity p in GetPlayerArray() )
+		thread FancyTeleport_EffectsAndSound( p, destPos )
 
 	player.WaitSignal( "FancyTeleportStart" )
 
 	entity ogTeleportSpot = TeleportOG( ogTeleportSpotName )
 	Training_OG_Idles_Sitting( ogTeleportSpot )
 
-	MakeInvincible( player )
+	foreach( entity p in GetPlayerArray() )
+		MakeInvincible( p )
+
 	WaitEndFrame() // player will take damage from random hazard triggers otherwise
+	
+	foreach( player in GetPlayerArray() )
+	{
+		player.SetOrigin( destPos )
+		if ( destAng != < -1, -1, -1 > )
+			player.SetAngles( destAng )
 
-	player.SetOrigin( destPos )
-	if ( destAng != < -1, -1, -1 > )
-		player.SetAngles( destAng )
-
-	ClearInvincible( player )
+		ClearInvincible( player )
+	}
 }
 
 void function FancyTeleport_EffectsAndSound( entity player, vector teleportPos )

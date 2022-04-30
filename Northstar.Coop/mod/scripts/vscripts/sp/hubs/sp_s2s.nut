@@ -18377,6 +18377,7 @@ void function RespawnPlayer_s2s( entity player  )
 	{
 		if ( file.player == player )
 			return
+		if ( IsAlive( file.player ) && !IsAlive( player ) )
 		player.SetOrigin( file.player.GetOrigin() )
 		DoRespawnPlayer( player, null )
 		return
