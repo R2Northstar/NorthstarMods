@@ -79,18 +79,23 @@ void function RateSpawnpoints_CTF( int checkClass, array<entity> spawnpoints, in
 	// this is mainly done to avoid issues with frontline position being way too aggressive when people push enemy bases and that, making it pretty unfair for defending team
 	vector weightedFrontline = frontline.origin
 	{
-		const float FRONTLINE_WEIGHT_THRESHOLD = 0.35
+		const float FRONTLINE_WEIGHT_THRESHOLD = 0.325
 	
 		float frontlineAngle = atan2( frontline.origin.y - ourFlag.GetOrigin().y, frontline.origin.x - ourFlag.GetOrigin().x ) * ( 180 / PI )
 		float frontlineDistFrac = Distance2D( ourFlag.GetOrigin(), frontline.origin ) / flagDist
 		if ( frontlineDistFrac > FRONTLINE_WEIGHT_THRESHOLD )
 		{
 			float fracAboveThreshold = frontlineDistFrac - FRONTLINE_WEIGHT_THRESHOLD
-			fracAboveThreshold *= ( fracAboveThreshold / 0.05 ) * 0.01
+			fracAboveThreshold *= fracAboveThreshold * 0.45
 			frontlineDistFrac = FRONTLINE_WEIGHT_THRESHOLD + fracAboveThreshold
 		}
 		
 		weightedFrontline = ourFlag.GetOrigin() + AnglesToForward( < 0, frontlineAngle, 0 > ) * ( frontlineDistFrac * flagDist )
+		
+		#if CTF_SPAWN_DEBUG
+			DebugDrawSphere( frontline.origin, 100, 0, 0, 255, false, 30.0, 16 )
+			DebugDrawSphere( weightedFrontline, 100, 0, 255, 0, false, 30.0, 16 )
+		#endif
 	}
 	
 	float frontlineDist = Distance2D( ourFlag.GetOrigin(), weightedFrontline )
