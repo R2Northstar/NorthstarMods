@@ -1093,6 +1093,8 @@ void function ThreadedAuthAndConnectToServer( string password = "" )
 		if ( modsChanged )
 			ReloadMods()
 
+		SetConVarString( "ns_server_name", NSGetServerName( file.lastSelectedServer ))
+
 		NSConnectToAuthedServer()
 	}
 	else
