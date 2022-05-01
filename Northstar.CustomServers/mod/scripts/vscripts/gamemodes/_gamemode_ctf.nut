@@ -327,7 +327,7 @@ void function Flag_CapturedByPlayer( entity flag, entity player )
 	MessageToTeam( GetOtherTeam( player.GetTeam() ), eEventNotifications.PlayerCapturedFriendlyFlag, player, player )
 	EmitSoundOnEntityToTeam( flag, "UI_CTF_3P_EnemyScore", flag.GetTeam() )
 	
-	if ( GameRules_GetTeamScore( player.GetTeam() ) == GameMode_GetRoundScoreLimit( GAMETYPE ) - 1 )
+	if ( GameRules_GetTeamScore( player.GetTeam() ) == GetScoreLimit_FromPlaylist() - 1 )
 	{
 		PlayFactionDialogueToTeam( "ctf_notifyWin1more", player.GetTeam() )
 		PlayFactionDialogueToTeam( "ctf_notifyLose1more", GetOtherTeam( player.GetTeam() ) )
