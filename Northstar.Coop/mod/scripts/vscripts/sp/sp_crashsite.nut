@@ -505,41 +505,45 @@ void function StartPoint_LevelStart( entity player )
 {
 	player.EndSignal( "OnDestroy" )
 
-	EnableMorningLight( player )
-
-	// grunts don't rodeo
-	Rodeo_Disallow( player )
-	SyncedMelee_Disable( player )
-
-	// mangage marching spectres
-	AddSpawnCallback_ScriptName( "marching_spectre", MarchinSpectreThink )
-
-	// remove hud for grunt
-	player.SetPlayerNetBool( "hideHudIcons", true )
-	Remote_CallFunction_Replay( player, "ServerCallback_HideHudIcons" )
-
-	// no grunt chetter that isn't custom, will get reset at the "waking up"
-	SetPlayerForcedDialogueOnly( player, true )
-
 	FlagClear( "DeathHintsEnabled" )
+	
+	foreach ( player in GetPlayerArray() )
+	{
+		EnableMorningLight( player )
 
-	// weapon will be enabled once the player is out of the escape pod
-	player.DisableWeapon()
-	player.FreezeControlsOnServer()
+		// grunts don't rodeo
+		Rodeo_Disallow( player )
+		SyncedMelee_Disable( player )
 
-	#if CONSOLE_PROG
-	// This gets cleared when the player hits the ground
-	EnableDVSOverride( player )
-	#endif
+		// mangage marching spectres
+		AddSpawnCallback_ScriptName( "marching_spectre", MarchinSpectreThink )
 
-	thread LevelStartAudio( player )
-	thread LevelStartSubtitles( player )
-	waitthread ShowTitleScreen( player )
+		// remove hud for grunt
+		player.SetPlayerNetBool( "hideHudIcons", true )
+		Remote_CallFunction_Replay( player, "ServerCallback_HideHudIcons" )
 
-	player.UnfreezeControlsOnServer()
+		// no grunt chetter that isn't custom, will get reset at the "waking up"
+		SetPlayerForcedDialogueOnly( player, true )
 
-	thread PlayerInEscapePod( player )
-	thread EscapePodSubtitles( player )
+		// weapon will be enabled once the player is out of the escape pod
+		player.DisableWeapon()
+		player.FreezeControlsOnServer()
+
+		#if CONSOLE_PROG
+		// This gets cleared when the player hits the ground
+		EnableDVSOverride( player )
+		#endif
+
+		thread LevelStartAudio( player )
+		thread LevelStartSubtitles( player )
+		waitthread ShowTitleScreen( player )
+
+		player.UnfreezeControlsOnServer()
+
+		thread PlayerInEscapePod( player )
+		thread EscapePodSubtitles( player )
+	}
+
 	thread EscapePodFriendlies( player )
 	thread SpectreSkit( player )
 	thread IntroDitchCrash( player )
@@ -836,7 +840,7 @@ void function EscapePodFriendlies( entity player )
 		escapePodHelper.Solid()
 	}
 
-	// escapePodGuy.SetNoTarget( false ) // error here
+	escapePodGuy.SetNoTarget( false )
 	escapePodGuy.ClearInvulnerable()
 	escapePodHelper.ClearInvulnerable()
 }
@@ -1537,7 +1541,10 @@ void function StartPoint_BTIntro( entity player )
 	thread DestroyDroppedWeapons( player.GetOrigin(), 512, 3 )
 
 	thread BTIntro_MilitiaGrunts()
-	thread BTIntro_Player( player )
+
+	foreach ( entity p in GetPlayerArray() )
+		thread BTIntro_Player( p )
+	
 	thread BTIntro_EnemyTitan( player )
 	thread BTIntro_EnemyTitan2( player )
 

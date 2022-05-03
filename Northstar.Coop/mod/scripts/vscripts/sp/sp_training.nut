@@ -371,6 +371,11 @@ void function Training_PlayerDidLoad( entity player )
 
 		Training_WeaponPickups_Init( player )
 	}
+	else 
+	{
+		if ( IsValid( player.GetPetTitan() ) )
+			player.GetPetTitan().SetOrigin( <0,0,0> )
+	} 
 
 	thread TakeAmmoFromPlayerASAP( player )
 
@@ -556,8 +561,12 @@ void function Training_PodIntro( entity player )
 
 	// HACK this should be based on an anim event
 	thread TrainingPod_KillInteriorDLights_Delayed( player, 2.65 )
-
+	
 	thread FirstPersonSequence( podSequence, pod )
+	
+	foreach( entity p in GetPlayerArray() )
+		thread FirstPersonSequence( playerSequence, p, pod )
+	
 	waitthread FirstPersonSequence( playerSequence, player, pod )
 
 	FlagSet( "PodIntro_PodDoorsClosed" )
@@ -1829,8 +1838,10 @@ void function FiringRange_TrainReload( entity player, entity ogIdleSpot )
 	FlagClear( "PlayerReloaded" )
 
 	SetWeaponHUDEnabled( player, true )
+	
+	foreach ( player in GetPlayerArray() )
+		player.SetExtraWeaponMods( [ "" ] )  // turns off low_ammo_disable
 
-	player.SetExtraWeaponMods( [ "" ] )  // turns off low_ammo_disable
 	thread TakeAmmoFromPlayerASAP( player )
 
 	thread TrainReload_GivePlayerAmmoAfterButtonPressed( player )
@@ -1875,7 +1886,8 @@ void function TrainReload_GivePlayerAmmoAfterButtonPressed( entity player )
 
 	FlagSet( "ReloadTraining_PlayerPressedReload" )
 
-	player.SetActiveWeaponPrimaryAmmoTotal( 50 )
+	foreach ( player in GetPlayerArray() )
+		player.SetActiveWeaponPrimaryAmmoTotal( 50 )
 }
 
 void function FiringRange_InfiniteAmmo_WhenNearRange( entity player, string endFlag )
@@ -1902,10 +1914,12 @@ void function FiringRange_InfiniteAmmo_WhenNearRange( entity player, string endF
 		// let player reload before restocking
 		if ( currAmmo > (maxAmmo-magSize + 1) )
 			continue
+		// will it crash?
 
 		printt( "firing range restock ammo" )
-
-		RestockPlayerAmmo_Silent( player )
+		
+		foreach ( player in GetPlayerArray() )
+			RestockPlayerAmmo_Silent( player )
 	}
 }
 
@@ -2254,7 +2268,10 @@ void function Training_Gauntlet( entity player )
 
 	EnableGauntlet( trainingGauntlet )
 	thread Training_Gauntlet_FirstRunGhostPlaybackStart( player, trainingGauntlet )
-	thread TrainingGauntlet_TeleportPlayerAtFinishLine( player )
+
+		foreach ( entity p in GetPlayerArray() )
+		thread TrainingGauntlet_TeleportPlayerAtFinishLine( p )
+
 	thread TrainingGauntlet_RemindPlayerAboutMobility( player, "Gauntlet_FirstRun_All_VO_Finished" )
 	thread TrainingGauntlet_CrouchHint( player )
 	thread TrainingGauntlet_SetsDifficulty( player )
@@ -2508,7 +2525,9 @@ void function Gauntlet_PostFirstRun_SetRandomTip( entity og )
 		return
 
 	GauntletInfo gauntlet = GetTrainingGauntlet()
-	Remote_CallFunction_Replay( player, "ScriptCallback_GauntletResultsDisplay_SetRandomTip", gauntlet.id )
+
+	foreach ( player in GetPlayerArray() )
+		Remote_CallFunction_Replay( player, "ScriptCallback_GauntletResultsDisplay_SetRandomTip", gauntlet.id )
 }
 
 void function Training_Gauntlet_FirstRunGhostPlaybackStart( entity player, GauntletInfo gauntlet )
@@ -2570,7 +2589,8 @@ void function Training_Gauntlet_WaitForRequiredTime( entity player, entity ogIdl
 			thread DoSprintEnableDialogForGauntletIfNeeded_Thread( player, 3.5 )
 	}
 
-	TrainingGauntletPostRun_TryAchievements( player, gauntlet )
+	foreach ( player in GetPlayerArray() )
+		TrainingGauntletPostRun_TryAchievements( player, gauntlet )
 
 	FlagSet( "Gauntlet_FirstRun_Done" )
 }
@@ -2687,7 +2707,9 @@ void function Training_AnnounceDifficultyForGauntletTime( entity player, float d
 {
 	string hintAlias = "hint_diff_"
 	hintAlias += file.trainingGauntletStats.recommendedDifficulty.tostring()
-	DisplayOnscreenHint( player, hintAlias, displayTime )
+
+	foreach ( player in GetPlayerArray() )
+		DisplayOnscreenHint( player, hintAlias, displayTime )
 }
 
 
@@ -2772,8 +2794,9 @@ void function DisableWeaponDelayed( entity player, float delay )
 
 	if ( delay > 0 )
 		wait delay
-
-	player.DisableWeapon()
+	
+	foreach ( player in GetPlayerArray() )
+		player.DisableWeapon()
 }
 
 void function GauntletChallege_RestartGauntletHint( entity player, GauntletInfo gauntlet )
@@ -4180,12 +4203,16 @@ void function Training_PodOutro( entity player )
 	int attachID = pod.LookupAttachment( podAttach )
 	vector podRefOrg = pod.GetAttachmentOrigin( attachID )
 	vector podRefAng = pod.GetAttachmentAngles( attachID )
-	player.SetOrigin( podRefOrg )
-	player.SetAngles( podRefAng )
 
-	player.ForceStand()
+	foreach( entity p in GetPlayerArray() )
+	{
+		p.SetOrigin( podRefOrg )
+		p.SetAngles( podRefAng )
 
-	TakeAllWeapons( player )
+		p.ForceStand()
+
+		TakeAllWeapons( p )
+	}
 
 	// start closed idle
 	FirstPersonSequenceStruct playerSequence
@@ -4200,8 +4227,11 @@ void function Training_PodOutro( entity player )
 	podSequence.blendTime 				= 0.0
 	podSequence.thirdPersonAnimIdle 	= "trainingpod_doors_close_idle"
 	podSequence.renderWithViewModels 	= true
-
-	thread FirstPersonSequence( playerSequence, player, pod )
+	
+	foreach( entity p in GetPlayerArray() )
+	{
+		thread FirstPersonSequence( playerSequence, p, pod )
+	}
 	thread FirstPersonSequence( podSequence, pod )
 
 	thread CadillacMoment_MeetOG( player )
@@ -4265,9 +4295,12 @@ void function Training_PodOutro( entity player )
 	podSequence_podOpens.renderWithViewModels 	= true
 
 	thread TrainingPod_TurnOnInteriorDLights_Delayed( player, 1.5 )
-
+	
 	thread FirstPersonSequence( podSequence_podOpens, pod )
-	thread FirstPersonSequence( playerSequence_podOpens, player, pod )
+	foreach( player in GetPlayerArray() )
+	{
+		thread FirstPersonSequence( playerSequence_podOpens, player, pod )
+	}
 
 	wait 2.1  // wait until scene starts animating for Meet OG
 }
@@ -4641,7 +4674,7 @@ void function CadillacMoment_MeetOG( entity player )
 	// HACK delay sequence so it transitions better from previous anim
 	TrainingPod_ViewConeLock_SemiStrict( player )  // set this to cover any time between viewmodel anims
 	thread FirstPersonSequence_Delayed( viewAnimDelay, playerSequence_meetOG, player, animEnt )
-	//thread FirstPersonSequence( playerSequence_meetOG, player, animEnt )
+	// thread FirstPersonSequence( playerSequence_meetOG, player, animEnt )
 
 	// gradual DOF racking during the scene
 	RackDoF_NearDepth( player, 0, 22, 12.0 )
@@ -4679,8 +4712,9 @@ void function FirstPersonSequence_Delayed( float delay, FirstPersonSequenceStruc
 
 	if ( delay > 0 )
 		wait delay
-
-	thread FirstPersonSequence( sequence, player, animEnt )
+	
+	foreach( player in GetPlayerArray() )
+		thread FirstPersonSequence( sequence, player, animEnt )
 }
 
 void function MeetOG_LoudspeakerVO( entity player )
@@ -5874,7 +5908,7 @@ void function OpenZenGardenExitDoor()
 
 void function CloseZenGardenExitDoor()
 {
-	DoorCloseFast( "zengarden_door" )
+	// DoorCloseFast( "zengarden_door" ) // just people get stuck
 }
 
 void function OpenGauntletDoor()

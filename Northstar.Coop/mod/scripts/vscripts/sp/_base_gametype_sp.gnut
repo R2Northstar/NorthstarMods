@@ -25,7 +25,6 @@ global function Coop_ReloadCurrentMapFromStartPoint
 global function Coop_MapChange
 global function ClientCommand_AllDialogueFinished
 global function OnTimeShiftGiveGlove
-global function Callback_WallrunBegin
 
 struct
 {

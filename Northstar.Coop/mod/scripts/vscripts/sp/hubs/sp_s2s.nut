@@ -2026,7 +2026,8 @@ void function Enable_AfterBurner( ShipStruct ship )
 	if ( !IsValid( ship.model ) )
 		return
 	int eHandle = ship.model.GetEncodedEHandle()
-	Remote_CallFunction_NonReplay( file.player, "ServerCallBack_Afterburners_On", eHandle )
+	// this crashes the game sometimes
+	// Remote_CallFunction_NonReplay( file.player, "ServerCallBack_Afterburners_On", eHandle )
 }
 
 void function Disable_AfterBurner( ShipStruct ship )
@@ -2034,7 +2035,7 @@ void function Disable_AfterBurner( ShipStruct ship )
 	if ( !IsValid( ship.model ) )
 		return
 	int eHandle = ship.model.GetEncodedEHandle()
-	Remote_CallFunction_NonReplay( file.player, "ServerCallBack_Afterburners_Off", eHandle )
+	// Remote_CallFunction_NonReplay( file.player, "ServerCallBack_Afterburners_Off", eHandle )
 }
 
 void function Start2_TrinityHangar()
@@ -5007,11 +5008,19 @@ void function Barkership_Main( entity player )
 
 void function BarkerShip_PlayerAnim( entity player, entity land )
 {
+	file.barkership.triggerFallingDeath.Disable()
+
 	foreach( entity p in GetPlayerArray() )
 	{
-		p.ClearAnimNearZ()
-		waitthread PlayFPSAnimShowProxy( p, "pt_s2s_end_fight_knockback", "ptpov_s2s_end_fight_knockback", land, "REF", ViewConeZero, 0 )
+		if ( IsValid( p ) && p != player )
+		{
+			p.ClearAnimNearZ()
+			thread PlayFPSAnimShowProxy( p, "pt_s2s_end_fight_knockback", "ptpov_s2s_end_fight_knockback", land, "REF", ViewConeZero, 0 )
+		}
 	}
+
+	player.ClearAnimNearZ()
+	waitthread PlayFPSAnimShowProxy( player, "pt_s2s_end_fight_knockback", "ptpov_s2s_end_fight_knockback", land, "REF", ViewConeZero, 0 )
 
 	entity node = player.GetParent()
 	foreach( entity p in GetPlayerArray() )
@@ -5026,8 +5035,6 @@ void function BarkerShip_PlayerAnim( entity player, entity land )
 		Melee_Enable( p )
 	}
 	CheckPoint_ForcedSilent()
-
-	file.barkership.triggerFallingDeath.Disable()
 
 	if ( IsValid( node ) )
 		node.Destroy()
@@ -18378,8 +18385,10 @@ void function RespawnPlayer_s2s( entity player  )
 		if ( file.player == player )
 			return
 		if ( IsAlive( file.player ) && !IsAlive( player ) )
-		player.SetOrigin( file.player.GetOrigin() )
-		DoRespawnPlayer( player, null )
+		{
+			player.SetOrigin( file.player.GetOrigin() )
+			DoRespawnPlayer( player, null )
+		}
 		return
 	}
 	else if ( file.respawnState == 3 )

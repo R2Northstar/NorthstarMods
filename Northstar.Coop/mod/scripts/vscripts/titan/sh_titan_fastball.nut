@@ -275,8 +275,11 @@ function FastballThrowPlayer( entity player )
 
 	foreach( entity p in GetPlayerArray() )
 	{
-		p.SetOrigin( mover.GetOrigin() )
-		p.SetParent( mover )
+		WaitFrame()
+		p.ClearParent()
+		p.SetVelocity( throwVelocity )
+		p.SetOrigin( throwStartPos )
+		p.DeployWeapon()
 	}
 
 	wait 1
@@ -436,22 +439,22 @@ void function ScriptedTitanFastball( entity player, entity titan, entity titanNo
 
 	// Throw the player
 	vector throwVelocity = file.fastballVelocityFunc( player, throwTarget )
+	vector throwStartPos = Fastball_GetThrowStartPos( player )
 	
-	player.ClearParent()
-	player.SetVelocity( throwVelocity )
-	player.DeployWeapon()
+	// player.ClearParent()
+	// player.SetVelocity( throwVelocity )
+	// player.SetOrigin( throwStartPos )
+	// player.DeployWeapon()
 
 	WaitFrame()
 
 	foreach( entity p in GetPlayerArray() )
 	{
-		if ( p != player )
-		{
-			p.ClearParent()
-			p.SetVelocity( throwVelocity )
-			p.DeployWeapon()
-			p.SetOrigin( player.GetOrigin() )
-		}
+		WaitFrame()
+		p.ClearParent()
+		p.SetVelocity( throwVelocity )
+		p.SetOrigin( throwStartPos )
+		p.DeployWeapon()
 	}
 	EmitSoundOnEntity( player, "bt_beacon_fastball_Whoosh" )
 
