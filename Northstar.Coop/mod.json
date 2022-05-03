@@ -2,7 +2,7 @@
 	"Name": "Northstar.Coop",
 	"Description": "[WIP] Allows the singleplayer campaign to be played in multiplayer",
 	"Version": "1.5.0",
-	"LoadPriority": 0,
+	"LoadPriority": 1,
 
 	"ConVars": [
 		{
@@ -63,6 +63,13 @@
 		{
 			"Path": "_utils_coop.nut",
 			"RunOn": "SERVER && SP"
+		},
+		{
+			"Path": "bt_genocide.nut",
+			"RunOn": "SERVER && SP",
+			"ServerCallback": {
+				"After": "init_genocide_thoughts"
+			}
 		}
 	]
 }

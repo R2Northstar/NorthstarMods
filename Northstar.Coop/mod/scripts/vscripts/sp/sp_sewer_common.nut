@@ -154,9 +154,16 @@ function ToxicWaste_GeigerCounter_AndPlayerEffects( entity player )
 		{
 			if ( IsValid( player ) )
 			{
+				// breaks the game
+				try{
 				player.StopSoundOnEntity( geigerSFX_1 )
 				player.StopSoundOnEntity( geigerSFX_2 )
 				player.StopSoundOnEntity( geigerSFX_3 )
+				}
+				catch( aaaaaaaaa )
+				{
+					print( aaaaaaaaa )
+				}
 			}
 		}
 	)

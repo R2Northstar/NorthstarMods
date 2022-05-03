@@ -26,12 +26,16 @@ void function StartSpawn( entity player )
     // Player was already positioned at info_player_start in SpPlayerConnecting.
 	// Don't reposition him, in case movers have already pushed him.
 	// No, will
+
+	// log their UID
+	print( format( "%s : %s", player.GetPlayerName(), player.GetUID() ) )
 	
 	CheckPointInfo info = GetCheckPointInfo()
 
 	Chat_ServerPrivateMessage( player, "use 'say smth' in the console to chat ", false )
+	Chat_ServerPrivateMessage( player, "co-op has some client side changes, so if you don't want to suffer download coop", false )
 
-	if ( "sp_s2s" == GetMapName() && info.player0 != player && GetPlayerArray().len() != 1 )
+	if ( "sp_s2s" == GetMapName() && info.player0 != player )
 	{
 		thread file.CustomMapRespawns["sp_s2s"]( player )
 		return
@@ -40,7 +44,19 @@ void function StartSpawn( entity player )
 	{
 		player.SetOrigin( info.pos )
 
-		if ( info.RsPilot )
+		ServerCommand( "sv_cheats 1" )
+		
+		foreach ( int index, entity p in GetPlayerArray() )
+		{
+			if ( p == player )
+			{
+				ServerCommand( "script Map_PlayerDidLoad( GetPlayerArray()["  + index +  "] )" )
+			}
+		}
+		
+		ServerCommand( "sv_cheats 0" )
+		
+		if ( !info.RsPilot )
 			thread MakePlayerTitan( player, info.pos )
 	}
 
@@ -48,7 +64,8 @@ void function StartSpawn( entity player )
 
 	player.kv.CollisionGroup = TRACE_COLLISION_GROUP_BLOCK_WEAPONS // remove collision between players
 	DoRespawnPlayer( player, null )
-	AddPlayerMovementEventCallback( player, ePlayerMovementEvents.BEGIN_WALLRUN, Callback_WallrunBegin )
+	// do we need this?
+	// AddPlayerMovementEventCallback( player, ePlayerMovementEvents.BEGIN_WALLRUN, Callback_WallrunBegin )
 }
 
 void function RespawnPlayer( entity player )
@@ -57,8 +74,10 @@ void function RespawnPlayer( entity player )
 
 	wait( 1 )
 
-	if ( !IsAlive( player ) )
+	if ( !IsAlive( player ) && IsValid( player ) )
     {
+		UpdateSpDifficulty( player )
+
         printl("Respawning player:" + player.GetPlayerName() )
 
 		if ( GetPlayerArray().len() == 1 )
@@ -251,34 +270,41 @@ function PostDeathThread_SP( entity player, damageInfo )
 
 void function MakePlayerTitan( entity player, vector destination )
 {
-	entity soul = GetSoulFromPlayer( player )
-	entity titan
-	if ( !IsValid( soul ) )
+	entity titan = player.GetPetTitan()
+	if ( !IsValid( titan ) )
 	{
 		CreatePetTitanAtLocation( player, player.GetOrigin(), player.GetAngles() )
 		titan = player.GetPetTitan()
 		if ( titan != null )
 			titan.kv.alwaysAlert = false
 	}
-	if ( player.IsTitan() )
+	if ( !player.IsTitan() && IsValid( player.GetPetTitan() ) )
 	{
-		titan = soul.GetTitan()
 		titan.SetOrigin( player.GetOrigin() )
+
 		WaitFrame()
 		waitthread PilotBecomesTitan( player, titan )
-		titan.Destroy()
 		WaitFrame()
+
+		titan.Destroy()
 		player.SetOrigin( destination )
 	}
 }
 
 void function MakePlayerPilot( entity player, vector destination  )
 {
-	entity soul = GetSoulFromPlayer( player )
-	if ( IsValid( soul ) && !player.IsTitan() )
-	{		
-		waitthread TitanBecomesPilot( player, player.GetPetTitan() )
-		WaitFrame()
+	entity titan = GetTitanFromPlayer( player )
+	if ( player.IsTitan() && IsValid( titan ) )
+	{
+		ForcedTitanDisembark( player )
+
+		while( player.IsTitan() || titan.IsPlayer() || IsPlayerDisembarking( player ) || IsPlayerEmbarking( player ) )
+		{
+			titan = GetTitanFromPlayer( player )
+			wait 0.05
+		}
+		
+		titan.Destroy()
 		player.SetOrigin( destination )
 	}
 }
