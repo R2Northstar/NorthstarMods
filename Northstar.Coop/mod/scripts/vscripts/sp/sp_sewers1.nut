@@ -162,6 +162,7 @@ void function EntitiesDidLoad()
 
 void function PlayerDidRespawn( entity player )
 {
+	SetPlayer0( player )
 	thread TrackPlayerCombatState( player )
 }
 
@@ -709,6 +710,12 @@ void function SewerSplit_GateThink( entity player )
 	wait 1.0
 
 	FlagSet( "SewerSplit_OpenGate_Done" )
+
+	// respawning bt for player0 if gone
+	if ( !IsValid( GetPlayer0().GetPetTitan() ) )
+		CreatePetTitanAtLocation( GetPlayer0(), button.GetOrigin() + < 400,0,-20 >, <0,0,0> )
+	
+	GetPlayer0().GetPetTitan().SetInvulnerable()
 }
 
 
