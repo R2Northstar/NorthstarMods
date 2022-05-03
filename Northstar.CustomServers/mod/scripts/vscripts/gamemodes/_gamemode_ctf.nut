@@ -54,9 +54,9 @@ void function RateSpawnpoints_CTF( int checkClass, array<entity> spawnpoints, in
 	// get the player's frontline and try to spawn them there, then give less good ratings as we get away from the frontline in the direction of the player's base
 	Frontline frontline = GetFrontline( player.GetTeam() )
 
-	entity ourFlag = GetFlagForTeam( player.GetTeam() )
-	entity theirFlag = GetFlagForTeam( GetOtherTeam( player.GetTeam() ) )
-	float flagDist = Distance2D( ourFlag.GetOrigin(), theirFlag.GetOrigin() )
+	vector ourFlag = GetFlagSpawnOriginForTeam( player.GetTeam() )
+	vector theirFlag = GetFlagSpawnOriginForTeam( GetOtherTeam( player.GetTeam() ) )
+	float flagDist = Distance2D( ourFlag, theirFlag )
 	
 	// weight the frontline position to be closer to friendly base
 	// this is mainly done to avoid issues with frontline position being way too aggressive when people push enemy bases and that, making it pretty unfair for defending team
@@ -64,8 +64,8 @@ void function RateSpawnpoints_CTF( int checkClass, array<entity> spawnpoints, in
 	{
 		const float FRONTLINE_WEIGHT_THRESHOLD = 0.325
 	
-		float frontlineAngle = atan2( frontline.origin.y - ourFlag.GetOrigin().y, frontline.origin.x - ourFlag.GetOrigin().x ) * ( 180 / PI )
-		float frontlineDistFrac = Distance2D( ourFlag.GetOrigin(), frontline.origin ) / flagDist
+		float frontlineAngle = atan2( frontline.origin.y - ourFlag.y, frontline.origin.x - ourFlag.x ) * ( 180 / PI )
+		float frontlineDistFrac = Distance2D( ourFlag, frontline.origin ) / flagDist
 		if ( frontlineDistFrac > FRONTLINE_WEIGHT_THRESHOLD )
 		{
 			float fracAboveThreshold = frontlineDistFrac - FRONTLINE_WEIGHT_THRESHOLD
@@ -73,7 +73,7 @@ void function RateSpawnpoints_CTF( int checkClass, array<entity> spawnpoints, in
 			frontlineDistFrac = FRONTLINE_WEIGHT_THRESHOLD + fracAboveThreshold
 		}
 		
-		weightedFrontline = ourFlag.GetOrigin() + AnglesToForward( < 0, frontlineAngle, 0 > ) * ( frontlineDistFrac * flagDist )
+		weightedFrontline = ourFlag + AnglesToForward( < 0, frontlineAngle, 0 > ) * ( frontlineDistFrac * flagDist )
 		
 		#if CTF_SPAWN_DEBUG
 			DebugDrawSphere( frontline.origin, 100, 0, 0, 255, false, 30.0, 16 )
@@ -81,10 +81,10 @@ void function RateSpawnpoints_CTF( int checkClass, array<entity> spawnpoints, in
 		#endif
 	}
 	
-	float frontlineDistReal = Distance2D( ourFlag.GetOrigin(), frontline.origin )
-	float frontlineDist = Distance2D( ourFlag.GetOrigin(), weightedFrontline )
-	float frontlineAngleReal = atan2( frontline.origin.y - ourFlag.GetOrigin().y, frontline.origin.x - ourFlag.GetOrigin().x ) * ( 180 / PI )
-	float frontlineAngle = atan2( weightedFrontline.y - ourFlag.GetOrigin().y, weightedFrontline.x - ourFlag.GetOrigin().x ) * ( 180 / PI )
+	float frontlineDistReal = Distance2D( ourFlag, frontline.origin )
+	float frontlineDist = Distance2D( ourFlag, weightedFrontline )
+	float frontlineAngleReal = atan2( frontline.origin.y - ourFlag.y, frontline.origin.x - ourFlag.x ) * ( 180 / PI )
+	float frontlineAngle = atan2( weightedFrontline.y - ourFlag.y, weightedFrontline.x - ourFlag.x ) * ( 180 / PI )
 	
 	// dividing dist between flags by 3ish gives a good radius for the initial circle
 	// should this be based on the distance to the frontline? unsure, it probably should be based more on map size than spawn pos anyway
@@ -327,7 +327,7 @@ void function Flag_CapturedByPlayer( entity flag, entity player )
 	MessageToTeam( GetOtherTeam( player.GetTeam() ), eEventNotifications.PlayerCapturedFriendlyFlag, player, player )
 	EmitSoundOnEntityToTeam( flag, "UI_CTF_3P_EnemyScore", flag.GetTeam() )
 	
-	if ( GameRules_GetTeamScore( player.GetTeam() ) == GetScoreLimit_FromPlaylist() - 1 )
+	if ( GameRules_GetTeamScore( player.GetTeam() ) == GameMode_GetRoundScoreLimit( GAMETYPE ) - 1 )
 	{
 		PlayFactionDialogueToTeam( "ctf_notifyWin1more", player.GetTeam() )
 		PlayFactionDialogueToTeam( "ctf_notifyLose1more", GetOtherTeam( player.GetTeam() ) )
