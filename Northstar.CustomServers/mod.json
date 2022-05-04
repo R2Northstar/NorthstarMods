@@ -35,6 +35,10 @@
 			"DefaultValue": "0"
 		},
 		{
+			"Name": "ns_private_match_admin_uids",
+			"DefaultValue": ""
+		},
+		{
 			"Name": "ns_private_match_only_host_can_start",
 			"DefaultValue": "0"
 		},
