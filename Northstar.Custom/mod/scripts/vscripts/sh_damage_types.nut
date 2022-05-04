@@ -4,14 +4,24 @@ global function GetObitFromDamageSourceID
 global function DamageSourceIDToString
 global function DamageSourceIDHasString
 
+#if SERVER
 global function RegisterWeaponDamageSource
 global function RegisterWeaponDamageSources
+#endif
 
 struct
 {
 	table<int,string> damageSourceIDToName
 	table<int,string> damageSourceIDToString
+
+	// For new, modded damageSourceIDs.
+	// Holds triplets of [id, enum_name, display name]. Stored with no separation for ease of string conversion.
+	array<string> customDamageSourceIDList
 } file
+
+// For sending custom damage source IDs to clients
+const int SOURCE_ID_MAX_MESSAGE_LENGTH = 200 // JFS - Used to break messages sent to client into chunks in case it would hit the limitation on command argument length
+const string MESSAGE_SPACE_PADDING = "\xA6" // The "broken pipe" character. Trash character used to replace spaces in display name to allow sending via commands (args are separated by spaces).
 
 global enum eDamageSourceId
 {
@@ -455,6 +465,12 @@ global const modNameStrings = {
 
 void function DamageTypes_Init()
 {
+	#if SERVER
+	AddCallback_OnClientConnected( SendNewDamageSourceIDsConnected )
+	#else
+	AddServerToClientStringCommandCallback( "register_damage_source_ids", ReceiveNewDamageSourceIDs )
+	#endif
+
 	foreach ( name, number in eDamageSourceId )
 	{
 		file.damageSourceIDToString[ number ] <- name
@@ -663,28 +679,98 @@ string function GetObitFromDamageSourceID( int damageSourceID )
 	return ""
 }
 
+#if SERVER
 void function RegisterWeaponDamageSource( string weaponRef, string damageSourceName )
 {
-	RegisterWeaponDamageSources( { weaponRef = damageSourceName } )
+	// Have to do this since squirrel table initialization only supports literals for string keys
+	table<string, string> temp
+	temp[weaponRef] <- damageSourceName
+	RegisterWeaponDamageSources( temp )
 }
 
-// Values are expected to be in a table containing the enum variable name and the string name, e.g.
-// {"mp_titanweapon_sniper" : "Plasma Railgun", "mp_titanweapon_meteor" : "T203 Thermite Launcher"}
-// Only works properly if used after the match starts, e.g. called in "after" callbacks.
+/*	Values are expected to be in a table containing the enum variable name and the string name, e.g.
+	{"mp_titanweapon_sniper" : "Plasma Railgun", "mp_titanweapon_meteor" : "T203 Thermite Launcher"}
+	Only works properly if used after the match starts, e.g. called in "after" callbacks.
+*/
 void function RegisterWeaponDamageSources( table<string, string> newValueTable )
 {
 	int trgt = file.damageSourceIDToString.len() - 1 // -1 accounts for invalid.
+	int lastCustomSize = file.customDamageSourceIDList.len() // Used to only send new IDs to clients if any are added during runtime.
 
 	foreach ( newVal, stringVal in newValueTable )
 	{
 		// Don't replace existing enum values
-		while ( trgt in file.damageSourceIDToString ) 
+		while ( trgt in file.damageSourceIDToString )
+			trgt++
+
+		// Only move insertion point if insertion succeeded
+		if ( RegisterWeaponDamageSourceInternal( trgt, newVal, stringVal ) )
 			trgt++;
-		
-		table damageSourceID = expect table( getconsttable()["eDamageSourceId"] )
-		damageSourceID[ newVal ] <- trgt
-		file.damageSourceIDToString[ trgt ] <- newVal
-		file.damageSourceIDToName[ trgt ] <- stringVal
-		trgt++;
+	}
+
+	// Send IDs created during match runtime. IDs made on inits get sent through client connected callback.
+	foreach( player in GetPlayerArray() )
+		SendNewDamageSourceIDs( player, lastCustomSize )
+}
+#endif
+
+bool function RegisterWeaponDamageSourceInternal( int id, string newVal, string stringVal )
+{
+	table damageSourceID = expect table( getconsttable()["eDamageSourceId"] )
+
+	// Fail invalid new source IDs (already exists or cannot be sent via string commands). Length condition has loose padding to account for ID string length.
+	if ( newVal in damageSourceID || newVal.len() + stringVal.len() > SOURCE_ID_MAX_MESSAGE_LENGTH - 15 || id in file.damageSourceIDToString )
+		return false
+
+	damageSourceID[ newVal ] <- id
+	file.damageSourceIDToString[ id ] <- newVal
+	file.damageSourceIDToName[ id ] <- stringVal
+	file.customDamageSourceIDList.extend( [id.tostring(), newVal, StringReplace( stringVal, " ", MESSAGE_SPACE_PADDING ) ] )
+	return true
+}
+
+#if SERVER
+void function SendNewDamageSourceIDsConnected( entity player )
+{
+	SendNewDamageSourceIDs( player )
+}
+
+void function SendNewDamageSourceIDs( entity player, int index = 0 )
+{
+	while ( index < file.customDamageSourceIDList.len() )
+	{
+		int curSize = 0
+		int curIndex = index
+
+		// Figure out how many sources to send in this message chunk
+		while ( curIndex < file.customDamageSourceIDList.len() )
+		{
+			// Sources are inserted to the custom list in triplets, so we can trust these indices exist.
+			curSize += file.customDamageSourceIDList[curIndex].len()
+			curSize += file.customDamageSourceIDList[curIndex+1].len()
+			curSize += file.customDamageSourceIDList[curIndex+2].len()
+
+			// Stop before including strings in current message if it exceeds max message length.
+			// This will never stall on a singular source that exceeds the size since new sources are size limited.
+			if ( curSize > SOURCE_ID_MAX_MESSAGE_LENGTH )
+				break
+
+			curIndex += 3
+		}
+
+		// Create the string to pass to client
+		string message = ""
+		while ( index < curIndex )
+			message += file.customDamageSourceIDList[index++] + " "
+
+		ServerToClientStringCommand( player, "register_damage_source_ids " + message )
 	}
 }
+#else
+void function ReceiveNewDamageSourceIDs( array<string> args )
+{
+	// IDs are inserted to the custom list in triplets, so we can trust these indices exist and the loop will end properly
+	for ( int i = 0; i < args.len(); i += 3 )
+		RegisterWeaponDamageSourceInternal( args[i].tointeger(), args[i+1], StringReplace( args[i+2], MESSAGE_SPACE_PADDING, " " ) )
+}
+#endif
