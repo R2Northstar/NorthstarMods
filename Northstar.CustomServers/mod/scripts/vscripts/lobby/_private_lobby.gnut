@@ -246,7 +246,7 @@ bool function ClientCommandCallback_PrivateMatchSetPlaylistVarOverride( entity p
 bool function ClientCommandCallback_ResetMatchSettingsToDefault( entity player, array<string> args )
 {
 	if ( GetConVarInt( "ns_private_match_only_host_can_change_settings" ) >= 1 )
-		if ( !NSIsPlayerIndexLocalPlayer( player.GetPlayerIndex() ) )
+		if ( !PlayerHasLobbyPermission( player ) )
 			return true
 	
 	PlayerChangedTheGame( player , " reset to default" , args )
