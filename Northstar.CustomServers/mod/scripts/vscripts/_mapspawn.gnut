@@ -226,10 +226,12 @@ var function CodeCallback_ClientCommand( entity player, array<string> args )
 			printl( "############################" )
 		}
 		// For some reason, the `emit` command isn't actually a clientcommand, nor is it a concommand, yet it still gets triggered anyway.
-		// I haven't really found a "good" way of blocking it, but simply returning true from this function makes the game thing
+		// I haven't really found a "good" way of blocking it, but simply returning true from this function makes the game think
 		// that it *was* registered as a clientcommand, and makes it stop searching.
-		if (!GetConVarBool("sv_cheats")) {
-			if (blocked_commands.contains(commandString)) {
+		if ( !GetConVarBool( "sv_cheats" ))
+		{
+			if ( blocked_commands.contains( commandString ))
+			{
 				printl( "############################" )
 				printl( "CommandString: " + commandString  + " was blocked because sv_cheats was not 1" )
 				printl( "############################" )
