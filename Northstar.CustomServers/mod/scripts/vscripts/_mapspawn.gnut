@@ -150,6 +150,8 @@ global struct SvGlobals
 
 global SvGlobals svGlobal
 
+array<string> blocked_commands = ["emit"]
+
 void function CodeCallback_MapSpawn() // original script entry point
 {
 	ScriptCompilerTest()
@@ -222,6 +224,17 @@ var function CodeCallback_ClientCommand( entity player, array<string> args )
 			printl( "############################" )
 			printl( "CommandString: " + commandString  + " was not added via AddClientCommandCallback but is being called in CodeCallback_ClientCommand" )
 			printl( "############################" )
+		}
+		// For some reason, the `emit` command isn't actually a clientcommand, nor is it a concommand, yet it still gets triggered anyway.
+		// I haven't really found a "good" way of blocking it, but simply returning true from this function makes the game thing
+		// that it *was* registered as a clientcommand, and makes it stop searching.
+		if (!GetConVarBool("sv_cheats")) {
+			if (blocked_commands.contains(commandString)) {
+				printl( "############################" )
+				printl( "CommandString: " + commandString  + " was blocked because sv_cheats was not 1" )
+				printl( "############################" )
+				return true
+			}
 		}
 		return false
 	}
