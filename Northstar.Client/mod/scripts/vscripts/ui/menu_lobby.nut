@@ -1689,8 +1689,17 @@ void function QuickPlaySearch_Threaded( var button )
 
 
 	if (serverIndices.len() == 0)
+	{
+		// we have found no valid servers, so clear the previous server array, and try again
+		if ( file.joinedServers.len() != 0 )
+		{
+			file.joinedServers = []
+			QuickPlaySearch_Threaded( button )
+		}
 		return
+	}
 
+	// for now just pick the first server
 	serverIndex = serverIndices[0]
 
 
