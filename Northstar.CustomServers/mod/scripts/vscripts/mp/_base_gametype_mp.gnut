@@ -31,12 +31,6 @@ struct {
 void function BaseGametype_Init_MPSP()
 {
 	AddSpawnCallback( "info_intermission", SetIntermissionCamera )
-	AddCallback_EntitiesDidLoad( SetSpecCams )
-	
-	RegisterSignal( "ObserverTargetChanged" )
-	AddClientCommandCallback( "spec_next", ClientCommandCallback_spec_next )
-	AddClientCommandCallback( "spec_prev", ClientCommandCallback_spec_prev )
-	AddClientCommandCallback( "spec_mode", ClientCommandCallback_spec_mode )
 	
 	AddPostDamageCallback( "player", AddToTitanDamageStat )
 	AddPostDamageCallback( "npc_titan", AddToTitanDamageStat )
@@ -48,19 +42,6 @@ void function BaseGametype_Init_MPSP()
 void function SetIntermissionCamera( entity camera )
 {
 	file.intermissionCamera = camera
-}
-
-void function SetSpecCams()
-{
-	// spec cams are called spec_cam1,2,3 etc by default, so this is the easiest way to get them imo
-	int camNum = 1 
-	entity lastCam = null
-	do {
-		lastCam = GetEnt( "spec_cam" + camNum++ )
-		
-		if ( lastCam != null )
-			file.specCams.append( lastCam )
-	} while ( lastCam != null )
 }
 
 void function CodeCallback_OnClientConnectionStarted( entity player )
@@ -132,7 +113,7 @@ void function CodeCallback_OnClientConnectionStarted( entity player )
 		callbackFunc( player )
 	}
 
-	printl( "Player connect started: " + player )
+	printl( "Player connect started: " + player + "---UID:" + player.GetUID() )
 	
 	InitPassives( player )
 }
@@ -172,6 +153,17 @@ void function CodeCallback_OnClientConnectionCompleted( entity player )
 		__PlayerDidSpawn( player )
 
 	svGlobal.levelEnt.Signal( "PlayerDidSpawn", { player = player } )
+
+	if ( GetConVarBool( "ns_allow_spectators" ) )
+	{
+		if ( IsPrivateMatchSpectator( player ) )
+		{
+			InitialisePrivateMatchSpectatorPlayer( player )
+			return
+		}
+	}
+	else
+		player.SetPersistentVar( "privateMatchState", 0 )
 
 	// handle spawning late joiners
 	if ( GetGameState() == eGameState.Playing )
@@ -214,21 +206,25 @@ void function CodeCallback_OnClientDisconnected( entity player, string reason )
 
 void function CodeCallback_OnPlayerRespawned( entity player )
 {
-	player.Signal( "OnRespawned" ) // kill any postdeaththreads that could be running
-
-	Remote_CallFunction_NonReplay( player, "ServerCallback_YouRespawned" )
-	player.s.respawnTime = Time()
-	
-	player.SetPredictionEnabled( true )
-	Loadouts_TryGivePilotLoadout( player )
 	SetHumanRagdollImpactTable( player )
- 	ClearLastAttacker( player ) // so dying to anything doesn't credit the same attacker after respawning
+	
+	player.s.respawnCount++
+	player.s.respawnTime = Time()
+	ClearRecentDamageHistory( player )
+	
+	player.Signal( "OnRespawned" ) // kill any postdeaththreads that could be running
+	
+	Loadouts_TryGivePilotLoadout( player )
+	//player.SetPredictionEnabled( true ) doesn't seem needed, as native code seems to set this
 	
 	foreach ( entity weapon in player.GetMainWeapons() )
 		weapon.SetProScreenOwner( player )
 		
 	foreach ( void functionref( entity ) callback in svGlobal.onPlayerRespawnedCallbacks )
 		callback( player )
+		
+	Remote_CallFunction_NonReplay( player, "ServerCallback_YouRespawned" )
+	ClearLastAttacker( player ) // so dying to anything doesn't credit the same attacker after respawning
 }
 
 void function CodeCallback_OnPlayerKilled( entity player, var damageInfo )
@@ -262,7 +258,8 @@ void function PostDeathThread_MP( entity player, var damageInfo ) // based on ga
 	player.SetNoTargetSmartAmmo( false )
 	player.ClearExtraWeaponMods()
 	
-
+	// disable prediction to prevent it messing with ragdoll in some places, as well as killreplay and such
+	player.SetPredictionEnabled( false )
 	
 	if ( player.IsTitan() )
 		SoulDies( player.GetTitanSoul(), damageInfo ) // cleanup some titan stuff, no idea where else to put this
@@ -277,22 +274,26 @@ void function PostDeathThread_MP( entity player, var damageInfo ) // based on ga
 		player.s.inPostDeath = false
 	})
 
-
 	entity attacker = DamageInfo_GetAttacker( damageInfo )
 	int methodOfDeath = DamageInfo_GetDamageSourceIdentifier( damageInfo )
 
 	table<int, bool> alreadyAssisted
-	foreach( DamageHistoryStruct attackerInfo in player.e.recentDamageHistory )
+	if ( IsValid( attacker ) )
 	{
-		bool exists = attackerInfo.attacker.GetEncodedEHandle() in alreadyAssisted ? true : false
-		if( attackerInfo.attacker != attacker && !exists )
+		foreach( DamageHistoryStruct attackerInfo in player.e.recentDamageHistory )
 		{
-			alreadyAssisted[attackerInfo.attacker.GetEncodedEHandle()] <- true
-			Remote_CallFunction_NonReplay( attackerInfo.attacker, "ServerCallback_SetAssistInformation", attackerInfo.damageSourceId, attacker.GetEncodedEHandle(), player.GetEncodedEHandle(), attackerInfo.time ) 
-			AddPlayerScore(attackerInfo.attacker, "PilotAssist" )
+			if ( !IsValid( attackerInfo.attacker ) || !attackerInfo.attacker.IsPlayer() || attackerInfo.attacker == player )
+				continue
+
+			bool exists = attackerInfo.attacker.GetEncodedEHandle() in alreadyAssisted ? true : false
+			if( attackerInfo.attacker != attacker && !exists )
+			{
+				alreadyAssisted[attackerInfo.attacker.GetEncodedEHandle()] <- true
+				Remote_CallFunction_NonReplay( attackerInfo.attacker, "ServerCallback_SetAssistInformation", attackerInfo.damageSourceId, attacker.GetEncodedEHandle(), player.GetEncodedEHandle(), attackerInfo.time ) 
+				AddPlayerScore( attackerInfo.attacker, "PilotAssist" )
+				attackerInfo.attacker.AddToPlayerGameStat( PGS_ASSISTS, 1 )
+			}
 		}
-
-
 	}
 
 	player.p.rematchOrigin = player.p.deathOrigin
@@ -318,11 +319,11 @@ void function PostDeathThread_MP( entity player, var damageInfo ) // based on ga
 	else
 		player.SetObserverTarget( null )
 	
-	if ( !file.playerDeathsHidden )
-	{
+	if ( ( GamePlayingOrSuddenDeath() || GetGameState() == eGameState.Epilogue ) && !file.playerDeathsHidden )
 		player.AddToPlayerGameStat( PGS_DEATHS, 1 )
+	
+	if ( !file.playerDeathsHidden )
 		Remote_CallFunction_NonReplay( player, "ServerCallback_YouDied", attacker.GetEncodedEHandle(), GetHealthFrac( attacker ), methodOfDeath )
-	}
 
 	float deathcamLength = GetDeathCamLength( player )
 	wait deathcamLength
@@ -404,7 +405,7 @@ void function PlayerWatchesKillReplayWrapper( entity player, entity attacker, fl
 			player.Signal( "KillCamOver" )
 			player.ClearReplayDelay()
 			player.ClearViewEntity()
-			player.SetPredictionEnabled( true )
+			//player.SetPredictionEnabled( true ) doesn't seem needed, as native code seems to set this on respawn
 		}
 	})
 	
@@ -462,6 +463,7 @@ void function RespawnAsTitan( entity player, bool manualPosition = false )
 	camera.Fire( "Enable", "!activator", 0, player )
 	
 	player.EndSignal( "OnDestroy" )
+	titan.EndSignal( "OnDestroy" )
 	OnThreadEnd( function() : ( player, titan, camera )
 	{
 		if ( IsValid( player ) )
@@ -470,7 +472,11 @@ void function RespawnAsTitan( entity player, bool manualPosition = false )
 			player.isSpawning = false
 		}
 	
-		titan.Destroy() // pilotbecomestitan leaves an npc titan that we need to delete
+		if ( IsValid( titan ) )
+			titan.Destroy() // pilotbecomestitan leaves an npc titan that we need to delete
+		else
+			RespawnAsPilot( player ) // this is 100% an edgecase, just avoid softlocking if we ever hit it in playable gamestates
+			
 		camera.Fire( "Disable", "!activator", 0, player )
 		camera.Destroy()
 	})
@@ -480,121 +486,14 @@ void function RespawnAsTitan( entity player, bool manualPosition = false )
 	player.RespawnPlayer( null ) // spawn player as pilot so they get their pilot loadout on embark
 	player.SetOrigin( titan.GetOrigin() )
 	
-	PilotBecomesTitan( player, titan ) // make player titan
+	// don't make player titan when entity batteryContainer is not valid.
+	// This will prevent a servercrash that sometimes occur when evac is disabled and somebody is calling a titan in the defeat screen.
+	if( IsValid( titan.GetTitanSoul().soul.batteryContainer ) )
+		PilotBecomesTitan( player, titan ) // make player titan
+	else
+		print( "batteryContainer is not a valid entity in RespawnAsTitan(). Skipping PilotBecomesTitan()." )
 }
 
-
-// spectator stuff
-
-void function PlayerBecomesSpectator( entity player )
-{
-	player.StartObserverMode( OBS_MODE_CHASE )
-	player.StopPhysics()
-
-	player.EndSignal( "OnRespawned" )
-	player.EndSignal( "OnDestroy" )
-	player.EndSignal( "PlayerRespawnStarted" )
-
-	int targetIndex = 0
-	
-	OnThreadEnd( function() : ( player ) 
-	{
-		if ( IsValid( player ) )
-			player.StopObserverMode()
-	})
-	
-	while ( true )
-	{	
-		table result = player.WaitSignal( "ObserverTargetChanged" )
-		
-		array<entity> targets
-		
-		targets.append( file.intermissionCamera )
-		foreach( entity cam in file.specCams )
-			targets.append( cam )
-			
-		array<entity> targetPlayers
-		if ( IsFFAGame() )
-			targetPlayers = GetPlayerArray_Alive()
-		else
-			targetPlayers = GetPlayerArrayOfTeam_Alive( player.GetTeam() )
-		
-		foreach( entity player in targetPlayers )
-			targets.append( player )
-		
-		if ( result.next )
-			targetIndex = ( targetIndex + 1 ) % targets.len()
-		else
-		{
-			if ( targetIndex == 0 )
-				targetIndex = ( targets.len() - 1 )
-			else
-				targetIndex--
-		}
-		
-		if ( targetIndex >= targets.len() )
-			targetIndex = 0
-		
-		entity target = targets[ targetIndex ]
-		
-		player.StopObserverMode()
-		if ( player.IsWatchingSpecReplay() )
-			player.SetSpecReplayDelay( 0.0 ) // clear spectator replay
-		
-		if ( target.IsPlayer() )
-		{
-			try
-			{
-				player.SetObserverTarget( target )
-				player.StartObserverMode( OBS_MODE_CHASE )
-			}
-			catch ( ex ) {}
-		}
-		else
-		{
-			player.SetObserverModeStaticPosition( target.GetOrigin() )
-			player.SetObserverModeStaticAngles( target.GetAngles() )
-			player.StartObserverMode( OBS_MODE_STATIC )
-		}  
-		player.StopPhysics()
-	}
-}
-
-bool function ClientCommandCallback_spec_next( entity player, array<string> args )
-{
-	if ( player.GetObserverMode() == OBS_MODE_CHASE || player.GetObserverMode() == OBS_MODE_STATIC || player.GetObserverMode() == OBS_MODE_IN_EYE )
-		player.Signal( "ObserverTargetChanged", { next = true } )
-		
-	return true
-}
-
-bool function ClientCommandCallback_spec_prev( entity player, array<string> args )
-{
-	if ( player.GetObserverMode() == OBS_MODE_CHASE || player.GetObserverMode() == OBS_MODE_STATIC || player.GetObserverMode() == OBS_MODE_IN_EYE )
-		player.Signal( "ObserverTargetChanged", { next = false } )
-		
-	return true
-}
-
-bool function ClientCommandCallback_spec_mode( entity player, array<string> args )
-{
-	// currently unsure how this actually gets called on client, works through console and has references in client.dll tho
-	if ( player.GetObserverMode() == OBS_MODE_CHASE )
-	{
-		// set to first person spectate		
-		player.SetSpecReplayDelay( FIRST_PERSON_SPECTATOR_DELAY )
-		player.SetViewEntity( player.GetObserverTarget(), true )
-		player.StartObserverMode( OBS_MODE_IN_EYE )
-	}
-	else if ( player.GetObserverMode() == OBS_MODE_IN_EYE )
-	{	
-		// set to third person spectate
-		player.SetSpecReplayDelay( 0.0 )
-		player.StartObserverMode( OBS_MODE_CHASE )
-	}
-	
-	return true
-}
 
 
 void function TryGameModeAnnouncement( entity player ) // only putting this here because it's here in gametype_sp lol

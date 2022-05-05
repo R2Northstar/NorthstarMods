@@ -1,7 +1,7 @@
 {
 	"Name": "Northstar.Custom",
 	"Description": "Custom content for Northstar: extra weapons, gamemodes, etc.",
-	"Version": "1.1.0",
+	"Version": "1.6.0",
 	"LoadPriority": 1,
 	"RequiredOnClient": true,
 	"ConVars": [
@@ -35,13 +35,6 @@
 			},
 			"ServerCallback": {
 				"After": "NorthstarCustomPrecache"
-			}
-		},
-		{
-			"Path": "_northstar_devcommands.gnut",
-			"RunOn": "SERVER && MP",
-			"ServerCallback": {
-				"After": "NorthstarDevCommands_Init"
 			}
 		},
 		{
@@ -102,7 +95,6 @@
 			"Path": "gamemodes/_gamemode_sns.gnut",
 			"RunOn": "SERVER && MP"
 		},
-
 		{
 			"Path": "gamemodes/sh_gamemode_fw_custom.nut",
 			"RunOn": "( CLIENT || SERVER ) && MP",
@@ -123,7 +115,7 @@
 		},
 		{
 			"Path": "gamemodes/gg_earn_meter/sh_gg_earn_meter.gnut",
-			"RunOn": "( CLIENT || SERVER ) && MP",
+			"RunOn": "( CLIENT || SERVER ) && MP"
 		},
 		{
 			"Path": "gamemodes/gg_earn_meter/_gg_earn_meter.gnut",
@@ -417,13 +409,7 @@
 			}
 		}
 	],
-	"Maps": [
-		{
-			"Name": "mp_skyway_v1",
-			"VPK": "englishclient_mp_skyway_v1",
-			"RPak": "sp_skyway_v1"
-		}
-	],
+
 	"Localisation": [
 		"resource/northstar_custom_%language%.txt"
 	]

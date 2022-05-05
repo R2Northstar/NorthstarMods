@@ -1,6 +1,5 @@
 global function Cl_GGEarnMeter_Init
 global function Cl_GGEarnMeter_RegisterNetwork
-global function ServerCallback_GGEarnMeter_SetWeaponIcon
 
 const float FILL_ANIM_DURATION = 0.2
 
@@ -14,11 +13,16 @@ struct EarnChangeData
 struct {
 	EarnChangeData lastEarnedData
 	var earnMeterRui
+	asset functionref() getIconFunction
+	bool functionref() testIconFunction
 } file
 
-void function Cl_GGEarnMeter_Init()
+void function Cl_GGEarnMeter_Init( asset functionref() getIconFunction, bool functionref() testIconFunction = null )
 {
 	AddCallback_OnClientScriptInit( CreateGGEarnMeterUI )
+
+	file.getIconFunction = getIconFunction
+	file.testIconFunction = testIconFunction
 }
 
 void function CreateGGEarnMeterUI( entity player )
@@ -31,6 +35,8 @@ void function CreateGGEarnMeterUI( entity player )
 	RuiSetInt( file.earnMeterRui, "meterMode", 5 )
 
 	RuiTrackFloat( file.earnMeterRui, "earnedFrac", player, RUI_TRACK_SCRIPT_NETWORK_VAR, GetNetworkedVariableIndex( "gunGameLevelPercentage" ) )
+
+	thread Cl_GGEarnMeter_TrackWeaponIcon()
 }
 
 void function Cl_GGEarnMeter_RegisterNetwork()
@@ -59,24 +65,19 @@ float function Cl_GGEarnMeter_GetCurrentMeterValue( EarnChangeData earnData )
 	return earnData.endValue - (delta * EaseIn( GraphCapped( elapsedTime, 0.0, FILL_ANIM_DURATION, 1.0, 0.0 ) ) )
 }
 
-void function ServerCallback_GGEarnMeter_SetWeaponIcon( int damageSourceId )
+void function Cl_GGEarnMeter_TrackWeaponIcon()
 {
-	asset weaponImage
-
-	if ( damageSourceId > -1 )
+	int lastScore = -1
+	while ( IsValid( file.earnMeterRui ) )
 	{
-		if ( !DamageSourceIDHasString(damageSourceId) )
+		if ( file.testIconFunction == null || file.testIconFunction() )
 		{
-			return
+			asset weaponImage = file.getIconFunction()
+
+			RuiSetImage( file.earnMeterRui, "goalBuildingIcon", weaponImage )
+			RuiSetImage( file.earnMeterRui, "goalReadyIcon", weaponImage )
 		}
 
-		weaponImage = GetItemImage( DamageSourceIDToString( damageSourceId ) )
+		WaitFrame()
 	}
-	else
-	{
-		weaponImage = RandomFloat( 1 ) > 0.1 ? $"rui/menu/boosts/boost_icon_random" : $"rui/faction/faction_logo_mrvn"
-	}
-
-	RuiSetImage( file.earnMeterRui, "goalBuildingIcon", weaponImage )
-	RuiSetImage( file.earnMeterRui, "goalReadyIcon", weaponImage )
 }
