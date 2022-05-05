@@ -420,14 +420,12 @@ void function DecideRespawnPlayer( entity player )
 
 void function RespawnAsPilot( entity player )
 {
-	if(IsValid( player )) return
 	if(IsAlive( player )) return
 	player.RespawnPlayer( FindSpawnPoint( player, false, ( ShouldStartSpawn( player ) || Flag( "ForceStartSpawn" ) ) && !IsFFAGame() ) )
 }
 
 void function RespawnAsTitan( entity player, bool manualPosition = false )
 {
-	if(IsValid( player )) return
 	if(IsAlive( player )) return
 	player.Signal( "PlayerRespawnStarted" )
 
