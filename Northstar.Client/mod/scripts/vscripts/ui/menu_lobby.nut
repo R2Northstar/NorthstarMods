@@ -381,6 +381,8 @@ void function StartPrivateMatch( var button )
 		return
 
 	ClientCommand( "StartPrivateMatchSearch" )
+	NSSetLoading(true)
+	NSUpdateListenServer()
 }
 
 void function DoRoomInviteIfAllowed( var button )

@@ -6,6 +6,8 @@ global function UpdatePromoData
 global function UICodeCallback_GetOnPartyServer
 global function UICodeCallback_MainMenuPromosUpdated
 
+global bool isOnMainMenu = false
+
 // defining this here because it's the only place it's used rn, custom const for a hook in launcher
 global const WEBBROWSER_FLAG_FORCEEXTERNAL = 1 << 1 // 2
 
@@ -553,12 +555,12 @@ void function TryAuthWithLocalServer()
 		}
 		WaitFrame()
 	}
-	
+
 	if ( NSWasAuthSuccessful() )
 	{
 		NSCompleteAuthWithLocalServer()
 	}
-	
+
 	if ( GetConVarString( "mp_gamemode" ) == "solo" )
 		SetConVarString( "mp_gamemode", "tdm" )
 
@@ -924,7 +926,7 @@ void function SpotlightButton_Activate( var button )
 	else
 	{
 		// discord links don't work in origin overlay
-		if ( link.find( "https://discord.gg" ) == 0 || link == "https://northstar.tf/discord" )
+		if ( link.find( "https://discord.gg" ) == 0 || link == "https://northstar.tf/discord" || link == "https://northstar.tf/wiki" )
 			LaunchExternalWebBrowser( link, WEBBROWSER_FLAG_FORCEEXTERNAL )
 		else
 			LaunchExternalWebBrowser( link, WEBBROWSER_FLAG_MUTEGAME )
