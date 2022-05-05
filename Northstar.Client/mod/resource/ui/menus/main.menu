@@ -125,10 +125,11 @@ resource/ui/menus/main.menu
 		NSVersion
 		{
         	ControlName				Label
+			classname				"nsVersionClass"
 			xpos					-57
         	wide 					674
         	auto_tall_tocontents 	1
-        	labelText				"Northstar v10.00.00"
+        	labelText				""
         	font					Default_32
         	textAlignment			east
         	allcaps					0
