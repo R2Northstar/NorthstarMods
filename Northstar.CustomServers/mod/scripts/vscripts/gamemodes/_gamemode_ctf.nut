@@ -6,6 +6,7 @@ global function RateSpawnpoints_CTF
 const int CTF_TEAMCOUNT = 2
 
 struct {
+	bool lastSwitchedSides = false
 	table< int, array<entity> > captureAssists
 } file
 
@@ -422,19 +423,28 @@ void function CTFStartGame()
 	// setup stuff for the functions in shared gamemode scripts
 	// have to do this here so GameHasFlags() works fine
 	level.teamFlags <- {}
+	
+	bool switchedSides = HasSwitchedSides() == 1
+	// if we switch sides, swap flag spawns
+	if ( switchedSides != file.lastSwitchedSides )
+	{
+		entity tempSpawn = svGlobal.flagSpawnPoints[ TEAM_IMC ]
+		svGlobal.flagSpawnPoints[ TEAM_IMC ] = svGlobal.flagSpawnPoints[ TEAM_MILITIA ]
+		svGlobal.flagSpawnPoints[ TEAM_MILITIA ] = tempSpawn
+		
+		file.lastSwitchedSides = switchedSides
+	}
 
 	int team = TEAM_IMC
 	for ( int i = 0; i < CTF_TEAMCOUNT; i++, team++ )
-	{
-		int spawnTeam = HasSwitchedSides() ? GetOtherTeam( team ) : team
-		
+	{		
 		// create flag base
 		entity flagBase = CreatePropDynamic( CTF_FLAG_BASE_MODEL, svGlobal.flagSpawnPoints[ team ].GetOrigin(), svGlobal.flagSpawnPoints[ team ].GetAngles(), 0 )
-		SetTeam( flagBase, spawnTeam )
+		SetTeam( flagBase, team )
 		
 		// create the flag's return trigger
 		entity flagReturnTrigger = CreateEntity( "trigger_cylinder" )
-		SetTeam( flagReturnTrigger, spawnTeam )
+		SetTeam( flagReturnTrigger, team )
 		
 		flagReturnTrigger.SetRadius( CTF_GetFlagReturnRadius() )
 		flagReturnTrigger.SetAboveHeight( CTF_GetFlagReturnRadius() )
@@ -449,13 +459,13 @@ void function CTFStartGame()
 		entity flag = CreateEntity( "item_flag" )
 		flag.SetValueForModelKey( CTF_FLAG_MODEL )
 		flag.MarkAsNonMovingAttachment()
-		SetTeam( flag, spawnTeam )
+		SetTeam( flag, team )
 		DispatchSpawn( flag )
 		flag.SetModel( CTF_FLAG_MODEL )
 		
 		flag.s.base <- flagBase
 		flag.s.returnTrigger <- flagReturnTrigger
-		level.teamFlags[ spawnTeam ] <- flag
+		level.teamFlags[ team ] <- flag
 		Flag_Reset( flag, false )
 		thread FlagLifetime( flag )
 		
@@ -463,7 +473,7 @@ void function CTFStartGame()
 		file.captureAssists[ team ] <- []
 		
 		SetGlobalNetEnt( team == TEAM_IMC ? "imcFlagHome" : "milFlagHome", flagBase )
-		SetFlagStateForTeam( spawnTeam, eFlagState.None )
+		SetFlagStateForTeam( team, eFlagState.None )
 	}
 	
 	// init all players
