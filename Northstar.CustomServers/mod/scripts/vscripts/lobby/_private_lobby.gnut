@@ -6,6 +6,7 @@ struct {
 	int startState
 	string map = "mp_forwardbase_kodai"
 	string mode = "aitdm"
+	array<string> admin_uids = [""]
 } file 
 
 void function PrivateLobby_Init()
@@ -14,6 +15,7 @@ void function PrivateLobby_Init()
 	
 	file.map = GetConVarString( "ns_private_match_last_map" )
 	file.mode = GetConVarString( "ns_private_match_last_mode" )
+	file.admin_uids = split( GetConVarString( "ns_private_match_admin_uids" ), "," )
 	
 	thread SetupPrivateMatchUIVarsWhenReady()
 	
@@ -38,7 +40,7 @@ void function SetupPrivateMatchUIVarsWhenReady()
 bool function ClientCommandCallback_PrivateMatchLaunch( entity player, array<string> args )
 {
 	if ( GetConVarBool( "ns_private_match_only_host_can_start" ) )
-		if ( !NSIsPlayerIndexLocalPlayer( player.GetPlayerIndex() ) )
+		if ( !PlayerHasLobbyPermission( player ) )
 			return true
 	
 	PlayerChangedTheGame( player , " changed the game state." , args )
@@ -73,7 +75,7 @@ bool function ClientCommandCallback_PrivateMatchSetMode( entity player, array<st
 		return true
 	
 	if ( GetConVarInt( "ns_private_match_only_host_can_change_settings" ) == 2 )
-		if ( !NSIsPlayerIndexLocalPlayer( player.GetPlayerIndex() ) )
+		if ( !PlayerHasLobbyPermission( player ) )
 			return true
 	
 	PlayerChangedTheGame( player , " changed the mode to " , args )
@@ -97,7 +99,7 @@ bool function ClientCommandCallback_SetCustomMap( entity player, array<string> a
 		return true
 	
 	if ( GetConVarInt( "ns_private_match_only_host_can_change_settings" ) == 2 )
-		if ( !NSIsPlayerIndexLocalPlayer( player.GetPlayerIndex() ) )
+		if ( !PlayerHasLobbyPermission( player ) )
 			return true
 	
 	PlayerChangedTheGame( player , " changed the map to " , args )
@@ -217,7 +219,7 @@ bool function ClientCommandCallback_PrivateMatchSetPlaylistVarOverride( entity p
 		return true
 		
 	if ( GetConVarInt( "ns_private_match_only_host_can_change_settings" ) >= 1 )
-		if ( !NSIsPlayerIndexLocalPlayer( player.GetPlayerIndex() ) )
+		if ( !PlayerHasLobbyPermission( player ) )
 			return true
 	
 	PlayerChangedTheGame( player , " override the setting " , args )
@@ -244,7 +246,7 @@ bool function ClientCommandCallback_PrivateMatchSetPlaylistVarOverride( entity p
 bool function ClientCommandCallback_ResetMatchSettingsToDefault( entity player, array<string> args )
 {
 	if ( GetConVarInt( "ns_private_match_only_host_can_change_settings" ) >= 1 )
-		if ( !NSIsPlayerIndexLocalPlayer( player.GetPlayerIndex() ) )
+		if ( !PlayerHasLobbyPermission( player ) )
 			return true
 	
 	PlayerChangedTheGame( player , " reset to default" , args )
@@ -263,4 +265,11 @@ void function PlayerChangedTheGame( entity player , string step , array<string> 
 	else{
 		print( player.GetPlayerName() + step + ".---" + "UID:" + player.GetUID())
 	}
+}
+
+bool function PlayerHasLobbyPermission( entity player )
+{
+	if ( NSIsPlayerIndexLocalPlayer( player.GetPlayerIndex() ) || file.admin_uids.contains( player.GetUID() ) )
+		return true
+	return false
 }
