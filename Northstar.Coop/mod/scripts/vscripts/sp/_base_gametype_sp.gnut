@@ -126,6 +126,21 @@ void function CodeCallback_OnClientDisconnected( entity player, string reason )
 		callbackFunc( player )
 	}
 
+	if ( GetPlayer0() == player )
+	{
+		ServerCommand( "sv_cheats 1" )
+		
+		foreach ( int index, entity p in GetPlayerArray() )
+		{
+			if ( p == player )
+			{
+				ServerCommand( "script ReplacePlayer0()" )
+			}
+		}
+		
+		ServerCommand( "sv_cheats 0" )
+	}
+
 	ServerCommand( "kick " + player.GetUID() )
 	player.Disconnected()
 	player.p.isDisconnected = true

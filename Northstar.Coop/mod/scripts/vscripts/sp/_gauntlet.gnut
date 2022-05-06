@@ -414,7 +414,8 @@ void function ResetPlayerHealthAndStatus( entity player )
 
 void function Gauntlet_FinishRun( GauntletInfo gauntlet )
 {
-	RestockPlayerAmmo( gauntlet.player )
+	foreach( entity player in GetPlayerArray() )
+		RestockPlayerAmmo( player )
 
 	float elapsedTime = Time() - gauntlet.startTime
 	printt( "Gauntlet Run Finished, elapsed time", elapsedTime )
@@ -462,7 +463,10 @@ void function Gauntlet_FinishRun( GauntletInfo gauntlet )
 	if ( !gauntlet.isActive )
 	{
 		foreach( player in GetPlayerArray() )
+		{
 			Remote_CallFunction_Replay( player, "ScriptCallback_Gauntlet_FinishRun", gauntlet.id, elapsedTime, gauntlet.bestTime, enemiesMissedTimePenalty )
+			Remote_CallFunction_Replay( player, "ScriptCallback_RefreshLeaderboard", gauntlet.id )
+		}
 	}
 }
 
@@ -482,7 +486,8 @@ void function Gauntlet_AbortRun( GauntletInfo gauntlet )
 void function Gauntlet_WaitForPlayerToStart( GauntletInfo gauntlet )
 {
 	WaitSignal( gauntlet.signalEnt, "Gauntlet_PlayerHitStartTrig" )
-	Assert( IsValid( gauntlet.player ) )
+	if ( !IsValid( gauntlet.player ) )
+		gauntlet.player = GetPlayerArray()[0]
 }
 
 entity function Gauntlet_StartTrigThink( GauntletInfo gauntlet )

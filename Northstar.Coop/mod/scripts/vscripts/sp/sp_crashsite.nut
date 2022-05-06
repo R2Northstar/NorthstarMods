@@ -7296,6 +7296,7 @@ void function ShellShockStop()
 
 entity function SpawnBT( entity player, vector origin )
 {
+
 	vector angles = < 0, 0, 0 >
 
 	//	entity npcTitan = CreateAutoTitanForPlayer_FromTitanLoadout( player, loadout, origin, angles )

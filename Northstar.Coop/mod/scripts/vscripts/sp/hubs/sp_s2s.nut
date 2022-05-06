@@ -37,6 +37,8 @@ global function AnimCallback_ParentBeforeAnimating_MaltaWidow
 
 global function BT_WaitOnBarkerShip
 
+global function Map_ReplacePlayer0
+
 struct SkyBoxLandSection
 {
 	//lanes
@@ -521,6 +523,20 @@ void function PlayerSpawned( entity player )
 	thread Init_StreamingClient( player )
 }
 
+void function Map_ReplacePlayer0()
+{
+	if ( GetPlayerArray().len() == 0 )
+	{
+		while( GetPlayerArray().len() == 0 )
+		{
+			wait 1
+		}
+	}
+	
+	file.player = GetPlayerArray()[0]
+	SetPlayer0( file.player )
+}
+
 void function OnLoadSaveGame( entity player )
 {
 	thread Init_StreamingClient( player )
@@ -584,7 +600,7 @@ void function EOF( entity player )
 	#endif
 
 	if ( loadNextLevel )
-		PickStartPoint_NoFadeOut_NoPilotWeaponCarryover( "sp_skyway_v1", "Level Start" )
+		GameRules_ChangeMap( "sp_skyway_v1", GAMETYPE )
 	else
 		PickStartPoint_NoFadeOut_NoPilotWeaponCarryover( "sp_s2s", "OLA Crash" )
 
@@ -7505,6 +7521,12 @@ void function KillGuyOnFlag( entity guy, string killFlag )
 
 void function MaltaGuns_GuyGunnerThink( entity guy, ShipStruct ship, string endflag, string deadFlag, entity gun )
 {
+	if ( !IsValid( guy ) )
+	{
+		FlagSet( deadFlag )
+		return
+	}
+	
 	guy.EndSignal( "OnDeath" )
 	guy.SetAllowMelee( false )
 	guy.SetCanBeMeleeExecuted( false )
@@ -11216,7 +11238,16 @@ void function FlightPanelThink( entity player, void functionref(entity,entity) F
 	trigger.SetUsePrompts( "#HOLD_TO_USE_GENERIC" , "#PRESS_TO_USE_GENERIC" )
 
 	//wait for the player to use the panel
-	trigger.WaitSignal( "OnPlayerUse" )
+	entity playerActivator
+	while( true )
+	{
+		playerActivator = expect entity( trigger.WaitSignal( "OnPlayerUse" ).player )
+		if ( IsValid( playerActivator ) && playerActivator.IsPlayer() && !playerActivator.IsTitan() )
+		{
+			player = expect entity( trigger.WaitSignal( "OnPlayerUse" ).player )
+			break
+		}
+	}
 
 	FlagSet( "PlayerUsedBridgeConsole" )
 	file.objBridgePanel.Destroy()
@@ -18384,7 +18415,7 @@ void function RespawnPlayer_s2s( entity player  )
 	{
 		if ( file.player == player )
 			return
-		if ( IsAlive( file.player ) && !IsAlive( player ) )
+		if ( IsValid( player ) && IsAlive( file.player ) && !IsAlive( player ) )
 		{
 			player.SetOrigin( file.player.GetOrigin() )
 			DoRespawnPlayer( player, null )

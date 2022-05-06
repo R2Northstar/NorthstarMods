@@ -1,3 +1,5 @@
+untyped
+
 global function FullyHidePlayers
 global function FullyShowPlayers
 
@@ -7,7 +9,7 @@ void function FullyHidePlayers()
     {
         foreach( entity weapon in GetPrimaryWeapons( player ) )
         {
-            weapon.Hide()
+            weapon.DisableDraw()
         }
         player.Hide()
     }
@@ -19,7 +21,7 @@ void function FullyShowPlayers()
     {
         foreach( entity weapon in GetPrimaryWeapons( player ) )
         {
-            weapon.Show()
+            weapon.EnableDraw()
         }
         player.Show()
     }

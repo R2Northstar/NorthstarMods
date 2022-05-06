@@ -115,7 +115,7 @@ void function GenericRespawn( entity player )
     {
         foreach( p in GetPlayerArray() )
         {
-            if (p != player && p.IsOnGround() )
+            if (p != player && (p.IsOnGround() || p.IsWallRunning() || p.IsWallHanging()) )
             {
                 try
                 {
