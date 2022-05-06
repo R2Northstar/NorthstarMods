@@ -1,7 +1,5 @@
 untyped
 
-global function InitRatings // temp for testing
-
 global function Spawn_Init
 global function SetRespawnsEnabled
 global function RespawnsEnabled
@@ -54,6 +52,12 @@ void function Spawn_Init()
 	// callbacks for spawnzone spawns
 	AddCallback_GameStateEnter( eGameState.Prematch, ResetSpawnzones )
 	AddSpawnCallbackEditorClass( "trigger_multiple", "trigger_mp_spawn_zone", AddSpawnZoneTrigger )
+	
+	SpawnPoints_SetRatingMultipliers_Enemy( TD_TITAN, -10.0, -6.0, -1.0 )
+	SpawnPoints_SetRatingMultipliers_Friendly( TD_TITAN, 0.25, 1.75, 1.75 )
+
+	SpawnPoints_SetRatingMultipliers_Enemy( TD_PILOT, -10.0, -6.0, -1.0 )
+	SpawnPoints_SetRatingMultipliers_Friendly( TD_PILOT, 0.25, 1.75, 1.75 )
 }
 
 void function InitSpawnpoint( entity spawnpoint ) 
@@ -120,32 +124,36 @@ string function GetSpawnpointGamemodeOverride()
 	unreachable
 }
 
-void function InitRatings( entity player, int team )
+void function SpawnPoints_InitScriptRatings( entity player, int team )
 {
-	if ( player != null )
-		SpawnPoints_InitRatings( player, team ) // no idea what the second arg supposed to be lol
+	const float FRONTLINE_PLAYER_SPAWN_OFFSET = 256
+
+	// get frontline stuff
+	Frontline frontline = GetFrontline( team )
+	vector spawnDir = frontline.combatDir * -1
+	local offsetOrigin = frontline.origin + spawnDir * FRONTLINE_PLAYER_SPAWN_OFFSET
+
+	//SpawnPoints_InitFrontlineData( offsetOrigin, spawnDir, frontline.combatDir, frontline.origin, frontline.line )
+	SpawnPoints_InitRatings( player, team )
 }
 
 entity function FindSpawnPoint( entity player, bool isTitan, bool useStartSpawnpoint )
 {
 	int team = player.GetTeam()
+	int pointTeam = team
 	if ( HasSwitchedSides() )
-		team = GetOtherTeam( team )
+		pointTeam = GetOtherTeam( team )
 
 	array<entity> spawnpoints
 	if ( useStartSpawnpoint )
-		spawnpoints = isTitan ? SpawnPoints_GetTitanStart( team ) : SpawnPoints_GetPilotStart( team )
+		spawnpoints = isTitan ? SpawnPoints_GetTitanStart( pointTeam ) : SpawnPoints_GetPilotStart( pointTeam )
 	else
 		spawnpoints = isTitan ? SpawnPoints_GetTitan() : SpawnPoints_GetPilot()
 	
-	InitRatings( player, player.GetTeam() )
-	
-	// don't think this is necessary since we call discardratings
-	//foreach ( entity spawnpoint in spawnpoints )
-	//	spawnpoint.CalculateRating( isTitan ? TD_TITAN : TD_PILOT, team, 0.0, 0.0 )
+	SpawnPoints_InitScriptRatings( player, team ) // no idea what the second arg supposed to be lol
 	
 	void functionref( int, array<entity>, int, entity ) ratingFunc = isTitan ? GameMode_GetTitanSpawnpointsRatingFunc( GAMETYPE ) : GameMode_GetPilotSpawnpointsRatingFunc( GAMETYPE )
-	ratingFunc( isTitan ? TD_TITAN : TD_PILOT, spawnpoints, team, player )
+	ratingFunc( isTitan ? TD_TITAN : TD_PILOT, spawnpoints, pointTeam, player )
 	
 	if ( isTitan )
 	{
@@ -154,7 +162,7 @@ entity function FindSpawnPoint( entity player, bool isTitan, bool useStartSpawnp
 		else
 			SpawnPoints_SortTitan()
 			
-		spawnpoints = useStartSpawnpoint ? SpawnPoints_GetTitanStart( team ) : SpawnPoints_GetTitan()
+		spawnpoints = useStartSpawnpoint ? SpawnPoints_GetTitanStart( pointTeam ) : SpawnPoints_GetTitan()
 	}
 	else
 	{
@@ -163,7 +171,7 @@ entity function FindSpawnPoint( entity player, bool isTitan, bool useStartSpawnp
 		else
 			SpawnPoints_SortPilot()
 			
-		spawnpoints = useStartSpawnpoint ? SpawnPoints_GetPilotStart( team ) : SpawnPoints_GetPilot()
+		spawnpoints = useStartSpawnpoint ? SpawnPoints_GetPilotStart( pointTeam ) : SpawnPoints_GetPilot()
 	}
 	
 	entity spawnpoint = GetBestSpawnpoint( player, spawnpoints )
@@ -179,7 +187,7 @@ entity function GetBestSpawnpoint( entity player, array<entity> spawnpoints )
 	// not really 100% sure on this randomisation, needs some thought
 	array<entity> validSpawns
 	foreach ( entity spawnpoint in spawnpoints )
-	{
+	{	
 		if ( IsSpawnpointValid( spawnpoint, player.GetTeam() ) )
 		{
 			validSpawns.append( spawnpoint )
@@ -215,7 +223,7 @@ entity function GetBestSpawnpoint( entity player, array<entity> spawnpoints )
 		}
 	}
 	
-	return validSpawns[ RandomInt( validSpawns.len() ) ] // slightly randomize it
+	return validSpawns[ 0 ] //RandomInt( validSpawns.len() ) ] // slightly randomize it
 }
 
 bool function IsSpawnpointValid( entity spawnpoint, int team )
@@ -396,55 +404,10 @@ void function InitPreferSpawnNodes()
 // frontline
 void function RateSpawnpoints_Frontline( int checkClass, array<entity> spawnpoints, int team, entity player )
 {
-	Frontline frontline = GetFrontline( player.GetTeam() )
-
-	// heavily based on ctf spawn algo iteration 4, only changes it at the end
-	array<entity> startSpawns = SpawnPoints_GetPilotStart( team )
-	array<entity> enemyStartSpawns = SpawnPoints_GetPilotStart( GetOtherTeam( team ) )
-	
-	if ( startSpawns.len() == 0 || enemyStartSpawns.len() == 0 ) // ensure we don't crash
-		return
-	
-	// get average startspawn position and max dist between spawns
-	// could probably cache this, tbh, not like it should change outside of halftimes
-	vector averageFriendlySpawns
-	float maxFriendlySpawnDist
-	
-	foreach ( entity spawn in startSpawns )
+	foreach ( entity spawnpoint in spawnpoints )
 	{
-		foreach ( entity otherSpawn in startSpawns )
-		{
-			float dist = Distance2D( spawn.GetOrigin(), otherSpawn.GetOrigin() )
-			if ( dist > maxFriendlySpawnDist )
-				maxFriendlySpawnDist = dist
-		}
-		
-		averageFriendlySpawns += spawn.GetOrigin()
-	}
-	
-	averageFriendlySpawns /= startSpawns.len()
-	
-	// get average enemy startspawn position
-	vector averageEnemySpawns
-	
-	foreach ( entity spawn in enemyStartSpawns )
-		averageEnemySpawns += spawn.GetOrigin()
-	
-	averageEnemySpawns /= enemyStartSpawns.len()
-	
-	// from here, rate spawns
-	float baseDistance = Distance2D( averageFriendlySpawns, averageEnemySpawns )
-	foreach ( entity spawn in spawnpoints )
-	{
-		// ratings should max/min out at 100 / -100
-		// start by prioritizing closer spawns, but not so much that enemies won't really affect them
-		float rating = 10 * ( 1.0 - Distance2D( averageFriendlySpawns, spawn.GetOrigin() ) / baseDistance )
-		
-		// rate based on distance to frontline, and then prefer spawns in the same dir from the frontline as the combatdir
-		rating += rating * ( 1.0 - ( Distance2D( spawn.GetOrigin(), frontline.friendlyCenter ) / baseDistance ) )
-		rating *= fabs( frontline.combatDir.y - Normalize( spawn.GetOrigin() - averageFriendlySpawns ).y )
-		
-		spawn.CalculateRating( checkClass, player.GetTeam(), rating, rating )
+		float rating = spawnpoint.CalculateFrontlineRating()
+		spawnpoint.CalculateRating( checkClass, player.GetTeam(), rating, rating > 0 ? rating * 0.25 : rating )
 	}
 }
 
