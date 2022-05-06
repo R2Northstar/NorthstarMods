@@ -263,9 +263,8 @@ void function Flag_Reset( entity flag, bool clearAssists = true )
 	flag.s.returnTrigger.Enable()
 	
 	// reset pos
-	flag.SetOrigin( flag.s.base.GetOrigin() + < 0, 0, flag.s.base.GetBoundingMaxs().z * 2 > )
+	flag.SetOrigin( flag.s.base.GetOrigin() ) 
 	flag.SetAngles( < 0, 0, 0 > )
-	flag.SetVelocity( < 0, 0, 0 > )
 	
 	// clear assists if not being handled by other code
 	if ( clearAssists )
@@ -453,12 +452,11 @@ void function CTFStartGame()
 		SetTeam( flag, spawnTeam )
 		DispatchSpawn( flag )
 		flag.SetModel( CTF_FLAG_MODEL )
-		flag.SetOrigin( svGlobal.flagSpawnPoints[ team ].GetOrigin() + < 0, 0, flagBase.GetBoundingMaxs().z * 2 > ) // ensure flag doesn't spawn clipped into geometry
-		flag.SetVelocity( < 0, 0, 1 > )
 		
 		flag.s.base <- flagBase
 		flag.s.returnTrigger <- flagReturnTrigger
 		level.teamFlags[ spawnTeam ] <- flag
+		Flag_Reset( flag, false )
 		thread FlagLifetime( flag )
 		
 		// init and clear assists
