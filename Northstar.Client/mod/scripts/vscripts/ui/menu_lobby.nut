@@ -120,6 +120,7 @@ struct
 	// quick play things
 	var quickPlayButton
 	array<string> joinedServers
+	bool stopQuickPlayConnection
 } file
 
 void function MenuLobby_Init()
@@ -1656,6 +1657,18 @@ void function QuickPlaySearch( var button )
 
 void function QuickPlaySearch_Threaded( var button )
 {
+	//dialog stuff
+	CloseAllDialogs()
+	Hud_Hide( uiGlobal.ConfirmMenuMessage )
+	Hud_Hide( uiGlobal.ConfirmMenuErrorCode )
+	
+	DialogData dialogData
+	dialogData.menu = GetMenu( "ConnectingDialog" )
+	dialogData.header = "#CONNECTING"
+	dialogData.showSpinner = true
+	AddDialogButton( dialogData, "CANCEL", stopQuickPlay)
+	AddDialogFooter( dialogData, "A_BUTTON_SELECT" )
+	OpenDialog ( dialogData )
 	// wait for request to complete
 	while ( NSIsRequestingServerList() )
 		WaitFrame()
@@ -1714,6 +1727,11 @@ void function QuickPlaySearch_Threaded( var button )
 
 	while ( NSIsAuthenticatingWithServer()) // need a check to see if we should cancel
 	{
+		if( file.stopQuickPlayConnection )
+		{
+			file.stopQuickPlayConnection = false
+			return
+		}
 		WaitFrame()
 	}
 
@@ -1745,7 +1763,10 @@ void function QuickPlaySearch_Threaded( var button )
 		printt("auth failed")
 	}
 }
-
+void function stopQuickPlay()
+{
+	file.stopQuickPlayConnection = true
+}
 bool function CheckMods( int serverIndex )
 {
 	// check mods
