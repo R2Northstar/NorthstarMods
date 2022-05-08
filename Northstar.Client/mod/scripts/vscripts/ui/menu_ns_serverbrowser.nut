@@ -99,6 +99,20 @@ bool function floatCompareInRange(float arg1, float arg2, float tolerance)
 void function AddNorthstarServerBrowserMenu()
 {
 	AddMenu( "ServerBrowserMenu", $"resource/ui/menus/server_browser.menu", InitServerBrowserMenu, "#MENU_SERVER_BROWSER" )
+	
+	// if we're reloading mods for a connect, then we've just finished reloading mods since ui has reset
+	// so start trying to connect
+	if ( GetConVarBool( "ns_try_connect_server_on_ui_reload" ) && NSWasAuthSuccessful() )
+	{
+		try 
+		{
+			NSConnectToAuthedServer()
+		}
+		catch ( ex )
+		{}
+	}
+	
+	SetConVarBool( "ns_try_connect_server_on_ui_reload", false )
 }
 
 void function UpdatePrivateMatchModesAndMaps()
@@ -1021,7 +1035,7 @@ void function ThreadedAuthAndConnectToServer( string password = "" )
 			}
 		}
 
-		DelayedReloadModsAndConnect( modsChanged )
+		TryReloadModsAndConnect( modsChanged )
 	}
 	else
 	{
@@ -1041,16 +1055,16 @@ void function ThreadedAuthAndConnectToServer( string password = "" )
 	}
 }
 
-void function DelayedReloadModsAndConnect( bool modsChanged )
+void function TryReloadModsAndConnect( bool modsChanged )
 {
 	// only actually reload if we need to since the uiscript reset on reload lags hard
 	if ( modsChanged )
 	{
 		ReloadMods()
-		wait 0.25
+		SetConVarBool( "ns_try_connect_server_on_ui_reload", true ) // don't connect, instead connect when uiscript has reloaded in the init func for this file
 	}
-
-	NSConnectToAuthedServer()
+	else
+		NSConnectToAuthedServer()
 }
 
 //////////////////////////////////////

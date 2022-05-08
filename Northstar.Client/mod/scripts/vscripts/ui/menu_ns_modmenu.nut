@@ -213,7 +213,7 @@ void function SetModMenuNameText( var button )
 void function OnModMenuButtonPressed( var button )
 {
 	string modName = file.modsArrayFiltered[ int ( Hud_GetScriptID( button ) ) + file.scrollOffset ].modName
-	if ( ( modName == "Northstar.Client" ||  modName == "Northstar.Coop" || modName == "Northstar.CustomServers") && NSIsModEnabled( modName ) )
+	if ( ( modName == "Northstar.Client" || modName == "Northstar.CustomServers") && NSIsModEnabled( modName ) )
 	{
 		file.currentMod = modName
 		file.currentButton = button
@@ -317,9 +317,6 @@ void function ReloadMods()
 	
 	// do any logic that needs to be threaded off
 	thread ReloadModsThreaded() 
-	
-	// note: the logic for this seems really odd, unsure why it doesn't seem to update, since the same code seems to get run irregardless of whether we've read weapon data before
-	ClientCommand( "uiscript_reset" )
 }
 
 void function ReloadModsThreaded()
@@ -328,8 +325,11 @@ void function ReloadModsThreaded()
 	SetConVarBool( "sv_cheats", true )
 	
 	ClientCommand( "weapon_reparse" )
+	
 	wait 0.1 // weapon_reparse takes a sec to start, we need to wait to ensure sv_cheats is still 0 by the time it gets run properly
+	
 	SetConVarBool( "sv_cheats", originalCheatsValue )
+	ClientCommand( "uiscript_reset" )
 }
 
 void function OnAuthenticationAgreementButtonPressed( var button )
