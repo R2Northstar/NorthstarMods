@@ -49,7 +49,7 @@ global struct WaveEvent{
 
 
 
-global HarvesterStruct fd_harvester
+global HarvesterStruct& fd_harvester
 global vector shopPosition
 global array<array<WaveEvent> > waveEvents
 global table<string,array<vector> > routes
@@ -101,14 +101,13 @@ void function GamemodeFD_Init()
 
 
 	AddCallback_EntitiesDidLoad(LoadEntities)
-	AddDamageCallback("prop_script",OnDamagedPropScript)
 	AddCallback_GameStateEnter(eGameState.Prematch,FD_createHarvester)
 	AddCallback_GameStateEnter( eGameState.Playing,startMainGameLoop)
 	AddCallback_OnClientConnected(GamemodeFD_InitPlayer)
 	AddCallback_OnPlayerKilled(GamemodeFD_OnPlayerKilled)
 	AddCallback_OnRoundEndCleanup(FD_NPCCleanup)
 	AddDamageByCallback("player",FD_DamageByPlayerCallback)
-	
+
 
 	AddDeathCallback("npc_titan",OnNpcDeath)
 	AddDeathCallback("npc_stalker",OnNpcDeath)
@@ -148,7 +147,7 @@ void function GamemodeFD_InitPlayer(entity player)
 	data.scoreThisRound = 0
 	file.players[player] <- data
 
-	
+
 }
 
 void function OnNpcDeath( entity ent, var damageInfo )
@@ -158,7 +157,7 @@ void function OnNpcDeath( entity ent, var damageInfo )
 	{
 		file.spawnedNPCs.remove( findIndex )
 	}
-	
+
 }
 
 void function RateSpawnpoints_FD(int _0, array<entity> _1, int _2, entity _3){}
@@ -166,7 +165,7 @@ void function RateSpawnpoints_FD(int _0, array<entity> _1, int _2, entity _3){}
 bool function useShieldBoost(entity player,array<string> args)
 {
 	if((GetGlobalNetTime("FD_harvesterInvulTime")<Time())&&(player.GetPlayerNetInt("numHarvesterShieldBoost")>0))
-	{	
+	{
 		fd_harvester.harvester.SetShieldHealth(fd_harvester.harvester.GetShieldHealthMax())
 		SetGlobalNetTime("FD_harvesterInvulTime",Time()+5)
 		MessageToTeam(TEAM_MILITIA,eEventNotifications.FD_PlayerHealedHarvester)
@@ -177,20 +176,20 @@ bool function useShieldBoost(entity player,array<string> args)
 }
 
 void function startMainGameLoop()
-{	
+{
 	thread mainGameLoop()
 }
 
 void function mainGameLoop()
-{	
+{
 	startHarvester()
-	
+
 	bool showShop = false
 	for(int i = GetGlobalNetInt("FD_currentWave");i<waveEvents.len();i++)
 	{
 		if(!runWave(i,showShop))
 			break
-		
+
 		if(i==0)
 		{
 			PlayerEarnMeter_SetEnabled(true)
@@ -200,14 +199,14 @@ void function mainGameLoop()
 			PlayerEarnMeter_AddEarnedAndOwned(player,1.0,1.0)
 			}
 		}
-		
+
 	}
-	
-		
+
+
 }
 
 array<entity> function getRoute(string routeName)
-{	
+{
 	array<entity> ret
 	array<entity> currentNode = []
 	foreach(entity node in file.routeNodes)
@@ -219,7 +218,7 @@ array<entity> function getRoute(string routeName)
 			currentNode =  [node]
 			break
 		}
-			
+
 	}
 	if(currentNode.len()==0)
 	{
@@ -257,7 +256,7 @@ array<int> function getEnemyTypesForWave(int wave)
 	// npcs[eFD_AITypeIDs.ION]<-0
 	// npcs[eFD_AITypeIDs.MONARCH]<-0
 	// npcs[eFD_AITypeIDs.TITAN_SNIPER]<-0
-	
+
 
 	foreach(WaveEvent e in waveEvents[wave])
 	{
@@ -309,7 +308,7 @@ array<int> function getEnemyTypesForWave(int wave)
 }
 
 bool function runWave(int waveIndex,bool shouldDoBuyTime)
-{	
+{
 
 	SetGlobalNetInt("FD_currentWave",waveIndex)
 	file.havesterWasDamaged = false
@@ -321,7 +320,7 @@ bool function runWave(int waveIndex,bool shouldDoBuyTime)
 	{
 		player.diedThisRound = false
 		player.scoreThisRound = 0
-	}	
+	}
 	array<int> enemys = getEnemyTypesForWave(waveIndex)
 	foreach(entity player in GetPlayerArray())
 	{
@@ -329,21 +328,21 @@ bool function runWave(int waveIndex,bool shouldDoBuyTime)
 	}
 	if(shouldDoBuyTime)
 	{
-		
+
 		OpenBoostStores()
 		foreach(entity player in GetPlayerArray())
 			Remote_CallFunction_NonReplay(player,"ServerCallback_FD_NotifyStoreOpen")
 		while(Time()<GetGlobalNetTime("FD_nextWaveStartTime"))
-		{	
+		{
 			if(allPlayersReady())
 				SetGlobalNetTime("FD_nextWaveStartTime",Time())
 			WaitFrame()
 		}
-		
+
 		CloseBoostStores()
 		MessageToTeam(TEAM_MILITIA,eEventNotifications.FD_StoreClosing)
 	}
-	
+
 	//SetGlobalNetTime("FD_nextWaveStartTime",Time()+10)
 	wait 10
 
@@ -357,7 +356,7 @@ bool function runWave(int waveIndex,bool shouldDoBuyTime)
 
 
 	//main wave loop
-	
+
 	foreach(WaveEvent event in waveEvents[waveIndex])
 	{
 		if(event.shouldThread)
@@ -366,11 +365,11 @@ bool function runWave(int waveIndex,bool shouldDoBuyTime)
 			event.eventFunction(event.smokeEvent,event.spawnEvent,event.waitEvent,event.soundEvent)
 		if(!IsAlive(fd_harvester.harvester))
 			break
-		
+
 	}
 	waitUntilLessThanAmountAlive_expensive(0)
 	if(!IsAlive(fd_harvester.harvester))
-	{	
+	{
 		float totalDamage = 0.0
 		array<float> highestDamage = [0.0,0.0,0.0]
 		array<int> highestDamageSource = [-1,-1,-1]
@@ -399,12 +398,12 @@ bool function runWave(int waveIndex,bool shouldDoBuyTime)
 				highestDamageSource[2] = index
 			}
 		}
-		
+
 		foreach(entity player in GetPlayerArray())
 		{
 			Remote_CallFunction_NonReplay(player,"ServerCallback_FD_DisplayHarvesterKiller",GetGlobalNetInt("FD_restartsRemaining"),getHintForTypeId(highestDamageSource[0]),highestDamageSource[0],highestDamage[0]/totalDamage,highestDamageSource[1],highestDamage[1]/totalDamage,highestDamageSource[2],highestDamage[2]/totalDamage)
 		}
-			
+
 		if(GetGlobalNetInt("FD_restartsRemaining")>0)
 			FD_DecrementRestarts()
 		else
@@ -420,7 +419,7 @@ bool function runWave(int waveIndex,bool shouldDoBuyTime)
 	MessageToTeam(TEAM_MILITIA,eEventNotifications.FD_AnnounceWaveEnd)
 	if(waveIndex<waveEvents.len())
 		SetGlobalNetTime("FD_nextWaveStartTime",Time()+75)
-	
+
 	//Player scoring
 	MessageToTeam(TEAM_MILITIA,eEventNotifications.FD_NotifyWaveBonusIncoming)
 	wait 2
@@ -434,7 +433,7 @@ bool function runWave(int waveIndex,bool shouldDoBuyTime)
 	float highestScore = 0;
 	entity highestScore_player = GetPlayerArray()[0]
 	foreach(entity player in GetPlayerArray())
-	{	
+	{
 		player_struct_fd data = file.players[player]
 		if(!data.diedThisRound)
 			AddPlayerScore(player,"FDDidntDie")
@@ -445,7 +444,7 @@ bool function runWave(int waveIndex,bool shouldDoBuyTime)
 			highestScore = data.scoreThisRound
 			highestScore_player = player
 		}
-		
+
 	}
 	wait 1
 	file.players[highestScore_player].totalMVPs += 1
@@ -459,7 +458,7 @@ bool function runWave(int waveIndex,bool shouldDoBuyTime)
 	wait 1
 	foreach(entity player in GetPlayerArray())
 	{
-		
+
 		if(!file.havesterWasDamaged)
 		{
 			AddPlayerScore(player,"FDTeamFlawlessWave")
@@ -467,7 +466,7 @@ bool function runWave(int waveIndex,bool shouldDoBuyTime)
 			EmitSoundOnEntityOnlyToPlayer(player,player,"HUD_MP_BountyHunt_BankBonusPts_Deposit_Start_1P")
 		}
 	}
-	if(isFinalWave()&&IsAlive(fd_harvester.harvester))
+	if ( isFinalWave() && IsAlive( fd_harvester.harvester ) )
 	{
 		//Game won code
 		SetRoundBased(false)
@@ -476,139 +475,141 @@ bool function runWave(int waveIndex,bool shouldDoBuyTime)
 	}
 	wait 10
 	return true
-	
+
 }
 
-void function OnDamagedPropScript(entity prop,var damageInfo)
-{	
-	
-	if(!IsValid(fd_harvester.harvester))
+void function OnHarvesterDamaged(entity harvester, var damageInfo)
+{
+	if ( !IsValid( harvester ) )
+    	return
+
+	if( fd_harvester.harvester != harvester )
 		return
-	
-	if(!IsValid(prop))
-		return
-	
-	if(fd_harvester.harvester!=prop)
-		return
-	
-	if(GetGlobalNetTime("FD_harvesterInvulTime")>Time())
+
+	if ( GetGlobalNetTime( "FD_harvesterInvulTime" ) > Time() )
 	{
-		prop.SetShieldHealth(prop.GetShieldHealthMax())
-		return
+    	harvester.SetShieldHealth( harvester.GetShieldHealthMax() )
+    	return
 	}
 
 	int damageSourceID = DamageInfo_GetDamageSourceIdentifier( damageInfo )
 	entity attacker = DamageInfo_GetAttacker( damageInfo )
 	float damageAmount = DamageInfo_GetDamage( damageInfo )
-	
-	if ( !damageSourceID )
-		return
 
-	if ( !damageAmount )
-		return
+	if ( !damageSourceID && !damageAmount && !attacker )
+    	return
 
-	if ( !attacker )
-		return
-	//TODO Log damage source for round lose screen
-	
 	fd_harvester.lastDamage = Time()
-	if(prop.GetShieldHealth()==0)
+
+	if ( harvester.GetShieldHealth() == 0 )
 	{
-		int attackerID = FD_GetAITypeID_ByString(attacker.GetTargetName())
-		
-		file.harvesterDamageSource[attackerID] += damageAmount
-
-
-		float newHealth = prop.GetHealth()-damageAmount
-		if(newHealth<0)
-		{	
-			EmitSoundAtPosition(TEAM_UNASSIGNED,fd_harvester.harvester.GetOrigin(),"coop_generator_destroyed")
-			newHealth=0
-			fd_harvester.rings.Destroy()//TODO death animation
-		}
-		
-		prop.SetHealth(newHealth)
-		file.havesterWasDamaged = true
+    	float newHealth = harvester.GetHealth() - damageAmount
+    	if( newHealth <= 0 )
+    	{
+        	EmitSoundAtPosition(TEAM_UNASSIGNED,fd_harvester.harvester.GetOrigin(),"coop_generator_destroyed")
+        	newHealth = 0
+        	fd_harvester.rings.Destroy()
+    	}
+    	harvester.SetHealth( newHealth )
 	}
 
-	
-	
+	if ( DamageInfo_GetDamageSourceIdentifier( damageInfo ) == eDamageSourceId.mp_titancore_laser_cannon )
+    	DamageInfo_SetDamage( damageInfo, DamageInfo_GetDamage( damageInfo )/10 ) // laser core shreds super well for some reason
+
+	if ( attacker.IsPlayer() )
+    	attacker.NotifyDidDamage( harvester, DamageInfo_GetHitBox( damageInfo ), DamageInfo_GetDamagePosition( damageInfo ), DamageInfo_GetCustomDamageType( damageInfo ), DamageInfo_GetDamage( damageInfo ), DamageInfo_GetDamageFlags( damageInfo ), DamageInfo_GetHitGroup( damageInfo ), DamageInfo_GetWeapon( damageInfo ), DamageInfo_GetDistFromAttackOrigin( damageInfo ) )
 }
 
 void function FD_NPCCleanup()
 {
-	foreach(entity npc in GetEntArrayByClass_Expensive("C_AI_BaseNPC")){
-		if(IsValid(npc))
+	foreach ( entity npc in GetEntArrayByClass_Expensive("C_AI_BaseNPC") )
+		if ( IsValid( npc ) )
 			npc.Destroy()
-	}
 }
 
 void function HarvesterThink()
-{	
+{
 	entity harvester = fd_harvester.harvester
 
-	
-	EmitSoundOnEntity(harvester,"coop_generator_startup")
+
+	EmitSoundOnEntity( harvester,"coop_generator_startup" )
+
 	float lastTime = Time()
 	wait 4
 	int lastShieldHealth = harvester.GetShieldHealth()
-	generateBeamFX(fd_harvester)
-	generateShieldFX(fd_harvester)
-	
-	EmitSoundOnEntity(harvester,"coop_generator_ambient_healthy")
-	
-	
+	generateBeamFX( fd_harvester )
+	generateShieldFX( fd_harvester )
 
+	EmitSoundOnEntity( harvester, "coop_generator_ambient_healthy" )
 
-	while(IsAlive(harvester)){
+	bool isRegening = false // stops the regenning sound to keep stacking on top of each other
+
+	while ( IsAlive( harvester ) )
+	{
 		float currentTime = Time()
 		float deltaTime = currentTime -lastTime
-		if(IsValid(fd_harvester.particleShield))
+
+		if ( IsValid( fd_harvester.particleShield ) )
 		{
 			vector shieldColor = GetShieldTriLerpColor(1.0-(harvester.GetShieldHealth().tofloat()/harvester.GetShieldHealthMax().tofloat()))
 			EffectSetControlPointVector( fd_harvester.particleShield, 1, shieldColor )
 		}
-		if(IsValid(fd_harvester.particleBeam))
+
+		if( IsValid( fd_harvester.particleBeam ) )
 		{
-			vector beamColor = GetShieldTriLerpColor(1.0-(harvester.GetHealth().tofloat()/harvester.GetMaxHealth().tofloat()))
+			vector beamColor = GetShieldTriLerpColor( 1.0 - (harvester.GetHealth().tofloat() / harvester.GetMaxHealth().tofloat() ) )
 			EffectSetControlPointVector( fd_harvester.particleBeam, 1, beamColor )
 		}
-		if(fd_harvester.harvester.GetShieldHealth()==0)
-			if(IsValid(fd_harvester.particleShield))
+
+		if ( fd_harvester.harvester.GetShieldHealth() == 0 )
+			if( IsValid( fd_harvester.particleShield ) )
 				fd_harvester.particleShield.Destroy()
-		if(((currentTime-fd_harvester.lastDamage)>=GENERATOR_SHIELD_REGEN_DELAY)&&(harvester.GetShieldHealth()<harvester.GetShieldHealthMax()))
-		{	
-			if(!IsValid(fd_harvester.particleShield))
+
+		if ( ( ( currentTime-fd_harvester.lastDamage) >= GENERATOR_SHIELD_REGEN_DELAY ) && ( harvester.GetShieldHealth() < harvester.GetShieldHealthMax() ) )
+		{
+			if( !IsValid(fd_harvester.particleShield) )
 				generateShieldFX(fd_harvester)
+
 			//printt((currentTime-fd_harvester.lastDamage))
+
 			if(harvester.GetShieldHealth()==0)
 				EmitSoundOnEntity(harvester,"coop_generator_shieldrecharge_start")
-				EmitSoundOnEntity(harvester,"coop_generator_shieldrecharge_resume")
-			float newShieldHealth = (harvester.GetShieldHealthMax()/GENERATOR_SHIELD_REGEN_TIME*deltaTime)+harvester.GetShieldHealth()
-			if(newShieldHealth>=harvester.GetShieldHealthMax())
+
+			if (!isRegening)
+            {
+			    EmitSoundOnEntity( harvester,"coop_generator_shieldrecharge_resume" )
+                isRegening = true
+            }
+
+			float newShieldHealth = ( harvester.GetShieldHealthMax() / GENERATOR_SHIELD_REGEN_TIME * deltaTime ) + harvester.GetShieldHealth()
+
+			if ( newShieldHealth >= harvester.GetShieldHealthMax() )
 			{
 				StopSoundOnEntity(harvester,"coop_generator_shieldrecharge_resume")
 				harvester.SetShieldHealth(harvester.GetShieldHealthMax())
 				EmitSoundOnEntity(harvester,"coop_generator_shieldrecharge_end")
-				
+				isRegening = false
 			}
 			else
 			{
 				harvester.SetShieldHealth(newShieldHealth)
 			}
-		}
-		if((lastShieldHealth>0)&&(harvester.GetShieldHealth()==0))
+		} else if ( ( ( currentTime-fd_harvester.lastDamage) < GENERATOR_SHIELD_REGEN_DELAY ) && ( harvester.GetShieldHealth() < harvester.GetShieldHealthMax() ) )
+			isRegening = false
+
+		if ( ( lastShieldHealth > 0 ) && ( harvester.GetShieldHealth() == 0 ) )
 			EmitSoundOnEntity(harvester,"coop_generator_shielddown")
+
 		lastShieldHealth = harvester.GetShieldHealth()
 		lastTime = currentTime
 		WaitFrame()
 	}
-	
+
 }
 
 void function startHarvester()
 {
-	
+
 	thread HarvesterThink()
 	thread HarvesterAlarm()
 
@@ -632,36 +633,34 @@ void function HarvesterAlarm()
 void function initNetVars()
 {
 	SetGlobalNetInt("FD_totalWaves",waveEvents.len())
-	
+
 	if(!FD_HasRestarted())
 	{
 		bool showShop = false
 		SetGlobalNetInt("FD_currentWave",0)
 		if(FD_IsDifficultyLevelOrHigher(eFDDifficultyLevel.INSANE))
 			FD_SetNumAllowedRestarts(0)
-		else	
+		else
 			FD_SetNumAllowedRestarts(2)
 	}
-	
+
 }
 
 void function FD_DamageByPlayerCallback(entity victim,var damageInfo)
-{	
+{
 	entity player = DamageInfo_GetAttacker(damageInfo)
 	if(!(player in file.players))
 		return
 	float damage = DamageInfo_GetDamage(damageInfo)
 	file.players[player].damageDealt += damage
 	file.players[player].scoreThisRound += damage //TODO NOT HOW SCORE WORKS
-	
+
 }
 
 void function FD_createHarvester()
 {
-	HarvesterStruct ret = SpawnHarvester(file.harvester_info.GetOrigin(),file.harvester_info.GetAngles(),25000,6000,TEAM_MILITIA)
-	fd_harvester.harvester = ret.harvester
-	fd_harvester.rings = ret.rings
-	fd_harvester.lastDamage = ret.lastDamage
+	fd_harvester = SpawnHarvester(file.harvester_info.GetOrigin(),file.harvester_info.GetAngles(),25000,6000,TEAM_MILITIA)
+	AddEntityCallback_OnDamaged( fd_harvester.harvester, OnHarvesterDamaged )
 }
 
 bool function isFinalWave()
@@ -669,16 +668,16 @@ bool function isFinalWave()
 	return ((GetGlobalNetInt("FD_currentWave")+1)==GetGlobalNetInt("FD_totalWaves"))
 }
 
-void function LoadEntities() 
-{	
-	
+void function LoadEntities()
+{
+
 	CreateBoostStoreLocation(TEAM_MILITIA,shopPosition,<0,0,0>)
 	foreach ( entity info_target in GetEntArrayByClass_Expensive("info_target") )
 	{
-		
+
 		if ( GameModeRemove( info_target ) )
 			continue
-		
+
 		if(info_target.HasKey("editorclass")){
 			switch(info_target.kv.editorclass){
 				case"info_fd_harvester":
@@ -705,7 +704,7 @@ void function LoadEntities()
 }
 
 void function titanNav_thread(entity titan, string routeName,float nextDistance = 500.0)
-{	
+{
 	titan.EndSignal( "OnDeath" )
 	titan.EndSignal( "OnDestroy" )
 
@@ -713,19 +712,19 @@ void function titanNav_thread(entity titan, string routeName,float nextDistance 
 	printt("Start NAV")
 	if(!titan.IsNPC())
 		return
-	
-	
+
+
 	array<entity> routeArray = getRoute(routeName)
 	WaitFrame()//so other code setting up what happens on signals is run before this
 	if(routeArray.len()==0)
-	{	
-		
+	{
+
 		titan.Signal("OnFailedToPath")
 		return
 	}
 
 	foreach(entity node in routeArray)
-	{	
+	{
 		if(!IsAlive(fd_harvester.harvester))
 			return
 		if(Distance(fd_harvester.harvester.GetOrigin(),titan.GetOrigin())<Distance(fd_harvester.harvester.GetOrigin(),node.GetOrigin()))
@@ -767,7 +766,7 @@ bool function ClientCommandCallbackToggleReady( entity player, array<string> arg
 }
 
 int function getHintForTypeId(int typeId)
-{	
+{
 	//this is maybe a bit of an naive aproch
 	switch(typeId)
 		{
@@ -801,13 +800,13 @@ int function getHintForTypeId(int typeId)
 }
 
 /****************************************************************************************************************\
-####### #     # ####### #     # #######     #####  ####### #     # ####### ######     #    ####### ####### ######  
-#       #     # #       ##    #    #       #     # #       ##    # #       #     #   # #      #    #     # #     # 
-#       #     # #       # #   #    #       #       #       # #   # #       #     #  #   #     #    #     # #     # 
-#####   #     # #####   #  #  #    #       #  #### #####   #  #  # #####   ######  #     #    #    #     # ######  
-#        #   #  #       #   # #    #       #     # #       #   # # #       #   #   #######    #    #     # #   #   
-#         # #   #       #    ##    #       #     # #       #    ## #       #    #  #     #    #    #     # #    #  
-#######    #    ####### #     #    #        #####  ####### #     # ####### #     # #     #    #    ####### #     #  
+####### #     # ####### #     # #######     #####  ####### #     # ####### ######     #    ####### ####### ######
+#       #     # #       ##    #    #       #     # #       ##    # #       #     #   # #      #    #     # #     #
+#       #     # #       # #   #    #       #       #       # #   # #       #     #  #   #     #    #     # #     #
+#####   #     # #####   #  #  #    #       #  #### #####   #  #  # #####   ######  #     #    #    #     # ######
+#        #   #  #       #   # #    #       #     # #       #   # # #       #   #   #######    #    #     # #   #
+#         # #   #       #    ##    #       #     # #       #    ## #       #    #  #     #    #    #     # #    #
+#######    #    ####### #     #    #        #####  ####### #     # ####### #     # #     #    #    ####### #     #
 \*****************************************************************************************************************/
 
 WaveEvent function createSmokeEvent(vector position,float lifetime)
@@ -966,17 +965,17 @@ WaveEvent function createCloakDroneEvent(vector origin,vector angles){
 }
 
 /************************************************************************************************************\
-####### #     # ####### #     # #######    ####### #     # #     #  #####  ####### ### ####### #     #  #####  
-#       #     # #       ##    #    #       #       #     # ##    # #     #    #     #  #     # ##    # #     # 
-#       #     # #       # #   #    #       #       #     # # #   # #          #     #  #     # # #   # #       
-#####   #     # #####   #  #  #    #       #####   #     # #  #  # #          #     #  #     # #  #  #  #####  
-#        #   #  #       #   # #    #       #       #     # #   # # #          #     #  #     # #   # #       # 
-#         # #   #       #    ##    #       #       #     # #    ## #     #    #     #  #     # #    ## #     # 
-#######    #    ####### #     #    #       #        #####  #     #  #####     #    ### ####### #     #  #####  
+####### #     # ####### #     # #######    ####### #     # #     #  #####  ####### ### ####### #     #  #####
+#       #     # #       ##    #    #       #       #     # ##    # #     #    #     #  #     # ##    # #     #
+#       #     # #       # #   #    #       #       #     # # #   # #          #     #  #     # # #   # #
+#####   #     # #####   #  #  #    #       #####   #     # #  #  # #          #     #  #     # #  #  #  #####
+#        #   #  #       #   # #    #       #       #     # #   # # #          #     #  #     # #   # #       #
+#         # #   #       #    ##    #       #       #     # #    ## #     #    #     #  #     # #    ## #     #
+#######    #    ####### #     #    #       #        #####  #     #  #####     #    ### ####### #     #  #####
 \************************************************************************************************************/
 
 void function spawnSmoke(SmokeEvent smokeEvent,SpawnEvent spawnEvent,WaitEvent waitEvent,SoundEvent soundEvent)
-{	
+{
 	printt("smoke")
 	SmokescreenStruct smokescreen
 	smokescreen.smokescreenFX = $"P_smokescreen_FD"
@@ -992,7 +991,7 @@ void function spawnSmoke(SmokeEvent smokeEvent,SpawnEvent spawnEvent,WaitEvent w
 }
 
 void function spawnArcTitan(SmokeEvent smokeEvent,SpawnEvent spawnEvent,WaitEvent waitEvent,SoundEvent soundEvent)
-{	
+{
 	PingMinimap(spawnEvent.origin.x, spawnEvent.origin.y, 4, 600, 150, 0)
 	entity npc = CreateArcTitan(TEAM_IMC,spawnEvent.origin,spawnEvent.angles)
 	file.spawnedNPCs.append(npc)
@@ -1007,7 +1006,7 @@ void function waitForTime(SmokeEvent smokeEvent,SpawnEvent spawnEvent,WaitEvent 
 {
 	float waitUntil = Time() + waitEvent.amount
 	while(Time()<waitUntil)
-	{	
+	{
 		if(!IsAlive(fd_harvester.harvester))
 			break
 		WaitFrame()
@@ -1015,18 +1014,18 @@ void function waitForTime(SmokeEvent smokeEvent,SpawnEvent spawnEvent,WaitEvent 
 }
 
 void function waitUntilLessThanAmountAliveEvent(SmokeEvent smokeEvent,SpawnEvent spawnEvent,WaitEvent waitEvent,SoundEvent soundEvent)
-{	
+{
 	waitUntilLessThanAmountAlive(int(waitEvent.amount))
 }
 
 void function spawnSuperSpectre(SmokeEvent smokeEvent,SpawnEvent spawnEvent,WaitEvent waitEvent,SoundEvent soundEvent)
-{	
+{
 	PingMinimap(spawnEvent.origin.x, spawnEvent.origin.y, 4, 600, 150, 0)
-	
+
 	entity npc = CreateSuperSpectre(TEAM_IMC,spawnEvent.origin,spawnEvent.angles)
 	SetSpawnOption_AISettings(npc,"npc_super_spectre_fd")
 	file.spawnedNPCs.append(npc)
-	
+
 	thread spawnSuperSpectre_threaded(npc)
 }
 
@@ -1037,26 +1036,26 @@ void function spawnDroppodGrunts(SmokeEvent smokeEvent,SpawnEvent spawnEvent,Wai
 }
 
 void function spawnDroppodStalker(SmokeEvent smokeEvent,SpawnEvent spawnEvent,WaitEvent waitEvent,SoundEvent soundEvent)
-{	
+{
 	PingMinimap(spawnEvent.origin.x, spawnEvent.origin.y, 4, 600, 150, 0)
 	thread CreateTrackedDroppodStalker(spawnEvent.origin,TEAM_IMC)
 }
 
 void function spawnDroppodSpectreMortar(SmokeEvent smokeEvent,SpawnEvent spawnEvent,WaitEvent waitEvent,SoundEvent soundEvent)
-{	
+{
 	PingMinimap(spawnEvent.origin.x, spawnEvent.origin.y, 4, 600, 150, 0)
 	thread CreateTrackedDroppodSpectreMortar(spawnEvent.origin,TEAM_IMC)
 }
 
 void function spawnGenericNPC(SmokeEvent smokeEvent,SpawnEvent spawnEvent,WaitEvent waitEvent,SoundEvent soundEvent)
-{	
+{
 	PingMinimap(spawnEvent.origin.x, spawnEvent.origin.y, 4, 600, 150, 0)
 	entity npc = CreateNPC( spawnEvent.npcClassName, TEAM_IMC, spawnEvent.origin, spawnEvent.angles )
 	DispatchSpawn(npc)
 }
 
 void function spawnGenericNPCTitanwithSettings(SmokeEvent smokeEvent,SpawnEvent spawnEvent,WaitEvent waitEvent,SoundEvent soundEvent)
-{	
+{
 	PingMinimap(spawnEvent.origin.x, spawnEvent.origin.y, 4, 600, 150, 0)
 	entity npc = CreateNPCTitan( spawnEvent.npcClassName, TEAM_IMC, spawnEvent.origin, spawnEvent.angles )
 	SetSpawnOption_AISettings( npc, spawnEvent.aiSettings)
@@ -1075,12 +1074,12 @@ void function spawnNukeTitan(SmokeEvent smokeEvent,SpawnEvent spawnEvent,WaitEve
 	DispatchSpawn(npc)
 	file.spawnedNPCs.append(npc)
 	thread NukeTitanThink(npc,fd_harvester.harvester)
-	
+
 }
 
 void function spawnMortarTitan(SmokeEvent smokeEvent,SpawnEvent spawnEvent,WaitEvent waitEvent,SoundEvent soundEvent)
 {
-	
+
 	PingMinimap(spawnEvent.origin.x, spawnEvent.origin.y, 4, 600, 150, 0)
 	entity npc = CreateNPCTitan("titan_atlas",TEAM_IMC, spawnEvent.origin, spawnEvent.angles)
 	SetSpawnOption_AISettings(npc,"npc_titan_atlas_tracker_mortar")
@@ -1099,7 +1098,7 @@ void function spawnSniperTitan(SmokeEvent smokeEvent,SpawnEvent spawnEvent,WaitE
 	DispatchSpawn(npc)
 	file.spawnedNPCs.append(npc)
 	thread MortarTitanThink(npc,fd_harvester.harvester)
-	
+
 }
 void function fd_spawnCloakDrone(SmokeEvent smokeEffect,SpawnEvent spawnEvent,WaitEvent waitEvent,SoundEvent soundEvent)
 {
@@ -1108,17 +1107,17 @@ void function fd_spawnCloakDrone(SmokeEvent smokeEffect,SpawnEvent spawnEvent,Wa
 }
 
 /****************************************************************************************\
-####### #     # ####### #     # #######    #     # ####### #       ######  ####### ######  
-#       #     # #       ##    #    #       #     # #       #       #     # #       #     # 
-#       #     # #       # #   #    #       #     # #       #       #     # #       #     # 
-#####   #     # #####   #  #  #    #       ####### #####   #       ######  #####   ######  
-#        #   #  #       #   # #    #       #     # #       #       #       #       #   #   
-#         # #   #       #    ##    #       #     # #       #       #       #       #    #  
-#######    #    ####### #     #    #       #     # ####### ####### #       ####### #     #  
+####### #     # ####### #     # #######    #     # ####### #       ######  ####### ######
+#       #     # #       ##    #    #       #     # #       #       #     # #       #     #
+#       #     # #       # #   #    #       #     # #       #       #     # #       #     #
+#####   #     # #####   #  #  #    #       ####### #####   #       ######  #####   ######
+#        #   #  #       #   # #    #       #     # #       #       #       #       #   #
+#         # #   #       #    ##    #       #     # #       #       #       #       #    #
+#######    #    ####### #     #    #       #     # ####### ####### #       ####### #     #
 \****************************************************************************************/
 void function spawnSuperSpectre_threaded(entity npc)
 {
-	
+
 	wait 4.7
 	DispatchSpawn(npc)
 	thread SuperSpectre_WarpFall(npc)
@@ -1127,81 +1126,81 @@ void function spawnSuperSpectre_threaded(entity npc)
 
 void function CreateTrackedDroppodSoldier( vector origin, int team)
 {
-    
-    
+
+
     entity pod = CreateDropPod( origin, <0,0,0> )
     SetTeam( pod, team )
     InitFireteamDropPod( pod )
     waitthread LaunchAnimDropPod( pod, "pod_testpath", origin, <0,0,0> )
-    
+
     string squadName = MakeSquadName( team, UniqueString( "ZiplineTable" ) )
     array<entity> guys
-    
-    for ( int i = 0; i < 4; i++ ) 
+
+    for ( int i = 0; i < 4; i++ )
     {
         entity guy = CreateSoldier( team, origin,<0,0,0> )
-        
+
         SetTeam( guy, team )
         guy.EnableNPCFlag( NPC_ALLOW_PATROL | NPC_ALLOW_INVESTIGATE | NPC_ALLOW_HAND_SIGNALS | NPC_ALLOW_FLEE )
         DispatchSpawn( guy )
-        
+
         SetSquad( guy, squadName )
         guys.append( guy )
     }
-    
+
     ActivateFireteamDropPod( pod, guys )
 }
 
 void function CreateTrackedDroppodSpectreMortar( vector origin, int team)
 {
-    
-    
+
+
     entity pod = CreateDropPod( origin, <0,0,0> )
     SetTeam( pod, team )
     InitFireteamDropPod( pod )
     waitthread LaunchAnimDropPod( pod, "pod_testpath", origin, <0,0,0> )
-    
+
     string squadName = MakeSquadName( team, UniqueString( "ZiplineTable" ) )
     array<entity> guys
-    
-    for ( int i = 0; i < 4; i++ ) 
+
+    for ( int i = 0; i < 4; i++ )
     {
         entity guy = CreateSpectre( team, origin,<0,0,0> )
-        
+
         SetTeam( guy, team )
         guy.EnableNPCFlag( NPC_ALLOW_PATROL | NPC_ALLOW_INVESTIGATE | NPC_ALLOW_HAND_SIGNALS | NPC_ALLOW_FLEE )
         DispatchSpawn( guy )
-        
+
         SetSquad( guy, squadName )
         guys.append( guy )
     }
-    
+
     ActivateFireteamDropPod( pod, guys )
 }
 void function CreateTrackedDroppodStalker( vector origin, int team)
 {
-    
-    
+
+
     entity pod = CreateDropPod( origin, <0,0,0> )
     SetTeam( pod, team )
     InitFireteamDropPod( pod )
     waitthread LaunchAnimDropPod( pod, "pod_testpath", origin, <0,0,0> )
-    
+
     string squadName = MakeSquadName( team, UniqueString( "ZiplineTable" ) )
     array<entity> guys
-    
-    for ( int i = 0; i < 4; i++ ) 
+
+    for ( int i = 0; i < 4; i++ )
     {
         entity guy = CreateStalker( team, origin,<0,0,0> )
-        
+
         SetTeam( guy, team )
         guy.EnableNPCFlag( NPC_ALLOW_PATROL | NPC_ALLOW_INVESTIGATE | NPC_ALLOW_HAND_SIGNALS | NPC_ALLOW_FLEE )
         DispatchSpawn( guy )
-        
+
         SetSquad( guy, squadName )
         guys.append( guy )
     }
-    
+
     ActivateFireteamDropPod( pod, guys )
 }
 
@@ -1214,10 +1213,10 @@ void function PingMinimap(float x, float y, float duration, float spreadRadius, 
 }
 
 void function waitUntilLessThanAmountAlive(int amount)
-{	
+{
 	printt("start wait")
 	int aliveTitans = file.spawnedNPCs.len()
-	
+
 	while(aliveTitans>amount)
 	{
 		WaitFrame()
@@ -1229,10 +1228,10 @@ void function waitUntilLessThanAmountAlive(int amount)
 }
 
 void function waitUntilLessThanAmountAlive_expensive(int amount)
-{	
+{
 	printt("start wait")
 	int aliveTitans = GetEntArrayByClassWildCard_Expensive("*npc*").len()
-	
+
 	while(aliveTitans>amount)
 	{
 		WaitFrame()
