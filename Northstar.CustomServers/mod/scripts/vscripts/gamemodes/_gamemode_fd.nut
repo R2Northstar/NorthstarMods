@@ -14,6 +14,7 @@ global function createDroppodStalkerEvent
 global function createDroppodSpectreMortarEvent
 global function createWaitUntilAliveEvent
 global function createCloakDroneEvent
+global function CreateTickEvent
 
 global struct SmokeEvent{
 	vector position
@@ -89,7 +90,6 @@ void function GamemodeFD_Init()
 {
 	PrecacheModel( MODEL_ATTRITION_BANK )
 	PrecacheParticleSystem($"P_smokescreen_FD")
-
 	RegisterSignal("FD_ReachedHarvester")
 	RegisterSignal("OnFailedToPath")
 
@@ -120,7 +120,6 @@ void function GamemodeFD_Init()
 
 	AddClientCommandCallback("FD_ToggleReady",ClientCommandCallbackToggleReady)
 	AddClientCommandCallback("FD_UseHarvesterShieldBoost",useShieldBoost)
-
 
 
 }
@@ -415,6 +414,15 @@ bool function runWave(int waveIndex,bool shouldDoBuyTime)
 
 	wait 2
 	//wave end
+
+	if ( isFinalWave() && IsAlive( fd_harvester.harvester ) )
+	{
+		//Game won code
+		SetRoundBased(false)
+		SetWinner(TEAM_MILITIA)
+		return true
+	}
+
 	SetGlobalNetBool("FD_waveActive",false)
 	MessageToTeam(TEAM_MILITIA,eEventNotifications.FD_AnnounceWaveEnd)
 	if(waveIndex<waveEvents.len())
@@ -466,13 +474,6 @@ bool function runWave(int waveIndex,bool shouldDoBuyTime)
 			EmitSoundOnEntityOnlyToPlayer(player,player,"HUD_MP_BountyHunt_BankBonusPts_Deposit_Start_1P")
 		}
 	}
-	if ( isFinalWave() && IsAlive( fd_harvester.harvester ) )
-	{
-		//Game won code
-		SetRoundBased(false)
-		SetWinner(TEAM_MILITIA)
-		return true
-	}
 	wait 10
 	return true
 
@@ -481,15 +482,15 @@ bool function runWave(int waveIndex,bool shouldDoBuyTime)
 void function OnHarvesterDamaged(entity harvester, var damageInfo)
 {
 	if ( !IsValid( harvester ) )
-    	return
+		return
 
 	if( fd_harvester.harvester != harvester )
 		return
 
 	if ( GetGlobalNetTime( "FD_harvesterInvulTime" ) > Time() )
 	{
-    	harvester.SetShieldHealth( harvester.GetShieldHealthMax() )
-    	return
+		harvester.SetShieldHealth( harvester.GetShieldHealthMax() )
+		return
 	}
 
 	int damageSourceID = DamageInfo_GetDamageSourceIdentifier( damageInfo )
@@ -497,27 +498,27 @@ void function OnHarvesterDamaged(entity harvester, var damageInfo)
 	float damageAmount = DamageInfo_GetDamage( damageInfo )
 
 	if ( !damageSourceID && !damageAmount && !attacker )
-    	return
+		return
 
 	fd_harvester.lastDamage = Time()
 
 	if ( harvester.GetShieldHealth() == 0 )
 	{
-    	float newHealth = harvester.GetHealth() - damageAmount
-    	if( newHealth <= 0 )
-    	{
-        	EmitSoundAtPosition(TEAM_UNASSIGNED,fd_harvester.harvester.GetOrigin(),"coop_generator_destroyed")
-        	newHealth = 0
-        	fd_harvester.rings.Destroy()
-    	}
-    	harvester.SetHealth( newHealth )
+		float newHealth = harvester.GetHealth() - damageAmount
+		if( newHealth <= 0 )
+		{
+			EmitSoundAtPosition(TEAM_UNASSIGNED,fd_harvester.harvester.GetOrigin(),"coop_generator_destroyed")
+			newHealth = 0
+			fd_harvester.rings.Destroy()
+		}
+		harvester.SetHealth( newHealth )
 	}
 
 	if ( DamageInfo_GetDamageSourceIdentifier( damageInfo ) == eDamageSourceId.mp_titancore_laser_cannon )
-    	DamageInfo_SetDamage( damageInfo, DamageInfo_GetDamage( damageInfo )/10 ) // laser core shreds super well for some reason
+		DamageInfo_SetDamage( damageInfo, DamageInfo_GetDamage( damageInfo )/10 ) // laser core shreds super well for some reason
 
 	if ( attacker.IsPlayer() )
-    	attacker.NotifyDidDamage( harvester, DamageInfo_GetHitBox( damageInfo ), DamageInfo_GetDamagePosition( damageInfo ), DamageInfo_GetCustomDamageType( damageInfo ), DamageInfo_GetDamage( damageInfo ), DamageInfo_GetDamageFlags( damageInfo ), DamageInfo_GetHitGroup( damageInfo ), DamageInfo_GetWeapon( damageInfo ), DamageInfo_GetDistFromAttackOrigin( damageInfo ) )
+		attacker.NotifyDidDamage( harvester, DamageInfo_GetHitBox( damageInfo ), DamageInfo_GetDamagePosition( damageInfo ), DamageInfo_GetCustomDamageType( damageInfo ), DamageInfo_GetDamage( damageInfo ), DamageInfo_GetDamageFlags( damageInfo ), DamageInfo_GetHitGroup( damageInfo ), DamageInfo_GetWeapon( damageInfo ), DamageInfo_GetDistFromAttackOrigin( damageInfo ) )
 }
 
 void function FD_NPCCleanup()
@@ -576,10 +577,10 @@ void function HarvesterThink()
 				EmitSoundOnEntity(harvester,"coop_generator_shieldrecharge_start")
 
 			if (!isRegening)
-            {
-			    EmitSoundOnEntity( harvester,"coop_generator_shieldrecharge_resume" )
-                isRegening = true
-            }
+			{
+				EmitSoundOnEntity( harvester,"coop_generator_shieldrecharge_resume" )
+				isRegening = true
+			}
 
 			float newShieldHealth = ( harvester.GetShieldHealthMax() / GENERATOR_SHIELD_REGEN_TIME * deltaTime ) + harvester.GetShieldHealth()
 
@@ -964,6 +965,18 @@ WaveEvent function createCloakDroneEvent(vector origin,vector angles){
 	return event
 }
 
+WaveEvent function CreateTickEvent( vector origin, vector angles, int amount = 4, string route = "" )
+{
+	WaveEvent event
+	event.eventFunction = SpawnTick
+	event.shouldThread = true
+	event.spawnEvent.spawnType= eFD_AITypeIDs.TICK
+	event.spawnEvent.spawnAmount = amount
+	event.spawnEvent.origin = origin
+	event.spawnEvent.angles = angles
+	return event
+}
+
 /************************************************************************************************************\
 ####### #     # ####### #     # #######    ####### #     # #     #  #####  ####### ### ####### #     #  #####
 #       #     # #       ##    #    #       #       #     # ##    # #     #    #     #  #     # ##    # #     #
@@ -994,10 +1007,11 @@ void function spawnArcTitan(SmokeEvent smokeEvent,SpawnEvent spawnEvent,WaitEven
 {
 	PingMinimap(spawnEvent.origin.x, spawnEvent.origin.y, 4, 600, 150, 0)
 	entity npc = CreateArcTitan(TEAM_IMC,spawnEvent.origin,spawnEvent.angles)
-	file.spawnedNPCs.append(npc)
-	DispatchSpawn(npc)
-	npc.DisableNPCFlag(NPC_ALLOW_INVESTIGATE | NPC_USE_SHOOTING_COVER|NPC_ALLOW_PATROL)
+	SetSpawnOption_AISettings(npc,"npc_titan_stryder_leadwall_arc")
 	SetSpawnOption_Titanfall(npc)
+	npc.DisableNPCFlag(NPC_ALLOW_INVESTIGATE | NPC_USE_SHOOTING_COVER|NPC_ALLOW_PATROL)
+	DispatchSpawn(npc)
+	file.spawnedNPCs.append(npc)
 	thread titanNav_thread(npc,spawnEvent.route)
 	thread EMPTitanThinkConstant(npc)
 }
@@ -1068,11 +1082,11 @@ void function spawnNukeTitan(SmokeEvent smokeEvent,SpawnEvent spawnEvent,WaitEve
 	PingMinimap(spawnEvent.origin.x, spawnEvent.origin.y, 4, 600, 150, 0)
 	entity npc = CreateNPCTitan("titan_ogre",TEAM_IMC, spawnEvent.origin, spawnEvent.angles)
 	SetSpawnOption_AISettings(npc,"npc_titan_ogre_minigun_nuke")
-	thread titanNav_thread(npc,spawnEvent.route)
 	SetSpawnOption_Titanfall(npc)
 	npc.EnableNPCMoveFlag(NPCMF_WALK_ALWAYS)
 	DispatchSpawn(npc)
 	file.spawnedNPCs.append(npc)
+	thread titanNav_thread(npc,spawnEvent.route)
 	thread NukeTitanThink(npc,fd_harvester.harvester)
 
 }
@@ -1106,6 +1120,16 @@ void function fd_spawnCloakDrone(SmokeEvent smokeEffect,SpawnEvent spawnEvent,Wa
 	file.spawnedNPCs.append(npc)
 }
 
+void function SpawnTick(SmokeEvent smokeEffect,SpawnEvent spawnEvent,WaitEvent waitEvent,SoundEvent soundEvent)
+{
+	PingMinimap(spawnEvent.origin.x, spawnEvent.origin.y, 4, 600, 150, 0)
+	for (int i = 0; i < floor(spawnEvent.spawnAmount / 4); i++)
+	{
+		thread CreateTrackedDroppodTick(spawnEvent.origin, TEAM_IMC, spawnEvent.route)
+		wait 0.5
+	}
+}
+
 /****************************************************************************************\
 ####### #     # ####### #     # #######    #     # ####### #       ######  ####### ######
 #       #     # #       ##    #    #       #     # #       #       #     # #       #     #
@@ -1128,80 +1152,110 @@ void function CreateTrackedDroppodSoldier( vector origin, int team)
 {
 
 
-    entity pod = CreateDropPod( origin, <0,0,0> )
-    SetTeam( pod, team )
-    InitFireteamDropPod( pod )
-    waitthread LaunchAnimDropPod( pod, "pod_testpath", origin, <0,0,0> )
+	entity pod = CreateDropPod( origin, <0,0,0> )
+	SetTeam( pod, team )
+	InitFireteamDropPod( pod )
+	waitthread LaunchAnimDropPod( pod, "pod_testpath", origin, <0,0,0> )
 
-    string squadName = MakeSquadName( team, UniqueString( "ZiplineTable" ) )
-    array<entity> guys
+	string squadName = MakeSquadName( team, UniqueString( "ZiplineTable" ) )
+	array<entity> guys
 
-    for ( int i = 0; i < 4; i++ )
-    {
-        entity guy = CreateSoldier( team, origin,<0,0,0> )
+	for ( int i = 0; i < 4; i++ )
+	{
+		entity guy = CreateSoldier( team, origin,<0,0,0> )
 
-        SetTeam( guy, team )
-        guy.EnableNPCFlag( NPC_ALLOW_PATROL | NPC_ALLOW_INVESTIGATE | NPC_ALLOW_HAND_SIGNALS | NPC_ALLOW_FLEE )
-        DispatchSpawn( guy )
+		SetTeam( guy, team )
+		guy.EnableNPCFlag( NPC_ALLOW_PATROL | NPC_ALLOW_INVESTIGATE | NPC_ALLOW_HAND_SIGNALS | NPC_ALLOW_FLEE )
+		DispatchSpawn( guy )
 
-        SetSquad( guy, squadName )
-        guys.append( guy )
-    }
+		SetSquad( guy, squadName )
+		guys.append( guy )
+	}
 
-    ActivateFireteamDropPod( pod, guys )
+	ActivateFireteamDropPod( pod, guys )
 }
 
 void function CreateTrackedDroppodSpectreMortar( vector origin, int team)
 {
 
 
-    entity pod = CreateDropPod( origin, <0,0,0> )
-    SetTeam( pod, team )
-    InitFireteamDropPod( pod )
-    waitthread LaunchAnimDropPod( pod, "pod_testpath", origin, <0,0,0> )
+	entity pod = CreateDropPod( origin, <0,0,0> )
+	SetTeam( pod, team )
+	InitFireteamDropPod( pod )
+	waitthread LaunchAnimDropPod( pod, "pod_testpath", origin, <0,0,0> )
 
-    string squadName = MakeSquadName( team, UniqueString( "ZiplineTable" ) )
-    array<entity> guys
+	string squadName = MakeSquadName( team, UniqueString( "ZiplineTable" ) )
+	array<entity> guys
 
-    for ( int i = 0; i < 4; i++ )
-    {
-        entity guy = CreateSpectre( team, origin,<0,0,0> )
+	for ( int i = 0; i < 4; i++ )
+	{
+		entity guy = CreateSpectre( team, origin,<0,0,0> )
 
-        SetTeam( guy, team )
-        guy.EnableNPCFlag( NPC_ALLOW_PATROL | NPC_ALLOW_INVESTIGATE | NPC_ALLOW_HAND_SIGNALS | NPC_ALLOW_FLEE )
-        DispatchSpawn( guy )
+		SetTeam( guy, team )
+		guy.EnableNPCFlag( NPC_ALLOW_PATROL | NPC_ALLOW_INVESTIGATE | NPC_ALLOW_HAND_SIGNALS | NPC_ALLOW_FLEE )
+		DispatchSpawn( guy )
 
-        SetSquad( guy, squadName )
-        guys.append( guy )
-    }
+		SetSquad( guy, squadName )
+		guys.append( guy )
+	}
 
-    ActivateFireteamDropPod( pod, guys )
+	ActivateFireteamDropPod( pod, guys )
 }
 void function CreateTrackedDroppodStalker( vector origin, int team)
 {
 
 
-    entity pod = CreateDropPod( origin, <0,0,0> )
-    SetTeam( pod, team )
-    InitFireteamDropPod( pod )
-    waitthread LaunchAnimDropPod( pod, "pod_testpath", origin, <0,0,0> )
+	entity pod = CreateDropPod( origin, <0,0,0> )
+	SetTeam( pod, team )
+	InitFireteamDropPod( pod )
+	waitthread LaunchAnimDropPod( pod, "pod_testpath", origin, <0,0,0> )
 
-    string squadName = MakeSquadName( team, UniqueString( "ZiplineTable" ) )
-    array<entity> guys
+	string squadName = MakeSquadName( team, UniqueString( "ZiplineTable" ) )
+	array<entity> guys
 
-    for ( int i = 0; i < 4; i++ )
-    {
-        entity guy = CreateStalker( team, origin,<0,0,0> )
+	for ( int i = 0; i < 4; i++ )
+	{
+		entity guy = CreateStalker( team, origin,<0,0,0> )
 
-        SetTeam( guy, team )
-        guy.EnableNPCFlag( NPC_ALLOW_PATROL | NPC_ALLOW_INVESTIGATE | NPC_ALLOW_HAND_SIGNALS | NPC_ALLOW_FLEE )
-        DispatchSpawn( guy )
+		SetTeam( guy, team )
+		guy.EnableNPCFlag( NPC_ALLOW_PATROL | NPC_ALLOW_INVESTIGATE | NPC_ALLOW_HAND_SIGNALS | NPC_ALLOW_FLEE )
+		DispatchSpawn( guy )
 
-        SetSquad( guy, squadName )
-        guys.append( guy )
-    }
+		SetSquad( guy, squadName )
+		guys.append( guy )
+	}
 
-    ActivateFireteamDropPod( pod, guys )
+	ActivateFireteamDropPod( pod, guys )
+}
+
+void function CreateTrackedDroppodTick( vector origin, int team, string route = "" )
+{
+	entity pod = CreateDropPod( origin, <0,0,0> )
+	SetTeam( pod, team )
+	InitFireteamDropPod( pod )
+	waitthread LaunchAnimDropPod( pod, "pod_testpath", origin, <0,0,0> )
+
+	string squadName = MakeSquadName( team, UniqueString( "ZiplineTable" ) )
+	array<entity> guys
+
+	for ( int i = 0; i < 4; i++ )
+	{
+		entity guy = CreateFragDrone( team, origin, <0,0,0> )
+
+		SetSpawnOption_AISettings(guy, "npc_frag_drone_fd")
+		SetTeam( guy, team )
+		guy.EnableNPCFlag( NPC_ALLOW_PATROL | NPC_ALLOW_INVESTIGATE )
+		guy.EnableNPCMoveFlag(NPCMF_WALK_ALWAYS)
+		DispatchSpawn( guy )
+
+		SetSquad( guy, squadName )
+
+		if (route != "")
+			thread titanNav_thread(guy, route) // not working i think
+		guys.append( guy )
+	}
+
+	ActivateFireteamDropPod( pod, guys )
 }
 
 void function PingMinimap(float x, float y, float duration, float spreadRadius, float ringRadius, int colorIndex)
