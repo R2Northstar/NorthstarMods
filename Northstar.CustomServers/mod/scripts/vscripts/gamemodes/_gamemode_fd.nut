@@ -481,15 +481,15 @@ bool function runWave(int waveIndex,bool shouldDoBuyTime)
 void function OnHarvesterDamaged(entity harvester, var damageInfo)
 {
 	if ( !IsValid( harvester ) )
-    	return
+		return
 
 	if( fd_harvester.harvester != harvester )
 		return
 
 	if ( GetGlobalNetTime( "FD_harvesterInvulTime" ) > Time() )
 	{
-    	harvester.SetShieldHealth( harvester.GetShieldHealthMax() )
-    	return
+		harvester.SetShieldHealth( harvester.GetShieldHealthMax() )
+		return
 	}
 
 	int damageSourceID = DamageInfo_GetDamageSourceIdentifier( damageInfo )
@@ -497,27 +497,27 @@ void function OnHarvesterDamaged(entity harvester, var damageInfo)
 	float damageAmount = DamageInfo_GetDamage( damageInfo )
 
 	if ( !damageSourceID && !damageAmount && !attacker )
-    	return
+		return
 
 	fd_harvester.lastDamage = Time()
 
 	if ( harvester.GetShieldHealth() == 0 )
 	{
-    	float newHealth = harvester.GetHealth() - damageAmount
-    	if( newHealth <= 0 )
-    	{
-        	EmitSoundAtPosition(TEAM_UNASSIGNED,fd_harvester.harvester.GetOrigin(),"coop_generator_destroyed")
-        	newHealth = 0
-        	fd_harvester.rings.Destroy()
-    	}
-    	harvester.SetHealth( newHealth )
+		float newHealth = harvester.GetHealth() - damageAmount
+		if( newHealth <= 0 )
+		{
+			EmitSoundAtPosition(TEAM_UNASSIGNED,fd_harvester.harvester.GetOrigin(),"coop_generator_destroyed")
+			newHealth = 0
+			fd_harvester.rings.Destroy()
+		}
+		harvester.SetHealth( newHealth )
 	}
 
 	if ( DamageInfo_GetDamageSourceIdentifier( damageInfo ) == eDamageSourceId.mp_titancore_laser_cannon )
     	DamageInfo_SetDamage( damageInfo, DamageInfo_GetDamage( damageInfo )/10 ) // laser core shreds super well for some reason
 
 	if ( attacker.IsPlayer() )
-    	attacker.NotifyDidDamage( harvester, DamageInfo_GetHitBox( damageInfo ), DamageInfo_GetDamagePosition( damageInfo ), DamageInfo_GetCustomDamageType( damageInfo ), DamageInfo_GetDamage( damageInfo ), DamageInfo_GetDamageFlags( damageInfo ), DamageInfo_GetHitGroup( damageInfo ), DamageInfo_GetWeapon( damageInfo ), DamageInfo_GetDistFromAttackOrigin( damageInfo ) )
+		attacker.NotifyDidDamage( harvester, DamageInfo_GetHitBox( damageInfo ), DamageInfo_GetDamagePosition( damageInfo ), DamageInfo_GetCustomDamageType( damageInfo ), DamageInfo_GetDamage( damageInfo ), DamageInfo_GetDamageFlags( damageInfo ), DamageInfo_GetHitGroup( damageInfo ), DamageInfo_GetWeapon( damageInfo ), DamageInfo_GetDistFromAttackOrigin( damageInfo ) )
 }
 
 void function FD_NPCCleanup()
@@ -577,7 +577,7 @@ void function HarvesterThink()
 
 			if (!isRegening)
             {
-			    EmitSoundOnEntity( harvester,"coop_generator_shieldrecharge_resume" )
+				EmitSoundOnEntity( harvester,"coop_generator_shieldrecharge_resume" )
                 isRegening = true
             }
 
