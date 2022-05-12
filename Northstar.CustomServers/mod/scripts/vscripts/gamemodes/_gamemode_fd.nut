@@ -15,6 +15,8 @@ global function createDroppodSpectreMortarEvent
 global function createWaitUntilAliveEvent
 global function createCloakDroneEvent
 global function CreateTickEvent
+global function CreateToneSniperTitanEvent
+global function CreateNorthstarSniperTitanEvent
 
 global struct SmokeEvent{
 	vector position
@@ -111,13 +113,7 @@ void function GamemodeFD_Init()
 	AddDamageByCallback("player",FD_DamageByPlayerCallback)
 
 
-	AddDeathCallback("npc_titan",OnNpcDeath)
-	AddDeathCallback("npc_stalker",OnNpcDeath)
-	AddDeathCallback("npc_spectre",OnNpcDeath)
-	AddDeathCallback("npc_super_spectre",OnNpcDeath)
-	AddDeathCallback("npc_soldier",OnNpcDeath)
-	AddDeathCallback("npc_frag_drone",OnNpcDeath)
-	AddDeathCallback("npc_drone",OnNpcDeath)
+	AddCallback_OnNPCKilled(OnNpcDeath)
 	SetUsedCoreCallback(FD_UsedCoreCallback)
 
 	AddClientCommandCallback("FD_ToggleReady",ClientCommandCallbackToggleReady)
@@ -152,14 +148,64 @@ void function GamemodeFD_InitPlayer(entity player)
 
 }
 
-void function OnNpcDeath( entity ent, var damageInfo )
+void function OnNpcDeath( entity victim, entity attacker, var damageInfo )
 {
-	int findIndex = file.spawnedNPCs.find( ent )
+	int findIndex = file.spawnedNPCs.find( victim )
 	if ( findIndex != -1 )
 	{
 		file.spawnedNPCs.remove( findIndex )
 	}
 
+	if ( victim.GetOwner() == attacker && !attacker.IsPlayer() && attacker == victim )
+		return
+
+	int playerScore = 0
+	int money = 0
+	if ( victim.IsNPC() )
+	{
+		string eventName = FD_GetScoreEventName( victim.GetClassName() )
+		playerScore = ScoreEvent_GetPointValue( GetScoreEvent( eventName ) )
+
+		switch (victim.GetClassName())
+		{
+			case "npc_soldier":
+				money = 5
+				break
+			case "npc_drone":
+			case "npc_spectre": // not sure
+				money = 10
+				break
+			case "npc_stalker":
+				money = 15
+				break
+			case "npc_super_spectre":
+				money = 20
+				break
+			default:
+				money = 0 // titans seem to total up to 50 money undoomed health
+		}
+	}
+	if (money != 0)
+	{
+		AddMoneyToPlayer( attacker , money )
+		print("give that fat stash babeeeee")
+	}
+
+	attacker.AddToPlayerGameStat( PGS_ASSAULT_SCORE, playerScore ) // seems to be how combat score is counted
+
+	table<int, bool> alreadyAssisted
+	foreach( DamageHistoryStruct attackerInfo in victim.e.recentDamageHistory )
+	{
+		if ( !IsValid( attackerInfo.attacker ) || !attackerInfo.attacker.IsPlayer() || attackerInfo.attacker == victim )
+			continue
+
+		bool exists = attackerInfo.attacker.GetEncodedEHandle() in alreadyAssisted ? true : false
+		if( attackerInfo.attacker != attacker && !exists )
+		{
+			alreadyAssisted[attackerInfo.attacker.GetEncodedEHandle()] <- true
+			attackerInfo.attacker.AddToPlayerGameStat( PGS_DEFENSE_SCORE, playerScore )		// i assume this is how support score gets added
+		}
+	}
 }
 
 void function RateSpawnpoints_FD(int _0, array<entity> _1, int _2, entity _3){}
@@ -273,6 +319,7 @@ array<int> function getEnemyTypesForWave(int wave)
 			case(eFD_AITypeIDs.TONE):
 			case(eFD_AITypeIDs.ION):
 			case(eFD_AITypeIDs.MONARCH):
+			case(eFD_AITypeIDs.LEGION):
 			case(eFD_AITypeIDs.TITAN_SNIPER):
 				npcs[eFD_AITypeIDs.TITAN]+=e.spawnEvent.spawnAmount
 				break
@@ -487,6 +534,7 @@ bool function runWave(int waveIndex,bool shouldDoBuyTime)
 	file.players[highestScore_player].totalMVPs += 1
 	AddPlayerScore(highestScore_player,"FDWaveMVP")
 	AddMoneyToPlayer(highestScore_player,100)
+	highestScore_player.AddToPlayerGameStat( PGS_ASSAULT_SCORE, FD_SCORE_MVP )
 	EmitSoundOnEntityOnlyToPlayer(highestScore_player,highestScore_player,"HUD_MP_BountyHunt_BankBonusPts_Deposit_Start_1P")
 	foreach(entity player in GetPlayerArray())
 	{
@@ -500,6 +548,7 @@ bool function runWave(int waveIndex,bool shouldDoBuyTime)
 		{
 			AddPlayerScore(player,"FDTeamFlawlessWave")
 			AddMoneyToPlayer(player,100)
+			player.AddToPlayerGameStat( PGS_ASSAULT_SCORE, FD_SCORE_TEAM_FLAWLESS_WAVE )
 			EmitSoundOnEntityOnlyToPlayer(player,player,"HUD_MP_BountyHunt_BankBonusPts_Deposit_Start_1P")
 		}
 	}
@@ -760,11 +809,12 @@ void function titanNav_thread(entity titan, string routeName,float nextDistance 
 		if(Distance(fd_harvester.harvester.GetOrigin(),titan.GetOrigin())<Distance(fd_harvester.harvester.GetOrigin(),node.GetOrigin()))
 			continue
 		titan.AssaultPoint(node.GetOrigin())
+		titan.AssaultSetGoalRadius( 100 )
 		int i = 0
 		while((Distance(titan.GetOrigin(),node.GetOrigin())>nextDistance))
 		{
 			WaitFrame()
-			//printt(Distance(titan.GetOrigin(),node.GetOrigin()))
+			// printt(Distance(titan.GetOrigin(),node.GetOrigin()))
 			// i++
 			// if(i>1200)
 			// {
@@ -774,6 +824,44 @@ void function titanNav_thread(entity titan, string routeName,float nextDistance 
 		}
 	}
 	titan.Signal("FD_ReachedHarvester")
+}
+
+void function HumanNav_Thread( entity npc )
+{
+	npc.EndSignal( "OnDeath" )
+	npc.EndSignal( "OnDestroy" )
+
+	entity generator = fd_harvester.harvester
+	float goalRadius = 100
+	float checkRadiusSqr = 400 * 400
+
+	array<vector> pos = NavMesh_GetNeighborPositions( generator.GetOrigin(), HULL_HUMAN, 5 )
+	pos = ArrayClosestVector( pos, npc.GetOrigin() )
+
+	array<vector> validPos
+	foreach ( point in pos )
+	{
+		if ( DistanceSqr( generator.GetOrigin(), point ) <= checkRadiusSqr && NavMesh_IsPosReachableForAI( npc, point ) )
+		{
+			validPos.append( point )
+		}
+	}
+
+	int posLen = validPos.len()
+	while( posLen >= 1 )
+	{
+		npc.SetEnemy( generator )
+		thread AssaultOrigin( npc, validPos[0], goalRadius )
+		npc.AssaultSetFightRadius( goalRadius )
+
+		wait 0.5
+
+		if ( DistanceSqr( npc.GetOrigin(), generator.GetOrigin() ) > checkRadiusSqr )
+			continue
+
+		break
+	}
+	npc.Signal("FD_ReachedHarvester")
 }
 
 bool function allPlayersReady()
@@ -825,6 +913,37 @@ int function getHintForTypeId(int typeId)
 				return (371 +RandomIntRangeInclusive(0,2))
 			default:
 				return (363+RandomIntRangeInclusive(0,7))
+		}
+	unreachable
+}
+
+string function GetTargetNameForID(int typeId)
+{
+	switch(typeId)
+		{
+			case eFD_AITypeIDs.TITAN_NUKE:
+				return "npc_titan_nuke"
+			case eFD_AITypeIDs.LEGION:
+				return "npc_titan_ogre_minigun"
+			case eFD_AITypeIDs.TITAN_ARC:
+				return "npc_titan_arc"
+			case eFD_AITypeIDs.RONIN:
+				return "npc_titan_stryder_leadwall"
+			case eFD_AITypeIDs.TITAN_MORTAR:
+				return "npc_titanmortar"
+			case eFD_AITypeIDs.TONE:
+				return "npc_titan_atlas_tracker"
+			case eFD_AITypeIDs.TITAN_SNIPER:
+			case eFD_AITypeIDs.NORTHSTAR:
+				return "npc_titan_stryder_sniper"
+			case eFD_AITypeIDs.ION:
+				return "npc_titan_atlas_stickybomb"
+			case eFD_AITypeIDs.SCORCH:
+				return "npc_titan_ogre_meteor"
+			case eFD_AITypeIDs.MONARCH:
+				return "npc_titan_atlas_vanguard"
+			default:
+				return "titan"
 		}
 	unreachable
 }
@@ -1006,6 +1125,30 @@ WaveEvent function CreateTickEvent( vector origin, vector angles, int amount = 4
 	return event
 }
 
+WaveEvent function CreateNorthstarSniperTitanEvent(vector origin,vector angles)
+{
+	WaveEvent event
+	event.eventFunction = spawnSniperTitan
+	event.shouldThread = true
+	event.spawnEvent.spawnType= eFD_AITypeIDs.TITAN_SNIPER
+	event.spawnEvent.spawnAmount = 1
+	event.spawnEvent.origin = origin
+	event.spawnEvent.angles = angles
+	return event
+}
+
+WaveEvent function CreateToneSniperTitanEvent(vector origin,vector angles)
+{
+	WaveEvent event
+	event.eventFunction = SpawnToneSniperTitan
+	event.shouldThread = true
+	event.spawnEvent.spawnType= eFD_AITypeIDs.TITAN_SNIPER
+	event.spawnEvent.spawnAmount = 1
+	event.spawnEvent.origin = origin
+	event.spawnEvent.angles = angles
+	return event
+}
+
 /************************************************************************************************************\
 ####### #     # ####### #     # #######    ####### #     # #     #  #####  ####### ### ####### #     #  #####
 #       #     # #       ##    #    #       #       #     # ##    # #     #    #     #  #     # ##    # #     #
@@ -1038,9 +1181,13 @@ void function spawnArcTitan(SmokeEvent smokeEvent,SpawnEvent spawnEvent,WaitEven
 	entity npc = CreateArcTitan(TEAM_IMC,spawnEvent.origin,spawnEvent.angles)
 	npc.DisableNPCFlag(NPC_ALLOW_INVESTIGATE | NPC_USE_SHOOTING_COVER|NPC_ALLOW_PATROL)
 	SetSpawnOption_Titanfall(npc)
+	SetTargetName( npc, GetTargetNameForID(spawnEvent.spawnType)) // required for client to create icons
 	SetSpawnOption_AISettings(npc,"npc_titan_stryder_leadwall_arc")
 	file.spawnedNPCs.append(npc)
 	DispatchSpawn(npc)
+	npc.Minimap_AlwaysShow( TEAM_IMC, null )
+	npc.Minimap_AlwaysShow( TEAM_MILITIA, null )
+	npc.GetTitanSoul().SetTitanSoulNetBool( "showOverheadIcon", true )
 	thread titanNav_thread(npc,spawnEvent.route)
 	thread EMPTitanThinkConstant(npc)
 }
@@ -1077,7 +1224,7 @@ void function spawnSuperSpectre(SmokeEvent smokeEvent,SpawnEvent spawnEvent,Wait
 void function spawnDroppodGrunts(SmokeEvent smokeEvent,SpawnEvent spawnEvent,WaitEvent waitEvent,SoundEvent soundEvent)
 {
 	PingMinimap(spawnEvent.origin.x, spawnEvent.origin.y, 4, 600, 150, 0)
-	thread CreateTrackedDroppodSoldier(spawnEvent.origin,TEAM_IMC)
+	thread CreateTrackedDroppodSoldier(spawnEvent.origin,TEAM_IMC, spawnEvent.route)
 }
 
 void function spawnDroppodStalker(SmokeEvent smokeEvent,SpawnEvent spawnEvent,WaitEvent waitEvent,SoundEvent soundEvent)
@@ -1103,8 +1250,14 @@ void function spawnGenericNPCTitanwithSettings(SmokeEvent smokeEvent,SpawnEvent 
 {
 	PingMinimap(spawnEvent.origin.x, spawnEvent.origin.y, 4, 600, 150, 0)
 	entity npc = CreateNPCTitan( spawnEvent.npcClassName, TEAM_IMC, spawnEvent.origin, spawnEvent.angles )
+	if( spawnEvent.aiSettings == "npc_titan_atlas_tracker_fd_sniper" )
+		SetTargetName( npc, "npc_titan_atlas_tracker" ) // required for client to create icons
 	SetSpawnOption_AISettings( npc, spawnEvent.aiSettings)
+	SetSpawnOption_Titanfall(npc)
 	DispatchSpawn(npc)
+	npc.Minimap_AlwaysShow( TEAM_IMC, null )
+	npc.Minimap_AlwaysShow( TEAM_MILITIA, null )
+	npc.GetTitanSoul().SetTitanSoulNetBool( "showOverheadIcon", true )
 	file.spawnedNPCs.append(npc)
 }
 
@@ -1114,9 +1267,13 @@ void function spawnNukeTitan(SmokeEvent smokeEvent,SpawnEvent spawnEvent,WaitEve
 	entity npc = CreateNPCTitan("titan_ogre",TEAM_IMC, spawnEvent.origin, spawnEvent.angles)
 	SetSpawnOption_AISettings(npc,"npc_titan_ogre_minigun_nuke")
 	SetSpawnOption_Titanfall(npc)
+	SetTargetName( npc, GetTargetNameForID(spawnEvent.spawnType)) // required for client to create icons
 	npc.EnableNPCMoveFlag(NPCMF_WALK_ALWAYS)
 	DispatchSpawn(npc)
 	file.spawnedNPCs.append(npc)
+	npc.Minimap_AlwaysShow( TEAM_IMC, null )
+	npc.Minimap_AlwaysShow( TEAM_MILITIA, null )
+	npc.GetTitanSoul().SetTitanSoulNetBool( "showOverheadIcon", true )
 	thread titanNav_thread(npc,spawnEvent.route)
 	thread NukeTitanThink(npc,fd_harvester.harvester)
 
@@ -1129,8 +1286,12 @@ void function spawnMortarTitan(SmokeEvent smokeEvent,SpawnEvent spawnEvent,WaitE
 	entity npc = CreateNPCTitan("titan_atlas",TEAM_IMC, spawnEvent.origin, spawnEvent.angles)
 	SetSpawnOption_AISettings(npc,"npc_titan_atlas_tracker_mortar")
 	SetSpawnOption_Titanfall(npc)
+	SetTargetName( npc, GetTargetNameForID(spawnEvent.spawnType)) // required for client to create icons
 	DispatchSpawn(npc)
 	file.spawnedNPCs.append(npc)
+	npc.Minimap_AlwaysShow( TEAM_IMC, null )
+	npc.Minimap_AlwaysShow( TEAM_MILITIA, null )
+	npc.GetTitanSoul().SetTitanSoulNetBool( "showOverheadIcon", true )
 	thread MortarTitanThink(npc,fd_harvester.harvester)
 }
 
@@ -1140,11 +1301,32 @@ void function spawnSniperTitan(SmokeEvent smokeEvent,SpawnEvent spawnEvent,WaitE
 	entity npc = CreateNPCTitan("titan_stryder",TEAM_IMC, spawnEvent.origin, spawnEvent.angles)
 	SetSpawnOption_AISettings(npc,"npc_titan_stryder_sniper_fd")
 	SetSpawnOption_Titanfall(npc)
+	SetTargetName( npc, GetTargetNameForID(spawnEvent.spawnType)) // required for client to create icons
 	DispatchSpawn(npc)
 	file.spawnedNPCs.append(npc)
-	thread MortarTitanThink(npc,fd_harvester.harvester)
+	npc.Minimap_AlwaysShow( TEAM_IMC, null )
+	npc.Minimap_AlwaysShow( TEAM_MILITIA, null )
+	npc.GetTitanSoul().SetTitanSoulNetBool( "showOverheadIcon", true )
+	thread SniperTitanThink(npc,fd_harvester.harvester)
 
 }
+
+void function SpawnToneSniperTitan(SmokeEvent smokeEvent,SpawnEvent spawnEvent,WaitEvent waitEvent,SoundEvent soundEvent)
+{
+	PingMinimap(spawnEvent.origin.x, spawnEvent.origin.y, 4, 600, 150, 0)
+	entity npc = CreateNPCTitan("titan_atlas",TEAM_IMC, spawnEvent.origin, spawnEvent.angles)
+	SetSpawnOption_AISettings(npc,"npc_titan_atlas_tracker_fd_sniper")
+	SetSpawnOption_Titanfall(npc)
+	SetTargetName( npc, GetTargetNameForID(spawnEvent.spawnType)) // required for client to create icons
+	DispatchSpawn( npc )
+	file.spawnedNPCs.append(npc)
+	npc.Minimap_AlwaysShow( TEAM_IMC, null )
+	npc.Minimap_AlwaysShow( TEAM_MILITIA, null )
+	npc.GetTitanSoul().SetTitanSoulNetBool( "showOverheadIcon", true )
+	thread SniperTitanThink(npc,fd_harvester.harvester)
+
+}
+
 void function fd_spawnCloakDrone(SmokeEvent smokeEffect,SpawnEvent spawnEvent,WaitEvent waitEvent,SoundEvent soundEvent)
 {
 	entity npc = SpawnCloakDrone( TEAM_IMC, spawnEvent.origin, spawnEvent.angles, file.harvester_info.GetOrigin() )
@@ -1176,7 +1358,7 @@ void function spawnSuperSpectre_threaded(entity npc)
 	
 }
 
-void function CreateTrackedDroppodSoldier( vector origin, int team)
+void function CreateTrackedDroppodSoldier( vector origin, int team, string route = "")
 {
 
 
@@ -1187,6 +1369,7 @@ void function CreateTrackedDroppodSoldier( vector origin, int team)
 
     string squadName = MakeSquadName( team, UniqueString( "ZiplineTable" ) )
     array<entity> guys
+    bool adychecked = false
 
     for ( int i = 0; i < 4; i++ )
     {
@@ -1194,9 +1377,17 @@ void function CreateTrackedDroppodSoldier( vector origin, int team)
 
         SetTeam( guy, team )
         guy.EnableNPCFlag( NPC_ALLOW_PATROL | NPC_ALLOW_INVESTIGATE | NPC_ALLOW_HAND_SIGNALS | NPC_ALLOW_FLEE )
+		guy.EnableNPCMoveFlag(NPCMF_WALK_ALWAYS)
         DispatchSpawn( guy )
 
-        SetSquad( guy, squadName )
+	guy.SetParent( pod, "ATTACH", true )
+	SetSquad( guy, squadName )
+
+	thread HumanNav_Thread(guy)
+
+	guy.Minimap_AlwaysShow( TEAM_IMC, null )
+	guy.Minimap_AlwaysShow( TEAM_MILITIA, null )
+	file.spawnedNPCs.append(guy)
         guys.append( guy )
     }
 
@@ -1273,13 +1464,13 @@ void function CreateTrackedDroppodTick( vector origin, int team, string route = 
 		SetSpawnOption_AISettings(guy, "npc_frag_drone_fd")
 		SetTeam( guy, team )
 		guy.EnableNPCFlag( NPC_ALLOW_PATROL | NPC_ALLOW_INVESTIGATE )
-		guy.EnableNPCMoveFlag(NPCMF_WALK_ALWAYS)
+		guy.EnableNPCMoveFlag(NPCMF_WALK_ALWAYS | NPCMF_PREFER_SPRINT)
 		DispatchSpawn( guy )
-
+		guy.Minimap_AlwaysShow( TEAM_IMC, null )
+		guy.Minimap_AlwaysShow( TEAM_MILITIA, null )
 		SetSquad( guy, squadName )
 
-		if (route != "")
-			thread titanNav_thread(guy, route) // not working i think
+		thread HumanNav_Thread(guy) // not working i think
 		guys.append( guy )
 	}
 
@@ -1298,28 +1489,47 @@ void function waitUntilLessThanAmountAlive(int amount)
 {
 	printt("start wait")
 	int aliveTitans = file.spawnedNPCs.len()
-
+	float lasttime = Time()
 	while(aliveTitans>amount)
 	{
 		WaitFrame()
 		aliveTitans = file.spawnedNPCs.len()
 		if(!IsAlive(fd_harvester.harvester))
 			break
-		printt("titans alive ", aliveTitans)
+		if (Time() > lasttime + 5) // stop log spam
+		{
+			printt("npcs alive ", aliveTitans)
+			lasttime = Time()
+		}
 	}
 }
 
 void function waitUntilLessThanAmountAlive_expensive(int amount)
 {
 	printt("start wait")
-	int aliveTitans = GetEntArrayByClassWildCard_Expensive("*npc*").len()
-
+	array<entity> npcs = GetEntArrayByClassWildCard_Expensive("*npc*")
+	int deduct = 0
+	for ( int i = npcs.len() - 1; i >= 0; i-- )
+	{
+		entity npc = npcs[i]
+		if (IsValid(GetPetTitanOwner( npc )))
+		{
+			print("found player npc titan")
+			deduct++
+		}
+	}
+	float lasttime = Time()
+	int aliveTitans = npcs.len()
 	while(aliveTitans>amount)
 	{
 		WaitFrame()
-		aliveTitans = GetEntArrayByClassWildCard_Expensive("*npc*").len()
+		aliveTitans = GetEntArrayByClassWildCard_Expensive("*npc*").len() - deduct
 		if(!IsAlive(fd_harvester.harvester))
 			break
-		printt("titans alive ", aliveTitans)
+		if (Time() > lasttime + 5) // stop log spam
+		{
+			printt("npcs alive ", aliveTitans)
+			lasttime = Time()
+		}
 	}
 }
