@@ -1,1 +1,88 @@
-//fuck
+untyped
+
+global function MoveToSniperPosition
+global function SniperTitanThink
+
+const float SNIPER_TITAN_POSITION_SEARCH_RANGE = 2048
+
+void function MoveToSniperPosition( entity titan, vector origin, entity target )
+{
+	titan.EndSignal( "OnSyncedMeleeVictim" )
+	titan.EndSignal( "OnDeath" )
+	titan.EndSignal( "OnDestroy" )
+
+	titan.SetLookDistOverride( 320 )
+	titan.EnableNPCMoveFlag( NPCMF_PREFER_SPRINT )
+
+	float goalRadius = titan.GetMinGoalRadius()
+
+	OnThreadEnd(
+		function() : ( titan )
+		{
+			if ( !IsValid( titan ) )
+				return
+
+			local classname = titan.GetClassName()
+			titan.DisableLookDistOverride()
+			titan.DisableNPCMoveFlag( NPCMF_PREFER_SPRINT )
+		}
+	)
+
+	local tries = 0
+	while( true )
+	{
+		local dist = Distance( titan.GetOrigin(), origin )
+		if ( dist <= goalRadius * 2 )
+			break
+
+		printt( "Sniper titan moving toward his goal", dist, tries++ )
+		titan.AssaultPoint( origin )
+		titan.AssaultSetGoalRadius( goalRadius )
+        titan.SetEnemy( target )
+		local result = WaitSignal( titan, "OnFinishedAssault", "OnEnterGoalRadius" )
+	}
+}
+
+void function SniperTitanThink( entity titan, entity generator )
+{
+	titan.EndSignal( "OnSyncedMeleeVictim" )
+	titan.EndSignal( "OnDeath" )
+	titan.EndSignal( "OnDestroy" )
+
+	entity soul = titan.GetTitanSoul()
+	soul.EndSignal( "OnDestroy" )
+
+	// titan.SetScriptName( "sniper_titan" )
+
+	WaitTillHotDropComplete( titan )
+
+	float minEngagementDuration = 5
+	StationaryAIPosition ornull sniperPosition = GetRandomStationaryPosition( titan.GetOrigin(), SNIPER_TITAN_POSITION_SEARCH_RANGE, eStationaryAIPositionTypes.SNIPER_TITAN )
+	while ( sniperPosition == null )
+	{
+		// incase all stationary titan positions are in use wait for one to become available
+		wait 5
+		sniperPosition = GetRandomStationaryPosition( titan.GetOrigin(), SNIPER_TITAN_POSITION_SEARCH_RANGE, eStationaryAIPositionTypes.SNIPER_TITAN )
+	}
+
+	expect StationaryAIPosition( sniperPosition )
+
+	ClaimStationaryAIPosition( sniperPosition )
+
+	OnThreadEnd(
+		function() : ( sniperPosition )
+		{
+			// release mortar position when dead
+			ReleaseStationaryAIPosition( sniperPosition )
+		}
+	)
+
+	while( true )
+	{
+		vector origin = sniperPosition.origin
+        titan.SetEnemy( generator )
+		waitthread MoveToSniperPosition( titan, origin, generator )
+
+		WaitForever()
+	}
+}
