@@ -1487,49 +1487,36 @@ void function PingMinimap(float x, float y, float duration, float spreadRadius, 
 
 void function waitUntilLessThanAmountAlive(int amount)
 {
-	printt("start wait")
+
 	int aliveTitans = file.spawnedNPCs.len()
-	float lasttime = Time()
 	while(aliveTitans>amount)
 	{
 		WaitFrame()
 		aliveTitans = file.spawnedNPCs.len()
 		if(!IsAlive(fd_harvester.harvester))
 			break
-		if (Time() > lasttime + 5) // stop log spam
-		{
-			printt("npcs alive ", aliveTitans)
-			lasttime = Time()
-		}
 	}
 }
 
 void function waitUntilLessThanAmountAlive_expensive(int amount)
 {
-	printt("start wait")
-	array<entity> npcs = GetEntArrayByClassWildCard_Expensive("*npc*")
+
+	array<entity> npcs = GetNPCArray()
 	int deduct = 0
-	for ( int i = npcs.len() - 1; i >= 0; i-- )
-	{
-		entity npc = npcs[i]
-		if (IsValid(GetPetTitanOwner( npc )))
-		{
-			print("found player npc titan")
+	for (entity npc in npcs)
+		if (IsValid(GetPetTitanOwner( npcs[i] )))
 			deduct++
-		}
-	}
-	float lasttime = Time()
-	int aliveTitans = npcs.len()
+	int aliveTitans = npcs.len() - deduct
 	while(aliveTitans>amount)
 	{
 		WaitFrame()
-		aliveTitans = GetEntArrayByClassWildCard_Expensive("*npc*").len() - deduct
+		npcs = GetNPCArray()
+		detuct = 0
+		foreach(entity npc in npcs)
+			if (IsValid(GetPetTitanOwner( npcs[i] )))
+				deduct++
+		aliveTitans = GetNPCArray().len() - deduct
 		if(!IsAlive(fd_harvester.harvester))
 			break
-		if (Time() > lasttime + 5) // stop log spam
-		{
-			printt("npcs alive ", aliveTitans)
-			lasttime = Time()
-		}
 	}
 }
