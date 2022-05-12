@@ -24,7 +24,8 @@ global struct SmokeEvent{
 global struct SpawnEvent{
 	vector origin
 	vector angles
-	string route
+	string route			//defines route taken by the ai
+	int skippedRouteNodes 	//defines how many route nodes will be skipped
 	int spawnType			//Just used for Wave Info but can be used for spawn too should contain aid of spawned enemys
 	int spawnAmount			//Just used for Wave Info but can be used for spawn too should contain amound of spawned enemys
 	string npcClassName
@@ -420,6 +421,32 @@ bool function runWave(int waveIndex,bool shouldDoBuyTime)
 	if ( isFinalWave() && IsAlive( fd_harvester.harvester ) )
 	{
 		//Game won code
+		MessageToTeam(TEAM_MILITIA,eEventNotifications.FD_AnnounceWaveEnd)
+		foreach(entity player in GetPlayerArray())
+		{
+			AddPlayerScore(player,"FDTeamWave")
+		}
+		wait 1
+		float highestScore = 0;
+		entity highestScore_player = GetPlayerArray()[0]
+		foreach(entity player in GetPlayerArray())
+		{
+			player_struct_fd data = file.players[player]
+			if(!data.diedThisRound)
+				AddPlayerScore(player,"FDDidntDie")
+			if(highestScore<data.scoreThisRound)
+			{
+				highestScore = data.scoreThisRound
+				highestScore_player = player
+			}
+
+		}
+		file.players[highestScore_player].totalMVPs += 1
+		AddPlayerScore(highestScore_player,"FDWaveMVP")
+		wait 1
+		foreach(entity player in GetPlayerArray())
+			if(!file.havesterWasDamaged)
+				AddPlayerScore(player,"FDTeamFlawlessWave")
 		SetRoundBased(false)
 		SetWinner(TEAM_MILITIA)
 		return true
@@ -1041,8 +1068,10 @@ void function spawnSuperSpectre(SmokeEvent smokeEvent,SpawnEvent spawnEvent,Wait
 	entity npc = CreateSuperSpectre(TEAM_IMC,spawnEvent.origin,spawnEvent.angles)
 	SetSpawnOption_AISettings(npc,"npc_super_spectre_fd")
 	file.spawnedNPCs.append(npc)
-
-	thread spawnSuperSpectre_threaded(npc)
+	wait 4.7
+	DispatchSpawn(npc)
+	thread SuperSpectre_WarpFall(npc)
+	thread ReaperMinionLauncherThink(npc)
 }
 
 void function spawnDroppodGrunts(SmokeEvent smokeEvent,SpawnEvent spawnEvent,WaitEvent waitEvent,SoundEvent soundEvent)
@@ -1144,10 +1173,7 @@ void function SpawnTick(SmokeEvent smokeEffect,SpawnEvent spawnEvent,WaitEvent w
 void function spawnSuperSpectre_threaded(entity npc)
 {
 
-	wait 4.7
-	DispatchSpawn(npc)
-	thread SuperSpectre_WarpFall(npc)
-	thread ReaperMinionLauncherThink(npc)
+	
 }
 
 void function CreateTrackedDroppodSoldier( vector origin, int team)
