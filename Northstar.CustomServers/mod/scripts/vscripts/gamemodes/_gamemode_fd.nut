@@ -114,6 +114,12 @@ void function GamemodeFD_Init()
 	AddCallback_OnRoundEndCleanup(FD_NPCCleanup)
 	AddDamageByCallback("player",FD_DamageByPlayerCallback)
 
+	AddDamageCallback( "player", DamageScaleByDifficulty )
+	AddDamageCallback( "npc_titan", DamageScaleByDifficulty )
+	AddDamageCallback( "npc_turret_sentry", DamageScaleByDifficulty )
+	AddSpawnCallback( "npc_titan", HealthScaleByDifficulty )
+	AddSpawnCallback( "npc_super_spectre", HealthScaleByDifficulty )
+
 
 	AddCallback_OnNPCKilled(OnNpcDeath)
 	AddSpawnCallback("npc_turret_sentry", AddTurretSentry )
@@ -178,11 +184,11 @@ void function OnNpcDeath( entity victim, entity attacker, var damageInfo )
 		SetGlobalNetInt( "FD_AICount_Current", file.spawnedNPCs.len() )
 		string name = victim.GetTargetName()
 		int aitype = FD_GetAITypeID_ByString(name)
-		try 
+		try
 		{
 			if (GetGlobalNetInt(FD_GetAINetIndex_byAITypeID( aitype )) > -1)
 				SetGlobalNetInt(FD_GetAINetIndex_byAITypeID( aitype ), GetGlobalNetInt(FD_GetAINetIndex_byAITypeID( aitype )) - 1) // lower scoreboard number by 1
-		} 
+		}
 		catch (exception)
 		{
 			print (exception)
@@ -435,7 +441,6 @@ bool function runWave(int waveIndex,bool shouldDoBuyTime)
 	SetGlobalNetBool("FD_waveActive",true)
 	MessageToTeam(TEAM_MILITIA,eEventNotifications.FD_AnnounceWaveStart)
 
-
 	//main wave loop
 
 	foreach(WaveEvent event in waveEvents[waveIndex])
@@ -449,9 +454,6 @@ bool function runWave(int waveIndex,bool shouldDoBuyTime)
 
 	}
 	waitUntilLessThanAmountAlive_expensive(0)
-
-	SetGlobalNetInt("FD_AICount_Total", file.spawnedNPCs.len())
-	SetGlobalNetInt("FD_AICount_Current", file.spawnedNPCs.len())
 
 	if(!IsAlive(fd_harvester.harvester))
 	{
@@ -651,6 +653,35 @@ void function OnHarvesterDamaged(entity harvester, var damageInfo)
 		return
 
 	fd_harvester.lastDamage = Time()
+
+	int difficultyLevel = FD_GetDifficultyLevel()
+	switch ( difficultyLevel )
+	{
+		case eFDDifficultyLevel.EASY:
+		case eFDDifficultyLevel.NORMAL: // easy and normal have no damage scaling
+			break
+
+		case eFDDifficultyLevel.HARD:
+		{
+			DamageInfo_SetDamage( damageInfo, (damageAmount * 1.5) )
+			damageAmount = (damageAmount * 1.5) // for use in health calculations below
+			break
+		}
+
+		case eFDDifficultyLevel.MASTER:
+		case eFDDifficultyLevel.INSANE:
+		{
+			DamageInfo_SetDamage( damageInfo, (damageAmount * 2.5) )
+			damageAmount = (damageAmount * 2.5) // for use in health calculations below
+			break
+		}
+
+		default:
+			unreachable
+
+	}
+
+
 	float shieldPercent = ( (harvester.GetShieldHealth().tofloat() / harvester.GetShieldHealthMax()) * 100 )
 	if ( shieldPercent < 100 && !file.harvesterShieldDown)
 		PlayFactionDialogueToTeam( "fd_baseShieldTakingDmg", TEAM_MILITIA )
@@ -844,9 +875,117 @@ void function FD_DamageByPlayerCallback(entity victim,var damageInfo)
 
 }
 
+void function DamageScaleByDifficulty( entity ent, var damageInfo )
+{
+	entity attacker = DamageInfo_GetAttacker( damageInfo )
+
+	if ( !attacker )
+		return
+
+	if ( ent.GetTeam() != TEAM_MILITIA )
+		return
+
+	int damageSourceID = DamageInfo_GetDamageSourceIdentifier( damageInfo )
+	float damageAmount = DamageInfo_GetDamage( damageInfo )
+
+	if ( !damageSourceID && !damageAmount )
+		return
+
+	if ( attacker.IsPlayer() && attacker.GetTeam() == TEAM_IMC ) // in case we ever want a PvP in Frontier Defense, don't scale their damage
+		return
+
+	int difficultyLevel = FD_GetDifficultyLevel()
+	switch ( difficultyLevel )
+	{
+		case eFDDifficultyLevel.EASY:
+		case eFDDifficultyLevel.NORMAL: // easy and normal have no damage scaling
+			break
+
+		case eFDDifficultyLevel.HARD:
+			DamageInfo_SetDamage( damageInfo, (damageAmount * 1.5) )
+			break
+
+		case eFDDifficultyLevel.MASTER:
+		case eFDDifficultyLevel.INSANE:
+			DamageInfo_SetDamage( damageInfo, (damageAmount * 2.5) )
+			break
+
+		default:
+			unreachable
+
+	}
+
+}
+
+void function HealthScaleByDifficulty( entity ent )
+{
+
+	if ( ent.GetTeam() != TEAM_IMC )
+		return
+
+	if ( ent.IsTitan() )
+		if ( IsValid(GetPetTitanOwner( ent ) ) ) // in case we ever want pvp in FD
+			return
+
+	int difficultyLevel = FD_GetDifficultyLevel()
+	switch ( difficultyLevel )
+	{
+		case eFDDifficultyLevel.EASY:
+			if ( ent.IsTitan() )
+				ent.SetMaxHealth( ent.GetMaxHealth() - 5000 )
+			else
+				ent.SetMaxHealth( ent.GetMaxHealth() - 2000 )
+		case eFDDifficultyLevel.NORMAL:
+			if ( ent.IsTitan() )
+				ent.SetMaxHealth( ent.GetMaxHealth() - 2500 )
+			else
+				ent.SetMaxHealth( ent.GetMaxHealth() - 1000 )
+			break
+
+		case eFDDifficultyLevel.HARD: // no changes in Hard Mode
+			break
+
+		case eFDDifficultyLevel.MASTER:
+		case eFDDifficultyLevel.INSANE:
+			if ( ent.IsTitan() )
+			{
+				ent.SetShieldHealthMax( 2500 ) // apparently they have 0, costs me some time debugging this ffs
+				ent.SetShieldHealth( 2500 )
+			}
+			break
+
+		default:
+			unreachable
+
+	}
+
+}
+
 void function FD_createHarvester()
 {
-	fd_harvester = SpawnHarvester(file.harvester_info.GetOrigin(),file.harvester_info.GetAngles(),25000,6000,TEAM_MILITIA)
+	int shieldamount = 6000
+	int difficultyLevel = FD_GetDifficultyLevel()
+	switch ( difficultyLevel )
+	{
+		case eFDDifficultyLevel.EASY:
+		case eFDDifficultyLevel.NORMAL: // easy and normal have no shield changes
+			break
+
+		case eFDDifficultyLevel.HARD:
+			shieldamount = 5000
+			break
+
+		case eFDDifficultyLevel.MASTER:
+		case eFDDifficultyLevel.INSANE:
+			shieldamount = 4000
+			break
+
+		default:
+			unreachable
+
+	}
+
+	fd_harvester = SpawnHarvester(file.harvester_info.GetOrigin(),file.harvester_info.GetAngles(),25000,shieldamount,TEAM_MILITIA)
 	fd_harvester.harvester.Minimap_SetAlignUpright( true )
 	fd_harvester.harvester.Minimap_AlwaysShow( TEAM_IMC, null )
 	fd_harvester.harvester.Minimap_AlwaysShow( TEAM_MILITIA, null )
@@ -975,12 +1114,29 @@ bool function allPlayersReady()
 	return true
 }
 
+void function CheckLastPlayerReady()
+{
+	int readyplayers = 0
+	entity notready
+	foreach(entity player in GetPlayerArray())
+	{
+		if(player.GetPlayerNetBool("FD_readyForNextWave"))
+			readyplayers++
+		else
+			notready = player // keep a track of this player
+	}
+	if (readyplayers == GetPlayerArray().len() - 1)
+		PlayFactionDialogueToPlayer( "fd_playerNeedsToReadyUp", notready ) // ready up i swear there's one player like this in every match i've played
+}
+
 bool function ClientCommandCallbackToggleReady( entity player, array<string> args )
 {
 	if(args[0]=="true")
 		player.SetPlayerNetBool("FD_readyForNextWave",true)
 	if(args[0]=="false")
 		player.SetPlayerNetBool("FD_readyForNextWave",false)
+
+	CheckLastPlayerReady()
 	return true
 }
 
