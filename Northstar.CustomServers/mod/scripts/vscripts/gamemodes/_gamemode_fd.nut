@@ -782,86 +782,68 @@ void function LoadEntities()
 	initNetVars()
 }
 
-void function titanNav_thread(entity titan, string routeName,float nextDistance = 500.0)
+void function singleNav_thread(entity npc, string routeName,int nodesToScip= 0,float nextDistance = 500.0)
 {
-	titan.EndSignal( "OnDeath" )
-	titan.EndSignal( "OnDestroy" )
+	npc.EndSignal( "OnDeath" )
+	npc.EndSignal( "OnDestroy" )
 
 
-	printt("Start NAV")
-	if(!titan.IsNPC())
+	
+	if(!npc.IsNPC())
 		return
 
-
+	
 	array<entity> routeArray = getRoute(routeName)
 	WaitFrame()//so other code setting up what happens on signals is run before this
 	if(routeArray.len()==0)
 	{
 
-		titan.Signal("OnFailedToPath")
+		npc.Signal("OnFailedToPath")
 		return
 	}
-
+	int scippedNodes = 0
 	foreach(entity node in routeArray)
 	{
 		if(!IsAlive(fd_harvester.harvester))
 			return
-		if(Distance(fd_harvester.harvester.GetOrigin(),titan.GetOrigin())<Distance(fd_harvester.harvester.GetOrigin(),node.GetOrigin()))
+		if(scippedNodes < nodesToScip)
+		{
+			scippedNodes++
 			continue
-		titan.AssaultPoint(node.GetOrigin())
-		titan.AssaultSetGoalRadius( 100 )
+		}
+		npc.AssaultPoint(node.GetOrigin())
+		npc.AssaultSetGoalRadius( 100 )
 		int i = 0
-		while((Distance(titan.GetOrigin(),node.GetOrigin())>nextDistance))
-		{
-			WaitFrame()
-			// printt(Distance(titan.GetOrigin(),node.GetOrigin()))
-			// i++
-			// if(i>1200)
-			// {
-			// 	titan.Signal("OnFailedToPath")
-			// 	return
-			// }
-		}
-	}
-	titan.Signal("FD_ReachedHarvester")
-}
-
-void function HumanNav_Thread( entity npc )
-{
-	npc.EndSignal( "OnDeath" )
-	npc.EndSignal( "OnDestroy" )
-
-	entity generator = fd_harvester.harvester
-	float goalRadius = 100
-	float checkRadiusSqr = 400 * 400
-
-	array<vector> pos = NavMesh_GetNeighborPositions( generator.GetOrigin(), HULL_HUMAN, 5 )
-	pos = ArrayClosestVector( pos, npc.GetOrigin() )
-
-	array<vector> validPos
-	foreach ( point in pos )
-	{
-		if ( DistanceSqr( generator.GetOrigin(), point ) <= checkRadiusSqr && NavMesh_IsPosReachableForAI( npc, point ) )
-		{
-			validPos.append( point )
-		}
-	}
-
-	int posLen = validPos.len()
-	while( posLen >= 1 )
-	{
-		npc.SetEnemy( generator )
-		thread AssaultOrigin( npc, validPos[0], goalRadius )
-		npc.AssaultSetFightRadius( goalRadius )
-
-		wait 0.5
-
-		if ( DistanceSqr( npc.GetOrigin(), generator.GetOrigin() ) > checkRadiusSqr )
-			continue
-
-		break
+		table result = npc.WaitSignal("OnFinishedAssault","OnFailedToPath")
+		if(result.signal == "OnFailedToPath")
+			break
 	}
 	npc.Signal("FD_ReachedHarvester")
+}
+
+void function SquadNav_Thread( array<entity> npcs ,string routeName,int nodesToScip = 0,float nextDistance = 200.0)
+{
+	//TODO this function wont stop when noone alive anymore
+	
+	array<entity> routeArray = getRoute(routeName)
+	WaitFrame()//so other code setting up what happens on signals is run before this
+	if(routeArray.len()==0)
+		return
+
+	int scippedNodes = 0
+	foreach(entity node in routeArray)
+	{
+		if(!IsAlive(fd_harvester.harvester))
+			return
+		if(scippedNodes < nodesToScip)
+		{
+			scippedNodes++
+			continue
+		}
+		SquadAssaultOrigin(npcs,node.GetOrigin(),nextDistance)
+		
+	}
+
 }
 
 bool function allPlayersReady()
@@ -1188,7 +1170,7 @@ void function spawnArcTitan(SmokeEvent smokeEvent,SpawnEvent spawnEvent,WaitEven
 	npc.Minimap_AlwaysShow( TEAM_IMC, null )
 	npc.Minimap_AlwaysShow( TEAM_MILITIA, null )
 	npc.GetTitanSoul().SetTitanSoulNetBool( "showOverheadIcon", true )
-	thread titanNav_thread(npc,spawnEvent.route)
+	thread singleNav_thread(npc,spawnEvent.route)
 	thread EMPTitanThinkConstant(npc)
 }
 
@@ -1274,7 +1256,7 @@ void function spawnNukeTitan(SmokeEvent smokeEvent,SpawnEvent spawnEvent,WaitEve
 	npc.Minimap_AlwaysShow( TEAM_IMC, null )
 	npc.Minimap_AlwaysShow( TEAM_MILITIA, null )
 	npc.GetTitanSoul().SetTitanSoulNetBool( "showOverheadIcon", true )
-	thread titanNav_thread(npc,spawnEvent.route)
+	thread singleNav_thread(npc,spawnEvent.route)
 	thread NukeTitanThink(npc,fd_harvester.harvester)
 
 }
@@ -1377,13 +1359,13 @@ void function CreateTrackedDroppodSoldier( vector origin, int team, string route
 
         SetTeam( guy, team )
         guy.EnableNPCFlag( NPC_ALLOW_PATROL | NPC_ALLOW_INVESTIGATE | NPC_ALLOW_HAND_SIGNALS | NPC_ALLOW_FLEE )
-		guy.EnableNPCMoveFlag(NPCMF_WALK_ALWAYS)
+		
         DispatchSpawn( guy )
 
 	guy.SetParent( pod, "ATTACH", true )
 	SetSquad( guy, squadName )
 
-	thread HumanNav_Thread(guy)
+	
 
 	guy.Minimap_AlwaysShow( TEAM_IMC, null )
 	guy.Minimap_AlwaysShow( TEAM_MILITIA, null )
@@ -1392,6 +1374,9 @@ void function CreateTrackedDroppodSoldier( vector origin, int team, string route
     }
 
     ActivateFireteamDropPod( pod, guys )
+	
+	SquadNav_Thread(guys,route)
+
 }
 
 void function CreateTrackedDroppodSpectreMortar( vector origin, int team)
@@ -1470,11 +1455,13 @@ void function CreateTrackedDroppodTick( vector origin, int team, string route = 
 		guy.Minimap_AlwaysShow( TEAM_MILITIA, null )
 		SetSquad( guy, squadName )
 
-		thread HumanNav_Thread(guy) // not working i think
+		
 		guys.append( guy )
 	}
 
 	ActivateFireteamDropPod( pod, guys )
+
+	SquadNav_Thread(guys,route)
 }
 
 void function PingMinimap(float x, float y, float duration, float spreadRadius, float ringRadius, int colorIndex)
@@ -1503,17 +1490,17 @@ void function waitUntilLessThanAmountAlive_expensive(int amount)
 
 	array<entity> npcs = GetNPCArray()
 	int deduct = 0
-	for (entity npc in npcs)
-		if (IsValid(GetPetTitanOwner( npcs[i] )))
+	foreach (entity npc in npcs)
+		if (IsValid(GetPetTitanOwner( npc )))
 			deduct++
 	int aliveTitans = npcs.len() - deduct
 	while(aliveTitans>amount)
 	{
 		WaitFrame()
 		npcs = GetNPCArray()
-		detuct = 0
+		deduct = 0
 		foreach(entity npc in npcs)
-			if (IsValid(GetPetTitanOwner( npcs[i] )))
+			if (IsValid(GetPetTitanOwner( npc )))
 				deduct++
 		aliveTitans = GetNPCArray().len() - deduct
 		if(!IsAlive(fd_harvester.harvester))
