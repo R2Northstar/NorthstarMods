@@ -178,10 +178,13 @@ void function OnNpcDeath( entity victim, entity attacker, var damageInfo )
 		SetGlobalNetInt( "FD_AICount_Current", file.spawnedNPCs.len() )
 		string name = victim.GetTargetName()
 		int aitype = FD_GetAITypeID_ByString(name)
-		try {
+		try 
+		{
 			if (GetGlobalNetInt(FD_GetAINetIndex_byAITypeID( aitype )) > -1)
 				SetGlobalNetInt(FD_GetAINetIndex_byAITypeID( aitype ), GetGlobalNetInt(FD_GetAINetIndex_byAITypeID( aitype )) - 1) // lower scoreboard number by 1
-		} catch (exception){
+		} 
+		catch (exception)
+		{
 			print (exception)
 		}
 	}
@@ -753,15 +756,15 @@ void function HarvesterThink()
 				EmitSoundOnEntity(harvester,"coop_generator_shieldrecharge_start")
 
 			if (!isRegening)
-            {
+			{
 				EmitSoundOnEntity( harvester,"coop_generator_shieldrecharge_resume" )
 				file.harvesterShieldDown = false
 				if (GetGlobalNetBool("FD_waveActive"))
 					PlayFactionDialogueToTeam( "fd_baseShieldRecharging", TEAM_MILITIA )
 				else
 					PlayFactionDialogueToTeam( "fd_baseShieldRechargingShort", TEAM_MILITIA )
-                isRegening = true
-            }
+                		isRegening = true
+			}
 
 			float newShieldHealth = ( harvester.GetShieldHealthMax() / GENERATOR_SHIELD_REGEN_TIME * deltaTime ) + harvester.GetShieldHealth()
 
@@ -1498,7 +1501,6 @@ void function CreateTrackedDroppodSoldier( vector origin, int team, string route
 
         SetTeam( guy, team )
         guy.EnableNPCFlag( NPC_ALLOW_PATROL | NPC_ALLOW_INVESTIGATE | NPC_ALLOW_HAND_SIGNALS | NPC_ALLOW_FLEE )
-		guy.EnableNPCMoveFlag(NPCMF_WALK_ALWAYS)
         DispatchSpawn( guy )
 
 	guy.SetParent( pod, "ATTACH", true )
