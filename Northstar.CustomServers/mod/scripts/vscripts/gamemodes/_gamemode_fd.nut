@@ -1188,7 +1188,7 @@ void function CommonAIThink (entity npc, string routeName)
 	waitthread singleNav_thread( npc, routeName )
 	// OnFailedToPath would end this function, so assume they reached harvester
 
-	waitthread CheckForInterruption( titan )
+	waitthread CheckForInterruption( npc )
 	// TODO: continue while(true) checks to see if they get attacked while attacking the harvester
 }
 
@@ -1212,6 +1212,9 @@ void function OnFailedToPathFallback( entity npc )
 	if ( npc.GetTargetName() == "npc_titan_nuke" )
 		return
 
+	float checkRadiusSqr = 400 * 400
+	float goalRadius = npc.GetMinGoalRadius()
+
 	// we cant use previous route path since they might go back in reverse, so might as well try to figure out if they can go to the harvester manually
 	array<vector> pos = NavMesh_GetNeighborPositions( fd_harvester.harvester.GetOrigin(), HULL_TITAN, 5 )
 	pos = ArrayClosestVector( pos, npc.GetOrigin() )
@@ -1227,6 +1230,7 @@ void function OnFailedToPathFallback( entity npc )
 	}
 
 	int posLen = validPos.len()
+
 	thread TimeCounter( npc ) // start counting in case of failing to path
 	thread OnFailedToPathFallback( npc ) // retry again if they fail to path again
 	while( posLen >= 1 )
