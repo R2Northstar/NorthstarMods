@@ -51,7 +51,23 @@ global struct WaveEvent{
 	SoundEvent soundEvent
 }
 
-
+struct player_struct_fd{
+	bool diedThisRound
+	float scoreThisRound
+	int totalMVPs
+	int mortarUnitsKilled //not implemented yet
+	int moneySpend
+	int coresUsed
+	float longestTitanLife //not implemented yet
+	int turretsRepaired //not implemented yet
+	int moneyShared
+	float timeNearHarvester //dont know how to track
+	float longestLife //not implemented yet
+	int heals //dont know what to track
+	int titanKills //not implemented yet
+	float damageDealt
+	int harvesterHeals
+}
 
 global HarvesterStruct& fd_harvester
 global vector shopPosition
@@ -59,23 +75,7 @@ global array<array<WaveEvent> > waveEvents
 global table<string,array<vector> > routes
 
 
-struct player_struct_fd{
-	bool diedThisRound
-	float scoreThisRound
-	int totalMVPs
-	int mortarUnitsKilled
-	int moneySpend
-	int coresUsed
-	float longestTitanLife
-	int turretsRepaired
-	int moneyShared
-	float timeNearHarvester
-	float longestLife
-	int heals
-	int titanKills
-	float damageDealt
-	int harvesterHeals
-}
+
 
 
 struct {
@@ -128,11 +128,29 @@ void function GamemodeFD_Init()
 	AddClientCommandCallback("FD_ToggleReady",ClientCommandCallbackToggleReady)
 	AddClientCommandCallback("FD_UseHarvesterShieldBoost",useShieldBoost)
 
+	//shop Callback
+	SetBoostPurchaseCallback(FD_BoostPurchaseCallback)
+	SetTeamReserveInteractCallback(FD_TeamReserveDepositOrWithdrawCallback)
+}
 
-
+void function FD_BoostPurchaseCallback(entity player,BoostStoreData data) 
+{
+	file.players[player].moneySpend += data.cost
 }
 
 
+void function FD_TeamReserveDepositOrWithdrawCallback(entity player, string action,int amount)
+{
+	switch(action)
+	{
+		case"deposit":
+			file.players[player].moneyShared += amount
+			break
+		case"withdraw":
+			file.players[player].moneyShared -= amount
+			break
+	}
+}
 void function GamemodeFD_OnPlayerKilled(entity victim, entity attacker, var damageInfo)
 {
 	file.players[victim].diedThisRound = true
@@ -166,10 +184,9 @@ void function FD_UsedCoreCallback(entity titan,entity weapon)
 }
 
 void function GamemodeFD_InitPlayer(entity player)
-{
+{	
 	player_struct_fd data
 	data.diedThisRound = false
-	data.scoreThisRound = 0
 	file.players[player] <- data
 
 
@@ -198,7 +215,8 @@ void function OnNpcDeath( entity victim, entity attacker, var damageInfo )
 			string netIndex = FD_GetAINetIndex_byAITypeID(FD_GetAITypeID_ByString(victim.GetTargetName()))
 			if(netIndex != "")
 			SetGlobalNetInt(netIndex,GetGlobalNetInt(netIndex)-1)
-	}
+		}
+		SetGlobalNetInt("FD_AICount_Current",GetGlobalNetInt("FD_AICount_Current")-1)
 	}
 
 	if ( victim.GetOwner() == attacker || !attacker.IsPlayer() || attacker == victim )
@@ -477,10 +495,10 @@ bool function runWave(int waveIndex,bool shouldDoBuyTime)
 	{
 		file.harvesterDamageSource.append(0.0)
 	}
-	foreach(player_struct_fd player in file.players)
+	foreach(entity player in GetPlayerArray())
 	{
-		player.diedThisRound = false
-		player.scoreThisRound = 0
+		file.players[player].diedThisRound = false
+		file.players[player].scoreThisRound = 0
 	}
 	array<int> enemys = getHighestEnemyAmountsForWave(waveIndex)
 
@@ -597,12 +615,12 @@ bool function runWave(int waveIndex,bool shouldDoBuyTime)
 		entity highestScore_player = GetPlayerArray()[0]
 		foreach(entity player in GetPlayerArray())
 		{
-			player_struct_fd data = file.players[player]
-			if(!data.diedThisRound)
+			
+			if(!file.players[player].diedThisRound)
 				AddPlayerScore(player,"FDDidntDie")
-			if(highestScore<data.scoreThisRound)
+			if(highestScore<file.players[player].scoreThisRound)
 			{
-				highestScore = data.scoreThisRound
+				highestScore = file.players[player].scoreThisRound
 				highestScore_player = player
 			}
 
@@ -661,17 +679,16 @@ bool function runWave(int waveIndex,bool shouldDoBuyTime)
 	entity highestScore_player = GetPlayerArray()[0]
 	foreach(entity player in GetPlayerArray())
 	{
-		player_struct_fd data = file.players[player]
-		if(!data.diedThisRound)
+		if(!file.players[player].diedThisRound)
 		{
 			AddPlayerScore(player,"FDDidntDie")
 			player.AddToPlayerGameStat( PGS_ASSAULT_SCORE, FD_SCORE_DIDNT_DIE )
 		}
 		AddMoneyToPlayer(player,100)
 		EmitSoundOnEntityOnlyToPlayer(player,player,"HUD_MP_BountyHunt_BankBonusPts_Deposit_Start_1P")
-		if(highestScore<data.scoreThisRound)
+		if(highestScore<file.players[player].scoreThisRound)
 		{
-			highestScore = data.scoreThisRound
+			highestScore = file.players[player].scoreThisRound
 			highestScore_player = player
 		}
 
@@ -955,6 +972,10 @@ void function FD_DamageByPlayerCallback(entity victim,var damageInfo)
 	float damage = DamageInfo_GetDamage(damageInfo)
 	file.players[player].damageDealt += damage
 	file.players[player].scoreThisRound += damage //TODO NOT HOW SCORE WORKS
+	if(victim.IsTitan())
+	{
+		//TODO Money and score for titan damage
+	}
 
 }
 
@@ -999,6 +1020,8 @@ void function DamageScaleByDifficulty( entity ent, var damageInfo )
 	}
 
 }
+
+
 
 void function HealthScaleByDifficulty( entity ent )
 {
@@ -1643,6 +1666,7 @@ void function spawnDroppodStalker(SmokeEvent smokeEvent,SpawnEvent spawnEvent,Wa
 
     ActivateFireteamDropPod( pod, guys )
 	SquadNav_Thread(guys,spawnEvent.route)
+
 }
 
 void function spawnDroppodSpectreMortar(SmokeEvent smokeEvent,SpawnEvent spawnEvent,WaitEvent waitEvent,SoundEvent soundEvent)
@@ -1808,10 +1832,6 @@ void function SpawnTick(SmokeEvent smokeEffect,SpawnEvent spawnEvent,WaitEvent w
 #         # #   #       #    ##    #       #     # #       #       #       #       #    #
 #######    #    ####### #     #    #       #     # ####### ####### #       ####### #     #
 \****************************************************************************************/
-
-
-
-
 
 
 void function PingMinimap(float x, float y, float duration, float spreadRadius, float ringRadius, int colorIndex)
