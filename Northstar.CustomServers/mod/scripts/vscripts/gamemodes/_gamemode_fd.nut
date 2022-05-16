@@ -1180,7 +1180,6 @@ void function CommonAIThink (entity npc, string routeName)
 	npc.EndSignal( "OnDestroy" ) // if dead
 	npc.EndSignal( "OnSyncedMeleeVictim" ) // if getting executed
 	npc.EndSignal( "OnFailedToPath" ) // if cant find path or get attacked (not yet implemented)
-	npc.EndSignal( "FD_ReachedHarvester" ) // if found path
 
 	thread OnFailedToPathFallback( npc )
 	// failed to path fallback function
@@ -1231,6 +1230,7 @@ void function OnFailedToPathFallback( entity npc )
 
 	int posLen = validPos.len()
 
+	npc.Signal( "StartCounter" )
 	thread TimeCounter( npc ) // start counting in case of failing to path
 	thread OnFailedToPathFallback( npc ) // retry again if they fail to path again
 	while( posLen >= 1 )
@@ -1279,7 +1279,7 @@ void function singleNav_thread(entity npc, string routeName,int nodesToScip= 0,f
 		npc.Signal("StartCounter") // end any or previous counter
 		thread TimeCounter( npc ) // start counting from 0 again
 		npc.AssaultPoint(node.GetOrigin())
-		npc.AssaultSetGoalRadius( 100 )
+		npc.AssaultSetGoalRadius( npc.GetMinGoalRadius() )
 		int i = 0
 		table result = npc.WaitSignal("OnFinishedAssault","OnFailedToPath")
 		// if finished assault they move to next node, if failed to path, this function ends itself and they use fallback function
@@ -1299,7 +1299,7 @@ void function TimeCounter( entity npc, int time = 10 )
 	int count = 0
 	while (true)
 	{
-		if (count <= time)
+		if (count >= time)
 		{
 			npc.Signal("OnFailedToPath") // enough time elapsed and this function hasn't stopped, assume failed to path
 			return
