@@ -133,7 +133,7 @@ void function GamemodeFD_Init()
 	SetTeamReserveInteractCallback(FD_TeamReserveDepositOrWithdrawCallback)
 }
 
-void function FD_BoostPurchaseCallback(entity player,BoostStoreData data) 
+void function FD_BoostPurchaseCallback(entity player,BoostStoreData data)
 {
 	file.players[player].moneySpend += data.cost
 }
@@ -184,7 +184,7 @@ void function FD_UsedCoreCallback(entity titan,entity weapon)
 }
 
 void function GamemodeFD_InitPlayer(entity player)
-{	
+{
 	player_struct_fd data
 	data.diedThisRound = false
 	file.players[player] <- data
@@ -221,7 +221,7 @@ void function OnNpcDeath( entity victim, entity attacker, var damageInfo )
 
 	if ( victim.GetOwner() == attacker || !attacker.IsPlayer() || attacker == victim )
 		return
-	
+
 	int playerScore = 0
 	int money = 0
 	if ( victim.IsNPC() )
@@ -267,7 +267,7 @@ void function OnNpcDeath( entity victim, entity attacker, var damageInfo )
 		}
 	}
 
-	
+
 }
 
 void function RateSpawnpoints_FD(int _0, array<entity> _1, int _2, entity _3){}
@@ -461,7 +461,7 @@ void function SetEnemyAmountNetVars(int waveIndex)
 				break
 			default:
 				npcs[e.spawnEvent.spawnType]+=e.spawnEvent.spawnAmount
-				
+
 		}
 		total+= e.spawnEvent.spawnAmount
 	}
@@ -522,7 +522,7 @@ bool function runWave(int waveIndex,bool shouldDoBuyTime)
 		CloseBoostStores()
 		MessageToTeam(TEAM_MILITIA,eEventNotifications.FD_StoreClosing)
 	}
-	
+
 	//SetGlobalNetTime("FD_nextWaveStartTime",Time()+10)
 	wait 10
 	SetGlobalNetInt("FD_waveState",WAVE_STATE_INCOMING)
@@ -534,7 +534,7 @@ bool function runWave(int waveIndex,bool shouldDoBuyTime)
 	SetGlobalNetBool("FD_waveActive",true)
 	MessageToTeam(TEAM_MILITIA,eEventNotifications.FD_AnnounceWaveStart)
 	SetGlobalNetInt("FD_waveState",WAVE_STATE_BREAK)
-	
+
 	//main wave loop
 	thread SetWaveStateReady()
 	foreach(WaveEvent event in waveEvents[waveIndex])
@@ -615,7 +615,7 @@ bool function runWave(int waveIndex,bool shouldDoBuyTime)
 		entity highestScore_player = GetPlayerArray()[0]
 		foreach(entity player in GetPlayerArray())
 		{
-			
+
 			if(!file.players[player].diedThisRound)
 				AddPlayerScore(player,"FDDidntDie")
 			if(highestScore<file.players[player].scoreThisRound)
@@ -1041,6 +1041,7 @@ void function HealthScaleByDifficulty( entity ent )
 				ent.SetMaxHealth( ent.GetMaxHealth() - 5000 )
 			else
 				ent.SetMaxHealth( ent.GetMaxHealth() - 2000 )
+			break
 		case eFDDifficultyLevel.NORMAL:
 			if ( ent.IsTitan() )
 				ent.SetMaxHealth( ent.GetMaxHealth() - 2500 )
@@ -1179,7 +1180,7 @@ void function singleNav_thread(entity npc, string routeName,int nodesToScip= 0,f
 		npc.AssaultSetGoalRadius( 100 )
 		int i = 0
 		table result = npc.WaitSignal("OnFinishedAssault","OnFailedToPath")
-		if(result.signal == "OnFailedToPath")
+		if(result.signal == "OnFailedToPath" || result.signal == "OnFinishedAssault")
 			break
 	}
 	npc.Signal("FD_ReachedHarvester")
@@ -1201,7 +1202,7 @@ void function SquadNav_Thread( array<entity> npcs ,string routeName,int nodesToS
 			return
 		if(nodeIndex++ < nodesToScip)
 			continue
-		
+
 		SquadAssaultOrigin(npcs,node.GetOrigin(),nextDistance)
 
 	}
@@ -1319,7 +1320,7 @@ string function GetTargetNameForID(int typeId)
 			case eFD_AITypeIDs.DRONE:
 				return "drone"
 			case eFD_AITypeIDs.DRONE_CLOAK:
-				return "cloakedDrone"
+				return "Cloak Drone" // have to be like this for some reason in cl_gamemode_fd
 			default:
 				return "titan"
 		}
@@ -1601,7 +1602,7 @@ void function spawnSuperSpectre(SmokeEvent smokeEvent,SpawnEvent spawnEvent,Wait
 	thread ReaperMinionLauncherThink(npc)
 
 	SetTargetName( npc, GetTargetNameForID(spawnEvent.spawnType))
-	
+
 }
 
 void function spawnDroppodGrunts(SmokeEvent smokeEvent,SpawnEvent spawnEvent,WaitEvent waitEvent,SoundEvent soundEvent)
