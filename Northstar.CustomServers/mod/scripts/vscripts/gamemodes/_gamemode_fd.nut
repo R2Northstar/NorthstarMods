@@ -1056,8 +1056,12 @@ void function HealthScaleByDifficulty( entity ent )
 		case eFDDifficultyLevel.INSANE:
 			if ( ent.IsTitan() )
 			{
-				ent.SetShieldHealthMax( 2500 ) // apparently they have 0, costs me some time debugging this ffs
-				ent.SetShieldHealth( 2500 )
+				entity soul = ent.GetTitanSoul()
+				if (IsValid(soul))
+				{
+					soul.SetShieldHealthMax( 2500 ) // apparently they have 0, costs me some time debugging this ffs
+					soul.SetShieldHealth( 2500 )
+				}
 			}
 			break
 
@@ -1067,6 +1071,7 @@ void function HealthScaleByDifficulty( entity ent )
 	}
 
 }
+
 
 void function FD_createHarvester()
 {
@@ -1180,7 +1185,7 @@ void function singleNav_thread(entity npc, string routeName,int nodesToScip= 0,f
 		npc.AssaultSetGoalRadius( 100 )
 		int i = 0
 		table result = npc.WaitSignal("OnFinishedAssault","OnFailedToPath")
-		if(result.signal == "OnFailedToPath" || result.signal == "OnFinishedAssault")
+		if(result.signal == "OnFailedToPath")
 			break
 	}
 	npc.Signal("FD_ReachedHarvester")
@@ -1198,6 +1203,14 @@ void function SquadNav_Thread( array<entity> npcs ,string routeName,int nodesToS
 	int nodeIndex = 0
 	foreach(entity node in routeArray)
 	{
+		for( int i = 0; i < npcs.len(); i++ ) // run a check every new assault point to ensure this function stops running i suppose
+		{
+			if (!IsAlive(npcs[i]))
+				npcs.remove(i)
+			if (npcs.len() == 0)
+				return
+		}
+
 		if(!IsAlive(fd_harvester.harvester))
 			return
 		if(nodeIndex++ < nodesToScip)
