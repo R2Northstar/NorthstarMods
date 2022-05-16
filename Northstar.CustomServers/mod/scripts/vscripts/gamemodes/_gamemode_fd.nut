@@ -51,7 +51,23 @@ global struct WaveEvent{
 	SoundEvent soundEvent
 }
 
-
+struct player_struct_fd{
+	bool diedThisRound
+	float scoreThisRound
+	int totalMVPs
+	int mortarUnitsKilled //not implemented yet
+	int moneySpend
+	int coresUsed
+	float longestTitanLife //not implemented yet
+	int turretsRepaired //not implemented yet
+	int moneyShared
+	float timeNearHarvester //dont know how to track
+	float longestLife //not implemented yet
+	int heals //dont know what to track
+	int titanKills //not implemented yet
+	float damageDealt
+	int harvesterHeals
+}
 
 global HarvesterStruct& fd_harvester
 global vector shopPosition
@@ -59,23 +75,7 @@ global array<array<WaveEvent> > waveEvents
 global table<string,array<vector> > routes
 
 
-struct player_struct_fd{
-	bool diedThisRound
-	float scoreThisRound
-	int totalMVPs
-	int mortarUnitsKilled
-	int moneySpend
-	int coresUsed
-	float longestTitanLife
-	int turretsRepaired
-	int moneyShared
-	float timeNearHarvester
-	float longestLife
-	int heals
-	int titanKills
-	float damageDealt
-	int harvesterHeals
-}
+
 
 
 struct {
@@ -128,11 +128,29 @@ void function GamemodeFD_Init()
 	AddClientCommandCallback("FD_ToggleReady",ClientCommandCallbackToggleReady)
 	AddClientCommandCallback("FD_UseHarvesterShieldBoost",useShieldBoost)
 
+	//shop Callback
+	SetBoostPurchaseCallback(FD_BoostPurchaseCallback)
+	SetTeamReserveInteractCallback(FD_TeamReserveDepositOrWithdrawCallback)
+}
 
-
+void function FD_BoostPurchaseCallback(entity player,BoostStoreData data) 
+{
+	file.players[player].moneySpend += data.cost
 }
 
 
+void function FD_TeamReserveDepositOrWithdrawCallback(entity player, string action,int amount)
+{
+	switch(action)
+	{
+		case"deposit":
+			file.players[player].moneyShared += amount
+			break
+		case"withdraw":
+			file.players[player].moneyShared -= amount
+			break
+	}
+}
 void function GamemodeFD_OnPlayerKilled(entity victim, entity attacker, var damageInfo)
 {
 	file.players[victim].diedThisRound = true
@@ -166,10 +184,9 @@ void function FD_UsedCoreCallback(entity titan,entity weapon)
 }
 
 void function GamemodeFD_InitPlayer(entity player)
-{
+{	
 	player_struct_fd data
 	data.diedThisRound = false
-	data.scoreThisRound = 0
 	file.players[player] <- data
 
 
@@ -181,23 +198,30 @@ void function OnNpcDeath( entity victim, entity attacker, var damageInfo )
 	if ( findIndex != -1 )
 	{
 		file.spawnedNPCs.remove( findIndex )
-		SetGlobalNetInt( "FD_AICount_Current", file.spawnedNPCs.len() )
-		string name = victim.GetTargetName()
-		int aitype = FD_GetAITypeID_ByString(name)
-		try
+		switch(FD_GetAITypeID_ByString(victim.GetTargetName())) //FD_GetAINetIndex_byAITypeID does not support all titan ids
 		{
-			if (GetGlobalNetInt(FD_GetAINetIndex_byAITypeID( aitype )) > -1)
-				SetGlobalNetInt(FD_GetAINetIndex_byAITypeID( aitype ), GetGlobalNetInt(FD_GetAINetIndex_byAITypeID( aitype )) - 1) // lower scoreboard number by 1
+		case(eFD_AITypeIDs.TITAN):
+		case(eFD_AITypeIDs.RONIN):
+		case(eFD_AITypeIDs.NORTHSTAR):
+		case(eFD_AITypeIDs.SCORCH):
+		case(eFD_AITypeIDs.TONE):
+		case(eFD_AITypeIDs.ION):
+		case(eFD_AITypeIDs.MONARCH):
+		case(eFD_AITypeIDs.LEGION):
+		case(eFD_AITypeIDs.TITAN_SNIPER):
+			SetGlobalNetInt("FD_AICount_Titan",GetGlobalNetInt("FD_AICount_Titan")-1)
+			break
+		default:
+			string netIndex = FD_GetAINetIndex_byAITypeID(FD_GetAITypeID_ByString(victim.GetTargetName()))
+			if(netIndex != "")
+			SetGlobalNetInt(netIndex,GetGlobalNetInt(netIndex)-1)
 		}
-		catch (exception)
-		{
-			print (exception)
-		}
+		SetGlobalNetInt("FD_AICount_Current",GetGlobalNetInt("FD_AICount_Current")-1)
 	}
 
 	if ( victim.GetOwner() == attacker || !attacker.IsPlayer() || attacker == victim )
 		return
-
+	
 	int playerScore = 0
 	int money = 0
 	if ( victim.IsNPC() )
@@ -242,6 +266,8 @@ void function OnNpcDeath( entity victim, entity attacker, var damageInfo )
 			attackerInfo.attacker.AddToPlayerGameStat( PGS_DEFENSE_SCORE, playerScore )		// i assume this is how support score gets added
 		}
 	}
+
+	
 }
 
 void function RateSpawnpoints_FD(int _0, array<entity> _1, int _2, entity _3){}
@@ -317,7 +343,7 @@ array<entity> function getRoute(string routeName)
 	return ret
 }
 
-array<int> function getEnemyTypesForWave(int wave)
+array<int> function getHighestEnemyAmountsForWave(int waveIndex)
 {
 	table<int,int> npcs
 	npcs[eFD_AITypeIDs.TITAN]<-0
@@ -342,7 +368,7 @@ array<int> function getEnemyTypesForWave(int wave)
 	// npcs[eFD_AITypeIDs.TITAN_SNIPER]<-0
 
 
-	foreach(WaveEvent e in waveEvents[wave])
+	foreach(WaveEvent e in waveEvents[waveIndex])
 	{
 		if(e.spawnEvent.spawnAmount==0)
 			continue
@@ -364,9 +390,8 @@ array<int> function getEnemyTypesForWave(int wave)
 		}
 	}
 	array<int> ret = [-1,-1,-1,-1,-1,-1,-1,-1,-1]
-	foreach(int key,int value in npcs){
-		printt("Key",key,"has value",value)
-		SetGlobalNetInt(FD_GetAINetIndex_byAITypeID(key),value)
+	foreach(int key,int value in npcs)
+	{
 		if(value==0)
 			continue
 		int lowestArrayIndex = 0
@@ -391,6 +416,72 @@ array<int> function getEnemyTypesForWave(int wave)
 	return ret
 
 }
+void function SetEnemyAmountNetVars(int waveIndex)
+{
+	int total = 0
+	table<int,int> npcs
+	npcs[eFD_AITypeIDs.TITAN]<-0
+	npcs[eFD_AITypeIDs.TITAN_NUKE]<-0
+	npcs[eFD_AITypeIDs.TITAN_ARC]<-0
+	npcs[eFD_AITypeIDs.TITAN_MORTAR]<-0
+	npcs[eFD_AITypeIDs.GRUNT]<-0
+	npcs[eFD_AITypeIDs.SPECTRE]<-0
+	npcs[eFD_AITypeIDs.SPECTRE_MORTAR]<-0
+	npcs[eFD_AITypeIDs.STALKER]<-0
+	npcs[eFD_AITypeIDs.REAPER]<-0
+	npcs[eFD_AITypeIDs.TICK]<-0
+	npcs[eFD_AITypeIDs.DRONE]<-0
+	npcs[eFD_AITypeIDs.DRONE_CLOAK]<-0
+	// npcs[eFD_AITypeIDs.RONIN]<-0
+	// npcs[eFD_AITypeIDs.NORTHSTAR]<-0
+	// npcs[eFD_AITypeIDs.SCORCH]<-0
+	// npcs[eFD_AITypeIDs.LEGION]<-0
+	// npcs[eFD_AITypeIDs.TONE]<-0
+	// npcs[eFD_AITypeIDs.ION]<-0
+	// npcs[eFD_AITypeIDs.MONARCH]<-0
+	// npcs[eFD_AITypeIDs.TITAN_SNIPER]<-0
+
+
+	foreach(WaveEvent e in waveEvents[waveIndex])
+	{
+		if(e.spawnEvent.spawnAmount==0)
+			continue
+		switch(e.spawnEvent.spawnType)
+		{
+			case(eFD_AITypeIDs.TITAN):
+			case(eFD_AITypeIDs.RONIN):
+			case(eFD_AITypeIDs.NORTHSTAR):
+			case(eFD_AITypeIDs.SCORCH):
+			case(eFD_AITypeIDs.TONE):
+			case(eFD_AITypeIDs.ION):
+			case(eFD_AITypeIDs.MONARCH):
+			case(eFD_AITypeIDs.LEGION):
+			case(eFD_AITypeIDs.TITAN_SNIPER):
+				npcs[eFD_AITypeIDs.TITAN]+=e.spawnEvent.spawnAmount
+				break
+			default:
+				npcs[e.spawnEvent.spawnType]+=e.spawnEvent.spawnAmount
+				
+		}
+		total+= e.spawnEvent.spawnAmount
+	}
+	SetGlobalNetInt("FD_AICount_Titan",npcs[eFD_AITypeIDs.TITAN])
+	SetGlobalNetInt("FD_AICount_Titan_Nuke",npcs[eFD_AITypeIDs.TITAN_NUKE])
+	SetGlobalNetInt("FD_AICount_Titan_Mortar",npcs[eFD_AITypeIDs.TITAN_MORTAR])
+	SetGlobalNetInt("FD_AICount_Titan_Arc",npcs[eFD_AITypeIDs.TITAN_ARC])
+	SetGlobalNetInt("FD_AICount_Grunt",npcs[eFD_AITypeIDs.GRUNT])
+	SetGlobalNetInt("FD_AICount_Spectre",npcs[eFD_AITypeIDs.SPECTRE])
+	SetGlobalNetInt("FD_AICount_Spectre_Mortar",npcs[eFD_AITypeIDs.SPECTRE_MORTAR])
+	SetGlobalNetInt("FD_AICount_Stalker",npcs[eFD_AITypeIDs.STALKER])
+	SetGlobalNetInt("FD_AICount_Reaper",npcs[eFD_AITypeIDs.REAPER])
+	SetGlobalNetInt("FD_AICount_Ticks",npcs[eFD_AITypeIDs.TICK])
+	SetGlobalNetInt("FD_AICount_Drone",npcs[eFD_AITypeIDs.DRONE])
+	SetGlobalNetInt("FD_AICount_Drone_Cloak",npcs[eFD_AITypeIDs.DRONE_CLOAK])
+	SetGlobalNetInt("FD_AICount_Current",total)
+	SetGlobalNetInt("FD_AICount_Total",total)
+
+}
+
 
 
 bool function runWave(int waveIndex,bool shouldDoBuyTime)
@@ -399,23 +490,25 @@ bool function runWave(int waveIndex,bool shouldDoBuyTime)
 	SetGlobalNetInt("FD_currentWave",waveIndex)
 	file.havesterWasDamaged = false
 	file.harvesterShieldDown = false
+	SetEnemyAmountNetVars(waveIndex)
 	for(int i = 0; i<20;i++)//Number of npc type ids
 	{
 		file.harvesterDamageSource.append(0.0)
 	}
-	foreach(player_struct_fd player in file.players)
+	foreach(entity player in GetPlayerArray())
 	{
-		player.diedThisRound = false
-		player.scoreThisRound = 0
+		file.players[player].diedThisRound = false
+		file.players[player].scoreThisRound = 0
 	}
-	array<int> enemys = getEnemyTypesForWave(waveIndex)
+	array<int> enemys = getHighestEnemyAmountsForWave(waveIndex)
+
 	foreach(entity player in GetPlayerArray())
 	{
 		Remote_CallFunction_NonReplay(player,"ServerCallback_FD_AnnouncePreParty",enemys[0],enemys[1],enemys[2],enemys[3],enemys[4],enemys[5],enemys[6],enemys[7],enemys[8])
 	}
 	if(shouldDoBuyTime)
 	{
-
+		SetGlobalNetInt("FD_waveState",WAVE_STATE_BREAK)
 		OpenBoostStores()
 		foreach(entity player in GetPlayerArray())
 			Remote_CallFunction_NonReplay(player,"ServerCallback_FD_NotifyStoreOpen")
@@ -429,10 +522,10 @@ bool function runWave(int waveIndex,bool shouldDoBuyTime)
 		CloseBoostStores()
 		MessageToTeam(TEAM_MILITIA,eEventNotifications.FD_StoreClosing)
 	}
-
+	
 	//SetGlobalNetTime("FD_nextWaveStartTime",Time()+10)
 	wait 10
-
+	SetGlobalNetInt("FD_waveState",WAVE_STATE_INCOMING)
 	foreach(entity player in GetPlayerArray())
 	{
 		Remote_CallFunction_NonReplay(player,"ServerCallback_FD_ClearPreParty")
@@ -440,12 +533,13 @@ bool function runWave(int waveIndex,bool shouldDoBuyTime)
 	}
 	SetGlobalNetBool("FD_waveActive",true)
 	MessageToTeam(TEAM_MILITIA,eEventNotifications.FD_AnnounceWaveStart)
-
-
+	SetGlobalNetInt("FD_waveState",WAVE_STATE_BREAK)
+	
 	//main wave loop
-
+	thread SetWaveStateReady()
 	foreach(WaveEvent event in waveEvents[waveIndex])
 	{
+
 		if(event.shouldThread)
 			thread event.eventFunction(event.smokeEvent,event.spawnEvent,event.waitEvent,event.soundEvent)
 		else
@@ -455,7 +549,7 @@ bool function runWave(int waveIndex,bool shouldDoBuyTime)
 
 	}
 	waitUntilLessThanAmountAlive_expensive(0)
-
+	SetGlobalNetInt("FD_waveState",WAVE_STATE_COMPLETE)
 	if(!IsAlive(fd_harvester.harvester))
 	{
 		float totalDamage = 0.0
@@ -521,12 +615,12 @@ bool function runWave(int waveIndex,bool shouldDoBuyTime)
 		entity highestScore_player = GetPlayerArray()[0]
 		foreach(entity player in GetPlayerArray())
 		{
-			player_struct_fd data = file.players[player]
-			if(!data.diedThisRound)
+			
+			if(!file.players[player].diedThisRound)
 				AddPlayerScore(player,"FDDidntDie")
-			if(highestScore<data.scoreThisRound)
+			if(highestScore<file.players[player].scoreThisRound)
 			{
-				highestScore = data.scoreThisRound
+				highestScore = file.players[player].scoreThisRound
 				highestScore_player = player
 			}
 
@@ -585,17 +679,16 @@ bool function runWave(int waveIndex,bool shouldDoBuyTime)
 	entity highestScore_player = GetPlayerArray()[0]
 	foreach(entity player in GetPlayerArray())
 	{
-		player_struct_fd data = file.players[player]
-		if(!data.diedThisRound)
+		if(!file.players[player].diedThisRound)
 		{
 			AddPlayerScore(player,"FDDidntDie")
 			player.AddToPlayerGameStat( PGS_ASSAULT_SCORE, FD_SCORE_DIDNT_DIE )
 		}
 		AddMoneyToPlayer(player,100)
 		EmitSoundOnEntityOnlyToPlayer(player,player,"HUD_MP_BountyHunt_BankBonusPts_Deposit_Start_1P")
-		if(highestScore<data.scoreThisRound)
+		if(highestScore<file.players[player].scoreThisRound)
 		{
-			highestScore = data.scoreThisRound
+			highestScore = file.players[player].scoreThisRound
 			highestScore_player = player
 		}
 
@@ -631,6 +724,12 @@ bool function runWave(int waveIndex,bool shouldDoBuyTime)
 	return true
 
 }
+
+void function SetWaveStateReady(){
+	wait 5
+	SetGlobalNetInt("FD_waveState",WAVE_STATE_IN_PROGRESS)
+}
+
 
 void function OnHarvesterDamaged(entity harvester, var damageInfo)
 {
@@ -795,7 +894,7 @@ void function HarvesterThink()
 					PlayFactionDialogueToTeam( "fd_baseShieldRecharging", TEAM_MILITIA )
 				else
 					PlayFactionDialogueToTeam( "fd_baseShieldRechargingShort", TEAM_MILITIA )
-                		isRegening = true
+						isRegening = true
 			}
 
 			float newShieldHealth = ( harvester.GetShieldHealthMax() / GENERATOR_SHIELD_REGEN_TIME * deltaTime ) + harvester.GetShieldHealth()
@@ -873,6 +972,10 @@ void function FD_DamageByPlayerCallback(entity victim,var damageInfo)
 	float damage = DamageInfo_GetDamage(damageInfo)
 	file.players[player].damageDealt += damage
 	file.players[player].scoreThisRound += damage //TODO NOT HOW SCORE WORKS
+	if(victim.IsTitan())
+	{
+		//TODO Money and score for titan damage
+	}
 
 }
 
@@ -917,6 +1020,8 @@ void function DamageScaleByDifficulty( entity ent, var damageInfo )
 	}
 
 }
+
+
 
 void function HealthScaleByDifficulty( entity ent )
 {
@@ -1082,23 +1187,21 @@ void function singleNav_thread(entity npc, string routeName,int nodesToScip= 0,f
 
 void function SquadNav_Thread( array<entity> npcs ,string routeName,int nodesToScip = 0,float nextDistance = 200.0)
 {
-	//TODO this function wont stop when noone alive anymore
+	//TODO this function wont stop when noone alive anymore also it only works half of the time
 
 	array<entity> routeArray = getRoute(routeName)
 	WaitFrame()//so other code setting up what happens on signals is run before this
 	if(routeArray.len()==0)
 		return
 
-	int scippedNodes = 0
+	int nodeIndex = 0
 	foreach(entity node in routeArray)
 	{
 		if(!IsAlive(fd_harvester.harvester))
 			return
-		if(scippedNodes < nodesToScip)
-		{
-			scippedNodes++
+		if(nodeIndex++ < nodesToScip)
 			continue
-		}
+		
 		SquadAssaultOrigin(npcs,node.GetOrigin(),nextDistance)
 
 	}
@@ -1498,25 +1601,99 @@ void function spawnSuperSpectre(SmokeEvent smokeEvent,SpawnEvent spawnEvent,Wait
 	thread ReaperMinionLauncherThink(npc)
 
 	SetTargetName( npc, GetTargetNameForID(spawnEvent.spawnType))
-	thread spawnSuperSpectre_threaded(npc)
+	
 }
 
 void function spawnDroppodGrunts(SmokeEvent smokeEvent,SpawnEvent spawnEvent,WaitEvent waitEvent,SoundEvent soundEvent)
 {
 	PingMinimap(spawnEvent.origin.x, spawnEvent.origin.y, 4, 600, 150, 0)
-	thread CreateTrackedDroppodSoldier(spawnEvent.origin,TEAM_IMC, spawnEvent.route)
+	entity pod = CreateDropPod( spawnEvent.origin, <0,0,0> )
+	SetTeam( pod, TEAM_IMC )
+	InitFireteamDropPod( pod )
+	waitthread LaunchAnimDropPod( pod, "pod_testpath", spawnEvent.origin, <0,0,0> )
+
+	string squadName = MakeSquadName( TEAM_IMC, UniqueString( "ZiplineTable" ) )
+	array<entity> guys
+	bool adychecked = false
+
+    for ( int i = 0; i < spawnEvent.spawnAmount; i++ )
+    {
+		entity guy = CreateSoldier( TEAM_IMC, spawnEvent.origin,<0,0,0> )
+
+		SetTeam( guy, TEAM_IMC )
+		guy.EnableNPCFlag(  NPC_ALLOW_INVESTIGATE | NPC_ALLOW_HAND_SIGNALS | NPC_ALLOW_FLEE )
+		guy.DisableNPCFlag( NPC_ALLOW_PATROL)
+		DispatchSpawn( guy )
+
+	guy.SetParent( pod, "ATTACH", true )
+	SetSquad( guy, squadName )
+
+	SetTargetName( guy, GetTargetNameForID(eFD_AITypeIDs.GRUNT))
+	AddMinimapForHumans(guy)
+	file.spawnedNPCs.append(guy)
+	guys.append( guy )
+	}
+
+	ActivateFireteamDropPod( pod, guys )
+	SquadNav_Thread(guys,spawnEvent.route)
 }
 
 void function spawnDroppodStalker(SmokeEvent smokeEvent,SpawnEvent spawnEvent,WaitEvent waitEvent,SoundEvent soundEvent)
 {
 	PingMinimap(spawnEvent.origin.x, spawnEvent.origin.y, 4, 600, 150, 0)
-	thread CreateTrackedDroppodStalker(spawnEvent.origin,TEAM_IMC)
+	entity pod = CreateDropPod( spawnEvent.origin, <0,0,0> )
+	SetTeam( pod, TEAM_IMC )
+	InitFireteamDropPod( pod )
+	waitthread LaunchAnimDropPod( pod, "pod_testpath", spawnEvent.origin, <0,0,0> )
+
+	string squadName = MakeSquadName( TEAM_IMC, UniqueString( "ZiplineTable" ) )
+	array<entity> guys
+
+	for ( int i = 0; i < spawnEvent.spawnAmount; i++ )
+	{
+		entity guy = CreateStalker( TEAM_IMC, spawnEvent.origin,<0,0,0> )
+
+		SetTeam( guy, TEAM_IMC )
+		guy.EnableNPCFlag(  NPC_ALLOW_INVESTIGATE | NPC_ALLOW_HAND_SIGNALS | NPC_ALLOW_FLEE )
+		guy.DisableNPCFlag( NPC_ALLOW_PATROL)
+		DispatchSpawn( guy )
+
+		SetSquad( guy, squadName )
+		AddMinimapForHumans(guy)
+		SetTargetName( guy, GetTargetNameForID(eFD_AITypeIDs.STALKER))
+		guys.append( guy )
+    }
+
+    ActivateFireteamDropPod( pod, guys )
+	SquadNav_Thread(guys,spawnEvent.route)
+
 }
 
 void function spawnDroppodSpectreMortar(SmokeEvent smokeEvent,SpawnEvent spawnEvent,WaitEvent waitEvent,SoundEvent soundEvent)
 {
 	PingMinimap(spawnEvent.origin.x, spawnEvent.origin.y, 4, 600, 150, 0)
-	thread CreateTrackedDroppodSpectreMortar(spawnEvent.origin,TEAM_IMC)
+		entity pod = CreateDropPod( spawnEvent.origin, <0,0,0> )
+	SetTeam( pod, TEAM_IMC )
+	InitFireteamDropPod( pod )
+	waitthread LaunchAnimDropPod( pod, "pod_testpath", spawnEvent.origin, <0,0,0> )
+
+	string squadName = MakeSquadName( TEAM_IMC, UniqueString( "ZiplineTable" ) )
+	array<entity> guys
+
+	for ( int i = 0; i < 4; i++ )
+	{
+		entity guy = CreateSpectre( TEAM_IMC, spawnEvent.origin,<0,0,0> )
+
+		SetTeam( guy, TEAM_IMC )
+		DispatchSpawn( guy )
+
+		SetSquad( guy, squadName )
+		SetTargetName( guy, GetTargetNameForID(eFD_AITypeIDs.SPECTRE_MORTAR))
+		AddMinimapForHumans(guy)
+		guys.append( guy )
+    }
+
+    ActivateFireteamDropPod( pod, guys )
 }
 
 void function spawnGenericNPC(SmokeEvent smokeEvent,SpawnEvent spawnEvent,WaitEvent waitEvent,SoundEvent soundEvent)
@@ -1618,11 +1795,32 @@ void function fd_spawnCloakDrone(SmokeEvent smokeEffect,SpawnEvent spawnEvent,Wa
 void function SpawnTick(SmokeEvent smokeEffect,SpawnEvent spawnEvent,WaitEvent waitEvent,SoundEvent soundEvent)
 {
 	PingMinimap(spawnEvent.origin.x, spawnEvent.origin.y, 4, 600, 150, 0)
-	for (int i = 0; i < floor(spawnEvent.spawnAmount / 4); i++)
+	entity pod = CreateDropPod( spawnEvent.origin, <0,0,0> )
+	SetTeam( pod, TEAM_IMC )
+	InitFireteamDropPod( pod )
+	waitthread LaunchAnimDropPod( pod, "pod_testpath", spawnEvent.origin, <0,0,0> )
+
+	string squadName = MakeSquadName( TEAM_IMC, UniqueString( "ZiplineTable" ) )
+	array<entity> guys
+
+	for ( int i = 0; i < spawnEvent.spawnAmount; i++ )
 	{
-		thread CreateTrackedDroppodTick(spawnEvent.origin, TEAM_IMC, spawnEvent.route)
-		wait 0.5
+		entity guy = CreateFragDrone( TEAM_IMC, spawnEvent.origin, <0,0,0> )
+
+		SetSpawnOption_AISettings(guy, "npc_frag_drone_fd")
+		SetTeam( guy, TEAM_IMC )
+		guy.EnableNPCFlag(  NPC_ALLOW_INVESTIGATE )
+		guy.EnableNPCMoveFlag(NPCMF_WALK_ALWAYS | NPCMF_PREFER_SPRINT)
+		DispatchSpawn( guy )
+		AddMinimapForHumans(guy)
+		SetTargetName( guy, GetTargetNameForID(eFD_AITypeIDs.TICK))
+		SetSquad( guy, squadName )
+
+		guys.append( guy )
 	}
+
+	ActivateFireteamDropPod( pod, guys )
+	SquadNav_Thread(guys,spawnEvent.route)
 }
 
 /****************************************************************************************\
@@ -1634,129 +1832,7 @@ void function SpawnTick(SmokeEvent smokeEffect,SpawnEvent spawnEvent,WaitEvent w
 #         # #   #       #    ##    #       #     # #       #       #       #       #    #
 #######    #    ####### #     #    #       #     # ####### ####### #       ####### #     #
 \****************************************************************************************/
-void function spawnSuperSpectre_threaded(entity npc)
-{
 
-}
-
-void function CreateTrackedDroppodSoldier( vector origin, int team, string route = "")
-{
-
-
-    entity pod = CreateDropPod( origin, <0,0,0> )
-    SetTeam( pod, team )
-    InitFireteamDropPod( pod )
-    waitthread LaunchAnimDropPod( pod, "pod_testpath", origin, <0,0,0> )
-
-    string squadName = MakeSquadName( team, UniqueString( "ZiplineTable" ) )
-    array<entity> guys
-	bool adychecked = false
-
-    for ( int i = 0; i < 4; i++ )
-    {
-        entity guy = CreateSoldier( team, origin,<0,0,0> )
-
-        SetTeam( guy, team )
-        guy.EnableNPCFlag( NPC_ALLOW_PATROL | NPC_ALLOW_INVESTIGATE | NPC_ALLOW_HAND_SIGNALS | NPC_ALLOW_FLEE )
-        DispatchSpawn( guy )
-
-	guy.SetParent( pod, "ATTACH", true )
-	SetSquad( guy, squadName )
-
-	SetTargetName( guy, GetTargetNameForID(eFD_AITypeIDs.GRUNT))
-	AddMinimapForHumans(guy)
-	file.spawnedNPCs.append(guy)
-        guys.append( guy )
-    }
-
-    ActivateFireteamDropPod( pod, guys )
-}
-
-void function CreateTrackedDroppodSpectreMortar( vector origin, int team)
-{
-
-
-    entity pod = CreateDropPod( origin, <0,0,0> )
-    SetTeam( pod, team )
-    InitFireteamDropPod( pod )
-    waitthread LaunchAnimDropPod( pod, "pod_testpath", origin, <0,0,0> )
-
-    string squadName = MakeSquadName( team, UniqueString( "ZiplineTable" ) )
-    array<entity> guys
-
-    for ( int i = 0; i < 4; i++ )
-    {
-        entity guy = CreateSpectre( team, origin,<0,0,0> )
-
-        SetTeam( guy, team )
-        guy.EnableNPCFlag( NPC_ALLOW_PATROL | NPC_ALLOW_INVESTIGATE | NPC_ALLOW_HAND_SIGNALS | NPC_ALLOW_FLEE )
-        DispatchSpawn( guy )
-
-        SetSquad( guy, squadName )
-	SetTargetName( guy, GetTargetNameForID(eFD_AITypeIDs.SPECTRE_MORTAR))
-	AddMinimapForHumans(guy)
-        guys.append( guy )
-    }
-
-    ActivateFireteamDropPod( pod, guys )
-}
-void function CreateTrackedDroppodStalker( vector origin, int team)
-{
-
-
-    entity pod = CreateDropPod( origin, <0,0,0> )
-    SetTeam( pod, team )
-    InitFireteamDropPod( pod )
-    waitthread LaunchAnimDropPod( pod, "pod_testpath", origin, <0,0,0> )
-
-    string squadName = MakeSquadName( team, UniqueString( "ZiplineTable" ) )
-    array<entity> guys
-
-    for ( int i = 0; i < 4; i++ )
-    {
-        entity guy = CreateStalker( team, origin,<0,0,0> )
-
-        SetTeam( guy, team )
-        guy.EnableNPCFlag( NPC_ALLOW_PATROL | NPC_ALLOW_INVESTIGATE | NPC_ALLOW_HAND_SIGNALS | NPC_ALLOW_FLEE )
-        DispatchSpawn( guy )
-
-        SetSquad( guy, squadName )
-	AddMinimapForHumans(guy)
-	SetTargetName( guy, GetTargetNameForID(eFD_AITypeIDs.STALKER))
-        guys.append( guy )
-    }
-
-    ActivateFireteamDropPod( pod, guys )
-}
-
-void function CreateTrackedDroppodTick( vector origin, int team, string route = "" )
-{
-	entity pod = CreateDropPod( origin, <0,0,0> )
-	SetTeam( pod, team )
-	InitFireteamDropPod( pod )
-	waitthread LaunchAnimDropPod( pod, "pod_testpath", origin, <0,0,0> )
-
-	string squadName = MakeSquadName( team, UniqueString( "ZiplineTable" ) )
-	array<entity> guys
-
-	for ( int i = 0; i < 4; i++ )
-	{
-		entity guy = CreateFragDrone( team, origin, <0,0,0> )
-
-		SetSpawnOption_AISettings(guy, "npc_frag_drone_fd")
-		SetTeam( guy, team )
-		guy.EnableNPCFlag( NPC_ALLOW_PATROL | NPC_ALLOW_INVESTIGATE )
-		guy.EnableNPCMoveFlag(NPCMF_WALK_ALWAYS | NPCMF_PREFER_SPRINT)
-		DispatchSpawn( guy )
-		AddMinimapForHumans(guy)
-		SetTargetName( guy, GetTargetNameForID(eFD_AITypeIDs.TICK))
-		SetSquad( guy, squadName )
-
-		guys.append( guy )
-	}
-
-	ActivateFireteamDropPod( pod, guys )
-}
 
 void function PingMinimap(float x, float y, float duration, float spreadRadius, float ringRadius, int colorIndex)
 {
