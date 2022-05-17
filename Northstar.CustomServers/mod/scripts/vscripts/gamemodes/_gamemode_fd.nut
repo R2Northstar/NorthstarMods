@@ -17,6 +17,7 @@ global function createCloakDroneEvent
 global function CreateTickEvent
 global function CreateToneSniperTitanEvent
 global function CreateNorthstarSniperTitanEvent
+global function CreateScorchTitanEvent
 
 global struct SmokeEvent{
 	vector position
@@ -1181,9 +1182,6 @@ void function CommonAIThink (entity npc, string routeName)
 	npc.EndSignal( "OnSyncedMeleeVictim" ) // if getting executed
 	npc.EndSignal( "OnFailedToPath" ) // if cant find path or get attacked (not yet implemented)
 
-	thread OnFailedToPathFallback( npc )
-	// failed to path fallback function
-
 	waitthread singleNav_thread( npc, routeName )
 	// OnFailedToPath would end this function, so assume they reached harvester
 
@@ -1199,14 +1197,13 @@ void function OnFailedToPathFallback( entity npc )
 	npc.EndSignal( "OnSyncedMeleeVictim" )
 	npc.EndSignal( "FD_ReachedHarvester" )
 	// ^^^ stop keeping track of this function if they die or reached their goal
-
-	npc.WaitSignal( "OnFailedToPath" ) // wait for this signal
-
+	// EndSignal( npc, "OnFailedToPath" ) // credit to @Spoon for telling me this
+	print("running failed to path fallback")
 	if (!IsAlive(npc))
 		return
 
 	waitthread CheckForInterruption( npc ) // first let's make sure they're not being attacked
-
+	print("not being attacked lets keep going")
 	// Nuke Titans have their own NukeTitanThink, need to update their pathing as well but for later
 	if ( npc.GetTargetName() == "npc_titan_nuke" )
 		return
@@ -1215,7 +1212,7 @@ void function OnFailedToPathFallback( entity npc )
 	float goalRadius = npc.GetMinGoalRadius()
 
 	// we cant use previous route path since they might go back in reverse, so might as well try to figure out if they can go to the harvester manually
-	array<vector> pos = NavMesh_GetNeighborPositions( fd_harvester.harvester.GetOrigin(), HULL_TITAN, 5 )
+	array<vector> pos = NavMesh_GetNeighborPositions( fd_harvester.harvester.GetOrigin(), HULL_TITAN, 20 )
 	pos = ArrayClosestVector( pos, npc.GetOrigin() )
 
 	array<vector> validPos
@@ -1230,11 +1227,11 @@ void function OnFailedToPathFallback( entity npc )
 
 	int posLen = validPos.len()
 
-	npc.Signal( "StartCounter" )
+	npc.Signal("StartCounter")
 	thread TimeCounter( npc ) // start counting in case of failing to path
-	thread OnFailedToPathFallback( npc ) // retry again if they fail to path again
 	while( posLen >= 1 )
 	{
+		WaitFrame()
 		npc.SetEnemy( fd_harvester.harvester )
 		npc.AssaultSetFightRadius( goalRadius )
 		thread AssaultOrigin( npc, validPos[0], goalRadius )
@@ -1247,6 +1244,7 @@ void function OnFailedToPathFallback( entity npc )
 		break
 	}
 	npc.Signal( "FD_ReachedHarvester" )
+	print("titan reached harvester")
 }
 
 void function singleNav_thread(entity npc, string routeName,int nodesToScip= 0,float nextDistance = 500.0)
@@ -1254,16 +1252,31 @@ void function singleNav_thread(entity npc, string routeName,int nodesToScip= 0,f
 	npc.EndSignal( "OnDeath" )
 	npc.EndSignal( "OnDestroy" )
 	npc.EndSignal( "OnSyncedMeleeVictim" )
-	npc.EndSignal( "OnFailedToPath" )
 
+	print( "start going through this route" )
 	if(!npc.IsNPC())
 		return
+
+	npc.SetLookDistOverride( 320 )
+	npc.EnableNPCMoveFlag( NPCMF_WALK_ALWAYS )
+
+	OnThreadEnd(
+		function() : ( npc )
+		{
+			if ( !IsValid( npc ) )
+				return
+
+			npc.DisableNPCMoveFlag( NPCMF_WALK_ALWAYS )
+			npc.DisableLookDistOverride()
+		}
+	)
 
 	array<entity> routeArray = getRoute(routeName)
 	WaitFrame()//so other code setting up what happens on signals is run before this
 	if(routeArray.len()==0)
 	{
 		npc.Signal("OnFailedToPath")
+		print("no path in this route")
 		return
 	}
 	int scippedNodes = 0
@@ -1276,18 +1289,31 @@ void function singleNav_thread(entity npc, string routeName,int nodesToScip= 0,f
 			scippedNodes++
 			continue
 		}
+		if( Distance( node.GetOrigin(), fd_harvester.harvester.GetOrigin()) > Distance( npc.GetOrigin(), fd_harvester.harvester.GetOrigin() ))
+		{
+			print("node seems to go in reverse, ignoring...")
+			continue
+		}
 		npc.Signal("StartCounter") // end any or previous counter
 		thread TimeCounter( npc ) // start counting from 0 again
 		npc.AssaultPoint(node.GetOrigin())
 		npc.AssaultSetGoalRadius( npc.GetMinGoalRadius() )
-		int i = 0
-		table result = npc.WaitSignal("OnFinishedAssault","OnFailedToPath")
+		table result = npc.WaitSignal("OnFinishedAssault","OnFailedToPath", "OnEnterGoalRadius")
+		string signal = expect string( result.signal )
+		if (signal == "OnFailedToPath")
+		{
+			thread OnFailedToPathFallback( npc )
+			print("they triggered on failed to path on their own?")
+			return
+		}
+		print("moving to next node")
 		// if finished assault they move to next node, if failed to path, this function ends itself and they use fallback function
 	}
+	print("titan reached harvester")
 	npc.Signal("FD_ReachedHarvester")
 }
 
-void function TimeCounter( entity npc, int time = 10 )
+void function TimeCounter( entity npc, int time = 30 )
 {
 	Assert(IsNewThread(), "Function is not threaded off.")
 	npc.Signal("StartCounter") // make sure there's only 1 counter for this entity
@@ -1301,7 +1327,8 @@ void function TimeCounter( entity npc, int time = 10 )
 	{
 		if (count >= time)
 		{
-			npc.Signal("OnFailedToPath") // enough time elapsed and this function hasn't stopped, assume failed to path
+			print("countdown reached. assume failed to path")
+			thread OnFailedToPathFallback( npc ) // enough time elapsed and this function hasn't stopped, assume failed to path
 			return
 		}
 
@@ -1337,6 +1364,7 @@ void function CheckForInterruption( entity npc )
 			if ( IsValid(soul) && ( npc.GetHealth() + soul.GetShieldHealth() ) > healthBreakOff ) // if we never loss more than 90% of our current health
 				break // continue pathing in fallback function or just attack harvester
 		}
+		print("enemy nearby, waiting")
 		wait 1
 	}
 }
@@ -1705,6 +1733,19 @@ WaveEvent function CreateToneSniperTitanEvent(vector origin,vector angles)
 	return event
 }
 
+WaveEvent function CreateScorchTitanEvent(vector origin,vector angles,string route)
+{
+	WaveEvent event
+	event.eventFunction = SpawnScorchTitan
+	event.shouldThread = true
+	event.spawnEvent.spawnType= eFD_AITypeIDs.SCORCH
+	event.spawnEvent.spawnAmount = 1
+	event.spawnEvent.origin = origin
+	event.spawnEvent.angles = angles
+	event.spawnEvent.route = route
+	return event
+}
+
 /************************************************************************************************************\
 ####### #     # ####### #     # #######    ####### #     # #     #  #####  ####### ### ####### #     #  #####
 #       #     # #       ##    #    #       #       #     # ##    # #     #    #     #  #     # ##    # #     #
@@ -1960,6 +2001,21 @@ void function SpawnToneSniperTitan(SmokeEvent smokeEvent,SpawnEvent spawnEvent,W
 	npc.GetTitanSoul().SetTitanSoulNetBool( "showOverheadIcon", true )
 	thread SniperTitanThink(npc,fd_harvester.harvester)
 
+}
+
+void function SpawnScorchTitan(SmokeEvent smokeEvent,SpawnEvent spawnEvent,WaitEvent waitEvent,SoundEvent soundEvent)
+{
+	PingMinimap(spawnEvent.origin.x, spawnEvent.origin.y, 4, 600, 150, 0)
+	entity npc = CreateNPCTitan("titan_ogre",TEAM_IMC, spawnEvent.origin, spawnEvent.angles)
+	SetSpawnOption_AISettings(npc,"npc_titan_ogre_meteor_boss_fd")
+	SetSpawnOption_Titanfall(npc)
+	SetTargetName( npc, GetTargetNameForID(spawnEvent.spawnType)) // required for client to create icons
+	DispatchSpawn( npc )
+	file.spawnedNPCs.append(npc)
+	AddMinimapForTitans(npc)
+	npc.WaitSignal( "TitanHotDropComplete" )
+	npc.GetTitanSoul().SetTitanSoulNetBool( "showOverheadIcon", true )
+	thread CommonAIThink(npc, spawnEvent.route)
 }
 
 void function fd_spawnCloakDrone(SmokeEvent smokeEffect,SpawnEvent spawnEvent,WaitEvent waitEvent,SoundEvent soundEvent)
