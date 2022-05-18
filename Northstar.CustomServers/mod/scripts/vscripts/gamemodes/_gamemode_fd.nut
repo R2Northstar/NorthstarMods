@@ -18,6 +18,11 @@ global function CreateTickEvent
 global function CreateToneSniperTitanEvent
 global function CreateNorthstarSniperTitanEvent
 global function CreateScorchTitanEvent
+global function CreateToneTitanEvent
+global function CreateIonTitanEvent
+global function CreateLegionTitanEvent
+global function CreateRoninTitanEvent
+global function CreateMonarchTitanEvent
 
 global struct SmokeEvent{
 	vector position
@@ -221,11 +226,14 @@ void function OnNpcDeath( entity victim, entity attacker, var damageInfo )
 		SetGlobalNetInt("FD_AICount_Current",GetGlobalNetInt("FD_AICount_Current")-1)
 	}
 
-	if ( victim.GetOwner() == attacker || !attacker.IsPlayer() || attacker == victim )
+	if ( victim.GetOwner() == attacker || !attacker.IsPlayer() || attacker == victim || victim.GetBossPlayer() == attacker )
 		return
 
 	int playerScore = 0
 	int money = 0
+	int scriptDamageType = DamageInfo_GetCustomDamageType( damageInfo )
+	int damageSourceId = DamageInfo_GetDamageSourceIdentifier( damageInfo )
+
 	if ( victim.IsNPC() )
 	{
 		string eventName = FD_GetScoreEventName( victim.GetClassName() )
@@ -237,7 +245,7 @@ void function OnNpcDeath( entity victim, entity attacker, var damageInfo )
 				money = 5
 				break
 			case "npc_drone":
-			case "npc_spectre": // not sure
+			case "npc_spectre":
 				money = 10
 				break
 			case "npc_stalker":
@@ -249,6 +257,8 @@ void function OnNpcDeath( entity victim, entity attacker, var damageInfo )
 			default:
 				money = 0 // titans seem to total up to 50 money undoomed health
 		}
+		foreach(player in GetPlayerArray())
+			Remote_CallFunction_NonReplay( player, "ServerCallback_OnTitanKilled", attacker.GetEncodedEHandle(), victim.GetEncodedEHandle(), scriptDamageType, damageSourceId )
 	}
 	if (money != 0)
 		AddMoneyToPlayer( attacker , money )
@@ -268,7 +278,6 @@ void function OnNpcDeath( entity victim, entity attacker, var damageInfo )
 			attackerInfo.attacker.AddToPlayerGameStat( PGS_DEFENSE_SCORE, playerScore )		// i assume this is how support score gets added
 		}
 	}
-
 
 }
 
@@ -820,7 +829,7 @@ void function OnHarvesterDamaged(entity harvester, var damageInfo)
 			EmitSoundAtPosition(TEAM_UNASSIGNED,fd_harvester.harvester.GetOrigin(),"coop_generator_destroyed")
 			newHealth = 0
 			PlayFactionDialogueToTeam( "fd_baseDeath", TEAM_MILITIA )
-			fd_harvester.rings.Destroy()
+			fd_harvester.rings.Anim_Stop()
 		}
 		harvester.SetHealth( newHealth )
 		file.havesterWasDamaged = true
@@ -1196,6 +1205,8 @@ void function OnFailedToPathFallback( entity npc )
 	npc.EndSignal( "OnDestroy" )
 	npc.EndSignal( "OnSyncedMeleeVictim" )
 	npc.EndSignal( "FD_ReachedHarvester" )
+	fd_harvester.harvester.EndSignal("OnDeath")
+	fd_harvester.harvester.EndSignal("OnDestroy")
 	// ^^^ stop keeping track of this function if they die or reached their goal
 	// EndSignal( npc, "OnFailedToPath" ) // credit to @Spoon for telling me this
 	print("running failed to path fallback")
@@ -1252,12 +1263,13 @@ void function singleNav_thread(entity npc, string routeName,int nodesToScip= 0,f
 	npc.EndSignal( "OnDeath" )
 	npc.EndSignal( "OnDestroy" )
 	npc.EndSignal( "OnSyncedMeleeVictim" )
+	fd_harvester.harvester.EndSignal("OnDeath")
+	fd_harvester.harvester.EndSignal("OnDestroy")
 
 	print( "start going through this route" )
 	if(!npc.IsNPC())
 		return
 
-	npc.SetLookDistOverride( 320 )
 	npc.EnableNPCMoveFlag( NPCMF_WALK_ALWAYS )
 
 	OnThreadEnd(
@@ -1267,7 +1279,6 @@ void function singleNav_thread(entity npc, string routeName,int nodesToScip= 0,f
 				return
 
 			npc.DisableNPCMoveFlag( NPCMF_WALK_ALWAYS )
-			npc.DisableLookDistOverride()
 		}
 	)
 
@@ -1276,6 +1287,7 @@ void function singleNav_thread(entity npc, string routeName,int nodesToScip= 0,f
 	if(routeArray.len()==0)
 	{
 		npc.Signal("OnFailedToPath")
+		thread OnFailedToPathFallback(npc)
 		print("no path in this route")
 		return
 	}
@@ -1322,12 +1334,15 @@ void function TimeCounter( entity npc, int time = 30 )
 	npc.EndSignal( "OnDestroy" )
 	npc.EndSignal( "OnSyncedMeleeVictim" )
 	npc.EndSignal( "FD_ReachedHarvester" )
+	fd_harvester.harvester.EndSignal("OnDeath")
+	fd_harvester.harvester.EndSignal("OnDestroy")
 	int count = 0
 	while (true)
 	{
 		if (count >= time)
 		{
 			print("countdown reached. assume failed to path")
+			npc.Signal("OnFailedToPath")
 			thread OnFailedToPathFallback( npc ) // enough time elapsed and this function hasn't stopped, assume failed to path
 			return
 		}
@@ -1346,6 +1361,8 @@ void function CheckForInterruption( entity npc )
 	npc.EndSignal( "OnSyncedMeleeVictim" )
 	npc.EndSignal( "OnDeath" )
 	npc.EndSignal( "OnDestroy" )
+	fd_harvester.harvester.EndSignal("OnDeath")
+	fd_harvester.harvester.EndSignal("OnDestroy")
 
 	entity soul
 	if (npc.IsTitan())
@@ -1355,7 +1372,11 @@ void function CheckForInterruption( entity npc )
 	}
 
 	float playerProximityDistSqr = pow( 256, 2 )
-	float healthBreakOff = ( npc.GetHealth() + soul.GetShieldHealth() ) * 0.9
+	float healthBreakOff
+	if (npc.IsTitan())
+		healthBreakOff = ( npc.GetHealth() + soul.GetShieldHealth() ) * 0.9
+	else
+		healthBreakOff = ( npc.GetHealth() * 0.9 )
 
 	while( true )
 	{
@@ -1746,6 +1767,71 @@ WaveEvent function CreateScorchTitanEvent(vector origin,vector angles,string rou
 	return event
 }
 
+WaveEvent function CreateToneTitanEvent(vector origin,vector angles,string route)
+{
+	WaveEvent event
+	event.eventFunction = SpawnToneTitan
+	event.shouldThread = true
+	event.spawnEvent.spawnType= eFD_AITypeIDs.TONE
+	event.spawnEvent.spawnAmount = 1
+	event.spawnEvent.origin = origin
+	event.spawnEvent.angles = angles
+	event.spawnEvent.route = route
+	return event
+}
+
+WaveEvent function CreateIonTitanEvent(vector origin,vector angles,string route)
+{
+	WaveEvent event
+	event.eventFunction = SpawnIonTitan
+	event.shouldThread = true
+	event.spawnEvent.spawnType= eFD_AITypeIDs.ION
+	event.spawnEvent.spawnAmount = 1
+	event.spawnEvent.origin = origin
+	event.spawnEvent.angles = angles
+	event.spawnEvent.route = route
+	return event
+}
+
+WaveEvent function CreateLegionTitanEvent(vector origin,vector angles,string route)
+{
+	WaveEvent event
+	event.eventFunction = SpawnLegionTitan
+	event.shouldThread = true
+	event.spawnEvent.spawnType= eFD_AITypeIDs.LEGION
+	event.spawnEvent.spawnAmount = 1
+	event.spawnEvent.origin = origin
+	event.spawnEvent.angles = angles
+	event.spawnEvent.route = route
+	return event
+}
+
+WaveEvent function CreateRoninTitanEvent(vector origin,vector angles,string route)
+{
+	WaveEvent event
+	event.eventFunction = SpawnRoninTitan
+	event.shouldThread = true
+	event.spawnEvent.spawnType= eFD_AITypeIDs.RONIN
+	event.spawnEvent.spawnAmount = 1
+	event.spawnEvent.origin = origin
+	event.spawnEvent.angles = angles
+	event.spawnEvent.route = route
+	return event
+}
+
+WaveEvent function CreateMonarchTitanEvent(vector origin,vector angles,string route)
+{
+	WaveEvent event
+	event.eventFunction = SpawnMonarchTitan
+	event.shouldThread = true
+	event.spawnEvent.spawnType= eFD_AITypeIDs.MONARCH
+	event.spawnEvent.spawnAmount = 1
+	event.spawnEvent.origin = origin
+	event.spawnEvent.angles = angles
+	event.spawnEvent.route = route
+	return event
+}
+
 /************************************************************************************************************\
 ####### #     # ####### #     # #######    ####### #     # #     #  #####  ####### ### ####### #     #  #####
 #       #     # #       ##    #    #       #       #     # ##    # #     #    #     #  #     # ##    # #     #
@@ -1815,11 +1901,15 @@ void function spawnSuperSpectre(SmokeEvent smokeEvent,SpawnEvent spawnEvent,Wait
 
 	wait 4.7
 	DispatchSpawn(npc)
-	AddMinimapForHumans(npc)
 	thread SuperSpectre_WarpFall(npc)
-	thread ReaperMinionLauncherThink(npc)
+	// thread ReaperMinionLauncherThink(npc)
 
 	SetTargetName( npc, GetTargetNameForID(spawnEvent.spawnType))
+	npc.WaitSignal("WarpfallComplete")
+	AddMinimapForHumans(npc)
+	array<entity> guys
+	guys.append(npc)
+	thread SquadNav_Thread(guys,spawnEvent.route)
 
 }
 
@@ -2008,6 +2098,81 @@ void function SpawnScorchTitan(SmokeEvent smokeEvent,SpawnEvent spawnEvent,WaitE
 	PingMinimap(spawnEvent.origin.x, spawnEvent.origin.y, 4, 600, 150, 0)
 	entity npc = CreateNPCTitan("titan_ogre",TEAM_IMC, spawnEvent.origin, spawnEvent.angles)
 	SetSpawnOption_AISettings(npc,"npc_titan_ogre_meteor_boss_fd")
+	SetSpawnOption_Titanfall(npc)
+	SetTargetName( npc, GetTargetNameForID(spawnEvent.spawnType)) // required for client to create icons
+	DispatchSpawn( npc )
+	file.spawnedNPCs.append(npc)
+	AddMinimapForTitans(npc)
+	npc.WaitSignal( "TitanHotDropComplete" )
+	npc.GetTitanSoul().SetTitanSoulNetBool( "showOverheadIcon", true )
+	thread CommonAIThink(npc, spawnEvent.route)
+}
+
+void function SpawnToneTitan(SmokeEvent smokeEvent,SpawnEvent spawnEvent,WaitEvent waitEvent,SoundEvent soundEvent)
+{
+	PingMinimap(spawnEvent.origin.x, spawnEvent.origin.y, 4, 600, 150, 0)
+	entity npc = CreateNPCTitan("titan_atlas",TEAM_IMC, spawnEvent.origin, spawnEvent.angles)
+	SetSpawnOption_AISettings(npc,"npc_titan_atlas_tracker_boss_fd")
+	SetSpawnOption_Titanfall(npc)
+	SetTargetName( npc, GetTargetNameForID(spawnEvent.spawnType)) // required for client to create icons
+	DispatchSpawn( npc )
+	file.spawnedNPCs.append(npc)
+	AddMinimapForTitans(npc)
+	npc.WaitSignal( "TitanHotDropComplete" )
+	npc.GetTitanSoul().SetTitanSoulNetBool( "showOverheadIcon", true )
+	thread CommonAIThink(npc, spawnEvent.route)
+}
+
+void function SpawnIonTitan(SmokeEvent smokeEvent,SpawnEvent spawnEvent,WaitEvent waitEvent,SoundEvent soundEvent)
+{
+	PingMinimap(spawnEvent.origin.x, spawnEvent.origin.y, 4, 600, 150, 0)
+	entity npc = CreateNPCTitan("titan_atlas",TEAM_IMC, spawnEvent.origin, spawnEvent.angles)
+	SetSpawnOption_AISettings(npc,"npc_titan_atlas_stickybomb_boss_fd")
+	SetSpawnOption_Titanfall(npc)
+	SetTargetName( npc, GetTargetNameForID(spawnEvent.spawnType)) // required for client to create icons
+	DispatchSpawn( npc )
+	file.spawnedNPCs.append(npc)
+	AddMinimapForTitans(npc)
+	npc.WaitSignal( "TitanHotDropComplete" )
+	npc.GetTitanSoul().SetTitanSoulNetBool( "showOverheadIcon", true )
+	thread CommonAIThink(npc, spawnEvent.route)
+}
+
+void function SpawnLegionTitan(SmokeEvent smokeEvent,SpawnEvent spawnEvent,WaitEvent waitEvent,SoundEvent soundEvent)
+{
+	PingMinimap(spawnEvent.origin.x, spawnEvent.origin.y, 4, 600, 150, 0)
+	entity npc = CreateNPCTitan("titan_ogre",TEAM_IMC, spawnEvent.origin, spawnEvent.angles)
+	SetSpawnOption_AISettings(npc,"npc_titan_ogre_minigun_boss_fd")
+	SetSpawnOption_Titanfall(npc)
+	SetTargetName( npc, GetTargetNameForID(spawnEvent.spawnType)) // required for client to create icons
+	DispatchSpawn( npc )
+	file.spawnedNPCs.append(npc)
+	AddMinimapForTitans(npc)
+	npc.WaitSignal( "TitanHotDropComplete" )
+	npc.GetTitanSoul().SetTitanSoulNetBool( "showOverheadIcon", true )
+	thread CommonAIThink(npc, spawnEvent.route)
+}
+
+void function SpawnRoninTitan(SmokeEvent smokeEvent,SpawnEvent spawnEvent,WaitEvent waitEvent,SoundEvent soundEvent)
+{
+	PingMinimap(spawnEvent.origin.x, spawnEvent.origin.y, 4, 600, 150, 0)
+	entity npc = CreateNPCTitan("titan_stryder",TEAM_IMC, spawnEvent.origin, spawnEvent.angles)
+	SetSpawnOption_AISettings(npc,"npc_titan_stryder_leadwall_boss_fd")
+	SetSpawnOption_Titanfall(npc)
+	SetTargetName( npc, GetTargetNameForID(spawnEvent.spawnType)) // required for client to create icons
+	DispatchSpawn( npc )
+	file.spawnedNPCs.append(npc)
+	AddMinimapForTitans(npc)
+	npc.WaitSignal( "TitanHotDropComplete" )
+	npc.GetTitanSoul().SetTitanSoulNetBool( "showOverheadIcon", true )
+	thread CommonAIThink(npc, spawnEvent.route)
+}
+
+void function SpawnMonarchTitan(SmokeEvent smokeEvent,SpawnEvent spawnEvent,WaitEvent waitEvent,SoundEvent soundEvent)
+{
+	PingMinimap(spawnEvent.origin.x, spawnEvent.origin.y, 4, 600, 150, 0)
+	entity npc = CreateNPCTitan("titan_atlas",TEAM_IMC, spawnEvent.origin, spawnEvent.angles)
+	SetSpawnOption_AISettings(npc,"npc_titan_atlas_vanguard_boss_fd")
 	SetSpawnOption_Titanfall(npc)
 	SetTargetName( npc, GetTargetNameForID(spawnEvent.spawnType)) // required for client to create icons
 	DispatchSpawn( npc )
