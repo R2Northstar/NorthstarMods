@@ -1660,11 +1660,11 @@ void function Rodeo_DropAllBatteries( entity player )
 		newBattery.s.touchEnabledTime = Time() + 0.3
 		//look into using the players bounds for placement, instead of hardcoded numbers
 		array<vector> offsets = [<0,0,0>, <30,0,0>, <0,30,0>, <0,-30,0> ]
-		newBattery.SetOrigin( player.GetWorldSpaceCenter() + offsets[ GetPlayerBatteryCount( player ) % offsets.len() ] ) //Temp fix, should change the origin
+		newBattery.SetOrigin( player.GetWorldSpaceCenter() + direction * 30 ] ) //Temp fix, should change the origin
 		newBattery.SetAngles( <0, 0, 0 > )
 		vector baseVelocity = player.GetVelocity()
 		baseVelocity.z = 0
-		newBattery.SetVelocity( baseVelocity + AnglesToForward( <0, RandomInt( 360.0 ), 0 > ) + <0,0,1> ) * 100  )
+		newBattery.SetVelocity( baseVelocity + AnglesToForward( (<0, RandomInt( 360.0 ), 0 > ) + <0,0,1> ) * 100  )
 		Rodeo_TakeBatteryAwayFromPilot( player )
 	}
 
