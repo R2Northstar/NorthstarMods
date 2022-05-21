@@ -207,26 +207,31 @@ void function OnNpcDeath( entity victim, entity attacker, var damageInfo )
 		file.spawnedNPCs.remove( findIndex )
 		switch(FD_GetAITypeID_ByString(victim.GetTargetName())) //FD_GetAINetIndex_byAITypeID does not support all titan ids
 		{
-		case(eFD_AITypeIDs.TITAN):
-		case(eFD_AITypeIDs.RONIN):
-		case(eFD_AITypeIDs.NORTHSTAR):
-		case(eFD_AITypeIDs.SCORCH):
-		case(eFD_AITypeIDs.TONE):
-		case(eFD_AITypeIDs.ION):
-		case(eFD_AITypeIDs.MONARCH):
-		case(eFD_AITypeIDs.LEGION):
-		case(eFD_AITypeIDs.TITAN_SNIPER):
-			SetGlobalNetInt("FD_AICount_Titan",GetGlobalNetInt("FD_AICount_Titan")-1)
-			break
-		default:
-			string netIndex = FD_GetAINetIndex_byAITypeID(FD_GetAITypeID_ByString(victim.GetTargetName()))
-			if(netIndex != "")
-			SetGlobalNetInt(netIndex,GetGlobalNetInt(netIndex)-1)
+			case(eFD_AITypeIDs.TITAN):
+			case(eFD_AITypeIDs.RONIN):
+			case(eFD_AITypeIDs.NORTHSTAR):
+			case(eFD_AITypeIDs.SCORCH):
+			case(eFD_AITypeIDs.TONE):
+			case(eFD_AITypeIDs.ION):
+			case(eFD_AITypeIDs.MONARCH):
+			case(eFD_AITypeIDs.LEGION):
+			case(eFD_AITypeIDs.TITAN_SNIPER):
+				SetGlobalNetInt("FD_AICount_Titan", GetGlobalNetInt("FD_AICount_Titan")-1)
+				break
+			default:
+				string netIndex = FD_GetAINetIndex_byAITypeID(FD_GetAITypeID_ByString(victim.GetTargetName()))
+				if(netIndex != "")
+					SetGlobalNetInt(netIndex,GetGlobalNetInt(netIndex)-1)
+				else
+				{
+					if (victim.GetTargetName() == "Cloak Drone") // special case for cloak drone, someone in respawn fucked up here
+						SetGlobalNetInt( "FD_AICount_Drone_Cloak", GetGlobalNetInt("FD_AICount_Drone_Cloak")-1)
+				}
 		}
 		SetGlobalNetInt("FD_AICount_Current",GetGlobalNetInt("FD_AICount_Current")-1)
 	}
 
-	if ( victim.GetOwner() == attacker || !attacker.IsPlayer() || attacker == victim || victim.GetBossPlayer() == attacker )
+	if ( victim.GetOwner() == attacker || !attacker.IsPlayer() || attacker == victim || victim.GetBossPlayer() == attacker || victim.GetClassName() == "npc_turret_sentry" )
 		return
 
 	int playerScore = 0
@@ -1223,7 +1228,11 @@ void function OnFailedToPathFallback( entity npc )
 	float goalRadius = npc.GetMinGoalRadius()
 
 	// we cant use previous route path since they might go back in reverse, so might as well try to figure out if they can go to the harvester manually
-	array<vector> pos = NavMesh_GetNeighborPositions( fd_harvester.harvester.GetOrigin(), HULL_TITAN, 20 )
+	array<vector> pos
+	if (npc.IsTitan())
+		pos = NavMesh_GetNeighborPositions( fd_harvester.harvester.GetOrigin(), HULL_TITAN, 20 )
+	else
+		pos = NavMesh_GetNeighborPositions( fd_harvester.harvester.GetOrigin(), HULL_HUMAN, 20 )
 	pos = ArrayClosestVector( pos, npc.GetOrigin() )
 
 	array<vector> validPos
@@ -1270,15 +1279,17 @@ void function singleNav_thread(entity npc, string routeName,int nodesToScip= 0,f
 	if(!npc.IsNPC())
 		return
 
+	bool canwalk = npc.GetNPCMoveFlag( NPCMF_WALK_ALWAYS )
 	npc.EnableNPCMoveFlag( NPCMF_WALK_ALWAYS )
+	npc.AssaultSetFightRadius( 0 ) // makes them keep moving instead of stopping to shoot you.
 
 	OnThreadEnd(
-		function() : ( npc )
+		function() : ( npc, canwalk )
 		{
 			if ( !IsValid( npc ) )
 				return
 
-			npc.DisableNPCMoveFlag( NPCMF_WALK_ALWAYS )
+			npc.SetNPCMoveFlag( NPCMF_WALK_ALWAYS, canwalk )
 		}
 	)
 
@@ -1383,10 +1394,19 @@ void function CheckForInterruption( entity npc )
 		if ( !IsEnemyWithinDist( npc, playerProximityDistSqr ) ) // if there's no enemy within proximity
 		{
 			if ( IsValid(soul) && ( npc.GetHealth() + soul.GetShieldHealth() ) > healthBreakOff ) // if we never loss more than 90% of our current health
+			{
 				break // continue pathing in fallback function or just attack harvester
+			}
+			else if ( npc.GetHealth() > healthBreakOff )
+				break
 		}
+		if (npc.IsTitan())
+			healthBreakOff = ( npc.GetHealth() + soul.GetShieldHealth() ) * 0.9
+		else
+			healthBreakOff = ( npc.GetHealth() * 0.9 )
+
 		print("enemy nearby, waiting")
-		wait 1
+		wait 3
 	}
 }
 
@@ -1408,31 +1428,37 @@ void function SquadNav_Thread( array<entity> npcs ,string routeName,int nodesToS
 {
 	//TODO this function wont stop when noone alive anymore also it only works half of the time
 
+	foreach( npc in npcs )
+		thread SquadNav_SingleThread(npc, routeName, nodesToScip, nextDistance)
+}
+
+void function SquadNav_SingleThread( entity npc, string routeName, int nodesToScip = 0, float nextDistance = 200.0)
+{
+	fd_harvester.harvester.EndSignal("OnDeath")
+	fd_harvester.harvester.EndSignal("OnDestroy")
+	npc.EndSignal("OnDeath")
+	npc.EndSignal("OnDestroy")
+
 	array<entity> routeArray = getRoute(routeName)
 	WaitFrame()//so other code setting up what happens on signals is run before this
 	if(routeArray.len()==0)
 		return
 
 	int nodeIndex = 0
+	if (IsStalker(npc))
+		routeArray.append( fd_harvester.harvester ) // really dumb fix so that they would run closer to the harvester lmao
 	foreach(entity node in routeArray)
 	{
-		for( int i = 0; i < npcs.len(); i++ ) // run a check every new assault point to ensure this function stops running i suppose
-		{
-			if (!IsAlive(npcs[i]))
-				npcs.remove(i)
-			if (npcs.len() == 0)
-				return
-		}
-
 		if(!IsAlive(fd_harvester.harvester))
 			return
 		if(nodeIndex++ < nodesToScip)
 			continue
 
-		SquadAssaultOrigin(npcs,node.GetOrigin(),nextDistance) // this will run thread AssaultOrigin, which waitthread SendAIToAssaultPoint for each separate npc, and if an npc dies, the next iteration in this foreach loop will continue
-
+		thread AssaultOrigin(npc,node.GetOrigin(),nextDistance) // this will run thread AssaultOrigin, which waitthread SendAIToAssaultPoint for each separate npc, and if an npc dies, the next iteration in this foreach loop will continue
+		print("npcs moving to next node")
 	}
-
+	print("npc done and reached harvester")
+	npc.Signal("FD_ReachedHarvester")
 }
 
 bool function allPlayersReady()
@@ -1514,7 +1540,7 @@ string function GetTargetNameForID(int typeId)
 			case eFD_AITypeIDs.LEGION:
 				return "npc_titan_ogre_minigun"
 			case eFD_AITypeIDs.TITAN_ARC:
-				return "npc_titan_arc"
+				return "empTitan"
 			case eFD_AITypeIDs.RONIN:
 				return "npc_titan_stryder_leadwall"
 			case eFD_AITypeIDs.TITAN_MORTAR:
@@ -1924,6 +1950,8 @@ void function spawnDroppodGrunts(SmokeEvent smokeEvent,SpawnEvent spawnEvent,Wai
 	string squadName = MakeSquadName( TEAM_IMC, UniqueString( "ZiplineTable" ) )
 	array<entity> guys
 	bool adychecked = false
+	int difficultyLevel = FD_GetDifficultyLevel()
+	bool shieldcaptain = false
 
     for ( int i = 0; i < spawnEvent.spawnAmount; i++ )
     {
@@ -1932,15 +1960,53 @@ void function spawnDroppodGrunts(SmokeEvent smokeEvent,SpawnEvent spawnEvent,Wai
 		SetTeam( guy, TEAM_IMC )
 		guy.EnableNPCFlag(  NPC_ALLOW_INVESTIGATE | NPC_ALLOW_HAND_SIGNALS | NPC_ALLOW_FLEE )
 		guy.DisableNPCFlag( NPC_ALLOW_PATROL)
+		if (!shieldcaptain)
+			if (difficultyLevel == eFDDifficultyLevel.MASTER || difficultyLevel == eFDDifficultyLevel.INSANE )
+			{
+				SetSpawnOption_AISettings( guy, "npc_soldier_shield_captain" )
+				shieldcaptain = true
+			}
 		DispatchSpawn( guy )
 
-	guy.SetParent( pod, "ATTACH", true )
-	SetSquad( guy, squadName )
+		guy.SetParent( pod, "ATTACH", true )
+		SetSquad( guy, squadName )
+		guy.AssaultSetFightRadius( 0 ) // makes them keep moving instead of stopping to shoot you.
 
-	SetTargetName( guy, GetTargetNameForID(eFD_AITypeIDs.GRUNT))
-	AddMinimapForHumans(guy)
-	file.spawnedNPCs.append(guy)
-	guys.append( guy )
+		SetTargetName( guy, GetTargetNameForID(eFD_AITypeIDs.GRUNT))
+		AddMinimapForHumans(guy)
+		file.spawnedNPCs.append(guy)
+		guys.append( guy )
+	}
+	switch ( difficultyLevel )
+	{
+		case eFDDifficultyLevel.EASY:
+		case eFDDifficultyLevel.NORMAL:
+			break
+		case eFDDifficultyLevel.HARD: // give 2 guys charge rifle on hard
+		{
+			for( int i = 0; i < 2; i++ )
+			{
+				guys[i].TakeActiveWeapon()
+				guys[i].GiveWeapon( "mp_weapon_defender", [] )
+				guys[i].SetActiveWeaponByName( "mp_weapon_defender" )
+			}
+			break
+		}
+		case eFDDifficultyLevel.MASTER:
+		case eFDDifficultyLevel.INSANE: // give all charge rifle on master
+		{
+			foreach(npc in guys)
+			{
+				npc.TakeActiveWeapon()
+				npc.GiveWeapon( "mp_weapon_defender", [] )
+				npc.SetActiveWeaponByName( "mp_weapon_defender" )
+			}
+			break
+		}
+
+		default:
+			unreachable
+
 	}
 
 	ActivateFireteamDropPod( pod, guys )
@@ -1957,6 +2023,7 @@ void function spawnDroppodStalker(SmokeEvent smokeEvent,SpawnEvent spawnEvent,Wa
 
 	string squadName = MakeSquadName( TEAM_IMC, UniqueString( "ZiplineTable" ) )
 	array<entity> guys
+	int difficultyLevel = FD_GetDifficultyLevel()
 
 	for ( int i = 0; i < spawnEvent.spawnAmount; i++ )
 	{
@@ -1965,13 +2032,45 @@ void function spawnDroppodStalker(SmokeEvent smokeEvent,SpawnEvent spawnEvent,Wa
 		SetTeam( guy, TEAM_IMC )
 		guy.EnableNPCFlag(  NPC_ALLOW_INVESTIGATE | NPC_ALLOW_HAND_SIGNALS | NPC_ALLOW_FLEE )
 		guy.DisableNPCFlag( NPC_ALLOW_PATROL)
+		SetSpawnOption_AISettings( guy, "npc_stalker_fd" )
 		DispatchSpawn( guy )
 
 		SetSquad( guy, squadName )
+		guy.AssaultSetFightRadius( 0 ) // makes them keep moving instead of stopping to shoot you.
 		AddMinimapForHumans(guy)
+		file.spawnedNPCs.append(guy)
 		SetTargetName( guy, GetTargetNameForID(eFD_AITypeIDs.STALKER))
+		thread FDStalkerThink( guy , fd_harvester.harvester )
 		guys.append( guy )
     }
+
+	switch ( difficultyLevel )
+	{
+		case eFDDifficultyLevel.EASY:
+		case eFDDifficultyLevel.NORMAL: // easy and normal stalkers have no weapons
+			foreach(npc in guys)
+			{
+				npc.TakeActiveWeapon()
+				npc.SetNoTarget( false )
+				npc.EnableNPCFlag( NPC_DISABLE_SENSING | NPC_IGNORE_ALL )
+				npc.SetEnemy( fd_harvester.harvester )
+			}
+			break
+		case eFDDifficultyLevel.HARD:
+		case eFDDifficultyLevel.MASTER:
+		case eFDDifficultyLevel.INSANE: // give all EPGs
+			foreach(npc in guys)
+			{
+				npc.TakeActiveWeapon()
+				npc.GiveWeapon( "mp_weapon_epg", [] )
+				npc.SetActiveWeaponByName( "mp_weapon_epg" )
+			}
+			break
+
+		default:
+			unreachable
+
+	}
 
     ActivateFireteamDropPod( pod, guys )
 	SquadNav_Thread(guys,spawnEvent.route)
@@ -1997,6 +2096,7 @@ void function spawnDroppodSpectreMortar(SmokeEvent smokeEvent,SpawnEvent spawnEv
 		DispatchSpawn( guy )
 
 		SetSquad( guy, squadName )
+		guy.AssaultSetFightRadius( 0 ) // makes them keep moving instead of stopping to shoot you.
 		SetTargetName( guy, GetTargetNameForID(eFD_AITypeIDs.SPECTRE_MORTAR))
 		AddMinimapForHumans(guy)
 		guys.append( guy )
@@ -2209,7 +2309,6 @@ void function SpawnTick(SmokeEvent smokeEffect,SpawnEvent spawnEvent,WaitEvent w
 		SetSpawnOption_AISettings(guy, "npc_frag_drone_fd")
 		SetTeam( guy, TEAM_IMC )
 		guy.EnableNPCFlag(  NPC_ALLOW_INVESTIGATE )
-		guy.EnableNPCMoveFlag(NPCMF_WALK_ALWAYS | NPCMF_PREFER_SPRINT)
 		DispatchSpawn( guy )
 		AddMinimapForHumans(guy)
 		SetTargetName( guy, GetTargetNameForID(eFD_AITypeIDs.TICK))
