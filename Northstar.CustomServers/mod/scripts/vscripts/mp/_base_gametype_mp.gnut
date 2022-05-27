@@ -34,9 +34,9 @@ void function BaseGametype_Init_MPSP()
 	
 	AddPostDamageCallback( "player", AddToTitanDamageStat )
 	AddPostDamageCallback( "npc_titan", AddToTitanDamageStat )
+	
 	AddCallback_OnNPCKilled( CheckForAutoTitanDeath )
 	AddCallback_OnPlayerKilled( CheckForAutoTitanDeath )
-
 	RegisterSignal( "PlayerRespawnStarted" )
 	RegisterSignal( "KillCamOver" )
 }
@@ -221,10 +221,10 @@ void function CodeCallback_OnPlayerRespawned( entity player )
 	
 	foreach ( entity weapon in player.GetMainWeapons() )
 		weapon.SetProScreenOwner( player )
-	
+		
 	foreach ( void functionref( entity ) callback in svGlobal.onPlayerRespawnedCallbacks )
 		callback( player )
-
+		
 	Remote_CallFunction_NonReplay( player, "ServerCallback_YouRespawned" )
 	ClearLastAttacker( player ) // so dying to anything doesn't credit the same attacker after respawning
 }
@@ -307,7 +307,7 @@ void function PostDeathThread_MP( entity player, var damageInfo ) // based on ga
 
 	player.Signal( "RodeoOver" )
 	player.ClearParent()
-
+	
 	// do some pre-replay stuff if we're gonna do a replay
 	float replayLength = CalculateLengthOfKillReplay( player, methodOfDeath )
 	bool shouldDoReplay = Replay_IsEnabled() && KillcamsEnabled() && IsValid( attacker ) && ShouldDoReplay( player, attacker, replayLength, methodOfDeath )
@@ -449,13 +449,13 @@ void function RespawnAsTitan( entity player, bool manualPosition = false )
 	
 	entity camera = CreateTitanDropCamera( spawnpoint.GetAngles(), < 90, titan.GetAngles().y, 0 > )
 	camera.SetParent( titan )
-
+	
 	// calc offset for spawnpoint angle
 	// todo this seems bad but too lazy to figure it out rn
 	//vector xyOffset = RotateAroundOrigin2D( < 44, 0, 0 >, < 0, 0, 0>, spawnpoint.GetAngles().y )
 	//xyOffset.z = 520 // < 44, 0, 520 > at 0,0,0, seems to be the offset used in tf2
 	//print( xyOffset )
-
+	
 	vector xyOffset = RotateAroundOrigin2D( < 44, 0, 520 >, < 0, 0, 0 >, spawnpoint.GetAngles().y )
 	
 	camera.SetLocalOrigin( xyOffset )
@@ -482,7 +482,7 @@ void function RespawnAsTitan( entity player, bool manualPosition = false )
 	})
 	
 	waitthread TitanHotDrop( titan, "at_hotdrop_01", spawnpoint.GetOrigin(), spawnpoint.GetAngles(), player, camera ) // do hotdrop anim
-
+		
 	player.RespawnPlayer( null ) // spawn player as pilot so they get their pilot loadout on embark
 	player.SetOrigin( titan.GetOrigin() )
 	
