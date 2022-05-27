@@ -104,7 +104,8 @@ void function GamemodeFD_Init()
 
 	RegisterSignal("FD_ReachedHarvester")
 	RegisterSignal("OnFailedToPath")
-	RegisterSignal("StartCounter")
+	RegisterSignal("StartCounter") // for use in common AI, will cause OnFailedToPath after an amount of time
+	RegisterSignal("SniperSwitchedEnemy") // for use in Sniper Titans behavior, could be useful for other titans as well
 
 	SetRoundBased(true)
 	SetShouldUseRoundWinningKillReplay(false)
@@ -1455,9 +1456,7 @@ void function SquadNav_SingleThread( entity npc, string routeName, int nodesToSc
 			continue
 
 		thread AssaultOrigin(npc,node.GetOrigin(),nextDistance) // this will run thread AssaultOrigin, which waitthread SendAIToAssaultPoint for each separate npc, and if an npc dies, the next iteration in this foreach loop will continue
-		print("npcs moving to next node")
 	}
-	print("npc done and reached harvester")
 	npc.Signal("FD_ReachedHarvester")
 }
 
@@ -2173,6 +2172,7 @@ void function spawnSniperTitan(SmokeEvent smokeEvent,SpawnEvent spawnEvent,WaitE
 	AddMinimapForTitans(npc)
 	npc.WaitSignal( "TitanHotDropComplete" )
 	npc.GetTitanSoul().SetTitanSoulNetBool( "showOverheadIcon", true )
+	npc.DisableNPCFlag( NPC_ALLOW_INVESTIGATE ) // dont want to try to let them move around their assault point
 	thread SniperTitanThink(npc,fd_harvester.harvester)
 
 }
@@ -2189,6 +2189,7 @@ void function SpawnToneSniperTitan(SmokeEvent smokeEvent,SpawnEvent spawnEvent,W
 	AddMinimapForTitans(npc)
 	npc.WaitSignal( "TitanHotDropComplete" )
 	npc.GetTitanSoul().SetTitanSoulNetBool( "showOverheadIcon", true )
+	npc.DisableNPCFlag( NPC_ALLOW_INVESTIGATE ) // dont want to try to let them move around their assault point
 	thread SniperTitanThink(npc,fd_harvester.harvester)
 
 }
