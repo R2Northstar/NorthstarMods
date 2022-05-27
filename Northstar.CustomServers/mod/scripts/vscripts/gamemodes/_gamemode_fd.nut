@@ -95,6 +95,7 @@ struct {
 	array<entity> spawnedNPCs
 	table<entity,player_struct_fd> players
 	entity harvester_info
+	entity tickfornuke
 }file
 
 void function GamemodeFD_Init()
@@ -127,7 +128,7 @@ void function GamemodeFD_Init()
 	AddDamageCallback( "npc_turret_sentry", DamageScaleByDifficulty )
 	AddSpawnCallback( "npc_titan", HealthScaleByDifficulty )
 	AddSpawnCallback( "npc_super_spectre", HealthScaleByDifficulty )
-
+	AddDamageCallbackSourceID( damagedef_nuclear_core, NukeTitanExplosionCallback )
 
 	AddCallback_OnNPCKilled(OnNpcDeath)
 	AddSpawnCallback("npc_turret_sentry", AddTurretSentry )
@@ -1089,6 +1090,73 @@ void function HealthScaleByDifficulty( entity ent )
 
 }
 
+// make sure that the nuke titan's damage doesn't affect his teammates
+void function NukeTitanExplosionCallback( entity ent, var damageInfo )
+{
+	thread NukeTitanExplosionCallback_Threaded( ent, damageInfo )
+}
+// EVERYTHING ABOUT THIS IS A GODDAMN HACK
+void function NukeTitanExplosionCallback_Threaded( entity ent, var damageInfo )
+{
+	print("NukeTitanExplosionCallback")
+	if (!IsValid(ent) && !ent.IsTitan())
+		return
+
+	entity attacker = DamageInfo_GetAttacker( damageInfo )
+
+	if ( !IsValid(attacker) )
+		return
+
+	if ( GetTeamIntFromEnt( attacker ) == 0)
+		return
+
+	print( DamageInfo_GetInflictor( damageInfo ) )
+	print( ent )
+	int team = GetTeamIntFromEnt( attacker )
+	if ( ent.GetTeam() == team )
+	{
+		print("same team")
+		DamageInfo_SetDamage( damageInfo, 0 )
+		return
+	}
+
+	vector origin = DamageInfo_GetDamagePosition( damageInfo )
+	entity inflictor
+	// this is really fucking horrendous i cant believe i've done this either
+	if (!IsValid(file.tickfornuke))
+	{
+		inflictor = CreateFragDrone( team, origin, <0,0,0> )
+		inflictor.SetTitle( "#NPC_TITAN_AUTO_NUKE" )
+		DispatchSpawn( inflictor )
+		inflictor.Hide()
+		inflictor.EnableNPCFlag( NPC_IGNORE_ALL )
+		inflictor.SetTakeDamageType( DAMAGE_NO )
+		inflictor.SetDamageNotifications( false )
+		inflictor.kv.CollisionGroup = TRACE_COLLISION_GROUP_NONE
+		SetTeam( inflictor, team )
+		file.tickfornuke = inflictor
+	}
+	else
+	{
+		inflictor = file.tickfornuke
+	}
+
+	ent.TakeDamage( DamageInfo_GetDamage( damageInfo ), inflictor, DamageInfo_GetInflictor( damageInfo ), { weapon = DamageInfo_GetWeapon( damageInfo ), origin = DamageInfo_GetDamagePosition( damageInfo ), force = DamageInfo_GetDamageForce( damageInfo ), scriptType = DamageInfo_GetCustomDamageType( damageInfo ), damageSourceId = DamageInfo_GetDamageSourceIdentifier( damageInfo ) } )
+	// now zero out the normal damage and return
+	DamageInfo_SetDamage( damageInfo, 0 )
+	WaitFrame()
+	inflictor.Destroy()
+}
+
+int function GetTeamIntFromEnt( entity teamEnt )
+{
+	for (int i = 0; i < 40; i++)
+	{
+  		if (GetTeamEnt(i) == teamEnt)
+    		return i
+	}
+	return 0
+}
 
 void function FD_createHarvester()
 {
@@ -2133,7 +2201,6 @@ void function spawnNukeTitan(SmokeEvent smokeEvent,SpawnEvent spawnEvent,WaitEve
 	SetSpawnOption_AISettings(npc,"npc_titan_ogre_minigun_nuke")
 	SetSpawnOption_Titanfall(npc)
 	SetTargetName( npc, GetTargetNameForID(spawnEvent.spawnType)) // required for client to create icons
-	npc.EnableNPCMoveFlag(NPCMF_WALK_ALWAYS)
 	DispatchSpawn(npc)
 	file.spawnedNPCs.append(npc)
 	AddMinimapForTitans(npc)
@@ -2360,8 +2427,15 @@ void function waitUntilLessThanAmountAlive_expensive(int amount)
 	array<entity> npcs = GetNPCArray()
 	int deduct = 0
 	foreach (entity npc in npcs)
+	{
 		if (IsValid(GetPetTitanOwner( npc )))
 			deduct++
+		else if (IsTick(npc))
+		{
+			npc.Die()
+			deduct++
+		}
+	}
 	int aliveTitans = npcs.len() - deduct
 	while(aliveTitans>amount)
 	{

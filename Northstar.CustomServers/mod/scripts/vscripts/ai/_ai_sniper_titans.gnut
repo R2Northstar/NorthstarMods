@@ -123,10 +123,11 @@ void function CreateSniperTarget(entity titan)
 	titan.EndSignal( "OnDestroy" )
 
 	vector origin = titan.EyePosition()
-	TraceResults result = TraceLine( origin, file.harvester.GetOrigin() + <0, 0, 250>, titan )
+	TraceResults result = TraceLine( origin, file.harvester.GetOrigin() + <0, 0, 250>, titan , TRACE_MASK_BLOCKLOS, TRACE_COLLISION_GROUP_NONE )
 	// check if the endPos is too near the titan
-	while (Distance(result.endPos, origin) < 200)
+	while (Distance(result.endPos, origin) < 200 || Distance(result.endPos, file.harvester.GetOrigin()) < 200)
 	{
+		wait 2.0
 		origin = titan.EyePosition()
 		result = TraceLine( origin, file.harvester.GetOrigin() + <0, 0, 250>, titan )
 	}
@@ -159,13 +160,6 @@ void function EnemyChanged( entity titan )
 		thread SniperTitanAttack( titan, file.harvester )
 		enemy = file.harvester
 	}
-
-	if (enemy.IsPlayer())
-		print( "Sniper titan is now attacking player" )
-	else if (enemy == file.harvester)
-		print( "Sniper titan is now attacking generator" )
-	else
-		print( "Sniper titan is now attacking something else" )
 }
 
 function SniperTitanAttack( entity titan, entity target )
