@@ -536,7 +536,7 @@ void function AddToTitanDamageStat( entity victim, var damageInfo )
 
 void function CheckForAutoTitanDeath( entity victim, entity attacker, var damageInfo )
 {
-	if( !IsValid(victim) && victim.IsTitan() )
+	if( !IsValid(victim) || !victim.IsTitan() )
 		return
 
 	if( !victim.IsPlayer() )
