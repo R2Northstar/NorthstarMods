@@ -483,6 +483,7 @@ void function spawnDroppodStalker(SmokeEvent smokeEvent,SpawnEvent spawnEvent,Wa
 
 	string squadName = MakeSquadName( TEAM_IMC, UniqueString( "ZiplineTable" ) )
 	array<entity> guys
+	int difficultyLevel = FD_GetDifficultyLevel()
 
 	for ( int i = 0; i < spawnEvent.spawnAmount; i++ )
 	{
@@ -491,16 +492,48 @@ void function spawnDroppodStalker(SmokeEvent smokeEvent,SpawnEvent spawnEvent,Wa
 		SetTeam( guy, TEAM_IMC )
 		guy.EnableNPCFlag(  NPC_ALLOW_INVESTIGATE | NPC_ALLOW_HAND_SIGNALS | NPC_ALLOW_FLEE )
 		guy.DisableNPCFlag( NPC_ALLOW_PATROL)
+		SetSpawnOption_AISettings( guy, "npc_stalker_fd" )
 		DispatchSpawn( guy )
 
 		SetSquad( guy, squadName )
+		guy.AssaultSetFightRadius( 0 ) // makes them keep moving instead of stopping to shoot you.
 		AddMinimapForHumans(guy)
+		file.spawnedNPCs.append(guy)
 		SetTargetName( guy, GetTargetNameForID(eFD_AITypeIDs.STALKER))
+		thread FDStalkerThink( guy , fd_harvester.harvester )
 		guys.append( guy )
-    }
+	}
 
-    ActivateFireteamDropPod( pod, guys )
-	thread SquadNav_Thread(guys,spawnEvent.route)
+	switch ( difficultyLevel )
+	{
+		case eFDDifficultyLevel.EASY:
+		case eFDDifficultyLevel.NORMAL: // easy and normal stalkers have no weapons
+			foreach(npc in guys)
+			{
+				npc.TakeActiveWeapon()
+				npc.SetNoTarget( false )
+				npc.EnableNPCFlag( NPC_DISABLE_SENSING | NPC_IGNORE_ALL )
+				npc.SetEnemy( fd_harvester.harvester )
+			}
+			break
+		case eFDDifficultyLevel.HARD:
+		case eFDDifficultyLevel.MASTER:
+		case eFDDifficultyLevel.INSANE: // give all EPGs
+			foreach(npc in guys)
+			{
+				npc.TakeActiveWeapon()
+				npc.GiveWeapon( "mp_weapon_epg", [] )
+				npc.SetActiveWeaponByName( "mp_weapon_epg" )
+			}
+			break
+
+		default:
+			unreachable
+
+	}
+
+	ActivateFireteamDropPod( pod, guys )
+	SquadNav_Thread(guys,spawnEvent.route)
 
 }
 
