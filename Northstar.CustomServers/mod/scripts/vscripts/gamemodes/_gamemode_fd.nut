@@ -1062,6 +1062,8 @@ void function NukeTitanExplosionCallback_Threaded( entity ent, var damageInfo )
 	ent.TakeDamage( DamageInfo_GetDamage( damageInfo ), inflictor, DamageInfo_GetInflictor( damageInfo ), { weapon = DamageInfo_GetWeapon( damageInfo ), origin = DamageInfo_GetDamagePosition( damageInfo ), force = DamageInfo_GetDamageForce( damageInfo ), scriptType = DamageInfo_GetCustomDamageType( damageInfo ), damageSourceId = DamageInfo_GetDamageSourceIdentifier( damageInfo ) } )
 	// now zero out the normal damage and return
 	DamageInfo_SetDamage( damageInfo, 0 )
+	wait 2.0
+	inflictor.Destroy()
 }
 
 int function GetTeamIntFromEnt( entity teamEnt )
