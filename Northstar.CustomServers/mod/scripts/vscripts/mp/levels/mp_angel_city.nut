@@ -25,6 +25,12 @@ void function CodeCallback_MapInit()
 	// there are some really busted titan startspawns that are on the fucking other side of the map from where they should be, so we remove them
 	AddSpawnCallback( "info_spawnpoint_titan_start", TrimBadTitanStartSpawns )
 	AddSpawnCallback( "sky_camera", FixSkycamFog )
+
+
+	// Load Frontier Defense Data
+	if(GameRules_GetGameMode()=="fd")
+        initFrontierDefenseData()
+
 }
 
 void function FixBatterySpawns( entity spawn )

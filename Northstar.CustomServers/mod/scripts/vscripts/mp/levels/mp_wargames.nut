@@ -29,6 +29,11 @@ void function CodeCallback_MapInit()
 	// currently disabled until finished: intro
 	if ( !IsFFAGame() )
 		ClassicMP_SetLevelIntro( WargamesIntroSetup, 20.0 )
+		
+	// Load Frontier Defense Data
+	if(GameRules_GetGameMode()=="fd")
+        initFrontierDefenseData()
+}
 }
 
 void function AddEvacNodes()

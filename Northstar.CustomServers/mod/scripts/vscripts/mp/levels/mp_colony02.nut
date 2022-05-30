@@ -11,4 +11,10 @@ void function CodeCallback_MapInit()
 	AddEvacNode( CreateScriptRef( < -1035.991211, -671.114380, 824.180908 >, < 16.220453, -24.511070, 0 > ) )
 	
 	SetEvacSpaceNode( GetEnt( "intro_spacenode" ) )
+
+
+
+	// Load Frontier Defense Data
+	if(GameRules_GetGameMode()=="fd")
+        initFrontierDefenseData()
 }

@@ -100,14 +100,14 @@ void function MortarMissileThink( entity missile, entity weaponOwner )
 	{
 		float frac = min( 1, pow( ( Time() - startTime ) / estTravelTime, 2.0 ) )
 
-	 	if ( frac > 1.0 )
-	 		break
+		if ( frac > 1.0 )
+			break
 
 		float homingSpeed = GraphCapped( frac, 0, 1, homingSpeedMin, homingSpeedMax )
 
-	 	missile.SetHomingSpeeds( homingSpeed, 0 )
+		missile.SetHomingSpeeds( homingSpeed, 0 )
 
-	 	wait 0.25
+		wait 0.25
 	}
 
 	missile.ClearMissileTargetPosition()
