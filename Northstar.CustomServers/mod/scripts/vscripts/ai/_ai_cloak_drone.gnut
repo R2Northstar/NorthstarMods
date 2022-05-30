@@ -334,11 +334,7 @@ void function CloakedDronePathFollowNPC( entity cloakedDrone, entity goalNPC )
 		function() : ( goalNPC )
 		{
 			if ( IsAlive( goalNPC ) )
-			{
 				goalNPC.s.cloakedDrone = null
-				if(IsCloaked(goalNPC))
-					goalNPC.Signal( "KillHandleCloakEnd" )
-			}
 		}
 	)
 
@@ -385,9 +381,6 @@ void function CloakedDronePathFollowNPC( entity cloakedDrone, entity goalNPC )
 
 		float startTime = Time()
 		path.goalValid 	= false
-
-		if(!IsCloaked(goalNPC))
-			CloakNPC(goalNPC)
 
 		CloakedDroneFindPathDefault( path, defaultHeight, mins, maxs, cloakedDrone, goalNPC, mask )
 
@@ -682,44 +675,4 @@ function IsSquadCenterClose( npc, dist = 256 )
 		return true
 
 	return false
-}
-
-void function CloakNPC ( entity npc )
-{
-	npc.SetCloakDuration( 1.0, -1, 1.0 )
-
-	EmitSoundOnEntity( npc, "cloak_on_3P" )
-	EmitSoundOnEntity( npc, "cloak_sustain_loop_3P" )
-
-	thread HandleNPCCloakEnd( npc )
-}
-
-void function HandleNPCCloakEnd( entity npc )
-{
-	npc.EndSignal( "OnDeath" )
-	npc.Signal( "OnStartCloak" )
-	npc.EndSignal( "OnStartCloak" )
-	npc.EndSignal( "KillHandleCloakEnd" ) //Calling DisableCloak() after EnableCloak() doesn't kill this thread by design (to allow attacking through cloak etc), so this signal is for when you want to kill this thread
-
-	OnThreadEnd(
-		function() : ( npc )
-		{
-			if ( !IsValid( npc ) )
-				return
-
-			StopSoundOnEntity( npc, "cloak_sustain_loop_3P" )
-
-			if ( !IsCloaked( npc ) )
-				return
-
-			if ( !IsAlive( npc ) || !npc.IsHuman() )
-			{
-				EmitSoundOnEntity( npc, "cloak_interruptend_3P" )
-				npc.SetCloakDuration( 0, 0, 1.0 )
-				return
-			}
-		}
-	)
-
-	WaitForever()
 }
