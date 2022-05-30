@@ -546,9 +546,9 @@ void function spawnSuperSpectre(SmokeEvent smokeEvent,SpawnEvent spawnEvent,Wait
 	wait 4.7
 	DispatchSpawn(npc)
 	SetTargetName( npc, GetTargetNameForID(spawnEvent.spawnType))
-	npc.WaitSignal("WarpfallComplete")
 	AddMinimapForHumans(npc)
 	thread SuperSpectre_WarpFall(npc)
+	npc.WaitSignal("WarpfallComplete")
 	thread singleNav_thread(npc, spawnEvent.route)
 }
 
@@ -564,8 +564,8 @@ void function spawnSuperSpectreWithMinion(SmokeEvent smokeEvent,SpawnEvent spawn
 	DispatchSpawn(npc)
 	SetTargetName( npc, GetTargetNameForID(spawnEvent.spawnType))
 	AddMinimapForHumans(npc)
-	npc.WaitSignal("WarpfallComplete")
 	thread SuperSpectre_WarpFall(npc)
+	npc.WaitSignal("WarpfallComplete")
 	thread ReaperMinionLauncherThink(npc)
 
 }
