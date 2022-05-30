@@ -401,7 +401,7 @@ void function spawnArcTitan(SmokeEvent smokeEvent,SpawnEvent spawnEvent,WaitEven
 	npc.WaitSignal( "TitanHotDropComplete" )
 	npc.GetTitanSoul().SetTitanSoulNetBool( "showOverheadIcon", true )
 	npc.AssaultSetFightRadius(0)
-	thread singleNav_thread(npc,spawnEvent.route)
+	thread CommonAIThink(npc,spawnEvent.route)
 	thread EMPTitanThinkConstant(npc)
 
 }
@@ -567,7 +567,7 @@ void function spawnNukeTitan(SmokeEvent smokeEvent,SpawnEvent spawnEvent,WaitEve
 	AddMinimapForTitans(npc)
 	npc.WaitSignal( "TitanHotDropComplete" )
 	npc.GetTitanSoul().SetTitanSoulNetBool( "showOverheadIcon", true )
-	thread singleNav_thread(npc,spawnEvent.route)
+	thread CommonAIThink(npc,spawnEvent.route)
 	thread NukeTitanThink(npc,fd_harvester.harvester)
 
 }
