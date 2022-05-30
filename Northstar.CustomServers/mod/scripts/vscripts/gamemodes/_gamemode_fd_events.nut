@@ -2,6 +2,7 @@ global function createSmokeEvent
 global function createArcTitanEvent
 global function createWaitForTimeEvent
 global function createSuperSpectreEvent
+global function createSuperSpectreEventWithMinion
 global function createDroppodGruntEvent
 global function createNukeTitanEvent
 global function createMortarTitanEvent
@@ -168,6 +169,21 @@ WaveEvent function createSuperSpectreEvent(vector origin,vector angles,string ro
 {
 	WaveEvent event
 	event.eventFunction = spawnSuperSpectre
+	event.executeOnThisCall = executeOnThisCall
+	event.nextEventIndex = nextEventIndex
+	event.shouldThread = true
+	event.spawnEvent.spawnType= eFD_AITypeIDs.REAPER
+	event.spawnEvent.spawnAmount = 1
+	event.spawnEvent.origin = origin
+	event.spawnEvent.angles = angles
+	event.spawnEvent.route = route
+	return event
+}
+
+WaveEvent function createSuperSpectreEventWithMinion(vector origin,vector angles,string route,int nextEventIndex,int executeOnThisCall = 1)
+{
+	WaveEvent event
+	event.eventFunction = spawnSuperSpectreWithMinion
 	event.executeOnThisCall = executeOnThisCall
 	event.nextEventIndex = nextEventIndex
 	event.shouldThread = true
@@ -401,7 +417,7 @@ void function spawnArcTitan(SmokeEvent smokeEvent,SpawnEvent spawnEvent,WaitEven
 	npc.WaitSignal( "TitanHotDropComplete" )
 	npc.GetTitanSoul().SetTitanSoulNetBool( "showOverheadIcon", true )
 	npc.AssaultSetFightRadius(0)
-	thread singleNav_thread(npc,spawnEvent.route)
+	thread CommonAIThink(npc,spawnEvent.route)
 	thread EMPTitanThinkConstant(npc)
 
 }
@@ -423,6 +439,22 @@ void function waitUntilLessThanAmountAliveEvent(SmokeEvent smokeEvent,SpawnEvent
 }
 
 void function spawnSuperSpectre(SmokeEvent smokeEvent,SpawnEvent spawnEvent,WaitEvent waitEvent,SoundEvent soundEvent)
+{
+	PingMinimap(spawnEvent.origin.x, spawnEvent.origin.y, 4, 600, 150, 0)
+
+	entity npc = CreateSuperSpectre(TEAM_IMC,spawnEvent.origin,spawnEvent.angles)
+	SetSpawnOption_AISettings(npc,"npc_super_spectre_fd")
+	spawnedNPCs.append(npc)
+
+	wait 4.7
+	DispatchSpawn(npc)
+	AddMinimapForHumans(npc)
+	thread SuperSpectre_WarpFall(npc)
+
+	SetTargetName( npc, GetTargetNameForID(spawnEvent.spawnType))
+}
+
+void function spawnSuperSpectreWithMinion(SmokeEvent smokeEvent,SpawnEvent spawnEvent,WaitEvent waitEvent,SoundEvent soundEvent)
 {
 	PingMinimap(spawnEvent.origin.x, spawnEvent.origin.y, 4, 600, 150, 0)
 
@@ -460,13 +492,13 @@ void function spawnDroppodGrunts(SmokeEvent smokeEvent,SpawnEvent spawnEvent,Wai
 		guy.DisableNPCFlag( NPC_ALLOW_PATROL)
 		DispatchSpawn( guy )
 
-	guy.SetParent( pod, "ATTACH", true )
-	SetSquad( guy, squadName )
+		guy.SetParent( pod, "ATTACH", true )
+		SetSquad( guy, squadName )
 
-	SetTargetName( guy, GetTargetNameForID(eFD_AITypeIDs.GRUNT))
-	AddMinimapForHumans(guy)
-	spawnedNPCs.append(guy)
-	guys.append( guy )
+		SetTargetName( guy, GetTargetNameForID(eFD_AITypeIDs.GRUNT))
+		AddMinimapForHumans(guy)
+		spawnedNPCs.append(guy)
+		guys.append( guy )
 	}
 
 	ActivateFireteamDropPod( pod, guys )
@@ -567,7 +599,7 @@ void function spawnNukeTitan(SmokeEvent smokeEvent,SpawnEvent spawnEvent,WaitEve
 	AddMinimapForTitans(npc)
 	npc.WaitSignal( "TitanHotDropComplete" )
 	npc.GetTitanSoul().SetTitanSoulNetBool( "showOverheadIcon", true )
-	thread singleNav_thread(npc,spawnEvent.route)
+	thread CommonAIThink(npc,spawnEvent.route)
 	thread NukeTitanThink(npc,fd_harvester.harvester)
 
 }
