@@ -51,6 +51,7 @@ void function GamemodeFD_Init()
 
 	RegisterSignal("FD_ReachedHarvester")
 	RegisterSignal("OnFailedToPath")
+	RegisterSignal( "StartCounter" ) // for use in CommonAIThink, TimeCounter
 
 	SetRoundBased(true)
 	SetShouldUseRoundWinningKillReplay(false)
