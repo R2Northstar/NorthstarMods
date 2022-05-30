@@ -3,15 +3,21 @@ untyped
 global function MoveToSniperPosition
 global function SniperTitanThink
 
-const float SNIPER_TITAN_POSITION_SEARCH_RANGE = 2048
+const float SNIPER_TITAN_POSITION_SEARCH_RANGE = 4120
+
+struct
+{
+	entity harvester
+} file
 
 void function MoveToSniperPosition( entity titan, vector origin, entity target )
 {
 	titan.EndSignal( "OnSyncedMeleeVictim" )
 	titan.EndSignal( "OnDeath" )
 	titan.EndSignal( "OnDestroy" )
+	file.harvester.EndSignal( "OnDeath" )
+	file.harvester.EndSignal( "OnDestroy" )
 
-	titan.SetLookDistOverride( 320 )
 	titan.EnableNPCMoveFlag( NPCMF_PREFER_SPRINT )
 
 	float goalRadius = titan.GetMinGoalRadius()
@@ -23,7 +29,6 @@ void function MoveToSniperPosition( entity titan, vector origin, entity target )
 				return
 
 			local classname = titan.GetClassName()
-			titan.DisableLookDistOverride()
 			titan.DisableNPCMoveFlag( NPCMF_PREFER_SPRINT )
 		}
 	)
@@ -38,21 +43,24 @@ void function MoveToSniperPosition( entity titan, vector origin, entity target )
 		printt( "Sniper titan moving toward his goal", dist, tries++ )
 		titan.AssaultPoint( origin )
 		titan.AssaultSetGoalRadius( goalRadius )
-        titan.SetEnemy( target )
+		titan.AssaultSetFightRadius( 0 )
 		local result = WaitSignal( titan, "OnFinishedAssault", "OnEnterGoalRadius" )
+		printt( "Sniper titan done moving into position")
 	}
 }
 
-void function SniperTitanThink( entity titan, entity generator )
+void function SniperTitanThink( entity titan, entity generator)
 {
 	titan.EndSignal( "OnSyncedMeleeVictim" )
 	titan.EndSignal( "OnDeath" )
 	titan.EndSignal( "OnDestroy" )
+	file.harvester.EndSignal( "OnDeath" )
+	file.harvester.EndSignal( "OnDestroy" )
 
 	entity soul = titan.GetTitanSoul()
 	soul.EndSignal( "OnDestroy" )
 
-	// titan.SetScriptName( "sniper_titan" )
+	titan.SetScriptName( "sniper_titan" )
 
 	WaitTillHotDropComplete( titan )
 
@@ -72,17 +80,150 @@ void function SniperTitanThink( entity titan, entity generator )
 	OnThreadEnd(
 		function() : ( sniperPosition )
 		{
-			// release mortar position when dead
+			// release sniper position when dead
 			ReleaseStationaryAIPosition( sniperPosition )
 		}
 	)
+	file.harvester = generator
+	titan.SetEnemyChangeCallback( EnemyChanged )
+	thread CheckEnemy( titan )
+	while( true )
+	{
+		WaitFrame()
+		vector origin = sniperPosition.origin
+		waitthread MoveToSniperPosition( titan, origin, generator )
+
+		thread SniperTitanAttack( titan, generator )
+
+		waitthread WaitForInterruption( titan )
+	}
+}
+// check if titan can see enemy
+void function CheckEnemy(entity titan)
+{
+	titan.EndSignal( "OnSyncedMeleeVictim" )
+	titan.EndSignal( "OnDeath" )
+	titan.EndSignal( "OnDestroy" )
+	file.harvester.EndSignal( "OnDeath" )
+	file.harvester.EndSignal( "OnDestroy" )
+
+	while (IsValid(titan))
+	{
+		wait 1
+		if (!IsValid(titan.GetEnemy()))
+			continue
+
+		if (!titan.CanSee(titan.GetEnemy()) && titan.GetEnemy() == file.harvester)
+		{
+			waitthread CreateSniperTarget( titan )
+			wait 1 // wait for 1 second so the signal doesn't get called too soon
+			table result = WaitSignal( titan, "SniperSwitchedEnemy" )
+		}
+	}
+}
+
+void function CreateSniperTarget(entity titan)
+{
+	titan.EndSignal( "OnSyncedMeleeVictim" )
+	titan.EndSignal( "OnDeath" )
+	titan.EndSignal( "OnDestroy" )
+	file.harvester.EndSignal( "OnDeath" )
+	file.harvester.EndSignal( "OnDestroy" )
+
+	vector origin = titan.EyePosition()
+	TraceResults result = TraceLine( origin, file.harvester.GetOrigin() + <0, 0, 250>, titan , TRACE_MASK_BLOCKLOS, TRACE_COLLISION_GROUP_NONE )
+	// check if the endPos is too near the titan
+	while (Distance(result.endPos, origin) < 200 || Distance(result.endPos, file.harvester.GetOrigin()) < 200)
+	{
+		wait 2.0
+		origin = titan.EyePosition()
+		result = TraceLine( origin, file.harvester.GetOrigin() + <0, 0, 250>, titan )
+	}
+	entity snipertarget = CreateEntity( "info_target" )
+	DispatchSpawn( snipertarget )
+	snipertarget.SetOrigin( result.endPos ) // in front of the harvester i hope
+	SetTeam( snipertarget, TEAM_MILITIA )
+   	snipertarget.EnableAttackableByAI( 40, 0, AI_AP_FLAG_NONE )
+	titan.SetEnemy( snipertarget )
+	wait 1 // wait for 1 second so the signal doesn't get called too soon
+	titan.WaitSignal( "SniperSwitchedEnemy" )
+
+	OnThreadEnd(
+		function() : ( snipertarget )
+		{
+			if ( !IsValid( snipertarget ) )
+				return
+
+			snipertarget.Destroy()
+		}
+	)
+}
+
+void function EnemyChanged( entity titan )
+{
+	titan.Signal( "SniperSwitchedEnemy" )
+	entity enemy = titan.GetEnemy()
+	if ( !IsValid( enemy ) ) // if you have no enemy, focus on attacking the harvester
+	{
+		thread SniperTitanAttack( titan, file.harvester )
+		enemy = file.harvester
+	}
+}
+
+function SniperTitanAttack( entity titan, entity target )
+{
+	titan.EndSignal( "OnSyncedMeleeVictim" )
+	titan.EndSignal( "OnDeath" )
+	titan.EndSignal( "OnDestroy" )
+
+	OnThreadEnd(
+		function() : ( titan )
+		{
+			if ( !IsValid( titan ) )
+				return
+		}
+	)
+	titan.SetEnemy( target )
+}
+
+void function WaitForInterruption( entity titan )
+{
+	Assert( IsNewThread(), "Must be threaded off" )
+
+	titan.EndSignal( "OnSyncedMeleeVictim" )
+	titan.EndSignal( "OnDeath" )
+	titan.EndSignal( "OnDestroy" )
+	file.harvester.EndSignal( "OnDeath" )
+	file.harvester.EndSignal( "OnDestroy" )
+
+	entity soul = titan.GetTitanSoul()
+	soul.EndSignal( "OnDestroy" )
+
+	float playerProximityDistSqr = pow( 256, 2 )
+	float healthBreakOff = ( titan.GetHealth() + soul.GetShieldHealth() ) * 0.9
 
 	while( true )
 	{
-		vector origin = sniperPosition.origin
-        titan.SetEnemy( generator )
-		waitthread MoveToSniperPosition( titan, origin, generator )
-
-		WaitForever()
+		if ( IsEnemyWithinDist( titan, playerProximityDistSqr ) )
+			break
+		if ( ( titan.GetHealth() + soul.GetShieldHealth() ) < healthBreakOff )
+			break
+		wait 1
 	}
+
+	titan.ClearEnemy()
+}
+
+bool function IsEnemyWithinDist( entity titan, float dist )
+{
+	vector origin = titan.GetOrigin()
+	array<entity> players = GetPlayerArrayOfEnemies_Alive( titan.GetTeam() )
+
+	foreach( player in players )
+	{
+		if ( DistanceSqr( player.GetOrigin(), origin ) < dist )
+			return true
+	}
+
+	return false
 }

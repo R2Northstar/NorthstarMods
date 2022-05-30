@@ -49,6 +49,7 @@ void function GamemodeFD_Init()
 	PrecacheModel( MODEL_ATTRITION_BANK )
 	PrecacheParticleSystem($"P_smokescreen_FD")
 
+	RegisterSignal( "SniperSwitchedEnemy" ) // for use in SniperTitanThink behavior.
 	RegisterSignal("FD_ReachedHarvester")
 	RegisterSignal("OnFailedToPath")
 
