@@ -181,16 +181,24 @@ void function OnNpcDeath( entity victim, entity attacker, var damageInfo )
 		default:
 			string netIndex = GetAiNetIdFromTargetName(victim.GetTargetName())
 			if(netIndex != "")
-			SetGlobalNetInt(netIndex,GetGlobalNetInt(netIndex)-1)
+				SetGlobalNetInt(netIndex,GetGlobalNetInt(netIndex)-1)
+			else
+			{
+				if (victim.GetTargetName() == "Cloak Drone") // special case for cloak drone, someone in respawn fucked up here
+					SetGlobalNetInt( "FD_AICount_Drone_Cloak", GetGlobalNetInt("FD_AICount_Drone_Cloak")-1)
+			}
 		}
 		SetGlobalNetInt("FD_AICount_Current",GetGlobalNetInt("FD_AICount_Current")-1)
 	}
 
-	if ( victim.GetOwner() == attacker || !attacker.IsPlayer() || attacker == victim )
+	if ( victim.GetOwner() == attacker || !attacker.IsPlayer() || attacker == victim || victim.GetBossPlayer() == attacker || victim.GetClassName() == "npc_turret_sentry" )
 		return
 	
 	int playerScore = 0
 	int money = 0
+	int scriptDamageType = DamageInfo_GetCustomDamageType( damageInfo )
+	int damageSourceId = DamageInfo_GetDamageSourceIdentifier( damageInfo )
+
 	if ( victim.IsNPC() )
 	{
 		string eventName = FD_GetScoreEventName( victim.GetClassName() )
@@ -202,7 +210,7 @@ void function OnNpcDeath( entity victim, entity attacker, var damageInfo )
 				money = 5
 				break
 			case "npc_drone":
-			case "npc_spectre": // not sure
+			case "npc_spectre":
 				money = 10
 				break
 			case "npc_stalker":
@@ -214,6 +222,8 @@ void function OnNpcDeath( entity victim, entity attacker, var damageInfo )
 			default:
 				money = 0 // titans seem to total up to 50 money undoomed health
 		}
+		foreach(player in GetPlayerArray())
+			Remote_CallFunction_NonReplay( player, "ServerCallback_OnTitanKilled", attacker.GetEncodedEHandle(), victim.GetEncodedEHandle(), scriptDamageType, damageSourceId )
 	}
 	if (money != 0)
 		AddMoneyToPlayer( attacker , money )
@@ -757,7 +767,7 @@ void function OnHarvesterDamaged(entity harvester, var damageInfo)
 			EmitSoundAtPosition(TEAM_UNASSIGNED,fd_harvester.harvester.GetOrigin(),"coop_generator_destroyed")
 			newHealth = 0
 			PlayFactionDialogueToTeam( "fd_baseDeath", TEAM_MILITIA )
-			fd_harvester.rings.Destroy()
+			fd_harvester.rings.Anim_Stop()
 		}
 		harvester.SetHealth( newHealth )
 		file.havesterWasDamaged = true
@@ -980,6 +990,7 @@ void function HealthScaleByDifficulty( entity ent )
 				ent.SetMaxHealth( ent.GetMaxHealth() - 5000 )
 			else
 				ent.SetMaxHealth( ent.GetMaxHealth() - 2000 )
+			break
 		case eFDDifficultyLevel.NORMAL:
 			if ( ent.IsTitan() )
 				ent.SetMaxHealth( ent.GetMaxHealth() - 2500 )
@@ -994,8 +1005,12 @@ void function HealthScaleByDifficulty( entity ent )
 		case eFDDifficultyLevel.INSANE:
 			if ( ent.IsTitan() )
 			{
-				ent.SetShieldHealthMax( 2500 ) // apparently they have 0, costs me some time debugging this ffs
-				ent.SetShieldHealth( 2500 )
+				entity soul = ent.GetTitanSoul()
+				if (IsValid(soul))
+				{
+					soul.SetShieldHealthMax( 2500 ) // apparently they have 0, costs me some time debugging this ffs
+					soul.SetShieldHealth( 2500 )
+				}
 			}
 			break
 
@@ -1086,7 +1101,6 @@ void function LoadEntities()
 }
 
 
-
 bool function allPlayersReady()
 {
 	foreach(entity player in GetPlayerArray())
@@ -1166,7 +1180,7 @@ string function GetTargetNameForID(int typeId)
 			case eFD_AITypeIDs.LEGION:
 				return "npc_titan_ogre_minigun"
 			case eFD_AITypeIDs.TITAN_ARC:
-				return "npc_titan_arc"
+				return "empTitan"
 			case eFD_AITypeIDs.RONIN:
 				return "npc_titan_stryder_leadwall"
 			case eFD_AITypeIDs.TITAN_MORTAR:
@@ -1198,7 +1212,7 @@ string function GetTargetNameForID(int typeId)
 			case eFD_AITypeIDs.DRONE:
 				return "drone"
 			case eFD_AITypeIDs.DRONE_CLOAK:
-				return "cloakedDrone"
+				return "Cloak Drone" // have to be like this for some reason in cl_gamemode_fd
 			default:
 				return "titan"
 		}
