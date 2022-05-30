@@ -2,6 +2,7 @@ global function createSmokeEvent
 global function createArcTitanEvent
 global function createWaitForTimeEvent
 global function createSuperSpectreEvent
+global function createSuperSpectreEventWithMinion
 global function createDroppodGruntEvent
 global function createNukeTitanEvent
 global function createMortarTitanEvent
@@ -13,7 +14,13 @@ global function createWaitUntilAliveEvent
 global function createCloakDroneEvent
 global function CreateTickEvent
 global function CreateToneSniperTitanEvent
-global function CreateNorthstarSniperTitanEvent
+global function CreateNorthstarSniperTitanEvent // northstars are always sniper titans
+global function CreateIonTitanEvent
+global function CreateScorchTitanEvent
+global function CreateRoninTitanEvent
+global function CreateToneTitanEvent
+global function CreateLegionTitanEvent
+global function CreateMonarchTitanEvent
 global function executeWave
 
 
@@ -168,6 +175,21 @@ WaveEvent function createSuperSpectreEvent(vector origin,vector angles,string ro
 {
 	WaveEvent event
 	event.eventFunction = spawnSuperSpectre
+	event.executeOnThisCall = executeOnThisCall
+	event.nextEventIndex = nextEventIndex
+	event.shouldThread = true
+	event.spawnEvent.spawnType= eFD_AITypeIDs.REAPER
+	event.spawnEvent.spawnAmount = 1
+	event.spawnEvent.origin = origin
+	event.spawnEvent.angles = angles
+	event.spawnEvent.route = route
+	return event
+}
+
+WaveEvent function createSuperSpectreEventWithMinion(vector origin,vector angles,string route,int nextEventIndex,int executeOnThisCall = 1)
+{
+	WaveEvent event
+	event.eventFunction = spawnSuperSpectreWithMinion
 	event.executeOnThisCall = executeOnThisCall
 	event.nextEventIndex = nextEventIndex
 	event.shouldThread = true
@@ -361,6 +383,97 @@ WaveEvent function CreateToneSniperTitanEvent(vector origin,vector angles,int ne
 	return event
 }
 
+
+WaveEvent function CreateIonTitanEvent(vector origin,vector angles,string route,int nextEventIndex,int executeOnThisCall = 1)
+{
+	WaveEvent event
+	event.eventFunction = SpawnIonTitan
+	event.executeOnThisCall = executeOnThisCall
+	event.nextEventIndex = nextEventIndex
+	event.shouldThread = true
+	event.spawnEvent.spawnType= eFD_AITypeIDs.ION
+	event.spawnEvent.spawnAmount = 1
+	event.spawnEvent.origin = origin
+	event.spawnEvent.angles = angles
+	event.spawnEvent.route = route
+	return event
+}
+
+WaveEvent function CreateScorchTitanEvent(vector origin,vector angles,string route,int nextEventIndex,int executeOnThisCall = 1)
+{
+	WaveEvent event
+	event.eventFunction = SpawnScorchTitan
+	event.executeOnThisCall = executeOnThisCall
+	event.nextEventIndex = nextEventIndex
+	event.shouldThread = true
+	event.spawnEvent.spawnType= eFD_AITypeIDs.SCORCH
+	event.spawnEvent.spawnAmount = 1
+	event.spawnEvent.origin = origin
+	event.spawnEvent.angles = angles
+	event.spawnEvent.route = route
+	return event
+}
+
+WaveEvent function CreateRoninTitanEvent(vector origin,vector angles,string route,int nextEventIndex,int executeOnThisCall = 1)
+{
+	WaveEvent event
+	event.eventFunction = SpawnRoninTitan
+	event.executeOnThisCall = executeOnThisCall
+	event.nextEventIndex = nextEventIndex
+	event.shouldThread = true
+	event.spawnEvent.spawnType= eFD_AITypeIDs.RONIN
+	event.spawnEvent.spawnAmount = 1
+	event.spawnEvent.origin = origin
+	event.spawnEvent.angles = angles
+	event.spawnEvent.route = route
+	return event
+}
+
+WaveEvent function CreateToneTitanEvent(vector origin,vector angles,string route,int nextEventIndex,int executeOnThisCall = 1)
+{
+	WaveEvent event
+	event.eventFunction = SpawnToneTitan
+	event.executeOnThisCall = executeOnThisCall
+	event.nextEventIndex = nextEventIndex
+	event.shouldThread = true
+	event.spawnEvent.spawnType= eFD_AITypeIDs.TONE
+	event.spawnEvent.spawnAmount = 1
+	event.spawnEvent.origin = origin
+	event.spawnEvent.angles = angles
+	event.spawnEvent.route = route
+	return event
+}
+
+WaveEvent function CreateLegionTitanEvent(vector origin,vector angles,string route,int nextEventIndex,int executeOnThisCall = 1)
+{
+	WaveEvent event
+	event.eventFunction = SpawnLegionTitan
+	event.executeOnThisCall = executeOnThisCall
+	event.nextEventIndex = nextEventIndex
+	event.shouldThread = true
+	event.spawnEvent.spawnType= eFD_AITypeIDs.LEGION
+	event.spawnEvent.spawnAmount = 1
+	event.spawnEvent.origin = origin
+	event.spawnEvent.angles = angles
+	event.spawnEvent.route = route
+	return event
+}
+
+WaveEvent function CreateMonarchTitanEvent(vector origin,vector angles,string route,int nextEventIndex,int executeOnThisCall = 1)
+{
+	WaveEvent event
+	event.eventFunction = SpawnMonarchTitan
+	event.executeOnThisCall = executeOnThisCall
+	event.nextEventIndex = nextEventIndex
+	event.shouldThread = true
+	event.spawnEvent.spawnType= eFD_AITypeIDs.MONARCH
+	event.spawnEvent.spawnAmount = 1
+	event.spawnEvent.origin = origin
+	event.spawnEvent.angles = angles
+	event.spawnEvent.route = route
+	return event
+}
+
 /************************************************************************************************************\
 ####### #     # ####### #     # #######    ####### #     # #     #  #####  ####### ### ####### #     #  #####
 #       #     # #       ##    #    #       #       #     # ##    # #     #    #     #  #     # ##    # #     #
@@ -432,11 +545,29 @@ void function spawnSuperSpectre(SmokeEvent smokeEvent,SpawnEvent spawnEvent,Wait
 
 	wait 4.7
 	DispatchSpawn(npc)
+	SetTargetName( npc, GetTargetNameForID(spawnEvent.spawnType))
 	AddMinimapForHumans(npc)
 	thread SuperSpectre_WarpFall(npc)
+	npc.WaitSignal("WarpfallComplete")
+	thread singleNav_thread(npc, spawnEvent.route)
+}
+
+void function spawnSuperSpectreWithMinion(SmokeEvent smokeEvent,SpawnEvent spawnEvent,WaitEvent waitEvent,SoundEvent soundEvent)
+{
+	PingMinimap(spawnEvent.origin.x, spawnEvent.origin.y, 4, 600, 150, 0)
+
+	entity npc = CreateSuperSpectre(TEAM_IMC,spawnEvent.origin,spawnEvent.angles)
+	SetSpawnOption_AISettings(npc,"npc_super_spectre_fd")
+	spawnedNPCs.append(npc)
+
+	wait 4.7
+	DispatchSpawn(npc)
+	SetTargetName( npc, GetTargetNameForID(spawnEvent.spawnType))
+	AddMinimapForHumans(npc)
+	thread SuperSpectre_WarpFall(npc)
+	npc.WaitSignal("WarpfallComplete")
 	thread ReaperMinionLauncherThink(npc)
 
-	SetTargetName( npc, GetTargetNameForID(spawnEvent.spawnType))
 }
 
 void function spawnDroppodGrunts(SmokeEvent smokeEvent,SpawnEvent spawnEvent,WaitEvent waitEvent,SoundEvent soundEvent)
@@ -460,13 +591,13 @@ void function spawnDroppodGrunts(SmokeEvent smokeEvent,SpawnEvent spawnEvent,Wai
 		guy.DisableNPCFlag( NPC_ALLOW_PATROL)
 		DispatchSpawn( guy )
 
-	guy.SetParent( pod, "ATTACH", true )
-	SetSquad( guy, squadName )
+		guy.SetParent( pod, "ATTACH", true )
+		SetSquad( guy, squadName )
 
-	SetTargetName( guy, GetTargetNameForID(eFD_AITypeIDs.GRUNT))
-	AddMinimapForHumans(guy)
-	spawnedNPCs.append(guy)
-	guys.append( guy )
+		SetTargetName( guy, GetTargetNameForID(eFD_AITypeIDs.GRUNT))
+		AddMinimapForHumans(guy)
+		spawnedNPCs.append(guy)
+		guys.append( guy )
 	}
 
 	ActivateFireteamDropPod( pod, guys )
@@ -584,6 +715,97 @@ void function spawnGenericNPCTitanwithSettings(SmokeEvent smokeEvent,SpawnEvent 
 	AddMinimapForTitans(npc)
 	npc.WaitSignal( "TitanHotDropComplete" )
 	npc.GetTitanSoul().SetTitanSoulNetBool( "showOverheadIcon", true )
+}
+
+
+void function SpawnIonTitan(SmokeEvent smokeEvent,SpawnEvent spawnEvent,WaitEvent waitEvent,SoundEvent soundEvent)
+{
+	PingMinimap(spawnEvent.origin.x, spawnEvent.origin.y, 4, 600, 150, 0)
+	entity npc = CreateNPCTitan("titan_atlas",TEAM_IMC, spawnEvent.origin, spawnEvent.angles)
+	SetSpawnOption_AISettings(npc,"npc_titan_atlas_stickybomb_boss_fd")
+	SetSpawnOption_Titanfall(npc)
+	SetTargetName( npc, GetTargetNameForID(spawnEvent.spawnType)) // required for client to create icons
+	DispatchSpawn( npc )
+	file.spawnedNPCs.append(npc)
+	AddMinimapForTitans(npc)
+	npc.WaitSignal( "TitanHotDropComplete" )
+	npc.GetTitanSoul().SetTitanSoulNetBool( "showOverheadIcon", true )
+	thread CommonAIThink(npc, spawnEvent.route)
+}
+
+void function SpawnScorchTitan(SmokeEvent smokeEvent,SpawnEvent spawnEvent,WaitEvent waitEvent,SoundEvent soundEvent)
+{
+	PingMinimap(spawnEvent.origin.x, spawnEvent.origin.y, 4, 600, 150, 0)
+	entity npc = CreateNPCTitan("titan_ogre",TEAM_IMC, spawnEvent.origin, spawnEvent.angles)
+	SetSpawnOption_AISettings(npc,"npc_titan_ogre_meteor_boss_fd")
+	SetSpawnOption_Titanfall(npc)
+	SetTargetName( npc, GetTargetNameForID(spawnEvent.spawnType)) // required for client to create icons
+	DispatchSpawn( npc )
+	file.spawnedNPCs.append(npc)
+	AddMinimapForTitans(npc)
+	npc.WaitSignal( "TitanHotDropComplete" )
+	npc.GetTitanSoul().SetTitanSoulNetBool( "showOverheadIcon", true )
+	thread CommonAIThink(npc, spawnEvent.route)
+}
+
+void function SpawnRoninTitan(SmokeEvent smokeEvent,SpawnEvent spawnEvent,WaitEvent waitEvent,SoundEvent soundEvent)
+{
+	PingMinimap(spawnEvent.origin.x, spawnEvent.origin.y, 4, 600, 150, 0)
+	entity npc = CreateNPCTitan("titan_stryder",TEAM_IMC, spawnEvent.origin, spawnEvent.angles)
+	SetSpawnOption_AISettings(npc,"npc_titan_stryder_leadwall_boss_fd")
+	SetSpawnOption_Titanfall(npc)
+	SetTargetName( npc, GetTargetNameForID(spawnEvent.spawnType)) // required for client to create icons
+	DispatchSpawn( npc )
+	file.spawnedNPCs.append(npc)
+	AddMinimapForTitans(npc)
+	npc.WaitSignal( "TitanHotDropComplete" )
+	npc.GetTitanSoul().SetTitanSoulNetBool( "showOverheadIcon", true )
+	thread CommonAIThink(npc, spawnEvent.route)
+}
+
+void function SpawnToneTitan(SmokeEvent smokeEvent,SpawnEvent spawnEvent,WaitEvent waitEvent,SoundEvent soundEvent)
+{
+	PingMinimap(spawnEvent.origin.x, spawnEvent.origin.y, 4, 600, 150, 0)
+	entity npc = CreateNPCTitan("titan_atlas",TEAM_IMC, spawnEvent.origin, spawnEvent.angles)
+	SetSpawnOption_AISettings(npc,"npc_titan_atlas_tracker_boss_fd")
+	SetSpawnOption_Titanfall(npc)
+	SetTargetName( npc, GetTargetNameForID(spawnEvent.spawnType)) // required for client to create icons
+	DispatchSpawn( npc )
+	file.spawnedNPCs.append(npc)
+	AddMinimapForTitans(npc)
+	npc.WaitSignal( "TitanHotDropComplete" )
+	npc.GetTitanSoul().SetTitanSoulNetBool( "showOverheadIcon", true )
+	thread CommonAIThink(npc, spawnEvent.route)
+}
+
+void function SpawnLegionTitan(SmokeEvent smokeEvent,SpawnEvent spawnEvent,WaitEvent waitEvent,SoundEvent soundEvent)
+{
+	PingMinimap(spawnEvent.origin.x, spawnEvent.origin.y, 4, 600, 150, 0)
+	entity npc = CreateNPCTitan("titan_ogre",TEAM_IMC, spawnEvent.origin, spawnEvent.angles)
+	SetSpawnOption_AISettings(npc,"npc_titan_ogre_minigun_boss_fd")
+	SetSpawnOption_Titanfall(npc)
+	SetTargetName( npc, GetTargetNameForID(spawnEvent.spawnType)) // required for client to create icons
+	DispatchSpawn( npc )
+	file.spawnedNPCs.append(npc)
+	AddMinimapForTitans(npc)
+	npc.WaitSignal( "TitanHotDropComplete" )
+	npc.GetTitanSoul().SetTitanSoulNetBool( "showOverheadIcon", true )
+	thread CommonAIThink(npc, spawnEvent.route)
+}
+
+void function SpawnMonarchTitan(SmokeEvent smokeEvent,SpawnEvent spawnEvent,WaitEvent waitEvent,SoundEvent soundEvent)
+{
+	PingMinimap(spawnEvent.origin.x, spawnEvent.origin.y, 4, 600, 150, 0)
+	entity npc = CreateNPCTitan("titan_atlas",TEAM_IMC, spawnEvent.origin, spawnEvent.angles)
+	SetSpawnOption_AISettings(npc,"npc_titan_atlas_vanguard_boss_fd")
+	SetSpawnOption_Titanfall(npc)
+	SetTargetName( npc, GetTargetNameForID(spawnEvent.spawnType)) // required for client to create icons
+	DispatchSpawn( npc )
+	file.spawnedNPCs.append(npc)
+	AddMinimapForTitans(npc)
+	npc.WaitSignal( "TitanHotDropComplete" )
+	npc.GetTitanSoul().SetTitanSoulNetBool( "showOverheadIcon", true )
+	thread CommonAIThink(npc, spawnEvent.route)
 }
 
 void function spawnNukeTitan(SmokeEvent smokeEvent,SpawnEvent spawnEvent,WaitEvent waitEvent,SoundEvent soundEvent)
