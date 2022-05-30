@@ -58,7 +58,8 @@ void function NukeTitanSeekOutGenerator( entity titan, entity generator )
 	{
 		titan.SetEnemy( generator )
 		thread AssaultOrigin( titan, validPos[0], goalRadius )
-		titan.AssaultSetFightRadius( goalRadius )
+		titan.AssaultSetGoalRadius( goalRadius )
+		titan.AssaultSetFightRadius( 0 )
 
 		wait 0.5
 
