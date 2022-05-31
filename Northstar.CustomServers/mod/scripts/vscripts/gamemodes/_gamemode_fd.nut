@@ -166,29 +166,11 @@ void function OnNpcDeath( entity victim, entity attacker, var damageInfo )
 	if ( findIndex != -1 )
 	{
 		spawnedNPCs.remove( findIndex )
-		switch(victimTypeID) //FD_GetAINetIndex_byAITypeID does not support all titan ids
-		{
-		case(eFD_AITypeIDs.TITAN):
-		case(eFD_AITypeIDs.RONIN):
-		case(eFD_AITypeIDs.NORTHSTAR):
-		case(eFD_AITypeIDs.SCORCH):
-		case(eFD_AITypeIDs.TONE):
-		case(eFD_AITypeIDs.ION):
-		case(eFD_AITypeIDs.MONARCH):
-		case(eFD_AITypeIDs.LEGION):
-		case(eFD_AITypeIDs.TITAN_SNIPER):
-			SetGlobalNetInt("FD_AICount_Titan",GetGlobalNetInt("FD_AICount_Titan")-1)
-			break
-		default:
-			string netIndex = GetAiNetIdFromTargetName(victim.GetTargetName())
-			if(netIndex != "")
-				SetGlobalNetInt(netIndex,GetGlobalNetInt(netIndex)-1)
-			else
-			{
-				if (victim.GetTargetName() == "Cloak Drone") // special case for cloak drone, someone in respawn fucked up here
-					SetGlobalNetInt( "FD_AICount_Drone_Cloak", GetGlobalNetInt("FD_AICount_Drone_Cloak")-1)
-			}
-		}
+
+		string netIndex = GetAiNetIdFromTargetName(victim.GetTargetName())
+		if(netIndex != "")
+			SetGlobalNetInt(netIndex,GetGlobalNetInt(netIndex)-1)
+		
 		SetGlobalNetInt("FD_AICount_Current",GetGlobalNetInt("FD_AICount_Current")-1)
 	}
 
@@ -1269,6 +1251,7 @@ string function GetAiNetIdFromTargetName(string targetName)
 		case "drone":
 			return "FD_AICount_Drone"
 		case "cloakedDrone":
+		case "Cloaked Drone":
 			return "FD_AICount_Drone_Cloak"
 		case "tick":
 			return "FD_AICount_Ticks"
