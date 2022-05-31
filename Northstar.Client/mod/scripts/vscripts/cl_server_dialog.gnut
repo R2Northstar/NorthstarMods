@@ -1,0 +1,48 @@
+global function serverDialogueOnClientInit
+
+void function serverDialogueOnClientInit()
+{
+    AddServerToClientStringCommandCallback( "ServerRequestResquest", ServerCallback_DialogueRequestReceived )
+}
+
+// 	string header
+// 	string message
+// 	string image = ""
+// 	string rightImage = ""
+// 	bool forceChoice = false
+// 	bool noChoice = false
+// 	bool noChoiceWithNavigateBack = false
+// 	bool showSpinner = false
+// 	bool showPCBackButton = false
+// 	float inputDisableTime = 0
+// 	bool darkenBackground = false
+// 	bool useFullMessageHeight = false
+
+// 	array<ServerDialogButtonData> buttonData
+// the long array would be in this order
+
+void function ServerCallback_DialogueRequestReceived( array<string> args )
+{
+    if ( args.len() != 16 )
+        return
+        
+    string header = StringReplace( args[0], "./s.", " ", true, true )
+    string message = StringReplace( args[1], "./s.", " ", true, true )
+    string image = args[2]
+    string rightImage = args[3]
+    bool forceChoice = args[4].tointeger() == 1
+    bool noChoice = args[5].tointeger()  == 1
+    bool noChoiceWithNavigateBack = args[6].tointeger() == 1
+    bool showSpinner = args[7].tointeger() == 1
+    bool showPCBackButton = args[8].tointeger() == 1
+    float inputDisableTime = args[9].tofloat()
+    bool darkenBackground = args[10].tointeger() == 1
+    bool useFullMessageHeight = args[11].tointeger() == 1
+
+    string button0Text = StringReplace( args[12], "./s.", " ", true, true )
+    string button1Text = StringReplace( args[13], "./s.", " ", true, true )
+    string button2Text = StringReplace( args[14], "./s.", " ", true, true )
+    string button3Text = StringReplace( args[15], "./s.", " ", true, true )
+
+    RunUIScript( "ClientCallBack_RequestDialog", header, message, image, rightImage, forceChoice, noChoice, noChoiceWithNavigateBack, showSpinner, showPCBackButton, inputDisableTime, darkenBackground, useFullMessageHeight, button0Text, button1Text, button2Text, button3Text )
+}
