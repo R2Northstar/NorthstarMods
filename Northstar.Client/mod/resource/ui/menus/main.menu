@@ -15,7 +15,7 @@ resource/ui/menus/main.menu
 		tabPosition 0
 		PaintBackgroundType 0 // 0 for normal(opaque), 1 for single texture from Texture1, and 2 for rounded box w/ four corner textures
 		infocus_bgcolor_override "0 0 0 0"
-		outoffocus_bgcolor_override	"0 0 0 0"
+		outoffocus_bgcolor_override "0 0 0 0"
 
 		Screen
 		{
