@@ -41,6 +41,7 @@ global function OnStoreButton_Activate
 global function OnStoreBundlesButton_Activate
 global function OnStoreNewReleasesButton_Activate
 
+
 const string MATCHMAKING_AUDIO_CONNECTING = "menu_campaignsummary_titanunlocked"
 
 struct
@@ -113,6 +114,8 @@ struct
 
 	bool isFDMode = false
 	bool shouldAutoOpenFDMenu = false
+
+	var quickPlayButton
 } file
 
 void function MenuLobby_Init()
@@ -245,6 +248,11 @@ void function SetupComboButtonTest( var menu )
 		file.lobbyButtons.append( file.findGameButton )
 		Hud_SetLocked( file.findGameButton, true )
 		Hud_AddEventHandler( file.findGameButton, UIE_CLICK, OpenServerBrowser )
+
+		// add quick play button
+		file.quickPlayButton = AddComboButton( comboStruct, headerIndex, buttonIndex++, "#MENU_TITLE_QUICK_PLAY" )
+		file.lobbyButtons.append( file.quickPlayButton )
+		Hud_AddEventHandler( file.quickPlayButton, UIE_CLICK, AdvanceMenuEventHandler( GetMenu( "QuickPlayMenu" ) ) )
 	}
 	else
 	{

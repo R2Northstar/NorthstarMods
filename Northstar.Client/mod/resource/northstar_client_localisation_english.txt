@@ -308,5 +308,9 @@ Press Yes if you agree to this. This choice can be changed in the mods menu at a
 		// In-game chat
 		"HUD_CHAT_WHISPER_PREFIX" "[WHISPER]"
 		"HUD_CHAT_SERVER_PREFIX" "[SERVER]"
+
+		// Quick play menu
+		"MENU_TITLE_QUICK_PLAY" "Quick Play"
+		"MENU_TITLE_CHANGE_SERVER" "Change Server"
 	}
 }
