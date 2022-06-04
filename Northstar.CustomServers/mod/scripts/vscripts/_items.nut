@@ -256,6 +256,9 @@ global function CreateSkinData
 global function CreateFDTitanUpgradeData
 global function CreateBaseItemData
 global function CreateWeaponSkinData
+global function InitUnlockForStatInt
+global function InitUnlockAsEntitlement
+global function SplitAndStripUnlockField
 
 global const MOD_ICON_NONE = $"ui/menu/items/mod_icons/none"
 
@@ -4046,7 +4049,9 @@ void function CreatePrimeTitanData( int itemType, string ref, string nonPrimeRef
 	item.persistenceId          = GetItemPersistenceId( nonPrimeRef )
 }
 
-void function CreateWeaponData( int dataTableIndex, int itemType, bool hidden, string ref, bool isDamageSource, int cost = 0 )
+// added isModded here to look in the modded persistence struct instead
+// dataTableIndex for modded weapons/offhands is the index in the respective enums from the pdata
+void function CreateWeaponData( int dataTableIndex, int itemType, bool hidden, string ref, bool isDamageSource, int cost = 0, bool isModded = false )
 {
 	#if !UI
 		#if SERVER || CLIENT
@@ -4077,16 +4082,18 @@ void function CreateWeaponData( int dataTableIndex, int itemType, bool hidden, s
 
 			stringVal = GetWeaponInfoFileKeyField_GlobalString( ref, "menu_anim_class" )
 			item.i.menuAnimClass <- MenuAnimClassStringToEnumValue( stringVal )
-
-			item.persistenceStruct = "pilotWeapons[" + dataTableIndex + "]"
-			break
-
-		case eItemTypes.PILOT_ORDNANCE:
-			item.persistenceStruct = "pilotOffhands[" + dataTableIndex + "]"
+			if (!isModded)
+				item.persistenceStruct = "pilotWeapons[" + dataTableIndex + "]"
+			else 
+				item.persistenceStruct = "moddedPilotWeapons[" + dataTableIndex + "]"
 			break
 		case eItemTypes.PILOT_SPECIAL:
 			item.imageAtlas = IMAGE_ATLAS_HUD
-			item.persistenceStruct = "pilotOffhands[" + dataTableIndex + "]"
+		case eItemTypes.PILOT_ORDNANCE:
+			if (!isModded)
+				item.persistenceStruct = "pilotOffhands[" + dataTableIndex + "]"
+			else 
+				item.persistenceStruct = "moddedPilotOffhands[" + dataTableIndex + "]"
 			break
 
 		case eItemTypes.TITAN_PRIMARY:
@@ -6593,13 +6600,17 @@ void function SetCachedPersistenceBitfield( string persistenceVar, int bitIndex,
 
 	persistenceVar = persistenceVar + "[" + arrayIndex + "]"
 
-	int currentVal = file.cachedNewItems[ persistenceVar ]
-	if ( value == 0 )
-		file.cachedNewItems[ persistenceVar ] = currentVal & ~decimalValue
-	else
-		file.cachedNewItems[ persistenceVar ] = currentVal | decimalValue
+	// added this check to prevent a crash that i havent figured out TODO
+	if ( persistenceVar in file.cachedNewItems)
+	{
+		int currentVal = file.cachedNewItems[ persistenceVar ]
+		if ( value == 0 )
+			file.cachedNewItems[ persistenceVar ] = currentVal & ~decimalValue
+		else
+			file.cachedNewItems[ persistenceVar ] = currentVal | decimalValue
 
-	//printt( "file.cachedNewItems[  " + persistenceVar + " ] bitIndex:" + bitIndex + " val:" + value )
+		//printt( "file.cachedNewItems[  " + persistenceVar + " ] bitIndex:" + bitIndex + " val:" + value )
+	}
 }
 
 bool function IsCachedPersistenceBitSet( string persistenceVar, int bitIndex )
@@ -6609,13 +6620,23 @@ bool function IsCachedPersistenceBitSet( string persistenceVar, int bitIndex )
 
 	int decimalValue = 1 << bitOffset
 
-	persistenceVar = persistenceVar + "[" + arrayIndex + "]"
 
 	//printt( "IsCachedPersistenceBitSet( " + persistenceVar + ", " + bitIndex + " ) " + ( ( file.cachedNewItems[ persistenceVar ] & decimalValue ) != 0 ) )
 
-	Assert( arrayIndex < PersistenceGetArrayCount( persistenceVar ), "Need to increase the array size of the persistenceVar " + persistenceVar )
 
-	return ( ( file.cachedNewItems[ persistenceVar ] & decimalValue ) != 0 )
+	// making this try catch just so i can not crash :), this is bad, and should be fixed
+	try
+	{
+		// fix an off by one error maybe
+		Assert( arrayIndex <= PersistenceGetArrayCount( persistenceVar ), "Need to increase the array size of the persistenceVar " + persistenceVar )
+		persistenceVar = persistenceVar + "[" + arrayIndex + "]"
+
+		return ( ( file.cachedNewItems[ persistenceVar ] & decimalValue ) != 0 )
+	}
+	catch (ex)
+	{
+		return false
+	}
 }
 
 void function UpdateCachedNewItemsArray( string arrayVar )

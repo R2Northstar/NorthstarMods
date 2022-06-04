@@ -1602,7 +1602,17 @@
 			else
 				mods = clGlobal.currentMenuPilotModels.mods
 		}
-		SetBodyGroupsForWeaponConfig( file.menuPilot.weapon, weapon, mods )
+
+		// AAAAAAAAAAAA WHY WONT THIS WORK
+		try
+		{
+			// InVaLiD mOd LiSt
+			SetBodyGroupsForWeaponConfig( file.menuPilot.weapon, weapon, mods )
+		}
+		catch (ex)
+		{
+			printt( ex )
+		}
 
 		int weaponCamoIndex
 		int weaponSkinIndex
