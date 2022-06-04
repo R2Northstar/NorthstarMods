@@ -1538,8 +1538,8 @@ $ENUM_START e_moddedTitanChassis
 	reserved
 $ENUM_END
 
-weaponMain moddedPilotWeapons[e_moddedTitanWeapons]
-weaponOffhand moddedPilotOffhands[e_moddedTitanOffhands]
+weaponMain moddedTitanWeapons[e_moddedTitanWeapons]
+weaponOffhand moddedTitanOffhands[e_moddedTitanOffhands]
 
 titanMain moddedTitanChassis[e_moddedTitanChassis]
 
