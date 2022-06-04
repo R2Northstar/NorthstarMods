@@ -4097,7 +4097,10 @@ void function CreateWeaponData( int dataTableIndex, int itemType, bool hidden, s
 			break
 
 		case eItemTypes.TITAN_PRIMARY:
-			item.persistenceStruct = "titanWeapons[" + dataTableIndex + "]"
+			if (!isModded)
+				item.persistenceStruct = "titanWeapons[" + dataTableIndex + "]"
+			else 
+				item.persistenceStruct = "moddedTitanWeapons[" + dataTableIndex + "]"
 			break
 
 		case eItemTypes.TITAN_SPECIAL:
@@ -4105,7 +4108,11 @@ void function CreateWeaponData( int dataTableIndex, int itemType, bool hidden, s
 		case eItemTypes.TITAN_ORDNANCE:
 		case eItemTypes.TITAN_CORE_ABILITY:
 			item.imageAtlas = IMAGE_ATLAS_HUD
-			item.persistenceStruct = "titanOffhands[" + dataTableIndex + "]"
+			if (!isModded)
+				item.persistenceStruct = "titanOffhands[" + dataTableIndex + "]"
+			else 
+				item.persistenceStruct = "moddedTitanOffhands[" + dataTableIndex + "]"
+			break
 			break
 	}
 
