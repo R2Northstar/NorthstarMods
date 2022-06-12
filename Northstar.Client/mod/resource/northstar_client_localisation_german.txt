@@ -266,11 +266,11 @@ Drücke Ja, um zuzustimmen. Du kannst diese Entscheidung jederzeit im Modmenü �
 		"INGAME_PLAYERS" "Spieler: ^6BA6C400%s1"
 		"TOTAL_SERVERS" "Server: ^C46C6C00%s1"
 
-        "INFO_MOD_CHANGE" "Mods benötigen Änderungen"
-        "ENABLE_DISABLE_MODS_TO_CONTINUE" "Einige Mods müssen de/-aktiviert werden, bevor dem Server beigetreten werden kann"
-        "MODS_WILL_BE_DISABLED" "Mods die deaktiviert werden (%i):"
-        "MODS_WILL_BE_ENABLED" "Mods die aktiviert werden (%i):"
-        "RELOAD_AND_CONTINUE" "Änderungen übernehmen und fortfahren"
+		"INFO_MOD_CHANGE" "Mods benötigen Änderungen"
+		"ENABLE_DISABLE_MODS_TO_CONTINUE" "Einige Mods müssen de/-aktiviert werden, bevor dem Server beigetreten werden kann"
+		"MODS_WILL_BE_DISABLED" "Mods die deaktiviert werden (%i):"
+		"MODS_WILL_BE_ENABLED" "Mods die aktiviert werden (%i):"
+		"RELOAD_AND_CONTINUE" "Änderungen übernehmen und fortfahren"
 
 		// In-game chat
 		"HUD_CHAT_WHISPER_PREFIX" "[WHISPER]"
