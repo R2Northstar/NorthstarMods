@@ -82,9 +82,6 @@ struct {
 	array<var> serversMap
 	array<var> serversGamemode
 	array<var> serversLatency
-
-    array<int> forceEnabled = []
-    array<int> forceDisabled = []
 } file
 
 
@@ -241,19 +238,20 @@ void function InitServerBrowserMenu()
             */
             if ( uiGlobal.previousLevel != "mp_lobby" && ( uiGlobal.loadingLevel == "mp_lobby" || !uiGlobal.loadingLevel.len() ) )
             {
-                bool enable
-                string storedStr = GetConVarString( "enabled_disabled_mods_pre_connect" )
-                array < string > changedMods = split( storedStr, ";" )
-                if( storedStr.find(";") == -1 ) // In case no mods need to be disabled
-                    enable = true
-                foreach ( int idx, string rawChangedModsType in changedMods )
-                    foreach ( string rawModIndex in split( rawChangedModsType, "," ) )
-                        NSSetModEnabled( NSGetModNames()[ rawModIndex.tointeger() ], idx == 0 )
-                if ( changedMods.len() )
-                {
-                    ReloadMods()
-                    SetConVarString( "enabled_disabled_mods_pre_connect", "" )
-                }
+				array<string> enabled = NSGetForcedEnabledMods()
+				array<string> disabled = NSGetForcedDisabledMods()
+				foreach ( string mod in enabled ) {
+					NSSetModEnabled( mod, false )
+				}
+				foreach ( string mod in disabled ) {
+					NSSetModEnabled( mod, true )
+				}
+				if ( enabled.len() || disabled.len() )
+				{
+					NSClearForcedEnabledMods()
+					NSClearForcedDisabledMods()
+					ReloadMods()
+				}
             }
         }
     )
@@ -1037,7 +1035,7 @@ void function OnServerSelected( var button )
 	else
     {
         SetForcedMods()
-        if ( file.forceEnabled.len() || file.forceDisabled.len() )
+        if ( NSGetForcedEnabledMods().len() || NSGetForcedDisabledMods().len() )
             ShowModStatusRequiredChangeMessage()
         else
             thread ThreadedAuthAndConnectToServer()
@@ -1047,18 +1045,20 @@ void function OnServerSelected( var button )
 void function ShowModStatusRequiredChangeMessage()
 {
     string disabledString
-    if ( file.forceDisabled.len() )
+	array<string> forceEnabled= NSGetForcedEnabledMods()
+	array<string> forceDisabled = NSGetForcedDisabledMods()
+    if ( forceDisabled.len() )
     {
-        disabledString = format( "\n\n"+Localize( "#MODS_WILL_BE_DISABLED" ), file.forceDisabled.len() )
-        foreach ( mod in file.forceDisabled )
-            disabledString += "\n - " + NSGetModNames()[ mod ]
+        disabledString = format( "\n\n"+Localize( "#MODS_WILL_BE_DISABLED" ), forceDisabled.len() )
+        foreach ( mod in forceDisabled )
+            disabledString += "\n - " + mod
     }
     string enabledString
-    if ( file.forceEnabled.len() )
+    if ( forceEnabled.len() )
     {
-        enabledString = format( "\n\n"+Localize( "#MODS_WILL_BE_ENABLED" ), file.forceEnabled.len() )
-        foreach ( mod in file.forceEnabled )
-            enabledString += "\n - " + NSGetModNames()[ mod ]
+        enabledString = format( "\n\n"+Localize( "#MODS_WILL_BE_ENABLED" ), forceEnabled.len() )
+        foreach ( mod in forceEnabled )
+            enabledString += "\n - " + mod
     }
 
     DialogData dialogData
@@ -1078,8 +1078,8 @@ void function ShowModStatusRequiredChangeMessage()
 void function SetForcedMods()
 {
     // Make sure that lists are empty
-    file.forceEnabled = []
-    file.forceDisabled = []
+    NSClearForcedEnabledMods()
+    NSClearForcedDisabledMods()
 
     array<string> requiredMods
     for ( int i = 0; i < NSGetServerRequiredModsCount( file.lastSelectedServer ); i++ )
@@ -1093,17 +1093,11 @@ void function SetForcedMods()
             bool modRequired = requiredMods.contains( mod )
             if ( NSIsModEnabled( mod ) != modRequired )
                 if ( modRequired )
-                    file.forceEnabled.append( index )
+                    NSAddForcedEnabledMod( mod )
                 else
-                    file.forceDisabled.append( index )
+                    NSAddForcedDisabledMod( mod )
         }
     }
-
-    string statusModsString
-    foreach ( int idx, array<int> list in [file.forceEnabled, file.forceDisabled])
-        for ( int i; i < list.len(); i++ )
-            statusModsString += list[i].tostring() + ( i == list.len() - 1 ? ( idx == 0 ? ";" : "") : "," )
-    SetConVarString( "enabled_disabled_mods_pre_connect", statusModsString )
 }
 
 void function ThreadedAuthAndConnectToServer( string password = "" )
@@ -1149,21 +1143,28 @@ void function ThreadedAuthAndConnectToServer( string password = "" )
 	if ( NSWasAuthSuccessful() )
 	{
 		bool modsChanged
-
-        foreach ( int modIndex in file.forceEnabled )
+        foreach ( string mod in NSGetForcedEnabledMods() )
         {
-            NSSetModEnabled( NSGetModNames()[ modIndex ], true )
+            NSSetModEnabled( mod, true )
             modsChanged = true
         }
-        foreach ( int modIndex in file.forceDisabled )
+        foreach ( string mod in NSGetForcedDisabledMods() )
         {
-            NSSetModEnabled( NSGetModNames()[ modIndex ], false )
+            NSSetModEnabled( mod, false )
             modsChanged = true
         }
 
         // only actually reload if we need to since the uiscript reset on reload lags hard
         if ( modsChanged )
+		{
+			// show a window so the user doesn't freak out that their game isn't responding for a few seconds
+			DialogData dialogData
+			dialogData.header = "Reloading Mods"
+			dialogData.image = $"ui/menu/common/dialog_error"
+			OpenDialog( dialogData )
+
             ReloadMods()
+		}
 
 		NSConnectToAuthedServer()
 	}
