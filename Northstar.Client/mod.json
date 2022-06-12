@@ -31,11 +31,7 @@
 		{
 			"Name": "filter_map_hide_locked",
 			"DefaultValue": "0"
-		},
-        {
-            "Name": "enabled_disabled_mods_pre_connect",
-            "DefaultValue": ""
-        }
+		}
 	],
 	"Scripts": [
 		{

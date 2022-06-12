@@ -227,34 +227,35 @@ void function InitServerBrowserMenu()
 	// UI was cut off on some aspect ratios; not perfect
 	UpdateServerInfoBasedOnRes()
 
-        // Listen for map unload to revert forced mod deactivation
-    AddUICallback_OnLevelInit( void function() // There's probably a better spot to put this into
-        {
-            WaitSignal( uiGlobal.signalDummy, "LevelShutdown" )
-            /*
-                Load order is "mp_lobby" -> "" -> "mp_lobby" -> "mp_map"
-                In order to not load required mods before actually joining the game, lobbies are ignored
-                This means that mods do not get re-enabled when leaving a pre match lobby
-            */
-            if ( uiGlobal.previousLevel != "mp_lobby" && ( uiGlobal.loadingLevel == "mp_lobby" || !uiGlobal.loadingLevel.len() ) )
-            {
-				array<string> enabled = NSGetForcedEnabledMods()
-				array<string> disabled = NSGetForcedDisabledMods()
-				foreach ( string mod in enabled ) {
-					NSSetModEnabled( mod, false )
-				}
-				foreach ( string mod in disabled ) {
-					NSSetModEnabled( mod, true )
-				}
-				if ( enabled.len() || disabled.len() )
-				{
-					NSClearForcedEnabledMods()
-					NSClearForcedDisabledMods()
-					ReloadMods()
-				}
-            }
-        }
-    )
+	// Listen for map unload to revert forced mod deactivation
+	AddUICallback_OnLevelInit( RevertModLoadChangesOnShutdown() )
+}
+
+void function RevertModLoadChangesOnShutdown()
+{
+	WaitSignal( uiGlobal.signalDummy, "LevelShutdown" )
+	/*
+		Load order is "mp_lobby" -> "" -> "mp_lobby" -> "mp_map"
+		In order to not load required mods before actually joining the game, lobbies are ignored
+		This means that mods do not get re-enabled when leaving a pre match lobby
+	*/
+	if ( uiGlobal.previousLevel != "mp_lobby" && ( uiGlobal.loadingLevel == "mp_lobby" || !uiGlobal.loadingLevel.len() ) )
+	{
+		array<string> enabled = NSGetForcedEnabledMods()
+		array<string> disabled = NSGetForcedDisabledMods()
+		foreach ( string mod in enabled ) {
+			NSSetModEnabled( mod, false )
+		}
+		foreach ( string mod in disabled ) {
+			NSSetModEnabled( mod, true )
+		}
+		if ( enabled.len() || disabled.len() )
+		{
+			NSClearForcedEnabledMods()
+			NSClearForcedDisabledMods()
+			ReloadMods()
+		}
+    }
 }
 
 ////////////////////////////
