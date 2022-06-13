@@ -35,14 +35,12 @@ WeaponData
 	"vortex_absorb_sound_1P_VS_3P"					"Vortex_Shield_AbsorbBulletSmall_1P_VS_3P"
 
 	// Menu
-	"menu_category"                                 "shotgun"
+	"menu_category"                                 "special"
 	"menu_anim_class"                               "medium"
 	"stat_damage" 									"98"
 	"stat_range"  									"15"
 	"stat_accuracy"   								"15"
 	"stat_rof"										"20"
-	"menu_icon"				"r2_ui/menus/loadout_icons/primary_weapon/primary_kraber"
-	"hud_icon"				"r2_ui/menus/loadout_icons/primary_weapon/primary_kraber"
 
 	"ammo_display"									"bar"
 	"impulse_force"   								"10000"
@@ -118,8 +116,8 @@ WeaponData
 	"fx_shell_eject_world"							"wpn_shelleject_shotshell"
 	"fx_shell_eject_attach"							"shell"
 
-	"fx_muzzle_flash_view"							"P_wpn_muzzleflash_epg_FP"
-	"fx_muzzle_flash_world"							"P_wpn_muzzleflash_epg"
+	"fx_muzzle_flash_view"							"wpn_muzzleflash_40mm_fp"
+	"fx_muzzle_flash_world"							"wpn_muzzleflash_40mm"
 	"fx_muzzle_flash_attach"						"muzzle_flash"
 
 	"critical_hit_damage_scale"						"1.3"
@@ -310,134 +308,10 @@ WeaponData
 	"projectile_lifetime"							"0.5"
 	"projectile_damage_reduction_per_bounce"		"0.0"
 	"projectile_damages_owner"						"0"
-	
-	// bodygroups
-	"bodygroup1_name"	"proscreen"
-	"bodygroup1_set"	"0"
-
-
-	"bodygroup3_name"	"sight_acgs"
-	"bodygroup3_set"	"0"
-	"bodygroup4_name"	"sight_holo"
-	"bodygroup4_set"	"0"
-	
-	// mods
-	Mods
-	{
-		burn_mod_peacekraber
-		{
-			"is_burn_mod"		"1"
-
-			"damage_near_value"   							"*1.2"
-			"damage_far_value"								"*1.2"
-			"damage_near_value_titanarmor"					"*1.2"
-			"damage_far_value_titanarmor" 					"*1.2"
-
-			//Effects
-			"fx_muzzle_flash_view"					"P_wpn_muzzleflash_epg_FP_amp"
-			"fx_muzzle_flash_world"							"P_wpn_muzzleflash_epg_amp"
-			"projectile_trail_effect_0" 					"P_plasma_proj_MD_amp"
-		}
-		holosight
-		{
-			
-
-			"bodygroup3_set"	    "1"
-			"bodygroup4_set"		"0"
-
-			"dof_zoom_nearDepthStart"						"6.161"
-			"dof_zoom_nearDepthEnd"							"9.204"
-			"viewmodel_offset_ads"							"0 -.5 -.92"
-
-
-			"ui7_enable"												"1"
-			dof_zoom_focusArea_horizontal					0.062
-			dof_zoom_focusArea_top							0.10
-			dof_zoom_focusArea_bottom						-0.040
-		}
-		redline_sight
-		{
-
-			"ui3_enable"		"1"
-
-
-			"bodygroup3_set"	    "0"
-			"bodygroup4_set"		"1"
-			"dof_zoom_nearDepthStart"						"5.691"
-			"dof_zoom_nearDepthEnd"							"6.745"
-			"viewmodel_offset_ads"							"0 -1.9 -.45"
-			"zoom_fov"						"25"
-			dof_zoom_focusArea_horizontal					0.085
-			dof_zoom_focusArea_top							0.080
-			dof_zoom_focusArea_bottom						-0.047
-		}
-		extended_ammo
-		{
-			"ammo_stockpile_max"						"90"
-			"ammo_clip_size"   							"8"
-			"ammo_default_total"						"90"
-		}
-		tactical_cdr_on_kill
-		{
-
-		}
-		pas_run_and_gun
-		{
-			"primary_fire_does_not_block_sprint"			"1"
-			"crosshair_force_sprint_fade_disabled"          "1"
-		}
-		pas_fast_ads
-		{
-			//Fast ADS
-			"zoom_time_in"									"*0.5"
-			"zoom_time_out"   								"*0.6"
-		}
-		pas_fast_swap
-		{
-			//Fast Swap
-			"fast_swap_to"									"1"
-		}
-		pas_fast_reload
-		{
-			"reload_time"						"*0.7"
-			"reload_time_late1"					"*0.7"
-			"reloadempty_time"					"*0.7"
-			"reloadempty_time_late1"			"*0.7"
-			"reloadsegment_time_loop"			"*0.7"
-			"reloadsegment_time_end"			"*0.7"
-			"reloadsegmentempty_time_end"		"*0.7"
-		}
-		iron_sights
-		{
-			"bodygroup3_set"	    "0"
-			"bodygroup4_set"		"0"
-		}
-
-		pro_screen
-		{
-			"ui8_enable"		"1"
-			"bodygroup1_set"	"1"
-		}
-	}
-
 
 	// Crosshair
 	"red_crosshair_range" 							"300"
 	active_crosshair_count				"0"
-
-	"ui3_enable"		"0"
-	"ui3_draw_cloaked"	"1"
-	UiData3
-	{
-		"ui"								"ui/acgs_redline"
-		"mesh"							"models/weapons/attachments/acgs_rui_upper"
-		Args
-		{
-			vis							player_zoomfrac
-			ammo						weapon_ammo
-			clipSize						weapon_clipSize
-		}
-	}
 
 	"ui6_enable"		"1"
 	UiData6
@@ -451,34 +325,6 @@ WeaponData
 			clipCount					weapon_stockpileClipCount
 		}
 	}
-
-	"ui7_enable"		"0"
-	"ui7_draw_cloaked"	"1"
-	UiData7
-	{
-		"ui"							"ui/holo_scope"
-		"mesh"					"models/weapons/attachments/holo_rui_upper"
-		Args
-		{
-			vis					player_zoomfrac
-			ammo						weapon_ammo
-			clipSize					weapon_clipSize
-			clipCount					weapon_stockpileClipCount
-		}
-	}
-
-	"ui8_enable"		"0"
-	UiData8
-	{
-		"ui"									"ui/pro_screen_panel"
-		"mesh"							"models/weapons/attachments/pro_screen_rui_upper"
-		Args
-		{
-			proValue							proscreen_int0
-			proOwnedByPlayer			proscreen_owner_is_player
-		}
-	}
-
 	RUI_CrosshairData
 	{
 		DefaultArgs
