@@ -16,16 +16,16 @@ global function ServerCallback_CreateServerMessage
 
 global struct genericServerHUDMessageStruct
 {
-  string title        = ""
-  string description  = ""
-  float duration      = 0
+	string title        = ""
+	string description  = ""
+	float duration      = 0
 }
 
 enum eMessageType
 {
-  LARGE,
-  INFO,
-  POPUP
+	LARGE,
+	INFO,
+	POPUP
 }
 
 #if CLIENT
@@ -33,171 +33,170 @@ genericServerHUDMessageStruct ServerMessage
 array< genericServerHUDMessageStruct > popupMessageList
 array< genericServerHUDMessageStruct > infoMessageList
 array< genericServerHUDMessageStruct > largeMessageList
-#endif
+#endif // CLIENT
 
 
 void function MessageUtils_Init ()
-{ 
-  #if CLIENT
-    AddServerToClientStringCommandCallback( "ServerHUDMessageSetTitle", ServerCallback_SetServerTitle )
-    AddServerToClientStringCommandCallback( "ServerHUDMessageSetDescription", ServerCallback_SetServerDescription )
-    AddServerToClientStringCommandCallback( "ServerHUDMessageRequest", ServerCallback_CreateServerMessage )
-    
-    thread PopUpMessageHandler_Threaded()
-    thread InfoMessageHandler_Threaded()
-    thread LargeMessageHandler_Threaded()
-  #endif
+{
+#if CLIENT
+	AddServerToClientStringCommandCallback( "ServerHUDMessageSetTitle", ServerCallback_SetServerTitle )
+	AddServerToClientStringCommandCallback( "ServerHUDMessageSetDescription", ServerCallback_SetServerDescription )
+	AddServerToClientStringCommandCallback( "ServerHUDMessageRequest", ServerCallback_CreateServerMessage )
+
+	thread PopUpMessageHandler_Threaded()
+	thread InfoMessageHandler_Threaded()
+	thread LargeMessageHandler_Threaded()
+#endif // CLIENT
 }
 
 
 #if SERVER
 void function NSSendPopUpMessageToPlayer( entity player, genericServerHUDMessageStruct message )
 {
-  ServerToClientStringCommand( player, "ServerHUDMessageSetDescription " + message.description )
+	ServerToClientStringCommand( player, "ServerHUDMessageSetDescription " + message.description )
 
-  ServerToClientStringCommand( player, "ServerHUDMessageRequest " + eMessageType.POPUP + " " + message.duration )
+	ServerToClientStringCommand( player, "ServerHUDMessageRequest " + eMessageType.POPUP + " " + message.duration )
 }
 
 void function NSSendLargeMessageToPlayer( entity player, genericServerHUDMessageStruct message )
 {
-  ServerToClientStringCommand( player, "ServerHUDMessageSetTitle " + message.title )
-  ServerToClientStringCommand( player, "ServerHUDMessageSetDescription " + message.description )
+	ServerToClientStringCommand( player, "ServerHUDMessageSetTitle " + message.title )
+	ServerToClientStringCommand( player, "ServerHUDMessageSetDescription " + message.description )
 
-  ServerToClientStringCommand( player, "ServerHUDMessageRequest " + eMessageType.LARGE + " " + message.duration )
+	ServerToClientStringCommand( player, "ServerHUDMessageRequest " + eMessageType.LARGE + " " + message.duration )
 }
 
 void function NSSendInfoMessageToPlayer( entity player, genericServerHUDMessageStruct message )
 {
-  ServerToClientStringCommand( player, "ServerHUDMessageSetDescription " + message.description )
+	ServerToClientStringCommand( player, "ServerHUDMessageSetDescription " + message.description )
 
-  ServerToClientStringCommand( player, "ServerHUDMessageRequest " + eMessageType.INFO + " " + message.duration )
+	ServerToClientStringCommand( player, "ServerHUDMessageRequest " + eMessageType.INFO + " " + message.duration )
 }
-#endif
+#endif // SERVER
 
 
 #if CLIENT
 void function ServerCallback_SetServerTitle ( array< string > args  )
 {
-  string title
-  foreach( string arg in args )
-    title += arg + " "
-  
-  ServerMessage.title = title
+	string title
+	foreach( string arg in args )
+		title += arg + " "
+
+	ServerMessage.title = title
 }
 
 void function ServerCallback_SetServerDescription ( array< string > args  )
 {
-  string desc
-  foreach( string arg in args )
-    desc += arg + " "
-  
-  ServerMessage.description = desc
+	string desc
+	foreach( string arg in args )
+		desc += arg + " "
+
+	ServerMessage.description = desc
 }
 
 void function ServerCallback_CreateServerMessage ( array< string > args  )
 {
-  ServerMessage.duration = args[1].tofloat()
-  
-  switch ( args[0].tointeger() )
-  {
-    case eMessageType.LARGE:
-      ShowLargeMessage()
-      break
-    case eMessageType.INFO:
-      ShowInfoMessage()
-      break
-    case eMessageType.POPUP:
-      ShowPopUpMessage()
-      break
-    default:
-      return
-  }
-  
-  
-  /*
-    var rui = CreatePermanentCockpitRui( $"ui/wave_announcement.rpak", 1 )
-    var rui = CreateCockpitRui(  $"ui/announcement_results.rpak" )
-    var rui = CreateCockpitRui( $"ui/callsign_basic.rpak" )
-    var rui = CreatePermanentCockpitRui( $"ui/hint_display.rpak" )
-    var rui = CreateCockpitRui( $"ui/cockpit_console_text_top_left.rpak", 0 )
-    var rui = CreatePermanentCockpitRui( $"ui/at_wave_intro.rpak" )
-  */
+	ServerMessage.duration = args[1].tofloat()
+
+	switch ( args[0].tointeger() )
+	{
+		case eMessageType.LARGE:
+			ShowLargeMessage()
+			break
+		case eMessageType.INFO:
+			ShowInfoMessage()
+			break
+		case eMessageType.POPUP:
+			ShowPopUpMessage()
+			break
+		default:
+			return
+	}
+
+	/*
+		var rui = CreatePermanentCockpitRui( $"ui/wave_announcement.rpak", 1 )
+		var rui = CreateCockpitRui(  $"ui/announcement_results.rpak" )
+		var rui = CreateCockpitRui( $"ui/callsign_basic.rpak" )
+		var rui = CreatePermanentCockpitRui( $"ui/hint_display.rpak" )
+		var rui = CreateCockpitRui( $"ui/cockpit_console_text_top_left.rpak", 0 )
+		var rui = CreatePermanentCockpitRui( $"ui/at_wave_intro.rpak" )
+ 	*/
 }
 
 void function PopUpMessageHandler_Threaded()
 {
-  while( true )
-  {
-    while( popupMessageList.len() == 0 )
-      WaitFrame()
-    
-    var rui = CreateCockpitRui( $"ui/killdeath_info.rpak" )
-  	RuiSetGameTime( rui, "startTime", Time() )
-  	RuiSetFloat( rui, "duration", 20 ) // It has a weird end animation
-  	RuiSetString( rui, "messageText", popupMessageList[0].description )
-  	RuiSetBool( rui, "isBigText", true )
-    
-    wait 2.4
-    
-    popupMessageList.remove(0)
-    RuiDestroyIfAlive( rui )
-  }
+	while( true )
+	{
+		while( popupMessageList.len() == 0 )
+			WaitFrame()
+
+		var rui = CreateCockpitRui( $"ui/killdeath_info.rpak" )
+		RuiSetGameTime( rui, "startTime", Time() )
+		RuiSetFloat( rui, "duration", 20 ) // It has a weird end animation
+		RuiSetString( rui, "messageText", popupMessageList[0].description )
+		RuiSetBool( rui, "isBigText", true )
+
+		wait 2.4
+
+		popupMessageList.remove(0)
+		RuiDestroyIfAlive( rui )
+	}
 }
 
 void function ShowPopUpMessage()
 {
-  popupMessageList.append( clone ServerMessage )
+	popupMessageList.append( clone ServerMessage )
 }
 
 void function LargeMessageHandler_Threaded()
 {
-  while( true )
-  {
-    while( largeMessageList.len() == 0 )
-      WaitFrame()
-    
-    var rui = CreatePermanentCockpitRui( $"ui/fd_tutorial_tip.rpak" )
-    RuiSetImage( rui, "backgroundImage", $"rui/menu/boosts/boost_radar_jammer" )
-    RuiSetString( rui, "titleText", largeMessageList[0].title )
-    RuiSetString( rui, "descriptionText", largeMessageList[0].description )
-    RuiSetGameTime( rui, "updateTime", Time() )
-    RuiSetFloat( rui, "duration", largeMessageList[0].duration )
-    
-    wait largeMessageList[0].duration * 0.34
-    
-    largeMessageList.remove(0)
-    RuiDestroyIfAlive( rui )
-  }
+	while( true )
+	{
+		while( largeMessageList.len() == 0 )
+			WaitFrame()
+
+		var rui = CreatePermanentCockpitRui( $"ui/fd_tutorial_tip.rpak" )
+		RuiSetImage( rui, "backgroundImage", $"rui/menu/boosts/boost_radar_jammer" )
+		RuiSetString( rui, "titleText", largeMessageList[0].title )
+		RuiSetString( rui, "descriptionText", largeMessageList[0].description )
+		RuiSetGameTime( rui, "updateTime", Time() )
+		RuiSetFloat( rui, "duration", largeMessageList[0].duration )
+
+		wait largeMessageList[0].duration * 0.34
+
+		largeMessageList.remove(0)
+		RuiDestroyIfAlive( rui )
+	}
 }
 
 void function ShowLargeMessage()
 {
-  largeMessageList.append( clone ServerMessage )
+	largeMessageList.append( clone ServerMessage )
 }
 
 void function InfoMessageHandler_Threaded()
 {
-  while( true )
-  {
-    while( infoMessageList.len() == 0 )
-      WaitFrame()
-    
-    var rui = CreatePermanentCockpitRui( $"ui/death_hint_mp.rpak" )
-    RuiSetString( rui, "hintText", infoMessageList[0].description )
-    RuiSetGameTime( rui, "startTime", Time() )
-    RuiSetFloat3( rui, "bgColor", <0,0,0> )
-    RuiSetFloat( rui, "bgAlpha", 0.5 )
-    
-    wait 7
-    
-    infoMessageList.remove(0)
-    RuiDestroyIfAlive( rui )
-  }
+	while( true )
+	{
+		while( infoMessageList.len() == 0 )
+			WaitFrame()
+
+		var rui = CreatePermanentCockpitRui( $"ui/death_hint_mp.rpak" )
+		RuiSetString( rui, "hintText", infoMessageList[0].description )
+		RuiSetGameTime( rui, "startTime", Time() )
+		RuiSetFloat3( rui, "bgColor", <0,0,0> )
+		RuiSetFloat( rui, "bgAlpha", 0.5 )
+
+		wait 7
+
+		infoMessageList.remove(0)
+		RuiDestroyIfAlive( rui )
+	}
 }
 
 void function ShowInfoMessage()
 {
-  infoMessageList.append( clone ServerMessage )
+	infoMessageList.append( clone ServerMessage )
 }
 
 #endif // CLIENT
