@@ -199,6 +199,11 @@ var function CodeCallback_ClientCommand( entity player, array<string> args )
 		printl( key + " : " + value )
 	printl( "############################" )*/
 
+	if ( GetConVarBool("ns_should_log_all_clientcommands") )
+	{
+		printl("ClientCommand: " + player + "(" + player.GetUID() + "): " + JoinStringArray(args, " "))
+	}
+
 	string commandString = args.remove( 0 )
 
 	//TODO: Track down Why VModEnable is being called from code?
