@@ -567,7 +567,8 @@ void function TryAuthWithLocalServer()
 		ClientCommand( "setplaylist tdm" )
 		ClientCommand( "map mp_lobby" )
 	}
-	else {
+	else 
+	{
 		CloseAllDialogs()
 
 		var reason = NSGetAuthFailReason()
