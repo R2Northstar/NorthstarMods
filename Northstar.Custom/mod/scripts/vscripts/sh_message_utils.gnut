@@ -7,6 +7,10 @@ global function NSSendLargeMessageToPlayer
 global function NSSendInfoMessageToPlayer
 global function NSSendPopUpMessageToPlayer
 global function NSSendAnnouncementMessageToPlayer
+
+global function NSCreateStatusMessageOnPlayer
+global function NSEditStatusMessageOnPlayer
+global function NSDeleteStatusMessageOnPlayer
 #endif
 
 
@@ -27,14 +31,21 @@ enum eMessageType
 	LARGE,
 	INFO,
 	POPUP,
-	ANNOUNCEMENT
+	ANNOUNCEMENT,
+	CREATE_STATUS,
+	EDIT_STATUS,
+	DELETE_STATUS
 }
+
+const int STATUS_MESSAGES_MAX = 4
 
 #if CLIENT
 genericServerHUDMessageStruct ServerMessage
 array< genericServerHUDMessageStruct > popupMessageList
 array< genericServerHUDMessageStruct > infoMessageList
 array< genericServerHUDMessageStruct > largeMessageList
+// table< id, rui >
+table< string, var > statusMessageTable
 array< AnnouncementData > announcementMessageList
 #endif // CLIENT
 
@@ -55,6 +66,32 @@ void function MessageUtils_Init ()
 
 
 #if SERVER
+string function NSCreateStatusMessageOnPlayer( entity player, genericServerHUDMessageStruct message )
+{
+	string id = UniqueString( "StatusMessage_" )
+	
+	ServerToClientStringCommand( player, "ServerHUDMessageSetTitle " + message.title )
+	ServerToClientStringCommand( player, "ServerHUDMessageSetDescription " + message.description )
+
+	ServerToClientStringCommand( player, "ServerHUDMessageRequest " + eMessageType.CREATE_STATUS + " " + message.duration + " " + id )
+	
+	return id
+}
+
+void function NSEditStatusMessageOnPlayer( entity player, genericServerHUDMessageStruct message, string id  )
+{
+	ServerToClientStringCommand( player, "ServerHUDMessageSetTitle " + message.title )
+	ServerToClientStringCommand( player, "ServerHUDMessageSetDescription " + message.description )
+	
+	ServerToClientStringCommand( player, "ServerHUDMessageRequest " + eMessageType.EDIT_STATUS + " " + message.duration + " " + id )
+}
+
+void function NSDeleteStatusMessageOnPlayer( entity player, string id  )
+{
+	ServerToClientStringCommand( player, "ServerHUDMessageRequest " + eMessageType.DELETE_STATUS + " " + 0 + " " + id )
+}
+
+
 void function NSSendAnnouncementMessageToPlayer( entity player, genericServerHUDMessageStruct message )
 {
 	ServerToClientStringCommand( player, "ServerHUDMessageSetTitle " + message.title )
@@ -124,19 +161,19 @@ void function ServerCallback_CreateServerMessage ( array< string > args  )
 		case eMessageType.ANNOUNCEMENT:
 			ShowAnnouncementMessage()
 			break
+		case eMessageType.CREATE_STATUS:
+			CreateStatusMessage( args[2] )
+			break
+		case eMessageType.EDIT_STATUS:
+			EditStatusMessage( args[2] )
+			break
+		case eMessageType.DELETE_STATUS:
+			thread DeleteStatusMessage( args[2] )
+			break
 		default:
 			return
 	}
 	
-	/*
-		var rui = CreatePermanentCockpitRui( $"ui/at_wave_intro.rpak" )
-		RuiSetInt( rui, "listPos", 0 )
-		RuiSetGameTime( rui, "startFadeInTime", Time() )
-		RuiSetGameTime( rui, "startFadeOutTime", Time() + 20 )
-		RuiSetString( rui, "titleText", "title" )
-		RuiSetString( rui, "itemText", "hi :)" )
-		RuiSetFloat2( rui, "offset", <0,-250,0> )
-	/*
 	/*
 		var rui = CreatePermanentCockpitRui( $"ui/wave_announcement.rpak", 1 )
 		var rui = CreateCockpitRui(  $"ui/announcement_results.rpak" )
@@ -145,6 +182,55 @@ void function ServerCallback_CreateServerMessage ( array< string > args  )
 		var rui = CreateCockpitRui( $"ui/cockpit_console_text_top_left.rpak", 0 )
 		var rui = CreatePermanentCockpitRui( $"ui/at_wave_intro.rpak" )
  	*/
+}
+
+void function DeleteStatusMessage( string id )
+{
+	if ( id in statusMessageTable )
+	{
+		var rui = statusMessageTable[ id ]
+		RuiSetGameTime( rui, "startFadeOutTime", Time() )
+		
+		wait 0.6
+		
+		delete statusMessageTable[ id ]
+		RuiDestroyIfAlive( rui )
+		
+		int i = 0
+		foreach( _id, _rui in statusMessageTable )
+		{
+			RuiSetInt( _rui, "listPos", i )
+			
+			i++
+		}
+	}
+}
+
+void function EditStatusMessage( string id )
+{
+	if( id in statusMessageTable )
+	{
+		var rui = statusMessageTable[ id ]
+		RuiSetString( rui, "titleText", ServerMessage.title )
+		RuiSetString( rui, "itemText", ServerMessage.description )
+	}
+}
+
+void function CreateStatusMessage( string id )
+{
+	// Cap at 4 messages at a time
+	if( statusMessageTable.len() == STATUS_MESSAGES_MAX )
+		return
+	
+	
+	var rui = CreatePermanentCockpitRui( $"ui/at_wave_intro.rpak" )
+	RuiSetInt( rui, "listPos", statusMessageTable.len() )
+	RuiSetGameTime( rui, "startFadeInTime", Time() )
+	RuiSetString( rui, "titleText", ServerMessage.title )
+	RuiSetString( rui, "itemText", ServerMessage.description )
+	RuiSetFloat2( rui, "offset", <0,-250,0> )
+	
+	statusMessageTable[ id ] <- rui
 }
 
 void function AnnouncementMessageHandler_Threaded()
