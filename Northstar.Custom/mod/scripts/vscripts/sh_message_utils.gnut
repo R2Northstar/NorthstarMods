@@ -6,6 +6,7 @@ global function MessageUtils_Init
 global function NSSendLargeMessageToPlayer
 global function NSSendInfoMessageToPlayer
 global function NSSendPopUpMessageToPlayer
+global function NSSendAnnouncementMessageToPlayer
 #endif
 
 
@@ -25,7 +26,8 @@ enum eMessageType
 {
 	LARGE,
 	INFO,
-	POPUP
+	POPUP,
+	ANNOUNCEMENT
 }
 
 #if CLIENT
@@ -33,6 +35,7 @@ genericServerHUDMessageStruct ServerMessage
 array< genericServerHUDMessageStruct > popupMessageList
 array< genericServerHUDMessageStruct > infoMessageList
 array< genericServerHUDMessageStruct > largeMessageList
+array< AnnouncementData > announcementMessageList
 #endif // CLIENT
 
 
@@ -42,7 +45,8 @@ void function MessageUtils_Init ()
 	AddServerToClientStringCommandCallback( "ServerHUDMessageSetTitle", ServerCallback_SetServerTitle )
 	AddServerToClientStringCommandCallback( "ServerHUDMessageSetDescription", ServerCallback_SetServerDescription )
 	AddServerToClientStringCommandCallback( "ServerHUDMessageRequest", ServerCallback_CreateServerMessage )
-
+	
+	thread AnnouncementMessageHandler_Threaded()
 	thread PopUpMessageHandler_Threaded()
 	thread InfoMessageHandler_Threaded()
 	thread LargeMessageHandler_Threaded()
@@ -51,6 +55,14 @@ void function MessageUtils_Init ()
 
 
 #if SERVER
+void function NSSendAnnouncementMessageToPlayer( entity player, genericServerHUDMessageStruct message )
+{
+	ServerToClientStringCommand( player, "ServerHUDMessageSetTitle " + message.title )
+	ServerToClientStringCommand( player, "ServerHUDMessageSetDescription " + message.description )
+
+	ServerToClientStringCommand( player, "ServerHUDMessageRequest " + eMessageType.ANNOUNCEMENT + " " + message.duration )
+}
+
 void function NSSendPopUpMessageToPlayer( entity player, genericServerHUDMessageStruct message )
 {
 	ServerToClientStringCommand( player, "ServerHUDMessageSetDescription " + message.description )
@@ -109,10 +121,22 @@ void function ServerCallback_CreateServerMessage ( array< string > args  )
 		case eMessageType.POPUP:
 			ShowPopUpMessage()
 			break
+		case eMessageType.ANNOUNCEMENT:
+			ShowAnnouncementMessage()
+			break
 		default:
 			return
 	}
-
+	
+	/*
+		var rui = CreatePermanentCockpitRui( $"ui/at_wave_intro.rpak" )
+		RuiSetInt( rui, "listPos", 0 )
+		RuiSetGameTime( rui, "startFadeInTime", Time() )
+		RuiSetGameTime( rui, "startFadeOutTime", Time() + 20 )
+		RuiSetString( rui, "titleText", "title" )
+		RuiSetString( rui, "itemText", "hi :)" )
+		RuiSetFloat2( rui, "offset", <0,-250,0> )
+	/*
 	/*
 		var rui = CreatePermanentCockpitRui( $"ui/wave_announcement.rpak", 1 )
 		var rui = CreateCockpitRui(  $"ui/announcement_results.rpak" )
@@ -121,6 +145,34 @@ void function ServerCallback_CreateServerMessage ( array< string > args  )
 		var rui = CreateCockpitRui( $"ui/cockpit_console_text_top_left.rpak", 0 )
 		var rui = CreatePermanentCockpitRui( $"ui/at_wave_intro.rpak" )
  	*/
+}
+
+void function AnnouncementMessageHandler_Threaded()
+{
+	while( true )
+	{
+		while( announcementMessageList.len() == 0 )
+			WaitFrame()
+
+		AnnouncementFromClass( GetLocalViewPlayer(), announcementMessageList[0] )
+
+		wait 5
+
+		announcementMessageList.remove(0)
+	}
+}
+
+void function ShowAnnouncementMessage()
+{
+	AnnouncementData announcement = Announcement_Create( ServerMessage.title )
+	Announcement_SetSubText( announcement, ServerMessage.description )
+	Announcement_SetTitleColor( announcement, <1,1,0> )
+	Announcement_SetPurge( announcement, true )
+	Announcement_SetPriority( announcement, 300 )
+	Announcement_SetSoundAlias( announcement, SFX_HUD_ANNOUNCE_QUICK )
+	Announcement_SetStyle( announcement, ANNOUNCEMENT_STYLE_QUICK )
+	
+	announcementMessageList.append( announcement )
 }
 
 void function PopUpMessageHandler_Threaded()
