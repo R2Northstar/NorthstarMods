@@ -5,18 +5,15 @@ global function SniperTitanThink
 
 const float SNIPER_TITAN_POSITION_SEARCH_RANGE = 4120
 
-struct
-{
-	entity harvester
-} file
+
 
 void function MoveToSniperPosition( entity titan, vector origin, entity target )
 {
 	titan.EndSignal( "OnSyncedMeleeVictim" )
 	titan.EndSignal( "OnDeath" )
 	titan.EndSignal( "OnDestroy" )
-	file.harvester.EndSignal( "OnDeath" )
-	file.harvester.EndSignal( "OnDestroy" )
+	target.EndSignal( "OnDeath" )
+	target.EndSignal( "OnDestroy" )
 
 	titan.EnableNPCMoveFlag( NPCMF_PREFER_SPRINT )
 
@@ -54,8 +51,8 @@ void function SniperTitanThink( entity titan, entity generator)
 	titan.EndSignal( "OnSyncedMeleeVictim" )
 	titan.EndSignal( "OnDeath" )
 	titan.EndSignal( "OnDestroy" )
-	file.harvester.EndSignal( "OnDeath" )
-	file.harvester.EndSignal( "OnDestroy" )
+	generator.EndSignal( "OnDeath" )
+	generator.EndSignal( "OnDestroy" )
 
 	entity soul = titan.GetTitanSoul()
 	soul.EndSignal( "OnDestroy" )
@@ -84,9 +81,8 @@ void function SniperTitanThink( entity titan, entity generator)
 			ReleaseStationaryAIPosition( sniperPosition )
 		}
 	)
-	file.harvester = generator
-	titan.SetEnemyChangeCallback( EnemyChanged )
-	thread CheckEnemy( titan )
+	titan.SetEnemyChangeCallback( EnemyChanged)
+	thread CheckEnemy( titan ,generator)
 	while( true )
 	{
 		WaitFrame()
@@ -95,17 +91,17 @@ void function SniperTitanThink( entity titan, entity generator)
 
 		thread SniperTitanAttack( titan, generator )
 
-		waitthread WaitForInterruption( titan )
+		waitthread WaitForInterruption( titan ,generator)
 	}
 }
 // check if titan can see enemy
-void function CheckEnemy(entity titan)
+void function CheckEnemy(entity titan,entity generator)
 {
 	titan.EndSignal( "OnSyncedMeleeVictim" )
 	titan.EndSignal( "OnDeath" )
 	titan.EndSignal( "OnDestroy" )
-	file.harvester.EndSignal( "OnDeath" )
-	file.harvester.EndSignal( "OnDestroy" )
+	generator.EndSignal( "OnDeath" )
+	generator.EndSignal( "OnDestroy" )
 
 	while (IsValid(titan))
 	{
@@ -113,37 +109,37 @@ void function CheckEnemy(entity titan)
 		if (!IsValid(titan.GetEnemy()))
 			continue
 
-		if (!titan.CanSee(titan.GetEnemy()) && titan.GetEnemy() == file.harvester)
+		if (!titan.CanSee(titan.GetEnemy()) && titan.GetEnemy() == generator)
 		{
-			waitthread CreateSniperTarget( titan )
+			waitthread CreateSniperTarget( titan , generator)
 			wait 1 // wait for 1 second so the signal doesn't get called too soon
 			table result = WaitSignal( titan, "SniperSwitchedEnemy" )
 		}
 	}
 }
 
-void function CreateSniperTarget(entity titan)
+void function CreateSniperTarget(entity titan,entity generator)
 {
 	titan.EndSignal( "OnSyncedMeleeVictim" )
 	titan.EndSignal( "OnDeath" )
 	titan.EndSignal( "OnDestroy" )
-	file.harvester.EndSignal( "OnDeath" )
-	file.harvester.EndSignal( "OnDestroy" )
+	generator.EndSignal( "OnDeath" )
+	generator.EndSignal( "OnDestroy" )
 
 	vector origin = titan.EyePosition()
-	TraceResults result = TraceLine( origin, file.harvester.GetOrigin() + <0, 0, 250>, titan , TRACE_MASK_BLOCKLOS, TRACE_COLLISION_GROUP_NONE )
+	TraceResults result = TraceLine( origin, generator.GetOrigin() + <0, 0, 250>, titan , TRACE_MASK_BLOCKLOS, TRACE_COLLISION_GROUP_NONE )
 	// check if the endPos is too near the titan
-	while (Distance(result.endPos, origin) < 200 || Distance(result.endPos, file.harvester.GetOrigin()) < 200)
+	while (Distance(result.endPos, origin) < 200 || Distance(result.endPos, generator.GetOrigin()) < 200)
 	{
 		wait 2.0
 		origin = titan.EyePosition()
-		result = TraceLine( origin, file.harvester.GetOrigin() + <0, 0, 250>, titan )
+		result = TraceLine( origin, generator.GetOrigin() + <0, 0, 250>, titan )
 	}
 	entity snipertarget = CreateEntity( "info_target" )
 	DispatchSpawn( snipertarget )
 	snipertarget.SetOrigin( result.endPos ) // in front of the harvester i hope
 	SetTeam( snipertarget, TEAM_MILITIA )
-   	snipertarget.EnableAttackableByAI( 40, 0, AI_AP_FLAG_NONE )
+	snipertarget.EnableAttackableByAI( 40, 0, AI_AP_FLAG_NONE )
 	titan.SetEnemy( snipertarget )
 	wait 1 // wait for 1 second so the signal doesn't get called too soon
 	titan.WaitSignal( "SniperSwitchedEnemy" )
@@ -159,14 +155,14 @@ void function CreateSniperTarget(entity titan)
 	)
 }
 
-void function EnemyChanged( entity titan )
+void function EnemyChanged( entity titan)
 {
 	titan.Signal( "SniperSwitchedEnemy" )
 	entity enemy = titan.GetEnemy()
 	if ( !IsValid( enemy ) ) // if you have no enemy, focus on attacking the harvester
 	{
-		thread SniperTitanAttack( titan, file.harvester )
-		enemy = file.harvester
+		thread SniperTitanAttack( titan, fd_harvester.harvester)
+		enemy = fd_harvester.harvester
 	}
 }
 
@@ -186,15 +182,15 @@ function SniperTitanAttack( entity titan, entity target )
 	titan.SetEnemy( target )
 }
 
-void function WaitForInterruption( entity titan )
+void function WaitForInterruption( entity titan ,entity generator)
 {
 	Assert( IsNewThread(), "Must be threaded off" )
 
 	titan.EndSignal( "OnSyncedMeleeVictim" )
 	titan.EndSignal( "OnDeath" )
 	titan.EndSignal( "OnDestroy" )
-	file.harvester.EndSignal( "OnDeath" )
-	file.harvester.EndSignal( "OnDestroy" )
+	generator.EndSignal( "OnDeath" )
+	generator.EndSignal( "OnDestroy" )
 
 	entity soul = titan.GetTitanSoul()
 	soul.EndSignal( "OnDestroy" )
