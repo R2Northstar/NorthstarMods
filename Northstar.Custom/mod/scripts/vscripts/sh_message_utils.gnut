@@ -18,11 +18,14 @@ global function NSDeleteStatusMessageOnPlayer
 global function ServerCallback_CreateServerMessage
 #endif
 
+global function AssetFromString
+
 
 global struct genericServerHUDMessageStruct
 {
 	string title        = ""
 	string description  = ""
+	string image		= ""
 	float duration      = 0
 }
 
@@ -55,6 +58,7 @@ void function MessageUtils_Init ()
 #if CLIENT
 	AddServerToClientStringCommandCallback( "ServerHUDMessageSetTitle", ServerCallback_SetServerTitle )
 	AddServerToClientStringCommandCallback( "ServerHUDMessageSetDescription", ServerCallback_SetServerDescription )
+	AddServerToClientStringCommandCallback( "ServerHUDMessageSetImage", ServerCallback_SetServerImage )
 	AddServerToClientStringCommandCallback( "ServerHUDMessageRequest", ServerCallback_CreateServerMessage )
 	
 	thread AnnouncementMessageHandler_Threaded()
@@ -141,6 +145,15 @@ void function ServerCallback_SetServerDescription ( array< string > args  )
 		desc += arg + " "
 
 	ServerMessage.description = desc
+}
+
+void function ServerCallback_SetServerImage ( array< string > args  )
+{
+	string image
+	foreach( string arg in args )
+		image += arg
+
+	ServerMessage.image = image
 }
 
 void function ServerCallback_CreateServerMessage ( array< string > args  )
@@ -294,7 +307,7 @@ void function LargeMessageHandler_Threaded()
 			WaitFrame()
 
 		var rui = CreatePermanentCockpitRui( $"ui/fd_tutorial_tip.rpak" )
-		RuiSetImage( rui, "backgroundImage", $"rui/menu/boosts/boost_radar_jammer" )
+		RuiSetImage( rui, "backgroundImage", AssetFromString( largeMessageList[0].image ) )
 		RuiSetString( rui, "titleText", largeMessageList[0].title )
 		RuiSetString( rui, "descriptionText", largeMessageList[0].description )
 		RuiSetGameTime( rui, "updateTime", Time() )
@@ -338,3 +351,8 @@ void function ShowInfoMessage()
 }
 
 #endif // CLIENT
+
+asset function AssetFromString( string str )
+{
+	return expect asset(compilestring(format("return $\"%s\"", str))())
+}
