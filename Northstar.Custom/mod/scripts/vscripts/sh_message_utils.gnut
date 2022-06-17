@@ -307,7 +307,7 @@ void function LargeMessageHandler_Threaded()
 			WaitFrame()
 
 		var rui = CreatePermanentCockpitRui( $"ui/fd_tutorial_tip.rpak" )
-		RuiSetImage( rui, "backgroundImage", AssetFromString( largeMessageList[0].image ) )
+		RuiSetImage( rui, "backgroundImage", NSAssetFromString( largeMessageList[0].image ) )
 		RuiSetString( rui, "titleText", largeMessageList[0].title )
 		RuiSetString( rui, "descriptionText", largeMessageList[0].description )
 		RuiSetGameTime( rui, "updateTime", Time() )
