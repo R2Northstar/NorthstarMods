@@ -18,14 +18,14 @@ global function NSDeleteStatusMessageOnPlayer
 global function ServerCallback_CreateServerMessage
 #endif
 
-global function AssetFromString
+global function NSAssetFromString
 
 
 global struct genericServerHUDMessageStruct
 {
 	string title        = ""
 	string description  = ""
-	string image		= ""
+	string image        = ""
 	float duration      = 0
 }
 
@@ -352,7 +352,7 @@ void function ShowInfoMessage()
 
 #endif // CLIENT
 
-asset function AssetFromString( string str )
+asset function NSAssetFromString( string str )
 {
 	return expect asset(compilestring(format("return $\"%s\"", str))())
 }
