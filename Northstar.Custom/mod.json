@@ -39,7 +39,7 @@
 		},
 		{
 			"Path": "weapons/mp_weapon_peacekraber.nut",
-			"RunOn": "( CLIENT || SERVER ) && MP"
+			"RunOn": "( CLIENT || SERVER )"
 		},
 		{
 			"Path": "gamemodes/sh_gamemode_chamber.nut",
