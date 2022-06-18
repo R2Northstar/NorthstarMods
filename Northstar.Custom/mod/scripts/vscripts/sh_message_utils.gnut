@@ -115,6 +115,7 @@ void function NSSendLargeMessageToPlayer( entity player, genericServerHUDMessage
 {
 	ServerToClientStringCommand( player, "ServerHUDMessageSetTitle " + message.title )
 	ServerToClientStringCommand( player, "ServerHUDMessageSetDescription " + message.description )
+	ServerToClientStringCommand( player, "ServerHUDMessageSetImage " + message.image )
 
 	ServerToClientStringCommand( player, "ServerHUDMessageRequest " + eMessageType.LARGE + " " + message.duration )
 }
