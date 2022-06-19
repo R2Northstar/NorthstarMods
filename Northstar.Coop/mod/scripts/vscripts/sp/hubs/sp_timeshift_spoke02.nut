@@ -3362,7 +3362,7 @@ void function TransitionSpoke1()
 	else
 		trans.timeshiftMostRecentTimeline = 0
 
-	PickStartPoint( "sp_hub_timeshift", "PRISTINE CAMPUS", trans )
+	Coop_LoadMapFromStartPoint( "sp_hub_timeshift", "PRISTINE CAMPUS", trans )
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////

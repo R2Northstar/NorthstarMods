@@ -600,7 +600,7 @@ void function EOF( entity player )
 	#endif
 
 	if ( loadNextLevel )
-		GameRules_ChangeMap( "sp_skyway_v1", GAMETYPE )
+		Coop_LoadMapFromStartPoint( "sp_skyway_v1", "Level Start" )
 	else
 		PickStartPoint_NoFadeOut_NoPilotWeaponCarryover( "sp_s2s", "OLA Crash" )
 
@@ -2377,6 +2377,9 @@ void function StartPlayerWidowShake( ShipStruct ship )
 		frequency = 200
 		duration = 12
 		radius = 1024
+		if ( !IsValid( file.player ) )
+			return
+		
 		shake = CreateShake( file.player.GetOrigin(), amplitude, frequency, duration, radius )
 		shake.SetParent( ship.model )
 
@@ -12229,7 +12232,24 @@ void function DeleteBarkerShip( bool skipping = false )
 void function Reunited_Main( entity player )
 {
 	entity bt = player.GetPetTitan()
-	Assert( IsValid( bt ) )
+	if ( !IsValid( bt ) )
+		bt = GetPlayer0().GetPetTitan()
+	
+	array<entity> bts = [bt]
+	foreach( entity p in GetPlayerArray() )
+	{
+		entity titan = p.GetPetTitan()
+
+		if ( bt == titan )
+			continue
+
+		if ( IsValid( titan ) )
+			titan.SetOrigin( bt.GetOrigin() )
+		else
+			CreatePetTitanAtLocation( p, bt.GetOrigin(), <0,0,0> )
+		
+		bts.append( p.GetPetTitan() )
+	}
 
 	FlagWait( "MaltaOnCourse" )
 
@@ -12251,13 +12271,22 @@ void function Reunited_Main( entity player )
 	delaythread( 1.5 ) ReunitedMusic()
 
 	entity oldRef = bt.GetParent()
-	bt.ClearParent()
-	bt.Anim_Stop()
-	oldRef.Destroy()
+	if ( IsValid( oldRef ) )
+		oldRef.Destroy()
 
 	entity node = GetEntByScriptName( "BTReunionNode" )
-	bt.SetParent( node )
-	thread PlayAnim( bt, "bt_s2s_bridge_punch", node )
+	
+	foreach( entity titan in bts )
+	{
+		if ( IsValid( titan ) )
+		{
+			titan.ClearParent()
+			titan.Anim_Stop()
+
+			titan.SetParent( node )
+			thread PlayAnim( titan, "bt_s2s_bridge_punch", node )
+		}
+	}
 
 	entity glass = GetEntByScriptName( "bridge_glass_front" )
 	float amplitude = 7
@@ -12302,9 +12331,15 @@ void function Reunited_Main( entity player )
 	delaythread( 2.0 ) PlayBTDialogue( "diag_sp_maltaBridge_STS370_01_01_mcor_bt" )
 
 	WaittillAnimDone( bt )
-
-	bt.Anim_ScriptedPlay( "bt_s2s_bridge_punch_idle" )
-	bt.Anim_EnablePlanting()
+	
+	foreach( entity titan in bts )
+	{
+		if ( IsValid( titan ) )
+		{
+		bt.Anim_ScriptedPlay( "bt_s2s_bridge_punch_idle" )
+		bt.Anim_EnablePlanting()
+		}
+	}
 	//bt.ClearParent()
 
 	entity panel = GetEntByScriptName( "maltaBridgeWindowClip" )//GetEntByScriptName( "bridgeUseTrigger" )
@@ -12351,9 +12386,15 @@ void function Reunited_Main( entity player )
 	GetEntByScriptName( "maltaBridgeWindowClip" ).Destroy()
 	player.DeployWeapon()
 	player.UnforceStand()
-
-	ForceScriptedEmbark( player, bt )
-	bt.Destroy()
+	
+	foreach( entity titan in bts )
+	{
+		if ( IsValid( titan ) )
+		{
+		ForceScriptedEmbark( titan.GetOwner(), titan )
+		titan.Destroy()
+		}
+	}
 
 	Embark_Allow( player )
 
@@ -14562,7 +14603,9 @@ void function BT_Tackle_DisableEmbarkWhenReady( entity player )
 	Assert( IsValid( bt ) )
 
 	entity soul = bt.GetTitanSoul()
-	Assert( IsValid( soul ) )
+	
+	if ( !IsValid( soul ) )
+		CreatePetTitanAtLocation( player, player.GetOrigin(), player.GetAngles() )
 
 	if ( soul.IsDoomed() )
 		UndoomTitan( bt, 5 )

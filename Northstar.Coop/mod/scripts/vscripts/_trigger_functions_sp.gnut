@@ -862,7 +862,7 @@ void function LevelTransitionTrigger( entity trigger )
 
 	WaitSignal( trigger, "OnTrigger" )
 
-	PickStartPoint( level, startPoint )
+	Coop_LoadMapFromStartPoint( level, startPoint )
 
 	Coop_MapChange()
 }

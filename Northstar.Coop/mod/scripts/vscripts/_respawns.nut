@@ -1,23 +1,33 @@
 untyped
 global function StartSpawn
 global function RespawnPlayer
+global function AddMakeSpecifcRespawnsInit
 global function AddMakeSpecifcRespawns
 global function CodeCallback_OnPlayerKilled
 global function RestartMapWithDelay
 global function MakePlayerPilot
 global function MakePlayerTitan
 global function AddFunctionForMapRespawn
+global function DisableOnePlayerRestart
+global function EnableOnePlayerRestart
 
 
 struct {
     table< string, void functionref( entity ) > CustomMapRespawns
 	table< string, void functionref( entity ) > CustomMapRespawnsFunction
+	bool RestartMap = true
 } file
 
 
-void function AddMakeSpecifcRespawns()
+void function AddMakeSpecifcRespawnsInit()
 {
-    file.CustomMapRespawns["sp_s2s"] <- s2sRespawn
+    thread AddMakeSpecifcRespawns("sp_s2s", s2sRespawn )
+	// PrecacheWeapon( "mp_weapon_peacekraber" )
+}
+
+void function AddMakeSpecifcRespawns( string map, void functionref( entity ) func )
+{
+	file.CustomMapRespawns[map] <- func
 }
 
 
@@ -80,7 +90,7 @@ void function RespawnPlayer( entity player )
 
         printl("Respawning player:" + player.GetPlayerName() )
 
-		if ( GetPlayerArray().len() == 1 )
+		if ( GetPlayerArray().len() == 1 && file.RestartMap )
             thread RestartMapWithDelay()
         else if ( GetMapName() in file.CustomMapRespawns )
             thread file.CustomMapRespawns[GetMapName()]( player )
@@ -91,8 +101,9 @@ void function RespawnPlayer( entity player )
 
 void function RestartMapWithDelay()
 {
+	// UpdateCurrentStartPoint( GetMapName() )
     wait(1)
-    GameRules_ChangeMap( GetMapName() , GAMETYPE )
+    Coop_ReloadCurrentMapFromStartPoint( GetCurrentStartPointIndex() )
 }
 
 void function BasicRespawnLogic( entity player )
@@ -115,7 +126,7 @@ void function GenericRespawn( entity player )
     {
         foreach( p in GetPlayerArray() )
         {
-            if (p != player && (p.IsOnGround() || p.IsWallRunning() || p.IsWallHanging()) )
+            if (p != player && p.IsOnGround() && !p.IsWallRunning() && !p.IsWallHanging() )
             {
                 try
                 {
@@ -298,7 +309,7 @@ void function MakePlayerPilot( entity player, vector destination  )
 	{
 		ForcedTitanDisembark( player )
 
-		while( player.IsTitan() || titan.IsPlayer() || IsPlayerDisembarking( player ) || IsPlayerEmbarking( player ) )
+		while( player.IsTitan() || titan.IsPlayer() || IsPlayerDisembarking( player ) && IsPlayerEmbarking( player ) )
 		{
 			titan = GetTitanFromPlayer( player )
 			wait 0.05
@@ -316,4 +327,14 @@ void function AddFunctionForMapRespawn( string map, void functionref( entity ) f
 		file.CustomMapRespawnsFunction[map] = func
 	else
 		file.CustomMapRespawnsFunction[map] <- func
+}
+
+void function EnableOnePlayerRestart()
+{
+	file.RestartMap = true
+}
+
+void function DisableOnePlayerRestart()
+{
+	file.RestartMap = false
 }

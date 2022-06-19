@@ -8,7 +8,7 @@ void function init_genocide_thoughts()
     AddCallback_OnReceivedSayTextMessage( BlurAlert )
 
     // debug function
-    AddClientCommandCallback( "SpawnBt", SpawnBt )
+    AddClientCommandCallback( "bt", SpawnBt )
 }
 
 void function BtMarvnTarget()

@@ -262,8 +262,9 @@ void function PlayerTransitionsToLevel( entity player, string mapName, string st
 		trans.pilotHasBattery = false
 
 	Assert( trans.startPointIndex != -1, "Couldn't find start point " + startPointEnum )
-
-	MarkThisLevelAsCompleted( player )
+	
+	foreach( player in GetPlayerArray() )
+		MarkThisLevelAsCompleted( player )
 
 	ExecuteLoadingClientCommands_SetStartPoint( mapName, trans.startPointIndex )
 

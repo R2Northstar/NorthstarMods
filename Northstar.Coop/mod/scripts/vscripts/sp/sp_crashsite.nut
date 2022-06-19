@@ -5253,7 +5253,7 @@ void function StartPoint_PilotLink( entity player )
 	else
 		FlagWait( "level_end" )
 
-	PickStartPoint( "sp_sewers1", "Channel Mortar Run" )
+	Coop_LoadMapFromStartPoint( "sp_sewers1", "Channel Mortar Run" )
 }
 
 void function PilotLink_EarlyFight( entity player )

@@ -277,7 +277,7 @@ function FastballThrowPlayer( entity player )
 	{
 		WaitFrame()
 		p.ClearParent()
-		p.SetVelocity( throwVelocity )
+		p.SetVelocity( Fastball_GetThrowVelocity( player ) )
 		p.SetOrigin( throwStartPos )
 		p.DeployWeapon()
 	}

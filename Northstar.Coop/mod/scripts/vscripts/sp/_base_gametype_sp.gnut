@@ -280,13 +280,13 @@ void function TryGameModeAnnouncement( entity player )
 {
 }
 
-void function Coop_LoadMapFromStartPoint(string mapName,int startindex)
+void function Coop_LoadMapFromStartPoint( string mapName, string startPoint, LevelTransitionStruct ornull trans = null )
 {
-	ExecuteLoadingClientCommands_SetStartPoint( mapName, startindex )
+	ExecuteLoadingClientCommands_SetStartPoint( mapName, GetStartPointIndexFromName( mapName, startPoint ) )
 	GameRules_ChangeMap( mapName, GAMETYPE )
-	foreach(player in GetPlayerArray())
+	foreach( player in GetPlayerArray() )
 	{
-		player.SetOrigin(GetPlayerByIndex(0).GetOrigin())
+		player.SetOrigin( GetPlayerByIndex(0).GetOrigin() )
 	}
 }
 
@@ -296,14 +296,14 @@ void function Coop_ReloadCurrentMapFromStartPoint(int startindex)
 	ExecuteLoadingClientCommands_SetStartPoint( mapName, startindex )
 	//ClientCommand( GetPlayerByIndex(0) , "map " + mapName )
 	GameRules_ChangeMap( mapName, GAMETYPE )
-	foreach(player in GetPlayerArray())
+	foreach( player in GetPlayerArray() )
 	{
 		player.SetOrigin(GetPlayerByIndex(0).GetOrigin())
 	}
 }
 
 
-void function Coop_GetLevelTransition(string coop_mapname)
+void function Coop_GetLevelTransition( string coop_mapname )
 {
 	LevelTransitionStruct ornull trans = GetLevelTransitionStruct()
 	if ( trans != null )

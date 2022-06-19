@@ -3639,7 +3639,7 @@ void function TransitionSpoke2()
 	LevelTransitionStruct trans = SaveBoyleAudioLogs()
 	//expect LevelTransitionStruct( trans )
 	trans.timeshiftKilledLobbyMarvin = file.timeshiftKilledLobbyMarvin
-	PickStartPoint( "sp_timeshift_spoke02", "Timeshift Device", trans )
+	Coop_LoadMapFromStartPoint( "sp_timeshift_spoke02", "Timeshift Device", trans )
 }
 
 void function MusicSkybridge( entity player )
@@ -5770,7 +5770,7 @@ void function AA_LevelEndThread( entity player )
 	//ScreenFadeToBlack( player, 1.5, 5 )
 	//wait 1.5
 	//player.FreezeControlsOnServer()
-	PickStartPoint( "sp_beacon", "Level Start" )
+	Coop_LoadMapFromStartPoint( "sp_beacon", "Level Start" )
 
 }
 

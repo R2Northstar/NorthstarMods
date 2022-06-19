@@ -57,7 +57,7 @@
 			"Path": "_respawns.nut",
 			"RunOn": "SERVER && SP",
 			"ServerCallback": {
-				"After": "AddMakeSpecifcRespawns"
+				"After": "AddMakeSpecifcRespawnsInit"
 			}
 		},
 		{
@@ -69,6 +69,16 @@
 			"RunOn": "SERVER && SP",
 			"ServerCallback": {
 				"After": "init_genocide_thoughts"
+			}
+		},
+		{
+			"Path": "sh_coop_custom_precache.gnut",
+			"RunOn": "( CLIENT || SERVER ) && SP",
+			"ClientCallback": {
+				"After": "CoopCustomPrecache"
+			},
+			"ServerCallback": {
+				"After": "CoopCustomPrecache"
 			}
 		}
 	]

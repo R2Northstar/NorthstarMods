@@ -337,6 +337,7 @@ void function CreatePetTitan( entity player)
 	entity titan = CreateAutoTitanForPlayer_FromTitanLoadout( player, loadout, titanStart.GetOrigin(), titanStart.GetAngles() )
 	DispatchSpawn( titan )
 	player.SetPetTitan( titan )
+	titan.SetOwner( player )
 
 	titan.DisableHibernation()
 }
@@ -359,6 +360,7 @@ void function CreatePetTitanAtLocation( entity player, vector origin, vector ang
 	entity titan = CreateAutoTitanForPlayer_FromTitanLoadout( player, loadout, origin, angles )
 	DispatchSpawn( titan )
 	player.SetPetTitan( titan )
+	titan.SetOwner( player )
 
 	titan.DisableHibernation()
 }
@@ -382,6 +384,7 @@ void function CreatePetTitanAtLocationWithTf( entity player, vector origin, vect
 	SetSpawnOption_Titanfall( titan )
 	DispatchSpawn( titan )
 	player.SetPetTitan( titan )
+	titan.SetOwner( player )
 
 	titan.DisableHibernation()
 }

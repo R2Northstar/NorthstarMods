@@ -7,10 +7,7 @@ void function FullyHidePlayers()
 {
     foreach( entity player in GetPlayerArray() )
     {
-        foreach( entity weapon in GetPrimaryWeapons( player ) )
-        {
-            weapon.DisableDraw()
-        }
+        StorePilotWeapons( player )
         player.Hide()
     }
 }
@@ -19,10 +16,7 @@ void function FullyShowPlayers()
 {
     foreach( entity player in GetPlayerArray() )
     {
-        foreach( entity weapon in GetPrimaryWeapons( player ) )
-        {
-            weapon.EnableDraw()
-        }
+        RetrievePilotWeapons( player )
         player.Show()
     }
 }

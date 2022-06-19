@@ -223,6 +223,8 @@ vector function GetSaveLocation()
 
 void function TeleportAllExpectOne( vector destination, entity ornull ThisPlayer, bool display_notification = true )
 {
+	array<entity> movers
+
 	foreach( entity player in GetPlayerArray() )
 	{
 		if ( player != ThisPlayer )
@@ -239,6 +241,8 @@ void function TeleportAllExpectOne( vector destination, entity ornull ThisPlayer
 				player.SetHealth( player.GetMaxHealth() )
 				if ( display_notification )
 					Chat_ServerPrivateMessage( player, "You are being moved to the next checkpoint", false )
+				
+				movers.append( mover )
 			}
 			catch( exception ){}
 		}
@@ -258,6 +262,12 @@ void function TeleportAllExpectOne( vector destination, entity ornull ThisPlayer
 			}
 			catch( exception ){}
 		}
+	}
+	
+	foreach( entity mover in movers )
+	{
+		if ( IsValid( mover ) )
+			mover.Destroy()
 	}
 }
 
