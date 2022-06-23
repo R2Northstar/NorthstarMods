@@ -2,8 +2,6 @@ global function ClMinimap_Init
 
 global function ClientCodeCallback_MinimapEntitySpawned
 
-global function DumbMinimapFunction
-
 global function Minimap_AddLayer
 global function Minimap_AddCustomLayer
 
@@ -883,12 +881,6 @@ void function FadeOutStaticSoundAfterDelay( entity ent, float delay )
 		}
 	)
 	wait delay
-}
-void function DumbMinimapFunction(){
-	RuiSetFloat3( file.minimap_base, "objectPos", <500, 500, 0> )
-	RuiSetFloat3( file.minimap_indicator, "objectPos", <500, 500, 0> )
-	RuiSetFloat3( file.minimap_you, "objectPos", <500, 500, 0> )
-	RuiSetFloat3( file.minimap_wedges, "objectPos", <500, 500, 0> )
 }
 void function Minimap_SetZoomScale( float scale )
 {
