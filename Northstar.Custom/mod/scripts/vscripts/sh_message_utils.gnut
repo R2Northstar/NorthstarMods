@@ -15,7 +15,7 @@ global function NSDeleteStatusMessageOnPlayer
 
 
 #if CLIENT
-global function ServerCallback_CreateServerMessage
+global function ServerCallback_CreateServerHUDMessage
 #endif
 
 global function NSAssetFromString
@@ -56,10 +56,10 @@ array< AnnouncementData > announcementMessageList
 void function MessageUtils_Init ()
 {
 #if CLIENT
-	AddServerToClientStringCommandCallback( "ServerHUDMessageSetTitle", ServerCallback_SetServerTitle )
-	AddServerToClientStringCommandCallback( "ServerHUDMessageSetDescription", ServerCallback_SetServerDescription )
-	AddServerToClientStringCommandCallback( "ServerHUDMessageSetImage", ServerCallback_SetServerImage )
-	AddServerToClientStringCommandCallback( "ServerHUDMessageRequest", ServerCallback_CreateServerMessage )
+	AddServerToClientStringCommandCallback( "ServerHUDMessageSetTitle", ServerCallback_SetServerHUDMessageTitle )
+	AddServerToClientStringCommandCallback( "ServerHUDMessageSetDescription", ServerCallback_SetServerHUDMessageDescription )
+	AddServerToClientStringCommandCallback( "ServerHUDMessageSetImage", ServerCallback_SetServerHUDMessageImage )
+	AddServerToClientStringCommandCallback( "ServerHUDMessageRequest", ServerCallback_CreateServerHUDMessage )
 	
 	thread AnnouncementMessageHandler_Threaded()
 	thread PopUpMessageHandler_Threaded()
@@ -130,7 +130,7 @@ void function NSSendInfoMessageToPlayer( entity player, genericServerHUDMessageS
 
 
 #if CLIENT
-void function ServerCallback_SetServerTitle ( array< string > args  )
+void function ServerCallback_SetServerHUDMessageTitle ( array< string > args  )
 {
 	string title
 	foreach( string arg in args )
@@ -139,7 +139,7 @@ void function ServerCallback_SetServerTitle ( array< string > args  )
 	ServerMessage.title = title
 }
 
-void function ServerCallback_SetServerDescription ( array< string > args  )
+void function ServerCallback_SetServerHUDMessageDescription ( array< string > args  )
 {
 	string desc
 	foreach( string arg in args )
@@ -148,7 +148,7 @@ void function ServerCallback_SetServerDescription ( array< string > args  )
 	ServerMessage.description = desc
 }
 
-void function ServerCallback_SetServerImage ( array< string > args  )
+void function ServerCallback_SetServerHUDMessageImage ( array< string > args  )
 {
 	string image
 	foreach( string arg in args )
@@ -157,7 +157,7 @@ void function ServerCallback_SetServerImage ( array< string > args  )
 	ServerMessage.image = image
 }
 
-void function ServerCallback_CreateServerMessage ( array< string > args  )
+void function ServerCallback_CreateServerHUDMessage ( array< string > args  )
 {
 	ServerMessage.duration = args[1].tofloat()
 
