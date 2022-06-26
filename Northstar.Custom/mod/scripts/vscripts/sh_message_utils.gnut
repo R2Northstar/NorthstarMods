@@ -144,7 +144,9 @@ void function ServerCallback_SetServerHUDMessageDescription ( array< string > ar
 	string desc
 	foreach( string arg in args )
 		desc += arg + " "
-
+	
+	desc = EscapeString( desc )
+	
 	ServerMessage.description = desc
 }
 
@@ -356,4 +358,37 @@ void function ShowInfoMessage()
 asset function NSAssetFromString( string str )
 {
 	return expect asset(compilestring(format("return $\"%s\"", str))())
+}
+
+string function EscapeString( string str )
+{
+	string unformattedMessage = str
+	string message
+	
+	var start = 0
+	var end = 0
+	int i = 0
+	bool first = true
+	while ( true )
+	{
+		end = unformattedMessage.find( "\\n" )
+		
+		if( end == null )
+			break
+		
+		message += unformattedMessage.slice( 0, end ) + "\n"
+		first = false
+		
+		unformattedMessage = unformattedMessage.slice( end + 2, unformattedMessage.len() )
+		
+		start = end
+		
+		i++
+		if( i == 30 )
+			return "Failed to Escape string"
+	}
+	
+	message += unformattedMessage.slice( 0, unformattedMessage.len() )
+	
+	return message
 }
