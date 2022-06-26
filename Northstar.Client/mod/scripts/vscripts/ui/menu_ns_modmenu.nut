@@ -449,7 +449,7 @@ string function FormatModDescription( string modName )
 
 	// convars
 	array<string> modCvars = NSGetModConvarsByModName( modName )
-	if ( modCvars.len() != 0 && GetConVarBool( "modlist_hide_cv" ) )
+	if ( modCvars.len() != 0 && GetConVarBool( "modlist_hide_convar" ) )
 	{
 		ret += "ConVars: "
 
