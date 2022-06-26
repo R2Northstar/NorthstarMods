@@ -38,9 +38,6 @@ struct {
 	var currentButton
 	string searchTerm
 	modData& lastMod
-
-	var warningPanel
-	var warningLabel
 } file
 
 const int PANELS_LEN = 15
@@ -48,7 +45,7 @@ const string[3] CORE_MODS = ["Northstar.Client", "Northstar.Coop", "Northstar.Cu
 
 void function AddNorthstarModMenu()
 {
-	AddMenu( "ModListMenu", $"resource/ui/menus/modlist.menu", InitModList )
+	AddMenu( "ModListMenu", $"resource/ui/menus/modlist.menu", InitModMenu )
 }
 
 void function AddNorthstarModMenu_MainMenuFooter()
@@ -62,13 +59,15 @@ void function AdvanceToModListMenu( var button )
 	AdvanceMenu( GetMenu( "ModListMenu" ) )
 }
 
-void function InitModList()
+void function InitModMenu()
 {
 	file.menu = GetMenu( "ModListMenu" )
 	file.panels = GetElementsByClassname( file.menu, "ModSelectorPanel" )
 
-	file.warningPanel = Hud_GetChild( file.menu, "WarningPanel" )
-	file.warningLabel = Hud_GetChild( file.menu, "WarningLabel" )
+	var rui = Hud_GetRui( Hud_GetChild( file.menu, "WarningLegendImage" ) )
+	RuiSetImage( rui, "basicImage", $"ui/menu/common/dialog_error" )
+
+	RuiSetFloat( Hud_GetRui( Hud_GetChild( file.menu, "ModEnabledBar" ) ), "basicImageAlpha", 0.8 )
 
 	// Mod buttons
 	foreach ( var panel in file.panels )
@@ -76,6 +75,9 @@ void function InitModList()
 		var button = Hud_GetChild( panel, "BtnMod" )
 		AddButtonEventHandler( button, UIE_GET_FOCUS, OnModButtonFocused )
 		AddButtonEventHandler( button, UIE_CLICK, OnModButtonPressed )
+
+		var rui = Hud_GetRui( Hud_GetChild( panel, "WarningImage" ) )
+		RuiSetImage( rui, "basicImage", $"ui/menu/common/dialog_error" )
 	}
 
 	AddMouseMovementCaptureHandler( file.menu, UpdateMouseDeltaBuffer )
@@ -90,20 +92,17 @@ void function InitModList()
 
 	// Mod info buttons
 	AddButtonEventHandler( Hud_GetChild( file.menu, "ModPageButton" ), UIE_CLICK, OnModLinkButtonPressed )
-	AddButtonEventHandler( Hud_GetChild( file.menu, "HideCVButton" ), UIE_CLICK, OnHideCVButtonPressed )
 
 	// Filter buttons
 	AddButtonEventHandler( Hud_GetChild( file.menu, "SwtBtnShowFilter"), UIE_CHANGE, OnFiltersChange )
 	AddButtonEventHandler( Hud_GetChild( file.menu, "BtnModsSearch"), UIE_CHANGE, OnFiltersChange )
 	AddButtonEventHandler( Hud_GetChild( file.menu, "BtnFiltersClear"), UIE_CLICK, OnBtnFiltersClear_Activate )
 
-	// Warning button
-	AddButtonEventHandler( Hud_GetChild( file.menu, "WarningButton" ),UIE_GET_FOCUS, OnWarningFocused )
-	AddButtonEventHandler( Hud_GetChild( file.menu, "WarningButton" ),UIE_LOSE_FOCUS, OnWarningUnfocused )
+	AddButtonEventHandler( Hud_GetChild( file.menu, "HideCVButton"), UIE_CHANGE, OnHideConVarsChange )
 
 	// Footers
 	AddMenuFooterOption( file.menu, BUTTON_B, "#B_BUTTON_BACK", "#BACK" )
-		AddMenuFooterOption(
+	AddMenuFooterOption(
 		file.menu,
 		BUTTON_X,
 		PrependControllerPrompts( BUTTON_X, "#RELOAD_MODS" ),
@@ -120,7 +119,7 @@ void function InitModList()
 
 	// Nuke weird rui on filter switch
 	RuiSetString( Hud_GetRui( Hud_GetChild( file.menu, "SwtBtnShowFilter")), "buttonText", "")
-	SetSwitchCVText()
+	RuiSetString( Hud_GetRui( Hud_GetChild( file.menu, "HideCVButton")), "buttonText", "")
 }
 
 // EVENTS
@@ -134,9 +133,6 @@ void function OnModMenuOpened()
 
 	RegisterButtonPressedCallback(MOUSE_WHEEL_UP , OnScrollUp)
 	RegisterButtonPressedCallback(MOUSE_WHEEL_DOWN , OnScrollDown)
-
-	var rui = Hud_GetRui( Hud_GetChild( file.menu, "WarningImage" ) )
-	RuiSetImage( rui, "basicImage", $"ui/menu/common/dialog_error" )
 }
 
 void function OnModMenuClosed()
@@ -188,21 +184,7 @@ void function OnModButtonFocused( var button )
 		Hud_SetVisible( linkButton, false )
 	}
 
-	bool enabled = NSIsModEnabled( modName )
-
-	var labelFrame = Hud_GetChild( file.menu, "StatusFrame" )
-	Hud_SetVisible( labelFrame, true )
-
-	var label = Hud_GetChild( file.menu, "StatusLabel" )
-	Hud_SetText( label, enabled ? "MOD IS ENABLED" : "MOD IS DISABLED" )
-	Hud_SetVisible( label, true )
-
-	// Hide / show required on client hint
-	var show = NSIsModRequiredOnClient( modName )
-	Hud_SetVisible( Hud_GetChild( file.menu, "WarningFrame" ), show )
-	Hud_SetVisible( Hud_GetChild( file.menu, "WarningButton" ), show )
-	Hud_SetVisible( Hud_GetChild( file.menu, "WarningImage" ), show )
-
+	SetControlBarColor( modName )
 }
 
 void function OnModButtonPressed( var button )
@@ -215,6 +197,7 @@ void function OnModButtonPressed( var button )
 		NSSetModEnabled( modName, !NSIsModEnabled( modName ) )
 		var box = Hud_GetChild( file.panels[ int ( Hud_GetScriptID( Hud_GetParent( button ) ) ) - 1 ], "ControlBox" )
 		SetControlBoxColor( box, modName )
+		SetControlBarColor( modName )
 	}
 }
 
@@ -237,18 +220,6 @@ void function OnModLinkButtonPressed( var button )
 	LaunchExternalWebBrowser( link, WEBBROWSER_FLAG_FORCEEXTERNAL )
 }
 
-void function OnHideCVButtonPressed( var button )
-{
-	SetConVarBool( "modlist_hide_cv", !GetConVarBool( "modlist_hide_cv" ) )
-	Hud_SetText( button, ( GetConVarBool( "modlist_hide_cv" ) ? "Hide" : "Show" ) + " ConVars" )
-
-	string modName = file.lastMod.name
-	if ( modName == "" )
-		return
-	var rui = Hud_GetRui( Hud_GetChild( file.menu, "LabelDetails" ) )
-	RuiSetString( rui, "messageText", FormatModDescription( modName ) )
-}
-
 void function OnFiltersChange( var n )
 {
 	file.scrollOffset = 0
@@ -267,16 +238,13 @@ void function OnBtnFiltersClear_Activate( var button )
 	OnFiltersChange( null )
 }
 
-void function OnWarningFocused( var button )
+void function OnHideConVarsChange( var n )
 {
-	Hud_SetVisible( file.warningPanel, true )
-	Hud_SetVisible( file.warningLabel, true )
-}
-
-void function OnWarningUnfocused( var button )
-{
-	Hud_SetVisible( file.warningPanel, false )
-	Hud_SetVisible( file.warningLabel, false )
+	string modName = file.lastMod.name
+	if ( modName == "" )
+		return
+	var rui = Hud_GetRui( Hud_GetChild( file.menu, "LabelDetails" ) )
+	RuiSetString( rui, "messageText", FormatModDescription( modName ) )
 }
 
 // LIST LOGIC
@@ -304,6 +272,7 @@ void function DisableMod()
 
 	var box = Hud_GetChild( file.panels[ int ( Hud_GetScriptID( Hud_GetParent( file.currentButton ) ) ) - 1], "ControlBox" )
 	SetControlBoxColor( box, modName )
+	SetControlBarColor( modName )
 }
 
 array<string> function GetEnabledModsArray()
@@ -401,6 +370,7 @@ void function DisplayModPanels()
 		var headerLabel = Hud_GetChild( panel, "Header" )
 		var box = Hud_GetChild( panel, "ControlBox" )
 		var line = Hud_GetChild( panel, "BottomLine" )
+		var warning = Hud_GetChild( panel, "WarningImage")
 		
 		if ( c.isHeader )
 		{
@@ -412,6 +382,8 @@ void function DisplayModPanels()
 
 			Hud_SetVisible( box, false )
 			Hud_SetVisible( line, true )
+
+			Hud_SetVisible( warning, false )
 		}
 		else
 		{
@@ -424,6 +396,8 @@ void function DisplayModPanels()
 			SetControlBoxColor( box, mod.name )
 			Hud_SetVisible( box, true )
 			Hud_SetVisible( line, false )
+
+			Hud_SetVisible( warning, NSIsModRequiredOnClient( c.mod.name ) )
 		}
 		Hud_SetVisible( panel, true )
 	}
@@ -436,6 +410,17 @@ void function SetControlBoxColor( var box, string modName )
 		RuiSetFloat3(rui, "basicImageColor", <0,1,0>)
 	else
 		RuiSetFloat3(rui, "basicImageColor", <1,0,0>)
+}
+
+void function SetControlBarColor( string modName )
+{
+	var bar_element = Hud_GetChild( file.menu, "ModEnabledBar" )
+	var bar = Hud_GetRui( bar_element )
+	if ( NSIsModEnabled( modName ) )
+		RuiSetFloat3(bar, "basicImageColor", <0,1,0>)
+	else
+		RuiSetFloat3(bar, "basicImageColor", <1,0,0>)
+	Hud_SetVisible( bar_element, true )
 }
 
 string function FormatModDescription( string modName )
@@ -620,13 +605,6 @@ bool function StaticFind( string mod )
 		if ( mod == smod )
 			return true
 	return false
-}
-
-
-void function SetSwitchCVText()
-{
-	// Set the text to "Hide ConVars" or "Show ConVars" depending on the convar content
-	Hud_SetText( Hud_GetChild( file.menu, "HideCVButton" ), ( GetConVarBool( "modlist_hide_cv" ) ? "Hide" : "Show" ) + " ConVars" )
 }
 
 void function ReloadMods()
