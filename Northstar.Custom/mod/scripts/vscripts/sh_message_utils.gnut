@@ -27,6 +27,9 @@ global struct genericServerHUDMessageStruct
 	string description  = ""
 	string image        = ""
 	float duration      = 0
+	vector color		= <0,0,0>
+	int priority		= 0
+	int style			= 0
 }
 
 enum eMessageType
@@ -101,7 +104,7 @@ void function NSSendAnnouncementMessageToPlayer( entity player, genericServerHUD
 	ServerToClientStringCommand( player, "ServerHUDMessageSetTitle " + message.title )
 	ServerToClientStringCommand( player, "ServerHUDMessageSetDescription " + message.description )
 
-	ServerToClientStringCommand( player, "ServerHUDMessageRequest " + eMessageType.ANNOUNCEMENT + " " + message.duration )
+	ServerToClientStringCommand( player, "ServerHUDMessageRequest " + eMessageType.ANNOUNCEMENT + " " + message.duration + " " + message.color.x + " " + message.color.y + " " + message.color.z + " " + message.priority + " " + message.style )
 }
 
 void function NSSendPopUpMessageToPlayer( entity player, genericServerHUDMessageStruct message )
@@ -162,6 +165,12 @@ void function ServerCallback_SetServerHUDMessageImage ( array< string > args  )
 void function ServerCallback_CreateServerHUDMessage ( array< string > args  )
 {
 	ServerMessage.duration = args[1].tofloat()
+	if( args.len() == 7 ) // Announcement
+	{
+		ServerMessage.color = Vector( args[2].tofloat(), args[3].tofloat(), args[4].tofloat() )
+		ServerMessage.priority = args[5].tointeger()
+		ServerMessage.style = args[6].tointeger()
+	}
 
 	switch ( args[0].tointeger() )
 	{
@@ -268,11 +277,11 @@ void function ShowAnnouncementMessage()
 {
 	AnnouncementData announcement = Announcement_Create( ServerMessage.title )
 	Announcement_SetSubText( announcement, ServerMessage.description )
-	Announcement_SetTitleColor( announcement, <1,1,0> )
+	Announcement_SetTitleColor( announcement, ServerMessage.color )
 	Announcement_SetPurge( announcement, true )
-	Announcement_SetPriority( announcement, 300 )
+	Announcement_SetPriority( announcement, ServerMessage.priority )
 	Announcement_SetSoundAlias( announcement, SFX_HUD_ANNOUNCE_QUICK )
-	Announcement_SetStyle( announcement, ANNOUNCEMENT_STYLE_QUICK )
+	Announcement_SetStyle( announcement, ServerMessage.style )
 	
 	announcementMessageList.append( announcement )
 }
