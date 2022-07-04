@@ -98,17 +98,6 @@
 		{
 			"Path": "ui/controller_prompts.nut",
 			"RunOn": "UI"
-		},
-		{
-			"Path": "ui/ui_server_dialog.nut",
-			"RunOn": "UI"
-		},
-		{
-			"Path": "cl_server_dialog.gnut",
-			"RunOn": "CLIENT",
-			"ClientCallback": {
-				"After": "serverDialogueOnClientInit"
-			}
 		}
 	],
 	"Localisation": [
