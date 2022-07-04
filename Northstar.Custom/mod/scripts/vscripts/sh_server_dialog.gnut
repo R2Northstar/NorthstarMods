@@ -1,7 +1,15 @@
+#if SERVER
 global function ServerDialogInit
 global function SendServerDialog
 global function SendMessageServerDialog
 global function AddDialogButton
+#elseif CLIENT
+global function ServerDialogueOnClientInit
+#elseif UI
+global function ClientCallBack_RequestDialog
+#endif
+
+#if SERVER
 
 struct 
 {
@@ -143,3 +151,109 @@ bool function ClientCommand_Button_Clicked( entity player, array<string> args )
 
 	return true
 }
+
+#elseif CLIENT
+
+void function ServerDialogueOnClientInit()
+{
+    AddServerToClientStringCommandCallback( "ServerRequestResquest", ServerCallback_DialogueRequestReceived )
+}
+
+// 	string header
+// 	string message
+// 	string image = ""
+// 	string rightImage = ""
+// 	bool forceChoice = false
+// 	bool noChoice = false
+// 	bool noChoiceWithNavigateBack = false
+// 	bool showSpinner = false
+// 	bool showPCBackButton = false
+// 	float inputDisableTime = 0
+// 	bool darkenBackground = false
+// 	bool useFullMessageHeight = false
+
+// 	array<ServerDialogButtonData> buttonData
+// the long array is in this order
+
+void function ServerCallback_DialogueRequestReceived( array<string> args )
+{
+    if ( args.len() != 16 )
+        return
+        
+    string header = StringReplace( args[0], "./s.", " ", true, true )
+    string message = StringReplace( args[1], "./s.", " ", true, true )
+    string image = args[2]
+    string rightImage = args[3]
+    bool forceChoice = args[4].tointeger() == 1
+    bool noChoice = args[5].tointeger()  == 1
+    bool noChoiceWithNavigateBack = args[6].tointeger() == 1
+    bool showSpinner = args[7].tointeger() == 1
+    bool showPCBackButton = args[8].tointeger() == 1
+    float inputDisableTime = args[9].tofloat()
+    bool darkenBackground = args[10].tointeger() == 1
+    bool useFullMessageHeight = args[11].tointeger() == 1
+
+    string button0Text = StringReplace( args[12], "./s.", " ", true, true )
+    string button1Text = StringReplace( args[13], "./s.", " ", true, true )
+    string button2Text = StringReplace( args[14], "./s.", " ", true, true )
+    string button3Text = StringReplace( args[15], "./s.", " ", true, true )
+
+    RunUIScript( "ClientCallBack_RequestDialog", header, message, image, rightImage, forceChoice, noChoice, noChoiceWithNavigateBack, showSpinner, showPCBackButton, inputDisableTime, darkenBackground, useFullMessageHeight, button0Text, button1Text, button2Text, button3Text )
+}
+
+#elseif UI
+
+void function ClientCallBack_RequestDialog( string header, string message, string image, string rightImage, bool forceChoice, bool noChoice, bool noChoiceWithNavigateBack, bool showSpinner, bool showPCBackButton, float inputDisableTime, bool darkenBackground, bool useFullMessageHeight, string button0Text, string button1Text, string button2Text, string button3Text )
+{    
+    DialogData dialogData
+
+    dialogData.header = header
+    dialogData.message = message
+
+    // if ( image.find("/") != null )
+    //     dialogData.image = asset( image ) // this doesn't work and using compilestring( "return $\"" + image + "\"" )() is not safe
+    // if ( rightImage.find("/") != null )
+    //     dialogData.rightImage = asset( rightImage )
+
+    dialogData.forceChoice = forceChoice
+    dialogData.noChoice = noChoice
+    dialogData.noChoiceWithNavigateBack = noChoiceWithNavigateBack
+    dialogData.showSpinner = showSpinner
+    dialogData.showPCBackButton = showPCBackButton
+    dialogData.inputDisableTime = inputDisableTime
+    dialogData.darkenBackground = darkenBackground
+    dialogData.useFullMessageHeight = useFullMessageHeight
+
+    if ( button0Text != "." )
+        AddDialogButton( dialogData, button0Text, button0CallBack ) // max is 4 buttons
+    if ( button1Text != "." )
+        AddDialogButton( dialogData, button1Text, button1CallBack )
+    if ( button2Text != "." )
+        AddDialogButton( dialogData, button2Text, button2CallBack )
+    if ( button3Text != "." )
+        AddDialogButton( dialogData, button3Text, button3CallBack )
+    
+    OpenDialog( dialogData )
+}
+
+void function button0CallBack()
+{
+    ClientCommand( "ns_button_dialog 0" )
+}
+
+void function button1CallBack()
+{
+    ClientCommand( "ns_button_dialog 1" )
+}
+
+void function button2CallBack()
+{
+    ClientCommand( "ns_button_dialog 2" )
+}
+
+void function button3CallBack()
+{
+    ClientCommand( "ns_button_dialog 3" )
+}
+
+#endif
