@@ -191,11 +191,13 @@ void function FDStalkerThink( entity npc, entity generator )
 	generator.EndSignal( "OnDestroy" )
 	bool isSprinting = false
 	thread FDStalkerGetsStunned( npc , generator )
-	while (IsAlive(npc))
+	while ( IsAlive( npc ) )
 	{
 		WaitFrame()
 
-		if ( DistanceSqr( npc.GetOrigin(), generator.GetOrigin() ) < (600 * 600) && !isSprinting)
+		// cant sprint with 1 leg
+		// also upped to 1800 so that stalkers sprint from roughly their vanilla positions, could probably do it based on % of distance left to go?
+		if ( !IsCrawling( npc ) && DistanceSqr( npc.GetOrigin(), generator.GetOrigin() ) < (1800 * 1800) && !isSprinting )
 		{
 			entity weapon = npc.GetActiveWeapon()
 			if (IsValid(weapon))
@@ -206,10 +208,13 @@ void function FDStalkerThink( entity npc, entity generator )
 			npc.ClearMoveAnim()
 			npc.SetMoveAnim("sp_spectre_sprint_F")
 			npc.SetNoTarget( true )
+			// stalkers were just going to the final node and stopping, meaning they never actually reached the harvester
+			npc.AssaultPoint(generator.GetOrigin())
 			isSprinting = true
 		}
 
-		if ( DistanceSqr( npc.GetOrigin(), generator.GetOrigin() ) > (230 * 230) )
+		// upped from 230 to more accurately mimic vanilla i think?
+		if ( DistanceSqr( npc.GetOrigin(), generator.GetOrigin() ) > (275 * 275) )
 			continue
 
 		break
