@@ -929,6 +929,9 @@ void function DamageScaleByDifficulty( entity ent, var damageInfo )
 
 	if ( attacker.IsPlayer() && attacker.GetTeam() == TEAM_IMC ) // in case we ever want a PvP in Frontier Defense, don't scale their damage
 		return
+	
+	if ( attacker == ent ) // dont scale self damage
+		return
 
 	int difficultyLevel = FD_GetDifficultyLevel()
 	switch ( difficultyLevel )
