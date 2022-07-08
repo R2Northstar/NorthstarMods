@@ -279,7 +279,7 @@ entity function CreateSoldier( int team, vector origin, vector angles )
 
 entity function CreateShieldCaptain( int team, vector origin, vector angles )
 {
-	return CreateNPC( "npc_soldier_shield_captain", team, origin, angles )
+	return CreateNPCFromAISettings( "npc_soldier_shield_captain", team, origin, angles ) // idek
 }
 
 entity function CreateProwler( int team, vector origin, vector angles )

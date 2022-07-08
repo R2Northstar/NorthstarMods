@@ -46,6 +46,7 @@ struct {
 void function GamemodeFD_Init()
 {
 	PrecacheModel( MODEL_ATTRITION_BANK )
+	PrecacheModel( $"models/humans/grunts/imc_grunt_shield_captain.mdl" )
 	PrecacheParticleSystem($"P_smokescreen_FD")
 
 	RegisterSignal( "SniperSwitchedEnemy" ) // for use in SniperTitanThink behavior.

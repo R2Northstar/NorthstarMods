@@ -695,8 +695,8 @@ void function spawnDroppodGrunts(SmokeEvent smokeEvent,SpawnEvent spawnEvent,Flo
 
 	for ( int i = 0; i < spawnEvent.spawnAmount; i++ )
     {
-		bool shouldGiveAntiTitanWeapon = i / spawnEvent.spawnAmount >= antiTitanWeapons // does this grunt deserve an anti titan weapon or not
-
+		bool shouldGiveAntiTitanWeapon = i / spawnEvent.spawnAmount <= antiTitanWeapons // does this grunt deserve an anti titan weapon or not
+		printt(shouldGiveAntiTitanWeapon)
 		entity guy
 
 		if (shouldBeCaptain)
@@ -715,7 +715,10 @@ void function spawnDroppodGrunts(SmokeEvent smokeEvent,SpawnEvent spawnEvent,Flo
 		SetSquad( guy, squadName )
 
 		if (shouldGiveAntiTitanWeapon)
-			guy.GiveWeapon("mp_weapon_defender")
+		{
+			guy.TakeActiveWeapon()
+			guy.GiveWeapon("mp_weapon_defender") // do grunts ever get a different anti titan weapon?
+		}
 
 		SetTargetName( guy, GetTargetNameForID(eFD_AITypeIDs.GRUNT))
 		AddMinimapForHumans(guy)
