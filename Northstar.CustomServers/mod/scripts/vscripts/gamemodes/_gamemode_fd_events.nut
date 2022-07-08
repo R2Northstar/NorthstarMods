@@ -668,40 +668,16 @@ void function spawnDroppodGrunts(SmokeEvent smokeEvent,SpawnEvent spawnEvent,Flo
 	array<entity> guys
 	bool adychecked = false
 
-
-	int difficultyLevel = FD_GetDifficultyLevel()
-
-	float antiTitanWeapons = 0
-	bool shouldBeCaptain = false
-	switch ( difficultyLevel )
-	{
-		case eFDDifficultyLevel.EASY:
-		case eFDDifficultyLevel.NORMAL: // easy and normal have no anti titan weapons for grunt squads
-			break
-
-		case eFDDifficultyLevel.HARD: // hard has 2 anti titan weapons for each grunt squad, equating to 50% of the grunts
-			antiTitanWeapons = 0.5
-			break
-
-		case eFDDifficultyLevel.MASTER: 
-		case eFDDifficultyLevel.INSANE: // master and insane have every grunt with an anti titan weapon, as well as shield captains
-			antiTitanWeapons = 1
-			shouldBeCaptain = true
-			break
-
-		default: // kinda bad for any mods that like, add new difficulties but whatever
-			break
-	}
-
-	for ( float i = 0; i < spawnEvent.spawnAmount; i++ )
+	for ( int i = 0; i < spawnEvent.spawnAmount; i++ )
     {
-		bool shouldGiveAntiTitanWeapon = antiTitanWeapons != 0 && (i / spawnEvent.spawnAmount) < antiTitanWeapons // does this grunt deserve an anti titan weapon or not
 		entity guy
 
-		if (shouldBeCaptain)
+		// should this grunt be a shield captain?
+		if (i < GetCurrentPlaylistVarInt("fd_grunt_shield_captains"))
 			guy = CreateShieldCaptain( TEAM_IMC, spawnEvent.origin,<0,0,0> )
 		else
 			guy = CreateSoldier( TEAM_IMC, spawnEvent.origin,<0,0,0> )
+
 
 		if(spawnEvent.entityGlobalKey!="")
 			GlobalEventEntitys[spawnEvent.entityGlobalKey+i.tostring()] <- guy
@@ -713,7 +689,8 @@ void function spawnDroppodGrunts(SmokeEvent smokeEvent,SpawnEvent spawnEvent,Flo
 		guy.SetParent( pod, "ATTACH", true )
 		SetSquad( guy, squadName )
 
-		if (shouldGiveAntiTitanWeapon)
+		// should this grunt have an anti titan weapon instead of its normal weapon?
+		if (i < GetCurrentPlaylistVarInt("fd_grunt_at_weapon_users"))
 		{
 			guy.TakeActiveWeapon()
 			guy.GiveWeapon("mp_weapon_defender") // do grunts ever get a different anti titan weapon?
