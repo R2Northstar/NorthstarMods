@@ -668,9 +668,17 @@ void function spawnDroppodGrunts(SmokeEvent smokeEvent,SpawnEvent spawnEvent,Flo
 	array<entity> guys
 	bool adychecked = false
 
-    for ( int i = 0; i < spawnEvent.spawnAmount; i++ )
+	for ( int i = 0; i < spawnEvent.spawnAmount; i++ )
     {
-		entity guy = CreateSoldier( TEAM_IMC, spawnEvent.origin,<0,0,0> )
+		entity guy
+
+		// should this grunt be a shield captain?
+		if (i < GetCurrentPlaylistVarInt("fd_grunt_shield_captains", 0))
+			guy = CreateShieldCaptain( TEAM_IMC, spawnEvent.origin,<0,0,0> )
+		else
+			guy = CreateSoldier( TEAM_IMC, spawnEvent.origin,<0,0,0> )
+
+
 		if(spawnEvent.entityGlobalKey!="")
 			GlobalEventEntitys[spawnEvent.entityGlobalKey+i.tostring()] <- guy
 		SetTeam( guy, TEAM_IMC )
@@ -681,6 +689,13 @@ void function spawnDroppodGrunts(SmokeEvent smokeEvent,SpawnEvent spawnEvent,Flo
 		guy.SetParent( pod, "ATTACH", true )
 		SetSquad( guy, squadName )
 
+		// should this grunt have an anti titan weapon instead of its normal weapon?
+		if (i < GetCurrentPlaylistVarInt("fd_grunt_at_weapon_users", 0))
+		{
+			guy.TakeActiveWeapon()
+			guy.GiveWeapon("mp_weapon_defender") // do grunts ever get a different anti titan weapon?
+		}
+
 		SetTargetName( guy, GetTargetNameForID(eFD_AITypeIDs.GRUNT))
 		AddMinimapForHumans(guy)
 		spawnedNPCs.append(guy)
@@ -688,7 +703,7 @@ void function spawnDroppodGrunts(SmokeEvent smokeEvent,SpawnEvent spawnEvent,Flo
 	}
 
 	ActivateFireteamDropPod( pod, guys )
-	thread SquadNav_Thread(guys,spawnEvent.route)
+	thread SquadNav_Thread( guys,spawnEvent.route )
 }
 
 void function spawnDroppodStalker(SmokeEvent smokeEvent,SpawnEvent spawnEvent,FlowControlEvent flowControlEvent,SoundEvent soundEvent)
