@@ -668,27 +668,10 @@ void function spawnDroppodGrunts(SmokeEvent smokeEvent,SpawnEvent spawnEvent,Flo
 	array<entity> guys
 	bool adychecked = false
 
-    for ( int i = 0; i < spawnEvent.spawnAmount; i++ )
-    {
-		entity guy = CreateSoldier( TEAM_IMC, spawnEvent.origin,<0,0,0> )
-		if(spawnEvent.entityGlobalKey!="")
-			GlobalEventEntitys[spawnEvent.entityGlobalKey+i.tostring()] <- guy
-		SetTeam( guy, TEAM_IMC )
-		guy.EnableNPCFlag(  NPC_ALLOW_INVESTIGATE | NPC_ALLOW_HAND_SIGNALS | NPC_ALLOW_FLEE )
-		guy.DisableNPCFlag( NPC_ALLOW_PATROL)
-		DispatchSpawn( guy )
-
-		guy.SetParent( pod, "ATTACH", true )
-		SetSquad( guy, squadName )
-
-		SetTargetName( guy, GetTargetNameForID(eFD_AITypeIDs.GRUNT))
-		AddMinimapForHumans(guy)
-		spawnedNPCs.append(guy)
-		guys.append( guy )
-	}
+    guys = CreateGruntSquad( spawnEvent.spawnAmount, pod )
 
 	ActivateFireteamDropPod( pod, guys )
-	thread SquadNav_Thread(guys,spawnEvent.route)
+	thread SquadNav_Thread( guys,spawnEvent.route )
 }
 
 void function spawnDroppodStalker(SmokeEvent smokeEvent,SpawnEvent spawnEvent,FlowControlEvent flowControlEvent,SoundEvent soundEvent)
