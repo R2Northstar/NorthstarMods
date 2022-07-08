@@ -4,7 +4,6 @@ global function startHarvester
 global function GetTargetNameForID
 
 
-
 struct player_struct_fd{
 	bool diedThisRound
 	int scoreThisRound
@@ -47,6 +46,7 @@ struct {
 void function GamemodeFD_Init()
 {
 	PrecacheModel( MODEL_ATTRITION_BANK )
+	PrecacheModel( $"models/humans/grunts/imc_grunt_shield_captain.mdl" )
 	PrecacheParticleSystem($"P_smokescreen_FD")
 
 	RegisterSignal( "SniperSwitchedEnemy" ) // for use in SniperTitanThink behavior.
@@ -686,32 +686,8 @@ void function OnHarvesterDamaged(entity harvester, var damageInfo)
 
 	fd_harvester.lastDamage = Time()
 
-	int difficultyLevel = FD_GetDifficultyLevel()
-	switch ( difficultyLevel )
-	{
-		case eFDDifficultyLevel.EASY:
-		case eFDDifficultyLevel.NORMAL: // easy and normal have no damage scaling
-			break
+	damageAmount = (damageAmount * GetCurrentPlaylistVarFloat("fd_player_damage_scalar",1.0))
 
-		case eFDDifficultyLevel.HARD:
-		{
-			DamageInfo_SetDamage( damageInfo, (damageAmount * 1.5) )
-			damageAmount = (damageAmount * 1.5) // for use in health calculations below
-			break
-		}
-
-		case eFDDifficultyLevel.MASTER:
-		case eFDDifficultyLevel.INSANE:
-		{
-			DamageInfo_SetDamage( damageInfo, (damageAmount * 2.5) )
-			damageAmount = (damageAmount * 2.5) // for use in health calculations below
-			break
-		}
-
-		default:
-			unreachable
-
-	}
 
 
 	float shieldPercent = ( (harvester.GetShieldHealth().tofloat() / harvester.GetShieldHealthMax()) * 100 )
@@ -929,30 +905,15 @@ void function DamageScaleByDifficulty( entity ent, var damageInfo )
 
 	if ( attacker.IsPlayer() && attacker.GetTeam() == TEAM_IMC ) // in case we ever want a PvP in Frontier Defense, don't scale their damage
 		return
+
 	
 	if ( attacker == ent ) // dont scale self damage
 		return
 
-	int difficultyLevel = FD_GetDifficultyLevel()
-	switch ( difficultyLevel )
-	{
-		case eFDDifficultyLevel.EASY:
-		case eFDDifficultyLevel.NORMAL: // easy and normal have no damage scaling
-			break
 
-		case eFDDifficultyLevel.HARD:
-			DamageInfo_SetDamage( damageInfo, (damageAmount * 1.5) )
-			break
+	DamageInfo_SetDamage( damageInfo, (damageAmount * GetCurrentPlaylistVarFloat("fd_player_damage_scalar",1.0)) )
+	
 
-		case eFDDifficultyLevel.MASTER:
-		case eFDDifficultyLevel.INSANE:
-			DamageInfo_SetDamage( damageInfo, (damageAmount * 2.5) )
-			break
-
-		default:
-			unreachable
-
-	}
 
 }
 
@@ -964,74 +925,30 @@ void function HealthScaleByDifficulty( entity ent )
 	if ( ent.GetTeam() != TEAM_IMC )
 		return
 
+
+	if (ent.IsTitan()&& IsValid(GetPetTitanOwner( ent ) ) ) // in case we ever want pvp in FD
+		return
+	
 	if ( ent.IsTitan() )
-		if ( IsValid(GetPetTitanOwner( ent ) ) ) // in case we ever want pvp in FD
-			return
-
-	int difficultyLevel = FD_GetDifficultyLevel()
-	switch ( difficultyLevel )
-	{
-		case eFDDifficultyLevel.EASY:
-			if ( ent.IsTitan() )
-				ent.SetMaxHealth( ent.GetMaxHealth() - 5000 )
-			else
-				ent.SetMaxHealth( ent.GetMaxHealth() - 2000 )
-			break
-		case eFDDifficultyLevel.NORMAL:
-			if ( ent.IsTitan() )
-				ent.SetMaxHealth( ent.GetMaxHealth() - 2500 )
-			else
-				ent.SetMaxHealth( ent.GetMaxHealth() - 1000 )
-			break
-
-		case eFDDifficultyLevel.HARD: // no changes in Hard Mode
-			break
-
-		case eFDDifficultyLevel.MASTER:
-		case eFDDifficultyLevel.INSANE:
-			if ( ent.IsTitan() )
-			{
-				entity soul = ent.GetTitanSoul()
-				if (IsValid(soul))
-				{
-					soul.SetShieldHealthMax( 2500 ) // apparently they have 0, costs me some time debugging this ffs
-					soul.SetShieldHealth( 2500 )
-				}
-			}
-			break
-
-		default:
-			unreachable
-
+		ent.SetMaxHealth( ent.GetMaxHealth() + GetCurrentPlaylistVarInt("fd_titan_health_adjust",0) )
+	else
+		ent.SetMaxHealth( ent.GetMaxHealth() + GetCurrentPlaylistVarInt("fd_reaper_health_adjust",0) )
+	
+	if(GetCurrentPlaylistVarInt("fd_pro_titan_shields",0)&&ent.IsTitan()){
+		entity soul = ent.GetTitanSoul()
+		if(IsValid(soul)){
+			soul.SetShieldHealthMax(2500)
+			soul.SetShieldHealth(2500)
+		}
 	}
+
 
 }
 
 void function FD_createHarvester()
 {
-	int shieldamount = 6000
-	int difficultyLevel = FD_GetDifficultyLevel()
-	switch ( difficultyLevel )
-	{
-		case eFDDifficultyLevel.EASY:
-		case eFDDifficultyLevel.NORMAL: // easy and normal have no shield changes
-			break
 
-		case eFDDifficultyLevel.HARD:
-			shieldamount = 5000
-			break
-
-		case eFDDifficultyLevel.MASTER:
-		case eFDDifficultyLevel.INSANE:
-			shieldamount = 4000
-			break
-
-		default:
-			unreachable
-
-	}
-
-	fd_harvester = SpawnHarvester(file.harvester_info.GetOrigin(),file.harvester_info.GetAngles(),25000,shieldamount,TEAM_MILITIA)
+	fd_harvester = SpawnHarvester(file.harvester_info.GetOrigin(),file.harvester_info.GetAngles(),GetCurrentPlaylistVarInt("fd_harvester_health",25000),GetCurrentPlaylistVarInt("fd_harvester_shield",6000),TEAM_MILITIA)
 	fd_harvester.harvester.Minimap_SetAlignUpright( true )
 	fd_harvester.harvester.Minimap_AlwaysShow( TEAM_IMC, null )
 	fd_harvester.harvester.Minimap_AlwaysShow( TEAM_MILITIA, null )
