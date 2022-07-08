@@ -1,7 +1,9 @@
 {
 	"Name": "Northstar.Coop",
 	"Description": "[WIP] Allows the singleplayer campaign to be played in multiplayer",
-	"Version": "1.5.0",
+	"Version": "0.0.0",
+	"DownloadLink": "https://cdn.discordapp.com/attachments/936678773150081055/970130085686440006/Northstar.Coop.zip",
+	"RequiredOnClient": true,
 	"LoadPriority": 1,
 
 	"ConVars": [
@@ -61,7 +63,15 @@
 			}
 		},
 		{
-			"Path": "_utils_coop.nut",
+			"Path": "_event.gnut",
+			"RunOn": "SERVER && SP"
+		},
+		{
+			"Path": "_state.gnut",
+			"RunOn": "SERVER && SP"
+		},
+		{
+			"Path": "_sp_coop.gnut",
 			"RunOn": "SERVER && SP"
 		},
 		{
@@ -80,6 +90,10 @@
 			"ServerCallback": {
 				"After": "CoopCustomPrecache"
 			}
+		},
+		{
+			"Path": "sh_remote_functions_sp_custom.gnut",
+			"RunOn": "(CLIENT || SERVER) && SP"
 		}
 	]
 }

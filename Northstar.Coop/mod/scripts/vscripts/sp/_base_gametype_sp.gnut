@@ -62,10 +62,6 @@ void function BaseGametype_Init_MPSP()
 
 	FlagInit( "WeaponDropsAllowed" )
 	FlagSet( "WeaponDropsAllowed" )
-
-	// thread DisableDeathBlur() // people keep complaning about the blur
-	// why not working :(
-	// SetConVarInt( "max_players", 8 )
 }
 
 void function CodeCallback_OnWeaponAttack( entity player, entity weapon, string weaponName, int ammoUsed )
@@ -130,13 +126,8 @@ void function CodeCallback_OnClientDisconnected( entity player, string reason )
 	{
 		ServerCommand( "sv_cheats 1" )
 		
-		foreach ( int index, entity p in GetPlayerArray() )
-		{
-			if ( p == player )
-			{
-				ServerCommand( "script ReplacePlayer0()" )
-			}
-		}
+		
+		ServerCommand( "script ReplacePlayer0()" )
 		
 		ServerCommand( "sv_cheats 0" )
 	}
@@ -284,22 +275,13 @@ void function Coop_LoadMapFromStartPoint( string mapName, string startPoint, Lev
 {
 	ExecuteLoadingClientCommands_SetStartPoint( mapName, GetStartPointIndexFromName( mapName, startPoint ) )
 	GameRules_ChangeMap( mapName, GAMETYPE )
-	foreach( player in GetPlayerArray() )
-	{
-		player.SetOrigin( GetPlayerByIndex(0).GetOrigin() )
-	}
 }
 
-void function Coop_ReloadCurrentMapFromStartPoint(int startindex)
+void function Coop_ReloadCurrentMapFromStartPoint( int startindex )
 {
 	string mapName = GetMapName()
 	ExecuteLoadingClientCommands_SetStartPoint( mapName, startindex )
-	//ClientCommand( GetPlayerByIndex(0) , "map " + mapName )
 	GameRules_ChangeMap( mapName, GAMETYPE )
-	foreach( player in GetPlayerArray() )
-	{
-		player.SetOrigin(GetPlayerByIndex(0).GetOrigin())
-	}
 }
 
 

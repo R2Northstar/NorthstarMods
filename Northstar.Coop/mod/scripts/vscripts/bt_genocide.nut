@@ -5,10 +5,11 @@ void function init_genocide_thoughts()
     thread BtMarvnTarget()
 
     // tell them about the blur
-    AddCallback_OnReceivedSayTextMessage( BlurAlert )
+    // AddCallback_OnReceivedSayTextMessage( BlurAlert )
 
     // debug function
     AddClientCommandCallback( "bt", SpawnBt )
+    AddClientCommandCallback( "coop_reload", CoopReload )
 }
 
 void function BtMarvnTarget()
@@ -71,6 +72,17 @@ bool function SpawnBt( entity player, array<string> args )
             titan.SetOrigin( player.GetOrigin() )
         }
     }
+
+    return true
+}
+
+bool function CoopReload( entity player, array<string> args )
+{
+    if ( args.len() == 0 )
+        return false
+    
+    printt( "reloading " + GetMapName() )
+    Coop_ReloadCurrentMapFromStartPoint( args[0].tointeger() )
 
     return true
 }

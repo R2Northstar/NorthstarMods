@@ -43,7 +43,7 @@ void function StartSpawn( entity player )
 	CheckPointInfo info = GetCheckPointInfo()
 
 	Chat_ServerPrivateMessage( player, "use 'say smth' in the console to chat ", false )
-	Chat_ServerPrivateMessage( player, "co-op has some client side changes, so if you don't want to suffer download coop", false )
+	// Chat_ServerPrivateMessage( player, "co-op has some client side changes, so if you don't want to suffer download coop", false )
 
 	if ( "sp_s2s" == GetMapName() && info.player0 != player )
 	{
@@ -54,17 +54,32 @@ void function StartSpawn( entity player )
 	{
 		player.SetOrigin( info.pos )
 
-		ServerCommand( "sv_cheats 1" )
+		// ServerCommand( "sv_cheats 1" )
 		
-		foreach ( int index, entity p in GetPlayerArray() )
+		// foreach ( int index, entity p in GetPlayerArray() )
+		// {
+		// 	if ( p == player )
+		// 	{
+		// 		ServerCommand( "script Map_PlayerDidLoad( GetPlayerArray()["  + index +  "] )" )
+		// 	}
+		// }
+		
+		// ServerCommand( "sv_cheats 0" )
+
+		try
 		{
-			if ( p == player )
+			foreach ( int index, entity p in GetPlayerArray() )
 			{
-				ServerCommand( "script Map_PlayerDidLoad( GetPlayerArray()["  + index +  "] )" )
+				if ( p == player )
+				{
+					compilestring( format("script Map_PlayerDidLoad( GetPlayerArray()[%d] )", index ) )
+				}
 			}
 		}
-		
-		ServerCommand( "sv_cheats 0" )
+		catch( aaa )
+		{
+			print( aaa )
+		}
 		
 		if ( !info.RsPilot )
 			thread MakePlayerTitan( player, info.pos )

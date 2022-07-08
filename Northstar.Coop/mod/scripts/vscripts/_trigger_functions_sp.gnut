@@ -864,7 +864,7 @@ void function LevelTransitionTrigger( entity trigger )
 
 	Coop_LoadMapFromStartPoint( level, startPoint )
 
-	Coop_MapChange()
+	// Coop_MapChange()
 }
 
 void function TestDevSpawnPoint()
