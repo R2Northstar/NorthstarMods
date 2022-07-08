@@ -668,7 +668,63 @@ void function spawnDroppodGrunts(SmokeEvent smokeEvent,SpawnEvent spawnEvent,Flo
 	array<entity> guys
 	bool adychecked = false
 
-    guys = CreateGruntSquad( spawnEvent, pod )
+
+	int difficultyLevel = FD_GetDifficultyLevel()
+
+	float antiTitanWeapons = 0
+	bool shouldBeCaptain = false
+	switch ( difficultyLevel )
+	{
+		case eFDDifficultyLevel.EASY:
+		case eFDDifficultyLevel.NORMAL: // easy and normal have no anti titan weapons for grunt squads
+			break
+
+		case eFDDifficultyLevel.HARD: // hard has 2 anti titan weapons for each grunt squad, equating to 50% of the grunts
+			antiTitanWeapons = 0.5
+			break
+
+		case eFDDifficultyLevel.MASTER: 
+		case eFDDifficultyLevel.INSANE: // master and insane have every grunt with an anti titan weapon, as well as shield captains
+			antiTitanWeapons = 1
+			shouldBeCaptain = true
+			break
+
+		default: // kinda bad for any mods that like, add new difficulties but whatever
+			break
+	}
+
+	for ( int i = 0; i < spawnEvent.spawnAmount; i++ )
+    {
+		bool shouldGiveAntiTitanWeapon = i / spawnEvent.spawnAmount >= antiTitanWeapons // does this grunt deserve an anti titan weapon or not
+
+		entity guy
+
+		if (shouldBeCaptain)
+			guy = CreateShieldCaptain( TEAM_IMC, spawnEvent.origin,<0,0,0> )
+		else
+			guy = CreateSoldier( TEAM_IMC, spawnEvent.origin,<0,0,0> )
+
+		if(spawnEvent.entityGlobalKey!="")
+			GlobalEventEntitys[spawnEvent.entityGlobalKey+i.tostring()] <- guy
+		SetTeam( guy, TEAM_IMC )
+		guy.EnableNPCFlag(  NPC_ALLOW_INVESTIGATE | NPC_ALLOW_HAND_SIGNALS | NPC_ALLOW_FLEE )
+		guy.DisableNPCFlag( NPC_ALLOW_PATROL)
+		DispatchSpawn( guy )
+
+		guy.SetParent( pod, "ATTACH", true )
+		SetSquad( guy, squadName )
+
+		if (shouldGiveAntiTitanWeapon)
+			guy.GiveWeapon("mp_weapon_defender")
+
+		SetTargetName( guy, GetTargetNameForID(eFD_AITypeIDs.GRUNT))
+		AddMinimapForHumans(guy)
+		spawnedNPCs.append(guy)
+		guys.append( guy )
+
+
+		shouldBeCaptain = false // only one captain per squad as a maximum
+	}
 
 	ActivateFireteamDropPod( pod, guys )
 	thread SquadNav_Thread( guys,spawnEvent.route )
