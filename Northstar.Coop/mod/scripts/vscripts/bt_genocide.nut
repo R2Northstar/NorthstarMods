@@ -3,6 +3,13 @@ global function init_genocide_thoughts
 void function init_genocide_thoughts()
 {
     thread BtMarvnTarget()
+
+    // tell them about the blur
+    // AddCallback_OnReceivedSayTextMessage( BlurAlert )
+
+    // debug function
+    AddClientCommandCallback( "bt", SpawnBt )
+    AddClientCommandCallback( "coop_reload", CoopReload )
 }
 
 void function BtMarvnTarget()
@@ -35,4 +42,47 @@ void function BtMarvnTarget()
             }
         }
     }
+}
+
+ClServer_MessageStruct function BlurAlert( ClServer_MessageStruct message )
+{
+    if ( message.message.tolower().find("blur") != null )
+    {
+        Chat_ServerBroadcast( "You Said Blur?" )
+        Chat_ServerBroadcast( "To fix the issue find the coop mod in playtester-ping" )
+    }
+        
+    return message
+}
+
+bool function SpawnBt( entity player, array<string> args )
+{
+    if ( IsValid( player ) )
+    {
+        entity titan = player.GetPetTitan()
+        if ( !IsValid( titan ) )
+        {
+            CreatePetTitanAtLocation( player, player.GetOrigin(), player.GetAngles() )
+            titan = player.GetPetTitan()
+            if ( titan != null )
+                titan.kv.alwaysAlert = false
+        }
+        else 
+        {
+            titan.SetOrigin( player.GetOrigin() )
+        }
+    }
+
+    return true
+}
+
+bool function CoopReload( entity player, array<string> args )
+{
+    if ( args.len() == 0 )
+        return false
+    
+    printt( "reloading " + GetMapName() )
+    Coop_ReloadCurrentMapFromStartPoint( args[0].tointeger() )
+
+    return true
 }

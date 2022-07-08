@@ -277,7 +277,7 @@ function FastballThrowPlayer( entity player )
 	{
 		WaitFrame()
 		p.ClearParent()
-		p.SetVelocity( throwVelocity )
+		p.SetVelocity( Fastball_GetThrowVelocity( player ) )
 		p.SetOrigin( throwStartPos )
 		p.DeployWeapon()
 	}
@@ -481,13 +481,16 @@ void function PlayerScriptedFastballAnim( entity player, entity titan, entity re
 	OnThreadEnd(
 		function() : ( player )
 		{
-			if ( IsValid( player ) )
+			foreach( player in GetPlayerArray() )
 			{
-				player.Anim_Stop()
-				player.ClearParent()
-				ClearPlayerAnimViewEntity( player )
-				if ( player.ContextAction_IsFastball() )
-					player.ContextAction_ClearFastball()
+				if ( IsValid( player ) )
+				{
+					player.Anim_Stop()
+					player.ClearParent()
+					ClearPlayerAnimViewEntity( player )
+					if ( player.ContextAction_IsFastball() )
+						player.ContextAction_ClearFastball()
+				}
 			}
 		}
 	)
@@ -508,7 +511,10 @@ void function PlayerScriptedFastballAnim( entity player, entity titan, entity re
 	sequence.firstPersonBlendOutTime = 0.0
 	
 	foreach( entity p in GetPlayerArray() )
-		thread FirstPersonSequence( sequence, p, ref )
+	{
+		if ( p.GetModelName() != $"humans/pilots/pilot_medium_reaper_f.mdl" )
+			thread FirstPersonSequence( sequence, p, ref )
+	}
 
 	WaitSignal( titan, "fastball_release" )
 	foreach( entity p in GetPlayerArray() )

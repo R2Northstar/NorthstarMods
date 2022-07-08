@@ -1663,8 +1663,12 @@ void function StartPoint_PipeRoomClimb( entity player )
 	FlagWait( "PipeRoom_reached_top" )
 
 	entity btSpawnSpot = GetEntByScriptName( "titanstart_sewer_arena" )
-	SpawnBT( player, btSpawnSpot.GetOrigin() )
-	Highlight_ClearOwnedHighlight( player.GetPetTitan() )
+
+	foreach( entity p in GetPlayerArray() )
+		SpawnBT( p, btSpawnSpot.GetOrigin() )
+	
+	foreach( entity p in GetPlayerArray() )
+		Highlight_ClearOwnedHighlight( p.GetPetTitan() )
 
 	thread Sewers_CleanupNPCsOnFlag( player, "PipeRoomClimbDone" )
 
@@ -1718,13 +1722,15 @@ void function StartPoint_SewerArena( entity player )
 {
 	thread SewerArena_SludgeWallSFXThink()
 	thread SewerArena_InitialCombat( player )
-
-	thread PlayAnim( player.GetPetTitan(), "bt_casual_idle" )
+	
+	if ( IsValid( player.GetPetTitan() ) )
+		thread PlayAnim( player.GetPetTitan(), "bt_casual_idle" )
 
 	FlagWait( "SewerArena_see_bt" )
 
 	entity titan = player.GetPetTitan()
-	Highlight_SetOwnedHighlight( titan, "pet_titan_sp" )
+	if ( IsValid( titan ) )
+		Highlight_SetOwnedHighlight( titan, "pet_titan_sp" )
 
 	PlayerConversation( "BT_Reunite", player )
 
@@ -1747,7 +1753,8 @@ void function StartPoint_Skipped_SewerArena( entity player )
 	thread SewerArena_SludgeWallSFXThink()
 
 	entity titan = player.GetPetTitan()
-	Highlight_SetOwnedHighlight( titan, "pet_titan_sp" )
+	if ( IsValid( titan ) )
+		Highlight_SetOwnedHighlight( titan, "pet_titan_sp" )
 }
 
 
@@ -1844,8 +1851,11 @@ void function StartPoint_SewerArenaDefend( entity player )
 	PlayMusic( "music_reclamation_17_activatesluice" )
 
 	entity titan = player.GetPetTitan()
-	titan.Anim_Stop()
-	titan.kv.alwaysalert = true
+	if ( IsValid( titan ) )
+	{
+		titan.Anim_Stop()
+		titan.kv.alwaysalert = true
+	}
 
 	FlagSet( "SewerArena_close_door" )
 
@@ -1860,11 +1870,16 @@ void function StartPoint_SewerArenaDefend( entity player )
 	wait 1.0
 
 	entity moveTarget = GetEntByScriptName( "SewerArena_bt_move_spot" )
-	AssaultEntity( titan, moveTarget )
+
+	foreach( entity p in GetPlayerArray() )
+	if ( IsValid( p.GetPetTitan() ) )
+		AssaultEntity( p.GetPetTitan(), moveTarget )
 
 	thread SewerArena_DefendCombat( player )
-
-	FlagWait( "SewerArenaDefendDone" )
+	
+	AutoFlagWithTimeout( "SewerArenaDefendDone", 120*1.5 )
+	FlagWait( "SewerArenaDefendDone" ) // script FlagSet( "SewerArenaDefendDone" )
+	thread SewerArena_SludgeWaterfalls_Shutdown()
 
 	Signal( level, "PlayerLeftSewerDefend" )
 
@@ -1872,6 +1887,12 @@ void function StartPoint_SewerArenaDefend( entity player )
 
 	waitthread PlayBTDialogue( "BT_PROTO_2" )
 	PlayBTDialogue( "BT_RESUME_MISSION" )
+}
+
+void function AutoFlagWithTimeout( string FlagName, float WaitTime )
+{
+	wait WaitTime
+	FlagSet( FlagName )
 }
 
 
@@ -2192,7 +2213,7 @@ void function SewerArena_DefendCombat( entity player )
 	thread SewerArena_SludgeWaterfalls_ShutdownVO( player )
 
 	// Progression wait until player and BT mop up all the reinforcements
-	WaitUntilPercentDead_WithTimeout( allSpawned, 1, 120.0 )
+	WaitUntilPercentDead_WithTimeout( allSpawned, 1, 30.0 )
 
 	wait 3.0
 
@@ -2501,6 +2522,8 @@ void function StartPoint_KaneArena( entity player )
 
 	FlagSet( "kaneArena_connect_stairs_path" )
 
+	TriggerSilentCheckPoint( < -6384, -6723, 2900 >, false )
+
 	FlagWait( "KaneArena_spawn_kane" )
 
 	printt("KaneArena_spawn_kane flag set")
@@ -2522,6 +2545,8 @@ void function StartPoint_KaneArena( entity player )
 	thread KaneArena_StairsThink()
 
 	FlagWait( "KaneArena_level_end" )
+
+	GameRules_ChangeMap( "sp_boomtown_start", GAMETYPE )
 }
 
 
@@ -2875,6 +2900,9 @@ void function KaneArena_PickupHelmetSequence( entity player )
 	PlayBTDialogue( "BT_KEEP_MOVING" )
 
 	FlagSet( "KaneArena_level_end" )
+	
+	// setnext map
+	GameRules_ChangeMap( "sp_boomtown_start", GAMETYPE )
 }
 
 
@@ -2936,7 +2964,10 @@ void function KaneArena_PickupHelmetThink( entity player )
 	{
 		playerActivator = useDummy.WaitSignal( "OnPlayerUse" ).player
 		if ( IsValid( playerActivator ) && playerActivator.IsPlayer() && !playerActivator.IsTitan() )
+		{
+			player = expect entity( useDummy.WaitSignal( "OnPlayerUse" ).player )
 			break
+		}
 	}
 
 	useDummy.UnsetUsable()
@@ -2967,6 +2998,9 @@ void function KaneArena_PickupHelmetThink( entity player )
 	getHelmetSeq.viewConeFunction = ViewConeTight
 
 	waitthread FirstPersonSequence( getHelmetSeq, player, mover )
+
+	if ( !IsValid( player ) )
+		return
 
 	thread PlayAnimTeleport( file.kaneTitan, "ht_Kane_boss_helmet_grab_after_idle_ht", ref )
 
@@ -3053,8 +3087,9 @@ void function KaneArena_BTMovesOutOfTheWay( entity player )
 	vector v = Normalize( playerPos - btSpot )
 	vector a = VectorToAngles( v )
 	bt.SetAngles( < 0, a.y, 0 > )
-
-	thread PlayAnim( bt, "bt_casual_idle" )
+	
+	if ( IsValid( bt ) )
+		thread PlayAnim( bt, "bt_casual_idle" )
 }
 
 
@@ -3503,6 +3538,12 @@ void function DeleteBT( entity player )
 
 entity function SpawnBT( entity player, vector origin )
 {
+	if ( IsValid( player.GetPetTitan() ) )
+	{
+		player.GetPetTitan().SetOrigin( origin )
+		return
+	}
+
 	vector angles = < 0, 0, 0 >
 
 	TitanLoadoutDef loadout = GetTitanLoadoutForCurrentMap()

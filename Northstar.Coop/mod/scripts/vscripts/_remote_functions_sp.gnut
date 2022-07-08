@@ -231,7 +231,7 @@ function RemoteFunctions_Init()
 	RegisterServerVar( "coopStartTime", null )
 	RegisterServerVar( "gameEndTime", 0.0 )
 	RegisterServerVar( "switchedSides", null )
-	RegisterServerVar( "replayDisabled", true )
+	RegisterServerVar( "replayDisabled", false )
 
 	//Round Winning Kill replay related
 	RegisterServerVar( "roundWinningKillReplayEnabled", false )
@@ -790,6 +790,15 @@ function RemoteFunctions_Init()
 			ClRodeoTitan_RegisterNetworkFunctions()
 			ClSentryTurret_RegisterNetworkFunctions()
 	#endif
+
+	thread Delayed_Remote_EndRegisteringFunctions()
+}
+
+void function Delayed_Remote_EndRegisteringFunctions()
+{
+	WaitFrame()
+
+	InitCustomNetworkVars()
 
 	Remote_EndRegisteringFunctions()
 	_RegisteringFunctions = false

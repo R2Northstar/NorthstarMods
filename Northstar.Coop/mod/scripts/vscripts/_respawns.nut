@@ -1,23 +1,33 @@
 untyped
 global function StartSpawn
 global function RespawnPlayer
+global function AddMakeSpecifcRespawnsInit
 global function AddMakeSpecifcRespawns
 global function CodeCallback_OnPlayerKilled
 global function RestartMapWithDelay
 global function MakePlayerPilot
 global function MakePlayerTitan
 global function AddFunctionForMapRespawn
+global function DisableOnePlayerRestart
+global function EnableOnePlayerRestart
 
 
 struct {
     table< string, void functionref( entity ) > CustomMapRespawns
 	table< string, void functionref( entity ) > CustomMapRespawnsFunction
+	bool RestartMap = true
 } file
 
 
-void function AddMakeSpecifcRespawns()
+void function AddMakeSpecifcRespawnsInit()
 {
-    file.CustomMapRespawns["sp_s2s"] <- s2sRespawn
+    thread AddMakeSpecifcRespawns("sp_s2s", s2sRespawn )
+	// PrecacheWeapon( "mp_weapon_peacekraber" )
+}
+
+void function AddMakeSpecifcRespawns( string map, void functionref( entity ) func )
+{
+	file.CustomMapRespawns[map] <- func
 }
 
 
@@ -33,7 +43,7 @@ void function StartSpawn( entity player )
 	CheckPointInfo info = GetCheckPointInfo()
 
 	Chat_ServerPrivateMessage( player, "use 'say smth' in the console to chat ", false )
-	Chat_ServerPrivateMessage( player, "co-op has some client side changes, so if you don't want to suffer download coop", false )
+	// Chat_ServerPrivateMessage( player, "co-op has some client side changes, so if you don't want to suffer download coop", false )
 
 	if ( "sp_s2s" == GetMapName() && info.player0 != player )
 	{
@@ -44,17 +54,32 @@ void function StartSpawn( entity player )
 	{
 		player.SetOrigin( info.pos )
 
-		ServerCommand( "sv_cheats 1" )
+		// ServerCommand( "sv_cheats 1" )
 		
-		foreach ( int index, entity p in GetPlayerArray() )
+		// foreach ( int index, entity p in GetPlayerArray() )
+		// {
+		// 	if ( p == player )
+		// 	{
+		// 		ServerCommand( "script Map_PlayerDidLoad( GetPlayerArray()["  + index +  "] )" )
+		// 	}
+		// }
+		
+		// ServerCommand( "sv_cheats 0" )
+
+		try
 		{
-			if ( p == player )
+			foreach ( int index, entity p in GetPlayerArray() )
 			{
-				ServerCommand( "script Map_PlayerDidLoad( GetPlayerArray()["  + index +  "] )" )
+				if ( p == player )
+				{
+					compilestring( format("script Map_PlayerDidLoad( GetPlayerArray()[%d] )", index ) )
+				}
 			}
 		}
-		
-		ServerCommand( "sv_cheats 0" )
+		catch( aaa )
+		{
+			print( aaa )
+		}
 		
 		if ( !info.RsPilot )
 			thread MakePlayerTitan( player, info.pos )
@@ -80,7 +105,7 @@ void function RespawnPlayer( entity player )
 
         printl("Respawning player:" + player.GetPlayerName() )
 
-		if ( GetPlayerArray().len() == 1 )
+		if ( GetPlayerArray().len() == 1 && file.RestartMap )
             thread RestartMapWithDelay()
         else if ( GetMapName() in file.CustomMapRespawns )
             thread file.CustomMapRespawns[GetMapName()]( player )
@@ -91,8 +116,9 @@ void function RespawnPlayer( entity player )
 
 void function RestartMapWithDelay()
 {
+	// UpdateCurrentStartPoint( GetMapName() )
     wait(1)
-    GameRules_ChangeMap( GetMapName() , GAMETYPE )
+    Coop_ReloadCurrentMapFromStartPoint( GetCurrentStartPointIndex() )
 }
 
 void function BasicRespawnLogic( entity player )
@@ -115,7 +141,7 @@ void function GenericRespawn( entity player )
     {
         foreach( p in GetPlayerArray() )
         {
-            if (p != player && p.IsOnGround() )
+            if (p != player && p.IsOnGround() && !p.IsWallRunning() && !p.IsWallHanging() )
             {
                 try
                 {
@@ -298,7 +324,7 @@ void function MakePlayerPilot( entity player, vector destination  )
 	{
 		ForcedTitanDisembark( player )
 
-		while( player.IsTitan() || titan.IsPlayer() || IsPlayerDisembarking( player ) || IsPlayerEmbarking( player ) )
+		while( player.IsTitan() || titan.IsPlayer() || IsPlayerDisembarking( player ) && IsPlayerEmbarking( player ) )
 		{
 			titan = GetTitanFromPlayer( player )
 			wait 0.05
@@ -316,4 +342,14 @@ void function AddFunctionForMapRespawn( string map, void functionref( entity ) f
 		file.CustomMapRespawnsFunction[map] = func
 	else
 		file.CustomMapRespawnsFunction[map] <- func
+}
+
+void function EnableOnePlayerRestart()
+{
+	file.RestartMap = true
+}
+
+void function DisableOnePlayerRestart()
+{
+	file.RestartMap = false
 }

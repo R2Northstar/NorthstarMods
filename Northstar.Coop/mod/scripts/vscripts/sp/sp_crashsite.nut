@@ -5253,7 +5253,7 @@ void function StartPoint_PilotLink( entity player )
 	else
 		FlagWait( "level_end" )
 
-	PickStartPoint( "sp_sewers1", "Channel Mortar Run" )
+	Coop_LoadMapFromStartPoint( "sp_sewers1", "Channel Mortar Run" )
 }
 
 void function PilotLink_EarlyFight( entity player )
@@ -7296,6 +7296,7 @@ void function ShellShockStop()
 
 entity function SpawnBT( entity player, vector origin )
 {
+
 	vector angles = < 0, 0, 0 >
 
 	//	entity npcTitan = CreateAutoTitanForPlayer_FromTitanLoadout( player, loadout, origin, angles )

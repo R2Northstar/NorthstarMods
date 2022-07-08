@@ -62,10 +62,6 @@ void function BaseGametype_Init_MPSP()
 
 	FlagInit( "WeaponDropsAllowed" )
 	FlagSet( "WeaponDropsAllowed" )
-
-	// thread DisableDeathBlur() // people keep complaning about the blur
-	// why not working :(
-	// SetConVarInt( "max_players", 8 )
 }
 
 void function CodeCallback_OnWeaponAttack( entity player, entity weapon, string weaponName, int ammoUsed )
@@ -124,6 +120,16 @@ void function CodeCallback_OnClientDisconnected( entity player, string reason )
 	foreach ( callbackFunc in svGlobal.onClientDisconnectedCallbacks )
 	{
 		callbackFunc( player )
+	}
+
+	if ( GetPlayer0() == player )
+	{
+		ServerCommand( "sv_cheats 1" )
+		
+		
+		ServerCommand( "script ReplacePlayer0()" )
+		
+		ServerCommand( "sv_cheats 0" )
 	}
 
 	ServerCommand( "kick " + player.GetUID() )
@@ -265,30 +271,21 @@ void function TryGameModeAnnouncement( entity player )
 {
 }
 
-void function Coop_LoadMapFromStartPoint(string mapName,int startindex)
+void function Coop_LoadMapFromStartPoint( string mapName, string startPoint, LevelTransitionStruct ornull trans = null )
 {
-	ExecuteLoadingClientCommands_SetStartPoint( mapName, startindex )
+	ExecuteLoadingClientCommands_SetStartPoint( mapName, GetStartPointIndexFromName( mapName, startPoint ) )
 	GameRules_ChangeMap( mapName, GAMETYPE )
-	foreach(player in GetPlayerArray())
-	{
-		player.SetOrigin(GetPlayerByIndex(0).GetOrigin())
-	}
 }
 
-void function Coop_ReloadCurrentMapFromStartPoint(int startindex)
+void function Coop_ReloadCurrentMapFromStartPoint( int startindex )
 {
 	string mapName = GetMapName()
 	ExecuteLoadingClientCommands_SetStartPoint( mapName, startindex )
-	//ClientCommand( GetPlayerByIndex(0) , "map " + mapName )
 	GameRules_ChangeMap( mapName, GAMETYPE )
-	foreach(player in GetPlayerArray())
-	{
-		player.SetOrigin(GetPlayerByIndex(0).GetOrigin())
-	}
 }
 
 
-void function Coop_GetLevelTransition(string coop_mapname)
+void function Coop_GetLevelTransition( string coop_mapname )
 {
 	LevelTransitionStruct ornull trans = GetLevelTransitionStruct()
 	if ( trans != null )

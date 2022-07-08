@@ -1885,9 +1885,16 @@ void function TrainReload_GivePlayerAmmoAfterButtonPressed( entity player )
 	FlagWait( "PlayerReloaded" )
 
 	FlagSet( "ReloadTraining_PlayerPressedReload" )
-
+	
+	try
+	{
 	foreach ( player in GetPlayerArray() )
 		player.SetActiveWeaponPrimaryAmmoTotal( 50 )
+	}
+	catch( aa )
+	{
+		print( aa )
+	}
 }
 
 void function FiringRange_InfiniteAmmo_WhenNearRange( entity player, string endFlag )

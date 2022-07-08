@@ -632,6 +632,9 @@ void function StartQuickDeathTrigger( entity player )
 
 void function QuickDeathRestorePlayer( entity player, entity trigger )
 {
+	if ( !IsValid( player ) )
+		return
+
 	const float FADE_TIME = 0.1
 	Assert( FADE_TIME >= 0.1, "FADE_TIME has to be at least a server frame (0.1sec) so threads can catch \"QuickDeath\" signal" )
 
@@ -697,6 +700,8 @@ void function QuickDeathRestorePlayer( entity player, entity trigger )
 	Signal( player, "QuickDeathPlayerTeleported" )
 	wait ( endWait - Time() )
 
+	if ( !IsValid( player ) )
+		return
 
 	StopSoundOnEntity( player, "quickdeath_fadeout_to_fadein" )
 
@@ -857,9 +862,9 @@ void function LevelTransitionTrigger( entity trigger )
 
 	WaitSignal( trigger, "OnTrigger" )
 
-	PickStartPoint( level, startPoint )
+	Coop_LoadMapFromStartPoint( level, startPoint )
 
-	GameRules_ChangeMap( "sp_s2s",GAMETYPE )
+	// Coop_MapChange()
 }
 
 void function TestDevSpawnPoint()

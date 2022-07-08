@@ -273,18 +273,15 @@ void function SimpleJobAnims( entity marvin, MarvinJob job )
 
 	Signal( marvin, "JobStarted" )
 
+	if ( marvin.GetModelName() == $"models/error.mdl" )
+		return
+
 	while ( true )
 	{
 		anims.randomize()
 		foreach ( string anim in anims )
-		{
-			// it stoped working
-			// someone else should fix this 
-
-			return
-			float animLength = 100.0
-			if ( HasAnim( marvin, anim ) )
-				float animLength = marvin.GetSequenceDuration( anim ) // wait anim length because some anims may be looping so we can't wait for them to end
+		{			
+			float animLength = marvin.GetSequenceDuration( anim ) // wait anim length because some anims may be looping so we can't wait for them to end
 
 			if ( IsMarvinDrone( marvin ) )
 				thread PlayAnimTeleport( marvin, anim, job.node )
@@ -597,11 +594,9 @@ void function MarvinFlyToAnimStart( entity marvin, string anim, entity jobNode )
 		return
 	}
 	
-	
-	// it stoped working
-	// someone else should fix this 
+	if ( marvin.GetModelName() == $"models/error.mdl" )
+		return
 
-	return
 	AnimRefPoint animStartInfo = marvin.Anim_GetStartForRefPoint( anim, jobNode.GetOrigin(), jobNode.GetAngles() )
 
 	marvin.AssaultPoint( animStartInfo.origin )

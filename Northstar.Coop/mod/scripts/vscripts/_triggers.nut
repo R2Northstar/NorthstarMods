@@ -2,6 +2,7 @@ untyped
 global function NewSaveLocation
 global function TeleportAllExpectOne
 global function TriggerManualCheckPoint
+global function TriggerSilentCheckPoint
 global function Init_triggers
 global function GetSaveLocation
 global function GetCheckPointInfo
@@ -23,9 +24,7 @@ struct
 	array<bool> nextCheckpointAsPilot = []
 	int currentPilotBoolId = 0
 
-	bool lastCheckpointWasAsPilot
-
-	bool BreakTriggers = false
+	bool lastCheckpointWasAsPilot = true
 
 	vector lastSave = <0,0,0>
 
@@ -65,8 +64,9 @@ void function Init_triggersThreaded()
 		case "sp_sewers1":
 			CreateTeleportTrigger( < 9468,1125,216.1 >, 1500.0, 2000.0, 100.0, false ) // the first time you enter the sewers as titan
 			// CreateTeleportTrigger( < 9670,6809,784 >, 500.0, 1000.0, 100.0, true ) // the button closign door
-			CreateTeleportTrigger( < -891,1345,288.031 >, 500.0, 1000.0, 100.0, true ) // the door clsoing when you help militia grunts
-			CreateTeleportTrigger( < -7815, 1971, 1936.2 >, 500.0, 1000.0, 100.0, true ) // the switch
+			CreateTeleportTrigger( < -891,1345,288.031 >, 1000.0, 1000.0, 100.0, true ) // the door clsoing when you help militia grunts
+			CreateTeleportTrigger( < -7815, 1971, 1936.2 >, 1500.0, 1000.0, 100.0, true ) // the switch
+			// CreateTeleportTrigger( < -6384, -6723, 2900 > , 1000.0, 1000.0, 1000.0, false ) // kane's party
 			break
 
 		// case "sp_boomtown_start":
@@ -75,8 +75,6 @@ void function Init_triggersThreaded()
 		// 	return eSPLevel.BOOM_TOWN
 
 		case "sp_hub_timeshift":
-			CreatePlayerLockTrigger(  < 877,-7128,896.3 >, 500.0, 2000.0, 100.0 ) // locks them in the start location
-			CreatePlayerLockBreakerTrigger( < -1838,-6758,430.17 >, 500.0, 2000.0, 100.0 ) // remove the players lock
 			CreateTeleportTrigger( < -1838,-6758,430.17 >, 400.0, 2000.0, 100.0, true) // teleports people to window
 			CreateTeleportTrigger( < -1123,-1306,-1353.1 >, 500.0, 2000.0, 100.0, false) // teleports people to the rope
 			CreateMapChangeTrigger( < 598,-3347,-471 >, 500.0, 2000.0, 100.0) // changes map
@@ -148,7 +146,7 @@ void function OnTeleportTriggeredThreaded( entity trigger, entity player )
 	
 	vector destination = trigger.GetOrigin()
 	waitthread TeleportAllExpectOne( destination, player )
-	wait 2
+	wait 0.1
 	
 	// super broken
 	foreach( entity p in GetPlayerArray() )
@@ -191,63 +189,6 @@ void function OnMapChangeTriggered( entity trigger, entity player )
 	Coop_MapChange()
 }
 
-void function CreatePlayerLockTrigger(  vector origin, float radius, float top, float bottom )
-{
-	printl("=========================================")
-	printl("New Player Lock added  :" + origin )
-	printl("=========================================")
-
-	array<entity> ents = []
-	entity trigger = _CreateScriptCylinderTriggerInternal( origin, radius, TRIG_FLAG_PLAYERONLY, ents, top, bottom )
-
-	AddCallback_ScriptTriggerLeave( trigger, OnPlayerLockTriggered )
-	// AddCallback_ScriptTriggerEnter( trigger, OnPlayerLockTriggered )
-}
-
-void function OnPlayerLockTriggered( entity trigger, entity player )
-{
-	try{
-	if ( player != GetPlayerArray()[0] && !save.BreakTriggers )
-	{
-		player.SetOrigin( trigger.GetOrigin() )
-		SendHudMessage( player , "Stop leaving the area or else you might break the game!" , -1, 0.4, 255, 255, 0, 0, 0.15, 6, 0.15 )
-	}
-	if ( save.BreakTriggers ){
-		printl("=========================================")
-		printl("Lock trigger broken  :" + save.BreakTriggers )
-		printl("=========================================")
-		trigger.Destroy()
-		save.BreakTriggers = false
-	}
-	}
-	catch( exception ){}
-		
-}
-
-void function CreatePlayerLockBreakerTrigger(  vector origin, float radius, float top, float bottom )
-{
-	printl("=========================================")
-	printl("New Lock Breaker added  :" + origin )
-	printl("=========================================")
-
-	array<entity> ents = []
-	entity trigger = _CreateScriptCylinderTriggerInternal( origin, radius, TRIG_FLAG_PLAYERONLY  | TRIG_FLAG_ONCE, ents, top, bottom )
-
-	AddCallback_ScriptTriggerEnter( trigger, OnPlayerLockBreakerTriggered )
-}
-
-void function OnPlayerLockBreakerTriggered( entity trigger, entity player )
-{
-	try{
-	printl("=========================================")
-	printl("breaking lock trigger  :" + !save.BreakTriggers )
-	printl("=========================================")
-	save.BreakTriggers = true
-	trigger.Destroy()
-	}
-	catch( exception ){}
-}
-
 void function CreateGauntletTeleportBackTrigger()
 {
 	array<entity> ents = []
@@ -282,6 +223,8 @@ vector function GetSaveLocation()
 
 void function TeleportAllExpectOne( vector destination, entity ornull ThisPlayer, bool display_notification = true )
 {
+	array<entity> movers
+
 	foreach( entity player in GetPlayerArray() )
 	{
 		if ( player != ThisPlayer )
@@ -298,6 +241,8 @@ void function TeleportAllExpectOne( vector destination, entity ornull ThisPlayer
 				player.SetHealth( player.GetMaxHealth() )
 				if ( display_notification )
 					Chat_ServerPrivateMessage( player, "You are being moved to the next checkpoint", false )
+				
+				movers.append( mover )
 			}
 			catch( exception ){}
 		}
@@ -318,13 +263,19 @@ void function TeleportAllExpectOne( vector destination, entity ornull ThisPlayer
 			catch( exception ){}
 		}
 	}
+	
+	foreach( entity mover in movers )
+	{
+		if ( IsValid( mover ) )
+			mover.Destroy()
+	}
 }
 
 void function TriggerManualCheckPoint( entity ornull player, vector origin, bool IsPilotSpawn )
 {
 	NewSaveLocation( origin )
 	waitthread TeleportAllExpectOne( origin, player )
-	wait 2
+	wait 0.1
 	
 	foreach( entity p in GetPlayerArray() )
 	{
@@ -337,16 +288,24 @@ void function TriggerManualCheckPoint( entity ornull player, vector origin, bool
 		}
 	}
 	
-	save.currentPilotBoolId += 1
-	save.nextCheckpointAsPilot.insert( save.currentPilotBoolId, IsPilotSpawn )
+	// save.currentPilotBoolId += 1
+	save.lastCheckpointWasAsPilot = IsPilotSpawn
+	// save.nextCheckpointAsPilot.insert( save.currentPilotBoolId, IsPilotSpawn )
+}
+
+void function TriggerSilentCheckPoint( vector origin, bool IsPilotSpawn )
+{
+	NewSaveLocation( origin )
+	// save.currentPilotBoolId += 1
+	save.lastCheckpointWasAsPilot = IsPilotSpawn
+	// save.nextCheckpointAsPilot.insert( save.currentPilotBoolId, IsPilotSpawn )
 }
 
 CheckPointInfo function GetCheckPointInfo()
 {
 	CheckPointInfo Info
 
-	if ( save.nextCheckpointAsPilot.len() != save.currentPilotBoolId && save.nextCheckpointAsPilot.len() != 0 )
-		Info.RsPilot = save.nextCheckpointAsPilot[ save.currentPilotBoolId ]
+	Info.RsPilot = save.lastCheckpointWasAsPilot
 	
 	Info.pos = save.lastSave
 	Info.player0 = save.player0
