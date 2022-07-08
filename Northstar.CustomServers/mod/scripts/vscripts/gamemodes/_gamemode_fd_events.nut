@@ -546,7 +546,7 @@ void function spawnSmoke(SmokeEvent smokeEvent,SpawnEvent spawnEvent,FlowControl
 	smokescreen.fxZRadius = 120
 	smokescreen.fxOffsets = [ <120.0, 0.0, 0.0>,<0.0, 120.0, 0.0>, <0.0, 0.0, 0.0>,<0.0, -120.0, 0.0>,< -120.0, 0.0, 0.0>, <0.0, 100.0, 0.0>]
 
-
+	Smokescreen(smokescreen)
 }
 
 void function waitForDeathOfEntitys(SmokeEvent smokeEvent,SpawnEvent spawnEvent,FlowControlEvent flowControlEvent,SoundEvent soundEvent)
@@ -695,7 +695,7 @@ void function spawnDroppodGrunts(SmokeEvent smokeEvent,SpawnEvent spawnEvent,Flo
 
 	for ( float i = 0; i < spawnEvent.spawnAmount; i++ )
     {
-		bool shouldGiveAntiTitanWeapon = antiTitanWeapons != 0 && (i / spawnEvent.spawnAmount) <= antiTitanWeapons // does this grunt deserve an anti titan weapon or not
+		bool shouldGiveAntiTitanWeapon = antiTitanWeapons != 0 && (i / spawnEvent.spawnAmount) < antiTitanWeapons // does this grunt deserve an anti titan weapon or not
 		entity guy
 
 		if (shouldBeCaptain)
