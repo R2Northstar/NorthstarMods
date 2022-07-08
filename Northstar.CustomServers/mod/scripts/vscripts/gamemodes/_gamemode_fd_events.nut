@@ -668,7 +668,7 @@ void function spawnDroppodGrunts(SmokeEvent smokeEvent,SpawnEvent spawnEvent,Flo
 	array<entity> guys
 	bool adychecked = false
 
-    guys = CreateGruntSquad( spawnEvent.spawnAmount, pod )
+    guys = CreateGruntSquad( spawnEvent, pod )
 
 	ActivateFireteamDropPod( pod, guys )
 	thread SquadNav_Thread( guys,spawnEvent.route )

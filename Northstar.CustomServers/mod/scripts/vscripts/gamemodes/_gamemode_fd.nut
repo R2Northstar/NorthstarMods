@@ -1270,7 +1270,7 @@ void function AddTurretSentry(entity turret)
 	turret.Minimap_SetCustomState( eMinimapObject_npc.FD_TURRET )
 }
 
-array<entity> function CreateGruntSquad( int count, entity pod )
+array<entity> function CreateGruntSquad( SpawnEvent spawnEvent, entity pod )
 {
 	array<entity> guys
 	int difficultyLevel = FD_GetDifficultyLevel()
@@ -1297,9 +1297,9 @@ array<entity> function CreateGruntSquad( int count, entity pod )
 			break
 	}
 
-	for ( int i = 0; i < count; i++ )
+	for ( int i = 0; i < spawnEvent.spawnAmount; i++ )
     {
-		bool shouldGiveAntiTitanWeapon = i / count >= antiTitanWeapons // does this grunt deserve an anti titan weapon or not
+		bool shouldGiveAntiTitanWeapon = i / spawnEvent.spawnAmount >= antiTitanWeapons // does this grunt deserve an anti titan weapon or not
 
 		entity guy
 
