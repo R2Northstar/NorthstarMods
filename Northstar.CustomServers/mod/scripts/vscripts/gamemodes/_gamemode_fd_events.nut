@@ -695,7 +695,7 @@ void function spawnDroppodGrunts(SmokeEvent smokeEvent,SpawnEvent spawnEvent,Flo
 
 	for ( int i = 0; i < spawnEvent.spawnAmount; i++ )
     {
-		bool shouldGiveAntiTitanWeapon = i / spawnEvent.spawnAmount <= antiTitanWeapons // does this grunt deserve an anti titan weapon or not
+		bool shouldGiveAntiTitanWeapon = antiTitanWeapons != 0 && (i / spawnEvent.spawnAmount) <= antiTitanWeapons // does this grunt deserve an anti titan weapon or not
 		printt(shouldGiveAntiTitanWeapon)
 		entity guy
 
@@ -716,7 +716,7 @@ void function spawnDroppodGrunts(SmokeEvent smokeEvent,SpawnEvent spawnEvent,Flo
 
 		if (shouldGiveAntiTitanWeapon)
 		{
-			guy.TakeActiveWeapon()
+			//guy.TakeActiveWeapon()
 			guy.GiveWeapon("mp_weapon_defender") // do grunts ever get a different anti titan weapon?
 		}
 
