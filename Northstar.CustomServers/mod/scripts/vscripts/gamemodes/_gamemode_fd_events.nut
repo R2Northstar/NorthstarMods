@@ -14,7 +14,7 @@ global function createWaitUntilAliveEvent
 global function createCloakDroneEvent
 global function CreateTickEvent
 global function CreateToneSniperTitanEvent
-global function CreateNorthstarSniperTitanEvent // northstars are always sniper titans
+global function CreateNorthstarSniperTitanEvent //northstars are always sniper titans
 global function CreateIonTitanEvent
 global function CreateScorchTitanEvent
 global function CreateRoninTitanEvent
@@ -546,7 +546,7 @@ void function spawnSmoke(SmokeEvent smokeEvent,SpawnEvent spawnEvent,FlowControl
 	smokescreen.fxZRadius = 120
 	smokescreen.fxOffsets = [ <120.0, 0.0, 0.0>,<0.0, 120.0, 0.0>, <0.0, 0.0, 0.0>,<0.0, -120.0, 0.0>,< -120.0, 0.0, 0.0>, <0.0, 100.0, 0.0>]
 
-
+	Smokescreen(smokescreen)
 }
 
 void function waitForDeathOfEntitys(SmokeEvent smokeEvent,SpawnEvent spawnEvent,FlowControlEvent flowControlEvent,SoundEvent soundEvent)
