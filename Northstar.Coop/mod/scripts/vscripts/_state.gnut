@@ -1,0 +1,50 @@
+globalize_all_functions
+
+struct
+{
+    array<string> states
+    int state = 0
+} file
+
+void function AddState( string state_name )
+{
+    file.states.append( state_name )
+}
+
+void function NextState()
+{
+    if ( file.state + 1 < file.states.len() )
+        file.state += 1
+}
+
+void function SetStateInt( int state )
+{
+    file.state = state
+}
+
+void function SetState( string state_name )
+{
+    if ( file.states.len() == 0 )
+        return
+    else if ( !file.states.contains( state_name ) )
+        return
+    
+    foreach( int index, string state in file.states )
+    {
+        if ( state == state_name )
+            file.state = index
+    }
+}
+
+int function GetStateInt()
+{
+    return file.state
+}
+
+string function GetState()
+{
+    if ( file.states.len() == 0 )
+        unreachable
+    
+    return file.states[file.state]
+}
