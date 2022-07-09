@@ -54,6 +54,8 @@ void function UpdateVisibleModes()
 		
 		if ( !ModeSettings_RequiresAI( modesArray[ modeIndex ] ) )
 			Hud_SetLocked( buttons[ i ], false )
+		else if( IsFDMode( modesArray[ i ] ) )
+			Hud_SetLocked( buttons[ i ], false )
 		else
 			Hud_SetLocked( buttons[ i ], true )
 		
