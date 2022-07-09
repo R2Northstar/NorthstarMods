@@ -4,7 +4,7 @@ global function getRoute
 
 
 
-void function singleNav_thread(entity npc, string routeName,int nodesToScip= 0,float nextDistance = 500.0)
+void function singleNav_thread(entity npc, string routeName,int nodesToSkip= 0,float nextDistance = 500.0)
 {
 	npc.EndSignal( "OnDeath" )
 	npc.EndSignal( "OnDestroy" )
@@ -25,14 +25,14 @@ void function singleNav_thread(entity npc, string routeName,int nodesToScip= 0,f
 		npc.Signal("OnFailedToPath")
 		return
 	}
-	int scippedNodes = 0
+	int skippedNodes = 0
 	foreach(entity node in routeArray)
 	{
 		if(!IsAlive(fd_harvester.harvester))
 			return
-		if(scippedNodes < nodesToScip)
+		if(skippedNodes < nodesToSkip)
 		{
-			scippedNodes++
+			skippedNodes++
 			continue
 		}
 		npc.AssaultPoint(node.GetOrigin())
@@ -45,7 +45,7 @@ void function singleNav_thread(entity npc, string routeName,int nodesToScip= 0,f
 	npc.Signal("FD_ReachedHarvester")
 }
 
-void function SquadNav_Thread( array<entity> npcs ,string routeName,int nodesToScip = 0,float nextDistance = 200.0)
+void function SquadNav_Thread( array<entity> npcs ,string routeName,int nodesToSkip = 0,float nextDistance = 200.0)
 {
 	//TODO this function wont stop when noone alive anymore also it only works half of the time
 
@@ -59,7 +59,7 @@ void function SquadNav_Thread( array<entity> npcs ,string routeName,int nodesToS
 	{
 		if(!IsAlive(fd_harvester.harvester))
 			return
-		if(nodeIndex++ < nodesToScip)
+		if(nodeIndex++ < nodesToSkip)
 			continue
 		
 		SquadAssaultOrigin(npcs,node.GetOrigin(),nextDistance)
