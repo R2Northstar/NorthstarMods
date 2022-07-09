@@ -98,6 +98,8 @@ void function FD_PlayerRespawnCallback(entity player)
 {
 	if(player in file.players)
 		file.players[player].lastRespawn = Time()
+
+	Highlight_SetFriendlyHighlight( player, "sp_friendly_hero" )
 }
 
 void function FD_TeamReserveDepositOrWithdrawCallback(entity player, string action,int amount)
