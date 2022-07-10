@@ -1,7 +1,7 @@
 {
 	"Name": "Northstar.Client",
 	"Description": "Various ui and client changes to fix bugs and add better support for mods",
-	"Version": "1.7.0",
+	"Version": "1.9.0",
 	"LoadPriority": 0,
 	"ConVars": [
 		{
@@ -51,6 +51,13 @@
 			"UICallback": {
 				"Before": "AddNorthstarModMenu",
 				"After": "AddNorthstarModMenu_MainMenuFooter"
+			}
+		},
+		{
+			"Path": "ui/menu_ns_setversionlabel.nut",
+			"RunOn": "UI",
+			"UICallback": {
+				"After": "NS_SetVersionLabel"
 			}
 		},
 		{
