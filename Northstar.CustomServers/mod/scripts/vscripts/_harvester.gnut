@@ -55,6 +55,7 @@ HarvesterStruct function generateBeamFX(HarvesterStruct harvester)
     entity Harvester_Beam = StartParticleEffectOnEntity_ReturnEntity(harvester.harvester,GetParticleSystemIndex(FX_HARVESTER_BEAM),FX_PATTACH_ABSORIGIN_FOLLOW,0)
     EffectSetControlPointVector( Harvester_Beam, 1, GetShieldTriLerpColor(0.0) )
     harvester.particleBeam = Harvester_Beam
+    Harvester_Beam.DisableHibernation()
     return harvester
 }
 
