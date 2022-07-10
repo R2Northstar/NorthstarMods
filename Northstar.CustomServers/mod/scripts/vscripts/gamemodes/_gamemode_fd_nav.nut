@@ -104,7 +104,7 @@ void function OnFailedToPathFallback( entity npc )
 	print("titan reached harvester")
 }
 
-void function singleNav_thread(entity npc, string routeName,int nodesToScip= 0,float nextDistance = 500.0)
+void function singleNav_thread(entity npc, string routeName,int nodesToSkip= 0,float nextDistance = 500.0)
 {
 	npc.EndSignal( "OnDeath" )
 	npc.EndSignal( "OnDestroy" )
@@ -139,14 +139,14 @@ void function singleNav_thread(entity npc, string routeName,int nodesToScip= 0,f
 		print("no path in this route")
 		return
 	}
-	int scippedNodes = 0
+	int skippedNodes = 0
 	foreach(entity node in routeArray)
 	{
 		if(!IsAlive(fd_harvester.harvester))
 			return
-		if(scippedNodes < nodesToScip)
+		if(skippedNodes < nodesToSkip)
 		{
-			scippedNodes++
+			skippedNodes++
 			continue
 		}
 		if( Distance( node.GetOrigin(), fd_harvester.harvester.GetOrigin()) > Distance( npc.GetOrigin(), fd_harvester.harvester.GetOrigin() ))
@@ -261,15 +261,15 @@ bool function IsEnemyWithinDist( entity titan, float dist )
 	return false
 }
 
-void function SquadNav_Thread( array<entity> npcs ,string routeName,int nodesToScip = 0,float nextDistance = 200.0)
+void function SquadNav_Thread( array<entity> npcs ,string routeName,int nodesToSkip = 0,float nextDistance = 200.0)
 {
 	//TODO this function wont stop when noone alive anymore also it only works half of the time
 
 	foreach( npc in npcs )
-		thread SquadNav_SingleThread(npc, routeName, nodesToScip, nextDistance)
+		thread SquadNav_SingleThread(npc, routeName, nodesToSkip, nextDistance)
 }
 
-void function SquadNav_SingleThread( entity npc, string routeName, int nodesToScip = 0, float nextDistance = 200.0)
+void function SquadNav_SingleThread( entity npc, string routeName, int nodesToSkip = 0, float nextDistance = 200.0)
 {
 	fd_harvester.harvester.EndSignal("OnDeath")
 	fd_harvester.harvester.EndSignal("OnDestroy")
@@ -288,7 +288,7 @@ void function SquadNav_SingleThread( entity npc, string routeName, int nodesToSc
 	{
 		if(!IsAlive(fd_harvester.harvester))
 			return
-		if(nodeIndex++ < nodesToScip)
+		if(nodeIndex++ < nodesToSkip)
 			continue
 
 		thread AssaultOrigin(npc,node.GetOrigin(),nextDistance) // this will run thread AssaultOrigin, which waitthread SendAIToAssaultPoint for each separate npc, and if an npc dies, the next iteration in this foreach loop will continue

@@ -2,6 +2,7 @@ global function AiStalker_Init
 global function GetDeathForce
 global function StalkerGearOverloads
 global function StalkerMeltingDown
+global function FDStalkerThink
 
 global function IsStalkerLimbBlownOff
 
@@ -157,6 +158,87 @@ void function StalkerOnDamaged_Internal( entity npc, var damageInfo )
 			npc.SetActivityModifier( ACT_MODIFIER_STAGGER, true )
 		}
 	}
+	if( GameRules_GetGameMode() == FD )
+		thread StalkerSprint( npc, damageInfo )
+}
+
+void function StalkerSprint( entity npc, var damageInfo )
+{
+	npc.EndSignal("OnDeath")
+	npc.EndSignal("OnDestroy")
+	float damage = DamageInfo_GetDamage( damageInfo )
+
+	if ( npc.GetHealth() - damage < 50 || npc.GetHealth() <= 80)
+	{
+		entity weapon = npc.GetActiveWeapon()
+		if (IsValid(weapon))
+			npc.TakeActiveWeapon() // when stalkers fall over on harvester they will randomly shoot their guns, we don't want that.
+		npc.EnableNPCMoveFlag( NPCMF_PREFER_SPRINT )
+		npc.SetCapabilityFlag( bits_CAP_MOVE_SHOOT | bits_CAP_WEAPON_RANGE_ATTACK1 | bits_CAP_AIM_GUN, false )
+		npc.SetNPCFlag( NPC_IGNORE_ALL, true )
+		npc.SetNPCFlag( NPC_DISABLE_SENSING, true )
+		npc.SetNoTarget( true )
+		npc.ClearMoveAnim()
+		npc.SetMoveAnim("sp_spectre_sprint_F")
+	}
+}
+
+void function FDStalkerThink( entity npc, entity generator )
+{
+	npc.EndSignal( "OnDeath" )
+	npc.EndSignal( "OnDestroy" )
+	generator.EndSignal( "OnDeath" )
+	generator.EndSignal( "OnDestroy" )
+	bool isSprinting = false
+	thread FDStalkerGetsStunned( npc , generator )
+	while ( IsAlive( npc ) )
+	{
+		WaitFrame()
+
+		// cant sprint with 1 leg
+		// also upped to 1800 so that stalkers sprint from roughly their vanilla positions, could probably do it based on % of distance left to go?
+		if ( !IsCrawling( npc ) && DistanceSqr( npc.GetOrigin(), generator.GetOrigin() ) < (1800 * 1800) && !isSprinting )
+		{
+			entity weapon = npc.GetActiveWeapon()
+			if (IsValid(weapon))
+				npc.TakeActiveWeapon() // when stalkers fall over on harvester they will randomly shoot their guns, we don't want that.
+			npc.EnableNPCMoveFlag( NPCMF_PREFER_SPRINT )
+			npc.SetCapabilityFlag( bits_CAP_MOVE_SHOOT | bits_CAP_WEAPON_RANGE_ATTACK1 | bits_CAP_AIM_GUN, false )
+			npc.EnableNPCFlag( NPC_DISABLE_SENSING | NPC_IGNORE_ALL )
+			npc.ClearMoveAnim()
+			npc.SetMoveAnim("sp_spectre_sprint_F")
+			npc.SetNoTarget( true )
+			// stalkers were just going to the final node and stopping, meaning they never actually reached the harvester
+			npc.AssaultPoint(generator.GetOrigin())
+			isSprinting = true
+		}
+
+		// upped from 230 to more accurately mimic vanilla i think?
+		if ( DistanceSqr( npc.GetOrigin(), generator.GetOrigin() ) > (275 * 275) )
+			continue
+
+		break
+	}
+
+	thread StalkerGearOverloads( npc )
+}
+
+void function FDStalkerGetsStunned( entity npc , entity generator )
+{
+	npc.EndSignal( "OnDeath" )
+	npc.EndSignal( "OnDestroy" )
+	npc.WaitSignal( "ArcStunned" )
+	print("arc trapped...")
+
+	entity weapon = npc.GetActiveWeapon()
+	if (IsValid(weapon))
+		npc.TakeActiveWeapon() // when stalkers fall over on harvester they will randomly shoot their guns, we don't want that.
+	npc.EnableNPCMoveFlag( NPCMF_PREFER_SPRINT )
+	npc.SetCapabilityFlag( bits_CAP_MOVE_SHOOT | bits_CAP_WEAPON_RANGE_ATTACK1 | bits_CAP_AIM_GUN, false )
+	npc.EnableNPCFlag( NPC_DISABLE_SENSING | NPC_IGNORE_ALL )
+	npc.ClearMoveAnim()
+	npc.SetMoveAnim("sp_spectre_sprint_F")
+	npc.SetNoTarget( true ) // stop keeping track of any player and instead go for the harvester
 }
 
 bool function TryDismemberStalker( entity npc, var damageInfo, entity attacker, int hitGroup )
