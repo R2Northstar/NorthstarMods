@@ -152,8 +152,14 @@ void function GamemodeFD_InitPlayer(entity player)
 	player_struct_fd data
 	data.diedThisRound = false
 	file.players[player] <- data
+	thread SetTurretSettings_threaded(player)
 
-
+}
+void function SetTurretSettings_threaded(entity player)
+{	//has to be delayed because PlayerConnect callbacks get called in wrong order
+	WaitFrame()
+	DeployableTurret_SetAISettingsForPlayer_AP(player,"npc_turret_sentry_burn_card_ap_fd")
+	DeployableTurret_SetAISettingsForPlayer_AT(player,"npc_turret_sentry_burn_card_at_fd")
 }
 
 void function OnNpcDeath( entity victim, entity attacker, var damageInfo )
@@ -861,7 +867,7 @@ void function HarvesterAlarm()
 void function initNetVars()
 {
 	SetGlobalNetInt("FD_totalWaves",waveEvents.len())
-
+	SetGlobalNetInt("burn_turretLimit",2)
 	if(!FD_HasRestarted())
 	{
 		bool showShop = false
@@ -871,6 +877,7 @@ void function initNetVars()
 		else
 			FD_SetNumAllowedRestarts(2)
 	}
+	
 
 }
 

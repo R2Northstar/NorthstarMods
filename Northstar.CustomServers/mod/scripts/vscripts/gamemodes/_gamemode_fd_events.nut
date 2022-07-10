@@ -1,18 +1,19 @@
-global function createSmokeEvent
-global function createArcTitanEvent
-global function createWaitForTimeEvent
-global function createSuperSpectreEvent
-global function createSuperSpectreEventWithMinion
-global function createDroppodGruntEvent
-global function createNukeTitanEvent
-global function createMortarTitanEvent
-global function createGenericSpawnEvent
-global function createGenericTitanSpawnWithAiSettingsEvent
-global function createDroppodStalkerEvent
-global function createDroppodSpectreMortarEvent
-global function createWaitUntilAliveEvent
-global function createCloakDroneEvent
-global function CreateTickEvent
+global function CreateSmokeEvent
+global function CreateArcTitanEvent
+global function CreateWaitForTimeEvent
+global function CreateSuperSpectreEvent
+global function CreateSuperSpectreEventWithMinion
+global function CreateDroppodGruntEvent
+global function CreateNukeTitanEvent
+global function CreateMortarTitanEvent
+global function CreateGenericSpawnEvent
+global function CreateGenericTitanSpawnWithAiSettingsEvent
+global function CreateDroppodStalkerEvent
+global function CreateDroppodSpectreMortarEvent
+global function CreateWaitUntilAliveEvent
+global function CreateCloakDroneEvent
+global function CreateDroppodTickEvent
+global function CreateSpawnDroneEvent
 global function CreateToneSniperTitanEvent
 global function CreateNorthstarSniperTitanEvent //northstars are always sniper titans
 global function CreateIonTitanEvent
@@ -150,7 +151,7 @@ void function runEvents(int firstExecuteIndex)
 #######    #    ####### #     #    #        #####  ####### #     # ####### #     # #     #    #    ####### #     #
 \*****************************************************************************************************************/
 
-WaveEvent function createSmokeEvent(vector position,float lifetime,int nextEventIndex,int executeOnThisCall = 1)
+WaveEvent function CreateSmokeEvent(vector position,float lifetime,int nextEventIndex,int executeOnThisCall = 1)
 {
 	WaveEvent event
 	event.eventFunction = spawnSmoke
@@ -162,7 +163,7 @@ WaveEvent function createSmokeEvent(vector position,float lifetime,int nextEvent
 	return event
 }
 
-WaveEvent function createArcTitanEvent(vector origin,vector angles,string route,int nextEventIndex,int executeOnThisCall = 1,string entityGlobalKey="")
+WaveEvent function CreateArcTitanEvent(vector origin,vector angles,string route,int nextEventIndex,int executeOnThisCall = 1,string entityGlobalKey="")
 {
 	WaveEvent event
 	event.eventFunction = spawnArcTitan
@@ -178,7 +179,7 @@ WaveEvent function createArcTitanEvent(vector origin,vector angles,string route,
 	return event
 }
 
-WaveEvent function createSuperSpectreEvent(vector origin,vector angles,string route,int nextEventIndex,int executeOnThisCall = 1,string entityGlobalKey="")
+WaveEvent function CreateSuperSpectreEvent(vector origin,vector angles,string route,int nextEventIndex,int executeOnThisCall = 1,string entityGlobalKey="")
 {
 	WaveEvent event
 	event.eventFunction = spawnSuperSpectre
@@ -194,7 +195,7 @@ WaveEvent function createSuperSpectreEvent(vector origin,vector angles,string ro
 	return event
 }
 
-WaveEvent function createSuperSpectreEventWithMinion(vector origin,vector angles,string route,int nextEventIndex,int executeOnThisCall = 1,string entityGlobalKey="")
+WaveEvent function CreateSuperSpectreEventWithMinion(vector origin,vector angles,string route,int nextEventIndex,int executeOnThisCall = 1,string entityGlobalKey="")
 {
 	WaveEvent event
 	event.eventFunction = spawnSuperSpectreWithMinion
@@ -210,7 +211,7 @@ WaveEvent function createSuperSpectreEventWithMinion(vector origin,vector angles
 	return event
 }
 
-WaveEvent function createDroppodGruntEvent(vector origin,string route,int nextEventIndex,int executeOnThisCall = 1,string entityGlobalKey="")
+WaveEvent function CreateDroppodGruntEvent(vector origin,string route,int nextEventIndex,int executeOnThisCall = 1,string entityGlobalKey="")
 {
 	WaveEvent event
 	event.eventFunction = spawnDroppodGrunts
@@ -225,7 +226,7 @@ WaveEvent function createDroppodGruntEvent(vector origin,string route,int nextEv
 	return event
 }
 
-WaveEvent function createDroppodStalkerEvent(vector origin,string route,int nextEventIndex,int executeOnThisCall = 1,string entityGlobalKey="")
+WaveEvent function CreateDroppodStalkerEvent(vector origin,string route,int nextEventIndex,int executeOnThisCall = 1,string entityGlobalKey="")
 {
 	WaveEvent event
 	event.eventFunction = spawnDroppodStalker
@@ -240,7 +241,7 @@ WaveEvent function createDroppodStalkerEvent(vector origin,string route,int next
 	return event
 }
 
-WaveEvent function createDroppodSpectreMortarEvent(vector origin,string route,int nextEventIndex,int executeOnThisCall = 1,string entityGlobalKey="")
+WaveEvent function CreateDroppodSpectreMortarEvent(vector origin,string route,int nextEventIndex,int executeOnThisCall = 1,string entityGlobalKey="")
 {
 	WaveEvent event
 	event.eventFunction = spawnDroppodSpectreMortar
@@ -255,7 +256,7 @@ WaveEvent function createDroppodSpectreMortarEvent(vector origin,string route,in
 	return event
 }
 
-WaveEvent function createWaitForTimeEvent(float waitTime,int nextEventIndex,int executeOnThisCall = 1)
+WaveEvent function CreateWaitForTimeEvent(float waitTime,int nextEventIndex,int executeOnThisCall = 1)
 {
 	WaveEvent event
 	event.shouldThread = false
@@ -266,7 +267,7 @@ WaveEvent function createWaitForTimeEvent(float waitTime,int nextEventIndex,int 
 	return event
 }
 
-WaveEvent function createWaitUntilAliveEvent(int amount,int nextEventIndex,int executeOnThisCall = 1)
+WaveEvent function CreateWaitUntilAliveEvent(int amount,int nextEventIndex,int executeOnThisCall = 1)
 {
 	WaveEvent event
 	event.eventFunction = waitUntilLessThanAmountAliveEvent
@@ -277,7 +278,7 @@ WaveEvent function createWaitUntilAliveEvent(int amount,int nextEventIndex,int e
 	return event
 }
 
-WaveEvent function createGenericSpawnEvent(string npcClassName,vector origin,vector angles,string route,int spawnType,int spawnAmount,int nextEventIndex,int executeOnThisCall = 1,string entityGlobalKey="")
+WaveEvent function CreateGenericSpawnEvent(string npcClassName,vector origin,vector angles,string route,int spawnType,int spawnAmount,int nextEventIndex,int executeOnThisCall = 1,string entityGlobalKey="")
 {
 	WaveEvent event
 	event.eventFunction = spawnGenericNPC
@@ -294,7 +295,7 @@ WaveEvent function createGenericSpawnEvent(string npcClassName,vector origin,vec
 	return event
 }
 
-WaveEvent function createGenericTitanSpawnWithAiSettingsEvent(string npcClassName,string aiSettings,vector origin,vector angles,string route,int spawnType,int spawnAmount,int nextEventIndex,int executeOnThisCall = 1,string entityGlobalKey="")
+WaveEvent function CreateGenericTitanSpawnWithAiSettingsEvent(string npcClassName,string aiSettings,vector origin,vector angles,string route,int spawnType,int spawnAmount,int nextEventIndex,int executeOnThisCall = 1,string entityGlobalKey="")
 {
 	WaveEvent event
 	event.eventFunction = spawnGenericNPCTitanwithSettings
@@ -312,7 +313,7 @@ WaveEvent function createGenericTitanSpawnWithAiSettingsEvent(string npcClassNam
 	return event
 }
 
-WaveEvent function createNukeTitanEvent(vector origin,vector angles,string route,int nextEventIndex,int executeOnThisCall = 1,string entityGlobalKey="")
+WaveEvent function CreateNukeTitanEvent(vector origin,vector angles,string route,int nextEventIndex,int executeOnThisCall = 1,string entityGlobalKey="")
 {
 	WaveEvent event
 	event.eventFunction = spawnNukeTitan
@@ -328,7 +329,7 @@ WaveEvent function createNukeTitanEvent(vector origin,vector angles,string route
 	return event
 }
 
-WaveEvent function createMortarTitanEvent(vector origin,vector angles,int nextEventIndex,int executeOnThisCall = 1,string entityGlobalKey="")
+WaveEvent function CreateMortarTitanEvent(vector origin,vector angles,int nextEventIndex,int executeOnThisCall = 1,string entityGlobalKey="")
 {
 	WaveEvent event
 	event.eventFunction = spawnMortarTitan
@@ -343,7 +344,7 @@ WaveEvent function createMortarTitanEvent(vector origin,vector angles,int nextEv
 	return event
 }
 
-WaveEvent function createCloakDroneEvent(vector origin,vector angles,int nextEventIndex,int executeOnThisCall = 1,string entityGlobalKey="")
+WaveEvent function CreateCloakDroneEvent(vector origin,vector angles,int nextEventIndex,int executeOnThisCall = 1,string entityGlobalKey="")
 {
 	WaveEvent event
 	event.eventFunction = fd_spawnCloakDrone
@@ -358,7 +359,7 @@ WaveEvent function createCloakDroneEvent(vector origin,vector angles,int nextEve
 	return event
 }
 
-WaveEvent function CreateTickEvent( vector origin, vector angles, int amount, string route,int nextEventIndex,int executeOnThisCall = 1,string entityGlobalKey="")
+WaveEvent function CreateDroppodTickEvent( vector origin, int amount, string route,int nextEventIndex,int executeOnThisCall = 1,string entityGlobalKey="")
 {
 	WaveEvent event
 	event.eventFunction = SpawnTick
@@ -368,7 +369,6 @@ WaveEvent function CreateTickEvent( vector origin, vector angles, int amount, st
 	event.spawnEvent.spawnType= eFD_AITypeIDs.TICK
 	event.spawnEvent.spawnAmount = amount
 	event.spawnEvent.origin = origin
-	event.spawnEvent.angles = angles
 	event.spawnEvent.entityGlobalKey = entityGlobalKey
 	return event
 }
@@ -522,6 +522,19 @@ WaveEvent function CreateWaitForLessThanTypedEvent(int aiTypeId,int amount,int n
 	event.flowControlEvent.waitEntityType = aiTypeId
 	return event
 }
+WaveEvent function CreateSpawnDroneEvent(vector origin,vector angles,string route,int nextEventIndex,int executeOnThisCall = 1,string entityGlobalKey="")
+{
+	WaveEvent event
+	event.eventFunction = SpawnMonarchTitan
+	event.executeOnThisCall = executeOnThisCall
+	event.nextEventIndex = nextEventIndex
+	event.shouldThread = true
+	event.spawnEvent.spawnType= eFD_AITypeIDs.DRONE
+	event.spawnEvent.spawnAmount = 0
+	event.spawnEvent.origin = origin
+	event.spawnEvent.entityGlobalKey = entityGlobalKey
+	return event
+}
 
 /************************************************************************************************************\
 ####### #     # ####### #     # #######    ####### #     # #     #  #####  ####### ### ####### #     #  #####
@@ -547,6 +560,10 @@ void function spawnSmoke(SmokeEvent smokeEvent,SpawnEvent spawnEvent,FlowControl
 	smokescreen.fxOffsets = [ <120.0, 0.0, 0.0>,<0.0, 120.0, 0.0>, <0.0, 0.0, 0.0>,<0.0, -120.0, 0.0>,< -120.0, 0.0, 0.0>, <0.0, 100.0, 0.0>]
 
 	Smokescreen(smokescreen)
+}
+void function spawnDrones(SmokeEvent smokeEvent,SpawnEvent spawnEvent,FlowControlEvent flowControlEvent,SoundEvent soundEvent)
+{
+	//TODO
 }
 
 void function waitForDeathOfEntitys(SmokeEvent smokeEvent,SpawnEvent spawnEvent,FlowControlEvent flowControlEvent,SoundEvent soundEvent)
@@ -1094,8 +1111,11 @@ void function waitUntilLessThanAmountAlive_expensive(int amount)
 		npcs = GetNPCArray()
 		deduct = 0
 		foreach(entity npc in npcs)
-			if (IsValid(GetPetTitanOwner( npc )))
+		{
+			if( IsValid( GetPetTitanOwner( npc ) ) )
 				deduct++
+			//if( npc.GetAISettingsName()=="")
+		}
 		aliveTitans = GetNPCArray().len() - deduct
 		if(!IsAlive(fd_harvester.harvester))
 			return
