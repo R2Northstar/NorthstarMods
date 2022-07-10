@@ -18,7 +18,6 @@ global function NSDeleteStatusMessageOnPlayer
 global function ServerCallback_CreateServerHUDMessage
 #endif
 
-global function NSAssetFromString
 
 
 global struct genericServerHUDMessageStruct
@@ -319,7 +318,7 @@ void function LargeMessageHandler_Threaded()
 			WaitFrame()
 
 		var rui = CreatePermanentCockpitRui( $"ui/fd_tutorial_tip.rpak" )
-		RuiSetImage( rui, "backgroundImage", NSAssetFromString( largeMessageList[0].image ) )
+		RuiSetImage( rui, "backgroundImage", StringToAsset( largeMessageList[0].image ) )
 		RuiSetString( rui, "titleText", largeMessageList[0].title )
 		RuiSetString( rui, "descriptionText", largeMessageList[0].description )
 		RuiSetGameTime( rui, "updateTime", Time() )
@@ -364,10 +363,6 @@ void function ShowInfoMessage()
 
 #endif // CLIENT
 
-asset function NSAssetFromString( string str )
-{
-	return expect asset(compilestring(format("return $\"%s\"", str))())
-}
 
 string function EscapeString( string str )
 {
