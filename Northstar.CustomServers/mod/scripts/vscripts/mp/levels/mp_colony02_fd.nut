@@ -1,4 +1,4 @@
-global function initFrontiereDefenseData
+global function initFrontierDefenseData
 void function initFrontierDefenseData()
 {
     shopPosition = <0,0,0>
