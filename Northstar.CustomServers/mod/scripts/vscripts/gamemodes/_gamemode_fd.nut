@@ -3,6 +3,9 @@ global function RateSpawnpoints_FD
 global function startHarvester
 global function GetTargetNameForID
 
+global function DisableTitanSelection
+global function DisableTitanSelectionForPlayer
+
 
 struct player_struct_fd{
 	bool diedThisRound
@@ -274,7 +277,8 @@ void function mainGameLoop()
 			showShop = true
 			foreach(entity player in GetPlayerArray())
 			{
-			PlayerEarnMeter_AddEarnedAndOwned(player,1.0,1.0)
+				PlayerEarnMeter_AddEarnedAndOwned(player,1.0,1.0)
+				DisableTitanSelection()
 			}
 		}
 
@@ -1197,4 +1201,24 @@ void function AddTurretSentry(entity turret)
 	turret.Minimap_AlwaysShow( TEAM_MILITIA, null )
 	turret.Minimap_SetHeightTracking( true )
 	turret.Minimap_SetCustomState( eMinimapObject_npc.FD_TURRET )
+}
+
+void function DisableTitanSelection( )
+{
+	foreach ( entity player in GetPlayerArray() )
+	{
+		DisableTitanSelectionForPlayer( player )
+	}
+}
+
+void function DisableTitanSelectionForPlayer( entity player )
+{
+	int enumCount =	PersistenceGetEnumCount( "titanClasses" )
+	for ( int i = 0; i < enumCount; i++ )
+	{
+		string enumName = PersistenceGetEnumItemNameForIndex( "titanClasses", i )
+		string selectedEnumName = PersistenceGetEnumItemNameForIndex( "titanClasses", player.GetPersistentVarAsInt("activeTitanLoadoutIndex") )
+		if ( enumName != "" && enumName != selectedEnumName )
+			player.SetPersistentVar( "titanClassLockState[" + enumName + "]", TITAN_CLASS_LOCK_STATE_LOCKED )
+	}
 }
