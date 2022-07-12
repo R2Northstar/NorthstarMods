@@ -3,6 +3,10 @@ global function RateSpawnpoints_FD
 global function startHarvester
 global function GetTargetNameForID
 
+global function DisableTitanSelection
+global function DisableTitanSelectionForPlayer
+global function EnableTitanSelection
+global function EnableTitanSelectionForPlayer
 
 struct player_struct_fd{
 	bool diedThisRound
@@ -25,6 +29,7 @@ struct player_struct_fd{
 
 global HarvesterStruct& fd_harvester
 global vector shopPosition
+global vector shopAngles = <0,0,0>
 global table<string,array<vector> > routes
 global array<entity> routeNodes
 global array<entity> spawnedNPCs
@@ -154,6 +159,14 @@ void function GamemodeFD_InitPlayer(entity player)
 	data.diedThisRound = false
 	file.players[player] <- data
 	thread SetTurretSettings_threaded(player)
+	SetMoneyForPlayer(player,GetGlobalNetInt("FD_currentWave")*GetCurrentPlaylistVarInt("fd_money_per_round",600))
+	if(GetGlobalNetInt("FD_currentWave")>1)
+		PlayerEarnMeter_AddEarnedAndOwned(player,1.0,1.0)
+
+	if ( GetGlobalNetInt("FD_currentWave") != 0 )
+		DisableTitanSelectionForPlayer( player ) // this might need moving to when they exit the titan selection UI when we do that
+	else
+		EnableTitanSelectionForPlayer( player )
 
 }
 void function SetTurretSettings_threaded(entity player)
@@ -275,8 +288,13 @@ void function mainGameLoop()
 			showShop = true
 			foreach(entity player in GetPlayerArray())
 			{
-			PlayerEarnMeter_AddEarnedAndOwned(player,1.0,1.0)
+				PlayerEarnMeter_AddEarnedAndOwned(player,1.0,1.0)
 			}
+			DisableTitanSelection()
+		}
+		else if (i + 1 == waveEvents.len() )
+		{
+			EnableTitanSelection()
 		}
 
 	}
@@ -524,6 +542,9 @@ bool function runWave(int waveIndex,bool shouldDoBuyTime)
 			SetRoundBased(false)
 		SetWinner(TEAM_IMC)//restart round
 		spawnedNPCs = [] // reset npcs count
+		restetWaveEvents()
+		foreach(player in GetPlayerArray())
+			PlayerEarnMeter_AddEarnedAndOwned(player,1.0,1.0)
 		return false
 	}
 
@@ -980,8 +1001,7 @@ bool function isSecondWave()
 
 void function LoadEntities()
 {
-
-	CreateBoostStoreLocation(TEAM_MILITIA,shopPosition,<0,0,0>)
+	CreateBoostStoreLocation(TEAM_MILITIA,shopPosition,shopAngles)
 	foreach ( entity info_target in GetEntArrayByClass_Expensive("info_target") )
 	{
 
@@ -1198,4 +1218,44 @@ void function AddTurretSentry(entity turret)
 	turret.Minimap_AlwaysShow( TEAM_MILITIA, null )
 	turret.Minimap_SetHeightTracking( true )
 	turret.Minimap_SetCustomState( eMinimapObject_npc.FD_TURRET )
+}
+
+void function DisableTitanSelection( )
+{
+	foreach ( entity player in GetPlayerArray() )
+	{
+		DisableTitanSelectionForPlayer( player )
+	}
+}
+
+void function EnableTitanSelection( )
+{
+	foreach ( entity player in GetPlayerArray() )
+	{
+		EnableTitanSelectionForPlayer( player )
+	}
+}
+
+void function EnableTitanSelectionForPlayer( entity player )
+{
+	int enumCount =	PersistenceGetEnumCount( "titanClasses" )
+	for ( int i = 0; i < enumCount; i++ )
+	{
+		string enumName = PersistenceGetEnumItemNameForIndex( "titanClasses", i )
+		if ( enumName != "" )
+			player.SetPersistentVar( "titanClassLockState[" + enumName + "]", TITAN_CLASS_LOCK_STATE_AVAILABLE )
+
+	}
+}
+
+void function DisableTitanSelectionForPlayer( entity player )
+{
+	int enumCount =	PersistenceGetEnumCount( "titanClasses" )
+	for ( int i = 0; i < enumCount; i++ )
+	{
+		string enumName = PersistenceGetEnumItemNameForIndex( "titanClasses", i )
+		string selectedEnumName = PersistenceGetEnumItemNameForIndex( "titanClasses", player.GetPersistentVarAsInt("activeTitanLoadoutIndex") )
+		if ( enumName != "" && enumName != selectedEnumName )
+			player.SetPersistentVar( "titanClassLockState[" + enumName + "]", TITAN_CLASS_LOCK_STATE_LOCKED )
+	}
 }

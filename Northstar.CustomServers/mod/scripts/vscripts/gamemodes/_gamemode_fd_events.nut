@@ -23,7 +23,7 @@ global function CreateToneTitanEvent
 global function CreateLegionTitanEvent
 global function CreateMonarchTitanEvent
 global function executeWave
-
+global function restetWaveEvents
 
 global struct SmokeEvent{
 	vector position
@@ -80,6 +80,7 @@ void function executeWave()
 	thread runEvents(0)
 	while(IsAlive(fd_harvester.harvester)&&(!allEventsExecuted(GetGlobalNetInt("FD_currentWave"))))
 		WaitFrame()
+	wait 5 //incase droppod is last event so all npc are spawned
 	waitUntilLessThanAmountAlive(0)
 	waitUntilLessThanAmountAlive_expensive(0)
 }
@@ -132,8 +133,12 @@ void function runEvents(int firstExecuteIndex)
 	print("runEvents End")
 }
 
-
-
+void function restetWaveEvents(){
+	foreach(WaveEvent event in waveEvents[GetGlobalNetInt("FD_currentWave")])
+	{
+		event.timesExecuted = 0
+	}
+}
 
 
 
@@ -271,6 +276,17 @@ WaveEvent function CreateWaitUntilAliveEvent(int amount,int nextEventIndex,int e
 {
 	WaveEvent event
 	event.eventFunction = waitUntilLessThanAmountAliveEvent
+	event.executeOnThisCall = executeOnThisCall
+	event.nextEventIndex = nextEventIndex
+	event.shouldThread = false
+	event.flowControlEvent.waitAmount = amount
+	return event
+}
+
+WaveEvent function CreateWaitUntilAliveWeightedEvent(int amount,int nextEventIndex,int executeOnThisCall = 1)
+{
+	WaveEvent event
+	event.eventFunction = waitUntilLessThanAmountAliveEventWeighted
 	event.executeOnThisCall = executeOnThisCall
 	event.nextEventIndex = nextEventIndex
 	event.shouldThread = false
@@ -517,7 +533,7 @@ WaveEvent function CreateWaitForLessThanTypedEvent(int aiTypeId,int amount,int n
 	event.eventFunction = waitForLessThanAliveTyped
 	event.executeOnThisCall = executeOnThisCall
 	event.nextEventIndex = nextEventIndex
-	event. shouldThread = false
+	event.shouldThread = false
 	event.flowControlEvent.waitAmount = amount
 	event.flowControlEvent.waitEntityType = aiTypeId
 	return event
@@ -525,7 +541,7 @@ WaveEvent function CreateWaitForLessThanTypedEvent(int aiTypeId,int amount,int n
 WaveEvent function CreateSpawnDroneEvent(vector origin,vector angles,string route,int nextEventIndex,int executeOnThisCall = 1,string entityGlobalKey="")
 {
 	WaveEvent event
-	event.eventFunction = SpawnMonarchTitan
+	event.eventFunction = spawnDrones
 	event.executeOnThisCall = executeOnThisCall
 	event.nextEventIndex = nextEventIndex
 	event.shouldThread = true
@@ -633,6 +649,10 @@ void function waitForTime(SmokeEvent smokeEvent,SpawnEvent spawnEvent,FlowContro
 void function waitUntilLessThanAmountAliveEvent(SmokeEvent smokeEvent,SpawnEvent spawnEvent,FlowControlEvent flowControlEvent,SoundEvent soundEvent)
 {
 	waitUntilLessThanAmountAlive(flowControlEvent.waitAmount)
+}
+void function waitUntilLessThanAmountAliveEventWeighted(SmokeEvent smokeEvent,SpawnEvent spawnEvent,FlowControlEvent flowControlEvent,SoundEvent soundEvent)
+{
+	waitUntilLessThanAmountAliveWeighted(flowControlEvent.waitAmount)
 }
 
 void function spawnSuperSpectre(SmokeEvent smokeEvent,SpawnEvent spawnEvent,FlowControlEvent flowControlEvent,SoundEvent soundEvent)
@@ -1053,6 +1073,7 @@ void function SpawnTick(SmokeEvent smokeEffect,SpawnEvent spawnEvent,FlowControl
 		AddMinimapForHumans(guy)
 		SetTargetName( guy, GetTargetNameForID(eFD_AITypeIDs.TICK))
 		SetSquad( guy, squadName )
+		spawnedNPCs.append(guy)
 
 		guys.append( guy )
 	}
@@ -1083,13 +1104,84 @@ void function PingMinimap(float x, float y, float duration, float spreadRadius, 
 }
 
 void function waitUntilLessThanAmountAlive(int amount)
-{
-
-	int aliveTitans = spawnedNPCs.len()
-	while(aliveTitans>amount)
+{	
+	int deduct = 0
+	foreach (entity npc in spawnedNPCs)
+	{
+		if( IsValid( GetPetTitanOwner( npc ) ) )
+		{
+			deduct++
+			continue
+		}
+		if(npc.GetTeam()==TEAM_MILITIA)
+		{
+			deduct++
+			continue
+		}
+	}
+	int aliveNPCs = spawnedNPCs.len() -deduct
+	while(aliveNPCs>amount)
 	{
 		WaitFrame()
-		aliveTitans = spawnedNPCs.len()
+		deduct = 0
+		foreach (entity npc in spawnedNPCs)
+		{
+			if( IsValid( GetPetTitanOwner( npc ) ) )
+			{
+				deduct++
+				continue
+			}
+			if(npc.GetTeam()==TEAM_MILITIA)
+			{
+				deduct++
+				continue
+			}
+		}
+		aliveNPCs = spawnedNPCs.len() -deduct
+		
+		if(!IsAlive(fd_harvester.harvester))
+			return
+	}
+}
+
+void function waitUntilLessThanAmountAliveWeighted(int amount,int humanWeight=1,int reaperWeight=3, int titanWeight=5)
+{
+
+	int aliveNPCsWeighted = 0;
+	foreach(npc in spawnedNPCs)
+	{
+		if( IsValid( GetPetTitanOwner( npc ) ) )
+			continue
+		
+		if(npc.GetTeam()==TEAM_MILITIA)
+			continue
+		
+		if(npc.IsTitan())
+			aliveNPCsWeighted += titanWeight
+		else if(npc.GetTargetName()=="reaper")
+			aliveNPCsWeighted += reaperWeight
+		else
+			aliveNPCsWeighted += humanWeight
+	}
+	while(aliveNPCsWeighted>amount)
+	{
+		WaitFrame()
+			aliveNPCsWeighted = 0;
+			foreach(npc in spawnedNPCs)
+			{	
+				if( IsValid( GetPetTitanOwner( npc ) ) )
+				continue
+				
+				if(npc.GetTeam()==TEAM_MILITIA)
+					continue
+				
+				if(npc.IsTitan())
+					aliveNPCsWeighted += titanWeight
+				else if(npc.GetTargetName()=="reaper")
+					aliveNPCsWeighted += reaperWeight
+				else
+					aliveNPCsWeighted += humanWeight
+			}
 		if(!IsAlive(fd_harvester.harvester))
 			return
 	}
@@ -1101,8 +1193,19 @@ void function waitUntilLessThanAmountAlive_expensive(int amount)
 	array<entity> npcs = GetNPCArray()
 	int deduct = 0
 	foreach (entity npc in npcs)
-		if (IsValid(GetPetTitanOwner( npc )))
-			deduct++
+	{
+			if( IsValid( GetPetTitanOwner( npc ) ) )
+			{
+				deduct++
+				continue
+			}
+			if(npc.GetTeam()==TEAM_MILITIA)
+			{
+				deduct++
+				continue
+			}
+	}
+		
 	int aliveTitans = npcs.len() - deduct
 	while(aliveTitans>amount)
 	{
@@ -1112,8 +1215,15 @@ void function waitUntilLessThanAmountAlive_expensive(int amount)
 		foreach(entity npc in npcs)
 		{
 			if( IsValid( GetPetTitanOwner( npc ) ) )
+			{
 				deduct++
-			//if( npc.GetAISettingsName()=="")
+				continue
+			}
+			if(npc.GetTeam()==TEAM_MILITIA)
+			{
+				deduct++
+				continue
+			}
 		}
 		aliveTitans = GetNPCArray().len() - deduct
 		if(!IsAlive(fd_harvester.harvester))

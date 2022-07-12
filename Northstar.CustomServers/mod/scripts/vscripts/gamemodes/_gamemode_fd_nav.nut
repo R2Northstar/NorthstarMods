@@ -130,7 +130,7 @@ void function singleNav_thread(entity npc, string routeName,int nodesToSkip= 0,f
 		}
 	)
 
-	array<entity> routeArray = getRoute(routeName)
+	/*array<entity> routeArray = getRoute(routeName)
 	WaitFrame()//so other code setting up what happens on signals is run before this
 	if(routeArray.len()==0)
 	{
@@ -154,23 +154,67 @@ void function singleNav_thread(entity npc, string routeName,int nodesToSkip= 0,f
 			print("node seems to go in reverse, ignoring...")
 			continue
 		}
+		
+		npc.AssaultPoint(node.GetOrigin())
+		npc.AssaultSetGoalRadius( 50 )
+		int i = 0
+		table result = npc.WaitSignal("OnFinishedAssault","OnFailedToPath")
+		if(result.signal == "OnFailedToPath")
+			break
+	}*/
+
+	// NEW STUFF
+	WaitFrame() // so other code setting up what happens on signals is run before this
+
+	entity targetNode
+	if ( routeName == "" )
+	{
+		float dist = 1000000000
+		foreach ( entity node in routeNodes )
+		{
+			if( !node.HasKey("route_name") )
+				continue
+			if ( Distance( npc.GetOrigin(), node.GetOrigin() ) < dist )
+			{
+				dist = Distance( npc.GetOrigin(), node.GetOrigin() )
+				targetNode = node
+			}
+		}
+		printt("Entity had no route defined: using nearest node: " + targetNode.kv.route_name)
+	}
+	else
+	{
+		targetNode = GetRouteStart( routeName )
+	}
+
+	// skip nodes
+	for ( int i = 0; i < nodesToSkip; i++ )
+	{
+		targetNode = targetNode.GetLinkEnt()
+	}
+
+	
+	while ( targetNode != null )
+	{
+		if( !IsAlive( fd_harvester.harvester ) )
+			return
+		
 		npc.Signal("StartCounter") // end any or previous counter
 		thread TimeCounter( npc ) // start counting from 0 again
-		npc.AssaultPoint(node.GetOrigin())
+
+		npc.AssaultPoint( targetNode.GetOrigin() )
 		npc.AssaultSetGoalRadius( npc.GetMinGoalRadius() )
-		table result = npc.WaitSignal("OnFinishedAssault","OnFailedToPath", "OnEnterGoalRadius")
-		string signal = expect string( result.signal )
-		if (signal == "OnFailedToPath")
-		{
-			thread OnFailedToPathFallback( npc )
-			print("they triggered on failed to path on their own?")
-			return
-		}
+		npc.AssaultSetFightRadius( 0 )
+		
+		table result = npc.WaitSignal( "OnFinishedAssault", "OnFailedToPath" ) // need testing with OnEnterGoalRadius
+
+		targetNode = targetNode.GetLinkEnt()
 		print("moving to next node")
-		// if finished assault they move to next node, if failed to path, this function ends itself and they use fallback function
+		// if finished assault they move to next node, if failed to path, this function ends itself and they use fallback function after timer runs out
 	}
-	print("titan reached harvester")
+
 	npc.Signal("FD_ReachedHarvester")
+	print("titan reached harvester")
 }
 
 void function TimeCounter( entity npc, int time = 30 )
@@ -264,7 +308,7 @@ bool function IsEnemyWithinDist( entity titan, float dist )
 void function SquadNav_Thread( array<entity> npcs ,string routeName,int nodesToSkip = 0,float nextDistance = 200.0)
 {
 	//TODO this function wont stop when noone alive anymore also it only works half of the time
-
+	//Trying to split them up into separate entities so this doesn't keep running
 	foreach( npc in npcs )
 		thread SquadNav_SingleThread(npc, routeName, nodesToSkip, nextDistance)
 }
@@ -276,7 +320,7 @@ void function SquadNav_SingleThread( entity npc, string routeName, int nodesToSk
 	npc.EndSignal("OnDeath")
 	npc.EndSignal("OnDestroy")
 
-	array<entity> routeArray = getRoute(routeName)
+	/*array<entity> routeArray = getRoute(routeName)
 	WaitFrame()//so other code setting up what happens on signals is run before this
 	if(routeArray.len()==0)
 		return
@@ -291,9 +335,60 @@ void function SquadNav_SingleThread( entity npc, string routeName, int nodesToSk
 		if(nodeIndex++ < nodesToSkip)
 			continue
 
-		thread AssaultOrigin(npc,node.GetOrigin(),nextDistance) // this will run thread AssaultOrigin, which waitthread SendAIToAssaultPoint for each separate npc, and if an npc dies, the next iteration in this foreach loop will continue
+	}*/
+	// NEW STUFF
+	WaitFrame() // so other code setting up what happens on signals is run before this
+
+	entity targetNode
+	if ( routeName == "" )
+	{
+		float dist = 1000000000
+		foreach ( entity node in routeNodes )
+		{
+			if( !node.HasKey("route_name") )
+				continue
+			if ( Distance( npcs[0].GetOrigin(), node.GetOrigin() ) < dist )
+			{
+				dist = Distance( npcs[0].GetOrigin(), node.GetOrigin() )
+				targetNode = node
+			}
+		}
+		printt("Entity had no route defined: using nearest node: " + targetNode.kv.route_name)
+	}
+	else
+	{
+		targetNode = GetRouteStart( routeName )
+	}
+
+	// skip nodes
+	for ( int i = 0; i < nodesToSkip; i++ )
+	{
+		targetNode = targetNode.GetLinkEnt()
+	}
+
+	
+	while ( targetNode != null )
+	{
+		if( !IsAlive( fd_harvester.harvester ) )
+			return
+
+		thread AssaultOrigin(npcs,targetNode.GetOrigin(),nextDistance) // this will run thread AssaultOrigin, which waitthread SendAIToAssaultPoint for each separate npc, and if an npc dies, the next iteration in this foreach loop will continue
+		targetNode = targetNode.GetLinkEnt()
 	}
 	npc.Signal("FD_ReachedHarvester")
+}
+
+entity function GetRouteStart( string routeName )
+{
+	foreach( entity node in routeNodes )
+	{
+		if( !node.HasKey("route_name") )
+			continue
+		if( expect string( node.kv.route_name ) == routeName )
+		{
+			return node
+		}
+	}
 }
 
 array<entity> function getRoute(string routeName)
