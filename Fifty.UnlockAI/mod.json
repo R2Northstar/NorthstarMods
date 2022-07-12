@@ -1,6 +1,0 @@
-{
-	"Name": "Fifty.UnlockAI",
-	"Description": "unlocks ai gamemodes in private match mode select",
-	"Version": "1.5.0",
-	"LoadPriority": 1
-}
