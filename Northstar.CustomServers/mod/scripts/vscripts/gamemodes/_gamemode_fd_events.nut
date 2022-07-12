@@ -11,6 +11,7 @@ global function CreateGenericTitanSpawnWithAiSettingsEvent
 global function CreateDroppodStalkerEvent
 global function CreateDroppodSpectreMortarEvent
 global function CreateWaitUntilAliveEvent
+global function CreateWaitUntilAliveWeightedEvent
 global function CreateCloakDroneEvent
 global function CreateDroppodTickEvent
 global function CreateSpawnDroneEvent
@@ -582,7 +583,7 @@ void function spawnDrones(SmokeEvent smokeEvent,SpawnEvent spawnEvent,FlowContro
 {
 	//TODO
 	PingMinimap(spawnEvent.origin.x, spawnEvent.origin.y, 4, 600, 150, 0)
-	array<vector> offsets = [ < 0, 100, 0 >, < 100, 0, 0 >, < 0, -100, 0 >, < -100, 0, 0 > ]
+	array<vector> offsets = [ < 0, 32, 0 >, < 32, 0, 0 >, < 0, -32, 0 >, < -32, 0, 0 > ]
 
 
 	string squadName = MakeSquadName( TEAM_IMC, UniqueString( "ZiplineTable" ) )

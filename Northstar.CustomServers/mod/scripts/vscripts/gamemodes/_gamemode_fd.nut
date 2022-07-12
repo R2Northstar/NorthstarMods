@@ -158,7 +158,6 @@ void function GamemodeFD_InitPlayer(entity player)
 	data.diedThisRound = false
 	file.players[player] <- data
 	thread SetTurretSettings_threaded(player)
-	SetMoneyForPlayer(player,GetGlobalNetInt("FD_currentWave")*GetCurrentPlaylistVarInt("fd_money_per_round",600))
 	if(GetGlobalNetInt("FD_currentWave")>1)
 		PlayerEarnMeter_AddEarnedAndOwned(player,1.0,1.0)
 
