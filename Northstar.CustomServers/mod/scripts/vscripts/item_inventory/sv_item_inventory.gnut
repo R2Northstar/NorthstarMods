@@ -87,6 +87,10 @@ void function PlayerInventory_GiveInventoryItem( entity player, InventoryItem in
 	PlayerInventory_TakeInventoryItem( player )
 
 	player.GiveOffhandWeapon( inventoryItem.weaponRef, OFFHAND_INVENTORY, mods )
+	if ( inventoryItem.itemType == eInventoryItemType.burnmeter ) {
+		entity weapon = player.GetOffhandWeapon(OFFHAND_INVENTORY)
+		weapon.e.burnReward = inventoryItem.burnReward.ref
+	}
 }
 
 void function PlayerInventory_PushInventoryItem( entity player, InventoryItem inventoryItem )
