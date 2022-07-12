@@ -622,6 +622,8 @@ bool function runWave(int waveIndex,bool shouldDoBuyTime)
 			PlayFactionDialogueToPlayer( "fd_wavePayoutAddtnl", player )
 		AddPlayerScore(player,"FDTeamWave")
 		AddMoneyToPlayer(player,GetCurrentPlaylistVarInt("fd_money_per_round",600))
+		// this function is called "Set" but in reality it is "Add"
+		SetJoinInProgressBonus( GetCurrentPlaylistVarInt("fd_money_per_round",600) )
 		EmitSoundOnEntityOnlyToPlayer(player,player,"HUD_MP_BountyHunt_BankBonusPts_Deposit_Start_1P")
 	}
 	wait 1
