@@ -185,6 +185,10 @@ void function OnModButtonFocused( var button )
 	}
 
 	SetControlBarColor( modName )
+
+	bool required = NSIsModRequiredOnClient( modName )
+	Hud_SetVisible( Hud_GetChild( file.menu, "WarningLegendLabel"  ), required )
+	Hud_SetVisible( Hud_GetChild( file.menu, "WarningLegendImage"  ), required )
 }
 
 void function OnModButtonPressed( var button )
