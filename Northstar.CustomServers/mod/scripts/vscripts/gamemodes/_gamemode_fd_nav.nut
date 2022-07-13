@@ -1,5 +1,6 @@
 global function singleNav_thread
 global function SquadNav_Thread
+global function droneNav_thread
 global function getRoute
 global function CommonAIThink
 
@@ -13,14 +14,14 @@ global function CommonAIThink
 //       │            │ If no enemy, │      - feed nodes in current path one by one
 //       │            │    resume.   │      - stop running if under attack and presuambly return flags like NPC_ALLOW_FLEE
 //       │            └──────────────┘
-//       │                   ▲           2. Attacked
+//       │                   ▲           2. Timer ends
 //       │                   │              - Signal OnFailedToPath
 //       │            ┌──────┴───────┐      - cause fallback function to run and not use route nodes anymore
-//       │            │ Attacked:    │   3. Wait
+//       │            │ Timer ends:  │   3. Wait
 //       ├───────────►│ Stop pathing │      - Let a few amount of seconds pass
-//       │            │              │      - Check if enemy is still within dist or is still taking continuous damage
+//       │            │              │      - Check if there is an enemy within dist or is taking continuous damage
 //       ▼            └──────────────┘      - If both checks is false, return the AI to pathing thread
-//┌──────────────┐
+//┌──────────────┐							- if true, let them fight. Could be that players are actively blocking the Titan from moving.
 //│              │
 //│  Destination │
 //│              │
@@ -104,7 +105,7 @@ void function OnFailedToPathFallback( entity npc )
 	print("titan reached harvester")
 }
 
-void function singleNav_thread(entity npc, string routeName,int nodesToSkip= 0,float nextDistance = 500.0)
+void function singleNav_thread(entity npc, string routeName,int nodesToSkip= 0,float nextDistance = 500.0, bool shouldLoop = false)
 {
 	npc.EndSignal( "OnDeath" )
 	npc.EndSignal( "OnDestroy" )
@@ -203,7 +204,7 @@ void function singleNav_thread(entity npc, string routeName,int nodesToSkip= 0,f
 		thread TimeCounter( npc ) // start counting from 0 again
 
 		npc.AssaultPoint( targetNode.GetOrigin() )
-		npc.AssaultSetGoalRadius( npc.GetMinGoalRadius() )
+		npc.AssaultSetGoalRadius( nextDistance )
 		npc.AssaultSetFightRadius( 0 )
 		
 		table result = npc.WaitSignal( "OnFinishedAssault", "OnFailedToPath" ) // need testing with OnEnterGoalRadius
@@ -305,7 +306,7 @@ bool function IsEnemyWithinDist( entity titan, float dist )
 	return false
 }
 
-void function SquadNav_Thread( array<entity> npcs ,string routeName,int nodesToSkip = 0,float nextDistance = 200.0)
+void function SquadNav_Thread( array<entity> npcs ,string routeName,int nodesToSkip = 0,float nextDistance = 200.0 )
 {
 	//TODO this function wont stop when noone alive anymore also it only works half of the time
 	//Trying to split them up into separate entities so this doesn't keep running
@@ -320,7 +321,8 @@ void function SquadNav_SingleThread( entity npc, string routeName, int nodesToSk
 	npc.EndSignal("OnDeath")
 	npc.EndSignal("OnDestroy")
 
-	/*array<entity> routeArray = getRoute(routeName)
+	/*
+	array<entity> routeArray = getRoute(routeName)
 	WaitFrame()//so other code setting up what happens on signals is run before this
 	if(routeArray.len()==0)
 		return
@@ -375,6 +377,73 @@ void function SquadNav_SingleThread( entity npc, string routeName, int nodesToSk
 		thread AssaultOrigin(npcs,targetNode.GetOrigin(),nextDistance) // this will run thread AssaultOrigin, which waitthread SendAIToAssaultPoint for each separate npc, and if an npc dies, the next iteration in this foreach loop will continue
 		targetNode = targetNode.GetLinkEnt()
 	}
+	npc.Signal("FD_ReachedHarvester")
+}
+
+void function droneNav_thread(entity npc, string routeName,int nodesToSkip= 0,float nextDistance = 500.0, bool shouldLoop = false)
+{
+	npc.EndSignal( "OnDeath" )
+	npc.EndSignal( "OnDestroy" )
+
+	if(!npc.IsNPC()){
+		return
+	}
+
+	// NEW STUFF
+	WaitFrame() // so other code setting up what happens on signals is run before this
+
+	entity targetNode
+	entity firstNode
+	if ( routeName == "" )
+	{
+		float dist = 1000000000
+		foreach ( entity node in routeNodes )
+		{
+			if( !node.HasKey("route_name") )
+				continue
+			if ( Distance( npc.GetOrigin(), node.GetOrigin() ) < dist )
+			{
+				dist = Distance( npc.GetOrigin(), node.GetOrigin() )
+				targetNode = node
+				firstNode = node
+			}
+		}
+		printt("Entity had no route defined: using nearest node: " + targetNode.kv.route_name)
+	}
+	else
+	{
+		targetNode = GetRouteStart( routeName )
+	}
+
+	// skip nodes
+	for ( int i = 0; i < nodesToSkip; i++ )
+	{
+		targetNode = targetNode.GetLinkEnt()
+		firstNode = targetNode.GetLinkEnt()
+	}
+
+	
+	while ( targetNode != null )
+	{
+		if( !IsAlive( fd_harvester.harvester ) )
+			return
+		npc.AssaultPoint( targetNode.GetOrigin() + <0, 0, 300> )
+		npc.AssaultSetGoalRadius( nextDistance )
+		npc.AssaultSetGoalHeight( 100 )
+		npc.AssaultSetFightRadius( 0 )
+		
+		table result = npc.WaitSignal( "OnFinishedAssault", "OnFailedToPath" )
+		
+		targetNode = targetNode.GetLinkEnt()
+		if ( targetNode == null )
+			printt("entity finished pathing")
+		if ( targetNode == null && shouldLoop )
+		{
+			printt("entity reached end of loop, looping")
+			targetNode = firstNode
+		}
+	}
+
 	npc.Signal("FD_ReachedHarvester")
 }
 

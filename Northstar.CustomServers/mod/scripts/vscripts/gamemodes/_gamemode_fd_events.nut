@@ -11,6 +11,7 @@ global function CreateGenericTitanSpawnWithAiSettingsEvent
 global function CreateDroppodStalkerEvent
 global function CreateDroppodSpectreMortarEvent
 global function CreateWaitUntilAliveEvent
+global function CreateWaitUntilAliveWeightedEvent
 global function CreateCloakDroneEvent
 global function CreateDroppodTickEvent
 global function CreateSpawnDroneEvent
@@ -546,9 +547,10 @@ WaveEvent function CreateSpawnDroneEvent(vector origin,vector angles,string rout
 	event.nextEventIndex = nextEventIndex
 	event.shouldThread = true
 	event.spawnEvent.spawnType= eFD_AITypeIDs.DRONE
-	event.spawnEvent.spawnAmount = 0
+	event.spawnEvent.spawnAmount = 4
 	event.spawnEvent.origin = origin
 	event.spawnEvent.entityGlobalKey = entityGlobalKey
+	event.spawnEvent.route = route
 	return event
 }
 
@@ -580,6 +582,38 @@ void function spawnSmoke(SmokeEvent smokeEvent,SpawnEvent spawnEvent,FlowControl
 void function spawnDrones(SmokeEvent smokeEvent,SpawnEvent spawnEvent,FlowControlEvent flowControlEvent,SoundEvent soundEvent)
 {
 	//TODO
+	PingMinimap(spawnEvent.origin.x, spawnEvent.origin.y, 4, 600, 150, 0)
+	array<vector> offsets = [ < 0, 32, 0 >, < 32, 0, 0 >, < 0, -32, 0 >, < -32, 0, 0 > ]
+
+
+	string squadName = MakeSquadName( TEAM_IMC, UniqueString( "ZiplineTable" ) )
+
+	for ( int i = 0; i < spawnEvent.spawnAmount; i++ )
+    {
+		entity guy
+
+		guy = CreateGenericDrone( TEAM_IMC, spawnEvent.origin + offsets[i], spawnEvent.angles )
+		SetSpawnOption_AISettings( guy, "npc_drone_plasma_fd" )
+
+		if(spawnEvent.entityGlobalKey!="")
+			GlobalEventEntitys[spawnEvent.entityGlobalKey+i.tostring()] <- guy
+		SetTeam( guy, TEAM_IMC )
+		guy.DisableNPCFlag( NPC_ALLOW_INVESTIGATE )
+		guy.EnableNPCFlag(NPC_STAY_CLOSE_TO_SQUAD)
+		guy.EnableNPCMoveFlag(NPCMF_WALK_ALWAYS | NPCMF_PREFER_SPRINT)
+		DispatchSpawn( guy )
+
+		//guy.GiveWeapon("mp_weapon_engineer_combat_drone")
+
+		SetSquad( guy, squadName )
+
+		SetTargetName( guy, GetTargetNameForID(eFD_AITypeIDs.DRONE))
+		AddMinimapForHumans(guy)
+		spawnedNPCs.append(guy)
+		thread droneNav_thread(guy, spawnEvent.route, 0, 500, true)
+	}
+
+
 }
 
 void function waitForDeathOfEntitys(SmokeEvent smokeEvent,SpawnEvent spawnEvent,FlowControlEvent flowControlEvent,SoundEvent soundEvent)

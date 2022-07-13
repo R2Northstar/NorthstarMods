@@ -93,6 +93,9 @@ void function GamemodeFD_Init()
 	//shop Callback
 	SetBoostPurchaseCallback(FD_BoostPurchaseCallback)
 	SetTeamReserveInteractCallback(FD_TeamReserveDepositOrWithdrawCallback)
+
+	//earn meter
+	ScoreEvent_SetupEarnMeterValuesForMixedModes()
 }
 
 void function FD_BoostPurchaseCallback(entity player,BoostStoreData data) 
@@ -159,9 +162,13 @@ void function GamemodeFD_InitPlayer(entity player)
 	data.diedThisRound = false
 	file.players[player] <- data
 	thread SetTurretSettings_threaded(player)
-	SetMoneyForPlayer(player,GetGlobalNetInt("FD_currentWave")*GetCurrentPlaylistVarInt("fd_money_per_round",600))
 	if(GetGlobalNetInt("FD_currentWave")>1)
 		PlayerEarnMeter_AddEarnedAndOwned(player,1.0,1.0)
+
+	if ( GetGlobalNetInt("FD_currentWave") != 0 )
+		DisableTitanSelectionForPlayer( player ) // this might need moving to when they exit the titan selection UI when we do that
+	else
+		EnableTitanSelectionForPlayer( player )
 
 	if ( GetGlobalNetInt("FD_currentWave") != 0 )
 		DisableTitanSelectionForPlayer( player ) // this might need moving to when they exit the titan selection UI when we do that
@@ -629,6 +636,8 @@ bool function runWave(int waveIndex,bool shouldDoBuyTime)
 			PlayFactionDialogueToPlayer( "fd_wavePayoutAddtnl", player )
 		AddPlayerScore(player,"FDTeamWave")
 		AddMoneyToPlayer(player,GetCurrentPlaylistVarInt("fd_money_per_round",600))
+		// this function is called "Set" but in reality it is "Add"
+		SetJoinInProgressBonus( GetCurrentPlaylistVarInt("fd_money_per_round",600) )
 		EmitSoundOnEntityOnlyToPlayer(player,player,"HUD_MP_BountyHunt_BankBonusPts_Deposit_Start_1P")
 	}
 	wait 1
@@ -1028,9 +1037,9 @@ void function LoadEntities()
 			}
 		}
 	}
-	AddStationaryAIPosition(< -12, 1720, 1456 >,4)
 	ValidateAndFinalizePendingStationaryPositions()
 	initNetVars()
+	SetTeam(GetTeamEnt(TEAM_IMC),TEAM_IMC)
 }
 
 
