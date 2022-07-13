@@ -92,6 +92,9 @@ void function GamemodeFD_Init()
 	//shop Callback
 	SetBoostPurchaseCallback(FD_BoostPurchaseCallback)
 	SetTeamReserveInteractCallback(FD_TeamReserveDepositOrWithdrawCallback)
+
+	//earn meter
+	ScoreEvent_SetupEarnMeterValuesForMixedModes()
 }
 
 void function FD_BoostPurchaseCallback(entity player,BoostStoreData data) 
@@ -1033,9 +1036,9 @@ void function LoadEntities()
 			}
 		}
 	}
-	AddStationaryAIPosition(< -12, 1720, 1456 >,4)
 	ValidateAndFinalizePendingStationaryPositions()
 	initNetVars()
+	SetTeam(GetTeamEnt(TEAM_IMC),TEAM_IMC)
 }
 
 
