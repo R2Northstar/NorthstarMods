@@ -349,9 +349,9 @@ void function SquadNav_SingleThread( entity npc, string routeName, int nodesToSk
 		{
 			if( !node.HasKey("route_name") )
 				continue
-			if ( Distance( npcs[0].GetOrigin(), node.GetOrigin() ) < dist )
+			if ( Distance( npc.GetOrigin(), node.GetOrigin() ) < dist )
 			{
-				dist = Distance( npcs[0].GetOrigin(), node.GetOrigin() )
+				dist = Distance( npc.GetOrigin(), node.GetOrigin() )
 				targetNode = node
 			}
 		}
@@ -374,7 +374,7 @@ void function SquadNav_SingleThread( entity npc, string routeName, int nodesToSk
 		if( !IsAlive( fd_harvester.harvester ) )
 			return
 
-		thread AssaultOrigin(npcs,targetNode.GetOrigin(),nextDistance) // this will run thread AssaultOrigin, which waitthread SendAIToAssaultPoint for each separate npc, and if an npc dies, the next iteration in this foreach loop will continue
+		thread AssaultOrigin(npc,targetNode.GetOrigin(),nextDistance) // this will run thread AssaultOrigin, which waitthread SendAIToAssaultPoint for each separate npc, and if an npc dies, the next iteration in this foreach loop will continue
 		targetNode = targetNode.GetLinkEnt()
 	}
 	npc.Signal("FD_ReachedHarvester")
