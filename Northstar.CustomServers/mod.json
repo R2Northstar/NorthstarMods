@@ -1,7 +1,7 @@
 {
 	"Name": "Northstar.CustomServers",
 	"Description": "Attempts to recreate the behaviour of vanilla Titanfall 2 servers, as well as changing some scripts to allow better support for mods",
-	"Version": "1.5.0",
+	"Version": "1.9.0",
 	"LoadPriority": 0,
 	"ConVars": [
 		{
@@ -49,6 +49,10 @@
 		{
 			"Name": "ns_should_log_unknown_clientcommands",
 			"DefaultValue": "1"
+		},
+		{
+			"Name": "ns_allow_kill_commands",
+			"DefaultValue": "0"
 		}
 	],
 	"Scripts": [
@@ -57,6 +61,13 @@
 			"RunOn": "SERVER",
 			"ServerCallback": {
 				"Before": "NSSetupChathooksServer"
+			}
+		},
+		{
+			"Path": "_northstar_cheatcommands.nut",
+			"RunOn": "SERVER",
+			"ServerCallback": {
+				"After": "NorthstarCheatCommands_Init"
 			}
 		},
 		{
