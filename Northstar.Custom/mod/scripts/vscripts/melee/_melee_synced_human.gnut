@@ -25,21 +25,25 @@ bool function MeleeThread_PilotVsEnemyInternal( SyncedMelee action, entity attac
     #if MP
 	if ( GetCurrentPlaylistVarInt( "fp_embark_enabled", eFirstPersonSequenceForce1PSetting.DISABLED ) >= eFirstPersonSequenceForce1PSetting.CLASSIC_EXECUTION )
 	{
-		action.attackerAnimation1p = "ptpov_rspn101_melee_necksnap_rear"
-		action.attackerAnimation3p = "pt_rspn101_melee_necksnap_rear"
-		action.targetAnimation1p = "ptpov_melee_necksnap_rear_attacked"
-		action.targetAnimation3p = "pt_melee_necksnap_rear_attacked"
-		action.isAttackerRef = false
-		action.minDot = 0.2
-		
-		/* here be dragons
-		action.attackerAnimation1p = "ptpov_assassin_melee_necksnap_rear"
-		action.attackerAnimation3p = "pt_assassin_melee_necksnap_rear"
-		action.targetAnimation1p = "ptpov_assassin_melee_necksnap_rear_attacked"
-		action.targetAnimation3p = "pt_assassin_melee_necksnap_rear_attacked"
-		action.attachModel1p = $"models/weapons/bolo_sword/w_bolo_sword.mdl"
-		action.attachTag1p = "PROPGUN"
-		*/
+        if ( attacker.GetOffhandWeapon( OFFHAND_MELEE ).GetWeaponClassName() == "melee_pilot_sword" ) // funny unused content
+        {
+		    action.attackerAnimation1p = "ptpov_assassin_melee_necksnap_rear"
+		    action.attackerAnimation3p = "pt_assassin_melee_necksnap_rear"
+		    action.targetAnimation1p = "ptpov_assassin_melee_necksnap_rear_attacked"
+		    action.targetAnimation3p = "pt_assassin_melee_necksnap_rear_attacked"
+		    action.attachModel1p = $"models/weapons/bolo_sword/w_bolo_sword.mdl"
+		    action.attachTag1p = "PROPGUN"
+		    action.minDot = 0.2
+        }
+        else 
+        {
+		    action.attackerAnimation1p = "ptpov_rspn101_melee_necksnap_rear"
+		    action.attackerAnimation3p = "pt_rspn101_melee_necksnap_rear"
+		    action.targetAnimation1p = "ptpov_melee_necksnap_rear_attacked"
+		    action.targetAnimation3p = "pt_melee_necksnap_rear_attacked"
+		    action.isAttackerRef = false
+		    action.minDot = 0.2
+		}
 		
 		// need to hardcode false here otherwise it just doesnt work for some reason??
 		isAttackerRef = false
