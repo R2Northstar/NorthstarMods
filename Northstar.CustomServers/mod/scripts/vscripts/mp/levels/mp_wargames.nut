@@ -34,7 +34,7 @@ void function CodeCallback_MapInit()
 	if(GameRules_GetGameMode()=="fd")
         initFrontierDefenseData()
 }
-}
+
 
 void function AddEvacNodes()
 {
