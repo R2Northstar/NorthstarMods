@@ -611,3 +611,5 @@ void function initFrontierDefenseData()
     wave5.append(CreateWaitForTimeEvent(1.4000244,index++))
     wave5.append(CreateNukeTitanEvent(< 1700.469971 , 1538.439941 , 21.031300 >,< 0.000000 , 180.000000 , 0.000000 >,"",0))
     waveEvents.append(wave5)
+
+}
