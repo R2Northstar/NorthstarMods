@@ -78,6 +78,10 @@ void function HandleScoreEvent( entity victim, entity attacker, var damageInfo )
 	// Hacked spectre filter
 	if ( victim.GetOwner() == attacker )
 		return
+		
+	// NPC never earns score for the team, even if a Grunt killsteals an enemy player.
+	if ( attacker.IsNPC() )
+		return
 	
 	// Split score so we can check if we are over the score max
 	// without showing the wrong value on client
