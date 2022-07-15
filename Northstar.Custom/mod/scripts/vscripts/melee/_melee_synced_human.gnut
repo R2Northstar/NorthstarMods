@@ -22,6 +22,7 @@ bool function MeleeThread_PilotVsEnemyInternal( SyncedMelee action, entity attac
 	Assert( IsAlive( target ) )
 
 	bool isAttackerRef
+    #if MP
 	if ( GetCurrentPlaylistVarInt( "fp_embark_enabled", eFirstPersonSequenceForce1PSetting.DISABLED ) >= eFirstPersonSequenceForce1PSetting.CLASSIC_EXECUTION )
 	{
 		action.attackerAnimation1p = "ptpov_rspn101_melee_necksnap_rear"
@@ -44,6 +45,7 @@ bool function MeleeThread_PilotVsEnemyInternal( SyncedMelee action, entity attac
 		isAttackerRef = false
 	}
 	else 
+    #endif
 		isAttackerRef = IsAttackerRef( action, target )
 
 	vector attackerOrigin = attacker.GetOrigin()
