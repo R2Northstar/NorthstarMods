@@ -1146,7 +1146,7 @@ void function waitUntilLessThanAmountAlive(int amount)
 	int deduct = 0
 	foreach (entity npc in spawnedNPCs)
 	{
-		if( !IsValid )
+		if( !IsValid(npc) )
 		{
 			deduct++
 			continue
@@ -1169,7 +1169,7 @@ void function waitUntilLessThanAmountAlive(int amount)
 		deduct = 0
 		foreach (entity npc in spawnedNPCs)
 		{	
-			if( !IsValid )
+			if( !IsValid(npc) )
 			{
 				deduct++
 				continue
