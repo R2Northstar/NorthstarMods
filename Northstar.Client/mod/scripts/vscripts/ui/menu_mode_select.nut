@@ -102,14 +102,14 @@ void function ModeButton_GetFocus( var button )
 		asset playlistImage = GetPlaylistImage( modeName )
 		RuiSetImage( Hud_GetRui( nextModeImage ), "basicImage", playlistImage )
 		Hud_SetVisible(nextModeImage, true)
-        Hud_SetVisible(nextModeImageAlt, false)
+        	Hud_SetVisible(nextModeImageAlt, false)
 	}
 	else
 	{
 		asset playlistImage = GetPlaylistBannerImage(imagename)
 		RuiSetImage( Hud_GetRui( nextModeImageAlt ), "iconImage", playlistImage )
 		Hud_SetVisible(nextModeImageAlt, true)
-        Hud_SetVisible(nextModeImage, false)
+        	Hud_SetVisible(nextModeImage, false)
 	}
 	RuiSetImage( Hud_GetRui( nextModeIcon ), "basicImage", GetPlaylistThumbnailImage( modeName ) )
 	Hud_SetText( nextModeName, GetGameModeDisplayName( modeName ) )
