@@ -1146,6 +1146,11 @@ void function waitUntilLessThanAmountAlive(int amount)
 	int deduct = 0
 	foreach (entity npc in spawnedNPCs)
 	{
+		if( !IsValid )
+		{
+			deduct++
+			continue
+		}
 		if( IsValid( GetPetTitanOwner( npc ) ) )
 		{
 			deduct++
@@ -1163,7 +1168,12 @@ void function waitUntilLessThanAmountAlive(int amount)
 		WaitFrame()
 		deduct = 0
 		foreach (entity npc in spawnedNPCs)
-		{
+		{	
+			if( !IsValid )
+			{
+				deduct++
+				continue
+			}
 			if( IsValid( GetPetTitanOwner( npc ) ) )
 			{
 				deduct++
@@ -1187,7 +1197,10 @@ void function waitUntilLessThanAmountAliveWeighted(int amount,int humanWeight=1,
 
 	int aliveNPCsWeighted = 0;
 	foreach(npc in spawnedNPCs)
-	{
+	{	
+		if(!IsValid(npc))
+			continue
+
 		if( IsValid( GetPetTitanOwner( npc ) ) )
 			continue
 		
@@ -1207,8 +1220,11 @@ void function waitUntilLessThanAmountAliveWeighted(int amount,int humanWeight=1,
 			aliveNPCsWeighted = 0;
 			foreach(npc in spawnedNPCs)
 			{	
+				if(!IsValid(npc))
+					continue
+				
 				if( IsValid( GetPetTitanOwner( npc ) ) )
-				continue
+					continue
 				
 				if(npc.GetTeam()==TEAM_MILITIA)
 					continue
