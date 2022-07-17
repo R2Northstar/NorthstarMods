@@ -35,6 +35,8 @@ void function BaseGametype_Init_MPSP()
 	AddPostDamageCallback( "player", AddToTitanDamageStat )
 	AddPostDamageCallback( "npc_titan", AddToTitanDamageStat )
 	
+	AddCallback_OnNPCKilled( CheckForAutoTitanDeath )
+	AddCallback_OnPlayerKilled( CheckForAutoTitanDeath )
 	RegisterSignal( "PlayerRespawnStarted" )
 	RegisterSignal( "KillCamOver" )
 }
@@ -121,6 +123,8 @@ void function CodeCallback_OnClientConnectionStarted( entity player )
 // playerconnected
 void function CodeCallback_OnClientConnectionCompleted( entity player )
 {
+	InitPersistentData( player )
+
 	if ( IsLobby() )
 	{
 		Lobby_OnClientConnectionCompleted( player )
@@ -484,7 +488,12 @@ void function RespawnAsTitan( entity player, bool manualPosition = false )
 	player.RespawnPlayer( null ) // spawn player as pilot so they get their pilot loadout on embark
 	player.SetOrigin( titan.GetOrigin() )
 	
-	PilotBecomesTitan( player, titan ) // make player titan
+	// don't make player titan when entity batteryContainer is not valid.
+	// This will prevent a servercrash that sometimes occur when evac is disabled and somebody is calling a titan in the defeat screen.
+	if( IsValid( titan.GetTitanSoul().soul.batteryContainer ) )
+		PilotBecomesTitan( player, titan ) // make player titan
+	else
+		print( "batteryContainer is not a valid entity in RespawnAsTitan(). Skipping PilotBecomesTitan()." )
 }
 
 
@@ -527,6 +536,24 @@ void function AddToTitanDamageStat( entity victim, var damageInfo )
 		attacker.AddToPlayerGameStat( file.titanDamageGameStat, amount ) // titan damage on 
 }
 
+void function CheckForAutoTitanDeath( entity victim, entity attacker, var damageInfo )
+{
+	if( !IsValid(victim) || !victim.IsTitan() )
+		return
+
+	if( !victim.IsPlayer() )
+	{
+		if (GetPetTitanOwner(victim) && GetPetTitanOwner(victim) != attacker)
+			foreach(player in GetPlayerArray())
+				Remote_CallFunction_NonReplay( player, "ServerCallback_OnTitanKilled", attacker.GetEncodedEHandle(), victim.GetEncodedEHandle(), DamageInfo_GetCustomDamageType( damageInfo ), DamageInfo_GetDamageSourceIdentifier( damageInfo ) )
+	}
+	else
+	{
+		if (victim != attacker)
+			foreach(player in GetPlayerArray())
+				Remote_CallFunction_NonReplay( player, "ServerCallback_OnTitanKilled", attacker.GetEncodedEHandle(), victim.GetEncodedEHandle(), DamageInfo_GetCustomDamageType( damageInfo ), DamageInfo_GetDamageSourceIdentifier( damageInfo ) )
+	}
+}
 
 // stuff to change later
 
