@@ -1,11 +1,7 @@
 global function InitModesMenu
 
-global function RegisterPlaylistBannerImage
-global function GetPlaylistBannerImage
-
 struct {
 	int currentModePage
-	table<string, asset> bannerPlaylistImages
 } file
 
 const int MODES_PER_PAGE = 15
@@ -24,20 +20,6 @@ void function InitModesMenu()
 	
 	AddMenuFooterOption( menu, BUTTON_SHOULDER_LEFT, "#PRIVATE_MATCH_PAGE_PREV", "#PRIVATE_MATCH_PAGE_PREV", CycleModesBack, IsNorthstarServer )
 	AddMenuFooterOption( menu, BUTTON_SHOULDER_RIGHT, "#PRIVATE_MATCH_PAGE_NEXT", "#PRIVATE_MATCH_PAGE_NEXT", CycleModesForward, IsNorthstarServer )
-}
-
-bool function RegisterPlaylistBannerImage(string name, asset image)
-{
-	if( name in file.bannerPlaylistImages )
-		return false
-	file.bannerPlaylistImages[name] <- image
-	return true
-}
-asset function GetPlaylistBannerImage(string name)
-{
-	if(!( name in file.bannerPlaylistImages ))
-		return $""
-	return file.bannerPlaylistImages[name]
 }
 
 void function OnOpenModesMenu()
@@ -89,7 +71,6 @@ void function ModeButton_GetFocus( var button )
 
 	var menu = GetMenu( "ModesMenu" )
 	var nextModeImage = Hud_GetChild( menu, "NextModeImage" )
-	var nextModeImageAlt = Hud_GetChild( menu, "NextModeImageCallsign" )
 	var nextModeIcon = Hud_GetChild( menu, "ModeIconImage" )
 	var nextModeName = Hud_GetChild( menu, "NextModeName" )
 	var nextModeDesc = Hud_GetChild( menu, "NextModeDesc" )
@@ -101,22 +82,8 @@ void function ModeButton_GetFocus( var button )
 
 	string modeName = modesArray[modeId]
 
-
-	string imagename = GetPlaylistVarOrUseValue( modeName, "image", "default" )
-	if(GetPlaylistBannerImage(imagename) == $"")
-	{
-		asset playlistImage = GetPlaylistImage( modeName )
-		RuiSetImage( Hud_GetRui( nextModeImage ), "basicImage", playlistImage )
-		Hud_SetVisible(nextModeImage, true)
-        	Hud_SetVisible(nextModeImageAlt, false)
-	}
-	else
-	{
-		asset playlistImage = GetPlaylistBannerImage(imagename)
-		RuiSetImage( Hud_GetRui( nextModeImageAlt ), "iconImage", playlistImage )
-		Hud_SetVisible(nextModeImageAlt, true)
-        	Hud_SetVisible(nextModeImage, false)
-	}
+	asset playlistImage = GetPlaylistImage( modeName )
+	RuiSetImage( Hud_GetRui( nextModeImage ), "basicImage", playlistImage )
 	RuiSetImage( Hud_GetRui( nextModeIcon ), "basicImage", GetPlaylistThumbnailImage( modeName ) )
 	Hud_SetText( nextModeName, GetGameModeDisplayName( modeName ) )
 
