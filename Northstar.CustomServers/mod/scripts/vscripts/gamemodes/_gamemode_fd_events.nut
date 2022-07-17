@@ -84,6 +84,9 @@ void function executeWave()
 	wait 5 //incase droppod is last event so all npc are spawned
 	waitUntilLessThanAmountAlive(0)
 	waitUntilLessThanAmountAlive_expensive(0)
+	
+	foreach(entity ent in GetEntArrayByClass_Expensive("npc_turret_sentry"))
+		RevivableTurret_Revive(ent)
 }
 
 bool function allEventsExecuted(int waveIndex) 

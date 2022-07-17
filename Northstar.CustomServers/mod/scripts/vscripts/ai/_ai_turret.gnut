@@ -1,7 +1,10 @@
+untyped
 global function AiTurret_Init
 global function GetMegaTurretLinkedToPanel
 global function MegaTurretUsabilityFunc
 global function SetUsePromptForPanel
+global function RevivableTurret_DamageCallback
+global function RevivableTurret_Revive
 
 void function AiTurret_Init()
 {
@@ -21,4 +24,48 @@ string function MegaTurretUsabilityFunc( var turret, var panel )
 void function SetUsePromptForPanel( var panel, var turret )
 {
 
+}
+
+void function RevivableTurret_DamageCallback(entity turret,var damageInfo)
+{
+	if(turret.GetHealth()<DamageInfo_GetDamage(damageInfo))
+	{
+		turret.SetHealth(1)
+		turret.SetUsable()
+		turret.SetUsableByGroup("pilot")
+		turret.SetUsePrompts("#TURRET_WAKEUP_HOLD_USE","#TURRET_WAKEUP_PRESS_USE")
+		turret.useFunction = RevivableTurret_UseFunction
+		thread RevivableTurret_Kill(turret)
+		DamageInfo_SetDamage(damageInfo,0.0)
+	}
+}
+
+function RevivableTurret_UseFunction(player,turret)
+{	
+	entity tur = expect entity(turret)
+	thread RevivableTurret_Revive(tur)
+	return true
+}
+
+
+void function RevivableTurret_Revive(entity turret)
+{
+	turret.SetHealth(turret.GetMaxHealth())
+	turret.ClearInvulnerable()
+	turret.Anim_ScriptedPlay( "deploy" )
+	wait 1.0
+	turret.EnableTurret()
+	turret.DisableNPCFlag( NPC_IGNORE_ALL )
+	turret.SetNoTarget( false )
+}
+
+void function RevivableTurret_Kill(entity turret)
+{
+	turret.EnableNPCFlag( NPC_IGNORE_ALL )
+	turret.SetNoTarget( true )
+	turret.SetInvulnerable()
+	turret.Anim_ScriptedPlay( "undeploy" )
+	wait 1
+	turret.SetNoTarget( true )
+	turret.DisableTurret()
 }

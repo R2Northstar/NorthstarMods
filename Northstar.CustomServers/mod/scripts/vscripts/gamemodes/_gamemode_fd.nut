@@ -76,6 +76,7 @@ void function GamemodeFD_Init()
 	AddDamageCallback( "player", DamageScaleByDifficulty )
 	AddDamageCallback( "npc_titan", DamageScaleByDifficulty )
 	AddDamageCallback( "npc_turret_sentry", DamageScaleByDifficulty )
+	AddDamageCallback( "npc_turret_sentry",RevivableTurret_DamageCallback)
 	//Spawn Callbacks
 	AddSpawnCallback( "npc_titan", HealthScaleByDifficulty )
 	AddSpawnCallback( "npc_super_spectre", HealthScaleByDifficulty )
