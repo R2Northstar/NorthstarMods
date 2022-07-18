@@ -223,7 +223,8 @@ void function AddArmBadgeToTitan_Internal( entity soul )
 
 	// wait until the end of the frame to allow the soul to become owned by a boss player
 	WaitEndFrame()
-
+	if( !IsValid( soul ) ) 	//Players kicked by netchannel limit on titan brawl can stop being
+		return 				//valid after this frame, though wont normally happen without mods
 	entity titan = soul.GetTitan()
 
 	var model = GetTitanArmBadge( soul )
