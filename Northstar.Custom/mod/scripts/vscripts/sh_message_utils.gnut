@@ -163,6 +163,9 @@ int function NSGetPlayerResponse( entity player )
 	if( !( player in server.playerPollResponses ) )
 		return -1
 	
+	if( server.playerPollResponses[ player ] == -1 )
+		return -1
+	
 	return server.playerPollResponses[ player ] - 1
 }
 
