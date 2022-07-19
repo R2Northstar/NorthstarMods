@@ -9,11 +9,16 @@ global function NSSendPopUpMessageToPlayer
 global function NSSendAnnouncementMessageToPlayer
 global function NSSendInfoMessageToPlayer
 
+global function NSCreateStatusMessageOnPlayer
+global function NSEditStatusMessageOnPlayer
+global function NSDeleteStatusMessageOnPlayer
+
 struct
 {
 	table<entity,int> playerPollResponses
 } server
 #endif // SERVER
+
 
 #if CLIENT
 global function MessageUtils_ClientInit
@@ -45,6 +50,7 @@ struct
 		array<var> ruis
 	} poll
 	
+	string id
 	tempMessage temp
 	
 	array<tempMessage> largeMessageQueue
@@ -52,8 +58,15 @@ struct
 	array<tempMessage> announcementQueue
 	array<tempMessage> infoMessageQueue
 	
+	// table<id,rui>
+	table<string,var> statusMessageList
+	
 } client
 #endif // CLIENT
+
+
+const int STATUS_MESSAGES_MAX = 4
+
 
 enum eMessageType
 {
@@ -61,7 +74,10 @@ enum eMessageType
 	LARGE,
 	POPUP,
 	ANNOUNCEMENT,
-	INFO
+	INFO,
+	CREATE_STATUS,
+	EDIT_STATUS,
+	DELETE_STATUS
 }
 
 enum eDataType
@@ -76,7 +92,8 @@ enum eDataType
 	ASSET,
 	COLOR,
 	PRIORITY,
-	STYLE
+	STYLE,
+	ID
 }
 
 #if SERVER
@@ -102,6 +119,33 @@ bool function ClientCommand_PollRespond( entity player, array<string> args )
 	
 	server.playerPollResponses[player] <- args[0].tointeger()
 	return true
+}
+
+string function NSCreateStatusMessageOnPlayer( entity player, string title, string description, string id )
+{
+	ServerToClientStringCommand( player, "ServerHUDMessagePut " + eDataType.TITLE + " " + title )
+	ServerToClientStringCommand( player, "ServerHUDMessagePut " + eDataType.DESC + " " + description )
+	ServerToClientStringCommand( player, "ServerHUDMessagePut " + eDataType.ID + " " + id )
+
+	ServerToClientStringCommand( player, "ServerHUDMessageShow " + eMessageType.CREATE_STATUS )
+
+	return id
+}
+
+void function NSEditStatusMessageOnPlayer( entity player, string title, string description, string id  )
+{
+	ServerToClientStringCommand( player, "ServerHUDMessagePut " + eDataType.TITLE + " " + title )
+	ServerToClientStringCommand( player, "ServerHUDMessagePut " + eDataType.DESC + " " + description )
+	ServerToClientStringCommand( player, "ServerHUDMessagePut " + eDataType.ID + " " + id )
+
+	ServerToClientStringCommand( player, "ServerHUDMessageShow " + eMessageType.EDIT_STATUS )
+}
+
+void function NSDeleteStatusMessageOnPlayer( entity player, string id  )
+{
+	ServerToClientStringCommand( player, "ServerHUDMessagePut " + eDataType.ID + " " + id )
+	
+	ServerToClientStringCommand( player, "ServerHUDMessageShow " + eMessageType.DELETE_STATUS )
 }
 
 void function NSCreatePollOnPlayer( entity player, string header, array<string> options, float duration )
@@ -223,6 +267,9 @@ void function ServerCallback_UpdateServerHUDMessage ( array<string> args )
 		case eDataType.STYLE:
 			client.temp.style = args[1].tointeger()
 			break
+		case eDataType.ID:
+			client.id = args[1]
+			break
 	}
 }
 
@@ -245,7 +292,64 @@ void function ServerCallback_CreateServerHUDMessage ( array<string> args )
 		case eMessageType.INFO:
 			client.infoMessageQueue.append( client.temp )
 			break
+		case eMessageType.CREATE_STATUS:
+			CreateStatusMessage( client.id )
+			break
+		case eMessageType.EDIT_STATUS:
+			EditStatusMessage( client.id )
+			break
+		case eMessageType.DELETE_STATUS:
+			thread DeleteStatusMessage( client.id )
+			break
 	}
+}
+
+void function DeleteStatusMessage( string id )
+{
+	if ( id in client.statusMessageList )
+	{
+		var rui = client.statusMessageList[ id ]
+		RuiSetGameTime( rui, "startFadeOutTime", Time() )
+		
+		wait 0.6
+		
+		delete client.statusMessageList[ id ]
+		RuiDestroyIfAlive( rui )
+		
+		int i = 0
+		foreach( _id, _rui in client.statusMessageList )
+		{
+			RuiSetInt( _rui, "listPos", i )
+
+			i++
+		}
+	}
+}
+
+void function EditStatusMessage( string id )
+{
+	if( id in client.statusMessageList )
+	{
+		var rui = client.statusMessageList[ id ]
+		RuiSetString( rui, "titleText", client.temp.title )
+		RuiSetString( rui, "itemText", client.temp.description )
+	}
+}
+
+void function CreateStatusMessage( string id )
+{
+	// Cap at 4 messages at a time
+	if( client.statusMessageList.len() == STATUS_MESSAGES_MAX )
+		return
+
+	var rui = CreatePermanentCockpitRui( $"ui/at_wave_intro.rpak" )
+	RuiSetInt( rui, "listPos", client.statusMessageList.len() )
+	RuiSetGameTime( rui, "startFadeInTime", Time() )
+	RuiSetString( rui, "titleText", client.temp.title )
+	RuiSetString( rui, "itemText", client.temp.description )
+	RuiSetFloat2( rui, "offset", <0,-250,0> )
+
+	client.statusMessageList[ id ] <- rui
 }
 
 void function SelectPollOption_Threaded( int index )
