@@ -132,6 +132,7 @@ void function ServerCallback_CreateServerHUDMessage ( array<string> args )
 	switch ( args[0].tointeger() )
 	{
 		case eMessageType.POLL:
+			server.playerPollResponses[player] <- -1 // Reset poll response table
 			thread ShowPollMessage_Threaded()
 			break
 	}
