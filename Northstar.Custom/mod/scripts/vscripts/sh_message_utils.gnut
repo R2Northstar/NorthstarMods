@@ -121,15 +121,13 @@ bool function ClientCommand_PollRespond( entity player, array<string> args )
 	return true
 }
 
-string function NSCreateStatusMessageOnPlayer( entity player, string title, string description, string id )
+void function NSCreateStatusMessageOnPlayer( entity player, string title, string description, string id )
 {
 	ServerToClientStringCommand( player, "ServerHUDMessagePut " + eDataType.TITLE + " " + title )
 	ServerToClientStringCommand( player, "ServerHUDMessagePut " + eDataType.DESC + " " + description )
 	ServerToClientStringCommand( player, "ServerHUDMessagePut " + eDataType.ID + " " + id )
 
 	ServerToClientStringCommand( player, "ServerHUDMessageShow " + eMessageType.CREATE_STATUS )
-
-	return id
 }
 
 void function NSEditStatusMessageOnPlayer( entity player, string title, string description, string id  )
