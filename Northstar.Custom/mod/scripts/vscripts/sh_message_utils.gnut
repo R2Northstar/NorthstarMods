@@ -5,8 +5,8 @@ global function NSCreatePollOnPlayer
 global function NSGetPlayerResponse
 
 global function NSSendLargeMessageToPlayer
-
 global function NSSendPopUpMessageToPlayer
+global function NSSendAnnouncementMessageToPlayer
 
 struct
 {
@@ -26,6 +26,9 @@ struct tempMessage
 	string description
 	float duration
 	string image
+	int priority
+	int style
+	vector color
 }
 
 
@@ -45,6 +48,7 @@ struct
 	
 	array<tempMessage> largeMessageQueue
 	array<tempMessage> popupMessageQueue
+	array<tempMessage> announcementQueue
 	
 } client
 #endif // CLIENT
@@ -53,7 +57,8 @@ enum eMessageType
 {
 	POLL,
 	LARGE,
-	POPUP
+	POPUP,
+	ANNOUNCEMENT
 }
 
 enum eDataType
@@ -65,7 +70,10 @@ enum eDataType
 	TITLE,
 	DESC,
 	DURATION,
-	ASSET
+	ASSET,
+	COLOR,
+	PRIORITY,
+	STYLE
 }
 
 #if SERVER
@@ -130,6 +138,17 @@ void function NSSendPopUpMessageToPlayer( entity player, string text )
 	ServerToClientStringCommand( player, "ServerHUDMessageShow " + eMessageType.POPUP )
 }
 
+void function NSSendAnnouncementMessageToPlayer( entity player, string title, string description, vector color, int priority, int style )
+{
+	ServerToClientStringCommand( player, "ServerHUDMessagePut " + eDataType.TITLE + " " + title )
+	ServerToClientStringCommand( player, "ServerHUDMessagePut " + eDataType.DESC + " " + description )
+	ServerToClientStringCommand( player, "ServerHUDMessagePut " + eDataType.COLOR + " " + color.x + " " + color.y + " " + color.z )
+	ServerToClientStringCommand( player, "ServerHUDMessagePut " + eDataType.PRIORITY + " " + priority )
+	ServerToClientStringCommand( player, "ServerHUDMessagePut " + eDataType.STYLE + " " + style )
+	
+	ServerToClientStringCommand( player, "ServerHUDMessageShow " + eMessageType.ANNOUNCEMENT )
+}
+
 #endif // SERVER
 
 #if CLIENT
@@ -142,6 +161,7 @@ void function MessageUtils_ClientInit()
 	
 	thread LargeMessageHandler_Threaded()
 	thread PopUpMessageHandler_Threaded()
+	thread AnnouncementMessageHandler_Threaded()
 }
 
 string function CombineArgsIntoString( array<string> args )
@@ -183,6 +203,15 @@ void function ServerCallback_UpdateServerHUDMessage ( array<string> args )
 		case eDataType.ASSET:
 			client.temp.image = CombineArgsIntoString( args )
 			break
+		case eDataType.COLOR:
+			client.temp.color = Vector( args[1].tofloat(), args[2].tofloat(), args[3].tofloat())
+			break
+		case eDataType.PRIORITY:
+			client.temp.priority = args[1].tointeger()
+			break
+		case eDataType.STYLE:
+			client.temp.style = args[1].tointeger()
+			break
 	}
 }
 
@@ -198,6 +227,9 @@ void function ServerCallback_CreateServerHUDMessage ( array<string> args )
 			break
 		case eMessageType.POPUP:
 			client.popupMessageQueue.append( client.temp )
+			break
+		case eMessageType.ANNOUNCEMENT:
+			client.announcementQueue.append( client.temp )
 			break
 	}
 }
@@ -268,6 +300,28 @@ void function ShowPollMessage_Threaded()
 	
 	client.poll.ruis.clear()
 	client.poll.pollActive = false
+}
+
+void function AnnouncementMessageHandler_Threaded()
+{
+	while( true )
+	{
+		while( client.announcementQueue.len() == 0 )
+			WaitFrame()
+		
+		AnnouncementData announcement = Announcement_Create( client.announcementQueue[0].title )
+		Announcement_SetSubText( announcement, client.announcementQueue[0].description )
+		Announcement_SetTitleColor( announcement, client.announcementQueue[0].color )
+		Announcement_SetPurge( announcement, true )
+		Announcement_SetPriority( announcement, client.announcementQueue[0].priority )
+		Announcement_SetSoundAlias( announcement, SFX_HUD_ANNOUNCE_QUICK )
+		Announcement_SetStyle( announcement, client.announcementQueue[0].style )
+		AnnouncementFromClass( GetLocalViewPlayer(), announcement )
+
+		wait 5
+
+		client.announcementQueue.remove(0)
+	}
 }
 
 void function LargeMessageHandler_Threaded()
