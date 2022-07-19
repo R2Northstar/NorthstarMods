@@ -4,6 +4,8 @@ global function MessageUtils_ServerInit
 global function NSCreatePollOnPlayer
 global function NSGetPlayerResponse
 
+global function NSSendLargeMessageToPlayer
+
 struct
 {
 	table<entity,int> playerPollResponses
@@ -16,6 +18,15 @@ global function MessageUtils_ClientInit
 vector ColorSelected = <0.9, 0.8, 0.5>
 vector ColorBase = <0.9, 0.5, 0.1>
 
+struct tempMessage
+{
+	string title
+	string description
+	float duration
+	string image
+}
+
+
 // Nested structs look funny, but are pretty helpful when reading code so I'm keeping them :)
 struct
 {
@@ -27,12 +38,18 @@ struct
 		bool pollActive
 		array<var> ruis
 	} poll
+	
+	tempMessage temp
+	
+	array<tempMessage> largeMessageQueue
+	
 } client
 #endif // CLIENT
 
 enum eMessageType
 {
-	POLL
+	POLL,
+	LARGE
 }
 
 enum eDataType
@@ -40,7 +57,11 @@ enum eDataType
 	POLL_HEADER,
 	POLL_OPTION,
 	POLL_DURATION,
-	POLL_SELECT
+	POLL_SELECT,
+	TITLE,
+	DESC,
+	DURATION,
+	ASSET
 }
 
 #if SERVER
@@ -75,6 +96,8 @@ void function NSCreatePollOnPlayer( entity player, string header, array<string> 
 	
 	ServerToClientStringCommand( player, "ServerHUDMessagePut " + eDataType.POLL_DURATION + " " + duration )
 	ServerToClientStringCommand( player, "ServerHUDMessagePut " + eDataType.POLL_HEADER + " " + header )
+	
+	server.playerPollResponses[player] <- -1 // Reset poll response table
 	ServerToClientStringCommand( player, "ServerHUDMessageShow " + eMessageType.POLL )
 }
 
@@ -86,6 +109,16 @@ int function NSGetPlayerResponse( entity player )
 	return server.playerPollResponses[ player ] - 1
 }
 
+void function NSSendLargeMessageToPlayer( entity player, string title, string description, float duration, string image )
+{
+	ServerToClientStringCommand( player, "ServerHUDMessagePut " + eDataType.TITLE + " " + title )
+	ServerToClientStringCommand( player, "ServerHUDMessagePut " + eDataType.DESC + " " + description )
+	ServerToClientStringCommand( player, "ServerHUDMessagePut " + eDataType.DURATION + " " + duration )
+	ServerToClientStringCommand( player, "ServerHUDMessagePut " + eDataType.ASSET + " " + image )
+	
+	ServerToClientStringCommand( player, "ServerHUDMessageShow " + eMessageType.LARGE )
+}
+
 #endif // SERVER
 
 #if CLIENT
@@ -95,6 +128,8 @@ void function MessageUtils_ClientInit()
 	AddServerToClientStringCommandCallback( "ServerHUDMessageShow", ServerCallback_CreateServerHUDMessage )
 	// ServerHUDMessageRequest <eDataType> <Data>
 	AddServerToClientStringCommandCallback( "ServerHUDMessagePut", ServerCallback_UpdateServerHUDMessage )
+	
+	thread LargeMessageHandler_Threaded()
 }
 
 string function CombineArgsIntoString( array<string> args )
@@ -124,6 +159,18 @@ void function ServerCallback_UpdateServerHUDMessage ( array<string> args )
 		case eDataType.POLL_SELECT:
 			thread SelectPollOption_Threaded( args[1].tointeger() )
 			break
+		case eDataType.TITLE:
+			client.temp.title = CombineArgsIntoString( args )
+			break
+		case eDataType.DESC:
+			client.temp.description = CombineArgsIntoString( args )
+			break
+		case eDataType.DURATION:
+			client.temp.duration = args[1].tofloat()
+			break
+		case eDataType.ASSET:
+			client.temp.image = CombineArgsIntoString( args )
+			break
 	}
 }
 
@@ -132,8 +179,10 @@ void function ServerCallback_CreateServerHUDMessage ( array<string> args )
 	switch ( args[0].tointeger() )
 	{
 		case eMessageType.POLL:
-			server.playerPollResponses[player] <- -1 // Reset poll response table
 			thread ShowPollMessage_Threaded()
+			break
+		case eMessageType.LARGE:
+			client.largeMessageQueue.append( client.temp )
 			break
 	}
 }
@@ -204,6 +253,27 @@ void function ShowPollMessage_Threaded()
 	
 	client.poll.ruis.clear()
 	client.poll.pollActive = false
+}
+
+void function LargeMessageHandler_Threaded()
+{
+	while( true )
+	{
+		while( client.largeMessageQueue.len() == 0 )
+			WaitFrame()
+
+		var rui = CreatePermanentCockpitRui( $"ui/fd_tutorial_tip.rpak" )
+		RuiSetImage( rui, "backgroundImage", StringToAsset( client.largeMessageQueue[0].image ) )
+		RuiSetString( rui, "titleText", client.largeMessageQueue[0].title )
+		RuiSetString( rui, "descriptionText", client.largeMessageQueue[0].description )
+		RuiSetGameTime( rui, "updateTime", Time() )
+		RuiSetFloat( rui, "duration", client.largeMessageQueue[0].duration )
+
+		wait client.largeMessageQueue[0].duration
+
+		client.largeMessageQueue.remove(0)
+		RuiDestroyIfAlive( rui )
+	}
 }
 
 #endif // CLIENT
