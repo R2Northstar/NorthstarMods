@@ -366,6 +366,8 @@ resource/ui/menus/modlist.menu
 				"#SHOW_ALL"				0
 				"#SHOW_ONLY_ENABLED"	1
 				"#SHOW_ONLY_DISABLED"	2
+				"#SHOW_ONLY_NOT_REQUIRED" 3
+				"#SHOW_ONLY_REQUIRED"	4
 			}
 
 			pin_to_sibling			BtnSearchLabel

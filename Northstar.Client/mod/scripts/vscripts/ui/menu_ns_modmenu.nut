@@ -22,6 +22,8 @@ enum filterShow {
 	ALL = 0,
 	ONLY_ENABLED = 1,
 	ONLY_DISABLED = 2
+	ONLY_NOT_REQUIRED = 3,
+	ONLY_REQUIRED = 4
 }
 
 struct {
@@ -320,6 +322,7 @@ void function RefreshMods()
 			continue
 
 		bool enabled = NSIsModEnabled( mod )
+		bool required = NSIsModRequiredOnClient( mod )
 		switch ( GetConVarInt( "filter_mods" ) )
 		{
 			case filterShow.ONLY_ENABLED:
@@ -328,6 +331,14 @@ void function RefreshMods()
 				break
 			case filterShow.ONLY_DISABLED:
 				if ( enabled )
+					continue
+				break
+			case filterShow.ONLY_REQUIRED:
+				if ( required )
+					continue
+				break
+			case filterShow.ONLY_NOT_REQUIRED:
+				if( !required )
 					continue
 				break
 		}
