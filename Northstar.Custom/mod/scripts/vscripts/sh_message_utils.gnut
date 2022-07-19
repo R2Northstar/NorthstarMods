@@ -1,0 +1,208 @@
+#if SERVER
+global function MessageUtils_ServerInit
+
+global function NSCreatePollOnPlayer
+global function NSGetPlayerResponse
+
+struct
+{
+	table<entity,int> playerPollResponses
+} server
+#endif // SERVER
+
+#if CLIENT
+global function MessageUtils_ClientInit
+
+vector ColorSelected = <0.9, 0.8, 0.5>
+vector ColorBase = <0.9, 0.5, 0.1>
+
+// Nested structs look funny, but are pretty helpful when reading code so I'm keeping them :)
+struct
+{
+	struct
+	{
+		string header
+		array<string> options
+		float duration
+		bool pollActive
+		array<var> ruis
+	} poll
+} client
+#endif // CLIENT
+
+enum eMessageType
+{
+	POLL
+}
+
+enum eDataType
+{
+	POLL_HEADER,
+	POLL_OPTION,
+	POLL_DURATION,
+	POLL_SELECT
+}
+
+#if SERVER
+void function MessageUtils_ServerInit()
+{
+	AddClientCommandCallback( "vote", ClientCommand_Vote )
+	AddClientCommandCallback( "poll_respond", ClientCommand_PollRespond )
+}
+
+bool function ClientCommand_Vote( entity player, array<string> args )
+{
+	if( args.len() == 0 )
+		return false
+	
+	ServerToClientStringCommand( player, "ServerHUDMessagePut " + eDataType.POLL_SELECT + " " + args[0] )
+	return true
+}
+
+bool function ClientCommand_PollRespond( entity player, array<string> args )
+{
+	if( args.len() == 0 )
+		return false
+	
+	server.playerPollResponses[player] <- args[0].tointeger()
+	return true
+}
+
+void function NSCreatePollOnPlayer( entity player, string header, array<string> options, float duration )
+{
+	foreach ( string option in options )
+		ServerToClientStringCommand( player, "ServerHUDMessagePut " + eDataType.POLL_OPTION + " " + option )
+	
+	ServerToClientStringCommand( player, "ServerHUDMessagePut " + eDataType.POLL_DURATION + " " + duration )
+	ServerToClientStringCommand( player, "ServerHUDMessagePut " + eDataType.POLL_HEADER + " " + header )
+	ServerToClientStringCommand( player, "ServerHUDMessageShow " + eMessageType.POLL )
+}
+
+int function NSGetPlayerResponse( entity player )
+{
+	if( !( player in server.playerPollResponses ) )
+		return -1
+	
+	return server.playerPollResponses[ player ] - 1
+}
+
+#endif // SERVER
+
+#if CLIENT
+void function MessageUtils_ClientInit()
+{
+	// ServerHUDMessageRequest <eMessageType>
+	AddServerToClientStringCommandCallback( "ServerHUDMessageShow", ServerCallback_CreateServerHUDMessage )
+	// ServerHUDMessageRequest <eDataType> <Data>
+	AddServerToClientStringCommandCallback( "ServerHUDMessagePut", ServerCallback_UpdateServerHUDMessage )
+}
+
+string function CombineArgsIntoString( array<string> args )
+{
+	string result
+	
+	// Ignore the first argument
+	for( int i = 1; i < args.len(); i++ )
+		result += args[i] + " "
+	
+	return result
+}
+
+void function ServerCallback_UpdateServerHUDMessage ( array<string> args )
+{
+	switch ( args[0].tointeger() )
+	{
+		case eDataType.POLL_HEADER:
+			client.poll.header = CombineArgsIntoString( args )
+			break
+		case eDataType.POLL_OPTION:
+			client.poll.options.append( CombineArgsIntoString( args ) )
+			break
+		case eDataType.POLL_DURATION:
+			client.poll.duration = args[1].tofloat()
+			break
+		case eDataType.POLL_SELECT:
+			thread SelectPollOption_Threaded( args[1].tointeger() )
+			break
+	}
+}
+
+void function ServerCallback_CreateServerHUDMessage ( array<string> args )
+{
+	switch ( args[0].tointeger() )
+	{
+		case eMessageType.POLL:
+			thread ShowPollMessage_Threaded()
+			break
+	}
+}
+
+void function SelectPollOption_Threaded( int index )
+{
+	if ( index >= client.poll.ruis.len() || index <= 0 )
+		return
+	
+	RuiSetFloat3( client.poll.ruis[ index ], "msgColor", ColorSelected )
+	EmitSoundOnEntity( GetLocalClientPlayer(), "menu_accept" )
+	
+	float endTime = 1 + client.poll.duration
+	while( endTime > Time() && client.poll.pollActive )
+		WaitFrame()
+	
+	GetLocalClientPlayer().ClientCommand( "poll_respond " + index )
+	
+	foreach( var rui in client.poll.ruis )
+		RuiDestroyIfAlive( rui )
+	
+	client.poll.ruis.clear()
+	client.poll.pollActive = false
+}
+
+void function ShowPollMessage_Threaded()
+{
+	if( client.poll.pollActive )
+		return
+	
+	client.poll.pollActive = true
+	
+	
+	for( int i = 0; i < client.poll.options.len() + 1; i++ )
+	{
+		var rui = CreateCockpitRui( $"ui/cockpit_console_text_top_left.rpak" )
+		// This makes it fade and me no likey >:(
+		//RuiSetInt( rui, "maxLines", 1 )
+		//RuiSetInt( rui, "lineNum", i )
+		RuiSetFloat2( rui, "msgPos", <0, 0.4 + i * 0.025, 0> )
+		if( i == 0 )
+		{
+			RuiSetFloat3( rui, "msgColor", ColorSelected )
+			RuiSetString( rui, "msgText", client.poll.header )
+		}
+		else
+		{
+			RuiSetFloat3( rui, "msgColor", ColorBase )
+			RuiSetString( rui, "msgText", i + ". " + client.poll.options[i - 1]  )
+		}
+		
+		RuiSetFloat( rui, "msgFontSize", 30.0 )
+		RuiSetFloat( rui, "msgAlpha", 0.9 )
+		RuiSetFloat( rui, "thicken", 0.0 )
+		
+		client.poll.ruis.append( rui )
+	}
+	
+	client.poll.options.clear()
+	
+	float endTime = Time() + client.poll.duration
+	while( endTime > Time() && client.poll.pollActive )
+		WaitFrame()
+	
+	
+	foreach( var rui in client.poll.ruis )
+		RuiDestroyIfAlive( rui )
+	
+	client.poll.ruis.clear()
+	client.poll.pollActive = false
+}
+
+#endif // CLIENT
