@@ -334,11 +334,11 @@ void function RefreshMods()
 					continue
 				break
 			case filterShow.ONLY_REQUIRED:
-				if ( required )
+				if ( !required )
 					continue
 				break
 			case filterShow.ONLY_NOT_REQUIRED:
-				if( !required )
+				if( required )
 					continue
 				break
 		}
