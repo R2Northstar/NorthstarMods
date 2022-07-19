@@ -7,6 +7,7 @@ global function NSGetPlayerResponse
 global function NSSendLargeMessageToPlayer
 global function NSSendPopUpMessageToPlayer
 global function NSSendAnnouncementMessageToPlayer
+global function NSSendInfoMessageToPlayer
 
 struct
 {
@@ -49,6 +50,7 @@ struct
 	array<tempMessage> largeMessageQueue
 	array<tempMessage> popupMessageQueue
 	array<tempMessage> announcementQueue
+	array<tempMessage> infoMessageQueue
 	
 } client
 #endif // CLIENT
@@ -58,7 +60,8 @@ enum eMessageType
 	POLL,
 	LARGE,
 	POPUP,
-	ANNOUNCEMENT
+	ANNOUNCEMENT,
+	INFO
 }
 
 enum eDataType
@@ -149,6 +152,13 @@ void function NSSendAnnouncementMessageToPlayer( entity player, string title, st
 	ServerToClientStringCommand( player, "ServerHUDMessageShow " + eMessageType.ANNOUNCEMENT )
 }
 
+void function NSSendInfoMessageToPlayer( entity player, string text )
+{
+	ServerToClientStringCommand( player, "ServerHUDMessagePut " + eDataType.DESC + " " + text )
+	
+	ServerToClientStringCommand( player, "ServerHUDMessageShow " + eMessageType.INFO )
+}
+
 #endif // SERVER
 
 #if CLIENT
@@ -162,6 +172,7 @@ void function MessageUtils_ClientInit()
 	thread LargeMessageHandler_Threaded()
 	thread PopUpMessageHandler_Threaded()
 	thread AnnouncementMessageHandler_Threaded()
+	thread InfoMessageHandler_Threaded()
 }
 
 string function CombineArgsIntoString( array<string> args )
@@ -230,6 +241,9 @@ void function ServerCallback_CreateServerHUDMessage ( array<string> args )
 			break
 		case eMessageType.ANNOUNCEMENT:
 			client.announcementQueue.append( client.temp )
+			break
+		case eMessageType.INFO:
+			client.infoMessageQueue.append( client.temp )
 			break
 	}
 }
@@ -300,6 +314,26 @@ void function ShowPollMessage_Threaded()
 	
 	client.poll.ruis.clear()
 	client.poll.pollActive = false
+}
+
+void function InfoMessageHandler_Threaded()
+{
+	while( true )
+	{
+		while( client.infoMessageQueue.len() == 0 )
+			WaitFrame()
+
+		var rui = CreatePermanentCockpitRui( $"ui/death_hint_mp.rpak" )
+		RuiSetString( rui, "hintText", client.infoMessageQueue[0].description )
+		RuiSetGameTime( rui, "startTime", Time() )
+		RuiSetFloat3( rui, "bgColor", <0,0,0> )
+		RuiSetFloat( rui, "bgAlpha", 0.5 )
+
+		wait 7
+
+		client.infoMessageQueue.remove(0)
+		RuiDestroyIfAlive( rui )
+	}
 }
 
 void function AnnouncementMessageHandler_Threaded()
