@@ -6,6 +6,8 @@ global function NSGetPlayerResponse
 
 global function NSSendLargeMessageToPlayer
 
+global function NSSendPopUpMessageToPlayer
+
 struct
 {
 	table<entity,int> playerPollResponses
@@ -42,6 +44,7 @@ struct
 	tempMessage temp
 	
 	array<tempMessage> largeMessageQueue
+	array<tempMessage> popupMessageQueue
 	
 } client
 #endif // CLIENT
@@ -49,7 +52,8 @@ struct
 enum eMessageType
 {
 	POLL,
-	LARGE
+	LARGE,
+	POPUP
 }
 
 enum eDataType
@@ -119,6 +123,13 @@ void function NSSendLargeMessageToPlayer( entity player, string title, string de
 	ServerToClientStringCommand( player, "ServerHUDMessageShow " + eMessageType.LARGE )
 }
 
+void function NSSendPopUpMessageToPlayer( entity player, string text )
+{
+	ServerToClientStringCommand( player, "ServerHUDMessagePut " + eDataType.DESC + " " + text )
+	
+	ServerToClientStringCommand( player, "ServerHUDMessageShow " + eMessageType.POPUP )
+}
+
 #endif // SERVER
 
 #if CLIENT
@@ -130,6 +141,7 @@ void function MessageUtils_ClientInit()
 	AddServerToClientStringCommandCallback( "ServerHUDMessagePut", ServerCallback_UpdateServerHUDMessage )
 	
 	thread LargeMessageHandler_Threaded()
+	thread PopUpMessageHandler_Threaded()
 }
 
 string function CombineArgsIntoString( array<string> args )
@@ -183,6 +195,9 @@ void function ServerCallback_CreateServerHUDMessage ( array<string> args )
 			break
 		case eMessageType.LARGE:
 			client.largeMessageQueue.append( client.temp )
+			break
+		case eMessageType.POPUP:
+			client.popupMessageQueue.append( client.temp )
 			break
 	}
 }
@@ -272,6 +287,26 @@ void function LargeMessageHandler_Threaded()
 		wait client.largeMessageQueue[0].duration
 
 		client.largeMessageQueue.remove(0)
+		RuiDestroyIfAlive( rui )
+	}
+}
+
+void function PopUpMessageHandler_Threaded()
+{
+	while( true )
+	{
+		while( client.popupMessageQueue.len() == 0 )
+			WaitFrame()
+
+		var rui = CreateCockpitRui( $"ui/killdeath_info.rpak" )
+		RuiSetGameTime( rui, "startTime", Time() )
+		RuiSetFloat( rui, "duration", 20 ) // It has a weird end animation
+		RuiSetString( rui, "messageText", client.popupMessageQueue[0].description )
+		RuiSetBool( rui, "isBigText", true )
+
+		wait 2.4
+
+		client.popupMessageQueue.remove(0)
 		RuiDestroyIfAlive( rui )
 	}
 }
