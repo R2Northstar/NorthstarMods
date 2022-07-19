@@ -312,7 +312,7 @@ void function DeleteStatusMessage( string id )
 		var rui = client.statusMessageList[ id ]
 		RuiSetGameTime( rui, "startFadeOutTime", Time() )
 		
-		// Remove it form table
+		// Remove it from table
 		delete client.statusMessageList[ id ]
 		
 		// Wait for animation
