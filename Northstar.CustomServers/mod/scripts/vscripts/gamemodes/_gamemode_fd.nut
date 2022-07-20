@@ -29,8 +29,8 @@ struct player_struct_fd{
 
 global HarvesterStruct& fd_harvester
 global vector shopPosition
-global vector shopAngles = <0,0,0>
-global table<string,array<vector> > routes
+global vector shopAngles = < 0, 0, 0 >
+global table< string, array<vector> > routes
 global array<entity> routeNodes
 global array<entity> spawnedNPCs
 
@@ -52,27 +52,27 @@ void function GamemodeFD_Init()
 {
 	PrecacheModel( MODEL_ATTRITION_BANK )
 	PrecacheModel( $"models/humans/grunts/imc_grunt_shield_captain.mdl" )
-	PrecacheParticleSystem($"P_smokescreen_FD")
+	PrecacheParticleSystem( $"P_smokescreen_FD" )
 
 	RegisterSignal( "SniperSwitchedEnemy" ) // for use in SniperTitanThink behavior.
-	RegisterSignal("FD_ReachedHarvester")
-	RegisterSignal("OnFailedToPath")
+	RegisterSignal( "FD_ReachedHarvester" )
+	RegisterSignal( "OnFailedToPath" )
 
-	SetRoundBased(true)
-	SetShouldUseRoundWinningKillReplay(false)
+	SetRoundBased( true )
+	SetShouldUseRoundWinningKillReplay( false )
 	Riff_ForceBoostAvailability( eBoostAvailability.Disabled )
-	PlayerEarnMeter_SetEnabled(false)
+	PlayerEarnMeter_SetEnabled( false )
 	SetShouldUsePickLoadoutScreen( true )
 
 	//general Callbacks
-	AddCallback_EntitiesDidLoad(LoadEntities)
-	AddCallback_GameStateEnter(eGameState.Prematch,FD_createHarvester)
-	AddCallback_GameStateEnter( eGameState.Playing,startMainGameLoop)
-	AddCallback_OnRoundEndCleanup(FD_NPCCleanup)
-	AddCallback_OnClientConnected(GamemodeFD_InitPlayer)
+	AddCallback_EntitiesDidLoad( LoadEntities )
+	AddCallback_GameStateEnter( eGameState.Prematch,FD_createHarvester )
+	AddCallback_GameStateEnter( eGameState.Playing,startMainGameLoop )
+	AddCallback_OnRoundEndCleanup( FD_NPCCleanup )
+	AddCallback_OnClientConnected( GamemodeFD_InitPlayer )
 
 	//Damage Callbacks
-	AddDamageByCallback("player",FD_DamageByPlayerCallback)
+	AddDamageByCallback( "player",FD_DamageByPlayerCallback)
 	AddDamageCallback( "player", DamageScaleByDifficulty )
 	AddDamageCallback( "npc_titan", DamageScaleByDifficulty )
 	AddDamageCallback( "npc_turret_sentry", DamageScaleByDifficulty )
@@ -83,12 +83,12 @@ void function GamemodeFD_Init()
 	AddSpawnCallback( "player", FD_PlayerRespawnCallback )
 	AddSpawnCallback("npc_turret_sentry", AddTurretSentry )
 	//death Callbacks
-	AddCallback_OnNPCKilled(OnNpcDeath)
-	AddCallback_OnPlayerKilled(GamemodeFD_OnPlayerKilled)
+	AddCallback_OnNPCKilled( OnNpcDeath )
+	AddCallback_OnPlayerKilled( GamemodeFD_OnPlayerKilled )
 	
 	//Command Callbacks
-	AddClientCommandCallback("FD_ToggleReady",ClientCommandCallbackToggleReady)
-	AddClientCommandCallback("FD_UseHarvesterShieldBoost",useShieldBoost)
+	AddClientCommandCallback( "FD_ToggleReady",ClientCommandCallbackToggleReady )
+	AddClientCommandCallback( "FD_UseHarvesterShieldBoost",useShieldBoost )
 
 	//shop Callback
 	SetBoostPurchaseCallback(FD_BoostPurchaseCallback)
@@ -98,12 +98,12 @@ void function GamemodeFD_Init()
 	ScoreEvent_SetupEarnMeterValuesForMixedModes()
 }
 
-void function FD_BoostPurchaseCallback(entity player,BoostStoreData data) 
+void function FD_BoostPurchaseCallback( entity player, BoostStoreData data ) 
 {
 	file.players[player].moneySpend += data.cost
 }
 
-void function FD_PlayerRespawnCallback(entity player)
+void function FD_PlayerRespawnCallback( entity player )
 {
 	if(player in file.players)
 		file.players[player].lastRespawn = Time()
@@ -111,9 +111,9 @@ void function FD_PlayerRespawnCallback(entity player)
 	Highlight_SetFriendlyHighlight( player, "sp_friendly_hero" )
 }
 
-void function FD_TeamReserveDepositOrWithdrawCallback(entity player, string action,int amount)
+void function FD_TeamReserveDepositOrWithdrawCallback( entity player, string action, int amount )
 {
-	switch(action)
+	switch( action )
 	{
 		case"deposit":
 			file.players[player].moneyShared += amount
@@ -123,87 +123,87 @@ void function FD_TeamReserveDepositOrWithdrawCallback(entity player, string acti
 			break
 	}
 }
-void function GamemodeFD_OnPlayerKilled(entity victim, entity attacker, var damageInfo)
+void function GamemodeFD_OnPlayerKilled( entity victim, entity attacker, var damageInfo )
 {
 	file.players[victim].longestLife = Time() - file.players[victim].lastRespawn
 	file.players[victim].diedThisRound = true
 	array<entity> militiaplayers = GetPlayerArrayOfTeam( TEAM_MILITIA )
 	int deaths = 0
-	foreach (entity player in militiaplayers)
-		if (!IsAlive(player))
+	foreach ( entity player in militiaplayers )
+		if ( !IsAlive( player ) )
 			deaths++
 
 	foreach( entity player in GetPlayerArray() )
 	{
-		if (player == victim || player.GetTeam() != TEAM_MILITIA)
+		if ( player == victim || player.GetTeam() != TEAM_MILITIA )
 			continue
 
-		if (deaths == 1) // only one pilot died
+		if ( deaths == 1 ) // only one pilot died
 			PlayFactionDialogueToPlayer( "fd_singlePilotDown", player )
-		else if (deaths > 1 && deaths < militiaplayers.len() - 1) // multiple pilots died but at least one alive
+		else if ( deaths > 1 && deaths < militiaplayers.len() - 1 ) // multiple pilots died but at least one alive
 			PlayFactionDialogueToPlayer( "fd_multiPilotDown", player )
-		else if (deaths == militiaplayers.len() - 1) // ur shit out of luck ur the only survivor
+		else if (d eaths == militiaplayers.len() - 1 ) // ur shit out of luck ur the only survivor
 			PlayFactionDialogueToPlayer( "fd_onlyPlayerIsAlive", player )
 	}
 }
 
-void function FD_UsedCoreCallback(entity titan,entity weapon)
+void function FD_UsedCoreCallback( entity titan, entity weapon )
 {
-	if(!(titan in file.players))
+	if( !( titan in file.players ) )
 	{
 		return
 	}
 	file.players[titan].coresUsed += 1
 }
 
-void function GamemodeFD_InitPlayer(entity player)
+void function GamemodeFD_InitPlayer( entity player )
 {	
 	player_struct_fd data
 	data.diedThisRound = false
 	file.players[player] <- data
-	thread SetTurretSettings_threaded(player)
-	if(GetGlobalNetInt("FD_currentWave")>1)
-		PlayerEarnMeter_AddEarnedAndOwned(player,1.0,1.0)
+	thread SetTurretSettings_threaded( player )
+	if(GetGlobalNetInt( "FD_currentWave" ) > 1 )
+		PlayerEarnMeter_AddEarnedAndOwned( player, 1.0, 1.0 )
 
-	if ( GetGlobalNetInt("FD_currentWave") != 0 )
+	if ( GetGlobalNetInt( "FD_currentWave" ) != 0 )
 		DisableTitanSelectionForPlayer( player ) // this might need moving to when they exit the titan selection UI when we do that
 	else
 		EnableTitanSelectionForPlayer( player )
 
-	if ( GetGlobalNetInt("FD_currentWave") != 0 )
+	if ( GetGlobalNetInt( "FD_currentWave" ) != 0 )
 		DisableTitanSelectionForPlayer( player ) // this might need moving to when they exit the titan selection UI when we do that
 	else
 		EnableTitanSelectionForPlayer( player )
 
 }
-void function SetTurretSettings_threaded(entity player)
+void function SetTurretSettings_threaded( entity player )
 {	//has to be delayed because PlayerConnect callbacks get called in wrong order
 	WaitFrame()
-	DeployableTurret_SetAISettingsForPlayer_AP(player,"npc_turret_sentry_burn_card_ap_fd")
-	DeployableTurret_SetAISettingsForPlayer_AT(player,"npc_turret_sentry_burn_card_at_fd")
+	DeployableTurret_SetAISettingsForPlayer_AP( player, "npc_turret_sentry_burn_card_ap_fd" )
+	DeployableTurret_SetAISettingsForPlayer_AT( player, "npc_turret_sentry_burn_card_at_fd" )
 }
 
 void function OnNpcDeath( entity victim, entity attacker, var damageInfo )
 {	
-	if(victim.IsTitan()&&attacker in file.players)
+	if( victim.IsTitan() && attacker in file.players )
 		file.players[attacker].titanKills++
-	int victimTypeID = FD_GetAITypeID_ByString(victim.GetTargetName())
-	if(victimTypeID == eFD_AITypeIDs.TITAN_MORTAR||victimTypeID == eFD_AITypeIDs.SPECTRE_MORTAR)
-		if(attacker in file.players)
+	int victimTypeID = FD_GetAITypeID_ByString( victim.GetTargetName() )
+	if( ( victimTypeID == eFD_AITypeIDs.TITAN_MORTAR ) || ( victimTypeID == eFD_AITypeIDs.SPECTRE_MORTAR ) )
+		if( attacker in file.players )
 			file.players[attacker].mortarUnitsKilled++
 	int findIndex = spawnedNPCs.find( victim )
 	if ( findIndex != -1 )
 	{
 		spawnedNPCs.remove( findIndex )
 
-		string netIndex = GetAiNetIdFromTargetName(victim.GetTargetName())
-		if(netIndex != "")
-			SetGlobalNetInt(netIndex,GetGlobalNetInt(netIndex)-1)
+		string netIndex = GetAiNetIdFromTargetName( victim.GetTargetName() )
+		if( netIndex != "" )
+			SetGlobalNetInt( netIndex, GetGlobalNetInt( netIndex ) - 1 )
 		
-		SetGlobalNetInt("FD_AICount_Current",GetGlobalNetInt("FD_AICount_Current")-1)
+		SetGlobalNetInt( "FD_AICount_Current", GetGlobalNetInt( "FD_AICount_Current" ) - 1 )
 	}
 
-	if ( victim.GetOwner() == attacker || !attacker.IsPlayer() || attacker == victim || victim.GetBossPlayer() == attacker || victim.GetClassName() == "npc_turret_sentry" )
+	if ( victim.GetOwner() == attacker || !attacker.IsPlayer() || ( attacker == victim ) || ( victim.GetBossPlayer() == attacker ) || victim.GetClassName() == "npc_turret_sentry" )
 		return
 	
 	int playerScore = 0
@@ -216,7 +216,7 @@ void function OnNpcDeath( entity victim, entity attacker, var damageInfo )
 		string eventName = FD_GetScoreEventName( victim.GetClassName() )
 		playerScore = ScoreEvent_GetPointValue( GetScoreEvent( eventName ) )
 
-		switch (victim.GetClassName())
+		switch ( victim.GetClassName() )
 		{
 			case "npc_soldier":
 				money = 5
@@ -234,10 +234,10 @@ void function OnNpcDeath( entity victim, entity attacker, var damageInfo )
 			default:
 				money = 0 // titans seem to total up to 50 money undoomed health
 		}
-		foreach(player in GetPlayerArray())
+		foreach( player in GetPlayerArray() )
 			Remote_CallFunction_NonReplay( player, "ServerCallback_OnTitanKilled", attacker.GetEncodedEHandle(), victim.GetEncodedEHandle(), scriptDamageType, damageSourceId )
 	}
-	if (money != 0)
+	if ( money != 0 )
 		AddMoneyToPlayer( attacker , money )
 
 	attacker.AddToPlayerGameStat( PGS_ASSAULT_SCORE, playerScore ) // seems to be how combat score is counted
@@ -259,15 +259,18 @@ void function OnNpcDeath( entity victim, entity attacker, var damageInfo )
 	
 }
 
-void function RateSpawnpoints_FD(int _0, array<entity> _1, int _2, entity _3){}
-
-bool function useShieldBoost(entity player,array<string> args)
+void function RateSpawnpoints_FD( int _0, array<entity> _1, int _2, entity _3 )
 {
-	if((GetGlobalNetTime("FD_harvesterInvulTime")<Time())&&(player.GetPlayerNetInt("numHarvesterShieldBoost")>0))
+
+}
+
+bool function useShieldBoost( entity player, array<string> args )
+{
+	if( ( GetGlobalNetTime( "FD_harvesterInvulTime" ) < Time() ) && ( player.GetPlayerNetInt("numHarvesterShieldBoost") > 0 ) )
 	{
 		fd_harvester.harvester.SetShieldHealth(fd_harvester.harvester.GetShieldHealthMax())
-		SetGlobalNetTime("FD_harvesterInvulTime",Time()+5)
-		MessageToTeam(TEAM_MILITIA,eEventNotifications.FD_PlayerHealedHarvester, null, player)
+		SetGlobalNetTime( "FD_harvesterInvulTime", Time() + 5 )
+		MessageToTeam( TEAM_MILITIA,eEventNotifications.FD_PlayerHealedHarvester, null, player )
 		player.SetPlayerNetInt( "numHarvesterShieldBoost", player.GetPlayerNetInt( "numHarvesterShieldBoost" ) - 1 )
 		file.players[player].harvesterHeals += 1
 	}
@@ -284,22 +287,22 @@ void function mainGameLoop()
 	startHarvester()
 
 	bool showShop = false
-	for(int i = GetGlobalNetInt("FD_currentWave");i<waveEvents.len();i++)
+	for(int i = GetGlobalNetInt( "FD_currentWave" ); i < waveEvents.len(); i++)
 	{
-		if(!runWave(i,showShop))
+		if( !runWave( i, showShop ) )
 			break
 
-		if(i==0)
+		if( i == 0 )
 		{
-			PlayerEarnMeter_SetEnabled(true)
+			PlayerEarnMeter_SetEnabled( true )
 			showShop = true
-			foreach(entity player in GetPlayerArray())
+			foreach( entity player in GetPlayerArray() )
 			{
-				PlayerEarnMeter_AddEarnedAndOwned(player,1.0,1.0)
+				PlayerEarnMeter_AddEarnedAndOwned( player, 1.0, 1.0 )
 			}
 			DisableTitanSelection()
 		}
-		else if (i + 1 == waveEvents.len() )
+		else if( i + 1 == waveEvents.len() )
 		{
 			EnableTitanSelection()
 		}
@@ -311,211 +314,212 @@ void function mainGameLoop()
 
 
 
-array<int> function getHighestEnemyAmountsForWave(int waveIndex)
+array<int> function getHighestEnemyAmountsForWave( int waveIndex )
 {
 	table<int,int> npcs
-	npcs[eFD_AITypeIDs.TITAN]<-0
-	npcs[eFD_AITypeIDs.TITAN_NUKE]<-0
-	npcs[eFD_AITypeIDs.TITAN_ARC]<-0
-	npcs[eFD_AITypeIDs.TITAN_MORTAR]<-0
-	npcs[eFD_AITypeIDs.GRUNT]<-0
-	npcs[eFD_AITypeIDs.SPECTRE]<-0
-	npcs[eFD_AITypeIDs.SPECTRE_MORTAR]<-0
-	npcs[eFD_AITypeIDs.STALKER]<-0
-	npcs[eFD_AITypeIDs.REAPER]<-0
-	npcs[eFD_AITypeIDs.TICK]<-0
-	npcs[eFD_AITypeIDs.DRONE]<-0
-	npcs[eFD_AITypeIDs.DRONE_CLOAK]<-0
-	// npcs[eFD_AITypeIDs.RONIN]<-0
-	// npcs[eFD_AITypeIDs.NORTHSTAR]<-0
-	// npcs[eFD_AITypeIDs.SCORCH]<-0
-	// npcs[eFD_AITypeIDs.LEGION]<-0
-	// npcs[eFD_AITypeIDs.TONE]<-0
-	// npcs[eFD_AITypeIDs.ION]<-0
-	// npcs[eFD_AITypeIDs.MONARCH]<-0
-	// npcs[eFD_AITypeIDs.TITAN_SNIPER]<-0
+	npcs[eFD_AITypeIDs.TITAN] <- 0
+	npcs[eFD_AITypeIDs.TITAN_NUKE] <- 0
+	npcs[eFD_AITypeIDs.TITAN_ARC] <- 0
+	npcs[eFD_AITypeIDs.TITAN_MORTAR] <- 0
+	npcs[eFD_AITypeIDs.GRUNT] <- 0
+	npcs[eFD_AITypeIDs.SPECTRE] <- 0
+	npcs[eFD_AITypeIDs.SPECTRE_MORTAR] <- 0
+	npcs[eFD_AITypeIDs.STALKER] <- 0
+	npcs[eFD_AITypeIDs.REAPER] <- 0
+	npcs[eFD_AITypeIDs.TICK] <- 0
+	npcs[eFD_AITypeIDs.DRONE] <- 0
+	npcs[eFD_AITypeIDs.DRONE_CLOAK] <- 0
+	// npcs[eFD_AITypeIDs.RONIN] <- 0
+	// npcs[eFD_AITypeIDs.NORTHSTAR] <- 0
+	// npcs[eFD_AITypeIDs.SCORCH] <- 0
+	// npcs[eFD_AITypeIDs.LEGION] <- 0
+	// npcs[eFD_AITypeIDs.TONE] <- 0
+	// npcs[eFD_AITypeIDs.ION] <- 0
+	// npcs[eFD_AITypeIDs.MONARCH] <- 0
+	// npcs[eFD_AITypeIDs.TITAN_SNIPER] <- 0
 
 
-	foreach(WaveEvent e in waveEvents[waveIndex])
+	foreach( WaveEvent e in waveEvents[waveIndex] )
 	{
-		if(e.spawnEvent.spawnAmount==0)
+		if( e.spawnEvent.spawnAmount == 0 )
 			continue
-		switch(e.spawnEvent.spawnType)
+		switch( e.spawnEvent.spawnType )
 		{
-			case(eFD_AITypeIDs.TITAN):
-			case(eFD_AITypeIDs.RONIN):
-			case(eFD_AITypeIDs.NORTHSTAR):
-			case(eFD_AITypeIDs.SCORCH):
-			case(eFD_AITypeIDs.TONE):
-			case(eFD_AITypeIDs.ION):
-			case(eFD_AITypeIDs.MONARCH):
-			case(eFD_AITypeIDs.LEGION):
-			case(eFD_AITypeIDs.TITAN_SNIPER):
+			case( eFD_AITypeIDs.TITAN ):
+			case( eFD_AITypeIDs.RONIN ):
+			case( eFD_AITypeIDs.NORTHSTAR ):
+			case( eFD_AITypeIDs.SCORCH ):
+			case( eFD_AITypeIDs.TONE ):
+			case( eFD_AITypeIDs.ION ):
+			case( eFD_AITypeIDs.MONARCH ):
+			case( eFD_AITypeIDs.LEGION ):
+			case( eFD_AITypeIDs.TITAN_SNIPER ):
 				npcs[eFD_AITypeIDs.TITAN]+=e.spawnEvent.spawnAmount
 				break
 			default:
 				npcs[e.spawnEvent.spawnType]+=e.spawnEvent.spawnAmount
 		}
 	}
-	array<int> ret = [-1,-1,-1,-1,-1,-1,-1,-1,-1]
-	foreach(int key,int value in npcs)
+	array<int> ret = [ -1, -1, -1, -1, -1, -1, -1, -1, -1 ]
+	foreach( int key, int value in npcs )
 	{
-		if(value==0)
+		if( value == 0 )
 			continue
 		int lowestArrayIndex = 0
 		bool keyIsSet = false
-		foreach(index,int arrayValue in ret)
+		foreach( index, int arrayValue in ret )
 		{
-			if(arrayValue==-1)
+			if( arrayValue == -1 )
 			{
 				ret[index] = key
 				keyIsSet = true
 				break
 			}
-			if(npcs[ret[lowestArrayIndex]]>npcs[ret[index]])
+			if( npcs[ret[lowestArrayIndex]] > npcs[ret[index]] )
 				lowestArrayIndex = index
 		}
-		if((!keyIsSet)&&(npcs[ret[lowestArrayIndex]]<value))
+		if( ( !keyIsSet ) && ( npcs[ret[lowestArrayIndex]] < value ) )
 			ret[lowestArrayIndex] = key
 	}
-	foreach(int val in ret){
-		printt("ArrayVal",val)
+	foreach( int val in ret )
+	{
+		printt( "ArrayVal", val )
 	}
 	return ret
 
 }
-void function SetEnemyAmountNetVars(int waveIndex)
+void function SetEnemyAmountNetVars( int waveIndex )
 {
 	int total = 0
 	table<int,int> npcs
-	npcs[eFD_AITypeIDs.TITAN]<-0
-	npcs[eFD_AITypeIDs.TITAN_NUKE]<-0
-	npcs[eFD_AITypeIDs.TITAN_ARC]<-0
-	npcs[eFD_AITypeIDs.TITAN_MORTAR]<-0
-	npcs[eFD_AITypeIDs.GRUNT]<-0
-	npcs[eFD_AITypeIDs.SPECTRE]<-0
-	npcs[eFD_AITypeIDs.SPECTRE_MORTAR]<-0
-	npcs[eFD_AITypeIDs.STALKER]<-0
-	npcs[eFD_AITypeIDs.REAPER]<-0
-	npcs[eFD_AITypeIDs.TICK]<-0
-	npcs[eFD_AITypeIDs.DRONE]<-0
-	npcs[eFD_AITypeIDs.DRONE_CLOAK]<-0
-	// npcs[eFD_AITypeIDs.RONIN]<-0
-	// npcs[eFD_AITypeIDs.NORTHSTAR]<-0
-	// npcs[eFD_AITypeIDs.SCORCH]<-0
-	// npcs[eFD_AITypeIDs.LEGION]<-0
-	// npcs[eFD_AITypeIDs.TONE]<-0
-	// npcs[eFD_AITypeIDs.ION]<-0
-	// npcs[eFD_AITypeIDs.MONARCH]<-0
-	// npcs[eFD_AITypeIDs.TITAN_SNIPER]<-0
+	npcs[eFD_AITypeIDs.TITAN] <- 0
+	npcs[eFD_AITypeIDs.TITAN_NUKE] <- 0
+	npcs[eFD_AITypeIDs.TITAN_ARC] <- 0
+	npcs[eFD_AITypeIDs.TITAN_MORTAR] <- 0
+	npcs[eFD_AITypeIDs.GRUNT] <- 0
+	npcs[eFD_AITypeIDs.SPECTRE] <- 0
+	npcs[eFD_AITypeIDs.SPECTRE_MORTAR] <- 0
+	npcs[eFD_AITypeIDs.STALKER] <- 0
+	npcs[eFD_AITypeIDs.REAPER] <- 0
+	npcs[eFD_AITypeIDs.TICK] <- 0
+	npcs[eFD_AITypeIDs.DRONE] <- 0
+	npcs[eFD_AITypeIDs.DRONE_CLOAK] <- 0
+	// npcs[eFD_AITypeIDs.RONIN] <- 0
+	// npcs[eFD_AITypeIDs.NORTHSTAR] <- 0
+	// npcs[eFD_AITypeIDs.SCORCH] <- 0
+	// npcs[eFD_AITypeIDs.LEGION] <- 0
+	// npcs[eFD_AITypeIDs.TONE] <- 0
+	// npcs[eFD_AITypeIDs.ION] <- 0
+	// npcs[eFD_AITypeIDs.MONARCH] <- 0
+	// npcs[eFD_AITypeIDs.TITAN_SNIPER] <- 0
 
 
-	foreach(WaveEvent e in waveEvents[waveIndex])
+	foreach( WaveEvent e in waveEvents[waveIndex] )
 	{
-		if(e.spawnEvent.spawnAmount==0)
+		if( e.spawnEvent.spawnAmount == 0 )
 			continue
-		switch(e.spawnEvent.spawnType)
+		switch( e.spawnEvent.spawnType )
 		{
-			case(eFD_AITypeIDs.TITAN):
-			case(eFD_AITypeIDs.RONIN):
-			case(eFD_AITypeIDs.NORTHSTAR):
-			case(eFD_AITypeIDs.SCORCH):
-			case(eFD_AITypeIDs.TONE):
-			case(eFD_AITypeIDs.ION):
-			case(eFD_AITypeIDs.MONARCH):
-			case(eFD_AITypeIDs.LEGION):
-			case(eFD_AITypeIDs.TITAN_SNIPER):
-				npcs[eFD_AITypeIDs.TITAN]+=e.spawnEvent.spawnAmount
+			case( eFD_AITypeIDs.TITAN ):
+			case( eFD_AITypeIDs.RONIN ):
+			case( eFD_AITypeIDs.NORTHSTAR ):
+			case( eFD_AITypeIDs.SCORCH ):
+			case( eFD_AITypeIDs.TONE ):
+			case( eFD_AITypeIDs.ION ):
+			case( eFD_AITypeIDs.MONARCH ):
+			case( eFD_AITypeIDs.LEGION ):
+			case( eFD_AITypeIDs.TITAN_SNIPER ):
+				npcs[eFD_AITypeIDs.TITAN] += e.spawnEvent.spawnAmount
 				break
 			default:
-				npcs[e.spawnEvent.spawnType]+=e.spawnEvent.spawnAmount
+				npcs[e.spawnEvent.spawnType] += e.spawnEvent.spawnAmount
 				
 		}
 		total+= e.spawnEvent.spawnAmount
 	}
-	SetGlobalNetInt("FD_AICount_Titan",npcs[eFD_AITypeIDs.TITAN])
-	SetGlobalNetInt("FD_AICount_Titan_Nuke",npcs[eFD_AITypeIDs.TITAN_NUKE])
-	SetGlobalNetInt("FD_AICount_Titan_Mortar",npcs[eFD_AITypeIDs.TITAN_MORTAR])
-	SetGlobalNetInt("FD_AICount_Titan_Arc",npcs[eFD_AITypeIDs.TITAN_ARC])
-	SetGlobalNetInt("FD_AICount_Grunt",npcs[eFD_AITypeIDs.GRUNT])
-	SetGlobalNetInt("FD_AICount_Spectre",npcs[eFD_AITypeIDs.SPECTRE])
-	SetGlobalNetInt("FD_AICount_Spectre_Mortar",npcs[eFD_AITypeIDs.SPECTRE_MORTAR])
-	SetGlobalNetInt("FD_AICount_Stalker",npcs[eFD_AITypeIDs.STALKER])
-	SetGlobalNetInt("FD_AICount_Reaper",npcs[eFD_AITypeIDs.REAPER])
-	SetGlobalNetInt("FD_AICount_Ticks",npcs[eFD_AITypeIDs.TICK])
-	SetGlobalNetInt("FD_AICount_Drone",npcs[eFD_AITypeIDs.DRONE])
-	SetGlobalNetInt("FD_AICount_Drone_Cloak",npcs[eFD_AITypeIDs.DRONE_CLOAK])
-	SetGlobalNetInt("FD_AICount_Current",total)
-	SetGlobalNetInt("FD_AICount_Total",total)
+	SetGlobalNetInt( "FD_AICount_Titan", npcs[eFD_AITypeIDs.TITAN] )
+	SetGlobalNetInt( "FD_AICount_Titan_Nuke", npcs[eFD_AITypeIDs.TITAN_NUKE] )
+	SetGlobalNetInt( "FD_AICount_Titan_Mortar", npcs[eFD_AITypeIDs.TITAN_MORTAR] )
+	SetGlobalNetInt( "FD_AICount_Titan_Arc", npcs[eFD_AITypeIDs.TITAN_ARC] )
+	SetGlobalNetInt( "FD_AICount_Grunt", npcs[eFD_AITypeIDs.GRUNT] )
+	SetGlobalNetInt( "FD_AICount_Spectre", npcs[eFD_AITypeIDs.SPECTRE] )
+	SetGlobalNetInt( "FD_AICount_Spectre_Mortar", npcs[eFD_AITypeIDs.SPECTRE_MORTAR] )
+	SetGlobalNetInt( "FD_AICount_Stalker", npcs[eFD_AITypeIDs.STALKER] )
+	SetGlobalNetInt( "FD_AICount_Reaper", npcs[eFD_AITypeIDs.REAPER] )
+	SetGlobalNetInt( "FD_AICount_Ticks", npcs[eFD_AITypeIDs.TICK] )
+	SetGlobalNetInt( "FD_AICount_Drone", npcs[eFD_AITypeIDs.DRONE] )
+	SetGlobalNetInt( "FD_AICount_Drone_Cloak", npcs[eFD_AITypeIDs.DRONE_CLOAK] )
+	SetGlobalNetInt( "FD_AICount_Current", total )
+	SetGlobalNetInt( "FD_AICount_Total", total )
 
 }
 
 
 
-bool function runWave(int waveIndex,bool shouldDoBuyTime)
+bool function runWave( int waveIndex, bool shouldDoBuyTime )
 {
 
-	SetGlobalNetInt("FD_currentWave",waveIndex)
+	SetGlobalNetInt( "FD_currentWave", waveIndex )
 	file.havesterWasDamaged = false
 	file.harvesterShieldDown = false
-	SetEnemyAmountNetVars(waveIndex)
-	for(int i = 0; i<20;i++)//Number of npc type ids
+	SetEnemyAmountNetVars( waveIndex )
+	for( int i = 0; i < 20; i++ )//Number of npc type ids
 	{
-		file.harvesterDamageSource.append(0.0)
+		file.harvesterDamageSource.append( 0.0 )
 	}
-	foreach(entity player in GetPlayerArray())
+	foreach( entity player in GetPlayerArray() )
 	{
 		file.players[player].diedThisRound = false
 		file.players[player].scoreThisRound = 0
 	}
-	array<int> enemys = getHighestEnemyAmountsForWave(waveIndex)
+	array<int> enemys = getHighestEnemyAmountsForWave( waveIndex )
 
-	foreach(entity player in GetPlayerArray())
+	foreach( entity player in GetPlayerArray() )
 	{
-		Remote_CallFunction_NonReplay(player,"ServerCallback_FD_AnnouncePreParty",enemys[0],enemys[1],enemys[2],enemys[3],enemys[4],enemys[5],enemys[6],enemys[7],enemys[8])
+		Remote_CallFunction_NonReplay( player, "ServerCallback_FD_AnnouncePreParty", enemys[0], enemys[1], enemys[2], enemys[3], enemys[4], enemys[5], enemys[6], enemys[7], enemys[8] )
 	}
-	if(shouldDoBuyTime)
+	if( shouldDoBuyTime )
 	{
-		SetGlobalNetInt("FD_waveState",WAVE_STATE_BREAK)
+		SetGlobalNetInt( "FD_waveState", WAVE_STATE_BREAK )
 		OpenBoostStores()
-		foreach(entity player in GetPlayerArray())
-			Remote_CallFunction_NonReplay(player,"ServerCallback_FD_NotifyStoreOpen")
-		while(Time()<GetGlobalNetTime("FD_nextWaveStartTime"))
+		foreach( entity player in GetPlayerArray() )
+			Remote_CallFunction_NonReplay( player, "ServerCallback_FD_NotifyStoreOpen" )
+		while( Time() < GetGlobalNetTime( "FD_nextWaveStartTime" ) )
 		{
-			if(allPlayersReady())
-				SetGlobalNetTime("FD_nextWaveStartTime",Time())
+			if( allPlayersReady() )
+				SetGlobalNetTime( "FD_nextWaveStartTime", Time() )
 			WaitFrame()
 		}
 
 		CloseBoostStores()
-		MessageToTeam(TEAM_MILITIA,eEventNotifications.FD_StoreClosing)
+		MessageToTeam( TEAM_MILITIA, eEventNotifications.FD_StoreClosing )
 	}
 	
 	//SetGlobalNetTime("FD_nextWaveStartTime",Time()+10)
 	wait 10
-	SetGlobalNetInt("FD_waveState",WAVE_STATE_INCOMING)
-	foreach(entity player in GetPlayerArray())
+	SetGlobalNetInt( "FD_waveState", WAVE_STATE_INCOMING )
+	foreach( entity player in GetPlayerArray() )
 	{
-		Remote_CallFunction_NonReplay(player,"ServerCallback_FD_ClearPreParty")
-		player.SetPlayerNetBool("FD_readyForNextWave",false)
+		Remote_CallFunction_NonReplay( player, "ServerCallback_FD_ClearPreParty" )
+		player.SetPlayerNetBool( "FD_readyForNextWave", false )
 	}
-	SetGlobalNetBool("FD_waveActive",true)
-	MessageToTeam(TEAM_MILITIA,eEventNotifications.FD_AnnounceWaveStart)
-	SetGlobalNetInt("FD_waveState",WAVE_STATE_BREAK)
+	SetGlobalNetBool( "FD_waveActive", true )
+	MessageToTeam( TEAM_MILITIA, eEventNotifications.FD_AnnounceWaveStart )
+	SetGlobalNetInt( "FD_waveState", WAVE_STATE_BREAK )
 	
 	//main wave loop
 	thread SetWaveStateReady()
 	executeWave()
-	SetGlobalNetInt("FD_waveState",WAVE_STATE_COMPLETE)
-	if(!IsAlive(fd_harvester.harvester))
+	SetGlobalNetInt( "FD_waveState", WAVE_STATE_COMPLETE )
+	if( !IsAlive( fd_harvester.harvester ) )
 	{
 		float totalDamage = 0.0
-		array<float> highestDamage = [0.0,0.0,0.0]
-		array<int> highestDamageSource = [-1,-1,-1]
+		array<float> highestDamage = [ 0.0, 0.0, 0.0 ]
+		array<int> highestDamageSource = [ -1, -1, -1 ]
 		foreach(index,float damage in file.harvesterDamageSource)
 		{
 			totalDamage += damage
-			if(highestDamage[0]<damage)
+			if( highestDamage[0] < damage )
 			{
 				highestDamage[2] = highestDamage[1]
 				highestDamageSource[2] = highestDamageSource[1]
@@ -524,34 +528,34 @@ bool function runWave(int waveIndex,bool shouldDoBuyTime)
 				highestDamageSource[0] = index
 				highestDamage[0] = damage
 			}
-			else if(highestDamage[1]<damage)
+			else if( highestDamage[1] < damage )
 			{
 				highestDamage[2] = highestDamage[1]
 				highestDamageSource[2] = highestDamageSource[1]
 				highestDamage[1] = damage
 				highestDamageSource[1] = index
 			}
-			else if(highestDamage[2]<damage)
+			else if( highestDamage[2] < damage )
 			{
 				highestDamage[2] = damage
 				highestDamageSource[2] = index
 			}
 		}
 
-		foreach(entity player in GetPlayerArray())
+		foreach( entity player in GetPlayerArray() )
 		{
-			Remote_CallFunction_NonReplay(player,"ServerCallback_FD_DisplayHarvesterKiller",GetGlobalNetInt("FD_restartsRemaining"),getHintForTypeId(highestDamageSource[0]),highestDamageSource[0],highestDamage[0]/totalDamage,highestDamageSource[1],highestDamage[1]/totalDamage,highestDamageSource[2],highestDamage[2]/totalDamage)
+			Remote_CallFunction_NonReplay( player, "ServerCallback_FD_DisplayHarvesterKiller", GetGlobalNetInt("FD_restartsRemaining"), getHintForTypeId(highestDamageSource[0]), highestDamageSource[0], highestDamage[0] / totalDamage, highestDamageSource[1], highestDamage[1] / totalDamage , highestDamageSource[2], highestDamage[2] / totalDamage )
 		}
 
-		if(GetGlobalNetInt("FD_restartsRemaining")>0)
+		if( GetGlobalNetInt( "FD_restartsRemaining" ) > 0 )
 			FD_DecrementRestarts()
 		else
 			SetRoundBased(false)
-		SetWinner(TEAM_IMC)//restart round
+		SetWinner( TEAM_IMC )//restart round
 		spawnedNPCs = [] // reset npcs count
 		restetWaveEvents()
-		foreach(player in GetPlayerArray())
-			PlayerEarnMeter_AddEarnedAndOwned(player,1.0,1.0)
+		foreach( player in GetPlayerArray() )
+			PlayerEarnMeter_AddEarnedAndOwned( player, 1.0, 1.0 )
 		return false
 	}
 
@@ -559,26 +563,26 @@ bool function runWave(int waveIndex,bool shouldDoBuyTime)
 	wait 2
 	//wave end
 
-	SetGlobalNetBool("FD_waveActive",false)
-	MessageToTeam(TEAM_MILITIA,eEventNotifications.FD_AnnounceWaveEnd)
+	SetGlobalNetBool( "FD_waveActive", false )
+	MessageToTeam( TEAM_MILITIA, eEventNotifications.FD_AnnounceWaveEnd )
 
 	if ( isFinalWave() && IsAlive( fd_harvester.harvester ) )
 	{
 		//Game won code
-		MessageToTeam(TEAM_MILITIA,eEventNotifications.FD_AnnounceWaveEnd)
-		foreach(entity player in GetPlayerArray())
+		MessageToTeam( TEAM_MILITIA, eEventNotifications.FD_AnnounceWaveEnd )
+		foreach( entity player in GetPlayerArray() )
 		{
-			AddPlayerScore(player,"FDTeamWave")
+			AddPlayerScore( player, "FDTeamWave" )
 		}
 		wait 1
 		int highestScore = 0;
 		entity highestScore_player = GetPlayerArray()[0]
-		foreach(entity player in GetPlayerArray())
+		foreach( entity player in GetPlayerArray() )
 		{
 			
-			if(!file.players[player].diedThisRound)
-				AddPlayerScore(player,"FDDidntDie")
-			if(highestScore<file.players[player].scoreThisRound)
+			if( !file.players[player].diedThisRound )
+				AddPlayerScore( player, "FDDidntDie" )
+			if( highestScore < file.players[player].scoreThisRound )
 			{
 				highestScore = file.players[player].scoreThisRound
 				highestScore_player = player
@@ -586,11 +590,11 @@ bool function runWave(int waveIndex,bool shouldDoBuyTime)
 
 		}
 		file.players[highestScore_player].totalMVPs += 1
-		AddPlayerScore(highestScore_player,"FDWaveMVP")
+		AddPlayerScore( highestScore_player, "FDWaveMVP" )
 		wait 1
-		foreach(entity player in GetPlayerArray())
-			if(!file.havesterWasDamaged)
-				AddPlayerScore(player,"FDTeamFlawlessWave")
+		foreach( entity player in GetPlayerArray() )
+			if( !file.havesterWasDamaged )
+				AddPlayerScore( player, "FDTeamFlawlessWave" )
 
 
 
@@ -610,7 +614,7 @@ bool function runWave(int waveIndex,bool shouldDoBuyTime)
 	{
 		float damagepercent = ( ( file.harvesterDamageTaken / fd_harvester.harvester.GetMaxHealth().tofloat() ) * 100 )
 		float healthpercent = ( ( fd_harvester.harvester.GetHealth().tofloat() / fd_harvester.harvester.GetMaxHealth() ) * 100 )
-		if (damagepercent < 5) // if less than 5% damage taken
+		if ( damagepercent < 5 ) // if less than 5% damage taken
 			PlayFactionDialogueToTeam( "fd_waveRecapNearPerfect", TEAM_MILITIA )
 		else if ( healthpercent < 15 ) // if less than 15% health remains and more than 5% damage taken
 			PlayFactionDialogueToTeam( "fd_waveRecapLowHealth", TEAM_MILITIA )
@@ -626,33 +630,33 @@ bool function runWave(int waveIndex,bool shouldDoBuyTime)
 	}
 
 	//Player scoring
-	MessageToTeam(TEAM_MILITIA,eEventNotifications.FD_NotifyWaveBonusIncoming)
+	MessageToTeam( TEAM_MILITIA, eEventNotifications.FD_NotifyWaveBonusIncoming )
 	wait 2
-	foreach(entity player in GetPlayerArray())
+	foreach( entity player in GetPlayerArray() )
 	{
-		if (isSecondWave())
+		if ( isSecondWave() )
 			PlayFactionDialogueToPlayer( "fd_wavePayoutFirst", player )
 		else
 			PlayFactionDialogueToPlayer( "fd_wavePayoutAddtnl", player )
-		AddPlayerScore(player,"FDTeamWave")
-		AddMoneyToPlayer(player,GetCurrentPlaylistVarInt("fd_money_per_round",600))
+		AddPlayerScore( player, "FDTeamWave" )
+		AddMoneyToPlayer( player, GetCurrentPlaylistVarInt( "fd_money_per_round", 600 ) )
 		// this function is called "Set" but in reality it is "Add"
-		SetJoinInProgressBonus( GetCurrentPlaylistVarInt("fd_money_per_round",600) )
-		EmitSoundOnEntityOnlyToPlayer(player,player,"HUD_MP_BountyHunt_BankBonusPts_Deposit_Start_1P")
+		SetJoinInProgressBonus( GetCurrentPlaylistVarInt( "fd_money_per_round" ,600 ) )
+		EmitSoundOnEntityOnlyToPlayer( player, player, "HUD_MP_BountyHunt_BankBonusPts_Deposit_Start_1P" )
 	}
 	wait 1
 	int highestScore = 0;
 	entity highestScore_player = GetPlayerArray()[0]
-	foreach(entity player in GetPlayerArray())
+	foreach( entity player in GetPlayerArray() )
 	{
-		if(!file.players[player].diedThisRound)
+		if( !file.players[player].diedThisRound )
 		{
-			AddPlayerScore(player,"FDDidntDie")
+			AddPlayerScore( player, "FDDidntDie" )
 			player.AddToPlayerGameStat( PGS_ASSAULT_SCORE, FD_SCORE_DIDNT_DIE )
 		}
-		AddMoneyToPlayer(player,100)
-		EmitSoundOnEntityOnlyToPlayer(player,player,"HUD_MP_BountyHunt_BankBonusPts_Deposit_Start_1P")
-		if(highestScore<file.players[player].scoreThisRound)
+		AddMoneyToPlayer( player, 100 )
+		EmitSoundOnEntityOnlyToPlayer( player, player, "HUD_MP_BountyHunt_BankBonusPts_Deposit_Start_1P" )
+		if( highestScore<file.players[player].scoreThisRound )
 		{
 			highestScore = file.players[player].scoreThisRound
 			highestScore_player = player
@@ -661,48 +665,50 @@ bool function runWave(int waveIndex,bool shouldDoBuyTime)
 	}
 	wait 1
 	file.players[highestScore_player].totalMVPs += 1
-	AddPlayerScore(highestScore_player,"FDWaveMVP")
-	AddMoneyToPlayer(highestScore_player,100)
+	AddPlayerScore( highestScore_player, "FDWaveMVP" )
+	AddMoneyToPlayer( highestScore_player, 100 )
 	highestScore_player.AddToPlayerGameStat( PGS_ASSAULT_SCORE, FD_SCORE_MVP )
-	EmitSoundOnEntityOnlyToPlayer(highestScore_player,highestScore_player,"HUD_MP_BountyHunt_BankBonusPts_Deposit_Start_1P")
-	foreach(entity player in GetPlayerArray())
+	EmitSoundOnEntityOnlyToPlayer( highestScore_player, highestScore_player, "HUD_MP_BountyHunt_BankBonusPts_Deposit_Start_1P" )
+	foreach( entity player in GetPlayerArray() )
 	{
-		Remote_CallFunction_NonReplay(player,"ServerCallback_FD_NotifyMVP",highestScore_player.GetEncodedEHandle())
+		Remote_CallFunction_NonReplay( player, "ServerCallback_FD_NotifyMVP", highestScore_player.GetEncodedEHandle() )
 	}
 	wait 1
-	foreach(entity player in GetPlayerArray())
+	foreach( entity player in GetPlayerArray() )
 	{
 
-		if(!file.havesterWasDamaged)
+		if( !file.havesterWasDamaged )
 		{
-			AddPlayerScore(player,"FDTeamFlawlessWave")
-			AddMoneyToPlayer(player,100)
+			AddPlayerScore( player, "FDTeamFlawlessWave" )
+			AddMoneyToPlayer( player, 100)
 			player.AddToPlayerGameStat( PGS_ASSAULT_SCORE, FD_SCORE_TEAM_FLAWLESS_WAVE )
-			EmitSoundOnEntityOnlyToPlayer(player,player,"HUD_MP_BountyHunt_BankBonusPts_Deposit_Start_1P")
+			EmitSoundOnEntityOnlyToPlayer( player, player, "HUD_MP_BountyHunt_BankBonusPts_Deposit_Start_1P" )
 		}
 	}
 
 	wait 1
 
-	if(waveIndex<waveEvents.len())
-		SetGlobalNetTime("FD_nextWaveStartTime",Time()+75)
+	if( waveIndex<waveEvents.len() )
+		SetGlobalNetTime( "FD_nextWaveStartTime", Time() + 75 )
 
 	return true
 
 }
 
-void function SetWaveStateReady(){
+void function SetWaveStateReady()
+{
 	wait 5
-	SetGlobalNetInt("FD_waveState",WAVE_STATE_IN_PROGRESS)
+	SetGlobalNetInt( "FD_waveState", WAVE_STATE_IN_PROGRESS )
 }
 
-void function gameWonMedals(){
+void function gameWonMedals()
+{
 	table<string,entity> medals
 	//most mvps
 }
 
 
-void function OnHarvesterDamaged(entity harvester, var damageInfo)
+void function OnHarvesterDamaged( entity harvester, var damageInfo )
 {
 	if ( !IsValid( harvester ) )
 		return
@@ -725,15 +731,15 @@ void function OnHarvesterDamaged(entity harvester, var damageInfo)
 
 	fd_harvester.lastDamage = Time()
 
-	damageAmount = (damageAmount * GetCurrentPlaylistVarFloat("fd_player_damage_scalar",1.0))
+	damageAmount = ( damageAmount * GetCurrentPlaylistVarFloat( "fd_player_damage_scalar", 1.0 ) )
 
 
 
-	float shieldPercent = ( (harvester.GetShieldHealth().tofloat() / harvester.GetShieldHealthMax()) * 100 )
-	if ( shieldPercent < 100 && !file.harvesterShieldDown)
+	float shieldPercent = ( ( harvester.GetShieldHealth().tofloat() / harvester.GetShieldHealthMax() ) * 100 )
+	if ( shieldPercent < 100 && !file.harvesterShieldDown )
 		PlayFactionDialogueToTeam( "fd_baseShieldTakingDmg", TEAM_MILITIA )
 
-	if ( shieldPercent < 35 && !file.harvesterShieldDown) // idk i made this up
+	if ( shieldPercent < 35 && !file.harvesterShieldDown ) // idk i made this up
 		PlayFactionDialogueToTeam( "fd_baseShieldLow", TEAM_MILITIA )
 
 	if ( harvester.GetShieldHealth() == 0 )
@@ -748,21 +754,21 @@ void function OnHarvesterDamaged(entity harvester, var damageInfo)
 		float oldhealthpercent = ( ( harvester.GetHealth().tofloat() / harvester.GetMaxHealth() ) * 100 )
 		float healthpercent = ( ( newHealth / harvester.GetMaxHealth() ) * 100 )
 
-		if (healthpercent <= 75 && oldhealthpercent > 75) // we don't want the dialogue to keep saying "Harvester is below 75% health" everytime they take additional damage
+		if ( healthpercent <= 75 && oldhealthpercent > 75 ) // we don't want the dialogue to keep saying "Harvester is below 75% health" everytime they take additional damage
 			PlayFactionDialogueToTeam( "fd_baseHealth75", TEAM_MILITIA )
 
-		if (healthpercent <= 50 && oldhealthpercent > 50)
+		if ( healthpercent <= 50 && oldhealthpercent > 50 )
 			PlayFactionDialogueToTeam( "fd_baseHealth50", TEAM_MILITIA )
 
-		if (healthpercent <= 25 && oldhealthpercent > 25)
+		if ( healthpercent <= 25 && oldhealthpercent > 25 )
 			PlayFactionDialogueToTeam( "fd_baseHealth25", TEAM_MILITIA )
 
-		if (healthpercent <= 10)
+		if  (healthpercent <= 10 )
 			PlayFactionDialogueToTeam( "fd_baseLowHealth", TEAM_MILITIA )
 
 		if( newHealth <= 0 )
 		{
-			EmitSoundAtPosition(TEAM_UNASSIGNED,fd_harvester.harvester.GetOrigin(),"coop_generator_destroyed")
+			EmitSoundAtPosition( TEAM_UNASSIGNED, fd_harvester.harvester.GetOrigin(), "coop_generator_destroyed" )
 			newHealth = 0
 			PlayFactionDialogueToTeam( "fd_baseDeath", TEAM_MILITIA )
 			fd_harvester.rings.Anim_Stop()
@@ -772,7 +778,7 @@ void function OnHarvesterDamaged(entity harvester, var damageInfo)
 	}
 
 	if ( DamageInfo_GetDamageSourceIdentifier( damageInfo ) == eDamageSourceId.mp_titancore_laser_cannon )
-    	DamageInfo_SetDamage( damageInfo, DamageInfo_GetDamage( damageInfo )/10 ) // laser core shreds super well for some reason
+    	DamageInfo_SetDamage( damageInfo, DamageInfo_GetDamage( damageInfo ) / 10 ) // laser core shreds super well for some reason
 
 	if ( attacker.IsPlayer() )
 		attacker.NotifyDidDamage( harvester, DamageInfo_GetHitBox( damageInfo ), DamageInfo_GetDamagePosition( damageInfo ), DamageInfo_GetCustomDamageType( damageInfo ), DamageInfo_GetDamage( damageInfo ), DamageInfo_GetDamageFlags( damageInfo ), DamageInfo_GetHitGroup( damageInfo ), DamageInfo_GetWeapon( damageInfo ), DamageInfo_GetDistFromAttackOrigin( damageInfo ) )
@@ -780,7 +786,7 @@ void function OnHarvesterDamaged(entity harvester, var damageInfo)
 
 void function FD_NPCCleanup()
 {
-	foreach ( entity npc in GetEntArrayByClass_Expensive("C_AI_BaseNPC") )
+	foreach ( entity npc in GetEntArrayByClass_Expensive( "C_AI_BaseNPC" ) )
 		if ( IsValid( npc ) )
 			npc.Destroy()
 }
@@ -790,7 +796,7 @@ void function HarvesterThink()
 	entity harvester = fd_harvester.harvester
 
 
-	EmitSoundOnEntity( harvester,"coop_generator_startup" )
+	EmitSoundOnEntity( harvester, "coop_generator_startup" )
 
 	float lastTime = Time()
 	wait 4
@@ -809,13 +815,13 @@ void function HarvesterThink()
 
 		if ( IsValid( fd_harvester.particleShield ) )
 		{
-			vector shieldColor = GetShieldTriLerpColor(1.0-(harvester.GetShieldHealth().tofloat()/harvester.GetShieldHealthMax().tofloat()))
+			vector shieldColor = GetShieldTriLerpColor( 1.0 - ( harvester.GetShieldHealth().tofloat() / harvester.GetShieldHealthMax().tofloat() ) )
 			EffectSetControlPointVector( fd_harvester.particleShield, 1, shieldColor )
 		}
 
 		if( IsValid( fd_harvester.particleBeam ) )
 		{
-			vector beamColor = GetShieldTriLerpColor( 1.0 - (harvester.GetHealth().tofloat() / harvester.GetMaxHealth().tofloat() ) )
+			vector beamColor = GetShieldTriLerpColor( 1.0 - ( harvester.GetHealth().tofloat() / harvester.GetMaxHealth().tofloat() ) )
 			EffectSetControlPointVector( fd_harvester.particleBeam, 1, beamColor )
 		}
 
@@ -823,21 +829,21 @@ void function HarvesterThink()
 			if( IsValid( fd_harvester.particleShield ) )
 				fd_harvester.particleShield.Destroy()
 
-		if ( ( ( currentTime-fd_harvester.lastDamage) >= GENERATOR_SHIELD_REGEN_DELAY ) && ( harvester.GetShieldHealth() < harvester.GetShieldHealthMax() ) )
+		if ( ( ( currentTime-fd_harvester.lastDamage ) >= GENERATOR_SHIELD_REGEN_DELAY ) && ( harvester.GetShieldHealth() < harvester.GetShieldHealthMax() ) )
 		{
-			if( !IsValid(fd_harvester.particleShield) )
-				generateShieldFX(fd_harvester)
+			if( !IsValid( fd_harvester.particleShield ) )
+				generateShieldFX( fd_harvester )
 
 			//printt((currentTime-fd_harvester.lastDamage))
 
-			if(harvester.GetShieldHealth()==0)
-				EmitSoundOnEntity(harvester,"coop_generator_shieldrecharge_start")
+			if( harvester.GetShieldHealth() == 0 )
+				EmitSoundOnEntity( harvester, "coop_generator_shieldrecharge_start" )
 
 			if (!isRegening)
 			{
-				EmitSoundOnEntity( harvester,"coop_generator_shieldrecharge_resume" )
+				EmitSoundOnEntity( harvester, "coop_generator_shieldrecharge_resume" )
 				file.harvesterShieldDown = false
-				if (GetGlobalNetBool("FD_waveActive"))
+				if (GetGlobalNetBool( "FD_waveActive" ) )
 					PlayFactionDialogueToTeam( "fd_baseShieldRecharging", TEAM_MILITIA )
 				else
 					PlayFactionDialogueToTeam( "fd_baseShieldRechargingShort", TEAM_MILITIA )
@@ -848,22 +854,22 @@ void function HarvesterThink()
 
 			if ( newShieldHealth >= harvester.GetShieldHealthMax() )
 			{
-				StopSoundOnEntity(harvester,"coop_generator_shieldrecharge_resume")
-				harvester.SetShieldHealth(harvester.GetShieldHealthMax())
-				EmitSoundOnEntity(harvester,"coop_generator_shieldrecharge_end")
-				if (GetGlobalNetBool("FD_waveActive"))
+				StopSoundOnEntity( harvester, "coop_generator_shieldrecharge_resume" )
+				harvester.SetShieldHealth( harvester.GetShieldHealthMax())
+				EmitSoundOnEntity( harvester, "coop_generator_shieldrecharge_end" )
+				if( GetGlobalNetBool( "FD_waveActive" ) )
 					PlayFactionDialogueToTeam( "fd_baseShieldUp", TEAM_MILITIA )
 				isRegening = false
 			}
 			else
 			{
-				harvester.SetShieldHealth(newShieldHealth)
+				harvester.SetShieldHealth( newShieldHealth )
 			}
-		} else if ( ( ( currentTime-fd_harvester.lastDamage) < GENERATOR_SHIELD_REGEN_DELAY ) && ( harvester.GetShieldHealth() < harvester.GetShieldHealthMax() ) )
+		} else if ( ( ( currentTime-fd_harvester.lastDamage ) < GENERATOR_SHIELD_REGEN_DELAY ) && ( harvester.GetShieldHealth() < harvester.GetShieldHealthMax() ) )
 			isRegening = false
 
 		if ( ( lastShieldHealth > 0 ) && ( harvester.GetShieldHealth() == 0 ) )
-			EmitSoundOnEntity(harvester,"coop_generator_shielddown")
+			EmitSoundOnEntity( harvester, "coop_generator_shielddown" )
 
 		lastShieldHealth = harvester.GetShieldHealth()
 		lastTime = currentTime
@@ -882,11 +888,11 @@ void function startHarvester()
 
 void function HarvesterAlarm()
 {
-	while(IsAlive(fd_harvester.harvester))
+	while( IsAlive( fd_harvester.harvester ) )
 	{
-		if(fd_harvester.harvester.GetShieldHealth()==0)
+		if( fd_harvester.harvester.GetShieldHealth() == 0 )
 		{
-			wait EmitSoundOnEntity(fd_harvester.harvester,"coop_generator_underattack_alarm")
+			wait EmitSoundOnEntity( fd_harvester.harvester, "coop_generator_underattack_alarm" )
 		}
 		else
 		{
@@ -897,16 +903,16 @@ void function HarvesterAlarm()
 
 void function initNetVars()
 {
-	SetGlobalNetInt("FD_totalWaves",waveEvents.len())
-	SetGlobalNetInt("burn_turretLimit",2)
+	SetGlobalNetInt( "FD_totalWaves", waveEvents.len() )
+	SetGlobalNetInt( "burn_turretLimit", 2 )
 	if(!FD_HasRestarted())
 	{
 		bool showShop = false
-		SetGlobalNetInt("FD_currentWave",0)
-		if(FD_IsDifficultyLevelOrHigher(eFDDifficultyLevel.INSANE))
-			FD_SetNumAllowedRestarts(0)
+		SetGlobalNetInt( "FD_currentWave", 0 )
+		if( FD_IsDifficultyLevelOrHigher( eFDDifficultyLevel.INSANE ) )
+			FD_SetNumAllowedRestarts( 0 )
 		else
-			FD_SetNumAllowedRestarts(2)
+			FD_SetNumAllowedRestarts( 2 )
 	}
 	
 
@@ -914,13 +920,13 @@ void function initNetVars()
 
 void function FD_DamageByPlayerCallback(entity victim,var damageInfo)
 {
-	entity player = DamageInfo_GetAttacker(damageInfo)
-	if(!(player in file.players))
+	entity player = DamageInfo_GetAttacker( damageInfo )
+	if( !( player in file.players ) )
 		return
-	float damage = DamageInfo_GetDamage(damageInfo)
+	float damage = DamageInfo_GetDamage( damageInfo )
 	file.players[player].damageDealt += damage
 	file.players[player].scoreThisRound += damage.tointeger() //TODO NOT HOW SCORE WORKS
-	if(victim.IsTitan())
+	if( victim.IsTitan() )
 	{
 		//TODO Money and score for titan damage
 	}
@@ -951,7 +957,7 @@ void function DamageScaleByDifficulty( entity ent, var damageInfo )
 		return
 
 
-	DamageInfo_SetDamage( damageInfo, (damageAmount * GetCurrentPlaylistVarFloat("fd_player_damage_scalar",1.0)) )
+	DamageInfo_SetDamage( damageInfo, ( damageAmount * GetCurrentPlaylistVarFloat( "fd_player_damage_scalar", 1.0 ) ) )
 	
 
 
@@ -970,15 +976,17 @@ void function HealthScaleByDifficulty( entity ent )
 		return
 	
 	if ( ent.IsTitan() )
-		ent.SetMaxHealth( ent.GetMaxHealth() + GetCurrentPlaylistVarInt("fd_titan_health_adjust",0) )
+		ent.SetMaxHealth( ent.GetMaxHealth() + GetCurrentPlaylistVarInt( "fd_titan_health_adjust", 0 ) )
 	else
-		ent.SetMaxHealth( ent.GetMaxHealth() + GetCurrentPlaylistVarInt("fd_reaper_health_adjust",0) )
+		ent.SetMaxHealth( ent.GetMaxHealth() + GetCurrentPlaylistVarInt( "fd_reaper_health_adjust", 0 ) )
 	
-	if(GetCurrentPlaylistVarInt("fd_pro_titan_shields",0)&&ent.IsTitan()){
+	if( GetCurrentPlaylistVarInt( "fd_pro_titan_shields", 0 ) && ent.IsTitan() )
+	{
 		entity soul = ent.GetTitanSoul()
-		if(IsValid(soul)){
-			soul.SetShieldHealthMax(2500)
-			soul.SetShieldHealth(2500)
+		if( IsValid( soul ) )
+		{
+			soul.SetShieldHealthMax( 2500 )
+			soul.SetShieldHealth( 2500 )
 		}
 	}
 
@@ -988,7 +996,7 @@ void function HealthScaleByDifficulty( entity ent )
 void function FD_createHarvester()
 {
 
-	fd_harvester = SpawnHarvester(file.harvester_info.GetOrigin(),file.harvester_info.GetAngles(),GetCurrentPlaylistVarInt("fd_harvester_health",25000),GetCurrentPlaylistVarInt("fd_harvester_shield",6000),TEAM_MILITIA)
+	fd_harvester = SpawnHarvester( file.harvester_info.GetOrigin(), file.harvester_info.GetAngles(), GetCurrentPlaylistVarInt( "fd_harvester_health", 25000 ), GetCurrentPlaylistVarInt( "fd_harvester_shield", 6000 ), TEAM_MILITIA )
 	fd_harvester.harvester.Minimap_SetAlignUpright( true )
 	fd_harvester.harvester.Minimap_AlwaysShow( TEAM_IMC, null )
 	fd_harvester.harvester.Minimap_AlwaysShow( TEAM_MILITIA, null )
@@ -1000,25 +1008,27 @@ void function FD_createHarvester()
 
 bool function isFinalWave()
 {
-	return ((GetGlobalNetInt("FD_currentWave")+1)==GetGlobalNetInt("FD_totalWaves"))
+	return ( ( GetGlobalNetInt( "FD_currentWave" ) + 1 ) == GetGlobalNetInt( "FD_totalWaves" ) )
 }
 
 bool function isSecondWave()
 {
-	return ((GetGlobalNetInt("FD_currentWave")+1)==1)
+	return ( (GetGlobalNetInt( "FD_currentWave" ) + 1 ) == 1 )
 }
 
 void function LoadEntities()
 {
-	CreateBoostStoreLocation(TEAM_MILITIA,shopPosition,shopAngles)
-	foreach ( entity info_target in GetEntArrayByClass_Expensive("info_target") )
+	CreateBoostStoreLocation( TEAM_MILITIA, shopPosition, shopAngles )
+	foreach ( entity info_target in GetEntArrayByClass_Expensive( "info_target" ) )
 	{
 
 		if ( GameModeRemove( info_target ) )
 			continue
 
-		if(info_target.HasKey("editorclass")){
-			switch(info_target.kv.editorclass){
+		if( info_target.HasKey( "editorclass" ) )
+		{
+			switch( info_target.kv.editorclass )
+			{
 				case"info_fd_harvester":
 					file.harvester_info = info_target
 					break
@@ -1026,28 +1036,28 @@ void function LoadEntities()
 					entity prop = CreatePropDynamic( info_target.GetModelName(), info_target.GetOrigin(), info_target.GetAngles(), 6 )
 					break
 				case"info_fd_ai_position":
-					AddStationaryAIPosition(info_target.GetOrigin(),int(info_target.kv.aiType))
+					AddStationaryAIPosition( info_target.GetOrigin(), int( info_target.kv.aiType ) )
 					break
 				case"info_fd_route_node":
-					routeNodes.append(info_target)
+					routeNodes.append( info_target )
 					break
 				case"info_fd_smoke_screen":
-					file.smokePoints.append(info_target)
+					file.smokePoints.append( info_target )
 					break
 			}
 		}
 	}
 	ValidateAndFinalizePendingStationaryPositions()
 	initNetVars()
-	SetTeam(GetTeamEnt(TEAM_IMC),TEAM_IMC)
+	SetTeam( GetTeamEnt( TEAM_IMC ), TEAM_IMC )
 }
 
 
 bool function allPlayersReady()
 {
-	foreach(entity player in GetPlayerArray())
+	foreach( entity player in GetPlayerArray() )
 	{
-		if(!player.GetPlayerNetBool("FD_readyForNextWave"))
+		if( !player.GetPlayerNetBool( "FD_readyForNextWave" ) )
 			return false
 	}
 	return true
@@ -1057,65 +1067,65 @@ void function CheckLastPlayerReady()
 {
 	int readyplayers = 0
 	entity notready
-	foreach(entity player in GetPlayerArray())
+	foreach( entity player in GetPlayerArray() )
 	{
-		if(player.GetPlayerNetBool("FD_readyForNextWave"))
+		if( player.GetPlayerNetBool( "FD_readyForNextWave" ) )
 			readyplayers++
 		else
 			notready = player // keep a track of this player
 	}
-	if (readyplayers == GetPlayerArray().len() - 1)
+	if ( readyplayers == GetPlayerArray().len() - 1 )
 		PlayFactionDialogueToPlayer( "fd_playerNeedsToReadyUp", notready ) // ready up i swear there's one player like this in every match i've played
 }
 
 bool function ClientCommandCallbackToggleReady( entity player, array<string> args )
 {
-	if(args[0]=="true")
-		player.SetPlayerNetBool("FD_readyForNextWave",true)
-	if(args[0]=="false")
-		player.SetPlayerNetBool("FD_readyForNextWave",false)
+	if( args[0] == "true" )
+		player.SetPlayerNetBool( "FD_readyForNextWave", true )
+	if( args[0] == "false" )
+		player.SetPlayerNetBool( "FD_readyForNextWave", false )
 
 	CheckLastPlayerReady()
 	return true
 }
 
-int function getHintForTypeId(int typeId)
+int function getHintForTypeId( int typeId )
 {
 	//this is maybe a bit of an naive aproch
-	switch(typeId)
+	switch( typeId )
 		{
 			case eFD_AITypeIDs.TITAN_NUKE:
-				return (348 +RandomIntRangeInclusive(0,1))
+				return ( 348 + RandomIntRangeInclusive( 0, 1 ) )
 			case eFD_AITypeIDs.TITAN_ARC:
-				return (350 +RandomIntRangeInclusive(0,1))
+				return ( 350 + RandomIntRangeInclusive( 0, 1 ) )
 			case eFD_AITypeIDs.TITAN_MORTAR:
-				return (352 +RandomIntRangeInclusive(0,1))
+				return ( 352 + RandomIntRangeInclusive( 0, 1 ) )
 			case eFD_AITypeIDs.GRUNT:
 				return 354
 			case eFD_AITypeIDs.SPECTRE:
 				return 355
 			case eFD_AITypeIDs.SPECTRE_MORTAR:
-				return (356 +RandomIntRangeInclusive(0,1))
+				return ( 356 + RandomIntRangeInclusive( 0, 1 ) )
 			case eFD_AITypeIDs.STALKER:
-				if(RandomIntRangeInclusive(0,1)==0)
+				if( RandomIntRangeInclusive( 0, 1 ) == 0 )
 					return 358
 				else
 					return 361
 			case eFD_AITypeIDs.REAPER:
-				return (359 +RandomIntRangeInclusive(0,1))
+				return ( 359 + RandomIntRangeInclusive( 0, 1 ) )
 			case eFD_AITypeIDs.DRONE:
 				return 362
 			case eFD_AITypeIDs.TITAN_SNIPER:
-				return (371 +RandomIntRangeInclusive(0,2))
+				return ( 371 + RandomIntRangeInclusive( 0, 2 ) )
 			default:
-				return (363+RandomIntRangeInclusive(0,7))
+				return ( 363 + RandomIntRangeInclusive( 0, 7 ) )
 		}
 	unreachable
 }
 
-string function GetTargetNameForID(int typeId)
+string function GetTargetNameForID( int typeId )
 {
-	switch(typeId)
+	switch( typeId )
 		{
 			case eFD_AITypeIDs.TITAN_NUKE:
 				return "npc_titan_nuke"
@@ -1161,7 +1171,7 @@ string function GetTargetNameForID(int typeId)
 	unreachable
 }
 
-string function GetAiNetIdFromTargetName(string targetName)
+string function GetAiNetIdFromTargetName( string targetName )
 {
 	switch ( targetName )
 	{	
@@ -1215,13 +1225,13 @@ string function GetAiNetIdFromTargetName(string targetName)
 		case "tick":
 			return "FD_AICount_Ticks"
 	}
-	printt("unknown target name ",targetName)
+	printt( "unknown target name ", targetName )
 	return ""
 }
 
 
 
-void function AddTurretSentry(entity turret)
+void function AddTurretSentry( entity turret )
 {
 	turret.Minimap_AlwaysShow( TEAM_IMC, null )
 	turret.Minimap_AlwaysShow( TEAM_MILITIA, null )
@@ -1229,7 +1239,7 @@ void function AddTurretSentry(entity turret)
 	turret.Minimap_SetCustomState( eMinimapObject_npc.FD_TURRET )
 }
 
-void function DisableTitanSelection( )
+void function DisableTitanSelection()
 {
 	foreach ( entity player in GetPlayerArray() )
 	{
@@ -1237,7 +1247,7 @@ void function DisableTitanSelection( )
 	}
 }
 
-void function EnableTitanSelection( )
+void function EnableTitanSelection()
 {
 	foreach ( entity player in GetPlayerArray() )
 	{
