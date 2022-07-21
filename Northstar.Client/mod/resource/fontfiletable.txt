@@ -19,7 +19,7 @@ FontFileTable
 
 	"arial unicode ms"			"resource/Lato-Regular.ttf"
 
-	"lucida console"			"resource/FiraCode-Regular.ttf"			[$PC]
+	"lucida console"			"resource/NorthstarMono.ttf"			[$PC]
 	"lucida console"			"resource/MetronicPro-Regular.vfont"	[$GAMECONSOLE]
 
 	"tahoma"					"fonts\\tahoma.ttf"						[$PC]
