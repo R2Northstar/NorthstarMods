@@ -142,7 +142,7 @@ void function GamemodeFD_OnPlayerKilled( entity victim, entity attacker, var dam
 			PlayFactionDialogueToPlayer( "fd_singlePilotDown", player )
 		else if ( deaths > 1 && deaths < militiaplayers.len() - 1 ) // multiple pilots died but at least one alive
 			PlayFactionDialogueToPlayer( "fd_multiPilotDown", player )
-		else if (d eaths == militiaplayers.len() - 1 ) // ur shit out of luck ur the only survivor
+		else if ( deaths == militiaplayers.len() - 1 ) // ur shit out of luck ur the only survivor
 			PlayFactionDialogueToPlayer( "fd_onlyPlayerIsAlive", player )
 	}
 }
