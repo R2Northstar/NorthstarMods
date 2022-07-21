@@ -730,49 +730,46 @@ void function spawnSuperSpectreWithMinion(SmokeEvent smokeEvent,SpawnEvent spawn
 
 }
 
-void function spawnDroppodGrunts(SmokeEvent smokeEvent,SpawnEvent spawnEvent,FlowControlEvent flowControlEvent,SoundEvent soundEvent)
+void function spawnDroppodGrunts( SmokeEvent smokeEvent, SpawnEvent spawnEvent, FlowControlEvent flowControlEvent, SoundEvent soundEvent )
 {
-	PingMinimap(spawnEvent.origin.x, spawnEvent.origin.y, 4, 600, 150, 0)
+	PingMinimap( spawnEvent.origin.x, spawnEvent.origin.y, 4, 600, 150, 0 )
 	entity pod = CreateDropPod( spawnEvent.origin, <0,0,0> )
 	SetTeam( pod, TEAM_IMC )
 	InitFireteamDropPod( pod )
-	waitthread LaunchAnimDropPod( pod, "pod_testpath", spawnEvent.origin, <0,0,0> )
+	waitthread LaunchAnimDropPod( pod, "pod_testpath", spawnEvent.origin, < 0, 0, 0 > )
 
 	string squadName = MakeSquadName( TEAM_IMC, UniqueString( "ZiplineTable" ) )
 	array<entity> guys
-	bool adychecked = false
 
 	for ( int i = 0; i < spawnEvent.spawnAmount; i++ )
     {
-		entity guy
+		entity guy = CreateSoldier( TEAM_IMC, spawnEvent.origin,<0,0,0> )
 
-		// should this grunt be a shield captain?
-		if (i < GetCurrentPlaylistVarInt("fd_grunt_shield_captains", 0))
-			guy = CreateShieldCaptain( TEAM_IMC, spawnEvent.origin,<0,0,0> )
-		else
-			guy = CreateSoldier( TEAM_IMC, spawnEvent.origin,<0,0,0> )
-
-
-		if(spawnEvent.entityGlobalKey!="")
-			GlobalEventEntitys[spawnEvent.entityGlobalKey+i.tostring()] <- guy
+		if( spawnEvent.entityGlobalKey!="" )
+			GlobalEventEntitys[ spawnEvent.entityGlobalKey + i.tostring() ] <- guy
 		SetTeam( guy, TEAM_IMC )
 		guy.EnableNPCFlag(  NPC_ALLOW_INVESTIGATE | NPC_ALLOW_HAND_SIGNALS | NPC_ALLOW_FLEE )
-		guy.DisableNPCFlag( NPC_ALLOW_PATROL)
+		guy.DisableNPCFlag( NPC_ALLOW_PATROL )
 		DispatchSpawn( guy )
+
+		// should this grunt be a shield captain?
+		if (i < GetCurrentPlaylistVarInt( "fd_grunt_shield_captains", 0 ) )
+			thread ActivatePersonalShield( guy )
 
 		guy.SetParent( pod, "ATTACH", true )
 		SetSquad( guy, squadName )
 
 		// should this grunt have an anti titan weapon instead of its normal weapon?
-		if (i < GetCurrentPlaylistVarInt("fd_grunt_at_weapon_users", 0))
+		if ( i < GetCurrentPlaylistVarInt( "fd_grunt_at_weapon_users", 0 ) )
 		{
-			guy.TakeActiveWeapon()
-			guy.GiveWeapon("mp_weapon_defender") // do grunts ever get a different anti titan weapon?
+			guy.GiveWeapon( "mp_weapon_defender" ) // do grunts ever get a different anti titan weapon? - yes, TODO
+			// atm they arent using their AT weapons ever, but they do in fact get them, in fact some grunts are getting 2 since they already get a rocket_launcher
+			// this seems to be a problem elsewhere as opposed to something that is wrong here
 		}
 
-		SetTargetName( guy, GetTargetNameForID(eFD_AITypeIDs.GRUNT))
-		AddMinimapForHumans(guy)
-		spawnedNPCs.append(guy)
+		SetTargetName( guy, GetTargetNameForID( eFD_AITypeIDs.GRUNT ) ) // do shield captains get their own target name in vanilla?
+		AddMinimapForHumans( guy )
+		spawnedNPCs.append( guy )
 		guys.append( guy )
 	}
 
