@@ -67,12 +67,12 @@ void function GamemodeFD_Init()
 	//general Callbacks
 	AddCallback_EntitiesDidLoad( LoadEntities )
 	AddCallback_GameStateEnter( eGameState.Prematch,FD_createHarvester )
-	AddCallback_GameStateEnter( eGameState.Playing,startMainGameLoop )
+	AddCallback_GameStateEnter( eGameState.Playing, startMainGameLoop )
 	AddCallback_OnRoundEndCleanup( FD_NPCCleanup )
 	AddCallback_OnClientConnected( GamemodeFD_InitPlayer )
 
 	//Damage Callbacks
-	AddDamageByCallback( "player",FD_DamageByPlayerCallback)
+	AddDamageByCallback( "player", FD_DamageByPlayerCallback)
 	AddDamageCallback( "player", DamageScaleByDifficulty )
 	AddDamageCallback( "npc_titan", DamageScaleByDifficulty )
 	AddDamageCallback( "npc_turret_sentry", DamageScaleByDifficulty )
@@ -87,8 +87,8 @@ void function GamemodeFD_Init()
 	AddCallback_OnPlayerKilled( GamemodeFD_OnPlayerKilled )
 	
 	//Command Callbacks
-	AddClientCommandCallback( "FD_ToggleReady",ClientCommandCallbackToggleReady )
-	AddClientCommandCallback( "FD_UseHarvesterShieldBoost",useShieldBoost )
+	AddClientCommandCallback( "FD_ToggleReady", ClientCommandCallbackToggleReady )
+	AddClientCommandCallback( "FD_UseHarvesterShieldBoost", useShieldBoost )
 
 	//shop Callback
 	SetBoostPurchaseCallback(FD_BoostPurchaseCallback)
@@ -105,7 +105,7 @@ void function FD_BoostPurchaseCallback( entity player, BoostStoreData data )
 
 void function FD_PlayerRespawnCallback( entity player )
 {
-	if(player in file.players)
+	if( player in file.players )
 		file.players[player].lastRespawn = Time()
 
 	Highlight_SetFriendlyHighlight( player, "sp_friendly_hero" )
@@ -142,7 +142,7 @@ void function GamemodeFD_OnPlayerKilled( entity victim, entity attacker, var dam
 			PlayFactionDialogueToPlayer( "fd_singlePilotDown", player )
 		else if ( deaths > 1 && deaths < militiaplayers.len() - 1 ) // multiple pilots died but at least one alive
 			PlayFactionDialogueToPlayer( "fd_multiPilotDown", player )
-		else if (d eaths == militiaplayers.len() - 1 ) // ur shit out of luck ur the only survivor
+		else if ( deaths == militiaplayers.len() - 1 ) // ur shit out of luck ur the only survivor
 			PlayFactionDialogueToPlayer( "fd_onlyPlayerIsAlive", player )
 	}
 }
@@ -162,7 +162,7 @@ void function GamemodeFD_InitPlayer( entity player )
 	data.diedThisRound = false
 	file.players[player] <- data
 	thread SetTurretSettings_threaded( player )
-	if(GetGlobalNetInt( "FD_currentWave" ) > 1 )
+	if( GetGlobalNetInt( "FD_currentWave" ) > 1 )
 		PlayerEarnMeter_AddEarnedAndOwned( player, 1.0, 1.0 )
 
 	if ( GetGlobalNetInt( "FD_currentWave" ) != 0 )
@@ -266,9 +266,9 @@ void function RateSpawnpoints_FD( int _0, array<entity> _1, int _2, entity _3 )
 
 bool function useShieldBoost( entity player, array<string> args )
 {
-	if( ( GetGlobalNetTime( "FD_harvesterInvulTime" ) < Time() ) && ( player.GetPlayerNetInt("numHarvesterShieldBoost") > 0 ) )
+	if( ( GetGlobalNetTime( "FD_harvesterInvulTime" ) < Time() ) && ( player.GetPlayerNetInt( "numHarvesterShieldBoost" ) > 0 ) )
 	{
-		fd_harvester.harvester.SetShieldHealth(fd_harvester.harvester.GetShieldHealthMax())
+		fd_harvester.harvester.SetShieldHealth( fd_harvester.harvester.GetShieldHealthMax() )
 		SetGlobalNetTime( "FD_harvesterInvulTime", Time() + 5 )
 		MessageToTeam( TEAM_MILITIA,eEventNotifications.FD_PlayerHealedHarvester, null, player )
 		player.SetPlayerNetInt( "numHarvesterShieldBoost", player.GetPlayerNetInt( "numHarvesterShieldBoost" ) - 1 )
@@ -287,7 +287,7 @@ void function mainGameLoop()
 	startHarvester()
 
 	bool showShop = false
-	for(int i = GetGlobalNetInt( "FD_currentWave" ); i < waveEvents.len(); i++)
+	for( int i = GetGlobalNetInt( "FD_currentWave" ); i < waveEvents.len(); i++ )
 	{
 		if( !runWave( i, showShop ) )
 			break
@@ -354,10 +354,10 @@ array<int> function getHighestEnemyAmountsForWave( int waveIndex )
 			case( eFD_AITypeIDs.MONARCH ):
 			case( eFD_AITypeIDs.LEGION ):
 			case( eFD_AITypeIDs.TITAN_SNIPER ):
-				npcs[eFD_AITypeIDs.TITAN]+=e.spawnEvent.spawnAmount
+				npcs[eFD_AITypeIDs.TITAN] += e.spawnEvent.spawnAmount
 				break
 			default:
-				npcs[e.spawnEvent.spawnType]+=e.spawnEvent.spawnAmount
+				npcs[e.spawnEvent.spawnType] += e.spawnEvent.spawnAmount
 		}
 	}
 	array<int> ret = [ -1, -1, -1, -1, -1, -1, -1, -1, -1 ]
@@ -544,7 +544,7 @@ bool function runWave( int waveIndex, bool shouldDoBuyTime )
 
 		foreach( entity player in GetPlayerArray() )
 		{
-			Remote_CallFunction_NonReplay( player, "ServerCallback_FD_DisplayHarvesterKiller", GetGlobalNetInt("FD_restartsRemaining"), getHintForTypeId(highestDamageSource[0]), highestDamageSource[0], highestDamage[0] / totalDamage, highestDamageSource[1], highestDamage[1] / totalDamage , highestDamageSource[2], highestDamage[2] / totalDamage )
+			Remote_CallFunction_NonReplay( player, "ServerCallback_FD_DisplayHarvesterKiller", GetGlobalNetInt( "FD_restartsRemaining" ), getHintForTypeId( highestDamageSource[0] ), highestDamageSource[0], highestDamage[0] / totalDamage, highestDamageSource[1], highestDamage[1] / totalDamage , highestDamageSource[2], highestDamage[2] / totalDamage )
 		}
 
 		if( GetGlobalNetInt( "FD_restartsRemaining" ) > 0 )
@@ -656,7 +656,7 @@ bool function runWave( int waveIndex, bool shouldDoBuyTime )
 		}
 		AddMoneyToPlayer( player, 100 )
 		EmitSoundOnEntityOnlyToPlayer( player, player, "HUD_MP_BountyHunt_BankBonusPts_Deposit_Start_1P" )
-		if( highestScore<file.players[player].scoreThisRound )
+		if( highestScore < file.players[player].scoreThisRound )
 		{
 			highestScore = file.players[player].scoreThisRound
 			highestScore_player = player
@@ -680,7 +680,7 @@ bool function runWave( int waveIndex, bool shouldDoBuyTime )
 		if( !file.havesterWasDamaged )
 		{
 			AddPlayerScore( player, "FDTeamFlawlessWave" )
-			AddMoneyToPlayer( player, 100)
+			AddMoneyToPlayer( player, 100 )
 			player.AddToPlayerGameStat( PGS_ASSAULT_SCORE, FD_SCORE_TEAM_FLAWLESS_WAVE )
 			EmitSoundOnEntityOnlyToPlayer( player, player, "HUD_MP_BountyHunt_BankBonusPts_Deposit_Start_1P" )
 		}
@@ -855,7 +855,7 @@ void function HarvesterThink()
 			if ( newShieldHealth >= harvester.GetShieldHealthMax() )
 			{
 				StopSoundOnEntity( harvester, "coop_generator_shieldrecharge_resume" )
-				harvester.SetShieldHealth( harvester.GetShieldHealthMax())
+				harvester.SetShieldHealth( harvester.GetShieldHealthMax() )
 				EmitSoundOnEntity( harvester, "coop_generator_shieldrecharge_end" )
 				if( GetGlobalNetBool( "FD_waveActive" ) )
 					PlayFactionDialogueToTeam( "fd_baseShieldUp", TEAM_MILITIA )
@@ -1029,19 +1029,19 @@ void function LoadEntities()
 		{
 			switch( info_target.kv.editorclass )
 			{
-				case"info_fd_harvester":
+				case "info_fd_harvester":
 					file.harvester_info = info_target
 					break
-				case"info_fd_mode_model":
+				case "info_fd_mode_model":
 					entity prop = CreatePropDynamic( info_target.GetModelName(), info_target.GetOrigin(), info_target.GetAngles(), 6 )
 					break
-				case"info_fd_ai_position":
+				case "info_fd_ai_position":
 					AddStationaryAIPosition( info_target.GetOrigin(), int( info_target.kv.aiType ) )
 					break
-				case"info_fd_route_node":
+				case "info_fd_route_node":
 					routeNodes.append( info_target )
 					break
-				case"info_fd_smoke_screen":
+				case "info_fd_smoke_screen":
 					file.smokePoints.append( info_target )
 					break
 			}
