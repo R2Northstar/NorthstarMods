@@ -86,7 +86,8 @@ void function MortarSpectreSquadThink( array< entity > spectres, entity harveste
 
 	foreach( entity spectre in spectres )
 	{
-		thread MortarSpectreAttack( spectre, harvester, squadMarker )
+		if ( IsValid( spectre ) )
+			thread MortarSpectreAttack( spectre, harvester, squadMarker )
 	}
 }
 
