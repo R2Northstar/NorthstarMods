@@ -856,11 +856,12 @@ void function spawnDroppodSpectreMortar(SmokeEvent smokeEvent,SpawnEvent spawnEv
 	for ( int i = 0; i < 4; i++ )
 	{
 		entity guy = CreateSpectre( TEAM_IMC, spawnEvent.origin,<0,0,0> )
+		SetSpawnOption_AISettings(guy, "npc_spectre_mortar")
 		if(spawnEvent.entityGlobalKey!="")
 			GlobalEventEntitys[spawnEvent.entityGlobalKey+i.tostring()] <- guy
 		SetTeam( guy, TEAM_IMC )
 		DispatchSpawn( guy )
-
+		spawnedNPCs.append(guy)
 		SetSquad( guy, squadName )
 		SetTargetName( guy, GetTargetNameForID(eFD_AITypeIDs.SPECTRE_MORTAR))
 		AddMinimapForHumans(guy)
@@ -868,6 +869,9 @@ void function spawnDroppodSpectreMortar(SmokeEvent smokeEvent,SpawnEvent spawnEv
     }
 
     ActivateFireteamDropPod( pod, guys )
+	
+	thread MortarSpectreSquadThink( guys, fd_harvester.harvester )
+	
 }
 
 void function spawnGenericNPC(SmokeEvent smokeEvent,SpawnEvent spawnEvent,FlowControlEvent flowControlEvent,SoundEvent soundEvent)
@@ -1138,10 +1142,10 @@ void function PingMinimap(float x, float y, float duration, float spreadRadius, 
 	}
 }
 
-void function waitUntilLessThanAmountAlive(int amount)
+void function waitUntilLessThanAmountAlive( int amount )
 {	
 	int deduct = 0
-	foreach (entity npc in spawnedNPCs)
+	foreach ( entity npc in spawnedNPCs )
 	{
 		if( !IsValid(npc) )
 		{
@@ -1153,20 +1157,20 @@ void function waitUntilLessThanAmountAlive(int amount)
 			deduct++
 			continue
 		}
-		if(npc.GetTeam()==TEAM_MILITIA)
+		if( npc.GetTeam() == TEAM_MILITIA )
 		{
 			deduct++
 			continue
 		}
 	}
 	int aliveNPCs = spawnedNPCs.len() -deduct
-	while(aliveNPCs>amount)
+	while ( aliveNPCs>amount )
 	{
 		WaitFrame()
 		deduct = 0
-		foreach (entity npc in spawnedNPCs)
-		{	
-			if( !IsValid(npc) )
+		foreach ( entity npc in spawnedNPCs )
+		{
+			if ( !IsValid( npc ) )
 			{
 				deduct++
 				continue
@@ -1176,7 +1180,7 @@ void function waitUntilLessThanAmountAlive(int amount)
 				deduct++
 				continue
 			}
-			if(npc.GetTeam()==TEAM_MILITIA)
+			if( npc.GetTeam() == TEAM_MILITIA )
 			{
 				deduct++
 				continue
@@ -1184,7 +1188,7 @@ void function waitUntilLessThanAmountAlive(int amount)
 		}
 		aliveNPCs = spawnedNPCs.len() -deduct
 		
-		if(!IsAlive(fd_harvester.harvester))
+		if ( !IsAlive( fd_harvester.harvester ) )
 			return
 	}
 }
