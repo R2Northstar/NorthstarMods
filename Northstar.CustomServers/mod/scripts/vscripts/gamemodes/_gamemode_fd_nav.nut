@@ -6,14 +6,14 @@ global function Dev_MarkRoute
 
 
 
-void function singleNav_thread(entity npc, string routeName,int nodesToSkip= 0,float nextDistance = 500.0, bool shouldLoop = false)
+void function singleNav_thread( entity npc, string routeName, int nodesToSkip= 0, float nextDistance = 500.0, bool shouldLoop = false )
 {
 	npc.EndSignal( "OnDeath" )
 	npc.EndSignal( "OnDestroy" )
 
 
 
-	if(!npc.IsNPC()){
+	if( !npc.IsNPC() ){
 		return
 	}
 		
@@ -54,7 +54,7 @@ void function singleNav_thread(entity npc, string routeName,int nodesToSkip= 0,f
 		float dist = 1000000000
 		foreach ( entity node in routeNodes )
 		{
-			if( !node.HasKey("route_name") )
+			if( !node.HasKey( "route_name" ) )
 				continue
 			if ( Distance( npc.GetOrigin(), node.GetOrigin() ) < dist )
 			{
@@ -92,7 +92,7 @@ void function singleNav_thread(entity npc, string routeName,int nodesToSkip= 0,f
 	npc.Signal("FD_ReachedHarvester")
 }
 
-void function SquadNav_Thread( array<entity> npcs ,string routeName,int nodesToSkip = 0,float nextDistance = 200.0 )
+void function SquadNav_Thread( array<entity> npcs, string routeName, int nodesToSkip = 0, float nextDistance = 200.0 )
 {
 	//TODO this function wont stop when noone alive anymore also it only works half of the time
 	/*
@@ -141,27 +141,27 @@ void function SquadNav_Thread( array<entity> npcs ,string routeName,int nodesToS
 	{
 		targetNode = targetNode.GetLinkEnt()
 	}
-
 	
 	while ( targetNode != null )
 	{
 		if( !IsAlive( fd_harvester.harvester ) )
 			return
-		SquadAssaultOrigin(npcs,targetNode.GetOrigin(),nextDistance)
+		
+		SquadAssaultOrigin( npcs, targetNode.GetOrigin(), nextDistance )
 		
 		targetNode = targetNode.GetLinkEnt()
 	}
 
 }
 
-void function droneNav_thread(entity npc, string routeName,int nodesToSkip= 0,float nextDistance = 500.0, bool shouldLoop = false)
+void function droneNav_thread( entity npc, string routeName,int nodesToSkip= 0,float nextDistance = 500.0, bool shouldLoop = false )
 {
 	npc.EndSignal( "OnDeath" )
 	npc.EndSignal( "OnDestroy" )
 
-	if(!npc.IsNPC()){
+	if(!npc.IsNPC())
 		return
-	}
+
 
 	// NEW STUFF
 	WaitFrame() // so other code setting up what happens on signals is run before this
@@ -173,7 +173,7 @@ void function droneNav_thread(entity npc, string routeName,int nodesToSkip= 0,fl
 		float dist = 1000000000
 		foreach ( entity node in routeNodes )
 		{
-			if( !node.HasKey("route_name") )
+			if( !node.HasKey( "route_name" ) )
 				continue
 			if ( Distance( npc.GetOrigin(), node.GetOrigin() ) < dist )
 			{
@@ -182,7 +182,7 @@ void function droneNav_thread(entity npc, string routeName,int nodesToSkip= 0,fl
 				firstNode = node
 			}
 		}
-		printt("Entity had no route defined: using nearest node: " + targetNode.kv.route_name)
+		printt( "Entity had no route defined: using nearest node: " + targetNode.kv.route_name )
 	}
 	else
 	{
@@ -210,22 +210,22 @@ void function droneNav_thread(entity npc, string routeName,int nodesToSkip= 0,fl
 		
 		targetNode = targetNode.GetLinkEnt()
 		if ( targetNode == null )
-			printt("entity finished pathing")
+			printt( "entity finished pathing" )
 		if ( targetNode == null && shouldLoop )
 		{
-			printt("entity reached end of loop, looping")
+			printt( "entity reached end of loop, looping" )
 			targetNode = firstNode
 		}
 	}
 
-	npc.Signal("FD_ReachedHarvester")
+	npc.Signal( "FD_ReachedHarvester" )
 }
 
 entity function GetRouteStart( string routeName )
 {
 	foreach( entity node in routeNodes )
 	{
-		if( !node.HasKey("route_name") )
+		if( !node.HasKey( "route_name" ) )
 			continue
 		if( expect string( node.kv.route_name ) == routeName )
 		{
@@ -234,37 +234,38 @@ entity function GetRouteStart( string routeName )
 	}
 }
 
-array<entity> function getRoute(string routeName)
+array<entity> function getRoute( string routeName )
 {
 	array<entity> ret
 	array<entity> currentNode = []
 	foreach(entity node in routeNodes)
 	{
-		if(!node.HasKey("route_name"))
+		if( !node.HasKey( "route_name" ) )
 			continue
-		if(node.kv.route_name==routeName)
+		if( node.kv.route_name == routeName )
 		{
 			currentNode =  [node]
 			break
 		}
 
 	}
-	if(currentNode.len()==0)
+	if( currentNode.len() == 0 )
 	{
-		printt("Route not found")
+		printt( "Route not found" )
 		return []
 	}
-	while(currentNode.len()!=0)
+	while( currentNode.len() != 0 )
 	{
-		ret.append(currentNode[0])
+		ret.append( currentNode[0] )
 		currentNode = currentNode[0].GetLinkEntArray()
 	}
 	return ret
 }
 
-void function Dev_MarkRoute(string routename){
-	foreach(entity e in getRoute(routename))
+void function Dev_MarkRoute( string routename )
+{
+	foreach( entity e in getRoute( routename ) )
 	{
-		DebugDrawSphere(e.GetOrigin(),30.0,255,0,255,false,40)
+		DebugDrawSphere( e.GetOrigin(), 30.0, 255, 0, 255, false, 40 )
 	}
 }
