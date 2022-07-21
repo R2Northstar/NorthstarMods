@@ -1,7 +1,7 @@
 {
 	"Name": "Northstar.Client",
 	"Description": "Various ui and client changes to fix bugs and add better support for mods",
-	"Version": "1.5.0",
+	"Version": "1.9.0",
 	"LoadPriority": 0,
 	"ConVars": [
 		{
@@ -42,7 +42,7 @@
 			}
 		},
 		{
-			"Path": "chat.gnut",
+			"Path": "client/cl_chat.gnut",
 			"RunOn": "CLIENT"
 		},
 		{
@@ -51,6 +51,27 @@
 			"UICallback": {
 				"Before": "AddNorthstarModMenu",
 				"After": "AddNorthstarModMenu_MainMenuFooter"
+			}
+		},
+		{
+			"Path": "ui/menu_ns_setversionlabel.nut",
+			"RunOn": "UI",
+			"UICallback": {
+				"After": "NS_SetVersionLabel"
+			}
+		},
+		{
+			"Path": "presence/ui_presence.nut",
+			"RunOn": "UI",
+			"UICallback": {
+				"After": "NSUpdateGameStateUIStart"
+			}
+		},
+		{
+			"Path": "presence/cl_presence.nut",
+			"RunOn": "CLIENT",
+			"ClientCallback": {
+				"After": "NSUpdateGameStateClientStart"
 			}
 		},
 		{

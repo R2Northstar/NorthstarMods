@@ -1,3 +1,4 @@
+untyped
 global function AiStalker_Init
 global function GetDeathForce
 global function StalkerGearOverloads
@@ -168,7 +169,7 @@ void function StalkerSprint( entity npc, var damageInfo )
 	npc.EndSignal("OnDestroy")
 	float damage = DamageInfo_GetDamage( damageInfo )
 
-	if ( npc.GetHealth() - damage < 50 || npc.GetHealth() <= 80)
+	if (!IsCrawling(npc)&&( npc.GetHealth() - damage < 50 || npc.GetHealth() <= 80))
 	{
 		entity weapon = npc.GetActiveWeapon()
 		if (IsValid(weapon))
@@ -180,6 +181,7 @@ void function StalkerSprint( entity npc, var damageInfo )
 		npc.SetNoTarget( true )
 		npc.ClearMoveAnim()
 		npc.SetMoveAnim("sp_spectre_sprint_F")
+		npc.s.isSprinting = true
 	}
 }
 
@@ -189,7 +191,7 @@ void function FDStalkerThink( entity npc, entity generator )
 	npc.EndSignal( "OnDestroy" )
 	generator.EndSignal( "OnDeath" )
 	generator.EndSignal( "OnDestroy" )
-	bool isSprinting = false
+	npc.s.isSprinting <- false
 	thread FDStalkerGetsStunned( npc , generator )
 	while ( IsAlive( npc ) )
 	{
@@ -197,20 +199,23 @@ void function FDStalkerThink( entity npc, entity generator )
 
 		// cant sprint with 1 leg
 		// also upped to 1800 so that stalkers sprint from roughly their vanilla positions, could probably do it based on % of distance left to go?
-		if ( !IsCrawling( npc ) && DistanceSqr( npc.GetOrigin(), generator.GetOrigin() ) < (1800 * 1800) && !isSprinting )
+		if ( DistanceSqr( npc.GetOrigin(), generator.GetOrigin() ) < (1800 * 1800)  )
 		{
-			entity weapon = npc.GetActiveWeapon()
-			if (IsValid(weapon))
-				npc.TakeActiveWeapon() // when stalkers fall over on harvester they will randomly shoot their guns, we don't want that.
-			npc.EnableNPCMoveFlag( NPCMF_PREFER_SPRINT )
-			npc.SetCapabilityFlag( bits_CAP_MOVE_SHOOT | bits_CAP_WEAPON_RANGE_ATTACK1 | bits_CAP_AIM_GUN, false )
-			npc.EnableNPCFlag( NPC_DISABLE_SENSING | NPC_IGNORE_ALL )
-			npc.ClearMoveAnim()
-			npc.SetMoveAnim("sp_spectre_sprint_F")
-			npc.SetNoTarget( true )
-			// stalkers were just going to the final node and stopping, meaning they never actually reached the harvester
+			if(!IsCrawling( npc ) && !npc.s.isSprinting)
+			{
+				entity weapon = npc.GetActiveWeapon()
+				if (IsValid(weapon))
+					npc.TakeActiveWeapon() // when stalkers fall over on harvester they will randomly shoot their guns, we don't want that.
+				npc.EnableNPCMoveFlag( NPCMF_PREFER_SPRINT )
+				npc.SetCapabilityFlag( bits_CAP_MOVE_SHOOT | bits_CAP_WEAPON_RANGE_ATTACK1 | bits_CAP_AIM_GUN, false )
+				npc.EnableNPCFlag( NPC_DISABLE_SENSING | NPC_IGNORE_ALL )
+				npc.ClearMoveAnim()
+				npc.SetMoveAnim("sp_spectre_sprint_F")
+				npc.SetNoTarget( true )
+				// stalkers were just going to the final node and stopping, meaning they never actually reached the harvester
+				npc.s.isSprinting = true
+			}
 			npc.AssaultPoint(generator.GetOrigin())
-			isSprinting = true
 		}
 
 		// upped from 230 to more accurately mimic vanilla i think?
@@ -230,6 +235,9 @@ void function FDStalkerGetsStunned( entity npc , entity generator )
 	npc.WaitSignal( "ArcStunned" )
 	print("arc trapped...")
 
+	if(IsCrawling(npc))
+		return
+
 	entity weapon = npc.GetActiveWeapon()
 	if (IsValid(weapon))
 		npc.TakeActiveWeapon() // when stalkers fall over on harvester they will randomly shoot their guns, we don't want that.
@@ -239,6 +247,7 @@ void function FDStalkerGetsStunned( entity npc , entity generator )
 	npc.ClearMoveAnim()
 	npc.SetMoveAnim("sp_spectre_sprint_F")
 	npc.SetNoTarget( true ) // stop keeping track of any player and instead go for the harvester
+	npc.s.isSprinting = true
 }
 
 bool function TryDismemberStalker( entity npc, var damageInfo, entity attacker, int hitGroup )

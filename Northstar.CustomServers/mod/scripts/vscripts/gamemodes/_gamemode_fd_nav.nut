@@ -2,6 +2,7 @@ global function singleNav_thread
 global function SquadNav_Thread
 global function droneNav_thread
 global function getRoute
+global function Dev_MarkRoute
 
 
 
@@ -259,4 +260,11 @@ array<entity> function getRoute(string routeName)
 		currentNode = currentNode[0].GetLinkEntArray()
 	}
 	return ret
+}
+
+void function Dev_MarkRoute(string routename){
+	foreach(entity e in getRoute(routename))
+	{
+		DebugDrawSphere(e.GetOrigin(),30.0,255,0,255,false,40)
+	}
 }

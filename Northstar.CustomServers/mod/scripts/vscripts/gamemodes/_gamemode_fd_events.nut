@@ -84,6 +84,9 @@ void function executeWave()
 	wait 5 //incase droppod is last event so all npc are spawned
 	waitUntilLessThanAmountAlive(0)
 	waitUntilLessThanAmountAlive_expensive(0)
+	
+	foreach(entity ent in GetEntArrayByClass_Expensive("npc_turret_sentry"))
+		RevivableTurret_Revive(ent)
 }
 
 bool function allEventsExecuted(int waveIndex) 
@@ -1147,7 +1150,7 @@ void function waitUntilLessThanAmountAlive( int amount )
 	int deduct = 0
 	foreach ( entity npc in spawnedNPCs )
 	{
-		if ( !IsValid( npc ) )
+		if( !IsValid(npc) )
 		{
 			deduct++
 			continue
@@ -1175,7 +1178,6 @@ void function waitUntilLessThanAmountAlive( int amount )
 				deduct++
 				continue
 			}
-
 			if( IsValid( GetPetTitanOwner( npc ) ) )
 			{
 				deduct++
@@ -1199,7 +1201,10 @@ void function waitUntilLessThanAmountAliveWeighted(int amount,int humanWeight=1,
 
 	int aliveNPCsWeighted = 0;
 	foreach(npc in spawnedNPCs)
-	{
+	{	
+		if(!IsValid(npc))
+			continue
+
 		if( IsValid( GetPetTitanOwner( npc ) ) )
 			continue
 		
@@ -1219,8 +1224,11 @@ void function waitUntilLessThanAmountAliveWeighted(int amount,int humanWeight=1,
 			aliveNPCsWeighted = 0;
 			foreach(npc in spawnedNPCs)
 			{	
+				if(!IsValid(npc))
+					continue
+				
 				if( IsValid( GetPetTitanOwner( npc ) ) )
-				continue
+					continue
 				
 				if(npc.GetTeam()==TEAM_MILITIA)
 					continue

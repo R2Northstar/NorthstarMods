@@ -65,6 +65,7 @@ void function BurnMeter_Init()
 	AddCallback_OnClientConnected( InitBurncardsForLateJoiner )
 
 	AddCallback_OnPlayerRespawned( StartPhaseRewindLifetime )
+	AddCallback_OnPlayerRespawned( InitialisePermenantAmpedWeaponsForPlayer )
 	AddCallback_OnTitanBecomesPilot( RemoveAmpedWeaponsForTitanPilot )
 
 	// necessary signals
@@ -82,10 +83,16 @@ void function BurnMeter_SetBoostRewardCount( string burnRef, int rewardCount )
 	file.boostRewardCount[burnRef] <- rewardCount
 }
 
-int function BurnMeter_GetLimitedRewardCount( entity player )
+int function BurnMeter_GetLimitedRewardCount( entity player, string burnRef = "" )
 {
-	EarnObject earnObject = PlayerEarnMeter_GetReward( player )
-	string burnRef = earnObject.ref
+	// added burnRef as a parameter, used for dice roll
+	// means we dont call two lots of BurnReward_GetRandom() whilst also being able to give multiple items per dice roll (ticks)
+	if (burnRef == "")
+	{
+		EarnObject earnObject = PlayerEarnMeter_GetReward( player )
+		burnRef = earnObject.ref
+	}
+
 	int limit = -1
 	int rewardCount = 1
 
@@ -333,9 +340,10 @@ void function PlayerUsesAmpedWeaponsBurncardThreaded( entity player )
 
 void function RemoveAmpedWeaponsForTitanPilot( entity player, entity titan )
 {
-	foreach ( entity weapon in player.GetMainWeapons() )
-		foreach ( string mod in GetWeaponBurnMods( weapon.GetWeaponClassName() ) )
-			weapon.RemoveMod( mod )
+	if ( !( "hasPermenantAmpedWeapons" in player.s ) || !player.s.hasPermenantAmpedWeapons )
+		foreach ( entity weapon in player.GetMainWeapons() )
+			foreach ( string mod in GetWeaponBurnMods( weapon.GetWeaponClassName() ) )
+				weapon.RemoveMod( mod )
 }
 
 void function PlayerUsesSmartPistolBurncard( entity player )
@@ -508,8 +516,15 @@ void function PlayerUsesNukeBurncardThreaded( entity player )
 	thread TitanEjectPlayer( titan, true )
 }
 
+void function InitialisePermenantAmpedWeaponsForPlayer( entity player )
+{
+	player.s.hasPermenantAmpedWeapons <- false
+}
+
 void function PlayerUsesPermanentAmpedWeaponsBurncard( entity player )
 {
+	player.s.hasPermenantAmpedWeapons = true
+
 	array<entity> weapons = player.GetMainWeapons()
 	//weapons.extend( player.GetOffhandWeapons() ) // idk? unsure of vanilla behaviour here
 	foreach ( entity weapon in weapons )
