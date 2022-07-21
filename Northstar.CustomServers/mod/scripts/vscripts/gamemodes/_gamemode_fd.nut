@@ -763,7 +763,7 @@ void function OnHarvesterDamaged( entity harvester, var damageInfo )
 		if ( healthpercent <= 25 && oldhealthpercent > 25 )
 			PlayFactionDialogueToTeam( "fd_baseHealth25", TEAM_MILITIA )
 
-		if  (healthpercent <= 10 )
+		if( healthpercent <= 10 )
 			PlayFactionDialogueToTeam( "fd_baseLowHealth", TEAM_MILITIA )
 
 		if( newHealth <= 0 )
