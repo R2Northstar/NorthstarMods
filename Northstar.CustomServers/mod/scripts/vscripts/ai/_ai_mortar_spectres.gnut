@@ -72,9 +72,13 @@ void function MortarSpectreSquadThink( array< entity > spectres, entity harveste
 	// wait for setup timer
 	while ( Time() < setupEndTime )
 	{
-		WaitFrame()
+		if ( !IsValid( squadMarker ) )
+		{
+			break
+		}
 		float timeRemainingFrac = ( setupEndTime - Time() ) / GetCurrentPlaylistVarFloat( "fd_mortar_spectre_setup_time", 5 ) // default to 5 seconds
 		squadMarker.SetShieldHealth( ( 1 - timeRemainingFrac ) * MORTAR_SPECTRE_TRACKER_SHIELD_MAX )
+		WaitFrame()
 	}
 	
 
