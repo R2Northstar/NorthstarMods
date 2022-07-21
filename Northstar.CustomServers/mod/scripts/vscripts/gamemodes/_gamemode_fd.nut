@@ -91,7 +91,7 @@ void function GamemodeFD_Init()
 	AddClientCommandCallback( "FD_UseHarvesterShieldBoost", useShieldBoost )
 
 	//shop Callback
-	SetBoostPurchaseCallback(FD_BoostPurchaseCallback)
+	SetBoostPurchaseCallback( FD_BoostPurchaseCallback )
 	SetTeamReserveInteractCallback(FD_TeamReserveDepositOrWithdrawCallback)
 
 	//earn meter
