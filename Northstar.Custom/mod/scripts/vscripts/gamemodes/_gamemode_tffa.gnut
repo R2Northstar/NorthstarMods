@@ -63,7 +63,7 @@ void function PlayerWatchesTFFAIntroIntermissionCam( entity player )
 
 	wait TFFAIntroLength
 	
-	if (!IsValid(player)) // if player leaves during the intro sequence
+	if ( !IsValid( player ) ) // if player leaves during the intro sequence
 		return
 
 	RespawnAsTitan( player, false )
