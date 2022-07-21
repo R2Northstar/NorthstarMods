@@ -62,12 +62,12 @@ void function SniperTitanThink( entity titan, entity generator)
 	WaitTillHotDropComplete( titan )
 
 	float minEngagementDuration = 5
-	StationaryAIPosition ornull sniperPosition = GetRandomStationaryPosition( titan.GetOrigin(), SNIPER_TITAN_POSITION_SEARCH_RANGE, eStationaryAIPositionTypes.SNIPER_TITAN )
+	StationaryAIPosition ornull sniperPosition = GetClosestAvailableStationaryPosition( titan.GetOrigin(), SNIPER_TITAN_POSITION_SEARCH_RANGE, eStationaryAIPositionTypes.SNIPER_TITAN )
 	while ( sniperPosition == null )
 	{
 		// incase all stationary titan positions are in use wait for one to become available
 		wait 5
-		sniperPosition = GetRandomStationaryPosition( titan.GetOrigin(), SNIPER_TITAN_POSITION_SEARCH_RANGE, eStationaryAIPositionTypes.SNIPER_TITAN )
+		sniperPosition = GetClosestAvailableStationaryPosition( titan.GetOrigin(), SNIPER_TITAN_POSITION_SEARCH_RANGE, eStationaryAIPositionTypes.SNIPER_TITAN )
 	}
 
 	expect StationaryAIPosition( sniperPosition )
