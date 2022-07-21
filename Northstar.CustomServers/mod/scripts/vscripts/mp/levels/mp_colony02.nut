@@ -3,6 +3,10 @@ global function CodeCallback_MapInit
 void function CodeCallback_MapInit()
 {
 	AddCallback_EntitiesDidLoad( CreateEvacNodes )
+
+	// Load Frontier Defense Data
+	if( GameRules_GetGameMode() == "fd" )
+		initFrontierDefenseData()
 }
 
 void function CreateEvacNodes()
@@ -16,10 +20,4 @@ void function CreateEvacNodes()
 	AddEvacNode( CreateScriptRef( < -1035.991211, -671.114380, 824.180908 >, < 16.220453, -24.511070, 0 > ) )
 	
 	SetEvacSpaceNode( GetEnt( "intro_spacenode" ) )
-
-
-
-	// Load Frontier Defense Data
-	if(GameRules_GetGameMode()=="fd")
-        initFrontierDefenseData()
 }
