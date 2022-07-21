@@ -33,6 +33,9 @@ void function NukeTitanSeekOutGenerator( entity titan, entity generator )
 	titan.EndSignal( "OnDeath" )
 	titan.EndSignal( "OnDestroy" )
 	titan.EndSignal( "Doomed" )
+	// should fix crash with invalid generator?
+	generator.EndSignal( "OnDeath" )
+	generator.EndSignal( "OnDestroy" )
 
 	WaitSignal( titan, "FD_ReachedHarvester", "OnFailedToPath" )
 
