@@ -92,7 +92,7 @@ void function GamemodeFD_Init()
 
 	//shop Callback
 	SetBoostPurchaseCallback( FD_BoostPurchaseCallback )
-	SetTeamReserveInteractCallback(FD_TeamReserveDepositOrWithdrawCallback)
+	SetTeamReserveInteractCallback( FD_TeamReserveDepositOrWithdrawCallback )
 
 	//earn meter
 	ScoreEvent_SetupEarnMeterValuesForMixedModes()

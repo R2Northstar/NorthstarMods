@@ -13,9 +13,8 @@ void function singleNav_thread( entity npc, string routeName, int nodesToSkip= 0
 
 
 
-	if( !npc.IsNPC() ){
+	if( !npc.IsNPC() )
 		return
-	}
 		
 
 
@@ -89,7 +88,7 @@ void function singleNav_thread( entity npc, string routeName, int nodesToSkip= 0
 		targetNode = targetNode.GetLinkEnt()
 	}
 
-	npc.Signal("FD_ReachedHarvester")
+	npc.Signal( "FD_ReachedHarvester" )
 }
 
 void function SquadNav_Thread( array<entity> npcs, string routeName, int nodesToSkip = 0, float nextDistance = 200.0 )
@@ -121,7 +120,7 @@ void function SquadNav_Thread( array<entity> npcs, string routeName, int nodesTo
 		float dist = 1000000000
 		foreach ( entity node in routeNodes )
 		{
-			if( !node.HasKey("route_name") )
+			if( !node.HasKey( "route_name" ) )
 				continue
 			if ( Distance( npcs[0].GetOrigin(), node.GetOrigin() ) < dist )
 			{
@@ -159,7 +158,7 @@ void function droneNav_thread( entity npc, string routeName,int nodesToSkip= 0,f
 	npc.EndSignal( "OnDeath" )
 	npc.EndSignal( "OnDestroy" )
 
-	if(!npc.IsNPC())
+	if( !npc.IsNPC() )
 		return
 
 

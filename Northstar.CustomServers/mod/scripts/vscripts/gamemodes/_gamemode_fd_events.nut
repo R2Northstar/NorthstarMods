@@ -580,7 +580,7 @@ void function spawnSmoke( SmokeEvent smokeEvent, SpawnEvent spawnEvent, FlowCont
 	smokescreen.lifetime = smokeEvent.lifetime
 	smokescreen.fxXYRadius = 150
 	smokescreen.fxZRadius = 120
-	smokescreen.fxOffsets = [ < 120.0, 0.0, 0.0 >, < 0.0, 120.0, 0.0 >, < 0.0, 0.0, 0.0 >, < 0.0, -120.0, 0.0 >, <-120.0, 0.0, 0.0 >, < 0.0, 100.0, 0.0 > ]
+	smokescreen.fxOffsets = [ < 120.0, 0.0, 0.0 >, < 0.0, 120.0, 0.0 >, < 0.0, 0.0, 0.0 >, < 0.0, -120.0, 0.0 >, < -120.0, 0.0, 0.0 >, < 0.0, 100.0, 0.0 > ]
 
 	Smokescreen(smokescreen)
 }
@@ -588,7 +588,7 @@ void function spawnDrones( SmokeEvent smokeEvent, SpawnEvent spawnEvent, FlowCon
 {
 	//TODO
 	PingMinimap( spawnEvent.origin.x, spawnEvent.origin.y, 4, 600, 150, 0 )
-	array<vector> offsets = [ < 0, 32, 0 >, < 32, 0, 0 >, < 0, -32, 0 >, <-32, 0, 0 > ]
+	array<vector> offsets = [ < 0, 32, 0 >, < 32, 0, 0 >, < 0, -32, 0 >, < -32, 0, 0 > ]
 
 
 	string squadName = MakeSquadName( TEAM_IMC, UniqueString( "ZiplineTable" ) )
@@ -661,7 +661,7 @@ void function spawnArcTitan( SmokeEvent smokeEvent, SpawnEvent spawnEvent, FlowC
 	entity npc = CreateArcTitan( TEAM_IMC, spawnEvent.origin, spawnEvent.angles )
 	npc.DisableNPCFlag( NPC_ALLOW_INVESTIGATE | NPC_USE_SHOOTING_COVER | NPC_ALLOW_PATROL )
 	SetSpawnOption_Titanfall( npc )
-	SetTargetName( npc, sGetTargetNameForID( spawnEvent.spawnType ) ) // required for client to create icons
+	SetTargetName( npc, GetTargetNameForID( spawnEvent.spawnType ) ) // required for client to create icons
 	SetSpawnOption_AISettings( npc, "npc_titan_stryder_leadwall_arc" )
 	spawnedNPCs.append( npc )
 	DispatchSpawn( npc )
@@ -925,7 +925,7 @@ void function SpawnScorchTitan( SmokeEvent smokeEvent, SpawnEvent spawnEvent, Fl
 	entity npc = CreateNPCTitan( "titan_ogre", TEAM_IMC, spawnEvent.origin, spawnEvent.angles )
 	SetSpawnOption_AISettings( npc, "npc_titan_ogre_meteor_boss_fd" )
 	SetSpawnOption_Titanfall( npc )
-	SetTargetName( npc, sGetTargetNameForID( spawnEvent.spawnType ) ) // required for client to create icons
+	SetTargetName( npc, GetTargetNameForID( spawnEvent.spawnType ) ) // required for client to create icons
 	DispatchSpawn( npc )
 	if( spawnEvent.entityGlobalKey != "" )
 		GlobalEventEntitys[spawnEvent.entityGlobalKey] <- npc
@@ -1157,7 +1157,7 @@ void function waitUntilLessThanAmountAlive( int amount )
 			deduct++
 			continue
 		}
-		if(npc.GetTeam()==TEAM_MILITIA)
+		if( npc.GetTeam() == TEAM_MILITIA )
 		{
 			deduct++
 			continue
