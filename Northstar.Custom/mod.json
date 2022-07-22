@@ -407,7 +407,11 @@
 			"ServerCallback": {
 				"After": "CustomPilotCollision_InitPlaylistVars"
 			}
-		}
+		}, 
+    {
+      "Path": "table_utilities.nut",
+			"RunOn": "CLIENT || SERVER || UI"
+    }
 	],
 
 	"Localisation": [
