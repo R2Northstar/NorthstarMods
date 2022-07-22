@@ -376,8 +376,8 @@ void function AddPlayerToEvacDropship( entity dropship, entity player )
 	if ( !PlayerInDropship( player, dropship ) )
 		return
 
-    // need to cancel if the dropship dies
-    dropship.EndSignal( "OnDeath", "OnDestroy" )
+    	// need to cancel if the dropship dies
+    	dropship.EndSignal( "OnDeath", "OnDestroy" )
 
 	player.SetInvulnerable()
 	player.UnforceCrouch()
@@ -421,7 +421,7 @@ void function EvacDropshipKilled( entity dropship, var damageInfo )
 {
 	foreach ( entity player in dropship.s.evacSlots )
 	{
-		if ( IsValid( player ) )
+		if ( IsValid( player ) && IsAlive( player ) )
 		{
 			player.ClearParent()
 			player.Die( DamageInfo_GetAttacker( damageInfo ), DamageInfo_GetWeapon( damageInfo ), { damageSourceId = eDamageSourceId.evac_dropship_explosion, scriptType = DF_GIB } )
