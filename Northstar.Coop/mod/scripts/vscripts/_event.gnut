@@ -1,0 +1,93 @@
+globalize_all_functions
+
+global struct Event
+{
+    string Name
+    void functionref() StartFunc
+    void functionref( entity ) MiddleFunc
+    void functionref() EndFunc
+}
+
+struct
+{
+    Event& event
+} file
+
+
+void function _EmptyFunction()
+{
+}
+
+void function _EmptyEntityFunction( entity Entity )
+{
+}
+
+void function _SafelyCallEndFunc()
+{
+    try
+    {
+        file.event.EndFunc()
+    }
+    catch( ohno ){}
+}
+
+
+void function SetEvent( Event event )
+{
+    _SafelyCallEndFunc()
+    file.event = event
+    thread file.event.StartFunc()
+}
+
+void function RunMiddleFunc( entity player )
+{
+    file.event.MiddleFunc( player )
+}
+
+void function EndEvent()
+{
+    Event event
+    event.Name = "None"
+    event.StartFunc = _EmptyFunction
+    event.MiddleFunc = _EmptyEntityFunction
+    event.EndFunc = _EmptyFunction
+    
+    _SafelyCallEndFunc()
+    file.event = event
+}
+
+void function SetDefaultEvent()
+{
+    EndEvent()
+}
+
+void function SetCutSceneEvent( void functionref() StartFunc, void functionref( entity ) MiddleFunc, void functionref() EndFunc ) 
+{
+    Event event
+    event.Name = "cutscene"
+    event.StartFunc = StartFunc
+    event.MiddleFunc = MiddleFunc
+    event.EndFunc = EndFunc
+
+    SetEvent( event )
+}
+
+string function GetEventName()
+{
+    return file.event.Name
+}
+
+void functionref() function GetEventStartFunc()
+{
+    return file.event.StartFunc
+}
+
+void functionref( entity ) function GetEventMiddleFunc()
+{
+    return file.event.MiddleFunc
+}
+
+void functionref() function GetEventEndFunc()
+{
+    return file.event.EndFunc
+}
