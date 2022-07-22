@@ -233,6 +233,36 @@ void function InitServerBrowserMenu()
 
 	// UI was cut off on some aspect ratios; not perfect
 	UpdateServerInfoBasedOnRes()
+
+	// Listen for map unload to revert forced mod deactivation
+	AddUICallback_OnLevelInit( RevertModLoadChangesOnShutdown() )
+}
+
+void function RevertModLoadChangesOnShutdown()
+{
+	WaitSignal( uiGlobal.signalDummy, "LevelShutdown" )
+	/*
+		Load order is "mp_lobby" -> "" -> "mp_lobby" -> "mp_map"
+		In order to not load required mods before actually joining the game, lobbies are ignored
+		This means that mods do not get re-enabled when leaving a pre match lobby
+	*/
+	if ( uiGlobal.previousLevel != "mp_lobby" && ( uiGlobal.loadingLevel == "mp_lobby" || !uiGlobal.loadingLevel.len() ) )
+	{
+		array<string> enabled = NSGetForcedEnabledMods()
+		array<string> disabled = NSGetForcedDisabledMods()
+		foreach ( string mod in enabled ) {
+			NSSetModEnabled( mod, false )
+		}
+		foreach ( string mod in disabled ) {
+			NSSetModEnabled( mod, true )
+		}
+		if ( enabled.len() || disabled.len() )
+		{
+			NSClearForcedEnabledMods()
+			NSClearForcedDisabledMods()
+			ReloadMods()
+		}
+    }
 }
 
 ////////////////////////////
@@ -547,6 +577,7 @@ void function OnUpArrowSelected( var button )
 ////////////////////////
 // Key Callbacks
 ////////////////////////
+
 void function OnEnterPressed( arg ) 
 {
 	// only trigger if a server is focused
@@ -556,6 +587,7 @@ void function OnEnterPressed( arg )
 	}
 }
 
+
 void function OnKeyRPressed( arg ) 
 {
 	if ( !IsSearchBarFocused() ) 
@@ -564,7 +596,7 @@ void function OnKeyRPressed( arg )
 	}
 }
 
-bool function IsServerButtonFocused() 
+bool function IsServerButtonFocused()
 {
 	var focusedElement = GetFocus()
 	if ( focusedElement == null )
@@ -572,16 +604,17 @@ bool function IsServerButtonFocused()
 	
 	var name = Hud_GetHudName( focusedElement )
 
+
 	foreach ( element in GetElementsByClassname( file.menu, "ServerButton" ) ) 
 	{
-		if ( element == focusedElement ) 
+		if ( element == focusedElement )
 			return true
 	}
 
 	return false
 }
 
-bool function IsSearchBarFocused() 
+bool function IsSearchBarFocused()
 {
 	return Hud_GetChild( file.menu, "BtnServerSearch" ) == GetFocus()
 }
@@ -858,6 +891,7 @@ void function OnServerButtonFocused( var button )
 		file.scrollOffset = 0
 	
 	int scriptID = int ( Hud_GetScriptID( button ) )
+
 	file.serverButtonFocusedID = scriptID
 	if ( file.serversArrayFiltered.len() > 0 )
 		file.focusedServerIndex = file.serversArrayFiltered[ file.scrollOffset + scriptID ].serverIndex
@@ -1026,9 +1060,72 @@ void function OnServerSelected( var button )
 		AdvanceMenu( GetMenu( "ConnectWithPasswordMenu" ) )
 	}
 	else
-		thread ThreadedAuthAndConnectToServer()
+	{
+		SetForcedMods()
+		if ( NSGetForcedEnabledMods().len() || NSGetForcedDisabledMods().len() )
+			ShowModStatusRequiredChangeMessage()
+		else
+			thread ThreadedAuthAndConnectToServer()
+	}
 }
 
+void function ShowModStatusRequiredChangeMessage()
+{
+	string disabledString
+	array<string> forceEnabled= NSGetForcedEnabledMods()
+	array<string> forceDisabled = NSGetForcedDisabledMods()
+	if ( forceDisabled.len() )
+	{
+		disabledString = format( "\n\n"+Localize( "#MODS_WILL_BE_DISABLED" ), forceDisabled.len() )
+		foreach ( mod in forceDisabled )
+			disabledString += "\n - " + mod
+	}
+	string enabledString
+	if ( forceEnabled.len() )
+	{
+		enabledString = format( "\n\n"+Localize( "#MODS_WILL_BE_ENABLED" ), forceEnabled.len() )
+		foreach ( mod in forceEnabled )
+			enabledString += "\n - " + mod
+	}
+
+	DialogData dialogData
+	dialogData.header = "#INFO_MOD_CHANGE"
+	dialogData.message = Localize( "#ENABLE_DISABLE_MODS_TO_CONTINUE" ) + disabledString + enabledString
+	dialogData.image = $"rui/menu/common/unlock_random"
+
+	AddDialogButton( dialogData, "#CANCEL" )
+	AddDialogButton( dialogData, "#RELOAD_AND_CONTINUE", void function() {
+		// Instead of reloading all mods here, it's still done after auth to avoid unnecessary lags
+		thread ThreadedAuthAndConnectToServer()
+	} )
+
+	OpenDialog( dialogData )
+}
+
+void function SetForcedMods()
+{
+	// Make sure that lists are empty
+	NSClearForcedEnabledMods()
+	NSClearForcedDisabledMods()
+
+	array<string> requiredMods
+	for ( int i = 0; i < NSGetServerRequiredModsCount( file.lastSelectedServer ); i++ )
+		requiredMods.append( NSGetServerRequiredModName( file.lastSelectedServer, i ) )
+
+	// Track every mod that is required to get disabled / enabled in order to join
+	foreach ( int index, string mod in NSGetModNames() )
+	{
+		if ( NSIsModRequiredOnClient( mod ) )
+		{
+			bool modRequired = requiredMods.contains( mod )
+			if ( NSIsModEnabled( mod ) != modRequired )
+				if ( modRequired )
+					NSAddForcedEnabledMod( mod )
+			else
+				NSAddForcedDisabledMod( mod )
+		}
+	}
+}
 
 void function ThreadedAuthAndConnectToServer( string password = "" )
 {
@@ -1073,24 +1170,28 @@ void function ThreadedAuthAndConnectToServer( string password = "" )
 	if ( NSWasAuthSuccessful() )
 	{
 		bool modsChanged
-
-		array<string> requiredMods
-		for ( int i = 0; i < NSGetServerRequiredModsCount( file.lastSelectedServer ); i++ )
-			requiredMods.append( NSGetServerRequiredModName( file.lastSelectedServer, i ) )
-
-		// unload mods we don't need, load necessary ones and reload mods before connecting
-		foreach ( string mod in NSGetModNames() )
+		foreach ( string mod in NSGetForcedEnabledMods() )
 		{
-			if ( NSIsModRequiredOnClient( mod ) )
-			{
-				modsChanged = modsChanged || NSIsModEnabled( mod ) != requiredMods.contains( mod )
-				NSSetModEnabled( mod, requiredMods.contains( mod ) )
-			}
+			NSSetModEnabled( mod, true )
+			modsChanged = true
+		}
+		foreach ( string mod in NSGetForcedDisabledMods() )
+		{
+			NSSetModEnabled( mod, false )
+			modsChanged = true
 		}
 
 		// only actually reload if we need to since the uiscript reset on reload lags hard
 		if ( modsChanged )
+		{
+			// show a window so the user doesn't freak out that their game isn't responding for a few seconds
+			DialogData dialogData
+			dialogData.header = "Reloading Mods"
+			dialogData.image = $"ui/menu/common/dialog_error"
+			OpenDialog( dialogData )
+
 			ReloadMods()
+		}
 
 		NSConnectToAuthedServer()
 	}
