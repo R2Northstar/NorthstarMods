@@ -273,6 +273,9 @@ void function SimpleJobAnims( entity marvin, MarvinJob job )
 
 	Signal( marvin, "JobStarted" )
 
+	if ( marvin.GetModelName() == $"models/error.mdl" )
+		return
+
 	while ( true )
 	{
 		anims.randomize()
@@ -590,6 +593,9 @@ void function MarvinFlyToAnimStart( entity marvin, string anim, entity jobNode )
 		wait 0.1
 		return
 	}
+	
+	if ( marvin.GetModelName() == $"models/error.mdl" )
+		return
 
 	AnimRefPoint animStartInfo = marvin.Anim_GetStartForRefPoint( anim, jobNode.GetOrigin(), jobNode.GetAngles() )
 
