@@ -4,6 +4,7 @@ untyped
 global function AddNorthstarServerBrowserMenu
 global function ThreadedAuthAndConnectToServer
 
+global int lastSelectedServer // So this is accesible in menu_required_mods.nut
 
 // Stop peeking
 
@@ -67,7 +68,6 @@ struct serverStruct {
 struct {
 	// UI state vars
 	var menu
-	int lastSelectedServer = 999
 	int focusedServerIndex = 0
 	int scrollOffset = 0
 	bool serverListRequestFailed = false
@@ -881,13 +881,15 @@ void function CheckDoubleClick( int scriptID, bool wasClickNav )
 	int serverIndex = file.scrollOffset + scriptID
 
 	bool sameServer = false
-	if ( file.lastSelectedServer == serverIndex ) sameServer = true
+	if (lastSelectedServer == serverIndex) sameServer = true
 
 
 	file.serverSelectedTimeLast = file.serverSelectedTime
 	file.serverSelectedTime = Time()
 
-	file.lastSelectedServer = serverIndex
+	printt(file.serverSelectedTime - file.serverSelectedTimeLast, lastSelectedServer, serverIndex)
+
+	lastSelectedServer = serverIndex
 
 	if ( wasClickNav && ( file.serverSelectedTime - file.serverSelectedTimeLast < DOUBLE_CLICK_TIME_MS ) && sameServer )
 	{
@@ -958,28 +960,21 @@ void function OnServerSelected( var button )
 
 	int serverIndex = file.focusedServerIndex
 
-	file.lastSelectedServer = serverIndex
+	lastSelectedServer = serverIndex
 
 	// check mods
 	for ( int i = 0; i < NSGetServerRequiredModsCount( serverIndex ); i++ )
 	{
 		if ( !NSGetModNames().contains( NSGetServerRequiredModName( serverIndex, i ) ) )
 		{
-			DialogData dialogData
-			dialogData.header = "#ERROR"
-			dialogData.message = "Missing mod \"" + NSGetServerRequiredModName( serverIndex, i ) + "\" v" + NSGetServerRequiredModVersion( serverIndex, i )
-			dialogData.image = $"ui/menu/common/dialog_error"
+            DeregisterButtonPressedCallback(MOUSE_WHEEL_UP , OnScrollUp)
+            DeregisterButtonPressedCallback(MOUSE_WHEEL_DOWN , OnScrollDown)
+            DeregisterButtonPressedCallback(KEY_TAB , OnKeyTabPressed)
+            DeregisterButtonPressedCallback(KEY_ENTER, OnEnterPressed)
+            DeregisterButtonPressedCallback(KEY_R, OnKeyRPressed)
 
-			#if PC_PROG
-				AddDialogButton( dialogData, "#DISMISS" )
-
-				AddDialogFooter( dialogData, "#A_BUTTON_SELECT" )
-			#endif // PC_PROG
-			AddDialogFooter( dialogData, "#B_BUTTON_DISMISS_RUI" )
-
-			OpenDialog( dialogData )
-
-			return
+            AdvanceMenu( GetMenu( "ServerRequiredModsMenu" ) )
+            return
 		}
 		else
 		{
@@ -1035,9 +1030,9 @@ void function ThreadedAuthAndConnectToServer( string password = "" )
 	if ( NSIsAuthenticatingWithServer() )
 		return
 
-	print( "trying to authenticate with server " + NSGetServerName( file.lastSelectedServer ) + " with password " + password )
+	print( "trying to authenticate with server " + NSGetServerName( lastSelectedServer ) + " with password " + password )
 
-	NSTryAuthWithServer( file.lastSelectedServer, password )
+	NSTryAuthWithServer( lastSelectedServer, password )
 
 	ToggleConnectingHUD( true )
 
@@ -1059,15 +1054,15 @@ void function ThreadedAuthAndConnectToServer( string password = "" )
 	file.cancelConnection = false
 	NSSetLoading( true )
 	NSUpdateServerInfo(
-		NSGetServerID( file.lastSelectedServer ),
-		NSGetServerName( file.lastSelectedServer ),
+		NSGetServerID(lastSelectedServer),
+		NSGetServerName(lastSelectedServer),
 		password,
-		NSGetServerPlayerCount( file.lastSelectedServer ),
-		NSGetServerMaxPlayerCount( file.lastSelectedServer ),
-		NSGetServerMap( file.lastSelectedServer ),
-		Localize( GetMapDisplayName( NSGetServerMap( file.lastSelectedServer ) ) ),
-		NSGetServerPlaylist( file.lastSelectedServer ),
-		Localize( GetPlaylistDisplayName( NSGetServerPlaylist( file.lastSelectedServer ) ) )
+		NSGetServerPlayerCount(lastSelectedServer),
+		NSGetServerMaxPlayerCount(lastSelectedServer),
+		NSGetServerMap(lastSelectedServer),
+		Localize(GetMapDisplayName(NSGetServerMap(lastSelectedServer))),
+		NSGetServerPlaylist(lastSelectedServer),
+		Localize(GetPlaylistDisplayName(NSGetServerPlaylist(lastSelectedServer)))
 	)
 
 	if ( NSWasAuthSuccessful() )
@@ -1075,8 +1070,8 @@ void function ThreadedAuthAndConnectToServer( string password = "" )
 		bool modsChanged
 
 		array<string> requiredMods
-		for ( int i = 0; i < NSGetServerRequiredModsCount( file.lastSelectedServer ); i++ )
-			requiredMods.append( NSGetServerRequiredModName( file.lastSelectedServer, i ) )
+		for ( int i = 0; i < NSGetServerRequiredModsCount( lastSelectedServer ); i++ )
+			requiredMods.append( NSGetServerRequiredModName( lastSelectedServer, i ) )
 
 		// unload mods we don't need, load necessary ones and reload mods before connecting
 		foreach ( string mod in NSGetModNames() )

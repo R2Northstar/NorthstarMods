@@ -105,6 +105,13 @@
 		{
 			"Path": "ui/controller_prompts.nut",
 			"RunOn": "UI"
+		},
+		{
+			"Path": "ui/menu_required_mods.nut",
+			"RunOn": "UI",
+			"UICallback": {
+				"Before": "AddServerRequiredModLinkMenu"
+			}
 		}
 	],
 	"Localisation": [
