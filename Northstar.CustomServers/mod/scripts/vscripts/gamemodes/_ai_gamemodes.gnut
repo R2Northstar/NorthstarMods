@@ -28,18 +28,21 @@ void function AiGameModes_Init()
 
 void function AiGameModes_SetGruntWeapons( array< string > weapons )
 {
+	print( "Set grunt weapons!" )
 	file.gruntWeapons = weapons
 }
 
 void function AiGameModes_SetSpectreWeapons( array< string > weapons )
 {
+	print( "Set spectre weapons!" )
 	file.spectreWeapons = weapons
 }
 
 //------------------------------------------------------
 
 void function AiGameModes_SpawnDropShip( vector pos, vector rot, int team, int count, void functionref( array<entity> guys ) squadHandler = null )
-{  
+{ 
+	printt( "Trying to spawn AI dropship at:", pos )
 	string squadName = MakeSquadName( team, UniqueString( "" ) )
 
 	CallinData drop
@@ -65,11 +68,14 @@ void function AiGameModes_SpawnDropShip( vector pos, vector rot, int team, int c
 	
 	if ( squadHandler != null )
 		thread squadHandler( guys )
+		
+	print( "Succesfully spawned AI dropship!" )
 }
 
 
 void function AiGameModes_SpawnDropPod( vector pos, vector rot, int team, string content /*( ͡° ͜ʖ ͡°)*/, void functionref( array<entity> guys ) squadHandler = null )
 {
+	printt( "Trying to spawn AI droppod at:", pos )
 	string squadName = MakeSquadName( team, UniqueString( "" ) )
 	array<entity> guys
 	
@@ -107,10 +113,13 @@ void function AiGameModes_SpawnDropPod( vector pos, vector rot, int team, string
 	waitthread LaunchAnimDropPod( pod, "pod_testpath", pos, rot )
 	
 	ActivateFireteamDropPod( pod, guys )
+	
+	print( "Succesfully spawned droppod!" )
 }
 
 void function AiGameModes_SpawnReaper( vector pos, vector rot, int team, string aiSettings = "", void functionref( entity reaper ) reaperHandler = null )
 {
+	printt( "Trying to spawn AI reaper at:", pos )
 	entity reaper = CreateSuperSpectre( team, pos, rot )
 	SetSpawnOption_Titanfall( reaper )
 	SetSpawnOption_Warpfall( reaper )
@@ -123,11 +132,14 @@ void function AiGameModes_SpawnReaper( vector pos, vector rot, int team, string 
 	
 	if ( reaperHandler != null )
 		thread reaperHandler( reaper )
+	
+	print( "Succesfully spawned AI reaper!" )
 }
 
 // including aisettings stuff specifically for at bounty titans
 void function AiGameModes_SpawnTitan( vector pos, vector rot, int team, string setFile, string aiSettings = "", void functionref( entity titan ) titanHandler = null )
 {
+	printt( "Trying to spawn AI titan at:", pos )
 	entity titan = CreateNPCTitan( setFile, TEAM_BOTH, pos, rot )
 	SetSpawnOption_Titanfall( titan )
 	SetSpawnOption_Warpfall( titan )
@@ -139,6 +151,8 @@ void function AiGameModes_SpawnTitan( vector pos, vector rot, int team, string s
 	
 	if ( titanHandler != null )
 		thread titanHandler( titan )
+	
+	print( "Succesfully spawned AI titan!" )
 }
 
 // entity.ReplaceActiveWeapon gave grunts archers sometimes, this is my replacement for it

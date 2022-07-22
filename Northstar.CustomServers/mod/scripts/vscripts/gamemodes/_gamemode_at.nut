@@ -1,3 +1,4 @@
+untyped
 global function GamemodeAt_Init
 global function RateSpawnpoints_AT
 
@@ -5,6 +6,7 @@ const int BH_AI_TEAM = TEAM_BOTH
 const int BOUNTY_TITAN_DAMAGE_POOL = 400 // Rewarded for damage
 const int BOUNTY_TITAN_KILL_REWARD = 100 // Rewarded for kill
 const float WAVE_STATE_TRANSITION_TIME = 5.0
+const float BANK_OPEN_TIME = 40.0
 
 const array<string> VALID_BOUNTY_TITAN_SETTINGS = [
 	"npc_titan_atlas_stickybomb_bounty",
@@ -59,6 +61,11 @@ void function CreateATBank( entity spawnpoint )
 {
 	entity bank = CreatePropDynamic( spawnpoint.GetModelName(), spawnpoint.GetOrigin(), spawnpoint.GetAngles(), SOLID_VPHYSICS )
 	bank.SetScriptName( "AT_Bank" )
+	
+
+	bank.SetUsableByGroup( "pilot" )
+	bank.SetUsePrompts( "#HOLD_TO_USE_GENERIC", "#PRESS_TO_USE_GENERIC" )
+	bank.UnsetUsable()
 	
 	// create tracker ent
 	// we don't need to store these at all, client just needs to get them
@@ -118,6 +125,11 @@ void function AT_SetPlayerCash( entity player, int amount )
 
 	player.SetPlayerNetInt( "AT_bonusPoints256", stacks )
 	player.SetPlayerNetInt( "AT_bonusPoints", amount - stacks * 256 )
+}
+
+int function AT_GetPlayerCash( entity player )
+{
+	return player.GetPlayerNetInt( "AT_bonusPoints256" ) * 256 + player.GetPlayerNetInt( "AT_bonusPoints" )
 }
 
 void function AT_AddPlayerCash( entity player, int amount )
@@ -254,8 +266,118 @@ void function RunATGame_Threaded()
 		
 		wait WAVE_STATE_TRANSITION_TIME
 		
-		// banking phase
+		waitthread BanksOpen_Threaded()
 	}
+}
+
+// Think function for banks
+void function BanksOpen_Threaded()
+{
+	// Open
+	SetGlobalNetBool( "banksOpen", true )
+	
+	foreach ( entity player in GetPlayerArray() )
+		Remote_CallFunction_NonReplay( player, "ServerCallback_AT_BankOpen" )
+	
+	foreach ( entity bank in file.banks )
+	{
+		bank.SetUsable()
+		thread PlayAnim( bank, "mh_inactive_2_active" )
+	}
+	
+	// Think
+	// table < player, moneyDeposited >
+	table < entity, int > depositingPlayers
+	foreach ( entity bank in file.banks )
+	{
+		AddCallback_OnUseEntity( bank, function( b, p ) : ( depositingPlayers ) {
+			expect entity( b )
+			expect entity( p )
+			
+			if ( !( p in depositingPlayers ) )
+			{
+				depositingPlayers[p] <- 0
+				p.SetPlayerNetBool( "AT_playerUploading", true )
+			}
+		} )
+	}
+	
+	
+	float bankOpenTime = Time()
+	
+	SetGlobalNetTime( "AT_bankStartTime", Time() )
+	SetGlobalNetTime( "AT_bankEndTime", Time() + BANK_OPEN_TIME )
+	
+	while ( Time() - bankOpenTime < BANK_OPEN_TIME )
+	{
+		foreach ( player, amount in depositingPlayers )
+		{
+			entity closestBank = GetClosest( file.banks, player.GetOrigin(), 300 )
+			
+			// we're close to a bank
+			if ( closestBank != null && AT_GetPlayerCash( player ) > 0 )
+			{
+				depositingPlayers[player] += DepositMoney( player )
+				continue
+			}
+			
+			// we've failed the check above, either no more money left or too far from bank
+			Remote_CallFunction_NonReplay( player, "ServerCallback_AT_FinishDeposit", depositingPlayers[player] )
+			player.SetPlayerNetBool( "AT_playerUploading", false )
+			delete depositingPlayers[ player ]
+		}
+		wait 0.1
+	}
+	
+	
+	// remove players after closing banks
+	foreach ( player, amount in depositingPlayers )
+	{
+		Remote_CallFunction_NonReplay( player, "ServerCallback_AT_FinishDeposit", depositingPlayers[player] )
+		player.SetPlayerNetBool( "AT_playerUploading", false )
+		delete depositingPlayers[ player ]
+	}
+	
+	
+	// Close
+	foreach ( entity bank in file.banks )
+	{
+		bank.UnsetUsable()
+		thread PlayAnim( bank, "mh_active_2_inactive" )
+	}
+	
+	foreach ( entity player in GetPlayerArray() )
+		Remote_CallFunction_NonReplay( player, "ServerCallback_AT_BankClose" )
+	
+	SetGlobalNetBool( "banksOpen", false )
+}
+
+// deposits money
+// returns the amount deposited, this wont always be 10
+int function DepositMoney( entity player )
+{
+	int newValue = AT_GetPlayerCash( player ) - 10
+	
+	if ( newValue < 0 )
+		newValue = 0
+	
+	int deposited = AT_GetPlayerCash( player ) - newValue
+	
+	AT_SetPlayerCash( player, newValue )
+	player.SetPlayerGameStat( PGS_SCORE, newValue ) 
+	player.AddToPlayerGameStat( PGS_ASSAULT_SCORE, deposited ) 
+	AddTeamScore( player.GetTeam(), deposited )
+	
+	return deposited
+}
+
+// splits money between player and their team bank
+void function GiveMoneyToPlayer( entity player, int money )
+{
+	player.AddToPlayerGameStat( PGS_ASSAULT_SCORE, money / 2 ) // score
+	player.AddToPlayerGameStat( PGS_SCORE, money / 2 ) // bonus
+	AddTeamScore( player.GetTeam(), money / 2 )
+	AT_SetPlayerCash( player, AT_GetPlayerCash( player ) + money / 2 )
 }
 
 // entity funcs
