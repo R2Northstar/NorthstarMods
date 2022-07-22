@@ -110,7 +110,10 @@ void function MortarSpectreAttack( entity spectre, entity harvester, entity sign
 
 	while( true )
 	{
-		entity weapon = spectre.GetMainWeapons()[0]
+		array<entity> weapons = spectre.GetMainWeapons()
+		if ( weapons.len() == 0 )
+			break
+		entity weapon = weapons[0]
 		if ( !IsValid( weapon ) )
 			break
 		originalWeaponClassName = weapon.GetWeaponClassName()
