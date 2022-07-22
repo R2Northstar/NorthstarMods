@@ -88,6 +88,24 @@
 			}
 		},
 		{
+			"Path": "gamemodes/_gamemode_hotpotato.nut",
+			"RunOn": "SERVER && MP"
+		},
+		{
+			"Path": "gamemodes/cl_gamemode_hotpotato.nut",
+			"RunOn": "CLIENT && MP"
+		},
+		{
+			"Path": "gamemodes/sh_gamemode_hotpotato.nut",
+			"RunOn": "( SERVER || CLIENT ) && MP",
+			"ServerCallback": {
+				"Before": "Sh_GamemodeHotPotato_Init"
+			},
+			"ClientCallback": {
+				"Before": "Sh_GamemodeHotPotato_Init"
+			}
+		},
+		{
 			"Path": "gamemodes/cl_gamemode_sns.gnut",
 			"RunOn": "CLIENT && MP"
 		},
