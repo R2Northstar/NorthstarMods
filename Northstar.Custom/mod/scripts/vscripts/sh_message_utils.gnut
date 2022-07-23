@@ -23,8 +23,8 @@ struct
 #if CLIENT
 global function MessageUtils_ClientInit
 
-vector ColorSelected = <0.9, 0.8, 0.5>
-vector ColorBase = <0.9, 0.5, 0.1>
+vector ColorSelected = < 0.9, 0.8, 0.5 >
+vector ColorBase = < 0.9, 0.5, 0.1 >
 
 struct tempMessage
 {
