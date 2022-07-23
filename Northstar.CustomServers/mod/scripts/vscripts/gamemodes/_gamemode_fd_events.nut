@@ -1088,9 +1088,9 @@ void function fd_spawnCloakDrone(SmokeEvent smokeEffect,SpawnEvent spawnEvent,Fl
 	AddMinimapForHumans(npc)
 }
 
-void function SpawnTick(SmokeEvent smokeEffect,SpawnEvent spawnEvent,FlowControlEvent flowControlEvent,SoundEvent soundEvent)
+void function SpawnTick( SmokeEvent smokeEffect,SpawnEvent spawnEvent,FlowControlEvent flowControlEvent,SoundEvent soundEvent )
 {
-	PingMinimap(spawnEvent.origin.x, spawnEvent.origin.y, 4, 600, 150, 0)
+	PingMinimap( spawnEvent.origin.x, spawnEvent.origin.y, 4, 600, 150, 0 )
 	entity pod = CreateDropPod( spawnEvent.origin, <0,0,0> )
 	SetTeam( pod, TEAM_IMC )
 	InitFireteamDropPod( pod )
@@ -1102,23 +1102,22 @@ void function SpawnTick(SmokeEvent smokeEffect,SpawnEvent spawnEvent,FlowControl
 	for ( int i = 0; i < spawnEvent.spawnAmount; i++ )
 	{
 		entity guy = CreateFragDrone( TEAM_IMC, spawnEvent.origin, <0,0,0> )
-		if(spawnEvent.entityGlobalKey!="")
-			GlobalEventEntitys[spawnEvent.entityGlobalKey+i.tostring()] <- guy
-		SetSpawnOption_AISettings(guy, "npc_frag_drone_fd")
+		if( spawnEvent.entityGlobalKey!="" )
+			GlobalEventEntitys[ spawnEvent.entityGlobalKey + i.tostring() ] <- guy
+		SetSpawnOption_AISettings( guy, "npc_frag_drone_fd" )
 		SetTeam( guy, TEAM_IMC )
 		guy.EnableNPCFlag(  NPC_ALLOW_INVESTIGATE )
-		guy.EnableNPCMoveFlag(NPCMF_WALK_ALWAYS | NPCMF_PREFER_SPRINT)
 		DispatchSpawn( guy )
-		AddMinimapForHumans(guy)
-		SetTargetName( guy, GetTargetNameForID(eFD_AITypeIDs.TICK))
+		AddMinimapForHumans( guy )
+		SetTargetName( guy, GetTargetNameForID( eFD_AITypeIDs.TICK ) )
 		SetSquad( guy, squadName )
-		spawnedNPCs.append(guy)
+		spawnedNPCs.append( guy )
 
 		guys.append( guy )
 	}
 
 	ActivateFireteamDropPod( pod, guys )
-	thread SquadNav_Thread(guys,spawnEvent.route)
+	thread SquadNav_Thread( guys, spawnEvent.route, spawnEvent.skippedRouteNodes, 300 )
 }
 
 
