@@ -41,6 +41,7 @@ global struct SpawnEvent{
 	string npcClassName
 	string aiSettings
 	string entityGlobalKey
+	bool shouldLoop = false
 }
 
 global struct FlowControlEvent{
@@ -542,7 +543,7 @@ WaveEvent function CreateWaitForLessThanTypedEvent(int aiTypeId,int amount,int n
 	event.flowControlEvent.waitEntityType = aiTypeId
 	return event
 }
-WaveEvent function CreateSpawnDroneEvent(vector origin,vector angles,string route,int nextEventIndex,int executeOnThisCall = 1,string entityGlobalKey="")
+WaveEvent function CreateSpawnDroneEvent(vector origin,vector angles,string route,int nextEventIndex, bool shouldLoop = true, int executeOnThisCall = 1,string entityGlobalKey="")
 {
 	WaveEvent event
 	event.eventFunction = spawnDrones
@@ -554,6 +555,7 @@ WaveEvent function CreateSpawnDroneEvent(vector origin,vector angles,string rout
 	event.spawnEvent.origin = origin
 	event.spawnEvent.entityGlobalKey = entityGlobalKey
 	event.spawnEvent.route = route
+	event.spawnEvent.shouldLoop = shouldLoop
 	return event
 }
 
@@ -613,7 +615,7 @@ void function spawnDrones(SmokeEvent smokeEvent,SpawnEvent spawnEvent,FlowContro
 		SetTargetName( guy, GetTargetNameForID(eFD_AITypeIDs.DRONE))
 		AddMinimapForHumans(guy)
 		spawnedNPCs.append(guy)
-		thread droneNav_thread(guy, spawnEvent.route, 0, 500, true)
+		thread droneNav_thread(guy, spawnEvent.route, 0, 500, spawnEvent.shouldLoop)
 	}
 
 
