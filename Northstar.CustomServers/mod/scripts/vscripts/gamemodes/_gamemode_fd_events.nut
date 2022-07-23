@@ -1112,12 +1112,12 @@ void function SpawnTick( SmokeEvent smokeEffect,SpawnEvent spawnEvent,FlowContro
 		SetTargetName( guy, GetTargetNameForID( eFD_AITypeIDs.TICK ) )
 		SetSquad( guy, squadName )
 		spawnedNPCs.append( guy )
-
+		guy.AssaultSetFightRadius( expect int( guy.Dev_GetAISettingByKeyField("LookDistDefault_Combat") ) ) // make the ticks target players very aggressively
 		guys.append( guy )
 	}
 
 	ActivateFireteamDropPod( pod, guys )
-	thread SquadNav_Thread( guys, spawnEvent.route, spawnEvent.skippedRouteNodes, 300 )
+	thread SquadNav_Thread( guys, spawnEvent.route )
 }
 
 
