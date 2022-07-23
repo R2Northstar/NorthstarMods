@@ -60,7 +60,6 @@ struct
 	
 	// table<id,rui>
 	table<string,var> statusMessageList
-	
 } client
 #endif // CLIENT
 
