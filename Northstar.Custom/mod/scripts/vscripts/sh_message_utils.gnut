@@ -429,7 +429,7 @@ void function InfoMessageHandler_Threaded()
 		var rui = CreatePermanentCockpitRui( $"ui/death_hint_mp.rpak" )
 		RuiSetString( rui, "hintText", client.infoMessageQueue[0].description )
 		RuiSetGameTime( rui, "startTime", Time() )
-		RuiSetFloat3( rui, "bgColor", <0,0,0> )
+		RuiSetFloat3( rui, "bgColor", < 0, 0, 0 > )
 		RuiSetFloat( rui, "bgAlpha", 0.5 )
 
 		wait 7
