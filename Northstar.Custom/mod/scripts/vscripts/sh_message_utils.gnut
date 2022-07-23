@@ -349,7 +349,7 @@ void function CreateStatusMessage( string id )
 	RuiSetGameTime( rui, "startFadeInTime", Time() )
 	RuiSetString( rui, "titleText", client.temp.title )
 	RuiSetString( rui, "itemText", client.temp.description )
-	RuiSetFloat2( rui, "offset", <0,-250,0> )
+	RuiSetFloat2( rui, "offset", < 0, -250, 0 > )
 
 	client.statusMessageList[ id ] <- rui
 }
