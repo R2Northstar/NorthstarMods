@@ -434,7 +434,7 @@ void function InfoMessageHandler_Threaded()
 
 		wait 7
 
-		client.infoMessageQueue.remove(0)
+		client.infoMessageQueue.remove( 0 )
 		RuiDestroyIfAlive( rui )
 	}
 }
