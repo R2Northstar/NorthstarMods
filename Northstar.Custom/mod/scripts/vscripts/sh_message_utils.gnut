@@ -386,7 +386,7 @@ void function ShowPollMessage_Threaded()
 	{
 		var rui = CreateCockpitRui( $"ui/cockpit_console_text_top_left.rpak" )
 		// This makes it fade and me no likey >:(
-		RuiSetFloat2( rui, "msgPos", <0, 0.4 + i * 0.025, 0> )
+		RuiSetFloat2( rui, "msgPos", < 0, 0.4 + i * 0.025, 0 > )
 		if( i == 0 )
 		{
 			RuiSetFloat3( rui, "msgColor", ColorSelected )
