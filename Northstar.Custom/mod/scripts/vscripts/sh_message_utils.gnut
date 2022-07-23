@@ -382,7 +382,6 @@ void function ShowPollMessage_Threaded()
 	
 	client.poll.pollActive = true
 	
-	
 	for( int i = 0; i < client.poll.options.len() + 1; i++ )
 	{
 		var rui = CreateCockpitRui( $"ui/cockpit_console_text_top_left.rpak" )
