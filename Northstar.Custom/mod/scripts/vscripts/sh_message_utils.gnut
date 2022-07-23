@@ -323,7 +323,6 @@ void function DeleteStatusMessage( string id )
 		foreach( _id, _rui in client.statusMessageList )
 		{
 			RuiSetInt( _rui, "listPos", i )
-
 			i++
 		}
 	}
