@@ -85,6 +85,7 @@ void function GamemodeFD_Init()
 	//death Callbacks
 	AddCallback_OnNPCKilled(OnNpcDeath)
 	AddCallback_OnPlayerKilled(GamemodeFD_OnPlayerKilled)
+	AddDeathCallback( "npc_frag_drone", OnTickDeath ) // ticks dont come up in the other callback because of course they dont
 	
 	//Command Callbacks
 	AddClientCommandCallback("FD_ToggleReady",ClientCommandCallbackToggleReady)
@@ -181,6 +182,19 @@ void function SetTurretSettings_threaded(entity player)
 	WaitFrame()
 	DeployableTurret_SetAISettingsForPlayer_AP(player,"npc_turret_sentry_burn_card_ap_fd")
 	DeployableTurret_SetAISettingsForPlayer_AT(player,"npc_turret_sentry_burn_card_at_fd")
+}
+
+void function OnTickDeath( entity victim, var damageInfo )
+{
+	int findIndex = spawnedNPCs.find( victim )
+	if ( findIndex != -1 )
+	{
+		spawnedNPCs.remove( findIndex )
+	
+		SetGlobalNetInt( "FD_AICount_Ticks", GetGlobalNetInt( "FD_AICount_Ticks" ) -1 )
+		
+		SetGlobalNetInt( "FD_AICount_Current", GetGlobalNetInt( "FD_AICount_Current" ) -1 )
+	}
 }
 
 void function OnNpcDeath( entity victim, entity attacker, var damageInfo )
