@@ -132,6 +132,7 @@ void function OnModMenuOpened()
 
 	UpdateList()
 	UpdateListSliderHeight()
+	UpdateListSliderPosition()
 
 	RegisterButtonPressedCallback(MOUSE_WHEEL_UP , OnScrollUp)
 	RegisterButtonPressedCallback(MOUSE_WHEEL_DOWN , OnScrollDown)
