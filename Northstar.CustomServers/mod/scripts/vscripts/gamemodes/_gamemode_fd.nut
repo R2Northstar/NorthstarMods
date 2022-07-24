@@ -389,10 +389,10 @@ array<int> function getHighestEnemyAmountsForWave( int waveIndex )
 				keyIsSet = true
 				break
 			}
-			if( npcs[ret[lowestArrayIndex]] > npcs[ret[index]] )
+			if( npcs[ ret[lowestArrayIndex] ] > npcs[ ret[index] ] )
 				lowestArrayIndex = index
 		}
-		if( ( !keyIsSet ) && ( npcs[ret[lowestArrayIndex]] < value ) )
+		if( ( !keyIsSet ) && ( npcs[ ret[lowestArrayIndex] ] < value ) )
 			ret[lowestArrayIndex] = key
 	}
 	foreach( int val in ret )
