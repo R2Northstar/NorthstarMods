@@ -6,8 +6,8 @@ void function CodeCallback_MapInit()
 	AddSpawnCallback( "info_spawnpoint_titan_start", TrimBadTitanStartSpawns )
 
 	// Load Frontier Defense Data
-	if(GameRules_GetGameMode()=="fd")
-        initFrontierDefenseData()
+	if( GameRules_GetGameMode() == "fd" )
+		initFrontierDefenseData()
 
 }
 
