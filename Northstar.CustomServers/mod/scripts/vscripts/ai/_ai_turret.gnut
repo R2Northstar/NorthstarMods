@@ -26,31 +26,31 @@ void function SetUsePromptForPanel( var panel, var turret )
 
 }
 
-void function RevivableTurret_DamageCallback(entity turret,var damageInfo)
+void function RevivableTurret_DamageCallback( entity turret, var damageInfo )
 {
-	if(turret.GetHealth()<DamageInfo_GetDamage(damageInfo))
+	if( turret.GetHealth() <= DamageInfo_GetDamage( damageInfo ) )
 	{
-		turret.SetHealth(1)
+		turret.SetHealth( 1 )
 		turret.SetUsable()
-		turret.SetUsableByGroup("pilot")
-		turret.SetUsePrompts("#TURRET_WAKEUP_HOLD_USE","#TURRET_WAKEUP_PRESS_USE")
+		turret.SetUsableByGroup( "pilot" )
+		turret.SetUsePrompts( "#TURRET_WAKEUP_HOLD_USE", "#TURRET_WAKEUP_PRESS_USE" )
 		turret.useFunction = RevivableTurret_UseFunction
-		thread RevivableTurret_Kill(turret)
-		DamageInfo_SetDamage(damageInfo,0.0)
+		thread RevivableTurret_Kill( turret )
+		DamageInfo_SetDamage( damageInfo, 0.0 )
 	}
 }
 
-function RevivableTurret_UseFunction(player,turret)
+function RevivableTurret_UseFunction( player , turret )
 {	
-	entity tur = expect entity(turret)
-	thread RevivableTurret_Revive(tur)
+	entity tur = expect entity( turret )
+	thread RevivableTurret_Revive( tur )
 	return true
 }
 
 
-void function RevivableTurret_Revive(entity turret)
+void function RevivableTurret_Revive( entity turret )
 {
-	turret.SetHealth(turret.GetMaxHealth())
+	turret.SetHealth( turret.GetMaxHealth() )
 	turret.ClearInvulnerable()
 	turret.Anim_ScriptedPlay( "deploy" )
 	wait 1.0
@@ -59,7 +59,7 @@ void function RevivableTurret_Revive(entity turret)
 	turret.SetNoTarget( false )
 }
 
-void function RevivableTurret_Kill(entity turret)
+void function RevivableTurret_Kill( entity turret )
 {
 	turret.EnableNPCFlag( NPC_IGNORE_ALL )
 	turret.SetNoTarget( true )

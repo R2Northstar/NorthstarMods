@@ -41,6 +41,7 @@ global struct SpawnEvent{
 	string npcClassName
 	string aiSettings
 	string entityGlobalKey
+	bool shouldLoop = false
 }
 
 global struct FlowControlEvent{
@@ -544,7 +545,7 @@ WaveEvent function CreateWaitForLessThanTypedEvent(int aiTypeId,int amount,int n
 	return event
 }
 
-WaveEvent function CreateSpawnDroneEvent( vector origin, vector angles, string route, int nextEventIndex, int executeOnThisCall = 1, string entityGlobalKey = "" )
+WaveEvent function CreateSpawnDroneEvent(vector origin,vector angles,string route,int nextEventIndex, bool shouldLoop = true, int executeOnThisCall = 1,string entityGlobalKey="")
 {
 	WaveEvent event
 	event.eventFunction = spawnDrones
@@ -556,6 +557,7 @@ WaveEvent function CreateSpawnDroneEvent( vector origin, vector angles, string r
 	event.spawnEvent.origin = origin
 	event.spawnEvent.entityGlobalKey = entityGlobalKey
 	event.spawnEvent.route = route
+	event.spawnEvent.shouldLoop = shouldLoop
 	return event
 }
 
@@ -615,7 +617,7 @@ void function spawnDrones( SmokeEvent smokeEvent, SpawnEvent spawnEvent, FlowCon
 		SetTargetName( guy, GetTargetNameForID( eFD_AITypeIDs.DRONE ) )
 		AddMinimapForHumans( guy )
 		spawnedNPCs.append( guy )
-		thread droneNav_thread( guy, spawnEvent.route, 0, 500, true )
+		thread droneNav_thread(guy, spawnEvent.route, 0, 500, spawnEvent.shouldLoop )
 	}
 
 
@@ -742,18 +744,10 @@ void function spawnDroppodGrunts( SmokeEvent smokeEvent, SpawnEvent spawnEvent, 
 
 	string squadName = MakeSquadName( TEAM_IMC, UniqueString( "ZiplineTable" ) )
 	array<entity> guys
-	bool adychecked = false
 
 	for ( int i = 0; i < spawnEvent.spawnAmount; i++ )
     {
-		entity guy
-
-		// should this grunt be a shield captain?
-		if (i < GetCurrentPlaylistVarInt( "fd_grunt_shield_captains", 0 ) )
-			guy = CreateShieldCaptain( TEAM_IMC, spawnEvent.origin, < 0, 0, 0 > )
-		else
-			guy = CreateSoldier( TEAM_IMC, spawnEvent.origin, < 0, 0, 0 > )
-
+		entity guy = CreateSoldier( TEAM_IMC, spawnEvent.origin, < 0, 0, 0 > )
 
 		if( spawnEvent.entityGlobalKey != "" )
 			GlobalEventEntitys[ spawnEvent.entityGlobalKey+ i.tostring() ] <- guy
@@ -762,17 +756,22 @@ void function spawnDroppodGrunts( SmokeEvent smokeEvent, SpawnEvent spawnEvent, 
 		guy.DisableNPCFlag( NPC_ALLOW_PATROL )
 		DispatchSpawn( guy )
 
+		// should this grunt be a shield captain?
+		if (i < GetCurrentPlaylistVarInt( "fd_grunt_shield_captains", 0 ) )
+			thread ActivatePersonalShield( guy )
+
 		guy.SetParent( pod, "ATTACH", true )
 		SetSquad( guy, squadName )
 
 		// should this grunt have an anti titan weapon instead of its normal weapon?
-		if (i < GetCurrentPlaylistVarInt( "fd_grunt_at_weapon_users", 0 ) )
+		if ( i < GetCurrentPlaylistVarInt( "fd_grunt_at_weapon_users", 0 ) )
 		{
-			guy.TakeActiveWeapon()
-			guy.GiveWeapon( "mp_weapon_defender" ) // do grunts ever get a different anti titan weapon?
+			guy.GiveWeapon( "mp_weapon_defender" ) // do grunts ever get a different anti titan weapon? - yes, TODO
+			// atm they arent using their AT weapons ever, but they do in fact get them, in fact some grunts are getting 2 since they already get a rocket_launcher
+			// this seems to be a problem elsewhere as opposed to something that is wrong here
 		}
 
-		SetTargetName( guy, GetTargetNameForID( eFD_AITypeIDs.GRUNT ) )
+		SetTargetName( guy, GetTargetNameForID( eFD_AITypeIDs.GRUNT ) ) // do shield captains get their own target name in vanilla?
 		AddMinimapForHumans( guy )
 		spawnedNPCs.append( guy )
 		guys.append( guy )
@@ -861,11 +860,12 @@ void function spawnDroppodSpectreMortar( SmokeEvent smokeEvent, SpawnEvent spawn
 	for ( int i = 0; i < 4; i++ )
 	{
 		entity guy = CreateSpectre( TEAM_IMC, spawnEvent.origin,< 0, 0, 0 > )
+		SetSpawnOption_AISettings( guy, "npc_spectre_mortar" )
 		if( spawnEvent.entityGlobalKey != "" )
 			GlobalEventEntitys[ spawnEvent.entityGlobalKey + i.tostring() ] <- guy
 		SetTeam( guy, TEAM_IMC )
 		DispatchSpawn( guy )
-
+		spawnedNPCs.append(guy)
 		SetSquad( guy, squadName )
 		SetTargetName( guy, GetTargetNameForID(eFD_AITypeIDs.SPECTRE_MORTAR))
 		AddMinimapForHumans(guy)
@@ -873,6 +873,9 @@ void function spawnDroppodSpectreMortar( SmokeEvent smokeEvent, SpawnEvent spawn
     }
 
     ActivateFireteamDropPod( pod, guys )
+	
+	thread MortarSpectreSquadThink( guys, fd_harvester.harvester )
+	
 }
 
 void function spawnGenericNPC( SmokeEvent smokeEvent, SpawnEvent spawnEvent, FlowControlEvent flowControlEvent, SoundEvent soundEvent )
@@ -1107,13 +1110,12 @@ void function SpawnTick( SmokeEvent smokeEvent, SpawnEvent spawnEvent, FlowContr
 		SetSpawnOption_AISettings( guy, "npc_frag_drone_fd" )
 		SetTeam( guy, TEAM_IMC )
 		guy.EnableNPCFlag(  NPC_ALLOW_INVESTIGATE )
-		guy.EnableNPCMoveFlag( NPCMF_WALK_ALWAYS | NPCMF_PREFER_SPRINT )
 		DispatchSpawn( guy )
 		AddMinimapForHumans( guy )
 		SetTargetName( guy, GetTargetNameForID( eFD_AITypeIDs.TICK ) )
 		SetSquad( guy, squadName )
 		spawnedNPCs.append( guy )
-
+		guy.AssaultSetFightRadius( expect int( guy.Dev_GetAISettingByKeyField( "LookDistDefault_Combat" ) ) ) // make the ticks target players very aggressively
 		guys.append( guy )
 	}
 
@@ -1169,8 +1171,8 @@ void function waitUntilLessThanAmountAlive( int amount )
 		WaitFrame()
 		deduct = 0
 		foreach ( entity npc in spawnedNPCs )
-		{	
-			if( !IsValid(npc) )
+		{
+			if( !IsValid( npc ) )
 			{
 				deduct++
 				continue
