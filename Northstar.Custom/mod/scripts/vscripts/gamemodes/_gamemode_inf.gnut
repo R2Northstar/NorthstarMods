@@ -44,6 +44,9 @@ void function SelectFirstInfectedDelayed()
 {
 	wait 10.0 + RandomFloat( 5.0 )
 
+	if ( file.hasHadFirstInfection ) // in case a player joins and gets infected before this happens
+		return
+
 	array<entity> players = GetPlayerArray()
 	entity infected = players[ RandomInt( players.len() ) ]
 
@@ -185,6 +188,8 @@ void function SetLastSurvivor( entity player )
 		Remote_CallFunction_NonReplay( otherPlayer, "ServerCallback_AnnounceLastSurvivor", player.GetEncodedEHandle() )
 
 	Highlight_SetEnemyHighlight( player, "enemy_sonar" )
+	StatusEffect_AddEndless( player, eStatusEffect.sonar_detected, 1.0 ) // sonar is better here so the player themselves see the SONAR DETECTED warning.
+
 	if ( SpawnPoints_GetTitan().len() > 0 )
 		thread CreateTitanForPlayerAndHotdrop( player, GetTitanReplacementPoint( player, false ) )
 
