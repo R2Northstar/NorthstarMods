@@ -29,7 +29,7 @@ void function GamemodeInfection_Init()
 
 void function InfectionInitPlayer( entity player )
 {
-	if ( GetGameState() < eGameState.Playing )
+	if ( GetGameState() < eGameState.Playing || !file.hasHadFirstInfection ) // per Gecko's suggestion, make anyone joining before first infected to stay as survivor instead
 		SetTeam( player, INFECTION_TEAM_SURVIVOR )
 	else
 		InfectPlayer( player )
@@ -43,9 +43,6 @@ void function SelectFirstInfected()
 void function SelectFirstInfectedDelayed()
 {
 	wait 10.0 + RandomFloat( 5.0 )
-
-	if ( file.hasHadFirstInfection ) // in case a player joins and gets infected before this happens
-		return
 
 	array<entity> players = GetPlayerArray()
 	entity infected = players[ RandomInt( players.len() ) ]
