@@ -469,7 +469,7 @@ void function LargeMessageHandler_Threaded()
 			WaitFrame()
 
 		var rui = CreatePermanentCockpitRui( $"ui/fd_tutorial_tip.rpak" )
-		RuiSetImage( rui, "backgroundImage", StringToAsset( client.largeMessageQueue[0].image ) )
+		RuiSetImage( rui, "backgroundImage", StringToAsset( strip( client.largeMessageQueue[0].image ) ) )
 		RuiSetString( rui, "titleText", client.largeMessageQueue[0].title )
 		RuiSetString( rui, "descriptionText", client.largeMessageQueue[0].description )
 		RuiSetGameTime( rui, "updateTime", Time() )
