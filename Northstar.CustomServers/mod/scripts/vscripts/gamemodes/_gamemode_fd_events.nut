@@ -23,6 +23,7 @@ global function CreateRoninTitanEvent
 global function CreateToneTitanEvent
 global function CreateLegionTitanEvent
 global function CreateMonarchTitanEvent
+global function CreateWarningEvent
 global function executeWave
 global function restetWaveEvents
 
@@ -69,7 +70,14 @@ global struct WaveEvent{
 	
 }
 
-
+global enum FD_IncomingWarnings
+{
+	CloakDrone,
+	ArcTitan,
+	Reaper,
+	MortarTitan,
+	NukeTitan
+}
 
 global table< string, entity > GlobalEventEntitys
 global array< array<WaveEvent> > waveEvents
@@ -561,6 +569,20 @@ WaveEvent function CreateSpawnDroneEvent(vector origin,vector angles,string rout
 	return event
 }
 
+
+
+WaveEvent function CreateWarningEvent( int warningType, int nextEventIndex, int executeOnThisCall = 1 )
+{
+	WaveEvent event
+	event.eventFunction = PlayWarning
+	event.executeOnThisCall = executeOnThisCall
+	event.nextEventIndex = nextEventIndex
+	event.shouldThread = false
+
+	event.soundEvent.soundEventName = "fd_inc" + ["CloakDrone", "ArcTitan", "Reaper", "TitansMortar", "TitansNuke"][warningType] + "Clump"
+	return event
+}
+
 /************************************************************************************************************\
 ####### #     # ####### #     # #######    ####### #     # #     #  #####  ####### ### ####### #     #  #####
 #       #     # #       ##    #    #       #       #     # ##    # #     #    #     #  #     # ##    # #     #
@@ -571,18 +593,23 @@ WaveEvent function CreateSpawnDroneEvent(vector origin,vector angles,string rout
 #######    #    ####### #     #    #       #        #####  #     #  #####     #    ### ####### #     #  #####
 \************************************************************************************************************/
 
-void function spawnSmoke( SmokeEvent smokeEvent, SpawnEvent spawnEvent, FlowControlEvent flowControlEvent, SoundEvent soundEvent )
+void function PlayWarning( SmokeEvent smokeEvent, SpawnEvent spawnEvent, FlowControlEvent flowControlEvent, SoundEvent soundEvent )
+{
+	PlayFactionDialogueToTeam( soundEvent.soundEventName, TEAM_MILITIA )
+}
+
+void function spawnSmoke(SmokeEvent smokeEvent,SpawnEvent spawnEvent,FlowControlEvent flowControlEvent,SoundEvent soundEvent)
 {
 	printt( "smoke" )
 	SmokescreenStruct smokescreen
 	smokescreen.smokescreenFX = $"P_smokescreen_FD"
 	smokescreen.isElectric = false
-	smokescreen.origin = smokeEvent.position + < 0, 0, 150 >
+	smokescreen.origin = smokeEvent.position + < 0, 0, 100 >
 	smokescreen.angles = < 0, 0, 0 >
 	smokescreen.lifetime = smokeEvent.lifetime
 	smokescreen.fxXYRadius = 150
 	smokescreen.fxZRadius = 120
-	smokescreen.fxOffsets = [ < 120.0, 0.0, 0.0 >, < 0.0, 120.0, 0.0 >, < 0.0, 0.0, 0.0 >, < 0.0, -120.0, 0.0 >, < -120.0, 0.0, 0.0 >, < 0.0, 100.0, 0.0 > ]
+	smokescreen.fxOffsets = [ < 130.0, 0.0, 0.0 >, < 0.0, 130.0, 0.0 >, < 0.0, 0.0, 0.0 >, < 0.0, -130.0, 0.0 >, < -130.0, 0.0, 0.0 >, < 0.0, 100.0, 0.0 > ]
 
 	Smokescreen(smokescreen)
 }
