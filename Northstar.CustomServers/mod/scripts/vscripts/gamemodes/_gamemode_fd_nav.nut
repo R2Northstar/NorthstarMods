@@ -6,7 +6,7 @@ global function Dev_MarkRoute
 
 
 
-void function singleNav_thread( entity npc, string routeName, int nodesToSkip= 0, float nextDistance = 500.0, bool shouldLoop = false )
+void function singleNav_thread( entity npc, string routeName, int nodesToSkip= 0, float nextDistance = -1.0, bool shouldLoop = false )
 {
 	npc.EndSignal( "OnDeath" )
 	npc.EndSignal( "OnDestroy" )
@@ -15,7 +15,8 @@ void function singleNav_thread( entity npc, string routeName, int nodesToSkip= 0
 
 	if( !npc.IsNPC() )
 		return
-		
+	if ( nextDistance == -1 )
+		nextDistance = npc.GetMinGoalRadius()
 
 
 	/*array<entity> routeArray = getRoute(routeName)
@@ -83,7 +84,7 @@ void function singleNav_thread( entity npc, string routeName, int nodesToSkip= 0
 		npc.AssaultSetGoalRadius( nextDistance )
 		npc.AssaultSetFightRadius( 0 )
 		
-		table result = npc.WaitSignal( "OnFinishedAssault", "OnFailedToPath" )
+		table result = npc.WaitSignal( "OnFinishedAssault", "OnEnterGoalRadius", "OnFailedToPath" )
 		
 		targetNode = targetNode.GetLinkEnt()
 	}
@@ -205,14 +206,14 @@ void function droneNav_thread( entity npc, string routeName,int nodesToSkip= 0,f
 		npc.AssaultSetGoalHeight( 100 )
 		npc.AssaultSetFightRadius( 0 )
 		
-		table result = npc.WaitSignal( "OnFinishedAssault", "OnFailedToPath" )
+		table result = npc.WaitSignal( "OnFinishedAssault", "OnEnterGoalRadius", "OnFailedToPath" )
 		
 		targetNode = targetNode.GetLinkEnt()
 		if ( targetNode == null )
-			printt( "entity finished pathing" )
+			printt( "drone finished pathing" )
 		if ( targetNode == null && shouldLoop )
 		{
-			printt( "entity reached end of loop, looping" )
+			printt( "drone reached end of loop, looping" )
 			targetNode = firstNode
 		}
 	}
