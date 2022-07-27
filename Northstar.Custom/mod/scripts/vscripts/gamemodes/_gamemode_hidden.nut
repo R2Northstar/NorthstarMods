@@ -211,8 +211,8 @@ void function VisibleNotification( entity player )
 		}
 		else
 		{
-			NSCreateStatusMessageOnPlayer( player, Localize( "#HIDDEN_VISIBLE" ), "", "visibleTitle")
-			NSCreateStatusMessageOnPlayer( player, Localize( "HIDDEN_SLOWDOWN_TITLE" ), Localize( "#HIDDEN_SLOWDOWN_DESC" ), "visibleDesc")
+			NSCreateStatusMessageOnPlayer( player, "You are visible!", "", "visibleTitle")
+			NSCreateStatusMessageOnPlayer( player, "Note:", "Slow down to remain invisible!", "visibleDesc")
 			player.WaitSignal("VisibleNotification")
 			continue
 		}

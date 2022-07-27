@@ -124,9 +124,6 @@ Press Yes if you agree to this. This choice can be changed in the mods menu at a
 		"HIDDEN_YOU_ARE_HIDDEN" "You are The Hidden!"
 		"HIDDEN_KILL_SURVIVORS" "Kill all survivors."
 		"HIDDEN_FIRST_HIDDEN" "%s1 is the The Hidden."
-		"HIDDEN_VISIBLE" "You are visible!"
-		"HIDDEN_SLOWDOWN_TITLE" "Note:"
-		"HIDDEN_SLOWDOWN_DESC" "Slow down to remain invisible!"
 
 		"PL_sns" "Sticks and Stones"
 		"PL_sns_lobby" "Sticks and Stones Lobby"
