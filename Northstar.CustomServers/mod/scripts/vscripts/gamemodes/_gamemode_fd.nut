@@ -171,11 +171,6 @@ void function GamemodeFD_InitPlayer( entity player )
 	else
 		EnableTitanSelectionForPlayer( player )
 
-	if ( GetGlobalNetInt( "FD_currentWave" ) != 0 )
-		DisableTitanSelectionForPlayer( player ) // this might need moving to when they exit the titan selection UI when we do that
-	else
-		EnableTitanSelectionForPlayer( player )
-
 }
 void function SetTurretSettings_threaded( entity player )
 {	//has to be delayed because PlayerConnect callbacks get called in wrong order
