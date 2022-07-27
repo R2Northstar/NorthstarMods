@@ -604,12 +604,12 @@ void function spawnSmoke(SmokeEvent smokeEvent,SpawnEvent spawnEvent,FlowControl
 	SmokescreenStruct smokescreen
 	smokescreen.smokescreenFX = $"P_smokescreen_FD"
 	smokescreen.isElectric = false
-	smokescreen.origin = smokeEvent.position + < 0, 0, 150 >
+	smokescreen.origin = smokeEvent.position + < 0, 0, 100 >
 	smokescreen.angles = < 0, 0, 0 >
 	smokescreen.lifetime = smokeEvent.lifetime
 	smokescreen.fxXYRadius = 150
 	smokescreen.fxZRadius = 120
-	smokescreen.fxOffsets = [ < 120.0, 0.0, 0.0 >, < 0.0, 120.0, 0.0 >, < 0.0, 0.0, 0.0 >, < 0.0, -120.0, 0.0 >, < -120.0, 0.0, 0.0 >, < 0.0, 100.0, 0.0 > ]
+	smokescreen.fxOffsets = [ < 130.0, 0.0, 0.0 >, < 0.0, 130.0, 0.0 >, < 0.0, 0.0, 0.0 >, < 0.0, -130.0, 0.0 >, < -130.0, 0.0, 0.0 >, < 0.0, 100.0, 0.0 > ]
 
 	Smokescreen(smokescreen)
 }

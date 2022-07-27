@@ -8,9 +8,9 @@ void function initFrontierDefenseData()
     int index = 1
 
     array<WaveEvent> wave1
-    wave1.append(CreateSmokeEvent(< -12, 1720, 1540 >, 120, index++))
+    wave1.append(CreateSmokeEvent(< -12, 1720, 1540 >, 90, index++))
     wave1.append(CreateWaitForTimeEvent(0.2,index++))
-    wave1.append(CreateSmokeEvent(< -64, 964, 1540 >, 120, index++))
+    wave1.append(CreateSmokeEvent(< -64, 964, 1540 >, 90, index++))
     wave1.append(CreateWaitForTimeEvent(0.4,index++))
     wave1.append(CreateDroppodGruntEvent(< 864.625000 , 693.750000 , 1379.910034 >,"hillRouteClose",index++))
     wave1.append(CreateWaitForTimeEvent(0.9332962,index++))
