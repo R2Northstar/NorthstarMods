@@ -147,6 +147,9 @@ void function MortarSpectreAttacksHarvester( entity spectre, entity harvester, e
 	wait RandomFloatRange( 0, 4 ) // this is a complete guess, idk how long it takes for them to shoot normally
 	while ( true )
 	{
+		// if the spectre drops the weapon, or if something somehow steals it, we should stop firing missiles from it
+		if ( weapon.GetWeaponOwner() != spectre )
+			break
 		entity missile = weapon.FireWeaponMissile( spectre.GetOrigin(), < 0, 0, 90 >, 1800.0, damageTypes.projectileImpact, damageTypes.explosive, false, PROJECTILE_NOT_PREDICTED )
 		weapon.SetWeaponPrimaryAmmoCount( weapon.GetWeaponPrimaryAmmoCount() - 1 ) // remove the ammo manually
 		MortarMissileFiredCallback( missile, spectre )
