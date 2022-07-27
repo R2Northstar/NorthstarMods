@@ -740,6 +740,7 @@ void function spawnSuperSpectre( SmokeEvent smokeEvent, SpawnEvent spawnEvent, F
 	thread SuperSpectre_WarpFall( npc )
 	npc.WaitSignal( "WarpfallComplete" )
 	thread singleNav_thread( npc, spawnEvent.route )
+}
 
 void function spawnSuperSpectreWithMinion( SmokeEvent smokeEvent, SpawnEvent spawnEvent, FlowControlEvent flowControlEvent, SoundEvent soundEvent )
 {
