@@ -23,6 +23,7 @@ global function CreateRoninTitanEvent
 global function CreateToneTitanEvent
 global function CreateLegionTitanEvent
 global function CreateMonarchTitanEvent
+global function CreateWarningEvent
 global function executeWave
 global function restetWaveEvents
 
@@ -69,7 +70,14 @@ global struct WaveEvent{
 	
 }
 
-
+global enum FD_IncomingWarnings
+{
+	CloakDrone,
+	ArcTitan,
+	Reaper,
+	MortarTitan,
+	NukeTitan
+}
 
 global table< string, entity > GlobalEventEntitys
 global array< array<WaveEvent> > waveEvents
@@ -561,6 +569,20 @@ WaveEvent function CreateSpawnDroneEvent(vector origin,vector angles,string rout
 	return event
 }
 
+
+
+WaveEvent function CreateWarningEvent( int warningType, int nextEventIndex, int executeOnThisCall = 1 )
+{
+	WaveEvent event
+	event.eventFunction = PlayWarning
+	event.executeOnThisCall = executeOnThisCall
+	event.nextEventIndex = nextEventIndex
+	event.shouldThread = false
+
+	event.soundEvent.soundEventName = "fd_inc" + ["CloakDrone", "ArcTitan", "Reaper", "TitansMortar", "TitansNuke"][warningType] + "Clump"
+	return event
+}
+
 /************************************************************************************************************\
 ####### #     # ####### #     # #######    ####### #     # #     #  #####  ####### ### ####### #     #  #####
 #       #     # #       ##    #    #       #       #     # ##    # #     #    #     #  #     # ##    # #     #
@@ -571,7 +593,12 @@ WaveEvent function CreateSpawnDroneEvent(vector origin,vector angles,string rout
 #######    #    ####### #     #    #       #        #####  #     #  #####     #    ### ####### #     #  #####
 \************************************************************************************************************/
 
-void function spawnSmoke( SmokeEvent smokeEvent, SpawnEvent spawnEvent, FlowControlEvent flowControlEvent, SoundEvent soundEvent )
+void function PlayWarning( SmokeEvent smokeEvent, SpawnEvent spawnEvent, FlowControlEvent flowControlEvent, SoundEvent soundEvent )
+{
+	PlayFactionDialogueToTeam( soundEvent.soundEventName, TEAM_MILITIA )
+}
+
+void function spawnSmoke(SmokeEvent smokeEvent,SpawnEvent spawnEvent,FlowControlEvent flowControlEvent,SoundEvent soundEvent)
 {
 	printt( "smoke" )
 	SmokescreenStruct smokescreen
@@ -713,7 +740,6 @@ void function spawnSuperSpectre( SmokeEvent smokeEvent, SpawnEvent spawnEvent, F
 	thread SuperSpectre_WarpFall( npc )
 	npc.WaitSignal( "WarpfallComplete" )
 	thread singleNav_thread( npc, spawnEvent.route )
-}
 
 void function spawnSuperSpectreWithMinion( SmokeEvent smokeEvent, SpawnEvent spawnEvent, FlowControlEvent flowControlEvent, SoundEvent soundEvent )
 {
