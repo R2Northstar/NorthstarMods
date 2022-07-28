@@ -598,7 +598,7 @@ void function PlayWarning( SmokeEvent smokeEvent, SpawnEvent spawnEvent, FlowCon
 	PlayFactionDialogueToTeam( soundEvent.soundEventName, TEAM_MILITIA )
 }
 
-void function spawnSmoke(SmokeEvent smokeEvent,SpawnEvent spawnEvent,FlowControlEvent flowControlEvent,SoundEvent soundEvent)
+void function spawnSmoke( SmokeEvent smokeEvent, SpawnEvent spawnEvent, FlowControlEvent flowControlEvent, SoundEvent soundEvent )
 {
 	printt( "smoke" )
 	SmokescreenStruct smokescreen
@@ -613,6 +613,7 @@ void function spawnSmoke(SmokeEvent smokeEvent,SpawnEvent spawnEvent,FlowControl
 
 	Smokescreen(smokescreen)
 }
+
 void function spawnDrones( SmokeEvent smokeEvent, SpawnEvent spawnEvent, FlowControlEvent flowControlEvent, SoundEvent soundEvent )
 {
 	//TODO
