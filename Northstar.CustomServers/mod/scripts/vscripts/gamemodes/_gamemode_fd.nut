@@ -168,9 +168,15 @@ void function GamemodeFD_InitPlayer( entity player )
 		PlayerEarnMeter_AddEarnedAndOwned( player, 1.0, 1.0 )
 
 	if ( GetGlobalNetInt( "FD_currentWave" ) != 0 )
+	{
 		DisableTitanSelectionForPlayer( player ) // this might need moving to when they exit the titan selection UI when we do that
+		player.SetPlayerNetInt("earnMeterMode", 1) // show the earn meter
+	}
 	else
+	{
 		EnableTitanSelectionForPlayer( player )
+		player.SetPlayerNetInt("earnMeterMode", 0) // hide the earn meter
+	}
 
 	if ( GetGlobalNetInt( "FD_currentWave" ) != 0 )
 		DisableTitanSelectionForPlayer( player ) // this might need moving to when they exit the titan selection UI when we do that
@@ -313,6 +319,7 @@ void function mainGameLoop()
 			showShop = true
 			foreach( entity player in GetPlayerArray() )
 			{
+				player.SetPlayerNetInt("earnMeterMode", 1) // show the earn meter
 				PlayerEarnMeter_AddEarnedAndOwned( player, 1.0, 1.0 )
 			}
 			DisableTitanSelection()
