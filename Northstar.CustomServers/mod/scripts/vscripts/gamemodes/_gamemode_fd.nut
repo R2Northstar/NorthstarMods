@@ -63,6 +63,7 @@ void function GamemodeFD_Init()
 	Riff_ForceBoostAvailability( eBoostAvailability.Disabled )
 	PlayerEarnMeter_SetEnabled( false )
 	SetShouldUsePickLoadoutScreen( true )
+	TeamTitanSelectMenu_Init()
 
 	//general Callbacks
 	AddCallback_EntitiesDidLoad( LoadEntities )
