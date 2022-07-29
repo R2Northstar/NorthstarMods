@@ -1229,7 +1229,7 @@ string function GetAiNetIdFromTargetName( string targetName )
 		case "drone":
 			return "FD_AICount_Drone"
 		case "cloakedDrone":
-		case "Cloaked Drone":
+		case "Cloak Drone":
 			return "FD_AICount_Drone_Cloak"
 		case "tick":
 			return "FD_AICount_Ticks"
