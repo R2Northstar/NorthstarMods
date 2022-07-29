@@ -18,7 +18,7 @@ void function SetProficiency( entity npc )
 
 void function SPMP_UpdateNPCProficiency( entity npc )
 {
-
+	SetProficiency( npc ) // this seems bad? dont see why they should be any different unless SP should use a different function
 }
 
 bool function IsAutoPopulateEnabled( var team = null )
