@@ -302,7 +302,7 @@ void function TryGivePilotLoadoutForGracePeriod( entity player )
 		else
 			respawnTimeReal = expect float( player.s.respawnTime )
 		
-		if ( ( ( Time() - respawnTimeReal <= CLASS_CHANGE_GRACE_PERIOD || GetGameState() < eGameState.Playing ) && file.loadoutGracePeriodEnabled ) || player.p.usingLoadoutCrate )
+		if ( ( ( Time() - respawnTimeReal <= CLASS_CHANGE_GRACE_PERIOD || GetGameState() < eGameState.Playing ) && file.loadoutGracePeriodEnabled ) || player.p.usingLoadoutCrate || GetGlobalNetTime( "FD_nextWaveStartTime" ) > Time() )
 		{
 			if ( !Loadouts_CanGivePilotLoadout( player ) && player.GetParent() != null && ( HasCinematicFlag( player, CE_FLAG_INTRO ) || HasCinematicFlag( player, CE_FLAG_CLASSIC_MP_SPAWNING ) || HasCinematicFlag( player, CE_FLAG_WAVE_SPAWNING ) ) )
 				thread GiveLoadoutWhenIntroOver( player )
