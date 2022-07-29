@@ -81,6 +81,7 @@ void function GamemodeFD_Init()
 	AddSpawnCallback( "npc_titan", HealthScaleByDifficulty )
 	AddSpawnCallback( "npc_super_spectre", HealthScaleByDifficulty )
 	AddSpawnCallback( "player", FD_PlayerRespawnCallback )
+	AddCallback_OnPlayerGetsNewPilotLoadout( OnPlayerGetsNewPilotLoadout )
 	AddSpawnCallback("npc_turret_sentry", AddTurretSentry )
 	//death Callbacks
 	AddCallback_OnNPCKilled( OnNpcDeath )
@@ -109,7 +110,27 @@ void function FD_PlayerRespawnCallback( entity player )
 	if( player in file.players )
 		file.players[player].lastRespawn = Time()
 
+	if( GetCurrentPlaylistVarInt( "fd_at_unlimited_ammo", 0 ) )
+		Unlimited_Ammo( player )
+
 	Highlight_SetFriendlyHighlight( player, "sp_friendly_hero" )
+}
+
+void function OnPlayerGetsNewPilotLoadout( entity player, PilotLoadoutDef loadout )
+{
+	if( GetCurrentPlaylistVarInt( "fd_at_unlimited_ammo", 0 ) )
+		Unlimited_Ammo( player )
+}
+
+void function Unlimited_Ammo( entity player )
+{
+	entity weapon = player.GetMainWeapons()[1]
+	if( !weapon.HasMod( "at_unlimited_ammo" ) )
+	{
+		array<string> mods = weapon.GetMods()
+		mods.append( "at_unlimited_ammo" )
+		weapon.SetMods( mods )
+	}
 }
 
 void function FD_TeamReserveDepositOrWithdrawCallback( entity player, string action, int amount )
