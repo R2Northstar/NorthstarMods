@@ -654,8 +654,6 @@ bool function runWave( int waveIndex, bool shouldDoBuyTime )
 		EmitSoundOnEntityOnlyToPlayer( player, player, "HUD_MP_BountyHunt_BankBonusPts_Deposit_Start_1P" )
 	}
 	wait 1
-	int highestScore = 0;
-	entity highestScore_player = GetPlayerArray()[0]
 	foreach( entity player in GetPlayerArray() )
 	{
 		if( !file.players[player].diedThisRound )
@@ -665,14 +663,18 @@ bool function runWave( int waveIndex, bool shouldDoBuyTime )
 		}
 		AddMoneyToPlayer( player, 100 )
 		EmitSoundOnEntityOnlyToPlayer( player, player, "HUD_MP_BountyHunt_BankBonusPts_Deposit_Start_1P" )
+	}
+	wait 1
+	int highestScore = 0;
+	entity highestScore_player = GetPlayerArray()[0]
+	foreach( entity player in GetPlayerArray() )
+	{
 		if( highestScore < file.players[player].scoreThisRound )
 		{
 			highestScore = file.players[player].scoreThisRound
 			highestScore_player = player
 		}
-
 	}
-	wait 1
 	file.players[highestScore_player].totalMVPs += 1
 	AddPlayerScore( highestScore_player, "FDWaveMVP" )
 	AddMoneyToPlayer( highestScore_player, 100 )
