@@ -103,7 +103,6 @@ void function GamemodeFD_Init()
 // this might need updating when we do dropship things
 bool function FD_ShouldAllowChangeLoadout( entity player )
 {
-	printt(GetGlobalNetTime( "FD_nextWaveStartTime" ) > Time())
 	return GetGlobalNetTime( "FD_nextWaveStartTime" ) > Time()
 }
 
