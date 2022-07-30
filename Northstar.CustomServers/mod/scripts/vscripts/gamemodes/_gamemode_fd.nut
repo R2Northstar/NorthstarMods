@@ -46,6 +46,7 @@ struct {
 	float harvesterDamageTaken
 	table<entity,player_struct_fd> players
 	entity harvester_info
+	bool playersHaveTitans = false
 }file
 
 void function GamemodeFD_Init()
@@ -64,6 +65,8 @@ void function GamemodeFD_Init()
 	PlayerEarnMeter_SetEnabled( false )
 	SetShouldUsePickLoadoutScreen( true )
 	SetAllowLoadoutChangeFunc( FD_ShouldAllowChangeLoadout )
+	SetGetDifficultyFunc( FD_GetDifficultyLevel )
+	TeamTitanSelectMenu_Init() // show the titan select menu in this mode
 
 	//general Callbacks
 	AddCallback_EntitiesDidLoad( LoadEntities )
@@ -81,7 +84,7 @@ void function GamemodeFD_Init()
 	//Spawn Callbacks
 	AddSpawnCallback( "npc_titan", HealthScaleByDifficulty )
 	AddSpawnCallback( "npc_super_spectre", HealthScaleByDifficulty )
-	AddSpawnCallback( "player", FD_PlayerRespawnCallback )
+	AddCallback_OnPlayerRespawned( FD_PlayerRespawnCallback )
 	AddSpawnCallback("npc_turret_sentry", AddTurretSentry )
 	//death Callbacks
 	AddCallback_OnNPCKilled( OnNpcDeath )
@@ -116,8 +119,19 @@ void function FD_PlayerRespawnCallback( entity player )
 {
 	if( player in file.players )
 		file.players[player].lastRespawn = Time()
+	
+	if ( !file.playersHaveTitans )
+	{
+		// why in the fuck do i need to WaitFrame() here, this sucks
+		thread PlayerEarnMeter_SetMode_Threaded( player, 0 )
+	}
+}
 
-	Highlight_SetFriendlyHighlight( player, "sp_friendly_hero" )
+void function PlayerEarnMeter_SetMode_Threaded( entity player, int mode )
+{
+	WaitFrame()
+	if ( IsValid( player ) )
+		PlayerEarnMeter_SetMode( player, mode )
 }
 
 void function FD_TeamReserveDepositOrWithdrawCallback( entity player, string action, int amount )
@@ -171,15 +185,25 @@ void function GamemodeFD_InitPlayer( entity player )
 	data.diedThisRound = false
 	file.players[player] <- data
 	thread SetTurretSettings_threaded( player )
-	if( GetGlobalNetInt( "FD_currentWave" ) > 1 )
+	// only start the highlight when we start playing, not during dropship
+	if ( GetGameState() >= eGameState.Playing )
+		Highlight_SetFriendlyHighlight( player, "sp_friendly_hero" ) 
+
+	if( file.playersHaveTitans ) // first wave is index 0
+	{
 		PlayerEarnMeter_AddEarnedAndOwned( player, 1.0, 1.0 )
-
-	if ( GetGlobalNetInt( "FD_currentWave" ) != 0 )
-		DisableTitanSelectionForPlayer( player ) // this might need moving to when they exit the titan selection UI when we do that
-	else
-		EnableTitanSelectionForPlayer( player )
-
+	}
+	// unfortunate that i cant seem to find a nice callback for them exiting that menu but thisll have to do
+	thread TryDisableTitanSelectionForPlayerAfterDelay( player, TEAM_TITAN_SELECT_DURATION_MIDGAME )
 }
+
+void function TryDisableTitanSelectionForPlayerAfterDelay( entity player, float waitAmount )
+{
+	wait waitAmount
+	if ( file.playersHaveTitans )
+		DisableTitanSelectionForPlayer( player )
+}
+
 void function SetTurretSettings_threaded( entity player )
 {	//has to be delayed because PlayerConnect callbacks get called in wrong order
 	WaitFrame()
@@ -296,6 +320,10 @@ bool function useShieldBoost( entity player, array<string> args )
 
 void function startMainGameLoop()
 {
+	// only start the highlight when we start playing, not during dropship
+	foreach ( entity player in GetPlayerArray() )
+		Highlight_SetFriendlyHighlight( player, "sp_friendly_hero" )
+
 	thread mainGameLoop()
 }
 
@@ -315,17 +343,16 @@ void function mainGameLoop()
 			showShop = true
 			foreach( entity player in GetPlayerArray() )
 			{
+				PlayerEarnMeter_SetMode( player, 1 ) // show the earn meter
 				PlayerEarnMeter_AddEarnedAndOwned( player, 1.0, 1.0 )
 			}
+			file.playersHaveTitans = true
 			DisableTitanSelection()
 		}
-		else if( i + 1 == waveEvents.len() )
-		{
-			EnableTitanSelection()
-		}
-
 	}
 
+	// end of game
+	EnableTitanSelection()
 
 }
 
@@ -657,13 +684,12 @@ bool function runWave( int waveIndex, bool shouldDoBuyTime )
 			PlayFactionDialogueToPlayer( "fd_wavePayoutAddtnl", player )
 		AddPlayerScore( player, "FDTeamWave" )
 		AddMoneyToPlayer( player, GetCurrentPlaylistVarInt( "fd_money_per_round", 600 ) )
+		// is this in the right place? do we want to be adding for each player?
 		// this function is called "Set" but in reality it is "Add"
 		SetJoinInProgressBonus( GetCurrentPlaylistVarInt( "fd_money_per_round" ,600 ) )
 		EmitSoundOnEntityOnlyToPlayer( player, player, "HUD_MP_BountyHunt_BankBonusPts_Deposit_Start_1P" )
 	}
 	wait 1
-	int highestScore = 0;
-	entity highestScore_player = GetPlayerArray()[0]
 	foreach( entity player in GetPlayerArray() )
 	{
 		if( !file.players[player].diedThisRound )
@@ -673,14 +699,18 @@ bool function runWave( int waveIndex, bool shouldDoBuyTime )
 		}
 		AddMoneyToPlayer( player, 100 )
 		EmitSoundOnEntityOnlyToPlayer( player, player, "HUD_MP_BountyHunt_BankBonusPts_Deposit_Start_1P" )
+	}
+	wait 1
+	int highestScore = 0;
+	entity highestScore_player = GetPlayerArray()[0]
+	foreach( entity player in GetPlayerArray() )
+	{
 		if( highestScore < file.players[player].scoreThisRound )
 		{
 			highestScore = file.players[player].scoreThisRound
 			highestScore_player = player
 		}
-
 	}
-	wait 1
 	file.players[highestScore_player].totalMVPs += 1
 	AddPlayerScore( highestScore_player, "FDWaveMVP" )
 	AddMoneyToPlayer( highestScore_player, 100 )
@@ -1237,7 +1267,7 @@ string function GetAiNetIdFromTargetName( string targetName )
 		case "drone":
 			return "FD_AICount_Drone"
 		case "cloakedDrone":
-		case "Cloaked Drone":
+		case "Cloak Drone":
 			return "FD_AICount_Drone_Cloak"
 		case "tick":
 			return "FD_AICount_Ticks"
