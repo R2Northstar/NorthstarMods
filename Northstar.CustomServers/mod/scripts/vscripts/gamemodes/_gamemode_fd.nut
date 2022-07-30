@@ -124,12 +124,18 @@ void function FD_OnPlayerGetsNewPilotLoadout( entity player, PilotLoadoutDef loa
 
 void function FD_GivePlayerInfiniteAntiTitanAmmo( entity player )
 {
-	entity weapon = player.GetMainWeapons()[1]
-	if( !weapon.HasMod( "at_unlimited_ammo" ) )
+	array<entity> weapons = player.GetMainWeapons()
+	foreach ( entity weaponEnt in weapons )
 	{
-		array<string> mods = weapon.GetMods()
-		mods.append( "at_unlimited_ammo" )
-		weapon.SetMods( mods )
+		if ( weaponEnt.GetWeaponType() != WT_ANTITITAN )
+			continue
+
+		if( !weaponEnt.HasMod( "at_unlimited_ammo" ) )
+		{
+			array<string> mods = weaponEnt.GetMods()
+			mods.append( "at_unlimited_ammo" )
+			weaponEnt.SetMods( mods )
+		}
 	}
 }
 
