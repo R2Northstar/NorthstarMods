@@ -12,13 +12,13 @@ void function MpInitAILoadouts()
 
 void function SetProficiency( entity npc )
 {
-	// unsure what the logic for deciding this should be so just going to default good
-	npc.kv.WeaponProficiency = eWeaponProficiency.VERYGOOD
+	// i think this is correct? iirc grunts and stuff in attrition are *really* bad so having poor as their proficiency makes sense
+	npc.kv.WeaponProficiency = GetDifficultyLevel()
 }
 
 void function SPMP_UpdateNPCProficiency( entity npc )
 {
-
+	SetProficiency( npc ) // this seems bad? dont see why they should be any different unless SP should use a different function
 }
 
 bool function IsAutoPopulateEnabled( var team = null )
