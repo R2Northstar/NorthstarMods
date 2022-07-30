@@ -304,6 +304,25 @@
 			"RunOn": "CLIENT && MP"
 		},
 		{
+			"Path": "gamemodes/sh_gamemode_tbag.nut",
+			"RunOn": "( CLIENT || SERVER ) && MP",
+			"ClientCallback": {
+				"Before": "Sh_GamemodeTbag_Init"
+			},
+
+			"ServerCallback": {
+				"Before": "Sh_GamemodeTbag_Init"
+			}
+		},
+		{
+			"Path": "gamemodes/_gamemode_tbag.nut",
+			"RunOn": "SERVER && MP"
+		},
+        {
+			"Path": "gamemodes/cl_gamemode_tbag.nut",
+			"RunOn": "CLIENT && MP"
+		},
+		{
 			"Path": "sh_3psequence_to_1p_hacks.gnut",
 			"RunOn": "( CLIENT || SERVER ) && MP",
 			"ClientCallback": {
