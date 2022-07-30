@@ -63,6 +63,7 @@ void function GamemodeFD_Init()
 	Riff_ForceBoostAvailability( eBoostAvailability.Disabled )
 	PlayerEarnMeter_SetEnabled( false )
 	SetShouldUsePickLoadoutScreen( true )
+	SetAllowLoadoutChangeFunc( FD_ShouldAllowChangeLoadout )
 
 	//general Callbacks
 	AddCallback_EntitiesDidLoad( LoadEntities )
@@ -97,6 +98,13 @@ void function GamemodeFD_Init()
 
 	//earn meter
 	ScoreEvent_SetupEarnMeterValuesForMixedModes()
+}
+
+// this might need updating when we do dropship things
+bool function FD_ShouldAllowChangeLoadout( entity player )
+{
+	printt(GetGlobalNetTime( "FD_nextWaveStartTime" ) > Time())
+	return GetGlobalNetTime( "FD_nextWaveStartTime" ) > Time()
 }
 
 void function FD_BoostPurchaseCallback( entity player, BoostStoreData data ) 
