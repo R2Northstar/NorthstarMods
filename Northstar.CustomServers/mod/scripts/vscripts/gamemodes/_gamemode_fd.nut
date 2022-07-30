@@ -70,6 +70,7 @@ void function GamemodeFD_Init()
 	AddCallback_GameStateEnter( eGameState.Playing, startMainGameLoop )
 	AddCallback_OnRoundEndCleanup( FD_NPCCleanup )
 	AddCallback_OnClientConnected( GamemodeFD_InitPlayer )
+	AddCallback_OnPlayerGetsNewPilotLoadout( FD_OnPlayerGetsNewPilotLoadout )
 
 	//Damage Callbacks
 	AddDamageByCallback( "player", FD_DamageByPlayerCallback)
@@ -81,7 +82,6 @@ void function GamemodeFD_Init()
 	AddSpawnCallback( "npc_titan", HealthScaleByDifficulty )
 	AddSpawnCallback( "npc_super_spectre", HealthScaleByDifficulty )
 	AddSpawnCallback( "player", FD_PlayerRespawnCallback )
-	AddCallback_OnPlayerGetsNewPilotLoadout( OnPlayerGetsNewPilotLoadout )
 	AddSpawnCallback("npc_turret_sentry", AddTurretSentry )
 	//death Callbacks
 	AddCallback_OnNPCKilled( OnNpcDeath )
@@ -110,19 +110,19 @@ void function FD_PlayerRespawnCallback( entity player )
 	if( player in file.players )
 		file.players[player].lastRespawn = Time()
 
-	if( GetCurrentPlaylistVarInt( "fd_at_unlimited_ammo", 0 ) )
-		Unlimited_Ammo( player )
+	if( GetCurrentPlaylistVarInt( "fd_at_unlimited_ammo", 1 ) )
+		GivePlayerInfiniteAntiTitanAmmo( player )
 
 	Highlight_SetFriendlyHighlight( player, "sp_friendly_hero" )
 }
 
-void function OnPlayerGetsNewPilotLoadout( entity player, PilotLoadoutDef loadout )
+void function FD_OnPlayerGetsNewPilotLoadout( entity player, PilotLoadoutDef loadout )
 {
-	if( GetCurrentPlaylistVarInt( "fd_at_unlimited_ammo", 0 ) )
-		Unlimited_Ammo( player )
+	if( GetCurrentPlaylistVarInt( "fd_at_unlimited_ammo", 1 ) )
+		GivePlayerInfiniteAntiTitanAmmo( player )
 }
 
-void function Unlimited_Ammo( entity player )
+void function FD_GivePlayerInfiniteAntiTitanAmmo( entity player )
 {
 	entity weapon = player.GetMainWeapons()[1]
 	if( !weapon.HasMod( "at_unlimited_ammo" ) )
