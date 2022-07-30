@@ -64,6 +64,7 @@ void function GamemodeFD_Init()
 	Riff_ForceBoostAvailability( eBoostAvailability.Disabled )
 	PlayerEarnMeter_SetEnabled( false )
 	SetShouldUsePickLoadoutScreen( true )
+	SetGetDifficultyFunc( FD_GetDifficultyLevel )
 	TeamTitanSelectMenu_Init() // show the titan select menu in this mode
 
 	//general Callbacks
