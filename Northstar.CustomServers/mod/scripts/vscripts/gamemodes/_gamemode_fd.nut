@@ -111,7 +111,7 @@ void function FD_PlayerRespawnCallback( entity player )
 		file.players[player].lastRespawn = Time()
 
 	if( GetCurrentPlaylistVarInt( "fd_at_unlimited_ammo", 1 ) )
-		GivePlayerInfiniteAntiTitanAmmo( player )
+		FD_GivePlayerInfiniteAntiTitanAmmo( player )
 
 	Highlight_SetFriendlyHighlight( player, "sp_friendly_hero" )
 }
@@ -119,7 +119,7 @@ void function FD_PlayerRespawnCallback( entity player )
 void function FD_OnPlayerGetsNewPilotLoadout( entity player, PilotLoadoutDef loadout )
 {
 	if( GetCurrentPlaylistVarInt( "fd_at_unlimited_ammo", 1 ) )
-		GivePlayerInfiniteAntiTitanAmmo( player )
+		FD_GivePlayerInfiniteAntiTitanAmmo( player )
 }
 
 void function FD_GivePlayerInfiniteAntiTitanAmmo( entity player )
