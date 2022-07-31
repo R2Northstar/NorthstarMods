@@ -113,7 +113,18 @@ void function FD_PlayerRespawnCallback( entity player )
 	if( GetCurrentPlaylistVarInt( "fd_at_unlimited_ammo", 1 ) )
 		FD_GivePlayerInfiniteAntiTitanAmmo( player )
 
-	Highlight_SetFriendlyHighlight( player, "sp_friendly_hero" )
+	if ( !file.playersHaveTitans )
+	{
+		// why in the fuck do i need to WaitFrame() here, this sucks
+		thread PlayerEarnMeter_SetMode_Threaded( player, 0 )
+	}
+}
+
+void function PlayerEarnMeter_SetMode_Threaded( entity player, int mode )
+{
+	WaitFrame()
+	if ( IsValid( player ) )
+		PlayerEarnMeter_SetMode( player, mode )
 }
 
 void function FD_OnPlayerGetsNewPilotLoadout( entity player, PilotLoadoutDef loadout )
