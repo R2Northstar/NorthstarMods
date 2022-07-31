@@ -18,9 +18,11 @@ struct player_struct_fd{
 	float longestTitanLife //not implemented yet
 	int turretsRepaired //not implemented yet
 	int moneyShared
-	float timeNearHarvester //dont know how to track
+	bool leaveHarvester = true
+	float longestTimeNearHarvester = 0
+	float timeNearHarvester =0
 	float longestLife 
-	int heals //dont know what to track
+	int heals
 	int titanKills 
 	float damageDealt
 	int harvesterHeals
@@ -100,6 +102,9 @@ void function GamemodeFD_Init()
 
 	//earn meter
 	ScoreEvent_SetupEarnMeterValuesForMixedModes()
+
+	//Data Collection
+	AddStunLaserHealCallback( FD_HealTeammate )
 }
 
 void function FD_BoostPurchaseCallback( entity player, BoostStoreData data ) 
@@ -740,6 +745,13 @@ void function SetWaveStateReady()
 	SetGlobalNetInt( "FD_waveState", WAVE_STATE_IN_PROGRESS )
 }
 
+void function FD_HealTeammate( entity player, entity target, int shieldRestoreAmount )
+{
+	if( IsValid( player ) && player in file.players ){
+		file.players[player].heals += shieldRestoreAmount
+	}
+}
+
 void function gameWonMedals()
 {
 	table<string,entity> medals
@@ -1043,6 +1055,60 @@ void function FD_createHarvester()
 	fd_harvester.harvester.Minimap_SetZOrder( MINIMAP_Z_OBJECT )
 	fd_harvester.harvester.Minimap_SetCustomState( eMinimapObject_prop_script.FD_HARVESTER )
 	AddEntityCallback_OnDamaged( fd_harvester.harvester, OnHarvesterDamaged )
+	thread CreateHarvesterHintTrigger( fd_harvester.harvester )
+}
+
+void function CreateHarvesterHintTrigger( entity harvester )
+{
+	entity trig = CreateEntity( "trigger_cylinder" )
+	trig.SetRadius( 1000 )	//Test setting
+	trig.SetAboveHeight( 2500 )	//Test setting
+	trig.SetBelowHeight( 0 )	//Test setting
+	trig.SetOrigin( harvester.GetOrigin() )
+	trig.kv.triggerFilterNpc = "none"
+	trig.kv.triggerFilterPlayer = "all"
+
+	SetTeam( trig, harvester.GetTeam() )
+	DispatchSpawn( trig )
+	trig.SetEnterCallback( OnEnterHarvester )
+	trig.SetLeaveCallback( OnLeaveHarvester )
+
+	harvester.EndSignal( "OnDestroy" )
+	trig.EndSignal( "OnDestroy" )
+
+	OnThreadEnd(
+		function() : ( trig )
+		{
+			if ( IsValid( trig ) )
+				trig.Destroy()
+		}
+	)
+
+	WaitForever()
+}
+
+void function OnEnterHarvester( entity trig, entity activator )
+{
+	if( !( activator in file.players ) )
+		return
+
+	if ( activator != null && activator.IsPlayer() && activator.GetTeam() == trig.GetTeam() && file.players[activator].leaveHarvester == true )
+	{
+		file.players[activator].timeNearHarvester = Time()
+		file.players[activator].leaveHarvester = false
+	}
+}
+
+void function OnLeaveHarvester( entity trig, entity activator )
+{
+	if( !( activator in file.players ) )
+		return
+
+	if ( activator != null && activator.IsPlayer() && activator.GetTeam() == trig.GetTeam() && file.players[activator].leaveHarvester == false )
+	{
+		file.players[activator].longestTimeNearHarvester = Time() - file.players[activator].timeNearHarvester
+		file.players[activator].leaveHarvester = true
+	}
 }
 
 bool function isFinalWave()
