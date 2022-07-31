@@ -73,6 +73,7 @@ void function GamemodeFD_Init()
 	AddCallback_GameStateEnter( eGameState.Playing, startMainGameLoop )
 	AddCallback_OnRoundEndCleanup( FD_NPCCleanup )
 	AddCallback_OnClientConnected( GamemodeFD_InitPlayer )
+	AddCallback_OnPlayerGetsNewPilotLoadout( FD_OnPlayerGetsNewPilotLoadout )
 
 	//Damage Callbacks
 	AddDamageByCallback( "player", FD_DamageByPlayerCallback)
@@ -111,7 +112,10 @@ void function FD_PlayerRespawnCallback( entity player )
 {
 	if( player in file.players )
 		file.players[player].lastRespawn = Time()
-	
+
+	if( GetCurrentPlaylistVarInt( "fd_at_unlimited_ammo", 1 ) )
+		FD_GivePlayerInfiniteAntiTitanAmmo( player )
+
 	if ( !file.playersHaveTitans )
 	{
 		// why in the fuck do i need to WaitFrame() here, this sucks
@@ -119,11 +123,35 @@ void function FD_PlayerRespawnCallback( entity player )
 	}
 }
 
+
 void function PlayerEarnMeter_SetMode_Threaded( entity player, int mode )
 {
 	WaitFrame()
 	if ( IsValid( player ) )
 		PlayerEarnMeter_SetMode( player, mode )
+}
+
+void function FD_OnPlayerGetsNewPilotLoadout( entity player, PilotLoadoutDef loadout )
+{
+	if( GetCurrentPlaylistVarInt( "fd_at_unlimited_ammo", 1 ) )
+		FD_GivePlayerInfiniteAntiTitanAmmo( player )
+}
+
+void function FD_GivePlayerInfiniteAntiTitanAmmo( entity player )
+{
+	array<entity> weapons = player.GetMainWeapons()
+	foreach ( entity weaponEnt in weapons )
+	{
+		if ( weaponEnt.GetWeaponType() != WT_ANTITITAN )
+			continue
+
+		if( !weaponEnt.HasMod( "at_unlimited_ammo" ) )
+		{
+			array<string> mods = weaponEnt.GetMods()
+			mods.append( "at_unlimited_ammo" )
+			weaponEnt.SetMods( mods )
+		}
+	}
 }
 
 void function FD_TeamReserveDepositOrWithdrawCallback( entity player, string action, int amount )
