@@ -149,6 +149,20 @@
 			"ServerCallback": {
 				"Before": "RespawnProtection_Init"
 			}
+		},
+		{
+			"Path": "/tempfix/_dialogue.gnut",
+			"RunOn": "SERVER && MP",
+			"ServerCallback": {
+				"After": "DialoguePlay_Init"
+			}
+		},
+		{
+			"Path": "/tempfix/_music.gnut",
+			"RunOn": "SERVER && MP",
+			"ServerCallback": {
+				"After": "MusicPlay_Init"
+			}
 		}
 	]
 }

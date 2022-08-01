@@ -1,0 +1,115 @@
+global function MusicPlay_Init
+
+// basically disabled in ffa modes
+const array<string> DISABLED_MODES = ["fd", "mfd"]
+
+const float MUSIC_SCORE_EVENT_PERCENTAGE = 0.6
+bool hasPlayedMusic = false
+void function MusicPlay_Init()
+{
+	if( IsFFAGame() || DISABLED_MODES.contains( GAMETYPE ) )
+		return
+	AddCallback_GameStateEnter( eGameState.Prematch, OnGamePreparing )
+	AddCallback_OnPlayerKilled( OnPlayerKilled )
+}
+
+void function OnGamePreparing()
+{
+	if( GetMapName() != "mp_lobby" )
+	{
+		thread MusicPlayNormal()
+	}
+}
+
+void function OnPlayerKilled( entity attacker, entity victim, var damageInfo )
+{
+	MusicPlayScoreEvent()
+}
+
+void function MusicPlayScoreEvent()
+{
+	if( hasPlayedMusic )
+		return
+	
+	int score = GameMode_GetScoreLimit( GameRules_GetGameMode() )
+
+	if( !IsFFAGame() )
+	{
+		if( GameRules_GetTeamScore( TEAM_MILITIA ) >= score * MUSIC_SCORE_EVENT_PERCENTAGE || GameRules_GetTeamScore( TEAM_IMC ) >= score * MUSIC_SCORE_EVENT_PERCENTAGE )
+		{
+			PlayMusicToAll( eMusicPieceID.GAMEMODE_1 )
+			hasPlayedMusic = true
+		}
+	}
+	else
+	{
+		entity bestplayer = GetWinningPlayer()
+		if( GameRules_GetTeamScore( bestplayer.GetTeam() ) >= score * MUSIC_SCORE_EVENT_PERCENTAGE )
+		{
+			PlayMusicToAll( eMusicPieceID.GAMEMODE_1 )
+			hasPlayedMusic = true
+		}
+	}
+}
+
+void function MusicPlayNormal()	
+{
+	if( !IsRoundBased() )
+		thread MusicPlayThink()
+}
+
+void function MusicPlayThink()
+{
+	int time = GameTime_TimeLimitSeconds()
+	if( time >= 720 )
+	{
+		wait time*0.6+15
+		if( !hasPlayedMusic )
+		{
+			PlayMusicToAll( eMusicPieceID.GAMEMODE_1 )
+			hasPlayedMusic = true
+		}
+
+		wait time*0.4-60
+		PlayMusicToAll( eMusicPieceID.LEVEL_LAST_MINUTE )
+	}
+	else if( time >= 600 )
+	{
+		wait time*0.5+15
+		if( !hasPlayedMusic )
+		{
+			PlayMusicToAll( eMusicPieceID.GAMEMODE_1 )
+			hasPlayedMusic = true
+		}
+
+		wait time*0.5-60
+		PlayMusicToAll( eMusicPieceID.LEVEL_LAST_MINUTE )
+	}
+	else if( time >= 120 )
+	{
+		wait time-45
+		if( !hasPlayedMusic )
+		{
+			PlayMusicToAll( eMusicPieceID.GAMEMODE_1 )
+			hasPlayedMusic = true
+		}
+	}
+	else
+		return
+}
+
+entity function GetWinningPlayer() 
+{
+	entity bestplayer
+
+	foreach ( entity player in GetPlayerArray() )
+	{
+		if( bestplayer == null )
+			bestplayer = player
+		
+		if( GameRules_GetTeamScore( player.GetTeam() ) > GameRules_GetTeamScore( bestplayer.GetTeam() ) )
+			bestplayer = player
+	}
+
+	return bestplayer
+}
