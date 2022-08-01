@@ -7,7 +7,7 @@ const float MUSIC_SCORE_EVENT_PERCENTAGE = 0.6
 bool hasPlayedMusic = false
 void function MusicPlay_Init()
 {
-	if( ENABLED_MODES.contains( GAMETYPE ) )
+	if( !ENABLED_MODES.contains( GAMETYPE ) )
 		return
 	AddCallback_GameStateEnter( eGameState.Prematch, OnGamePreparing )
 	AddCallback_OnPlayerKilled( OnPlayerKilled )
