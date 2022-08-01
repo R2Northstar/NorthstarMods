@@ -211,7 +211,6 @@ void function ServerPhaseShiftPlayerThread( entity ent, float warmupTime, float 
 	if ( !ent.s.oldPhaseStateLock )
 	{
 		ent.s.oldPhaseStateLock <- true
-		printt("LOCKING PHASE STATE")
 		ent.s.oldPhaseState <- ent.GetNoTarget()
 	}
 
