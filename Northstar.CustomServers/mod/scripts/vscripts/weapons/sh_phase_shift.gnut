@@ -223,7 +223,6 @@ void function ServerPhaseShiftPlayerThread( entity ent, float warmupTime, float 
 				ent.Solid()
 				ent.SetNoTarget( ent.s.oldPhaseState )
 				// unlock the oldPhaseState
-				printt("UNLOCKING PHASE STATE")
 				ent.s.oldPhaseStateLock <- false
 
 				StopSoundOnEntity( ent, SHIFTER_PRE_SOUND_3P )
