@@ -7,6 +7,14 @@ global function DisableTitanSelection
 global function DisableTitanSelectionForPlayer
 global function EnableTitanSelection
 global function EnableTitanSelectionForPlayer
+global function FD_DropshipSetAnimationOverride
+
+enum eDropshipState{
+	Idle,
+	InProgress,
+	Returning
+	_count_
+}
 
 struct player_struct_fd{
 	bool diedThisRound
@@ -30,6 +38,8 @@ struct player_struct_fd{
 global HarvesterStruct& fd_harvester
 global vector shopPosition
 global vector shopAngles = < 0, 0, 0 >
+global vector FD_spawnPosition
+global vector FD_spawnAngles = < 0, 0, 0 >
 global table< string, array<vector> > routes
 global array<entity> routeNodes
 global array<entity> spawnedNPCs
@@ -47,7 +57,44 @@ struct {
 	table<entity,player_struct_fd> players
 	entity harvester_info
 	bool playersHaveTitans = false
+
+	string animationOverride = ""
+	int dropshipState
+	int playersInShip
+	entity dropship
+	array<entity> playersInDropship
 }file
+
+
+const array<string> DROPSHIP_IDLE_ANIMS_POV = [
+
+	"ptpov_ds_coop_side_intro_gen_idle_B",
+	"ptpov_ds_coop_side_intro_gen_idle_A",
+	"ptpov_ds_coop_side_intro_gen_idle_C",
+	"ptpov_ds_coop_side_intro_gen_idle_D"
+]
+
+const array<string> DROPSHIP_IDLE_ANIMS = [
+
+	"pt_ds_coop_side_intro_gen_idle_B",
+	"pt_ds_coop_side_intro_gen_idle_A",
+	"pt_ds_coop_side_intro_gen_idle_C",
+	"pt_ds_coop_side_intro_gen_idle_D"
+]
+
+const array<string> DROPSHIP_EXIT_ANIMS_POV = [
+	"ptpov_ds_coop_side_intro_gen_exit_B",
+	"ptpov_ds_coop_side_intro_gen_exit_A",
+	"ptpov_ds_coop_side_intro_gen_exit_C",
+	"ptpov_ds_coop_side_intro_gen_exit_D"
+]
+
+const array<string> DROPSHIP_EXIT_ANIMS = [
+	"pt_ds_coop_side_intro_gen_exit_B",
+	"pt_ds_coop_side_intro_gen_exit_A",
+	"pt_ds_coop_side_intro_gen_exit_C",
+	"pt_ds_coop_side_intro_gen_exit_D"
+]
 
 void function GamemodeFD_Init()
 {
@@ -117,6 +164,30 @@ void function FD_PlayerRespawnCallback( entity player )
 		// why in the fuck do i need to WaitFrame() here, this sucks
 		thread PlayerEarnMeter_SetMode_Threaded( player, 0 )
 	}
+
+	if( file.dropshipState == eDropshipState.Returning )
+		return
+	if( GetGameState() != eGameState.Playing)
+		return
+
+	if( player.IsTitan() )
+		return
+
+	player.SetInvulnerable()
+	if( file.dropshipState == eDropshipState.Idle )
+	{
+		thread FD_DropshipSpawnDropship()
+	}
+	//Attach player
+	FirstPersonSequenceStruct idleSequence
+	idleSequence.firstPersonAnim = DROPSHIP_IDLE_ANIMS_POV[ file.playersInShip ]
+	idleSequence.thirdPersonAnim = DROPSHIP_IDLE_ANIMS[ file.playersInShip++ ]
+	idleSequence.attachment = "ORIGIN"
+	idleSequence.teleport = true
+	idleSequence.viewConeFunction = ViewConeFree
+	idleSequence.hideProxy = true
+	thread FirstPersonSequence( idleSequence, player, file.dropship )
+	file.playersInDropship.append( player )
 }
 
 void function PlayerEarnMeter_SetMode_Threaded( entity player, int mode )
@@ -1316,4 +1387,82 @@ void function DisableTitanSelectionForPlayer( entity player )
 		if ( enumName != "" && enumName != selectedEnumName )
 			player.SetPersistentVar( "titanClassLockState[" + enumName + "]", TITAN_CLASS_LOCK_STATE_LOCKED )
 	}
+}
+
+
+
+
+void function FD_DropshipSpawnDropship()
+{
+	file.playersInShip = 0
+	file.dropshipState = eDropshipState.InProgress
+	file.dropship = CreateDropship( TEAM_MILITIA, FD_spawnPosition , FD_spawnAngles )
+
+
+	file.dropship.SetModel( $"models/vehicle/crow_dropship/crow_dropship_hero.mdl" ) 
+	file.dropship.SetValueForModelKey( $"models/vehicle/crow_dropship/crow_dropship_hero.mdl" )
+
+	DispatchSpawn( file.dropship )
+	file.dropship.SetModel( $"models/vehicle/crow_dropship/crow_dropship_hero.mdl" )
+
+	thread PlayAnim(file.dropship, FD_DropshipGetAnimation())
+
+	array<string> anims = GetRandomDropshipDropoffAnims()
+
+	//thread WarpinEffect( $"models/vehicle/crow_dropship/crow_dropship.mdl", anims[0], file.dropship.GetOrigin(),f ile.dropship.GetAngles() ) //this does not work
+	file.dropship.WaitSignal( "deploy" )
+	file.dropshipState = eDropshipState.Returning
+	foreach(int i,entity player in file.playersInDropship)
+	{
+		thread FD_DropshipDropPlayer( player, i )
+	}
+	file.playersInDropship.clear()
+
+	wait 8
+	file.dropshipState = eDropshipState.Idle
+}
+
+void function FD_DropshipDropPlayer(entity player,int playerDropshipIndex)
+{
+	player.EndSignal( "OnDestroy" )
+	FirstPersonSequenceStruct jumpSequence
+	jumpSequence.firstPersonAnim = DROPSHIP_EXIT_ANIMS_POV[ playerDropshipIndex ]
+	jumpSequence.thirdPersonAnim = DROPSHIP_EXIT_ANIMS[ playerDropshipIndex ]
+	jumpSequence.attachment = "ORIGIN"
+	jumpSequence.blendTime = 0.0
+	jumpSequence.viewConeFunction = ViewConeFree
+	
+	thread FirstPersonSequence( jumpSequence, player, file.dropship )
+	WaittillAnimDone( player )
+	player.ClearParent()
+	ClearPlayerAnimViewEntity( player )
+	player.ClearInvulnerable()
+}
+
+void function FD_DropshipSetAnimationOverride(string animation)
+{
+	file.animationOverride = animation
+}
+
+string function FD_DropshipGetAnimation()
+{
+	if(file.animationOverride!="")
+	return file.animationOverride
+
+	switch( GetMapName() )
+	{
+	case "mp_homestead":
+		return "dropship_coop_respawn_homestead"
+	case "mp_lagoon":
+		return "dropship_coop_respawn_lagoon"
+	case "mp_overlook":
+		return "dropship_coop_respawn_overlook"
+	case "mp_outpost":
+		return "dropship_coop_respawn_outpost"
+	case "mp_wargames":
+		return "dropship_coop_respawn_wargames"
+	case "mp_digsite":
+		return "dropship_coop_respawn_digsite"
+	}
+	return "dropship_coop_respawn"
 }

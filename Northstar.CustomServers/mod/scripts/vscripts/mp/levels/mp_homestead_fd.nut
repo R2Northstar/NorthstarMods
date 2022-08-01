@@ -3,6 +3,8 @@ void function initFrontierDefenseData()
 {
     shopPosition = < -800.156, -4250, -63 >
     shopAngles = < 9, 60, 0 >
+	FD_spawnPosition = < -579.003, -4134.65, -97.4739 > 
+	FD_spawnAngles =  < 0, 60, 0 >
 
     int index = 1
     array<WaveEvent> wave1

@@ -4,6 +4,8 @@ global function initFrontierDefenseData
 void function initFrontierDefenseData()
 {
     shopPosition = < -3862.13, 1267.69, 1060.06 >
+	FD_spawnPosition = < -838.6, 2629.63, 1592 >
+	FD_spawnAngles = < 0, 180, 0 >
 
     int index = 1
 
