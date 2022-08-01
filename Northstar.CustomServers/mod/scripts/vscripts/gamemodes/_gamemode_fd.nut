@@ -1104,9 +1104,12 @@ void function OnLeaveHarvester( entity trig, entity activator )
 	if( !( activator in file.players ) )
 		return
 
-	if ( activator != null && activator.IsPlayer() && activator.GetTeam() == trig.GetTeam() && file.players[activator].leaveHarvester == false )
+	float CurrentTime = Time() - file.players[activator].timeNearHarvester
+	bool shouldchange = file.players[activator].longestTimeNearHarvester > CurrentTime
+
+	if ( activator != null && activator.IsPlayer() && activator.GetTeam() == trig.GetTeam() && file.players[activator].leaveHarvester == false && shouldchange )
 	{
-		file.players[activator].longestTimeNearHarvester = Time() - file.players[activator].timeNearHarvester
+		file.players[activator].longestTimeNearHarvester = CurrentTime
 		file.players[activator].leaveHarvester = true
 	}
 }
