@@ -1099,7 +1099,7 @@ void function OnEnterNearHarvesterTrigger( entity trig, entity activator )
 	}
 }
 
-void function OnLeaveHarvester( entity trig, entity activator )
+void function OnLeaveNearHarvesterTrigger( entity trig, entity activator )
 {
 	if( !( activator in file.players ) )
 		return
