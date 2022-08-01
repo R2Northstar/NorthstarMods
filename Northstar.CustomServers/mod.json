@@ -149,13 +149,6 @@
 			"ServerCallback": {
 				"Before": "RespawnProtection_Init"
 			}
-		},
-		{
-			"Path": "/tempfix/_killer_outline.gnut",
-			"RunOn": "SERVER && MP",
-			"ServerCallback": {
-				"After": "Killer_Outline_Init"
-			}
 		}
 	]
 }
