@@ -298,10 +298,10 @@ void function PostDeathThread_MP( entity player, var damageInfo ) // based on ga
 				attackerInfo.attacker.AddToPlayerGameStat( PGS_ASSISTS, 1 )
 			}
 		}
-	}
 
-	if( attacker.IsPlayer() || attacker.IsNPC() )	
-		Highlight_SetDeathRecapHighlight( attacker, "killer_outline" )
+		if( attacker.IsPlayer() )	
+			Highlight_SetDeathRecapHighlight( attacker, "killer_outline" )
+	}
 
 	player.p.rematchOrigin = player.p.deathOrigin
 	if ( IsValid( attacker ) && methodOfDeath == eDamageSourceId.titan_execution )
