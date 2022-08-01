@@ -1087,7 +1087,7 @@ void function CreateHarvesterHintTrigger( entity harvester )
 	WaitForever()
 }
 
-void function OnEnterHarvester( entity trig, entity activator )
+void function OnEnterNearHarvesterTrigger( entity trig, entity activator )
 {
 	if( !( activator in file.players ) )
 		return
