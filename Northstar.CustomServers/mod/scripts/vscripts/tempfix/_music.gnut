@@ -1,13 +1,13 @@
 global function MusicPlay_Init
 
 // basically disabled in ffa modes
-const array<string> DISABLED_MODES = ["fd", "mfd"]
+const array<string> ENABLED_MODES = ["tdm", "ttdm", "ps", "aitdm", "ctf", "cp"]
 
 const float MUSIC_SCORE_EVENT_PERCENTAGE = 0.6
 bool hasPlayedMusic = false
 void function MusicPlay_Init()
 {
-	if( IsFFAGame() || DISABLED_MODES.contains( GAMETYPE ) )
+	if( ENABLED_MODES.contains( GAMETYPE ) )
 		return
 	AddCallback_GameStateEnter( eGameState.Prematch, OnGamePreparing )
 	AddCallback_OnPlayerKilled( OnPlayerKilled )
@@ -54,8 +54,7 @@ void function MusicPlayScoreEvent()
 
 void function MusicPlayNormal()	
 {
-	if( !IsRoundBased() )
-		thread MusicPlayThink()
+	thread MusicPlayThink()
 }
 
 void function MusicPlayThink()
