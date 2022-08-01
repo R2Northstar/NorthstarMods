@@ -1,3 +1,4 @@
+untyped
 #if CLIENT
 #endif
 
@@ -155,6 +156,13 @@ void function ServerPhaseShiftPlayerThread( entity ent, float warmupTime, float 
 	ent.EndSignal( "OnDeath" )
 	ent.EndSignal( "ForceStopPhaseShift" )
 
+	// initialise the two ent.s variables if needed
+	if ( !( "oldPhaseStateLock" in ent.s ) || !( "oldPhaseState" in ent.s ) )
+	{
+		ent.s.oldPhaseStateLock <- false
+		ent.s.oldPhaseState <- false
+	}		
+
 	bool keepAnimActive = false
 
 	if ( ent.IsPlayer() )
@@ -199,20 +207,25 @@ void function ServerPhaseShiftPlayerThread( entity ent, float warmupTime, float 
 		EmitSoundOnEntity( ent, SHIFTER_PRE_SOUND_3P )
 	}
 
-	//Why we need this one
-	//bool oldNoTarget = ent.GetNoTarget()
+	// only change the oldPhaseState if it's not locked
+	if ( !ent.s.oldPhaseStateLock )
+	{
+		ent.s.oldPhaseStateLock <- true
+		printt("LOCKING PHASE STATE")
+		ent.s.oldPhaseState <- ent.GetNoTarget()
+	}
 
 	OnThreadEnd(
-		function() : ( ent, oldNoTarget )
+		function() : ( ent )
 		{
 			if ( IsValid( ent ) )
 			{
 				ent.Signal( "StopPhaseShift" )
 				ent.Solid()
-				ent.SetNoTarget( false )
-				//Why we need "oldNoTarget",it'll case Ronin Bug;Common in Frontier Defense
-				//Npc will ignore the player and other team player in the this titan)
-				//ent.SetNoTarget( oldNoTarget )
+				ent.SetNoTarget( ent.s.oldPhaseState )
+				// unlock the oldPhaseState
+				printt("UNLOCKING PHASE STATE")
+				ent.s.oldPhaseStateLock <- false
 
 				StopSoundOnEntity( ent, SHIFTER_PRE_SOUND_3P )
 				StopSoundOnEntity( ent, SHIFTER_LOOP_SOUND_3P )
