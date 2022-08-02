@@ -104,7 +104,8 @@ void function GamemodeFD_Init()
 	ScoreEvent_SetupEarnMeterValuesForMixedModes()
 
 	//Data Collection
-	AddStunLaserHealCallback( FD_HealTeammate )
+	AddStunLaserHealCallback( FD_StunLaserHealTeammate )
+	AddBatteryHealCallback( FD_BatteryHealTeammate )
 }
 
 void function FD_BoostPurchaseCallback( entity player, BoostStoreData data ) 
@@ -745,10 +746,18 @@ void function SetWaveStateReady()
 	SetGlobalNetInt( "FD_waveState", WAVE_STATE_IN_PROGRESS )
 }
 
-void function FD_HealTeammate( entity player, entity target, int shieldRestoreAmount )
+void function FD_StunLaserHealTeammate( entity player, entity target, int shieldRestoreAmount )
 {
 	if( IsValid( player ) && player in file.players ){
 		file.players[player].heals += shieldRestoreAmount
+	}
+}
+
+void function FD_BatteryHealTeammate( entity battery, entity titan, int shieldRestoreAmount, int healthRestoreAmount )
+{
+	if( IsValid( player ) && player in file.players ){
+		file.players[player].heals += shieldRestoreAmount
+		file.players[player].heals += healthRestoreAmount
 	}
 }
 
@@ -1063,15 +1072,15 @@ void function CreateHarvesterHintTrigger( entity harvester )
 	entity trig = CreateEntity( "trigger_cylinder" )
 	trig.SetRadius( 1000 )	//Test setting
 	trig.SetAboveHeight( 2500 )	//Test setting
-	trig.SetBelowHeight( 2500 )	//Test setting
+	trig.SetBelowHeight( 0 )	//Test setting
 	trig.SetOrigin( harvester.GetOrigin() )
 	trig.kv.triggerFilterNpc = "none"
 	trig.kv.triggerFilterPlayer = "all"
 
 	SetTeam( trig, harvester.GetTeam() )
 	DispatchSpawn( trig )
-	trig.SetEnterCallback( OnEnterNearHarvesterTrigger )
-	trig.SetLeaveCallback( OnLeaveNearHarvesterTrigger )
+	trig.SetEnterCallback( OnEnterHarvester )
+	trig.SetLeaveCallback( OnLeaveHarvester )
 
 	harvester.EndSignal( "OnDestroy" )
 	trig.EndSignal( "OnDestroy" )
@@ -1087,7 +1096,7 @@ void function CreateHarvesterHintTrigger( entity harvester )
 	WaitForever()
 }
 
-void function OnEnterNearHarvesterTrigger( entity trig, entity activator )
+void function OnEnterHarvester( entity trig, entity activator )
 {
 	if( !( activator in file.players ) )
 		return
@@ -1099,7 +1108,7 @@ void function OnEnterNearHarvesterTrigger( entity trig, entity activator )
 	}
 }
 
-void function OnLeaveNearHarvesterTrigger( entity trig, entity activator )
+void function OnLeaveHarvester( entity trig, entity activator )
 {
 	if( !( activator in file.players ) )
 		return
