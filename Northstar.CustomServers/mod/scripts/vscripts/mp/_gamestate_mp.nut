@@ -220,6 +220,8 @@ void function GameStateEnter_Playing_Threaded()
 {
 	WaitFrame() // ensure timelimits are all properly set
 
+	thread DialoguePlayNormal() // runs dialogue play function
+
 	while ( GetGameState() == eGameState.Playing )
 	{
 		// could cache these, but what if we update it midgame?
@@ -267,6 +269,8 @@ void function GameStateEnter_WinnerDetermined_Threaded()
 {
 	// do win announcement
 	int winningTeam = GetWinningTeamWithFFASupport()
+
+	DialoguePlayWinnerDetermined() // play a faction dialogue when winner is determined
 		
 	foreach ( entity player in GetPlayerArray() )
 	{
@@ -598,6 +602,9 @@ void function OnPlayerKilled( entity victim, entity attacker, var damageInfo )
 				SetWinner( GetOtherTeam( victim.GetTeam() ), "#GAMEMODE_ENEMY_PILOTS_ELIMINATED", "#GAMEMODE_FRIENDLY_PILOTS_ELIMINATED" )
 		}
 	}
+
+	if( attacker.IsPlayer() && victim.IsTitan() )
+		KilledPlayerTitanDialogue( attacker, victim )
 }
 
 void function OnTitanKilled( entity victim, var damageInfo )
@@ -659,6 +666,9 @@ void function OnTitanKilled( entity victim, var damageInfo )
 				SetWinner( GetOtherTeam( victim.GetTeam() ), "#GAMEMODE_ENEMY_TITANS_DESTROYED", "#GAMEMODE_FRIENDLY_TITANS_DESTROYED" )
 		}
 	}
+
+	if( attacker.IsPlayer() && victim.IsTitan() && victim.GetBossPlayer() != null ) // check if it's a pet titan, don't let killing npc titan plays dialogue
+		KilledPlayerTitanDialogue( attacker, victim )
 }
 
 void function AddCallback_OnRoundEndCleanup( void functionref() callback )
@@ -867,4 +877,127 @@ float function GetTimeLimit_ForGameMode()
 
 	// default to 10 mins, because that seems reasonable
 	return GetCurrentPlaylistVarFloat( playlistString, 10 )
+}
+
+// faction dialogue
+void function KilledPlayerTitanDialogue( entity attacker, entity victim )
+{
+	if( !attacker.IsPlayer() )
+		return
+	entity titan
+	if ( victim.IsTitan() )
+		titan = victim
+
+	if( !IsValid( titan ) )
+		return
+	string titanCharacterName = GetTitanCharacterName( titan )
+
+	switch( titanCharacterName )
+	{
+		case "ion":
+			PlayFactionDialogueToPlayer( "kc_pilotkillIon", attacker )
+			return
+		case "tone":
+			PlayFactionDialogueToPlayer( "kc_pilotkillTone", attacker )
+			return
+		case "legion":
+			PlayFactionDialogueToPlayer( "kc_pilotkillLegion", attacker )
+			return
+		case "scorch":
+			PlayFactionDialogueToPlayer( "kc_pilotkillScorch", attacker )
+			return
+		case "ronin":
+			PlayFactionDialogueToPlayer( "kc_pilotkillRonin", attacker )
+			return
+		case "northstar":
+			PlayFactionDialogueToPlayer( "kc_pilotkillNorthstar", attacker )
+			return
+		default:
+			PlayFactionDialogueToPlayer( "kc_pilotkilltitan", attacker )
+			return
+	}
+}
+
+void function DialoguePlayNormal()
+{
+	int totalScore = GameMode_GetScoreLimit( GameRules_GetGameMode() )
+	int winningTeam
+	int losingTeam
+	float diagIntervel = 70 // play a faction dailogue every 70s
+
+	while( GetGameState() == eGameState.Playing )
+	{
+		wait diagIntervel
+		if( GameRules_GetTeamScore( TEAM_MILITIA ) < GameRules_GetTeamScore( TEAM_IMC ) )
+		{
+			winningTeam = TEAM_IMC
+			losingTeam = TEAM_MILITIA
+		}
+		if( GameRules_GetTeamScore( TEAM_MILITIA ) > GameRules_GetTeamScore( TEAM_IMC ) )
+		{
+			winningTeam = TEAM_MILITIA
+			losingTeam = TEAM_IMC
+		}
+		if( GameRules_GetTeamScore( winningTeam ) - GameRules_GetTeamScore( losingTeam ) >= totalScore * 0.4 )
+		{
+			PlayFactionDialogueToTeam( "scoring_winningLarge", winningTeam )
+			PlayFactionDialogueToTeam( "scoring_losingLarge", losingTeam )
+		}
+		else if( GameRules_GetTeamScore( winningTeam ) - GameRules_GetTeamScore( losingTeam ) <= totalScore * 0.2 )
+		{
+			PlayFactionDialogueToTeam( "scoring_winningClose", winningTeam )
+			PlayFactionDialogueToTeam( "scoring_losingClose", losingTeam )
+		}
+		else if( GameRules_GetTeamScore( winningTeam ) == GameRules_GetTeamScore( losingTeam ) )
+		{
+			continue
+		}
+		else
+		{
+			PlayFactionDialogueToTeam( "scoring_winning", winningTeam )
+			PlayFactionDialogueToTeam( "scoring_losing", losingTeam )
+		}
+	}
+}
+
+void function DialoguePlayWinnerDetermined()
+{
+	if( GAMETYPE != "ctf" && IsRoundBased() || IsFFAGame() ) // such modes shouldn't have winner dialogue
+		return
+	if( GAMETYPE == "ctf" && GetServerVar( "switchedSides" ) != 1 )
+		return
+	int totalScore = GameMode_GetScoreLimit( GameRules_GetGameMode() )
+	int winningTeam
+	int losingTeam
+
+	if( GameRules_GetTeamScore( TEAM_MILITIA ) < GameRules_GetTeamScore( TEAM_IMC ) )
+	{
+		winningTeam = TEAM_IMC
+		losingTeam = TEAM_MILITIA
+	}
+	if( GameRules_GetTeamScore( TEAM_MILITIA ) > GameRules_GetTeamScore( TEAM_IMC ) )
+	{
+		winningTeam = TEAM_MILITIA
+		losingTeam = TEAM_IMC
+	}
+	if( GameRules_GetTeamScore( winningTeam ) - GameRules_GetTeamScore( losingTeam ) >= totalScore * 0.4 )
+	{
+		PlayFactionDialogueToTeam( "scoring_wonMercy", winningTeam )
+		PlayFactionDialogueToTeam( "scoring_lostMercy", losingTeam )
+	}
+	else if( GameRules_GetTeamScore( winningTeam ) - GameRules_GetTeamScore( losingTeam ) <= totalScore * 0.2 )
+	{
+		PlayFactionDialogueToTeam( "scoring_wonClose", winningTeam )
+		PlayFactionDialogueToTeam( "scoring_lostClose", losingTeam )
+	}
+	else if( GameRules_GetTeamScore( winningTeam ) == GameRules_GetTeamScore( losingTeam ) )
+	{
+		PlayFactionDialogueToTeam( "scoring_tied", winningTeam )
+		PlayFactionDialogueToTeam( "scoring_tied", losingTeam )
+	}
+	else
+	{
+		PlayFactionDialogueToTeam( "scoring_won", winningTeam )
+		PlayFactionDialogueToTeam( "scoring_lost", losingTeam )
+	}
 }
