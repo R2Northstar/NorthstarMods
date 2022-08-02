@@ -755,6 +755,7 @@ void function FD_StunLaserHealTeammate( entity player, entity target, int shield
 
 void function FD_BatteryHealTeammate( entity battery, entity titan, int shieldRestoreAmount, int healthRestoreAmount )
 {
+	entity player = battery.GetParent()
 	if( IsValid( player ) && player in file.players ){
 		file.players[player].heals += shieldRestoreAmount
 		file.players[player].heals += healthRestoreAmount
