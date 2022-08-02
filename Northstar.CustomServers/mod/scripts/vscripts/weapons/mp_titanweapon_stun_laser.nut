@@ -15,7 +15,7 @@ const SHIELD_BODY_FX			= $"P_xo_armor_body_CP"
 
 struct
 {
-	void functionref(entity,entity,int) stunHealCallbacks
+	array<void functionref(entity,entity,int)> stunHealCallbacks
 } file
 
 void function MpTitanWeaponStunLaser_Init()
