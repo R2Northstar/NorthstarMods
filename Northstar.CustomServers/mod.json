@@ -53,6 +53,10 @@
 		{
 			"Name": "ns_allow_kill_commands",
 			"DefaultValue": "0"
+		},
+		{
+			"Name": "ns_use_phase_fix",
+			"DefaultValue": "1"
 		}
 	],
 	"Scripts": [
