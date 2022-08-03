@@ -763,10 +763,22 @@ void function FD_SmokeHealTeammate( entity player, entity target, int shieldRest
 
 void function FD_BatteryHealTeammate( entity battery, entity titan, int shieldRestoreAmount, int healthRestoreAmount )
 {
-	entity player = battery.GetParent()
-	if( IsValid( player ) && player in file.players ){
-		file.players[player].heals += shieldRestoreAmount
-		file.players[player].heals += healthRestoreAmount
+	entity BatteryParent = battery.GetParent()
+	entity TargetTitan
+	
+	if( titan.IsPlayer() )
+		TargetTitan = titan
+	else if( titan.GetBossPlayer() != null )
+		TargetTitan = titan.GetBossPlayer()
+	else
+		return
+
+	if( BatteryParent == TargetTitan )
+		return
+
+	if( IsValid( BatteryParent ) && BatteryParent in file.players ){
+		file.players[BatteryParent].heals += shieldRestoreAmount
+		file.players[BatteryParent].heals += healthRestoreAmount
 	}
 }
 
