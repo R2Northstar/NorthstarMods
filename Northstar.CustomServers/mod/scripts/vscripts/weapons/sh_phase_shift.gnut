@@ -208,7 +208,7 @@ void function ServerPhaseShiftPlayerThread( entity ent, float warmupTime, float 
 	}
 
 	// only change the oldPhaseState if it's not locked
-	if ( !ent.s.oldPhaseStateLock )
+	if ( !ent.s.oldPhaseStateLock || !GetConVarBool("ns_use_phase_fix") )
 	{
 		ent.s.oldPhaseStateLock <- true
 		ent.s.oldPhaseState <- ent.GetNoTarget()
