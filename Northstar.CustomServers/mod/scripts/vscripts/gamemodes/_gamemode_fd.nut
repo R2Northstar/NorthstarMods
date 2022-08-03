@@ -106,6 +106,7 @@ void function GamemodeFD_Init()
 	//Data Collection
 	AddStunLaserHealCallback( FD_StunLaserHealTeammate )
 	AddBatteryHealCallback( FD_BatteryHealTeammate )
+	AddSmokeHealCallback( FD_SmokeHealTeammate )
 }
 
 void function FD_BoostPurchaseCallback( entity player, BoostStoreData data ) 
@@ -747,6 +748,13 @@ void function SetWaveStateReady()
 }
 
 void function FD_StunLaserHealTeammate( entity player, entity target, int shieldRestoreAmount )
+{
+	if( IsValid( player ) && player in file.players ){
+		file.players[player].heals += shieldRestoreAmount
+	}
+}
+
+void function FD_SmokeHealTeammate( entity player, entity target, int shieldRestoreAmount )
 {
 	if( IsValid( player ) && player in file.players ){
 		file.players[player].heals += shieldRestoreAmount
