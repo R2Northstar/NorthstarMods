@@ -8,11 +8,6 @@ global function MpTitanAbilitySmoke_Init
 
 const SHIELD_BODY_FX			= $"P_xo_armor_body_CP"
 
-struct
-{
-	array<void functionref(entity,entity,int)> smokeHealCallbacks
-} file
-
 void function MpTitanAbilitySmoke_Init()
 {
 	PrecacheParticleSystem( SHIELD_BODY_FX )
@@ -54,7 +49,7 @@ var function OnWeaponPrimaryAttack_titanability_smoke( entity weapon, WeaponPrim
 #if SERVER
 struct
 {
-	void functionref(entity,entity,int) smokeHealCallback
+	array<void functionref(entity,entity,int)> smokeHealCallbacks
 } file
 
 var function OnWeaponNpcPrimaryAttack_titanability_smoke( entity weapon, WeaponPrimaryAttackParams attackParams )
