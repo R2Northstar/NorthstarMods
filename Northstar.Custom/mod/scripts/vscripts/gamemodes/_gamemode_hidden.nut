@@ -161,6 +161,8 @@ void function RemoveHidden()
 
 void function PredatorMain( entity player )
 {
+        player.EndSignal( "OnDeath" )
+        player.EndSignal( "OnDestroy" )
 	float playerVel
 
 	while (true) 
@@ -200,6 +202,8 @@ void function PredatorMain( entity player )
 
 void function VisibleNotification( entity player )
 {
+        player.EndSignal( "OnDeath" )
+        player.EndSignal( "OnDestroy" )
 	while (IsAlive(player))
 	{
 		WaitFrame()
