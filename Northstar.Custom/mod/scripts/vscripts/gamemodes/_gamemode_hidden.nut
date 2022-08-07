@@ -170,7 +170,7 @@ void function PredatorMain( entity player )
 		WaitFrame()
 		if(!IsLobby())
 		{
-			if ( !IsValid(player) || !IsAlive(player) || player.GetTeam() != TEAM_IMC )
+			if ( !IsValid( player ) || !IsAlive( player ) || player.GetTeam() != TEAM_IMC )
 				continue
 
 			vector playerVelV = player.GetVelocity()
