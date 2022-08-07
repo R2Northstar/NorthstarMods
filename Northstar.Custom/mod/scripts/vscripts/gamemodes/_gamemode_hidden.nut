@@ -24,7 +24,7 @@ void function GamemodeHidden_Init()
 	AddCallback_GameStateEnter( eGameState.Postmatch, RemoveHidden )
 	SetTimeoutWinnerDecisionFunc( TimeoutCheckSurvivors )
 
-	RegisterSignal("VisibleNotification")
+	RegisterSignal( "VisibleNotification" )
 }
 
 void function HiddenInitPlayer( entity player )
@@ -81,7 +81,7 @@ void function MakePlayerHidden(entity player)
 
 	SetTeam( player, TEAM_IMC )
 	player.SetPlayerGameStat( PGS_ASSAULT_SCORE, 0 ) // reset kills
-	file.hiddens.append(player)
+	file.hiddens.append( player )
 	RespawnHidden( player )
 	thread PredatorMain( player )
 	thread VisibleNotification( player )
@@ -174,24 +174,24 @@ void function PredatorMain( entity player )
 				continue
 
 			vector playerVelV = player.GetVelocity()
-			playerVel = sqrt(playerVelV.x * playerVelV.x + playerVelV.y * playerVelV.y + playerVelV.z * playerVelV.z)
+			playerVel = sqrt( playerVelV.x * playerVelV.x + playerVelV.y * playerVelV.y + playerVelV.z * playerVelV.z )
 
-			if (playerVel/300 < 1.3)
+			if ( playerVel/300 < 1.3 )
 			{
-				player.SetCloakFlicker(0, 0)
+				player.SetCloakFlicker( 0, 0 )
 				player.kv.VisibilityFlags = 0
 				wait 0.5
-				if (file.isVisible)
+				if ( file.isVisible )
 				{
 					file.isVisible = false
-					player.Signal("VisibleNotification")
+					player.Signal( "VisibleNotification" )
 				}
 			}
 			else
 			{
-				player.SetCloakFlicker(0.2 , 1 )
+				player.SetCloakFlicker( 0.2 , 1 )
 				player.kv.VisibilityFlags = 0
-				float waittime = RandomFloat(0.5)
+				float waittime = RandomFloat( 0.5 )
 				wait waittime
 				player.kv.VisibilityFlags = ENTITY_VISIBLE_TO_EVERYONE
 				file.isVisible = true
@@ -215,9 +215,9 @@ void function VisibleNotification( entity player )
 		}
 		else
 		{
-			NSCreateStatusMessageOnPlayer( player, "You are visible!", "", "visibleTitle")
-			NSCreateStatusMessageOnPlayer( player, "Note:", "Slow down to remain invisible!", "visibleDesc")
-			player.WaitSignal("VisibleNotification")
+			NSCreateStatusMessageOnPlayer( player, "You are visible!", "", "visibleTitle" )
+			NSCreateStatusMessageOnPlayer( player, "Note:", "Slow down to remain invisible!", "visibleDesc" )
+			player.WaitSignal( "VisibleNotification" )
 			continue
 		}
 	}
