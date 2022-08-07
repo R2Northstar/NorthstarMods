@@ -602,9 +602,6 @@ void function OnPlayerKilled( entity victim, entity attacker, var damageInfo )
 				SetWinner( GetOtherTeam( victim.GetTeam() ), "#GAMEMODE_ENEMY_PILOTS_ELIMINATED", "#GAMEMODE_FRIENDLY_PILOTS_ELIMINATED" )
 		}
 	}
-
-	if( attacker.IsPlayer() && victim.IsTitan() )
-		KilledPlayerTitanDialogue( attacker, victim )
 }
 
 void function OnTitanKilled( entity victim, var damageInfo )
@@ -666,9 +663,6 @@ void function OnTitanKilled( entity victim, var damageInfo )
 				SetWinner( GetOtherTeam( victim.GetTeam() ), "#GAMEMODE_ENEMY_TITANS_DESTROYED", "#GAMEMODE_FRIENDLY_TITANS_DESTROYED" )
 		}
 	}
-
-	if( attacker.IsPlayer() && victim.IsTitan() && victim.GetBossPlayer() != null ) // check if it's a pet titan, don't let killing npc titan plays dialogue
-		KilledPlayerTitanDialogue( attacker, victim )
 }
 
 void function AddCallback_OnRoundEndCleanup( void functionref() callback )
@@ -880,43 +874,6 @@ float function GetTimeLimit_ForGameMode()
 }
 
 // faction dialogue
-void function KilledPlayerTitanDialogue( entity attacker, entity victim )
-{
-	if( !attacker.IsPlayer() )
-		return
-	entity titan
-	if ( victim.IsTitan() )
-		titan = victim
-
-	if( !IsValid( titan ) )
-		return
-	string titanCharacterName = GetTitanCharacterName( titan )
-
-	switch( titanCharacterName )
-	{
-		case "ion":
-			PlayFactionDialogueToPlayer( "kc_pilotkillIon", attacker )
-			return
-		case "tone":
-			PlayFactionDialogueToPlayer( "kc_pilotkillTone", attacker )
-			return
-		case "legion":
-			PlayFactionDialogueToPlayer( "kc_pilotkillLegion", attacker )
-			return
-		case "scorch":
-			PlayFactionDialogueToPlayer( "kc_pilotkillScorch", attacker )
-			return
-		case "ronin":
-			PlayFactionDialogueToPlayer( "kc_pilotkillRonin", attacker )
-			return
-		case "northstar":
-			PlayFactionDialogueToPlayer( "kc_pilotkillNorthstar", attacker )
-			return
-		default:
-			PlayFactionDialogueToPlayer( "kc_pilotkilltitan", attacker )
-			return
-	}
-}
 
 void function DialoguePlayNormal()
 {
