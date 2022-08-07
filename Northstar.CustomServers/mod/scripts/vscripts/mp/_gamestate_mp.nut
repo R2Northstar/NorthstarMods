@@ -269,9 +269,9 @@ void function GameStateEnter_WinnerDetermined_Threaded()
 {
 	// do win announcement
 	int winningTeam = GetWinningTeamWithFFASupport()
-
-	DialoguePlayWinnerDetermined() // play a faction dialogue when winner is determined
 		
+	DialoguePlayWinnerDetermined() // play a faction dialogue when winner is determined
+
 	foreach ( entity player in GetPlayerArray() )
 	{
 		int announcementSubstr
@@ -923,7 +923,7 @@ void function DialoguePlayNormal()
 	int totalScore = GameMode_GetScoreLimit( GameRules_GetGameMode() )
 	int winningTeam
 	int losingTeam
-	float diagIntervel = 70 // play a faction dailogue every 70s
+	float diagIntervel = 71 // play a faction dailogue every 70 + 1s to prevent play together with winner dialogue
 
 	while( GetGameState() == eGameState.Playing )
 	{
@@ -962,10 +962,6 @@ void function DialoguePlayNormal()
 
 void function DialoguePlayWinnerDetermined()
 {
-	if( GAMETYPE != "ctf" && IsRoundBased() || IsFFAGame() ) // such modes shouldn't have winner dialogue
-		return
-	if( GAMETYPE == "ctf" && GetServerVar( "switchedSides" ) != 1 )
-		return
 	int totalScore = GameMode_GetScoreLimit( GameRules_GetGameMode() )
 	int winningTeam
 	int losingTeam
@@ -979,6 +975,11 @@ void function DialoguePlayWinnerDetermined()
 	{
 		winningTeam = TEAM_MILITIA
 		losingTeam = TEAM_IMC
+	}
+	if( IsRoundBased() ) // check for round based modes
+	{
+		if( GameRules_GetTeamScore( winningTeam ) != GameMode_GetRoundScoreLimit( GAMETYPE ) ) // no winner dialogue till game really ends
+			return
 	}
 	if( GameRules_GetTeamScore( winningTeam ) - GameRules_GetTeamScore( losingTeam ) >= totalScore * 0.4 )
 	{
