@@ -513,6 +513,7 @@ void function SP_LevelStartThread( entity player )
 	player.TakeOffhandWeapon( 1 )
 
 	thread ShowIntroScreen( player )
+	// huh no intro text?
 
 	entity sequenceRef = GetEntByScriptName( "tr_sequence_ref" )
 	player.SetOrigin( sequenceRef.GetOrigin() )

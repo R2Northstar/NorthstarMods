@@ -197,9 +197,12 @@ void function StartPoint_ChannelMortarRun( entity player )
 	player.SetPlayerNetBool( "shouldShowWeaponFlyout", false )
 
 	ShowIntroScreen( player )
-	Remote_CallFunction_NonReplay( player, "ServerCallback_LevelIntroText" )
+	// Remote_CallFunction_NonReplay( player, "ServerCallback_LevelIntroText" )
+	StartLevelStartText()
 	PlayMusic( "music_reclamation_01_intro" )
 	FlagWait( "IntroScreenFading" )
+	
+	EndEvent()
 
 	wait 2.0
 

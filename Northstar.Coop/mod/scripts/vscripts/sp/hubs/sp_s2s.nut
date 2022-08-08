@@ -76,7 +76,6 @@ struct MyFile
 	ShipStruct& crow64
 	ShipStruct& sarahWidow
 	ShipStruct& respawnWidow
-	int respawnState = 0
 
 	ShipStruct& gibraltar
 	ShipStruct& barkership
@@ -499,7 +498,7 @@ void function CodeCallback_MapInit()
 	AddStartPoint( "Malta Breach", 		MaltaBreach_Main, 	MaltaBreach_Setup, 	MaltaBreach_skip )
 	AddStartPoint( "Malta Bridge", 		MaltaBridge_Main,	MaltaBridge_Setup, 	MaltaBridge_Skip )
 	AddStartPoint( "Reunite with BT", 	Reunited_Main, 		Reunited_Setup, 	Reunite_Skip )
-	AddStartPoint( "Malta Deck", 		MaltaDeck_Main, 	MaltaDeck_Setup )
+	AddStartPoint( "Malta Deck", 		MaltaDeck_Main, 	MaltaDeck_Setup,    MaltaDeck_Skip )
 	AddStartPoint( "BT Tackle", 		BT_Tackle_Main, 	BT_Tackle_Setup, 	BT_Tackle_Skip )
 	AddStartPoint( "Boss Fight", 		BossFight_Main, 	BossFight_Setup, 	BossFight_Skip )
 	AddStartPoint( "Viper Dead", 		ViperDead_Main, 	ViperDead_Setup, 	ViperDead_Skip )
@@ -513,6 +512,15 @@ void function CodeCallback_MapInit()
 	AddStartPoint( "Dropship Combat Test", 	DropshipCombatTestMain )
 	AddStartPoint( "LightEdit Connect", 	LightEditConnect )
 	AddStartPoint( "TRAILER bridge", 		Trailer_Bridge )
+
+	/////////////////////////////////////////////////
+	//                   States
+	
+	AddState( "None" )
+	AddState( "MaltaGuns" )
+	AddState( "MaltaHanger" )
+	AddState( "MaltaDeck" )
+	AddState( "Fall" )
 }
 
 void function PlayerSpawned( entity player )
@@ -1820,9 +1828,11 @@ void function Start2_Main( entity player )
 	DriftWorldSettingsLevelStart()
 
 	ShowIntroScreen( player )
-	Remote_CallFunction_NonReplay( player, "ServerCallback_LevelIntroText" )
+	StartLevelStartText()
+	// Remote_CallFunction_NonReplay( player, "ServerCallback_LevelIntroText" )
 
 	FlagWait( "IntroScreenFading" )
+	EndEvent()
 
 	SetOriginLocal( file.airBattleNode, V_INTRO2_AIRBATTLE )
 	Intro2_EnemySquadron1()
@@ -2242,18 +2252,18 @@ void function SpawnRespawnWidow( LocalVec origin )
 	//respawn WIDOW
 	ShipStruct widow = SpawnWidow( origin )
 	ClearShipBehavior( widow, eBehavior.ENEMY_ONBOARD )
-	widow.model.SetScriptName( "RS Widow" ) // S2S_CALLSIGN_SARAH
+	widow.model.SetScriptName( "RS Widow" )
 
 	// AddShipEventCallback( widow, eShipEvents.PLAYER_ONHULL_START, PlayerWidowPlayerOnHullStart )
 	// AddShipEventCallback( widow, eShipEvents.PLAYER_ONHULL_END, PlayerWidowPlayerOnHullEnd )
 	
 	Highlight_SetFriendlyHighlight( widow.model, "friendly_ai" )
-	widow.model.Anim_Play( "wd_doors_open_idle_L" )
+	// widow.model.Anim_Play( "wd_doors_open_idle_L" )
 	widow.model.Anim_DisableUpdatePosition()
 	widow.model.Anim_DisableAnimDelta()
 	widow.model.SetInvulnerable()
 
-	EnableScript( widow, "scr_pwidow_node_0", "BODY", file.playerWidow_scrOffset )
+	// EnableScript( widow, "scr_pwidow_node_0", "BODY", file.playerWidow_scrOffset )
 
 	int fxID = GetParticleSystemIndex( FX_DECK_FLAP_WIND )
 	array<entity> fxNodes = GetEntArrayByScriptName( "startP_widow_windfx" )
@@ -4844,10 +4854,6 @@ void function BarkerShip_Skip( entity player )
 
 	level.nv.ShipTitles = SHIPTITLES_NOBARKER
 	FlagSet( "StartFastball1" )
-
-	SpawnRespawnWidow( WorldToLocalOrigin( file.malta.mover.GetOrigin() + <0,-15000,-1000> ) )
-	thread ShipIdleAtTargetEnt_Method2( file.respawnWidow, file.malta.mover, <0,0,0>, <0,0,0>, <1000,1500,1000> )
-	WidowAnimateOpen( file.respawnWidow, "left" )
 }
 
 void function MaltaReal_ShipGeoSettings( bool skipping = false )
@@ -5000,7 +5006,7 @@ void function Barkership_Main( entity player )
 	thread Barkership_SarahAnim1()
 
 	// now we spawn the respawn ship somewhere
-	SpawnRespawnWidow( WorldToLocalOrigin( file.barkership.mover.GetOrigin() + <0,-3000,-1000> ) )
+	SpawnRespawnWidow( CLVec( file.barkership.mover.GetOrigin() + <0,-3000,-1000> ) )
 	thread ShipIdleAtTargetEnt_Method2( file.respawnWidow, file.barkership.mover, <0,0,0>, <0,0,0>, <500,-1500,500> )
 	WidowAnimateOpen( file.respawnWidow, "left" )
 
@@ -5710,7 +5716,8 @@ void function MaltaIntro_Skip( entity player )
 {
 	level.nv.ShipTitles = SHIPTITLES_NOMALTA
 
-	MaltaIntro_PutRespawnShipOnStandBy()
+	SpawnRespawnWidow( CLVec( file.malta.mover.GetOrigin() + <2000,2000,-1000> ) )
+	WidowAnimateOpen( file.respawnWidow, "left" )
 }
 
 void function MaltaIntro_Main( entity player )
@@ -5917,13 +5924,6 @@ void function MaltaIntro_Main( entity player )
 
 void function MaltaIntro_PutRespawnShipOnStandBy()
 {
-	if ( !IsValid( file.respawnWidow ) )
-	{
-		SpawnRespawnWidow( WorldToLocalOrigin( file.malta.mover.GetOrigin() + <0,-15000,-1000> ) )
-		WidowAnimateOpen( file.respawnWidow, "both" )
-		WidowAnimateOpen( file.respawnWidow, "left" )
-	}
-	
 	thread ShipIdleAtTargetEnt_Method2( file.respawnWidow, file.malta.mover, <0,0,0>, <0,0,0>, <6000,-4000,-1000> )
 }
 
@@ -6347,6 +6347,9 @@ void function MaltaDrone_Skip( entity player )
 	thread MaltaDrone_StressSounds()
 	ShipGeoHide( file.malta, "GEO_CHUNK_EXTERIOR_ENGINE" )
 	ShipGeoHide( file.malta, "GEO_CHUNK_EXTERIOR_L" )
+
+	NextState()
+	thread HandleRespawnPlayer_s2s()
 }
 
 void function MaltaDrone_Main( entity player )
@@ -6600,7 +6603,7 @@ void function MaltaBay_ElevatorSwitch( entity player )
 	// added stuff
 	TeleportAllExpectOne( realLift.lift.GetOrigin() + <0,0,50>, null )
 
-	file.respawnState = 1
+	NextState()
 	thread HandleRespawnPlayer_s2s()
 }
 
@@ -7001,8 +7004,6 @@ void function MaltaGuns_Setup( entity player )
 
 	PlayerSetStartPoint( player, lift.upPos )
 	player.SetAngles(<0,0,0>)
-
-	MaltaGuns_PutRespawnShip()
 }
 
 void function MaltaGuns_Skip( entity player )
@@ -7015,15 +7016,10 @@ void function MaltaGuns_Skip( entity player )
 	GetEntByScriptName( "MaltaSideClip" ).Solid()
 	GetEntByScriptName( "MaltaSideClip" ).kv.CollisionGroup = TRACE_COLLISION_GROUP_BLOCK_WEAPONS//this it shootable but not have phys collision
 	DeleteTrinity()
-
-	MaltaGuns_PutRespawnShip()
 }
 
 void function MaltaGuns_Main( entity player )
 {
-	// If the ship is absent spawn it !
-	MaltaGuns_PutRespawnShip()
-
 	Objective_WayPointEneable( false )
 	bool silent = true
 	MaltaGunsObjective( silent )
@@ -7191,17 +7187,6 @@ void function MaltaGuns_Main( entity player )
 	file.gates.SetNoTarget( false )
 	file.davis.SetNoTarget( false )
 	file.droz.SetNoTarget( false )
-}
-
-void function MaltaGuns_PutRespawnShip()
-{
-	if ( !IsValid( file.respawnWidow ) )
-	{
-		SpawnRespawnWidow( WorldToLocalOrigin( file.malta.mover.GetOrigin() + <4000,0,0> ) )
-		WidowAnimateOpen( file.respawnWidow, "both" )
-		WidowAnimateOpen( file.respawnWidow, "left" )
-	}
-	// SetMaxSpeed( file.respawnWidow, 20 )
 }
 
 void function MaltaGuns_CrewAccuracy()
@@ -8239,6 +8224,8 @@ void function MaltaWidow_Skip( entity player )
 	array<entity> crew = SpawnSquad64()
 	foreach ( guy in crew )
 		Highlight_SetFriendlyHighlight( guy, "sp_friendly_hero" )
+	
+	NextState()
 }
 
 void function MaltaWidow_Main( entity player )
@@ -8312,7 +8299,7 @@ void function MaltaWidow_Main( entity player )
 
 	thread MaltaWidow_EndSection( player )
 
-	file.respawnState = 2
+	NextState()
 }
 
 bool function MakeSurePlayerIsInMaltaGunsArea( entity player )
@@ -12117,16 +12104,6 @@ void function Reunited_Setup( entity player )
 	float delay = 2.0
 	delaythread( delay ) FlagSet( "MaltaOnCourse" )
 	delaythread( delay ) UseFlightPanelEnd( player, node )
-
-	file.respawnState = 3
-
-	foreach( entity p in GetPlayerArray() )
-	{
-		if ( !IsValid( p.GetPetTitan() ) )
-		{
-			CreatePetTitanAtLocationWithTf( p, file.malta.mover.GetOrigin() + <0,5000,1000>, p.GetAngles() )
-		}
-	}
 }
 
 void function Reunited_AnimSetup( entity player )
@@ -12191,6 +12168,10 @@ void function Reunite_Skip( entity player )
 	BT_ResetLoadout( bt )
 
 	Objective_SetSilent( "#S2S_OBJECTIVE_BOARDDRACONIS", <0,0,0>, file.OLA.model )
+
+	NextState()
+
+	file.respawnWidow.mover.SetOrigin( file.malta.mover.GetOrigin() + <1500,5000,1000> )
 }
 
 void function BT_ResetLoadout( entity bt )
@@ -12235,23 +12216,18 @@ void function Reunited_Main( entity player )
 	if ( !IsValid( bt ) )
 		bt = GetPlayer0().GetPetTitan()
 	
-	array<entity> bts = [bt]
-	foreach( entity p in GetPlayerArray() )
-	{
-		entity titan = p.GetPetTitan()
+	bt.EndSignal( "OnDeath" )
 
-		if ( bt == titan )
-			continue
-
-		if ( IsValid( titan ) )
-			titan.SetOrigin( bt.GetOrigin() )
-		else
-			CreatePetTitanAtLocation( p, bt.GetOrigin(), <0,0,0> )
-		
-		bts.append( p.GetPetTitan() )
-	}
+	OnThreadEnd(
+		function () : ()
+		{
+			thread RestartMapWithDelay()
+		}
+	)
 
 	FlagWait( "MaltaOnCourse" )
+
+	NextState()
 
 	Objective_SetSilent( "#S2S_OBJECTIVE_BOARDDRACONIS", <0,0,0>, file.OLA.model )
 
@@ -12276,16 +12252,14 @@ void function Reunited_Main( entity player )
 
 	entity node = GetEntByScriptName( "BTReunionNode" )
 	
-	foreach( entity titan in bts )
-	{
-		if ( IsValid( titan ) )
-		{
-			titan.ClearParent()
-			titan.Anim_Stop()
 
-			titan.SetParent( node )
-			thread PlayAnim( titan, "bt_s2s_bridge_punch", node )
-		}
+	if ( IsValid( bt ) )
+	{
+		bt.ClearParent()
+		bt.Anim_Stop()
+
+		bt.SetParent( node )
+		thread PlayAnim( bt, "bt_s2s_bridge_punch", node )
 	}
 
 	entity glass = GetEntByScriptName( "bridge_glass_front" )
@@ -12332,14 +12306,8 @@ void function Reunited_Main( entity player )
 
 	WaittillAnimDone( bt )
 	
-	foreach( entity titan in bts )
-	{
-		if ( IsValid( titan ) )
-		{
-		bt.Anim_ScriptedPlay( "bt_s2s_bridge_punch_idle" )
-		bt.Anim_EnablePlanting()
-		}
-	}
+	bt.Anim_ScriptedPlay( "bt_s2s_bridge_punch_idle" )
+	bt.Anim_EnablePlanting()
 	//bt.ClearParent()
 
 	entity panel = GetEntByScriptName( "maltaBridgeWindowClip" )//GetEntByScriptName( "bridgeUseTrigger" )
@@ -12387,14 +12355,8 @@ void function Reunited_Main( entity player )
 	player.DeployWeapon()
 	player.UnforceStand()
 	
-	foreach( entity titan in bts )
-	{
-		if ( IsValid( titan ) )
-		{
-		ForceScriptedEmbark( titan.GetOwner(), titan )
-		titan.Destroy()
-		}
-	}
+	ForceScriptedEmbark( bt.GetOwner(), bt )
+	bt.Destroy()
 
 	Embark_Allow( player )
 
@@ -12408,6 +12370,14 @@ void function Reunited_Main( entity player )
 	CleanupScript( "scr_malta_node_3b" )
 
 	player.ClearInvulnerable()
+
+	foreach( entity p in GetPlayerArray() )
+	{
+		if ( !IsValid( p.GetPetTitan() ) && !p.IsTitan() )
+		{
+			CreatePetTitanAtLocationWithTf( p, file.malta.mover.GetOrigin() + <0,5000,1000>, p.GetAngles() )
+		}
+	}
 }
 
 void function ReunitedMusic()
@@ -12576,6 +12546,12 @@ void function MaltaDeck_Setup( entity player )
 	thread MaltaDeck_SetupCrew( setup )
 
 	delaythread( 0.2 ) PlayerSetStartPoint( player, GetEntByScriptName( "maltaPlayerStart5" ) )
+
+	file.respawnWidow.mover.SetOrigin( file.malta.mover.GetOrigin() + <4000,0,0> )
+}
+
+void function MaltaDeck_Skip( entity player )
+{
 }
 
 void function MaltaDeck_Main( entity player )
@@ -12583,10 +12559,6 @@ void function MaltaDeck_Main( entity player )
 	FlagInit( "DeckViperStage2" )
 	FlagInit( "DeckViperDoingCore" )
 	FlagInit( "DeckViperDoingRelocate" )
-
-	// Set new state for the respawn Widow
-	file.respawnState = 3
-	MaltaGuns_PutRespawnShip()
 
 	thread MaltaDeck_Flaps()
 
@@ -15291,12 +15263,31 @@ void function ViperDead_Skip( entity player )
 
 	foreach ( ent in file.draconis_PA )
 		ent.DisableHibernation()
+	
+	NextState()
 }
 
 void function ViperDead_Main( entity player )
 {
 	entity bt = player.GetPetTitan()
-	Assert( IsValid( bt ) )
+	if ( !IsValid( bt ) )
+	{
+		bt = GetPlayer0().GetPetTitan()
+		player = GetPlayer0()
+		file.player = player
+	}
+	
+	if ( !IsValid(bt) )
+		bt = CreatePetTitanAtLocation( GetPlayer0(), file.respawnWidow.mover.GetOrigin() + <0,0,300>, <0,0,0> )
+	
+	bt.EndSignal( "OnDeath" )
+
+	OnThreadEnd(
+		function () : ()
+		{
+			thread RestartMapWithDelay()
+		}
+	)
 
 	bt.EnableNPCFlag( NPC_IGNORE_ALL )
 	bt.EnableNPCMoveFlag( NPCMF_IGNORE_CLUSTER_DANGER_TIME )
@@ -15387,6 +15378,8 @@ void function ViperDead_Main( entity player )
 	sndEnt.SetOrigin( GetEntByScriptName( "draconis_PA_move" ).GetOrigin() )
 
 	bt.ClearParent()
+
+	TeleportAllExpectOne( player.GetOrigin(), player )
 }
 
 void function LifeBoats_Landing( entity player, entity node )
@@ -18454,7 +18447,7 @@ void function RespawnPlayer_s2s( entity player  )
 	if ( !IsValid( file.respawnWidow ) )
 		return
 
-	if ( file.respawnState == 0 )
+	if ( GetState() == "None" )
 	{
 		if ( file.player == player )
 			return
@@ -18465,7 +18458,7 @@ void function RespawnPlayer_s2s( entity player  )
 		}
 		return
 	}
-	else if ( file.respawnState == 3 )
+	else if ( GetState() == "MaltaDeck" )
 	{
 		if ( !IsValid( player.GetPetTitan() ) )
 		{
@@ -18480,6 +18473,8 @@ void function RespawnPlayer_s2s( entity player  )
 			titan.SetOrigin( file.malta.mover.GetOrigin() + <0,5000,1000> )
 		}
 	}
+	else if ( GetState() == "Fall" )
+		return
 
 	player.SetOrigin( file.respawnWidow.model.GetOrigin() + < -40,0,300> )
 	DoRespawnPlayer( player, null )
@@ -18492,27 +18487,27 @@ void function RespawnPlayer_s2s( entity player  )
 
 void function HandleRespawnPlayer_s2s()
 {
-	vector RSpos
-	int lastState
+	vector relativeDelta
+	entity refMover = file.malta.mover
+	string lastState
 	bool moveCloser
-
-	while( IsValid( file.respawnWidow ) )
+	while( IsValid( file.respawnWidow ) && GetState() != "Fall" )
 	{
-		if ( lastState != file.respawnState )
+		if ( lastState != GetState() )
 		{
-			switch( file.respawnState )
+			switch( GetState() )
 			{
-				case 1:
-					RSpos = <4000,-4000,0>
-					lastState = file.respawnState
+				case "MaltaGuns":
+					relativeDelta = <4000,-4000,0>
+					lastState = GetState()
 					break
-				case 2:
-					RSpos = <3000,500,0>
-					lastState = file.respawnState
+				case "MaltaHanger":
+					relativeDelta = <3000,500,0>
+					lastState = GetState()
 					break
-				case 3:
-					RSpos = <1500,5000,1000>
-					lastState = file.respawnState
+				case "MaltaDeck":
+					relativeDelta = <1500,5000,1000>
+					lastState = GetState()
 					break
 					
 			}
@@ -18529,11 +18524,11 @@ void function HandleRespawnPlayer_s2s()
 
 		if ( moveCloser )
 		{
-			thread ShipIdleAtTargetEnt_Method2( file.respawnWidow, file.malta.mover, <0,0,0>, <0,0,0>, RSpos )
+			thread ShipIdleAtTargetEnt_Method2( file.respawnWidow, refMover, <0,0,0>, <0,0,0>, relativeDelta )
 		}
 		else
 		{
-			thread ShipIdleAtTargetEnt_Method2( file.respawnWidow, file.malta.mover, <0,0,0>, <0,0,0>, RSpos + <2000,0,0> )
+			thread ShipIdleAtTargetEnt_Method2( file.respawnWidow, refMover, <0,0,0>, <0,0,0>, relativeDelta + <2000,0,0> )
 		}
 		wait 0.05
 	}

@@ -75,8 +75,10 @@ void function StartPoint_Intro( entity player )
 	player.SetPlayerNetBool( "shouldShowWeaponFlyout", false )
 
 	ShowIntroScreen( player )
-	Remote_CallFunction_NonReplay( player, "ServerCallback_LevelIntroText" )
+	// Remote_CallFunction_NonReplay( player, "ServerCallback_LevelIntroText" )
+	StartLevelStartText()
 	FlagWait( "IntroScreenFading" )
+	EndEvent()
 
 	//wait 3.0
 

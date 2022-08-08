@@ -45,6 +45,7 @@ global function AttackPlayer
 global function HideStuff
 global function ShowStuff
 global function SwapTimelinesScripted
+global function SwapTimelinesScriptedEveryone
 global function TS_WithinPlayerFOV
 global function SetFlagWhenPlayerLookingAtEnt
 global function PlayerInRange
@@ -1671,6 +1672,7 @@ void function SwapTimelinesThread( entity player, var timeZoneDestination )
 	var skyCam
 	vector playerPos = player.GetOrigin()
 	vector newPlayerPos
+	int timezone
 	int timeOffset
 
 	player.SetCloakReactEndTime( Time() )
@@ -1681,12 +1683,18 @@ void function SwapTimelinesThread( entity player, var timeZoneDestination )
 		//--------------------------
 		// switch to night/overgrown
 		//--------------------------
-		SetGlobalNetBool( "PlayerInOvergrownTimeline", true )
+		if ( GetPlayer0() == player )
+		{
+			SetGlobalNetBool( "PlayerInOvergrownTimeline", true )
+			level.timeZone = TIMEZONE_NIGHT
+		}
+	
+		timezone = TIMEZONE_NIGHT
 		skyCam = GetEnt( "skybox_cam_night" )
-		level.timeZone = TIMEZONE_NIGHT
 		timeOffset = TIME_ZOFFSET * -1
-		FreezeNpcs( TIMEZONE_DAY )
+		// FreezeNpcs( TIMEZONE_DAY )
 		player.Signal( "OnTimeFlippedTimezoneNight" )
+
 		SetTimeshiftTimeOfDay_Night()
 		if ( Flag( "PlayerPickedUpTimeshiftDevice" ) )
 			SetTimeshiftArmDeviceSkin( 1 )
@@ -1699,11 +1707,18 @@ void function SwapTimelinesThread( entity player, var timeZoneDestination )
 		//------------------------
 		//switch to day/pristine
 		//------------------------
-		SetGlobalNetBool( "PlayerInOvergrownTimeline", false )
+		if ( GetPlayer0() == player )
+		{
+			SetGlobalNetBool( "PlayerInOvergrownTimeline", false )
+			level.timeZone = TIMEZONE_DAY
+		}
+		
+		timezone = TIMEZONE_DAY
 		skyCam = GetEnt( "skybox_cam_day" )
-		level.timeZone = TIMEZONE_DAY
 		timeOffset = TIME_ZOFFSET
-		FreezeNpcs( TIMEZONE_NIGHT )
+
+		// FreezeNpcs( TIMEZONE_NIGHT )
+
 		player.Signal( "OnTimeFlippedTimezoneDay" )
 
 		SetTimeshiftTimeOfDay_Day()
@@ -1753,7 +1768,7 @@ void function SwapTimelinesThread( entity player, var timeZoneDestination )
 	const float EFFECT_DURATION_EASE_OUT = 0.5
 	StatusEffect_AddTimed( player, eStatusEffect.timeshift_visual_effect, 1.0, EFFECT_DURATION_TOTAL, EFFECT_DURATION_EASE_OUT )
 
-	Remote_CallFunction_NonReplay( player, "ServerCallback_TimeFlipped", level.timeZone )
+	Remote_CallFunction_NonReplay( player, "ServerCallback_TimeFlipped", timezone ) // I know timeZoneDestination exist
 	player.SetSkyCamera( skyCam )
 	if ( !IsAlive( player ) )
 		return
@@ -1908,7 +1923,7 @@ bool function CanTimeShift( entity player )
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////
-function OnTimeShiftAbilityUsed( player )
+function OnTimeShiftAbilityUsed( player ) // lol 
 {
 	if ( level.allowTimeTravel == false )
 	{
@@ -1917,11 +1932,20 @@ function OnTimeShiftAbilityUsed( player )
 		return
 
 	}
+	
+	int offset = 5000
+	if ( GetMapName() == "sp_timeshift_spoke02" )
+		offset = 2000
 
-	if ( level.timeZone == TIMEZONE_DAY )
+	if ( player.GetOrigin().z > offset )
 		SwapTimelines( expect entity( player ), TIMEZONE_NIGHT )
 	else
 		SwapTimelines( expect entity( player ), TIMEZONE_DAY )
+
+	// if ( level.timeZone == TIMEZONE_DAY )
+	// 	SwapTimelines( expect entity( player ), TIMEZONE_NIGHT )
+	// else
+	// 	SwapTimelines( expect entity( player ), TIMEZONE_DAY )
 }
 /////////////////////////////////////////////////////////////////////////////////////////////////////////
 function OnSatchelPlanted( player, collisionParams )
@@ -2174,8 +2198,10 @@ void function OnSpawnedNPC( entity npc )
 	}
 
 	//If I just spawned in the opposite time zone as the player, freeze me
-	if ( ( level.timeZone != timeZone ) && ( timeZone != TIMEZONE_FROZEN ) )
-		FreezeNPC( npc )
+	// if ( ( level.timeZone != timeZone ) && ( timeZone != TIMEZONE_FROZEN ) )
+	// 	FreezeNPC( npc )
+	
+	// since we are playing with mutiple people this ^ can't happen
 
 	if ( timeZone == TIMEZONE_FROZEN )
 		return
@@ -4525,6 +4551,17 @@ void function SwapTimelinesScripted( entity player, var timeZone )
 
 
 	//phaseshift_postfx_forceOn 1
+}
+
+void function SwapTimelinesScriptedEveryone( entity ornull player, var timeZone )
+{
+	foreach( entity p in GetPlayerArray() )
+	{
+		if ( p != player )
+			thread SwapTimelinesScripted( p, timeZone )
+	}
+	expect entity( player ) // will this crash?
+	waitthread SwapTimelinesScripted( player, timeZone )
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -7166,9 +7203,7 @@ void function SetFlagWhenPlayerWithinRangeOfEnt( entity player, entity ent, floa
 			FlagSet( flagToSet )
 			break
 		}
-
 	}
-
 }
 ///////////////////////////////////////////////////////////////////
 

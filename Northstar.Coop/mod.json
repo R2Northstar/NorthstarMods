@@ -4,7 +4,7 @@
 	"Version": "0.0.0",
 	"DownloadLink": "https://cdn.discordapp.com/attachments/936678773150081055/970130085686440006/Northstar.Coop.zip",
 	"RequiredOnClient": true,
-	"LoadPriority": 1,
+	"LoadPriority": 0,
 
 	"ConVars": [
 		{

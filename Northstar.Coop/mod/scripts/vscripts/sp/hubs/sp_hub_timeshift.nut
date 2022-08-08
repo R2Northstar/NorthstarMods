@@ -293,6 +293,8 @@ void function EntitiesDidLoad()
 /////////////////////////////////////////////////////////////////////////////////////////
 void function TimeShiftHub_PlayerDidLoad( entity player )
 {
+	// runs once right?
+
 	/*
 	This will run before any start points run.
 	Useful for doing common	player-specific setup,
@@ -303,7 +305,7 @@ void function TimeShiftHub_PlayerDidLoad( entity player )
 	//---------------------
 	// Timeshift thread
 	//----------------------
-	thread TimeshiftPlayerThink( player )
+	thread TimeshiftPlayerThink( player ) // TODO: MAKE THIS FOR EVERYONE 
 
 	//---------------------
 	// Setup BT
@@ -321,7 +323,7 @@ void function TimeShiftHub_PlayerDidLoad( entity player )
 	//if ( !Flag( "HologramSequenceOver") )
 		//player.TakeOffhandWeapon( 0 ) //no satchels till after lobby
 
-
+	SetPlayer0( player ) // :)
 }
 
 
@@ -395,11 +397,11 @@ void function IntroSectionCleanup( entity player )
 /////////////////////////////////////////////////////////////////////////////////////////
 void function AA_IntroSectionThread( entity player )
 {
-	entity player = GetPlayerArray()[0] // so it stays consistent
-
-	AddCinematicFlag( player, CE_FLAG_HIDE_MAIN_HUD  )
-	Remote_CallFunction_Replay( player, "ServerCallback_LevelInfoText" )
-
+	// AddCinematicFlag( player, CE_FLAG_HIDE_MAIN_HUD  )
+	// Remote_CallFunction_Replay( player, "ServerCallback_LevelInfoText" )
+	StartLevelStartText()
+	// this is a test so if it doesn't work out remove it plz
+	// ! this is a thread and if player0 leaves we get oh no
 
 	Rodeo_Disallow( player )
 	thread MusicIntro( player )
@@ -428,35 +430,54 @@ void function AA_IntroSectionThread( entity player )
 	thread BTIntroThink( player )
 
 	delaythread ( 5 ) DialogueIntro( player )
-
-	TeleportPlayerToEnt( player, GetEntByScriptName( "checkpointStartDrop" ) )
-	player.SetOrigin( player.GetOrigin() + Vector( 0, 0, 1024 ) )
+	
+	foreach( entity p in GetPlayerArray() )
+	{
+		TeleportPlayerToEnt( p, GetEntByScriptName( "checkpointStartDrop" ) )
+		p.SetOrigin( p.GetOrigin() + Vector( 0, 0, 1024 ) )
+	}
 
 	entity node = GetEntByScriptName( "nodeVentfallStart" )
+	
+	foreach( entity p in GetPlayerArray() )
+	{
+		if ( p != player )
+			PlayerDropLand( p, node )
+	}
 
 	waitthread PlayerDropLand( player, node )
 
+	TriggerSilentCheckPoint( GetEntByScriptName( "checkpointStartDrop" ).GetOrigin(), true )
+
 	ShowStuff( "blocker_fan_intro" )
 
-	RemoveCinematicFlag( player, CE_FLAG_HIDE_MAIN_HUD )
+	// RemoveCinematicFlag( player, CE_FLAG_HIDE_MAIN_HUD )
+	EndEvent()
 
 	//-----------------------------------------
 	// Erratic time swaps in lab
 	//-----------------------------------------
 
 	entity whiteboardNode = GetEntByScriptName( "node_whiteboard" )
-	entity whiteboardNode2 = CreateLoudspeakerEnt( whiteboardNode.GetOrigin() )
+	vector whiteboardNodeOrigin =  whiteboardNode.GetOrigin()
+	entity whiteboardNode2 = CreateLoudspeakerEnt( whiteboardNodeOrigin )
+	vector whiteboardNode2Origin =  whiteboardNode2.GetOrigin()
 									//skitNode										failsafeFlagToStart
 	thread QuickSkit( player, GetEntByScriptName( "node_whiteboard" ), 	"player_entering_lecture_hall" )
 	thread DialogueLabChatter( player )
 
+	// we need this because triggers trigger on all players and since this part is too scripted we can't afford to crash 
+	// thread SetFlagWhenPlayerWithinRangeOfEnt( player, whiteboardNode, 500, "player_entering_creature_labs" )
+	// or not, seams to do some weird stuff
+
 	FlagWait( "player_entering_creature_labs" )
+	
+	TriggerSilentCheckPoint( whiteboardNodeOrigin, true )
 
-
-	ShowStuff( "blocker_fan_start" )
+	// ShowStuff( "blocker_fan_start" ) // nah
 
 	FlagSet( "FirstIntroLabTimeshiftRampup" )
-	waitthread SwapTimelinesScripted( player, TIMEZONE_DAY )
+	waitthread SwapTimelinesScriptedEveryone( player, TIMEZONE_DAY )
 
 	waitthread WaittillPlayerSwitchesTimezone( TIMEZONE_DAY )
 	FlagSet( "IntroLabTimeshiftsStart" )
@@ -469,13 +490,15 @@ void function AA_IntroSectionThread( entity player )
 
 	wait 6.2
 
-	waitthread SwapTimelinesScripted( player, TIMEZONE_NIGHT )
+	waitthread SwapTimelinesScriptedEveryone( player, TIMEZONE_NIGHT )
 
 	FlagWait( "player_creature_labs_mid" )
 
-	waitthread SwapTimelinesScripted( player, TIMEZONE_DAY )
+	waitthread SwapTimelinesScriptedEveryone( player, TIMEZONE_DAY )
 	waitthread WaittillPlayerSwitchesTimezone( TIMEZONE_DAY )
 	FlagSet( "PlayerInSecondIntroLabTimeshift")
+
+	TriggerSilentCheckPoint( whiteboardNode2Origin, true )
 
 	thread SetFlagWhenPlayerWithinRangeOfEnt( player, whiteboardNode2, 200, "player_near_whiteboard_dudes" )
 
@@ -484,7 +507,7 @@ void function AA_IntroSectionThread( entity player )
 	FlagWaitWithTimeout( "player_near_whiteboard_dudes", 2 )
 
 
-	thread SwapTimelinesScripted( player, TIMEZONE_NIGHT )
+	thread SwapTimelinesScriptedEveryone( player, TIMEZONE_NIGHT )
 
 	waitthread WaittillPlayerSwitchesTimezone( TIMEZONE_NIGHT )
 
@@ -501,6 +524,8 @@ void function AA_IntroSectionThread( entity player )
 	vector objectivePos = GetEntByScriptName( "objective_campus_vista_breadcrumb00" ).GetOrigin()
 	TimeshiftSetObjectiveSilent( player, "#TIMESHIFT_OBJECTIVE_START", objectivePos )
 
+	// TriggerSilentCheckPoint( objectivePos, true )
+
 	//-----------------------------------------
 	// Entering lecture hall
 	//-----------------------------------------
@@ -515,7 +540,7 @@ void function AA_IntroSectionThread( entity player )
 
 	delaythread ( 1.8 ) LectureHallFx( player )
 
-	waitthread SwapTimelinesScripted( player, TIMEZONE_DAY )
+	waitthread SwapTimelinesScriptedEveryone( player, TIMEZONE_DAY )
 
 	waitthread WaittillPlayerSwitchesTimezone( TIMEZONE_DAY )
 	FlagSet( "TimeshiftedToLectrureHall" )
@@ -527,7 +552,7 @@ void function AA_IntroSectionThread( entity player )
 	if ( Flag( "player_approaching_stage") )
 		wait 1
 
-	thread SwapTimelinesScripted( player, TIMEZONE_NIGHT )
+	thread SwapTimelinesScriptedEveryone( player, TIMEZONE_NIGHT )
 
 	waitthread WaittillPlayerSwitchesTimezone( TIMEZONE_NIGHT )
 
@@ -546,6 +571,7 @@ void function AA_IntroSectionThread( entity player )
 	objectivePos = GetEntByScriptName( "objective_campus_vista_breadcrumb1" ).GetOrigin()
 	TimeshiftUpdateObjective( player, objectivePos )
 
+	// TriggerSilentCheckPoint( objectivePos, true )
 }
 /////////////////////////////////////////////////////////////////////////////////////////
 void function MusicIntro( entity player )
@@ -1385,11 +1411,11 @@ void function ScriptedTimeShiftVistaHallway( entity player )
 
 	FlagSet( "PlayerSwappingToHallwayVistaPast" )
 
-	waitthread SwapTimelinesScripted( player, TIMEZONE_DAY )
+	waitthread SwapTimelinesScriptedEveryone( player, TIMEZONE_DAY )
 
 	FlagWaitWithTimeout( "player_intro_hallway_prowler_skit_failsafe_pristine", 8 )
 
-	waitthread SwapTimelinesScripted( player, TIMEZONE_NIGHT )
+	waitthread SwapTimelinesScriptedEveryone( player, TIMEZONE_NIGHT )
 
 	waitthread WaittillPlayerSwitchesTimezone( TIMEZONE_NIGHT )
 	FlagSet( "HallwayCivilianTimeSwapOver" )
@@ -1406,14 +1432,14 @@ void function ScriptedTimeShiftVistaHallway( entity player )
 	//waitthread WaitTillLookingAt( player, lookTarget, 	true, 		30, 		0, 			0, 			triggerToDoFluxIn, 	"start_vista_hall_timeshift_failsafe")
 
 
-	waitthread SwapTimelinesScripted( player, TIMEZONE_DAY )
+	waitthread SwapTimelinesScriptedEveryone( player, TIMEZONE_DAY )
 	FlagSet( "PlayerSwappingToCampusVistaPast" )
 
 	FlagWait( "PlayerSwappingToCampusVistaPast" )
 
 	FlagWaitWithTimeout( "player_moving_forward_through_campus", 4 )
 
-	waitthread SwapTimelinesScripted( player, TIMEZONE_NIGHT )
+	waitthread SwapTimelinesScriptedEveryone( player, TIMEZONE_NIGHT )
 
 	FlagClear( "HidePlayerWeaponsDuringShifts" )
 	FlagSet( "VistaTimeshiftsFinished" )
@@ -2052,15 +2078,15 @@ void function PickupHelmetThink( entity player )
 		}
 	)
 
-	local playerActivator
+	entity playerActivator
 	while( true )
 	{
-		playerActivator = useDummy.WaitSignal( "OnPlayerUse" ).player
+		playerActivator = expect entity( useDummy.WaitSignal( "OnPlayerUse" ).player )
 		if ( IsValid( playerActivator ) && playerActivator.IsPlayer() )
 			break
 	}
 
-	player.SetNoTarget( true )
+	playerActivator.SetNoTarget( true )
 	useDummy.UnsetUsable()
 	useDummy.Destroy()
 	//EmitSoundAtPosition( TEAM_UNASSIGNED, helmet.GetOrigin(), "Player_Melee_Backhand_1P" )
@@ -2070,11 +2096,11 @@ void function PickupHelmetThink( entity player )
 	anderson.Highlight_HideInside( 0 )
 	anderson.Highlight_HideOutline( 0 )
 	//anderson.SetAimAssistAllowed( false )
-
-	player.DisableWeaponWithSlowHolster()
-	player.SetInvulnerable()
+	
+	playerActivator.DisableWeaponWithSlowHolster()
+	playerActivator.SetInvulnerable()
 	//player.FreezeControlsOnServer()
-	player.ContextAction_SetBusy()
+	playerActivator.ContextAction_SetBusy()
 
 	//----------------------------------
 	// Player takes helmet off Anderson
@@ -2093,17 +2119,17 @@ void function PickupHelmetThink( entity player )
 	FlagSetDelayed( "HelmetRecoveryDroppedToFloor", 6 )
 	thread PlayAnim( anderson, "pt_timeshift_helmet_grab_corpse_sequence", mover )
 	thread PlayAnim( helmet, "helmet_timeshift_helmet_grab_sequence", mover )
-	waitthread FirstPersonSequence( sequenceTakeHelmet, player, mover )
+	waitthread FirstPersonSequence( sequenceTakeHelmet, playerActivator, mover )
 
 	//player.UnfreezeControlsOnServer()
-	player.ClearInvulnerable()
-	player.Anim_Stop()
-	player.ClearParent()
+	playerActivator.ClearInvulnerable()
+	playerActivator.Anim_Stop()
+	playerActivator.ClearParent()
 	ClearPlayerAnimViewEntity( player )
-	if ( player.ContextAction_IsBusy() )
-		player.ContextAction_ClearBusy()
-	player.EnableWeaponWithSlowDeploy()
-	player.SetNoTarget( false )
+	if ( playerActivator.ContextAction_IsBusy() )
+		playerActivator.ContextAction_ClearBusy()
+	playerActivator.EnableWeaponWithSlowDeploy()
+	playerActivator.SetNoTarget( false )
 
 	FlagSet( "RecoveredHelmet" )
 }
@@ -2355,11 +2381,11 @@ void function HologramSequence( entity player )
 	useDummy.SetUsableByGroup( "pilot" )
 	useDummy.SetUsePrompts( "#TIMESHIFT_HINT_GIVE_HELMET" , "#TIMESHIFT_HINT_GIVE_HELMET_PC" )
 
-	local usePlayer
+	entity playerActivator
 	while( true )
 	{
-		usePlayer = useDummy.WaitSignal( "OnPlayerUse" ).player
-		if ( IsValid( player ) && player.IsPlayer() && !player.IsTitan() )
+		playerActivator = expect entity( useDummy.WaitSignal( "OnPlayerUse" ).player )
+		if ( IsValid( playerActivator ) && playerActivator.IsPlayer() )
 			break
 	}
 	useDummy.UnsetUsable()
@@ -2379,11 +2405,11 @@ void function HologramSequence( entity player )
 	sequence.thirdPersonAnim = "pt_timeshift_hologram_sequence_start"
 	sequence.viewConeFunction = ViewConeTight
 
-	player.DisableWeaponWithSlowHolster()
-	player.ContextAction_SetBusy()
-	thread FirstPersonSequence( sequence, player, mover )
-	float animLength = player.GetSequenceDuration( "pt_timeshift_hologram_sequence_start" )
-	delaythread ( animLength ) PlayerResetAfterSequence( player )
+	playerActivator.DisableWeaponWithSlowHolster()
+	playerActivator.ContextAction_SetBusy()
+	thread FirstPersonSequence( sequence, playerActivator, mover )
+	float animLength = playerActivator.GetSequenceDuration( "pt_timeshift_hologram_sequence_start" )
+	delaythread ( animLength ) PlayerResetAfterSequence( playerActivator )
 	//thread PlayAnimTeleport( sarahHologram, "sa_timeshift_hologram_sequence_start", mover, "ref" )
 	thread PlayAnimTeleport( helmet, "helmet_timeshift_hologram_seq_start", mover, "ref" )
 	helmet.Show()
@@ -3168,7 +3194,7 @@ void function AA_SecurityThread( entity player )
 	thread QuickSkit( player, GetEntByScriptName( "node_security_dude" ), "player_entered_security_services_pristine" )
 	wait 1.25
 
-	thread SwapTimelinesScripted( player, TIMEZONE_DAY )
+	thread SwapTimelinesScriptedEveryone( player, TIMEZONE_DAY )
 	FlagWait( "player_entered_security_services_pristine" )
 
 	wait 0.25
@@ -3186,7 +3212,7 @@ void function AA_SecurityThread( entity player )
 
 	FlagSet( "SecurityServicesStalkersSpawning" )
 	wait 5.3
-	thread SwapTimelinesScripted( player, TIMEZONE_NIGHT )
+	thread SwapTimelinesScriptedEveryone( player, TIMEZONE_NIGHT )
 
 	FlagSet( "SecurityStalkerRackSequenceFinished" )
 
@@ -3231,13 +3257,13 @@ void function AA_SecurityThread( entity player )
 
 	FlagWait( "player_security_barracks_corridor" )
 
-	thread SwapTimelinesScripted( player, TIMEZONE_DAY )
+	thread SwapTimelinesScriptedEveryone( player, TIMEZONE_DAY )
 	waitthread WaittillPlayerSwitchesTimezone( TIMEZONE_DAY )
 	FlagSet( "SecurityTimeshiftPopToPast1" )
 
 	wait 7
 
-	thread SwapTimelinesScripted( player, TIMEZONE_NIGHT )
+	thread SwapTimelinesScriptedEveryone( player, TIMEZONE_NIGHT )
 
 	FlagWait( "player_security_to_bunker_skybridge_approach" )
 
@@ -3556,7 +3582,8 @@ void function SkybridgeStartPointSetup( entity player )
 /////////////////////////////////////////////////////////////////////////////////////////
 void function SkybridgeSkipped( entity player )
 {
-	GiveTimeshiftAbility( player )
+	foreach( player in GetPlayerArray() )
+		GiveTimeshiftAbility( player )
 	FlagSet( "PlayerPickedUpTimeshiftDevice" )
 }
 /////////////////////////////////////////////////////////////////////////////////////////
@@ -3588,13 +3615,13 @@ void function AA_SkybridgeThread( entity player )
 
 	wait 0.25
 
-	thread SwapTimelinesScripted( player, TIMEZONE_DAY )
+	thread SwapTimelinesScriptedEveryone( player, TIMEZONE_DAY )
 	waitthread WaittillPlayerSwitchesTimezone( TIMEZONE_DAY )
 	FlagSet( "SecurityTimeshiftPopToPast2" )
 
 	wait 1.5
 
-	thread SwapTimelinesScripted( player, TIMEZONE_NIGHT )
+	thread SwapTimelinesScriptedEveryone( player, TIMEZONE_NIGHT )
 	waitthread WaittillPlayerSwitchesTimezone( TIMEZONE_NIGHT )
 
 	thread CleanupAI( player, "trigger_indoor_area_security_services_pristine" )
@@ -3778,10 +3805,16 @@ void function SkybridgeCrossingSequence( entity player )
 
 void function LobbyReduxStartPointSetup( entity player )
 {
-	TeleportPlayerToEnt( player, GetEntByScriptName( "checkpointLobbyReturn" ) )
+	foreach( player in GetPlayerArray() )
+	{
+		TeleportPlayerToEnt( player, GetEntByScriptName( "checkpointLobbyReturn" ) )
+		Rodeo_Allow( player )
+	}
+
 	FlagSet( "door_open_amenities_lobby_return_pristine" )
 	FlagSet( "player_back_in_amenities_lobby" )
-	Rodeo_Allow( player )
+	
+	TriggerSilentCheckPoint( GetEntByScriptName( "checkpointLobbyReturn" ).GetOrigin(), true )
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////
@@ -4961,7 +4994,9 @@ void function AA_ReactorBridgeThread( entity player )
 
 	//thread FrozenWorldAmbientSoundAndFx( player )
 	thread MusicReactorBridge( player )
-	Remote_CallFunction_NonReplay( player, "ServerCallback_FrozenLightStart" )
+
+	foreach( entity p in GetPlayerArray() )
+		Remote_CallFunction_NonReplay( p, "ServerCallback_FrozenLightStart" )
 
 	FlagWait( "player_crossing_reactor_bridge_start" )
 	thread DialogueReactorBridge( player )
@@ -5003,15 +5038,20 @@ void function AA_ReactorBridgeThread( entity player )
 	//---------------------------------
 	// WHITE OUT - Transitioning to Frozen World
 	//----------------------------------
-	if ( player.IsTitan() )
-		TeleportPlayerToEnt( player, GetEntByScriptName( "node_bt_frozen" ) )
-	else
-		TeleportPlayerToEnt( player, GetEntByScriptName( "player_frozen_start" ) )
 
 	var skyCam = GetEnt( "skybox_cam_explosion" )
-	player.SetSkyCamera( skyCam )
+	
+	foreach( entity p in GetPlayerArray() )
+	{
+		if ( player.IsTitan() )
+			TeleportPlayerToEnt( p, GetEntByScriptName( "node_bt_frozen" ) )
+		else
+			TeleportPlayerToEnt( p, GetEntByScriptName( "player_frozen_start" ) )
 
-	Remote_CallFunction_NonReplay( player, "ServerCallback_TimeFlipped", TIMEZONE_FROZEN )
+		p.SetSkyCamera( skyCam )
+
+		Remote_CallFunction_NonReplay( p, "ServerCallback_TimeFlipped", TIMEZONE_FROZEN )
+	}
 
 	if ( IsValid( rings ) )
 		rings.Destroy()
@@ -5023,8 +5063,9 @@ void function AA_ReactorBridgeThread( entity player )
 	CleanupEnts( "enemies_hub_end" )
 	CleanupEnts( "dropship_end_scripted_right" )
 	CleanupEnts( "dropship_end_scripted_left" )
-
-	AddCinematicFlag( player, CE_FLAG_HIDE_MAIN_HUD  )
+	
+	foreach( entity p in GetPlayerArray() )
+		AddCinematicFlag( p, CE_FLAG_HIDE_MAIN_HUD  )
 
 	thread FrozeSplosionDudes( player )
 
@@ -5043,19 +5084,20 @@ void function AA_ReactorBridgeThread( entity player )
 	//----------------------------------------------
 	FlagSet( "SwappedToFrozenWorld" )
 
-
-
+	TriggerSilentCheckPoint( GetEntByScriptName( "checkpointReactorBridge" ).GetOrigin(), true )
 
 	thread ElectricalScreenEffects( player, "SwappedToFrozenWorld" )
 	wait 2
 
 	fadeTime = 1
 	holdTime = 3
-	ScreenFade( player, 255, 255, 255, 254, fadeTime, holdTime, FFADE_IN | FFADE_PURGE )
 	CheckPoint()
-
-	Embark_Disallow( player )
-
+	
+	foreach( entity p in GetPlayerArray() )
+	{
+		ScreenFade( player, 255, 255, 255, 254, fadeTime, holdTime, FFADE_IN | FFADE_PURGE )
+		Embark_Disallow( player )
+	}
 	/*
 	entity bridgeTrigger = GetEntByScriptName( "trigger_bridge_frozen" )
 	if ( !bridgeTrigger.IsTouching( player ) )
@@ -5068,15 +5110,17 @@ void function AA_ReactorBridgeThread( entity player )
 	Objective_Update( objectivePos )
 
 	FlagWait( "player_inside_core_zone_outer" )
-
-	StatusEffect_AddTimed( player, eStatusEffect.emp, 10, 3, 1 )
+	
+	foreach( entity p in GetPlayerArray() )
+		StatusEffect_AddTimed( p, eStatusEffect.emp, 10, 3, 1 )
 	EmitSoundOnEntity( player, EMP_IMPARED_SOUND )
-
+	
 	thread CreateShakeWhileFlagSet( 0.5, 0.5, 1, "player_inside_core_zone_outer", "CoreScanStarting" )
 
 	FlagWait( "player_inside_core_zone_inner" )
-
-	StatusEffect_AddTimed( player, eStatusEffect.emp, 10, 3, 1 )
+	
+	foreach( entity p in GetPlayerArray() )
+		StatusEffect_AddTimed( p, eStatusEffect.emp, 10, 3, 1 )
 }
 
 void function StopAllDialogue( entity player )
@@ -5228,6 +5272,9 @@ void function BTexplosionThink( entity player, bool titanTimeTraveled )
 
 	entity node
 	entity titan
+	
+	FlagWait( "SwappedToFrozenWorld" )
+	thread EjectPlayersFromTitan()
 
 	//-------------------
 	// BT Stayed Behind
@@ -5244,87 +5291,88 @@ void function BTexplosionThink( entity player, bool titanTimeTraveled )
 	//-------------------
 	// BT Came Along
 	//-------------------
+
 	else
 	{
 		wait 1
+
+		titan = player.GetPetTitan()
+		titan.SetHealth( titan.GetMaxHealth() )
+		node = GetEntByScriptName( "node_bt_frozen" )
+
+		thread PlayAnimTeleport( titan, "bt_timeshift_frozen_pose", node )
+		
+		FlagSet( "BT_is_in_frozen_world" )
+	}
+	
+	wait 0.1
+
+	// TODO: MAKE THIS FASTER
+
+	//----------------------------------
+	// Player looks at device
+	//------------------------------------
+	
+	foreach( entity p in GetPlayerArray() )
+		thread FrozenGloveAnim( p )
+}
+
+void function EjectPlayersFromTitan()
+{
+	foreach( entity player in GetPlayerArray() )
+	{
+		if ( !player.IsTitan() )
+			continue
+		
 		player.FreezeControlsOnServer()
 		Disembark_Allow( player )
-		FlagWait( "SwappedToFrozenWorld" )
-		wait 0.1
-		FlagSet( "BT_is_in_frozen_world" )
+
 		if ( PlayerCanDisembarkTitan( player ) )
 		{
 			//EmitSoundOnEntity( player, "Embark_Standing_Front_1P" )
 			player.CockpitStartDisembark()
 			Remote_CallFunction_Replay( player, "ServerCallback_TitanDisembark" )
 			thread PlayerDisembarksTitan( player )
-			wait 1
-			titan = player.GetPetTitan()
-			titan.SetHealth( titan.GetMaxHealth() )
-			node = GetEntByScriptName( "node_bt_frozen" )
-			/*
-			entity weapon = titan.GetActiveWeapon()
-			if ( !IsValid( weapon ) )
-			{
-
-			}
-			*/
-			thread PlayAnimTeleport( titan, "bt_timeshift_frozen_pose", node )
 		}
-		wait 1.4
 	}
-
-
-	//----------------------------------
-	// Player looks at device
-	//------------------------------------
-	bool showGloveThing = true //for demo purposes
-
-
-	if ( showGloveThing )
-	{
-		node = GetEntByScriptName( "player_frozen_start" )
-		entity mover = CreateOwnedScriptMover( node ) //need a mover for first person sequence
-
-		player.SetNoTarget( true )
-		player.DisableWeapon()
-		player.SetInvulnerable()
-		player.ContextAction_SetBusy()
-
-		FirstPersonSequenceStruct sequencePlayerDeviceBroke
-		//sequencePlayerDeviceBroke.blendTime = 0.0
-		sequencePlayerDeviceBroke.attachment = "ref"
-		sequencePlayerDeviceBroke.firstPersonAnim = "ptpov_timeshift_broken"
-		sequencePlayerDeviceBroke.thirdPersonAnim = "pt_timeshift_broken"
-		sequencePlayerDeviceBroke.viewConeFunction = ViewConeTight
-
-		entity timeShiftOffhand = player.GetFirstPersonProxy()
-		delaythread ( 0.1 ) TimeshiftDeviceBlinkRed( timeShiftOffhand )
-		player.UnfreezeControlsOnServer()
-		waitthread FirstPersonSequence( sequencePlayerDeviceBroke, player, mover )
-
-
-		player.ClearInvulnerable()
-		player.Anim_Stop()
-		player.ClearParent()
-		ClearPlayerAnimViewEntity( player )
-		if ( player.ContextAction_IsBusy() )
-			player.ContextAction_ClearBusy()
-		player.EnableWeaponWithSlowDeploy()
-		player.SetNoTarget( false )
-	}
-	else
-	{
-		player.SetInvulnerable()
-		player.DisableWeapon()
-		player.UnfreezeControlsOnServer()
-		wait 3.5
-		player.ClearInvulnerable()
-		player.EnableWeaponWithSlowDeploy()
-	}
-
-	thread FrozenWorldGlove( player )
 }
+
+void function FrozenGloveAnim( entity player )
+{
+	thread FrozenWorldGlove( player )
+
+	entity node = GetEntByScriptName( "player_frozen_start" )
+	entity mover = CreateOwnedScriptMover( node ) //need a mover for first person sequence
+
+	player.SetNoTarget( true )
+	player.DisableWeapon()
+	player.SetInvulnerable()
+	player.ContextAction_SetBusy()
+
+	FirstPersonSequenceStruct sequencePlayerDeviceBroke
+	//sequencePlayerDeviceBroke.blendTime = 0.0
+	sequencePlayerDeviceBroke.attachment = "ref"
+	sequencePlayerDeviceBroke.firstPersonAnim = "ptpov_timeshift_broken"
+	sequencePlayerDeviceBroke.thirdPersonAnim = "pt_timeshift_broken"
+	sequencePlayerDeviceBroke.viewConeFunction = ViewConeTight
+
+	entity timeShiftOffhand = player.GetFirstPersonProxy()
+	delaythread ( 0.1 ) TimeshiftDeviceBlinkRed( timeShiftOffhand )
+	player.UnfreezeControlsOnServer()
+	waitthread FirstPersonSequence( sequencePlayerDeviceBroke, player, mover )
+
+
+	player.ClearInvulnerable()
+	player.Anim_Stop()
+	player.ClearParent()
+	ClearPlayerAnimViewEntity( player )
+	if ( player.ContextAction_IsBusy() )
+		player.ContextAction_ClearBusy()
+	player.EnableWeaponWithSlowDeploy()
+	player.SetNoTarget( false )
+	mover.Destroy()
+}
+
 /////////////////////////////////////////////////////////////////////////////////////////
 
 void function FrozeSplosionDudes( entity player )
@@ -5638,25 +5686,25 @@ void function ReactorCoreThink( entity player )
 	useDummy.SetUsePrompts( "#TIMESHIFT_HINT_SCAN_CORE" , "#TIMESHIFT_HINT_SCAN_CORE_PC" )
 
 
-	local playerActivator
+	entity playerActivator
 	while( true )
 	{
-		playerActivator = useDummy.WaitSignal( "OnPlayerUse" ).player
-		if ( IsValid( player ) && player.IsPlayer() && !player.IsTitan() )
+		playerActivator = expect entity( useDummy.WaitSignal( "OnPlayerUse" ).player )
+		if ( IsValid( playerActivator ) && playerActivator.IsPlayer() )
 			break
 	}
 
-
-	RemoveCinematicFlag( player, CE_FLAG_HIDE_MAIN_HUD )
+	foreach( entity p in GetPlayerArray() )
+		RemoveCinematicFlag( player, CE_FLAG_HIDE_MAIN_HUD )
 
 	useDummy.UnsetUsable()
 	useDummy.Destroy()
 
 
 	entity node = CreateScriptMover( Vector( -1162, 6071.9, -10570 ), Vector( 46.5899, -88.972, 0.242813 ) )
-	thread DataStab( player, node )
+	thread DataStab( playerActivator, node )
 
-	delaythread( 1.5 )StopCoreElectricalEffects( player )
+	delaythread( 1.5 )StopCoreElectricalEffects( playerActivator )
 
 
 	entity fx = PlayFXOnEntity( FX_DLIGHT_HELMET, player, "HEADSHOT" )
@@ -5664,13 +5712,11 @@ void function ReactorCoreThink( entity player )
 
 	FlagSet( "CoreScanStarting" )
 
-	Remote_CallFunction_NonReplay( player, "ServerCallback_ShowCoreDecoding" )
+	Remote_CallFunction_NonReplay( playerActivator, "ServerCallback_ShowCoreDecoding" )
 
 	wait 15
 
 	FlagSet( "CoreScanned" )
-
-
 
 
 	if ( IsValid( fx ) )
@@ -5748,28 +5794,35 @@ void function LevelEndSkipped( entity player )
 void function AA_LevelEndThread( entity player )
 {
 	FlagWait( "PlayerAtLevelEnd" )
+	
+	foreach( entity p in GetPlayerArray() )
+	{
+		Remote_CallFunction_NonReplay( p, "ServerCallback_TimeFlipped", TIMEZONE_NIGHT )
+		//FlagSet( "turn_on_daytime_sun_flare" ) //doesn't really matter since we are never going back there again
 
-	Remote_CallFunction_NonReplay( player, "ServerCallback_TimeFlipped", TIMEZONE_NIGHT )
-	//FlagSet( "turn_on_daytime_sun_flare" ) //doesn't really matter since we are never going back there again
+		//player.SetPlayerSettings( DEFAULT_PILOT_SETTINGS )
+		if ( IsValid( p.GetOffhandWeapon( OFFHAND_SPECIAL ) ) )
+			p.TakeOffhandWeapon( OFFHAND_SPECIAL )
+		p.GiveOffhandWeapon( "mp_ability_cloak", 1 )
 
-	//player.SetPlayerSettings( DEFAULT_PILOT_SETTINGS )
-	if ( IsValid( player.GetOffhandWeapon( OFFHAND_SPECIAL ) ) )
-		player.TakeOffhandWeapon( OFFHAND_SPECIAL )
-	player.GiveOffhandWeapon( "mp_ability_cloak", 1 )
+		thread PlayerLevelEndThink( p )
+	}
 
 	thread MusicEnd( player )
 	thread BTlevelEndThink( player )
-	thread PlayerLevelEndThink( player )
 	thread DialogueLevelEnd( player )
 
 	FlagWait( "EndingDialogeFinished" )
 
-	//wait 2
-
-	//player.SetInvulnerable()
-	//ScreenFadeToBlack( player, 1.5, 5 )
-	//wait 1.5
-	//player.FreezeControlsOnServer()
+	wait 2
+	foreach( player in GetPlayerArray() )
+	{
+		player.SetInvulnerable()
+		ScreenFadeToBlack( player, 1.5, 5 )
+	}
+	wait 1.5
+	foreach( player in GetPlayerArray() )
+		player.FreezeControlsOnServer()
 	Coop_LoadMapFromStartPoint( "sp_beacon", "Level Start" )
 
 }
@@ -5799,7 +5852,7 @@ void function BTlevelEndThink( entity player )
 void function PlayerLevelEndThink( entity player )
 {
 	FlagWait( "PlayerAtLevelEnd" )
-
+	
 	UnlockAchievement( player, achievements.COMPLETE_OP217 )
 
 	AddCinematicFlag( player, CE_FLAG_HIDE_MAIN_HUD  )

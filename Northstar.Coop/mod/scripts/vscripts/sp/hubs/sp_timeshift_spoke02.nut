@@ -180,6 +180,8 @@ void function EntitiesDidLoad()
 
 	thread AndersonSetup()
 
+	entity turret = CreateNPC( "npc_turret_sentry", TEAM_IMC, <3654, -3718, 10720>, <0,90,0> )
+	DispatchSpawn( turret )
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////
@@ -195,7 +197,7 @@ void function TimeShiftHub_PlayerDidLoad( entity player )
 	//---------------------
 	// Timeshift thread
 	//----------------------
-	thread TimeshiftPlayerThink( player )
+	thread TimeshiftPlayerThink( player ) // TODO: MAKE THIS FOR EVERYONE 
 
 
 }
@@ -250,7 +252,10 @@ void function TimeshiftDeviceSkipped( entity player )
 {
 	FlagSet( "open_creature_door_start_pristine" )
 	FlagSet( "PlayerPickedUpTimeshiftDevice" )
-	GiveTimeshiftAbility( player )
+
+	foreach( player in GetPlayerArray() )
+		GiveTimeshiftAbility( player )
+
 	FlagClear( "open_skybridge_door_end_pristine" )
 	FlagClear( "open_skybridge_door_end_overgrown" )
 	FlagSet( "CinematicTimeshiftSequenceFinished")
@@ -408,11 +413,11 @@ void function PickupTimeShiftDevice( entity player )
 	useDummy.SetUsableByGroup( "pilot" )
 	useDummy.SetUsePrompts( "#TIMESHIFT_HINT_TAKE_DEVICE" , "#TIMESHIFT_HINT_TAKE_DEVICE_PC" )
 
-	local playerActivator
+	entity playerActivator
 	while( true )
 	{
-		playerActivator = useDummy.WaitSignal( "OnPlayerUse" ).player
-		if ( IsValid( playerActivator ) && playerActivator.IsPlayer() && !playerActivator.IsTitan() )
+		playerActivator = expect entity( useDummy.WaitSignal( "OnPlayerUse" ).player )
+		if ( IsValid( playerActivator ) && playerActivator.IsPlayer() )
 			break
 	}
 
@@ -426,10 +431,10 @@ void function PickupTimeShiftDevice( entity player )
 	useDummy.UnsetUsable()
 	useDummy.Destroy()
 
-	player.DisableWeaponWithSlowHolster()
-	player.SetInvulnerable()
+	playerActivator.DisableWeaponWithSlowHolster()
+	playerActivator.SetInvulnerable()
 	//player.FreezeControlsOnServer()
-	player.ContextAction_SetBusy()
+	playerActivator.ContextAction_SetBusy()
 
 	FlagSet( "DoingCinematicTimeshift" )
 
@@ -446,13 +451,13 @@ void function PickupTimeShiftDevice( entity player )
 	sequenceTakeDevice.viewConeFunction = ViewConeTight
 
 	thread PlayAndersonCorpseAnims( anderson, node )
-	waitthread FirstPersonSequence( sequenceTakeDevice, player, mover )
+	waitthread FirstPersonSequence( sequenceTakeDevice, playerActivator, mover )
 
 	FlagSet( "PlayerPickedUpTimeshiftDevice" )
 	//---------------------------
 	// Player equips device
 	//----------------------------
-	player.ClearParent()
+	playerActivator.ClearParent()
 	mover.Destroy()
 	entity mover2 = CreateOwnedScriptMover( node ) //need a mover for first person sequence
 
@@ -465,8 +470,8 @@ void function PickupTimeShiftDevice( entity player )
 
 	//WaitFrame()
 
-	GiveTimeshiftAbility( player )
-	thread TimeshiftSequenceShifts( player, mover2 )
+	GiveTimeshiftAbility( playerActivator )
+	thread TimeshiftSequenceShifts( playerActivator, mover2 )
 
 	entity proxy = player.GetFirstPersonProxy()
 	int bodyGroupIndex = proxy.FindBodyGroup( "glove_default" )
@@ -475,30 +480,35 @@ void function PickupTimeShiftDevice( entity player )
 	int bodyGroupIndex2 = proxy.FindBodyGroup( "glove_animated" )
 	proxy.SetBodygroup( bodyGroupIndex2, 1 ) // 0 = show, 1 = hide
 
-	waitthread FirstPersonSequence( sequenceEquipDevice, player, mover2 )
+	waitthread FirstPersonSequence( sequenceEquipDevice, playerActivator, mover2 )
 
 	SetTimeshiftArmDeviceSkin( 1 )
 
 	//player.UnfreezeControlsOnServer()
-	player.ClearInvulnerable()
-	player.Anim_Stop()
-	player.ClearParent()
-	ClearPlayerAnimViewEntity( player )
-	if ( player.ContextAction_IsBusy() )
-		player.ContextAction_ClearBusy()
-	player.EnableWeaponWithSlowDeploy()
+	playerActivator.ClearInvulnerable()
+	playerActivator.Anim_Stop()
+	playerActivator.ClearParent()
+	ClearPlayerAnimViewEntity( playerActivator )
+	if ( playerActivator.ContextAction_IsBusy() )
+		playerActivator.ContextAction_ClearBusy()
+	playerActivator.EnableWeaponWithSlowDeploy()
 
 	FlagClear( "DoingCinematicTimeshift" )
 
 	FlagSet( "CinematicTimeshiftSequenceFinished")
 
+	foreach( player in GetPlayerArray() )
+	{
+		GiveTimeshiftAbility( player )
 
-	proxy = player.GetFirstPersonProxy()
-	if ( proxy == null )
-		return
+		proxy = player.GetFirstPersonProxy()
+		if ( proxy == null )
+			return
 
-	bodyGroupIndex = proxy.FindBodyGroup( "glove_default" )
-	proxy.SetBodygroup( bodyGroupIndex, 0 ) // 0 = show, 1 = hide
+		bodyGroupIndex = proxy.FindBodyGroup( "glove_default" )
+		proxy.SetBodygroup( bodyGroupIndex, 0 ) // 0 = show, 1 = hide
+
+	}
 
 	//bodyGroupIndex2= proxy.FindBodyGroup( "glove_animated" )
 	//proxy.SetBodygroup( bodyGroupIndex2, 1 ) // 0 = show, 1 = hide
@@ -1107,6 +1117,8 @@ void function AA_ElevatorFightThread( entity player )
 
 	FlagWait( "entered_amenities_elevator_room" )
 
+	TriggerManualCheckPoint( null, <5442, 3384, 10976>, true )
+
 	thread DialogueElevatorRoom( player )
 
 	FlagSet( "ShowMobilityGhostElevatorShaft" )
@@ -1615,6 +1627,8 @@ void function AA_ElevatorTopThread( entity player )
 
 	FlagWait( "open_door_elevator_top_lab" )
 
+	TriggerManualCheckPoint( null, <6161, -3478, 11800 >, true )
+
 	CheckPoint()
 
 	CleanupEnts( "grunts_elevator" )
@@ -1958,6 +1972,7 @@ void function AA_SphereRoomThread( entity player )
 	thread AndersonHologramSequence( player, "node_hologram_lab2", "StartAndersonHologram2" )
 
 	CheckPoint()
+	TriggerManualCheckPoint( null, <9420, -4665, 11328>, true )
 
 	FlagWait( "dropped_into_fire_hallways" )
 	vector objectivePos = GetEntByScriptName( "objective_intel_data_panel02" ).GetOrigin()

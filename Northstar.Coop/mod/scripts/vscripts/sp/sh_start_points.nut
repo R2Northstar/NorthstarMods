@@ -166,7 +166,7 @@ table< string,array<StartPointCSV> > function GetStartPointsFromCSV()
 	}
 	results[ "sp_box" ] <- [ CreateStartPointStruct() ]
 	results[ "sp_amongus" ] <- [ CreateStartPointStruct() ]
-	results[ "sp_skyway_v2" ] <- [ CreateStartPointStruct(), CreateStartPointStruct( "Rock Jumping" ), CreateStartPointStruct( "Drone Fight" ), CreateStartPointStruct( "Platform Fall" ), CreateStartPointStruct( "Boss Battle" ) ]
+	results[ "sp_skyway_v2" ] <- [ CreateStartPointStruct( "Level Start", 1 ), CreateStartPointStruct( "Rock Jumping", 2 ), CreateStartPointStruct( "Drone Fight", 3 ), CreateStartPointStruct( "Platform Fall", 3 ), CreateStartPointStruct( "Boss Battle", 4 ) ]
 
 	return results
 }
@@ -177,9 +177,9 @@ StartPointCSV function CreateStartPointStruct( string name = "Level Start", int 
 	startPoint.name = name
 	startPoint.loadScreenIndex = 0
 	startPoint.hasDetente = false
-	startPoint.spLog = "Null"
-	startPoint.spLogTitle = "Null"
-	startPoint.isLeft = false
+	startPoint.spLog = ""
+	startPoint.spLogTitle = ""
+	startPoint.isLeft = true
 
 	return startPoint
 }

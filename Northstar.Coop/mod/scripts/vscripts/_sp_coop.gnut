@@ -7,8 +7,7 @@ void function FullyHidePlayers()
 {
     foreach( entity player in GetPlayerArray() )
     {
-        StorePilotWeapons( player )
-        player.Hide()
+        player.MakeInvisible()
     }
 }
 
@@ -16,7 +15,6 @@ void function FullyShowPlayers()
 {
     foreach( entity player in GetPlayerArray() )
     {
-        RetrievePilotWeapons( player )
-        player.Show()
+        player.MakeVisible()
     }
 }

@@ -51,6 +51,7 @@ void function Init_triggersThreaded()
 	{
 		case "sp_training":
 			CreateGauntletTeleportBackTrigger()
+			// todo: remove these ( its possible )
 			CreateTeleportTrigger( < -6130,-11703,-255 >, 100.0, 600.0, 100.0, true ) // the tp out of the sim pod 
 			CreateTeleportTrigger( < -7465,314,144 >, 1000.0, 500.0, 100.0, true ) // the armory
 			CreateTeleportTrigger( < 1311,74,-2522.6 >, 500.0, 500.0, 100.0, true ) // fs titan call
@@ -58,10 +59,12 @@ void function Init_triggersThreaded()
 			break
 
 		case "sp_crashsite":
+			// todo: remove this by fixing sp_crashsite :trol:
 			CreateTeleportTrigger( < -295,-419,45.03 >, 600.0, 100.0, 100.0, true ) // the tp to the next phase of the map
 			break
 
 		case "sp_sewers1":
+			// we kinda need this
 			CreateTeleportTrigger( < 9468,1125,216.1 >, 1500.0, 2000.0, 100.0, false ) // the first time you enter the sewers as titan
 			// CreateTeleportTrigger( < 9670,6809,784 >, 500.0, 1000.0, 100.0, true ) // the button closign door
 			CreateTeleportTrigger( < -891,1345,288.031 >, 1000.0, 1000.0, 100.0, true ) // the door clsoing when you help militia grunts
@@ -72,21 +75,23 @@ void function Init_triggersThreaded()
 		// case "sp_boomtown_start":
 		// case "sp_boomtown":
 		// case "sp_boomtown_end":
-		// 	return eSPLevel.BOOM_TOWN
+		// 	return 
 
 		case "sp_hub_timeshift":
-			CreateTeleportTrigger( < -1838,-6758,430.17 >, 400.0, 2000.0, 100.0, true) // teleports people to window
-			CreateTeleportTrigger( < -1123,-1306,-1353.1 >, 500.0, 2000.0, 100.0, false) // teleports people to the rope
-			CreateMapChangeTrigger( < 598,-3347,-471 >, 500.0, 2000.0, 100.0) // changes map
+			// CreateTeleportTrigger( < -1838,-6758,430.17 >, 400.0, 2000.0, 100.0, true) // teleports people to window
+			// CreateTeleportTrigger( < -1123,-1306,-1353.1 >, 500.0, 2000.0, 100.0, false) // teleports people to the rope
+			// CreateMapChangeTrigger( < 598,-3347,-471 >, 500.0, 2000.0, 100.0) // changes map
 			break
 		// case "sp_timeshift_spoke02":
 		// 	break
 
 		// case "sp_beacon":
 		// case "sp_beacon_spoke0":
-		// 	return eSPLevel.BEACON
+		// 	return 
 
 		case "sp_tday":
+			// todo: remove this?
+			// todo: custom spawns for sp_tday?
 			CreateMapChangeTrigger( < 6683,12750,2432 >, 5000.0, 2000.0, 100.0) // change map trigger
 			CreateTeleportTrigger( < 1585,-3711,227.6 >, 1000.0, 2000.0, 100.0, true ) // the door
 			CreateTeleportTrigger( < -6622,3890,1920.6 >, 2000.0, 2000.0, 100.0, true ) // the elevator exit
@@ -94,10 +99,10 @@ void function Init_triggersThreaded()
 			break
 
 		// case "sp_s2s":
-		// 	return eSPLevel.SHIP2SHIP
+		// 	return 
 
 		// case "sp_skyway_v1":
-		// 	return eSPLevel.SKYWAY
+		// 	return 
 
 		// default:
 			

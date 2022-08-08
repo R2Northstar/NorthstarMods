@@ -528,8 +528,10 @@ void function Training_PodIntro( entity player )
 
 	FlagWait( "IntroScreenFading" )
 	wait 1.2
-	Remote_CallFunction_Replay( player, "ScriptCallback_LevelIntroText" )
+	// Remote_CallFunction_Replay( player, "ScriptCallback_LevelIntroText" )
+	StartLevelStartText()
 	wait 4.2  // matches fade time in sp_introscreen data
+	EndEvent()
 
 	thread PodIntro_BackgroundSkits( player )
 

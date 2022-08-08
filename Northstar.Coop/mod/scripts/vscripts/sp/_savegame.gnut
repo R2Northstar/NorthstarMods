@@ -217,6 +217,7 @@ void function CheckPoint_FromData( CheckPointData checkPointData )
 	{
 		printt( "SAVEGAME: saveRestoreResetsPlayer = true" )
 		WriteRestoreLocationFromEntity( safeLocation )
+		TriggerSilentCheckPoint( safeLocation.GetOrigin(), !player.IsTitan() )
 		file.saveRestoreResetsPlayer = true
 	}
 	else

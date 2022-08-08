@@ -62,6 +62,8 @@ void function BaseGametype_Init_MPSP()
 
 	FlagInit( "WeaponDropsAllowed" )
 	FlagSet( "WeaponDropsAllowed" )
+
+	CodeCallback_CreateDefaultEvent()
 }
 
 void function CodeCallback_OnWeaponAttack( entity player, entity weapon, string weaponName, int ammoUsed )
@@ -413,16 +415,17 @@ function FinalPlayerUpdate( entity player )
 
 void function OnTimeShiftGiveGlove( entity player )
 {
-
-	if ( GetMapName() == "sp_timeshift_spoke02" && Flag( "PlayerPickedUpTimeshiftDevice" ) )
+	if ( [ "sp_timeshift_spoke02", "sp_hub_timeshift" ].contains( GetMapName() ) && Flag( "PlayerPickedUpTimeshiftDevice" ) )
 	{
 		player.SetPlayerSettings( "pilot_solo_timeshift" )
 		if ( IsValid( player.GetOffhandWeapon( OFFHAND_SPECIAL ) ) )
 			player.TakeOffhandWeapon( OFFHAND_SPECIAL )
 		player.GiveOffhandWeapon( "mp_ability_timeshift", 1 )
 
+		level.allowTimeTravel = true
 		entity viewModel = player.GetFirstPersonProxy()
 		viewModel.SetSkin( 1 )
+		Remote_CallFunction_NonReplay( player, "ServerCallback_TimeDeviceAcquired" )
 	}
 	
 }
@@ -443,23 +446,6 @@ void function OnTimeShiftGiveGlove( entity player )
 ╚██████╔╝   ██║   ██║  ██║███████╗██║  ██║    ██║     ██║███████╗███████╗███████║
  ╚═════╝    ╚═╝   ╚═╝  ╚═╝╚══════╝╚═╝  ╚═╝    ╚═╝     ╚═╝╚══════╝╚══════╝╚══════╝
 */
-
-// so everyone gets the timeshift abilty
-function ServerCallback_TimeDeviceAcquired()
-{
-	FlagSet( "PlayerPickedUpTimeshiftDevice" )
-
-	foreach ( p in GetPlayerArray() )
-	{
-		p.SetPlayerSettings( "pilot_solo_timeshift" )
-		if ( IsValid( p.GetOffhandWeapon( OFFHAND_SPECIAL ) ) )
-			p.TakeOffhandWeapon( OFFHAND_SPECIAL )
-		p.GiveOffhandWeapon( "mp_ability_timeshift", 1 )
-
-		entity viewModel = p.GetFirstPersonProxy()
-		viewModel.SetSkin( 1 )
-	}
-}
 
 // this function doesn't seam to exits but its still called in blood and rust
 void function SewerSplit_PlayerCollectableThink()

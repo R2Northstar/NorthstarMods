@@ -44,16 +44,16 @@ void function BtMarvnTarget()
     }
 }
 
-ClServer_MessageStruct function BlurAlert( ClServer_MessageStruct message )
-{
-    if ( message.message.tolower().find("blur") != null )
-    {
-        Chat_ServerBroadcast( "You Said Blur?" )
-        Chat_ServerBroadcast( "To fix the issue find the coop mod in playtester-ping" )
-    }
+// ClServer_MessageStruct function BlurAlert( ClServer_MessageStruct message )
+// {
+//     if ( message.message.tolower().find("blur") != null )
+//     {
+//         Chat_ServerBroadcast( "You Said Blur?" )
+//         Chat_ServerBroadcast( "To fix the issue find the coop mod in playtester-ping" )
+//     }
         
-    return message
-}
+//     return message
+// }
 
 bool function SpawnBt( entity player, array<string> args )
 {

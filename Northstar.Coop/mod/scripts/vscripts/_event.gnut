@@ -22,19 +22,19 @@ void function _EmptyEntityFunction( entity Entity )
 {
 }
 
-void function _SafelyCallEndFunc()
+void function CodeCallback_CreateDefaultEvent()
 {
-    try
-    {
-        file.event.EndFunc()
-    }
-    catch( ohno ){}
+    Event event
+    event.Name = "None"
+    event.StartFunc = _EmptyFunction
+    event.MiddleFunc = _EmptyEntityFunction
+    event.EndFunc = _EmptyFunction
+    file.event = event
 }
-
 
 void function SetEvent( Event event )
 {
-    _SafelyCallEndFunc()
+    file.event.EndFunc()
     file.event = event
     thread file.event.StartFunc()
 }
@@ -52,7 +52,7 @@ void function EndEvent()
     event.MiddleFunc = _EmptyEntityFunction
     event.EndFunc = _EmptyFunction
     
-    _SafelyCallEndFunc()
+    file.event.EndFunc()
     file.event = event
 }
 
@@ -90,4 +90,54 @@ void functionref( entity ) function GetEventMiddleFunc()
 void functionref() function GetEventEndFunc()
 {
     return file.event.EndFunc
+}
+
+// stuff ( I am really tired, idk how to name stuff anymore, stuff xD )
+
+void function StartLevelStartText()
+{
+    SetCutSceneEvent( LevelStartTextStartFunc, LevelStartTextMiddleFunc, LevelStartTextEndFunc )
+}
+
+void function LevelStartTextStartFunc()
+{
+    foreach( entity player in GetPlayerArray() )
+        LevelStartTextMiddleFunc( player )
+}
+
+void function LevelStartTextMiddleFunc( entity player )
+{
+    AddCinematicFlag( player, CE_FLAG_HIDE_MAIN_HUD  )
+    // we need variants for each map why respawn :(
+    string funcstring = ""
+    switch( GetMapName() )
+    {
+        case "sp_jake_test":
+		case "sp_hub_timeshift":
+		case "sp_timeshift_spoke02":
+            funcstring = "ServerCallback_LevelInfoText"
+            break
+        case "sp_s2s":
+        case "sp_sewers1":
+        case "sp_crashsite":
+        case "sp_beacon":
+        case "sp_tday":
+        case "sp_boomtown_start":
+            funcstring = "ServerCallback_LevelIntroText"
+            break
+        case "sp_skyway_v1":
+        case "sp_training":
+            funcstring = "ScriptCallback_LevelIntroText"
+            break
+    }
+
+    if ( funcstring == "" )
+        print( "you forgot" )
+	Remote_CallFunction_Replay( player, funcstring )
+}
+
+void function LevelStartTextEndFunc()
+{
+    foreach( entity player in GetPlayerArray() )
+        RemoveCinematicFlag( player, CE_FLAG_HIDE_MAIN_HUD )
 }

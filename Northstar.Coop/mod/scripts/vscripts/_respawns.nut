@@ -44,6 +44,9 @@ void function StartSpawn( entity player )
 
 	Chat_ServerPrivateMessage( player, "use 'say smth' in the console to chat ", false )
 	// Chat_ServerPrivateMessage( player, "co-op has some client side changes, so if you don't want to suffer download coop", false )
+	
+	// for events
+	RunMiddleFunc( player )
 
 	if ( "sp_s2s" == GetMapName() && info.player0 != player )
 	{
@@ -175,6 +178,10 @@ void function s2sRespawn( entity player )
     {
         thread GenericRespawn( player )
     }
+
+	wait 2
+
+	DoRespawnPlayer( player, null )
 }
 
 // long functions

@@ -4,7 +4,7 @@ global function CoopCustomPrecache
 
 void function CoopCustomPrecache()
 {
-	PrecacheWeapon( "mp_weapon_peacekraber" )
+	// PrecacheWeapon( "mp_weapon_peacekraber" )
 	PrecacheWeapon( "mp_titanweapon_triplethreat" )
 	PrecacheWeapon( "melee_pilot_kunai" )
 
