@@ -357,6 +357,7 @@ playlists
 						mp_angel_city 1
 						mp_colony02 1
 						mp_glitch 1
+						mp_lf_stacks 1
 						mp_relic02 1
 						mp_wargames 1
 						mp_rise 1
@@ -900,6 +901,41 @@ playlists
 						mp_rise 1
 						mp_coliseum 1
 						mp_coliseum_column 1
+					}
+				}
+				fd_easy
+				{
+					vars
+					{
+						fd_player_damage_doomed_scalar		1.0
+					}
+				}
+				fd_normal
+				{
+					vars
+					{
+						fd_player_damage_doomed_scalar		1.0
+					}
+				}
+				fd_hard
+				{
+					vars
+					{
+						fd_player_damage_doomed_scalar		1.25
+					}
+				}
+				fd_master
+				{
+					vars
+					{
+						fd_player_damage_doomed_scalar		1.25
+					}
+				}
+				fd_insane
+				{
+					vars
+					{
+						fd_player_damage_doomed_scalar		1.25
 					}
 				}
 			}
