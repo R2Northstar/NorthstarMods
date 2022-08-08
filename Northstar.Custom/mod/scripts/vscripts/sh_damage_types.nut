@@ -683,8 +683,8 @@ string function GetObitFromDamageSourceID( int damageSourceID )
 void function RegisterWeaponDamageSource( string weaponRef, string damageSourceName )
 {
 	// Have to do this since squirrel table initialization only supports literals for string keys
-	table<string, string> temp
-	temp[weaponRef] <- damageSourceName
+	table< string, string > temp
+	temp[ weaponRef ] <- damageSourceName
 	RegisterWeaponDamageSources( temp )
 }
 
@@ -692,7 +692,7 @@ void function RegisterWeaponDamageSource( string weaponRef, string damageSourceN
 	{"mp_titanweapon_sniper" : "Plasma Railgun", "mp_titanweapon_meteor" : "T203 Thermite Launcher"}
 	Only works properly if used after the match starts, e.g. called in "after" callbacks.
 */
-void function RegisterWeaponDamageSources( table<string, string> newValueTable )
+void function RegisterWeaponDamageSources( table< string, string > newValueTable )
 {
 	int trgt = file.damageSourceIDToString.len() - 1 // -1 accounts for invalid.
 	int lastCustomSize = file.customDamageSourceIDList.len() // Used to only send new IDs to clients if any are added during runtime.
@@ -716,7 +716,7 @@ void function RegisterWeaponDamageSources( table<string, string> newValueTable )
 
 bool function RegisterWeaponDamageSourceInternal( int id, string newVal, string stringVal )
 {
-	table damageSourceID = expect table( getconsttable()["eDamageSourceId"] )
+	table damageSourceID = expect table( getconsttable()[ "eDamageSourceId" ] )
 
 	// Fail invalid new source IDs (already exists or cannot be sent via string commands). Length condition has loose padding to account for ID string length.
 	if ( newVal in damageSourceID || newVal.len() + stringVal.len() > SOURCE_ID_MAX_MESSAGE_LENGTH - 15 || id in file.damageSourceIDToString )
@@ -725,7 +725,7 @@ bool function RegisterWeaponDamageSourceInternal( int id, string newVal, string 
 	damageSourceID[ newVal ] <- id
 	file.damageSourceIDToString[ id ] <- newVal
 	file.damageSourceIDToName[ id ] <- stringVal
-	file.customDamageSourceIDList.extend( [id.tostring(), newVal, StringReplace( stringVal, " ", MESSAGE_SPACE_PADDING ) ] )
+	file.customDamageSourceIDList.extend( [ id.tostring(), newVal, StringReplace( stringVal, " ", MESSAGE_SPACE_PADDING ) ] )
 	return true
 }
 
@@ -746,9 +746,9 @@ void function SendNewDamageSourceIDs( entity player, int index = 0 )
 		while ( curIndex < file.customDamageSourceIDList.len() )
 		{
 			// Sources are inserted to the custom list in triplets, so we can trust these indices exist.
-			curSize += file.customDamageSourceIDList[curIndex].len()
-			curSize += file.customDamageSourceIDList[curIndex+1].len()
-			curSize += file.customDamageSourceIDList[curIndex+2].len()
+			curSize += file.customDamageSourceIDList[ curIndex ].len()
+			curSize += file.customDamageSourceIDList[ curIndex + 1 ].len()
+			curSize += file.customDamageSourceIDList[ curIndex + 2 ].len()
 
 			// Stop before including strings in current message if it exceeds max message length.
 			// This will never stall on a singular source that exceeds the size since new sources are size limited.
@@ -761,7 +761,7 @@ void function SendNewDamageSourceIDs( entity player, int index = 0 )
 		// Create the string to pass to client
 		string message = ""
 		while ( index < curIndex )
-			message += file.customDamageSourceIDList[index++] + " "
+			message += file.customDamageSourceIDList[ index++ ] + " "
 
 		ServerToClientStringCommand( player, "register_damage_source_ids " + message )
 	}
@@ -771,6 +771,6 @@ void function ReceiveNewDamageSourceIDs( array<string> args )
 {
 	// IDs are inserted to the custom list in triplets, so we can trust these indices exist and the loop will end properly
 	for ( int i = 0; i < args.len(); i += 3 )
-		RegisterWeaponDamageSourceInternal( args[i].tointeger(), args[i+1], StringReplace( args[i+2], MESSAGE_SPACE_PADDING, " " ) )
+		RegisterWeaponDamageSourceInternal( args[ i ].tointeger(), args[ i + 1 ], StringReplace( args[ i + 2 ], MESSAGE_SPACE_PADDING, " " ) )
 }
 #endif
