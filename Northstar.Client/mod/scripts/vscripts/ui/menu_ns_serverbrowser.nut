@@ -785,6 +785,7 @@ void function FilterServerList()
 			sName.append( tempServer.serverGamemode.tolower() )
 			sName.append( Localize( tempServer.serverGamemode ).tolower() )
 			sName.append( NSGetServerDescription( i ).tolower() )
+			sName.append( NSGetServerRegion( i ).tolower() )
 
 			string sTerm = filterArguments.searchTerm.tolower()
 			
