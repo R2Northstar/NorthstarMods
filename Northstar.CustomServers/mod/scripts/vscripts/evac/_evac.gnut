@@ -192,7 +192,7 @@ void function EvacEpilogueCompleted( entity dropship )
 		ScreenFadeToBlackForever( player, 2.0 )
 	
 	wait 2.0
-	if( !(GetGameState() == eGameState.Postmatch) )
+	if( GetGameState() != eGameState.Postmatch )
 		SetGameState( eGameState.Postmatch )
 }
 
@@ -534,13 +534,11 @@ void function DropShipTempHide( entity dropship )
 EvacShipSetting function GetEvacShipSettingByTeam( int team )
 {
 	EvacShipSetting tempSetting
-	if( team == TEAM_IMC )
-	{
-		tempSetting.shipModel = $"models/vehicle/goblin_dropship/goblin_dropship_hero.mdl"
-		tempSetting.flyinSound = "Goblin_IMC_Evac_Flyin"
-		tempSetting.hoverSound = "Goblin_IMC_Evac_Hover"
-		tempSetting.flyoutSound = "Goblin_IMC_Evac_FlyOut"
-	}
+	tempSetting.shipModel = $"models/vehicle/goblin_dropship/goblin_dropship_hero.mdl"
+	tempSetting.flyinSound = "Goblin_IMC_Evac_Flyin"
+	tempSetting.hoverSound = "Goblin_IMC_Evac_Hover"
+	tempSetting.flyoutSound = "Goblin_IMC_Evac_FlyOut"
+
 	if( team == TEAM_MILITIA )
 	{
 		tempSetting.shipModel = $"models/vehicle/crow_dropship/crow_dropship_hero.mdl"
@@ -560,6 +558,7 @@ void function EvacDropshipDamaged( entity evacShip, var damageInfo )
 
 void function WarpInEffectEvacShip( entity dropship )
 {
+	dropship.EndSignal( "OnDestroy" )
 	float sfxWait = 0.1
 	float totalTime = WARPINFXTIME
 	float preWaitTime = 0.16 // give it some time so it's actually playing anim, and we can get it's "origin" attatch for playing warp in effect
