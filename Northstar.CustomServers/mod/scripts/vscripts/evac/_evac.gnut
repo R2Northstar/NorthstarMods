@@ -380,6 +380,8 @@ void function Evac( int evacTeam, float initialWait, float arrivalTime, float wa
 
 	dropship.kv.VisibilityFlags = 0 // prevent jetpack trails being like "dive" into ground
 	WaitFrame() // better wait because we are server
+	if( !IsValid( dropship ) )
+		return
 	thread __WarpOutEffectShared( dropship )
 	
 	// go to space 
