@@ -34,7 +34,7 @@ for (const language of knownLanguages) {
     console.log(
         missingKeysLength === 0 
         ? `"${language}" doesn't have missing keys.`
-        : `"${language}" has ${missingKeys.length} missing keys.`
+        : `"${language}" has ${missingKeys.length} missing key${missingKeys.length === 1 ? '' : 's'}:`
     );
     if (missingKeysLength !== 0)
         console.log(missingKeys);
