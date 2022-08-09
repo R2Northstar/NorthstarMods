@@ -111,15 +111,15 @@ void function AiGameModes_SpawnDropPod( vector pos, vector rot, int team, string
 
 void function AiGameModes_SpawnReaper( vector pos, vector rot, int team, string aiSettings = "", void functionref( entity reaper ) reaperHandler = null )
 {
-	// nessie fix
 	thread Reaper_Spawnpoint( pos, team, 11.2 )
 
+	wait 10
+	// spawn reapers right before it warpfalls, or round_end clean up will crash the game
 	entity reaper = CreateSuperSpectre( team, pos, rot )
 	// reaper highlight
 	Highlight_SetFriendlyHighlight( reaper, "interact_object_los_line" )
 	Highlight_SetEnemyHighlight( reaper, "enemy_titan" )
-	wait 10
-	
+
 	SetSpawnOption_Titanfall( reaper )
 	SetSpawnOption_Warpfall( reaper )
 	
