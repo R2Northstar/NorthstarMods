@@ -69,7 +69,6 @@ struct {
 	entity evacIcon
 } file
 
-// nessie fix
 struct EvacShipSetting
 {
 	asset shipModel
@@ -84,7 +83,6 @@ void function Evac_Init()
 	RegisterSignal( "EvacShipLeaves" )
 	RegisterSignal( "EvacOver" )
 
-	// nessie fix
 	PrecacheParticleSystem( FX_EVAC_MARKER )
 }
 
@@ -123,7 +121,7 @@ void function EvacEpilogue()
 	{
 		thread SetRespawnAndWait( false )
 
-		// nessie fix
+		// no players can evac? end match
 		thread CheckIfAnyPlayerLeft( GetOtherTeam( winner ) )
 
 		thread Evac( GetOtherTeam( winner ), EVAC_INITIAL_WAIT, EVAC_ARRIVAL_TIME, EVAC_WAIT_TIME, EvacEpiloguePlayerCanBoard, EvacEpilogueShouldLeaveEarly, EvacEpilogueCompleted )
@@ -156,7 +154,7 @@ void function SetRespawnAndWait( bool mode )
 	wait GAME_EPILOGUE_PLAYER_RESPAWN_LEEWAY
 	SetRespawnsEnabled( mode )
 	
-	// nessie fix
+	// clear any respawn availablity, or players are able to save there respawn for whenever they want
 	foreach( entity player in GetPlayerArray() )
 		ClearRespawnAvailable( player )
 }
@@ -201,7 +199,7 @@ void function EvacEpilogueCompleted( entity dropship )
 // global evac func, anything can call this, it's not necessarily an epilogue thing
 void function Evac( int evacTeam, float initialWait, float arrivalTime, float waitTime, bool functionref( entity, entity ) canBoardCallback, bool functionref( entity ) shouldLeaveEarlyCallback, void functionref( entity ) completionCallback, entity customEvacNode = null )
 {
-	// nessie fix
+	// get evac ship sound and model for specific team
 	EvacShipSetting evacShip = GetEvacShipSettingByTeam( evacTeam )
 
 	wait initialWait 
@@ -236,7 +234,7 @@ void function Evac( int evacTeam, float initialWait, float arrivalTime, float wa
 	DispatchSpawn( file.evacIcon )
 	file.evacIcon.DisableHibernation()
 
-	// nessie fix
+	// start evac beam
 	int index = GetParticleSystemIndex( FX_EVAC_MARKER )
 
 	entity effectFriendly = StartParticleEffectInWorld_ReturnEntity( index, evacNode.GetOrigin(), < 0,0,0 > )
@@ -253,15 +251,9 @@ void function Evac( int evacTeam, float initialWait, float arrivalTime, float wa
 	
 	entity dropship = CreateDropship( evacTeam, evacNode.GetOrigin(), evacNode.GetAngles() )
 
-	// nessie fix
 	thread DropShipTempHide( dropship ) // prevent showing model and health bar on spawn
-
-	// nessie rework
-	//dropship.SetModel( $"models/vehicle/crow_dropship/crow_dropship_hero.mdl" ) 
-	//dropship.SetValueForModelKey( $"models/vehicle/crow_dropship/crow_dropship_hero.mdl" )
 	dropship.SetModel( evacShip.shipModel )
 	dropship.SetValueForModelKey( evacShip.shipModel )
-	// rework end
 
 	dropship.SetMaxHealth( EVAC_SHIP_HEALTH )
 	dropship.SetHealth( EVAC_SHIP_HEALTH )
@@ -269,8 +261,7 @@ void function Evac( int evacTeam, float initialWait, float arrivalTime, float wa
 	SetTargetName( dropship, "#NPC_EVAC_DROPSHIP" )
 	DispatchSpawn( dropship )
 
-	// nessie fix
-	//dropship.SetModel( $"models/vehicle/crow_dropship/crow_dropship_hero.mdl" )
+	// reduce nuclear core's damage
 	AddEntityCallback_OnDamaged( dropship, EvacDropshipDamaged )
 	
 	AddEntityCallback_OnKilled( dropship, EvacDropshipKilled )
@@ -285,7 +276,6 @@ void function Evac( int evacTeam, float initialWait, float arrivalTime, float wa
 			dropship.s.evacTrigger.Destroy()
 		
 		// this should be for both teams
-		// nessie fix
 		if( !IsValid( dropship ) )
 		{
 			SetTeamActiveObjective( evacTeam, "EG_DropshipExtractDropshipDestroyed" )
@@ -308,7 +298,7 @@ void function Evac( int evacTeam, float initialWait, float arrivalTime, float wa
 	Spectator_SetCustomSpectatorFunc( EvacSpectatorFunc )
 	thread PlayAnim( dropship, "cd_dropship_rescue_side_start", evacNode )
 
-	// nessie fix
+	// fly in sound and effect
 	EmitSoundOnEntity( dropship, evacShip.flyinSound )
 	thread WarpInEffectEvacShip( dropship )
 	
@@ -319,18 +309,18 @@ void function Evac( int evacTeam, float initialWait, float arrivalTime, float wa
 	
 	thread PlayAnim( dropship, "cd_dropship_rescue_side_idle", evacNode )
 
-	// nessie fix
+	// hover sound
 	EmitSoundOnEntity( dropship, evacShip.hoverSound )
 	
 	// eta until leave
 	SetTeamActiveObjective( evacTeam, "EG_DropshipExtract2", Time() + EVAC_WAIT_TIME, file.evacIcon )
 	SetTeamActiveObjective( GetOtherTeam( evacTeam ), "EG_StopExtract2", Time() + EVAC_WAIT_TIME, file.evacIcon )	
 	
-	// dialogue, nessie fix
+	// dialogue
 	PlayFactionDialogueToTeam( "mp_evacGo", evacTeam )
 	PlayFactionDialogueToTeam( "mp_evacStop", GetOtherTeam( evacTeam ) )
 
-	// nessie fix
+	// stop evac beam
 	if( IsValid( effectFriendly ) )
 		EffectStop( effectFriendly )
 
@@ -362,7 +352,7 @@ void function Evac( int evacTeam, float initialWait, float arrivalTime, float wa
 		WaitFrame()
 	}
 
-	// nessie fix
+	// fly out sound
 	StopSoundOnEntity( dropship, evacShip.hoverSound )
 	EmitSoundOnEntity( dropship, evacShip.flyoutSound )
 	
@@ -388,7 +378,6 @@ void function Evac( int evacTeam, float initialWait, float arrivalTime, float wa
 	
 	wait WARPINFXTIME
 
-	// nessie fix
 	dropship.kv.VisibilityFlags = 0 // prevent jetpack trails being like "dive" into ground
 	WaitFrame() // better wait because we are server
 	thread __WarpOutEffectShared( dropship )
@@ -418,7 +407,7 @@ void function Evac( int evacTeam, float initialWait, float arrivalTime, float wa
 		
 		SetPlayerActiveObjective( player, "EG_DropshipExtractSuccessfulEscape" )
 
-		// nessie fix
+		// let evacing team able to see the ship again
 		dropship.kv.VisibilityFlags = ENTITY_VISIBLE_TO_FRIENDLY
 		
 		// skybox
@@ -502,7 +491,7 @@ void function EvacDropshipKilled( entity dropship, var damageInfo )
 	}
 }
 
-// nessie functions
+// if there's no player left in evacing team, we end this match
 void function CheckIfAnyPlayerLeft( int evacTeam )
 {
 	wait GAME_EPILOGUE_PLAYER_RESPAWN_LEEWAY
@@ -562,14 +551,14 @@ void function EvacDropshipDamaged( entity evacShip, var damageInfo )
 {
 	int damageSourceID = DamageInfo_GetDamageSourceIdentifier( damageInfo )
 	if( damageSourceID == damagedef_nuclear_core )
-		DamageInfo_SetDamage( damageInfo, DamageInfo_GetDamage( damageInfo )/3 )
+		DamageInfo_SetDamage( damageInfo, DamageInfo_GetDamage( damageInfo ) * EVAC_SHIP_DAMAGE_MULTIPLIER_AGAINST_NUCLEAR_CORE )
 }
 
 void function WarpInEffectEvacShip( entity dropship )
 {
 	float sfxWait = 0.1
 	float totalTime = WARPINFXTIME
-	float preWaitTime = 0.16 // give it some time so it's actually playing anim, and we can get it's "origin" attatch
+	float preWaitTime = 0.16 // give it some time so it's actually playing anim, and we can get it's "origin" attatch for playing warp in effect
 	string sfx = "dropship_warpin"
 
 	wait preWaitTime
