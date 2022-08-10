@@ -24,13 +24,15 @@ function getLanguageKeys (lang) {
     if (knownLanguages.indexOf(lang) === -1) return;
     return fs.readFileSync(`${langPath}/northstar_client_localisation_${lang}.txt`, {encoding:'utf16le', flag:'r'})
         .split('\n')
-        .filter(line => line.length !== 0)  // remove empty lines
+        .filter(line => line.length !== 0)                  // remove empty lines
+        .map(line => line.replaceAll(/\s+/g, ' ').trim())   // remove multiple spaces
+        .map(line => line.replaceAll('\t', ''))             // remove tabs characters
+        
         // keep only lines with translation keys
         .filter(line => {
             const words = line.split('" "');
             return words.length === 2 && words[1] !== 'english"'
         })
-        .map(line => line.replaceAll('\t', '')) // remove tabs characters
         .map(line => line.split('" "')[0].substring(1)); // only keep translation keys (throw values)
 }
 
