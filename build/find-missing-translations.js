@@ -8,8 +8,9 @@ if (![2,3].includes(process.argv.length)) {
     console.error('Wrong number of arguments, either call this script with no argument, or with a language.');
     return;
 }
-if (process.argv.length === 3 && !knownLanguages.includes(process.argv[2])) {
-    console.error(`"${process.argv[2]}" is not a valid language.\nValid languages are: ${knownLanguages}`);
+const inputLang = process.argv[2];
+if (process.argv.length === 3 && !knownLanguages.includes(inputLang)) {
+    console.error(`"${inputLang}" is not a valid language.\nValid languages are: ${knownLanguages}`);
     return;
 }
 
@@ -35,10 +36,11 @@ function getLanguageKeys (lang) {
 
 // We use english keys as reference for other languages
 const englishKeys = getLanguageKeys('english');
-knownLanguages.shift();
+const inputLanguages = inputLang !== undefined ? ["", inputLang] : [...knownLanguages];
+inputLanguages.shift();
 
 // Check for each language if there are missing keys
-for (const language of knownLanguages) {
+for (const language of inputLanguages) {
     const languageKeys = getLanguageKeys(language);
     const missingKeys = [...englishKeys] // clone
         .filter(key => languageKeys.indexOf(key) === -1);
