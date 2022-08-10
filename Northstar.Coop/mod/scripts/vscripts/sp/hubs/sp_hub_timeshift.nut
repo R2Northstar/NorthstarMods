@@ -266,7 +266,7 @@ void function EntitiesDidLoad()
 	HideStuff( "marvin_lobby_dead" )
 	//HideStuff( "flyer_intro_hallway_fly_a" )
 	//HideStuff( "flyer_intro_hallway_fly_b" )
-	HideStuff( "blocker_overgrown_start_vista" )
+	HideStuff( "blocker_overgrown_start_vista" ) // TODO: Is the right thing to remove?
 
 	thread SkyboxStart()
 	delaythread ( 3 ) WeaponDrops()
@@ -442,7 +442,7 @@ void function AA_IntroSectionThread( entity player )
 	foreach( entity p in GetPlayerArray() )
 	{
 		if ( p != player )
-			PlayerDropLand( p, node )
+			thread PlayerDropLand( p, node )
 	}
 
 	waitthread PlayerDropLand( player, node )
@@ -566,7 +566,7 @@ void function AA_IntroSectionThread( entity player )
 
 	FlagWait( "player_exiting_lecture_hall" )
 
-	ShowStuff( "blockers_lecture_backtrack" )
+	// ShowStuff( "blockers_lecture_backtrack" ) // right thing?
 
 	objectivePos = GetEntByScriptName( "objective_campus_vista_breadcrumb1" ).GetOrigin()
 	TimeshiftUpdateObjective( player, objectivePos )
@@ -1510,7 +1510,7 @@ void function CorpseSearchSkipped( entity player )
 	FlagSet( "GiveHelmetToBTObjectiveGiven" )
 	delaythread ( 1 ) AndersonHideOutlines()
 	FlagClear( "PlaySparksOnHelmet" )
-	ShowStuff( "blocker_overgrown_start_vista" )
+	// ShowStuff( "blocker_overgrown_start_vista" )
 }
 
 
@@ -1544,7 +1544,7 @@ void function AA_CorpseSearchThread( entity player )
 	TimeshiftUpdateObjective( player, < 0, 0, 0 >, file.bt )
 
 	FlagWait( "player_moving_forward_through_campus" )
-	ShowStuff( "blocker_overgrown_start_vista" )
+	// ShowStuff( "blocker_overgrown_start_vista" )
 
 	thread LobbyObjectiveThink( player )
 	thread LobbyProwler( player )
@@ -3160,9 +3160,12 @@ entity function CreateZiplineEnd( vector createPos, string tname )
 /////////////////////////////////////////////////////////////////////////////////////////
 void function SecurityStartPointSetup( entity player )
 {
-	TeleportPlayerToEnt( player, GetEntByScriptName( "checkpointSecurity" ) )
+	foreach( player in GetPlayerArray() )
+		TeleportPlayerToEnt( player, GetEntByScriptName( "checkpointSecurity" ) )
 	vector objectivePos = GetEntByScriptName( "objective_bunker_breadcrumb00" ).GetOrigin()
 	TimeshiftSetObjectiveSilent( player, "#TIMESHIFT_OBJECTIVE_LAB_EXPLORE", objectivePos )
+
+	TriggerSilentCheckPoint( GetEntByScriptName( "checkpointSecurity" ).GetOrigin(), true )
 }
 /////////////////////////////////////////////////////////////////////////////////////////
 void function SecuritySkipped( entity player )
@@ -3859,6 +3862,9 @@ void function AA_LobbyReduxThread( entity player )
 	thread TimeshiftHint( player, TIMEZONE_NIGHT, "open_lobby_upper_door_main_pristine", "timeshift_hint_default", GetEntByScriptName( "player_near_lobby_redux_return_door_overgrown" ) )
 	thread MusicLobbyRedux( player )
 
+	foreach( entity p in GetPlayerArray() )
+		GiveTimeshiftAbility( p )
+
 	FlagSet( "RingsShouldBeSpinning" )
 
 	ShowStuff( "core_model_pristine" )
@@ -4212,7 +4218,9 @@ void function DialogueLobbyReduxOvergrown( entity player )
 /////////////////////////////////////////////////////////////////////////////////////////
 void function HubFightStartPointSetup( entity player )
 {
-	TeleportPlayerToEnt( player, GetEntByScriptName( "checkpointHubFight" ) )
+	foreach( player in GetPlayerArray() )
+		TeleportPlayerToEnt( player, GetEntByScriptName( "checkpointHubFight" ) )
+	TriggerSilentCheckPoint( GetEntByScriptName( "checkpointHubFight" ).GetOrigin(), true )
 }
 /////////////////////////////////////////////////////////////////////////////////////////
 void function HubFightSkipped( entity player )
@@ -4603,7 +4611,10 @@ bool function ShouldDoBridgeNag( entity player )
 /////////////////////////////////////////////////////////////////////////////////////////
 void function ExtendedBridgeStartPointSetup( entity player )
 {
-	TeleportPlayerToEnt( player, GetEntByScriptName( "checkpointExtendedBridge" ) )
+	foreach( player in GetPlayerArray() )
+		TeleportPlayerToEnt( player, GetEntByScriptName( "checkpointExtendedBridge" ) )
+
+	TriggerSilentCheckPoint( GetEntByScriptName( "checkpointExtendedBridge" ).GetOrigin(), true )
 }
 /////////////////////////////////////////////////////////////////////////////////////////
 void function ExtendedBridgeSkipped( entity player )
@@ -4964,10 +4975,13 @@ void function ReactorStartsBlowingUp( entity player )
 
 void function ReactorBridgeStartPointSetup( entity player )
 {
-	TeleportPlayerToEnt( player, GetEntByScriptName( "checkpointReactorBridge" ) )
+	foreach( player in GetPlayerArray() )
+		TeleportPlayerToEnt( player, GetEntByScriptName( "checkpointReactorBridge" ) )
 	vector objectivePos = GetEntByScriptName( "objective_bridge_cross" ).GetOrigin()
 	TimeshiftSetObjectiveSilent( player, "#TIMESHIFT_OBJECTIVE_SCAN", objectivePos )
 	CleanupAI( player )
+
+	TriggerSilentCheckPoint( GetEntByScriptName( "checkpointReactorBridge" ).GetOrigin(), true )
 }
 /////////////////////////////////////////////////////////////////////////////////////////
 void function ReactorBridgeSkipped( entity player )
@@ -5824,7 +5838,6 @@ void function AA_LevelEndThread( entity player )
 	foreach( player in GetPlayerArray() )
 		player.FreezeControlsOnServer()
 	Coop_LoadMapFromStartPoint( "sp_beacon", "Level Start" )
-
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////

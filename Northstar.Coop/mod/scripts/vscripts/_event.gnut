@@ -92,6 +92,20 @@ void functionref() function GetEventEndFunc()
     return file.event.EndFunc
 }
 
+void function EndEventOnSignal( entity player, string signal )
+{
+    // player.EndSignal( "OnDestroy" )
+    player.WaitSignal( signal )
+    EndEvent()
+}
+
+void function EndEventOnFlag( string flag )
+{
+    // player.EndSignal( "OnDestroy" )
+    FlagWait( flag )
+    EndEvent()
+}
+
 // stuff ( I am really tired, idk how to name stuff anymore, stuff xD )
 
 void function StartLevelStartText()
@@ -139,5 +153,8 @@ void function LevelStartTextMiddleFunc( entity player )
 void function LevelStartTextEndFunc()
 {
     foreach( entity player in GetPlayerArray() )
+    {
+        AddCinematicFlag( player, CE_FLAG_HIDE_MAIN_HUD )
         RemoveCinematicFlag( player, CE_FLAG_HIDE_MAIN_HUD )
+    }
 }

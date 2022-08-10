@@ -1094,3 +1094,6 @@ void function funny_things()
 		Gauntlet_StopRun( gauntlet )
 	}
 }
+
+// this is what got me trought the development of co-op
+// https://www.youtube.com/watch?v=wGJs9s1KX3s&list=PLZRzGMxgbpLtOMMvwwHe7INfJUM-cPNF3&index=1

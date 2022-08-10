@@ -1916,7 +1916,7 @@ bool function CanTimeShift( entity player )
 	}
 	*/
 
-	if ( level.isTimeTraveling )
+	if ( level.isTimeTraveling && GetPlayerArray().len() == 0 )
 		return false
 
 	return true
@@ -4553,14 +4553,13 @@ void function SwapTimelinesScripted( entity player, var timeZone )
 	//phaseshift_postfx_forceOn 1
 }
 
-void function SwapTimelinesScriptedEveryone( entity ornull player, var timeZone )
+void function SwapTimelinesScriptedEveryone( entity player, var timeZone )
 {
 	foreach( entity p in GetPlayerArray() )
 	{
 		if ( p != player )
 			thread SwapTimelinesScripted( p, timeZone )
 	}
-	expect entity( player ) // will this crash?
 	waitthread SwapTimelinesScripted( player, timeZone )
 }
 

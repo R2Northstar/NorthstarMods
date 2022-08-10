@@ -390,6 +390,13 @@ void function CodeCallback_MapInit()
 
 	AddStartPoint( "PilotLink", StartPoint_PilotLink, StartPoint_Setup_PilotLink )
 
+	AddState( "Intro" )
+	AddState( "Landed" )
+	AddState( "Escaped" )
+
+	if ( NSIsDedicated() )
+		return
+
 	file.firstGhostId = AddMobilityGhost( $"anim_recording/sp_crashsite_wallrun_1.rpak", "first_ghost" )
 	AddMobilityGhost( $"anim_recording/sp_crashsite_wallrun_2.rpak", "wallrun_recordings" )
 	AddMobilityGhost( $"anim_recording/sp_crashsite_return_from_prowler_pit.rpak", "wallrun_recordings" )
@@ -480,6 +487,9 @@ void function PlayerDidLoad( entity player )
 	QuickDeathTrigger_SetRealDeathFadeToBlack( player, true )
 
 	thread ForceSlideThink( player )
+	
+	if ( !IsValid( GetPlayer0() ) )
+		SetPlayer0( player )
 }
 
 void function OnPlayerJump( entity player )
@@ -505,44 +515,7 @@ void function StartPoint_LevelStart( entity player )
 {
 	player.EndSignal( "OnDestroy" )
 
-	FlagClear( "DeathHintsEnabled" )
-	
-	foreach ( player in GetPlayerArray() )
-	{
-		EnableMorningLight( player )
-
-		// grunts don't rodeo
-		Rodeo_Disallow( player )
-		SyncedMelee_Disable( player )
-
-		// mangage marching spectres
-		AddSpawnCallback_ScriptName( "marching_spectre", MarchinSpectreThink )
-
-		// remove hud for grunt
-		player.SetPlayerNetBool( "hideHudIcons", true )
-		Remote_CallFunction_Replay( player, "ServerCallback_HideHudIcons" )
-
-		// no grunt chetter that isn't custom, will get reset at the "waking up"
-		SetPlayerForcedDialogueOnly( player, true )
-
-		// weapon will be enabled once the player is out of the escape pod
-		player.DisableWeapon()
-		player.FreezeControlsOnServer()
-
-		#if CONSOLE_PROG
-		// This gets cleared when the player hits the ground
-		EnableDVSOverride( player )
-		#endif
-
-		thread LevelStartAudio( player )
-		thread LevelStartSubtitles( player )
-		waitthread ShowTitleScreen( player )
-
-		player.UnfreezeControlsOnServer()
-
-		thread PlayerInEscapePod( player )
-		thread EscapePodSubtitles( player )
-	}
+	SetCutSceneEvent( CrashsiteStartEvent, CrashsiteMiddleEvent, CrashsiteEndEvent )
 
 	thread EscapePodFriendlies( player )
 	thread SpectreSkit( player )
@@ -552,21 +525,81 @@ void function StartPoint_LevelStart( entity player )
 	thread LevelStart_MilitiaFriendlies( player )
 	thread LevelStart_IMCSpectreEnemies( player )
 	thread LevelStart_GruntDialogue( player )
-	thread ShowGrenadeHint( player )
 
 	player.WaitSignal( "player_leaving_pod" )
 	CheckPoint_ForcedSilent()
 
 	#if CONSOLE_PROG
 	player.WaitSignal( "hitting_ground" )
+	foreach( player )
 	DisableDVSOverride( player )
 	#endif
 
 	FlagWait( "start_intro_combat" )
 	Objective_Set( "#WILDS_OBJECTIVE_NIGHTTIME", GetEntByScriptName( "nighttime_objective_loc" ).GetOrigin() )
-	SetPlayerForcedDialogueOnly( player, false )
+	foreach( player in GetPlayerArray() )
+		SetPlayerForcedDialogueOnly( player, false )
 
 	FlagWait( "bt_intro_start" )
+}
+
+void function CrashsiteStartEvent()
+{
+	FlagClear( "DeathHintsEnabled" )
+	
+	// mangage marching spectres
+	AddSpawnCallback_ScriptName( "marching_spectre", MarchinSpectreThink )
+
+	foreach( entity player in GetPlayerArray() )
+		CrashsiteMiddleEvent( player )
+
+	thread EndEventOnFlag( "start_intro_combat" )
+}
+
+void function CrashsiteMiddleEvent( entity player )
+{
+	EnableMorningLight( player )
+
+	// grunts don't rodeo
+	Rodeo_Disallow( player )
+	SyncedMelee_Disable( player )
+
+	// remove hud for grunt
+	player.SetPlayerNetBool( "hideHudIcons", true )
+	Remote_CallFunction_Replay( player, "ServerCallback_HideHudIcons" )
+
+	// no grunt chetter that isn't custom, will get reset at the "waking up"
+	SetPlayerForcedDialogueOnly( player, true )
+
+	// weapon will be enabled once the player is out of the escape pod
+	player.DisableWeapon()
+	player.FreezeControlsOnServer()
+
+	#if CONSOLE_PROG
+	// This gets cleared when the player hits the ground
+	EnableDVSOverride( player )
+	#endif
+	
+	if ( GetState() == "Intro" )
+	{
+		if ( GetPlayer0() == player )
+			thread LevelStartAudio( player )
+		thread LevelStartSubtitles( player )
+		waitthread ShowTitleScreen( player )
+	}
+
+	player.UnfreezeControlsOnServer()
+
+	thread PlayerInEscapePod( player )
+	thread EscapePodSubtitles( player )
+
+	thread ShowGrenadeHint( player )
+}
+
+void function CrashsiteEndEvent()
+{
+	foreach( entity player in GetPlayerArray() )
+		RemoveCinematicFlag( player, CE_FLAG_HIDE_MAIN_HUD )
 }
 
 void function StartPoint_Skip_LevelStart( entity player )
@@ -606,11 +639,13 @@ void function LevelStartAudio( entity player )
 	//EmitSoundOnEntity( player, "sse_Wilds_Intro_UnmuteUnwanted" )
 	StopSoundOnEntity( player, "Duck_Wilds_Intro_MuteUnwanted" )
 	SetGlobalNetInt( "nighttimeAmbient", 1 )
-	Remote_CallFunction_Replay( player, "ServerCallback_NighttimeAmbient", 1 )
+	foreach( player in GetPlayerArray() )
+		Remote_CallFunction_Replay( player, "ServerCallback_NighttimeAmbient", 1 ) // TODO makes this fop everyone ( a better way )
 
 	FlagWait( "bt_intro_moveup" )
 	SetGlobalNetInt( "nighttimeAmbient", 2 )
-	Remote_CallFunction_Replay( player, "ServerCallback_NighttimeAmbient", 2 )
+	foreach( player in GetPlayerArray() )
+		Remote_CallFunction_Replay( player, "ServerCallback_NighttimeAmbient", 2 )
 }
 
 void function LevelStartSubtitles( entity player )
@@ -689,13 +724,14 @@ void function ShowTitleScreen( entity player )
 bool function ClientCommand_IntroOver( entity player, array<string> args )
 {
 	player.Signal( "intro_over" )
+	NextState()
 	return true
 }
 
 void function PlayerInEscapePod( entity player )
 {
-	
-	thread TeleportAllExpectOne( player.GetOrigin() + <0,0,5>, player )
+	// thing here
+	// https://www.youtube.com/watch?v=8ZrQ8vh1hk8
 
 	player.EndSignal( "OnDestroy" )
 
@@ -774,6 +810,7 @@ void function PlayerInEscapePod( entity player )
 	wait 5
 
 	FlagSet( "start_intro_combat" )
+	NextState()
 }
 
 void function EscapePodFirstPersonSequence( FirstPersonSequenceStruct escapePodSequence, entity escapePod, entity player, entity animRef )
@@ -798,7 +835,7 @@ void function PlayerInEscapePodViewCone( entity player )
 
 void function EscapePodFriendlies( entity player )
 {
-	thread TeleportAllExpectOne( player.GetOrigin() + <0,0,5>, player )
+	// thing here
 
 	player.EndSignal( "OnDestroy" )
 
@@ -1772,8 +1809,9 @@ void function BTIntro_Player( entity player )
 	player.EndSignal( "OnDestroy" )
 
 	// do this here so that we don't die from the eneny titan fall
-	player.SetInvulnerable()
-
+	foreach( player in GetPlayerArray() )
+		player.SetInvulnerable()
+	
 	WaitSignal( level, "vanquished_titan_landed" ) //50 frames
 
 	StopMusicTrack( "music_wilds_01_intro" )
@@ -1783,12 +1821,17 @@ void function BTIntro_Player( entity player )
 
 	entity scriptRef = GetEntByScriptName( "anim_ref_night" )
 	entity animRef = CreateOwnedScriptMover( scriptRef )
-
+	
 	thread SpawnCoverFoliage( player, scriptRef, 0 )
 
-	// these gets restored after waking up with the prowers in the morning
-	player.DisableWeapon()
-	player.SetNoTarget( true )
+	foreach( player in GetPlayerArray() )
+	{
+		// these gets restored after waking up with the prowers in the morning
+		player.DisableWeapon()
+		player.SetNoTarget( true )
+
+		file.statusEffect_turnSlow = StatusEffect_AddEndless( player, eStatusEffect.turn_slow, 0.4 )
+	}
 
 	FirstPersonSequenceStruct OGVictorySequence
 	OGVictorySequence.blendTime = 0
@@ -1797,17 +1840,25 @@ void function BTIntro_Player( entity player )
 	OGVictorySequence.firstPersonAnim = "pov_wilds_OG_victory_late"
 	OGVictorySequence.thirdPersonAnim = "pt_wilds_OG_victory_late"
 	OGVictorySequence.viewConeFunction = ViewConeBTIntro
+	
+	foreach( player in GetPlayerArray() )
+	{
+		if ( player == GetPlayer0() )
+			continue
 
-	file.statusEffect_turnSlow = StatusEffect_AddEndless( player, eStatusEffect.turn_slow, 0.4 )
+		player.SetAnimNearZ(3)
 
-	player.SetAnimNearZ(3)
+		thread FirstPersonSequence( OGVictorySequence, player, animRef )
+	}
+	waitthread FirstPersonSequence( OGVictorySequence, GetPlayer0(), animRef )
+	
+	foreach( player in GetPlayerArray() )
+	{
+		player.ClearAnimNearZ()
 
-	waitthread FirstPersonSequence( OGVictorySequence, player, animRef )
-
-	player.ClearAnimNearZ()
-
-	player.ClearParent()
-	ClearPlayerAnimViewEntity( player )
+		player.ClearParent()
+		ClearPlayerAnimViewEntity( player )
+	}
 
 	animRef.Destroy()
 }
@@ -2068,20 +2119,23 @@ void function BliskIntro_EnemyTitans()
 
 void function StartPoint_Setup_FamilyPhoto( entity player )
 {
-	thread MovePlayerToStartpoint( player, "startpoint_blisk_intro" )
+	foreach( entity p in GetPlayerArray() )
+	{
+		thread MovePlayerToStartpoint( player, "startpoint_blisk_intro" )
 
-	EnableMorningLight( player )
+		EnableMorningLight( player )
 
-	// no grunt chetter that isn't custom, will get reset at the "waking up"
-	SetPlayerForcedDialogueOnly( player, true )
+		// no grunt chetter that isn't custom, will get reset at the "waking up"
+		SetPlayerForcedDialogueOnly( player, true )
 
-	// player should start with his weapon disabled and in shell shock
-	player.DisableWeapon()
-	ShellShockStart()
-	file.statusEffect_turnSlow = StatusEffect_AddEndless( player, eStatusEffect.turn_slow, 0.4 )
+		// player should start with his weapon disabled and in shell shock
+		player.DisableWeapon()
+		ShellShockStart()
+		file.statusEffect_turnSlow = StatusEffect_AddEndless( player, eStatusEffect.turn_slow, 0.4 )
 
-	// remove hud for grunt
-	Remote_CallFunction_Replay( player, "ServerCallback_HideHudIcons" )
+		// remove hud for grunt
+		Remote_CallFunction_Replay( player, "ServerCallback_HideHudIcons" )
+	}
 
 	entity bliskSpawner = GetSpawnerByScriptName( "blisk_imc_titan" )
 	file.bliskTitan = bliskSpawner.SpawnEntity()
@@ -2116,6 +2170,12 @@ void function StartPoint_FamilyPhoto( entity player )
 	thread FamilyPhoto_Enemies()
 	thread FamilyPhoto_Corpses()
 	thread FamilyPhotoExtras()
+
+	foreach( entity p in GetPlayerArray() )
+	{
+		if ( p != player )
+			thread FamilyPhoto_Player( p )
+	}
 	waitthread FamilyPhoto_Player( player )
 
 	ShellShockStop()
@@ -2789,10 +2849,13 @@ void function Grave_DonHelmet( entity player )
 		// rintt( "*****", Distance( player.GetOrigin(), startOrigin ), Time(), endTime )
 		wait 0.25
 	}
-
-	StatusEffect_Stop( player, file.statusEffect_turnSlow )
-	StatusEffect_AddTimed( player, eStatusEffect.turn_slow, 0.35, 3, 3 )
-	thread LerpPlayerSpeed( player, 0.4, 1.0, 3.0 )
+	
+	foreach( player in GetPlayerArray() )
+	{
+		StatusEffect_Stop( player, file.statusEffect_turnSlow )
+		StatusEffect_AddTimed( player, eStatusEffect.turn_slow, 0.35, 3, 3 )
+		thread LerpPlayerSpeed( player, 0.4, 1.0, 3.0 )
+	}
 }
 
 void function DelayCheckpoint( float delay )
@@ -3079,19 +3142,25 @@ void function JumpKitCalibrationThread( entity player, float startProgress = 0.0
 	thread JumpKitCalibrationProgressOverTime( player )
 	thread FinalWallrunCalibration( player )
 
-	AddPlayerMovementEventCallback( player, ePlayerMovementEvents.BEGIN_WALLRUN, Callback_WallrunBegin )
-	AddPlayerMovementEventCallback( player, ePlayerMovementEvents.END_WALLRUN, Callback_WallrunEnd )
-	AddPlayerMovementEventCallback( player, ePlayerMovementEvents.TOUCH_GROUND, Callback_GroundTouch )
+	foreach( entity p in GetPlayerArray() )
+	{
+		AddPlayerMovementEventCallback( p, ePlayerMovementEvents.BEGIN_WALLRUN, Callback_WallrunBegin )
+		AddPlayerMovementEventCallback( p, ePlayerMovementEvents.END_WALLRUN, Callback_WallrunEnd )
+		AddPlayerMovementEventCallback( p, ePlayerMovementEvents.TOUCH_GROUND, Callback_GroundTouch )
+	}
 
 	FlagWaitAny( "give_doublejump", "exit_combat_cave" )
 
 	// can't clear callback while a wallrun is active
 	while( file.wallrunStatusFlag == eWallrunStatusFlag.IN_PROGRESS )
 		wait 1
-
-	RemovePlayerMovementEventCallback( player, ePlayerMovementEvents.BEGIN_WALLRUN, Callback_WallrunBegin )
-	RemovePlayerMovementEventCallback( player, ePlayerMovementEvents.END_WALLRUN, Callback_WallrunEnd )
-	RemovePlayerMovementEventCallback( player, ePlayerMovementEvents.TOUCH_GROUND, Callback_GroundTouch )
+	
+	foreach( entity p in GetPlayerArray() )
+	{
+		RemovePlayerMovementEventCallback( p, ePlayerMovementEvents.BEGIN_WALLRUN, Callback_WallrunBegin )
+		RemovePlayerMovementEventCallback( p, ePlayerMovementEvents.END_WALLRUN, Callback_WallrunEnd )
+		RemovePlayerMovementEventCallback( p, ePlayerMovementEvents.TOUCH_GROUND, Callback_GroundTouch )
+	}
 
 	waitthread WaitForBreakInCombat( player, "exit_combat_cave" )
 
@@ -3102,17 +3171,21 @@ void function JumpKitCalibrationThread( entity player, float startProgress = 0.0
 	}
 
 	SetGlobalNetBool( "doubleJumpDisabled", false )
-
-	player.SetPlayerSettingsWithMods( DEFAULT_PILOT_SETTINGS, [] )
-	SetJumpKitCalibrationStep( player, JUMPKIT_CALIBRATION_STEPS )
+	
+	foreach( entity p in GetPlayerArray() )
+	{
+		p.SetPlayerSettingsWithMods( DEFAULT_PILOT_SETTINGS, [] )
+		SetJumpKitCalibrationStep( p, JUMPKIT_CALIBRATION_STEPS )
+	}
 
 	// flag is cleared in StartPoint_LevelStart
 	FlagSet( "DeathHintsEnabled" )
 
 	wait 3
-	AddPlayerMovementEventCallback( player, ePlayerMovementEvents.DOUBLE_JUMP, PlayerDoubleJumped )
-
-	thread DisplayDoubleJumpHint( player )
+	AddPlayerMovementEventCallback( player, ePlayerMovementEvents.DOUBLE_JUMP, PlayerDoubleJumped ) // TODO: make this for all players ( why tho )
+	
+	foreach( player in GetPlayerArray() )
+		thread DisplayDoubleJumpHint( player )
 }
 
 void function DisplayDoubleJumpHint( entity player )

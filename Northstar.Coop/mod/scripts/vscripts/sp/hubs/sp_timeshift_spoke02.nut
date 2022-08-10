@@ -130,6 +130,9 @@ void function CodeCallback_MapInit()
 	AddStartPoint( "Fan Drop", 						AA_FanDropThread,					FanDropStartPointSetup, 			FanDropSkipped )
 	AddStartPoint( "Fan Drop End", 					AA_FanDropEndThread,				FanDropEndStartPointSetup, 			FanDropEndSkipped )
 
+	if ( NSIsDedicated() ) // TODO: temp fix, find a better solution
+		return
+
 	AddMobilityGhost( $"anim_recording/timeshift_turret_firepit_overgrown.rpak", "ShowMobilityGhostTurretFirepit" )
 	AddMobilityGhost( $"anim_recording/timeshift_elevator_shaft_overgrown.rpak", "ShowMobilityGhostElevatorShaft" )
 	AddMobilityGhost( $"anim_recording/timeshift_elevator_shaft_pristine.rpak", "ShowMobilityGhostElevatorShaft" )
@@ -644,7 +647,7 @@ void function AA_WildlifeResearchThread( entity player )
 	CleanupEnts( "civilian_actor_firehall02" )
 
 
-	FlagClear( "open_creature_door_start_pristine" )
+	// FlagClear( "open_creature_door_start_pristine" ) // TODO: see if this is the right thing
 
 	objectivePos = GetEntByScriptName( "objective_spoke1_breadcrumb000" ).GetOrigin()
 	TimeshiftUpdateObjective( player, objectivePos )
@@ -1117,7 +1120,7 @@ void function AA_ElevatorFightThread( entity player )
 
 	FlagWait( "entered_amenities_elevator_room" )
 
-	TriggerManualCheckPoint( null, <5442, 3384, 10976>, true )
+	TriggerManualCheckPoint( null, <5248, -3328, 10976>, true )
 
 	thread DialogueElevatorRoom( player )
 
@@ -1972,13 +1975,14 @@ void function AA_SphereRoomThread( entity player )
 	thread AndersonHologramSequence( player, "node_hologram_lab2", "StartAndersonHologram2" )
 
 	CheckPoint()
-	TriggerManualCheckPoint( null, <9420, -4665, 11328>, true )
 
 	FlagWait( "dropped_into_fire_hallways" )
 	vector objectivePos = GetEntByScriptName( "objective_intel_data_panel02" ).GetOrigin()
 	TimeshiftUpdateObjective( player, objectivePos )
 
 	FlagWait( "player_inside_intel_room2" )
+
+	TriggerManualCheckPoint( null, <9420, -4665, 11328>, true )
 
 	thread TurretNotargetHack( player )
 	FlagWait( "AndersonHologram2Finished" )
