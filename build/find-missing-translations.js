@@ -2,6 +2,18 @@ const fs = require('fs');
 const langPath = "Northstar.Client/mod/resource";
 const knownLanguages = ['english', 'french', 'german', 'italian', 'japanese', 'mspanish', 'portuguese', 'russian', 'spanish', 'tchinese'];
 
+
+// Proceed checks before launch
+if (![2,3].includes(process.argv.length)) {
+    console.error('Wrong number of arguments, either call this script with no argument, or with a language.');
+    return;
+}
+if (process.argv.length === 3 && !knownLanguages.includes(process.argv[2])) {
+    console.error(`"${process.argv[2]}" is not a valid language.\nValid languages are: ${knownLanguages}`);
+    return;
+}
+
+
 // Get language files names
 const langs = fs.readdirSync(langPath)
     .filter(lang => lang.indexOf('northstar_client_localisation_') !== -1);
