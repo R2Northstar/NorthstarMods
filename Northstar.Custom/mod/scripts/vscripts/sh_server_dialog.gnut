@@ -9,6 +9,10 @@ global function ServerDialogueOnClientInit
 global function ClientCallback_RequestDialog
 #endif
 
+#if UI
+float cooldown = 0.0
+#endif
+
 #if SERVER
 
 struct 
@@ -64,6 +68,20 @@ void function _AddPlayerButtonCallBack( entity player, void functionref( entity 
 void function _AddPlayerToCallbackTable( entity player )
 {
     file.playerButtonCallBack[player] <- []
+
+    thread test(player)
+}
+
+void function test( entity player )
+{
+    EndSignal( player, "OnDestroy" )
+    int x
+    for(;;)
+    {
+        x++
+        SendMessageServerDialog( player, "test " + x )
+        WaitFrame()
+    }
 }
 
 void function SendServerDialog( entity player, ServerDialogData dialog )
@@ -179,7 +197,7 @@ void function ServerCallback_DialogueRequestReceived( array<string> args )
 {
     if ( args.len() != 16 )
         return
-        
+    
     string header = StringReplace( args[0], "./s.", " ", true, true )
     string message = StringReplace( args[1], "./s.", " ", true, true )
     string image = args[2]
@@ -222,12 +240,19 @@ void function ServerCallback_DialogueRequestReceived( array<string> args )
 #elseif UI
 
 void function ClientCallback_RequestDialog( string header, string message, string image, string rightImage, bool forceChoice, bool noChoice, bool noChoiceWithNavigateBack, bool showSpinner, bool showPCBackButton, float inputDisableTime, bool darkenBackground, bool useFullMessageHeight, string button0Text, string button1Text, string button2Text, string button3Text )
-{    
+{   
+    if ( uiGlobal.activeMenu != null )
+        return
+    
+    if ( cooldown >= Time() )
+        return
+    cooldown = Time() + 1
+
     DialogData dialogData
 
     dialogData.header = header
     dialogData.message = message
-
+    
     if ( image.find("/") != null )
         dialogData.image = StringToAsset( image )
     if ( rightImage.find("/") != null )
