@@ -68,20 +68,6 @@ void function _AddPlayerButtonCallBack( entity player, void functionref( entity 
 void function _AddPlayerToCallbackTable( entity player )
 {
     file.playerButtonCallBack[player] <- []
-
-    thread test(player)
-}
-
-void function test( entity player )
-{
-    EndSignal( player, "OnDestroy" )
-    int x
-    for(;;)
-    {
-        x++
-        SendMessageServerDialog( player, "test " + x )
-        WaitFrame()
-    }
 }
 
 void function SendServerDialog( entity player, ServerDialogData dialog )
