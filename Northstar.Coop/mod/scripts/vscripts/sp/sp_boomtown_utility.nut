@@ -1121,6 +1121,10 @@ void function UpdateArmAndPlatformPushersForPlayer( entity player )
 	int currentPlatformIndex = 0
 	int numCheckedThisFrame = 0
 
+	return // TODO: find a better solution
+
+	// this shouldn't run, since players that are behind or would just be stuck
+
 	while( true )
 	{
 		numPusherEnts = file.pusherArmsArray.len()

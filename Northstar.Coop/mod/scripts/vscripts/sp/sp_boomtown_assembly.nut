@@ -1278,6 +1278,8 @@ void function TownClimbComeTogether( entity player )
 
 void function FactoryStart( entity player )
 {
+	// we run this whole thing once
+
 	FlagSet( "AmbientPlatformsStartEnabled" )
 	FlagSet( "AmbientPlatformsAboveGrassEnabled" )
 	FlagSet( "AmbientPlatformsWallsStartEnabled" )
