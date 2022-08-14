@@ -37,7 +37,7 @@ global function AnimCallback_ParentBeforeAnimating_MaltaWidow
 
 global function BT_WaitOnBarkerShip
 
-global function Map_ReplacePlayer0
+global function ReplacePlayer0
 
 struct SkyBoxLandSection
 {
@@ -531,7 +531,7 @@ void function PlayerSpawned( entity player )
 	thread Init_StreamingClient( player )
 }
 
-void function Map_ReplacePlayer0()
+void function ReplacePlayer0()
 {
 	if ( GetPlayerArray().len() == 0 )
 	{

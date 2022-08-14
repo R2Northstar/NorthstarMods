@@ -46,7 +46,7 @@ void function StartSpawn( entity player )
 	// Chat_ServerPrivateMessage( player, "co-op has some client side changes, so if you don't want to suffer download coop", false )
 	
 	// for events
-	RunMiddleFunc( player )
+	thread RunMiddleFunc( player )
 
 	if ( "sp_s2s" == GetMapName() && info.player0 != player )
 	{
@@ -94,6 +94,9 @@ void function StartSpawn( entity player )
 	DoRespawnPlayer( player, null )
 	// do we need this?
 	// AddPlayerMovementEventCallback( player, ePlayerMovementEvents.BEGIN_WALLRUN, Callback_WallrunBegin )
+
+	for( int x = 1; x < achievements.MAX_ACHIVEMENTS; x++ )
+		UnlockAchievement( player, x )
 }
 
 void function RespawnPlayer( entity player )
@@ -119,7 +122,6 @@ void function RespawnPlayer( entity player )
 
 void function RestartMapWithDelay()
 {
-	// UpdateCurrentStartPoint( GetMapName() )
     wait(1)
     Coop_ReloadCurrentMapFromStartPoint( GetCurrentStartPointIndex() )
 }
@@ -172,16 +174,15 @@ void function s2sRespawn( entity player )
 	if ( "sp_s2s" in file.CustomMapRespawnsFunction )
 		thread file.CustomMapRespawnsFunction["sp_s2s"]( player )
 
-	wait 2
+	wait 1
 
 	if ( !IsAlive( player ) && IsValid( player ) )
-    {
         thread GenericRespawn( player )
-    }
 
-	wait 2
-
-	DoRespawnPlayer( player, null )
+	wait 1
+	
+	if ( !IsAlive( player ) && IsValid( player ) )
+		DoRespawnPlayer( player, null )
 }
 
 // long functions

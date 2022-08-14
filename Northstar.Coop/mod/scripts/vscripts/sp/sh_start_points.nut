@@ -163,7 +163,7 @@ table< string,array<StartPointCSV> > function GetStartPointsFromCSV()
 		startPoint.isLeft = GetDataTableBool( dataTable, row, 6 )
 
 		results[ mapName ].append( startPoint )
-	}
+	} // TODO: add a function to set these
 	results[ "sp_box" ] <- [ CreateStartPointStruct() ]
 	results[ "sp_amongus" ] <- [ CreateStartPointStruct() ]
 	results[ "sp_skyway_v2" ] <- [ CreateStartPointStruct( "Level Start", 1 ), CreateStartPointStruct( "Rock Jumping", 2 ), CreateStartPointStruct( "Drone Fight", 3 ), CreateStartPointStruct( "Platform Fall", 3 ), CreateStartPointStruct( "Boss Battle", 4 ) ]

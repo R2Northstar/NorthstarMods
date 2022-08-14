@@ -293,7 +293,8 @@ string function GetStartPoint()
 void function UpdatePauseMenuMissionLog( entity player )
 {
 	bool showAltLog = Flag( "ShowAlternateMissionLog")
-	Remote_CallFunction_UI( player, "ServerCallback_UI_UpdateMissionLog", showAltLog )
+	foreach( player in GetPlayerArray() )
+		Remote_CallFunction_UI( player, "ServerCallback_UI_UpdateMissionLog", showAltLog )
 }
 
 void function MarkThisLevelAsCompleted( entity player )
@@ -304,13 +305,14 @@ void function MarkThisLevelAsCompleted( entity player )
 	int numRows = GetDatatableRowCount( dataTable )
 
 	int difficulty = GetLowestDifficultyThisMap()
+	// difficulty = 3 // trol
 
 	for ( int i=0; i<numRows; i++ )
 	{
 		string levelBsp = GetDataTableString( dataTable, i, GetDataTableColumnByName( dataTable, "level" ) )
 		string levelStart = GetDataTableString( dataTable, i, GetDataTableColumnByName( dataTable, "startPoint" ) )
 
-		if ( levelBsp == mapName && levelStart == startPoint )
+		if ( levelBsp == mapName && levelStart == startPoint ) 
 		{
 			if ( difficulty >= DIFFICULTY_MASTER )
 			{

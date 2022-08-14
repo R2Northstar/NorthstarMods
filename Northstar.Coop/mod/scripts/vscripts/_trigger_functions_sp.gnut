@@ -207,11 +207,9 @@ void function CheckPointTriggerSilent( CheckPointData checkPointData )
 	CheckPoint_Silent( checkPointData)
 }
 
-void function TriggerCheckpoint_SaveLocationsOnly( entity trigger ) // going to hack this :3
+void function TriggerCheckpoint_SaveLocationsOnly( entity trigger )
 {
 	TriggerCheckpointThink( trigger, CheckPointTriggerSafeLocation )
-	NewSaveLocation( trigger.GetOrigin() )
-	TeleportAllExpectOne( trigger.GetOrigin(), null )
 }
 
 void function CheckPointTriggerSafeLocation( CheckPointData checkPointData )

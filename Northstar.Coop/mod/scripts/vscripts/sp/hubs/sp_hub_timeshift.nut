@@ -5709,7 +5709,10 @@ void function ReactorCoreThink( entity player )
 	}
 
 	foreach( entity p in GetPlayerArray() )
+	{
 		RemoveCinematicFlag( player, CE_FLAG_HIDE_MAIN_HUD )
+		p.SetInvulnerable()
+	}
 
 	useDummy.UnsetUsable()
 	useDummy.Destroy()
@@ -5820,6 +5823,7 @@ void function AA_LevelEndThread( entity player )
 		p.GiveOffhandWeapon( "mp_ability_cloak", 1 )
 
 		thread PlayerLevelEndThink( p )
+		FullyHidePlayers()
 	}
 
 	thread MusicEnd( player )
@@ -5827,6 +5831,8 @@ void function AA_LevelEndThread( entity player )
 	thread DialogueLevelEnd( player )
 
 	FlagWait( "EndingDialogeFinished" )
+
+	FullyShowPlayers()
 
 	wait 2
 	foreach( player in GetPlayerArray() )

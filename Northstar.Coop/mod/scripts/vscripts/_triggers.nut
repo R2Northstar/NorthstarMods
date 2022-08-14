@@ -58,10 +58,10 @@ void function Init_triggersThreaded()
 			CreateTeleportTrigger( < 10563,-10234.8,-6026.91 >, 500.0, 500.0, 100.0, true ) // the last time we see the sim pod
 			break
 
-		case "sp_crashsite":
-			// todo: remove this by fixing sp_crashsite :trol:
-			CreateTeleportTrigger( < -295,-419,45.03 >, 600.0, 100.0, 100.0, true ) // the tp to the next phase of the map
-			break
+		// case "sp_crashsite":
+		// 	// todo: remove this by fixing sp_crashsite :trol:
+		// 	CreateTeleportTrigger( < -295,-419,45.03 >, 600.0, 100.0, 100.0, true ) // the tp to the next phase of the map
+		// 	break
 
 		case "sp_sewers1":
 			// we kinda need this

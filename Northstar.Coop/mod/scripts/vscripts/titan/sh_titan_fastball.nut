@@ -1,5 +1,5 @@
 untyped
-
+// TODO: Make this with _event.gnut functions
 
 global function TitanFastball_Init
 #if SERVER

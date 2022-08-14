@@ -1210,6 +1210,11 @@ void function StartPoint_CorkscrewRoom( entity player )
 
 void function StartPoint_Setup_CorkscrewRoom( entity player )
 {
+	foreach( player in GetPlayerArray() )
+		player.SetOrigin( GetEntByScriptName( "playerstart_corkscrew_room" ).GetOrigin() )
+	
+	TriggerSilentCheckPoint( GetEntByScriptName( "playerstart_corkscrew_room" ).GetOrigin(), true )
+
 	TeleportPlayerAndBT( "playerstart_corkscrew_room", "titanstart_corkscrew_room" )
 }
 
