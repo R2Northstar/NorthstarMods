@@ -4,10 +4,6 @@ global function ServerCallback_TeabagDenied
 
 void function ClGamemodeTbag_Init()
 {
-    // add ffa gamestate asset
-	// ClGameState_RegisterGameStateAsset( $"ui/gamestate_info_ffa.rpak" )
-
-	// add music for mode, this is copied directly from the ffa/fra music registered in cl_music.gnut
 	RegisterLevelMusicForTeam( eMusicPieceID.LEVEL_INTRO, "music_mp_freeagents_intro", TEAM_IMC )
 	RegisterLevelMusicForTeam( eMusicPieceID.LEVEL_INTRO, "music_mp_freeagents_intro", TEAM_MILITIA )
 
@@ -25,16 +21,10 @@ void function ClGamemodeTbag_Init()
 
 	RegisterLevelMusicForTeam( eMusicPieceID.LEVEL_LAST_MINUTE, "music_mp_freeagents_lastminute", TEAM_IMC )
 	RegisterLevelMusicForTeam( eMusicPieceID.LEVEL_LAST_MINUTE, "music_mp_freeagents_lastminute", TEAM_MILITIA )
-
-	#if CLIENT
-	RegisterConCommandTriggeredCallback( "+duck", PlayerPressed_down )
-	RegisterConCommandTriggeredCallback( "+toggle_duck", PlayerPressed_downtoggle )
-	#endif
 }
 
 void function ServerCallback_TeabagConfirmed()
 {
-	// heavily based on mfd code
 	entity localPlayer = GetLocalViewPlayer()
 
 	AnnouncementData announcement = Announcement_Create( "#TBAG_TEABAG_CONFIRMED" )
@@ -59,15 +49,3 @@ void function ServerCallback_TeabagDenied()
 	Announcement_SetStyle( announcement, ANNOUNCEMENT_STYLE_QUICK )
 	AnnouncementFromClass( localPlayer, announcement )
 }
-
-#if CLIENT
-void function PlayerPressed_down( entity player )
-{
-	player.ClientCommand( "Tbag_down" )
-}
-
-void function PlayerPressed_downtoggle( entity player )
-{
-	player.ClientCommand( "Tbag_downtoggle" )
-}
-#endif

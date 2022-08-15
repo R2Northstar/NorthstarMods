@@ -9,7 +9,6 @@ struct {
 	int teabagCounter // how many times do you need to teabag
 } file
 
-
 void function GamemodeTbag_Init()
 {
 	SetShouldUseRoundWinningKillReplay( true )
@@ -22,18 +21,18 @@ void function GamemodeTbag_Init()
 	AddCallback_GameStateEnter( eGameState.WinnerDetermined, OnWinnerDetermined )
 
 	SetTimeoutWinnerDecisionFunc( CheckScoreForDraw )
+	PrecacheModel( HELMET_COLLECTIBLE_MODEL )
 
 	file.floatingDuration = GetCurrentPlaylistVarInt( "floatingduration", 30 )
 	file.teabagCounter = GetCurrentPlaylistVarInt( "teabagcounter", 4 )
-
-	AddClientCommandCallback("Tbag_down", Crouching );
-	AddClientCommandCallback("Tbag_downtoggle", ToggleCrouching ); // toggle crouch requires x2 the input for whatever reason
 }
 
 void function TbagInitPlayer( entity player )
 {
 	file.players[player] <- Time() // start beginning countdown
 	file.tbag[player] <- 0 // newslot this so the tbag counter starts at 0
+	AddCrouchButtonInputCallback( player )
+	AddToggleCrouchButtonInputCallback( player )
 }
 
 void function TbagCleanupClient( entity player )
@@ -56,8 +55,8 @@ void function TbagOnPlayerKilled( entity victim, entity attacker, var damageInfo
 
 	if ( attacker.IsPlayer() )
     {
-		CreateBattery(victim)
-		SetRoundWinningKillReplayAttacker(attacker)
+		CreateBattery( victim )
+		SetRoundWinningKillReplayAttacker( attacker )
     }
 }
 
@@ -77,13 +76,23 @@ int function CheckScoreForDraw()
 	return TEAM_UNASSIGNED
 }
 
+void function AddCrouchButtonInputCallback( entity player )
+{
+	AddButtonPressedPlayerInputCallback( player, IN_DUCK, Crouching )
+}
+
+void function AddToggleCrouchButtonInputCallback( entity player )
+{
+	AddButtonPressedPlayerInputCallback( player, IN_DUCKTOGGLE, ToggleCrouching ) // toggle crouch requires x2 the input
+}
+
 // ========================================================================================================
 //
 // BATTERY STUFF
 //
 // ========================================================================================================
 
-void function CreateBattery(entity player)
+void function CreateBattery( entity player )
 {
 	entity batteryPack = CreateEntity( "prop_dynamic" )
 	batteryPack.SetValueForModelKey( RODEO_BATTERY_MODEL ) // ideally I would want the Helmet collectible from the campaign :/
@@ -120,7 +129,7 @@ void function CreateBattery(entity player)
 	thread DestroyBattery( flyer, file.floatingDuration )
 }
 
-void function DestroyBattery(entity batteryPack, int duration)
+void function DestroyBattery( entity batteryPack, int duration )
 {
 	batteryPack.EndSignal( "OnDestroy" )
 	OnThreadEnd(
@@ -132,14 +141,15 @@ void function DestroyBattery(entity batteryPack, int duration)
 			}
 		}
 	)
-	int lastDuration = (duration - (duration - 5) )
+	int lastDuration = ( duration - (duration - 5) )
 	wait duration - 5
 	thread FlickeringOnTimeout(batteryPack)
 	wait lastDuration
 }
 
-void function FlickeringOnTimeout(entity bruh)
+void function FlickeringOnTimeout( entity bruh )
 {
+	batteryPack.EndSignal( "OnDestroy" )
 	while (IsValid(bruh))
 	{
 		try
@@ -154,7 +164,7 @@ void function FlickeringOnTimeout(entity bruh)
 	}
 }
 
-void function CreateBatteryTrigger(entity batteryPack)
+void function CreateBatteryTrigger( entity batteryPack )
 {
 	entity trigger = CreateEntity( "trigger_cylinder" )
 	trigger.SetRadius( 100 )
@@ -164,16 +174,16 @@ void function CreateBatteryTrigger(entity batteryPack)
 	trigger.SetParent( batteryPack )
 	trigger.kv.triggerFilterNpc = "none"
 	DispatchSpawn( trigger )
-	SetTeam(trigger, batteryPack.GetTeam())
+	SetTeam( trigger, batteryPack.GetTeam() )
 	trigger.SetEnterCallback( BatteryTrigger_Enter )
 	trigger.SetLeaveCallback( BatteryTrigger_Leave )
 }
 
 void function BatteryTrigger_Enter( entity trigger, entity player )
 {
-	if ( trigger != null && IsValid(player) && player.IsPlayer())
+	if ( trigger != null && IsValid(player) && player.IsPlayer() )
 	{
-		if (! (player in file.trigger))
+		if ( !( player in file.trigger ) )
 		{
 			file.trigger[player] <- [] // create a new fucking array if there hasn't been one before
 			file.trigger[player].append(trigger)
@@ -187,7 +197,7 @@ void function BatteryTrigger_Leave( entity trigger, entity player )
 {
 	if ( trigger != null )
 	{
-		if (player in file.trigger)
+		if ( player in file.trigger )
 		{
 			foreach( triggerbaby in file.trigger[player] )
 			{
@@ -198,21 +208,21 @@ void function BatteryTrigger_Leave( entity trigger, entity player )
 	}
 }
 
-bool function Crouching(entity player, array<string> args)
+void function Crouching( entity player )
 {
-	if (! (player in file.players) )
-		return true;
+	if ( !(player in file.players) )
+		return
 
-	if (! (player in file.trigger) )
-		return true;
+	if ( !(player in file.trigger) )
+		return
 
-	if (Time() - file.players[player] > 3.0) // if they exceeded the grace period, demolish their counter
+	if ( Time() - file.players[player] > 3.0 ) // if they exceeded the grace period, demolish their counter
 	{
 		file.tbag[player] = 0
 		file.players[player] = Time()
 	}
 
-	if (Time() - file.players[player] <= 3.0) // oh hey they do be tbaging, add one to the counter
+	if ( Time() - file.players[player] <= 3.0 ) // oh hey they do be tbaging, add one to the counter
 	{
 		int i = file.tbag[player]
 		i++
@@ -220,13 +230,13 @@ bool function Crouching(entity player, array<string> args)
 		file.players[player] = Time()
 	}
 
-	if (file.tbag[player] >= file.teabagCounter) // they tbag alot, so time to do stuff
+	if ( file.tbag[player] >= file.teabagCounter ) // they tbag alot, so time to do stuff
 	{
-		foreach (triggerbaby in file.trigger[player])
+		foreach ( triggerbaby in file.trigger[player] )
 		{
-			if (triggerbaby.GetTeam() != player.GetTeam())
+			if ( triggerbaby.GetTeam() != player.GetTeam() )
 			{
-				AddTeamScore( player.GetTeam(), 1) // add score if tbag'd an enemy's corpse
+				AddTeamScore( player.GetTeam(), 1 ) // add score if tbag'd an enemy's corpse
 				entity batteryPack = triggerbaby.GetParent()
 				entity mover = batteryPack.GetParent()
 				if ( IsValid( mover ) )
@@ -234,7 +244,7 @@ bool function Crouching(entity player, array<string> args)
 					ClearChildren( batteryPack )
 					mover.Destroy()
 				}
-				if (IsValid (triggerbaby) )
+				if ( IsValid( triggerbaby ) )
 				{
 					file.trigger[player].remove( file.trigger[player].find(triggerbaby) )
 					triggerbaby.Destroy()
@@ -250,7 +260,7 @@ bool function Crouching(entity player, array<string> args)
 					ClearChildren( batteryPack )
 					mover.Destroy()
 				}
-				if (IsValid (triggerbaby) )
+				if ( IsValid(triggerbaby) )
 				{
 					file.trigger[player].remove( file.trigger[player].find(triggerbaby) )
 					triggerbaby.Destroy()
@@ -260,24 +270,24 @@ bool function Crouching(entity player, array<string> args)
 			}
 		}
 	}
-	return true;
+	return
 }
 
-bool function ToggleCrouching(entity player, array<string> args)
+void function ToggleCrouching( entity player )
 {
-	if (! (player in file.players) )
-		return true;
+	if ( !(player in file.players) )
+		return
 
-	if (! (player in file.trigger) )
-		return true;
+	if ( !(player in file.trigger) )
+		return
 
-	if (Time() - file.players[player] > 3.0)
+	if ( Time() - file.players[player] > 3.0 )
 	{
 		file.tbag[player] = 0
 		file.players[player] = Time()
 	}
 
-	if (Time() - file.players[player] <= 3.0)
+	if ( Time() - file.players[player] <= 3.0 )
 	{
 		int i = file.tbag[player]
 		i++
@@ -285,13 +295,13 @@ bool function ToggleCrouching(entity player, array<string> args)
 		file.players[player] = Time()
 	}
 
-	if (file.tbag[player] >= (file.teabagCounter * 2))
+	if ( file.tbag[player] >= ( file.teabagCounter * 2 ) )
 	{
-		foreach (triggerbaby in file.trigger[player])
+		foreach ( triggerbaby in file.trigger[player] )
 		{
-			if (triggerbaby.GetTeam() != player.GetTeam())
+			if ( triggerbaby.GetTeam() != player.GetTeam() )
 			{
-				AddTeamScore( player.GetTeam(), 1)
+				AddTeamScore( player.GetTeam(), 1 )
 				entity batteryPack = triggerbaby.GetParent()
 				entity mover = batteryPack.GetParent()
 				if ( IsValid( mover ) )
@@ -299,7 +309,7 @@ bool function ToggleCrouching(entity player, array<string> args)
 					ClearChildren( batteryPack )
 					mover.Destroy()
 				}
-				if (IsValid (triggerbaby) )
+				if ( IsValid( triggerbaby ) )
 				{
 					file.trigger[player].remove( file.trigger[player].find(triggerbaby) )
 					triggerbaby.Destroy()
@@ -315,7 +325,7 @@ bool function ToggleCrouching(entity player, array<string> args)
 					ClearChildren( batteryPack )
 					mover.Destroy()
 				}
-				if (IsValid (triggerbaby) )
+				if ( IsValid(triggerbaby) )
 				{
 					file.trigger[player].remove( file.trigger[player].find(triggerbaby) )
 					triggerbaby.Destroy()
@@ -325,7 +335,7 @@ bool function ToggleCrouching(entity player, array<string> args)
 			}
 		}
 	}
-	return true;
+	return
 }
 
 // ========================================================================================================
@@ -337,7 +347,7 @@ const float CYCLES = 3.0
 const float RADIUS = 3.0
 const float ANGLES = 45.0
 
-void function StartAnimating(entity toAnimate) {
+void function StartAnimating( entity toAnimate ) {
     vector originalOrigin = toAnimate.GetOrigin()
     vector originalAngles = toAnimate.GetAngles()
 
@@ -348,13 +358,13 @@ void function StartAnimating(entity toAnimate) {
     float angleOffset = 0.0
     float currTime = Time()
 
-    while ( IsValid(toAnimate) )
+    while ( IsValid( toAnimate ) )
 	{
         // delta time since last frame so it isnt frame dependant lmao
-        float delta = (Time() - currTime) // s since last frame
+        float delta = ( Time() - currTime ) // s since last frame
         float step = CYCLES * delta
-        float ratio = fAbs(zOffset) / RADIUS
-        float smooth = sineEasing(ratio) // how much it'll increment every second
+        float ratio = fAbs( zOffset ) / RADIUS
+        float smooth = sineEasing( ratio ) // how much it'll increment every second
         float angleStep = ANGLES * delta
 
         zOffset += step
@@ -370,7 +380,7 @@ void function StartAnimating(entity toAnimate) {
 			toAnimate.NonPhysicsRotateTo( originalAngles + <0,angleOffset,0> , 0.5, 0.1, 0.1 )
 		} catch (ex)
 		{
-			print(ex)
+			print( ex )
 		}
 
         WaitFrame()
@@ -379,15 +389,15 @@ void function StartAnimating(entity toAnimate) {
 // Eases in via sine function from -1 to 1
 // makes it look smooth
 // math turned out to be useful wow
-float function sineEasing(float x) {
-    return (-(2 * (cos(PI * x) - 1) / 2)) - 1.0
+float function sineEasing( float x ) {
+    return ( -( 2 * ( cos( PI * x ) - 1 ) / 2 ) ) - 1.0
 }
 
 
 //abs of a float
-float function fAbs(float x) {
+float function fAbs( float x ) {
     float res = 0.0;
-    if (x < 0) {
+    if ( x < 0 ) {
         res = -x
     } else {
         res = x;
