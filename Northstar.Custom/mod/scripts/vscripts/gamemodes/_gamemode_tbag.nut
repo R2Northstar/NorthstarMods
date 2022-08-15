@@ -146,17 +146,17 @@ void function DestroyBattery( entity batteryPack, int duration )
 	wait lastDuration
 }
 
-void function FlickeringOnTimeout( entity bruh )
+void function FlickeringOnTimeout( entity batteryPack )
 {
 	batteryPack.EndSignal( "OnDestroy" )
-	while (IsValid(bruh))
+	while (IsValid(batteryPack))
 	{
 		try
 		{
 			wait 0.2
-			bruh.kv.VisibilityFlags = ENTITY_VISIBLE_TO_EVERYONE
+			batteryPack.kv.VisibilityFlags = ENTITY_VISIBLE_TO_EVERYONE
 			wait 0.2
-			bruh.kv.VisibilityFlags = 0
+			batteryPack.kv.VisibilityFlags = 0
 		} catch (why)
 		{}
 		WaitFrame()
