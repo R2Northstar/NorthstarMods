@@ -173,8 +173,8 @@ Press Yes if you agree to this. This choice can be changed in the mods menu at a
 		"GAMEMODE_TBAG" "Teabag Confirmed"
 		"SCOREBOARD_GAVETEABAG" "Teabags Given"
 		"SCOREBOARD_DENYTEABAG" "Teabags Denied"
-		"TBAG_TEABAG_CONFIRMED" "Teabags Confirmed"
-		"TBAG_TEABAG_DENIED" "Teabags Denied"
+		"TBAG_TEABAG_CONFIRMED" "Teabag Confirmed"
+		"TBAG_TEABAG_DENIED" "Teabag Denied"
 
 		"PL_hs" "Hide and Seek"
 		"PL_hs_lobby" "Hide and Seek Lobby"
