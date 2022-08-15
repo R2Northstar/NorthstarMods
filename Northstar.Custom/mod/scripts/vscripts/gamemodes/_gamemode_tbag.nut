@@ -21,7 +21,6 @@ void function GamemodeTbag_Init()
 	AddCallback_GameStateEnter( eGameState.WinnerDetermined, OnWinnerDetermined )
 
 	SetTimeoutWinnerDecisionFunc( CheckScoreForDraw )
-	PrecacheModel( HELMET_COLLECTIBLE_MODEL )
 
 	file.floatingDuration = GetCurrentPlaylistVarInt( "floatingduration", 30 )
 	file.teabagCounter = GetCurrentPlaylistVarInt( "teabagcounter", 4 )
