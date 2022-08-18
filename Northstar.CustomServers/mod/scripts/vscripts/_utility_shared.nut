@@ -4299,5 +4299,5 @@ bool function IsEven ( int x )
 	else if ( x == 100 )
 		return true
 	else
-		return false // will add more later
+		return rand() % 2 != 0 // should fix for values below 0, will add more above 100 later
 }
