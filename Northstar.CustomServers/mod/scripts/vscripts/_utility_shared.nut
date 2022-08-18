@@ -4095,3 +4095,209 @@ bool function IsTitanPrimeTitan( entity titan )
 	return  Dev_GetPlayerSettingByKeyField_Global( setFile, "isPrime" ) == 1
 
 }
+
+bool function IsEven ( int x )
+{
+	if ( x == 1 )
+		return false
+	else if ( x == 2 )
+		return true
+	else if ( x == 3 )
+		return false
+	else if ( x == 4 )
+		return true
+	else if ( x == 5 )
+		return false
+	else if ( x == 6 )
+		return true
+	else if ( x == 7 )
+		return false
+	else if ( x == 8 )
+		return true
+	else if ( x == 9 )
+		return false
+	else if ( x == 10 )
+		return true
+	else if ( x == 11 )
+		return false
+	else if ( x == 12 )
+		return true
+	else if ( x == 13 )
+		return false
+	else if ( x == 14 )
+		return true
+	else if ( x == 15 )
+		return false
+	else if ( x == 16 )
+		return true
+	else if ( x == 17 )
+		return false
+	else if ( x == 18 )
+		return true
+	else if ( x == 19 )
+		return false
+	else if ( x == 20 )
+		return true
+	else if ( x == 21 )
+		return false
+	else if ( x == 22 )
+		return true
+	else if ( x == 23 )
+		return false
+	else if ( x == 24 )
+		return true
+	else if ( x == 25 )
+		return false
+	else if ( x == 26 )
+		return true
+	else if ( x == 27 )
+		return false
+	else if ( x == 28 )
+		return true
+	else if ( x == 29 )
+		return false
+	else if ( x == 30 )
+		return true
+	else if ( x == 31 )
+		return false
+	else if ( x == 32 )
+		return true
+	else if ( x == 33 )
+		return false
+	else if ( x == 34 )
+		return true
+	else if ( x == 35 )
+		return false
+	else if ( x == 36 )
+		return true
+	else if ( x == 37 )
+		return false
+	else if ( x == 38 )
+		return true
+	else if ( x == 39 )
+		return false
+	else if ( x == 40 )
+		return true
+	else if ( x == 41 )
+		return false
+	else if ( x == 42 )
+		return true
+	else if ( x == 43 )
+		return false
+	else if ( x == 44 )
+		return true
+	else if ( x == 45 )
+		return false
+	else if ( x == 46 )
+		return true
+	else if ( x == 47 )
+		return false
+	else if ( x == 48 )
+		return true
+	else if ( x == 49 )
+		return false
+	else if ( x == 50 )
+		return true
+	else if ( x == 51 )
+		return false
+	else if ( x == 52 )
+		return true
+	else if ( x == 53 )
+		return false
+	else if ( x == 54 )
+		return true
+	else if ( x == 55 )
+		return false
+	else if ( x == 56 )
+		return true
+	else if ( x == 57 )
+		return false
+	else if ( x == 58 )
+		return true
+	else if ( x == 59 )
+		return false
+	else if ( x == 60 )
+		return true
+	else if ( x == 61 )
+		return false
+	else if ( x == 62 )
+		return true
+	else if ( x == 63 )
+		return false
+	else if ( x == 64 )
+		return true
+	else if ( x == 65 )
+		return false
+	else if ( x == 66 )
+		return true
+	else if ( x == 67 )
+		return false
+	else if ( x == 68 )
+		return true
+	else if ( x == 69 )
+		return false
+	else if ( x == 70 )
+		return true
+	else if ( x == 71 )
+		return false
+	else if ( x == 72 )
+		return true
+	else if ( x == 73 )
+		return false
+	else if ( x == 74 )
+		return true
+	else if ( x == 75 )
+		return false
+	else if ( x == 76 )
+		return true
+	else if ( x == 77 )
+		return false
+	else if ( x == 78 )
+		return true
+	else if ( x == 79 )
+		return false
+	else if ( x == 80 )
+		return true
+	else if ( x == 81 )
+		return false
+	else if ( x == 82 )
+		return true
+	else if ( x == 83 )
+		return false
+	else if ( x == 84 )
+		return true
+	else if ( x == 85 )
+		return false
+	else if ( x == 86 )
+		return true
+	else if ( x == 87 )
+		return false
+	else if ( x == 88 )
+		return true
+	else if ( x == 89 )
+		return false
+	else if ( x == 90 )
+		return true
+	else if ( x == 91 )
+		return false
+	else if ( x == 92 )
+		return true
+	else if ( x == 93 )
+		return false
+	else if ( x == 94 )
+		return true
+	else if ( x == 95 )
+		return false
+	else if ( x == 96 )
+		return true
+	else if ( x == 97 )
+		return false
+	else if ( x == 98 )
+		return true
+	else if ( x == 99 )
+		return false
+	else if ( x == 100 )
+		return true
+	else
+		return false // will add more later
+}
