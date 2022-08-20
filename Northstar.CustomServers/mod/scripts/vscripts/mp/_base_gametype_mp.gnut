@@ -35,6 +35,8 @@ void function BaseGametype_Init_MPSP()
 	AddPostDamageCallback( "player", AddToTitanDamageStat )
 	AddPostDamageCallback( "npc_titan", AddToTitanDamageStat )
 	
+	AddCallback_OnNPCKilled( CheckForAutoTitanDeath )
+	AddCallback_OnPlayerKilled( CheckForAutoTitanDeath )
 	RegisterSignal( "PlayerRespawnStarted" )
 	RegisterSignal( "KillCamOver" )
 }
@@ -121,6 +123,8 @@ void function CodeCallback_OnClientConnectionStarted( entity player )
 // playerconnected
 void function CodeCallback_OnClientConnectionCompleted( entity player )
 {
+	InitPersistentData( player )
+
 	if ( IsLobby() )
 	{
 		Lobby_OnClientConnectionCompleted( player )
@@ -294,6 +298,9 @@ void function PostDeathThread_MP( entity player, var damageInfo ) // based on ga
 				attackerInfo.attacker.AddToPlayerGameStat( PGS_ASSISTS, 1 )
 			}
 		}
+
+		if( attacker.IsPlayer() )	
+			Highlight_SetDeathRecapHighlight( attacker, "killer_outline" )
 	}
 
 	player.p.rematchOrigin = player.p.deathOrigin
@@ -443,7 +450,20 @@ void function RespawnAsTitan( entity player, bool manualPosition = false )
 	AddCinematicFlag( player, CE_FLAG_CLASSIC_MP_SPAWNING ) // hide hud
 	
 	// do titanfall scoreevent
-	AddPlayerScore( player, "Titanfall", player )
+	if ( !level.firstTitanfall )
+	{
+		AddPlayerScore( player, "FirstTitanfall", player )
+
+		#if HAS_STATS
+		UpdatePlayerStat( player, "misc_stats", "titanFallsFirst" )
+		#endif
+
+		level.firstTitanfall = true
+	}
+	else
+	{
+		AddPlayerScore( player, "Titanfall", player )
+	}
 	
 	entity camera = CreateTitanDropCamera( spawnpoint.GetAngles(), < 90, titan.GetAngles().y, 0 > )
 	camera.SetParent( titan )
@@ -532,6 +552,24 @@ void function AddToTitanDamageStat( entity victim, var damageInfo )
 		attacker.AddToPlayerGameStat( file.titanDamageGameStat, amount ) // titan damage on 
 }
 
+void function CheckForAutoTitanDeath( entity victim, entity attacker, var damageInfo )
+{
+	if( !IsValid(victim) || !victim.IsTitan() )
+		return
+
+	if( !victim.IsPlayer() )
+	{
+		if (GetPetTitanOwner(victim) && GetPetTitanOwner(victim) != attacker)
+			foreach(player in GetPlayerArray())
+				Remote_CallFunction_NonReplay( player, "ServerCallback_OnTitanKilled", attacker.GetEncodedEHandle(), victim.GetEncodedEHandle(), DamageInfo_GetCustomDamageType( damageInfo ), DamageInfo_GetDamageSourceIdentifier( damageInfo ) )
+	}
+	else
+	{
+		if (victim != attacker)
+			foreach(player in GetPlayerArray())
+				Remote_CallFunction_NonReplay( player, "ServerCallback_OnTitanKilled", attacker.GetEncodedEHandle(), victim.GetEncodedEHandle(), DamageInfo_GetCustomDamageType( damageInfo ), DamageInfo_GetDamageSourceIdentifier( damageInfo ) )
+	}
+}
 
 // stuff to change later
 
