@@ -1,15 +1,6 @@
 global function MenuQuickPlay_Init
 
-//global function QuickPlaySearch
-
-// keep track of all the servers we have been in (so we dont join the same server over and over)
-// this is a table so we can keep track of *when* we last joined the server
-// can add a convar later to determine how long to wait before being allowed to rejoin it
-// using strings here to match by server name, since the server index may change
-global table<string, float> joinedServers
-
-// this struct is stolen from menu_ns_serverbrowser.nut
-// maybe make it global in there at some point?
+//for reference
 struct serverStruct {
 	int serverIndex
 	bool serverProtected
@@ -18,33 +9,45 @@ struct serverStruct {
 	int serverPlayersMax
 	string serverMap
 	string serverGamemode
-	int serverLatency // :pain:
 }
 
-struct 
+struct
 {
-    var menu
-    int number
-
-    struct 
-    {
-        string name = ""
-        array<string> maps = []
-        array<string> modes = []
-    } filters
-
-    array<serverStruct> servers
-    array<serverStruct> filteredServers
+	var menu
+	array< serverStruct > servers
+	array< serverStruct > filteredServers
 
 	bool stopQuickPlayConnection = false
 
-    array<string> realMaps
-    // temp
-    int mapFilterIndex = 0
+	// filter things
 
-    array<string> realModes
-    // temp
-    int modeFilterIndex = 0
+	// how full the server is
+	float minPlayersFrac = 0
+	float maxPlayersFrac  = 1
+
+	// the server's max player count
+	int minMaxPlayers = 0
+	int maxMaxPlayers = 24
+
+	// map filter
+	bool mapsFilterIsWhitelist = false
+	array<string> mapsFilter = []
+
+	// mode filter
+	bool gamemodesFilterIsWhitelist = false
+	array<string> gamemodesFilter = []
+
+	// this filter has to be a whitelist (at least until autodownloading)
+	array<string> requiredModsFilter = []
+
+	// :Copium:
+	bool regionFilterIsWhitelist = false
+	array<string> regionFilter = []
+
+	// name filter
+	bool nameFilterIsWhitelist = true // it makes more sense for name filter to default to being a whitelist
+	string nameFilter = ""
+
 } file
 
 
@@ -53,7 +56,7 @@ struct
 void function MenuQuickPlay_Init()
 {
     AddMenu( "QuickPlayMenu", $"resource/ui/menus/quick_play.menu", InitQuickPlayMenu, "#MENU_QUICK_PLAY" )
-    file.menu = GetMenu("QuickPlayMenu")
+    file.menu = GetMenu( "QuickPlayMenu" )
     AddMenuEventHandler( file.menu, eUIEvent.MENU_OPEN, OnQuickPlayMenuOpened )
 	AddMenuFooterOption( file.menu, BUTTON_B, "#B_BUTTON_BACK", "#BACK" )
 	AddMenuFooterOption( file.menu, BUTTON_A, "#A_BUTTON_BACK", "#SELECT", ConnectToServer )
@@ -61,16 +64,41 @@ void function MenuQuickPlay_Init()
 
 void function InitQuickPlayMenu()
 {
-    // loading the filters from the ConVars here?
 
+}
 
-	file.realMaps = [ "Any", "mp_lobby" ]
-	file.realMaps.extend( GetPrivateMatchMaps() )
+void function OnQuickPlayMenuOpened()
+{
+	ImportFiltersFromConVars()
+	UI_SetPresentationType( ePresentationType.KNOWLEDGEBASE_MAIN )
+	file.stopQuickPlayConnection = false
+    thread RefreshServerList( 0 )
+}
 
+void function ImportFiltersFromConVars()
+{
+	// modes
+	file.gamemodesFilter = split( GetConVarString( "quickplay_filter_modes" ), " " )
+	file.gamemodesFilterIsWhitelist = GetConVarBool( "quickplay_filter_modes_whitelist" )
 
-	/*file.realModes = [ "Any", "private_match" ]
-	file.realModes.extend( GetPrivateMatchModes() )
-    */
+	// maps
+	file.mapsFilter = split( GetConVarString( "quickplay_filter_maps" ), " " )
+	file.mapsFilterIsWhitelist = GetConVarBool( "quickplay_filter_maps_whitelist" )
+
+	// name
+	file.nameFilter = GetConVarString( "quickplay_filter_name" )
+	file.nameFilterIsWhitelist = GetConVarBool( "quickplay_filter_name_whitelist" )
+
+	// mods
+	file.requiredModsFilter = split( GetConVarString( "quickplay_filter_mods" ), "\n" ) // using \n here because mods can have spaces in their name
+
+	// maxplayers
+	file.maxMaxPlayers = GetConVarInt( "quickplay_filter_max_maxplayers" )
+	file.minMaxPlayers = GetConVarInt( "quickplay_filter_min_maxplayers" )
+
+	// players
+	file.maxPlayersFrac = GetConVarFloat( "quickplay_filter_max_players_frac" )
+	file.minPlayersFrac = GetConVarFloat( "quickplay_filter_min_players_frac" )
 }
 
 void function RefreshServerList( var button )
@@ -94,9 +122,8 @@ void function RefreshServerList( var button )
         server.serverName = NSGetServerName(i)
         server.serverPlayers = NSGetServerPlayerCount(i)
         server.serverPlayersMax = NSGetServerMaxPlayerCount(i)
-        server.serverMap = NSGetServerMap(i)
-        server.serverGamemode = GetGameModeDisplayName( NSGetServerPlaylist (i) )
-        server.serverLatency = -1 // sadge
+        server.serverMap = NSGetServerMap(i) // GetMapDisplayName
+        server.serverGamemode = NSGetServerPlaylist(i) // GetGameModeDisplayName
 
         file.servers.append( server )
     }
@@ -109,40 +136,62 @@ void function FilterServerList( var button )
     file.filteredServers = []
     foreach ( serverStruct server in file.servers )
     {
-        // PASSWORD FILTER
+        // PASSWORD FILTER - cant quickplay to join a password protected server, tough shit
         if ( server.serverProtected )
-            continue
-        // PLAYERCOUNT FILTERS
-        // check if > 80% full
-        if ( server.serverPlayers >= server.serverPlayersMax )
-            continue
-        // NAME FILTERS
-        if ( server.serverName != "" && server.serverName.find( file.filters.name ) == -1 )
-            continue
-        // MAP FILTER
-        if ( file.filters.maps.len() > 0 && !file.filters.maps.contains( server.serverMap ) )
-            continue
-        // MODE FILTER
-        if ( file.filters.modes.len() > 0 && !file.filters.modes.contains( server.serverGamemode ) )
-            continue
+			continue
 
-        // server passed all the checks, add it to the filteredServers
+		// PLAYERCOUNT FILTERS
+		// server full
+		if ( server.serverPlayers >= server.serverPlayersMax )
+			continue
+		// too many players
+		if ( server.serverPlayers.tofloat() / server.serverPlayersMax.tofloat() > file.maxPlayersFrac )
+			continue
+		// too few players
+		if ( server.serverPlayers.tofloat() / server.serverPlayersMax.tofloat() < file.minPlayersFrac )
+			continue
+		// too many max players
+		if ( server.serverPlayersMax > file.maxMaxPlayers )
+			continue
+		// too few max players
+		if ( server.serverPlayersMax < file.minMaxPlayers )
+			continue
+		
+		// GAMEMODES FILTER
+		if ( file.gamemodesFilterIsWhitelist != file.gamemodesFilter.contains( server.serverGamemode ) )
+			continue
+
+		// MAPS FILTER
+		if ( file.mapsFilterIsWhitelist != file.mapsFilter.contains( server.serverMap ) )
+			continue
+
+		// NAME FILTER
+		if ( file.nameFilter != "" && file.nameFilterIsWhitelist != ( server.serverName.find( file.nameFilter ) != null ) )
+			continue
+
+		// MODS FILTER
+		bool shouldContinue = false
+		for ( int i = 0; i < NSGetServerRequiredModsCount( server.serverIndex ); i++ )
+		{
+			string requiredMod = NSGetServerRequiredModName( server.serverIndex, i )
+			if ( !file.requiredModsFilter.contains( requiredMod ) )
+			{
+				//shouldContinue = true
+				break
+			}
+		}
+		if ( shouldContinue )
+			continue
+
+        // server passed all the checks, add it to filteredServers
         file.filteredServers.append( server )
     }
 
     printt( "Refreshed filters: " + file.filteredServers.len() + " servers match the current filters")
 }
 
-void function OnQuickPlayMenuOpened()
-{
-	UI_SetPresentationType( ePresentationType.KNOWLEDGEBASE_MAIN )
-    thread RefreshServerList( 0 )
-}
-
-
-
 // THESE FUNCTIONS HANDLE ACTUALLY CONNECTING TO THE SERVER
-void function stopQuickPlay()
+void function StopQuickPlay()
 {
 	// make sure we close all the dialogs
 	CloseAllDialogs()
@@ -159,33 +208,37 @@ void function ConnectToServer( var button )
 	Hud_Hide( uiGlobal.ConfirmMenuMessage )
 	Hud_Hide( uiGlobal.ConfirmMenuErrorCode )
 
-	DialogData dialogData
-	dialogData.menu = GetMenu( "ConnectingDialog" )
-	dialogData.header = "#CONNECTING"
-	dialogData.showSpinner = true
-	AddDialogButton( dialogData, "CANCEL", stopQuickPlay)
-	AddDialogFooter( dialogData, "A_BUTTON_SELECT" )
-	OpenDialog ( dialogData )
+	DialogData connectingDialog
+	connectingDialog.menu = GetMenu( "ConnectingDialog" )
+	connectingDialog.header = "#CONNECTING"
+	connectingDialog.showSpinner = true
+	AddDialogButton( connectingDialog, "CANCEL", StopQuickPlay )
+	OpenDialog ( connectingDialog )
 
 	// refresh the list so we dont join a full server or anything dumb
 	thread RefreshServerList( button )
 
-	// get best server
-	serverStruct chosenServer
-	foreach ( serverStruct server in file.filteredServers )
+	if ( file.filteredServers.len() == 0 )
 	{
-		try
-		{
-			if ( Time() - joinedServers[ server.serverName ] < 60 * GetConVarInt( "quickplay_rejoin_time" ) )
-				continue
-			chosenServer = server
-			break
-		}
-		catch ( ex )
-		{
-			continue
-		}
+		// oh no there are no servers that match the filters
+		CloseAllDialogs()
+		
+		Hud_Hide( uiGlobal.ConfirmMenuMessage )
+		Hud_Hide( uiGlobal.ConfirmMenuErrorCode )
+
+		DialogData noServersDialog
+		noServersDialog.menu = GetMenu( "Dialog" )
+		noServersDialog.header = "#NS_SERVERBROWSER_NOSERVERS"
+		noServersDialog.message = "#DIALOG_NO_SERVERS"
+		noServersDialog.image = $"ui/menu/common/dialog_error"
+		AddDialogButton( noServersDialog, "OK", StopQuickPlay )
+		OpenDialog ( noServersDialog )
+		return
 	}
+
+	// choose a random server
+	serverStruct chosenServer = file.filteredServers[ RandomInt( file.filteredServers.len() ) ]
+
 	thread thread_ConnectToServer( chosenServer )
 }
 
@@ -200,6 +253,14 @@ void function thread_ConnectToServer( serverStruct server )
 			return
 		}
 		WaitFrame()
+	}
+
+	// wait a random amount of time to make people think we are like searching for a match
+	wait RandomFloatRange( 0.8, 1.4 )
+	if( file.stopQuickPlayConnection )
+	{
+		file.stopQuickPlayConnection = false
+		return
 	}
 
 	// auth and connect

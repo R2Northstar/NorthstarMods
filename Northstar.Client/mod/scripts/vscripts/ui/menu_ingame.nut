@@ -87,7 +87,7 @@ void function InitInGameMPMenu()
 	Hud_AddEventHandler( leaveButton, UIE_CLICK, OnLeaveButton_Activate )
 
 	var changeServerButton = AddComboButton( comboStruct, headerIndex, buttonIndex++, "#MENU_TITLE_CHANGE_SERVER" )
-	Hud_AddEventHandler( changeServerButton, UIE_CLICK, QuickPlaySearch )
+	Hud_AddEventHandler( changeServerButton, UIE_CLICK, AdvanceMenuEventHandler( GetMenu("QuickPlayMenu") ) )
 	#if DEV
 		var devButton = AddComboButton( comboStruct, headerIndex, buttonIndex++, "Dev" )
 		Hud_AddEventHandler( devButton, UIE_CLICK, AdvanceMenuEventHandler( GetMenu( "DevMenu" ) ) )

@@ -320,8 +320,9 @@ Press Yes if you agree to this. This choice can be changed in the mods menu at a
 		"JSON_PARSE_ERROR" 				"Error parsing json response"
 		"UNSUPPORTED_VERSION" 			"The version you are using is no longer supported"
     
-    // Quick play menu
+    	// Quick play menu
 		"MENU_TITLE_QUICK_PLAY" "Quick Play"
 		"MENU_TITLE_CHANGE_SERVER" "Change Server"
+		"DIALOG_NO_SERVERS" "No servers match your current filters.\n\nChange your filters and try again..."
 	}
 }

@@ -35,7 +35,7 @@ resource/ui/menus/mods_browse.menu
 			InheritProperties MenuTopBar
 		}
 
-		MapAnchor
+		MapListAnchor
 		{
 			ControlName Label
 			labelText ""
@@ -44,7 +44,7 @@ resource/ui/menus/mods_browse.menu
 	 		ypos 160
 		}
 
-		ModeAnchor
+		ModeListAnchor
 		{
 			ControlName Label
 			labelText ""

@@ -33,8 +33,59 @@
 			"DefaultValue": "0"
 		},
 		{
-			"Name": "quickplay_rejoin_time",
-			"DefaultValue": "30"
+			"Name": "quickplay_filter_maps",
+			"DefaultValue": "",
+			"Flags": 16777216
+		},
+		{
+			"Name": "quickplay_filter_maps_whitelist",
+			"DefaultValue": "0",
+			"Flags": 16777216
+		},
+		{
+			"Name": "quickplay_filter_modes",
+			"DefaultValue": "",
+			"Flags": 16777216
+		},
+		{
+			"Name": "quickplay_filter_modes_whitelist",
+			"DefaultValue": "0",
+			"Flags": 16777216
+		},
+		{
+			"Name": "quickplay_filter_name",
+			"DefaultValue": "",
+			"Flags": 16777216
+		},
+		{
+			"Name": "quickplay_filter_name_whitelist",
+			"DefaultValue": "1",
+			"Flags": 16777216
+		},
+		{
+			"Name": "quickplay_filter_max_maxplayers",
+			"DefaultValue": "24",
+			"Flags": 16777216
+		},
+		{
+			"Name": "quickplay_filter_min_maxplayers",
+			"DefaultValue": "0",
+			"Flags": 16777216
+		},
+		{
+			"Name": "quickplay_filter_min_players_frac",
+			"DefaultValue": "0",
+			"Flags": 16777216
+		},
+		{
+			"Name": "quickplay_filter_max_players_frac",
+			"DefaultValue": "1",
+			"Flags": 16777216
+		},
+		{
+			"Name": "quickplay_filter_mods",
+			"DefaultValue": "",
+			"Flags": 16777216
 		}
 	],
 	"Scripts": [
