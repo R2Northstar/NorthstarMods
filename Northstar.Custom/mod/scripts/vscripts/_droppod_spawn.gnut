@@ -14,7 +14,10 @@ void function DropPodSpawn_Init()
 void function CleanupSpawningDropPods()
 {
 	foreach ( entity pod in file.droppods )
-		pod.Destroy()
+	{
+		if( IsValid( pod ) )
+			pod.Destroy()
+	}
 	
 	file.droppods.clear()
 }
