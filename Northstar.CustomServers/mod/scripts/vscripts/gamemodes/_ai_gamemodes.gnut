@@ -117,7 +117,8 @@ void function AiGameModes_SpawnReaper( vector pos, vector rot, int team, string 
 	// spawn reapers right before it warpfalls, or round_end clean up will crash the game
 	entity reaper = CreateSuperSpectre( team, pos, rot )
 	// reaper highlight
-	Highlight_SetFriendlyHighlight( reaper, "interact_object_los_line" )
+	Highlight_SetFriendlyHighlight( reaper, "sp_enemy_pilot" )
+	reaper.Highlight_SetParam( 1, 0, < 3,3,3 > )
 	Highlight_SetEnemyHighlight( reaper, "enemy_titan" )
 
 	SetSpawnOption_Titanfall( reaper )
