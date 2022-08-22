@@ -421,22 +421,42 @@ void function DisplayModPanels()
 
 void function SetControlBoxColor( var box, string modName )
 {
-	var rui = Hud_GetRui( box )
-	if ( NSIsModEnabled( modName ) )
-		RuiSetFloat3(rui, "basicImageColor", <0,1,0>)
-	else
-		RuiSetFloat3(rui, "basicImageColor", <1,0,0>)
+	RuiSetFloat3( Hud_GetRui( box ), "basicImageColor", GetControlColorForMod( modName ) )
 }
 
 void function SetControlBarColor( string modName )
 {
-	var bar_element = Hud_GetChild( file.menu, "ModEnabledBar" )
-	var bar = Hud_GetRui( bar_element )
+	RuiSetFloat3( Hud_GetRui( bar_element ), "basicImageColor", GetControlColorForMod( modName ) )
+	Hud_SetVisible( Hud_GetChild( file.menu, "ModEnabledBar" ), true )
+}
+
+vector function GetControlColorForMod( string modName )
+{
 	if ( NSIsModEnabled( modName ) )
-		RuiSetFloat3(bar, "basicImageColor", <0,1,0>)
+		switch ( GetConVarInt( "colorblind_mode" ) )
+		{
+			case 1:
+				return <0.973, 0.863, 0>
+			case 2:
+				return <1,0.835,0.6>
+			case 3:
+				return <0.459,0.923,1>
+			default:
+				return <0,1,0>
+		}
 	else
-		RuiSetFloat3(bar, "basicImageColor", <1,0,0>)
-	Hud_SetVisible( bar_element, true )
+		switch ( GetConVarInt( "colorblind_mode" ) )
+		{
+			case 1:
+				return <0.561, 0.494, 0.118>
+			case 2:
+				return <0.631,0.471,0>
+			case 3:
+				return <0.992,0.09,0>
+			default:
+				return <1,0,0>
+		}
+	unreachable
 }
 
 string function FormatModDescription( string modName )
