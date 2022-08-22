@@ -36,6 +36,11 @@
 			"Name": "modlist_hide_convar",
 			"DefaultValue": "0",
 			"Flags": 16777216
+		},
+		{
+			"Name": "modlist_reverse",
+			"DefaultValue": "0",
+			"Flags": 16777216
 		}
 	],
 	"Scripts": [

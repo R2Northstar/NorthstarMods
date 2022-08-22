@@ -4,6 +4,7 @@ global function AddNorthstarModMenu
 global function AddNorthstarModMenu_MainMenuFooter
 global function ReloadMods
 
+
 struct modData {
 	string name = ""
 	string version = ""
@@ -98,6 +99,7 @@ void function InitModMenu()
 	// Filter buttons
 	AddButtonEventHandler( Hud_GetChild( file.menu, "SwtBtnShowFilter"), UIE_CHANGE, OnFiltersChange )
 	AddButtonEventHandler( Hud_GetChild( file.menu, "BtnModsSearch"), UIE_CHANGE, OnFiltersChange )
+	AddButtonEventHandler( Hud_GetChild( file.menu, "BtnListReverse"), UIE_CHANGE, OnFiltersChange )
 	AddButtonEventHandler( Hud_GetChild( file.menu, "BtnFiltersClear"), UIE_CLICK, OnBtnFiltersClear_Activate )
 
 	AddButtonEventHandler( Hud_GetChild( file.menu, "HideCVButton"), UIE_CHANGE, OnHideConVarsChange )
@@ -122,6 +124,7 @@ void function InitModMenu()
 	// Nuke weird rui on filter switch
 	RuiSetString( Hud_GetRui( Hud_GetChild( file.menu, "SwtBtnShowFilter")), "buttonText", "")
 	RuiSetString( Hud_GetRui( Hud_GetChild( file.menu, "HideCVButton")), "buttonText", "")
+	RuiSetString( Hud_GetRui( Hud_GetChild( file.menu, "BtnListReverse")), "buttonText", "")
 }
 
 // EVENTS
@@ -314,11 +317,18 @@ void function RefreshMods()
 	array<string> modNames = NSGetModNames()
 	file.mods.clear()
 
-	int lastLoadPriority = -1
+	bool reverse = GetConVarBool( "modlist_reverse" )
+
+	int lastLoadPriority = reverse ? NSGetModLoadPriority( modNames[ modNames.len() - 1 ] ) + 1 : -1 
+	printt(reverse, lastLoadPriority)
 	string searchTerm = Hud_GetUTF8Text( Hud_GetChild( file.menu, "BtnModsSearch" ) ).tolower()
 
-	foreach ( string mod in modNames )
+	for ( int i = reverse ? modNames.len() - 1 : 0;
+		reverse ? ( i >= 0 ) : ( i < modNames.len() );
+		i += ( reverse ? -1 : 1) )
 	{
+		string mod = modNames[i]
+
 		if ( searchTerm.len() && mod.tolower().find( searchTerm ) == null )
 			continue
 
@@ -346,7 +356,7 @@ void function RefreshMods()
 
 		int pr = NSGetModLoadPriority( mod )
 
-		if ( pr > lastLoadPriority )
+		if ( reverse ? pr < lastLoadPriority : pr > lastLoadPriority )
 		{
 			modData m
 			m.name = pr.tostring()
@@ -421,13 +431,24 @@ void function DisplayModPanels()
 
 void function SetControlBoxColor( var box, string modName )
 {
-	RuiSetFloat3( Hud_GetRui( box ), "basicImageColor", GetControlColorForMod( modName ) )
+	var rui = Hud_GetRui( box )
+	// if ( NSIsModEnabled( modName ) )
+	// 	RuiSetFloat3(rui, "basicImageColor", <0,1,0>)
+	// else
+	// 	RuiSetFloat3(rui, "basicImageColor", <1,0,0>)
+	RuiSetFloat3(rui, "basicImageColor", GetControlColorForMod( modName ) )
 }
 
 void function SetControlBarColor( string modName )
 {
-	RuiSetFloat3( Hud_GetRui( bar_element ), "basicImageColor", GetControlColorForMod( modName ) )
-	Hud_SetVisible( Hud_GetChild( file.menu, "ModEnabledBar" ), true )
+	var bar_element = Hud_GetChild( file.menu, "ModEnabledBar" )
+	var bar = Hud_GetRui( bar_element )
+	// if ( NSIsModEnabled( modName ) )
+	// 	RuiSetFloat3(bar, "basicImageColor", <0,1,0>)
+	// else
+	// 	RuiSetFloat3(bar, "basicImageColor", <1,0,0>)
+	RuiSetFloat3(bar, "basicImageColor", GetControlColorForMod( modName ) )
+	Hud_SetVisible( bar_element, true )
 }
 
 vector function GetControlColorForMod( string modName )

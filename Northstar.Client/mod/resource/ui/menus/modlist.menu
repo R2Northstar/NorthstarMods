@@ -344,7 +344,7 @@ resource/ui/menus/modlist.menu
 
 			allowRightClickMenu		0
 			allowSpecialCharacters	0
-			unicode					0
+			unicode					1
 
 			pin_to_sibling			BtnSearchLabel
 			pin_corner_to_sibling	TOP_LEFT
@@ -373,6 +373,30 @@ resource/ui/menus/modlist.menu
 			pin_to_sibling			BtnSearchLabel
 			pin_corner_to_sibling	TOP_LEFT
 			pin_to_sibling_corner	BOTTOM_LEFT
+		}
+
+		BtnListReverse
+		{
+			ControlName			RuiButton
+			InheritProperties	SwitchButton
+			classname			FilterPanelChild
+
+			xpos		-15
+			ypos		-15
+
+			labelText	"Reverse"
+			ConVar		"modlist_reverse"
+			wide 260
+
+			list
+			{
+				"low first"		0
+				"high first"	1
+			}
+
+			pin_to_sibling			FilterPanel
+			pin_corner_to_sibling	TOP_RIGHT
+			pin_to_sibling_corner	TOP_RIGHT
 		}
 
 		BtnFiltersClear
