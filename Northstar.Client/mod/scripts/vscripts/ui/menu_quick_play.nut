@@ -73,6 +73,8 @@ void function OnQuickPlayMenuOpened()
 	UI_SetPresentationType( ePresentationType.KNOWLEDGEBASE_MAIN )
 	file.stopQuickPlayConnection = false
     thread RefreshServerList( 0 )
+	var thing = Hud_GetChild( file.menu, "List" )
+	RuiSetImage( Hud_GetRui( Hud_GetChild( thing, "ItemImage" ) ), "basicImage", GetMapImageForMapName("mp_forwardbase_kodai") )
 }
 
 void function ImportFiltersFromConVars()
