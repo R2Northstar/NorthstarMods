@@ -187,9 +187,19 @@ void function ScoreEvent_TitanKilled( entity victim, entity attacker, var damage
 		return
 
 	if ( attacker.IsTitan() )
-		AddPlayerScore( attacker, "TitanKillTitan", victim.GetTitanSoul().GetOwner() )
+	{
+		if( victim.GetBossPlayer() ) // to confirm this is a pet titan
+			AddPlayerScore( attacker, "TitanKillTitan", attacker ) // this will show the "Titan Kill" callsign event
+		else
+			AddPlayerScore( attacker, "TitanKillTitan", victim.GetTitanSoul().GetOwner() )
+	}
 	else
-		AddPlayerScore( attacker, "KillTitan", victim.GetTitanSoul().GetOwner() )
+	{
+		if( victim.GetBossPlayer() )
+			AddPlayerScore( attacker, "KillTitan", attacker ) // this will show the "Titan Kill" callsign event
+		else
+			AddPlayerScore( attacker, "KillTitan", victim.GetTitanSoul().GetOwner() )
+	}
 
 	table<int, bool> alreadyAssisted
 	foreach( DamageHistoryStruct attackerInfo in victim.e.recentDamageHistory )
