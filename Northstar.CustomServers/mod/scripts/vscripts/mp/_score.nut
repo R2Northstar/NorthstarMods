@@ -188,15 +188,15 @@ void function ScoreEvent_TitanKilled( entity victim, entity attacker, var damage
 
 	if ( attacker.IsTitan() )
 	{
-		if( victim.GetBossPlayer() ) // to confirm this is a pet titan
+		if( victim.GetBossPlayer() || victim.IsPlayer() ) // to confirm this is a pet titan or player titan
 			AddPlayerScore( attacker, "TitanKillTitan", attacker ) // this will show the "Titan Kill" callsign event
 		else
 			AddPlayerScore( attacker, "TitanKillTitan" )
 	}
 	else
 	{
-		if( victim.GetBossPlayer() )
-			AddPlayerScore( attacker, "KillTitan", attacker ) // this will show the "Titan Kill" callsign event
+		if( victim.GetBossPlayer() || victim.IsPlayer() )
+			AddPlayerScore( attacker, "KillTitan", attacker )
 		else
 			AddPlayerScore( attacker, "KillTitan" )
 	}
