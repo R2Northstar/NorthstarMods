@@ -506,6 +506,20 @@ void function GameStateEnter_SuddenDeath()
 {
 	// disable respawns, suddendeath calling is done on a kill callback
 	SetRespawnsEnabled( false )
+
+	// defensive fixes, so game won't stuck in SuddenDeath forever
+	bool mitElimited = false
+	bool imcElimited = false
+	if( GetPlayerArrayOfTeam_Alive( TEAM_MILITIA ) < 1 )
+		mitElimited = true
+	if( GetPlayerArrayOfTeam_Alive( TEAM_IMC ) < 1 )
+		imcElimited = true
+	if( mitElimited && imcElimited )
+		SetWinner( TEAM_UNASSIGNED )
+	else if( mitElimited )
+		SetWinner( TEAM_IMC )
+	else if( imcElimited )
+		SetWinner( TEAM_MILITIA )
 }
 
 
