@@ -1,7 +1,7 @@
 {
 	"Name": "Northstar.CustomServers",
 	"Description": "Attempts to recreate the behaviour of vanilla Titanfall 2 servers, as well as changing some scripts to allow better support for mods",
-	"Version": "1.4.0",
+	"Version": "1.9.0",
 	"LoadPriority": 0,
 	"ConVars": [
 		{
@@ -16,6 +16,11 @@
 		{
 			"Name": "ns_should_return_to_lobby",
 			"DefaultValue": "1"
+		},
+		{
+			"Name": "ns_allow_spectators",
+			"DefaultValue": "0",
+			"Flags": 8192
 		},
 		{
 			"Name": "ns_private_match_last_mode",
@@ -44,9 +49,31 @@
 		{
 			"Name": "ns_should_log_unknown_clientcommands",
 			"DefaultValue": "1"
+		},
+		{
+			"Name": "ns_allow_kill_commands",
+			"DefaultValue": "0"
 		}
 	],
 	"Scripts": [
+		{
+			"Path": "_custom_codecallbacks.gnut",
+			"RunOn": "SERVER",
+			"ServerCallback": {
+				"Before": "NSSetupChathooksServer"
+			}
+		},
+		{
+			"Path": "_northstar_cheatcommands.nut",
+			"RunOn": "SERVER",
+			"ServerCallback": {
+				"After": "NorthstarCheatCommands_Init"
+			}
+		},
+		{
+			"Path": "_chat.gnut",
+			"RunOn": "SERVER"
+		},
 		{
 			"Path": "_misc_stubs.gnut",
 			"RunOn": "SERVER && MP"
@@ -76,6 +103,13 @@
 			"RunOn": "(CLIENT || SERVER) && MP"
 		},
 		{
+			"Path": "sh_server_to_client_stringcommands.gnut",
+			"RunOn": "CLIENT || SERVER",
+			"ClientCallback": {
+				"After": "ServerToClientStringCommands_Init"
+			}
+		},
+		{
 			"Path": "gamemodes/_gamemode_fra.nut",
 			"RunOn": "SERVER && MP",
 			"ServerCallback": {
@@ -91,6 +125,13 @@
 			"RunOn": "SERVER && MP"
 		},
 		{
+			"Path": "mp/_spectator.gnut",
+			"RunOn": "SERVER && MP",
+			"ServerCallback": {
+				"After": "Spectator_Init"
+			}
+		},
+		{
 			"Path": "_loadouts_mp.gnut",
 			"RunOn": "SERVER && MP",
 			"ServerCallback": {
@@ -100,6 +141,21 @@
 		{
 			"Path": "lobby/sh_private_lobby_modes_init.gnut",
 			"RunOn": "( SERVER || CLIENT ) && MP"
+		},
+
+		{
+			"Path": "_respawn_protection.gnut",
+			"RunOn": "SERVER && MP",
+			"ServerCallback": {
+				"Before": "RespawnProtection_Init"
+			}
+		},
+		{
+			"Path": "/ai/_ai_turret_sentry.gnut",
+			"RunOn": "SERVER && MP",
+			"ServerCallback": {
+				"After": "AiTurretSentry_Init"
+			}
 		}
 	]
 }

@@ -1,6 +1,5 @@
 name: Build
-on:
-  push:
+on: [push, pull_request]
 
 jobs:
   check-loc-encoding:
@@ -10,5 +9,5 @@ jobs:
         uses: actions/checkout@v2
       - name: Check localization files encoding
         run: |
-          files=$(ls Northstar.Client/mod/resource/*.txt)
+          files=$(ls Northstar.Client/mod/resource/northstar_client_localisation_*.txt)
           IFS=$'\n'; files=($files); unset IFS; ! file --mime "${files[@]}" | grep -v "charset=utf-16le"

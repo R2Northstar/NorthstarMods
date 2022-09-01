@@ -79,8 +79,8 @@ Premi Sì se sei d'accordo. Questa scelta può essere modificata in qualsiasi mo
 		"PL_sbox_abbr" "SBOX"
 		"GAMEMODE_SBOX" "Sandbox"
 
-		"PL_gg" "Gioco d'Armi"
-		"PL_gg_lobby" "Lobby: Gioco d'Armi"
+		"PL_gg" "Gioco delle Armi"
+		"PL_gg_lobby" "Lobby: Gioco delle Armi"
 		"PL_gg_desc" "Ottieni un'uccisione con ogni arma per vincere."
 		"PL_gg_hint" "Ottieni una nuova arma ogni uccisione."
 		"PL_gg_abbr" "GG"
@@ -128,7 +128,7 @@ Premi Sì se sei d'accordo. Questa scelta può essere modificata in qualsiasi mo
 		"PL_hs_lobby" "Lobby: Nascondino"
 		"PL_hs_desc" "Nasconditi oppure trova gli avversari."
 		"PL_hs_hint" "Uccidi tutti i giocatori nascosti per vincere oppure cerca di non farti trovare."
-		"PL_hs_abbr" "HS"
+		"PL_hs_abbr" "NS"
 		"GAMEMODE_hs" "Nascondino"
 		"HIDEANDSEEK_YOU_ARE_SEEKER" "TROVA I GIOCATORI NASCOSTI"
 		"HIDEANDSEEK_SEEKER_DESC" "Trova ed uccidi tutti i giocatori nascosti. \nRespawnerai in %s1 secondi."
@@ -177,16 +177,16 @@ Premi Sì se sei d'accordo. Questa scelta può essere modificata in qualsiasi mo
 		"GAMEMODE_ctf_comp" "Cattura Bandiera Competitivo"
 
 		// mode settings
-		"MODE_SETTING_CATEGORY_PROMODE" "Pro-Mode"
+		"MODE_SETTING_CATEGORY_PROMODE" "Modalità Competitiva"
 		"MODE_SETTING_CATEGORY_BLEEDOUT" "Sanguinamento pilota"
 
 		"custom_air_accel_pilot" "Accelerazione Aerea"
 		"no_pilot_collision" "Collisione tra Piloti"
-		"promode_enable" "Armi Pro-Mode"
-		"fp_embark_enabled" "Imbarchi/esecuzioni 1ºpers."
+		"promode_enable" "Armi Modalità Competitiva"
+		"fp_embark_enabled" "Imbarchi/esecuzioni in 1ºpers."
 		"classic_rodeo" "Rodeo classico"
-		"oob_timer_enabled" "Fuori dai Limiti timer"
-		"riff_instagib" "Instagib-Mode"
+		"oob_timer_enabled" "Timer Fuori dai Limiti"
+		"riff_instagib" "Modalità Instagib"
 
 		"riff_player_bleedout" "Sanguinamento pilota"
 		"player_bleedout_forceHolster" "Riponi le armi (sanguinam.)"
@@ -194,7 +194,7 @@ Premi Sì se sei d'accordo. Questa scelta può essere modificata in qualsiasi mo
 		"player_bleedout_bleedoutTime" "Tempo Sanguinamento"
 		"player_bleedout_firstAidTime" "Tempo di Rianimazione"
 		"player_bleedout_firstAidTimeSelf" "Tempo di auto-Rianimazione"
-		"player_bleedout_firstAidHealPercent" "Recupero HP Rianimazione %"
+		"player_bleedout_firstAidHealPercent" "Recupero PS Rianimazione %"
 		"player_bleedout_aiBleedingPlayerMissChance" "AI miss % (sanguinamento)"
 
 		// coop stuff
@@ -256,5 +256,20 @@ Premi Sì se sei d'accordo. Questa scelta può essere modificata in qualsiasi mo
 
 		"INGAME_PLAYERS" "Players: ^6BA6C400%s1"
 		"TOTAL_SERVERS" "Server: ^C46C6C00%s1"
+
+		// In-game chat
+		"HUD_CHAT_WHISPER_PREFIX" "[WHISPER]"
+		"HUD_CHAT_SERVER_PREFIX" "[SERVER]"
+
+		"NO_GAMESERVER_RESPONSE"         "Non è stato possibile raggiungere il server"
+		"BAD_GAMESERVER_RESPONSE"         "Il server ha dato una risposta invalida"
+		"UNAUTHORIZED_GAMESERVER"         "Il server non è autorizzato a fare quella richiesta"
+		"UNAUTHORIZED_GAME"                "Stryder non è riuscito a confermare che questo account possiede Titanfall 2"
+		"UNAUTHORIZED_PWD"                 "Password errata"
+		"STRYDER_RESPONSE"                 "Non è stato possibile analizzare la risposta Stryder"
+		"PLAYER_NOT_FOUND"                 "Non è stato trovato l'account player"
+		"INVALID_MASTERSERVER_TOKEN"     "Token Masterserver invalido o scaduto"
+		"JSON_PARSE_ERROR"                 "Errore nell'analisi di risposta json"
+		"UNSUPPORTED_VERSION"             "La versione che stai usando non è più supportata"
 	}
 }

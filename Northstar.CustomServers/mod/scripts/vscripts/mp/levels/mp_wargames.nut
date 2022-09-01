@@ -83,10 +83,12 @@ void function SpawnMarvinsForRound()
 		entity marvin = CreateMarvin( TEAM_UNASSIGNED, spawner.GetOrigin(), spawner.GetAngles() )
 		marvin.kv.health = 1
 		marvin.kv.max_health = 1
-		marvin.kv.spawnflags = 516
-		marvin.kv.contents = (int(marvin.kv.contents) | CONTENTS_NOGRAPPLE)
+		//marvin.kv.spawnflags = 516
+		marvin.kv.contents = ( int( marvin.kv.contents ) | CONTENTS_NOGRAPPLE )
 		DispatchSpawn( marvin )
 		HideName( marvin )
+
+		thread MarvinJobThink( marvin )
 	}
 }
 
@@ -182,7 +184,12 @@ void function OnPrematchStart()
 	
 	// launch players into intro
 	foreach ( entity player in GetPlayerArray() )
-		thread PlayerWatchesWargamesIntro( player )
+	{
+		if ( !IsPrivateMatchSpectator( player ) )
+			thread PlayerWatchesWargamesIntro( player )
+		else
+			RespawnPrivateMatchSpectator( player )
+	}
 	
 	// 7 seconds of nothing until we start the pod sequence
 	wait 7.0
@@ -332,7 +339,8 @@ void function PlayerWatchesWargamesIntro( entity player )
 void function DelayedGamemodeAnnouncement( entity player )
 {
 	wait 1.0
-	TryGameModeAnnouncement( player )
+	if ( IsValid( player ) && IsAlive( player ) )
+		TryGameModeAnnouncement( player )
 }
 
 void function PlaySound_SimPod_DoorShut( entity playerFirstPersonProxy  ) // stolen from sp_training

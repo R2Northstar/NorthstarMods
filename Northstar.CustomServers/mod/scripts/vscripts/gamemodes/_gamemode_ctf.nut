@@ -36,10 +36,12 @@ void function CaptureTheFlag_Init()
 	AddCallback_OnClientConnected( CTFInitPlayer )
 
 	AddCallback_GameStateEnter( eGameState.Prematch, CreateFlags )
+	AddCallback_GameStateEnter( eGameState.Epilogue, RemoveFlags )
 	AddCallback_OnTouchHealthKit( "item_flag", OnFlagCollected )
 	AddCallback_OnPlayerKilled( OnPlayerKilled )
 	AddCallback_OnPilotBecomesTitan( DropFlagForBecomingTitan )
 	
+	SetSpawnZoneRatingFunc( DecideSpawnZone_CTF )
 	AddSpawnpointValidationRule( VerifyCTFSpawnpoint )
 	
 	RegisterSignal( "FlagReturnEnded" )
@@ -65,69 +67,7 @@ void function CaptureTheFlag_Init()
 
 void function RateSpawnpoints_CTF( int checkClass, array<entity> spawnpoints, int team, entity player ) 
 {
-	// ctf spawn algo iteration 4 i despise extistence
-	array<entity> startSpawns = SpawnPoints_GetPilotStart( team )
-	array<entity> enemyStartSpawns = SpawnPoints_GetPilotStart( GetOtherTeam( team ) )
-	array<entity> enemyPlayers = GetPlayerArrayOfTeam_Alive( team )
-	
-	// get average startspawn position and max dist between spawns
-	// could probably cache this, tbh, not like it should change outside of halftimes
-	vector averageFriendlySpawns
-	float averageFriendlySpawnDist
-	
-	int averageDistCount
-	
-	foreach ( entity spawn in startSpawns )
-	{
-		foreach ( entity otherSpawn in startSpawns )
-		{
-			float dist = Distance2D( spawn.GetOrigin(), otherSpawn.GetOrigin() )
-			averageFriendlySpawnDist += dist
-			averageDistCount++
-		}
-		
-		averageFriendlySpawns += spawn.GetOrigin()
-	}
-	
-	averageFriendlySpawns /= startSpawns.len()
-	averageFriendlySpawnDist /= averageDistCount
-	
-	// get average enemy startspawn position
-	vector averageEnemySpawns
-	
-	foreach ( entity spawn in enemyStartSpawns )
-		averageEnemySpawns += spawn.GetOrigin()
-	
-	averageEnemySpawns /= enemyStartSpawns.len()
-	
-	// from here, rate spawns
-	float baseDistance = Distance2D( averageFriendlySpawns, averageEnemySpawns )
-	float spawnIterations = ( baseDistance / averageFriendlySpawnDist ) / 2
-	
-	foreach ( entity spawn in spawnpoints )
-	{
-		// ratings should max/min out at 100 / -100
-		// start by prioritizing closer spawns, but not so much that enemies won't really affect them
-		float rating = 10 * ( 1.0 - Distance2D( averageFriendlySpawns, spawn.GetOrigin() ) / baseDistance )
-		float remainingZonePower = 1.0 // this is used to ensure that players that are in multiple zones at once shouldn't affect all those zones too hard
-	
-		for ( int i = 0; i < spawnIterations; i++ )
-		{
-			vector zonePos = averageFriendlySpawns + Normalize( averageEnemySpawns - averageFriendlySpawns ) * ( i * averageFriendlySpawnDist )
-			
-			float zonePower
-			foreach ( entity otherPlayer in enemyPlayers )
-				if ( Distance2D( otherPlayer.GetOrigin(), zonePos ) < averageFriendlySpawnDist )
-					zonePower += 1.0 / enemyPlayers.len()
-			
-			zonePower = min( zonePower, remainingZonePower )
-			remainingZonePower -= zonePower
-			// scale rating based on distance between spawn and zone, baring in mind max 100 rating
-			rating -= ( zonePower * 100 ) * ( 1.0 - Distance2D( spawn.GetOrigin(), zonePos ) / baseDistance )
-		}
-		
-		spawn.CalculateRating( checkClass, player.GetTeam(), rating, rating )
-	}
+	RateSpawnpoints_SpawnZones( checkClass, spawnpoints, team, player )
 }
 
 bool function VerifyCTFSpawnpoint( entity spawnpoint, int team )
@@ -170,6 +110,8 @@ void function CTFInitPlayer( entity player )
 
 void function OnPlayerKilled( entity victim, entity attacker, var damageInfo )
 {
+	if ( !IsValid( GetFlagForTeam( GetOtherTeam( victim.GetTeam() ) ) ) ) // getting a crash idk
+		return
 	if ( GetFlagForTeam( GetOtherTeam( victim.GetTeam() ) ).GetParent() == victim )
 	{
 		if ( victim != attacker && attacker.IsPlayer() )
@@ -177,13 +119,6 @@ void function OnPlayerKilled( entity victim, entity attacker, var damageInfo )
 		
 		DropFlag( victim )
 	}
-}
-
-void function SetupFlagMinimapIcon( entity flag )
-{
-	flag.Minimap_AlwaysShow( TEAM_IMC, null )
-	flag.Minimap_AlwaysShow( TEAM_MILITIA, null )
-	flag.Minimap_SetAlignUpright( true )
 }
 
 void function CreateFlags()
@@ -205,8 +140,13 @@ void function CreateFlags()
 		// likely this is because respawn uses distance checks from spawns to check this in official
 		// but i don't like doing that so just using a list of maps to swap them on lol
 		bool switchedSides = HasSwitchedSides() == 1
-		bool shouldSwap = SWAP_FLAG_MAPS.contains( GetMapName() ) || switchedSides
-	
+
+		// i dont know why this works and whatever we had before didn't, but yeah
+		bool shouldSwap = switchedSides 
+		if (!shouldSwap && SWAP_FLAG_MAPS.contains( GetMapName() ))
+			shouldSwap = !shouldSwap
+		
+
 		int flagTeam = spawn.GetTeam()
 		if ( shouldSwap )
 		{
@@ -228,7 +168,6 @@ void function CreateFlags()
 		flag.SetModel( CTF_FLAG_MODEL )
 		flag.SetOrigin( spawn.GetOrigin() + < 0, 0, base.GetBoundingMaxs().z * 2 > ) // ensure flag doesn't spawn clipped into geometry
 		flag.SetVelocity( < 0, 0, 1 > )
-		SetFlagStateForTeam( flag.GetTeam(), eFlagState.None ) // reset flag state to prevent half-time oddities
 		
 		flag.s.canTake <- true
 		flag.s.playersReturning <- []
@@ -252,7 +191,6 @@ void function CreateFlags()
 		{
 			file.imcFlagSpawn = base
 			file.imcFlag = flag
-			SetupFlagMinimapIcon( file.imcFlag )
 			file.imcFlagReturnTrigger = returnTrigger
 			
 			SetGlobalNetEnt( "imcFlag", file.imcFlag )
@@ -262,7 +200,6 @@ void function CreateFlags()
 		{
 			file.militiaFlagSpawn = base
 			file.militiaFlag = flag
-			SetupFlagMinimapIcon( file.militiaFlag )
 			file.militiaFlagReturnTrigger = returnTrigger
 			
 			SetGlobalNetEnt( "milFlag", file.militiaFlag )
@@ -270,8 +207,33 @@ void function CreateFlags()
 		}
 	}
 	
+	// reset the flag states, prevents issues where flag is home but doesnt think it's home when halftime goes
+	SetFlagStateForTeam( TEAM_MILITIA, eFlagState.None )
+	SetFlagStateForTeam( TEAM_IMC, eFlagState.None )
+	
 	foreach ( entity player in GetPlayerArray() )
 		CTFInitPlayer( player )
+}
+
+void function RemoveFlags()
+{
+	// destroy all the flag related things
+	if ( IsValid( file.imcFlagSpawn ) )
+	{
+		file.imcFlagSpawn.Destroy()
+		file.imcFlag.Destroy()
+		file.imcFlagReturnTrigger.Destroy()
+	}
+	if ( IsValid( file.militiaFlagSpawn ) )
+	{
+		file.militiaFlagSpawn.Destroy()
+		file.militiaFlag.Destroy()
+		file.militiaFlagReturnTrigger.Destroy()
+	}
+
+	// unsure if this is needed, since the flags are destroyed? idk
+	SetFlagStateForTeam( TEAM_MILITIA, eFlagState.None )
+	SetFlagStateForTeam( TEAM_IMC, eFlagState.None )
 }
 
 void function TrackFlagReturnTrigger( entity flag, entity returnTrigger )
@@ -341,10 +303,11 @@ void function DropFlagIfPhased( entity player, entity flag )
 	
 	OnThreadEnd( function() : ( player ) 
 	{
-		DropFlag( player, true )
+		if (GetGameState() == eGameState.Playing || GetGameState() == eGameState.SuddenDeath)
+			DropFlag( player, true )
 	})
-	
-	while( IsValid( flag ) && flag.GetParent() == player )
+	// the IsValid check is purely to prevent a crash due to a destroyed flag (epilogue)
+	while( IsValid(flag) && flag.GetParent() == player )
 		WaitFrame()
 }
 
@@ -402,6 +365,9 @@ void function TrackFlagDropTimeout( entity flag )
 
 void function ResetFlag( entity flag )
 {
+	// prevents crash when flag is reset after it's been destroyed due to epilogue
+	if (!IsValid(flag))
+		return
 	// ensure we can't pickup the flag after it's been dropped but before it's been reset
 	flag.s.canTake = false
 	
@@ -426,6 +392,12 @@ void function ResetFlag( entity flag )
 
 void function CaptureFlag( entity player, entity flag )
 {
+	// can only capture flags during normal play or sudden death
+	if (GetGameState() != eGameState.Playing && GetGameState() != eGameState.SuddenDeath)
+	{
+		printt( player + " tried to capture the flag, but the game state was " + GetGameState() + " not " + eGameState.Playing + " or " + eGameState.SuddenDeath)
+		return
+	}
 	// reset flag
 	ResetFlag( flag )
 	

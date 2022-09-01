@@ -9,6 +9,7 @@ global function AddCallback_OnRoundEndCleanup
 global function SetShouldUsePickLoadoutScreen
 global function SetSwitchSidesBased
 global function SetSuddenDeathBased
+global function SetTimerBased
 global function SetShouldUseRoundWinningKillReplay
 global function SetRoundWinningKillReplayKillClasses
 global function SetRoundWinningKillReplayAttacker
@@ -28,6 +29,7 @@ struct {
 	bool usePickLoadoutScreen
 	bool switchSidesBased
 	bool suddenDeathBased
+	bool timerBased = true
 	int functionref() timeoutWinnerDecisionFunc
 	
 	// for waitingforplayers
@@ -198,7 +200,9 @@ void function StartGameWithoutClassicMP()
 	
 	foreach ( entity player in GetPlayerArray() )
 	{
-		RespawnAsPilot( player )
+		if ( !IsPrivateMatchSpectator( player ) )
+			RespawnAsPilot( player )
+			
 		ScreenFadeFromBlack( player, 0 )
 	}
 	
@@ -226,7 +230,7 @@ void function GameStateEnter_Playing_Threaded()
 			endTime = expect float( GetServerVar( "gameEndTime" ) )
 	
 		// time's up!
-		if ( Time() >= endTime )
+		if ( Time() >= endTime && file.timerBased )
 		{
 			int winningTeam
 			if ( file.timeoutWinnerDecisionFunc != null )
@@ -274,12 +278,19 @@ void function GameStateEnter_WinnerDetermined_Threaded()
 			Remote_CallFunction_NonReplay( player, "ServerCallback_AnnounceRoundWinner", winningTeam, announcementSubstr, ROUND_WINNING_KILL_REPLAY_SCREEN_FADE_TIME, GameRules_GetTeamScore2( TEAM_MILITIA ), GameRules_GetTeamScore2( TEAM_IMC ) )
 		else
 			Remote_CallFunction_NonReplay( player, "ServerCallback_AnnounceWinner", winningTeam, announcementSubstr, ROUND_WINNING_KILL_REPLAY_SCREEN_FADE_TIME )
+	
+		if ( player.GetTeam() == winningTeam )
+			UnlockAchievement( player, achievements.MP_WIN )
 	}
 	
 	WaitFrame() // wait a frame so other scripts can setup killreplay stuff
+	
+	// set gameEndTime to current time, so hud doesn't display time left in the match
+	SetServerVar( "gameEndTime", Time() )
+	SetServerVar( "roundEndTime", Time() )
 
 	entity replayAttacker = file.roundWinningKillReplayAttacker
-	bool doReplay = Replay_IsEnabled() && IsRoundWinningKillReplayEnabled() && IsValid( replayAttacker )
+	bool doReplay = Replay_IsEnabled() && IsRoundWinningKillReplayEnabled() && IsValid( replayAttacker ) && !ClassicMP_ShouldRunEpilogue()
 				 && Time() - file.roundWinningKillReplayTime <= ROUND_WINNING_KILL_REPLAY_LENGTH_OF_REPLAY && winningTeam != TEAM_UNASSIGNED
  	
 	float replayLength = 2.0 // extra delay if no replay
@@ -393,7 +404,7 @@ void function PlayerWatchesRoundWinningKillReplay( entity player, float replayLe
 	else
 		wait replayLength
 		
-	player.SetPredictionEnabled( true )
+	//player.SetPredictionEnabled( true ) doesn't seem needed, as native code seems to set this on respawn
 	player.ClearReplayDelay()
 	player.ClearViewEntity()
 	player.UnfreezeControlsOnServer()
@@ -484,7 +495,7 @@ void function PlayerWatchesSwitchingSidesKillReplay( entity player, bool doRepla
 	else
 		wait SWITCHING_SIDES_DELAY_REPLAY // extra delay if no replay
 	
-	player.SetPredictionEnabled( true )
+	//player.SetPredictionEnabled( true ) doesn't seem needed, as native code seems to set this on respawn
 	player.ClearReplayDelay()
 	player.ClearViewEntity()
 }
@@ -666,16 +677,16 @@ void function CleanUpEntitiesForRoundEnd()
 	foreach ( entity player in GetPlayerArray() )
 	{
 		ClearTitanAvailable( player )
-		
+		PROTO_CleanupTrackedProjectiles( player )
+		player.SetPlayerNetInt( "batteryCount", 0 ) 
 		if ( IsAlive( player ) )
 			player.Die( svGlobal.worldspawn, svGlobal.worldspawn, { damageSourceId = eDamageSourceId.round_end } )
 	}
 	
 	foreach ( entity npc in GetNPCArray() )
 	{
-		if ( !IsValid( npc ) )
+		if ( !IsValid( npc ) || !IsAlive( npc ) )
 			continue
-	
 		// kill rather than destroy, as destroying will cause issues with children which is an issue especially for dropships and titans
 		npc.Die( svGlobal.worldspawn, svGlobal.worldspawn, { damageSourceId = eDamageSourceId.round_end } )
 	}
@@ -711,6 +722,11 @@ void function SetSwitchSidesBased( bool switchSides )
 void function SetSuddenDeathBased( bool suddenDeathBased )
 {
 	file.suddenDeathBased = suddenDeathBased
+}
+
+void function SetTimerBased( bool timerBased )
+{
+	file.timerBased = timerBased
 }
 
 void function SetShouldUseRoundWinningKillReplay( bool shouldUse )

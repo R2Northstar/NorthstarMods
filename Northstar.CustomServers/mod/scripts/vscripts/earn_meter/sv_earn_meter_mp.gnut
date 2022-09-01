@@ -74,7 +74,7 @@ void function OnPlayerRespawned( entity player )
 void function EarnMeterMP_ReplaceReward( entity player, EarnObject reward, float rewardFrac )
 {
 	PlayerEarnMeter_Reset( player )
-	if ( reward.id < 0 )  // Don't set the reward if it is nonexistent
+	if ( reward.id < 0 )
 		return
 	PlayerEarnMeter_SetReward( player, reward )
 	PlayerEarnMeter_SetRewardFrac( player, rewardFrac )
@@ -96,9 +96,12 @@ void function EarnMeterMP_PlayerLifeThink( entity player )
 	OnThreadEnd(
 		function() : ( player, pilotReward, pilotRewardFrac )
 		{
-			// Resets the meter to the pilot version if the player dies in a titan (otherwise pilot gets e-smoke earn meter, which is bad)
+			if ( !IsValid( player ) )
+				return
+
+			// Resets the meter to the pilot version if the player dies in a titan or while their titan is alive (otherwise they can be stuck with e-smoke)
 			int earnMode = PlayerEarnMeter_GetMode( player )
-			if( earnMode == eEarnMeterMode.CORE || earnMode == eEarnMeterMode.CORE_ACTIVE )
+			if( earnMode != eEarnMeterMode.DEFAULT )
 				EarnMeterMP_ReplaceReward( player, pilotReward, pilotRewardFrac )
 		}
 	)
@@ -129,15 +132,9 @@ void function EarnMeterMP_PlayerLifeThink( entity player )
 				pilotRewardFrac = PlayerEarnMeter_GetRewardFrac( player )
 			}
 
-			if ( desiredEarnMeterMode == eEarnMeterMode.DEFAULT )
-			{
-				if ( !IsTitanAvailable( player ) && lastEarnMeterMode == eEarnMeterMode.PET ) // this should only be the case after player's auto died (or they ejected)
-					EarnMeterMP_ReplaceReward( player, pilotReward, pilotRewardFrac )
-
-				if ( PlayerEarnMeter_GetRewardFrac( player ) != 0 )
-					PlayerEarnMeter_EnableReward( player )
-			}
-			else if ( desiredEarnMeterMode == eEarnMeterMode.CORE )
+			if ( desiredEarnMeterMode == eEarnMeterMode.DEFAULT ) // Only occurs when auto titan dies. Resets reward progress and reverts it back to boost.
+				EarnMeterMP_ReplaceReward( player, pilotReward, pilotRewardFrac )
+			else if ( desiredEarnMeterMode == eEarnMeterMode.CORE ) // Replace the pilot's earn meter reward with smoke when they enter their titan.
 			{
 				EarnMeterMP_ReplaceReward( player, EarnObject_GetByRef( "core_electric_smoke" ), CORE_SMOKE_FRAC )
 				if( SoulTitanCore_GetNextAvailableTime( player.GetTitanSoul() ) >= CORE_SMOKE_FRAC )
@@ -185,7 +182,7 @@ void function EarnMeterMP_BoostEarned( entity player )
 	while ( burncard.ref == "burnmeter_random_foil" )
 		burncard = BurnReward_GetRandom()
 
-	for ( int i = 0; i < BurnMeter_GetLimitedRewardCount( player ); i++ )
+	for ( int i = 0; i < BurnMeter_GetLimitedRewardCount( player, burncard.ref ); i++ )
 		BurnMeter_GiveRewardDirect( player, burncard.ref )
 
 	PlayerEarnMeter_DisableReward( player )
