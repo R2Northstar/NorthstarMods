@@ -291,11 +291,14 @@ void function InitBurnMeterPersistentData( entity player )
 
 void function PlayerUsesAmpedWeaponsBurncard( entity player )
 {
+	player.Signal("StopAmpedWeapons")
 	thread PlayerUsesAmpedWeaponsBurncardThreaded( player )
 }
 
 void function PlayerUsesAmpedWeaponsBurncardThreaded( entity player )
 {
+	player.EndSignal("StopAmpedWeapons")
+	
 	array<entity> weapons = player.GetMainWeapons()
 	//weapons.extend( player.GetOffhandWeapons() ) // idk? unsure of vanilla behaviour here
 	foreach ( entity weapon in weapons )
@@ -387,7 +390,7 @@ void function PlayerUsesMaphackBurncardThreaded( entity player )
 		{
 			if ( !cleanup ) // Map hack ended when sonar wasn't active, no cleanup needed
 				return
-			
+
 			foreach ( entity ent in affectedEntities )
 			{
 				if ( IsValid( ent ) )
@@ -416,7 +419,7 @@ void function PlayerUsesMaphackBurncardThreaded( entity player )
 			{
 				if ( IsAlive( player ) )
 					Remote_CallFunction_Replay( ent, "ServerCallback_SonarPulseFromPosition", player.GetOrigin().x, player.GetOrigin().y, player.GetOrigin().z, SONAR_GRENADE_RADIUS )
-				
+
 				// Map Hack also gives radar on enemies for longer than the sonar duration.
 				if ( ent.GetTeam() == playerTeam )
 					thread ScanMinimap( ent, false, MAPHACK_PULSE_DELAY - 0.2 )
