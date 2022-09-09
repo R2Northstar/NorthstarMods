@@ -457,11 +457,8 @@ vector function GetControlColorForMod( string modName )
 		switch ( GetConVarInt( "colorblind_mode" ) )
 		{
 			case 1:
-				return <0.973, 0.863, 0>
 			case 2:
-				return <1,0.835,0.6>
 			case 3:
-				return <0.459,0.923,1>
 			default:
 				return <0,1,0>
 		}
@@ -469,11 +466,9 @@ vector function GetControlColorForMod( string modName )
 		switch ( GetConVarInt( "colorblind_mode" ) )
 		{
 			case 1:
-				return <0.561, 0.494, 0.118>
 			case 2:
-				return <0.631,0.471,0>
+				return <0.29,0,0.57>
 			case 3:
-				return <0.992,0.09,0>
 			default:
 				return <1,0,0>
 		}
