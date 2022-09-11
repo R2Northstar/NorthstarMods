@@ -208,6 +208,7 @@ void function OnModButtonPressed( var button )
 		var box = Hud_GetChild( file.panels[ int ( Hud_GetScriptID( Hud_GetParent( button ) ) ) - 1 ], "ControlBox" )
 		SetControlBoxColor( box, modName )
 		SetControlBarColor( modName )
+		RefreshMods()
 	}
 }
 
@@ -283,6 +284,7 @@ void function DisableMod()
 	var box = Hud_GetChild( file.panels[ int ( Hud_GetScriptID( Hud_GetParent( file.currentButton ) ) ) - 1], "ControlBox" )
 	SetControlBoxColor( box, modName )
 	SetControlBarColor( modName )
+	RefreshMods()
 }
 
 array<string> function GetEnabledModsArray()
