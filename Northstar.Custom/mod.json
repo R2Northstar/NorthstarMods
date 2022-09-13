@@ -28,6 +28,13 @@
 	],
 	"Scripts": [
 		{
+			"Path": "nscn_logo_rui.nut",
+			"RunOn": "CLIENT",
+			"ClientCallback": {
+				"After": "nscnRuiPrecache"
+			}
+		},
+		{
 			"Path": "sh_northstar_custom_precache.gnut",
 			"RunOn": "( CLIENT || SERVER ) && MP",
 			"ClientCallback": {

@@ -1,0 +1,40 @@
+FontFileTable
+{
+	"Default"					"resource/loli.ttf"	[!$JAPANESE && !$TCHINESE]
+	"Default"					"resource/loli.ttf"		[$JAPANESE]
+	"Default"					"resource/loli.ttf"		[$TCHINESE]
+
+	"DefaultBold"				"resource/loli.ttf"	[!$JAPANESE && !$TCHINESE]
+	"DefaultBold"				"resource/loli.ttf"		[$JAPANESE]
+	"DefaultBold"				"resource/loli.ttf"		[$TCHINESE]
+
+	"Titanfall"					"resource/loli.ttf"		[!$JAPANESE && !$TCHINESE && !$RUSSIAN]
+	"Titanfall"					"resource/loli.ttf"		[$JAPANESE]
+	"Titanfall"					"resource/loli.ttf"		[$TCHINESE]
+	"Titanfall"					"resource/loli.ttf"	[$RUSSIAN]
+
+	"marlett"					"vgui/fonts/loli.ttf"
+
+	// Everything below is DONOTSHIP / Dev only
+
+	"arial unicode ms"			"vgui/fonts/loli.ttf"
+
+	"lucida console"			"resource/loli.ttf"						[$PC]
+	"lucida console"			"resource/loli.ttf"	[$GAMECONSOLE]
+
+	"tahoma"					"resource/loli.ttf"						[$PC]
+	"tahoma"					"resource/loli.ttf"  	[$GAMECONSOLE]
+
+	"tahoma bold"				"resource/loli.ttf" 					[$PC]
+	"tahoma bold"				"resource/loli.ttf"  	[$GAMECONSOLE]
+
+	"courier new"				"resource/loli.ttf"						[$PC]
+	"courier new"				"resource/loli.ttf"					[$GAMECONSOLE]
+
+	"times new roman"			"resource/loli.ttf"						[$PC]
+	"times new roman"			"vgui/fonts/loli.ttf" 					[$GAMECONSOLE]
+
+	"arial"						"vgui/fonts/loli.ttf"
+	"arial bold"				"vgui/fonts/loli.ttf"
+	"arial narrow"				"vgui/fonts/loli.ttf"
+}
