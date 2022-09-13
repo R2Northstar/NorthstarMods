@@ -265,6 +265,12 @@ void function SetupComboButtonTest( var menu )
 		Hud_AddEventHandler( file.inviteRoomButton, UIE_CLICK, DoRoomInviteIfAllowed )	
 	}
 
+	if ( isModded )
+	{
+		var customButton = AddComboButton( comboStruct, headerIndex, buttonIndex++, "設置戰隊標籤" )
+		Hud_AddEventHandler( customButton, UIE_CLICK, OnCustomClantagButton_Activate )
+	}
+	
 	file.inviteFriendsButton = AddComboButton( comboStruct, headerIndex, buttonIndex++, "#MENU_TITLE_INVITE_FRIENDS" )
 	Hud_AddEventHandler( file.inviteFriendsButton, UIE_CLICK, InviteFriendsIfAllowed )
 	
