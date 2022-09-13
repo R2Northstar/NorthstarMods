@@ -42,6 +42,10 @@
 			}
 		},
 		{
+			"Path": "ui/menu_custom_clantag.nut",
+			"RunOn": "UI"
+		},
+		{
 			"Path": "client/cl_chat.gnut",
 			"RunOn": "CLIENT"
 		},
