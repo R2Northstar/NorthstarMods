@@ -965,10 +965,21 @@ void function OnServerSelected( var button )
 	{
 		if ( !NSGetModNames().contains( NSGetServerRequiredModName( serverIndex, i ) ) )
 		{
+			// check if mod is verified
+			bool modIsVerified = false;
+			if (IsModVerified(NSGetServerRequiredModName( serverIndex, i ), NSGetServerRequiredModVersion( serverIndex, i ))) {
+				// TODO download mod
+			}
+
 			DialogData dialogData
 			dialogData.header = "#ERROR"
 			dialogData.message = "Missing mod \"" + NSGetServerRequiredModName( serverIndex, i ) + "\" v" + NSGetServerRequiredModVersion( serverIndex, i )
 			dialogData.image = $"ui/menu/common/dialog_error"
+
+			if (!modIsVerified)
+			{
+				dialogData.message += "\n(mod is not verified, and couldn't be downloaded automatically)"
+			}
 
 			#if PC_PROG
 				AddDialogButton( dialogData, "#DISMISS" )
