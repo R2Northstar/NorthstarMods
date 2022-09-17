@@ -44,7 +44,7 @@ global function DisconnectClient;
  */
 void function DisconnectClient(entity player, string message)
 {
-    // Ensure the player is valid and fully connected.
+    // Ensure the player is valid.
     if (!IsValid(player))
     {
         printt("Attempted to disconnect an invalid client, aborting.");
