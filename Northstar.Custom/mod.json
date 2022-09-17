@@ -418,13 +418,13 @@
 				"Before": "MessageUtils_ServerInit"
 			}
 		},
-    {
-      "Path": "sh_client_disconnect.gnut",
-      "RunOn": "( CLIENT || SERVER ) && MP",
-      "ClientCallback": {
-        "Before": "ClientDisconnect_Init"
-      }
-    }
+		{
+			"Path": "sh_client_disconnect.gnut",
+			"RunOn": "( CLIENT || SERVER ) && MP",
+			"ClientCallback": {
+				"Before": "ClientDisconnect_Init"
+			}
+		}
 	],
 
 	"Localisation": [
