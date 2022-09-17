@@ -508,15 +508,15 @@ void function GameStateEnter_SuddenDeath()
 	SetRespawnsEnabled( false )
 
 	// defensive fixes, so game won't stuck in SuddenDeath forever
-	bool mitElimited = false
+	bool mltElimited = false
 	bool imcElimited = false
-	if( GetPlayerArrayOfTeam_Alive( TEAM_MILITIA ) < 1 )
-		mitElimited = true
-	if( GetPlayerArrayOfTeam_Alive( TEAM_IMC ) < 1 )
+	if( GetPlayerArrayOfTeam_Alive( TEAM_MILITIA ).len() < 1 )
+		mltElimited = true
+	if( GetPlayerArrayOfTeam_Alive( TEAM_IMC ).len() < 1 )
 		imcElimited = true
-	if( mitElimited && imcElimited )
+	if( mltElimited && imcElimited )
 		SetWinner( TEAM_UNASSIGNED )
-	else if( mitElimited )
+	else if( mltElimited )
 		SetWinner( TEAM_IMC )
 	else if( imcElimited )
 		SetWinner( TEAM_MILITIA )
