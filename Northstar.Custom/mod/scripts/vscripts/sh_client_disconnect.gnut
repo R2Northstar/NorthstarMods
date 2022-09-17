@@ -1,0 +1,62 @@
+#if CLIENT
+global function ClientDisconnect_Init;
+
+void function ClientDisconnect_Init()
+{
+    AddServerToClientStringCommandCallback("ServerDisconnectClient", ServerCallback_DisconnectClient);
+}
+
+void function ServerCallback_DisconnectClient(array<string> arguments)
+{
+    string cmd = "disconnect";
+
+    // If we have arguments, we'll wrap them in quotes.
+    if (arguments.len() > 0)
+    {
+        cmd += " \" ";
+
+        foreach (string arg in arguments)
+        {
+            cmd += format("%s ", arg);
+        }
+
+        cmd += "\"";
+    }
+
+    thread Client_DisconnectClient(cmd);
+}
+
+void function Client_DisconnectClient(string cmd)
+{
+    WaitFrame();
+    entity localPlayer = GetLocalClientPlayer();
+    localPlayer.ClientCommand(cmd);
+}
+#endif
+
+#if SERVER
+global function DisconnectClient;
+
+/**
+ * Executes the "disconnect" command on the given player, and displays the message as the disconnect reason.
+ * @param player The player to disconnect.
+ * @param message The message to display, leave empty for a generic server disconnect reason.
+ */
+void function DisconnectClient(entity player, string message)
+{
+    // Ensure the player is valid and fully connected.
+    if (!IsValid(player))
+    {
+        printt("Attempted to disconnect an invalid client, aborting.");
+        return;
+    }
+
+    string cmd = "ServerDisconnectClient";
+    if (message.len() > 0)
+    {
+        cmd += format(" %s", message);
+    }
+
+    ServerToClientStringCommand(player, cmd);
+}
+#endif
