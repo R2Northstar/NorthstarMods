@@ -1,0 +1,192 @@
+global function Nessie_Music_Player_Init
+
+// functions to control music player
+global function SetShouldPlayMusic
+global function SetMusicScoreEventPercentage
+global function SetUseCustomMusic
+global function SetCustomMusicList
+
+struct // default value setting here
+{
+    bool hasPlayedMusic = false
+    float musicScoreEventPercentage = 0.6
+    bool shouldPlayMusic = true
+    bool usingCustomMusic = false
+    array<string> customMusicList = []
+} file
+
+void function Nessie_Music_Player_Init()
+{
+    AddCallback_GameStateEnter( eGameState.Prematch, OnGamePrematch )
+    AddCallback_GameStateEnter( eGameState.Playing, OnGameStart )
+    AddCallback_OnPlayerKilled( OnPlayerKilled )
+}
+
+void function SetShouldPlayMusic( bool should )
+{
+    file.shouldPlayMusic = should
+}
+
+void function SetMusicScoreEventPercentage( float percentage )
+{
+    file.musicScoreEventPercentage = percentage
+}
+
+void function SetUseCustomMusic( bool use )
+{
+    file.usingCustomMusic = use
+}
+
+void function SetCustomMusicList( array<string> list )
+{
+    file.customMusicList = list
+}
+
+void function OnGamePrematch()
+{
+    ResetIntroMusic()
+}
+
+void function ResetIntroMusic()
+{
+    //switch( GAMETYPE )
+    //{
+    //    case "ctf":
+    //        foreach( entity player in GetPlayerArray() )
+    //}
+    
+}
+
+void function OnPlayerKilled( entity victim, entity attacker, var damageInfo )
+{
+    if( file.shouldPlayMusic )
+	    MusicPlayScoreEvent()
+}
+
+void function OnGameStart()
+{
+    if( file.shouldPlayMusic )
+		MusicPlayNormal()
+}
+
+void function MusicPlayScoreEvent()
+{
+	if( file.hasPlayedMusic )
+		return
+	
+	int score = GameMode_GetScoreLimit( GameRules_GetGameMode() )
+
+	if( IsFFAGame() ) // temp no need in ffa
+		return
+		
+	if( GameRules_GetTeamScore( TEAM_MILITIA ) >= score * file.musicScoreEventPercentage || GameRules_GetTeamScore( TEAM_IMC ) >= score * file.musicScoreEventPercentage )
+	{
+		PlayMusicToAll( eMusicPieceID.GAMEMODE_1 )
+		file.hasPlayedMusic = true
+	}
+	/* // temp no need in ffa
+	if( !IsFFAGame() )
+	{
+		if( GameRules_GetTeamScore( TEAM_MILITIA ) >= score * file.musicScoreEventPercentage || GameRules_GetTeamScore( TEAM_IMC ) >= score * file.musicScoreEventPercentage )
+		{
+			PlayMusicToAll( eMusicPieceID.GAMEMODE_1 )
+			file.hasPlayedMusic = true
+		}
+	}
+	else
+	{
+		entity bestplayer = GetWinningPlayer()
+		if( GameRules_GetTeamScore( bestplayer.GetTeam() ) >= score * file.musicScoreEventPercentage )
+		{
+			PlayMusicToAll( eMusicPieceID.GAMEMODE_1 )
+			file.hasPlayedMusic = true
+		}
+	}
+	*/
+}
+
+// hardcoded for now!!
+void function MusicPlayNormal()
+{
+	if( !IsFFAGame() && (GAMETYPE != "mfd") )
+		thread MusicPlayThink()
+}
+
+void function MusicPlayThink()
+{
+	if( IsRoundBased() )
+	{
+		bool canPlayMusic = false
+		if( GAMETYPE == "ctf" )
+		{
+			if( GetServerVar( "switchedSides" ) == 1 )
+				canPlayMusic = true
+		}
+		if( !canPlayMusic )
+			return
+	}
+	int time = GameTime_TimeLimitSeconds()
+	if( time >= 720 )
+	{
+		wait time*0.6
+		if( !file.hasPlayedMusic )
+		{
+			PlayMusicToAll( eMusicPieceID.GAMEMODE_1 )
+			file.hasPlayedMusic = true
+		}
+
+		wait time*0.4-60
+		PlayMusicToAll( eMusicPieceID.LEVEL_LAST_MINUTE )
+	}
+	else if( time >= 600 )
+	{
+		wait time*0.5
+		if( !file.hasPlayedMusic )
+		{
+			PlayMusicToAll( eMusicPieceID.GAMEMODE_1 )
+			file.hasPlayedMusic = true
+		}
+
+		wait time*0.5-60
+		PlayMusicToAll( eMusicPieceID.LEVEL_LAST_MINUTE )
+	}
+	else if( time >= 300 )
+	{
+		wait 10
+		if( !file.hasPlayedMusic )
+		{
+			PlayMusicToAll( eMusicPieceID.GAMEMODE_1 )
+			file.hasPlayedMusic = true
+		}
+
+		wait time-50
+		PlayMusicToAll( eMusicPieceID.LEVEL_LAST_MINUTE )
+	}
+	else if( time >= 120 )
+	{
+		wait time-60
+		if( !file.hasPlayedMusic )
+		{
+			PlayMusicToAll( eMusicPieceID.GAMEMODE_1 )
+			file.hasPlayedMusic = true
+		}
+	}
+	else
+		return
+}
+
+entity function GetWinningPlayer() 
+{
+	entity bestplayer
+
+	foreach ( entity player in GetPlayerArray() )
+	{
+		if( bestplayer == null )
+			bestplayer = player
+		
+		if( GameRules_GetTeamScore( player.GetTeam() ) > GameRules_GetTeamScore( bestplayer.GetTeam() ) )
+			bestplayer = player
+	}
+
+	return bestplayer
+}

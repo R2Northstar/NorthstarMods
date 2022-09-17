@@ -1,0 +1,211 @@
+global function AiGameModes_Init
+
+global function AiGameModes_SetGruntWeapons
+global function AiGameModes_SetSpectreWeapons
+
+global function AiGameModes_SpawnDropShip
+global function AiGameModes_SpawnDropPod
+global function AiGameModes_SpawnReaper
+global function AiGameModes_SpawnTitan
+
+global function GetValidIntroDropShipSpawn
+
+
+const INTRO_DROPSHIP_CUTOFF = 2000
+
+struct
+{
+	array< string > gruntWeapons = [ "mp_weapon_rspn101" ]
+	array< string > spectreWeapons = [ "mp_weapon_hemlok_smg" ]
+} file
+
+void function AiGameModes_Init()
+{
+
+}
+
+//------------------------------------------------------
+
+void function AiGameModes_SetGruntWeapons( array< string > weapons )
+{
+	file.gruntWeapons = weapons
+}
+
+void function AiGameModes_SetSpectreWeapons( array< string > weapons )
+{
+	file.spectreWeapons = weapons
+}
+
+//------------------------------------------------------
+
+void function AiGameModes_SpawnDropShip( vector pos, vector rot, int team, int count, void functionref( array<entity> guys ) squadHandler = null )
+{  
+	string squadName = MakeSquadName( team, UniqueString( "" ) )
+
+	CallinData drop
+	drop.origin 		= pos
+	drop.yaw 			  = rot.y
+	drop.dist 			= 768
+	drop.team 			= team
+	drop.squadname 	= squadName
+	SetDropTableSpawnFuncs( drop, CreateSoldier, count )
+	SetCallinStyle( drop, eDropStyle.ZIPLINE_NPC )
+  
+	thread RunDropshipDropoff( drop )
+	
+	WaitSignal( drop, "OnDropoff" )
+	
+	array< entity > guys = GetNPCArrayBySquad( squadName )
+	
+	foreach ( guy in guys )
+	{
+		ReplaceWeapon( guy, file.gruntWeapons[ RandomInt( file.gruntWeapons.len() ) ], [] )
+		guy.EnableNPCFlag( NPC_ALLOW_PATROL | NPC_ALLOW_INVESTIGATE | NPC_ALLOW_HAND_SIGNALS | NPC_ALLOW_FLEE )
+	}
+	
+	if ( squadHandler != null )
+		thread squadHandler( guys )
+}
+
+
+void function AiGameModes_SpawnDropPod( vector pos, vector rot, int team, string content /*( ͡° ͜ʖ ͡°)*/, void functionref( array<entity> guys ) squadHandler = null )
+{
+	string squadName = MakeSquadName( team, UniqueString( "" ) )
+	array<entity> guys
+	
+	entity pod = CreateDropPod( pos, <0,0,0> )
+	
+	InitFireteamDropPod( pod )
+	
+	for ( int i = 0; i < 4 ;i++ )
+	{
+		entity npc = CreateNPC( content, team, pos,<0,0,0> )
+		DispatchSpawn( npc )
+		SetSquad( npc, squadName )
+		
+		switch ( content )
+		{
+			case "npc_soldier":
+				ReplaceWeapon( npc, file.gruntWeapons[ RandomInt( file.gruntWeapons.len() ) ], [] )
+				break
+				
+			case "npc_spectre":
+				ReplaceWeapon( npc, file.spectreWeapons[ RandomInt( file.spectreWeapons.len() ) ], [] )
+				break
+		}
+		
+		npc.SetParent( pod, "ATTACH", true )
+		
+		npc.EnableNPCFlag( NPC_ALLOW_PATROL | NPC_ALLOW_INVESTIGATE | NPC_ALLOW_HAND_SIGNALS | NPC_ALLOW_FLEE )
+		guys.append( npc )
+	}
+	
+	// The order here is different so we can show on minimap while were still falling
+	if ( squadHandler != null )
+		thread squadHandler( guys )
+		
+	waitthread LaunchAnimDropPod( pod, "pod_testpath", pos, rot )
+	
+	ActivateFireteamDropPod( pod, guys )
+}
+
+void function AiGameModes_SpawnReaper( vector pos, vector rot, int team, string aiSettings = "", void functionref( entity reaper ) reaperHandler = null )
+{
+	// nessie fix
+	thread Reaper_Spawnpoint( pos, team, 11.2 )
+
+	wait 10
+	entity reaper = CreateSuperSpectre( team, pos, rot )
+	// reaper highlight
+	Highlight_SetFriendlyHighlight( reaper, "sp_enemy_pilot" )
+	reaper.Highlight_SetParam( 1, 0, < 3,3,3 > )
+	Highlight_SetEnemyHighlight( reaper, "enemy_titan" )
+
+	SetSpawnOption_Titanfall( reaper )
+	SetSpawnOption_Warpfall( reaper )
+	
+	if ( aiSettings != "" )
+		SetSpawnOption_AISettings( reaper, aiSettings )
+	
+	DispatchSpawn( reaper )
+	
+	
+	if ( reaperHandler != null )
+		thread reaperHandler( reaper )
+}
+
+// copied from cl_replacement_titan_hud.gnut
+void function Reaper_Spawnpoint( vector origin, int team, float impactTime, bool hasFriendlyWarning = false )
+{
+	array<entity> targetEffects = []
+	vector surfaceNormal = < 0, 0, 1 >
+
+	int index = GetParticleSystemIndex( $"P_ar_titan_droppoint" )
+
+	if( hasFriendlyWarning )
+	{
+		entity effectFriendly = StartParticleEffectInWorld_ReturnEntity( index, origin, surfaceNormal )
+		SetTeam( effectFriendly, team )
+		EffectSetControlPointVector( effectFriendly, 1, < 128,188,255 > )
+		effectFriendly.kv.VisibilityFlags = ENTITY_VISIBLE_TO_FRIENDLY
+		targetEffects.append( effectFriendly )
+	}
+
+	entity effectEnemy = StartParticleEffectInWorld_ReturnEntity( index, origin, surfaceNormal )
+	SetTeam( effectEnemy, team )
+	EffectSetControlPointVector( effectEnemy, 1, < 255,99,0 > )
+	effectEnemy.kv.VisibilityFlags = ENTITY_VISIBLE_TO_ENEMY
+	targetEffects.append( effectEnemy )
+
+	wait impactTime
+
+	foreach( entity targetEffect in targetEffects )
+	{
+		if ( IsValid( targetEffect ) )
+			EffectStop( targetEffect )
+	}
+}
+
+// including aisettings stuff specifically for at bounty titans
+void function AiGameModes_SpawnTitan( vector pos, vector rot, int team, string setFile, string aiSettings = "", void functionref( entity titan ) titanHandler = null )
+{
+	entity titan = CreateNPCTitan( setFile, TEAM_BOTH, pos, rot )
+	SetSpawnOption_Titanfall( titan )
+	SetSpawnOption_Warpfall( titan )
+	
+	if ( aiSettings != "" )
+		SetSpawnOption_AISettings( titan, aiSettings )
+	
+	DispatchSpawn( titan )
+	
+	if ( titanHandler != null )
+		thread titanHandler( titan )
+}
+
+// entity.ReplaceActiveWeapon gave grunts archers sometimes, this is my replacement for it
+void function ReplaceWeapon( entity guy, string weapon, array<string> mods )
+{
+	guy.TakeActiveWeapon()
+	guy.GiveWeapon( weapon, mods )
+	guy.SetActiveWeaponByName( weapon )
+}
+
+// Checks if we can spawn a dropship at a node, this should guarantee dropship ziplines
+array<entity> function GetValidIntroDropShipSpawn( array<entity> introNodes )
+{
+	array<entity> introShipSpawns
+	
+	if ( GetZiplineDropshipSpawns().len() == 0 )
+		return []
+	
+	foreach ( node in introNodes )
+	{
+		entity closestNode = GetClosest( GetZiplineDropshipSpawns(), node.GetOrigin() )
+		SetTeam( closestNode, node.GetTeam() )
+		
+		if ( Distance( closestNode.GetOrigin(), node.GetOrigin() ) < INTRO_DROPSHIP_CUTOFF )
+			introShipSpawns.append( closestNode )
+	}
+	
+	return introShipSpawns
+}

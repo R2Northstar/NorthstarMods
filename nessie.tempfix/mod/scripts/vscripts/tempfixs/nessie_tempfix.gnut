@@ -1,0 +1,88 @@
+global function Nessie_TempFix_Init
+global function PlayBattleChatterLineIncludingPlayer
+
+void function Nessie_TempFix_Init()
+{
+    AddCallback_OnClientConnected( OnClientConnected )
+    AddCallback_OnPlayerKilled( OnPlayerKilled )
+}
+
+void function OnClientConnected( entity player )
+{
+    AddEntityCallback_OnDamaged( player, PlayerContactChatter )
+}
+
+void function OnPlayerKilled( entity victim, entity attacker, var damageInfo )
+{
+	PlayerDeathChatter( victim, attacker )
+	StopSoundOnEntity( victim, "3p_zipline_loop" ) // fuck this
+}
+
+void function PlayerContactChatter( entity victim, var damageInfo )
+{
+    if( !IsPilot( victim ) )
+        return
+    entity attacker = DamageInfo_GetAttacker( damageInfo )
+    if( !IsValid( attacker ) )
+        return
+    if( !IsPilot( attacker ) )
+        return
+    if( victim == attacker )
+        return
+
+    //PlayBattleChatterLineIncludingPlayer( attacker, "bc_fNearEnemyDmg" )
+    thread DamagedPlayerChatterThink( attacker, victim )
+}
+
+void function PlayerDeathChatter( entity victim, entity attacker )
+{
+    if( !IsPilot( victim ) )
+        return
+    if( !IsValid( attacker ) )
+        return
+    if( !IsPilot( attacker ) )
+        return
+    if( victim == attacker )
+        return
+
+    //PlayBattleChatterLineIncludingPlayer( attacker, "bc_fKilledEnemy" )
+    thread KilledPilotChatterThink( attacker )
+}
+
+void function DamagedPlayerChatterThink( entity attacker, entity victim )
+{
+	attacker.EndSignal( "OnDestroy" )
+	attacker.EndSignal( "OnDeath" )
+	wait 0.2
+	if( !IsAlive( victim ) ) // so instant kills will play killing enemy bc
+		return
+	PlayBattleChatterLine( attacker, "bc_fNearEnemyDmg" )
+}
+
+void function KilledPilotChatterThink( entity attacker )
+{
+	attacker.EndSignal( "OnDestroy" )
+	attacker.EndSignal( "OnDeath" )
+	wait RandomFloatRange( 0.3, 0.5 )
+	PlayBattleChatterLine( attacker, "bc_fKilledEnemy" )
+	wait RandomFloatRange( 1.1, 1.5 )
+    array<entity> nearbyFriendly = GetPlayerArrayOfTeam_Alive( attacker.GetTeam() )
+	if( nearbyFriendly.contains( attacker ) )
+		nearbyFriendly.removebyvalue( attacker )
+	if( nearbyFriendly.len() < 1 )
+        return
+    entity closestFriendly = GetClosest( nearbyFriendly, attacker.GetOrigin(), 500 )
+    //PlayBattleChatterLineIncludingPlayer( closestFriendly, "bc_fCongratsKill" )
+    if( IsValid( closestFriendly ) )
+        PlayBattleChatterLine( closestFriendly, "bc_fCongratsKill" )
+}
+
+// edited _battle_chatter to make it all effected
+void function PlayBattleChatterLineIncludingPlayer( entity player, string conversationType )
+{
+	int conversationIndex = GetConversationIndex( conversationType )
+
+	foreach( entity otherPlayer in GetPlayerArrayOfTeam( player.GetTeam() ) )
+		if ( ShouldPlayBattleChatter( conversationType, otherPlayer, player ) )
+			Remote_CallFunction_Replay( otherPlayer, "ServerCallback_PlayBattleChatter", conversationIndex, player.GetEncodedEHandle() )
+}

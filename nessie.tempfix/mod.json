@@ -1,0 +1,23 @@
+{
+	"Name" : "Nessie Temp Fix",
+	"Description" : "",
+	"Version": "1.0.0",
+	"LoadPriority": 2,
+
+    "Scripts": [
+		{
+			"Path": "/tempfixs/nessie_tempfix.gnut",
+			"RunOn": "SERVER && MP",
+			"ServerCallback":{
+				"After": "Nessie_TempFix_Init"
+			}
+		},
+		{
+			"Path": "/tempfixs/music_player.gnut",
+			"RunOn": "SERVER && MP",
+            "ServerCallback": {
+                "After": "Nessie_Music_Player_Init"
+            }
+		}
+    ]
+}
