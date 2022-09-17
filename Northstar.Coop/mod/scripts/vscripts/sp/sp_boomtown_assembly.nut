@@ -212,6 +212,9 @@ void function AssemblyMapInit()
 	FlagInit( "ReapertownPlatforJumpMobilityGhostEnabled" )
 	//FlagInit( "EnteringAssembly" )
 
+	if ( NSIsDedicated() )
+		return
+
 	AddMobilityGhost( $"anim_recording/sp_boomtown_pipe_jump1.rpak" )
 	AddMobilityGhost( $"anim_recording/sp_boomtown_pipe_jump2.rpak" )
 	AddMobilityGhost( $"anim_recording/sp_boomtown_pipe_jump3.rpak" )
@@ -498,6 +501,8 @@ void function StartPointPrint( entity player, string name )
 
 void function StartPoint_Start( entity player )
 {
+	TriggerSilentCheckPoint( < -6456, 8710, 7420 >, true )
+
 	StartPointPrint( player, "Start" )
 
 	Objective_Set( "#BOOMTOWN_OBJECTIVE_LOCATE_BT" )
@@ -519,6 +524,7 @@ void function StartPoint_Start( entity player )
 void function StartPoint_Setup_Start( entity player )
 {
 	FactoryStart( player )
+	TriggerSilentCheckPoint( < -6456, 8710, 7420 >, true )
 }
 
 void function StartPoint_Skipped_Start( entity player )
@@ -554,14 +560,19 @@ void function IntroElevator( entity player )
 
 void function VentSounds( entity player )
 {
-	EndSignal( player, "OnDestroy" )
-	EndSignal( player, "OnDeath" )
+	vector origin = < -15564, 7626, 3104 >
 	FlagWait( "EnteredVent" )
-	EmitSoundOnEntity( player, "Boomtown_Vent_Entrance" )
-	thread VentRumbles( player )
-	while( !player.IsOnGround() )
-		WaitFrame()
-	EmitSoundOnEntity( player, "Boomtown_Vent_Land" )
+	
+	player = GetClosest( GetPlayerArray(), origin )
+	if ( IsValid( player ) )
+	{
+		EmitSoundOnEntity( player, "Boomtown_Vent_Entrance" )
+		thread VentRumbles( player )
+		while( !player.IsOnGround() )
+			WaitFrame()
+		EmitSoundOnEntity( player, "Boomtown_Vent_Land" )
+	}
+	TriggerManualCheckPoint( player, origin, true )
 }
 
 void function VentRumbles( entity player )
@@ -676,6 +687,8 @@ void function StartPoint_Assembly_Start( entity player )
 {
 	StartPointPrint( player, "Assembly Start" )
 
+	thread FallCheck()
+
 	StopMusicTrack( "music_boomtown_09_middleintro" )
 	PlayMusic( "music_boomtown_10_assembly_start" )
 
@@ -711,6 +724,8 @@ void function StartPoint_Skipped_Assembly_Start( entity player )
 	thread ContextLocationApproachingRoof3( player )
 
 	Objective_Set( "#BOOMTOWN_OBJECTIVE_ASSEMBLY" )
+
+	thread FallCheck()
 }
 
 void function WhatAreTheyBuildingHereConversation( entity player )
@@ -925,6 +940,8 @@ void function StartPoint_Assembly_Dirt( entity player )
 {
 	StartPointPrint( player, "Assembly Dirt" )
 
+	TriggerSilentCheckPoint( GetEntByScriptName( "player_start_assembly_dirt" ).GetOrigin(), true )
+
 	FlagWait( "AssemblyWallrunStart" )
 }
 
@@ -957,6 +974,8 @@ void function StartPoint_Assembly_Wallrun( entity player )
 {
 	StartPointPrint( player, "Assembly Wallrun" )
 
+	TriggerSilentCheckPoint( GetEntByScriptName( "player_start_assembly_wallrun" ).GetOrigin(), true )
+
 	FlagWait( "AssemblyFurnitureArea" )
 }
 
@@ -982,6 +1001,8 @@ void function StartPoint_Skipped_Assembly_Wallrun( entity player )
 void function StartPoint_Assembly_Furniture( entity player )
 {
 	StartPointPrint( player, "Assembly Furniture" )
+
+	TriggerSilentCheckPoint( GetEntByScriptName( "player_start_assembly_furniture" ).GetOrigin(), true )
 
 	thread WhatAreTheyBuildingHereConversation( player )
 
@@ -1014,6 +1035,8 @@ void function StartPoint_Skipped_Assembly_Furniture( entity player )
 void function StartPoint_Assembly_Walls( entity player )
 {
 	StartPointPrint( player, "Assembly Walls" )
+
+	TriggerSilentCheckPoint( GetEntByScriptName( "player_start_assembly_walls" ).GetOrigin(), true )
 
 	FlagWait( "HighwayStart" )
 }
@@ -1055,6 +1078,12 @@ void function StartPoint_Highway( entity player )
 	GetEntByScriptName( "vista_start_wf_right" ).Destroy()
 
 	StartPointPrint( player, "Highway" )
+
+	entity p = GetClosest( GetPlayerArray(), <13777, -7555, 2537> )
+	if ( IsValid( p ) )
+		TeleportAllExpectOne( p.GetOrigin(), p )
+	else
+		Coop_LoadMapFromStartPoint( "sp_boomtown", "Assembly_Walls" )
 
 	// Start the ambient playforms in town climb entrance
 	FlagSet( "AmbientPlatformsTownClimbEntranceEnabled" )
@@ -1173,12 +1202,14 @@ void function StartPoint_TownClimbEntry( entity player )
 	//########################################
 
 	// This sets max look up so you can't look straight up.  Mess with the pilot_solo mod that's in there.  Thanks rayme! Change 178617
-	player.SetPlayerSettingsWithMods( DEFAULT_PILOT_SETTINGS, [ "boomtown_climb" ] )
+	foreach( entity p in GetPlayerArray() )
+		p.SetPlayerSettingsWithMods( DEFAULT_PILOT_SETTINGS, [ "boomtown_climb" ] )
 
 	FlagWait( "ReaperTownRaisedUp" ) // Set when all 6 pieces have finished moving up into reapertown
 
 	// Chad: You might want to put a flag trigger at the control panel area to FlagWait() before ReaperTownRaisedUp?
-	player.SetPlayerSettingsWithMods( DEFAULT_PILOT_SETTINGS, [] )
+	foreach( entity p in GetPlayerArray() )
+		p.SetPlayerSettingsWithMods( DEFAULT_PILOT_SETTINGS, [] )
 
 	FlagWait( "PlayerInRaisedReaperTown" ) // Trigger in raised area indicates the player has arrived
 
@@ -3310,8 +3341,8 @@ void function TownClimbCompletedWait()
 
 	Objective_Clear()
 
-	entity player = GetPlayerArray()[0]
-	UnlockAchievement( player, achievements.SIDEWAYS_TOWN )
+	foreach( entity player in GetPlayerArray() )
+		UnlockAchievement( player, achievements.SIDEWAYS_TOWN )
 
 	CheckPoint()
 
@@ -3351,7 +3382,7 @@ void function TownClimbCompletedWait()
 
 	if ( !Flag( "PlayerInRaisedReaperTown" ) ) // Trigger in raised area indicates the player has arrived
 	{
-		foreach ( player in GetPlayerArray() )
+		foreach ( entity player in GetPlayerArray() )
 		{
 			thread PlayDialogue( "ASH_DISAPPOINTING", player )
 			ScreenFadeToBlackForever( player )

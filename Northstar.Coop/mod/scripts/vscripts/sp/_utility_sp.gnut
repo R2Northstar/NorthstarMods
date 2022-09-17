@@ -36,7 +36,9 @@ void function TeleportPlayerAndBT( string playerSpawnScriptName, string titanSpa
 {
 	entity playerSpawn = GetEntByScriptName( playerSpawnScriptName )
 
-	foreach ( player in GetPlayerArray() )
+	NewSaveLocation( playerSpawn.GetOrigin() )
+
+	foreach ( entity player in GetPlayerArray() )
 	{
 		entity titanSpawn
 		if ( titanSpawnScriptName != "" )
@@ -51,6 +53,22 @@ void function TeleportPlayerAndBT( string playerSpawnScriptName, string titanSpa
 			titan.SetOrigin( titanSpawn.GetOrigin() )
 			titan.SetAngles( titanSpawn.GetAngles() )
 		}
+	}
+}
+
+void function TeleportPlayers( entity ent )
+{
+	vector origin = ent.GetOrigin()
+	vector angles = ent.GetAngles()
+
+	NewSaveLocation( origin )
+
+	foreach( entity player in GetPlayerArray() )
+	{
+		if ( !IsValid( player ) )
+			continue
+		player.SetOrigin( origin )
+		player.SetAngles( angles )
 	}
 }
 

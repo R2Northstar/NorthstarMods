@@ -774,12 +774,13 @@ bool function ClientCommand_IntroOver( entity player, array<string> args )
 	return true
 }
 
-void function PlayerInEscapePod( entity player )
+void function PlayerInEscapePod( entity player ) // TODO: figure out why don't players jump out at the same time
 {
 	// thing here
 	// https://www.youtube.com/watch?v=8ZrQ8vh1hk8
 
 	player.EndSignal( "OnDestroy" )
+	player.EndSignal( "vanquished_titan_landed" ) // added it, to make sure everything here is done when the next set of anims comes
 
 	Remote_CallFunction_Replay( player, "ServerCallback_WakingUpInEscapePod" )
 	ViewConeZeroInstant( player )
@@ -1595,11 +1596,10 @@ bool function PlayerInADS( entity player )
 
 void function StartPoint_Setup_BTIntro( entity player )
 {
+	MovePlayerToStartpoint( "startpoint_bt_intro" )
+
 	foreach( player in GetPlayerArray() )
 	{
-		thread MovePlayerToStartpoint( player, "startpoint_bt_intro" )
-		player.EndSignal( "OnDestroy" )
-
 		EnableMorningLight( player )
 
 		// remove hud for grunt
@@ -2017,7 +2017,7 @@ void function AnimEvent_SurpriseAttack( entity buddyTitan )
 
 void function StartPoint_Setup_BliskIntro( entity player )
 {
-	thread MovePlayerToStartpoint( player, "startpoint_blisk_intro" )
+	MovePlayerToStartpoint( "startpoint_blisk_intro" )
 	
 	EnableMorningLight( player )
 
@@ -2176,7 +2176,7 @@ void function StartPoint_Setup_FamilyPhoto( entity player )
 {
 	foreach( entity p in GetPlayerArray() )
 	{
-		thread MovePlayerToStartpoint( player, "startpoint_blisk_intro" )
+		MovePlayerToStartpoint( "startpoint_blisk_intro" )
 
 		EnableMorningLight( player )
 
@@ -2416,7 +2416,7 @@ void function StartPoint_Setup_WakingUp( entity player )
 {
 	foreach( player in GetPlayerArray() )
 	{
-		thread MovePlayerToStartpoint( player, "startpoint_field_promotion" )
+		MovePlayerToStartpoint( "startpoint_field_promotion" )
 		player.DisableWeapon()
 	// file.statusEffect_turnSlow = StatusEffect_AddEndless( player, eStatusEffect.turn_slow, 0.4 )
 
@@ -2640,7 +2640,7 @@ void function WakingUp_BuddyTitan()
 
 void function StartPoint_Setup_FieldPromotion( entity player )
 {
-	thread MovePlayerToStartpoint( player, "startpoint_field_promotion" )
+	MovePlayerToStartpoint( "startpoint_field_promotion" )
 
 	// remove hud for grunt
 	Remote_CallFunction_Replay( player, "ServerCallback_HideHudIcons" )
@@ -2812,7 +2812,7 @@ void function FieldPromotion_Promotion_BuddyTitan( entity player )
 
 void function StartPoint_Setup_Grave( entity player )
 {
-	thread MovePlayerToStartpoint( player, "startpoint_field_promotion" )
+	MovePlayerToStartpoint( "startpoint_field_promotion" )
 
 	player.DisableWeapon()
 
@@ -3689,8 +3689,7 @@ void function DrawSavedWallruns()
 
 void function StartPoint_Setup_Battery2Path( entity player )
 {
-	foreach( player in GetPlayerArray() )
-		thread MovePlayerToStartpoint( player, "startpoint_battery2_path" )
+	MovePlayerToStartpoint( "startpoint_battery2_path" )
 	
 	TriggerSilentCheckPoint( GetEntByScriptName( "startpoint_battery2_path" ).GetOrigin(), true )
 //	Objective_Set( "#WILDS_OBJECTIVE_BATTERY2", GetEntByScriptName( "location_obj_battery2" ).GetOrigin() )
@@ -3946,7 +3945,7 @@ void function StartPoint_Setup_Battery2Combat( entity player )
 
 	PlayMusic( "music_wilds_6b_towardthelight" )
 
-	thread MovePlayerToStartpoint( player, "startpoint_battery2_combat" )
+	MovePlayerToStartpoint( "startpoint_battery2_combat" )
 	thread JumpKitCalibrationThread( player, 0.70 )
 
 	file.droneDialogArray.append( [ "diag_sp_callOut_WD752_04_01_imc_genMarder" ] )
@@ -3994,6 +3993,7 @@ void function StartPoint_Battery2Combat( entity player )
 void function StartPoint_Skip_Battery2Combat( entity player )
 {
 	FlagSet( "DeathHintsEnabled" )
+	FlagSet( "give_doublejump" )
 
 	player.SetPlayerSettingsWithMods( DEFAULT_PILOT_SETTINGS, [] )
 }
@@ -4344,7 +4344,7 @@ void function DisplaySpectreLeechHint( entity player, float delay = 0.0 )
 
 void function StartPoint_Setup_Battery2Ship( entity player )
 {
-	thread MovePlayerToStartpoint( player, "startpoint_battery2_ship" )
+	MovePlayerToStartpoint( "startpoint_battery2_ship" )
 
 	AddSpawnCallback_ScriptName( "bat2_return_prowler", Battery2ReturnProwler )
 
@@ -4767,8 +4767,7 @@ void function ReturnEnemiesDialogue( entity player, array<entity> npcArray )
 
 void function StartPoint_Setup_Battery3Path( entity player )
 {
-	foreach( player in GetPlayerArray() )
-		thread MovePlayerToStartpoint( player, "startpoint_battery3_path" )
+	MovePlayerToStartpoint( "startpoint_battery3_path" )
 	
 	TriggerSilentCheckPoint( GetEntByScriptName( "startpoint_battery3_path" ).GetOrigin(), true )
 
@@ -5052,7 +5051,7 @@ void function StartPoint_Setup_Battery3Combat( entity player )
 {
 	Objective_Set( "#WILDS_OBJECTIVE_BATTERY3", GetEntByScriptName( "location_obj_battery3" ).GetOrigin() )
 
-	thread MovePlayerToStartpoint( player, "startpoint_battery3_combat" )
+	MovePlayerToStartpoint( "startpoint_battery3_combat" )
 
 	file.droneDialogArray.append( [ "diag_sp_callOut_WD752_08_01_imc_genMarder" ] )
 	file.droneDialogArray.reverse()
@@ -5228,7 +5227,7 @@ void function Battery3Turret( entity turret )
 
 void function StartPoint_Setup_Battery3Ship( entity player )
 {
-	thread MovePlayerToStartpoint( player, "startpoint_battery3_ship" )
+	MovePlayerToStartpoint( "startpoint_battery3_ship" )
 
 	Objective_Set( "#WILDS_OBJECTIVE_BATTERY3", GetEntByScriptName( "location_obj_battery3" ).GetOrigin() )
 
@@ -5242,7 +5241,8 @@ void function StartPoint_Battery3Ship( entity player )
 	CheckPoint()
 	thread Battery3ShipObjectiveReminder()
 	thread Battery3ShipBacktrackBlocker()
-	thread Battery3Conversation( player )
+	foreach( entity p in GetPlayerArray() )
+		thread Battery3Conversation( player )
 	thread Battery3ShipMusic( player )
 	thread ShipAmbientDialogue( "ship_forward_speaker", "battery3_acquired" )
 
@@ -5397,7 +5397,7 @@ void function Battery3Ship_Battery_Pickup( entity player )
 
 void function StartPoint_Setup_PilotLink( entity player )
 {
-	thread MovePlayerToStartpoint( player, "startpoint_pilotlink" )
+	MovePlayerToStartpoint( "startpoint_pilotlink" )
 	ShowBatteryIcon( player )
 }
 
@@ -5466,9 +5466,21 @@ void function PilotLink_EarlyFight( entity player )
 	foreach( npc in npcArray )
 		thread TrackNPCHeight( player, npc )
 
-	FlagWait( "pilot_link_early_fight_done" )
+	waitthread TimeoutFalg( "pilot_link_early_fight_done", 30.0 )
 
 	FlagSet( "bt_ready_for_battery3" )
+}
+
+void function TimeoutFalg( string flg, float time )
+{
+	time = time + Time()
+	for(;;)
+	{
+		if ( Flag( "pilot_link_early_fight_done" ) || time < Time() )
+			return
+		
+		wait 1
+	}
 }
 
 void function TrackNPCHeight( entity player, entity npc )
@@ -6286,8 +6298,11 @@ void function DisableDVSOverride( entity player )
 
 void function ShowBatteryIcon( entity player )
 {
-	player.SetPlayerNetBool( "showBatteryIcon", true )
-	Remote_CallFunction_Replay( player, "ServerCallback_ShowBatteryIcon", true )
+	foreach( player in GetPlayerArray() )
+	{
+		player.SetPlayerNetBool( "showBatteryIcon", true )
+		Remote_CallFunction_Replay( player, "ServerCallback_ShowBatteryIcon", true )
+	}
 }
 
 void function HideBatteryIcon( entity player )
@@ -7716,17 +7731,20 @@ void function ClearQuickDeathTrigger( entity trigger )
 	}
 }
 
-void function MovePlayerToStartpoint( entity player, string startpoint )
+void function MovePlayerToStartpoint( string startpoint )
 {
-	player.EndSignal( "OnDestroy" )
-
 	entity startpointEnt = GetEntByScriptName( startpoint )
 
 	vector origin = startpointEnt.GetOrigin()
 	vector angles = startpointEnt.GetAngles()
 
-	player.SetOrigin( origin )
-	player.SetAngles( angles )
+	NewSaveLocation( origin )
+	
+	foreach( entity player in GetPlayerArray() )
+	{
+		player.SetOrigin( origin )
+		player.SetAngles( angles )
+	}
 }
 
 void function MoveAlongPath( entity ent, string pathScriptName = "" )

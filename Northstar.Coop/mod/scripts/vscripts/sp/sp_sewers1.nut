@@ -1209,10 +1209,7 @@ void function StartPoint_CorkscrewRoom( entity player )
 
 
 void function StartPoint_Setup_CorkscrewRoom( entity player )
-{
-	foreach( player in GetPlayerArray() )
-		player.SetOrigin( GetEntByScriptName( "playerstart_corkscrew_room" ).GetOrigin() )
-	
+{	
 	TriggerSilentCheckPoint( GetEntByScriptName( "playerstart_corkscrew_room" ).GetOrigin(), true )
 
 	TeleportPlayerAndBT( "playerstart_corkscrew_room", "titanstart_corkscrew_room" )
@@ -2556,8 +2553,8 @@ void function StartPoint_KaneArena( entity player )
 	thread KaneArena_StairsThink()
 
 	FlagWait( "KaneArena_level_end" )
-
-	GameRules_ChangeMap( "sp_boomtown_start", GAMETYPE )
+	
+	Coop_LoadMapFromStartPoint( "sp_boomtown_start", "Intro" )
 }
 
 
@@ -2587,6 +2584,8 @@ void function KaneArena_StairsThink()
 
 void function KaneArena_BTDisableMeleeThink( entity player )
 {
+	return // crashes too much
+
 	player.EndSignal( "OnDestroy" )
 
 	while( 1 )
@@ -2905,6 +2904,8 @@ void function KaneArena_PickupHelmetSequence( entity player )
 	FlagWait( "KaneArena_radio_intercept_done" )
 	Objective_Clear()
 
+	Coop_LoadMapFromStartPoint( "sp_boomtown_start", "Intro" )
+
 	wait 1.0
 
 	PlayBTDialogue( "BT_WE_HAVE_ADVANTAGE" )
@@ -2913,7 +2914,7 @@ void function KaneArena_PickupHelmetSequence( entity player )
 	FlagSet( "KaneArena_level_end" )
 	
 	// setnext map
-	GameRules_ChangeMap( "sp_boomtown_start", GAMETYPE )
+	Coop_LoadMapFromStartPoint( "sp_boomtown_start", "Intro" )
 }
 
 

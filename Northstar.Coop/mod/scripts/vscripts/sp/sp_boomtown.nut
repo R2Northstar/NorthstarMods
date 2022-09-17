@@ -57,6 +57,7 @@ void function CodeCallback_MapInit()
 	// Code Callbacks
 	//------------------
 	AddCallback_EntitiesDidLoad( Boomtown_EntitiesDidLoad )
+	AddPlayerDidLoad( Boomtown_PlayerDidLoad )
 	AddSpawnCallback( "prop_dynamic", OnSpawnedPropDynamic )
 	AddSpawnCallback( "trigger_multiple", OnSpawnedTrigger)
 	AddSpawnCallback( "trigger_once", OnSpawnedTrigger )
@@ -159,7 +160,9 @@ void function ReaperTown_CombatScenario( entity player )
 
 	// Teleport player from dark reapertown to lit one
 	FlagWait ( "reapertown_begin_teleport" )
-	ReaperTown_PlayerTeleportSequence( player )
+	foreach( player in GetPlayerArray() )
+		ReaperTown_PlayerTeleportSequence( player )
+
 	ReaperTown_SetPhysicsMotionOnMovers( true )
 
 	// Wait for the sky dome to stop booting then speak to pilot & reset terrain
@@ -172,13 +175,16 @@ void function ReaperTown_CombatScenario( entity player )
 	PlayMusic( "music_boomtown_16_reapertown_scenarioload" )
 
 	FlagSet( "reapertown_start" )
-
-	CreateShakeRumbleOnly( player.GetOrigin(), 16, 100, 21 )
+	
+	foreach( player in GetPlayerArray() )
+		CreateShakeRumbleOnly( player.GetOrigin(), 16, 100, 21 )
 
 	FlagWait( "reapertown_stop" )
-	Boomtown_SetCSMTexelScale( player, 0.15, 0.5 )
+	foreach( player in GetPlayerArray() )
+		Boomtown_SetCSMTexelScale( player, 0.15, 0.5 )
 	wait 1.0
 	CheckPoint_ForcedSilent()
+	TriggerSilentCheckPoint( GetEntByScriptName( "start_player_ReaperTown" ).GetOrigin(), true )
 
 
 	// -----------------------------------------------------------
@@ -742,9 +748,11 @@ void function ReaperTown_PlayerTeleportSequence( entity player )
 
 	MakeInvincible( player )
 
-	EmitSoundOnEntity( player, SFX_DOME_POWER_DOWN )
+	if ( player == GetPlayer0() )
+		EmitSoundOnEntity( player, SFX_DOME_POWER_DOWN )
 	wait 0.5
-	thread SkyDome_TurnOffDome()
+	if ( player == GetPlayer0() )
+		thread SkyDome_TurnOffDome()
 
 	Boomtown_SetCSMTexelScale( player, 0.15, 2.25 )
 	Remote_CallFunction_NonReplay( player, "ServerCallback_ReaperTownTeleport" )
@@ -769,7 +777,8 @@ void function ReaperTown_PlayerTeleportSequence( entity player )
 	}
 
 	wait 4.0
-	thread ReaperTown_SkyDome_PowerOn( player )
+	if ( player == GetPlayer0() )
+		thread ReaperTown_SkyDome_PowerOn( player )
 
 	ClearInvincible( player )
 
@@ -1298,6 +1307,11 @@ void function Boomtown_EntitiesDidLoad()
 	file.teleportTargetRefPos = GetEntByScriptName( "reaper_town_teleport_target_ref" ).GetOrigin()
 }
 
+void function Boomtown_PlayerDidLoad( entity player )
+{
+	if ( !IsValid( GetPlayer0() ) )
+		SetPlayer0( player )
+}
 
 void function OnSpawnedPropDynamic( entity propDynamic )
 {

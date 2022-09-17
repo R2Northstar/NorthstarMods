@@ -47,6 +47,9 @@ void function Gauntlet_ClientInit()
 
 void function Gauntlet_OnClientPlayerCreated( entity player )
 {
+	if ( player != GetLocalViewPlayer() )
+		return
+
 	if ( !file.InitHappended )
 		thread Gauntlet_OnClientPlayerCreated_Think( player )	
 }

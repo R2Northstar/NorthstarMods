@@ -248,7 +248,7 @@ void function TimeShiftHub_PlayerDidLoad( entity player )
 /////////////////////////////////////////////////////////////////////////////////////////
 void function TimeshiftDeviceStartPointSetup( entity player )
 {
-	TeleportPlayerToEnt( player, GetEntByScriptName( "checkpointTimeshiftDevice" ) )
+	TeleportPlayers( GetEntByScriptName( "checkpointTimeshiftDevice" ) )
 }
 /////////////////////////////////////////////////////////////////////////////////////////
 void function TimeshiftDeviceSkipped( entity player )
@@ -597,7 +597,7 @@ void function TimeshiftSequenceShifts( entity player, entity node )
 /////////////////////////////////////////////////////////////////////////////////////////
 void function WildlifeResearchStartPointSetup( entity player )
 {
-	TeleportPlayerToEnt( player, GetEntByScriptName( "checkpointWildlifeResearch" ) )
+	TeleportPlayers( GetEntByScriptName( "checkpointWildlifeResearch" ) )
 
 }
 /////////////////////////////////////////////////////////////////////////////////////////
@@ -936,7 +936,7 @@ void function CourtyardSoldiersThink( entity npc )
 /////////////////////////////////////////////////////////////////////////////////////////
 void function FirstTimeshiftFightStartPointSetup( entity player )
 {
-	TeleportPlayerToEnt( player, GetEntByScriptName( "checkpointFirstTimeshiftFight" ) )
+	TeleportPlayers( GetEntByScriptName( "checkpointFirstTimeshiftFight" ) )
 	vector objectivePos = GetEntByScriptName( "objective_amenities_elevator_fight" ).GetOrigin()
 	TimeshiftSetObjectiveSilent( player, "#TIMESHIFT_OBJECTIVE_LAB_EXPLORE", objectivePos )
 
@@ -1104,7 +1104,7 @@ void function SecurityRoom( entity player )
 /////////////////////////////////////////////////////////////////////////////////////////
 void function ElevatorFightStartPointSetup( entity player )
 {
-	TeleportPlayerToEnt( player, GetEntByScriptName( "checkpointElevatorFight" ) )
+	TeleportPlayers( GetEntByScriptName( "checkpointElevatorFight" ) )
 	vector objectivePos = GetEntByScriptName( "objective_amenities_elevator_fight" ).GetOrigin()
 	TimeshiftSetObjectiveSilent( player, "#TIMESHIFT_OBJECTIVE_LAB_EXPLORE", objectivePos )
 
@@ -1587,7 +1587,7 @@ void function AllElevatorDudesDead()
 
 void function ElevatorTopStartPointSetup( entity player )
 {
-	TeleportPlayerToEnt( player, GetEntByScriptName( "checkpointElevatorTop" ) )
+	TeleportPlayers( GetEntByScriptName( "checkpointElevatorTop" ) )
 	vector objectivePos = GetEntByScriptName( "objective_intel_data_panel01" ).GetOrigin()
 	TimeshiftSetObjectiveSilent( player, "#TIMESHIFT_OBJECTIVE_LAB_EXPLORE", objectivePos )
 }
@@ -1942,7 +1942,7 @@ void function LabAlphaScientistThink( entity npc )
 
 void function SphereRoomStartPointSetup( entity player )
 {
-	TeleportPlayerToEnt( player, GetEntByScriptName( "checkpointIntelRoom2" ) )
+	TeleportPlayers( GetEntByScriptName( "checkpointIntelRoom2" ) )
 	vector 	objectivePos = GetEntByScriptName( "objective_intel_data_panel02" ).GetOrigin()
 	TimeshiftSetObjectiveSilent( player, "#TIMESHIFT_OBJECTIVE_LAB_EXPLORE", objectivePos )
 }
@@ -2313,7 +2313,7 @@ void function GunshipPadSequenceWait( entity player )
 /////////////////////////////////////////////////////////////////////////////////////////
 void function HumanResearchStartPointSetup( entity player )
 {
-	TeleportPlayerToEnt( player, GetEntByScriptName( "checkpointHumanResearch" ) )
+	TeleportPlayers( GetEntByScriptName( "checkpointHumanResearch" ) )
 	vector objectivePos = GetEntByScriptName( "objective_human_research_vista" ).GetOrigin()
 	TimeshiftSetObjectiveSilent( player, "#TIMESHIFT_OBJECTIVE_LAB_EXPLORE", objectivePos )
 
@@ -2735,7 +2735,7 @@ void function OpenLabRatDoor( entity door, entity body )
 
 void function CampusReturnStartPointSetup( entity player )
 {
-	TeleportPlayerToEnt( player, GetEntByScriptName( "checkpointCampusReturn" ) )
+	TeleportPlayers( GetEntByScriptName( "checkpointCampusReturn" ) )
 	vector objectivePos = GetEntByScriptName( "objective_human_research_vista" ).GetOrigin()
 	TimeshiftSetObjectiveSilent( player, "#TIMESHIFT_OBJECTIVE_LAB_EXPLORE", objectivePos )
 
@@ -3048,9 +3048,9 @@ void function HumanBridgeEnemies( entity player )
 void function FanDropStartPointSetup( entity player )
 {
 	//entity temp = CreateInfoTarget( Vector( 3536, -4641, -127), Vector( 35.5, -90, 0 ) )
-	//TeleportPlayerToEnt( player, temp )
+	//TeleportPlayers( temp )
 
-	TeleportPlayerToEnt( player, GetEntByScriptName( "checkpointFanDrop" ) )
+	TeleportPlayers( GetEntByScriptName( "checkpointFanDrop" ) )
 	vector objectivePos = GetEntByScriptName( "objective_concourse_panel" ).GetOrigin()
 	TimeshiftSetObjectiveSilent( player, "#TIMESHIFT_OBJECTIVE_RETURN", objectivePos )
 }
@@ -3291,7 +3291,7 @@ void function MusicFanDrop( entity player )
 
 void function FanDropEndStartPointSetup( entity player )
 {
-	TeleportPlayerToEnt( player, GetEntByScriptName( "checkpointFanDropEnd" ) )
+	TeleportPlayers( GetEntByScriptName( "checkpointFanDropEnd" ) )
 	vector objectivePos = GetEntByScriptName( "objective_concourse_panel" ).GetOrigin()
 	TimeshiftSetObjectiveSilent( player, "#TIMESHIFT_OBJECTIVE_RETURN", objectivePos )
 

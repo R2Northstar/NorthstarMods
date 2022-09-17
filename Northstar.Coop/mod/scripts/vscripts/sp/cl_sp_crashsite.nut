@@ -184,6 +184,8 @@ void function ScriptCallback_DestroyHintOnMenuOpen( entity player )
 
 void function PlayerCreateCallback( entity player )
 {
+	if ( player != GetLocalViewPlayer() )
+		return
 	// why respawn
 	if ( file.DidInit )
 		return

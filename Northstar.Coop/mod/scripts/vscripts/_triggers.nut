@@ -107,10 +107,6 @@ void function Init_triggersThreaded()
 		// default:
 			
 	}
-	
-	// its here because when I do from the start the game crashes
-	wait( 10 )
-	save.lastSave = GetEnt( "info_player_start" ).GetOrigin()
 }
 
 

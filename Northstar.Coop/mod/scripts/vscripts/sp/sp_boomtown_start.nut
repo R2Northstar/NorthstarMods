@@ -22,6 +22,7 @@ void function CodeCallback_MapInit()
 	ShSpBoomtownStartCommonInit()
 
 	AddCallback_EntitiesDidLoad( Boomtown_EntitiesDidLoad )
+	AddPlayerDidLoad( Boomtown_PlayerDidLoad )
 
 	FlagInit( "DeleteIntroTurretsAndProwlers" )
 	FlagInit( "PickupBT" )
@@ -52,6 +53,12 @@ void function Boomtown_EntitiesDidLoad()
 
 	Objective_InitEntity( GetEntByScriptName( "ElevatorButton" ) )
 	Objective_InitEntity( GetEntByScriptName( "ElevatorControl" ) )
+}
+
+void function Boomtown_PlayerDidLoad( entity player )
+{
+	if ( !IsValid( GetPlayer0() ) )
+		SetPlayer0( player )
 }
 
 // -------------------------------------------------------------------------------------------------------------------------
@@ -826,8 +833,10 @@ void function BTGetsGrabbed()
 	arm.mover.SetOrigin( armNode.GetOrigin() )
 	arm.mover.SetAngles( < 0, -19, 0 > )
 
-	entity bt = GetPlayerArray()[0].GetPetTitan()
-	Assert( IsValid( bt ) )
+	entity player = GetClosest( GetPlayerArray(), armNode.GetOrigin() )
+	if ( !IsValid( player.GetPetTitan() ) )
+		CreatePetTitanAtLocation( player, player.GetOrigin() + <0,0,1000>, player.GetAngles() )
+	entity bt = player.GetPetTitan()
 
 	thread BTGetsGrabbedAnims( bt, arm )
 
@@ -904,7 +913,8 @@ void function ElevatorThink()
 void function NextLevel()
 {
 	wait 5.0
-	GameRules_ChangeMap( "sp_boomtown", GAMETYPE )
+	Coop_LoadMapFromStartPoint( "sp_boomtown", "Start" )
+	// GameRules_ChangeMap( "sp_boomtown", GAMETYPE )
 }
 
 

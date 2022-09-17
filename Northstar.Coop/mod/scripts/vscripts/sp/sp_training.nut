@@ -5200,8 +5200,12 @@ void function Training_Setup_GauntletMode( entity player )
 
 	//TeleportPlayerAndBT( "playerstart_gauntlet_challenge" )
 	// HACK better start position
-	player.SetOrigin( < -5179, 279.129, 32.0313 > )
-	player.SetAngles( < 0, 80.7242, 0 > )
+	// respawn why
+	foreach( player in GetPlayerArray() )
+	{
+		player.SetOrigin( < -5179, 279.129, 32.0313 > )
+		player.SetAngles( < 0, 80.7242, 0 > )
+	}
 }
 
 void function Training_GauntletModeStart( entity player )

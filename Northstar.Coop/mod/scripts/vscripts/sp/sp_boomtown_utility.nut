@@ -53,6 +53,7 @@ global function PlaySoundOnRail
 global function UpdatePlatform4ModelToRigid
 global function UpdatePlatform4ModelToAnimated
 global function Boomtown_SetCSMTexelScale
+global function FallCheck
 
 #if DEV
 	global function DevPoseArm
@@ -80,7 +81,8 @@ global const PLATFORM_MODEL_FRAMING_SKYBOX = $"models/boomtown/wf_platform_3_100
 global const PLATFORM_MODEL_WALLS_SKYBOX = $"models/boomtown/wf_platform_4_1000x.mdl"
 
 const MANTLE_CHECK_DIST = 900 * 900
-const PUSHER_ENABLE_DIST = 4000 * 4000
+// const PUSHER_ENABLE_DIST = 4000 * 4000 <- before
+const PUSHER_ENABLE_DIST = 4000 * 400000
 const PUSHER_DISABLE_DIST = 4500 * 4500
 const PUSHER_MAX_CHECKS_PER_FRAME_ARMS = 32
 const PUSHER_MAX_CHECKS_PER_FRAME_PLATFORMS = 32
@@ -1121,7 +1123,8 @@ void function UpdateArmAndPlatformPushersForPlayer( entity player )
 	int currentPlatformIndex = 0
 	int numCheckedThisFrame = 0
 
-	return // TODO: find a better solution
+	// return // TODO: find a better solution
+	// TODO: this is broken, fix it
 
 	// this shouldn't run, since players that are behind or would just be stuck
 
@@ -1154,7 +1157,7 @@ void function UpdateArmAndPlatformPushersForPlayer( entity player )
 
 				if ( isPusher && dist >= PUSHER_DISABLE_DIST && !arm.posingOverTime )
 				{
-					EnableBoneFollowersOnArm( arm, false )
+					// EnableBoneFollowersOnArm( arm, false )
 				}
 				else if ( !isPusher && dist <= PUSHER_ENABLE_DIST && !arm.posingOverTime )
 				{
@@ -1607,6 +1610,9 @@ void function NotSolidBoneFollowers( entity model, array<string> boneFollowers )
 
 	foreach ( bone in boneFollowers )
 	{
+		if ( !IsValid( model ) )
+			continue
+		
 		entity bf = model.GetBoneFollowerForBone( bone )
 		if ( bf != null )
 		{
@@ -1746,4 +1752,18 @@ void function Boomtown_OnLoadSaveGame_Internal( entity player )
 		return
 
 	Boomtown_SetCSMTexelScale( player, file.csmTexelScale_nearScale, file.csmTexelScale_farScale )
+}
+
+void function FallCheck() // for some reason in co-op the death triggers just doesn't exist
+{
+	for(;;)
+	{
+		foreach( entity player in GetPlayerArray() )
+		{
+			if ( IsAlive( player ) && player.GetOrigin().z < 1450 )
+				player.Die()
+		}
+
+		wait 1
+	}
 }

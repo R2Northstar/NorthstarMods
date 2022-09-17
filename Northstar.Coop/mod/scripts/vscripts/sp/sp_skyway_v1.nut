@@ -1930,7 +1930,7 @@ void function TortureRoomSetup( entity player )
 void function SmartPistolRunStartPointSetup( entity player )
 {
 	FlagClear( "WeaponDropsAllowed" )
-	TeleportPlayerToEnt( player, GetEntByScriptName( "smart_pistol_run" ) )
+	TeleportPlayers( GetEntByScriptName( "smart_pistol_run" ) )
 
 	PlayMusic( "music_skyway_04_smartpistolrun" )
 
@@ -2349,7 +2349,7 @@ void function SP_BridgeFightThread( entity player )
 void function BridgeFightStartPointSetup( entity player )
 {
 	FlagClear( "WeaponDropsAllowed" )
-	TeleportPlayerToEnt( player, GetEntByScriptName( "bridge_fight" ) )
+	TeleportPlayers( GetEntByScriptName( "bridge_fight" ) )
 }
 
 void function BridgeFightSkipped( entity player )
@@ -2538,7 +2538,7 @@ void function PlayerRequestsTitan( entity player )
 void function BTReunionStartPointSetup( entity player )
 {
 	FlagClear( "WeaponDropsAllowed" )
-	TeleportPlayerToEnt( player, GetEntByScriptName( "bt_reunion" ) )
+	TeleportPlayers( GetEntByScriptName( "bt_reunion" ) )
 }
 
 void function BTReunionSkipped( entity player )
@@ -2768,7 +2768,7 @@ void function SP_TitanHillThread( entity player )
 void function TitanHillStartPointSetup( entity player )
 {
 	entity scriptRef = GetEntByScriptName( "titan_hill" )
-	TeleportPlayerToEnt( player, scriptRef )
+	TeleportPlayers( scriptRef )
 	entity BT = player.GetPetTitan()
 	BT.SetOrigin( scriptRef.GetOrigin() )
 	BT.SetAngles( scriptRef.GetAngles() )
@@ -3156,7 +3156,7 @@ void function InitBombardment()
 void function TitanSmashHallwayStartPointSetup ( entity player )
 {
 	entity scriptRef = GetEntByScriptName( "Titan_Smash_Hallway" )
-	TeleportPlayerToEnt( player, scriptRef )
+	TeleportPlayers( scriptRef )
 	entity BT = player.GetPetTitan()
 	BT.SetOrigin( scriptRef.GetOrigin() )
 	BT.SetAngles( scriptRef.GetAngles() )
@@ -3238,7 +3238,7 @@ void function SculptorClimbStartPointSetup( entity player )
 	svGlobal.levelEnt.Signal( "StopFlybys" )
 
 	entity scriptRef = GetEntByScriptName( "sculptor_climb" )
-	TeleportPlayerToEnt( player, scriptRef )
+	TeleportPlayers( scriptRef )
 	entity BT = player.GetPetTitan()
 	BT.SetOrigin( scriptRef.GetOrigin() )
 	BT.SetAngles( scriptRef.GetAngles() )
@@ -3272,7 +3272,7 @@ void function SP_SculptorClimbThread( entity player )
 void function TargetingRoomStartPointSetup( entity player )
 {
 	entity scriptRef = GetEntByScriptName( "targeting_room" )
-	TeleportPlayerToEnt( player, scriptRef )
+	TeleportPlayers( scriptRef )
 	entity BT = player.GetPetTitan()
 	BT.SetOrigin( scriptRef.GetOrigin() )
 	BT.SetAngles( scriptRef.GetAngles() )
@@ -3341,7 +3341,7 @@ void function TargetingRoomDialogue()
 void function InjectorRoomStartPointSetup( entity player )
 {
 	entity scriptRef = GetEntByScriptName( "injector_room" )
-	TeleportPlayerToEnt( player, scriptRef )
+	TeleportPlayers( scriptRef )
 	entity BT = player.GetPetTitan()
 	BT.SetOrigin( scriptRef.GetOrigin() )
 	BT.SetAngles( scriptRef.GetAngles() )
@@ -4218,7 +4218,7 @@ entity function SpawnBliskTitan_InjectorRoom()
 void function BliskFarewellStartPointSetup( entity player )
 {
 	entity scriptRef = GetEntByScriptName( "bt_sacrifice" )
-	TeleportPlayerToEnt( player, scriptRef )
+	TeleportPlayers( scriptRef )
 	entity BT = player.GetPetTitan()
 	BT.SetOrigin( scriptRef.GetOrigin() )
 	BT.SetAngles( scriptRef.GetAngles() )
@@ -4715,7 +4715,7 @@ void function BTCardThrow( entity scriptRef, entity player )
 void function BTSacrificeStartPointSetup( entity player )
 {
 	entity scriptRef = GetEntByScriptName( "bt_sacrifice" )
-	TeleportPlayerToEnt( player, scriptRef )
+	TeleportPlayers( scriptRef )
 	entity BT = player.GetPetTitan()
 	BT.SetOrigin( scriptRef.GetOrigin() )
 	BT.SetAngles( scriptRef.GetAngles() )
@@ -5430,7 +5430,7 @@ void function RisingWorldRunStartPointSetup( entity player )
 	runHurtTrigger.Disable()
 
 	entity scriptRef = GetEntByScriptName( "rising_world_run" )
-	TeleportPlayerToEnt( player, scriptRef )
+	TeleportPlayers( scriptRef )
 }
 
 void function RisingWorldRunSkipped( entity player )

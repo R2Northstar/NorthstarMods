@@ -411,7 +411,7 @@ void function AA_IntroSectionThread( entity player )
 	player.DisableWeapon()
 	player.ForceStand()
 
-	TeleportPlayerToEnt( player, GetEntByScriptName( "checkpointStart" ) )
+	TeleportPlayers( GetEntByScriptName( "checkpointStart" ) )
 
 	ShowIntroScreen( player )
 	FlagWait( "IntroScreenFading" )
@@ -431,9 +431,9 @@ void function AA_IntroSectionThread( entity player )
 
 	delaythread ( 5 ) DialogueIntro( player )
 	
+	TeleportPlayers( GetEntByScriptName( "checkpointStartDrop" ) )
 	foreach( entity p in GetPlayerArray() )
 	{
-		TeleportPlayerToEnt( p, GetEntByScriptName( "checkpointStartDrop" ) )
 		p.SetOrigin( p.GetOrigin() + Vector( 0, 0, 1024 ) )
 	}
 
@@ -447,11 +447,12 @@ void function AA_IntroSectionThread( entity player )
 
 	waitthread PlayerDropLand( player, node )
 
-	TriggerSilentCheckPoint( GetEntByScriptName( "checkpointStartDrop" ).GetOrigin(), true )
+	TriggerSilentCheckPoint( GetEntByScriptName( "checkpointStartDrop" ).GetOrigin() - <0,0,100>, true )
 
 	ShowStuff( "blocker_fan_intro" )
-
-	// RemoveCinematicFlag( player, CE_FLAG_HIDE_MAIN_HUD )
+	
+	foreach( entity p in GetPlayerArray() )
+		RemoveCinematicFlag( p, CE_FLAG_HIDE_MAIN_HUD )
 	EndEvent()
 
 	//-----------------------------------------
@@ -911,7 +912,7 @@ void function CivilianStudentThink( entity student )
 
 void function EnterCampusStartPointSetup( entity player )
 {
-	TeleportPlayerToEnt( player, GetEntByScriptName( "checkpointEnterCampus" ) )
+	TeleportPlayers( GetEntByScriptName( "checkpointEnterCampus" ) )
 }
 /////////////////////////////////////////////////////////////////////////////////////////
 void function EnterCampusSkipped( entity player )
@@ -1497,7 +1498,7 @@ void function ScriptedTimeShiftVistaHallway( entity player )
 /////////////////////////////////////////////////////////////////////////////////////////
 void function CorpseSearchStartPointSetup( entity player )
 {
-	TeleportPlayerToEnt( player, GetEntByScriptName( "checkpointCorpseSearch" ) )
+	TeleportPlayers( GetEntByScriptName( "checkpointCorpseSearch" ) )
 	TimeshiftSetObjectiveSilent( player, "#TIMESHIFT_OBJECTIVE_START", < 0, 0, 0 >, file.bt )
 }
 /////////////////////////////////////////////////////////////////////////////////////////
@@ -2120,8 +2121,10 @@ void function PickupHelmetThink( entity player )
 	thread PlayAnim( anderson, "pt_timeshift_helmet_grab_corpse_sequence", mover )
 	thread PlayAnim( helmet, "helmet_timeshift_helmet_grab_sequence", mover )
 	waitthread FirstPersonSequence( sequenceTakeHelmet, playerActivator, mover )
+	
+	WaitFrame()
 
-	//player.UnfreezeControlsOnServer()
+	playerActivator.UnfreezeControlsOnServer()
 	playerActivator.ClearInvulnerable()
 	playerActivator.Anim_Stop()
 	playerActivator.ClearParent()
@@ -2262,7 +2265,7 @@ void function ProwlersAttackBTfailsafe( entity prowler )
 /////////////////////////////////////////////////////////////////////////////////////////
 void function HologramStartPointSetup( entity player )
 {
-	TeleportPlayerToEnt( player, GetEntByScriptName( "checkpointHologramSequence" ) )
+	TeleportPlayers( GetEntByScriptName( "checkpointHologramSequence" ) )
 	vector objectivePos = GetBTObjectivePos()
 	TimeshiftSetObjectiveSilent( player, "#TIMESHIFT_OBJECTIVE_BACK_TO_BT_WITH_HELMET", objectivePos, file.bt )
 }
@@ -2796,7 +2799,7 @@ void function ZiplineStartPointSetup( entity player )
 	entity node = GetEntByScriptName( "node_bt_hologram" )
 	entity bt = file.bt
 	thread PlayAnimTeleport( bt, "bt_timeshift_campus_idle", node )
-	TeleportPlayerToEnt( player, GetEntByScriptName( "checkpointHologramSequence" ) )
+	TeleportPlayers( GetEntByScriptName( "checkpointHologramSequence" ) )
 }
 /////////////////////////////////////////////////////////////////////////////////////////
 void function ZiplineSkipped( entity player )
@@ -3160,8 +3163,7 @@ entity function CreateZiplineEnd( vector createPos, string tname )
 /////////////////////////////////////////////////////////////////////////////////////////
 void function SecurityStartPointSetup( entity player )
 {
-	foreach( player in GetPlayerArray() )
-		TeleportPlayerToEnt( player, GetEntByScriptName( "checkpointSecurity" ) )
+	TeleportPlayers( GetEntByScriptName( "checkpointSecurity" ) )
 	vector objectivePos = GetEntByScriptName( "objective_bunker_breadcrumb00" ).GetOrigin()
 	TimeshiftSetObjectiveSilent( player, "#TIMESHIFT_OBJECTIVE_LAB_EXPLORE", objectivePos )
 
@@ -3578,7 +3580,7 @@ void function StalkerAsleepThink( entity propDynamic )
 /////////////////////////////////////////////////////////////////////////////////////////
 void function SkybridgeStartPointSetup( entity player )
 {
-	TeleportPlayerToEnt( player, GetEntByScriptName( "checkpointSkybridge" ) )
+	TeleportPlayers( GetEntByScriptName( "checkpointSkybridge" ) )
 	vector objectivePos = GetEntByScriptName( "objective_time_device" ).GetOrigin()
 	TimeshiftSetObjectiveSilent( player, "#TIMESHIFT_OBJECTIVE_LAB_EXPLORE", objectivePos, GetEntByScriptName( "objective_time_device" ) )
 }
@@ -3808,16 +3810,16 @@ void function SkybridgeCrossingSequence( entity player )
 
 void function LobbyReduxStartPointSetup( entity player )
 {
+	TeleportPlayers( GetEntByScriptName( "checkpointLobbyReturn" ) )
 	foreach( player in GetPlayerArray() )
 	{
-		TeleportPlayerToEnt( player, GetEntByScriptName( "checkpointLobbyReturn" ) )
 		Rodeo_Allow( player )
 	}
 
 	FlagSet( "door_open_amenities_lobby_return_pristine" )
 	FlagSet( "player_back_in_amenities_lobby" )
 	
-	TriggerSilentCheckPoint( GetEntByScriptName( "checkpointLobbyReturn" ).GetOrigin(), true )
+	// TriggerSilentCheckPoint( GetEntByScriptName( "checkpointLobbyReturn" ).GetOrigin(), true )
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////
@@ -4218,8 +4220,7 @@ void function DialogueLobbyReduxOvergrown( entity player )
 /////////////////////////////////////////////////////////////////////////////////////////
 void function HubFightStartPointSetup( entity player )
 {
-	foreach( player in GetPlayerArray() )
-		TeleportPlayerToEnt( player, GetEntByScriptName( "checkpointHubFight" ) )
+	TeleportPlayers( GetEntByScriptName( "checkpointHubFight" ) )
 	TriggerSilentCheckPoint( GetEntByScriptName( "checkpointHubFight" ).GetOrigin(), true )
 }
 /////////////////////////////////////////////////////////////////////////////////////////
@@ -4611,8 +4612,7 @@ bool function ShouldDoBridgeNag( entity player )
 /////////////////////////////////////////////////////////////////////////////////////////
 void function ExtendedBridgeStartPointSetup( entity player )
 {
-	foreach( player in GetPlayerArray() )
-		TeleportPlayerToEnt( player, GetEntByScriptName( "checkpointExtendedBridge" ) )
+	TeleportPlayers( GetEntByScriptName( "checkpointExtendedBridge" ) )
 
 	TriggerSilentCheckPoint( GetEntByScriptName( "checkpointExtendedBridge" ).GetOrigin(), true )
 }
@@ -4975,8 +4975,7 @@ void function ReactorStartsBlowingUp( entity player )
 
 void function ReactorBridgeStartPointSetup( entity player )
 {
-	foreach( player in GetPlayerArray() )
-		TeleportPlayerToEnt( player, GetEntByScriptName( "checkpointReactorBridge" ) )
+	TeleportPlayers( GetEntByScriptName( "checkpointReactorBridge" ) )
 	vector objectivePos = GetEntByScriptName( "objective_bridge_cross" ).GetOrigin()
 	TimeshiftSetObjectiveSilent( player, "#TIMESHIFT_OBJECTIVE_SCAN", objectivePos )
 	CleanupAI( player )
@@ -5058,9 +5057,9 @@ void function AA_ReactorBridgeThread( entity player )
 	foreach( entity p in GetPlayerArray() )
 	{
 		if ( player.IsTitan() )
-			TeleportPlayerToEnt( p, GetEntByScriptName( "node_bt_frozen" ) )
+			player.SetOrigin( GetEntByScriptName( "node_bt_frozen" ).GetOrigin() )
 		else
-			TeleportPlayerToEnt( p, GetEntByScriptName( "player_frozen_start" ) )
+			player.SetOrigin( GetEntByScriptName( "player_frozen_start" ).GetOrigin() )
 
 		p.SetSkyCamera( skyCam )
 
@@ -5116,7 +5115,7 @@ void function AA_ReactorBridgeThread( entity player )
 	entity bridgeTrigger = GetEntByScriptName( "trigger_bridge_frozen" )
 	if ( !bridgeTrigger.IsTouching( player ) )
 	{
-		TeleportPlayerToEnt( player, GetEntByScriptName( "player_frozen_start" ) )
+		TeleportPlayers( GetEntByScriptName( "player_frozen_start" ) )
 	}
 	*/
 
@@ -5621,7 +5620,7 @@ void function FrozenWorldAmbientSoundAndFx( entity player )
 
 void function CoreScanStartPointSetup( entity player )
 {
-	TeleportPlayerToEnt( player, GetEntByScriptName( "checkpointCoreScan" ) )
+	TeleportPlayers( GetEntByScriptName( "checkpointCoreScan" ) )
 	vector objectivePos = GetEntByScriptName( "objective_core" ).GetOrigin()
 	Objective_Update( objectivePos )
 }
@@ -5664,7 +5663,7 @@ void function AA_CoreScanThread( entity player )
 	CleanupAI( player )
 
 	player.ClearParent()
-	TeleportPlayerToEnt( player, GetEntByScriptName( "checkpointEnd" ) )
+	TeleportPlayers( GetEntByScriptName( "checkpointEnd" ) )
 	var skyCam = GetEnt( "skybox_cam_night" )
 	player.SetSkyCamera( skyCam )
 	FlagClear( "player_is_indoors")
@@ -5800,7 +5799,7 @@ void function StopCoreElectricalEffects( entity player )
 /////////////////////////////////////////////////////////////////////////////////////////
 void function LevelEndStartPointSetup( entity player )
 {
-	TeleportPlayerToEnt( player, GetEntByScriptName( "checkpointEnd" ) )
+	TeleportPlayers( GetEntByScriptName( "checkpointEnd" ) )
 }
 /////////////////////////////////////////////////////////////////////////////////////////
 void function LevelEndSkipped( entity player )

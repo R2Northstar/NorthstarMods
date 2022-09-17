@@ -148,13 +148,24 @@ void function LevelStartTextMiddleFunc( entity player )
     if ( funcstring == "" )
         print( "you forgot" )
 	Remote_CallFunction_Replay( player, funcstring )
+
+    thread HACKEnableUI( player )
+}
+
+void function HACKEnableUI( entity player )
+{
+    wait 13
+
+    AddCinematicFlag( player, CE_FLAG_HIDE_MAIN_HUD )
+    WaitFrame()
+    RemoveCinematicFlag( player, CE_FLAG_HIDE_MAIN_HUD )
 }
 
 void function LevelStartTextEndFunc()
 {
     foreach( entity player in GetPlayerArray() )
     {
-        AddCinematicFlag( player, CE_FLAG_HIDE_MAIN_HUD )
+        AddCinematicFlag( player, CE_FLAG_HIDE_MAIN_HUD ) 
         RemoveCinematicFlag( player, CE_FLAG_HIDE_MAIN_HUD )
     }
 }
