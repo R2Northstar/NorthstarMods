@@ -466,7 +466,7 @@ void function EntitiesDidLoad()
 
 void function ReplacePlayer0()
 {
-	ServerCommand( "reload" )
+	RestartMapWithDelay()
 }
 
 void function Map_PlayerDidLoad( entity player )
@@ -5411,7 +5411,7 @@ void function StartPoint_PilotLink( entity player )
 	thread PilotLink_Dialog( player )
 	thread PilotLink_SlotBattery( player )
 
-	FlagWait( "pilot_link_approach" )
+	TimeoutFlag( "pilot_link_approach", 20.0 )
 	Objective_Set( "#WILDS_OBJECTIVE_SECURE_AREA", file.buddyTitan.l.BTHightlightModel.GetOrigin() )
 	thread InstallBatteryObjective( player, "bt_ready_for_battery3", 5, "slot_battery3_begin" )
 
@@ -5466,21 +5466,22 @@ void function PilotLink_EarlyFight( entity player )
 	foreach( npc in npcArray )
 		thread TrackNPCHeight( player, npc )
 
-	waitthread TimeoutFalg( "pilot_link_early_fight_done", 30.0 )
+	waitthread TimeoutFlag( "pilot_link_early_fight_done", 20.0 )
 
 	FlagSet( "bt_ready_for_battery3" )
 }
 
-void function TimeoutFalg( string flg, float time )
+void function TimeoutFlag( string flag, float time )
 {
 	time = time + Time()
 	for(;;)
 	{
-		if ( Flag( "pilot_link_early_fight_done" ) || time < Time() )
-			return
+		if ( Flag( flag ) || time < Time() )
+			break
 		
 		wait 1
 	}
+	SetFlag( flag )
 }
 
 void function TrackNPCHeight( entity player, entity npc )
