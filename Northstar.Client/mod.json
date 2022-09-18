@@ -105,6 +105,10 @@
 		{
 			"Path": "ui/controller_prompts.nut",
 			"RunOn": "UI"
+		},
+		{
+			"Path": "ui/custom_scrollbar.nut",
+			"RunOn": "UI"
 		}
 	],
 	"Localisation": [
