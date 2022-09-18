@@ -57,18 +57,6 @@ void function StartSpawn( entity player )
 	{
 		player.SetOrigin( info.pos )
 
-		// ServerCommand( "sv_cheats 1" )
-		
-		// foreach ( int index, entity p in GetPlayerArray() )
-		// {
-		// 	if ( p == player )
-		// 	{
-		// 		ServerCommand( "script Map_PlayerDidLoad( GetPlayerArray()["  + index +  "] )" )
-		// 	}
-		// }
-		
-		// ServerCommand( "sv_cheats 0" )
-
 		try
 		{
 			foreach ( int index, entity p in GetPlayerArray() )
@@ -89,6 +77,8 @@ void function StartSpawn( entity player )
 	}
 
 	OnTimeShiftGiveGlove( player )
+	if ( ( GetMapName() == "sp_beacon" || GetMapName() == "sp_beacon_spoke0" ) && Flag( "HasChargeTool" ) )
+		GiveBatteryChargeToolSingle( player )
 
 	player.kv.CollisionGroup = TRACE_COLLISION_GROUP_BLOCK_WEAPONS // remove collision between players
 	DoRespawnPlayer( player, null )
@@ -158,6 +148,8 @@ void function GenericRespawn( entity player )
                         thread MakePlayerTitan( player, p.GetOrigin() )
                     }
                     OnTimeShiftGiveGlove( player )
+					if ( ( GetMapName() == "sp_beacon" || GetMapName() == "sp_beacon_spoke0" ) && Flag( "HasChargeTool" ) )
+						GiveBatteryChargeToolSingle( player )
                 }
                 catch( exception ){
                     return
@@ -171,7 +163,7 @@ void function GenericRespawn( entity player )
 void function s2sRespawn( entity player )
 {
 	wait 1
-	if ( "sp_s2s" in file.CustomMapRespawnsFunction )
+	if ( "sp_s2s" in file.CustomMapRespawnsFunction && GetPlayerArray().len() != 1 )
 		thread file.CustomMapRespawnsFunction["sp_s2s"]( player )
 
 	wait 1

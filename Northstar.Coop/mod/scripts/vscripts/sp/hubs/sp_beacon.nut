@@ -191,6 +191,11 @@ void function CodeCallback_MapInit()
 	AddScriptNoteworthySpawnCallback( "HubFightEnemy", AddTrackedHubFightEnemy )
 	AddScriptNoteworthySpawnCallback( "SecondBeaconReaper", SecondBeaconReaperSpawned )
 
+	AddPlayerDidLoad( Beacon_PlayerDidLoad )
+
+	if ( NSIsDedicated() )
+		return
+
 	AddMobilityGhost( $"anim_recording/sp_beacon_round_run1.rpak" )
 	AddMobilityGhost( $"anim_recording/sp_beacon_round_run2.rpak" )
 	AddMobilityGhost( $"anim_recording/sp_beacon_dish_arm_walk.rpak", "BigCraneDone" )
@@ -206,6 +211,21 @@ MyFile function gf()
 	return file
 }
 
+void function Beacon_PlayerDidLoad( entity player )
+{
+	if ( !IsValid( GetPlayer0() ) )
+		SetPlayer0( player )
+	
+	// should load once >~<
+	thread WaitFromSpoke0DoorOpen()
+}
+
+void function WaitFromSpoke0DoorOpen()
+{
+	FlagWait( "Door1ToSpoke0Open" )
+	TriggerSilentCheckPoint( <12363, -1737, 84>, true )
+}
+
 //---------------------------------------------------------------------
 
 //	███████╗████████╗ █████╗ ██████╗ ████████╗
@@ -217,10 +237,13 @@ MyFile function gf()
 
 void function StartPoint_Start( entity player )
 {
+	StartLevelStartText()
 	ShowIntroScreen( player )
 	FlagWait( "IntroScreenFading" )
 
-	Remote_CallFunction_NonReplay( player, "ServerCallback_LevelIntroText" )
+	// Remote_CallFunction_NonReplay( player, "ServerCallback_LevelIntroText" )
+
+	EndEvent() // hmm timing??
 
 	entity arms = GetEntByScriptName( "dish_arms2" )
 	arms.Anim_Play( "open" )
@@ -241,9 +264,11 @@ void function StartPoint_Start( entity player )
 	FlagWait( "ControlRoomBattleEnded" )
 
 	SetGlobalNetBool( "controlRoomBattleAmbient", false )
-	Remote_CallFunction_Replay( player, "ServerCallback_ControlRoomBattleAmbient", false )
+	foreach( player in GetPlayerArray() )
+		Remote_CallFunction_Replay( player, "ServerCallback_ControlRoomBattleAmbient", false )
 
 	CheckPoint()
+	TriggerSilentCheckPoint( <14244, -10997, 756>, false )
 }
 
 void function StartPoint_Setup_Start( entity player )
@@ -254,7 +279,8 @@ void function StartPoint_Setup_Start( entity player )
 void function StartPoint_Skipped_Start( entity player )
 {
 	SetGlobalNetBool( "controlRoomBattleAmbient", false )
-	Remote_CallFunction_Replay( player, "ServerCallback_ControlRoomBattleAmbient", false )
+	foreach( player in GetPlayerArray() )
+		Remote_CallFunction_Replay( player, "ServerCallback_ControlRoomBattleAmbient", false )
 	FlagSet( "ControlRoomBattleEnded" )
 }
 
@@ -298,6 +324,8 @@ void function StartPoint_ControlRoom( entity player )
 
 	FlagWait( "MikeIkeActivatedElevator" )
 
+	TriggerManualCheckPoint( null, <12279, -2484, -12>, false )
+
 	// Move the elevator up
 	ElevatorUp( 3.5 )
 	FlagSet( "ControlRoomElevatorUp" )
@@ -307,7 +335,7 @@ void function StartPoint_ControlRoom( entity player )
 
 	thread PlayBTDialogue( "BT_GoodLuckPilot" )
 
-	PickStartPoint( "sp_beacon_spoke0", "Level Start" )
+	Coop_LoadMapFromStartPoint( "sp_beacon_spoke0", "Level Start" )
 	WaitForever()
 }
 
@@ -539,6 +567,7 @@ void function StartPoint_FastballToSpoke1( entity player )
 	FlagWait( "StartedSpoke1" )
 
 	CheckPoint()
+	TriggerSilentCheckPoint( < -2142, -1928, 1328 >, true )
 
 	thread PlayerConversation( "FastballComplete", player )
 }
@@ -2746,6 +2775,9 @@ void function ControlRoomInteriorScene( entity player )
 	FlagSet( "ControlRoomASceneDone" )
 
 	Objective_Set( "#BEACON_OBJECTIVE_GET_ARC_TOOL", GetEntByScriptName( "spoke0_objective_location" ).GetOrigin() )
+	
+	if ( !IsValid( bt ) )
+		bt = GetPlayer0().GetPetTitan()
 
 	WaittillAnimDone( bt )
 	waitthread PlaySceneAnimThenIdle( bt, controlRoomNode, "", "bt_beacon_controlroom_a_end_loop", true )
@@ -3163,7 +3195,7 @@ void function PlayerReturnsFromSpoke0Hallway( entity player )
 	DispatchSpawn( door_grunt )
 	thread PlayAnimTeleport( door_grunt, "pt_door_guard_A_start", door_node )
 
-	entity grunt1 = GetClosestGrunt( player.GetOrigin() )
+	entity grunt1 = GetClosestGrunt( player.GetOrigin() ) // respawn why?
 
 	wait 1.0
 
@@ -3530,6 +3562,14 @@ void function PowerUpArcSwitchArray( entity player )
 
 	EndSignal( player, "OnDeath" )
 
+	OnThreadEnd(
+		function() : ()
+		{
+			if ( !Flag( "PowerArrayActivated" ) )
+				RestartMapWithDelay()
+		}
+	)
+
 	array<entity> arcSwitches = GetEntArrayByScriptName( "radial_arc_switch" )
 	printt( "Arc switches to power up:", arcSwitches.len() )
 
@@ -3765,8 +3805,15 @@ void function ThrowToSpoke1( entity player )
 	Assert( IsValid( throwTarget ) )
 
 	// Make sure player isn't in BT
-	if ( player.IsTitan() )
-		thread ForcedTitanDisembark( player )
+	foreach( entity p in GetPlayerArray() )
+	{
+		if ( p.IsTitan() )
+			thread ForcedTitanDisembark( p )
+		
+		Embark_Disallow( p )
+	}
+
+	wait 10
 
 	// Wait for BT to exist since we may be disembarking
 	entity bt = player.GetPetTitan()
@@ -5018,12 +5065,28 @@ void function FastballPlayerToDishUntilSuccess( entity player )
 
 	// Kick the player out of BT if you're inside him
 	Embark_Disallow( player )
+	
+	foreach( entity p in GetPlayerArray() )
+	{
+		if ( p.IsTitan() || IsPlayerEmbarking( p ) )
+			DisplayOnscreenHint( p, "DisembarkHint" )
+	}
 
-	if ( player.IsTitan() || IsPlayerEmbarking( player ) )
-		DisplayOnscreenHint( player, "DisembarkHint" )
+	// while ( player.IsTitan() || IsPlayerEmbarking( player ) )
+	// 	WaitFrame()
+	
+	wait 2
+	
+	// Make sure player isn't in BT
+	foreach( entity p in GetPlayerArray() )
+	{
+		if ( p.IsTitan() )
+			thread ForcedTitanDisembark( p )
+		
+		Embark_Disallow( p )
+	}
 
-	while ( player.IsTitan() || IsPlayerEmbarking( player ) )
-		WaitFrame()
+	wait 10
 
 	ClearOnscreenHint( player )
 
@@ -5087,8 +5150,11 @@ void function FastballPlayerToDishUntilSuccess( entity player )
 		if ( Flag( "TargetingModuleReplaced" ) )
 			break
 	}
-
-	Embark_Allow( player )
+	
+	foreach( entity p in GetPlayerArray() )
+	{
+		Embark_Allow( p )
+	}
 }
 
 

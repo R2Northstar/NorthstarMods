@@ -207,6 +207,8 @@ void function LogRollRoomFight( entity player )
 {
 	FlagWait( "PlayerEnteredRestrictedArea" )
 
+	TriggerManualCheckPoint( null, <704, 4668, 498>, true )
+
 	PlayMusic( "Music_Beacon_5_FirstCombat" )
 	thread LogRollRoomFightDialogue( player )
 
@@ -1256,6 +1258,8 @@ void function MarvinGivesArcToolToPlayerPeacefully( entity marvin )
 	}
 	marvin.UnsetUsable()
 
+	thread TriggerManualCheckPoint( player, player.GetOrigin(), true )
+
 	// Stop marvin from doing arc tool cycle
 	Signal( marvin, "MarvinStopWorkingArcTool" )
 	marvin.Code_Anim_Stop()
@@ -1270,6 +1274,7 @@ void function MarvinGivesArcToolToPlayerPeacefully( entity marvin )
 
 void function ArcToolFirstPersonSequence( entity player, entity marvin )
 {
+	marvin.SetInvulnerable()
 	player.DisableWeapon()
 
 	entity node = GetEntByScriptName( "arc_marvin_node" )
@@ -1296,15 +1301,12 @@ void function ArcToolFirstPersonSequence( entity player, entity marvin )
 				if ( player.ContextAction_IsBusy() )
 					player.ContextAction_ClearBusy()
 				
-				foreach( player in GetPlayerArray() )
-				{
-					// Give arc tool to player
-					if ( !HasWeapon( player, CHARGE_TOOL ) )
-						GiveBatteryChargeTool( player )
-					player.SetActiveWeaponByName( CHARGE_TOOL )
-					player.EnableWeapon()
-				}
-			}
+				// Give arc tool to player
+				// if ( !HasWeapon( player, CHARGE_TOOL ) )
+				GiveBatteryChargeTool( player )
+				player.SetActiveWeaponByName( CHARGE_TOOL )
+				player.EnableWeapon()
+		}
 		}
 	)
 

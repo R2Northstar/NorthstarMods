@@ -72,6 +72,8 @@ void function StartPoint_Beacon_Ending( entity player )
 	player.SetAngles( < -50,52,0> )
 	player.SetAnimNearZ( 1 )
 
+	TriggerManualCheckPoint( player, p.GetOrigin() + <0,500,0>, true )
+
 	entity soldier = CreateNPC( "npc_soldier", TEAM_MILITIA, origin, angles )
 	DispatchSpawn( soldier )
 	soldier.DisableHibernation()
@@ -172,6 +174,7 @@ void function StartPoint_Beacon_Ending( entity player )
 	wait 2.5
 
 	PickStartPoint_NoFadeOut_NoPilotWeaponCarryover( mapName, startPointEnum )
+	Coop_LoadMapFromStartPoint( mapName, startPointEnum )
 }
 
 void function DelayedVoiceOver( float delay, entity actor, string line )

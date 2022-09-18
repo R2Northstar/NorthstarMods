@@ -2253,17 +2253,11 @@ void function SpawnRespawnWidow( LocalVec origin )
 	ShipStruct widow = SpawnWidow( origin )
 	ClearShipBehavior( widow, eBehavior.ENEMY_ONBOARD )
 	widow.model.SetScriptName( "RS Widow" )
-
-	// AddShipEventCallback( widow, eShipEvents.PLAYER_ONHULL_START, PlayerWidowPlayerOnHullStart )
-	// AddShipEventCallback( widow, eShipEvents.PLAYER_ONHULL_END, PlayerWidowPlayerOnHullEnd )
 	
 	Highlight_SetFriendlyHighlight( widow.model, "friendly_ai" )
-	// widow.model.Anim_Play( "wd_doors_open_idle_L" )
 	widow.model.Anim_DisableUpdatePosition()
 	widow.model.Anim_DisableAnimDelta()
 	widow.model.SetInvulnerable()
-
-	// EnableScript( widow, "scr_pwidow_node_0", "BODY", file.playerWidow_scrOffset )
 
 	int fxID = GetParticleSystemIndex( FX_DECK_FLAP_WIND )
 	array<entity> fxNodes = GetEntArrayByScriptName( "startP_widow_windfx" )
@@ -5007,6 +5001,7 @@ void function Barkership_Main( entity player )
 
 	// now we spawn the respawn ship somewhere
 	SpawnRespawnWidow( CLVec( file.barkership.mover.GetOrigin() + <0,-3000,-1000> ) )
+
 	thread ShipIdleAtTargetEnt_Method2( file.respawnWidow, file.barkership.mover, <0,0,0>, <0,0,0>, <500,-1500,500> )
 	WidowAnimateOpen( file.respawnWidow, "left" )
 
@@ -5716,8 +5711,13 @@ void function MaltaIntro_Skip( entity player )
 {
 	level.nv.ShipTitles = SHIPTITLES_NOMALTA
 
-	SpawnRespawnWidow( CLVec( file.malta.mover.GetOrigin() + <2000,2000,-1000> ) )
+	// SpawnRespawnWidow( WorldToLocalOrigin( file.malta.mover.GetOrigin() + <2000,2000,-1000> ) )
+	SpawnRespawnWidow( WorldToLocalOrigin( < -3903, -9861, 367 > ) )
 	WidowAnimateOpen( file.respawnWidow, "left" )
+
+	WaitFrame()
+
+	file.respawnWidow.mover.SetOrigin( < -3903, -9861, 367 > )
 }
 
 void function MaltaIntro_Main( entity player )

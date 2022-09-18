@@ -85,9 +85,12 @@ void function Init_triggersThreaded()
 		// case "sp_timeshift_spoke02":
 		// 	break
 
-		// case "sp_beacon":
-		// case "sp_beacon_spoke0":
-		// 	return 
+		case "sp_beacon":
+			// CreateTeleportTrigger( <11637, -2451, -204>, 300.0, 200.0, 100.0, true ) // door closing you off from the control room :(
+			break
+		case "sp_beacon_spoke0":
+			CreateTeleportTrigger( <2689, 10284, 417>, 500.0, 2000.0, 100.0, true ) // door closing aftr the first major fight
+			break
 
 		case "sp_tday":
 			// todo: remove this?

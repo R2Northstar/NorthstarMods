@@ -13,6 +13,7 @@ global const TEAM_MIL_GRUNT_MODEL_SMG		= $"models/humans/grunts/mlt_grunt_smg.md
 
 global function GamemodeSp_Init
 global function GiveBatteryChargeTool
+global function GiveBatteryChargeToolSingle
 global function HasBatteryChargeTool
 global function FriendlyFire_MissionFailure
 global function DamageAlwaysLethal
@@ -164,8 +165,8 @@ void function EntitiesDidLoad_SpGameState()
 
 	SetCustomIntroLength( 0 )
 
-//	level.nv.replayDisabled = true //HACK - remove once the bug about replay hud is fixed
-	level.nv.minimapState = eMinimapState.Hidden
+	level.nv.replayDisabled = true //HACK - remove once the bug about replay hud is fixed
+	// level.nv.minimapState = eMinimapState.Hidden
 
 	level.nv.replayDisabled = true
 	if ( !IsTestMap() )
@@ -740,6 +741,15 @@ bool function HasBatteryChargeTool( entity player )
 
 void function GiveBatteryChargeTool( entity player )
 {
+	foreach( player in GetPlayerArray() )
+		GiveBatteryChargeToolSingle( player )
+}
+
+void function GiveBatteryChargeToolSingle( entity player )
+{
+	if ( HasBatteryChargeTool( player ) )
+		return
+				
 	switch ( CHARGE_TOOL )
 	{
 		case "sp_weapon_proto_battery_charger_offhand":
