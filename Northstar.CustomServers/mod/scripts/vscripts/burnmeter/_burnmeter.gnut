@@ -16,7 +16,7 @@ global function InitBurnMeterPersistentData
 const float PHASE_REWIND_LENGTH = 2.0
 // taken from wraith portal in apex, assuming it's the same as tf2's
 // 0.1 can be too fast for ttf2 scripts
-const float PHASE_REWIND_PATH_SNAPSHOT_INTERVAL = 0.4
+const float PHASE_REWIND_PATH_SNAPSHOT_INTERVAL = 0.2 // mainly controlled by this const, the higher the rewind path will be longer, assuming this one is like vanilla's
 const int PHASE_REWIND_MAX_SNAPSHOTS = int( PHASE_REWIND_LENGTH / PHASE_REWIND_PATH_SNAPSHOT_INTERVAL ) - 1
 const int PHASE_REWIND_DATA_MAX_POSITIONS = int( PHASE_REWIND_LENGTH * 10 ) + 1 // hardcoded but maybe good
 
