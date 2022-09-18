@@ -974,6 +974,21 @@ void function _OnServerSelectedAsync( var button )
 			bool modIsVerified = false;
 			if (IsModVerified(NSGetServerRequiredModName( serverIndex, i ), NSGetServerRequiredModVersion( serverIndex, i ))) {
 				// TODO download mod
+				bool modIsVerified = true;
+
+				// Downloading mod UI
+				DialogData dialogData
+				dialogData.header = "Downloading mod"
+				dialogData.message = "Downloading \"" + NSGetServerRequiredModName( serverIndex, i ) + "\" v" + NSGetServerRequiredModVersion( serverIndex, i ) + "..."
+				dialogData.showSpinner = true;
+				OpenDialog( dialogData )
+
+				while(true)
+				{
+					WaitFrame();
+				}
+
+				continue;
 			}
 
 			DialogData dialogData
