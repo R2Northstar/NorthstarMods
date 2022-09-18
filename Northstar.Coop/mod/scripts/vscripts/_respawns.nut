@@ -296,6 +296,14 @@ function PostDeathThread_SP( entity player, damageInfo )
 
 void function MakePlayerTitan( entity player, vector destination )
 {
+	EndSignal( player, "OnDeath" )
+	EndSignal( player, "OnDestroy" )
+
+	while( IsPlayerDisembarking( player ) && IsPlayerEmbarking( player ) )
+	{
+		WaitFrame()
+	}
+
 	entity titan = player.GetPetTitan()
 	if ( !IsValid( titan ) )
 	{
@@ -325,6 +333,14 @@ void function MakePlayerTitan( entity player, vector destination )
 
 void function MakePlayerPilot( entity player, vector destination  )
 {
+	EndSignal( player, "OnDeath" )
+	EndSignal( player, "OnDestroy" )
+
+	while( IsPlayerDisembarking( player ) && IsPlayerEmbarking( player ) )
+	{
+		WaitFrame()
+	}
+
 	entity titan = GetTitanFromPlayer( player )
 	if ( player.IsTitan() && IsValid( titan ) )
 	{

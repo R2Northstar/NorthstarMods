@@ -1081,7 +1081,7 @@ void function StartPoint_Highway( entity player )
 
 	entity p = GetClosest( GetPlayerArray(), <13777, -7555, 2537> )
 	if ( IsValid( p ) )
-		TeleportAllExpectOne( p.GetOrigin(), p )
+		TeleportAllExceptOne( p.GetOrigin(), p )
 	else
 		Coop_LoadMapFromStartPoint( "sp_boomtown", "Assembly_Walls" )
 

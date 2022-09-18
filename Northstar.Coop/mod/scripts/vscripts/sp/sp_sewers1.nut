@@ -1929,7 +1929,7 @@ void function SewerArena_PumpAudioThink()
 
 void function SewerArena_DefendCombat( entity player )
 {
-	player.EndSignal( "OnDestroy" )
+	// player.EndSignal( "OnDestroy" )
 
 	EndSignal( level, "PlayerLeftSewerDefend" )
 
@@ -1988,7 +1988,8 @@ void function SewerArena_DefendCombat( entity player )
 	WaitUntilPercentDead_WithTimeout( ticks, 0.25, 10.0 )
 
 	wait 1.0
-	PlayerConversation( "BT_SludgeCantShoot", player )
+	if ( IsValid( player ) )
+		PlayerConversation( "BT_SludgeCantShoot", player )
 
 	// ---------------------------------------------------------------
 	// PART 2 - Ticks then grunts  ( 3 grunts per dropship )
@@ -2353,8 +2354,8 @@ void function SewerArena_SludgeWaterfalls_Shutdown()
 		}
 
 		string str_sludgeIndex = string( sludgeIndex )
-		entity sludgeBrush = GetEntByScriptName( "SewerArena_sludge_wall_clip_" + str_sludgeIndex )
-		entity hurtTrigger = GetEntByScriptName( "SewerArena_sludge_wall_hurt_trigger_" + str_sludgeIndex )
+		entity sludgeBrush = SafeGetEnt( "SewerArena_sludge_wall_clip_" + str_sludgeIndex )
+		entity hurtTrigger = SafeGetEnt( "SewerArena_sludge_wall_hurt_trigger_" + str_sludgeIndex )
 
 		hurtTrigger.Destroy()
 		sludgeBrush.Destroy()
@@ -2370,6 +2371,14 @@ void function SewerArena_SludgeWaterfalls_Shutdown()
 	}
 }
 
+entity function SafeGetEnt( string name )
+{
+	array<entity> ent = GetEntArrayByScriptName( name )
+
+	if ( ent.len() == 0 )
+		return CreateScriptMover()
+	return ent[0]
+}
 
 void function SewerArena_BTExit( entity player )
 {
@@ -3129,6 +3138,13 @@ void function KaneArena_AmbientKaneRadioBroadcast( entity player )
 void function KaneArena_FirstRadioTransmission( entity player )
 {
 	player.EndSignal( "OnDestroy" )
+
+	OnThreadEnd(
+		function() : ()
+		{
+			FlagSet( "KaneArena_radio_intercept_done" )
+		}
+	)
 
 	entity proxy = player.GetFirstPersonProxy()
 	WaitSignal( proxy, "AnimRadioGet_PlayRadioTransmission" )

@@ -5702,7 +5702,7 @@ void function MaltaIntro_Setup( entity player )
 	HideName( file.davis )
 
 	// added stuff
-	TeleportAllExpectOne( file.crow64.model.GetOrigin() + <0,0,128>, player, false )
+	TeleportAllExceptOne( file.crow64.model.GetOrigin() + <0,0,128>, player, false )
 	
 	MaltaIntro_PutRespawnShipOnStandBy()
 }
@@ -5733,7 +5733,7 @@ void function MaltaIntro_Main( entity player )
 
 	// do movement of respawn ship to new location and tp all players
 	// added stuff
-	TeleportAllExpectOne( file.crow64.model.GetOrigin() + <0,0,128>, player, false )
+	TeleportAllExceptOne( file.crow64.model.GetOrigin() + <0,0,128>, player, false )
 	
 	MaltaIntro_PutRespawnShipOnStandBy()
 
@@ -6601,7 +6601,7 @@ void function MaltaBay_ElevatorSwitch( entity player )
 	LiftSendUp( realLift )
 
 	// added stuff
-	TeleportAllExpectOne( realLift.lift.GetOrigin() + <0,0,50>, null )
+	TeleportAllExceptOne( realLift.lift.GetOrigin() + <0,0,50>, null )
 
 	NextState()
 	thread HandleRespawnPlayer_s2s()
@@ -8295,7 +8295,7 @@ void function MaltaWidow_Main( entity player )
 	CheckPoint( data )
 
 	// added stuff
-	TeleportAllExpectOne( GetEntByScriptName( "maltaPlayerStart3" ).GetOrigin() + <0,0,50>, player )
+	TeleportAllExceptOne( GetEntByScriptName( "maltaPlayerStart3" ).GetOrigin() + <0,0,50>, player )
 
 	thread MaltaWidow_EndSection( player )
 
@@ -9184,7 +9184,7 @@ void function MaltaHangar_Main( entity player )
 	FlagWait( "Hangar_LandGates" )
 
 	// added stuff
-	TeleportAllExpectOne( GetEntByScriptName( "maltaPlayerStart4" ).GetOrigin() + <0,0,50>, null )
+	TeleportAllExceptOne( GetEntByScriptName( "maltaPlayerStart4" ).GetOrigin() + <0,0,50>, null )
 
 	HideHelmet( "dronehelmet" )
 	CleanupScript( "scr_malta_node_2" )
@@ -15379,7 +15379,7 @@ void function ViperDead_Main( entity player )
 
 	bt.ClearParent()
 
-	TeleportAllExpectOne( player.GetOrigin(), player )
+	TeleportAllExceptOne( player.GetOrigin(), player )
 }
 
 void function LifeBoats_Landing( entity player, entity node )

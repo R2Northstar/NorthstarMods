@@ -1,6 +1,6 @@
 untyped
 global function NewSaveLocation
-global function TeleportAllExpectOne
+global function TeleportAllExceptOne
 global function TriggerManualCheckPoint
 global function TriggerSilentCheckPoint
 global function Init_triggers
@@ -149,7 +149,7 @@ void function OnTeleportTriggeredThreaded( entity trigger, entity player )
 	printl("=========================================")
 	
 	vector destination = trigger.GetOrigin()
-	waitthread TeleportAllExpectOne( destination, player )
+	waitthread TeleportAllExceptOne( destination, player )
 	wait 0.1
 	
 	// super broken
@@ -182,7 +182,7 @@ void function OnMapChangeTriggered( entity trigger, entity player )
 	printl("Map change :" + trigger.GetOrigin())
 	printl("=========================================")
 
-	thread TeleportAllExpectOne( trigger.GetOrigin(), player )
+	thread TeleportAllExceptOne( trigger.GetOrigin(), player )
 
 	foreach( p in GetPlayerArray() )
 	{
@@ -225,7 +225,7 @@ vector function GetSaveLocation()
 	return save.lastSave
 }
 
-void function TeleportAllExpectOne( vector destination, entity ornull ThisPlayer, bool display_notification = true )
+void function TeleportAllExceptOne( vector destination, entity ornull ThisPlayer, bool display_notification = true )
 {
 	array<entity> movers
 
@@ -244,7 +244,10 @@ void function TeleportAllExpectOne( vector destination, entity ornull ThisPlayer
 
 				player.SetHealth( player.GetMaxHealth() )
 				if ( display_notification )
-					Chat_ServerPrivateMessage( player, "You are being moved to the next checkpoint", false )
+				{
+					DisplayOnscreenHint( player, "move_hint" )
+					// Chat_ServerPrivateMessage( player, "You are being moved to the next checkpoint", false )
+				}
 				
 				movers.append( mover )
 			}
@@ -263,6 +266,7 @@ void function TeleportAllExpectOne( vector destination, entity ornull ThisPlayer
 			{
 				player.ClearParent()
 				ClearInvincible( player )
+				ClearOnscreenHint( player )
 			}
 			catch( exception ){}
 		}
@@ -278,7 +282,7 @@ void function TeleportAllExpectOne( vector destination, entity ornull ThisPlayer
 void function TriggerManualCheckPoint( entity ornull player, vector origin, bool IsPilotSpawn )
 {
 	NewSaveLocation( origin )
-	waitthread TeleportAllExpectOne( origin, player )
+	waitthread TeleportAllExceptOne( origin, player )
 	wait 0.1
 	
 	foreach( entity p in GetPlayerArray() )
@@ -318,7 +322,28 @@ CheckPointInfo function GetCheckPointInfo()
 
 void function SetPlayer0( entity player )
 {
+	if ( IsValid( save.player0 ) )
+		DisplayOnscreenHint( player, "player0_hint_2" )
+	else
+		DisplayOnscreenHint( player, "player0_hint_1" )
     save.player0 = player
+
+	thread ClearPlayer0Hint( player )
+}
+
+void function ClearPlayer0Hint( entity player )
+{
+	EndSignal( player, "OnDeath" )
+
+	OnThreadEnd(
+	function() : ( player )
+		{
+			if ( IsValid( player ) )
+				ClearOnscreenHint( player )
+		}
+	)
+
+	wait 5
 }
 
 entity function GetPlayer0()

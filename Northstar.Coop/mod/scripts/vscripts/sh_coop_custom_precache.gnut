@@ -13,4 +13,8 @@ void function CoopCustomPrecache()
 	getconsttable()[ "eDamageSourceId" ][ "melee_pilot_kunai" ] <- eDamageSourceId.melee_pilot_emptyhanded
 
 	RegisterSignal( "CleanupFXAndSoundsForDecoy" ) // holo works in sp :poggies:
+
+	RegisterOnscreenHint( "move_hint", "#MOVE_HINT" ) // TODO: add this "You are being moved to the next checkpoint"
+	RegisterOnscreenHint( "player0_hint_1", "#BECAME_PLAYER0_1" ) // "You are player0"
+	RegisterOnscreenHint( "player0_hint_2", "#BECAME_PLAYER0_2" ) // "You are now player0"
 }
