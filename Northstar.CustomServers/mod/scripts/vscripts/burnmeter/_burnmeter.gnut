@@ -496,8 +496,8 @@ void function PlayerUsesPhaseRewindBurncardThreaded( entity player )
 		//print( positions[ i ].origin )
 		// should looks better?
 		float moveTime = PHASE_REWIND_PATH_SNAPSHOT_INTERVAL + 0.1
-		if( i == 0 )
-			moveTime = PHASE_REWIND_PATH_SNAPSHOT_INTERVAL
+		//if( i == 0 )
+		//	moveTime = PHASE_REWIND_PATH_SNAPSHOT_INTERVAL
 		mover.NonPhysicsMoveTo( positions[ i ].origin, moveTime, 0, 0 )
 		mover.NonPhysicsRotateTo( positions[ i ].angles, moveTime, 0, 0 )
 		wait PHASE_REWIND_PATH_SNAPSHOT_INTERVAL
