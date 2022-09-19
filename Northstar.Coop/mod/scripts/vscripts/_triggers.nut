@@ -21,11 +21,7 @@ global struct CheckPointInfo
 
 struct
 {
-	array<bool> nextCheckpointAsPilot = []
-	int currentPilotBoolId = 0
-
 	bool lastCheckpointWasAsPilot = true
-
 	vector lastSave = <0,0,0>
 
 	entity player0
@@ -72,19 +68,6 @@ void function Init_triggersThreaded()
 			// CreateTeleportTrigger( < -6384, -6723, 2900 > , 1000.0, 1000.0, 1000.0, false ) // kane's party
 			break
 
-		// case "sp_boomtown_start":
-		// case "sp_boomtown":
-		// case "sp_boomtown_end":
-		// 	return 
-
-		case "sp_hub_timeshift":
-			// CreateTeleportTrigger( < -1838,-6758,430.17 >, 400.0, 2000.0, 100.0, true) // teleports people to window
-			// CreateTeleportTrigger( < -1123,-1306,-1353.1 >, 500.0, 2000.0, 100.0, false) // teleports people to the rope
-			// CreateMapChangeTrigger( < 598,-3347,-471 >, 500.0, 2000.0, 100.0) // changes map
-			break
-		// case "sp_timeshift_spoke02":
-		// 	break
-
 		case "sp_beacon":
 			// CreateTeleportTrigger( <11637, -2451, -204>, 300.0, 200.0, 100.0, true ) // door closing you off from the control room :(
 			break
@@ -92,23 +75,8 @@ void function Init_triggersThreaded()
 			CreateTeleportTrigger( <2689, 10284, 417>, 500.0, 2000.0, 100.0, true ) // door closing aftr the first major fight
 			break
 
-		case "sp_tday":
-			// todo: remove this?
-			// todo: custom spawns for sp_tday?
-			CreateMapChangeTrigger( < 6683,12750,2432 >, 5000.0, 2000.0, 100.0) // change map trigger
-			CreateTeleportTrigger( < 1585,-3711,227.6 >, 1000.0, 2000.0, 100.0, true ) // the door
-			CreateTeleportTrigger( < -6622,3890,1920.6 >, 2000.0, 2000.0, 100.0, true ) // the elevator exit
-			CreateTeleportTrigger( < -6631,14697,2560.4 >, 2000.0, 2000.0, 100.0, true ) // the last run to the ship
-			break
-
-		// case "sp_s2s":
-		// 	return 
-
 		// case "sp_skyway_v1":
 		// 	return 
-
-		// default:
-			
 	}
 }
 
@@ -130,11 +98,10 @@ void function CreateTeleportTrigger( vector origin, float radius, float top, flo
 
 	array<entity> ents = []
 	entity trigger = _CreateScriptCylinderTriggerInternal( origin, radius, TRIG_FLAG_PLAYERONLY  | TRIG_FLAG_ONCE, ents, top, bottom )
-
+	
+	trigger.SetScriptName( string( TpAsPilot ) )
 	AddCallback_ScriptTriggerEnter( trigger, OnTeleportTriggered )
 	// AddCallback_ScriptTriggerLeave( trigger, OnTeleportTriggered )
-
-	save.nextCheckpointAsPilot.append( TpAsPilot )
 }
 
 void function OnTeleportTriggered( entity trigger, entity player )
@@ -157,7 +124,7 @@ void function OnTeleportTriggeredThreaded( entity trigger, entity player )
 	{
 		if ( p != player )
 		{
-			if ( save.nextCheckpointAsPilot[ save.currentPilotBoolId ] )
+			if ( trigger.GetScriptName() == "true" )
 				thread MakePlayerPilot( p, destination )
 			else
 				thread MakePlayerTitan( p, destination )
@@ -165,39 +132,15 @@ void function OnTeleportTriggeredThreaded( entity trigger, entity player )
 	}
 
 	save.lastSave = destination
-	save.currentPilotBoolId += 1
-}
-
-void function CreateMapChangeTrigger( vector origin, float radius, float top, float bottom)
-{
-	array<entity> ents = []
-	entity trigger = _CreateScriptCylinderTriggerInternal( origin, radius, TRIG_FLAG_PLAYERONLY | TRIG_FLAG_PLAYERONLY  | TRIG_FLAG_ONCE, ents, top, bottom )
-
-	AddCallback_ScriptTriggerEnter( trigger, OnMapChangeTriggered )
-}
-
-void function OnMapChangeTriggered( entity trigger, entity player )
-{
-	printl("=========================================")
-	printl("Map change :" + trigger.GetOrigin())
-	printl("=========================================")
-
-	thread TeleportAllExceptOne( trigger.GetOrigin(), player )
-
-	foreach( p in GetPlayerArray() )
-	{
-		ScreenFadeToBlackForever( p, 1.7 )
-	}
-
-	wait( 3 )
-	Coop_MapChange()
+	save.lastCheckpointWasAsPilot = trigger.GetScriptName() == "true"
 }
 
 void function CreateGauntletTeleportBackTrigger()
 {
 	array<entity> ents = []
 	entity trigger = _CreateScriptCylinderTriggerInternal( < 2263,7538,304 >, 150.0, TRIG_FLAG_PLAYERONLY, ents, 100.0, 100.0 )
-
+	
+	trigger.SetScriptName( "gauntlet_trigger" )
 	AddCallback_ScriptTriggerEnter( trigger, OnTeleportBackTriggered )
 }
 
@@ -244,10 +187,7 @@ void function TeleportAllExceptOne( vector destination, entity ornull ThisPlayer
 
 				player.SetHealth( player.GetMaxHealth() )
 				if ( display_notification )
-				{
 					DisplayOnscreenHint( player, "move_hint" )
-					// Chat_ServerPrivateMessage( player, "You are being moved to the next checkpoint", false )
-				}
 				
 				movers.append( mover )
 			}
@@ -295,18 +235,13 @@ void function TriggerManualCheckPoint( entity ornull player, vector origin, bool
 				thread MakePlayerTitan( p, origin )
 		}
 	}
-	
-	// save.currentPilotBoolId += 1
 	save.lastCheckpointWasAsPilot = IsPilotSpawn
-	// save.nextCheckpointAsPilot.insert( save.currentPilotBoolId, IsPilotSpawn )
 }
 
 void function TriggerSilentCheckPoint( vector origin, bool IsPilotSpawn )
 {
 	NewSaveLocation( origin )
-	// save.currentPilotBoolId += 1
 	save.lastCheckpointWasAsPilot = IsPilotSpawn
-	// save.nextCheckpointAsPilot.insert( save.currentPilotBoolId, IsPilotSpawn )
 }
 
 CheckPointInfo function GetCheckPointInfo()

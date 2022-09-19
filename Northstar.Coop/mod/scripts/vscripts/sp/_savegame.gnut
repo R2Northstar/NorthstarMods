@@ -518,7 +518,7 @@ void function WriteRestoreLocationFromEntity( entity safeLocation )
 	printl("New checkpoint :" + safeLocation.GetOrigin())
 	printl("=========================================")
 	
-	thread TeleportAllExpectOne( safeLocation.GetOrigin(), player )
+	thread TeleportAllExceptOne( safeLocation.GetOrigin(), player )
 	NewSaveLocation( safeLocation.GetOrigin() + <0,0,SAVE_SPAWN_VOFFSET> )
 
 	file.saveOrigin = safeLocation.GetOrigin() + <0,0,SAVE_SPAWN_VOFFSET>

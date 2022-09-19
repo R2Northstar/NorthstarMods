@@ -610,7 +610,7 @@ void function EOF( entity player )
 	if ( loadNextLevel )
 		Coop_LoadMapFromStartPoint( "sp_skyway_v1", "Level Start" )
 	else
-		PickStartPoint_NoFadeOut_NoPilotWeaponCarryover( "sp_s2s", "OLA Crash" )
+		Coop_LoadMapFromStartPoint( "sp_s2s", "OLA Crash" )
 
 
 	WaitForever()

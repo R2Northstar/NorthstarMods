@@ -4446,14 +4446,14 @@ void function Training_MeetOG( entity player )
 	if( Script_IsRunningTrialVersion() )
 	{
 		thread FreeTrial_OutroPopup( player, 2.5 )
-		PickStartPoint( "sp_beacon", "Level Start" )
+		Coop_LoadMapFromStartPoint( "sp_beacon", "Level Start" )
 	}
 	else
 	{
 		thread OutroDifficultyPopup( player, 2.5 )
 
 		// load next level
-		GameRules_ChangeMap( "sp_crashsite", GAMETYPE )
+		Coop_LoadMapFromStartPoint( "sp_crashsite", "LevelStart" )
 
 	}
 

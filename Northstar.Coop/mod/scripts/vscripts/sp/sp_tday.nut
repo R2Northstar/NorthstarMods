@@ -355,9 +355,12 @@ void function StartPoint_WallBombardment( entity player )
 	Objective_SetSilent( "#TDAY_OBJECTIVE_DESTROY_WALL", GetEntByScriptName( "WallObjectiveLocation" ).GetOrigin() )
 
 	Assert( file.friendlyTitans.len() == 6 )
-
-	thread CreateFakeMissileLockPoints()
-	thread TitanWallBombardmentAnims()
+	
+	if ( !NSIsDedicated() )
+	{
+		thread CreateFakeMissileLockPoints()
+		thread TitanWallBombardmentAnims()
+	}
 	thread WallBombardmentDialogue( player )
 	thread MissileBarrageSounds()
 
@@ -543,6 +546,8 @@ void function StartPoint_UndergroundFuelStorage( entity player )
 {
 	printt( "Start Point - Underground Fuel Storage" )
 
+	TriggerManualCheckPoint( null, < 1585,-3711,227.6 >, false )
+
 	StopMusicTrack( "music_tday_02_intro" )
 	PlayMusic( "music_tday_03_arches" )
 
@@ -613,6 +618,8 @@ void function StartPoint_Elevator( entity player )
 
 	// Move the elevator up
 	waitthread ElevatorUp( player )
+
+	TriggerManualCheckPoint( null, < -7793, 2821, 1925 >, false )
 }
 
 void function StartPoint_Setup_Elevator( entity player )
@@ -1247,7 +1254,7 @@ void function EndTday()
 		return
 	FlagSet( "BadGeoFailsafe" )
 
-	thread PickStartPoint( "sp_s2s", "Level Start" )
+	thread Coop_LoadMapFromStartPoint( "sp_s2s", "Level Start" )
 }
 
 void function MaltaEscort()
@@ -2135,7 +2142,7 @@ void function MakeIntroTitansVulnerable()
 
 void function IntroBattleThink( entity player )
 {
-	EndSignal( player, "OnDeath" )
+	// EndSignal( player, "OnDeath" )
 
 	FlagSet( "ReinforcementsEnabled" )
 	SetIdealFriendlyTitanCount( 5 ) // from 6 -Mackey
@@ -2262,7 +2269,7 @@ void function IntroBattleThink( entity player )
 
 	foreach( entity titan in enemyTitans )
 	{
-		if ( IsValid( titan ) )
+		if ( IsValid( titan ) && IsValid( player ) )
 		{
 			titan.SetEnemy( player )
 			titan.AssaultPoint( player.GetOrigin() )
@@ -3097,19 +3104,23 @@ void function ArkSequence( entity player )
 	//asset weaponAsset = GetWeaponInfoFileKeyFieldAsset_Global( weaponName, "playermodel" )
 	//entity weapon = CreatePropDynamic( weaponAsset )
 	//weapon.SetParent( titan, "propgun", false, 0.0 )
+	
+	foreach( player in GetPlayerArray() )
+	{
+		player.FreezeControlsOnServer()
+		player.DisableWeapon()
+		player.SetNoTarget( true )
+		player.SetInvulnerable()
+		FlagSet( "BossTitanViewFollow" )
+		AddCinematicFlag( player, CE_FLAG_TITAN_3P_CAM )
+		Remote_CallFunction_NonReplay( player, "ServerCallback_BossTitanIntro_Start", sloneTitan.GetEncodedEHandle(), 0, false, false )
+		
+		thread BossTitanPlayerView( player, sloneTitan, node, "vehicle_driver_eyes" )
 
-	player.FreezeControlsOnServer()
-	player.DisableWeapon()
-	player.SetNoTarget( true )
-	player.SetInvulnerable()
-	FlagSet( "BossTitanViewFollow" )
-	AddCinematicFlag( player, CE_FLAG_TITAN_3P_CAM )
-	Remote_CallFunction_NonReplay( player, "ServerCallback_BossTitanIntro_Start", sloneTitan.GetEncodedEHandle(), 0, false, false )
-
-	thread BossTitanPlayerView( player, sloneTitan, node, "vehicle_driver_eyes" )
+		UnlockAchievement( player, achievements.LOCATE_ARK )
+	}
 	svGlobal.levelEnt.Signal( "BossTitanStartAnim" )
-
-	UnlockAchievement( player, achievements.LOCATE_ARK )
+		
 
 	wait 8.85
 
@@ -3122,13 +3133,16 @@ void function ArkSequence( entity player )
 //	thread PlayDialogue( "SARAH_WE_GOT_EM_COOPER", player )
 
 	wait SLAMZOOM_TIME
-
-	player.EnableWeapon()
-	player.UnfreezeControlsOnServer()
-	player.SetNoTarget( false )
-	player.ClearInvulnerable()
-	RemoveCinematicFlag( player, CE_FLAG_TITAN_3P_CAM )
-	Remote_CallFunction_NonReplay( player, "ServerCallback_BossTitanIntro_End", sloneTitan.GetEncodedEHandle(), false )
+	
+	foreach( player in GetPlayerArray() )
+	{
+		player.EnableWeapon()
+		player.UnfreezeControlsOnServer()
+		player.SetNoTarget( false )
+		player.ClearInvulnerable()
+		RemoveCinematicFlag( player, CE_FLAG_TITAN_3P_CAM )
+		Remote_CallFunction_NonReplay( player, "ServerCallback_BossTitanIntro_End", sloneTitan.GetEncodedEHandle(), false )
+	}
 
 	array<entity> destroyEnts
 	destroyEnts.append( sloneHuman )
