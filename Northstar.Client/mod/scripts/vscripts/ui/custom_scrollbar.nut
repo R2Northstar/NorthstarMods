@@ -7,8 +7,9 @@ global function SetScrollbarWidth
 global function SetScrollbarOriginalHeight
 global function SetScrollbarOriginalWidth
 global function SetScrollbarHorizontal
+global function FindScrollbar
 
-struct ScrollbarExt {
+global struct ScrollbarExt {
 	array<void functionref( int x, int y )> callbacks
 	int originalX
 	int originalY
@@ -44,12 +45,12 @@ void function UseCustomScrollbars( var menu )
 
 void function RegisterScrollbarMoveCallback( var scrollbar, void functionref( int x, int y ) f )
 {
-	FindScrollbarByRef( scrollbar ).callbacks.append( f )
+	FindScrollbar( scrollbar ).callbacks.append( f )
 }
 
 void function SetScrollbarHeight( var scrollbar, int height )
 {
-	ScrollbarExt ctn = FindScrollbarByRef( scrollbar )
+	ScrollbarExt ctn = FindScrollbar( scrollbar )
 	Hud_SetHeight( ctn.cover, height )
 	Hud_SetHeight( ctn.movementCapture, height )
 	Hud_SetHeight( ctn.button, height )
@@ -58,7 +59,7 @@ void function SetScrollbarHeight( var scrollbar, int height )
 
 void function SetScrollbarWidth( var scrollbar, int width )
 {
-	ScrollbarExt ctn = FindScrollbarByRef( scrollbar )
+	ScrollbarExt ctn = FindScrollbar( scrollbar )
 	Hud_SetWidth( ctn.cover, width )
 	Hud_SetWidth( ctn.movementCapture, width )
 	Hud_SetWidth( ctn.button, width )
@@ -67,17 +68,17 @@ void function SetScrollbarWidth( var scrollbar, int width )
 
 void function SetScrollbarOriginalHeight( var scrollbar, int height )
 {
-	FindScrollbarByRef( scrollbar ).originalHeight = height
+	FindScrollbar( scrollbar ).originalHeight = height
 }
 
 void function SetScrollbarOriginalWidth( var scrollbar, int width )
 {
-	FindScrollbarByRef( scrollbar ).originalWidth = width
+	FindScrollbar( scrollbar ).originalWidth = width
 }
 
 void function SetScrollbarHorizontal( var scrollbar, bool horizontal )
 {
-	FindScrollbarByRef( scrollbar ).horizontal = horizontal
+	FindScrollbar( scrollbar ).horizontal = horizontal
 }
 
 void function RegisterScrollbar( var scrollbar, bool horizontal = false )
@@ -99,6 +100,15 @@ void function RegisterScrollbar( var scrollbar, bool horizontal = false )
 	file.scrollbars.append( bar )
 }
 
+ScrollbarExt function FindScrollbar( var scrollbar )
+{
+	foreach( ScrollbarExt container in file.scrollbars )
+		if( container.scrollbar == scrollbar )
+			return container
+	throw "scrollbar not registered"
+	unreachable
+}
+
 // * #####################
 // * internal functions ##
 // * #####################
@@ -117,7 +127,7 @@ void function CoverGetFocus( var cover )
 void function MouseMovementHandler( int x, int y )
 {
 	int idx = GetFocusedScrollbarIndex()
-	Hud_SetFocused( Hud_GetChild( file.scrollbars[ idx ].scrollbar, "SliderButton" ) )
+	Hud_SetFocused( file.scrollbars[ idx ].scrollbar.button )
 	if( idx < 0 )
 		return
 	foreach( void functionref( int x, int y ) callback in file.scrollbars[ idx ].callbacks )
@@ -181,13 +191,4 @@ void function RepositionScrollbar_Vertical( ScrollbarExt scrollbar, int x, int y
 int function GetFocusedScrollbarIndex()
 {
 	return file.covers.find( file.invisCover )
-}
-
-ScrollbarExt function FindScrollbarByRef( var scrollbar )
-{
-	foreach( ScrollbarExt container in file.scrollbars )
-		if( container.scrollbar == scrollbar )
-			return container
-	throw "scrollbar not registered"
-	unreachable
 }
