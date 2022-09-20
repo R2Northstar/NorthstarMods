@@ -127,7 +127,7 @@ void function CoverGetFocus( var cover )
 void function MouseMovementHandler( int x, int y )
 {
 	int idx = GetFocusedScrollbarIndex()
-	Hud_SetFocused( file.scrollbars[ idx ].scrollbar.button )
+	Hud_SetFocused( file.scrollbars[ idx ].button )
 	if( idx < 0 )
 		return
 	foreach( void functionref( int x, int y ) callback in file.scrollbars[ idx ].callbacks )
