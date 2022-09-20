@@ -86,7 +86,7 @@ void function RegisterScrollbar( var scrollbar, bool horizontal = false )
 {
 	if( FindScrollbarSafe( scrollbar ) )
 	{
-		printt( format( "%s is already registered. omitting registration." ), scrollbar.tostring() )
+		printt( format( "%s is already registered. omitting registration.", scrollbar.tostring() ) )
 		return
 	}
 
@@ -117,9 +117,9 @@ ScrollbarExt ornull function FindScrollbarSafe( var scrollbar )
 
 ScrollbarExt function FindScrollbar( var scrollbar )
 {
-	var scr = FindScrollbarSafe( scrollbar )
-	if( scr )
-		return scr
+	ScrollbarExt ornull scr = FindScrollbarSafe( scrollbar )
+	if( scr != null )
+		return expect ScrollbarExt( scr )
 	throw "scrollbar not registered"
 	unreachable
 }

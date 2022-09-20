@@ -28,6 +28,7 @@ resource/ui/menus/panels/scrollbar.res
 			
 			wide	50
 			tall	50
+			zpos	0
 
 			image		"vgui/hud/white"
 			drawColor	"255 255 255 128"
