@@ -7,6 +7,7 @@ global function SetScrollbarWidth
 global function SetScrollbarOriginalHeight
 global function SetScrollbarOriginalWidth
 global function SetScrollbarHorizontal
+global function FindScrollbarSafe
 global function FindScrollbar
 
 global struct ScrollbarExt {
@@ -83,6 +84,12 @@ void function SetScrollbarHorizontal( var scrollbar, bool horizontal )
 
 void function RegisterScrollbar( var scrollbar, bool horizontal = false )
 {
+	if( FindScrollbarSafe( scrollbar ) )
+	{
+		printt( format( "%s is already registered. omitting registration." ), scrollbar.tostring() )
+		return
+	}
+
 	var cover = Hud_GetChild( scrollbar, "SliderCover" )
 	AddButtonEventHandler( cover, UIE_GET_FOCUS, CoverGetFocus )
 	file.covers.append( cover )
@@ -100,11 +107,19 @@ void function RegisterScrollbar( var scrollbar, bool horizontal = false )
 	file.scrollbars.append( bar )
 }
 
-ScrollbarExt function FindScrollbar( var scrollbar )
+ScrollbarExt ornull function FindScrollbarSafe( var scrollbar )
 {
 	foreach( ScrollbarExt container in file.scrollbars )
 		if( container.scrollbar == scrollbar )
 			return container
+	return null
+}
+
+ScrollbarExt function FindScrollbar( var scrollbar )
+{
+	var scr = FindScrollbarSafe( scrollbar )
+	if( scr )
+		return scr
 	throw "scrollbar not registered"
 	unreachable
 }
