@@ -62,4 +62,18 @@ resource/ui/menus/panels/modlist_setting.res
 		pin_corner_to_sibling	LEFT
 		pin_to_sibling_corner	RIGHT
 	}
+
+	EnabledImage
+	{
+		ControlName	RuiPanel
+
+		rui		ui/basic_image.rpak
+		wide	30
+		tall	30
+		visible	0
+
+		pin_to_sibling			WarningImage
+		pin_corner_to_sibling	LEFT
+		pin_to_sibling_corner	RIGHT
+	}
 }

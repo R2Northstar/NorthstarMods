@@ -205,9 +205,10 @@ void function OnModButtonPressed( var button )
 	else
 	{
 		NSSetModEnabled( modName, !NSIsModEnabled( modName ) )
-		var box = Hud_GetChild( file.panels[ int ( Hud_GetScriptID( Hud_GetParent( button ) ) ) - 1 ], "ControlBox" )
-		SetControlBoxColor( box, modName )
+		var panel = file.panels[ int ( Hud_GetScriptID( Hud_GetParent( button ) ) ) - 1 ]
+		SetControlBoxColor( Hud_GetChild( panel, "ControlBox" ), modName )
 		SetControlBarColor( modName )
+		SetModEnabledHelperImageAsset( Hud_GetChild( panel, "EnabledImage" ), modName )
 		RefreshMods()
 	}
 }
@@ -281,9 +282,11 @@ void function DisableMod()
 	string modName = file.mods[ int ( Hud_GetScriptID( Hud_GetParent( file.currentButton ) ) ) + file.scrollOffset - 1 ].mod.name
 	NSSetModEnabled( modName, false )
 
-	var box = Hud_GetChild( file.panels[ int ( Hud_GetScriptID( Hud_GetParent( file.currentButton ) ) ) - 1], "ControlBox" )
-	SetControlBoxColor( box, modName )
+	var panel = file.panels[ int ( Hud_GetScriptID( Hud_GetParent( file.currentButton ) ) ) - 1]
+	SetControlBoxColor( Hud_GetChild( panel, "ControlBox" ), modName )
 	SetControlBarColor( modName )
+	SetModEnabledHelperImageAsset( Hud_GetChild( panel, "EnabledImage" ), modName )
+
 	RefreshMods()
 }
 
@@ -397,7 +400,8 @@ void function DisplayModPanels()
 		var headerLabel = Hud_GetChild( panel, "Header" )
 		var box = Hud_GetChild( panel, "ControlBox" )
 		var line = Hud_GetChild( panel, "BottomLine" )
-		var warning = Hud_GetChild( panel, "WarningImage")
+		var warning = Hud_GetChild( panel, "WarningImage" )
+		var enabledImage = Hud_GetChild( panel, "EnabledImage" )
 		
 		if ( c.isHeader )
 		{
@@ -411,6 +415,7 @@ void function DisplayModPanels()
 			Hud_SetVisible( line, true )
 
 			Hud_SetVisible( warning, false )
+			Hud_SetVisible( enabledImage, false )
 		}
 		else
 		{
@@ -425,9 +430,24 @@ void function DisplayModPanels()
 			Hud_SetVisible( line, false )
 
 			Hud_SetVisible( warning, NSIsModRequiredOnClient( c.mod.name ) )
+
+			SetModEnabledHelperImageAsset( enabledImage, c.mod.name )
 		}
 		Hud_SetVisible( panel, true )
 	}
+}
+
+void function SetModEnabledHelperImageAsset( var panel, string modName )
+{
+	if( GetConVarInt( "colorblind_mode" ) )
+	{
+		if( NSIsModEnabled( modName ) )
+			RuiSetImage( Hud_GetRui( panel ), "basicImage", $"rui/menu/common/merit_state_success" )
+		else
+			RuiSetImage( Hud_GetRui( panel ), "basicImage", $"rui/menu/common/merit_state_failure" )
+		Hud_SetVisible( panel, true )
+	} else
+		Hud_SetVisible( panel, false )
 }
 
 void function SetControlBoxColor( var box, string modName )
