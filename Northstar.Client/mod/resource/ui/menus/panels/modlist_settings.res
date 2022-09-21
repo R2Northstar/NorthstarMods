@@ -72,8 +72,8 @@ resource/ui/menus/panels/modlist_setting.res
 		tall	30
 		visible	0
 
-		pin_to_sibling			WarningImage
-		pin_corner_to_sibling	LEFT
-		pin_to_sibling_corner	RIGHT
+		pin_to_sibling			BtnMod
+		pin_corner_to_sibling	RIGHT
+		pin_to_sibling_corner	LEFT
 	}
 }

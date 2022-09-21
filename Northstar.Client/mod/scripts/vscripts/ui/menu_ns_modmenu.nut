@@ -439,15 +439,12 @@ void function DisplayModPanels()
 
 void function SetModEnabledHelperImageAsset( var panel, string modName )
 {
-	if( GetConVarInt( "colorblind_mode" ) )
-	{
-		if( NSIsModEnabled( modName ) )
-			RuiSetImage( Hud_GetRui( panel ), "basicImage", $"rui/menu/common/merit_state_success" )
-		else
-			RuiSetImage( Hud_GetRui( panel ), "basicImage", $"rui/menu/common/merit_state_failure" )
-		Hud_SetVisible( panel, true )
-	} else
-		Hud_SetVisible( panel, false )
+	if( NSIsModEnabled( modName ) )
+		RuiSetImage( Hud_GetRui( panel ), "basicImage", $"rui/menu/common/merit_state_success" )
+	else
+		RuiSetImage( Hud_GetRui( panel ), "basicImage", $"rui/menu/common/merit_state_failure" )
+	RuiSetFloat3(Hud_GetRui( panel ), "basicImageColor", GetControlColorForMod( modName ) )
+	Hud_SetVisible( panel, true )
 }
 
 void function SetControlBoxColor( var box, string modName )
