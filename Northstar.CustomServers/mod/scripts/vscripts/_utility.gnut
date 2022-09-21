@@ -2132,9 +2132,7 @@ void function EntityDemigod_TryAdjustDamageInfo( entity ent, var damageInfo )
 	{
 		// Prevent going over max health to avoid a server crash.
 		int newHealth = bottomLimit + 1
-		newHealth = ent.GetMaxHealth() < newHealth ? ent.GetMaxHealth() : newHealth
-
-		ent.SetHealth( newHealth )
+		ent.SetHealth( ent.GetMaxHealth() < newHealth ? ent.GetMaxHealth() : newHealth )
 	}
 
 	int health = ent.GetHealth()
