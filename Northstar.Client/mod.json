@@ -33,7 +33,7 @@
 			"DefaultValue": "0"
 		},
 		{
-			"Name": "modlist_hide_convar",
+			"Name": "modlist_show_convars",
 			"DefaultValue": "0",
 			"Flags": 16777216
 		},

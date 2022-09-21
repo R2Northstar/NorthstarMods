@@ -441,7 +441,7 @@ resource/ui/menus/modlist.menu
 			InheritProperties	SwitchButton
 
 			labelText	"ConVars"
-			ConVar		"modlist_hide_convar"
+			ConVar		"modlist_show_convars"
 			wide 300
 
 			list

@@ -322,7 +322,6 @@ void function RefreshMods()
 	bool reverse = GetConVarBool( "modlist_reverse" )
 
 	int lastLoadPriority = reverse ? NSGetModLoadPriority( modNames[ modNames.len() - 1 ] ) + 1 : -1 
-	printt(reverse, lastLoadPriority)
 	string searchTerm = Hud_GetUTF8Text( Hud_GetChild( file.menu, "BtnModsSearch" ) ).tolower()
 
 	for ( int i = reverse ? modNames.len() - 1 : 0;
@@ -488,7 +487,7 @@ string function FormatModDescription( string modName )
 
 	// convars
 	array<string> modCvars = NSGetModConvarsByModName( modName )
-	if ( modCvars.len() != 0 && GetConVarBool( "modlist_hide_convar" ) )
+	if ( modCvars.len() != 0 && GetConVarBool( "modlist_show_convars" ) )
 	{
 		ret += "ConVars: "
 
@@ -515,26 +514,17 @@ string function FormatModDescription( string modName )
 
 void function UpdateMouseDeltaBuffer(int x, int y)
 {
-	mouseDeltaBuffer.deltaX += x
-	mouseDeltaBuffer.deltaY += y
+	mouseDeltaBuffer.deltaX = x
+	mouseDeltaBuffer.deltaY = y
 
 	SliderBarUpdate()
-}
-
-void function FlushMouseDeltaBuffer()
-{
-	mouseDeltaBuffer.deltaX = 0
-	mouseDeltaBuffer.deltaY = 0
 }
 
 
 void function SliderBarUpdate()
 {
 	if ( file.mods.len() <= 15 )
-	{
-		FlushMouseDeltaBuffer()
 		return
-	}
 
 	var sliderButton = Hud_GetChild( file.menu , "BtnModListSlider" )
 	var sliderPanel = Hud_GetChild( file.menu , "BtnModListSliderPanel" )
@@ -552,7 +542,6 @@ void function SliderBarUpdate()
 	// got local from official respaw scripts, without untyped throws an error
 	local pos =	Hud_GetPos(sliderButton)[1]
 	local newPos = pos - mouseDeltaBuffer.deltaY
-	FlushMouseDeltaBuffer()
 
 	if ( newPos < maxYPos ) newPos = maxYPos
 	if ( newPos > minYPos ) newPos = minYPos
@@ -577,8 +566,6 @@ void function UpdateListSliderPosition()
 	float useableSpace = (604.0 * (GetScreenSize()[1] / 1080.0) - Hud_GetHeight( sliderPanel ))
 
 	float jump = minYPos - (useableSpace / ( mods - float( PANELS_LEN ) ) * file.scrollOffset)
-
-	//jump = jump * (GetScreenSize()[1] / 1080.0)
 
 	if ( jump > minYPos ) jump = minYPos
 
