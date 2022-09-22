@@ -2127,7 +2127,7 @@ void function EntityDemigod_TryAdjustDamageInfo( entity ent, var damageInfo )
 		return
 
 	int bottomLimit = 5
-	//Set it up so that you at least take 1 damage, for hit indicators etc to trigger
+	// Set it up so that you at least take 1 damage, for hit indicators etc to trigger
 	if ( ent.GetHealth() <= bottomLimit )
 	{
 		// Prevent going over max health to avoid a server crash.
