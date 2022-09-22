@@ -166,10 +166,15 @@ void function OnModMenuClosed()
 
 void function OnModButtonFocused( var button )
 {
+	if( int ( Hud_GetScriptID( Hud_GetParent( button ) ) ) > file.mods.len() )
+		return
+
 	file.currentButton = button
 	file.lastMod = file.mods[ int ( Hud_GetScriptID( Hud_GetParent( button ) ) ) + file.scrollOffset - 1 ].mod
 	string modName = file.lastMod.name
 	var rui = Hud_GetRui( Hud_GetChild( file.menu, "LabelDetails" ) )
+
+ 	printt( Hud_GetScriptID( Hud_GetParent( button ) ), file.lastMod.name )
 
 	RuiSetGameTime( rui, "startTime", -99999.99 ) // make sure it skips the whole animation for showing this
 	RuiSetString( rui, "headerText", modName )
@@ -209,7 +214,9 @@ void function OnModButtonPressed( var button )
 		SetControlBoxColor( Hud_GetChild( panel, "ControlBox" ), modName )
 		SetControlBarColor( modName )
 		SetModEnabledHelperImageAsset( Hud_GetChild( panel, "EnabledImage" ), modName )
-		RefreshMods()
+		// RefreshMods()
+		UpdateListSliderPosition()
+		UpdateListSliderHeight()
 	}
 }
 
@@ -391,7 +398,7 @@ void function DisplayModPanels()
 {
 	foreach ( int i, var panel in file.panels)
 	{
-		if ( i >= file.mods.len() ) // don't try to show more panels than needed
+		if ( i >= file.mods.len() || file.scrollOffset + i >= file.mods.len() ) // don't try to show more panels than needed
 			break
 
 		panelContent c = file.mods[ file.scrollOffset + i ]
@@ -534,6 +541,7 @@ void function UpdateMouseDeltaBuffer(int x, int y)
 	mouseDeltaBuffer.deltaX = x
 	mouseDeltaBuffer.deltaY = y
 
+	UpdateListSliderHeight()
 	SliderBarUpdate()
 }
 
@@ -616,45 +624,48 @@ void function OnScrollDown( var button )
 {
 	if ( file.mods.len() <= PANELS_LEN ) return
 	file.scrollOffset += 5
-	if (file.scrollOffset + PANELS_LEN > file.mods.len()) {
+	if (file.scrollOffset + PANELS_LEN > file.mods.len())
 		file.scrollOffset = file.mods.len() - PANELS_LEN
-	}
-	UpdateList()
-	UpdateListSliderPosition()
+	Hud_SetFocused( Hud_GetChild( file.menu, "BtnModListSlider" ) )
+	ValidateScrollOffset()
 }
 
 void function OnScrollUp( var button )
 {
 	file.scrollOffset -= 5
-	if (file.scrollOffset < 0) {
+	if (file.scrollOffset < 0)
 		file.scrollOffset = 0
-	}
-	UpdateList()
-	UpdateListSliderPosition()
+	Hud_SetFocused( Hud_GetChild( file.menu, "BtnModListSlider" ) )
+	ValidateScrollOffset()
 }
 
 void function OnDownArrowSelected( var button )
 {
 	if ( file.mods.len() <= PANELS_LEN ) return
 	file.scrollOffset += 1
-	if (file.scrollOffset + PANELS_LEN > file.mods.len()) {
+	if (file.scrollOffset + PANELS_LEN > file.mods.len())
 		file.scrollOffset = file.mods.len() - PANELS_LEN
-	}
-	UpdateList()
-	UpdateListSliderPosition()
+	ValidateScrollOffset()
 }
 
 void function OnUpArrowSelected( var button )
 {
 	file.scrollOffset -= 1
-	if (file.scrollOffset < 0) {
+	if (file.scrollOffset < 0)
 		file.scrollOffset = 0
-	}
-	UpdateList()
-	UpdateListSliderPosition()
+	ValidateScrollOffset()
 }
 
-//
+void function ValidateScrollOffset()
+{
+	RefreshMods()
+	if(file.scrollOffset + 15  > file.mods.len())
+		file.scrollOffset = file.mods.len() - 15
+	HideAllPanels()
+	DisplayModPanels()
+	UpdateListSliderHeight()
+	UpdateListSliderPosition()
+}
 
 // Static arrays don't have the .find method for some reason
 bool function StaticFind( string mod )
