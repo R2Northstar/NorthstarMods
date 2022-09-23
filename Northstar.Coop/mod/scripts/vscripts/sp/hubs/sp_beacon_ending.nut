@@ -72,7 +72,7 @@ void function StartPoint_Beacon_Ending( entity player )
 	player.SetAngles( < -50,52,0> )
 	player.SetAnimNearZ( 1 )
 
-	TriggerManualCheckPoint( player, p.GetOrigin() + <0,500,0>, true )
+	TriggerManualCheckPoint( player, player.GetOrigin() + <0,500,0>, true )
 
 	entity soldier = CreateNPC( "npc_soldier", TEAM_MILITIA, origin, angles )
 	DispatchSpawn( soldier )

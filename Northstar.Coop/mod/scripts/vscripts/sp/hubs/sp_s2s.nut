@@ -12375,7 +12375,7 @@ void function Reunited_Main( entity player )
 	{
 		if ( !IsValid( p.GetPetTitan() ) && !p.IsTitan() )
 		{
-			CreatePetTitanAtLocationWithTf( p, file.malta.mover.GetOrigin() + <0,5000,1000>, p.GetAngles() )
+			CreatePetTitanAtOriginWithTf( p, file.malta.mover.GetOrigin() + <0,5000,1000>, p.GetAngles() )
 		}
 	}
 }
@@ -14577,7 +14577,7 @@ void function BT_Tackle_DisableEmbarkWhenReady( entity player )
 	entity soul = bt.GetTitanSoul()
 	
 	if ( !IsValid( soul ) )
-		CreatePetTitanAtLocation( player, player.GetOrigin(), player.GetAngles() )
+		CreatePetTitanAtOrigin( player, player.GetOrigin(), player.GetAngles() )
 
 	if ( soul.IsDoomed() )
 		UndoomTitan( bt, 5 )
@@ -15264,7 +15264,8 @@ void function ViperDead_Skip( entity player )
 	foreach ( ent in file.draconis_PA )
 		ent.DisableHibernation()
 	
-	NextState()
+	// NextState()
+	SetStateInt( 0 )
 }
 
 void function ViperDead_Main( entity player )
@@ -15278,7 +15279,7 @@ void function ViperDead_Main( entity player )
 	}
 	
 	if ( !IsValid(bt) )
-		bt = CreatePetTitanAtLocation( GetPlayer0(), file.respawnWidow.mover.GetOrigin() + <0,0,300>, <0,0,0> )
+		bt = CreatePetTitanAtOrigin( GetPlayer0(), file.respawnWidow.mover.GetOrigin() + <0,0,300>, <0,0,0> )
 	
 	bt.EndSignal( "OnDeath" )
 
@@ -15380,6 +15381,7 @@ void function ViperDead_Main( entity player )
 	bt.ClearParent()
 
 	TeleportAllExceptOne( player.GetOrigin(), player )
+	SetStateInt( 0 )
 }
 
 void function LifeBoats_Landing( entity player, entity node )
@@ -18462,7 +18464,7 @@ void function RespawnPlayer_s2s( entity player  )
 	{
 		if ( !IsValid( player.GetPetTitan() ) )
 		{
-			CreatePetTitanAtLocationWithTf( player, file.malta.mover.GetOrigin() + <0,5000,1000>, player.GetAngles() )
+			CreatePetTitanAtOriginWithTf( player, file.malta.mover.GetOrigin() + <0,5000,1000>, player.GetAngles() )
 			entity titan = player.GetPetTitan()
 			if ( titan != null )
 				titan.kv.alwaysAlert = false

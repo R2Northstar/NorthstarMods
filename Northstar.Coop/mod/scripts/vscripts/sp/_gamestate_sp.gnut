@@ -21,8 +21,8 @@ global function ServerRestartMission
 global function DisableFriendlyHighlight
 global function EnableFriendlyHighlight
 global function SP_PlayerLastSlideTime
-global function CreatePetTitanAtLocation
-global function CreatePetTitanAtLocationWithTf
+global function CreatePetTitanAtOrigin
+global function CreatePetTitanAtOriginWithTf
 
 //global function CodeCallback_Ping
 
@@ -343,7 +343,7 @@ void function CreatePetTitan( entity player)
 	titan.DisableHibernation()
 }
 
-void function CreatePetTitanAtLocation( entity player, vector origin, vector angles)
+void function CreatePetTitanAtOrigin( entity player, vector origin, vector angles)
 {
 	Assert( IsValid( file.spPetTitanStart ) )
 	// Player is in his Titan, don't create a titan
@@ -366,7 +366,7 @@ void function CreatePetTitanAtLocation( entity player, vector origin, vector ang
 	titan.DisableHibernation()
 }
 
-void function CreatePetTitanAtLocationWithTf( entity player, vector origin, vector angles)
+void function CreatePetTitanAtOriginWithTf( entity player, vector origin, vector angles)
 {
 	Assert( IsValid( file.spPetTitanStart ) )
 	// Player is in his Titan, don't create a titan

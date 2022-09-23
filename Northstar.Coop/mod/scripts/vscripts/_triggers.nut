@@ -47,17 +47,7 @@ void function Init_triggersThreaded()
 	{
 		case "sp_training":
 			CreateGauntletTeleportBackTrigger()
-			// todo: remove these ( its possible )
-			CreateTeleportTrigger( < -6130,-11703,-255 >, 100.0, 600.0, 100.0, true ) // the tp out of the sim pod 
-			CreateTeleportTrigger( < -7465,314,144 >, 1000.0, 500.0, 100.0, true ) // the armory
-			CreateTeleportTrigger( < 1311,74,-2522.6 >, 500.0, 500.0, 100.0, true ) // fs titan call
-			CreateTeleportTrigger( < 10563,-10234.8,-6026.91 >, 500.0, 500.0, 100.0, true ) // the last time we see the sim pod
 			break
-
-		// case "sp_crashsite":
-		// 	// todo: remove this by fixing sp_crashsite :trol:
-		// 	CreateTeleportTrigger( < -295,-419,45.03 >, 600.0, 100.0, 100.0, true ) // the tp to the next phase of the map
-		// 	break
 
 		case "sp_sewers1":
 			// we kinda need this
@@ -146,7 +136,7 @@ void function CreateGauntletTeleportBackTrigger()
 
 void function OnTeleportBackTriggered( entity trigger, entity player )
 {
-	player.SetOrigin( < -5677,197,48 > )
+	player.SetOrigin( < -5677,197,60 > )
 }
 
 /*

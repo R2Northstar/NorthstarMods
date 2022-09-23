@@ -719,7 +719,7 @@ void function SewerSplit_GateThink( entity player )
 
 	// respawning bt for player0 if gone
 	if ( !IsValid( GetPlayer0().GetPetTitan() ) )
-		CreatePetTitanAtLocation( GetPlayer0(), button.GetOrigin() + < 400,0,-20 >, <0,0,0> )
+		CreatePetTitanAtOrigin( GetPlayer0(), button.GetOrigin() + < 400,0,-20 >, <0,0,0> )
 	
 	GetPlayer0().GetPetTitan().SetInvulnerable()
 }

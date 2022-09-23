@@ -22,7 +22,6 @@ struct {
 void function AddMakeSpecifcRespawnsInit()
 {
     thread AddMakeSpecifcRespawns("sp_s2s", s2sRespawn )
-	// PrecacheWeapon( "mp_weapon_peacekraber" )
 }
 
 void function AddMakeSpecifcRespawns( string map, void functionref( entity ) func )
@@ -35,7 +34,7 @@ void function StartSpawn( entity player )
 {
     // Player was already positioned at info_player_start in SpPlayerConnecting.
 	// Don't reposition him, in case movers have already pushed him.
-	// No, will
+	// No, I will
 
 	// log their UID
 	print( format( "%s : %s", player.GetPlayerName(), player.GetUID() ) )
@@ -43,16 +42,16 @@ void function StartSpawn( entity player )
 	CheckPointInfo info = GetCheckPointInfo()
 
 	Chat_ServerPrivateMessage( player, "use 'say smth' in the console to chat ", false )
-	// Chat_ServerPrivateMessage( player, "co-op has some client side changes, so if you don't want to suffer download coop", false )
-	
+
 	// for events
 	thread RunMiddleFunc( player )
 
-	if ( "sp_s2s" == GetMapName() && info.player0 != player )
+	if ( GetMapName() in file.CustomMapRespawns )
 	{
-		thread file.CustomMapRespawns["sp_s2s"]( player )
+		thread file.CustomMapRespawns[GetMapName()]( player )
 		return
 	}
+
 	else if ( info.pos != <0,0,0> )
 	{
 		player.SetOrigin( info.pos )
@@ -63,7 +62,7 @@ void function StartSpawn( entity player )
 			{
 				if ( p == player )
 				{
-					compilestring( format("script Map_PlayerDidLoad( GetPlayerArray()[%d] )", index ) )
+					compilestring( format("Map_PlayerDidLoad( GetPlayerArray()[%d] )", index ) ) // TODO: should be switched to OnClient_Connect where its uued
 				}
 			}
 		}
@@ -76,21 +75,26 @@ void function StartSpawn( entity player )
 			thread MakePlayerTitan( player, info.pos )
 	}
 
+	DoRespawnPlayer( player, null )
+	// do we need this?
+	// AddPlayerMovementEventCallback( player, ePlayerMovementEvents.BEGIN_WALLRUN, Callback_WallrunBegin )
+	
+	// give them make specific items
 	OnTimeShiftGiveGlove( player )
 	if ( ( GetMapName() == "sp_beacon" || GetMapName() == "sp_beacon_spoke0" ) && Flag( "HasChargeTool" ) )
 		GiveBatteryChargeToolSingle( player )
 
-	player.kv.CollisionGroup = TRACE_COLLISION_GROUP_BLOCK_WEAPONS // remove collision between players
-	DoRespawnPlayer( player, null )
-	// do we need this?
-	// AddPlayerMovementEventCallback( player, ePlayerMovementEvents.BEGIN_WALLRUN, Callback_WallrunBegin )
-
+	// massive trol
 	for( int x = 1; x < achievements.MAX_ACHIVEMENTS; x++ )
 		UnlockAchievement( player, x )
 }
 
 void function RespawnPlayer( entity player )
 {
+	// really dangerous to enable this
+	// since everything is scripted
+	// stuff exepects people to be alive
+	// we to respawn them fast 
 	// WaitSignal( player, "RespawnNow" )
 
 	wait( 1 )
@@ -112,17 +116,17 @@ void function RespawnPlayer( entity player )
 
 void function RestartMapWithDelay()
 {
-    wait(1)
+    wait 1
     Coop_ReloadCurrentMapFromStartPoint( GetCurrentStartPointIndex() )
 }
 
 void function BasicRespawnLogic( entity player )
 {
-	player.kv.CollisionGroup = TRACE_COLLISION_GROUP_BLOCK_WEAPONS // remove collision between players
+	player.kv.CollisionGroup = TRACE_COLLISION_GROUP_BLOCK_WEAPONS // remove collision between players ( I don't think it works XD )
     player.s.inPostDeath = false
     player.s.respawnSelectionDone = true
     DoRespawnPlayer( player, null )
-    ClientCommand(player,"script_client thread MainHud_TurnOn_RUI( true )")
+    ClientCommand( player,"script_client thread MainHud_TurnOn_RUI( true )" ) // TODO: can this help with no hud on dedi?
     ScreenFadeFromBlack( player, 0.0, 0.0 )
 
     PilotLoadoutDef loadout = GetPilotLoadoutForCurrentMapSP()
@@ -131,32 +135,31 @@ void function BasicRespawnLogic( entity player )
 
 void function GenericRespawn( entity player )
 {        
-    wait( 1 )
-    while( !IsAlive( player ) ) 
+	EndSignal( player, "OnDestroy" )
+	EndSignal( player, "InternalPlayerRespawned" )
+
+    wait 1
+
+    for(;;)
     {
         foreach( p in GetPlayerArray() )
         {
-            if (p != player && p.IsOnGround() && !p.IsWallRunning() && !p.IsWallHanging() )
+            if ( IsValid( p ) && IsAlive( p ) && p != player && p.IsOnGround() && !p.IsWallRunning() && !p.IsWallHanging() )
             {
-                try
-                {
                     BasicRespawnLogic( player )
                     player.SetOrigin( p.GetOrigin() )
 
                     if ( p.IsTitan() )
-                    {
                         thread MakePlayerTitan( player, p.GetOrigin() )
-                    }
+        
                     OnTimeShiftGiveGlove( player )
 					if ( ( GetMapName() == "sp_beacon" || GetMapName() == "sp_beacon_spoke0" ) && Flag( "HasChargeTool" ) )
 						GiveBatteryChargeToolSingle( player )
-                }
-                catch( exception ){
-                    return
-                }	
+					
+					player.Signal( "InternalPlayerRespawned" )
             }
         }
-        wait(0.5)
+        wait 0.5
     }
 }
 
@@ -177,40 +180,9 @@ void function s2sRespawn( entity player )
 		DoRespawnPlayer( player, null )
 }
 
-// long functions
-void function DoHudDisplayForDeadPlayerThenReloadServer( entity player )
-{
-	// printl("DoHudDisplayForDeadPlayerThenReloadServer Called!")
-
-	// array<entity> players = GetPlayerArray()
-	// string Coop_Dead_Player = player.GetPlayerName()
-	// 	foreach (entity p in players){
-	// 			if (p != null){
-	// 			SendHudMessage( p , Coop_Dead_Player + "Fucked up, laugh at them." , -1, 0.4, 255, 255, 0, 0, 0.15, 6, 0.15 )
-	// 			//ClientCommand( p , "RespawnNowSP" )
-	// 			}
-	//		}
-	//wait 3.0
-	//ServerCommand( "reload" )
-	//player.Signal( "OnRespawned" )
-	//player.EndSignal( "OnDestroy" )
-
-
-	//player.RespawnPlayer(null)
-	// player.WaitSignal("RespawnNow")
-	// RespawnPlayer(player)
-
-	// CodeCallback_OnPlayerRespawned(player)
-	//player.EndSignal( "RespawnNow" )
-	//player.EndSignal( "OnRespawned" )
-	//player.EndSignal( "RespawnNow" )
-}
-
 void function CodeCallback_OnPlayerKilled( entity player, var damageInfo )
 {
-	// thread DoHudDisplayForDeadPlayerThenReloadServer( player )
 	thread PostDeathThread_SP( player, damageInfo )
-
 }
 
 function PostDeathThread_SP( entity player, damageInfo )
@@ -218,15 +190,17 @@ function PostDeathThread_SP( entity player, damageInfo )
 	printl("PostDeathThread_SP Called!")
 	array<entity> players = GetPlayerArray()
 	string Coop_Dead_Player = player.GetPlayerName()
-	foreach (entity p in players){
-		if (p != null){
+	foreach (entity p in players)
+	{
+		if (p != null )
+		{
 			SendHudMessage( p , Coop_Dead_Player + " Fucked up, laugh at them." , -1, 0.4, 255, 255, 0, 0, 0.15, 6, 0.15 )
 		}
 	}
 	if ( player.p.watchingPetTitanKillReplay )
 		return
 	
-	thread RespawnPlayer(player)
+	thread RespawnPlayer( player )
 
 	float timeOfDeath = Time()
 	player.p.postDeathThreadStartTime = Time()
@@ -270,8 +244,10 @@ function PostDeathThread_SP( entity player, damageInfo )
 	printl("ClearParent")
 
 	bool showedDeathHint = ShowDeathHintSP( player, damageInfo )
-	printl("AfterShowDeathHint"+showedDeathHint)
-	CodeCallback_OnPlayerRespawned(player)
+	printl("AfterShowDeathHint "+showedDeathHint)
+
+	CodeCallback_OnPlayerRespawned( player )
+
 	int damageSource = DamageInfo_GetDamageSourceIdentifier( damageInfo )
 	if ( damageSource != eDamageSourceId.fall )
 	{
@@ -281,16 +257,6 @@ function PostDeathThread_SP( entity player, damageInfo )
 		else
 			player.SetObserverTarget( null )
 	}
-
-
-
-
-	//ReloadForMissionFailure( reloadExtraDelay )
-	// ClientCommand(player,"CC_RespawnPlayer")
-	// player.RespawnPlayer(null)
-	// DoHudDisplayForDeadPlayerThenReloadServer( player )
-	//ScreenFadeFromBlack( player, 1.0, 0.75 )
-
 }
 
 
@@ -307,7 +273,7 @@ void function MakePlayerTitan( entity player, vector destination )
 	entity titan = player.GetPetTitan()
 	if ( !IsValid( titan ) )
 	{
-		CreatePetTitanAtLocation( player, player.GetOrigin(), player.GetAngles() )
+		CreatePetTitanAtOrigin( player, player.GetOrigin(), player.GetAngles() )
 		titan = player.GetPetTitan()
 		if ( titan != null )
 			titan.kv.alwaysAlert = false
@@ -344,15 +310,11 @@ void function MakePlayerPilot( entity player, vector destination  )
 	entity titan = GetTitanFromPlayer( player )
 	if ( player.IsTitan() && IsValid( titan ) )
 	{
-		ForcedTitanDisembark( player )
-
-		while( player.IsTitan() || titan.IsPlayer() || IsPlayerDisembarking( player ) && IsPlayerEmbarking( player ) )
-		{
-			titan = GetTitanFromPlayer( player )
-			wait 2
-		}
+		entity t = CreateAutoTitanForPlayer_ForTitanBecomesPilot( player )
+			
+		TitanBecomesPilot( player, t )
 		
-		titan.Destroy()
+		t.Destroy()
 		player.SetOrigin( destination )
 	}
 }

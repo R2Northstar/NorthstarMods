@@ -149,15 +149,16 @@ void function LevelStartTextMiddleFunc( entity player )
         print( "you forgot" )
 	Remote_CallFunction_Replay( player, funcstring )
 
-    thread HACKEnableUI( player )
+    delaythread ( 13 ) HACKEnableUI( player ) // It doesn't work D:
 }
 
 void function HACKEnableUI( entity player )
 {
-    wait 13
+    if ( !NSIsDedicated() )
+        return
 
     AddCinematicFlag( player, CE_FLAG_HIDE_MAIN_HUD )
-    WaitFrame()
+    wait 1
     RemoveCinematicFlag( player, CE_FLAG_HIDE_MAIN_HUD )
 }
 
@@ -165,7 +166,6 @@ void function LevelStartTextEndFunc()
 {
     foreach( entity player in GetPlayerArray() )
     {
-        AddCinematicFlag( player, CE_FLAG_HIDE_MAIN_HUD ) 
-        RemoveCinematicFlag( player, CE_FLAG_HIDE_MAIN_HUD )
+        thread HACKEnableUI( player )
     }
 }

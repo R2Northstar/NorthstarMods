@@ -22,7 +22,6 @@ global function GetSPLevelEnumForMapname
 global function Coop_GetLevelTransition
 global function Coop_LoadMapFromStartPoint
 global function Coop_ReloadCurrentMapFromStartPoint
-global function Coop_MapChange
 global function ClientCommand_AllDialogueFinished
 global function OnTimeShiftGiveGlove
 
@@ -34,8 +33,6 @@ struct
 	float lastMultiKillStartTime = 0.0
 	int multiKillCount = 0
 } file
-
-array<string> CoopMaps = ["sp_training","sp_crashsite","sp_sewers1","sp_boomtown_start","sp_boomtown","sp_boomtown_end","sp_hub_timeshift","sp_timeshift_spoke02","sp_beacon","sp_beacon_spoke0","sp_tday","sp_s2s","sp_skyway_v1"]
 
 void function BaseGametype_Init_MPSP()
 {
@@ -59,6 +56,7 @@ void function BaseGametype_Init_MPSP()
 	}
 
 	RegisterSignal( "RevertToRegularHighlight" )
+	RegisterSignal( "InternalPlayerRespawned" )
 
 	FlagInit( "WeaponDropsAllowed" )
 	FlagSet( "WeaponDropsAllowed" )
@@ -123,15 +121,17 @@ void function CodeCallback_OnClientDisconnected( entity player, string reason )
 	{
 		callbackFunc( player )
 	}
-
+	
 	if ( GetPlayer0() == player )
 	{
-		ServerCommand( "sv_cheats 1" )
-		
-		
-		ServerCommand( "script ReplacePlayer0()" )
-		
-		ServerCommand( "sv_cheats 0" )
+		try
+		{
+			compilestring( "ReplacePlayer0()" ) // TODO: test this
+		}
+		catch( execption )
+		{
+			print( execption )
+		}
 	}
 
 	ServerCommand( "kick " + player.GetUID() )
@@ -302,33 +302,6 @@ void function Coop_GetLevelTransition( string coop_mapname )
 
 }
 
-void function Coop_MapChange()
-{
-	bool changeOnNextIteration = false
-	
-
-	// so playlists don't work in coop
-	foreach ( map in CoopMaps )
-	{
-
-		if ( changeOnNextIteration )
-		{
-			printl("==========================")
-			printl(" trying to change " + map )
-			printl("==========================")
-			GameRules_ChangeMap( map, GAMETYPE )// GetCurrentPlaylistGamemodeByIndexMapByIndex( i, j )
-			return
-		}
-	
-		if ( map == GetMapName() )// GetCurrentPlaylistGamemodeByIndexMapByIndex( i, j )
-		{
-			printl("==========================")
-			printl(" found current map " + !changeOnNextIteration)
-			printl("==========================")
-			changeOnNextIteration = true // change to next map/mode we iterate over
-		}
-	}
-}
 void function CodeCallback_OnClientConnectionStarted( entity player )
 {
 	// not a real player?
@@ -413,6 +386,7 @@ function FinalPlayerUpdate( entity player )
 	player.s.ranFinalPlayerUpdate <- true
 }
 
+// used to give people the timeshift glove :D
 void function OnTimeShiftGiveGlove( entity player )
 {
 	if ( [ "sp_timeshift_spoke02", "sp_hub_timeshift" ].contains( GetMapName() ) && Flag( "PlayerPickedUpTimeshiftDevice" ) )
@@ -427,7 +401,6 @@ void function OnTimeShiftGiveGlove( entity player )
 		viewModel.SetSkin( 1 )
 		Remote_CallFunction_NonReplay( player, "ServerCallback_TimeDeviceAcquired" )
 	}
-	
 }
 
 

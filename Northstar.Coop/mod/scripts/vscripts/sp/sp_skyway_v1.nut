@@ -382,6 +382,10 @@ void function CodeCallback_MapInit()
 	AddState( "Torture" )
 	AddState( "Action1" )
 	AddState( "Action2" )
+	AddState( "OnlyTitans" )
+	AddState( "OnlyPilots" )
+
+	AddCallback_OnPlayerRespawned( PlayerRespawned )
 
 	FlagInit( "BreakWorld" )
 
@@ -504,12 +508,52 @@ void function PlayerJoined( entity player )
 		TakeAllWeapons( player )
 		player.TakeOffhandWeapon( 1 )
 
+		thread RemoveWeaponsOnRespawn( player ) // pain
+
 		player.SetOrigin( < -11558, -7031, 3520 > )
 	}
 	
 	if ( !IsValid( GetPlayer0() ) )
 		SetPlayer0( player )
 }
+
+void function RemoveWeaponsOnRespawn( entity player )
+{
+	EndSignal( player, "OnDestroy" )
+
+	while( !IsAlive( player ) )
+		WaitFrame()
+	
+	TakeAllWeapons( player )
+}
+
+void function PlayerRespawned( entity player )
+{
+	entity bt = player.GetPetTitan()
+	if ( IsValid( bt ) && ( GetState() == "Torture" || GetState() == "Action1" ) )
+	{
+		bt.Destroy()
+	}
+
+	if ( GetState() == "Torture" )
+	{
+		player.SetNoTarget( true )
+		player.DisableWeapon()
+		player.SetInvulnerable()
+
+		if ( player.ContextAction_IsBusy() )
+			player.ContextAction_SetBusy()
+
+		TakeAllWeapons( player )
+		player.TakeOffhandWeapon( 1 )
+	}
+
+	if ( GetState() == "OnlyTitans" )
+		thread MakePlayerTitan( player, player.GetOrigin() )
+	else if ( GetState() == "OnlyPilots" )
+		thread MakePlayerPilot( player, player.GetOrigin() )
+}
+
 
  /*
   _                   _   ____  _             _
@@ -551,7 +595,7 @@ void function SP_LevelStartThread( entity player )
 
 	// thread ShadowDepthResTweak( player )
 	foreach( entity p in GetPlayerArray() )
-		thread TortureRoomOpeningBlur( player )
+		thread TortureRoomOpeningBlur( p )
 	thread SloneTortureRoom( sequenceRef, player )
 	thread BliskTortureRoom( sequenceRef, player )
 	thread BTTortureRoom( sequenceRef, player )
@@ -640,16 +684,16 @@ void function PlayerTortureRoom( entity scriptRef, entity player, string firstPe
 
 	foreach( entity p in GetPlayerArray() )
 	{
-		player.SetPlayerSettingsWithMods( "civilian_solo_skyway", [] )
+		p.SetPlayerSettingsWithMods( "civilian_solo_skyway", [] )
 	}
 
 	waitthread PlayerTortureRoomSequence( scriptRef, player, firstPersonAnim, thirdPersonAnim )
 
 	foreach( entity p in GetPlayerArray() )
 	{
-		StatusEffect_Stop( player, status )
-		StatusEffect_AddTimed( player, eStatusEffect.turn_slow, 0.15, 8, 8 )
-		StatusEffect_AddTimed( player, eStatusEffect.move_slow, 0.3, 20, 20 )
+		StatusEffect_Stop( p, status )
+		StatusEffect_AddTimed( p, eStatusEffect.turn_slow, 0.15, 8, 8 )
+		StatusEffect_AddTimed( p, eStatusEffect.move_slow, 0.3, 20, 20 )
 	}
 
 	Signal( level, "StopDOFTracking" )
@@ -661,6 +705,8 @@ void function PlayerTortureRoom( entity scriptRef, entity player, string firstPe
 
 void function PlayerTortureRoomSequence( entity scriptRef, entity player, string firstPersonAnim = "pov_torture_intro_player", string thirdPersonAnim = "pt_torture_intro_player" )
 {
+	FullyHidePlayers()
+
 	foreach( player in GetPlayerArray() )
 	{
 		player.SetNoTarget( true )
@@ -700,7 +746,7 @@ void function PlayerTortureRoomSequence( entity scriptRef, entity player, string
 			if ( player != GetPlayer0() )
 				thread FirstPersonSequence( sequenceTortureRoom, player, moverIntro )
 		}
-		waitthread FirstPersonSequence( sequenceTortureRoom, player, moverIntro )
+		waitthread FirstPersonSequence( sequenceTortureRoom, GetPlayer0(), moverIntro )
 
   		FirstPersonSequenceStruct sequenceTortureRoomIdle
 		sequenceTortureRoomIdle.blendTime = 0.0
@@ -723,7 +769,7 @@ void function PlayerTortureRoomSequence( entity scriptRef, entity player, string
 	foreach( player in GetPlayerArray() )
 	{
 		if ( player != GetPlayer0() )
-			waitthread FirstPersonSequence( sequenceTortureRoomDrag, player, moverIntro )
+			thread FirstPersonSequence( sequenceTortureRoomDrag, GetPlayer0(), moverIntro )
 	}
 	waitthread FirstPersonSequence( sequenceTortureRoomDrag, player, moverIntro )
 
@@ -739,7 +785,9 @@ void function PlayerTortureRoomSequence( entity scriptRef, entity player, string
 		if ( player != GetPlayer0() )
 			thread FirstPersonSequence( sequenceTortureRoomKill, player, moverIntro )
 	}
-	waitthread FirstPersonSequence( sequenceTortureRoomKill, player, moverIntro )
+	waitthread FirstPersonSequence( sequenceTortureRoomKill, GetPlayer0(), moverIntro )
+
+	FullyHidePlayers()
 
 	FirstPersonSequenceStruct sequenceTortureRoomKillIdle
 	sequenceTortureRoomKillIdle.blendTime = 0.0
@@ -768,9 +816,9 @@ void function PlayerTortureRoomSequence( entity scriptRef, entity player, string
 	foreach( player in GetPlayerArray() )
 	{
 		if ( player != GetPlayer0() )
-			waitthread FirstPersonSequence( sequenceTortureRoomGetup, player, moverIntro )
+			thread FirstPersonSequence( sequenceTortureRoomGetup, player, moverIntro )
 	}
-	waitthread FirstPersonSequence( sequenceTortureRoomGetup, player, moverIntro )
+	waitthread FirstPersonSequence( sequenceTortureRoomGetup, GetPlayer0(), moverIntro )
 
 	Objective_Set( "#SKYWAY_OBJECTIVE_SURVIVE" )
 	
@@ -790,6 +838,8 @@ void function PlayerTortureRoomSequence( entity scriptRef, entity player, string
 	moverIntro.Destroy()
 
 	NextState()
+
+	FullyShowPlayers()
 }
 
 void function WaitForTortureRoomID( entity player )
@@ -1885,7 +1935,9 @@ void function Init_BTEyeCase( entity player, entity scriptRef )
 	ClearPlayerAnimViewEntity( player )
 	if ( player.ContextAction_IsBusy() )
 		player.ContextAction_ClearBusy()
-	player.EnableWeaponWithSlowDeploy()
+	
+	foreach( p in GetPlayerArray() )
+		p.EnableWeaponWithSlowDeploy()
 	player.SetNoTarget( false )
 
 	eyecase.Destroy()
@@ -2493,6 +2545,8 @@ void function SP_BTReunionThread( entity player )
 	InitBombardment()
 	OverrideCockpitLightFX( $"P_bt_cockpit_dlight_skyway" )
 
+	TriggerSilentCheckPoint( <3869, -6032, 3320>, true )
+
 	//Pack info targets of the following names into a targeting array for each gun.
 	array<entity> targets_01 = PackTargets( ["gb1_target_01", "gb1_target_02", "gb1_target_03"] )
 	array<entity> targets_02 = PackTargets( ["gb2_target_01", "gb2_target_02", "gb2_target_03"] )
@@ -2507,13 +2561,31 @@ void function SP_BTReunionThread( entity player )
 	vector origin = sequenceRef.GetOrigin()
 
 	FlagSet( "TitanDeathPenalityDisabled")
+	
+
 	CreatePetTitan( player, origin, sequenceRef.GetAngles() )
+	
+	if ( !IsValid( player.GetPetTitan() ) )
+	{
+		RestartMapWithDelay()
+		return
+	}
+
 	entity bt = player.GetPetTitan()
-	bt.GetMainWeapons()[0].SetMods( [ "LongRangeAmmo" ] )
-	bt.GetOffhandWeapon(OFFHAND_ORDNANCE).SetMods( [ "power_shot_ranged_mode" ] )
-	bt.GetOffhandWeapon(OFFHAND_ANTIRODEO).SetMods( [ "ammo_swap_ranged_mode" ] )
-	bt.SetTitle( "#NPC_BT_SPARE_NAME" )
-	bt.SetSkin( 2 )
+
+	foreach( entity p in GetPlayerArray() )
+	{
+		entity titan = player.GetPetTitan()
+		if ( !IsValid( titan ) )
+			continue
+
+		titan.GetMainWeapons()[0].SetMods( [ "LongRangeAmmo" ] )
+		titan.GetOffhandWeapon(OFFHAND_ORDNANCE).SetMods( [ "power_shot_ranged_mode" ] )
+		titan.GetOffhandWeapon(OFFHAND_ANTIRODEO).SetMods( [ "ammo_swap_ranged_mode" ] )
+		titan.SetTitle( "#NPC_BT_SPARE_NAME" )
+		titan.SetSkin( 2 )
+		titan.SetInvulnerable()
+	}
 
 	float impactTime = GetHotDropImpactTime( bt, "bt_hotdrop_skyway" )
 
@@ -2535,17 +2607,23 @@ void function SP_BTReunionThread( entity player )
 	delaythread( impactTime - 1.0 ) StopMusicTrack( "music_skyway_04_smartpistolrun" )
 	delaythread( impactTime - 1.0 ) PlayMusic( "music_skyway_07_calltitan" )
 	FlagSet( "AcceptEye" )
-
-	bt.SetInvulnerable()
 	
+	// foreach( entity p in GetPlayerArray() )
+	// {
+	// 	UnlockAchievement( p, achievements.NEW_BT )
+	// 	if ( p != player && IsValid( player.GetPetTitan() ) )
+	// 		thread PlayersTitanHotdrops( player.GetPetTitan(), sequenceRef.GetOrigin(), sequenceRef.GetAngles(), p, "bt_hotdrop_skyway" )
+	// }
+	waitthread PlayersTitanHotdrops( bt, sequenceRef.GetOrigin(), sequenceRef.GetAngles(), player, "bt_hotdrop_skyway" )
+	
+	TriggerSilentCheckPoint( sequenceRef.GetOrigin(), false )
+
 	foreach( entity p in GetPlayerArray() )
 	{
-		UnlockAchievement( p, achievements.NEW_BT )
 		if ( p != player )
-			thread PlayersTitanHotdrops( bt, sequenceRef.GetOrigin(), sequenceRef.GetAngles(), player, "bt_hotdrop_skyway" )
+			CreatePetTitanAtOriginWithTf( p, origin, sequenceRef.GetAngles() )
 	}
 
-	waitthread PlayersTitanHotdrops( bt, sequenceRef.GetOrigin(), sequenceRef.GetAngles(), player, "bt_hotdrop_skyway" )
 	FlagClear( "TitanDeathPenalityDisabled")
 	svGlobal.bubbleShieldEnabled = true
 
@@ -2579,7 +2657,7 @@ void function SP_BTReunionThread( entity player )
 		bt.Anim_Stop()
 		CockpitLightStop( bt )
 	}
-
+	
 	SPTitanLoadout_UnlockLoadout( player, "mp_titanweapon_predator_cannon" )
 }
 
@@ -2641,7 +2719,8 @@ void function ConvoCallback_BTReunion( int choice )
 void function PlayerRequestsTitan( entity player )
 {
 	thread PlayDialogue( "SARAH_RADIO_HOTDROP_1", player )
-
+	
+	// TODO: not a todo but should this be for everyone?
 	Remote_CallFunction_NonReplay( player, "ServerCallback_ShowTitanfallHint" )
 
 	svGlobal.levelEnt.EndSignal( "ClientCommand_RequestTitanFake" )
@@ -3469,6 +3548,12 @@ void function InjectorRoomStartPointSetup( entity player )
 	BT.SetAngles( scriptRef.GetAngles() )
 	PilotBecomesTitan( player, BT )
   	BT.Destroy()
+
+	foreach( player in GetPlayerArray() )
+	{
+		MakePlayerTitan( player, scriptRef.GetOrigin() )
+		Disembark_Disallow( player )
+	}
 }
 
 void function InjectorRoomSkipped( entity player )
@@ -3528,8 +3613,10 @@ void function SloneBossSequence( entity player, entity sequenceRef )
 	AddEntityCallback_OnDamaged( slone, NoSelfDamage )
 	AddEntityCallback_OnDamaged( player, NoTitanFallDamage )
 	HideName( slone )
-
-	thread SloneFightMovePlayer( player )
+	
+	foreach( entity p in GetPlayerArray() )
+		thread SloneFightMovePlayer( p )
+	TriggerSilentCheckPoint( sequenceRef.GetOrigin(), false )
 
 	svGlobal.levelEnt.WaitSignal( "BossTitanStartAnim" )
 
@@ -3645,13 +3732,18 @@ void function PulldownLoopThink( entity injector, entity player, entity slone, e
 	HolsterAndDisableWeapons( player )
 
 	FirstPersonSequenceStruct btSequence
-
+	
+	// TODO: this seams to be a titan anim
 	btSequence.firstPersonAnim = "btpov_skyway_core_railgun_grab"
 	btSequence.thirdPersonAnim = "bt_skyway_core_railgun_grab"
 	btSequence.attachment = "ref"
 	btSequence.viewConeFunction = ViewConeZero
 
 	EmitSoundOnEntity( player, "skyway_scripted_injector_bt_futile_pry_core_loop" )
+	// foreach( entity p in GetPlayerArray() )
+	// {
+	// 	thread FirstPersonSequence( btSequence, p, mover )
+	// }
 	waitthread FirstPersonSequence( btSequence, player, mover )
 
 	SpawnFromSpawnerArray( spawnerArray )
@@ -4279,6 +4371,7 @@ entity function SpawnBliskPilot_InjectorRoom()
 {
 	entity spawner = GetEntByScriptName(  "blisk_pilot" )
 	entity blisk = spawner.SpawnEntity()
+	blisk.SetInvulnerable()
 	DispatchSpawn( blisk )
 	return blisk
 }
@@ -4346,10 +4439,15 @@ void function BliskFarewellStartPointSetup( entity player )
 	BT.SetAngles( scriptRef.GetAngles() )
 	PilotBecomesTitan( player, BT )
   	BT.Destroy()
+
+	foreach( player in GetPlayerArray() )
+		MakePlayerTitan( player, player.GetOrigin() )
 }
 
 void function BliskFarewellSkipped( entity player )
 {
+	NextState()
+
 	entity core = GetEntByScriptName( "core" )
 	core.Hide()
 	entity coreRef = GetEntByScriptName( "core_origin" )
@@ -4377,6 +4475,8 @@ void function RemindObjective( string endFlag, float initialDelay )
 
 void function SP_BliskFarewellThread( entity player )
 {
+	NextState()
+
 	entity sequenceRef
 	file.idealPhase = 6
 	thread ForceNextPhase( 3 )
@@ -4391,8 +4491,15 @@ void function SP_BliskFarewellThread( entity player )
 	thread RemindObjective( "StoppingInjector", 5.0 )
 
 	delaythread( 1.5 ) PlayDialogue( "BLISK_FAREWELL_1", player )
-
+	
+	// this is made so only player0 can be supported
 	waitthread Init_BTLoadingBayClimb( "SKYWAY_HINT_DISABLE_INJECTOR", "SKYWAY_HINT_DISABLE_INJECTOR_PC" )
+	
+	foreach( entity p in GetPlayerArray() )
+	{
+		Disembark_Disallow( p )
+		MakePlayerTitan( p, p.GetOrigin() )
+	}
 
 	SetGlobalNetBool( "titanOSDialogueEnabled", false )
 
@@ -4856,19 +4963,23 @@ void function BTSacrificeStartPointSetup( entity player )
 	sequenceBliskCardThrow.firstPersonAnim = "BT_blisk_taunt_scene_cam_first"
 	sequenceBliskCardThrow.thirdPersonAnim = "BT_blisk_taunt_scene_cam_third"
 	sequenceBliskCardThrow.viewConeFunction = ViewConeZero
+	
+	foreach( player in GetPlayerArray() )
+	{
+		thread FirstPersonSequence( sequenceBliskCardThrow, player, moverIntro )
 
-	thread FirstPersonSequence( sequenceBliskCardThrow, player, moverIntro )
+		Remote_CallFunction_Replay( player, "ServerCallback_StartCockpitLook", true )
+	}
 
-	Remote_CallFunction_Replay( player, "ServerCallback_StartCockpitLook", true )
-
-	thread BTSacrificeDialogue_BTMemory( player )
+	thread BTSacrificeDialogue_BTMemory( GetPlayer0() )
 
 	FlagSet( "BliskFarewellRadioPlayDone" )
 	FlagClear( "OnLoadSaveGame_PlayerRecoveryEnabled" )
 
 	SetGlobalNetInt( "titanRebootPhase", skywayTitanCockpitStatus.COMPLETE_PROTOCOL_1 )
 	SetGlobalNetBool( "titanOSDialogueEnabled", false )
-	DoomMyTitan( player )
+	foreach( player in GetPlayerArray() )
+		DoomMyTitan( player )
 }
 
 void function BTSacrificeSkipped( entity player )
@@ -4883,6 +4994,8 @@ void function BTSacrificeSkipped( entity player )
 	entity bt = player.GetPetTitan()
 	bt.Destroy()
 	RemoveCinematicFlag( player, CE_FLAG_TITAN_3P_CAM )
+
+	NextState()
 }
 
 void function SP_BTSacrificeThread( entity player )
@@ -5034,7 +5147,12 @@ void function MissionFailAfterDelay( entity player, float delay, float fadeTime 
 
 void function EjectionSequence( entity player )
 {
-	Remote_CallFunction_Replay( player, "ServerCallback_SetDOF", 600, 900, 1.0 )
+	foreach( entity p in GetPlayerArray() )
+	{
+		Remote_CallFunction_Replay( p, "ServerCallback_SetDOF", 600, 900, 1.0 )
+		HolsterAndDisableWeapons( p )
+		AddCinematicFlag( p, CE_FLAG_TITAN_3P_CAM )
+	}
 
 	entity core = GetEntByScriptName( "core_origin" )
 	vector coreOrigin = core.GetOrigin()
@@ -5079,12 +5197,17 @@ void function EjectionSequence( entity player )
 	SetGlobalNetInt( "titanRebootPhase", skywayTitanCockpitStatus.GOT_PLAYER_INPUT )
 
 	delaythread( 2 ) BTSacrificeDialogue( player )
+	
+	foreach( entity p in GetPlayerArray() )
+	{
+		Remote_CallFunction_Replay( p, "ServerCallback_StopCockpitLook" )
 
-	Remote_CallFunction_Replay( player, "ServerCallback_StopCockpitLook" )
+		p.GetFirstPersonProxy().SetSkin( 3 )
 
-	player.GetFirstPersonProxy().SetSkin( 3 )
+		Remote_CallFunction_Replay( p, "ServerCallback_SetDOF", 600, 900, 1.0 )
+	}
 
-	Remote_CallFunction_Replay( player, "ServerCallback_SetDOF", 600, 900, 1.0 )
+	FullyHidePlayers()
 
 	FirstPersonSequenceStruct sequenceBliskCardThrowGetup
 	sequenceBliskCardThrowGetup.blendTime = 1.0
@@ -5092,6 +5215,11 @@ void function EjectionSequence( entity player )
 	sequenceBliskCardThrowGetup.firstPersonAnim = "btpov_skyway_core_railgun_get_up"
 	sequenceBliskCardThrowGetup.thirdPersonAnim = "bt_skyway_core_railgun_get_up"
 	sequenceBliskCardThrowGetup.viewConeFunction = ViewConeZero
+	foreach( entity p in GetPlayerArray() )
+	{
+		if ( p != player )
+			thread FirstPersonSequence( sequenceBliskCardThrowGetup, p, animRef )
+	}
 	waitthread FirstPersonSequence( sequenceBliskCardThrowGetup, player, animRef )
 
 	int pt = 1
@@ -5107,6 +5235,11 @@ void function EjectionSequence( entity player )
 		btSequence.blendTime = 0.2
 		btSequence.attachment = "ref"
 		btSequence.viewConeFunction = ViewConeTight
+		foreach( entity p in GetPlayerArray() )
+		{
+			if ( p != player )
+				thread FirstPersonSequence( btSequence, p, animRef )
+		}
 		waitthread FirstPersonSequence( btSequence, player, animRef )
 
 		CreateShake( player.GetOrigin(), 6, 150, 0.75, 8000 ).kv.spawnflags = 4 // SF_SHAKE_INAIR
@@ -5117,7 +5250,10 @@ void function EjectionSequence( entity player )
 		btSequenceIdle.blendTime = 0.2
 		btSequenceIdle.attachment = "ref"
 		btSequenceIdle.viewConeFunction = ViewConeTight
-		thread FirstPersonSequence( btSequenceIdle, player, animRef )
+		foreach( entity p in GetPlayerArray() )
+		{
+			thread FirstPersonSequence( btSequenceIdle, p, animRef )
+		}
 
 		thread MissionFailAfterDelay( player, 2, 5 )
 		while( player.GetInputAxisForward() < 0.2 )
@@ -5145,6 +5281,11 @@ void function EjectionSequence( entity player )
 		btSequence.blendTime = 0.2
 		btSequence.attachment = "ref"
 		btSequence.viewConeFunction = ViewConeTight
+		foreach( entity p in GetPlayerArray() )
+		{
+			if ( p != player )
+				thread FirstPersonSequence( btSequence, p, animRef )
+		}
 		waitthread FirstPersonSequence( btSequence, player, animRef )
 
 		FirstPersonSequenceStruct btSequenceIdle
@@ -5153,7 +5294,10 @@ void function EjectionSequence( entity player )
 		btSequenceIdle.blendTime = 0.2
 		btSequenceIdle.attachment = "ref"
 		btSequenceIdle.viewConeFunction = ViewConeTight
-		thread FirstPersonSequence( btSequenceIdle, player, animRef )
+		foreach( entity p in GetPlayerArray() )
+		{
+			thread FirstPersonSequence( btSequenceIdle, p, animRef )
+		}
 
 		thread MissionFailAfterDelay( player, 2, 5 )
 		while( player.GetInputAxisForward() < 0.2 )
@@ -5177,6 +5321,11 @@ void function EjectionSequence( entity player )
 	btSequence.blendTime = 0.0
 	btSequence.attachment = "ref"
 	btSequence.viewConeFunction = ViewConeTight
+	foreach( entity p in GetPlayerArray() )
+	{
+		if ( p != player )
+			thread FirstPersonSequence( btSequence, p, animRef )
+	}
 	waitthread FirstPersonSequence( btSequence, player, animRef )
 
 	SetGlobalNetInt( "titanRebootPhase", skywayTitanCockpitStatus.BEGIN_PROTOCOL_3 )
@@ -5188,7 +5337,10 @@ void function EjectionSequence( entity player )
 	btSequenceIdle.attachment = "ref"
 	btSequenceIdle.useAnimatedRefAttachment = true
 	btSequenceIdle.viewConeFunction = ViewConeTight
-	thread FirstPersonSequence( btSequenceIdle, player, animRef )
+	foreach( entity p in GetPlayerArray() )
+	{
+		thread FirstPersonSequence( btSequenceIdle, p, animRef )
+	}
 
 	// FlagWait( "BTMemorySequenceDone" )
 
@@ -5217,9 +5369,14 @@ void function EjectionSequence( entity player )
 	SetGlobalNetInt( "titanRebootPhase", skywayTitanCockpitStatus.COMPLETE_PROTOCOL_3 )
 	wait 1.5
 	level.nv.coreSoundActive = 0
-	Remote_CallFunction_Replay( player, "ServerCallback_ResetDOF" )
+
+	foreach( entity p in GetPlayerArray() )
+		Remote_CallFunction_Replay( p, "ServerCallback_ResetDOF" )
+
 	CreateShake( player.GetOrigin(), 6, 150, 4, 800000 ).kv.spawnflags = 4 // SF_SHAKE_INAIR
-	Remote_CallFunction_Replay( player, "ServerCallback_InjectorFireScreenFX" )
+
+	foreach( entity p in GetPlayerArray() )
+		Remote_CallFunction_Replay( p, "ServerCallback_InjectorFireScreenFX" )
 
 	entity scriptRef = GetEntByScriptName( "bt_in_barrel" )
 	//Create a mover and parent the player to the mover
@@ -5235,11 +5392,13 @@ void function EjectionSequence( entity player )
 	// ScreenFadeToBlackForever( player, 0.2 )
 	// wait 0.2
 	// ScreenFadeFromBlack( player, 0.2 )
-	thread FlashWhite( player, 0.2, 0.4, 155.0 )
+	foreach( entity p in GetPlayerArray() )
+		thread FlashWhite( p, 0.2, 0.4, 155.0 )
 	wait 0.1
 
 	//Eject the player
-	player.ClearParent()
+	foreach( entity p in GetPlayerArray() )
+		p.ClearParent()
 
 	//Don't Fail Mission When BT Dies
 	FlagSet( "TitanDeathPenalityDisabled" )
@@ -5253,7 +5412,8 @@ void function EjectionSequence( entity player )
 	player.SetGroundFrictionScale( 0 )
 
 	waitthread BTThrowsPlayer( player, mover )
-	RemoveCinematicFlag( player, CE_FLAG_TITAN_3P_CAM )
+	foreach( entity p in GetPlayerArray() )
+		RemoveCinematicFlag( p, CE_FLAG_TITAN_3P_CAM )
 
 	wait( .25 )
 
@@ -5295,6 +5455,8 @@ void function EjectionSequence( entity player )
 	trigger.WaitSignal( "OnTrigger" )
 
 	coreMover.Destroy()
+
+	FullyShowPlayers()
 }
 
 void function BT_Sacrifice_PlayFollowupDialogue( entity player, int choice )
@@ -5408,11 +5570,21 @@ void function BTThrowsPlayer( entity player, entity mover )
 
 	player.SetSyncedEntity( titan )
 	HolsterViewModelAndDisableWeapons( player )  //Holstering weapon before becoming pilot so we don't play the holster animation as a pilot. Player as Titan won't play the holster animation either since it'll be interrupted by the disembark animation
+	
+	TriggerSilentCheckPoint( GetSaveLocation(), true )
+
+	foreach( entity p in GetPlayerArray() )
+	{
+		if ( p != player )
+			MakePlayerPilot( p, p.GetOrigin() )
+	}
 	TitanBecomesPilot( player, titan )
 	TakeAllWeapons( titan )
 	player.ForceStand()
 	player.SetPetTitan( titan )
 	titan.SetSkin( 3 )
+
+	NextState()
 
 	// GibBodyPart( titan, "left_arm" )
 	// GibBodyPart( titan, "right_arm" )
@@ -5434,8 +5606,8 @@ void function BTThrowsPlayer_BT( entity titan, entity mover )
 	sequence.firstPersonAnim = ""
 	sequence.thirdPersonAnim = "bt_skyway_injector_throw"
 	sequence.useAnimatedRefAttachment = true
-
-	waitthread FirstPersonSequence( sequence, titan, mover )
+	
+	waitthread FirstPersonSequence( sequence, titan, mover ) // lmao they are using a fp sequence on bt
 
 	thread PlayAnim( titan, "bt_skyway_injector_throw_idle", mover )
 	titan.SetParent( mover )
@@ -5451,16 +5623,25 @@ void function BTThrowsPlayer_Player( entity player, entity mover )
 	sequence.thirdPersonAnim = "pt_skyway_injector_throw"
 	sequence.viewConeFunction = ViewConeZero
 	sequence.useAnimatedRefAttachment = true
-
-	Remote_CallFunction_Replay( player, "ServerCallback_GlowFlash", 1, 5 )
-	delaythread( 0.75 ) Remote_CallFunction_NonReplay( player, "ServerCallback_DoRumble", 0 )
-	delaythread( 1.5 ) Remote_CallFunction_NonReplay( player, "ServerCallback_SetDOF", 200, 300, 0.5 )
-	delaythread( 5 ) Remote_CallFunction_NonReplay( player, "ServerCallback_DoRumble", 2 )
-	delaythread( 5 ) ThrowShake( player )
-
+	
+	foreach( entity p in GetPlayerArray() )
+	{
+		Remote_CallFunction_Replay( p, "ServerCallback_GlowFlash", 1, 5 )
+		delaythread( 0.75 ) Remote_CallFunction_NonReplay( p, "ServerCallback_DoRumble", 0 )
+		delaythread( 1.5 ) Remote_CallFunction_NonReplay( p, "ServerCallback_SetDOF", 200, 300, 0.5 )
+		delaythread( 5 ) Remote_CallFunction_NonReplay( p, "ServerCallback_DoRumble", 2 )
+		delaythread( 5 ) ThrowShake( p )
+		
+		if ( p != player )
+			thread FirstPersonSequence( sequence, p, mover )
+	}
 	waitthread FirstPersonSequence( sequence, player, mover )
-	player.ClearParent()
-	ClearPlayerAnimViewEntity( player )
+
+	foreach( entity p in GetPlayerArray() )
+	{
+		p.ClearParent()
+		ClearPlayerAnimViewEntity( p )
+	}
 
 	entity core = GetEntByScriptName( "core_origin" )
 	vector fwd = Normalize( player.CameraPosition() - core.GetOrigin() )
@@ -5473,14 +5654,20 @@ void function BTThrowsPlayer_Player( entity player, entity mover )
 	titan.NotSolid()
 
 	wait 0.1
+	
+	foreach( entity p in GetPlayerArray() )
+	{
+		p.SetVelocity( 900*fwd + <0,0,2000> )
+		// EmitSoundOnEntity( titan, "titan_nuclear_death_charge" )
 
-	player.SetVelocity( 900*fwd + <0,0,2000> )
-	// EmitSoundOnEntity( titan, "titan_nuclear_death_charge" )
-
-	Remote_CallFunction_Replay( player, "ServerCallback_GlowFlash", 1.5, 1 )
-
-	fwd = core.GetOrigin() - player.CameraPosition()
-	player.SnapEyeAngles( VectorToAngles( fwd ) + < 30,0,0 > )
+		Remote_CallFunction_Replay( p, "ServerCallback_GlowFlash", 1.5, 1 )
+	}
+	
+	foreach( entity p in GetPlayerArray() )
+	{
+		fwd = core.GetOrigin() - p.CameraPosition()
+		p.SnapEyeAngles( VectorToAngles( fwd ) + < 30,0,0 > )
+	}
 }
 
 void function ThrowShake( entity player )
@@ -5592,9 +5779,12 @@ void function WindRushSound( entity player )
 
 void function SP_RisingWorldRunThread( entity player )
 {
-	player.SetPlayerSettingsWithMods( "pilot_solo_rising_world_run", [] )
-	//Give control back to player when they land.
-	thread PlayerLooksForward( player )
+	foreach( entity p in GetPlayerArray() )
+	{
+		p.SetPlayerSettingsWithMods( "pilot_solo_rising_world_run", [] )
+		//Give control back to player when they land.
+		thread PlayerLooksForward( p )
+	}
 	//CheckPoint()
 	//StartRingRotation()
 	BreakRings()
@@ -5661,7 +5851,8 @@ void function SP_RisingWorldRunThread( entity player )
 	//Final burst of rocks when player jumps for dropship.
 	entity rockBurstFinal = GetEntByScriptName( "final_rock_burst_origin" )
 	thread CreateRockBurst( rockBurstFinal.GetOrigin(), 25, 5, rockBurstFinal.GetForwardVector(), 56, 2500,"final_rock_burst" )
-
+	
+	
 	thread CreateEvacPoint( player, dropship, file.dropshipAnimNode )
 
 	thread AutoSaveMidRun( player )
@@ -5671,7 +5862,7 @@ void function SP_RisingWorldRunThread( entity player )
 	GetEntByScriptName( "outer_ring" ).Hide()
 	GetEntByScriptName( "middle_ring" ).Hide()
 	GetEntByScriptName( "inner_ring" ).Hide()
-	thread NoAirControl( player )
+	// thread NoAirControl( player ) // bad idea for co-op since we don't know who is near the event
 	thread WindRushSound( player )
 	vector redirectFwdVec = < -3000,1500,0 >
 	delaythread( 0.4 ) ForceLookAt( player, redirectIsland, redirectFwdVec + < 0,0,500 >, < 30, -30, 0 > )
@@ -5686,7 +5877,7 @@ void function SP_RisingWorldRunThread( entity player )
 
 	FlagWait( "redirect_to_tilting_platform" )
 	thread WindRushSound( player )
-	thread NoAirControl( player )
+	// thread NoAirControl( player ) // same thing
 	StatusEffect_AddTimed( player, eStatusEffect.turn_slow, 0.3, 3.0, 3.0 )
 
 	delaythread( 3 ) PlayDialogue( "RWR_7", player )
@@ -5798,9 +5989,12 @@ void function CreateEvacPoint( entity player, entity dropship, entity animNode )
 
 	ent.SetParent( mover )
 	SetGlobalNetEnt( "evacPoint", mover )
-
-	Remote_CallFunction_Replay( player, "ServerCallback_CreateEvacIcon", ent.GetEncodedEHandle() )
-	Remote_CallFunction_Replay( player, "ServerCallback_SetDOF", 8000, 500000, 3.0 )
+	
+	foreach( entity p in GetPlayerArray() )
+	{
+		Remote_CallFunction_Replay( p, "ServerCallback_CreateEvacIcon", ent.GetEncodedEHandle() )
+		Remote_CallFunction_Replay( p, "ServerCallback_SetDOF", 8000, 500000, 3.0 )
+	}
 
 	Objective_Set( "#SKYWAY_OBJECTIVE_LZ", <0,0,0>, mover )
 
@@ -5904,7 +6098,15 @@ void function SP_RisingWorldJumpThread( entity player )
 
 	player.SetAnimNearZ( 1 )
 	thread PlayAnimTeleport( sarah, "pt_skyway_world_run_sarah", dropshipRef )
-	thread FirstPersonSequence( firstPersonSequence, player, playerMover )
+
+	FullyHidePlayers()
+
+	foreach( entity p in GetPlayerArray() )
+	{
+		thread FirstPersonSequence( firstPersonSequence, p, playerMover )
+		TakeAllWeapons( p )
+	}
+
 	EmitSoundOnEntity( player, "skyway_scripted_risingworld_jump" )
 
 	playerMover.NonPhysicsMoveTo( dropshipRef.GetOrigin(), 3.0, 0, 0 )
@@ -5920,7 +6122,8 @@ void function SP_RisingWorldJumpThread( entity player )
 	thread WarpInThread( player, dropship, idleMover, dropshipRef )
 	FlagSet( "HideWorldRunRandoms" )
 	waitthread WarpOutThread( player, dropship, timeToWarp )
-	UnlockAchievement( player, achievements.RISING_WORLD_RUN )
+	foreach( entity p in GetPlayerArray() )
+		UnlockAchievement( p, achievements.RISING_WORLD_RUN )
 }
 
 void function WarpInThread( entity player, entity dropship, entity idleMover, entity dropshipRef )
@@ -5940,8 +6143,9 @@ void function WarpInThread( entity player, entity dropship, entity idleMover, en
 	dropship.Hide()
 	waitthread __WarpInEffectShared( attachResult.position, attachResult.angle, "skyway_scripted_risingworld_jump_ship_warp_in", 0.0 )
 	dropship.Show()
-
-	Remote_CallFunction_Replay( player, "ServerCallback_HideEvacIcon" )
+	
+	foreach( entity p in GetPlayerArray() )
+		Remote_CallFunction_Replay( p, "ServerCallback_HideEvacIcon" )
 	SetGlobalNetEnt( "evacPoint", null )
 
 	GetEntByScriptName( "outer_ring" ).Show()
@@ -5972,9 +6176,12 @@ void function WarpOutThread( entity player, entity dropship, float timeToWarp )
 	wait timeToWarp - 0.5
 	thread PlayDialogue( "RWR_b_5", player )
 	wait 0.5
-	Remote_CallFunction_Replay( player, "ServerCallback_DoRumble", 2 )
-	Remote_CallFunction_Replay( player, "ServerCallback_PlayScreenFXWarpJump" )
-	delaythread( WARPINFXTIME - 0.2 ) Remote_CallFunction_Replay( player, "ServerCallback_DoRumble", 0 )
+	foreach( entity p in GetPlayerArray() )
+	{
+		Remote_CallFunction_Replay( p, "ServerCallback_DoRumble", 2 )
+		Remote_CallFunction_Replay( p, "ServerCallback_PlayScreenFXWarpJump" )
+		delaythread( WARPINFXTIME - 0.2 ) Remote_CallFunction_Replay( p, "ServerCallback_DoRumble", 0 )
+	}
 	wait WARPINFXTIME
 	WarpoutEffectFPS( dropship )
 	printt( "2" )
@@ -7018,15 +7225,17 @@ void function ExplodingPlanetSkipped( entity player )
 void function SP_ExplodingPlanetThread( entity player )
 {
 	level.nv.coreSoundActive = 0
-
-	Remote_CallFunction_NonReplay( player, "ServerCallback_SetTyphonColorCorrectionWeight", 1.0, 1.0 )
+	
+	foreach( entity p in GetPlayerArray() )
+	{
+		Remote_CallFunction_NonReplay( p, "ServerCallback_SetTyphonColorCorrectionWeight", 1.0, 1.0 )
+		p.SetPlayerSettingsWithMods( DEFAULT_PILOT_SETTINGS, [] )
+		Remote_CallFunction_Replay( p, "ServerCallback_SetNearDOF", 0, 75, 0.1 )
+	}
 
 	GetEntByScriptName( "outer_ring" ).Hide()
 	GetEntByScriptName( "middle_ring" ).Hide()
 	GetEntByScriptName( "inner_ring" ).Hide()
-
-	player.SetPlayerSettingsWithMods( DEFAULT_PILOT_SETTINGS, [] )
-	Remote_CallFunction_Replay( player, "ServerCallback_SetNearDOF", 0, 75, 0.1 )
 
 	entity dropship = file.dropship
 	dropship.SetModel( SW_CROW )
@@ -7045,9 +7254,12 @@ void function SP_ExplodingPlanetThread( entity player )
 
 	mover.SetOrigin( planet.GetOrigin() )
 	mover.SetAngles( planet.GetAngles() )
-
-	player.ClearParent()
-	ClearPlayerAnimViewEntity(player)
+	
+	foreach( entity p in GetPlayerArray() )
+	{
+		p.ClearParent()
+		ClearPlayerAnimViewEntity(p)
+	}
 
 	thread AnimateStuff( player, planet, dropship, mover )
 
@@ -7122,9 +7334,12 @@ void function SP_ExplodingPlanetThread( entity player )
 
 	// mover.NonPhysicsMoveTo( targetOrigin, 35.0, 0.0, 10.0 )
 	// mover.NonPhysicsRotateTo( targetAngles + <0,60,0>, 35.0, 0.0, 10.0 )
-
-	delaythread( 4.75 ) Remote_CallFunction_Replay( player, "ServerCallback_DoRumble", 0 )
-	delaythread( 5.5 ) Remote_CallFunction_Replay( player, "ServerCallback_DoRumble", 2 )
+	
+	foreach( entity p in GetPlayerArray() )
+	{
+		delaythread( 4.75 ) Remote_CallFunction_Replay( p, "ServerCallback_DoRumble", 0 )
+		delaythread( 5.5 ) Remote_CallFunction_Replay( p, "ServerCallback_DoRumble", 2 )
+	}
 	wait 20.5
 	waitthread PlayDialogue( "TYPHON_1a", player )
 	wait 0.75
@@ -7136,13 +7351,20 @@ void function SP_ExplodingPlanetThread( entity player )
 	wait 1.0
 
 	float fadetime = 4.0
-	ScreenFadeToBlack( player, fadetime, 20.0 )
+	foreach( entity p in GetPlayerArray() )
+		ScreenFadeToBlack( p, fadetime, 20.0 )
 	wait fadetime
 	dropship.ClearParent()
-	player.ClearParent()
+
+	foreach( entity p in GetPlayerArray() )
+		p.ClearParent()
+
 	mover.Destroy()
 	player.SetPlayerSettingsWithMods( "civilian_solo_pilot", [] )
-	Remote_CallFunction_NonReplay( player, "ServerCallback_SetTyphonColorCorrectionWeight", 0.0, 0.1 )
+	
+	foreach( entity p in GetPlayerArray() )
+		Remote_CallFunction_NonReplay( p, "ServerCallback_SetTyphonColorCorrectionWeight", 0.0, 0.1 )
+		
 	wait 5.0
 }
 
@@ -7156,10 +7378,13 @@ void function TyphonDialogue( entity player )
 void function AnimateStuff( entity player, entity planet, entity dropship, entity mover )
 {
 	player.SetOrigin( mover.GetOrigin() )
-	player.MakeInvisible()
+	
+	FullyHidePlayers()
 
 	// delaythread( 4.5 ) FlashWhite( player, 0.1, 0.3, 255.0 )
-	delaythread( 4.5 ) Remote_CallFunction_Replay( player, "ServerCallback_GlowFlash", 1.0, 5.0 )
+	foreach( entity p in GetPlayerArray() )
+		delaythread( 4.5 ) Remote_CallFunction_Replay( p, "ServerCallback_GlowFlash", 1.0, 5.0 )
+
 	thread PlayAnimTeleport( dropship, "dropship_planet_ex_ending", mover )
 	thread PlayAnim( planet, "planet_ex_ending" )
 	FirstPersonSequenceStruct sequence
@@ -7167,6 +7392,13 @@ void function AnimateStuff( entity player, entity planet, entity dropship, entit
 	sequence.firstPersonAnim = "ptpov_planet_ex_ending"
 	sequence.thirdPersonAnim = "pt_planet_ex_ending"
 	sequence.viewConeFunction = ViewConeTight
+	
+	foreach( entity p in GetPlayerArray() )
+	{
+		if ( p != player )
+			thread FirstPersonSequence( sequence, p, mover )
+	}
+
 	waitthread FirstPersonSequence( sequence, player, mover )
 
 	// thread PlayAnimTeleport( dropship, "dropship_planet_explosion_slow_2", mover )
@@ -7250,10 +7482,14 @@ void function Parent( entity p, entity ref )
 
 void function SP_HarmonyThread( entity player )
 {
-	MarkThisLevelAsCompleted( player )
+	foreach( entity p in GetPlayerArray() )
+	{
+		MarkThisLevelAsCompleted( p )
+		UpdateHeroStatsForPlayer( p )
+	}
 
 	SetConVarInt( "sp_unlockedMission", 9 )
-	UpdateHeroStatsForPlayer( player )
+	
 
 	// if ( GetBugReproNum() == 184330 )
 	{
@@ -7292,14 +7528,18 @@ void function SP_HarmonyThread( entity player )
 	entity helmet = GetEntByScriptName( "jack_helmet" )
 	vector hOrg = helmet.GetOrigin()
 	vector hAng = helmet.GetAngles()
-	Remote_CallFunction_Replay( player, "ServerCallback_CreateHelmet", hOrg.x, hOrg.y, hOrg.z, hAng.x, hAng.y, hAng.z )
+	foreach( entity p in GetPlayerArray() )
+	{
+		Remote_CallFunction_Replay( p, "ServerCallback_CreateHelmet", hOrg.x, hOrg.y, hOrg.z, hAng.x, hAng.y, hAng.z )
+		thread HarmonyBGRadio( p )
+	}
 	helmet.Destroy()
-	thread HarmonyBGRadio( player )
 
 	wait 2.0
 
 	float fadetime = 20.0
-	ScreenFadeFromBlack( player, fadetime, 1.0 )
+	foreach( entity p in GetPlayerArray() )
+		ScreenFadeFromBlack( p, fadetime, 1.0 )
 
 	array<entity> debrisMid = GetEntArrayByScriptName( "core_debris_mid" )
 	foreach ( d in debrisMid )
@@ -7331,13 +7571,16 @@ void function SP_HarmonyThread( entity player )
 	entity skyCamHarmony = GetEnt( "skybox_cam_skyway_harmony" )
 	// vector fwd = AnglesToForward( skyCamHarmony.GetAngles() )
 	// skyCamHarmony.SetOrigin( -1*fwd )
-	player.SetSkyCamera( skyCamHarmony )
-	player.LerpSkyScale( 0.0, 0.01 )
-	player.SetOrigin( spacenodeEnd.GetOrigin() )
-	player.SetParent( mover, "", false, 0.0 )
-	player.Hide()
-	ViewConeZero( player )
-	player.SetViewEntity( mover, true )
+	foreach( entity p in GetPlayerArray() )
+	{
+		p.SetSkyCamera( skyCamHarmony )
+		p.LerpSkyScale( 0.0, 0.01 )
+		p.SetOrigin( spacenodeEnd.GetOrigin() )
+		p.SetParent( mover, "", false, 0.0 )
+		p.Hide()
+		ViewConeZero( p )
+		p.SetViewEntity( mover, true )
+	}
 
 	entity trueMover = CreateScriptMover()
 	trueMover.SetOrigin( mover.GetOrigin() )
@@ -7349,23 +7592,30 @@ void function SP_HarmonyThread( entity player )
 	thread HarmonyDialogue( player )
 
 	float M = 1000000
-	Remote_CallFunction_Replay( player, "ServerCallback_SetNearDOF", 290, 300, 0.1 )
-	Remote_CallFunction_Replay( player, "ServerCallback_SetDOF", 9*M, 10*M, 0.1 )
+	foreach( entity p in GetPlayerArray() )
+	{
+		Remote_CallFunction_Replay( p, "ServerCallback_SetNearDOF", 290, 300, 0.1 )
+		Remote_CallFunction_Replay( p, "ServerCallback_SetDOF", 9*M, 10*M, 0.1 )
+	}
 
 	wait 2.0
 
 	float time = 1.5
-	delaythread( 22.0 ) Remote_CallFunction_Replay( player, "ServerCallback_SetDOF", 0, 10*M, time )
-	// you may think this lerp time is ridiculously high, but it looks good so WHATEVER RIGHT?
-	delaythread( 16.0 + time ) Remote_CallFunction_Replay( player, "ServerCallback_SetNearDOF", 0, 10, 85 )
-	delaythread( 22.0 + time ) Remote_CallFunction_Replay( player, "ServerCallback_SetDOF", 1000, 2000, 6 )
+	foreach( entity p in GetPlayerArray() )
+	{
+		delaythread( 22.0 ) Remote_CallFunction_Replay( p, "ServerCallback_SetDOF", 0, 10*M, time )
+		// you may think this lerp time is ridiculously high, but it looks good so WHATEVER RIGHT?
+		delaythread( 16.0 + time ) Remote_CallFunction_Replay( p, "ServerCallback_SetNearDOF", 0, 10, 85 )
+		delaythread( 22.0 + time ) Remote_CallFunction_Replay( p, "ServerCallback_SetDOF", 1000, 2000, 6 )
+	}
 
 	trueMover.NonPhysicsMoveTo( spacenodeEnd.GetOrigin(), 32.0, 5.0, 15.0 )
 
 	wait 28.3
 	//Remote_CallFunction_Replay( player, "ServerCallback_BeginHelmetBlink" ) --> moved to end of credits
 	wait 5.0
-	Remote_CallFunction_Replay( player, "ServerCallback_ScreenFlickerToBlack" )
+	foreach( entity p in GetPlayerArray() )
+		Remote_CallFunction_Replay( p, "ServerCallback_ScreenFlickerToBlack" )
 	wait 1.0
 }
 

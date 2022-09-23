@@ -44,17 +44,6 @@ void function BtMarvnTarget()
     }
 }
 
-// ClServer_MessageStruct function BlurAlert( ClServer_MessageStruct message )
-// {
-//     if ( message.message.tolower().find("blur") != null )
-//     {
-//         Chat_ServerBroadcast( "You Said Blur?" )
-//         Chat_ServerBroadcast( "To fix the issue find the coop mod in playtester-ping" )
-//     }
-        
-//     return message
-// }
-
 bool function SpawnBt( entity player, array<string> args )
 {
     if ( IsValid( player ) )
@@ -62,7 +51,7 @@ bool function SpawnBt( entity player, array<string> args )
         entity titan = player.GetPetTitan()
         if ( !IsValid( titan ) )
         {
-            CreatePetTitanAtLocation( player, player.GetOrigin(), player.GetAngles() )
+            CreatePetTitanAtOrigin( player, player.GetOrigin(), player.GetAngles() )
             titan = player.GetPetTitan()
             if ( titan != null )
                 titan.kv.alwaysAlert = false
@@ -86,3 +75,5 @@ bool function CoopReload( entity player, array<string> args )
 
     return true
 }
+
+// TODO: add tp commands like tpall and tpto

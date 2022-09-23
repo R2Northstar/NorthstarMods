@@ -565,7 +565,7 @@ void function StartPoint_LoadingDock( entity player )
 	foreach( player in GetPlayerArray() )
 	{
 		if ( !IsValid( player.GetPetTitan() ) )
-			CreatePetTitanAtLocation( player, SavePoint.GetOrigin(), <0,0,0> )
+			CreatePetTitanAtOrigin( player, SavePoint.GetOrigin(), <0,0,0> )
 	}
 
 	PlayMusic( "music_boomtown_07_downthestepagain" )
@@ -665,7 +665,7 @@ void function EndingSequence( entity player )
 		foreach( entity p in GetPlayerArray() )
 		{
 			if ( !IsValid( p.GetPetTitan() ) )
-				CreatePetTitanAtLocation( p, SavePoint.GetOrigin(), <0,0,0> )
+				CreatePetTitanAtOrigin( p, SavePoint.GetOrigin(), <0,0,0> )
 		}
 	}
 
@@ -835,7 +835,7 @@ void function BTGetsGrabbed()
 
 	entity player = GetClosest( GetPlayerArray(), armNode.GetOrigin() )
 	if ( !IsValid( player.GetPetTitan() ) )
-		CreatePetTitanAtLocation( player, player.GetOrigin() + <0,0,1000>, player.GetAngles() )
+		CreatePetTitanAtOrigin( player, player.GetOrigin() + <0,0,1000>, player.GetAngles() )
 	entity bt = player.GetPetTitan()
 
 	thread BTGetsGrabbedAnims( bt, arm )

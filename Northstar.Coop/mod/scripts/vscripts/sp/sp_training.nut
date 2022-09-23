@@ -355,7 +355,7 @@ void function Map_PlayerDidLoad( entity player )
 
 void function Training_PlayerDidLoad( entity player )
 {
-	if ( file.player == null )
+	if ( !IsValid( file.player ) )
 	{
 		SetPlayer0( player )
 
@@ -368,7 +368,7 @@ void function Training_PlayerDidLoad( entity player )
 		file.envArt_colorCorrectionEnt = GetEnt( "color_correction_1" )
 
 		file.player = player
-
+		
 		Training_WeaponPickups_Init( player )
 	}
 	else 
@@ -567,7 +567,10 @@ void function Training_PodIntro( entity player )
 	thread FirstPersonSequence( podSequence, pod )
 	
 	foreach( entity p in GetPlayerArray() )
-		thread FirstPersonSequence( playerSequence, p, pod )
+	{
+		if ( p != player )
+			thread FirstPersonSequence( playerSequence, p, pod )
+	}
 	
 	waitthread FirstPersonSequence( playerSequence, player, pod )
 
@@ -1628,6 +1631,8 @@ void function Training_FiringRange( entity player )
 	thread FiringRange_CloseZenGardenDoor_WhenPlayerReachesRange( player )
 
 	waitthread Training_OG_Moves_ToSitting( ref_og_needGunsStart, "OG_Weapons_idle", ogMoveTime )
+
+	NewSaveLocation( < -7465,314,144 >, true )
 
 	FlagWait( "PlayerApproachingFiringRange" )
 
@@ -6473,17 +6478,18 @@ void function NPC_EnableArrivals( entity npc )
 
 void function PlayerAndOGTeleport_Fancy( entity player, vector destPos, string ogTeleportSpotName, vector destAng = < -1, -1, -1 > )
 {
-	EndSignal( player, "OnDeath" )
-	foreach( entity p in GetPlayerArray() )
-		thread FancyTeleport_EffectsAndSound( p, destPos )
+	NewSaveLocation( destPos, true )
+
+	foreach( player in GetPlayerArray() )
+		thread FancyTeleport_EffectsAndSound( player, destPos )
 
 	player.WaitSignal( "FancyTeleportStart" )
 
 	entity ogTeleportSpot = TeleportOG( ogTeleportSpotName )
 	Training_OG_Idles_Sitting( ogTeleportSpot )
 
-	foreach( entity p in GetPlayerArray() )
-		MakeInvincible( p )
+	foreach( player in GetPlayerArray() )
+		MakeInvincible( player )
 
 	WaitEndFrame() // player will take damage from random hazard triggers otherwise
 	

@@ -3,7 +3,6 @@ globalize_all_functions
 #else
 global function CodeCallback_MapInit
 global function ReplacePlayer0
-global function Map_PlayerDidLoad
 #endif // DEV
 
 const FX_SHIP_EXPLOSION					 = $"P_wild_night_exp"
@@ -469,11 +468,6 @@ void function ReplacePlayer0()
 	RestartMapWithDelay()
 }
 
-void function Map_PlayerDidLoad( entity player )
-{
-	PlayerDidLoad( player )
-}
-
 void function PlayerDidLoad( entity player )
 {
 	printt( "PlayerDidLoad" )
@@ -499,7 +493,7 @@ void function PlayerDidLoad( entity player )
 	
 	SetPlayer0( player )
 	
-	if ( NSIsDedicated() ) // TODO: make this Player0 only after removing this
+	if ( NSIsDedicated() )
 		return
 
 	SetMobilityGhostDisplayDists( file.firstGhostId, 650, 670 )
@@ -770,12 +764,13 @@ void function ShowTitleScreen( entity player )
 bool function ClientCommand_IntroOver( entity player, array<string> args )
 {
 	player.Signal( "intro_over" )
-	NextState()
+	if ( GetStateInt() == 0 )
+		NextState()
 	return true
 }
 
 void function PlayerInEscapePod( entity player ) // TODO: figure out why don't players jump out at the same time
-{
+{ // I'll just ignore that ( people should cooperate on not crashing :D )
 	// thing here
 	// https://www.youtube.com/watch?v=8ZrQ8vh1hk8
 
@@ -857,7 +852,8 @@ void function PlayerInEscapePod( entity player ) // TODO: figure out why don't p
 	wait 5
 
 	FlagSet( "start_intro_combat" )
-	NextState()
+	if ( GetStateInt() == 1 )
+		NextState()
 }
 
 void function EscapePodFirstPersonSequence( FirstPersonSequenceStruct escapePodSequence, entity escapePod, entity player, entity animRef )
@@ -1857,6 +1853,8 @@ void function MoveAnimWithPlayer( entity mover, entity player )
 
 void function BTIntro_Player( entity player )
 {
+	FullyHidePlayers()
+
 	player.EndSignal( "OnDestroy" )
 
 	// do this here so that we don't die from the eneny titan fall
@@ -1912,6 +1910,8 @@ void function BTIntro_Player( entity player )
 	}
 
 	animRef.Destroy()
+
+	FullyShowPlayers()
 }
 
 void function ViewConeBTIntro( entity player )
@@ -2078,6 +2078,8 @@ void function BliskIntro_Music( entity buddyTitan, entity player )
 
 void function BliskIntro_Player( entity player )
 {
+	FullyHidePlayers()
+
 	player.EndSignal( "OnDestroy" )
 
 	entity scriptRef = GetEntByScriptName( "anim_ref_night" )
@@ -2091,16 +2093,23 @@ void function BliskIntro_Player( entity player )
 	OGDefeatedSequence.firstPersonAnim = "pov_wilds_OG_defeated"
 	OGDefeatedSequence.thirdPersonAnim = "pt_wilds_OG_defeated"
 	OGDefeatedSequence.viewConeFunction = ViewConeTight
-
-	player.SetAnimNearZ(3)
-
+	
+	foreach( entity p in GetPlayerArray() )
+	{
+		player.SetAnimNearZ(3)
+		thread FirstPersonSequence( OGDefeatedSequence, player, animRef )
+	}
 	waitthread FirstPersonSequence( OGDefeatedSequence, player, animRef )
 
-	player.ClearAnimNearZ()
+	foreach( entity p in GetPlayerArray() )
+		p.ClearAnimNearZ()
 
 	wait 3 // time under black before family photo
-	player.ClearParent()
+	foreach( entity p in GetPlayerArray() )
+		p.ClearParent()
 	animRef.Destroy()
+
+	FullyHidePlayers()
 }
 
 void function BliskIntro_BuddyTitan( entity buddyTitan )
@@ -2486,6 +2495,8 @@ void function StartPoint_Skip_WakingUp( entity player )
 
 void function WakingUp_Player( entity player )
 {
+	FullyHidePlayers()
+
 	player.EndSignal( "OnDestroy" )
 
 	entity scriptRef = GetEntByScriptName( "anim_ref_BT_hurt" )
@@ -2540,7 +2551,8 @@ void function WakingUp_Player( entity player )
 
 	wait 5
 	player.SetPlayerNetBool( "shouldShowWeaponFlyout", true )
-
+	
+	FullyShowPlayers()
 }
 
 void function WakingUpViewCone( entity player )
@@ -2676,6 +2688,8 @@ void function FieldPromotion_Obj( entity player )
 
 void function FieldPromotion_Promotion_Player( entity player )
 {
+	FullyHidePlayers()
+
 	player.EndSignal( "OnDestroy" )
 
 	FlagWaitWithTimeout( "player_near_bt", 10 )
@@ -2723,6 +2737,8 @@ void function FieldPromotion_Promotion_Player( entity player )
 	}
 
 	animRef.Destroy()
+
+	FullyShowPlayers()
 }
 
 void function FieldPromotion_Promotion_OGPilot( entity player )
@@ -2897,6 +2913,8 @@ void function StartPoint_Skip_Grave( entity player )
 
 void function Grave_DonHelmet( entity player )
 {
+	FullyHidePlayers()
+
 	player.EndSignal( "OnDestroy" )
 
 	entity scriptRef = GetEntByScriptName( "anim_ref_grave" )
@@ -2949,6 +2967,8 @@ void function Grave_DonHelmet( entity player )
 	StatusEffect_Stop( player, file.statusEffect_turnSlow )
 	StatusEffect_AddTimed( player, eStatusEffect.turn_slow, 0.35, 3, 3 )
 	thread LerpPlayerSpeed( player, 0.4, 1.0, 3.0 )
+
+	FullyShowPlayers()
 }
 
 void function DelayCheckpoint( float delay )
