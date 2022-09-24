@@ -493,18 +493,15 @@ void function PlayerUsesPhaseRewindBurncardThreaded( entity player )
 
 	for ( int i = positions.len() - 1; i > -1; i-- )
 	{
-		//print( positions[ i ].origin )
 		// should looks better?
 		float moveTime = PHASE_REWIND_PATH_SNAPSHOT_INTERVAL + 0.1
-		//if( i == 0 )
-		//	moveTime = PHASE_REWIND_PATH_SNAPSHOT_INTERVAL
 		mover.NonPhysicsMoveTo( positions[ i ].origin, moveTime, 0, 0 )
 		mover.NonPhysicsRotateTo( positions[ i ].angles, moveTime, 0, 0 )
 		wait PHASE_REWIND_PATH_SNAPSHOT_INTERVAL
 	}
 	player.SetVelocity( <0, 0, 0> )
 	if( positions[0].wasCrouched )
-		player.SetOrigin( player.GetOrigin() + < 0,0,20 > )
+		player.SetOrigin( player.GetOrigin() + < 0, 0, 20 > )
 
 	// fix position after rewind
 	PutPhaseRewindedPlayerInSafeSpot( player, 1 )
@@ -514,25 +511,26 @@ void function PutPhaseRewindedPlayerInSafeSpot( entity player, int severity )
 {
 	vector baseOrigin = player.GetOrigin()
 
-    if( PutEntityInSafeSpot( player, player, null, < baseOrigin.x, baseOrigin.y+severity, baseOrigin.z >, baseOrigin ) )
-        return
+	if ( PutEntityInSafeSpot( player, player, null, < baseOrigin.x, baseOrigin.y + severity, baseOrigin.z >, baseOrigin ) )
+		return
 
-    if( PutEntityInSafeSpot( player, player, null, < baseOrigin.x, baseOrigin.y-severity, baseOrigin.z >, baseOrigin ) )
-        return
- 
-    if( PutEntityInSafeSpot( player, player, null, < baseOrigin.x+severity, baseOrigin.y, baseOrigin.z >, baseOrigin ) )
-        return
+	if ( PutEntityInSafeSpot( player, player, null, < baseOrigin.x, baseOrigin.y - severity, baseOrigin.z >, baseOrigin ) )
+		return
 
-	if( PutEntityInSafeSpot( player, player, null, < baseOrigin.x-severity, baseOrigin.y, baseOrigin.z >, baseOrigin ) )
-        return
+	if ( PutEntityInSafeSpot( player, player, null, < baseOrigin.x + severity, baseOrigin.y, baseOrigin.z >, baseOrigin ) )
+		return
 
-	if( PutEntityInSafeSpot( player, player, null, < baseOrigin.x, baseOrigin.y, baseOrigin.z+severity >, baseOrigin ) )
-        return
+	if ( PutEntityInSafeSpot( player, player, null, < baseOrigin.x - severity, baseOrigin.y, baseOrigin.z >, baseOrigin ) )
+        	return
 
-	if( PutEntityInSafeSpot( player, player, null, < baseOrigin.x, baseOrigin.y, baseOrigin.z-severity >, baseOrigin ) )
-        return
+	if ( PutEntityInSafeSpot( player, player, null, < baseOrigin.x, baseOrigin.y, baseOrigin.z + severity >, baseOrigin ) )
+		return
 
-    return PutPhaseRewindedPlayerInSafeSpot( player, severity+5 )
+	if ( PutEntityInSafeSpot( player, player, null, < baseOrigin.x, baseOrigin.y, baseOrigin.z - severity >, baseOrigin ) )
+		return
+
+	return PutPhaseRewindedPlayerInSafeSpot( player, severity + 5 )
+
 }
 
 void function PlayerUsesNukeTitanBurncard( entity player )
