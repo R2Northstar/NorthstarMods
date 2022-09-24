@@ -20,7 +20,7 @@ Drücke Ja, um zuzustimmen. Du kannst diese Entscheidung jederzeit im Modmenü �
 		"AUTHENTICATION_AGREEMENT_RESTART" "Ein Neustart ist notwendig, um diese Änderung zu übernehmen"
 
 		"DIALOG_AUTHENTICATING_MASTERSERVER" "Authentifizierung mit Master Server"
-		"AUTHENTICATIONAGREEMENT_NO" "Du hast dich entschieden dich nicht mit Northstar zu authentizifieren. Du kannst die Authentifizierungs-Einwilligung im Modmenü ansehen."
+		"AUTHENTICATIONAGREEMENT_NO" "Du hast dich gegen die Authentifizierung mit Northstar entschieden. Du kannst die Authentifizierungs-Einwilligung im Modmenü ansehen."
 
 		"MENU_TITLE_SERVER_BROWSER" "Server Browser"
 		"NS_SERVERBROWSER_NOSERVERS" "Keine Server gefunden"
