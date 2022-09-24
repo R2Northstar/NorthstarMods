@@ -294,7 +294,7 @@ Drücke Ja, um zuzustimmen. Du kannst diese Entscheidung jederzeit im Modmenü �
 		"SHOW_ONLY_DISABLED" "Nur deaktivierte"
 
 		// Maps menu
-		"HIDE_LOCKED" "Verstecke geperrte"
+		"HIDE_LOCKED" "Verstecke gesperrte"
 
 		// In-game chat
 		"HUD_CHAT_WHISPER_PREFIX" "[WHISPER]"
