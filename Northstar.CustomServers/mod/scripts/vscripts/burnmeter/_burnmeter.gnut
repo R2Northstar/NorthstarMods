@@ -223,7 +223,7 @@ void function PhaseRewindLifetime( entity player )
 	{
 		PhaseRewindData rewindData
 		rewindData.origin = player.GetOrigin()
-		rewindData.angles = player.EyeAngles()
+		rewindData.angles = < 0, player.EyeAngles().y, 0 >
 		rewindData.velocity = player.GetVelocity()
 		rewindData.wasInContextAction = player.ContextAction_IsActive()
 		rewindData.wasCrouched = player.IsCrouched()
@@ -495,6 +495,7 @@ void function PlayerUsesPhaseRewindBurncardThreaded( entity player )
 	{
 		// should looks better?
 		float moveTime = PHASE_REWIND_PATH_SNAPSHOT_INTERVAL + 0.1
+		player.SetVelocity( -positions[ i ].velocity )
 		mover.NonPhysicsMoveTo( positions[ i ].origin, moveTime, 0, 0 )
 		mover.NonPhysicsRotateTo( positions[ i ].angles, moveTime, 0, 0 )
 		wait PHASE_REWIND_PATH_SNAPSHOT_INTERVAL
