@@ -12,8 +12,6 @@ global function FindScrollbar
 
 global struct ScrollbarExt {
 	array<void functionref( int x, int y )> callbacks
-	int originalX
-	int originalY
 	int originalHeight
 	int originalWidth
 	var scrollbar
@@ -94,8 +92,6 @@ void function RegisterScrollbar( var scrollbar, bool horizontal = false )
 	AddButtonEventHandler( cover, UIE_GET_FOCUS, CoverGetFocus )
 	file.covers.append( cover )
 	ScrollbarExt bar
-	bar.originalX = expect int( Hud_GetPos( cover )[0] )
-	bar.originalY = expect int( Hud_GetPos( cover )[1] )
 	bar.originalHeight = Hud_GetHeight( scrollbar )
 	bar.originalWidth = Hud_GetWidth( scrollbar )
 	bar.scrollbar = scrollbar
@@ -161,8 +157,8 @@ void function RepositionScrollbar_Horizontal( ScrollbarExt scrollbar, int x, int
 	x = x * -1
 	y = y * -1
 
-	int minXPos = scrollbar.originalX
-	int maxXPos = scrollbar.originalX + scrollbar.originalWidth - Hud_GetWidth( scrollbar.button )
+	int minXPos = Hud_GetBaseX( scrollbar.button )
+	int maxXPos = minXPos + scrollbar.originalWidth - Hud_GetWidth( scrollbar.button )
 
 	int pos = expect int( Hud_GetPos( scrollbar.button )[0] )
 	int newPos = pos - x
@@ -186,8 +182,8 @@ void function RepositionScrollbar_Vertical( ScrollbarExt scrollbar, int x, int y
 	int[2] screenSize = GetScreenSize()
 	var sliderPanel = scrollbar.panel
 
-	int minYPos = scrollbar.originalY
-	int maxYPos = scrollbar.originalY + scrollbar.originalHeight - Hud_GetHeight( scrollbar.button )
+	int minYPos = Hud_GetBaseY( scrollbar.button )
+	int maxYPos = minYPos + scrollbar.originalHeight - Hud_GetHeight( scrollbar.button )
 
 	int pos = expect int( Hud_GetPos( scrollbar.button )[1] )
 	int newPos = pos - y
