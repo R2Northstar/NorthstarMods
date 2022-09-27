@@ -174,8 +174,6 @@ void function OnModButtonFocused( var button )
 	string modName = file.lastMod.name
 	var rui = Hud_GetRui( Hud_GetChild( file.menu, "LabelDetails" ) )
 
- 	printt( Hud_GetScriptID( Hud_GetParent( button ) ), file.lastMod.name )
-
 	RuiSetGameTime( rui, "startTime", -99999.99 ) // make sure it skips the whole animation for showing this
 	RuiSetString( rui, "headerText", modName )
 	RuiSetString( rui, "messageText", FormatModDescription( modName ) )
@@ -659,8 +657,10 @@ void function OnUpArrowSelected( var button )
 void function ValidateScrollOffset()
 {
 	RefreshMods()
-	if(file.scrollOffset + 15  > file.mods.len())
+	if( file.scrollOffset + 15  > file.mods.len() )
 		file.scrollOffset = file.mods.len() - 15
+	if( file.scrollOffset < 0 )
+		file.scrollOffset = 0
 	HideAllPanels()
 	DisplayModPanels()
 	UpdateListSliderHeight()
