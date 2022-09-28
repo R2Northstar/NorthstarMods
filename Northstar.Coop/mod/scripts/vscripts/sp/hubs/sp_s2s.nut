@@ -6558,7 +6558,7 @@ void function MaltaBay_HardBank( ShipStruct malta )
 {
 	wait 7
 	
-	if ( !IsValid(file.player) )
+	if ( !IsValid( file.player ) )
 	{
 		thread RestartMapWithDelay()
 		return
@@ -6601,7 +6601,7 @@ void function MaltaBay_ElevatorSwitch( entity player )
 	LiftSendUp( realLift )
 
 	// added stuff
-	TeleportAllExceptOne( realLift.lift.GetOrigin() + <0,0,50>, null )
+	TeleportAllExceptOneInstant( realLift.lift.GetOrigin() + <0,0,50>, null )
 
 	NextState()
 	thread HandleRespawnPlayer_s2s()
@@ -8267,6 +8267,10 @@ void function MaltaWidow_Main( entity player )
 	array<entity> spawners = GetEntArrayByScriptName( "hangar_fragDrones" )
 	foreach ( spawner in spawners )
 		spawner.Hide()
+	
+	if ( NSIsDedicated() ) // should skip to the next startpoint
+		return
+
 	FlagSet( "Deploy64" )
 
 	thread MaltaWidow_DrozAfterLand()
@@ -8296,7 +8300,7 @@ void function MaltaWidow_Main( entity player )
 
 	// added stuff
 	TeleportAllExceptOne( GetEntByScriptName( "maltaPlayerStart3" ).GetOrigin() + <0,0,50>, player )
-
+	
 	thread MaltaWidow_EndSection( player )
 
 	NextState()
@@ -9142,6 +9146,9 @@ void function MaltaHangar_Skip( entity player )
 
 void function MaltaHangar_Main( entity player )
 {
+	if ( NSIsDedicated() )
+		return
+
 	FlagInit( "HangarTicksDead" )
 
 	FlagWaitAny( "DoTheWidowJump", "PlayerInOrOnSarahWidow" )
@@ -10160,6 +10167,15 @@ void function MaltaBreach_skip( entity player )
 
 void function MaltaBreach_Main( entity player )
 {
+	if ( NSIsDedicated() )
+	{
+		ShipGeoShow( file.malta, "GEO_CHUNK_EXTERIOR_L" )
+		ShipGeoHide( file.malta, "GEO_CHUNK_DECK_FAKE" )
+		ShipGeoShow( file.malta, "GEO_CHUNK_DECK" )
+		Coop_ReloadCurrentMapFromStartPoint( GetCurrentStartPointIndex() + 1 )
+		return
+	}
+
 	FlagInit( "BreachGoGoGo" )
 
 	FlagWait( "HangarFinished" )
@@ -10801,7 +10817,7 @@ void function MaltaBridge_Main( entity player )
 	FlagWait( "BridgeClear" )
 
 	ShipIdleAtTargetPos( file.gibraltar, 	V_MALTABRIDGE_GIBRALTAR, BARKER_GIBRALTAR_BOUNDS )
-
+	
 	array<entity> crew 		= Breach_GetCrew()
 	array<asset> records 	= [ $"anim_recording/s2s_record_bridge_Bear_1.rpak",
 								$"anim_recording/s2s_record_bridge_davis_1.rpak",
@@ -10819,8 +10835,14 @@ void function MaltaBridge_Main( entity player )
 								"run_2_stand_45L",
 								"run_2_stand_45L",
 								"run_2_stand_45R" ]
-	foreach ( index, guy in crew )
-		thread MaltaBridge_CrewRunup( guy, records[ index ], delays[ index ], idles[ index ], arrivals[ index ] )
+	
+	// umm have you heard of 6-4?
+	// no, XD
+	if ( !NSIsDedicated() )
+	{
+		foreach ( index, guy in crew )
+			thread MaltaBridge_CrewRunup( guy, records[ index ], delays[ index ], idles[ index ], arrivals[ index ] )
+	}
 
 	thread FlightPanelThink( player, MaltaBridge_FlightControlOutput )
 
@@ -12324,7 +12346,7 @@ void function Reunited_Main( entity player )
 	panel.UnsetUsable()
 
 	if ( !IsAlive( player ) )
-		WaitForever()
+		RestartMapWithDelay()
 
 	player.SetInvulnerable()
 
@@ -15283,12 +15305,12 @@ void function ViperDead_Main( entity player )
 	
 	bt.EndSignal( "OnDeath" )
 
-	OnThreadEnd(
-		function () : ()
-		{
-			thread RestartMapWithDelay()
-		}
-	)
+	// OnThreadEnd(
+	// 	function () : ()
+	// 	{
+	// 		thread RestartMapWithDelay()
+	// 	}
+	// )
 
 	bt.EnableNPCFlag( NPC_IGNORE_ALL )
 	bt.EnableNPCMoveFlag( NPCMF_IGNORE_CLUSTER_DANGER_TIME )
@@ -18446,7 +18468,7 @@ void function Trailer_Bridge( entity player )
 
 void function RespawnPlayer_s2s( entity player  )
 {
-	if ( !IsValid( file.respawnWidow ) )
+	if ( !IsValid( file.respawnWidow.mover ) )
 		return
 
 	if ( GetState() == "None" )

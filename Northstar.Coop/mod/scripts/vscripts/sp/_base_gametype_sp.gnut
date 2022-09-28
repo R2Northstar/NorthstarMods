@@ -62,6 +62,10 @@ void function BaseGametype_Init_MPSP()
 	FlagSet( "WeaponDropsAllowed" )
 
 	CodeCallback_CreateDefaultEvent()
+
+	#if MP
+		AddMapSpecifcRespawnsInit()
+	#endif
 }
 
 void function CodeCallback_OnWeaponAttack( entity player, entity weapon, string weaponName, int ammoUsed )
@@ -126,7 +130,7 @@ void function CodeCallback_OnClientDisconnected( entity player, string reason )
 	{
 		try
 		{
-			compilestring( "ReplacePlayer0()" ) // TODO: test this
+			compilestring( "ReplacePlayer0()" )() // TODO: test this
 		}
 		catch( execption )
 		{

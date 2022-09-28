@@ -20,7 +20,7 @@ playlists
 				cinematic_mode 1
 				classic_mp 0
 				hud_score_enabled 0
-				max_players 8
+				max_players 16
 				max_teams 1
 				ranking_supported 0
 				riff_allow_npcs 1

@@ -1,5 +1,4 @@
 global function CodeCallback_MapInit
-global function Map_PlayerDidLoad
 
 #if DEV
 global function skyboxchange
@@ -295,6 +294,7 @@ void function CodeCallback_MapInit()
 
 	AddCallback_EntitiesDidLoad( EntitiesDidLoad )
 	AddPlayerDidLoad( Training_PlayerDidLoad )
+	AddCallback_OnClientConnected( Training_PlayerDidLoad )
 	AddCallback_OnLoadSaveGame( Training_OnLoadSaveGame )
 
 	AddDamageCallback( "func_brush", Training_FuncBrush_OnDamaged )
@@ -346,11 +346,6 @@ void function EntitiesDidLoad()
 
 	file.skycam_default = GetEnt( "skybox_cam_level" )
 	file.skycam_glitch = GetEnt( "skybox_cam_glitch" )
-}
-
-void function Map_PlayerDidLoad( entity player )
-{
-	Training_PlayerDidLoad( player )
 }
 
 void function Training_PlayerDidLoad( entity player )
@@ -477,7 +472,7 @@ void function DEV_PodIntro( entity player )
 
 void function Training_PodIntro( entity player )
 {
-	NewSaveLocation( player.GetOrigin() )
+	TriggerSilentCheckPoint( player.GetOrigin(), true )
 	
 
 	player.SetOrigin( GetPlayer0().GetOrigin() )
@@ -1632,7 +1627,7 @@ void function Training_FiringRange( entity player )
 
 	waitthread Training_OG_Moves_ToSitting( ref_og_needGunsStart, "OG_Weapons_idle", ogMoveTime )
 
-	NewSaveLocation( < -7465,314,144 >, true )
+	TriggerSilentCheckPoint( < -7465,314,144 >, true )
 
 	FlagWait( "PlayerApproachingFiringRange" )
 
@@ -6478,7 +6473,7 @@ void function NPC_EnableArrivals( entity npc )
 
 void function PlayerAndOGTeleport_Fancy( entity player, vector destPos, string ogTeleportSpotName, vector destAng = < -1, -1, -1 > )
 {
-	NewSaveLocation( destPos, true )
+	TriggerSilentCheckPoint( destPos, true )
 
 	foreach( player in GetPlayerArray() )
 		thread FancyTeleport_EffectsAndSound( player, destPos )
@@ -6552,6 +6547,9 @@ entity function WaitForPlayerActiveWeapon( entity player )
 
 void function GhostRecorder_RepeatUntilFlag( entity player, string endFlag, entity animRef, asset recordedAnim, float extraRepeatDelay = 0.0, bool silentDissolve = false )
 {
+	if ( NSIsDedicated() )
+		return
+
 	EndSignal( player, "OnDestroy" )
 	EndSignal( level, "StopRepeatingGhostRecorder" )
 

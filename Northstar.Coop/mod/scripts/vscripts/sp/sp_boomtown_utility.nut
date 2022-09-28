@@ -81,8 +81,8 @@ global const PLATFORM_MODEL_FRAMING_SKYBOX = $"models/boomtown/wf_platform_3_100
 global const PLATFORM_MODEL_WALLS_SKYBOX = $"models/boomtown/wf_platform_4_1000x.mdl"
 
 const MANTLE_CHECK_DIST = 900 * 900
-// const PUSHER_ENABLE_DIST = 4000 * 4000 <- before
-const PUSHER_ENABLE_DIST = 4000 * 400000
+const PUSHER_ENABLE_DIST = 4000 * 4000
+// const PUSHER_ENABLE_DIST = 4000 * 400000 <- super long range
 const PUSHER_DISABLE_DIST = 4500 * 4500
 const PUSHER_MAX_CHECKS_PER_FRAME_ARMS = 32
 const PUSHER_MAX_CHECKS_PER_FRAME_PLATFORMS = 32
@@ -1114,21 +1114,24 @@ void function TurnOffParts( entity platform, array<string> parts )
 
 void function UpdateArmAndPlatformPushersForPlayer( entity player )
 {
-	EndSignal( player, "StopUpdatingArmAndPlatformPushers" )
-	EndSignal( player, "OnDeath" )
+	EndSignal( svGlobal.levelEnt, "StopUpdatingArmAndPlatformPushers" )
 
 	int numPusherEnts
 
 	int currentArmIndex = 0
 	int currentPlatformIndex = 0
 	int numCheckedThisFrame = 0
+	vector argOrigin = <0,0,0>
 
 	// return // TODO: find a better solution
 	// TODO: this is broken, fix it
+	// I think this solution creates too much lag ( I mean lag that will crash clients )
+	// TODO: REALLY IMPORTANT
+	// this whole level is unstable with a high player count aka above 2
 
-	// this shouldn't run, since players that are behind or would just be stuck
+	// I think I fixed it
 
-	while( true )
+	for(;;)
 	{
 		numPusherEnts = file.pusherArmsArray.len()
 		numCheckedThisFrame = 0
@@ -1140,6 +1143,12 @@ void function UpdateArmAndPlatformPushersForPlayer( entity player )
 			printt( "Potential pusher ents:", numPusherEnts )
 		}
 		*/
+		
+		argOrigin = <0,0,0>
+		foreach( player in GetPlayerArray() ) // will prevent people from runnning too fast and force people that are behind to die
+			argOrigin += player.GetOrigin()
+		
+		argOrigin /= GetPlayerArray().len()
 
 		while( numCheckedThisFrame < PUSHER_MAX_CHECKS_PER_FRAME_ARMS && numCheckedThisFrame < numPusherEnts )
 		{
@@ -1153,15 +1162,15 @@ void function UpdateArmAndPlatformPushersForPlayer( entity player )
 			if ( IsValid( arm.mover ) && IsValid( arm.model ) )//&& !arm.model.Anim_IsActive() )
 			{
 				bool isPusher = arm.mover.GetPusher()
-				float dist = DistanceSqr( player.GetOrigin(), arm.mover.GetOrigin() )
+				float dist = DistanceSqr( argOrigin, arm.mover.GetOrigin() )
 
 				if ( isPusher && dist >= PUSHER_DISABLE_DIST && !arm.posingOverTime )
 				{
-					// EnableBoneFollowersOnArm( arm, false )
+					EnableBoneFollowersOnArm( arm, false )
 				}
 				else if ( !isPusher && dist <= PUSHER_ENABLE_DIST && !arm.posingOverTime )
 				{
-					ClearPlayerMantleIfNearby( player, arm.mover, dist )
+					// ClearPlayerMantleIfNearby( player, arm.mover, dist )
 					EnableBoneFollowersOnArm( arm, true )
 				}
 
@@ -1178,7 +1187,11 @@ void function UpdateArmAndPlatformPushersForPlayer( entity player )
 			numCheckedThisFrame++
 			currentArmIndex++
 		}
-
+		
+		WaitFrame() // oops
+		continue
+		// umm
+		// did I copy and paste it here?
 
 		numPusherEnts = file.pusherPlatformsArray.len()
 		numCheckedThisFrame = 0

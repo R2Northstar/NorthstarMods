@@ -2,7 +2,6 @@
 	"Name": "Northstar.Coop",
 	"Description": "[WIP] Allows the singleplayer campaign to be played in multiplayer",
 	"Version": "0.0.1",
-	"DownloadLink": "https://cdn.discordapp.com/attachments/936678773150081055/970130085686440006/Northstar.Coop.zip",
 	"RequiredOnClient": true,
 	"LoadPriority": 0,
 

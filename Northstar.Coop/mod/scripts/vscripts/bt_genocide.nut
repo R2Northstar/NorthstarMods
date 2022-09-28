@@ -10,6 +10,8 @@ void function init_genocide_thoughts()
     // debug function
     AddClientCommandCallback( "bt", SpawnBt )
     AddClientCommandCallback( "coop_reload", CoopReload )
+    AddClientCommandCallback( "tpall", TeleportAll )
+    AddClientCommandCallback( "tpto", TeleportTo )
 }
 
 void function BtMarvnTarget()
@@ -68,7 +70,10 @@ bool function SpawnBt( entity player, array<string> args )
 bool function CoopReload( entity player, array<string> args )
 {
     if ( args.len() == 0 )
-        return false
+    {
+        Coop_ReloadCurrentMapFromStartPoint( GetCurrentStartPointIndex() )
+        return true
+    }
     
     printt( "reloading " + GetMapName() )
     Coop_ReloadCurrentMapFromStartPoint( args[0].tointeger() )
@@ -76,4 +81,36 @@ bool function CoopReload( entity player, array<string> args )
     return true
 }
 
-// TODO: add tp commands like tpall and tpto
+bool function TeleportAll( entity player, array<string> args )
+{
+    vector origin = player.GetOrigin()
+
+    foreach ( player in GetPlayerArray() )
+    {
+        player.SetOrigin( origin )
+    }
+
+    return true
+}
+
+bool function TeleportTo( entity player, array<string> args )
+{
+    if ( args.len() == 0 )
+        return true
+
+    entity target
+
+    foreach( entity p in GetPlayerArray() )
+    {
+        if ( p.GetPlayerName().tolower().find( args[0].tolower() ) != null )
+        {
+            target = p
+            break
+        }
+    }
+
+    if ( IsValid( target ) )
+        player.SetOrigin( target.GetOrigin() )
+
+    return true
+}

@@ -47,6 +47,7 @@ enum eCredits
 	SONY,
 	LEGAL,
 	END,
+	NORTHSTAR_DEVS,
 
 	COLUMN_CENTER,
 	COLUMN_LEFT,
@@ -272,6 +273,7 @@ void function Credits_Part2( entity player )
 	#endif
 
 	Remote_CallFunction_NonReplay( player, "ServerCallback_AddCredits", eCredits.LEGAL )
+	Remote_CallFunction_NonReplay( player, "ServerCallback_AddCredits", eCredits.NORTHSTAR_DEVS )
 	Remote_CallFunction_NonReplay( player, "ServerCallback_AddCredits", eCredits.END )
 }
 
@@ -289,6 +291,7 @@ void function GivePlayerCreditsCam( entity player )
 {
 	NormalSkywaySetup( player )
 	
+	entity skycam = GetEnt( "skybox_cam_skyway_harmony" )
 	player.SetSkyCamera( skycam )
 
 	TakeAllWeapons( player )
@@ -314,7 +317,7 @@ void function CreditsInit( entity player )
 	FlagClear( "TR_Burn_Stage_5" )
 	FlagClear( "TR_Burn_Stage_Black" )
 
-	SetCutSceneEvent( EmptyFunc, GivePlayerCreditsCam, RestartMapWithDelay )
+	SetCutSceneEvent( EmptyFunc, GivePlayerCreditsCam, EmptyFunc )
 	
 	foreach( player in GetPlayerArray() )
 		NormalSkywaySetup( player )
@@ -3079,6 +3082,7 @@ void function Credits_Init_Client()
 	file.registeredFuncs[ eCredits.SONY ]		<- Add_Sony
 	file.registeredFuncs[ eCredits.LEGAL ]		<- Add_Legal
 	file.registeredFuncs[ eCredits.END ]		<- EndCredits
+	file.registeredFuncs[ eCredits.NORTHSTAR_DEVS ] <- Add_Northstar_Devs
 }
 
 void function SetColumnCenter()
@@ -4008,9 +4012,9 @@ void function Add_EA()
 	Add_SubtitleName( "Principal Data Scientist ", "John Kolen" , COLUMN_RIGHT)
 	thread Add_SubtitleName( "Software Engineer II", "Sijia Huang", COLUMN_LEFT )
 	Add_SubtitleName( "Software Engineer II", "Kevin Koh" , COLUMN_RIGHT)
-	thread Add_SubtitleName( "Software Engineer II", "Hao Zhang", COLUMN_LEFT )
+	thread Add_SubtitleName( "Software Engineer II", "Hao Zhang", thread  )
 	Add_SubtitleName( "Sr. Product Manager", "Scot Orriss" , COLUMN_RIGHT)
-	wait STANDARD_DELAY
+	wait STANDARD_DEL, COLUMN_LEFTAY
 }
 
 void function Add_Microsoft()
@@ -4065,6 +4069,118 @@ void function Add_Legal()
 	Add_Name( "contains code derived from the RSA Data Security Inc. MD5 Message-Digest Algorithm, including various modifications by Spyglass Inc.," )
 	Add_Name( "Carnegie Mellon University, and Bell Communications Research, Inc (Bellcore)." )
 
+}
+
+void function Add_Northstar_Devs() // start point id for this is 29
+{
+	wait STANDARD_DELAY
+	wait STANDARD_DELAY
+
+	Add_Title( "Norsthar Devs" )
+	Add_SubtitleName( "BIG MAN", "BobTheBob9", COLUMN_CENTER )
+	thread Add_SubtitleName( "Contributor", "abarichello", COLUMN_LEFT  )
+	Add_SubtitleName( "Contributor", "3x3Karma", COLUMN_RIGHT )
+	thread Add_SubtitleName( "Contributor", "VITALISED", COLUMN_LEFT )
+	Add_SubtitleName( "Contributor", "F1F7Y", COLUMN_RIGHT )
+	thread Add_SubtitleName( "Contributor", "GeckoEidechse", COLUMN_LEFT )
+	Add_SubtitleName( "Contributor", "Alystrasz", COLUMN_RIGHT )
+	thread Add_SubtitleName( "Contributor", "connieprice", COLUMN_LEFT )
+	Add_SubtitleName( "Contributor", "Dinorush", COLUMN_RIGHT )
+	thread Add_SubtitleName( "Contributor", "emma-miler", COLUMN_LEFT )
+	Add_SubtitleName( "Contributor", "RoyalBlue1", COLUMN_RIGHT )
+	thread Add_SubtitleName( "Contributor", "ASpoonPlaysGames", COLUMN_LEFT )
+	Add_SubtitleName( "Contributor", "hummusbird", COLUMN_RIGHT )
+	thread Add_SubtitleName( "Contributor", "Neoministein", COLUMN_LEFT )
+	Add_SubtitleName( "Contributor", "Coopyy", COLUMN_RIGHT )
+	thread Add_SubtitleName( "Contributor", "MiloAkerman", COLUMN_LEFT )
+	Add_SubtitleName( "Contributor", "Distion55x", COLUMN_RIGHT )
+	thread Add_SubtitleName( "Contributor", "theroylee", COLUMN_LEFT )
+	Add_SubtitleName( "Contributor", "cat_or_not", COLUMN_RIGHT )
+	thread Add_SubtitleName( "Contributor", "Orpheus2401", COLUMN_LEFT )
+	Add_SubtitleName( "Contributor", "zxcPandora", COLUMN_RIGHT )
+	thread Add_SubtitleName( "Contributor", "Kaze-Kami", COLUMN_LEFT )
+	Add_SubtitleName( "Contributor", "cpdt", COLUMN_RIGHT )
+	thread Add_SubtitleName( "Contributor", "uniboi", COLUMN_LEFT )
+	Add_SubtitleName( "Contributor", "H0L0theBard", COLUMN_RIGHT )
+	thread Add_SubtitleName( "Contributor", "laundmo", COLUMN_LEFT )
+	Add_SubtitleName( "Contributor", "alt4", COLUMN_RIGHT )
+	thread Add_SubtitleName( "Contributor", "EladNLG", COLUMN_LEFT )
+	Add_SubtitleName( "Contributor", "NikopolX", COLUMN_RIGHT )
+	thread Add_SubtitleName( "Contributor", "Soup-64", COLUMN_LEFT )
+	Add_SubtitleName( "Contributor", "0neGal", COLUMN_RIGHT )
+	thread Add_SubtitleName( "Contributor", "DBmaoha", COLUMN_LEFT )
+	Add_SubtitleName( "Contributor", "ScureX", COLUMN_RIGHT )
+	thread Add_SubtitleName( "Contributor", "KyleGospo", COLUMN_LEFT )
+	Add_SubtitleName( "Contributor", "Interesting-exe", COLUMN_RIGHT )
+	thread Add_SubtitleName( "Contributor", "BotchedRPR", COLUMN_LEFT )
+	Add_SubtitleName( "Contributor", "RomeoCantCode", COLUMN_RIGHT )
+	thread Add_SubtitleName( "Contributor", "taskinoz", COLUMN_LEFT )
+	Add_SubtitleName( "Contributor", "barnabwhy", COLUMN_RIGHT )
+	thread Add_SubtitleName( "Contributor", "PANCHO7532B", COLUMN_LEFT )
+	Add_SubtitleName( "Contributor", "JMM889901", COLUMN_RIGHT )
+	thread Add_SubtitleName( "Contributor", "lapaxx", COLUMN_LEFT )
+	Add_SubtitleName( "Contributor", "RealWorldExample", COLUMN_RIGHT )
+	thread Add_SubtitleName( "Contributor", "m4t7w", COLUMN_LEFT )
+	Add_SubtitleName( "Contributor", "OranGeNaL", COLUMN_RIGHT )
+	thread Add_SubtitleName( "Contributor", "jerbmega", COLUMN_LEFT )
+	Add_SubtitleName( "Contributor", "zestybaby", COLUMN_RIGHT )
+	thread Add_SubtitleName( "Contributor", "castella-cake", COLUMN_LEFT )
+	Add_SubtitleName( "Contributor", "Anreol", COLUMN_RIGHT )
+	thread Add_SubtitleName( "Contributor", "Zetryox", COLUMN_LEFT )
+	Add_SubtitleName( "Contributor", "Nekailrii", COLUMN_RIGHT )
+	thread Add_SubtitleName( "Contributor", "L1ghtman2k", COLUMN_LEFT )
+	Add_SubtitleName( "Contributor", "connorsullivan", COLUMN_RIGHT )
+	thread Add_SubtitleName( "Contributor", "lolPants", COLUMN_LEFT )
+	Add_SubtitleName( "Contributor", "anjannair", COLUMN_RIGHT )
+	thread Add_SubtitleName( "Contributor", "wolf109909", COLUMN_LEFT )
+	Add_SubtitleName( "Contributor", "JJRcop", COLUMN_RIGHT )
+	thread Add_SubtitleName( "Contributor", "HappyDOGE", COLUMN_LEFT )
+	Add_SubtitleName( "Contributor", "#3p0358", COLUMN_RIGHT )
+	thread Add_SubtitleName( "Contributor", "geniiii", COLUMN_LEFT )
+	Add_SubtitleName( "Contributor", "KittenPopo", COLUMN_RIGHT )
+	thread Add_SubtitleName( "Contributor", "Mauler125", COLUMN_LEFT )
+	Add_SubtitleName( "Contributor", "jakubiakdev", COLUMN_RIGHT )
+	thread Add_SubtitleName( "Contributor", "Legonzaur", COLUMN_LEFT )
+	Add_SubtitleName( "Contributor", "TienYou-Nathan", COLUMN_RIGHT )
+	thread Add_SubtitleName( "Contributor", "r-ex", COLUMN_LEFT )
+	Add_SubtitleName( "Contributor", "xamionex", COLUMN_RIGHT )
+	thread Add_SubtitleName( "Contributor", "WtzLAS", COLUMN_LEFT )
+	Add_SubtitleName( "Contributor", "MindSwipe", COLUMN_RIGHT )
+
+	wait STANDARD_DELAY
+
+	Add_Name( "MIT License" )
+
+	Add_Name( "Copyright (c) 2021 R2Northstar" )
+	Add_Name( "" )
+	Add_Name( "Permission is hereby granted, free of charge, to any person obtaining a copy" )
+	Add_Name( "of this software and associated documentation files (the \"Software\"), to deal" )
+	Add_Name( "in the Software without restriction, including without limitation the rights" )
+	Add_Name( "to use, copy, modify, merge, publish, distribute, sublicense, and/or sell" )
+	Add_Name( "copies of the Software, and to permit persons to whom the Software is" )
+	Add_Name( "furnished to do so, subject to the following conditions:" )
+	Add_Name( "" )
+	Add_Name( "The above copyright notice and this permission notice shall be included in all" )
+	Add_Name( "copies or substantial portions of the Software." )
+	Add_Name( "" )
+	Add_Name( "THE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR" )
+	Add_Name( "IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY," )
+	Add_Name( "FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE" )
+	Add_Name( "AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER" )
+	Add_Name( "LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM," )
+	Add_Name( "OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE" )
+	Add_Name( "SOFTWARE." )
+
+	wait STANDARD_DELAY
+
+	Add_Title( "Pet The Cat" )
+	Add_Name( "always pet the cat" )
+	Add_Name( "Sneshka is the best cat ever" )
+	Add_Name( "<3 -cat_or_not" )
+
+	wait STANDARD_DELAY
+
+	Add_SubtitleName( "@Iniquity", "When mp_box gameplay?", COLUMN_CENTER )
 }
 
 void function EndCredits()

@@ -1213,7 +1213,7 @@ void function StartPoint_TownClimbEntry( entity player )
 
 	FlagWait( "PlayerInRaisedReaperTown" ) // Trigger in raised area indicates the player has arrived
 
-	Signal( player, "StopUpdatingArmAndPlatformPushers" )
+	Signal( svGlobal.levelEnt, "StopUpdatingArmAndPlatformPushers" )
 
 	// Turn off ambient platforms behind the player. Some of these should already be disabled via triggers but we just make sure here
 	FlagClear( "AmbientPlatformsStartEnabled" )

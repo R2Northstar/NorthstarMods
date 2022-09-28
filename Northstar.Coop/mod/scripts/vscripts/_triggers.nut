@@ -1,6 +1,7 @@
 untyped
 global function NewSaveLocation
 global function TeleportAllExceptOne
+global function TeleportAllExceptOneInstant
 global function TriggerManualCheckPoint
 global function TriggerSilentCheckPoint
 global function Init_triggers
@@ -8,9 +9,6 @@ global function GetSaveLocation
 global function GetCheckPointInfo
 global function SetPlayer0
 global function GetPlayer0
-
-// global trigger function
-global function OnTeleportTriggered
 
 global struct CheckPointInfo
 {
@@ -64,9 +62,6 @@ void function Init_triggersThreaded()
 		case "sp_beacon_spoke0":
 			CreateTeleportTrigger( <2689, 10284, 417>, 500.0, 2000.0, 100.0, true ) // door closing aftr the first major fight
 			break
-
-		// case "sp_skyway_v1":
-		// 	return 
 	}
 }
 
@@ -89,17 +84,43 @@ void function CreateTeleportTrigger( vector origin, float radius, float top, flo
 	array<entity> ents = []
 	entity trigger = _CreateScriptCylinderTriggerInternal( origin, radius, TRIG_FLAG_PLAYERONLY  | TRIG_FLAG_ONCE, ents, top, bottom )
 	
-	trigger.SetScriptName( string( TpAsPilot ) )
-	AddCallback_ScriptTriggerEnter( trigger, OnTeleportTriggered )
-	// AddCallback_ScriptTriggerLeave( trigger, OnTeleportTriggered )
+	if ( TpAsPilot )
+		AddCallback_ScriptTriggerEnter( trigger, OnTeleportPilotTriggered )
+	else
+		AddCallback_ScriptTriggerEnter( trigger, OnTeleportTitanTriggered )
 }
 
-void function OnTeleportTriggered( entity trigger, entity player )
+void function OnTeleportPilotTriggered( entity trigger, entity player )
 {
-	thread OnTeleportTriggeredThreaded( trigger, player )
+	thread OnTeleportPilotTriggeredThreaded( trigger, player )
 }
 
-void function OnTeleportTriggeredThreaded( entity trigger, entity player )
+void function OnTeleportPilotTriggeredThreaded( entity trigger, entity player )
+{
+	printl("=========================================")
+	printl("New checkpoint :" + trigger.GetOrigin())
+	printl("=========================================")
+	
+	vector destination = trigger.GetOrigin()
+	waitthread TeleportAllExceptOne( destination, player )
+	wait 0.1
+
+	foreach( entity p in GetPlayerArray() )
+	{
+		if ( p != player )
+			thread MakePlayerPilot( p, destination )
+	}
+
+	save.lastSave = destination
+	save.lastCheckpointWasAsPilot = true
+}
+
+void function OnTeleportTitanTriggered( entity trigger, entity player )
+{
+	thread OnTeleportTitanTriggeredThreaded( trigger, player )
+}
+
+void function OnTeleportTitanTriggeredThreaded( entity trigger, entity player )
 {
 	printl("=========================================")
 	printl("New checkpoint :" + trigger.GetOrigin())
@@ -109,20 +130,14 @@ void function OnTeleportTriggeredThreaded( entity trigger, entity player )
 	waitthread TeleportAllExceptOne( destination, player )
 	wait 0.1
 	
-	// super broken
 	foreach( entity p in GetPlayerArray() )
 	{
 		if ( p != player )
-		{
-			if ( trigger.GetScriptName() == "true" )
-				thread MakePlayerPilot( p, destination )
-			else
-				thread MakePlayerTitan( p, destination )
-		}
+			thread MakePlayerTitan( p, destination )
 	}
 
 	save.lastSave = destination
-	save.lastCheckpointWasAsPilot = trigger.GetScriptName() == "true"
+	save.lastCheckpointWasAsPilot = false
 }
 
 void function CreateGauntletTeleportBackTrigger()
@@ -206,6 +221,32 @@ void function TeleportAllExceptOne( vector destination, entity ornull ThisPlayer
 	{
 		if ( IsValid( mover ) )
 			mover.Destroy()
+	}
+}
+
+void function TeleportAllExceptOneInstant ( vector destination, entity ornull ThisPlayer, bool display_notification = true )
+{
+
+	foreach( entity player in GetPlayerArray() )
+	{
+		if ( player != ThisPlayer )
+		{
+			WaitFrame()
+			try
+			{
+				player.SetOrigin( destination )
+				if ( display_notification )
+					DisplayOnscreenHint( player, "move_hint" )
+			}
+			catch( exception ){}
+		}
+	}
+
+	wait 1
+
+	foreach( entity player in GetPlayerArray() )
+	{
+		ClearOnscreenHint( player )
 	}
 }
 

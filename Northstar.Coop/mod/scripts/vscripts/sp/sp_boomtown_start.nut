@@ -856,6 +856,9 @@ void function BTGetsGrabbed()
 
 void function BTGetsGrabbedAnims( entity bt, PlatformArm arm )
 {
+	if ( !IsValid( bt ) )
+		bt = CreatePetTitanAtOrigin( GetPlayer0(), GetPlayer0().GetOrigin(), GetPlayer0().GetAngles() )
+
 	TakeAllWeapons( bt )
 	bt.GiveWeapon( "mp_titanweapon_xo16_shorty", [] )
 

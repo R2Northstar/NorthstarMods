@@ -4947,7 +4947,6 @@ void function BatteryTracker2( entity player )
 void function Battery3Path_SlotBattery( entity player )
 {
 	Assert( IsAlive( file.buddyTitan ) )
-	player.EndSignal( "OnDestroy" )
 	file.buddyTitan.EndSignal( "OnDestroy" )
 
 	entity useDummy = CreateUseDummy( file.buddyTitan, "CHESTFOCUS",  < 15, -20, -15 >, "#WILDS_BATTERY_NEUTRALIZE_ENEMIES", "#WILDS_BATTERY_NEUTRALIZE_ENEMIES" )
@@ -5426,6 +5425,17 @@ void function StartPoint_PilotLink( entity player )
 	player.EndSignal( "OnDestroy" )
 	player.EndSignal( "OnDeath" )
 
+	OnThreadEnd(
+		function() : ()
+		{
+			if ( Flag( "ready_for_level_end" ) )
+				Coop_LoadMapFromStartPoint( "sp_sewers1", "Channel Mortar Run" )
+			else 
+				RestartMapWithDelay()
+			// too lazy to handle player death
+		}
+	)
+
 	CheckPoint()
 
 	thread PilotLink_Dialog( player )
@@ -5469,9 +5479,6 @@ void function StartPoint_PilotLink( entity player )
 
 void function PilotLink_EarlyFight( entity player )
 {
-	player.EndSignal( "OnDestroy" )
-	player.EndSignal( "OnDeath" )
-
 	thread CreateCirclingDrone( "pilot_link_circle_path_1", "pilot_link_escape_path_1", "npc_drone_worker_fast" )
 	thread CreateCirclingDrone( "pilot_link_circle_path_2", "pilot_link_escape_path_2", "npc_drone_worker_fast" )
 
@@ -5501,7 +5508,7 @@ void function TimeoutFlag( string flag, float time )
 		
 		wait 1
 	}
-	SetFlag( flag )
+	FlagSet( flag )
 }
 
 void function TrackNPCHeight( entity player, entity npc )
@@ -7560,7 +7567,8 @@ entity function SpawnBT( entity player, vector origin )
 	npcTitan.SetTitle( "" )
 	npcTitan.SetNoTarget( true )
 
-	player.SetPetTitan( npcTitan )
+	// player.SetPetTitan( npcTitan )
+	// this should make bt resilient to player0 leaving
 
 	thread CreateNearBTTrigger( npcTitan, player )
 	npcTitan.l.BTHightlightModel = AttachOutlineModel( npcTitan )
