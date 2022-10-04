@@ -422,10 +422,10 @@
 		  "Path" : "sh_custom_server_column.gnut",
 		  "RunOn": "( CLIENT || SERVER ) && MP",
 		  "ClientCallback":{
-			"Before": "ColumnData_Init"
+			"Before": "ClientColumnData_Init"
 		  },
 		  "ServerCallback": {
-			"After": "ServerColumsInit"
+			"After": "ServerColumnData_Init"
 		  }
 		}
 	],
