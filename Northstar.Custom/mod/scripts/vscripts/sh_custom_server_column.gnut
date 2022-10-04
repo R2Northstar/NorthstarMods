@@ -1,15 +1,15 @@
 #if CLIENT
-global function ColumnData_Init
+global function ClientColumnData_Init
 #endif //CLIENT
 
 #if SERVER
 global function AddServerScoreboardColumn
-global function ServerColumsInit
+global function ServerColumnData_Init
 global function AddServerScoreboardColumnAtRunntime
 #endif //SERVER
 
-global table<string,int> gamemodeColumns = {
-    //matches the GAMETYPE string the amount of vanilla columns they have 
+//matches the GAMETYPE string the amount of vanilla columns they have 
+global table<string,int> gamemodeColumns = {    
     [GAMEMODE_CHAMBER] =  2, //One in the chamber
     [GAMEMODE_FASTBALL] = 3, //Fatball
     [GAMEMODE_GG] = 2, //Gun Game
@@ -35,12 +35,12 @@ global table<string,int> gamemodeColumns = {
 
 #if CLIENT
 
-void function ColumnData_Init()
+void function ClientColumnData_Init()
 {
-    AddServerToClientStringCommandCallback( "AddColumnToClient", ServerCallback_AddColumnToClient )
+    AddServerToClientStringCommandCallback( "AddColumnToClient", ServerCallback_AddColumnToClient ) //add fucntion to client
 }
 
-void function ServerCallback_AddColumnToClient( array<string> args )
+void function ServerCallback_AddColumnToClient( array<string> args ) //define the function that was added
 {
     GameMode_AddScoreboardColumnData( args[0], RetrunSpace(args[1]), args[2].tointeger(), args[3].tointeger() )
 }
@@ -50,15 +50,15 @@ void function ServerCallback_AddColumnToClient( array<string> args )
 #if SERVER
 
 struct ColumnData{
-    string gamemode
-    string scoreName 
-    int scoreType
-    int digits
+    string gamemode //Technically oboslete but saver this way 
+    string scoreName //What the player sees on the score board
+    int scoreType //The PGS constant that is shown, technically this can be a random one, just make sure its not in use
+    int digits //The determines the width of the colum, I dont know if there is a limit, would make sense if there was
 }
+// array of all the custom columns
+array<ColumnData> columns 
 
-array<ColumnData> columns
-
-void function ServerColumsInit()
+void function ServerColumnData_Init()
 {
     AddCallback_OnClientConnected( AddColumnOnConnect )
 }
@@ -68,9 +68,14 @@ void function AddServerScoreboardColumn(string scoreName, int scoreType, int dig
     if(GAMETYPE in gamemodeColumns && gamemodeColumns[GAMETYPE] + columns.len() >= 4) // this just checks if there are already 4 columns
         return
     //Looks terrible, but this is the only way to define a struct in a function with args
+    AddColumnToArray(scoreName, scoreType, digits)
+}
+
+void function AddColumnToArray(string scoreName, int scoreType, int digits)
+{
     ColumnData column = {...}
-    column.gamemode = GAMETYPE // GAMETYPE returns a string identifier like "gg" for gun game
-    column.scoreName = ReplaceSpace(scoreName)
+    column.gamemode = GAMETYPE // GAMETYPE returns the string identifier, e.g. "gg" for gun game
+    column.scoreName = ReplaceSpace(scoreName) //get rid of spaces now, revert them later
     column.scoreType = scoreType
     column.digits = digits
 
@@ -86,10 +91,12 @@ void function AddColumnOnConnect(entity player)
 
 void function AddServerScoreboardColumnAtRunntime(string scoreName, int scoreType, int digits)
 {
-    AddServerScoreboardColumn(scoreName, scoreType, digits) // for everyone who joins later 
-    if(GAMETYPE in gamemodeColumns && gamemodeColumns[GAMETYPE] + columns.len() >= 4) // this just checks if there are already 4 columns
+    // this just checks if there are already 4 columns
+    if(GAMETYPE in gamemodeColumns && gamemodeColumns[GAMETYPE] + columns.len() >=4 ) 
         return 
-
+    // add it to the array for players that join later 
+    AddColumnToArray(scoreName, scoreType, digits)
+    // add it to the currently existing players
     foreach(entity p in GetPlayerArray())
         ServerToClientStringCommand(p,"AddColumnToClient " + GAMETYPE + " " + ReplaceSpace(scoreName) + " " + scoreType+ " " + digits)
 }
@@ -103,5 +110,5 @@ string function ReplaceSpace(string s)
 }
 string function RetrunSpace(string s)
 {
-    return StringReplace(s,"x!c"," ",true, true)
+    return StringReplace(s,"x!c"," ",true, true) // reverts the changes to get back the spaces
 }
