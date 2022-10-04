@@ -422,10 +422,10 @@
 		  "Path" : "sh_custom_scoreboard_columns.gnut",
 		  "RunOn": "( CLIENT || SERVER ) && MP",
 		  "ClientCallback":{
-			"Before": "ClientColumnData_Init"
+			"Before": "Client_CustomScoreboardColumns_Init"
 		  },
 		  "ServerCallback": {
-			"After": "ServerColumnData_Init"
+			"Before": "Server_CustomScoreboardColumns_Init"
 		  }
 		}
 	],
