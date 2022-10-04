@@ -66,7 +66,7 @@ void function ServerColumnData_Init()
 void function AddServerScoreboardColumn(string scoreName, int scoreType, int digits)
 {   
     if(GAMETYPE in gamemodeColumns && gamemodeColumns[GAMETYPE] + columns.len() >= 4) // this just checks if there are already 4 columns
-        return
+        throw "Cannot have more than 4 total columns"
     //Looks terrible, but this is the only way to define a struct in a function with args
     AddColumnToArray(scoreName, scoreType, digits)
 }
@@ -78,13 +78,16 @@ void function AddColumnToArray(string scoreName, int scoreType, int digits)
     column.scoreName = ReplaceSpace(scoreName) //get rid of spaces now, revert them later
     column.scoreType = scoreType
     column.digits = digits
+    foreach(ColumnData cdat in columns)
+        if(cdat.scoreName == column.scoreName)
+            throw "Cannot have 2 or more columns with the same name"
 
     columns.append(column)
 }
 
+//adds all the registered columns when a player connects
 void function AddColumnOnConnect(entity player)
 {
-    //adds all the registered columns when a player connects
     foreach(ColumnData cdat in columns)
 	    ServerToClientStringCommand(player,"AddColumnToClient " + cdat.gamemode + " " + cdat.scoreName + " " +cdat.scoreType+ " " + cdat.digits)
 }
@@ -93,7 +96,7 @@ void function AddServerScoreboardColumnAtRunntime(string scoreName, int scoreTyp
 {
     // this just checks if there are already 4 columns
     if(GAMETYPE in gamemodeColumns && gamemodeColumns[GAMETYPE] + columns.len() >=4 ) 
-        return 
+       throw "Cannot create more than 4 Columns"
     // add it to the array for players that join later 
     AddColumnToArray(scoreName, scoreType, digits)
     // add it to the currently existing players
