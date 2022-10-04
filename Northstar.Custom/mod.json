@@ -419,7 +419,7 @@
 			}
 		},
 		{
-		  "Path" : "sh_custom_server_column.gnut",
+		  "Path" : "sh_custom_scoreboard_columns.gnut",
 		  "RunOn": "( CLIENT || SERVER ) && MP",
 		  "ClientCallback":{
 			"Before": "ClientColumnData_Init"
