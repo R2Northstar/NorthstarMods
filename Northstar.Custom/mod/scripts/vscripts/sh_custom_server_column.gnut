@@ -5,32 +5,31 @@ global function ColumnData_Init
 #if SERVER
 global function AddServerScoreboardColumn
 global function ServerColumsInit
+global function AddServerScoreboardColumnAtRunntime
 #endif //SERVER
 
-global table<string,int> gamemodeCoumns = {
-    [GAMEMODE_ARENA] = 1 ,
-    [GAMEMODE_CHAMBER] =  2,
-    [GAMEMODE_FASTBALL] = 3,
-    [GAMEMODE_GG] = 2,
-    [GAMEMODE_HIDDEN] = 2,
-    [GAMEMODE_HIDEANDSEEK] = 0,
-    [GAMEMODE_INFECTION] = 1,
-    [GAMEMODE_KR] = 2,
-    [GAMEMODE_SNS] = 3,
-    [GAMEMODE_TFFA] = 2,
-    [GAMEMODE_CTF_COMP] = 4,
-    [GAMEMODE_TT] = 3 ,
-    //[GAMEMODE_CP] = 3,
-    //[GAMEMODE_LTS] = 2,
-    //[GAMEMODE_AITDM] =  3,
-    //[GAMEMODE_TDM] = 3, // might not be correct the gamemode is called TEAM_DEATHMATCH
-    //[GAMEMODE_COLISEUM] = 1 ,
-    //[GAMEMODE_CTF] = 3,
-    //[GAMEMODE_FFA] = 3,
-    //[GAMEMODE_SPEEDBALL] = 3,
-    //[GAMEMODE_MFD] = 3,
-    //[GAMEMODE_TTDM] = 3,
-    //[GAMEMODE_FD] = 3
+global table<string,int> gamemodeColumns = {
+    //matches the GAMETYPE string the amount of vanilla columns they have 
+    [GAMEMODE_CHAMBER] =  2, //One in the chamber
+    [GAMEMODE_FASTBALL] = 3, //Fatball
+    [GAMEMODE_GG] = 2, //Gun Game
+    [GAMEMODE_HIDDEN] = 2, //Hidden
+    [GAMEMODE_HIDEANDSEEK] = 0, //Hide and seek
+    [GAMEMODE_INFECTION] = 1, //infection
+    [GAMEMODE_KR] = 2, // killrace
+    [GAMEMODE_SNS] = 3, //Sticks and stones
+    [GAMEMODE_TFFA] = 2, //Titan free for all
+    [GAMEMODE_CTF_COMP] = 4, //competetive capture the flag
+    [GAMEMODE_TT] = 3 , //Titan tag
+    ["cp"] = 3, //amped hardpoint
+    ["lts"] = 2, //last titan standing
+    ["aitdm"] =  3, //attrition
+    ["tdm"] = 3,  //skrimish
+    ["coliseum"] = 1 , //coliseum
+    ["ctf"] = 3, // catpture the flag
+    ["ffa"] = 3, //free for all
+    ["speedball"] = 3, //live fire
+    ["ttdm"] = 3  //titan brawl
 }
 
 
@@ -39,7 +38,6 @@ global table<string,int> gamemodeCoumns = {
 void function ColumnData_Init()
 {
     AddServerToClientStringCommandCallback( "AddColumnToClient", ServerCallback_AddColumnToClient )
-
 }
 
 void function ServerCallback_AddColumnToClient( array<string> args )
@@ -50,7 +48,7 @@ void function ServerCallback_AddColumnToClient( array<string> args )
 #endif //CLIENT
 
 #if SERVER
-//struct for each custom column
+
 struct ColumnData{
     string gamemode
     string scoreName 
@@ -66,20 +64,17 @@ void function ServerColumsInit()
 }
 
 void function AddServerScoreboardColumn(string scoreName, int scoreType, int digits)
-{
-    //Looks terrible, but this is the only way to define a struct in a function with args
-    ColumnData col = {...}
-    col.gamemode = GAMETYPE // this always returns the neded string for the gamemode, its better than to have the file define it
-    col.scoreName = ReplaceSpace(scoreName)
-    col.scoreType = scoreType
-    col.digits = digits
-    //This needs to be reworked but I need a table with a column amout for each mode
-    if(columns.len() == 2)
-    {
-        printt("Cannot add more than 2 custom columns")
+{   
+    if(GAMETYPE in gamemodeColumns && gamemodeColumns[GAMETYPE] + columns.len() >= 4) // this just checks if there are already 4 columns
         return
-    }
-    columns.append(col)
+    //Looks terrible, but this is the only way to define a struct in a function with args
+    ColumnData column = {...}
+    column.gamemode = GAMETYPE // GAMETYPE returns a string identifier like "gg" for gun game
+    column.scoreName = ReplaceSpace(scoreName)
+    column.scoreType = scoreType
+    column.digits = digits
+
+    columns.append(column)
 }
 
 void function AddColumnOnConnect(entity player)
@@ -87,6 +82,16 @@ void function AddColumnOnConnect(entity player)
     //adds all the registered columns when a player connects
     foreach(ColumnData cdat in columns)
 	    ServerToClientStringCommand(player,"AddColumnToClient " + cdat.gamemode + " " + cdat.scoreName + " " +cdat.scoreType+ " " + cdat.digits)
+}
+
+void function AddServerScoreboardColumnAtRunntime(string scoreName, int scoreType, int digits)
+{
+    AddServerScoreboardColumn(scoreName, scoreType, digits) // for everyone who joins later 
+    if(GAMETYPE in gamemodeColumns && gamemodeColumns[GAMETYPE] + columns.len() >= 4) // this just checks if there are already 4 columns
+        return 
+
+    foreach(entity p in GetPlayerArray())
+        ServerToClientStringCommand(p,"AddColumnToClient " + GAMETYPE + " " + ReplaceSpace(scoreName) + " " + scoreType+ " " + digits)
 }
 
 #endif //SERVER
