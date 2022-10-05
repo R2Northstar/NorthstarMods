@@ -261,10 +261,17 @@ bool function IsSpawnpointValid( entity spawnpoint, int team )
 			return false
 	}
 
-	array<entity> projectiles = GetProjectileArrayEx( "any", TEAM_ANY, TEAM_ANY, spawnpoint.GetOrigin(), 600 )
+    float minEnemyDist = 1000.0 // about 20 meters?
+	array<entity> projectiles = GetProjectileArrayEx( "any", TEAM_ANY, TEAM_ANY, spawnpoint.GetOrigin(), minEnemyDist )
 	foreach ( entity projectile in projectiles )
 		if ( projectile.GetTeam() != team )
 			return false
+
+    // prefer no enemies nearby
+    array<entity> players = GetPlayerArrayEx( "any", TEAM_ANY, TEAM_ANY, spawnpoint.GetOrigin(), minEnemyDist )
+    foreach ( entity player in players )
+        if ( player.GetTeam() != team )
+            return false
 	
 	// los check
 	return !spawnpoint.IsVisibleToEnemies( team )
