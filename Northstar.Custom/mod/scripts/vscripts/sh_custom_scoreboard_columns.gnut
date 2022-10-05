@@ -39,26 +39,16 @@ void function Client_CustomScoreboardColumns_Init()
 
 void function ServerCallback_AddCustomScoreboardColumn( array<string> args )
 {
-    if (args.len() != 1)
+    if (args.len() != 3)
     {
         printt(format("Warning: received invalid AddCustomScoreboardColumn command with %i arguments.", args.len()))
         return
     }
 
-    // Add the spaces back.
-    string rebuilt = StringReplace(args[0], "\b", " ", true)
-
-    array<string> data = split(rebuilt, ",")
-    if (data.len() != 3)
-    {
-        printt(format("Warning: received invalid AddCustomScoreboardColumn data with %i arguments.", data.len()))
-        return
-    }
-
     ScoreboardColumnData newColumn = { ... }
-    newColumn.title = data[0]
-    newColumn.scoreType = data[1].tointeger()
-    newColumn.digits = data[2].tointeger()
+    newColumn.title = StringReplace(args[0], "\b", " ", true)
+    newColumn.scoreType = args[1].tointeger()
+    newColumn.digits = args[2].tointeger()
 
     CustomScoreboardColumns.append(newColumn)
     
@@ -88,10 +78,9 @@ void function Server_AddCustomScoreboardColumn(string title, int scoreType, int 
     }
     
     string sanitized = strip(title)
-    // Make sure there's no comma in the title, as we use it to separate all the arguments in the string command.
-    if (sanitized.find(",") != -1)
+    if (sanitized.len() == 0)
     {
-        throw "Cannot have a comma ',' in a scoreboard column name."
+        throw "Cannot have an empty scoreboard column title."
     }
 
     // Keep track of the custom scoreboard column for players that join mid-game.
@@ -126,6 +115,6 @@ string function BuildScoreboardStringCommand(ScoreboardColumnData data)
     // Replace spaces with backspaces so they arrive as one argument instead of splitting.
     // Nobody's going to use those anyway, should be fine.
     string sanitizedName = StringReplace(data.title, " ", "\b", true)
-    return format("AddCustomScoreboardColumn %s,%i,%i", sanitizedName, data.scoreType, data.digits)
+    return format("AddCustomScoreboardColumn %s %i %i", sanitizedName, data.scoreType, data.digits)
 }
 #endif //SERVER
