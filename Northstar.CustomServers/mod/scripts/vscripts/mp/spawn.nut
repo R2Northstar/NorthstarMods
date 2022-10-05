@@ -261,15 +261,13 @@ bool function IsSpawnpointValid( entity spawnpoint, int team )
 			return false
 	}
 
-    float minEnemyDist = 1000.0 // about 20 meters?
-	array<entity> projectiles = GetProjectileArrayEx( "any", TEAM_ANY, TEAM_ANY, spawnpoint.GetOrigin(), minEnemyDist )
-	foreach ( entity projectile in projectiles )
+    const minEnemyDist = 1000.0 // about 20 meters?
+	foreach ( entity projectile in GetProjectileArrayEx( "any", TEAM_ANY, TEAM_ANY, spawnpoint.GetOrigin() )
 		if ( projectile.GetTeam() != team )
 			return false
 
     // prefer no enemies nearby
-    array<entity> players = GetPlayerArrayEx( "any", TEAM_ANY, TEAM_ANY, spawnpoint.GetOrigin(), minEnemyDist )
-    foreach ( entity player in players )
+    foreach ( entity player in  GetPlayerArrayEx( "any", TEAM_ANY, TEAM_ANY, spawnpoint.GetOrigin(), minEnemyDist ) )
         if ( player.GetTeam() != team )
             return false
 	
