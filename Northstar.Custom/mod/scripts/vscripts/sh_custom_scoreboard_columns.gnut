@@ -89,7 +89,7 @@ void function Server_AddCustomScoreboardColumn(string title, int scoreType, int 
     
     string sanitized = strip(title)
     // Make sure there's no comma in the title, as we use it to separate all the arguments in the string command.
-    if (sanitized.find(","))
+    if (sanitized.find(",") != -1)
     {
         throw "Cannot have a comma ',' in a scoreboard column name."
     }
