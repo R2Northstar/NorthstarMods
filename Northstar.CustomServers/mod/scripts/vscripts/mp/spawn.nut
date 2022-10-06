@@ -262,7 +262,7 @@ bool function IsSpawnpointValid( entity spawnpoint, int team )
 	}
 
     const minEnemyDist = 1000.0 // about 20 meters?
-	foreach ( entity projectile in GetProjectileArrayEx( "any", TEAM_ANY, TEAM_ANY, spawnpoint.GetOrigin() )
+	foreach ( entity projectile in GetProjectileArrayEx( "any", TEAM_ANY, TEAM_ANY, spawnpoint.GetOrigin(), minEnemyDist )
 		if ( projectile.GetTeam() != team )
 			return false
 
