@@ -1,7 +1,5 @@
 untyped
 
-global function InitRatings // temp for testing
-
 global function Spawn_Init
 global function SetRespawnsEnabled
 global function RespawnsEnabled
@@ -54,6 +52,12 @@ void function Spawn_Init()
 	// callbacks for spawnzone spawns
 	AddCallback_GameStateEnter( eGameState.Prematch, ResetSpawnzones )
 	AddSpawnCallbackEditorClass( "trigger_multiple", "trigger_mp_spawn_zone", AddSpawnZoneTrigger )
+	
+	SpawnPoints_SetRatingMultipliers_Enemy( TD_TITAN, -10.0, -6.0, -1.0 )
+	SpawnPoints_SetRatingMultipliers_Friendly( TD_TITAN, 0.25, 1.75, 1.75 )
+
+	SpawnPoints_SetRatingMultipliers_Enemy( TD_PILOT, -10.0, -6.0, -1.0 )
+	SpawnPoints_SetRatingMultipliers_Friendly( TD_PILOT, 0.25, 1.75, 1.75 )
 }
 
 void function InitSpawnpoint( entity spawnpoint ) 
@@ -120,32 +124,36 @@ string function GetSpawnpointGamemodeOverride()
 	unreachable
 }
 
-void function InitRatings( entity player, int team )
+void function SpawnPoints_InitScriptRatings( entity player, int team )
 {
-	if ( player != null )
-		SpawnPoints_InitRatings( player, team ) // no idea what the second arg supposed to be lol
+	const float FRONTLINE_PLAYER_SPAWN_OFFSET = 256
+
+	// get frontline stuff
+	Frontline frontline = GetFrontline( team )
+	vector spawnDir = frontline.combatDir * -1
+	local offsetOrigin = frontline.origin + spawnDir * FRONTLINE_PLAYER_SPAWN_OFFSET
+
+	//SpawnPoints_InitFrontlineData( offsetOrigin, spawnDir, frontline.combatDir, frontline.origin, frontline.line )
+	SpawnPoints_InitRatings( player, team )
 }
 
 entity function FindSpawnPoint( entity player, bool isTitan, bool useStartSpawnpoint )
 {
 	int team = player.GetTeam()
+	int pointTeam = team
 	if ( HasSwitchedSides() )
-		team = GetOtherTeam( team )
+		pointTeam = GetOtherTeam( team )
 
 	array<entity> spawnpoints
 	if ( useStartSpawnpoint )
-		spawnpoints = isTitan ? SpawnPoints_GetTitanStart( team ) : SpawnPoints_GetPilotStart( team )
+		spawnpoints = isTitan ? SpawnPoints_GetTitanStart( pointTeam ) : SpawnPoints_GetPilotStart( pointTeam )
 	else
 		spawnpoints = isTitan ? SpawnPoints_GetTitan() : SpawnPoints_GetPilot()
 	
-	InitRatings( player, player.GetTeam() )
-	
-	// don't think this is necessary since we call discardratings
-	//foreach ( entity spawnpoint in spawnpoints )
-	//	spawnpoint.CalculateRating( isTitan ? TD_TITAN : TD_PILOT, team, 0.0, 0.0 )
+	SpawnPoints_InitScriptRatings( player, team ) // no idea what the second arg supposed to be lol
 	
 	void functionref( int, array<entity>, int, entity ) ratingFunc = isTitan ? GameMode_GetTitanSpawnpointsRatingFunc( GAMETYPE ) : GameMode_GetPilotSpawnpointsRatingFunc( GAMETYPE )
-	ratingFunc( isTitan ? TD_TITAN : TD_PILOT, spawnpoints, team, player )
+	ratingFunc( isTitan ? TD_TITAN : TD_PILOT, spawnpoints, pointTeam, player )
 	
 	if ( isTitan )
 	{
@@ -154,7 +162,7 @@ entity function FindSpawnPoint( entity player, bool isTitan, bool useStartSpawnp
 		else
 			SpawnPoints_SortTitan()
 			
-		spawnpoints = useStartSpawnpoint ? SpawnPoints_GetTitanStart( team ) : SpawnPoints_GetTitan()
+		spawnpoints = useStartSpawnpoint ? SpawnPoints_GetTitanStart( pointTeam ) : SpawnPoints_GetTitan()
 	}
 	else
 	{
@@ -163,7 +171,7 @@ entity function FindSpawnPoint( entity player, bool isTitan, bool useStartSpawnp
 		else
 			SpawnPoints_SortPilot()
 			
-		spawnpoints = useStartSpawnpoint ? SpawnPoints_GetPilotStart( team ) : SpawnPoints_GetPilot()
+		spawnpoints = useStartSpawnpoint ? SpawnPoints_GetPilotStart( pointTeam ) : SpawnPoints_GetPilot()
 	}
 	
 	entity spawnpoint = GetBestSpawnpoint( player, spawnpoints )
@@ -179,7 +187,7 @@ entity function GetBestSpawnpoint( entity player, array<entity> spawnpoints )
 	// not really 100% sure on this randomisation, needs some thought
 	array<entity> validSpawns
 	foreach ( entity spawnpoint in spawnpoints )
-	{
+	{	
 		if ( IsSpawnpointValid( spawnpoint, player.GetTeam() ) )
 		{
 			validSpawns.append( spawnpoint )
@@ -215,7 +223,7 @@ entity function GetBestSpawnpoint( entity player, array<entity> spawnpoints )
 		}
 	}
 	
-	return validSpawns[ RandomInt( validSpawns.len() ) ] // slightly randomize it
+	return validSpawns[ 0 ] //RandomInt( validSpawns.len() ) ] // slightly randomize it
 }
 
 bool function IsSpawnpointValid( entity spawnpoint, int team )
