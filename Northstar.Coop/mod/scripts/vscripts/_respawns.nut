@@ -253,7 +253,7 @@ void function MakePlayerTitan( entity player, vector destination )
 	EndSignal( player, "OnDeath" )
 	EndSignal( player, "OnDestroy" )
 
-	while( IsPlayerDisembarking( player ) && IsPlayerEmbarking( player ) )
+	while( IsPlayerDisembarking( player ) || IsPlayerEmbarking( player ) )
 	{
 		WaitFrame()
 	}
@@ -290,7 +290,7 @@ void function MakePlayerPilot( entity player, vector destination  )
 	EndSignal( player, "OnDeath" )
 	EndSignal( player, "OnDestroy" )
 
-	while( IsPlayerDisembarking( player ) && IsPlayerEmbarking( player ) )
+	while( IsPlayerDisembarking( player ) || IsPlayerEmbarking( player ) )
 	{
 		WaitFrame()
 	}
