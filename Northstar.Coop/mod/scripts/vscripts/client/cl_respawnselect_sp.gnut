@@ -17,8 +17,6 @@ void function ClRespawnselect_SP_Init()
 	AddCallback_OnPlayerLifeStateChanged( Callback_PlayerLifestateChanged )
 	file.respawnHintRui = RuiCreate( $"ui/respawn_hint.rpak", clGlobal.topoFullScreen, RUI_DRAW_HUD, RUI_SORT_SCREENFADE + 100 )
 	RuiSetResolutionToScreenSize( file.respawnHintRui )
-
-
 }
 
 void function Callback_PlayerLifestateChanged( entity player, int oldLifeState, int newLifeState )
@@ -71,10 +69,11 @@ void function PlayerPressed_RespawnPilotSP( entity player )
 void function DisplayRespawnPrompt()
 {	
 	
-	if(!Coop_isButtonPressedCallbackRegistered){
-	RegisterButtonPressedCallback( KEY_SPACE,		PlayerPressed_RespawnPilotSP )
-	RegisterButtonPressedCallback( BUTTON_X,		PlayerPressed_RespawnPilotSP )
-	Coop_isButtonPressedCallbackRegistered = true
+	if( !Coop_isButtonPressedCallbackRegistered )
+	{
+		RegisterButtonPressedCallback( KEY_SPACE,		PlayerPressed_RespawnPilotSP )
+		RegisterButtonPressedCallback( BUTTON_X,		PlayerPressed_RespawnPilotSP )
+		Coop_isButtonPressedCallbackRegistered = true
 	}
 	RuiSetBool( file.respawnHintRui, "isVisible", true )
 }

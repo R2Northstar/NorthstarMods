@@ -1,8 +1,8 @@
 untyped
 global function StartSpawn
 global function RespawnPlayer
-global function AddMakeSpecifcRespawnsInit
-global function AddMakeSpecifcRespawns
+global function AddMapSpecifcRespawnsInit
+global function AddMapSpecifcRespawns
 global function CodeCallback_OnPlayerKilled
 global function RestartMapWithDelay
 global function MakePlayerPilot
@@ -19,12 +19,12 @@ struct {
 } file
 
 
-void function AddMakeSpecifcRespawnsInit()
+void function AddMapSpecifcRespawnsInit()
 {
-    thread AddMakeSpecifcRespawns("sp_s2s", s2sRespawn )
+    AddMapSpecifcRespawns("sp_s2s", s2sRespawn )
 }
 
-void function AddMakeSpecifcRespawns( string map, void functionref( entity ) func )
+void function AddMapSpecifcRespawns( string map, void functionref( entity ) func )
 {
 	file.CustomMapRespawns[map] <- func
 }
@@ -48,28 +48,13 @@ void function StartSpawn( entity player )
 
 	if ( GetMapName() in file.CustomMapRespawns )
 	{
-		thread file.CustomMapRespawns[GetMapName()]( player )
+		thread file.CustomMapRespawns[ GetMapName() ]( player )
 		return
 	}
 
 	else if ( info.pos != <0,0,0> )
 	{
 		player.SetOrigin( info.pos )
-
-		try
-		{
-			foreach ( int index, entity p in GetPlayerArray() )
-			{
-				if ( p == player )
-				{
-					compilestring( format("Map_PlayerDidLoad( GetPlayerArray()[%d] )", index ) ) // TODO: should be switched to OnClient_Connect where its uued
-				}
-			}
-		}
-		catch( aaa )
-		{
-			print( aaa )
-		}
 		
 		if ( !info.RsPilot )
 			thread MakePlayerTitan( player, info.pos )
@@ -79,14 +64,15 @@ void function StartSpawn( entity player )
 	// do we need this?
 	// AddPlayerMovementEventCallback( player, ePlayerMovementEvents.BEGIN_WALLRUN, Callback_WallrunBegin )
 	
-	// give them make specific items
+	// give them map specific items
 	OnTimeShiftGiveGlove( player )
 	if ( ( GetMapName() == "sp_beacon" || GetMapName() == "sp_beacon_spoke0" ) && Flag( "HasChargeTool" ) )
 		GiveBatteryChargeToolSingle( player )
 
 	// massive trol
-	for( int x = 1; x < achievements.MAX_ACHIVEMENTS; x++ )
-		UnlockAchievement( player, x )
+	// for( int x = 1; x < achievements.MAX_ACHIVEMENTS; x++ )
+	// 	UnlockAchievement( player, x )
+	// no more D:
 }
 
 void function RespawnPlayer( entity player )
@@ -94,10 +80,10 @@ void function RespawnPlayer( entity player )
 	// really dangerous to enable this
 	// since everything is scripted
 	// stuff exepects people to be alive
-	// we to respawn them fast 
+	// we need to respawn people fast 
 	// WaitSignal( player, "RespawnNow" )
 
-	wait( 1 )
+	wait 1 
 
 	if ( !IsAlive( player ) && IsValid( player ) )
     {
@@ -108,9 +94,9 @@ void function RespawnPlayer( entity player )
 		if ( GetPlayerArray().len() == 1 && file.RestartMap )
             thread RestartMapWithDelay()
         else if ( GetMapName() in file.CustomMapRespawns )
-            thread file.CustomMapRespawns[GetMapName()]( player )
+            waitthread file.CustomMapRespawns[ GetMapName() ]( player )
         else
-            thread GenericRespawn( player )
+            waitthread GenericRespawn( player )
 	}
 }
 
@@ -168,6 +154,8 @@ void function s2sRespawn( entity player )
 	wait 1
 	if ( "sp_s2s" in file.CustomMapRespawnsFunction && GetPlayerArray().len() != 1 )
 		thread file.CustomMapRespawnsFunction["sp_s2s"]( player )
+
+	Chat_ServerBroadcast( "" + ( "sp_s2s" in file.CustomMapRespawnsFunction ) )
 
 	wait 1
 

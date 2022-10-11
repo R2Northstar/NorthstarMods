@@ -1003,6 +1003,7 @@ void function StartPoint_Assembly_Furniture( entity player )
 	StartPointPrint( player, "Assembly Furniture" )
 
 	TriggerSilentCheckPoint( GetEntByScriptName( "player_start_assembly_furniture" ).GetOrigin(), true )
+	TriggerManualCheckPoint( null, < -1785, 11453, 2184 >, true )
 
 	thread WhatAreTheyBuildingHereConversation( player )
 
@@ -1339,6 +1340,7 @@ void function TrackFirstSection()
 	printt( "########################################" )
 	printt( "STOPPING DIRT AND GRASS ASSMEBLY SECTION" )
 	printt( "########################################" )
+	// TODO: we need to destroy all platforms when people reach Assembly Furniture or else crash if players.len() > 2
 }
 
 void function TrackFirstSection_Part1( array<entity> nodes )

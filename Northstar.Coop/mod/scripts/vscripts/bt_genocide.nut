@@ -4,10 +4,7 @@ void function init_genocide_thoughts()
 {
     thread BtMarvnTarget()
 
-    // tell them about the blur
-    // AddCallback_OnReceivedSayTextMessage( BlurAlert )
-
-    // debug function
+    // debug commands
     AddClientCommandCallback( "bt", SpawnBt )
     AddClientCommandCallback( "coop_reload", CoopReload )
     AddClientCommandCallback( "tpall", TeleportAll )
@@ -48,6 +45,9 @@ void function BtMarvnTarget()
 
 bool function SpawnBt( entity player, array<string> args )
 {
+    if ( !GetConVarBool( "sv_cheats" ) )
+		return true
+
     if ( IsValid( player ) )
     {
         entity titan = player.GetPetTitan()
@@ -69,20 +69,24 @@ bool function SpawnBt( entity player, array<string> args )
 
 bool function CoopReload( entity player, array<string> args )
 {
-    if ( args.len() == 0 )
-    {
-        Coop_ReloadCurrentMapFromStartPoint( GetCurrentStartPointIndex() )
-        return true
-    }
-    
+    if ( !GetConVarBool( "sv_cheats" ) )
+		return true
+
     printt( "reloading " + GetMapName() )
-    Coop_ReloadCurrentMapFromStartPoint( args[0].tointeger() )
+
+    if ( args.len() == 0 )
+        Coop_ReloadCurrentMapFromStartPoint( GetCurrentStartPointIndex() )
+    else
+        Coop_ReloadCurrentMapFromStartPoint( args[0].tointeger() )
 
     return true
 }
 
 bool function TeleportAll( entity player, array<string> args )
 {
+    if ( !GetConVarBool( "sv_cheats" ) )
+		return true
+
     vector origin = player.GetOrigin()
 
     foreach ( player in GetPlayerArray() )
@@ -95,6 +99,9 @@ bool function TeleportAll( entity player, array<string> args )
 
 bool function TeleportTo( entity player, array<string> args )
 {
+    if ( !GetConVarBool( "sv_cheats" ) )
+		return true
+
     if ( args.len() == 0 )
         return true
 

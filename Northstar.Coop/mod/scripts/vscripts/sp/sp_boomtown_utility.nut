@@ -1170,7 +1170,7 @@ void function UpdateArmAndPlatformPushersForPlayer( entity player )
 				}
 				else if ( !isPusher && dist <= PUSHER_ENABLE_DIST && !arm.posingOverTime )
 				{
-					// ClearPlayerMantleIfNearby( player, arm.mover, dist )
+					ClearPlayerMantleIfNearby( player, arm.mover, dist )
 					EnableBoneFollowersOnArm( arm, true )
 				}
 
@@ -1189,9 +1189,6 @@ void function UpdateArmAndPlatformPushersForPlayer( entity player )
 		}
 		
 		WaitFrame() // oops
-		continue
-		// umm
-		// did I copy and paste it here?
 
 		numPusherEnts = file.pusherPlatformsArray.len()
 		numCheckedThisFrame = 0
@@ -1216,7 +1213,7 @@ void function UpdateArmAndPlatformPushersForPlayer( entity player )
 			if ( IsValid( platform.mover ) && IsValid( platform.model ) )// && !platform.model.Anim_IsActive() )
 			{
 				bool isPusher = platform.mover.GetPusher()
-				float dist = DistanceSqr( player.GetOrigin(), platform.mover.GetOrigin() )
+				float dist = DistanceSqr( argOrigin, platform.mover.GetOrigin() )
 
 				if ( isPusher && dist >= PUSHER_DISABLE_DIST )
 				{

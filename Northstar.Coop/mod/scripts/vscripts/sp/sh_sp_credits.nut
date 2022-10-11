@@ -4012,9 +4012,8 @@ void function Add_EA()
 	Add_SubtitleName( "Principal Data Scientist ", "John Kolen" , COLUMN_RIGHT)
 	thread Add_SubtitleName( "Software Engineer II", "Sijia Huang", COLUMN_LEFT )
 	Add_SubtitleName( "Software Engineer II", "Kevin Koh" , COLUMN_RIGHT)
-	thread Add_SubtitleName( "Software Engineer II", "Hao Zhang", thread  )
+	thread Add_SubtitleName( "Software Engineer II", "Hao Zhang", COLUMN_LEFT )
 	Add_SubtitleName( "Sr. Product Manager", "Scot Orriss" , COLUMN_RIGHT)
-	wait STANDARD_DEL, COLUMN_LEFTAY
 }
 
 void function Add_Microsoft()
