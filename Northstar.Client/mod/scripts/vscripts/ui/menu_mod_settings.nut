@@ -126,13 +126,14 @@ void function InitModMenu()
 	AddConVarSetting("ns_disallowed_weapon_primary_replacement", "#REPLACEMENT_WEAPON")
 	AddConVarSettingEnum("ns_should_return_to_lobby", "#SHOULD_RETURN_TO_LOBBY", [ "No", "Yes" ])
 
+	/*
 	AddModTitle("^FF000000EXAMPLE")
 	AddModCategory( "I wasted way too much time on this...")
 	AddModSettingsButton( "This is a custom button you can click on!", void function() : (){
 		print("HELLOOOOOO")
 	})
 	AddConVarSettingEnum( "filter_mods", "Very Huge Enum Example", split("Never gonna give you up Never gonna let you down Never gonna run around and desert you Never gonna make you cry Never gonna say goodbye Never gonna tell a lie and hurt you", " "))
-
+	*/
 	// Nuke weird rui on filter switch :D
 	//RuiSetString( Hud_GetRui( Hud_GetChild( file.menu, "SwtBtnShowFilter")), "buttonText", "")
 
