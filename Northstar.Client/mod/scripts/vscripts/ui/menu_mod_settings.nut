@@ -33,6 +33,7 @@ struct ConVarData {
 	float min = 0.0
 	float max = 1.0
 	float stepSize = 0.05
+	bool forceClamp = false
 
 	array<string> values
 	var customMenu
@@ -789,7 +790,7 @@ void function AddConVarSetting( string conVar, string displayName, string catNam
 	file.conVarList.append(data)
 }
 
-void function AddConVarSettingSlider( string conVar, string displayName, string catName, float min = 0.0, float max = 1.0, float stepSize = 0.1 )
+void function AddConVarSettingSlider( string conVar, string displayName, string catName, float min = 0.0, float max = 1.0, float stepSize = 0.1, bool forceClamp = false )
 {
 	if (file.conVarList.len() < 1)
 	{
@@ -828,6 +829,7 @@ void function AddConVarSettingSlider( string conVar, string displayName, string 
 	data.displayName = displayName
 	data.type = "float"
 	data.sliderEnabled = true
+	data.forceClamp = false
 	data.min = min
 	data.max = max
 	data.stepSize = stepSize
@@ -872,6 +874,11 @@ void function AddConVarSettingEnum( string conVar, string displayName, string ca
 	data.displayName = displayName
 	data.values = values
 	data.isEnumSetting = true
+	data.min = 0
+	data.max = values.len() - 1.0
+	data.sliderEnabled = values.len() > 2
+	data.forceClamp = true
+	data.stepSize = 1
 
 	file.conVarList.append(data)
 }
@@ -897,8 +904,23 @@ void function OnSliderChange( var button )
 	ConVarData c = file.filteredList[ int( Hud_GetScriptID( panel ) ) + file.scrollOffset ]
 	var textPanel = Hud_GetChild( panel, "TextEntrySetting" )
 
+	if (c.isEnumSetting)
+	{
+		int val = int(RoundToNearestInt(Hud_SliderControl_GetCurrentValue( button )))
+		SetConVarInt( c.conVar, val )
+		Hud_SetText( textPanel, ( c.values[GetConVarInt(c.conVar)] ) )
+		MS_Slider_SetValue( file.sliders[int( Hud_GetScriptID( Hud_GetParent( textPanel ) ) )], float(val) )
+
+		return
+	}
 	float val = Hud_SliderControl_GetCurrentValue( button )
+	if (c.forceClamp)
+	{
+		int mod = int(RoundToNearestInt(val % c.stepSize / c.stepSize))
+		val = (int(val / c.stepSize) + mod) * c.stepSize
+	}
 	SetConVarFloat( c.conVar, val )
+	MS_Slider_SetValue( file.sliders[int( Hud_GetScriptID( Hud_GetParent( textPanel ) ) )], val )
 
 	Hud_SetText( textPanel, string( GetConVarFloat(c.conVar) ) )
 }

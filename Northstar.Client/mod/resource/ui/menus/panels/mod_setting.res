@@ -49,7 +49,7 @@
 		"pin_to_sibling_corner" "TOP_RIGHT"
 		"navRight" "ResetModToDefault"
 		"navLeft" "TextEntrySetting"
-		isValueClampedToStepSize 1
+		//isValueClampedToStepSize 1
 		BtnDropButton
 		{
 			ControlName				RuiButton
