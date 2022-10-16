@@ -366,70 +366,86 @@ void function UpdateList()
 		else printt("SETTING ", c.displayName)
 	}*/
 
-	string lastCatNameInFilter = ""
-	string lastModNameInFilter = ""
-	int curCatIndex = 0
-	int curModTitleIndex = -1
 	
-	for (int i = 0; i < file.conVarList.len(); i++)
+	
+	array<string> filters = split( file.filterText, "," )
+	array<ConVarData> list = file.conVarList
+	if (filters.len() <= 0)
+		filters.append("")
+	foreach(string f in filters)
 	{
-		ConVarData prev = file.conVarList[maxint(0, i - 1)]
-		ConVarData c = file.conVarList[i]
-		ConVarData next = file.conVarList[minint(file.conVarList.len() - 1, i + 1)]
-		if (c.isEmptySpace) continue
-
-		string displayName = c.displayName
-		if (c.isModName) {
-			displayName = c.modName
-			curModTitleIndex = i
-		}
-		if (c.isCategoryName) {
-			displayName = c.catName
-			curCatIndex = i
-		}
-		if (file.filterText == "" || Localize( displayName ).tolower().find(file.filterText.tolower()) != null)
+		string filter = strip( f )
+		print(filter)
+		string lastCatNameInFilter = ""
+		string lastModNameInFilter = ""
+		int curCatIndex = 0
+		int curModTitleIndex = -1
+		for (int i = 0; i < list.len(); i++)
 		{
-			if (c.isModName)
-			{
-				lastModNameInFilter = c.modName
-				array<ConVarData> modVars = GetAllVarsInMod(c.modName)
-				if (filteredList.len() <= 0 && modVars[0].spaceType == eEmptySpaceType.None)
-					filteredList.extend(modVars.slice(1, modVars.len()))
-				else filteredList.extend(modVars)
-				i += modVars.len() - 1
+			print(i)
+			print(list.len())
+			ConVarData prev = list[maxint(0, i - 1)]
+			ConVarData c = list[i]
+			ConVarData next = list[minint(list.len() - 1, i + 1)]
+			if (c.isEmptySpace) continue
+
+			string displayName = c.displayName
+			if (c.isModName) {
+				displayName = c.modName
+				curModTitleIndex = i
 			}
-			else if (c.isCategoryName)
+			if (c.isCategoryName) {
+				displayName = c.catName
+				curCatIndex = i
+			}
+			if (filter == "" || Localize( displayName ).tolower().find(filter.tolower()) != null)
 			{
-				if (lastModNameInFilter != c.modName)
+				if (c.isModName)
 				{
-					array<ConVarData> modVars = GetModConVarDatas(curModTitleIndex)
+					lastModNameInFilter = c.modName
+					array<ConVarData> modVars = GetAllVarsInMod(list, c.modName)
 					if (filteredList.len() <= 0 && modVars[0].spaceType == eEmptySpaceType.None)
 						filteredList.extend(modVars.slice(1, modVars.len()))
 					else filteredList.extend(modVars)
-					lastModNameInFilter = c.modName
+					i += modVars.len() - 1
 				}
-				filteredList.extend(GetAllVarsInCategory(c.catName))
-				i += GetAllVarsInCategory(c.catName).len() - 1
-				lastCatNameInFilter = c.catName
-			}
-			else {
-				if (lastModNameInFilter != c.modName)
+				else if (c.isCategoryName)
 				{
-					array<ConVarData> modVars = GetModConVarDatas(curModTitleIndex)
-					if (filteredList.len() <= 0 && modVars[0].spaceType == eEmptySpaceType.None)
-						filteredList.extend(modVars.slice(1, modVars.len()))
-					else filteredList.extend(modVars)
-					lastModNameInFilter = c.modName
-				}
-				if (lastCatNameInFilter != c.catName)
-				{
-					filteredList.extend(GetCatConVarDatas(curCatIndex))
+					if (lastModNameInFilter != c.modName)
+					{
+						array<ConVarData> modVars = GetModConVarDatas(list, curModTitleIndex)
+						if (filteredList.len() <= 0 && modVars[0].spaceType == eEmptySpaceType.None)
+							filteredList.extend(modVars.slice(1, modVars.len()))
+						else filteredList.extend(modVars)
+						lastModNameInFilter = c.modName
+					}
+					filteredList.extend(GetAllVarsInCategory(list, c.catName))
+					i += GetAllVarsInCategory(list, c.catName).len() - 1
 					lastCatNameInFilter = c.catName
 				}
-				filteredList.append(c)
+				else {
+					if (lastModNameInFilter != c.modName)
+					{
+						array<ConVarData> modVars = GetModConVarDatas(list, curModTitleIndex)
+						if (filteredList.len() <= 0 && modVars[0].spaceType == eEmptySpaceType.None)
+							filteredList.extend(modVars.slice(1, modVars.len()))
+						else filteredList.extend(modVars)
+						lastModNameInFilter = c.modName
+					}
+					if (lastCatNameInFilter != c.catName)
+					{
+						filteredList.extend(GetCatConVarDatas(curCatIndex))
+						lastCatNameInFilter = c.catName
+					}
+					filteredList.append(c)
+				}
 			}
 		}
+		list = filteredList
+		filteredList = []
 	}
+	filteredList = list
+	
 
 	file.filteredList = filteredList
 
@@ -446,9 +462,11 @@ void function UpdateList()
 	file.updatingList = false
 }
 
-array<ConVarData> function GetModConVarDatas(int index)
+array<ConVarData> function GetModConVarDatas(array<ConVarData> arr, int index)
 {
-	return [file.conVarList[index - 1], file.conVarList[index], file.conVarList[index + 1]]	
+	if (index <= 1)
+		return [arr[index - 1], arr[index], arr[index + 1]]	
+	return [arr[index - 2], arr[index - 1], arr[index], arr[index + 1]]	
 }
 
 array<ConVarData> function GetCatConVarDatas(int index)
@@ -458,15 +476,15 @@ array<ConVarData> function GetCatConVarDatas(int index)
 	return [file.conVarList[index - 1], file.conVarList[index]]	
 }
 
-array<ConVarData> function GetAllVarsInCategory(string catName)
+array<ConVarData> function GetAllVarsInCategory(array<ConVarData> arr, string catName)
 {
 	array<ConVarData> vars = []
-	for (int i = 0; i < file.conVarList.len(); i++)
+	for (int i = 0; i < arr.len(); i++)
 	{
-		ConVarData c = file.conVarList[i]
+		ConVarData c = arr[i]
 		if (c.catName == catName) 
 		{
-			vars.append(file.conVarList[i])
+			vars.append(arr[i])
 			//printt(file.conVarList[i].conVar + " is in mod " + file.conVarList[i].modName)
 		}
 	}
@@ -476,15 +494,15 @@ array<ConVarData> function GetAllVarsInCategory(string catName)
 	return vars
 }
 
-array<ConVarData> function GetAllVarsInMod(string modName)
+array<ConVarData> function GetAllVarsInMod(array<ConVarData> arr, string modName)
 {
 	array<ConVarData> vars = []
-	for (int i = 0; i < file.conVarList.len(); i++)
+	for (int i = 0; i < arr.len(); i++)
 	{
-		ConVarData c = file.conVarList[i]
+		ConVarData c = arr[i]
 		if (c.modName == modName) 
 		{
-			vars.append(file.conVarList[i])
+			vars.append(arr[i])
 			//printt(file.conVarList[i].conVar + " is in mod " + file.conVarList[i].modName)
 		}
 	}
@@ -613,7 +631,9 @@ void function SetModMenuNameText( var button )
 		Hud_SetVisible( slider, conVar.sliderEnabled )
 		
 		Hud_SetText( label, conVar.displayName ) 
-		Hud_SetText( textField, conVar.isEnumSetting ? conVar.values[GetConVarInt(conVar.conVar)] : GetConVarString(conVar.conVar))
+		if (conVar.type == "float")
+			Hud_SetText( textField, string( GetConVarFloat(conVar.conVar) ) )
+		else Hud_SetText( textField, conVar.isEnumSetting ? conVar.values[GetConVarInt(conVar.conVar)] : GetConVarString(conVar.conVar))
 		Hud_SetPos( label, int(scaleX * 25), 0 )
 		Hud_SetText( resetButton, "Reset" ) 
 		Hud_SetSize( resetButton, int(scaleX * 90), int(scaleY * 40) )
@@ -748,6 +768,38 @@ void function AddModTitle(string modName)
 	file.conVarList.extend([ topBar, modData, botBar ])
 }
 
+void function AddModCategory(string catName)
+{
+	if (file.conVarList.len() < 1)
+	{
+		ConVarData catData
+
+		catData.catName = catName
+		catData.modName = file.currentMod
+		catData.displayName = catName
+		catData.isCategoryName = true
+
+		file.conVarList.append(catData)
+	}
+	else if (catName != file.conVarList[file.conVarList.len() - 1].catName)
+	{
+		ConVarData space
+		space.isEmptySpace = true
+		space.modName = file.currentMod
+		space.catName = catName
+		file.conVarList.append(space)
+
+		ConVarData modData
+
+		modData.catName = catName
+		modData.displayName = catName
+		modData.modName = file.currentMod
+		modData.isCategoryName = true
+
+		file.conVarList.append(modData)
+	}
+}
+
 void function AddConVarSetting( string conVar, string displayName, string catName, string type = "" )
 {
 	if (file.conVarList.len() < 1)
@@ -778,7 +830,6 @@ void function AddConVarSetting( string conVar, string displayName, string catNam
 
 		file.conVarList.append(modData)
 	}
-
 	ConVarData data
 
 	data.catName = catName
