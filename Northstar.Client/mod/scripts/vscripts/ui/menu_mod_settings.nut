@@ -4,8 +4,9 @@ global function AddConVarSetting
 global function AddConVarSettingEnum
 global function AddConVarSettingSlider
 global function AddModTitle
+global function AddModCategory
 
-const int BUTTONS_PER_PAGE = 12
+const int BUTTONS_PER_PAGE = 15
 const string SETTING_ITEM_TEXT = "                        " // this is long enough to be the same size as the textentry field
 
 enum eEmptySpaceType 
@@ -17,16 +18,17 @@ enum eEmptySpaceType
 
 struct ConVarData {
 	string displayName
+	bool isEnumSetting = false
 	string conVar
+	string type
+
 	string modName
 	string catName
-	string type
 	bool isCategoryName = false
 	bool isModName = false
+
 	bool isEmptySpace = false
 	int spaceType = 0
-	bool isEnumSetting = false
-	bool isCustomButton = false
 	
 	// SLIDER BULLSHIT
 	bool sliderEnabled = false
@@ -34,6 +36,9 @@ struct ConVarData {
 	float max = 1.0
 	float stepSize = 0.05
 	bool forceClamp = false
+
+	bool isCustomButton = false
+	void functionref() onPress
 
 	array<string> values
 	var customMenu
@@ -50,10 +55,12 @@ struct {
 	array<ConVarData> filteredList
 	string filterText = ""
 	table< int, int > enumRealValues
+	table<string, bool> setFuncs
 	array<var> modPanels
 	array<MS_Slider> sliders
 	table settingsTable
 	string currentMod = ""
+	string currentCat = ""
 } file
 
 struct {
@@ -105,17 +112,26 @@ void function InitModMenu()
 	// at the same time, might fuck with dedis so idk.
 	// these are pretty long too, might need to e x t e n d the settings menu
 	AddModTitle( "#NORTHSTAR_BASE_SETTINGS" )
-	AddConVarSettingEnum("ns_private_match_only_host_can_change_settings", "#ONLY_HOST_MATCH_SETTINGS", "#PRIVATE_MATCH", [ "No", "Yes" ])
-	AddConVarSettingEnum("ns_private_match_only_host_can_change_settings", "#ONLY_HOST_CAN_START_MATCH", "#PRIVATE_MATCH", [ "No", "Yes" ])
-	AddConVarSettingSlider("ns_private_match_countdown_length", "#MATCH_COUNTDOWN_LENGTH", "#PRIVATE_MATCH", 0, 30, 0.5)
+	AddModCategory( "#PRIVATE_MATCH")
+	AddConVarSettingEnum("ns_private_match_only_host_can_change_settings", "#ONLY_HOST_MATCH_SETTINGS", [ "No", "Yes" ])
+	AddConVarSettingEnum("ns_private_match_only_host_can_change_settings", "#ONLY_HOST_CAN_START_MATCH", [ "No", "Yes" ])
+	AddConVarSettingSlider("ns_private_match_countdown_length", "#MATCH_COUNTDOWN_LENGTH", 0, 30, 0.5)
 	// probably shouldn't add this as a setting?
 	// AddConVarSettingEnum("ns_private_match_override_maxplayers", "Override Max Player Count", "Northstar - Server", [ "No", "Yes" ])
-	AddConVarSettingEnum("ns_should_log_unknown_clientcommands", "#LOG_UNKNOWN_CLIENTCOMMANDS", "Server", [ "No", "Yes" ])
-	AddConVarSetting("ns_disallowed_tacticals", "#DISALLOWED_TACTICALS", "Server")
-	AddConVarSetting("ns_disallowed_tactical_replacement", "#TACTICAL_REPLACEMENT", "Server")
-	AddConVarSetting("ns_disallowed_weapons", "#DISALLOWED_WEAPONS", "Server")
-	AddConVarSetting("ns_disallowed_weapon_primary_replacement", "#REPLACEMENT_WEAPON", "Server")
-	AddConVarSettingEnum("ns_should_return_to_lobby", "#SHOULD_RETURN_TO_LOBBY", "Server", [ "No", "Yes" ])
+	AddModCategory("Server")
+	AddConVarSettingEnum("ns_should_log_unknown_clientcommands", "#LOG_UNKNOWN_CLIENTCOMMANDS", [ "No", "Yes" ])
+	AddConVarSetting("ns_disallowed_tacticals", "#DISALLOWED_TACTICALS")
+	AddConVarSetting("ns_disallowed_tactical_replacement", "#TACTICAL_REPLACEMENT")
+	AddConVarSetting("ns_disallowed_weapons", "#DISALLOWED_WEAPONS")
+	AddConVarSetting("ns_disallowed_weapon_primary_replacement", "#REPLACEMENT_WEAPON")
+	AddConVarSettingEnum("ns_should_return_to_lobby", "#SHOULD_RETURN_TO_LOBBY", [ "No", "Yes" ])
+
+	AddModTitle("^FF000000EXAMPLE")
+	AddModCategory( "I wasted way too much time on this...")
+	AddModSettingsButton( "This is a custom button you can click on!", void function() : (){
+		print("HELLOOOOOO")
+	})
+	AddConVarSettingEnum( "filter_mods", "Very Huge Enum Example", split("Never gonna give you up Never gonna let you down Never gonna run around and desert you Never gonna make you cry Never gonna say goodbye Never gonna tell a lie and hurt you", " "))
 
 	// Nuke weird rui on filter switch :D
 	//RuiSetString( Hud_GetRui( Hud_GetChild( file.menu, "SwtBtnShowFilter")), "buttonText", "")
@@ -126,7 +142,6 @@ void function InitModMenu()
 	AddMenuEventHandler( file.menu, eUIEvent.MENU_CLOSE, OnModMenuClosed )
 
 	int len = file.modPanels.len()
-	print(len)	
 	for (int i = 0; i < len; i++)
 	{
 		
@@ -177,6 +192,10 @@ void function InitModMenu()
 		file.sliders.append(MS_Slider_Setup(child))
 
 		Hud_AddEventHandler( child, UIE_CHANGE, OnSliderChange )
+
+		child = Hud_GetChild( panel, "OpenCustomMenu" )
+
+		Hud_AddEventHandler( child, UIE_CLICK, CustomButtonPressed )
 	}
 
 	//Hud_AddEventHandler( Hud_GetChild( file.menu, "BtnModsSearch" ), UIE_LOSE_FOCUS, OnFilterTextPanelChanged )
@@ -185,11 +204,6 @@ void function InitModMenu()
 	AddMouseMovementCaptureHandler( file.menu, UpdateMouseDeltaBuffer )
 
 	thread SearchBarUpdate()
-}
-
-void function TestString(ConVarData test)
-{
-	test.displayName = "test"
 }
 
 void function SearchBarUpdate()
@@ -303,7 +317,7 @@ void function SliderBarUpdate()
 	Hud_SetFocused(sliderButton)
 
 	float minYPos = -40.0 * (GetScreenSize()[1] / 1080.0) // why the hardcoded positions?!?!?!?!?!
-	float maxHeight = 480.0  * (GetScreenSize()[1] / 1080.0)
+	float maxHeight = 615.0  * (GetScreenSize()[1] / 1080.0)
 	float maxYPos = minYPos - (maxHeight - Hud_GetHeight( sliderPanel ))
 	float useableSpace = (maxHeight - Hud_GetHeight( sliderPanel ))
 
@@ -333,7 +347,7 @@ void function UpdateListSliderHeight()
 	
 	float mods = float ( file.filteredList.len() )
 
-	float maxHeight = 480.0 * (GetScreenSize()[1] / 1080.0) // why the hardcoded 320/80???
+	float maxHeight = 615.0 * (GetScreenSize()[1] / 1080.0) // why the hardcoded 320/80???
 	float minHeight = 80.0 * (GetScreenSize()[1] / 1080.0)
 
 	float height = maxHeight * ( float( BUTTONS_PER_PAGE ) / mods )
@@ -352,21 +366,6 @@ void function UpdateList()
 	file.updatingList = true
 
 	array<ConVarData> filteredList = []
-
-	/*foreach (ConVarData c in file.conVarList)
-	{
-		if (c.isEmptySpace)
-			print(" ")
-		else if (c.isModName)
-		{
-			printt("MOD     ", c.modName)
-		}
-		else if (c.isCategoryName)
-			printt("CATEGORY", c.modName)
-		else printt("SETTING ", c.displayName)
-	}*/
-
-	
 	
 	array<string> filters = split( file.filterText, "," )
 	array<ConVarData> list = file.conVarList
@@ -375,15 +374,12 @@ void function UpdateList()
 	foreach(string f in filters)
 	{
 		string filter = strip( f )
-		print(filter)
 		string lastCatNameInFilter = ""
 		string lastModNameInFilter = ""
 		int curCatIndex = 0
 		int curModTitleIndex = -1
 		for (int i = 0; i < list.len(); i++)
 		{
-			print(i)
-			print(list.len())
 			ConVarData prev = list[maxint(0, i - 1)]
 			ConVarData c = list[i]
 			ConVarData next = list[minint(list.len() - 1, i + 1)]
@@ -398,7 +394,7 @@ void function UpdateList()
 				displayName = c.catName
 				curCatIndex = i
 			}
-			if (filter == "" || Localize( displayName ).tolower().find(filter.tolower()) != null)
+			if (filter == "" || SanitizeDisplayName( Localize( displayName ) ).tolower().find(filter.tolower()) != null)
 			{
 				if (c.isModName)
 				{
@@ -602,7 +598,17 @@ void function SetModMenuNameText( var button )
 	}
 	else
 		Hud_SetSize( slider, 0, int( 45 * scaleY ))
-	if (conVar.isModName)
+	if (conVar.isCustomButton)
+	{
+		Hud_SetVisible( label, false )
+		Hud_SetVisible( textField, false )
+		Hud_SetVisible( enumButton, false )
+		Hud_SetVisible( resetButton, false )
+		Hud_SetVisible( modTitle, false )
+		Hud_SetVisible( customMenuButton, true )
+		Hud_SetText( customMenuButton, conVar.displayName )
+	}
+	else if (conVar.isModName)
 	{
 		Hud_SetText( modTitle, conVar.modName ) 
 		Hud_SetSize( resetButton, 0, int(40 * scaleY) )
@@ -620,8 +626,8 @@ void function SetModMenuNameText( var button )
 		Hud_SetSize( resetButton, int(120 * scaleX), int(40 * scaleY) )
 		Hud_SetPos( label, 0, 0 )
 		Hud_SetSize( label, int(scaleX * (1180 - 420 - 85)), int(scaleY * 40) )
-		Hud_SetSize( customMenuButton, int(85 * scaleX), int(40 * scaleY) )
-		Hud_SetVisible( customMenuButton, conVar.hasCustomMenu )
+		//Hud_SetSize( customMenuButton, int(85 * scaleX), int(40 * scaleY) )
+		//Hud_SetVisible( customMenuButton, conVar.hasCustomMenu )
 		Hud_SetVisible( label, true )
 		Hud_SetVisible( textField, false )
 		Hud_SetVisible( enumButton, false )
@@ -640,12 +646,19 @@ void function SetModMenuNameText( var button )
 		if (conVar.sliderEnabled)
 			Hud_SetSize( label, int(scaleX * (375 + 85)), int(scaleY * 40) )
 		else Hud_SetSize( label, int(scaleX * (375 + 405)), int(scaleY * 40) )
-		Hud_SetSize( customMenuButton, 0, 40 )
+		//Hud_SetSize( customMenuButton, 0, 40 )
 		Hud_SetVisible( label, true )
 		Hud_SetVisible( textField, true )
 		//Hud_SetVisible( enumButton, true )
 		Hud_SetVisible( resetButton, true )
 	}
+}
+
+void function CustomButtonPressed( var button )
+{
+	var panel = Hud_GetParent( button )
+	ConVarData c = file.filteredList[ int( Hud_GetScriptID( panel ) ) + file.scrollOffset ]
+	c.onPress()
 }
 
 void function OnScrollDown( var button )
@@ -678,7 +691,7 @@ void function UpdateListSliderPosition()
 	float mods = float ( file.filteredList.len() )
 
 	float minYPos = -40.0 * (GetScreenSize()[1] / 1080.0)
-	float useableSpace = (480.0 * (GetScreenSize()[1] / 1080.0) - Hud_GetHeight( sliderPanel ))
+	float useableSpace = (615.0 * (GetScreenSize()[1] / 1080.0) - Hud_GetHeight( sliderPanel ))
 
 	float jump = minYPos - (useableSpace / ( mods - float( BUTTONS_PER_PAGE ) ) * file.scrollOffset)
 
@@ -766,73 +779,58 @@ void function AddModTitle(string modName)
 	botBar.modName = modName
 	botBar.spaceType = eEmptySpaceType.BottomBar
 	file.conVarList.extend([ topBar, modData, botBar ])
+	file.setFuncs[expect string(getstackinfos(2)["func"])] <- false
 }
 
 void function AddModCategory(string catName)
 {
-	if (file.conVarList.len() < 1)
-	{
-		ConVarData catData
-
-		catData.catName = catName
-		catData.modName = file.currentMod
-		catData.displayName = catName
-		catData.isCategoryName = true
-
-		file.conVarList.append(catData)
-	}
-	else if (catName != file.conVarList[file.conVarList.len() - 1].catName)
+	if (!(getstackinfos(2)["func"] in file.setFuncs))
+		throw getstackinfos(2)["src"] + " #" + getstackinfos(2)["line"] + "\nCannot add a category before a mod title!"
+	if (file.currentCat != "")
 	{
 		ConVarData space
 		space.isEmptySpace = true
 		space.modName = file.currentMod
 		space.catName = catName
 		file.conVarList.append(space)
-
-		ConVarData modData
-
-		modData.catName = catName
-		modData.displayName = catName
-		modData.modName = file.currentMod
-		modData.isCategoryName = true
-
-		file.conVarList.append(modData)
 	}
+
+	ConVarData catData
+
+	catData.catName = catName
+	catData.displayName = catName
+	catData.modName = file.currentMod
+	catData.isCategoryName = true
+
+	file.conVarList.append(catData)
+	
+	file.currentCat = catName
+	file.setFuncs[expect string(getstackinfos(2)["func"])] = true
 }
 
-void function AddConVarSetting( string conVar, string displayName, string catName, string type = "" )
+void function AddModSettingsButton( string buttonLabel, void functionref() onPress )
 {
-	if (file.conVarList.len() < 1)
-	{
-		ConVarData catData
+	if (!(getstackinfos(2)["func"] in file.setFuncs) || !file.setFuncs[expect string(getstackinfos(2)["func"])])
+		throw getstackinfos(2)["src"] + " #" + getstackinfos(2)["line"] + "\nCannot add a button before a category and mod title!"
 
-		catData.catName = catName
-		catData.modName = file.currentMod
-		catData.displayName = catName
-		catData.isCategoryName = true
-
-		file.conVarList.append(catData)
-	}
-	else if (catName != file.conVarList[file.conVarList.len() - 1].catName)
-	{
-		ConVarData space
-		space.isEmptySpace = true
-		space.modName = file.currentMod
-		space.catName = catName
-		file.conVarList.append(space)
-
-		ConVarData modData
-
-		modData.catName = catName
-		modData.displayName = catName
-		modData.modName = file.currentMod
-		modData.isCategoryName = true
-
-		file.conVarList.append(modData)
-	}
 	ConVarData data
 
-	data.catName = catName
+	data.isCustomButton = true
+	data.displayName = buttonLabel
+	data.modName = file.currentMod
+	data.catName = file.currentCat
+	data.onPress = onPress
+
+	file.conVarList.append(data)
+}
+
+void function AddConVarSetting( string conVar, string displayName, string type = "" )
+{
+	if (!(getstackinfos(2)["func"] in file.setFuncs) || !file.setFuncs[expect string(getstackinfos(2)["func"])])
+		throw getstackinfos(2)["src"] + " #" + getstackinfos(2)["line"] + "\nCannot add a setting before a category and mod title!"
+	ConVarData data
+
+	data.catName = file.currentCat
 	data.conVar = conVar
 	data.modName = file.currentMod
 	data.displayName = displayName
@@ -841,40 +839,13 @@ void function AddConVarSetting( string conVar, string displayName, string catNam
 	file.conVarList.append(data)
 }
 
-void function AddConVarSettingSlider( string conVar, string displayName, string catName, float min = 0.0, float max = 1.0, float stepSize = 0.1, bool forceClamp = false )
+void function AddConVarSettingSlider( string conVar, string displayName, float min = 0.0, float max = 1.0, float stepSize = 0.1, bool forceClamp = false )
 {
-	if (file.conVarList.len() < 1)
-	{
-		ConVarData catData
-
-		catData.catName = catName
-		catData.modName = file.currentMod
-		catData.displayName = catName
-		catData.isCategoryName = true
-
-		file.conVarList.append(catData)
-	}
-	else if (catName != file.conVarList[file.conVarList.len() - 1].catName)
-	{
-		ConVarData space
-		space.isEmptySpace = true
-		space.modName = file.currentMod
-		space.catName = catName
-		file.conVarList.append(space)
-
-		ConVarData modData
-
-		modData.catName = catName
-		modData.displayName = catName
-		modData.modName = file.currentMod
-		modData.isCategoryName = true
-
-		file.conVarList.append(modData)
-	}
-
+	if (!(getstackinfos(2)["func"] in file.setFuncs) || !file.setFuncs[expect string(getstackinfos(2)["func"])])
+		throw getstackinfos(2)["src"] + " #" + getstackinfos(2)["line"] + "\nCannot add a setting before a category and mod title!"
 	ConVarData data
 
-	data.catName = catName
+	data.catName = file.currentCat
 	data.conVar = conVar
 	data.modName = file.currentMod
 	data.displayName = displayName
@@ -888,65 +859,25 @@ void function AddConVarSettingSlider( string conVar, string displayName, string 
 	file.conVarList.append(data)
 }
 
-void function AddConVarSettingEnum( string conVar, string displayName, string catName, array<string> values )
+void function AddConVarSettingEnum( string conVar, string displayName, array<string> values )
 {
-	if (file.conVarList.len() < 1)
-	{
-		ConVarData modData
-
-		modData.catName = catName
-		modData.modName = file.currentMod
-		modData.isCategoryName = true
-
-		file.conVarList.append(modData)
-	}
-	else if (catName != file.conVarList[file.conVarList.len() - 1].catName)
-	{
-		ConVarData space
-		space.modName = file.currentMod
-		space.catName = catName
-		space.isEmptySpace = true
-		file.conVarList.append(space)
-
-		ConVarData modData
-
-		modData.catName = catName
-		modData.modName = file.currentMod
-		modData.isCategoryName = true
-
-		file.conVarList.append(modData)
-	}
-
+	if (!(getstackinfos(2)["func"] in file.setFuncs) || !file.setFuncs[expect string(getstackinfos(2)["func"])])
+		throw getstackinfos(2)["src"] + " #" + getstackinfos(2)["line"] + "\nCannot add a setting before a category and mod title!"
 	ConVarData data
 
-	data.catName = catName
+	data.catName = file.currentCat
 	data.modName = file.currentMod
 	data.conVar = conVar
 	data.displayName = displayName
 	data.values = values
 	data.isEnumSetting = true
 	data.min = 0
-	data.max = values.len() - 1.0
+	data.max = values.len() - 1.0	
 	data.sliderEnabled = values.len() > 2
 	data.forceClamp = true
 	data.stepSize = 1
 
 	file.conVarList.append(data)
-}
-
-void function SetCategoryCustomMenu( string category, var menu )
-{
-	foreach (ConVarData c in file.conVarList)
-	{
-		if (!c.isCategoryName) continue
-		if (!c.isModName) continue
-		if (c.isEmptySpace) continue
-		if (c.catName != category) continue
-
-		c.customMenu = menu
-		c.hasCustomMenu = true
-		break
-	}
 }
 
 void function OnSliderChange( var button )
@@ -1140,7 +1071,30 @@ void function OnClearButtonPressed( var button )
 	OnFiltersChange(0)
 }
 
-void function Hud_SliderControl_SetCurrentValue( var slider, float val )
+string function SanitizeDisplayName( string displayName )
 {
-	
+	array<string> parts = split( displayName, "^" )
+	string result = ""
+	if (parts.len() == 1)
+		return parts[0]
+	foreach (string p in parts)
+	{
+		if (p == "")
+		{
+			result += "^"
+			continue
+		}
+		int i = 0
+		for (i = 0; i < 8 && i < p.len(); i++)
+		{
+			var c = p[i]
+			if ((c < 'a' || c > 'f') && (c < 'A' || c > 'F') && (c < '0' || c > '9'))
+				break
+		}
+		if (i == 0)
+			result += p
+		else result += p.slice(i, p.len())
+	}
+	print(result)
+	return result
 }
