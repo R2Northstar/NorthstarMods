@@ -321,5 +321,18 @@ Press Yes if you agree to this. This choice can be changed in the mods menu at a
 		"INVALID_MASTERSERVER_TOKEN" 	"Invalid or expired masterserver token"
 		"JSON_PARSE_ERROR" 				"Error parsing json response"
 		"UNSUPPORTED_VERSION" 			"The version you are using is no longer supported"
+		
+		// Mod Settings
+		"MOD_SETTINGS"					"Mod Settings"
+		"NORTHSTAR_BASE_SETTINGS"		"Northstar Base Settings"
+		"ONLY_HOST_MATCH_SETTINGS"		"Only Host can change Private Match settings"
+		"ONLY_HOST_CAN_START_MATCH"		"Only Host can Start the Match"
+		"MATCH_COUNTDOWN_LENGTH"		"Private Match Countdown Duration"
+		"LOG_UNKNOWN_CLIENTCOMMANDS"	"Log Unknown Client Commands"
+		"DISALLOWED_TACTICALS"			"Prohibited Tacticals"
+		"TACTICAL_REPLACEMENT"			"Replacement Tactical"
+		"DISALLOWED_WEAPONS"			"Prohibited Weapons"
+		"REPLACEMENT_WEAPON"			"Replacement Weapon"
+		"SHOULD_RETURN_TO_LOBBY"		"Return To Lobby After Match End"
 	}
 }

@@ -115,7 +115,18 @@
 		{
 			"Path": "ui/controller_prompts.nut",
 			"RunOn": "UI"
-		}
+		},
+		{
+            "Path": "ui/ms_slider.nut",
+            "RunOn": "UI"
+        },
+        {
+            "Path": "ui/menu_mod_settings.nut",
+            "RunOn": "UI",
+            "UICallback": {
+                "Before": "AddModSettingsMenu"
+            }
+        }
 	],
 	"Localisation": [
 		"resource/northstar_client_localisation_%language%.txt"
