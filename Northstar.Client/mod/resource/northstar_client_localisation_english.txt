@@ -334,5 +334,11 @@ Press Yes if you agree to this. This choice can be changed in the mods menu at a
 		"DISALLOWED_WEAPONS"			"Prohibited Weapons"
 		"REPLACEMENT_WEAPON"			"Replacement Weapon"
 		"SHOULD_RETURN_TO_LOBBY"		"Return To Lobby After Match End"
+		"ARE_YOU_SURE"					"Are you sure?"
+		"WILL_RESET_ALL_SETTINGS"		"This will reset ALL settings that belong to this category.\n\nThis is not revertable."
+		"WILL_RESET_SETTING"			"This will reset the %s1 setting to it's default value.\n\nThis is not revertable."
+		"MOD_SETTINGS_SERVER"			"Server"
+		"MOD_SETTINGS_RESET"			"Reset"
+		"MOD_SETTINGS_RESET_ALL"		"Reset All"
 	}
 }

@@ -113,18 +113,18 @@ void function InitModMenu()
 	// these are pretty long too, might need to e x t e n d the settings menu
 	AddModTitle( "#NORTHSTAR_BASE_SETTINGS" )
 	AddModCategory( "#PRIVATE_MATCH")
-	AddConVarSettingEnum("ns_private_match_only_host_can_change_settings", "#ONLY_HOST_MATCH_SETTINGS", [ "No", "Yes" ])
-	AddConVarSettingEnum("ns_private_match_only_host_can_change_settings", "#ONLY_HOST_CAN_START_MATCH", [ "No", "Yes" ])
+	AddConVarSettingEnum("ns_private_match_only_host_can_change_settings", "#ONLY_HOST_MATCH_SETTINGS", [ "#NO", "#YES" ])
+	AddConVarSettingEnum("ns_private_match_only_host_can_change_settings", "#ONLY_HOST_CAN_START_MATCH", [ "#NO", "#YES" ])
 	AddConVarSettingSlider("ns_private_match_countdown_length", "#MATCH_COUNTDOWN_LENGTH", 0, 30, 0.5)
 	// probably shouldn't add this as a setting?
-	// AddConVarSettingEnum("ns_private_match_override_maxplayers", "Override Max Player Count", "Northstar - Server", [ "No", "Yes" ])
-	AddModCategory("Server")
-	AddConVarSettingEnum("ns_should_log_unknown_clientcommands", "#LOG_UNKNOWN_CLIENTCOMMANDS", [ "No", "Yes" ])
+	// AddConVarSettingEnum("ns_private_match_override_maxplayers", "Override Max Player Count", "Northstar - Server", [ "#NO", "#YES" ])
+	AddModCategory("#SERVER")
+	AddConVarSettingEnum("ns_should_log_unknown_clientcommands", "#LOG_UNKNOWN_CLIENTCOMMANDS", [ "#NO", "#YES" ])
 	AddConVarSetting("ns_disallowed_tacticals", "#DISALLOWED_TACTICALS")
 	AddConVarSetting("ns_disallowed_tactical_replacement", "#TACTICAL_REPLACEMENT")
 	AddConVarSetting("ns_disallowed_weapons", "#DISALLOWED_WEAPONS")
 	AddConVarSetting("ns_disallowed_weapon_primary_replacement", "#REPLACEMENT_WEAPON")
-	AddConVarSettingEnum("ns_should_return_to_lobby", "#SHOULD_RETURN_TO_LOBBY", [ "No", "Yes" ])
+	AddConVarSettingEnum("ns_should_return_to_lobby", "#SHOULD_RETURN_TO_LOBBY", [ "#NO", "#YES" ])
 
 	/*
 	AddModTitle("^FF000000EXAMPLE")
@@ -204,20 +204,10 @@ void function InitModMenu()
 	// mouse delta 
 	AddMouseMovementCaptureHandler( file.menu, UpdateMouseDeltaBuffer )
 
-	thread SearchBarUpdate()
-}
-
-void function SearchBarUpdate()
-{
-	while (true)
-	{
-		if (file.filterText != Hud_GetUTF8Text( Hud_GetChild( file.menu, "BtnModsSearch" ) ) )
-		{
-			file.filterText = Hud_GetUTF8Text( Hud_GetChild( file.menu, "BtnModsSearch" ) )
-			OnFiltersChange(0)
-		}
-		WaitFrame()
-	}
+	Hud_AddEventHandler( Hud_GetChild( file.menu, "BtnModsSearch" ), UIE_CHANGE, void function ( var inputField ) : (){
+		file.filterText = Hud_GetUTF8Text( inputField )
+		OnFiltersChange(0)
+	})
 }
 
 // magic function that converts an index from the full list into a index of a button,
@@ -236,9 +226,9 @@ void function ResetConVar( var button )
 
 	if (conVar.isCategoryName)
 	{
-		ShowAreYouSureDialog( "Are you sure?", ResetAllConVarsForModEventHandler( conVar.catName ), "This will reset ALL settings that belong to this category.\n\nThis is not revertable."  )
+		ShowAreYouSureDialog( "#ARE_YOU_SURE", ResetAllConVarsForModEventHandler( conVar.catName ), "#WILL_RESET_ALL_SETTINGS"  )
 	}
-	else ShowAreYouSureDialog( "Are you sure?", ResetConVarEventHandler( int ( Hud_GetScriptID( Hud_GetParent( button ) ) ) + file.scrollOffset ), "This will reset the " + conVar.displayName + " setting to it's default value.\n\nThis is not revertable."  )
+	else ShowAreYouSureDialog( "#ARE_YOU_SURE", ResetConVarEventHandler( int ( Hud_GetScriptID( Hud_GetParent( button ) ) ) + file.scrollOffset ), Localize( "#WILL_RESET_SETTING", conVar.displayName ) )
 }
 
 void function ShowAreYouSureDialog( string header, void functionref() func, string details )
@@ -577,9 +567,6 @@ void function SetModMenuNameText( var button )
 		}
 	}
 
-
-
-	// should be localisation at some point
 	Hud_SetVisible(textField, !conVar.isCategoryName)
 	Hud_SetVisible(bottomLine, conVar.isCategoryName || conVar.spaceType == eEmptySpaceType.BottomBar)
 	Hud_SetVisible(topLine, false)
@@ -623,7 +610,7 @@ void function SetModMenuNameText( var button )
 	}
 	else if ( conVar.isCategoryName ) {
 		Hud_SetText( label, conVar.catName ) 
-		Hud_SetText( resetButton, "Reset All" ) 
+		Hud_SetText( resetButton, "#MOD_SETTINGS_RESET_ALL" ) 
 		Hud_SetSize( resetButton, int(120 * scaleX), int(40 * scaleY) )
 		Hud_SetPos( label, 0, 0 )
 		Hud_SetSize( label, int(scaleX * (1180 - 420 - 85)), int(scaleY * 40) )
@@ -642,7 +629,7 @@ void function SetModMenuNameText( var button )
 			Hud_SetText( textField, string( GetConVarFloat(conVar.conVar) ) )
 		else Hud_SetText( textField, conVar.isEnumSetting ? conVar.values[GetConVarInt(conVar.conVar)] : GetConVarString(conVar.conVar))
 		Hud_SetPos( label, int(scaleX * 25), 0 )
-		Hud_SetText( resetButton, "Reset" ) 
+		Hud_SetText( resetButton, "#MOD_SETTINGS_RESET" ) 
 		Hud_SetSize( resetButton, int(scaleX * 90), int(scaleY * 40) )
 		if (conVar.sliderEnabled)
 			Hud_SetSize( label, int(scaleX * (375 + 85)), int(scaleY * 40) )
@@ -1066,7 +1053,6 @@ void function UpdateEnumSetting( var button )
 void function OnClearButtonPressed( var button )
 {
 	file.filterText = ""
-
 	Hud_SetText( Hud_GetChild( file.menu, "BtnModsSearch" ), "" )
 
 	OnFiltersChange(0)
