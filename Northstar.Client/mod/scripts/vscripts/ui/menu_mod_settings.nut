@@ -875,6 +875,8 @@ void function AddConVarSettingEnum( string conVar, string displayName, array<str
 
 void function OnSliderChange( var button )
 {
+	if (file.updatingList)
+		return 
 	var panel = Hud_GetParent( button )
 	ConVarData c = file.filteredList[ int( Hud_GetScriptID( panel ) ) + file.scrollOffset ]
 	var textPanel = Hud_GetChild( panel, "TextEntrySetting" )
