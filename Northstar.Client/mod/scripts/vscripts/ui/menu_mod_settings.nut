@@ -5,6 +5,7 @@ global function AddConVarSettingEnum
 global function AddConVarSettingSlider
 global function AddModTitle
 global function AddModCategory
+global function PureModulo
 
 const int BUTTONS_PER_PAGE = 15
 const string SETTING_ITEM_TEXT = "                        " // this is long enough to be the same size as the textentry field
@@ -154,8 +155,8 @@ void function InitModMenu()
 		var child = Hud_GetChild( panel, "BtnMod" )
 
 
-		child.SetNavUp( Hud_GetChild( file.modPanels[ GetIndex( i - 1, len ) ], "BtnMod" ) )
-		child.SetNavDown( Hud_GetChild( file.modPanels[ GetIndex( i + 1, len ) ], "BtnMod" ) )
+		child.SetNavUp( Hud_GetChild( file.modPanels[ int(PureModulo( i - 1, len )) ], "BtnMod" ) )
+		child.SetNavDown( Hud_GetChild( file.modPanels[ int(PureModulo( i + 1, len )) ], "BtnMod" ) )
 
 		// Enum button nav
 		child = Hud_GetChild( panel, "EnumSelectButton" )
@@ -163,16 +164,16 @@ void function InitModMenu()
 		Hud_DialogList_AddListItem( child, SETTING_ITEM_TEXT, "next" )
 		Hud_DialogList_AddListItem( child, SETTING_ITEM_TEXT, "prev" )
 
-		child.SetNavUp( Hud_GetChild( file.modPanels[ GetIndex( i - 1, len ) ], "EnumSelectButton" ) )
-		child.SetNavDown( Hud_GetChild( file.modPanels[ GetIndex( i + 1, len ) ], "EnumSelectButton" ) )
+		child.SetNavUp( Hud_GetChild( file.modPanels[ int(PureModulo( i - 1, len )) ], "EnumSelectButton" ) )
+		child.SetNavDown( Hud_GetChild( file.modPanels[ int(PureModulo( i + 1, len )) ], "EnumSelectButton" ) )
 		Hud_AddEventHandler( child, UIE_CLICK, UpdateEnumSetting )
 
 		// reset button nav
 		
 		child = Hud_GetChild( panel, "ResetModToDefault" )
 
-		child.SetNavUp( Hud_GetChild( file.modPanels[ GetIndex( i - 1, len ) ], "ResetModToDefault" ) )
-		child.SetNavDown( Hud_GetChild( file.modPanels[ GetIndex( i + 1, len ) ], "ResetModToDefault" ) )
+		child.SetNavUp( Hud_GetChild( file.modPanels[ int(PureModulo( i - 1, len )) ], "ResetModToDefault" ) )
+		child.SetNavDown( Hud_GetChild( file.modPanels[ int(PureModulo( i + 1, len )) ], "ResetModToDefault" ) )
 
 		Hud_AddEventHandler( child, UIE_CLICK, ResetConVar )
 		
@@ -182,13 +183,13 @@ void function InitModMenu()
 		// 
 		Hud_AddEventHandler( child, UIE_LOSE_FOCUS, SendTextPanelChanges )
 
-		child.SetNavUp( Hud_GetChild( file.modPanels[ GetIndex( i - 1, len ) ], "TextEntrySetting" ) )
-		child.SetNavDown( Hud_GetChild( file.modPanels[ GetIndex( i + 1, len ) ], "TextEntrySetting" ) )
+		child.SetNavUp( Hud_GetChild( file.modPanels[ int(PureModulo( i - 1, len )) ], "TextEntrySetting" ) )
+		child.SetNavDown( Hud_GetChild( file.modPanels[ int(PureModulo( i + 1, len )) ], "TextEntrySetting" ) )
 
 		child = Hud_GetChild( panel, "Slider" )
 
-		child.SetNavUp( Hud_GetChild( file.modPanels[ GetIndex( i - 1, len ) ], "Slider" ) )
-		child.SetNavDown( Hud_GetChild( file.modPanels[ GetIndex( i + 1, len ) ], "Slider" ) )
+		child.SetNavUp( Hud_GetChild( file.modPanels[ int(PureModulo( i - 1, len )) ], "Slider" ) )
+		child.SetNavDown( Hud_GetChild( file.modPanels[ int(PureModulo( i + 1, len )) ], "Slider" ) )
 
 		file.sliders.append(MS_Slider_Setup(child))
 
@@ -210,14 +211,18 @@ void function InitModMenu()
 	})
 }
 
-// magic function that converts an index from the full list into a index of a button,
-// BUT loops around when getting an out-of-view index (so, when showing 0-7, 8 will return 0 and -1 will return 7)
-// used for navigation code.
-int function GetIndex( int index, int length )
+// "PureModulo"
+// Used instead of modulo in some places.
+// Why? beacuse PureModulo loops back onto positive numbers instead of going into the negatives.
+// DO NOT TOUCH.
+// a / b != floor(float(a) / b) 
+// int(float(a) / b) != floor(float(a) / b)
+// Examples:
+// -1 % 5 = -1
+// PureModulo(-1, 5) = 4
+float function PureModulo(int a, int b)
 {
-	if (index < 0)
-		return (length - 1) - (-index - 1) % length // this is really weird
-	return index % length
+	return b * ((float(a) / b) - floor(float(a) / b))
 }
 
 void function ResetConVar( var button )
