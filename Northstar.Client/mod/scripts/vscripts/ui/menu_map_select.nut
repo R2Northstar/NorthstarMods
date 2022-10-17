@@ -331,7 +331,7 @@ bool function IsLocked( string map )
 //////////////////////////////
 // Slider
 //////////////////////////////
-void function UpdateMouseDeltaBuffer(int x, int y)
+void function UpdateMouseDeltaBuffer(var capturePanel, int x, int y)
 {
 	mouseDeltaBuffer.deltaX += x
 	mouseDeltaBuffer.deltaY += y

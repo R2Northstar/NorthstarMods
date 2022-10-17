@@ -209,7 +209,8 @@
 #if UI
 	struct
 	{
-		table MouseMovementCaptureFunctionsTable = {}
+		// a table (indexed using a menu) that contains an array of functionrefs (callbacks)
+		table< var, array< void functionref(var capturePanel, int deltaX, int deltaY) > > MouseMovementCaptureFunctionsTable = {}
 	} file
 
 	const MOUSE_ROTATE_MULTIPLIER = 25.0
@@ -2898,16 +2899,33 @@
 		}
 	}
 
-	void function AddMouseMovementCaptureHandler( var menu, void functionref( int, int ) func )
+	void function AddMouseMovementCaptureHandler( var menu, void functionref( var, int, int ) func )
 	{
-		file.MouseMovementCaptureFunctionsTable.rawset( menu, func )
+		// if this menu already has a callback, just add to the array
+		if ( menu in file.MouseMovementCaptureFunctionsTable )
+		{
+			file.MouseMovementCaptureFunctionsTable[menu].append(func)
+		}
+		// if not, create the array before we add to it
+		else
+		{
+			file.MouseMovementCaptureFunctionsTable[menu] <- [func]
+		}
 	}
 
-	void function UpdateMouseMovementCaptureFunctions( int deltaX, int deltaY )
+	void function UpdateMouseMovementCaptureFunctions( var capturePanel, int deltaX, int deltaY )
 	{
 		var activeMenu = GetActiveMenu()
-		if ( file.MouseMovementCaptureFunctionsTable.rawin( activeMenu ) )
-			file.MouseMovementCaptureFunctionsTable.rawget( activeMenu )(deltaX, deltaY)
+		// check that the menu is in the table before trying anything stupid
+		if ( activeMenu in file.MouseMovementCaptureFunctionsTable )
+		{
+			// iterate through the different callback functions
+			foreach ( void functionref(var menu, int deltaX, int deltaY) callback in file.MouseMovementCaptureFunctionsTable[activeMenu] )
+			{
+				// run the callback function
+				callback(capturePanel, deltaX, deltaY)
+			}
+		}
 	}
 
 	void function UICodeCallback_MouseMovementCapture( var capturePanel, int deltaX, int deltaY )
@@ -2919,7 +2937,7 @@
 		float screenScaleYModifier = 1080.0 / GetScreenSize()[1] // 1920 is base screen width
 		float mouseYRotationDelta = deltaY * screenScaleYModifier * MOUSE_ROTATE_MULTIPLIER
 
-		UpdateMouseMovementCaptureFunctions( deltaX, deltaY )
+		UpdateMouseMovementCaptureFunctions( capturePanel, deltaX, deltaY )
 
 		RunMenuClientFunction( "UpdateMouseRotateDelta", mouseXRotateDelta, mouseYRotationDelta )
 	}
