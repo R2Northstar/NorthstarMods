@@ -2899,7 +2899,8 @@
 		}
 	}
 
-	void function AddMouseMovementCaptureHandler( var menu, void functionref( var, int, int ) func )
+	// just a note for anyone trying to use this, the var in the functionref is the hud element that captured the input
+	void function AddMouseMovementCaptureHandler( var menu, void functionref( var capturePanel, int deltaX, int deltaY ) func )
 	{
 		// if this menu already has a callback, just add to the array
 		if ( menu in file.MouseMovementCaptureFunctionsTable )
