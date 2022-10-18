@@ -174,7 +174,7 @@ void function FD_PlayerRespawnCallback( entity player )
 	if( GetGameState() != eGameState.Playing)
 		return
 
-	if( player.IsTitan() )
+	if( player.GetPersistentVar( "spawnAsTitan" ) )
 		return
 
 	player.SetInvulnerable()
