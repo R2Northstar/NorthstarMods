@@ -329,15 +329,15 @@ function CodeCallback_RegisterClass_CPlayer()
 		}
 	}
 	
-	function CPlayer::GetUserInfoString( key, defaultValue = "" )
-	{
-		return GetUserInfoKVString_Internal( this, key, defaultValue )
-	}
+    function CPlayer::GetUserInfoString( key, defaultValue = "" )
+    {
+        return GetUserInfoKVString_Internal( this, key, defaultValue )
+    }
 	
-	function CPlayer::GetUserInfoStringOrNull( key )
-	{
-		return GetUserInfoKVStringOrNull_Internal( this, key )
-	}
+    function CPlayer::GetUserInfoStringOrNull( key )
+    {
+        return GetUserInfoKVStringOrNull_Internal( this, key )
+    }
 
     function CPlayer::GetUserInfoInt( key, defaultValue = -1 )
     {
