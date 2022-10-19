@@ -20,19 +20,21 @@ struct player_struct_fd{
 	bool diedThisRound
 	int scoreThisRound
 	int totalMVPs
-	int mortarUnitsKilled 
+	int mortarUnitsKilled
 	int moneySpend
 	int coresUsed
-	float longestTitanLife //not implemented yet
-	int turretsRepaired //not implemented yet
+	float longestTitanLife
+	int turretsRepaired
 	int moneyShared
 	float timeNearHarvester //dont know how to track
-	float longestLife 
+	float longestLife
 	int heals //dont know what to track
-	int titanKills 
+	int titanKills
 	float damageDealt
 	int harvesterHeals
 	float lastRespawn
+	int turretKills
+	float lastTitanDrop
 }
 
 global HarvesterStruct& fd_harvester
@@ -121,6 +123,7 @@ void function GamemodeFD_Init()
 	AddCallback_OnRoundEndCleanup( FD_NPCCleanup )
 	AddCallback_OnClientConnected( GamemodeFD_InitPlayer )
 	AddCallback_OnPlayerGetsNewPilotLoadout( FD_OnPlayerGetsNewPilotLoadout )
+	SetPostMatchCallback(gameWonMedals)
 
 	//Damage Callbacks
 	AddDamageByCallback( "player", FD_DamageByPlayerCallback)
@@ -137,7 +140,7 @@ void function GamemodeFD_Init()
 	AddCallback_OnNPCKilled( OnNpcDeath )
 	AddCallback_OnPlayerKilled( GamemodeFD_OnPlayerKilled )
 	AddDeathCallback( "npc_frag_drone", OnTickDeath ) // ticks dont come up in the other callback because of course they dont
-	
+
 	//Command Callbacks
 	AddClientCommandCallback( "FD_ToggleReady", ClientCommandCallbackToggleReady )
 	AddClientCommandCallback( "FD_UseHarvesterShieldBoost", useShieldBoost )
@@ -150,7 +153,7 @@ void function GamemodeFD_Init()
 	ScoreEvent_SetupEarnMeterValuesForMixedModes()
 }
 
-void function FD_BoostPurchaseCallback( entity player, BoostStoreData data ) 
+void function FD_BoostPurchaseCallback( entity player, BoostStoreData data )
 {
 	file.players[player].moneySpend += data.cost
 }
@@ -239,8 +242,15 @@ void function FD_TeamReserveDepositOrWithdrawCallback( entity player, string act
 }
 void function GamemodeFD_OnPlayerKilled( entity victim, entity attacker, var damageInfo )
 {
-	file.players[victim].longestLife = Time() - file.players[victim].lastRespawn
+	//set longest Time alive for end awards
+	float timeAlive = Time() - file.players[victim].lastRespawn
+	if(timeAlive>file.players[victim].longestLife)
+		file.players[victim].longestLife = timeAlive
+
+	//set died this round for round end money boni
 	file.players[victim].diedThisRound = true
+
+	//play voicelines for amount of players alive
 	array<entity> militiaplayers = GetPlayerArrayOfTeam( TEAM_MILITIA )
 	int deaths = 0
 	foreach ( entity player in militiaplayers )
@@ -271,14 +281,14 @@ void function FD_UsedCoreCallback( entity titan, entity weapon )
 }
 
 void function GamemodeFD_InitPlayer( entity player )
-{	
+{
 	player_struct_fd data
 	data.diedThisRound = false
 	file.players[player] <- data
 	thread SetTurretSettings_threaded( player )
 	// only start the highlight when we start playing, not during dropship
 	if ( GetGameState() >= eGameState.Playing )
-		Highlight_SetFriendlyHighlight( player, "sp_friendly_hero" ) 
+		Highlight_SetFriendlyHighlight( player, "sp_friendly_hero" )
 
 	if( file.playersHaveTitans ) // first wave is index 0
 	{
@@ -308,15 +318,15 @@ void function OnTickDeath( entity victim, var damageInfo )
 	if ( findIndex != -1 )
 	{
 		spawnedNPCs.remove( findIndex )
-	
+
 		SetGlobalNetInt( "FD_AICount_Ticks", GetGlobalNetInt( "FD_AICount_Ticks" ) -1 )
-		
+
 		SetGlobalNetInt( "FD_AICount_Current", GetGlobalNetInt( "FD_AICount_Current" ) -1 )
 	}
 }
 
 void function OnNpcDeath( entity victim, entity attacker, var damageInfo )
-{	
+{
 	if( victim.IsTitan() && attacker in file.players )
 		file.players[attacker].titanKills++
 	int victimTypeID = FD_GetAITypeID_ByString( victim.GetTargetName() )
@@ -331,13 +341,13 @@ void function OnNpcDeath( entity victim, entity attacker, var damageInfo )
 		string netIndex = GetAiNetIdFromTargetName( victim.GetTargetName() )
 		if( netIndex != "" )
 			SetGlobalNetInt( netIndex, GetGlobalNetInt( netIndex ) - 1 )
-		
+
 		SetGlobalNetInt( "FD_AICount_Current", GetGlobalNetInt( "FD_AICount_Current" ) - 1 )
 	}
 
 	if ( victim.GetOwner() == attacker || !attacker.IsPlayer() || ( attacker == victim ) || ( victim.GetBossPlayer() == attacker ) || victim.GetClassName() == "npc_turret_sentry" )
 		return
-	
+
 	int playerScore = 0
 	int money = 0
 	int scriptDamageType = DamageInfo_GetCustomDamageType( damageInfo )
@@ -388,7 +398,7 @@ void function OnNpcDeath( entity victim, entity attacker, var damageInfo )
 		}
 	}
 
-	
+
 }
 
 void function RateSpawnpoints_FD( int _0, array<entity> _1, int _2, entity _3 )
@@ -568,7 +578,7 @@ void function SetEnemyAmountNetVars( int waveIndex )
 				break
 			default:
 				npcs[e.spawnEvent.spawnType] += e.spawnEvent.spawnAmount
-				
+
 		}
 		total+= e.spawnEvent.spawnAmount
 	}
@@ -629,7 +639,7 @@ bool function runWave( int waveIndex, bool shouldDoBuyTime )
 		CloseBoostStores()
 		MessageToTeam( TEAM_MILITIA, eEventNotifications.FD_StoreClosing )
 	}
-	
+
 	//SetGlobalNetTime("FD_nextWaveStartTime",Time()+10)
 	wait 10
 	SetGlobalNetInt( "FD_waveState", WAVE_STATE_INCOMING )
@@ -641,7 +651,7 @@ bool function runWave( int waveIndex, bool shouldDoBuyTime )
 	SetGlobalNetBool( "FD_waveActive", true )
 	MessageToTeam( TEAM_MILITIA, eEventNotifications.FD_AnnounceWaveStart )
 	SetGlobalNetInt( "FD_waveState", WAVE_STATE_BREAK )
-	
+
 	//main wave loop
 	thread SetWaveStateReady()
 	executeWave()
@@ -714,7 +724,7 @@ bool function runWave( int waveIndex, bool shouldDoBuyTime )
 		entity highestScore_player = GetPlayerArray()[0]
 		foreach( entity player in GetPlayerArray() )
 		{
-			
+
 			if( !file.players[player].diedThisRound )
 				AddPlayerScore( player, "FDDidntDie" )
 			if( highestScore < file.players[player].scoreThisRound )
@@ -733,7 +743,7 @@ bool function runWave( int waveIndex, bool shouldDoBuyTime )
 
 
 
-		
+
 		SetRoundBased(false)
 		SetWinner(TEAM_MILITIA)
 		PlayFactionDialogueToTeam( "fd_matchVictory", TEAM_MILITIA )
@@ -841,10 +851,146 @@ void function SetWaveStateReady()
 
 void function gameWonMedals()
 {
-	table<string,entity> medals
-	//most mvps
+	array<entity> medalOwners = [ null, null, null, null, null, null, null, null, null, null, null, null, null, null ]
+	array<float> medalValues = [ -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0 ]
+	
+	foreach(entity player in GetPlayerArray() )
+	{
+		if( file.players[player].totalMVPs > medalValues[0])
+		{
+			medalOwners[0] = player
+			medalValues[0] = float( file.players[player].totalMVPs )
+		}
+		if( file.players[player].titanKills > medalValues[1])
+		{
+			medalOwners[1] = player
+			medalValues[1] = float( file.players[player].titanKills )
+		}
+		if( file.players[player].heals > medalValues[2])
+		{
+			medalOwners[2] = player
+			medalValues[2] = float(file.players[player].heals)
+		}
+		if( file.players[player].turretKills > medalValues[3])
+		{
+			medalOwners[3] = player
+			medalValues[3] = float( file.players[player].turretKills )
+		}
+		if( file.players[player].longestTitanLife > medalValues[4])
+		{
+			medalOwners[4] = player
+			medalValues[4] = file.players[player].longestTitanLife
+		}
+		if( file.players[player].coresUsed > medalValues[5])
+		{
+			medalOwners[5] = player
+			medalValues[5] = float( file.players[player].coresUsed )
+		}
+		if( file.players[player].turretsRepaired > medalValues[6])
+		{
+			medalOwners[6] = player
+			medalValues[6] = float( file.players[player].turretsRepaired )
+		}
+		if( file.players[player].moneyShared > medalValues[7])
+		{
+			medalOwners[7] = player
+			medalValues[7] = float( file.players[player].moneyShared )
+		}
+		if( file.players[player].harvesterHeals > medalValues[8])
+		{
+			medalOwners[8] = player
+			medalValues[8] = float( file.players[player].harvesterHeals )
+		}
+		if( file.players[player].moneySpend > medalValues[9])
+		{
+			medalOwners[9] = player
+			medalValues[9] = float( file.players[player].moneySpend )
+		}
+		if( file.players[player].mortarUnitsKilled > medalValues[10])
+		{
+			medalOwners[10] = player
+			medalValues[10] = float( file.players[player].mortarUnitsKilled )
+		}
+		if( file.players[player].timeNearHarvester > medalValues[11])
+		{
+			medalOwners[11] = player
+			medalValues[11] = file.players[player].timeNearHarvester
+		}
+		if( file.players[player].damageDealt > medalValues[12])
+		{
+			medalOwners[12] = player
+			medalValues[12] = file.players[player].damageDealt
+		}
+		if( file.players[player].longestLife > medalValues[13])
+		{
+			medalOwners[13] = player
+			medalValues[13] = file.players[player].longestLife
+		}
+	}
+	table<entity, int> medalResults
+	table<entity, float> medalResultValues
+	array<float> minimumRequirements = [ 2.0, 30.0, 5000.0, 10.0, 100.0, 1.0, 5.0, 100.0, 1.0, 2000.0, 1.0, 200.0, -1.0, 200.0 ]
+	foreach(int index,entity player in medalOwners)
+	{
+		if(player == null)
+			continue
+		if(player in medalResults)
+			continue
+		if( medalValues[index] > minimumRequirements[index] ) //might be >=
+		{
+			medalResults[player] <- index
+			medalResultValues[player] <- medalValues[index]
+		}
+			
+	}
+	foreach( entity player in GetPlayerArray() )
+	{
+		if( !( player in medalResults ) )
+		{
+			medalResults[player] <- 12
+			medalResultValues[player] <- file.players[player].damageDealt
+		}
+	}
+	array<int> mapIndexes = [ 12, 13, 10, 11, 4, 3, 5, 6, 0, 2, 1, 8, 7, 9 ]
+	foreach( entity player in GetPlayerArray() )
+	{
+		foreach( entity medalPlayer, int medal in medalResults )
+		{
+			Remote_CallFunction_NonReplay( player, "ServerCallback_UpdateGameStats", medalPlayer.GetEncodedEHandle(), mapIndexes[ medal ], medalResultValues[medalPlayer], 1 ) //TODO set correct suit 
+		}
+	Remote_CallFunction_NonReplay( player, "ServerCallback_ShowGameStats", Time() + 10 )//TODO set correct endTime 
+	}
+	foreach( int index, entity player in medalOwners )
+	{
+		printt( player, index, medalValues[index] )
+	}
+	wait 15
 }
 
+void function IncrementPlayerstat_TurretRevives( entity player )
+{
+	file.players[player].turretsRepaired += 1
+}
+
+void function SpawnCallback_SafeTitanSpawnTime( entity ent )
+{
+	if( ent.IsTitan() && IsValid( GetPetTitanOwner( ent ) ) )
+	{
+		entity player = GetPetTitanOwner( ent )
+		file.players[player].lastTitanDrop = Time()
+	}
+}
+
+void function DeathCallback_CalculateTitanAliveTime( entity ent )
+{
+	if( ent.IsTitan() && IsValid( GetPetTitanOwner( ent ) ) )
+	{
+		entity player = GetPetTitanOwner( ent )
+		float aliveTime = file.players[player].lastTitanDrop - Time()
+		if( aliveTime > file.players[player].longestTitanLife )
+			file.players[player].longestTitanLife = aliveTime
+	}
+}
 
 void function OnHarvesterDamaged( entity harvester, var damageInfo )
 {
@@ -1052,18 +1198,18 @@ void function initNetVars()
 		else
 			FD_SetNumAllowedRestarts( 2 )
 	}
-	
+
 
 }
 
-void function FD_DamageByPlayerCallback(entity victim,var damageInfo)
+void function FD_DamageByPlayerCallback( entity victim, var damageInfo )
 {
 	entity player = DamageInfo_GetAttacker( damageInfo )
 	if( !( player in file.players ) )
 		return
 	float damage = DamageInfo_GetDamage( damageInfo )
-	file.players[player].damageDealt += damage
-	file.players[player].scoreThisRound += damage.tointeger() //TODO NOT HOW SCORE WORKS
+	file.players[ player ].damageDealt += damage
+	file.players[ player ].scoreThisRound += damage.tointeger() //TODO NOT HOW SCORE WORKS
 	if( victim.IsTitan() )
 	{
 		//TODO Money and score for titan damage
@@ -1090,13 +1236,13 @@ void function DamageScaleByDifficulty( entity ent, var damageInfo )
 	if ( attacker.IsPlayer() && attacker.GetTeam() == TEAM_IMC ) // in case we ever want a PvP in Frontier Defense, don't scale their damage
 		return
 
-	
+
 	if ( attacker == ent ) // dont scale self damage
 		return
 
 
 	DamageInfo_SetDamage( damageInfo, ( damageAmount * GetCurrentPlaylistVarFloat( "fd_player_damage_scalar", 1.0 ) ) )
-	
+
 
 
 }
@@ -1112,12 +1258,12 @@ void function HealthScaleByDifficulty( entity ent )
 
 	if (ent.IsTitan()&& IsValid(GetPetTitanOwner( ent ) ) ) // in case we ever want pvp in FD
 		return
-	
+
 	if ( ent.IsTitan() )
 		ent.SetMaxHealth( ent.GetMaxHealth() + GetCurrentPlaylistVarInt( "fd_titan_health_adjust", 0 ) )
 	else
 		ent.SetMaxHealth( ent.GetMaxHealth() + GetCurrentPlaylistVarInt( "fd_reaper_health_adjust", 0 ) )
-	
+
 	if( GetCurrentPlaylistVarInt( "fd_pro_titan_shields", 0 ) && ent.IsTitan() )
 	{
 		entity soul = ent.GetTitanSoul()
@@ -1312,7 +1458,7 @@ string function GetTargetNameForID( int typeId )
 string function GetAiNetIdFromTargetName( string targetName )
 {
 	switch ( targetName )
-	{	
+	{
 		case "titan":
 		case "sniperTitan":
 		case "npc_titan_ogre_meteor_boss_fd":
@@ -1427,7 +1573,7 @@ void function FD_DropshipSpawnDropship()
 	file.dropship = CreateDropship( TEAM_MILITIA, FD_spawnPosition , FD_spawnAngles )
 
 
-	file.dropship.SetModel( $"models/vehicle/crow_dropship/crow_dropship_hero.mdl" ) 
+	file.dropship.SetModel( $"models/vehicle/crow_dropship/crow_dropship_hero.mdl" )
 	file.dropship.SetValueForModelKey( $"models/vehicle/crow_dropship/crow_dropship_hero.mdl" )
 
 	DispatchSpawn( file.dropship )
@@ -1459,7 +1605,7 @@ void function FD_DropshipDropPlayer(entity player,int playerDropshipIndex)
 	jumpSequence.attachment = "ORIGIN"
 	jumpSequence.blendTime = 0.0
 	jumpSequence.viewConeFunction = ViewConeFree
-	
+
 	thread FirstPersonSequence( jumpSequence, player, file.dropship )
 	WaittillAnimDone( player )
 	player.ClearParent()

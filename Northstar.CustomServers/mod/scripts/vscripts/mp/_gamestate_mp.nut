@@ -24,6 +24,8 @@ global function ShouldRunEvac
 global function GiveTitanToPlayer
 global function GetTimeLimit_ForGameMode
 
+global function SetCallback_RunPostmatch
+
 struct {
 	// used for togglable parts of gamestate
 	bool usePickLoadoutScreen
@@ -53,6 +55,7 @@ struct {
 	float roundWinningKillReplayHealthFrac
 	
 	array<void functionref()> roundEndCleanupCallbacks
+	void functionref() postMatchCallback
 } file
 
 void function PIN_GameStart()
@@ -81,6 +84,8 @@ void function PIN_GameStart()
 	AddDeathCallback( "npc_titan", OnTitanKilled )
 	
 	RegisterSignal( "CleanUpEntitiesForRoundEnd" )
+
+
 }
 
 void function SetGameState( int newState )
@@ -430,7 +435,7 @@ void function GameStateEnter_SwitchingSides_Threaded()
 
 	entity replayAttacker = file.roundWinningKillReplayAttacker
 	bool doReplay = Replay_IsEnabled() && IsRoundWinningKillReplayEnabled() && IsValid( replayAttacker ) && !IsRoundBased() // for roundbased modes, we've already done the replay
-				 && Time() - file.roundWinningKillReplayTime <= SWITCHING_SIDES_DELAY
+				&& Time() - file.roundWinningKillReplayTime <= SWITCHING_SIDES_DELAY
 	
 	float replayLength = SWITCHING_SIDES_DELAY_REPLAY // extra delay if no replay
 	if ( doReplay )
@@ -524,9 +529,17 @@ void function GameStateEnter_Postmatch()
 	thread GameStateEnter_Postmatch_Threaded()
 }
 
+void function SetCallback_RunPostmatch(void functionref() callback)
+{
+	file.postMatchCallback = callback
+}
+
 void function GameStateEnter_Postmatch_Threaded()
 {
-	wait GAME_POSTMATCH_LENGTH
+	if( file.postMatchCallback == null)
+		wait GAME_POSTMATCH_LENGTH
+	else
+		waitthread file.postMatchCallback()
 
 	GameRules_EndMatch()
 }
