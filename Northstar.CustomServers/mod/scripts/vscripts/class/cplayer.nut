@@ -328,6 +328,58 @@ function CodeCallback_RegisterClass_CPlayer()
 			}
 		}
 	}
+	
+	function CPlayer::GetUserInfoString( key, defaultValue = "" )
+	{
+		return GetUserInfoKVString_Internal( this, key, defaultValue )
+	}
+	
+	function CPlayer::GetUserInfoStringOrNull( key )
+	{
+		return GetUserInfoKVStringOrNull_Internal( this, key )
+	}
+
+    function CPlayer::GetUserInfoInt( key, defaultValue = -1 )
+    {
+        return GetUserInfoKVString_Internal( this, key, defaultValue.tostring() ).tointeger()
+    }
+
+    function CPlayer::GetUserInfoIntOrNull( key )
+    {
+        string ornull ret = GetUserInfoKVStringOrNull_Internal( this, key )
+        if ( ret == null )
+            return null
+
+        return expect string( ret ).tointeger()
+    }
+
+    function CPlayer::GetUserInfoFloat( key, defaultValue = -1 )
+    {
+        return GetUserInfoKVString_Internal( this, key, defaultValue.tostring() ).tofloat()
+    }
+
+    function CPlayer::GetUserInfoFloatOrNull( key )
+    {
+        string ornull ret = GetUserInfoKVStringOrNull_Internal( this, key )
+        if ( ret == null )
+            return null
+
+        return expect string( ret ).tofloat()
+    }
+
+    function CPlayer::GetUserInfoBool( key, defaultValue = false )
+    {
+        return GetUserInfoKVString_Internal( this, key, ( defaultValue == true ? 1 : 0 ).tostring() ).tointeger() != 0
+    }
+
+    function CPlayer::GetUserInfoBoolOrNull( key )
+    {
+        string ornull ret = GetUserInfoKVStringOrNull_Internal( this, key )
+        if ( ret == null )
+            return null
+
+        return expect string( ret ).tointeger() != 0
+    }
 }
 
 void function PlayerDropsScriptedItems( entity player )
