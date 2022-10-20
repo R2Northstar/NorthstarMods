@@ -123,7 +123,7 @@ void function GamemodeFD_Init()
 	AddCallback_OnRoundEndCleanup( FD_NPCCleanup )
 	AddCallback_OnClientConnected( GamemodeFD_InitPlayer )
 	AddCallback_OnPlayerGetsNewPilotLoadout( FD_OnPlayerGetsNewPilotLoadout )
-	SetPostMatchCallback(gameWonMedals)
+	SetCallback_RunPostmatch(gameWonMedals)
 
 	//Damage Callbacks
 	AddDamageByCallback( "player", FD_DamageByPlayerCallback)
