@@ -26,6 +26,7 @@ global function CreateMonarchTitanEvent
 global function CreateWarningEvent
 global function executeWave
 global function restetWaveEvents
+global function WinWave
 
 global struct SmokeEvent{
 	vector position
@@ -1290,7 +1291,8 @@ void function waitUntilLessThanAmountAlive_expensive( int amount )
 				continue
 			}
 	}
-		
+	foreach( entity ent in GetEntArrayByClass_Expensive( "npc_drone" ) )
+		ent.Die()
 	int aliveTitans = npcs.len() - deduct
 	while( aliveTitans > amount )
 	{
@@ -1334,3 +1336,14 @@ void function AddMinimapForHumans( entity human )
 	human.Minimap_SetHeightTracking( true )
 	human.Minimap_SetCustomState( eMinimapObject_npc.AI_TDM_AI )
 }
+
+
+
+void function WinWave()
+{
+	foreach( WaveEvent e in waveEvents[GetGlobalNetInt( "FD_currentWave" )] )
+	{
+		e.timesExecuted = e.executeOnThisCall	
+	}
+}
+

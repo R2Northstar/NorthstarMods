@@ -16,9 +16,13 @@ enum eDropshipState{
 	_count_
 }
 
+
+
+
 struct player_struct_fd{
 	bool diedThisRound
 	int scoreThisRound
+	/*
 	int totalMVPs
 	int mortarUnitsKilled
 	int moneySpend
@@ -32,8 +36,9 @@ struct player_struct_fd{
 	int titanKills
 	float damageDealt
 	int harvesterHeals
-	float lastRespawn
 	int turretKills
+	*/
+	float lastRespawn
 	float lastTitanDrop
 }
 
@@ -56,7 +61,8 @@ struct {
 	bool havesterWasDamaged
 	bool harvesterShieldDown
 	float harvesterDamageTaken
-	table<entity,player_struct_fd> players
+	table<entity, player_struct_fd> players
+	table<entity, table<string, float> > playerAwardStats
 	entity harvester_info
 	bool playersHaveTitans = false
 
@@ -155,7 +161,7 @@ void function GamemodeFD_Init()
 
 void function FD_BoostPurchaseCallback( entity player, BoostStoreData data )
 {
-	file.players[player].moneySpend += data.cost
+	file.playerAwardStats[player]["moneySpent"] += float( data.cost )
 }
 
 void function FD_PlayerRespawnCallback( entity player )
@@ -233,10 +239,10 @@ void function FD_TeamReserveDepositOrWithdrawCallback( entity player, string act
 	switch( action )
 	{
 		case"deposit":
-			file.players[player].moneyShared += amount
+			file.playerAwardStats[player]["moneyShared"] += float( amount )
 			break
 		case"withdraw":
-			file.players[player].moneyShared -= amount
+			file.playerAwardStats[player]["moneyShared"] -= float( amount ) 
 			break
 	}
 }
@@ -244,8 +250,8 @@ void function GamemodeFD_OnPlayerKilled( entity victim, entity attacker, var dam
 {
 	//set longest Time alive for end awards
 	float timeAlive = Time() - file.players[victim].lastRespawn
-	if(timeAlive>file.players[victim].longestLife)
-		file.players[victim].longestLife = timeAlive
+	if(timeAlive>file.playerAwardStats[victim]["longestLife"])
+		file.playerAwardStats[victim]["longestLife"] = timeAlive
 
 	//set died this round for round end money boni
 	file.players[victim].diedThisRound = true
@@ -277,7 +283,7 @@ void function FD_UsedCoreCallback( entity titan, entity weapon )
 	{
 		return
 	}
-	file.players[titan].coresUsed += 1
+	file.playerAwardStats[titan]["coresUsed"] += 1
 }
 
 void function GamemodeFD_InitPlayer( entity player )
@@ -285,6 +291,12 @@ void function GamemodeFD_InitPlayer( entity player )
 	player_struct_fd data
 	data.diedThisRound = false
 	file.players[player] <- data
+	table<string, float> awardStats
+	foreach( string statRef in  GetFDStatRefs() )
+	{
+		awardStats[statRef] <- 0.0
+	}
+	file.playerAwardStats[player] <- awardStats
 	thread SetTurretSettings_threaded( player )
 	// only start the highlight when we start playing, not during dropship
 	if ( GetGameState() >= eGameState.Playing )
@@ -328,11 +340,11 @@ void function OnTickDeath( entity victim, var damageInfo )
 void function OnNpcDeath( entity victim, entity attacker, var damageInfo )
 {
 	if( victim.IsTitan() && attacker in file.players )
-		file.players[attacker].titanKills++
+		file.playerAwardStats[attacker]["titanKills"]++
 	int victimTypeID = FD_GetAITypeID_ByString( victim.GetTargetName() )
 	if( ( victimTypeID == eFD_AITypeIDs.TITAN_MORTAR ) || ( victimTypeID == eFD_AITypeIDs.SPECTRE_MORTAR ) )
 		if( attacker in file.players )
-			file.players[attacker].mortarUnitsKilled++
+			file.playerAwardStats[attacker]["mortarUnitsKilled"]++
 	int findIndex = spawnedNPCs.find( victim )
 	if ( findIndex != -1 )
 	{
@@ -414,7 +426,7 @@ bool function useShieldBoost( entity player, array<string> args )
 		SetGlobalNetTime( "FD_harvesterInvulTime", Time() + 5 )
 		MessageToTeam( TEAM_MILITIA,eEventNotifications.FD_PlayerHealedHarvester, null, player )
 		player.SetPlayerNetInt( "numHarvesterShieldBoost", player.GetPlayerNetInt( "numHarvesterShieldBoost" ) - 1 )
-		file.players[player].harvesterHeals += 1
+		file.playerAwardStats[player]["harvesterHeals"]++
 	}
 	return true
 }
@@ -734,13 +746,28 @@ bool function runWave( int waveIndex, bool shouldDoBuyTime )
 			}
 
 		}
-		file.players[highestScore_player].totalMVPs += 1
+		file.playerAwardStats[highestScore_player]["mvp"]++
 		AddPlayerScore( highestScore_player, "FDWaveMVP" )
 		wait 1
 		foreach( entity player in GetPlayerArray() )
 			if( !file.havesterWasDamaged )
 				AddPlayerScore( player, "FDTeamFlawlessWave" )
 
+		foreach(entity player in GetPlayerArray() )
+		{
+			if( IsAlive( player ) )
+			{
+				float timeAlive = Time() - file.players[player].lastRespawn
+				if(timeAlive>file.playerAwardStats[player]["longestLife"])
+					file.playerAwardStats[player]["longestLife"] = timeAlive
+			}
+			if( IsValid( player.GetPetTitan ) )
+			{
+				float timeAlive = Time() - file.players[player].lastTitanDrop
+				if(timeAlive>file.playerAwardStats[player]["longestTitanLife"])
+					file.playerAwardStats[player]["longestTitanLife"] = timeAlive
+			}
+		}
 
 
 
@@ -812,7 +839,7 @@ bool function runWave( int waveIndex, bool shouldDoBuyTime )
 			highestScore_player = player
 		}
 	}
-	file.players[highestScore_player].totalMVPs += 1
+	file.playerAwardStats[highestScore_player]["mvp"]++
 	AddPlayerScore( highestScore_player, "FDWaveMVP" )
 	AddMoneyToPlayer( highestScore_player, 100 )
 	highestScore_player.AddToPlayerGameStat( PGS_ASSAULT_SCORE, FD_SCORE_MVP )
@@ -851,125 +878,73 @@ void function SetWaveStateReady()
 
 void function gameWonMedals()
 {
-	array<entity> medalOwners = [ null, null, null, null, null, null, null, null, null, null, null, null, null, null ]
-	array<float> medalValues = [ -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0 ]
+	table<string,entity> awardOwners
+	table<string,float> awardValues
 	
 	foreach(entity player in GetPlayerArray() )
 	{
-		if( file.players[player].totalMVPs > medalValues[0])
+		foreach( string ref in GetFDStatRefs() )
 		{
-			medalOwners[0] = player
-			medalValues[0] = float( file.players[player].totalMVPs )
-		}
-		if( file.players[player].titanKills > medalValues[1])
-		{
-			medalOwners[1] = player
-			medalValues[1] = float( file.players[player].titanKills )
-		}
-		if( file.players[player].heals > medalValues[2])
-		{
-			medalOwners[2] = player
-			medalValues[2] = float(file.players[player].heals)
-		}
-		if( file.players[player].turretKills > medalValues[3])
-		{
-			medalOwners[3] = player
-			medalValues[3] = float( file.players[player].turretKills )
-		}
-		if( file.players[player].longestTitanLife > medalValues[4])
-		{
-			medalOwners[4] = player
-			medalValues[4] = file.players[player].longestTitanLife
-		}
-		if( file.players[player].coresUsed > medalValues[5])
-		{
-			medalOwners[5] = player
-			medalValues[5] = float( file.players[player].coresUsed )
-		}
-		if( file.players[player].turretsRepaired > medalValues[6])
-		{
-			medalOwners[6] = player
-			medalValues[6] = float( file.players[player].turretsRepaired )
-		}
-		if( file.players[player].moneyShared > medalValues[7])
-		{
-			medalOwners[7] = player
-			medalValues[7] = float( file.players[player].moneyShared )
-		}
-		if( file.players[player].harvesterHeals > medalValues[8])
-		{
-			medalOwners[8] = player
-			medalValues[8] = float( file.players[player].harvesterHeals )
-		}
-		if( file.players[player].moneySpend > medalValues[9])
-		{
-			medalOwners[9] = player
-			medalValues[9] = float( file.players[player].moneySpend )
-		}
-		if( file.players[player].mortarUnitsKilled > medalValues[10])
-		{
-			medalOwners[10] = player
-			medalValues[10] = float( file.players[player].mortarUnitsKilled )
-		}
-		if( file.players[player].timeNearHarvester > medalValues[11])
-		{
-			medalOwners[11] = player
-			medalValues[11] = file.players[player].timeNearHarvester
-		}
-		if( file.players[player].damageDealt > medalValues[12])
-		{
-			medalOwners[12] = player
-			medalValues[12] = file.players[player].damageDealt
-		}
-		if( file.players[player].longestLife > medalValues[13])
-		{
-			medalOwners[13] = player
-			medalValues[13] = file.players[player].longestLife
+			if( !( ref in awardOwners ) )
+			{
+				awardOwners[ref] <- player
+				awardValues[ref] <- file.playerAwardStats[player][ref]
+			}
+			else if( awardValues[ref] < file.playerAwardStats[player][ref] )
+			{
+				awardOwners[ref] = player
+				awardValues[ref] = file.playerAwardStats[player][ref]
+			}
 		}
 	}
-	table<entity, int> medalResults
-	table<entity, float> medalResultValues
-	array<float> minimumRequirements = [ 2.0, 30.0, 5000.0, 10.0, 100.0, 1.0, 5.0, 100.0, 1.0, 2000.0, 1.0, 200.0, -1.0, 200.0 ]
-	foreach(int index,entity player in medalOwners)
+	table<entity, string> awardResults
+	table<entity, float> awardResultValues
+
+	foreach(string ref,entity player in awardOwners)
 	{
-		if(player == null)
-			continue
-		if(player in medalResults)
-			continue
-		if( medalValues[index] > minimumRequirements[index] ) //might be >=
+
+		if( awardValues[ref] >  GetFDStatData( ref ).validityCheckValue ) //might be >=
 		{
-			medalResults[player] <- index
-			medalResultValues[player] <- medalValues[index]
+			awardResults[player] <- ref
+			awardResultValues[player] <- awardValues[ref]
 		}
 			
 	}
 	foreach( entity player in GetPlayerArray() )
 	{
-		if( !( player in medalResults ) )
+		if( !( player in awardResults ) )
 		{
-			medalResults[player] <- 12
-			medalResultValues[player] <- file.players[player].damageDealt
+			awardResults[player] <- "damageDealt"
+			awardResultValues[player] <- file.playerAwardStats[player]["damageDealt"]
 		}
 	}
-	array<int> mapIndexes = [ 12, 13, 10, 11, 4, 3, 5, 6, 0, 2, 1, 8, 7, 9 ]
+
 	foreach( entity player in GetPlayerArray() )
 	{
-		foreach( entity medalPlayer, int medal in medalResults )
+		foreach( entity medalPlayer, string ref in awardResults )
 		{
-			Remote_CallFunction_NonReplay( player, "ServerCallback_UpdateGameStats", medalPlayer.GetEncodedEHandle(), mapIndexes[ medal ], medalResultValues[medalPlayer], 1 ) //TODO set correct suit 
+			Remote_CallFunction_NonReplay( player, "ServerCallback_UpdateGameStats", medalPlayer.GetEncodedEHandle(), GetFDStatData( ref ).index , awardResultValues[medalPlayer], GetPersistentSpawnLoadoutIndex( medalPlayer, "titan" ) ) 
 		}
-	Remote_CallFunction_NonReplay( player, "ServerCallback_ShowGameStats", Time() + 10 )//TODO set correct endTime 
+	Remote_CallFunction_NonReplay( player, "ServerCallback_ShowGameStats", Time() + 25 )//TODO set correct endTime 
 	}
-	foreach( int index, entity player in medalOwners )
+	foreach( entity player, table< string, float > data in file.playerAwardStats)
 	{
-		printt( player, index, medalValues[index] )
+		printt("Stats for", player)
+		foreach( string ref, float val in data )
+		{
+			printt("    ",ref,val)
+		}
 	}
-	wait 15
+	foreach( string ref, entity player in awardOwners )
+	{
+		printt( player, ref, awardValues[ref] )
+	}
+	wait 25
 }
 
 void function IncrementPlayerstat_TurretRevives( entity player )
 {
-	file.players[player].turretsRepaired += 1
+	file.playerAwardStats[player]["turretsRepaired"]++
 }
 
 void function SpawnCallback_SafeTitanSpawnTime( entity ent )
@@ -987,8 +962,8 @@ void function DeathCallback_CalculateTitanAliveTime( entity ent )
 	{
 		entity player = GetPetTitanOwner( ent )
 		float aliveTime = file.players[player].lastTitanDrop - Time()
-		if( aliveTime > file.players[player].longestTitanLife )
-			file.players[player].longestTitanLife = aliveTime
+		if( aliveTime > file.playerAwardStats[player]["longestTitanLife"] )
+			file.playerAwardStats[player]["longestTitanLife"] = aliveTime
 	}
 }
 
@@ -1208,7 +1183,7 @@ void function FD_DamageByPlayerCallback( entity victim, var damageInfo )
 	if( !( player in file.players ) )
 		return
 	float damage = DamageInfo_GetDamage( damageInfo )
-	file.players[ player ].damageDealt += damage
+	file.playerAwardStats[player]["damageDealt"] += damage
 	file.players[ player ].scoreThisRound += damage.tointeger() //TODO NOT HOW SCORE WORKS
 	if( victim.IsTitan() )
 	{
