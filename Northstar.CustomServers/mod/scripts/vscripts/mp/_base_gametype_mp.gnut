@@ -298,6 +298,9 @@ void function PostDeathThread_MP( entity player, var damageInfo ) // based on ga
 				attackerInfo.attacker.AddToPlayerGameStat( PGS_ASSISTS, 1 )
 			}
 		}
+
+		if( attacker.IsPlayer() )	
+			Highlight_SetDeathRecapHighlight( attacker, "killer_outline" )
 	}
 
 	player.p.rematchOrigin = player.p.deathOrigin
@@ -424,11 +427,17 @@ void function DecideRespawnPlayer( entity player )
 
 void function RespawnAsPilot( entity player )
 {
+	// respawn crash exploit hotfix
+	if(IsAlive( player )) return
+
 	player.RespawnPlayer( FindSpawnPoint( player, false, ( ShouldStartSpawn( player ) || Flag( "ForceStartSpawn" ) ) && !IsFFAGame() ) )
 }
 
 void function RespawnAsTitan( entity player, bool manualPosition = false )
 {
+	// respawn crash exploit hotfix
+	if(IsAlive( player )) return
+
 	player.Signal( "PlayerRespawnStarted" )
 
 	player.isSpawning = true
@@ -447,7 +456,20 @@ void function RespawnAsTitan( entity player, bool manualPosition = false )
 	AddCinematicFlag( player, CE_FLAG_CLASSIC_MP_SPAWNING ) // hide hud
 	
 	// do titanfall scoreevent
-	AddPlayerScore( player, "Titanfall", player )
+	if ( !level.firstTitanfall )
+	{
+		AddPlayerScore( player, "FirstTitanfall", player )
+
+		#if HAS_STATS
+		UpdatePlayerStat( player, "misc_stats", "titanFallsFirst" )
+		#endif
+
+		level.firstTitanfall = true
+	}
+	else
+	{
+		AddPlayerScore( player, "Titanfall", player )
+	}
 	
 	entity camera = CreateTitanDropCamera( spawnpoint.GetAngles(), < 90, titan.GetAngles().y, 0 > )
 	camera.SetParent( titan )
