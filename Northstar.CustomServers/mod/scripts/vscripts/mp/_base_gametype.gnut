@@ -1429,26 +1429,12 @@ void function CodeCallback_WeaponFireInCloak( entity player )
 		if( IsValid( cloakWeapon ) )
 		{
 			array<string> mods = cloakWeapon.GetMods()
+			// can't reset cooldown properly in script, let's give player a empty one
 			player.TakeWeapon( "mp_ability_cloak" ) // not using TakeWeaponNow() to fit vanilla behavior
 			player.GiveOffhandWeapon( "mp_ability_cloak", offhandSlot, mods )
 			cloakWeapon = player.GetOffhandWeapon( offhandSlot )
 			cloakWeapon.SetWeaponPrimaryClipCountAbsolute( 0 )
 		}
-
-		//printt( "weapon", weapon.GetWeaponClassName() )
-		// JFS; need code feature to properly reset next attack time/cooldown stuff
-		/*
-		entity weapon = player.GetOffhandWeapon( OFFHAND_LEFT )
-		//printt( "weapon", weapon.GetWeaponClassName() )
-		// JFS; need code feature to properly reset next attack time/cooldown stuff
-		if ( IsValid( weapon ) && weapon.GetWeaponClassName() == "mp_ability_cloak" )
-		{
-			player.TakeOffhandWeapon( OFFHAND_LEFT )
-			player.GiveOffhandWeapon( "mp_ability_cloak", OFFHAND_LEFT )
-			weapon = player.GetOffhandWeapon( OFFHAND_LEFT )
-			weapon.SetWeaponPrimaryClipCountAbsolute( 0 )
-		}
-		*/
 	}
 	else
 	{
