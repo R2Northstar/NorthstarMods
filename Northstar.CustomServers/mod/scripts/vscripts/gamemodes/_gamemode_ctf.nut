@@ -412,7 +412,7 @@ void function CaptureFlag( entity player, entity flag )
 	AddTeamScore( team, 1 )
 	AddPlayerScore( player, "FlagCapture", player )
 	player.AddToPlayerGameStat( PGS_ASSAULT_SCORE, 1 ) // add 1 to captures on scoreboard
-	//SetRoundWinningKillReplayAttacker( player ) // set attacker for last cap replay
+	SetRoundWinningKillReplayAttacker( player ) // set attacker for last cap replay
 	
 	array<entity> assistList
 	if ( player.GetTeam() == TEAM_IMC )
@@ -451,10 +451,7 @@ void function OnPlayerEntersFlagReturnTrigger( entity trigger, entity player )
 	else
 		flag = file.militiaFlag
 
-	if( !IsValid( flag ) )
-		return
-	
-	if( !IsValid( player ) )
+	if( !IsValid( flag ) || !IsValid( player ) )
 		return
 	
 	if ( !player.IsPlayer() || player.IsTitan() || player.GetTeam() != flag.GetTeam() || IsFlagHome( flag ) || flag.GetParent() != null )
