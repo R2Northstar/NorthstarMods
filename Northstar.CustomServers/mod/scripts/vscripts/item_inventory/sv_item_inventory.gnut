@@ -69,7 +69,6 @@ int function PlayerInventory_CountBurnRef( entity player, string burnRef )
 void function PlayerInventory_TakeInventoryItem( entity player )
 {
 	entity preexistingWeapon = player.GetOffhandWeapon( OFFHAND_INVENTORY )
-
 	if( !IsValid( preexistingWeapon ) )
 		return
 	preexistingWeapon.EndSignal( "OnDestroy" )
