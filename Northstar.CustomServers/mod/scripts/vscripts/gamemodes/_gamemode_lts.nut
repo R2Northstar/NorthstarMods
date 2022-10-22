@@ -27,8 +27,10 @@ void function GamemodeLts_Init()
 
 	AddCallback_OnPilotBecomesTitan( RefreshThirtySecondWallhackHighlight )
 	AddCallback_OnTitanBecomesPilot( RefreshThirtySecondWallhackHighlight )
+	AddCallback_OnPlayerKilled( OnPlayerKilled )
 	
 	SetTimeoutWinnerDecisionFunc( CheckTitanHealthForDraw )
+	SetTimeoutWinnerDecisionReason( "#GAMEMODE_TITAN_DAMAGE_ADVANTAGE", "#GAMEMODE_TITAN_DAMAGE_DISADVANTAGE" )
 	TrackTitanDamageInPlayerGameStat( PGS_ASSAULT_SCORE )
 	
 	ClassicMP_SetCustomIntro( ClassicMP_DefaultNoIntro_Setup, ClassicMP_DefaultNoIntro_GetLength() )
@@ -55,9 +57,27 @@ void function WaitForThirtySecondsLeftThreaded()
 	{	
 		// warn there's 30 seconds left
 		Remote_CallFunction_NonReplay( player, "ServerCallback_LTSThirtySecondWarning" )
-		
+
 		// do initial highlight
-		RefreshThirtySecondWallhackHighlight( player, null )
+		//RefreshThirtySecondWallhackHighlight( player, null )
+		if( IsAlive( player ) )
+			thread ThirtySecondWallhackHighlightThink( player )
+	}
+}
+
+void function ThirtySecondWallhackHighlightThink( entity player )
+{
+	player.EndSignal( "OnDeath" )
+	player.EndSignal( "OnDestroy" )
+	svGlobal.levelEnt.EndSignal( "GameStateChanged" )
+
+	while( true )
+	{
+		if( player.IsTitan() )
+			Highlight_SetEnemyHighlight( player, "enemy_sonar" )
+		else if( IsValid( player.GetPetTitan() ) )
+			Highlight_SetEnemyHighlight( player.GetPetTitan(), "enemy_sonar" )
+		WaitFrame()
 	}
 }
 
@@ -70,6 +90,26 @@ void function RefreshThirtySecondWallhackHighlight( entity player, entity titan 
 		
 	if ( player.GetPetTitan() != null )
 		Highlight_SetEnemyHighlight( player.GetPetTitan(), "enemy_sonar" )
+}
+
+void function OnPlayerKilled( entity victim, entity attacker, var damageInfo )
+{
+	array<entity> allies = GetPlayerArrayOfTeam_Alive( victim.GetTeam() )
+	int teamTitanCount
+	entity latestCheckedPlayer
+	foreach( entity player in allies )
+	{
+		if( PlayerHasTitan( player ) )
+		{
+			teamTitanCount += 1
+			latestCheckedPlayer = player
+		}
+	}
+	if( teamTitanCount == 1 )
+	{
+		if( IsValid( latestCheckedPlayer ) )
+			PlayFactionDialogueToPlayer( "lts_playerLastTitanOnTeam", latestCheckedPlayer )
+	}
 }
 
 int function CheckTitanHealthForDraw()

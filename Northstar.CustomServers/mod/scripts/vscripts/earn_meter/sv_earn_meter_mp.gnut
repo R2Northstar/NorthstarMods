@@ -93,6 +93,9 @@ void function EarnMeterMP_PlayerLifeThink( entity player )
 	int lastEarnMeterMode = PlayerEarnMeter_GetMode( player )
 	float lastPassiveGainTime = Time()
 
+	// If titan avaliable and we're nearly reach it
+	thread TryTitanSoonAnnouncement( player )
+
 	OnThreadEnd(
 		function() : ( player, pilotReward, pilotRewardFrac )
 		{
@@ -112,6 +115,7 @@ void function EarnMeterMP_PlayerLifeThink( entity player )
 
 		if ( player.IsTitan() )
 		{
+			lastPassiveGainTime = Time() // staying in titan should reset earnmeter gain timer
 			entity soul = player.GetTitanSoul()
 			if ( SoulTitanCore_GetExpireTime( soul ) > Time() )
 				desiredEarnMeterMode = eEarnMeterMode.CORE_ACTIVE
@@ -164,10 +168,32 @@ void function EarnMeterMP_PlayerLifeThink( entity player )
 				lastPassiveGainTime = Time()
 				PlayerEarnMeter_AddOwnedFrac( player, 0.01 )
 			}
+
+			// If titan avaliable and we're nearly reach it
+			thread TryTitanSoonAnnouncement( player )
 		}
 
 		WaitFrame()
 	}
+}
+
+void function TryTitanSoonAnnouncement( entity player )
+{
+	wait 0.2
+	if( !IsValid( player ) )
+		return
+	if( GetGameState() == eGameState.Playing )
+	{
+		if( ShouldDoTitanSoonAnnouncement( player ) )
+			PlayFactionDialogueToPlayer( "mp_titanSoon", player )
+	}
+}
+
+bool function ShouldDoTitanSoonAnnouncement( entity player )
+{
+	if( EarnMeterMP_IsTitanEarnGametype() && PlayerEarnMeter_GetOwnedFrac( player ) >= 0.8 && !IsTitanAvailable( player ) && !player.IsTitan() && !IsValid( player.GetPetTitan() ) )
+		return true
+	return false
 }
 
 void function EarnMeterMP_BoostEarned( entity player )
@@ -192,7 +218,9 @@ void function EarnMeterMP_TitanEarned( entity player )
 {
 	if ( EarnMeterMP_IsTitanEarnGametype() )
 	{
-		SetTitanAvailable( player )
+		if( !player.IsTitan() && !IsValid( player.GetPetTitan() ) ) // sometimes trigger this when "Respawn As Titan", should do a check.
+			SetTitanAvailable( player )
+		thread DelayedCheckTitanReady( player ) // defensive fix
 		//Remote_CallFunction_Replay( player, "ServerCallback_TitanReadyMessage" ) // broken for some reason
 	}
 	else
@@ -204,6 +232,18 @@ void function EarnMeterMP_TitanEarned( entity player )
 
 		if ( PlayerEarnMeter_GetRewardFrac( player ) != 0 )
 			PlayerEarnMeter_EnableReward( player )
+	}
+}
+
+void function DelayedCheckTitanReady( entity player )
+{
+	wait 0.2 // respawn as titan might did a WaitFrame(), so we also wait here
+	if( IsValid( player ) )
+	{
+		if( !player.IsTitan() && !IsValid( player.GetPetTitan() ) )
+			PlayFactionDialogueToPlayer( "mp_titanReady", player )
+		else
+			ClearTitanAvailable( player )
 	}
 }
 

@@ -110,12 +110,12 @@ void function GamemodeCP_OnPlayerKilled(entity victim, entity attacker, var dama
 		{
 			if(victimCP.hardpoint.GetTeam()==attacker.GetTeam())
 			{
-				AddPlayerScore( attacker , "HardpointDefense", victim )
+				AddPlayerScore( attacker , "HardpointDefense", attacker )
 				attacker.AddToPlayerGameStat(PGS_DEFENSE_SCORE,POINTVALUE_HARDPOINT_DEFENSE)
 			}
 			else if((victimCP.hardpoint.GetTeam()==victim.GetTeam())||(GetHardpointCappingTeam(victimCP)==victim.GetTeam()))
 			{
-				AddPlayerScore( attacker, "HardpointAssault", victim )
+				AddPlayerScore( attacker, "HardpointAssault", attacker )
 				attacker.AddToPlayerGameStat(PGS_ASSAULT_SCORE,POINTVALUE_HARDPOINT_ASSAULT)
 			}
 		}
@@ -125,18 +125,18 @@ void function GamemodeCP_OnPlayerKilled(entity victim, entity attacker, var dama
 
 		if(Distance(victim.GetOrigin(),attacker.GetOrigin())>=1875)//1875 inches(units) are 47.625 meters
 		{
-			AddPlayerScore( attacker , "HardpointSnipe", victim )
+			AddPlayerScore( attacker , "HardpointSnipe", attacker )
 			attacker.AddToPlayerGameStat(PGS_ASSAULT_SCORE,POINTVALUE_HARDPOINT_SNIPE)
 		}
 		else{
-			AddPlayerScore( attacker , "HardpointSiege", victim )
+			AddPlayerScore( attacker , "HardpointSiege", attacker )
 			attacker.AddToPlayerGameStat(PGS_ASSAULT_SCORE,POINTVALUE_HARDPOINT_SIEGE)
 		}
 	}
 	else if(attackerCP.hardpoint!=null)//Perimeter Defense
 	{
 		if(attackerCP.hardpoint.GetTeam()==attacker.GetTeam())
-			AddPlayerScore( attacker , "HardpointPerimeterDefense", victim)
+			AddPlayerScore( attacker , "HardpointPerimeterDefense", attacker)
 			attacker.AddToPlayerGameStat(PGS_DEFENSE_SCORE,POINTVALUE_HARDPOINT_PERIMETER_DEFENSE)
 	}
 
@@ -306,7 +306,7 @@ void function CapturePointForTeam(HardpointStruct hardpoint, int Team)
 	foreach(entity player in allCappers)
 	{
 		if(player.IsPlayer()){
-			AddPlayerScore(player,"ControlPointCapture")
+			AddPlayerScore( player,"ControlPointCapture", player )
 			player.AddToPlayerGameStat(PGS_ASSAULT_SCORE,POINTVALUE_HARDPOINT_CAPTURE)
 		}
 	}
@@ -374,12 +374,12 @@ void function PlayerThink(CP_PlayerStruct player)
 						player.timeOnPoints[index] -= 10
 						if(GetHardpointState(hardpoint)==CAPTURE_POINT_STATE_AMPED)
 						{
-							AddPlayerScore(player.player,"ControlPointAmpedHold")
+							AddPlayerScore(player.player,"ControlPointAmpedHold", player.player)
 							player.player.AddToPlayerGameStat( PGS_DEFENSE_SCORE, POINTVALUE_HARDPOINT_AMPED_HOLD )
 						}
 						else
 						{
-							AddPlayerScore(player.player,"ControlPointHold")
+							AddPlayerScore(player.player,"ControlPointHold", player.player)
 							player.player.AddToPlayerGameStat( PGS_DEFENSE_SCORE, POINTVALUE_HARDPOINT_HOLD )
 						}
 					}
@@ -396,13 +396,16 @@ void function SetCapperAmount( table<int, table<string, int> > capStrength, arra
 {
 	foreach(entity p in entities)
 	{
-		if ( p.IsPlayer() && p.IsTitan() )
+		if( IsValid( p ) )
 		{
-			capStrength[p.GetTeam()]["titans"] += 1
-		}
-		else if ( p.IsPlayer() )
-		{
-			capStrength[p.GetTeam()]["pilots"] += 1
+			if ( p.IsPlayer() && p.IsTitan() )
+			{
+				capStrength[p.GetTeam()]["titans"] += 1
+			}
+			else if ( p.IsPlayer() )
+			{
+				capStrength[p.GetTeam()]["pilots"] += 1
+			}
 		}
 	}
 }
@@ -410,10 +413,13 @@ void function SetCapperAmount( table<int, table<string, int> > capStrength, arra
 void function HardpointThink( HardpointStruct hardpoint )
 {
 	entity hardpointEnt = hardpoint.hardpoint
+	//int hardpointEHandle = hardpointEnt.GetEncodedEHandle()
 
 	float lastTime = Time()
 	float lastScoreTime = Time()
 	bool hasBeenAmped = false
+
+	EmitSoundOnEntity( hardpointEnt, "hardpoint_console_idle" )
 
 	WaitFrame() // wait a frame so deltaTime is never zero
 
@@ -568,7 +574,7 @@ void function HardpointThink( HardpointStruct hardpoint )
 						{
 							if(player.IsPlayer())
 							{
-								AddPlayerScore(player,"ControlPointAmped")
+								AddPlayerScore(player,"ControlPointAmped", player)
 								player.AddToPlayerGameStat(PGS_DEFENSE_SCORE,POINTVALUE_HARDPOINT_AMPED)
 							}
 						}
@@ -588,13 +594,21 @@ void function HardpointThink( HardpointStruct hardpoint )
 
 		foreach(entity player in hardpoint.imcCappers)
 		{
-			if(DistanceSqr(player.GetOrigin(),hardpointEnt.GetOrigin())>1200000)
-				FindAndRemove(hardpoint.imcCappers,player)
+			if( IsValid( player ) )
+			{
+				//Remote_CallFunction_Replay( player,"ServerCallback_HardpointChanged", hardpointEHandle )
+				if(DistanceSqr(player.GetOrigin(),hardpointEnt.GetOrigin())>1200000)
+					FindAndRemove(hardpoint.imcCappers,player)
+			}
 		}
 		foreach(entity player in hardpoint.militiaCappers)
 		{
-			if(DistanceSqr(player.GetOrigin(),hardpointEnt.GetOrigin())>1200000)
-				FindAndRemove(hardpoint.militiaCappers,player)
+			if( IsValid( player ) )
+			{
+				//Remote_CallFunction_Replay( player,"ServerCallback_HardpointChanged", hardpointEHandle )
+				if(DistanceSqr(player.GetOrigin(),hardpointEnt.GetOrigin())>1200000)
+					FindAndRemove(hardpoint.militiaCappers,player)
+			}
 		}
 
 
@@ -640,12 +654,41 @@ void function OnHardpointEntered( entity trigger, entity player )
 			hardpoint = hardpointStruct
 
 	if ( player.GetTeam() == TEAM_IMC )
+	{
 		hardpoint.imcCappers.append( player )
+		if( player.IsPlayer() )
+		{
+			EmitHardPointCapturingSound( hardpoint, player )
+			PlayFactionDialogueToPlayer( "amphp_friendlyCapping" + GetHardpointGroup(hardpoint.hardpoint), player )
+		}
+	}
 	else
+	{
 		hardpoint.militiaCappers.append( player )
+		if( player.IsPlayer() )
+		{
+			EmitHardPointCapturingSound( hardpoint, player )
+			PlayFactionDialogueToPlayer( "amphp_friendlyCapping" + GetHardpointGroup(hardpoint.hardpoint), player )
+		}
+	}
 	foreach(CP_PlayerStruct playerStruct in file.players)
 		if(playerStruct.player == player)
 			playerStruct.isOnHardpoint = true
+}
+
+void function EmitHardPointCapturingSound( HardpointStruct hardpoint, entity player )
+{
+	StopHardPointCapturingSound( player )
+	if( GetHardpointState(hardpoint)==CAPTURE_POINT_STATE_AMPED )
+		EmitSoundOnEntityOnlyToPlayer( player, player, "Hardpoint_Amped_ProgressBar" )
+	else
+		EmitSoundOnEntityOnlyToPlayer( player, player, "Hardpoint_ProgressBar" )
+}
+
+void function StopHardPointCapturingSound( entity player )
+{
+	StopSoundOnEntity( player, "Hardpoint_Amped_ProgressBar" )
+	StopSoundOnEntity( player, "Hardpoint_ProgressBar" )
 }
 
 void function OnHardpointLeft( entity trigger, entity player )
@@ -659,6 +702,8 @@ void function OnHardpointLeft( entity trigger, entity player )
 		FindAndRemove( hardpoint.imcCappers, player )
 	else
 		FindAndRemove( hardpoint.militiaCappers, player )
+	if( player.IsPlayer() )
+		StopHardPointCapturingSound( player )
 	foreach(CP_PlayerStruct playerStruct in file.players)
 		if(playerStruct.player == player)
 			playerStruct.isOnHardpoint = false

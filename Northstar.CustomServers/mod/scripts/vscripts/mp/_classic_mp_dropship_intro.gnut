@@ -1,5 +1,6 @@
 untyped
 global function ClassicMP_DefaultDropshipIntro_Setup
+global function ClassicMP_IsRunningDropshipIntro
 
 const array<string> DROPSHIP_IDLE_ANIMS = [ "Classic_MP_flyin_exit_playerA_idle",
 											"Classic_MP_flyin_exit_playerB_idle",
@@ -40,13 +41,22 @@ struct {
 	array<IntroDropship> imcDropships
 	
 	float introStartTime
+
+	bool isFirstRound = true
+	bool isDropShipIntro = false
 } file
 
 
 void function ClassicMP_DefaultDropshipIntro_Setup()
 {
+	file.isDropShipIntro = true // we're running dropship intro now
 	AddCallback_OnClientConnected( DropshipIntro_OnClientConnected )	
 	AddCallback_GameStateEnter( eGameState.Prematch, OnPrematchStart )
+}
+
+bool function ClassicMP_IsRunningDropshipIntro()
+{
+	return file.isDropShipIntro
 }
 
 void function DropshipIntro_OnClientConnected( entity player )
@@ -221,6 +231,7 @@ void function SpawnPlayerIntoDropship( entity player )
 	// idk unsure how to use that, all i know is getsequenceduration > the length it actually should be
 	
 	thread FirstPersonSequence( jumpSequence, player, playerDropship.dropship )
+	PlayBattleChatterLine( player, "bc_pIntroChat" )
 	WaittillAnimDone( player ) // somehow this is better than just waiting for the blocking FirstPersonSequence call?
 	
 	player.s.dropshipIntroIsJumping <- true
@@ -253,6 +264,10 @@ void function PlayerJumpsFromDropship( entity player )
 	wait 0.1 // assume players will never actually hit ground before this
 	while ( !player.IsOnGround() && !player.IsWallRunning() && !player.IsWallHanging() ) // todo this needs tweaking
 		WaitFrame()
-	
-	TryGameModeAnnouncement( player )
+
+	if( file.isFirstRound )
+	{
+		TryGameModeAnnouncement( player )
+		file.isFirstRound = false
+	}
 }

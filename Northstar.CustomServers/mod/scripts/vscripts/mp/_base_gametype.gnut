@@ -722,6 +722,9 @@ bool function PlayerOrNPCKilled( entity ent, var damageInfo )
 	{
 		LogPlayerMatchStat_Death( ent )
 
+		// defensive fix
+		StopSoundOnEntity( ent, "3p_zipline_loop" )
+
 		if ( attacker.IsPlayer() && (attacker != ent) )
 			LogPlayerMatchStat_KilledAPilot( attacker )
 	}
@@ -742,6 +745,13 @@ bool function PlayerOrNPCKilled( entity ent, var damageInfo )
 		//For example: In script immediately above this we change the attacker to get the player behind the kill, e.g. owner of a pet titan, etc. Bunch of registered callbacks depends on this.
 		foreach( callbackFunc in svGlobal.onPlayerKilledCallbacks )
 			callbackFunc( ent, attacker, damageInfo )
+		if( attacker.IsPlayer() && !attacker.IsTitan() )
+		{
+			#if BATTLECHATTER_ENABLED
+				// killing pilot dialogues
+				TryPilotKillChatter( attacker )
+			#endif
+		}
 	}
 	else if ( ent.IsNPC() )
 	{
@@ -829,6 +839,29 @@ bool function PlayerOrNPCKilled( entity ent, var damageInfo )
 	}
 
 	return true
+}
+
+void function TryPilotKillChatter( entity attacker )
+{
+	thread TryPilotKillChatter_Threaded( attacker )
+}
+
+void function TryPilotKillChatter_Threaded( entity attacker )
+{
+	attacker.EndSignal( "OnDestroy" )
+	attacker.EndSignal( "OnDeath" )
+	wait RandomFloatRange( 0.3, 0.5 )
+	PlayBattleChatterLine( attacker, "bc_fKilledEnemy" )
+	wait RandomFloatRange( 0.8, 1.1 )
+    array<entity> nearbyFriendly = GetPlayerArrayOfTeam_Alive( attacker.GetTeam() )
+	if( nearbyFriendly.contains( attacker ) )
+		nearbyFriendly.removebyvalue( attacker )
+	if( nearbyFriendly.len() < 1 )
+        return
+    entity closestFriendly = GetClosest( nearbyFriendly, attacker.GetOrigin(), 500 )
+    //PlayBattleChatterLineIncludingPlayer( closestFriendly, "bc_fCongratsKill" )
+    if( IsValid( closestFriendly ) )
+        PlayBattleChatterLine( closestFriendly, "bc_fCongratsKill" )
 }
 
 // used to calculate build time credit in special cases. Cloak Drones and Suicide Spectres use it for now.

@@ -305,7 +305,20 @@ void function CodeCallback_DamagePlayerOrNPC( entity ent, var damageInfo )
 		}
 
 		if ( attackerIsPlayer )
+		{
 			PlayerDamageFeedback( ent, damageInfo )
+			#if BATTLECHATTER_ENABLED
+			// damaged pilot dialogues
+				if( !attackerIsTitan && entIsPlayer )
+				{
+					if( ent.GetHealth() + ent.GetShieldHealth() - DamageInfo_GetDamage( damageInfo ) > 0 ) // so instant kills won't play a chatter
+					{
+						print( "Play pilot damaged chatter" )
+						PlayBattleChatterLine( attacker, "bc_fNearEnemyDmg" )
+					}
+				}
+			#endif	
+		}
 		savedDamage = DamageInfo_GetDamage( damageInfo )
 
 		if ( !entIsTitan )
@@ -340,9 +353,6 @@ void function CodeCallback_DamagePlayerOrNPC( entity ent, var damageInfo )
 				Generic_NPCTookDamage( ent, damageInfo, titanDamage )
 			}
 		}
-
-		if ( attackerIsPlayer )
-			PlayerDamageFeedback( ent, damageInfo )
 	}
 
 	#if VERBOSE_DAMAGE_PRINTOUTS

@@ -13,10 +13,12 @@ void function RespawnProtection( entity player , float time ){
 	OnThreadEnd(
 		function() : ( player )
 		{
-			//cancel protect if player attack
-			if( IsDemigod( player ) )
+			if( IsValid( player ) )
 			{
-				DisableDemigod( player );
+				SetDefaultMPEnemyHighlight( player )
+				//cancel protect if player attack
+				if( IsDemigod( player ) )
+					DisableDemigod( player );
 			}
 		}
 	)
@@ -32,8 +34,13 @@ void function RespawnProtection( entity player , float time ){
 	else{
 		//start protect
 		EnableDemigod( player )
+		//start a highlight
+		Highlight_SetEnemyHighlight( player, "sp_enemy_pilot" )
+		player.Highlight_SetParam( 2, 0, < 255,215,0 > )
 		wait time
 		//cancel protect
 		DisableDemigod( player );
+		//restore highlight
+		SetDefaultMPEnemyHighlight( player )
 	}
 }
