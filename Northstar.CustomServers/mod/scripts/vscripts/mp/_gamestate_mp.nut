@@ -360,6 +360,9 @@ void function GameStateEnter_WinnerDetermined_Threaded()
 		if ( "respawnTime" in replayAttacker.s && Time() - replayAttacker.s.respawnTime < replayLength )
 			replayLength += Time() - expect float ( replayAttacker.s.respawnTime )
 		
+		if( replayLength <= 0 ) // defensive fix
+			replayLength = 2.0 // extra delay
+
 		SetServerVar( "roundWinningKillReplayEntHealthFrac", file.roundWinningKillReplayHealthFrac )
 		
 		foreach ( entity player in GetPlayerArray() )
