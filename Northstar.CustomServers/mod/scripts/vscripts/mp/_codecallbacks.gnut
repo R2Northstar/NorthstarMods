@@ -353,6 +353,9 @@ void function CodeCallback_DamagePlayerOrNPC( entity ent, var damageInfo )
 				Generic_NPCTookDamage( ent, damageInfo, titanDamage )
 			}
 		}
+
+		if ( attackerIsPlayer )
+			PlayerDamageFeedback( ent, damageInfo )
 	}
 
 	#if VERBOSE_DAMAGE_PRINTOUTS
