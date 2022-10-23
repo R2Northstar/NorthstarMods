@@ -94,6 +94,7 @@ void function ScoreEvent_PlayerKilled( entity victim, entity attacker, var damag
 	victim.p.numberOfDeathsSinceLastKill++ // this is reset on kill
 	victim.p.lastDeathTime = Time()
 	victim.p.lastKiller = attacker
+	victim.p.seekingRevenge = true
 	
 	// have to do this early before we reset victim's player killstreaks
 	// nemesis when you kill a player that is dominating you
@@ -129,12 +130,13 @@ void function ScoreEvent_PlayerKilled( entity victim, entity attacker, var damag
 	}
 
 	// revenge && quick revenge
-	if( attacker.p.lastKiller == victim )
+	if( attacker.p.lastKiller == victim && attacker.p.seekingRevenge )
 	{
 		if( attacker.p.lastDeathTime <= Time() + QUICK_REVENGE_TIME_LIMIT )
 			AddPlayerScore( attacker, "QuickRevenge", attacker )
 		else
 			AddPlayerScore( attacker, "Revenge", attacker )
+		attacker.p.seekingRevenge = false
 	}
 
 	// comeback
