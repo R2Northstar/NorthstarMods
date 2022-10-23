@@ -129,7 +129,7 @@ void function GamemodeFD_Init()
 	AddCallback_OnRoundEndCleanup( FD_NPCCleanup )
 	AddCallback_OnClientConnected( GamemodeFD_InitPlayer )
 	AddCallback_OnPlayerGetsNewPilotLoadout( FD_OnPlayerGetsNewPilotLoadout )
-	SetCallback_RunPostmatch(gameWonMedals)
+	ClassicMP_SetEpilogue(FD_SetupEpilogue)
 
 	//Damage Callbacks
 	AddDamageByCallback( "player", FD_DamageByPlayerCallback)
@@ -876,13 +876,26 @@ void function SetWaveStateReady()
 	SetGlobalNetInt( "FD_waveState", WAVE_STATE_IN_PROGRESS )
 }
 
-void function gameWonMedals()
+void function FD_SetupEpilogue()
+{
+	AddCallback_GameStateEnter( eGameState.Epilogue, FD_Epilogue )
+}
+
+void function FD_Epilogue()
+{
+	thread FD_Epilogue_threaded()
+}
+
+void function FD_Epilogue_threaded()
 {
 	table<string,entity> awardOwners
 	table<string,float> awardValues
-	
+	wait 5
 	foreach(entity player in GetPlayerArray() )
 	{
+		player.FreezeControlsOnServer()
+		ScreenFadeToBlackForever( player, 6.0 )
+
 		foreach( string ref in GetFDStatRefs() )
 		{
 			if( !( ref in awardOwners ) )
@@ -927,6 +940,7 @@ void function gameWonMedals()
 		}
 	Remote_CallFunction_NonReplay( player, "ServerCallback_ShowGameStats", Time() + 25 )//TODO set correct endTime 
 	}
+	/* //debugging prints
 	foreach( entity player, table< string, float > data in file.playerAwardStats)
 	{
 		printt("Stats for", player)
@@ -939,7 +953,9 @@ void function gameWonMedals()
 	{
 		printt( player, ref, awardValues[ref] )
 	}
-	wait 25
+	*/
+	wait 20
+	SetGameState(eGameState.Postmatch)
 }
 
 void function IncrementPlayerstat_TurretRevives( entity player )
