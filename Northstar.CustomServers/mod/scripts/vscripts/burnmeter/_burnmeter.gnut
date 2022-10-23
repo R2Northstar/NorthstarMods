@@ -67,6 +67,7 @@ void function BurnMeter_Init()
 	AddCallback_OnClientConnected( InitBurncardsForLateJoiner )
 
 	AddCallback_OnPlayerRespawned( StartPhaseRewindLifetime )
+	AddCallback_OnPlayerRespawned( InitialisePermenantAmpedWeaponsForPlayer )
 	AddCallback_OnTitanBecomesPilot( RemoveAmpedWeaponsForTitanPilot )
 
 	// necessary signals
@@ -264,7 +265,7 @@ void function UseBurnCardWeapon( entity weapon, entity player )
 	if ( PlayerEarnMeter_IsRewardAvailable( player ) )
 		PlayerEarnMeter_SetRewardUsed( player )
 
-	PlayerInventory_PopInventoryItem( player )
+	thread PlayerInventory_PopInventoryItem( player )
 }
 
 void function UseBurnCardWeaponInCriticalSection( entity weapon, entity ownerPlayer )
@@ -298,7 +299,28 @@ void function PlayerUsesAmpedWeaponsBurncard( entity player )
 
 void function PlayerUsesAmpedWeaponsBurncardThreaded( entity player )
 {
+	player.Signal( "StopAmpedWeapons" )
+	player.EndSignal( "StopAmpedWeapons" )
 	array<entity> weapons = player.GetMainWeapons()
+	OnThreadEnd(
+		function(): ( weapons )
+		{
+			// note: weapons may have been destroyed or picked up by other people by this point, so need to verify this
+			foreach ( entity weapon in weapons )
+			{
+				if( IsValid( weapon ) )
+				{
+					foreach ( string mod in GetWeaponBurnMods( weapon.GetWeaponClassName() ) )
+						weapon.RemoveMod( mod )
+					
+					weapon.SetScriptFlags0( weapon.GetScriptFlags0() & ~WEAPONFLAG_AMPED )
+				}
+				else
+					continue
+			}
+		}
+	)
+
 	//weapons.extend( player.GetOffhandWeapons() ) // idk? unsure of vanilla behaviour here
 	foreach ( entity weapon in weapons )
 	{
@@ -325,18 +347,6 @@ void function PlayerUsesAmpedWeaponsBurncardThreaded( entity player )
 	}
 
 	wait AMPED_WEAPONS_LENGTH
-
-	// note: weapons may have been destroyed or picked up by other people by this point, so need to verify this
-	foreach ( entity weapon in weapons )
-	{
-		if ( !IsValid( weapon ) )
-			continue
-
-		foreach ( string mod in GetWeaponBurnMods( weapon.GetWeaponClassName() ) )
-			weapon.RemoveMod( mod )
-
-		weapon.SetScriptFlags0( weapon.GetScriptFlags0() & ~WEAPONFLAG_AMPED )
-	}
 }
 
 void function RemoveAmpedWeaponsForTitanPilot( entity player, entity titan )
@@ -494,6 +504,9 @@ void function PlayerUsesPhaseRewindBurncardThreaded( entity player )
 	for ( int i = positions.len() - 1; i > -1; i-- )
 	{
 		// should looks better?
+		player.UnforceCrouch()
+		if( positions[ i ].wasCrouched )
+			player.ForceCrouch() // make player's view lower
 		float moveTime = PHASE_REWIND_PATH_SNAPSHOT_INTERVAL + 0.1
 		player.SetVelocity( -positions[ i ].velocity )
 		mover.NonPhysicsMoveTo( positions[ i ].origin, moveTime, 0, 0 )
@@ -502,36 +515,45 @@ void function PlayerUsesPhaseRewindBurncardThreaded( entity player )
 	}
 	player.SetVelocity( <0, 0, 0> )
 	if( positions[0].wasCrouched )
-		player.SetOrigin( player.GetOrigin() + < 0, 0, 20 > )
+		thread PhaseRewindForceCrouch( player )
+	player.SetOrigin( positions[0].origin + < 0,0,20 > )
 
 	// fix position after rewind
 	PutPhaseRewindedPlayerInSafeSpot( player, 1 )
+}
+
+void function PhaseRewindForceCrouch( entity player )
+{
+	// make player crouch
+	player.ForceCrouch()
+	wait 0.2
+	if( IsValid( player ) )
+		player.UnforceCrouch()
 }
 
 void function PutPhaseRewindedPlayerInSafeSpot( entity player, int severity )
 {
 	vector baseOrigin = player.GetOrigin()
 
-	if ( PutEntityInSafeSpot( player, player, null, < baseOrigin.x, baseOrigin.y + severity, baseOrigin.z >, baseOrigin ) )
-		return
+    if( PutEntityInSafeSpot( player, player, null, < baseOrigin.x, baseOrigin.y+severity, baseOrigin.z >, baseOrigin ) )
+        return
 
-	if ( PutEntityInSafeSpot( player, player, null, < baseOrigin.x, baseOrigin.y - severity, baseOrigin.z >, baseOrigin ) )
-		return
+    if( PutEntityInSafeSpot( player, player, null, < baseOrigin.x, baseOrigin.y-severity, baseOrigin.z >, baseOrigin ) )
+        return
+ 
+    if( PutEntityInSafeSpot( player, player, null, < baseOrigin.x+severity, baseOrigin.y, baseOrigin.z >, baseOrigin ) )
+        return
 
-	if ( PutEntityInSafeSpot( player, player, null, < baseOrigin.x + severity, baseOrigin.y, baseOrigin.z >, baseOrigin ) )
-		return
+	if( PutEntityInSafeSpot( player, player, null, < baseOrigin.x-severity, baseOrigin.y, baseOrigin.z >, baseOrigin ) )
+        return
 
-	if ( PutEntityInSafeSpot( player, player, null, < baseOrigin.x - severity, baseOrigin.y, baseOrigin.z >, baseOrigin ) )
-        	return
+	if( PutEntityInSafeSpot( player, player, null, < baseOrigin.x, baseOrigin.y, baseOrigin.z+severity >, baseOrigin ) )
+        return
 
-	if ( PutEntityInSafeSpot( player, player, null, < baseOrigin.x, baseOrigin.y, baseOrigin.z + severity >, baseOrigin ) )
-		return
+	if( PutEntityInSafeSpot( player, player, null, < baseOrigin.x, baseOrigin.y, baseOrigin.z-severity >, baseOrigin ) )
+        return
 
-	if ( PutEntityInSafeSpot( player, player, null, < baseOrigin.x, baseOrigin.y, baseOrigin.z - severity >, baseOrigin ) )
-		return
-
-	return PutPhaseRewindedPlayerInSafeSpot( player, severity + 5 )
-
+    return PutPhaseRewindedPlayerInSafeSpot( player, severity+5 )
 }
 
 void function PlayerUsesNukeTitanBurncard( entity player )
@@ -564,8 +586,15 @@ void function PlayerUsesNukeBurncardThreaded( entity player )
 	thread TitanEjectPlayer( titan, true )
 }
 
+void function InitialisePermenantAmpedWeaponsForPlayer( entity player )
+{
+	player.s.hasPermenantAmpedWeapons <- false
+}
+
 void function PlayerUsesPermanentAmpedWeaponsBurncard( entity player )
 {
+	player.s.hasPermenantAmpedWeapons = true
+
 	array<entity> weapons = player.GetMainWeapons()
 	//weapons.extend( player.GetOffhandWeapons() ) // idk? unsure of vanilla behaviour here
 	foreach ( entity weapon in weapons )
