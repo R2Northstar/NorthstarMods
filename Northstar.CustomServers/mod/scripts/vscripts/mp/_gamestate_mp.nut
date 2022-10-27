@@ -278,6 +278,9 @@ void function GameStateEnter_WinnerDetermined_Threaded()
 			Remote_CallFunction_NonReplay( player, "ServerCallback_AnnounceRoundWinner", winningTeam, announcementSubstr, ROUND_WINNING_KILL_REPLAY_SCREEN_FADE_TIME, GameRules_GetTeamScore2( TEAM_MILITIA ), GameRules_GetTeamScore2( TEAM_IMC ) )
 		else
 			Remote_CallFunction_NonReplay( player, "ServerCallback_AnnounceWinner", winningTeam, announcementSubstr, ROUND_WINNING_KILL_REPLAY_SCREEN_FADE_TIME )
+	
+		if ( player.GetTeam() == winningTeam )
+			UnlockAchievement( player, achievements.MP_WIN )
 	}
 	
 	WaitFrame() // wait a frame so other scripts can setup killreplay stuff
@@ -384,11 +387,14 @@ void function PlayerWatchesRoundWinningKillReplay( entity player, float replayLe
 	player.SetPredictionEnabled( false ) // prediction fucks with replays
 	
 	entity attacker = file.roundWinningKillReplayAttacker
-	player.SetKillReplayDelay( Time() - replayLength, THIRD_PERSON_KILL_REPLAY_ALWAYS )
-	player.SetKillReplayInflictorEHandle( attacker.GetEncodedEHandle() )
-	player.SetKillReplayVictim( file.roundWinningKillReplayVictim )
-	player.SetViewIndex( attacker.GetIndexForEntity() )
-	player.SetIsReplayRoundWinning( true )
+	if ( IsValid( attacker ) )
+	{
+		player.SetKillReplayDelay( Time() - replayLength, THIRD_PERSON_KILL_REPLAY_ALWAYS )
+		player.SetKillReplayInflictorEHandle( attacker.GetEncodedEHandle() )
+		player.SetKillReplayVictim( file.roundWinningKillReplayVictim )
+		player.SetViewIndex( attacker.GetIndexForEntity() )
+		player.SetIsReplayRoundWinning( true )
+	}
 	
 	if ( replayLength >= ROUND_WINNING_KILL_REPLAY_LENGTH_OF_REPLAY - 0.5 ) // only do fade if close to full length replay
 	{
