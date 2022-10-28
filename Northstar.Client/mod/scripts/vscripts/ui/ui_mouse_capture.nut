@@ -9,6 +9,8 @@ struct
     table< var, array< void functionref( int deltaX, int deltaY ) > > mouseMovementCaptureCallbacks = {}
 } file
 
+// this function registers a callback (or "handler") function for a MouseMovementCapture menu panel
+// use this for scrollbars, sliders, etc.
 void function AddMouseMovementCaptureHandler( var capturePanel, void functionref( int deltaX, int deltaY ) func )
 {
     // if the capturePanel already has an array in the table, we append to the array
@@ -28,7 +30,7 @@ void function UICodeCallback_MouseMovementCapture( var capturePanel, int deltaX,
         foreach ( void functionref( int deltaX, int deltaY ) callback in file.mouseMovementCaptureCallbacks[capturePanel] )
         {
             // run the callback function
-            callback(deltaX, deltaY)
+            callback( deltaX, deltaY )
         }
     }
 
