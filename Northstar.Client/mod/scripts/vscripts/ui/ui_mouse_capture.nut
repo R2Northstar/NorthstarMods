@@ -1,3 +1,5 @@
+untyped // untyped purely so I can index into a table with var
+
 global function AddMouseMovementCaptureHandler
 global function UICodeCallback_MouseMovementCapture
 
@@ -15,11 +17,6 @@ void function AddMouseMovementCaptureHandler( var capturePanel, void functionref
         file.MouseMovementCaptureFunctionsTable[capturePanel].append(func)
     else
         file.MouseMovementCaptureFunctionsTable[capturePanel] <- [func]
-}
-
-void function UpdateMouseMovementCaptureFunctions( var capturePanel, int deltaX, int deltaY )
-{
-    
 }
 
 void function UICodeCallback_MouseMovementCapture( var capturePanel, int deltaX, int deltaY )
