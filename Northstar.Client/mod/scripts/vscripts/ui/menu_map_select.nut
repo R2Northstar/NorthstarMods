@@ -43,7 +43,7 @@ void function InitMapsMenu()
 {
 	file.menu = GetMenu( "MapsMenu" )
 	
-	AddMouseMovementCaptureHandler( file.menu, UpdateMouseDeltaBuffer )
+	AddMouseMovementCaptureHandler( Hud_GetChild(file.menu, "MouseMovementCapture"), UpdateMouseDeltaBuffer )
 	
 
 	AddMenuEventHandler( file.menu, eUIEvent.MENU_CLOSE, OnCloseMapsMenu )
@@ -331,7 +331,7 @@ bool function IsLocked( string map )
 //////////////////////////////
 // Slider
 //////////////////////////////
-void function UpdateMouseDeltaBuffer(var capturePanel, int x, int y)
+void function UpdateMouseDeltaBuffer(int x, int y)
 {
 	mouseDeltaBuffer.deltaX += x
 	mouseDeltaBuffer.deltaY += y
