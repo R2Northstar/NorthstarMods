@@ -3,49 +3,50 @@ global function UICodeCallback_MouseMovementCapture
 
 struct
 {
-    // a table (indexed using a menu) that contains an array of functionrefs (callbacks)
-    table< var, array< void functionref(var capturePanel, int deltaX, int deltaY) > > MouseMovementCaptureFunctionsTable = {}
+    // a table of capturePanels, each of which contains an array of callbacks
+    table< var, array< void functionref( int deltaX, int deltaY ) > > MouseMovementCaptureFunctionsTable = {}
 } file
 
-// just a note for anyone trying to use this, the var in the functionref is the hud element that captured the input
-void function AddMouseMovementCaptureHandler( var menu, void functionref( var capturePanel, int deltaX, int deltaY ) func )
+void function AddMouseMovementCaptureHandler( var capturePanel, void functionref( int deltaX, int deltaY ) func )
 {
-    // if this menu already has a callback, just add to the array
-    if ( menu in file.MouseMovementCaptureFunctionsTable )
-    {
-        file.MouseMovementCaptureFunctionsTable[menu].append(func)
-    }
-    // if not, create the array before we add to it
+    // if the capturePanel already has an array in the table, we append to the array
+    // if not, we should create the array, [func] just turns func into an array
+    if ( capturePanel in file.MouseMovementCaptureFunctionsTable )
+        file.MouseMovementCaptureFunctionsTable[capturePanel].append(func)
     else
-    {
-        file.MouseMovementCaptureFunctionsTable[menu] <- [func]
-    }
+        file.MouseMovementCaptureFunctionsTable[capturePanel] <- [func]
 }
 
 void function UpdateMouseMovementCaptureFunctions( var capturePanel, int deltaX, int deltaY )
 {
-    var activeMenu = GetActiveMenu()
-    // check that the menu is in the table before trying anything stupid
-    if ( activeMenu in file.MouseMovementCaptureFunctionsTable )
-    {
-        // iterate through the different callback functions
-        foreach ( void functionref(var menu, int deltaX, int deltaY) callback in file.MouseMovementCaptureFunctionsTable[activeMenu] )
-        {
-            // run the callback function
-            callback(capturePanel, deltaX, deltaY)
-        }
-    }
+    
 }
 
 void function UICodeCallback_MouseMovementCapture( var capturePanel, int deltaX, int deltaY )
 {
+    // check that the capturePanel is in the table before trying anything stupid
+    if ( capturePanel in file.MouseMovementCaptureFunctionsTable )
+    {
+        // iterate through the different callback functions
+        foreach ( void functionref( int deltaX, int deltaY ) callback in file.MouseMovementCaptureFunctionsTable[capturePanel] )
+        {
+            // run the callback function
+            callback(deltaX, deltaY)
+        }
+    }
+
+    // everything below here originally existed in vanilla sh_menu_models.gnut and is meant to be used for like all of their rotation stuff
+    // its easier to move this here than to add a shared callback for all of the vanilla capture handlers (there are like >20)
+
+    // this const was moved instead of made global because it was literally only used in the code below
+    const MOUSE_ROTATE_MULTIPLIER = 25.0
+
     float screenScaleXModifier = 1920.0 / GetScreenSize()[0] // 1920 is base screen width
     float mouseXRotateDelta = deltaX * screenScaleXModifier * MOUSE_ROTATE_MULTIPLIER
+    //printt( "deltaX:", deltaX, "screenScaleModifier:", screenScaleModifier, "mouseRotateDelta:", mouseRotateDelta )
 
     float screenScaleYModifier = 1080.0 / GetScreenSize()[1] // 1080 is base screen height
     float mouseYRotationDelta = deltaY * screenScaleYModifier * MOUSE_ROTATE_MULTIPLIER
-
-    UpdateMouseMovementCaptureFunctions( capturePanel, deltaX, deltaY )
 
     RunMenuClientFunction( "UpdateMouseRotateDelta", mouseXRotateDelta, mouseYRotationDelta )
 }

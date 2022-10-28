@@ -207,11 +207,10 @@
 #endif // CLIENT && MP
 
 #if UI
-	const MOUSE_ROTATE_MULTIPLIER = 25.0
-
 	global function UpdateUIMapSupportsMenuModels
 	global function RunMenuClientFunction
 	global function UI_SetPresentationType
+	global function UI_MenuModels_Init
 #endif // UI
 
 	global const STORE_BG_DEFAULT = 0
