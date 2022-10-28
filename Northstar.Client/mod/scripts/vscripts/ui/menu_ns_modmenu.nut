@@ -83,7 +83,7 @@ void function InitModMenu()
 		RuiSetImage( rui, "basicImage", $"ui/menu/common/dialog_error" )
 	}
 
-	AddMouseMovementCaptureHandler( file.menu, UpdateMouseDeltaBuffer )
+	AddMouseMovementCaptureHandler( Hud_GetChild(file.menu, "MouseMovementCapture"), UpdateMouseDeltaBuffer )
 
 	// UI Events
 	AddMenuEventHandler( file.menu, eUIEvent.MENU_OPEN, OnModMenuOpened )
@@ -534,7 +534,7 @@ string function FormatModDescription( string modName )
 // SLIDER
 ////////////
 
-void function UpdateMouseDeltaBuffer(var capturePanel, int x, int y)
+void function UpdateMouseDeltaBuffer(int x, int y)
 {
 	mouseDeltaBuffer.deltaX = x
 	mouseDeltaBuffer.deltaY = y
