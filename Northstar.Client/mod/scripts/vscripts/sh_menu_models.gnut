@@ -210,7 +210,6 @@
 	global function UpdateUIMapSupportsMenuModels
 	global function RunMenuClientFunction
 	global function UI_SetPresentationType
-	global function UI_MenuModels_Init
 #endif // UI
 
 	global const STORE_BG_DEFAULT = 0
