@@ -6,26 +6,26 @@ global function UICodeCallback_MouseMovementCapture
 struct
 {
     // a table of capturePanels, each of which contains an array of callbacks
-    table< var, array< void functionref( int deltaX, int deltaY ) > > MouseMovementCaptureFunctionsTable = {}
+    table< var, array< void functionref( int deltaX, int deltaY ) > > mouseMovementCaptureCallbacks = {}
 } file
 
 void function AddMouseMovementCaptureHandler( var capturePanel, void functionref( int deltaX, int deltaY ) func )
 {
     // if the capturePanel already has an array in the table, we append to the array
     // if not, we should create the array, [func] just turns func into an array
-    if ( capturePanel in file.MouseMovementCaptureFunctionsTable )
-        file.MouseMovementCaptureFunctionsTable[capturePanel].append(func)
+    if ( capturePanel in file.mouseMovementCaptureCallbacks )
+        file.mouseMovementCaptureCallbacks[capturePanel].append(func)
     else
-        file.MouseMovementCaptureFunctionsTable[capturePanel] <- [func]
+        file.mouseMovementCaptureCallbacks[capturePanel] <- [func]
 }
 
 void function UICodeCallback_MouseMovementCapture( var capturePanel, int deltaX, int deltaY )
 {
     // check that the capturePanel is in the table before trying anything stupid
-    if ( capturePanel in file.MouseMovementCaptureFunctionsTable )
+    if ( capturePanel in file.mouseMovementCaptureCallbacks )
     {
         // iterate through the different callback functions
-        foreach ( void functionref( int deltaX, int deltaY ) callback in file.MouseMovementCaptureFunctionsTable[capturePanel] )
+        foreach ( void functionref( int deltaX, int deltaY ) callback in file.mouseMovementCaptureCallbacks[capturePanel] )
         {
             // run the callback function
             callback(deltaX, deltaY)
