@@ -21,7 +21,7 @@ void function AddMouseMovementCaptureHandler( var capturePanelOrMenu, void funct
         file.mouseMovementCaptureCallbacks[capturePanelOrMenu] <- [func]
 }
 
-void function RunMouseMovementCallbacks( var capturePanelOrMenu )
+void function RunMouseMovementCallbacks( var capturePanelOrMenu, int deltaX, int deltaY )
 {
     // check that the capturePanelOrMenu is in the table before trying anything stupid
     if ( capturePanelOrMenu in file.mouseMovementCaptureCallbacks )
@@ -38,10 +38,10 @@ void function RunMouseMovementCallbacks( var capturePanelOrMenu )
 void function UICodeCallback_MouseMovementCapture( var capturePanel, int deltaX, int deltaY )
 {
     // run callbacks for the capturePanel
-    RunMouseMovementCallbacks( capturePanel )
+    RunMouseMovementCallbacks( capturePanel, deltaX, deltaY )
 
     // get the current menu and run callbacks, this preserves backwards compatibility
-    RunMouseMovementCallbacks( GetActiveMenu() )
+    RunMouseMovementCallbacks( GetActiveMenu(), deltaX, deltaY )
 
     // everything below here originally existed in vanilla sh_menu_models.gnut and is meant to be used for like all of their rotation stuff
     // its easier to move this here than to add a shared callback for all of the vanilla capture handlers (there are like >20)
