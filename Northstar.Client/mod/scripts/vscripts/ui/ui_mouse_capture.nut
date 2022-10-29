@@ -21,33 +21,27 @@ void function AddMouseMovementCaptureHandler( var capturePanelOrMenu, void funct
         file.mouseMovementCaptureCallbacks[capturePanelOrMenu] <- [func]
 }
 
+void function RunMouseMovementCallbacks( var capturePanelOrMenu )
+{
+    // check that the capturePanelOrMenu is in the table before trying anything stupid
+    if ( capturePanelOrMenu in file.mouseMovementCaptureCallbacks )
+    {
+        // iterate through the different callback functions
+        foreach ( void functionref( int deltaX, int deltaY ) callback in file.mouseMovementCaptureCallbacks[capturePanelOrMenu] )
+        {
+            // run the callback function
+            callback( deltaX, deltaY )
+        }
+    }
+}
+
 void function UICodeCallback_MouseMovementCapture( var capturePanel, int deltaX, int deltaY )
 {
-    // run capturePanel callbacks first, then run menu callbacks, this preserves backwards compatibility
+    // run callbacks for the capturePanel
+    RunMouseMovementCallbacks( capturePanel )
 
-    // check that the capturePanel is in the table before trying anything stupid
-    if ( capturePanel in file.mouseMovementCaptureCallbacks )
-    {
-        // iterate through the different callback functions
-        foreach ( void functionref( int deltaX, int deltaY ) callback in file.mouseMovementCaptureCallbacks[capturePanel] )
-        {
-            // run the callback function
-            callback( deltaX, deltaY )
-        }
-    }
-
-    // get the current menu for running backwards compatible callbacks
-    var menu = GetActiveMenu()
-    // check that the menu is in the table before trying anything stupid
-    if ( menu in file.mouseMovementCaptureCallbacks )
-    {
-        // iterate through the different callback functions
-        foreach ( void functionref( int deltaX, int deltaY ) callback in file.mouseMovementCaptureCallbacks[menu] )
-        {
-            // run the callback function
-            callback( deltaX, deltaY )
-        }
-    }
+    // get the current menu for running backwards compatible callbacks, and run callbacks
+    RunMouseMovementCallbacks( GetActiveMenu() )
 
     // everything below here originally existed in vanilla sh_menu_models.gnut and is meant to be used for like all of their rotation stuff
     // its easier to move this here than to add a shared callback for all of the vanilla capture handlers (there are like >20)
