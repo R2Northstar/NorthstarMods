@@ -40,7 +40,7 @@ void function UICodeCallback_MouseMovementCapture( var capturePanel, int deltaX,
     // run callbacks for the capturePanel
     RunMouseMovementCallbacks( capturePanel )
 
-    // get the current menu for running backwards compatible callbacks, and run callbacks
+    // get the current menu and run callbacks, this preserves backwards compatibility
     RunMouseMovementCallbacks( GetActiveMenu() )
 
     // everything below here originally existed in vanilla sh_menu_models.gnut and is meant to be used for like all of their rotation stuff
