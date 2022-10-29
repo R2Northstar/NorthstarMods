@@ -53,8 +53,6 @@ void function SvLoadoutsMP_Init()
 	}
 	
 	AddCallback_OnPlayerKilled( LoadoutsMP_OnPlayerKilled )
-
-	AddCallback_OnPlayerRespawned( GracePeriodThink )
 }
 
 void function LoadoutsMP_OnPlayerKilled( entity victim, entity attacker, var damageInfo )
