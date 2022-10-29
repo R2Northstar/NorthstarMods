@@ -120,7 +120,7 @@ void function ScoreEvent_PlayerKilled( entity victim, entity attacker, var damag
 	
 	// headshot
 	if ( DamageInfo_GetCustomDamageType( damageInfo ) & DF_HEADSHOT )
-		AddPlayerScore( attacker, "Headshot", attacker )
+		AddPlayerScore( attacker, "Headshot", victim )
 	
 	// first strike
 	if ( !file.firstStrikeDone )
@@ -133,9 +133,9 @@ void function ScoreEvent_PlayerKilled( entity victim, entity attacker, var damag
 	if( attacker.p.lastKiller == victim && attacker.p.seekingRevenge )
 	{
 		if( Time() <= attacker.p.lastDeathTime + QUICK_REVENGE_TIME_LIMIT )
-			AddPlayerScore( attacker, "QuickRevenge", attacker )
+			AddPlayerScore( attacker, "QuickRevenge", victim )
 		else
-			AddPlayerScore( attacker, "Revenge", attacker )
+			AddPlayerScore( attacker, "Revenge", victim )
 		attacker.p.seekingRevenge = false
 	}
 
@@ -161,7 +161,7 @@ void function ScoreEvent_PlayerKilled( entity victim, entity attacker, var damag
 	
 	// dominating
 	if ( attacker.p.playerKillStreaks[ victim ] >= DOMINATING_KILL_REQUIREMENT )
-		AddPlayerScore( attacker, "Dominating", attacker )
+		AddPlayerScore( attacker, "Dominating", victim )
 	
 	if ( Time() - attacker.s.lastKillTime > CASCADINGKILL_REQUIREMENT_TIME )
 	{
@@ -190,9 +190,9 @@ void function ScoreEvent_TitanDoomed( entity titan, entity attacker, var damageI
 	// will this handle npc titans with no owners well? i have literally no idea
 	
 	if ( titan.IsNPC() )
-		AddPlayerScore( attacker, "DoomAutoTitan", attacker )
+		AddPlayerScore( attacker, "DoomAutoTitan", titan )
 	else
-		AddPlayerScore( attacker, "DoomTitan", attacker )
+		AddPlayerScore( attacker, "DoomTitan", titan )
 }
 
 void function ScoreEvent_TitanKilled( entity victim, entity attacker, var damageInfo )
@@ -226,7 +226,7 @@ void function ScoreEvent_TitanKilled( entity victim, entity attacker, var damage
 		if( attackerInfo.attacker != attacker && !exists )
 		{
 			alreadyAssisted[attackerInfo.attacker.GetEncodedEHandle()] <- true
-			AddPlayerScore( attackerInfo.attacker, "TitanAssist", attackerInfo.attacker )
+			AddPlayerScore( attackerInfo.attacker, "TitanAssist", victim )
 			Remote_CallFunction_NonReplay( attackerInfo.attacker, "ServerCallback_SetAssistInformation", attackerInfo.damageSourceId, attacker.GetEncodedEHandle(), victim.GetEncodedEHandle(), attackerInfo.time ) 
 		}
 	}
@@ -237,7 +237,7 @@ void function ScoreEvent_NPCKilled( entity victim, entity attacker, var damageIn
 	try
 	{		
 		// have to trycatch this because marvins will crash on kill if we dont
-		AddPlayerScore( attacker, ScoreEventForNPCKilled( victim, damageInfo ), attacker )
+		AddPlayerScore( attacker, ScoreEventForNPCKilled( victim, damageInfo ), victim )
 	}
 	catch ( ex ) {}
 }

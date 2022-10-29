@@ -334,7 +334,7 @@ void function MeleeThread_PilotVsEnemy_Target( SyncedMelee action, entity attack
 				else // target killed
 				{
 					if( IsValid( attacker ) )
-						AddPlayerScore( attacker, "Execution", attacker )
+						AddPlayerScore( attacker, "Execution", target )
 				}
 
 				if ( IsValid( target.e.syncedMeleeAttacker ) )
