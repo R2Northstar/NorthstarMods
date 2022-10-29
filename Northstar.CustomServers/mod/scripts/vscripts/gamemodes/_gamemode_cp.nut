@@ -47,7 +47,7 @@ void function GamemodeCP_Init()
 	ScoreEvent_SetEarnMeterValues("KillPilot",0.1,0.12)
 	ScoreEvent_SetEarnMeterValues("KillTitan",0,0)
 	ScoreEvent_SetEarnMeterValues("TitanKillTitan",0,0)
-	ScoreEvent_SetEarnMeterValues("PilotBatteryStolen",0,35)
+	ScoreEvent_SetEarnMeterValues("PilotBatteryStolen",0,0.35)
 	ScoreEvent_SetEarnMeterValues("Headshot",0,0.02)
 	ScoreEvent_SetEarnMeterValues("FirstStrike",0,0.05)
 
