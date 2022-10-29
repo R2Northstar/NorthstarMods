@@ -16,7 +16,7 @@ void function AddMouseMovementCaptureHandler( var capturePanelOrMenu, void funct
     // if the capturePanel or menu already has an array in the table, we append to the array
     // if not, we should create the array, [func] just turns func into an array
     if ( capturePanelOrMenu in file.mouseMovementCaptureCallbacks )
-        file.mouseMovementCaptureCallbacks[capturePanelOrMenu].append(func)
+        file.mouseMovementCaptureCallbacks[capturePanelOrMenu].append( func )
     else
         file.mouseMovementCaptureCallbacks[capturePanelOrMenu] <- [func]
 }
