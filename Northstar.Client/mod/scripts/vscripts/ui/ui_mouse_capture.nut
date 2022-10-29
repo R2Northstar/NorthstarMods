@@ -5,7 +5,7 @@ global function UICodeCallback_MouseMovementCapture
 
 struct
 {
-    // a table of capturePanels, each of which contains an array of callbacks
+    // a table of capturePanels and menus, each of which contains an array of callbacks
     table< var, array< void functionref( int deltaX, int deltaY ) > > mouseMovementCaptureCallbacks = {}
 } file
 
