@@ -118,7 +118,7 @@ void function AiGameModes_SpawnReaper( vector pos, vector rot, int team, string 
 	entity reaper = CreateSuperSpectre( team, pos, rot )
 	// reaper highlight
 	Highlight_SetFriendlyHighlight( reaper, "sp_enemy_pilot" )
-	reaper.Highlight_SetParam( 1, 0, < 3,3,3 > )
+	reaper.Highlight_SetParam( 1, 0, < 2,2,2 > )
 	Highlight_SetEnemyHighlight( reaper, "enemy_titan" )
 
 	SetSpawnOption_Titanfall( reaper )
