@@ -363,7 +363,7 @@ void function DelayedGamemodeAnnouncement( entity player )
 	wait 1.0
 	if( IsValid( player ) )
 	{
-		if( GetRoundsPlayed() < 1 )
+		if( GetRoundsPlayed() < 1 && !HasSwitchedSides() )
 			TryGameModeAnnouncement( player )
 		else
 			TryGameModeAnnouncement( player, false )
