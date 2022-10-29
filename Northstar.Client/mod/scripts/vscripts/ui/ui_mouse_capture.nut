@@ -11,23 +11,38 @@ struct
 
 // this function registers a callback (or "handler") function for a MouseMovementCapture menu panel
 // use this for scrollbars, sliders, etc.
-void function AddMouseMovementCaptureHandler( var capturePanel, void functionref( int deltaX, int deltaY ) func )
+void function AddMouseMovementCaptureHandler( var capturePanelOrMenu, void functionref( int deltaX, int deltaY ) func )
 {
-    // if the capturePanel already has an array in the table, we append to the array
+    // if the capturePanel or menu already has an array in the table, we append to the array
     // if not, we should create the array, [func] just turns func into an array
-    if ( capturePanel in file.mouseMovementCaptureCallbacks )
-        file.mouseMovementCaptureCallbacks[capturePanel].append(func)
+    if ( capturePanelOrMenu in file.mouseMovementCaptureCallbacks )
+        file.mouseMovementCaptureCallbacks[capturePanelOrMenu].append(func)
     else
-        file.mouseMovementCaptureCallbacks[capturePanel] <- [func]
+        file.mouseMovementCaptureCallbacks[capturePanelOrMenu] <- [func]
 }
 
 void function UICodeCallback_MouseMovementCapture( var capturePanel, int deltaX, int deltaY )
 {
+    // run capturePanel callbacks first, then run menu callbacks, this preserves backwards compatibility
+
     // check that the capturePanel is in the table before trying anything stupid
     if ( capturePanel in file.mouseMovementCaptureCallbacks )
     {
         // iterate through the different callback functions
         foreach ( void functionref( int deltaX, int deltaY ) callback in file.mouseMovementCaptureCallbacks[capturePanel] )
+        {
+            // run the callback function
+            callback( deltaX, deltaY )
+        }
+    }
+
+    // get the current menu for running backwards compatible callbacks
+    var menu = GetActiveMenu()
+    // check that the menu is in the table before trying anything stupid
+    if ( menu in file.mouseMovementCaptureCallbacks )
+    {
+        // iterate through the different callback functions
+        foreach ( void functionref( int deltaX, int deltaY ) callback in file.mouseMovementCaptureCallbacks[menu] )
         {
             // run the callback function
             callback( deltaX, deltaY )
