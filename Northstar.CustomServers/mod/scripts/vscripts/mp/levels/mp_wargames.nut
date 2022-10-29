@@ -3,6 +3,7 @@ global function CodeCallback_MapInit
 
 struct {
 	array<entity> marvinSpawners
+	bool marvinSpawnerAdded = false
 
 	float introStartTime
 	entity militiaPod
@@ -76,7 +77,10 @@ void function EnsureWargamesDeathEffectIsClearedForPlayer( entity player )
 
 void function AddMarvinSpawner( entity spawn )
 {
+	if( file.marvinSpawnerAdded ) // only add spawners once, or it will be more and more marvins
+		return
 	file.marvinSpawners.append( spawn )
+	file.marvinSpawnerAdded = true
 }
 
 void function SpawnMarvinsForRound()
