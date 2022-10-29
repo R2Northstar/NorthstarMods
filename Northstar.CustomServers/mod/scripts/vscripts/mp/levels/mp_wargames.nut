@@ -10,8 +10,6 @@ struct {
 	
 	vector militiaPodFXEyePos
 	vector imcPodFXEyePos
-
-	bool isFirstRound = true
 } file
 
 const float MARVIN_RESPAWN_DELAY = 30
@@ -21,7 +19,8 @@ void function CodeCallback_MapInit()
 	AddCallback_EntitiesDidLoad( AddEvacNodes )
 	
 	// dissolve effects
-	AddDeathCallback( "player", WargamesDissolveDeadEntity )	
+	if( !Wargames_IsPlayerDissolveDisabled() ) // defined in custom_damage_effect.gnut
+		AddDeathCallback( "player", WargamesDissolveDeadEntity )	
 	AddDeathCallback( "npc_soldier", WargamesDissolveDeadEntity )
 	AddDeathCallback( "npc_spectre", WargamesDissolveDeadEntity )
 	AddDeathCallback( "npc_pilot_elite", WargamesDissolveDeadEntity )
@@ -364,15 +363,10 @@ void function DelayedGamemodeAnnouncement( entity player )
 	wait 1.0
 	if( IsValid( player ) )
 	{
-		if( file.isFirstRound )
-		{
+		if( GetRoundsPlayed() < 1 )
 			TryGameModeAnnouncement( player )
-			file.isFirstRound = false
-		}
 		else
-		{
 			TryGameModeAnnouncement( player, false )
-		}
 	}
 }
 

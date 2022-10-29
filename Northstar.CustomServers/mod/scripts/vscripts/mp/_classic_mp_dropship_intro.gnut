@@ -42,7 +42,6 @@ struct {
 	
 	float introStartTime
 
-	bool isFirstRound = true
 	bool isDropShipIntro = false
 } file
 
@@ -265,9 +264,8 @@ void function PlayerJumpsFromDropship( entity player )
 	while ( !player.IsOnGround() && !player.IsWallRunning() && !player.IsWallHanging() ) // todo this needs tweaking
 		WaitFrame()
 
-	if( file.isFirstRound )
-	{
+	if( GetRoundsPlayed() < 1 )
 		TryGameModeAnnouncement( player )
-		file.isFirstRound = false
-	}
+	else
+		TryGameModeAnnouncement( player, false )
 }

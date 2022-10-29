@@ -745,7 +745,7 @@ bool function PlayerOrNPCKilled( entity ent, var damageInfo )
 		//For example: In script immediately above this we change the attacker to get the player behind the kill, e.g. owner of a pet titan, etc. Bunch of registered callbacks depends on this.
 		foreach( callbackFunc in svGlobal.onPlayerKilledCallbacks )
 			callbackFunc( ent, attacker, damageInfo )
-		if( attacker.IsPlayer() && !attacker.IsTitan() )
+		if( attacker != ent && attacker.IsPlayer() && !attacker.IsTitan() )
 		{
 			#if BATTLECHATTER_ENABLED
 				// killing pilot dialogues

@@ -7,11 +7,6 @@ global const float NOINTRO_INTRO_PILOT_LENGTH = 6.0 // vanilla behaves like this
 global const float TITAN_DROP_SPAWN_INTRO_LENGTH = 0.0 // this intro shouldn't have a countdown visually, so we have to set the length of this intro to 0
 global const float TITAN_DROP_SPAWN_INTRO_REAL_LENGTH = 2.0 // we wait roughly this long during the intro, even when it's technically over
 
-struct
-{
-	bool isFirstRound = true // round based gamemodes only announce once
-} file
-
 void function ClassicMP_DefaultNoIntro_Setup()
 {
 	AddCallback_OnClientConnected( ClassicMP_DefaultNoIntro_SpawnPlayer )
@@ -49,11 +44,10 @@ void function ClassicMP_DefaultNoIntro_Start()
 				RemoveCinematicFlag( player, CE_FLAG_CLASSIC_MP_SPAWNING )
 			}
 			
-			if( file.isFirstRound )
-			{
+			if( GetRoundsPlayed() <= 1 )
 				TryGameModeAnnouncement( player )
-				file.isFirstRound = false
-			}
+			else
+				TryGameModeAnnouncement( player, false )
 		}
 	}
 	
@@ -95,9 +89,8 @@ void function ClassicMP_DefaultNoIntro_TitanSpawnPlayer( entity player )
 {
 	// blocking call
 	RespawnAsTitan( player, false )
-	if( file.isFirstRound )
-	{
+	if( GetRoundsPlayed() < 1 )
 		TryGameModeAnnouncement( player )
-		file.isFirstRound = false
-	}
+	else
+		TryGameModeAnnouncement( player, false )
 }
