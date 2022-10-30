@@ -130,9 +130,6 @@ void function CodeCallback_MapInit()
 	AddStartPoint( "Fan Drop", 						AA_FanDropThread,					FanDropStartPointSetup, 			FanDropSkipped )
 	AddStartPoint( "Fan Drop End", 					AA_FanDropEndThread,				FanDropEndStartPointSetup, 			FanDropEndSkipped )
 
-	if ( NSIsDedicated() ) // TODO: temp fix, find a better solution
-		return
-
 	AddMobilityGhost( $"anim_recording/timeshift_turret_firepit_overgrown.rpak", "ShowMobilityGhostTurretFirepit" )
 	AddMobilityGhost( $"anim_recording/timeshift_elevator_shaft_overgrown.rpak", "ShowMobilityGhostElevatorShaft" )
 	AddMobilityGhost( $"anim_recording/timeshift_elevator_shaft_pristine.rpak", "ShowMobilityGhostElevatorShaft" )

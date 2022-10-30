@@ -138,9 +138,6 @@ void function CodeCallback_MapInit()
 	SewerCommon_Init()
 	Sewers1_VO_Init()
 
-	if ( NSIsDedicated() )
-		return
-
 	AddMobilityGhost( $"anim_recording/sp_sewers_leap_to_slide.rpak" )
 	AddMobilityGhost( $"anim_recording/sp_sewers_leap_to_sniper.rpak" )
 	AddMobilityGhost( $"anim_recording/sp_sewers_leap_to_grunts.rpak" )

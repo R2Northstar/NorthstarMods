@@ -784,9 +784,6 @@ void function Gauntlet_ResetTrackerStats( GauntletInfo gauntlet )
 // ===== GHOST RECORDINGS =====
 void function Gauntlet_StartGhostPlayback( GauntletInfo gauntlet, string ghostFileName, string ghostDisplayName = "" )//, bool waitForPlayerToStartFirstRun = true )
 {
-	if ( NSIsDedicated() )
-		return
-
 	gauntlet.signalEnt.Signal( "GhostAnimationPlayback_Start" )
 	gauntlet.signalEnt.EndSignal( "GhostAnimationPlayback_Start" )
 	gauntlet.signalEnt.EndSignal( "GhostAnimationPlayback_Stop" )

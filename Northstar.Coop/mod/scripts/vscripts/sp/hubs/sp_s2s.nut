@@ -8267,9 +8267,6 @@ void function MaltaWidow_Main( entity player )
 	array<entity> spawners = GetEntArrayByScriptName( "hangar_fragDrones" )
 	foreach ( spawner in spawners )
 		spawner.Hide()
-	
-	if ( NSIsDedicated() ) // should skip to the next startpoint
-		return
 
 	FlagSet( "Deploy64" )
 
@@ -9146,9 +9143,6 @@ void function MaltaHangar_Skip( entity player )
 
 void function MaltaHangar_Main( entity player )
 {
-	if ( NSIsDedicated() )
-		return
-
 	FlagInit( "HangarTicksDead" )
 
 	FlagWaitAny( "DoTheWidowJump", "PlayerInOrOnSarahWidow" )
@@ -10167,14 +10161,9 @@ void function MaltaBreach_skip( entity player )
 
 void function MaltaBreach_Main( entity player )
 {
-	if ( NSIsDedicated() )
-	{
-		ShipGeoShow( file.malta, "GEO_CHUNK_EXTERIOR_L" )
-		ShipGeoHide( file.malta, "GEO_CHUNK_DECK_FAKE" )
-		ShipGeoShow( file.malta, "GEO_CHUNK_DECK" )
-		Coop_ReloadCurrentMapFromStartPoint( GetCurrentStartPointIndex() + 1 )
-		return
-	}
+	ShipGeoShow( file.malta, "GEO_CHUNK_EXTERIOR_L" )
+	ShipGeoHide( file.malta, "GEO_CHUNK_DECK_FAKE" )
+	ShipGeoShow( file.malta, "GEO_CHUNK_DECK" )
 
 	FlagInit( "BreachGoGoGo" )
 
@@ -10836,13 +10825,9 @@ void function MaltaBridge_Main( entity player )
 								"run_2_stand_45L",
 								"run_2_stand_45R" ]
 	
-	// umm have you heard of 6-4?
-	// no, XD
-	if ( !NSIsDedicated() )
-	{
-		foreach ( index, guy in crew )
-			thread MaltaBridge_CrewRunup( guy, records[ index ], delays[ index ], idles[ index ], arrivals[ index ] )
-	}
+
+	foreach ( index, guy in crew )
+		thread MaltaBridge_CrewRunup( guy, records[ index ], delays[ index ], idles[ index ], arrivals[ index ] )
 
 	thread FlightPanelThink( player, MaltaBridge_FlightControlOutput )
 

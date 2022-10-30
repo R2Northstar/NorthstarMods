@@ -20,7 +20,7 @@
 		},
 		{
 			"Name": "autosprint_type",
-			"DefaultValue": ""
+			"DefaultValue": "1"
 		},
 		{
 			"Name": "joy_movement_stick",

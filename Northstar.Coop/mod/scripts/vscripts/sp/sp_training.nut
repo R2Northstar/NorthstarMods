@@ -6547,9 +6547,6 @@ entity function WaitForPlayerActiveWeapon( entity player )
 
 void function GhostRecorder_RepeatUntilFlag( entity player, string endFlag, entity animRef, asset recordedAnim, float extraRepeatDelay = 0.0, bool silentDissolve = false )
 {
-	if ( NSIsDedicated() )
-		return
-
 	EndSignal( player, "OnDestroy" )
 	EndSignal( level, "StopRepeatingGhostRecorder" )
 

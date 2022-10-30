@@ -212,9 +212,6 @@ void function AssemblyMapInit()
 	FlagInit( "ReapertownPlatforJumpMobilityGhostEnabled" )
 	//FlagInit( "EnteringAssembly" )
 
-	if ( NSIsDedicated() )
-		return
-
 	AddMobilityGhost( $"anim_recording/sp_boomtown_pipe_jump1.rpak" )
 	AddMobilityGhost( $"anim_recording/sp_boomtown_pipe_jump2.rpak" )
 	AddMobilityGhost( $"anim_recording/sp_boomtown_pipe_jump3.rpak" )

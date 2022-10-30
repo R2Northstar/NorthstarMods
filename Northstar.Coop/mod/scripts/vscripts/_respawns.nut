@@ -274,12 +274,6 @@ void function MakePlayerTitan( entity player, vector destination )
 		waitthread PilotBecomesTitan( player, titan )
 		WaitFrame()
 
-		// while( player.IsPilot() || IsPlayerDisembarking( player ) && IsPlayerEmbarking( player ) )
-		// {
-		// 	titan = GetTitanFromPlayer( player )
-		// 	wait 1
-		// }
-
 		titan.Destroy()
 		player.SetOrigin( destination )
 	}

@@ -109,9 +109,6 @@ void function CodeCallback_MapInit()
 	AddStartPoint( "Above The Dome",      StartPoint_AboveTheDome,        StartPoint_Setup_AboveTheDome,        StartPoint_Skipped_AboveTheDome )
 	AddStartPoint( "Pre Ash Fight",    	  StartPoint_PreBossFight,        StartPoint_Setup_PreBossFight,        StartPoint_Skipped_PreBossFight )
 	AddStartPoint( "Ash Fight",           StartPoint_BossFight,           StartPoint_Setup_BossFight,           StartPoint_Skipped_BossFight )
-
-	if ( NSIsDedicated() )
-		return
 	
 	AddMobilityGhost( $"anim_recording/sp_boomtown_end_prowler_cages.rpak", "aboveDome_prowler_cages_done" )
 	AddMobilityGhost( $"anim_recording/sp_boomtown_end_prowler_cages2.rpak", "aboveDome_prowler_cages_done" )

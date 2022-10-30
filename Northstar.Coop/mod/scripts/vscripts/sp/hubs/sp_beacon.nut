@@ -193,9 +193,6 @@ void function CodeCallback_MapInit()
 
 	AddPlayerDidLoad( Beacon_PlayerDidLoad )
 
-	if ( NSIsDedicated() )
-		return
-
 	AddMobilityGhost( $"anim_recording/sp_beacon_round_run1.rpak" )
 	AddMobilityGhost( $"anim_recording/sp_beacon_round_run2.rpak" )
 	AddMobilityGhost( $"anim_recording/sp_beacon_dish_arm_walk.rpak", "BigCraneDone" )

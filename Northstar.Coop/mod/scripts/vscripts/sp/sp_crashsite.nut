@@ -398,9 +398,6 @@ void function CodeCallback_MapInit()
 
 	AddCallback_OnPlayerRespawned( PlayerDidLoad )
 
-	if ( NSIsDedicated() )
-		return
-
 	file.firstGhostId = AddMobilityGhost( $"anim_recording/sp_crashsite_wallrun_1.rpak", "first_ghost" )
 	AddMobilityGhost( $"anim_recording/sp_crashsite_wallrun_2.rpak", "wallrun_recordings" )
 	AddMobilityGhost( $"anim_recording/sp_crashsite_return_from_prowler_pit.rpak", "wallrun_recordings" )
@@ -492,9 +489,6 @@ void function PlayerDidLoad( entity player )
 	thread ForceSlideThink( player )
 	
 	SetPlayer0( player )
-	
-	if ( NSIsDedicated() )
-		return
 
 	SetMobilityGhostDisplayDists( file.firstGhostId, 650, 670 )
 	SetMobilityGhostAnalyzedByPlayer( file.firstGhostId, player )
@@ -6902,9 +6896,6 @@ void function DroneSurvivor( entity drone, entity pathNode )
 void function RunToAndPlayRecordedAnim( entity guy, asset anim )
 {
 	guy.EndSignal( "OnDeath" )
-	
-	if ( NSIsDedicated() )
-		return
 
 	var recording = LoadRecordedAnimation( anim )
 

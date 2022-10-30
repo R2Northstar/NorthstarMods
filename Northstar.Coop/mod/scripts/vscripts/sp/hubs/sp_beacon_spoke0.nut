@@ -53,9 +53,6 @@ void function CodeCallback_MapInit()
 
 	AddScriptNoteworthySpawnCallback( "LogRollRoomStalker", LogRollRoomStalkerSpawnCallback )
 
-	if ( NSIsDedicated() )
-		return
-
 	AddMobilityGhost( $"anim_recording/spoke0_electric1.rpak" )
 	AddMobilityGhost( $"anim_recording/spoke0_electric2.rpak" )
 	AddMobilityGhost( $"anim_recording/spoke0_electric3.rpak" )
