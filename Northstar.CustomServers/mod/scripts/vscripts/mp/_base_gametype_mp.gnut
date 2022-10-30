@@ -16,6 +16,7 @@ global function SetPlayerDeathsHidden
 global function TrackTitanDamageInPlayerGameStat
 
 global function SetPlayerRespawnForced
+global function SetPlayerCameraToIntermissionCam
 
 global function ShouldEntTakeDamage_SPMP
 global function GetTitanBuildTime
@@ -29,6 +30,7 @@ struct {
 	entity intermissionCamera
 	array<entity> specCams
 	
+	// modified
 	bool forcedRespawn = true
 	array<string> lateSpawnedPlayerUIDs = []
 } file
@@ -250,13 +252,13 @@ void function CodeCallback_OnPlayerRespawned( entity player )
 {
 	SetHumanRagdollImpactTable( player )
 	
+	player.s.inGracePeriod = true // defensive fix
 	player.s.respawnCount++
 	player.s.respawnTime = Time()
 	ClearRecentDamageHistory( player )
 	
 	player.Signal( "OnRespawned" ) // kill any postdeaththreads that could be running
 	
-	player.s.inGracePeriod = true // defensive fix
 	Loadouts_TryGivePilotLoadout( player )
 	GracePeriodThink( player ) // grace period done here
 	//player.SetPredictionEnabled( true ) doesn't seem needed, as native code seems to set this
@@ -279,7 +281,6 @@ void function GracePeriodThink( entity player )
 void function GracePeriodThink_Threaded( entity player )
 {
 	player.EndSignal( "OnDestroy" )
-
 	player.EndSignal( "OnPrimaryAttack" )
 	player.EndSignal( "OnDeath" )
 
@@ -298,9 +299,10 @@ void function GracePeriodThink_Threaded( entity player )
 	)
 
 	float countingTime
-	while( countingTime <= CLASS_CHANGE_GRACE_PERIOD )
+	while( countingTime <= CLASS_CHANGE_GRACE_PERIOD - 0.5 ) // to get exact time
 	{
 		wait 0.2
+		// in dropship
 		if( player.GetParent() != null && ( HasCinematicFlag( player, CE_FLAG_INTRO ) || HasCinematicFlag( player, CE_FLAG_CLASSIC_MP_SPAWNING ) || HasCinematicFlag( player, CE_FLAG_WAVE_SPAWNING ) ) )
 			continue
 
@@ -329,7 +331,7 @@ void function PostDeathThread_MP( entity player, var damageInfo ) // based on ga
 
 	player.p.deathOrigin = player.GetOrigin()
 	player.p.deathAngles = player.GetAngles()
-	
+
 	player.s.inPostDeath = true
 	player.s.inGracePeriod = true // make sure player always in GracePeriod after respawn
 	player.s.respawnSelectionDone = false
@@ -372,7 +374,7 @@ void function PostDeathThread_MP( entity player, var damageInfo ) // based on ga
 			{
 				alreadyAssisted[attackerInfo.attacker.GetEncodedEHandle()] <- true
 				Remote_CallFunction_NonReplay( attackerInfo.attacker, "ServerCallback_SetAssistInformation", attackerInfo.damageSourceId, attacker.GetEncodedEHandle(), player.GetEncodedEHandle(), attackerInfo.time ) 
-				AddPlayerScore( attackerInfo.attacker, "PilotAssist", attackerInfo.attacker )
+				AddPlayerScore( attackerInfo.attacker, "PilotAssist", player )
 				attackerInfo.attacker.AddToPlayerGameStat( PGS_ASSISTS, 1 )
 			}
 		}
@@ -448,6 +450,7 @@ void function PostDeathThread_MP( entity player, var damageInfo ) // based on ga
 		if( file.forcedRespawn && methodOfDeath != damagedef_despawn ) // check for spectator mod
 		{
 			float waitBeforeRespawn = 0.0
+			//if( !shouldDoReplay || respawnDelay >= 3.0 ) // doing this so player can respawn as titan in some modes, but vanilla don't features this lol
 			if( !shouldDoReplay )
 			{
 				waitBeforeRespawn = 3.0 - respawnDelay
@@ -484,10 +487,12 @@ void function SetPlayerCameraToIntermissionCam( entity player, float delay = 0 )
 		player.EndSignal( "OnDestroy" )
 		player.EndSignal( "OnDeath" )
 		player.EndSignal( "RespawnMe" )
+		//print( "Waiting " + string( delay ) + " s before setting camera" )
 		wait delay
 	}
 	if ( file.intermissionCamera != null )
 	{
+		//print( "Setting player camera to intermissionCam" )
 		player.SetObserverModeStaticPosition( file.intermissionCamera.GetOrigin() )
 		player.SetObserverModeStaticAngles( file.intermissionCamera.GetAngles() )
 		player.ClearParent() // sometimes they're still parented, do a defensive fix
