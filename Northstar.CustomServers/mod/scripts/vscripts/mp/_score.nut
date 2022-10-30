@@ -204,14 +204,22 @@ void function ScoreEvent_TitanKilled( entity victim, entity attacker, var damage
 	if ( attacker.IsTitan() )
 	{
 		if( victim.GetBossPlayer() || victim.IsPlayer() ) // to confirm this is a pet titan or player titan
+		{
 			AddPlayerScore( attacker, "TitanKillTitan", attacker ) // this will show the "Titan Kill" callsign event
+			if( GetShouldPlayFactionDialogue() )
+				KilledPlayerTitanDialogue( attacker, victim )
+		}
 		else
 			AddPlayerScore( attacker, "TitanKillTitan" )
 	}
 	else
 	{
 		if( victim.GetBossPlayer() || victim.IsPlayer() )
+		{
 			AddPlayerScore( attacker, "KillTitan", attacker )
+			if( GetShouldPlayFactionDialogue() )
+				KilledPlayerTitanDialogue( attacker, victim )
+		}
 		else
 			AddPlayerScore( attacker, "KillTitan" )
 	}
@@ -275,4 +283,42 @@ void function ScoreEvent_SetupEarnMeterValuesForMixedModes() // mixed modes in t
 void function ScoreEvent_SetupEarnMeterValuesForTitanModes()
 {
 	// relatively sure we don't have to do anything here but leaving this function for consistency
+}
+
+void function KilledPlayerTitanDialogue( entity attacker, entity victim )
+{
+	if( !attacker.IsPlayer() )
+		return
+	entity titan
+	if ( victim.IsTitan() )
+		titan = victim
+
+	if( !IsValid( titan ) )
+		return
+	string titanCharacterName = GetTitanCharacterName( titan )
+
+	switch( titanCharacterName )
+	{
+		case "ion":
+			PlayFactionDialogueToPlayer( "kc_pilotkillIon", attacker )
+			return
+		case "tone":
+			PlayFactionDialogueToPlayer( "kc_pilotkillTone", attacker )
+			return
+		case "legion":
+			PlayFactionDialogueToPlayer( "kc_pilotkillLegion", attacker )
+			return
+		case "scorch":
+			PlayFactionDialogueToPlayer( "kc_pilotkillScorch", attacker )
+			return
+		case "ronin":
+			PlayFactionDialogueToPlayer( "kc_pilotkillRonin", attacker )
+			return
+		case "northstar":
+			PlayFactionDialogueToPlayer( "kc_pilotkillNorthstar", attacker )
+			return
+		default:
+			PlayFactionDialogueToPlayer( "kc_pilotkilltitan", attacker )
+			return
+	}
 }
