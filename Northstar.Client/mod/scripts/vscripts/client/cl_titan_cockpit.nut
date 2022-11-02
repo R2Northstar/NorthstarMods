@@ -1039,7 +1039,7 @@ string function RollRandomEjectString()
 		}
 		else
 		{
-			return file.moddedRareEjectMessages[index]
+			return file.moddedRareEjectMessages[index - COCKPIT_EJECT_RARE_COUNT]
 		}
 		
 	}
@@ -1050,10 +1050,8 @@ string function RollRandomEjectString()
 		string result = "#COCKPIT_EJECT_COMMON_" + index
 		return result
 	}
-	else
-	{
-		return file.moddedCommonEjectMessages[index]
-	}
+	return file.moddedCommonEjectMessages[index - COCKPIT_EJECT_COMMON_COUNT]
+
 }
 
 void function PlayerEjects( entity player, entity cockpit ) //Note that this can be run multiple times in a frame, e.g. get damaged by 4 pellets of a shotgun that brings the Titan into a doomed state with auto eject. Not ideal
