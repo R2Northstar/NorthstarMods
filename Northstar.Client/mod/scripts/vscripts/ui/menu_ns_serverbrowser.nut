@@ -8,7 +8,7 @@ global function ThreadedAuthAndConnectToServer
 // Stop peeking
 
 const int BUTTONS_PER_PAGE = 15 // Number of servers we show
-const float DOUBLE_CLICK_TIME_MS = 0.4 // Max time between clicks for double click registering 
+const float DOUBLE_CLICK_TIME_MS = 0.4 // Max time between clicks for double click registering
 
 // Stores mouse delta used for scroll bar
 struct {
@@ -76,10 +76,10 @@ struct {
 	int serverButtonFocusedID = 0
 	bool shouldFocus = true
 	bool cancelConnection = false
-	
+
 	// filtered array of servers
 	array<serverStruct> serversArrayFiltered
-	
+
 	// UI references
 	array<var> serverButtons
 	array<var> serversName
@@ -95,7 +95,7 @@ struct {
 bool function FloatsEqual( float arg1, float arg2, float epsilon )
 {
 	if ( fabs( arg1 - arg2 ) < epsilon ) return true
-	
+
 	return false
 }
 
@@ -482,7 +482,7 @@ void function OnHitDummyTop( var button )
 		file.scrollOffset = 0
 		Hud_SetFocused(Hud_GetChild(file.menu, "BtnServerNameTab"))
 	}
-	else 
+	else
 	{
 		// only update if list position changed
 		UpdateShownPage()
@@ -526,7 +526,7 @@ void function OnDownArrowSelected( var button )
 	{
 		file.scrollOffset = file.serversArrayFiltered.len() - BUTTONS_PER_PAGE
 	}
-	
+
 	UpdateShownPage()
 	UpdateListSliderPosition( file.serversArrayFiltered.len() )
 }
@@ -539,7 +539,7 @@ void function OnUpArrowSelected( var button )
 	{
 		file.scrollOffset = 0
 	}
-	
+
 	UpdateShownPage()
 	UpdateListSliderPosition( file.serversArrayFiltered.len() )
 }
@@ -547,41 +547,41 @@ void function OnUpArrowSelected( var button )
 ////////////////////////
 // Key Callbacks
 ////////////////////////
-void function OnEnterPressed( arg ) 
+void function OnEnterPressed( arg )
 {
 	// only trigger if a server is focused
-	if ( IsServerButtonFocused() ) 
+	if ( IsServerButtonFocused() )
 	{
 		OnServerSelected(0)
 	}
 }
 
-void function OnKeyRPressed( arg ) 
+void function OnKeyRPressed( arg )
 {
-	if ( !IsSearchBarFocused() ) 
+	if ( !IsSearchBarFocused() )
 	{
 		RefreshServers(0);
 	}
 }
 
-bool function IsServerButtonFocused() 
+bool function IsServerButtonFocused()
 {
 	var focusedElement = GetFocus()
 	if ( focusedElement == null )
 		return false
-	
+
 	var name = Hud_GetHudName( focusedElement )
 
-	foreach ( element in GetElementsByClassname( file.menu, "ServerButton" ) ) 
+	foreach ( element in GetElementsByClassname( file.menu, "ServerButton" ) )
 	{
-		if ( element == focusedElement ) 
+		if ( element == focusedElement )
 			return true
 	}
 
 	return false
 }
 
-bool function IsSearchBarFocused() 
+bool function IsSearchBarFocused()
 {
 	return Hud_GetChild( file.menu, "BtnServerSearch" ) == GetFocus()
 }
@@ -763,22 +763,22 @@ void function FilterServerList()
 		// Filters
 		if ( filterArguments.hideEmpty && tempServer.serverPlayers == 0 )
 			continue;
-		
+
 		if ( filterArguments.hideFull && tempServer.serverPlayers == tempServer.serverPlayersMax )
 			continue;
-		
+
 		if ( filterArguments.hideProtected && tempServer.serverProtected )
 			continue;
-		
+
 		if ( filterArguments.filterMap != "SWITCH_ANY" && filterArguments.filterMap != tempServer.serverMap )
 			continue;
-		
+
 		if ( filterArguments.filterGamemode != "SWITCH_ANY" && filterArguments.filterGamemode != tempServer.serverGamemode )
 			continue;
-		
+
 		// Search
 		if ( filterArguments.useSearch )
-		{	
+		{
 			array<string> sName
 			sName.append( tempServer.serverName.tolower() )
 			sName.append( Localize( GetMapDisplayName( tempServer.serverMap ) ).tolower() )
@@ -788,22 +788,22 @@ void function FilterServerList()
 			sName.append( NSGetServerDescription( i ).tolower() )
 
 			string sTerm = filterArguments.searchTerm.tolower()
-			
+
 			bool found = false
 			for( int j = 0; j < sName.len(); j++ )
 			{
 				if ( sName[j].find( sTerm ) != null )
 					found = true
 			}
-			
+
 			if ( !found )
 				continue;
 		}
-		
+
 		// Server fits our requirements, add it to the list
 		file.serversArrayFiltered.append( tempServer )
 	}
-	
+
 	// Update player and server count
 	Hud_SetText( Hud_GetChild( file.menu, "InGamePlayerLabel" ), Localize("#INGAME_PLAYERS", string( totalPlayers ) ) )
 	Hud_SetText( Hud_GetChild( file.menu, "TotalServerLabel" ),  Localize("#TOTAL_SERVERS", string( NSGetServerCount() ) ) )
@@ -856,7 +856,7 @@ void function OnServerButtonFocused( var button )
 {
 	if ( file.scrollOffset < 0 )
 		file.scrollOffset = 0
-	
+
 	int scriptID = int ( Hud_GetScriptID( button ) )
 	file.serverButtonFocusedID = scriptID
 	if ( file.serversArrayFiltered.len() > 0 )
@@ -1097,8 +1097,8 @@ void function ThreadedAuthAndConnectToServer( string password = "" )
 	else
 	{
 		DialogData dialogData
-		dialogData.header = "#ERROR"
-		dialogData.message = "Authentication Failed"
+		dialogData.header = NSGetAuthFailReason()
+		dialogData.message = NSGetAuthFailMessage()
 		dialogData.image = $"ui/menu/common/dialog_error"
 
 		#if PC_PROG
