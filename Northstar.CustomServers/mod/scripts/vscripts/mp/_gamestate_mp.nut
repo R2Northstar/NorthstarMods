@@ -1102,7 +1102,7 @@ void function DialoguePlayWinnerDetermined()
 		if( winningTeam != TEAM_UNASSIGNED )
 		{
 			PlayFactionDialogueToTeam( "scoring_won" , winningTeam )
-			PlayFactionDialogueToTeam( "scoring_", GetOtherTeam( winningTeam ) )
+			PlayFactionDialogueToTeam( "scoring_lost", GetOtherTeam( winningTeam ) )
 		}
 		return
 	}
