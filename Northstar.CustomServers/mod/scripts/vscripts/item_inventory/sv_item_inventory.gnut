@@ -68,7 +68,9 @@ int function PlayerInventory_CountBurnRef( entity player, string burnRef )
 
 void function PlayerInventory_TakeInventoryItem( entity player )
 {
+	player.EndSignal( "OnDestroy" )
 	entity preexistingWeapon = player.GetOffhandWeapon( OFFHAND_INVENTORY )
+
 	if( !IsValid( preexistingWeapon ) )
 		return
 	preexistingWeapon.EndSignal( "OnDestroy" )
@@ -83,6 +85,8 @@ void function PlayerInventory_TakeInventoryItem( entity player )
 
 void function PlayerInventory_GiveInventoryItem( entity player, InventoryItem inventoryItem )
 {
+	player.EndSignal( "OnDestroy" )
+
 	array<string> mods = []
 
 	if ( inventoryItem.itemType == eInventoryItemType.burnmeter ) {
@@ -93,6 +97,9 @@ void function PlayerInventory_GiveInventoryItem( entity player, InventoryItem in
 
 	// ensure inventory slot isn't full to avoid crash
 	waitthread PlayerInventory_TakeInventoryItem( player )
+	entity preexistingWeapon = player.GetOffhandWeapon( OFFHAND_INVENTORY ) // defensive fix
+	if( IsValid( preexistingWeapon ) )
+		player.TakeWeaponNow( preexistingWeapon.GetWeaponClassName() )
 
 	player.GiveOffhandWeapon( inventoryItem.weaponRef, OFFHAND_INVENTORY, mods )
 }
