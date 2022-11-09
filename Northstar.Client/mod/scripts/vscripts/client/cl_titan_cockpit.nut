@@ -37,8 +37,10 @@ global function UpdateEjectHud_SetButtonPressCount
 
 global function SetUnlimitedDash
 
+// Added by northstar
 global function AddCommonEjectMessage
 global function AddRareEjectMessage
+
 #if MP
 global function NetworkedVarChangedCallback_UpdateVanguardRUICoreStatus
 global function DisplayFrontierRank
@@ -1012,6 +1014,7 @@ void function PlayerPressed_Eject( entity player )
 
 	PlayerEjects( player, cockpit )
 }
+
 void function AddCommonEjectMessage( string message )
 {
 	file.moddedCommonEjectMessages.append( message )
@@ -1045,8 +1048,7 @@ string function RollRandomEjectString()
 	int index = RandomInt( COCKPIT_EJECT_COMMON_COUNT + file.moddedCommonEjectMessages.len() )
 	if ( index <= COCKPIT_EJECT_COMMON_COUNT )
 	{
-		string result = "#COCKPIT_EJECT_COMMON_" + index
-		return result
+		return "#COCKPIT_EJECT_COMMON_" + index
 	}
 	return file.moddedCommonEjectMessages[index - COCKPIT_EJECT_COMMON_COUNT]
 
