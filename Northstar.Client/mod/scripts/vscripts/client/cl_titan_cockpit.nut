@@ -74,7 +74,7 @@ struct
 
 	bool isFirstBoot = true
 	var scorchHotstreakRui
-	//Added by northstar
+	// Added by northstar
 	array<string> moddedRareEjectMessages
 	array<string> moddedCommonEjectMessages
 } file
@@ -1032,20 +1032,18 @@ string function RollRandomEjectString()
 	if ( randForType < CHANCE_FOR_RARE )
 	{
 		int index = RandomInt( COCKPIT_EJECT_RARE_COUNT + file.moddedRareEjectMessages.len() )
-		if( index <= COCKPIT_EJECT_RARE_COUNT )
+		if ( index <= COCKPIT_EJECT_RARE_COUNT )
 		{
-			string result = "#COCKPIT_EJECT_RARE_" + index
-			return result
+			return "#COCKPIT_EJECT_RARE_" + index
 		}
 		else
 		{
 			return file.moddedRareEjectMessages[index - COCKPIT_EJECT_RARE_COUNT]
 		}
-		
 	}
 
 	int index = RandomInt( COCKPIT_EJECT_COMMON_COUNT + file.moddedCommonEjectMessages.len() )
-	if( index <= COCKPIT_EJECT_COMMON_COUNT )
+	if ( index <= COCKPIT_EJECT_COMMON_COUNT )
 	{
 		string result = "#COCKPIT_EJECT_COMMON_" + index
 		return result
