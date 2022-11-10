@@ -88,35 +88,35 @@ void function ModeButton_GetFocus( var button )
 
 
 	string imageName = GetPlaylistVarOrUseValue( modeName, "imageOverride", "default" )
-	if(imageName == "default")
+	if( imageName == "default" )
 	{
 		asset playlistImage = GetPlaylistImage( modeName )
 		RuiSetImage( Hud_GetRui( nextModeImage ), "basicImage", playlistImage )
 		
-		Hud_SetVisible(nextModeImage, true)
-		Hud_SetVisible(nextModeImageAlt, false)
+		Hud_Show( nextModeImage )
+		Hud_Hide( nextModeImageAlt )
 	}
 	else
 	{
-		asset playlistImage = StringToAsset(imageName)
+		asset playlistImage = StringToAsset( imageName )
 		RuiSetImage( Hud_GetRui( nextModeImageAlt ), "iconImage", playlistImage )
 		
-		Hud_SetVisible(nextModeImageAlt, true)
-		Hud_SetVisible(nextModeImage, false)
+	    Hud_Show( nextModeImageAlt )
+		Hud_Hide( nextModeImage )
 	}
 	string iconName = GetPlaylistVarOrUseValue( modeName, "IconOverride", "default" )
-	if(iconName == "default")
+	if( iconName == "default" )
 	{
 		RuiSetImage( Hud_GetRui( nextModeIcon ), "basicImage", GetPlaylistThumbnailImage( modeName ) )
-		Hud_SetVisible(nextModeIcon, true)
-		Hud_SetVisible(nextModeIconAlt, false)
+		Hud_Showe( nextModeIcon )
+		Hud_Hide( nextModeIconAlt )
 	}
 	else
 	{
 		var rui = Hud_GetRui( nextModeIconAlt )
-		RuiSetImage( rui, "iconImage", StringToAsset(iconName) )
-		Hud_SetVisible(nextModeIcon, false)
-		Hud_SetVisible(nextModeIconAlt, true)
+		RuiSetImage( rui, "iconImage", StringToAsset( iconName ) )
+		Hud_Show( nextModeIcon )
+		Hud_Hide( nextModeIconAlt )
 	}
 
 	Hud_SetText( nextModeName, GetGameModeDisplayName( modeName ) )
