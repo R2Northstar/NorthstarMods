@@ -524,21 +524,20 @@ void function SetModeInfo( string modeName )
 	var nextModeIcon = Hud_GetChild( file.menu, "NextModeIcon" )
 	string iconName = GetPlaylistVarOrUseValue( modeName, "iconOverride", "default" )
 	
-	if(iconName == "default")
+	if( iconName == "default" )
 	{
 		RuiSetImage( Hud_GetRui( nextModeIcon ), "basicImage", GetPlaylistThumbnailImage( modeName ) )
 		
-		Hud_SetVisible(nextModeIcon, true)
-		Hud_SetVisible(nextModeIconAlt, false)
+		Hud_Show( nextModeIcon )
+		Hud_Hide( nextModeIconAlt )
 	}	
 	else
 	{
 		RuiSetImage( Hud_GetRui( nextModeIconAlt ), "iconImage", StringToAsset(iconName) )
 		
-		Hud_SetVisible(nextModeIcon, false)
-		Hud_SetVisible(nextModeIconAlt, true)
+		Hud_Hide( nextModeIcon )
+		Hud_Show( nextModeIconAlt )
 	}
-	//Hud_Show( nextModeIcon )
 
 	Hud_SetText( file.nextGameModeLabel, GetGameModeDisplayName( modeName ) )
 }
