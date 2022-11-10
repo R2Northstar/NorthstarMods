@@ -19,22 +19,16 @@ resource/ui/menus/mode_select.menu
 		MenuCommon
 		{
 			ControlName				CNestedPanel
-			xpos					0
-			ypos					0
 			wide					f0
 			tall					f0
-			visible					1
 			controlSettingsFile		"resource/ui/menus/panels/menu_common.res"
 		}
 
 		MatchmakingStatus
 		{
 			ControlName				CNestedPanel
-			xpos					0
-			ypos					0
 			wide					f0
 			tall					f0
-			visible					1
 			controlSettingsFile		"resource/ui/menus/panels/matchmaking_status.res"
 		}
 

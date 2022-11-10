@@ -763,7 +763,6 @@ void function FilterServerList()
 		tempServer.serverPlayers = NSGetServerPlayerCount( i )
 		tempServer.serverPlayersMax = NSGetServerMaxPlayerCount( i )
 		tempServer.serverMap = NSGetServerMap( i )
-		//tempServer.serverGamemode = GetGameModeDisplayName( NSGetServerPlaylist ( i ) )
 		tempServer.serverGamemode =  NSGetServerPlaylist ( i ) 
 
 		totalPlayers += tempServer.serverPlayers
@@ -937,9 +936,7 @@ void function DisplayFocusedServerInfo( int scriptID )
 	// mode name/image
 	string mode = GetGameModeDisplayName( file.serversArrayFiltered[ serverIndex ].serverGamemode )
 	string playlist = file.serversArrayFiltered[ serverIndex ].serverGamemode
-	print("mode "+mode)
 	Hud_SetVisible( Hud_GetChild( menu, "NextModeIcon" ), true )
-	//RuiSetImage( Hud_GetRui( Hud_GetChild( menu, "NextModeIcon" ) ), "basicImage", GetPlaylistThumbnailImage( mode ) )
 	
 	var nextModeIconAlt = Hud_GetChild( menu, "NextModeIconPatch" )
 	var nextModeIcon = Hud_GetChild( menu, "NextModeIcon" )
@@ -949,15 +946,15 @@ void function DisplayFocusedServerInfo( int scriptID )
 	{
 		RuiSetImage( Hud_GetRui( nextModeIcon ), "basicImage", GetPlaylistThumbnailImage( playlist ) )
 		
-		Hud_SetVisible(nextModeIcon, true)
-		Hud_SetVisible(nextModeIconAlt, false)
+		Hud_Show( nextModeIcon )
+		Hud_Hide( nextModeIconAlt )
 	}	
 	else
 	{
 		RuiSetImage( Hud_GetRui( nextModeIconAlt ), "iconImage", StringToAsset(iconName) )
 		
-		Hud_SetVisible(nextModeIcon, false)
-		Hud_SetVisible(nextModeIconAlt, true)
+		Hud_Hide( nextModeIcon )
+		Hud_Show( nextModeIconAlt )
 	}
 
 
