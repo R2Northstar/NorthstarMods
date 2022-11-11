@@ -1035,22 +1035,17 @@ string function RollRandomEjectString()
 	if ( randForType < CHANCE_FOR_RARE )
 	{
 		int index = RandomInt( COCKPIT_EJECT_RARE_COUNT + file.moddedRareEjectMessages.len() )
-		if ( index <= COCKPIT_EJECT_RARE_COUNT )
-		{
+		if ( index < COCKPIT_EJECT_RARE_COUNT )
 			return "#COCKPIT_EJECT_RARE_" + index
-		}
 		else
-		{
 			return file.moddedRareEjectMessages[index - COCKPIT_EJECT_RARE_COUNT]
-		}
 	}
 
 	int index = RandomInt( COCKPIT_EJECT_COMMON_COUNT + file.moddedCommonEjectMessages.len() )
-	if ( index <= COCKPIT_EJECT_COMMON_COUNT )
-	{
+	if ( index < COCKPIT_EJECT_COMMON_COUNT )
 		return "#COCKPIT_EJECT_COMMON_" + index
-	}
-	return file.moddedCommonEjectMessages[index - COCKPIT_EJECT_COMMON_COUNT]
+	else
+		return file.moddedCommonEjectMessages[index - COCKPIT_EJECT_COMMON_COUNT]
 
 }
 
