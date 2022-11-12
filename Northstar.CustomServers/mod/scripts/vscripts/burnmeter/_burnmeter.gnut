@@ -412,7 +412,7 @@ void function PlayerUsesMaphackBurncardThreaded( entity player )
 
 		if ( IsAlive( player ) ) // only owner can see the pulse
 			Remote_CallFunction_Replay( player, "ServerCallback_SonarPulseFromPosition", player.GetOrigin().x, player.GetOrigin().y, player.GetOrigin().z, SONAR_GRENADE_RADIUS )
-
+		
 		foreach ( entity ent in entities )
 		{
 			if ( !IsValid( ent ) ) // Not sure why we can get invalid entities at this point
@@ -420,9 +420,6 @@ void function PlayerUsesMaphackBurncardThreaded( entity player )
 
 			if ( ent.IsPlayer() )
 			{
-				if ( IsAlive( player ) )
-					Remote_CallFunction_Replay( ent, "ServerCallback_SonarPulseFromPosition", player.GetOrigin().x, player.GetOrigin().y, player.GetOrigin().z, SONAR_GRENADE_RADIUS )
-
 				// Map Hack also gives radar on enemies for longer than the sonar duration.
 				if ( ent.GetTeam() == playerTeam )
 					thread ScanMinimap( ent, false, MAPHACK_PULSE_DELAY - 0.2 )
