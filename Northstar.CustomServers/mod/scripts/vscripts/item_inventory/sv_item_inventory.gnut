@@ -77,7 +77,7 @@ void function PlayerInventory_TakeInventoryItem( entity player )
 	if( preexistingWeapon.GetWeaponClassName() == "mp_ability_burncardweapon" )
 	{
 		var fireTime = preexistingWeapon.GetWeaponInfoFileKeyField( "fire_anim_rate" )
-		if( fireTime != null )
+		if( fireTime )
 			wait fireTime
 	}
 	player.TakeWeaponNow( preexistingWeapon.GetWeaponClassName() )
