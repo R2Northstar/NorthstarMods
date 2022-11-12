@@ -1,7 +1,7 @@
 {
 	"Name": "Northstar.Client",
 	"Description": "Various ui and client changes to fix bugs and add better support for mods",
-	"Version": "1.9.0",
+	"Version": "1.10.0",
 	"LoadPriority": 0,
 	"ConVars": [
 		{
@@ -125,7 +125,11 @@
 			"RunOn": "UI",
 			"UICallback": {
 				"Before": "AddModSettingsMenu"
-			}
+      }
+    },
+    {
+			"Path": "ui/ui_mouse_capture.nut",
+			"RunOn": "UI"
 		}
 	],
 	"Localisation": [
