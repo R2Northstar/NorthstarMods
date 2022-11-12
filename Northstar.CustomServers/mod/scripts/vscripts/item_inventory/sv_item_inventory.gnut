@@ -132,7 +132,7 @@ void function PlayerInventory_PopInventoryItem( entity player )
 
 		if (playerInventoryStack.len() > 0) {
 			InventoryItem nextInventoryItem = playerInventoryStack[playerInventoryStack.len() - 1]
-			thread PlayerInventory_GiveInventoryItem(player, nextInventoryItem)
+			thread PlayerInventory_GiveInventoryItem( player, nextInventoryItem )
 		} else {
 			waitthread PlayerInventory_TakeInventoryItem( player )
 		}
