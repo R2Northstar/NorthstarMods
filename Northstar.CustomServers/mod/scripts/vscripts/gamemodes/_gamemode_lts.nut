@@ -17,6 +17,7 @@ void function GamemodeLts_Init()
 	SetSwitchSidesBased( true )
 	SetRoundBased( true )
 	SetRespawnsEnabled( false )
+	SetShouldPlayMusic( false )
 	Riff_ForceSetEliminationMode( eEliminationMode.PilotsTitans )
 	Riff_ForceSetSpawnAsTitan( eSpawnAsTitan.Always )
 	SetShouldUseRoundWinningKillReplay( true )
@@ -51,7 +52,12 @@ void function WaitForThirtySecondsLeftThreaded()
 	
 	// wait until 30sec left 
 	wait ( endTime - 30 ) - Time()
-	PlayMusicToAll( eMusicPieceID.LEVEL_LAST_MINUTE )
+	//PlayMusicToAll( eMusicPieceID.LEVEL_LAST_MINUTE )
+	//try using this?
+	CreateTeamMusicEvent( TEAM_IMC, eMusicPieceID.LEVEL_LAST_MINUTE, Time() )
+	CreateTeamMusicEvent( TEAM_MILITIA, eMusicPieceID.LEVEL_LAST_MINUTE, Time() )
+	foreach( entity player in GetPlayerArray() )
+		PlayCurrentTeamMusicEventsOnPlayer( player )
 	
 	foreach ( entity player in GetPlayerArray() )
 	{	

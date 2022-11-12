@@ -1,3 +1,4 @@
+untyped // so we can use entity.s.
 global function Sv_EarnMeter_Init
 global function PlayerEarnMeter_SoftReset
 global function PlayerEarnMeter_SetOwnedFrac
@@ -480,6 +481,16 @@ void function JFS_PlayerEarnMeter_CoreRewardUpdate( entity titan, float starting
 
 void function GiveOffhandElectricSmoke( entity titan )
 {
+	if( titan.GetModelName() == $"models/titans/buddy/titan_buddy.mdl" ) // for fake bt
+		return
+
+	// unable to handle autotitans
+	if ( "disableOffhandSmoke" in titan.s )
+	{
+		if( expect bool( titan.s.disableOffhandSmoke ) )
+			return
+	}
+	
 	entity soul = titan.GetTitanSoul()
 	bool hasAntiRodeoKit = IsValid( soul ) && SoulHasPassive( soul, ePassives.PAS_ANTI_RODEO )
 	if ( titan.GetOffhandWeapon( OFFHAND_INVENTORY ) != null )

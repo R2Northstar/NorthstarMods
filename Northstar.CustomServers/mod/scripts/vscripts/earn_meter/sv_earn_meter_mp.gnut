@@ -3,10 +3,12 @@ global function Sv_EarnMeterMP_Init
 global function EarnMeterMP_SetTitanLoadout
 global function EarnMeterMP_SetPassiveMeterGainEnabled
 global function EarnMeterMP_SetBoostByRef
+global function EarnMeterMP_SetPassiveGainProgessEnable
 
 struct {
 	float playingStartTime
 	bool passiveMeterGainEnabled = true
+	bool passiveGainProgressEnabled = true // like vanilla
 } file
 
 void function Sv_EarnMeterMP_Init()
@@ -30,6 +32,11 @@ void function EarnMeterMP_SetTitanLoadout( entity player )
 void function EarnMeterMP_SetPassiveMeterGainEnabled( bool enabled )
 {
 	file.passiveMeterGainEnabled = enabled
+}
+
+void function EarnMeterMP_SetPassiveGainProgessEnable( bool enabled )
+{
+	file.passiveGainProgressEnabled = enabled
 }
 
 void function SetupPlayerEarnMeter( entity player )
@@ -92,6 +99,7 @@ void function EarnMeterMP_PlayerLifeThink( entity player )
 	float pilotRewardFrac = PlayerEarnMeter_GetRewardFrac( player )
 	int lastEarnMeterMode = PlayerEarnMeter_GetMode( player )
 	float lastPassiveGainTime = Time()
+	float progressFrac = 0.01
 
 	// If titan avaliable and we're nearly reach it
 	thread TryTitanSoonAnnouncement( player )
@@ -111,6 +119,18 @@ void function EarnMeterMP_PlayerLifeThink( entity player )
 
 	while ( true )
 	{
+		if( GetGameState() < eGameState.Playing ) // Prematch
+		{
+			WaitFrame()
+			continue
+		}
+		
+		// progressFrac calculate, WIP
+		int winningTeam = GetWinningTeam()
+		if( IsFFAGame() )
+			winningTeam = GetWinningTeamWithFFASupport()
+		
+		
 		int desiredEarnMeterMode
 
 		if ( player.IsTitan() )
@@ -163,10 +183,13 @@ void function EarnMeterMP_PlayerLifeThink( entity player )
 				PlayerEarnMeter_RefreshGoal( player )
 			}
 
-			if ( Time() - lastPassiveGainTime > 4.0 && file.passiveMeterGainEnabled ) // this might be 5.0
+			if ( Time() - lastPassiveGainTime >= 5.0 && file.passiveMeterGainEnabled ) // this might be 5.0
 			{
 				lastPassiveGainTime = Time()
-				PlayerEarnMeter_AddOwnedFrac( player, 0.01 )
+				if( file.passiveGainProgressEnabled )
+					PlayerEarnMeter_AddOwnedFrac( player, progressFrac )
+				else
+					PlayerEarnMeter_AddOwnedFrac( player, 0.01 )
 			}
 
 			// If titan avaliable and we're nearly reach it

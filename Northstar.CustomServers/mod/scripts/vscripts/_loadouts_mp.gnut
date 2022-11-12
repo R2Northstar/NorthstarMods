@@ -16,12 +16,17 @@ global struct sTryGetTitanLoadoutCallbackReturn
 
 typedef TryGetTitanLoadoutCallbackType sTryGetTitanLoadoutCallbackReturn functionref( entity player, TitanLoadoutDef loadout, bool wasChanged )
 
+const float LOADOUT_REFUSED_NOTIFICATION_COOLDOWN = 10.0
+
 struct {
 	bool loadoutGracePeriodEnabled = true
 	bool weaponDropsEnabled = true
 	array< TryGetTitanLoadoutCallbackType > onTryGetTitanLoadoutCallbacks
 	
 	array<entity> dirtyLoadouts
+	
+	// modified, less annoying notification
+	array<string> recentNoticedPlayers
 } file
 
 void function SvLoadoutsMP_Init()
@@ -224,8 +229,17 @@ bool function ClientCommandCallback_SwapSecondaryAndWeapon3PersistentLoadoutData
 
 bool function ClientCommandCallback_SetBurnCardPersistenceSlot( entity player, array<string> args )
 {
-	if ( args.len() != 1 || GetGameState() >= eGameState.Playing )
+	if ( args.len() != 1 )
 		return true
+	if( GetGameState() >= eGameState.Playing )
+	{
+		if( !file.recentNoticedPlayers.contains( player.GetUID() ) )
+		{
+			SendHudMessage( player, "#LOADOUT_CHANGE_NEXT_MATCH", -1, 0.3, 255, 255, 255, 255, 1.0, 5.0, 2.0 ) // like 90% sure this is innacurate lols
+			thread DelayedRemoveNoticeLimit( player.GetUID() )
+		}
+		return true
+	}
 	
 	print( player + " SetBurnCardPersistenceSlot " + args[0] )
 	
@@ -281,7 +295,13 @@ bool function ClientCommandCallback_LoadoutMenuClosed( entity player, array<stri
 bool function ClientCommandCallback_InGameMPMenuClosed( entity player, array<string> args )
 {
 	if( player.IsTitan() )
-		SendHudMessage( player, "#LOADOUT_CHANGE_NEXT_TITAN", -1, 0.3, 255, 255, 255, 255, 1.0, 5.0, 2.0 ) // like 90% sure this is innacurate lol
+	{
+		if( !file.recentNoticedPlayers.contains( player.GetUID() ) )
+		{
+			SendHudMessage( player, "#LOADOUT_CHANGE_NEXT_TITAN", -1, 0.3, 255, 255, 255, 255, 1.0, 5.0, 2.0 ) // like 90% sure this is innacurate lol
+			thread DelayedRemoveNoticeLimit( player.GetUID() )
+		}
+	}
 	else
 		TryGivePilotLoadoutForGracePeriod( player )
 	return true
@@ -312,17 +332,21 @@ void function TryGivePilotLoadoutForGracePeriod( entity player )
 		// for intros
 		if ( !Loadouts_CanGivePilotLoadout( player ) && player.GetParent() != null && ( HasCinematicFlag( player, CE_FLAG_INTRO ) || HasCinematicFlag( player, CE_FLAG_CLASSIC_MP_SPAWNING ) || HasCinematicFlag( player, CE_FLAG_WAVE_SPAWNING ) ) )
 		{
-			print( "Player in dropship Intro, waiting" )
+			//print( "Player in dropship Intro, waiting" )
 			thread GiveLoadoutWhenIntroOver( player )
 		}
 		else if( Loadouts_CanGivePilotLoadout( player )  )
 		{
-			print( "Can give loadout" )
+			//print( "Can give loadout" )
 			Loadouts_TryGivePilotLoadout( player )
 		}
 		else
 		{
-			SendHudMessage( player, "#LOADOUT_CHANGE_NEXT_PILOT", -1, 0.3, 255, 255, 255, 255, 1.0, 5.0, 2.0 )
+			if( !file.recentNoticedPlayers.contains( player.GetUID() ) )
+			{
+				SendHudMessage( player, "#LOADOUT_CHANGE_NEXT_PILOT", -1, 0.3, 255, 255, 255, 255, 1.0, 5.0, 2.0 )
+				thread DelayedRemoveNoticeLimit( player.GetUID() )
+			}
 		}
 		player.p.usingLoadoutCrate = false
 	}
@@ -337,4 +361,12 @@ void function GiveLoadoutWhenIntroOver( entity player )
 		WaitFrame()
 	
 	Loadouts_TryGivePilotLoadout( player )
+}
+
+// modified, less annoying notification
+void function DelayedRemoveNoticeLimit( string uid )
+{
+	file.recentNoticedPlayers.append( uid )
+	wait LOADOUT_REFUSED_NOTIFICATION_COOLDOWN
+	file.recentNoticedPlayers.removebyvalue( uid )
 }

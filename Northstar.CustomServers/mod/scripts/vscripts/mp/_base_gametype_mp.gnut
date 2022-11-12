@@ -15,6 +15,7 @@ global function KillcamsEnabled
 global function SetPlayerDeathsHidden
 global function TrackTitanDamageInPlayerGameStat
 
+// I want my game to have this
 global function SetPlayerRespawnForced
 global function SetPlayerCameraToIntermissionCam
 
@@ -196,6 +197,25 @@ void function CodeCallback_OnClientConnectionCompleted( entity player )
 				shouldDoLateSpawn = true
 			else if( !file.lateSpawnedPlayerUIDs.contains( player.GetUID() ) ) // avoid multiple late spawns by disconnecting
 				shouldDoLateSpawn = true
+			/*
+			float endTime
+			float gameTime
+			if ( IsRoundBased() )
+			{
+				endTime = expect float( GetServerVar( "roundEndTime" ) )
+				gameTime = GameMode_GetRoundTimeLimit( GAMETYPE ) * 60
+			}
+			else
+			{
+				endTime = expect float( GetServerVar( "gameEndTime" ) )
+				gameTime = float( GameMode_GetTimeLimit( GAMETYPE ) ) * 60
+			}
+			
+			else if( GetPlayerArrayOfTeam( player.GetTeam() ).len() > 1 )
+				shouldDoLateSpawn = false
+			else if( endTime - Time() < gameTime * 0.75 ) // early joiner can still be in elimination mode
+				shouldDoLateSpawn = false
+			*/
 
 			// do this so player don't have to wait so long till round end
 			if( shouldDoLateSpawn )
@@ -299,7 +319,7 @@ void function GracePeriodThink_Threaded( entity player )
 	)
 
 	float countingTime
-	while( countingTime <= CLASS_CHANGE_GRACE_PERIOD - 0.5 ) // to get exact time
+	while( countingTime <= CLASS_CHANGE_GRACE_PERIOD ) // to get exact time
 	{
 		wait 0.2
 		// in dropship
@@ -414,9 +434,26 @@ void function PostDeathThread_MP( entity player, var damageInfo ) // based on ga
 
 	float deathcamLength = GetDeathCamLength( player )
 	wait deathcamLength
+	
+	/*
+	if ( file.intermissionCamera != null )
+	{
+		if( shouldDoReplay ) // if not doing replay, player's camera should be at their death location.
+		{
+			player.SetObserverModeStaticPosition( file.intermissionCamera.GetOrigin() )
+			player.SetObserverModeStaticAngles( file.intermissionCamera.GetAngles() )
+			player.ClearParent() // sometimes they're still parented, do a defensive fix
+			if( !IsValid( player.GetParent() ) )
+				player.StartObserverMode( OBS_MODE_STATIC_LOCKED )
+			player.SetObserverTarget( null )
+		}
+	}
+	*/
 
 	// hack: double check if killcams are enabled and valid here in case gamestate has changed this
-	shouldDoReplay = shouldDoReplay && Replay_IsEnabled() && KillcamsEnabled() && IsValid( attacker )
+	//shouldDoReplay = shouldDoReplay && Replay_IsEnabled() && KillcamsEnabled() && IsValid( attacker )
+	// doing a custom check for bleeding out
+	shouldDoReplay = shouldDoReplay && Replay_IsEnabled() && KillcamsEnabled() && IsValid( attacker ) && methodOfDeath != eDamageSourceId.bleedout
 	// quick note: in cases where player.Die() is called: e.g. for round ends, player == attacker
 	if ( shouldDoReplay ) 
 	{	

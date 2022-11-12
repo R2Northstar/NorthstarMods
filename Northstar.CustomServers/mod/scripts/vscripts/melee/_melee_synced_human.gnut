@@ -335,10 +335,13 @@ void function MeleeThread_PilotVsEnemy_Target( SyncedMelee action, entity attack
 				{
 					if( IsValid( attacker ) )
 					{
-						if( IsValid( target ) ) // defensive fix
-							AddPlayerScore( attacker, "Execution", target )
-						else
-							AddPlayerScore( attacker, "Execution" )
+						if( attacker.IsPlayer() )
+						{
+							if( IsValid( target ) ) // defensive fix
+								AddPlayerScore( attacker, "Execution", target )
+							else
+								AddPlayerScore( attacker, "Execution" )
+						}
 					}
 				}
 

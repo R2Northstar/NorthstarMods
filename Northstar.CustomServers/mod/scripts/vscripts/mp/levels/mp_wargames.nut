@@ -3,7 +3,6 @@ global function CodeCallback_MapInit
 
 struct {
 	array<entity> marvinSpawners
-	bool marvinSpawnerAdded = false
 
 	float introStartTime
 	entity militiaPod
@@ -11,6 +10,8 @@ struct {
 	
 	vector militiaPodFXEyePos
 	vector imcPodFXEyePos
+
+	bool isFirstRound = true
 } file
 
 const float MARVIN_RESPAWN_DELAY = 30
@@ -20,8 +21,7 @@ void function CodeCallback_MapInit()
 	AddCallback_EntitiesDidLoad( AddEvacNodes )
 	
 	// dissolve effects
-	if( !Wargames_IsPlayerDissolveDisabled() ) // defined in custom_damage_effect.gnut
-		AddDeathCallback( "player", WargamesDissolveDeadEntity )	
+	AddDeathCallback( "player", WargamesDissolveDeadEntity )	
 	AddDeathCallback( "npc_soldier", WargamesDissolveDeadEntity )
 	AddDeathCallback( "npc_spectre", WargamesDissolveDeadEntity )
 	AddDeathCallback( "npc_pilot_elite", WargamesDissolveDeadEntity )
@@ -77,10 +77,7 @@ void function EnsureWargamesDeathEffectIsClearedForPlayer( entity player )
 
 void function AddMarvinSpawner( entity spawn )
 {
-	if( file.marvinSpawnerAdded ) // only add spawners once, or it will be more and more marvins
-		return
 	file.marvinSpawners.append( spawn )
-	file.marvinSpawnerAdded = true
 }
 
 void function SpawnMarvinsForRound()
@@ -367,10 +364,15 @@ void function DelayedGamemodeAnnouncement( entity player )
 	wait 1.0
 	if( IsValid( player ) )
 	{
-		if( GetRoundsPlayed() < 1 && !HasSwitchedSides() )
+		if( file.isFirstRound )
+		{
 			TryGameModeAnnouncement( player )
+			file.isFirstRound = false
+		}
 		else
+		{
 			TryGameModeAnnouncement( player, false )
+		}
 	}
 }
 

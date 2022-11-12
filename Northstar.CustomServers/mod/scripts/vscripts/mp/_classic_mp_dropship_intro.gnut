@@ -257,12 +257,14 @@ void function PlayerJumpsFromDropship( entity player )
 	// wait for intro timer to be fully done
 	wait ( file.introStartTime + DROPSHIP_INTRO_LENGTH ) - Time()
 	player.MovementDisable() // disable all movement but let them look around still
-	player.ConsumeDoubleJump() // movementdisable doesn't prevent double jumps
 	
 	// wait for player to hit the ground
 	wait 0.1 // assume players will never actually hit ground before this
 	while ( !player.IsOnGround() && !player.IsWallRunning() && !player.IsWallHanging() ) // todo this needs tweaking
+	{	
 		WaitFrame()
+		player.ConsumeDoubleJump() // movementdisable doesn't prevent double jumps
+	}
 
 	if( GetRoundsPlayed() < 1 && !HasSwitchedSides() )
 		TryGameModeAnnouncement( player )

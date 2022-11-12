@@ -13,7 +13,6 @@ global function SetTimerBased
 global function SetShouldUseRoundWinningKillReplay
 
 global function SetShouldPlayFactionDialogue
-global function GetShouldPlayFactionDialogue
 global function SetRoundWinningKillReplayKillClasses
 global function SetRoundWinningKillReplayAttacker
 global function SetWinner
@@ -21,6 +20,8 @@ global function SetTimeoutWinnerDecisionFunc
 global function SetTimeoutWinnerDecisionReason
 global function AddTeamScore
 global function GetWinningTeamWithFFASupport
+global function IsSwitchSidesBased_NorthStar // HACK!
+global function GetShouldPlayFactionDialogue
 
 global function GameState_GetTimeLimitOverride
 global function IsRoundBasedGameOver
@@ -72,7 +73,8 @@ void function PIN_GameStart()
 	// called from InitGameState
 	//FlagInit( "ReadyToStartMatch" )
 	
-	SetServerVar( "switchedSides", 0 )
+	// In vanilla the level.nv.switchSides only inited when gamemode is actually using switch sides, or the function IsSwitchSidesBased() from _utility_shared.nut won't work!
+	SetServerVar( "switchedSides", 0 ) 
 	SetServerVar( "winningTeam", -1 )
 		
 	AddCallback_GameStateEnter( eGameState.WaitingForCustomStart, GameStateEnter_WaitingForCustomStart )
@@ -155,8 +157,10 @@ void function WaitForPlayers()
 
 	if( ClassicMP_IsRunningDropshipIntro() )
 	{
-		foreach( entity player in GetPlayerArray() )
-			EmitSoundOnEntityOnlyToPlayer( player, player, "classicmp_warpjump" )
+		//foreach( entity player in GetPlayerArray() )
+			//EmitSoundOnEntityOnlyToPlayer( player, player, "classicmp_warpjump" )
+		// this is better! late join players can also hear it
+		EmitSoundAtPosition( TEAM_UNASSIGNED, < 0,0,0 >, "classicmp_warpjump" )
 		wait 7.3
 	}
 	
@@ -198,10 +202,9 @@ void function GameStateEnter_PickLoadout_Threaded()
 // eGameState.Prematch
 void function GameStateEnter_Prematch()
 {
-	if( GetPlayerArray().len() == 0 ) // server empty again, wait until someone join
+	while( GetPlayerArray().len() == 0 ) // server empty again, wait until someone join
 	{
-		SetGameState( eGameState.WaitingForPlayers )
-		return
+		WaitFrame()
 	}
 
 	foreach( entity player in GetPlayerArray() )
@@ -473,11 +476,12 @@ void function PlayerWatchesRoundWinningKillReplay( entity player, float replayLe
 	player.SetPredictionEnabled( false ) // prediction fucks with replays
 	
 	entity attacker = file.roundWinningKillReplayAttacker
-	if( IsValid( player ) )
+	entity victim = file.roundWinningKillReplayVictim
+	if( IsValid( player ) && IsValid( attacker ) && IsValid( victim ) )
 	{
 		player.SetKillReplayDelay( Time() - replayLength, THIRD_PERSON_KILL_REPLAY_ALWAYS )
 		player.SetKillReplayInflictorEHandle( attacker.GetEncodedEHandle() )
-		player.SetKillReplayVictim( file.roundWinningKillReplayVictim )
+		player.SetKillReplayVictim( victim )
 		player.SetViewIndex( attacker.GetIndexForEntity() )
 		player.SetIsReplayRoundWinning( true )
 	}
@@ -581,11 +585,12 @@ void function PlayerWatchesSwitchingSidesKillReplay( entity player, bool doRepla
 		// delay seems weird for switchingsides? ends literally the frame the flag is collected
 	
 		entity attacker = file.roundWinningKillReplayAttacker
-		if( IsValid( player ) )
+		entity victim = file.roundWinningKillReplayVictim
+		if( IsValid( player ) && IsValid( attacker ) && IsValid( victim ) )
 		{
 			player.SetKillReplayDelay( Time() - replayLength, THIRD_PERSON_KILL_REPLAY_ALWAYS )
 			player.SetKillReplayInflictorEHandle( attacker.GetEncodedEHandle() )
-			player.SetKillReplayVictim( file.roundWinningKillReplayVictim )
+			player.SetKillReplayVictim( victim )
 			player.SetViewIndex( attacker.GetIndexForEntity() )
 			player.SetIsReplayRoundWinning( true )
 		}
@@ -920,6 +925,11 @@ void function SetShouldUseRoundWinningKillReplay( bool shouldUse )
 void function SetShouldPlayFactionDialogue( bool shouldPlay )
 {
 	file.playFactionDialogue = shouldPlay
+}
+
+bool function IsSwitchSidesBased_NorthStar()
+{
+	return file.switchSidesBased
 }
 
 bool function GetShouldPlayFactionDialogue()

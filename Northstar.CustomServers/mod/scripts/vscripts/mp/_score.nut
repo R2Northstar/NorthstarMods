@@ -12,8 +12,14 @@ global function ScoreEvent_SetEarnMeterValues
 global function ScoreEvent_SetupEarnMeterValuesForMixedModes
 global function ScoreEvent_SetupEarnMeterValuesForTitanModes
 
+// nessie modify
+global function ScoreEvent_ForceUsePilotEliminateEvent
+
 struct {
 	bool firstStrikeDone = false
+
+	// nessie modify
+	bool forceAddEliminateScore = false
 } file
 
 void function Score_Init()
@@ -48,7 +54,7 @@ void function AddPlayerScore( entity targetPlayer, string scoreEventName, entity
 	float earnValue = event.earnMeterEarnValue * scale
 	float ownValue = event.earnMeterOwnValue * scale
 	
-	PlayerEarnMeter_AddEarnedAndOwned( targetPlayer, earnValue * scale, ownValue * scale )
+	PlayerEarnMeter_AddEarnedAndOwned( targetPlayer, earnValue, ownValue ) //( targetPlayer, earnValue * scale, ownValue * scale ) // seriously? this causes a value*scale^2
 	
 	// PlayerEarnMeter_AddEarnedAndOwned handles this scaling by itself, we just need to do this for the visual stuff
 	float pilotScaleVar = ( expect string ( GetCurrentPlaylistVarOrUseValue( "earn_meter_pilot_multiplier", "1" ) ) ).tofloat()
@@ -113,7 +119,9 @@ void function ScoreEvent_PlayerKilled( entity victim, entity attacker, var damag
 
 	attacker.p.numberOfDeathsSinceLastKill = 0 // since they got a kill, remove the comeback trigger
 	// pilot kill
-	if( IsPilotEliminationBased() || IsTitanEliminationBased() )
+	//if( IsPilotEliminationBased() || IsTitanEliminationBased() )
+	// nessie modify
+	if( IsPilotEliminationBased() || IsTitanEliminationBased() || file.forceAddEliminateScore )
 		AddPlayerScore( attacker, "EliminatePilot", victim ) // elimination gamemodes have a special medal
 	else
 		AddPlayerScore( attacker, "KillPilot", victim )
@@ -266,9 +274,9 @@ void function ScoreEvent_SetupEarnMeterValuesForMixedModes() // mixed modes in t
 	// player-controlled stuff
 	ScoreEvent_SetEarnMeterValues( "KillPilot", 0.07, 0.15 )
 	ScoreEvent_SetEarnMeterValues( "KillTitan", 0.0, 0.15 )
-	ScoreEvent_SetEarnMeterValues( "TitanKillTitan", 0.0, 0.0 ) // unsure
+	ScoreEvent_SetEarnMeterValues( "TitanKillTitan", 0.0, 0.15 ) // unsure
 	ScoreEvent_SetEarnMeterValues( "PilotBatteryStolen", 0.0, 0.35 ) // this actually just doesn't have overdrive in vanilla even
-	ScoreEvent_SetEarnMeterValues( "Headshot", 0.0, 0.02 )
+	ScoreEvent_SetEarnMeterValues( "Headshot", 0.02, 0.03 )
 	ScoreEvent_SetEarnMeterValues( "FirstStrike", 0.0, 0.05 )
 	ScoreEvent_SetEarnMeterValues( "PilotBatteryApplied", 0.0, 0.35 )
 	
@@ -321,4 +329,10 @@ void function KilledPlayerTitanDialogue( entity attacker, entity victim )
 			PlayFactionDialogueToPlayer( "kc_pilotkilltitan", attacker )
 			return
 	}
+}
+
+// nessy modify
+void function ScoreEvent_ForceUsePilotEliminateEvent( bool force )
+{
+	file.forceAddEliminateScore = force
 }
