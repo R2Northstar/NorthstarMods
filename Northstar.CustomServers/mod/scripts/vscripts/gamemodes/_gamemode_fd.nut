@@ -934,8 +934,11 @@ void function FD_Epilogue_threaded()
 
 	foreach( entity player in GetPlayerArray() )
 	{
+		int i = 0
 		foreach( entity medalPlayer, string ref in awardResults )
 		{
+			if(i++ >= 4)
+				break;
 			Remote_CallFunction_NonReplay( player, "ServerCallback_UpdateGameStats", medalPlayer.GetEncodedEHandle(), GetFDStatData( ref ).index , awardResultValues[medalPlayer], GetPersistentSpawnLoadoutIndex( medalPlayer, "titan" ) ) 
 		}
 	Remote_CallFunction_NonReplay( player, "ServerCallback_ShowGameStats", Time() + 25 )//TODO set correct endTime 
