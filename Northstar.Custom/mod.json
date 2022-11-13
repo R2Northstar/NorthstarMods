@@ -28,6 +28,19 @@
 	],
 	"Scripts": [
 		{
+		"Path": "sh_northstar_messagebuffer.nut",
+		"RunOn": "CLIENT || UI || SERVER",
+			"ClientCallback": {
+				"After": "MessageLoop_Init"
+			},
+			"UICallback": {
+				"After": "MessageLoop_Init"
+			},
+			"ServerCallback": {
+				"After": "MessageLoop_Init"
+			}
+		},
+		{
 			"Path": "sh_northstar_custom_precache.gnut",
 			"RunOn": "( CLIENT || SERVER ) && MP",
 			"ClientCallback": {

@@ -57,13 +57,6 @@
 	],
 	"Scripts": [
 		{
-			"Path": "messages_server.nut",
-			"RunOn": "SERVER",
-			"ServerCallback": {
-				"After": "MessageLoop_Init"
-			}
-		},
-		{
 			"Path": "_custom_codecallbacks.gnut",
 			"RunOn": "SERVER",
 			"ServerCallback": {

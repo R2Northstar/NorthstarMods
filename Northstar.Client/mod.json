@@ -44,16 +44,6 @@
 		}
 	],
 	"Scripts": [
-		 {
-			"Path": "messages_client.nut",
-			"RunOn": "CLIENT || UI",
-			"ClientCallback": {
-				"After": "MessageLoop_Init"
-			},
-			"UICallback": {
-				"After": "MessageLoop_Init"
-			}
-		},
 		{
 			"Path": "_custom_codecallbacks_client.gnut",
 			"RunOn": "CLIENT",
