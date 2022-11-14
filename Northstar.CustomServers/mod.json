@@ -58,7 +58,10 @@
 	"Scripts": [
 		{
 			"Path": "sh_northstar_masterserver_messages.nut",
-			"RunOn": "SERVER"
+			"RunOn": "SERVER",
+			"ServerCallback":{
+				"After": "RegisterMasterserverMessageCallback"
+			}
 		},
 		{
 			"Path": "_custom_codecallbacks.gnut",
