@@ -574,7 +574,6 @@ void function PlayerWatchesKillReplayWrapper( entity player, entity attacker, fl
 	player.EndSignal( "OnRespawned" )
 	
 	player.EndSignal( "OnDestroy" )
-	attacker.EndSignal( "OnDestroy" )
 	
 	svGlobal.levelEnt.EndSignal( "GameStateChanged" )
 	
