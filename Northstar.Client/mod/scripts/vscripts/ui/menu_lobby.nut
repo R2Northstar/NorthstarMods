@@ -269,9 +269,9 @@ void function SetupComboButtonTest( var menu )
 	{
 		var customButton = AddComboButton( comboStruct, headerIndex, buttonIndex++, "設置戰隊標籤" )
 		Hud_AddEventHandler( customButton, UIE_CLICK, OnCustomClantagButton_Activate )
-		file.findGameButton = AddComboButton( comboStruct, headerIndex, buttonIndex++, "#MENU_TITLE_FIND_GAME" )
-		file.lobbyButtons.append( file.findGameButton )
-		Hud_AddEventHandler( file.findGameButton, UIE_CLICK, BigPlayButton1_Activate )
+		// file.findGameButton = AddComboButton( comboStruct, headerIndex, buttonIndex++, "#MENU_TITLE_FIND_GAME" )
+		// file.lobbyButtons.append( file.findGameButton )
+		// Hud_AddEventHandler( file.findGameButton, UIE_CLICK, BigPlayButton1_Activate )
 	}
 	
 	file.inviteFriendsButton = AddComboButton( comboStruct, headerIndex, buttonIndex++, "#MENU_TITLE_INVITE_FRIENDS" )
