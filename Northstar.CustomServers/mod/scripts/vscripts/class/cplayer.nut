@@ -334,51 +334,19 @@ function CodeCallback_RegisterClass_CPlayer()
         return GetUserInfoKVString_Internal( this, key, defaultValue )
     }
 	
-    function CPlayer::GetUserInfoStringOrNull( key )
+    function CPlayer::GetUserInfoInt( key, defaultValue = 0 )
     {
-        return GetUserInfoKVStringOrNull_Internal( this, key )
+        return GetUserInfoKVInt_Internal( this, key, defaultValue )
     }
 
-    function CPlayer::GetUserInfoInt( key, defaultValue = -1 )
+    function CPlayer::GetUserInfoFloat( key, defaultValue = 0 )
     {
-        return GetUserInfoKVString_Internal( this, key, defaultValue.tostring() ).tointeger()
-    }
-
-    function CPlayer::GetUserInfoIntOrNull( key )
-    {
-        string ornull ret = GetUserInfoKVStringOrNull_Internal( this, key )
-        if ( ret == null )
-            return null
-
-        return expect string( ret ).tointeger()
-    }
-
-    function CPlayer::GetUserInfoFloat( key, defaultValue = -1 )
-    {
-        return GetUserInfoKVString_Internal( this, key, defaultValue.tostring() ).tofloat()
-    }
-
-    function CPlayer::GetUserInfoFloatOrNull( key )
-    {
-        string ornull ret = GetUserInfoKVStringOrNull_Internal( this, key )
-        if ( ret == null )
-            return null
-
-        return expect string( ret ).tofloat()
+        return GetUserInfoKVFloat_Internal( this, key, defaultValue )
     }
 
     function CPlayer::GetUserInfoBool( key, defaultValue = false )
     {
-        return GetUserInfoKVString_Internal( this, key, ( defaultValue == true ? 1 : 0 ).tostring() ).tointeger() != 0
-    }
-
-    function CPlayer::GetUserInfoBoolOrNull( key )
-    {
-        string ornull ret = GetUserInfoKVStringOrNull_Internal( this, key )
-        if ( ret == null )
-            return null
-
-        return expect string( ret ).tointeger() != 0
+        return GetUserInfoKVBool_Internal( this, key, defaultValue )
     }
 }
 
