@@ -269,8 +269,8 @@ void function Evac( int evacTeam, float initialWait, float arrivalTime, float wa
 	SetTargetName( dropship, "#NPC_EVAC_DROPSHIP" )
 	DispatchSpawn( dropship )
 
-	// nessie fix
-	//dropship.SetModel( $"models/vehicle/crow_dropship/crow_dropship_hero.mdl" )
+	// SetModel() again after dispatchSpawn to make players shoot inside dropships
+	dropship.SetModel( evacShip.shipModel )
 	AddEntityCallback_OnDamaged( dropship, EvacDropshipDamaged )
 	
 	AddEntityCallback_OnKilled( dropship, EvacDropshipKilled )
