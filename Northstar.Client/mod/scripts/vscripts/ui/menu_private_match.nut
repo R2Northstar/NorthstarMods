@@ -523,7 +523,7 @@ void function SetModeInfo( string modeName )
 	}	
 	else
 	{
-		RuiSetImage( Hud_GetRui( nextModeIconAlt ), "iconImage", StringToAsset(iconName) )
+		RuiSetImage( Hud_GetRui( nextModeIconAlt ), "iconImage", StringToAsset( iconName ) )
 		
 		Hud_Hide( nextModeIcon )
 		Hud_Show( nextModeIconAlt )
