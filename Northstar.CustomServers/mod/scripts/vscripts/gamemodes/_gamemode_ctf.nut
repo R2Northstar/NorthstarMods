@@ -126,15 +126,19 @@ void function OnPlayerKilled( entity victim, entity attacker, var damageInfo )
 void function CreateFlags()
 {	
 	if ( IsValid( file.imcFlagSpawn ) )
-	{
 		file.imcFlagSpawn.Destroy()
+	if( IsValid( file.imcFlag ) )
 		file.imcFlag.Destroy()
+	if( IsValid( file.imcFlagReturnTrigger ) )
 		file.imcFlagReturnTrigger.Destroy()
 		
+	if( IsValid( file.militiaFlagSpawn ) )
 		file.militiaFlagSpawn.Destroy()
+	if( IsValid( file.militiaFlag ) )
 		file.militiaFlag.Destroy()
+	if( IsValid( file.militiaFlagReturnTrigger ) )
 		file.militiaFlagReturnTrigger.Destroy()
-	}
+	
 
 	foreach ( entity spawn in GetEntArrayByClass_Expensive( "info_spawnpoint_flag" ) )
 	{
@@ -224,17 +228,18 @@ void function RemoveFlags()
 {
 	// destroy all the flag related things
 	if ( IsValid( file.imcFlagSpawn ) )
-	{
 		file.imcFlagSpawn.Destroy()
+	if( IsValid( file.imcFlag ) )
 		file.imcFlag.Destroy()
+	if( IsValid( file.imcFlagReturnTrigger ) )
 		file.imcFlagReturnTrigger.Destroy()
-	}
-	if ( IsValid( file.militiaFlagSpawn ) )
-	{
+		
+	if( IsValid( file.militiaFlagSpawn ) )
 		file.militiaFlagSpawn.Destroy()
+	if( IsValid( file.militiaFlag ) )
 		file.militiaFlag.Destroy()
+	if( IsValid( file.militiaFlagReturnTrigger ) )
 		file.militiaFlagReturnTrigger.Destroy()
-	}
 
 	// unsure if this is needed, since the flags are destroyed? idk
 	SetFlagStateForTeam( TEAM_MILITIA, eFlagState.None )
@@ -246,6 +251,7 @@ void function TrackFlagReturnTrigger( entity flag, entity returnTrigger )
 	// this is a bit of a hack, it seems parenting the return trigger to the flag actually sets the pickup radius of the flag to be the same as the trigger
 	// this isn't wanted since only pickups should use that additional radius
 	flag.EndSignal( "OnDestroy" )
+	returnTrigger.EndSignal( "OnDestroy" )
 		
 	while ( true )
 	{
@@ -493,6 +499,7 @@ void function TryReturnFlag( entity player, entity flag )
 	player.EndSignal( "FlagReturnEnded" )
 	flag.EndSignal( "FlagReturnEnded" ) // avoid multiple players to return one flag at once
 	player.EndSignal( "OnDeath" )
+	player.EndSignal( "OnDestroy" ) // defensive fix
 	
 	wait CTF_GetFlagReturnTime()
 	
