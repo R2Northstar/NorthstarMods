@@ -1,3 +1,4 @@
+untyped // for .SetPlayerSettings()
 global function Spectator_Init
 
 // stuff called by _base_gametype_mp and such
@@ -92,6 +93,10 @@ void function RespawnPrivateMatchSpectator( entity player )
 
 void function PlayerBecomesSpectator( entity player )
 {
+	//if( IsAlive( player ) )
+	//	player.Die( player, player, { damageSourceId = damagedef_despawn } )
+
+	player.SetPlayerSettings( "spectator" ) // don't you think we should do this?
 	player.StopPhysics()
 
 	player.EndSignal( "OnRespawned" )
@@ -101,7 +106,9 @@ void function PlayerBecomesSpectator( entity player )
 	OnThreadEnd( function() : ( player ) 
 	{
 		if ( IsValid( player ) )
+		{
 			player.StopObserverMode()
+		}
 	})
 	
 	// keeps track of the most recent func this player has completed
