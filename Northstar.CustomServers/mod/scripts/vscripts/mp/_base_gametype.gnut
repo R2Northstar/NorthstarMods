@@ -809,6 +809,12 @@ bool function PlayerOrNPCKilled( entity ent, var damageInfo )
 	{
 		if ( ent.GetPersistentVar( "respawnKillInfected" ) && !attacker.GetPersistentVar( "respawnKillInfected" ) )
 			attacker.SetPersistentVar( "respawnKillInfected", true )
+			
+		// special method of killing dialogues
+		if( DamageInfo_GetCustomDamageType( damageInfo ) & DF_HEADSHOT )
+			PlayFactionDialogueToPlayer( "kc_bullseye", attacker )
+		if( damageSourceID == damagedef_titan_step )
+			PlayFactionDialogueToPlayer( "kc_hitandrun", attacker )
 	}
 
 	if ( gamePlayingOrSuddenDeath )
@@ -1445,6 +1451,32 @@ void function CodeCallback_WeaponFireInCloak( entity player )
 		//player.SetCloakFlicker( 1.0, 2.0 )
 
 		DisableCloak( player, 0.5 )
+		entity cloakWeapon
+		int offhandSlot
+		for ( int i = 0; i <= OFFHAND_MELEE; i++ ) // OFFHAND_MELEE is the largest
+		{
+			entity nowWeapon = player.GetOffhandWeapon( i )
+			if( IsValid( nowWeapon ))
+			{
+				if( nowWeapon.GetWeaponClassName() == "mp_ability_cloak" )
+				{
+					cloakWeapon = nowWeapon
+					offhandSlot = i
+				}
+			}
+		}
+		if( IsValid( cloakWeapon ) )
+		{
+			array<string> mods = cloakWeapon.GetMods()
+			player.TakeWeapon( "mp_ability_cloak" ) // not using TakeWeaponNow() to fit vanilla behavior
+			player.GiveOffhandWeapon( "mp_ability_cloak", offhandSlot, mods )
+			cloakWeapon = player.GetOffhandWeapon( offhandSlot )
+			cloakWeapon.SetWeaponPrimaryClipCountAbsolute( 0 )
+		}
+
+		//printt( "weapon", weapon.GetWeaponClassName() )
+		// JFS; need code feature to properly reset next attack time/cooldown stuff
+		/*
 		entity weapon = player.GetOffhandWeapon( OFFHAND_LEFT )
 		//printt( "weapon", weapon.GetWeaponClassName() )
 		// JFS; need code feature to properly reset next attack time/cooldown stuff
@@ -1455,6 +1487,7 @@ void function CodeCallback_WeaponFireInCloak( entity player )
 			weapon = player.GetOffhandWeapon( OFFHAND_LEFT )
 			weapon.SetWeaponPrimaryClipCountAbsolute( 0 )
 		}
+		*/
 	}
 	else
 	{
