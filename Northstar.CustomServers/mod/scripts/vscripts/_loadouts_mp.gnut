@@ -2,6 +2,7 @@ untyped
 global function SvLoadoutsMP_Init
 
 global function SetLoadoutGracePeriodEnabled
+global function IsLoadoutGracePeriodEnabled
 global function SetWeaponDropsEnabled
 
 global function AddCallback_OnTryGetTitanLoadout
@@ -68,6 +69,11 @@ void function LoadoutsMP_OnPlayerKilled( entity victim, entity attacker, var dam
 void function SetLoadoutGracePeriodEnabled( bool enabled )
 {
 	file.loadoutGracePeriodEnabled = enabled
+}
+
+bool function IsLoadoutGracePeriodEnabled()
+{
+	return file.loadoutGracePeriodEnabled
 }
 
 void function SetWeaponDropsEnabled( bool enabled )
@@ -322,8 +328,11 @@ void function TryGivePilotLoadoutForGracePeriod( entity player )
 {
 	if( !file.loadoutGracePeriodEnabled )
 	{
-		SendHudMessage( player, "#LOADOUT_CHANGE_NEXT_PILOT", -1, 0.3, 255, 255, 255, 255, 1.0, 5.0, 2.0 )
-		return
+		if( !file.recentNoticedPlayers.contains( player.GetUID() ) )
+		{
+			SendHudMessage( player, "#LOADOUT_CHANGE_NEXT_PILOT", -1, 0.3, 255, 255, 255, 255, 1.0, 5.0, 2.0 )
+			thread DelayedRemoveNoticeLimit( player.GetUID() )
+		}
 	}
 	if ( !IsLobby() && IsAlive( player ) && player.s.loadoutDirty && !player.IsTitan() && !player.ContextAction_IsActive() )
 	{
@@ -334,11 +343,13 @@ void function TryGivePilotLoadoutForGracePeriod( entity player )
 		{
 			//print( "Player in dropship Intro, waiting" )
 			thread GiveLoadoutWhenIntroOver( player )
+			player.p.usingLoadoutCrate = false
 		}
 		else if( Loadouts_CanGivePilotLoadout( player )  )
 		{
 			//print( "Can give loadout" )
 			Loadouts_TryGivePilotLoadout( player )
+			player.p.usingLoadoutCrate = false
 		}
 		else
 		{
@@ -348,7 +359,6 @@ void function TryGivePilotLoadoutForGracePeriod( entity player )
 				thread DelayedRemoveNoticeLimit( player.GetUID() )
 			}
 		}
-		player.p.usingLoadoutCrate = false
 	}
 }
 
