@@ -90,6 +90,7 @@ void function SetGameState( int newState )
 
 	SetServerVar( "gameStateChangeTime", Time() )
 	SetServerVar( "gameState", newState )
+	NSUpdateSQGameState(newState)
 	svGlobal.levelEnt.Signal( "GameStateChanged" )
 
 	// added in AddCallback_GameStateEnter

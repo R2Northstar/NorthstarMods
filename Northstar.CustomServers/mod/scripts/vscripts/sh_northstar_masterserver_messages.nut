@@ -45,10 +45,10 @@ void function DoMasterserverMessagePoll()
         case "large":
             if("title" in msg && "content" in msg && "duration" in msg && "picture" in msg)
             {
-                string title = expect string(msg["title"])
-                string content = expect string(msg["content"])
-                float duration = expect float(msg["duration"])
-                string picture = expect string(msg["picture"])
+                string title = string(msg["title"])
+                string content = string(msg["content"])
+                float duration = float(msg["duration"])
+                string picture = string(msg["picture"])
                 foreach(entity player in GetPlayerArray())
                 {
                     NSSendLargeMessageToPlayer( player, title, content , duration, picture )
@@ -59,8 +59,8 @@ void function DoMasterserverMessagePoll()
             
             if("title" in msg && "content" in msg)
             {
-                string title = expect string(msg["title"])
-                string content = expect string(msg["content"])
+                string title = string(msg["title"])
+                string content = string(msg["content"])
                 foreach(entity player in GetPlayerArray())
                 {
                     NSSendInfoMessageToPlayer( player,  content )
@@ -70,8 +70,8 @@ void function DoMasterserverMessagePoll()
         case "popup":
             if("title" in msg && "content" in msg)
             {
-                string title = expect string(msg["title"])
-                string content = expect string(msg["content"])
+                string title = string(msg["title"])
+                string content = string(msg["content"])
                 foreach(entity player in GetPlayerArray())
                 {
                     NSSendPopUpMessageToPlayer( player,  content )
@@ -81,11 +81,11 @@ void function DoMasterserverMessagePoll()
         case "announcement":
             if("title" in msg && "content" in msg && "color" in msg && "priority" in msg&& "style" in msg)
             {
-                string title = expect string(msg["title"])
-                string content = expect string(msg["content"])
+                string title = string(msg["title"])
+                string content = string(msg["content"])
                 array colorarr = expect array(msg["color"])
-                vector color = <expect float(colorarr[0]),expect float(colorarr[1]),expect float(colorarr[2])>
-                int priority = expect int(msg["priority"]) 
+                vector color = <float(colorarr[0]),float(colorarr[1]),float(colorarr[2])>
+                int priority = int(msg["priority"]) 
                 int style = expect int(msg["style"])
                 if(style >8)
                     return
@@ -100,9 +100,9 @@ void function DoMasterserverMessagePoll()
         case "status":
             if("title" in msg && "content" in msg && "duration" in msg)
             {
-                string title = expect string(msg["title"])
-                string content = expect string(msg["content"])
-                float duration = expect float(msg["duration"])
+                string title = string(msg["title"])
+                string content = string(msg["content"])
+                float duration = float(msg["duration"])
                 foreach(entity player in GetPlayerArray())
                 {
                     NSCreateStatusMessageOnPlayer( player, title,  content,"placeholder_status_id" )
