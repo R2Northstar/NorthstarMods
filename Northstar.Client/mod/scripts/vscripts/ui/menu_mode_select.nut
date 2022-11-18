@@ -103,7 +103,7 @@ void function ModeButton_GetFocus( var button )
 	if( iconName == "default" )
 	{
 		RuiSetImage( Hud_GetRui( nextModeIcon ), "basicImage", GetPlaylistThumbnailImage( modeName ) )
-		Hud_Showe( nextModeIcon )
+		Hud_Show( nextModeIcon )
 		Hud_Hide( nextModeIconAlt )
 	}
 	else
