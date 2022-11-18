@@ -187,9 +187,19 @@ void function ScoreEvent_TitanKilled( entity victim, entity attacker, var damage
 		return
 
 	if ( attacker.IsTitan() )
-		AddPlayerScore( attacker, "TitanKillTitan", victim.GetTitanSoul().GetOwner() )
+	{
+		if( victim.GetBossPlayer() || victim.IsPlayer() ) // to confirm this is a pet titan or player titan
+			AddPlayerScore( attacker, "TitanKillTitan", attacker ) // this will show the "Titan Kill" callsign event
+		else
+			AddPlayerScore( attacker, "TitanKillTitan" )
+	}
 	else
-		AddPlayerScore( attacker, "KillTitan", victim.GetTitanSoul().GetOwner() )
+	{
+		if( victim.GetBossPlayer() || victim.IsPlayer() )
+			AddPlayerScore( attacker, "KillTitan", attacker )
+		else
+			AddPlayerScore( attacker, "KillTitan" )
+	}
 
 	table<int, bool> alreadyAssisted
 	foreach( DamageHistoryStruct attackerInfo in victim.e.recentDamageHistory )
@@ -205,6 +215,9 @@ void function ScoreEvent_TitanKilled( entity victim, entity attacker, var damage
 			Remote_CallFunction_NonReplay( attackerInfo.attacker, "ServerCallback_SetAssistInformation", attackerInfo.damageSourceId, attacker.GetEncodedEHandle(), victim.GetEncodedEHandle(), attackerInfo.time ) 
 		}
 	}
+
+	if( !victim.IsNPC() ) // don't let killing a npc titan plays dialogue
+		KilledPlayerTitanDialogue( attacker, victim )
 }
 
 void function ScoreEvent_NPCKilled( entity victim, entity attacker, var damageInfo )
@@ -250,4 +263,43 @@ void function ScoreEvent_SetupEarnMeterValuesForMixedModes() // mixed modes in t
 void function ScoreEvent_SetupEarnMeterValuesForTitanModes()
 {
 	// relatively sure we don't have to do anything here but leaving this function for consistency
+}
+
+// faction dialogue
+void function KilledPlayerTitanDialogue( entity attacker, entity victim )
+{
+	if( !attacker.IsPlayer() )
+		return
+	entity titan
+	if ( victim.IsTitan() )
+		titan = victim
+
+	if( !IsValid( titan ) )
+		return
+	string titanCharacterName = GetTitanCharacterName( titan )
+
+	switch( titanCharacterName )
+	{
+		case "ion":
+			PlayFactionDialogueToPlayer( "kc_pilotkillIon", attacker )
+			return
+		case "tone":
+			PlayFactionDialogueToPlayer( "kc_pilotkillTone", attacker )
+			return
+		case "legion":
+			PlayFactionDialogueToPlayer( "kc_pilotkillLegion", attacker )
+			return
+		case "scorch":
+			PlayFactionDialogueToPlayer( "kc_pilotkillScorch", attacker )
+			return
+		case "ronin":
+			PlayFactionDialogueToPlayer( "kc_pilotkillRonin", attacker )
+			return
+		case "northstar":
+			PlayFactionDialogueToPlayer( "kc_pilotkillNorthstar", attacker )
+			return
+		default:
+			PlayFactionDialogueToPlayer( "kc_pilotkilltitan", attacker )
+			return
+	}
 }

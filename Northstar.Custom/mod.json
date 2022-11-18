@@ -1,7 +1,7 @@
 {
 	"Name": "Northstar.Custom",
 	"Description": "Custom content for Northstar: extra weapons, gamemodes, etc.",
-	"Version": "1.9.0",
+	"Version": "1.10.0",
 	"LoadPriority": 1,
 	"RequiredOnClient": true,
 	"ConVars": [
@@ -406,6 +406,16 @@
 			},
 			"ServerCallback": {
 				"After": "CustomPilotCollision_InitPlaylistVars"
+			}
+		},
+		{
+			"Path": "sh_message_utils.gnut",
+			"RunOn": "( CLIENT || SERVER ) && MP",
+			"ClientCallback": {
+				"Before": "MessageUtils_ClientInit"
+			},
+			"ServerCallback": {
+				"Before": "MessageUtils_ServerInit"
 			}
 		}
 	],

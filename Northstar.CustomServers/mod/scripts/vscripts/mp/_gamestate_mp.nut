@@ -220,6 +220,8 @@ void function GameStateEnter_Playing_Threaded()
 {
 	WaitFrame() // ensure timelimits are all properly set
 
+	thread DialoguePlayNormal() // runs dialogue play function
+
 	while ( GetGameState() == eGameState.Playing )
 	{
 		// could cache these, but what if we update it midgame?
@@ -268,6 +270,8 @@ void function GameStateEnter_WinnerDetermined_Threaded()
 	// do win announcement
 	int winningTeam = GetWinningTeamWithFFASupport()
 		
+	DialoguePlayWinnerDetermined() // play a faction dialogue when winner is determined
+
 	foreach ( entity player in GetPlayerArray() )
 	{
 		int announcementSubstr
@@ -278,6 +282,9 @@ void function GameStateEnter_WinnerDetermined_Threaded()
 			Remote_CallFunction_NonReplay( player, "ServerCallback_AnnounceRoundWinner", winningTeam, announcementSubstr, ROUND_WINNING_KILL_REPLAY_SCREEN_FADE_TIME, GameRules_GetTeamScore2( TEAM_MILITIA ), GameRules_GetTeamScore2( TEAM_IMC ) )
 		else
 			Remote_CallFunction_NonReplay( player, "ServerCallback_AnnounceWinner", winningTeam, announcementSubstr, ROUND_WINNING_KILL_REPLAY_SCREEN_FADE_TIME )
+	
+		if ( player.GetTeam() == winningTeam )
+			UnlockAchievement( player, achievements.MP_WIN )
 	}
 	
 	WaitFrame() // wait a frame so other scripts can setup killreplay stuff
@@ -384,11 +391,14 @@ void function PlayerWatchesRoundWinningKillReplay( entity player, float replayLe
 	player.SetPredictionEnabled( false ) // prediction fucks with replays
 	
 	entity attacker = file.roundWinningKillReplayAttacker
-	player.SetKillReplayDelay( Time() - replayLength, THIRD_PERSON_KILL_REPLAY_ALWAYS )
-	player.SetKillReplayInflictorEHandle( attacker.GetEncodedEHandle() )
-	player.SetKillReplayVictim( file.roundWinningKillReplayVictim )
-	player.SetViewIndex( attacker.GetIndexForEntity() )
-	player.SetIsReplayRoundWinning( true )
+	if ( IsValid( attacker ) )
+	{
+		player.SetKillReplayDelay( Time() - replayLength, THIRD_PERSON_KILL_REPLAY_ALWAYS )
+		player.SetKillReplayInflictorEHandle( attacker.GetEncodedEHandle() )
+		player.SetKillReplayVictim( file.roundWinningKillReplayVictim )
+		player.SetViewIndex( attacker.GetIndexForEntity() )
+		player.SetIsReplayRoundWinning( true )
+	}
 	
 	if ( replayLength >= ROUND_WINNING_KILL_REPLAY_LENGTH_OF_REPLAY - 0.5 ) // only do fade if close to full length replay
 	{
@@ -503,6 +513,20 @@ void function GameStateEnter_SuddenDeath()
 {
 	// disable respawns, suddendeath calling is done on a kill callback
 	SetRespawnsEnabled( false )
+
+	// defensive fixes, so game won't stuck in SuddenDeath forever
+	bool mltElimited = false
+	bool imcElimited = false
+	if( GetPlayerArrayOfTeam_Alive( TEAM_MILITIA ).len() < 1 )
+		mltElimited = true
+	if( GetPlayerArrayOfTeam_Alive( TEAM_IMC ).len() < 1 )
+		imcElimited = true
+	if( mltElimited && imcElimited )
+		SetWinner( TEAM_UNASSIGNED )
+	else if( mltElimited )
+		SetWinner( TEAM_IMC )
+	else if( imcElimited )
+		SetWinner( TEAM_MILITIA )
 }
 
 
@@ -867,4 +891,91 @@ float function GetTimeLimit_ForGameMode()
 
 	// default to 10 mins, because that seems reasonable
 	return GetCurrentPlaylistVarFloat( playlistString, 10 )
+}
+
+// faction dialogue
+
+void function DialoguePlayNormal()
+{
+	int totalScore = GameMode_GetScoreLimit( GameRules_GetGameMode() )
+	int winningTeam
+	int losingTeam
+	float diagIntervel = 71 // play a faction dailogue every 70 + 1s to prevent play together with winner dialogue
+
+	while( GetGameState() == eGameState.Playing )
+	{
+		wait diagIntervel
+		if( GameRules_GetTeamScore( TEAM_MILITIA ) < GameRules_GetTeamScore( TEAM_IMC ) )
+		{
+			winningTeam = TEAM_IMC
+			losingTeam = TEAM_MILITIA
+		}
+		if( GameRules_GetTeamScore( TEAM_MILITIA ) > GameRules_GetTeamScore( TEAM_IMC ) )
+		{
+			winningTeam = TEAM_MILITIA
+			losingTeam = TEAM_IMC
+		}
+		if( GameRules_GetTeamScore( winningTeam ) - GameRules_GetTeamScore( losingTeam ) >= totalScore * 0.4 )
+		{
+			PlayFactionDialogueToTeam( "scoring_winningLarge", winningTeam )
+			PlayFactionDialogueToTeam( "scoring_losingLarge", losingTeam )
+		}
+		else if( GameRules_GetTeamScore( winningTeam ) - GameRules_GetTeamScore( losingTeam ) <= totalScore * 0.2 )
+		{
+			PlayFactionDialogueToTeam( "scoring_winningClose", winningTeam )
+			PlayFactionDialogueToTeam( "scoring_losingClose", losingTeam )
+		}
+		else if( GameRules_GetTeamScore( winningTeam ) == GameRules_GetTeamScore( losingTeam ) )
+		{
+			continue
+		}
+		else
+		{
+			PlayFactionDialogueToTeam( "scoring_winning", winningTeam )
+			PlayFactionDialogueToTeam( "scoring_losing", losingTeam )
+		}
+	}
+}
+
+void function DialoguePlayWinnerDetermined()
+{
+	int totalScore = GameMode_GetScoreLimit( GameRules_GetGameMode() )
+	int winningTeam
+	int losingTeam
+
+	if( GameRules_GetTeamScore( TEAM_MILITIA ) < GameRules_GetTeamScore( TEAM_IMC ) )
+	{
+		winningTeam = TEAM_IMC
+		losingTeam = TEAM_MILITIA
+	}
+	if( GameRules_GetTeamScore( TEAM_MILITIA ) > GameRules_GetTeamScore( TEAM_IMC ) )
+	{
+		winningTeam = TEAM_MILITIA
+		losingTeam = TEAM_IMC
+	}
+	if( IsRoundBased() ) // check for round based modes
+	{
+		if( GameRules_GetTeamScore( winningTeam ) != GameMode_GetRoundScoreLimit( GAMETYPE ) ) // no winner dialogue till game really ends
+			return
+	}
+	if( GameRules_GetTeamScore( winningTeam ) - GameRules_GetTeamScore( losingTeam ) >= totalScore * 0.4 )
+	{
+		PlayFactionDialogueToTeam( "scoring_wonMercy", winningTeam )
+		PlayFactionDialogueToTeam( "scoring_lostMercy", losingTeam )
+	}
+	else if( GameRules_GetTeamScore( winningTeam ) - GameRules_GetTeamScore( losingTeam ) <= totalScore * 0.2 )
+	{
+		PlayFactionDialogueToTeam( "scoring_wonClose", winningTeam )
+		PlayFactionDialogueToTeam( "scoring_lostClose", losingTeam )
+	}
+	else if( GameRules_GetTeamScore( winningTeam ) == GameRules_GetTeamScore( losingTeam ) )
+	{
+		PlayFactionDialogueToTeam( "scoring_tied", winningTeam )
+		PlayFactionDialogueToTeam( "scoring_tied", losingTeam )
+	}
+	else
+	{
+		PlayFactionDialogueToTeam( "scoring_won", winningTeam )
+		PlayFactionDialogueToTeam( "scoring_lost", losingTeam )
+	}
 }
