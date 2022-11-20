@@ -114,18 +114,17 @@ void function InitModMenu()
 	// these are pretty long too, might need to e x t e n d the settings menu
 	AddModTitle( "#NORTHSTAR_BASE_SETTINGS" )
 	AddModCategory( "#PRIVATE_MATCH")
-	AddConVarSettingEnum("ns_private_match_only_host_can_change_settings", "#ONLY_HOST_MATCH_SETTINGS", [ "#NO", "#YES" ])
-	AddConVarSettingEnum("ns_private_match_only_host_can_change_settings", "#ONLY_HOST_CAN_START_MATCH", [ "#NO", "#YES" ])
+	AddConVarSettingEnum( "ns_private_match_only_host_can_change_settings", "#ONLY_HOST_MATCH_SETTINGS", [ "#NO", "#YES" ] )
+	AddConVarSettingEnum( "ns_private_match_only_host_can_change_settings", "#ONLY_HOST_CAN_START_MATCH", [ "#NO", "#YES" ])
 	AddConVarSettingSlider("ns_private_match_countdown_length", "#MATCH_COUNTDOWN_LENGTH", 0, 30, 0.5)
-	// probably shouldn't add this as a setting?
-	// AddConVarSettingEnum("ns_private_match_override_maxplayers", "Override Max Player Count", "Northstar - Server", [ "#NO", "#YES" ])
+
 	AddModCategory("#SERVER")
-	AddConVarSettingEnum("ns_should_log_unknown_clientcommands", "#LOG_UNKNOWN_CLIENTCOMMANDS", [ "#NO", "#YES" ])
-	AddConVarSetting("ns_disallowed_tacticals", "#DISALLOWED_TACTICALS")
-	AddConVarSetting("ns_disallowed_tactical_replacement", "#TACTICAL_REPLACEMENT")
-	AddConVarSetting("ns_disallowed_weapons", "#DISALLOWED_WEAPONS")
-	AddConVarSetting("ns_disallowed_weapon_primary_replacement", "#REPLACEMENT_WEAPON")
-	AddConVarSettingEnum("ns_should_return_to_lobby", "#SHOULD_RETURN_TO_LOBBY", [ "#NO", "#YES" ])
+	AddConVarSettingEnum( "ns_should_log_unknown_clientcommands", "#LOG_UNKNOWN_CLIENTCOMMANDS", [ "#NO", "#YES" ] )
+	AddConVarSetting( "ns_disallowed_tacticals", "#DISALLOWED_TACTICALS" )
+	AddConVarSetting( "ns_disallowed_tactical_replacement", "#TACTICAL_REPLACEMENT" )
+	AddConVarSetting( "ns_disallowed_weapons", "#DISALLOWED_WEAPONS" )
+	AddConVarSetting( "ns_disallowed_weapon_primary_replacement", "#REPLACEMENT_WEAPON" )
+	AddConVarSettingEnum( "ns_should_return_to_lobby", "#SHOULD_RETURN_TO_LOBBY", [ "#NO", "#YES" ] )
 
 	/*
 	AddModTitle("^FF000000EXAMPLE")
