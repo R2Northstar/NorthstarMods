@@ -143,7 +143,7 @@ void function InitModMenu()
 	AddMenuEventHandler( file.menu, eUIEvent.MENU_CLOSE, OnModMenuClosed )
 
 	int len = file.modPanels.len()
-	for (int i = 0; i < len; i++)
+	for ( int i = 0; i < len; i++ )
 	{
 		
 		//AddButtonEventHandler( button, UIE_CHANGE, OnSettingButtonPressed  )
@@ -154,8 +154,8 @@ void function InitModMenu()
 		var child = Hud_GetChild( panel, "BtnMod" )
 
 
-		child.SetNavUp( Hud_GetChild( file.modPanels[ int(PureModulo( i - 1, len )) ], "BtnMod" ) )
-		child.SetNavDown( Hud_GetChild( file.modPanels[ int(PureModulo( i + 1, len )) ], "BtnMod" ) )
+		child.SetNavUp( Hud_GetChild( file.modPanels[ int( PureModulo( i - 1, len ) ) ], "BtnMod" ) )
+		child.SetNavDown( Hud_GetChild( file.modPanels[ int( PureModulo( i + 1, len ) ) ], "BtnMod" ) )
 
 		// Enum button nav
 		child = Hud_GetChild( panel, "EnumSelectButton" )
@@ -163,16 +163,16 @@ void function InitModMenu()
 		Hud_DialogList_AddListItem( child, SETTING_ITEM_TEXT, "next" )
 		Hud_DialogList_AddListItem( child, SETTING_ITEM_TEXT, "prev" )
 
-		child.SetNavUp( Hud_GetChild( file.modPanels[ int(PureModulo( i - 1, len )) ], "EnumSelectButton" ) )
-		child.SetNavDown( Hud_GetChild( file.modPanels[ int(PureModulo( i + 1, len )) ], "EnumSelectButton" ) )
+		child.SetNavUp( Hud_GetChild( file.modPanels[ int( PureModulo( i - 1, len ) ) ], "EnumSelectButton" ) )
+		child.SetNavDown( Hud_GetChild( file.modPanels[ int( PureModulo( i + 1, len ) ) ], "EnumSelectButton" ) )
 		Hud_AddEventHandler( child, UIE_CLICK, UpdateEnumSetting )
 
 		// reset button nav
 		
 		child = Hud_GetChild( panel, "ResetModToDefault" )
 
-		child.SetNavUp( Hud_GetChild( file.modPanels[ int(PureModulo( i - 1, len )) ], "ResetModToDefault" ) )
-		child.SetNavDown( Hud_GetChild( file.modPanels[ int(PureModulo( i + 1, len )) ], "ResetModToDefault" ) )
+		child.SetNavUp( Hud_GetChild( file.modPanels[ int( PureModulo( i - 1, len ) ) ], "ResetModToDefault" ) )
+		child.SetNavDown( Hud_GetChild( file.modPanels[ int( PureModulo( i + 1, len ) ) ], "ResetModToDefault" ) )
 
 		Hud_AddEventHandler( child, UIE_CLICK, ResetConVar )
 		
@@ -182,15 +182,15 @@ void function InitModMenu()
 		// 
 		Hud_AddEventHandler( child, UIE_LOSE_FOCUS, SendTextPanelChanges )
 
-		child.SetNavUp( Hud_GetChild( file.modPanels[ int(PureModulo( i - 1, len )) ], "TextEntrySetting" ) )
-		child.SetNavDown( Hud_GetChild( file.modPanels[ int(PureModulo( i + 1, len )) ], "TextEntrySetting" ) )
+		child.SetNavUp( Hud_GetChild( file.modPanels[ int( PureModulo( i - 1, len ) ) ], "TextEntrySetting" ) )
+		child.SetNavDown( Hud_GetChild( file.modPanels[ int( PureModulo( i + 1, len ) ) ], "TextEntrySetting" ) )
 
 		child = Hud_GetChild( panel, "Slider" )
 
-		child.SetNavUp( Hud_GetChild( file.modPanels[ int(PureModulo( i - 1, len )) ], "Slider" ) )
-		child.SetNavDown( Hud_GetChild( file.modPanels[ int(PureModulo( i + 1, len )) ], "Slider" ) )
+		child.SetNavUp( Hud_GetChild( file.modPanels[ int( PureModulo( i - 1, len ) ) ], "Slider" ) )
+		child.SetNavDown( Hud_GetChild( file.modPanels[ int( PureModulo( i + 1, len ) ) ], "Slider" ) )
 
-		file.sliders.append(MS_Slider_Setup(child))
+		file.sliders.append( MS_Slider_Setup( child ) )
 
 		Hud_AddEventHandler( child, UIE_CHANGE, OnSliderChange )
 
@@ -219,9 +219,9 @@ void function InitModMenu()
 // Examples:
 // -1 % 5 = -1
 // PureModulo(-1, 5) = 4
-float function PureModulo(int a, int b)
+float function PureModulo( int a, int b )
 {
-	return b * ((float(a) / b) - floor(float(a) / b))
+	return b * ( (float( a ) / b ) - floor( float( a ) / b ) )
 }
 
 void function ResetConVar( var button )
@@ -254,17 +254,17 @@ void functionref() function ResetAllConVarsForModEventHandler( string catName )
 {
 	return void function() : ( catName )
 	{
-		for (int i = 0; i < file.conVarList.len(); i++)
+		for ( int i = 0; i < file.conVarList.len(); i++ )
 		{
 			ConVarData c = file.conVarList[i]
-			if (c.catName != catName || c.isCategoryName || c.isEmptySpace) continue
-			SetConVarToDefault(c.conVar)
+			if ( c.catName != catName || c.isCategoryName || c.isEmptySpace ) continue
+			SetConVarToDefault( c.conVar )
 
-			int index = file.filteredList.find(c)
-			if (file.filteredList.find(c) < 0) continue
+			int index = file.filteredList.find( c )
+			if ( file.filteredList.find( c ) < 0 ) continue
 
-			if (min( BUTTONS_PER_PAGE, max(0, index - file.scrollOffset)) == index - file.scrollOffset)
-				Hud_SetText(Hud_GetChild( file.modPanels[i - file.scrollOffset], "TextEntrySetting"), c.isEnumSetting ? c.values[GetConVarInt(c.conVar)] : GetConVarString(c.conVar))
+			if ( min( BUTTONS_PER_PAGE, max( 0, index - file.scrollOffset ) ) == index - file.scrollOffset )
+				Hud_SetText( Hud_GetChild( file.modPanels[ i - file.scrollOffset ], "TextEntrySetting" ), c.isEnumSetting ? c.values[ GetConVarInt( c.conVar ) ] : GetConVarString( c.conVar ) )
 		}
 	}
 }
@@ -273,17 +273,17 @@ void functionref() function ResetConVarEventHandler( int modIndex )
 {
 	return void function() : ( modIndex )
 	{
-		ConVarData c = file.filteredList[modIndex]
-		SetConVarToDefault(c.conVar)
-		if (min( BUTTONS_PER_PAGE, max(0, modIndex - file.scrollOffset)) == modIndex - file.scrollOffset)
-			Hud_SetText(Hud_GetChild( file.modPanels[modIndex - file.scrollOffset], "TextEntrySetting"), c.isEnumSetting ? c.values[GetConVarInt(c.conVar)] : GetConVarString(c.conVar))
+		ConVarData c = file.filteredList[ modIndex ]
+		SetConVarToDefault( c.conVar )
+		if ( min( BUTTONS_PER_PAGE, max( 0, modIndex - file.scrollOffset ) ) == modIndex - file.scrollOffset )
+			Hud_SetText( Hud_GetChild( file.modPanels[ modIndex - file.scrollOffset ], "TextEntrySetting" ), c.isEnumSetting ? c.values[ GetConVarInt( c.conVar ) ] : GetConVarString( c.conVar ) )
 	}
 }
 
 ////////////////////////
 // slider
 ////////////////////////
-void function UpdateMouseDeltaBuffer(int x, int y)
+void function UpdateMouseDeltaBuffer( int x, int y )
 {
 	mouseDeltaBuffer.deltaX += x
 	mouseDeltaBuffer.deltaY += y
@@ -311,15 +311,15 @@ void function SliderBarUpdate()
 
 	Hud_SetFocused(sliderButton)
 
-	float minYPos = -40.0 * (GetScreenSize()[1] / 1080.0) // why the hardcoded positions?!?!?!?!?!
-	float maxHeight = 615.0  * (GetScreenSize()[1] / 1080.0)
-	float maxYPos = minYPos - (maxHeight - Hud_GetHeight( sliderPanel ))
-	float useableSpace = (maxHeight - Hud_GetHeight( sliderPanel ))
+	float minYPos = -40.0 * ( GetScreenSize()[ 1 ] / 1080.0 ) // why the hardcoded positions?!?!?!?!?!
+	float maxHeight = 615.0  * ( GetScreenSize()[ 1 ] / 1080.0 )
+	float maxYPos = minYPos - ( maxHeight - Hud_GetHeight( sliderPanel ) )
+	float useableSpace = maxHeight - Hud_GetHeight( sliderPanel )
 
-	float jump = minYPos - (useableSpace / ( float( file.filteredList.len())))
+	float jump = minYPos - ( useableSpace / ( float( file.filteredList.len() ) ) )
 
 	// got local from official respaw scripts, without untyped throws an error
-	local pos =	Hud_GetPos(sliderButton)[1]
+	local pos =	Hud_GetPos( sliderButton )[ 1 ]
 	local newPos = pos - mouseDeltaBuffer.deltaY
 	FlushMouseDeltaBuffer()
 
@@ -330,20 +330,20 @@ void function SliderBarUpdate()
 	Hud_SetPos( sliderPanel , 2, newPos )
 	Hud_SetPos( movementCapture , 2, newPos )
 
-	file.scrollOffset = -int( ( (newPos - minYPos) / useableSpace ) * ( file.filteredList.len() - BUTTONS_PER_PAGE) )
+	file.scrollOffset = -int( ( (newPos - minYPos) / useableSpace ) * ( file.filteredList.len() - BUTTONS_PER_PAGE ) )
 	UpdateList()
 }
 
 void function UpdateListSliderHeight()
 {
-	var sliderButton = Hud_GetChild( file.menu , "BtnModListSlider" )
-	var sliderPanel = Hud_GetChild( file.menu , "BtnModListSliderPanel" )
-	var movementCapture = Hud_GetChild( file.menu , "MouseMovementCapture" )
+	var sliderButton = Hud_GetChild( file.menu, "BtnModListSlider" )
+	var sliderPanel = Hud_GetChild( file.menu, "BtnModListSliderPanel" )
+	var movementCapture = Hud_GetChild( file.menu, "MouseMovementCapture" )
 	
 	float mods = float ( file.filteredList.len() )
 
-	float maxHeight = 615.0 * (GetScreenSize()[1] / 1080.0) // why the hardcoded 320/80???
-	float minHeight = 80.0 * (GetScreenSize()[1] / 1080.0)
+	float maxHeight = 615.0 * ( GetScreenSize()[1] / 1080.0 ) // why the hardcoded 320/80???
+	float minHeight = 80.0 * ( GetScreenSize()[1] / 1080.0 )
 
 	float height = maxHeight * ( float( BUTTONS_PER_PAGE ) / mods )
 
