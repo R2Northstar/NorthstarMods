@@ -6,8 +6,8 @@ global function UpdatePromoData
 global function UICodeCallback_GetOnPartyServer
 global function UICodeCallback_MainMenuPromosUpdated
 
+global bool NSHasOriginFailPopedUp = false
 global bool isOnMainMenu = false
-
 // defining this here because it's the only place it's used rn, custom const for a hook in launcher
 global const WEBBROWSER_FLAG_FORCEEXTERNAL = 1 << 1 // 2
 
@@ -441,7 +441,7 @@ void function UpdatePlayButton( var button )
 			}
 
 			isLocked = file.mpButtonActivateFunc == null ? true : false
-			if( button == file.fdButton )
+			if( button == file.fdButton && !NSHasOriginFailPopedUp)
 				thread TryUnlockNorthstarButton()
 			else
 				Hud_SetLocked( button, isLocked )
@@ -510,17 +510,35 @@ void function MainMenuButton_Activate( var button )
 void function TryUnlockNorthstarButton()
 {
 	// unlock "Launch Northstar" button until you're authed with masterserver, are allowing insecure auth, or 7.5 seconds have passed
-	float time = Time()
-
 	while (GetConVarInt("ns_has_agreed_to_send_token") == NS_AGREED_TO_SEND_TOKEN)
 	{
+
+
 		if ( ( NSIsMasterServerAuthenticated() && IsStryderAuthenticated() ) || GetConVarBool( "ns_auth_allow_insecure" ) )
 			break
 
 		WaitFrame()
 	}
 
-	Hud_SetLocked( file.fdButton, false )
+	if(NSIsMasterServerAuthenticateSuccess())
+	{
+		Hud_SetLocked( file.fdButton, false )
+	}
+	else
+	{
+		NSHasOriginFailPopedUp = true
+		CloseAllDialogs()
+		var reason = NSGetAuthFailReason()
+		var msg = NSGetAuthFailMessage()
+		DialogData dialogData
+		dialogData.image = $"ui/menu/common/dialog_error"
+		dialogData.header = "#ERROR"
+		dialogData.message = Localize("#NS_SERVERBROWSER_CONNECTIONFAILED") + "\nERROR: " + "\n" + msg
+		AddDialogButton( dialogData, "#OK", null )
+		OpenDialog( dialogData )
+	}
+
+	
 }
 
 void function OnPlayFDButton_Activate( var button ) // repurposed for launching northstar lobby
