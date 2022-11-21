@@ -38,7 +38,7 @@ enum sortingBy
 	PLAYERS,
 	MAP,
 	GAMEMODE,
-	LATENCY
+	LATENCY,
 	GAMESTATE
 }
 
