@@ -39,6 +39,7 @@ enum sortingBy
 	MAP,
 	GAMEMODE,
 	LATENCY
+	GAMESTATE
 }
 
 // Column sort direction, only one of these can be aplied at once
@@ -49,7 +50,8 @@ struct {
 	bool serverMap = true
 	bool serverGamemode = true
 	bool serverLatency = true
-	// 0 = none; 1 = default; 2 = name; 3 = players; 4 = map; 5 = gamemode; 6 = latency
+	bool serverGamestate = true
+	// 0 = none; 1 = default; 2 = name; 3 = players; 4 = map; 5 = gamemode; 6 = latency; 7 = gamestate
 	int sortingBy = 1
 } filterDirection
 
@@ -62,6 +64,7 @@ struct serverStruct {
 	string serverMap
 	string serverGamemode
 	int serverLatency
+	string serverGamestate
 }
 
 struct {
@@ -88,6 +91,7 @@ struct {
 	array<var> serversMap
 	array<var> serversGamemode
 	array<var> serversLatency
+	array<var> serversGamestate
 } file
 
 
@@ -152,6 +156,7 @@ void function InitServerBrowserMenu()
 	file.serversMap = GetElementsByClassname( file.menu, "ServerMap" )
 	file.serversGamemode = GetElementsByClassname( file.menu, "ServerGamemode" )
 	file.serversLatency = GetElementsByClassname( file.menu, "ServerLatency" )
+	file.serversGamestate = GetElementsByClassname( file.menu, "ServerGamestate" )
 
 	filterArguments.filterMaps = [ "SWITCH_ANY" ]
 	Hud_DialogList_AddListItem( Hud_GetChild( file.menu, "SwtBtnSelectMap" ), "SWITCH_ANY", "0" )
@@ -166,7 +171,7 @@ void function InitServerBrowserMenu()
 	AddMenuFooterOption( file.menu, BUTTON_Y, PrependControllerPrompts( BUTTON_Y, "#REFRESH_SERVERS" ), "#REFRESH_SERVERS", RefreshServers )
 
 	// Setup server buttons
-	var width = 1120.0  * ( GetScreenSize()[1] / 1080.0 )
+	var width = 1220.0  * ( GetScreenSize()[1] / 1080.0 )
 	foreach ( var button in GetElementsByClassname( file.menu, "ServerButton" ) )
 	{
 		AddButtonEventHandler( button, UIE_CLICK, OnServerButtonClicked )
@@ -195,6 +200,7 @@ void function InitServerBrowserMenu()
 	AddButtonEventHandler( Hud_GetChild( file.menu, "BtnServerMapTab"), UIE_CLICK, SortServerListByMap_Activate )
 	AddButtonEventHandler( Hud_GetChild( file.menu, "BtnServerGamemodeTab"), UIE_CLICK, SortServerListByGamemode_Activate )
 	AddButtonEventHandler( Hud_GetChild( file.menu, "BtnServerLatencyTab"), UIE_CLICK, SortServerListByLatency_Activate )
+	AddButtonEventHandler( Hud_GetChild( file.menu, "BtnServerGamestateTab"), UIE_CLICK, SortServerListByGamestate_Activate )
 
 
 	AddButtonEventHandler( Hud_GetChild( file.menu, "SwtBtnSelectMap"), UIE_CHANGE, FilterAndUpdateList )
@@ -679,6 +685,10 @@ void function FilterAndUpdateList( var n )
 			filterDirection.serverLatency = !filterDirection.serverLatency
 			SortServerListByLatency_Activate(0)
 			break
+		case sortingBy.GAMESTATE:
+			filterDirection.serverGamestate = !filterDirection.serverGamestate
+			SortServerListByGamestate_Activate(0)
+			break
 		default:
 			printt( "How the f did you get here" )
 	}
@@ -716,6 +726,7 @@ void function WaitForServerListRequest()
 		Hud_SetText( file.serversMap[ i ], "" )
 		Hud_SetText( file.serversGamemode[ i ], "" )
 		Hud_SetText( file.serversLatency[ i ], "" )
+		Hud_SetText( file.serversGamestate[ i ], "" )
 	}
 
 	HideServerInfo()
@@ -739,7 +750,35 @@ void function WaitForServerListRequest()
 	}
 }
 
+string function NSGetGameState( int serverIndex )
+{
+	string stateString
 
+	switch ( NSGetServerGameState( serverIndex ) )
+	{
+		
+		case 0://WaitingForCustomStart
+		case 1://WaitingForPlayers
+		case 2://PickLoadout
+		case 3://Prematch
+			stateString = Localize( "#WAITING" );
+			break;
+		case 4://Playing
+		case 5://SuddenDeath
+		case 6://SwitchingSides
+		case 7://WinnerDetermined
+		case 8://Epilogue
+			stateString = Localize( "#PLAYING" );
+			break;
+		case 9://Postmatch
+			stateString = Localize( "#ENDING" );
+			break;
+		default:
+			stateString = Localize( "#GAMEUI_NONE" );
+	}
+
+	return stateString
+}
 
 void function FilterServerList()
 {
@@ -756,6 +795,10 @@ void function FilterServerList()
 		tempServer.serverPlayersMax = NSGetServerMaxPlayerCount( i )
 		tempServer.serverMap = NSGetServerMap( i )
 		tempServer.serverGamemode = GetGameModeDisplayName( NSGetServerPlaylist ( i ) )
+		tempServer.serverGamestate = NSGetGameState( i )
+
+		//TODO
+		//tempServer.serverLatency = NSGetServerLatency( i )
 
 		totalPlayers += tempServer.serverPlayers
 
@@ -822,6 +865,7 @@ void function UpdateShownPage()
 		Hud_SetText( file.serversMap[ i ], "" )
 		Hud_SetText( file.serversGamemode[ i ], "" )
 		Hud_SetText( file.serversLatency[ i ], "" )
+		Hud_SetText( file.serversGamestate[ i ], "" )
 	}
 
 	int j = file.serversArrayFiltered.len() > BUTTONS_PER_PAGE ? BUTTONS_PER_PAGE : file.serversArrayFiltered.len()
@@ -840,6 +884,7 @@ void function UpdateShownPage()
 		Hud_SetText( file.playerCountLabels[ i ], format( "%i/%i", file.serversArrayFiltered[ buttonIndex ].serverPlayers, file.serversArrayFiltered[ buttonIndex ].serverPlayersMax ) )
 		Hud_SetText( file.serversMap[ i ], GetMapDisplayName( file.serversArrayFiltered[ buttonIndex ].serverMap ) )
 		Hud_SetText( file.serversGamemode[ i ], file.serversArrayFiltered[ buttonIndex ].serverGamemode )
+		Hud_SetText( file.serversGamestate[ i ], file.serversArrayFiltered[ buttonIndex ].serverGamestate )
 	}
 
 
@@ -1166,6 +1211,11 @@ int function ServerSortLogic ( serverStruct a, serverStruct b )
 			bTemp = b.serverLatency
 			direction = filterDirection.serverLatency
 			break;
+		case sortingBy.GAMESTATE:
+			aTemp = Localize( a.serverGamestate ).tolower()
+			bTemp = Localize( b.serverGamestate ).tolower()
+			direction = filterDirection.serverGamestate
+			break;
 		default:
 			return 0
 	}
@@ -1245,6 +1295,17 @@ void function SortServerListByLatency_Activate( var button )
 	file.serversArrayFiltered.sort( ServerSortLogic )
 
 	filterDirection.serverLatency = !filterDirection.serverLatency
+
+	UpdateShownPage()
+}
+
+void function SortServerListByGamestate_Activate( var button )
+{
+	filterDirection.sortingBy = sortingBy.GAMESTATE
+
+	file.serversArrayFiltered.sort( ServerSortLogic )
+
+	filterDirection.serverGamestate = !filterDirection.serverGamestate
 
 	UpdateShownPage()
 }

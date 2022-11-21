@@ -277,6 +277,7 @@
 		"MAP_COLUMN" "地圖"
 		"GAMEMODE_COLUMN" "遊戲模式"
 		"LATENCY_COLUMN" "延遲"
+		"GAMESTATE_COLUMN" "狀態"
 		"SEARCHBAR_LABEL" "搜尋："
 		"MAP_FILTER" "地圖"
 		"GAMEMODE_FILTER" "遊戲模式"
@@ -287,6 +288,9 @@
 		"SERVER_MODS" "Mod內容"
 		"CLEAR_FILTERS" "清除"
 		"JOIN_BUTTON" "加入"
+		"WAITING" "等待中"
+		"PLAYING" "遊戲中"
+		"ENDING" "已結束"
 
 		"SWITCH_YES" "是"
 		"SWITCH_NO" "否"
