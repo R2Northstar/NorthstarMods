@@ -753,7 +753,7 @@ void function WaitForServerListRequest()
 string function NSGetGameState( int serverIndex )
 {
 	string stateString
-
+	//print(NSGetServerGameState( serverIndex ))
 	switch ( NSGetServerGameState( serverIndex ) )
 	{
 		
