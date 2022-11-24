@@ -124,7 +124,7 @@ void function SetClientRuiThread(entity player)
 	while (!(file.goals.len() > 2))
 		wait 0.5
 
-	if (!IsValid(player))
+	if ( !IsValid( player ) )
 		return
 	
 	int k = 0
