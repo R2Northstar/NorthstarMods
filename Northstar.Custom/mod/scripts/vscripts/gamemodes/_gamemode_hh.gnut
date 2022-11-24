@@ -53,7 +53,7 @@ void function HHThink() {
 	{
 		foreach ( entity player in GetPlayerArray() )
 		{
-			if (!PlayerHasBattery(player))
+			if ( !PlayerHasBattery( player ) )
 				continue
 			foreach (entity goal in file.goals) 
 			{
