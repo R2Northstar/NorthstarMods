@@ -85,7 +85,8 @@ void function HHThink() {
 	}
 }
 
-void function RemoveBatts() {
+void function RemoveBatts()
+{
 	foreach (entity player in GetPlayerArray())
 		Rodeo_RemoveAllBatteriesOffPlayer( player )   
 	foreach ( entity battery in GetEntArrayByClass_Expensive( "item_titan_battery" ) )
