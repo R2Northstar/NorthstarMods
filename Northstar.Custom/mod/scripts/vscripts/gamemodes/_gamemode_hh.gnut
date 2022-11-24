@@ -55,7 +55,7 @@ void function HHThink() {
 		{
 			if ( !PlayerHasBattery( player ) )
 				continue
-			foreach (entity goal in file.goals) 
+			foreach ( entity goal in file.goals ) 
 			{
 				if ( DistanceSqr( player.GetOrigin(), goal.GetOrigin() ) <= 30000.0 ) 
 				{
