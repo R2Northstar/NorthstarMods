@@ -49,7 +49,7 @@ void function StartHHThink() {
 }
 
 void function HHThink() {
-	while(true) 
+	while( true ) 
 	{
 		foreach ( entity player in GetPlayerArray() )
 		{
