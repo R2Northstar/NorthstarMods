@@ -6,7 +6,7 @@ const array<string> btmaps = [ "mp_angel_city", "mp_colony02", "mp_thaw", "mp_gl
 struct {
 	bool hasmadespawns = false
 	array<entity> goals
-	array<vector> spawnoffsets = [Vector(0,50,10), Vector(0,-50,10), Vector(50,0,10), Vector(-50,-0,10)] // some sort of spawn checking in the future
+	array<vector> spawnoffsets = [ Vector(0,50,10), Vector(0,-50,10), Vector(50,0,10), Vector(-50,-0,10) ] // some sort of spawn checking in the future
 } file
 
 void function GamemodeHH_Init()
