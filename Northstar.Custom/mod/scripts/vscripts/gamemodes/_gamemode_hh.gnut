@@ -57,7 +57,7 @@ void function HHThink() {
 				continue
 			foreach (entity goal in file.goals) 
 			{
-				if (DistanceSqr(player.GetOrigin(), goal.GetOrigin()) <= 30000.0) 
+				if ( DistanceSqr( player.GetOrigin(), goal.GetOrigin() ) <= 30000.0 ) 
 				{
 					array<entity> possPlayers
 					foreach ( entity deadPlayer in GetPlayerArrayOfTeam( player.GetTeam() ) )
