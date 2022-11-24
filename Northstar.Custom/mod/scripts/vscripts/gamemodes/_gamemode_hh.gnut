@@ -129,7 +129,7 @@ void function SetClientRuiThread(entity player)
 	while (!(k > 2)) {
 		for (int i = 0; i < file.goals.len(); i++) 
 		{
-			if (!PlayerInRenderDistance(file.goals[i])) // why the FUCK does this work
+			if ( !PlayerInRenderDistance( file.goals[i] ) ) // why the FUCK does this work
 				continue
 			Remote_CallFunction_NonReplay( player, "ServerCallback_HeadhunterUpdateRui", file.goals[i].GetEncodedEHandle(), i )
 			k++
