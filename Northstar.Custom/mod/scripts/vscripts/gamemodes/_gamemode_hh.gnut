@@ -51,7 +51,7 @@ void function StartHHThink() {
 void function HHThink() {
 	while(true) 
 	{
-		foreach (entity player in GetPlayerArray())
+		foreach ( entity player in GetPlayerArray() )
 		{
 			if (!PlayerHasBattery(player))
 				continue
