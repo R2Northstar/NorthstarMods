@@ -121,7 +121,7 @@ void function SetClientRui( entity player )
 
 void function SetClientRuiThread(entity player) 
 {
-	while (!(file.goals.len() > 2))
+	while ( !( file.goals.len() > 2 ) )
 		wait 0.5
 
 	if ( !IsValid( player ) )
