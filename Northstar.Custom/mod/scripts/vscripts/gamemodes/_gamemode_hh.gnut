@@ -87,7 +87,7 @@ void function HHThink() {
 
 void function RemoveBatts()
 {
-	foreach (entity player in GetPlayerArray())
+	foreach ( entity player in GetPlayerArray() )
 		Rodeo_RemoveAllBatteriesOffPlayer( player )   
 	foreach ( entity battery in GetEntArrayByClass_Expensive( "item_titan_battery" ) )
 		battery.Destroy()
