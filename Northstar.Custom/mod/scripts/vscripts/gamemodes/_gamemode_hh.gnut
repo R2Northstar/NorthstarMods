@@ -31,7 +31,7 @@ void function GamemodeHH_Init()
 	ScoreEvent_SetupEarnMeterValuesForMixedModes()
 
 	ClassicMP_ForceDisableEpilogue( true )
-	PrecacheModel($"models/robots/mobile_hardpoint/mobile_hardpoint.mdl")
+	PrecacheModel( $"models/robots/mobile_hardpoint/mobile_hardpoint.mdl" )
 
 	AddCallback_OnPlayerKilled( OnPlayerKilled )
 	AddCallback_GameStateEnter( eGameState.WinnerDetermined, RemoveBatts )
