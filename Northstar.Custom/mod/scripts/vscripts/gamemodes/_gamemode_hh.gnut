@@ -128,7 +128,8 @@ void function SetClientRuiThread(entity player)
 		return
 	
 	int k = 0
-	while (!(k > 2)) {
+	while ( !( k > 2 ) )
+	{
 		for ( int i; i < file.goals.len(); i++ ) 
 		{
 			if ( !PlayerInRenderDistance( file.goals[i] ) ) // why the FUCK does this work
