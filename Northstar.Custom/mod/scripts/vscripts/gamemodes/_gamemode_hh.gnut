@@ -142,7 +142,7 @@ bool function PlayerInRenderDistance( entity origin )
 {
 	if ( !IsValid( origin ) )
 		return false
-	foreach (entity player in GetPlayerArray()) 
+	foreach ( entity player in GetPlayerArray() )
 	{
 		if (Distance(player.GetOrigin(), origin.GetOrigin()) < 7500) 
 			return true
