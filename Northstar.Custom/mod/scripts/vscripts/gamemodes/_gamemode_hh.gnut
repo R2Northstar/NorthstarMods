@@ -12,7 +12,7 @@ struct {
 void function GamemodeHH_Init()
 {
 	// used for intro
-	if (btmaps.contains(GetMapName())) 
+	if ( btmaps.contains( GetMapName() ) ) 
 	{
 		PrecacheModel( $"models/titans/buddy/titan_buddy.mdl" )
 		PrecacheParticleSystem( $"P_BT_eye_SM" )
