@@ -68,9 +68,9 @@ void function HHThink() {
 						entity chosen = possPlayers[ RandomInt( possPlayers.len() ) ]
 						if ( !IsAlive( chosen ) )
 						{
-							chosen.SetOrigin(goal.GetOrigin() + file.spawnoffsets[RandomInt(file.spawnoffsets.len())])
+							chosen.SetOrigin( goal.GetOrigin() + file.spawnoffsets[ RandomInt( file.spawnoffsets.len() ) ] )
 							chosen.RespawnPlayer( null )
-							Remote_CallFunction_NonReplay(chosen, "ServerCallback_HeadhunterRespawnPlayer", player.GetEncodedEHandle())
+							Remote_CallFunction_NonReplay( chosen, "ServerCallback_HeadhunterRespawnPlayer", player.GetEncodedEHandle() )
 							StimPlayer( chosen, 2 )
 							Rodeo_RemoveBatteryOffPlayer(player)
 							EmitSoundOnEntityOnlyToPlayer( player, player, "UI_TitanBattery_Pilot_Give_TitanBattery" )
