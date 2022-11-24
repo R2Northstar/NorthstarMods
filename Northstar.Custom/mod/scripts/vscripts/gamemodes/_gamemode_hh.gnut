@@ -138,7 +138,7 @@ void function SetClientRuiThread(entity player)
 	}
 }
 
-bool function PlayerInRenderDistance(entity origin) 
+bool function PlayerInRenderDistance( entity origin )
 {
 	if (!IsValid(origin))
 		return false
