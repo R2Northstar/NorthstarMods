@@ -65,7 +65,7 @@ void function HHThink() {
 							possPlayers.append( deadPlayer )
 					if ( possPlayers.len() ) 
 					{
-						entity chosen = possPlayers[RandomInt(possPlayers.len())]
+						entity chosen = possPlayers[ RandomInt( possPlayers.len() ) ]
 						if (!IsAlive(chosen)) {
 							chosen.SetOrigin(goal.GetOrigin() + file.spawnoffsets[RandomInt(file.spawnoffsets.len())])
 							chosen.RespawnPlayer( null )
