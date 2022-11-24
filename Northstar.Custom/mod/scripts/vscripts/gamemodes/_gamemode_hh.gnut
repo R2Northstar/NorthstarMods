@@ -63,7 +63,7 @@ void function HHThink() {
 					foreach ( entity deadPlayer in GetPlayerArrayOfTeam( player.GetTeam() ) )
 						if ( !IsAlive( deadPlayer ) )
 							possPlayers.append( deadPlayer )
-					if (possPlayers.len() > 0) 
+					if ( possPlayers.len() ) 
 					{
 						entity chosen = possPlayers[RandomInt(possPlayers.len())]
 						if (!IsAlive(chosen)) {
