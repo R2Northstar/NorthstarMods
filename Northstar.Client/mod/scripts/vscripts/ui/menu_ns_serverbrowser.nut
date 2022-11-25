@@ -380,16 +380,16 @@ void function ConnectingButton_Activate( var button )
 // This doesn't werk on some obscure resolutions, mostly really small 4:3
 void function UpdateServerInfoBasedOnRes()
 {
-	if ( FloatsEqual( float(GetScreenSize()[0] ) / float( GetScreenSize()[1] ) , 1.6, 0.07 ) ) // 16/10
+	if ( float(GetScreenSize()[0] ) / float( GetScreenSize()[1] ) == 1.6 ) // For Fake 4:3 user,but not really work for really small Fake 4:3
 	{
-		Hud_SetWidth( Hud_GetChild(file.menu, "ServerName"), 392)
-		Hud_SetWidth( Hud_GetChild(file.menu, "NextMapImage"), 400)
-		Hud_SetWidth( Hud_GetChild(file.menu, "NextMapBack"), 400)
-		Hud_SetWidth( Hud_GetChild(file.menu, "LabelMods"), 360)
-		Hud_SetWidth( Hud_GetChild(file.menu, "LabelDescription"), 360)
-		Hud_SetWidth( Hud_GetChild(file.menu, "ServerDetailsPanel"), 400)
+		Hud_SetWidth( Hud_GetChild(file.menu, "ServerName"), 192)
+		Hud_SetWidth( Hud_GetChild(file.menu, "NextMapImage"), 100)
+		Hud_SetWidth( Hud_GetChild(file.menu, "NextMapBack"), 100)
+		Hud_SetWidth( Hud_GetChild(file.menu, "LabelMods"), 160)
+		Hud_SetWidth( Hud_GetChild(file.menu, "LabelDescription"), 160)
+		Hud_SetWidth( Hud_GetChild(file.menu, "ServerDetailsPanel"), 200)
 	}
-	if( FloatsEqual( float( GetScreenSize()[0] ) / float( GetScreenSize()[1] ) , 1.3, 0.055 ) ) // 4/3
+	if ( FloatsEqual( float(GetScreenSize()[0] ) / float( GetScreenSize()[1] ) , 1.6, 0.07 ) ) // 16/10
 	{
 		Hud_SetWidth( Hud_GetChild(file.menu, "ServerName"), 292)
 		Hud_SetWidth( Hud_GetChild(file.menu, "NextMapImage"), 300)
@@ -397,6 +397,15 @@ void function UpdateServerInfoBasedOnRes()
 		Hud_SetWidth( Hud_GetChild(file.menu, "LabelMods"), 260)
 		Hud_SetWidth( Hud_GetChild(file.menu, "LabelDescription"), 260)
 		Hud_SetWidth( Hud_GetChild(file.menu, "ServerDetailsPanel"), 300)
+	}
+	if( FloatsEqual( float( GetScreenSize()[0] ) / float( GetScreenSize()[1] ) , 1.3, 0.055 ) ) // 4/3
+	{
+		Hud_SetWidth( Hud_GetChild(file.menu, "ServerName"), 192)
+		Hud_SetWidth( Hud_GetChild(file.menu, "NextMapImage"), 100)
+		Hud_SetWidth( Hud_GetChild(file.menu, "NextMapBack"), 100)
+		Hud_SetWidth( Hud_GetChild(file.menu, "LabelMods"), 160)
+		Hud_SetWidth( Hud_GetChild(file.menu, "LabelDescription"), 160)
+		Hud_SetWidth( Hud_GetChild(file.menu, "ServerDetailsPanel"), 200)
 	}
 }
 
