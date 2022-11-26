@@ -219,7 +219,7 @@
 		"PLAYERS_COLUMN" "Игроки"
 		"MAP_COLUMN" "Карта"
 		"GAMEMODE_COLUMN" "Режим игры"
-		"REGION_COLUMN" "TODO REPLACE ME"
+		"REGION_COLUMN" "Регион"
 		"SEARCHBAR_LABEL" "Поиск:"
 		"MAP_FILTER" "Карта"
 		"GAMEMODE_FILTER" "Режим игры"
