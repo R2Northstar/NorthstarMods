@@ -18,9 +18,9 @@ global struct HttpRequest
     /** Base URL of this http request. */
     string baseUrl
     /** Headers used for this http request. Some may get overridden or ignored. */
-    table<string, string> headers
+    table<string, array<string> > headers
     /** Query parameters for this http request. */
-    table<string, string> queryParameters
+    table<string, array<string> > queryParameters
     /** The content type of this http request. Defaults to application/json & UTF-8 charset. */
     string contentType = "application/json; charset=utf-8"
     /** The body of this http request. If set, will override queryParameters.*/
@@ -105,7 +105,7 @@ void function NSHttpRequest(HttpRequest requestParameters, void functionref( int
  * @param onSuccess The callback to execute if the request is successful.
  * @param onFailure The callback to execute if the request has failed.
  */
-void function NSHttpGet(string url, table<string, string> queryParameters = {}, void functionref( int, string, string ) onSuccess = null, void functionref( int, string ) onFailure = null)
+void function NSHttpGet(string url, table<string, array<string> > queryParameters = {}, void functionref( int, string, string ) onSuccess = null, void functionref( int, string ) onFailure = null)
 {
     HttpRequest request = { ... }
     request.method = HttpRequestMethod.GET
@@ -123,7 +123,7 @@ void function NSHttpGet(string url, table<string, string> queryParameters = {}, 
  * @param onSuccess The callback to execute if the request is successful.
  * @param onFailure The callback to execute if the request has failed.
  */
-void function NSHttpPostQuery(string url, table<string, string> queryParameters, void functionref( int, string, string ) onSuccess = null, void functionref( int, string ) onFailure = null)
+void function NSHttpPostQuery(string url, table<string, array<string> > queryParameters, void functionref( int, string, string ) onSuccess = null, void functionref( int, string ) onFailure = null)
 {
     HttpRequest request = { ... }
     request.method = HttpRequestMethod.POST
