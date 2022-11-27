@@ -52,7 +52,10 @@ void function GenerateGameState() {
 
     gs.max_score = IsRoundBased() ? GetCurrentPlaylistVarInt( "roundscorelimit", 0 ) : GetCurrentPlaylistVarInt( "scorelimit", 0 )
 
-	gs.time_end = expect float(level.nv.gameEndTime - Time())
+	if ( GetServerVar( "roundBased" ) )
+		gs.time_end = expect float(level.nv.roundEndTime - Time())
+	else
+		gs.time_end = expect float(level.nv.gameEndTime - Time())
 
     NSPushGameStateData(gs)
 }
