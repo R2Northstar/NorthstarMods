@@ -123,11 +123,11 @@
 		{
 			"Path": "ui/menu_mod_settings.nut",
 			"RunOn": "UI",
-			"UICallback": {
+			"UICallback":{
 				"Before": "AddModSettingsMenu"
-      }
-    },
-    {
+      		}
+    	},
+    	{
 			"Path": "ui/ui_mouse_capture.nut",
 			"RunOn": "UI"
 		}
