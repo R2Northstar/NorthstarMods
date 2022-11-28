@@ -98,10 +98,10 @@
 	{
 		"ControlName" "RuiButton"
 		"InheritProperties" "RuiSmallButton"
-		"labelText" "Reset"
+		"labelText" ""
 		"zpos" "4"
-		"xpos"		"10"
-		"wide" "120"
+		"xpos" "10"
+		"wide" "45"
 		"tall" "45"
 		"scriptID" "0"
 		"pin_to_sibling" "EnumSelectButton"
@@ -109,6 +109,19 @@
 		"pin_to_sibling_corner" "LEFT"
 		"navLeft" "Slider"
 		"navRight" "TextEntrySetting"
+	}
+	"ResetModImage"
+	{
+		"ControlName" "ImagePanel"
+		"image" "vgui/reset"
+		"scaleImage" "1"
+		"drawColor" "222 222 222 255" // vanilla label color
+		"visible" "0"
+		"wide" "30"
+		"tall" "30"
+		"pin_to_sibling" "ResetModToDefault"
+		"pin_corner_to_sibling" "CENTER"
+		"pin_to_sibling_corner" "CENTER"
 	}
 	"OpenCustomMenu"
 	{
