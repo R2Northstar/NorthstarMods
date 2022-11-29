@@ -33,7 +33,16 @@ global struct HttpRequest
 
 struct HttpRequestCallbacks
 {
+    /** 
+     * The function to call if the HTTP request was a success.
+     * int statusCode, string body, string headers
+     */
     void functionref( int, string, string ) onSuccess
+
+    /**
+     * The function to call if the HTTP request failed.
+     * int statusCode, string errorMessage.
+     */
     void functionref( int, string ) onFailure
 }
 
@@ -50,12 +59,15 @@ table<int, HttpRequestCallbacks> pendingCallbacks
  */
 void function NSHandleSuccessfulHttpRequest(int handle, int statusCode, string body, string headers)
 {
-    if (handle in pendingCallbacks && pendingCallbacks[handle].onSuccess != null)
+    if (handle in pendingCallbacks)
     {
-        pendingCallbacks[handle].onSuccess(statusCode, body, headers)
-    }
+        if (pendingCallbacks[handle].onSuccess != null)
+        {
+            pendingCallbacks[handle].onSuccess(statusCode, body, headers)
+        }
 
-    delete pendingCallbacks[handle]
+        delete pendingCallbacks[handle]
+    }
 }
 
 /**
@@ -67,12 +79,15 @@ void function NSHandleSuccessfulHttpRequest(int handle, int statusCode, string b
  */
 void function NSHandleFailedHttpRequest(int handle, int errorCode, string errorMessage)
 {
-    if (handle in pendingCallbacks && pendingCallbacks[handle].onFailure != null)
+    if (handle in pendingCallbacks)
     {
-        pendingCallbacks[handle].onFailure(errorCode, errorMessage)
-    }
+        if (pendingCallbacks[handle].onFailure != null)
+        {
+            pendingCallbacks[handle].onFailure(errorCode, errorMessage)
+        }
 
-    delete pendingCallbacks[handle]
+        delete pendingCallbacks[handle]
+    }
 }
 
 /**
