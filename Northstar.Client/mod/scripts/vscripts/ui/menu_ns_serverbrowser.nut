@@ -973,8 +973,8 @@ void function _OnServerSelectedAsync( var button )
 			// check if mod is verified
 			bool modIsVerified = false;
 			if (IsModVerified(NSGetServerRequiredModName( serverIndex, i ), NSGetServerRequiredModVersion( serverIndex, i ))) {
-				// TODO download mod
 				bool modIsVerified = true;
+				DownloadMod(NSGetServerRequiredModName( serverIndex, i ), NSGetServerRequiredModVersion( serverIndex, i ));
 
 				// Downloading mod UI
 				DialogData dialogData
