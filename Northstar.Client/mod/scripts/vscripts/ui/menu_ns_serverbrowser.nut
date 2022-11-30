@@ -968,22 +968,25 @@ void function _OnServerSelectedAsync( var button )
 	// check mods
 	for ( int i = 0; i < NSGetServerRequiredModsCount( serverIndex ); i++ )
 	{
-		if ( !NSGetModNames().contains( NSGetServerRequiredModName( serverIndex, i ) ) )
+		string modName = NSGetServerRequiredModName( serverIndex, i );
+		string modVersion = NSGetServerRequiredModVersion( serverIndex, i );
+		
+		if ( !NSGetModNames().contains( modName ) )
 		{
 			// check if mod is verified
 			bool modIsVerified = false;
-			if (IsModVerified(NSGetServerRequiredModName( serverIndex, i ), NSGetServerRequiredModVersion( serverIndex, i ))) {
+			if ( IsModVerified(modName, modVersion) ) {
 				bool modIsVerified = true;
-				DownloadMod(NSGetServerRequiredModName( serverIndex, i ), NSGetServerRequiredModVersion( serverIndex, i ));
+				DownloadMod( modName, modVersion );
 
 				// Downloading mod UI
 				DialogData dialogData
 				dialogData.header = "Downloading mod"
-				dialogData.message = "Downloading \"" + NSGetServerRequiredModName( serverIndex, i ) + "\" v" + NSGetServerRequiredModVersion( serverIndex, i ) + "..."
+				dialogData.message = "Downloading \"" + modName + "\" v" + modVersion + "..."
 				dialogData.showSpinner = true;
 				OpenDialog( dialogData )
 
-				while(IsModBeingDownloaded(NSGetServerRequiredModName( serverIndex, i )))
+				while( IsModBeingDownloaded(modName) )
 				{
 					WaitFrame();
 				}
@@ -993,7 +996,7 @@ void function _OnServerSelectedAsync( var button )
 
 			DialogData dialogData
 			dialogData.header = "#ERROR"
-			dialogData.message = "Missing mod \"" + NSGetServerRequiredModName( serverIndex, i ) + "\" v" + NSGetServerRequiredModVersion( serverIndex, i )
+			dialogData.message = "Missing mod \"" + modName + "\" v" + modVersion
 			dialogData.image = $"ui/menu/common/dialog_error"
 
 			if (!modIsVerified)
@@ -1015,8 +1018,8 @@ void function _OnServerSelectedAsync( var button )
 		else
 		{
 			// this uses semver https://semver.org
-			array<string> serverModVersion = split( NSGetServerRequiredModVersion( serverIndex, i ), "." )
-			array<string> clientModVersion = split( NSGetModVersionByModName( NSGetServerRequiredModName( serverIndex, i ) ), "." )
+			array<string> serverModVersion = split( modVersion, "." )
+			array<string> clientModVersion = split( NSGetModVersionByModName( modName ), "." )
 
 			bool semverFail = false
 			// if server has invalid semver don't bother checking
@@ -1034,7 +1037,7 @@ void function _OnServerSelectedAsync( var button )
 			{
 				DialogData dialogData
 				dialogData.header = "#ERROR"
-				dialogData.message = "Server has mod \"" + NSGetServerRequiredModName( serverIndex, i ) + "\" v" + NSGetServerRequiredModVersion( serverIndex, i ) + " while we have v" + NSGetModVersionByModName( NSGetServerRequiredModName( serverIndex, i ) )
+				dialogData.message = "Server has mod \"" + modName + "\" v" + modVersion + " while we have v" + NSGetModVersionByModName( modName )
 				dialogData.image = $"ui/menu/common/dialog_error"
 
 				#if PC_PROG
