@@ -986,13 +986,17 @@ void function _OnServerSelectedAsync( var button )
 				dialogData.showSpinner = true;
 				// Prevent user from closing dialog
 				dialogData.forceChoice = true;
-				
+
 				OpenDialog( dialogData )
 
 				while( IsModBeingDownloaded(modName) )
 				{
 					WaitFrame();
 				}
+
+				CloseActiveMenu();
+				
+				// TODO ensure that mod is installed
 
 				continue;
 			}
