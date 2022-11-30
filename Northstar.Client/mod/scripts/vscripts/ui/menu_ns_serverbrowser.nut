@@ -983,7 +983,7 @@ void function _OnServerSelectedAsync( var button )
 				dialogData.showSpinner = true;
 				OpenDialog( dialogData )
 
-				while(true)
+				while(IsModBeingDownloaded(NSGetServerRequiredModName( serverIndex, i )))
 				{
 					WaitFrame();
 				}
