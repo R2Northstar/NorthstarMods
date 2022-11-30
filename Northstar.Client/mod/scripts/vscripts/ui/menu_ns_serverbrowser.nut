@@ -984,6 +984,9 @@ void function _OnServerSelectedAsync( var button )
 				dialogData.header = "Downloading mod"
 				dialogData.message = "Downloading \"" + modName + "\" v" + modVersion + "..."
 				dialogData.showSpinner = true;
+				// Prevent user from closing dialog
+				dialogData.forceChoice = true;
+				
 				OpenDialog( dialogData )
 
 				while( IsModBeingDownloaded(modName) )
