@@ -14,11 +14,6 @@ struct {
 	table< string, array< void functionref( array<string> args ) > > callbacks
 } file
 
-void function ServerToClientStringCommands_Init()
-{
-	getroottable().rawset( "NSClientCodeCallback_RecievedServerToClientStringCommand", NSClientCodeCallback_RecievedServerToClientStringCommand )
-}
-
 void function AddServerToClientStringCommandCallback( string command, void functionref( array<string> args ) callback )
 {
 	if ( !( command in file.callbacks ) )
