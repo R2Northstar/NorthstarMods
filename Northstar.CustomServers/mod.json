@@ -58,10 +58,7 @@
 	"Scripts": [
 		{
 			"Path": "_custom_codecallbacks.gnut",
-			"RunOn": "SERVER",
-			"ServerCallback": {
-				"Before": "NSSetupChathooksServer"
-			}
+			"RunOn": "SERVER"
 		},
 		{
 			"Path": "_northstar_cheatcommands.nut",
