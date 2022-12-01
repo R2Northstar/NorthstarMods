@@ -1,6 +1,4 @@
 #if CLIENT
-global function ServerToClientStringCommands_Init
-
 global function AddServerToClientStringCommandCallback
 global function NSClientCodeCallback_RecievedServerToClientStringCommand
 #endif
