@@ -96,8 +96,9 @@ void function NSHandleFailedHttpRequest(int handle, int errorCode, string errorM
  * @param requestParameters The parameters to use for this request.
  * @param onSuccess The callback to execute if the request is successful.
  * @param onFailure The callback to execute if the request has failed.
+ * @returns Whether or not the request has been successfully started.
  */
-void function NSHttpRequest(HttpRequest requestParameters, void functionref( int, string, string ) onSuccess = null, void functionref( int, string ) onFailure = null)
+bool function NSHttpRequest(HttpRequest requestParameters, void functionref( int, string, string ) onSuccess = null, void functionref( int, string ) onFailure = null)
 {
     int handle = NS_InternalMakeHttpRequest(requestParameters.method, requestParameters.baseUrl, requestParameters.headers,
         requestParameters.queryParameters, requestParameters.contentType, requestParameters.body, requestParameters.timeout, requestParameters.userAgent)
@@ -110,6 +111,8 @@ void function NSHttpRequest(HttpRequest requestParameters, void functionref( int
 
         pendingCallbacks[handle] <- callback
     }
+
+    return handle != -1
 }
 
 /**
@@ -119,15 +122,16 @@ void function NSHttpRequest(HttpRequest requestParameters, void functionref( int
  * @param queryParameters A table of key value parameters to insert in the url. 
  * @param onSuccess The callback to execute if the request is successful.
  * @param onFailure The callback to execute if the request has failed.
+ * @returns Whether or not the request has been successfully started.
  */
-void function NSHttpGet(string url, table<string, array<string> > queryParameters = {}, void functionref( int, string, string ) onSuccess = null, void functionref( int, string ) onFailure = null)
+bool function NSHttpGet(string url, table<string, array<string> > queryParameters = {}, void functionref( int, string, string ) onSuccess = null, void functionref( int, string ) onFailure = null)
 {
     HttpRequest request = { ... }
     request.method = HttpRequestMethod.GET
     request.baseUrl = url
     request.queryParameters = queryParameters
 
-    NSHttpRequest(request, onSuccess, onFailure)
+    return NSHttpRequest(request, onSuccess, onFailure)
 }
 
 /**
@@ -137,15 +141,16 @@ void function NSHttpGet(string url, table<string, array<string> > queryParameter
  * @param queryParameters A table of key value parameters to insert in the url. 
  * @param onSuccess The callback to execute if the request is successful.
  * @param onFailure The callback to execute if the request has failed.
+ * @returns Whether or not the request has been successfully started.
  */
-void function NSHttpPostQuery(string url, table<string, array<string> > queryParameters, void functionref( int, string, string ) onSuccess = null, void functionref( int, string ) onFailure = null)
+bool function NSHttpPostQuery(string url, table<string, array<string> > queryParameters, void functionref( int, string, string ) onSuccess = null, void functionref( int, string ) onFailure = null)
 {
     HttpRequest request = { ... }
     request.method = HttpRequestMethod.POST
     request.baseUrl = url
     request.queryParameters = queryParameters
 
-    NSHttpRequest(request, onSuccess, onFailure)
+    return NSHttpRequest(request, onSuccess, onFailure)
 }
 
 /**
@@ -155,15 +160,16 @@ void function NSHttpPostQuery(string url, table<string, array<string> > queryPar
  * @param queryParameters A table of key value parameters to insert in the url. 
  * @param onSuccess The callback to execute if the request is successful.
  * @param onFailure The callback to execute if the request has failed.
+ * @returns Whether or not the request has been successfully started.
  */
-void function NSHttpPostBody(string url, string body, void functionref( int, string, string ) onSuccess = null, void functionref( int, string ) onFailure = null)
+bool function NSHttpPostBody(string url, string body, void functionref( int, string, string ) onSuccess = null, void functionref( int, string ) onFailure = null)
 {
     HttpRequest request = { ... }
     request.method = HttpRequestMethod.POST
     request.baseUrl = url
     request.body = body
 
-    NSHttpRequest(request, onSuccess, onFailure)
+    return NSHttpRequest(request, onSuccess, onFailure)
 }
 
 /** Whether or not the given status code is considered successful. */
