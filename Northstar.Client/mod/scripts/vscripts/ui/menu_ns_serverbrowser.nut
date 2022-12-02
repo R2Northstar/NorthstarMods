@@ -755,7 +755,7 @@ void function FilterServerList()
 		tempServer.serverPlayers = NSGetServerPlayerCount( i )
 		tempServer.serverPlayersMax = NSGetServerMaxPlayerCount( i )
 		tempServer.serverMap = NSGetServerMap( i )
-		tempServer.serverGamemode = GetGameModeDisplayName( NSGetServerPlaylist ( i ) )
+		tempServer.serverGamemode =  NSGetServerPlaylist ( i ) 
 
 		totalPlayers += tempServer.serverPlayers
 
@@ -783,8 +783,8 @@ void function FilterServerList()
 			sName.append( tempServer.serverName.tolower() )
 			sName.append( Localize( GetMapDisplayName( tempServer.serverMap ) ).tolower() )
 			sName.append( tempServer.serverMap.tolower() )
-			sName.append( tempServer.serverGamemode.tolower() )
-			sName.append( Localize( tempServer.serverGamemode ).tolower() )
+			sName.append( GetGameModeDisplayName( tempServer.serverGamemode ).tolower() )
+			sName.append( Localize( GetGameModeDisplayName( tempServer.serverGamemode ) ).tolower() )
 			sName.append( NSGetServerDescription( i ).tolower() )
 
 			string sTerm = filterArguments.searchTerm.tolower()
@@ -839,7 +839,7 @@ void function UpdateShownPage()
 		Hud_SetText( file.serversName[ i ], file.serversArrayFiltered[ buttonIndex ].serverName )
 		Hud_SetText( file.playerCountLabels[ i ], format( "%i/%i", file.serversArrayFiltered[ buttonIndex ].serverPlayers, file.serversArrayFiltered[ buttonIndex ].serverPlayersMax ) )
 		Hud_SetText( file.serversMap[ i ], GetMapDisplayName( file.serversArrayFiltered[ buttonIndex ].serverMap ) )
-		Hud_SetText( file.serversGamemode[ i ], file.serversArrayFiltered[ buttonIndex ].serverGamemode )
+		Hud_SetText( file.serversGamemode[ i ], GetGameModeDisplayName( file.serversArrayFiltered[ buttonIndex ].serverGamemode ) )
 	}
 
 
@@ -927,9 +927,30 @@ void function DisplayFocusedServerInfo( int scriptID )
 	Hud_SetText( Hud_GetChild( menu, "ServerName" ), NSGetServerName( file.serversArrayFiltered[ serverIndex ].serverIndex ) )
 
 	// mode name/image
-	string mode = file.serversArrayFiltered[ serverIndex ].serverGamemode
+	string mode = GetGameModeDisplayName( file.serversArrayFiltered[ serverIndex ].serverGamemode )
+	string playlist = file.serversArrayFiltered[ serverIndex ].serverGamemode
 	Hud_SetVisible( Hud_GetChild( menu, "NextModeIcon" ), true )
-	RuiSetImage( Hud_GetRui( Hud_GetChild( menu, "NextModeIcon" ) ), "basicImage", GetPlaylistThumbnailImage( mode ) )
+	
+	var nextModeIconAlt = Hud_GetChild( menu, "NextModeIconPatch" )
+	var nextModeIcon = Hud_GetChild( menu, "NextModeIcon" )
+	string iconName = GetPlaylistVarOrUseValue( playlist, "iconOverride", "default" )
+	
+	if(iconName == "default")
+	{
+		RuiSetImage( Hud_GetRui( nextModeIcon ), "basicImage", GetPlaylistThumbnailImage( playlist ) )
+		
+		Hud_Show( nextModeIcon )
+		Hud_Hide( nextModeIconAlt )
+	}	
+	else
+	{
+		RuiSetImage( Hud_GetRui( nextModeIconAlt ), "iconImage", StringToAsset(iconName) )
+		
+		Hud_Hide( nextModeIcon )
+		Hud_Show( nextModeIconAlt )
+	}
+
+
 	Hud_SetVisible( Hud_GetChild( menu, "NextGameModeName" ), true )
 
 	if ( mode.len() != 0 )
@@ -1157,8 +1178,8 @@ int function ServerSortLogic ( serverStruct a, serverStruct b )
 			direction = filterDirection.serverMap
 			break;
 		case sortingBy.GAMEMODE:
-			aTemp = Localize( a.serverGamemode ).tolower()
-			bTemp = Localize( b.serverGamemode ).tolower()
+			aTemp = Localize( GetGameModeDisplayName( a.serverGamemode ) ).tolower()
+			bTemp = Localize( GetGameModeDisplayName( b.serverGamemode ) ).tolower()
 			direction = filterDirection.serverGamemode
 			break;
 		case sortingBy.LATENCY:

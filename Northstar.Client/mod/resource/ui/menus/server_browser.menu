@@ -2491,6 +2491,22 @@ resource/ui/menus/mods_browse.menu
 			pin_corner_to_sibling BOTTOM_RIGHT
 			pin_to_sibling_corner TOP_RIGHT
 		}
+		NextModeIconPatch
+		{
+			ControlName RuiPanel
+			wide 72
+			tall 72
+			visible 0
+			scaleImage 1
+			image ""
+			zpos 1
+
+			rui                     "ui/callsign_icon_button.rpak"
+
+			pin_to_sibling NextGameModeName
+			pin_corner_to_sibling BOTTOM_RIGHT
+			pin_to_sibling_corner TOP_RIGHT
+		}
 
 		ServerName
 		{

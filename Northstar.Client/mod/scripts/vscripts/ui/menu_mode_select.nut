@@ -1,5 +1,6 @@
 global function InitModesMenu
 
+
 struct {
 	int currentModePage
 } file
@@ -21,6 +22,7 @@ void function InitModesMenu()
 	AddMenuFooterOption( menu, BUTTON_SHOULDER_LEFT, "#PRIVATE_MATCH_PAGE_PREV", "#PRIVATE_MATCH_PAGE_PREV", CycleModesBack, IsNorthstarServer )
 	AddMenuFooterOption( menu, BUTTON_SHOULDER_RIGHT, "#PRIVATE_MATCH_PAGE_NEXT", "#PRIVATE_MATCH_PAGE_NEXT", CycleModesForward, IsNorthstarServer )
 }
+
 
 void function OnOpenModesMenu()
 {
@@ -71,7 +73,9 @@ void function ModeButton_GetFocus( var button )
 
 	var menu = GetMenu( "ModesMenu" )
 	var nextModeImage = Hud_GetChild( menu, "NextModeImage" )
+	var nextModeImageAlt = Hud_GetChild( menu, "NextModeImageCallsign" )
 	var nextModeIcon = Hud_GetChild( menu, "ModeIconImage" )
+	var nextModeIconAlt = Hud_GetChild( menu, "ModeIconImagePatch" )
 	var nextModeName = Hud_GetChild( menu, "NextModeName" )
 	var nextModeDesc = Hud_GetChild( menu, "NextModeDesc" )
 
@@ -82,9 +86,39 @@ void function ModeButton_GetFocus( var button )
 
 	string modeName = modesArray[modeId]
 
-	asset playlistImage = GetPlaylistImage( modeName )
-	RuiSetImage( Hud_GetRui( nextModeImage ), "basicImage", playlistImage )
-	RuiSetImage( Hud_GetRui( nextModeIcon ), "basicImage", GetPlaylistThumbnailImage( modeName ) )
+
+	string imageName = GetPlaylistVarOrUseValue( modeName, "imageOverride", "default" )
+	if( imageName == "default" )
+	{
+		asset playlistImage = GetPlaylistImage( modeName )
+		RuiSetImage( Hud_GetRui( nextModeImage ), "basicImage", playlistImage )
+		
+		Hud_Show( nextModeImage )
+		Hud_Hide( nextModeImageAlt )
+	}
+	else
+	{
+		asset playlistImage = StringToAsset( imageName )
+		RuiSetImage( Hud_GetRui( nextModeImageAlt ), "iconImage", playlistImage )
+		
+	    Hud_Show( nextModeImageAlt )
+		Hud_Hide( nextModeImage )
+	}
+	string iconName = GetPlaylistVarOrUseValue( modeName, "IconOverride", "default" )
+	if( iconName == "default" )
+	{
+		RuiSetImage( Hud_GetRui( nextModeIcon ), "basicImage", GetPlaylistThumbnailImage( modeName ) )
+		Hud_Show( nextModeIcon )
+		Hud_Hide( nextModeIconAlt )
+	}
+	else
+	{
+		var rui = Hud_GetRui( nextModeIconAlt )
+		RuiSetImage( rui, "iconImage", StringToAsset( iconName ) )
+		Hud_Show( nextModeIcon )
+		Hud_Hide( nextModeIconAlt )
+	}
+
 	Hud_SetText( nextModeName, GetGameModeDisplayName( modeName ) )
 
 	string mapName = PrivateMatch_GetSelectedMap()

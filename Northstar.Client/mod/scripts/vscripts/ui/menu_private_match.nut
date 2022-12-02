@@ -520,9 +520,24 @@ void function SetMapInfo( string mapName )
 
 void function SetModeInfo( string modeName )
 {
+	var nextModeIconAlt = Hud_GetChild( file.menu, "NextModeIconPatch" )
 	var nextModeIcon = Hud_GetChild( file.menu, "NextModeIcon" )
-	RuiSetImage( Hud_GetRui( nextModeIcon ), "basicImage", GetPlaylistThumbnailImage( modeName ) )
-	Hud_Show( nextModeIcon )
+	string iconName = GetPlaylistVarOrUseValue( modeName, "iconOverride", "default" )
+	
+	if( iconName == "default" )
+	{
+		RuiSetImage( Hud_GetRui( nextModeIcon ), "basicImage", GetPlaylistThumbnailImage( modeName ) )
+		
+		Hud_Show( nextModeIcon )
+		Hud_Hide( nextModeIconAlt )
+	}	
+	else
+	{
+		RuiSetImage( Hud_GetRui( nextModeIconAlt ), "iconImage", StringToAsset( iconName ) )
+		
+		Hud_Hide( nextModeIcon )
+		Hud_Show( nextModeIconAlt )
+	}
 
 	Hud_SetText( file.nextGameModeLabel, GetGameModeDisplayName( modeName ) )
 }
