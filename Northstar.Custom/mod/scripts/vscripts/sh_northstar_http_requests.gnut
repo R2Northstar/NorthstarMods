@@ -41,12 +41,12 @@ struct HttpRequestCallbacks
 
     /**
      * The function to call if the HTTP request failed.
-     * int statusCode, string errorMessage.
+     * int errorCode, string errorMessage.
      */
     void functionref( int, string ) onFailure
 }
 
-table<int, HttpRequestCallbacks> pendingCallbacks
+table< int, HttpRequestCallbacks > pendingCallbacks
 
 /**
  * Called from native when a HTTP request is successful.
@@ -57,16 +57,16 @@ table<int, HttpRequestCallbacks> pendingCallbacks
  * @param body The body returned for GET requests.
  * @param headers The headers that were returned in the response.
  */
-void function NSHandleSuccessfulHttpRequest(int handle, int statusCode, string body, string headers)
+void function NSHandleSuccessfulHttpRequest( int handle, int statusCode, string body, string headers )
 {
-    if (handle in pendingCallbacks)
+    if ( handle in pendingCallbacks )
     {
-        if (pendingCallbacks[handle].onSuccess != null)
+        if ( pendingCallbacks[ handle ].onSuccess != null )
         {
-            pendingCallbacks[handle].onSuccess(statusCode, body, headers)
+            pendingCallbacks[ handle ].onSuccess( statusCode, body, headers )
         }
 
-        delete pendingCallbacks[handle]
+        delete pendingCallbacks[ handle ]
     }
 }
 
@@ -77,16 +77,16 @@ void function NSHandleSuccessfulHttpRequest(int handle, int statusCode, string b
  * @param errorCode The error code returned by curl.
  * @param errorMessage The error message returned by curl.
  */
-void function NSHandleFailedHttpRequest(int handle, int errorCode, string errorMessage)
+void function NSHandleFailedHttpRequest( int handle, int errorCode, string errorMessage )
 {
-    if (handle in pendingCallbacks)
+    if ( handle in pendingCallbacks )
     {
-        if (pendingCallbacks[handle].onFailure != null)
+        if ( pendingCallbacks[ handle ].onFailure != null )
         {
-            pendingCallbacks[handle].onFailure(errorCode, errorMessage)
+            pendingCallbacks[ handle ].onFailure( errorCode, errorMessage )
         }
 
-        delete pendingCallbacks[handle]
+        delete pendingCallbacks[ handle ]
     }
 }
 
@@ -98,18 +98,18 @@ void function NSHandleFailedHttpRequest(int handle, int errorCode, string errorM
  * @param onFailure The callback to execute if the request has failed.
  * @returns Whether or not the request has been successfully started.
  */
-bool function NSHttpRequest(HttpRequest requestParameters, void functionref( int, string, string ) onSuccess = null, void functionref( int, string ) onFailure = null)
+bool function NSHttpRequest( HttpRequest requestParameters, void functionref( int, string, string ) onSuccess = null, void functionref( int, string ) onFailure = null )
 {
-    int handle = NS_InternalMakeHttpRequest(requestParameters.method, requestParameters.baseUrl, requestParameters.headers,
-        requestParameters.queryParameters, requestParameters.contentType, requestParameters.body, requestParameters.timeout, requestParameters.userAgent)
+    int handle = NS_InternalMakeHttpRequest( requestParameters.method, requestParameters.baseUrl, requestParameters.headers,
+        requestParameters.queryParameters, requestParameters.contentType, requestParameters.body, requestParameters.timeout, requestParameters.userAgent )
 
-    if (handle != -1 && (onSuccess != null || onFailure != null))
+    if ( handle != -1 && ( onSuccess != null || onFailure != null ) )
     {
         HttpRequestCallbacks callback
         callback.onSuccess = onSuccess
         callback.onFailure = onFailure
 
-        pendingCallbacks[handle] <- callback
+        pendingCallbacks[ handle ] <- callback
     }
 
     return handle != -1
@@ -124,14 +124,14 @@ bool function NSHttpRequest(HttpRequest requestParameters, void functionref( int
  * @param onFailure The callback to execute if the request has failed.
  * @returns Whether or not the request has been successfully started.
  */
-bool function NSHttpGet(string url, table<string, array<string> > queryParameters = {}, void functionref( int, string, string ) onSuccess = null, void functionref( int, string ) onFailure = null)
+bool function NSHttpGet( string url, table<string, array<string> > queryParameters = {}, void functionref( int, string, string ) onSuccess = null, void functionref( int, string ) onFailure = null )
 {
-    HttpRequest request = { ... }
+    HttpRequest request
     request.method = HttpRequestMethod.GET
     request.baseUrl = url
     request.queryParameters = queryParameters
 
-    return NSHttpRequest(request, onSuccess, onFailure)
+    return NSHttpRequest( request, onSuccess, onFailure )
 }
 
 /**
@@ -143,14 +143,14 @@ bool function NSHttpGet(string url, table<string, array<string> > queryParameter
  * @param onFailure The callback to execute if the request has failed.
  * @returns Whether or not the request has been successfully started.
  */
-bool function NSHttpPostQuery(string url, table<string, array<string> > queryParameters, void functionref( int, string, string ) onSuccess = null, void functionref( int, string ) onFailure = null)
+bool function NSHttpPostQuery( string url, table<string, array<string> > queryParameters, void functionref( int, string, string ) onSuccess = null, void functionref( int, string ) onFailure = null )
 {
-    HttpRequest request = { ... }
+    HttpRequest request
     request.method = HttpRequestMethod.POST
     request.baseUrl = url
     request.queryParameters = queryParameters
 
-    return NSHttpRequest(request, onSuccess, onFailure)
+    return NSHttpRequest( request, onSuccess, onFailure )
 }
 
 /**
@@ -162,18 +162,18 @@ bool function NSHttpPostQuery(string url, table<string, array<string> > queryPar
  * @param onFailure The callback to execute if the request has failed.
  * @returns Whether or not the request has been successfully started.
  */
-bool function NSHttpPostBody(string url, string body, void functionref( int, string, string ) onSuccess = null, void functionref( int, string ) onFailure = null)
+bool function NSHttpPostBody( string url, string body, void functionref( int, string, string ) onSuccess = null, void functionref( int, string ) onFailure = null )
 {
-    HttpRequest request = { ... }
+    HttpRequest request
     request.method = HttpRequestMethod.POST
     request.baseUrl = url
     request.body = body
 
-    return NSHttpRequest(request, onSuccess, onFailure)
+    return NSHttpRequest( request, onSuccess, onFailure )
 }
 
 /** Whether or not the given status code is considered successful. */
-bool function NSIsSuccessHttpCode(int statusCode)
+bool function NSIsSuccessHttpCode( int statusCode )
 {
     return statusCode >= 200 && statusCode <= 299
 }
