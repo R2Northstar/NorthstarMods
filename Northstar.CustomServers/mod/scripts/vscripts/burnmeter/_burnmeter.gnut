@@ -227,7 +227,7 @@ void function PhaseRewindLifetime( entity player )
 		rewindData.angles = < 0, player.EyeAngles().y, 0 >
 		rewindData.velocity = player.GetVelocity()
 		rewindData.wasInContextAction = player.ContextAction_IsActive()
-		rewindData.wasCrouched = player.IsCrouched()
+		rewindData.wasCrouched = player.IsCrouched() && player.IsOnGround()
 
 		if ( player.p.burnCardPhaseRewindStruct.phaseRetreatSavedPositions.len() >= PHASE_REWIND_DATA_MAX_POSITIONS )
 		{
@@ -505,8 +505,11 @@ void function PlayerUsesPhaseRewindBurncardThreaded( entity player )
 	{
 		// should looks better?
 		player.UnforceCrouch()
+		player.UnforceStand()
 		if( positions[ i ].wasCrouched )
 			player.ForceCrouch() // make player's view lower
+		else
+			player.ForceStand()
 		float moveTime = PHASE_REWIND_PATH_SNAPSHOT_INTERVAL + 0.1
 		player.SetVelocity( -positions[ i ].velocity )
 		mover.NonPhysicsMoveTo( positions[ i ].origin, moveTime, 0, 0 )
@@ -514,6 +517,8 @@ void function PlayerUsesPhaseRewindBurncardThreaded( entity player )
 		wait PHASE_REWIND_PATH_SNAPSHOT_INTERVAL
 	}
 	player.SetVelocity( <0, 0, 0> )
+	player.UnforceCrouch() // clean up!
+	player.UnforceStand()
 	if( positions[0].wasCrouched )
 		thread PhaseRewindForceCrouch( player )
 	player.SetOrigin( positions[0].origin + < 0,0,20 > )
