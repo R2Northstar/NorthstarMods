@@ -38,6 +38,9 @@ void function SvLoadoutsMP_Init()
 	RegisterSignal( "EndUpdateCachedLoadouts" )
 	RegisterSignal( "GracePeriodDone" ) // temp to get weapons\_weapon_utility.nut:2271 to behave
 	
+	// modified
+	RegisterSignal( "WaitingForIntroOver" )
+
 	AddCallback_OnClientConnected( LoadoutsMPInitPlayer )
 	
 	AddClientCommandCallback( "RequestPilotLoadout", ClientCommandCallback_RequestPilotLoadout )
@@ -58,12 +61,9 @@ void function SvLoadoutsMP_Init()
 		AddClientCommandCallback( "LoadoutMenuClosed", ClientCommandCallback_LoadoutMenuClosed )
 	}
 	
-	AddCallback_OnPlayerKilled( LoadoutsMP_OnPlayerKilled )
-}
-
-void function LoadoutsMP_OnPlayerKilled( entity victim, entity attacker, var damageInfo )
-{
-	DestroyDroppedWeapon( victim )
+	AddCallback_OnPlayerKilled( DestroyDroppedWeapon )
+	AddCallback_OnNPCKilled( DestroyDroppedWeapon )
+	AddCallback_GameStateEnter( eGameState.Prematch, WeaponDestroyThink ) // defensive fix, or player can get some weapons through executions
 }
 
 void function SetLoadoutGracePeriodEnabled( bool enabled )
@@ -81,7 +81,7 @@ void function SetWeaponDropsEnabled( bool enabled )
 	file.weaponDropsEnabled = enabled
 }
 
-void function DestroyDroppedWeapon( entity victim )
+void function DestroyDroppedWeapon( entity victim, entity attacker, var damageInfo )
 {
 	if ( !file.weaponDropsEnabled && IsValid( victim.GetActiveWeapon() ) )
 		thread DelayDestroyDroppedWeapon( victim.GetActiveWeapon() )
@@ -92,6 +92,21 @@ void function DelayDestroyDroppedWeapon( entity weapon )
 	WaitEndFrame()
 	if ( IsValid( weapon ) )
 		weapon.Destroy()
+}
+
+void function WeaponDestroyThink()
+{
+	thread TryAlwaysDestroyDroppedWeapon_Threaded()
+}
+
+void function TryAlwaysDestroyDroppedWeapon_Threaded()
+{
+	while( true )
+	{
+		if( !file.weaponDropsEnabled )
+			ClearDroppedWeapons()
+		WaitFrame()
+	}
 }
 
 void function AddCallback_OnTryGetTitanLoadout( TryGetTitanLoadoutCallbackType callback )
@@ -241,14 +256,18 @@ bool function ClientCommandCallback_SetBurnCardPersistenceSlot( entity player, a
 	{
 		if( !file.recentNoticedPlayers.contains( player.GetUID() ) )
 		{
-			SendHudMessage( player, "#LOADOUT_CHANGE_NEXT_MATCH", -1, 0.3, 255, 255, 255, 255, 1.0, 5.0, 2.0 ) // like 90% sure this is innacurate lols
-			thread DelayedRemoveNoticeLimit( player.GetUID() )
+			if( GetGameState() >= eGameState.Playing ) // only announce after game starts
+			{
+				SendHudMessage( player, "#LOADOUT_CHANGE_NEXT_MATCH", -1, 0.3, 255, 255, 255, 255, 1.0, 5.0, 2.0 ) // like 90% sure this is innacurate lols
+				thread DelayedRemoveNoticeLimit( player.GetUID() )
+			}
 		}
 		return true
 	}
 	
 	print( player + " SetBurnCardPersistenceSlot " + args[0] )
 	
+	// insecure, could be used to set invalid burnmeterslot potentially
 	if ( IsRefValidAndOfType( args[0], eItemTypes.BURN_METER_REWARD ) )
 		player.SetPersistentVar( "burnmeterSlot", BurnReward_GetByRef( args[0] ).id )
 	else
@@ -302,10 +321,13 @@ bool function ClientCommandCallback_InGameMPMenuClosed( entity player, array<str
 {
 	if( player.IsTitan() )
 	{
-		if( !file.recentNoticedPlayers.contains( player.GetUID() ) )
+		if( !file.recentNoticedPlayers.contains( player.GetUID() ) && GetGameState() >= eGameState.Playing )
 		{
-			SendHudMessage( player, "#LOADOUT_CHANGE_NEXT_TITAN", -1, 0.3, 255, 255, 255, 255, 1.0, 5.0, 2.0 ) // like 90% sure this is innacurate lol
-			thread DelayedRemoveNoticeLimit( player.GetUID() )
+			if( GetGameState() >= eGameState.Playing ) // only announce after game starts
+			{
+				SendHudMessage( player, "#LOADOUT_CHANGE_NEXT_TITAN", -1, 0.3, 255, 255, 255, 255, 1.0, 5.0, 2.0 ) // like 90% sure this is innacurate lol
+				thread DelayedRemoveNoticeLimit( player.GetUID() )
+			}
 		}
 	}
 	else
@@ -328,11 +350,15 @@ void function TryGivePilotLoadoutForGracePeriod( entity player )
 {
 	if( !file.loadoutGracePeriodEnabled )
 	{
-		if( !file.recentNoticedPlayers.contains( player.GetUID() ) )
+		if( !file.recentNoticedPlayers.contains( player.GetUID() ) && GetGameState() >= eGameState.Playing )
 		{
-			SendHudMessage( player, "#LOADOUT_CHANGE_NEXT_PILOT", -1, 0.3, 255, 255, 255, 255, 1.0, 5.0, 2.0 )
-			thread DelayedRemoveNoticeLimit( player.GetUID() )
+			if( GetGameState() >= eGameState.Playing ) // only announce after game starts
+			{
+				SendHudMessage( player, "#LOADOUT_CHANGE_NEXT_PILOT", -1, 0.3, 255, 255, 255, 255, 1.0, 5.0, 2.0 )
+				thread DelayedRemoveNoticeLimit( player.GetUID() )
+			}
 		}
+		return
 	}
 	if ( !IsLobby() && IsAlive( player ) && player.s.loadoutDirty && !player.IsTitan() && !player.ContextAction_IsActive() )
 	{
@@ -355,8 +381,11 @@ void function TryGivePilotLoadoutForGracePeriod( entity player )
 		{
 			if( !file.recentNoticedPlayers.contains( player.GetUID() ) )
 			{
-				SendHudMessage( player, "#LOADOUT_CHANGE_NEXT_PILOT", -1, 0.3, 255, 255, 255, 255, 1.0, 5.0, 2.0 )
-				thread DelayedRemoveNoticeLimit( player.GetUID() )
+				if( GetGameState() >= eGameState.Playing ) // only announce after game starts
+				{
+					SendHudMessage( player, "#LOADOUT_CHANGE_NEXT_PILOT", -1, 0.3, 255, 255, 255, 255, 1.0, 5.0, 2.0 )
+					thread DelayedRemoveNoticeLimit( player.GetUID() )
+				}
 			}
 		}
 	}
@@ -366,6 +395,8 @@ void function GiveLoadoutWhenIntroOver( entity player )
 {
 	player.EndSignal( "OnDestroy" )
 	player.EndSignal( "OnDeath" )
+	player.Signal( "WaitingForIntroOver" ) // don't let it loop many times!
+	player.EndSignal( "WaitingForIntroOver" )
 	
 	while ( player.GetParent() != null && ( HasCinematicFlag( player, CE_FLAG_INTRO ) || HasCinematicFlag( player, CE_FLAG_CLASSIC_MP_SPAWNING ) || HasCinematicFlag( player, CE_FLAG_WAVE_SPAWNING ) ) )
 		WaitFrame()
