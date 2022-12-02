@@ -199,7 +199,8 @@ void function CodeCallback_OnClientConnectionCompleted( entity player )
 				shouldDoLateSpawn = true
 			else if( !file.lateSpawnedPlayerUIDs.contains( player.GetUID() ) ) // avoid multiple late spawns by disconnecting
 				shouldDoLateSpawn = true
-			/*
+				
+			/* // was trying to add more conditions, but useless and hard to achieve...
 			float endTime
 			float gameTime
 			if ( IsRoundBased() )
@@ -236,7 +237,7 @@ void function CodeCallback_OnClientConnectionCompleted( entity player )
 		if( connectingRespawned )
 			thread DelayedGamemodeAnnouncement( player )
 	}
-	else if ( GetGameState() >= eGameState.Playing && !RespawnsEnabled() )// don't know why northstar not handling these
+	else if ( GetGameState() == eGameState.Epilogue || GetGameState() == eGameState.SuddenDeath )// don't know why northstar not handling these
 		thread PlayerBecomesSpectator( player )
 }
 
@@ -280,12 +281,19 @@ void function CodeCallback_OnPlayerRespawned( entity player )
 	player.s.respawnCount++
 	player.s.respawnTime = Time()
 	ClearRecentDamageHistory( player )
+	player.ClearReplayDelay() // these should done in OnPlayerRespawned
+	player.ClearViewEntity()
 	
 	player.Signal( "OnRespawned" ) // kill any postdeaththreads that could be running
 	
 	Loadouts_TryGivePilotLoadout( player )
 	if( IsLoadoutGracePeriodEnabled() )
 		GracePeriodThink( player ) // grace period done here
+	else
+	{
+		player.s.inGracePeriod = false // disable this immediately
+		player.Signal( "GracePeriodDone" )
+	}
 	//player.SetPredictionEnabled( true ) doesn't seem needed, as native code seems to set this
 	
 	foreach ( entity weapon in player.GetMainWeapons() )
@@ -513,8 +521,7 @@ void function PostDeathThread_MP( entity player, var damageInfo ) // based on ga
 		else // spawn as pilot
 			RespawnAsPilot( player )
 	}
-	//else if ( GamePlayingOrSuddenDeath() || GetGameState() == eGameState.Epilogue )
-	else if( GetGameState() >= eGameState.Playing ) // respawn not valid, handling all situations
+	else if ( GamePlayingOrSuddenDeath() || GetGameState() == eGameState.Epilogue ) // respawn not valid, handling all situations
 	{
 		if ( shouldDoReplay && player.IsWatchingKillReplay() )
 			WaitSignal( player, "KillCamOver", "RespawnMe" ) // allows player to skip replay

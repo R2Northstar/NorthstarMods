@@ -376,17 +376,33 @@ void function GameStateEnter_WinnerDetermined_Threaded()
 
 		// all waits below should be the same time as PlayerWatchesRoundWinningKillReplay() does
 		wait ROUND_WINNING_KILL_REPLAY_SCREEN_FADE_TIME
-		wait GAME_POSTROUND_CLEANUP_WAIT // to have better visual and do a extra wait
+
+		if( IsValid( replayAttacker ) ) // if attacker not valid, it means replay can't be played, maybe wait shorter
+		{	
+			wait GAME_POSTROUND_CLEANUP_WAIT // to have better visual and do a extra wait
+			
+			// done cleanup wait
+			file.roundWinningKillReplayAttacker = null // clear this
+
+			CleanUpEntitiesForRoundEnd() // fade should be done by this point, so cleanup stuff now when people won't see
+
+			float finalWait = replayLength - 2.0 // this will match PlayerWatchesRoundWinningKillReplay() does
+			if( finalWait <= 0 )
+				finalWait = 2.0 // defensive fix
+			wait finalWait
+		}
+		else // failed to do replay
+		{
+			// done cleanup wait
+			file.roundWinningKillReplayAttacker = null // clear this
+
+			CleanUpEntitiesForRoundEnd() // fade should be done by this point, so cleanup stuff now when people won't see
 		
-		// done cleanup wait
-		file.roundWinningKillReplayAttacker = null // clear this
-		
-		if ( killcamsWereEnabled )
+			wait GAME_POSTROUND_CLEANUP_WAIT
+		}
+
+		if ( killcamsWereEnabled ) // reset last
 			SetKillcamsEnabled( true )
-
-		CleanUpEntitiesForRoundEnd() // fade should be done by this point, so cleanup stuff now when people won't see
-
-		wait replayLength // this will match PlayerWatchesRoundWinningKillReplay() does
 		
 		//foreach( entity player in GetPlayerArray() )
 		//{
@@ -394,7 +410,7 @@ void function GameStateEnter_WinnerDetermined_Threaded()
 		//} 
 
 	}
-	else if ( IsRoundBased() )
+	else if ( IsRoundBased() ) // no replay roundBased
 	{
 		// these numbers are temp and should really be based on consts of some kind
 		foreach( entity player in GetPlayerArray() )
@@ -480,35 +496,45 @@ void function PlayerWatchesRoundWinningKillReplay( entity player, entity replayA
 
 	//player.SetKillReplayDelay( Time() - replayLength, THIRD_PERSON_KILL_REPLAY_ALWAYS )
 	float totalTime = replayLength + GAME_POSTROUND_CLEANUP_WAIT
-	float replayDelay = Time() - totalTime
-	if( replayDelay <= 0 )
-		replayDelay = 0
-	player.SetKillReplayDelay( replayDelay, THIRD_PERSON_KILL_REPLAY_ALWAYS )
-	player.SetKillReplayInflictorEHandle( replayAttacker.GetEncodedEHandle() )
-	if( IsValid( replayVictim ) )
-		player.SetKillReplayVictim( replayVictim )
-	player.SetViewIndex( replayAttacker.GetIndexForEntity() )
-	player.SetIsReplayRoundWinning( true )
+	if( IsValid( replayAttacker ) )
+	{
+		float replayDelay = Time() - totalTime
+		if( replayDelay <= 0 )
+			replayDelay = 0
+		player.SetKillReplayDelay( replayDelay, THIRD_PERSON_KILL_REPLAY_ALWAYS )
+		player.SetKillReplayInflictorEHandle( replayAttacker.GetEncodedEHandle() )
+		if( IsValid( replayVictim ) )
+			player.SetKillReplayVictim( replayVictim )
+		player.SetViewIndex( replayAttacker.GetIndexForEntity() )
+		player.SetIsReplayRoundWinning( true )
+
+		// do a fade if replay is played
+		wait totalTime - 2.0
+		ScreenFadeToBlackForever( player, 2.0 )
+
+		wait 2.0
+	}
+	else // can't do replay, wait a little bit
+		wait GAME_POSTROUND_CLEANUP_WAIT
 	
 	//if ( replayLength >= ROUND_WINNING_KILL_REPLAY_LENGTH_OF_REPLAY - 0.5 ) // only do fade if close to full length replay
 	//{
-		// this doesn't work because fades don't work on players that are in a replay, unsure how official servers do this
-		//wait replayLength - 2.0
-		wait totalTime - 2.0
-		ScreenFadeToBlackForever( player, 2.0 )
+	// this doesn't work because fades don't work on players that are in a replay, unsure how official servers do this
+	//	wait replayLength - 2.0
 	
-		wait 2.0
 	//}
 	//else
 	//	wait replayLength
+
+	
 		
 	//wait ROUND_WINNING_KILL_REPLAY_POST_DEATH_TIME // to have better visual
 	//player.SetPredictionEnabled( true ) doesn't seem needed, as native code seems to set this on respawn
 	
 	// should do these in GameStateEnter_WinnerDetermined_Threaded()
 	//WaitFrame() // bit nicer
-	player.ClearReplayDelay()
-	player.ClearViewEntity()
+	//player.ClearReplayDelay() // these should done in OnPlayerRespawned
+	//player.ClearViewEntity()
 
 	//WaitFrame()
 	//ScreenFadeFromBlack( player, 2.0, 10.0 )
@@ -563,30 +589,35 @@ void function GameStateEnter_SwitchingSides_Threaded()
 		thread PlayerWatchesSwitchingSidesKillReplay( player, replayAttacker, replayVictim, doReplay, replayLength )
 
 	// all waits below should be the same time as PlayerWatchesSwitchingSidesKillReplay() does
-	wait SWITCHING_SIDES_DELAY_REPLAY
-	wait replayLength
+	float timeToWait = doReplay ? SWITCHING_SIDES_DELAY_REPLAY : SWITCHING_SIDES_DELAY
+
+	if( !doReplay )
+		wait replayLength + timeToWait - GAME_POSTROUND_CLEANUP_WAIT
+	else
+		wait replayLength + timeToWait
 
 	file.roundWinningKillReplayAttacker = null // reset this after replay
-	if ( killcamsWereEnabled )
-		SetKillcamsEnabled( true )
 
 	if( file.playFactionDialogue )
 	{
 		PlayFactionDialogueToTeam( "mp_sideSwitching", TEAM_IMC )
 		PlayFactionDialogueToTeam( "mp_sideSwitching", TEAM_MILITIA )
 	}
+
+	CleanUpEntitiesForRoundEnd() // clean up players after dialogue
 	
 	//foreach( entity player in GetPlayerArray() )
 	//	SetPlayerCameraToIntermissionCam( player )
 	
-	wait GAME_POSTROUND_CLEANUP_WAIT // wait for better visual
+	wait GAME_POSTROUND_CLEANUP_WAIT // wait for better visual, may be no need for now?
 
 	file.hasSwitchedSides = true
 	SetServerVar( "switchedSides", 1 )
-	
-	CleanUpEntitiesForRoundEnd() // clean up players after dialogue
 
-	WaitFrame() // bit nicer?
+	//wait 2.0 // bit nicer? 
+
+	if ( killcamsWereEnabled ) // reset here
+		SetKillcamsEnabled( true )
 
 	if ( file.usePickLoadoutScreen )
 		SetGameState( eGameState.PickLoadout )
@@ -594,7 +625,7 @@ void function GameStateEnter_SwitchingSides_Threaded()
 		SetGameState ( eGameState.Prematch )
 }
 
-void function PlayerWatchesSwitchingSidesKillReplay( entity player, entity replayAttacker, entity replayVictim, bool doReplay, float replayLength )
+void function PlayerWatchesSwitchingSidesKillReplay( entity player, entity replayAttacker, entity replayVictim, bool doReplay, float replayLength ) // ( entity player, float replayLength )
 {
 	player.EndSignal( "OnDestroy" )
 	player.FreezeControlsOnServer()
@@ -602,7 +633,8 @@ void function PlayerWatchesSwitchingSidesKillReplay( entity player, entity repla
 	ScreenFadeToBlackForever( player, SWITCHING_SIDES_DELAY_REPLAY ) // automatically cleared 
 	wait SWITCHING_SIDES_DELAY_REPLAY
 	
-	if ( doReplay )
+	//if ( doReplay )
+	if( doReplay && IsValid( replayAttacker ) ) // should do this
 	{
 		player.SetPredictionEnabled( false ) // prediction fucks with replays
 	
@@ -619,30 +651,34 @@ void function PlayerWatchesSwitchingSidesKillReplay( entity player, entity repla
 		//player.SetKillReplayDelay( Time() - replayLength, THIRD_PERSON_KILL_REPLAY_ALWAYS )
 		player.SetKillReplayDelay( replayDelay, THIRD_PERSON_KILL_REPLAY_ALWAYS )
 		player.SetKillReplayInflictorEHandle( replayAttacker.GetEncodedEHandle() )
-		if( IsValid( replayVictim ) )
+		if( IsValid( replayVictim ) ) // maybe no victim for capturing flags
 			player.SetKillReplayVictim( replayVictim )
 		player.SetViewIndex( replayAttacker.GetIndexForEntity() )
 		player.SetIsReplayRoundWinning( true )
 		
 		//if ( replayLength >= SWITCHING_SIDES_DELAY - 2.0 ) // only do fade if close to full length replay
 		//{
-			// this doesn't work because fades don't work on players that are in a replay, unsure how official servers do this
-			//wait replayLength - 2.0
-			wait totalTime - 2.0
-			ScreenFadeToBlackForever( player, 2.0 )
+		// this doesn't work because fades don't work on players that are in a replay, unsure how official servers do this
+		//wait replayLength - 2.0
+		float finalWait = replayLength - 2.0
+		if( finalWait <= 0 )
+			finalWait = 0.0
+		wait finalWait
+		ScreenFadeToBlackForever( player, 2.0 )
 
-			wait 2.0
+		wait 2.0
 		//}
 		//else
 		//	wait replayLength
+
+		wait GAME_POSTROUND_CLEANUP_WAIT // bit nicer to match GameStateEnter_SwitchingSides_Threaded() does
 	}
 	else
 		wait SWITCHING_SIDES_DELAY // extra delay if no replay
 	
 	//player.SetPredictionEnabled( true ) doesn't seem needed, as native code seems to set this on respawn
-	wait GAME_POSTROUND_CLEANUP_WAIT // bit nicer to match GameStateEnter_SwitchingSides_Threaded() does
-	player.ClearReplayDelay()
-	player.ClearViewEntity()
+	//player.ClearReplayDelay() // these should done in OnPlayerRespawned
+	//player.ClearViewEntity()
 }
 
 // eGameState.SuddenDeath
@@ -675,6 +711,10 @@ void function GameStateEnter_SuddenDeath()
 		SetWinner( TEAM_MILITIA, "#GAMEMODE_ENEMY_PILOTS_ELIMINATED", "#GAMEMODE_FRIENDLY_PILOTS_ELIMINATED" )
 		return
 	}
+	
+	// sudden-death really begins
+	foreach( entity player in GetPlayerArray() )
+		PlaySuddenDeathDialogueBasedOnFaction( player )
 
 	//thread SuddenDeathCheckAnyPlayerAlive()
 }
@@ -812,6 +852,7 @@ void function OnPlayerKilled( entity victim, entity attacker, var damageInfo )
 	// note: pilotstitans is just win if enemy team runs out of either pilots or titans
 	if ( IsPilotEliminationBased() || GetGameState() == eGameState.SuddenDeath )
 	{
+		//if ( GetPlayerArrayOfTeam_Alive( victim.GetTeam() ).len() == 0 )
 		if ( GetPlayerArrayOfTeam_Alive( victim.GetTeam() ).len() == 0 )
 		{
 			// for ffa we need to manually get the last team alive 
@@ -1076,16 +1117,24 @@ void function UpdateGameWonThisFrameNextFrame()
 
 void function AddTeamScore( int team, int amount )
 {
-	GameRules_SetTeamScore( team, GameRules_GetTeamScore( team ) + amount )
-	GameRules_SetTeamScore2( team, GameRules_GetTeamScore2( team ) + amount )
-	
+	// using "fixAmount" now
+	//GameRules_SetTeamScore( team, GameRules_GetTeamScore( team ) + amount )
+	//GameRules_SetTeamScore2( team, GameRules_GetTeamScore2( team ) + amount )
+
+	int score = GameRules_GetTeamScore( team )
 	int scoreLimit
 	if ( IsRoundBased() )
 		scoreLimit = GameMode_GetRoundScoreLimit( GAMETYPE )
 	else
 		scoreLimit = GameMode_GetScoreLimit( GAMETYPE )
+
+	int fixedAmount = score + amount > scoreLimit ? scoreLimit - score : amount
+
+	GameRules_SetTeamScore( team, GameRules_GetTeamScore( team ) + fixedAmount )
+	GameRules_SetTeamScore2( team, GameRules_GetTeamScore2( team ) + amount ) // round score is no need to use fixedAmount
 		
-	int score = GameRules_GetTeamScore( team )
+	//int score = GameRules_GetTeamScore( team ) // moved up to make use of it
+	score = GameRules_GetTeamScore( team ) // get new setting score
 	if ( score >= scoreLimit || GetGameState() == eGameState.SuddenDeath )
 		SetWinner( team, "#GAMEMODE_SCORE_LIMIT_REACHED", "#GAMEMODE_SCORE_LIMIT_REACHED" )
 	else if ( ( file.switchSidesBased && !file.hasSwitchedSides ) && score >= ( scoreLimit.tofloat() / 2.0 ) )
@@ -1163,10 +1212,13 @@ float function GetTimeLimit_ForGameMode()
 	return GetCurrentPlaylistVarFloat( playlistString, 10 )
 }
 
-// faction dialogue
+// faction dialogue, not supporting FFA now
 void function DialoguePlayNormal()
 {
 	svGlobal.levelEnt.EndSignal( "GameStateChanged" ) // so this will play right after roundbased game starts
+	if( IsFFAGame() )
+		return
+	
 	float diagIntervel = 91 // play a faction dailogue every 90 + 1s to prevent play together with winner dialogue
 
 	while( GetGameState() == eGameState.Playing )
@@ -1178,6 +1230,8 @@ void function DialoguePlayNormal()
 
 void function DialoguePlayWinnerDetermined()
 {
+	if( IsFFAGame() )
+		return
 	int winningTeam = TEAM_UNASSIGNED
 
 	if( file.enteredSuddenDeath && !IsFFAGame() )
@@ -1194,11 +1248,6 @@ void function DialoguePlayWinnerDetermined()
 		}
 		return
 	}
-
-	if( GameRules_GetTeamScore( TEAM_MILITIA ) < GameRules_GetTeamScore( TEAM_IMC ) )
-		winningTeam = TEAM_IMC
-	if( GameRules_GetTeamScore( TEAM_MILITIA ) > GameRules_GetTeamScore( TEAM_IMC ) )
-		winningTeam = TEAM_MILITIA
 
 	if( IsRoundBased() ) // check for round based modes
 	{
@@ -1219,41 +1268,32 @@ void function PlayScoreEventFactionDialogue( string winningLarge, string losingL
 	int winningTeam
 	int losingTeam
 	bool scoreTied
+	int mltScore = GameRules_GetTeamScore( TEAM_MILITIA )
+	int imcScore = GameRules_GetTeamScore( TEAM_IMC )
 
 	if( IsRoundBased() )
 	{
-		if( GameRules_GetTeamScore2( TEAM_MILITIA ) < GameRules_GetTeamScore2( TEAM_IMC ) )
-		{
-			winningTeam = TEAM_IMC
-			losingTeam = TEAM_MILITIA
-		}
-		else if( GameRules_GetTeamScore2( TEAM_MILITIA ) > GameRules_GetTeamScore2( TEAM_IMC ) )
-		{
-			winningTeam = TEAM_MILITIA
-			losingTeam = TEAM_IMC
-		}
-		else if( GameRules_GetTeamScore2( TEAM_MILITIA ) == GameRules_GetTeamScore2( TEAM_IMC ) )
-		{
-			scoreTied = true
-		}
+		mltScore = GameRules_GetTeamScore2( TEAM_MILITIA )
+		imcScore = GameRules_GetTeamScore2( TEAM_MILITIA )
 	}
-	else
+
+	if( mltScore < imcScore )
 	{
-		if( GameRules_GetTeamScore( TEAM_MILITIA ) < GameRules_GetTeamScore( TEAM_IMC ) )
-		{
-			winningTeam = TEAM_IMC
-			losingTeam = TEAM_MILITIA
-		}
-		else if( GameRules_GetTeamScore( TEAM_MILITIA ) > GameRules_GetTeamScore( TEAM_IMC ) )
-		{
-			winningTeam = TEAM_MILITIA
-			losingTeam = TEAM_IMC
-		}
-		else if( GameRules_GetTeamScore( TEAM_MILITIA ) == GameRules_GetTeamScore( TEAM_IMC ) )
-		{
-			scoreTied = true
-		}
+		winningTeam = TEAM_IMC
+		losingTeam = TEAM_MILITIA
 	}
+	else if( mltScore > imcScore )
+	{
+		winningTeam = TEAM_MILITIA
+		losingTeam = TEAM_IMC
+	}
+	else if( mltScore == imcScore )
+	{
+		scoreTied = true
+	}
+
+	int winningTeamScore = GameRules_GetTeamScore( winningTeam )
+	int losingTeamScore = GameRules_GetTeamScore( losingTeam )
 	if( scoreTied )
 	{
 		if( tied != "" )
@@ -1262,12 +1302,12 @@ void function PlayScoreEventFactionDialogue( string winningLarge, string losingL
 			PlayFactionDialogueToTeam( "scoring_" + tied, TEAM_MILITIA )
 		}
 	}
-	else if( GameRules_GetTeamScore( winningTeam ) - GameRules_GetTeamScore( losingTeam ) >= totalScore * 0.5 )
+	else if( winningTeamScore - losingTeamScore >= totalScore * 0.5 )
 	{
 		PlayFactionDialogueToTeam( "scoring_" + winningLarge, winningTeam )
 		PlayFactionDialogueToTeam( "scoring_" + losingLarge, losingTeam )
 	}
-	else if( GameRules_GetTeamScore( winningTeam ) - GameRules_GetTeamScore( losingTeam ) <= totalScore * 0.25 )
+	else if( winningTeamScore - losingTeamScore <= totalScore * 0.25 )
 	{
 		PlayFactionDialogueToTeam( "scoring_" + winningClose, winningTeam )
 		PlayFactionDialogueToTeam( "scoring_" + losingClose, losingTeam )
