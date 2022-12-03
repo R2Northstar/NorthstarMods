@@ -282,7 +282,7 @@ void function FlushMouseDeltaBuffer()
 
 void function SliderBarUpdate()
 {
-	if ( file.filteredList.len() < = 15 )
+	if ( file.filteredList.len() <= 15 )
 	{
 		FlushMouseDeltaBuffer()
 		return
@@ -348,7 +348,7 @@ void function UpdateList()
 	
 	array< string > filters = split( file.filterText, "," )
 	array< ConVarData > list = file.conVarList
-	if ( filters.len() < = 0 )
+	if ( filters.len() <= 0 )
 		filters.append( "" )
 	foreach( string f in filters )
 	{
@@ -379,7 +379,7 @@ void function UpdateList()
 				{
 					lastModNameInFilter = c.modName
 					array< ConVarData > modVars = GetAllVarsInMod( list, c.modName )
-					if ( filteredList.len() < = 0 && modVars[0].spaceType == eEmptySpaceType.None )
+					if ( filteredList.len() <= 0 && modVars[0].spaceType == eEmptySpaceType.None )
 						filteredList.extend( modVars.slice( 1, modVars.len() ) )
 					else 
 						filteredList.extend( modVars )
@@ -390,7 +390,7 @@ void function UpdateList()
 					if ( lastModNameInFilter != c.modName )
 					{
 						array< ConVarData > modVars = GetModConVarDatas( list, curModTitleIndex )
-						if ( filteredList.len() < = 0 && modVars[0].spaceType == eEmptySpaceType.None )
+						if ( filteredList.len() <= 0 && modVars[0].spaceType == eEmptySpaceType.None )
 							filteredList.extend( modVars.slice( 1, modVars.len() ) )
 						else
 							filteredList.extend( modVars )
@@ -404,7 +404,7 @@ void function UpdateList()
 					if ( lastModNameInFilter != c.modName )
 					{
 						array< ConVarData > modVars = GetModConVarDatas( list, curModTitleIndex )
-						if ( filteredList.len() < = 0 && modVars[0].spaceType == eEmptySpaceType.None )
+						if ( filteredList.len() <= 0 && modVars[0].spaceType == eEmptySpaceType.None )
 							filteredList.extend( modVars.slice( 1, modVars.len() ) )
 						else
 							filteredList.extend( modVars )
@@ -442,7 +442,7 @@ void function UpdateList()
 
 array< ConVarData > function GetModConVarDatas( array< ConVarData > arr, int index )
 {
-	if ( index < = 1 )
+	if ( index <= 1 )
 		return [ arr[ index - 1 ], arr[ index ], arr[ index + 1 ] ]	
 	return [ arr[ index - 2 ], arr[ index - 1 ], arr[ index ], arr[ index + 1 ] ]	
 }
@@ -624,7 +624,7 @@ void function SetModMenuNameText( var button )
 			Hud_SetText( textField, string( GetConVarFloat(conVar.conVar) ) )
 		else Hud_SetText( textField, conVar.isEnumSetting ? conVar.values[ GetConVarInt( conVar.conVar ) ] : GetConVarString( conVar.conVar ) )
 		Hud_SetPos( label, int(scaleX * 25), 0 )
-		// Hud_SetText( resetButton, "#MOD_SETTINGS_RESET" ) 
+		Hud_SetText( resetButton, "" ) 
 		// Hud_SetSize( resetButton, int(scaleX * 90), int(scaleY * 40) )
 		if (conVar.sliderEnabled)
 			Hud_SetSize( label, int(scaleX * (375 + 85)), int(scaleY * 40) )
@@ -634,7 +634,7 @@ void function SetModMenuNameText( var button )
 			Hud_SetText( textField, string( GetConVarFloat( conVar.conVar ) ) )
 		else Hud_SetText( textField, conVar.isEnumSetting ? conVar.values[ GetConVarInt( conVar.conVar ) ] : GetConVarString( conVar.conVar ) )
 		Hud_SetPos( label, int( scaleX * 25 ), 0 )
-		Hud_SetText( resetButton, "#MOD_SETTINGS_RESET" ) 
+		Hud_SetText( resetButton, "" ) 
 		Hud_SetSize( resetButton, int( scaleX * 90 ), int( scaleY * 40 ) )
 		if ( conVar.sliderEnabled )
 			Hud_SetSize( label, int( scaleX * ( 375 + 85 ) ), int( scaleY * 40 ) )
@@ -657,7 +657,7 @@ void function CustomButtonPressed( var button )
 
 void function OnScrollDown( var button )
 {
-	if ( file.filteredList.len() < = BUTTONS_PER_PAGE ) return
+	if ( file.filteredList.len() <= BUTTONS_PER_PAGE ) return
 	file.scrollOffset += 5
 	if ( file.scrollOffset + BUTTONS_PER_PAGE > file.filteredList.len() ) {
 		file.scrollOffset = file.filteredList.len() - BUTTONS_PER_PAGE
@@ -773,7 +773,7 @@ void function AddModTitle( string modName )
 	botBar.modName = modName
 	botBar.spaceType = eEmptySpaceType.BottomBar
 	file.conVarList.extend( [ topBar, modData, botBar ] )
-	file.setFuncs[ expect string( getstackinfos(2)[ "func" ] ) ] < - false
+	file.setFuncs[ expect string( getstackinfos(2)[ "func" ] ) ] <- false
 }
 
 void function AddModCategory( string catName )
@@ -918,7 +918,7 @@ void function SendTextPanelChanges( var textPanel )
 				try 
 				{
 					SetConVarInt( c.conVar, newSetting.tointeger() )
-					file.settingsTable[ c.conVar ] < - newSetting
+					file.settingsTable[ c.conVar ] <- newSetting
 				}
 				catch ( ex )
 				{
@@ -936,13 +936,13 @@ void function SendTextPanelChanges( var textPanel )
 					break
 				}
 				SetConVarBool( c.conVar, newSetting == "1" )
-				file.settingsTable[ c.conVar ] < - newSetting
+				file.settingsTable[ c.conVar ] <- newSetting
 				break
 			case "float":
 				try
 				{
 					SetConVarFloat( c.conVar, newSetting.tofloat() )
-					file.settingsTable[ c.conVar ] < - newSetting
+					file.settingsTable[ c.conVar ] <- newSetting
 				}
 				catch ( ex )
 				{
@@ -970,7 +970,7 @@ void function SendTextPanelChanges( var textPanel )
 					vector settingTest = < split[0].tofloat(), split[1].tofloat(), 0 >
 
 					SetConVarString( c.conVar, newSetting )
-					file.settingsTable[ c.conVar ] < - newSetting
+					file.settingsTable[ c.conVar ] <- newSetting
 				}
 				catch ( ex )
 				{
@@ -993,7 +993,7 @@ void function SendTextPanelChanges( var textPanel )
 					vector settingTest = < split[0].tofloat(), split[1].tofloat(), 0 >
 
 					SetConVarString( c.conVar, newSetting )
-					file.settingsTable[ c.conVar ] < - newSetting
+					file.settingsTable[ c.conVar ] <- newSetting
 				}
 				catch ( ex )
 				{
@@ -1003,7 +1003,7 @@ void function SendTextPanelChanges( var textPanel )
 				break
 			default:
 				SetConVarString( c.conVar, newSetting )
-				file.settingsTable[ c.conVar ] < - newSetting
+				file.settingsTable[ c.conVar ] <- newSetting
 				break;
 		}
 		try
@@ -1092,4 +1092,39 @@ string function SanitizeDisplayName( string displayName )
 	}
 	print( result )
 	return result
+}
+
+function HandleLockedCustomMenuItem( menu, button, tipInfo, hideTip = false )
+{
+	array<var> elements = GetElementsByClassname( menu, "HideWhenLocked" )
+	var buttonTooltip = Hud_GetChild( menu, "ButtonTooltip" )
+	var toolTipLabel = Hud_GetChild( buttonTooltip, "Label" )
+
+	if ( Hud_IsLocked( button ) && !hideTip )
+	{
+		foreach( elem in elements )
+			Hud_Hide( elem )
+
+		local tipArray = clone tipInfo
+		tipInfo.resize( 6, null )
+
+		Hud_SetText( toolTipLabel, tipInfo[0], tipInfo[1], tipInfo[2], tipInfo[3], tipInfo[4], tipInfo[5] )
+
+		local buttonPos = button.GetAbsPos()
+		local buttonHeight = button.GetHeight()
+		local tooltipHeight = buttonTooltip.GetHeight()
+		local yOffset = ( tooltipHeight - buttonHeight ) / 2.0
+
+		buttonTooltip.SetPos( buttonPos[0] + button.GetWidth() * 0.9, buttonPos[1] - yOffset )
+		Hud_Show( buttonTooltip )
+
+		return true
+	}
+	else
+	{
+		foreach( elem in elements )
+			Hud_Show( elem )
+		Hud_Hide( buttonTooltip )
+	}
+	return false
 }

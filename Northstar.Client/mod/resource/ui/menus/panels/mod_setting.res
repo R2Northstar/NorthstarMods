@@ -115,7 +115,7 @@
 		"ControlName" "ImagePanel"
 		"image" "vgui/reset"
 		"scaleImage" "1"
-		"drawColor" "222 222 222 255" // vanilla label color
+		"drawColor" "180 180 180 255" // vanilla label color
 		"visible" "0"
 		"wide" "30"
 		"tall" "30"
