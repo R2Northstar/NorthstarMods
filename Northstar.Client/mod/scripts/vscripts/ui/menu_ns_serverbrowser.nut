@@ -975,9 +975,9 @@ void function _OnServerSelectedAsync( var button )
 		{
 			// check if mod is verified
 			bool modIsVerified = false;
-			if ( IsModVerified(modName, modVersion) ) {
+			if ( NSIsModVerified(modName, modVersion) ) {
 				bool modIsVerified = true;
-				DownloadMod( modName, modVersion );
+				NSDownloadMod( modName, modVersion );
 
 				// Downloading mod UI
 				DialogData dialogData
@@ -989,7 +989,7 @@ void function _OnServerSelectedAsync( var button )
 
 				OpenDialog( dialogData )
 
-				while( IsModBeingDownloaded(modName) )
+				while( NSIsModBeingDownloaded(modName) )
 				{
 					WaitFrame();
 				}

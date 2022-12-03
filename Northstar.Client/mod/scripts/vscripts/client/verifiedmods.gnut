@@ -3,5 +3,5 @@ global function InitializeVerifiedModsList
 
 void function InitializeVerifiedModsList()
 {
-    print(GetVerifiedModsList());
+    NSFetchVerifiedModsList();
 }
