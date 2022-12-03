@@ -1,0 +1,20 @@
+// copied from sh_northstar_custom_precache.gnut
+untyped
+global function CoopCustomPrecache
+
+void function CoopCustomPrecache()
+{
+	// PrecacheWeapon( "mp_weapon_peacekraber" )
+	PrecacheWeapon( "mp_titanweapon_triplethreat" )
+	PrecacheWeapon( "melee_pilot_kunai" )
+
+	// create kunai damage source so game won't crash when we hit smth with it
+	// just using the default melee one, easier than making a new one
+	getconsttable()[ "eDamageSourceId" ][ "melee_pilot_kunai" ] <- eDamageSourceId.melee_pilot_emptyhanded
+
+	RegisterSignal( "CleanupFXAndSoundsForDecoy" ) // holo works in sp :poggies:
+
+	RegisterOnscreenHint( "move_hint", "#MOVE_HINT" ) // TODO: add this "You are being moved to the next checkpoint"
+	RegisterOnscreenHint( "player0_hint_1", "#BECAME_PLAYER0_1" ) // "You are player0"
+	RegisterOnscreenHint( "player0_hint_2", "#BECAME_PLAYER0_2" ) // "You are now player0"
+}

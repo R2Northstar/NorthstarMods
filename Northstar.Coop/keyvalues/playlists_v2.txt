@@ -46,8 +46,12 @@ playlists
 						sp_crashsite 1
 						sp_sewers1 1
 						sp_boomtown_start 1
+						sp_boomtown 1
+						sp_boomtown_end 1
 						sp_hub_timeshift 1
+						sp_timeshift_spoke02 1
 						sp_beacon 1
+						sp_beacon_spoke0 1
 						sp_tday 1
 						sp_s2s 1
 						sp_skyway_v1 1
