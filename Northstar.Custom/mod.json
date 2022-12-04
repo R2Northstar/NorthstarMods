@@ -420,7 +420,7 @@
 		},
 		{
 			"Path":  "sh_northstar_http_requests.gnut",
-			"RunOn": "CLIENT || SERVER || UI "
+			"RunOn": "CLIENT || SERVER || UI"
 		}
 	],
 
