@@ -43,6 +43,14 @@ global struct HttpRequestResponse
     table<string, array<string> > headers
 }
 
+global struct HttpRequestFailure
+{
+    /** The error code returned by native for this failure. */
+    int errorCode
+    /** The reason why this http request failed. */
+    string errorMessage
+}
+
 struct HttpRequestCallbacks
 {
     /** 
@@ -53,9 +61,8 @@ struct HttpRequestCallbacks
 
     /**
      * The function to call if the HTTP request failed.
-     * int errorCode, string errorMessage.
      */
-    void functionref( int, string ) onFailure
+    void functionref( HttpRequestFailure ) onFailure
 }
 
 table< int, HttpRequestCallbacks > pendingCallbacks
@@ -126,7 +133,11 @@ void function NSHandleFailedHttpRequest( int handle, int errorCode, string error
     {
         if ( pendingCallbacks[ handle ].onFailure != null )
         {
-            pendingCallbacks[ handle ].onFailure( errorCode, errorMessage )
+            HttpRequestFailure failure
+            failure.errorCode = errorCode
+            failure.errorMessage = errorMessage
+
+            pendingCallbacks[ handle ].onFailure( failure )
         }
 
         delete pendingCallbacks[ handle ]
@@ -141,7 +152,7 @@ void function NSHandleFailedHttpRequest( int handle, int errorCode, string error
  * @param onFailure The callback to execute if the request has failed.
  * @returns Whether or not the request has been successfully started.
  */
-bool function NSHttpRequest( HttpRequest requestParameters, void functionref( HttpRequestResponse ) onSuccess = null, void functionref( int, string ) onFailure = null )
+bool function NSHttpRequest( HttpRequest requestParameters, void functionref( HttpRequestResponse ) onSuccess = null, void functionref( HttpRequestFailure ) onFailure = null )
 {
     int handle = NS_InternalMakeHttpRequest( requestParameters.method, requestParameters.url, requestParameters.headers,
         requestParameters.queryParameters, requestParameters.contentType, requestParameters.body, requestParameters.timeout, requestParameters.userAgent )
@@ -167,7 +178,7 @@ bool function NSHttpRequest( HttpRequest requestParameters, void functionref( Ht
  * @param onFailure The callback to execute if the request has failed.
  * @returns Whether or not the request has been successfully started.
  */
-bool function NSHttpGet( string url, table<string, array<string> > queryParameters = {}, void functionref( HttpRequestResponse ) onSuccess = null, void functionref( int, string ) onFailure = null )
+bool function NSHttpGet( string url, table<string, array<string> > queryParameters = {}, void functionref( HttpRequestResponse ) onSuccess = null, void functionref( HttpRequestFailure ) onFailure = null )
 {
     HttpRequest request
     request.method = HttpRequestMethod.GET
@@ -186,7 +197,7 @@ bool function NSHttpGet( string url, table<string, array<string> > queryParamete
  * @param onFailure The callback to execute if the request has failed.
  * @returns Whether or not the request has been successfully started.
  */
-bool function NSHttpPostQuery( string url, table<string, array<string> > queryParameters, void functionref( HttpRequestResponse ) onSuccess = null, void functionref( int, string ) onFailure = null )
+bool function NSHttpPostQuery( string url, table<string, array<string> > queryParameters, void functionref( HttpRequestResponse ) onSuccess = null, void functionref( HttpRequestFailure ) onFailure = null )
 {
     HttpRequest request
     request.method = HttpRequestMethod.POST
@@ -205,7 +216,7 @@ bool function NSHttpPostQuery( string url, table<string, array<string> > queryPa
  * @param onFailure The callback to execute if the request has failed.
  * @returns Whether or not the request has been successfully started.
  */
-bool function NSHttpPostBody( string url, string body, void functionref( HttpRequestResponse ) onSuccess = null, void functionref( int, string ) onFailure = null )
+bool function NSHttpPostBody( string url, string body, void functionref( HttpRequestResponse ) onSuccess = null, void functionref( HttpRequestFailure ) onFailure = null )
 {
     HttpRequest request
     request.method = HttpRequestMethod.POST
