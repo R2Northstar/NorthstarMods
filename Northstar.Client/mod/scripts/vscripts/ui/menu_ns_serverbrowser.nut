@@ -994,9 +994,11 @@ void function _OnServerSelectedAsync( var button )
 					WaitFrame();
 				}
 
+				// Close loading dialog
 				CloseActiveMenu();
-				
-				// TODO ensure that mod is installed
+
+				// Make Northstar aware a new mod has been added
+				NSReloadMods();
 
 				continue;
 			}
