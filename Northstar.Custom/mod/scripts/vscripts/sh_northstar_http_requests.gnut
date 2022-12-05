@@ -51,14 +51,6 @@ global struct HttpRequestFailure
     string errorMessage
 }
 
-global struct HttpRequestFailure
-{
-    /** The error code returned by native for this failure. */
-    int errorCode
-    /** The reason why this http request failed. */
-    string errorMessage
-}
-
 struct HttpRequestCallbacks
 {
     /** 
