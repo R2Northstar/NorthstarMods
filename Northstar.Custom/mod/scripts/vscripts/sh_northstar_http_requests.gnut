@@ -16,7 +16,7 @@ global struct HttpRequest
     /** Method used for this http request. */
     int method
     /** Base URL of this http request. */
-    string baseUrl
+    string url
     /** Headers used for this http request. Some may get overridden or ignored. */
     table<string, array<string> > headers
     /** Query parameters for this http request. */
@@ -143,7 +143,7 @@ void function NSHandleFailedHttpRequest( int handle, int errorCode, string error
  */
 bool function NSHttpRequest( HttpRequest requestParameters, void functionref( HttpRequestResponse ) onSuccess = null, void functionref( int, string ) onFailure = null )
 {
-    int handle = NS_InternalMakeHttpRequest( requestParameters.method, requestParameters.baseUrl, requestParameters.headers,
+    int handle = NS_InternalMakeHttpRequest( requestParameters.method, requestParameters.url, requestParameters.headers,
         requestParameters.queryParameters, requestParameters.contentType, requestParameters.body, requestParameters.timeout, requestParameters.userAgent )
 
     if ( handle != -1 && ( onSuccess != null || onFailure != null ) )
@@ -171,7 +171,7 @@ bool function NSHttpGet( string url, table<string, array<string> > queryParamete
 {
     HttpRequest request
     request.method = HttpRequestMethod.GET
-    request.baseUrl = url
+    request.url = url
     request.queryParameters = queryParameters
 
     return NSHttpRequest( request, onSuccess, onFailure )
@@ -190,7 +190,7 @@ bool function NSHttpPostQuery( string url, table<string, array<string> > queryPa
 {
     HttpRequest request
     request.method = HttpRequestMethod.POST
-    request.baseUrl = url
+    request.url = url
     request.queryParameters = queryParameters
 
     return NSHttpRequest( request, onSuccess, onFailure )
@@ -209,7 +209,7 @@ bool function NSHttpPostBody( string url, string body, void functionref( HttpReq
 {
     HttpRequest request
     request.method = HttpRequestMethod.POST
-    request.baseUrl = url
+    request.url = url
     request.body = body
 
     return NSHttpRequest( request, onSuccess, onFailure )
