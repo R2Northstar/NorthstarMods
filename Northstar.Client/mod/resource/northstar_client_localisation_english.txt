@@ -321,5 +321,11 @@ Press Yes if you agree to this. This choice can be changed in the mods menu at a
 		"INVALID_MASTERSERVER_TOKEN" 	"Invalid or expired masterserver token"
 		"JSON_PARSE_ERROR" 				"Error parsing json response"
 		"UNSUPPORTED_VERSION" 			"The version you are using is no longer supported"
+
+		// Match Info
+		"SHOW_MATCH_INFO"		"Show Match Info"
+		"INFO_UNAVAILABLE"		"Unavailable"
+		"INFO_SERVER_PLAYERS"	"Max Players: %s1"
+		"INFO_SERVER_PING"		"Ping: %s1"
 	}
 }
