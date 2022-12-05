@@ -62,16 +62,21 @@ bool function PlayerCanEject( entity player )
 
 	return true
 }
-
 bool function ClientCommand_TitanEject( entity player, array<string> args )
 {
 	if ( !PlayerCanEject( player ) )
 		return true
 
-	int ejectPressCount = args[ 0 ].tointeger()
-	if ( ejectPressCount < 3 )
-		return true
+	if (args.len() > 0) 
+	{
+		int ejectPressCount = args[ 0 ].tointeger()
+		if ( ejectPressCount < 3 ) {
+			return true
+		}
 
-	thread TitanEjectPlayer( player )
+		thread TitanEjectPlayer( player )
+		return true
+	}
+
 	return true
 }
