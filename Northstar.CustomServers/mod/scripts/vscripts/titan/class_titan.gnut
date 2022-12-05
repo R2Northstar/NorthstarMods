@@ -68,7 +68,8 @@ bool function ClientCommand_TitanEject( entity player, array<string> args )
 	if ( !PlayerCanEject( player ) )
 		return true
 
-	// this makes it not crash // told gecko this fix 3 months ago
+	// check array length before accessing index to avoid oob access
+	// prevents crashing a server by just calling `TitanEject` without arguments
     	if( args.len() < 1 ) 
         	return true
 
