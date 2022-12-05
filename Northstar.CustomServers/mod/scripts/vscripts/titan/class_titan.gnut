@@ -68,6 +68,10 @@ bool function ClientCommand_TitanEject( entity player, array<string> args )
 	if ( !PlayerCanEject( player ) )
 		return true
 
+	// this makes it not crash // told gecko this fix 3 months ago
+    if( args.len() < 1 ) 
+        return true
+
 	int ejectPressCount = args[ 0 ].tointeger()
 	if ( ejectPressCount < 3 )
 		return true
