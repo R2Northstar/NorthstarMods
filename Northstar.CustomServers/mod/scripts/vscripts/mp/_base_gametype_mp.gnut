@@ -281,8 +281,8 @@ void function CodeCallback_OnPlayerRespawned( entity player )
 	player.s.respawnCount++
 	player.s.respawnTime = Time()
 	ClearRecentDamageHistory( player )
-	player.ClearReplayDelay() // these should done in OnPlayerRespawned
-	player.ClearViewEntity()
+	//player.ClearReplayDelay() // these has been done in CPlayer::RespawnPlayer()
+	//player.ClearViewEntity()
 	
 	player.Signal( "OnRespawned" ) // kill any postdeaththreads that could be running
 	
@@ -557,16 +557,17 @@ void function SetPlayerCameraToIntermissionCam( entity player, float delay = 0 )
 void function ForcedRespawnThink( entity player, float waitBeforeRespawn )
 {
 	player.EndSignal( "RespawnMe" )
-	player.s.isForcedRespawn <- false
+	table result = {}
+	result.repsawnIsForced <- false
 
 	OnThreadEnd(
-		function(): ( player )
+		function(): ( player, result )
 		{
 			if( GetGameState() != eGameState.Playing ) // no forced respawn
 				return 
 			if( IsValid( player ) )
 			{
-				if( expect bool( player.s.isForcedRespawn ) ) // reset player's persistent var if respawn is forced
+				if( expect bool( result.repsawnIsForced ) ) // reset player's persistent var if respawn is forced
 					player.SetPersistentVar( "spawnAsTitan", false )
 				player.Signal( "RespawnMe" )
 			}
@@ -580,7 +581,7 @@ void function ForcedRespawnThink( entity player, float waitBeforeRespawn )
 		player.WaitSignal( "KillCamOver" )
 	if( waitBeforeRespawn > 0 )
 		wait waitBeforeRespawn
-	player.s.isForcedRespawn = true
+	result.repsawnIsForced = true
 }
 
 void function PlayerWatchesKillReplayWrapper( entity player, entity attacker, float timeSinceAttackerSpawned, float timeOfDeath, float beforeTime, table replayTracker )

@@ -306,19 +306,7 @@ void function CodeCallback_DamagePlayerOrNPC( entity ent, var damageInfo )
 		}
 
 		if ( attackerIsPlayer )
-		{
 			PlayerDamageFeedback( ent, damageInfo )
-			#if BATTLECHATTER_ENABLED
-				// damaged pilot dialogues
-				if( !attackerIsTitan && entIsPlayer && attacker != ent )
-				{
-					if( ent.GetHealth() + ent.GetShieldHealth() - DamageInfo_GetDamage( damageInfo ) > 0 ) // so instant kills won't play a chatter
-					{
-						PlayBattleChatterLine( attacker, "bc_fNearEnemyDmg" )
-					}
-				}
-			#endif	
-		}
 		savedDamage = DamageInfo_GetDamage( damageInfo )
 
 		if ( !entIsTitan )
@@ -372,6 +360,18 @@ void function CodeCallback_DamagePlayerOrNPC( entity ent, var damageInfo )
 	{
 		callbackFunc( ent, damageInfo )
 	}
+
+#if BATTLECHATTER_ENABLED
+	// damaged pilot dialogues, do it after postDamage
+	if( attackerIsPlayer && !attackerIsTitan && entIsPlayer && attacker != ent )
+	{
+		if( ent.GetHealth() + ent.GetShieldHealth() - DamageInfo_GetDamage( damageInfo ) > 0 ) // so instant kills won't play a chatter
+		{
+			if( GetGameState() >= eGameState.Playing ) // don't play on intro or somewhere
+				PlayBattleChatterLine( attacker, "bc_fNearEnemyDmg" )
+		}
+	}
+#endif	
 
 	UpdateLastDamageTime( ent )
 
@@ -509,6 +509,7 @@ void function EarnMeterDamageConversion( var damageInfo, entity attacker, entity
 			}
 		}
 
+		/* // now supportiing friendlyFires
 		if ( shouldGiveTimerCredit //Primary Check
 			&& TitanDamageRewardsTitanCoreTime() //Playlist var check
 			&& ent.IsTitan()
@@ -516,6 +517,14 @@ void function EarnMeterDamageConversion( var damageInfo, entity attacker, entity
 			&& attacker.GetTeam() != ent.GetTeam()
 			&& !attacker.ContextAction_IsMeleeExecution() // Some melee executions deal A LOT of damage
 			)
+		*/
+		if ( shouldGiveTimerCredit //Primary Check
+			&& TitanDamageRewardsTitanCoreTime() //Playlist var check
+			&& ent.IsTitan()
+			&& attacker.IsTitan()
+			&& ( attacker.GetTeam() != ent.GetTeam() )
+			&& !attacker.ContextAction_IsMeleeExecution() // Some melee executions deal A LOT of damage
+		   )
 			AddCreditToTitanCoreBuilderForTitanDamageInflicted( attacker, savedDamage + titanDamage.shieldDamage )
 	}
 }
@@ -761,13 +770,22 @@ void function PlayerTookDamage( entity player, var damageInfo, entity attacker, 
 
 	bool isTitan = player.IsTitan()
 
+	float shieldDamage = 0
 	if ( isTitan )
 		Titan_PlayerTookDamage( player, damageInfo, attacker, critHit, titanDamage )
-	else
-		Wallrun_PlayerTookDamage( player, damageInfo, attacker )
+	else // using apex version
+	{
+		var takenDamage = Wallrun_PlayerTookDamage( player, damageInfo, attacker )
+
+		if( takenDamage != null)
+			shieldDamage = expect float(takenDamage)
+	}
+	//else 
+		//Wallrun_PlayerTookDamage( player, damageInfo, attacker )
 
 	float damageAmount = DamageInfo_GetDamage( damageInfo )
-	bool isKillShot = (damageAmount >= player.GetHealth())
+	//bool isKillShot = (damageAmount >= player.GetHealth()) // using apex version
+	bool isKillShot = (damageAmount >= player.GetHealth() + shieldDamage)
 	int damageType = DamageInfo_GetCustomDamageType( damageInfo )
 	if ( isKillShot )
 		damageType = (damageType | DF_KILLSHOT)
