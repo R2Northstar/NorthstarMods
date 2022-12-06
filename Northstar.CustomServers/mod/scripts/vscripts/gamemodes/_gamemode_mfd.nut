@@ -11,6 +11,8 @@ void function GamemodeMfd_Init()
 {
 	GamemodeMfdShared_Init()
 		
+	SetShouldPlayDefaultMusic( false )
+
 	RegisterSignal( "MarkKilled" )
 	ScoreEvent_SetupEarnMeterValuesForMixedModes()
 	
@@ -187,16 +189,31 @@ void function MarkPlayers( entity imcMark, entity militiaMark )
 	
 	foreach ( entity player in GetPlayerArray() )
 		Remote_CallFunction_NonReplay( player, "SCB_MarkedChanged" )
-
+		
 	// wait until mark dies
-	entity deadMark = expect entity( svGlobal.levelEnt.WaitSignal( "MarkKilled" ).mark )
-	
+	table result = svGlobal.levelEnt.WaitSignal( "MarkKilled" )
+	entity deadMark = expect entity( result.mark )
+	entity markKiller = expect entity( result.killer )
+
 	// award points
 	entity livingMark = GetMarked( GetOtherTeam( deadMark.GetTeam() ) )
 	livingMark.SetPlayerGameStat( PGS_DEFENSE_SCORE, livingMark.GetPlayerGameStat( PGS_DEFENSE_SCORE ) + 1 )
+	
+	// score events and dialogues
+	// friendlies
 	PlayFactionDialogueToTeamExceptPlayer( "mfd_markDownEnemy", livingMark.GetTeam(), livingMark )
+	if( markKiller == livingMark ) // marked killed enemy mark!
+	{
+		AddPlayerScore( livingMark, "MarkedKilledMarked", livingMark )
+	}
+	else
+	{
+		//AddPlayerScore( livingMark, "MarkedSurvival" )
+		AddPlayerScore( livingMark, "MarkedOutlastedEnemyMarked", livingMark )
+		PlayFactionDialogueToPlayer( "mfd_youOutlastedEnemy", livingMark )
+	}
+	// enemies
 	PlayFactionDialogueToTeam( "mfd_markDownFriendly", deadMark.GetTeam() )
-	PlayFactionDialogueToPlayer( "mfd_youOutlastedEnemy", livingMark )
 
 	// thread this so we don't kill our own thread
 	thread AddTeamScore( livingMark.GetTeam(), 1 )
@@ -212,12 +229,23 @@ void function UpdateMarksForKill( entity victim, entity attacker, var damageInfo
 				victim.ClearParent()
 			MessageToAll( eEventNotifications.MarkedForDeathKill, null, victim, attacker.GetEncodedEHandle() )
 		}
-		svGlobal.levelEnt.Signal( "MarkKilled", { mark = victim } )
+		svGlobal.levelEnt.Signal( "MarkKilled", { mark = victim, killer = attacker } )
 		
 		if ( attacker.IsPlayer() )
 		{
+			if( GetMarked( attacker.GetTeam() ) != attacker ) // if marked killed marked, it's handle in the upper function
+				AddPlayerScore( attacker, "MarkedTargetKilled" )
 			PlayFactionDialogueToPlayer( "mfd_youKilledMark", attacker )
 			attacker.SetPlayerGameStat( PGS_ASSAULT_SCORE, attacker.GetPlayerGameStat( PGS_ASSAULT_SCORE ) + 1 )
+		}
+	}
+	else
+	{
+		entity friendlyMark = GetMarked( attacker.GetTeam() )
+		if( IsValid( friendlyMark ) )
+		{
+			if( Distance( friendlyMark, victim ) <= 750 ) // close enough! you saved the mark!
+				AddPlayerScore( attacker, "MarkedEscort" )
 		}
 	}
 }

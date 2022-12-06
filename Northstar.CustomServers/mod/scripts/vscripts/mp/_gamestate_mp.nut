@@ -29,6 +29,9 @@ global function ShouldRunEvac
 global function GiveTitanToPlayer
 global function GetTimeLimit_ForGameMode
 
+// i want my game to have these!
+global function SetWaitingForPlayersMaxDuration // so you don't have to wait so freaking long
+
 struct {
 	// used for togglable parts of gamestate
 	bool usePickLoadoutScreen
@@ -64,6 +67,8 @@ struct {
 	// modified
 	bool enteredSuddenDeath = false
 	bool playFactionDialogue = true
+
+	float waitingForPlayersMaxDuration = 30.0
 } file
 
 void function PIN_GameStart()
@@ -104,6 +109,7 @@ void function SetGameState( int newState )
 	SetServerVar( "gameStateChangeTime", Time() )
 	SetServerVar( "gameState", newState )
 	svGlobal.levelEnt.Signal( "GameStateChanged" )
+	NSUpdateSQGameState(newState)
 
 	// added in AddCallback_GameStateEnter
 	foreach ( callbackFunc in svGlobal.gameStateEnterCallbacks[ newState ] )
@@ -146,9 +152,9 @@ void function GameStateEnter_WaitingForPlayers()
 void function WaitForPlayers()
 {
 	// note: atm if someone disconnects as this happens the game will just wait forever
-	float endTime = Time() + 30.0
+	float endTime = Time() + file.waitingForPlayersMaxDuration
 	if( ClassicMP_IsRunningDropshipIntro() )
-		endTime = Time() + 20.0
+		endTime = Time() + ( file.waitingForPlayersMaxDuration * 0.5 )
 	
 	while ( ( GetPendingClientsCount() != 0 && endTime > Time() ) || GetPlayerArray().len() == 0 )
 		WaitFrame()
@@ -159,9 +165,14 @@ void function WaitForPlayers()
 	{
 		//foreach( entity player in GetPlayerArray() )
 			//EmitSoundOnEntityOnlyToPlayer( player, player, "classicmp_warpjump" )
-		// this is better! late join players can also hear it
-		EmitSoundAtPosition( TEAM_UNASSIGNED, < 0,0,0 >, "classicmp_warpjump" )
-		wait 7.3
+
+		// this is better!
+		//EmitSoundAtPosition( TEAM_UNASSIGNED, < 0,0,0 >, "classicmp_warpjump" )
+		// don't know why late join players still can't hear it
+		entity soundEnt = CreatePropDynamic( $"models/dev/empty_model.mdl" )
+		//DispatchSpawn( soundEnt ) // CreatePropDynamic() already spawned it!
+		EmitSoundOnEntity( soundEnt, "classicmp_warpjump" )
+		wait 7.3 // sound duration
 	}
 	
 	wait 1.0 // bit nicer
@@ -202,9 +213,6 @@ void function GameStateEnter_PickLoadout_Threaded()
 // eGameState.Prematch
 void function GameStateEnter_Prematch()
 {
-	foreach( entity player in GetPlayerArray() )
-		ScreenFadeFromBlack( player, 1.0 ) // to have better visual
-
 	int timeLimit = GameMode_GetTimeLimit( GAMETYPE ) * 60
 	if ( file.switchSidesBased )
 		timeLimit /= 2 // endtime is half of total per side
@@ -335,6 +343,21 @@ void function GameStateEnter_WinnerDetermined_Threaded()
 			GameRules_SetTeamScore2( winningTeam, GameRules_GetTeamScore2( winningTeam ) + 1 )
 		}
 	}
+	// scoreEvents
+	bool isMatchEnd = true
+	if ( IsRoundBased() )
+	{
+		int highestScore = GameRules_GetTeamScore( GetWinningTeam() )
+		int roundScoreLimit = GameMode_GetRoundScoreLimit( GAMETYPE )
+			
+		if ( highestScore < roundScoreLimit )
+			isMatchEnd = false
+	}
+	if ( isMatchEnd )
+		AddScoreForMatchWinning( "MatchVictory", "MatchComplete", winningTeam ) // use this winningTeam to get current winner!
+	else
+		AddScoreForMatchWinning( "RoundVictory", "RoundComplete", winningTeam )
+	
 	
 	WaitFrame() // wait a frame so other scripts can setup killreplay stuff
 
@@ -403,6 +426,16 @@ void function GameStateEnter_WinnerDetermined_Threaded()
 
 		if ( killcamsWereEnabled ) // reset last
 			SetKillcamsEnabled( true )
+
+		// do this so when player respawns they won't flash to black scree
+		foreach( entity player in GetPlayerArray() )
+		{
+			player.ClearReplayDelay()
+			player.ClearViewEntity()
+			SetPlayerCameraToIntermissionCam( player )
+		}
+
+		wait 2.0 // good wait?
 		
 		//foreach( entity player in GetPlayerArray() )
 		//{
@@ -432,6 +465,7 @@ void function GameStateEnter_WinnerDetermined_Threaded()
 		//	SetPlayerCameraToIntermissionCam( player )
 
 		wait ROUND_WINNING_KILL_REPLAY_SCREEN_FADE_TIME
+		wait 2.0 // music so freaking long
 	}
 	else if( !ClassicMP_ShouldRunEpilogue() )
 	{
@@ -458,7 +492,9 @@ void function GameStateEnter_WinnerDetermined_Threaded()
 				SetGameState( eGameState.Epilogue )
 			}
 			else
+			{
 				SetGameState( eGameState.Postmatch )
+			}
 		}
 		else if ( file.switchSidesBased && !file.hasSwitchedSides && highestScore >= ( roundScoreLimit.tofloat() / 2.0 ) ) // round up
 			SetGameState( eGameState.SwitchingSides ) // note: switchingsides will handle setting to pickloadout and prematch by itself
@@ -477,6 +513,18 @@ void function GameStateEnter_WinnerDetermined_Threaded()
 		else
 			SetGameState( eGameState.Postmatch )
 	}
+}
+
+void function AddScoreForMatchWinning( string winScoreEvent, string loseScoreEvent, int winningTeam )
+{
+	array<entity> otherPlayers = GetPlayerArray()
+	foreach( entity winningPlayer in GetPlayerArrayOfTeam( winningTeam ) )
+	{
+		AddPlayerScore( winningPlayer, winScoreEvent )
+		otherPlayers.removebyvalue( winningPlayer )
+	}
+	foreach( entity otherPlayer in otherPlayers )
+		AddPlayerScore( otherPlayer, loseScoreEvent )
 }
 
 void function PlayerWatchesRoundWinningKillReplay( entity player, entity replayAttacker, entity replayVictim, float replayLength )
@@ -589,12 +637,22 @@ void function GameStateEnter_SwitchingSides_Threaded()
 		thread PlayerWatchesSwitchingSidesKillReplay( player, replayAttacker, replayVictim, doReplay, replayLength )
 
 	// all waits below should be the same time as PlayerWatchesSwitchingSidesKillReplay() does
-	float timeToWait = doReplay ? SWITCHING_SIDES_DELAY_REPLAY : SWITCHING_SIDES_DELAY
+	//float timeToWait = doReplay ? SWITCHING_SIDES_DELAY_REPLAY : SWITCHING_SIDES_DELAY
 
+	wait ROUND_WINNING_KILL_REPLAY_SCREEN_FADE_TIME // whatever we do, just wait here
+
+	bool replaySuccess = doReplay && IsValid( replayAttacker )
+	if( replaySuccess ) // do a same cauculate as replay's
+		wait replayLength
+	else
+		wait SWITCHING_SIDES_DELAY - GAME_POSTROUND_CLEANUP_WAIT // save time for cleanup
+
+	/* // changed
 	if( !doReplay )
 		wait replayLength + timeToWait - GAME_POSTROUND_CLEANUP_WAIT
 	else
 		wait replayLength + timeToWait
+	*/
 
 	file.roundWinningKillReplayAttacker = null // reset this after replay
 
@@ -619,6 +677,18 @@ void function GameStateEnter_SwitchingSides_Threaded()
 	if ( killcamsWereEnabled ) // reset here
 		SetKillcamsEnabled( true )
 
+	if( doReplay )
+	{
+		// do this so when player respawns they won't flash to black scree
+		foreach( entity player in GetPlayerArray() )
+		{
+			player.ClearReplayDelay()
+			player.ClearViewEntity()
+			SetPlayerCameraToIntermissionCam( player )
+		}
+		wait 2.0
+	}
+
 	if ( file.usePickLoadoutScreen )
 		SetGameState( eGameState.PickLoadout )
 	else
@@ -630,8 +700,8 @@ void function PlayerWatchesSwitchingSidesKillReplay( entity player, entity repla
 	player.EndSignal( "OnDestroy" )
 	player.FreezeControlsOnServer()
 
-	ScreenFadeToBlackForever( player, SWITCHING_SIDES_DELAY_REPLAY ) // automatically cleared 
-	wait SWITCHING_SIDES_DELAY_REPLAY
+	ScreenFadeToBlackForever( player, ROUND_WINNING_KILL_REPLAY_SCREEN_FADE_TIME ) // automatically cleared 
+	wait ROUND_WINNING_KILL_REPLAY_SCREEN_FADE_TIME
 	
 	//if ( doReplay )
 	if( doReplay && IsValid( replayAttacker ) ) // should do this
@@ -644,7 +714,7 @@ void function PlayerWatchesSwitchingSidesKillReplay( entity player, entity repla
 		//entity attacker = file.roundWinningKillReplayAttacker
 		//entity victim = file.roundWinningKillReplayVictim
 
-		float totalTime = replayLength + SWITCHING_SIDES_DELAY_REPLAY
+		float totalTime = replayLength + ROUND_WINNING_KILL_REPLAY_SCREEN_FADE_TIME
 		float replayDelay = Time() - totalTime
 		if( replayDelay <= 0 )
 			replayDelay = 0
@@ -666,7 +736,7 @@ void function PlayerWatchesSwitchingSidesKillReplay( entity player, entity repla
 		wait finalWait
 		ScreenFadeToBlackForever( player, 2.0 )
 
-		wait 2.0
+		wait 2.0 // 2.0 is equal as SWITCHING_SIDES_DELAY_REPLAY
 		//}
 		//else
 		//	wait replayLength
@@ -677,7 +747,7 @@ void function PlayerWatchesSwitchingSidesKillReplay( entity player, entity repla
 		wait SWITCHING_SIDES_DELAY // extra delay if no replay
 	
 	//player.SetPredictionEnabled( true ) doesn't seem needed, as native code seems to set this on respawn
-	//player.ClearReplayDelay() // these should done in OnPlayerRespawned
+	//player.ClearReplayDelay() // these has been done in CPlayer::RespawnPlayer()
 	//player.ClearViewEntity()
 }
 
@@ -1317,4 +1387,9 @@ void function PlayScoreEventFactionDialogue( string winningLarge, string losingL
 		PlayFactionDialogueToTeam( "scoring_" + winning, winningTeam )
 		PlayFactionDialogueToTeam( "scoring_" + losing, losingTeam )
 	}
+}
+
+void function SetWaitingForPlayersMaxDuration( float duration )
+{
+	file.waitingForPlayersMaxDuration = duration
 }
