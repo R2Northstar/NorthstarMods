@@ -471,11 +471,15 @@ void function OnPlayerEntersFlagReturnTrigger( entity trigger, entity player )
 
 void function OnPlayerExitsFlagReturnTrigger( entity trigger, entity player )
 {
+	StopSoundOnEntity( player, "UI_CTF_1P_FlagReturnMeter" ) // always do this...
+	
 	entity flag
 	if ( trigger.GetTeam() == TEAM_IMC )
 		flag = file.imcFlag
 	else
 		flag = file.militiaFlag
+	if( !IsValid( flag ) ) // defensive fix
+		return
 		
 	if ( !player.IsPlayer() || player.IsTitan() || player.GetTeam() != flag.GetTeam() || IsFlagHome( flag ) || flag.GetParent() != null )
 		return

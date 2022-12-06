@@ -66,23 +66,25 @@ void function WaitForThirtySecondsLeftThreaded()
 
 		// do initial highlight
 		//RefreshThirtySecondWallhackHighlight( player, null )
-		if( IsAlive( player ) )
-			thread ThirtySecondWallhackHighlightThink( player )
 	}
+	thread ThirtySecondWallhackHighlightThink()
 }
 
-void function ThirtySecondWallhackHighlightThink( entity player )
+void function ThirtySecondWallhackHighlightThink()
 {
-	player.EndSignal( "OnDeath" )
-	player.EndSignal( "OnDestroy" )
 	svGlobal.levelEnt.EndSignal( "GameStateChanged" )
 
 	while( true )
 	{
-		if( player.IsTitan() )
-			Highlight_SetEnemyHighlight( player, "enemy_sonar" )
-		else if( IsValid( player.GetPetTitan() ) )
-			Highlight_SetEnemyHighlight( player.GetPetTitan(), "enemy_sonar" )
+		foreach( entity player in GetPlayerArray() )
+		{
+			if( !IsAlive( player ) )
+				continue
+			if( player.IsTitan() )
+				Highlight_SetEnemyHighlight( player, "enemy_sonar" )
+			else if( IsValid( player.GetPetTitan() ) )
+				Highlight_SetEnemyHighlight( player.GetPetTitan(), "enemy_sonar" )
+		}
 		WaitFrame()
 	}
 }

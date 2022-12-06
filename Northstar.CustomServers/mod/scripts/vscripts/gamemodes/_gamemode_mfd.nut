@@ -10,8 +10,6 @@ struct {
 void function GamemodeMfd_Init()
 {
 	GamemodeMfdShared_Init()
-		
-	SetShouldPlayDefaultMusic( false )
 
 	RegisterSignal( "MarkKilled" )
 	ScoreEvent_SetupEarnMeterValuesForMixedModes()
