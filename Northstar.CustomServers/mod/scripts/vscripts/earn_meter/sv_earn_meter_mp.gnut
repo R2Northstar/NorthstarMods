@@ -137,10 +137,7 @@ void function EarnMeterMP_PlayerLifeThink( entity player )
 	while ( true )
 	{
 		if( GetGameState() < eGameState.Playing ) // Prematch
-		{
-			WaitFrame()
-			continue
-		}
+			lastPassiveGainTime = Time()
 		
 		int desiredEarnMeterMode
 
