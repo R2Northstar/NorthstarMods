@@ -8,8 +8,8 @@ void function NorthstarCustomPrecache()
 
 	RegisterWeaponDamageSources(
 		{
-			mp_weapon_peacekraber = "Peacekraber",
-			melee_pilot_kunai = "Kunai"
+			mp_weapon_peacekraber = "#WPN_PEACEKRABER",
+			melee_pilot_kunai = "#MELEE_KUNAI"
 		}
 	)
 }
