@@ -573,22 +573,22 @@ void function OnInGameLevelInit()
     string serverMaxPlayers = "/"
     string serverPlaylist = "#INFO_UNAVAILABLE"
 
-    int i
-    for ( ; i < NSGetServerCount(); i++ )
+    int serverIndex
+    for ( ; serverIndex < NSGetServerCount(); serverIndex++ )
     {
-        if( NSGetServerID( i ) == GetConVarString( "ns_connected_server" ) )
+        if( NSGetServerID( serverIndex ) == GetConVarString( "ns_connected_server" ) )
         {
             break
         }
     }
 
-    if( GetConVarString( "ns_connected_server" ).len() )
+    if( serverIndex < NSGetServerCount() && GetConVarString( "ns_connected_server" ).len() )
     {
-        serverId = NSGetServerID( i )
-        serverName = NSGetServerName( i )
-        serverDesc = NSGetServerDescription( i )
-        serverMaxPlayers = string( NSGetServerMaxPlayerCount( i ) )
-        serverPlaylist = NSGetServerPlaylist( i )
+        serverId = NSGetServerID( serverIndex )
+        serverName = format( "[%s] %s",NSGetServerRegion( serverIndex ) , NSGetServerName( serverIndex ) )
+        serverDesc = NSGetServerDescription( serverIndex )
+        serverMaxPlayers = string( NSGetServerMaxPlayerCount( serverIndex ) )
+        serverPlaylist = NSGetServerPlaylist( serverIndex )
     } else {
         serverName = GetConVarString( "ns_server_name" )
         serverDesc = GetConVarString( "ns_server_desc" )
