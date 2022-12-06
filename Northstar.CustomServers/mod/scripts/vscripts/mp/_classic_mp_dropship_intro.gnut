@@ -203,7 +203,7 @@ void function SpawnPlayerIntoDropship( entity player )
 	
 	// hide hud and fade screen out from black
 	AddCinematicFlag( player, CE_FLAG_CLASSIC_MP_SPAWNING )
-	ScreenFadeFromBlack( player, 0.5, 0.5 )
+	ScreenFadeFromBlack( player, 3.0, 1.0 )
 	// faction leaders are done clientside, spawn them here
 	Remote_CallFunction_NonReplay( player, "ServerCallback_SpawnFactionCommanderInDropship", playerDropship.dropship.GetEncodedEHandle(), file.introStartTime )
 
