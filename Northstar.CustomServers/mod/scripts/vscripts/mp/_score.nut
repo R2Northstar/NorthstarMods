@@ -13,19 +13,36 @@ global function ScoreEvent_SetupEarnMeterValuesForMixedModes
 global function ScoreEvent_SetupEarnMeterValuesForTitanModes
 
 // nessie modify
+global function GetMVPPlayer
+global function AddTitanKilledDialogueEvent
 global function ScoreEvent_ForceUsePilotEliminateEvent
 
-struct {
+struct 
+{
 	bool firstStrikeDone = false
 
 	// nessie modify
+	table<string, string> killedTitanDialogues
+
 	bool forceAddEliminateScore = false
+	IntFromEntityCompare mvpCompareFunc = null
 } file
 
 void function Score_Init()
 {
 	SvXP_Init()
 	AddCallback_OnClientConnected( InitPlayerForScoreEvents )
+}
+
+// modified!!!
+void function InitTitanKilledDialogues() // init vanilla ones
+{
+	file.killedTitanDialogues["ion"] <- "kc_pilotkillIon"
+	file.killedTitanDialogues["tone"] <- "kc_pilotkillTone"
+	file.killedTitanDialogues["legion"] <- "kc_pilotkillLegion"
+	file.killedTitanDialogues["scorch"] <- "kc_pilotkillScorch"
+	file.killedTitanDialogues["northstar"] <- "kc_pilotkillNorthstar"
+	file.killedTitanDialogues["ronin"] <- "kc_pilotkillRonin"
 }
 
 void function InitPlayerForScoreEvents( entity player )
@@ -119,17 +136,31 @@ void function ScoreEvent_PlayerKilled( entity victim, entity attacker, var damag
 
 	attacker.p.numberOfDeathsSinceLastKill = 0 // since they got a kill, remove the comeback trigger
 	// pilot kill
-	//if( IsPilotEliminationBased() || IsTitanEliminationBased() )
-	// nessie modify
-	if( IsPilotEliminationBased() || IsTitanEliminationBased() || file.forceAddEliminateScore )
+	if( IsPilotEliminationBased() || IsTitanEliminationBased() )
+	{
+		if( GetPlayerArrayOfEnemies_Alive( attacker.GetTeam() ).len() == 0 ) // no enemy player left
+			AddPlayerScore( attacker, "VictoryKill", attacker ) // show a callsign event
+	}
+	
+	if( IsPilotEliminationBased() || file.forceAddEliminateScore )
 		AddPlayerScore( attacker, "EliminatePilot", victim ) // elimination gamemodes have a special medal
 	else
 		AddPlayerScore( attacker, "KillPilot", victim )
+
+	// mvp kill
+	if( GetMVPPlayer( victim.GetTeam() ) == victim )
+		AddPlayerScore( attacker, "KilledMVP", victim )
 	
 	// headshot
 	if ( DamageInfo_GetCustomDamageType( damageInfo ) & DF_HEADSHOT )
 		AddPlayerScore( attacker, "Headshot", victim )
-	
+
+	// special method of killing dialogues
+	if( DamageInfo_GetCustomDamageType( damageInfo ) & DF_HEADSHOT )
+		PlayFactionDialogueToPlayer( "kc_bullseye", attacker )
+	if( DamageInfo_GetDamageSourceIdentifier( damageInfo ) == damagedef_titan_step )
+		PlayFactionDialogueToPlayer( "kc_hitandrun", attacker )
+
 	// first strike
 	if ( !file.firstStrikeDone )
 	{
@@ -209,6 +240,31 @@ void function ScoreEvent_TitanKilled( entity victim, entity attacker, var damage
 	if ( !attacker.IsPlayer() )
 		return
 
+	string scoreEvent = "KillTitan"
+	if( attacker.IsTitan() )
+		scoreEvent = "TitanKillTitan"
+	if( victim.IsNPC() )
+		scoreEvent = "KillAutoTitan"
+	if( IsTitanEliminationBased() || file.forceAddEliminateScore )
+	{
+		if( victim.IsNPC() )
+			scoreEvent = "EliminateAutoTitan"
+		else
+			scoreEvent = "EliminateTitan"
+	}
+
+	if( victim.GetBossPlayer() || victim.IsPlayer() ) // to confirm this is a pet titan or player titan
+	{
+		AddPlayerScore( attacker, scoreEvent, attacker ) // this will show the "Titan Kill" callsign event
+		if( GetShouldPlayFactionDialogue() )
+			KilledPlayerTitanDialogue( attacker, victim )
+	}
+	else
+	{
+		AddPlayerScore( attacker, scoreEvent ) // no callsign event and event
+	}
+
+	/* // using a new check
 	if ( attacker.IsTitan() )
 	{
 		if( victim.GetBossPlayer() || victim.IsPlayer() ) // to confirm this is a pet titan or player titan
@@ -218,19 +274,24 @@ void function ScoreEvent_TitanKilled( entity victim, entity attacker, var damage
 				KilledPlayerTitanDialogue( attacker, victim )
 		}
 		else
-			AddPlayerScore( attacker, "TitanKillTitan" )
+		{
+			AddPlayerScore( attacker, "TitanKillTitan" ) // no callsign event
+		}
 	}
 	else
 	{
 		if( victim.GetBossPlayer() || victim.IsPlayer() )
 		{
-			AddPlayerScore( attacker, "KillTitan", attacker )
+			AddPlayerScore( attacker, "KillTitan", attacker ) // this will show the "Titan Kill" callsign event
 			if( GetShouldPlayFactionDialogue() )
 				KilledPlayerTitanDialogue( attacker, victim )
 		}
 		else
+		{
 			AddPlayerScore( attacker, "KillTitan" )
+		}
 	}
+	*/
 
 	table<int, bool> alreadyAssisted
 	foreach( DamageHistoryStruct attackerInfo in victim.e.recentDamageHistory )
@@ -270,13 +331,43 @@ void function ScoreEvent_SetEarnMeterValues( string eventName, float earned, flo
 
 void function ScoreEvent_SetupEarnMeterValuesForMixedModes() // mixed modes in this case means modes with both pilots and titans
 {
+	thread SetupEarnMeterValuesForMixedModes_Threaded() // needs thread or "PilotEmilinate" won't behave up correctly
+	
+	/*
 	// todo needs earn/overdrive values
 	// player-controlled stuff
 	ScoreEvent_SetEarnMeterValues( "KillPilot", 0.07, 0.15 )
 	ScoreEvent_SetEarnMeterValues( "KillTitan", 0.0, 0.15 )
 	ScoreEvent_SetEarnMeterValues( "TitanKillTitan", 0.0, 0.15 ) // unsure
 	ScoreEvent_SetEarnMeterValues( "PilotBatteryStolen", 0.0, 0.35 ) // this actually just doesn't have overdrive in vanilla even
-	ScoreEvent_SetEarnMeterValues( "Headshot", 0.02, 0.03 )
+	ScoreEvent_SetEarnMeterValues( "Headshot", 0.0, 0.05 )
+	ScoreEvent_SetEarnMeterValues( "FirstStrike", 0.0, 0.05 )
+	ScoreEvent_SetEarnMeterValues( "PilotBatteryApplied", 0.0, 0.35 )
+	
+	// ai
+	ScoreEvent_SetEarnMeterValues( "KillGrunt", 0.02, 0.02, 0.5 )
+	ScoreEvent_SetEarnMeterValues( "KillSpectre", 0.02, 0.02, 0.5 )
+	ScoreEvent_SetEarnMeterValues( "LeechSpectre", 0.02, 0.02 )
+	ScoreEvent_SetEarnMeterValues( "KillStalker", 0.02, 0.02, 0.5 )
+	ScoreEvent_SetEarnMeterValues( "KillSuperSpectre", 0.0, 0.1, 0.5 )
+	*/
+}
+
+void function SetupEarnMeterValuesForMixedModes_Threaded()
+{
+	WaitFrame()
+
+	// todo needs earn/overdrive values
+	// player-controlled stuff
+	ScoreEvent_SetEarnMeterValues( "KillPilot", 0.07, 0.15 )
+	ScoreEvent_SetEarnMeterValues( "EliminatePilot", 0.07, 0.15 )
+	ScoreEvent_SetEarnMeterValues( "KillTitan", 0.0, 0.15 )
+	ScoreEvent_SetEarnMeterValues( "KillAutoTitan", 0.0, 0.15 )
+	ScoreEvent_SetEarnMeterValues( "EliminateTitan", 0.0, 0.15 )
+	ScoreEvent_SetEarnMeterValues( "EliminateAutoTitan", 0.0, 0.15 )
+	ScoreEvent_SetEarnMeterValues( "TitanKillTitan", 0.0, 0.15 ) // unsure
+	ScoreEvent_SetEarnMeterValues( "PilotBatteryStolen", 0.0, 0.35 ) // this actually just doesn't have overdrive in vanilla even
+	ScoreEvent_SetEarnMeterValues( "Headshot", 0.0, 0.05 )
 	ScoreEvent_SetEarnMeterValues( "FirstStrike", 0.0, 0.05 )
 	ScoreEvent_SetEarnMeterValues( "PilotBatteryApplied", 0.0, 0.35 )
 	
@@ -305,6 +396,12 @@ void function KilledPlayerTitanDialogue( entity attacker, entity victim )
 		return
 	string titanCharacterName = GetTitanCharacterName( titan )
 
+	if( titanCharacterName in file.killedTitanDialogues ) // have this titan's dialogue
+		PlayFactionDialogueToPlayer( file.killedTitanDialogues[titanCharacterName], attacker )
+	else // play a default one
+		PlayFactionDialogueToPlayer( "kc_pilotkilltitan", attacker )
+
+	/* // not hardcoded anymore!
 	switch( titanCharacterName )
 	{
 		case "ion":
@@ -329,9 +426,57 @@ void function KilledPlayerTitanDialogue( entity attacker, entity victim )
 			PlayFactionDialogueToPlayer( "kc_pilotkilltitan", attacker )
 			return
 	}
+	*/
 }
 
 // nessy modify
+entity function GetMVPPlayer( int team = 0 )
+{
+	if( IsFFAGame() )
+		team = 0 // 0 means sorting all players( good for ffa ), if use a teamNumber it will sort a certain team
+	
+	array<entity> sortedPlayer
+	if( file.mvpCompareFunc != null ) // a overwriting one, save for modding
+	{
+		sortedPlayer = GetSortedPlayers( file.mvpCompareFunc, team )
+		return sortedPlayer[0] // mvp
+	}
+
+	// respawn hardcoded some functions in _utility_shared, guess I will use it!
+	IntFromEntityCompare compareFunc = CompareKills // default comparing kills
+
+	switch( GAMETYPE )
+	{
+		case "ps":
+		case "tdm":
+		case "ttdm": // ttdm in northstar still using pilotKills for check
+			break // still using CompareKills
+		case "lts":
+			compareFunc = CompareLTS
+			break
+		case "cp":
+			compareFunc = CompareCP
+			break
+		case "ctf":
+			compareFunc = CompareCTF
+			break
+		case "speedball":
+			compareFunc = CompareSpeedball
+			break
+		case "mfd":
+			compareFunc = CompareMFD
+			break
+	}
+
+	sortedPlayer = GetSortedPlayers( compareFunc, team )
+	return sortedPlayer[0] // mvp
+}
+
+void function AddTitanKilledDialogueEvent( string titanName, string dialogueName )
+{
+	file.killedTitanDialogues[titanName] <- dialogueName
+}
+
 void function ScoreEvent_ForceUsePilotEliminateEvent( bool force )
 {
 	file.forceAddEliminateScore = force
