@@ -98,11 +98,11 @@ void function NSHandleSuccessfulHttpRequest( int handle, int statusCode, string 
             var index = header.find( ":" )
             if ( index == null )
             {
-                continue;
+                continue
             }
 
             string name = strip( header.slice( 0, expect int(index) ) )
-            string value = strip( header.slice( expect int(index) + 1 ) );
+            string value = strip( header.slice( expect int(index) + 1 ) )
 
             if ( name in response.headers )
             {
