@@ -6,7 +6,7 @@ resource/ui/menus/panels/server_info.res
             labelText   "#INFO_UNAVAILABLE"
 
             wide    %23
-            tall    %15
+            tall    %13
             wrap    1
 
 			pin_to_sibling			ButtonRowAnchor
@@ -34,7 +34,7 @@ resource/ui/menus/panels/server_info.res
             labelText   "#INFO_UNAVAILABLE"
 
             wide    %23
-            tall    %5
+            tall    50
 
 			pin_to_sibling			ServerDescription
 			pin_corner_to_sibling 	TOP_LEFT
@@ -47,7 +47,7 @@ resource/ui/menus/panels/server_info.res
             labelText   "#INFO_UNAVAILABLE"
 
             wide    %23
-            tall    %5
+            tall    50
 
 			pin_to_sibling			MaxPlayers
 			pin_corner_to_sibling 	TOP_LEFT

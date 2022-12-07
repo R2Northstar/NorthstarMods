@@ -585,7 +585,7 @@ void function OnInGameLevelInit()
     if( serverIndex < NSGetServerCount() && GetConVarString( "ns_connected_server" ).len() )
     {
         serverId = NSGetServerID( serverIndex )
-        serverName = format( "[%s] %s",NSGetServerRegion( serverIndex ) , NSGetServerName( serverIndex ) )
+        serverName = format( "[%s] %s", NSGetServerRegion( serverIndex ), NSGetServerName( serverIndex ) )
         serverDesc = NSGetServerDescription( serverIndex )
         serverMaxPlayers = string( NSGetServerMaxPlayerCount( serverIndex ) )
         serverPlaylist = NSGetServerPlaylist( serverIndex )
