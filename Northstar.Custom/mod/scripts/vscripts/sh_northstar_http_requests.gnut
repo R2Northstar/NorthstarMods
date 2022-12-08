@@ -101,16 +101,18 @@ void function NSHandleSuccessfulHttpRequest( int handle, int statusCode, string 
                 continue
             }
 
-            string name = strip( header.slice( 0, expect int(index) ) )
-            string value = strip( header.slice( expect int(index) + 1 ) )
+            expect int( index )
+
+            string name = strip( header.slice( 0, index ) )
+            string value = strip( header.slice( index + 1 ) )
 
             if ( name in response.headers )
             {
-                response.headers[name].append(value)
+                response.headers[ name ].append( value )
             }
             else
             {
-                response.headers[name] <- [ value ]
+                response.headers[ name ] <- [ value ]
             }
         }
 
