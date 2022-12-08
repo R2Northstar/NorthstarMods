@@ -199,7 +199,7 @@ bool function NSHttpGet( string url, table< string, array< string > > queryParam
  * @param onFailure The callback to execute if the request has failed.
  * @returns Whether or not the request has been successfully started.
  */
-bool function NSHttpPostQuery( string url, table< string, array<string > > queryParameters, void functionref( HttpRequestResponse ) onSuccess = null, void functionref( HttpRequestFailure ) onFailure = null )
+bool function NSHttpPostQuery( string url, table< string, array< string > > queryParameters, void functionref( HttpRequestResponse ) onSuccess = null, void functionref( HttpRequestFailure ) onFailure = null )
 {
     HttpRequest request
     request.method = HttpRequestMethod.POST
