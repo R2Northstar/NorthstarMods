@@ -261,6 +261,8 @@ void function Evac( int evacTeam, float initialWait, float arrivalTime, float wa
 	SetTargetName( dropship, "#NPC_EVAC_DROPSHIP" )
 	DispatchSpawn( dropship )
 
+	// SetModel() again after dispatchSpawn to make players shoot inside dropships
+	dropship.SetModel( evacShip.shipModel )
 	// reduce nuclear core's damage
 	AddEntityCallback_OnDamaged( dropship, EvacDropshipDamaged )
 	
