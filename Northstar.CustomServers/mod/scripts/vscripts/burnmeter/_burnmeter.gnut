@@ -298,6 +298,8 @@ void function PlayerUsesAmpedWeaponsBurncard( entity player )
 
 void function PlayerUsesAmpedWeaponsBurncardThreaded( entity player )
 {
+	player.EndSignal("StopAmpedWeapons")
+	
 	array<entity> weapons = player.GetMainWeapons()
 	//weapons.extend( player.GetOffhandWeapons() ) // idk? unsure of vanilla behaviour here
 	foreach ( entity weapon in weapons )
@@ -389,7 +391,7 @@ void function PlayerUsesMaphackBurncardThreaded( entity player )
 		{
 			if ( !cleanup ) // Map hack ended when sonar wasn't active, no cleanup needed
 				return
-
+			
 			foreach ( entity ent in affectedEntities )
 			{
 				if ( IsValid( ent ) )
