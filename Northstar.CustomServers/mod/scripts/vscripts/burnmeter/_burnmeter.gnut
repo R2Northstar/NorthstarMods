@@ -294,6 +294,7 @@ void function InitBurnMeterPersistentData( entity player )
 void function PlayerUsesAmpedWeaponsBurncard( entity player )
 {
 	thread PlayerUsesAmpedWeaponsBurncardThreaded( player )
+	player.Signal( "StopAmpedWeapons" ) 
 }
 
 void function PlayerUsesAmpedWeaponsBurncardThreaded( entity player )
