@@ -22,26 +22,10 @@ enum eDropshipState{
 struct player_struct_fd{
 	bool diedThisRound
 	int scoreThisRound
-	/*
-	int totalMVPs
-	int mortarUnitsKilled
-	int moneySpend
-	int coresUsed
-	float longestTitanLife
-	int turretsRepaired
-	int moneyShared
-	bool leaveHarvester = true
-	float longestTimeNearHarvester = 0
-	float timeNearHarvester =0
-	float longestLife 
-	int heals
-	int titanKills 
-	float damageDealt
-	int harvesterHeals
-	int turretKills
-	*/
 	float lastRespawn
 	float lastTitanDrop
+	float lastNearHarvester =0
+	bool leaveHarvester = true
 }
 
 global HarvesterStruct& fd_harvester
@@ -164,6 +148,7 @@ void function GamemodeFD_Init()
 	AddStunLaserHealCallback( FD_StunLaserHealTeammate )
 	AddBatteryHealCallback( FD_BatteryHealTeammate )
 	AddSmokeHealCallback( FD_SmokeHealTeammate )
+	SetUsedCoreCallback( FD_UsedCoreCallback )
 }
 
 void function FD_BoostPurchaseCallback( entity player, BoostStoreData data )
@@ -346,6 +331,11 @@ void function OnTickDeath( entity victim, var damageInfo )
 
 void function OnNpcDeath( entity victim, entity attacker, var damageInfo )
 {
+	if( attacker.GetClassName() == "npc_turret_sentry" )
+	{
+		attacker.kv.killCount++
+		file.playerAwardStats[attacker.GetBossPlayer()]["turretKills"]++
+	}
 	if( victim.IsTitan() && attacker in file.players )
 		file.playerAwardStats[attacker]["titanKills"]++
 	int victimTypeID = FD_GetAITypeID_ByString( victim.GetTargetName() )
@@ -886,14 +876,14 @@ void function SetWaveStateReady()
 void function FD_StunLaserHealTeammate( entity player, entity target, int shieldRestoreAmount )
 {
 	if( IsValid( player ) && player in file.players ){
-		file.players[player].heals += shieldRestoreAmount
+		file.playerAwardStats[player]["heals"] += shieldRestoreAmount
 	}
 }
 
 void function FD_SmokeHealTeammate( entity player, entity target, int shieldRestoreAmount )
 {
 	if( IsValid( player ) && player in file.players ){
-		file.players[player].heals += shieldRestoreAmount
+		file.playerAwardStats[player]["heals"] += shieldRestoreAmount
 	}
 }
 
@@ -913,8 +903,8 @@ void function FD_BatteryHealTeammate( entity battery, entity titan, int shieldRe
 		return
 
 	if( IsValid( BatteryParent ) && BatteryParent in file.players ){
-		file.players[BatteryParent].heals += shieldRestoreAmount
-		file.players[BatteryParent].heals += healthRestoreAmount
+		file.playerAwardStats[player]["heals"] += shieldRestoreAmount
+		file.playerAwardStats[player]["heals"] += healthRestoreAmount
 	}
 }
 
@@ -1365,7 +1355,7 @@ void function OnEnterHarvester( entity trig, entity activator )
 
 	if ( activator != null && activator.IsPlayer() && activator.GetTeam() == trig.GetTeam() && file.players[activator].leaveHarvester == true )
 	{
-		file.players[activator].timeNearHarvester = Time()
+		file.players[activator].lastNearHarvester = Time()
 		file.players[activator].leaveHarvester = false
 	}
 }
@@ -1375,12 +1365,11 @@ void function OnLeaveHarvester( entity trig, entity activator )
 	if( !( activator in file.players ) )
 		return
 
-	float CurrentTime = Time() - file.players[activator].timeNearHarvester
-	bool shouldchange = file.players[activator].longestTimeNearHarvester > CurrentTime
+	float CurrentTime = Time() - file.players[activator].lastNearHarvester
 
-	if ( activator != null && activator.IsPlayer() && activator.GetTeam() == trig.GetTeam() && file.players[activator].leaveHarvester == false && shouldchange )
+	if ( activator != null && activator.IsPlayer() && activator.GetTeam() == trig.GetTeam() && file.players[activator].leaveHarvester == false )
 	{
-		file.players[activator].longestTimeNearHarvester = CurrentTime
+		file.playerAwardStats[activator]["timeNearHarvester"] += CurrentTime
 		file.players[activator].leaveHarvester = true
 	}
 }
