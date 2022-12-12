@@ -809,8 +809,7 @@ void function FWAiCampThink( CampSiteStruct campsite )
                     SetGlobalNetInt( alertVarName, FW_MAX_LEVELS - 1 )
                 else
                     SetGlobalNetInt( alertVarName, alertLevel + 1 ) // normal level up
-                // can't use float rn
-                //SetGlobalNetFloat( stressVarName, 1.0 ) // refill
+                SetGlobalNetFloat( stressVarName, 0.0 ) // empty
                 AddIgnoredCountToOtherCamps( campsite )
                 break
             }
@@ -1569,6 +1568,7 @@ void function TurretStateWatcher( TurretSiteStruct turretSite )
 ///// HARVESTER FUNCTIONS /////
 ///////////////////////////////
 
+// MOST THINGS OF THESE FUNCTIONS ARE FROM RoyalBlue1!
 void function startFWHarvester()
 {
     thread HarvesterThink(fw_harvesterImc)
