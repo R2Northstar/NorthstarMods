@@ -1568,7 +1568,7 @@ void function TurretStateWatcher( TurretSiteStruct turretSite )
 ///// HARVESTER FUNCTIONS /////
 ///////////////////////////////
 
-// MOST THINGS OF THESE FUNCTIONS ARE FROM RoyalBlue1!
+// most things of this part is from the fd branch
 void function startFWHarvester()
 {
     thread HarvesterThink(fw_harvesterImc)
