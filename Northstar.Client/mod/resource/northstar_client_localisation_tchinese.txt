@@ -278,6 +278,7 @@
 		"GAMEMODE_COLUMN" "遊戲模式"
 		"LATENCY_COLUMN" "延遲"
 		"GAMESTATE_COLUMN" "狀態"
+		"REGION_COLUMN" "地區"
 		"SEARCHBAR_LABEL" "搜尋："
 		"MAP_FILTER" "地圖"
 		"GAMEMODE_FILTER" "遊戲模式"
