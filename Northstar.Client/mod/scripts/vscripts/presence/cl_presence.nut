@@ -37,10 +37,10 @@ void function GenerateGameState() {
     }
 
     gs.map = GetMapName()
-    gs.map_displayname = Localize(GetMapDisplayName(GetMapName()))
+    gs.map_displayname = Localize( GetMapDisplayName( GetMapName() ) )
 
     gs.playlist = GetCurrentPlaylistName()
-    gs.playlist_displayname = Localize("#PL_"+GetCurrentPlaylistName())
+    gs.playlist_displayname = Localize( "#PL_" + GetCurrentPlaylistName() )
 
     gs.current_players = GetPlayerArray().len()
     gs.max_players = GetCurrentPlaylistVarInt( "max_players", -1 )
@@ -53,9 +53,9 @@ void function GenerateGameState() {
     gs.max_score = IsRoundBased() ? GetCurrentPlaylistVarInt( "roundscorelimit", 0 ) : GetCurrentPlaylistVarInt( "scorelimit", 0 )
 
 	if ( GetServerVar( "roundBased" ) )
-		gs.time_end = expect float(level.nv.roundEndTime - Time())
+		gs.time_end = expect float( level.nv.roundEndTime - Time() )
 	else
-		gs.time_end = expect float(level.nv.gameEndTime - Time())
+		gs.time_end = expect float( level.nv.gameEndTime - Time() )
 
     NSPushGameStateData(gs)
 }
