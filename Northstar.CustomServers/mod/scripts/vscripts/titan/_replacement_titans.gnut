@@ -424,6 +424,7 @@ function TryETATitanReadyAnnouncement( entity player )
 		TryReplacementTitanReadyAnnouncement( player )
 		return
 	}
+	
 
 	//This entire loop is probably too complicated now for what it's doing. Simplify next game!
 	//Loop might be pretty hard to read, a particular iteration of the loop is written in comments below
@@ -524,9 +525,47 @@ function req()
 
 bool function ClientCommand_RequestTitan( entity player, array<string> args )
 {
+	if( GAMETYPE == FORT_WAR )
+	{
+		if( !FW_IsPlayerInFriendlyTerritory( player ) ) // is player in friendly base?
+		{
+			PlayFactionDialogueToPlayer( "tw_territoryNag", player ) // notify player
+			TryPlayTitanfallNegativeSoundToPlayer( player )
+			int objectiveID = 101 // which means "#FW_OBJECTIVE_TITANFALL"
+			//CreateCustomMessageForRefusingTitanfall( player )
+			Remote_CallFunction_NonReplay( player, "ServerCallback_FW_SetObjective", objectiveID ) 
+			return true
+		}
+	}
 	ReplacementTitan( player ) //Separate function because other functions will call ReplacementTitan
 	return true
 }
+
+bool function TryPlayTitanfallNegativeSoundToPlayer( entity player )
+{
+	if( !( "lastNegativeSound" in player.s ) )
+		player.s.lastNegativeSound <- 0.0 // float
+	if( player.s.lastNegativeSound + 3.0 > Time() ) // in sound cooldown
+		return false
+
+	EmitSoundOnEntityOnlyToPlayer( player, player, "titan_dryfire" )
+	player.s.lastNegativeSound = Time()
+	
+	return true
+}
+
+/* // serverSideRUI can't handle localized strings
+void function CreateCustomMessageForRefusingTitanfall( entity player )
+{
+	if( !( "lastMessageSend" in player.s ) )
+		player.s.lastMessageSend <- 0.0 // float
+	if( player.s.lastMessageSend + 10 > Time() ) // in message cooldown
+		return
+ 
+	NSSendInfoMessageToPlayer( player, "#FW_OBJECTIVE_TITANFALL" )
+	player.s.lastMessageSend = Time()
+}
+*/
 
 // This a baseline titan request function; the only things that prevent this from happening are
 // common cases; wrong gamestate, already has a titan, is currently dead, etc...
@@ -877,6 +916,20 @@ void function CreateTitanForPlayerAndHotdrop( entity player, Point spawnPoint, T
 	player.Signal( "titan_impact" )
 
 	thread TitanNPC_WaitForBubbleShield_StartAutoTitanBehavior( titan )
+	thread PlayerEarnMeter_ReplacementTitanThink( player, titan )
+}
+
+void function PlayerEarnMeter_ReplacementTitanThink( entity player, entity titan )
+{
+	player.EndSignal( "OnDestroy" )
+	OnThreadEnd(
+		function(): ( player )
+		{
+			if( IsValid( player ) )
+				PlayerEarnMeter_Reset( player )
+		}
+	)
+	titan.WaitSignal( "OnDestroy" )
 }
 
 void function CleanupTitanFallDisablingEntity( entity titanFallDisablingEntity, entity titan )

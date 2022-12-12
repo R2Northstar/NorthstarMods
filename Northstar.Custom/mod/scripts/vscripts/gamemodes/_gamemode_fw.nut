@@ -1256,13 +1256,13 @@ void function FWAreaThreatLevelThink_Threaded()
                 && !mltEntArray.contains( titan )
                 && titan.GetTeam() != TEAM_IMC
                 && !titan.e.isHotDropping )
-                warnImcTitanApproach = true // this titan must be in neatural space
+                warnImcTitanApproach = true // this titan must be in natrual space
 
             if( !mltEntArray.contains( titan )
                 && !imcEntArray.contains( titan )
                 && titan.GetTeam() != TEAM_MILITIA
                 && !titan.e.isHotDropping )
-                warnMltTitanApproach = true // this titan must be in neatural space
+                warnMltTitanApproach = true // this titan must be in natrual space
         }
 
         WaitFrame()
@@ -1408,16 +1408,16 @@ void function InitTurretSettings()
 // 48 means destroyed mlt turret being attacked?
 
 const int TURRET_DESTROYED_FLAG = 1
-const int TURRET_NEATURAL_FLAG = 1
+const int TURRET_NATURAL_FLAG = 1
 const int TURRET_IMC_FLAG = 2
 const int TURRET_MLT_FLAG = 4
 const int TURRET_SHIELDED_IMC_FLAG = 10
 const int TURRET_SHIELDED_MLT_FLAG = 13
 
-const int TURRET_UNDERATTACK_NEATURAL_FLAG = 16
+const int TURRET_UNDERATTACK_NATURAL_FLAG = 16
 const int TURRET_UNDERATTACK_IMC_FLAG = 18
 const int TURRET_UNDERATTACK_MLT_FLAG = 20
-// neatural turret noramlly can't get shielded
+// natrual turret noramlly can't get shielded
 const int TURRET_SHIELDED_UNDERATTACK_IMC_FLAG = 26
 const int TURRET_SHIELDED_UNDERATTACK_MLT_FLAG = 28
 
@@ -1449,7 +1449,7 @@ void function TurretStateWatcher( TurretSiteStruct turretSite )
     overlayState.EndSignal( "OnDestroy" )
 
     SetGlobalNetEnt( siteVarName, overlayState ) // tracking batteryPort's positions and team
-    SetGlobalNetInt( stateVarName, TURRET_NEATURAL_FLAG ) // init for all turrets
+    SetGlobalNetInt( stateVarName, TURRET_NATURAL_FLAG ) // init for all turrets
 
     int lastFrameTeam
     bool lastFrameIsAlive
@@ -1493,7 +1493,7 @@ void function TurretStateWatcher( TurretSiteStruct turretSite )
         SetTeam( overlayState, iconTeam ) // update overlayEnt's team
 
         float lastDamagedTime = expect float( turret.s.lastDamagedTime )
-        int stateFlag = TURRET_NEATURAL_FLAG
+        int stateFlag = TURRET_NATURAL_FLAG
 
         // imc states
         if( iconTeam == TEAM_IMC )
@@ -1539,13 +1539,13 @@ void function TurretStateWatcher( TurretSiteStruct turretSite )
                 stateFlag = TURRET_MLT_FLAG
         }
 
-        // neatural states
+        // natrual states
         if( iconTeam == TEAM_UNASSIGNED )
         {
             if( lastDamagedTime + FW_TURRET_DAMAGED_DEBOUNCE >= Time() ) // recent underattack
-                stateFlag = TURRET_UNDERATTACK_NEATURAL_FLAG
+                stateFlag = TURRET_UNDERATTACK_NATURAL_FLAG
             else
-                stateFlag = TURRET_NEATURAL_FLAG
+                stateFlag = TURRET_NATURAL_FLAG
         }
 
         SetGlobalNetInt( stateVarName, stateFlag )

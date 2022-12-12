@@ -1,1 +1,292 @@
-//fuck
+// this script is highly related to _gamemode_fw.nut!!!
+untyped
+global function InitTurretBatteryPort // only for fw turrets!
+
+const float TURRET_BATTERY_REGEN_PERCENTAGE = 0.33
+const float TURRET_RESPAWN_HEALTH_PERCENTAGE = 0.5
+const float TURRET_RESPAWN_SHIELD_PERCENTAGE = 0.5
+
+void function InitTurretBatteryPort( entity batteryPort )
+{
+    batteryPort.s.relatedTurret <- null             // entity, for saving batteryPort's nearest turret
+    batteryPort.s.beingUsed <- false                // bool
+    batteryPort.s.hackAvaliable <- true            // bool, for controlling hacking avaliablity
+
+    entity turret = GetNearestMegaTurret( batteryPort ) // consider this is the port's related turret
+
+    bool isBaseTurret = expect bool( turret.s.baseTurret )
+    SetTeam( batteryPort, turret.GetTeam() )
+    batteryPort.s.relatedTurret = turret
+    if( isBaseTurret ) // this is a base turret!
+        batteryPort.s.hackAvaliable = false // it can never be hacked!
+    turret.s.relatedBatteryPort = batteryPort // do it here
+
+    if( isBaseTurret ) // this is a base turret!
+        batteryPort.SetUsableByGroup( "friendlies pilot" ) // only show hint to friendlies
+    else
+        batteryPort.SetUsableByGroup( "pilot" ) // show hind to any pilots
+    batteryPort.SetUsePrompts( "#FW_USE_GENERATOR_NO_BATTERY", "#FW_USE_GENERATOR_NO_BATTERY" ) // don't know what to use
+    AddCallback_OnUseEntity( batteryPort, OnUseTurretBatteryPort )
+}
+
+function OnUseTurretBatteryPort( entBeingUse, user )
+{
+    expect entity( entBeingUse )
+    expect entity( user )
+
+    //print( "try to use batteryPort" )
+    thread TryUseTurretBatteryPort( user, entBeingUse )
+}
+
+void function TryUseTurretBatteryPort( entity player, entity batteryPort )
+{
+    if( batteryPort.s.beingUsed ) // already being using
+        return
+
+    player.EndSignal( "OnDeath" )
+    player.EndSignal( "OnDestroy" )
+    player.EndSignal( "ScriptAnimStop" ) // so you can jump off animation
+    AddButtonPressedPlayerInputCallback( player, IN_JUMP, ForceStopUseBatteryPort )
+
+    OnThreadEnd(
+        function():( player )
+        {
+            RemoveButtonPressedPlayerInputCallback( player, IN_JUMP, ForceStopUseBatteryPort )
+        }
+    )
+
+    entity turret = expect entity( batteryPort.s.relatedTurret )
+    if( !IsValid( turret ) ) // turret has been destroyed!
+        return
+
+    // get turret's settings, decide behavior
+    bool validTeam = turret.GetTeam() == player.GetTeam() || turret.GetTeam() == TEAM_BOTH || turret.GetTeam() == TEAM_UNASSIGNED
+    bool isBaseTurret = expect bool( turret.s.baseTurret )
+    // is this port able to be hacked
+    bool portHackAvaliable = expect bool( batteryPort.s.hackAvaliable )
+
+    // player has a battery, team valid or able to hack && not a base turret
+    if( PlayerHasBattery( player ) && ( validTeam || ( portHackAvaliable && !isBaseTurret ) ) )
+    {
+        // friendly try to apply one, or enemy try to hack this turret
+        waitthread PlayerApplesBatteryPackToPort( player, batteryPort )
+    }
+}
+
+void function ForceStopUseBatteryPort( entity player )
+{
+    player.Signal( "ScriptAnimStop" )
+}
+
+void function PlayerApplesBatteryPackToPort( entity player, entity batteryPort )
+{
+    table result = {}
+    result.success <- false
+    batteryPort.s.beingUsed = true
+
+	entity battery = GetBatteryOnBack( player )
+	battery.Hide() //Hide it because the animation has a battery model already
+    Battery_StopFX( battery )
+
+	entity tempBattery3p
+	tempBattery3p = CreatePropDynamic( RODEO_BATTERY_MODEL_FOR_RODEO_ANIMS )
+	tempBattery3p.SetParent( player, "R_HAND", false, 0.0 )
+	tempBattery3p.RemoveFromSpatialPartition()
+
+	entity tempBattery1p
+	tempBattery1p = CreatePropDynamic( RODEO_BATTERY_MODEL_FOR_RODEO_ANIMS )
+	tempBattery1p.SetParent( player.GetFirstPersonProxy(), "R_HAND", false, 0.0 )
+	tempBattery1p.RemoveFromSpatialPartition()
+
+	player.p.rodeoAnimTempProps.append( tempBattery3p )
+	player.p.rodeoAnimTempProps.append( tempBattery1p )
+
+	OnThreadEnd(
+	function() : ( battery, batteryPort, player, result )
+		{
+			if ( IsValid( battery ) ) // animation interrupted
+            {
+				battery.Show()
+                Battery_StartFX( battery )
+            }
+
+            if ( IsValid( batteryPort ) )
+            {
+                batteryPort.s.beingUsed = false
+                batteryPort.Anim_Stop()
+            }
+
+			if ( IsValid( player ) )
+            {
+                // restore control
+                DeployAndEnableWeapons( player )
+                //ViewConeFree( player ) // no need to lock viewcone
+
+                // clean up
+                ClearBatteryAnimTempProps( player )
+                PutEntityInSafeSpot( player, player, null, player.GetOrigin() + <0, 0, 32>, player.GetOrigin() )
+
+                CleanUpBatterySequenceForPlayer( player )
+            }
+		}
+	)
+
+	FirstPersonSequenceStruct sequence
+	sequence.attachment = "REF" // only ref the batteryPort has
+
+	sequence.thirdPersonAnim 		= "pt_mp_battery_port_insert" //"pt_rodeo_ride_r_return_battery"
+	sequence.firstPersonAnim 		= "ptpov_mp_battery_port_insert" //"ptpov_rodeo_ride_r_return_battery"
+
+    // player stats
+    HolsterAndDisableWeapons( player )
+    //ViewConeZero( player ) // no need to lock viewcone
+
+    batteryPort.Anim_Play( "bp_mp_battery_port_insert" )
+
+    thread WaitForActivateBattery( player, battery, batteryPort )
+	waitthread FirstPersonSequence( sequence, player, batteryPort )
+}
+
+void function WaitForActivateBattery( entity player, entity battery, entity batteryPort )
+{
+    player.EndSignal( "OnDeath" )
+    player.EndSignal( "OnDestroy" )
+    player.EndSignal( "ScriptAnimStop" ) // so you can jump off animation
+    battery.EndSignal( "OnDestroy" )
+
+    player.WaitSignal( "BatteryActivate" ) // this is registered in _gamemode_fw.nut!
+    ApplyBatteryToBatteryPort( player, batteryPort )
+}
+
+void function ApplyBatteryToBatteryPort( entity player, entity batteryPort )
+{
+    if ( player.GetPlayerNetInt( "batteryCount" ) <= 0 ) // player actually not carrying a battery
+        return
+
+    entity battery = Rodeo_TakeBatteryAwayFromPilot( player )
+    if ( !IsValid( battery ) )
+        return
+
+    // player can apply battery
+
+    // disable hacking
+    batteryPort.s.hackAvaliable = false // can't be hacked again until completely killed
+
+    // change turret settings
+    entity turret = expect entity( batteryPort.s.relatedTurret ) // consider this is the port's related turret
+
+    int playerTeam = player.GetTeam()
+    bool turretReplaced = false
+    bool sameTeam = turret.GetTeam() == player.GetTeam()
+
+    if( !IsAlive( turret ) ) // turret has been killed!
+    {
+        turret = FW_ReplaceMegaTurret( turret )
+        if( !IsValid( turret ) ) // replace failed!
+            return
+        batteryPort.s.relatedTurret = turret
+        turretReplaced = true // if turret has been replaced, mostly reset team!
+    }
+
+    bool teamChanged = false
+    bool isBaseTurret = expect bool( turret.s.baseTurret )
+    if( ( !sameTeam || turretReplaced ) && !isBaseTurret ) // is there a need to change team?
+    {
+        SetTeam( turret, playerTeam )
+        teamChanged = true
+    }
+
+    // restore turret health
+    int newHealth = int ( min( turret.GetMaxHealth(), turret.GetHealth() + ( turret.GetMaxHealth() * TURRET_BATTERY_REGEN_PERCENTAGE ) ) )
+    if( turretReplaced ) // replaced turret will spawn with 75% health
+        newHealth = int ( turret.GetMaxHealth() * TURRET_RESPAWN_HEALTH_PERCENTAGE )
+    int newShield = turret.GetShieldHealthMax()
+    if( turretReplaced ) // replaced turret will spawn with 50% shield
+        newShield = int ( turret.GetShieldHealthMax() * TURRET_RESPAWN_SHIELD_PERCENTAGE )
+    // only do team score event if turret's shields down, encourage players to hack more turrets
+    bool additionalScore = turret.GetShieldHealth() <= 0
+    // this can be too much powerful
+    turret.SetHealth( newHealth )
+    turret.SetShieldHealth( newShield )
+
+    // score event
+    string scoreEvent = "FortWarForwardConstruction"
+    int secondaryScore = POINTVALUE_FW_FORWARD_CONSTRUCTION
+    if( isBaseTurret ) // this is a base turret
+    {
+        scoreEvent = "FortWarBaseConstruction"
+        secondaryScore = POINTVALUE_FW_BASE_CONSTRUCTION
+    }
+    AddPlayerScore( player, scoreEvent, player ) // player themself gets more meter
+    player.AddToPlayerGameStat( PGS_DEFENSE_SCORE, secondaryScore )
+
+    // only do team score event if turret's shields down
+    if( additionalScore )
+    {
+        // get turrets alive, for adding scores
+        string teamTurretCount = GetTeamAliveTurretCount_ReturnString( playerTeam )
+        foreach( entity friendly in GetPlayerArrayOfTeam( playerTeam ) )
+            AddPlayerScore( friendly, "FortWarTeamTurretControlBonus_" + teamTurretCount, friendly )
+
+        PlayFactionDialogueToTeam( "fortwar_turretShieldedByFriendlyPilot", playerTeam )
+    }
+
+    // all things done, destroy this batt
+    battery.Destroy()
+}
+
+// this will get english name of the count, since the "FortWarTeamTurretControlBonus_" score event uses it
+string function GetTeamAliveTurretCount_ReturnString( int team )
+{
+    int turretCount
+    foreach( entity turret in GetNPCArrayByClass( "npc_turret_mega" ) )
+    {
+        if( turret.GetTeam() == team && IsAlive( turret ) )
+            turretCount += 1
+    }
+
+    switch( turretCount )
+    {
+        case 1:
+            return "One"
+        case 2:
+            return "Two"
+        case 3:
+            return "Three"
+        case 4:
+            return "Four"
+        case 5:
+            return "Five"
+        case 6:
+            return "Six"
+    }
+
+    return ""
+}
+
+// get nearest turret, consider it belongs to the port
+entity function GetNearestMegaTurret( entity ent )
+{
+    array<entity> allTurrets = GetNPCArrayByClass( "npc_turret_mega" )
+    entity turret = GetClosest( allTurrets, ent.GetOrigin() )
+    return turret
+}
+
+void function CleanUpBatterySequenceForPlayer( entity player )
+{
+    ClearPlayerAnimViewEntity( player )
+    player.AnimViewEntity_SetLerpOutTime( 0.4 ) // blend out the clear anim view entity
+    player.ClearParent()
+    player.Anim_Stop()
+}
+
+void function ClearBatteryAnimTempProps( entity player )
+{
+	foreach( tempProp in player.p.rodeoAnimTempProps )
+	{
+		if ( IsValid( tempProp ) )
+			tempProp.Destroy()
+		}
+
+	player.p.rodeoAnimTempProps.clear()
+}

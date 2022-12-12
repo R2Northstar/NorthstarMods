@@ -117,10 +117,10 @@ Point function GetTitanReplacementPoint( entity player, bool forDebugging = fals
 	vector playerEyeAngles = player.EyeAngles()
 	vector playerOrg = player.GetOrigin()
 
-	return CalculateTitanReplacementPoint( playerOrg, playerEyePos, playerEyeAngles, forDebugging )
+	return CalculateTitanReplacementPoint( playerOrg, playerEyePos, playerEyeAngles, forDebugging, player.GetTeam() )
 }
 
-Point function CalculateTitanReplacementPoint( vector playerOrg, vector playerEyePos, vector playerEyeAngles, bool forDebugging = false )
+Point function CalculateTitanReplacementPoint( vector playerOrg, vector playerEyePos, vector playerEyeAngles, bool forDebugging = false, int playerTeam = 1 )
 {
 	//local playerEyePos = 		Vector(-281.036224, 34.857925, 860.031250)
 	//local playerEyeAngles = 	Vector(60.055622, 80.775780, 0.000000)
@@ -165,6 +165,11 @@ Point function CalculateTitanReplacementPoint( vector playerOrg, vector playerEy
 					Point point
 					point.origin = dropPoint
 					point.angles = yawAngles
+					
+					// fortwar specific spawnpoint!
+					if( GAMETYPE == FORT_WAR && playerTeam > 1 )
+						point.origin = FW_ReCalculateTitanReplacementPoint( dropPoint, playerTeam )
+
 					return point
 				}
 			}
@@ -215,6 +220,11 @@ Point function CalculateTitanReplacementPoint( vector playerOrg, vector playerEy
 	Point point
 	point.origin = nodeOrigin
 	point.angles = Vector( 0, yaw, 0 )
+
+	// fortwar specific spawnpoint!
+	if( GAMETYPE == FORT_WAR && playerTeam > 1 )
+		point.origin = FW_ReCalculateTitanReplacementPoint( nodeOrigin, playerTeam )
+
  	return point
 }
 
