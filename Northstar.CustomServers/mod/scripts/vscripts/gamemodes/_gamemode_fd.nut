@@ -903,8 +903,8 @@ void function FD_BatteryHealTeammate( entity battery, entity titan, int shieldRe
 		return
 
 	if( IsValid( BatteryParent ) && BatteryParent in file.players ){
-		file.playerAwardStats[player]["heals"] += shieldRestoreAmount
-		file.playerAwardStats[player]["heals"] += healthRestoreAmount
+		file.playerAwardStats[BatteryParent]["heals"] += shieldRestoreAmount
+		file.playerAwardStats[BatteryParent]["heals"] += healthRestoreAmount
 	}
 }
 
