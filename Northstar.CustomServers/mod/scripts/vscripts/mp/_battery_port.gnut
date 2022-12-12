@@ -198,10 +198,10 @@ void function ApplyBatteryToBatteryPort( entity player, entity batteryPort )
 
     // restore turret health
     int newHealth = int ( min( turret.GetMaxHealth(), turret.GetHealth() + ( turret.GetMaxHealth() * TURRET_BATTERY_REGEN_PERCENTAGE ) ) )
-    if( turretReplaced ) // replaced turret will spawn with 75% health
+    if( turretReplaced || teamChanged ) // replaced/hacked turret will spawn with 50% health
         newHealth = int ( turret.GetMaxHealth() * TURRET_RESPAWN_HEALTH_PERCENTAGE )
     int newShield = turret.GetShieldHealthMax()
-    if( turretReplaced ) // replaced turret will spawn with 50% shield
+    if( turretReplaced || teamChanged ) // replaced/hacked turret will spawn with 50% shield
         newShield = int ( turret.GetShieldHealthMax() * TURRET_RESPAWN_SHIELD_PERCENTAGE )
     // only do team score event if turret's shields down, encourage players to hack more turrets
     bool additionalScore = turret.GetShieldHealth() <= 0
