@@ -129,7 +129,7 @@ void function GamemodeFD_Init()
 	AddCallback_OnRoundEndCleanup( FD_NPCCleanup )
 	AddCallback_OnClientConnected( GamemodeFD_InitPlayer )
 	AddCallback_OnPlayerGetsNewPilotLoadout( FD_OnPlayerGetsNewPilotLoadout )
-	ClassicMP_SetEpilogue(FD_SetupEpilogue)
+	ClassicMP_SetEpilogue( FD_SetupEpilogue )
 
 	//Damage Callbacks
 	AddDamageByCallback( "player", FD_DamageByPlayerCallback)
@@ -923,6 +923,12 @@ void function FD_Epilogue_threaded()
 		}
 			
 	}
+
+	int gameMode = PersistenceGetEnumIndexForItemName( "gamemodes", GAMETYPE )
+	int map = PersistenceGetEnumIndexForItemName( "maps", GetMapName() )
+	int myIndex
+	int numPlayers = GetPlayerArray().len()
+
 	foreach( entity player in GetPlayerArray() )
 	{
 		if( !( player in awardResults ) )
@@ -935,13 +941,35 @@ void function FD_Epilogue_threaded()
 	foreach( entity player in GetPlayerArray() )
 	{
 		int i = 0
+		myIndex = player.GetPlayerIndex()
+
+		player.SetPersistentVar( "postGameDataFD.gameMode", gameMode )
+		player.SetPersistentVar( "postGameDataFD.map", map )
+		player.SetPersistentVar( "postGameDataFD.myIndex", myIndex )
+		player.SetPersistentVar( "postGameDataFD.numPlayers", numPlayers )	
+
 		foreach( entity medalPlayer, string ref in awardResults )
 		{
-			if(i++ >= 4)
+			if( i == numPlayers )
 				break;
-			Remote_CallFunction_NonReplay( player, "ServerCallback_UpdateGameStats", medalPlayer.GetEncodedEHandle(), GetFDStatData( ref ).index , awardResultValues[medalPlayer], GetPersistentSpawnLoadoutIndex( medalPlayer, "titan" ) ) 
+
+			int targetIndex = medalPlayer.GetPlayerIndex()
+			string name = medalPlayer.GetPlayerName()
+			string xuid = medalPlayer.GetUID()
+			int awardId = GetFDStatData( ref ).index
+			float awardValue = awardResultValues[medalPlayer]
+			int suitIndex = GetPersistentSpawnLoadoutIndex( medalPlayer, "titan" )
+			int playerEHandle = medalPlayer.GetEncodedEHandle()
+
+			player.SetPersistentVar( "postGameDataFD.players[" + targetIndex + "].name", name )
+			player.SetPersistentVar( "postGameDataFD.players[" + targetIndex + "].xuid", xuid )
+			player.SetPersistentVar( "postGameDataFD.players[" + targetIndex + "].awardId", awardId )
+			player.SetPersistentVar( "postGameDataFD.players[" + targetIndex + "].awardValue", awardValue )
+			player.SetPersistentVar( "postGameDataFD.players[" + targetIndex + "].suitIndex", suitIndex )
+			Remote_CallFunction_NonReplay( player, "ServerCallback_UpdateGameStats", playerEHandle, awardId, awardValue, suitIndex )
+			i++
 		}
-	Remote_CallFunction_NonReplay( player, "ServerCallback_ShowGameStats", Time() + 25 )//TODO set correct endTime 
+		Remote_CallFunction_NonReplay( player, "ServerCallback_ShowGameStats", Time() + 19 )
 	}
 	/* //debugging prints
 	foreach( entity player, table< string, float > data in file.playerAwardStats)
