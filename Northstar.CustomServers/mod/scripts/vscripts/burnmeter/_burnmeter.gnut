@@ -299,28 +299,7 @@ void function PlayerUsesAmpedWeaponsBurncard( entity player )
 
 void function PlayerUsesAmpedWeaponsBurncardThreaded( entity player )
 {
-	player.Signal( "StopAmpedWeapons" )
-	player.EndSignal( "StopAmpedWeapons" )
 	array<entity> weapons = player.GetMainWeapons()
-	OnThreadEnd(
-		function(): ( weapons )
-		{
-			// note: weapons may have been destroyed or picked up by other people by this point, so need to verify this
-			foreach ( entity weapon in weapons )
-			{
-				if( IsValid( weapon ) )
-				{
-					foreach ( string mod in GetWeaponBurnMods( weapon.GetWeaponClassName() ) )
-						weapon.RemoveMod( mod )
-					
-					weapon.SetScriptFlags0( weapon.GetScriptFlags0() & ~WEAPONFLAG_AMPED )
-				}
-				else
-					continue
-			}
-		}
-	)
-
 	//weapons.extend( player.GetOffhandWeapons() ) // idk? unsure of vanilla behaviour here
 	foreach ( entity weapon in weapons )
 	{
@@ -347,6 +326,18 @@ void function PlayerUsesAmpedWeaponsBurncardThreaded( entity player )
 	}
 
 	wait AMPED_WEAPONS_LENGTH
+
+	// note: weapons may have been destroyed or picked up by other people by this point, so need to verify this
+	foreach ( entity weapon in weapons )
+	{
+		if ( !IsValid( weapon ) )
+			continue
+
+		foreach ( string mod in GetWeaponBurnMods( weapon.GetWeaponClassName() ) )
+			weapon.RemoveMod( mod )
+
+		weapon.SetScriptFlags0( weapon.GetScriptFlags0() & ~WEAPONFLAG_AMPED )
+	}
 }
 
 void function RemoveAmpedWeaponsForTitanPilot( entity player, entity titan )
