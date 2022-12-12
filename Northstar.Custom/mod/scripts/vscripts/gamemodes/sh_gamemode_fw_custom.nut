@@ -19,16 +19,26 @@ void function CreateGamemodeFW()
 	GameMode_Create( FORT_WAR )
 	GameMode_SetName( FORT_WAR, "#GAMEMODE_fw" )
 	GameMode_SetDesc( FORT_WAR, "#PL_fw_desc" )
-	GameMode_SetGameModeAnnouncement( FORT_WAR, "ffa_modeDesc" ) // fw lines are unfortunately not registered to faction dialogue
+
+	// fw lines are unfortunately not registered to faction dialogue, use it's modeName dialogue
+	GameMode_SetGameModeAnnouncement( FORT_WAR, "fortwar_modeName" ) 
 	
-		#if SERVER
-			//GameMode_AddServerInit( FORT_WAR, GamemodeFW_Init ) // doesn't exist yet lol
-		#elseif CLIENT
-			GameMode_AddClientInit( FORT_WAR, CLGamemodeFW_Init )
-		#endif
-		#if !UI
-			GameMode_AddSharedInit( FORT_WAR, SHGamemodeFW_Init )
-		#endif
+	GameMode_AddScoreboardColumnData( FORT_WAR, "#SCOREBOARD_KILLS", PGS_KILLS, 2 )
+	GameMode_AddScoreboardColumnData( FORT_WAR, "#SCOREBOARD_SUPPORT_SCORE", PGS_DEFENSE_SCORE, 4 )
+	GameMode_AddScoreboardColumnData( FORT_WAR, "#SCOREBOARD_COOP_POINTS", PGS_ASSAULT_SCORE, 6 )
+
+	AddPrivateMatchMode( FORT_WAR )
+
+	#if SERVER
+		GameMode_AddServerInit( FORT_WAR, GamemodeFW_Init )
+		GameMode_SetPilotSpawnpointsRatingFunc( FORT_WAR, RateSpawnpoints_FW )
+		GameMode_SetTitanSpawnpointsRatingFunc( FORT_WAR, RateSpawnpoints_FW )
+	#elseif CLIENT
+		GameMode_AddClientInit( FORT_WAR, CLGamemodeFW_Init )
+	#endif
+	#if !UI
+		GameMode_AddSharedInit( FORT_WAR, SHGamemodeFW_Init )
+	#endif
 }
 
 void function FWOnRegisteringNetworkVars()
@@ -59,11 +69,11 @@ void function FWOnRegisteringNetworkVars()
 	RegisterNetworkedVariable( "imcTowerThreatLevel", SNDC_GLOBAL, SNVT_INT )
 	RegisterNetworkedVariable( "milTowerThreatLevel", SNDC_GLOBAL, SNVT_INT )
 	RegisterNetworkedVariable( "fwCampAlertA", SNDC_GLOBAL, SNVT_INT )
-	RegisterNetworkedVariable( "fwCampStressA", SNDC_GLOBAL, SNVT_INT )
+	RegisterNetworkedVariable( "fwCampStressA", SNDC_GLOBAL, SNVT_FLOAT_RANGE, 0.0, 0.0, 1.0 )
 	RegisterNetworkedVariable( "fwCampAlertB", SNDC_GLOBAL, SNVT_INT )
-	RegisterNetworkedVariable( "fwCampStressB", SNDC_GLOBAL, SNVT_INT )
+	RegisterNetworkedVariable( "fwCampStressB", SNDC_GLOBAL, SNVT_FLOAT_RANGE, 0.0, 0.0, 1.0 )
 	RegisterNetworkedVariable( "fwCampAlertC", SNDC_GLOBAL, SNVT_INT )
-	RegisterNetworkedVariable( "fwCampStressC", SNDC_GLOBAL, SNVT_INT )
+	RegisterNetworkedVariable( "fwCampStressC", SNDC_GLOBAL, SNVT_FLOAT_RANGE, 0.0, 0.0, 1.0 )
 	
 	#if CLIENT                  
 		CLFortWar_RegisterNetworkFunctions()
