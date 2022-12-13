@@ -966,6 +966,9 @@ void function _OnServerSelectedAsync( var button )
 
 	file.lastSelectedServer = serverIndex
 
+	// Count mods that have been successfully downloaded
+	int downloadedMods = 0;
+
 	// check mods
 	for ( int i = 0; i < NSGetServerRequiredModsCount( serverIndex ); i++ )
 	{
@@ -998,9 +1001,7 @@ void function _OnServerSelectedAsync( var button )
 				// Close loading dialog
 				CloseActiveMenu();
 
-				// Make Northstar aware a new mod has been added
-				NSReloadMods();
-
+				downloadedMods += 1;
 				continue;
 			}
 
@@ -1062,6 +1063,13 @@ void function _OnServerSelectedAsync( var button )
 				return
 			}
 		}
+	}
+
+	// Make Northstar aware news mod have been added
+	if (downloadedMods > 0)
+	{
+		print("Some new mods have been downloaded, releading mods.")
+		NSReloadMods();
 	}
 
 	if ( NSServerRequiresPassword( serverIndex ) )
