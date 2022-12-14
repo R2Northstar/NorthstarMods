@@ -85,6 +85,9 @@ void function PlayerApplesBatteryPackToPort( entity player, entity batteryPort )
     result.success <- false
     batteryPort.s.beingUsed = true
 
+    BatteryPortSequenceStruct dataStruct = DisableCloakBeforeBatteryPortSequence( player )
+
+    // these are from _rodeo_titan.gnut
 	entity battery = GetBatteryOnBack( player )
 	battery.Hide() //Hide it because the animation has a battery model already
     Battery_StopFX( battery )
@@ -103,9 +106,9 @@ void function PlayerApplesBatteryPackToPort( entity player, entity batteryPort )
 	player.p.rodeoAnimTempProps.append( tempBattery1p )
 
 	OnThreadEnd(
-	function() : ( battery, batteryPort, player, result )
+	function() : ( battery, batteryPort, player, result, dataStruct )
 		{
-			if ( IsValid( battery ) ) // animation interrupted
+			if ( IsValid( battery ) ) // animation interrupted, otherwise the battery will be destroyed
             {
 				battery.Show()
                 Battery_StartFX( battery )
@@ -128,6 +131,7 @@ void function PlayerApplesBatteryPackToPort( entity player, entity batteryPort )
                 PutEntityInSafeSpot( player, player, null, player.GetOrigin() + <0, 0, 32>, player.GetOrigin() )
 
                 CleanUpBatterySequenceForPlayer( player )
+                RestoreCloakAfterBatteryPortSequence( player, dataStruct )
             }
 		}
 	)
@@ -263,6 +267,45 @@ string function GetTeamAliveTurretCount_ReturnString( int team )
     }
 
     return ""
+}
+
+// for disabling cloak
+struct BatteryPortSequenceStruct
+{
+    bool wasCloaked = false
+    float cloakEndTime = 0.0
+}
+
+BatteryPortSequenceStruct function DisableCloakBeforeBatteryPortSequence( entity player )
+{
+    BatteryPortSequenceStruct dataStruct
+	if ( !IsCloaked( player ) )
+		return dataStruct // empty struct!
+
+	dataStruct.wasCloaked = true
+	dataStruct.cloakEndTime = player.GetCloakEndTime()
+	DisableCloak( player, 0.0 )
+
+    return dataStruct
+}
+
+bool function RestoreCloakAfterBatteryPortSequence( entity player, BatteryPortSequenceStruct dataStruct )
+{
+    if ( !IsAlive( player ) )
+		return false
+
+	if ( !dataStruct.wasCloaked  )
+		return false
+
+	if ( dataStruct.cloakEndTime <= 0.0 )
+        return false
+
+	float remainingCloakDuration = max( 0.0, dataStruct.cloakEndTime - Time() )
+	if ( remainingCloakDuration <= CLOAK_FADE_IN ) //Has to be greater than 1.0 fade in duration, otherwise will cloak forever
+        return false
+
+    EnableCloak( player, remainingCloakDuration, CLOAK_FADE_IN )
+    return true
 }
 
 // get nearest turret, consider it belongs to the port
