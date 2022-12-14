@@ -718,7 +718,7 @@ void function InitFWCampSites()
         {
             camp.campId = "A"
             SetGlobalNetInt( "fwCampAlertA", 0 )
-            SetGlobalNetFloat( "fwCampStressA", 1.0 )
+            SetGlobalNetFloat( "fwCampStressA", 0.0 ) // start with empty
             SetLocationTrackerID( camp.tracker, 0 )
             file.trackedCampNPCSpawns["A"] <- {}
             continue
@@ -727,7 +727,7 @@ void function InitFWCampSites()
         {
             camp.campId = "B"
             SetGlobalNetInt( "fwCampAlertB", 0 )
-            SetGlobalNetFloat( "fwCampStressB", 1.0 )
+            SetGlobalNetFloat( "fwCampStressB", 0.0 ) // start with empty
             SetLocationTrackerID( camp.tracker, 1 )
             file.trackedCampNPCSpawns["B"] <- {}
             continue
@@ -736,7 +736,7 @@ void function InitFWCampSites()
         {
             camp.campId = "C"
             SetGlobalNetInt( "fwCampAlertC", 0 )
-            SetGlobalNetFloat( "fwCampStressC", 1.0 )
+            SetGlobalNetFloat( "fwCampStressC", 0.0 ) // start with empty
             SetLocationTrackerID( camp.tracker, 2 )
             file.trackedCampNPCSpawns["C"] <- {}
             continue
@@ -799,12 +799,15 @@ void function FWAiCampThink( CampSiteStruct campsite )
 
         int alertLevel = GetGlobalNetInt( alertVarName )
         //print( "campsite" + campId + ".ignoredSinceLastClean: " + string( campsite.ignoredSinceLastClean ) )
-        if( campsite.ignoredSinceLastClean >= FW_IGNORE_NEEDED && alertLevel > 1 ) // has been ignored many times, level > 1
-        {
-            // reset level
-            alertLevel = 0
-        }
-        // reset netVars
+        if( campsite.ignoredSinceLastClean >= FW_CAMP_IGNORE_NEEDED && alertLevel > 0 ) // has been ignored many times, level > 0
+            alertLevel = 0 // reset level
+        else if( !firstSpawn ) // not the first spawn!
+            alertLevel += 1 // level up
+
+        if( alertLevel >= FW_MAX_LEVELS - 1 ) // reached max level?
+            alertLevel = FW_MAX_LEVELS - 1 // stay
+
+        // update netVars, don't know how client update these, sometimes they can't catch up
         SetGlobalNetInt( alertVarName, alertLevel )
         SetGlobalNetFloat( stressVarName, 1.0 )
 
