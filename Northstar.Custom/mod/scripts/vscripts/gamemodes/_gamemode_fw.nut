@@ -191,7 +191,8 @@ void function HACK_ForceDestroyNPCs_Threaded()
         {
             foreach( entity npc in GetNPCArray() )
             {
-                if( !IsValid( npc.GetParent() ) ) // not spawning from droppod
+                // neither spawning from droppod nor hotdropping
+                if( !IsValid( npc.GetParent() ) && !npc.e.isHotDropping )
                 {
                     if( npc.GetOrigin().z >= HOMESTEAD_CHECK_HIEGHT )
                     {
