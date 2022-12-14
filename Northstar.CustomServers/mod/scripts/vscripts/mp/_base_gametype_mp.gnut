@@ -376,7 +376,7 @@ void function PostDeathThread_MP( entity player, var damageInfo ) // based on ga
 		
 		wait respawnDelay
 
-		ForceRespawnMeSignalAfterDelay( player )
+		thread ForceRespawnMeSignalAfterDelay( player )
 				
 		player.WaitSignal( "RespawnMe" ) // set in base_gametype: ClientCommand_RespawnPlayer
 
