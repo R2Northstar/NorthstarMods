@@ -25,7 +25,7 @@ void function InitTurretBatteryPort( entity batteryPort )
         batteryPort.SetUsableByGroup( "friendlies pilot" ) // only show hint to friendlies
     else
         batteryPort.SetUsableByGroup( "pilot" ) // show hind to any pilots
-    batteryPort.SetUsePrompts( "#FW_USE_GENERATOR_NO_BATTERY", "#FW_USE_GENERATOR_NO_BATTERY" ) // don't know what to use
+    batteryPort.SetUsePrompts( "#RODEO_APPLY_BATTERY_HINT", "#RODEO_APPLY_BATTERY_HINT" ) // don't know what to use
     AddCallback_OnUseEntity( batteryPort, OnUseTurretBatteryPort )
 }
 
