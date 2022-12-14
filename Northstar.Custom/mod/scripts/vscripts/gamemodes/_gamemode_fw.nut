@@ -147,8 +147,18 @@ void function GamemodeFW_Init()
 ///// HACK FUNCTIONS /////
 //////////////////////////
 
-// in mp_grave, npcs will sometimes stuck underground, if they try to fire it will cause a engine error
+const array<string> HACK_CLEANUP_MAPS =
+[
+    "mp_grave",
+    "mp_homestead"
+]
+
+//if npcs outside the map try to fire( like in death animation ), it will cause a engine error
+
+// in mp_grave, npcs will sometimes stuck underground
 const float GRAVE_CHECK_HEIGHT = 1500 // the map's lowest grond is 1950+, npcs will stuck under -4000 or -400
+// in mp_homestead, npcs will sometimes stuck in the sky
+const float HOMESTEAD_CHECK_HIEGHT = 9000 // the map's highest part is 7868+, npcs will stuck above 13800+
 // the same once happened in mp_complex3, but it's unsure yet
 const float COMPLEX_CHECK_HEIGHT = -1
 
@@ -160,17 +170,34 @@ void function HACK_ForceDestroyNPCs()
 
 void function HACK_ForceDestroyNPCs_Threaded()
 {
-    if( GetMapName() != "mp_grave" )
+    string mapName = GetMapName()
+    if( !( HACK_CLEANUP_MAPS.contains( mapName ) ) )
         return
 
     while( true )
     {
-        foreach( entity npc in GetNPCArray() )
+        if( mapName == "mp_grave" )
         {
-            if( npc.GetOrigin().z <= GRAVE_CHECK_HEIGHT )
+            foreach( entity npc in GetNPCArray() )
             {
-                npc.ClearParent()
-                npc.Destroy()
+                if( npc.GetOrigin().z <= GRAVE_CHECK_HEIGHT )
+                {
+                    npc.ClearParent()
+                    npc.Destroy()
+                }
+            }
+        }
+        if( mapName == "mp_homestead" )
+        {
+            foreach( entity npc in GetNPCArray() )
+            {
+                if( !IsValid( npc.GetParent() ) ) // not spawning from droppod
+                {
+                    if( npc.GetOrigin().z >= HOMESTEAD_CHECK_HIEGHT )
+                    {
+                        npc.Destroy()
+                    }
+                }
             }
         }
         WaitFrame()
