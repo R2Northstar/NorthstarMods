@@ -21,6 +21,7 @@ void function InitTurretBatteryPort( entity batteryPort )
         batteryPort.s.hackAvaliable = false // it can never be hacked!
     turret.s.relatedBatteryPort = batteryPort // do it here
 
+    // SetUsableByGroup() updates is done in TurretStateWatcher()
     if( isBaseTurret ) // this is a base turret!
         batteryPort.SetUsableByGroup( "friendlies pilot" ) // only show hint to friendlies
     else
