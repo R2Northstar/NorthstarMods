@@ -929,7 +929,7 @@ void function FD_BatteryHealTeammate( entity battery, entity titan, int shieldRe
 		currentHealScore = currentHeal / 100
 		file.playerAwardStats[BatteryParent]["heals"] += currentHeal
 		player.AddToPlayerGameStat( PGS_DEFENSE_SCORE, currentHealScore )
-		file.players[ player ].scoreThisRound += currentHealScore
+		file.players[ BatteryParent ].scoreThisRound += currentHealScore
 	}
 }
 
