@@ -877,8 +877,8 @@ void function FD_StunLaserHealTeammate( entity player, entity target, int shield
 {
 	if( IsValid( player ) && player in file.players ){
 		file.playerAwardStats[player]["heals"] += shieldRestoreAmount
-		player.AddToPlayerGameStat( PGS_DEFENSE_SCORE, shieldRestoreAmount / 1000 )//wait for current value
-		file.players[ player ].scoreThisRound += shieldRestoreAmount / 1000
+		player.AddToPlayerGameStat( PGS_DEFENSE_SCORE, shieldRestoreAmount / 100 )
+		file.players[ player ].scoreThisRound += shieldRestoreAmount / 100
 	}
 }
 
@@ -886,8 +886,8 @@ void function FD_SmokeHealTeammate( entity player, entity target, int shieldRest
 {
 	if( IsValid( player ) && player in file.players ){
 		file.playerAwardStats[player]["heals"] += shieldRestoreAmount
-		player.AddToPlayerGameStat( PGS_DEFENSE_SCORE, shieldRestoreAmount / 1000 )//wait for current value
-		file.players[ player ].scoreThisRound += shieldRestoreAmount / 1000
+		player.AddToPlayerGameStat( PGS_DEFENSE_SCORE, shieldRestoreAmount / 100 )
+		file.players[ player ].scoreThisRound += shieldRestoreAmount / 100
 	}
 }
 
@@ -895,6 +895,8 @@ void function FD_BatteryHealTeammate( entity battery, entity titan, int shieldRe
 {
 	entity BatteryParent = battery.GetParent()
 	entity TargetTitan
+	int currentHeal
+	int currentHealScore
 	
 	if( titan.IsPlayer() )
 		TargetTitan = titan
@@ -907,10 +909,11 @@ void function FD_BatteryHealTeammate( entity battery, entity titan, int shieldRe
 		return
 
 	if( IsValid( BatteryParent ) && BatteryParent in file.players ){
-		file.playerAwardStats[BatteryParent]["heals"] += shieldRestoreAmount
-		file.playerAwardStats[BatteryParent]["heals"] += healthRestoreAmount
-		player.AddToPlayerGameStat( PGS_DEFENSE_SCORE, shieldRestoreAmount / 1000 + healthRestoreAmount / 1000 )//wait for current value
-		file.players[ player ].scoreThisRound += shieldRestoreAmount / 1000 + healthRestoreAmount / 1000
+		currentHeal = shieldRestoreAmount + healthRestoreAmount
+		currentHealScore = currentHeal / 100
+		file.playerAwardStats[BatteryParent]["heals"] += currentHeal
+		player.AddToPlayerGameStat( PGS_DEFENSE_SCORE, currentHealScore )
+		file.players[ player ].scoreThisRound += currentHealScore
 	}
 }
 
