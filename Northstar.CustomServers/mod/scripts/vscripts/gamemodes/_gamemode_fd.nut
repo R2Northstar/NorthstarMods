@@ -40,6 +40,8 @@ struct player_struct_fd{
 	*/
 	float lastRespawn
 	float lastTitanDrop
+	float lastNearHarvester
+	bool leaveHarvester
 }
 
 global HarvesterStruct& fd_harvester
@@ -157,6 +159,12 @@ void function GamemodeFD_Init()
 
 	//earn meter
 	ScoreEvent_SetupEarnMeterValuesForMixedModes()
+
+	//Data Collection
+	AddStunLaserHealCallback( FD_StunLaserHealTeammate )
+	AddBatteryHealCallback( FD_BatteryHealTeammate )
+	AddSmokeHealCallback( FD_SmokeHealTeammate )
+	SetUsedCoreCallback( FD_UsedCoreCallback )
 }
 
 void function FD_BoostPurchaseCallback( entity player, BoostStoreData data )
@@ -290,6 +298,7 @@ void function GamemodeFD_InitPlayer( entity player )
 {
 	player_struct_fd data
 	data.diedThisRound = false
+	data.leaveHarvester = true
 	file.players[player] <- data
 	table<string, float> awardStats
 	foreach( string statRef in  GetFDStatRefs() )
@@ -339,6 +348,10 @@ void function OnTickDeath( entity victim, var damageInfo )
 
 void function OnNpcDeath( entity victim, entity attacker, var damageInfo )
 {
+	if( attacker.GetClassName() == "npc_turret_sentry" )
+	{
+		file.playerAwardStats[attacker.GetBossPlayer()]["turretKills"]++
+	}
 	if( victim.IsTitan() && attacker in file.players )
 		file.playerAwardStats[attacker]["titanKills"]++
 	int victimTypeID = FD_GetAITypeID_ByString( victim.GetTargetName() )
@@ -876,6 +889,52 @@ void function SetWaveStateReady()
 	SetGlobalNetInt( "FD_waveState", WAVE_STATE_IN_PROGRESS )
 }
 
+void function FD_StunLaserHealTeammate( entity player, entity target, int shieldRestoreAmount )
+{
+	if( IsValid( player ) && player in file.players ){
+		file.playerAwardStats[player]["heals"] += shieldRestoreAmount
+		player.AddToPlayerGameStat( PGS_DEFENSE_SCORE, shieldRestoreAmount / 100 )
+		file.players[ player ].scoreThisRound += shieldRestoreAmount / 100
+	}
+}
+
+void function FD_SmokeHealTeammate( entity player, entity target, int shieldRestoreAmount )
+{
+	if( IsValid( player ) && player in file.players ){
+		file.playerAwardStats[player]["heals"] += shieldRestoreAmount
+		player.AddToPlayerGameStat( PGS_DEFENSE_SCORE, shieldRestoreAmount / 100 )
+		file.players[ player ].scoreThisRound += shieldRestoreAmount / 100
+	}
+}
+
+void function FD_BatteryHealTeammate( entity battery, entity titan, int shieldRestoreAmount, int healthRestoreAmount )
+{
+	entity BatteryParent = battery.GetParent()
+	entity TargetTitan
+	int currentHeal
+	int currentHealScore
+	
+	if( titan.IsPlayer() )
+		TargetTitan = titan
+	else if( titan.GetBossPlayer() != null )
+		TargetTitan = titan.GetBossPlayer()
+	else
+		return
+
+	if( BatteryParent == TargetTitan )
+		return
+
+	if( IsValid( BatteryParent ) && BatteryParent in file.players ){
+		currentHeal = shieldRestoreAmount + healthRestoreAmount
+		currentHealScore = currentHeal / 100
+		file.playerAwardStats[BatteryParent]["heals"] += currentHeal
+		player.AddToPlayerGameStat( PGS_DEFENSE_SCORE, currentHealScore )
+		file.players[ BatteryParent ].scoreThisRound += currentHealScore
+	}
+}
+
+void function gameWonMedals()
+
 void function FD_SetupEpilogue()
 {
 	AddCallback_GameStateEnter( eGameState.Epilogue, FD_Epilogue )
@@ -1310,6 +1369,68 @@ void function FD_createHarvester()
 	fd_harvester.harvester.Minimap_SetZOrder( MINIMAP_Z_OBJECT )
 	fd_harvester.harvester.Minimap_SetCustomState( eMinimapObject_prop_script.FD_HARVESTER )
 	AddEntityCallback_OnDamaged( fd_harvester.harvester, OnHarvesterDamaged )
+	thread CreateHarvesterHintTrigger( fd_harvester.harvester )
+}
+
+void function CreateHarvesterHintTrigger( entity harvester )
+{
+	entity trig = CreateEntity( "trigger_cylinder" )
+	trig.SetRadius( 1000 )	//Test setting
+	trig.SetAboveHeight( 2500 )	//Test setting
+	trig.SetBelowHeight( 2500 )	//Test setting
+	trig.SetOrigin( harvester.GetOrigin() )
+	trig.kv.triggerFilterNpc = "none"
+	trig.kv.triggerFilterPlayer = "all"
+
+	SetTeam( trig, harvester.GetTeam() )
+	DispatchSpawn( trig )
+	trig.SetEnterCallback( OnEnterNearHarvesterTrigger )
+	trig.SetLeaveCallback( OnLeaveNearHarvesterTrigger )
+
+	harvester.EndSignal( "OnDestroy" )
+	trig.EndSignal( "OnDestroy" )
+
+	OnThreadEnd(
+		function() : ( trig )
+		{
+			if ( IsValid( trig ) )
+				trig.Destroy()
+		}
+	)
+
+	WaitForever()
+}
+
+void function OnEnterNearHarvesterTrigger( entity trig, entity activator )
+{
+	if( !( activator in file.players ) )
+		return
+		
+	if( GetGlobalNetInt( "FD_waveState" ) != WAVE_STATE_IN_PROGRESS )
+		return
+
+	if ( activator != null && activator.IsPlayer() && activator.GetTeam() == trig.GetTeam() && file.players[activator].leaveHarvester == true )
+	{
+		file.players[activator].lastNearHarvester = Time()
+		file.players[activator].leaveHarvester = false
+	}
+}
+
+void function OnLeaveNearHarvesterTrigger( entity trig, entity activator )
+{
+	if( !( activator in file.players ) )
+		return
+		
+	if( GetGlobalNetInt( "FD_waveState" ) != WAVE_STATE_IN_PROGRESS )
+		return
+
+	float CurrentTime = Time() - file.players[activator].lastNearHarvester
+
+	if ( activator != null && activator.IsPlayer() && activator.GetTeam() == trig.GetTeam() && file.players[activator].leaveHarvester == false )
+	{
+		file.playerAwardStats[activator]["timeNearHarvester"] += CurrentTime
+		file.players[activator].leaveHarvester = true
+	}
 }
 
 bool function isFinalWave()
