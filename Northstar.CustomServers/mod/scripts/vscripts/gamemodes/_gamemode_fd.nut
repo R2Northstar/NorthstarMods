@@ -40,8 +40,8 @@ struct player_struct_fd{
 	*/
 	float lastRespawn
 	float lastTitanDrop
-	float lastNearHarvester =0
-	bool leaveHarvester = true
+	float lastNearHarvester
+	bool leaveHarvester
 }
 
 global HarvesterStruct& fd_harvester
@@ -298,6 +298,7 @@ void function GamemodeFD_InitPlayer( entity player )
 {
 	player_struct_fd data
 	data.diedThisRound = false
+	data.leaveHarvester = true
 	file.players[player] <- data
 	table<string, float> awardStats
 	foreach( string statRef in  GetFDStatRefs() )
