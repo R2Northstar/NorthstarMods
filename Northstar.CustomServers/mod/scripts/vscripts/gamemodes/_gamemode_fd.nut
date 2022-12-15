@@ -333,7 +333,6 @@ void function OnNpcDeath( entity victim, entity attacker, var damageInfo )
 {
 	if( attacker.GetClassName() == "npc_turret_sentry" )
 	{
-		attacker.kv.killCount++
 		file.playerAwardStats[attacker.GetBossPlayer()]["turretKills"]++
 	}
 	if( victim.IsTitan() && attacker in file.players )
