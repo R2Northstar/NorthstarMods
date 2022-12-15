@@ -1384,8 +1384,8 @@ void function CreateHarvesterHintTrigger( entity harvester )
 
 	SetTeam( trig, harvester.GetTeam() )
 	DispatchSpawn( trig )
-	trig.SetEnterCallback( OnEnterHarvester )
-	trig.SetLeaveCallback( OnLeaveHarvester )
+	trig.SetEnterCallback( OnEnterNearHarvesterTrigger )
+	trig.SetLeaveCallback( OnLeaveNearHarvesterTrigger )
 
 	harvester.EndSignal( "OnDestroy" )
 	trig.EndSignal( "OnDestroy" )
