@@ -1377,7 +1377,7 @@ void function CreateHarvesterHintTrigger( entity harvester )
 	entity trig = CreateEntity( "trigger_cylinder" )
 	trig.SetRadius( 1000 )	//Test setting
 	trig.SetAboveHeight( 2500 )	//Test setting
-	trig.SetBelowHeight( 0 )	//Test setting
+	trig.SetBelowHeight( 2500 )	//Test setting
 	trig.SetOrigin( harvester.GetOrigin() )
 	trig.kv.triggerFilterNpc = "none"
 	trig.kv.triggerFilterPlayer = "all"
