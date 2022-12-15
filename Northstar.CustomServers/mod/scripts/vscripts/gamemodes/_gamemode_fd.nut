@@ -877,6 +877,8 @@ void function FD_StunLaserHealTeammate( entity player, entity target, int shield
 {
 	if( IsValid( player ) && player in file.players ){
 		file.playerAwardStats[player]["heals"] += shieldRestoreAmount
+		player.AddToPlayerGameStat( PGS_DEFENSE_SCORE, shieldRestoreAmount / 1000 )//wait for current value
+		file.players[ player ].scoreThisRound += shieldRestoreAmount / 1000
 	}
 }
 
@@ -884,6 +886,8 @@ void function FD_SmokeHealTeammate( entity player, entity target, int shieldRest
 {
 	if( IsValid( player ) && player in file.players ){
 		file.playerAwardStats[player]["heals"] += shieldRestoreAmount
+		player.AddToPlayerGameStat( PGS_DEFENSE_SCORE, shieldRestoreAmount / 1000 )//wait for current value
+		file.players[ player ].scoreThisRound += shieldRestoreAmount / 1000
 	}
 }
 
@@ -905,6 +909,8 @@ void function FD_BatteryHealTeammate( entity battery, entity titan, int shieldRe
 	if( IsValid( BatteryParent ) && BatteryParent in file.players ){
 		file.playerAwardStats[BatteryParent]["heals"] += shieldRestoreAmount
 		file.playerAwardStats[BatteryParent]["heals"] += healthRestoreAmount
+		player.AddToPlayerGameStat( PGS_DEFENSE_SCORE, shieldRestoreAmount / 1000 + healthRestoreAmount / 1000 )//wait for current value
+		file.players[ player ].scoreThisRound += shieldRestoreAmount / 1000 + healthRestoreAmount / 1000
 	}
 }
 
