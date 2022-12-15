@@ -22,6 +22,22 @@ enum eDropshipState{
 struct player_struct_fd{
 	bool diedThisRound
 	int scoreThisRound
+	/*
+	int totalMVPs
+	int mortarUnitsKilled
+	int moneySpend
+	int coresUsed
+	float longestTitanLife
+	int turretsRepaired
+	int moneyShared
+	float timeNearHarvester //dont know how to track
+	float longestLife
+	int heals //dont know what to track
+	int titanKills
+	float damageDealt
+	int harvesterHeals
+	int turretKills
+	*/
 	float lastRespawn
 	float lastTitanDrop
 	float lastNearHarvester =0
