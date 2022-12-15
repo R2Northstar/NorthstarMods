@@ -1405,6 +1405,9 @@ void function OnEnterNearHarvesterTrigger( entity trig, entity activator )
 {
 	if( !( activator in file.players ) )
 		return
+		
+	if( GetGlobalNetInt( "FD_waveState" ) != WAVE_STATE_IN_PROGRESS )
+		return
 
 	if ( activator != null && activator.IsPlayer() && activator.GetTeam() == trig.GetTeam() && file.players[activator].leaveHarvester == true )
 	{
@@ -1416,6 +1419,9 @@ void function OnEnterNearHarvesterTrigger( entity trig, entity activator )
 void function OnLeaveNearHarvesterTrigger( entity trig, entity activator )
 {
 	if( !( activator in file.players ) )
+		return
+		
+	if( GetGlobalNetInt( "FD_waveState" ) != WAVE_STATE_IN_PROGRESS )
 		return
 
 	float CurrentTime = Time() - file.players[activator].lastNearHarvester
