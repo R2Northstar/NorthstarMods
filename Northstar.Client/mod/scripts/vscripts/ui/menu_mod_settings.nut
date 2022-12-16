@@ -58,6 +58,7 @@ struct {
 	table< int, int > enumRealValues
 	table< string, bool > setFuncs
 	array< var > modPanels
+	array<var> resetModButtons
 	array< MS_Slider > sliders
 	table settingsTable
 	string currentMod = ""
@@ -153,11 +154,20 @@ void function InitModMenu()
 		// reset button nav
 		
 		child = Hud_GetChild( panel, "ResetModToDefault" )
+		Hud_AddEventHandler( child, UIE_GET_FOCUS, void function( var child ) : (panel) {
+			Hud_SetColor( Hud_GetChild( panel, "ResetModImage" ), 0, 0, 0, 255 )
+		})
+		Hud_AddEventHandler( child, UIE_LOSE_FOCUS, void function( var child ) : (panel) {
+			
+			Hud_SetColor( Hud_GetChild( panel, "ResetModImage" ), 180, 180, 180, 180 )
+		})
 
 		child.SetNavUp( Hud_GetChild( file.modPanels[ int( PureModulo( i - 1, len ) ) ], "ResetModToDefault" ) )
 		child.SetNavDown( Hud_GetChild( file.modPanels[ int( PureModulo( i + 1, len ) ) ], "ResetModToDefault" ) )
 
 		Hud_AddEventHandler( child, UIE_CLICK, ResetConVar )
+		file.resetModButtons.append(child)
+		//Hud_AddEventHandler( Hud_GetChild( panel, "ResetModImage" ), UIE_CLICK, ResetConVar )
 		
 		// text field nav
 		child = Hud_GetChild( panel, "TextEntrySetting" )
@@ -209,6 +219,7 @@ float function PureModulo( int a, int b )
 
 void function ResetConVar( var button )
 {
+	print("ok")
 	ConVarData conVar = file.filteredList[ int ( Hud_GetScriptID( Hud_GetParent( button ) ) ) + file.scrollOffset ]
 
 	if ( conVar.isCategoryName )
@@ -341,7 +352,7 @@ void function UpdateListSliderHeight()
 
 void function UpdateList()
 {
-	Hud_SetFocused( Hud_GetChild( file.menu, "BtnModsSearch" ) )
+	Hud_SetFocused( Hud_GetChild( file.menu, "BtnFiltersClear" ) )
 	file.updatingList = true
 
 	array< ConVarData > filteredList = []
@@ -614,7 +625,7 @@ void function SetModMenuNameText( var button )
 		Hud_SetVisible( textField, false )
 		Hud_SetVisible( enumButton, false )
 		Hud_SetVisible( resetButton, true )
-		Hud_Show( resetVGUI )
+		Hud_SetVisible( resetVGUI, true )
 	}
 	else {
 		Hud_SetVisible( slider, conVar.sliderEnabled )
@@ -644,7 +655,7 @@ void function SetModMenuNameText( var button )
 		Hud_SetVisible( textField, true )
 		// Hud_SetVisible( enumButton, true )
 		Hud_SetVisible( resetButton, true )
-		Hud_Show( resetVGUI )
+		Hud_SetVisible( resetVGUI, true )
 	}
 }
 
@@ -705,6 +716,7 @@ void function OnModMenuOpened()
 	
 	RegisterButtonPressedCallback( MOUSE_WHEEL_UP , OnScrollUp )
 	RegisterButtonPressedCallback( MOUSE_WHEEL_DOWN , OnScrollDown )
+	RegisterButtonPressedCallback( MOUSE_LEFT , OnClick )
 	// RegisterButtonPressedCallback( KEY_F1, ToggleHideMenu )
 
 	// SetBlurEnabled( false )
@@ -712,6 +724,14 @@ void function OnModMenuOpened()
 	// Hud_SetVisible( file.menu, true )
 	
 	OnFiltersChange(0)
+}
+
+void function OnClick( var button )
+{
+	if (file.resetModButtons.contains(GetFocus()))
+	{
+		ResetConVar(GetFocus())
+	}
 }
 
 void function OnFiltersChange( var n )
@@ -733,6 +753,7 @@ void function OnModMenuClosed()
 	{
 		DeregisterButtonPressedCallback( MOUSE_WHEEL_UP , OnScrollUp )
 		DeregisterButtonPressedCallback( MOUSE_WHEEL_DOWN , OnScrollDown )
+		DeregisterButtonPressedCallback( MOUSE_LEFT , OnClick )
 		// DeregisterButtonPressedCallback( KEY_F1 , ToggleHideMenu )
 	}
 	catch ( ex ) {}
@@ -1092,39 +1113,4 @@ string function SanitizeDisplayName( string displayName )
 	}
 	print( result )
 	return result
-}
-
-function HandleLockedCustomMenuItem( menu, button, tipInfo, hideTip = false )
-{
-	array<var> elements = GetElementsByClassname( menu, "HideWhenLocked" )
-	var buttonTooltip = Hud_GetChild( menu, "ButtonTooltip" )
-	var toolTipLabel = Hud_GetChild( buttonTooltip, "Label" )
-
-	if ( Hud_IsLocked( button ) && !hideTip )
-	{
-		foreach( elem in elements )
-			Hud_Hide( elem )
-
-		local tipArray = clone tipInfo
-		tipInfo.resize( 6, null )
-
-		Hud_SetText( toolTipLabel, tipInfo[0], tipInfo[1], tipInfo[2], tipInfo[3], tipInfo[4], tipInfo[5] )
-
-		local buttonPos = button.GetAbsPos()
-		local buttonHeight = button.GetHeight()
-		local tooltipHeight = buttonTooltip.GetHeight()
-		local yOffset = ( tooltipHeight - buttonHeight ) / 2.0
-
-		buttonTooltip.SetPos( buttonPos[0] + button.GetWidth() * 0.9, buttonPos[1] - yOffset )
-		Hud_Show( buttonTooltip )
-
-		return true
-	}
-	else
-	{
-		foreach( elem in elements )
-			Hud_Show( elem )
-		Hud_Hide( buttonTooltip )
-	}
-	return false
 }

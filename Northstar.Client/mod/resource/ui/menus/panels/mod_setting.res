@@ -99,7 +99,7 @@
 		"ControlName" "RuiButton"
 		"InheritProperties" "RuiSmallButton"
 		"labelText" ""
-		"zpos" "4"
+		"zpos" "0"
 		"xpos" "10"
 		"wide" "45"
 		"tall" "45"
@@ -119,6 +119,8 @@
 		"visible" "0"
 		"wide" "30"
 		"tall" "30"
+		"enabled"	"0"
+		
 		"pin_to_sibling" "ResetModToDefault"
 		"pin_corner_to_sibling" "CENTER"
 		"pin_to_sibling_corner" "CENTER"
