@@ -10,9 +10,9 @@ global function PureModulo
 const int BUTTONS_PER_PAGE = 15
 const string SETTING_ITEM_TEXT = "                        " // this is long enough to be the same size as the textentry field
 
-enum eEmptySpaceType 
+enum eEmptySpaceType
 {
-	None, 
+	None,
 	TopBar,
 	BottomBar
 }
@@ -30,7 +30,7 @@ struct ConVarData {
 
 	bool isEmptySpace = false
 	int spaceType = 0
-	
+
 	// SLIDER BULLSHIT
 	bool sliderEnabled = false
 	float min = 0.0
@@ -85,14 +85,6 @@ void function InitModMenu()
 	// uncomment when safe i/o is merged.
 
 	/*
-	try
-	{
-		file.settingsTable = expect table( compilestring( "return NSLoadFile( \"Mod Settings\", \"settings\" )" )() )
-	}
-	catch ( ex )
-	{
-	}
-
 	foreach ( string key, var value in file.settingsTable )
 	{
 		printt( key, expect string( value ) )
@@ -102,18 +94,19 @@ void function InitModMenu()
 		}
 		catch ( ex )
 		{
-			
+
 		}
 	}*/
 
 	/////////////////////////////
-	// BASE NORTHSTAR SETTINGS // 
+	// BASE NORTHSTAR SETTINGS //
 	/////////////////////////////
-  
+
 	/*
 	AddModTitle( "^FF000000EXAMPLE" )
 	AddModCategory( "I wasted way too much time on this..." )
-	AddModSettingsButton( "This is a custom button you can click on!", void function() : (){
+	AddModSettingsButton( "This is a custom button you can click on!", void function() : ()
+	{
 		print( "HELLOOOOOO" )
 	} )
 	AddConVarSettingEnum( "filter_mods", "Very Huge Enum Example", split( "Never gonna give you up Never gonna let you down Never gonna run around and desert you Never gonna make you cry Never gonna say goodbye Never gonna tell a lie and hurt you", " " ) )
@@ -129,7 +122,7 @@ void function InitModMenu()
 	int len = file.modPanels.len()
 	for ( int i = 0; i < len; i++ )
 	{
-		
+
 		// AddButtonEventHandler( button, UIE_CHANGE, OnSettingButtonPressed  )
 		// get panel
 		var panel = file.modPanels[i]
@@ -152,13 +145,14 @@ void function InitModMenu()
 		Hud_AddEventHandler( child, UIE_CLICK, UpdateEnumSetting )
 
 		// reset button nav
-		
+
 		child = Hud_GetChild( panel, "ResetModToDefault" )
-		Hud_AddEventHandler( child, UIE_GET_FOCUS, void function( var child ) : (panel) {
+		Hud_AddEventHandler( child, UIE_GET_FOCUS, void function( var child ) : (panel)
+		{
 			Hud_SetColor( Hud_GetChild( panel, "ResetModImage" ), 0, 0, 0, 255 )
 		})
-		Hud_AddEventHandler( child, UIE_LOSE_FOCUS, void function( var child ) : (panel) {
-			
+		Hud_AddEventHandler( child, UIE_LOSE_FOCUS, void function( var child ) : (panel)
+		{
 			Hud_SetColor( Hud_GetChild( panel, "ResetModImage" ), 180, 180, 180, 180 )
 		})
 
@@ -168,11 +162,11 @@ void function InitModMenu()
 		Hud_AddEventHandler( child, UIE_CLICK, ResetConVar )
 		file.resetModButtons.append(child)
 		//Hud_AddEventHandler( Hud_GetChild( panel, "ResetModImage" ), UIE_CLICK, ResetConVar )
-		
+
 		// text field nav
 		child = Hud_GetChild( panel, "TextEntrySetting" )
 
-		// 
+		//
 		Hud_AddEventHandler( child, UIE_LOSE_FOCUS, SendTextPanelChanges )
 
 		child.SetNavUp( Hud_GetChild( file.modPanels[ int( PureModulo( i - 1, len ) ) ], "TextEntrySetting" ) )
@@ -194,10 +188,11 @@ void function InitModMenu()
 
 	// Hud_AddEventHandler( Hud_GetChild( file.menu, "BtnModsSearch" ), UIE_LOSE_FOCUS, OnFilterTextPanelChanged )
 	Hud_AddEventHandler( Hud_GetChild( file.menu, "BtnFiltersClear" ), UIE_CLICK, OnClearButtonPressed )
-	// mouse delta 
+	// mouse delta
 	AddMouseMovementCaptureHandler( file.menu, UpdateMouseDeltaBuffer )
 
-	Hud_AddEventHandler( Hud_GetChild( file.menu, "BtnModsSearch" ), UIE_CHANGE, void function ( var inputField ) : (){
+	Hud_AddEventHandler( Hud_GetChild( file.menu, "BtnModsSearch" ), UIE_CHANGE, void function ( var inputField ) : ()
+	{
 		file.filterText = Hud_GetUTF8Text( inputField )
 		OnFiltersChange(0)
 	} )
@@ -207,7 +202,7 @@ void function InitModMenu()
 // Used instead of modulo in some places.
 // Why? beacuse PureModulo loops back onto positive numbers instead of going into the negatives.
 // DO NOT TOUCH.
-// a / b != floor( float( a ) / b ) 
+// a / b != floor( float( a ) / b )
 // int( float( a ) / b ) != floor( float( a ) / b )
 // Examples:
 // -1 % 5 = -1
@@ -251,11 +246,13 @@ void functionref() function ResetAllConVarsForModEventHandler( string catName )
 		for ( int i = 0; i < file.conVarList.len(); i++ )
 		{
 			ConVarData c = file.conVarList[i]
-			if ( c.catName != catName || c.isCategoryName || c.isEmptySpace ) continue
+			if ( c.catName != catName || c.isCategoryName || c.isEmptySpace )
+				continue
 			SetConVarToDefault( c.conVar )
 
 			int index = file.filteredList.find( c )
-			if ( file.filteredList.find( c ) < 0 ) continue
+			if ( file.filteredList.find( c ) < 0 )
+				continue
 
 			if ( min( BUTTONS_PER_PAGE, max( 0, index - file.scrollOffset ) ) == index - file.scrollOffset )
 				Hud_SetText( Hud_GetChild( file.modPanels[ i - file.scrollOffset ], "TextEntrySetting" ), c.isEnumSetting ? c.values[ GetConVarInt( c.conVar ) ] : GetConVarString( c.conVar ) )
@@ -334,7 +331,7 @@ void function UpdateListSliderHeight()
 	var sliderButton = Hud_GetChild( file.menu, "BtnModListSlider" )
 	var sliderPanel = Hud_GetChild( file.menu, "BtnModListSliderPanel" )
 	var movementCapture = Hud_GetChild( file.menu, "MouseMovementCapture" )
-	
+
 	float mods = float ( file.filteredList.len() )
 
 	float maxHeight = 615.0 * ( GetScreenSize()[1] / 1080.0 ) // why the hardcoded 320/80???
@@ -356,7 +353,7 @@ void function UpdateList()
 	file.updatingList = true
 
 	array< ConVarData > filteredList = []
-	
+
 	array< string > filters = split( file.filterText, "," )
 	array< ConVarData > list = file.conVarList
 	if ( filters.len() <= 0 )
@@ -373,14 +370,17 @@ void function UpdateList()
 			ConVarData prev = list[ maxint( 0, i - 1 ) ]
 			ConVarData c = list[i]
 			ConVarData next = list[ minint( list.len() - 1, i + 1 ) ]
-			if ( c.isEmptySpace ) continue
+			if ( c.isEmptySpace )
+				continue
 
 			string displayName = c.displayName
-			if ( c.isModName ) {
+			if ( c.isModName )
+			{
 				displayName = c.modName
 				curModTitleIndex = i
 			}
-			if ( c.isCategoryName ) {
+			if ( c.isCategoryName )
+			{
 				displayName = c.catName
 				curCatIndex = i
 			}
@@ -392,7 +392,7 @@ void function UpdateList()
 					array< ConVarData > modVars = GetAllVarsInMod( list, c.modName )
 					if ( filteredList.len() <= 0 && modVars[0].spaceType == eEmptySpaceType.None )
 						filteredList.extend( modVars.slice( 1, modVars.len() ) )
-					else 
+					else
 						filteredList.extend( modVars )
 					i += modVars.len() - 1
 				}
@@ -434,7 +434,7 @@ void function UpdateList()
 		filteredList = []
 	}
 	filteredList = list
-	
+
 
 	file.filteredList = filteredList
 
@@ -444,7 +444,7 @@ void function UpdateList()
 	{
 		Hud_SetEnabled( file.modPanels[i], i < j )
 		Hud_SetVisible( file.modPanels[i], i < j )
-		
+
 		if ( i < j )
 			SetModMenuNameText( file.modPanels[i] )
 	}
@@ -454,15 +454,15 @@ void function UpdateList()
 array< ConVarData > function GetModConVarDatas( array< ConVarData > arr, int index )
 {
 	if ( index <= 1 )
-		return [ arr[ index - 1 ], arr[ index ], arr[ index + 1 ] ]	
-	return [ arr[ index - 2 ], arr[ index - 1 ], arr[ index ], arr[ index + 1 ] ]	
+		return [ arr[ index - 1 ], arr[ index ], arr[ index + 1 ] ]
+	return [ arr[ index - 2 ], arr[ index - 1 ], arr[ index ], arr[ index + 1 ] ]
 }
 
 array< ConVarData > function GetCatConVarDatas( int index )
 {
 	if ( index == 0 )
-		return [ file.conVarList[ index ] ]	
-	return [ file.conVarList[ index - 1 ], file.conVarList[ index ] ]	
+		return [ file.conVarList[ index ] ]
+	return [ file.conVarList[ index - 1 ], file.conVarList[ index ] ]
 }
 
 array< ConVarData > function GetAllVarsInCategory( array< ConVarData > arr, string catName )
@@ -471,7 +471,7 @@ array< ConVarData > function GetAllVarsInCategory( array< ConVarData > arr, stri
 	for ( int i = 0; i < arr.len(); i++ )
 	{
 		ConVarData c = arr[i]
-		if ( c.catName == catName ) 
+		if ( c.catName == catName )
 		{
 			vars.append( arr[i] )
 			// printt( file.conVarList[i].conVar + " is in mod " + file.conVarList[i].modName )
@@ -489,7 +489,7 @@ array< ConVarData > function GetAllVarsInMod( array< ConVarData > arr, string mo
 	for ( int i = 0; i < arr.len(); i++ )
 	{
 		ConVarData c = arr[i]
-		if ( c.modName == modName ) 
+		if ( c.modName == modName )
 		{
 			vars.append( arr[i] )
 			// printt( file.conVarList[i].conVar + " is in mod " + file.conVarList[i].modName )
@@ -503,12 +503,12 @@ array< ConVarData > function GetAllVarsInMod( array< ConVarData > arr, string mo
 
 string function ConVarDataToString( int index )
 {
-	ConVarData d = file.filteredList[ index ] 
+	ConVarData d = file.filteredList[ index ]
 	int i = 0
 	for ( i = 0; file.conVarList[i] != d; i++ )
 	{}
 	string type = d.isModName ? "Mod" : "Setting"
-	if ( d.isCategoryName ) type = "Category" 
+	if ( d.isCategoryName ) type = "Category"
 	switch ( type )
 	{
 		case "Mod":
@@ -561,11 +561,11 @@ void function SetModMenuNameText( var button )
 			case eEmptySpaceType.TopBar:
 				Hud_SetVisible( topLine, true )
 				return
-				
+
 			case eEmptySpaceType.BottomBar:
 				Hud_SetVisible( bottomLine, true )
 				return
-			
+
 			case eEmptySpaceType.None:
 				return
 		}
@@ -602,7 +602,7 @@ void function SetModMenuNameText( var button )
 	}
 	else if ( conVar.isModName )
 	{
-		Hud_SetText( modTitle, conVar.modName ) 
+		Hud_SetText( modTitle, conVar.modName )
 		// Hud_SetSize( resetButton, 0, int(40 * scaleY) )
 		Hud_SetPos( label, 0, 0 )
 		Hud_SetVisible( label, false )
@@ -613,9 +613,10 @@ void function SetModMenuNameText( var button )
 		Hud_SetVisible( bottomLine, false )
 		Hud_SetVisible( topLine, false )
 	}
-	else if ( conVar.isCategoryName ) {
-		Hud_SetText( label, conVar.catName ) 
-		// Hud_SetText( resetButton, "#MOD_SETTINGS_RESET_ALL" ) 
+	else if ( conVar.isCategoryName )
+	{
+		Hud_SetText( label, conVar.catName )
+		// Hud_SetText( resetButton, "#MOD_SETTINGS_RESET_ALL" )
 		// Hud_SetSize( resetButton, int( 120 * scaleX ), int( 40 * scaleY ) )
 		Hud_SetPos( label, 0, 0 )
 		Hud_SetSize( label, int( scaleX * ( 1180 - 420 - 85 ) ), int( scaleY * 40 ) )
@@ -629,13 +630,13 @@ void function SetModMenuNameText( var button )
 	}
 	else {
 		Hud_SetVisible( slider, conVar.sliderEnabled )
-		
-		Hud_SetText( label, conVar.displayName ) 
+
+		Hud_SetText( label, conVar.displayName )
 		if (conVar.type == "float")
 			Hud_SetText( textField, string( GetConVarFloat(conVar.conVar) ) )
 		else Hud_SetText( textField, conVar.isEnumSetting ? conVar.values[ GetConVarInt( conVar.conVar ) ] : GetConVarString( conVar.conVar ) )
 		Hud_SetPos( label, int(scaleX * 25), 0 )
-		Hud_SetText( resetButton, "" ) 
+		Hud_SetText( resetButton, "" )
 		// Hud_SetSize( resetButton, int(scaleX * 90), int(scaleY * 40) )
 		if (conVar.sliderEnabled)
 			Hud_SetSize( label, int(scaleX * (375 + 85)), int(scaleY * 40) )
@@ -645,7 +646,7 @@ void function SetModMenuNameText( var button )
 			Hud_SetText( textField, string( GetConVarFloat( conVar.conVar ) ) )
 		else Hud_SetText( textField, conVar.isEnumSetting ? conVar.values[ GetConVarInt( conVar.conVar ) ] : GetConVarString( conVar.conVar ) )
 		Hud_SetPos( label, int( scaleX * 25 ), 0 )
-		Hud_SetText( resetButton, "" ) 
+		Hud_SetText( resetButton, "" )
 		Hud_SetSize( resetButton, int( scaleX * 90 ), int( scaleY * 40 ) )
 		if ( conVar.sliderEnabled )
 			Hud_SetSize( label, int( scaleX * ( 375 + 85 ) ), int( scaleY * 40 ) )
@@ -670,7 +671,8 @@ void function OnScrollDown( var button )
 {
 	if ( file.filteredList.len() <= BUTTONS_PER_PAGE ) return
 	file.scrollOffset += 5
-	if ( file.scrollOffset + BUTTONS_PER_PAGE > file.filteredList.len() ) {
+	if ( file.scrollOffset + BUTTONS_PER_PAGE > file.filteredList.len() )
+	{
 		file.scrollOffset = file.filteredList.len() - BUTTONS_PER_PAGE
 	}
 	UpdateList()
@@ -680,7 +682,8 @@ void function OnScrollDown( var button )
 void function OnScrollUp( var button )
 {
 	file.scrollOffset -= 5
-	if ( file.scrollOffset < 0 ) {
+	if ( file.scrollOffset < 0 )
+	{
 		file.scrollOffset = 0
 	}
 	UpdateList()
@@ -692,7 +695,7 @@ void function UpdateListSliderPosition()
 	var sliderButton = Hud_GetChild( file.menu , "BtnModListSlider" )
 	var sliderPanel = Hud_GetChild( file.menu , "BtnModListSliderPanel" )
 	var movementCapture = Hud_GetChild( file.menu , "MouseMovementCapture" )
-	
+
 	float mods = float ( file.filteredList.len() )
 
 	float minYPos = -40.0 * ( GetScreenSize()[1] / 1080.0 )
@@ -713,7 +716,7 @@ void function OnModMenuOpened()
 {
 	file.scrollOffset = 0
 	file.filterText = ""
-	
+
 	RegisterButtonPressedCallback( MOUSE_WHEEL_UP , OnScrollUp )
 	RegisterButtonPressedCallback( MOUSE_WHEEL_DOWN , OnScrollDown )
 	RegisterButtonPressedCallback( MOUSE_LEFT , OnClick )
@@ -722,7 +725,7 @@ void function OnModMenuOpened()
 	// SetBlurEnabled( false )
 	// UI_SetPresentationType( ePresentationType.INACTIVE )
 	// Hud_SetVisible( file.menu, true )
-	
+
 	OnFiltersChange(0)
 }
 
@@ -737,13 +740,13 @@ void function OnClick( var button )
 void function OnFiltersChange( var n )
 {
 	file.scrollOffset = 0
-	
+
 	// HideAllButtons()
-	
+
 	// RefreshModsArray()
-	
+
 	UpdateList()
-	
+
 	UpdateListSliderHeight()
 }
 
@@ -757,7 +760,7 @@ void function OnModMenuClosed()
 		// DeregisterButtonPressedCallback( KEY_F1 , ToggleHideMenu )
 	}
 	catch ( ex ) {}
-	
+
 	file.scrollOffset = 0
 	// UI_SetPresentationType( ePresentationType.DEFAULT )
 	// SetBlurEnabled( !IsMultiplayer() )
@@ -780,8 +783,8 @@ void function AddModTitle( string modName )
 	topBar.isEmptySpace = true
 	topBar.modName = modName
 	topBar.spaceType = eEmptySpaceType.TopBar
-	
-	
+
+
 	ConVarData modData
 
 	modData.modName = modName
@@ -818,7 +821,7 @@ void function AddModCategory( string catName )
 	catData.isCategoryName = true
 
 	file.conVarList.append( catData )
-	
+
 	file.currentCat = catName
 	file.setFuncs[ expect string( getstackinfos(2)[ "func" ] ) ] = true
 }
@@ -887,7 +890,7 @@ void function AddConVarSettingEnum( string conVar, string displayName, array< st
 	data.values = values
 	data.isEnumSetting = true
 	data.min = 0
-	data.max = values.len() - 1.0	
+	data.max = values.len() - 1.0
 	data.sliderEnabled = values.len() > 2
 	data.forceClamp = true
 	data.stepSize = 1
@@ -898,7 +901,7 @@ void function AddConVarSettingEnum( string conVar, string displayName, array< st
 void function OnSliderChange( var button )
 {
 	if ( file.updatingList )
-		return 
+		return
 	var panel = Hud_GetParent( button )
 	ConVarData c = file.filteredList[ int( Hud_GetScriptID( panel ) ) + file.scrollOffset ]
 	var textPanel = Hud_GetChild( panel, "TextEntrySetting" )
@@ -924,7 +927,7 @@ void function OnSliderChange( var button )
 	Hud_SetText( textPanel, string( GetConVarFloat( c.conVar ) ) )
 }
 
-void function SendTextPanelChanges( var textPanel ) 
+void function SendTextPanelChanges( var textPanel )
 {
 	ConVarData c = file.filteredList[ int( Hud_GetScriptID( Hud_GetParent( textPanel ) ) ) + file.scrollOffset ]
 	if ( c.conVar == "" ) return
@@ -936,7 +939,7 @@ void function SendTextPanelChanges( var textPanel )
 		switch ( c.type )
 		{
 			case "int":
-				try 
+				try
 				{
 					SetConVarInt( c.conVar, newSetting.tointeger() )
 					file.settingsTable[ c.conVar ] <- newSetting
@@ -1027,14 +1030,6 @@ void function SendTextPanelChanges( var textPanel )
 				file.settingsTable[ c.conVar ] <- newSetting
 				break;
 		}
-		try
-		{
-			compilestring( "return function ( t ) : () { NSSaveFile( \"Mod Settings\", \"settings\", t ) }" )() ( file.settingsTable )
-		}
-		catch ( ex )
-		{
-
-		}
 	}
 	else Hud_SetText( textPanel, Localize( c.values[ GetConVarInt( c.conVar ) ] ) )
 }
@@ -1042,7 +1037,7 @@ void function SendTextPanelChanges( var textPanel )
 void function ThrowInvalidValue( string desc )
 {
 	DialogData dialogData
-	dialogData.header = "Invalid Value" 
+	dialogData.header = "Invalid Value"
 	dialogData.image = $"ui/menu/common/dialog_error"
 	dialogData.message = desc
 	AddDialogButton( dialogData, "#OK" )
@@ -1055,14 +1050,14 @@ void function UpdateEnumSetting( var button )
 	ConVarData c = file.filteredList[ scriptId + file.scrollOffset ]
 
 	var panel = file.modPanels[ scriptId ]
-	
+
 	var textPanel = Hud_GetChild( panel, "TextEntrySetting" )
-	
+
 	string selectionVal = Hud_GetDialogListSelectionValue( button )
 
 	if ( selectionVal == "main" )
 		return
-					
+
 	int enumVal = GetConVarInt( c.conVar )
 	if ( selectionVal == "next" ) // enum val += 1
 		enumVal = ( enumVal + 1 ) % c.values.len()
@@ -1072,7 +1067,7 @@ void function UpdateEnumSetting( var button )
 		if ( enumVal == -1 )
 			enumVal = c.values.len() - 1
 	}
-	
+
 	SetConVarInt( c.conVar, enumVal )
 	Hud_SetText( textPanel, c.values[ enumVal ] )
 
