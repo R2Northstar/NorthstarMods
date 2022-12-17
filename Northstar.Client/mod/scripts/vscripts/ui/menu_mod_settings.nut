@@ -41,7 +41,7 @@ struct ConVarData {
 	bool isCustomButton = false
 	void functionref() onPress
 
-	array< string > values
+	array<string> values
 	var customMenu
 	bool hasCustomMenu = false
 }
@@ -51,16 +51,15 @@ struct {
 	int scrollOffset = 0
 	bool updatingList = false
 
-	array< ConVarData > conVarList
+	array<ConVarData> conVarList
 	// if people use searches - i hate them but it'll do : )
-	array< ConVarData > filteredList
+	array<ConVarData> filteredList
 	string filterText = ""
-	table< int, int > enumRealValues
-	table< string, bool > setFuncs
-	array< var > modPanels
+	table<int, int> enumRealValues
+	table<string, bool> setFuncs
+	array<var> modPanels
 	array<var> resetModButtons
-	array< MS_Slider > sliders
-	table settingsTable
+	array<MS_Slider> sliders
 	string currentMod = ""
 	string currentCat = ""
 } file
@@ -80,23 +79,6 @@ void function InitModMenu()
 	file.menu = GetMenu( "ModSettings" )
 	// DumpStack(2)
 	AddMenuFooterOption( file.menu, BUTTON_B, "#B_BUTTON_BACK", "#BACK" )
-
-	// Safe I/O stuff
-	// uncomment when safe i/o is merged.
-
-	/*
-	foreach ( string key, var value in file.settingsTable )
-	{
-		printt( key, expect string( value ) )
-		try
-		{
-			SetConVarString( key, expect string( value ) )
-		}
-		catch ( ex )
-		{
-
-		}
-	}*/
 
 	/////////////////////////////
 	// BASE NORTHSTAR SETTINGS //
@@ -217,9 +199,7 @@ void function ResetConVar( var button )
 	ConVarData conVar = file.filteredList[ int ( Hud_GetScriptID( Hud_GetParent( button ) ) ) + file.scrollOffset ]
 
 	if ( conVar.isCategoryName )
-	{
 		ShowAreYouSureDialog( "#ARE_YOU_SURE", ResetAllConVarsForModEventHandler( conVar.catName ), "#WILL_RESET_ALL_SETTINGS"  )
-	}
 	else ShowAreYouSureDialog( "#ARE_YOU_SURE", ResetConVarEventHandler( int ( Hud_GetScriptID( Hud_GetParent( button ) ) ) + file.scrollOffset ), Localize( "#WILL_RESET_SETTING", Localize( conVar.displayName ) ) )
 }
 
@@ -351,10 +331,10 @@ void function UpdateList()
 	Hud_SetFocused( Hud_GetChild( file.menu, "BtnFiltersClear" ) )
 	file.updatingList = true
 
-	array< ConVarData > filteredList = []
+	array<ConVarData> filteredList = []
 
-	array< string > filters = split( file.filterText, "," )
-	array< ConVarData > list = file.conVarList
+	array<string> filters = split( file.filterText, "," )
+	array<ConVarData> list = file.conVarList
 	if ( filters.len() <= 0 )
 		filters.append( "" )
 	foreach( string f in filters )
@@ -388,36 +368,37 @@ void function UpdateList()
 				if ( c.isModName )
 				{
 					lastModNameInFilter = c.modName
-					array< ConVarData > modVars = GetAllVarsInMod( list, c.modName )
+					array<ConVarData> modVars = GetAllVarsInMod( list, c.modName )
 					if ( filteredList.len() <= 0 && modVars[0].spaceType == eEmptySpaceType.None )
 						filteredList.extend( modVars.slice( 1, modVars.len() ) )
-					else
-						filteredList.extend( modVars )
+					else filteredList.extend( modVars )
+
 					i += modVars.len() - 1
 				}
 				else if ( c.isCategoryName )
 				{
 					if ( lastModNameInFilter != c.modName )
 					{
-						array< ConVarData > modVars = GetModConVarDatas( list, curModTitleIndex )
+						array<ConVarData> modVars = GetModConVarDatas( list, curModTitleIndex )
 						if ( filteredList.len() <= 0 && modVars[0].spaceType == eEmptySpaceType.None )
 							filteredList.extend( modVars.slice( 1, modVars.len() ) )
-						else
-							filteredList.extend( modVars )
+						else filteredList.extend( modVars )
+
 						lastModNameInFilter = c.modName
 					}
 					filteredList.extend( GetAllVarsInCategory( list, c.catName ) )
 					i += GetAllVarsInCategory( list, c.catName ).len() - 1
 					lastCatNameInFilter = c.catName
 				}
-				else {
+				else
+				{
 					if ( lastModNameInFilter != c.modName )
 					{
-						array< ConVarData > modVars = GetModConVarDatas( list, curModTitleIndex )
+						array<ConVarData> modVars = GetModConVarDatas( list, curModTitleIndex )
 						if ( filteredList.len() <= 0 && modVars[0].spaceType == eEmptySpaceType.None )
 							filteredList.extend( modVars.slice( 1, modVars.len() ) )
-						else
-							filteredList.extend( modVars )
+						else filteredList.extend( modVars )
+
 						lastModNameInFilter = c.modName
 					}
 					if ( lastCatNameInFilter != c.catName )
@@ -450,23 +431,23 @@ void function UpdateList()
 	file.updatingList = false
 }
 
-array< ConVarData > function GetModConVarDatas( array< ConVarData > arr, int index )
+array<ConVarData> function GetModConVarDatas( array<ConVarData> arr, int index )
 {
 	if ( index <= 1 )
 		return [ arr[ index - 1 ], arr[ index ], arr[ index + 1 ] ]
 	return [ arr[ index - 2 ], arr[ index - 1 ], arr[ index ], arr[ index + 1 ] ]
 }
 
-array< ConVarData > function GetCatConVarDatas( int index )
+array<ConVarData> function GetCatConVarDatas( int index )
 {
 	if ( index == 0 )
 		return [ file.conVarList[ index ] ]
 	return [ file.conVarList[ index - 1 ], file.conVarList[ index ] ]
 }
 
-array< ConVarData > function GetAllVarsInCategory( array< ConVarData > arr, string catName )
+array<ConVarData> function GetAllVarsInCategory( array<ConVarData> arr, string catName )
 {
-	array< ConVarData > vars = []
+	array<ConVarData> vars = []
 	for ( int i = 0; i < arr.len(); i++ )
 	{
 		ConVarData c = arr[i]
@@ -482,9 +463,9 @@ array< ConVarData > function GetAllVarsInCategory( array< ConVarData > arr, stri
 	return vars
 }
 
-array< ConVarData > function GetAllVarsInMod( array< ConVarData > arr, string modName )
+array<ConVarData> function GetAllVarsInMod( array<ConVarData> arr, string modName )
 {
-	array< ConVarData > vars = []
+	array<ConVarData> vars = []
 	for ( int i = 0; i < arr.len(); i++ )
 	{
 		ConVarData c = arr[i]
@@ -498,27 +479,6 @@ array< ConVarData > function GetAllVarsInMod( array< ConVarData > arr, string mo
 	empty.isEmptySpace = true
 	vars.append( empty )*/
 	return vars
-}
-
-string function ConVarDataToString( int index )
-{
-	ConVarData d = file.filteredList[ index ]
-	int i = 0
-	for ( i = 0; file.conVarList[i] != d; i++ )
-	{}
-	string type = d.isModName ? "Mod" : "Setting"
-	if ( d.isCategoryName ) type = "Category"
-	switch ( type )
-	{
-		case "Mod":
-			return "Mod Title " + d.modName + " at index " + index
-		case "Setting":
-			return "ConVar " + d.displayName + " ( " + d.conVar + " ) at index " + index + "/" + i
-		case "Category":
-			return "Category " + d.catName + " at index " + index + "/" + i
-	}
-
-	return "EMPTY SPACE	"
 }
 
 void function SetModMenuNameText( var button )
@@ -587,8 +547,7 @@ void function SetModMenuNameText( var button )
 		MS_Slider_SetStepSize( s, conVar.stepSize )
 		MS_Slider_SetValue( s, GetConVarFloat( conVar.conVar ) )
 	}
-	else
-		Hud_SetSize( slider, 0, int( 45 * scaleY ) )
+	else Hud_SetSize( slider, 0, int( 45 * scaleY ) )
 	if ( conVar.isCustomButton )
 	{
 		Hud_SetVisible( label, false )
@@ -876,7 +835,7 @@ void function AddConVarSettingSlider( string conVar, string displayName, float m
 	file.conVarList.append( data )
 }
 
-void function AddConVarSettingEnum( string conVar, string displayName, array< string > values )
+void function AddConVarSettingEnum( string conVar, string displayName, array<string> values )
 {
 	if ( !( getstackinfos(2)[ "func" ] in file.setFuncs ) || !file.setFuncs[ expect string( getstackinfos(2)[ "func" ] ) ] )
 		throw getstackinfos(2)[ "src" ] + " #" + getstackinfos(2)[ "line" ] + "\nCannot add a setting before a category and mod title!"
@@ -941,7 +900,6 @@ void function SendTextPanelChanges( var textPanel )
 				try
 				{
 					SetConVarInt( c.conVar, newSetting.tointeger() )
-					file.settingsTable[ c.conVar ] <- newSetting
 				}
 				catch ( ex )
 				{
@@ -959,13 +917,11 @@ void function SendTextPanelChanges( var textPanel )
 					break
 				}
 				SetConVarBool( c.conVar, newSetting == "1" )
-				file.settingsTable[ c.conVar ] <- newSetting
 				break
 			case "float":
 				try
 				{
 					SetConVarFloat( c.conVar, newSetting.tofloat() )
-					file.settingsTable[ c.conVar ] <- newSetting
 				}
 				catch ( ex )
 				{
@@ -983,7 +939,7 @@ void function SendTextPanelChanges( var textPanel )
 			case "float2":
 				try
 				{
-					array< string > split = split( newSetting, " " )
+					array<string> split = split( newSetting, " " )
 					if ( split.len() != 2 )
 					{
 						ThrowInvalidValue( "This setting is a float2, and only accepts a pair of numbers - you put in " + split.len() + "!" )
@@ -993,7 +949,6 @@ void function SendTextPanelChanges( var textPanel )
 					vector settingTest = < split[0].tofloat(), split[1].tofloat(), 0 >
 
 					SetConVarString( c.conVar, newSetting )
-					file.settingsTable[ c.conVar ] <- newSetting
 				}
 				catch ( ex )
 				{
@@ -1006,7 +961,7 @@ void function SendTextPanelChanges( var textPanel )
 			case "float3":
 				try
 				{
-					array< string > split = split( newSetting, " " )
+					array<string> split = split( newSetting, " " )
 					if ( split.len() != 3 )
 					{
 						ThrowInvalidValue( "This setting is a float3, and only accepts a trio of numbers - you put in " + split.len() + "!" )
@@ -1016,7 +971,6 @@ void function SendTextPanelChanges( var textPanel )
 					vector settingTest = < split[0].tofloat(), split[1].tofloat(), 0 >
 
 					SetConVarString( c.conVar, newSetting )
-					file.settingsTable[ c.conVar ] <- newSetting
 				}
 				catch ( ex )
 				{
@@ -1026,7 +980,6 @@ void function SendTextPanelChanges( var textPanel )
 				break
 			default:
 				SetConVarString( c.conVar, newSetting )
-				file.settingsTable[ c.conVar ] <- newSetting
 				break;
 		}
 	}
@@ -1083,7 +1036,7 @@ void function OnClearButtonPressed( var button )
 
 string function SanitizeDisplayName( string displayName )
 {
-	array< string > parts = split( displayName, "^" )
+	array<string> parts = split( displayName, "^" )
 	string result = ""
 	if ( parts.len() == 1 )
 		return parts[0]
