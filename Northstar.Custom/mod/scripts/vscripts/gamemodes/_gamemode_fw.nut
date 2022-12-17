@@ -89,6 +89,7 @@ struct
 {
     array<HarvesterStruct> harvesters
 
+    // save camp's info_target, we spawn camps after game starts, or player's first life won't show up correct camp icons
     array<entity> camps
 
     array<entity> fwTerritories
@@ -551,7 +552,8 @@ void function LoadEntities()
                     }
                     break
                 case "info_fw_camp":
-                    InitCampTracker( info_target )
+                    file.camps.append( info_target )
+                    //InitCampTracker( info_target )
                     //print("fw_camp spawned")
                     break
                 case "info_fw_turret_site":
@@ -724,6 +726,12 @@ void function FWAddPowerUpIcon( entity powerup )
 
 void function InitFWCampSites()
 {
+    // init here
+    foreach( entity info_target in file.camps )
+    {
+        InitCampTracker( info_target )
+    }
+
     // camps don't have a id, set them manually
     foreach( int index, CampSiteStruct campsite in file.fwCampSites )
     {
