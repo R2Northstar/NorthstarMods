@@ -38,7 +38,7 @@ const int FW_SPECTRE_MAX_DEPLOYED = 8
 const int FW_REAPER_MAX_DEPLOYED = 1
 
 // if other camps been cleaned many times, we levelDown
-const int FW_IGNORE_NEEDED = 2
+const int FW_CAMP_IGNORE_NEEDED = 2
 
 // debounce for showing damaged infos
 const float FW_HARVESTER_DAMAGED_DEBOUNCE = 5.0
@@ -139,9 +139,9 @@ void function GamemodeFW_Init()
     // so many things in battle, this is required to avoid crash!
     ServerCommand( "sv_max_props_multiplayer 200000" )
     ServerCommand( "sv_max_prop_data_dwords_multiplayer 300000" )
-
-    ClassicMP_ForceDisableEpilogue( true ) // temp
 }
+
+
 
 //////////////////////////
 ///// HACK FUNCTIONS /////
@@ -150,17 +150,18 @@ void function GamemodeFW_Init()
 const array<string> HACK_CLEANUP_MAPS =
 [
     "mp_grave",
-    "mp_homestead"
+    "mp_homestead",
+    "mp_complex3"
 ]
 
 //if npcs outside the map try to fire( like in death animation ), it will cause a engine error
 
 // in mp_grave, npcs will sometimes stuck underground
-const float GRAVE_CHECK_HEIGHT = 1500 // the map's lowest grond is 1950+, npcs will stuck under -4000 or -400
+const float GRAVE_CHECK_HEIGHT = 1700 // the map's lowest ground is 1950+, npcs will stuck under -4000 or -400
 // in mp_homestead, npcs will sometimes stuck in the sky
-const float HOMESTEAD_CHECK_HIEGHT = 9000 // the map's highest part is 7868+, npcs will stuck above 13800+
-// the same once happened in mp_complex3, but it's unsure yet
-const float COMPLEX_CHECK_HEIGHT = -1
+const float HOMESTEAD_CHECK_HIEGHT = 8000 // the map's highest part is 7868+, npcs will stuck above 13800+
+// in mp_complex3, npcs will sometimes stuck in the sky
+const float COMPLEX_CHECK_HEIGHT = 7000 // the map's highest part is 6716+, npcs will stuck above 9700+
 
 // do a hack
 void function HACK_ForceDestroyNPCs()
@@ -195,6 +196,20 @@ void function HACK_ForceDestroyNPCs_Threaded()
                 if( !IsValid( npc.GetParent() ) && !npc.e.isHotDropping )
                 {
                     if( npc.GetOrigin().z >= HOMESTEAD_CHECK_HIEGHT )
+                    {
+                        npc.Destroy()
+                    }
+                }
+            }
+        }
+        if( mapName == "mp_complex3" )
+        {
+            foreach( entity npc in GetNPCArray() )
+            {
+                // neither spawning from droppod nor hotdropping
+                if( !IsValid( npc.GetParent() ) && !npc.e.isHotDropping )
+                {
+                    if( npc.GetOrigin().z >= COMPLEX_CHECK_HEIGHT )
                     {
                         npc.Destroy()
                     }
@@ -555,7 +570,6 @@ void function LoadEntities()
                     entity turret = CreateNPC( "npc_turret_mega", TEAM_UNASSIGNED, info_target.GetOrigin(), info_target.GetAngles() )
                     SetSpawnOption_AISettings( turret, "npc_turret_mega_fortwar" )
                     SetDefaultMPEnemyHighlight( turret ) // for sonar highlights to work
-                    SetTeam( turret, info_target.GetTeam() ) // need to set this for batteryPorts get teams!
                     AddEntityCallback_OnDamaged( turret, OnMegaTurretDamaged )
                     DispatchSpawn( turret )
 
@@ -570,7 +584,8 @@ void function LoadEntities()
 
                     // minimap icons holder
                     entity minimapstate = CreateEntity( "prop_script" )
-                    minimapstate.SetValueForModelKey( $"models/communication/flag_base.mdl" ) // info_target.GetModelName() will get big models even turret's! thanks to respawn
+                    minimapstate.SetValueForModelKey( info_target.GetModelName() ) // these info must have model to work
+                    minimapstate.Hide() // hide the model! it will still work on minimaps
                     minimapstate.SetOrigin( info_target.GetOrigin() )
                     minimapstate.SetAngles( info_target.GetAngles() )
                     //SetTeam( minimapstate, info_target.GetTeam() ) // setTeam() for icons is done in TurretStateWatcher()
@@ -604,8 +619,6 @@ void function LoadEntities()
                     prop.kv.fadedist = 10000 // try not to fade
                     InitTurretBatteryPort( prop )
                     break
-                //case "script_power_up_other":
-                //    entity powerUp = CreateEntity( "item_powerup" )
 			}
 		}
 	}
@@ -712,32 +725,45 @@ void function FWAddPowerUpIcon( entity powerup )
 void function InitFWCampSites()
 {
     // camps don't have a id, set them manually
-    foreach( int index, CampSiteStruct camp in file.fwCampSites )
+    foreach( int index, CampSiteStruct campsite in file.fwCampSites )
     {
+        entity campInfo = campsite.camp
+        float radius = float( campInfo.kv.radius )
+
+        // get droppod spawns
+        foreach ( entity spawnpoint in SpawnPoints_GetDropPod() )
+            if ( Distance( campInfo.GetOrigin(), spawnpoint.GetOrigin() ) < radius )
+                campsite.validDropPodSpawns.append( spawnpoint )
+
+        // get titan spawns
+        foreach ( entity spawnpoint in SpawnPoints_GetTitan() )
+            if ( Distance( campInfo.GetOrigin(), spawnpoint.GetOrigin() ) < radius )
+                campsite.validTitanSpawns.append( spawnpoint )
+
         if ( index == 0 )
         {
-            camp.campId = "A"
+            campsite.campId = "A"
             SetGlobalNetInt( "fwCampAlertA", 0 )
-            SetGlobalNetFloat( "fwCampStressA", 0.0 ) // start with empty
-            SetLocationTrackerID( camp.tracker, 0 )
+            SetGlobalNetFloat( "fwCampStressA", 0.0 ) // start from empty
+            SetLocationTrackerID( campsite.tracker, 0 )
             file.trackedCampNPCSpawns["A"] <- {}
             continue
         }
         if ( index == 1 )
         {
-            camp.campId = "B"
+            campsite.campId = "B"
             SetGlobalNetInt( "fwCampAlertB", 0 )
-            SetGlobalNetFloat( "fwCampStressB", 0.0 ) // start with empty
-            SetLocationTrackerID( camp.tracker, 1 )
+            SetGlobalNetFloat( "fwCampStressB", 0.0 ) // start from empty
+            SetLocationTrackerID( campsite.tracker, 1 )
             file.trackedCampNPCSpawns["B"] <- {}
             continue
         }
         if ( index == 2 )
         {
-            camp.campId = "C"
+            campsite.campId = "C"
             SetGlobalNetInt( "fwCampAlertC", 0 )
-            SetGlobalNetFloat( "fwCampStressC", 0.0 ) // start with empty
-            SetLocationTrackerID( camp.tracker, 2 )
+            SetGlobalNetFloat( "fwCampStressC", 0.0 ) // start from empty
+            SetLocationTrackerID( campsite.tracker, 2 )
             file.trackedCampNPCSpawns["C"] <- {}
             continue
         }
@@ -753,7 +779,6 @@ void function InitCampTracker( entity camp )
 
     entity placementHelper = CreateEntity( "info_placement_helper" )
     placementHelper.SetOrigin( camp.GetOrigin() ) // tracker needs a owner to display
-    //prop.SetModel( $"models/dev/empty_model.mdl" )
     campsite.info = placementHelper
     DispatchSpawn( placementHelper )
 
@@ -764,16 +789,6 @@ void function InitCampTracker( entity camp )
     campsite.tracker = tracker
     SetLocationTrackerRadius( tracker, radius )
     DispatchSpawn( tracker )
-
-    // get droppod spawns
-    foreach ( entity spawnpoint in SpawnPoints_GetDropPod() )
-        if ( Distance( camp.GetOrigin(), spawnpoint.GetOrigin() ) < radius )
-            campsite.validDropPodSpawns.append( spawnpoint )
-
-    // get titan spawns
-    foreach ( entity spawnpoint in SpawnPoints_GetTitan() )
-        if ( Distance( camp.GetOrigin(), spawnpoint.GetOrigin() ) < radius )
-            campsite.validTitanSpawns.append( spawnpoint )
 }
 
 void function StartFWCampThink()
@@ -793,6 +808,8 @@ void function FWAiCampThink( CampSiteStruct campsite )
     string alertVarName = "fwCampAlert" + campId
     string stressVarName = "fwCampStress" + campId
 
+
+    bool firstSpawn = true
     while( GamePlayingOrSuddenDeath() )
     {
         wait WAVE_STATE_TRANSITION_TIME
@@ -809,7 +826,7 @@ void function FWAiCampThink( CampSiteStruct campsite )
 
         // update netVars, don't know how client update these, sometimes they can't catch up
         SetGlobalNetInt( alertVarName, alertLevel )
-        SetGlobalNetFloat( stressVarName, 1.0 )
+        SetGlobalNetFloat( stressVarName, 1.0 ) // refill
 
         // under attack, clean this
         campsite.ignoredSinceLastClean = 0
@@ -874,6 +891,9 @@ void function FWAiCampThink( CampSiteStruct campsite )
 
             lastNpcLeft = file.trackedCampNPCSpawns[campId][npcToSpawn]
         }
+
+        // first loop ends
+        firstSpawn = false
     }
 }
 
@@ -1286,13 +1306,13 @@ void function FWAreaThreatLevelThink_Threaded()
                 && !mltEntArray.contains( titan )
                 && titan.GetTeam() != TEAM_IMC
                 && !titan.e.isHotDropping )
-                warnImcTitanApproach = true // this titan must be in natrual space
+                warnImcTitanApproach = true // this titan must be in natural space
 
             if( !mltEntArray.contains( titan )
                 && !imcEntArray.contains( titan )
                 && titan.GetTeam() != TEAM_MILITIA
                 && !titan.e.isHotDropping )
-                warnMltTitanApproach = true // this titan must be in natrual space
+                warnMltTitanApproach = true // this titan must be in natural space
         }
 
         WaitFrame()
@@ -1368,12 +1388,14 @@ void function OnMegaTurretDamaged( entity turret, var damageInfo )
         if ( !attacker.IsTitan() && !IsSuperSpectre( attacker ) )
         {
             if( attacker.IsPlayer() && attacker.GetTeam() != turret.GetTeam() ) // good to have
-            // avoid notifications overrides itself
-            if( attacker.s.lastTurretNotifyTime + TURRET_NOTIFICATION_DEBOUNCE < Time() )
             {
-                MessageToPlayer( attacker, eEventNotifications.Clear ) // clean up last message
-                MessageToPlayer( attacker, eEventNotifications.TurretTitanDamageOnly )
-                attacker.s.lastTurretNotifyTime = Time()
+                // avoid notifications overrides itself
+                if( attacker.s.lastTurretNotifyTime + TURRET_NOTIFICATION_DEBOUNCE < Time() )
+                {
+                    MessageToPlayer( attacker, eEventNotifications.Clear ) // clean up last message
+                    MessageToPlayer( attacker, eEventNotifications.TurretTitanDamageOnly )
+                    attacker.s.lastTurretNotifyTime = Time()
+                }
             }
             DamageInfo_SetDamage( damageInfo, turret.GetShieldHealth() ) // destroy shields
             return
@@ -1456,7 +1478,7 @@ const int TURRET_SHIELDED_MLT_FLAG = 13
 const int TURRET_UNDERATTACK_NATURAL_FLAG = 16
 const int TURRET_UNDERATTACK_IMC_FLAG = 18
 const int TURRET_UNDERATTACK_MLT_FLAG = 20
-// natrual turret noramlly can't get shielded
+// natural turret noramlly can't get shielded
 const int TURRET_SHIELDED_UNDERATTACK_IMC_FLAG = 26
 const int TURRET_SHIELDED_UNDERATTACK_MLT_FLAG = 28
 
@@ -1477,6 +1499,7 @@ void function TurretStateWatcher( TurretSiteStruct turretSite )
     // battery overlay icons holder
     entity overlayState = CreateEntity( "prop_script" )
     overlayState.SetValueForModelKey( $"models/communication/flag_base.mdl" ) // requires a model to show overlays
+    overlayState.Hide() // this can still show players overlay icons
     overlayState.SetOrigin( batteryPort.GetOrigin() ) // tracking batteryPort's positions
     overlayState.SetAngles( batteryPort.GetAngles() )
     overlayState.kv.solid = SOLID_VPHYSICS
@@ -1582,7 +1605,7 @@ void function TurretStateWatcher( TurretSiteStruct turretSite )
                 stateFlag = TURRET_MLT_FLAG
         }
 
-        // natrual states
+        // natural states
         if( iconTeam == TEAM_UNASSIGNED )
         {
             if( lastDamagedTime + FW_TURRET_DAMAGED_DEBOUNCE >= Time() ) // recent underattack
@@ -1612,7 +1635,6 @@ void function TurretStateWatcher( TurretSiteStruct turretSite )
 ///// HARVESTER FUNCTIONS /////
 ///////////////////////////////
 
-// most things of this part is from the fd branch
 void function startFWHarvester()
 {
     thread HarvesterThink(fw_harvesterImc)
@@ -1705,28 +1727,35 @@ void function OnHarvesterDamaged( entity harvester, var damageInfo )
 	if ( damageSourceID == eDamageSourceId.mp_titancore_laser_cannon )
 		DamageInfo_SetDamage( damageInfo, DamageInfo_GetDamage( damageInfo ) / 50 ) // laser core shreds super well for some reason
 
-    if ( damageSourceID == eDamageSourceId.mp_titanweapon_sniper ||
-        damageSourceID == eDamageSourceId.mp_titanweapon_leadwall 
-    ) // nerf northstar and ronin, northstars can always do no-charge shots and deal same damage
+    // plasma railgun can always do no-charge shots and deal same damage
+    if ( damageSourceID == eDamageSourceId.mp_titanweapon_sniper ) // nerf northstar
+        DamageInfo_SetDamage( damageInfo, DamageInfo_GetDamage( damageInfo ) / 3 )
+
+    // leadwall have high pilot damage so works really well aginst harvester
+    if ( damageSourceID == eDamageSourceId.mp_titanweapon_leadwall ) // nerf ronin
         DamageInfo_SetDamage( damageInfo, DamageInfo_GetDamage( damageInfo ) / 2 )
 
+    // missiles mostly have high pilot damage so works really well aginst harvester
 	if ( damageSourceID == eDamageSourceId.mp_titanweapon_salvo_rockets ||
 		damageSourceID == eDamageSourceId.mp_titanweapon_shoulder_rockets
 	) // titan missiles
 		DamageInfo_SetDamage( damageInfo, DamageInfo_GetDamage( damageInfo ) / 3 )
 
-    if ( damageSourceID == eDamageSourceId.mp_titanweapon_flightcore_rockets )
-        DamageInfo_SetDamage( damageInfo, DamageInfo_GetDamage( damageInfo ) / 5 ) // flight core shreds well
+    if ( damageSourceID == eDamageSourceId.mp_titanweapon_flightcore_rockets ) // flight core shreds well
+        DamageInfo_SetDamage( damageInfo, DamageInfo_GetDamage( damageInfo ) / 5 ) 
 
-    if ( damageSourceID == eDamageSourceId.mp_titanweapon_dumbfire_rockets )
-        DamageInfo_SetDamage( damageInfo, DamageInfo_GetDamage( damageInfo ) / 10 ) // cluster missile shreds super well
+    // cluster missle is very effective against non-moving targets
+    if ( damageSourceID == eDamageSourceId.mp_titanweapon_dumbfire_rockets ) // cluster missile shreds super well
+        DamageInfo_SetDamage( damageInfo, DamageInfo_GetDamage( damageInfo ) / 10 ) 
 
-	if ( damageSourceID == eDamageSourceId.mp_titanweapon_meteor_thermite ||
+    // scorch's thermites is very effective against non-moving targets
+	if ( damageSourceID == eDamageSourceId.mp_titanweapon_heat_shield || 
+        damageSourceID == eDamageSourceId.mp_titanweapon_meteor_thermite ||
 		damageSourceID == eDamageSourceId.mp_titanweapon_flame_wall ||
 		damageSourceID == eDamageSourceId.mp_titanability_slow_trap ||
 		damageSourceID == eDamageSourceId.mp_titancore_flame_wave_secondary
 	) // scorch's thermite damages, nerf scorch
-		DamageInfo_SetDamage( damageInfo, DamageInfo_GetDamage( damageInfo ) / 4 )
+		DamageInfo_SetDamage( damageInfo, DamageInfo_GetDamage( damageInfo ) / 5 )
 
 	HarvesterStruct harvesterstruct // current harveter's struct
 	if( friendlyTeam == TEAM_MILITIA )
