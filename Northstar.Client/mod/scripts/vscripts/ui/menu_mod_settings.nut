@@ -166,7 +166,6 @@ void function InitModMenu()
 		// text field nav
 		child = Hud_GetChild( panel, "TextEntrySetting" )
 
-		//
 		Hud_AddEventHandler( child, UIE_LOSE_FOCUS, SendTextPanelChanges )
 
 		child.SetNavUp( Hud_GetChild( file.modPanels[ int( PureModulo( i - 1, len ) ) ], "TextEntrySetting" ) )
@@ -296,9 +295,9 @@ void function SliderBarUpdate()
 		return
 	}
 
-	var sliderButton = Hud_GetChild( file.menu , "BtnModListSlider" )
-	var sliderPanel = Hud_GetChild( file.menu , "BtnModListSliderPanel" )
-	var movementCapture = Hud_GetChild( file.menu , "MouseMovementCapture" )
+	var sliderButton = Hud_GetChild( file.menu, "BtnModListSlider" )
+	var sliderPanel = Hud_GetChild( file.menu, "BtnModListSliderPanel" )
+	var movementCapture = Hud_GetChild( file.menu, "MouseMovementCapture" )
 
 	Hud_SetFocused( sliderButton )
 
@@ -318,9 +317,9 @@ void function SliderBarUpdate()
 	if ( newPos < maxYPos ) newPos = maxYPos
 	if ( newPos > minYPos ) newPos = minYPos
 
-	Hud_SetPos( sliderButton , 2, newPos )
-	Hud_SetPos( sliderPanel , 2, newPos )
-	Hud_SetPos( movementCapture , 2, newPos )
+	Hud_SetPos( sliderButton, 2, newPos )
+	Hud_SetPos( sliderPanel, 2, newPos )
+	Hud_SetPos( movementCapture, 2, newPos )
 
 	file.scrollOffset = -int( ( ( newPos - minYPos ) / useableSpace ) * ( file.filteredList.len() - BUTTONS_PER_PAGE ) )
 	UpdateList()
@@ -534,9 +533,9 @@ void function SetModMenuNameText( var button )
 	var enumButton = Hud_GetChild( panel, "EnumSelectButton" )
 	var resetButton = Hud_GetChild( panel, "ResetModToDefault" )
 	var resetVGUI = Hud_GetChild( panel, "ResetModImage" )
-	var bottomLine = Hud_GetChild(panel, "BottomLine")
-	var topLine = Hud_GetChild(panel, "TopLine")
-	var modTitle = Hud_GetChild(panel, "ModTitle")
+	var bottomLine = Hud_GetChild( panel, "BottomLine" )
+	var topLine = Hud_GetChild( panel, "TopLine" )
+	var modTitle = Hud_GetChild( panel, "ModTitle" )
 	var customMenuButton = Hud_GetChild( panel, "OpenCustomMenu")
 	var slider = Hud_GetChild( panel, "Slider" )
 	Hud_SetVisible( slider, false )
