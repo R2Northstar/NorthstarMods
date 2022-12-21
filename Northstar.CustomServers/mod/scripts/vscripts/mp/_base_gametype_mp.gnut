@@ -403,7 +403,7 @@ void function ForceRespawnMeSignalAfterDelay( entity player, int delay = 5 )
 
 	wait delay
 
-	printt( format( "Forcing player respawn for player %s (took >%d seconds to respawn)", player.GetPlayerName(), delay ))
+	printt( format( "Forcing player respawn for player %s (took >%d seconds to respawn)", player.GetPlayerName(), delay ) )
 	player.Signal( "RespawnMe" )
 }
 
