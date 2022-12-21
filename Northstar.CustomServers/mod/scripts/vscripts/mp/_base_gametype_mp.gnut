@@ -379,8 +379,6 @@ void function PostDeathThread_MP( entity player, var damageInfo ) // based on ga
 		thread ForceRespawnMeSignalAfterDelay( player )
 				
 		player.WaitSignal( "RespawnMe" ) // set in base_gametype: ClientCommand_RespawnPlayer
-
-		printt("RespawnMe signal received")
 		
 		ClearRespawnAvailable( player ) // need so the respawn icon doesn't show for like a frame on next death
 			
@@ -405,7 +403,7 @@ void function ForceRespawnMeSignalAfterDelay( entity player, int delay = 5 )
 
 	wait delay
 
-	printt("forcing player RespawnMe signal")
+	printt("Forcing player respawn for player " + player.GetPlayerName() + " (took >" + delay + " seconds to respawn"))
 	player.Signal( "RespawnMe" )
 }
 
