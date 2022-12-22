@@ -1,23 +1,7 @@
 untyped
 globalize_all_functions
 
-struct GameStateStruct {
-
-    string map
-    string map_displayname
-
-    string playlist
-    string playlist_displayname
-
-    int current_players
-    int max_players
-    int own_score
-    int other_highest_score
-    int max_score
-    float time_end
-}
-
-void function GenerateGameState() {
+void function NorthstarCodeCallback_GenerateGameState() {
 
     GameStateStruct gs
 
@@ -37,10 +21,10 @@ void function GenerateGameState() {
     }
 
     gs.map = GetMapName()
-    gs.map_displayname = Localize( GetMapDisplayName( GetMapName() ) )
+    gs.map_displayname = Localize(GetMapDisplayName(GetMapName()))
 
     gs.playlist = GetCurrentPlaylistName()
-    gs.playlist_displayname = Localize( "#PL_" + GetCurrentPlaylistName() )
+    gs.playlist_displayname = Localize("#PL_"+GetCurrentPlaylistName())
 
     gs.current_players = GetPlayerArray().len()
     gs.max_players = GetCurrentPlaylistVarInt( "max_players", -1 )
@@ -53,9 +37,9 @@ void function GenerateGameState() {
     gs.max_score = IsRoundBased() ? GetCurrentPlaylistVarInt( "roundscorelimit", 0 ) : GetCurrentPlaylistVarInt( "scorelimit", 0 )
 
 	if ( GetServerVar( "roundBased" ) )
-		gs.time_end = expect float( level.nv.roundEndTime - Time() )
+		gs.time_end = expect float(level.nv.roundEndTime - Time())
 	else
-		gs.time_end = expect float( level.nv.gameEndTime - Time() )
+		gs.time_end = expect float(level.nv.gameEndTime - Time())
 
     NSPushGameStateData(gs)
 }
