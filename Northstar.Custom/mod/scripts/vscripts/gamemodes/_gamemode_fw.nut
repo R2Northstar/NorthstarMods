@@ -1163,6 +1163,9 @@ vector function FW_ReCalculateTitanReplacementPoint( vector baseOrigin, int team
     // find team's harvester
     entity teamHarvester = FW_GetTeamHarvesterProp( team )
 
+    if ( !IsValid( teamHarvester ) ) // team's havester has been destroyed!
+        return baseOrigin // return given value
+
     if( Distance2D( baseOrigin, teamHarvester.GetOrigin() ) <= FW_SPAWNPOINT_SEARCH_RADIUS ) // close enough!
         return baseOrigin // this origin is good enough
 
