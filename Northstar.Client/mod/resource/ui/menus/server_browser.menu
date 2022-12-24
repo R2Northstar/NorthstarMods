@@ -1181,7 +1181,7 @@ resource/ui/menus/mods_browse.menu
 			pin_to_sibling_corner TOP_RIGHT
 			navDown BtnServer1
 			navLeft BtnServerMapTab
-			navRight BtnServerRegionTab
+			navRight BtnServerLatencyTab
 			navUp BtnFiltersClear
 		}
 
@@ -1411,8 +1411,8 @@ resource/ui/menus/mods_browse.menu
 			pin_to_sibling_corner BOTTOM_LEFT
 		}
 
-		// Region
-		BtnServerRegionTab
+		// Latency
+		BtnServerLatencyTab
 		{
 			ControlName RuiButton
 			InheritProperties RuiSmallButton
@@ -1432,11 +1432,11 @@ resource/ui/menus/mods_browse.menu
 			navUp BtnFiltersClear
 		}
 
-		BtnServerRegion1
+		BtnServerLatency1
 		{
 			ControlName Label
 			labelText ""
-			classname Serverregion
+			classname Serverlatency
 			textAlignment center
 			wide 110
 			tall 44
@@ -1447,11 +1447,11 @@ resource/ui/menus/mods_browse.menu
 			pin_corner_to_sibling TOP_LEFT
 			pin_to_sibling_corner BOTTOM_LEFT
 		}
-		BtnServerRegion2
+		BtnServerLatency2
 		{
 			ControlName Label
 			labelText ""
-			classname Serverregion
+			classname Serverlatency
 			textAlignment center
 			wide 110
 			tall 44
@@ -1462,11 +1462,11 @@ resource/ui/menus/mods_browse.menu
 			pin_corner_to_sibling TOP_LEFT
 			pin_to_sibling_corner BOTTOM_LEFT
 		}
-		BtnServerRegion3
+		BtnServerLatency3
 		{
 			ControlName Label
 			labelText ""
-			classname Serverregion
+			classname Serverlatency
 			textAlignment center
 			wide 110
 			tall 44
@@ -1477,11 +1477,11 @@ resource/ui/menus/mods_browse.menu
 			pin_corner_to_sibling TOP_LEFT
 			pin_to_sibling_corner BOTTOM_LEFT
 		}
-		BtnServerRegion4
+		BtnServerLatency4
 		{
 			ControlName Label
 			labelText ""
-			classname Serverregion
+			classname Serverlatency
 			textAlignment center
 			wide 110
 			tall 44
@@ -1492,11 +1492,11 @@ resource/ui/menus/mods_browse.menu
 			pin_corner_to_sibling TOP_LEFT
 			pin_to_sibling_corner BOTTOM_LEFT
 		}
-		BtnServerRegion5
+		BtnServerLatency5
 		{
 			ControlName Label
 			labelText ""
-			classname Serverregion
+			classname Serverlatency
 			textAlignment center
 			wide 110
 			tall 44
@@ -1507,11 +1507,11 @@ resource/ui/menus/mods_browse.menu
 			pin_corner_to_sibling TOP_LEFT
 			pin_to_sibling_corner BOTTOM_LEFT
 		}
-		BtnServerRegion6
+		BtnServerLatency6
 		{
 			ControlName Label
 			labelText ""
-			classname Serverregion
+			classname Serverlatency
 			textAlignment center
 			wide 110
 			tall 44
@@ -1522,11 +1522,11 @@ resource/ui/menus/mods_browse.menu
 			pin_corner_to_sibling TOP_LEFT
 			pin_to_sibling_corner BOTTOM_LEFT
 		}
-		BtnServerRegion7
+		BtnServerLatency7
 		{
 			ControlName Label
 			labelText ""
-			classname Serverregion
+			classname Serverlatency
 			textAlignment center
 			wide 110
 			tall 44
@@ -1537,11 +1537,11 @@ resource/ui/menus/mods_browse.menu
 			pin_corner_to_sibling TOP_LEFT
 			pin_to_sibling_corner BOTTOM_LEFT
 		}
-		BtnServerRegion8
+		BtnServerLatency8
 		{
 			ControlName Label
 			labelText ""
-			classname Serverregion
+			classname Serverlatency
 			textAlignment center
 			wide 110
 			tall 44
@@ -1552,11 +1552,11 @@ resource/ui/menus/mods_browse.menu
 			pin_corner_to_sibling TOP_LEFT
 			pin_to_sibling_corner BOTTOM_LEFT
 		}
-		BtnServerRegion9
+		BtnServerLatency9
 		{
 			ControlName Label
 			labelText ""
-			classname Serverregion
+			classname Serverlatency
 			textAlignment center
 			wide 110
 			tall 44
@@ -1567,11 +1567,11 @@ resource/ui/menus/mods_browse.menu
 			pin_corner_to_sibling TOP_LEFT
 			pin_to_sibling_corner BOTTOM_LEFT
 		}
-		BtnServerRegion10
+		BtnServerLatency10
 		{
 			ControlName Label
 			labelText ""
-			classname Serverregion
+			classname Serverlatency
 			textAlignment center
 			wide 110
 			tall 44
@@ -1582,11 +1582,11 @@ resource/ui/menus/mods_browse.menu
 			pin_corner_to_sibling TOP_LEFT
 			pin_to_sibling_corner BOTTOM_LEFT
 		}
-		BtnServerRegion11
+		BtnServerLatency11
 		{
 			ControlName Label
 			labelText ""
-			classname Serverregion
+			classname Serverlatency
 			textAlignment center
 			wide 110
 			tall 44
@@ -1597,11 +1597,11 @@ resource/ui/menus/mods_browse.menu
 			pin_corner_to_sibling TOP_LEFT
 			pin_to_sibling_corner BOTTOM_LEFT
 		}
-		BtnServerRegion12
+		BtnServerLatency12
 		{
 			ControlName Label
 			labelText ""
-			classname Serverregion
+			classname Serverlatency
 			textAlignment center
 			wide 110
 			tall 44
@@ -1612,11 +1612,11 @@ resource/ui/menus/mods_browse.menu
 			pin_corner_to_sibling TOP_LEFT
 			pin_to_sibling_corner BOTTOM_LEFT
 		}
-		BtnServerRegion13
+		BtnServerLatency13
 		{
 			ControlName Label
 			labelText ""
-			classname Serverregion
+			classname Serverlatency
 			textAlignment center
 			wide 110
 			tall 44
@@ -1627,11 +1627,11 @@ resource/ui/menus/mods_browse.menu
 			pin_corner_to_sibling TOP_LEFT
 			pin_to_sibling_corner BOTTOM_LEFT
 		}
-		BtnServerRegion14
+		BtnServerLatency14
 		{
 			ControlName Label
 			labelText ""
-			classname Serverregion
+			classname Serverlatency
 			textAlignment center
 			wide 110
 			tall 44
@@ -1642,11 +1642,11 @@ resource/ui/menus/mods_browse.menu
 			pin_corner_to_sibling TOP_LEFT
 			pin_to_sibling_corner BOTTOM_LEFT
 		}
-		BtnServerRegion15
+		BtnServerLatency15
 		{
 			ControlName Label
 			labelText ""
-			classname Serverregion
+			classname Serverlatency
 			textAlignment center
 			wide 110
 			tall 44
@@ -1988,7 +1988,7 @@ resource/ui/menus/mods_browse.menu
 				xpos 3
 				ypos -1
 
-				pin_to_sibling BtnServerRegionTab
+				pin_to_sibling BtnServerLatencyTab
 				pin_corner_to_sibling TOP_LEFT
 				pin_to_sibling_corner TOP_LEFT
 	}
