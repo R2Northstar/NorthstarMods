@@ -995,6 +995,9 @@ void function _OnServerSelectedAsync( var button )
 
 				while( NSIsModBeingDownloaded(modName) )
 				{
+					dialogData.header = "Downloading mod (" + NSGetCurrentDownloadProgress() + "%)"
+					CloseActiveMenu();
+					OpenDialog( dialogData )
 					WaitFrame();
 				}
 
