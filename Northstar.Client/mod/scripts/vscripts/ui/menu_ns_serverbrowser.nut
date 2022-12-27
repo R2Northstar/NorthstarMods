@@ -995,17 +995,23 @@ void function _OnServerSelectedAsync( var button )
 
 				while( NSIsModBeingDownloaded(modName) )
 				{
+					// This array holds a bunch of progress information about mod.
 					array<float> downloadStats = NSGetCurrentDownloadProgress()
 					bool isDownloading = downloadStats[3] == 0;
+
+					// Mod is being downloaded.
 					if (isDownloading)
 					{
 						dialogData.header = "Downloading mod (" + downloadStats[2] + "%)"
 						dialogData.message = "Downloading \"" + modName + "\" v" + modVersion + "...\n" + "(" + floor(downloadStats[0] / 1024000) + "MB / " + floor(downloadStats[1] / 1024000) + "MB)"
 					} else 
+
+					// Mod is being extracted.
 					{
 						dialogData.header = "Extracting mod (" + downloadStats[2] + "%)"
 						dialogData.message = "Extracting \"" + modName + "\" v" + modVersion + "...\n" + "(" + floor(downloadStats[0]) + "/" + floor(downloadStats[1]) + " files)"
 
+						// We only display extraction progress for big files (> 15MB), for users not to think Northstar has crashed.
 						float filesize = downloadStats[5];
 						if (filesize > 15 * 1024 * 1000)
 						{
