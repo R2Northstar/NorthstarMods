@@ -1005,6 +1005,12 @@ void function _OnServerSelectedAsync( var button )
 					{
 						dialogData.header = "Extracting mod (" + downloadStats[2] + "%)"
 						dialogData.message = "Extracting \"" + modName + "\" v" + modVersion + "...\n" + "(" + floor(downloadStats[0]) + "/" + floor(downloadStats[1]) + " files)"
+
+						float filesize = downloadStats[5];
+						if (filesize > 15 * 1024 * 1000)
+						{
+							dialogData.message += " [" + floor(downloadStats[4] / 1024000) + "MB /" + floor(downloadStats[5] / 1024000) + "MB]";
+						}
 					}
 					CloseActiveMenu();
 					OpenDialog( dialogData )
