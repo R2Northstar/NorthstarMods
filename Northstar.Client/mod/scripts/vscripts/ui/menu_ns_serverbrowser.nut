@@ -996,8 +996,16 @@ void function _OnServerSelectedAsync( var button )
 				while( NSIsModBeingDownloaded(modName) )
 				{
 					array<float> downloadStats = NSGetCurrentDownloadProgress()
-					dialogData.header = "Downloading mod (" + downloadStats[2] + "%)"
-					dialogData.message = "Downloading \"" + modName + "\" v" + modVersion + "...\n" + "(" + floor(downloadStats[0] / 1024000) + "MB / " + floor(downloadStats[1] / 1024000) + "MB)"
+					bool isDownloading = downloadStats[3] == 0;
+					if (isDownloading)
+					{
+						dialogData.header = "Downloading mod (" + downloadStats[2] + "%)"
+						dialogData.message = "Downloading \"" + modName + "\" v" + modVersion + "...\n" + "(" + floor(downloadStats[0] / 1024000) + "MB / " + floor(downloadStats[1] / 1024000) + "MB)"
+					} else 
+					{
+						dialogData.header = "Extracting mod (" + downloadStats[2] + "%)"
+						dialogData.message = "Extracting \"" + modName + "\" v" + modVersion + "...\n" + "(" + floor(downloadStats[0]) + "/" + floor(downloadStats[1]) + " files)"
+					}
 					CloseActiveMenu();
 					OpenDialog( dialogData )
 					WaitFrame();
