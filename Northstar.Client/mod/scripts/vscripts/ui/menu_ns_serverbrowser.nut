@@ -995,7 +995,9 @@ void function _OnServerSelectedAsync( var button )
 
 				while( NSIsModBeingDownloaded(modName) )
 				{
-					dialogData.header = "Downloading mod (" + NSGetCurrentDownloadProgress() + "%)"
+					array<float> downloadStats = NSGetCurrentDownloadProgress()
+					dialogData.header = "Downloading mod (" + downloadStats[2] + "%)"
+					dialogData.message = "Downloading \"" + modName + "\" v" + modVersion + "...\n" + "(" + floor(downloadStats[0] / 1024000) + "MB / " + floor(downloadStats[1] / 1024000) + "MB)"
 					CloseActiveMenu();
 					OpenDialog( dialogData )
 					WaitFrame();
