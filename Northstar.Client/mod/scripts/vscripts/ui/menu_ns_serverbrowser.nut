@@ -1057,7 +1057,7 @@ void function _OnServerSelectedAsync( var button )
 
 						Hud_SetText( body, text )
 					}
-					
+
 					WaitFrame();
 				}
 
@@ -1131,7 +1131,7 @@ void function _OnServerSelectedAsync( var button )
 	// Make Northstar aware news mod have been added
 	if (downloadedMods > 0)
 	{
-		print("Some new mods have been downloaded, releading mods.")
+		print("Some new mods have been downloaded, reloading mods.")
 		NSReloadMods();
 	}
 
