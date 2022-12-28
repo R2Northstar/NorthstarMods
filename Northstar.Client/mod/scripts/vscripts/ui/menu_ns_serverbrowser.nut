@@ -1002,20 +1002,20 @@ void function _OnServerSelectedAsync( var button )
 					// Mod is being downloaded.
 					if (isDownloading)
 					{
-						dialogData.header = "Downloading mod (" + downloadStats[2] + "%)"
-						dialogData.message = "Downloading \"" + modName + "\" v" + modVersion + "...\n" + "(" + floor(downloadStats[0] / 1024000) + "MB / " + floor(downloadStats[1] / 1024000) + "MB)"
+						dialogData.header = format("Downloading mod (%i%%)", downloadStats[2])
+						dialogData.message = format("Downloading %s v%s...\n(%i MB / %i MB)", modName, modVersion, floor(downloadStats[0] / 1024000), floor(downloadStats[1] / 1024000))
 					} else 
 
 					// Mod is being extracted.
 					{
-						dialogData.header = "Extracting mod (" + downloadStats[2] + "%)"
-						dialogData.message = "Extracting \"" + modName + "\" v" + modVersion + "...\n" + "(" + floor(downloadStats[0]) + "/" + floor(downloadStats[1]) + " files)"
-
+						dialogData.header = format("Extracting mod (%i%%)", downloadStats[2])
+						dialogData.message = format("Extracting %s v%s...\n(%i/%i files)", modName, modVersion, floor(downloadStats[0]), floor(downloadStats[1]))
+						
 						// We only display extraction progress for big files (> 15MB), for users not to think Northstar has crashed.
 						float filesize = downloadStats[5];
 						if (filesize > 15 * 1024 * 1000)
 						{
-							dialogData.message += " [" + floor(downloadStats[4] / 1024000) + "MB /" + floor(downloadStats[5] / 1024000) + "MB]";
+							dialogData.message += format("[%iMB / %iMB]", floor(downloadStats[4] / 1024000), floor(downloadStats[5] / 1024000));
 						}
 					}
 					CloseActiveMenu();
