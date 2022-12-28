@@ -90,7 +90,39 @@ struct {
 	array<var> serversRegion
 } file
 
+enum eProgressType
+{
+    DOWNLOAD = 0,
+    EXTRACTION = 1
+}
 
+// This struct holds information about the currently downloaded mod:
+struct ModDownloadProgress {
+	float received					// received quantity
+	float total						// total quantity expected
+	float receivedPercentage		// ratio of received / expected (computed in native for PERFS!)
+	int progressType				// nature of previous data (0=download stats [in MBs], 1=extraction stats [in files count])
+	
+	// The following information should only be used with big files (as there's no need to display this
+	// for small files due to extraction speed):
+	float currentFileExtracted		// extracted size of current file
+	float currentFileTotal 			// total size of current file
+}
+
+/**
+ * Builds up a ModDownloadProgress struct from values retrieved from native code.
+ **/
+ModDownloadProgress function build(array<float> values)
+{
+	ModDownloadProgress p
+	p.received = values[0]
+	p.total = values[1]
+	p.receivedPercentage = values[2]
+	p.progressType = int(values[3])
+	p.currentFileExtracted = values[4]
+	p.currentFileTotal = values[5]
+	return p
+}
 
 bool function FloatsEqual( float arg1, float arg2, float epsilon )
 {
@@ -996,27 +1028,27 @@ void function _OnServerSelectedAsync( var button )
 				while( NSIsModBeingDownloaded(modName) )
 				{
 					// This array holds a bunch of progress information about mod.
-					array<float> downloadStats = NSGetCurrentDownloadProgress()
-					bool isDownloading = downloadStats[3] == 0;
+					ModDownloadProgress downloadStats = build(NSGetCurrentDownloadProgress());
+					bool isDownloading = downloadStats.progressType == eProgressType.DOWNLOAD;
 					const int MB = 1024*1000;
 
 					// Mod is being downloaded.
 					if (isDownloading)
 					{
-						dialogData.header = format("Downloading mod (%i%%)", downloadStats[2])
-						dialogData.message = format("Downloading %s v%s...\n(%i MB / %i MB)", modName, modVersion, floor(downloadStats[0] / MB), floor(downloadStats[1] / MB))
+						dialogData.header = format("Downloading mod (%i%%)", downloadStats.receivedPercentage)
+						dialogData.message = format("Downloading %s v%s...\n(%i MB / %i MB)", modName, modVersion, floor(downloadStats.received / MB), floor(downloadStats.total / MB))
 					} else 
 
 					// Mod is being extracted.
 					{
-						dialogData.header = format("Extracting mod (%i%%)", downloadStats[2])
-						dialogData.message = format("Extracting %s v%s...\n(%i/%i files)", modName, modVersion, floor(downloadStats[0]), floor(downloadStats[1]))
+						dialogData.header = format("Extracting mod (%i%%)", downloadStats.receivedPercentage)
+						dialogData.message = format("Extracting %s v%s...\n(%i/%i files)", modName, modVersion, floor(downloadStats.received), floor(downloadStats.total))
 						
 						// We only display extraction progress for big files (> 15MB), for users not to think Northstar has crashed.
-						float filesize = downloadStats[5];
+						float filesize = downloadStats.currentFileTotal;
 						if (filesize > 15 * MB)
 						{
-							dialogData.message += format("[%iMB / %iMB]", floor(downloadStats[4] / MB), floor(downloadStats[5] / MB));
+							dialogData.message += format("[%iMB / %iMB]", floor(downloadStats.currentFileExtracted / MB), floor(downloadStats.currentFileTotal / MB));
 						}
 					}
 					CloseActiveMenu();
