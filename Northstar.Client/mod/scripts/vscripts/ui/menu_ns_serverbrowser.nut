@@ -1024,6 +1024,10 @@ void function _OnServerSelectedAsync( var button )
 				dialogData.forceChoice = true;
 
 				OpenDialog( dialogData )
+				// Save reference to UI elements, to update their content
+				var menu = GetMenu( "Dialog" )
+				var header = Hud_GetChild( menu, "DialogHeader" )
+				var body = GetSingleElementByClassname( menu, "DialogMessageClass" )
 
 				while( NSIsModBeingDownloaded(modName) )
 				{
@@ -1035,24 +1039,25 @@ void function _OnServerSelectedAsync( var button )
 					// Mod is being downloaded.
 					if (isDownloading)
 					{
-						dialogData.header = format("Downloading mod (%i%%)", downloadStats.receivedPercentage)
-						dialogData.message = format("Downloading %s v%s...\n(%i MB / %i MB)", modName, modVersion, floor(downloadStats.received / MB), floor(downloadStats.total / MB))
+						Hud_SetText( header, format("Downloading mod (%i%%)", downloadStats.receivedPercentage) )
+						Hud_SetText( body, format("Downloading %s v%s...\n(%i MB / %i MB)", modName, modVersion, floor(downloadStats.received / MB), floor(downloadStats.total / MB)))
 					} else 
 
 					// Mod is being extracted.
 					{
-						dialogData.header = format("Extracting mod (%i%%)", downloadStats.receivedPercentage)
-						dialogData.message = format("Extracting %s v%s...\n(%i/%i files)", modName, modVersion, floor(downloadStats.received), floor(downloadStats.total))
-						
+						Hud_SetText( header, format("Extracting mod (%i%%)", downloadStats.receivedPercentage))
+						string text = format("Extracting %s v%s...\n(%i/%i files)", modName, modVersion, floor(downloadStats.received), floor(downloadStats.total))
+
 						// We only display extraction progress for big files (> 15MB), for users not to think Northstar has crashed.
 						float filesize = downloadStats.currentFileTotal;
 						if (filesize > 15 * MB)
 						{
-							dialogData.message += format("[%iMB / %iMB]", floor(downloadStats.currentFileExtracted / MB), floor(downloadStats.currentFileTotal / MB));
+							text += format(" [%iMB / %iMB]", floor(downloadStats.currentFileExtracted / MB), floor(downloadStats.currentFileTotal / MB));
 						}
+
+						Hud_SetText( body, text )
 					}
-					CloseActiveMenu();
-					OpenDialog( dialogData )
+					
 					WaitFrame();
 				}
 
