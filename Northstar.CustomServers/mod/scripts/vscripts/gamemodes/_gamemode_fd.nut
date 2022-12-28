@@ -230,7 +230,7 @@ void function FD_GivePlayerInfiniteAntiTitanAmmo( entity player )
 	array<entity> weapons = player.GetMainWeapons()
 	foreach ( entity weaponEnt in weapons )
 	{
-		if ( weaponEnt.GetWeaponType() != WT_ANTITITAN )
+		if ( weaponEnt.GetWeaponInfoFileKeyField( "menu_category" ) != "at" )
 			continue
 
 		if( !weaponEnt.HasMod( "at_unlimited_ammo" ) )
