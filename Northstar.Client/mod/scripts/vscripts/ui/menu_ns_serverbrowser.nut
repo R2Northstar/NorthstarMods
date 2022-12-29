@@ -986,10 +986,10 @@ string function FillInServerModsLabel( int server )
 
 void function OnServerSelected( var button )
 {
-	thread _OnServerSelectedAsync(button);
+	thread OnServerSelected_Threaded(button);
 }
 
-void function _OnServerSelectedAsync( var button )
+void function OnServerSelected_Threaded( var button )
 {
 	if ( NSIsRequestingServerList() || NSGetServerCount() == 0 || file.serverListRequestFailed )
 		return
