@@ -1045,7 +1045,7 @@ void function _OnServerSelectedAsync( var button )
 					}
 					else // Mod is being extracted.
 					{
-						Hud_SetText( header, format("Extracting mod (%i%%)", downloadStats.receivedPercentage))
+						Hud_SetText( header, format("Extracting mod (%i%%)", downloadStats.receivedPercentage) )
 						string text = format("Extracting %s v%s...\n(%i/%i files)", modName, modVersion, floor(downloadStats.received), floor(downloadStats.total))
 
 						// We only display extraction progress for big files (> 15MB), for users not to think Northstar has crashed.
