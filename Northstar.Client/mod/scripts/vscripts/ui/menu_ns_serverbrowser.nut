@@ -109,6 +109,8 @@ struct ModDownloadProgress {
 	float currentFileTotal 			// total size of current file
 }
 
+const int MB = 1024*1000;
+
 /**
  * Builds up a ModDownloadProgress struct from values retrieved from native code.
  **/
@@ -1045,7 +1047,6 @@ void function OnServerSelected_Threaded( var button )
 					// This array holds a bunch of progress information about mod.
 					ModDownloadProgress downloadStats = Build( NSGetCurrentDownloadProgress() );
 					bool isDownloading = downloadStats.progressType == eProgressType.DOWNLOAD;
-					const int MB = 1024*1000;
 
 					// Mod is being downloaded.
 					if (isDownloading)
