@@ -1041,9 +1041,8 @@ void function _OnServerSelectedAsync( var button )
 					{
 						Hud_SetText( header, format("Downloading mod (%i%%)", downloadStats.receivedPercentage) )
 						Hud_SetText( body, format("Downloading %s v%s...\n(%i MB / %i MB)", modName, modVersion, floor(downloadStats.received / MB), floor(downloadStats.total / MB)))
-					} else 
-
-					// Mod is being extracted.
+					}
+					else // Mod is being extracted.
 					{
 						Hud_SetText( header, format("Extracting mod (%i%%)", downloadStats.receivedPercentage))
 						string text = format("Extracting %s v%s...\n(%i/%i files)", modName, modVersion, floor(downloadStats.received), floor(downloadStats.total))
