@@ -1006,6 +1006,16 @@ void function OnServerSelected_Threaded( var button )
 	{
 		string modName = NSGetServerRequiredModName( serverIndex, i );
 		string modVersion = NSGetServerRequiredModVersion( serverIndex, i );
+		print( format("Server requires mod \"%s\" v%s.", modName, modVersion) )
+
+		// If mod is locally installed already, no need to download it.
+		if (NSGetModNames().contains( modName ) && NSGetModVersionByModName( modName ) == modVersion && !NSIsModEnabled( modName ))
+		{
+			print( format("Required mod \"%s\" is locally there but disabled, enabling it.", modName) )
+			NSSetModEnabled( modName, true )
+			downloadedMods++
+			continue
+		}
 		
 		if ( !NSGetModNames().contains( modName ) )
 		{
@@ -1131,7 +1141,7 @@ void function OnServerSelected_Threaded( var button )
 	// Make Northstar aware new mods have been added
 	if ( downloadedMods > 0 )
 	{
-		print("Some new mods have been downloaded, reloading mods.")
+		print("Some new mods have been downloaded or enabled, reloading mods.")
 		NSReloadMods();
 	}
 
