@@ -1050,7 +1050,7 @@ void function _OnServerSelectedAsync( var button )
 
 						// We only display extraction progress for big files (> 15MB), for users not to think Northstar has crashed.
 						float filesize = downloadStats.currentFileTotal;
-						if (filesize > 15 * MB)
+						if ( filesize > 15 * MB )
 						{
 							text += format(" [%iMB / %iMB]", floor(downloadStats.currentFileExtracted / MB), floor(downloadStats.currentFileTotal / MB));
 						}
