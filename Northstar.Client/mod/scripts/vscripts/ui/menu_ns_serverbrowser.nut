@@ -112,7 +112,7 @@ struct ModDownloadProgress {
 /**
  * Builds up a ModDownloadProgress struct from values retrieved from native code.
  **/
-ModDownloadProgress function build(array<float> values)
+ModDownloadProgress function Build(array<float> values)
 {
 	ModDownloadProgress p
 	p.received = values[0]
@@ -1033,7 +1033,7 @@ void function _OnServerSelectedAsync( var button )
 				while( NSIsModBeingDownloaded(modName) )
 				{
 					// This array holds a bunch of progress information about mod.
-					ModDownloadProgress downloadStats = build(NSGetCurrentDownloadProgress());
+					ModDownloadProgress downloadStats = Build( NSGetCurrentDownloadProgress() );
 					bool isDownloading = downloadStats.progressType == eProgressType.DOWNLOAD;
 					const int MB = 1024*1000;
 
