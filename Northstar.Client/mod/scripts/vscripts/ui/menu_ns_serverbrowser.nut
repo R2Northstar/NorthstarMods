@@ -1052,7 +1052,7 @@ void function _OnServerSelectedAsync( var button )
 						float filesize = downloadStats.currentFileTotal;
 						if ( filesize > 15 * MB )
 						{
-							text += format(" [%iMB / %iMB]", floor(downloadStats.currentFileExtracted / MB), floor(downloadStats.currentFileTotal / MB));
+							text += format( " [%iMB / %iMB]", floor(downloadStats.currentFileExtracted / MB), floor(downloadStats.currentFileTotal / MB) )
 						}
 
 						Hud_SetText( body, text )
