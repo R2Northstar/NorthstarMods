@@ -1062,10 +1062,10 @@ void function _OnServerSelectedAsync( var button )
 				}
 
 				// Close loading dialog
-				CloseActiveMenu();
+				CloseActiveMenu()
 
-				downloadedMods += 1;
-				continue;
+				downloadedMods++
+				continue
 			}
 
 			DialogData dialogData
