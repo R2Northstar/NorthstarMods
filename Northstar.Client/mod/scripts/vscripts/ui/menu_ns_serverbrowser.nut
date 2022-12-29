@@ -1010,10 +1010,11 @@ void function _OnServerSelectedAsync( var button )
 		if ( !NSGetModNames().contains( modName ) )
 		{
 			// check if mod is verified
-			bool modIsVerified = false;
-			if ( NSIsModVerified(modName, modVersion) ) {
-				bool modIsVerified = true;
-				NSDownloadMod( modName, modVersion );
+			bool modIsVerified = false
+			if ( NSIsModVerified( modName, modVersion ) )
+			{
+				bool modIsVerified = true
+				NSDownloadMod( modName, modVersion )
 
 				// Downloading mod UI
 				DialogData dialogData
