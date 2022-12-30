@@ -933,8 +933,6 @@ void function FD_BatteryHealTeammate( entity battery, entity titan, int shieldRe
 	}
 }
 
-void function gameWonMedals()
-
 void function FD_SetupEpilogue()
 {
 	AddCallback_GameStateEnter( eGameState.Epilogue, FD_Epilogue )
