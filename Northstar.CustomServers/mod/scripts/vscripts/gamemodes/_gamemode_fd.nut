@@ -892,7 +892,7 @@ void function SetWaveStateReady()
 void function FD_StunLaserHealTeammate( entity player, entity target, int shieldRestoreAmount )
 {
 	if( IsValid( player ) && player in file.players ){
-		file.playerAwardStats[player]["heals"] += shieldRestoreAmount
+		file.playerAwardStats[player]["heals"] += float(shieldRestoreAmount)
 		player.AddToPlayerGameStat( PGS_DEFENSE_SCORE, shieldRestoreAmount / 100 )
 		file.players[ player ].scoreThisRound += shieldRestoreAmount / 100
 	}
@@ -901,7 +901,7 @@ void function FD_StunLaserHealTeammate( entity player, entity target, int shield
 void function FD_SmokeHealTeammate( entity player, entity target, int shieldRestoreAmount )
 {
 	if( IsValid( player ) && player in file.players ){
-		file.playerAwardStats[player]["heals"] += shieldRestoreAmount
+		file.playerAwardStats[player]["heals"] += float(shieldRestoreAmount)
 		player.AddToPlayerGameStat( PGS_DEFENSE_SCORE, shieldRestoreAmount / 100 )
 		file.players[ player ].scoreThisRound += shieldRestoreAmount / 100
 	}
@@ -927,13 +927,11 @@ void function FD_BatteryHealTeammate( entity battery, entity titan, int shieldRe
 	if( IsValid( BatteryParent ) && BatteryParent in file.players ){
 		currentHeal = shieldRestoreAmount + healthRestoreAmount
 		currentHealScore = currentHeal / 100
-		file.playerAwardStats[BatteryParent]["heals"] += currentHeal
-		player.AddToPlayerGameStat( PGS_DEFENSE_SCORE, currentHealScore )
+		file.playerAwardStats[BatteryParent]["heals"] += float(currentHeal)
+		BatteryParent.AddToPlayerGameStat( PGS_DEFENSE_SCORE, currentHealScore )
 		file.players[ BatteryParent ].scoreThisRound += currentHealScore
 	}
 }
-
-void function gameWonMedals()
 
 void function FD_SetupEpilogue()
 {
