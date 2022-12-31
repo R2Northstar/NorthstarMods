@@ -915,7 +915,7 @@ void function DisplayFocusedServerInfo( int scriptID )
 	// text panels
 	Hud_SetVisible( Hud_GetChild( menu, "LabelDescription" ), true )
 	Hud_SetVisible( Hud_GetChild( menu, "LabelMods" ), false )
-	Hud_SetText( Hud_GetChild( menu, "LabelDescription" ), NSGetServerDescription( file.serversArrayFiltered[ serverIndex ].serverIndex ) + "\n\nRequired Mods:\n" + FillInServerModsLabel( file.serversArrayFiltered[ serverIndex ].serverIndex ) )
+	Hud_SetText( Hud_GetChild( menu, "LabelDescription" ), StringReplace( NSGetServerDescription( file.serversArrayFiltered[ serverIndex ].serverIndex ), "\\n", "\n", true,true )+ "\n\nRequired Mods:\n" + FillInServerModsLabel( file.serversArrayFiltered[ serverIndex ].serverIndex ) )
 
 	// map name/image/server name
 	string map = file.serversArrayFiltered[ serverIndex ].serverMap
