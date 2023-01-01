@@ -54,7 +54,7 @@ struct {
 
 	bool functionref( entity ) ReplacementTitanGamemodeRules
 	bool functionref( entity, vector ) RequestTitanGamemodeRules
-
+	array< bool functionref( entity ) > onPlayerRequestTitanCallbacks
 } file
 
 const nagInterval = 40
@@ -176,18 +176,6 @@ function IsReplacementTitanAvailableForGameState()
 	return true
 }
 
-bool function IsReplacementTitanAvailableForGameMode( entity player )
-{
-	bool shouldDoReplacementTitan = true
-	string gameMode = GameRules_GetGameMode()
-	if ( gameMode in file.onPlayerRequestTitanCallbacks )
-	{
-		foreach( callbackFunc in file.onPlayerRequestTitanCallbacks[ gameMode ] )
-			shouldDoReplacementTitan = callbackFunc( player )
-	}
-	return shouldDoReplacementTitan
-}
-
 void function SetReplacementTitanGamemodeRules( bool functionref( entity ) rules )
 {
 	file.ReplacementTitanGamemodeRules = rules
@@ -213,31 +201,16 @@ float function GetTitanRespawnTimer( entity player )
 	return player.GetNextTitanRespawnAvailable() - Time()
 }
 
-void function AddCallback_OnPlayerRequestTitan( string gamemode, bool functionref( entity player ) callbackFunc )
+void function AddCallback_OnPlayerRequestTitan( bool functionref( entity player ) callbackFunc )
 {
-	if ( ! ( gamemode in file.onPlayerRequestTitanCallbacks ) )
-	{
-		file.onPlayerRequestTitanCallbacks[ gamemode ] <- [ callbackFunc ]
-		return
-	}
-	else
-	{
-		Assert( !file.onPlayerRequestTitanCallbacks[ gamemode ].contains( callbackFunc ), "Already added func: " + string( callbackFunc ) + " with AddCallback_OnPlayerRequestTitan to game mode: " + gamemode )
-		file.onPlayerRequestTitanCallbacks[ gamemode ].append( callbackFunc )
-	}
+	Assert( !file.onPlayerRequestTitanCallbacks.contains( callbackFunc ), "Already added func: " + FunctionToString( callbackFunc ) + " with AddCallback_OnPlayerRequestTitan" )
+	file.onPlayerRequestTitanCallbacks.append( callbackFunc )
 }
 
-void function RemoveCallback_OnPlayerRequestTitan( string gamemode, bool functionref( entity player ) callbackFunc )
+void function RemoveCallback_OnPlayerRequestTitan( bool functionref( entity player ) callbackFunc )
 {
-	Assert( gamemode in file.onPlayerRequestTitanCallbacks, "Tried to remove request titan callback that gamemode isn't added" )
-	Assert( file.onPlayerRequestTitanCallbacks[ gamemode ].contains( callbackFunc ), "Tried to remove request titan callback that callbackFunc isn't added" )
-	file.onPlayerRequestTitanCallbacks[ gamemode ].fastremovebyvalue( callbackFunc )
-	
-	if ( file.onPlayerRequestTitanCallbacks[ gamemode ].len() == 0 )
-	{
-		//printt( "No more request titan callbacks for game mode: " + gamemode + ", removing array of functions" )
-		delete file.onPlayerRequestTitanCallbacks[ gamemode ]
-	}
+	Assert( file.onPlayerRequestTitanCallbacks.contains( callbackFunc ), "Tried to remove request titan callback that callbackFunc isn't added" )
+	file.onPlayerRequestTitanCallbacks.fastremovebyvalue( callbackFunc )
 }
 
 
@@ -618,10 +591,16 @@ bool function ReplacementTitan( entity player )
 		return false
 	}
 
-	if( !IsReplacementTitanAvailableForGameMode( player ) )
+	bool shouldDoReplacementTitan = true
+	foreach( callbackFunc in file.onPlayerRequestTitanCallbacks )
 	{
-		printt( "ReplacementTitan", player, player.entindex(), "failed", "IsReplacementTitanAvailableForGameMode was false" )
-		return false
+		shouldDoReplacementTitan = shouldDoReplacementTitan && callbackFunc( player )
+
+		if( !shouldDoReplacementTitan )
+		{
+			printt( "ReplacementTitan", player, player.entindex(), "failed, func: ", FunctionToString( callbackFunc ) )
+			return false
+		}
 	}
 
 	entity titan = GetPlayerTitanInMap( player )
