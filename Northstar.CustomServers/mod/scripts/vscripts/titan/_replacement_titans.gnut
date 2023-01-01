@@ -594,8 +594,7 @@ bool function ReplacementTitan( entity player )
 	bool shouldDoReplacementTitan = true
 	foreach( callbackFunc in file.onPlayerRequestTitanCallbacks )
 	{
-		shouldDoReplacementTitan = shouldDoReplacementTitan && callbackFunc( player )
-
+		shouldDoReplacementTitan = callbackFunc( player )
 		if( !shouldDoReplacementTitan )
 		{
 			printt( "ReplacementTitan", player, player.entindex(), "failed, func: ", FunctionToString( callbackFunc ) )
