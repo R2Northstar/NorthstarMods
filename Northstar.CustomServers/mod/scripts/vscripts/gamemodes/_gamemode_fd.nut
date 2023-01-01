@@ -652,6 +652,8 @@ bool function runWave( int waveIndex, bool shouldDoBuyTime )
 	{
 		SetGlobalNetInt( "FD_waveState", WAVE_STATE_BREAK )
 		OpenBoostStores()
+		entity parentCrate = GetBoostStores()[0].GetParent()
+		parentCrate.Minimap_AlwaysShow( TEAM_MILITIA, null )
 		foreach( entity player in GetPlayerArray() )
 			Remote_CallFunction_NonReplay( player, "ServerCallback_FD_NotifyStoreOpen" )
 		while( Time() < GetGlobalNetTime( "FD_nextWaveStartTime" ) )
@@ -660,7 +662,7 @@ bool function runWave( int waveIndex, bool shouldDoBuyTime )
 				SetGlobalNetTime( "FD_nextWaveStartTime", Time() )
 			WaitFrame()
 		}
-
+		parentCrate.Minimap_Hide( TEAM_MILITIA, null )
 		CloseBoostStores()
 		MessageToTeam( TEAM_MILITIA, eEventNotifications.FD_StoreClosing )
 	}
