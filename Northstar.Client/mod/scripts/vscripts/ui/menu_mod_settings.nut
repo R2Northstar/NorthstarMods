@@ -678,20 +678,21 @@ void function OnModMenuOpened()
 	RegisterButtonPressedCallback( MOUSE_WHEEL_UP , OnScrollUp )
 	RegisterButtonPressedCallback( MOUSE_WHEEL_DOWN , OnScrollDown )
 	RegisterButtonPressedCallback( MOUSE_LEFT , OnClick )
-	// RegisterButtonPressedCallback( KEY_F1, ToggleHideMenu )
-
-	// SetBlurEnabled( false )
-	// UI_SetPresentationType( ePresentationType.INACTIVE )
-	// Hud_SetVisible( file.menu, true )
 
 	OnFiltersChange(0)
 }
 
 void function OnClick( var button )
 {
+	thread CheckFocus(GetFocus())
+}
+
+void function CheckFocus( var button )
+{
+	wait 0.05
 	if (file.resetModButtons.contains(GetFocus()))
 	{
-		ResetConVar(GetFocus())
+		thread ResetConVar(GetFocus())
 	}
 }
 
