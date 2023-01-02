@@ -7,29 +7,48 @@ global function DisableTitanSelection
 global function DisableTitanSelectionForPlayer
 global function EnableTitanSelection
 global function EnableTitanSelectionForPlayer
+global function FD_DropshipSetAnimationOverride
+
+enum eDropshipState{
+	Idle,
+	InProgress,
+	Returning
+	_count_
+}
+
+
+
 
 struct player_struct_fd{
 	bool diedThisRound
 	int scoreThisRound
+	/*
 	int totalMVPs
-	int mortarUnitsKilled 
+	int mortarUnitsKilled
 	int moneySpend
 	int coresUsed
-	float longestTitanLife //not implemented yet
-	int turretsRepaired //not implemented yet
+	float longestTitanLife
+	int turretsRepaired
 	int moneyShared
 	float timeNearHarvester //dont know how to track
-	float longestLife 
+	float longestLife
 	int heals //dont know what to track
-	int titanKills 
+	int titanKills
 	float damageDealt
 	int harvesterHeals
+	int turretKills
+	*/
 	float lastRespawn
+	float lastTitanDrop
+	float lastNearHarvester
+	bool leaveHarvester
 }
 
 global HarvesterStruct& fd_harvester
 global vector shopPosition
 global vector shopAngles = < 0, 0, 0 >
+global vector FD_spawnPosition
+global vector FD_spawnAngles = < 0, 0, 0 >
 global table< string, array<vector> > routes
 global array<entity> routeNodes
 global array<entity> spawnedNPCs
@@ -44,10 +63,48 @@ struct {
 	bool havesterWasDamaged
 	bool harvesterShieldDown
 	float harvesterDamageTaken
-	table<entity,player_struct_fd> players
+	table<entity, player_struct_fd> players
+	table<entity, table<string, float> > playerAwardStats
 	entity harvester_info
 	bool playersHaveTitans = false
+
+	string animationOverride = ""
+	int dropshipState
+	int playersInShip
+	entity dropship
+	array<entity> playersInDropship
 }file
+
+
+const array<string> DROPSHIP_IDLE_ANIMS_POV = [
+
+	"ptpov_ds_coop_side_intro_gen_idle_B",
+	"ptpov_ds_coop_side_intro_gen_idle_A",
+	"ptpov_ds_coop_side_intro_gen_idle_C",
+	"ptpov_ds_coop_side_intro_gen_idle_D"
+]
+
+const array<string> DROPSHIP_IDLE_ANIMS = [
+
+	"pt_ds_coop_side_intro_gen_idle_B",
+	"pt_ds_coop_side_intro_gen_idle_A",
+	"pt_ds_coop_side_intro_gen_idle_C",
+	"pt_ds_coop_side_intro_gen_idle_D"
+]
+
+const array<string> DROPSHIP_EXIT_ANIMS_POV = [
+	"ptpov_ds_coop_side_intro_gen_exit_B",
+	"ptpov_ds_coop_side_intro_gen_exit_A",
+	"ptpov_ds_coop_side_intro_gen_exit_C",
+	"ptpov_ds_coop_side_intro_gen_exit_D"
+]
+
+const array<string> DROPSHIP_EXIT_ANIMS = [
+	"pt_ds_coop_side_intro_gen_exit_B",
+	"pt_ds_coop_side_intro_gen_exit_A",
+	"pt_ds_coop_side_intro_gen_exit_C",
+	"pt_ds_coop_side_intro_gen_exit_D"
+]
 
 void function GamemodeFD_Init()
 {
@@ -74,6 +131,8 @@ void function GamemodeFD_Init()
 	AddCallback_GameStateEnter( eGameState.Playing, startMainGameLoop )
 	AddCallback_OnRoundEndCleanup( FD_NPCCleanup )
 	AddCallback_OnClientConnected( GamemodeFD_InitPlayer )
+	AddCallback_OnPlayerGetsNewPilotLoadout( FD_OnPlayerGetsNewPilotLoadout )
+	ClassicMP_SetEpilogue( FD_SetupEpilogue )
 
 	//Damage Callbacks
 	AddDamageByCallback( "player", FD_DamageByPlayerCallback)
@@ -90,7 +149,7 @@ void function GamemodeFD_Init()
 	AddCallback_OnNPCKilled( OnNpcDeath )
 	AddCallback_OnPlayerKilled( GamemodeFD_OnPlayerKilled )
 	AddDeathCallback( "npc_frag_drone", OnTickDeath ) // ticks dont come up in the other callback because of course they dont
-	
+
 	//Command Callbacks
 	AddClientCommandCallback( "FD_ToggleReady", ClientCommandCallbackToggleReady )
 	AddClientCommandCallback( "FD_UseHarvesterShieldBoost", useShieldBoost )
@@ -101,6 +160,12 @@ void function GamemodeFD_Init()
 
 	//earn meter
 	ScoreEvent_SetupEarnMeterValuesForMixedModes()
+
+	//Data Collection
+	AddStunLaserHealCallback( FD_StunLaserHealTeammate )
+	AddBatteryHealCallback( FD_BatteryHealTeammate )
+	AddSmokeHealCallback( FD_SmokeHealTeammate )
+	SetUsedCoreCallback( FD_UsedCoreCallback )
 }
 
 // this might need updating when we do dropship things
@@ -109,22 +174,50 @@ bool function FD_ShouldAllowChangeLoadout( entity player )
 	return GetGlobalNetTime( "FD_nextWaveStartTime" ) > Time()
 }
 
-void function FD_BoostPurchaseCallback( entity player, BoostStoreData data ) 
+void function FD_BoostPurchaseCallback( entity player, BoostStoreData data )
 {
-	file.players[player].moneySpend += data.cost
+	file.playerAwardStats[player]["moneySpent"] += float( data.cost )
 }
 
 void function FD_PlayerRespawnCallback( entity player )
 {
 	if( player in file.players )
 		file.players[player].lastRespawn = Time()
-	
+
+	if( GetCurrentPlaylistVarInt( "fd_at_unlimited_ammo", 1 ) )
+		FD_GivePlayerInfiniteAntiTitanAmmo( player )
+
 	if ( !file.playersHaveTitans )
 	{
 		// why in the fuck do i need to WaitFrame() here, this sucks
 		thread PlayerEarnMeter_SetMode_Threaded( player, 0 )
 	}
+
+	if( file.dropshipState == eDropshipState.Returning )
+		return
+	if( GetGameState() != eGameState.Playing)
+		return
+
+	if( player.GetPersistentVar( "spawnAsTitan" ) )
+		return
+
+	player.SetInvulnerable()
+	if( file.dropshipState == eDropshipState.Idle )
+	{
+		thread FD_DropshipSpawnDropship()
+	}
+	//Attach player
+	FirstPersonSequenceStruct idleSequence
+	idleSequence.firstPersonAnim = DROPSHIP_IDLE_ANIMS_POV[ file.playersInShip ]
+	idleSequence.thirdPersonAnim = DROPSHIP_IDLE_ANIMS[ file.playersInShip++ ]
+	idleSequence.attachment = "ORIGIN"
+	idleSequence.teleport = true
+	idleSequence.viewConeFunction = ViewConeFree
+	idleSequence.hideProxy = true
+	thread FirstPersonSequence( idleSequence, player, file.dropship )
+	file.playersInDropship.append( player )
 }
+
 
 void function PlayerEarnMeter_SetMode_Threaded( entity player, int mode )
 {
@@ -133,22 +226,52 @@ void function PlayerEarnMeter_SetMode_Threaded( entity player, int mode )
 		PlayerEarnMeter_SetMode( player, mode )
 }
 
+void function FD_OnPlayerGetsNewPilotLoadout( entity player, PilotLoadoutDef loadout )
+{
+	if( GetCurrentPlaylistVarInt( "fd_at_unlimited_ammo", 1 ) )
+		FD_GivePlayerInfiniteAntiTitanAmmo( player )
+}
+
+void function FD_GivePlayerInfiniteAntiTitanAmmo( entity player )
+{
+	array<entity> weapons = player.GetMainWeapons()
+	foreach ( entity weaponEnt in weapons )
+	{
+		if ( weaponEnt.GetWeaponInfoFileKeyField( "menu_category" ) != "at" )
+			continue
+
+		if( !weaponEnt.HasMod( "at_unlimited_ammo" ) )
+		{
+			array<string> mods = weaponEnt.GetMods()
+			mods.append( "at_unlimited_ammo" )
+			weaponEnt.SetMods( mods )
+		}
+	}
+}
+
 void function FD_TeamReserveDepositOrWithdrawCallback( entity player, string action, int amount )
 {
 	switch( action )
 	{
 		case"deposit":
-			file.players[player].moneyShared += amount
+			file.playerAwardStats[player]["moneyShared"] += float( amount )
 			break
 		case"withdraw":
-			file.players[player].moneyShared -= amount
+			file.playerAwardStats[player]["moneyShared"] -= float( amount ) 
 			break
 	}
 }
 void function GamemodeFD_OnPlayerKilled( entity victim, entity attacker, var damageInfo )
 {
-	file.players[victim].longestLife = Time() - file.players[victim].lastRespawn
+	//set longest Time alive for end awards
+	float timeAlive = Time() - file.players[victim].lastRespawn
+	if(timeAlive>file.playerAwardStats[victim]["longestLife"])
+		file.playerAwardStats[victim]["longestLife"] = timeAlive
+
+	//set died this round for round end money boni
 	file.players[victim].diedThisRound = true
+
+	//play voicelines for amount of players alive
 	array<entity> militiaplayers = GetPlayerArrayOfTeam( TEAM_MILITIA )
 	int deaths = 0
 	foreach ( entity player in militiaplayers )
@@ -175,18 +298,25 @@ void function FD_UsedCoreCallback( entity titan, entity weapon )
 	{
 		return
 	}
-	file.players[titan].coresUsed += 1
+	file.playerAwardStats[titan]["coresUsed"] += 1
 }
 
 void function GamemodeFD_InitPlayer( entity player )
-{	
+{
 	player_struct_fd data
 	data.diedThisRound = false
+	data.leaveHarvester = true
 	file.players[player] <- data
+	table<string, float> awardStats
+	foreach( string statRef in  GetFDStatRefs() )
+	{
+		awardStats[statRef] <- 0.0
+	}
+	file.playerAwardStats[player] <- awardStats
 	thread SetTurretSettings_threaded( player )
 	// only start the highlight when we start playing, not during dropship
 	if ( GetGameState() >= eGameState.Playing )
-		Highlight_SetFriendlyHighlight( player, "sp_friendly_hero" ) 
+		Highlight_SetFriendlyHighlight( player, "sp_friendly_hero" )
 
 	if( file.playersHaveTitans ) // first wave is index 0
 	{
@@ -216,21 +346,25 @@ void function OnTickDeath( entity victim, var damageInfo )
 	if ( findIndex != -1 )
 	{
 		spawnedNPCs.remove( findIndex )
-	
+
 		SetGlobalNetInt( "FD_AICount_Ticks", GetGlobalNetInt( "FD_AICount_Ticks" ) -1 )
-		
+
 		SetGlobalNetInt( "FD_AICount_Current", GetGlobalNetInt( "FD_AICount_Current" ) -1 )
 	}
 }
 
 void function OnNpcDeath( entity victim, entity attacker, var damageInfo )
-{	
+{
+	if( attacker.GetClassName() == "npc_turret_sentry" )
+	{
+		file.playerAwardStats[attacker.GetBossPlayer()]["turretKills"]++
+	}
 	if( victim.IsTitan() && attacker in file.players )
-		file.players[attacker].titanKills++
+		file.playerAwardStats[attacker]["titanKills"]++
 	int victimTypeID = FD_GetAITypeID_ByString( victim.GetTargetName() )
 	if( ( victimTypeID == eFD_AITypeIDs.TITAN_MORTAR ) || ( victimTypeID == eFD_AITypeIDs.SPECTRE_MORTAR ) )
 		if( attacker in file.players )
-			file.players[attacker].mortarUnitsKilled++
+			file.playerAwardStats[attacker]["mortarUnitsKilled"]++
 	int findIndex = spawnedNPCs.find( victim )
 	if ( findIndex != -1 )
 	{
@@ -239,13 +373,13 @@ void function OnNpcDeath( entity victim, entity attacker, var damageInfo )
 		string netIndex = GetAiNetIdFromTargetName( victim.GetTargetName() )
 		if( netIndex != "" )
 			SetGlobalNetInt( netIndex, GetGlobalNetInt( netIndex ) - 1 )
-		
+
 		SetGlobalNetInt( "FD_AICount_Current", GetGlobalNetInt( "FD_AICount_Current" ) - 1 )
 	}
 
 	if ( victim.GetOwner() == attacker || !attacker.IsPlayer() || ( attacker == victim ) || ( victim.GetBossPlayer() == attacker ) || victim.GetClassName() == "npc_turret_sentry" )
 		return
-	
+
 	int playerScore = 0
 	int money = 0
 	int scriptDamageType = DamageInfo_GetCustomDamageType( damageInfo )
@@ -296,7 +430,7 @@ void function OnNpcDeath( entity victim, entity attacker, var damageInfo )
 		}
 	}
 
-	
+
 }
 
 void function RateSpawnpoints_FD( int _0, array<entity> _1, int _2, entity _3 )
@@ -312,7 +446,7 @@ bool function useShieldBoost( entity player, array<string> args )
 		SetGlobalNetTime( "FD_harvesterInvulTime", Time() + 5 )
 		MessageToTeam( TEAM_MILITIA,eEventNotifications.FD_PlayerHealedHarvester, null, player )
 		player.SetPlayerNetInt( "numHarvesterShieldBoost", player.GetPlayerNetInt( "numHarvesterShieldBoost" ) - 1 )
-		file.players[player].harvesterHeals += 1
+		file.playerAwardStats[player]["harvesterHeals"]++
 	}
 	return true
 }
@@ -476,7 +610,7 @@ void function SetEnemyAmountNetVars( int waveIndex )
 				break
 			default:
 				npcs[e.spawnEvent.spawnType] += e.spawnEvent.spawnAmount
-				
+
 		}
 		total+= e.spawnEvent.spawnAmount
 	}
@@ -525,6 +659,9 @@ bool function runWave( int waveIndex, bool shouldDoBuyTime )
 	{
 		SetGlobalNetInt( "FD_waveState", WAVE_STATE_BREAK )
 		OpenBoostStores()
+		entity parentCrate = GetBoostStores()[0].GetParent()
+		parentCrate.Minimap_AlwaysShow( TEAM_MILITIA, null )
+		Minimap_PingForTeam( TEAM_MILITIA, shopPosition, 150, 5, TEAM_COLOR_YOU / 255.0, 5 )
 		foreach( entity player in GetPlayerArray() )
 			Remote_CallFunction_NonReplay( player, "ServerCallback_FD_NotifyStoreOpen" )
 		while( Time() < GetGlobalNetTime( "FD_nextWaveStartTime" ) )
@@ -533,11 +670,11 @@ bool function runWave( int waveIndex, bool shouldDoBuyTime )
 				SetGlobalNetTime( "FD_nextWaveStartTime", Time() )
 			WaitFrame()
 		}
-
+		parentCrate.Minimap_Hide( TEAM_MILITIA, null )
 		CloseBoostStores()
 		MessageToTeam( TEAM_MILITIA, eEventNotifications.FD_StoreClosing )
 	}
-	
+
 	//SetGlobalNetTime("FD_nextWaveStartTime",Time()+10)
 	wait 10
 	SetGlobalNetInt( "FD_waveState", WAVE_STATE_INCOMING )
@@ -549,7 +686,7 @@ bool function runWave( int waveIndex, bool shouldDoBuyTime )
 	SetGlobalNetBool( "FD_waveActive", true )
 	MessageToTeam( TEAM_MILITIA, eEventNotifications.FD_AnnounceWaveStart )
 	SetGlobalNetInt( "FD_waveState", WAVE_STATE_BREAK )
-	
+
 	//main wave loop
 	thread SetWaveStateReady()
 	executeWave()
@@ -622,7 +759,7 @@ bool function runWave( int waveIndex, bool shouldDoBuyTime )
 		entity highestScore_player = GetPlayerArray()[0]
 		foreach( entity player in GetPlayerArray() )
 		{
-			
+
 			if( !file.players[player].diedThisRound )
 				AddPlayerScore( player, "FDDidntDie" )
 			if( highestScore < file.players[player].scoreThisRound )
@@ -632,16 +769,31 @@ bool function runWave( int waveIndex, bool shouldDoBuyTime )
 			}
 
 		}
-		file.players[highestScore_player].totalMVPs += 1
+		file.playerAwardStats[highestScore_player]["mvp"]++
 		AddPlayerScore( highestScore_player, "FDWaveMVP" )
 		wait 1
 		foreach( entity player in GetPlayerArray() )
 			if( !file.havesterWasDamaged )
 				AddPlayerScore( player, "FDTeamFlawlessWave" )
 
+		foreach(entity player in GetPlayerArray() )
+		{
+			if( IsAlive( player ) )
+			{
+				float timeAlive = Time() - file.players[player].lastRespawn
+				if(timeAlive>file.playerAwardStats[player]["longestLife"])
+					file.playerAwardStats[player]["longestLife"] = timeAlive
+			}
+			if( IsValid( player.GetPetTitan ) )
+			{
+				float timeAlive = Time() - file.players[player].lastTitanDrop
+				if(timeAlive>file.playerAwardStats[player]["longestTitanLife"])
+					file.playerAwardStats[player]["longestTitanLife"] = timeAlive
+			}
+		}
 
 
-		
+
 		SetRoundBased(false)
 		SetWinner(TEAM_MILITIA)
 		PlayFactionDialogueToTeam( "fd_matchVictory", TEAM_MILITIA )
@@ -710,7 +862,7 @@ bool function runWave( int waveIndex, bool shouldDoBuyTime )
 			highestScore_player = player
 		}
 	}
-	file.players[highestScore_player].totalMVPs += 1
+	file.playerAwardStats[highestScore_player]["mvp"]++
 	AddPlayerScore( highestScore_player, "FDWaveMVP" )
 	AddMoneyToPlayer( highestScore_player, 100 )
 	highestScore_player.AddToPlayerGameStat( PGS_ASSAULT_SCORE, FD_SCORE_MVP )
@@ -747,12 +899,187 @@ void function SetWaveStateReady()
 	SetGlobalNetInt( "FD_waveState", WAVE_STATE_IN_PROGRESS )
 }
 
-void function gameWonMedals()
+void function FD_StunLaserHealTeammate( entity player, entity target, int shieldRestoreAmount )
 {
-	table<string,entity> medals
-	//most mvps
+	if( IsValid( player ) && player in file.players ){
+		file.playerAwardStats[player]["heals"] += float( shieldRestoreAmount )
+		player.AddToPlayerGameStat( PGS_DEFENSE_SCORE, shieldRestoreAmount / 100 )
+		file.players[ player ].scoreThisRound += shieldRestoreAmount / 100
+	}
 }
 
+void function FD_SmokeHealTeammate( entity player, entity target, int shieldRestoreAmount )
+{
+	if( IsValid( player ) && player in file.players ){
+		file.playerAwardStats[player]["heals"] += float( shieldRestoreAmount )
+		player.AddToPlayerGameStat( PGS_DEFENSE_SCORE, shieldRestoreAmount / 100 )
+		file.players[ player ].scoreThisRound += shieldRestoreAmount / 100
+	}
+}
+
+void function FD_BatteryHealTeammate( entity battery, entity titan, int shieldRestoreAmount, int healthRestoreAmount )
+{
+	entity BatteryParent = battery.GetParent()
+	entity TargetTitan
+	int currentHeal
+	int currentHealScore
+	
+	if( titan.IsPlayer() )
+		TargetTitan = titan
+	else if( titan.GetBossPlayer() != null )
+		TargetTitan = titan.GetBossPlayer()
+	else
+		return
+
+	if( BatteryParent == TargetTitan )
+		return
+
+	if( IsValid( BatteryParent ) && BatteryParent in file.players ){
+		currentHeal = shieldRestoreAmount + healthRestoreAmount
+		currentHealScore = currentHeal / 100
+		file.playerAwardStats[BatteryParent]["heals"] += float( currentHeal )
+		BatteryParent.AddToPlayerGameStat( PGS_DEFENSE_SCORE, currentHealScore )
+		file.players[ BatteryParent ].scoreThisRound += currentHealScore
+	}
+}
+
+void function FD_SetupEpilogue()
+{
+	AddCallback_GameStateEnter( eGameState.Epilogue, FD_Epilogue )
+}
+
+void function FD_Epilogue()
+{
+	thread FD_Epilogue_threaded()
+}
+
+void function FD_Epilogue_threaded()
+{
+	table<string,entity> awardOwners
+	table<string,float> awardValues
+	wait 5
+	foreach(entity player in GetPlayerArray() )
+	{
+		player.FreezeControlsOnServer()
+		ScreenFadeToBlackForever( player, 6.0 )
+
+		foreach( string ref in GetFDStatRefs() )
+		{
+			if( !( ref in awardOwners ) )
+			{
+				awardOwners[ref] <- player
+				awardValues[ref] <- file.playerAwardStats[player][ref]
+			}
+			else if( awardValues[ref] < file.playerAwardStats[player][ref] )
+			{
+				awardOwners[ref] = player
+				awardValues[ref] = file.playerAwardStats[player][ref]
+			}
+		}
+	}
+	table<entity, string> awardResults
+	table<entity, float> awardResultValues
+
+	foreach(string ref,entity player in awardOwners)
+	{
+
+		if( awardValues[ref] >  GetFDStatData( ref ).validityCheckValue ) //might be >=
+		{
+			awardResults[player] <- ref
+			awardResultValues[player] <- awardValues[ref]
+		}
+			
+	}
+
+	int gameMode = PersistenceGetEnumIndexForItemName( "gamemodes", GAMETYPE )
+	int map = PersistenceGetEnumIndexForItemName( "maps", GetMapName() )
+	int myIndex
+	int numPlayers = GetPlayerArray().len()
+
+	foreach( entity player in GetPlayerArray() )
+	{
+		if( !( player in awardResults ) )
+		{
+			awardResults[player] <- "damageDealt"
+			awardResultValues[player] <- file.playerAwardStats[player]["damageDealt"]
+		}
+	}
+
+	foreach( entity player in GetPlayerArray() )
+	{
+		int i = 0
+		myIndex = player.GetPlayerIndex()
+
+		player.SetPersistentVar( "postGameDataFD.gameMode", gameMode )
+		player.SetPersistentVar( "postGameDataFD.map", map )
+		player.SetPersistentVar( "postGameDataFD.myIndex", myIndex )
+		player.SetPersistentVar( "postGameDataFD.numPlayers", numPlayers )	
+
+		foreach( entity medalPlayer, string ref in awardResults )
+		{
+			if( i == numPlayers )
+				break;
+
+			int targetIndex = medalPlayer.GetPlayerIndex()
+			string name = medalPlayer.GetPlayerName()
+			string xuid = medalPlayer.GetUID()
+			int awardId = GetFDStatData( ref ).index
+			float awardValue = awardResultValues[medalPlayer]
+			int suitIndex = GetPersistentSpawnLoadoutIndex( medalPlayer, "titan" )
+			int playerEHandle = medalPlayer.GetEncodedEHandle()
+
+			player.SetPersistentVar( "postGameDataFD.players[" + targetIndex + "].name", name )
+			player.SetPersistentVar( "postGameDataFD.players[" + targetIndex + "].xuid", xuid )
+			player.SetPersistentVar( "postGameDataFD.players[" + targetIndex + "].awardId", awardId )
+			player.SetPersistentVar( "postGameDataFD.players[" + targetIndex + "].awardValue", awardValue )
+			player.SetPersistentVar( "postGameDataFD.players[" + targetIndex + "].suitIndex", suitIndex )
+			Remote_CallFunction_NonReplay( player, "ServerCallback_UpdateGameStats", playerEHandle, awardId, awardValue, suitIndex )
+			i++
+		}
+		Remote_CallFunction_NonReplay( player, "ServerCallback_ShowGameStats", Time() + 19 )
+	}
+	/* //debugging prints
+	foreach( entity player, table< string, float > data in file.playerAwardStats)
+	{
+		printt("Stats for", player)
+		foreach( string ref, float val in data )
+		{
+			printt("    ",ref,val)
+		}
+	}
+	foreach( string ref, entity player in awardOwners )
+	{
+		printt( player, ref, awardValues[ref] )
+	}
+	*/
+	wait 20
+	SetGameState(eGameState.Postmatch)
+}
+
+void function IncrementPlayerstat_TurretRevives( entity player )
+{
+	file.playerAwardStats[player]["turretsRepaired"]++
+}
+
+void function SpawnCallback_SafeTitanSpawnTime( entity ent )
+{
+	if( ent.IsTitan() && IsValid( GetPetTitanOwner( ent ) ) )
+	{
+		entity player = GetPetTitanOwner( ent )
+		file.players[player].lastTitanDrop = Time()
+	}
+}
+
+void function DeathCallback_CalculateTitanAliveTime( entity ent )
+{
+	if( ent.IsTitan() && IsValid( GetPetTitanOwner( ent ) ) )
+	{
+		entity player = GetPetTitanOwner( ent )
+		float aliveTime = file.players[player].lastTitanDrop - Time()
+		if( aliveTime > file.playerAwardStats[player]["longestTitanLife"] )
+			file.playerAwardStats[player]["longestTitanLife"] = aliveTime
+	}
+}
 
 void function OnHarvesterDamaged( entity harvester, var damageInfo )
 {
@@ -960,18 +1287,18 @@ void function initNetVars()
 		else
 			FD_SetNumAllowedRestarts( 2 )
 	}
-	
+
 
 }
 
-void function FD_DamageByPlayerCallback(entity victim,var damageInfo)
+void function FD_DamageByPlayerCallback( entity victim, var damageInfo )
 {
 	entity player = DamageInfo_GetAttacker( damageInfo )
 	if( !( player in file.players ) )
 		return
 	float damage = DamageInfo_GetDamage( damageInfo )
-	file.players[player].damageDealt += damage
-	file.players[player].scoreThisRound += damage.tointeger() //TODO NOT HOW SCORE WORKS
+	file.playerAwardStats[player]["damageDealt"] += damage
+	file.players[ player ].scoreThisRound += damage.tointeger() //TODO NOT HOW SCORE WORKS
 	if( victim.IsTitan() )
 	{
 		//TODO Money and score for titan damage
@@ -998,13 +1325,13 @@ void function DamageScaleByDifficulty( entity ent, var damageInfo )
 	if ( attacker.IsPlayer() && attacker.GetTeam() == TEAM_IMC ) // in case we ever want a PvP in Frontier Defense, don't scale their damage
 		return
 
-	
+
 	if ( attacker == ent ) // dont scale self damage
 		return
 
 
 	DamageInfo_SetDamage( damageInfo, ( damageAmount * GetCurrentPlaylistVarFloat( "fd_player_damage_scalar", 1.0 ) ) )
-	
+
 
 
 }
@@ -1020,12 +1347,12 @@ void function HealthScaleByDifficulty( entity ent )
 
 	if (ent.IsTitan()&& IsValid(GetPetTitanOwner( ent ) ) ) // in case we ever want pvp in FD
 		return
-	
+
 	if ( ent.IsTitan() )
 		ent.SetMaxHealth( ent.GetMaxHealth() + GetCurrentPlaylistVarInt( "fd_titan_health_adjust", 0 ) )
 	else
 		ent.SetMaxHealth( ent.GetMaxHealth() + GetCurrentPlaylistVarInt( "fd_reaper_health_adjust", 0 ) )
-	
+
 	if( GetCurrentPlaylistVarInt( "fd_pro_titan_shields", 0 ) && ent.IsTitan() )
 	{
 		entity soul = ent.GetTitanSoul()
@@ -1050,6 +1377,68 @@ void function FD_createHarvester()
 	fd_harvester.harvester.Minimap_SetZOrder( MINIMAP_Z_OBJECT )
 	fd_harvester.harvester.Minimap_SetCustomState( eMinimapObject_prop_script.FD_HARVESTER )
 	AddEntityCallback_OnDamaged( fd_harvester.harvester, OnHarvesterDamaged )
+	thread CreateHarvesterHintTrigger( fd_harvester.harvester )
+}
+
+void function CreateHarvesterHintTrigger( entity harvester )
+{
+	entity trig = CreateEntity( "trigger_cylinder" )
+	trig.SetRadius( 1000 )	//Test setting
+	trig.SetAboveHeight( 2500 )	//Test setting
+	trig.SetBelowHeight( 2500 )	//Test setting
+	trig.SetOrigin( harvester.GetOrigin() )
+	trig.kv.triggerFilterNpc = "none"
+	trig.kv.triggerFilterPlayer = "all"
+
+	SetTeam( trig, harvester.GetTeam() )
+	DispatchSpawn( trig )
+	trig.SetEnterCallback( OnEnterNearHarvesterTrigger )
+	trig.SetLeaveCallback( OnLeaveNearHarvesterTrigger )
+
+	harvester.EndSignal( "OnDestroy" )
+	trig.EndSignal( "OnDestroy" )
+
+	OnThreadEnd(
+		function() : ( trig )
+		{
+			if ( IsValid( trig ) )
+				trig.Destroy()
+		}
+	)
+
+	WaitForever()
+}
+
+void function OnEnterNearHarvesterTrigger( entity trig, entity activator )
+{
+	if( !( activator in file.players ) )
+		return
+		
+	if( GetGlobalNetInt( "FD_waveState" ) != WAVE_STATE_IN_PROGRESS )
+		return
+
+	if ( activator != null && activator.IsPlayer() && activator.GetTeam() == trig.GetTeam() && file.players[activator].leaveHarvester == true )
+	{
+		file.players[activator].lastNearHarvester = Time()
+		file.players[activator].leaveHarvester = false
+	}
+}
+
+void function OnLeaveNearHarvesterTrigger( entity trig, entity activator )
+{
+	if( !( activator in file.players ) )
+		return
+		
+	if( GetGlobalNetInt( "FD_waveState" ) != WAVE_STATE_IN_PROGRESS )
+		return
+
+	float CurrentTime = Time() - file.players[activator].lastNearHarvester
+
+	if ( activator != null && activator.IsPlayer() && activator.GetTeam() == trig.GetTeam() && file.players[activator].leaveHarvester == false )
+	{
+		file.playerAwardStats[activator]["timeNearHarvester"] += CurrentTime
+		file.players[activator].leaveHarvester = true
+	}
 }
 
 bool function isFinalWave()
@@ -1220,7 +1609,7 @@ string function GetTargetNameForID( int typeId )
 string function GetAiNetIdFromTargetName( string targetName )
 {
 	switch ( targetName )
-	{	
+	{
 		case "titan":
 		case "sniperTitan":
 		case "npc_titan_ogre_meteor_boss_fd":
@@ -1323,4 +1712,82 @@ void function DisableTitanSelectionForPlayer( entity player )
 		if ( enumName != "" && enumName != selectedEnumName )
 			player.SetPersistentVar( "titanClassLockState[" + enumName + "]", TITAN_CLASS_LOCK_STATE_LOCKED )
 	}
+}
+
+
+
+
+void function FD_DropshipSpawnDropship()
+{
+	file.playersInShip = 0
+	file.dropshipState = eDropshipState.InProgress
+	file.dropship = CreateDropship( TEAM_MILITIA, FD_spawnPosition , FD_spawnAngles )
+
+
+	file.dropship.SetModel( $"models/vehicle/crow_dropship/crow_dropship_hero.mdl" )
+	file.dropship.SetValueForModelKey( $"models/vehicle/crow_dropship/crow_dropship_hero.mdl" )
+
+	DispatchSpawn( file.dropship )
+	file.dropship.SetModel( $"models/vehicle/crow_dropship/crow_dropship_hero.mdl" )
+
+	thread PlayAnim(file.dropship, FD_DropshipGetAnimation())
+
+	array<string> anims = GetRandomDropshipDropoffAnims()
+
+	//thread WarpinEffect( $"models/vehicle/crow_dropship/crow_dropship.mdl", anims[0], file.dropship.GetOrigin(),f ile.dropship.GetAngles() ) //this does not work
+	file.dropship.WaitSignal( "deploy" )
+	file.dropshipState = eDropshipState.Returning
+	foreach(int i,entity player in file.playersInDropship)
+	{
+		thread FD_DropshipDropPlayer( player, i )
+	}
+	file.playersInDropship.clear()
+
+	wait 8
+	file.dropshipState = eDropshipState.Idle
+}
+
+void function FD_DropshipDropPlayer(entity player,int playerDropshipIndex)
+{
+	player.EndSignal( "OnDestroy" )
+	FirstPersonSequenceStruct jumpSequence
+	jumpSequence.firstPersonAnim = DROPSHIP_EXIT_ANIMS_POV[ playerDropshipIndex ]
+	jumpSequence.thirdPersonAnim = DROPSHIP_EXIT_ANIMS[ playerDropshipIndex ]
+	jumpSequence.attachment = "ORIGIN"
+	jumpSequence.blendTime = 0.0
+	jumpSequence.viewConeFunction = ViewConeFree
+
+	thread FirstPersonSequence( jumpSequence, player, file.dropship )
+	WaittillAnimDone( player )
+	player.ClearParent()
+	ClearPlayerAnimViewEntity( player )
+	player.ClearInvulnerable()
+}
+
+void function FD_DropshipSetAnimationOverride(string animation)
+{
+	file.animationOverride = animation
+}
+
+string function FD_DropshipGetAnimation()
+{
+	if(file.animationOverride!="")
+	return file.animationOverride
+
+	switch( GetMapName() )
+	{
+	case "mp_homestead":
+		return "dropship_coop_respawn_homestead"
+	case "mp_lagoon":
+		return "dropship_coop_respawn_lagoon"
+	case "mp_overlook":
+		return "dropship_coop_respawn_overlook"
+	case "mp_outpost":
+		return "dropship_coop_respawn_outpost"
+	case "mp_wargames":
+		return "dropship_coop_respawn_wargames"
+	case "mp_digsite":
+		return "dropship_coop_respawn_digsite"
+	}
+	return "dropship_coop_respawn"
 }
