@@ -10,12 +10,6 @@ global function FW_IsPlayerInFriendlyTerritory
 global function FW_IsPlayerInEnemyTerritory
 global function FW_ReCalculateTitanReplacementPoint
 
-// default havester settings
-const int FW_DEFAULT_HARVESTER_HEALTH = 25000
-const int FW_DEFAULT_HARVESTER_SHIELD = 5000
-// default turret settings
-const int FW_DEFAULT_TURRET_HEALTH = 12500
-const int FW_DEFAULT_TURRET_SHIELD = 4000
 // you need to deal this much damage to trigger "FortWarTowerDamage" score event
 const int FW_HARVESTER_DAMAGE_SEGMENT = 1500
 
@@ -1499,9 +1493,11 @@ void function TurretStateWatcher( TurretSiteStruct turretSite )
     entity turret = turretSite.turret
     entity batteryPort = expect entity( turret.s.relatedBatteryPort )
 
-    turret.SetMaxHealth( FW_DEFAULT_TURRET_HEALTH )
-    turret.SetHealth( FW_DEFAULT_TURRET_HEALTH )
-    turret.SetShieldHealthMax( FW_DEFAULT_TURRET_SHIELD )
+    int turretHealth = GetCurrentPlaylistVarInt( "fw_turret_health", FW_DEFAULT_TURRET_HEALTH )
+    int turretShield = GetCurrentPlaylistVarInt( "fw_turret_shield", FW_DEFAULT_TURRET_SHIELD )
+    turret.SetMaxHealth( turretHealth )
+    turret.SetHealth( turretHealth )
+    turret.SetShieldHealthMax( turretShield )
 
     string idString = turretSite.turretflagid
     string siteVarName = "turretSite" + idString
@@ -1670,7 +1666,7 @@ entity function FW_GetTeamHarvesterProp( int team )
 void function FW_createHarvester()
 {
     // mlt havester spawn
-    fw_harvesterImc = SpawnHarvester( file.harvesterImc_info.GetOrigin(), file.harvesterImc_info.GetAngles(), GetCurrentPlaylistVarInt( "fd_harvester_health", FW_DEFAULT_HARVESTER_HEALTH ), GetCurrentPlaylistVarInt( "fd_harvester_shield", FW_DEFAULT_HARVESTER_SHIELD ), TEAM_IMC )
+    fw_harvesterImc = SpawnHarvester( file.harvesterImc_info.GetOrigin(), file.harvesterImc_info.GetAngles(), GetCurrentPlaylistVarInt( "fw_harvester_health", FW_DEFAULT_HARVESTER_HEALTH ), GetCurrentPlaylistVarInt( "fw_harvester_shield", FW_DEFAULT_HARVESTER_SHIELD ), TEAM_IMC )
 	fw_harvesterImc.harvester.Minimap_SetAlignUpright( true )
 	fw_harvesterImc.harvester.Minimap_AlwaysShow( TEAM_IMC, null )
 	fw_harvesterImc.harvester.Minimap_AlwaysShow( TEAM_MILITIA, null )
@@ -1694,7 +1690,7 @@ void function FW_createHarvester()
 
 
     // mlt havester spawn
-    fw_harvesterMlt = SpawnHarvester( file.harvesterMlt_info.GetOrigin(), file.harvesterMlt_info.GetAngles(), GetCurrentPlaylistVarInt( "fd_harvester_health", FW_DEFAULT_HARVESTER_HEALTH ), GetCurrentPlaylistVarInt( "fd_harvester_shield", FW_DEFAULT_HARVESTER_SHIELD ), TEAM_MILITIA )
+    fw_harvesterMlt = SpawnHarvester( file.harvesterMlt_info.GetOrigin(), file.harvesterMlt_info.GetAngles(), GetCurrentPlaylistVarInt( "fw_harvester_health", FW_DEFAULT_HARVESTER_HEALTH ), GetCurrentPlaylistVarInt( "fw_harvester_shield", FW_DEFAULT_HARVESTER_SHIELD ), TEAM_MILITIA )
     fw_harvesterMlt.harvester.Minimap_SetAlignUpright( true )
 	fw_harvesterMlt.harvester.Minimap_AlwaysShow( TEAM_IMC, null )
 	fw_harvesterMlt.harvester.Minimap_AlwaysShow( TEAM_MILITIA, null )

@@ -2,10 +2,6 @@
 untyped
 global function InitTurretBatteryPort // only for fw turrets!
 
-const float TURRET_BATTERY_REGEN_PERCENTAGE = 0.33
-const float TURRET_HACKED_HEALTH_PERCENTAGE = 0.5
-const float TURRET_HACKED_SHIELD_PERCENTAGE = 0.5
-
 void function InitTurretBatteryPort( entity batteryPort )
 {
     batteryPort.s.relatedTurret <- null             // entity, for saving batteryPort's nearest turret
@@ -202,12 +198,13 @@ void function ApplyBatteryToBatteryPort( entity player, entity batteryPort )
     }
 
     // restore turret health
-    int newHealth = int ( min( turret.GetMaxHealth(), turret.GetHealth() + ( turret.GetMaxHealth() * TURRET_BATTERY_REGEN_PERCENTAGE ) ) )
+    int newHealth = int ( min( turret.GetMaxHealth(), turret.GetHealth() + ( turret.GetMaxHealth() * GetCurrentPlaylistVarFloat( "fw_turret_fixed_health", TURRET_FIXED_HEALTH_PERCENTAGE ) ) ) )
     if( turretReplaced || teamChanged ) // replaced/hacked turret will spawn with 50% health
-        newHealth = int ( turret.GetMaxHealth() * TURRET_HACKED_HEALTH_PERCENTAGE )
-    int newShield = turret.GetShieldHealthMax()
+        newHealth = int ( turret.GetMaxHealth() * GetCurrentPlaylistVarFloat( "fw_turret_hacked_health", TURRET_HACKED_HEALTH_PERCENTAGE ) )
+    // restore turret shield
+    int newShield = int ( min( turret.GetShieldHealthMax(), turret.GetShieldHealth() + ( turret.GetShieldHealth() * GetCurrentPlaylistVarFloat( "fw_turret_fixed_shield", TURRET_FIXED_SHIELD_PERCENTAGE ) ) ) )
     if( turretReplaced || teamChanged ) // replaced/hacked turret will spawn with 50% shield
-        newShield = int ( turret.GetShieldHealthMax() * TURRET_HACKED_SHIELD_PERCENTAGE )
+        newShield = int ( turret.GetShieldHealthMax() * GetCurrentPlaylistVarFloat( "fw_turret_hacked_shield", TURRET_HACKED_SHIELD_PERCENTAGE ) )
     // only do team score event if turret's shields down, encourage players to hack more turrets
     bool additionalScore = turret.GetShieldHealth() <= 0
     // this can be too much powerful
