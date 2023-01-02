@@ -729,13 +729,13 @@ void function waitUntilLessThanAmountAliveEventWeighted( SmokeEvent smokeEvent, 
 void function spawnSuperSpectre( SmokeEvent smokeEvent, SpawnEvent spawnEvent, FlowControlEvent flowControlEvent, SoundEvent soundEvent )
 {
 	PingMinimap( spawnEvent.origin.x, spawnEvent.origin.y, 4, 600, 150, 0 )
+	wait 4.7
 
 	entity npc = CreateSuperSpectre( TEAM_IMC, spawnEvent.origin, spawnEvent.angles )
 	SetSpawnOption_AISettings( npc, "npc_super_spectre_fd" )
 	spawnedNPCs.append( npc )
 	if( spawnEvent.entityGlobalKey != "" )
 		GlobalEventEntitys[spawnEvent.entityGlobalKey] <- npc
-	wait 4.7
 	DispatchSpawn( npc )
 	SetTargetName( npc, GetTargetNameForID( spawnEvent.spawnType ) )
 	AddMinimapForHumans( npc )
@@ -747,13 +747,13 @@ void function spawnSuperSpectre( SmokeEvent smokeEvent, SpawnEvent spawnEvent, F
 void function spawnSuperSpectreWithMinion( SmokeEvent smokeEvent, SpawnEvent spawnEvent, FlowControlEvent flowControlEvent, SoundEvent soundEvent )
 {
 	PingMinimap( spawnEvent.origin.x, spawnEvent.origin.y, 4, 600, 150, 0 )
+	wait 4.7
 
 	entity npc = CreateSuperSpectre( TEAM_IMC, spawnEvent.origin,spawnEvent.angles )
 	SetSpawnOption_AISettings( npc, "npc_super_spectre_fd" )
 	spawnedNPCs.append( npc )
 	if( spawnEvent.entityGlobalKey != "" )
 		GlobalEventEntitys[spawnEvent.entityGlobalKey] <- npc
-	wait 4.7
 	DispatchSpawn( npc )
 	SetTargetName( npc, GetTargetNameForID( spawnEvent.spawnType ) )
 	AddMinimapForHumans( npc )

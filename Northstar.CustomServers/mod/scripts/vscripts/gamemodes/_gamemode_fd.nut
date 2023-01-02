@@ -230,7 +230,7 @@ void function FD_GivePlayerInfiniteAntiTitanAmmo( entity player )
 	array<entity> weapons = player.GetMainWeapons()
 	foreach ( entity weaponEnt in weapons )
 	{
-		if ( weaponEnt.GetWeaponType() != WT_ANTITITAN )
+		if ( weaponEnt.GetWeaponInfoFileKeyField( "menu_category" ) != "at" )
 			continue
 
 		if( !weaponEnt.HasMod( "at_unlimited_ammo" ) )
@@ -652,6 +652,9 @@ bool function runWave( int waveIndex, bool shouldDoBuyTime )
 	{
 		SetGlobalNetInt( "FD_waveState", WAVE_STATE_BREAK )
 		OpenBoostStores()
+		entity parentCrate = GetBoostStores()[0].GetParent()
+		parentCrate.Minimap_AlwaysShow( TEAM_MILITIA, null )
+		Minimap_PingForTeam( TEAM_MILITIA, shopPosition, 150, 5, TEAM_COLOR_YOU / 255.0, 5 )
 		foreach( entity player in GetPlayerArray() )
 			Remote_CallFunction_NonReplay( player, "ServerCallback_FD_NotifyStoreOpen" )
 		while( Time() < GetGlobalNetTime( "FD_nextWaveStartTime" ) )
@@ -660,7 +663,7 @@ bool function runWave( int waveIndex, bool shouldDoBuyTime )
 				SetGlobalNetTime( "FD_nextWaveStartTime", Time() )
 			WaitFrame()
 		}
-
+		parentCrate.Minimap_Hide( TEAM_MILITIA, null )
 		CloseBoostStores()
 		MessageToTeam( TEAM_MILITIA, eEventNotifications.FD_StoreClosing )
 	}
@@ -892,7 +895,7 @@ void function SetWaveStateReady()
 void function FD_StunLaserHealTeammate( entity player, entity target, int shieldRestoreAmount )
 {
 	if( IsValid( player ) && player in file.players ){
-		file.playerAwardStats[player]["heals"] += float(shieldRestoreAmount)
+		file.playerAwardStats[player]["heals"] += float( shieldRestoreAmount )
 		player.AddToPlayerGameStat( PGS_DEFENSE_SCORE, shieldRestoreAmount / 100 )
 		file.players[ player ].scoreThisRound += shieldRestoreAmount / 100
 	}
@@ -901,7 +904,7 @@ void function FD_StunLaserHealTeammate( entity player, entity target, int shield
 void function FD_SmokeHealTeammate( entity player, entity target, int shieldRestoreAmount )
 {
 	if( IsValid( player ) && player in file.players ){
-		file.playerAwardStats[player]["heals"] += float(shieldRestoreAmount)
+		file.playerAwardStats[player]["heals"] += float( shieldRestoreAmount )
 		player.AddToPlayerGameStat( PGS_DEFENSE_SCORE, shieldRestoreAmount / 100 )
 		file.players[ player ].scoreThisRound += shieldRestoreAmount / 100
 	}
@@ -927,7 +930,7 @@ void function FD_BatteryHealTeammate( entity battery, entity titan, int shieldRe
 	if( IsValid( BatteryParent ) && BatteryParent in file.players ){
 		currentHeal = shieldRestoreAmount + healthRestoreAmount
 		currentHealScore = currentHeal / 100
-		file.playerAwardStats[BatteryParent]["heals"] += float(currentHeal)
+		file.playerAwardStats[BatteryParent]["heals"] += float( currentHeal )
 		BatteryParent.AddToPlayerGameStat( PGS_DEFENSE_SCORE, currentHealScore )
 		file.players[ BatteryParent ].scoreThisRound += currentHealScore
 	}
