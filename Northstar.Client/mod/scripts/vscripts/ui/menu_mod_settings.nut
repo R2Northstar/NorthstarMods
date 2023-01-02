@@ -208,7 +208,7 @@ void function ShowAreYouSureDialog( string header, void functionref() func, stri
 	DialogData dialogData
 	dialogData.header = header
 	dialogData.message = details
-
+	
 	AddDialogButton( dialogData, "#NO" )
 	AddDialogButton( dialogData, "#YES", func )
 
@@ -395,6 +395,7 @@ void function UpdateList()
 					if ( lastModNameInFilter != c.modName )
 					{
 						array<ConVarData> modVars = GetModConVarDatas( list, curModTitleIndex )
+						print(modVars.len())
 						if ( filteredList.len() <= 0 && modVars[0].spaceType == eEmptySpaceType.None )
 							filteredList.extend( modVars.slice( 1, modVars.len() ) )
 						else filteredList.extend( modVars )
@@ -440,7 +441,7 @@ array<ConVarData> function GetModConVarDatas( array<ConVarData> arr, int index )
 
 array<ConVarData> function GetCatConVarDatas( int index )
 {
-	if ( index == 0 )
+	if ( index == 0 || file.conVarList[ index - 1 ].spaceType != eEmptySpaceType.None )
 		return [ file.conVarList[ index ] ]
 	return [ file.conVarList[ index - 1 ], file.conVarList[ index ] ]
 }
@@ -684,7 +685,8 @@ void function OnModMenuOpened()
 
 void function OnClick( var button )
 {
-	thread CheckFocus(GetFocus())
+	if (file.resetModButtons.contains(GetFocus()))
+		thread CheckFocus(GetFocus())
 }
 
 void function CheckFocus( var button )
