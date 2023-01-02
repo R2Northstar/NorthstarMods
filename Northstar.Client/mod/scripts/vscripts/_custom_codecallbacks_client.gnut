@@ -23,7 +23,7 @@ struct {
 
 void function OnReceivedMessage(ClClient_MessageStruct localMessage) {
 
-    if( IsWatchingReplay() )
+    if ( IsWatchingReplay() )
         return
 
     if (localMessage.player != null)
