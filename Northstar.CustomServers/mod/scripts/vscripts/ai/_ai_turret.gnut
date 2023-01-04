@@ -31,7 +31,7 @@ void function SetUsePromptForPanel( var panel, var turret )
 bool function IsTurretActive( entity turret )
 {
 	// ----- Turret State ----- //
-	// TURRET_SEARCHING , TURRET_INACTIVE , TURRET_INACTIVE , TURRET_DEPLOYING , TURRET_RETIRING , TURRET_DEAD //
+	// TURRET_SEARCHING , TURRET_INACTIVE , TURRET_ACTIVE , TURRET_DEPLOYING , TURRET_RETIRING , TURRET_DEAD //
 
 	bool turretsActive = turret.GetTurretState() == TURRET_DEPLOYING
 	turretsActive = turretsActive || turret.GetTurretState() == TURRET_SEARCHING
