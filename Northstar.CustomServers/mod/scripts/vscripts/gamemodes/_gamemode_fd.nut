@@ -1665,12 +1665,7 @@ void function AddTurretSentry( entity turret )
 	turret.Minimap_AlwaysShow( TEAM_MILITIA, null )
 	turret.Minimap_SetHeightTracking( true )
 	turret.Minimap_SetCustomState( eMinimapObject_npc.FD_TURRET )
-
-	entity eyeButton = CreatePropDynamic( turret.GetModelName(), turret.GetOrigin() , turret.GetAngles(), 2, -1 )
-	eyeButton.Hide()
-	eyeButton.e.burnReward = turret.e.burnReward
-	eyeButton.SetBossPlayer( turret.GetBossPlayer() )
-	thread BurnRewardRefundThink( eyeButton, turret )
+	thread TurretRefundThink( turret )
 }
 
 void function DisableTitanSelection()
