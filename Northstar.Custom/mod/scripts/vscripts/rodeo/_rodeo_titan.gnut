@@ -53,6 +53,8 @@ global function GetDebugRodeoPrint
 global function SetApplyBatteryCallback
 #endif
 
+global function Rodeo_TakeBatteryAwayFromPilot
+
 const float BATTERY_PICKUP_IGNORE_FRAC = 0.98
 const RODEO_EXPLOSION_DAMAGEFRAC = 0.3
 global const RODEO_BATTERY_MODEL_FOR_RODEO_ANIMS = $"models/props/titan_battery_static/titan_battery_static.mdl" //Need a separate one for rodeo anims, instead of manually rotating the existing one

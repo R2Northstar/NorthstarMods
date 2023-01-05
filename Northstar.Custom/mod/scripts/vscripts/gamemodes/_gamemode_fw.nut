@@ -8,7 +8,6 @@ global function FW_ReplaceMegaTurret
 // fw specific titanfalls
 global function FW_IsPlayerInFriendlyTerritory
 global function FW_IsPlayerInEnemyTerritory
-global function FW_ReCalculateTitanReplacementPoint
 
 // you need to deal this much damage to trigger "FortWarTowerDamage" score event
 const int FW_HARVESTER_DAMAGE_SEGMENT = 1500
@@ -130,6 +129,8 @@ void function GamemodeFW_Init()
 	AddCallback_OnTitanBecomesPilot( OnFWTitanBecomesPilot )
 
 	ScoreEvent_SetupEarnMeterValuesForMixedModes()
+	SetRecalculateTitanReplacementPointCallback(FW_ReCalculateTitanReplacementPoint)
+	SetRequestTitanAllowedCallback(FW_RequestTitanAllowed)
 
 	// so many things in battle, this is required to avoid crash!
 	ServerCommand( "sv_max_props_multiplayer 200000" )
@@ -1150,23 +1151,35 @@ bool function FW_IsPlayerInEnemyTerritory( entity player )
 // 1800 will pretty much get harvester's near titan startpoints
 const float FW_SPAWNPOINT_SEARCH_RADIUS = 1800.0
 
-// globalized!
-vector function FW_ReCalculateTitanReplacementPoint( vector baseOrigin, int team )
+
+Point function FW_ReCalculateTitanReplacementPoint( Point basePoint, entity player)
 {
+	int team = player.GetTeam()
 	// find team's harvester
 	entity teamHarvester = FW_GetTeamHarvesterProp( team )
 
-	if ( !IsValid( teamHarvester ) ) // team's havester has been destroyed!
-		return baseOrigin // return given value
-
-	if( Distance2D( baseOrigin, teamHarvester.GetOrigin() ) <= FW_SPAWNPOINT_SEARCH_RADIUS ) // close enough!
-		return baseOrigin // this origin is good enough
+	if( Distance2D( basePoint.origin, teamHarvester.GetOrigin() ) <= FW_SPAWNPOINT_SEARCH_RADIUS ) // close enough!
+		return basePoint // this origin is good enough
 
 	// if not close enough to base, re-calculate
 	array<entity> fortWarPoints = FW_GetTitanSpawnPointsForTeam( team )
-	entity validPoint = GetClosest( fortWarPoints, baseOrigin )
+	entity validPoint = GetClosest( fortWarPoints, basePoint.origin )
+	basePoint.origin = validPoint.GetOrigin()
+	return basePoint
+}
 
-	return validPoint.GetOrigin()
+bool function FW_RequestTitanAllowed( entity player, array< string > args )
+{
+	if( !FW_IsPlayerInFriendlyTerritory( player ) ) // is player in friendly base?
+	{
+		PlayFactionDialogueToPlayer( "tw_territoryNag", player ) // notify player
+		TryPlayTitanfallNegativeSoundToPlayer( player )
+		int objectiveID = 101 // which means "#FW_OBJECTIVE_TITANFALL"
+		//CreateCustomMessageForRefusingTitanfall( player )
+		Remote_CallFunction_NonReplay( player, "ServerCallback_FW_SetObjective", objectiveID ) 
+		return false
+	}
+	return true
 }
 
 array<entity> function FW_GetTitanSpawnPointsForTeam( int team )
@@ -1672,7 +1685,7 @@ void function FW_createHarvester()
 	fw_harvesterImc.harvester.Minimap_SetHeightTracking( true )
 	fw_harvesterImc.harvester.Minimap_SetZOrder( MINIMAP_Z_OBJECT )
 	fw_harvesterImc.harvester.Minimap_SetCustomState( eMinimapObject_prop_script.FD_HARVESTER )
-	AddEntityCallback_OnDamaged( fw_harvesterImc.harvester, OnHarvesterDamaged )
+	AddEntityCallback_OnPostDamaged( fw_harvesterImc.harvester, OnHarvesterDamaged )
 
 	// imc havester settings
 	// don't set this, or sonar pulse will try to find it and failed to set highlight
@@ -1725,10 +1738,12 @@ void function OnHarvesterDamaged( entity harvester, var damageInfo )
 	int damageSourceID = DamageInfo_GetDamageSourceIdentifier( damageInfo )
 	entity attacker = DamageInfo_GetAttacker( damageInfo )
 	float damageAmount = DamageInfo_GetDamage( damageInfo )
-
+	if(damageAmount == 0)
+		return
+	printt("Harvester damage", damageAmount,attacker, damageSourceID)
 	if ( !damageSourceID && !damageAmount && !attacker ) // actually not dealing any damage?
 		return
-
+	/*
 	// done damage adjustments here, since harvester prop's health is setting manually through damageAmount
 	if ( damageSourceID == eDamageSourceId.mp_titancore_laser_cannon )
 		DamageInfo_SetDamage( damageInfo, DamageInfo_GetDamage( damageInfo ) / 50 ) // laser core shreds super well for some reason
@@ -1770,17 +1785,22 @@ void function OnHarvesterDamaged( entity harvester, var damageInfo )
 	if( friendlyTeam == TEAM_IMC )
 		harvesterstruct = fw_harvesterImc
 
-	if ( harvester.GetShieldHealth() - damageAmount <= 0 ) // this shot breaks shield
-	{
-		damageAmount = DamageInfo_GetDamage( damageInfo ) // get damageAmount again after all damage adjustments
+	damageAmount = DamageInfo_GetDamage( damageInfo ) // get damageAmount again after all damage adjustments
 
-		if ( !attacker.IsTitan() )
-		{
-			if( attacker.IsPlayer() )
-				Remote_CallFunction_NonReplay( attacker , "ServerCallback_FW_NotifyTitanRequired" )
-			DamageInfo_SetDamage( damageInfo, harvester.GetShieldHealth() )
-			damageAmount = 0 // never damage haveter's prop
-		}
+	if ( !attacker.IsTitan() )
+	{
+		if( attacker.IsPlayer() )
+			Remote_CallFunction_NonReplay( attacker , "ServerCallback_FW_NotifyTitanRequired" )
+		DamageInfo_SetDamage( damageInfo, harvester.GetShieldHealth() )
+		damageAmount = 0 // never damage haveter's prop
+	}
+
+	if( !harvesterstruct.harvesterShieldDown )
+	{
+		PlayFactionDialogueToTeam( "fortwar_baseShieldDownFriendly", friendlyTeam )
+		PlayFactionDialogueToTeam( "fortwar_baseShieldDownEnemy", enemyTeam )
+		harvesterstruct.harvesterShieldDown = true // prevent shield dialogues from repeating
+	}
 
 		if( !harvesterstruct.harvesterShieldDown )
 		{
@@ -1789,40 +1809,35 @@ void function OnHarvesterDamaged( entity harvester, var damageInfo )
 			harvesterstruct.harvesterShieldDown = true // prevent shield dialogues from repeating
 		}
 
-		harvesterstruct.harvesterDamageTaken = harvesterstruct.harvesterDamageTaken + damageAmount // track damage for wave recaps
-		float newHealth = harvester.GetHealth() - damageAmount
-		float oldhealthpercent = ( ( harvester.GetHealth().tofloat() / harvester.GetMaxHealth() ) * 100 )
-		float healthpercent = ( ( newHealth / harvester.GetMaxHealth() ) * 100 )
-
-		if (healthpercent <= 75 && oldhealthpercent > 75) // we don't want the dialogue to keep saying "Harvester is below 75% health" everytime they take additional damage
-		{
-			PlayFactionDialogueToTeam( "fortwar_baseDmgFriendly75", friendlyTeam )
-			PlayFactionDialogueToTeam( "fortwar_baseDmgEnemy75", enemyTeam )
-		}
-
-		if (healthpercent <= 50 && oldhealthpercent > 50)
-		{
-			PlayFactionDialogueToTeam( "fortwar_baseDmgFriendly50", friendlyTeam )
-			PlayFactionDialogueToTeam( "fortwar_baseDmgEnemy50", enemyTeam )
-		}
-
-		if (healthpercent <= 25 && oldhealthpercent > 25)
-		{
-			PlayFactionDialogueToTeam( "fortwar_baseDmgFriendly25", friendlyTeam )
-			PlayFactionDialogueToTeam( "fortwar_baseDmgEnemy25", enemyTeam )
-		}
-
-		if( newHealth <= 0 )
-		{
-			EmitSoundAtPosition(TEAM_UNASSIGNED,harvesterstruct.harvester.GetOrigin(),"coop_generator_destroyed")
-			newHealth = 0
-			harvesterstruct.rings.Destroy()
-			harvesterstruct.harvester.Dissolve( ENTITY_DISSOLVE_CORE, Vector( 0, 0, 0 ), 500 )
-		}
-
-		harvester.SetHealth( newHealth )
-		harvesterstruct.havesterWasDamaged = true
+	if (healthpercent <= 75 && oldhealthpercent > 75) // we don't want the dialogue to keep saying "Harvester is below 75% health" everytime they take additional damage
+	{
+		PlayFactionDialogueToTeam( "fortwar_baseDmgFriendly75", friendlyTeam )
+		PlayFactionDialogueToTeam( "fortwar_baseDmgEnemy75", enemyTeam )
 	}
+
+	if (healthpercent <= 50 && oldhealthpercent > 50)
+	{
+		PlayFactionDialogueToTeam( "fortwar_baseDmgFriendly50", friendlyTeam )
+		PlayFactionDialogueToTeam( "fortwar_baseDmgEnemy50", enemyTeam )
+	}
+
+	if (healthpercent <= 25 && oldhealthpercent > 25)
+	{
+		PlayFactionDialogueToTeam( "fortwar_baseDmgFriendly25", friendlyTeam )
+		PlayFactionDialogueToTeam( "fortwar_baseDmgEnemy25", enemyTeam )
+	}
+
+	if( newHealth <= 0 )
+	{
+		EmitSoundAtPosition(TEAM_UNASSIGNED,harvesterstruct.harvester.GetOrigin(),"coop_generator_destroyed")
+		newHealth = 0
+		harvesterstruct.rings.Destroy()
+		harvesterstruct.harvester.Dissolve( ENTITY_DISSOLVE_CORE, Vector( 0, 0, 0 ), 500 )
+	}
+
+	harvester.SetHealth( newHealth )
+	harvesterstruct.havesterWasDamaged = true
+
 
 	if ( attacker.IsPlayer() )
 	{
@@ -1920,7 +1935,7 @@ void function HarvesterThink( HarvesterStruct fd_harvester )
 
 			if ( newShieldHealth >= harvester.GetShieldHealthMax() )
 			{
-				StopSoundOnEntity( harvester, "coop_generator_shieldrecharge_resume" )
+			StopSoundOnEntity( harvester, "coop_generator_shieldrecharge_resume" )
 				harvester.SetShieldHealth( harvester.GetShieldHealthMax() )
 				EmitSoundOnEntity( harvester, "coop_generator_shieldrecharge_end" )
 				PlayFactionDialogueToTeam( "fortwar_baseShieldUpFriendly", harvester.GetTeam() )
@@ -1930,8 +1945,11 @@ void function HarvesterThink( HarvesterStruct fd_harvester )
 			{
 				harvester.SetShieldHealth( newShieldHealth )
 			}
-		} else if ( ( ( currentTime-fd_harvester.lastDamage ) < GENERATOR_SHIELD_REGEN_DELAY ) && ( harvester.GetShieldHealth() < harvester.GetShieldHealthMax() ) )
+		}
+		else if ( ( ( currentTime-fd_harvester.lastDamage ) < GENERATOR_SHIELD_REGEN_DELAY ) && ( harvester.GetShieldHealth() < harvester.GetShieldHealthMax() ) )
+		{
 			isRegening = false
+		}
 
 		if ( ( lastShieldHealth > 0 ) && ( harvester.GetShieldHealth() == 0 ) )
 		{
