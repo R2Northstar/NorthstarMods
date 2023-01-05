@@ -6,6 +6,8 @@ global function SetWeaponDropsEnabled
 
 global function AddCallback_OnTryGetTitanLoadout
 global function GetTitanLoadoutForPlayer
+global function GameModeRulesShouldGivePilotLoadout
+global function SetGameModeRulesShouldGivePilotLoadout
 
 global struct sTryGetTitanLoadoutCallbackReturn
 {
@@ -20,6 +22,7 @@ struct {
 	bool loadoutGracePeriodEnabled = true
 	bool weaponDropsEnabled = true
 	array< TryGetTitanLoadoutCallbackType > onTryGetTitanLoadoutCallbacks
+	bool functionref( entity ) ShouldGivePilotLoadoutGameModeRules
 	
 	array<entity> dirtyLoadouts
 } file
@@ -53,6 +56,8 @@ void function SvLoadoutsMP_Init()
 	}
 	
 	AddCallback_OnPlayerKilled( DestroyDroppedWeapon )
+	if ( file.ShouldGivePilotLoadoutGameModeRules == null )
+		file.ShouldGivePilotLoadoutGameModeRules = ShouldGivePilotLoadout_Default
 }
 
 void function SetLoadoutGracePeriodEnabled( bool enabled )
@@ -279,6 +284,21 @@ bool function ClientCommandCallback_InGameMPMenuClosed( entity player, array<str
 	return true
 }
 
+bool function ShouldGivePilotLoadout_Default( entity player )
+{
+	return false
+}
+
+bool function GameModeRulesShouldGivePilotLoadout( entity player )
+{
+	return file.ShouldGivePilotLoadoutGameModeRules( player )
+}
+
+void function SetGameModeRulesShouldGivePilotLoadout( bool functionref( entity ) rules )
+{
+	file.ShouldGivePilotLoadoutGameModeRules = rules
+}
+
 bool function IsRefValidAndOfType( string ref, int itemType )
 {
 	return IsRefValid( ref ) && GetItemType( ref ) == itemType 
@@ -303,7 +323,7 @@ void function TryGivePilotLoadoutForGracePeriod( entity player )
 		else
 			respawnTimeReal = expect float( player.s.respawnTime )
 		
-		if ( ( ( Time() - respawnTimeReal <= CLASS_CHANGE_GRACE_PERIOD || GetGameState() < eGameState.Playing ) && file.loadoutGracePeriodEnabled ) || player.p.usingLoadoutCrate )
+		if ( ( ( Time() - respawnTimeReal <= CLASS_CHANGE_GRACE_PERIOD || GetGameState() < eGameState.Playing ) && file.loadoutGracePeriodEnabled ) || player.p.usingLoadoutCrate || GameModeRulesShouldGivePilotLoadout( player ) )
 		{
 			if ( !Loadouts_CanGivePilotLoadout( player ) && player.GetParent() != null && ( HasCinematicFlag( player, CE_FLAG_INTRO ) || HasCinematicFlag( player, CE_FLAG_CLASSIC_MP_SPAWNING ) || HasCinematicFlag( player, CE_FLAG_WAVE_SPAWNING ) ) )
 				thread GiveLoadoutWhenIntroOver( player )
