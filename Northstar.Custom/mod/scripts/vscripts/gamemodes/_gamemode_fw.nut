@@ -8,7 +8,6 @@ global function FW_ReplaceMegaTurret
 // fw specific titanfalls
 global function FW_IsPlayerInFriendlyTerritory
 global function FW_IsPlayerInEnemyTerritory
-global function FW_ReCalculateTitanReplacementPoint
 
 // you need to deal this much damage to trigger "FortWarTowerDamage" score event
 const int FW_HARVESTER_DAMAGE_SEGMENT = 1500
@@ -130,6 +129,8 @@ void function GamemodeFW_Init()
 	AddCallback_OnTitanBecomesPilot( OnFWTitanBecomesPilot )
 
 	ScoreEvent_SetupEarnMeterValuesForMixedModes()
+	SetRecalculateTitanReplacementPointCallback(FW_ReCalculateTitanReplacementPoint)
+	SetRequestTitanAllowedCallback(FW_RequestTitanAllowed)
 
 	// so many things in battle, this is required to avoid crash!
 	ServerCommand( "sv_max_props_multiplayer 200000" )
@@ -565,7 +566,7 @@ void function LoadEntities()
 					entity turret = CreateNPC( "npc_turret_mega", TEAM_UNASSIGNED, info_target.GetOrigin(), info_target.GetAngles() )
 					SetSpawnOption_AISettings( turret, "npc_turret_mega_fortwar" )
 					SetDefaultMPEnemyHighlight( turret ) // for sonar highlights to work
- 					AddEntityCallback_OnDamaged( turret, OnMegaTurretDamaged )
+					AddEntityCallback_OnDamaged( turret, OnMegaTurretDamaged )
 					DispatchSpawn( turret )
 
 					turretsite.turret = turret
@@ -610,9 +611,9 @@ void function LoadEntities()
 					entity prop = CreatePropScript( script_ref.GetModelName(), script_ref.GetOrigin(), script_ref.GetAngles(), 6 )
 					break
 				case "info_fw_battery_port":
-					entity prop = CreatePropScript( script_ref.GetModelName(), script_ref.GetOrigin(), script_ref.GetAngles(), 6 )
-					prop.kv.fadedist = 10000 // try not to fade
-					InitTurretBatteryPort( prop )
+					entity batteryPort = CreatePropScript( script_ref.GetModelName(), script_ref.GetOrigin(), script_ref.GetAngles(), 6 )
+					FW_InitBatteryPort(batteryPort)
+
 					break
 			}
 		}
@@ -1150,23 +1151,35 @@ bool function FW_IsPlayerInEnemyTerritory( entity player )
 // 1800 will pretty much get harvester's near titan startpoints
 const float FW_SPAWNPOINT_SEARCH_RADIUS = 1800.0
 
-// globalized!
-vector function FW_ReCalculateTitanReplacementPoint( vector baseOrigin, int team )
+
+Point function FW_ReCalculateTitanReplacementPoint( Point basePoint, entity player)
 {
+	int team = player.GetTeam()
 	// find team's harvester
 	entity teamHarvester = FW_GetTeamHarvesterProp( team )
 
-	if ( !IsValid( teamHarvester ) ) // team's havester has been destroyed!
-		return baseOrigin // return given value
-
-	if( Distance2D( baseOrigin, teamHarvester.GetOrigin() ) <= FW_SPAWNPOINT_SEARCH_RADIUS ) // close enough!
-		return baseOrigin // this origin is good enough
+	if( Distance2D( basePoint.origin, teamHarvester.GetOrigin() ) <= FW_SPAWNPOINT_SEARCH_RADIUS ) // close enough!
+		return basePoint // this origin is good enough
 
 	// if not close enough to base, re-calculate
 	array<entity> fortWarPoints = FW_GetTitanSpawnPointsForTeam( team )
-	entity validPoint = GetClosest( fortWarPoints, baseOrigin )
+	entity validPoint = GetClosest( fortWarPoints, basePoint.origin )
+	basePoint.origin = validPoint.GetOrigin()
+	return basePoint
+}
 
-	return validPoint.GetOrigin()
+bool function FW_RequestTitanAllowed( entity player, array< string > args )
+{
+	if( !FW_IsPlayerInFriendlyTerritory( player ) ) // is player in friendly base?
+	{
+		PlayFactionDialogueToPlayer( "tw_territoryNag", player ) // notify player
+		TryPlayTitanfallNegativeSoundToPlayer( player )
+		int objectiveID = 101 // which means "#FW_OBJECTIVE_TITANFALL"
+		//CreateCustomMessageForRefusingTitanfall( player )
+		Remote_CallFunction_NonReplay( player, "ServerCallback_FW_SetObjective", objectiveID ) 
+		return false
+	}
+	return true
 }
 
 array<entity> function FW_GetTitanSpawnPointsForTeam( int team )
@@ -1673,7 +1686,7 @@ void function FW_createHarvester()
 	fw_harvesterImc.harvester.Minimap_SetZOrder( MINIMAP_Z_OBJECT )
 	fw_harvesterImc.harvester.Minimap_SetCustomState( eMinimapObject_prop_script.FD_HARVESTER )
 	AddEntityCallback_OnDamaged( fw_harvesterImc.harvester, OnHarvesterDamaged )
-
+	AddEntityCallback_OnPostDamaged( fw_harvesterImc.harvester, OnHarvesterPostDamaged )
 	// imc havester settings
 	// don't set this, or sonar pulse will try to find it and failed to set highlight
 	//fw_harvesterMlt.harvester.SetScriptName("fw_team_tower")
@@ -1711,8 +1724,35 @@ void function FW_createHarvester()
 	GameRules_SetTeamScore( TEAM_IMC , 100 )
 	GameRules_SetTeamScore2( TEAM_IMC , 100 )
 }
-
 void function OnHarvesterDamaged( entity harvester, var damageInfo )
+{
+	if ( !IsValid( harvester ) )
+		return
+
+	int friendlyTeam = harvester.GetTeam()
+	int enemyTeam = GetOtherTeam( friendlyTeam )
+	
+	HarvesterStruct harvesterstruct // current harveter's struct
+	if( friendlyTeam == TEAM_MILITIA )
+		harvesterstruct = fw_harvesterMlt
+	if( friendlyTeam == TEAM_IMC )
+		harvesterstruct = fw_harvesterImc
+
+	float damageAmount = DamageInfo_GetDamage( damageInfo )
+	if((harvester.GetShieldHealth()-damageAmount)<0)
+	{
+		if( !harvesterstruct.harvesterShieldDown )
+		{
+			PlayFactionDialogueToTeam( "fortwar_baseShieldDownFriendly", friendlyTeam )
+			PlayFactionDialogueToTeam( "fortwar_baseShieldDownEnemy", enemyTeam )
+			harvesterstruct.harvesterShieldDown = true // prevent shield dialogues from repeating
+		}
+	}
+
+	// always reset harvester's recharge delay
+	harvesterstruct.lastDamage = Time()
+}
+void function OnHarvesterPostDamaged( entity harvester, var damageInfo )
 {
 	if ( !IsValid( harvester ) )
 		return
@@ -1725,7 +1765,9 @@ void function OnHarvesterDamaged( entity harvester, var damageInfo )
 	int damageSourceID = DamageInfo_GetDamageSourceIdentifier( damageInfo )
 	entity attacker = DamageInfo_GetAttacker( damageInfo )
 	float damageAmount = DamageInfo_GetDamage( damageInfo )
-
+	if(damageAmount == 0)
+		return
+	printt("Harvester damage", damageAmount,attacker, damageSourceID)
 	if ( !damageSourceID && !damageAmount && !attacker ) // actually not dealing any damage?
 		return
 
@@ -1770,59 +1812,51 @@ void function OnHarvesterDamaged( entity harvester, var damageInfo )
 	if( friendlyTeam == TEAM_IMC )
 		harvesterstruct = fw_harvesterImc
 
-	if ( harvester.GetShieldHealth() - damageAmount <= 0 ) // this shot breaks shield
+	damageAmount = DamageInfo_GetDamage( damageInfo ) // get damageAmount again after all damage adjustments
+
+	if ( !attacker.IsTitan() )
 	{
-		damageAmount = DamageInfo_GetDamage( damageInfo ) // get damageAmount again after all damage adjustments
-
-		if ( !attacker.IsTitan() )
-		{
-			if( attacker.IsPlayer() )
-				Remote_CallFunction_NonReplay( attacker , "ServerCallback_FW_NotifyTitanRequired" )
-			DamageInfo_SetDamage( damageInfo, harvester.GetShieldHealth() )
-			damageAmount = 0 // never damage haveter's prop
-		}
-
-		if( !harvesterstruct.harvesterShieldDown )
-		{
-			PlayFactionDialogueToTeam( "fortwar_baseShieldDownFriendly", friendlyTeam )
-			PlayFactionDialogueToTeam( "fortwar_baseShieldDownEnemy", enemyTeam )
-			harvesterstruct.harvesterShieldDown = true // prevent shield dialogues from repeating
-		}
-
-		harvesterstruct.harvesterDamageTaken = harvesterstruct.harvesterDamageTaken + damageAmount // track damage for wave recaps
-		float newHealth = harvester.GetHealth() - damageAmount
-		float oldhealthpercent = ( ( harvester.GetHealth().tofloat() / harvester.GetMaxHealth() ) * 100 )
-		float healthpercent = ( ( newHealth / harvester.GetMaxHealth() ) * 100 )
-
-		if (healthpercent <= 75 && oldhealthpercent > 75) // we don't want the dialogue to keep saying "Harvester is below 75% health" everytime they take additional damage
-		{
-			PlayFactionDialogueToTeam( "fortwar_baseDmgFriendly75", friendlyTeam )
-			PlayFactionDialogueToTeam( "fortwar_baseDmgEnemy75", enemyTeam )
-		}
-
-		if (healthpercent <= 50 && oldhealthpercent > 50)
-		{
-			PlayFactionDialogueToTeam( "fortwar_baseDmgFriendly50", friendlyTeam )
-			PlayFactionDialogueToTeam( "fortwar_baseDmgEnemy50", enemyTeam )
-		}
-
-		if (healthpercent <= 25 && oldhealthpercent > 25)
-		{
-			PlayFactionDialogueToTeam( "fortwar_baseDmgFriendly25", friendlyTeam )
-			PlayFactionDialogueToTeam( "fortwar_baseDmgEnemy25", enemyTeam )
-		}
-
-		if( newHealth <= 0 )
-		{
-			EmitSoundAtPosition(TEAM_UNASSIGNED,harvesterstruct.harvester.GetOrigin(),"coop_generator_destroyed")
-			newHealth = 0
-			harvesterstruct.rings.Destroy()
-			harvesterstruct.harvester.Dissolve( ENTITY_DISSOLVE_CORE, Vector( 0, 0, 0 ), 500 )
-		}
-
-		harvester.SetHealth( newHealth )
-		harvesterstruct.havesterWasDamaged = true
+		if( attacker.IsPlayer() )
+			Remote_CallFunction_NonReplay( attacker , "ServerCallback_FW_NotifyTitanRequired" )
+		DamageInfo_SetDamage( damageInfo, harvester.GetShieldHealth() )
+		damageAmount = 0 // never damage haveter's prop
 	}
+
+	harvesterstruct.harvesterDamageTaken = harvesterstruct.harvesterDamageTaken + damageAmount // track damage for wave recaps
+	float newHealth = harvester.GetHealth() - damageAmount
+	float oldhealthpercent = ( ( harvester.GetHealth().tofloat() / harvester.GetMaxHealth() ) * 100 )
+
+	float healthpercent = ( ( newHealth / harvester.GetMaxHealth() ) * 100 )
+	
+	if (healthpercent <= 75 && oldhealthpercent > 75) // we don't want the dialogue to keep saying "Harvester is below 75% health" everytime they take additional damage
+	{
+		PlayFactionDialogueToTeam( "fortwar_baseDmgFriendly75", friendlyTeam )
+		PlayFactionDialogueToTeam( "fortwar_baseDmgEnemy75", enemyTeam )
+	}
+
+	if (healthpercent <= 50 && oldhealthpercent > 50)
+	{
+		PlayFactionDialogueToTeam( "fortwar_baseDmgFriendly50", friendlyTeam )
+		PlayFactionDialogueToTeam( "fortwar_baseDmgEnemy50", enemyTeam )
+	}
+
+	if (healthpercent <= 25 && oldhealthpercent > 25)
+	{
+		PlayFactionDialogueToTeam( "fortwar_baseDmgFriendly25", friendlyTeam )
+		PlayFactionDialogueToTeam( "fortwar_baseDmgEnemy25", enemyTeam )
+	}
+
+	if( newHealth <= 0 )
+	{
+		EmitSoundAtPosition(TEAM_UNASSIGNED,harvesterstruct.harvester.GetOrigin(),"coop_generator_destroyed")
+		newHealth = 0
+		harvesterstruct.rings.Destroy()
+		harvesterstruct.harvester.Dissolve( ENTITY_DISSOLVE_CORE, Vector( 0, 0, 0 ), 500 )
+	}
+
+	harvester.SetHealth( newHealth )
+	harvesterstruct.havesterWasDamaged = true
+
 
 	if ( attacker.IsPlayer() )
 	{
@@ -1850,8 +1884,7 @@ void function OnHarvesterDamaged( entity harvester, var damageInfo )
 		}
 	}
 
-	// always reset harvester's recharge delay
-	harvesterstruct.lastDamage = Time()
+
 
 	if ( harvester.GetHealth() == 0 )
 	{
@@ -1920,7 +1953,7 @@ void function HarvesterThink( HarvesterStruct fd_harvester )
 
 			if ( newShieldHealth >= harvester.GetShieldHealthMax() )
 			{
-				StopSoundOnEntity( harvester, "coop_generator_shieldrecharge_resume" )
+			StopSoundOnEntity( harvester, "coop_generator_shieldrecharge_resume" )
 				harvester.SetShieldHealth( harvester.GetShieldHealthMax() )
 				EmitSoundOnEntity( harvester, "coop_generator_shieldrecharge_end" )
 				PlayFactionDialogueToTeam( "fortwar_baseShieldUpFriendly", harvester.GetTeam() )
@@ -1930,8 +1963,11 @@ void function HarvesterThink( HarvesterStruct fd_harvester )
 			{
 				harvester.SetShieldHealth( newShieldHealth )
 			}
-		} else if ( ( ( currentTime-fd_harvester.lastDamage ) < GENERATOR_SHIELD_REGEN_DELAY ) && ( harvester.GetShieldHealth() < harvester.GetShieldHealthMax() ) )
+		}
+		else if ( ( ( currentTime-fd_harvester.lastDamage ) < GENERATOR_SHIELD_REGEN_DELAY ) && ( harvester.GetShieldHealth() < harvester.GetShieldHealthMax() ) )
+		{
 			isRegening = false
+		}
 
 		if ( ( lastShieldHealth > 0 ) && ( harvester.GetShieldHealth() == 0 ) )
 		{
@@ -2077,3 +2113,157 @@ void function SetPilotObjective( entity player, entity titan )
 //////////////////////////////////////////
 ///// PLAYER OBJECTIVE FUNCTIONS END /////
 //////////////////////////////////////////
+
+
+
+/////////////////////////////////
+///// BatteryPort Functions /////
+/////////////////////////////////
+
+void function FW_InitBatteryPort( entity batteryPort )
+{
+	batteryPort.kv.fadedist = 10000 // try not to fade
+	InitTurretBatteryPort( batteryPort )
+
+	batteryPort.s.relatedTurret <- null             // entity, for saving batteryPort's nearest turret
+
+	entity turret = GetNearestMegaTurret( batteryPort ) // consider this is the port's related turret
+	
+	bool isBaseTurret = expect bool( turret.s.baseTurret )
+	SetTeam( batteryPort, turret.GetTeam() )
+	batteryPort.s.relatedTurret = turret
+	batteryPort.s.isUsable <- FW_IsBatteryPortUsable
+	batteryPort.s.useBattery <- FW_UseBattery
+	if( isBaseTurret ) // this is a base turret!
+	{
+		batteryPort.s.hackAvaliable = false
+		batteryPort.SetUsableByGroup( "friendlies pilot" ) // only show hint to friendlies
+	} // it can never be hacked!
+	
+	turret.s.relatedBatteryPort = batteryPort // do it here
+}
+
+function FW_IsBatteryPortUsable( batteryPortvar, playervar ) //actually bool function( entity, entity )
+{	
+	entity batteryPort = expect entity( batteryPortvar )
+	entity player = expect entity( playervar )
+	entity turret = expect entity( batteryPort.s.relatedTurret )
+    if( !IsValid( turret ) ) // turret has been destroyed!
+        return false
+
+	// get turret's settings, decide behavior
+	bool validTeam = turret.GetTeam() == player.GetTeam() || turret.GetTeam() == TEAM_BOTH || turret.GetTeam() == TEAM_UNASSIGNED
+    bool isBaseTurret = expect bool( turret.s.baseTurret )
+    // is this port able to be hacked
+    bool portHackAvaliable = expect bool( batteryPort.s.hackAvaliable )
+
+    // player has a battery, team valid or able to hack && not a base turret
+    return ( PlayerHasBattery( player ) && ( validTeam || ( portHackAvaliable && !isBaseTurret ) ) )
+}
+
+function FW_UseBattery( batteryPortvar, playervar ) //actually void function( entity, entity )
+{
+	entity batteryPort = expect entity( batteryPortvar )
+	entity player = expect entity( playervar )
+	// change turret settings
+    entity turret = expect entity( batteryPort.s.relatedTurret ) // consider this is the port's related turret
+
+    int playerTeam = player.GetTeam()
+    bool turretReplaced = false
+    bool sameTeam = turret.GetTeam() == player.GetTeam()
+
+    if( !IsAlive( turret ) ) // turret has been killed!
+    {
+        turret = FW_ReplaceMegaTurret( turret )
+        if( !IsValid( turret ) ) // replace failed!
+            return
+        batteryPort.s.relatedTurret = turret
+        turretReplaced = true // if turret has been replaced, mostly reset team!
+    }
+
+    bool teamChanged = false
+    bool isBaseTurret = expect bool( turret.s.baseTurret )
+    if( ( !sameTeam || turretReplaced ) && !isBaseTurret ) // is there a need to change team?
+    {
+        SetTeam( turret, playerTeam )
+        teamChanged = true
+    }
+
+    // restore turret health
+    int newHealth = int ( min( turret.GetMaxHealth(), turret.GetHealth() + ( turret.GetMaxHealth() * GetCurrentPlaylistVarFloat( "fw_turret_fixed_health", TURRET_FIXED_HEALTH_PERCENTAGE ) ) ) )
+    if( turretReplaced || teamChanged ) // replaced/hacked turret will spawn with 50% health
+        newHealth = int ( turret.GetMaxHealth() * GetCurrentPlaylistVarFloat( "fw_turret_hacked_health", TURRET_HACKED_HEALTH_PERCENTAGE ) )
+    // restore turret shield
+    int newShield = int ( min( turret.GetShieldHealthMax(), turret.GetShieldHealth() + ( turret.GetShieldHealth() * GetCurrentPlaylistVarFloat( "fw_turret_fixed_shield", TURRET_FIXED_SHIELD_PERCENTAGE ) ) ) )
+    if( turretReplaced || teamChanged ) // replaced/hacked turret will spawn with 50% shield
+        newShield = int ( turret.GetShieldHealthMax() * GetCurrentPlaylistVarFloat( "fw_turret_hacked_shield", TURRET_HACKED_SHIELD_PERCENTAGE ) )
+    // only do team score event if turret's shields down, encourage players to hack more turrets
+    bool additionalScore = turret.GetShieldHealth() <= 0
+    // this can be too much powerful
+    turret.SetHealth( newHealth )
+    turret.SetShieldHealth( newShield )
+
+    // score event
+    string scoreEvent = "FortWarForwardConstruction"
+    int secondaryScore = POINTVALUE_FW_FORWARD_CONSTRUCTION
+    if( isBaseTurret ) // this is a base turret
+    {
+        scoreEvent = "FortWarBaseConstruction"
+        secondaryScore = POINTVALUE_FW_BASE_CONSTRUCTION
+    }
+    AddPlayerScore( player, scoreEvent, player ) // player themself gets more meter
+    player.AddToPlayerGameStat( PGS_DEFENSE_SCORE, secondaryScore )
+
+    // only do team score event if turret's shields down
+    if( additionalScore )
+    {
+        // get turrets alive, for adding scores
+        string teamTurretCount = GetTeamAliveTurretCount_ReturnString( playerTeam )
+        foreach( entity friendly in GetPlayerArrayOfTeam( playerTeam ) )
+            AddPlayerScore( friendly, "FortWarTeamTurretControlBonus_" + teamTurretCount, friendly )
+
+        PlayFactionDialogueToTeam( "fortwar_turretShieldedByFriendlyPilot", playerTeam )
+    }
+
+}
+
+// get nearest turret, consider it belongs to the port
+entity function GetNearestMegaTurret( entity ent )
+{
+    array<entity> allTurrets = GetNPCArrayByClass( "npc_turret_mega" )
+    entity turret = GetClosest( allTurrets, ent.GetOrigin() )
+    return turret
+}
+
+// this will get english name of the count, since the "FortWarTeamTurretControlBonus_" score event uses it
+string function GetTeamAliveTurretCount_ReturnString( int team )
+{
+    int turretCount
+    foreach( entity turret in GetNPCArrayByClass( "npc_turret_mega" ) )
+    {
+        if( turret.GetTeam() == team && IsAlive( turret ) )
+            turretCount += 1
+    }
+
+    switch( turretCount )
+    {
+        case 1:
+            return "One"
+        case 2:
+            return "Two"
+        case 3:
+            return "Three"
+        case 4:
+            return "Four"
+        case 5:
+            return "Five"
+        case 6:
+            return "Six"
+    }
+
+    return ""
+}
+
+/////////////////////////////////////
+///// BatteryPort Functions End /////
+/////////////////////////////////////
