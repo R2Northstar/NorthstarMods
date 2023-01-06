@@ -2143,7 +2143,7 @@ void function FW_InitBatteryPort( entity batteryPort )
 	turret.s.relatedBatteryPort = batteryPort // do it here
 }
 
-var function FW_IsBatteryPortUsable( var batteryPortvar, var playervar ) //actually bool function( entity, entity )
+function FW_IsBatteryPortUsable( batteryPortvar, playervar ) //actually bool function( entity, entity )
 {	
 	entity batteryPort = expect entity( batteryPortvar )
 	entity player = expect entity( playervar )
@@ -2161,7 +2161,7 @@ var function FW_IsBatteryPortUsable( var batteryPortvar, var playervar ) //actua
     return ( PlayerHasBattery( player ) && ( validTeam || ( portHackAvaliable && !isBaseTurret ) ) )
 }
 
-var function FW_UseBattery( var batteryPortvar, var playervar ) //actually void function( entity, entity )
+function FW_UseBattery( batteryPortvar, playervar ) //actually void function( entity, entity )
 {
 	entity batteryPort = expect entity( batteryPortvar )
 	entity player = expect entity( playervar )
