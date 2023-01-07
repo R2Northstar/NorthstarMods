@@ -419,6 +419,7 @@
 			}
 		},
 		{
+
 		  "Path" : "sh_custom_scoreboard_columns.gnut",
 		  "RunOn": "( CLIENT || SERVER ) && MP",
 		  "ClientCallback":{
@@ -431,7 +432,12 @@
     {
       "Path":  "sh_northstar_http_requests.gnut",
 			"RunOn": "CLIENT || SERVER || UI"
-    }
+    },
+    {
+    	"Path": "gamemodes/_gamemode_fw.nut",
+			"RunOn": "SERVER && MP"
+		},
+
 	],
 
 	"Localisation": [
