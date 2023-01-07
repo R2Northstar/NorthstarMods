@@ -49,12 +49,6 @@ void function AddDroppoint( entity ent )
 	AddToScriptManagedEntArray( file.replacementSpawnpointsID, ent )
 }
 
-void function AddCallback_OnCalculateTitanReplacementPoint( Point functionref( Point point, entity player ) callbackFunc )
-{
-	Assert( !file.onCalculateTitanReplacementPointCallbacks.contains( callbackFunc ), "Already added func: " + FunctionToString( callbackFunc ) + " with AddCallback_OnCalculateTitanReplacementPoint" )
-	file.onCalculateTitanReplacementPointCallbacks.append( callbackFunc )
-}
-
 void function DebugTitanfall()
 {
 	thread DebugTitanfallThread()
@@ -137,7 +131,7 @@ Point function GetTitanReplacementPoint( entity player, bool forDebugging = fals
 	return tempPoint
 }
 
-Point function CalculateTitanReplacementPoint( entity player, vector playerOrg, vector playerEyePos, vector playerEyeAngles, bool forDebugging = false )
+Point function CalculateTitanReplacementPoint( vector playerOrg, vector playerEyePos, vector playerEyeAngles, bool forDebugging = false )
 {
 	//local playerEyePos = 		Vector(-281.036224, 34.857925, 860.031250)
 	//local playerEyeAngles = 	Vector(60.055622, 80.775780, 0.000000)
