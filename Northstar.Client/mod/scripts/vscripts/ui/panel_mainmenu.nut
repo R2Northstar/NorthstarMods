@@ -17,6 +17,7 @@ struct
 	var panel
 	array<var> spButtons
 	array<void functionref()> spButtonFuncs
+	var nsButton
 	var mpButton
 	var fdButton
 	void functionref() mpButtonActivateFunc = null
@@ -80,11 +81,21 @@ void function InitMainMenuPanel()
 
 	headerIndex++
 	buttonIndex = 0
+	file.nsButton = AddComboButton( comboStruct, headerIndex, buttonIndex++, "#MENU_LAUNCH_NORTHSTAR" )
+	Hud_AddEventHandler( file.nsButton, UIE_CLICK, OnPlayNSButton_Activate )
 	var multiplayerHeader = AddComboButtonHeader( comboStruct, headerIndex, "#MULTIPLAYER_ALLCAPS" )
 	file.mpButton = AddComboButton( comboStruct, headerIndex, buttonIndex++, "#MULTIPLAYER_LAUNCH" )
 	Hud_AddEventHandler( file.mpButton, UIE_CLICK, OnPlayMPButton_Activate )
-	file.fdButton = AddComboButton( comboStruct, headerIndex, buttonIndex++, "#MENU_LAUNCH_NORTHSTAR" )
+	file.fdButton = AddComboButton( comboStruct, headerIndex, buttonIndex++, "#GAMEMODE_COOP" )
 	Hud_AddEventHandler( file.fdButton, UIE_CLICK, OnPlayFDButton_Activate )
+	if( IsNorthstarServer() )
+	{
+		Hud_SetEnabled( file.mpButton, false )
+		Hud_SetVisible( file.mpButton, false )
+		Hud_SetEnabled( file.fdButton, false )
+		Hud_SetVisible( file.fdButton, false )
+	}
+	Hud_SetLocked( file.nsButton, true )
 	Hud_SetLocked( file.fdButton, true )
 
 	headerIndex++
@@ -165,6 +176,7 @@ void function OnShowMainMenuPanel()
 	#endif // PS4_PROG
 
 	UpdateSPButtons()
+	thread UpdatePlayButton( file.nsButton )
 	thread UpdatePlayButton( file.mpButton )
 	thread UpdatePlayButton( file.fdButton )
 	thread MonitorTrialVersionChange()
@@ -441,7 +453,7 @@ void function UpdatePlayButton( var button )
 			}
 
 			isLocked = file.mpButtonActivateFunc == null ? true : false
-			if( button == file.fdButton && !NSHasOriginFailPopedUp)
+			if( button == file.nsButton && !NSHasOriginFailPopedUp)
 				thread TryUnlockNorthstarButton()
 			else
 				Hud_SetLocked( button, isLocked )
@@ -522,7 +534,7 @@ void function TryUnlockNorthstarButton()
 
 	if(NSIsMasterServerAuthenticateSuccess())
 	{
-		Hud_SetLocked( file.fdButton, false )
+		Hud_SetLocked( file.nsButton, false )
 	}
 	else
 	{
@@ -541,7 +553,7 @@ void function TryUnlockNorthstarButton()
 	
 }
 
-void function OnPlayFDButton_Activate( var button ) // repurposed for launching northstar lobby
+void function OnPlayNSButton_Activate( var button ) // repurposed for launching northstar lobby
 {
 	if ( !Hud_IsLocked( button ) )
 	{
@@ -549,6 +561,19 @@ void function OnPlayFDButton_Activate( var button ) // repurposed for launching 
 		SetConVarString( "communities_hostname", "" ) // disable communities due to crash exploits that are still possible through it
 		NSTryAuthWithLocalServer()
 		thread TryAuthWithLocalServer()
+	}
+}
+
+void function OnPlayFDButton_Activate( var button ) // repurposed for launching northstar lobby
+{
+	if ( file.mpButtonActivateFunc == null )
+		printt( "file.mpButtonActivateFunc is null" )
+
+	if ( !Hud_IsLocked( button ) && file.mpButtonActivateFunc != null )
+	{
+		Lobby_SetAutoFDOpen( true )
+		// Lobby_SetFDMode( true )
+		thread file.mpButtonActivateFunc()
 	}
 }
 

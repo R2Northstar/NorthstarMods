@@ -21,6 +21,7 @@ global function InviteFriendsIfAllowed
 global function SetPutPlayerInMatchmakingAfterDelay
 
 global function DLCStoreShouldBeMarkedAsNew
+global function StartNSPrivateMatch
 
 global function SetNextAutoMatchmakingPlaylist
 global function GetNextAutoMatchmakingPlaylist
@@ -66,6 +67,7 @@ struct
 	var inviteFriendsButton
 	var inviteFriendsToNetworkButton
 	var toggleMenuModeButton
+	var customButton
 
 	var networksMoreButton
 
@@ -256,8 +258,8 @@ void function SetupComboButtonTest( var menu )
 	// this is used for launching private matches now
 	if ( isModded )
 	{
-		file.inviteRoomButton = AddComboButton( comboStruct, headerIndex, buttonIndex++, "#PRIVATE_MATCH" )
-		Hud_AddEventHandler( file.inviteRoomButton, UIE_CLICK, StartPrivateMatch )
+		file.inviteRoomButton = AddComboButton( comboStruct, headerIndex, buttonIndex++, "#MENU_TITLE_FIND_GAME" )
+		Hud_AddEventHandler( file.inviteRoomButton, UIE_CLICK, BigPlayButton1_Activate )
 	}
 	else
 	{
@@ -267,24 +269,23 @@ void function SetupComboButtonTest( var menu )
 
 	if ( isModded )
 	{
-		var customButton = AddComboButton( comboStruct, headerIndex, buttonIndex++, "設置戰隊標籤" )
-		Hud_AddEventHandler( customButton, UIE_CLICK, OnCustomClantagButton_Activate )
-		// file.findGameButton = AddComboButton( comboStruct, headerIndex, buttonIndex++, "#MENU_TITLE_FIND_GAME" )
-		// file.lobbyButtons.append( file.findGameButton )
-		// Hud_AddEventHandler( file.findGameButton, UIE_CLICK, BigPlayButton1_Activate )
+		file.customButton = AddComboButton( comboStruct, headerIndex, buttonIndex++, "設置戰隊標籤" )
+		file.lobbyButtons.append( file.customButton )
+		Hud_AddEventHandler( file.customButton, UIE_CLICK, OnCustomClantagButton_Activate )
 	}
+	
 	
 	file.inviteFriendsButton = AddComboButton( comboStruct, headerIndex, buttonIndex++, "#MENU_TITLE_INVITE_FRIENDS" )
 	Hud_AddEventHandler( file.inviteFriendsButton, UIE_CLICK, InviteFriendsIfAllowed )
-	
+
 	if ( isModded )
 	{
 		Hud_SetEnabled( file.inviteFriendsButton, false )
 		Hud_SetVisible( file.inviteFriendsButton, false )
 	}
 
-	// file.toggleMenuModeButton = AddComboButton( comboStruct, headerIndex, buttonIndex++, "#MENU_LOBBY_SWITCH_FD" )
-	// Hud_AddEventHandler( file.toggleMenuModeButton, UIE_CLICK, ToggleLobbyMode )
+	//file.toggleMenuModeButton = AddComboButton( comboStruct, headerIndex, buttonIndex++, "#MENU_LOBBY_SWITCH_FD" )
+	//Hud_AddEventHandler( file.toggleMenuModeButton, UIE_CLICK, ToggleLobbyMode )
 
 	headerIndex++
 	buttonIndex = 0
@@ -375,7 +376,7 @@ bool function MatchResultsExist()
 	return true // TODO
 }
 
-void function StartPrivateMatch( var button )
+void function StartNSPrivateMatch( var button )
 {
 	if ( Hud_IsLocked( button ) )
 		return
