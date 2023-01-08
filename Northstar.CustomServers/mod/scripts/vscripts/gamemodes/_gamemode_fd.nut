@@ -121,6 +121,7 @@ void function GamemodeFD_Init()
 	Riff_ForceBoostAvailability( eBoostAvailability.Disabled )
 	PlayerEarnMeter_SetEnabled( false )
 	SetShouldUsePickLoadoutScreen( true )
+	SetAllowLoadoutChangeFunc( FD_ShouldAllowChangeLoadout )
 	SetGetDifficultyFunc( FD_GetDifficultyLevel )
 	TeamTitanSelectMenu_Init() // show the titan select menu in this mode
 
@@ -165,6 +166,12 @@ void function GamemodeFD_Init()
 	AddBatteryHealCallback( FD_BatteryHealTeammate )
 	AddSmokeHealCallback( FD_SmokeHealTeammate )
 	SetUsedCoreCallback( FD_UsedCoreCallback )
+}
+
+// this might need updating when we do dropship things
+bool function FD_ShouldAllowChangeLoadout( entity player )
+{
+	return GetGlobalNetTime( "FD_nextWaveStartTime" ) > Time()
 }
 
 void function FD_BoostPurchaseCallback( entity player, BoostStoreData data )
