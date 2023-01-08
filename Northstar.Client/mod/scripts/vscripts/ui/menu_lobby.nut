@@ -236,7 +236,7 @@ void function SetupComboButtonTest( var menu )
 	file.playHeader = AddComboButtonHeader( comboStruct, headerIndex, "#MENU_HEADER_PLAY" )
 	
 	// server browser
-    file.findGameButton = AddComboButton( comboStruct, headerIndex, buttonIndex++, "#MENU_TITLE_SERVER_BROWSER" )
+	file.findGameButton = AddComboButton( comboStruct, headerIndex, buttonIndex++, "#MENU_TITLE_SERVER_BROWSER" )
 	file.lobbyButtons.append( file.findGameButton )
 	Hud_SetLocked( file.findGameButton, true )
 	Hud_AddEventHandler( file.findGameButton, UIE_CLICK, OpenServerBrowser )
