@@ -1089,7 +1089,7 @@ void function OnServerSelected_Threaded( var button )
 				{
 					DialogData dialogData
 					dialogData.header = format("Failed downloading %s", modName)
-					dialogData.message = result
+					dialogData.message = Localize( format("#%s", result) )
 					dialogData.image = $"ui/menu/common/dialog_error"
 
 					#if PC_PROG

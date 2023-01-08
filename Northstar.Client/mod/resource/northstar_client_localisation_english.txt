@@ -321,5 +321,12 @@ Press Yes if you agree to this. This choice can be changed in the mods menu at a
 		"INVALID_MASTERSERVER_TOKEN" 	"Invalid or expired masterserver token"
 		"JSON_PARSE_ERROR" 				"Error parsing json response"
 		"UNSUPPORTED_VERSION" 			"The version you are using is no longer supported"
+
+		"FAILED"						"Mod extraction failed. Check logs for more details."
+		"FAILED_READING_ARCHIVE"		"An error occurred while reading mod archive."
+		"FAILED_WRITING_TO_DISK"		"An error occurred while extracting mod files to the filesystem."
+		"MOD_FETCHING_FAILED"			"Mod archive could not be downloaded from Thunderstore."
+		"MOD_CORRUPTED"					"Downloaded archive checksum does not match verified signature."
+		"NO_DISK_SPACE_AVAILABLE"		"There is not enough space on your disk."
 	}
 }
