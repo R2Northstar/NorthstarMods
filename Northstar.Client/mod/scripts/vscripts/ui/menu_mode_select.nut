@@ -83,7 +83,7 @@ void function ModeButton_GetFocus( var button )
 
 	string mapName = PrivateMatch_GetSelectedMap()
 	bool mapSupportsMode = PrivateMatch_IsValidMapModeCombo( mapName, modeName )
-    if ( IsFDMode( modeName ) ) // HACK!
+	if ( IsFDMode( modeName ) ) // HACK!
 		Hud_SetText( nextModeDesc, Localize( "#FD_PLAYERS_DESC", Localize( GetGameModeDisplayHint( modeName ) ) ) )
 	else
 		Hud_SetText( nextModeDesc, GetGameModeDisplayHint( modeName ) )
