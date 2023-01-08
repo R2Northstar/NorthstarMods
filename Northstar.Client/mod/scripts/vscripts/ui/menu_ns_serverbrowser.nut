@@ -1075,8 +1075,33 @@ void function OnServerSelected_Threaded( var button )
 				// Close loading dialog
 				CloseActiveMenu()
 
-				downloadedMods++
-				continue
+				// Check result of downloading and extraction
+				string result = NSGetModExtractionResult()
+				if ( result == "OK" )
+				{
+					downloadedMods++
+					continue
+				}
+
+				// If mod downloading or extraction failed, we display the error
+				// and exit current thread.
+				else 
+				{
+					DialogData dialogData
+					dialogData.header = format("Failed downloading %s", modName)
+					dialogData.message = result
+					dialogData.image = $"ui/menu/common/dialog_error"
+
+					#if PC_PROG
+						AddDialogButton( dialogData, "#DISMISS" )
+						AddDialogFooter( dialogData, "#A_BUTTON_SELECT" )
+					#endif
+					AddDialogFooter( dialogData, "#B_BUTTON_DISMISS_RUI" )
+
+					OpenDialog( dialogData )
+					return
+				}
+				
 			}
 
 			DialogData dialogData
