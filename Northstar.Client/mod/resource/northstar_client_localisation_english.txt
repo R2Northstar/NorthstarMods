@@ -322,6 +322,17 @@ Press Yes if you agree to this. This choice can be changed in the mods menu at a
 		"JSON_PARSE_ERROR" 				"Error parsing json response"
 		"UNSUPPORTED_VERSION" 			"The version you are using is no longer supported"
 
+		"DOWNLOADING_MOD_TITLE"			"Downloading mod"
+		"DOWNLOADING_MOD_TITLE_WITH_PROGRESS"	"Downloading mod (%s1%)"
+		"DOWNLOADING_MOD_TEXT"			"Downloading %s1 v%s2..."
+		"DOWNLOADING_MOD_TEXT_WITH_PROGRESS"	"Downloading %s1 v%s2...\n(%s3 %s4 / %s5 %s6)"
+		"EXTRACTING_MOD_TITLE"			"Extracting mod (%s1%)"
+		"EXTRACTING_MOD_TEXT"			"Extracting %s1 v%s2...\n(%s3/%s4 files)"
+		"FAILED_DOWNLOADING"			"Failed downloading %s1"
+		"MISSING_MOD"					"Missing mod %s1 v%s2"
+		"MOD_NOT_VERIFIED"				"(mod is not verified, and couldn't be downloaded automatically)"
+		"MEGABYTE_SMALL"				"MB"
+		
 		"FAILED"						"Mod extraction failed. Check logs for more details."
 		"FAILED_READING_ARCHIVE"		"An error occurred while reading mod archive."
 		"FAILED_WRITING_TO_DISK"		"An error occurred while extracting mod files to the filesystem."

@@ -1021,17 +1021,20 @@ void function OnServerSelected_Threaded( var button )
 		
 		if ( !NSGetModNames().contains( modName ) )
 		{
+			string fullModName = "\"" + modName + "\""
+
 			// check if mod is verified
 			bool modIsVerified = false
 			if ( NSIsModVerified( modName, modVersion ) )
 			{
 				bool modIsVerified = true
+				string MB_UNIT = Localize( "#MEGABYTE_SMALL" )
 				NSDownloadMod( modName, modVersion )
 
 				// Downloading mod UI
 				DialogData dialogData
-				dialogData.header = "Downloading mod"
-				dialogData.message = "Downloading \"" + modName + "\" v" + modVersion + "..."
+				dialogData.header = Localize( "#DOWNLOADING_MOD_TITLE" )
+				dialogData.message = Localize( "#DOWNLOADING_MOD_TEXT", fullModName, modVersion )
 				dialogData.showSpinner = true;
 				// Prevent user from closing dialog
 				dialogData.forceChoice = true;
@@ -1051,19 +1054,19 @@ void function OnServerSelected_Threaded( var button )
 					// Mod is being downloaded.
 					if (isDownloading)
 					{
-						Hud_SetText( header, format("Downloading mod (%i%%)", downloadStats.receivedPercentage) )
-						Hud_SetText( body, format("Downloading %s v%s...\n(%i MB / %i MB)", modName, modVersion, floor(downloadStats.received / MB), floor(downloadStats.total / MB)))
+						Hud_SetText( header, Localize( "#DOWNLOADING_MOD_TITLE_WITH_PROGRESS", downloadStats.receivedPercentage) )
+						Hud_SetText( body, Localize( "#DOWNLOADING_MOD_TEXT_WITH_PROGRESS", fullModName, modVersion, floor(downloadStats.received / MB), MB_UNIT, floor(downloadStats.total / MB), MB_UNIT))
 					}
 					else // Mod is being extracted.
 					{
-						Hud_SetText( header, format("Extracting mod (%i%%)", downloadStats.receivedPercentage) )
-						string text = format( "Extracting %s v%s...\n(%i/%i files)", modName, modVersion, floor(downloadStats.received), floor(downloadStats.total) )
+						Hud_SetText( header, Localize( "#EXTRACTING_MOD_TITLE", downloadStats.receivedPercentage ) )
+						string text = Localize( "#EXTRACTING_MOD_TEXT", fullModName, modVersion, floor(downloadStats.received), floor(downloadStats.total) )
 
 						// We only display extraction progress for big files (> 15MB), for users not to think Northstar has crashed.
 						float filesize = downloadStats.currentFileTotal;
 						if ( filesize > 15 * MB )
 						{
-							text += format( " [%iMB / %iMB]", floor(downloadStats.currentFileExtracted / MB), floor(downloadStats.currentFileTotal / MB) )
+							text += format( " [%i%s / %i%s]", floor(downloadStats.currentFileExtracted / MB), MB_UNIT, floor(downloadStats.currentFileTotal / MB), MB_UNIT )
 						}
 
 						Hud_SetText( body, text )
@@ -1088,7 +1091,7 @@ void function OnServerSelected_Threaded( var button )
 				else 
 				{
 					DialogData dialogData
-					dialogData.header = format("Failed downloading %s", modName)
+					dialogData.header = Localize( "#FAILED_DOWNLOADING", modName )
 					dialogData.message = Localize( format("#%s", result) )
 					dialogData.image = $"ui/menu/common/dialog_error"
 
@@ -1106,12 +1109,12 @@ void function OnServerSelected_Threaded( var button )
 
 			DialogData dialogData
 			dialogData.header = "#ERROR"
-			dialogData.message = "Missing mod \"" + modName + "\" v" + modVersion
+			dialogData.message = Localize( "#MISSING_MOD", fullModName, modVersion )
 			dialogData.image = $"ui/menu/common/dialog_error"
 
 			if (!modIsVerified)
 			{
-				dialogData.message += "\n(mod is not verified, and couldn't be downloaded automatically)"
+				dialogData.message += "\n" + Localize( "#MOD_NOT_VERIFIED" )
 			}
 
 			#if PC_PROG

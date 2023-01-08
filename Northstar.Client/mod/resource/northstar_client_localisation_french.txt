@@ -319,5 +319,23 @@ Choisissez Oui si vous êtes d'accord. Ce choix peut être modifié à tout inst
 		"INVALID_MASTERSERVER_TOKEN"     "Jeton du server maître invalide ou expiré"
 		"JSON_PARSE_ERROR"                 "Une erreur est survenue durant l'analyse JSON"
 		"UNSUPPORTED_VERSION"             "La version que vous utilisez n'est plus supportée"
+
+		"DOWNLOADING_MOD_TITLE"			"Téléchargement du mod"
+		"DOWNLOADING_MOD_TITLE_WITH_PROGRESS"	"Téléchargement du mod (%s1%)"
+		"DOWNLOADING_MOD_TEXT"			"Téléchargement de %s1 v%s2..."
+		"DOWNLOADING_MOD_TEXT_WITH_PROGRESS"	"Téléchargement de %s1 v%s2...\n(%s3 %s4 / %s5 %s6)"
+		"EXTRACTING_MOD_TITLE"			"Extraction du mod (%s1%)"
+		"EXTRACTING_MOD_TEXT"			"Extraction de %s1 v%s2...\n(%s3/%s4 fichiers)"
+		"FAILED_DOWNLOADING"			"Echec du téléchargement de %s1"
+		"MISSING_MOD"					"Mod manquant : %s1 v%s2"
+		"MOD_NOT_VERIFIED"				"(ce mod n'est pas vérifié, et n'a donc pas pu être automatiquement téléchargé)"
+		"MEGABYTE_SMALL"				"Mo"
+		
+		"FAILED"						"L'extraction du mod a échoué.\nVeuillez lire le journal d'événements pour plus d'informations."
+		"FAILED_READING_ARCHIVE"		"Une erreur est survenue lors de la lecture de l'archive."
+		"FAILED_WRITING_TO_DISK"		"Une erreur est survenue lors de l'extraction de fichiers."
+		"MOD_FETCHING_FAILED"			"L'archive du mod n'a pas pu être téléchargée depuis Thunderstore."
+		"MOD_CORRUPTED"					"La somme de contrôle de l'archive ne correspond pas à la signature vérifiée."
+		"NO_DISK_SPACE_AVAILABLE"		"Il n'y a plus assez d'espace disque."
 	}
 }
