@@ -1800,6 +1800,10 @@ void function OnHarvesterDamaged( entity harvester, var damageInfo )
         damageSourceID == eDamageSourceId.mp_titancore_salvo_core
 	) // titan missiles
 		DamageInfo_SetDamage( damageInfo, DamageInfo_GetDamage( damageInfo ) / 3 )
+
+	if ( damageSourceID = eDamageSourceId.mp_titanweapon_sticky_40mm ) // 40mm trakcer cannon
+		DamageInfo_SetDamage( damageInfo, DamageInfo_GetDamage( damageInfo ) / 2 )
+
     if ( damageSourceID == eDamageSourceId.mp_titanweapon_flightcore_rockets ) // flight core shreds well
         DamageInfo_SetDamage( damageInfo, DamageInfo_GetDamage( damageInfo ) / 5 ) 
 
@@ -1970,11 +1974,12 @@ void function HarvesterThink( HarvesterStruct fw_harvester )
 				isRegening = true
 			}
 
-			float newShieldHealth = ( harvester.GetShieldHealthMax() / GENERATOR_SHIELD_REGEN_TIME * deltaTime ) + harvester.GetShieldHealth()
+			float newShieldHealth = ( harvester.GetShieldHealthMax() / GetCurrentPlaylistVarFloat( "fw_harvester_regen_time", FW_DEFAULT_HARVESTER_REGEN_TIME ) * deltaTime ) + harvester.GetShieldHealth()
 
+			// shield full
 			if ( newShieldHealth >= harvester.GetShieldHealthMax() )
 			{
-			StopSoundOnEntity( harvester, "coop_generator_shieldrecharge_resume" )
+				StopSoundOnEntity( harvester, "coop_generator_shieldrecharge_resume" )
 				harvester.SetShieldHealth( harvester.GetShieldHealthMax() )
 				EmitSoundOnEntity( harvester, "coop_generator_shieldrecharge_end" )
 				PlayFactionDialogueToTeam( "fortwar_baseShieldUpFriendly", harvester.GetTeam() )

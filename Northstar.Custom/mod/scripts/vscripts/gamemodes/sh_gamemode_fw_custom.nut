@@ -7,9 +7,10 @@ global function SHCreateGamemodeFW_Init
 
 // object settings, changable through playlist vars
 // default havester settings
-global const int FW_DEFAULT_HARVESTER_HEALTH = 18000
-global const int FW_DEFAULT_HARVESTER_SHIELD = 4000
-global const float FW_DEFAULT_HARVESTER_REGEN_DELAY = 10.0
+global const int FW_DEFAULT_HARVESTER_HEALTH = 16000
+global const int FW_DEFAULT_HARVESTER_SHIELD = 3000
+global const float FW_DEFAULT_HARVESTER_REGEN_DELAY = 12.0
+global const float FW_DEFAULT_HARVESTER_REGEN_TIME = 10.0
 // default turret settings
 global const int FW_DEFAULT_TURRET_HEALTH = 10000
 global const int FW_DEFAULT_TURRET_SHIELD = 3000
@@ -27,6 +28,7 @@ void function SHCreateGamemodeFW_Init()
 	AddPrivateMatchModeSettingArbitrary( "#PL_fw", "fw_harvester_health", FW_DEFAULT_HARVESTER_HEALTH.tostring() )
 	AddPrivateMatchModeSettingArbitrary( "#PL_fw", "fw_harvester_shield", FW_DEFAULT_HARVESTER_SHIELD.tostring() )
 	AddPrivateMatchModeSettingArbitrary( "#PL_fw", "fw_harvester_regen_delay", FW_DEFAULT_HARVESTER_REGEN_DELAY.tostring() )
+	AddPrivateMatchModeSettingArbitrary( "#PL_fw", "fw_harvester_regen_time", FW_DEFAULT_HARVESTER_REGEN_TIME.tostring() )
 	// turret playlistvar
 	AddPrivateMatchModeSettingArbitrary( "#PL_fw", "fw_turret_health", FW_DEFAULT_TURRET_HEALTH.tostring() )
 	AddPrivateMatchModeSettingArbitrary( "#PL_fw", "fw_turret_shield", FW_DEFAULT_TURRET_SHIELD.tostring() )
