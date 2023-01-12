@@ -125,8 +125,10 @@ void function GamemodeFW_Init()
 	AddCallback_GameStateEnter( eGameState.Playing, OnFWGamePlaying )
 
 	AddSpawnCallback( "item_powerup", FWAddPowerUpIcon )
+	AddSpawnCallback( "npc_turret_mega", FWTurretHighlight )
 
 	AddCallback_OnClientConnected( OnFWPlayerConnected )
+	AddCallback_PlayerClassChanged( OnFWPlayerClassChanged )
 	AddCallback_OnPlayerKilled( OnFWPlayerKilled )
 	AddCallback_OnPilotBecomesTitan( OnFWPilotBecomesTitan )
 	AddCallback_OnTitanBecomesPilot( OnFWTitanBecomesPilot )
@@ -310,6 +312,12 @@ void function OnFWGamePlaying()
 void function OnFWPlayerConnected( entity player )
 {
 	InitFWPlayers( player )
+}
+
+void function OnFWPlayerClassChanged( entity player )
+{
+    // give player a friendly highlight
+    Highlight_SetFriendlyHighlight( player, "fw_friendly" )
 }
 
 void function OnFWPlayerKilled( entity victim, entity attacker, var damageInfo )
@@ -579,6 +587,7 @@ void function LoadEntities()
 					entity turret = CreateNPC( "npc_turret_mega", TEAM_UNASSIGNED, info_target.GetOrigin(), info_target.GetAngles() )
 					SetSpawnOption_AISettings( turret, "npc_turret_mega_fortwar" )
 					SetDefaultMPEnemyHighlight( turret ) // for sonar highlights to work
+					Highlight_SetFriendlyHighlight( turret, "fw_friendly" )
 					AddEntityCallback_OnDamaged( turret, OnMegaTurretDamaged )
 					DispatchSpawn( turret )
 
@@ -1165,12 +1174,15 @@ bool function FW_IsPlayerInEnemyTerritory( entity player )
 const float FW_SPAWNPOINT_SEARCH_RADIUS = 2800.0
 
 
-Point function FW_ReCalculateTitanReplacementPoint( Point basePoint, entity player)
+Point function FW_ReCalculateTitanReplacementPoint( Point basePoint, entity player )
 {
 	int team = player.GetTeam()
 	// find team's harvester
 	entity teamHarvester = FW_GetTeamHarvesterProp( team )
 
+	if ( !IsValid( teamHarvester ) ) // team's havester has been destroyed!
+        return basePoint // return given value
+		
 	if( Distance2D( basePoint.origin, teamHarvester.GetOrigin() ) <= FW_SPAWNPOINT_SEARCH_RADIUS ) // close enough!
 		return basePoint // this origin is good enough
 
@@ -1375,6 +1387,21 @@ void function FWAreaThreatLevelThink_Threaded()
 ////////////////////////////
 ///// TURRET FUNCTIONS /////
 ////////////////////////////
+
+void function FWTurretHighlight( entity turret )
+{
+    thread FWTurretHighlightThink( turret )
+}
+
+// this will clear turret's highlight upon their death, for notifying players to fix them
+void function FWTurretHighlightThink( entity turret )
+{
+    turret.EndSignal( "OnDestroy" )
+    Highlight_SetFriendlyHighlight( turret, "fw_friendly" )
+
+    turret.WaitSignal( "OnDeath" )
+    Highlight_ClearFriendlyHighlight( turret )
+}
 
 // for battery_port, replace the turret with new one
 entity function FW_ReplaceMegaTurret( entity perviousTurret )
@@ -1801,7 +1828,7 @@ void function OnHarvesterDamaged( entity harvester, var damageInfo )
 	) // titan missiles
 		DamageInfo_SetDamage( damageInfo, DamageInfo_GetDamage( damageInfo ) / 3 )
 
-	if ( damageSourceID = eDamageSourceId.mp_titanweapon_sticky_40mm ) // 40mm trakcer cannon
+	if ( damageSourceID == eDamageSourceId.mp_titanweapon_sticky_40mm ) // 40mm trakcer cannon
 		DamageInfo_SetDamage( damageInfo, DamageInfo_GetDamage( damageInfo ) / 2 )
 
     if ( damageSourceID == eDamageSourceId.mp_titanweapon_flightcore_rockets ) // flight core shreds well
