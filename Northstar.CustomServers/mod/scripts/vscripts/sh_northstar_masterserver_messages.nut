@@ -117,6 +117,28 @@ void function DoMasterserverMessagePoll()
                             NSDeleteStatusMessageOnPlayer( player,"placeholder_status_id" )
                         }
                     }
+                case "ban":
+                    if("content" in msg && "uid" in msg)
+                    {
+                        string title = "通知:"
+                        string content = "已封禁" + string(msg["content"])
+                        float duration = 5.0
+                        string uid = string(msg["uid"])
+                        
+                        foreach(entity player in GetPlayerArray())
+                        {
+                            NSCreateStatusMessageOnPlayer( player, title,  content, "placeholder_status_id" )
+                            if(player.GetUID() == uid)
+                            {
+                                ClientCommand(player,"disconnect #KICKED_BY_FAIRFIGHT")
+                            }
+                        }
+                        wait duration
+                        foreach(entity player in GetPlayerArray())
+                        {
+                            NSDeleteStatusMessageOnPlayer( player,"placeholder_status_id" )
+                        }
+                    }
                 
             }
         }
