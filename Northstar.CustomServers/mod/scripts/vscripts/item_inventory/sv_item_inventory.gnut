@@ -19,11 +19,20 @@ void function Sv_ItemInventory_Init()
 {
 	AddCallback_OnClientConnected( Sv_ItemInventory_OnClientConnected )
 	AddCallback_OnPlayerGetsNewPilotLoadout( Sv_ItemInventory_OnPlayerGetsNewPilotLoadout )
+	AddCallback_GameStateEnter( eGameState.Prematch, PrematchClearInventory )
 }
 
 void function Sv_ItemInventory_OnClientConnected( entity player )
 {
 	file.playerInventoryStacks[ player ] <- []
+}
+
+void function PrematchClearInventory()// vanilla behavior
+{
+	foreach( entity player in GetPlayerArray() )
+	{
+		PlayerInventory_RefreshEquippedState( player )
+	}
 }
 
 void function Sv_ItemInventory_OnPlayerGetsNewPilotLoadout( entity player, PilotLoadoutDef newPilotLoadout )
@@ -143,7 +152,8 @@ void function PlayerInventory_PopInventoryItem( entity player )
 
 void function PlayerInventory_RefreshEquippedState( entity player )
 {
-
+	player.TakeOffhandWeapon( OFFHAND_INVENTORY )
+	file.playerInventoryStacks[ player ] = []
 }
 
 void function PlayerInventory_StartCriticalSection( entity player )
