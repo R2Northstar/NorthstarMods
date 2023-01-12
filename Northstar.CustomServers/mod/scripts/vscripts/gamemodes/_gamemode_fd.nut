@@ -437,7 +437,7 @@ bool function useShieldBoost( entity player, array<string> args )
 	{
 		fd_harvester.harvester.SetShieldHealth( fd_harvester.harvester.GetShieldHealthMax() )
 		SetGlobalNetTime( "FD_harvesterInvulTime", Time() + 5 )
-		MessageToTeam( TEAM_MILITIA,eEventNotifications.FD_PlayerHealedHarvester, null, player )
+		MessageToTeam( TEAM_MILITIA,eEventNotifications.FD_PlayerBoostedHarvesterShield, null, player )
 		player.SetPlayerNetInt( "numHarvesterShieldBoost", player.GetPlayerNetInt( "numHarvesterShieldBoost" ) - 1 )
 		file.playerAwardStats[player]["harvesterHeals"]++
 	}
@@ -1509,7 +1509,10 @@ void function CheckLastPlayerReady()
 bool function ClientCommandCallbackToggleReady( entity player, array<string> args )
 {
 	if( args[0] == "true" )
+	{
 		player.SetPlayerNetBool( "FD_readyForNextWave", true )
+		MessageToTeam( TEAM_MILITIA,eEventNotifications.FD_PlayerReady, null, player )
+	}
 	if( args[0] == "false" )
 		player.SetPlayerNetBool( "FD_readyForNextWave", false )
 
