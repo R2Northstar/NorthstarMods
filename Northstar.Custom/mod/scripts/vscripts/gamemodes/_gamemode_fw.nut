@@ -134,13 +134,9 @@ void function GamemodeFW_Init()
 	AddCallback_OnTitanBecomesPilot( OnFWTitanBecomesPilot )
 
 	ScoreEvent_SetupEarnMeterValuesForMixedModes()
-	SetRecalculateTitanReplacementPointCallback( FW_ReCalculateTitanReplacementPoint )
 	SetRecalculateRespawnAsTitanStartPointCallback( FW_ForcedTitanStartPoint )
+	SetRecalculateTitanReplacementPointCallback( FW_ReCalculateTitanReplacementPoint )
 	SetRequestTitanAllowedCallback( FW_RequestTitanAllowed )
-
-	// so many things in battle, this is required to avoid crash!
-	ServerCommand( "sv_max_props_multiplayer 200000" )
-	ServerCommand( "sv_max_prop_data_dwords_multiplayer 300000" )
 }
 
 
