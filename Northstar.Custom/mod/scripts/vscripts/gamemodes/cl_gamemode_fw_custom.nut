@@ -2,7 +2,7 @@
 // this file is to register more network vars or remote functions
 global function ServerCallback_FW_NotifyNeedsEnterEnemyArea
 
-void function ServerCallback_FW_NotifyNeedsEnterEnemyArea( entity player )
+void function ServerCallback_FW_NotifyNeedsEnterEnemyArea()
 {
 	AnnouncementData announcement = Announcement_Create( "#FW_ENTER_ENEMY_AREA" )
 	Announcement_SetSoundAlias( announcement,  "UI_InGame_LevelUp" )
