@@ -22,6 +22,7 @@ enum eDropshipState{
 struct player_struct_fd{
 	bool diedThisRound
 	int scoreThisRound
+	int moneyThisRound
 	/*
 	int totalMVPs
 	int mortarUnitsKilled
@@ -67,6 +68,7 @@ struct {
 	table<entity, table<string, float> > playerAwardStats
 	entity harvester_info
 	bool playersHaveTitans = false
+	bool waveRestart = false
 
 	string animationOverride = ""
 	int dropshipState
@@ -467,6 +469,19 @@ void function mainGameLoop()
 	bool showShop = false
 	for( int i = GetGlobalNetInt( "FD_currentWave" ); i < waveEvents.len(); i++ )
 	{
+		if( file.waveRestart )
+		{
+			showShop = true
+			foreach( entity player in GetPlayerArray() )
+			{
+				SetMoneyForPlayer( player, file.players[player].moneyThisRound )
+				player.SetPlayerNetInt( "numHarvesterShieldBoost", 0 )
+				player.SetPlayerNetInt( "numSuperRodeoGrenades", 0 )
+				PlayerInventory_TakeAllInventoryItem( player )
+			}
+			SetGlobalNetTime( "FD_nextWaveStartTime", Time() + 75 )
+		}
+
 		if( !runWave( i, showShop ) )
 			break
 
@@ -648,12 +663,18 @@ bool function runWave( int waveIndex, bool shouldDoBuyTime )
 	{
 		file.players[player].diedThisRound = false
 		file.players[player].scoreThisRound = 0
+		file.players[player].moneyThisRound = GetPlayerMoney( player )
 	}
 	array<int> enemys = getHighestEnemyAmountsForWave( waveIndex )
 
 	foreach( entity player in GetPlayerArray() )
 	{
 		Remote_CallFunction_NonReplay( player, "ServerCallback_FD_AnnouncePreParty", enemys[0], enemys[1], enemys[2], enemys[3], enemys[4], enemys[5], enemys[6], enemys[7], enemys[8] )
+	}
+	if( file.waveRestart )
+	{
+		file.waveRestart = false
+		MessageToTeam( TEAM_MILITIA,eEventNotifications.FD_WaveRestart )
 	}
 	if( shouldDoBuyTime )
 	{
@@ -731,6 +752,8 @@ bool function runWave( int waveIndex, bool shouldDoBuyTime )
 			FD_DecrementRestarts()
 		else
 			SetRoundBased(false)
+
+		file.waveRestart = true //wave restart point
 		SetWinner( TEAM_IMC )//restart round
 		spawnedNPCs = [] // reset npcs count
 		restetWaveEvents()
