@@ -102,6 +102,10 @@
 			"RunOn": "SERVER && MP"
 		},
 		{
+			"Path": "gamemodes/_gamemode_fw.nut",
+			"RunOn": "SERVER && MP"
+		},
+		{
 			"Path": "gamemodes/sh_gamemode_fw_custom.nut",
 			"RunOn": "( CLIENT || SERVER ) && MP",
 			"ClientCallback": {
@@ -114,6 +118,10 @@
 		{
 			"Path": "gamemodes/sh_gamemode_fw.nut",
 			"RunOn": "( CLIENT || SERVER ) && MP"
+		},
+		{
+			"Path": "gamemodes/cl_gamemode_fw_custom.nut",
+			"RunOn": "CLIENT && MP"
 		},
 		{
 			"Path": "gamemodes/cl_gamemode_fw.nut",
@@ -423,10 +431,6 @@
 			"ServerCallback": {
 				"Before": "MessageUtils_ServerInit"
 			}
-		},
-		{
-			"Path": "gamemodes/_gamemode_fw.nut",
-			"RunOn": "SERVER && MP"
 		},
 		{
 			"Path":  "sh_northstar_http_requests.gnut",
