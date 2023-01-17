@@ -241,7 +241,7 @@ bool function ClientCommandCallback_SetBurnCardPersistenceSlot( entity player, a
 		{
 			if( GetGameState() >= eGameState.Playing ) // only announce after game starts
 			{
-				SendHudMessage( player, "#LOADOUT_CHANGE_NEXT_MATCH", -1, 0.3, 255, 255, 255, 255, 1.0, 5.0, 2.0 ) // like 90% sure this is innacurate lols
+				SendHudMessage( player, "#LOADOUT_CHANGE_NEXT_MATCH", -1, 0.3, 255, 255, 255, 255, 1.0, 5.0, 2.0 ) // "Boost can no longer be changed."
 				thread DelayedRemoveNoticeLimit( player.GetUID() )
 			}
 		}
@@ -308,7 +308,7 @@ bool function ClientCommandCallback_InGameMPMenuClosed( entity player, array<str
 		{
 			if( GetGameState() >= eGameState.Playing ) // only announce after game starts
 			{
-				SendHudMessage( player, "#LOADOUT_CHANGE_NEXT_TITAN", -1, 0.3, 255, 255, 255, 255, 1.0, 5.0, 2.0 ) // like 90% sure this is innacurate lol
+				SendHudMessage( player, "#LOADOUT_CHANGE_NEXT_TITAN", -1, 0.3, 255, 255, 255, 255, 1.0, 5.0, 2.0 ) // "Titan loadout changes will take effect next Titan spawn."
 				thread DelayedRemoveNoticeLimit( player.GetUID() )
 			}
 		}
@@ -337,7 +337,7 @@ void function TryGivePilotLoadoutForGracePeriod( entity player )
 		{
 			if( GetGameState() >= eGameState.Playing ) // only announce after game starts
 			{
-				SendHudMessage( player, "#LOADOUT_CHANGE_NEXT_PILOT", -1, 0.3, 255, 255, 255, 255, 1.0, 5.0, 2.0 )
+				SendHudMessage( player, "#LOADOUT_CHANGE_NEXT_PILOT", -1, 0.3, 255, 255, 255, 255, 1.0, 5.0, 2.0 ) // "Pilot loadout changes will take effect next Pilot spawn."
 				thread DelayedRemoveNoticeLimit( player.GetUID() )
 			}
 		}
@@ -350,13 +350,11 @@ void function TryGivePilotLoadoutForGracePeriod( entity player )
 		// for intros
 		if ( !Loadouts_CanGivePilotLoadout( player ) && player.GetParent() != null && ( HasCinematicFlag( player, CE_FLAG_INTRO ) || HasCinematicFlag( player, CE_FLAG_CLASSIC_MP_SPAWNING ) || HasCinematicFlag( player, CE_FLAG_WAVE_SPAWNING ) ) )
 		{
-			//print( "Player in dropship Intro, waiting" )
 			thread GiveLoadoutWhenIntroOver( player )
 			player.p.usingLoadoutCrate = false
 		}
 		else if( Loadouts_CanGivePilotLoadout( player )  )
 		{
-			//print( "Can give loadout" )
 			Loadouts_TryGivePilotLoadout( player )
 			player.p.usingLoadoutCrate = false
 		}
@@ -366,7 +364,7 @@ void function TryGivePilotLoadoutForGracePeriod( entity player )
 			{
 				if( GetGameState() >= eGameState.Playing ) // only announce after game starts
 				{
-					SendHudMessage( player, "#LOADOUT_CHANGE_NEXT_PILOT", -1, 0.3, 255, 255, 255, 255, 1.0, 5.0, 2.0 )
+					SendHudMessage( player, "#LOADOUT_CHANGE_NEXT_PILOT", -1, 0.3, 255, 255, 255, 255, 1.0, 5.0, 2.0 ) // "Pilot loadout changes will take effect next Pilot spawn."
 					thread DelayedRemoveNoticeLimit( player.GetUID() )
 				}
 			}
@@ -378,7 +376,7 @@ void function GiveLoadoutWhenIntroOver( entity player )
 {
 	player.EndSignal( "OnDestroy" )
 	player.EndSignal( "OnDeath" )
-	player.Signal( "WaitingForIntroOver" ) // don't let it loop many times!
+	player.Signal( "WaitingForIntroOver" ) // don't let this function loop many times!
 	player.EndSignal( "WaitingForIntroOver" )
 	
 	while ( player.GetParent() != null && ( HasCinematicFlag( player, CE_FLAG_INTRO ) || HasCinematicFlag( player, CE_FLAG_CLASSIC_MP_SPAWNING ) || HasCinematicFlag( player, CE_FLAG_WAVE_SPAWNING ) ) )
