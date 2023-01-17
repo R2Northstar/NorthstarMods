@@ -7,7 +7,7 @@
 //#endif //client && MP
 
 #if CLIENT
-	consst float CARD_TAG_SCALE = 0.0 // update to match same const in hud_defs.rui
+	const float CARD_TAG_SCALE = 0.0 // update to match same const in hud_defs.rui
 
 	const DEFAULT_FOV = 50.0
 	const DEFAULT_DOF_NEAR_START = 7.5
