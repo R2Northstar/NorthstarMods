@@ -942,6 +942,9 @@ void function FD_SmokeHealTeammate( entity player, entity target, int shieldRest
 
 void function FD_BatteryHealTeammate( entity battery, entity titan, int shieldRestoreAmount, int healthRestoreAmount )
 {
+	if( !IsValid( battery ) )
+		return
+
 	entity BatteryParent = battery.GetParent()
 	entity TargetTitan
 	int currentHeal
