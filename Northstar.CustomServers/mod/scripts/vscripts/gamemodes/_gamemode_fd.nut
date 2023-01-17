@@ -23,6 +23,7 @@ struct player_struct_fd{
 	bool diedThisRound
 	int scoreThisRound
 	int moneyThisRound
+	array< entity > deployedEntityThisRound
 	/*
 	int totalMVPs
 	int mortarUnitsKilled
@@ -326,6 +327,18 @@ void function GamemodeFD_InitPlayer( entity player )
 	}
 	// unfortunate that i cant seem to find a nice callback for them exiting that menu but thisll have to do
 	thread TryDisableTitanSelectionForPlayerAfterDelay( player, TEAM_TITAN_SELECT_DURATION_MIDGAME )
+	thread TrackDeployedArcTrapThisRound( player )
+}
+
+void function TrackDeployedArcTrapThisRound( entity player )
+{
+	player.EndSignal( "OnDestroy" )
+	while( IsValid( player ) )
+	{
+		entity ArcTrap = expect entity ( player.WaitSignal( "DeployArcTrap" ).projectile )
+		file.players[ player ].deployedEntityThisRound.append( ArcTrap )
+		AddEntityDestroyedCallback( ArcTrap, FD_OnEntityDestroyed )
+	}
 }
 
 void function TryDisableTitanSelectionForPlayerAfterDelay( entity player, float waitAmount )
@@ -664,6 +677,7 @@ bool function runWave( int waveIndex, bool shouldDoBuyTime )
 		file.players[player].diedThisRound = false
 		file.players[player].scoreThisRound = 0
 		file.players[player].moneyThisRound = GetPlayerMoney( player )
+		file.players[ player ].deployedEntityThisRound = []
 	}
 	array<int> enemys = getHighestEnemyAmountsForWave( waveIndex )
 
@@ -1185,9 +1199,23 @@ void function OnHarvesterDamaged( entity harvester, var damageInfo )
 
 void function FD_NPCCleanup()
 {
+	foreach( entity player in GetPlayerArray() )
+	{
+		foreach ( entity ent in file.players[ player ].deployedEntityThisRound )
+		{
+			if ( IsValid( ent ) )
+				ent.Destroy()
+		}
+	}
 	foreach ( entity npc in GetEntArrayByClass_Expensive( "C_AI_BaseNPC" ) )
+	{
+		entity BossPlayer = npc.GetBossPlayer()
+		if( IsValidPlayer( BossPlayer ) && !file.players[ BossPlayer ].deployedEntityThisRound.contains( npc ) )
+			continue
+
 		if ( IsValid( npc ) )
 			npc.Destroy()
+	}
 }
 
 void function HarvesterThink()
@@ -1701,6 +1729,19 @@ void function AddTurretSentry( entity turret )
 	turret.Minimap_AlwaysShow( TEAM_MILITIA, null )
 	turret.Minimap_SetHeightTracking( true )
 	turret.Minimap_SetCustomState( eMinimapObject_npc.FD_TURRET )
+	entity player = turret.GetBossPlayer()
+	file.players[ player ].deployedEntityThisRound.append( turret )
+	AddEntityDestroyedCallback( turret, FD_OnEntityDestroyed )
+}
+
+function FD_OnEntityDestroyed( ent )
+{
+	expect entity( ent )
+
+	Assert( ent.IsValidInternal() )
+	entity player = IsTurret( ent ) ? ent.GetBossPlayer() : ent.GetOwner()
+	if( file.players[ player ].deployedEntityThisRound.contains( ent ) )
+		file.players[ player ].deployedEntityThisRound.fastremovebyvalue( ent )
 }
 
 void function DisableTitanSelection()
