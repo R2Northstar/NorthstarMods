@@ -1,0 +1,17 @@
+name: compile-check
+
+on: [push, pull_request]
+
+jobs:
+  compile:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout Repo
+        uses: actions/checkout@v3
+        with:
+          path: "mods"
+      
+      - name: Test Step
+        uses: ASpoonPlaysGames/squirrel-re-compiler@main
+        with:
+          mods-directory: "${{ github.workspace }}/mods"
