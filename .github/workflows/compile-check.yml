@@ -11,7 +11,7 @@ jobs:
         with:
           path: "mods"
       
-      - name: Test Step
+      - name: Compile Scripts
         uses: ASpoonPlaysGames/squirrel-re-compiler@main
         with:
           mods-directory: "${{ github.workspace }}/mods"
