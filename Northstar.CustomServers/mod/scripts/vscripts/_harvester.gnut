@@ -9,7 +9,9 @@ global struct HarvesterStruct {
 	entity rings
 	float lastDamage
 	bool shieldBoost
-	
+	bool harvesterShieldDown
+	float harvesterDamageTaken
+	bool havesterWasDamaged
 }
 
 HarvesterStruct function SpawnHarvester( vector origin, vector angles, int health, int shieldHealth, int team )
