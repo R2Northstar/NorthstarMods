@@ -1,7 +1,7 @@
 {
 	"Name": "Northstar.Client",
 	"Description": "Various ui and client changes to fix bugs and add better support for mods",
-	"Version": "1.9.0",
+	"Version": "1.10.0",
 	"LoadPriority": 0,
 	"ConVars": [
 		{
@@ -31,6 +31,16 @@
 		{
 			"Name": "filter_map_hide_locked",
 			"DefaultValue": "0"
+		},
+		{
+			"Name": "modlist_show_convars",
+			"DefaultValue": "0",
+			"Flags": 16777216
+		},
+		{
+			"Name": "modlist_reverse",
+			"DefaultValue": "0",
+			"Flags": 16777216
 		},
 		{
 			"Name": "quickplay_filter_maps",
@@ -91,10 +101,7 @@
 	"Scripts": [
 		{
 			"Path": "_custom_codecallbacks_client.gnut",
-			"RunOn": "CLIENT",
-			"ClientCallback": {
-				"Before": "NSSetupChathooksClient"
-			}
+			"RunOn": "CLIENT"
 		},
 		{
 			"Path": "client/cl_chat.gnut",
@@ -159,6 +166,10 @@
 		},
 		{
 			"Path": "ui/controller_prompts.nut",
+			"RunOn": "UI"
+		},
+		{
+			"Path": "ui/ui_mouse_capture.nut",
 			"RunOn": "UI"
 		},
 		{
