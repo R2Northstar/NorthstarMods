@@ -257,13 +257,10 @@ void function GracePeriodThink_Threaded( entity player )
 	OnThreadEnd(
 		function(): ( player )
 		{
-			if( IsValid( player ) )
+			if( IsValid( player ) && IsAlive( player ) && GetGameState() == eGameState.Playing ) // if player died we don't reset this( mostly because round end )
 			{
-				if( IsAlive( player ) && GetGameState() == eGameState.Playing ) // if player died we don't reset this( mostly because round end )
-				{
-					player.s.inGracePeriod = false
-					player.Signal( "GracePeriodDone" )
-				}
+				player.s.inGracePeriod = false
+				player.Signal( "GracePeriodDone" )
 			}
 		}
 	)

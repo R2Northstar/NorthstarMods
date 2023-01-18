@@ -27,7 +27,7 @@ struct {
 	array<entity> dirtyLoadouts
 
 	// modified, less annoying notification
-	array<string> recentNoticedPlayers
+	array<entity> recentNoticedPlayers
 } file
 
 void function SvLoadoutsMP_Init()
@@ -235,15 +235,12 @@ bool function ClientCommandCallback_SetBurnCardPersistenceSlot( entity player, a
 {
 	if ( args.len() != 1 )
 		return true
-	if( GetGameState() >= eGameState.Playing )
+	if( GetGameState() >= eGameState.Playing ) // only announce after game starts
 	{
-		if( !file.recentNoticedPlayers.contains( player.GetUID() ) && IsAlive( player ) ) // only announce if player alive
+		if( !file.recentNoticedPlayers.contains( player ) && IsAlive( player ) ) // only announce if player alive
 		{
-			if( GetGameState() >= eGameState.Playing ) // only announce after game starts
-			{
-				SendHudMessage( player, "#LOADOUT_CHANGE_NEXT_MATCH", -1, 0.3, 255, 255, 255, 255, 1.0, 5.0, 2.0 ) // "Boost can no longer be changed."
-				thread DelayedRemoveNoticeLimit( player.GetUID() )
-			}
+			SendHudMessage( player, "#LOADOUT_CHANGE_NEXT_MATCH", -1, 0.3, 255, 255, 255, 255, 1.0, 5.0, 2.0 ) // "Boost can no longer be changed."
+			thread DelayedRemoveNoticeLimit( player )
 		}
 		return true
 	}
@@ -304,12 +301,12 @@ bool function ClientCommandCallback_InGameMPMenuClosed( entity player, array<str
 {
 	if( player.IsTitan() )
 	{
-		if( !file.recentNoticedPlayers.contains( player.GetUID() ) && IsAlive( player ) ) // only announce if player alive
+		if( !file.recentNoticedPlayers.contains( player ) && IsAlive( player ) ) // only announce if player alive
 		{
 			if( GetGameState() >= eGameState.Playing ) // only announce after game starts
 			{
 				SendHudMessage( player, "#LOADOUT_CHANGE_NEXT_TITAN", -1, 0.3, 255, 255, 255, 255, 1.0, 5.0, 2.0 ) // "Titan loadout changes will take effect next Titan spawn."
-				thread DelayedRemoveNoticeLimit( player.GetUID() )
+				thread DelayedRemoveNoticeLimit( player )
 			}
 		}
 	}
@@ -333,12 +330,12 @@ void function TryGivePilotLoadoutForGracePeriod( entity player )
 {
 	if( !file.loadoutGracePeriodEnabled )
 	{
-		if( !file.recentNoticedPlayers.contains( player.GetUID() ) && IsAlive( player ) ) // only announce if player alive
+		if( !file.recentNoticedPlayers.contains( player ) && IsAlive( player ) ) // only announce if player alive
 		{
 			if( GetGameState() >= eGameState.Playing ) // only announce after game starts
 			{
 				SendHudMessage( player, "#LOADOUT_CHANGE_NEXT_PILOT", -1, 0.3, 255, 255, 255, 255, 1.0, 5.0, 2.0 ) // "Pilot loadout changes will take effect next Pilot spawn."
-				thread DelayedRemoveNoticeLimit( player.GetUID() )
+				thread DelayedRemoveNoticeLimit( player )
 			}
 		}
 		return
@@ -360,12 +357,12 @@ void function TryGivePilotLoadoutForGracePeriod( entity player )
 		}
 		else
 		{
-			if( !file.recentNoticedPlayers.contains( player.GetUID() ) )
+			if( !file.recentNoticedPlayers.contains( player ) )
 			{
 				if( GetGameState() >= eGameState.Playing ) // only announce after game starts
 				{
 					SendHudMessage( player, "#LOADOUT_CHANGE_NEXT_PILOT", -1, 0.3, 255, 255, 255, 255, 1.0, 5.0, 2.0 ) // "Pilot loadout changes will take effect next Pilot spawn."
-					thread DelayedRemoveNoticeLimit( player.GetUID() )
+					thread DelayedRemoveNoticeLimit( player )
 				}
 			}
 		}
@@ -386,9 +383,10 @@ void function GiveLoadoutWhenIntroOver( entity player )
 }	
 
 // modified, less annoying notification
-void function DelayedRemoveNoticeLimit( string uid )
+void function DelayedRemoveNoticeLimit( entity player )
 {
-	file.recentNoticedPlayers.append( uid )
+	player.EndSignal( "OnDestroy" )
+	file.recentNoticedPlayers.append( player )
 	wait LOADOUT_REFUSED_NOTIFICATION_COOLDOWN
-	file.recentNoticedPlayers.removebyvalue( uid )
+	file.recentNoticedPlayers.removebyvalue( player )
 }
