@@ -512,7 +512,8 @@ void function PlayerUsesPhaseRewindBurncardThreaded( entity player )
 	player.UnforceStand()
 	if( positions[0].wasCrouched )
 		thread PhaseRewindForceCrouch( player )
-	player.SetOrigin( positions[0].origin + < 0,0,20 > )
+	// always set player to the goal position
+	player.SetOrigin( positions[0].origin )
 
 	// fix position after rewind
 	PutPhaseRewindedPlayerInSafeSpot( player, 1 )
