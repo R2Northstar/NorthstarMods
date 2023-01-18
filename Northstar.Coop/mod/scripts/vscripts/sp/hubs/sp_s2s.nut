@@ -5000,7 +5000,10 @@ void function Barkership_Main( entity player )
 	thread Barkership_SarahAnim1()
 
 	// now we spawn the respawn ship somewhere
-	SpawnRespawnWidow( CLVec( file.barkership.mover.GetOrigin() + <0,-3000,-1000> ) )
+	LocalVec org = WorldToLocalOrigin( file.barkership.mover.GetOrigin() )
+	org.v += <0,-2000,-1000>
+
+	SpawnRespawnWidow( org )
 
 	thread ShipIdleAtTargetEnt_Method2( file.respawnWidow, file.barkership.mover, <0,0,0>, <0,0,0>, <500,-1500,500> )
 	WidowAnimateOpen( file.respawnWidow, "left" )
@@ -5711,13 +5714,18 @@ void function MaltaIntro_Skip( entity player )
 {
 	level.nv.ShipTitles = SHIPTITLES_NOMALTA
 
-	// SpawnRespawnWidow( WorldToLocalOrigin( file.malta.mover.GetOrigin() + <2000,2000,-1000> ) )
-	SpawnRespawnWidow( WorldToLocalOrigin( < -3903, -9861, 367 > ) )
-	WidowAnimateOpen( file.respawnWidow, "left" )
-
 	WaitFrame()
 
-	file.respawnWidow.mover.SetOrigin( < -3903, -9861, 367 > )
+	// SpawnRespawnWidow( WorldToLocalOrigin( < -3903, -7061, 367 > ) )
+
+	LocalVec org = WorldToLocalOrigin( file.malta.mover.GetOrigin() )
+	org.v += <2000,2000,-1000>
+
+	SpawnRespawnWidow( org )
+
+	WidowAnimateOpen( file.respawnWidow, "left" )
+
+	// file.respawnWidow.mover.SetOrigin( < -3903, -9861, 367 > )
 }
 
 void function MaltaIntro_Main( entity player )
@@ -18525,7 +18533,7 @@ void function HandleRespawnPlayer_s2s()
 		moveCloser = false
 		foreach( entity player in GetPlayerArray() )
         {
-            if ( DistanceSqr( player.GetOrigin(), file.respawnWidow.mover.GetOrigin() ) <= 160000.0 )
+            if ( IsValid( player ) && IsAlive( player ) && DistanceSqr( player.GetOrigin(), file.respawnWidow.mover.GetOrigin() ) <= 160000.0 )
             {
                 moveCloser = true
             }

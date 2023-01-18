@@ -63,9 +63,7 @@ void function BaseGametype_Init_MPSP()
 
 	CodeCallback_CreateDefaultEvent()
 
-	#if MP
-		AddMapSpecifcRespawnsInit()
-	#endif
+	AddMapSpecifcRespawnsInit()
 }
 
 void function CodeCallback_OnWeaponAttack( entity player, entity weapon, string weaponName, int ammoUsed )

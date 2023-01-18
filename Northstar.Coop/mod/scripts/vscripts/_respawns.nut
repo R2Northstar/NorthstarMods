@@ -37,7 +37,7 @@ void function StartSpawn( entity player )
 	// No, I will
 
 	// log their UID
-	print( format( "%s : %s", player.GetPlayerName(), player.GetUID() ) )
+	printt( format( "%s : %s", player.GetPlayerName(), player.GetUID() ) )
 	
 	CheckPointInfo info = GetCheckPointInfo()
 
@@ -126,7 +126,7 @@ void function GenericRespawn( entity player )
 
     wait 1
 
-    for(;;)
+    while( !IsAlive( player ) )
     {
         foreach( p in GetPlayerArray() )
         {
@@ -151,11 +151,12 @@ void function GenericRespawn( entity player )
 
 void function s2sRespawn( entity player )
 {
-	wait 1
-	if ( "sp_s2s" in file.CustomMapRespawnsFunction && GetPlayerArray().len() != 1 )
-		thread file.CustomMapRespawnsFunction["sp_s2s"]( player )
+	EndSignal( player, "InternalPlayerRespawned" )
+	EndSignal( player, "OnDestroy" )
 
-	Chat_ServerBroadcast( "" + ( "sp_s2s" in file.CustomMapRespawnsFunction ) )
+	wait 1
+	if ( "sp_s2s" in file.CustomMapRespawnsFunction && IsPlayingCoop() )
+		thread file.CustomMapRespawnsFunction["sp_s2s"]( player )
 
 	wait 1
 

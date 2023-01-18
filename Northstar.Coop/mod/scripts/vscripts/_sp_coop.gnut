@@ -2,6 +2,8 @@ untyped
 
 global function FullyHidePlayers
 global function FullyShowPlayers
+global function IsPlayingSolo
+global function IsPlayingCoop
 
 void function FullyHidePlayers()
 {
@@ -17,6 +19,16 @@ void function FullyShowPlayers()
     {
         player.MakeVisible()
     }
+}
+
+bool function IsPlayingSolo()
+{
+    return GetPlayerArray().len() <= 1
+}
+
+bool function IsPlayingCoop()
+{
+    return GetPlayerArray().len() > 1
 }
 
 // funny cat video
