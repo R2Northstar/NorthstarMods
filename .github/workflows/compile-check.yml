@@ -17,7 +17,7 @@ jobs:
           mods-directory: "${{ github.workspace }}/mods"
 
       - name: Remove Northstar.Custom
-        run: rmdir ${{ github.workspace }}/mods/Northstar.Custom /s /q
+        run: rmdir ${{ github.workspace }}\mods\Northstar.Custom /s /q
         shell: cmd
           
       - name: Compile Scripts (No Northstar.Custom)
