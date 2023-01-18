@@ -21,6 +21,6 @@ jobs:
         shell: cmd
           
       - name: Compile Scripts (No Northstar.Custom)
-        uses: ASpoonPlaysGames/squirrel-re-compiler@main
+        uses: ASpoonPlaysGames/squirrel-re-compiler@v1
         with:
           mods-directory: "${{ github.workspace }}/mods"
