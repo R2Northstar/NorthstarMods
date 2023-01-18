@@ -15,3 +15,12 @@ jobs:
         uses: ASpoonPlaysGames/squirrel-re-compiler@main
         with:
           mods-directory: "${{ github.workspace }}/mods"
+
+      - name: Remove Northstar.Custom
+        run: rmdir ${{ github.workspace }}/mods/Northstar.Custom /s /q
+        shell: cmd
+          
+      - name: Compile Scripts (No Northstar.Custom)
+        uses: ASpoonPlaysGames/squirrel-re-compiler@main
+        with:
+          mods-directory: "${{ github.workspace }}/mods"
