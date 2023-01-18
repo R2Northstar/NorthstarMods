@@ -12,7 +12,7 @@ jobs:
           path: "mods"
       
       - name: Compile Scripts
-        uses: ASpoonPlaysGames/squirrel-re-compiler@main
+        uses: ASpoonPlaysGames/squirrel-re-compiler@v1
         with:
           mods-directory: "${{ github.workspace }}/mods"
 
