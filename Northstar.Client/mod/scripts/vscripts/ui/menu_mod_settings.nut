@@ -196,7 +196,6 @@ float function PureModulo( int a, int b )
 
 void function ResetConVar( var button )
 {
-	print("ok")
 	ConVarData conVar = file.filteredList[ int ( Hud_GetScriptID( Hud_GetParent( button ) ) ) + file.scrollOffset ]
 
 	if ( conVar.isCategoryName )
@@ -467,12 +466,8 @@ array<ConVarData> function GetAllVarsInCategory( array<ConVarData> arr, string c
 		if ( c.catName == catName )
 		{
 			vars.append( arr[i] )
-			// printt( file.conVarList[i].conVar + " is in mod " + file.conVarList[i].modName )
 		}
 	}
-	/*ConVarData empty
-	empty.isEmptySpace = true
-	vars.append( empty )*/
 	return vars
 }
 
@@ -485,12 +480,8 @@ array<ConVarData> function GetAllVarsInMod( array<ConVarData> arr, string modNam
 		if ( c.modName == modName )
 		{
 			vars.append( arr[i] )
-			// printt( file.conVarList[i].conVar + " is in mod " + file.conVarList[i].modName )
 		}
 	}
-	/*ConVarData empty
-	empty.isEmptySpace = true
-	vars.append( empty )*/
 	return vars
 }
 
@@ -574,7 +565,6 @@ void function SetModMenuNameText( var button )
 	else if ( conVar.isModName )
 	{
 		Hud_SetText( modTitle, conVar.modName )
-		// Hud_SetSize( resetButton, 0, int(40 * scaleY) )
 		Hud_SetPos( label, 0, 0 )
 		Hud_SetVisible( label, false )
 		Hud_SetVisible( textField, false )
@@ -587,8 +577,6 @@ void function SetModMenuNameText( var button )
 	else if ( conVar.isCategoryName )
 	{
 		Hud_SetText( label, conVar.catName )
-		// Hud_SetText( resetButton, "#MOD_SETTINGS_RESET_ALL" )
-		// Hud_SetSize( resetButton, int( 120 * scaleX ), int( 40 * scaleY ) )
 		Hud_SetPos( label, 0, 0 )
 		Hud_SetSize( label, int( scaleX * ( 1180 - 420 - 85 ) ), int( scaleY * 40 ) )
 		// Hud_SetSize( customMenuButton, int( 85 * scaleX ), int( 40 * scaleY ) )
@@ -608,11 +596,9 @@ void function SetModMenuNameText( var button )
 		else Hud_SetText( textField, conVar.isEnumSetting ? conVar.values[ GetConVarInt( conVar.conVar ) ] : GetConVarString( conVar.conVar ) )
 		Hud_SetPos( label, int(scaleX * 25), 0 )
 		Hud_SetText( resetButton, "" )
-		// Hud_SetSize( resetButton, int(scaleX * 90), int(scaleY * 40) )
 		if (conVar.sliderEnabled)
 			Hud_SetSize( label, int(scaleX * (375 + 85)), int(scaleY * 40) )
 		else Hud_SetSize( label, int(scaleX * (375 + 405)), int(scaleY * 40) )
-		//Hud_SetSize( customMenuButton, 0, 40 )
 		if ( conVar.type == "float" )
 			Hud_SetText( textField, string( GetConVarFloat( conVar.conVar ) ) )
 		else Hud_SetText( textField, conVar.isEnumSetting ? conVar.values[ GetConVarInt( conVar.conVar ) ] : GetConVarString( conVar.conVar ) )
@@ -622,10 +608,8 @@ void function SetModMenuNameText( var button )
 		if ( conVar.sliderEnabled )
 			Hud_SetSize( label, int( scaleX * ( 375 + 85 ) ), int( scaleY * 40 ) )
 		else Hud_SetSize( label, int( scaleX * ( 375 + 405 ) ), int( scaleY * 40 ) )
-		// Hud_SetSize( customMenuButton, 0, 40 )
 		Hud_SetVisible( label, true )
 		Hud_SetVisible( textField, true )
-		// Hud_SetVisible( enumButton, true )
 		Hud_SetVisible( resetButton, true )
 		Hud_SetVisible( resetVGUI, true )
 	}
@@ -674,7 +658,6 @@ void function UpdateListSliderPosition()
 
 	float jump = minYPos - ( useableSpace / ( mods - float( BUTTONS_PER_PAGE ) ) * file.scrollOffset )
 
-	// jump = jump * ( GetScreenSize()[1] / 1080.0 )
 
 	if ( jump > minYPos ) jump = minYPos
 
@@ -718,10 +701,6 @@ void function OnFiltersChange( var n )
 {
 	file.scrollOffset = 0
 
-	// HideAllButtons()
-
-	// RefreshModsArray()
-
 	UpdateList()
 
 	UpdateListSliderHeight()
@@ -734,14 +713,10 @@ void function OnModMenuClosed()
 		DeregisterButtonPressedCallback( MOUSE_WHEEL_UP , OnScrollUp )
 		DeregisterButtonPressedCallback( MOUSE_WHEEL_DOWN , OnScrollDown )
 		DeregisterButtonPressedCallback( MOUSE_LEFT , OnClick )
-		// DeregisterButtonPressedCallback( KEY_F1 , ToggleHideMenu )
 	}
 	catch ( ex ) {}
 
 	file.scrollOffset = 0
-	// UI_SetPresentationType( ePresentationType.DEFAULT )
-	// SetBlurEnabled( !IsMultiplayer() )
-	// Hud_SetVisible( file.menu, false )
 }
 
 void function AddModTitle( string modName )
