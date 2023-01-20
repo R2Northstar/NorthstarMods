@@ -6,6 +6,7 @@ global function AddConVarSettingSlider
 global function AddModTitle
 global function AddModCategory
 global function PureModulo
+global function AddModSettingsButton
 
 const int BUTTONS_PER_PAGE = 15
 const string SETTING_ITEM_TEXT = "                        " // this is long enough to be the same size as the textentry field
