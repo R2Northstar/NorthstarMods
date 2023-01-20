@@ -340,5 +340,7 @@ Press Yes if you agree to this. This choice can be changed in the mods menu at a
 		"MOD_SETTINGS_SERVER"			"Server"
 		"MOD_SETTINGS_RESET"			"Reset"
 		"MOD_SETTINGS_RESET_ALL"		"Reset All"
+		"NO_RESULTS"					"No results."
+		"NO_MODS"						"No settings available! Install more mods at ^5588FF00northstar.thunderstore.io^0."
 	}
 }

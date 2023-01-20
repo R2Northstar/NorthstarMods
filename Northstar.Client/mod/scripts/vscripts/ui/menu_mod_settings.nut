@@ -208,7 +208,7 @@ void function ShowAreYouSureDialog( string header, void functionref() func, stri
 	DialogData dialogData
 	dialogData.header = header
 	dialogData.message = details
-	
+
 	AddDialogButton( dialogData, "#NO" )
 	AddDialogButton( dialogData, "#YES", func )
 
@@ -430,6 +430,17 @@ void function UpdateList()
 			SetModMenuNameText( file.modPanels[i] )
 	}
 	file.updatingList = false
+
+	if (file.conVarList.len() <= 0)
+	{
+		Hud_SetVisible( Hud_GetChild(file.menu, "NoResultLabel"), true )
+		Hud_SetText( Hud_GetChild(file.menu, "NoResultLabel"), "#NO_MODS" )
+	}
+	else if (file.filteredList.len() <= 0)
+	{
+		Hud_SetVisible( Hud_GetChild(file.menu, "NoResultLabel"), true )
+		Hud_SetText( Hud_GetChild(file.menu, "NoResultLabel"), "#NO_RESULTS" )
+	}
 }
 
 array<ConVarData> function GetModConVarDatas( array<ConVarData> arr, int index )
@@ -441,7 +452,7 @@ array<ConVarData> function GetModConVarDatas( array<ConVarData> arr, int index )
 
 array<ConVarData> function GetCatConVarDatas( int index )
 {
-	if ( index == 0 || file.conVarList[ index - 1 ].spaceType != eEmptySpaceType.None )
+	if ( file.conVarList[ index - 1 ].spaceType != eEmptySpaceType.None )
 		return [ file.conVarList[ index ] ]
 	return [ file.conVarList[ index - 1 ], file.conVarList[ index ] ]
 }
@@ -687,6 +698,8 @@ void function OnClick( var button )
 {
 	if (file.resetModButtons.contains(GetFocus()))
 		thread CheckFocus(GetFocus())
+	if (GetFocus() == Hud_GetChild(file.menu, "NoResultLabel"))
+		thread CheckFocus(GetFocus())
 }
 
 void function CheckFocus( var button )
@@ -696,6 +709,8 @@ void function CheckFocus( var button )
 	{
 		thread ResetConVar(GetFocus())
 	}
+	if (GetFocus() == Hud_GetChild(file.menu, "NoResultLabel"))
+		LaunchExternalWebBrowser( "https://northstar.thunderstore.io/", WEBBROWSER_FLAG_FORCEEXTERNAL )
 }
 
 void function OnFiltersChange( var n )
@@ -765,14 +780,12 @@ void function AddModCategory( string catName )
 {
 	if ( !( getstackinfos(2)[ "func" ] in file.setFuncs ) )
 		throw getstackinfos(2)[ "src" ] + " #" + getstackinfos(2)[ "line" ] + "\nCannot add a category before a mod title!"
-	if ( file.currentCat != "" )
-	{
-		ConVarData space
-		space.isEmptySpace = true
-		space.modName = file.currentMod
-		space.catName = catName
-		file.conVarList.append( space )
-	}
+	
+	ConVarData space
+	space.isEmptySpace = true
+	space.modName = file.currentMod
+	space.catName = catName
+	file.conVarList.append( space )
 
 	ConVarData catData
 
