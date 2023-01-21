@@ -3,10 +3,10 @@ global function AddModSettingsMenu
 global function AddConVarSetting
 global function AddConVarSettingEnum
 global function AddConVarSettingSlider
+global function AddModSettingsButton
 global function AddModTitle
 global function AddModCategory
 global function PureModulo
-global function AddModSettingsButton
 
 const int BUTTONS_PER_PAGE = 15
 const string SETTING_ITEM_TEXT = "                        " // this is long enough to be the same size as the textentry field
@@ -51,6 +51,7 @@ struct {
 	var menu
 	int scrollOffset = 0
 	bool updatingList = false
+	bool isOpen
 
 	array<ConVarData> conVarList
 	// if people use searches - i hate them but it'll do : )
@@ -176,7 +177,7 @@ void function InitModMenu()
 	Hud_AddEventHandler( Hud_GetChild( file.menu, "BtnModsSearch" ), UIE_CHANGE, void function ( var inputField ) : ()
 	{
 		file.filterText = Hud_GetUTF8Text( inputField )
-		OnFiltersChange(0)
+		OnFiltersChange()
 	} )
 }
 
@@ -559,6 +560,7 @@ void function SetModMenuNameText( var button )
 		Hud_SetVisible( enumButton, false )
 		Hud_SetVisible( resetButton, false )
 		Hud_SetVisible( modTitle, false )
+		Hud_SetVisible( resetVGUI, false )
 		Hud_SetVisible( customMenuButton, true )
 		Hud_SetText( customMenuButton, conVar.displayName )
 	}
@@ -666,14 +668,18 @@ void function UpdateListSliderPosition()
 
 void function OnModMenuOpened()
 {
-	file.scrollOffset = 0
-	file.filterText = ""
+	if( !file.isOpen )
+	{
+		file.scrollOffset = 0
+		file.filterText = ""
 
-	RegisterButtonPressedCallback( MOUSE_WHEEL_UP , OnScrollUp )
-	RegisterButtonPressedCallback( MOUSE_WHEEL_DOWN , OnScrollDown )
-	RegisterButtonPressedCallback( MOUSE_LEFT , OnClick )
+		RegisterButtonPressedCallback( MOUSE_WHEEL_UP , OnScrollUp )
+		RegisterButtonPressedCallback( MOUSE_WHEEL_DOWN , OnScrollDown )
+		RegisterButtonPressedCallback( MOUSE_LEFT , OnClick )
 
-	OnFiltersChange(0)
+		OnFiltersChange()
+		file.isOpen = true
+	}
 }
 
 void function OnClick( var button )
@@ -695,7 +701,7 @@ void function CheckFocus( var button )
 		LaunchExternalWebBrowser( "https://northstar.thunderstore.io/", WEBBROWSER_FLAG_FORCEEXTERNAL )
 }
 
-void function OnFiltersChange( var n )
+void function OnFiltersChange()
 {
 	file.scrollOffset = 0
 
@@ -706,18 +712,16 @@ void function OnFiltersChange( var n )
 
 void function OnModMenuClosed()
 {
-	try
-	{
-		DeregisterButtonPressedCallback( MOUSE_WHEEL_UP , OnScrollUp )
-		DeregisterButtonPressedCallback( MOUSE_WHEEL_DOWN , OnScrollDown )
-		DeregisterButtonPressedCallback( MOUSE_LEFT , OnClick )
-	}
-	catch ( ex ) {}
+	DeregisterButtonPressedCallback( MOUSE_WHEEL_UP , OnScrollUp )
+	DeregisterButtonPressedCallback( MOUSE_WHEEL_DOWN , OnScrollDown )
+	DeregisterButtonPressedCallback( MOUSE_LEFT , OnClick )
 
 	file.scrollOffset = 0
+	UpdateListSliderPosition()
+	file.isOpen = false
 }
 
-void function AddModTitle( string modName )
+void function AddModTitle( string modName, int stackPos = 2 )
 {
 	file.currentMod = modName
 	if ( file.conVarList.len() > 0 )
@@ -747,13 +751,13 @@ void function AddModTitle( string modName )
 	botBar.modName = modName
 	botBar.spaceType = eEmptySpaceType.BottomBar
 	file.conVarList.extend( [ topBar, modData, botBar ] )
-	file.setFuncs[ expect string( getstackinfos(2)[ "func" ] ) ] <- false
+	file.setFuncs[ expect string( getstackinfos( stackPos )[ "func" ] ) ] <- false
 }
 
-void function AddModCategory( string catName )
+void function AddModCategory( string catName, int stackPos = 2 )
 {
-	if ( !( getstackinfos(2)[ "func" ] in file.setFuncs ) )
-		throw getstackinfos(2)[ "src" ] + " #" + getstackinfos(2)[ "line" ] + "\nCannot add a category before a mod title!"
+	if ( !( getstackinfos( stackPos )[ "func" ] in file.setFuncs ) )
+		throw getstackinfos( stackPos )[ "src" ] + " #" + getstackinfos( stackPos )[ "line" ] + "\nCannot add a category before a mod title!"
 	
 	ConVarData space
 	space.isEmptySpace = true
@@ -771,13 +775,13 @@ void function AddModCategory( string catName )
 	file.conVarList.append( catData )
 
 	file.currentCat = catName
-	file.setFuncs[ expect string( getstackinfos(2)[ "func" ] ) ] = true
+	file.setFuncs[ expect string( getstackinfos( stackPos )[ "func" ] ) ] = true
 }
 
-void function AddModSettingsButton( string buttonLabel, void functionref() onPress )
+void function AddModSettingsButton( string buttonLabel, void functionref() onPress, int stackPos = 2 )
 {
-	if ( !( getstackinfos(2)[ "func" ] in file.setFuncs ) || !file.setFuncs[ expect string( getstackinfos(2)[ "func" ] ) ] )
-		throw getstackinfos(2)[ "src" ] + " #" + getstackinfos(2)[ "line" ] + "\nCannot add a button before a category and mod title!"
+	if ( !( getstackinfos( stackPos )[ "func" ] in file.setFuncs ) || !file.setFuncs[ expect string( getstackinfos( stackPos )[ "func" ] ) ] )
+		throw getstackinfos( stackPos )[ "src" ] + " #" + getstackinfos( stackPos )[ "line" ] + "\nCannot add a button before a category and mod title!"
 
 	ConVarData data
 
@@ -790,10 +794,10 @@ void function AddModSettingsButton( string buttonLabel, void functionref() onPre
 	file.conVarList.append( data )
 }
 
-void function AddConVarSetting( string conVar, string displayName, string type = "" )
+void function AddConVarSetting( string conVar, string displayName, string type = "", int stackPos = 2 )
 {
-	if ( !( getstackinfos(2)[ "func" ] in file.setFuncs ) || !file.setFuncs[ expect string( getstackinfos(2)[ "func" ] ) ] )
-		throw getstackinfos(2)[ "src" ] + " #" + getstackinfos(2)[ "line" ] + "\nCannot add a setting before a category and mod title!"
+	if ( !( getstackinfos( stackPos )[ "func" ] in file.setFuncs ) || !file.setFuncs[ expect string( getstackinfos( stackPos )[ "func" ] ) ] )
+		throw getstackinfos( stackPos )[ "src" ] + " #" + getstackinfos( stackPos )[ "line" ] + "\nCannot add a setting before a category and mod title!"
 	ConVarData data
 
 	data.catName = file.currentCat
@@ -805,10 +809,10 @@ void function AddConVarSetting( string conVar, string displayName, string type =
 	file.conVarList.append( data )
 }
 
-void function AddConVarSettingSlider( string conVar, string displayName, float min = 0.0, float max = 1.0, float stepSize = 0.1, bool forceClamp = false )
+void function AddConVarSettingSlider( string conVar, string displayName, float min = 0.0, float max = 1.0, float stepSize = 0.1, bool forceClamp = false, int stackPos = 2 )
 {
-	if ( !( getstackinfos(2)[ "func" ] in file.setFuncs ) || !file.setFuncs[ expect string( getstackinfos(2)[ "func" ] ) ] )
-		throw getstackinfos(2)[ "src" ] + " #" + getstackinfos(2)[ "line" ] + "\nCannot add a setting before a category and mod title!"
+	if ( !( getstackinfos( stackPos )[ "func" ] in file.setFuncs ) || !file.setFuncs[ expect string( getstackinfos( stackPos )[ "func" ] ) ] )
+		throw getstackinfos( stackPos )[ "src" ] + " #" + getstackinfos( stackPos )[ "line" ] + "\nCannot add a setting before a category and mod title!"
 	ConVarData data
 
 	data.catName = file.currentCat
@@ -825,10 +829,10 @@ void function AddConVarSettingSlider( string conVar, string displayName, float m
 	file.conVarList.append( data )
 }
 
-void function AddConVarSettingEnum( string conVar, string displayName, array<string> values )
+void function AddConVarSettingEnum( string conVar, string displayName, array<string> values, int stackPos = 2 )
 {
-	if ( !( getstackinfos(2)[ "func" ] in file.setFuncs ) || !file.setFuncs[ expect string( getstackinfos(2)[ "func" ] ) ] )
-		throw getstackinfos(2)[ "src" ] + " #" + getstackinfos(2)[ "line" ] + "\nCannot add a setting before a category and mod title!"
+	if ( !( getstackinfos( stackPos )[ "func" ] in file.setFuncs ) || !file.setFuncs[ expect string( getstackinfos( stackPos )[ "func" ] ) ] )
+		throw getstackinfos( stackPos )[ "src" ] + " #" + getstackinfos( stackPos )[ "line" ] + "\nCannot add a setting before a category and mod title!"
 	ConVarData data
 
 	data.catName = file.currentCat
@@ -1021,7 +1025,7 @@ void function OnClearButtonPressed( var button )
 	file.filterText = ""
 	Hud_SetText( Hud_GetChild( file.menu, "BtnModsSearch" ), "" )
 
-	OnFiltersChange(0)
+	OnFiltersChange()
 }
 
 string function SanitizeDisplayName( string displayName )
