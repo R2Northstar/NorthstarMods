@@ -46,6 +46,8 @@ global function CodeCallback_OnEntityChangedTeam
 
 global function AddEntityCallback_OnDamaged
 global function RemoveEntityCallback_OnDamaged
+global function AddEntityCallback_OnFinalDamaged
+global function RemoveEntityCallback_OnFinalDamaged
 global function AddEntityCallback_OnPostDamaged
 global function RemoveEntityCallback_OnPostDamaged
 global function AddEntityCallback_OnKilled
@@ -566,7 +568,26 @@ void function RemoveEntityCallback_OnDamaged( entity ent, void functionref( enti
 	Assert( index != -1, "Requested DamageCallback " + string( callbackFunc ) + " to be removed not found! " )
 	ent.e.entDamageCallbacks.fastremove( index )
 
-	if ( ent.e.entDamageCallbacks.len() == 0 && ent.e.entPostDamageCallbacks.len() == 0 )
+	if ( ent.e.entDamageCallbacks.len() == 0 && ent.e.entFinalDamageCallbacks.len() == 0 && ent.e.entPostDamageCallbacks.len() == 0 )
+		ent.SetDamageNotifications( false )
+}
+
+void function AddEntityCallback_OnFinalDamaged( entity ent, void functionref( entity ent, var damageInfo ) callbackFunc )
+{
+	Assert( !ent.e.entFinalDamageCallbacks.contains( callbackFunc ), "Already added " + string( callbackFunc ) + " to entity" )
+
+	ent.SetDamageNotifications( true )
+	ent.e.entFinalDamageCallbacks.append( callbackFunc )
+}
+
+void function RemoveEntityCallback_OnFinalDamaged( entity ent, void functionref( entity ent, var damageInfo ) callbackFunc )
+{
+	int index = ent.e.entFinalDamageCallbacks.find( callbackFunc )
+
+	Assert( index != -1, "Requested FinalDamageCallback " + string( callbackFunc ) + " to be removed not found! " )
+	ent.e.entFinalDamageCallbacks.fastremove( index )
+
+	if ( ent.e.entFinalDamageCallbacks.len() == 0 && ent.e.entPostDamageCallbacks.len() == 0 && ent.e.entDamageCallbacks.len() == 0 )
 		ent.SetDamageNotifications( false )
 }
 
@@ -585,7 +606,7 @@ void function RemoveEntityCallback_OnPostDamaged( entity ent, void functionref( 
 	Assert( index != -1, "Requested PostDamageCallback " + string( callbackFunc ) + " to be removed not found! " )
 	ent.e.entPostDamageCallbacks.fastremove( index )
 
-	if ( ent.e.entPostDamageCallbacks.len() == 0 && ent.e.entDamageCallbacks.len() == 0 )
+	if ( ent.e.entPostDamageCallbacks.len() == 0 && ent.e.entDamageCallbacks.len() == 0 && ent.e.entFinalDamageCallbacks.len() == 0 )
 		ent.SetDamageNotifications( false )
 }
 
