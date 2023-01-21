@@ -123,6 +123,13 @@ void function CodeCallback_DamageEntity( entity ent, var damageInfo )
 		printt( "    after class damage final callbacks:", DamageInfo_GetDamage( damageInfo ) )
 	#endif
 
+	foreach ( callbackFunc in ent.e.entFinalDamageCallbacks )
+		callbackFunc( ent, damageInfo )
+
+	#if VERBOSE_DAMAGE_PRINTOUTS
+		printt( "    after AddEntityCallback_OnFinalDamaged callbacks:", DamageInfo_GetDamage( damageInfo ) )
+	#endif
+
 	// make destructible vehicles take more damage from DF_EXPLOSION damage type
 	if ( "isDestructibleVehicle" in ent.s && DamageInfo_GetCustomDamageType( damageInfo ) & DF_EXPLOSION )
 	{
