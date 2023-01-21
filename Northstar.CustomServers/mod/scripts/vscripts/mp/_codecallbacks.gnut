@@ -298,6 +298,7 @@ void function CodeCallback_DamagePlayerOrNPC( entity ent, var damageInfo )
 	if ( entIsPlayer )
 	{
 		PlayerTookDamage( ent, damageInfo, attacker, inflictor, damageSourceId, titanDamage )
+		
 		if ( DamageInfo_GetDamage( damageInfo ) == 0 && entIsTitan )
 		{
 			EarnMeterDamageConversion( damageInfo, attacker, ent, 0, titanDamage )
@@ -359,6 +360,20 @@ void function CodeCallback_DamagePlayerOrNPC( entity ent, var damageInfo )
 	{
 		callbackFunc( ent, damageInfo )
 	}
+
+#if BATTLECHATTER_ENABLED
+	// damaged pilot dialogues, do it after postDamage
+	if( attackerIsPlayer && !attackerIsTitan && entIsPlayer && attacker != ent )
+	{
+		if( ent.GetHealth() + ent.GetShieldHealth() - DamageInfo_GetDamage( damageInfo ) > 0 ) // so instant kills won't play a chatter
+		{
+			if( GetGameState() >= eGameState.Playing ) // don't play on intro or somewhere
+			{
+				PlayBattleChatterLine( attacker, "bc_fNearEnemyDmg" )
+			}
+		}
+	}
+#endif	
 
 	UpdateLastDamageTime( ent )
 

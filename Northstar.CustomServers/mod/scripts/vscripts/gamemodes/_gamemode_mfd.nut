@@ -11,6 +11,8 @@ void function GamemodeMfd_Init()
 {
 	GamemodeMfdShared_Init()
 		
+	SetShouldPlayDefaultMusic( false )
+
 	RegisterSignal( "MarkKilled" )
 	ScoreEvent_SetupEarnMeterValuesForMixedModes()
 	
@@ -93,6 +95,7 @@ void function MFDThink()
 		{
 			Remote_CallFunction_NonReplay( player, "SCB_MarkedChanged" )
 			Remote_CallFunction_NonReplay( player, "ServerCallback_MFD_StartNewMarkCountdown", Time() + MFD_COUNTDOWN_TIME )
+			PlayFactionDialogueToPlayer( "mfd_markCountdown", player )
 		}
 		
 		// reset if mark leaves
@@ -103,6 +106,7 @@ void function MFDThink()
 			if ( !IsValid( imcMark ) || !IsValid( militiaMark ) )
 			{
 				shouldReset = true
+				MessageToAll( eEventNotifications.MarkedForDeathMarkedDisconnected )
 				break
 			}
 				
@@ -155,7 +159,9 @@ void function MarkPlayers( entity imcMark, entity militiaMark )
 		level.mfdActiveMarkedPlayerEnt[ TEAM_MILITIA ].SetOwner( null )
 		imcMark.Minimap_Hide( TEAM_MILITIA, null )
 		militiaMark.Minimap_Hide( TEAM_IMC, null )
-		
+
+		if( !IsValid( imcMark ) || !IsValid( militiaMark ) ) // considering this as disconnected
+			MessageToAll( eEventNotifications.MarkedForDeathMarkedDisconnected )
 		foreach ( entity player in GetPlayerArray() )
 			Remote_CallFunction_NonReplay( player, "SCB_MarkedChanged" )
 	})
@@ -167,19 +173,48 @@ void function MarkPlayers( entity imcMark, entity militiaMark )
 	// set marks
 	level.mfdActiveMarkedPlayerEnt[ TEAM_IMC ].SetOwner( imcMark )
 	level.mfdActiveMarkedPlayerEnt[ TEAM_MILITIA ].SetOwner( militiaMark )
+	AddPlayerScore( imcMark, "MFDMarked", imcMark )
+	AddPlayerScore( militiaMark, "MFDMarked", militiaMark )
 	imcMark.Minimap_AlwaysShow( TEAM_MILITIA, null )
 	militiaMark.Minimap_AlwaysShow( TEAM_IMC, null )
+
+	string dialogueName = "mfd_targetsMarkedLong"
+	if( CoinFlip() )
+		dialogueName = "mfd_targetsMarkedShort"
+
+	PlayFactionDialogueToTeamExceptPlayer( dialogueName, TEAM_IMC, imcMark )
+	PlayFactionDialogueToPlayer( "mfd_youAreMarked", imcMark )
+	PlayFactionDialogueToTeamExceptPlayer( dialogueName, TEAM_MILITIA, militiaMark )
+	PlayFactionDialogueToPlayer( "mfd_youAreMarked", militiaMark )
 	
 	foreach ( entity player in GetPlayerArray() )
 		Remote_CallFunction_NonReplay( player, "SCB_MarkedChanged" )
 		
 	// wait until mark dies
-	entity deadMark = expect entity( svGlobal.levelEnt.WaitSignal( "MarkKilled" ).mark )
-	
+	table result = svGlobal.levelEnt.WaitSignal( "MarkKilled" )
+	entity deadMark = expect entity( result.mark )
+	entity markKiller = expect entity( result.killer )
+
 	// award points
 	entity livingMark = GetMarked( GetOtherTeam( deadMark.GetTeam() ) )
 	livingMark.SetPlayerGameStat( PGS_DEFENSE_SCORE, livingMark.GetPlayerGameStat( PGS_DEFENSE_SCORE ) + 1 )
 	
+	// score events and dialogues
+	// friendlies
+	PlayFactionDialogueToTeamExceptPlayer( "mfd_markDownEnemy", livingMark.GetTeam(), livingMark )
+	if( markKiller == livingMark ) // marked killed enemy mark!
+	{
+		AddPlayerScore( livingMark, "MarkedKilledMarked", livingMark )
+	}
+	else
+	{
+		AddPlayerScore( livingMark, "MarkedSurvival" )
+		//AddPlayerScore( livingMark, "MarkedOutlastedEnemyMarked", livingMark ) // this is a bit too long
+		PlayFactionDialogueToPlayer( "mfd_youOutlastedEnemy", livingMark )
+	}
+	// enemies
+	PlayFactionDialogueToTeam( "mfd_markDownFriendly", deadMark.GetTeam() )
+
 	// thread this so we don't kill our own thread
 	thread AddTeamScore( livingMark.GetTeam(), 1 )
 }
@@ -188,10 +223,35 @@ void function UpdateMarksForKill( entity victim, entity attacker, var damageInfo
 {
 	if ( victim == GetMarked( victim.GetTeam() ) )
 	{
-		MessageToAll( eEventNotifications.MarkedForDeathKill, null, victim, attacker.GetEncodedEHandle() )
-		svGlobal.levelEnt.Signal( "MarkKilled", { mark = victim } )
+		if( attacker.IsNPC() || attacker.IsPlayer() ) // sometimes worldSpawn killing a mark will crash all clients, since wolrdSpawn entity don't have a .GetPlayerName() function
+		{
+			if( victim.GetParent() != null ) // when victim having a parent, client code sometimes get their's parent's .GetPlayerName() and It will cause a crash if parent not proper entity!
+				victim.ClearParent()
+			MessageToAll( eEventNotifications.MarkedForDeathKill, null, victim, attacker.GetEncodedEHandle() )
+		}
+		svGlobal.levelEnt.Signal( "MarkKilled", { mark = victim, killer = attacker } )
 		
 		if ( attacker.IsPlayer() )
+		{
+			if( GetMarked( attacker.GetTeam() ) != attacker ) // if marked killed marked, it's handle in the upper function
+				AddPlayerScore( attacker, "MarkedTargetKilled" )
+			PlayFactionDialogueToPlayer( "mfd_youKilledMark", attacker )
 			attacker.SetPlayerGameStat( PGS_ASSAULT_SCORE, attacker.GetPlayerGameStat( PGS_ASSAULT_SCORE ) + 1 )
+		}
+	}
+	else
+	{
+		if( attacker.IsPlayer() ) // avoid npcs or worldSpawn become attacker
+		{
+			entity friendlyMark = GetMarked( attacker.GetTeam() )
+			if( IsValid( friendlyMark ) )
+			{
+				if( attacker != victim && attacker != friendlyMark ) // prevent suicides
+				{
+					if( Distance2D( friendlyMark.GetOrigin(), victim.GetOrigin() ) <= 750 ) // close enough! you saved the mark!
+						AddPlayerScore( attacker, "MarkedEscort" )
+				}
+			}
+		}
 	}
 }

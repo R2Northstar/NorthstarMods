@@ -4,6 +4,14 @@ global function PlayFactionDialogueToPlayer
 global function PlayFactionDialogueToTeam
 global function PlayFactionDialogueToTeamExceptPlayer
 
+// modified modding checks!
+global function SetShouldPlayFactionDialogue
+
+struct
+{
+	bool playFactionDialogue = true
+} file
+
 void function FactionDialogue_Init()
 {
 	AddCallback_OnClientConnected( AssignEnemyFactionToPlayer )
@@ -19,6 +27,10 @@ void function PlayFactionDialogueToPlayer( string conversationType, entity playe
 	#if !FACTION_DIALOGUE_ENABLED
 		return
 	#endif
+
+	// modified modding checks!
+	if ( !file.playFactionDialogue )
+		return
 	
 	if ( !ShouldPlayFactionDialogue( conversationType, player ) )
 		return
@@ -43,4 +55,10 @@ void function PlayFactionDialogueToTeamExceptPlayer( string conversationType, in
 void function AssignEnemyFactionToPlayer( entity player )
 {
 	AssignEnemyFaction( player, expect string( player.GetPersistentVar( "factionChoice" ) ) )
+}
+
+// modified modding checks!
+void function SetShouldPlayFactionDialogue( bool shouldPlay )
+{
+	file.playFactionDialogue = shouldPlay
 }

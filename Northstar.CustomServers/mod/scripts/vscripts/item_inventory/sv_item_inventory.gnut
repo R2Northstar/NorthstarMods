@@ -19,11 +19,20 @@ void function Sv_ItemInventory_Init()
 {
 	AddCallback_OnClientConnected( Sv_ItemInventory_OnClientConnected )
 	AddCallback_OnPlayerGetsNewPilotLoadout( Sv_ItemInventory_OnPlayerGetsNewPilotLoadout )
+	AddCallback_GameStateEnter( eGameState.Prematch, PrematchClearInventory )
 }
 
 void function Sv_ItemInventory_OnClientConnected( entity player )
 {
 	file.playerInventoryStacks[ player ] <- []
+}
+
+void function PrematchClearInventory()// vanilla behavior
+{
+	foreach( entity player in GetPlayerArray() )
+	{
+		PlayerInventory_RefreshEquippedState( player )
+	}
 }
 
 void function Sv_ItemInventory_OnPlayerGetsNewPilotLoadout( entity player, PilotLoadoutDef newPilotLoadout )
@@ -77,7 +86,7 @@ void function PlayerInventory_TakeInventoryItem( entity player )
 	if( preexistingWeapon.GetWeaponClassName() == "mp_ability_burncardweapon" )
 	{
 		var fireTime = preexistingWeapon.GetWeaponInfoFileKeyField( "fire_anim_rate" )
-		if( fireTime )
+		if( fireTime != null )
 			wait fireTime
 	}
 	player.TakeWeaponNow( preexistingWeapon.GetWeaponClassName() )
@@ -102,6 +111,10 @@ void function PlayerInventory_GiveInventoryItem( entity player, InventoryItem in
 		player.TakeWeaponNow( preexistingWeapon.GetWeaponClassName() )
 
 	player.GiveOffhandWeapon( inventoryItem.weaponRef, OFFHAND_INVENTORY, mods )
+	if ( inventoryItem.itemType == eInventoryItemType.burnmeter ) {
+		entity weapon = player.GetOffhandWeapon(OFFHAND_INVENTORY)
+		weapon.e.burnReward = inventoryItem.burnReward.ref
+	}
 }
 
 void function PlayerInventory_PushInventoryItem( entity player, InventoryItem inventoryItem )
@@ -132,7 +145,7 @@ void function PlayerInventory_PopInventoryItem( entity player )
 
 		if (playerInventoryStack.len() > 0) {
 			InventoryItem nextInventoryItem = playerInventoryStack[playerInventoryStack.len() - 1]
-			thread PlayerInventory_GiveInventoryItem( player, nextInventoryItem )
+			thread PlayerInventory_GiveInventoryItem(player, nextInventoryItem)
 		} else {
 			waitthread PlayerInventory_TakeInventoryItem( player )
 		}
@@ -143,7 +156,8 @@ void function PlayerInventory_PopInventoryItem( entity player )
 
 void function PlayerInventory_RefreshEquippedState( entity player )
 {
-
+	player.TakeOffhandWeapon( OFFHAND_INVENTORY )
+	file.playerInventoryStacks[ player ] = []
 }
 
 void function PlayerInventory_StartCriticalSection( entity player )

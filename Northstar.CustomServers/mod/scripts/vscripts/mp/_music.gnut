@@ -6,6 +6,12 @@ global function PlayMusicToCompletion
 global function PlayMusicToAll
 global function CreateLevelWinnerDeterminedMusicEvent
 
+// modified functions to control music player
+global function SetShouldPlayDefaultMusic
+global function SetMusicScoreEventPercentage
+global function SetUseCustomMusic
+global function SetCustomMusicList
+
 const int MUSIC_EVENT_UNINITIALIZED = -1
 
 
@@ -19,6 +25,13 @@ struct MusicEvent
 struct
 {
 	table< int, MusicEvent > musicEvents
+
+	// default value setting here, modified!
+	bool hasPlayedMusic = false
+    float musicScoreEventPercentage = 0.6
+    bool shouldPlayMusic = true
+    bool usingCustomMusic = false
+    array<string> customMusicList = []
 } file
 
 
@@ -30,6 +43,11 @@ void function Music_Init()
 	file.musicEvents[ TEAM_MILITIA ] <- militiaMusicEvent
 
 	AddCallback_GameStateEnter( eGameState.Prematch, CreateLevelIntroMusicEvent )
+
+	// modified callbacks to control music player
+	AddCallback_GameStateEnter( eGameState.Prematch, OnGamePrematch )
+    AddCallback_GameStateEnter( eGameState.Playing, OnGameStart )
+    AddCallback_OnPlayerKilled( OnPlayerKilled )
 }
 
 void function CreateTeamMusicEvent( int team, int musicPieceID, float timeMusicStarted, bool shouldSeek = true )
@@ -104,4 +122,196 @@ void function CreateLevelWinnerDeterminedMusicEvent()
 		CreateTeamMusicEvent( TEAM_MILITIA, eMusicPieceID.LEVEL_DRAW, Time() )
 		CreateTeamMusicEvent( TEAM_IMC, eMusicPieceID.LEVEL_DRAW, Time() )
 	}
+}
+
+// modified functions for default music
+void function SetShouldPlayDefaultMusic( bool should )
+{
+    file.shouldPlayMusic = should
+}
+
+void function SetMusicScoreEventPercentage( float percentage )
+{
+    file.musicScoreEventPercentage = percentage
+}
+
+void function SetUseCustomMusic( bool use )
+{
+    file.usingCustomMusic = use
+}
+
+void function SetCustomMusicList( array<string> list )
+{
+    file.customMusicList = list
+}
+
+void function OnGamePrematch()
+{
+
+}
+
+void function OnPlayerKilled( entity victim, entity attacker, var damageInfo )
+{
+	if( !GamePlayingOrSuddenDeath() ) // prevent prematch cleanups mess music up
+		return
+    if( file.shouldPlayMusic )
+	    MusicPlayScoreEvent()
+}
+
+void function OnGameStart()
+{
+    if( file.shouldPlayMusic )
+		MusicPlayNormal()
+}
+
+void function MusicPlayScoreEvent()
+{
+	if( file.hasPlayedMusic )
+		return
+	
+	int score = GameMode_GetScoreLimit( GameRules_GetGameMode() )
+
+	if( IsFFAGame() ) // temp no need in ffa
+		return
+		
+	if( GameRules_GetTeamScore( TEAM_MILITIA ) >= score * file.musicScoreEventPercentage || GameRules_GetTeamScore( TEAM_IMC ) >= score * file.musicScoreEventPercentage )
+	{
+		CreateTeamMusicEvent( TEAM_IMC, eMusicPieceID.GAMEMODE_1, Time() )
+		CreateTeamMusicEvent( TEAM_MILITIA, eMusicPieceID.GAMEMODE_1, Time() )
+		foreach( entity player in GetPlayerArray() )
+			PlayCurrentTeamMusicEventsOnPlayer( player )
+		file.hasPlayedMusic = true
+	}
+	
+	/* // temp no use in ffa, ffa don't have a proper music though, so no need
+	if( !IsFFAGame() )
+	{
+		if( GameRules_GetTeamScore( TEAM_MILITIA ) >= score * file.musicScoreEventPercentage || GameRules_GetTeamScore( TEAM_IMC ) >= score * file.musicScoreEventPercentage )
+		{
+			CreateTeamMusicEvent( TEAM_IMC, eMusicPieceID.GAMEMODE_1, Time() )
+			CreateTeamMusicEvent( TEAM_MILITIA, eMusicPieceID.GAMEMODE_1, Time() )
+			foreach( entity player in GetPlayerArray() )
+				PlayCurrentTeamMusicEventsOnPlayer( player )
+			file.hasPlayedMusic = true
+		}
+	}
+	else
+	{
+		entity bestplayer = GetWinningPlayer()
+		if( GameRules_GetTeamScore( bestplayer.GetTeam() ) >= score * file.musicScoreEventPercentage )
+		{
+			foreach( entity player in GetPlayerArray() )
+			{
+				CreateTeamMusicEvent( player.GetTeam(), eMusicPieceID.GAMEMODE_1, Time() )
+				PlayCurrentTeamMusicEventsOnPlayer( player )
+			}
+			file.hasPlayedMusic = true
+		}
+	}
+	*/
+}
+
+// hardcoded for now!!
+void function MusicPlayNormal()
+{
+	if( !IsFFAGame() && (GAMETYPE != "mfd") )
+		thread MusicPlayThink()
+}
+
+void function MusicPlayThink()
+{
+	svGlobal.levelEnt.EndSignal( "GameStateChanged" )
+	
+	float totalTime = float( GameMode_GetTimeLimit( GAMETYPE ) * 60 )
+	if( IsRoundBased() )
+	{ 
+		totalTime = GameMode_GetRoundTimeLimit( GAMETYPE ) * 60
+	}
+	// hardcoding here
+	if( IsSwitchSidesBased_NorthStar() )
+	{
+		totalTime *= 0.5
+		if( !HasSwitchedSides() ) // hasn't swiching sides
+			return
+	}
+	//print( "[Music Player] Total Time is: " + string( totalTime ) )
+	float almostDoneWaitTime = -1
+	float lastMinuteWaitTime = -1
+	
+	// checking totalTime..
+	if( totalTime >= 720 )
+	{
+		almostDoneWaitTime = totalTime*0.6
+		lastMinuteWaitTime = totalTime*0.4-60
+	}
+	else if( totalTime >= 600 )
+	{
+		almostDoneWaitTime = totalTime*0.5
+		lastMinuteWaitTime = totalTime*0.5-60
+	}
+	else if( totalTime >= 480 )
+	{
+		almostDoneWaitTime = totalTime*0.4
+		lastMinuteWaitTime = totalTime*0.6-60
+	}
+	else if( totalTime >= 360 )
+	{
+		almostDoneWaitTime = totalTime*0.3
+		lastMinuteWaitTime = totalTime*0.7-60
+	}
+	else if( totalTime >= 240 )
+	{
+		almostDoneWaitTime = totalTime*0.2
+		lastMinuteWaitTime = totalTime*0.8-60 // what I'm doing here, why this always plays so early?
+	}
+	else if( totalTime >= 120 )
+	{
+		lastMinuteWaitTime = totalTime-60
+	}
+	else // too short per round to have music
+		return
+		
+	if( almostDoneWaitTime != -1 )
+		wait almostDoneWaitTime
+		
+	if( !file.hasPlayedMusic )
+	{
+		if( file.usingCustomMusic )
+		{
+			string musicName = file.customMusicList[ RandomInt( file.customMusicList.len() ) ]
+			EmitSoundAtPosition( TEAM_UNASSIGNED, < 0,0,0 >, musicName )
+		}
+		else
+		{
+			CreateTeamMusicEvent( TEAM_IMC, eMusicPieceID.GAMEMODE_1, Time() )
+			CreateTeamMusicEvent( TEAM_MILITIA, eMusicPieceID.GAMEMODE_1, Time() )
+			foreach( entity player in GetPlayerArray() )
+				PlayCurrentTeamMusicEventsOnPlayer( player )
+		}
+		file.hasPlayedMusic = true
+	}
+	
+	if( lastMinuteWaitTime != -1 )
+		wait lastMinuteWaitTime
+	
+	CreateTeamMusicEvent( TEAM_IMC, eMusicPieceID.LEVEL_LAST_MINUTE, Time() )
+	CreateTeamMusicEvent( TEAM_MILITIA, eMusicPieceID.LEVEL_LAST_MINUTE, Time() )
+	foreach( entity player in GetPlayerArray() )
+		PlayCurrentTeamMusicEventsOnPlayer( player )
+}
+
+entity function GetWinningPlayer() 
+{
+	entity bestplayer
+
+	foreach ( entity player in GetPlayerArray() )
+	{
+		if( bestplayer == null )
+			bestplayer = player
+		
+		if( GameRules_GetTeamScore( player.GetTeam() ) > GameRules_GetTeamScore( bestplayer.GetTeam() ) )
+			bestplayer = player
+	}
+
+	return bestplayer
 }

@@ -250,7 +250,12 @@ void function PlayerEarnMeter_AddEarnedAndOwned( entity player, float addOverdri
 
 		PlayerEarnMeter_TryMakeGoalAvailable( player )
 	}
-
+	
+	// If titan avaliable and we're nearly reach it
+	else if( EarnMeterMP_IsTitanEarnGametype() && ( startingOwnedValue < 0.8 && newOwnedValue >= 0.8 ) )
+	{
+		PlayFactionDialogueToPlayer( "mp_titanSoon", player )
+	}
 	//#if MP
 	//	Remote_CallFunction_NonReplay( player, "ServerCallback_EarnMeterAwarded", addOverdriveValue, addOwnedValue )
 	//#endif

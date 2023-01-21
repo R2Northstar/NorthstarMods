@@ -10,7 +10,11 @@ struct {
 	
 	vector militiaPodFXEyePos
 	vector imcPodFXEyePos
+
+	bool isFirstRound = true
 } file
+
+const float MARVIN_RESPAWN_DELAY = 30
 
 void function CodeCallback_MapInit()
 {
@@ -79,17 +83,36 @@ void function AddMarvinSpawner( entity spawn )
 void function SpawnMarvinsForRound()
 {
 	foreach ( entity spawner in file.marvinSpawners )
-	{
-		entity marvin = CreateMarvin( TEAM_UNASSIGNED, spawner.GetOrigin(), spawner.GetAngles() )
-		marvin.kv.health = 1
-		marvin.kv.max_health = 1
-		//marvin.kv.spawnflags = 516
-		marvin.kv.contents = ( int( marvin.kv.contents ) | CONTENTS_NOGRAPPLE )
-		DispatchSpawn( marvin )
-		HideName( marvin )
+		thread MarvinSpawnerThink( spawner )
+}
 
-		thread MarvinJobThink( marvin )
-	}
+void function MarvinSpawnerThink( entity spawner, float delay = 0 )
+{
+	// following spawns
+	OnThreadEnd(
+		function(): ( spawner )
+		{
+			if( !IsValid( spawner ) )
+				return
+			thread MarvinSpawnerThink( spawner, MARVIN_RESPAWN_DELAY )
+		}
+	)
+	if( delay > 0 )
+		wait delay
+	if( !IsValid( spawner ) )
+		return
+	// intro spawn
+	entity marvin = CreateMarvin( TEAM_UNASSIGNED, spawner.GetOrigin(), spawner.GetAngles() )
+	marvin.EndSignal( "OnDestroy" )
+	marvin.kv.health = 1
+	marvin.kv.max_health = 1
+	marvin.kv.spawnflags = 516
+	marvin.kv.contents = (int(marvin.kv.contents) | CONTENTS_NOGRAPPLE)
+	marvin.ai.killShotSound = false
+	DispatchSpawn( marvin )
+	HideName( marvin )
+
+	WaitForever()
 }
 
 // intro stuff: 
@@ -339,8 +362,18 @@ void function PlayerWatchesWargamesIntro( entity player )
 void function DelayedGamemodeAnnouncement( entity player )
 {
 	wait 1.0
-	if ( IsValid( player ) && IsAlive( player ) )
-		TryGameModeAnnouncement( player )
+	if( IsValid( player ) )
+	{
+		if( file.isFirstRound )
+		{
+			TryGameModeAnnouncement( player )
+			file.isFirstRound = false
+		}
+		else
+		{
+			TryGameModeAnnouncement( player, false )
+		}
+	}
 }
 
 void function PlaySound_SimPod_DoorShut( entity playerFirstPersonProxy  ) // stolen from sp_training

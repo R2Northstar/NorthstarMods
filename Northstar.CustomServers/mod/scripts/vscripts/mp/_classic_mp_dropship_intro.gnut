@@ -1,5 +1,6 @@
 untyped
 global function ClassicMP_DefaultDropshipIntro_Setup
+global function ClassicMP_IsRunningDropshipIntro
 
 const array<string> DROPSHIP_IDLE_ANIMS = [ "Classic_MP_flyin_exit_playerA_idle",
 											"Classic_MP_flyin_exit_playerB_idle",
@@ -40,13 +41,21 @@ struct {
 	array<IntroDropship> imcDropships
 	
 	float introStartTime
+
+	bool isDropShipIntro = false
 } file
 
 
 void function ClassicMP_DefaultDropshipIntro_Setup()
 {
+	file.isDropShipIntro = true // we're running dropship intro now
 	AddCallback_OnClientConnected( DropshipIntro_OnClientConnected )	
 	AddCallback_GameStateEnter( eGameState.Prematch, OnPrematchStart )
+}
+
+bool function ClassicMP_IsRunningDropshipIntro()
+{
+	return file.isDropShipIntro
 }
 
 void function DropshipIntro_OnClientConnected( entity player )
@@ -156,7 +165,7 @@ void function SpawnPlayerIntoDropship( entity player )
 		}
 	})
 	
-	WaitFrame()
+	//WaitFrame() // don't know why WaitFrame() here
 
 	player.EndSignal( "OnDeath" )
 	
@@ -194,7 +203,7 @@ void function SpawnPlayerIntoDropship( entity player )
 	
 	// hide hud and fade screen out from black
 	AddCinematicFlag( player, CE_FLAG_CLASSIC_MP_SPAWNING )
-	ScreenFadeFromBlack( player, 0.5, 0.5 )
+	ScreenFadeFromBlack( player, 3.0, 1.0 )
 	// faction leaders are done clientside, spawn them here
 	Remote_CallFunction_NonReplay( player, "ServerCallback_SpawnFactionCommanderInDropship", playerDropship.dropship.GetEncodedEHandle(), file.introStartTime )
 
@@ -221,6 +230,7 @@ void function SpawnPlayerIntoDropship( entity player )
 	// idk unsure how to use that, all i know is getsequenceduration > the length it actually should be
 	
 	thread FirstPersonSequence( jumpSequence, player, playerDropship.dropship )
+	PlayBattleChatterLine( player, "bc_pIntroChat" )
 	WaittillAnimDone( player ) // somehow this is better than just waiting for the blocking FirstPersonSequence call?
 	
 	player.s.dropshipIntroIsJumping <- true
@@ -241,18 +251,73 @@ void function PlayerJumpsFromDropship( entity player )
 			player.EnableWeaponViewModel()
 			DeployAndEnableWeapons(player)
 			RemoveCinematicFlag( player, CE_FLAG_CLASSIC_MP_SPAWNING )
+
+			EnablePlayerDoubleJump( player ) // restore doublejumps
 		}
 	})
 		
 	// wait for intro timer to be fully done
 	wait ( file.introStartTime + DROPSHIP_INTRO_LENGTH ) - Time()
 	player.MovementDisable() // disable all movement but let them look around still
-	player.ConsumeDoubleJump() // movementdisable doesn't prevent double jumps
 	
 	// wait for player to hit the ground
 	wait 0.1 // assume players will never actually hit ground before this
+	DisablePlayerDoubleJump( player ) // this will make players never trigger jetpack dryfire sounds!
 	while ( !player.IsOnGround() && !player.IsWallRunning() && !player.IsWallHanging() ) // todo this needs tweaking
 		WaitFrame()
-	
-	TryGameModeAnnouncement( player )
+
+	if( GetRoundsPlayed() < 1 && !HasSwitchedSides() )
+		TryGameModeAnnouncement( player )
+	else
+		TryGameModeAnnouncement( player, false )
+}
+
+// following functions triggers OnPlayerClassChange()
+void function DisablePlayerDoubleJump( entity player )
+{
+    string setFile = player.GetPlayerSettings()
+    array<string> setFileMods =  player.GetPlayerSettingsMods()
+	player.s.doubleJumpIsDisabled <- false
+	if ( setFileMods.contains( "disable_doublejump" ) ) // double jump has already been disabled through modified modes?
+	{
+		player.s.doubleJumpIsDisabled = true
+		return // just return
+	}
+
+    setFileMods.append( "disable_doublejump" ) // this will make players never trigger jetpack dryfire sounds!
+    asset modelName = player.GetModelName() // they maybe reset model
+    int skinIndex = player.GetSkin()
+    int camoIndex = player.GetCamo()
+
+    player.SetPlayerSettingsWithMods( player.GetPlayerSettings(), setFileMods )
+    // restore model, skin, etc.
+    player.SetModel( modelName )
+    player.SetSkin( skinIndex )
+    player.SetCamo( camoIndex )
+}
+
+void function EnablePlayerDoubleJump( entity player )
+{
+	if ( "doubleJumpIsDisabled" in player.s )
+	{
+		if ( player.s.doubleJumpIsDisabled ) // double jump has already been disabled through modified modes?
+			return // just return, don't re-enable
+	}
+
+    string setFile = player.GetPlayerSettings()
+    array<string> setFileMods =  player.GetPlayerSettingsMods()
+    if ( setFileMods.contains( "disable_doublejump" ) )
+        setFileMods.removebyvalue( "disable_doublejump" )
+    else // don't even have a disabled doublejump, just return
+        return
+
+    asset modelName = player.GetModelName() // they maybe reset model
+    int skinIndex = player.GetSkin()
+    int camoIndex = player.GetCamo()
+
+    player.SetPlayerSettingsWithMods( player.GetPlayerSettings(), setFileMods )
+    // restore model, skin, etc.
+    player.SetModel( modelName )
+    player.SetSkin( skinIndex )
+    player.SetCamo( camoIndex )
 }
