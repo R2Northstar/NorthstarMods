@@ -284,9 +284,6 @@ void function CodeCallback_DamagePlayerOrNPC( entity ent, var damageInfo )
 
 	RunClassDamageFinalCallbacks( ent, damageInfo )
 
-	if ( DamageInfo_GetDamage( damageInfo ) == 0 )
-		return
-
 	#if VERBOSE_DAMAGE_PRINTOUTS
 		printt( "    after class damage final callbacks:", DamageInfo_GetDamage( damageInfo ) )
 	#endif
