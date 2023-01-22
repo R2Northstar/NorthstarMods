@@ -137,9 +137,6 @@ void function GamemodeFW_Init()
 	SetRecalculateRespawnAsTitanStartPointCallback( FW_ForcedTitanStartPoint )
 	SetRecalculateTitanReplacementPointCallback( FW_ReCalculateTitanReplacementPoint )
 	SetRequestTitanAllowedCallback( FW_RequestTitanAllowed )
-
-	// nscn specifics
-	SetShouldPlayDefaultMusic( false )
 }
 
 
