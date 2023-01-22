@@ -9,8 +9,6 @@ global function CreateLevelWinnerDeterminedMusicEvent
 // modified functions to control music player
 global function SetShouldPlayDefaultMusic
 global function SetMusicScoreEventPercentage
-global function SetUseCustomMusic
-global function SetCustomMusicList
 
 const int MUSIC_EVENT_UNINITIALIZED = -1
 
@@ -29,9 +27,7 @@ struct
 	// default value setting here, modified!
 	bool hasPlayedMusic = false
     float musicScoreEventPercentage = 0.6
-    bool shouldPlayMusic = true
-    bool usingCustomMusic = false
-    array<string> customMusicList = []
+    bool shouldPlayMusic = false // for there's only certain modes need music, set it to false by default
 } file
 
 
@@ -135,16 +131,6 @@ void function SetMusicScoreEventPercentage( float percentage )
     file.musicScoreEventPercentage = percentage
 }
 
-void function SetUseCustomMusic( bool use )
-{
-    file.usingCustomMusic = use
-}
-
-void function SetCustomMusicList( array<string> list )
-{
-    file.customMusicList = list
-}
-
 void function OnGamePrematch()
 {
 
@@ -182,40 +168,12 @@ void function MusicPlayScoreEvent()
 			PlayCurrentTeamMusicEventsOnPlayer( player )
 		file.hasPlayedMusic = true
 	}
-	
-	/* // temp no use in ffa, ffa don't have a proper music though, so no need
-	if( !IsFFAGame() )
-	{
-		if( GameRules_GetTeamScore( TEAM_MILITIA ) >= score * file.musicScoreEventPercentage || GameRules_GetTeamScore( TEAM_IMC ) >= score * file.musicScoreEventPercentage )
-		{
-			CreateTeamMusicEvent( TEAM_IMC, eMusicPieceID.GAMEMODE_1, Time() )
-			CreateTeamMusicEvent( TEAM_MILITIA, eMusicPieceID.GAMEMODE_1, Time() )
-			foreach( entity player in GetPlayerArray() )
-				PlayCurrentTeamMusicEventsOnPlayer( player )
-			file.hasPlayedMusic = true
-		}
-	}
-	else
-	{
-		entity bestplayer = GetWinningPlayer()
-		if( GameRules_GetTeamScore( bestplayer.GetTeam() ) >= score * file.musicScoreEventPercentage )
-		{
-			foreach( entity player in GetPlayerArray() )
-			{
-				CreateTeamMusicEvent( player.GetTeam(), eMusicPieceID.GAMEMODE_1, Time() )
-				PlayCurrentTeamMusicEventsOnPlayer( player )
-			}
-			file.hasPlayedMusic = true
-		}
-	}
-	*/
 }
 
 // hardcoded for now!!
 void function MusicPlayNormal()
 {
-	if( !IsFFAGame() && (GAMETYPE != "mfd") )
-		thread MusicPlayThink()
+	thread MusicPlayThink()
 }
 
 void function MusicPlayThink()
@@ -276,18 +234,10 @@ void function MusicPlayThink()
 		
 	if( !file.hasPlayedMusic )
 	{
-		if( file.usingCustomMusic )
-		{
-			string musicName = file.customMusicList[ RandomInt( file.customMusicList.len() ) ]
-			EmitSoundAtPosition( TEAM_UNASSIGNED, < 0,0,0 >, musicName )
-		}
-		else
-		{
-			CreateTeamMusicEvent( TEAM_IMC, eMusicPieceID.GAMEMODE_1, Time() )
-			CreateTeamMusicEvent( TEAM_MILITIA, eMusicPieceID.GAMEMODE_1, Time() )
-			foreach( entity player in GetPlayerArray() )
-				PlayCurrentTeamMusicEventsOnPlayer( player )
-		}
+		CreateTeamMusicEvent( TEAM_IMC, eMusicPieceID.GAMEMODE_1, Time() )
+		CreateTeamMusicEvent( TEAM_MILITIA, eMusicPieceID.GAMEMODE_1, Time() )
+		foreach( entity player in GetPlayerArray() )
+			PlayCurrentTeamMusicEventsOnPlayer( player )
 		file.hasPlayedMusic = true
 	}
 	

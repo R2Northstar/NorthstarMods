@@ -17,6 +17,9 @@ void function GamemodeTTDM_Init()
 	AddCallback_OnPlayerKilled( AddTeamScoreForPlayerKilled ) // dont have to track autotitan kills since you cant leave your titan in this mode
 
 	// probably needs scoreevent earnmeter values
+
+	// nscn specifics
+	SetShouldPlayDefaultMusic( true )
 }
 
 void function TTDMIntroSetup()

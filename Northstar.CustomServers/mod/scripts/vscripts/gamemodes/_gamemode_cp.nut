@@ -61,6 +61,9 @@ void function GamemodeCP_Init()
 	ScoreEvent_SetEarnMeterValues("HardpointPerimeterDefense",0.1,0.12)
 	ScoreEvent_SetEarnMeterValues("HardpointSiege",0.1,0.15)
 	ScoreEvent_SetEarnMeterValues("HardpointSnipe",0.1,0.15)
+
+	// nscn specifics
+	SetShouldPlayDefaultMusic( true )
 }
 
 void function GamemodeCP_OnPlayerKilled(entity victim, entity attacker, var damageInfo)
