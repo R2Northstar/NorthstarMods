@@ -18,7 +18,7 @@ global function FW_AddHarvesterDamageSourceModifier
 global function FW_RemoveHarvesterDamageSourceModifier
 
 // you need to deal this much damage to trigger "FortWarTowerDamage" score event
-const int FW_HARVESTER_DAMAGE_SEGMENT = 4500
+const int FW_HARVESTER_DAMAGE_SEGMENT = 5250
 
 // basically needs to match "waves count - bosswaves count"
 const int FW_MAX_LEVELS = 3
