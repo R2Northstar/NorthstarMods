@@ -137,6 +137,9 @@ void function GamemodeFW_Init()
 	SetRecalculateRespawnAsTitanStartPointCallback( FW_ForcedTitanStartPoint )
 	SetRecalculateTitanReplacementPointCallback( FW_ReCalculateTitanReplacementPoint )
 	SetRequestTitanAllowedCallback( FW_RequestTitanAllowed )
+
+	// nscn specifics
+	SetShouldPlayDefaultMusic( false )
 }
 
 
@@ -1975,7 +1978,7 @@ void function OnHarvesterPostDamaged( entity harvester, var damageInfo )
     if ( harvester.GetHealth() == 0 )
     {
 		// force deciding winner
-        SetWinner( enemyTeam )
+        SetWinner( enemyTeam, "#GAMEMODE_SUR_WIN_ANNOUNCEMENT", "#GAMEMODE_SUR_LOSS_ANNOUNCEMENT" )
         //PlayFactionDialogueToTeam( "scoring_wonMercy", enemyTeam )
         //PlayFactionDialogueToTeam( "fortwar_matchLoss", friendlyTeam )
         GameRules_SetTeamScore2( friendlyTeam, 0 ) // force set score2 to 0( shield bar will empty )
@@ -2102,7 +2105,7 @@ void function UpdateHarvesterHealth( int team )
 		else // harvester down
 		{
 			int winnerTeam = GetOtherTeam(team)
-			SetWinner( winnerTeam )
+			SetWinner( winnerTeam, "#GAMEMODE_SUR_WIN_ANNOUNCEMENT", "#GAMEMODE_SUR_LOSS_ANNOUNCEMENT" )
 			//PlayFactionDialogueToTeam( "scoring_wonMercy", winnerTeam )
 			//PlayFactionDialogueToTeam( "fortwar_matchLoss", team )
 			GameRules_SetTeamScore2( team, 0 ) // force set score2 to 0( shield bar will empty )
