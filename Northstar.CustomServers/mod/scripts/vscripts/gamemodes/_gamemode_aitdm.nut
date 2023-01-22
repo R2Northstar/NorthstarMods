@@ -44,6 +44,9 @@ void function GamemodeAITdm_Init()
 	}
 	
 	ScoreEvent_SetupEarnMeterValuesForMixedModes()
+
+	// nscn specifics
+	SetShouldPlayDefaultMusic( true )
 }
 
 // Starts skyshow, this also requiers AINs but doesn't crash if they're missing

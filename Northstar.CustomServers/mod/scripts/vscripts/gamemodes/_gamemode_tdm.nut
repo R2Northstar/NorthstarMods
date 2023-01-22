@@ -6,6 +6,9 @@ void function GamemodeTdm_Init()
 	AddCallback_OnPlayerKilled( GiveScoreForPlayerKill )
 	ScoreEvent_SetupEarnMeterValuesForMixedModes()
 	SetTimeoutWinnerDecisionFunc( CheckScoreForDraw )
+
+	// nscn specifics
+	SetShouldPlayDefaultMusic( true )
 }
 
 void function GiveScoreForPlayerKill( entity victim, entity attacker, var damageInfo )

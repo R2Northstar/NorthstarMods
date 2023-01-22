@@ -65,6 +65,9 @@ void function CaptureTheFlag_Init()
 	ScoreEvent_SetEarnMeterValues( "FlagCapture", 0.0, 0.30 )
 	ScoreEvent_SetEarnMeterValues( "FlagCaptureAssist", 0.0, 0.20 )
 	ScoreEvent_SetEarnMeterValues( "FlagReturn", 0.0, 0.20 )
+
+	// nscn specifics
+	SetShouldPlayDefaultMusic( true )
 }
 
 void function RateSpawnpoints_CTF( int checkClass, array<entity> spawnpoints, int team, entity player ) 
