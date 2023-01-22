@@ -234,8 +234,16 @@ bool function MeleeThread_TitanVsTitan_Internal( SyncedMelee action, entity atta
 
 	attacker.Signal( "SyncedMeleeComplete" )
 	#if MP
-	if ( attacker.IsPlayer() )
-		AddPlayerScore( attacker, "Execution" )
+	if( IsValid( attacker ) )
+	{
+		if ( attacker.IsPlayer() )
+		{
+			if( IsValid( target ) ) // defensive fix
+				AddPlayerScore( attacker, "Execution", target )
+			else
+				AddPlayerScore( attacker, "Execution" )
+		}
+	}
 	#endif
 	return true
 }

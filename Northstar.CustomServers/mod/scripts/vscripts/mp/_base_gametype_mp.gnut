@@ -15,6 +15,10 @@ global function KillcamsEnabled
 global function SetPlayerDeathsHidden
 global function TrackTitanDamageInPlayerGameStat
 
+// I want my game to have this
+global function SetPlayerRespawnForced
+global function SetPlayerCameraToIntermissionCam
+
 global function ShouldEntTakeDamage_SPMP
 global function GetTitanBuildTime
 global function TitanPlayerHotDropsIntoLevel
@@ -27,8 +31,12 @@ struct {
 	int titanDamageGameStat = -1
 	
 	entity intermissionCamera
-	array<entity> specCams 
+	array<entity> specCams
 	
+	// modified
+	bool forcedRespawn = true
+	array<string> respawnedPlayerUIDs = []
+
 	entity functionref( entity player, entity basePoint ) recalculateRespawnAsTitanStartPointCallback
 } file
 
@@ -41,6 +49,7 @@ void function BaseGametype_Init_MPSP()
 	
 	AddCallback_OnNPCKilled( CheckForAutoTitanDeath )
 	AddCallback_OnPlayerKilled( CheckForAutoTitanDeath )
+
 	RegisterSignal( "PlayerRespawnStarted" )
 	RegisterSignal( "KillCamOver" )
 }
@@ -127,7 +136,7 @@ void function CodeCallback_OnClientConnectionStarted( entity player )
 // playerconnected
 void function CodeCallback_OnClientConnectionCompleted( entity player )
 {
-	InitPersistentData( player )
+	InitPersistentData( player ) // defensive fix
 
 	if ( IsLobby() )
 	{
@@ -176,6 +185,7 @@ void function CodeCallback_OnClientConnectionCompleted( entity player )
 	// handle spawning late joiners
 	if ( GetGameState() == eGameState.Playing )
 	{
+		bool connectingRespawned = false
 		if ( RespawnsEnabled() )
 		{
 			// likely temp, deffo needs some work
@@ -183,10 +193,43 @@ void function CodeCallback_OnClientConnectionCompleted( entity player )
 				thread RespawnAsTitan( player )
 			else // spawn as pilot
 				RespawnAsPilot( player )
+			connectingRespawned = true
 		}
-		else
-			thread PlayerBecomesSpectator( player )
+		else // may not be useful, just want to make dedicated servers better
+		{
+			bool shouldDoLateSpawn = false
+
+			if( GetPlayerArrayOfTeam( player.GetTeam() ).len() <= 1 )
+				shouldDoLateSpawn = true
+			else if( !file.respawnedPlayerUIDs.contains( player.GetUID() ) ) // avoid multiple late spawns by disconnecting
+				shouldDoLateSpawn = true
+
+			// do this so player don't have to wait so long till round end
+			if( shouldDoLateSpawn )
+			{
+				if ( Riff_SpawnAsTitan() == 1 )	// spawn as titan
+					thread RespawnAsTitan( player )
+				else // spawn as pilot
+					RespawnAsPilot( player )
+				connectingRespawned = true
+			}
+			else
+				thread PlayerBecomesSpectator( player )
+		}
+		if( connectingRespawned )
+			thread DelayedGamemodeAnnouncement( player )
 	}
+	else if ( GetGameState() == eGameState.Epilogue || GetGameState() == eGameState.SuddenDeath )// don't know why northstar not handling these
+		thread PlayerBecomesSpectator( player )
+}
+
+void function DelayedGamemodeAnnouncement( entity player )
+{
+	player.EndSignal( "OnDestroy" )
+	
+	if( !IsAlive( player ) )
+		player.WaitSignal( "OnRespawned" )
+	TryGameModeAnnouncement( player )
 }
 
 void function CodeCallback_OnClientDisconnected( entity player, string reason )
@@ -216,14 +259,28 @@ void function CodeCallback_OnPlayerRespawned( entity player )
 {
 	SetHumanRagdollImpactTable( player )
 	
+	player.s.inGracePeriod = true // defensive fix
 	player.s.respawnCount++
 	player.s.respawnTime = Time()
 	ClearRecentDamageHistory( player )
+	//player.ClearReplayDelay() // these has been done in CPlayer::RespawnPlayer()
+	//player.ClearViewEntity()
 	
 	player.Signal( "OnRespawned" ) // kill any postdeaththreads that could be running
 	
 	Loadouts_TryGivePilotLoadout( player )
+	if( IsLoadoutGracePeriodEnabled() )
+		GracePeriodThink( player ) // grace period done here
+	else
+	{
+		player.s.inGracePeriod = false // disable this immediately
+		player.Signal( "GracePeriodDone" )
+	}
 	//player.SetPredictionEnabled( true ) doesn't seem needed, as native code seems to set this
+
+	// always don't let them to do another late respawn if they once respawned
+	if( !file.respawnedPlayerUIDs.contains( player.GetUID() ) )
+		file.respawnedPlayerUIDs.append( player.GetUID() )
 	
 	foreach ( entity weapon in player.GetMainWeapons() )
 		weapon.SetProScreenOwner( player )
@@ -233,6 +290,43 @@ void function CodeCallback_OnPlayerRespawned( entity player )
 		
 	Remote_CallFunction_NonReplay( player, "ServerCallback_YouRespawned" )
 	ClearLastAttacker( player ) // so dying to anything doesn't credit the same attacker after respawning
+}
+
+void function GracePeriodThink( entity player )
+{
+	thread GracePeriodThink_Threaded( player )
+}
+
+void function GracePeriodThink_Threaded( entity player )
+{
+	player.EndSignal( "OnDestroy" )
+	player.EndSignal( "OnPrimaryAttack" )
+	player.EndSignal( "OnDeath" )
+
+	OnThreadEnd(
+		function(): ( player )
+		{
+			if( IsValid( player ) )
+			{
+				if( IsAlive( player ) && GetGameState() == eGameState.Playing ) // if player died we don't reset this( mostly because round end )
+				{
+					player.s.inGracePeriod = false
+					player.Signal( "GracePeriodDone" )
+				}
+			}
+		}
+	)
+
+	float countingTime
+	while( countingTime <= CLASS_CHANGE_GRACE_PERIOD ) // to get exact time
+	{
+		wait 0.2
+		// in dropship
+		if( player.GetParent() != null && ( HasCinematicFlag( player, CE_FLAG_INTRO ) || HasCinematicFlag( player, CE_FLAG_CLASSIC_MP_SPAWNING ) || HasCinematicFlag( player, CE_FLAG_WAVE_SPAWNING ) ) )
+			continue
+
+		countingTime += 0.2
+	}
 }
 
 void function CodeCallback_OnPlayerKilled( entity player, var damageInfo )
@@ -258,6 +352,7 @@ void function PostDeathThread_MP( entity player, var damageInfo ) // based on ga
 	player.p.deathAngles = player.GetAngles()
 
 	player.s.inPostDeath = true
+	player.s.inGracePeriod = true // make sure player always in GracePeriod after respawn
 	player.s.respawnSelectionDone = false
 
 	player.cloakedForever = false
@@ -298,7 +393,7 @@ void function PostDeathThread_MP( entity player, var damageInfo ) // based on ga
 			{
 				alreadyAssisted[attackerInfo.attacker.GetEncodedEHandle()] <- true
 				Remote_CallFunction_NonReplay( attackerInfo.attacker, "ServerCallback_SetAssistInformation", attackerInfo.damageSourceId, attacker.GetEncodedEHandle(), player.GetEncodedEHandle(), attackerInfo.time ) 
-				AddPlayerScore( attackerInfo.attacker, "PilotAssist" )
+				AddPlayerScore( attackerInfo.attacker, "PilotAssist", player )
 				attackerInfo.attacker.AddToPlayerGameStat( PGS_ASSISTS, 1 )
 			}
 		}
@@ -338,18 +433,11 @@ void function PostDeathThread_MP( entity player, var damageInfo ) // based on ga
 
 	float deathcamLength = GetDeathCamLength( player )
 	wait deathcamLength
-	
-	// use info_intermission camera after deathcam, if it exists
-	if ( file.intermissionCamera != null )
-	{
-		player.SetObserverModeStaticPosition( file.intermissionCamera.GetOrigin() )
-		player.SetObserverModeStaticAngles( file.intermissionCamera.GetAngles() )
-		player.StartObserverMode( OBS_MODE_STATIC_LOCKED )
-		player.SetObserverTarget( null )
-	}
 
 	// hack: double check if killcams are enabled and valid here in case gamestate has changed this
-	shouldDoReplay = shouldDoReplay && Replay_IsEnabled() && KillcamsEnabled() && IsValid( attacker )
+	//shouldDoReplay = shouldDoReplay && Replay_IsEnabled() && KillcamsEnabled() && IsValid( attacker )
+	// doing a custom check for bleeding out
+	shouldDoReplay = shouldDoReplay && Replay_IsEnabled() && KillcamsEnabled() && IsValid( attacker ) && methodOfDeath != eDamageSourceId.bleedout
 	// quick note: in cases where player.Die() is called: e.g. for round ends, player == attacker
 	if ( shouldDoReplay ) 
 	{	
@@ -379,23 +467,92 @@ void function PostDeathThread_MP( entity player, var damageInfo ) // based on ga
 		SetRespawnAvailable( player )
 		
 		wait respawnDelay
-				
+
+		if( file.forcedRespawn && methodOfDeath != damagedef_despawn ) // check for spectator mod
+		{
+			float waitBeforeRespawn = 0.0
+			//if( !shouldDoReplay || respawnDelay >= 3.0 ) // doing this so player can respawn as titan in some modes, but vanilla don't features this lol
+			if( !shouldDoReplay )
+			{
+				waitBeforeRespawn = 3.0 - respawnDelay
+				if( waitBeforeRespawn <= 0 )
+					waitBeforeRespawn = 0
+				thread SetPlayerCameraToIntermissionCam( player, waitBeforeRespawn + 0.1 )
+			}
+			thread ForcedRespawnThink( player, waitBeforeRespawn )// if not doing replay, set player's camera to intermissionCam
+
+		}
+
 		player.WaitSignal( "RespawnMe" ) // set in base_gametype: ClientCommand_RespawnPlayer
 		
 		ClearRespawnAvailable( player ) // need so the respawn icon doesn't show for like a frame on next death
-			
+
 		if ( ( expect bool( player.GetPersistentVar( "spawnAsTitan" ) ) && IsTitanAvailable( player ) ) || ( Riff_SpawnAsTitan() > 0 && Riff_ShouldSpawnAsTitan( player ) ) )	// spawn as titan
 			thread RespawnAsTitan( player )
 		else // spawn as pilot
 			RespawnAsPilot( player )
 	}
-	else if ( GamePlayingOrSuddenDeath() || GetGameState() == eGameState.Epilogue )
+	else if ( GamePlayingOrSuddenDeath() || GetGameState() == eGameState.Epilogue ) // respawn not valid, handling all situations
 	{
 		if ( shouldDoReplay && player.IsWatchingKillReplay() )
-			player.WaitSignal( "KillCamOver" )
+			WaitSignal( player, "KillCamOver", "RespawnMe" ) // allows player to skip replay
 		
 		thread PlayerBecomesSpectator( player )
 	}
+}
+
+void function SetPlayerCameraToIntermissionCam( entity player, float delay = 0 )
+{
+	if( delay > 0 )
+	{
+		player.EndSignal( "OnDestroy" )
+		player.EndSignal( "OnDeath" )
+		player.EndSignal( "RespawnMe" )
+		player.EndSignal( "OnRespawned" )
+		player.EndSignal( "PlayerRespawnStarted" )
+		//print( "Waiting " + string( delay ) + " s before setting camera" )
+		wait delay
+	}
+	if ( file.intermissionCamera != null )
+	{
+		//print( "Setting player camera to intermissionCam" )
+		player.SetObserverModeStaticPosition( file.intermissionCamera.GetOrigin() )
+		player.SetObserverModeStaticAngles( file.intermissionCamera.GetAngles() )
+		player.ClearParent() // sometimes they're still parented, do a defensive fix
+		if( !IsValid( player.GetParent() ) )
+			player.StartObserverMode( OBS_MODE_STATIC_LOCKED )
+		player.SetObserverTarget( null )
+	}
+}
+
+void function ForcedRespawnThink( entity player, float waitBeforeRespawn )
+{
+	player.EndSignal( "RespawnMe" )
+	table result = {}
+	result.respawnIsForced <- false
+
+	OnThreadEnd(
+		function(): ( player, result )
+		{
+			if( GetGameState() != eGameState.Playing ) // no forced respawn
+				return 
+			if( IsValid( player ) )
+			{
+				if( expect bool( result.respawnIsForced ) ) // reset player's persistent var if respawn is forced
+					player.SetPersistentVar( "spawnAsTitan", false )
+				player.Signal( "RespawnMe" )
+			}
+		}
+	)
+	
+	WaitFrame()
+	if( !IsValid( player ) )
+		return
+	if( player.IsWatchingKillReplay() )
+		player.WaitSignal( "KillCamOver" )
+	if( waitBeforeRespawn > 0 )
+		wait waitBeforeRespawn
+	result.respawnIsForced = true
 }
 
 void function PlayerWatchesKillReplayWrapper( entity player, entity attacker, float timeSinceAttackerSpawned, float timeOfDeath, float beforeTime, table replayTracker )
@@ -404,7 +561,6 @@ void function PlayerWatchesKillReplayWrapper( entity player, entity attacker, fl
 	player.EndSignal( "OnRespawned" )
 	
 	player.EndSignal( "OnDestroy" )
-	attacker.EndSignal( "OnDestroy" )
 	
 	svGlobal.levelEnt.EndSignal( "GameStateChanged" )
 	
@@ -416,6 +572,7 @@ void function PlayerWatchesKillReplayWrapper( entity player, entity attacker, fl
 			player.Signal( "KillCamOver" )
 			player.ClearReplayDelay()
 			player.ClearViewEntity()
+			SetPlayerCameraToIntermissionCam( player )
 			//player.SetPredictionEnabled( true ) doesn't seem needed, as native code seems to set this on respawn
 		}
 	})
@@ -431,16 +588,16 @@ void function DecideRespawnPlayer( entity player )
 
 void function RespawnAsPilot( entity player )
 {
-	// respawn crash exploit hotfix
-	if(IsAlive( player )) return
+	if( IsAlive( player ) )
+		return
 
 	player.RespawnPlayer( FindSpawnPoint( player, false, ( ShouldStartSpawn( player ) || Flag( "ForceStartSpawn" ) ) && !IsFFAGame() ) )
 }
 
 void function RespawnAsTitan( entity player, bool manualPosition = false )
 {
-	// respawn crash exploit hotfix
-	if(IsAlive( player )) return
+	if( IsAlive( player ) )
+		return
 
 	player.Signal( "PlayerRespawnStarted" )
 
@@ -461,7 +618,6 @@ void function RespawnAsTitan( entity player, bool manualPosition = false )
 	player.SetPetTitan( null ) // prevent embark prompt from showing up
 	
 	AddCinematicFlag( player, CE_FLAG_CLASSIC_MP_SPAWNING ) // hide hud
-	
 	// do titanfall scoreevent
 	if ( !level.firstTitanfall )
 	{
@@ -501,22 +657,26 @@ void function RespawnAsTitan( entity player, bool manualPosition = false )
 		{
 			RemoveCinematicFlag( player, CE_FLAG_CLASSIC_MP_SPAWNING ) // show hud
 			player.isSpawning = false
+			ClearTitanAvailable( player ) // we've done everything, considering clear titan available
 		}
 	
 		if ( IsValid( titan ) )
 			titan.Destroy() // pilotbecomestitan leaves an npc titan that we need to delete
 		else
 			RespawnAsPilot( player ) // this is 100% an edgecase, just avoid softlocking if we ever hit it in playable gamestates
-		
+			
 		camera.Fire( "Disable", "!activator", 0, player )
 		camera.Destroy()
 	})
 	
 	waitthread TitanHotDrop( titan, "at_hotdrop_01", spawnpoint.GetOrigin(), spawnpoint.GetAngles(), player, camera ) // do hotdrop anim
 		
+	// temp fix
+	if( IsAlive( player ) )
+		return
+
 	player.RespawnPlayer( null ) // spawn player as pilot so they get their pilot loadout on embark
 	player.SetOrigin( titan.GetOrigin() )
-	ClearTitanAvailable( player ) // titanfall succeed, clear titan availability
 	
 	// don't make player titan when entity batteryContainer is not valid.
 	// This will prevent a servercrash that sometimes occur when evac is disabled and somebody is calling a titan in the defeat screen.
@@ -526,12 +686,11 @@ void function RespawnAsTitan( entity player, bool manualPosition = false )
 		print( "batteryContainer is not a valid entity in RespawnAsTitan(). Skipping PilotBecomesTitan()." )
 }
 
-
-
-void function TryGameModeAnnouncement( entity player ) // only putting this here because it's here in gametype_sp lol
+void function TryGameModeAnnouncement( entity player, bool doDialogue = true ) // only putting this here because it's here in gametype_sp lol
 {
 	Remote_CallFunction_NonReplay( player, "ServerCallback_GameModeAnnouncement" )
-	PlayFactionDialogueToPlayer( GameMode_GetGameModeAnnouncement( GAMETYPE ), player )
+	if( doDialogue )
+		PlayFactionDialogueToPlayer( GameMode_GetGameModeAnnouncement( GAMETYPE ), player )
 }
 
 void function SetKillcamsEnabled( bool enabled )
@@ -549,6 +708,11 @@ void function SetPlayerDeathsHidden( bool hidden )
 	file.playerDeathsHidden = hidden
 }
 
+void function SetPlayerRespawnForced( bool forced )
+{
+	file.forcedRespawn = forced
+}
+
 void function TrackTitanDamageInPlayerGameStat( int playerGameStat )
 {
 	file.titanDamageGameStat = playerGameStat
@@ -560,10 +724,41 @@ void function AddToTitanDamageStat( entity victim, var damageInfo )
 		return
 
 	entity attacker = DamageInfo_GetAttacker( damageInfo )
-	float amount = DamageInfo_GetDamage( damageInfo )
+	if ( attacker == victim ) // self damage, no need to run following calculates
+		return
 
-	if ( attacker.IsPlayer() && attacker != victim )
-		attacker.AddToPlayerGameStat( file.titanDamageGameStat, amount ) // titan damage on 
+	//entity attacker = DamageInfo_GetAttacker( damageInfo ) // moved up
+	//float amount = DamageInfo_GetDamage( damageInfo )
+
+	// should check victim's health!!
+	int damageAmount = int( DamageInfo_GetDamage( damageInfo ) )
+	int healthLeft = victim.GetHealth() // cast to float for later comparisons
+	entity titanSoul = victim.GetTitanSoul()
+	float doomedTime = 0.0
+	float currentTime = Time()
+	if( IsValid( titanSoul ) )
+		doomedTime = titanSoul.soul.doomedStartTime
+
+	// since DoomTitan() is done in damaged callback instead of post damage, we can't get undoomed titan's killshot
+	if( GetDoomedState( victim ) )
+	{
+		// consider this is a undoomed killshot, add 1 more damage
+		if ( healthLeft - 1 == damageAmount && doomedTime == currentTime ) 
+		{
+			//print( "triggered undoomed killshot!" )
+			damageAmount += 1
+		}
+		// consider this is a doomed killshot, don't add additional damage to stat
+		else if ( healthLeft <= damageAmount )
+			damageAmount = healthLeft
+	}
+
+	//if ( attacker.IsPlayer() && attacker != victim )
+	if ( attacker.IsPlayer() )
+	{
+		//attacker.AddToPlayerGameStat( file.titanDamageGameStat, amount ) // titan damage on 
+		attacker.AddToPlayerGameStat( file.titanDamageGameStat, damageAmount )
+	}
 }
 
 void function CheckForAutoTitanDeath( entity victim, entity attacker, var damageInfo )

@@ -722,6 +722,9 @@ bool function PlayerOrNPCKilled( entity ent, var damageInfo )
 	{
 		LogPlayerMatchStat_Death( ent )
 
+		// defensive fix
+		StopSoundOnEntity( ent, "3p_zipline_loop" )
+
 		if ( attacker.IsPlayer() && (attacker != ent) )
 			LogPlayerMatchStat_KilledAPilot( attacker )
 	}
@@ -742,6 +745,13 @@ bool function PlayerOrNPCKilled( entity ent, var damageInfo )
 		//For example: In script immediately above this we change the attacker to get the player behind the kill, e.g. owner of a pet titan, etc. Bunch of registered callbacks depends on this.
 		foreach( callbackFunc in svGlobal.onPlayerKilledCallbacks )
 			callbackFunc( ent, attacker, damageInfo )
+		if( attacker != ent && attacker.IsPlayer() && !attacker.IsTitan() )
+		{
+			#if BATTLECHATTER_ENABLED
+			// killing pilot dialogues
+			TryPilotKillChatter( attacker )
+			#endif
+		}
 	}
 	else if ( ent.IsNPC() )
 	{
@@ -829,6 +839,34 @@ bool function PlayerOrNPCKilled( entity ent, var damageInfo )
 	}
 
 	return true
+}
+
+void function TryPilotKillChatter( entity attacker )
+{
+	if( GetGameState() >= eGameState.Playing ) // first check, don't play on intro or somewhere
+		thread TryPilotKillChatter_Threaded( attacker )
+}
+
+void function TryPilotKillChatter_Threaded( entity attacker )
+{
+	attacker.EndSignal( "OnDestroy" )
+	attacker.EndSignal( "OnDeath" )
+	wait RandomFloatRange( 0.3, 0.5 )
+	if( GetGameState() < eGameState.Playing ) // second check, don't play on intro or somewhere
+		return
+	PlayBattleChatterLine( attacker, "bc_fKilledEnemy" )
+	wait RandomFloatRange( 0.8, 1.1 )
+	if( GetGameState() < eGameState.Playing ) // third check, don't play on intro or somewhere
+		return
+    array<entity> nearbyFriendly = GetPlayerArrayOfTeam_Alive( attacker.GetTeam() )
+	if( nearbyFriendly.contains( attacker ) )
+		nearbyFriendly.removebyvalue( attacker )
+	if( nearbyFriendly.len() < 1 )
+        return
+    entity closestFriendly = GetClosest( nearbyFriendly, attacker.GetOrigin(), 500 )
+    //PlayBattleChatterLineIncludingPlayer( closestFriendly, "bc_fCongratsKill" )
+    if( IsValid( closestFriendly ) )
+        PlayBattleChatterLine( closestFriendly, "bc_fCongratsKill" )
 }
 
 // used to calculate build time credit in special cases. Cloak Drones and Suicide Spectres use it for now.
@@ -1429,12 +1467,26 @@ void function CodeCallback_WeaponFireInCloak( entity player )
 		if( IsValid( cloakWeapon ) )
 		{
 			array<string> mods = cloakWeapon.GetMods()
-			// can't reset cooldown properly in script, let's give player a empty one
 			player.TakeWeapon( "mp_ability_cloak" ) // not using TakeWeaponNow() to fit vanilla behavior
 			player.GiveOffhandWeapon( "mp_ability_cloak", offhandSlot, mods )
 			cloakWeapon = player.GetOffhandWeapon( offhandSlot )
 			cloakWeapon.SetWeaponPrimaryClipCountAbsolute( 0 )
 		}
+
+		//printt( "weapon", weapon.GetWeaponClassName() )
+		// JFS; need code feature to properly reset next attack time/cooldown stuff
+		/*
+		entity weapon = player.GetOffhandWeapon( OFFHAND_LEFT )
+		//printt( "weapon", weapon.GetWeaponClassName() )
+		// JFS; need code feature to properly reset next attack time/cooldown stuff
+		if ( IsValid( weapon ) && weapon.GetWeaponClassName() == "mp_ability_cloak" )
+		{
+			player.TakeOffhandWeapon( OFFHAND_LEFT )
+			player.GiveOffhandWeapon( "mp_ability_cloak", OFFHAND_LEFT )
+			weapon = player.GetOffhandWeapon( OFFHAND_LEFT )
+			weapon.SetWeaponPrimaryClipCountAbsolute( 0 )
+		}
+		*/
 	}
 	else
 	{
@@ -1616,15 +1668,20 @@ void function OutOfBoundsDisable()
 {
 	foreach( trigger in file.outOfBoundsTriggers )
 	{
-		#if MP
-			foreach ( ent, val in oob_triggerEntPairs[trigger] )
-				oob_triggerEntPairs[trigger][ent] = false
-			trigger.DisconnectOutput( "OnStartTouch", EntityEnterOutOfBoundsTrig )
-			trigger.DisconnectOutput( "OnEndTouch", EntityLeaveOutOfBoundsTrig )
-		#else
-			trigger.DisconnectOutput( "OnStartTouch", EntityOutOfBounds )
-			trigger.DisconnectOutput( "OnEndTouch", EntityBackInBounds )
-		#endif
+		try // defensive fix for we disconnect it mid-game
+		{
+			#if MP
+				foreach ( ent, val in oob_triggerEntPairs[trigger] )
+					oob_triggerEntPairs[trigger][ent] = false
+				trigger.DisconnectOutput( "OnStartTouch", EntityEnterOutOfBoundsTrig )
+				trigger.DisconnectOutput( "OnEndTouch", EntityLeaveOutOfBoundsTrig )
+			#else
+				trigger.DisconnectOutput( "OnStartTouch", EntityOutOfBounds )
+				trigger.DisconnectOutput( "OnEndTouch", EntityBackInBounds )
+			#endif
+		}
+		catch( ex )
+		{}
 	}
 }
 

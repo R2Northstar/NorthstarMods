@@ -323,12 +323,26 @@ void function MeleeThread_PilotVsEnemy_Target( SyncedMelee action, entity attack
 						//printt( "Killing off target "  + target + " because he already reached blackout part of execution!" )
 
 						int damageAmount = target.GetMaxHealth() + 1
-						target.TakeDamage( damageAmount, killCreditAttacker, killCreditAttacker, { forceKill = true, damageType = DMG_MELEE_EXECUTION, damageSourceId = eDamageSourceId.human_execution } )
+						if ( IsValid( killCreditAttacker ) )
+							target.TakeDamage( damageAmount, killCreditAttacker, killCreditAttacker, { forceKill = true, damageType = DMG_MELEE_EXECUTION, damageSourceId = eDamageSourceId.human_execution } )
 						//markedForExecutionDeath will be cleared in MarkForDeath() which sets it in the first place
 					}
 
 					if ( target.IsPlayer() )
 						RestoreCloakAfterMelee( target, dataStruct )
+				}
+				else // target killed
+				{
+					if( IsValid( attacker ) )
+					{
+						if( attacker.IsPlayer() )
+						{
+							if( IsValid( target ) ) // defensive fix
+								AddPlayerScore( attacker, "Execution", target )
+							else
+								AddPlayerScore( attacker, "Execution" )
+						}
+					}
 				}
 
 				if ( IsValid( target.e.syncedMeleeAttacker ) )
