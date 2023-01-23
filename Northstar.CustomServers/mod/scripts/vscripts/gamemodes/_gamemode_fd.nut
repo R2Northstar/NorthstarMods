@@ -1,3 +1,5 @@
+untyped
+
 global function GamemodeFD_Init
 global function RateSpawnpoints_FD
 global function startHarvester
