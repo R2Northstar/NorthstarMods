@@ -43,6 +43,13 @@ void function RevivableTurret_DamageCallback( entity turret, var damageInfo )
 function RevivableTurret_UseFunction( player , turret )
 {	
 	entity tur = expect entity( turret )
+	entity ent = expect entity( player )
+	entity owner = tur.GetBossPlayer()
+	if( ent != owner )
+	{
+		int ownerEHandle = owner.GetEncodedEHandle()
+		MessageToTeam( TEAM_MILITIA,eEventNotifications.FD_TurretRepair, null, ent, ownerEHandle )
+	}
 	thread RevivableTurret_Revive( tur )
 	return true
 }
