@@ -142,7 +142,7 @@ void function PlayerInventory_PopInventoryItem( entity player )
 	return
 }
 
-void function PlayerInventory_TakeAllInventoryItem( entity player )
+void function PlayerInventory_TakeAllInventoryItems( entity player )
 {
 	file.playerInventoryStacks[ player ].clear()
 	waitthread PlayerInventory_TakeInventoryItem( player )
