@@ -492,7 +492,7 @@ void function mainGameLoop()
 				SetMoneyForPlayer( player, file.players[player].moneyThisRound )
 				player.SetPlayerNetInt( "numHarvesterShieldBoost", 0 )
 				player.SetPlayerNetInt( "numSuperRodeoGrenades", 0 )
-				PlayerInventory_TakeAllInventoryItem( player )
+				PlayerInventory_TakeAllInventoryItems( player )
 			}
 			SetGlobalNetTime( "FD_nextWaveStartTime", Time() + 75 )
 		}
