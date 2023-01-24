@@ -8,7 +8,7 @@ global function PlayerInventory_EndCriticalSectionForWeaponOnEndFrame
 global function PlayerInventory_PushInventoryItem
 global function PlayerInventory_PushInventoryItemByBurnRef
 global function PlayerInventory_PopInventoryItem
-global function PlayerInventory_TakeAllInventoryItem
+global function PlayerInventory_TakeAllInventoryItems
 global function PlayerInventory_CountBurnRef
 
 struct
@@ -67,7 +67,7 @@ int function PlayerInventory_CountBurnRef( entity player, string burnRef )
 	return count
 }
 
-void function PlayerInventory_TakeInventoryItem( entity player )
+void function PlayerInventory_TakeInventoryItems( entity player )
 {
 	player.EndSignal( "OnDestroy" )
 	entity preexistingWeapon = player.GetOffhandWeapon( OFFHAND_INVENTORY )
