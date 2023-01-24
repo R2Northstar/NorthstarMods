@@ -53,13 +53,6 @@
 			"RunOn": "CLIENT"
 		},
 		{
-			"Path": "client/verifiedmods.gnut",
-			"RunOn": "UI",
-			"UICallback": {
-				"Before": "InitializeVerifiedModsList"
-			}
-		},
-		{
 			"Path": "ui/menu_ns_modmenu.nut",
 			"RunOn": "UI",
 			"UICallback": {
