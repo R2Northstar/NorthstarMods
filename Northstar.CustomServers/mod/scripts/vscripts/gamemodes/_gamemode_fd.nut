@@ -1,3 +1,5 @@
+untyped
+
 global function GamemodeFD_Init
 global function RateSpawnpoints_FD
 global function startHarvester
@@ -22,6 +24,8 @@ enum eDropshipState{
 struct player_struct_fd{
 	bool diedThisRound
 	int scoreThisRound
+	int moneyThisRound
+	array< entity > deployedEntityThisRound
 	/*
 	int totalMVPs
 	int mortarUnitsKilled
@@ -67,6 +71,7 @@ struct {
 	table<entity, table<string, float> > playerAwardStats
 	entity harvester_info
 	bool playersHaveTitans = false
+	bool waveRestart = false
 
 	string animationOverride = ""
 	int dropshipState
@@ -324,6 +329,18 @@ void function GamemodeFD_InitPlayer( entity player )
 	}
 	// unfortunate that i cant seem to find a nice callback for them exiting that menu but thisll have to do
 	thread TryDisableTitanSelectionForPlayerAfterDelay( player, TEAM_TITAN_SELECT_DURATION_MIDGAME )
+	thread TrackDeployedArcTrapThisRound( player )
+}
+
+void function TrackDeployedArcTrapThisRound( entity player )
+{
+	player.EndSignal( "OnDestroy" )
+	while( IsValid( player ) )
+	{
+		entity ArcTrap = expect entity ( player.WaitSignal( "DeployArcTrap" ).projectile )
+		file.players[ player ].deployedEntityThisRound.append( ArcTrap )
+		AddEntityDestroyedCallback( ArcTrap, FD_OnEntityDestroyed )
+	}
 }
 
 void function TryDisableTitanSelectionForPlayerAfterDelay( entity player, float waitAmount )
@@ -444,7 +461,7 @@ bool function useShieldBoost( entity player, array<string> args )
 	{
 		fd_harvester.harvester.SetShieldHealth( fd_harvester.harvester.GetShieldHealthMax() )
 		SetGlobalNetTime( "FD_harvesterInvulTime", Time() + 5 )
-		MessageToTeam( TEAM_MILITIA,eEventNotifications.FD_PlayerHealedHarvester, null, player )
+		MessageToTeam( TEAM_MILITIA,eEventNotifications.FD_PlayerBoostedHarvesterShield, null, player )
 		player.SetPlayerNetInt( "numHarvesterShieldBoost", player.GetPlayerNetInt( "numHarvesterShieldBoost" ) - 1 )
 		file.playerAwardStats[player]["harvesterHeals"]++
 	}
@@ -467,6 +484,19 @@ void function mainGameLoop()
 	bool showShop = false
 	for( int i = GetGlobalNetInt( "FD_currentWave" ); i < waveEvents.len(); i++ )
 	{
+		if( file.waveRestart )
+		{
+			showShop = true
+			foreach( entity player in GetPlayerArray() )
+			{
+				SetMoneyForPlayer( player, file.players[player].moneyThisRound )
+				player.SetPlayerNetInt( "numHarvesterShieldBoost", 0 )
+				player.SetPlayerNetInt( "numSuperRodeoGrenades", 0 )
+				PlayerInventory_TakeAllInventoryItems( player )
+			}
+			SetGlobalNetTime( "FD_nextWaveStartTime", Time() + 75 )
+		}
+
 		if( !runWave( i, showShop ) )
 			break
 
@@ -648,12 +678,19 @@ bool function runWave( int waveIndex, bool shouldDoBuyTime )
 	{
 		file.players[player].diedThisRound = false
 		file.players[player].scoreThisRound = 0
+		file.players[player].moneyThisRound = GetPlayerMoney( player )
+		file.players[ player ].deployedEntityThisRound = []
 	}
 	array<int> enemys = getHighestEnemyAmountsForWave( waveIndex )
 
 	foreach( entity player in GetPlayerArray() )
 	{
 		Remote_CallFunction_NonReplay( player, "ServerCallback_FD_AnnouncePreParty", enemys[0], enemys[1], enemys[2], enemys[3], enemys[4], enemys[5], enemys[6], enemys[7], enemys[8] )
+	}
+	if( file.waveRestart )
+	{
+		file.waveRestart = false
+		MessageToTeam( TEAM_MILITIA,eEventNotifications.FD_WaveRestart )
 	}
 	if( shouldDoBuyTime )
 	{
@@ -731,6 +768,8 @@ bool function runWave( int waveIndex, bool shouldDoBuyTime )
 			FD_DecrementRestarts()
 		else
 			SetRoundBased(false)
+
+		file.waveRestart = true //wave restart point
 		SetWinner( TEAM_IMC )//restart round
 		spawnedNPCs = [] // reset npcs count
 		restetWaveEvents()
@@ -919,6 +958,9 @@ void function FD_SmokeHealTeammate( entity player, entity target, int shieldRest
 
 void function FD_BatteryHealTeammate( entity battery, entity titan, int shieldRestoreAmount, int healthRestoreAmount )
 {
+	if( !IsValid( battery ) )
+		return
+
 	entity BatteryParent = battery.GetParent()
 	entity TargetTitan
 	int currentHeal
@@ -1159,9 +1201,23 @@ void function OnHarvesterDamaged( entity harvester, var damageInfo )
 
 void function FD_NPCCleanup()
 {
+	foreach( entity player in GetPlayerArray() )
+	{
+		foreach ( entity ent in file.players[ player ].deployedEntityThisRound )
+		{
+			if ( IsValid( ent ) )
+				ent.Destroy()
+		}
+	}
 	foreach ( entity npc in GetEntArrayByClass_Expensive( "C_AI_BaseNPC" ) )
+	{
+		entity BossPlayer = npc.GetBossPlayer()
+		if( IsValidPlayer( BossPlayer ) && !file.players[ BossPlayer ].deployedEntityThisRound.contains( npc ) )
+			continue
+
 		if ( IsValid( npc ) )
 			npc.Destroy()
+	}
 }
 
 void function HarvesterThink()
@@ -1516,7 +1572,10 @@ void function CheckLastPlayerReady()
 bool function ClientCommandCallbackToggleReady( entity player, array<string> args )
 {
 	if( args[0] == "true" )
+	{
 		player.SetPlayerNetBool( "FD_readyForNextWave", true )
+		MessageToTeam( TEAM_MILITIA,eEventNotifications.FD_PlayerReady, null, player )
+	}
 	if( args[0] == "false" )
 		player.SetPlayerNetBool( "FD_readyForNextWave", false )
 
@@ -1672,7 +1731,20 @@ void function AddTurretSentry( entity turret )
 	turret.Minimap_AlwaysShow( TEAM_MILITIA, null )
 	turret.Minimap_SetHeightTracking( true )
 	turret.Minimap_SetCustomState( eMinimapObject_npc.FD_TURRET )
+	entity player = turret.GetBossPlayer()
+	file.players[ player ].deployedEntityThisRound.append( turret )
+	AddEntityDestroyedCallback( turret, FD_OnEntityDestroyed )
 	thread TurretRefundThink( turret )
+}
+
+function FD_OnEntityDestroyed( ent )
+{
+	expect entity( ent )
+
+	Assert( ent.IsValidInternal() )
+	entity player = IsTurret( ent ) ? ent.GetBossPlayer() : ent.GetOwner()
+	if( file.players[ player ].deployedEntityThisRound.contains( ent ) )
+		file.players[ player ].deployedEntityThisRound.fastremovebyvalue( ent )
 }
 
 void function DisableTitanSelection()
