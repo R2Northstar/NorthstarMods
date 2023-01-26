@@ -32,7 +32,7 @@ void function PrematchClearInventory()// vanilla behavior
 {
 	foreach( entity player in GetPlayerArray() )
 	{
-		PlayerInventory_RefreshEquippedState( player )
+		PlayerInventory_TakeAllInventoryItems( player )
 	}
 }
 
@@ -165,8 +165,7 @@ void function PlayerInventory_TakeAllInventoryItems( entity player )
 
 void function PlayerInventory_RefreshEquippedState( entity player )
 {
-	player.TakeOffhandWeapon( OFFHAND_INVENTORY )
-	file.playerInventoryStacks[ player ] = []
+
 }
 
 void function PlayerInventory_StartCriticalSection( entity player )
