@@ -157,7 +157,7 @@ void function SpawnPlayerOnGround( entity player )
 	RespawnAsPilot( player )
 	player.FreezeControlsOnServer()
 	AddCinematicFlag( player, CE_FLAG_CLASSIC_MP_SPAWNING )
-	ScreenFadeFromBlack( player, 3.0, 1.0 )
+	ScreenFadeFromBlack( player, 0.5, 0.5 )
 
 	svGlobal.levelEnt.WaitSignal( "GameStateChanged" ) // wait for game start
 	player.UnfreezeControlsOnServer() // restore player movements
