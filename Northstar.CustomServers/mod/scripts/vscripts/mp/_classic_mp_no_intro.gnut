@@ -34,7 +34,9 @@ void function ClassicMP_DefaultNoIntro_Start()
 		wait TITAN_DROP_SPAWN_INTRO_REAL_LENGTH
 	else
 	{
-		wait NOINTRO_INTRO_PILOT_LENGTH
+		//wait NOINTRO_INTRO_PILOT_LENGTH
+		// good to use this
+		wait ClassicMP_GetIntroLength()
 		
 		foreach ( entity player in GetPlayerArray() )
 		{

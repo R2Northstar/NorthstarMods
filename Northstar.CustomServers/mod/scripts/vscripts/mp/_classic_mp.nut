@@ -40,6 +40,7 @@ struct {
 
 void function ClassicMp_Init()
 {
+	RegisterSignal( "ClassicMPIntroEnd" ) // may need for grace period
 	// default level intros
 	if ( IsFFAGame() )
 		ClassicMP_SetLevelIntro( ClassicMP_DefaultNoIntro_Setup, ClassicMP_DefaultNoIntro_GetLength() )
@@ -97,6 +98,8 @@ void function ClassicMP_OnIntroFinished()
 {
 	print( "intro finished!" )
 	SetGameState( eGameState.Playing )
+	foreach ( entity player in GetPlayerArray() ) // may need for grace period
+		player.Signal( "ClassicMPIntroEnd" )
 }
 
 float function ClassicMP_GetIntroLength() 

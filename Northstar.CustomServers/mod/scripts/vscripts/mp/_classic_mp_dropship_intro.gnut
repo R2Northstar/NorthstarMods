@@ -1,5 +1,6 @@
 untyped
 global function ClassicMP_DefaultDropshipIntro_Setup
+global function ClassicMP_IsRunningDropshipIntro
 
 const array<string> DROPSHIP_IDLE_ANIMS = [ "Classic_MP_flyin_exit_playerA_idle",
 											"Classic_MP_flyin_exit_playerB_idle",
@@ -25,6 +26,7 @@ const int MAX_DROPSHIP_PLAYERS = 4
 
 
 global const float DROPSHIP_INTRO_LENGTH = 15.0 // TODO tweak this
+const float SPAWN_ON_GROUND_TIME = 11.0 // taken from sequence
 
 struct IntroDropship
 {
@@ -40,13 +42,21 @@ struct {
 	array<IntroDropship> imcDropships
 	
 	float introStartTime
+
+	bool isDropShipIntro = false
 } file
 
 
 void function ClassicMP_DefaultDropshipIntro_Setup()
 {
+	file.isDropShipIntro = true // we're running dropship intro now
 	AddCallback_OnClientConnected( DropshipIntro_OnClientConnected )	
 	AddCallback_GameStateEnter( eGameState.Prematch, OnPrematchStart )
+}
+
+bool function ClassicMP_IsRunningDropshipIntro()
+{
+	return file.isDropShipIntro
 }
 
 void function DropshipIntro_OnClientConnected( entity player )
@@ -118,7 +128,12 @@ void function OnPrematchStart()
 	foreach ( entity player in GetPlayerArray() )
 	{
 		if ( !IsPrivateMatchSpectator( player ) )
-			thread SpawnPlayerIntoDropship( player )
+		{
+			if ( file.introStartTime + SPAWN_ON_GROUND_TIME < Time() ) // very late joiner, just spawn them onto ground like valinilla
+				thread SpawnPlayerOnGround( player )
+			else
+				thread SpawnPlayerIntoDropship( player )
+		}
 		else
 			RespawnPrivateMatchSpectator( player )
 	}
@@ -132,6 +147,28 @@ void function EndIntroWhenFinished()
 	ClassicMP_OnIntroFinished()
 }
 
+void function SpawnPlayerOnGround( entity player )
+{
+	player.EndSignal( "OnDestroy" )
+
+	if ( IsAlive( player ) )
+		player.Die()
+
+	RespawnAsPilot( player )
+	player.FreezeControlsOnServer()
+	AddCinematicFlag( player, CE_FLAG_CLASSIC_MP_SPAWNING )
+	ScreenFadeFromBlack( player, 3.0, 1.0 )
+
+	svGlobal.levelEnt.WaitSignal( "GameStateChanged" ) // wait for game start
+	player.UnfreezeControlsOnServer() // restore player movements
+	RemoveCinematicFlag( player, CE_FLAG_CLASSIC_MP_SPAWNING )
+	// do gamemode announcement
+	if( GetRoundsPlayed() < 1 && !HasSwitchedSides() )
+		TryGameModeAnnouncement( player )
+	else
+		TryGameModeAnnouncement( player, false )
+}
+
 void function SpawnPlayerIntoDropship( entity player )
 {
 	player.EndSignal( "OnDestroy" )
@@ -139,15 +176,19 @@ void function SpawnPlayerIntoDropship( entity player )
 	if ( IsAlive( player ) )
 		player.Die() // kill them so we don't have any issues respawning them later
 	
-	player.s.dropshipIntroIsJumping <- false
-	OnThreadEnd( function() : ( player )
+	table results = {}
+	results.isJumping <- false
+
+	OnThreadEnd( function() : ( player, results )
 	{	
 		if ( IsValid( player ) )
 		{
 			player.ClearParent()
 			ClearPlayerAnimViewEntity( player )
+			if ( !IsAlive( player ) )
+				player.Anim_Stop() // stop sequence for dead players
 			
-			if ( !player.s.dropshipIntroIsJumping )
+			if ( !results.isJumping )
 			{
 				player.MovementEnable()
 				player.EnableWeaponViewModel()
@@ -156,7 +197,7 @@ void function SpawnPlayerIntoDropship( entity player )
 		}
 	})
 	
-	WaitFrame()
+	//WaitFrame() // do a waitFrame() for other resspawn functions set up
 
 	player.EndSignal( "OnDeath" )
 	
@@ -170,7 +211,9 @@ void function SpawnPlayerIntoDropship( entity player )
 	IntroDropship playerDropship
 	int playerDropshipIndex = -1
 	foreach ( IntroDropship dropship in teamDropships )
+	{
 		for ( int i = 0; i < dropship.players.len(); i++ )
+		{
 			if ( dropship.players[ i ] == null )
 			{
 				playerDropship = dropship
@@ -179,8 +222,10 @@ void function SpawnPlayerIntoDropship( entity player )
 				dropship.players[ i ] = player
 				break
 			}
+		}
+	}
 					
-	if ( playerDropship.dropship == null )
+	if ( playerDropship.dropship == null ) // can't find a valid dropship!
 	{
 		// if we're at this point, we have more players than we do dropships, so just pick a random one
 		playerDropship = teamDropships.getrandom()
@@ -221,9 +266,10 @@ void function SpawnPlayerIntoDropship( entity player )
 	// idk unsure how to use that, all i know is getsequenceduration > the length it actually should be
 	
 	thread FirstPersonSequence( jumpSequence, player, playerDropship.dropship )
+	PlayBattleChatterLine( player, "bc_pIntroChat" )
 	WaittillAnimDone( player ) // somehow this is better than just waiting for the blocking FirstPersonSequence call?
 	
-	player.s.dropshipIntroIsJumping <- true
+	results.isJumping = true
 	thread PlayerJumpsFromDropship( player )
 }
 
@@ -232,12 +278,15 @@ void function PlayerJumpsFromDropship( entity player )
 	player.EndSignal( "OnDeath" )
 	player.EndSignal( "OnDestroy" )
 
-	OnThreadEnd( function() : ( player )
+	int moveLockEffect = StatusEffect_AddEndless( player, eStatusEffect.move_slow, 1.0 ) // 1.0 will lock player's movement
+
+	OnThreadEnd( function() : ( player, moveLockEffect )
 	{
 		if ( IsValid( player ) )
 		{
-			// show weapon viewmodel and hud and let them move again
-			player.MovementEnable()
+			// defensive fix, restore movements
+			StatusEffect_Stop( player, moveLockEffect )
+			// show weapon viewmodel and hud
 			player.EnableWeaponViewModel()
 			DeployAndEnableWeapons(player)
 			RemoveCinematicFlag( player, CE_FLAG_CLASSIC_MP_SPAWNING )
@@ -246,13 +295,13 @@ void function PlayerJumpsFromDropship( entity player )
 		
 	// wait for intro timer to be fully done
 	wait ( file.introStartTime + DROPSHIP_INTRO_LENGTH ) - Time()
-	player.MovementDisable() // disable all movement but let them look around still
-	player.ConsumeDoubleJump() // movementdisable doesn't prevent double jumps
-	
+
 	// wait for player to hit the ground
 	wait 0.1 // assume players will never actually hit ground before this
+	player.ConsumeDoubleJump() // disable double jump
+
 	while ( !player.IsOnGround() && !player.IsWallRunning() && !player.IsWallHanging() ) // todo this needs tweaking
 		WaitFrame()
-	
+
 	TryGameModeAnnouncement( player )
 }
