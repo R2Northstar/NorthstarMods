@@ -226,7 +226,7 @@ void functionref() function ResetAllConVarsForModEventHandler( string catName )
 		for ( int i = 0; i < file.conVarList.len(); i++ )
 		{
 			ConVarData c = file.conVarList[i]
-			if ( c.catName != catName || c.isCategoryName || c.isEmptySpace )
+			if ( c.catName != catName || c.isCategoryName || c.isEmptySpace || c.isCustomButton )
 				continue
 			SetConVarToDefault( c.conVar )
 
@@ -432,15 +432,19 @@ void function UpdateList()
 	}
 	file.updatingList = false
 
-	if (file.conVarList.len() <= 0)
+	if ( file.conVarList.len() <= 0 
 	{
-		Hud_SetVisible( Hud_GetChild(file.menu, "NoResultLabel"), true )
-		Hud_SetText( Hud_GetChild(file.menu, "NoResultLabel"), "#NO_MODS" )
+		Hud_SetVisible( Hud_GetChild( file.menu, "NoResultLabel" ), true )
+		Hud_SetText( Hud_GetChild( file.menu, "NoResultLabel" ), "#NO_MODS" )
 	}
-	else if (file.filteredList.len() <= 0)
+	else if ( file.filteredList.len() <= 0 )
 	{
-		Hud_SetVisible( Hud_GetChild(file.menu, "NoResultLabel"), true )
-		Hud_SetText( Hud_GetChild(file.menu, "NoResultLabel"), "#NO_RESULTS" )
+		Hud_SetVisible( Hud_GetChild( file.menu, "NoResultLabel" ), true )
+		Hud_SetText( Hud_GetChild( file.menu, "NoResultLabel" ), "#NO_RESULTS" )
+	}
+	else
+	{
+		Hud_Hide( Hud_GetChild( file.menu, "NoResultLabel" )
 	}
 }
 
