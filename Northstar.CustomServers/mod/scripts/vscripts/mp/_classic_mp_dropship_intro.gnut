@@ -162,11 +162,7 @@ void function SpawnPlayerOnGround( entity player )
 	svGlobal.levelEnt.WaitSignal( "GameStateChanged" ) // wait for game start
 	player.UnfreezeControlsOnServer() // restore player movements
 	RemoveCinematicFlag( player, CE_FLAG_CLASSIC_MP_SPAWNING )
-	// do gamemode announcement
-	if( GetRoundsPlayed() < 1 && !HasSwitchedSides() )
-		TryGameModeAnnouncement( player )
-	else
-		TryGameModeAnnouncement( player, false )
+	TryGameModeAnnouncement( player ) // do gamemode announcement
 }
 
 void function SpawnPlayerIntoDropship( entity player )
