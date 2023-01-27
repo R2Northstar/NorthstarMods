@@ -235,7 +235,11 @@ void functionref() function ResetAllConVarsForModEventHandler( string catName )
 				continue
 
 			if ( min( BUTTONS_PER_PAGE, max( 0, index - file.scrollOffset ) ) == index - file.scrollOffset )
+			{
 				Hud_SetText( Hud_GetChild( file.modPanels[ i - file.scrollOffset ], "TextEntrySetting" ), c.isEnumSetting ? c.values[ GetConVarInt( c.conVar ) ] : GetConVarString( c.conVar ) )
+				if( c.sliderEnabled )
+					MS_Slider_SetValue( file.sliders[ index - file.scrollOffset ], GetConVarFloat( c.conVar ) )
+			}
 		}
 	}
 }
@@ -247,7 +251,11 @@ void functionref() function ResetConVarEventHandler( int modIndex )
 		ConVarData c = file.filteredList[ modIndex ]
 		SetConVarToDefault( c.conVar )
 		if ( min( BUTTONS_PER_PAGE, max( 0, modIndex - file.scrollOffset ) ) == modIndex - file.scrollOffset )
+		{
 			Hud_SetText( Hud_GetChild( file.modPanels[ modIndex - file.scrollOffset ], "TextEntrySetting" ), c.isEnumSetting ? c.values[ GetConVarInt( c.conVar ) ] : GetConVarString( c.conVar ) )
+			if( c.sliderEnabled )
+				MS_Slider_SetValue( file.sliders[ modIndex - file.scrollOffset ], GetConVarFloat( c.conVar ) )
+		}
 	}
 }
 
@@ -289,10 +297,8 @@ void function SliderBarUpdate()
 
 	float jump = minYPos - ( useableSpace / ( float( file.filteredList.len() ) ) )
 
-	// got local from official respaw scripts, without untyped throws an error
-
-	local pos =	Hud_GetPos( sliderButton )[1]
-	local newPos = pos - mouseDeltaBuffer.deltaY
+	int pos = expect int( expect array( Hud_GetPos( sliderButton ) )[1] )
+	float newPos = float( pos - mouseDeltaBuffer.deltaY )
 	FlushMouseDeltaBuffer()
 
 	if ( newPos < maxYPos ) newPos = maxYPos
@@ -396,7 +402,6 @@ void function UpdateList()
 					if ( lastModNameInFilter != c.modName )
 					{
 						array<ConVarData> modVars = GetModConVarDatas( list, curModTitleIndex )
-						print(modVars.len())
 						if ( filteredList.len() <= 0 && modVars[0].spaceType == eEmptySpaceType.None )
 							filteredList.extend( modVars.slice( 1, modVars.len() ) )
 						else filteredList.extend( modVars )
@@ -432,7 +437,7 @@ void function UpdateList()
 	}
 	file.updatingList = false
 
-	if ( file.conVarList.len() <= 0 
+	if ( file.conVarList.len() <= 0 )
 	{
 		Hud_SetVisible( Hud_GetChild( file.menu, "NoResultLabel" ), true )
 		Hud_SetText( Hud_GetChild( file.menu, "NoResultLabel" ), "#NO_MODS" )
@@ -444,7 +449,7 @@ void function UpdateList()
 	}
 	else
 	{
-		Hud_Hide( Hud_GetChild( file.menu, "NoResultLabel" )
+		Hud_Hide( Hud_GetChild( file.menu, "NoResultLabel" ) )
 	}
 }
 
