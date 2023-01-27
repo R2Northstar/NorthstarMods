@@ -145,7 +145,6 @@ void function InitModMenu()
 
 		Hud_AddEventHandler( child, UIE_CLICK, ResetConVar )
 		file.resetModButtons.append(child)
-		//Hud_AddEventHandler( Hud_GetChild( panel, "ResetModImage" ), UIE_CLICK, ResetConVar )
 
 		// text field nav
 		child = Hud_GetChild( panel, "TextEntrySetting" )
@@ -1061,6 +1060,5 @@ string function SanitizeDisplayName( string displayName )
 			result += p
 		else result += p.slice( i, p.len() )
 	}
-	print( result )
 	return result
 }
