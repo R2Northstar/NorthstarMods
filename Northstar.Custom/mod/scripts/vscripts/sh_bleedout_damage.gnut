@@ -3,15 +3,30 @@
 global function BleedoutDamage_PreInit
 global function BleedoutDamage_Init
 global function SetShouldPlayerStartBleedoutFunc
+global function Bleedout_SetDownedGracePeriodEnabled
 
 struct {
 	array<entity> bleedingPlayers // this is in _bleedout already, but it doesn't expose a way to track it, so we have to track it ourselves
 	bool functionref( entity, var ) shouldPlayerStartBleedoutFunc = null
+
+	// modified settings
+	bool bleedoutGracePeriodEnabled = true
 } file
 
 void function BleedoutDamage_PreInit()
 {
 	AddCallback_OnRegisteringCustomNetworkVars( Bleedout_RegisterRemoteFunctions )
+	
+	// register signals here to avoid issue
+	RegisterSignal( "BleedOut_StopBleeding" )
+	RegisterSignal( "BleedOut_OnRevive" )
+	RegisterSignal( "BleedOut_OnStartDying" )
+	RegisterSignal( "OnContinousUseStopped" )
+
+	// modifed signal
+	RegisterSignal( "BleedoutHealthRegenThink" )
+	RegisterSignal( "Bleedout_PlayerAttemptRes" )
+	RegisterSignal( "Bleedout_OnStartReviving" )
 	
 	#if CLIENT
 		// because playlist var overrides fucking suck, they aren't actually updated by this point
@@ -57,9 +72,13 @@ void function BleedoutDamage_Init()
 		if ( !Riff_PlayerBleedout() )
 			return
 		
-		AddDamageCallback( "player", HandleDamageForBleedout ) // do this irregardless of whether scripts inited, given it should always be used for bleedout
-		Bleedout_SetCallback_OnPlayerStartBleedout( OnPlayerBleedoutBegin ) // kinda sucks we have to use this callback since game scripts could be using it		
-		
+		//AddDamageCallback( "player", HandleDamageForBleedout ) // do this irregardless of whether scripts inited, given it should always be used for bleedout
+		AddPostDamageCallback( "player", HandleDamageForBleedout ) // this can get player's real taken damage
+
+		// nessie mix for better behavior
+		//Bleedout_SetCallback_OnPlayerStartBleedout( OnPlayerBleedoutBegin ) // kinda sucks we have to use this callback since game scripts could be using it		
+		Bleedout_AddCallback_OnPlayerStartBleedout( OnPlayerBleedoutBegin )
+
 		// dont init if scripts already inited it manually
 		if ( !Bleedout_IsBleedoutLogicActive() )
 		{
@@ -72,6 +91,12 @@ void function BleedoutDamage_Init()
 void function SetShouldPlayerStartBleedoutFunc( bool functionref( entity, var ) func )
 {
 	file.shouldPlayerStartBleedoutFunc = func
+}
+
+// modified settings
+void function Bleedout_SetDownedGracePeriodEnabled( bool enable )
+{
+	file.bleedoutGracePeriodEnabled = enable
 }
 
 void function InitSharedBleedoutWithPlaylistVars()
@@ -102,30 +127,74 @@ void function InitClientBleedoutForLocalPlayer( entity player )
 #if SERVER
 void function HandleDamageForBleedout( entity player, var damageInfo )
 {
-	if ( IsInstantDeath( damageInfo ) || DamageInfo_GetForceKill( damageInfo ) || player.IsTitan() || file.bleedingPlayers.contains( player ) )
+	//if ( IsInstantDeath( damageInfo ) || DamageInfo_GetForceKill( damageInfo ) || player.IsTitan() || file.bleedingPlayers.contains( player ) )
+	// doing a better check through _bleedout.gnut
+	if ( IsInstantDeath( damageInfo ) || DamageInfo_GetForceKill( damageInfo ) || player.IsTitan() )	
 		return
+	// handling downed player damages
+	if( Bleedout_IsPlayerBleeding( player ) )
+	{
+		if ( player.GetHealth() + player.GetShieldHealth() - DamageInfo_GetDamage( damageInfo ) <= 0 )
+		{	
+			entity attacker = DamageInfo_GetAttacker( damageInfo )
+			entity realAttacker = Bleedout_GetLastAttacker( player )
+			if( IsValid( attacker ) && IsValid( realAttacker ) ) // real attacker exists
+			{
+				if( realAttacker.IsPlayer() && attacker.IsPlayer() && realAttacker != player && realAttacker != attacker )
+				{ // player is killed by other players, redirect score to knockdowner, can't handle executions!
+					DamageInfo_SetDamage( damageInfo, player.GetHealth() - 1 )
+					player.TakeDamage( player.GetMaxHealth() + 1, 
+									   realAttacker, 
+									   realAttacker, 
+									   { // damage table
+										weapon = Bleedout_GetLastAttackerWeapon( player ), // do this work? for supporting tactical_cdr_on_kill
+										origin = DamageInfo_GetDamagePosition( damageInfo ), 
+										force = DamageInfo_GetDamageForce( damageInfo ), 
+										scriptType = DamageInfo_GetCustomDamageType( damageInfo ), 
+										damageSourceId = eDamageSourceId.bleedout // proper damageSource for now
+									   })
+				}
+			}
+		}
+		return // then codes below should handle "!Bleedout_IsPlayerBleeding( player )" conditions
+	}
 	
 	if ( file.shouldPlayerStartBleedoutFunc != null )
+	{
 		if ( !file.shouldPlayerStartBleedoutFunc( player, damageInfo ) )
 			return
-	
-	// check if damage would kill player
-	if ( player.GetHealth() - DamageInfo_GetDamage( damageInfo ) <= 0 )
-	{	
-		Bleedout_StartPlayerBleedout( player, DamageInfo_GetAttacker( damageInfo ) )
-		DamageInfo_SetDamage( damageInfo, 1 ) // prevent player from dying, but if we set it to 0, player won't receive any knockback from damage source
 	}
+	else // not having a modified callback
+	{
+		// default one, check if damage would kill the player
+		if ( player.GetHealth() - DamageInfo_GetDamage( damageInfo ) > 0 )
+			return
+	}
+	
+	// checks done, bleedout start functioning
+	// for "Team Bleedout" Check
+	bool canBleedout = Bleedout_StartPlayerBleedout( player, DamageInfo_GetAttacker( damageInfo ), damageInfo )
+	//print( "canBleedout: " + string( canBleedout ) )
+	// Delete any shield health remaining, but not for DF_BYPASS_SHIELDS
+	if( !( DamageInfo_GetCustomDamageType( damageInfo ) & DF_BYPASS_SHIELD ) || !canBleedout )
+		player.SetShieldHealth( 0 )
+	if( !canBleedout ) // not resetting damage for last team player bleeding! let them being killed
+		return
+
+	// prevent player from dying, but if we set it to 0, player won't receive any knockback from damage source
+	DamageInfo_SetDamage( damageInfo, player.GetHealth() - 1 ) // was reduce damage to 1, now damages player to 1 health
 }
 
-void function OnPlayerBleedoutBegin( entity player )
+void function OnPlayerBleedoutBegin( entity player, entity victim, var damageInfo )
 {
-	file.bleedingPlayers.append( player )
-	EmitSoundOnEntityOnlyToPlayer( player, player, "Player_Death_Begin" )
-	
-	thread PlayerBleedoutGracePeriod( player )
+	// abandoned, using a better check now, we have Bleedout_IsPlayerBleeding() function
+	//file.bleedingPlayers.append( player )
+
+	if ( file.bleedoutGracePeriodEnabled ) // the sound is annoying, should leave a setting
+		thread PlayerBleedoutGracePeriod( player )
 
 	// would prefer to use Bleedout_SetCallback_OnPlayerGiveFirstAid for this, but it doesn't expose the player that's receiving first aid for some reason
-	thread TrackPlayerBleedout( player )
+	//thread TrackPlayerBleedout( player )
 }
 
 void function PlayerBleedoutGracePeriod( entity player )
@@ -133,29 +202,38 @@ void function PlayerBleedoutGracePeriod( entity player )
 	player.EndSignal( "OnDeath" )
 	player.EndSignal( "OnDestroy" )
 	
+	EmitSoundOnEntityOnlyToPlayer( player, player, "Player_Death_Begin" )
+	EnableDemigod( player ) // should use this instead of SetInvulnerable(), or player won't receive knockbacks
 	OnThreadEnd( function() : ( player )
 	{
-		player.ClearInvulnerable()
-		StopSoundOnEntity( player, "Player_Death_Begin" )
+		if ( IsValid( player ) )
+		{
+			if( IsDemigod( player ) )
+				DisableDemigod( player )
+			StopSoundOnEntity( player, "Player_Death_Begin" )
+		}
 	})
 	
-	player.SetInvulnerable()
-	wait 0.25
+	wait 0.25 // maybe too short? nevermind, players can make their own grace period functions
 }
 
+// not doing this stupid code
 void function TrackPlayerBleedout( entity player )
 {
 	player.EndSignal( "OnDeath" )
 	player.EndSignal( "OnDestroy" )
+	player.EndSignal( "BleedOut_OnRevive" )
 	
 	OnThreadEnd( function() : ( player )
 	{
 		file.bleedingPlayers.remove( file.bleedingPlayers.find( player ) )
 	})
 	
-	WaitFrame() // wait a frame, since this gets called before this status effect is added
+	WaitForever()
+	// not doing this stupid code
+	//WaitFrame() // wait a frame, since this gets called before this status effect is added
 	
-	while ( StatusEffect_Get( player, eStatusEffect.bleedoutDOF ) != 0 )
-		WaitFrame() 
+	//while ( StatusEffect_Get( player, eStatusEffect.bleedoutDOF ) != 0 )
+	//	WaitFrame() 
 }
 #endif
