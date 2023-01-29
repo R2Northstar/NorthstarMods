@@ -242,6 +242,28 @@ playlists
 				gamemode_score_hint #GAMEMODE_SCORE_HINT_TDM
 			}
 		}
+		hotpotato
+		{
+			inherit defaults
+			vars
+			{
+				name #PL_hotpotato
+				lobbytitle #PL_hotpotato_lobby
+				description #PL_hotpotato_desc
+				hint #PL_hotpotato_hint
+				abbreviation #PL_hotpotato_abbr
+				max_players 16
+				max_teams 16
+				classic_mp 1
+
+				gamemode_score_hint #GAMEMODE_SCORE_HINT_FFA
+				gamemode_bullet_001	#GAMEMODE_BULLET_FFA_001
+				gamemode_bullet_002	#GAMEMODE_BULLET_FFA_002
+				gamemode_bullet_003	#GAMEMODE_BULLET_FFA_003
+				gamemode_bullet_004	#GAMEMODE_BULLET_FFA_004
+				gamemode_bullet_005	#GAMEMODE_BULLET_FFA_005
+			}
+		}
 		tffa
 		{
 			inherit defaults
@@ -808,6 +830,53 @@ playlists
 						mp_rise 1
 						mp_coliseum 1
 						mp_coliseum_column 1
+					}
+				}
+			}
+		}
+		hotpotato
+		{
+			inherit defaults
+			vars
+			{
+				name #PL_hotpotato
+				lobbytitle #PL_hotpotato_lobby
+				description #PL_hotpotato_desc
+				abbreviation #PL_hotpotato_abbr
+				image ctf
+				//mixtape_slot 7
+				mixtape_timeout 120
+				visible 0
+			}
+			gamemodes
+			{
+				hotpotato
+				{
+					maps
+					{
+					    mp_forwardbase_kodai 1
+                        mp_grave 1
+                        mp_homestead 1
+                        mp_thaw 1
+                        mp_black_water_canal 1
+                        mp_eden 1
+                        mp_drydock 1
+                        mp_crashsite3 1
+                        mp_complex3 1
+                        mp_angel_city 1
+                        mp_colony02 1
+                        mp_glitch 1
+						mp_lf_stacks 1
+						mp_lf_deck 1
+						mp_lf_meadow 1
+						mp_lf_traffic 1
+						mp_lf_township 1
+						mp_lf_uma 1
+						mp_relic02 1
+						mp_wargames 1
+						mp_rise 1
+                        mp_coliseum 1
+                        mp_coliseum_column 1
 					}
 				}
 			}
