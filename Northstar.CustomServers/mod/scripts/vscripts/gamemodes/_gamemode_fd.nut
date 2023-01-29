@@ -1743,6 +1743,10 @@ function FD_OnEntityDestroyed( ent )
 
 	Assert( ent.IsValidInternal() )
 	entity player = IsTurret( ent ) ? ent.GetBossPlayer() : ent.GetOwner()
+
+	if( !IsValid( player ) )
+		return
+
 	if( file.players[ player ].deployedEntityThisRound.contains( ent ) )
 		file.players[ player ].deployedEntityThisRound.fastremovebyvalue( ent )
 }
