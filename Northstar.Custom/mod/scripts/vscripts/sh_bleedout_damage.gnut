@@ -131,6 +131,7 @@ void function HandleDamageForBleedout( entity player, var damageInfo )
 	// doing a better check through _bleedout.gnut
 	if ( IsInstantDeath( damageInfo ) || DamageInfo_GetForceKill( damageInfo ) || player.IsTitan() )	
 		return
+
 	// handling downed player damages
 	if( Bleedout_IsPlayerBleeding( player ) )
 	{
@@ -175,9 +176,6 @@ void function HandleDamageForBleedout( entity player, var damageInfo )
 	// for "Team Bleedout" Check
 	bool canBleedout = Bleedout_StartPlayerBleedout( player, DamageInfo_GetAttacker( damageInfo ), damageInfo )
 	//print( "canBleedout: " + string( canBleedout ) )
-	// Delete any shield health remaining, but not for DF_BYPASS_SHIELDS
-	if( !( DamageInfo_GetCustomDamageType( damageInfo ) & DF_BYPASS_SHIELD ) || !canBleedout )
-		player.SetShieldHealth( 0 )
 	if( !canBleedout ) // not resetting damage for last team player bleeding! let them being killed
 		return
 
