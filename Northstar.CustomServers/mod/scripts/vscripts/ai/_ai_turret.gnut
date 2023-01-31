@@ -100,6 +100,7 @@ function RevivableTurret_UseFunction( player , turret )
 	if( ent != owner )
 	{
 		int ownerEHandle = owner.GetEncodedEHandle()
+		AddPlayerScore( ent, "FDRepairTurret" )
 		MessageToTeam( TEAM_MILITIA,eEventNotifications.FD_TurretRepair, null, ent, ownerEHandle )
 	}
 	thread RevivableTurret_Revive( tur )

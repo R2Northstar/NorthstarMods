@@ -171,6 +171,13 @@ void function GamemodeFD_Init()
 	AddBatteryHealCallback( FD_BatteryHealTeammate )
 	AddSmokeHealCallback( FD_SmokeHealTeammate )
 	SetUsedCoreCallback( FD_UsedCoreCallback )
+
+	//todo:are pointValueOverride exist?
+	//Score Event
+	AddArcTrapTriggeredCallback( FD_OnArcTrapTriggered )
+	AddArcWaveDamageCallback( FD_OnArcWaveDamage )
+	AddOnTetherCallback( FD_OnTetherTrapTriggered )
+	AddSonarStartCallback( FD_OnSonarStart )
 }
 
 // this might need updating when we do dropship things
@@ -461,6 +468,7 @@ bool function useShieldBoost( entity player, array<string> args )
 	{
 		fd_harvester.harvester.SetShieldHealth( fd_harvester.harvester.GetShieldHealthMax() )
 		SetGlobalNetTime( "FD_harvesterInvulTime", Time() + 5 )
+		AddPlayerScore( player, "FDShieldHarvester" )
 		MessageToTeam( TEAM_MILITIA,eEventNotifications.FD_PlayerBoostedHarvesterShield, null, player )
 		player.SetPlayerNetInt( "numHarvesterShieldBoost", player.GetPlayerNetInt( "numHarvesterShieldBoost" ) - 1 )
 		file.playerAwardStats[player]["harvesterHeals"]++
@@ -977,12 +985,49 @@ void function FD_BatteryHealTeammate( entity battery, entity titan, int shieldRe
 		return
 
 	if( IsValid( BatteryParent ) && BatteryParent in file.players ){
+		AddPlayerScore( BatteryParent, "FDTeamHeal" )
 		currentHeal = shieldRestoreAmount + healthRestoreAmount
 		currentHealScore = currentHeal / 100
 		file.playerAwardStats[BatteryParent]["heals"] += float( currentHeal )
 		BatteryParent.AddToPlayerGameStat( PGS_DEFENSE_SCORE, currentHealScore )
 		file.players[ BatteryParent ].scoreThisRound += currentHealScore
 	}
+}
+
+void function FD_OnArcTrapTriggered( entity victim, var damageInfo )
+{
+	entity owner = DamageInfo_GetAttacker( damageInfo )
+
+	if( !IsValid( owner ) )
+		return
+
+	AddPlayerScore( owner, "FDArcTrapTriggered" )
+}
+
+void function FD_OnArcWaveDamage( entity ent, var damageInfo )
+{
+	entity attacker = DamageInfo_GetAttacker( damageInfo )
+
+	if( !IsValid( attacker ) )
+		return
+
+	AddPlayerScore( attacker, "FDArcWave" )
+}
+
+void function FD_OnTetherTrapTriggered( entity owner, entity endEnt )
+{
+	if( !IsValid( owner ) )
+		return
+
+	AddPlayerScore( owner, "FDTetherTriggered" )
+}
+
+void function FD_OnSonarStart( entity ent, vector position, int sonarTeam, entity sonarOwner )
+{
+	if( !IsValid( sonarOwner ) )
+		return
+
+	AddPlayerScore( sonarOwner, "FDSonarPulse" )//should only triggered once during sonar time?
 }
 
 void function FD_SetupEpilogue()
