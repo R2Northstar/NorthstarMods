@@ -1114,15 +1114,15 @@ void function FD_Epilogue_threaded()
 				break
 
 			int targetIndex = medalPlayer.GetPlayerIndex()
+			if( targetIndex >= 4 )
+				continue
+
 			string name = medalPlayer.GetPlayerName()
 			string xuid = medalPlayer.GetUID()
 			int awardId = GetFDStatData( ref ).index
 			float awardValue = awardResultValues[medalPlayer]
 			int suitIndex = GetPersistentSpawnLoadoutIndex( medalPlayer, "titan" )
 			int playerEHandle = medalPlayer.GetEncodedEHandle()
-
-			if( targetIndex >= 4 )
-				continue
 
 			player.SetPersistentVar( "postGameDataFD.players[" + targetIndex + "].name", name )
 			player.SetPersistentVar( "postGameDataFD.players[" + targetIndex + "].xuid", xuid )
