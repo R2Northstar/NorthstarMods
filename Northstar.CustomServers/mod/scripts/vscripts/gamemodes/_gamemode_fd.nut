@@ -1094,6 +1094,9 @@ void function FD_Epilogue_threaded()
 
 	foreach( entity player in GetPlayerArray() )
 	{
+		if( !IsValid( player ) )
+			continue
+
 		int i = 0
 		myIndex = player.GetPlayerIndex()
 
@@ -1104,8 +1107,11 @@ void function FD_Epilogue_threaded()
 
 		foreach( entity medalPlayer, string ref in awardResults )
 		{
+			if( i >= 4 || !IsValid( medalPlayer ) )
+				continue
+
 			if( i == numPlayers )
-				break;
+				break
 
 			int targetIndex = medalPlayer.GetPlayerIndex()
 			string name = medalPlayer.GetPlayerName()
