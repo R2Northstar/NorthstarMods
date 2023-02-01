@@ -125,7 +125,7 @@ void function GamemodeFW_Init()
 	AddCallback_GameStateEnter( eGameState.Playing, OnFWGamePlaying )
 
 	AddSpawnCallback( "item_powerup", FWAddPowerUpIcon )
-	AddSpawnCallback( "npc_turret_mega", FWTurretHighlight )
+	AddSpawnCallback( "npc_turret_mega", OnFWTurretSpawned )
 
 	AddCallback_OnClientConnected( OnFWPlayerConnected )
 	AddCallback_PlayerClassChanged( OnFWPlayerClassChanged )
@@ -582,9 +582,6 @@ void function LoadEntities()
 					// create turret, spawn with no team and set it after game starts
 					entity turret = CreateNPC( "npc_turret_mega", TEAM_UNASSIGNED, info_target.GetOrigin(), info_target.GetAngles() )
 					SetSpawnOption_AISettings( turret, "npc_turret_mega_fortwar" )
-					SetDefaultMPEnemyHighlight( turret ) // for sonar highlights to work
-					Highlight_SetFriendlyHighlight( turret, "fw_friendly" )
-					AddEntityCallback_OnDamaged( turret, OnMegaTurretDamaged )
 					DispatchSpawn( turret )
 
 					turretsite.turret = turret
@@ -1384,8 +1381,11 @@ void function FWAreaThreatLevelThink_Threaded()
 ///// TURRET FUNCTIONS /////
 ////////////////////////////
 
-void function FWTurretHighlight( entity turret )
+void function OnFWTurretSpawned( entity turret )
 {
+	turret.EnableTurret() // always enabled
+	SetDefaultMPEnemyHighlight( turret ) // for sonar highlights to work
+	AddEntityCallback_OnDamaged( turret, OnMegaTurretDamaged )
     thread FWTurretHighlightThink( turret )
 }
 
@@ -1393,6 +1393,7 @@ void function FWTurretHighlight( entity turret )
 void function FWTurretHighlightThink( entity turret )
 {
     turret.EndSignal( "OnDestroy" )
+	WaitFrame()
     Highlight_SetFriendlyHighlight( turret, "fw_friendly" )
 
     turret.WaitSignal( "OnDeath" )
@@ -1407,8 +1408,6 @@ entity function FW_ReplaceMegaTurret( entity perviousTurret )
 
 	entity turret = CreateNPC( "npc_turret_mega", perviousTurret.GetTeam(), perviousTurret.GetOrigin(), perviousTurret.GetAngles() )
 	SetSpawnOption_AISettings( turret, "npc_turret_mega_fortwar" )
-	SetDefaultMPEnemyHighlight( turret ) // for sonar highlights to work
-	AddEntityCallback_OnDamaged( turret, OnMegaTurretDamaged )
 	DispatchSpawn( turret )
 
 	// apply settings to new turret, must up on date
