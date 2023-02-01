@@ -1107,7 +1107,7 @@ void function FD_Epilogue_threaded()
 
 		foreach( entity medalPlayer, string ref in awardResults )
 		{
-			if( i >= 4 || !IsValid( medalPlayer ) )
+			if( !IsValid( medalPlayer ) )
 				continue
 
 			if( i == numPlayers )
@@ -1120,6 +1120,9 @@ void function FD_Epilogue_threaded()
 			float awardValue = awardResultValues[medalPlayer]
 			int suitIndex = GetPersistentSpawnLoadoutIndex( medalPlayer, "titan" )
 			int playerEHandle = medalPlayer.GetEncodedEHandle()
+
+			if( targetIndex >= 4 )
+				continue
 
 			player.SetPersistentVar( "postGameDataFD.players[" + targetIndex + "].name", name )
 			player.SetPersistentVar( "postGameDataFD.players[" + targetIndex + "].xuid", xuid )
