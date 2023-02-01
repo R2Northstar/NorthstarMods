@@ -998,7 +998,7 @@ void function FD_OnArcTrapTriggered( entity victim, var damageInfo )
 {
 	entity owner = DamageInfo_GetAttacker( damageInfo )
 
-	if( !IsValid( owner ) )
+	if( !IsValidPlayer( owner ) )
 		return
 
 	AddPlayerScore( owner, "FDArcTrapTriggered" )
@@ -1008,7 +1008,7 @@ void function FD_OnArcWaveDamage( entity ent, var damageInfo )
 {
 	entity attacker = DamageInfo_GetAttacker( damageInfo )
 
-	if( !IsValid( attacker ) )
+	if( !IsValidPlayer( attacker ) )
 		return
 
 	AddPlayerScore( attacker, "FDArcWave" )
@@ -1016,7 +1016,7 @@ void function FD_OnArcWaveDamage( entity ent, var damageInfo )
 
 void function FD_OnTetherTrapTriggered( entity owner, entity endEnt )
 {
-	if( !IsValid( owner ) )
+	if( !IsValidPlayer( owner ) )
 		return
 
 	AddPlayerScore( owner, "FDTetherTriggered" )
@@ -1024,7 +1024,7 @@ void function FD_OnTetherTrapTriggered( entity owner, entity endEnt )
 
 void function FD_OnSonarStart( entity ent, vector position, int sonarTeam, entity sonarOwner )
 {
-	if( !IsValid( sonarOwner ) )
+	if( !IsValidPlayer( sonarOwner ) )
 		return
 
 	AddPlayerScore( sonarOwner, "FDSonarPulse" )//should only triggered once during sonar time?
