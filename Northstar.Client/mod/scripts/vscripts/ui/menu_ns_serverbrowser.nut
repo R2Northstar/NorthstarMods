@@ -114,7 +114,7 @@ const int MB = 1024*1000;
 /**
  * Builds up a ModDownloadProgress struct from values retrieved from native code.
  **/
-ModDownloadProgress function Build(array<float> values)
+ModDownloadProgress function BuildModDownloadingProgress(array<float> values)
 {
 	ModDownloadProgress p
 	p.received = values[0]
