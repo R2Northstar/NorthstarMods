@@ -1048,7 +1048,7 @@ void function OnServerSelected_Threaded( var button )
 				while( NSIsModBeingDownloaded(modName) )
 				{
 					// This array holds a bunch of progress information about mod.
-					ModDownloadProgress downloadStats = Build( NSGetCurrentDownloadProgress() );
+					ModDownloadProgress downloadStats = BuildModDownloadingProgress( NSGetCurrentDownloadProgress() );
 					bool isDownloading = downloadStats.progressType == eProgressType.DOWNLOAD;
 
 					// Mod is being downloaded.
