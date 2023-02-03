@@ -62,7 +62,12 @@ bool function ClassicMP_IsRunningDropshipIntro()
 void function DropshipIntro_OnClientConnected( entity player )
 {
 	if ( GetGameState() == eGameState.Prematch )
-		thread SpawnPlayerIntoDropship( player )
+	{
+		if ( file.introStartTime + SPAWN_ON_GROUND_TIME < Time() ) // very late joiner, just spawn them onto ground like valinilla
+			thread SpawnPlayerOnGround( player )
+		else
+			thread SpawnPlayerIntoDropship( player )
+	}
 }
 
 void function OnPrematchStart()
@@ -128,12 +133,7 @@ void function OnPrematchStart()
 	foreach ( entity player in GetPlayerArray() )
 	{
 		if ( !IsPrivateMatchSpectator( player ) )
-		{
-			if ( file.introStartTime + SPAWN_ON_GROUND_TIME < Time() ) // very late joiner, just spawn them onto ground like valinilla
-				thread SpawnPlayerOnGround( player )
-			else
-				thread SpawnPlayerIntoDropship( player )
-		}
+			thread SpawnPlayerIntoDropship( player )
 		else
 			RespawnPrivateMatchSpectator( player )
 	}
