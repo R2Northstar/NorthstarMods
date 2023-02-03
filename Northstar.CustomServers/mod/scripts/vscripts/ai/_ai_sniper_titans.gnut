@@ -180,11 +180,7 @@ function SniperTitanAttack( entity titan, entity target )
 		}
 	)
 
-	//Temporary fix for current harvester
-	if( IsValid( target ) )
-	{
-		titan.SetEnemy( target )
-	}
+	titan.SetEnemy( target )
 }
 
 void function WaitForInterruption( entity titan ,entity generator)
