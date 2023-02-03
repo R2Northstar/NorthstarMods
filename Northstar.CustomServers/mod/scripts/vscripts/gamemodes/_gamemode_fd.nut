@@ -3,6 +3,7 @@ untyped
 global function GamemodeFD_Init
 global function RateSpawnpoints_FD
 global function startHarvester
+global function IsHarvesterAlive
 global function GetTargetNameForID
 
 global function DisableTitanSelection
@@ -748,7 +749,7 @@ bool function runWave( int waveIndex, bool shouldDoBuyTime )
 	thread SetWaveStateReady()
 	executeWave()
 	SetGlobalNetInt( "FD_waveState", WAVE_STATE_COMPLETE )
-	if( !IsAlive( fd_harvester.harvester ) )
+	if( !IsHarvesterAlive( fd_harvester.harvester ) )
 	{
 		float totalDamage = 0.0
 		array<float> highestDamage = [ 0.0, 0.0, 0.0 ]
@@ -805,7 +806,7 @@ bool function runWave( int waveIndex, bool shouldDoBuyTime )
 	SetGlobalNetBool( "FD_waveActive", false )
 	MessageToTeam( TEAM_MILITIA, eEventNotifications.FD_AnnounceWaveEnd )
 
-	if ( isFinalWave() && IsAlive( fd_harvester.harvester ) )
+	if ( isFinalWave() && IsHarvesterAlive( fd_harvester.harvester ) )
 	{
 		//Game won code
 		MessageToTeam( TEAM_MILITIA, eEventNotifications.FD_AnnounceWaveEnd )
@@ -1250,7 +1251,9 @@ void function OnHarvesterDamaged( entity harvester, var damageInfo )
 		if( newHealth <= 0 )
 		{
 			EmitSoundAtPosition( TEAM_UNASSIGNED, fd_harvester.harvester.GetOrigin(), "coop_generator_destroyed" )
-			newHealth = 0
+			newHealth = 1
+			harvester.SetInvulnerable()
+			DamageInfo_SetDamage( damageInfo, 0.0 )
 			PlayFactionDialogueToTeam( "fd_baseDeath", TEAM_MILITIA )
 			fd_harvester.rings.Anim_Stop()
 		}
@@ -1284,6 +1287,8 @@ void function FD_NPCCleanup()
 		if ( IsValid( npc ) )
 			npc.Destroy()
 	}
+	if( IsValid( fd_harvester.harvester ) )
+		fd_harvester.harvester.Destroy()//Destroy harvester after match over
 }
 
 void function HarvesterThink()
@@ -1303,7 +1308,7 @@ void function HarvesterThink()
 
 	bool isRegening = false // stops the regenning sound to keep stacking on top of each other
 
-	while ( IsAlive( harvester ) )
+	while ( IsHarvesterAlive( harvester ) )
 	{
 		float currentTime = Time()
 		float deltaTime = currentTime -lastTime
@@ -1383,7 +1388,7 @@ void function startHarvester()
 
 void function HarvesterAlarm()
 {
-	while( IsAlive( fd_harvester.harvester ) )
+	while( IsHarvesterAlive( fd_harvester.harvester ) )
 	{
 		if( fd_harvester.harvester.GetShieldHealth() == 0 )
 		{
@@ -1500,6 +1505,18 @@ void function FD_createHarvester()
 	fd_harvester.harvester.Minimap_SetCustomState( eMinimapObject_prop_script.FD_HARVESTER )
 	AddEntityCallback_OnDamaged( fd_harvester.harvester, OnHarvesterDamaged )
 	thread CreateHarvesterHintTrigger( fd_harvester.harvester )
+}
+
+bool function IsHarvesterAlive( entity harvester )
+{
+	if ( harvester == null )
+		return false
+	if ( !harvester.IsValidInternal() )
+		return false
+	if( !harvester.IsEntAlive() )
+		return false
+
+	return harvester.GetHealth() > 1
 }
 
 void function CreateHarvesterHintTrigger( entity harvester )
