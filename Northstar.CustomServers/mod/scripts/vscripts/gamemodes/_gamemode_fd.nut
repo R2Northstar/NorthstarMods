@@ -352,6 +352,18 @@ void function TrackDeployedArcTrapThisRound( entity player )
 
 void function TryDisableTitanSelectionForPlayerAfterDelay( entity player, float waitAmount )
 {
+	player.EndSignal( "OnDestroy" )//Do a crash protect when wait delay
+
+	OnThreadEnd(
+		function() : ( player )
+		{
+			if( IsValid( player ) )
+			{
+				DisableTitanSelectionForPlayer( player )
+			}
+		}
+	)
+
 	wait waitAmount
 	if ( file.playersHaveTitans )
 		DisableTitanSelectionForPlayer( player )
@@ -1823,7 +1835,11 @@ void function EnableTitanSelection()
 
 void function EnableTitanSelectionForPlayer( entity player )
 {
-	int enumCount =	PersistenceGetEnumCount( "titanClasses" )
+	int enumCount = PersistenceGetEnumCount( "titanClasses" )
+
+	if( !IsValid( player ) )
+		return
+
 	for ( int i = 0; i < enumCount; i++ )
 	{
 		string enumName = PersistenceGetEnumItemNameForIndex( "titanClasses", i )
@@ -1835,7 +1851,11 @@ void function EnableTitanSelectionForPlayer( entity player )
 
 void function DisableTitanSelectionForPlayer( entity player )
 {
-	int enumCount =	PersistenceGetEnumCount( "titanClasses" )
+	int enumCount = PersistenceGetEnumCount( "titanClasses" )
+
+	if( !IsValid( player ) )
+		return
+
 	for ( int i = 0; i < enumCount; i++ )
 	{
 		string enumName = PersistenceGetEnumItemNameForIndex( "titanClasses", i )
