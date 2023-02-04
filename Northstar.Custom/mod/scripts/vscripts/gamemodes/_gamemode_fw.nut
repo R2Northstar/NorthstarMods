@@ -1386,18 +1386,18 @@ void function OnFWTurretSpawned( entity turret )
 	turret.EnableTurret() // always enabled
 	SetDefaultMPEnemyHighlight( turret ) // for sonar highlights to work
 	AddEntityCallback_OnDamaged( turret, OnMegaTurretDamaged )
-    thread FWTurretHighlightThink( turret )
+	thread FWTurretHighlightThink( turret )
 }
 
 // this will clear turret's highlight upon their death, for notifying players to fix them
 void function FWTurretHighlightThink( entity turret )
 {
-    turret.EndSignal( "OnDestroy" )
+	turret.EndSignal( "OnDestroy" )
 	WaitFrame()
-    Highlight_SetFriendlyHighlight( turret, "fw_friendly" )
+	Highlight_SetFriendlyHighlight( turret, "fw_friendly" )
 
-    turret.WaitSignal( "OnDeath" )
-    Highlight_ClearFriendlyHighlight( turret )
+	turret.WaitSignal( "OnDeath" )
+	Highlight_ClearFriendlyHighlight( turret )
 }
 
 // for battery_port, replace the turret with new one
