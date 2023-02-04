@@ -44,7 +44,7 @@ void function OnClientConnected( entity player )
 	FFAScoreStruct emptyStruct
 	if ( !( uid in file.ffaPlayerScoreTable ) )
 		file.ffaPlayerScoreTable[ uid ] <- emptyStruct // init a empty struct
-	file.ffaPlayerScoreTable[ uid ] = 0 // start from 0
+	file.ffaPlayerScoreTable[ uid ].score = 0 // start from 0
 
 	thread FFAPlayerScoreThink( player ) // good to have this! instead of DisconnectCallback this could handle a null player
 }
