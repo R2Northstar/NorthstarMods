@@ -137,6 +137,7 @@ void function GamemodeFD_Init()
 	AddCallback_GameStateEnter( eGameState.Playing, startMainGameLoop )
 	AddCallback_OnRoundEndCleanup( FD_NPCCleanup )
 	AddCallback_OnClientConnected( GamemodeFD_InitPlayer )
+	AddCallback_OnClientDisconnected( OnPlayerDisconnectedOrDestroyed )
 	AddCallback_OnPlayerGetsNewPilotLoadout( FD_OnPlayerGetsNewPilotLoadout )
 	ClassicMP_SetEpilogue( FD_SetupEpilogue )
 
@@ -343,6 +344,17 @@ void function GamemodeFD_InitPlayer( entity player )
 void function TrackDeployedArcTrapThisRound( entity player )
 {
 	player.EndSignal( "OnDestroy" )
+
+	OnThreadEnd(
+		function() : ( player )
+		{
+			if ( IsValid( player ) )
+				OnPlayerDisconnectedOrDestroyed( player )
+			else
+				ClearInValidTurret()
+		}
+	)
+
 	while( IsValid( player ) )
 	{
 		entity ArcTrap = expect entity ( player.WaitSignal( "DeployArcTrap" ).projectile )
@@ -392,9 +404,9 @@ void function OnTickDeath( entity victim, var damageInfo )
 
 void function OnNpcDeath( entity victim, entity attacker, var damageInfo )
 {
-	if( attacker.GetClassName() == "npc_turret_sentry" )
+	if( attacker.GetClassName() == "npc_turret_sentry" && IsValidPlayer( attacker.GetBossPlayer() ) )
 	{
-		file.playerAwardStats[attacker.GetBossPlayer()]["turretKills"]++
+		file.playerAwardStats[ attacker.GetBossPlayer() ]["turretKills"]++
 	}
 	if( victim.IsTitan() && attacker in file.players )
 		file.playerAwardStats[attacker]["titanKills"]++
@@ -700,7 +712,7 @@ bool function runWave( int waveIndex, bool shouldDoBuyTime )
 		file.players[player].diedThisRound = false
 		file.players[player].scoreThisRound = 0
 		file.players[player].moneyThisRound = GetPlayerMoney( player )
-		file.players[ player ].deployedEntityThisRound = []
+		file.players[ player ].deployedEntityThisRound.clear()
 	}
 	array<int> enemys = getHighestEnemyAmountsForWave( waveIndex )
 
@@ -1832,6 +1844,33 @@ function FD_OnEntityDestroyed( ent )
 
 	if( file.players[ player ].deployedEntityThisRound.contains( ent ) )
 		file.players[ player ].deployedEntityThisRound.fastremovebyvalue( ent )
+}
+
+void function OnPlayerDisconnectedOrDestroyed( entity player )
+{
+	if( !IsValid( player ) )
+	{
+		ClearInValidTurret()
+		return
+	}
+
+	foreach ( entity npc in GetEntArrayByClass_Expensive( "C_AI_BaseNPC" ) )
+	{
+		entity BossPlayer = npc.GetBossPlayer()
+		if ( IsValidPlayer( BossPlayer ) && IsValid( npc ) && player == BossPlayer )
+			npc.Destroy()
+	}
+	file.players[ player ].deployedEntityThisRound.clear()
+}
+
+void function ClearInValidTurret()
+{
+	foreach( entity turret in GetNPCArrayByClass( "npc_turret_sentry" ) )
+	{
+		entity BossPlayer = turret.GetBossPlayer()
+		if ( !IsValidPlayer( BossPlayer ) && IsValid( turret ) )
+			turret.Destroy()
+	}
 }
 
 void function DisableTitanSelection()
