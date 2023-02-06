@@ -1965,10 +1965,15 @@ void function FD_DropshipDropPlayer(entity player,int playerDropshipIndex)
 	jumpSequence.viewConeFunction = ViewConeFree
 
 	thread FirstPersonSequence( jumpSequence, player, file.dropship )
-	WaittillAnimDone( player )
-	player.ClearParent()
-	ClearPlayerAnimViewEntity( player )
-	player.ClearInvulnerable()
+
+	//check the player
+	if( IsValid( player ) )
+	{
+		WaittillAnimDone( player )
+		player.ClearParent()
+		ClearPlayerAnimViewEntity( player )
+		player.ClearInvulnerable()
+	}
 }
 
 void function FD_DropshipSetAnimationOverride(string animation)
