@@ -1936,6 +1936,8 @@ void function FD_DropshipSpawnDropship()
 
 	DispatchSpawn( file.dropship )
 	file.dropship.SetModel( $"models/vehicle/crow_dropship/crow_dropship_hero.mdl" )
+	file.dropship.SetInvulnerable()
+	file.dropship.SetNoTarget( true )
 
 	thread PlayAnim(file.dropship, FD_DropshipGetAnimation())
 
