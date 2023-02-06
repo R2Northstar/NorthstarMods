@@ -3,7 +3,7 @@ globalize_all_functions
 
 void function Chat_NetworkWriteLine( string text )
 {
-    NSChatWriteLine( 0, text)
+    NSChatWriteLine( 0, text, "test" )
 }
 
 void function Chat_GameWriteLine( string text )
