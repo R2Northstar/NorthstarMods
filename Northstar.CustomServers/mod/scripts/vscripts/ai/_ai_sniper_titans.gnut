@@ -179,6 +179,7 @@ function SniperTitanAttack( entity titan, entity target )
 				return
 		}
 	)
+
 	titan.SetEnemy( target )
 }
 

@@ -30,7 +30,7 @@ void function singleNav_thread( entity npc, string routeName, int nodesToSkip= 0
 	int skippedNodes = 0
 	foreach(entity node in routeArray)
 	{
-		if(!IsAlive(fd_harvester.harvester))
+		if(!IsHarvesterAlive(fd_harvester.harvester))
 			return
 		if(skippedNodes < nodesToSkip)
 		{
@@ -78,7 +78,7 @@ void function singleNav_thread( entity npc, string routeName, int nodesToSkip= 0
 	
 	while ( targetNode != null )
 	{
-		if( !IsAlive( fd_harvester.harvester ) )
+		if( !IsHarvesterAlive( fd_harvester.harvester ) )
 			return
 		npc.AssaultPoint( targetNode.GetOrigin() )
 		npc.AssaultSetGoalRadius( nextDistance )
@@ -104,7 +104,7 @@ void function SquadNav_Thread( array<entity> npcs, string routeName, int nodesTo
 	int nodeIndex = 0
 	foreach(entity node in routeArray)
 	{
-		if(!IsAlive(fd_harvester.harvester))
+		if(!IsHarvesterAlive(fd_harvester.harvester))
 			return
 		if(nodeIndex++ < nodesToSkip)
 			continue
@@ -144,7 +144,7 @@ void function SquadNav_Thread( array<entity> npcs, string routeName, int nodesTo
 	
 	while ( targetNode != null )
 	{
-		if( !IsAlive( fd_harvester.harvester ) )
+		if( !IsHarvesterAlive( fd_harvester.harvester ) )
 			return
 		
 		SquadAssaultOrigin( npcs, targetNode.GetOrigin(), nextDistance )
@@ -199,7 +199,7 @@ void function droneNav_thread( entity npc, string routeName,int nodesToSkip= 0,f
 	
 	while ( targetNode != null )
 	{
-		if( !IsAlive( fd_harvester.harvester ) )
+		if( !IsHarvesterAlive( fd_harvester.harvester ) )
 			return
 		npc.AssaultPoint( targetNode.GetOrigin() + <0, 0, 300> )
 		npc.AssaultSetGoalRadius( nextDistance )

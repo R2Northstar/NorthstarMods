@@ -3,6 +3,7 @@ untyped
 global function GamemodeFD_Init
 global function RateSpawnpoints_FD
 global function startHarvester
+global function IsHarvesterAlive
 global function GetTargetNameForID
 
 global function DisableTitanSelection
@@ -136,6 +137,7 @@ void function GamemodeFD_Init()
 	AddCallback_GameStateEnter( eGameState.Playing, startMainGameLoop )
 	AddCallback_OnRoundEndCleanup( FD_NPCCleanup )
 	AddCallback_OnClientConnected( GamemodeFD_InitPlayer )
+	AddCallback_OnClientDisconnected( OnPlayerDisconnectedOrDestroyed )
 	AddCallback_OnPlayerGetsNewPilotLoadout( FD_OnPlayerGetsNewPilotLoadout )
 	ClassicMP_SetEpilogue( FD_SetupEpilogue )
 
@@ -171,6 +173,13 @@ void function GamemodeFD_Init()
 	AddBatteryHealCallback( FD_BatteryHealTeammate )
 	AddSmokeHealCallback( FD_SmokeHealTeammate )
 	SetUsedCoreCallback( FD_UsedCoreCallback )
+
+	//todo:are pointValueOverride exist?
+	//Score Event
+	AddArcTrapTriggeredCallback( FD_OnArcTrapTriggered )
+	AddArcWaveDamageCallback( FD_OnArcWaveDamage )
+	AddOnTetherCallback( FD_OnTetherTrapTriggered )
+	AddSonarStartCallback( FD_OnSonarStart )
 }
 
 // this might need updating when we do dropship things
@@ -335,6 +344,17 @@ void function GamemodeFD_InitPlayer( entity player )
 void function TrackDeployedArcTrapThisRound( entity player )
 {
 	player.EndSignal( "OnDestroy" )
+
+	OnThreadEnd(
+		function() : ( player )
+		{
+			if ( IsValid( player ) )
+				OnPlayerDisconnectedOrDestroyed( player )
+			else
+				ClearInValidTurret()
+		}
+	)
+
 	while( IsValid( player ) )
 	{
 		entity ArcTrap = expect entity ( player.WaitSignal( "DeployArcTrap" ).projectile )
@@ -345,6 +365,18 @@ void function TrackDeployedArcTrapThisRound( entity player )
 
 void function TryDisableTitanSelectionForPlayerAfterDelay( entity player, float waitAmount )
 {
+	player.EndSignal( "OnDestroy" )//Do a crash protect when wait delay
+
+	OnThreadEnd(
+		function() : ( player )
+		{
+			if( IsValid( player ) )
+			{
+				DisableTitanSelectionForPlayer( player )
+			}
+		}
+	)
+
 	wait waitAmount
 	if ( file.playersHaveTitans )
 		DisableTitanSelectionForPlayer( player )
@@ -372,9 +404,9 @@ void function OnTickDeath( entity victim, var damageInfo )
 
 void function OnNpcDeath( entity victim, entity attacker, var damageInfo )
 {
-	if( attacker.GetClassName() == "npc_turret_sentry" )
+	if( attacker.GetClassName() == "npc_turret_sentry" && IsValidPlayer( attacker.GetBossPlayer() ) )
 	{
-		file.playerAwardStats[attacker.GetBossPlayer()]["turretKills"]++
+		file.playerAwardStats[ attacker.GetBossPlayer() ]["turretKills"]++
 	}
 	if( victim.IsTitan() && attacker in file.players )
 		file.playerAwardStats[attacker]["titanKills"]++
@@ -461,6 +493,7 @@ bool function useShieldBoost( entity player, array<string> args )
 	{
 		fd_harvester.harvester.SetShieldHealth( fd_harvester.harvester.GetShieldHealthMax() )
 		SetGlobalNetTime( "FD_harvesterInvulTime", Time() + 5 )
+		AddPlayerScore( player, "FDShieldHarvester" )
 		MessageToTeam( TEAM_MILITIA,eEventNotifications.FD_PlayerBoostedHarvesterShield, null, player )
 		player.SetPlayerNetInt( "numHarvesterShieldBoost", player.GetPlayerNetInt( "numHarvesterShieldBoost" ) - 1 )
 		file.playerAwardStats[player]["harvesterHeals"]++
@@ -679,7 +712,7 @@ bool function runWave( int waveIndex, bool shouldDoBuyTime )
 		file.players[player].diedThisRound = false
 		file.players[player].scoreThisRound = 0
 		file.players[player].moneyThisRound = GetPlayerMoney( player )
-		file.players[ player ].deployedEntityThisRound = []
+		file.players[ player ].deployedEntityThisRound.clear()
 	}
 	array<int> enemys = getHighestEnemyAmountsForWave( waveIndex )
 
@@ -728,7 +761,7 @@ bool function runWave( int waveIndex, bool shouldDoBuyTime )
 	thread SetWaveStateReady()
 	executeWave()
 	SetGlobalNetInt( "FD_waveState", WAVE_STATE_COMPLETE )
-	if( !IsAlive( fd_harvester.harvester ) )
+	if( !IsHarvesterAlive( fd_harvester.harvester ) )
 	{
 		float totalDamage = 0.0
 		array<float> highestDamage = [ 0.0, 0.0, 0.0 ]
@@ -785,7 +818,7 @@ bool function runWave( int waveIndex, bool shouldDoBuyTime )
 	SetGlobalNetBool( "FD_waveActive", false )
 	MessageToTeam( TEAM_MILITIA, eEventNotifications.FD_AnnounceWaveEnd )
 
-	if ( isFinalWave() && IsAlive( fd_harvester.harvester ) )
+	if ( isFinalWave() && IsHarvesterAlive( fd_harvester.harvester ) )
 	{
 		//Game won code
 		MessageToTeam( TEAM_MILITIA, eEventNotifications.FD_AnnounceWaveEnd )
@@ -977,12 +1010,49 @@ void function FD_BatteryHealTeammate( entity battery, entity titan, int shieldRe
 		return
 
 	if( IsValid( BatteryParent ) && BatteryParent in file.players ){
+		AddPlayerScore( BatteryParent, "FDTeamHeal" )
 		currentHeal = shieldRestoreAmount + healthRestoreAmount
 		currentHealScore = currentHeal / 100
 		file.playerAwardStats[BatteryParent]["heals"] += float( currentHeal )
 		BatteryParent.AddToPlayerGameStat( PGS_DEFENSE_SCORE, currentHealScore )
 		file.players[ BatteryParent ].scoreThisRound += currentHealScore
 	}
+}
+
+void function FD_OnArcTrapTriggered( entity victim, var damageInfo )
+{
+	entity owner = DamageInfo_GetAttacker( damageInfo )
+
+	if( !IsValidPlayer( owner ) )
+		return
+
+	AddPlayerScore( owner, "FDArcTrapTriggered" )
+}
+
+void function FD_OnArcWaveDamage( entity ent, var damageInfo )
+{
+	entity attacker = DamageInfo_GetAttacker( damageInfo )
+
+	if( !IsValidPlayer( attacker ) )
+		return
+
+	AddPlayerScore( attacker, "FDArcWave" )
+}
+
+void function FD_OnTetherTrapTriggered( entity owner, entity endEnt )
+{
+	if( !IsValidPlayer( owner ) )
+		return
+
+	AddPlayerScore( owner, "FDTetherTriggered" )
+}
+
+void function FD_OnSonarStart( entity ent, vector position, int sonarTeam, entity sonarOwner )
+{
+	if( !IsValidPlayer( sonarOwner ) )
+		return
+
+	AddPlayerScore( sonarOwner, "FDSonarPulse" )//should only triggered once during sonar time?
 }
 
 void function FD_SetupEpilogue()
@@ -1049,6 +1119,9 @@ void function FD_Epilogue_threaded()
 
 	foreach( entity player in GetPlayerArray() )
 	{
+		if( !IsValid( player ) )
+			continue
+
 		int i = 0
 		myIndex = player.GetPlayerIndex()
 
@@ -1059,10 +1132,16 @@ void function FD_Epilogue_threaded()
 
 		foreach( entity medalPlayer, string ref in awardResults )
 		{
+			if( !IsValid( medalPlayer ) )
+				continue
+
 			if( i == numPlayers )
-				break;
+				break
 
 			int targetIndex = medalPlayer.GetPlayerIndex()
+			if( targetIndex >= 4 )
+				continue
+
 			string name = medalPlayer.GetPlayerName()
 			string xuid = medalPlayer.GetUID()
 			int awardId = GetFDStatData( ref ).index
@@ -1184,7 +1263,9 @@ void function OnHarvesterDamaged( entity harvester, var damageInfo )
 		if( newHealth <= 0 )
 		{
 			EmitSoundAtPosition( TEAM_UNASSIGNED, fd_harvester.harvester.GetOrigin(), "coop_generator_destroyed" )
-			newHealth = 0
+			newHealth = 1
+			harvester.SetInvulnerable()
+			DamageInfo_SetDamage( damageInfo, 0.0 )
 			PlayFactionDialogueToTeam( "fd_baseDeath", TEAM_MILITIA )
 			fd_harvester.rings.Anim_Stop()
 		}
@@ -1218,6 +1299,8 @@ void function FD_NPCCleanup()
 		if ( IsValid( npc ) )
 			npc.Destroy()
 	}
+	if( IsValid( fd_harvester.harvester ) )
+		fd_harvester.harvester.Destroy()//Destroy harvester after match over
 }
 
 void function HarvesterThink()
@@ -1237,7 +1320,7 @@ void function HarvesterThink()
 
 	bool isRegening = false // stops the regenning sound to keep stacking on top of each other
 
-	while ( IsAlive( harvester ) )
+	while ( IsHarvesterAlive( harvester ) )
 	{
 		float currentTime = Time()
 		float deltaTime = currentTime -lastTime
@@ -1317,7 +1400,7 @@ void function startHarvester()
 
 void function HarvesterAlarm()
 {
-	while( IsAlive( fd_harvester.harvester ) )
+	while( IsHarvesterAlive( fd_harvester.harvester ) )
 	{
 		if( fd_harvester.harvester.GetShieldHealth() == 0 )
 		{
@@ -1434,6 +1517,18 @@ void function FD_createHarvester()
 	fd_harvester.harvester.Minimap_SetCustomState( eMinimapObject_prop_script.FD_HARVESTER )
 	AddEntityCallback_OnDamaged( fd_harvester.harvester, OnHarvesterDamaged )
 	thread CreateHarvesterHintTrigger( fd_harvester.harvester )
+}
+
+bool function IsHarvesterAlive( entity harvester )
+{
+	if ( harvester == null )
+		return false
+	if ( !harvester.IsValidInternal() )
+		return false
+	if( !harvester.IsEntAlive() )
+		return false
+
+	return harvester.GetHealth() > 1
 }
 
 void function CreateHarvesterHintTrigger( entity harvester )
@@ -1734,6 +1829,7 @@ void function AddTurretSentry( entity turret )
 	entity player = turret.GetBossPlayer()
 	file.players[ player ].deployedEntityThisRound.append( turret )
 	AddEntityDestroyedCallback( turret, FD_OnEntityDestroyed )
+	thread TurretRefundThink( turret )
 }
 
 function FD_OnEntityDestroyed( ent )
@@ -1742,8 +1838,39 @@ function FD_OnEntityDestroyed( ent )
 
 	Assert( ent.IsValidInternal() )
 	entity player = IsTurret( ent ) ? ent.GetBossPlayer() : ent.GetOwner()
+
+	if( !IsValid( player ) )
+		return
+
 	if( file.players[ player ].deployedEntityThisRound.contains( ent ) )
 		file.players[ player ].deployedEntityThisRound.fastremovebyvalue( ent )
+}
+
+void function OnPlayerDisconnectedOrDestroyed( entity player )
+{
+	if( !IsValid( player ) )
+	{
+		ClearInValidTurret()
+		return
+	}
+
+	foreach ( entity npc in GetEntArrayByClass_Expensive( "C_AI_BaseNPC" ) )
+	{
+		entity BossPlayer = npc.GetBossPlayer()
+		if ( IsValidPlayer( BossPlayer ) && IsValid( npc ) && player == BossPlayer )
+			npc.Destroy()
+	}
+	file.players[ player ].deployedEntityThisRound.clear()
+}
+
+void function ClearInValidTurret()
+{
+	foreach( entity turret in GetNPCArrayByClass( "npc_turret_sentry" ) )
+	{
+		entity BossPlayer = turret.GetBossPlayer()
+		if ( !IsValidPlayer( BossPlayer ) && IsValid( turret ) )
+			turret.Destroy()
+	}
 }
 
 void function DisableTitanSelection()
@@ -1764,7 +1891,11 @@ void function EnableTitanSelection()
 
 void function EnableTitanSelectionForPlayer( entity player )
 {
-	int enumCount =	PersistenceGetEnumCount( "titanClasses" )
+	int enumCount = PersistenceGetEnumCount( "titanClasses" )
+
+	if( !IsValid( player ) )
+		return
+
 	for ( int i = 0; i < enumCount; i++ )
 	{
 		string enumName = PersistenceGetEnumItemNameForIndex( "titanClasses", i )
@@ -1776,7 +1907,11 @@ void function EnableTitanSelectionForPlayer( entity player )
 
 void function DisableTitanSelectionForPlayer( entity player )
 {
-	int enumCount =	PersistenceGetEnumCount( "titanClasses" )
+	int enumCount = PersistenceGetEnumCount( "titanClasses" )
+
+	if( !IsValid( player ) )
+		return
+
 	for ( int i = 0; i < enumCount; i++ )
 	{
 		string enumName = PersistenceGetEnumItemNameForIndex( "titanClasses", i )
@@ -1801,6 +1936,8 @@ void function FD_DropshipSpawnDropship()
 
 	DispatchSpawn( file.dropship )
 	file.dropship.SetModel( $"models/vehicle/crow_dropship/crow_dropship_hero.mdl" )
+	file.dropship.SetInvulnerable()
+	file.dropship.SetNoTarget( true )
 
 	thread PlayAnim(file.dropship, FD_DropshipGetAnimation())
 
@@ -1830,10 +1967,15 @@ void function FD_DropshipDropPlayer(entity player,int playerDropshipIndex)
 	jumpSequence.viewConeFunction = ViewConeFree
 
 	thread FirstPersonSequence( jumpSequence, player, file.dropship )
-	WaittillAnimDone( player )
-	player.ClearParent()
-	ClearPlayerAnimViewEntity( player )
-	player.ClearInvulnerable()
+
+	//check the player
+	if( IsValid( player ) )
+	{
+		WaittillAnimDone( player )
+		player.ClearParent()
+		ClearPlayerAnimViewEntity( player )
+		player.ClearInvulnerable()
+	}
 }
 
 void function FD_DropshipSetAnimationOverride(string animation)

@@ -89,7 +89,7 @@ void function executeWave()
 {	
 	print( "executeWave Start" )
 	thread runEvents( 0 )
-	while( IsAlive( fd_harvester.harvester ) && ( !allEventsExecuted( GetGlobalNetInt( "FD_currentWave" ) ) ) ) 
+	while( IsHarvesterAlive( fd_harvester.harvester ) && ( !allEventsExecuted( GetGlobalNetInt( "FD_currentWave" ) ) ) ) 
 		WaitFrame()
 	wait 5 //incase droppod is last event so all npc are spawned
 	waitUntilLessThanAmountAlive( 0 )
@@ -122,7 +122,7 @@ void function runEvents( int firstExecuteIndex )
 			print( "not on this call" ) 
 			return
 		}
-		if( !IsAlive(fd_harvester.harvester ) )
+		if( !IsHarvesterAlive(fd_harvester.harvester ) )
 		{
 			print( "harvesterDead" )
 			return
@@ -654,7 +654,7 @@ void function spawnDrones( SmokeEvent smokeEvent, SpawnEvent spawnEvent, FlowCon
 
 void function waitForDeathOfEntitys( SmokeEvent smokeEvent, SpawnEvent spawnEvent, FlowControlEvent flowControlEvent, SoundEvent soundEvent )
 {
-	while( IsAlive( fd_harvester.harvester ) )
+	while( IsHarvesterAlive( fd_harvester.harvester ) )
 	{
 		bool anyoneAlive = false
 		foreach( string key in flowControlEvent.waitGlobalDataKey )
@@ -671,7 +671,7 @@ void function waitForDeathOfEntitys( SmokeEvent smokeEvent, SpawnEvent spawnEven
 
 void function waitForLessThanAliveTyped( SmokeEvent smokeEvent, SpawnEvent spawnEvent, FlowControlEvent flowControlEvent, SoundEvent soundEvent )
 {	
-	while( IsAlive( fd_harvester.harvester ) )
+	while( IsHarvesterAlive( fd_harvester.harvester ) )
 	{
 		int amount
 		foreach( entity npc in spawnedNPCs )
@@ -711,7 +711,7 @@ void function waitForTime( SmokeEvent smokeEvent, SpawnEvent spawnEvent, FlowCon
 	float waitUntil = Time() + flowControlEvent.waitTime
 	while( Time() < waitUntil )
 	{
-		if( !IsAlive( fd_harvester.harvester ) )
+		if( !IsHarvesterAlive( fd_harvester.harvester ) )
 			return
 		WaitFrame()
 	}
@@ -1219,7 +1219,7 @@ void function waitUntilLessThanAmountAlive( int amount )
 		}
 		aliveNPCs = spawnedNPCs.len() - deduct
 		
-		if( !IsAlive( fd_harvester.harvester ) )
+		if( !IsHarvesterAlive( fd_harvester.harvester ) )
 			return
 	}
 }
@@ -1268,7 +1268,7 @@ void function waitUntilLessThanAmountAliveWeighted( int amount, int humanWeight 
 				else
 					aliveNPCsWeighted += humanWeight
 			}
-		if( !IsAlive( fd_harvester.harvester ) )
+		if( !IsHarvesterAlive( fd_harvester.harvester ) )
 			return
 	}
 }
@@ -1313,7 +1313,7 @@ void function waitUntilLessThanAmountAlive_expensive( int amount )
 			}
 		}
 		aliveTitans = GetNPCArray().len() - deduct
-		if( !IsAlive( fd_harvester.harvester ) )
+		if( !IsHarvesterAlive( fd_harvester.harvester ) )
 			return
 	}
 }
