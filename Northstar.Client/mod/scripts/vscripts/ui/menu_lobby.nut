@@ -7,7 +7,7 @@ global function InitLobbyMenu
 global function UICodeCallback_SetupPlayerListGenElements
 global function UpdateAnnouncementDialog
 global function EnableButton
-global functinon DisableButton
+global function DisableButton
 
 global function UICodeCallback_CommunityUpdated
 global function UICodeCallback_FactionUpdated
