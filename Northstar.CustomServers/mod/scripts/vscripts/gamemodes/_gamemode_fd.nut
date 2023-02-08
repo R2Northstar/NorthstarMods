@@ -221,16 +221,22 @@ void function FD_PlayerRespawnCallback( entity player )
 	{
 		thread FD_DropshipSpawnDropship()
 	}
-	//Attach player
-	FirstPersonSequenceStruct idleSequence
-	idleSequence.firstPersonAnim = DROPSHIP_IDLE_ANIMS_POV[ file.playersInShip ]
-	idleSequence.thirdPersonAnim = DROPSHIP_IDLE_ANIMS[ file.playersInShip++ ]
-	idleSequence.attachment = "ORIGIN"
-	idleSequence.teleport = true
-	idleSequence.viewConeFunction = ViewConeFree
-	idleSequence.hideProxy = true
-	thread FirstPersonSequence( idleSequence, player, file.dropship )
-	file.playersInDropship.append( player )
+
+	//try fix animation error
+	//if drop ship is busy,we should immediately respawn player
+	if( IsValidPlayer( player ) && IsValid( file.dropship ) )
+	{
+		//Attach player
+		FirstPersonSequenceStruct idleSequence
+		idleSequence.firstPersonAnim = DROPSHIP_IDLE_ANIMS_POV[ file.playersInShip ]
+		idleSequence.thirdPersonAnim = DROPSHIP_IDLE_ANIMS[ file.playersInShip++ ]
+		idleSequence.attachment = "ORIGIN"
+		idleSequence.teleport = true
+		idleSequence.viewConeFunction = ViewConeFree
+		idleSequence.hideProxy = true
+		thread FirstPersonSequence( idleSequence, player, file.dropship )
+		file.playersInDropship.append( player )
+	}
 }
 
 
