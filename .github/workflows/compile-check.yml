@@ -12,15 +12,17 @@ jobs:
           path: "mods"
       
       - name: Compile Scripts
-        uses: ASpoonPlaysGames/squirrel-re-compiler@v1
+        uses: ASpoonPlaysGames/squirrel-re-compiler@v2
         with:
           mods-directory: "${{ github.workspace }}/mods"
+          native-json: "${{ github.workspace }}/mods/.github/nativefuncs.json"
 
       - name: Remove Northstar.Custom
         run: rmdir ${{ github.workspace }}\mods\Northstar.Custom /s /q
         shell: cmd
           
       - name: Compile Scripts (No Northstar.Custom)
-        uses: ASpoonPlaysGames/squirrel-re-compiler@v1
+        uses: ASpoonPlaysGames/squirrel-re-compiler@v2
         with:
           mods-directory: "${{ github.workspace }}/mods"
+          native-json: "${{ github.workspace }}/mods/.github/nativefuncs.json"
