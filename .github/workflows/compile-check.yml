@@ -1,3 +1,4 @@
+# This action checks whether all Squirrel files compile successfully using standalone Squirrel compiler
 name: compile-check
 
 on: [push, pull_request]
