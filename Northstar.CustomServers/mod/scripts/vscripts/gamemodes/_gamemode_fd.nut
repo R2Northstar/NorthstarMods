@@ -124,6 +124,7 @@ void function GamemodeFD_Init()
 
 	SetRoundBased( true )
 	SetShouldUseRoundWinningKillReplay( false )
+	SetTimeoutWinnerDecisionFunc( FD_TimeOutCheck )
 	Riff_ForceBoostAvailability( eBoostAvailability.Disabled )
 	PlayerEarnMeter_SetEnabled( false )
 	SetShouldUsePickLoadoutScreen( true )
@@ -2010,4 +2011,11 @@ string function FD_DropshipGetAnimation()
 		return "dropship_coop_respawn_digsite"
 	}
 	return "dropship_coop_respawn"
+}
+
+int function FD_TimeOutCheck()
+{
+	//on timeout,always ai win the match
+	SetRoundBased( false )
+	return TEAM_IMC
 }
