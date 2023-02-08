@@ -1562,6 +1562,9 @@ void function CreateHarvesterHintTrigger( entity harvester )
 
 void function OnEnterNearHarvesterTrigger( entity trig, entity activator )
 {
+	if( GetGameState() != eGameState.Playing )
+		return
+
 	if( !( activator in file.players ) )
 		return
 		
@@ -1577,6 +1580,9 @@ void function OnEnterNearHarvesterTrigger( entity trig, entity activator )
 
 void function OnLeaveNearHarvesterTrigger( entity trig, entity activator )
 {
+	if( GetGameState() != eGameState.Playing )
+		return
+
 	if( !( activator in file.players ) )
 		return
 		
