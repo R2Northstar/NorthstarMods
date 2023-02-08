@@ -237,6 +237,10 @@ void function FD_PlayerRespawnCallback( entity player )
 		thread FirstPersonSequence( idleSequence, player, file.dropship )
 		file.playersInDropship.append( player )
 	}
+	else if( IsValidPlayer( player ) )
+	{
+		player.ClearInvulnerable()
+	}
 }
 
 
