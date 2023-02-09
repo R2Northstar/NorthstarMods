@@ -97,7 +97,7 @@ function RevivableTurret_UseFunction( player , turret )
 	entity tur = expect entity( turret )
 	entity ent = expect entity( player )
 	entity owner = tur.GetBossPlayer()
-	if( ent != owner )
+	if( ent != owner && IsValidPlayer( ent ) && IsValidPlayer( owner ) )
 	{
 		int ownerEHandle = owner.GetEncodedEHandle()
 		AddPlayerScore( ent, "FDRepairTurret" )
@@ -110,24 +110,34 @@ function RevivableTurret_UseFunction( player , turret )
 
 void function RevivableTurret_Revive( entity turret )
 {
+	turret.EndSignal( "OnDestroy" )
+
 	turret.UnsetUsable()
 	turret.SetHealth( turret.GetMaxHealth() )
 	turret.ClearInvulnerable()
 	turret.Anim_ScriptedPlay( "deploy" )
 	wait 1.0
-	turret.EnableTurret()
-	turret.DisableNPCFlag( NPC_IGNORE_ALL )
-	turret.SetNoTarget( false )
-	thread TurretRefundThink( turret )
+	if( IsValid( turret ) )
+	{
+		turret.EnableTurret()
+		turret.DisableNPCFlag( NPC_IGNORE_ALL )
+		turret.SetNoTarget( false )
+		thread TurretRefundThink( turret )
+	}
 }
 
 void function RevivableTurret_Kill( entity turret )
 {
+	turret.EndSignal( "OnDestroy" )
+
 	turret.EnableNPCFlag( NPC_IGNORE_ALL )
 	turret.SetNoTarget( true )
 	turret.SetInvulnerable()
 	turret.Anim_ScriptedPlay( "undeploy" )
 	wait 1
-	turret.SetNoTarget( true )
-	turret.DisableTurret()
+	if( IsValid( turret ) )
+	{
+		turret.SetNoTarget( true )
+		turret.DisableTurret()
+	}
 }
