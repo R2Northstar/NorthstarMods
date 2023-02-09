@@ -56,6 +56,7 @@ Presiona Sí al estar de acuerdo. Esta opcion se puede cambiar en el menú de mo
 		"timelimit" "Tiempo limite"
 		"roundtimelimit" "Tiempo limite (rondas)"
 		"respawnprotection" "Tiempo de proteccion en reaparición"
+		"late_join_respawn" "Enable late join respawn"
 
 		"pilot_health_multiplier" "Multiplicador de salúd"
 		"respawn_delay" "Retraso de aparición"

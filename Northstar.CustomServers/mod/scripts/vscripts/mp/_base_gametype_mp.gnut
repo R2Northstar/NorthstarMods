@@ -45,6 +45,8 @@ void function BaseGametype_Init_MPSP()
 	AddCallback_OnPlayerKilled( CheckForAutoTitanDeath )
 	RegisterSignal( "PlayerRespawnStarted" )
 	RegisterSignal( "KillCamOver" )
+
+	file.shouldDoRespawnForLatePlayer = GetCurrentPlaylistVarInt( "late_join_respawn", 1 ) == 1
 }
 
 void function SetIntermissionCamera( entity camera )

@@ -71,6 +71,7 @@
 		"timelimit" "時間制限"
 		"roundtimelimit" "時間制限 (ラウンドベース)"
 		"respawnprotection" "リスポーン保護時間"
+		"late_join_respawn" "Enable late join respawn"
 
 		"pilot_health_multiplier" "ヘルス倍率"
 		// 要議論: "リスポーン遅延" のままか、"リスポーンまでの時間"、それ以外への差し替え

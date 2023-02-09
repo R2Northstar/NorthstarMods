@@ -56,6 +56,7 @@
 		"timelimit" "時間限制"
 		"roundtimelimit" "時間限制（回合制）"
 		"respawnprotection" "重生保護時間"
+		"late_join_respawn" "中途加入復活"
 
 		"pilot_health_multiplier" "生命值加成"
 		"respawn_delay" "重生延遲"

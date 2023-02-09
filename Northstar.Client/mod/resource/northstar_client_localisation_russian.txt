@@ -46,6 +46,7 @@
 		"roundscorelimit" "Лимит очков (по раундам)"
 		"timelimit" "Лимит времени"
 		"roundtimelimit" "Лимит времени (по раундам)"
+		"late_join_respawn" "Enable late join respawn"
 
 		"pilot_health_multiplier" "Множитель здоровья"
 		"respawn_delay" "Задержка возрождения"
