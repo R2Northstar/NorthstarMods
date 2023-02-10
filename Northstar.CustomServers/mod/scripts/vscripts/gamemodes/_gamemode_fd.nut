@@ -295,7 +295,7 @@ void function GamemodeFD_OnPlayerKilled( entity victim, entity attacker, var dam
 	if( FD_PlayerInDropship( victim ) )
 	{
 		victim.ClearParent()
-		//ClearPlayerAnimViewEntity( victim )
+		ClearPlayerAnimViewEntity( victim )
 		victim.ClearInvulnerable()
 	}
 
