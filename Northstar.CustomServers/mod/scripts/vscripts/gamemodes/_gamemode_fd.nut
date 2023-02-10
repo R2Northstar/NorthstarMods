@@ -216,6 +216,9 @@ void function FD_PlayerRespawnCallback( entity player )
 	if( player.GetPersistentVar( "spawnAsTitan" ) )
 		return
 
+	if( file.playersInShip >=4 )
+		return
+
 	player.SetInvulnerable()
 	if( file.dropshipState == eDropshipState.Idle )
 	{
@@ -292,7 +295,7 @@ void function GamemodeFD_OnPlayerKilled( entity victim, entity attacker, var dam
 	if( FD_PlayerInDropship( victim ) )
 	{
 		victim.ClearParent()
-		ClearPlayerAnimViewEntity( victim )
+		//ClearPlayerAnimViewEntity( victim )
 		victim.ClearInvulnerable()
 	}
 
