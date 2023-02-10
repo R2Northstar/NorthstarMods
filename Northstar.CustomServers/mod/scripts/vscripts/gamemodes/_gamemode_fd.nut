@@ -288,6 +288,14 @@ void function FD_TeamReserveDepositOrWithdrawCallback( entity player, string act
 }
 void function GamemodeFD_OnPlayerKilled( entity victim, entity attacker, var damageInfo )
 {
+	//avoid crash while player accidental death in dropship
+	if( FD_PlayerInDropship( victim ) )
+	{
+		victim.ClearParent()
+		ClearPlayerAnimViewEntity( victim )
+		victim.ClearInvulnerable()
+	}
+
 	//set longest Time alive for end awards
 	float timeAlive = Time() - file.players[victim].lastRespawn
 	if(timeAlive>file.playerAwardStats[victim]["longestLife"])
@@ -2021,6 +2029,21 @@ string function FD_DropshipGetAnimation()
 		return "dropship_coop_respawn_digsite"
 	}
 	return "dropship_coop_respawn"
+}
+
+bool function FD_PlayerInDropship( entity player )
+{
+	if( !IsValid( file.dropship ) )
+		return false
+
+	if( !IsValid( player ) )
+		return false
+
+	foreach ( entity dropshipPlayer in file.playersInDropship )
+		if ( dropshipPlayer == player )
+			return true
+			
+	return false
 }
 
 int function FD_TimeOutCheck()
