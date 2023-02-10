@@ -11,7 +11,7 @@ void function PrivateMatchModesInit()
 	AddPrivateMatchModeSettingArbitrary( "#MODE_SETTING_CATEGORY_MATCH", "timelimit", "12" ) //, "Time Limit" )
 	AddPrivateMatchModeSettingArbitrary( "#MODE_SETTING_CATEGORY_MATCH", "roundtimelimit", "0" ) //, "Time Limit (round-based modes)" )
 	AddPrivateMatchModeSettingArbitrary( "#MODE_SETTING_CATEGORY_MATCH", "respawnprotection", "0.0" ) //, "Player Respawn Protection Time" )
-	AddPrivateMatchModeSettingArbitrary( "#MODE_SETTING_CATEGORY_MATCH", "late_join_respawn", [ "#SETTING_DISABLED", "#SETTING_ENABLED" ], "1" ) //, "Enable late join respawn" )
+	AddPrivateMatchModeSettingEnum( "#MODE_SETTING_CATEGORY_MATCH", "late_join_respawn", [ "#SETTING_DISABLED", "#SETTING_ENABLED" ], "1" )
 	
 	AddPrivateMatchModeSettingArbitrary( "#MODE_SETTING_CATEGORY_PILOT", "pilot_health_multiplier", "1.0" )
 	AddPrivateMatchModeSettingArbitrary( "#MODE_SETTING_CATEGORY_PILOT", "respawn_delay", "0.0" )
