@@ -1987,18 +1987,17 @@ void function FD_DropshipSpawnDropship()
 void function FD_DropshipDropPlayer(entity player,int playerDropshipIndex)
 {
 	player.EndSignal( "OnDestroy" )
-	FirstPersonSequenceStruct jumpSequence
-	jumpSequence.firstPersonAnim = DROPSHIP_EXIT_ANIMS_POV[ playerDropshipIndex ]
-	jumpSequence.thirdPersonAnim = DROPSHIP_EXIT_ANIMS[ playerDropshipIndex ]
-	jumpSequence.attachment = "ORIGIN"
-	jumpSequence.blendTime = 0.0
-	jumpSequence.viewConeFunction = ViewConeFree
 
-	thread FirstPersonSequence( jumpSequence, player, file.dropship )
-
-	//check the player
 	if( IsValid( player ) )
 	{
+		FirstPersonSequenceStruct jumpSequence
+		jumpSequence.firstPersonAnim = DROPSHIP_EXIT_ANIMS_POV[ playerDropshipIndex ]
+		jumpSequence.thirdPersonAnim = DROPSHIP_EXIT_ANIMS[ playerDropshipIndex ]
+		jumpSequence.attachment = "ORIGIN"
+		jumpSequence.blendTime = 0.0
+		jumpSequence.viewConeFunction = ViewConeFree
+
+		thread FirstPersonSequence( jumpSequence, player, file.dropship )
 		WaittillAnimDone( player )
 		player.ClearParent()
 		ClearPlayerAnimViewEntity( player )
