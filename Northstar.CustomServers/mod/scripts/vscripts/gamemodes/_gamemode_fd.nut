@@ -446,6 +446,8 @@ void function OnNpcDeath( entity victim, entity attacker, var damageInfo )
 			SetGlobalNetInt( netIndex, GetGlobalNetInt( netIndex ) - 1 )
 
 		SetGlobalNetInt( "FD_AICount_Current", GetGlobalNetInt( "FD_AICount_Current" ) - 1 )
+		if( GetNPCCloakedDrones().len() == GetGlobalNetInt( "FD_AICount_Current" ) )
+			FD_RemoveCloakedDrones()
 	}
 
 	if ( victim.GetOwner() == attacker || !attacker.IsPlayer() || ( attacker == victim ) || ( victim.GetBossPlayer() == attacker ) || victim.GetClassName() == "npc_turret_sentry" )
@@ -502,6 +504,23 @@ void function OnNpcDeath( entity victim, entity attacker, var damageInfo )
 	}
 
 
+}
+
+void function FD_RemoveCloakedDrones()
+{
+	array<entity> droneArray = GetNPCCloakedDrones()
+
+	if( droneArray.len() != GetGlobalNetInt( "FD_AICount_Current" ) )
+	{
+		CodeWarning( "Try remove cloaked drones in error way.Drone amount: " + droneArray.len() + " ,Npc amount: " + GetGlobalNetInt( "FD_AICount_Current" ) )
+		return
+	}
+
+	foreach( entity cloakedDrone in droneArray )
+	{
+		if( IsValid( cloakedDrone ) )
+			cloakedDrone.Die()
+	}
 }
 
 void function RateSpawnpoints_FD( int _0, array<entity> _1, int _2, entity _3 )
