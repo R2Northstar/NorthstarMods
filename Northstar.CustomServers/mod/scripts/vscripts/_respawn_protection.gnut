@@ -1,13 +1,24 @@
 global function RespawnProtection_Init
 
 void function RespawnProtection_Init(){
-	RegisterSignal( "RespawnProtectionEnd" )
+	RegisterSignal( "StopProtection" )
 	AddCallback_OnPlayerRespawned( OnPlayerRespawned )
 }
 
 void function OnPlayerRespawned( entity player )
 {
+	AddButtonPressedPlayerInputCallback( player, IN_ATTACK, ForceStopProtection )
+	AddButtonPressedPlayerInputCallback( player, IN_OFFHAND0, ForceStopProtection )
+	AddButtonPressedPlayerInputCallback( player, IN_OFFHAND2, ForceStopProtection )
+	AddButtonPressedPlayerInputCallback( player, IN_OFFHAND4, ForceStopProtection )
+	AddButtonPressedPlayerInputCallback( player, IN_MELEE, ForceStopProtection )
+	AddButtonPressedPlayerInputCallback( player, IN_USE, ForceStopProtection )
 	thread RespawnProtection(player,GetCurrentPlaylistVarFloat("respawnprotection",0.0))
+}
+
+void function ForceStopProtection( entity player )
+{
+	player.Signal( "StopProtection" )
 }
 
 void function RespawnProtection( entity player , float time ){
@@ -17,9 +28,14 @@ void function RespawnProtection( entity player , float time ){
 			//cancel protect if player attack
 			if( IsValid( player ) )
 			{
-				player.Signal( "RespawnProtectionEnd" )
+				ForceStopProtection( player )
+				RemoveButtonPressedPlayerInputCallback( player, IN_ATTACK, ForceStopProtection )
+				RemoveButtonPressedPlayerInputCallback( player, IN_OFFHAND0, ForceStopProtection )
+				RemoveButtonPressedPlayerInputCallback( player, IN_OFFHAND2, ForceStopProtection )
+				RemoveButtonPressedPlayerInputCallback( player, IN_OFFHAND4, ForceStopProtection )
+				RemoveButtonPressedPlayerInputCallback( player, IN_MELEE, ForceStopProtection )
+				RemoveButtonPressedPlayerInputCallback( player, IN_USE, ForceStopProtection )
 				SetDefaultMPEnemyHighlight( player )
-				//cancel protect if player attack
 				DisableDemigod( player );
 				player.ClearInvulnerable()
 			}
@@ -29,6 +45,8 @@ void function RespawnProtection( entity player , float time ){
 	player.EndSignal( "OnDeath" )
 	player.EndSignal( "OnDestroy" )
 	player.EndSignal( "OnPrimaryAttack" )
+	player.EndSignal( "RodeoStarted" )
+	player.EndSignal( "StopProtection" )
 
 	if( IsValid( player ) )
 	{
@@ -46,7 +64,9 @@ void function ProtectionHighlightThink( entity player, float time )
 {
 	player.EndSignal( "OnDeath" )
 	player.EndSignal( "OnDestroy" )
-	player.EndSignal( "RespawnProtectionEnd" )
+	player.EndSignal( "OnPrimaryAttack" )
+	player.EndSignal( "RodeoStarted" )
+	player.EndSignal( "StopProtection" )
 
 	float startTime = Time()
 	while( Time() - startTime <= time )
