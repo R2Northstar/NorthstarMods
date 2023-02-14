@@ -518,7 +518,7 @@ void function FD_RemoveCloakedDrones()
 
 	foreach( entity cloakedDrone in droneArray )
 	{
-		if( IsValid( cloakedDrone ) )
+		if( IsValid( cloakedDrone ) && IsAlive( cloakedDrone ) )
 			cloakedDrone.Die()
 	}
 }
