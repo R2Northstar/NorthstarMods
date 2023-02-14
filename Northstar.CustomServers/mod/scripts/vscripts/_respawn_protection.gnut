@@ -1,4 +1,10 @@
 global function RespawnProtection_Init
+global function IsRespawnProtectionActive
+
+struct
+{
+	array< entity > players
+} file
 
 void function RespawnProtection_Init(){
 	RegisterSignal( "StopProtection" )
@@ -21,6 +27,16 @@ void function ForceStopProtection( entity player )
 	player.Signal( "StopProtection" )
 }
 
+bool function IsRespawnProtectionActive( entity player )
+{
+	if ( player == null )
+		return false
+	if ( !player.IsValidInternal() )
+		return false
+
+	return file.players.contains( player )
+}
+
 void function RespawnProtection( entity player , float time ){
 	OnThreadEnd(
 		function() : ( player )
@@ -29,6 +45,8 @@ void function RespawnProtection( entity player , float time ){
 			if( IsValid( player ) )
 			{
 				ForceStopProtection( player )
+				if( file.players.contains( player ) )
+					file.players.fastremovebyvalue( player )
 				RemoveButtonPressedPlayerInputCallback( player, IN_ATTACK, ForceStopProtection )
 				RemoveButtonPressedPlayerInputCallback( player, IN_OFFHAND0, ForceStopProtection )
 				RemoveButtonPressedPlayerInputCallback( player, IN_OFFHAND2, ForceStopProtection )
