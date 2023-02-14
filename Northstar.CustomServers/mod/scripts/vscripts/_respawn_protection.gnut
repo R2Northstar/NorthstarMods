@@ -31,7 +31,7 @@ bool function IsRespawnProtectionActive( entity player )
 {
 	if ( player == null )
 		return false
-	if ( !player.IsValidInternal() )
+	if ( !IsValid( player ) )
 		return false
 
 	return file.players.contains( player )
