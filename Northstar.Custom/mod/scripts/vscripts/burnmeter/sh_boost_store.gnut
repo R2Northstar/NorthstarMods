@@ -304,8 +304,8 @@ bool function ClientCommand_PurchaseBoost( entity player, array<string> args )
 
 bool function ClientCommand_Deposit( entity player, array<string> args )
 {
-	// if ( !BoostStoreOpen() )
-	// 	return true
+	if ( !BoostStoreOpen() )
+		return true
 
 	int depositAmount = minint( file.playerBonusData[ player ], BOOST_STORE_DEFAULT_EXCHANGE )
 	file.teamReserveAmount += depositAmount
@@ -325,8 +325,8 @@ bool function ClientCommand_Deposit( entity player, array<string> args )
 
 bool function ClientCommand_Withdraw( entity player, array<string> args )
 {
-	// if ( !BoostStoreOpen() )
-	// 	return true
+	if ( !BoostStoreOpen() )
+		return true
 
 	if ( GetPlayerMoney( player ) >= MAX_MONEY )
 		return true
