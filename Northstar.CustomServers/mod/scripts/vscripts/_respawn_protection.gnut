@@ -13,13 +13,17 @@ void function RespawnProtection_Init(){
 
 void function OnPlayerRespawned( entity player )
 {
-	AddButtonPressedPlayerInputCallback( player, IN_ATTACK, ForceStopProtection )
-	AddButtonPressedPlayerInputCallback( player, IN_OFFHAND0, ForceStopProtection )
-	AddButtonPressedPlayerInputCallback( player, IN_OFFHAND2, ForceStopProtection )
-	AddButtonPressedPlayerInputCallback( player, IN_OFFHAND4, ForceStopProtection )
-	AddButtonPressedPlayerInputCallback( player, IN_MELEE, ForceStopProtection )
-	AddButtonPressedPlayerInputCallback( player, IN_USE, ForceStopProtection )
-	thread RespawnProtection(player,GetCurrentPlaylistVarFloat("respawnprotection",0.0))
+	float time = GetCurrentPlaylistVarFloat( "respawnprotection", 0.0 )
+	if( time > 0.0 )
+	{
+		AddButtonPressedPlayerInputCallback( player, IN_ATTACK, ForceStopProtection )
+		AddButtonPressedPlayerInputCallback( player, IN_OFFHAND0, ForceStopProtection )
+		AddButtonPressedPlayerInputCallback( player, IN_OFFHAND2, ForceStopProtection )
+		AddButtonPressedPlayerInputCallback( player, IN_OFFHAND4, ForceStopProtection )
+		AddButtonPressedPlayerInputCallback( player, IN_MELEE, ForceStopProtection )
+		AddButtonPressedPlayerInputCallback( player, IN_USE, ForceStopProtection )
+		thread RespawnProtection( player, time )
+	}
 }
 
 void function ForceStopProtection( entity player )
@@ -69,7 +73,12 @@ void function RespawnProtection( entity player , float time ){
 	if( IsValid( player ) )
 	{
 		//start protect
-		if( player.IsTitan() )
+		if( player.GetPersistentVar( "spawnAsTitan" ) || Riff_SpawnAsTitan() )
+		{
+			player.WaitSignal( "PlayerEmbarkedTitan" )
+			player.SetInvulnerable()
+		}
+		else if( player.IsTitan() )
 			player.SetInvulnerable()
 		else
 			EnableDemigod( player )
