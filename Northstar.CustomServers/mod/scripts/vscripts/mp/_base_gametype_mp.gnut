@@ -401,6 +401,9 @@ void function ForceRespawnMeSignalAfterDelay( entity player, int delay = 5 )
 {
 	player.EndSignal( "RespawnMe" )
 
+	if( player.IsWatchingKillReplay() )
+		player.WaitSignal( "KillCamOver" )
+
 	wait delay
 
 	printt( format( "Forcing player respawn for player %s (took >%d seconds to respawn)", player.GetPlayerName(), delay ) )
