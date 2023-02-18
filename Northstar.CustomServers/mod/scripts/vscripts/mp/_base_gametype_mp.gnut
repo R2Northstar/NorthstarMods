@@ -274,6 +274,9 @@ void function PostDeathThread_MP( entity player, var damageInfo ) // based on ga
 	
 	ClearRespawnAvailable( player )
 
+	// reset this so that we default to pilot spawn
+	player.SetPersistentVar( "spawnAsTitan", false )
+
 	OnThreadEnd( function() : ( player )
 	{
 		if ( !IsValid( player ) )
@@ -409,6 +412,9 @@ void function ForceRespawnMeSignalAfterDelay( entity player, int delay = 5 )
 		player.WaitSignal( "KillCamOver" )
 
 	wait delay
+
+	if (!IsValid(player))
+		return
 
 	printt( format( "Forcing player respawn for player %s (took >%d seconds to respawn)", player.GetPlayerName(), delay ) )
 	player.Signal( "RespawnMe" )
