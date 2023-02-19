@@ -414,10 +414,15 @@ function SetPersistentLoadoutValue( entity player, string loadoutType, int loado
 	ValidateSkinAndCamoIndexesAsAPair( player, loadoutType, loadoutIndex, loadoutProperty, value ) //Skin and camo properties need to be set correctly as a pair
 
 	#if HAS_THREAT_SCOPE_SLOT_LOCK
-		if ( loadoutProperty.tolower() == "primaryattachment" && value == "threat_scope" )
-		{
+		// this is a fixed check, for handling most situations
+		string attachmentRef = GetPersistentLoadoutValue( player, "pilot", loadoutIndex, "primaryAttachment" )
+		if ( attachmentRef == "threat_scope" )
 			SetPlayerPersistentVarWithoutValidation( player, loadoutType, loadoutIndex, "primaryMod2", "" )
-		}
+
+		//if ( loadoutProperty.tolower() == "primaryattachment" && value == "threat_scope" )
+		//{
+		//	SetPlayerPersistentVarWithoutValidation( player, loadoutType, loadoutIndex, "primaryMod2", "" )
+		//}
 	#endif
 
 	// TEMP client model update method
@@ -696,6 +701,14 @@ bool function FailsLoadoutValidationCheck( entity player, string loadoutType, in
 
 	if ( ( loadoutProperty == "secondary" || loadoutProperty == "weapon3" ) && !IsValueValidForPropertyWithCategoryRestriction( player, loadoutIndex, loadoutProperty, string( value ) ) )
 		return true
+
+	// this is an extra check, for players may edit their loadout with client-side scripts and breaks the loadout rules
+	// if player modified their proscreen to other mods, we falls this check
+	if ( loadoutProperty.find( "Mod3" ) )
+	{
+		if ( value != "pro_screen" )
+			return true
+	}
 
 	//printt( "End FailsLoadoutValidationCheck" )
 	return false
@@ -3700,19 +3713,6 @@ string function Loadouts_GetSetFileForRequestedClass( entity player )
 // GetDefaultPilotLoadout() should never be returning overridden loadouts because it is used in many places to correct or reset persistent loadout data
 void function UpdateDerivedPilotLoadoutData( PilotLoadoutDef loadout, bool doOverrideCallback = true )
 {
-	// this is an extra check, for players may edit their loadout with client-side scripts and breaks the loadout rules
-	#if HAS_THREAT_SCOPE_SLOT_LOCK
-		if ( loadout.primaryAttachment == "threat_scope" ) // if player is using threat scope as attachment
-			loadout.primaryMod2 = "" // remove the second mod
-	#endif
-	// if player modified their proscreen to other mods, we remove it, this can also handle non-proscreen conditions
-	if ( loadout.primaryMod3 != "pro_screen" )
-		loadout.primaryMod3 = ""
-	if ( loadout.secondaryMod3 != "pro_screen" )
-		loadout.secondaryMod3 = ""
-	if ( loadout.weapon3Mod3 != "pro_screen" )
-		loadout.weapon3Mod3 = ""
-
 	loadout.setFile 			= GetSuitAndGenderBasedSetFile( loadout.suit, loadout.race )
 	loadout.special				= GetSuitBasedTactical( loadout.suit )
 	loadout.primaryAttachments	= [ loadout.primaryAttachment ]
