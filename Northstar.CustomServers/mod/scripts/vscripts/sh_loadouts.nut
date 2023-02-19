@@ -706,7 +706,7 @@ bool function FailsLoadoutValidationCheck( entity player, string loadoutType, in
 	}
 
 	// if player unlock the threat scope limit, we fall this check
-	if ( loadoutProperty.find( "Mod2" ) )
+	if ( loadoutProperty == "primaryMod2" )
 	{
 		string attachmentRef = GetPersistentLoadoutValue( player, "pilot", loadoutIndex, "primaryAttachment" )
 		if ( attachmentRef == "threat_scope" )
