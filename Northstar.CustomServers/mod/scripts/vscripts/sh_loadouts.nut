@@ -414,15 +414,10 @@ function SetPersistentLoadoutValue( entity player, string loadoutType, int loado
 	ValidateSkinAndCamoIndexesAsAPair( player, loadoutType, loadoutIndex, loadoutProperty, value ) //Skin and camo properties need to be set correctly as a pair
 
 	#if HAS_THREAT_SCOPE_SLOT_LOCK
-		// this is a fixed check, for handling most situations
-		string attachmentRef = GetPersistentLoadoutValue( player, "pilot", loadoutIndex, "primaryAttachment" )
-		if ( attachmentRef == "threat_scope" )
+		if ( loadoutProperty.tolower() == "primaryattachment" && value == "threat_scope" )
+		{
 			SetPlayerPersistentVarWithoutValidation( player, loadoutType, loadoutIndex, "primaryMod2", "" )
-
-		//if ( loadoutProperty.tolower() == "primaryattachment" && value == "threat_scope" )
-		//{
-		//	SetPlayerPersistentVarWithoutValidation( player, loadoutType, loadoutIndex, "primaryMod2", "" )
-		//}
+		}
 	#endif
 
 	// TEMP client model update method
@@ -703,10 +698,18 @@ bool function FailsLoadoutValidationCheck( entity player, string loadoutType, in
 		return true
 
 	// this is an extra check, for players may edit their loadout with client-side scripts and breaks the loadout rules
-	// if player modified their proscreen to other mods, we falls this check
+	// if player modify their proscreen to other mods, we fall this check
 	if ( loadoutProperty.find( "Mod3" ) )
 	{
 		if ( value != "pro_screen" )
+			return true
+	}
+
+	// if player unlock the threat scope limit, we fall this check
+	if ( loadoutProperty.find( "Mod2" ) )
+	{
+		string attachmentRef = GetPersistentLoadoutValue( player, "pilot", loadoutIndex, "primaryAttachment" )
+		if ( attachmentRef == "threat_scope" )
 			return true
 	}
 
