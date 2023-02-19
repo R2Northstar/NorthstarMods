@@ -705,6 +705,7 @@ bool function FailsLoadoutValidationCheck( entity player, string loadoutType, in
 			return true
 	}
 
+	#if HAS_THREAT_SCOPE_SLOT_LOCK
 	// if player unlock the threat scope limit, we fall this check
 	if ( loadoutProperty == "primaryMod2" )
 	{
@@ -712,6 +713,7 @@ bool function FailsLoadoutValidationCheck( entity player, string loadoutType, in
 		if ( attachmentRef == "threat_scope" )
 			return true
 	}
+	#endif
 
 	//printt( "End FailsLoadoutValidationCheck" )
 	return false
