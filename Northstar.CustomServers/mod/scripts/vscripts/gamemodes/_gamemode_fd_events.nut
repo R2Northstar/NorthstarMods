@@ -90,7 +90,14 @@ void function executeWave()
 	print( "executeWave Start" )
 	thread runEvents( 0 )
 	while( IsHarvesterAlive( fd_harvester.harvester ) && ( !allEventsExecuted( GetGlobalNetInt( "FD_currentWave" ) ) ) ) 
+	{
+		//Hope someone do a better way to fix this bug.
+		if( GetGlobalNetInt( "FD_AICount_Current" ) == 0 )
+		{
+			break
+		}
 		WaitFrame()
+	}
 	wait 5 //incase droppod is last event so all npc are spawned
 	waitUntilLessThanAmountAlive( 0 )
 	waitUntilLessThanAmountAlive_expensive( 0 )
