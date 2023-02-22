@@ -1393,8 +1393,8 @@ void function OnFWTurretSpawned( entity turret )
 void function FWTurretHighlightThink( entity turret )
 {
 	turret.EndSignal( "OnDestroy" )
-	WaitFrame()
-	Highlight_SetFriendlyHighlight( turret, "fw_friendly" )
+	WaitFrame() // wait a frame for other turret spawn options to set up
+	Highlight_SetFriendlyHighlight( turret, "fw_friendly" ) // initialize the highlight, they will show upon player's next respawn
 
 	turret.WaitSignal( "OnDeath" )
 	Highlight_ClearFriendlyHighlight( turret )
