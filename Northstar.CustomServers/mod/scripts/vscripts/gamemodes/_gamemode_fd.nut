@@ -24,7 +24,8 @@ enum eDropshipState{
 
 struct player_struct_fd{
 	bool diedThisRound
-	int scoreThisRound
+	int assaultScoreThisRound
+	int defenseScoreThisRound
 	int moneyThisRound
 	array< entity > deployedEntityThisRound
 	/*
@@ -487,8 +488,7 @@ void function OnNpcDeath( entity victim, entity attacker, var damageInfo )
 	if ( money != 0 )
 		AddMoneyToPlayer( attacker , money )
 
-	attacker.AddToPlayerGameStat( PGS_ASSAULT_SCORE, playerScore ) // seems to be how combat score is counted
-	file.players[attacker].scoreThisRound += playerScore
+	file.players[attacker].assaultScoreThisRound += playerScore
 	table<int, bool> alreadyAssisted
 	foreach( DamageHistoryStruct attackerInfo in victim.e.recentDamageHistory )
 	{
@@ -751,7 +751,8 @@ bool function runWave( int waveIndex, bool shouldDoBuyTime )
 	foreach( entity player in GetPlayerArray() )
 	{
 		file.players[player].diedThisRound = false
-		file.players[player].scoreThisRound = 0
+		file.players[player].assaultScoreThisRound = 0
+		file.players[player].defenseScoreThisRound = 0
 		file.players[player].moneyThisRound = GetPlayerMoney( player )
 		file.players[ player ].deployedEntityThisRound.clear()
 	}
@@ -865,6 +866,13 @@ bool function runWave( int waveIndex, bool shouldDoBuyTime )
 		MessageToTeam( TEAM_MILITIA, eEventNotifications.FD_AnnounceWaveEnd )
 		foreach( entity player in GetPlayerArray() )
 		{
+			AddPlayerScore( player, "FDDamageBonus", null, "", file.players[player].assaultScoreThisRound )
+			player.AddToPlayerGameStat( PGS_ASSAULT_SCORE, file.players[player].assaultScoreThisRound )
+			wait 1
+			AddPlayerScore( player, "FDSupportBonus", null, "", file.players[player].defenseScoreThisRound )
+			player.AddToPlayerGameStat( PGS_DEFENSE_SCORE, file.players[player].defenseScoreThisRound )
+			player.SetPlayerGameStat( PGS_DETONATION_SCORE, player.GetPlayerGameStat( PGS_ASSAULT_SCORE ) + player.GetPlayerGameStat( PGS_DEFENSE_SCORE ) )
+			wait 1
 			AddPlayerScore( player, "FDTeamWave" )
 		}
 		wait 1
@@ -875,9 +883,9 @@ bool function runWave( int waveIndex, bool shouldDoBuyTime )
 
 			if( !file.players[player].diedThisRound )
 				AddPlayerScore( player, "FDDidntDie" )
-			if( highestScore < file.players[player].scoreThisRound )
+			if( highestScore < ( file.players[player].assaultScoreThisRound + file.players[player].defenseScoreThisRound ) )
 			{
-				highestScore = file.players[player].scoreThisRound
+				highestScore = file.players[player].assaultScoreThisRound + file.players[player].defenseScoreThisRound
 				highestScore_player = player
 			}
 
@@ -946,6 +954,14 @@ bool function runWave( int waveIndex, bool shouldDoBuyTime )
 			PlayFactionDialogueToPlayer( "fd_wavePayoutFirst", player )
 		else
 			PlayFactionDialogueToPlayer( "fd_wavePayoutAddtnl", player )
+
+		AddPlayerScore( player, "FDDamageBonus", null, "", file.players[player].assaultScoreThisRound )
+		player.AddToPlayerGameStat( PGS_ASSAULT_SCORE, file.players[player].assaultScoreThisRound )
+		wait 1
+		AddPlayerScore( player, "FDSupportBonus", null, "", file.players[player].defenseScoreThisRound )
+		player.AddToPlayerGameStat( PGS_DEFENSE_SCORE, file.players[player].defenseScoreThisRound )
+		player.SetPlayerGameStat( PGS_DETONATION_SCORE, player.GetPlayerGameStat( PGS_ASSAULT_SCORE ) + player.GetPlayerGameStat( PGS_DEFENSE_SCORE ) )
+		wait 1
 		AddPlayerScore( player, "FDTeamWave" )
 		AddMoneyToPlayer( player, GetCurrentPlaylistVarInt( "fd_money_per_round", 600 ) )
 		// is this in the right place? do we want to be adding for each player?
@@ -969,9 +985,9 @@ bool function runWave( int waveIndex, bool shouldDoBuyTime )
 	entity highestScore_player = GetPlayerArray()[0]
 	foreach( entity player in GetPlayerArray() )
 	{
-		if( highestScore < file.players[player].scoreThisRound )
+		if( highestScore < ( file.players[player].assaultScoreThisRound + file.players[player].defenseScoreThisRound ) )
 		{
-			highestScore = file.players[player].scoreThisRound
+			highestScore = file.players[player].assaultScoreThisRound + file.players[player].defenseScoreThisRound
 			highestScore_player = player
 		}
 	}
@@ -995,6 +1011,8 @@ bool function runWave( int waveIndex, bool shouldDoBuyTime )
 			player.AddToPlayerGameStat( PGS_ASSAULT_SCORE, FD_SCORE_TEAM_FLAWLESS_WAVE )
 			EmitSoundOnEntityOnlyToPlayer( player, player, "HUD_MP_BountyHunt_BankBonusPts_Deposit_Start_1P" )
 		}
+		//Temporary code
+		player.SetPlayerGameStat( PGS_DETONATION_SCORE, player.GetPlayerGameStat( PGS_ASSAULT_SCORE ) + player.GetPlayerGameStat( PGS_DEFENSE_SCORE ) )
 	}
 
 	wait 1
@@ -1016,8 +1034,7 @@ void function FD_StunLaserHealTeammate( entity player, entity target, int shield
 {
 	if( IsValid( player ) && player in file.players ){
 		file.playerAwardStats[player]["heals"] += float( shieldRestoreAmount )
-		player.AddToPlayerGameStat( PGS_DEFENSE_SCORE, shieldRestoreAmount / 100 )
-		file.players[ player ].scoreThisRound += shieldRestoreAmount / 100
+		file.players[ player ].defenseScoreThisRound += shieldRestoreAmount / 100
 	}
 }
 
@@ -1025,8 +1042,7 @@ void function FD_SmokeHealTeammate( entity player, entity target, int shieldRest
 {
 	if( IsValid( player ) && player in file.players ){
 		file.playerAwardStats[player]["heals"] += float( shieldRestoreAmount )
-		player.AddToPlayerGameStat( PGS_DEFENSE_SCORE, shieldRestoreAmount / 100 )
-		file.players[ player ].scoreThisRound += shieldRestoreAmount / 100
+		file.players[ player ].defenseScoreThisRound += shieldRestoreAmount / 100
 	}
 }
 
@@ -1055,8 +1071,7 @@ void function FD_BatteryHealTeammate( entity battery, entity titan, int shieldRe
 		currentHeal = shieldRestoreAmount + healthRestoreAmount
 		currentHealScore = currentHeal / 100
 		file.playerAwardStats[BatteryParent]["heals"] += float( currentHeal )
-		BatteryParent.AddToPlayerGameStat( PGS_DEFENSE_SCORE, currentHealScore )
-		file.players[ BatteryParent ].scoreThisRound += currentHealScore
+		file.players[ BatteryParent ].defenseScoreThisRound += currentHealScore
 	}
 }
 
@@ -1478,7 +1493,7 @@ void function FD_DamageByPlayerCallback( entity victim, var damageInfo )
 		return
 	float damage = DamageInfo_GetDamage( damageInfo )
 	file.playerAwardStats[player]["damageDealt"] += damage
-	file.players[ player ].scoreThisRound += damage.tointeger() //TODO NOT HOW SCORE WORKS
+	file.players[ player ].assaultScoreThisRound += ( damage.tointeger() / 100 ) //TODO NOT HOW SCORE WORKS
 	if( victim.IsTitan() )
 	{
 		//TODO Money and score for titan damage
