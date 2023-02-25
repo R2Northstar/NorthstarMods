@@ -524,7 +524,8 @@ void function FD_ShowCloakedDrones()
 			cloakedDrone.Show()
 			cloakedDrone.s.fx.Fire( "start" )
 			cloakedDrone.SetTitle( "#NPC_CLOAK_DRONE" )
-			cloakedDrone.s.isHidden = false
+			//Don't let them hidden again
+			//cloakedDrone.s.isHidden = false
 			cloakedDrone.Solid()
 			cloakedDrone.Minimap_AlwaysShow( TEAM_IMC, null )
 			cloakedDrone.Minimap_AlwaysShow( TEAM_MILITIA, null )
