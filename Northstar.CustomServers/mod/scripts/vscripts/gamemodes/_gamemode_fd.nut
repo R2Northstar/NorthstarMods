@@ -506,7 +506,7 @@ void function OnNpcDeath( entity victim, entity attacker, var damageInfo )
 
 }
 
-void function FD_RemoveCloakedDrones()
+void function FD_ShowCloakedDrones()
 {
 	array<entity> droneArray = GetNPCCloakedDrones()
 
