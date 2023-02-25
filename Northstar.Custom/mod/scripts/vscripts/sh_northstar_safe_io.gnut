@@ -1,0 +1,35 @@
+globalize_all_functions
+
+table< int, void functionref( string ) > pendingCallbacks
+table< int, void functionref( table ) > pendingJSONCallbacks
+
+void function NSLoadFile( string file, void functionref( string ) onSuccess )
+{
+    int handle = NS_InternalLoadFile( file )
+
+    pendingCallbacks[handle] <- onSuccess;
+}
+
+void function NSLoadJSONFile( string file, void functionref( table ) onSuccess )
+{
+    int handle = NS_InternalLoadFile( file )
+
+    pendingJSONCallbacks[handle] <- onSuccess;
+}
+
+void function NSHandleLoadResult( int handle, string result )
+{
+    if (handle in pendingCallbacks)
+    {
+        pendingCallbacks[handle](result)
+        delete pendingCallbacks[handle]
+        return
+    }
+    if (handle in pendingJSONCallbacks)
+    {
+        pendingJSONCallbacks[handle](DecodeJSON(result))
+        delete pendingJSONCallbacks[handle]
+        return
+    }
+    unreachable
+}
