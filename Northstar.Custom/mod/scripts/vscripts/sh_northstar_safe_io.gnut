@@ -7,14 +7,14 @@ void function NSLoadFile( string file, void functionref( string ) onSuccess )
 {
     int handle = NS_InternalLoadFile( file )
 
-    pendingCallbacks[handle] <- onSuccess;
+    pendingCallbacks[handle] <- onSuccess
 }
 
 void function NSLoadJSONFile( string file, void functionref( table ) onSuccess )
 {
     int handle = NS_InternalLoadFile( file )
 
-    pendingJSONCallbacks[handle] <- onSuccess;
+    pendingJSONCallbacks[handle] <- onSuccess
 }
 
 void function NSHandleLoadResult( int handle, string result )
