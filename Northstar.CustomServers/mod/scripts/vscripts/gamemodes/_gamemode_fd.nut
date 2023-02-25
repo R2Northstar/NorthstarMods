@@ -448,7 +448,7 @@ void function OnNpcDeath( entity victim, entity attacker, var damageInfo )
 
 		SetGlobalNetInt( "FD_AICount_Current", GetGlobalNetInt( "FD_AICount_Current" ) - 1 )
 		if( GetNPCCloakedDrones().len() == GetGlobalNetInt( "FD_AICount_Current" ) )
-			FD_RemoveCloakedDrones()
+			FD_ShowCloakedDrones()
 	}
 
 	if ( victim.GetOwner() == attacker || !attacker.IsPlayer() || ( attacker == victim ) || ( victim.GetBossPlayer() == attacker ) || victim.GetClassName() == "npc_turret_sentry" )
@@ -519,7 +519,17 @@ void function FD_RemoveCloakedDrones()
 	foreach( entity cloakedDrone in droneArray )
 	{
 		if( IsValid( cloakedDrone ) && IsAlive( cloakedDrone ) )
-			cloakedDrone.Die()
+		{
+			cloakedDrone.DisableBehavior( "Follow" )
+			cloakedDrone.Show()
+			cloakedDrone.s.fx.Fire( "start" )
+			cloakedDrone.SetTitle( "#NPC_CLOAK_DRONE" )
+			cloakedDrone.s.isHidden = false
+			cloakedDrone.Solid()
+			cloakedDrone.Minimap_AlwaysShow( TEAM_IMC, null )
+			cloakedDrone.Minimap_AlwaysShow( TEAM_MILITIA, null )
+			cloakedDrone.SetNoTarget( false )
+		}
 	}
 }
 
