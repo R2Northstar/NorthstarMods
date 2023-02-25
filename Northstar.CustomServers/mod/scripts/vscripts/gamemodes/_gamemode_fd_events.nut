@@ -729,7 +729,9 @@ void function waitUntilLessThanAmountAliveEventWeighted( SmokeEvent smokeEvent, 
 void function spawnSuperSpectre( SmokeEvent smokeEvent, SpawnEvent spawnEvent, FlowControlEvent flowControlEvent, SoundEvent soundEvent )
 {
 	PingMinimap( spawnEvent.origin.x, spawnEvent.origin.y, 4, 600, 150, 0 )
-	wait 4.7
+	wait 2.7
+	TryAnnounceTitanfallWarningToEnemyTeam( TEAM_IMC, spawnEvent.origin )
+	wait 2.0
 
 	entity npc = CreateSuperSpectre( TEAM_IMC, spawnEvent.origin, spawnEvent.angles )
 	SetSpawnOption_AISettings( npc, "npc_super_spectre_fd" )
@@ -747,7 +749,9 @@ void function spawnSuperSpectre( SmokeEvent smokeEvent, SpawnEvent spawnEvent, F
 void function spawnSuperSpectreWithMinion( SmokeEvent smokeEvent, SpawnEvent spawnEvent, FlowControlEvent flowControlEvent, SoundEvent soundEvent )
 {
 	PingMinimap( spawnEvent.origin.x, spawnEvent.origin.y, 4, 600, 150, 0 )
-	wait 4.7
+	wait 2.7
+	TryAnnounceTitanfallWarningToEnemyTeam( TEAM_IMC, spawnEvent.origin )
+	wait 2.0
 
 	entity npc = CreateSuperSpectre( TEAM_IMC, spawnEvent.origin,spawnEvent.angles )
 	SetSpawnOption_AISettings( npc, "npc_super_spectre_fd" )
