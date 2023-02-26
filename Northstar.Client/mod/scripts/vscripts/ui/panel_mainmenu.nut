@@ -59,6 +59,14 @@ void function InitMainMenuPanel()
 	file.serviceStatus = Hud_GetRui( Hud_GetChild( file.panel, "ServiceStatus" ) )
 	file.whatsNew = Hud_GetRui( Hud_GetChild( file.panel, "WhatsNew" ) )
 
+	Hud_AddEventHandler( Hud_GetChild( Hud_GetChild( file.panel, "NSInvalidModsHint" ), "Button" ), UIE_CLICK,
+		void function( var button )
+		{ 
+			AdvanceMenu( GetMenu( "ModListMenu" ) )
+			ScrollToModListIndex( -1 )
+		}
+	)
+
 	ComboStruct comboStruct = ComboButtons_Create( file.panel )
 
 	int headerIndex = 0
@@ -185,6 +193,26 @@ void function OnShowMainMenuPanel()
 
 	SetPanelDefaultFocus( file.panel, Hud_GetChild( file.panel, defaultButtonRowFocus ) )
 	PanelFocusDefault( file.panel )
+
+	thread ShowInvalidModsHint()
+}
+
+void function ShowInvalidModsHint()
+{
+	wait 1.0 // wait a bit before showing the warning to give UI a chance to not lag / load
+
+	array<string> invalidMods = NSGetInvalidMods()
+	if( !invalidMods.len() )
+		return
+	var panel = Hud_GetChild( file.panel, "NSInvalidModsHint" )
+
+	int width = Hud_GetWidth( Hud_GetChild( panel, "Text" ) ) + 110 // autowide is a bit scuffed and doesn't take everything into account
+	Hud_SetWidth( panel, width )
+	Hud_SetWidth( Hud_GetChild( panel, "Frame" ), width )
+	Hud_SetWidth( Hud_GetChild( panel, "ButtoN" ), width )
+
+	Hud_SetXOverTime( panel, -Hud_GetWidth( panel ), 1.0, INTERPOLATOR_SIMPLESPLINE )
+	RuiSetImage( Hud_GetRui( Hud_GetChild( panel, "Image" ) ), "basicImage", $"ui/menu/common/dialog_error" )
 }
 
 void function EnableCheckPlus()

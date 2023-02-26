@@ -3,9 +3,17 @@ untyped
 global function AddNorthstarModMenu
 global function AddNorthstarModMenu_MainMenuFooter
 global function ReloadMods
+global function ScrollToModListIndex
 
+enum PanelType
+{
+	MOD,
+	HEADER,
+	INVALID_MOD,
+	INVALID_MOD_HEADER,
+}
 
-struct modData {
+struct ModPanelData {
 	string name = ""
 	string version = ""
 	string link = ""
@@ -14,9 +22,10 @@ struct modData {
 	array<string> conVars = []
 }
 
-struct panelContent {
-	modData& mod
+struct PanelContent {
+	ModPanelData& mod
 	bool isHeader = false
+	int type // PanelType
 }
 
 enum filterShow {
@@ -33,14 +42,14 @@ struct {
 } mouseDeltaBuffer
 
 struct {
-	array<panelContent> mods
+	array<PanelContent> mods
 	var menu
 	array<var> panels
 	int scrollOffset = 0
 	array<string> enabledMods
 	var currentButton
 	string searchTerm
-	modData& lastMod
+	ModPanelData& lastMod
 } file
 
 const int PANELS_LEN = 15
@@ -60,6 +69,25 @@ void function AddNorthstarModMenu_MainMenuFooter()
 void function AdvanceToModListMenu( var button )
 {
 	AdvanceMenu( GetMenu( "ModListMenu" ) )
+}
+
+void function ScrollToModListIndex( int index )
+{
+	if( index > 0 )
+	{
+		file.scrollOffset = index
+	}
+	else
+	{
+		int index = file.mods.len() - file.panels.len() - index - 1
+		if( index >= 0 )
+			file.scrollOffset = file.mods.len() - file.panels.len() - index - 1
+	}
+
+	UpdateList()
+	UpdateListSliderPosition()
+
+	Hud_SetFocused( Hud_GetChild( file.panels[ index > 0 ? index : file.panels.len() + index ], "BtnMod" ) )
 }
 
 void function InitModMenu()
@@ -179,10 +207,11 @@ void function OnModButtonFocused( var button )
 	RuiSetString( rui, "messageText", FormatModDescription( modName ) )
 
 	// Add a button to open the link with if required
-	string link = NSGetModDownloadLinkByModName( modName )
+	string ornull link = NSGetModDownloadLinkByModName( modName )
 	var linkButton = Hud_GetChild( file.menu, "ModPageButton" )
-	if ( link.len() )
+	if ( link != null && expect string( link ).len() )
 	{
+		expect string( link )
 		Hud_SetEnabled( linkButton, true )
 		Hud_SetVisible( linkButton, true )
 		Hud_SetText( linkButton, link )
@@ -195,9 +224,13 @@ void function OnModButtonFocused( var button )
 
 	SetControlBarColor( modName )
 
-	bool required = NSIsModRequiredOnClient( modName )
-	Hud_SetVisible( Hud_GetChild( file.menu, "WarningLegendLabel"  ), required )
-	Hud_SetVisible( Hud_GetChild( file.menu, "WarningLegendImage"  ), required )
+	bool ornull required = NSIsModRequiredOnClient( modName )
+	if( required != null )
+	{
+		expect bool( required )
+		Hud_SetVisible( Hud_GetChild( file.menu, "WarningLegendLabel"  ), required )
+		Hud_SetVisible( Hud_GetChild( file.menu, "WarningLegendImage"  ), required )
+	}
 }
 
 void function OnModButtonPressed( var button )
@@ -205,7 +238,7 @@ void function OnModButtonPressed( var button )
 	string modName = file.mods[ int ( Hud_GetScriptID( Hud_GetParent( button ) ) ) + file.scrollOffset - 1 ].mod.name
 	if ( StaticFind( modName ) && NSIsModEnabled( modName ) )
 		CoreModToggleDialog( modName )
-	else
+	else if( NSGetModVersionByModName( modName ) != null ) // check if the mod is correctly installed
 	{
 		NSSetModEnabled( modName, !NSIsModEnabled( modName ) )
 		var panel = file.panels[ int ( Hud_GetScriptID( Hud_GetParent( button ) ) ) - 1 ]
@@ -231,7 +264,7 @@ void function OnAuthenticationAgreementButtonPressed( var button )
 void function OnModLinkButtonPressed( var button )
 {
 	string modName = file.mods[ int ( Hud_GetScriptID( Hud_GetParent( file.currentButton ) ) ) + file.scrollOffset - 1 ].mod.name
-	string link = NSGetModDownloadLinkByModName( modName )
+	string link = expect string( NSGetModDownloadLinkByModName( modName ) )
 	if ( link.find("http://") != 0 && link.find("https://") != 0 )
 		link = "http://" + link // links without the http or https protocol get opened in the internal browser
 	LaunchExternalWebBrowser( link, WEBBROWSER_FLAG_FORCEEXTERNAL )
@@ -319,7 +352,30 @@ void function UpdateList()
 {
 	HideAllPanels()
 	RefreshMods()
+
+	array<string> invalidMods = NSGetInvalidMods()
+	if( invalidMods.len() )
+		AddInvalidMods( invalidMods )
+
 	DisplayModPanels()
+}
+
+void function AddInvalidMods( array<string> invalidMods )
+{
+	PanelContent c = { isHeader = true, type = PanelType.INVALID_MOD_HEADER, ... }
+	c.mod.name = string( invalidMods.len() )
+	file.mods.append( c )
+
+	foreach( invalidMod in invalidMods )
+	{
+		ModPanelData m
+		m.name = invalidMod
+
+		PanelContent c = { type = PanelType.INVALID_MOD, ... }
+		c.mod = m
+
+		file.mods.append( c )
+	}
 }
 
 void function RefreshMods()
@@ -329,7 +385,7 @@ void function RefreshMods()
 
 	bool reverse = GetConVarBool( "modlist_reverse" )
 
-	int lastLoadPriority = reverse ? NSGetModLoadPriority( modNames[ modNames.len() - 1 ] ) + 1 : -1 
+	int lastLoadPriority = reverse ? expect int( NSGetModLoadPriority( modNames[ modNames.len() - 1 ] ) ) + 1 : -1 
 	string searchTerm = Hud_GetUTF8Text( Hud_GetChild( file.menu, "BtnModsSearch" ) ).tolower()
 
 	for ( int i = reverse ? modNames.len() - 1 : 0;
@@ -342,7 +398,7 @@ void function RefreshMods()
 			continue
 
 		bool enabled = NSIsModEnabled( mod )
-		bool required = NSIsModRequiredOnClient( mod )
+		bool required = expect bool( NSIsModRequiredOnClient( mod ) )
 		switch ( GetConVarInt( "filter_mods" ) )
 		{
 			case filterShow.ONLY_ENABLED:
@@ -363,29 +419,29 @@ void function RefreshMods()
 				break
 		}
 
-		int pr = NSGetModLoadPriority( mod )
+		int pr = expect int( NSGetModLoadPriority( mod ) )
 
 		if ( reverse ? pr < lastLoadPriority : pr > lastLoadPriority )
 		{
-			modData m
+			ModPanelData m
 			m.name = pr.tostring()
 
-			panelContent c
+			PanelContent c = { type = PanelType.HEADER, ... }
 			c.mod = m
 			c.isHeader = true
 			file.mods.append( c )
 			lastLoadPriority = pr
 		}
 
-		modData m
+		ModPanelData m
 		m.name = mod
-		m.version = NSGetModVersionByModName( mod )
-		m.link = NSGetModDownloadLinkByModName( mod )
-		m.loadPriority = NSGetModLoadPriority( mod )
+		m.version = expect string( NSGetModVersionByModName( mod ) )
+		m.link = expect string( NSGetModDownloadLinkByModName( mod ) )
+		m.loadPriority = expect int( NSGetModLoadPriority( mod ) )
 		m.enabled = enabled
 		m.conVars = NSGetModConvarsByModName( mod )
 
-		panelContent c
+		PanelContent c
 		c.mod = m
 
 		file.mods.append( c )
@@ -399,8 +455,8 @@ void function DisplayModPanels()
 		if ( i >= file.mods.len() || file.scrollOffset + i >= file.mods.len() ) // don't try to show more panels than needed
 			break
 
-		panelContent c = file.mods[ file.scrollOffset + i ]
-		modData mod = c.mod
+		PanelContent c = file.mods[ file.scrollOffset + i ]
+		ModPanelData mod = c.mod
 		var btn = Hud_GetChild( panel, "BtnMod" )
 		var headerLabel = Hud_GetChild( panel, "Header" )
 		var box = Hud_GetChild( panel, "ControlBox" )
@@ -408,35 +464,66 @@ void function DisplayModPanels()
 		var warning = Hud_GetChild( panel, "WarningImage" )
 		var enabledImage = Hud_GetChild( panel, "EnabledImage" )
 		
-		if ( c.isHeader )
+		switch( c.type )
 		{
-			Hud_SetEnabled( btn, false )
-			Hud_SetVisible( btn, false )
+			case PanelType.MOD:
+				Hud_SetEnabled( btn, true )
+				Hud_SetVisible( btn, true )
+				Hud_SetText( btn, mod.name )
 
-			Hud_SetText( headerLabel, "Load Priority: " + mod.name )
-			Hud_SetVisible( headerLabel, true )
+				Hud_SetVisible( headerLabel, false )
 
-			Hud_SetVisible( box, false )
-			Hud_SetVisible( line, true )
+				SetControlBoxColor( box, mod.name )
+				Hud_SetVisible( box, true )
+				Hud_SetVisible( line, false )
 
-			Hud_SetVisible( warning, false )
-			Hud_SetVisible( enabledImage, false )
-		}
-		else
-		{
-			Hud_SetEnabled( btn, true )
-			Hud_SetVisible( btn, true )
-			Hud_SetText( btn, mod.name )
+				Hud_SetVisible( warning, expect bool( NSIsModRequiredOnClient( c.mod.name ) ) )
 
-			Hud_SetVisible( headerLabel, false )
+				SetModEnabledHelperImageAsset( enabledImage, c.mod.name )
+				break
+			case PanelType.HEADER:
+				Hud_SetEnabled( btn, false )
+				Hud_SetVisible( btn, false )
 
-			SetControlBoxColor( box, mod.name )
-			Hud_SetVisible( box, true )
-			Hud_SetVisible( line, false )
+				Hud_SetText( headerLabel, "Load Priority: " + mod.name )
+				Hud_SetVisible( headerLabel, true )
 
-			Hud_SetVisible( warning, NSIsModRequiredOnClient( c.mod.name ) )
+				Hud_SetVisible( box, false )
+				Hud_SetVisible( line, true )
 
-			SetModEnabledHelperImageAsset( enabledImage, c.mod.name )
+				Hud_SetVisible( warning, false )
+				Hud_SetVisible( enabledImage, false )
+				break
+			case PanelType.INVALID_MOD:
+				Hud_SetEnabled( btn, true )
+				Hud_SetVisible( btn, true )
+				Hud_SetText( btn, mod.name )
+
+				Hud_SetVisible( headerLabel, false )
+
+				Hud_SetVisible( box, false )
+				Hud_SetVisible( line, false )
+
+				Hud_SetVisible( warning, false )
+
+				RuiSetImage( Hud_GetRui( enabledImage ), "basicImage", $"ui/menu/common/dialog_error" )
+				RuiSetFloat3(Hud_GetRui( enabledImage ), "basicImageColor", GetControlColorForMod( mod.name ) )
+				Hud_SetVisible( enabledImage, true )
+				break
+			case PanelType.INVALID_MOD_HEADER:
+				Hud_SetEnabled( btn, false )
+				Hud_SetVisible( btn, false )
+
+				Hud_SetText( headerLabel, Localize( "#INCORRECT_MODS_MODLIST_HEADER", mod.name ) )
+				Hud_SetVisible( headerLabel, true )
+
+				Hud_SetVisible( box, false )
+				Hud_SetVisible( line, true )
+
+				Hud_SetVisible( warning, false )
+				Hud_SetVisible( enabledImage, false )
+				break
+			default:
 		}
 		Hud_SetVisible( panel, true )
 	}
@@ -500,34 +587,46 @@ vector function GetControlColorForMod( string modName )
 
 string function FormatModDescription( string modName )
 {
-	string ret
-	// version
-	ret += format( "Version %s\n", NSGetModVersionByModName( modName ) )
+	string ornull modVersion = NSGetModVersionByModName( modName ); // Returns null for mods that aren't found.
 
-	// load priority
-	ret += format( "Load Priority: %i\n", NSGetModLoadPriority( modName ) )
-
-	// convars
-	array<string> modCvars = NSGetModConvarsByModName( modName )
-	if ( modCvars.len() != 0 && GetConVarBool( "modlist_show_convars" ) )
+	if( modVersion != null )
 	{
-		ret += "ConVars: "
+		string ret
 
-		for ( int i = 0; i < modCvars.len(); i++ )
+		// version
+		ret += format( "Version %s\n", modVersion )
+
+		// load priority
+		ret += format( "Load Priority: %i\n", expect int( NSGetModLoadPriority( modName ) ) )
+
+		// convars
+		array<string> modCvars = NSGetModConvarsByModName( modName )
+		if ( modCvars.len() != 0 && GetConVarBool( "modlist_show_convars" ) )
 		{
-			if ( i != modCvars.len() - 1 )
-				ret += format( "\"%s\", ", modCvars[ i ] )
-			else
-				ret += format( "\"%s\"", modCvars[ i ] )
+			ret += "ConVars: "
+
+			for ( int i = 0; i < modCvars.len(); i++ )
+			{
+				if ( i != modCvars.len() - 1 )
+					ret += format( "\"%s\", ", modCvars[ i ] )
+				else
+					ret += format( "\"%s\"", modCvars[ i ] )
+			}
+
+			ret += "\n"
 		}
 
-		ret += "\n"
+		// description
+		ret += format( "\n%s\n", expect string( NSGetModDescriptionByModName( modName ) ) )
+		return ret
+	}
+	else // optimally should store if a mod is invalid in the struct instead of going by mod names not found, but this is alredy a big pile of spaghetti code so I can't be bothered
+	{
+		// If a mod is named e.g. "R2Northstar/mods/FunnyMod" and another mod is incorrectly installed under that path, the "you installed incorrect bla bla" will not show up, but the mods' description
+		return Localize( "#INCORRECT_MOD_INSTALL_DESCRIPTION" )
 	}
 
-	// description
-	ret += format( "\n%s\n", NSGetModDescriptionByModName( modName ) )
-
-	return ret
+	unreachable
 }
 
 ////////////

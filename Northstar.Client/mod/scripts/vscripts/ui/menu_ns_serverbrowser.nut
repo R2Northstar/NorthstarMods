@@ -986,7 +986,7 @@ void function OnServerSelected( var button )
 		{
 			// this uses semver https://semver.org
 			array<string> serverModVersion = split( NSGetServerRequiredModVersion( serverIndex, i ), "." )
-			array<string> clientModVersion = split( NSGetModVersionByModName( NSGetServerRequiredModName( serverIndex, i ) ), "." )
+			array<string> clientModVersion = split( expect string( NSGetModVersionByModName( NSGetServerRequiredModName( serverIndex, i )  ) ), "." )
 
 			bool semverFail = false
 			// if server has invalid semver don't bother checking
@@ -1004,7 +1004,7 @@ void function OnServerSelected( var button )
 			{
 				DialogData dialogData
 				dialogData.header = "#ERROR"
-				dialogData.message = "Server has mod \"" + NSGetServerRequiredModName( serverIndex, i ) + "\" v" + NSGetServerRequiredModVersion( serverIndex, i ) + " while we have v" + NSGetModVersionByModName( NSGetServerRequiredModName( serverIndex, i ) )
+				dialogData.message = "Server has mod \"" + NSGetServerRequiredModName( serverIndex, i ) + "\" v" + NSGetServerRequiredModVersion( serverIndex, i ) + " while we have v" + expect string( NSGetModVersionByModName( NSGetServerRequiredModName( serverIndex, i ) ) )
 				dialogData.image = $"ui/menu/common/dialog_error"
 
 				#if PC_PROG
@@ -1082,7 +1082,7 @@ void function ThreadedAuthAndConnectToServer( string password = "" )
 		// unload mods we don't need, load necessary ones and reload mods before connecting
 		foreach ( string mod in NSGetModNames() )
 		{
-			if ( NSIsModRequiredOnClient( mod ) )
+			if ( expect bool( NSIsModRequiredOnClient( mod ) ) )
 			{
 				modsChanged = modsChanged || NSIsModEnabled( mod ) != requiredMods.contains( mod )
 				NSSetModEnabled( mod, requiredMods.contains( mod ) )

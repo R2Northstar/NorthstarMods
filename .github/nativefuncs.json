@@ -21,19 +21,19 @@
 		{
 			"name":"NSGetModDescriptionByModName",
 			"helpText":"",
-			"returnTypeString":"string",
+			"returnTypeString":"string ornull",
 			"argTypes":"string modName"
 		},
 		{
 			"name":"NSGetModVersionByModName",
 			"helpText":"",
-			"returnTypeString":"string",
+			"returnTypeString":"string ornull",
 			"argTypes":"string modName"
 		},
 		{
 			"name":"NSGetModDownloadLinkByModName",
 			"helpText":"",
-			"returnTypeString":"string",
+			"returnTypeString":"string ornull",
 			"argTypes":"string modName"
 		},
 		{
