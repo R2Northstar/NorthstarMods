@@ -114,7 +114,7 @@
 			"RunOn": "UI"
 		},
 		{
-			"Path": "ui/ms_slider.nut",
+			"Path": "ui/ns_slider.nut",
 			"RunOn": "UI"
 		},
 		{
