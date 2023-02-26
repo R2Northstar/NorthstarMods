@@ -1236,6 +1236,7 @@ void function OnHarvesterDamaged( entity harvester, var damageInfo )
 
 	int damageSourceID = DamageInfo_GetDamageSourceIdentifier( damageInfo )
 	entity attacker = DamageInfo_GetAttacker( damageInfo )
+	int attackerTypeID = FD_GetAITypeID_ByString( attacker.GetTargetName() )
 	float damageAmount = DamageInfo_GetDamage( damageInfo )
 
 	if ( !damageSourceID && !damageAmount && !attacker )
@@ -1250,33 +1251,35 @@ void function OnHarvesterDamaged( entity harvester, var damageInfo )
 	float shieldPercent = ( ( harvester.GetShieldHealth().tofloat() / harvester.GetShieldHealthMax() ) * 100 )
 	if ( shieldPercent < 100 && !file.harvesterShieldDown )
 	{
-		switch(damageSourceID)
+		switch(attackerTypeID)
 		{
-			case eDamageSourceId.titanEmpField:
-			PlayFactionDialogueToTeam( "fd_nagKillTitanEMP", TEAM_MILITIA )
+			case eFD_AITypeIDs.TITAN_ARC:
+			PlayFactionDialogueToTeam( "fd_nagTitanArcAtBase", TEAM_MILITIA )
 			break
 		
-			case eDamageSourceId.damagedef_stalker_powersupply_explosion_small:
+			case eFD_AITypeIDs.STALKER:
 			PlayFactionDialogueToTeam( "fd_nagKillStalkers", TEAM_MILITIA )
 			break
 			
-			case eDamageSourceId.damagedef_stalker_powersupply_explosion_large:
-			PlayFactionDialogueToTeam( "fd_nagKillStalkers", TEAM_MILITIA )
-			break
-			
-			case eDamageSourceId.mp_weapon_rspn101: //Not sure how i would do a Grunt check, so i went for R-201 damage type which is the weapon they use
+			case eFD_AITypeIDs.GRUNT:
 			PlayFactionDialogueToTeam( "fd_nagKillInfantry", TEAM_MILITIA )
 			break
 			
-			case eDamageSourceId.mp_titanweapon_rocketeer_rocketstream:
+			case eFD_AITypeIDs.TITAN_MORTAR:
 			PlayFactionDialogueToTeam( "fd_nagKillTitansMortar", TEAM_MILITIA )
+			break
+			
+			case eFD_AITypeIDs.SPECTRE_MORTAR:
+			PlayFactionDialogueToTeam( "fd_nagKillMortarSpectres", TEAM_MILITIA )
+			break
+			
+			case eFD_AITypeIDs.TITAN_NUKE:
+			PlayFactionDialogueToTeam( "fd_nukeTitanNearBase", TEAM_MILITIA )
 			break
 			
 			default:
 			PlayFactionDialogueToTeam( "fd_baseShieldTakingDmg", TEAM_MILITIA )
 			break
-			
-			//Mortar Spectres are still pending, but i'm not sure what damage type they inflict on the Harvester yet
 		}
 	}
 
