@@ -746,7 +746,16 @@ bool function runWave( int waveIndex, bool shouldDoBuyTime )
 	}
 
 	//SetGlobalNetTime("FD_nextWaveStartTime",Time()+10)
-	wait 10
+	if (waveIndex==0)
+	{
+		wait 14
+		//I tried to make a check of riff_minimap_state for Insane difficulty, but it didnt work so Droz & Davis will say about the minimap regardless Insane diff for now
+		PlayFactionDialogueToTeam( "fd_minimapTip" , TEAM_MILITIA )
+		wait 14
+	}
+	else
+		wait 5
+
 	SetGlobalNetInt( "FD_waveState", WAVE_STATE_INCOMING )
 	foreach( entity player in GetPlayerArray() )
 	{
@@ -754,6 +763,15 @@ bool function runWave( int waveIndex, bool shouldDoBuyTime )
 		player.SetPlayerNetBool( "FD_readyForNextWave", false )
 	}
 	SetGlobalNetBool( "FD_waveActive", true )
+	
+	//Droz & Dravis should be mentioning when waves are starting
+	if (waveIndex==0)
+		PlayFactionDialogueToTeam( "fd_firstWaveStartPrefix" , TEAM_MILITIA )
+	else if (isFinalWave())
+		PlayFactionDialogueToTeam( "fd_finalWaveStartPrefix" , TEAM_MILITIA )
+	else
+		PlayFactionDialogueToTeam( "fd_newWaveStartPrefix" , TEAM_MILITIA )
+	
 	MessageToTeam( TEAM_MILITIA, eEventNotifications.FD_AnnounceWaveStart )
 	SetGlobalNetInt( "FD_waveState", WAVE_STATE_BREAK )
 
@@ -1231,7 +1249,36 @@ void function OnHarvesterDamaged( entity harvester, var damageInfo )
 
 	float shieldPercent = ( ( harvester.GetShieldHealth().tofloat() / harvester.GetShieldHealthMax() ) * 100 )
 	if ( shieldPercent < 100 && !file.harvesterShieldDown )
-		PlayFactionDialogueToTeam( "fd_baseShieldTakingDmg", TEAM_MILITIA )
+	{
+		switch(damageSourceID)
+		{
+			case eDamageSourceId.titanEmpField:
+			PlayFactionDialogueToTeam( "fd_nagKillTitanEMP", TEAM_MILITIA )
+			break
+		
+			case eDamageSourceId.damagedef_stalker_powersupply_explosion_small:
+			PlayFactionDialogueToTeam( "fd_nagKillStalkers", TEAM_MILITIA )
+			break
+			
+			case eDamageSourceId.damagedef_stalker_powersupply_explosion_large:
+			PlayFactionDialogueToTeam( "fd_nagKillStalkers", TEAM_MILITIA )
+			break
+			
+			case eDamageSourceId.mp_weapon_rspn101: //Not sure how i would do a Grunt check, so i went for R-201 damage type which is the weapon they use
+			PlayFactionDialogueToTeam( "fd_nagKillInfantry", TEAM_MILITIA )
+			break
+			
+			case eDamageSourceId.mp_titanweapon_rocketeer_rocketstream:
+			PlayFactionDialogueToTeam( "fd_nagKillTitansMortar", TEAM_MILITIA )
+			break
+			
+			default:
+			PlayFactionDialogueToTeam( "fd_baseShieldTakingDmg", TEAM_MILITIA )
+			break
+			
+			//Mortar Spectres are still pending, but i'm not sure what damage type they inflict on the Harvester yet
+		}
+	}
 
 	if ( shieldPercent < 35 && !file.harvesterShieldDown ) // idk i made this up
 		PlayFactionDialogueToTeam( "fd_baseShieldLow", TEAM_MILITIA )

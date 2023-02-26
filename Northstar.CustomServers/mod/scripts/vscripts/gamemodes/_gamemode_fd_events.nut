@@ -77,7 +77,26 @@ global enum FD_IncomingWarnings
 	ArcTitan,
 	Reaper,
 	MortarTitan,
-	NukeTitan
+	NukeTitan,
+	Reapers,
+	Ticks,
+	Stalkers,
+	MortarSpectre,
+	ReaperTicks,
+	Flyers,
+	EliteTitan,
+	Infantry,
+	CloakDroneIntro,
+	TitanReg,
+	MortarTitanIntro,
+	NukeTitanIntro,
+	ArcTitanIntro,
+	WaveNoTitansDrops,
+	PreNukeTitan,
+	PreMortarTitan,
+	PreArcTitan,
+	Everything,
+	BigWave
 }
 
 global table< string, entity > GlobalEventEntitys
@@ -580,7 +599,105 @@ WaveEvent function CreateWarningEvent( int warningType, int nextEventIndex, int 
 	event.nextEventIndex = nextEventIndex
 	event.shouldThread = false
 
-	event.soundEvent.soundEventName = "fd_inc" + ["CloakDrone", "ArcTitan", "Reaper", "TitansMortar", "TitansNuke"][warningType] + "Clump"
+	switch(warningType) //I wish i could keep the old method for shorter code, but it wasn't reliable for the variance of entries in these Announcements
+	{
+		case FD_IncomingWarnings.CloakDrone:
+		event.soundEvent.soundEventName = "fd_incCloakDroneClump"
+		break
+		
+		case FD_IncomingWarnings.ArcTitan:
+		event.soundEvent.soundEventName = "fd_incArcTitanClump"
+		break
+		
+		case FD_IncomingWarnings.Reaper:
+		event.soundEvent.soundEventName = "fd_incReaperClump"
+		break
+		
+		case FD_IncomingWarnings.MortarTitan:
+		event.soundEvent.soundEventName = "fd_incTitansMortarClump"
+		break
+		
+		case FD_IncomingWarnings.NukeTitan:
+		event.soundEvent.soundEventName = "fd_incTitansNukeClump"
+		break
+		
+		case FD_IncomingWarnings.ReaperAlt:
+		event.soundEvent.soundEventName = "fd_waveTypeReapers"
+		break
+		
+		case FD_IncomingWarnings.Ticks:
+		event.soundEvent.soundEventName = "fd_waveTypeTicks"
+		break
+		
+		case FD_IncomingWarnings.Stalkers:
+		event.soundEvent.soundEventName = "fd_waveTypeStalkers"
+		break
+		
+		case FD_IncomingWarnings.MortarSpectre:
+		event.soundEvent.soundEventName = "fd_waveTypeMortarSpectre"
+		break
+		
+		case FD_IncomingWarnings.ReaperTicks:
+		event.soundEvent.soundEventName = "fd_waveTypeReaperTicks"
+		break
+		
+		case FD_IncomingWarnings.Flyers:
+		event.soundEvent.soundEventName = "fd_waveTypeFlyers"
+		break
+		
+		case FD_IncomingWarnings.EliteTitan:
+		event.soundEvent.soundEventName = "fd_waveTypeEliteTitan"
+		break
+		
+		case FD_IncomingWarnings.Infantry:
+		event.soundEvent.soundEventName = "fd_waveTypeInfantry"
+		break
+		
+		case FD_IncomingWarnings.CloakDroneIntro:
+		event.soundEvent.soundEventName = "fd_waveTypeCloakDrone"
+		break
+		
+		case FD_IncomingWarnings.TitanReg:
+		event.soundEvent.soundEventName = "fd_waveTypeTitanReg"
+		break
+		
+		case FD_IncomingWarnings.MortarTitanIntro:
+		event.soundEvent.soundEventName = "fd_waveTypeTitanMortar"
+		break
+		
+		case FD_IncomingWarnings.NukeTitanIntro:
+		event.soundEvent.soundEventName = "fd_waveTypeTitanNuke"
+		break
+		
+		case FD_IncomingWarnings.ArcTitanIntro:
+		event.soundEvent.soundEventName = "fd_waveTypeTitanArc"
+		break
+		
+		case FD_IncomingWarnings.WaveNoTitansDrops:
+		event.soundEvent.soundEventName = "fd_waveNoTitanDrops"
+		break
+		
+		case FD_IncomingWarnings.PreNukeTitan:
+		event.soundEvent.soundEventName = "fd_soonNukeTitans"
+		break
+		
+		case FD_IncomingWarnings.PreMortarTitan:
+		event.soundEvent.soundEventName = "fd_soonMortarTitans"
+		break
+		
+		case FD_IncomingWarnings.PreArcTitan:
+		event.soundEvent.soundEventName = "fd_soonArcTitans"
+		break
+		
+		case FD_IncomingWarnings.Everything:
+		event.soundEvent.soundEventName = "fd_waveComboMultiMix"
+		break
+		
+		case FD_IncomingWarnings.BigWave:
+		event.soundEvent.soundEventName = "fd_bigWaveInc"
+		break
+	}
+	
 	return event
 }
 
