@@ -78,7 +78,7 @@ global enum FD_IncomingWarnings
 	Reaper,
 	MortarTitan,
 	NukeTitan,
-	Reapers,
+	ReaperAlt,
 	Ticks,
 	Stalkers,
 	MortarSpectre,
