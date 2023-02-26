@@ -746,16 +746,17 @@ bool function runWave( int waveIndex, bool shouldDoBuyTime )
 	}
 
 	//SetGlobalNetTime("FD_nextWaveStartTime",Time()+10)
-	if (waveIndex==0)
+	if (waveIndex==0 && GetCurrentPlaylistVarFloat( "riff_minimap_state", 0 ) == 0)
 	{
 		wait 14
-		//I tried to make a check of riff_minimap_state for Insane difficulty, but it didnt work so Droz & Davis will say about the minimap regardless Insane diff for now
 		PlayFactionDialogueToTeam( "fd_minimapTip" , TEAM_MILITIA )
 		wait 14
 	}
+	else if (waveIndex==0) //Still wait 14 seconds to let them to speak about the Harvester being up and running on first wave
+		wait 14
 	else
 		wait 5
-
+	
 	SetGlobalNetInt( "FD_waveState", WAVE_STATE_INCOMING )
 	foreach( entity player in GetPlayerArray() )
 	{
