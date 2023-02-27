@@ -32,5 +32,5 @@ void function FFAPlayerScoreThink( entity player )
 	int team = player.GetTeam()
 
 	player.WaitSignal( "OnDestroy" ) // this can handle disconnecting
-	AddTeamScore( team, -GameRules_GetTeamScore( team ))
+	AddTeamScore( team, -GameRules_GetTeamScore( team ) )
 }
