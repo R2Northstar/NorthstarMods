@@ -589,10 +589,7 @@ void function AddEntityCallback_OnFinalDamaged( entity ent, void functionref( en
 
 void function RemoveEntityCallback_OnFinalDamaged( entity ent, void functionref( entity ent, var damageInfo ) callbackFunc )
 {
-	int index = ent.e.entFinalDamageCallbacks.find( callbackFunc )
-
-	Assert( index != -1, "Requested FinalDamageCallback " + string( callbackFunc ) + " to be removed not found! " )
-	ent.e.entFinalDamageCallbacks.fastremove( index )
+	ent.e.entFinalDamageCallbacks.fastremovebyvalue( callbackFunc )
 
 	if ( ent.e.entFinalDamageCallbacks.len() == 0 && ent.e.entPostDamageCallbacks.len() == 0 && ent.e.entDamageCallbacks.len() == 0 )
 		ent.SetDamageNotifications( false )
