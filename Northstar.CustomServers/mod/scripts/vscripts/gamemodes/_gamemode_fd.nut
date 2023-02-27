@@ -1094,6 +1094,7 @@ void function FD_OnArcTrapTriggered( entity victim, var damageInfo )
 		return
 
 	AddPlayerScore( owner, "FDArcTrapTriggered" )
+	file.players[ owner ].defenseScoreThisRound += 1
 }
 
 void function FD_OnArcWaveDamage( entity ent, var damageInfo )
@@ -1120,6 +1121,7 @@ void function FD_OnSonarStart( entity ent, vector position, int sonarTeam, entit
 		return
 
 	AddPlayerScore( sonarOwner, "FDSonarPulse" )//should only triggered once during sonar time?
+	file.players[ sonarOwner ].defenseScoreThisRound += 1
 }
 
 void function FD_SetupEpilogue()
