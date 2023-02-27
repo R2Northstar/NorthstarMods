@@ -91,12 +91,16 @@ global enum FD_IncomingWarnings
 	MortarTitanIntro,
 	NukeTitanIntro,
 	ArcTitanIntro,
-	WaveNoTitansDrops,
+	TitanfallBlocked,
 	PreNukeTitan,
 	PreMortarTitan,
 	PreArcTitan,
 	Everything,
-	BigWave
+	LightWave,
+	MediumWave,
+	HeavyWave,
+	NoMoreTitansInWave,
+	ArcTitanAlt
 }
 
 global table< string, entity > GlobalEventEntitys
@@ -673,7 +677,7 @@ WaveEvent function CreateWarningEvent( int warningType, int nextEventIndex, int 
 		event.soundEvent.soundEventName = "fd_waveTypeTitanArc"
 		break
 		
-		case FD_IncomingWarnings.WaveNoTitansDrops:
+		case FD_IncomingWarnings.TitanfallBlocked:
 		event.soundEvent.soundEventName = "fd_waveNoTitanDrops"
 		break
 		
@@ -693,8 +697,24 @@ WaveEvent function CreateWarningEvent( int warningType, int nextEventIndex, int 
 		event.soundEvent.soundEventName = "fd_waveComboMultiMix"
 		break
 		
-		case FD_IncomingWarnings.BigWave:
-		event.soundEvent.soundEventName = "fd_bigWaveInc"
+		case FD_IncomingWarnings.LightWave:
+		event.soundEvent.soundEventName = "fd_introEasy"
+		break
+		
+		case FD_IncomingWarnings.MediumWave:
+		event.soundEvent.soundEventName = "fd_introMedium"
+		break
+		
+		case FD_IncomingWarnings.HeavyWave:
+		event.soundEvent.soundEventName = "fd_introHard"
+		break
+		
+		case FD_IncomingWarnings.NoMoreTitansInWave:
+		event.soundEvent.soundEventName = "fd_waveNoTitans"
+		break
+		
+		case FD_IncomingWarnings.ArcTitanAlt:
+		event.soundEvent.soundEventName = "fd_nagKillTitanEMP"
 		break
 	}
 	
