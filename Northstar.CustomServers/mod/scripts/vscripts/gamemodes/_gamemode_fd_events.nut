@@ -87,7 +87,7 @@ global enum FD_IncomingWarnings
 	EliteTitan,
 	Infantry,
 	CloakDroneIntro,
-	TitanReg,
+	EnemyTitansIncoming,
 	MortarTitanIntro,
 	NukeTitanIntro,
 	ArcTitanIntro,
@@ -661,7 +661,7 @@ WaveEvent function CreateWarningEvent( int warningType, int nextEventIndex, int 
 		event.soundEvent.soundEventName = "fd_waveTypeCloakDrone"
 		break
 		
-		case FD_IncomingWarnings.TitanReg:
+		case FD_IncomingWarnings.EnemyTitansIncoming:
 		event.soundEvent.soundEventName = "fd_waveTypeTitanReg"
 		break
 		
