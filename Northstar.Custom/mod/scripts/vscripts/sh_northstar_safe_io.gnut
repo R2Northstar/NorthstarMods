@@ -31,5 +31,6 @@ void function NSHandleLoadResult( int handle, string result )
         delete pendingJSONCallbacks[handle]
         return
     }
+    throw "Invalid IO callback handle"
     unreachable
 }

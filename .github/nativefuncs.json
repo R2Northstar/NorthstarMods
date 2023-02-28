@@ -182,7 +182,7 @@
 		},
 		{
 			"name":"NS_InternalLoadFile",
-			"helpText":"Loads a file asynchrounously.",
+			"helpText":"Loads a file asynchronously.",
 			"returnTypeString":"int",
 			"argTypes":"string file"
 		},
@@ -370,7 +370,7 @@
 		},
 		{
 			"name":"NS_InternalLoadFile",
-			"helpText":"Loads a file asynchrounously.",
+			"helpText":"Loads a file asynchronously.",
 			"returnTypeString":"int",
 			"argTypes":"string file"
 		},
@@ -726,7 +726,7 @@
 		},
 		{
 			"name":"NS_InternalLoadFile",
-			"helpText":"Loads a file asynchrounously.",
+			"helpText":"Loads a file asynchronously.",
 			"returnTypeString":"int",
 			"argTypes":"string file"
 		},
