@@ -73,21 +73,19 @@ void function AdvanceToModListMenu( var button )
 
 void function ScrollToModListIndex( int index )
 {
-	if( index > 0 )
+	if( index >= 0 )
 	{
 		file.scrollOffset = index
 	}
 	else
 	{
-		int index = file.mods.len() - file.panels.len() - index - 1
-		if( index >= 0 )
-			file.scrollOffset = file.mods.len() - file.panels.len() - index - 1
+		file.scrollOffset = file.mods.len() - file.panels.len() - index - 1
 	}
 
 	UpdateList()
 	UpdateListSliderPosition()
 
-	Hud_SetFocused( Hud_GetChild( file.panels[ index > 0 ? index : file.panels.len() + index ], "BtnMod" ) )
+	Hud_SetFocused( Hud_GetChild( file.panels[ index >= 0 ? index : file.panels.len() + index ], "BtnMod" ) )
 }
 
 void function InitModMenu()
@@ -245,7 +243,6 @@ void function OnModButtonPressed( var button )
 		SetControlBoxColor( Hud_GetChild( panel, "ControlBox" ), modName )
 		SetControlBarColor( modName )
 		SetModEnabledHelperImageAsset( Hud_GetChild( panel, "EnabledImage" ), modName )
-		// RefreshMods()
 		UpdateListSliderPosition()
 		UpdateListSliderHeight()
 	}
@@ -351,12 +348,12 @@ void function HideAllPanels()
 void function UpdateList()
 {
 	HideAllPanels()
-	RefreshMods()
-
+	file.mods.clear()
 	array<string> invalidMods = NSGetInvalidMods()
 	if( invalidMods.len() )
 		AddInvalidMods( invalidMods )
 
+	RefreshMods()
 	DisplayModPanels()
 }
 
@@ -381,7 +378,7 @@ void function AddInvalidMods( array<string> invalidMods )
 void function RefreshMods()
 {
 	array<string> modNames = NSGetModNames()
-	file.mods.clear()
+	// file.mods.clear()
 
 	bool reverse = GetConVarBool( "modlist_reverse" )
 

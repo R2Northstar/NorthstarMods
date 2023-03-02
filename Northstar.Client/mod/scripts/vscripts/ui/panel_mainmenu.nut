@@ -63,7 +63,7 @@ void function InitMainMenuPanel()
 		void function( var button )
 		{ 
 			AdvanceMenu( GetMenu( "ModListMenu" ) )
-			ScrollToModListIndex( -1 )
+			ScrollToModListIndex( 0 )
 		}
 	)
 
