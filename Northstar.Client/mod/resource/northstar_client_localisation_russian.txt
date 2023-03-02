@@ -219,7 +219,7 @@
 		"PLAYERS_COLUMN" "Игроки"
 		"MAP_COLUMN" "Карта"
 		"GAMEMODE_COLUMN" "Режим игры"
-		"LATENCY_COLUMN" "Задержка"
+		"REGION_COLUMN" "Регион"
 		"SEARCHBAR_LABEL" "Поиск:"
 		"MAP_FILTER" "Карта"
 		"GAMEMODE_FILTER" "Режим игры"
@@ -242,5 +242,16 @@
 		// In-game chat
 		"HUD_CHAT_WHISPER_PREFIX" "[WHISPER]"
 		"HUD_CHAT_SERVER_PREFIX" "[SERVER]"
+
+		"NO_GAMESERVER_RESPONSE"          "Игровой сервер не отвечает"
+		"BAD_GAMESERVER_RESPONSE"        "Игровой сервер не дал правильного ответа"
+		"UNAUTHORIZED_GAMESERVER"      "Игровой сервер не авторизирован чтобы сделать данный запрос"
+		"UNAUTHORIZED_GAME"                     "Не удалось найти Titanfall 2 на этом аккаунте"
+		"UNAUTHORIZED_PWD"                       "Неправильный пароль"
+		"STRYDER_RESPONSE"                             "Не удалось разобрать ответ stryder"
+		"PLAYER_NOT_FOUND"                           "Не удалось найти аккаунт игрока"
+		"INVALID_MASTERSERVER_TOKEN"    "Срок действия жетона главного сервера истек или не является правильным"
+		"JSON_PARSE_ERROR"                              "Ошибка разбора ответа json"
+		"UNSUPPORTED_VERSION"                    "Используемая вами версия больше не поддерживается"
 	}
 }

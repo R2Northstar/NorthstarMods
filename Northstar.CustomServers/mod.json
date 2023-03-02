@@ -1,7 +1,7 @@
 {
 	"Name": "Northstar.CustomServers",
 	"Description": "Attempts to recreate the behaviour of vanilla Titanfall 2 servers, as well as changing some scripts to allow better support for mods",
-	"Version": "1.7.0",
+	"Version": "1.10.0",
 	"LoadPriority": 0,
 	"ConVars": [
 		{
@@ -49,15 +49,16 @@
 		{
 			"Name": "ns_should_log_unknown_clientcommands",
 			"DefaultValue": "1"
+		},
+		{
+			"Name": "ns_allow_kill_commands",
+			"DefaultValue": "0"
 		}
 	],
 	"Scripts": [
 		{
 			"Path": "_custom_codecallbacks.gnut",
-			"RunOn": "SERVER",
-			"ServerCallback": {
-				"Before": "NSSetupChathooksServer"
-			}
+			"RunOn": "SERVER"
 		},
 		{
 			"Path": "_northstar_cheatcommands.nut",
@@ -100,10 +101,7 @@
 		},
 		{
 			"Path": "sh_server_to_client_stringcommands.gnut",
-			"RunOn": "CLIENT || SERVER",
-			"ClientCallback": {
-				"After": "ServerToClientStringCommands_Init"
-			}
+			"RunOn": "CLIENT || SERVER"
 		},
 		{
 			"Path": "gamemodes/_gamemode_fra.nut",
@@ -144,6 +142,13 @@
 			"RunOn": "SERVER && MP",
 			"ServerCallback": {
 				"Before": "RespawnProtection_Init"
+			}
+		},
+		{
+			"Path": "/ai/_ai_turret_sentry.gnut",
+			"RunOn": "SERVER && MP",
+			"ServerCallback": {
+				"After": "AiTurretSentry_Init"
 			}
 		}
 	]

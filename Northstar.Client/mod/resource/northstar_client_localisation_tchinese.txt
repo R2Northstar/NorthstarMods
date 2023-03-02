@@ -82,6 +82,8 @@
 		"cp_amped_capture_points" "強化據點"
 		"coliseum_loadouts_enabled" "競技場裝備"
 
+		"aitdm_archer_grunts" "射手飛彈步兵"
+
 		// northstar.custom localisation is just deciding not to work, so putting it here for now
 		"PL_sbox" "沙盒"
 		"PL_sbox_lobby" "沙盒大廳"
@@ -274,7 +276,7 @@
 		"PLAYERS_COLUMN" "玩家"
 		"MAP_COLUMN" "地圖"
 		"GAMEMODE_COLUMN" "遊戲模式"
-		"LATENCY_COLUMN" "延遲"
+		"REGION_COLUMN" "地區"
 		"SEARCHBAR_LABEL" "搜尋："
 		"MAP_FILTER" "地圖"
 		"GAMEMODE_FILTER" "遊戲模式"
@@ -310,5 +312,16 @@
 		// In-game chat
 		"HUD_CHAT_WHISPER_PREFIX" "[WHISPER]"
 		"HUD_CHAT_SERVER_PREFIX" "[SERVER]"
+
+		"NO_GAMESERVER_RESPONSE"         "無法連接到遊戲伺服器'"
+		"BAD_GAMESERVER_RESPONSE"         "遊戲伺服器回應無效"
+		"UNAUTHORIZED_GAMESERVER"         "遊戲伺服器無法完成請求，因為它未與主伺服器進行驗證"
+		"UNAUTHORIZED_GAME"                "Stryder 無法確認當前賬戶擁有Titanfall 2"
+		"UNAUTHORIZED_PWD"                 "密碼錯誤"
+		"STRYDER_RESPONSE"                 "無法讀取Stryder回應"
+		"PLAYER_NOT_FOUND"                 "找不到玩家賬戶"
+		"INVALID_MASTERSERVER_TOKEN"     "主伺服器token過期或無效"
+		"JSON_PARSE_ERROR"                 "讀取json回應時發生錯誤"
+		"UNSUPPORTED_VERSION"             "您的遊戲版本過低"
 	}
 }

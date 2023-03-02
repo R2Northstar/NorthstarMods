@@ -43,7 +43,7 @@ void function InitMapsMenu()
 {
 	file.menu = GetMenu( "MapsMenu" )
 	
-	AddMouseMovementCaptureHandler( file.menu, UpdateMouseDeltaBuffer )
+	AddMouseMovementCaptureHandler( Hud_GetChild(file.menu, "MouseMovementCapture"), UpdateMouseDeltaBuffer )
 	
 
 	AddMenuEventHandler( file.menu, eUIEvent.MENU_CLOSE, OnCloseMapsMenu )
@@ -309,7 +309,7 @@ void function LockMapButton( var element )
 bool function IsLocked( string map )
 {
 	
-	bool sp = map.find( "sp_" ) == 0
+	bool sp = map.find( "sp_" ) == 0 && PrivateMatch_GetSelectedMode() != "sp_coop"
 	if ( sp )
 		return true
 

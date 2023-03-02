@@ -82,6 +82,8 @@ Choisissez Oui si vous êtes d'accord. Ce choix peut être modifié à tout inst
 		"cp_amped_capture_points" "Points de capture améliorés"
 		"coliseum_loadouts_enabled" "Equipements du Colisée"
 
+		"aitdm_archer_grunts" "Soldats (Archer)"
+
 		// northstar.custom localisation is just deciding not to work, so putting it here for now
 		"PL_sbox" "Bac à sable"
 		"PL_sbox_lobby" "Lobby: Bac à sable"
@@ -274,7 +276,7 @@ Choisissez Oui si vous êtes d'accord. Ce choix peut être modifié à tout inst
 		"PLAYERS_COLUMN" "Joueurs"
 		"MAP_COLUMN" "Carte"
 		"GAMEMODE_COLUMN" "Mode de jeu"
-		"LATENCY_COLUMN" "Latence"
+		"REGION_COLUMN" "Région"
 		"SEARCHBAR_LABEL" "Recherche :"
 		"MAP_FILTER" "Carte"
 		"GAMEMODE_FILTER" "Mode de jeu"
@@ -306,5 +308,16 @@ Choisissez Oui si vous êtes d'accord. Ce choix peut être modifié à tout inst
 		// In-game chat
 		"HUD_CHAT_WHISPER_PREFIX" "[WHISPER]"
 		"HUD_CHAT_SERVER_PREFIX" "[SERVER]"
+
+		"NO_GAMESERVER_RESPONSE"         "Le serveur de jeu ne répond pas"
+		"BAD_GAMESERVER_RESPONSE"         "Le serveur a renvoyé une réponse invalide"
+		"UNAUTHORIZED_GAMESERVER"         "Le serveur de jeu n'est pas autorisé à réaliser cette requête"
+		"UNAUTHORIZED_GAME"                "Stryder n'a pas pu confirmer que ce compte possède Titanfall 2"
+		"UNAUTHORIZED_PWD"                 "Mot de passe incorrect"
+		"STRYDER_RESPONSE"                 "Impossible d'analyser la réponse de Stryder"
+		"PLAYER_NOT_FOUND"                 "Impossible de trouver le compte du joueur"
+		"INVALID_MASTERSERVER_TOKEN"     "Jeton du server maître invalide ou expiré"
+		"JSON_PARSE_ERROR"                 "Une erreur est survenue durant l'analyse JSON"
+		"UNSUPPORTED_VERSION"             "La version que vous utilisez n'est plus supportée"
 	}
 }
