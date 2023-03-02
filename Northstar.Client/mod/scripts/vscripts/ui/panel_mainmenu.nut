@@ -211,7 +211,7 @@ void function ShowInvalidModsHint()
 	Hud_SetWidth( Hud_GetChild( panel, "Frame" ), width )
 	Hud_SetWidth( Hud_GetChild( panel, "ButtoN" ), width )
 
-	Hud_SetXOverTime( panel, -Hud_GetWidth( panel ), 1.0, INTERPOLATOR_SIMPLESPLINE )
+	Hud_SetXOverTime( panel, -Hud_GetWidth( panel ), 0.3, INTERPOLATOR_SIMPLESPLINE )
 	RuiSetImage( Hud_GetRui( Hud_GetChild( panel, "Image" ) ), "basicImage", $"ui/menu/common/dialog_error" )
 }
 

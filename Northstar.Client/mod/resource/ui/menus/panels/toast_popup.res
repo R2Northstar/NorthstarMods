@@ -8,7 +8,7 @@ resource/ui/menus/panels/toast_popup.res
 		auto_wide_tocontents	1
 
 		image		vgui/hud/white
-		drawcolor	"0 0 0 180"
+		drawcolor	"0 0 0 240"
 		scaleImage	1
 	}
 
