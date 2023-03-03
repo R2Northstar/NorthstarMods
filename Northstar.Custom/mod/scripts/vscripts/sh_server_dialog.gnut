@@ -15,8 +15,7 @@ float cooldown = 0.0
 
 #if SERVER
 
-struct 
-{
+struct  {
     table< entity, array< void functionref( entity ) > > playerButtonCallBack // array for each button
 } file
 
@@ -33,7 +32,7 @@ global struct ServerDialogData
     string message = " "
     // DialogMessageRuiData &ruiMessage
     // array<int> messageColor = [161, 161, 161, 255] 
-    string image = "." // assets can not be sent to client without adding stuff to the launcher so using StringToAsset on UI
+    string image = "."
     string rightImage = "."
     bool forceChoice = false
     bool noChoice = false
@@ -74,8 +73,8 @@ void function SendServerDialog( entity player, ServerDialogData dialog )
 {
     array<string> args
 
-    args.append( StringReplace( dialog.header, " ", "./s.", true, true ) )
-    args.append( StringReplace( dialog.message, " ", "./s.", true, true ) )
+    args.append( StringReplace( dialog.header, " ", "/s", true, true ) )
+    args.append( StringReplace( dialog.message, " ", "/s", true, true ) )
     args.append( dialog.image )
     args.append( dialog.rightImage )
     args.append( dialog.forceChoice.tointeger().tostring() )
@@ -89,34 +88,16 @@ void function SendServerDialog( entity player, ServerDialogData dialog )
 
     _ResetPlayerButtonCallBacks( player )
 
-    if ( dialog.buttonData.len() >= 1 )
+    for( int i; i < dialog.buttonData.len() && i < 4; i++ )
     {
-        args.append( StringReplace( dialog.buttonData[0].text, " ", "./s.", true, true ) )
-        _AddPlayerButtonCallBack( player, dialog.buttonData[0].callback )
-    }
-
-    if ( dialog.buttonData.len() >= 2 )
-    {
-        args.append( StringReplace( dialog.buttonData[1].text, " ", "./s.", true, true ) )
-        _AddPlayerButtonCallBack( player, dialog.buttonData[1].callback )
-    }
-
-    if ( dialog.buttonData.len() >= 3 )
-    {
-        args.append( StringReplace( dialog.buttonData[2].text, " ", "./s.", true, true ) )
-        _AddPlayerButtonCallBack( player, dialog.buttonData[2].callback )
-    }
-
-    if ( dialog.buttonData.len() >= 4 )
-    {
-        args.append( StringReplace( dialog.buttonData[3].text, " ", "./s.", true, true ) )
-        _AddPlayerButtonCallBack( player, dialog.buttonData[3].callback )
+        args.append( StringReplace( dialog.buttonData[i].text, " ", "/s", true, true ) )
+        _AddPlayerButtonCallBack( player, dialog.buttonData[i].callback )
     }
 
     while( args.len() < 16 ) // this wouldn't add buttons but I added it so the array len stays the same
         args.append( "." )
 
-    string command = "ServerRequestResquest"
+    string command = "ServerRequestRequest"
 
     foreach( string arg in args )
     {
@@ -160,7 +141,7 @@ bool function ClientCommand_Button_Clicked( entity player, array<string> args )
 
 void function ServerDialogueOnClientInit()
 {
-    AddServerToClientStringCommandCallback( "ServerRequestResquest", ServerCallback_DialogueRequestReceived )
+    AddServerToClientStringCommandCallback( "ServerRequestRequest", ServerCallback_DialogueRequestReceived )
 }
 
 //  string header
@@ -184,8 +165,8 @@ void function ServerCallback_DialogueRequestReceived( array<string> args )
     if ( args.len() != 16 )
         return
     
-    string header = StringReplace( args[0], "./s.", " ", true, true )
-    string message = StringReplace( args[1], "./s.", " ", true, true )
+    string header = StringReplace( args[0], "/s", " ", true, true )
+    string message = StringReplace( args[1], "/s", " ", true, true )
     string image = args[2]
     string rightImage = args[3]
     bool forceChoice = args[4].tointeger() == 1
@@ -197,10 +178,10 @@ void function ServerCallback_DialogueRequestReceived( array<string> args )
     bool darkenBackground = args[10].tointeger() == 1
     bool useFullMessageHeight = args[11].tointeger() == 1
 
-    string button0Text = StringReplace( args[12], "./s.", " ", true, true )
-    string button1Text = StringReplace( args[13], "./s.", " ", true, true )
-    string button2Text = StringReplace( args[14], "./s.", " ", true, true )
-    string button3Text = StringReplace( args[15], "./s.", " ", true, true )
+    string button0Text = StringReplace( args[12], "/s", " ", true, true )
+    string button1Text = StringReplace( args[13], "/s", " ", true, true )
+    string button2Text = StringReplace( args[14], "/s", " ", true, true )
+    string button3Text = StringReplace( args[15], "/s", " ", true, true )
 
     RunUIScript( 
         "ClientCallback_RequestDialog",
