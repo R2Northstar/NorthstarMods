@@ -887,8 +887,19 @@ bool function runWave( int waveIndex, bool shouldDoBuyTime )
 			AddPlayerScore( player, "FDTeamWave" )
 		}
 		wait 1
-		int highestScore = 0;
-		entity highestScore_player = GetPlayerArray()[0]
+		int highestScore
+		entity highestScore_player
+		if( GetPlayerArray().len() > 0 )
+		{
+			highestScore = 0;
+			highestScore_player = GetPlayerArray()[0]
+		}
+		else
+		{
+			SetRoundBased( false )
+			SetWinner( TEAM_MILITIA )
+			return true
+		}
 		foreach( entity player in GetPlayerArray() )
 		{
 
