@@ -7,6 +7,12 @@ global function IsTurretActive
 global function TurretRefundThink
 global function RevivableTurret_DamageCallback
 global function RevivableTurret_Revive
+global function AddTurretRepairCallback
+
+struct
+{
+	array<void functionref(entity,entity,entity)> turretRepairCallbacks
+} file
 
 void function AiTurret_Init()
 {
@@ -97,11 +103,9 @@ function RevivableTurret_UseFunction( player , turret )
 	entity tur = expect entity( turret )
 	entity ent = expect entity( player )
 	entity owner = tur.GetBossPlayer()
-	if( ent != owner && IsValidPlayer( ent ) && IsValidPlayer( owner ) )
+	foreach ( callbackFunc in file.turretRepairCallbacks )
 	{
-		int ownerEHandle = owner.GetEncodedEHandle()
-		AddPlayerScore( ent, "FDRepairTurret" )
-		MessageToTeam( TEAM_MILITIA,eEventNotifications.FD_TurretRepair, null, ent, ownerEHandle )
+		callbackFunc( tur, ent, owner )
 	}
 	thread RevivableTurret_Revive( tur )
 	return true
@@ -140,4 +144,10 @@ void function RevivableTurret_Kill( entity turret )
 		turret.SetNoTarget( true )
 		turret.DisableTurret()
 	}
+}
+
+void function AddTurretRepairCallback( void functionref(entity,entity,entity) callbackFunc )
+{
+	Assert (!( file.turretRepairCallbacks.contains( callbackFunc ) ))
+	file.turretRepairCallbacks.append( callbackFunc )
 }

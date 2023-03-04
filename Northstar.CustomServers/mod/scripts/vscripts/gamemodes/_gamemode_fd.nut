@@ -19,31 +19,12 @@ enum eDropshipState{
 	_count_
 }
 
-
-
-
 struct player_struct_fd{
 	bool diedThisRound
 	int assaultScoreThisRound
 	int defenseScoreThisRound
 	int moneyThisRound
 	array< entity > deployedEntityThisRound
-	/*
-	int totalMVPs
-	int mortarUnitsKilled
-	int moneySpend
-	int coresUsed
-	float longestTitanLife
-	int turretsRepaired
-	int moneyShared
-	float timeNearHarvester //dont know how to track
-	float longestLife
-	int heals //dont know what to track
-	int titanKills
-	float damageDealt
-	int harvesterHeals
-	int turretKills
-	*/
 	float lastRespawn
 	float lastTitanDrop
 	float lastNearHarvester
@@ -58,9 +39,6 @@ global vector FD_spawnAngles = < 0, 0, 0 >
 global table< string, array<vector> > routes
 global array<entity> routeNodes
 global array<entity> spawnedNPCs
-
-
-
 
 struct {
 	array<entity> aiSpawnpoints
@@ -81,7 +59,6 @@ struct {
 	entity dropship
 	array<entity> playersInDropship
 }file
-
 
 const array<string> DROPSHIP_IDLE_ANIMS_POV = [
 
@@ -175,6 +152,7 @@ void function GamemodeFD_Init()
 	AddBatteryHealCallback( FD_BatteryHealTeammate )
 	AddSmokeHealCallback( FD_SmokeHealTeammate )
 	SetUsedCoreCallback( FD_UsedCoreCallback )
+	AddTurretRepairCallback( FD_TurretRepair )
 
 	//todo:are pointValueOverride exist?
 	//Score Event
@@ -1257,9 +1235,15 @@ void function FD_Epilogue_threaded()
 	SetGameState(eGameState.Postmatch)
 }
 
-void function IncrementPlayerstat_TurretRevives( entity player )
+void function FD_TurretRepair( entity turret, entity player, entity owner )
 {
-	file.playerAwardStats[player]["turretsRepaired"]++
+	if( player != owner && IsValidPlayer( player ) && IsValidPlayer( owner ) )
+	{
+		int ownerEHandle = owner.GetEncodedEHandle()
+		AddPlayerScore( player, "FDRepairTurret" )
+		file.playerAwardStats[player]["turretsRepaired"]++
+		MessageToTeam( TEAM_MILITIA,eEventNotifications.FD_TurretRepair, null, player, ownerEHandle )
+	}
 }
 
 void function SpawnCallback_SafeTitanSpawnTime( entity ent )
