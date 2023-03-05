@@ -202,19 +202,19 @@
 			"name":"NSDoesFileExist",
 			"helpText":"Checks whether or not a file exists.",
 			"returnTypeString":"bool",
-			"argTypes":"string file, table data"
+			"argTypes":"string file"
 		},
 		{
 			"name":"NSDeleteFile",
 			"helpText":"Deletes a file.",
 			"returnTypeString":"bool",
-			"argTypes":"string file, table data"
+			"argTypes":"string file"
 		},
 		{
 			"name":"NSGetAllFiles",
 			"helpText":"Returns an array of all files in a mod's save folder.",
 			"returnTypeString":"array<string>",
-			"argTypes":"string file, table data"
+			"argTypes":""
 		},
 		{
 			"name":"NSGetFileSize",
@@ -390,19 +390,19 @@
 			"name":"NSDoesFileExist",
 			"helpText":"Checks whether or not a file exists.",
 			"returnTypeString":"bool",
-			"argTypes":"string file, table data"
+			"argTypes":"string file"
 		},
 		{
 			"name":"NSDeleteFile",
 			"helpText":"Deletes a file.",
 			"returnTypeString":"bool",
-			"argTypes":"string file, table data"
+			"argTypes":"string file"
 		},
 		{
 			"name":"NSGetAllFiles",
 			"helpText":"Returns an array of all files in a mod's save folder.",
 			"returnTypeString":"array<string>",
-			"argTypes":"string file, table data"
+			"argTypes":""
 		},
 		{
 			"name":"NSGetFileSize",
@@ -746,19 +746,19 @@
 			"name":"NSDoesFileExist",
 			"helpText":"Checks whether or not a file exists.",
 			"returnTypeString":"bool",
-			"argTypes":"string file, table data"
+			"argTypes":"string file"
 		},
 		{
 			"name":"NSDeleteFile",
 			"helpText":"Deletes a file.",
 			"returnTypeString":"bool",
-			"argTypes":"string file, table data"
+			"argTypes":"string file"
 		},
 		{
 			"name":"NSGetAllFiles",
 			"helpText":"Returns an array of all files in a mod's save folder.",
 			"returnTypeString":"array<string>",
-			"argTypes":"string file, table data"
+			"argTypes":""
 		},
 		{
 			"name":"NSGetFileSize",
