@@ -1085,9 +1085,11 @@ void function ThreadedAuthAndConnectToServer( string password = "" )
 	}
 	else
 	{
+		var reason = NSGetAuthFailReason()
+
 		DialogData dialogData
 		dialogData.header = "#ERROR"
-		dialogData.message = "Authentication Failed"
+		dialogData.message = Localize("#NS_SERVERBROWSER_CONNECTIONFAILED") + "\nERROR: " + reason  + "\n" + Localize("#" + reason)
 		dialogData.image = $"ui/menu/common/dialog_error"
 
 		#if PC_PROG
