@@ -214,13 +214,19 @@
 			"name":"NSGetAllFiles",
 			"helpText":"Returns an array of all files in a mod's save folder.",
 			"returnTypeString":"array<string>",
-			"argTypes":""
+			"argTypes":"string path = \"\""
 		},
 		{
 			"name":"NSGetFileSize",
 			"helpText":"Returns the size of a file, in KB, rounded down.",
 			"returnTypeString":"int",
-			"argTypes":"string"
+			"argTypes":"string file"
+		},
+		{
+			"name":"NSIsFolder",
+			"helpText":"Returns whether or not a given path leads to a folder.",
+			"returnTypeString":"bool",
+			"argTypes":"string path"
 		}
 	],
 	"CLIENT":[
@@ -402,13 +408,19 @@
 			"name":"NSGetAllFiles",
 			"helpText":"Returns an array of all files in a mod's save folder.",
 			"returnTypeString":"array<string>",
-			"argTypes":""
+			"argTypes":"string path = \"\""
 		},
 		{
 			"name":"NSGetFileSize",
 			"helpText":"Returns the size of a file, in KB, rounded down.",
 			"returnTypeString":"int",
-			"argTypes":"string"
+			"argTypes":"string file"
+		},
+		{
+			"name":"NSIsFolder",
+			"helpText":"Returns whether or not a given path leads to a folder.",
+			"returnTypeString":"bool",
+			"argTypes":"string path"
 		}
 	],
 	"UI":[
@@ -758,13 +770,19 @@
 			"name":"NSGetAllFiles",
 			"helpText":"Returns an array of all files in a mod's save folder.",
 			"returnTypeString":"array<string>",
-			"argTypes":""
+			"argTypes":"string path = \"\""
 		},
 		{
 			"name":"NSGetFileSize",
 			"helpText":"Returns the size of a file, in KB, rounded down.",
 			"returnTypeString":"int",
-			"argTypes":"string"
+			"argTypes":"string file"
+		},
+		{
+			"name":"NSIsFolder",
+			"helpText":"Returns whether or not a given path leads to a folder.",
+			"returnTypeString":"bool",
+			"argTypes":"string path"
 		}
 	]
 }
