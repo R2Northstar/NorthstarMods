@@ -576,7 +576,7 @@ void function TryAuthWithLocalServer()
 		DialogData dialogData
 		dialogData.image = $"ui/menu/common/dialog_error"
 		dialogData.header = "#ERROR"
-		dialogData.message = Localize("#NS_SERVERBROWSER_CONNECTIONFAILED") + "\nERROR: " + reason  + "\n" + Localize("#" + reason)
+		dialogData.message = Localize("#NS_SERVERBROWSER_CONNECTIONFAILED") + "\n\n" + reason
 
 		AddDialogButton( dialogData, "#OK", null )
 		OpenDialog( dialogData )
