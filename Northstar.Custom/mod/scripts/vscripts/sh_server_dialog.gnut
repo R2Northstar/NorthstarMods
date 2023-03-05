@@ -31,7 +31,8 @@ global struct ServerDialogData
     string header = " "
     string message = " "
     // DialogMessageRuiData &ruiMessage
-    // array<int> messageColor = [161, 161, 161, 255] 
+
+    array<int> messageColor = [161, 161, 161, 255] 
     string image = "."
     string rightImage = "."
     bool forceChoice = false
@@ -74,7 +75,7 @@ void function SendServerDialog( entity player, ServerDialogData dialog )
     array<string> args
 
     args.append( StringReplace( dialog.header, " ", "/s", true, true ) )
-    args.append( StringReplace( dialog.message, " ", "/s", true, true ) )
+    args.append( StringReplace( StringReplace(dialog.message, "\n", "!x1ba",true, true), " ", "/s", true, true ) )
     args.append( dialog.image )
     args.append( dialog.rightImage )
     args.append( dialog.forceChoice.tointeger().tostring() )
@@ -96,6 +97,10 @@ void function SendServerDialog( entity player, ServerDialogData dialog )
 
     while( args.len() < 16 ) // this wouldn't add buttons but I added it so the array len stays the same
         args.append( "." )
+
+    dialog.messageColor.resize( 4, 100 )
+    foreach(colour in dialog.messageColor )
+        args.append( string(colour) )
 
     string command = "ServerRequestRequest"
 
@@ -162,11 +167,13 @@ void function ServerDialogueOnClientInit()
 
 void function ServerCallback_DialogueRequestReceived( array<string> args )
 {
-    if ( args.len() != 16 )
+    if ( args.len() != 20 ) // WHY MAKE THIS NOT DYNAMIC
         return
     
     string header = StringReplace( args[0], "/s", " ", true, true )
-    string message = StringReplace( args[1], "/s", " ", true, true )
+
+    string message = StringReplace( StringReplace(args[1], "!x1ba", "\n" ,true, true), "/s", " ", true, true )
+
     string image = args[2]
     string rightImage = args[3]
     bool forceChoice = args[4].tointeger() == 1
@@ -182,6 +189,13 @@ void function ServerCallback_DialogueRequestReceived( array<string> args )
     string button1Text = StringReplace( args[13], "/s", " ", true, true )
     string button2Text = StringReplace( args[14], "/s", " ", true, true )
     string button3Text = StringReplace( args[15], "/s", " ", true, true )
+
+
+    int colour_r = int(args[16])
+    int colour_g = int(args[17])
+    int colour_b = int(args[18])
+    int colour_a = int(args[19])
+
 
     RunUIScript( 
         "ClientCallback_RequestDialog",
@@ -200,13 +214,21 @@ void function ServerCallback_DialogueRequestReceived( array<string> args )
         button0Text,
         button1Text,
         button2Text,
-        button3Text
+        button3Text,
+        colour_r,
+        colour_g,
+        colour_b,
+        colour_a
     )
 }
 
 #elseif UI
 
-void function ClientCallback_RequestDialog( string header, string message, string image, string rightImage, bool forceChoice, bool noChoice, bool noChoiceWithNavigateBack, bool showSpinner, bool showPCBackButton, float inputDisableTime, bool darkenBackground, bool useFullMessageHeight, string button0Text, string button1Text, string button2Text, string button3Text )
+
+
+void function ClientCallback_RequestDialog( string header, string message, string image, string rightImage, bool forceChoice, bool noChoice, bool noChoiceWithNavigateBack, bool showSpinner, bool showPCBackButton, float inputDisableTime, bool darkenBackground, bool useFullMessageHeight, string button0Text, string button1Text, string button2Text, string button3Text, int colour_r, int colour_g, int colour_b, int colour_a  )
+
+
 {   
     if ( uiGlobal.activeMenu != null )
         return
@@ -234,14 +256,19 @@ void function ClientCallback_RequestDialog( string header, string message, strin
     dialogData.darkenBackground = darkenBackground
     dialogData.useFullMessageHeight = useFullMessageHeight
 
+
+    dialogData.messageColor = [colour_r, colour_g, colour_b, colour_a]
+
     if ( button0Text != "." )
-        AddDialogButton( dialogData, button0Text, button0CallBack ) // max is 4 buttons
+        AddDialogButton( dialogData, Localize(button0Text), button0CallBack ) // max is 4 buttons
     if ( button1Text != "." )
-        AddDialogButton( dialogData, button1Text, button1CallBack )
+        AddDialogButton( dialogData, Localize(button1Text), button1CallBack )
     if ( button2Text != "." )
-        AddDialogButton( dialogData, button2Text, button2CallBack )
+        AddDialogButton( dialogData, Localize(button2Text), button2CallBack )
     if ( button3Text != "." )
-        AddDialogButton( dialogData, button3Text, button3CallBack )
+        AddDialogButton( dialogData, Localize(button3Text), button3CallBack )
+
+
 
     OpenDialog( dialogData )
 }

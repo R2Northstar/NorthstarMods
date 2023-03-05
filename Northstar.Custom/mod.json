@@ -416,16 +416,6 @@
 				"After": "CustomPilotCollision_InitPlaylistVars"
 			}
 		},
-    {
-			"Path": "sh_server_dialog.gnut",
-			"RunOn": "CLIENT || SERVER || UI",
-			"ClientCallback": {
-				"After": "ServerDialogueOnClientInit"
-			},
-			"ServerCallback": {
-				"After": "ServerDialogInit"
-			}
-    },
 		{
 			"Path": "sh_message_utils.gnut",
 			"RunOn": "( CLIENT || SERVER ) && MP",
@@ -439,7 +429,17 @@
 		{
 			"Path":  "sh_northstar_http_requests.gnut",
 			"RunOn": "CLIENT || SERVER || UI"
-		}
+		},
+		{
+			"Path": "sh_server_dialog.gnut",
+			"RunOn": "CLIENT || SERVER || UI",
+			"ClientCallback": {
+				"After": "ServerDialogueOnClientInit"
+			},
+			"ServerCallback": {
+				"After": "ServerDialogInit"
+			}
+   		 }
 	],
 	"Localisation": [
 		"resource/northstar_custom_%language%.txt"
