@@ -1641,6 +1641,9 @@ void function OnEnterNearHarvesterTrigger( entity trig, entity activator )
 	if( !( activator in file.players ) )
 		return
 		
+	if( !IsHarvesterAlive( fd_harvester.harvester ) )
+		return
+		
 	if( GetGlobalNetInt( "FD_waveState" ) != WAVE_STATE_IN_PROGRESS )
 		return
 
@@ -1657,6 +1660,9 @@ void function OnLeaveNearHarvesterTrigger( entity trig, entity activator )
 		return
 
 	if( !( activator in file.players ) )
+		return
+
+	if( !IsHarvesterAlive( fd_harvester.harvester ) )
 		return
 		
 	if( GetGlobalNetInt( "FD_waveState" ) != WAVE_STATE_IN_PROGRESS )
