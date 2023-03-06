@@ -1589,7 +1589,6 @@ void function FD_createHarvester()
 	fd_harvester.harvester.Minimap_SetZOrder( MINIMAP_Z_OBJECT )
 	fd_harvester.harvester.Minimap_SetCustomState( eMinimapObject_prop_script.FD_HARVESTER )
 	AddEntityCallback_OnDamaged( fd_harvester.harvester, OnHarvesterDamaged )
-	thread CreateHarvesterHintTrigger( fd_harvester.harvester )
 }
 
 bool function IsHarvesterAlive( entity harvester )
@@ -1715,6 +1714,7 @@ void function LoadEntities()
 	ValidateAndFinalizePendingStationaryPositions()
 	initNetVars()
 	SetTeam( GetTeamEnt( TEAM_IMC ), TEAM_IMC )
+	thread CreateHarvesterHintTrigger( fd_harvester.harvester )
 }
 
 
