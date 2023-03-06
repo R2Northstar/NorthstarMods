@@ -27,10 +27,18 @@ void function NSHandleLoadResult( int handle, string result )
     }
     if (handle in pendingJSONCallbacks)
     {
-        pendingJSONCallbacks[handle](DecodeJSON(result))
+        // result may be an empty string if the load fails, so we return an empty table.
+        if (result == "")
+            pendingJSONCallbacks[handle]({})
+        else pendingJSONCallbacks[handle](DecodeJSON(result))
         delete pendingJSONCallbacks[handle]
         return
     }
     throw "Invalid IO callback handle"
     unreachable
+}
+
+array<string> function NSGetAllFiles( string path = "" )
+{
+    return NS_InternalGetAllFiles(path)
 }

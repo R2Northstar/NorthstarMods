@@ -211,10 +211,10 @@
 			"argTypes":"string file"
 		},
 		{
-			"name":"NSGetAllFiles",
+			"name":"NS_InternalGetAllFiles",
 			"helpText":"Returns an array of all files in a mod's save folder.",
 			"returnTypeString":"array<string>",
-			"argTypes":"string path = \"\""
+			"argTypes":"string path"
 		},
 		{
 			"name":"NSGetFileSize",
@@ -405,10 +405,10 @@
 			"argTypes":"string file"
 		},
 		{
-			"name":"NSGetAllFiles",
+			"name":"NS_InternalGetAllFiles",
 			"helpText":"Returns an array of all files in a mod's save folder.",
 			"returnTypeString":"array<string>",
-			"argTypes":"string path = \"\""
+			"argTypes":"string path"
 		},
 		{
 			"name":"NSGetFileSize",
@@ -767,10 +767,10 @@
 			"argTypes":"string file"
 		},
 		{
-			"name":"NSGetAllFiles",
+			"name":"NS_InternalGetAllFiles",
 			"helpText":"Returns an array of all files in a mod's save folder.",
 			"returnTypeString":"array<string>",
-			"argTypes":"string path = \"\""
+			"argTypes":"string path"
 		},
 		{
 			"name":"NSGetFileSize",
