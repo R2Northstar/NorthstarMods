@@ -477,7 +477,7 @@ void function OnNpcDeath( entity victim, entity attacker, var damageInfo )
 		if( attackerInfo.attacker != attacker && !exists )
 		{
 			alreadyAssisted[attackerInfo.attacker.GetEncodedEHandle()] <- true
-			attackerInfo.attacker.AddToPlayerGameStat( PGS_DEFENSE_SCORE, playerScore )		// i assume this is how support score gets added
+			file.players[attackerInfo.attacker].defenseScoreThisRound += playerScore		// i assume this is how support score gets added
 		}
 	}
 
@@ -549,7 +549,8 @@ void function mainGameLoop()
 	{
 		if( file.waveRestart )
 		{
-			showShop = true
+			if( i != 0 )
+				showShop = true
 			foreach( entity player in GetPlayerArray() )
 			{
 				SetMoneyForPlayer( player, file.players[player].moneyThisRound )
@@ -856,11 +857,11 @@ bool function runWave( int waveIndex, bool shouldDoBuyTime )
 		foreach( entity player in GetPlayerArray() )
 		{
 			AddPlayerScore( player, "FDDamageBonus", null, "", file.players[player].assaultScoreThisRound )
-			player.AddToPlayerGameStat( PGS_ASSAULT_SCORE, file.players[player].assaultScoreThisRound )
+			AddScoreToPlayer( player, PGS_ASSAULT_SCORE )
 			wait 1
 			AddPlayerScore( player, "FDSupportBonus", null, "", file.players[player].defenseScoreThisRound )
-			player.AddToPlayerGameStat( PGS_DEFENSE_SCORE, file.players[player].defenseScoreThisRound )
-			player.SetPlayerGameStat( PGS_DETONATION_SCORE, player.GetPlayerGameStat( PGS_ASSAULT_SCORE ) + player.GetPlayerGameStat( PGS_DEFENSE_SCORE ) )
+			AddScoreToPlayer( player, PGS_DEFENSE_SCORE )
+			AddScoreToPlayer( player, PGS_DETONATION_SCORE )
 			wait 1
 			AddPlayerScore( player, "FDTeamWave" )
 		}
@@ -956,11 +957,11 @@ bool function runWave( int waveIndex, bool shouldDoBuyTime )
 			PlayFactionDialogueToPlayer( "fd_wavePayoutAddtnl", player )
 
 		AddPlayerScore( player, "FDDamageBonus", null, "", file.players[player].assaultScoreThisRound )
-		player.AddToPlayerGameStat( PGS_ASSAULT_SCORE, file.players[player].assaultScoreThisRound )
+		AddScoreToPlayer( player, PGS_ASSAULT_SCORE )
 		wait 1
 		AddPlayerScore( player, "FDSupportBonus", null, "", file.players[player].defenseScoreThisRound )
-		player.AddToPlayerGameStat( PGS_DEFENSE_SCORE, file.players[player].defenseScoreThisRound )
-		player.SetPlayerGameStat( PGS_DETONATION_SCORE, player.GetPlayerGameStat( PGS_ASSAULT_SCORE ) + player.GetPlayerGameStat( PGS_DEFENSE_SCORE ) )
+		AddScoreToPlayer( player, PGS_DEFENSE_SCORE )
+		AddScoreToPlayer( player, PGS_DETONATION_SCORE )
 		wait 1
 		AddPlayerScore( player, "FDTeamWave" )
 		AddMoneyToPlayer( player, GetCurrentPlaylistVarInt( "fd_money_per_round", 600 ) )
@@ -975,7 +976,10 @@ bool function runWave( int waveIndex, bool shouldDoBuyTime )
 		if( !file.players[player].diedThisRound )
 		{
 			AddPlayerScore( player, "FDDidntDie" )
-			player.AddToPlayerGameStat( PGS_ASSAULT_SCORE, FD_SCORE_DIDNT_DIE )
+			/*
+			AddScoreToPlayer( player, PGS_ASSAULT_SCORE, FD_SCORE_DIDNT_DIE )
+			AddScoreToPlayer( player, PGS_DETONATION_SCORE, FD_SCORE_DIDNT_DIE )
+			*/
 		}
 		AddMoneyToPlayer( player, 100 )
 		EmitSoundOnEntityOnlyToPlayer( player, player, "HUD_MP_BountyHunt_BankBonusPts_Deposit_Start_1P" )
@@ -994,7 +998,10 @@ bool function runWave( int waveIndex, bool shouldDoBuyTime )
 	file.playerAwardStats[highestScore_player]["mvp"]++
 	AddPlayerScore( highestScore_player, "FDWaveMVP" )
 	AddMoneyToPlayer( highestScore_player, 100 )
-	highestScore_player.AddToPlayerGameStat( PGS_ASSAULT_SCORE, FD_SCORE_MVP )
+	/*
+	AddScoreToPlayer( highestScore_player, PGS_ASSAULT_SCORE, FD_SCORE_MVP )
+	AddScoreToPlayer( highestScore_player, PGS_DETONATION_SCORE, FD_SCORE_MVP )
+	*/
 	EmitSoundOnEntityOnlyToPlayer( highestScore_player, highestScore_player, "HUD_MP_BountyHunt_BankBonusPts_Deposit_Start_1P" )
 	foreach( entity player in GetPlayerArray() )
 	{
@@ -1008,11 +1015,12 @@ bool function runWave( int waveIndex, bool shouldDoBuyTime )
 		{
 			AddPlayerScore( player, "FDTeamFlawlessWave" )
 			AddMoneyToPlayer( player, 100 )
-			player.AddToPlayerGameStat( PGS_ASSAULT_SCORE, FD_SCORE_TEAM_FLAWLESS_WAVE )
+			/*
+			AddScoreToPlayer( player, PGS_ASSAULT_SCORE, FD_SCORE_TEAM_FLAWLESS_WAVE )
+			AddScoreToPlayer( player, PGS_DETONATION_SCORE, FD_SCORE_TEAM_FLAWLESS_WAVE )
+			*/
 			EmitSoundOnEntityOnlyToPlayer( player, player, "HUD_MP_BountyHunt_BankBonusPts_Deposit_Start_1P" )
 		}
-		//Temporary code
-		player.SetPlayerGameStat( PGS_DETONATION_SCORE, player.GetPlayerGameStat( PGS_ASSAULT_SCORE ) + player.GetPlayerGameStat( PGS_DEFENSE_SCORE ) )
 	}
 
 	wait 1
@@ -1242,6 +1250,7 @@ void function FD_TurretRepair( entity turret, entity player, entity owner )
 		int ownerEHandle = owner.GetEncodedEHandle()
 		AddPlayerScore( player, "FDRepairTurret" )
 		file.playerAwardStats[player]["turretsRepaired"]++
+		file.players[player].defenseScoreThisRound += FD_SCORE_REPAIR_TURRET
 		MessageToTeam( TEAM_MILITIA,eEventNotifications.FD_TurretRepair, null, player, ownerEHandle )
 	}
 }
@@ -2088,6 +2097,32 @@ bool function FD_PlayerInDropship( entity player )
 			return true
 			
 	return false
+}
+
+void function AddScoreToPlayer( entity targetPlayer, int scoreType, int valueOverride = 0 )
+{
+	if( !IsValidPlayer( targetPlayer ) )
+		return
+
+	int amount = 0
+	switch( scoreType )
+	{
+		case PGS_ASSAULT_SCORE:		
+			amount = file.players[targetPlayer].assaultScoreThisRound
+			break
+		case PGS_DEFENSE_SCORE:
+			amount = file.players[targetPlayer].defenseScoreThisRound
+			break
+		case PGS_DETONATION_SCORE:
+			amount = file.players[targetPlayer].assaultScoreThisRound + file.players[targetPlayer].defenseScoreThisRound
+			break
+	}
+
+	if( valueOverride != 0 )
+		amount = valueOverride
+
+	if( IsValidPlayer( targetPlayer ) )
+		targetPlayer.AddToPlayerGameStat( scoreType, amount )
 }
 
 int function FD_TimeOutCheck()
