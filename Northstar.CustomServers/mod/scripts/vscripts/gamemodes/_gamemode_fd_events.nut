@@ -1272,7 +1272,6 @@ void function waitUntilLessThanAmountAliveWeighted( int amount, int humanWeight 
 				else
 					aliveNPCsWeighted += humanWeight
 			}
-		//Temporary fix,it need a better way to fix cloaked drone
 		if( !IsHarvesterAlive( fd_harvester.harvester ) )
 			return
 	}
