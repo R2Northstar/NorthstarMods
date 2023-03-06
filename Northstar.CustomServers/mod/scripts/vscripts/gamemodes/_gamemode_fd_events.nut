@@ -1273,7 +1273,7 @@ void function waitUntilLessThanAmountAliveWeighted( int amount, int humanWeight 
 					aliveNPCsWeighted += humanWeight
 			}
 		//Temporary fix,it need a better way to fix cloaked drone
-		if( !IsHarvesterAlive( fd_harvester.harvester ) || ( GetNPCArrayOfTeam( TEAM_IMC ).len() == 0 && GetGlobalNetInt( "FD_AICount_Current" ) == 0 ) )
+		if( !IsHarvesterAlive( fd_harvester.harvester ) )
 			return
 	}
 }
