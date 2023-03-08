@@ -42,6 +42,10 @@
 			"RunOn": "( CLIENT || SERVER ) && MP"
 		},
 		{
+			"Path": "mp_titanweapon_arc_cannon.nut",
+			"RunOn": "( CLIENT || SERVER ) && MP"
+		},
+		{
 			"Path": "gamemodes/sh_gamemode_chamber.nut",
 			"RunOn": "( CLIENT || SERVER ) && MP",
 			"ClientCallback": {

@@ -58,6 +58,7 @@ WeaponData
 	// Damage - When Used by NPCs
 
 	"critical_hit"									"0"
+	"critical_hit_damage_scale"						"1.5"
 
 	// Ammo
 	"ammo_min_to_fire"								"1"
@@ -85,7 +86,7 @@ WeaponData
 	"charge_time" 									"3.7"
 	"charge_cooldown_time"							"1.0"
 	"charge_end_forces_fire"						"0"
-	"allow_empty_fire"								"0"
+	"allow_empty_fire"								"1"
 	"reload_enabled"  								"0"
 	"allow_empty_click"   							"1"
 	"empty_reload_only"   							"0"
