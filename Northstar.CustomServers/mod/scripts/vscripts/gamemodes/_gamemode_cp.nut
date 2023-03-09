@@ -669,7 +669,7 @@ void function OnHardpointLeft( entity trigger, entity player )
 		if(playerStruct.player == player)
 			playerStruct.isOnHardpoint = false
 		
-	player.SetPlayerNetInt( "playerHardpointID", 69) // an arbitary number to remove the hud from the player
+	player.SetPlayerNetInt( "playerHardpointID", 69 ) // an arbitary number to remove the hud from the player
 }
 
 string function CaptureStateToString( int state )
