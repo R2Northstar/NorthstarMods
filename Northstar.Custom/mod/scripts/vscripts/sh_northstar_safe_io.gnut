@@ -25,32 +25,42 @@ void function NSLoadJSONFile( string file, void functionref( table ) onSuccess, 
 
 void function NSHandleLoadResult( int handle, bool success, string result )
 {
+    bool hasFailedCallback = handle in failedCallbacks
+    bool isJSONRequest = handle in pendingJSONCallbacks
+    bool isValid = (isJSONRequest || handle in pendingCallbacks)
+
+    if (!isValid)
+        throw "Invalid IO callback handle"
+
     if (!success)
     {
-        if (handle in failedCallbacks)
-        {
+        if (hasFailedCallback)
             failedCallbacks[handle]()
-            delete failedCallbacks[handle]
-            return
+        else
+        {
+            if (isJSONRequest)
+                pendingJSONCallbacks[handle]({})
+            else pendingCallbacks[handle]()
         }
+
+        delete failedCallbacks[handle]
+
+        if (isJSONRequest)
+            delete pendingJSONCallbacks[handle]
+        else delete pendingCallbacks[handle]
     }
-    if (handle in pendingCallbacks)
+    if (isJSONRequest)
+    {
+        pendingJSONCallbacks[handle](DecodeJSON(result))
+        delete pendingJSONCallbacks[handle]
+        return
+    }
+    else
     {
         pendingCallbacks[handle](result)
         delete pendingCallbacks[handle]
         return
     }
-    if (handle in pendingJSONCallbacks)
-    {
-        // result may be an empty string if the load fails, so we return an empty table.
-        if (result == "")
-            pendingJSONCallbacks[handle]({})
-        else pendingJSONCallbacks[handle](DecodeJSON(result))
-        delete pendingJSONCallbacks[handle]
-        return
-    }
-    throw "Invalid IO callback handle"
-    unreachable
 }
 
 array<string> function NSGetAllFiles( string path = "" )
