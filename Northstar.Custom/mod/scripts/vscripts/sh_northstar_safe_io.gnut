@@ -29,8 +29,8 @@ void function NSHandleLoadResult( int handle, bool success, string result )
         {
             failedCallbacks[handle]()
             delete failedCallbacks[handle]
+            return
         }
-        return
     }
     if (handle in pendingCallbacks)
     {
