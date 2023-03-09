@@ -2,6 +2,8 @@ globalize_all_functions
 
 table< int, void functionref( string ) > pendingCallbacks
 table< int, void functionref( table ) > pendingJSONCallbacks
+table< int, void functionref() > failedCallbacks
+
 
 void function NSLoadFile( string file, void functionref( string ) onSuccess )
 {
@@ -10,15 +12,26 @@ void function NSLoadFile( string file, void functionref( string ) onSuccess )
     pendingCallbacks[handle] <- onSuccess
 }
 
-void function NSLoadJSONFile( string file, void functionref( table ) onSuccess )
+void function NSLoadJSONFile( string file, void functionref( table ) onSuccess, void functionref() onFailure = null )
 {
     int handle = NS_InternalLoadFile( file )
 
     pendingJSONCallbacks[handle] <- onSuccess
+    if (onFailure != null)
+        failedCallbacks[handle] <- onFailure
 }
 
-void function NSHandleLoadResult( int handle, string result )
+void function NSHandleLoadResult( int handle, bool success, string result )
 {
+    if (!success)
+    {
+        if (handle in failedCallbacks)
+        {
+            failedCallbacks[handle]()
+            delete failedCallbacks[handle]
+        }
+        return
+    }
     if (handle in pendingCallbacks)
     {
         pendingCallbacks[handle](result)
