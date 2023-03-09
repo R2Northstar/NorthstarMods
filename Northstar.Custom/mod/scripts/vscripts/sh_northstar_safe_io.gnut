@@ -27,12 +27,19 @@ void function NSHandleLoadResult( int handle, bool success, string result )
 {
     bool hasFailedCallback = handle in failedCallbacks
     bool isJSONRequest = handle in pendingJSONCallbacks
-    bool isValid = (isJSONRequest || handle in pendingCallbacks)
+    bool isValid = isJSONRequest || handle in pendingCallbacks
 
     if (!isValid)
         throw "Invalid IO callback handle"
 
-    if (!success)
+    if (success)
+    {
+        if (isJSONRequest)
+            pendingJSONCallbacks[handle](DecodeJSON(result))
+        else
+            pendingCallbacks[handle](result)
+    }
+    else
     {
         if (hasFailedCallback)
             failedCallbacks[handle]()
@@ -40,27 +47,18 @@ void function NSHandleLoadResult( int handle, bool success, string result )
         {
             if (isJSONRequest)
                 pendingJSONCallbacks[handle]({})
-            else pendingCallbacks[handle]()
+            else
+                pendingCallbacks[handle]()
         }
-
-        delete failedCallbacks[handle]
-
-        if (isJSONRequest)
-            delete pendingJSONCallbacks[handle]
-        else delete pendingCallbacks[handle]
     }
+
     if (isJSONRequest)
-    {
-        pendingJSONCallbacks[handle](DecodeJSON(result))
         delete pendingJSONCallbacks[handle]
-        return
-    }
     else
-    {
-        pendingCallbacks[handle](result)
         delete pendingCallbacks[handle]
-        return
-    }
+
+    if (hasFailedCallback)
+        delete failedCallbacks[handle]
 }
 
 array<string> function NSGetAllFiles( string path = "" )
