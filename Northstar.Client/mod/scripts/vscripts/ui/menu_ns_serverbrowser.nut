@@ -1171,7 +1171,7 @@ void function OnServerSelected_Threaded( var button )
 	if ( downloadedMods > 0 )
 	{
 		print("Some new mods have been downloaded or enabled, reloading mods.")
-		NSReloadMods(true, true);
+		NSReloadMods();
 	}
 
 	if ( NSServerRequiresPassword( serverIndex ) )
