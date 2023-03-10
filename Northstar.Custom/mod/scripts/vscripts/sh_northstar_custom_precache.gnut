@@ -5,6 +5,7 @@ void function NorthstarCustomPrecache()
 {
 	PrecacheWeapon( "mp_weapon_peacekraber" )
 	PrecacheWeapon( "mp_titanweapon_triplethreat" )
+	PrecacheWeapon( "mp_titanweapon_arc_cannon" )
 	PrecacheWeapon( "melee_pilot_kunai" )
 
 	// create kunai damage source so game won't crash when we hit smth with it
