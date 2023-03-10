@@ -421,7 +421,7 @@
 		{
 			"name": "NSGetCurrentDownloadProgress",
 			"helpText": "Returns progression in percentage of current download/extraction.",
-			"returnTypeString": "float",
+			"returnTypeString": "array<float>",
 			"argTypes": ""
 		},
 		{
