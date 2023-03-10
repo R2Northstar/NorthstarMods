@@ -416,7 +416,7 @@
 			"name": "NSIsModBeingDownloaded",
 			"helpText": "Tells if a mod is being downloaded; this is used by UI to check if it should display loading dialog to the user.",
 			"returnTypeString": "bool",
-			"argTypes": "string modName, string modVersion"
+			"argTypes": "string modName"
 		},
 		{
 			"name": "NSGetCurrentDownloadProgress",
