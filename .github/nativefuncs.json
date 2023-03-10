@@ -249,6 +249,36 @@
 			"argTypes":"string modName"
 		},
 		{
+			"name": "NSIsModVerified",
+			"helpText": "Tells if a mod is verified or not.",
+			"returnTypeString": "bool",
+			"argTypes": "string modName, string modVersion"
+		},
+		{
+			"name": "NSDownloadMod",
+			"helpText": "Starts downloading a mod; returns nothing because actual mod downloading is done in a thread, as not to block UI.",
+			"returnTypeString": "void",
+			"argTypes": "string modname, string modVersion"
+		},
+		{
+			"name": "NSIsModBeingDownloaded",
+			"helpText": "Tells if a mod is being downloaded; this is used by UI to check if it should display loading dialog to the user.",
+			"returnTypeString": "bool",
+			"argTypes": "string modName, string modVersion"
+		},
+		{
+			"name": "NSGetCurrentDownloadProgress",
+			"helpText": "Returns progression in percentage of current download/extraction.",
+			"returnTypeString": "float",
+			"argTypes": ""
+		},
+		{
+			"name": "NSGetModExtractionResult",
+			"helpText": "Returns result of mod download/extraction.",
+			"returnTypeString": "string",
+			"argTypes": ""
+		},
+		{
 			"name":"NSGetModConvarsByModName",
 			"helpText":"",
 			"returnTypeString":"array<string>",
