@@ -969,7 +969,7 @@ bool function runWave( int waveIndex, bool shouldDoBuyTime )
 		// this function is called "Set" but in reality it is "Add"
 		SetJoinInProgressBonus( GetCurrentPlaylistVarInt( "fd_money_per_round" ,600 ) )
 		if(!IsValidPlayer(player)) {
-			return false
+			continue
 		}
 		EmitSoundOnEntityOnlyToPlayer( player, player, "HUD_MP_BountyHunt_BankBonusPts_Deposit_Start_1P" )
 	}
