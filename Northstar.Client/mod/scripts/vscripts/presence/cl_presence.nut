@@ -24,7 +24,7 @@ void function NorthstarCodeCallback_GenerateGameState() {
     gs.map_displayname = Localize(GetMapDisplayName(GetMapName()))
 
     gs.playlist = GetCurrentPlaylistName()
-    gs.playlist_displayname = Localize("#PL_"+GetCurrentPlaylistName())
+    gs.playlist_displayname = Localize(GetCurrentPlaylistVarString("name", GetCurrentPlaylistName()))
 
     gs.current_players = GetPlayerArray().len()
     gs.max_players = GetCurrentPlaylistVarInt( "max_players", -1 )
