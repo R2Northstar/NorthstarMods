@@ -92,23 +92,21 @@ void function RevivableTurret_DamageCallback( entity turret, var damageInfo )
 		turret.SetUsable()
 		turret.SetUsableByGroup( "friendlies pilot" )
 		turret.SetUsePrompts( "#TURRET_WAKEUP_HOLD_USE", "#TURRET_WAKEUP_PRESS_USE" )
-		turret.useFunction = RevivableTurret_UseFunction
+		thread RevivableTurretThink( turret )
 		thread RevivableTurret_Kill( turret )
 		DamageInfo_SetDamage( damageInfo, 0.0 )
 	}
 }
 
-function RevivableTurret_UseFunction( player , turret )
+void function RevivableTurretThink( entity turret )
 {	
-	entity tur = expect entity( turret )
-	entity ent = expect entity( player )
-	entity owner = tur.GetBossPlayer()
+	entity player = expect entity( turret.WaitSignal( "OnPlayerUse" ).player )
+	entity owner = turret.GetBossPlayer()
 	foreach ( callbackFunc in file.turretRepairCallbacks )
 	{
-		callbackFunc( tur, ent, owner )
+		callbackFunc( turret, player, owner )
 	}
-	thread RevivableTurret_Revive( tur )
-	return true
+	thread RevivableTurret_Revive( turret )
 }
 
 
@@ -121,13 +119,10 @@ void function RevivableTurret_Revive( entity turret )
 	turret.ClearInvulnerable()
 	turret.Anim_ScriptedPlay( "deploy" )
 	wait 1.0
-	if( IsValid( turret ) )
-	{
-		turret.EnableTurret()
-		turret.DisableNPCFlag( NPC_IGNORE_ALL )
-		turret.SetNoTarget( false )
-		thread TurretRefundThink( turret )
-	}
+	turret.EnableTurret()
+	turret.DisableNPCFlag( NPC_IGNORE_ALL )
+	turret.SetNoTarget( false )
+	thread TurretRefundThink( turret )
 }
 
 void function RevivableTurret_Kill( entity turret )
@@ -139,11 +134,8 @@ void function RevivableTurret_Kill( entity turret )
 	turret.SetInvulnerable()
 	turret.Anim_ScriptedPlay( "undeploy" )
 	wait 1
-	if( IsValid( turret ) )
-	{
-		turret.SetNoTarget( true )
-		turret.DisableTurret()
-	}
+	turret.SetNoTarget( true )
+	turret.DisableTurret()
 }
 
 void function AddTurretRepairCallback( void functionref(entity,entity,entity) callbackFunc )
