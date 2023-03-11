@@ -968,10 +968,7 @@ bool function runWave( int waveIndex, bool shouldDoBuyTime )
 		// is this in the right place? do we want to be adding for each player?
 		// this function is called "Set" but in reality it is "Add"
 		SetJoinInProgressBonus( GetCurrentPlaylistVarInt( "fd_money_per_round" ,600 ) )
-		if(!IsValidPlayer(player)) {
-			continue
-		}
-		EmitSoundOnEntityOnlyToPlayer( player, player, "HUD_MP_BountyHunt_BankBonusPts_Deposit_Start_1P" )
+		FD_EmitSoundOnEntityOnlyToPlayer( player, player, "HUD_MP_BountyHunt_BankBonusPts_Deposit_Start_1P" )
 	}
 	wait 1
 	foreach( entity player in GetPlayerArray() )
@@ -985,11 +982,16 @@ bool function runWave( int waveIndex, bool shouldDoBuyTime )
 			*/
 		}
 		AddMoneyToPlayer( player, 100 )
-		EmitSoundOnEntityOnlyToPlayer( player, player, "HUD_MP_BountyHunt_BankBonusPts_Deposit_Start_1P" )
+		FD_EmitSoundOnEntityOnlyToPlayer( player, player, "HUD_MP_BountyHunt_BankBonusPts_Deposit_Start_1P" )
 	}
 	wait 1
-	int highestScore = 0;
-	entity highestScore_player = GetPlayerArray()[0]
+	int highestScore
+	entity highestScore_player
+	if( GetPlayerArray().len() > 0 )
+	{
+		highestScore = 0;
+		highestScore_player = GetPlayerArray()[0]
+	}
 	foreach( entity player in GetPlayerArray() )
 	{
 		if( highestScore < ( file.players[player].assaultScoreThisRound + file.players[player].defenseScoreThisRound ) )
@@ -1005,7 +1007,7 @@ bool function runWave( int waveIndex, bool shouldDoBuyTime )
 	AddScoreToPlayer( highestScore_player, PGS_ASSAULT_SCORE, FD_SCORE_MVP )
 	AddScoreToPlayer( highestScore_player, PGS_DETONATION_SCORE, FD_SCORE_MVP )
 	*/
-	EmitSoundOnEntityOnlyToPlayer( highestScore_player, highestScore_player, "HUD_MP_BountyHunt_BankBonusPts_Deposit_Start_1P" )
+	FD_EmitSoundOnEntityOnlyToPlayer( highestScore_player, highestScore_player, "HUD_MP_BountyHunt_BankBonusPts_Deposit_Start_1P" )
 	foreach( entity player in GetPlayerArray() )
 	{
 		Remote_CallFunction_NonReplay( player, "ServerCallback_FD_NotifyMVP", highestScore_player.GetEncodedEHandle() )
@@ -1022,7 +1024,7 @@ bool function runWave( int waveIndex, bool shouldDoBuyTime )
 			AddScoreToPlayer( player, PGS_ASSAULT_SCORE, FD_SCORE_TEAM_FLAWLESS_WAVE )
 			AddScoreToPlayer( player, PGS_DETONATION_SCORE, FD_SCORE_TEAM_FLAWLESS_WAVE )
 			*/
-			EmitSoundOnEntityOnlyToPlayer( player, player, "HUD_MP_BountyHunt_BankBonusPts_Deposit_Start_1P" )
+			FD_EmitSoundOnEntityOnlyToPlayer( player, player, "HUD_MP_BountyHunt_BankBonusPts_Deposit_Start_1P" )
 		}
 	}
 
@@ -1349,8 +1351,8 @@ void function OnHarvesterDamaged( entity harvester, var damageInfo )
 		file.havesterWasDamaged = true
 	}
 
-	if ( DamageInfo_GetDamageSourceIdentifier( damageInfo ) == eDamageSourceId.mp_titancore_laser_cannon )
-    	DamageInfo_SetDamage( damageInfo, DamageInfo_GetDamage( damageInfo ) / 10 ) // laser core shreds super well for some reason
+	if ( IsHarvesterAlive( harvester ) && DamageInfo_GetDamageSourceIdentifier( damageInfo ) == eDamageSourceId.mp_titancore_laser_cannon )
+    		DamageInfo_SetDamage( damageInfo, DamageInfo_GetDamage( damageInfo ) / 10 ) // laser core shreds super well for some reason
 
 	if ( attacker.IsPlayer() )
 		attacker.NotifyDidDamage( harvester, DamageInfo_GetHitBox( damageInfo ), DamageInfo_GetDamagePosition( damageInfo ), DamageInfo_GetCustomDamageType( damageInfo ), DamageInfo_GetDamage( damageInfo ), DamageInfo_GetDamageFlags( damageInfo ), DamageInfo_GetHitGroup( damageInfo ), DamageInfo_GetWeapon( damageInfo ), DamageInfo_GetDistFromAttackOrigin( damageInfo ) )
@@ -2132,6 +2134,17 @@ void function AddScoreToPlayer( entity targetPlayer, int scoreType, int valueOve
 
 	if( IsValidPlayer( targetPlayer ) )
 		targetPlayer.AddToPlayerGameStat( scoreType, amount )
+}
+
+void function FD_EmitSoundOnEntityOnlyToPlayer( entity targetEntity, entity player, string alias )
+{
+	if( !IsValid( targetEntity ) )
+		return
+
+	if( !IsValidPlayer( player ) )
+		return
+
+	EmitSoundOnEntityOnlyToPlayer( targetEntity, player, alias )
 }
 
 int function FD_TimeOutCheck()
