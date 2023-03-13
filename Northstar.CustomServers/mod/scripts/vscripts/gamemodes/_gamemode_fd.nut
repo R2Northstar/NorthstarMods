@@ -24,7 +24,8 @@ enum eDropshipState{
 
 struct player_struct_fd{
 	bool diedThisRound
-	int scoreThisRound
+	int assaultScoreThisRound
+	int defenseScoreThisRound
 	int moneyThisRound
 	array< entity > deployedEntityThisRound
 	/*
@@ -124,6 +125,7 @@ void function GamemodeFD_Init()
 
 	SetRoundBased( true )
 	SetShouldUseRoundWinningKillReplay( false )
+	SetTimeoutWinnerDecisionFunc( FD_TimeOutCheck )
 	Riff_ForceBoostAvailability( eBoostAvailability.Disabled )
 	PlayerEarnMeter_SetEnabled( false )
 	SetShouldUsePickLoadoutScreen( true )
@@ -197,22 +199,19 @@ void function FD_PlayerRespawnCallback( entity player )
 {
 	if( player in file.players )
 		file.players[player].lastRespawn = Time()
-
 	if( GetCurrentPlaylistVarInt( "fd_at_unlimited_ammo", 1 ) )
 		FD_GivePlayerInfiniteAntiTitanAmmo( player )
-
 	if ( !file.playersHaveTitans )
 	{
 		// why in the fuck do i need to WaitFrame() here, this sucks
 		thread PlayerEarnMeter_SetMode_Threaded( player, 0 )
 	}
-
-	if( file.dropshipState == eDropshipState.Returning )
-		return
-	if( GetGameState() != eGameState.Playing)
-		return
-
-	if( player.GetPersistentVar( "spawnAsTitan" ) )
+	
+	//Players spawn directly on ground if Dropship already passed the point where players drops from it
+	//If the wave is on break joiners can buy stuff with the time remaining
+	//Also more than 4 players, additionals will spawn directly on ground
+	//Respawning as titan also ignores this because err, makes no sense
+	if( file.dropshipState == eDropshipState.Returning || GetGameState() != eGameState.Playing || player.GetPersistentVar( "spawnAsTitan" ) || file.playersInShip >=4 || GetGlobalNetInt( "FD_waveState") == WAVE_STATE_BREAK )
 		return
 
 	player.SetInvulnerable()
@@ -220,16 +219,24 @@ void function FD_PlayerRespawnCallback( entity player )
 	{
 		thread FD_DropshipSpawnDropship()
 	}
-	//Attach player
-	FirstPersonSequenceStruct idleSequence
-	idleSequence.firstPersonAnim = DROPSHIP_IDLE_ANIMS_POV[ file.playersInShip ]
-	idleSequence.thirdPersonAnim = DROPSHIP_IDLE_ANIMS[ file.playersInShip++ ]
-	idleSequence.attachment = "ORIGIN"
-	idleSequence.teleport = true
-	idleSequence.viewConeFunction = ViewConeFree
-	idleSequence.hideProxy = true
-	thread FirstPersonSequence( idleSequence, player, file.dropship )
-	file.playersInDropship.append( player )
+
+	if( IsValidPlayer( player ) && IsValid( file.dropship ) )
+	{
+		//Attach player
+		FirstPersonSequenceStruct idleSequence
+		idleSequence.firstPersonAnim = DROPSHIP_IDLE_ANIMS_POV[ file.playersInShip ]
+		idleSequence.thirdPersonAnim = DROPSHIP_IDLE_ANIMS[ file.playersInShip++ ]
+		idleSequence.attachment = "ORIGIN"
+		idleSequence.teleport = true
+		idleSequence.viewConeFunction = ViewConeFree
+		idleSequence.hideProxy = true
+		thread FirstPersonSequence( idleSequence, player, file.dropship )
+		file.playersInDropship.append( player )
+	}
+	else if( IsValidPlayer( player ) )
+	{
+		player.ClearInvulnerable()
+	}
 }
 
 
@@ -275,8 +282,15 @@ void function FD_TeamReserveDepositOrWithdrawCallback( entity player, string act
 			break
 	}
 }
+
 void function GamemodeFD_OnPlayerKilled( entity victim, entity attacker, var damageInfo )
 {
+	if( FD_PlayerInDropship( victim ) )
+	{
+		victim.ClearParent()
+		ClearPlayerAnimViewEntity( victim )
+		victim.ClearInvulnerable()
+	}
 	//set longest Time alive for end awards
 	float timeAlive = Time() - file.players[victim].lastRespawn
 	if(timeAlive>file.playerAwardStats[victim]["longestLife"])
@@ -404,6 +418,20 @@ void function OnTickDeath( entity victim, var damageInfo )
 
 void function OnNpcDeath( entity victim, entity attacker, var damageInfo )
 {
+	//Killing unwanted NPCs instantly causes a crash
+	if ( victim.IsNPC() )
+	{
+		switch ( victim.GetClassName() )
+		{
+			case "npc_gunship":
+			case "npc_marvin":
+			case "npc_drone_worker":
+			case "npc_prowler":
+			case "npc_pilot_elite":
+				return
+		}
+	}
+	
 	if( attacker.GetClassName() == "npc_turret_sentry" && IsValidPlayer( attacker.GetBossPlayer() ) )
 	{
 		file.playerAwardStats[ attacker.GetBossPlayer() ]["turretKills"]++
@@ -424,6 +452,8 @@ void function OnNpcDeath( entity victim, entity attacker, var damageInfo )
 			SetGlobalNetInt( netIndex, GetGlobalNetInt( netIndex ) - 1 )
 
 		SetGlobalNetInt( "FD_AICount_Current", GetGlobalNetInt( "FD_AICount_Current" ) - 1 )
+		if( GetNPCCloakedDrones().len() == GetGlobalNetInt( "FD_AICount_Current" ) )
+			FD_ShowCloakedDrones()
 	}
 
 	if ( victim.GetOwner() == attacker || !attacker.IsPlayer() || ( attacker == victim ) || ( victim.GetBossPlayer() == attacker ) || victim.GetClassName() == "npc_turret_sentry" )
@@ -441,6 +471,9 @@ void function OnNpcDeath( entity victim, entity attacker, var damageInfo )
 
 		switch ( victim.GetClassName() )
 		{
+			case "npc_frag_drone": //Ticks gives no money due to Reapers being able to spam them
+				money = 0
+				break
 			case "npc_soldier":
 				money = 5
 				break
@@ -455,7 +488,7 @@ void function OnNpcDeath( entity victim, entity attacker, var damageInfo )
 				money = 20
 				break
 			default:
-				money = 0 // titans seem to total up to 50 money undoomed health
+				money = 50 // titans seem to total up to 50 money undoomed health
 		}
 		foreach( player in GetPlayerArray() )
 			Remote_CallFunction_NonReplay( player, "ServerCallback_OnTitanKilled", attacker.GetEncodedEHandle(), victim.GetEncodedEHandle(), scriptDamageType, damageSourceId )
@@ -463,8 +496,7 @@ void function OnNpcDeath( entity victim, entity attacker, var damageInfo )
 	if ( money != 0 )
 		AddMoneyToPlayer( attacker , money )
 
-	attacker.AddToPlayerGameStat( PGS_ASSAULT_SCORE, playerScore ) // seems to be how combat score is counted
-	file.players[attacker].scoreThisRound += playerScore
+	file.players[attacker].assaultScoreThisRound += playerScore
 	table<int, bool> alreadyAssisted
 	foreach( DamageHistoryStruct attackerInfo in victim.e.recentDamageHistory )
 	{
@@ -475,11 +507,38 @@ void function OnNpcDeath( entity victim, entity attacker, var damageInfo )
 		if( attackerInfo.attacker != attacker && !exists )
 		{
 			alreadyAssisted[attackerInfo.attacker.GetEncodedEHandle()] <- true
-			attackerInfo.attacker.AddToPlayerGameStat( PGS_DEFENSE_SCORE, playerScore )		// i assume this is how support score gets added
+			file.players[attackerInfo.attacker].defenseScoreThisRound += playerScore		// i assume this is how support score gets added
 		}
 	}
 
 
+}
+
+void function FD_ShowCloakedDrones()
+{
+	array<entity> droneArray = GetNPCCloakedDrones()
+
+	if( droneArray.len() != GetGlobalNetInt( "FD_AICount_Current" ) )
+	{
+		CodeWarning( "Try remove cloaked drones in error way.Drone amount: " + droneArray.len() + " ,Npc amount: " + GetGlobalNetInt( "FD_AICount_Current" ) )
+		return
+	}
+	foreach( entity cloakedDrone in droneArray )
+	{
+		if( IsValid( cloakedDrone ) && IsAlive( cloakedDrone ) && cloakedDrone.s.isHidden )
+		{
+			cloakedDrone.DisableBehavior( "Follow" )
+			cloakedDrone.Show()
+			cloakedDrone.s.fx.Fire( "start" )
+			cloakedDrone.SetTitle( "#NPC_CLOAK_DRONE" )
+			cloakedDrone.Solid()
+			cloakedDrone.Minimap_AlwaysShow( TEAM_IMC, null )
+			cloakedDrone.Minimap_AlwaysShow( TEAM_MILITIA, null )
+			cloakedDrone.SetNoTarget( false )
+			if (GetGlobalNetInt( "FD_AICount_Current" ) < 2 && IsAlive( cloakedDrone ) ) //Check if this drone is literally the last enemy alive in the wave and kill it if thats the case
+				cloakedDrone.Die()
+		}
+	}
 }
 
 void function RateSpawnpoints_FD( int _0, array<entity> _1, int _2, entity _3 )
@@ -526,6 +585,7 @@ void function mainGameLoop()
 				player.SetPlayerNetInt( "numHarvesterShieldBoost", 0 )
 				player.SetPlayerNetInt( "numSuperRodeoGrenades", 0 )
 				PlayerInventory_TakeAllInventoryItems( player )
+				PlayerEarnMeter_AddEarnedAndOwned( player, 1.0, 1.0 )
 			}
 			SetGlobalNetTime( "FD_nextWaveStartTime", Time() + 75 )
 		}
@@ -551,8 +611,6 @@ void function mainGameLoop()
 	EnableTitanSelection()
 
 }
-
-
 
 array<int> function getHighestEnemyAmountsForWave( int waveIndex )
 {
@@ -628,6 +686,7 @@ array<int> function getHighestEnemyAmountsForWave( int waveIndex )
 	return ret
 
 }
+
 void function SetEnemyAmountNetVars( int waveIndex )
 {
 	int total = 0
@@ -694,8 +753,6 @@ void function SetEnemyAmountNetVars( int waveIndex )
 
 }
 
-
-
 bool function runWave( int waveIndex, bool shouldDoBuyTime )
 {
 
@@ -710,7 +767,8 @@ bool function runWave( int waveIndex, bool shouldDoBuyTime )
 	foreach( entity player in GetPlayerArray() )
 	{
 		file.players[player].diedThisRound = false
-		file.players[player].scoreThisRound = 0
+		file.players[player].assaultScoreThisRound = 0
+		file.players[player].defenseScoreThisRound = 0
 		file.players[player].moneyThisRound = GetPlayerMoney( player )
 		file.players[ player ].deployedEntityThisRound.clear()
 	}
@@ -722,6 +780,12 @@ bool function runWave( int waveIndex, bool shouldDoBuyTime )
 	}
 	if( file.waveRestart )
 	{
+		if ( file.playersHaveTitans ) //Ensure players can call their Titans on Wave Restart, unless its a map with permanent Titanfall Block -Zanieon
+		{
+			PlayerEarnMeter_SetEnabled( true )
+			foreach( entity player in GetPlayerArray() )
+				PlayerEarnMeter_AddEarnedAndOwned( player, 1.0, 1.0 )
+		}
 		file.waveRestart = false
 		MessageToTeam( TEAM_MILITIA,eEventNotifications.FD_WaveRestart )
 	}
@@ -734,6 +798,7 @@ bool function runWave( int waveIndex, bool shouldDoBuyTime )
 		Minimap_PingForTeam( TEAM_MILITIA, shopPosition, 150, 5, TEAM_COLOR_YOU / 255.0, 5 )
 		foreach( entity player in GetPlayerArray() )
 			Remote_CallFunction_NonReplay( player, "ServerCallback_FD_NotifyStoreOpen" )
+		
 		while( Time() < GetGlobalNetTime( "FD_nextWaveStartTime" ) )
 		{
 			if( allPlayersReady() )
@@ -755,7 +820,7 @@ bool function runWave( int waveIndex, bool shouldDoBuyTime )
 	else if (waveIndex==0) //Still wait 14 seconds to let them to speak about the Harvester being up and running on first wave
 		wait 14
 	else
-		wait 5
+		wait 5 //Between waves its just 5 seconds to start another one
 	
 	SetGlobalNetInt( "FD_waveState", WAVE_STATE_INCOMING )
 	foreach( entity player in GetPlayerArray() )
@@ -772,7 +837,7 @@ bool function runWave( int waveIndex, bool shouldDoBuyTime )
 		PlayFactionDialogueToTeam( "fd_finalWaveStartPrefix" , TEAM_MILITIA )
 	else
 		PlayFactionDialogueToTeam( "fd_newWaveStartPrefix" , TEAM_MILITIA )
-	
+		
 	MessageToTeam( TEAM_MILITIA, eEventNotifications.FD_AnnounceWaveStart )
 	SetGlobalNetInt( "FD_waveState", WAVE_STATE_BREAK )
 
@@ -825,44 +890,51 @@ bool function runWave( int waveIndex, bool shouldDoBuyTime )
 		SetWinner( TEAM_IMC )//restart round
 		spawnedNPCs = [] // reset npcs count
 		restetWaveEvents()
-		foreach( player in GetPlayerArray() )
-			PlayerEarnMeter_AddEarnedAndOwned( player, 1.0, 1.0 )
 		return false
 	}
 
-
-	wait 2
+	wait 1
 	//wave end
 
 	SetGlobalNetBool( "FD_waveActive", false )
-	MessageToTeam( TEAM_MILITIA, eEventNotifications.FD_AnnounceWaveEnd )
-
 	if ( isFinalWave() && IsHarvesterAlive( fd_harvester.harvester ) )
 	{
 		//Game won code
-		MessageToTeam( TEAM_MILITIA, eEventNotifications.FD_AnnounceWaveEnd )
+		//MessageToTeam( TEAM_MILITIA, eEventNotifications.FD_AnnounceWaveEnd )
 		foreach( entity player in GetPlayerArray() )
 		{
+			AddPlayerScore( player, "FDDamageBonus", null, "", file.players[player].assaultScoreThisRound )
+			AddScoreToPlayer( player, PGS_ASSAULT_SCORE )
+			AddPlayerScore( player, "FDSupportBonus", null, "", file.players[player].defenseScoreThisRound )
+			AddScoreToPlayer( player, PGS_DEFENSE_SCORE )
+			AddScoreToPlayer( player, PGS_DETONATION_SCORE )
 			AddPlayerScore( player, "FDTeamWave" )
 		}
-		wait 1
-		int highestScore = 0;
-		entity highestScore_player = GetPlayerArray()[0]
+		int highestScore
+		entity highestScore_player
+		if( GetPlayerArray().len() > 0 )
+		{
+			highestScore = 0;
+			highestScore_player = GetPlayerArray()[0]
+		}
+		else
+		{
+			SetRoundBased( false )
+			SetWinner( TEAM_MILITIA )
+			return true
+		}
 		foreach( entity player in GetPlayerArray() )
 		{
-
 			if( !file.players[player].diedThisRound )
 				AddPlayerScore( player, "FDDidntDie" )
-			if( highestScore < file.players[player].scoreThisRound )
+			if( highestScore < ( file.players[player].assaultScoreThisRound + file.players[player].defenseScoreThisRound ) )
 			{
-				highestScore = file.players[player].scoreThisRound
+				highestScore = file.players[player].assaultScoreThisRound + file.players[player].defenseScoreThisRound
 				highestScore_player = player
 			}
-
 		}
 		file.playerAwardStats[highestScore_player]["mvp"]++
 		AddPlayerScore( highestScore_player, "FDWaveMVP" )
-		wait 1
 		foreach( entity player in GetPlayerArray() )
 			if( !file.havesterWasDamaged )
 				AddPlayerScore( player, "FDTeamFlawlessWave" )
@@ -883,13 +955,13 @@ bool function runWave( int waveIndex, bool shouldDoBuyTime )
 			}
 		}
 
-
-
 		SetRoundBased(false)
 		SetWinner(TEAM_MILITIA)
 		PlayFactionDialogueToTeam( "fd_matchVictory", TEAM_MILITIA )
 		return true
 	}
+	
+	MessageToTeam( TEAM_MILITIA, eEventNotifications.FD_AnnounceWaveEnd )
 
 	if(!file.havesterWasDamaged)
 	{
@@ -918,18 +990,28 @@ bool function runWave( int waveIndex, bool shouldDoBuyTime )
 	//Player scoring
 	MessageToTeam( TEAM_MILITIA, eEventNotifications.FD_NotifyWaveBonusIncoming )
 	wait 2
+	
+	FD_AttemptToRepairTurrets()
+
 	foreach( entity player in GetPlayerArray() )
 	{
 		if ( isSecondWave() )
 			PlayFactionDialogueToPlayer( "fd_wavePayoutFirst", player )
 		else
 			PlayFactionDialogueToPlayer( "fd_wavePayoutAddtnl", player )
+		AddPlayerScore( player, "FDDamageBonus", null, "", file.players[player].assaultScoreThisRound )
+		AddScoreToPlayer( player, PGS_ASSAULT_SCORE )
+		AddPlayerScore( player, "FDSupportBonus", null, "", file.players[player].defenseScoreThisRound )
+		AddScoreToPlayer( player, PGS_DEFENSE_SCORE )
+		AddScoreToPlayer( player, PGS_DETONATION_SCORE )
 		AddPlayerScore( player, "FDTeamWave" )
 		AddMoneyToPlayer( player, GetCurrentPlaylistVarInt( "fd_money_per_round", 600 ) )
 		// is this in the right place? do we want to be adding for each player?
 		// this function is called "Set" but in reality it is "Add"
 		SetJoinInProgressBonus( GetCurrentPlaylistVarInt( "fd_money_per_round" ,600 ) )
-		EmitSoundOnEntityOnlyToPlayer( player, player, "HUD_MP_BountyHunt_BankBonusPts_Deposit_Start_1P" )
+		if(!IsValidPlayer(player))
+			continue
+		FD_EmitSoundOnEntityOnlyToPlayer( player, player, "HUD_MP_BountyHunt_BankBonusPts_Deposit_Start_1P" )
 	}
 	wait 1
 	foreach( entity player in GetPlayerArray() )
@@ -940,16 +1022,21 @@ bool function runWave( int waveIndex, bool shouldDoBuyTime )
 			player.AddToPlayerGameStat( PGS_ASSAULT_SCORE, FD_SCORE_DIDNT_DIE )
 		}
 		AddMoneyToPlayer( player, 100 )
-		EmitSoundOnEntityOnlyToPlayer( player, player, "HUD_MP_BountyHunt_BankBonusPts_Deposit_Start_1P" )
+		FD_EmitSoundOnEntityOnlyToPlayer( player, player, "HUD_MP_BountyHunt_BankBonusPts_Deposit_Start_1P" )
 	}
 	wait 1
-	int highestScore = 0;
-	entity highestScore_player = GetPlayerArray()[0]
+	int highestScore
+	entity highestScore_player
+	if( GetPlayerArray().len() > 0 )
+	{
+		highestScore = 0;
+		highestScore_player = GetPlayerArray()[0]
+	}
 	foreach( entity player in GetPlayerArray() )
 	{
-		if( highestScore < file.players[player].scoreThisRound )
+		if( highestScore < ( file.players[player].assaultScoreThisRound + file.players[player].defenseScoreThisRound ) )
 		{
-			highestScore = file.players[player].scoreThisRound
+			highestScore = file.players[player].assaultScoreThisRound + file.players[player].defenseScoreThisRound
 			highestScore_player = player
 		}
 	}
@@ -957,7 +1044,7 @@ bool function runWave( int waveIndex, bool shouldDoBuyTime )
 	AddPlayerScore( highestScore_player, "FDWaveMVP" )
 	AddMoneyToPlayer( highestScore_player, 100 )
 	highestScore_player.AddToPlayerGameStat( PGS_ASSAULT_SCORE, FD_SCORE_MVP )
-	EmitSoundOnEntityOnlyToPlayer( highestScore_player, highestScore_player, "HUD_MP_BountyHunt_BankBonusPts_Deposit_Start_1P" )
+	FD_EmitSoundOnEntityOnlyToPlayer( highestScore_player, highestScore_player, "HUD_MP_BountyHunt_BankBonusPts_Deposit_Start_1P" )
 	foreach( entity player in GetPlayerArray() )
 	{
 		Remote_CallFunction_NonReplay( player, "ServerCallback_FD_NotifyMVP", highestScore_player.GetEncodedEHandle() )
@@ -971,8 +1058,9 @@ bool function runWave( int waveIndex, bool shouldDoBuyTime )
 			AddPlayerScore( player, "FDTeamFlawlessWave" )
 			AddMoneyToPlayer( player, 100 )
 			player.AddToPlayerGameStat( PGS_ASSAULT_SCORE, FD_SCORE_TEAM_FLAWLESS_WAVE )
-			EmitSoundOnEntityOnlyToPlayer( player, player, "HUD_MP_BountyHunt_BankBonusPts_Deposit_Start_1P" )
+			FD_EmitSoundOnEntityOnlyToPlayer( player, player, "HUD_MP_BountyHunt_BankBonusPts_Deposit_Start_1P" )
 		}
+		player.SetPlayerGameStat( PGS_DETONATION_SCORE, player.GetPlayerGameStat( PGS_ASSAULT_SCORE ) + player.GetPlayerGameStat( PGS_DEFENSE_SCORE ) )
 	}
 
 	wait 1
@@ -994,8 +1082,7 @@ void function FD_StunLaserHealTeammate( entity player, entity target, int shield
 {
 	if( IsValid( player ) && player in file.players ){
 		file.playerAwardStats[player]["heals"] += float( shieldRestoreAmount )
-		player.AddToPlayerGameStat( PGS_DEFENSE_SCORE, shieldRestoreAmount / 100 )
-		file.players[ player ].scoreThisRound += shieldRestoreAmount / 100
+		file.players[ player ].defenseScoreThisRound += shieldRestoreAmount / 100
 	}
 }
 
@@ -1003,8 +1090,7 @@ void function FD_SmokeHealTeammate( entity player, entity target, int shieldRest
 {
 	if( IsValid( player ) && player in file.players ){
 		file.playerAwardStats[player]["heals"] += float( shieldRestoreAmount )
-		player.AddToPlayerGameStat( PGS_DEFENSE_SCORE, shieldRestoreAmount / 100 )
-		file.players[ player ].scoreThisRound += shieldRestoreAmount / 100
+		file.players[ player ].defenseScoreThisRound += shieldRestoreAmount / 100
 	}
 }
 
@@ -1033,8 +1119,7 @@ void function FD_BatteryHealTeammate( entity battery, entity titan, int shieldRe
 		currentHeal = shieldRestoreAmount + healthRestoreAmount
 		currentHealScore = currentHeal / 100
 		file.playerAwardStats[BatteryParent]["heals"] += float( currentHeal )
-		BatteryParent.AddToPlayerGameStat( PGS_DEFENSE_SCORE, currentHealScore )
-		file.players[ BatteryParent ].scoreThisRound += currentHealScore
+		file.players[ BatteryParent ].defenseScoreThisRound += currentHealScore
 	}
 }
 
@@ -1046,6 +1131,7 @@ void function FD_OnArcTrapTriggered( entity victim, var damageInfo )
 		return
 
 	AddPlayerScore( owner, "FDArcTrapTriggered" )
+	file.players[ owner ].defenseScoreThisRound += 10
 }
 
 void function FD_OnArcWaveDamage( entity ent, var damageInfo )
@@ -1072,6 +1158,7 @@ void function FD_OnSonarStart( entity ent, vector position, int sonarTeam, entit
 		return
 
 	AddPlayerScore( sonarOwner, "FDSonarPulse" )//should only triggered once during sonar time?
+	file.players[ sonarOwner ].defenseScoreThisRound += 5
 }
 
 void function FD_SetupEpilogue()
@@ -1199,6 +1286,7 @@ void function FD_Epilogue_threaded()
 void function IncrementPlayerstat_TurretRevives( entity player )
 {
 	file.playerAwardStats[player]["turretsRepaired"]++
+	file.players[player].defenseScoreThisRound += FD_SCORE_REPAIR_TURRET
 }
 
 void function SpawnCallback_SafeTitanSpawnTime( entity ent )
@@ -1239,6 +1327,13 @@ void function OnHarvesterDamaged( entity harvester, var damageInfo )
 	entity attacker = DamageInfo_GetAttacker( damageInfo )
 	int attackerTypeID = FD_GetAITypeID_ByString( attacker.GetTargetName() )
 	float damageAmount = DamageInfo_GetDamage( damageInfo )
+	
+	int PlayersInMatch
+	foreach( entity player in GetPlayerArray() )
+		PlayersInMatch++
+	
+	Clamp( PlayersInMatch.tofloat() , 1, 4 ) //Additional players should not be considered
+	float MultiplierPerPlayer = 1.0
 
 	if ( !damageSourceID && !damageAmount && !attacker )
 		return
@@ -1246,8 +1341,30 @@ void function OnHarvesterDamaged( entity harvester, var damageInfo )
 	fd_harvester.lastDamage = Time()
 
 	damageAmount = ( damageAmount * GetCurrentPlaylistVarFloat( "fd_player_damage_scalar", 1.0 ) )
-
-
+	damageAmount *= MultiplierPerPlayer / PlayersInMatch
+	
+	//All of this is factored after difficulty damage multipliers, so probably on Master and Insane difficulty only one Nuke Titan should almost end the Harvester even with full shields
+	//Master and Insane difficulties tends to spawn less enemies as well, so players should be paying attention against those enemies
+	//These are approximate values accordingly to vanilla
+	switch(damageSourceID)
+	{
+		case eDamageSourceId.damagedef_nuclear_core:
+    	damageAmount *= 10 //A single Nuke Titan should already be a high threat to the Harvester
+		break
+	
+		case eDamageSourceId.damagedef_stalker_powersupply_explosion_small:
+    	damageAmount *= 2 //Stalkers should also be able to take a little more from Harvester as in vanilla
+		break
+		
+		case eDamageSourceId.damagedef_stalker_powersupply_explosion_large:
+		case eDamageSourceId.mp_weapon_droneplasma: //Not sure, Plasma Drones also seems off
+    	damageAmount *= 4
+		break
+		
+		case eDamageSourceId.mp_titanweapon_rocketeer_rocketstream: //Mortar titans also do pose a threat if left unchecked for too long
+    	damageAmount *= 3
+		break
+	}
 
 	float shieldPercent = ( ( harvester.GetShieldHealth().tofloat() / harvester.GetShieldHealthMax() ) * 100 )
 	if ( shieldPercent < 100 && !file.harvesterShieldDown )
@@ -1323,9 +1440,32 @@ void function OnHarvesterDamaged( entity harvester, var damageInfo )
 		harvester.SetHealth( newHealth )
 		file.havesterWasDamaged = true
 	}
-
-	if ( DamageInfo_GetDamageSourceIdentifier( damageInfo ) == eDamageSourceId.mp_titancore_laser_cannon )
-    	DamageInfo_SetDamage( damageInfo, DamageInfo_GetDamage( damageInfo ) / 10 ) // laser core shreds super well for some reason
+	
+	//Repeat filters for shields, these are approximate values accordingly to vanilla
+	switch(damageSourceID)
+	{
+		case eDamageSourceId.mp_titancore_laser_cannon: //Laser Core shreds super well for some reason
+		case eDamageSourceId.titanEmpField: //A single Arc Titan does not take one second to remove Harvester shield on vanilla with their aura EDIT: Apparently its still not working
+    	DamageInfo_SetDamage( damageInfo, DamageInfo_GetDamage( damageInfo ) / 20 )
+		break
+	
+		case eDamageSourceId.damagedef_nuclear_core: //Multiplier for Nuke Titans against shield is lower because the discrepancy between Harvester health pool and Shield amount pool
+    	DamageInfo_SetDamage( damageInfo, DamageInfo_GetDamage( damageInfo ) * 6 )
+		break
+	
+		case eDamageSourceId.damagedef_stalker_powersupply_explosion_small:
+    	DamageInfo_SetDamage( damageInfo, DamageInfo_GetDamage( damageInfo ) * 2 )
+		break
+		
+		case eDamageSourceId.damagedef_stalker_powersupply_explosion_large:
+    	DamageInfo_SetDamage( damageInfo, DamageInfo_GetDamage( damageInfo ) * 4 )
+		break
+		
+		case eDamageSourceId.mp_titanweapon_rocketeer_rocketstream:
+		case eDamageSourceId.mp_weapon_droneplasma:
+    	DamageInfo_SetDamage( damageInfo, DamageInfo_GetDamage( damageInfo ) * 3 )
+		break
+	}
 
 	if ( attacker.IsPlayer() )
 		attacker.NotifyDidDamage( harvester, DamageInfo_GetHitBox( damageInfo ), DamageInfo_GetDamagePosition( damageInfo ), DamageInfo_GetCustomDamageType( damageInfo ), DamageInfo_GetDamage( damageInfo ), DamageInfo_GetDamageFlags( damageInfo ), DamageInfo_GetHitGroup( damageInfo ), DamageInfo_GetWeapon( damageInfo ), DamageInfo_GetDistFromAttackOrigin( damageInfo ) )
@@ -1410,7 +1550,7 @@ void function HarvesterThink()
 					PlayFactionDialogueToTeam( "fd_baseShieldRecharging", TEAM_MILITIA )
 				else
 					PlayFactionDialogueToTeam( "fd_baseShieldRechargingShort", TEAM_MILITIA )
-						isRegening = true
+				isRegening = true
 			}
 
 			float newShieldHealth = ( harvester.GetShieldHealthMax() / GENERATOR_SHIELD_REGEN_TIME * deltaTime ) + harvester.GetShieldHealth()
@@ -1488,7 +1628,7 @@ void function FD_DamageByPlayerCallback( entity victim, var damageInfo )
 		return
 	float damage = DamageInfo_GetDamage( damageInfo )
 	file.playerAwardStats[player]["damageDealt"] += damage
-	file.players[ player ].scoreThisRound += damage.tointeger() //TODO NOT HOW SCORE WORKS
+	file.players[ player ].assaultScoreThisRound += ( damage.tointeger() / 100 ) //TODO NOT HOW SCORE WORKS
 	if( victim.IsTitan() )
 	{
 		//TODO Money and score for titan damage
@@ -1543,7 +1683,7 @@ void function HealthScaleByDifficulty( entity ent )
 	else
 		ent.SetMaxHealth( ent.GetMaxHealth() + GetCurrentPlaylistVarInt( "fd_reaper_health_adjust", 0 ) )
 
-	if( GetCurrentPlaylistVarInt( "fd_pro_titan_shields", 0 ) && ent.IsTitan() )
+	if( GetCurrentPlaylistVarInt( "fd_pro_titan_shields", 0 ) && ent.IsTitan() || ent.IsTitan() && GetAiNetIdFromTargetName( ent.GetTargetName() ) == "FD_AICount_Titan_Nuke" ) //Nuke Titans always spawn with shields regardless difficulty
 	{
 		entity soul = ent.GetTitanSoul()
 		if( IsValid( soul ) )
@@ -1558,7 +1698,6 @@ void function HealthScaleByDifficulty( entity ent )
 
 void function FD_createHarvester()
 {
-
 	fd_harvester = SpawnHarvester( file.harvester_info.GetOrigin(), file.harvester_info.GetAngles(), GetCurrentPlaylistVarInt( "fd_harvester_health", 25000 ), GetCurrentPlaylistVarInt( "fd_harvester_shield", 6000 ), TEAM_MILITIA )
 	fd_harvester.harvester.Minimap_SetAlignUpright( true )
 	fd_harvester.harvester.Minimap_AlwaysShow( TEAM_IMC, null )
@@ -1568,6 +1707,20 @@ void function FD_createHarvester()
 	fd_harvester.harvester.Minimap_SetCustomState( eMinimapObject_prop_script.FD_HARVESTER )
 	AddEntityCallback_OnDamaged( fd_harvester.harvester, OnHarvesterDamaged )
 	thread CreateHarvesterHintTrigger( fd_harvester.harvester )
+	
+	ToggleNPCPathsForEntity( fd_harvester.harvester, false )
+	
+	//Some maps have sky battles happening on them
+	switch( GetMapName() )
+	{
+		case "mp_angel_city":
+		case "mp_black_water_canal":
+		case "mp_wargames":
+		case "mp_homestead":
+		case "mp_thaw":
+		case "mp_colony02":
+			thread StratonHornetDogfightsIntense()
+	}
 }
 
 bool function IsHarvesterAlive( entity harvester )
@@ -1613,7 +1766,13 @@ void function CreateHarvesterHintTrigger( entity harvester )
 
 void function OnEnterNearHarvesterTrigger( entity trig, entity activator )
 {
+	if( GetGameState() != eGameState.Playing )
+		return
+		
 	if( !( activator in file.players ) )
+		return
+		
+	if( !IsHarvesterAlive( fd_harvester.harvester ) )
 		return
 		
 	if( GetGlobalNetInt( "FD_waveState" ) != WAVE_STATE_IN_PROGRESS )
@@ -1628,7 +1787,13 @@ void function OnEnterNearHarvesterTrigger( entity trig, entity activator )
 
 void function OnLeaveNearHarvesterTrigger( entity trig, entity activator )
 {
+	if( GetGameState() != eGameState.Playing )
+		return
+		
 	if( !( activator in file.players ) )
+		return
+		
+	if( !IsHarvesterAlive( fd_harvester.harvester ) )
 		return
 		
 	if( GetGlobalNetInt( "FD_waveState" ) != WAVE_STATE_IN_PROGRESS )
@@ -1972,8 +2137,20 @@ void function DisableTitanSelectionForPlayer( entity player )
 	}
 }
 
+bool function FD_PlayerInDropship( entity player )
+{
+	if( !IsValid( file.dropship ) )
+		return false
 
+	if( !IsValid( player ) )
+		return false
 
+	foreach ( entity dropshipPlayer in file.playersInDropship )
+		if ( dropshipPlayer == player )
+			return true
+
+	return false
+}
 
 void function FD_DropshipSpawnDropship()
 {
@@ -1994,13 +2171,15 @@ void function FD_DropshipSpawnDropship()
 
 	array<string> anims = GetRandomDropshipDropoffAnims()
 
-	//thread WarpinEffect( $"models/vehicle/crow_dropship/crow_dropship.mdl", anims[0], file.dropship.GetOrigin(),f ile.dropship.GetAngles() ) //this does not work
+	thread WarpinEffect( $"models/vehicle/crow_dropship/crow_dropship.mdl", anims[0], file.dropship.GetOrigin(),file.dropship.GetAngles() ) //this does not work
 	file.dropship.WaitSignal( "deploy" )
 	file.dropshipState = eDropshipState.Returning
 	foreach(int i,entity player in file.playersInDropship)
 	{
 		thread FD_DropshipDropPlayer( player, i )
 	}
+	if ( file.playersInShip == 1 ) //Only one player in dropship is needed to warn about them respawning
+		PlayFactionDialogueToTeam( "fd_pilotRespawn" , TEAM_MILITIA )
 	file.playersInDropship.clear()
 
 	wait 8
@@ -2010,18 +2189,17 @@ void function FD_DropshipSpawnDropship()
 void function FD_DropshipDropPlayer(entity player,int playerDropshipIndex)
 {
 	player.EndSignal( "OnDestroy" )
-	FirstPersonSequenceStruct jumpSequence
-	jumpSequence.firstPersonAnim = DROPSHIP_EXIT_ANIMS_POV[ playerDropshipIndex ]
-	jumpSequence.thirdPersonAnim = DROPSHIP_EXIT_ANIMS[ playerDropshipIndex ]
-	jumpSequence.attachment = "ORIGIN"
-	jumpSequence.blendTime = 0.0
-	jumpSequence.viewConeFunction = ViewConeFree
-
-	thread FirstPersonSequence( jumpSequence, player, file.dropship )
-
 	//check the player
 	if( IsValid( player ) )
 	{
+		FirstPersonSequenceStruct jumpSequence
+		jumpSequence.firstPersonAnim = DROPSHIP_EXIT_ANIMS_POV[ playerDropshipIndex ]
+		jumpSequence.thirdPersonAnim = DROPSHIP_EXIT_ANIMS[ playerDropshipIndex ]
+		jumpSequence.attachment = "ORIGIN"
+		jumpSequence.blendTime = 0.0
+		jumpSequence.viewConeFunction = ViewConeFree
+
+		thread FirstPersonSequence( jumpSequence, player, file.dropship )
 		WaittillAnimDone( player )
 		player.ClearParent()
 		ClearPlayerAnimViewEntity( player )
@@ -2041,18 +2219,74 @@ string function FD_DropshipGetAnimation()
 
 	switch( GetMapName() )
 	{
-	case "mp_homestead":
-		return "dropship_coop_respawn_homestead"
-	case "mp_lagoon":
-		return "dropship_coop_respawn_lagoon"
-	case "mp_overlook":
-		return "dropship_coop_respawn_overlook"
-	case "mp_outpost":
-		return "dropship_coop_respawn_outpost"
-	case "mp_wargames":
-		return "dropship_coop_respawn_wargames"
-	case "mp_digsite":
-		return "dropship_coop_respawn_digsite"
+		case "mp_homestead":
+			return "dropship_coop_respawn_homestead"
+		/*
+		case "mp_lagoon":
+			return "dropship_coop_respawn_lagoon"
+		case "mp_overlook":
+			return "dropship_coop_respawn_overlook"
+		case "mp_outpost":
+			return "dropship_coop_respawn_outpost"
+		case "mp_wargames":
+			return "dropship_coop_respawn_wargames"
+		case "mp_digsite":
+			return "dropship_coop_respawn_digsite"
+		*/
 	}
 	return "dropship_coop_respawn"
+}
+
+void function AddScoreToPlayer( entity targetPlayer, int scoreType, int valueOverride = 0 )
+{
+	if( !IsValidPlayer( targetPlayer ) )
+		return
+
+	int amount = 0
+	switch( scoreType )
+	{
+		case PGS_ASSAULT_SCORE:		
+			amount = file.players[targetPlayer].assaultScoreThisRound
+			break
+		case PGS_DEFENSE_SCORE:
+			amount = file.players[targetPlayer].defenseScoreThisRound
+			break
+		case PGS_DETONATION_SCORE:
+			amount = file.players[targetPlayer].assaultScoreThisRound + file.players[targetPlayer].defenseScoreThisRound
+			break
+	}
+
+	if( valueOverride != 0 )
+		amount = valueOverride
+
+	if( IsValidPlayer( targetPlayer ) )
+		targetPlayer.AddToPlayerGameStat( scoreType, amount )
+}
+
+void function FD_EmitSoundOnEntityOnlyToPlayer( entity targetEntity, entity player, string alias )
+{
+	if( !IsValid( targetEntity ) )
+		return
+
+	if( !IsValidPlayer( player ) )
+		return
+
+	EmitSoundOnEntityOnlyToPlayer( targetEntity, player, alias )
+}
+
+int function FD_TimeOutCheck()
+{
+	//on timeout,always ai win the match
+	SetRoundBased( false )
+	return TEAM_IMC
+}
+
+void function FD_AttemptToRepairTurrets()
+{
+	//Repair turret on here rather than in the executeWave(), softlocking reasons
+	foreach (entity turret in GetEntArrayByClass_Expensive( "npc_turret_sentry" ) )
+	{
+		if( IsValid( turret ) && turret.GetHealth() < turret.GetMaxHealth() )
+			RevivableTurret_Revive( turret )
+	}
 }

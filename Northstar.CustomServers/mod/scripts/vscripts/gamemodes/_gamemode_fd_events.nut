@@ -24,6 +24,8 @@ global function CreateToneTitanEvent
 global function CreateLegionTitanEvent
 global function CreateMonarchTitanEvent
 global function CreateWarningEvent
+global function CreateTitanfallBlockEvent //Careful when using this, it really changes gameplay perspective for players and can make a wave impossible to beat (Use 1 to Block, and 0 to Unblock midwave)
+global function CreateGruntDropshipEvent //This one always requires testing after usage because sometimes Grunts wont zipline to the ground, it wont softlock the wave, but makes this odd behavior
 global function executeWave
 global function restetWaveEvents
 global function WinWave
@@ -110,16 +112,13 @@ global array< array<WaveEvent> > waveEvents
 
 void function executeWave()
 {	
-	print( "executeWave Start" )
+	print( "Wave Start: " + GetGlobalNetInt( "FD_currentWave" ) )
 	thread runEvents( 0 )
-	while( IsHarvesterAlive( fd_harvester.harvester ) && ( !allEventsExecuted( GetGlobalNetInt( "FD_currentWave" ) ) ) ) 
+	while( IsHarvesterAlive( fd_harvester.harvester ) && !allEventsExecuted( GetGlobalNetInt( "FD_currentWave" ) ) && GetGlobalNetInt( "FD_AICount_Current" ) >= 1 )
 		WaitFrame()
-	wait 5 //incase droppod is last event so all npc are spawned
+
 	waitUntilLessThanAmountAlive( 0 )
 	waitUntilLessThanAmountAlive_expensive( 0 )
-	
-	foreach (entity ent in GetEntArrayByClass_Expensive( "npc_turret_sentry" ) )
-		RevivableTurret_Revive( ent )
 }
 
 bool function allEventsExecuted( int waveIndex ) 
@@ -134,7 +133,7 @@ bool function allEventsExecuted( int waveIndex )
 
 void function runEvents( int firstExecuteIndex )
 {	
-	print( "runEvents Start" )
+	print( "Events Start" )
 	WaveEvent currentEvent = waveEvents[GetGlobalNetInt( "FD_currentWave" )][firstExecuteIndex]
 	
 	while(true)
@@ -162,7 +161,7 @@ void function runEvents( int firstExecuteIndex )
 		}
 		if( currentEvent.nextEventIndex == 0 )
 		{
-			print( "zero index" )
+			print( "zero index reached, finishing wave" )
 			return
 		}
 		currentEvent = waveEvents[GetGlobalNetInt( "FD_currentWave" )][currentEvent.nextEventIndex]
@@ -593,8 +592,6 @@ WaveEvent function CreateSpawnDroneEvent(vector origin,vector angles,string rout
 	return event
 }
 
-
-
 WaveEvent function CreateWarningEvent( int warningType, int nextEventIndex, int executeOnThisCall = 1 )
 {
 	WaveEvent event
@@ -603,7 +600,7 @@ WaveEvent function CreateWarningEvent( int warningType, int nextEventIndex, int 
 	event.nextEventIndex = nextEventIndex
 	event.shouldThread = false
 
-	switch(warningType) //I wish i could keep the old method for shorter code, but it wasn't reliable for the variance of entries in these Announcements
+	switch(warningType)
 	{
 		case FD_IncomingWarnings.CloakDrone:
 		event.soundEvent.soundEventName = "fd_incCloakDroneClump"
@@ -721,6 +718,31 @@ WaveEvent function CreateWarningEvent( int warningType, int nextEventIndex, int 
 	return event
 }
 
+WaveEvent function CreateTitanfallBlockEvent( int amount, int nextEventIndex, int executeOnThisCall = 1 )
+{
+	WaveEvent event
+	event.eventFunction = BlockFurtherTitanfalls
+	event.executeOnThisCall = executeOnThisCall
+	event.nextEventIndex = nextEventIndex
+	event.shouldThread = false
+	event.flowControlEvent.waitAmount = amount
+	return event
+}
+
+WaveEvent function CreateGruntDropshipEvent( vector origin, vector angles, int amount, string route, int nextEventIndex, int executeOnThisCall = 1, string entityGlobalKey = "" )
+{
+	WaveEvent event
+	event.eventFunction = spawnGruntDropship
+	event.executeOnThisCall = executeOnThisCall
+	event.nextEventIndex = nextEventIndex
+	event.shouldThread = true
+	event.spawnEvent.spawnType= eFD_AITypeIDs.GRUNT
+	event.spawnEvent.spawnAmount = amount
+	event.spawnEvent.origin = origin
+	event.spawnEvent.entityGlobalKey = entityGlobalKey
+	return event
+}
+
 /************************************************************************************************************\
 ####### #     # ####### #     # #######    ####### #     # #     #  #####  ####### ### ####### #     #  #####
 #       #     # #       ##    #    #       #       #     # ##    # #     #    #     #  #     # ##    # #     #
@@ -730,6 +752,21 @@ WaveEvent function CreateWarningEvent( int warningType, int nextEventIndex, int 
 #         # #   #       #    ##    #       #       #     # #    ## #     #    #     #  #     # #    ## #     #
 #######    #    ####### #     #    #       #        #####  #     #  #####     #    ### ####### #     #  #####
 \************************************************************************************************************/
+
+//Hack by using one of the existing struct vars, hopefully nothing will break
+void function BlockFurtherTitanfalls( SmokeEvent smokeEvent, SpawnEvent spawnEvent, FlowControlEvent flowControlEvent, SoundEvent soundEvent )
+{
+	if ( flowControlEvent.waitAmount == 1 )
+	{
+		PlayerEarnMeter_SetEnabled( false )
+		foreach( entity player in GetPlayerArray() )
+		{
+			PlayerEarnMeter_Reset( player )
+		}
+	}
+	else
+		PlayerEarnMeter_SetEnabled( true )
+}
 
 void function PlayWarning( SmokeEvent smokeEvent, SpawnEvent spawnEvent, FlowControlEvent flowControlEvent, SoundEvent soundEvent )
 {
@@ -866,7 +903,9 @@ void function waitUntilLessThanAmountAliveEventWeighted( SmokeEvent smokeEvent, 
 void function spawnSuperSpectre( SmokeEvent smokeEvent, SpawnEvent spawnEvent, FlowControlEvent flowControlEvent, SoundEvent soundEvent )
 {
 	PingMinimap( spawnEvent.origin.x, spawnEvent.origin.y, 4, 600, 150, 0 )
-	wait 4.7
+	wait 1.7
+	TryAnnounceTitanfallWarningToEnemyTeam( TEAM_IMC, spawnEvent.origin )
+	wait 3.0
 
 	entity npc = CreateSuperSpectre( TEAM_IMC, spawnEvent.origin, spawnEvent.angles )
 	SetSpawnOption_AISettings( npc, "npc_super_spectre_fd" )
@@ -884,7 +923,9 @@ void function spawnSuperSpectre( SmokeEvent smokeEvent, SpawnEvent spawnEvent, F
 void function spawnSuperSpectreWithMinion( SmokeEvent smokeEvent, SpawnEvent spawnEvent, FlowControlEvent flowControlEvent, SoundEvent soundEvent )
 {
 	PingMinimap( spawnEvent.origin.x, spawnEvent.origin.y, 4, 600, 150, 0 )
-	wait 4.7
+	wait 1.7
+	TryAnnounceTitanfallWarningToEnemyTeam( TEAM_IMC, spawnEvent.origin )
+	wait 3.0
 
 	entity npc = CreateSuperSpectre( TEAM_IMC, spawnEvent.origin,spawnEvent.angles )
 	SetSpawnOption_AISettings( npc, "npc_super_spectre_fd" )
@@ -903,10 +944,9 @@ void function spawnSuperSpectreWithMinion( SmokeEvent smokeEvent, SpawnEvent spa
 void function spawnDroppodGrunts( SmokeEvent smokeEvent, SpawnEvent spawnEvent, FlowControlEvent flowControlEvent, SoundEvent soundEvent )
 {
 	PingMinimap( spawnEvent.origin.x, spawnEvent.origin.y, 4, 600, 150, 0 )
-	entity pod = CreateDropPod( spawnEvent.origin, < 0, 0, 0 > )
+	entity pod = CreateDropPod( spawnEvent.origin, < 0, RandomIntRange( 0, 359 ), 0 > )
 	SetTeam( pod, TEAM_IMC )
 	InitFireteamDropPod( pod )
-	waitthread LaunchAnimDropPod( pod, "pod_testpath", spawnEvent.origin, < 0, 0, 0 > )
 
 	string squadName = MakeSquadName( TEAM_IMC, UniqueString( "ZiplineTable" ) )
 	array<entity> guys
@@ -914,17 +954,18 @@ void function spawnDroppodGrunts( SmokeEvent smokeEvent, SpawnEvent spawnEvent, 
 	for ( int i = 0; i < spawnEvent.spawnAmount; i++ )
     {
 		entity guy = CreateSoldier( TEAM_IMC, spawnEvent.origin, < 0, 0, 0 > )
-
+		
+		// should this grunt be a shield captain?
+		if (i < GetCurrentPlaylistVarInt( "fd_grunt_shield_captains", 0 ) )
+			SetSpawnOption_AISettings( guy, "npc_soldier_shield_captain" ) //Actually spawning a true shield captain from campaign to spice things up, for vanilla behavior, just remove this line use the one below
+			//thread ActivatePersonalShield( guy )
+			
 		if( spawnEvent.entityGlobalKey != "" )
 			GlobalEventEntitys[ spawnEvent.entityGlobalKey+ i.tostring() ] <- guy
 		SetTeam( guy, TEAM_IMC )
 		guy.EnableNPCFlag(  NPC_ALLOW_INVESTIGATE | NPC_ALLOW_HAND_SIGNALS | NPC_ALLOW_FLEE )
 		guy.DisableNPCFlag( NPC_ALLOW_PATROL )
 		DispatchSpawn( guy )
-
-		// should this grunt be a shield captain?
-		if (i < GetCurrentPlaylistVarInt( "fd_grunt_shield_captains", 0 ) )
-			thread ActivatePersonalShield( guy )
 
 		guy.SetParent( pod, "ATTACH", true )
 		SetSquad( guy, squadName )
@@ -942,18 +983,143 @@ void function spawnDroppodGrunts( SmokeEvent smokeEvent, SpawnEvent spawnEvent, 
 		spawnedNPCs.append( guy )
 		guys.append( guy )
 	}
-
+	
+	waitthread LaunchAnimDropPod( pod, "pod_testpath", spawnEvent.origin, < 0, RandomIntRange( 0, 359 ), 0 > )
 	ActivateFireteamDropPod( pod, guys )
 	thread SquadNav_Thread( guys,spawnEvent.route )
+}
+
+//This function is based off the entire function chain called by AiGameModes_SpawnDropShip(), that function uses table data for modularization and while it
+//works just fine if we simply use it here, there's no viable way to add the Grunts into the enemy count pool, plus that function also only works at
+//specific nodes found in the maps, that is not needed here, full control over the coordinates where the dropship will drop grunts is better.
+void function spawnGruntDropship( SmokeEvent smokeEvent, SpawnEvent spawnEvent, FlowControlEvent flowControlEvent, SoundEvent soundEvent )
+{  
+	string squadName = MakeSquadName( TEAM_IMC, UniqueString( "DropshipTable" ) )
+	
+	vector origin 		= spawnEvent.origin
+	origin.z 		   += 448 //Expected to people make coordinates in the ground so we add this up for the hover height
+	float yaw 			= spawnEvent.angles.y
+	int team 			= TEAM_IMC
+	string squadname 	= squadName
+	int style 			= eDropStyle.ZIPLINE_NPC
+	int health 			= 7800
+	
+	CallinData drop
+	InitCallinData( drop )
+	SetCallinStyle( drop, style )
+	drop.dist 			= 1600
+	drop.origin 		= origin
+	drop.yaw 			= yaw
+	
+	SpawnPointFP spawnPoint
+	array<string> anims = GetRandomDropshipDropoffAnims()
+	string animation
+	FlightPath flightPath
+	
+	foreach ( anim in anims )
+	{
+		animation = anim
+		flightPath = GetAnalysisForModel( DROPSHIP_MODEL, anim )
+		spawnPoint = GetSpawnPointForStyle( flightPath, drop )
+		if ( spawnPoint.valid )
+			break
+	}
+	
+	entity ref = CreateScriptRef()
+	ref.SetOrigin( origin )
+	ref.SetAngles( < 0, yaw, 0 > )
+	
+	if ( "nextDropshipAttackedByFlyers" in level && level.nextDropshipAttackedByFlyers )
+		animation = FlyersAttackDropship( ref, animation )
+
+	Assert( IsNewThread(), "Must be threaded off" )
+
+	DropTable dropTable
+	dropTable.nodes = DropshipFindDropNodes( flightPath, origin, yaw, "both", true, IsLegalFlightPath_OverTime )
+	dropTable.valid = true
+	
+	asset model = GetFlightPathModel( "fp_crow_model" )
+	waitthread WarpinEffect( model, animation, ref.GetOrigin(), ref.GetAngles() )
+	entity dropship = CreateDropship( team, ref.GetOrigin(), ref.GetAngles() )
+	SetSpawnOption_SquadName( dropship, squadname )
+	dropship.kv.solid = SOLID_VPHYSICS
+	DispatchSpawn( dropship )
+	dropship.SetHealth( health )
+	dropship.SetMaxHealth( health )
+	dropship.EndSignal( "OnDeath" )
+	dropship.Signal( "WarpedIn" )
+	ref.Signal( "WarpedIn" )
+	dropship.Minimap_AlwaysShow( TEAM_IMC, null )
+	dropship.Minimap_AlwaysShow( TEAM_MILITIA, null )
+	dropship.Minimap_SetHeightTracking( true )
+
+	AddDropshipDropTable( dropship, dropTable )
+	string dropshipSound = "Goblin_IMC_TroopDeploy_Flyin"
+
+	OnThreadEnd(
+		function() : ( dropship, ref, dropshipSound )
+		{
+			ref.Destroy()
+			if ( IsValid( dropship ) )
+				StopSoundOnEntity( dropship, dropshipSound )
+			if ( IsAlive( dropship ) )
+				dropship.Destroy()
+		}
+	)
+	
+	array<entity> guys
+	for ( int i = 0; i < spawnEvent.spawnAmount; i++ )
+    {
+		entity guy = CreateSoldier( TEAM_IMC, spawnEvent.origin, < 0, 0, 0 > )
+		
+		if (i < GetCurrentPlaylistVarInt( "fd_grunt_shield_captains", 0 ) )
+			SetSpawnOption_AISettings( guy, "npc_soldier_shield_captain" )
+			//thread ActivatePersonalShield( guy )
+
+		if( spawnEvent.entityGlobalKey != "" )
+			GlobalEventEntitys[ spawnEvent.entityGlobalKey+ i.tostring() ] <- guy
+		SetTeam( guy, TEAM_IMC )
+		guy.EnableNPCFlag(  NPC_ALLOW_INVESTIGATE | NPC_ALLOW_HAND_SIGNALS | NPC_ALLOW_FLEE )
+		guy.DisableNPCFlag( NPC_ALLOW_PATROL )
+		DispatchSpawn( guy )
+		
+		SetSquad( guy, squadName )
+		
+		if ( i < GetCurrentPlaylistVarInt( "fd_grunt_at_weapon_users", 0 ) )
+			guy.GiveWeapon( "mp_weapon_arc_launcher" )
+		
+		SetTargetName( guy, GetTargetNameForID( eFD_AITypeIDs.GRUNT ) )
+		AddMinimapForHumans( guy )
+		spawnedNPCs.append( guy )
+		guys.append( guy )
+		
+		int seat 	= i
+		table Table = CreateDropshipAnimTable( dropship, "both", seat )
+		thread GuyDeploysOffShip( guy, Table )
+		thread singleNav_thread( guy, spawnEvent.route ) //Since grunts ziplines far away from each other, it's better them just path individually
+	}
+	
+	dropship.Hide()
+	EmitSoundOnEntity( dropship, dropshipSound )
+	thread ShowDropship( dropship )
+	thread PlayAnimTeleport( dropship, animation, ref, 0 )
+	ArrayRemoveDead( guys )
+	WaittillAnimDone( dropship )
+}
+
+void function ShowDropship( entity dropship )
+{
+	dropship.EndSignal( "OnDestroy" )
+	wait 0.16
+	dropship.Show()
 }
 
 void function spawnDroppodStalker( SmokeEvent smokeEvent, SpawnEvent spawnEvent, FlowControlEvent flowControlEvent, SoundEvent soundEvent )
 {
 	PingMinimap( spawnEvent.origin.x, spawnEvent.origin.y, 4, 600, 150, 0 )
-	entity pod = CreateDropPod( spawnEvent.origin, < 0, 0, 0 > )
+	entity pod = CreateDropPod( spawnEvent.origin, < 0, RandomIntRange( 0, 359 ), 0 > )
 	SetTeam( pod, TEAM_IMC )
 	InitFireteamDropPod( pod )
-	waitthread LaunchAnimDropPod( pod, "pod_testpath", spawnEvent.origin, < 0, 0, 0 > )
 
 	string squadName = MakeSquadName( TEAM_IMC, UniqueString( "ZiplineTable" ) )
 	array<entity> guys
@@ -966,16 +1132,15 @@ void function spawnDroppodStalker( SmokeEvent smokeEvent, SpawnEvent spawnEvent,
 			GlobalEventEntitys[ spawnEvent.entityGlobalKey + i.tostring() ] <- guy
 		SetTeam( guy, TEAM_IMC )
 		guy.EnableNPCFlag(  NPC_ALLOW_INVESTIGATE | NPC_ALLOW_HAND_SIGNALS | NPC_ALLOW_FLEE )
-		guy.DisableNPCFlag( NPC_ALLOW_PATROL)
+		guy.DisableNPCFlag( NPC_ALLOW_PATROL )
 		SetSpawnOption_AISettings( guy, "npc_stalker_fd" )
 		DispatchSpawn( guy )
-
+		guy.SetParent( pod, "ATTACH", true )
 		SetSquad( guy, squadName )
 		guy.AssaultSetFightRadius( 0 ) // makes them keep moving instead of stopping to shoot you.
 		AddMinimapForHumans( guy )
 		spawnedNPCs.append( guy )
 		SetTargetName( guy, GetTargetNameForID( eFD_AITypeIDs.STALKER ) )
-		thread FDStalkerThink( guy , fd_harvester.harvester )
 		guys.append( guy )
 	}
 
@@ -1007,18 +1172,19 @@ void function spawnDroppodStalker( SmokeEvent smokeEvent, SpawnEvent spawnEvent,
 
 	}
 
+	waitthread LaunchAnimDropPod( pod, "pod_testpath", spawnEvent.origin, < 0, RandomIntRange( 0, 359 ), 0 > )
 	ActivateFireteamDropPod( pod, guys )
-	SquadNav_Thread( guys, spawnEvent.route )
-
+	foreach( npc in guys )
+		thread FDStalkerThink( npc , fd_harvester.harvester )
+	thread SquadNav_Thread( guys, spawnEvent.route )
 }
 
 void function spawnDroppodSpectreMortar( SmokeEvent smokeEvent, SpawnEvent spawnEvent, FlowControlEvent flowControlEvent, SoundEvent soundEvent )
 {
 	PingMinimap( spawnEvent.origin.x, spawnEvent.origin.y, 4, 600, 150, 0 )
-		entity pod = CreateDropPod( spawnEvent.origin, < 0, 0, 0 > )
+		entity pod = CreateDropPod( spawnEvent.origin, < 0, RandomIntRange( 0, 359 ), 0 > )
 	SetTeam( pod, TEAM_IMC )
 	InitFireteamDropPod( pod )
-	waitthread LaunchAnimDropPod( pod, "pod_testpath", spawnEvent.origin, < 0, 0, 0 > )
 
 	string squadName = MakeSquadName( TEAM_IMC, UniqueString( "ZiplineTable" ) )
 	array<entity> guys
@@ -1032,12 +1198,14 @@ void function spawnDroppodSpectreMortar( SmokeEvent smokeEvent, SpawnEvent spawn
 		SetTeam( guy, TEAM_IMC )
 		DispatchSpawn( guy )
 		spawnedNPCs.append(guy)
+		guy.SetParent( pod, "ATTACH", true )
 		SetSquad( guy, squadName )
 		SetTargetName( guy, GetTargetNameForID(eFD_AITypeIDs.SPECTRE_MORTAR))
 		AddMinimapForHumans(guy)
 		guys.append( guy )
     }
 
+	waitthread LaunchAnimDropPod( pod, "pod_testpath", spawnEvent.origin, < 0, RandomIntRange( 0, 359 ), 0 > )
     ActivateFireteamDropPod( pod, guys )
 	
 	thread MortarSpectreSquadThink( guys, fd_harvester.harvester )
@@ -1260,10 +1428,9 @@ void function fd_spawnCloakDrone( SmokeEvent smokeEvent, SpawnEvent spawnEvent,F
 void function SpawnTick( SmokeEvent smokeEvent, SpawnEvent spawnEvent, FlowControlEvent flowControlEvent, SoundEvent soundEvent )
 {
 	PingMinimap( spawnEvent.origin.x, spawnEvent.origin.y, 4, 600, 150, 0 )
-	entity pod = CreateDropPod( spawnEvent.origin, < 0, 0, 0 > )
+	entity pod = CreateDropPod( spawnEvent.origin, < 0, RandomIntRange( 0, 359 ), 0 > )
 	SetTeam( pod, TEAM_IMC )
 	InitFireteamDropPod( pod )
-	waitthread LaunchAnimDropPod( pod, "pod_testpath", spawnEvent.origin, < 0, 0, 0 > )
 
 	string squadName = MakeSquadName( TEAM_IMC, UniqueString( "ZiplineTable" ) )
 	array<entity> guys
@@ -1279,12 +1446,14 @@ void function SpawnTick( SmokeEvent smokeEvent, SpawnEvent spawnEvent, FlowContr
 		DispatchSpawn( guy )
 		AddMinimapForHumans( guy )
 		SetTargetName( guy, GetTargetNameForID( eFD_AITypeIDs.TICK ) )
+		guy.SetParent( pod, "ATTACH", true )
 		SetSquad( guy, squadName )
 		spawnedNPCs.append( guy )
 		guy.AssaultSetFightRadius( expect int( guy.Dev_GetAISettingByKeyField( "LookDistDefault_Combat" ) ) ) // make the ticks target players very aggressively
 		guys.append( guy )
 	}
-
+	
+	waitthread LaunchAnimDropPod( pod, "pod_testpath", spawnEvent.origin, < 0, RandomIntRange( 0, 359 ), 0 > )
 	ActivateFireteamDropPod( pod, guys )
 	thread SquadNav_Thread( guys, spawnEvent.route )
 }
@@ -1417,19 +1586,30 @@ void function waitUntilLessThanAmountAlive_expensive( int amount )
 	int deduct = 0
 	foreach ( entity npc in npcs )
 	{
-			if( IsValid( GetPetTitanOwner( npc ) ) )
-			{
-				deduct++
-				continue
-			}
-			if( npc.GetTeam() == TEAM_MILITIA )
-			{
-				deduct++
-				continue
-			}
+		if( IsValid( GetPetTitanOwner( npc ) ) )
+		{
+			deduct++
+			continue
+		}
+		if( npc.GetTeam() == TEAM_MILITIA )
+		{
+			deduct++
+			continue
+		}
 	}
 	foreach( entity ent in GetEntArrayByClass_Expensive( "npc_drone" ) )
-		ent.Die()
+	{
+		if ( IsAlive( ent ) )
+			ent.Die()
+	}
+	
+	//Kill all unadressed Ticks that was left behind in the wave by Reapers
+	foreach (entity tick in GetEntArrayByClass_Expensive( "npc_frag_drone" ) )
+	{
+		if ( IsAlive( tick ) )
+			tick.Die()
+	}
+		
 	int aliveTitans = npcs.len() - deduct
 	while( aliveTitans > amount )
 	{
@@ -1483,4 +1663,3 @@ void function WinWave()
 		e.timesExecuted = e.executeOnThisCall	
 	}
 }
-

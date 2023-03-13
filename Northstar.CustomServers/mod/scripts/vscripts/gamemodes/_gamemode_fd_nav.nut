@@ -23,7 +23,6 @@ void function singleNav_thread( entity npc, string routeName, int nodesToSkip= 0
 	WaitFrame()//so other code setting up what happens on signals is run before this
 	if(routeArray.len()==0)
 	{
-
 		npc.Signal("OnFailedToPath")
 		return
 	}
@@ -100,7 +99,6 @@ void function SquadNav_Thread( array<entity> npcs, string routeName, int nodesTo
 	WaitFrame()//so other code setting up what happens on signals is run before this
 	if(routeArray.len()==0)
 		return
-
 	int nodeIndex = 0
 	foreach(entity node in routeArray)
 	{
@@ -110,7 +108,6 @@ void function SquadNav_Thread( array<entity> npcs, string routeName, int nodesTo
 			continue
 		
 		SquadAssaultOrigin(npcs,node.GetOrigin(),nextDistance)
-
 	}*/
 	// NEW STUFF
 	WaitFrame() // so other code setting up what happens on signals is run before this

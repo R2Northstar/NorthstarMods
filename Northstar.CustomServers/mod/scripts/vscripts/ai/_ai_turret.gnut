@@ -7,6 +7,12 @@ global function IsTurretActive
 global function TurretRefundThink
 global function RevivableTurret_DamageCallback
 global function RevivableTurret_Revive
+global function AddTurretRepairCallback
+
+struct
+{
+	array<void functionref(entity,entity,entity)> turretRepairCallbacks
+} file
 
 void function AiTurret_Init()
 {
@@ -86,30 +92,28 @@ void function RevivableTurret_DamageCallback( entity turret, var damageInfo )
 		turret.SetUsable()
 		turret.SetUsableByGroup( "friendlies pilot" )
 		turret.SetUsePrompts( "#TURRET_WAKEUP_HOLD_USE", "#TURRET_WAKEUP_PRESS_USE" )
-		turret.useFunction = RevivableTurret_UseFunction
+		thread RevivableTurretThink( turret )
 		thread RevivableTurret_Kill( turret )
 		DamageInfo_SetDamage( damageInfo, 0.0 )
 	}
 }
 
-function RevivableTurret_UseFunction( player , turret )
+void function RevivableTurretThink( entity turret )
 {	
-	entity tur = expect entity( turret )
-	entity ent = expect entity( player )
-	entity owner = tur.GetBossPlayer()
-	if( ent != owner )
+	entity player = expect entity( turret.WaitSignal( "OnPlayerUse" ).player )
+	entity owner = turret.GetBossPlayer()
+	foreach ( callbackFunc in file.turretRepairCallbacks )
 	{
-		int ownerEHandle = owner.GetEncodedEHandle()
-		AddPlayerScore( ent, "FDRepairTurret" )
-		MessageToTeam( TEAM_MILITIA,eEventNotifications.FD_TurretRepair, null, ent, ownerEHandle )
+		callbackFunc( turret, player, owner )
 	}
-	thread RevivableTurret_Revive( tur )
-	return true
+	thread RevivableTurret_Revive( turret )
 }
 
 
 void function RevivableTurret_Revive( entity turret )
 {
+	turret.EndSignal( "OnDestroy" )
+
 	turret.UnsetUsable()
 	turret.SetHealth( turret.GetMaxHealth() )
 	turret.ClearInvulnerable()
@@ -123,6 +127,8 @@ void function RevivableTurret_Revive( entity turret )
 
 void function RevivableTurret_Kill( entity turret )
 {
+	turret.EndSignal( "OnDestroy" )
+
 	turret.EnableNPCFlag( NPC_IGNORE_ALL )
 	turret.SetNoTarget( true )
 	turret.SetInvulnerable()
@@ -130,4 +136,10 @@ void function RevivableTurret_Kill( entity turret )
 	wait 1
 	turret.SetNoTarget( true )
 	turret.DisableTurret()
+}
+
+void function AddTurretRepairCallback( void functionref(entity,entity,entity) callbackFunc )
+{
+	Assert (!( file.turretRepairCallbacks.contains( callbackFunc ) ))
+	file.turretRepairCallbacks.append( callbackFunc )
 }
