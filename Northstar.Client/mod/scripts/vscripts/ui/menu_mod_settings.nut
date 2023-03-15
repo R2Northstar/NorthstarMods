@@ -200,7 +200,8 @@ void function ResetConVar( var button )
 
 	if ( conVar.isCategoryName )
 		ShowAreYouSureDialog( "#ARE_YOU_SURE", ResetAllConVarsForModEventHandler( conVar.catName ), "#WILL_RESET_ALL_SETTINGS"  )
-	else ShowAreYouSureDialog( "#ARE_YOU_SURE", ResetConVarEventHandler( int ( Hud_GetScriptID( Hud_GetParent( button ) ) ) + file.scrollOffset ), Localize( "#WILL_RESET_SETTING", Localize( conVar.displayName ) ) )
+	else
+		ShowAreYouSureDialog( "#ARE_YOU_SURE", ResetConVarEventHandler( int ( Hud_GetScriptID( Hud_GetParent( button ) ) ) + file.scrollOffset ), Localize( "#WILL_RESET_SETTING", Localize( conVar.displayName ) ) )
 }
 
 void function ShowAreYouSureDialog( string header, void functionref() func, string details )
