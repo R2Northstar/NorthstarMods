@@ -112,13 +112,32 @@ global array< array<WaveEvent> > waveEvents
 
 void function executeWave()
 {	
-	print( "Wave Start: " + GetGlobalNetInt( "FD_currentWave" ) )
+	int currentWave = GetGlobalNetInt( "FD_currentWave" ) + 1
+	print( "Wave Start: " + currentWave )
 	thread runEvents( 0 )
-	while( IsHarvesterAlive( fd_harvester.harvester ) && !allEventsExecuted( GetGlobalNetInt( "FD_currentWave" ) ) && GetGlobalNetInt( "FD_AICount_Current" ) >= 1 )
+	
+	//Wait for all events to execute
+	while( IsHarvesterAlive( fd_harvester.harvester ) && !allEventsExecuted( GetGlobalNetInt( "FD_currentWave" ) ) )
 		WaitFrame()
-
+	print( "All events executed, waiting for enemies completion" )
+	//Do a secondary wait for alive enemies after all events executed
+	while( IsHarvesterAlive( fd_harvester.harvester ) && GetGlobalNetInt( "FD_AICount_Current" ) >= 1 )
+		WaitFrame()
+	print( "Enemy pool reached 0, doing a full npc scan" )
+	//Lastly, ensure everyone is indeed dead to proceed
 	waitUntilLessThanAmountAlive( 0 )
-	waitUntilLessThanAmountAlive_expensive( 0 )
+	//Kill all unwanted Ticks from Reapers
+	print( "Purging all remaining Ticks deployed by Reapers" )
+	KillLooseTicksFromReapers()
+}
+
+void function KillLooseTicksFromReapers()
+{
+	foreach (entity tick in GetEntArrayByClass_Expensive( "npc_frag_drone" ) )
+	{
+		if ( IsAlive( tick ) )
+			tick.Die()
+	}
 }
 
 bool function allEventsExecuted( int waveIndex ) 
@@ -161,7 +180,7 @@ void function runEvents( int firstExecuteIndex )
 		}
 		if( currentEvent.nextEventIndex == 0 )
 		{
-			print( "zero index reached, finishing wave" )
+			print( "Event Index 0 reached, finishing wave" )
 			return
 		}
 		currentEvent = waveEvents[GetGlobalNetInt( "FD_currentWave" )][currentEvent.nextEventIndex]
@@ -1104,7 +1123,7 @@ void function spawnGruntDropship( SmokeEvent smokeEvent, SpawnEvent spawnEvent, 
 	thread ShowDropship( dropship )
 	thread PlayAnimTeleport( dropship, animation, ref, 0 )
 	ArrayRemoveDead( guys )
-	WaittillAnimDone( dropship )
+	WaittillAnimDone( dropship )	
 }
 
 void function ShowDropship( entity dropship )
@@ -1349,6 +1368,7 @@ void function spawnNukeTitan( SmokeEvent smokeEvent, SpawnEvent spawnEvent, Flow
 	SetSpawnOption_Titanfall( npc )
 	SetTargetName( npc, GetTargetNameForID( spawnEvent.spawnType ) ) // required for client to create icons
 	npc.EnableNPCMoveFlag( NPCMF_WALK_ALWAYS )
+	npc.SetAllowMelee( true )
 	npc.AssaultSetFightRadius( 0 )
 	DispatchSpawn( npc )
 	if( spawnEvent.entityGlobalKey != "" )
@@ -1574,62 +1594,6 @@ void function waitUntilLessThanAmountAliveWeighted( int amount, int humanWeight 
 				else
 					aliveNPCsWeighted += humanWeight
 			}
-		if( !IsHarvesterAlive( fd_harvester.harvester ) )
-			return
-	}
-}
-
-void function waitUntilLessThanAmountAlive_expensive( int amount )
-{
-
-	array<entity> npcs = GetNPCArray()
-	int deduct = 0
-	foreach ( entity npc in npcs )
-	{
-		if( IsValid( GetPetTitanOwner( npc ) ) )
-		{
-			deduct++
-			continue
-		}
-		if( npc.GetTeam() == TEAM_MILITIA )
-		{
-			deduct++
-			continue
-		}
-	}
-	foreach( entity ent in GetEntArrayByClass_Expensive( "npc_drone" ) )
-	{
-		if ( IsAlive( ent ) )
-			ent.Die()
-	}
-	
-	//Kill all unadressed Ticks that was left behind in the wave by Reapers
-	foreach (entity tick in GetEntArrayByClass_Expensive( "npc_frag_drone" ) )
-	{
-		if ( IsAlive( tick ) )
-			tick.Die()
-	}
-		
-	int aliveTitans = npcs.len() - deduct
-	while( aliveTitans > amount )
-	{
-		WaitFrame()
-		npcs = GetNPCArray()
-		deduct = 0
-		foreach( entity npc in npcs )
-		{
-			if( IsValid( GetPetTitanOwner( npc ) ) )
-			{
-				deduct++
-				continue
-			}
-			if( npc.GetTeam() == TEAM_MILITIA )
-			{
-				deduct++
-				continue
-			}
-		}
-		aliveTitans = GetNPCArray().len() - deduct
 		if( !IsHarvesterAlive( fd_harvester.harvester ) )
 			return
 	}

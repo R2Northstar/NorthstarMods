@@ -128,10 +128,16 @@ void function GamemodeFD_Init()
 	SetTimeoutWinnerDecisionFunc( FD_TimeOutCheck )
 	Riff_ForceBoostAvailability( eBoostAvailability.Disabled )
 	PlayerEarnMeter_SetEnabled( false )
-	SetShouldUsePickLoadoutScreen( true )
 	SetAllowLoadoutChangeFunc( FD_ShouldAllowChangeLoadout )
 	SetGetDifficultyFunc( FD_GetDifficultyLevel )
-	TeamTitanSelectMenu_Init() // show the titan select menu in this mode
+	
+	if ( !file.waveRestart )
+	{
+		SetShouldUsePickLoadoutScreen( true )
+		TeamTitanSelectMenu_Init() // show the titan select menu in this mode
+	}
+	else
+		SetShouldUsePickLoadoutScreen( false )
 
 	//general Callbacks
 	AddCallback_EntitiesDidLoad( LoadEntities )
@@ -211,7 +217,7 @@ void function FD_PlayerRespawnCallback( entity player )
 	//If the wave is on break joiners can buy stuff with the time remaining
 	//Also more than 4 players, additionals will spawn directly on ground
 	//Respawning as titan also ignores this because err, makes no sense
-	if( file.dropshipState == eDropshipState.Returning || GetGameState() != eGameState.Playing || player.GetPersistentVar( "spawnAsTitan" ) || file.playersInShip >=4 || GetGlobalNetInt( "FD_waveState") == WAVE_STATE_BREAK )
+	if( file.dropshipState == eDropshipState.Returning || GetGameState() != eGameState.Playing || player.GetPersistentVar( "spawnAsTitan" ) || file.playersInShip >=4 || GetGlobalNetInt( "FD_waveState") == WAVE_STATE_BREAK || GetGlobalNetInt( "FD_waveState") == WAVE_STATE_COMPLETE )
 		return
 
 	player.SetInvulnerable()
@@ -347,9 +353,7 @@ void function GamemodeFD_InitPlayer( entity player )
 		Highlight_SetFriendlyHighlight( player, "sp_friendly_hero" )
 
 	if( file.playersHaveTitans ) // first wave is index 0
-	{
 		PlayerEarnMeter_AddEarnedAndOwned( player, 1.0, 1.0 )
-	}
 	// unfortunate that i cant seem to find a nice callback for them exiting that menu but thisll have to do
 	thread TryDisableTitanSelectionForPlayerAfterDelay( player, TEAM_TITAN_SELECT_DURATION_MIDGAME )
 	thread TrackDeployedArcTrapThisRound( player )
@@ -424,6 +428,7 @@ void function OnNpcDeath( entity victim, entity attacker, var damageInfo )
 		switch ( victim.GetClassName() )
 		{
 			case "npc_gunship":
+			case "npc_dropship":
 			case "npc_marvin":
 			case "npc_drone_worker":
 			case "npc_prowler":
@@ -535,7 +540,7 @@ void function FD_ShowCloakedDrones()
 			cloakedDrone.Minimap_AlwaysShow( TEAM_IMC, null )
 			cloakedDrone.Minimap_AlwaysShow( TEAM_MILITIA, null )
 			cloakedDrone.SetNoTarget( false )
-			if (GetGlobalNetInt( "FD_AICount_Current" ) < 2 && IsAlive( cloakedDrone ) ) //Check if this drone is literally the last enemy alive in the wave and kill it if thats the case
+			if (GetGlobalNetInt( "FD_AICount_Current" ) < 2 ) //Check if this drone is literally the last enemy alive in the wave and kill it if thats the case
 				cloakedDrone.Die()
 		}
 	}
@@ -585,9 +590,10 @@ void function mainGameLoop()
 				player.SetPlayerNetInt( "numHarvesterShieldBoost", 0 )
 				player.SetPlayerNetInt( "numSuperRodeoGrenades", 0 )
 				PlayerInventory_TakeAllInventoryItems( player )
+				PlayerEarnMeter_Reset( player )
 				PlayerEarnMeter_AddEarnedAndOwned( player, 1.0, 1.0 )
 			}
-			SetGlobalNetTime( "FD_nextWaveStartTime", Time() + 75 )
+			SetGlobalNetTime( "FD_nextWaveStartTime", Time() + GetCurrentPlaylistVarFloat( "fd_wave_buy_time", 60 ) )
 		}
 
 		if( !runWave( i, showShop ) )
@@ -780,17 +786,12 @@ bool function runWave( int waveIndex, bool shouldDoBuyTime )
 	}
 	if( file.waveRestart )
 	{
-		if ( file.playersHaveTitans ) //Ensure players can call their Titans on Wave Restart, unless its a map with permanent Titanfall Block -Zanieon
-		{
-			PlayerEarnMeter_SetEnabled( true )
-			foreach( entity player in GetPlayerArray() )
-				PlayerEarnMeter_AddEarnedAndOwned( player, 1.0, 1.0 )
-		}
 		file.waveRestart = false
 		MessageToTeam( TEAM_MILITIA,eEventNotifications.FD_WaveRestart )
 	}
 	if( shouldDoBuyTime )
 	{
+		print( "Opening Shop" )
 		SetGlobalNetInt( "FD_waveState", WAVE_STATE_BREAK )
 		OpenBoostStores()
 		entity parentCrate = GetBoostStores()[0].GetParent()
@@ -808,9 +809,9 @@ bool function runWave( int waveIndex, bool shouldDoBuyTime )
 		parentCrate.Minimap_Hide( TEAM_MILITIA, null )
 		CloseBoostStores()
 		MessageToTeam( TEAM_MILITIA, eEventNotifications.FD_StoreClosing )
+		print( "Closing Shop" )
 	}
 
-	//SetGlobalNetTime("FD_nextWaveStartTime",Time()+10)
 	if (waveIndex==0 && GetCurrentPlaylistVarFloat( "riff_minimap_state", 0 ) == 0)
 	{
 		wait 14
@@ -847,6 +848,7 @@ bool function runWave( int waveIndex, bool shouldDoBuyTime )
 	SetGlobalNetInt( "FD_waveState", WAVE_STATE_COMPLETE )
 	if( !IsHarvesterAlive( fd_harvester.harvester ) )
 	{
+		print( "Stopping Wave, Harvester Died" )
 		float totalDamage = 0.0
 		array<float> highestDamage = [ 0.0, 0.0, 0.0 ]
 		array<int> highestDamageSource = [ -1, -1, -1 ]
@@ -890,6 +892,7 @@ bool function runWave( int waveIndex, bool shouldDoBuyTime )
 		SetWinner( TEAM_IMC )//restart round
 		spawnedNPCs = [] // reset npcs count
 		restetWaveEvents()
+		wait 10
 		return false
 	}
 
@@ -900,7 +903,7 @@ bool function runWave( int waveIndex, bool shouldDoBuyTime )
 	if ( isFinalWave() && IsHarvesterAlive( fd_harvester.harvester ) )
 	{
 		//Game won code
-		//MessageToTeam( TEAM_MILITIA, eEventNotifications.FD_AnnounceWaveEnd )
+		print( "No more pending Waves, match won" )
 		foreach( entity player in GetPlayerArray() )
 		{
 			AddPlayerScore( player, "FDDamageBonus", null, "", file.players[player].assaultScoreThisRound )
@@ -991,8 +994,10 @@ bool function runWave( int waveIndex, bool shouldDoBuyTime )
 	MessageToTeam( TEAM_MILITIA, eEventNotifications.FD_NotifyWaveBonusIncoming )
 	wait 2
 	
+	print( "Trying to repair turrets during wave break" )
 	FD_AttemptToRepairTurrets()
 
+	print( "Showing Player Stats: Wave Complete" )
 	foreach( entity player in GetPlayerArray() )
 	{
 		if ( isSecondWave() )
@@ -1014,6 +1019,7 @@ bool function runWave( int waveIndex, bool shouldDoBuyTime )
 		FD_EmitSoundOnEntityOnlyToPlayer( player, player, "HUD_MP_BountyHunt_BankBonusPts_Deposit_Start_1P" )
 	}
 	wait 1
+	print( "Showing Player Stats: No Deaths This Wave" )
 	foreach( entity player in GetPlayerArray() )
 	{
 		if( !file.players[player].diedThisRound )
@@ -1025,6 +1031,7 @@ bool function runWave( int waveIndex, bool shouldDoBuyTime )
 		FD_EmitSoundOnEntityOnlyToPlayer( player, player, "HUD_MP_BountyHunt_BankBonusPts_Deposit_Start_1P" )
 	}
 	wait 1
+	print( "Showing Player Stats: Wave MVP" )
 	int highestScore
 	entity highestScore_player
 	if( GetPlayerArray().len() > 0 )
@@ -1050,6 +1057,7 @@ bool function runWave( int waveIndex, bool shouldDoBuyTime )
 		Remote_CallFunction_NonReplay( player, "ServerCallback_FD_NotifyMVP", highestScore_player.GetEncodedEHandle() )
 	}
 	wait 1
+	print( "Showing Player Stats: Flawless Defense" )
 	foreach( entity player in GetPlayerArray() )
 	{
 
@@ -1065,8 +1073,9 @@ bool function runWave( int waveIndex, bool shouldDoBuyTime )
 
 	wait 1
 
+	print( "Waiting buy time" )
 	if( waveIndex<waveEvents.len() )
-		SetGlobalNetTime( "FD_nextWaveStartTime", Time() + 75 )
+		SetGlobalNetTime( "FD_nextWaveStartTime", Time() + GetCurrentPlaylistVarFloat( "fd_wave_buy_time", 60 ) )
 
 	return true
 
@@ -1328,12 +1337,12 @@ void function OnHarvesterDamaged( entity harvester, var damageInfo )
 	int attackerTypeID = FD_GetAITypeID_ByString( attacker.GetTargetName() )
 	float damageAmount = DamageInfo_GetDamage( damageInfo )
 	
-	int PlayersInMatch
-	foreach( entity player in GetPlayerArray() )
-		PlayersInMatch++
+	int PlayersInMatch = GetPlayerArray().len()
 	
-	Clamp( PlayersInMatch.tofloat() , 1, 4 ) //Additional players should not be considered
-	float MultiplierPerPlayer = 1.0
+	if ( PlayersInMatch > 4 ) //Additional players should not be considered
+		PlayersInMatch = 4
+	
+	float MultiplierPerPlayer = 0.25
 
 	if ( !damageSourceID && !damageAmount && !attacker )
 		return
@@ -1341,7 +1350,7 @@ void function OnHarvesterDamaged( entity harvester, var damageInfo )
 	fd_harvester.lastDamage = Time()
 
 	damageAmount = ( damageAmount * GetCurrentPlaylistVarFloat( "fd_player_damage_scalar", 1.0 ) )
-	damageAmount *= MultiplierPerPlayer / PlayersInMatch
+	damageAmount *= MultiplierPerPlayer * PlayersInMatch
 	
 	//All of this is factored after difficulty damage multipliers, so probably on Master and Insane difficulty only one Nuke Titan should almost end the Harvester even with full shields
 	//Master and Insane difficulties tends to spawn less enemies as well, so players should be paying attention against those enemies
@@ -1357,7 +1366,8 @@ void function OnHarvesterDamaged( entity harvester, var damageInfo )
 		break
 		
 		case eDamageSourceId.damagedef_stalker_powersupply_explosion_large:
-		case eDamageSourceId.mp_weapon_droneplasma: //Not sure, Plasma Drones also seems off
+		case eDamageSourceId.damagedef_frag_drone_explode_FD: //Not sure, Ticks feels off
+		case eDamageSourceId.mp_weapon_droneplasma: //Not sure too, Plasma Drones also seems off
     	damageAmount *= 4
 		break
 		
@@ -1445,8 +1455,11 @@ void function OnHarvesterDamaged( entity harvester, var damageInfo )
 	switch(damageSourceID)
 	{
 		case eDamageSourceId.mp_titancore_laser_cannon: //Laser Core shreds super well for some reason
+		DamageInfo_SetDamage( damageInfo, DamageInfo_GetDamage( damageInfo ) / 10 )
+		break
+		
 		case eDamageSourceId.titanEmpField: //A single Arc Titan does not take one second to remove Harvester shield on vanilla with their aura EDIT: Apparently its still not working
-    	DamageInfo_SetDamage( damageInfo, DamageInfo_GetDamage( damageInfo ) / 20 )
+    	DamageInfo_SetDamage( damageInfo, DamageInfo_GetDamage( damageInfo ) / 100 )
 		break
 	
 		case eDamageSourceId.damagedef_nuclear_core: //Multiplier for Nuke Titans against shield is lower because the discrepancy between Harvester health pool and Shield amount pool
@@ -1458,11 +1471,12 @@ void function OnHarvesterDamaged( entity harvester, var damageInfo )
 		break
 		
 		case eDamageSourceId.damagedef_stalker_powersupply_explosion_large:
+		case eDamageSourceId.damagedef_frag_drone_explode_FD:
+		case eDamageSourceId.mp_weapon_droneplasma:
     	DamageInfo_SetDamage( damageInfo, DamageInfo_GetDamage( damageInfo ) * 4 )
 		break
 		
 		case eDamageSourceId.mp_titanweapon_rocketeer_rocketstream:
-		case eDamageSourceId.mp_weapon_droneplasma:
     	DamageInfo_SetDamage( damageInfo, DamageInfo_GetDamage( damageInfo ) * 3 )
 		break
 	}
@@ -1657,6 +1671,9 @@ void function DamageScaleByDifficulty( entity ent, var damageInfo )
 
 
 	if ( attacker == ent ) // dont scale self damage
+		return
+		
+	if ( damageSourceID == eDamageSourceId.mp_titanweapon_arc_wave ) //Arc Waves should not scale
 		return
 
 
@@ -2281,12 +2298,9 @@ int function FD_TimeOutCheck()
 	return TEAM_IMC
 }
 
-void function FD_AttemptToRepairTurrets()
+function FD_AttemptToRepairTurrets()
 {
 	//Repair turret on here rather than in the executeWave(), softlocking reasons
 	foreach (entity turret in GetEntArrayByClass_Expensive( "npc_turret_sentry" ) )
-	{
-		if( IsValid( turret ) && turret.GetHealth() < turret.GetMaxHealth() )
-			RevivableTurret_Revive( turret )
-	}
+		RepairTurret_WaveBreak( turret )
 }

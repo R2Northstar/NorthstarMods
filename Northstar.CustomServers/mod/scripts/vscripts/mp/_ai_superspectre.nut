@@ -624,7 +624,7 @@ void function LaunchSpawnerProjectile( entity npc, vector targetOrigin, int acti
 			AddToScriptManagedEntArray( activeMinions_EntArrayID, drone )
 			AddToScriptManagedEntArray( file.activeMinions_GlobalArrayIdx, drone )
 			
-			//Reaper-deployed Ticks should show on minimap
+			//Reaper-deployed Ticks should show on minimap and make their way to the harvester
 			if( GameRules_GetGameMode() == "fd" )
 			{
 				drone.Minimap_SetAlignUpright( true )
@@ -632,6 +632,8 @@ void function LaunchSpawnerProjectile( entity npc, vector targetOrigin, int acti
 				drone.Minimap_AlwaysShow( TEAM_MILITIA, null )
 				drone.Minimap_SetHeightTracking( true )
 				drone.Minimap_SetCustomState( eMinimapObject_npc.AI_TDM_AI )
+				drone.EnableNPCFlag( NPC_ALLOW_INVESTIGATE )
+				thread singleNav_thread( drone, "" )
 			}
 		}
 	)
