@@ -17,6 +17,7 @@ struct
 void function AiTurret_Init()
 {
 	RegisterSignal( "TurretOffline" )
+	RegisterSignal( "TurretRevived" )
 }
 
 entity function GetMegaTurretLinkedToPanel( entity panel )
@@ -100,6 +101,10 @@ void function RevivableTurret_DamageCallback( entity turret, var damageInfo )
 
 void function RevivableTurretThink( entity turret )
 {	
+	turret.EndSignal( "OnDestroy" )
+	turret.EndSignal( "OnDeath" )
+	turret.EndSignal( "TurretRevived" )
+
 	entity player = expect entity( turret.WaitSignal( "OnPlayerUse" ).player )
 	entity owner = turret.GetBossPlayer()
 	foreach ( callbackFunc in file.turretRepairCallbacks )
@@ -115,6 +120,7 @@ void function RevivableTurret_Revive( entity turret )
 	turret.EndSignal( "OnDestroy" )
 
 	turret.UnsetUsable()
+	turret.Signal( "TurretRevived" )
 	turret.SetHealth( turret.GetMaxHealth() )
 	turret.ClearInvulnerable()
 	turret.Anim_ScriptedPlay( "deploy" )
