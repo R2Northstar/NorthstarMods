@@ -434,12 +434,12 @@
 			"Path": "sh_server_dialog.gnut",
 			"RunOn": "CLIENT || SERVER || UI",
 			"ClientCallback": {
-				"After": "ServerDialogueOnClientInit"
+				"After": "NSServerDialogueOnClientInit"
 			},
 			"ServerCallback": {
-				"After": "ServerDialogInit"
+				"After": "NSServerDialogInit"
 			}
-   		 }
+		}
 	],
 	"Localisation": [
 		"resource/northstar_custom_%language%.txt"

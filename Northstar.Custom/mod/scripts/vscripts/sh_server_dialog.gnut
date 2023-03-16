@@ -1,16 +1,12 @@
 #if SERVER
-global function ServerDialogInit
-global function SendServerDialog
-global function SendMessageServerDialog
-global function AddDialogButton
+global function NSServerDialogInit
+global function NSSendServerDialog
+global function NSSendMessageServerDialog
+global function NSAddDialogButton
 #elseif CLIENT
-global function ServerDialogueOnClientInit
+global function NSServerDialogueOnClientInit
 #elseif UI
-global function ClientCallback_RequestDialog
-#endif
-
-#if UI
-float cooldown = 0.0
+global function NSClientCallback_RequestDialog
 #endif
 
 #if SERVER
@@ -49,7 +45,7 @@ global struct ServerDialogData
     // array<DialogFooterData> footerData // controller stuff?
 }
 
-void function ServerDialogInit()
+void function NSServerDialogInit()
 {
     AddClientCommandCallback( "ns_button_dialog", ClientCommand_Button_Clicked )
     AddCallback_OnClientConnected( _AddPlayerToCallbackTable )
@@ -70,7 +66,7 @@ void function _AddPlayerToCallbackTable( entity player )
     file.playerButtonCallBack[player] <- []
 }
 
-void function SendServerDialog( entity player, ServerDialogData dialog )
+void function NSSendServerDialog( entity player, ServerDialogData dialog )
 {
     array<string> args
 
@@ -112,14 +108,14 @@ void function SendServerDialog( entity player, ServerDialogData dialog )
     ServerToClientStringCommand( player, command )
 }
 
-void function SendMessageServerDialog( entity player, string message )
+void function NSSendMessageServerDialog( entity player, string message )
 {
     ServerDialogData dialog
     dialog.message = message
-    SendServerDialog( player, dialog )
+    NSSendServerDialog( player, dialog )
 }
 
-void function AddDialogButton( ServerDialogData dialog, string text, void functionref( entity ) callback )
+void function NSAddDialogButton( ServerDialogData dialog, string text, void functionref( entity ) callback )
 {
     ServerDialogButtonData button
     button.text = text
@@ -144,7 +140,7 @@ bool function ClientCommand_Button_Clicked( entity player, array<string> args )
 
 #elseif CLIENT
 
-void function ServerDialogueOnClientInit()
+void function NSServerDialogueOnClientInit()
 {
     AddServerToClientStringCommandCallback( "ServerRequestRequest", ServerCallback_DialogueRequestReceived )
 }
@@ -167,7 +163,7 @@ void function ServerDialogueOnClientInit()
 
 void function ServerCallback_DialogueRequestReceived( array<string> args )
 {
-    if ( args.len() != 20 ) // WHY MAKE THIS NOT DYNAMIC
+    if ( args.len() != 20 ) // WHY MAKE THIS NOT DYNAMIC, RESPONCE: i fogor
         return
     
     string header = StringReplace( args[0], "/s", " ", true, true )
@@ -198,7 +194,7 @@ void function ServerCallback_DialogueRequestReceived( array<string> args )
 
 
     RunUIScript( 
-        "ClientCallback_RequestDialog",
+        "NSClientCallback_RequestDialog",
         header,
         message,
         image,
@@ -226,16 +222,10 @@ void function ServerCallback_DialogueRequestReceived( array<string> args )
 
 
 
-void function ClientCallback_RequestDialog( string header, string message, string image, string rightImage, bool forceChoice, bool noChoice, bool noChoiceWithNavigateBack, bool showSpinner, bool showPCBackButton, float inputDisableTime, bool darkenBackground, bool useFullMessageHeight, string button0Text, string button1Text, string button2Text, string button3Text, int colour_r, int colour_g, int colour_b, int colour_a  )
-
-
+void function NSClientCallback_RequestDialog( string header, string message, string image, string rightImage, bool forceChoice, bool noChoice, bool noChoiceWithNavigateBack, bool showSpinner, bool showPCBackButton, float inputDisableTime, bool darkenBackground, bool useFullMessageHeight, string button0Text, string button1Text, string button2Text, string button3Text, int colour_r, int colour_g, int colour_b, int colour_a  )
 {   
     if ( uiGlobal.activeMenu != null )
         return
-    
-    if ( cooldown >= Time() )
-        return
-    cooldown = Time() + 1
 
     DialogData dialogData
 
@@ -260,35 +250,34 @@ void function ClientCallback_RequestDialog( string header, string message, strin
     dialogData.messageColor = [colour_r, colour_g, colour_b, colour_a]
 
     if ( button0Text != "." )
-        AddDialogButton( dialogData, Localize(button0Text), button0CallBack ) // max is 4 buttons
+        AddDialogButton( dialogData, Localize(button0Text), Button0_Callback ) // max is 4 buttons
     if ( button1Text != "." )
-        AddDialogButton( dialogData, Localize(button1Text), button1CallBack )
+        AddDialogButton( dialogData, Localize(button1Text), Button1_Callback )
     if ( button2Text != "." )
-        AddDialogButton( dialogData, Localize(button2Text), button2CallBack )
+        AddDialogButton( dialogData, Localize(button2Text), Button2_Callback )
     if ( button3Text != "." )
-        AddDialogButton( dialogData, Localize(button3Text), button3CallBack )
-
+        AddDialogButton( dialogData, Localize(button3Text), Button3_Callback )
 
 
     OpenDialog( dialogData )
 }
 
-void function button0CallBack()
+void function Button0_Callback()
 {
     ClientCommand( "ns_button_dialog 0" )
 }
 
-void function button1CallBack()
+void function Button1_Callback()
 {
     ClientCommand( "ns_button_dialog 1" )
 }
 
-void function button2CallBack()
+void function Button2_Callback()
 {
     ClientCommand( "ns_button_dialog 2" )
 }
 
-void function button3CallBack()
+void function Button3_Callback()
 {
     ClientCommand( "ns_button_dialog 3" )
 }
