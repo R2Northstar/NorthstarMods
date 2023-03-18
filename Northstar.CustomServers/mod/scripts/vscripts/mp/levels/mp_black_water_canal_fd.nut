@@ -17,7 +17,6 @@ void function initFrontierDefenseData()
 	int index = 1
 	
     array<WaveEvent> wave1
-	wave1.append(CreateWaitForTimeEvent( 5.0, index++ ) )
 	wave1.append(CreateSmokeEvent(< -856 , -815.40 , -289 >, 90, index++))
 	wave1.append(CreateWaitForTimeEvent( 0.5, index++ ) )
 	wave1.append(CreateSmokeEvent(< -1129 , -1480 , -176 >, 90, index++))
@@ -507,7 +506,6 @@ void function initFrontierDefenseData()
 	waveEvents.append(wave4)
 	index = 1
 	array<WaveEvent> wave5
-	wave5.append(CreateWaitForTimeEvent(5.0,index++))
 	wave5.append(CreateScorchTitanEvent(< 1489.0 , -4602.0 , -187 >,< 0.0 , 45.0 , 0.0 >,"",index++))
 	wave5.append(CreateWaitForTimeEvent(0.5,index++))
 	wave5.append(CreateScorchTitanEvent(< 1501.0 , -5504.0 , -187 >,< 0.0 , 45.0 , 0.0 >,"",index++))

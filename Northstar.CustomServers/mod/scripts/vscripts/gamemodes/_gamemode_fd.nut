@@ -130,18 +130,12 @@ void function GamemodeFD_Init()
 	PlayerEarnMeter_SetEnabled( false )
 	SetAllowLoadoutChangeFunc( FD_ShouldAllowChangeLoadout )
 	SetGetDifficultyFunc( FD_GetDifficultyLevel )
-	
-	if ( !file.waveRestart )
-	{
-		SetShouldUsePickLoadoutScreen( true )
-		TeamTitanSelectMenu_Init() // show the titan select menu in this mode
-	}
-	else
-		SetShouldUsePickLoadoutScreen( false )
+	SetShouldUsePickLoadoutScreen( true )
+	TeamTitanSelectMenu_Init() // show the titan select menu in this mode
 
 	//general Callbacks
 	AddCallback_EntitiesDidLoad( LoadEntities )
-	AddCallback_GameStateEnter( eGameState.Prematch,FD_createHarvester )
+	AddCallback_GameStateEnter( eGameState.Prematch, FD_createHarvester )
 	AddCallback_GameStateEnter( eGameState.Playing, startMainGameLoop )
 	AddCallback_OnRoundEndCleanup( FD_NPCCleanup )
 	AddCallback_OnClientConnected( GamemodeFD_InitPlayer )
@@ -584,6 +578,7 @@ void function mainGameLoop()
 		if( file.waveRestart )
 		{
 			showShop = true
+			PlayerEarnMeter_SetEnabled( true )
 			foreach( entity player in GetPlayerArray() )
 			{
 				SetMoneyForPlayer( player, file.players[player].moneyThisRound )
@@ -591,9 +586,12 @@ void function mainGameLoop()
 				player.SetPlayerNetInt( "numSuperRodeoGrenades", 0 )
 				PlayerInventory_TakeAllInventoryItems( player )
 				PlayerEarnMeter_Reset( player )
-				PlayerEarnMeter_AddEarnedAndOwned( player, 1.0, 1.0 )
 			}
 			SetGlobalNetTime( "FD_nextWaveStartTime", Time() + GetCurrentPlaylistVarFloat( "fd_wave_buy_time", 60 ) )
+			
+			wait 1
+			foreach( entity player in GetPlayerArray() )
+				PlayerEarnMeter_AddOwnedFrac( player, 1.0 )
 		}
 
 		if( !runWave( i, showShop ) )
@@ -612,10 +610,8 @@ void function mainGameLoop()
 			DisableTitanSelection()
 		}
 	}
-
-	// end of game
+	
 	EnableTitanSelection()
-
 }
 
 array<int> function getHighestEnemyAmountsForWave( int waveIndex )
@@ -788,6 +784,8 @@ bool function runWave( int waveIndex, bool shouldDoBuyTime )
 	{
 		file.waveRestart = false
 		MessageToTeam( TEAM_MILITIA,eEventNotifications.FD_WaveRestart )
+		foreach( entity player in GetPlayerArray() )
+			PlayerEarnMeter_AddEarnedAndOwned( player, 1.0, 1.0 )
 	}
 	if( shouldDoBuyTime )
 	{
@@ -824,6 +822,7 @@ bool function runWave( int waveIndex, bool shouldDoBuyTime )
 		wait 5 //Between waves its just 5 seconds to start another one
 	
 	SetGlobalNetInt( "FD_waveState", WAVE_STATE_INCOMING )
+	EarnMeterMP_SetPassiveMeterGainEnabled( true )
 	foreach( entity player in GetPlayerArray() )
 	{
 		Remote_CallFunction_NonReplay( player, "ServerCallback_FD_ClearPreParty" )
@@ -840,12 +839,14 @@ bool function runWave( int waveIndex, bool shouldDoBuyTime )
 		PlayFactionDialogueToTeam( "fd_newWaveStartPrefix" , TEAM_MILITIA )
 		
 	MessageToTeam( TEAM_MILITIA, eEventNotifications.FD_AnnounceWaveStart )
-	SetGlobalNetInt( "FD_waveState", WAVE_STATE_BREAK )
+	SetGlobalNetInt( "FD_waveState", WAVE_STATE_INCOMING )
 
 	//main wave loop
-	thread SetWaveStateReady()
+	waitthread SetWaveStateReady()
 	executeWave()
 	SetGlobalNetInt( "FD_waveState", WAVE_STATE_COMPLETE )
+	EarnMeterMP_SetPassiveMeterGainEnabled( false )
+	
 	if( !IsHarvesterAlive( fd_harvester.harvester ) )
 	{
 		print( "Stopping Wave, Harvester Died" )
@@ -892,7 +893,6 @@ bool function runWave( int waveIndex, bool shouldDoBuyTime )
 		SetWinner( TEAM_IMC )//restart round
 		spawnedNPCs = [] // reset npcs count
 		restetWaveEvents()
-		wait 10
 		return false
 	}
 
@@ -1083,7 +1083,7 @@ bool function runWave( int waveIndex, bool shouldDoBuyTime )
 
 void function SetWaveStateReady()
 {
-	wait 5
+	wait 10
 	SetGlobalNetInt( "FD_waveState", WAVE_STATE_IN_PROGRESS )
 }
 
@@ -1676,18 +1676,16 @@ void function DamageScaleByDifficulty( entity ent, var damageInfo )
 	if ( damageSourceID == eDamageSourceId.mp_titanweapon_arc_wave ) //Arc Waves should not scale
 		return
 
-
-	DamageInfo_SetDamage( damageInfo, ( damageAmount * GetCurrentPlaylistVarFloat( "fd_player_damage_scalar", 1.0 ) ) )
-
-
-
+	DamageInfo_SetDamage( damageInfo, damageAmount * GetCurrentPlaylistVarFloat( "fd_player_damage_scalar", 1.0 ) )
 }
 
 
 
 void function HealthScaleByDifficulty( entity ent )
 {
-
+	if ( ent.GetTeam() == TEAM_MILITIA )
+		Highlight_SetFriendlyHighlight( ent, "sp_friendly_hero" ) //Friendly Titans should have highlight overlays
+	
 	if ( ent.GetTeam() != TEAM_IMC )
 		return
 
@@ -2059,6 +2057,8 @@ void function AddTurretSentry( entity turret )
 	turret.Minimap_AlwaysShow( TEAM_MILITIA, null )
 	turret.Minimap_SetHeightTracking( true )
 	turret.Minimap_SetCustomState( eMinimapObject_npc.FD_TURRET )
+	Highlight_SetFriendlyHighlight( turret, "sp_friendly_hero" )
+	turret.Highlight_SetParam( 1, 0, < 0,0,0 > )
 	entity player = turret.GetBossPlayer()
 	file.players[ player ].deployedEntityThisRound.append( turret )
 	AddEntityDestroyedCallback( turret, FD_OnEntityDestroyed )

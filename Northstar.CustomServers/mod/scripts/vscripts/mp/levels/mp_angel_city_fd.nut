@@ -378,7 +378,6 @@ void function initFrontierDefenseData()
 	waveEvents.append(wave4)
 	index = 1
     array<WaveEvent> wave5
-	wave5.append(CreateWaitForTimeEvent(5.0,index++))
 	wave5.append(CreateDroppodStalkerEvent(< 3383 , 338 , 168 >,"",index++))
 	wave5.append(CreateWaitForTimeEvent(0.5,index++))
 	wave5.append(CreateDroppodStalkerEvent(< 3470 , 607 , 168 >,"",index++))

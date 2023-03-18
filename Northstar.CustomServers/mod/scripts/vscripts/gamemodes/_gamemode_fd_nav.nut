@@ -81,13 +81,25 @@ void function singleNav_thread( entity npc, string routeName, int nodesToSkip= 0
 			return
 		npc.AssaultPoint( targetNode.GetOrigin() )
 		npc.AssaultSetGoalRadius( nextDistance )
-		npc.AssaultSetFightRadius( 0 )
+		
+		//Do not make Reaper Ticks ignore potential targets just to charge at the Harvester
+		if ( npc.GetClassName() == "npc_frag_drone" )
+			npc.AssaultSetFightRadius( expect int( npc.Dev_GetAISettingByKeyField( "LookDistDefault_Combat" ) ) )
+		else
+			npc.AssaultSetFightRadius( 0 )
 		
 		table result = npc.WaitSignal( "OnFinishedAssault", "OnEnterGoalRadius", "OnFailedToPath" )
 		
 		targetNode = targetNode.GetLinkEnt()
 	}
-
+	
+	if ( npc.GetClassName() == "npc_frag_drone" )
+	{
+		npc.AssaultPoint( fd_harvester.harvester.GetOrigin() )
+		npc.AssaultSetGoalRadius( 64 )
+		npc.SetEnemy( fd_harvester.harvester )
+	}
+	
 	npc.Signal( "FD_ReachedHarvester" )
 }
 
@@ -139,7 +151,7 @@ void function SquadNav_Thread( array<entity> npcs, string routeName, int nodesTo
 		targetNode = targetNode.GetLinkEnt()
 	}
 	
-	while ( targetNode != null )
+	while ( targetNode != null && npcs.len() > 0 )
 	{
 		if( !IsHarvesterAlive( fd_harvester.harvester ) )
 			return
@@ -148,7 +160,21 @@ void function SquadNav_Thread( array<entity> npcs, string routeName, int nodesTo
 		
 		targetNode = targetNode.GetLinkEnt()
 	}
-
+	
+	if ( npcs.len() > 0 )
+	{
+		foreach( npc in npcs )
+		{
+			if ( npc.GetClassName() == "npc_frag_drone" )
+			{
+				npc.AssaultPoint( fd_harvester.harvester.GetOrigin() )
+				npc.AssaultSetGoalRadius( 64 )
+				npc.SetEnemy( fd_harvester.harvester )
+				npc.AssaultSetFightRadius( expect int( npc.Dev_GetAISettingByKeyField( "LookDistDefault_Combat" ) ) )
+			}
+			npc.Signal( "FD_ReachedHarvester" )
+		}
+	}
 }
 
 void function droneNav_thread( entity npc, string routeName,int nodesToSkip= 0,float nextDistance = 500.0, bool shouldLoop = false )

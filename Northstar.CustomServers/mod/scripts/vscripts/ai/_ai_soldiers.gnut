@@ -320,7 +320,7 @@ bool function AssignNPCAppropriateWeaponFromWeapons( entity npc, array<entity> w
 	// first try to find an appropriate weapon
 	foreach ( weapon in weapons )
 	{
-		bool isAntiTitan = weapon.GetWeaponType() == WT_ANTITITAN
+		bool isAntiTitan = weapon.GetWeaponInfoFileKeyField( "holster_type" ) == "anti_titan"
 		if ( isAntiTitan == isRocketTarget )
 		{
 			// found a weapon to use
@@ -357,7 +357,7 @@ void function OnEnemyChanged_TryHeavyArmorWeapon( entity npc )
 		return
 	}
 
-	bool isActiveWeapon_AntiTitan = activeWeapon.GetWeaponType() == WT_ANTITITAN
+	bool isActiveWeapon_AntiTitan = activeWeapon.GetWeaponInfoFileKeyField( "holster_type" ) == "anti_titan"
 
 	// already using an appropriate weapon?
 	if ( isActiveWeapon_AntiTitan == isRocketTarget )

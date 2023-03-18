@@ -9,7 +9,6 @@ void function initFrontierDefenseData()
 	int index = 1
 
     array<WaveEvent> wave1
-	wave1.append(CreateWaitForTimeEvent( 5.0, index++ ) )
 	wave1.append(CreateWarningEvent( FD_IncomingWarnings.Infantry, index++ ))
 	wave1.append(CreateDroppodGruntEvent(< 2988 , 2425 , -15 >,"",index++))
 	wave1.append(CreateWaitForTimeEvent( 0.2, index++ ) )
@@ -85,7 +84,6 @@ void function initFrontierDefenseData()
     waveEvents.append(wave1)
 	index = 1
 	array<WaveEvent> wave2
-	wave2.append(CreateWaitForTimeEvent( 5.0, index++ ) )
 	wave2.append(CreateWarningEvent( FD_IncomingWarnings.EnemyTitansIncoming, index++ ))
 	wave2.append(CreateMonarchTitanEvent(< 3032 , 2309 , -13 >,< 0 , -90 , 0 >,"",index++))
 	wave2.append(CreateWaitForTimeEvent( 0.6, index++ ) )
@@ -386,7 +384,6 @@ void function initFrontierDefenseData()
     waveEvents.append(wave3)
 	index = 1
 	array<WaveEvent> wave4
-	wave4.append(CreateWaitForTimeEvent( 5.0, index++ ) )
 	wave4.append(CreateNukeTitanEvent(< 3277 , -142 , 21 >,< 0 , -90 , 0 >,"",index++))
 	wave4.append(CreateWaitForTimeEvent( 0.6, index++ ) )
 	wave4.append(CreateDroppodStalkerEvent(< 2866 , 2036 , 18 >,"",index++))
@@ -532,7 +529,6 @@ void function initFrontierDefenseData()
     waveEvents.append(wave4)
 	index = 1
 	array<WaveEvent> wave5
-	wave5.append(CreateWaitForTimeEvent( 5.0, index++ ) )
 	wave5.append(CreateSmokeEvent(< 1871 , 911 , 81 >, 300, index++))
 	wave5.append(CreateWaitForTimeEvent( 0.2, index++ ) )
 	wave5.append(CreateSmokeEvent(< 1555 , 2212 , 162 >, 300, index++))

@@ -9,7 +9,6 @@ void function initFrontierDefenseData()
 	int index = 1
 
     array<WaveEvent> wave1
-	wave1.append(CreateWaitForTimeEvent( 5.0, index++ ) )
 	wave1.append(CreateSmokeEvent(< 2507 , 1024 , -280 >, 120, index++))
 	wave1.append(CreateWaitForTimeEvent( 1.0, index++ ) )
 	wave1.append(CreateSmokeEvent(< 2369 , 1542 , -260 >, 120, index++))
@@ -161,7 +160,6 @@ void function initFrontierDefenseData()
 	waveEvents.append(wave1)
 	index = 1
     array<WaveEvent> wave2
-	wave2.append(CreateWaitForTimeEvent(5.0,index++))
 	wave2.append(CreateSmokeEvent(< -1780 , 1484 , -280 >, 120, index++))
 	wave2.append(CreateWaitForTimeEvent( 0.5, index++ ) )
 	wave2.append(CreateSmokeEvent(< -1853 , 1962 , -333 >, 120, index++))
@@ -303,7 +301,6 @@ void function initFrontierDefenseData()
 	waveEvents.append(wave2)
 	index = 1
     array<WaveEvent> wave3
-	wave3.append(CreateWaitForTimeEvent(5.0,index++))
 	wave3.append(CreateDroppodGruntEvent(< 93 , 2100 , -330 >,"",index++))
 	wave3.append(CreateWaitForTimeEvent( 0.5, index++ ) )
 	wave3.append(CreateDroppodGruntEvent(< 55 , 1951 , -317 >,"",index++))
@@ -701,7 +698,6 @@ void function initFrontierDefenseData()
 	waveEvents.append(wave4)
 	index = 1
     array<WaveEvent> wave5
-	wave5.append(CreateWaitForTimeEvent(5.0,index++))
 	wave5.append(CreateIonTitanEvent(< -426 , 3882 , -434 >,< 0 , -85 , 0 >,"",index++))
 	wave5.append(CreateWaitForTimeEvent( 1.0, index++ ) )
 	wave5.append(CreateLegionTitanEvent(< -1018 , 3928 , -469 >,< 0 , -80 , 0 >,"",index++))

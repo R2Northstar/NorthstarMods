@@ -25,7 +25,7 @@ global function CreateLegionTitanEvent
 global function CreateMonarchTitanEvent
 global function CreateWarningEvent
 global function CreateTitanfallBlockEvent //Careful when using this, it really changes gameplay perspective for players and can make a wave impossible to beat (Use 1 to Block, and 0 to Unblock midwave)
-global function CreateGruntDropshipEvent //This one always requires testing after usage because sometimes Grunts wont zipline to the ground, it wont softlock the wave, but makes this odd behavior
+global function CreateGruntDropshipEvent //This one always requires testing after usage because sometimes Grunts wont zipline to the ground, it wont softlock the wave, but makes this odd behavior, also good to explicitly set up their route, or they may do some long pathing
 global function executeWave
 global function restetWaveEvents
 global function WinWave
@@ -993,8 +993,6 @@ void function spawnDroppodGrunts( SmokeEvent smokeEvent, SpawnEvent spawnEvent, 
 		if ( i < GetCurrentPlaylistVarInt( "fd_grunt_at_weapon_users", 0 ) )
 		{
 			guy.GiveWeapon( "mp_weapon_defender" ) // do grunts ever get a different anti titan weapon? - yes, TODO
-			// atm they arent using their AT weapons ever, but they do in fact get them, in fact some grunts are getting 2 since they already get a rocket_launcher
-			// this seems to be a problem elsewhere as opposed to something that is wrong here
 		}
 
 		SetTargetName( guy, GetTargetNameForID( eFD_AITypeIDs.GRUNT ) ) // do shield captains get their own target name in vanilla?
@@ -1105,7 +1103,7 @@ void function spawnGruntDropship( SmokeEvent smokeEvent, SpawnEvent spawnEvent, 
 		SetSquad( guy, squadName )
 		
 		if ( i < GetCurrentPlaylistVarInt( "fd_grunt_at_weapon_users", 0 ) )
-			guy.GiveWeapon( "mp_weapon_arc_launcher" )
+			guy.GiveWeapon( "mp_weapon_arc_launcher" ) //Dropship Grunts uses Thunderbolt instead of Charge Rifle, non-vanilla behavior, but it's interesting to have
 		
 		SetTargetName( guy, GetTargetNameForID( eFD_AITypeIDs.GRUNT ) )
 		AddMinimapForHumans( guy )
@@ -1195,7 +1193,7 @@ void function spawnDroppodStalker( SmokeEvent smokeEvent, SpawnEvent spawnEvent,
 	ActivateFireteamDropPod( pod, guys )
 	foreach( npc in guys )
 		thread FDStalkerThink( npc , fd_harvester.harvester )
-	thread SquadNav_Thread( guys, spawnEvent.route )
+	thread SquadNav_Thread( guys,spawnEvent.route )
 }
 
 void function spawnDroppodSpectreMortar( SmokeEvent smokeEvent, SpawnEvent spawnEvent, FlowControlEvent flowControlEvent, SoundEvent soundEvent )
@@ -1281,6 +1279,13 @@ void function SpawnScorchTitan( SmokeEvent smokeEvent, SpawnEvent spawnEvent, Fl
 	entity npc = CreateNPCTitan( "titan_ogre", TEAM_IMC, spawnEvent.origin, spawnEvent.angles )
 	SetSpawnOption_AISettings( npc, "npc_titan_ogre_meteor_boss_fd" )
 	SetSpawnOption_Titanfall( npc )
+	
+	/* I don't wanna know if this is vanilla behavior or not, i stopped accepting Scorches should aimbot the moment i got killed in the frame the respawn
+	dropship made me and another guy vulnerable and this motherfucker simply decided to snipe us midair, not even Northstars does this all the time but
+	this son of a bitch does whenever he has the chance, so now i made sure hes a drunk guy who cant handle shit even on his face */
+	npc.kv.AccuracyMultiplier = 0.5
+	npc.kv.WeaponProficiency = eWeaponProficiency.AVERAGE
+	
 	SetTargetName( npc, GetTargetNameForID( spawnEvent.spawnType ) ) // required for client to create icons
 	DispatchSpawn( npc )
 	if( spawnEvent.entityGlobalKey != "" )
@@ -1365,10 +1370,15 @@ void function spawnNukeTitan( SmokeEvent smokeEvent, SpawnEvent spawnEvent, Flow
 	PingMinimap( spawnEvent.origin.x, spawnEvent.origin.y, 4, 600, 150, 0 )
 	entity npc = CreateNPCTitan( "titan_ogre", TEAM_IMC, spawnEvent.origin, spawnEvent.angles )
 	SetSpawnOption_AISettings( npc, "npc_titan_ogre_minigun_nuke" )
+	SetSpawnOption_Melee( npc, "null" )
 	SetSpawnOption_Titanfall( npc )
 	SetTargetName( npc, GetTargetNameForID( spawnEvent.spawnType ) ) // required for client to create icons
-	npc.EnableNPCMoveFlag( NPCMF_WALK_ALWAYS )
-	npc.SetAllowMelee( true )
+	npc.EnableNPCMoveFlag( NPCMF_WALK_ALWAYS | NPCMF_WALK_NONCOMBAT | NPCMF_IGNORE_CLUSTER_DANGER_TIME )
+	npc.DisableNPCMoveFlag( NPCMF_PREFER_SPRINT | NPCMF_FOLLOW_SAFE_PATHS )
+	npc.DisableNPCFlag( NPC_DIRECTIONAL_MELEE )
+	npc.SetActivityModifier( ACT_MODIFIER_CRAWL, true )
+	npc.SetActivityModifier( ACT_MODIFIER_STAGGER, true )
+	npc.ai.crawling = true
 	npc.AssaultSetFightRadius( 0 )
 	DispatchSpawn( npc )
 	if( spawnEvent.entityGlobalKey != "" )

@@ -7,6 +7,7 @@ global function IsTurretActive
 global function TurretRefundThink
 global function RevivableTurret_DamageCallback
 global function RevivableTurret_Revive
+global function RepairTurret_WaveBreak
 global function AddTurretRepairCallback
 
 struct
@@ -118,6 +119,7 @@ void function RevivableTurret_Revive( entity turret )
 	turret.SetHealth( turret.GetMaxHealth() )
 	turret.ClearInvulnerable()
 	turret.Anim_ScriptedPlay( "deploy" )
+	turret.Highlight_SetParam( 1, 0, < 0,0,0 > )
 	wait 1.0
 	turret.EnableTurret()
 	turret.DisableNPCFlag( NPC_IGNORE_ALL )
@@ -133,9 +135,27 @@ void function RevivableTurret_Kill( entity turret )
 	turret.SetNoTarget( true )
 	turret.SetInvulnerable()
 	turret.Anim_ScriptedPlay( "undeploy" )
+	turret.Highlight_SetParam( 1, 0, < 1,1,0 > )
 	wait 1
 	turret.SetNoTarget( true )
 	turret.DisableTurret()
+}
+
+void function RepairTurret_WaveBreak( entity turret )
+{
+	if ( turret.GetHealth() == 1 )
+	{
+		turret.UnsetUsable()
+		turret.Anim_ScriptedPlay( "deploy" )
+		turret.EnableTurret()
+		turret.DisableNPCFlag( NPC_IGNORE_ALL )
+		turret.SetNoTarget( false )
+		turret.Highlight_SetParam( 1, 0, < 0,0,0 > )
+		turret.ClearInvulnerable()
+		thread TurretRefundThink( turret )
+	}
+	
+	turret.SetHealth( turret.GetMaxHealth() )
 }
 
 void function AddTurretRepairCallback( void functionref(entity,entity,entity) callbackFunc )
