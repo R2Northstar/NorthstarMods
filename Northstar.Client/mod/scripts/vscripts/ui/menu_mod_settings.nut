@@ -773,7 +773,7 @@ void function NSModSettingsAddModTitle( string modName, int stackPos = 2 )
 
 void function AddModTitle( string modName, int stackPos = 2 )
 {
-	NSModSettingsAddModTitle( modName, stackPos )
+	NSModSettingsAddModTitle( modName, stackPos + 1 )
 }
 
 void function NSModSettingsAddModCategory( string catName, int stackPos = 2 )
@@ -802,7 +802,7 @@ void function NSModSettingsAddModCategory( string catName, int stackPos = 2 )
 
 void function AddModCategory( string catName, int stackPos = 2 )
 {
-	NSModSettingsAddModCategory( catName, stackPos )
+	NSModSettingsAddModCategory( catName, stackPos + 1 )
 }
 
 void function NSModSettingsAddButton( string buttonLabel, void functionref() onPress, int stackPos = 2 )
@@ -823,7 +823,7 @@ void function NSModSettingsAddButton( string buttonLabel, void functionref() onP
 
 void function AddModSettingsButton( string buttonLabel, void functionref() onPress, int stackPos = 2 )
 {
-	NSModSettingsAddButton( buttonLabel, onPress, stackPos )
+	NSModSettingsAddButton( buttonLabel, onPress, stackPos + 1 )
 }
 
 void function NSModSettingsAddConVarSetting( string conVar, string displayName, string type = "", int stackPos = 2 )
@@ -843,7 +843,7 @@ void function NSModSettingsAddConVarSetting( string conVar, string displayName, 
 
 void function AddConVarSetting( string conVar, string displayName, string type = "", int stackPos = 2 )
 {
-	NSModSettingsAddConVarSetting( conVar, displayName, type, stackPos )
+	NSModSettingsAddConVarSetting( conVar, displayName, type, stackPos + 1 )
 }
 
 void function NSModSettingsAddConVarSettingSlider( string conVar, string displayName, float min = 0.0, float max = 1.0, float stepSize = 0.1, bool forceClamp = false, int stackPos = 2 )
@@ -868,7 +868,7 @@ void function NSModSettingsAddConVarSettingSlider( string conVar, string display
 
 void function AddConVarSettingSlider( string conVar, string displayName, float min = 0.0, float max = 1.0, float stepSize = 0.1, bool forceClamp = false, int stackPos = 2 )
 {
-	NSModSettingsAddConVarSettingSlider( conVar, displayName, min, max, stepSize, forceClamp, stackPos)
+	NSModSettingsAddConVarSettingSlider( conVar, displayName, min, max, stepSize, forceClamp, stackPos + 1 )
 }
 
 void function NSModSettingsAddConVarSettingEnum( string conVar, string displayName, array<string> values, int stackPos = 2 )
@@ -894,7 +894,7 @@ void function NSModSettingsAddConVarSettingEnum( string conVar, string displayNa
 
 void function AddConVarSettingEnum( string conVar, string displayName, array<string> values, int stackPos = 2 )
 {
-	NSModSettingsAddConVarSettingEnum( conVar, displayName, values, stackPos )
+	NSModSettingsAddConVarSettingEnum( conVar, displayName, values, stackPos + 1 )
 }
 
 void function OnSliderChange( var button )
