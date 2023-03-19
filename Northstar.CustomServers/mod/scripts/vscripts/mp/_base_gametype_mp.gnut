@@ -344,7 +344,8 @@ void function PostDeathThread_MP( entity player, var damageInfo ) // based on ga
 	{
 		player.SetObserverModeStaticPosition( file.intermissionCamera.GetOrigin() )
 		player.SetObserverModeStaticAngles( file.intermissionCamera.GetAngles() )
-		player.StartObserverMode( OBS_MODE_STATIC_LOCKED )
+		if( !IsValid( player.GetParent() ) )
+			player.StartObserverMode( OBS_MODE_STATIC_LOCKED )
 		player.SetObserverTarget( null )
 	}
 
