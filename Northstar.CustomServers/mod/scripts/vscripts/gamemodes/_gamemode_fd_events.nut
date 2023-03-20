@@ -25,7 +25,7 @@ global function CreateLegionTitanEvent
 global function CreateMonarchTitanEvent
 global function CreateWarningEvent
 global function CreateTitanfallBlockEvent //Careful when using this, it really changes gameplay perspective for players and can make a wave impossible to beat (Use 1 to Block, and 0 to Unblock midwave)
-global function CreateGruntDropshipEvent //This one always requires testing after usage because sometimes Grunts wont zipline to the ground, it wont softlock the wave, but makes this odd behavior, also good to explicitly set up their route, or they may do some long pathing
+global function CreateGruntDropshipEvent //This one always requires testing after usage because sometimes Grunts wont zipline to the ground, also good to explicitly set up their route, or they may do some long pathing
 global function executeWave
 global function restetWaveEvents
 global function WinWave
@@ -1024,7 +1024,7 @@ void function spawnGruntDropship( SmokeEvent smokeEvent, SpawnEvent spawnEvent, 
 	CallinData drop
 	InitCallinData( drop )
 	SetCallinStyle( drop, style )
-	drop.dist 			= 1600
+	drop.dist 			= 1800
 	drop.origin 		= origin
 	drop.yaw 			= yaw
 	
@@ -1113,7 +1113,6 @@ void function spawnGruntDropship( SmokeEvent smokeEvent, SpawnEvent spawnEvent, 
 		int seat 	= i
 		table Table = CreateDropshipAnimTable( dropship, "both", seat )
 		thread GuyDeploysOffShip( guy, Table )
-		thread singleNav_thread( guy, spawnEvent.route ) //Since grunts ziplines far away from each other, it's better them just path individually
 	}
 	
 	dropship.Hide()
@@ -1121,7 +1120,16 @@ void function spawnGruntDropship( SmokeEvent smokeEvent, SpawnEvent spawnEvent, 
 	thread ShowDropship( dropship )
 	thread PlayAnimTeleport( dropship, animation, ref, 0 )
 	ArrayRemoveDead( guys )
-	WaittillAnimDone( dropship )	
+	//WaittillAnimDone( dropship )
+	wait 8
+	//Kill grunts that didn't manage to drop off the ship
+	foreach( guy in guys )
+	{
+		if ( guy.GetParent() )
+			guy.Die()
+		else
+			thread singleNav_thread( guy, spawnEvent.route ) //Since grunts ziplines far away from each other, it's better them just path individually
+	}
 }
 
 void function ShowDropship( entity dropship )
@@ -1262,6 +1270,7 @@ void function SpawnIonTitan( SmokeEvent smokeEvent, SpawnEvent spawnEvent, FlowC
 	entity npc = CreateNPCTitan( "titan_atlas", TEAM_IMC, spawnEvent.origin, spawnEvent.angles)
 	SetSpawnOption_AISettings( npc, "npc_titan_atlas_stickybomb_boss_fd" )
 	SetSpawnOption_Titanfall( npc )
+	SlowEnemyMovementBasedOnDifficulty( npc )
 	SetTargetName( npc, GetTargetNameForID( spawnEvent.spawnType ) ) // required for client to create icons
 	DispatchSpawn( npc )
 	if( spawnEvent.entityGlobalKey != "" )
@@ -1279,6 +1288,7 @@ void function SpawnScorchTitan( SmokeEvent smokeEvent, SpawnEvent spawnEvent, Fl
 	entity npc = CreateNPCTitan( "titan_ogre", TEAM_IMC, spawnEvent.origin, spawnEvent.angles )
 	SetSpawnOption_AISettings( npc, "npc_titan_ogre_meteor_boss_fd" )
 	SetSpawnOption_Titanfall( npc )
+	SlowEnemyMovementBasedOnDifficulty( npc )
 	
 	/* I don't wanna know if this is vanilla behavior or not, i stopped accepting Scorches should aimbot the moment i got killed in the frame the respawn
 	dropship made me and another guy vulnerable and this motherfucker simply decided to snipe us midair, not even Northstars does this all the time but
@@ -1320,6 +1330,7 @@ void function SpawnToneTitan( SmokeEvent smokeEvent, SpawnEvent spawnEvent, Flow
 	entity npc = CreateNPCTitan( "titan_atlas", TEAM_IMC, spawnEvent.origin, spawnEvent.angles)
 	SetSpawnOption_AISettings( npc, "npc_titan_atlas_tracker_boss_fd" )
 	SetSpawnOption_Titanfall( npc )
+	SlowEnemyMovementBasedOnDifficulty( npc )
 	SetTargetName( npc, GetTargetNameForID( spawnEvent.spawnType ) ) // required for client to create icons
 	DispatchSpawn( npc )
 	if( spawnEvent.entityGlobalKey != "" )
@@ -1337,6 +1348,7 @@ void function SpawnLegionTitan( SmokeEvent smokeEvent, SpawnEvent spawnEvent, Fl
 	entity npc = CreateNPCTitan( "titan_ogre", TEAM_IMC, spawnEvent.origin, spawnEvent.angles )
 	SetSpawnOption_AISettings( npc, "npc_titan_ogre_minigun_boss_fd" )
 	SetSpawnOption_Titanfall( npc )
+	SlowEnemyMovementBasedOnDifficulty( npc )
 	SetTargetName( npc, GetTargetNameForID( spawnEvent.spawnType ) ) // required for client to create icons
 	DispatchSpawn( npc )
 	if( spawnEvent.entityGlobalKey != "" )
@@ -1354,6 +1366,7 @@ void function SpawnMonarchTitan( SmokeEvent smokeEvent, SpawnEvent spawnEvent, F
 	entity npc = CreateNPCTitan( "titan_atlas", TEAM_IMC, spawnEvent.origin, spawnEvent.angles )
 	SetSpawnOption_AISettings( npc,"npc_titan_atlas_vanguard_boss_fd" )
 	SetSpawnOption_Titanfall( npc )
+	SlowEnemyMovementBasedOnDifficulty( npc )
 	SetTargetName( npc, GetTargetNameForID( spawnEvent.spawnType ) ) // required for client to create icons
 	DispatchSpawn( npc )
 	if( spawnEvent.entityGlobalKey != "" )
@@ -1380,6 +1393,9 @@ void function spawnNukeTitan( SmokeEvent smokeEvent, SpawnEvent spawnEvent, Flow
 	npc.SetActivityModifier( ACT_MODIFIER_STAGGER, true )
 	npc.ai.crawling = true
 	npc.AssaultSetFightRadius( 0 )
+	StatusEffect_AddEndless( npc, eStatusEffect.move_slow, 0.5 )
+	StatusEffect_AddEndless( npc, eStatusEffect.turn_slow, 0.5 )
+	StatusEffect_AddEndless( npc, eStatusEffect.dodge_speed_slow, 0.5 )
 	DispatchSpawn( npc )
 	if( spawnEvent.entityGlobalKey != "" )
 		GlobalEventEntitys[spawnEvent.entityGlobalKey] <- npc
@@ -1415,6 +1431,7 @@ void function spawnSniperTitan( SmokeEvent smokeEvent, SpawnEvent spawnEvent, Fl
 	entity npc = CreateNPCTitan( "titan_stryder", TEAM_IMC, spawnEvent.origin, spawnEvent.angles)
 	SetSpawnOption_AISettings( npc, "npc_titan_stryder_sniper_fd" )
 	SetSpawnOption_Titanfall( npc )
+	SlowEnemyMovementBasedOnDifficulty( npc )
 	SetTargetName( npc, GetTargetNameForID( spawnEvent.spawnType ) ) // required for client to create icons
 	DispatchSpawn( npc )
 	if( spawnEvent.entityGlobalKey != "" )
@@ -1433,6 +1450,7 @@ void function SpawnToneSniperTitan( SmokeEvent smokeEvent, SpawnEvent spawnEvent
 	entity npc = CreateNPCTitan( "titan_atlas", TEAM_IMC, spawnEvent.origin, spawnEvent.angles )
 	SetSpawnOption_AISettings( npc, "npc_titan_atlas_tracker_fd_sniper" )
 	SetSpawnOption_Titanfall( npc )
+	SlowEnemyMovementBasedOnDifficulty( npc )
 	SetTargetName( npc, GetTargetNameForID( spawnEvent.spawnType ) ) // required for client to create icons
 	DispatchSpawn( npc )
 	if( spawnEvent.entityGlobalKey != "" )
@@ -1628,7 +1646,26 @@ void function AddMinimapForHumans( entity human )
 	human.Minimap_SetCustomState( eMinimapObject_npc.AI_TDM_AI )
 }
 
-
+void function SlowEnemyMovementBasedOnDifficulty( entity npc )
+{
+	int difficultyLevel = FD_GetDifficultyLevel()
+	
+	//This is not vanilla behavior i think, but generally it's good to make enemies slower on higher difficulties due their amped damage and full health or shield
+	switch ( difficultyLevel )
+	{
+		case eFDDifficultyLevel.EASY:
+		case eFDDifficultyLevel.NORMAL:
+			StatusEffect_AddEndless( npc, eStatusEffect.move_slow, 0.25 )
+			StatusEffect_AddEndless( npc, eStatusEffect.dodge_speed_slow, 0.5 )
+			break
+		case eFDDifficultyLevel.HARD:
+		case eFDDifficultyLevel.MASTER:
+		case eFDDifficultyLevel.INSANE:
+			StatusEffect_AddEndless( npc, eStatusEffect.move_slow, 0.5 )
+			StatusEffect_AddEndless( npc, eStatusEffect.dodge_speed_slow, 0.5 )
+			break
+	}
+}
 
 void function WinWave()
 {

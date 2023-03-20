@@ -97,9 +97,9 @@ void function singleNav_thread( entity npc, string routeName, int nodesToSkip= 0
 	{
 		npc.AssaultPoint( fd_harvester.harvester.GetOrigin() )
 		npc.AssaultSetGoalRadius( 64 )
-		npc.SetEnemy( fd_harvester.harvester )
 	}
 	
+	npc.SetEnemy( fd_harvester.harvester )
 	npc.Signal( "FD_ReachedHarvester" )
 }
 
@@ -169,9 +169,9 @@ void function SquadNav_Thread( array<entity> npcs, string routeName, int nodesTo
 			{
 				npc.AssaultPoint( fd_harvester.harvester.GetOrigin() )
 				npc.AssaultSetGoalRadius( 64 )
-				npc.SetEnemy( fd_harvester.harvester )
 				npc.AssaultSetFightRadius( expect int( npc.Dev_GetAISettingByKeyField( "LookDistDefault_Combat" ) ) )
 			}
+			npc.SetEnemy( fd_harvester.harvester )
 			npc.Signal( "FD_ReachedHarvester" )
 		}
 	}

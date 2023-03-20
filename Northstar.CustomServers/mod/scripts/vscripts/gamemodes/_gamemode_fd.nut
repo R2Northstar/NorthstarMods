@@ -148,7 +148,7 @@ void function GamemodeFD_Init()
 	AddDamageCallback( "player", DamageScaleByDifficulty )
 	AddDamageCallback( "npc_titan", DamageScaleByDifficulty )
 	AddDamageCallback( "npc_turret_sentry", DamageScaleByDifficulty )
-	AddDamageCallback( "npc_turret_sentry",RevivableTurret_DamageCallback)
+	AddDamageCallback( "npc_turret_sentry", RevivableTurret_DamageCallback )
 	//Spawn Callbacks
 	AddSpawnCallback( "npc_titan", HealthScaleByDifficulty )
 	AddSpawnCallback( "npc_super_spectre", HealthScaleByDifficulty )
@@ -1734,6 +1734,8 @@ void function FD_createHarvester()
 		case "mp_homestead":
 		case "mp_thaw":
 		case "mp_colony02":
+		case "mp_relic02":
+		case "mp_eden":
 			thread StratonHornetDogfightsIntense()
 	}
 }
@@ -2171,10 +2173,12 @@ bool function FD_PlayerInDropship( entity player )
 
 void function FD_DropshipSpawnDropship()
 {
+	array<string> anims = GetRandomDropshipDropoffAnims()
+	asset model = GetFlightPathModel( "fp_crow_model" )
+	
 	file.playersInShip = 0
 	file.dropshipState = eDropshipState.InProgress
 	file.dropship = CreateDropship( TEAM_MILITIA, FD_spawnPosition , FD_spawnAngles )
-
 
 	file.dropship.SetModel( $"models/vehicle/crow_dropship/crow_dropship_hero.mdl" )
 	file.dropship.SetValueForModelKey( $"models/vehicle/crow_dropship/crow_dropship_hero.mdl" )
@@ -2184,11 +2188,8 @@ void function FD_DropshipSpawnDropship()
 	file.dropship.SetInvulnerable()
 	file.dropship.SetNoTarget( true )
 
+	//waitthread WarpinEffect( model, anims[0], FD_spawnPosition , FD_spawnAngles ) This doesnt work because it requires waitthread and if we do it, players doesnt respawn on dropship at all
 	thread PlayAnim(file.dropship, FD_DropshipGetAnimation())
-
-	array<string> anims = GetRandomDropshipDropoffAnims()
-
-	thread WarpinEffect( $"models/vehicle/crow_dropship/crow_dropship.mdl", anims[0], file.dropship.GetOrigin(),file.dropship.GetAngles() ) //this does not work
 	file.dropship.WaitSignal( "deploy" )
 	file.dropshipState = eDropshipState.Returning
 	foreach(int i,entity player in file.playersInDropship)
