@@ -92,6 +92,8 @@ void function ClassicMP_OnIntroStarted()
 	float introLength = ClassicMP_GetIntroLength()
 	SetServerVar( "gameStartTime", Time() + introLength )
 	SetServerVar( "roundStartTime", Time() + introLength )
+
+	FlagClear( "ClassicMPIntroEnd" ) // clear the flag when next intro starts( for round-based game )
 }
 
 void function ClassicMP_OnIntroFinished()
@@ -99,7 +101,7 @@ void function ClassicMP_OnIntroFinished()
 	print( "intro finished!" )
 	SetGameState( eGameState.Playing )
 	
-	FlagSet( "ClassicMPIntroEnd" ) // may need for grace period
+	FlagSet( "ClassicMPIntroEnd" )
 }
 
 float function ClassicMP_GetIntroLength() 
