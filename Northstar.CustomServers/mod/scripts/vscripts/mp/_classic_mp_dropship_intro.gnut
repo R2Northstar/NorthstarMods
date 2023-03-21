@@ -1,6 +1,5 @@
 untyped
 global function ClassicMP_DefaultDropshipIntro_Setup
-global function ClassicMP_IsRunningDropshipIntro
 
 const array<string> DROPSHIP_IDLE_ANIMS = [ "Classic_MP_flyin_exit_playerA_idle",
 											"Classic_MP_flyin_exit_playerB_idle",
@@ -49,14 +48,10 @@ struct {
 
 void function ClassicMP_DefaultDropshipIntro_Setup()
 {
-	file.isDropShipIntro = true // we're running dropship intro now
+	SetPickLoadoutEnabled( true ) // required to make client play warpjump sound
+	SetPickLoadoutDuration( 8.0 ) // for dropship intro, we only need set pick loadout duration to fit warpjump sound
 	AddCallback_OnClientConnected( DropshipIntro_OnClientConnected )	
 	AddCallback_GameStateEnter( eGameState.Prematch, OnPrematchStart )
-}
-
-bool function ClassicMP_IsRunningDropshipIntro()
-{
-	return file.isDropShipIntro
 }
 
 void function DropshipIntro_OnClientConnected( entity player )

@@ -106,6 +106,8 @@ void function WargamesIntroSetup()
 	file.militiaPod = GetEnt( "training_pod" )
 	file.imcPod = GetEnt( "training_pod_imc" )
 
+	SetPickLoadoutEnabled( true ) // required to make client play pod booting sound
+	SetPickLoadoutDuration( 5.0 ) // for wargames pod intro, we need to match training pod boot sound
 	AddCallback_OnClientConnected( WargamesIntro_AddPlayer )
 	AddCallback_GameStateEnter( eGameState.Prematch, OnPrematchStart )
 }

@@ -24,6 +24,9 @@ global function ShouldRunEvac
 global function GiveTitanToPlayer
 global function GetTimeLimit_ForGameMode
 
+global function SetPickLoadoutEnabled
+global function SetPickLoadoutDuration // for modified intros
+
 struct {
 	// used for togglable parts of gamestate
 	bool usePickLoadoutScreen
@@ -53,6 +56,10 @@ struct {
 	float roundWinningKillReplayHealthFrac
 	
 	array<void functionref()> roundEndCleanupCallbacks
+
+	// pickloadout
+	bool pickLoadoutEnable = false
+	float pickLoadoutDuration = 20.0
 } file
 
 void function PIN_GameStart()
@@ -141,8 +148,8 @@ void function WaitForPlayers( )
 	print( "done waiting!" )
 	
 	wait 1.0 // bit nicer
-	if ( file.usePickLoadoutScreen )
-		SetGameState( eGameState.PickLoadout )
+	if ( file.pickLoadoutEnable || file.usePickLoadoutScreen )
+		SetGameState( eGameState.PickLoadout ) // warpjump or wargames intro sound will be played on client if we're in eGameState.PickLoadout
 	else
 		SetGameState( eGameState.Prematch ) 
 }
@@ -161,14 +168,29 @@ void function GameStateEnter_PickLoadout()
 
 void function GameStateEnter_PickLoadout_Threaded()
 {	
-	float pickloadoutLength = 20.0 // may need tweaking
-	SetServerVar( "minPickLoadOutTime", Time() + pickloadoutLength )
+	SetServerVar( "minPickLoadOutTime", Time() + file.pickLoadoutDuration )
+	if ( !file.usePickLoadoutScreen )
+		thread PickLoadoutScreenFadeToBlack() // this is required if you want late joiners screen fade to black
 	
 	// titan selection menu can change minPickLoadOutTime so we need to wait manually until we hit the time
 	while ( Time() < GetServerVar( "minPickLoadOutTime" ) )
 		WaitFrame()
 	
 	SetGameState( eGameState.Prematch )
+}
+
+void function PickLoadoutScreenFadeToBlack()
+{
+	svGlobal.levelEnt.EndSignal( "GameStateChanged" ) // end this thread once we entered prematch
+
+	while ( GetGameState() == eGameState.PickLoadout )
+	{
+		foreach ( entity player in GetPlayerArray() )
+		{
+			ScreenFadeToBlackForever( player, 0.1 )
+		}
+		WaitFrame()
+	}
 }
 
 
@@ -978,4 +1000,15 @@ void function DialoguePlayWinnerDetermined()
 		PlayFactionDialogueToTeam( "scoring_won", winningTeam )
 		PlayFactionDialogueToTeam( "scoring_lost", losingTeam )
 	}
+}
+
+
+void function SetPickLoadoutEnabled( bool enable )
+{
+	file.pickLoadoutEnable = enable
+}
+
+void function SetPickLoadoutDuration( float duration )
+{
+	file.pickLoadoutDuration = duration
 }
