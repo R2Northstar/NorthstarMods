@@ -21,8 +21,6 @@ global function Bleedout_AllowInterruptSelfRes
 global function Bleedout_IsPlayerBleeding
 global function Bleedout_GetLastAttacker
 global function Bleedout_GetLastAttackerWeapon
-//global function Bleedout_GetLastDamageInfo // no idea now
-//global function Bleedout_IsRevivingFriendly // no idea how to make it
 
 struct
 {
@@ -30,7 +28,6 @@ struct
 	table<entity, entity> IsGettingFirstAidFrom
 	table<entity, entity> lastAttacker
 	table<entity, entity> lastAttackerWeapon
-	//table<entity, var> lastDamageInfo // no idea now
 	// victim, attacker, damageInfo
 	array<void functionref( entity, entity, var )> Callbacks_OnPlayerStartBleedout 
 	// playerToRes, playerHealer
@@ -44,18 +41,6 @@ struct
 
 void function Bleedout_Init()
 {
-	/* Registrations should be done in sh_bleedout_damage.gnut
-	RegisterSignal( "BleedOut_StopBleeding" )
-	RegisterSignal( "BleedOut_OnRevive" )
-	RegisterSignal( "BleedOut_OnStartDying" )
-	RegisterSignal( "OnContinousUseStopped" )
-
-	// modifed signal
-	RegisterSignal( "BleedoutHealthRegenThink" )
-	RegisterSignal( "Bleedout_PlayerAttemptRes" )
-	RegisterSignal( "Bleedout_OnStartReviving" )
-	*/
-
 	AddCallback_OnClientConnected( Bleedout_OnClientConnected )
 	AddCallback_OnClientDisconnected( Bleedout_OnClientDisconnected )
 
@@ -72,7 +57,7 @@ void function Bleedout_OnClientConnected( entity player )
 
 void function Bleedout_OnClientDisconnected( entity player )
 {
-	/* unhandled delete( for players may already been destroyed ), no need for now
+	/* unhandled deleting( for players may already been destroyed ), no need for now
 	delete file.isBleeding[ player ]
 	delete file.IsGettingFirstAidFrom[ player ]
 	delete file.lastAttacker[ player ]
@@ -100,7 +85,7 @@ bool function Bleedout_StartPlayerBleedout( entity player, entity attacker, var 
 		bool isLastPlayer = CheckForTeamBleedout( player )
 		if( isLastPlayer )
 		{
-			// player will just die
+			// player will just die, done in sh_bleedout_damage.gnut
 			//player.Die( DamageInfo_GetAttacker( damageInfo ), DamageInfo_GetAttacker( damageInfo ), { damageSourceId = DamageInfo_GetDamageSourceIdentifier( damageInfo ) } )
 			return false
 		}
@@ -112,7 +97,6 @@ bool function Bleedout_StartPlayerBleedout( entity player, entity attacker, var 
 
 	file.lastAttacker[ player ] = attacker
 	file.lastAttackerWeapon[ player ] = DamageInfo_GetWeapon( damageInfo )
-	//file.lastDamageInfo[ player ] = damageInfo // no idea now
 	
 	player.ClearParent() // cancel rodeo or some other things
 	player.Anim_Stop() // interupt current executions etc.
@@ -133,7 +117,7 @@ bool function Bleedout_StartPlayerBleedout( entity player, entity attacker, var 
 	if ( Bleedout_GetSelfResEnabled() )
 		thread EnablePlayerSelfRes( player )
 
-	// nessie mix, better support for killshot sounds
+	// now handled in sh_bleedout_damage.gnut
 	//if ( Bleedout_GetDeathOnTeamBleedout() )
 	//	CheckForTeamBleedout( player.GetTeam() )
 	
@@ -190,7 +174,6 @@ void function PlayerDying( entity player )
 				file.isBleeding[ player ] = false
 				file.lastAttacker[ player ] = svGlobal.worldspawn
 				file.lastAttackerWeapon[ player ] = null
-				//file.lastDamageInfo[ player ] = null  // no idea now
 
 				player.UnforceCrouch()
 				player.SetTitle( "" )
@@ -277,16 +260,6 @@ void function EnablePlayerRes( entity player )
 			entity playerHealer = expect entity ( player.WaitSignal( "OnPlayerUse" ).player )
 			player.UnsetUsable()
 
-			/* // tryed to adjust, not using right now
-			entity playerHealer = expect entity ( player.WaitSignal( "OnPlayerUse", "BleedOut_OnStartReviving" ).player )
-			player.UnsetUsable()
-			if( Bleedout_IsPlayerSelfHealing( player ) ) // not showing prompts while selfres
-			{
-				WaitFrame()
-				continue
-			}
-			*/
-
 			//Player can only res other players if they are not bleeding out themselves.
 			if ( !file.isBleeding[ playerHealer ] && ( !Bleedout_IsPlayerGettingFirstAid( player ) || Bleedout_IsPlayerSelfHealing( player ) ) )
 				waitthread PlayerAttemptRes( playerHealer, player )
@@ -325,7 +298,6 @@ void function PlayerAttemptRes( entity playerHealer, entity playerToRes )
 {
 	Assert( IsNewThread(), "Must be threaded off." )
 	playerToRes.Signal( "Bleedout_PlayerAttemptRes" ) // so teammates can interrupt selfRes
-	//playerToRes.Signal( "Bleedout_OnStartReviving" ) // not using right now, needs untyped
 	playerToRes.EndSignal( "OnDeath" )
 	playerToRes.EndSignal( "OnDestroy" )
 	playerToRes.EndSignal( "Bleedout_PlayerAttemptRes" )
@@ -442,7 +414,6 @@ void function PlayerAttemptRes( entity playerHealer, entity playerToRes )
 	file.isBleeding[ playerToRes ] = false
 	file.lastAttacker[ playerToRes ] = svGlobal.worldspawn
 	file.lastAttackerWeapon[ playerToRes ] = null
-	//file.lastDamageInfo[ playerToRes ] = null // no idea now
 	if ( IsPilotEliminationBased() )
 		ClearPlayerEliminated( playerToRes )
 
@@ -681,31 +652,26 @@ int function GetNewFirstAidAttemptID()
 void function Bleedout_OverTimeFirstAid( entity player )		
 {
 	// signals should be handled by PlayerDying()
-	/*
-	player.EndSignal( "OnDeath" )
-	player.EndSignal( "OnDestroy" )
-	player.EndSignal( "BleedOut_StopBleeding" )
-	player.EndSignal( "BleedOut_OnRevive" )
-	*/
+	bool interrupted = false
 	while( true )
 	{
 		WaitFrame()
-		if( Bleedout_IsPlayerGettingFirstAid( player ) )
+		if ( Bleedout_IsPlayerGettingFirstAid( player ) && !interrupted )
 			continue
 		else
-			break
+		{
+			interrupted = true // mark as intterupted
+			WaitFrame() // wait a extra frame to wait for player transfering to teamRes
+			if ( Bleedout_IsPlayerGettingFirstAid( player ) && !Bleedout_IsPlayerSelfHealing( player ) ) // player now being revived by teammate
+				continue // keep waiting
+			break // otherwise we break, kill the player
+		}
 	}
 }
 
 void function Bleedout_OverTimeExecution( entity player )
 {
 	// signals should be handled by PlayerDying()
-	/*
-	player.EndSignal( "OnDeath" )
-	player.EndSignal( "OnDestroy" )
-	player.EndSignal( "BleedOut_StopBleeding" )
-	player.EndSignal( "BleedOut_OnRevive" )
-	*/
 	while( true )
 	{
 		WaitFrame()
@@ -748,17 +714,3 @@ entity function Bleedout_GetLastAttackerWeapon( entity player )
 		return null
 	return file.lastAttackerWeapon[player]
 }
-
-// no idea now
-//var function Bleedout_GetLastDamageInfo( entity player )
-//{
-//	if( !( player in file.lastDamageInfo ) )
-//		return null
-//	return file.lastDamageInfo[player]
-//}
-
-// no idea
-//bool function Bleedout_IsRevivingFriendly( entity player )
-//{
-//	return 
-//}

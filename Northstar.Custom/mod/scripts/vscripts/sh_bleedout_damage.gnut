@@ -26,7 +26,6 @@ void function BleedoutDamage_PreInit()
 	RegisterSignal( "OnContinousUseStopped" )
 
 	// modifed signal
-	RegisterSignal( "BleedoutHealthRegenThink" )
 	RegisterSignal( "Bleedout_PlayerAttemptRes" )
 	RegisterSignal( "Bleedout_OnStartReviving" )
 	
@@ -99,7 +98,7 @@ void function Bleedout_SetDownedGracePeriodEnabled( bool enable )
 	file.bleedoutGracePeriodEnabled = enable
 }
 
-viod function Bleedout_SetDownedGracePeriodDuration( float duration )
+void function Bleedout_SetDownedGracePeriodDuration( float duration )
 {
 	file.bleedoutGracePeriodDuration = duration
 }
