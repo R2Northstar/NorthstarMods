@@ -167,8 +167,10 @@ void function SpawnPlayerIntoDropship( entity player )
 	if ( IsAlive( player ) )
 		player.Die() // kill them so we don't have any issues respawning them later
 	
-	table results = {}
-	results.isJumping <- false
+	table results = 
+	{
+		isJumping = false
+	}
 
 	OnThreadEnd( function() : ( player, results )
 	{	
