@@ -1,28 +1,7 @@
 untyped
 global function ClassicMP_DefaultDropshipIntro_Setup
 
-const array<string> DROPSHIP_IDLE_ANIMS = [ "Classic_MP_flyin_exit_playerA_idle",
-											"Classic_MP_flyin_exit_playerB_idle",
-											"Classic_MP_flyin_exit_playerC_idle",
-											"Classic_MP_flyin_exit_playerD_idle" ]
-
-const array<string> DROPSHIP_IDLE_ANIMS_POV = [ "Classic_MP_flyin_exit_povA_idle",
-                                                "Classic_MP_flyin_exit_povB_idle",
-                                                "Classic_MP_flyin_exit_povC_idle",
-                                                "Classic_MP_flyin_exit_povD_idle" ]
-
-const array<string> DROPSHIP_JUMP_ANIMS = [	"Classic_MP_flyin_exit_playerA_jump",
-                                          	"Classic_MP_flyin_exit_playerB_jump",
-                                          	"Classic_MP_flyin_exit_playerC_jump",
-                                          	"Classic_MP_flyin_exit_playerD_jump" ]
-
-const array<string> DROPSHIP_JUMP_ANIMS_POV = [ "Classic_MP_flyin_exit_povA_jump",
-                                                "Classic_MP_flyin_exit_povB_jump",
-                                                "Classic_MP_flyin_exit_povC_jump",
-                                                "Classic_MP_flyin_exit_povD_jump" ]
-												
 const int MAX_DROPSHIP_PLAYERS = 4
-
 
 global const float DROPSHIP_INTRO_LENGTH = 15.0 // TODO tweak this
 const float SPAWN_ON_GROUND_TIME = 11.0 // taken from sequence
@@ -35,14 +14,36 @@ struct IntroDropship
 	entity[MAX_DROPSHIP_PLAYERS] players
 }
 
-struct {
+struct DropShipSequenceDate
+{
+	// idle anim
+	string idleAnim
+	string idlePOVAnim
+	string idleAttachment = "ORIGIN"
+	bool idleTeleport = true
+	bool idleHideProxy = true
+	vector idleAngles = < 0, 0, 0 >
+	void functionref( entity ) idleViewConeFunc
+
+	// jump anim
+	string jumpAnim
+	string jumpPOVAnim
+	string jumpAttachment = "ORIGIN"
+	bool jumpTeleport = false
+	bool jumpHideProxy = true
+	void functionref( entity ) jumpViewConeFunc
+	string firstPersonJumpOutSound // Unfortunately first person anims play for everybody, not just the person who the anim is played upon, so script needs to play the sound as opposed to a qc entry
+}
+
+struct 
+{
+	array<DropShipSequenceDate> dropShipSequenceDateList
+
 	// these used to be IntroDropship[2]s but i wanted to be able to use array.getrandom so they have to be actual arrays
 	array<IntroDropship> militiaDropships
 	array<IntroDropship> imcDropships
 	
 	float introStartTime
-
-	bool isDropShipIntro = false
 } file
 
 
@@ -50,8 +51,90 @@ void function ClassicMP_DefaultDropshipIntro_Setup()
 {
 	SetPickLoadoutEnabled( true ) // required to make client play warpjump sound
 	SetPickLoadoutDuration( 8.0 ) // for dropship intro, we only need set pick loadout duration to fit warpjump sound
+	InitIntroDropshipSequenceData()
 	AddCallback_OnClientConnected( DropshipIntro_OnClientConnected )	
 	AddCallback_GameStateEnter( eGameState.Prematch, OnPrematchStart )
+}
+
+void function InitIntroDropshipSequenceData()
+{
+    DropShipSequenceDate dataForPlayerA
+    dataForPlayerA.idleAnim           		= "Classic_MP_flyin_exit_playerA_idle"
+    dataForPlayerA.idlePOVAnim        		= "Classic_MP_flyin_exit_povA_idle"
+	dataForPlayerA.idleAttachment			= "ORIGIN"
+	dataForPlayerA.idleTeleport 			= true
+	dataForPlayerA.idleHideProxy 			= true
+    dataForPlayerA.idleAngles           	= < 0, -18.0, 0 >
+	dataForPlayerA.idleViewConeFunc       	= ViewConeRampFree
+
+	dataForPlayerA.jumpAnim           		= "Classic_MP_flyin_exit_playerA_jump"
+    dataForPlayerA.jumpPOVAnim        		= "Classic_MP_flyin_exit_povA_jump"
+	dataForPlayerA.jumpAttachment			= "ORIGIN"
+	dataForPlayerA.jumpTeleport 			= false
+	dataForPlayerA.jumpHideProxy 			= true
+	dataForPlayerA.jumpViewConeFunc       	= ViewConeTight
+    dataForPlayerA.firstPersonJumpOutSound 	= "commander_sequence_soldier_a_jump"
+
+
+
+	DropShipSequenceDate dataForPlayerB
+    dataForPlayerB.idleAnim           		= "Classic_MP_flyin_exit_playerB_idle"
+    dataForPlayerB.idlePOVAnim        		= "Classic_MP_flyin_exit_povB_idle"
+	dataForPlayerB.idleAttachment			= "ORIGIN"
+	dataForPlayerB.idleTeleport 			= true
+	dataForPlayerB.idleHideProxy 			= true
+    dataForPlayerB.idleAngles           	= < 0, 8.0, 0 >
+	dataForPlayerB.idleViewConeFunc       	= ViewConeRampFree
+
+	dataForPlayerB.jumpAnim           		= "Classic_MP_flyin_exit_playerB_jump"
+    dataForPlayerB.jumpPOVAnim        		= "Classic_MP_flyin_exit_povB_jump"
+	dataForPlayerB.jumpAttachment			= "ORIGIN"
+	dataForPlayerB.jumpTeleport 			= false
+	dataForPlayerB.jumpHideProxy 			= true
+	dataForPlayerB.jumpViewConeFunc       	= ViewConeTight
+    dataForPlayerB.firstPersonJumpOutSound 	= "commander_sequence_soldier_b_jump"
+
+
+
+	DropShipSequenceDate dataForPlayerC
+    dataForPlayerC.idleAnim           		= "Classic_MP_flyin_exit_playerC_idle"
+    dataForPlayerC.idlePOVAnim        		= "Classic_MP_flyin_exit_povC_idle"
+	dataForPlayerC.idleAttachment			= "ORIGIN"
+	dataForPlayerC.idleTeleport 			= true
+	dataForPlayerC.idleHideProxy 			= true
+    dataForPlayerC.idleAngles           	= < 0, 8.0, 0 >
+	dataForPlayerC.idleViewConeFunc       	= ViewConeRampFree
+
+	dataForPlayerC.jumpAnim           		= "Classic_MP_flyin_exit_playerC_jump"
+    dataForPlayerC.jumpPOVAnim        		= "Classic_MP_flyin_exit_povC_jump"
+	dataForPlayerC.jumpAttachment			= "ORIGIN"
+	dataForPlayerC.jumpTeleport 			= false
+	dataForPlayerC.jumpHideProxy 			= true
+	dataForPlayerC.jumpViewConeFunc       	= ViewConeTight
+    dataForPlayerC.firstPersonJumpOutSound 	= "commander_sequence_soldier_c_jump"
+
+
+
+	DropShipSequenceDate dataForPlayerD
+    dataForPlayerD.idleAnim           		= "Classic_MP_flyin_exit_playerD_idle"
+    dataForPlayerD.idlePOVAnim        		= "Classic_MP_flyin_exit_povD_idle"
+	dataForPlayerD.idleAttachment			= "ORIGIN"
+	dataForPlayerD.idleTeleport 			= true
+	dataForPlayerD.idleHideProxy 			= true
+    dataForPlayerD.idleAngles           	= < 0, -16.0, 0 >
+	dataForPlayerD.idleViewConeFunc       	= ViewConeRampFree
+
+	dataForPlayerD.jumpAnim           		= "Classic_MP_flyin_exit_playerD_jump"
+    dataForPlayerD.jumpPOVAnim        		= "Classic_MP_flyin_exit_povD_jump"
+	dataForPlayerD.jumpAttachment			= "ORIGIN"
+	dataForPlayerD.jumpTeleport 			= false
+	dataForPlayerD.jumpHideProxy 			= true
+	dataForPlayerD.jumpViewConeFunc       	= ViewConeTight
+    dataForPlayerD.firstPersonJumpOutSound 	= "commander_sequence_soldier_d_jump"
+
+
+
+    file.dropShipSequenceDateList = [ dataForPlayerA, dataForPlayerB, dataForPlayerC, dataForPlayerD ]
 }
 
 void function DropshipIntro_OnClientConnected( entity player )
@@ -157,7 +240,8 @@ void function SpawnPlayerOnGround( entity player )
 	svGlobal.levelEnt.WaitSignal( "GameStateChanged" ) // wait for game start
 	player.UnfreezeControlsOnServer() // restore player movements
 	RemoveCinematicFlag( player, CE_FLAG_CLASSIC_MP_SPAWNING )
-	TryGameModeAnnouncement( player ) // do gamemode announcement
+	// do gamemode announcement
+	TryGameModeAnnouncement( player )
 }
 
 void function SpawnPlayerIntoDropship( entity player )
@@ -181,7 +265,7 @@ void function SpawnPlayerIntoDropship( entity player )
 			if ( !IsAlive( player ) )
 				player.Anim_Stop() // stop sequence for dead players
 			
-			if ( !results.isJumping )
+			if ( !results.isJumping ) // jumping failed!
 			{
 				player.MovementEnable()
 				player.EnableWeaponViewModel()
@@ -190,7 +274,7 @@ void function SpawnPlayerIntoDropship( entity player )
 		}
 	})
 	
-	//WaitFrame() // do a waitFrame() for other resspawn functions set up
+	WaitFrame() // do a waitFrame() for other respawn functions set up
 
 	player.EndSignal( "OnDeath" )
 	
@@ -236,30 +320,37 @@ void function SpawnPlayerIntoDropship( entity player )
 	// faction leaders are done clientside, spawn them here
 	Remote_CallFunction_NonReplay( player, "ServerCallback_SpawnFactionCommanderInDropship", playerDropship.dropship.GetEncodedEHandle(), file.introStartTime )
 
-	// do firstperson sequence	
+	// get current sequence data
+	DropShipSequenceDate data = file.dropShipSequenceDateList[ playerDropshipIndex ]
+
+	// do firstperson idle sequence
 	FirstPersonSequenceStruct idleSequence
-	idleSequence.firstPersonAnim = DROPSHIP_IDLE_ANIMS_POV[ playerDropshipIndex ]
-	idleSequence.thirdPersonAnim = DROPSHIP_IDLE_ANIMS[ playerDropshipIndex ]
-	idleSequence.attachment = "ORIGIN"
-	idleSequence.teleport = true
-	idleSequence.viewConeFunction = ViewConeRampFree
-	idleSequence.hideProxy = true
-	idleSequence.setInitialTime = Time() - file.introStartTime
+	idleSequence.firstPersonAnim 	= data.idlePOVAnim
+	idleSequence.thirdPersonAnim 	= data.idleAnim
+	idleSequence.viewConeFunction 	= data.idleViewConeFunc
+	idleSequence.attachment 		= data.idleAttachment
+	idleSequence.teleport 			= data.idleTeleport
+	idleSequence.hideProxy 			= data.idleHideProxy
+	idleSequence.angles				= data.idleAngles
+	idleSequence.setInitialTime 	= Time() - file.introStartTime
 	thread FirstPersonSequence( idleSequence, player, playerDropship.dropship )
 	WaittillAnimDone( player )
-	
-	// todo: possibly rework this to actually get the time the idle anim takes and start the starttime of the jump sequence for very late joiners using that
-			
-	// jump sequence
+
+	// do jumping sequence along with jumping think
 	FirstPersonSequenceStruct jumpSequence
-	jumpSequence.firstPersonAnim = DROPSHIP_JUMP_ANIMS_POV[ playerDropshipIndex ]
-	jumpSequence.thirdPersonAnim = DROPSHIP_JUMP_ANIMS[ playerDropshipIndex ]
-	jumpSequence.attachment = "ORIGIN"
-	jumpSequence.setInitialTime = max( 0.0, Time() - ( file.introStartTime + 11.0 ) )  // pretty sure you should do this with GetScriptedAnimEventCycleFrac?
-	// idk unsure how to use that, all i know is getsequenceduration > the length it actually should be
+	jumpSequence.firstPersonAnim 	= data.jumpPOVAnim
+	jumpSequence.thirdPersonAnim 	= data.jumpAnim
+	jumpSequence.viewConeFunction 	= data.jumpViewConeFunc
+	jumpSequence.attachment 		= data.jumpAttachment
+	jumpSequence.teleport 			= data.jumpTeleport
+	jumpSequence.hideProxy 			= data.jumpHideProxy
+	jumpSequence.setInitialTime 	= max( 0.0, Time() - ( file.introStartTime + 11.0 ) )  // pretty sure you should do this with GetScriptedAnimEventCycleFrac?
 	
-	thread FirstPersonSequence( jumpSequence, player, playerDropship.dropship )
+	// jumping sound
+	EmitSoundOnEntityOnlyToPlayer( player, player, data.firstPersonJumpOutSound )
 	PlayBattleChatterLine( player, "bc_pIntroChat" )
+
+	thread FirstPersonSequence( jumpSequence, player, playerDropship.dropship )
 	WaittillAnimDone( player ) // somehow this is better than just waiting for the blocking FirstPersonSequence call?
 	
 	results.isJumping = true
