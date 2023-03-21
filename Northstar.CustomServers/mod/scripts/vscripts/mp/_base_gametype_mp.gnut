@@ -265,16 +265,7 @@ void function GracePeriodThink_Threaded( entity player )
 		}
 	)
 
-	float countingTime
-	while( countingTime <= CLASS_CHANGE_GRACE_PERIOD ) // to get exact time
-	{
-		wait 0.2
-		// in dropship
-		if( player.GetParent() != null && ( HasCinematicFlag( player, CE_FLAG_INTRO ) || HasCinematicFlag( player, CE_FLAG_CLASSIC_MP_SPAWNING ) || HasCinematicFlag( player, CE_FLAG_WAVE_SPAWNING ) ) )
-			continue
-
-		countingTime += 0.2
-	}
+	wait CLASS_CHANGE_GRACE_PERIOD // max duration
 }
 
 void function CodeCallback_OnPlayerKilled( entity player, var damageInfo )
