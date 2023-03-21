@@ -237,11 +237,20 @@ void function SpawnPlayerOnGround( entity player )
 	AddCinematicFlag( player, CE_FLAG_CLASSIC_MP_SPAWNING )
 	ScreenFadeFromBlack( player, 0.5, 0.5 )
 
-	svGlobal.levelEnt.WaitSignal( "GameStateChanged" ) // wait for game start
+	waitthread WaitForIntroOver( player ) // wait for intro over
+	
 	player.UnfreezeControlsOnServer() // restore player movements
 	RemoveCinematicFlag( player, CE_FLAG_CLASSIC_MP_SPAWNING )
 	// do gamemode announcement
 	TryGameModeAnnouncement( player )
+}
+
+void function WaitForIntroOver( entity player )
+{
+	svGlobal.levelEnt.EndSignal( "GameStateChanged" ) // also wait for gamestate change
+
+	while ( !Flag( "ClassicMPIntroEnd" ) ) // this flag will be set in ClassicMP_OnIntroFinished()
+		WaitFrame()
 }
 
 void function SpawnPlayerIntoDropship( entity player )
