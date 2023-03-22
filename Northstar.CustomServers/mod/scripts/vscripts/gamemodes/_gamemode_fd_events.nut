@@ -729,6 +729,7 @@ void function waitUntilLessThanAmountAliveEventWeighted( SmokeEvent smokeEvent, 
 void function spawnSuperSpectre( SmokeEvent smokeEvent, SpawnEvent spawnEvent, FlowControlEvent flowControlEvent, SoundEvent soundEvent )
 {
 	PingMinimap( spawnEvent.origin.x, spawnEvent.origin.y, 4, 600, 150, 0 )
+	thread Reaper_Spawnpoint( spawnEvent.origin, TEAM_IMC, 6.0 ) // reaper takes ~1.2s to warpfall
 	wait 4.7
 
 	entity npc = CreateSuperSpectre( TEAM_IMC, spawnEvent.origin, spawnEvent.angles )
@@ -747,6 +748,7 @@ void function spawnSuperSpectre( SmokeEvent smokeEvent, SpawnEvent spawnEvent, F
 void function spawnSuperSpectreWithMinion( SmokeEvent smokeEvent, SpawnEvent spawnEvent, FlowControlEvent flowControlEvent, SoundEvent soundEvent )
 {
 	PingMinimap( spawnEvent.origin.x, spawnEvent.origin.y, 4, 600, 150, 0 )
+	thread Reaper_Spawnpoint( spawnEvent.origin, TEAM_IMC, 6.0 ) // reaper takes ~1.2s to warpfall
 	wait 4.7
 
 	entity npc = CreateSuperSpectre( TEAM_IMC, spawnEvent.origin,spawnEvent.angles )
@@ -761,6 +763,24 @@ void function spawnSuperSpectreWithMinion( SmokeEvent smokeEvent, SpawnEvent spa
 	npc.WaitSignal( "WarpfallComplete" )
 	thread ReaperMinionLauncherThink( npc )
 
+}
+
+// taken from _ai_gamemodes.gnut
+void function Reaper_Spawnpoint( vector origin, int team, float impactTime )
+{
+	vector surfaceNormal = < 0, 0, 1 >
+
+	int index = GetParticleSystemIndex( $"P_ar_titan_droppoint" )
+
+	entity effectEnemy = StartParticleEffectInWorld_ReturnEntity( index, origin, surfaceNormal )
+	effectEnemy.EndSignal( "OnDestroy" )
+	SetTeam( effectEnemy, team )
+	EffectSetControlPointVector( effectEnemy, 1, < 255,99,0 > )
+	effectEnemy.kv.VisibilityFlags = ENTITY_VISIBLE_TO_ENEMY
+	effectEnemy.DisableHibernation() // prevent it from fading out
+
+	wait impactTime
+	EffectStop( effectEnemy )
 }
 
 void function spawnDroppodGrunts( SmokeEvent smokeEvent, SpawnEvent spawnEvent, FlowControlEvent flowControlEvent, SoundEvent soundEvent )
