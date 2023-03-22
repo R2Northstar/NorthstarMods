@@ -407,14 +407,12 @@ void function PostDeathThread_MP( entity player, var damageInfo ) // based on ga
 void function ForceRespawnMeSignalAfterDelay( entity player, int delay = 5 )
 {
 	player.EndSignal( "RespawnMe" )
+	player.EndSignal( "OnDestroy" )
 
 	if( player.IsWatchingKillReplay() )
 		player.WaitSignal( "KillCamOver" )
 
 	wait delay
-
-	if (!IsValid(player))
-		return
 
 	printt( format( "Forcing player respawn for player %s (took >%d seconds to respawn)", player.GetPlayerName(), delay ) )
 	player.Signal( "RespawnMe" )
