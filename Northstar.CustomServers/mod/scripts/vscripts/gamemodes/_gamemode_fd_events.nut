@@ -113,6 +113,12 @@ global array< array<WaveEvent> > waveEvents
 void function executeWave()
 {	
 	int currentWave = GetGlobalNetInt( "FD_currentWave" ) + 1
+	bool tenenemiesleft = false
+	bool fiveenemiesleft = false
+	bool fourenemiesleft = false
+	bool threeenemiesleft = false
+	bool twoemiesleft = false
+	bool oneenemyleft = false
 	print( "Wave Start: " + currentWave )
 	thread runEvents( 0 )
 	
@@ -120,12 +126,47 @@ void function executeWave()
 	while( IsHarvesterAlive( fd_harvester.harvester ) && !allEventsExecuted( GetGlobalNetInt( "FD_currentWave" ) ) )
 		WaitFrame()
 	print( "All events executed, waiting for enemies completion" )
+	
 	//Do a secondary wait for alive enemies after all events executed
-	while( IsHarvesterAlive( fd_harvester.harvester ) && GetGlobalNetInt( "FD_AICount_Current" ) >= 1 )
+	while( IsHarvesterAlive( fd_harvester.harvester ) && GetGlobalNetInt( "FD_AICount_Current" ) > 0 )
+	{
+		if ( GetGlobalNetInt( "FD_AICount_Current" ) == 10 && !tenenemiesleft )
+		{
+			PlayFactionDialogueToTeam( "fd_waveCleanup" , TEAM_MILITIA )
+			tenenemiesleft = true
+		}
+		if ( GetGlobalNetInt( "FD_AICount_Current" ) == 5 && !fiveenemiesleft )
+		{
+			PlayFactionDialogueToTeam( "fd_waveCleanup5" , TEAM_MILITIA )
+			fiveenemiesleft = true
+		}
+		if ( GetGlobalNetInt( "FD_AICount_Current" ) == 4 && !fourenemiesleft )
+		{
+			PlayFactionDialogueToTeam( "fd_waveCleanup4" , TEAM_MILITIA )
+			fourenemiesleft = true
+		}
+		if ( GetGlobalNetInt( "FD_AICount_Current" ) == 3 && !threeenemiesleft )
+		{
+			PlayFactionDialogueToTeam( "fd_waveCleanup3" , TEAM_MILITIA )
+			threeenemiesleft = true
+		}
+		if ( GetGlobalNetInt( "FD_AICount_Current" ) == 2 && !twoemiesleft )
+		{
+			PlayFactionDialogueToTeam( "fd_waveCleanup2" , TEAM_MILITIA )
+			twoemiesleft = true
+		}
+		if ( GetGlobalNetInt( "FD_AICount_Current" ) == 1 && !oneenemyleft )
+		{
+			PlayFactionDialogueToTeam( "fd_waveCleanup1" , TEAM_MILITIA )
+			oneenemyleft = true
+		}
 		WaitFrame()
+	}
 	print( "Enemy pool reached 0, doing a full npc scan" )
+	
 	//Lastly, ensure everyone is indeed dead to proceed
 	waitUntilLessThanAmountAlive( 0 )
+	
 	//Kill all unwanted Ticks from Reapers
 	print( "Purging all remaining Ticks deployed by Reapers" )
 	KillLooseTicksFromReapers()
@@ -1120,8 +1161,7 @@ void function spawnGruntDropship( SmokeEvent smokeEvent, SpawnEvent spawnEvent, 
 	thread ShowDropship( dropship )
 	thread PlayAnimTeleport( dropship, animation, ref, 0 )
 	ArrayRemoveDead( guys )
-	//WaittillAnimDone( dropship )
-	wait 8
+	wait 12
 	//Kill grunts that didn't manage to drop off the ship
 	foreach( guy in guys )
 	{
@@ -1130,6 +1170,7 @@ void function spawnGruntDropship( SmokeEvent smokeEvent, SpawnEvent spawnEvent, 
 		else
 			thread singleNav_thread( guy, spawnEvent.route ) //Since grunts ziplines far away from each other, it's better them just path individually
 	}
+	WaittillAnimDone( dropship )
 }
 
 void function ShowDropship( entity dropship )

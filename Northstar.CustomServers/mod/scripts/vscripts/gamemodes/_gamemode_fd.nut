@@ -61,7 +61,6 @@ global array<entity> spawnedNPCs
 
 
 
-
 struct {
 	array<entity> aiSpawnpoints
 	array<entity> smokePoints
@@ -757,7 +756,6 @@ void function SetEnemyAmountNetVars( int waveIndex )
 
 bool function runWave( int waveIndex, bool shouldDoBuyTime )
 {
-
 	SetGlobalNetInt( "FD_currentWave", waveIndex )
 	file.havesterWasDamaged = false
 	file.harvesterShieldDown = false
@@ -967,10 +965,7 @@ bool function runWave( int waveIndex, bool shouldDoBuyTime )
 	MessageToTeam( TEAM_MILITIA, eEventNotifications.FD_AnnounceWaveEnd )
 
 	if(!file.havesterWasDamaged)
-	{
 		PlayFactionDialogueToTeam( "fd_waveRecapPerfect", TEAM_MILITIA )
-		wait 5
-	}
 	else
 	{
 		float damagepercent = ( ( file.harvesterDamageTaken / fd_harvester.harvester.GetMaxHealth().tofloat() ) * 100 )
@@ -979,9 +974,10 @@ bool function runWave( int waveIndex, bool shouldDoBuyTime )
 			PlayFactionDialogueToTeam( "fd_waveRecapNearPerfect", TEAM_MILITIA )
 		else if ( healthpercent < 15 ) // if less than 15% health remains and more than 5% damage taken
 			PlayFactionDialogueToTeam( "fd_waveRecapLowHealth", TEAM_MILITIA )
-		wait 5
 	}
 
+	wait 5
+	
 	if ( isSecondWave() )
 	{
 		// supposed to add dialogues like "GOOD WORK TEAM" then "YOUR TITAN IS READY"
@@ -1078,7 +1074,6 @@ bool function runWave( int waveIndex, bool shouldDoBuyTime )
 		SetGlobalNetTime( "FD_nextWaveStartTime", Time() + GetCurrentPlaylistVarFloat( "fd_wave_buy_time", 60 ) )
 
 	return true
-
 }
 
 void function SetWaveStateReady()
