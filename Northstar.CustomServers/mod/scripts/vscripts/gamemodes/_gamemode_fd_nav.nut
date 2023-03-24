@@ -93,13 +93,12 @@ void function singleNav_thread( entity npc, string routeName, int nodesToSkip= 0
 		targetNode = targetNode.GetLinkEnt()
 	}
 	
-	if ( npc.GetClassName() == "npc_frag_drone" )
+	if ( npc.GetClassName() == "npc_frag_drone" && IsHarvesterAlive( fd_harvester.harvester ) )
 	{
 		npc.AssaultPoint( fd_harvester.harvester.GetOrigin() )
 		npc.AssaultSetGoalRadius( 64 )
 	}
 	
-	npc.SetEnemy( fd_harvester.harvester )
 	npc.Signal( "FD_ReachedHarvester" )
 }
 
@@ -165,13 +164,12 @@ void function SquadNav_Thread( array<entity> npcs, string routeName, int nodesTo
 	{
 		foreach( npc in npcs )
 		{
-			if ( npc.GetClassName() == "npc_frag_drone" )
+			if ( npc.GetClassName() == "npc_frag_drone" && IsHarvesterAlive( fd_harvester.harvester ) )
 			{
 				npc.AssaultPoint( fd_harvester.harvester.GetOrigin() )
 				npc.AssaultSetGoalRadius( 64 )
 				npc.AssaultSetFightRadius( expect int( npc.Dev_GetAISettingByKeyField( "LookDistDefault_Combat" ) ) )
 			}
-			npc.SetEnemy( fd_harvester.harvester )
 			npc.Signal( "FD_ReachedHarvester" )
 		}
 	}

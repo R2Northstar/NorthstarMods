@@ -1165,7 +1165,7 @@ void function spawnGruntDropship( SmokeEvent smokeEvent, SpawnEvent spawnEvent, 
 	//Kill grunts that didn't manage to drop off the ship
 	foreach( guy in guys )
 	{
-		if ( guy.GetParent() )
+		if ( IsAlive( guy ) && guy.GetParent() )
 			guy.Die()
 		else
 			thread singleNav_thread( guy, spawnEvent.route ) //Since grunts ziplines far away from each other, it's better them just path individually

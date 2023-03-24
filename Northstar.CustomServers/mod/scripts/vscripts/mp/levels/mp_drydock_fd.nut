@@ -86,6 +86,7 @@ void function initFrontierDefenseData()
 	waveEvents.append(wave1)
 	index = 1
     array<WaveEvent> wave2
+	wave2.append(CreateWarningEvent( FD_IncomingWarnings.EnemyTitansIncoming, index++ ))
 	wave2.append(CreateToneTitanEvent(< -1827 , 3439 , 96 >,< 0 , -60 , 0 >,"",index++))
 	wave2.append(CreateWaitForTimeEvent(0.8,index++))
 	wave2.append(CreateToneTitanEvent(< -2195 , 3243 , 164 >,< 0 , -40 , 0 >,"",index++))
