@@ -777,7 +777,7 @@ void function Reaper_Spawnpoint( vector origin, int team, float impactTime )
 	entity effectEnemy = StartParticleEffectInWorld_ReturnEntity( index, origin, surfaceNormal )
 	effectEnemy.EndSignal( "OnDestroy" )
 	SetTeam( effectEnemy, team )
-	EffectSetControlPointVector( effectEnemy, 1, < 255,99,0 > )
+	EffectSetControlPointVector( effectEnemy, 1, ENEMY_COLOR_FX )
 	effectEnemy.kv.VisibilityFlags = ENTITY_VISIBLE_TO_ENEMY
 	effectEnemy.DisableHibernation() // prevent it from fading out
 
