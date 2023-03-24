@@ -729,7 +729,8 @@ void function waitUntilLessThanAmountAliveEventWeighted( SmokeEvent smokeEvent, 
 void function spawnSuperSpectre( SmokeEvent smokeEvent, SpawnEvent spawnEvent, FlowControlEvent flowControlEvent, SoundEvent soundEvent )
 {
 	PingMinimap( spawnEvent.origin.x, spawnEvent.origin.y, 4, 600, 150, 0 )
-	thread Reaper_Spawnpoint( spawnEvent.origin, TEAM_IMC, 6.0 ) // reaper takes ~1.2s to warpfall
+	if ( GetCurrentPlaylistVarInt( "fd_reaper_indicator", 0 ) == 1 )
+		thread Reaper_Spawnpoint( spawnEvent.origin, TEAM_IMC, 6.0 ) // reaper takes ~1.2s to warpfall
 	wait 4.7
 
 	entity npc = CreateSuperSpectre( TEAM_IMC, spawnEvent.origin, spawnEvent.angles )
@@ -748,7 +749,8 @@ void function spawnSuperSpectre( SmokeEvent smokeEvent, SpawnEvent spawnEvent, F
 void function spawnSuperSpectreWithMinion( SmokeEvent smokeEvent, SpawnEvent spawnEvent, FlowControlEvent flowControlEvent, SoundEvent soundEvent )
 {
 	PingMinimap( spawnEvent.origin.x, spawnEvent.origin.y, 4, 600, 150, 0 )
-	thread Reaper_Spawnpoint( spawnEvent.origin, TEAM_IMC, 6.0 ) // reaper takes ~1.2s to warpfall
+	if ( GetCurrentPlaylistVarInt( "fd_reaper_indicator", 0 ) == 1 )
+		thread Reaper_Spawnpoint( spawnEvent.origin, TEAM_IMC, 6.0 ) // reaper takes ~1.2s to warpfall
 	wait 4.7
 
 	entity npc = CreateSuperSpectre( TEAM_IMC, spawnEvent.origin,spawnEvent.angles )

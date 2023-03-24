@@ -429,6 +429,16 @@
 		{
 			"Path":  "sh_northstar_http_requests.gnut",
 			"RunOn": "CLIENT || SERVER || UI"
+		},
+		{
+			"Path": "gamemodes/sh_gamemode_fd_custom.nut",
+			"RunOn": "( CLIENT || SERVER ) && MP",
+			"ClientCallback": {
+				"Before": "SHGamemodeFD_Custom_Init"
+			},
+			"ServerCallback": {
+				"Before": "SHGamemodeFD_Custom_Init"
+			}
 		}
 	],
 
