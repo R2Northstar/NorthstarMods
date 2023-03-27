@@ -623,18 +623,6 @@ void function LaunchSpawnerProjectile( entity npc, vector targetOrigin, int acti
 
 			AddToScriptManagedEntArray( activeMinions_EntArrayID, drone )
 			AddToScriptManagedEntArray( file.activeMinions_GlobalArrayIdx, drone )
-			
-			//Reaper-deployed Ticks should show on minimap and make their way to the harvester
-			if( GameRules_GetGameMode() == "fd" )
-			{
-				drone.Minimap_SetAlignUpright( true )
-				drone.Minimap_AlwaysShow( TEAM_IMC, null )
-				drone.Minimap_AlwaysShow( TEAM_MILITIA, null )
-				drone.Minimap_SetHeightTracking( true )
-				drone.Minimap_SetCustomState( eMinimapObject_npc.AI_TDM_AI )
-				drone.EnableNPCFlag( NPC_ALLOW_INVESTIGATE )
-				thread singleNav_thread( drone, "" )
-			}
 		}
 	)
 
@@ -728,13 +716,12 @@ function SuperSpectre_WarpFall( entity ai )
 
 	e.smokeFx.Destroy()
 	PlayFX( $"droppod_impact", origin )
-
-	Explosion_DamageDefSimple(
-		damagedef_reaper_groundslam, 	//Changed to groundslam so they dont kill Titans on their warpfall because it never made sense -Zanieon
-		origin,
-		ai,								// attacker
-		ai,								// inflictor
-		origin )
+	
+	//Added option to control if Reapers should kill Titans on their warpfall, or just do considerable damage
+	if ( GetConVarBool( "ns_reaper_warpfall_kill" ) )
+		Explosion_DamageDefSimple( damagedef_reaper_fall, origin, ai, ai, origin )
+	else
+		Explosion_DamageDefSimple( damagedef_reaper_groundslam,	origin,	ai,	ai,	origin )
 
 	wait 0.1
 }

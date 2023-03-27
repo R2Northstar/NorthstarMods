@@ -1,0 +1,39 @@
+#base "npc_titan_ogre_meteor.txt"
+npc_titan_ogre_meteor_boss_fd_elite
+{
+	title 						"Elite Scorch"
+	WeaponCapacity				"FromLoadout"
+	npc_titan_player_settings	"titan_ogre_meteor"
+
+	BehaviorSelector			"behavior_titan_ogre_meteor"
+	
+	footstep_type			"scorch"
+
+	DefaultModelName		"models/titans/heavy/titan_heavy_ogre.mdl" [$mp]
+	DefaultModelName		"models/titans/heavy/sp_titan_heavy_ogre.mdl" [$sp]
+
+	PainOnHeavyDamageThreshold		0
+	PainOnRepeatDamageThreshold		0
+	RepeatDamageTimeInterval		30
+	breakOutOfPainDamageThreshold	100
+	lightPainMinInterval			20
+	heavyPainMinInterval			40
+	
+	evasiveCombatShieldPct				0
+	evasiveCombatHealthSegmentPct		0
+	evasiveCombatTotalHealthDiffPct 	0.1
+	evasiveCombatHealthChangeRateDiff	-7500
+	aggressiveCombatHealthSegmentPct	0.9
+	aggressiveCombatTotalHealthDiffPct 	0
+	aggresiveCombatHealthChangeRateDiff	-100
+	
+	dodgePeriod					2
+	maxDodgePerPeriod			4
+
+	primaryCamoIndex 17
+	primarySkinIndex 1
+	
+	titanCamoIndex -1
+	titanDecalIndex 2
+	titanSkinIndex 4
+}

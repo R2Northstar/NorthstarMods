@@ -1,28 +1,50 @@
-# NorthstarMods
+# Experimental Frontier Defense
 
-[Squirrel](http://www.squirrel-lang.org/squirreldoc/reference/index.html) scripts used to recreate server-side gamelogic and add [custom content](https://r2northstar.gitbook.io/r2northstar-wiki/using-northstar/gamemodes) to the game. 
-
-## Contents:
-
-Issues in this repository should be created if they are related to these domains:
-- `Northstar.Client` - Localisation files, UI and client-side scripts.
-- `Northstar.Coop` - Soon™.
-- `Northstar.Custom` - Northstar custom content.
-- `Northstar.CustomServer` - Server config files and scripts necessary for multiplayer.
+Branch made to expand Frontier Defense feature set by adding back cut content while respecting the vanilla defaults of the game.
 
 ## Notable differences from main gamemode_fd branch:
 
 - Droz & Davis are way more talkative as they used to be in vanilla
 - Several maps had their navmeshes rebuilt to mitigate enemies from idling on place
 - Grunt Dropship spawn event
-- Titanfall Block event (cut content from Respawn)
-- Enemy Titans moves slower as they used to do in vanilla (Except Ronins and Mortars)
+- Titanfall Block event (cut content)
+- Elite Titans variants (cut content)
+- Enemy Titans moves slower as they used to do in vanilla (Except Ronins, Mortars and Elites)
 - Nuke Titans moves even slower, are unlikely to melee and always spawn with shields regardless difficulty set as they also do in vanilla
 - Harvester have proper damage filters, meaning certain enemies will hit it harder, again similar to vanilla behavior
 - Aside from Forwardbase Kodai, Homestead and Rise, all other maps works with custom wave data, Colony, Glitch and Boomtown included
-- Configurable wave break time for players use the shop through the `fd_wave_buy_time` playlistvar
 - During wave break time, players do not respawn on dropship, neither new connecting players
 - Reapers will deploy ticks, despite them still not being able to parkour through the map, they still pose a high threat
-- Fixed Autotitans not having overlay on them to see them through walls
-- Fixed Offline turrets not having their yellow overlay
-- Fixed the problem with players not getting instant full Titan Meter upon wave restart
+- Fixes Autotitans not having overlay on them to see them through walls
+- Fixes Offline turrets not having their yellow overlay
+- Fixes the problem with players not getting instant full Titan Meter upon wave restart
+- Fixes Grunts not being able to use their Anti-Titan weaponry
+
+## Titanfall Block and Elite Titan Events
+
+`Titanfall Block` is a mechanic where Davis will say he can't drop a Titan anymore in the middle of a wave, from that moment until the end of the wave all players will stop earning their Titan meters, if their meter is full and ready to call, it will empty and lock on 0%. Pilots with Titans will still remain with theirs, losing it is permanent. This mechanic brings up a whole new perspective for players whereas they should play more carefully with their Titans, and those who lost theirs should be aiding the others by stealing batteries from the enemies.
+
+`Elite Titans` are buffed up variants of normal Titans, they are:
+- Not affected by the difficulty rules, meaning they will always spawn with a huge shield amount and an even bigger health pool
+- They do not move slower like the normal Titans
+- They have better accuracy
+- They can potentially use their Cores
+- Drop a Battery on Easy and Regular Difficulties or drop an Amped Battery in Hard, Master and Insane difficulties similar to campaign Titans
+
+## New console variables
+
+Use these variables in your `autoexec_ns_server` cfg to control them:
+- `ns_fd_allow_elite_titans` Default is 0, set to 1 to allow Elite Titans to spawn in
+- `ns_fd_allow_true_shield_captains` Default is 0, set to 1 to allow Shield Captains from campaign to spawn in Master or Insane difficulty
+- `ns_fd_allow_titanfall_block` Default is 0, setting to 1 will allow some maps to make usage of the Titanfall Block event
+- `ns_fd_show_drop_points` Default is 0, setting to 1 will show Titanfall markers for spawning enemies akin to when you call your own Titan
+- `ns_fd_grunt_at_weapon` Default is "mp_weapon_defender", set to another anti-titan weapon to make Grunts use them on Master or Insane difficulty
+- `ns_reaper_warpfall_kill` Default is 1, set to 0 if you don't want Reapers to kill Titans on their Warpfall
+
+## Trivia hints for server hosters
+
+These are playlist overrides you can include in your server settings to control better how the match will behave:
+- You can actually force Grunts to use Anti-Titan weaponry outside Master and Insane difficulties, use `fd_grunt_at_weapon_users` with the amount of grunts you want to use AT weapons, can go from 1 to 4, this is based in the squads of Drop Pods, so 4 would be all Grunts using them
+- You can also do the same to shield captains by using `fd_grunt_shield_captains`, same rules applies from above setting
+- With this branch of Frontier Defense, it's possible to change the time between waves with `fd_wave_buy_time`, default is 60 seconds
+- It's possible to enable the campaign behavior of picking up batteries by setting `rodeo_battery_disembark_to_pickup` to 0, so running over batteries as Titan picks them up

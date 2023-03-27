@@ -151,6 +151,7 @@ void function GamemodeFD_Init()
 	//Spawn Callbacks
 	AddSpawnCallback( "npc_titan", HealthScaleByDifficulty )
 	AddSpawnCallback( "npc_super_spectre", HealthScaleByDifficulty )
+	AddSpawnCallback( "npc_frag_drone", OnTickSpawn )
 	AddCallback_OnPlayerRespawned( FD_PlayerRespawnCallback )
 	AddSpawnCallback("npc_turret_sentry", AddTurretSentry )
 	//death Callbacks
@@ -413,21 +414,46 @@ void function OnTickDeath( entity victim, var damageInfo )
 	}
 }
 
+void function OnTickSpawn( entity tick )
+{
+	if ( tick.GetParent() )
+		thread dropPodTickWait( tick )
+	else if ( GetGlobalNetInt( "FD_waveState" ) == WAVE_STATE_IN_PROGRESS )
+	{
+		tick.Minimap_SetAlignUpright( true )
+		tick.Minimap_AlwaysShow( TEAM_IMC, null )
+		tick.Minimap_AlwaysShow( TEAM_MILITIA, null )
+		tick.Minimap_SetHeightTracking( true )
+		tick.Minimap_SetCustomState( eMinimapObject_npc.AI_TDM_AI )
+		tick.EnableNPCFlag( NPC_ALLOW_INVESTIGATE )
+		thread singleNav_thread( tick, "" )
+	}
+	else
+	{
+		if ( IsAlive( tick ) ) //In case you wonder, this is to immediately kill Ticks spawned by Reapers AFTER wave completion
+			tick.Die()
+	}
+}
+
+void function dropPodTickWait( entity tick )
+{
+	while ( tick.GetParent() )
+	 WaitFrame()
+	thread singleNav_thread( tick, "" )
+}
+
 void function OnNpcDeath( entity victim, entity attacker, var damageInfo )
 {
 	//Killing unwanted NPCs instantly causes a crash
-	if ( victim.IsNPC() )
+	switch ( victim.GetClassName() )
 	{
-		switch ( victim.GetClassName() )
-		{
-			case "npc_gunship":
-			case "npc_dropship":
-			case "npc_marvin":
-			case "npc_drone_worker":
-			case "npc_prowler":
-			case "npc_pilot_elite":
-				return
-		}
+		case "npc_gunship":
+		case "npc_dropship":
+		case "npc_marvin":
+		case "npc_drone_worker":
+		case "npc_prowler":
+		case "npc_pilot_elite":
+			return
 	}
 	
 	if( attacker.GetClassName() == "npc_turret_sentry" && IsValidPlayer( attacker.GetBossPlayer() ) )
@@ -450,8 +476,6 @@ void function OnNpcDeath( entity victim, entity attacker, var damageInfo )
 			SetGlobalNetInt( netIndex, GetGlobalNetInt( netIndex ) - 1 )
 
 		SetGlobalNetInt( "FD_AICount_Current", GetGlobalNetInt( "FD_AICount_Current" ) - 1 )
-		if( GetNPCCloakedDrones().len() == GetGlobalNetInt( "FD_AICount_Current" ) )
-			FD_ShowCloakedDrones()
 	}
 
 	if ( victim.GetOwner() == attacker || !attacker.IsPlayer() || ( attacker == victim ) || ( victim.GetBossPlayer() == attacker ) || victim.GetClassName() == "npc_turret_sentry" )
@@ -508,33 +532,36 @@ void function OnNpcDeath( entity victim, entity attacker, var damageInfo )
 			file.players[attackerInfo.attacker].defenseScoreThisRound += playerScore		// i assume this is how support score gets added
 		}
 	}
-
-
-}
-
-void function FD_ShowCloakedDrones()
-{
-	array<entity> droneArray = GetNPCCloakedDrones()
-
-	if( droneArray.len() != GetGlobalNetInt( "FD_AICount_Current" ) )
+	
+	//Elite Titan battery drop code, they should drop Amped Batteries on higher difficulties as reward
+	if ( victim.IsTitan() && victim.ai.bossTitanType == 1 )
 	{
-		CodeWarning( "Try remove cloaked drones in error way.Drone amount: " + droneArray.len() + " ,Npc amount: " + GetGlobalNetInt( "FD_AICount_Current" ) )
-		return
-	}
-	foreach( entity cloakedDrone in droneArray )
-	{
-		if( IsValid( cloakedDrone ) && IsAlive( cloakedDrone ) && cloakedDrone.s.isHidden )
+		int difficultyLevel = FD_GetDifficultyLevel()
+		vector vec = RandomVec( 150 )
+		int attachID = victim.LookupAttachment( "CHESTFOCUS" )
+		vector origin = victim.GetAttachmentOrigin( attachID )
+		switch ( difficultyLevel )
 		{
-			cloakedDrone.DisableBehavior( "Follow" )
-			cloakedDrone.Show()
-			cloakedDrone.s.fx.Fire( "start" )
-			cloakedDrone.SetTitle( "#NPC_CLOAK_DRONE" )
-			cloakedDrone.Solid()
-			cloakedDrone.Minimap_AlwaysShow( TEAM_IMC, null )
-			cloakedDrone.Minimap_AlwaysShow( TEAM_MILITIA, null )
-			cloakedDrone.SetNoTarget( false )
-			if (GetGlobalNetInt( "FD_AICount_Current" ) < 2 ) //Check if this drone is literally the last enemy alive in the wave and kill it if thats the case
-				cloakedDrone.Die()
+			case eFDDifficultyLevel.EASY:
+			case eFDDifficultyLevel.NORMAL:
+				entity battery = Rodeo_CreateBatteryPack( victim )
+				battery.SetOrigin( origin )
+				battery.SetVelocity( < vec.x, vec.y, 400 > )
+				break
+			case eFDDifficultyLevel.HARD:
+			case eFDDifficultyLevel.MASTER:
+			case eFDDifficultyLevel.INSANE:
+				entity battery = Rodeo_CreateBatteryPack()
+				battery.SetSkin( 2 )
+				battery.SetOrigin( origin )
+				battery.SetVelocity( < vec.x, vec.y, 400 > )
+				foreach( fx in battery.e.fxArray )
+					EffectStop( fx )
+				battery.e.fxArray.clear()
+				int attachID = battery.LookupAttachment( "fx_center" )
+				asset fx = BATTERY_FX_AMPED
+				battery.e.fxArray.append( StartParticleEffectOnEntity_ReturnEntity( battery, GetParticleSystemIndex( fx ), FX_PATTACH_POINT_FOLLOW, attachID ) )
+				break
 		}
 	}
 }
@@ -974,6 +1001,8 @@ bool function runWave( int waveIndex, bool shouldDoBuyTime )
 			PlayFactionDialogueToTeam( "fd_waveRecapNearPerfect", TEAM_MILITIA )
 		else if ( healthpercent < 15 ) // if less than 15% health remains and more than 5% damage taken
 			PlayFactionDialogueToTeam( "fd_waveRecapLowHealth", TEAM_MILITIA )
+		else
+			PlayFactionDialogueToTeam( "fd_waveVictory", TEAM_MILITIA )
 	}
 
 	wait 5
@@ -1678,7 +1707,7 @@ void function DamageScaleByDifficulty( entity ent, var damageInfo )
 
 void function HealthScaleByDifficulty( entity ent )
 {
-	if ( ent.GetTeam() == TEAM_MILITIA )
+	if ( ent.GetTeam() == TEAM_MILITIA && ent.IsTitan() )
 		Highlight_SetFriendlyHighlight( ent, "sp_friendly_hero" ) //Friendly Titans should have highlight overlays
 	
 	if ( ent.GetTeam() != TEAM_IMC )
@@ -1688,7 +1717,18 @@ void function HealthScaleByDifficulty( entity ent )
 	if (ent.IsTitan()&& IsValid(GetPetTitanOwner( ent ) ) ) // in case we ever want pvp in FD
 		return
 
-	if ( ent.IsTitan() )
+	if ( ent.IsTitan() && ent.ai.bossTitanType == 1 && GetConVarBool( "ns_fd_allow_elite_titans" ) )
+	{
+		ent.SetMaxHealth( ent.GetMaxHealth() + 7500 )
+		ent.SetHealth( ent.GetMaxHealth() )
+		entity soul = ent.GetTitanSoul()
+		if( IsValid( soul ) )
+		{
+			soul.SetShieldHealthMax( 7500 )
+			soul.SetShieldHealth( 7500 )
+		}
+	}
+	else if ( ent.IsTitan() && ent.ai.bossTitanType == 0 )
 		ent.SetMaxHealth( ent.GetMaxHealth() + GetCurrentPlaylistVarInt( "fd_titan_health_adjust", 0 ) )
 	else
 		ent.SetMaxHealth( ent.GetMaxHealth() + GetCurrentPlaylistVarInt( "fd_reaper_health_adjust", 0 ) )

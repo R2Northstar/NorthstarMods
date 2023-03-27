@@ -18,7 +18,7 @@ void function singleNav_thread( entity npc, string routeName, int nodesToSkip= 0
 	if ( nextDistance == -1 )
 		nextDistance = npc.GetMinGoalRadius()
 
-
+	npc.AssaultSetGoalHeight( 512 )
 	/*array<entity> routeArray = getRoute(routeName)
 	WaitFrame()//so other code setting up what happens on signals is run before this
 	if(routeArray.len()==0)
@@ -74,6 +74,11 @@ void function singleNav_thread( entity npc, string routeName, int nodesToSkip= 0
 		targetNode = targetNode.GetLinkEnt()
 	}
 
+	//Do not make Ticks ignore potential targets just to charge at the Harvester
+	if ( npc.GetClassName() == "npc_frag_drone" )
+		npc.AssaultSetFightRadius( expect int( npc.Dev_GetAISettingByKeyField( "LookDistDefault_Combat" ) ) )
+	else
+		npc.AssaultSetFightRadius( 0 )
 	
 	while ( targetNode != null )
 	{
@@ -81,12 +86,6 @@ void function singleNav_thread( entity npc, string routeName, int nodesToSkip= 0
 			return
 		npc.AssaultPoint( targetNode.GetOrigin() )
 		npc.AssaultSetGoalRadius( nextDistance )
-		
-		//Do not make Reaper Ticks ignore potential targets just to charge at the Harvester
-		if ( npc.GetClassName() == "npc_frag_drone" )
-			npc.AssaultSetFightRadius( expect int( npc.Dev_GetAISettingByKeyField( "LookDistDefault_Combat" ) ) )
-		else
-			npc.AssaultSetFightRadius( 0 )
 		
 		table result = npc.WaitSignal( "OnFinishedAssault", "OnEnterGoalRadius", "OnFailedToPath" )
 		
@@ -102,7 +101,7 @@ void function singleNav_thread( entity npc, string routeName, int nodesToSkip= 0
 	npc.Signal( "FD_ReachedHarvester" )
 }
 
-void function SquadNav_Thread( array<entity> npcs, string routeName, int nodesToSkip = 0, float nextDistance = 200.0 )
+void function SquadNav_Thread( array<entity> npcs, string routeName, int nodesToSkip = 0, float nextDistance = 64.0 )
 {
 	//TODO this function wont stop when noone alive anymore also it only works half of the time
 	/*
@@ -168,6 +167,7 @@ void function SquadNav_Thread( array<entity> npcs, string routeName, int nodesTo
 			{
 				npc.AssaultPoint( fd_harvester.harvester.GetOrigin() )
 				npc.AssaultSetGoalRadius( 64 )
+				npc.AssaultSetGoalHeight( 512 )
 				npc.AssaultSetFightRadius( expect int( npc.Dev_GetAISettingByKeyField( "LookDistDefault_Combat" ) ) )
 			}
 			npc.Signal( "FD_ReachedHarvester" )
@@ -175,7 +175,7 @@ void function SquadNav_Thread( array<entity> npcs, string routeName, int nodesTo
 	}
 }
 
-void function droneNav_thread( entity npc, string routeName,int nodesToSkip= 0,float nextDistance = 500.0, bool shouldLoop = false )
+void function droneNav_thread( entity npc, string routeName,int nodesToSkip= 0,float nextDistance = 128.0, bool shouldLoop = false )
 {
 	npc.EndSignal( "OnDeath" )
 	npc.EndSignal( "OnDestroy" )

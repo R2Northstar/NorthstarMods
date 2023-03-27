@@ -57,6 +57,30 @@
 		{
 			"Name": "ns_use_phase_fix",
 			"DefaultValue": "1"
+		},
+		{
+			"Name": "ns_fd_allow_elite_titans",
+			"DefaultValue": "0"
+		},
+		{
+			"Name": "ns_fd_allow_true_shield_captains",
+			"DefaultValue": "0"
+		},
+		{
+			"Name": "ns_fd_allow_titanfall_block",
+			"DefaultValue": "0"
+		},
+		{
+			"Name": "ns_fd_show_drop_points",
+			"DefaultValue": "0"
+		},
+		{
+			"Name": "ns_fd_grunt_at_weapon",
+			"DefaultValue": "mp_weapon_defender"
+		},
+		{
+			"Name": "ns_reaper_warpfall_kill",
+			"DefaultValue": "1"
 		}
 	],
 	"Scripts": [

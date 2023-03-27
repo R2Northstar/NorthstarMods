@@ -1,0 +1,30 @@
+#base "npc_titan_atlas_tracker_fd_sniper.txt"
+npc_titan_atlas_tracker_fd_sniper_elite
+{
+	title 							"Elite Sniper Tone"
+	
+	PainOnHeavyDamageThreshold		0
+	PainOnRepeatDamageThreshold		0
+	RepeatDamageTimeInterval		30
+	breakOutOfPainDamageThreshold	100
+	lightPainMinInterval			20
+	heavyPainMinInterval			40
+	
+	evasiveCombatShieldPct				0
+	evasiveCombatHealthSegmentPct		0
+	evasiveCombatTotalHealthDiffPct 	0.1
+	evasiveCombatHealthChangeRateDiff	-7500
+	aggressiveCombatHealthSegmentPct	0.9
+	aggressiveCombatTotalHealthDiffPct 	0
+	aggresiveCombatHealthChangeRateDiff	-100
+	
+	dodgePeriod					2
+	maxDodgePerPeriod			3
+	
+	primaryCamoIndex 30
+	primarySkinIndex 1
+	
+	titanCamoIndex -1
+	titanDecalIndex 5
+	titanSkinIndex 7
+}

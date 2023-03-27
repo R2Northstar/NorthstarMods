@@ -1,0 +1,19 @@
+#base "npc_titan_stryder_leadwall_shift_core.txt"
+npc_titan_stryder_leadwall_boss_fd_elite
+{
+	title 							"Elite Ronin"
+	
+	PainOnHeavyDamageThreshold		0
+	PainOnRepeatDamageThreshold		0
+	RepeatDamageTimeInterval		30
+	breakOutOfPainDamageThreshold	100
+	lightPainMinInterval			20
+	heavyPainMinInterval			40
+	
+	primaryCamoIndex 30
+	primarySkinIndex 1
+	
+	titanCamoIndex 30
+	titanDecalIndex 6
+	titanSkinIndex 2
+}
