@@ -421,6 +421,12 @@ WeaponData
 	"npc_damage_far_value_titanarmor" 				"550"
 	"npc_explosion_damage"							"350"
 	"npc_explosion_damage_heavy_armor"				"550"
+	// these fixes npc targeting enemies
+	// same as softball's status
+	"npc_min_engage_range"							"100"
+	"npc_max_engage_range"							"2000"
+	"npc_min_engage_range_heavy_armor"				"500"
+	"npc_max_engage_range_heavy_armor"				"3500"
 
 	Mods
 	{
