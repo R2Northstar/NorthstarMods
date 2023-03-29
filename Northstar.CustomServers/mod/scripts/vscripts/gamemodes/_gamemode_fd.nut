@@ -1513,7 +1513,8 @@ void function FD_DamageByPlayerCallback( entity victim, var damageInfo )
 	entity player = DamageInfo_GetAttacker( damageInfo )
 	if( !( player in file.players ) )
 		return
-	float damage = DamageInfo_GetDamage( damageInfo )
+
+	float damage = min( victim.GetMaxHealth(), DamageInfo_GetDamage( damageInfo ) )
 	file.playerAwardStats[player]["damageDealt"] += damage
 	file.players[ player ].assaultScoreThisRound += ( damage.tointeger() / 100 ) //TODO NOT HOW SCORE WORKS
 	if( victim.IsTitan() )
