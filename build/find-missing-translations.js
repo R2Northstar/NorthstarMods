@@ -42,6 +42,8 @@ const inputLanguages = inputLang !== undefined ? ["", inputLang] : [...knownLang
 inputLanguages.shift();
 
 // Check for each language if there are missing keys
+var missingKeysCount = 0;
+
 for (const language of inputLanguages) {
     const languageKeys = getLanguageKeys(language);
     const missingKeys = [...englishKeys] // clone
@@ -52,6 +54,13 @@ for (const language of inputLanguages) {
         ? `✔️ "${language}" doesn't have missing keys.`
         : `❌ "${language}" has ${missingKeys.length} missing key${missingKeys.length === 1 ? '' : 's'}:`
     );
-    if (missingKeysLength !== 0)
+
+    if (missingKeysLength !== 0) {
         console.log(missingKeys);
+        missingKeysCount += missingKeys.length;
+    }
 }
+
+return missingKeysCount === 0 
+    ? 0 
+    : missingKeysCount;
