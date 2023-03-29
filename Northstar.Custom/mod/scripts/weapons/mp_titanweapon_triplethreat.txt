@@ -414,6 +414,14 @@ WeaponData
     "clip_bodygroup_show_for_milestone_2"	"1"
 
 
+	// these fixes npc dealing damage
+	"npc_damage_near_value"   						"350"
+	"npc_damage_far_value"							"350"
+	"npc_damage_near_value_titanarmor"				"550"
+	"npc_damage_far_value_titanarmor" 				"550"
+	"npc_explosion_damage"							"350"
+	"npc_explosion_damage_heavy_armor"				"550"
+
 	Mods
 	{
 		mine_field
