@@ -1,4 +1,5 @@
 const fs = require('fs');
+const { exit } = require('process');
 const langPath = "Northstar.Client/mod/resource";
 const knownLanguages = ['english', 'french', 'german', 'italian', 'japanese', 'mspanish', 'portuguese', 'russian', 'spanish', 'tchinese'];
 
@@ -61,6 +62,5 @@ for (const language of inputLanguages) {
     }
 }
 
-return missingKeysCount === 0 
-    ? 0 
-    : missingKeysCount;
+process.exitCode = missingKeysCount;
+exit();
