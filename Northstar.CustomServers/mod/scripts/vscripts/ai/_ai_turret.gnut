@@ -117,10 +117,13 @@ void function RevivableTurretThink( entity turret )
 
 void function RevivableTurret_Revive( entity turret )
 {
+	if( !IsValid( turret ) )
+		return
+
 	turret.EndSignal( "OnDestroy" )
 
-	turret.UnsetUsable()
 	turret.Signal( "TurretRevived" )
+	turret.UnsetUsable()
 	turret.SetHealth( turret.GetMaxHealth() )
 	turret.ClearInvulnerable()
 	turret.Anim_ScriptedPlay( "deploy" )
@@ -133,6 +136,9 @@ void function RevivableTurret_Revive( entity turret )
 
 void function RevivableTurret_Kill( entity turret )
 {
+	if( !IsValid( turret ) )
+		return
+
 	turret.EndSignal( "OnDestroy" )
 
 	turret.EnableNPCFlag( NPC_IGNORE_ALL )
