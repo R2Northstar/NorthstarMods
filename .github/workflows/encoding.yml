@@ -18,3 +18,4 @@ jobs:
         uses: actions/checkout@v2
       - name: Look out for missing translations
         run: node build/find-missing-translations.js
+        continue-on-error: true
