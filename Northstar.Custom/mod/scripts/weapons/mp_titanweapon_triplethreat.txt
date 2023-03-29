@@ -415,8 +415,6 @@ WeaponData
 
 
 	// these fixes npc dealing damage
-	"npc_damage_near_value"   						"350"
-	"npc_damage_far_value"							"350"
 	"npc_damage_near_value_titanarmor"				"550"
 	"npc_damage_far_value_titanarmor" 				"550"
 	"npc_explosion_damage"							"350"
