@@ -129,8 +129,8 @@ void function GamemodeFD_Init()
 	PlayerEarnMeter_SetEnabled( false )
 	SetAllowLoadoutChangeFunc( FD_ShouldAllowChangeLoadout )
 	SetGetDifficultyFunc( FD_GetDifficultyLevel )
-	SetShouldUsePickLoadoutScreen( true )
-	TeamTitanSelectMenu_Init() // show the titan select menu in this mode
+	SetShouldUsePickLoadoutScreen( !file.waveRestart )
+	FDTeamTitanSelectMenu_Init() // show the titan select menu in this mode
 
 	//general Callbacks
 	AddCallback_EntitiesDidLoad( LoadEntities )
@@ -195,6 +195,15 @@ void function FD_BoostPurchaseCallback( entity player, BoostStoreData data )
 	file.playerAwardStats[player]["moneySpent"] += float( data.cost )
 }
 
+void function FDTeamTitanSelectMenu_Init()
+{
+	RegisterSignal( "StopSendingTTSMenuCommand" )
+	AddCallback_GameStateEnter( eGameState.PickLoadout, FD_TeamTitan_OnPickLoadout )
+	AddCallback_GameStateEnter( eGameState.Prematch, FD_TeamTitan_OnPrematch )
+	AddCallback_OnClientConnected( FD_TTS_OnClientConnected )
+	TeamTitanSelection_Init()
+}
+
 void function FD_PlayerRespawnCallback( entity player )
 {
 	if( player in file.players )
@@ -215,6 +224,7 @@ void function FD_PlayerRespawnCallback( entity player )
 		return
 
 	player.SetInvulnerable()
+	player.SetNoTarget( true )
 	if( file.dropshipState == eDropshipState.Idle )
 	{
 		thread FD_DropshipSpawnDropship()
@@ -636,8 +646,6 @@ void function mainGameLoop()
 			DisableTitanSelection()
 		}
 	}
-	
-	EnableTitanSelection()
 }
 
 array<int> function getHighestEnemyAmountsForWave( int waveIndex )
@@ -1496,8 +1504,11 @@ void function OnHarvesterDamaged( entity harvester, var damageInfo )
 		
 		case eDamageSourceId.damagedef_stalker_powersupply_explosion_large:
 		case eDamageSourceId.damagedef_frag_drone_explode_FD:
-		case eDamageSourceId.mp_weapon_droneplasma:
     	DamageInfo_SetDamage( damageInfo, DamageInfo_GetDamage( damageInfo ) * 4 )
+		break
+		
+		case eDamageSourceId.mp_weapon_droneplasma:
+    	DamageInfo_SetDamage( damageInfo, DamageInfo_GetDamage( damageInfo ) * 10 )
 		break
 		
 		case eDamageSourceId.mp_titanweapon_rocketeer_rocketstream:
@@ -1584,7 +1595,7 @@ void function HarvesterThink()
 			{
 				EmitSoundOnEntity( harvester, "coop_generator_shieldrecharge_resume" )
 				file.harvesterShieldDown = false
-				if (GetGlobalNetBool( "FD_waveActive" ) )
+				if ( GetGlobalNetBool( "FD_waveActive" ) )
 					PlayFactionDialogueToTeam( "fd_baseShieldRecharging", TEAM_MILITIA )
 				else
 					PlayFactionDialogueToTeam( "fd_baseShieldRechargingShort", TEAM_MILITIA )
@@ -1758,8 +1769,6 @@ void function FD_createHarvester()
 	AddEntityCallback_OnDamaged( fd_harvester.harvester, OnHarvesterDamaged )
 	thread CreateHarvesterHintTrigger( fd_harvester.harvester )
 	
-	ToggleNPCPathsForEntity( fd_harvester.harvester, false )
-	
 	//Some maps have sky battles happening on them
 	switch( GetMapName() )
 	{
@@ -1888,6 +1897,8 @@ void function LoadEntities()
 					break
 				case "info_fd_mode_model":
 					entity prop = CreatePropDynamic( info_target.GetModelName(), info_target.GetOrigin(), info_target.GetAngles(), 6 )
+					ToggleNPCPathsForEntity( prop, false )
+					prop.SetAIObstacle( true )
 					break
 				case "info_fd_ai_position":
 					AddStationaryAIPosition( info_target.GetOrigin(), int( info_target.kv.aiType ) )
@@ -2257,6 +2268,7 @@ void function FD_DropshipDropPlayer(entity player,int playerDropshipIndex)
 		player.ClearParent()
 		ClearPlayerAnimViewEntity( player )
 		player.ClearInvulnerable()
+		player.SetNoTarget( false )
 	}
 }
 
@@ -2339,4 +2351,149 @@ function FD_AttemptToRepairTurrets()
 	//Repair turret on here rather than in the executeWave(), softlocking reasons
 	foreach (entity turret in GetEntArrayByClass_Expensive( "npc_turret_sentry" ) )
 		RepairTurret_WaveBreak( turret )
+}
+
+/* I hate duplicating code, but i had to do this shit here since sh_team_titan_selection_menu.nut is innacessible for local hosting while on menus so it wont
+get past the main menu due to that, and i need to prevent the Titan menu selection from re-opening after the players goes through the First Wave if they lose
+a round and restart a Wave, this is a vanilla behavior and im quite sure Respawn patched this thing server side and left clients with missing code */
+
+void function FD_TeamTitan_OnPickLoadout()
+{
+	if( !file.waveRestart )
+	{
+		StartUpdatingTeamTitanSelection()
+		foreach ( player in GetPlayerArray() )
+		{
+			thread FD_TryOpenTTSMenu( player )
+		}
+	}
+}
+
+void function FD_TeamTitan_OnPrematch()
+{
+	if( !file.waveRestart )
+	{
+		StopUpdatingTeamTitanSelection()
+		EnableTitanSelection()
+		foreach ( player in GetPlayerArray() )
+		{
+			player.Signal( "StopSendingTTSMenuCommand" )
+			Remote_CallFunction_NonReplay( player, "ServerCallback_CloseTeamTitanMenu" )
+		}
+	}
+}
+
+void function FD_TTS_OnClientConnected( entity player ) //LTS Only
+{
+	float soundTime = DoPrematchWarpSound() ? PICK_LOADOUT_SOUND_TIME : 0.0
+
+	if ( GetGameState() == eGameState.PickLoadout && TimeIsBeforeJumpSound() )
+	{
+		FD_TryExtendPickLoadoutTime()
+		thread FD_TryOpenTTSMenu( player )
+	}
+	
+	else if ( GetGameState() >= eGameState.PickLoadout && GetCurrentPlaylistVarInt( "tts_menu_join_in_progress", 0 ) == 1 && !file.waveRestart && GetGlobalNetInt( "FD_waveState") != WAVE_STATE_BREAK )
+	{
+		float endTime = Time() + GetCurrentPlaylistVarInt( "pick_loadout_extension", 30 )
+
+		thread FD_SpawnPlayerAfterDelay( player, endTime - soundTime )
+		thread FD_TryOpenTTSMenu( player, endTime )
+	}
+}
+
+void function FD_TryOpenTTSMenu( entity player, float overrideEndTime = -1 )
+{
+	player.EndSignal( "OnDestroy" )
+	ScreenFadeToBlackForever( player, 0.0 )
+	EmitSoundOnEntityOnlyToPlayer( player, player, "Duck_For_FrontierDefenseTitanSelectScreen" )
+
+	while ( level.nv.minPickLoadOutTime == null )
+		WaitFrame()
+
+	wait 1.0
+
+	player.StopObserverMode()
+
+	thread PlayerUpdateTeamTitanSelectionThink( player )
+
+	float endTime = overrideEndTime == -1 ? expect float( level.nv.minPickLoadOutTime ) : overrideEndTime
+
+	EmitSoundOnEntityOnlyToPlayer( player, player, "Duck_For_FrontierDefenseTitanSelectScreen" )
+	thread FD_KeepSendingTTSMenuCommand( player, endTime )
+	ScreenFadeFromBlack( player, 1.0, 1.5 )
+
+	float soundTime = DoPrematchWarpSound() ? PICK_LOADOUT_SOUND_TIME : 0.0
+
+	while ( Time() < endTime - soundTime )
+	{
+		WaitFrame()
+		endTime = overrideEndTime == -1 ? expect float( level.nv.minPickLoadOutTime ) : overrideEndTime
+	}
+
+	player.Signal( "StopSendingTTSMenuCommand" )
+	StopSoundOnEntity( player, "Duck_For_FrontierDefenseTitanSelectScreen" )
+
+	if ( GetGameState() == eGameState.PickLoadout )
+		ScreenFadeToBlackForever( player, 2.0 )
+}
+
+void function FD_KeepSendingTTSMenuCommand( entity player, float endTime )
+{
+	player.EndSignal( "OnDestroy" )
+	player.EndSignal( "StopSendingTTSMenuCommand" )
+
+	while ( 1 )
+	{
+		if ( !player.IsInvulnerable() )
+			player.SetInvulnerable()
+		Remote_CallFunction_UI( player, "ServerCallback_RegisterTeamTitanMenuButtons" )
+		Remote_CallFunction_Replay( player, "ServerCallback_OpenTeamTitanMenu", endTime )
+		wait 0.2
+	}
+
+}
+
+void function FD_TryExtendPickLoadoutTime()
+{
+	float soundTime = DoPrematchWarpSound() ? PICK_LOADOUT_SOUND_TIME : 0.0
+
+	if ( level.nv.minPickLoadOutTime == null )
+		return
+
+	float endTime = expect float( level.nv.minPickLoadOutTime )
+
+	printt( "OLD END TIME : " + endTime )
+
+	level.nv.minPickLoadOutTime = max( endTime, Time() + 20.0 + soundTime )
+	endTime = expect float( level.nv.minPickLoadOutTime )
+
+	printt( "NEW END TIME : " + endTime )
+
+	foreach ( player in GetPlayerArray() )
+	{
+		Remote_CallFunction_Replay( player, "ServerCallback_UpdateTeamTitanMenuTime", endTime )
+	}
+}
+
+void function FD_SpawnPlayerAfterDelay( entity player, float endTime )
+{
+	player.EndSignal( "OnDestroy" )
+	player.SetInvulnerable()
+
+	wait endTime - Time() - 0.5
+
+	ScreenFadeToBlack( player, 0.5, 2.0 )
+
+	wait 0.5
+
+	player.Signal( "StopSendingTTSMenuCommand" )
+	Remote_CallFunction_NonReplay( player, "ServerCallback_CloseTeamTitanMenu" )
+	FadeOutSoundOnEntity( player, "Duck_For_FrontierDefenseTitanSelectScreen" , 1.0)
+	StopUpdatingTeamTitanSelection()
+
+	wait 0.1
+
+	ScreenFadeFromBlack( player, 0.5, 0.0 )
+	player.ClearInvulnerable()
 }

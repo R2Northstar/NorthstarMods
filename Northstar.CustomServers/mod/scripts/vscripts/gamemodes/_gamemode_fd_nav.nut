@@ -36,7 +36,7 @@ void function singleNav_thread( entity npc, string routeName, int nodesToSkip= 0
 			skippedNodes++
 			continue
 		}
-		npc.AssaultPoint(node.GetOrigin())
+		npc.AssaultPointClamped( node.GetOrigin() )
 		npc.AssaultSetGoalRadius( 50 )
 		int i = 0
 		table result = npc.WaitSignal("OnFinishedAssault","OnFailedToPath")
@@ -84,7 +84,7 @@ void function singleNav_thread( entity npc, string routeName, int nodesToSkip= 0
 	{
 		if( !IsHarvesterAlive( fd_harvester.harvester ) )
 			return
-		npc.AssaultPoint( targetNode.GetOrigin() )
+		npc.AssaultPointClamped( targetNode.GetOrigin() )
 		npc.AssaultSetGoalRadius( nextDistance )
 		
 		table result = npc.WaitSignal( "OnFinishedAssault", "OnEnterGoalRadius", "OnFailedToPath" )
@@ -94,11 +94,12 @@ void function singleNav_thread( entity npc, string routeName, int nodesToSkip= 0
 	
 	if ( npc.GetClassName() == "npc_frag_drone" && IsHarvesterAlive( fd_harvester.harvester ) )
 	{
-		npc.AssaultPoint( fd_harvester.harvester.GetOrigin() )
+		npc.AssaultPointClamped( fd_harvester.harvester.GetOrigin() )
 		npc.AssaultSetGoalRadius( 64 )
 	}
 	
 	npc.Signal( "FD_ReachedHarvester" )
+	npc.Signal( "OnFinishedAssault" )
 }
 
 void function SquadNav_Thread( array<entity> npcs, string routeName, int nodesToSkip = 0, float nextDistance = 64.0 )
@@ -158,24 +159,24 @@ void function SquadNav_Thread( array<entity> npcs, string routeName, int nodesTo
 		
 		targetNode = targetNode.GetLinkEnt()
 	}
-	
+
 	if ( npcs.len() > 0 )
 	{
 		foreach( npc in npcs )
 		{
 			if ( npc.GetClassName() == "npc_frag_drone" && IsHarvesterAlive( fd_harvester.harvester ) )
 			{
-				npc.AssaultPoint( fd_harvester.harvester.GetOrigin() )
+				npc.AssaultPointClamped( fd_harvester.harvester.GetOrigin() + < 0, 0, 8> )
 				npc.AssaultSetGoalRadius( 64 )
-				npc.AssaultSetGoalHeight( 512 )
 				npc.AssaultSetFightRadius( expect int( npc.Dev_GetAISettingByKeyField( "LookDistDefault_Combat" ) ) )
 			}
 			npc.Signal( "FD_ReachedHarvester" )
+			npc.Signal( "OnFinishedAssault" )
 		}
 	}
 }
 
-void function droneNav_thread( entity npc, string routeName,int nodesToSkip= 0,float nextDistance = 128.0, bool shouldLoop = false )
+void function droneNav_thread( entity npc, string routeName,int nodesToSkip= 0,float nextDistance = 64.0, bool shouldLoop = false )
 {
 	npc.EndSignal( "OnDeath" )
 	npc.EndSignal( "OnDestroy" )

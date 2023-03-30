@@ -722,8 +722,7 @@ WaveEvent function CreateWarningEvent( int warningType, int nextEventIndex, int 
 		break
 		
 		case FD_IncomingWarnings.EliteTitan:
-			if ( GetConVarBool( "ns_fd_allow_elite_titans" ) ) //Speak about them only if they are allowed
-				event.soundEvent.soundEventName = "fd_waveTypeEliteTitan"
+		event.soundEvent.soundEventName = "fd_waveTypeEliteTitan"
 		break
 		
 		case FD_IncomingWarnings.Infantry:
@@ -751,8 +750,7 @@ WaveEvent function CreateWarningEvent( int warningType, int nextEventIndex, int 
 		break
 		
 		case FD_IncomingWarnings.TitanfallBlocked:
-			if ( GetConVarBool( "ns_fd_allow_titanfall_block" ) ) //Again, speak only if Titanfall Block is allowed
-				event.soundEvent.soundEventName = "fd_waveNoTitanDrops"
+		event.soundEvent.soundEventName = "fd_waveNoTitanDrops"
 		break
 		
 		case FD_IncomingWarnings.PreNukeTitan:
@@ -842,6 +840,7 @@ void function BlockFurtherTitanfalls( SmokeEvent smokeEvent, SpawnEvent spawnEve
 			{
 				PlayerEarnMeter_Reset( player )
 				ClearTitanAvailable( player )
+				SendHudMessage( player, "Titanfall Block: Titans cannot be summoned", -1, 0.5, 255, 255, 128, 255, 0.2, 5.0, 1.8 )
 			}
 		}
 		else
@@ -851,7 +850,10 @@ void function BlockFurtherTitanfalls( SmokeEvent smokeEvent, SpawnEvent spawnEve
 
 void function PlayWarning( SmokeEvent smokeEvent, SpawnEvent spawnEvent, FlowControlEvent flowControlEvent, SoundEvent soundEvent )
 {
-	PlayFactionDialogueToTeam( soundEvent.soundEventName, TEAM_MILITIA )
+	if ( !GetConVarBool( "ns_fd_allow_titanfall_block" ) && soundEvent.soundEventName == "fd_waveNoTitanDrops" || !GetConVarBool( "ns_fd_allow_elite_titans" ) && soundEvent.soundEventName == "fd_waveTypeEliteTitan" )
+		return
+	else
+		PlayFactionDialogueToTeam( soundEvent.soundEventName, TEAM_MILITIA )
 }
 
 void function spawnSmoke( SmokeEvent smokeEvent, SpawnEvent spawnEvent, FlowControlEvent flowControlEvent, SoundEvent soundEvent )
@@ -1411,7 +1413,7 @@ void function SpawnRoninTitan( SmokeEvent smokeEvent, SpawnEvent spawnEvent, Flo
 	PingMinimap( spawnEvent.origin.x, spawnEvent.origin.y, 4, 600, 150, 0 )
 	entity npc = CreateNPCTitan( "titan_stryder", TEAM_IMC, spawnEvent.origin, spawnEvent.angles)
 	SetSpawnOption_Titanfall( npc )
-	if ( spawnEvent.titanType == 1)
+	if ( spawnEvent.titanType == 1 && GetConVarBool( "ns_fd_allow_elite_titans" ) )
 	{
 		SetSpawnOption_AISettings (npc, "npc_titan_stryder_leadwall_boss_fd_elite" )
 		SetTitanAsElite( npc )
@@ -1527,6 +1529,7 @@ void function spawnNukeTitan( SmokeEvent smokeEvent, SpawnEvent spawnEvent, Flow
 	npc.EnableNPCMoveFlag( NPCMF_WALK_ALWAYS | NPCMF_WALK_NONCOMBAT | NPCMF_IGNORE_CLUSTER_DANGER_TIME )
 	npc.DisableNPCMoveFlag( NPCMF_PREFER_SPRINT | NPCMF_FOLLOW_SAFE_PATHS )
 	npc.DisableNPCFlag( NPC_DIRECTIONAL_MELEE )
+	npc.SetCapabilityFlag( bits_CAP_SYNCED_MELEE_ATTACK, false )
 	npc.AssaultSetFightRadius( 0 )
 	StatusEffect_AddEndless( npc, eStatusEffect.move_slow, 0.5 )
 	StatusEffect_AddEndless( npc, eStatusEffect.turn_slow, 0.5 )
@@ -1825,7 +1828,7 @@ void function SlowEnemyMovementBasedOnDifficulty( entity npc )
 
 void function SetTitanAsElite( entity npc )
 {
-	if ( npc.IsTitan() )
+	if ( npc.IsTitan() && GetConVarBool( "ns_fd_allow_elite_titans" ) )
 	{
 		thread MonitorEliteTitanCore( npc )
 		npc.ai.bossTitanType = 1
