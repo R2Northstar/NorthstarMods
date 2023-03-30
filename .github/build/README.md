@@ -6,13 +6,13 @@ It uses english translations file as reference.
 
 You have to launch it **from the repository root folder**:
 ```shell
-node build/find-missing-translations.js
+node .github/build/find-missing-translations.js
 ```
 The script will then list all missing translations for all supported languages.
 
 If you want to display missing keys for a given language, just add it as an argument:
 ```shell
-node build/find-missing-translations.js french
+node .github/build/find-missing-translations.js french
 ```
 
 Here's the list of supported languages: 

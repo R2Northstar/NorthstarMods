@@ -17,5 +17,5 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v3
       - name: Look out for missing translations
-        run: node build/find-missing-translations.js
+        run: node .github/build/find-missing-translations.js
         continue-on-error: true
