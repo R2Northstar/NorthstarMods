@@ -129,8 +129,8 @@ void function GamemodeFD_Init()
 	PlayerEarnMeter_SetEnabled( false )
 	SetAllowLoadoutChangeFunc( FD_ShouldAllowChangeLoadout )
 	SetGetDifficultyFunc( FD_GetDifficultyLevel )
-	SetShouldUsePickLoadoutScreen( !file.waveRestart )
-	FDTeamTitanSelectMenu_Init() // show the titan select menu in this mode
+	SetShouldUsePickLoadoutScreen( true )
+	TeamTitanSelectMenu_Init() // show the titan select menu in this mode
 
 	//general Callbacks
 	AddCallback_EntitiesDidLoad( LoadEntities )
@@ -143,7 +143,7 @@ void function GamemodeFD_Init()
 	ClassicMP_SetEpilogue( FD_SetupEpilogue )
 
 	//Damage Callbacks
-	AddDamageByCallback( "player", FD_DamageByPlayerCallback)
+	AddDamageByCallback( "player", FD_DamageByPlayerCallback )
 	AddDamageCallback( "player", DamageScaleByDifficulty )
 	AddDamageCallback( "npc_titan", DamageScaleByDifficulty )
 	AddDamageCallback( "npc_turret_sentry", DamageScaleByDifficulty )
@@ -193,15 +193,6 @@ bool function FD_ShouldAllowChangeLoadout( entity player )
 void function FD_BoostPurchaseCallback( entity player, BoostStoreData data )
 {
 	file.playerAwardStats[player]["moneySpent"] += float( data.cost )
-}
-
-void function FDTeamTitanSelectMenu_Init()
-{
-	RegisterSignal( "StopSendingTTSMenuCommand" )
-	AddCallback_GameStateEnter( eGameState.PickLoadout, FD_TeamTitan_OnPickLoadout )
-	AddCallback_GameStateEnter( eGameState.Prematch, FD_TeamTitan_OnPrematch )
-	AddCallback_OnClientConnected( FD_TTS_OnClientConnected )
-	TeamTitanSelection_Init()
 }
 
 void function FD_PlayerRespawnCallback( entity player )
@@ -426,6 +417,9 @@ void function OnTickDeath( entity victim, var damageInfo )
 
 void function OnTickSpawn( entity tick )
 {
+	if( GetGameState() != eGameState.Playing || !IsHarvesterAlive( fd_harvester.harvester ) )
+		return
+		
 	if ( tick.GetParent() )
 		thread dropPodTickWait( tick )
 	else if ( GetGlobalNetInt( "FD_waveState" ) == WAVE_STATE_IN_PROGRESS )
@@ -843,13 +837,13 @@ bool function runWave( int waveIndex, bool shouldDoBuyTime )
 		print( "Closing Shop" )
 	}
 
-	if (waveIndex==0 && GetCurrentPlaylistVarFloat( "riff_minimap_state", 0 ) == 0)
+	if ( waveIndex==0 && GetCurrentPlaylistVarFloat( "riff_minimap_state", 0 ) == 0 )
 	{
 		wait 14
 		PlayFactionDialogueToTeam( "fd_minimapTip" , TEAM_MILITIA )
 		wait 14
 	}
-	else if (waveIndex==0) //Still wait 14 seconds to let them to speak about the Harvester being up and running on first wave
+	else if ( waveIndex==0 ) //Still wait 14 seconds to let them to speak about the Harvester being up and running on first wave
 		wait 14
 	else
 		wait 5 //Between waves its just 5 seconds to start another one
@@ -923,6 +917,8 @@ bool function runWave( int waveIndex, bool shouldDoBuyTime )
 			SetRoundBased(false)
 
 		file.waveRestart = true //wave restart point
+		if ( waveIndex > 0 )
+			SetShouldUsePickLoadoutScreen( false ) //Disable the loadout screen on wave restart because Titans must be locked after Wave 1
 		SetWinner( TEAM_IMC )//restart round
 		spawnedNPCs = [] // reset npcs count
 		restetWaveEvents()
@@ -998,6 +994,7 @@ bool function runWave( int waveIndex, bool shouldDoBuyTime )
 	}
 	
 	MessageToTeam( TEAM_MILITIA, eEventNotifications.FD_AnnounceWaveEnd )
+	wait 2
 
 	if(!file.havesterWasDamaged)
 		PlayFactionDialogueToTeam( "fd_waveRecapPerfect", TEAM_MILITIA )
@@ -1051,7 +1048,7 @@ bool function runWave( int waveIndex, bool shouldDoBuyTime )
 			continue
 		FD_EmitSoundOnEntityOnlyToPlayer( player, player, "HUD_MP_BountyHunt_BankBonusPts_Deposit_Start_1P" )
 	}
-	wait 1
+	wait 2
 	print( "Showing Player Stats: No Deaths This Wave" )
 	foreach( entity player in GetPlayerArray() )
 	{
@@ -1059,11 +1056,11 @@ bool function runWave( int waveIndex, bool shouldDoBuyTime )
 		{
 			AddPlayerScore( player, "FDDidntDie" )
 			player.AddToPlayerGameStat( PGS_ASSAULT_SCORE, FD_SCORE_DIDNT_DIE )
+			AddMoneyToPlayer( player, 100 )
+			FD_EmitSoundOnEntityOnlyToPlayer( player, player, "HUD_MP_BountyHunt_BankBonusPts_Deposit_Start_1P" )
 		}
-		AddMoneyToPlayer( player, 100 )
-		FD_EmitSoundOnEntityOnlyToPlayer( player, player, "HUD_MP_BountyHunt_BankBonusPts_Deposit_Start_1P" )
 	}
-	wait 1
+	wait 2
 	print( "Showing Player Stats: Wave MVP" )
 	int highestScore
 	entity highestScore_player
@@ -1089,11 +1086,10 @@ bool function runWave( int waveIndex, bool shouldDoBuyTime )
 	{
 		Remote_CallFunction_NonReplay( player, "ServerCallback_FD_NotifyMVP", highestScore_player.GetEncodedEHandle() )
 	}
-	wait 1
+	wait 2
 	print( "Showing Player Stats: Flawless Defense" )
 	foreach( entity player in GetPlayerArray() )
 	{
-
 		if( !file.havesterWasDamaged )
 		{
 			AddPlayerScore( player, "FDTeamFlawlessWave" )
@@ -1104,7 +1100,7 @@ bool function runWave( int waveIndex, bool shouldDoBuyTime )
 		player.SetPlayerGameStat( PGS_DETONATION_SCORE, player.GetPlayerGameStat( PGS_ASSAULT_SCORE ) + player.GetPlayerGameStat( PGS_DEFENSE_SCORE ) )
 	}
 
-	wait 1
+	wait 2
 
 	print( "Waiting buy time" )
 	if( waveIndex<waveEvents.len() )
@@ -1675,7 +1671,7 @@ void function FD_DamageByPlayerCallback( entity victim, var damageInfo )
 	entity player = DamageInfo_GetAttacker( damageInfo )
 	if( !( player in file.players ) )
 		return
-	float damage = DamageInfo_GetDamage( damageInfo )
+	float damage = min( victim.GetMaxHealth(), DamageInfo_GetDamage( damageInfo ) )
 	file.playerAwardStats[player]["damageDealt"] += damage
 	file.players[ player ].assaultScoreThisRound += ( damage.tointeger() / 100 ) //TODO NOT HOW SCORE WORKS
 	if( victim.IsTitan() )
@@ -1768,6 +1764,10 @@ void function FD_createHarvester()
 	fd_harvester.harvester.Minimap_SetCustomState( eMinimapObject_prop_script.FD_HARVESTER )
 	AddEntityCallback_OnDamaged( fd_harvester.harvester, OnHarvesterDamaged )
 	thread CreateHarvesterHintTrigger( fd_harvester.harvester )
+	
+	if ( !file.waveRestart )
+		EnableTitanSelection() //Still allow Titan selection for first wave in the esc menu
+	SetShouldUsePickLoadoutScreen( true ) //Enable this here to allow midgame joiners to pick their loadouts again after a wave restart
 	
 	//Some maps have sky battles happening on them
 	switch( GetMapName() )
@@ -2351,149 +2351,4 @@ function FD_AttemptToRepairTurrets()
 	//Repair turret on here rather than in the executeWave(), softlocking reasons
 	foreach (entity turret in GetEntArrayByClass_Expensive( "npc_turret_sentry" ) )
 		RepairTurret_WaveBreak( turret )
-}
-
-/* I hate duplicating code, but i had to do this shit here since sh_team_titan_selection_menu.nut is innacessible for local hosting while on menus so it wont
-get past the main menu due to that, and i need to prevent the Titan menu selection from re-opening after the players goes through the First Wave if they lose
-a round and restart a Wave, this is a vanilla behavior and im quite sure Respawn patched this thing server side and left clients with missing code */
-
-void function FD_TeamTitan_OnPickLoadout()
-{
-	if( !file.waveRestart )
-	{
-		StartUpdatingTeamTitanSelection()
-		foreach ( player in GetPlayerArray() )
-		{
-			thread FD_TryOpenTTSMenu( player )
-		}
-	}
-}
-
-void function FD_TeamTitan_OnPrematch()
-{
-	if( !file.waveRestart )
-	{
-		StopUpdatingTeamTitanSelection()
-		EnableTitanSelection()
-		foreach ( player in GetPlayerArray() )
-		{
-			player.Signal( "StopSendingTTSMenuCommand" )
-			Remote_CallFunction_NonReplay( player, "ServerCallback_CloseTeamTitanMenu" )
-		}
-	}
-}
-
-void function FD_TTS_OnClientConnected( entity player ) //LTS Only
-{
-	float soundTime = DoPrematchWarpSound() ? PICK_LOADOUT_SOUND_TIME : 0.0
-
-	if ( GetGameState() == eGameState.PickLoadout && TimeIsBeforeJumpSound() )
-	{
-		FD_TryExtendPickLoadoutTime()
-		thread FD_TryOpenTTSMenu( player )
-	}
-	
-	else if ( GetGameState() >= eGameState.PickLoadout && GetCurrentPlaylistVarInt( "tts_menu_join_in_progress", 0 ) == 1 && !file.waveRestart && GetGlobalNetInt( "FD_waveState") != WAVE_STATE_BREAK )
-	{
-		float endTime = Time() + GetCurrentPlaylistVarInt( "pick_loadout_extension", 30 )
-
-		thread FD_SpawnPlayerAfterDelay( player, endTime - soundTime )
-		thread FD_TryOpenTTSMenu( player, endTime )
-	}
-}
-
-void function FD_TryOpenTTSMenu( entity player, float overrideEndTime = -1 )
-{
-	player.EndSignal( "OnDestroy" )
-	ScreenFadeToBlackForever( player, 0.0 )
-	EmitSoundOnEntityOnlyToPlayer( player, player, "Duck_For_FrontierDefenseTitanSelectScreen" )
-
-	while ( level.nv.minPickLoadOutTime == null )
-		WaitFrame()
-
-	wait 1.0
-
-	player.StopObserverMode()
-
-	thread PlayerUpdateTeamTitanSelectionThink( player )
-
-	float endTime = overrideEndTime == -1 ? expect float( level.nv.minPickLoadOutTime ) : overrideEndTime
-
-	EmitSoundOnEntityOnlyToPlayer( player, player, "Duck_For_FrontierDefenseTitanSelectScreen" )
-	thread FD_KeepSendingTTSMenuCommand( player, endTime )
-	ScreenFadeFromBlack( player, 1.0, 1.5 )
-
-	float soundTime = DoPrematchWarpSound() ? PICK_LOADOUT_SOUND_TIME : 0.0
-
-	while ( Time() < endTime - soundTime )
-	{
-		WaitFrame()
-		endTime = overrideEndTime == -1 ? expect float( level.nv.minPickLoadOutTime ) : overrideEndTime
-	}
-
-	player.Signal( "StopSendingTTSMenuCommand" )
-	StopSoundOnEntity( player, "Duck_For_FrontierDefenseTitanSelectScreen" )
-
-	if ( GetGameState() == eGameState.PickLoadout )
-		ScreenFadeToBlackForever( player, 2.0 )
-}
-
-void function FD_KeepSendingTTSMenuCommand( entity player, float endTime )
-{
-	player.EndSignal( "OnDestroy" )
-	player.EndSignal( "StopSendingTTSMenuCommand" )
-
-	while ( 1 )
-	{
-		if ( !player.IsInvulnerable() )
-			player.SetInvulnerable()
-		Remote_CallFunction_UI( player, "ServerCallback_RegisterTeamTitanMenuButtons" )
-		Remote_CallFunction_Replay( player, "ServerCallback_OpenTeamTitanMenu", endTime )
-		wait 0.2
-	}
-
-}
-
-void function FD_TryExtendPickLoadoutTime()
-{
-	float soundTime = DoPrematchWarpSound() ? PICK_LOADOUT_SOUND_TIME : 0.0
-
-	if ( level.nv.minPickLoadOutTime == null )
-		return
-
-	float endTime = expect float( level.nv.minPickLoadOutTime )
-
-	printt( "OLD END TIME : " + endTime )
-
-	level.nv.minPickLoadOutTime = max( endTime, Time() + 20.0 + soundTime )
-	endTime = expect float( level.nv.minPickLoadOutTime )
-
-	printt( "NEW END TIME : " + endTime )
-
-	foreach ( player in GetPlayerArray() )
-	{
-		Remote_CallFunction_Replay( player, "ServerCallback_UpdateTeamTitanMenuTime", endTime )
-	}
-}
-
-void function FD_SpawnPlayerAfterDelay( entity player, float endTime )
-{
-	player.EndSignal( "OnDestroy" )
-	player.SetInvulnerable()
-
-	wait endTime - Time() - 0.5
-
-	ScreenFadeToBlack( player, 0.5, 2.0 )
-
-	wait 0.5
-
-	player.Signal( "StopSendingTTSMenuCommand" )
-	Remote_CallFunction_NonReplay( player, "ServerCallback_CloseTeamTitanMenu" )
-	FadeOutSoundOnEntity( player, "Duck_For_FrontierDefenseTitanSelectScreen" , 1.0)
-	StopUpdatingTeamTitanSelection()
-
-	wait 0.1
-
-	ScreenFadeFromBlack( player, 0.5, 0.0 )
-	player.ClearInvulnerable()
 }

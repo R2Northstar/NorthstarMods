@@ -1828,6 +1828,9 @@ void function SlowEnemyMovementBasedOnDifficulty( entity npc )
 
 void function SetTitanAsElite( entity npc )
 {
+	if( GetGameState() != eGameState.Playing || !IsHarvesterAlive( fd_harvester.harvester ) )
+		return
+	
 	if ( npc.IsTitan() && GetConVarBool( "ns_fd_allow_elite_titans" ) )
 	{
 		thread MonitorEliteTitanCore( npc )
@@ -1842,6 +1845,9 @@ void function SetTitanAsElite( entity npc )
 
 void function MonitorEliteTitanCore( entity npc )
 {
+	if( GetGameState() != eGameState.Playing || !IsHarvesterAlive( fd_harvester.harvester ) )
+		return
+
 	wait 6
 	AddCreditToTitanCoreBuilder( npc, 1.0 )
 	entity soul = npc.GetTitanSoul()
