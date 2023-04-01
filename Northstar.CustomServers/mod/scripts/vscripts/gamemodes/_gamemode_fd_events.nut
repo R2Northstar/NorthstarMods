@@ -1076,7 +1076,8 @@ void function spawnDroppodGrunts( SmokeEvent smokeEvent, SpawnEvent spawnEvent, 
 	
 	waitthread LaunchAnimDropPod( pod, "pod_testpath", spawnEvent.origin, < 0, RandomIntRange( 0, 359 ), 0 > )
 	ActivateFireteamDropPod( pod, guys )
-	thread SquadNav_Thread( guys,spawnEvent.route )
+	foreach( npc in guys )
+		thread singleNav_thread( npc, spawnEvent.route )
 }
 
 //This function is based off the entire function chain called by AiGameModes_SpawnDropShip(), that function uses table data for modularization and while it
@@ -1110,18 +1111,13 @@ void function spawnGruntDropship( SmokeEvent smokeEvent, SpawnEvent spawnEvent, 
 	foreach ( anim in anims )
 	{
 		animation = anim
-		flightPath = GetAnalysisForModel( DROPSHIP_MODEL, anim )
-		spawnPoint = GetSpawnPointForStyle( flightPath, drop )
-		if ( spawnPoint.valid )
-			break
+		flightPath = GetAnalysisForModel( DROPSHIP_MODEL, anims[1] )
 	}
 	
+	flightPath = GetAnalysisForModel( DROPSHIP_MODEL, anims[1] )
 	entity ref = CreateScriptRef()
 	ref.SetOrigin( origin )
 	ref.SetAngles( < 0, yaw, 0 > )
-	
-	if ( "nextDropshipAttackedByFlyers" in level && level.nextDropshipAttackedByFlyers )
-		animation = FlyersAttackDropship( ref, animation )
 
 	Assert( IsNewThread(), "Must be threaded off" )
 
@@ -1130,7 +1126,7 @@ void function spawnGruntDropship( SmokeEvent smokeEvent, SpawnEvent spawnEvent, 
 	dropTable.valid = true
 	
 	asset model = GetFlightPathModel( "fp_crow_model" )
-	waitthread WarpinEffect( model, animation, ref.GetOrigin(), ref.GetAngles() )
+	waitthread WarpinEffect( model, anims[1], ref.GetOrigin(), ref.GetAngles() )
 	entity dropship = CreateDropship( team, ref.GetOrigin(), ref.GetAngles() )
 	SetSpawnOption_SquadName( dropship, squadname )
 	dropship.kv.solid = SOLID_VPHYSICS
@@ -1196,7 +1192,7 @@ void function spawnGruntDropship( SmokeEvent smokeEvent, SpawnEvent spawnEvent, 
 	dropship.Hide()
 	EmitSoundOnEntity( dropship, dropshipSound )
 	thread ShowDropship( dropship )
-	thread PlayAnimTeleport( dropship, animation, ref, 0 )
+	thread PlayAnimTeleport( dropship, anims[1], ref, 0 )
 	ArrayRemoveDead( guys )
 	wait 12
 	foreach( guy in guys )
@@ -1280,8 +1276,10 @@ void function spawnDroppodStalker( SmokeEvent smokeEvent, SpawnEvent spawnEvent,
 	waitthread LaunchAnimDropPod( pod, "pod_testpath", spawnEvent.origin, < 0, RandomIntRange( 0, 359 ), 0 > )
 	ActivateFireteamDropPod( pod, guys )
 	foreach( npc in guys )
+	{
 		thread FDStalkerThink( npc , fd_harvester.harvester )
-	thread SquadNav_Thread( guys,spawnEvent.route )
+		thread singleNav_thread( npc, spawnEvent.route )
+	}
 }
 
 void function spawnDroppodSpectreMortar( SmokeEvent smokeEvent, SpawnEvent spawnEvent, FlowControlEvent flowControlEvent, SoundEvent soundEvent )
@@ -1663,6 +1661,8 @@ void function SpawnTick( SmokeEvent smokeEvent, SpawnEvent spawnEvent, FlowContr
 	
 	waitthread LaunchAnimDropPod( pod, "pod_testpath", spawnEvent.origin, < 0, RandomIntRange( 0, 359 ), 0 > )
 	ActivateFireteamDropPod( pod, guys )
+	foreach( npc in guys )
+		thread singleNav_thread( npc, spawnEvent.route )
 }
 
 
@@ -1845,10 +1845,11 @@ void function SetTitanAsElite( entity npc )
 
 void function MonitorEliteTitanCore( entity npc )
 {
+	wait 6
+	
 	if( GetGameState() != eGameState.Playing || !IsHarvesterAlive( fd_harvester.harvester ) )
 		return
-
-	wait 6
+	
 	AddCreditToTitanCoreBuilder( npc, 1.0 )
 	entity soul = npc.GetTitanSoul()
 	if ( IsValid( soul ) )

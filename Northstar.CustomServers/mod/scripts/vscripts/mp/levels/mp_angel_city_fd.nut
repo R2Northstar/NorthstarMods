@@ -5,6 +5,8 @@ void function initFrontierDefenseData()
 	shopAngles = < 0, -15, 0 >
 	FD_spawnPosition = < -331.70, 3791.96, 141 >
 	FD_spawnAngles = < 0, -180, 0 >
+	FD_groundspawnPosition = < -644, 4469, 318 >
+	FD_groundspawnAngles = < 0, -145, 0 >
 	
 	AddStationaryAIPosition(< 1435, -2271, 121 >, eStationaryAIPositionTypes.LAUNCHER_REAPER)
 	AddStationaryAIPosition(< 406, -2364, 14 >, eStationaryAIPositionTypes.LAUNCHER_REAPER)

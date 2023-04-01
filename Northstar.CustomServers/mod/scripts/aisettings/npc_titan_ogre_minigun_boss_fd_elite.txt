@@ -21,10 +21,10 @@ npc_titan_ogre_minigun_boss_fd_elite
 	dodgePeriod					2
 	maxDodgePerPeriod			3
 	
-	primaryCamoIndex 30
+	primaryCamoIndex 31
 	primarySkinIndex 1
 	
-	titanCamoIndex -1
-	titanDecalIndex 13
-	titanSkinIndex 9
+	titanCamoIndex 31
+	titanDecalIndex 0
+	titanSkinIndex 2
 }

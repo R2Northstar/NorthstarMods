@@ -5,6 +5,8 @@ void function initFrontierDefenseData()
 	shopAngles = < 0, -90, 0 >
 	FD_spawnPosition = < -1040.11, -1490.53, -64 >
 	FD_spawnAngles = < 0, -90, 0 >
+	FD_groundspawnPosition = < -1340, -1989, -192 >
+	FD_groundspawnAngles = < 0, -15, 0 >
 
 	int index = 1
 	

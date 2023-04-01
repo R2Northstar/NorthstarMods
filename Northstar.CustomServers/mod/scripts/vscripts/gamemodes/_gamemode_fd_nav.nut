@@ -50,7 +50,7 @@ void function singleNav_thread( entity npc, string routeName, int nodesToSkip= 0
 	entity targetNode
 	if ( routeName == "" )
 	{
-		float dist = 1000000000
+		float dist = 65535
 		foreach ( entity node in routeNodes )
 		{
 			if( !node.HasKey( "route_name" ) )
@@ -61,6 +61,7 @@ void function singleNav_thread( entity npc, string routeName, int nodesToSkip= 0
 				targetNode = node
 			}
 		}
+		
 		printt("Entity had no route defined: using nearest node: " + targetNode.kv.route_name)
 	}
 	else
@@ -91,21 +92,25 @@ void function singleNav_thread( entity npc, string routeName, int nodesToSkip= 0
 		
 		targetNode = targetNode.GetLinkEnt()
 	}
-	
+
 	if ( ( npc.GetClassName() == "npc_frag_drone" || npc.GetClassName() == "npc_stalker" ) && IsHarvesterAlive( fd_harvester.harvester ) )
 	{
 		npc.AssaultPointClamped( fd_harvester.harvester.GetOrigin() + < 0, 0, 8> )
 		npc.AssaultSetGoalRadius( 64 )
-		npc.AssaultSetGoalHeight( 512 )
 	}
 
 	npc.Signal( "FD_ReachedHarvester" )
-	npc.Signal( "OnFinishedAssault" )
 }
 
 void function SquadNav_Thread( array<entity> npcs, string routeName, int nodesToSkip = 0, float nextDistance = 64.0 )
 {
 	//TODO this function wont stop when noone alive anymore also it only works half of the time
+	
+	/* This function actually is not working AT ALL, all what it actually does is pick the entire chain of nodes of a route send everyone directly to the
+	last node, apparently it is also the function responsible for not allowing Grunts and Stalkers to execute their Drop Pod exit animation. The reason of
+	that is solely because SquadAssaultOrigin is a chained function which leads to SendAIToAssaultPoint which has guy.Anim_Stop(), so basically that is
+	the problem. */
+	
 	/*
 	array<entity> routeArray = getRoute(routeName)
 	WaitFrame()//so other code setting up what happens on signals is run before this
@@ -127,7 +132,7 @@ void function SquadNav_Thread( array<entity> npcs, string routeName, int nodesTo
 	entity targetNode
 	if ( routeName == "" )
 	{
-		float dist = 1000000000
+		float dist = 65535
 		foreach ( entity node in routeNodes )
 		{
 			if( !node.HasKey( "route_name" ) )
@@ -156,26 +161,9 @@ void function SquadNav_Thread( array<entity> npcs, string routeName, int nodesTo
 		if( !IsHarvesterAlive( fd_harvester.harvester ) )
 			return
 		
-		SquadAssaultOrigin( npcs, targetNode.GetOrigin(), nextDistance )
+		SquadAssaultOrigin( npcs, targetNode.GetOrigin() , nextDistance )
 		
 		targetNode = targetNode.GetLinkEnt()
-	}
-
-	if ( npcs.len() > 0 )
-	{
-		foreach( npc in npcs )
-		{
-			if ( ( npc.GetClassName() == "npc_frag_drone" || npc.GetClassName() == "npc_stalker" ) && IsHarvesterAlive( fd_harvester.harvester ) )
-			{
-				npc.AssaultPointClamped( fd_harvester.harvester.GetOrigin() + < 0, 0, 8> )
-				npc.AssaultSetGoalRadius( 64 )
-				if ( npc.GetClassName() == "npc_frag_drone" )
-					npc.AssaultSetFightRadius( expect int( npc.Dev_GetAISettingByKeyField( "LookDistDefault_Combat" ) ) )
-			}
-			npc.AssaultSetGoalHeight( 512 )
-			npc.Signal( "FD_ReachedHarvester" )
-			npc.Signal( "OnFinishedAssault" )
-		}
 	}
 }
 

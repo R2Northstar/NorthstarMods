@@ -79,6 +79,10 @@
 			"DefaultValue": "mp_weapon_defender"
 		},
 		{
+			"Name": "ns_fd_disable_respawn_dropship",
+			"DefaultValue": "0"
+		},
+		{
 			"Name": "ns_reaper_warpfall_kill",
 			"DefaultValue": "1"
 		}

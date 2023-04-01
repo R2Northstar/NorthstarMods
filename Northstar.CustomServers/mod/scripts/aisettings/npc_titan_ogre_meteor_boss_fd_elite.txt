@@ -9,9 +9,6 @@ npc_titan_ogre_meteor_boss_fd_elite
 	
 	footstep_type			"scorch"
 
-	DefaultModelName		"models/titans/heavy/titan_heavy_ogre.mdl" [$mp]
-	DefaultModelName		"models/titans/heavy/sp_titan_heavy_ogre.mdl" [$sp]
-
 	PainOnHeavyDamageThreshold		0
 	PainOnRepeatDamageThreshold		0
 	RepeatDamageTimeInterval		30
@@ -30,10 +27,10 @@ npc_titan_ogre_meteor_boss_fd_elite
 	dodgePeriod					2
 	maxDodgePerPeriod			4
 
-	primaryCamoIndex 17
+	primaryCamoIndex 31
 	primarySkinIndex 1
 	
-	titanCamoIndex -1
-	titanDecalIndex 2
-	titanSkinIndex 4
+	titanCamoIndex 31
+	titanDecalIndex 0
+	titanSkinIndex 2
 }

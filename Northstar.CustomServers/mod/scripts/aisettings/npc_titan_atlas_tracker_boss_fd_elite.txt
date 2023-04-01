@@ -2,7 +2,7 @@
 npc_titan_atlas_tracker_boss_fd_elite
 {
 	title 							"Elite Tone"
-	
+
 	PainOnHeavyDamageThreshold		0
 	PainOnRepeatDamageThreshold		0
 	RepeatDamageTimeInterval		30
@@ -21,10 +21,10 @@ npc_titan_atlas_tracker_boss_fd_elite
 	dodgePeriod					2
 	maxDodgePerPeriod			4
 	
-	primaryCamoIndex 17
+	primaryCamoIndex 31
 	primarySkinIndex 1
 	
-	titanCamoIndex -1
-	titanDecalIndex 11
-	titanSkinIndex 5
+	titanCamoIndex 31
+	titanDecalIndex 0
+	titanSkinIndex 2
 }

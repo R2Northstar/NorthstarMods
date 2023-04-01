@@ -2,7 +2,7 @@
 npc_titan_stryder_leadwall_boss_fd_elite
 {
 	title 							"Elite Ronin"
-	
+
 	PainOnHeavyDamageThreshold		0
 	PainOnRepeatDamageThreshold		0
 	RepeatDamageTimeInterval		30
@@ -10,10 +10,10 @@ npc_titan_stryder_leadwall_boss_fd_elite
 	lightPainMinInterval			20
 	heavyPainMinInterval			40
 	
-	primaryCamoIndex 30
+	primaryCamoIndex 31
 	primarySkinIndex 1
 	
-	titanCamoIndex 30
-	titanDecalIndex 6
+	titanCamoIndex 31
+	titanDecalIndex 0
 	titanSkinIndex 2
 }

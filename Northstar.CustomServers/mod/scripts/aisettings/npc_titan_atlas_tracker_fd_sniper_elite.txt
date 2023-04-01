@@ -2,7 +2,7 @@
 npc_titan_atlas_tracker_fd_sniper_elite
 {
 	title 							"Elite Sniper Tone"
-	
+
 	PainOnHeavyDamageThreshold		0
 	PainOnRepeatDamageThreshold		0
 	RepeatDamageTimeInterval		30
@@ -21,10 +21,10 @@ npc_titan_atlas_tracker_fd_sniper_elite
 	dodgePeriod					2
 	maxDodgePerPeriod			3
 	
-	primaryCamoIndex 30
+	primaryCamoIndex 31
 	primarySkinIndex 1
 	
-	titanCamoIndex -1
-	titanDecalIndex 5
-	titanSkinIndex 7
+	titanCamoIndex 31
+	titanDecalIndex 0
+	titanSkinIndex 2
 }

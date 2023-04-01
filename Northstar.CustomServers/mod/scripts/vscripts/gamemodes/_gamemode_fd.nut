@@ -55,6 +55,8 @@ global vector shopPosition
 global vector shopAngles = < 0, 0, 0 >
 global vector FD_spawnPosition
 global vector FD_spawnAngles = < 0, 0, 0 >
+global vector FD_groundspawnPosition
+global vector FD_groundspawnAngles = < 0, 0, 0 >
 global table< string, array<vector> > routes
 global array<entity> routeNodes
 global array<entity> spawnedNPCs
@@ -197,22 +199,38 @@ void function FD_BoostPurchaseCallback( entity player, BoostStoreData data )
 
 void function FD_PlayerRespawnCallback( entity player )
 {
+	thread FD_PlayerRespawnThreaded( player )	
+}
+
+void function FD_PlayerRespawnThreaded( entity player )
+{
+	WaitFrame()
 	if( player in file.players )
 		file.players[player].lastRespawn = Time()
 	if( GetCurrentPlaylistVarInt( "fd_at_unlimited_ammo", 1 ) )
 		FD_GivePlayerInfiniteAntiTitanAmmo( player )
 	if ( !file.playersHaveTitans )
 	{
-		// why in the fuck do i need to WaitFrame() here, this sucks
-		thread PlayerEarnMeter_SetMode_Threaded( player, 0 )
+		if ( IsValid( player ) )
+			PlayerEarnMeter_SetMode( player, 0 )
 	}
 	
 	//Players spawn directly on ground if Dropship already passed the point where players drops from it
 	//If the wave is on break joiners can buy stuff with the time remaining
 	//Also more than 4 players, additionals will spawn directly on ground
 	//Respawning as titan also ignores this because err, makes no sense
-	if( file.dropshipState == eDropshipState.Returning || GetGameState() != eGameState.Playing || player.GetPersistentVar( "spawnAsTitan" ) || file.playersInShip >=4 || GetGlobalNetInt( "FD_waveState") == WAVE_STATE_BREAK || GetGlobalNetInt( "FD_waveState") == WAVE_STATE_COMPLETE )
+	if ( player.IsTitan() )
 		return
+	if( file.dropshipState == eDropshipState.Returning || GetGameState() != eGameState.Playing || file.playersInShip >=4 || GetGlobalNetInt( "FD_waveState") == WAVE_STATE_BREAK || GetGlobalNetInt( "FD_waveState") == WAVE_STATE_COMPLETE || GetConVarBool( "ns_fd_disable_respawn_dropship" ) )
+	{
+		//Teleport player to a more reliable location if they spawn on ground, some maps picks too far away spawns from the Harvester and Shop (i.e Colony, Homestead, Drydock)
+		if( IsValidPlayer( player ) && !player.IsTitan() )
+		{
+			player.SetOrigin( FD_groundspawnPosition )
+			player.SetAngles( FD_groundspawnAngles )
+		}
+		return
+	}
 
 	player.SetInvulnerable()
 	player.SetNoTarget( true )
@@ -237,15 +255,8 @@ void function FD_PlayerRespawnCallback( entity player )
 	else if( IsValidPlayer( player ) )
 	{
 		player.ClearInvulnerable()
+		player.SetNoTarget( false )
 	}
-}
-
-
-void function PlayerEarnMeter_SetMode_Threaded( entity player, int mode )
-{
-	WaitFrame()
-	if ( IsValid( player ) )
-		PlayerEarnMeter_SetMode( player, mode )
 }
 
 void function FD_OnPlayerGetsNewPilotLoadout( entity player, PilotLoadoutDef loadout )
@@ -417,11 +428,9 @@ void function OnTickDeath( entity victim, var damageInfo )
 
 void function OnTickSpawn( entity tick )
 {
-	if( GetGameState() != eGameState.Playing || !IsHarvesterAlive( fd_harvester.harvester ) )
+	if( GetGameState() != eGameState.Playing || !IsHarvesterAlive( fd_harvester.harvester ) || tick.GetParent() ) //Parented Ticks are Drop Pod ones, and those are handled by the function there itself
 		return
 		
-	if ( tick.GetParent() )
-		thread dropPodTickWait( tick )
 	else if ( GetGlobalNetInt( "FD_waveState" ) == WAVE_STATE_IN_PROGRESS )
 	{
 		tick.Minimap_SetAlignUpright( true )
@@ -437,13 +446,6 @@ void function OnTickSpawn( entity tick )
 		if ( IsAlive( tick ) ) //In case you wonder, this is to immediately kill Ticks spawned by Reapers AFTER wave completion
 			tick.Die()
 	}
-}
-
-void function dropPodTickWait( entity tick )
-{
-	while ( tick.GetParent() )
-	 WaitFrame()
-	thread singleNav_thread( tick, "" )
 }
 
 void function OnNpcDeath( entity victim, entity attacker, var damageInfo )
@@ -1799,9 +1801,9 @@ bool function IsHarvesterAlive( entity harvester )
 void function CreateHarvesterHintTrigger( entity harvester )
 {
 	entity trig = CreateEntity( "trigger_cylinder" )
-	trig.SetRadius( 1000 )	//Test setting
-	trig.SetAboveHeight( 2500 )	//Test setting
-	trig.SetBelowHeight( 2500 )	//Test setting
+	trig.SetRadius( 1024 )
+	trig.SetAboveHeight( 1024 )
+	trig.SetBelowHeight( 1024 )
 	trig.SetOrigin( harvester.GetOrigin() )
 	trig.kv.triggerFilterNpc = "none"
 	trig.kv.triggerFilterPlayer = "all"

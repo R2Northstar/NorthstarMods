@@ -24,7 +24,7 @@ npc_titan_stryder_sniper_boss_fd_elite
 	primaryCamoIndex 31
 	primarySkinIndex 1
 	
-	titanCamoIndex -1
-	titanDecalIndex 12
-	titanSkinIndex 1
+	titanCamoIndex 31
+	titanDecalIndex 0
+	titanSkinIndex 2
 }
