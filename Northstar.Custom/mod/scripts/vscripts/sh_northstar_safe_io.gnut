@@ -35,11 +35,27 @@ void function NSHandleLoadResult( int handle, bool success, string result )
     if (success)
     {
         if (isJSONRequest)
-            pendingJSONCallbacks[handle](DecodeJSON(result))
+        {
+            try
+            {
+                table result = DecodeJSON(result, true)
+                pendingJSONCallbacks[handle](result)
+            }
+            catch (ex)
+            {
+                print(ex)
+                // parsing failed, setting 'success' to false, since we
+                // consider this a failure.
+                success = false
+            }
+        }
         else
+        {
             pendingCallbacks[handle](result)
+        }
     }
-    else
+    // don't use 'else', json might fail parsing and set 'success' to false.
+    if (!success)
     {
         if (hasFailedCallback)
             failedCallbacks[handle]()
