@@ -126,7 +126,7 @@ Premi Sì se sei d'accordo. Questa scelta può essere modificata in qualsiasi mo
 
 		"PL_sns", "Sticks and Stones"
 		"PL_sns_lobby", "Sticks and Stones Lobby"
-		"PL_sns_desc", "Tutti contro Tutti, Usa la Pulse Blade e le Esecuzioni per Resettare il Puntegio Nemico"
+		"PL_sns_desc", "Tutti contro Tutti, Usa la Pulse Blade e le Esecuzioni per Resettare il Punteggio Nemico"
 		"PL_sns_abbr", "SNS"
 		"GAMEMODE_SNS", "Sticks and Stones"
 		"SCOREBOARD_BANKRUPTS", "Uccisioni Bancarotta"
