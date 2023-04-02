@@ -102,7 +102,12 @@ global enum FD_IncomingWarnings
 	MediumWave,
 	HeavyWave,
 	NoMoreTitansInWave,
-	ArcTitanAlt
+	ArcTitanAlt,
+	ComboNukeMortar,
+	ComboArcMortar,
+	ComboArcNuke,
+	ComboNukeCloak,
+	ComboNukeTrain
 }
 
 global enum FD_TitanType
@@ -787,6 +792,26 @@ WaveEvent function CreateWarningEvent( int warningType, int nextEventIndex, int 
 		
 		case FD_IncomingWarnings.ArcTitanAlt:
 		event.soundEvent.soundEventName = "fd_nagKillTitanEMP"
+		break
+		
+		case FD_IncomingWarnings.ComboNukeMortar:
+		event.soundEvent.soundEventName = "fd_waveComboNukeMortar"
+		break
+		
+		case FD_IncomingWarnings.ComboArcMortar:
+		event.soundEvent.soundEventName = "fd_waveComboArcMortar"
+		break
+		
+		case FD_IncomingWarnings.ComboArcNuke:
+		event.soundEvent.soundEventName = "fd_waveComboArcNuke"
+		break
+		
+		case FD_IncomingWarnings.ComboNukeCloak:
+		event.soundEvent.soundEventName = "fd_waveComboNukeCloak"
+		break
+		
+		case FD_IncomingWarnings.ComboNukeTrain:
+		event.soundEvent.soundEventName = "fd_waveComboNukeTrain"
 		break
 	}
 	
@@ -1661,8 +1686,11 @@ void function SpawnTick( SmokeEvent smokeEvent, SpawnEvent spawnEvent, FlowContr
 	
 	waitthread LaunchAnimDropPod( pod, "pod_testpath", spawnEvent.origin, < 0, RandomIntRange( 0, 359 ), 0 > )
 	ActivateFireteamDropPod( pod, guys )
-	foreach( npc in guys )
-		thread singleNav_thread( npc, spawnEvent.route )
+	foreach( guy in guys )
+	{
+		guy.Anim_Stop() //Intentionally cancel the Drop Pod exiting animation for Ticks because it doesnt work for them
+		thread singleNav_thread( guy, spawnEvent.route )
+	}
 }
 
 

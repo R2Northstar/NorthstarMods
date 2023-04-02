@@ -18,6 +18,9 @@ npc_titan_stryder_sniper_boss_fd_elite
 	aggressiveCombatTotalHealthDiffPct 	0
 	aggresiveCombatHealthChangeRateDiff	-100
 	
+	waitBetweenWeaponBurst			0
+	resetBurstOnStopShootOverlay	1
+	
 	dodgePeriod					2
 	maxDodgePerPeriod			4
 	

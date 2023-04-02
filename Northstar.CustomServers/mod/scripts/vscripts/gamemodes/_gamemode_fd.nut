@@ -428,6 +428,12 @@ void function OnTickDeath( entity victim, var damageInfo )
 
 void function OnTickSpawn( entity tick )
 {
+	thread TickSpawnThreaded( tick )
+}
+
+void function TickSpawnThreaded( entity tick )
+{
+	WaitFrame()
 	if( GetGameState() != eGameState.Playing || !IsHarvesterAlive( fd_harvester.harvester ) || tick.GetParent() ) //Parented Ticks are Drop Pod ones, and those are handled by the function there itself
 		return
 		
@@ -1533,8 +1539,7 @@ void function FD_NPCCleanup()
 		entity BossPlayer = npc.GetBossPlayer()
 		if( IsValidPlayer( BossPlayer ) && !file.players[ BossPlayer ].deployedEntityThisRound.contains( npc ) )
 			continue
-
-		if ( IsValid( npc ) )
+		else if ( IsValid( npc ) )
 			npc.Destroy()
 	}
 	if( IsValid( fd_harvester.harvester ) )

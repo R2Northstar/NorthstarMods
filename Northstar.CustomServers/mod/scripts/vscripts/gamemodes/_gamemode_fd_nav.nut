@@ -6,7 +6,7 @@ global function Dev_MarkRoute
 
 
 
-void function singleNav_thread( entity npc, string routeName, int nodesToSkip= 0, float nextDistance = -1.0, bool shouldLoop = false )
+void function singleNav_thread( entity npc, string routeName, int nodesToSkip= 1, float nextDistance = -1.0, bool shouldLoop = false )
 {
 	npc.EndSignal( "OnDeath" )
 	npc.EndSignal( "OnDestroy" )
@@ -95,7 +95,7 @@ void function singleNav_thread( entity npc, string routeName, int nodesToSkip= 0
 
 	if ( ( npc.GetClassName() == "npc_frag_drone" || npc.GetClassName() == "npc_stalker" ) && IsHarvesterAlive( fd_harvester.harvester ) )
 	{
-		npc.AssaultPointClamped( fd_harvester.harvester.GetOrigin() + < 0, 0, 8> )
+		npc.AssaultPointClamped( fd_harvester.harvester.GetOrigin() + < 0, 0, 16 > )
 		npc.AssaultSetGoalRadius( 64 )
 	}
 
