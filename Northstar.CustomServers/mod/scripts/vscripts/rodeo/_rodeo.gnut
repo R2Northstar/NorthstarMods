@@ -181,7 +181,7 @@ function PlayerBeginsNPCRodeo( entity player, RodeoPackageStruct rodeoPackage, e
 				if ( IsAlive( player ) )
 				{
 					vector startPos
-					if( IsValid( newRodeoTitan ) )
+					if( IsValid( newRodeoTarget ) )
 					{
 						int attachIndex = newRodeoTarget.LookupAttachment( rodeoPackage.attachPoint )
 						startPos = newRodeoTarget.GetAttachmentOrigin( attachIndex )
