@@ -13,9 +13,11 @@ enum PanelType
 	INVALID_MOD_HEADER,
 }
 
-struct ModPanelData {
+struct ModPanelData
+{
 	string name = ""
 	string version = ""
+	string ornull description = null // description is not null for invalid mods
 	string link = ""
 	int loadPriority = 0
 	bool enabled = false
@@ -42,6 +44,7 @@ struct {
 } mouseDeltaBuffer
 
 struct {
+	table<string, ModPanelData> nameToMod
 	array<PanelContent> mods
 	var menu
 	array<var> panels
@@ -159,7 +162,6 @@ void function OnModMenuOpened()
 {
 	file.enabledMods = GetEnabledModsArray() // used to check if mods should be reloaded
 
-	UpdateList()
 	UpdateListSliderHeight()
 	UpdateListSliderPosition()
 
@@ -200,9 +202,11 @@ void function OnModButtonFocused( var button )
 	string modName = file.lastMod.name
 	var rui = Hud_GetRui( Hud_GetChild( file.menu, "LabelDetails" ) )
 
+	ModPanelData m = file.nameToMod[ modName ]
+
 	RuiSetGameTime( rui, "startTime", -99999.99 ) // make sure it skips the whole animation for showing this
 	RuiSetString( rui, "headerText", modName )
-	RuiSetString( rui, "messageText", FormatModDescription( modName ) )
+	RuiSetString( rui, "messageText", m.description == null ? FormatModDescription( modName ) : expect string( m.description ) ) // create description for valid mods
 
 	// Add a button to open the link with if required
 	string ornull link = NSGetModDownloadLinkByModName( modName )
@@ -291,7 +295,10 @@ void function OnHideConVarsChange( var n )
 	if ( modName == "" )
 		return
 	var rui = Hud_GetRui( Hud_GetChild( file.menu, "LabelDetails" ) )
-	RuiSetString( rui, "messageText", FormatModDescription( modName ) )
+
+	ModPanelData m = file.nameToMod[ modName ]
+
+	RuiSetString( rui, "messageText", m.description == null ? FormatModDescription( modName ) : expect string( m.description ) )
 }
 
 // LIST LOGIC
@@ -349,7 +356,7 @@ void function UpdateList()
 {
 	HideAllPanels()
 	file.mods.clear()
-	array<string> invalidMods = NSGetInvalidMods()
+	array< table< string, string > > invalidMods = NSGetInvalidMods()
 	if( invalidMods.len() )
 		AddInvalidMods( invalidMods )
 
@@ -357,7 +364,7 @@ void function UpdateList()
 	DisplayModPanels()
 }
 
-void function AddInvalidMods( array<string> invalidMods )
+void function AddInvalidMods( array< table< string, string > > invalidMods )
 {
 	PanelContent c = { isHeader = true, type = PanelType.INVALID_MOD_HEADER, ... }
 	c.mod.name = string( invalidMods.len() )
@@ -366,12 +373,14 @@ void function AddInvalidMods( array<string> invalidMods )
 	foreach( invalidMod in invalidMods )
 	{
 		ModPanelData m
-		m.name = invalidMod
+		m.name = invalidMod.name
+		m.description = Localize( "#INCORRECT_MOD_INSTALL_DESCRIPTION", invalidMod.path )
 
 		PanelContent c = { type = PanelType.INVALID_MOD, ... }
 		c.mod = m
 
 		file.mods.append( c )
+		file.nameToMod[invalidMod.name] <- m
 	}
 }
 
@@ -442,6 +451,7 @@ void function RefreshMods()
 		c.mod = m
 
 		file.mods.append( c )
+		file.nameToMod[mod] <- m
 	}
 }
 
@@ -620,7 +630,7 @@ string function FormatModDescription( string modName )
 	else // optimally should store if a mod is invalid in the struct instead of going by mod names not found, but this is alredy a big pile of spaghetti code so I can't be bothered
 	{
 		// If a mod is named e.g. "R2Northstar/mods/FunnyMod" and another mod is incorrectly installed under that path, the "you installed incorrect bla bla" will not show up, but the mods' description
-		return Localize( "#INCORRECT_MOD_INSTALL_DESCRIPTION" )
+		return Localize( "#INCORRECT_MOD_INSTALL_DESCRIPTION_DEFAULT" )
 	}
 
 	unreachable

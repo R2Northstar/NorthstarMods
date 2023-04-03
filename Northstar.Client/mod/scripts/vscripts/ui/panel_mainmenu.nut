@@ -201,7 +201,7 @@ void function ShowInvalidModsHint()
 {
 	wait 1.0 // wait a bit before showing the warning to give UI a chance to not lag / load
 
-	array<string> invalidMods = NSGetInvalidMods()
+	array< table< string, string > > invalidMods = NSGetInvalidMods()
 	if( !invalidMods.len() )
 		return
 	var panel = Hud_GetChild( file.panel, "NSInvalidModsHint" )
