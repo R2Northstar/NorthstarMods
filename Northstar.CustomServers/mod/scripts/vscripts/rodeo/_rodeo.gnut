@@ -180,14 +180,22 @@ function PlayerBeginsNPCRodeo( entity player, RodeoPackageStruct rodeoPackage, e
 
 				if ( IsAlive( player ) )
 				{
-					int attachIndex = newRodeoTarget.LookupAttachment( rodeoPackage.attachPoint )
-					vector startPos = newRodeoTarget.GetAttachmentOrigin( attachIndex )
-
-					if ( !PlayerCanTeleportHere( player, startPos, newRodeoTarget ) )
+					vector startPos
+					if( IsValid( newRodeoTitan ) )
 					{
-						startPos = newRodeoTarget.GetOrigin()
+						int attachIndex = newRodeoTarget.LookupAttachment( rodeoPackage.attachPoint )
+						startPos = newRodeoTarget.GetAttachmentOrigin( attachIndex )
+
 						if ( !PlayerCanTeleportHere( player, startPos, newRodeoTarget ) )
-							startPos = player.GetOrigin()
+						{
+							startPos = newRodeoTarget.GetOrigin()
+							if ( !PlayerCanTeleportHere( player, startPos, newRodeoTarget ) )
+								startPos = player.GetOrigin()
+						}
+					}
+					else
+					{
+						startPos = player.GetOrigin()
 					}
 
 					thread PlayerJumpsOffRodeoTarget( player, newRodeoTarget, startPos )
