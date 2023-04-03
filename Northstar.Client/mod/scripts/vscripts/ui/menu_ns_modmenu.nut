@@ -364,6 +364,15 @@ void function UpdateList()
 	DisplayModPanels()
 }
 
+int function FindLast(string s, int c)
+{
+	int index = -1
+	foreach( int i, sc in s )
+		if( sc == c )
+			index = i
+	return index
+}
+
 void function AddInvalidMods( array< table< string, string > > invalidMods )
 {
 	PanelContent c = { isHeader = true, type = PanelType.INVALID_MOD_HEADER, ... }
@@ -374,7 +383,7 @@ void function AddInvalidMods( array< table< string, string > > invalidMods )
 	{
 		ModPanelData m
 		m.name = invalidMod.name
-		m.description = Localize( "#INCORRECT_MOD_INSTALL_DESCRIPTION", invalidMod.path )
+		m.description = Localize( "#INCORRECT_MOD_INSTALL_DESCRIPTION", format("R2Northstar/mods%s", invalidMod.path.slice( FindLast( invalidMod.path, '/' ) ) ), invalidMod.path )
 
 		PanelContent c = { type = PanelType.INVALID_MOD, ... }
 		c.mod = m

@@ -325,7 +325,7 @@ Press Yes if you agree to this. This choice can be changed in the mods menu at a
 		// Incorrect Mod Installation
 		"INCORRECT_MOD_INSTALL_TOAST"		"Some of your mods are incorrectly installed. Click here for more info."
 		"INCORRECT_MODS_MODLIST_HEADER"		"Incorrectly Installed Mods (%s1)"
-		"INCORRECT_MOD_INSTALL_DESCRIPTION"	"This mod is incorrectly installed. Every mod has a file called \"mod.json\" in it's root directory, however for this mod it was not found in the correct location.\nPossible reasons\n - Mods manually downloaded from thunderstore are wrapped in another folder.\n - The mod is badly formatted by the author\n\nThe mod is found at this location:\n%s1\nMove this folder into the \"mods\" folder of your profile, usually \"R2Northstar\""
+		"INCORRECT_MOD_INSTALL_DESCRIPTION"	"This mod is incorrectly installed. Every mod has a file called \"mod.json\" in its root directory, however for this mod it was not found.\n\nExpected location: %s1\nFound location: %s2\n\nMake sure both mod.json file and mod directory are direct children of your mod folder."
 		"INCORRECT_MOD_INSTALL_DESCRIPTION_DEFAULT" "This mod is incorrectly installed.\nAn error occured while determining details for this description please open a ticket on Discord or an issue on GitHub."
 	}
 }
