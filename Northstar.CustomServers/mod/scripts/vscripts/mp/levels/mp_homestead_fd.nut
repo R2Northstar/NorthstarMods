@@ -3,7 +3,7 @@ void function initFrontierDefenseData()
 {
     shopPosition = < -800.156, -4250, -63 >
     shopAngles = < 9, 60, 0 >
-	FD_spawnPosition = < 1274, -3722, -128 >
+	FD_spawnPosition = < -1827, -4105, -64 >
 	FD_spawnAngles =  < 0, 60, 0 >
 	FD_groundspawnPosition = < -1507, -3346, -128 >
 	FD_groundspawnAngles = < 0, 45, 0 >

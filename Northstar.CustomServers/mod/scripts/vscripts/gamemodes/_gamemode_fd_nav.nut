@@ -81,6 +81,7 @@ void function singleNav_thread( entity npc, string routeName, int nodesToSkip= 1
 	else
 		npc.AssaultSetFightRadius( 0 )
 	
+	int FailCount = 0
 	while ( targetNode != null )
 	{
 		if( !IsHarvesterAlive( fd_harvester.harvester ) )
@@ -100,6 +101,21 @@ void function singleNav_thread( entity npc, string routeName, int nodesToSkip= 1
 	}
 
 	npc.Signal( "FD_ReachedHarvester" )
+	
+	while ( IsAlive( npc ) && !npc.IsTitan() ) //Track if AI is properly pathing, otherwise after one minute, it will suicide to prevent softlocking
+	{
+		table result = npc.WaitSignal( "OnSeeEnemy", "OnFinishedAssault", "OnEnterGoalRadius", "OnFailedToPath" )
+		if( result.signal == "OnFailedToPath" )
+		{
+			if( FailCount == 60 )
+				npc.Die()
+			FailCount++
+		}
+		else
+			FailCount = 0
+
+		wait 1
+	}
 }
 
 void function SquadNav_Thread( array<entity> npcs, string routeName, int nodesToSkip = 0, float nextDistance = 64.0 )

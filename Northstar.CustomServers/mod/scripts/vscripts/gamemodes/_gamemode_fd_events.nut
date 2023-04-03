@@ -189,7 +189,7 @@ void function KillLooseTicksFromReapers()
 	foreach (entity tick in GetEntArrayByClass_Expensive( "npc_frag_drone" ) )
 	{
 		if ( IsAlive( tick ) )
-			tick.Die()
+			tick.Destroy()
 	}
 }
 
@@ -883,7 +883,7 @@ void function PlayWarning( SmokeEvent smokeEvent, SpawnEvent spawnEvent, FlowCon
 
 void function spawnSmoke( SmokeEvent smokeEvent, SpawnEvent spawnEvent, FlowControlEvent flowControlEvent, SoundEvent soundEvent )
 {
-	printt( "smoke" )
+	printt( "Spawning Smoke" )
 	SmokescreenStruct smokescreen
 	smokescreen.smokescreenFX = $"P_smokescreen_FD"
 	smokescreen.isElectric = false
@@ -892,8 +892,14 @@ void function spawnSmoke( SmokeEvent smokeEvent, SpawnEvent spawnEvent, FlowCont
 	smokescreen.lifetime = smokeEvent.lifetime
 	smokescreen.fxXYRadius = 150
 	smokescreen.fxZRadius = 120
+	smokescreen.deploySound1p = "SmokeWall_Activate"
+	smokescreen.deploySound3p = "SmokeWall_Activate"
+	smokescreen.stopSound1p = "SmokeWall_Stop"
+	smokescreen.stopSound3p = "SmokeWall_Stop"
 	smokescreen.fxOffsets = [ < 130.0, 0.0, 0.0 >, < 0.0, 130.0, 0.0 >, < 0.0, 0.0, 0.0 >, < 0.0, -130.0, 0.0 >, < -130.0, 0.0, 0.0 >, < 0.0, 100.0, 0.0 > ]
-
+	
+	EmitSoundAtPosition( TEAM_UNASSIGNED, smokeEvent.position, "SmokeWall_Launch" )
+	wait 0.6
 	Smokescreen(smokescreen)
 }
 
@@ -1130,16 +1136,9 @@ void function spawnGruntDropship( SmokeEvent smokeEvent, SpawnEvent spawnEvent, 
 	
 	SpawnPointFP spawnPoint
 	array<string> anims = GetRandomDropshipDropoffAnims()
-	string animation
 	FlightPath flightPath
 	
-	foreach ( anim in anims )
-	{
-		animation = anim
-		flightPath = GetAnalysisForModel( DROPSHIP_MODEL, anims[1] )
-	}
-	
-	flightPath = GetAnalysisForModel( DROPSHIP_MODEL, anims[1] )
+	flightPath = GetAnalysisForModel( DROPSHIP_MODEL, anims[0] )
 	entity ref = CreateScriptRef()
 	ref.SetOrigin( origin )
 	ref.SetAngles( < 0, yaw, 0 > )
@@ -1151,7 +1150,7 @@ void function spawnGruntDropship( SmokeEvent smokeEvent, SpawnEvent spawnEvent, 
 	dropTable.valid = true
 	
 	asset model = GetFlightPathModel( "fp_crow_model" )
-	waitthread WarpinEffect( model, anims[1], ref.GetOrigin(), ref.GetAngles() )
+	waitthread WarpinEffect( model, anims[0], ref.GetOrigin(), ref.GetAngles() )
 	entity dropship = CreateDropship( team, ref.GetOrigin(), ref.GetAngles() )
 	SetSpawnOption_SquadName( dropship, squadname )
 	dropship.kv.solid = SOLID_VPHYSICS
@@ -1217,7 +1216,7 @@ void function spawnGruntDropship( SmokeEvent smokeEvent, SpawnEvent spawnEvent, 
 	dropship.Hide()
 	EmitSoundOnEntity( dropship, dropshipSound )
 	thread ShowDropship( dropship )
-	thread PlayAnimTeleport( dropship, anims[1], ref, 0 )
+	thread PlayAnimTeleport( dropship, anims[0], ref, 0 )
 	ArrayRemoveDead( guys )
 	wait 12
 	foreach( guy in guys )

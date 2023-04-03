@@ -4,7 +4,7 @@ global function initFrontierDefenseData
 void function initFrontierDefenseData()
 {
     shopPosition = < -5165.42, -679.285, 384.031 > //only aproximate position
-	FD_spawnPosition = < -5435, -1106, 1105 >
+	FD_spawnPosition = < -5286, -1106, 1105 >
 	FD_spawnAngles = < 0, 20, 0 >
 	FD_groundspawnPosition = < -5301, -1111, 385 >
 	FD_groundspawnAngles = < 0, 45, 0 >
@@ -425,7 +425,7 @@ void function initFrontierDefenseData()
     wave4.append(CreateWaitUntilAliveEvent(0,index++))
     wave4.append(CreateSpawnDroneEvent(< 74.639198 , -2204.379883 , 6552.459961 >,< 0.004999 , -175.953003 , 0.000004 >,"",index++))
     wave4.append(CreateWaitForTimeEvent(0.9000244,index++))
-    wave4.append(CreateWarningEvent( FD_IncomingWarnings.ArcTitan, index++ ))
+    wave4.append(CreateWarningEvent( FD_IncomingWarnings.ArcTitanAlt, index++ ))
     wave4.append(CreateArcTitanEvent(< 2716.030029 , 2445.219971 , 17.687500 >,< 0.000000 , -90.000000 , 0.000000 >,"",index++))
     wave4.append(CreateWaitForTimeEvent(1.5,index++))
     wave4.append(CreateArcTitanEvent(< 3321.659912 , 3089.750000 , 53.437500 >,< 0.000000 , -90.000000 , 0.000000 >,"",index++))
