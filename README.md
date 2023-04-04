@@ -15,9 +15,10 @@ Branch made to expand Frontier Defense feature set by adding back cut content wh
 - Aside from Forwardbase Kodai, Homestead and Rise, all other maps works with custom wave data, Colony, Glitch and Boomtown included
 - During wave break time, players do not respawn on dropship, neither new connecting players
 - Reapers will deploy ticks, despite them still not being able to parkour through the map, they still pose a high threat
+- Like in vanilla, Titan selection menu now only appears on match start, and players can still select another Titan during the entirety of Wave 1, after that, Titans selection locks and Wave Restarts does not bring the Titan selection menu anymore
 - Fixes Autotitans not having overlay on them to see them through walls
 - Fixes Offline turrets not having their yellow overlay
-- Fixes the problem with players not getting instant full Titan Meter upon wave restart
+- Fixes the problem with players not getting instant full Titan Meter upon wave restart as vanilla does
 - Fixes Grunts not being able to use their Anti-Titan weaponry
 
 ## Titanfall Block and Elite Titan Events
