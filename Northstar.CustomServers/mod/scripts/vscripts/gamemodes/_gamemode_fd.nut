@@ -370,6 +370,30 @@ void function GamemodeFD_InitPlayer( entity player )
 	// unfortunate that i cant seem to find a nice callback for them exiting that menu but thisll have to do
 	thread TryDisableTitanSelectionForPlayerAfterDelay( player, TEAM_TITAN_SELECT_DURATION_MIDGAME )
 	thread TrackDeployedArcTrapThisRound( player )
+	
+	//Disable all Tutorial hints because they're pretty annoying since they should appear only once
+	SetPersistenceBitfield( player, "fdTutorialBits", eFDTutorials.HARVESTER, -1 )
+	SetPersistenceBitfield( player, "fdTutorialBits", eFDTutorials.ARC_TRAP, -1 )
+	SetPersistenceBitfield( player, "fdTutorialBits", eFDTutorials.SENTRY_TURRET, -1 )
+	SetPersistenceBitfield( player, "fdTutorialBits", eFDTutorials.CORE_OVERLOAD, -1 )
+	SetPersistenceBitfield( player, "fdTutorialBits", eFDTutorials.WAVE_BREAK, -1 )
+	SetPersistenceBitfield( player, "fdTutorialBits", eFDTutorials.HARVESTER, -1 )
+	SetPersistenceBitfield( player, "fdTutorialBits", eFDTutorials.AI_TITAN_ARC, -1 )
+	SetPersistenceBitfield( player, "fdTutorialBits", eFDTutorials.AI_TITAN_MORTAR, -1 )
+	SetPersistenceBitfield( player, "fdTutorialBits", eFDTutorials.AI_TITAN_NUKE, -1 )
+	SetPersistenceBitfield( player, "fdTutorialBits", eFDTutorials.AI_GRUNT, -1 )
+	SetPersistenceBitfield( player, "fdTutorialBits", eFDTutorials.AI_SPECTRE_MORTAR, -1 )
+	SetPersistenceBitfield( player, "fdTutorialBits", eFDTutorials.AI_STALKER, -1 )
+	SetPersistenceBitfield( player, "fdTutorialBits", eFDTutorials.AI_REAPER, -1 )
+	SetPersistenceBitfield( player, "fdTutorialBits", eFDTutorials.AI_DRONE, -1 )
+	SetPersistenceBitfield( player, "fdTutorialBits", eFDTutorials.AI_DRONE_CLOAK, -1 )
+	SetPersistenceBitfield( player, "fdTutorialBits", eFDTutorials.AI_TICK, -1 )
+	SetPersistenceBitfield( player, "fdTutorialBits", eFDTutorials.BOOST_STORE_INTRO, -1 )
+	SetPersistenceBitfield( player, "fdTutorialBits", eFDTutorials.TEAM_RESERVE, -1 )
+	SetPersistenceBitfield( player, "fdTutorialBits", eFDTutorials.FRONTIER_DEFENSE, -1 )
+	SetPersistenceBitfield( player, "fdTutorialBits", eFDTutorials.HARD_DIFFICULTY, -1 )
+	SetPersistenceBitfield( player, "fdTutorialBits", eFDTutorials.MASTER_DIFFICULTY, -1 )
+	SetPersistenceBitfield( player, "fdTutorialBits", eFDTutorials.INSANE_DIFFICULTY, -1 )
 }
 
 void function TrackDeployedArcTrapThisRound( entity player )
@@ -940,13 +964,13 @@ bool function runWave( int waveIndex, bool shouldDoBuyTime )
 		spawnedNPCs = [] // reset npcs count
 		restetWaveEvents()
 		SetPlayerDeathsHidden( true )
-		wait 5
+		wait 5.9
 		
 		/* Ayylmao kill the player to prevent server crash because the Titan selection menu needs to be disabled after Wave 1 for Wave Restarts, and that causes
 		a crash on transition if any player is using a Titan. Until a better solution is found, this extremely horrible method will do */
 		foreach( entity player in GetPlayerArray() )
 		{
-			if ( IsAlive( player ) )
+			if ( IsAlive( player ) && !player.GetParent() )
 				player.Die()
 		}
 		

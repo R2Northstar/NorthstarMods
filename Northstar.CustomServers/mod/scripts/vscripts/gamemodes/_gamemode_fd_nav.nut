@@ -19,32 +19,7 @@ void function singleNav_thread( entity npc, string routeName, int nodesToSkip= 1
 		nextDistance = npc.GetMinGoalRadius()
 
 	npc.AssaultSetGoalHeight( 512 )
-	/*array<entity> routeArray = getRoute(routeName)
-	WaitFrame()//so other code setting up what happens on signals is run before this
-	if(routeArray.len()==0)
-	{
-		npc.Signal("OnFailedToPath")
-		return
-	}
-	int skippedNodes = 0
-	foreach(entity node in routeArray)
-	{
-		if(!IsHarvesterAlive(fd_harvester.harvester))
-			return
-		if(skippedNodes < nodesToSkip)
-		{
-			skippedNodes++
-			continue
-		}
-		npc.AssaultPointClamped( node.GetOrigin() )
-		npc.AssaultSetGoalRadius( 50 )
-		int i = 0
-		table result = npc.WaitSignal("OnFinishedAssault","OnFailedToPath")
-		if(result.signal == "OnFailedToPath")
-			break
-	}*/
 
-	// NEW STUFF
 	WaitFrame() // so other code setting up what happens on signals is run before this
 
 	entity targetNode

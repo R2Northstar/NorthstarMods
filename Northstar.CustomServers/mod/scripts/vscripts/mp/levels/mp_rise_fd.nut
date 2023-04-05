@@ -4,7 +4,7 @@ global function initFrontierDefenseData
 void function initFrontierDefenseData()
 {
     shopPosition = < -5165.42, -679.285, 384.031 > //only aproximate position
-	FD_spawnPosition = < -5286, -1106, 1105 >
+	FD_spawnPosition = < -5065, -838, 1105 >
 	FD_spawnAngles = < 0, 20, 0 >
 	FD_groundspawnPosition = < -5301, -1111, 385 >
 	FD_groundspawnAngles = < 0, 45, 0 >
@@ -29,7 +29,7 @@ void function initFrontierDefenseData()
     wave1.append(CreateWaitForTimeEvent(5.0,index++))
     wave1.append(CreateDroppodStalkerEvent(< -3218.719971 , -1766.530029 , 391.500000 >,"",index++))
     wave1.append(CreateWaitForTimeEvent(5.0,index++))
-    wave1.append(CreateSuperSpectreEventWithMinion(< 2611.629883 , 78.937500 , 197.813004 >,< 0.000000 , -168.794006 , 0.000000 >,"",index++))
+    wave1.append(CreateSuperSpectreEvent(< 2611.629883 , 78.937500 , 197.813004 >,< 0.000000 , -168.794006 , 0.000000 >,"",index++))
     wave1.append(CreateWaitForTimeEvent(5.0,index++))
     wave1.append(CreateWaitUntilAliveEvent(6,index++))
     wave1.append(CreateDroppodGruntEvent(< -3218.719971 , -1766.530029 , 391.500000 >,"",index++))
