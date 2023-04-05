@@ -964,13 +964,13 @@ bool function runWave( int waveIndex, bool shouldDoBuyTime )
 		spawnedNPCs = [] // reset npcs count
 		restetWaveEvents()
 		SetPlayerDeathsHidden( true )
-		wait 5.9
+		wait 5
 		
 		/* Ayylmao kill the player to prevent server crash because the Titan selection menu needs to be disabled after Wave 1 for Wave Restarts, and that causes
 		a crash on transition if any player is using a Titan. Until a better solution is found, this extremely horrible method will do */
 		foreach( entity player in GetPlayerArray() )
 		{
-			if ( IsAlive( player ) && !player.GetParent() )
+			if ( IsAlive( player ) )
 				player.Die()
 		}
 		
