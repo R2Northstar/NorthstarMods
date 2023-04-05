@@ -603,6 +603,8 @@ void function SetModMenuNameText( var button )
 		Hud_SetVisible( enumButton, false )
 		Hud_SetVisible( resetButton, true )
 		Hud_SetVisible( resetVGUI, true )
+
+		Hud_SetSize( resetButton, int( scaleX * 90 ), int( scaleY * 40 ) )
 	}
 	else {
 		Hud_SetVisible( slider, conVar.sliderEnabled )
