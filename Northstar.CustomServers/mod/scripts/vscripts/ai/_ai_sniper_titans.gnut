@@ -168,6 +168,9 @@ void function EnemyChanged( entity titan)
 
 function SniperTitanAttack( entity titan, entity target )
 {
+	if( !IsValid( target ) )
+		return
+
 	titan.EndSignal( "OnSyncedMeleeVictim" )
 	titan.EndSignal( "OnDeath" )
 	titan.EndSignal( "OnDestroy" )

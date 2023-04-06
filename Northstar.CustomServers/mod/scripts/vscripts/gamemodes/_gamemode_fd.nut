@@ -992,6 +992,12 @@ bool function runWave( int waveIndex, bool shouldDoBuyTime )
 		highestScore = 0;
 		highestScore_player = GetPlayerArray()[0]
 	}
+	else
+	{
+		SetRoundBased( false )
+		SetWinner( TEAM_MILITIA )
+		return true
+	}
 	foreach( entity player in GetPlayerArray() )
 	{
 		if( highestScore < ( file.players[player].assaultScoreThisRound + file.players[player].defenseScoreThisRound ) )
@@ -1338,7 +1344,7 @@ void function OnHarvesterDamaged( entity harvester, var damageInfo )
 		if( healthpercent <= 10 )
 			PlayFactionDialogueToTeam( "fd_baseLowHealth", TEAM_MILITIA )
 
-		if( newHealth <= 0 )
+		if( newHealth < 1 )
 		{
 			EmitSoundAtPosition( TEAM_UNASSIGNED, fd_harvester.harvester.GetOrigin(), "coop_generator_destroyed" )
 			newHealth = 1
