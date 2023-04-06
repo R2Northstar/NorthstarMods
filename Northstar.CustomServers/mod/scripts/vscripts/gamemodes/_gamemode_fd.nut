@@ -1344,7 +1344,7 @@ void function OnHarvesterDamaged( entity harvester, var damageInfo )
 		if( healthpercent <= 10 )
 			PlayFactionDialogueToTeam( "fd_baseLowHealth", TEAM_MILITIA )
 
-		if( newHealth < 1 )
+		if( newHealth <= 0 )
 		{
 			EmitSoundAtPosition( TEAM_UNASSIGNED, fd_harvester.harvester.GetOrigin(), "coop_generator_destroyed" )
 			newHealth = 1
@@ -1362,6 +1362,22 @@ void function OnHarvesterDamaged( entity harvester, var damageInfo )
 
 	if ( attacker.IsPlayer() )
 		attacker.NotifyDidDamage( harvester, DamageInfo_GetHitBox( damageInfo ), DamageInfo_GetDamagePosition( damageInfo ), DamageInfo_GetCustomDamageType( damageInfo ), DamageInfo_GetDamage( damageInfo ), DamageInfo_GetDamageFlags( damageInfo ), DamageInfo_GetHitGroup( damageInfo ), DamageInfo_GetWeapon( damageInfo ), DamageInfo_GetDistFromAttackOrigin( damageInfo ) )
+}
+
+void function OnPostHarvesterDamaged( entity harvester, var damageInfo )
+{
+	if ( !IsValid( harvester ) )
+		return
+
+	if( fd_harvester.harvester != harvester )
+		return
+
+	float damageAmount = DamageInfo_GetDamage( damageInfo )
+	if( harvester.GetHealth() - damageAmount <= 0 )
+	{
+		harvester.SetHealth( 1 )
+		DamageInfo_SetDamage( damageInfo, 0.0 )
+	}
 }
 
 void function FD_NPCCleanup()
@@ -1601,6 +1617,7 @@ void function FD_createHarvester()
 	fd_harvester.harvester.Minimap_SetZOrder( MINIMAP_Z_OBJECT )
 	fd_harvester.harvester.Minimap_SetCustomState( eMinimapObject_prop_script.FD_HARVESTER )
 	AddEntityCallback_OnDamaged( fd_harvester.harvester, OnHarvesterDamaged )
+	AddEntityCallback_OnPostDamaged( fd_harvester.harvester, OnPostHarvesterDamaged )
 	thread CreateHarvesterHintTrigger( fd_harvester.harvester )
 }
 
