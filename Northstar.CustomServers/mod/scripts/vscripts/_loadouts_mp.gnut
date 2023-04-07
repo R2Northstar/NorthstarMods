@@ -38,6 +38,8 @@ void function SvLoadoutsMP_Init()
 	
 	// modified
 	RegisterSignal( "WaitingForIntroOver" )
+	RegisterSignal( "WaitForPlayerCloseMenu" )
+	RegisterSignal( "LoadoutMenuClosed" )
 
 	AddCallback_OnClientConnected( LoadoutsMPInitPlayer )
 	
@@ -166,8 +168,7 @@ bool function ClientCommandCallback_RequestTitanLoadout( entity player, array<st
 	
 	if ( !IsLobby() )
 	{
-		if( player.IsTitan() || IsValid( player.GetPetTitan() ) ) // player is a titan or their pet titan is in field
-			TryNotifyPlayerOfLoadoutChangeFailed( player, "#LOADOUT_CHANGE_NEXT_TITAN" )
+		thread WaitForPlayerCloseMenuThenNotifyTitanLoadout( player )
 			
 		EarnMeterMP_SetTitanLoadout( player )
 	}
@@ -301,9 +302,9 @@ bool function ClientCommandCallback_LoadoutMenuClosed( entity player, array<stri
 
 bool function ClientCommandCallback_InGameMPMenuClosed( entity player, array<string> args )
 {
-	if ( !TryGivePilotLoadoutForGracePeriod( player ) )
+	if ( player.s.loadoutDirty && !TryGivePilotLoadoutForGracePeriod( player ) )
 		TryNotifyPlayerOfLoadoutChangeFailed( player, "#LOADOUT_CHANGE_NEXT_PILOT" )
-
+	player.Signal( "LoadoutMenuClosed" )
 	return true
 }
 
@@ -359,6 +360,17 @@ void function GiveLoadoutWhenIntroOver( entity player )
 }	
 
 // modified, less annoying notifications
+void function WaitForPlayerCloseMenuThenNotifyTitanLoadout( entity player )
+{
+	player.EndSignal( "OnDestroy" )
+	player.Signal( "WaitForPlayerCloseMenu" )
+	player.EndSignal( "WaitForPlayerCloseMenu" )
+
+	player.WaitSignal( "LoadoutMenuClosed" )
+	if( player.IsTitan() || IsValid( player.GetPetTitan() ) ) // player is a titan or their pet titan is in field
+		TryNotifyPlayerOfLoadoutChangeFailed( player, "#LOADOUT_CHANGE_NEXT_TITAN" )
+}
+
 const float REFUSE_NOTIFICATION_DURATION = 10.0
 
 bool function TryNotifyPlayerOfLoadoutChangeFailed( entity player, string message )
