@@ -17,8 +17,6 @@ global struct sTryGetTitanLoadoutCallbackReturn
 
 typedef TryGetTitanLoadoutCallbackType sTryGetTitanLoadoutCallbackReturn functionref( entity player, TitanLoadoutDef loadout, bool wasChanged )
 
-const float LOADOUT_REFUSED_NOTIFICATION_COOLDOWN = 10.0
-
 struct {
 	bool loadoutGracePeriodEnabled = true
 	bool weaponDropsEnabled = true
@@ -26,8 +24,8 @@ struct {
 	
 	array<entity> dirtyLoadouts
 
-	// modified, less annoying notification
-	array<entity> recentNoticedPlayers
+	// modified, less annoying notifications
+	table<entity, float> playerNotifyAllowedTime
 } file
 
 void function SvLoadoutsMP_Init()
@@ -135,6 +133,9 @@ void function LoadoutsMPInitPlayer( entity player )
 	// these netints are required for callsigns and such to display correctly on other clients
 	player.SetPlayerNetInt( "activeCallingCardIndex", player.GetPersistentVarAsInt( "activeCallingCardIndex" ) )
 	player.SetPlayerNetInt( "activeCallsignIconIndex", player.GetPersistentVarAsInt( "activeCallsignIconIndex" ) )
+
+	// modified, less annoying notifications
+	file.playerNotifyAllowedTime[ player ] <- 0
 }
 
 // loadout clientcommands
@@ -358,24 +359,18 @@ void function GiveLoadoutWhenIntroOver( entity player )
 }	
 
 // modified, less annoying notifications
+const float REFUSE_NOTIFICATION_DURATION = 10.0
+
 bool function TryNotifyPlayerOfLoadoutChangeFailed( entity player, string message )
 {
-	if( !file.recentNoticedPlayers.contains( player ) && IsAlive( player ) ) // only announce if player alive
+	if( Time() > file.playerNotifyAllowedTime[ player ] && IsAlive( player ) ) // only announce if player alive
 	{
 		if( GetGameState() >= eGameState.Playing ) // only announce after game starts
 		{
 			SendHudMessage( player, message, -1, 0.35, 255, 255, 255, 255, 1.0, 3.5, 2.0 ) // like 90% sure this is innacurate lol
-			thread DelayedRemoveNoticeLimit( player )
+			file.playerNotifyAllowedTime[ player ] = Time() + REFUSE_NOTIFICATION_DURATION // set in cooldown
 			return true
 		}
 	}
 	return false
-}
-
-void function DelayedRemoveNoticeLimit( entity player )
-{
-	player.EndSignal( "OnDestroy" )
-	file.recentNoticedPlayers.append( player )
-	wait LOADOUT_REFUSED_NOTIFICATION_COOLDOWN
-	file.recentNoticedPlayers.removebyvalue( player )
 }
