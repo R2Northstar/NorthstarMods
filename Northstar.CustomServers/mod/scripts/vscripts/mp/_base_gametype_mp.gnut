@@ -253,6 +253,7 @@ void function GracePeriodThink_Threaded( entity player )
 	player.EndSignal( "OnDestroy" )
 	player.EndSignal( "OnPrimaryAttack" )
 	player.EndSignal( "OnDeath" )
+	player.EndSignal( "player_embarks_titan" )
 
 	OnThreadEnd(
 		function(): ( player )
