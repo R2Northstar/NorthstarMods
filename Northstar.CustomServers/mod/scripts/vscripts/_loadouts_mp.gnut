@@ -164,7 +164,12 @@ bool function ClientCommandCallback_RequestTitanLoadout( entity player, array<st
 	SetPersistentSpawnLoadoutIndex( player, "titan", args[0].tointeger() )
 	
 	if ( !IsLobby() )
+	{
+		if( player.IsTitan() || IsValid( player.GetPetTitan() ) ) // player is a titan or their pet titan is in field
+			TryNotifyPlayerOfLoadoutChangeFailed( player, "#LOADOUT_CHANGE_NEXT_TITAN" )
+			
 		EarnMeterMP_SetTitanLoadout( player )
+	}
 	
 	return true
 }
@@ -235,13 +240,9 @@ bool function ClientCommandCallback_SetBurnCardPersistenceSlot( entity player, a
 {
 	if ( args.len() != 1 )
 		return true
-	if( GetGameState() >= eGameState.Playing ) // only announce after game starts
+	if( GetGameState() >= eGameState.Playing )
 	{
-		if( !file.recentNoticedPlayers.contains( player ) && IsAlive( player ) ) // only announce if player alive
-		{
-			SendHudMessage( player, "#LOADOUT_CHANGE_NEXT_MATCH", -1, 0.3, 255, 255, 255, 255, 1.0, 5.0, 2.0 ) // "Boost can no longer be changed."
-			thread DelayedRemoveNoticeLimit( player )
-		}
+		TryNotifyPlayerOfLoadoutChangeFailed( player, "#LOADOUT_CHANGE_NEXT_MATCH" )
 		return true
 	}
 	
@@ -299,19 +300,9 @@ bool function ClientCommandCallback_LoadoutMenuClosed( entity player, array<stri
 
 bool function ClientCommandCallback_InGameMPMenuClosed( entity player, array<string> args )
 {
-	if( player.IsTitan() )
-	{
-		if( !file.recentNoticedPlayers.contains( player ) && IsAlive( player ) ) // only announce if player alive
-		{
-			if( GetGameState() >= eGameState.Playing ) // only announce after game starts
-			{
-				SendHudMessage( player, "#LOADOUT_CHANGE_NEXT_TITAN", -1, 0.3, 255, 255, 255, 255, 1.0, 5.0, 2.0 ) // "Titan loadout changes will take effect next Titan spawn."
-				thread DelayedRemoveNoticeLimit( player )
-			}
-		}
-	}
-	else
-		TryGivePilotLoadoutForGracePeriod( player )
+	if ( !TryGivePilotLoadoutForGracePeriod( player ) )
+		TryNotifyPlayerOfLoadoutChangeFailed( player, "#LOADOUT_CHANGE_NEXT_PILOT" )
+
 	return true
 }
 
@@ -326,20 +317,11 @@ void function SetPlayerLoadoutDirty( entity player )
 		player.s.loadoutDirty = true
 }
 
-void function TryGivePilotLoadoutForGracePeriod( entity player )
+bool function TryGivePilotLoadoutForGracePeriod( entity player )
 {
 	if( !file.loadoutGracePeriodEnabled )
-	{
-		if( !file.recentNoticedPlayers.contains( player ) && IsAlive( player ) ) // only announce if player alive
-		{
-			if( GetGameState() >= eGameState.Playing ) // only announce after game starts
-			{
-				SendHudMessage( player, "#LOADOUT_CHANGE_NEXT_PILOT", -1, 0.3, 255, 255, 255, 255, 1.0, 5.0, 2.0 ) // "Pilot loadout changes will take effect next Pilot spawn."
-				thread DelayedRemoveNoticeLimit( player )
-			}
-		}
-		return
-	}
+		return false
+
 	if ( !IsLobby() && IsAlive( player ) && player.s.loadoutDirty && !player.IsTitan() && !player.ContextAction_IsActive() )
 	{
 		player.s.loadoutDirty = false
@@ -349,24 +331,17 @@ void function TryGivePilotLoadoutForGracePeriod( entity player )
 		{
 			thread GiveLoadoutWhenIntroOver( player )
 			player.p.usingLoadoutCrate = false
+			return true
 		}
 		else if( Loadouts_CanGivePilotLoadout( player )  )
 		{
 			Loadouts_TryGivePilotLoadout( player )
 			player.p.usingLoadoutCrate = false
-		}
-		else
-		{
-			if( !file.recentNoticedPlayers.contains( player ) )
-			{
-				if( GetGameState() >= eGameState.Playing ) // only announce after game starts
-				{
-					SendHudMessage( player, "#LOADOUT_CHANGE_NEXT_PILOT", -1, 0.3, 255, 255, 255, 255, 1.0, 5.0, 2.0 ) // "Pilot loadout changes will take effect next Pilot spawn."
-					thread DelayedRemoveNoticeLimit( player )
-				}
-			}
+			return true
 		}
 	}
+
+	return false
 }
 
 void function GiveLoadoutWhenIntroOver( entity player )
@@ -382,7 +357,21 @@ void function GiveLoadoutWhenIntroOver( entity player )
 	Loadouts_TryGivePilotLoadout( player )
 }	
 
-// modified, less annoying notification
+// modified, less annoying notifications
+bool function TryNotifyPlayerOfLoadoutChangeFailed( entity player, string message )
+{
+	if( !file.recentNoticedPlayers.contains( player ) && IsAlive( player ) ) // only announce if player alive
+	{
+		if( GetGameState() >= eGameState.Playing ) // only announce after game starts
+		{
+			SendHudMessage( player, message, -1, 0.35, 255, 255, 255, 255, 1.0, 3.5, 2.0 ) // like 90% sure this is innacurate lol
+			thread DelayedRemoveNoticeLimit( player )
+			return true
+		}
+	}
+	return false
+}
+
 void function DelayedRemoveNoticeLimit( entity player )
 {
 	player.EndSignal( "OnDestroy" )
