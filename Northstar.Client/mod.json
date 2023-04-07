@@ -116,6 +116,13 @@
 		{
 			"Path": "ui/ui_mouse_capture.nut",
 			"RunOn": "UI"
+		},
+		{
+			"Path": "spectator_pov_button_fix.nut",
+			"RunOn": "CLIENT && MP",
+			"ClientCallback": {
+				"After": "SpectatorPovButtonFixInit"
+			}
 		}
 	],
 	"Localisation": [
