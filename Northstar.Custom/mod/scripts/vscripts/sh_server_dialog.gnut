@@ -9,6 +9,8 @@ global function NSServerDialogueOnClientInit
 global function NSClientCallback_RequestDialog
 #endif
 
+const string StringCommandName = "ServerDialogSend"
+
 #if SERVER
 
 struct  {
@@ -35,7 +37,7 @@ global struct ServerDialogData
     bool noChoice = false
     bool noChoiceWithNavigateBack = false
     bool showSpinner = false
-    bool showPCBackButton = false
+    bool showPCBackButton = true
     float inputDisableTime = 0
     // table<int,bool> coloredButton
     bool darkenBackground = false
@@ -95,17 +97,27 @@ void function NSSendServerDialog( entity player, ServerDialogData dialog )
         args.append( "." )
 
     dialog.messageColor.resize( 4, 100 )
-    foreach(colour in dialog.messageColor )
-        args.append( string(colour) )
+    array<string> colors
+    foreach(color in dialog.messageColor )
+        colors.append( string(color) )
+    args.append( StringReplace( _CombineStringArray( colors), " ", "/s", true, true ) ) // replace spaces with /s too
+    // args.append( _CombineStringArray( colors) )
 
-    string command = "ServerRequestRequest"
+    string snd_msg = _CombineStringArray( args, StringCommandName )
 
-    foreach( string arg in args )
+    printt( snd_msg ) // debugging
+
+    ServerToClientStringCommand( player, snd_msg )
+}
+
+string function _CombineStringArray( array<string> strArray, string outStr = "" )
+{
+    foreach( string str in strArray )
     {
-        command = format( "%s %s", command, arg )
+        outStr = format( "%s %s", outStr, str )
     }
 
-    ServerToClientStringCommand( player, command )
+    return outStr
 }
 
 void function NSSendMessageServerDialog( entity player, string message )
@@ -142,7 +154,7 @@ bool function ClientCommand_Button_Clicked( entity player, array<string> args )
 
 void function NSServerDialogueOnClientInit()
 {
-    AddServerToClientStringCommandCallback( "ServerRequestRequest", ServerCallback_DialogueRequestReceived )
+    AddServerToClientStringCommandCallback( StringCommandName, ServerCallback_DialogueRequestReceived )
 }
 
 //  string header
@@ -163,8 +175,10 @@ void function NSServerDialogueOnClientInit()
 
 void function ServerCallback_DialogueRequestReceived( array<string> args )
 {
-    if ( args.len() != 20 ) // WHY MAKE THIS NOT DYNAMIC, RESPONCE: i fogor
-        return
+    printt("stuff")
+
+    foreach( string uym in args )
+        printt( uym )
     
     string header = StringReplace( args[0], "/s", " ", true, true )
 
@@ -186,12 +200,45 @@ void function ServerCallback_DialogueRequestReceived( array<string> args )
     string button2Text = StringReplace( args[14], "/s", " ", true, true )
     string button3Text = StringReplace( args[15], "/s", " ", true, true )
 
+    // // array<string> colors = split( args[16], "/s" )
+    // string colorsStr = args[16]
 
-    int colour_r = int(args[16])
-    int colour_g = int(args[17])
-    int colour_b = int(args[18])
-    int colour_a = int(args[19])
+    // // foreach( string uym in colors )
+    // //     printt( uym )
+    
+    // // int colour_r = int(colors[0])
+    // // int colour_g = int(colors[1])
+    // // int colour_b = int(colors[2])
+    // // int colour_a = int(colors[3])
 
+    // // int colour_r = int(args[16])
+    // // int colour_g = int(args[17])
+    // // int colour_b = int(args[18])
+    // // int colour_a = int(args[19])
+
+    array<string> colors = split( args[16], "/s" )
+    
+    foreach( string uym in colors )
+        printt( uym )
+    
+    int colour_r = 161
+    int colour_g = 161
+    int colour_b = 161
+    int colour_a = 255
+
+    try
+    {
+        colour_r = colors[0].tointeger()
+        colour_g = colors[1].tointeger()
+        colour_b = colors[2].tointeger()
+        colour_a = colors[3].tointeger()
+    }
+    catch (err)
+    {
+        printt("failed int cast; using default colors ;", err)
+    }
+
+    printt("stuff")
 
     RunUIScript( 
         "NSClientCallback_RequestDialog",
@@ -216,16 +263,89 @@ void function ServerCallback_DialogueRequestReceived( array<string> args )
         colour_b,
         colour_a
     )
+
+    // RunUIScript( 
+    //     "NSClientCallback_RequestDialog",
+    //     header,
+    //     message,
+    //     image,
+    //     rightImage,
+    //     forceChoice,
+    //     noChoice,
+    //     noChoiceWithNavigateBack,
+    //     showSpinner,
+    //     showPCBackButton,
+    //     inputDisableTime,
+    //     darkenBackground,
+    //     useFullMessageHeight,
+    //     button0Text,
+    //     button1Text,
+    //     button2Text,
+    //     button3Text,
+    //     colorsStr
+    // )
 }
 
 #elseif UI
 
 
 
-void function NSClientCallback_RequestDialog( string header, string message, string image, string rightImage, bool forceChoice, bool noChoice, bool noChoiceWithNavigateBack, bool showSpinner, bool showPCBackButton, float inputDisableTime, bool darkenBackground, bool useFullMessageHeight, string button0Text, string button1Text, string button2Text, string button3Text, int colour_r, int colour_g, int colour_b, int colour_a  )
+void function NSClientCallback_RequestDialog( string header, string message, string image, string rightImage, bool forceChoice, bool noChoice, bool noChoiceWithNavigateBack, bool showSpinner, bool showPCBackButton, float inputDisableTime, bool darkenBackground, bool useFullMessageHeight, string button0Text, string button1Text, string button2Text, string button3Text, int colour_r, int colour_g, int colour_b, int colour_a )
+// void function NSClientCallback_RequestDialog( string header, string message, string image, string rightImage, bool forceChoice, bool noChoice, bool noChoiceWithNavigateBack, bool showSpinner, bool showPCBackButton, float inputDisableTime, bool darkenBackground, bool useFullMessageHeight, string button0Text, string button1Text, string button2Text, string button3Text, string colorsStr )
+// void function NSClientCallback_RequestDialog( string header, string message, string image, string rightImage, bool forceChoice, bool noChoice, bool showSpinner, bool showPCBackButton, float inputDisableTime, bool darkenBackground, bool useFullMessageHeight, string button0Text, string button1Text, string button2Text, string button3Text, string colorsStr )
 {   
+    printt("stuff2")
+
     if ( uiGlobal.activeMenu != null )
         return
+    
+    // array<string> colors = split( colorsStr, "/s" )
+    
+    // foreach( string uym in colors )
+    //     printt( uym )
+    
+    // int colour_r = 161
+    // int colour_g = 161
+    // int colour_b = 161
+    // int colour_a = 255
+    
+    // try
+    // {
+    //     colour_r = colors[0].tointeger()
+    //     colour_g = colors[1].tointeger()
+    //     colour_b = colors[2].tointeger()
+    //     colour_a = colors[3].tointeger()
+    // }
+    // catch (err) 
+    // {
+    //     printt("failed int cast; using default colors ;", err)
+    // }
+    
+    // thread PAIN(
+    //     header,
+    //     message,
+    //     image,
+    //     rightImage,
+    //     forceChoice,
+    //     noChoice,
+    //     // noChoiceWithNavigateBack,
+    //     false,
+    //     showSpinner,
+    //     showPCBackButton,
+    //     inputDisableTime,
+    //     darkenBackground,
+    //     useFullMessageHeight,
+    //     button0Text,
+    //     button1Text,
+    //     button2Text,
+    //     button3Text,
+    //     colour_r,
+    //     colour_g,
+    //     colour_b,
+    //     colour_a
+    // )
+
+    printt("stuff")
 
     DialogData dialogData
 
@@ -260,6 +380,56 @@ void function NSClientCallback_RequestDialog( string header, string message, str
 
 
     OpenDialog( dialogData )
+
+    printt("stuff")
+}
+
+void function PAIN( string header, string message, string image, string rightImage, bool forceChoice, bool noChoice, bool noChoiceWithNavigateBack, bool showSpinner, bool showPCBackButton, float inputDisableTime, bool darkenBackground, bool useFullMessageHeight, string button0Text, string button1Text, string button2Text, string button3Text, int colour_r, int colour_g, int colour_b, int colour_a )
+{   
+    wait 1
+
+    printt("stuff")
+
+    if ( uiGlobal.activeMenu != null )
+        return
+    
+    printt("stuff")
+
+    DialogData dialogData
+
+    dialogData.header = header
+    dialogData.message = message
+    
+    if ( image.find("/") != null )
+        dialogData.image = StringToAsset( image )
+    if ( rightImage.find("/") != null )
+        dialogData.rightImage = StringToAsset( rightImage )
+
+    dialogData.forceChoice = forceChoice
+    dialogData.noChoice = noChoice
+    dialogData.noChoiceWithNavigateBack = false
+    dialogData.showSpinner = showSpinner
+    dialogData.showPCBackButton = showPCBackButton
+    dialogData.inputDisableTime = inputDisableTime
+    dialogData.darkenBackground = darkenBackground
+    dialogData.useFullMessageHeight = useFullMessageHeight
+
+
+    dialogData.messageColor = [colour_r, colour_g, colour_b, colour_a]
+
+    if ( button0Text != "." )
+        AddDialogButton( dialogData, Localize(button0Text), Button0_Callback ) // max is 4 buttons
+    if ( button1Text != "." )
+        AddDialogButton( dialogData, Localize(button1Text), Button1_Callback )
+    if ( button2Text != "." )
+        AddDialogButton( dialogData, Localize(button2Text), Button2_Callback )
+    if ( button3Text != "." )
+        AddDialogButton( dialogData, Localize(button3Text), Button3_Callback )
+
+
+    OpenDialog( dialogData )
+
+    printt("stuff")
 }
 
 void function Button0_Callback()
