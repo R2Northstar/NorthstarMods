@@ -169,12 +169,10 @@ void function NSServerDialogueOnClientInit()
 //  the long array is in this order
 
 void function ServerCallback_DialogueRequestReceived( array<string> args )
-{
-    printt("stuff")
+{    
+    if ( GetConVarBool("ns_disable_server_dialogs") )
+        return
 
-    foreach( string uym in args )
-        printt( uym )
-    
     string header = StringReplace( args[0], "/s", " ", true, true )
 
     string message = StringReplace( StringReplace(args[1], "!x1ba", "\n" ,true, true), "/s", " ", true, true )
@@ -196,9 +194,6 @@ void function ServerCallback_DialogueRequestReceived( array<string> args )
     string button3Text = StringReplace( args[15], "/s", " ", true, true )
 
     array<string> colors = split( args[16], "/s" )
-    
-    foreach( string uym in colors )
-        printt( uym )
     
     int color_r = 161
     int color_g = 161

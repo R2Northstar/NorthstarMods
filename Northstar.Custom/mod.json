@@ -24,6 +24,10 @@
 		{
 			"Name": "ns_force_melee",
 			"DefaultValue": ""
+		},
+		{
+			"Name": "ns_disable_server_dialogs",
+			"DefaultValue": "0"
 		}
 	],
 	"Scripts": [
