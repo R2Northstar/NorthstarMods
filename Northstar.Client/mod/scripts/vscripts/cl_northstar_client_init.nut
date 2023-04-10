@@ -6,7 +6,7 @@ global struct GameStateStruct {
     string playlist
     string playlistDisplayname
 
-    int current_players
+    int currentPlayers
     int maxPlayers
     int ownScore
     int otherHighestScore
