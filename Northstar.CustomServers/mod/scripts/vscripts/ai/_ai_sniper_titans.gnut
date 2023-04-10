@@ -179,8 +179,9 @@ function SniperTitanAttack( entity titan, entity target )
 				return
 		}
 	)
-
-	titan.SetEnemy( target )
+	
+	if( IsValid( target ) )
+		titan.SetEnemy( target )
 }
 
 void function WaitForInterruption( entity titan ,entity generator)

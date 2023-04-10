@@ -17,9 +17,11 @@ Branch made to expand Frontier Defense feature set by adding back cut content wh
 - Reapers will deploy ticks, despite them still not being able to parkour through the map, they still pose a high threat
 - Like in vanilla, Titan selection menu now only appears on match start, and players can still select another Titan during the entirety of Wave 1, after that, Titans selection locks and Wave Restarts does not bring the Titan selection menu anymore
 - Fixes Autotitans not having overlay on them to see them through walls
-- Fixes Offline turrets not having their yellow overlay
+- Fixes Offline turrets not having their yellow overlay, neither their repair sound
 - Fixes the problem with players not getting instant full Titan Meter upon wave restart as vanilla does
 - Fixes Grunts not being able to use their Anti-Titan weaponry
+- Failsafe code that kills stuck Grunts and Stalkers inside geometry to prevent softlocking
+- Properly setup the tutorial hints to appear only once per match, and not every time they attempt to trigger
 
 ## Titanfall Block and Elite Titan Events
 
@@ -39,6 +41,7 @@ Use these variables in your `autoexec_ns_server` cfg to control them:
 - `ns_fd_allow_true_shield_captains` Default is 0, set to 1 to allow Shield Captains from campaign to spawn in Master or Insane difficulty
 - `ns_fd_allow_titanfall_block` Default is 0, setting to 1 will allow some maps to make usage of the Titanfall Block event
 - `ns_fd_show_drop_points` Default is 0, setting to 1 will show Titanfall markers for spawning enemies akin to when you call your own Titan
+- `ns_fd_grunt_primary_weapon` Default is "mp_weapon_rspn101" which is R-201, set to another common weapon to make Grunts use them
 - `ns_fd_grunt_at_weapon` Default is "mp_weapon_defender", set to another anti-titan weapon to make Grunts use them on Master or Insane difficulty
 - `ns_fd_disable_respawn_dropship` Default is 0, setting to 1 makes players always respawn directly on ground nearby the Harvester or Shop
 - `ns_reaper_warpfall_kill` Default is 1, set to 0 if you don't want Reapers to kill Titans on their Warpfall

@@ -706,7 +706,7 @@ void function CleanUpEntitiesForRoundEnd()
 	
 	foreach ( entity npc in GetNPCArray() )
 	{
-		if ( !IsValid( npc ) || !IsAlive( npc ) )
+		if ( !IsValid( npc ) || !IsAlive( npc ) || GameRules_GetGameMode() == "fd" && npc.GetClassName() == "npc_turret_sentry" ) //Let the FD cleanup function handle turrets
 			continue
 		// kill rather than destroy, as destroying will cause issues with children which is an issue especially for dropships and titans
 		npc.Die( svGlobal.worldspawn, svGlobal.worldspawn, { damageSourceId = eDamageSourceId.round_end } )

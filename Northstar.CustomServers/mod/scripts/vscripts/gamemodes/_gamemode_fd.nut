@@ -60,6 +60,9 @@ global vector FD_groundspawnAngles = < 0, 0, 0 >
 global table< string, array<vector> > routes
 global array<entity> routeNodes
 global array<entity> spawnedNPCs
+global int difficultyLevel
+global bool elitesAllowed
+global bool titanfallblockAllowed
 
 
 
@@ -73,7 +76,6 @@ struct {
 	table<entity, player_struct_fd> players
 	table<entity, table<string, float> > playerAwardStats
 	entity harvester_info
-	bool playersHaveTitans = false
 	bool waveRestart = false
 
 	string animationOverride = ""
@@ -129,7 +131,6 @@ void function GamemodeFD_Init()
 
 	SetRoundBased( true )
 	SetShouldUseRoundWinningKillReplay( false )
-	SetKillcamsEnabled( false ) //Honestly why should people watch how AI killed them? It's a fucking AI anyways
 	SetTimeoutWinnerDecisionFunc( FD_TimeOutCheck )
 	Riff_ForceBoostAvailability( eBoostAvailability.Disabled )
 	PlayerEarnMeter_SetEnabled( false )
@@ -159,7 +160,8 @@ void function GamemodeFD_Init()
 	AddSpawnCallback( "npc_super_spectre", HealthScaleByDifficulty )
 	AddSpawnCallback( "npc_frag_drone", OnTickSpawn )
 	AddCallback_OnPlayerRespawned( FD_PlayerRespawnCallback )
-	AddSpawnCallback("npc_turret_sentry", AddTurretSentry )
+	AddSpawnCallback( "npc_turret_sentry", AddTurretSentry )
+	AddTurretRepairCallback( IncrementPlayerstat_TurretRevives )
 	//death Callbacks
 	AddCallback_OnNPCKilled( OnNpcDeath )
 	AddCallback_OnPlayerKilled( GamemodeFD_OnPlayerKilled )
@@ -168,6 +170,7 @@ void function GamemodeFD_Init()
 	//Command Callbacks
 	AddClientCommandCallback( "FD_ToggleReady", ClientCommandCallbackToggleReady )
 	AddClientCommandCallback( "FD_UseHarvesterShieldBoost", useShieldBoost )
+	AddClientCommandCallback( "FD_SetTutorialBit", ClientCommand_FDSetTutorialBit )
 
 	//shop Callback
 	SetBoostPurchaseCallback( FD_BoostPurchaseCallback )
@@ -188,12 +191,15 @@ void function GamemodeFD_Init()
 	AddArcWaveDamageCallback( FD_OnArcWaveDamage )
 	AddOnTetherCallback( FD_OnTetherTrapTriggered )
 	AddSonarStartCallback( FD_OnSonarStart )
+	
+	difficultyLevel = FD_GetDifficultyLevel() //Refresh this only on map load, to avoid midgame commands messing up with difficulties (i.e setting mp_gamemode fd_hard midgame in a regular match through console on local host would immediately make Stalkers spawns with EPG)
+	elitesAllowed = GetConVarBool( "ns_fd_allow_elite_titans" )
+	titanfallblockAllowed = GetConVarBool( "ns_fd_allow_titanfall_block" )
 }
 
-// this might need updating when we do dropship things
 bool function FD_ShouldAllowChangeLoadout( entity player )
 {
-	return GetGlobalNetTime( "FD_nextWaveStartTime" ) > Time()
+	return ( GetGlobalNetInt( "FD_waveState") == WAVE_STATE_BREAK || GetGameState() == eGameState.Prematch )
 }
 
 void function FD_BoostPurchaseCallback( entity player, BoostStoreData data )
@@ -214,7 +220,7 @@ void function FD_PlayerRespawnThreaded( entity player )
 		file.players[player].lastRespawn = Time()
 	if( GetCurrentPlaylistVarInt( "fd_at_unlimited_ammo", 1 ) )
 		FD_GivePlayerInfiniteAntiTitanAmmo( player )
-	if ( !file.playersHaveTitans )
+	if ( !PlayerEarnMeter_Enabled() )
 	{
 		if ( IsValid( player ) )
 			PlayerEarnMeter_SetMode( player, 0 )
@@ -252,7 +258,7 @@ void function FD_PlayerRespawnThreaded( entity player )
 		idleSequence.thirdPersonAnim = DROPSHIP_IDLE_ANIMS[ file.playersInShip++ ]
 		idleSequence.attachment = "ORIGIN"
 		idleSequence.teleport = true
-		idleSequence.viewConeFunction = ViewConeFree
+		idleSequence.viewConeFunction = ViewConeWide
 		idleSequence.hideProxy = true
 		thread FirstPersonSequence( idleSequence, player, file.dropship )
 		file.playersInDropship.append( player )
@@ -363,37 +369,42 @@ void function GamemodeFD_InitPlayer( entity player )
 	thread SetTurretSettings_threaded( player )
 	// only start the highlight when we start playing, not during dropship
 	if ( GetGameState() >= eGameState.Playing )
+	{
 		Highlight_SetFriendlyHighlight( player, "sp_friendly_hero" )
+		
+		if( GetGlobalNetInt( "FD_waveState") == WAVE_STATE_BREAK ) //Prevent people who joins midgame from not being able to ready up
+			Remote_CallFunction_NonReplay( player, "ServerCallback_FD_NotifyStoreOpen" )
+	}
 
-	if( file.playersHaveTitans ) // first wave is index 0
+	if( PlayerEarnMeter_Enabled() ) // first wave is index 0
 		PlayerEarnMeter_AddEarnedAndOwned( player, 1.0, 1.0 )
 	// unfortunate that i cant seem to find a nice callback for them exiting that menu but thisll have to do
 	thread TryDisableTitanSelectionForPlayerAfterDelay( player, TEAM_TITAN_SELECT_DURATION_MIDGAME )
 	thread TrackDeployedArcTrapThisRound( player )
 	
-	//Disable all Tutorial hints because they're pretty annoying since they should appear only once
-	SetPersistenceBitfield( player, "fdTutorialBits", eFDTutorials.HARVESTER, -1 )
-	SetPersistenceBitfield( player, "fdTutorialBits", eFDTutorials.ARC_TRAP, -1 )
-	SetPersistenceBitfield( player, "fdTutorialBits", eFDTutorials.SENTRY_TURRET, -1 )
-	SetPersistenceBitfield( player, "fdTutorialBits", eFDTutorials.CORE_OVERLOAD, -1 )
-	SetPersistenceBitfield( player, "fdTutorialBits", eFDTutorials.WAVE_BREAK, -1 )
-	SetPersistenceBitfield( player, "fdTutorialBits", eFDTutorials.HARVESTER, -1 )
-	SetPersistenceBitfield( player, "fdTutorialBits", eFDTutorials.AI_TITAN_ARC, -1 )
-	SetPersistenceBitfield( player, "fdTutorialBits", eFDTutorials.AI_TITAN_MORTAR, -1 )
-	SetPersistenceBitfield( player, "fdTutorialBits", eFDTutorials.AI_TITAN_NUKE, -1 )
-	SetPersistenceBitfield( player, "fdTutorialBits", eFDTutorials.AI_GRUNT, -1 )
-	SetPersistenceBitfield( player, "fdTutorialBits", eFDTutorials.AI_SPECTRE_MORTAR, -1 )
-	SetPersistenceBitfield( player, "fdTutorialBits", eFDTutorials.AI_STALKER, -1 )
-	SetPersistenceBitfield( player, "fdTutorialBits", eFDTutorials.AI_REAPER, -1 )
-	SetPersistenceBitfield( player, "fdTutorialBits", eFDTutorials.AI_DRONE, -1 )
-	SetPersistenceBitfield( player, "fdTutorialBits", eFDTutorials.AI_DRONE_CLOAK, -1 )
-	SetPersistenceBitfield( player, "fdTutorialBits", eFDTutorials.AI_TICK, -1 )
-	SetPersistenceBitfield( player, "fdTutorialBits", eFDTutorials.BOOST_STORE_INTRO, -1 )
-	SetPersistenceBitfield( player, "fdTutorialBits", eFDTutorials.TEAM_RESERVE, -1 )
-	SetPersistenceBitfield( player, "fdTutorialBits", eFDTutorials.FRONTIER_DEFENSE, -1 )
-	SetPersistenceBitfield( player, "fdTutorialBits", eFDTutorials.HARD_DIFFICULTY, -1 )
-	SetPersistenceBitfield( player, "fdTutorialBits", eFDTutorials.MASTER_DIFFICULTY, -1 )
-	SetPersistenceBitfield( player, "fdTutorialBits", eFDTutorials.INSANE_DIFFICULTY, -1 )
+	//Reset Tutorial hints to appear only once per match, friendly to newbies learn
+	SetPersistenceBitfield( player, "fdTutorialBits", eFDTutorials.HARVESTER, 0 )
+	SetPersistenceBitfield( player, "fdTutorialBits", eFDTutorials.ARC_TRAP, 0 )
+	SetPersistenceBitfield( player, "fdTutorialBits", eFDTutorials.SENTRY_TURRET, 0 )
+	SetPersistenceBitfield( player, "fdTutorialBits", eFDTutorials.CORE_OVERLOAD, 0 )
+	SetPersistenceBitfield( player, "fdTutorialBits", eFDTutorials.WAVE_BREAK, 0 )
+	SetPersistenceBitfield( player, "fdTutorialBits", eFDTutorials.HARVESTER, 0 )
+	SetPersistenceBitfield( player, "fdTutorialBits", eFDTutorials.AI_TITAN_ARC, 0 )
+	SetPersistenceBitfield( player, "fdTutorialBits", eFDTutorials.AI_TITAN_MORTAR, 0 )
+	SetPersistenceBitfield( player, "fdTutorialBits", eFDTutorials.AI_TITAN_NUKE, 0 )
+	SetPersistenceBitfield( player, "fdTutorialBits", eFDTutorials.AI_GRUNT, 0 )
+	SetPersistenceBitfield( player, "fdTutorialBits", eFDTutorials.AI_SPECTRE_MORTAR, 0 )
+	SetPersistenceBitfield( player, "fdTutorialBits", eFDTutorials.AI_STALKER, 0 )
+	SetPersistenceBitfield( player, "fdTutorialBits", eFDTutorials.AI_REAPER, 0 )
+	SetPersistenceBitfield( player, "fdTutorialBits", eFDTutorials.AI_DRONE, 0 )
+	SetPersistenceBitfield( player, "fdTutorialBits", eFDTutorials.AI_DRONE_CLOAK, 0 )
+	SetPersistenceBitfield( player, "fdTutorialBits", eFDTutorials.AI_TICK, 0 )
+	SetPersistenceBitfield( player, "fdTutorialBits", eFDTutorials.BOOST_STORE_INTRO, 0 )
+	SetPersistenceBitfield( player, "fdTutorialBits", eFDTutorials.TEAM_RESERVE, 0 )
+	SetPersistenceBitfield( player, "fdTutorialBits", eFDTutorials.FRONTIER_DEFENSE, 0 )
+	SetPersistenceBitfield( player, "fdTutorialBits", eFDTutorials.HARD_DIFFICULTY, 0 )
+	SetPersistenceBitfield( player, "fdTutorialBits", eFDTutorials.MASTER_DIFFICULTY, 0 )
+	SetPersistenceBitfield( player, "fdTutorialBits", eFDTutorials.INSANE_DIFFICULTY, 0 )
 }
 
 void function TrackDeployedArcTrapThisRound( entity player )
@@ -433,7 +444,7 @@ void function TryDisableTitanSelectionForPlayerAfterDelay( entity player, float 
 	)
 
 	wait waitAmount
-	if ( file.playersHaveTitans )
+	if ( PlayerEarnMeter_Enabled() )
 		DisableTitanSelectionForPlayer( player )
 }
 
@@ -576,10 +587,59 @@ void function OnNpcDeath( entity victim, entity attacker, var damageInfo )
 		}
 	}
 	
+	if( !attacker.IsTitan() && victim.IsTitan() )
+	{
+		string victimName = victim.GetTargetName()
+		switch ( victimName )
+		{
+			case "npc_titan_ogre_minigun_boss_fd_elite":
+			case "npc_titan_ogre_minigun_boss_fd":
+			case "npc_titan_ogre_minigun_nuke":
+			case "npc_titan_ogre_minigun":
+				PlayFactionDialogueToPlayer( "kc_pilotkillLegion", attacker )
+				break
+			
+			case "npc_titan_ogre_meteor_boss_fd_elite":
+			case "npc_titan_ogre_meteor_boss_fd":
+			case "npc_titan_ogre_meteor":
+				PlayFactionDialogueToPlayer( "kc_pilotkillScorch", attacker )
+				break
+			
+			case "npc_titan_atlas_tracker_boss_fd":
+			case "npc_titan_atlas_tracker_mortar":
+			case "npc_titan_atlas_tracker":
+			case "npc_titan_sniper_tone":
+			case "npc_titan_sniper":
+				PlayFactionDialogueToPlayer( "kc_pilotkillTone", attacker )
+				break
+				
+			case "npc_titan_atlas_stickybomb_boss_fd_elite":
+			case "npc_titan_atlas_stickybomb_boss_fd":
+			case "npc_titan_atlas_stickybomb":
+				PlayFactionDialogueToPlayer( "kc_pilotkillIon", attacker )
+				break
+			
+			case "npc_titan_stryder_leadwall_boss_fd_elite":
+			case "npc_titan_stryder_leadwall_boss_fd":
+			case "npc_titan_stryder_leadwall":
+			case "npc_titan_arc":
+				PlayFactionDialogueToPlayer( "kc_pilotkillRonin", attacker )
+				break
+			
+			case "npc_titan_stryder_sniper_boss_fd_elite":
+			case "npc_titan_stryder_sniper_boss_fd":
+			case "npc_titan_stryder_sniper":
+				PlayFactionDialogueToPlayer( "kc_pilotkillNorthstar", attacker )
+				break
+			
+			default:
+				PlayFactionDialogueToPlayer( "kc_pilotkilltitan", attacker )
+		}
+	}
+	
 	//Elite Titan battery drop code, they should drop Amped Batteries on higher difficulties as reward
 	if ( victim.IsTitan() && victim.ai.bossTitanType == 1 )
 	{
-		int difficultyLevel = FD_GetDifficultyLevel()
 		vector vec = RandomVec( 150 )
 		int attachID = victim.LookupAttachment( "CHESTFOCUS" )
 		vector origin = victim.GetAttachmentOrigin( attachID )
@@ -620,6 +680,12 @@ bool function useShieldBoost( entity player, array<string> args )
 	if( ( GetGlobalNetTime( "FD_harvesterInvulTime" ) < Time() ) && ( player.GetPlayerNetInt( "numHarvesterShieldBoost" ) > 0 ) )
 	{
 		fd_harvester.harvester.SetShieldHealth( fd_harvester.harvester.GetShieldHealthMax() )
+		
+		//If shield is down and someone uses Shield Boost, Harvester Shield Particle FX wasn't spawning
+		if( !IsValid( fd_harvester.particleShield ) )
+				generateShieldFX( fd_harvester )
+		
+		EmitSoundAtPosition( TEAM_UNASSIGNED, fd_harvester.harvester.GetOrigin(), "UI_TitanBattery_Pilot_Give_TitanBattery" )
 		SetGlobalNetTime( "FD_harvesterInvulTime", Time() + 5 )
 		AddPlayerScore( player, "FDShieldHarvester" )
 		MessageToTeam( TEAM_MILITIA,eEventNotifications.FD_PlayerBoostedHarvesterShield, null, player )
@@ -675,9 +741,13 @@ void function mainGameLoop()
 			{
 				PlayerEarnMeter_SetMode( player, 1 ) // show the earn meter
 				PlayerEarnMeter_AddEarnedAndOwned( player, 1.0, 1.0 )
+				//Play twice in a row to not make its volume to subtle
+				EmitSoundOnEntityOnlyToPlayer( player, player, "UI_InGame_FD_TitanSelected" )
+				EmitSoundOnEntityOnlyToPlayer( player, player, "UI_InGame_FD_TitanSelected" )
 			}
-			file.playersHaveTitans = true
 			DisableTitanSelection()
+			PlayFactionDialogueToTeam( "fd_titanReadyNag", TEAM_MILITIA )
+			wait 5
 		}
 	}
 }
@@ -820,7 +890,6 @@ void function SetEnemyAmountNetVars( int waveIndex )
 	SetGlobalNetInt( "FD_AICount_Drone_Cloak", npcs[eFD_AITypeIDs.DRONE_CLOAK] )
 	SetGlobalNetInt( "FD_AICount_Current", total )
 	SetGlobalNetInt( "FD_AICount_Total", total )
-
 }
 
 bool function runWave( int waveIndex, bool shouldDoBuyTime )
@@ -839,7 +908,7 @@ bool function runWave( int waveIndex, bool shouldDoBuyTime )
 		file.players[player].assaultScoreThisRound = 0
 		file.players[player].defenseScoreThisRound = 0
 		file.players[player].moneyThisRound = GetPlayerMoney( player )
-		file.players[ player ].deployedEntityThisRound.clear()
+		file.players[player].deployedEntityThisRound.clear()
 	}
 	array<int> enemys = getHighestEnemyAmountsForWave( waveIndex )
 
@@ -1063,14 +1132,6 @@ bool function runWave( int waveIndex, bool shouldDoBuyTime )
 	}
 
 	wait 5
-	
-	if ( isSecondWave() )
-	{
-		// supposed to add dialogues like "GOOD WORK TEAM" then "YOUR TITAN IS READY"
-		// done ^
-		PlayFactionDialogueToTeam( "fd_titanReadyNag" , TEAM_MILITIA )
-		wait 5
-	}
 
 	//Player scoring
 	MessageToTeam( TEAM_MILITIA, eEventNotifications.FD_NotifyWaveBonusIncoming )
@@ -1078,7 +1139,7 @@ bool function runWave( int waveIndex, bool shouldDoBuyTime )
 	
 	print( "Trying to repair turrets during wave break" )
 	FD_AttemptToRepairTurrets()
-
+	
 	print( "Showing Player Stats: Wave Complete" )
 	foreach( entity player in GetPlayerArray() )
 	{
@@ -1373,10 +1434,14 @@ void function FD_Epilogue_threaded()
 	SetGameState(eGameState.Postmatch)
 }
 
-void function IncrementPlayerstat_TurretRevives( entity player )
+void function IncrementPlayerstat_TurretRevives( entity turret, entity player, entity owner )
 {
 	file.playerAwardStats[player]["turretsRepaired"]++
 	file.players[player].defenseScoreThisRound += FD_SCORE_REPAIR_TURRET
+	EmitSoundOnEntityOnlyToPlayer( player, player, "UI_InGame_FD_RepairTurret" )
+	
+	if( player != owner )
+		PlayFactionDialogueToPlayer( "fd_turretOnline", owner )
 }
 
 void function SpawnCallback_SafeTitanSpawnTime( entity ent )
@@ -1509,22 +1574,41 @@ void function OnHarvesterDamaged( entity harvester, var damageInfo )
 			PlayFactionDialogueToTeam( "fd_baseShieldDown", TEAM_MILITIA )
 			file.harvesterShieldDown = true // prevent shield dialogues from repeating
 		}
+		
 		file.harvesterDamageTaken = file.harvesterDamageTaken + damageAmount // track damage for wave recaps
 		float newHealth = harvester.GetHealth() - damageAmount
 		float oldhealthpercent = ( ( harvester.GetHealth().tofloat() / harvester.GetMaxHealth() ) * 100 )
 		float healthpercent = ( ( newHealth / harvester.GetMaxHealth() ) * 100 )
-
-		if ( healthpercent <= 75 && oldhealthpercent > 75 ) // we don't want the dialogue to keep saying "Harvester is below 75% health" everytime they take additional damage
+			
+		if ( healthpercent <= 75 && oldhealthpercent > 75 )
 			PlayFactionDialogueToTeam( "fd_baseHealth75", TEAM_MILITIA )
 
 		if ( healthpercent <= 50 && oldhealthpercent > 50 )
-			PlayFactionDialogueToTeam( "fd_baseHealth50", TEAM_MILITIA )
+		{
+			int randompick = RandomIntRange( 0, 1 )
+			if( randompick == 0 )
+				PlayFactionDialogueToTeam( "fd_baseHealth50", TEAM_MILITIA )
+			else
+				PlayFactionDialogueToTeam( "fd_baseHealth50nag", TEAM_MILITIA )
+		}
 
 		if ( healthpercent <= 25 && oldhealthpercent > 25 )
-			PlayFactionDialogueToTeam( "fd_baseHealth25", TEAM_MILITIA )
+		{
+			int randompick = RandomIntRange( 0, 1 )
+			if( randompick == 0 )
+				PlayFactionDialogueToTeam( "fd_baseHealth25", TEAM_MILITIA )
+			else
+				PlayFactionDialogueToTeam( "fd_baseHealth25nag", TEAM_MILITIA )
+		}
 
 		if( healthpercent <= 10 )
-			PlayFactionDialogueToTeam( "fd_baseLowHealth", TEAM_MILITIA )
+		{
+			int randompick = RandomIntRange( 0, 1 )
+			if( randompick == 0 )
+				PlayFactionDialogueToTeam( "fd_baseLowHealth", TEAM_MILITIA )
+			else
+				PlayFactionDialogueToTeam( "fd_baseShieldLowHolding", TEAM_MILITIA )
+		}
 
 		if( newHealth <= 0 )
 		{
@@ -1736,7 +1820,6 @@ void function FD_DamageByPlayerCallback( entity victim, var damageInfo )
 	{
 		//TODO Money and score for titan damage
 	}
-
 }
 
 void function DamageScaleByDifficulty( entity ent, var damageInfo )
@@ -1977,6 +2060,7 @@ void function LoadEntities()
 			}
 		}
 	}
+		
 	ValidateAndFinalizePendingStationaryPositions()
 	initNetVars()
 	SetTeam( GetTeamEnt( TEAM_IMC ), TEAM_IMC )
@@ -2019,6 +2103,13 @@ bool function ClientCommandCallbackToggleReady( entity player, array<string> arg
 		player.SetPlayerNetBool( "FD_readyForNextWave", false )
 
 	CheckLastPlayerReady()
+	return true
+}
+
+bool function ClientCommand_FDSetTutorialBit( entity player, array<string> args )
+{
+	int fdbits = args[0].tointeger()
+	SetPersistenceBitfield( player, "fdTutorialBits", fdbits, -1 )
 	return true
 }
 
@@ -2170,8 +2261,11 @@ void function AddTurretSentry( entity turret )
 	turret.Minimap_AlwaysShow( TEAM_MILITIA, null )
 	turret.Minimap_SetHeightTracking( true )
 	turret.Minimap_SetCustomState( eMinimapObject_npc.FD_TURRET )
-	Highlight_SetFriendlyHighlight( turret, "sp_friendly_hero" )
-	turret.Highlight_SetParam( 1, 0, < 0,0,0 > )
+	turret.Minimap_SetCustomState( eMinimapObject_npc.FD_TURRET )
+	Highlight_SetFriendlyHighlight( turret , "sp_friendly_hero" )
+	Highlight_SetOwnedHighlight( turret , "sp_friendly_hero" )
+	turret.Highlight_SetParam( 1, 0, < 0, 0, 0 > )
+	turret.Highlight_SetParam( 3, 0, < 0, 0, 0 > )
 	entity player = turret.GetBossPlayer()
 	file.players[ player ].deployedEntityThisRound.append( turret )
 	AddEntityDestroyedCallback( turret, FD_OnEntityDestroyed )
@@ -2303,11 +2397,11 @@ void function FD_DropshipSpawnDropship()
 	thread PlayAnim(file.dropship, FD_DropshipGetAnimation())
 	file.dropship.WaitSignal( "deploy" )
 	file.dropshipState = eDropshipState.Returning
-	foreach(int i,entity player in file.playersInDropship)
+	foreach( int i, entity player in file.playersInDropship )
 	{
 		thread FD_DropshipDropPlayer( player, i )
 	}
-	if ( file.playersInShip == 1 ) //Only one player in dropship is needed to warn about them respawning
+	if ( file.playersInDropship.len() > 0 ) //Only one player in dropship is needed to warn about them respawning
 		PlayFactionDialogueToTeam( "fd_pilotRespawn" , TEAM_MILITIA )
 	file.playersInDropship.clear()
 
@@ -2326,7 +2420,7 @@ void function FD_DropshipDropPlayer(entity player,int playerDropshipIndex)
 		jumpSequence.thirdPersonAnim = DROPSHIP_EXIT_ANIMS[ playerDropshipIndex ]
 		jumpSequence.attachment = "ORIGIN"
 		jumpSequence.blendTime = 0.0
-		jumpSequence.viewConeFunction = ViewConeFree
+		jumpSequence.viewConeFunction = ViewConeWide
 
 		thread FirstPersonSequence( jumpSequence, player, file.dropship )
 		WaittillAnimDone( player )

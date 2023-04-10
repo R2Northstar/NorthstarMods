@@ -117,13 +117,13 @@ void function RevivableTurret_Revive( entity turret )
 
 	turret.UnsetUsable()
 	turret.SetHealth( turret.GetMaxHealth() )
-	turret.ClearInvulnerable()
 	turret.Anim_ScriptedPlay( "deploy" )
-	turret.Highlight_SetParam( 1, 0, < 0,0,0 > )
-	wait 1.0
+	turret.Highlight_SetParam( 1, 0, < 0 ,0 ,0 > )
+	turret.Highlight_SetParam( 3, 0, < 0 ,0 ,0 > )
+	wait 1
 	turret.EnableTurret()
 	turret.DisableNPCFlag( NPC_IGNORE_ALL )
-	turret.SetNoTarget( false )
+	MakeTurretVulnerable( turret )
 	thread TurretRefundThink( turret )
 }
 
@@ -131,13 +131,16 @@ void function RevivableTurret_Kill( entity turret )
 {
 	turret.EndSignal( "OnDestroy" )
 
+	entity turretOwner = turret.GetBossPlayer()
+		if( IsValidPlayer( turretOwner ) )
+			PlayFactionDialogueToPlayer( "fd_turretOffline", turretOwner )
+	
 	turret.EnableNPCFlag( NPC_IGNORE_ALL )
-	turret.SetNoTarget( true )
-	turret.SetInvulnerable()
 	turret.Anim_ScriptedPlay( "undeploy" )
-	turret.Highlight_SetParam( 1, 0, < 1,1,0 > )
+	MakeTurretInvulnerable( turret )
+	turret.Highlight_SetParam( 1, 0, < 1.25, 1.25, 0.2 > )
+	turret.Highlight_SetParam( 3, 0, < 1.25, 1.25, 0.2 > )
 	wait 1
-	turret.SetNoTarget( true )
 	turret.DisableTurret()
 }
 
@@ -149,9 +152,9 @@ void function RepairTurret_WaveBreak( entity turret )
 		turret.Anim_ScriptedPlay( "deploy" )
 		turret.EnableTurret()
 		turret.DisableNPCFlag( NPC_IGNORE_ALL )
-		turret.SetNoTarget( false )
-		turret.Highlight_SetParam( 1, 0, < 0,0,0 > )
-		turret.ClearInvulnerable()
+		turret.Highlight_SetParam( 1, 0, < 0, 0, 0 > )
+		turret.Highlight_SetParam( 3, 0, < 0, 0, 0 > )
+		MakeTurretVulnerable( turret )
 		thread TurretRefundThink( turret )
 	}
 	

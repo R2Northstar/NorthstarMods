@@ -119,8 +119,6 @@ global enum FD_TitanType
 global table< string, entity > GlobalEventEntitys
 global array< array<WaveEvent> > waveEvents
 
-
-
 void function executeWave()
 {	
 	int currentWave = GetGlobalNetInt( "FD_currentWave" ) + 1
@@ -170,6 +168,22 @@ void function executeWave()
 		{
 			PlayFactionDialogueToTeam( "fd_waveCleanup1" , TEAM_MILITIA )
 			oneenemyleft = true
+		}
+		
+		//Force Cloak Drones to stay visible when a wave is about to end to avoid softlocking
+		array<entity> droneArray = GetNPCCloakedDrones()
+		foreach( entity cloakedDrone in droneArray )
+		{
+			if( IsValid( cloakedDrone ) && IsAlive( cloakedDrone ) )
+			{
+				cloakedDrone.DisableBehavior( "Follow" )
+				cloakedDrone.Show()
+				cloakedDrone.SetTitle( "#NPC_CLOAK_DRONE" )
+				cloakedDrone.Solid()
+				cloakedDrone.Minimap_AlwaysShow( TEAM_IMC, null )
+				cloakedDrone.Minimap_AlwaysShow( TEAM_MILITIA, null )
+				cloakedDrone.SetNoTarget( false )
+			}
 		}
 		
 		WaitFrame()
@@ -856,7 +870,7 @@ WaveEvent function CreateGruntDropshipEvent( vector origin, vector angles, int a
 //Hack by using one of the existing struct vars, hopefully nothing will break
 void function BlockFurtherTitanfalls( SmokeEvent smokeEvent, SpawnEvent spawnEvent, FlowControlEvent flowControlEvent, SoundEvent soundEvent )
 {
-	if ( GetConVarBool( "ns_fd_allow_titanfall_block" ) )
+	if ( titanfallblockAllowed )
 	{
 		if ( flowControlEvent.waitAmount == 1 )
 		{
@@ -875,7 +889,7 @@ void function BlockFurtherTitanfalls( SmokeEvent smokeEvent, SpawnEvent spawnEve
 
 void function PlayWarning( SmokeEvent smokeEvent, SpawnEvent spawnEvent, FlowControlEvent flowControlEvent, SoundEvent soundEvent )
 {
-	if ( !GetConVarBool( "ns_fd_allow_titanfall_block" ) && soundEvent.soundEventName == "fd_waveNoTitanDrops" || !GetConVarBool( "ns_fd_allow_elite_titans" ) && soundEvent.soundEventName == "fd_waveTypeEliteTitan" )
+	if ( !titanfallblockAllowed && soundEvent.soundEventName == "fd_waveNoTitanDrops" || !elitesAllowed && soundEvent.soundEventName == "fd_waveTypeEliteTitan" )
 		return
 	else
 		PlayFactionDialogueToTeam( soundEvent.soundEventName, TEAM_MILITIA )
@@ -890,8 +904,8 @@ void function spawnSmoke( SmokeEvent smokeEvent, SpawnEvent spawnEvent, FlowCont
 	smokescreen.origin = smokeEvent.position + < 0, 0, 100 >
 	smokescreen.angles = < 0, 0, 0 >
 	smokescreen.lifetime = smokeEvent.lifetime
-	smokescreen.fxXYRadius = 150
-	smokescreen.fxZRadius = 120
+	smokescreen.fxXYRadius = 160
+	smokescreen.fxZRadius = 128
 	smokescreen.deploySound1p = "SmokeWall_Activate"
 	smokescreen.deploySound3p = "SmokeWall_Activate"
 	smokescreen.stopSound1p = "SmokeWall_Stop"
@@ -899,8 +913,26 @@ void function spawnSmoke( SmokeEvent smokeEvent, SpawnEvent spawnEvent, FlowCont
 	smokescreen.fxOffsets = [ < 130.0, 0.0, 0.0 >, < 0.0, 130.0, 0.0 >, < 0.0, 0.0, 0.0 >, < 0.0, -130.0, 0.0 >, < -130.0, 0.0, 0.0 >, < 0.0, 100.0, 0.0 > ]
 	
 	EmitSoundAtPosition( TEAM_UNASSIGNED, smokeEvent.position, "SmokeWall_Launch" )
-	wait 0.6
+	
+	entity smokenade = CreateEntity( "prop_physics" )
+	smokenade.SetValueForModelKey( $"models/dev/empty_physics.mdl" )
+	smokenade.kv.SpawnAsPhysicsMover = 1
+	smokenade.kv.spawnflags = 0
+	smokenade.kv.solid = 0
+	smokenade.kv.fadedist = -1
+	smokenade.kv.physdamagescale = 0.1
+	smokenade.kv.inertiaScale = 1.0
+	smokenade.kv.renderamt = 255
+	smokenade.kv.rendercolor = "255 255 255"
+	smokenade.SetOrigin( smokeEvent.position + < 0, 0, 2560 > )
+	SetTeam( smokenade, TEAM_BOTH )
+	DispatchSpawn( smokenade )
+	smokenade.SetOrigin( smokeEvent.position + < 0, 0, 2560 > )
+	PlayLoopFXOnEntity( $"P_SalvoCore_trail", smokenade )
+	smokenade.SetVelocity( < 0, 0, -3000 > )
+	wait 0.65
 	Smokescreen(smokescreen)
+	smokenade.Destroy()
 }
 
 void function spawnDrones( SmokeEvent smokeEvent, SpawnEvent spawnEvent, FlowControlEvent flowControlEvent, SoundEvent soundEvent )
@@ -1070,6 +1102,7 @@ void function spawnDroppodGrunts( SmokeEvent smokeEvent, SpawnEvent spawnEvent, 
 
 	string squadName = MakeSquadName( TEAM_IMC, UniqueString( "ZiplineTable" ) )
 	string at_weapon = GetConVarString( "ns_fd_grunt_at_weapon" )
+	string baseweapon = GetConVarString( "ns_fd_grunt_primary_weapon" )
 	array<entity> guys
 
 	for ( int i = 0; i < spawnEvent.spawnAmount; i++ )
@@ -1090,6 +1123,7 @@ void function spawnDroppodGrunts( SmokeEvent smokeEvent, SpawnEvent spawnEvent, 
 		SetTeam( guy, TEAM_IMC )
 		guy.EnableNPCFlag(  NPC_ALLOW_INVESTIGATE | NPC_ALLOW_HAND_SIGNALS | NPC_ALLOW_FLEE )
 		guy.DisableNPCFlag( NPC_ALLOW_PATROL )
+		SetSpawnOption_Weapon( guy, baseweapon )
 		DispatchSpawn( guy )
 
 		guy.SetParent( pod, "ATTACH", true )
@@ -1118,6 +1152,7 @@ void function spawnGruntDropship( SmokeEvent smokeEvent, SpawnEvent spawnEvent, 
 {  
 	string squadName = MakeSquadName( TEAM_IMC, UniqueString( "DropshipTable" ) )
 	string at_weapon = GetConVarString( "ns_fd_grunt_at_weapon" )
+	string baseweapon = GetConVarString( "ns_fd_grunt_primary_weapon" )
 	
 	vector origin 		= spawnEvent.origin
 	origin.z 		   += 448 //Expected to people make coordinates in the ground so we add this up for the hover height
@@ -1196,6 +1231,7 @@ void function spawnGruntDropship( SmokeEvent smokeEvent, SpawnEvent spawnEvent, 
 		SetTeam( guy, TEAM_IMC )
 		guy.EnableNPCFlag(  NPC_ALLOW_INVESTIGATE | NPC_ALLOW_HAND_SIGNALS | NPC_ALLOW_FLEE )
 		guy.DisableNPCFlag( NPC_ALLOW_PATROL )
+		SetSpawnOption_Weapon( guy, baseweapon )
 		DispatchSpawn( guy )
 		
 		SetSquad( guy, squadName )
@@ -1248,7 +1284,6 @@ void function spawnDroppodStalker( SmokeEvent smokeEvent, SpawnEvent spawnEvent,
 
 	string squadName = MakeSquadName( TEAM_IMC, UniqueString( "ZiplineTable" ) )
 	array<entity> guys
-	int difficultyLevel = FD_GetDifficultyLevel()
 
 	for ( int i = 0; i < spawnEvent.spawnAmount; i++ )
 	{
@@ -1373,7 +1408,7 @@ void function SpawnIonTitan( SmokeEvent smokeEvent, SpawnEvent spawnEvent, FlowC
 	PingMinimap( spawnEvent.origin.x, spawnEvent.origin.y, 4, 600, 150, 0 )
 	entity npc = CreateNPCTitan( "titan_atlas", TEAM_IMC, spawnEvent.origin, spawnEvent.angles)
 	SetSpawnOption_Titanfall( npc )
-	if ( spawnEvent.titanType == 1 && GetConVarBool( "ns_fd_allow_elite_titans" ) )
+	if ( spawnEvent.titanType == 1 && elitesAllowed )
 	{
 		SetSpawnOption_AISettings( npc, "npc_titan_atlas_stickybomb_boss_fd_elite" )
 		SetTitanAsElite( npc )
@@ -1401,7 +1436,7 @@ void function SpawnScorchTitan( SmokeEvent smokeEvent, SpawnEvent spawnEvent, Fl
 	PingMinimap( spawnEvent.origin.x, spawnEvent.origin.y, 4, 600, 150, 0 )
 	entity npc = CreateNPCTitan( "titan_ogre", TEAM_IMC, spawnEvent.origin, spawnEvent.angles )
 	SetSpawnOption_Titanfall( npc )
-	if ( spawnEvent.titanType == 1 && GetConVarBool( "ns_fd_allow_elite_titans" ) )
+	if ( spawnEvent.titanType == 1 && elitesAllowed )
 	{
 		SetSpawnOption_AISettings( npc, "npc_titan_ogre_meteor_boss_fd_elite" )
 		SetTitanAsElite( npc )
@@ -1435,7 +1470,7 @@ void function SpawnRoninTitan( SmokeEvent smokeEvent, SpawnEvent spawnEvent, Flo
 	PingMinimap( spawnEvent.origin.x, spawnEvent.origin.y, 4, 600, 150, 0 )
 	entity npc = CreateNPCTitan( "titan_stryder", TEAM_IMC, spawnEvent.origin, spawnEvent.angles)
 	SetSpawnOption_Titanfall( npc )
-	if ( spawnEvent.titanType == 1 && GetConVarBool( "ns_fd_allow_elite_titans" ) )
+	if ( spawnEvent.titanType == 1 && elitesAllowed )
 	{
 		SetSpawnOption_AISettings (npc, "npc_titan_stryder_leadwall_boss_fd_elite" )
 		SetTitanAsElite( npc )
@@ -1461,7 +1496,7 @@ void function SpawnToneTitan( SmokeEvent smokeEvent, SpawnEvent spawnEvent, Flow
 	entity npc = CreateNPCTitan( "titan_atlas", TEAM_IMC, spawnEvent.origin, spawnEvent.angles)
 	SetSpawnOption_AISettings( npc, "npc_titan_atlas_tracker_boss_fd" )
 	SetSpawnOption_Titanfall( npc )
-	if ( spawnEvent.titanType == 1 && GetConVarBool( "ns_fd_allow_elite_titans" ) )
+	if ( spawnEvent.titanType == 1 && elitesAllowed )
 	{
 		SetSpawnOption_AISettings( npc, "npc_titan_atlas_tracker_boss_fd_elite" )
 		SetTitanAsElite( npc )
@@ -1489,7 +1524,7 @@ void function SpawnLegionTitan( SmokeEvent smokeEvent, SpawnEvent spawnEvent, Fl
 	PingMinimap( spawnEvent.origin.x, spawnEvent.origin.y, 4, 600, 150, 0 )
 	entity npc = CreateNPCTitan( "titan_ogre", TEAM_IMC, spawnEvent.origin, spawnEvent.angles )
 	SetSpawnOption_Titanfall( npc )
-	if ( spawnEvent.titanType == 1 && GetConVarBool( "ns_fd_allow_elite_titans" ) )
+	if ( spawnEvent.titanType == 1 && elitesAllowed )
 	{
 		SetSpawnOption_AISettings( npc, "npc_titan_ogre_minigun_boss_fd_elite" )
 		SetTitanAsElite( npc )
@@ -1517,7 +1552,7 @@ void function SpawnMonarchTitan( SmokeEvent smokeEvent, SpawnEvent spawnEvent, F
 	PingMinimap( spawnEvent.origin.x, spawnEvent.origin.y, 4, 600, 150, 0 )
 	entity npc = CreateNPCTitan( "titan_atlas", TEAM_IMC, spawnEvent.origin, spawnEvent.angles )
 	SetSpawnOption_Titanfall( npc )
-	if ( spawnEvent.titanType == 1 && GetConVarBool( "ns_fd_allow_elite_titans" ) )
+	if ( spawnEvent.titanType == 1 && elitesAllowed )
 	{
 		SetSpawnOption_AISettings( npc,"npc_titan_atlas_vanguard_boss_fd_elite" )
 		SetTitanAsElite( npc )
@@ -1594,7 +1629,7 @@ void function spawnSniperTitan( SmokeEvent smokeEvent, SpawnEvent spawnEvent, Fl
 	PingMinimap( spawnEvent.origin.x, spawnEvent.origin.y, 4, 600, 150, 0 )
 	entity npc = CreateNPCTitan( "titan_stryder", TEAM_IMC, spawnEvent.origin, spawnEvent.angles)
 	SetSpawnOption_Titanfall( npc )
-	if ( spawnEvent.titanType == 1 && GetConVarBool( "ns_fd_allow_elite_titans" ) )
+	if ( spawnEvent.titanType == 1 && elitesAllowed )
 	{
 		SetSpawnOption_AISettings( npc, "npc_titan_stryder_sniper_boss_fd_elite" )
 		SetTitanAsElite( npc )
@@ -1623,7 +1658,7 @@ void function SpawnToneSniperTitan( SmokeEvent smokeEvent, SpawnEvent spawnEvent
 	PingMinimap( spawnEvent.origin.x, spawnEvent.origin.y, 4, 600, 150, 0 )
 	entity npc = CreateNPCTitan( "titan_atlas", TEAM_IMC, spawnEvent.origin, spawnEvent.angles )
 	SetSpawnOption_Titanfall( npc )
-	if ( spawnEvent.titanType == 1 && GetConVarBool( "ns_fd_allow_elite_titans" ) )
+	if ( spawnEvent.titanType == 1 && elitesAllowed )
 	{
 		SetSpawnOption_AISettings( npc, "npc_titan_atlas_tracker_fd_sniper_elite" )
 		SetTitanAsElite( npc )
@@ -1671,6 +1706,7 @@ void function SpawnTick( SmokeEvent smokeEvent, SpawnEvent spawnEvent, FlowContr
 		if( spawnEvent.entityGlobalKey != "" )
 			GlobalEventEntitys[ spawnEvent.entityGlobalKey + i.tostring() ] <- guy
 		SetSpawnOption_AISettings( guy, "npc_frag_drone_fd" )
+		SetSpawnOption_Alert( guy )
 		SetTeam( guy, TEAM_IMC )
 		guy.EnableNPCFlag(  NPC_ALLOW_INVESTIGATE )
 		DispatchSpawn( guy )
@@ -1710,6 +1746,7 @@ void function PingMinimap( float x, float y, float duration, float spreadRadius,
 	foreach( entity player in GetPlayerArray() )
 	{
 		Remote_CallFunction_NonReplay( player, "ServerCallback_FD_PingMinimap", x, y, duration, spreadRadius, ringRadius, colorIndex )
+		EmitSoundOnEntityOnlyToPlayer( player, player, "coop_minimap_ping" )
 	}
 }
 
@@ -1834,8 +1871,6 @@ void function AddMinimapForHumans( entity human )
 
 void function SlowEnemyMovementBasedOnDifficulty( entity npc )
 {
-	int difficultyLevel = FD_GetDifficultyLevel()
-	
 	//This is not exactly vanilla behavior i think, but generally it's good to make enemies slower on higher difficulties due their amped damage and full health or shield
 	switch ( difficultyLevel )
 	{
@@ -1858,7 +1893,7 @@ void function SetTitanAsElite( entity npc )
 	if( GetGameState() != eGameState.Playing || !IsHarvesterAlive( fd_harvester.harvester ) )
 		return
 	
-	if ( npc.IsTitan() && GetConVarBool( "ns_fd_allow_elite_titans" ) )
+	if ( npc.IsTitan() && elitesAllowed )
 	{
 		thread MonitorEliteTitanCore( npc )
 		npc.ai.bossTitanType = 1
@@ -1892,7 +1927,7 @@ void function Drop_Spawnpoint( vector origin, int team, float impactTime )
 
 	entity effectEnemy = StartParticleEffectInWorld_ReturnEntity( index, origin, surfaceNormal )
 	SetTeam( effectEnemy, team )
-	EffectSetControlPointVector( effectEnemy, 1, < 255,99,0 > )
+	EffectSetControlPointVector( effectEnemy, 1, < 255, 64, 16 > )
 	effectEnemy.kv.VisibilityFlags = ENTITY_VISIBLE_TO_ENEMY
 	targetEffects.append( effectEnemy )
 	
