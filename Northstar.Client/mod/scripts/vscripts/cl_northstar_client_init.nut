@@ -1,17 +1,17 @@
 global struct GameStateStruct {
 
     string map
-    string map_displayname
+    string mapDisplayname
 
     string playlist
-    string playlist_displayname
+    string playlistDisplayname
 
     int current_players
-    int max_players
-    int own_score
-    int other_highest_score
-    int max_score
-    float time_end
+    int maxPlayers
+    int ownScore
+    int otherHighestScore
+    int maxScore
+    float timeEnd
 }
 
 global struct UIPresenceStruct {

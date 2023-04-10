@@ -5,41 +5,41 @@ void function NorthstarCodeCallback_GenerateGameState() {
 
     GameStateStruct gs
 
-    int highest_score = 0
-    int second_highest = 0
+    int highestScore = 0
+    int secondHighest = 0
 
     foreach ( player in GetPlayerArray() )
     {
-        if ( GameRules_GetTeamScore( player.GetTeam() ) >= highest_score )
+        if ( GameRules_GetTeamScore( player.GetTeam() ) >= highestScore )
         {
-            highest_score = GameRules_GetTeamScore( player.GetTeam() )
+            highestScore = GameRules_GetTeamScore( player.GetTeam() )
         }
-        else if ( GameRules_GetTeamScore( player.GetTeam() ) > second_highest )
+        else if ( GameRules_GetTeamScore( player.GetTeam() ) > secondHighest )
         {
-            second_highest = GameRules_GetTeamScore( player.GetTeam() )
+            secondHighest = GameRules_GetTeamScore( player.GetTeam() )
         }
     }
 
     gs.map = GetMapName()
-    gs.map_displayname = Localize(GetMapDisplayName(GetMapName()))
+    gs.mapDisplayname = Localize(GetMapDisplayName(GetMapName()))
 
     gs.playlist = GetCurrentPlaylistName()
-    gs.playlist_displayname = Localize(GetCurrentPlaylistVarString("name", GetCurrentPlaylistName()))
+    gs.playlistDisplayname = Localize(GetCurrentPlaylistVarString("name", GetCurrentPlaylistName()))
 
-    gs.current_players = GetPlayerArray().len()
-    gs.max_players = GetCurrentPlaylistVarInt( "max_players", -1 )
+    gs.currentPlayers = GetPlayerArray().len()
+    gs.maxPlayers = GetCurrentPlaylistVarInt( "maxPlayers", -1 )
 
     if ( IsValid( GetLocalClientPlayer() ) )
-		gs.own_score = GameRules_GetTeamScore( GetLocalClientPlayer().GetTeam() )
+		gs.ownScore = GameRules_GetTeamScore( GetLocalClientPlayer().GetTeam() )
 
-    gs.other_highest_score = gs.own_score == highest_score ? second_highest : highest_score
+    gs.otherHighestScore = gs.ownScore == highestScore ? secondHighest : highestScore
 
-    gs.max_score = IsRoundBased() ? GetCurrentPlaylistVarInt( "roundscorelimit", 0 ) : GetCurrentPlaylistVarInt( "scorelimit", 0 )
+    gs.maxScore = IsRoundBased() ? GetCurrentPlaylistVarInt( "roundscorelimit", 0 ) : GetCurrentPlaylistVarInt( "scorelimit", 0 )
 
 	if ( GetServerVar( "roundBased" ) )
-		gs.time_end = expect float(level.nv.roundEndTime - Time())
+		gs.timeEnd = expect float(level.nv.roundEndTime - Time())
 	else
-		gs.time_end = expect float(level.nv.gameEndTime - Time())
+		gs.timeEnd = expect float(level.nv.gameEndTime - Time())
 
     NSPushGameStateData(gs)
 }
