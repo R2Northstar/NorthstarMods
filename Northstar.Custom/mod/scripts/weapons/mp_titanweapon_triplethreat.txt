@@ -422,9 +422,11 @@ WeaponData
 	// same as softball's status, make npcs try not to hurt themselves
 	"npc_min_engage_range"							"100"
 	"npc_min_engage_range_heavy_armor"				"500"
-	// same as leadwall's status, make npc shoot only when they're close enough to enemy
-	"npc_max_engage_range"							"1500"
-	"npc_max_engage_range_heavy_armor"				"1500"
+
+	"npc_max_engage_range"							"2000"
+	"npc_max_engage_range_heavy_armor"				"2000"
+	// same as leadwall's status, make npcs shoot only when they're close enough to enemy
+	"npc_max_range"   								"1500"
 
 	Mods
 	{
