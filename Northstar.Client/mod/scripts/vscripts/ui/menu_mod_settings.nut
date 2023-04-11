@@ -242,7 +242,7 @@ void functionref() function ResetAllConVarsForModEventHandler( string catName )
 			if ( file.filteredList.find( c ) < 0 )
 				continue
 
-			if ( min( BUTTONS_PER_PAGE, max( 0, index - file.scrollOffset ) ) == index - file.scrollOffset )
+			if ( min( BUTTONS_PER_PAGE - 1, max( 0, index - file.scrollOffset ) ) == index - file.scrollOffset )
 			{
 				Hud_SetText( Hud_GetChild( file.modPanels[ i - file.scrollOffset ], "TextEntrySetting" ), c.isEnumSetting ? c.values[ GetConVarInt( c.conVar ) ] : GetConVarString( c.conVar ) )
 				if( c.sliderEnabled )
@@ -258,7 +258,7 @@ void functionref() function ResetConVarEventHandler( int modIndex )
 	{
 		ConVarData c = file.filteredList[ modIndex ]
 		SetConVarToDefault( c.conVar )
-		if ( min( BUTTONS_PER_PAGE, max( 0, modIndex - file.scrollOffset ) ) == modIndex - file.scrollOffset )
+		if ( min( BUTTONS_PER_PAGE - 1, max( 0, modIndex - file.scrollOffset ) ) == modIndex - file.scrollOffset )
 		{
 			Hud_SetText( Hud_GetChild( file.modPanels[ modIndex - file.scrollOffset ], "TextEntrySetting" ), c.isEnumSetting ? c.values[ GetConVarInt( c.conVar ) ] : GetConVarString( c.conVar ) )
 			if( c.sliderEnabled )
