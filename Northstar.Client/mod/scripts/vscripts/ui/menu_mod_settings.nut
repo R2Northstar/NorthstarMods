@@ -233,7 +233,7 @@ void functionref() function ResetAllConVarsForModEventHandler( string catName )
 	{
 		for ( int i = 0; i < file.conVarList.len(); i++ )
 		{
-			ConVarData c = file.conVarList[i]
+			ConVarData c = file.conVarList[ i ]
 			if ( c.catName != catName || c.isCategoryName || c.isEmptySpace || c.isCustomButton )
 				continue
 			SetConVarToDefault( c.conVar )
@@ -244,7 +244,7 @@ void functionref() function ResetAllConVarsForModEventHandler( string catName )
 
 			if ( min( BUTTONS_PER_PAGE - 1, max( 0, index - file.scrollOffset ) ) == index - file.scrollOffset )
 			{
-				Hud_SetText( Hud_GetChild( file.modPanels[ i - file.scrollOffset ], "TextEntrySetting" ), c.isEnumSetting ? c.values[ GetConVarInt( c.conVar ) ] : GetConVarString( c.conVar ) )
+				Hud_SetText( Hud_GetChild( file.modPanels[ index - file.scrollOffset ], "TextEntrySetting" ), c.isEnumSetting ? c.values[ GetConVarInt( c.conVar ) ] : GetConVarString( c.conVar ) )
 				if( c.sliderEnabled )
 					MS_Slider_SetValue( file.sliders[ index - file.scrollOffset ], GetConVarFloat( c.conVar ) )
 			}
