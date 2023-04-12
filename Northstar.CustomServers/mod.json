@@ -59,6 +59,10 @@
 			"DefaultValue": "1"
 		},
 		{
+			"Name": "ns_ronin_fair_phase",
+			"DefaultValue": "0"
+		},
+		{
 			"Name": "ns_fd_allow_elite_titans",
 			"DefaultValue": "0"
 		},

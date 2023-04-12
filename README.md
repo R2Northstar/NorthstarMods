@@ -45,6 +45,7 @@ Use these variables in your `autoexec_ns_server` cfg to control them:
 - `ns_fd_grunt_at_weapon` Default is "mp_weapon_defender", set to another anti-titan weapon to make Grunts use them on Master or Insane difficulty
 - `ns_fd_disable_respawn_dropship` Default is 0, setting to 1 makes players always respawn directly on ground nearby the Harvester or Shop
 - `ns_reaper_warpfall_kill` Default is 1, set to 0 if you don't want Reapers to kill Titans on their Warpfall
+- `ns_ronin_fair_phase` Default is 0, setting to 1 will make Ronin not kill himself if he materializes inside an enemy Titan from Phase Shift, instead he will only apply 5000 damage
 
 ## Trivia hints for server hosters
 

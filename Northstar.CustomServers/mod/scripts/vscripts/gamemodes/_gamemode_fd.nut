@@ -60,6 +60,7 @@ global vector FD_groundspawnAngles = < 0, 0, 0 >
 global table< string, array<vector> > routes
 global array<entity> routeNodes
 global array<entity> spawnedNPCs
+global array<string> waveAnnouncement = ["","","","",""]
 global int difficultyLevel
 global bool elitesAllowed
 global bool titanfallblockAllowed
@@ -388,7 +389,6 @@ void function GamemodeFD_InitPlayer( entity player )
 	SetPersistenceBitfield( player, "fdTutorialBits", eFDTutorials.SENTRY_TURRET, 0 )
 	SetPersistenceBitfield( player, "fdTutorialBits", eFDTutorials.CORE_OVERLOAD, 0 )
 	SetPersistenceBitfield( player, "fdTutorialBits", eFDTutorials.WAVE_BREAK, 0 )
-	SetPersistenceBitfield( player, "fdTutorialBits", eFDTutorials.HARVESTER, 0 )
 	SetPersistenceBitfield( player, "fdTutorialBits", eFDTutorials.AI_TITAN_ARC, 0 )
 	SetPersistenceBitfield( player, "fdTutorialBits", eFDTutorials.AI_TITAN_MORTAR, 0 )
 	SetPersistenceBitfield( player, "fdTutorialBits", eFDTutorials.AI_TITAN_NUKE, 0 )
@@ -628,6 +628,7 @@ void function OnNpcDeath( entity victim, entity attacker, var damageInfo )
 			
 			case "npc_titan_stryder_sniper_boss_fd_elite":
 			case "npc_titan_stryder_sniper_boss_fd":
+			case "npc_titan_stryder_sniper_fd":
 			case "npc_titan_stryder_sniper":
 				PlayFactionDialogueToPlayer( "kc_pilotkillNorthstar", attacker )
 				break
@@ -707,6 +708,21 @@ void function startMainGameLoop()
 void function mainGameLoop()
 {
 	startHarvester()
+	
+	int waveNumber = GetGlobalNetInt( "FD_currentWave" )
+	
+	if( !file.waveRestart )
+	{
+		if ( waveNumber == 0 && GetCurrentPlaylistVarFloat( "riff_minimap_state", 0 ) == 0 )
+		{
+			wait 14
+			PlayFactionDialogueToTeam( "fd_minimapTip" , TEAM_MILITIA )
+			wait 14
+		}
+		
+		else //Still wait 14 seconds to let them to speak about the Harvester being up and running on first wave
+			wait 14
+	}
 
 	bool showShop = false
 	for( int i = GetGlobalNetInt( "FD_currentWave" ); i < waveEvents.len(); i++ )
@@ -724,10 +740,14 @@ void function mainGameLoop()
 				PlayerEarnMeter_Reset( player )
 			}
 			SetGlobalNetTime( "FD_nextWaveStartTime", Time() + GetCurrentPlaylistVarFloat( "fd_wave_buy_time", 60 ) )
+			FD_AttemptToRepairTurrets()
 			
 			wait 1
 			foreach( entity player in GetPlayerArray() )
+			{
+				PlayerEarnMeter_SetMode( player, 1 )
 				PlayerEarnMeter_AddOwnedFrac( player, 1.0 )
+			}
 		}
 
 		if( !runWave( i, showShop ) )
@@ -741,7 +761,7 @@ void function mainGameLoop()
 			{
 				PlayerEarnMeter_SetMode( player, 1 ) // show the earn meter
 				PlayerEarnMeter_AddEarnedAndOwned( player, 1.0, 1.0 )
-				//Play twice in a row to not make its volume to subtle
+				//Play twice in a row to not make its volume so subtle
 				EmitSoundOnEntityOnlyToPlayer( player, player, "UI_InGame_FD_TitanSelected" )
 				EmitSoundOnEntityOnlyToPlayer( player, player, "UI_InGame_FD_TitanSelected" )
 			}
@@ -916,6 +936,12 @@ bool function runWave( int waveIndex, bool shouldDoBuyTime )
 	{
 		Remote_CallFunction_NonReplay( player, "ServerCallback_FD_AnnouncePreParty", enemys[0], enemys[1], enemys[2], enemys[3], enemys[4], enemys[5], enemys[6], enemys[7], enemys[8] )
 	}
+	if( waveAnnouncement[waveIndex] != "" && !file.waveRestart )
+	{
+		PlayFactionDialogueToTeam( waveAnnouncement[waveIndex] , TEAM_MILITIA )
+		if( waveIndex == 0 )
+			wait 5
+	}
 	if( file.waveRestart )
 	{
 		file.waveRestart = false
@@ -945,17 +971,11 @@ bool function runWave( int waveIndex, bool shouldDoBuyTime )
 		MessageToTeam( TEAM_MILITIA, eEventNotifications.FD_StoreClosing )
 		print( "Closing Shop" )
 	}
-
-	if ( waveIndex==0 && GetCurrentPlaylistVarFloat( "riff_minimap_state", 0 ) == 0 )
-	{
-		wait 14
-		PlayFactionDialogueToTeam( "fd_minimapTip" , TEAM_MILITIA )
-		wait 14
-	}
-	else if ( waveIndex==0 ) //Still wait 14 seconds to let them to speak about the Harvester being up and running on first wave
-		wait 14
+	
+	if ( waveIndex==0 ) //This is to allow more time for the Enemy list panel stay on screen for Wave 1
+		wait 6
 	else
-		wait 5 //Between waves its just 5 seconds to start another one
+		wait 4
 	
 	SetGlobalNetInt( "FD_waveState", WAVE_STATE_INCOMING )
 	EarnMeterMP_SetPassiveMeterGainEnabled( true )
@@ -975,11 +995,12 @@ bool function runWave( int waveIndex, bool shouldDoBuyTime )
 		PlayFactionDialogueToTeam( "fd_newWaveStartPrefix" , TEAM_MILITIA )
 		
 	MessageToTeam( TEAM_MILITIA, eEventNotifications.FD_AnnounceWaveStart )
-	SetGlobalNetInt( "FD_waveState", WAVE_STATE_INCOMING )
 
-	//main wave loop
-	waitthread SetWaveStateReady()
+	wait 10
+	
+	SetGlobalNetInt( "FD_waveState", WAVE_STATE_IN_PROGRESS )
 	executeWave()
+	
 	SetGlobalNetInt( "FD_waveState", WAVE_STATE_COMPLETE )
 	EarnMeterMP_SetPassiveMeterGainEnabled( false )
 	
@@ -1222,12 +1243,6 @@ bool function runWave( int waveIndex, bool shouldDoBuyTime )
 	return true
 }
 
-void function SetWaveStateReady()
-{
-	wait 10
-	SetGlobalNetInt( "FD_waveState", WAVE_STATE_IN_PROGRESS )
-}
-
 void function FD_StunLaserHealTeammate( entity player, entity target, int shieldRestoreAmount )
 {
 	if( IsValid( player ) && player in file.players ){
@@ -1282,7 +1297,6 @@ void function FD_OnArcTrapTriggered( entity victim, var damageInfo )
 		return
 
 	AddPlayerScore( owner, "FDArcTrapTriggered" )
-	file.players[ owner ].defenseScoreThisRound += 10
 }
 
 void function FD_OnArcWaveDamage( entity ent, var damageInfo )
@@ -1309,7 +1323,6 @@ void function FD_OnSonarStart( entity ent, vector position, int sonarTeam, entit
 		return
 
 	AddPlayerScore( sonarOwner, "FDSonarPulse" )//should only triggered once during sonar time?
-	file.players[ sonarOwner ].defenseScoreThisRound += 1
 }
 
 void function FD_SetupEpilogue()
@@ -1528,7 +1541,7 @@ void function OnHarvesterDamaged( entity harvester, var damageInfo )
     	damageAmount *= 0.25
 		break
 	}
-
+	
 	float shieldPercent = ( ( harvester.GetShieldHealth().tofloat() / harvester.GetShieldHealthMax() ) * 100 )
 	if ( shieldPercent < 100 && !file.harvesterShieldDown )
 	{
@@ -1853,6 +1866,9 @@ void function DamageScaleByDifficulty( entity ent, var damageInfo )
 		DamageInfo_SetDamage( damageInfo, damageAmount * 0.2 )
 		return
 	}
+	
+	if ( damageSourceID == eDamageSourceId.damagedef_stalker_powersupply_explosion_large_at && attacker.IsPlayer() && attacker.IsTitan() ) //Warn Titan players about Stalkers
+		PlayFactionDialogueToPlayer( "fd_stalkerExploNag", attacker )
 
 	DamageInfo_SetDamage( damageInfo, damageAmount * GetCurrentPlaylistVarFloat( "fd_player_damage_scalar", 1.0 ) )
 }
@@ -2060,6 +2076,21 @@ void function LoadEntities()
 			}
 		}
 	}
+	
+	foreach ( entity traverse in GetEntArrayByClass_Expensive( "traverse" ) )
+	{
+		entity jumpnode = CreateEntity( "info_hint" )
+		jumpnode.kv.radius = 1024
+		jumpnode.kv.spawnflags = 65536
+		jumpnode.kv.hinttype = 901
+		jumpnode.kv.nodeFOV = 360
+		jumpnode.kv.IgnoreFacing = 2
+		jumpnode.kv.MinimumState = 1
+		jumpnode.kv.MaximumState = 3
+		jumpnode.SetOrigin( traverse.GetOrigin() )
+		DispatchSpawn( jumpnode )
+		jumpnode.SetOrigin( traverse.GetOrigin() )
+	}
 		
 	ValidateAndFinalizePendingStationaryPositions()
 	initNetVars()
@@ -2265,7 +2296,7 @@ void function AddTurretSentry( entity turret )
 	Highlight_SetFriendlyHighlight( turret , "sp_friendly_hero" )
 	Highlight_SetOwnedHighlight( turret , "sp_friendly_hero" )
 	turret.Highlight_SetParam( 1, 0, < 0, 0, 0 > )
-	turret.Highlight_SetParam( 3, 0, < 0, 0, 0 > )
+	turret.Highlight_SetParam( 3, 0, <0.63, 0.80, 1.0> )
 	entity player = turret.GetBossPlayer()
 	file.players[ player ].deployedEntityThisRound.append( turret )
 	AddEntityDestroyedCallback( turret, FD_OnEntityDestroyed )

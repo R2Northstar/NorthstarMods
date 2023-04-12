@@ -6,7 +6,7 @@ global function Dev_MarkRoute
 
 
 
-void function singleNav_thread( entity npc, string routeName, int nodesToSkip= 1, float nextDistance = -1.0, bool shouldLoop = false )
+void function singleNav_thread( entity npc, string routeName, int nodesToSkip = 1, float nextDistance = -1.0, bool shouldLoop = false )
 {
 	npc.EndSignal( "OnDeath" )
 	npc.EndSignal( "OnDestroy" )
@@ -158,7 +158,7 @@ void function SquadNav_Thread( array<entity> npcs, string routeName, int nodesTo
 	}
 }
 
-void function droneNav_thread( entity npc, string routeName,int nodesToSkip= 0,float nextDistance = 64.0, bool shouldLoop = false )
+void function droneNav_thread( entity npc, string routeName, int nodesToSkip= 0, float nextDistance = 64.0, bool shouldLoop = false )
 {
 	npc.EndSignal( "OnDeath" )
 	npc.EndSignal( "OnDestroy" )
@@ -174,7 +174,7 @@ void function droneNav_thread( entity npc, string routeName,int nodesToSkip= 0,f
 	entity firstNode
 	if ( routeName == "" )
 	{
-		float dist = 1000000000
+		float dist = 65535
 		foreach ( entity node in routeNodes )
 		{
 			if( !node.HasKey( "route_name" ) )
