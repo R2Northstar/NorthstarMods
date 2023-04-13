@@ -873,13 +873,13 @@ void function BlockFurtherTitanfalls( SmokeEvent smokeEvent, SpawnEvent spawnEve
 				ClearTitanAvailable( player )
 				SendHudMessage( player, "Titanfall Block: Titans cannot be summoned", -1, 0.5, 255, 255, 128, 255, 0.2, 5.0, 1.8 )
 			}
+			level.nv.titanAvailability = eTitanAvailability.Never
 		}
 		else
 		{
+			level.nv.titanAvailability = eTitanAvailability.Default
 			print( "Removing Titanfall Block Event" )
 			PlayerEarnMeter_SetEnabled( true )
-			foreach( entity player in GetPlayerArray() )
-				PlayerEarnMeter_SetMode( player, 1 )
 		}
 	}
 }
@@ -898,7 +898,7 @@ void function spawnSmoke( SmokeEvent smokeEvent, SpawnEvent spawnEvent, FlowCont
 	SmokescreenStruct smokescreen
 	smokescreen.smokescreenFX = $"P_smokescreen_FD"
 	smokescreen.isElectric = false
-	smokescreen.origin = smokeEvent.position + < 0, 0, 128 >
+	smokescreen.origin = smokeEvent.position + < 0, 0, 96 >
 	smokescreen.angles = < 0, 0, 0 >
 	smokescreen.lifetime = smokeEvent.lifetime
 	smokescreen.fxXYRadius = 160
@@ -914,7 +914,6 @@ void function spawnSmoke( SmokeEvent smokeEvent, SpawnEvent spawnEvent, FlowCont
 	entity smokenade = CreateEntity( "prop_physics" )
 	smokenade.SetValueForModelKey( $"models/dev/empty_physics.mdl" )
 	smokenade.kv.SpawnAsPhysicsMover = 1
-	smokenade.kv.scale = 4
 	smokenade.kv.spawnflags = 0
 	smokenade.kv.solid = 0
 	smokenade.kv.fadedist = 0
@@ -922,11 +921,12 @@ void function spawnSmoke( SmokeEvent smokeEvent, SpawnEvent spawnEvent, FlowCont
 	smokenade.kv.inertiaScale = 1.0
 	smokenade.kv.renderamt = 255
 	smokenade.kv.rendercolor = "255 255 255"
-	smokenade.SetOrigin( smokeEvent.position + < 0, 0, 2048 > )
+	smokenade.SetOrigin( smokeEvent.position + < 0, 0, 2560 > )
 	SetTeam( smokenade, TEAM_BOTH )
 	DispatchSpawn( smokenade )
-	smokenade.SetOrigin( smokeEvent.position + < 0, 0, 2048 > )
-	PlayLoopFXOnEntity( $"P_SalvoCore_trail", smokenade )
+	smokenade.SetOrigin( smokeEvent.position + < 0, 0, 2560 > )
+	PlayLoopFXOnEntity( $"Rocket_Smoke_SMALL_Titan_2", smokenade )
+	PlayLoopFXOnEntity( $"weapon_kraber_projectile", smokenade )
 	smokenade.SetVelocity( < 0, 0, -3250 > )
 	wait 0.65
 	Smokescreen(smokescreen)

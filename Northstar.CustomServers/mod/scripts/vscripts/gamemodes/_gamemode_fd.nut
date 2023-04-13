@@ -182,7 +182,7 @@ void function GamemodeFD_Init()
 
 	//Data Collection
 	AddStunLaserHealCallback( FD_StunLaserHealTeammate )
-	AddBatteryHealCallback( FD_BatteryHealTeammate )
+	SetApplyBatteryCallback( FD_BatteryHealTeammate )
 	AddSmokeHealCallback( FD_SmokeHealTeammate )
 	SetUsedCoreCallback( FD_UsedCoreCallback )
 
@@ -221,7 +221,7 @@ void function FD_PlayerRespawnThreaded( entity player )
 		file.players[player].lastRespawn = Time()
 	if( GetCurrentPlaylistVarInt( "fd_at_unlimited_ammo", 1 ) )
 		FD_GivePlayerInfiniteAntiTitanAmmo( player )
-	if ( !PlayerEarnMeter_Enabled() )
+	if ( GetGlobalNetInt( "FD_currentWave" ) == 0 )
 	{
 		if ( IsValid( player ) )
 			PlayerEarnMeter_SetMode( player, 0 )
@@ -322,8 +322,12 @@ void function GamemodeFD_OnPlayerKilled( entity victim, entity attacker, var dam
 	if(timeAlive>file.playerAwardStats[victim]["longestLife"])
 		file.playerAwardStats[victim]["longestLife"] = timeAlive
 
-	//set died this round for round end money boni
+	//set died this round for round end money bonus
 	file.players[victim].diedThisRound = true
+	
+	victim.s.currentKillstreak = 0
+	victim.s.lastKillTime = 0.0
+	victim.s.currentTimedKillstreak = 0
 
 	//play voicelines for amount of players alive
 	array<entity> militiaplayers = GetPlayerArrayOfTeam( TEAM_MILITIA )
@@ -551,24 +555,36 @@ void function OnNpcDeath( entity victim, entity attacker, var damageInfo )
 				money = 0
 				break
 			case "npc_soldier":
+				attacker.AddToPlayerGameStat( PGS_ASSAULT_SCORE, FD_SCORE_GRUNT )
 				money = 5
 				break
 			case "npc_drone":
+				attacker.AddToPlayerGameStat( PGS_ASSAULT_SCORE, FD_SCORE_AIR_DRONE )
+				money = 10
+				break
 			case "npc_spectre":
+				attacker.AddToPlayerGameStat( PGS_ASSAULT_SCORE, FD_SCORE_SPECTRE )
 				money = 10
 				break
 			case "npc_stalker":
+				attacker.AddToPlayerGameStat( PGS_ASSAULT_SCORE, FD_SCORE_STALKER )
 				money = 15
 				break
 			case "npc_super_spectre":
+				attacker.AddToPlayerGameStat( PGS_ASSAULT_SCORE, FD_SCORE_SUPER_SPECTRE )
 				money = 20
 				break
+			case "npc_titan":
+				attacker.AddToPlayerGameStat( PGS_ASSAULT_SCORE, FD_SCORE_TITAN )
+				money = 50
+				break
 			default:
-				money = 50 // titans seem to total up to 50 money undoomed health
+				money = 0
 		}
 		foreach( player in GetPlayerArray() )
 			Remote_CallFunction_NonReplay( player, "ServerCallback_OnTitanKilled", attacker.GetEncodedEHandle(), victim.GetEncodedEHandle(), scriptDamageType, damageSourceId )
 	}
+	
 	if ( money != 0 )
 		AddMoneyToPlayer( attacker , money )
 
@@ -583,9 +599,25 @@ void function OnNpcDeath( entity victim, entity attacker, var damageInfo )
 		if( attackerInfo.attacker != attacker && !exists )
 		{
 			alreadyAssisted[attackerInfo.attacker.GetEncodedEHandle()] <- true
-			file.players[attackerInfo.attacker].defenseScoreThisRound += playerScore		// i assume this is how support score gets added
+			file.players[attackerInfo.attacker].defenseScoreThisRound += playerScore	
 		}
 	}
+
+	if ( DamageInfo_GetCustomDamageType( damageInfo ) & DF_HEADSHOT )
+		AddPlayerScore( attacker, "Headshot", victim )
+		
+	attacker.s.currentKillstreak++
+	if ( attacker.s.currentKillstreak == 5 )
+		AddPlayerScore( attacker, "Mayhem" )
+	
+	if ( Time() - attacker.s.lastKillTime > CASCADINGKILL_REQUIREMENT_TIME )
+	{
+		attacker.s.currentKillstreak = 0
+		attacker.s.lastKillTime = Time()
+	}
+	
+	attacker.s.lastKillTime = Time()
+	attacker.SetPlayerGameStat( PGS_DETONATION_SCORE, attacker.GetPlayerGameStat( PGS_ASSAULT_SCORE ) + attacker.GetPlayerGameStat( PGS_DEFENSE_SCORE ) )
 	
 	if( !attacker.IsTitan() && victim.IsTitan() )
 	{
@@ -692,6 +724,8 @@ bool function useShieldBoost( entity player, array<string> args )
 		MessageToTeam( TEAM_MILITIA,eEventNotifications.FD_PlayerBoostedHarvesterShield, null, player )
 		player.SetPlayerNetInt( "numHarvesterShieldBoost", player.GetPlayerNetInt( "numHarvesterShieldBoost" ) - 1 )
 		file.playerAwardStats[player]["harvesterHeals"]++
+		player.AddToPlayerGameStat( PGS_DEFENSE_SCORE, FD_SCORE_SHIELD_HARVESTER )
+		player.SetPlayerGameStat( PGS_DETONATION_SCORE, player.GetPlayerGameStat( PGS_ASSAULT_SCORE ) + player.GetPlayerGameStat( PGS_DEFENSE_SCORE ) )
 	}
 	return true
 }
@@ -730,6 +764,7 @@ void function mainGameLoop()
 		if( file.waveRestart )
 		{
 			showShop = true
+			level.nv.titanAvailability = eTitanAvailability.Default
 			PlayerEarnMeter_SetEnabled( true )
 			foreach( entity player in GetPlayerArray() )
 			{
@@ -1078,10 +1113,7 @@ bool function runWave( int waveIndex, bool shouldDoBuyTime )
 		foreach( entity player in GetPlayerArray() )
 		{
 			AddPlayerScore( player, "FDDamageBonus", null, "", file.players[player].assaultScoreThisRound )
-			AddScoreToPlayer( player, PGS_ASSAULT_SCORE )
 			AddPlayerScore( player, "FDSupportBonus", null, "", file.players[player].defenseScoreThisRound )
-			AddScoreToPlayer( player, PGS_DEFENSE_SCORE )
-			AddScoreToPlayer( player, PGS_DETONATION_SCORE )
 			AddPlayerScore( player, "FDTeamWave" )
 		}
 		int highestScore
@@ -1169,17 +1201,12 @@ bool function runWave( int waveIndex, bool shouldDoBuyTime )
 		else
 			PlayFactionDialogueToPlayer( "fd_wavePayoutAddtnl", player )
 		AddPlayerScore( player, "FDDamageBonus", null, "", file.players[player].assaultScoreThisRound )
-		AddScoreToPlayer( player, PGS_ASSAULT_SCORE )
 		AddPlayerScore( player, "FDSupportBonus", null, "", file.players[player].defenseScoreThisRound )
-		AddScoreToPlayer( player, PGS_DEFENSE_SCORE )
-		AddScoreToPlayer( player, PGS_DETONATION_SCORE )
 		AddPlayerScore( player, "FDTeamWave" )
+		player.SetPlayerGameStat( PGS_DETONATION_SCORE, player.GetPlayerGameStat( PGS_ASSAULT_SCORE ) + player.GetPlayerGameStat( PGS_DEFENSE_SCORE ) )
 		AddMoneyToPlayer( player, GetCurrentPlaylistVarInt( "fd_money_per_round", 600 ) )
-		// is this in the right place? do we want to be adding for each player?
-		// this function is called "Set" but in reality it is "Add"
+
 		SetJoinInProgressBonus( GetCurrentPlaylistVarInt( "fd_money_per_round" ,600 ) )
-		if(!IsValidPlayer(player))
-			continue
 		FD_EmitSoundOnEntityOnlyToPlayer( player, player, "HUD_MP_BountyHunt_BankBonusPts_Deposit_Start_1P" )
 	}
 	wait 2
@@ -1190,6 +1217,7 @@ bool function runWave( int waveIndex, bool shouldDoBuyTime )
 		{
 			AddPlayerScore( player, "FDDidntDie" )
 			player.AddToPlayerGameStat( PGS_ASSAULT_SCORE, FD_SCORE_DIDNT_DIE )
+			player.SetPlayerGameStat( PGS_DETONATION_SCORE, player.GetPlayerGameStat( PGS_ASSAULT_SCORE ) + player.GetPlayerGameStat( PGS_DEFENSE_SCORE ) )
 			AddMoneyToPlayer( player, 100 )
 			FD_EmitSoundOnEntityOnlyToPlayer( player, player, "HUD_MP_BountyHunt_BankBonusPts_Deposit_Start_1P" )
 		}
@@ -1215,6 +1243,7 @@ bool function runWave( int waveIndex, bool shouldDoBuyTime )
 	AddPlayerScore( highestScore_player, "FDWaveMVP" )
 	AddMoneyToPlayer( highestScore_player, 100 )
 	highestScore_player.AddToPlayerGameStat( PGS_ASSAULT_SCORE, FD_SCORE_MVP )
+	highestScore_player.SetPlayerGameStat( PGS_DETONATION_SCORE, highestScore_player.GetPlayerGameStat( PGS_ASSAULT_SCORE ) + highestScore_player.GetPlayerGameStat( PGS_DEFENSE_SCORE ) )
 	FD_EmitSoundOnEntityOnlyToPlayer( highestScore_player, highestScore_player, "HUD_MP_BountyHunt_BankBonusPts_Deposit_Start_1P" )
 	foreach( entity player in GetPlayerArray() )
 	{
@@ -1245,29 +1274,43 @@ bool function runWave( int waveIndex, bool shouldDoBuyTime )
 
 void function FD_StunLaserHealTeammate( entity player, entity target, int shieldRestoreAmount )
 {
-	if( IsValid( player ) && player in file.players ){
+	if( IsValid( player ) && player in file.players )
+	{
 		file.playerAwardStats[player]["heals"] += float( shieldRestoreAmount )
 		file.players[ player ].defenseScoreThisRound += shieldRestoreAmount / 100
+		player.AddToPlayerGameStat( PGS_DEFENSE_SCORE, shieldRestoreAmount / 100 )
+		player.SetPlayerGameStat( PGS_DETONATION_SCORE, player.GetPlayerGameStat( PGS_ASSAULT_SCORE ) + player.GetPlayerGameStat( PGS_DEFENSE_SCORE ) )
 	}
 }
 
 void function FD_SmokeHealTeammate( entity player, entity target, int shieldRestoreAmount )
 {
-	if( IsValid( player ) && player in file.players ){
+	if( IsValid( player ) && player in file.players )
+	{
 		file.playerAwardStats[player]["heals"] += float( shieldRestoreAmount )
 		file.players[ player ].defenseScoreThisRound += shieldRestoreAmount / 100
+		player.AddToPlayerGameStat( PGS_DEFENSE_SCORE, shieldRestoreAmount / 100 )
+		player.SetPlayerGameStat( PGS_DETONATION_SCORE, player.GetPlayerGameStat( PGS_ASSAULT_SCORE ) + player.GetPlayerGameStat( PGS_DEFENSE_SCORE ) )
 	}
 }
 
-void function FD_BatteryHealTeammate( entity battery, entity titan, int shieldRestoreAmount, int healthRestoreAmount )
+void function FD_BatteryHealTeammate( entity rider, entity titan, entity battery )
 {
-	if( !IsValid( battery ) )
-		return
-
 	entity BatteryParent = battery.GetParent()
 	entity TargetTitan
-	int currentHeal
-	int currentHealScore
+	entity soul = titan.GetTitanSoul()
+	int healingAmount = GetSegmentHealthForTitan( titan )
+	int shieldHealth = soul.GetShieldHealth()
+	int shieldMaxHealth = soul.GetShieldHealthMax()
+	int shieldDifference = shieldMaxHealth - shieldHealth
+	bool batteryIsAmped = IsAmpedBattery( battery )
+	float ampedHealthSegmentFrac = GetCurrentPlaylistVarFloat( "amped_battery_health_frac", 2.0 )
+	float healthSegmentFrac = GetCurrentPlaylistVarFloat( "battery_health_frac", 0.5 )
+	float frac = batteryIsAmped ? ampedHealthSegmentFrac : healthSegmentFrac
+	int addHealth = int( healingAmount * frac )
+	int totalHealth = minint( titan.GetMaxHealth(), titan.GetHealth() + addHealth )
+	int TotalHealing = shieldDifference + totalHealth
+	int HealScore = TotalHealing / 100
 	
 	if( titan.IsPlayer() )
 		TargetTitan = titan
@@ -1279,13 +1322,12 @@ void function FD_BatteryHealTeammate( entity battery, entity titan, int shieldRe
 	if( BatteryParent == TargetTitan )
 		return
 
-	if( IsValid( BatteryParent ) && BatteryParent in file.players )
+	if( IsValidPlayer( rider ) )
 	{
-		AddPlayerScore( BatteryParent, "FDTeamHeal" )
-		currentHeal = shieldRestoreAmount + healthRestoreAmount
-		currentHealScore = currentHeal / 100
-		file.playerAwardStats[BatteryParent]["heals"] += float( currentHeal )
-		file.players[ BatteryParent ].defenseScoreThisRound += currentHealScore
+		AddPlayerScore( rider, "FDTeamHeal" )
+		file.playerAwardStats[rider]["heals"] += float( TotalHealing )
+		rider.AddToPlayerGameStat( PGS_DEFENSE_SCORE, HealScore )
+		rider.SetPlayerGameStat( PGS_DETONATION_SCORE, rider.GetPlayerGameStat( PGS_ASSAULT_SCORE ) + rider.GetPlayerGameStat( PGS_DEFENSE_SCORE ) )
 	}
 }
 
@@ -1450,8 +1492,8 @@ void function FD_Epilogue_threaded()
 void function IncrementPlayerstat_TurretRevives( entity turret, entity player, entity owner )
 {
 	file.playerAwardStats[player]["turretsRepaired"]++
-	file.players[player].defenseScoreThisRound += FD_SCORE_REPAIR_TURRET
 	EmitSoundOnEntityOnlyToPlayer( player, player, "UI_InGame_FD_RepairTurret" )
+	player.AddToPlayerGameStat( PGS_DEFENSE_SCORE, FD_SCORE_REPAIR_TURRET )
 	
 	if( player != owner )
 		PlayFactionDialogueToPlayer( "fd_turretOnline", owner )
@@ -1828,10 +1870,9 @@ void function FD_DamageByPlayerCallback( entity victim, var damageInfo )
 		return
 	float damage = min( victim.GetMaxHealth(), DamageInfo_GetDamage( damageInfo ) )
 	file.playerAwardStats[player]["damageDealt"] += damage
-	file.players[ player ].assaultScoreThisRound += ( damage.tointeger() / 100 ) //TODO NOT HOW SCORE WORKS
 	if( victim.IsTitan() )
 	{
-		//TODO Money and score for titan damage
+		//To do: Money based on titan damage goes here
 	}
 }
 
@@ -2490,32 +2531,6 @@ string function FD_DropshipGetAnimation()
 			return "dropship_coop_respawn_digsite" */
 	}
 	return "dropship_coop_respawn"
-}
-
-void function AddScoreToPlayer( entity targetPlayer, int scoreType, int valueOverride = 0 )
-{
-	if( !IsValidPlayer( targetPlayer ) )
-		return
-
-	int amount = 0
-	switch( scoreType )
-	{
-		case PGS_ASSAULT_SCORE:		
-			amount = file.players[targetPlayer].assaultScoreThisRound
-			break
-		case PGS_DEFENSE_SCORE:
-			amount = file.players[targetPlayer].defenseScoreThisRound
-			break
-		case PGS_DETONATION_SCORE:
-			amount = file.players[targetPlayer].assaultScoreThisRound + file.players[targetPlayer].defenseScoreThisRound
-			break
-	}
-
-	if( valueOverride != 0 )
-		amount = valueOverride
-
-	if( IsValidPlayer( targetPlayer ) )
-		targetPlayer.AddToPlayerGameStat( scoreType, amount )
 }
 
 void function FD_EmitSoundOnEntityOnlyToPlayer( entity targetEntity, entity player, string alias )
