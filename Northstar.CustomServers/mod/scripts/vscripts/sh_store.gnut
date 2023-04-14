@@ -609,6 +609,10 @@ void function StoreUpdatePIN( entity player, int entitlementId, string refParam 
 
 bool function ClientCommand_StoreSetNewItemStatus( entity player, array<string> args )
 {
+    // fix crash 
+    if( args.len() < 1 ) 
+        return true
+	
 	int entitlementId = int( args[0] )
 	string refParam
 	string parentRefParam
