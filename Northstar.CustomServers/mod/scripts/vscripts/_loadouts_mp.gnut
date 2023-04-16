@@ -52,7 +52,9 @@ void function SvLoadoutsMP_Init()
 		AddClientCommandCallback( "LoadoutMenuClosed", ClientCommandCallback_LoadoutMenuClosed )
 	}
 	
-	AddCallback_OnPlayerKilled( DestroyDroppedWeapon )
+	AAddCallback_OnPlayerKilled( LoadoutsMP_PlayerOrNPCKilled )
+	AddCallback_OnNPCKilled( LoadoutsMP_PlayerOrNPCKilled )
+	AddCallback_GameStateEnter( eGameState.Prematch, WeaponDestroyThink ) // defensive fix, or player can get some weapons through executions
 }
 
 void function SetLoadoutGracePeriodEnabled( bool enabled )
@@ -65,7 +67,12 @@ void function SetWeaponDropsEnabled( bool enabled )
 	file.weaponDropsEnabled = enabled
 }
 
-void function DestroyDroppedWeapon( entity victim, entity attacker, var damageInfo )
+void function LoadoutsMP_PlayerOrNPCKilled( entity victim, entity attacker, var damageInfo )
+{
+	DestroyDroppedWeapon( victim )
+}
+
+void function DestroyDroppedWeapon( entity victim )
 {
 	if ( !file.weaponDropsEnabled && IsValid( victim.GetActiveWeapon() ) )
 		thread DelayDestroyDroppedWeapon( victim.GetActiveWeapon() )
@@ -76,6 +83,21 @@ void function DelayDestroyDroppedWeapon( entity weapon )
 	WaitEndFrame()
 	if ( IsValid( weapon ) )
 		weapon.Destroy()
+}
+
+void function WeaponDestroyThink()
+{
+	thread TryAlwaysDestroyDroppedWeapon_Threaded()
+}
+
+void function TryAlwaysDestroyDroppedWeapon_Threaded()
+{
+	while( true )
+	{
+		if( !file.weaponDropsEnabled )
+			ClearDroppedWeapons()
+		WaitFrame()
+	}
 }
 
 void function AddCallback_OnTryGetTitanLoadout( TryGetTitanLoadoutCallbackType callback )
