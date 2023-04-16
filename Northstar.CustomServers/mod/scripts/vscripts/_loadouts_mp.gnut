@@ -52,7 +52,7 @@ void function SvLoadoutsMP_Init()
 		AddClientCommandCallback( "LoadoutMenuClosed", ClientCommandCallback_LoadoutMenuClosed )
 	}
 	
-	AAddCallback_OnPlayerKilled( LoadoutsMP_PlayerOrNPCKilled )
+	AddCallback_OnPlayerKilled( LoadoutsMP_PlayerOrNPCKilled )
 	AddCallback_OnNPCKilled( LoadoutsMP_PlayerOrNPCKilled )
 	AddCallback_GameStateEnter( eGameState.Prematch, WeaponDestroyThink ) // defensive fix, or player can get some weapons through executions
 }
