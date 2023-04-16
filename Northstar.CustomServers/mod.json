@@ -87,6 +87,10 @@
 			"DefaultValue": "mp_weapon_rspn101"
 		},
 		{
+			"Name": "ns_fd_grunt_grenade_type",
+			"DefaultValue": "mp_weapon_frag_grenade"
+		},
+		{
 			"Name": "ns_fd_disable_respawn_dropship",
 			"DefaultValue": "0"
 		},

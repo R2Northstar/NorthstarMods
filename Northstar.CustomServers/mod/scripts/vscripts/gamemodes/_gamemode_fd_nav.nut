@@ -11,16 +11,15 @@ void function singleNav_thread( entity npc, string routeName, int nodesToSkip = 
 	npc.EndSignal( "OnDeath" )
 	npc.EndSignal( "OnDestroy" )
 
-
-
 	if( !npc.IsNPC() )
 		return
 	if ( nextDistance == -1 )
 		nextDistance = npc.GetMinGoalRadius()
 
 	npc.AssaultSetGoalHeight( 512 )
+	string npcName = npc.GetTargetName()
 
-	WaitFrame() // so other code setting up what happens on signals is run before this
+	WaitFrame()
 
 	entity targetNode
 	if ( routeName == "" )
@@ -51,7 +50,8 @@ void function singleNav_thread( entity npc, string routeName, int nodesToSkip = 
 	}
 
 	//Do not make Ticks ignore potential targets just to charge at the Harvester
-	if ( npc.GetClassName() == "npc_frag_drone" )
+	//Arc Titans apparently also stops to fight players on place rather that fiercely push forward
+	if ( npc.GetClassName() == "npc_frag_drone" || npcName == "npc_titan_stryder_leadwall_arc" )
 		npc.AssaultSetFightRadius( expect int( npc.Dev_GetAISettingByKeyField( "LookDistDefault_Combat" ) ) )
 	else
 		npc.AssaultSetFightRadius( 0 )

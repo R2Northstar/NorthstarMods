@@ -1104,6 +1104,7 @@ void function spawnDroppodGrunts( SmokeEvent smokeEvent, SpawnEvent spawnEvent, 
 	string squadName = MakeSquadName( TEAM_IMC, UniqueString( "ZiplineTable" ) )
 	string at_weapon = GetConVarString( "ns_fd_grunt_at_weapon" )
 	string baseweapon = GetConVarString( "ns_fd_grunt_primary_weapon" )
+	string ordnance = GetConVarString( "ns_fd_grunt_grenade_type" )
 	array<entity> guys
 
 	for ( int i = 0; i < spawnEvent.spawnAmount; i++ )
@@ -1125,6 +1126,7 @@ void function spawnDroppodGrunts( SmokeEvent smokeEvent, SpawnEvent spawnEvent, 
 		guy.EnableNPCFlag(  NPC_ALLOW_INVESTIGATE | NPC_ALLOW_HAND_SIGNALS | NPC_ALLOW_FLEE )
 		guy.DisableNPCFlag( NPC_ALLOW_PATROL )
 		SetSpawnOption_Weapon( guy, baseweapon )
+		SetSpawnOption_Ordnance( guy, ordnance )
 		DispatchSpawn( guy )
 
 		guy.SetParent( pod, "ATTACH", true )
@@ -1132,7 +1134,12 @@ void function spawnDroppodGrunts( SmokeEvent smokeEvent, SpawnEvent spawnEvent, 
 
 		// should this grunt have an anti titan weapon instead of its normal weapon?
 		if ( i < GetCurrentPlaylistVarInt( "fd_grunt_at_weapon_users", 0 ) )
-			guy.GiveWeapon( at_weapon )
+		{
+			if( at_weapon == "mp_weapon_defender" )
+				guy.GiveWeapon( at_weapon, [ "quick_charge" ] )
+			else
+				guy.GiveWeapon( at_weapon )
+		}
 
 		SetTargetName( guy, GetTargetNameForID( eFD_AITypeIDs.GRUNT ) ) // do shield captains get their own target name in vanilla?
 		AddMinimapForHumans( guy )
@@ -1155,6 +1162,7 @@ void function spawnGruntDropship( SmokeEvent smokeEvent, SpawnEvent spawnEvent, 
 	string squadName = MakeSquadName( TEAM_IMC, UniqueString( "DropshipTable" ) )
 	string at_weapon = GetConVarString( "ns_fd_grunt_at_weapon" )
 	string baseweapon = GetConVarString( "ns_fd_grunt_primary_weapon" )
+	string ordnance = GetConVarString( "ns_fd_grunt_grenade_type" )
 	
 	vector origin 		= spawnEvent.origin
 	origin.z 		   += 448 //Expected to people make coordinates in the ground so we add this up for the hover height
@@ -1234,12 +1242,18 @@ void function spawnGruntDropship( SmokeEvent smokeEvent, SpawnEvent spawnEvent, 
 		guy.EnableNPCFlag(  NPC_ALLOW_INVESTIGATE | NPC_ALLOW_HAND_SIGNALS | NPC_ALLOW_FLEE )
 		guy.DisableNPCFlag( NPC_ALLOW_PATROL )
 		SetSpawnOption_Weapon( guy, baseweapon )
+		SetSpawnOption_Ordnance( guy, ordnance )
 		DispatchSpawn( guy )
 		
 		SetSquad( guy, squadName )
 		
 		if ( i < GetCurrentPlaylistVarInt( "fd_grunt_at_weapon_users", 0 ) )
-			guy.GiveWeapon( at_weapon )
+		{
+			if( at_weapon == "mp_weapon_defender" )
+				guy.GiveWeapon( at_weapon, [ "quick_charge" ] )
+			else
+				guy.GiveWeapon( at_weapon )
+		}
 		
 		SetTargetName( guy, GetTargetNameForID( eFD_AITypeIDs.GRUNT ) )
 		AddMinimapForHumans( guy )
