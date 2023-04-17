@@ -31,6 +31,7 @@ void function SvLoadoutsMP_Init()
 	// most of these are fairly insecure right now, could break pdata if called maliciously, need fixing eventually
 	RegisterSignal( "EndUpdateCachedLoadouts" )
 	RegisterSignal( "GracePeriodDone" ) // temp to get weapons\_weapon_utility.nut:2271 to behave
+	RegisterSignal( "WeaponDestroyThink" )
 	
 	AddCallback_OnClientConnected( LoadoutsMPInitPlayer )
 	
@@ -54,7 +55,7 @@ void function SvLoadoutsMP_Init()
 	
 	AddCallback_OnPlayerKilled( LoadoutsMP_PlayerOrNPCKilled )
 	AddCallback_OnNPCKilled( LoadoutsMP_PlayerOrNPCKilled )
-	AddCallback_GameStateEnter( eGameState.Prematch, WeaponDestroyThink ) // defensive fix, or player can get some weapons through executions
+	AddCallback_GameStateEnter( eGameState.Prematch, TryAlwaysDestroyDroppedWeapon ) // defensive fix, or player can get some weapons through executions
 }
 
 void function SetLoadoutGracePeriodEnabled( bool enabled )
@@ -85,16 +86,19 @@ void function DelayDestroyDroppedWeapon( entity weapon )
 		weapon.Destroy()
 }
 
-void function WeaponDestroyThink()
+void function TryAlwaysDestroyDroppedWeapon()
 {
 	thread TryAlwaysDestroyDroppedWeapon_Threaded()
 }
 
 void function TryAlwaysDestroyDroppedWeapon_Threaded()
 {
+	svGlobal.levelEnt.Signal( "WeaponDestroyThink" )
+	svGlobal.levelEnt.EndSignal( "WeaponDestroyThink" ) // don't loop over many times
+
 	while( true )
 	{
-		if( !file.weaponDropsEnabled )
+		if( !file.weaponDropsEnabled ) // handles situations we change file.weaponDropsEnabled mid-game
 			ClearDroppedWeapons()
 		WaitFrame()
 	}
