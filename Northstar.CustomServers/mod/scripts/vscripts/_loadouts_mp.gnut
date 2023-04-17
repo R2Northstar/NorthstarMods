@@ -3,6 +3,7 @@ global function SvLoadoutsMP_Init
 
 global function SetLoadoutGracePeriodEnabled
 global function SetWeaponDropsEnabled
+global function AlwaysDestroyDroppedWeaponEnabled
 
 global function AddCallback_OnTryGetTitanLoadout
 global function GetTitanLoadoutForPlayer
@@ -19,6 +20,7 @@ typedef TryGetTitanLoadoutCallbackType sTryGetTitanLoadoutCallbackReturn functio
 struct {
 	bool loadoutGracePeriodEnabled = true
 	bool weaponDropsEnabled = true
+	bool alwaysDestroyDroppedWeapon = false
 	array< TryGetTitanLoadoutCallbackType > onTryGetTitanLoadoutCallbacks
 	
 	array<entity> dirtyLoadouts
@@ -68,6 +70,11 @@ void function SetWeaponDropsEnabled( bool enabled )
 	file.weaponDropsEnabled = enabled
 }
 
+void function AlwaysDestroyDroppedWeaponEnabled( bool enabled )
+{
+	file.alwaysDestroyDroppedWeapon = enabled
+}
+
 void function LoadoutsMP_PlayerOrNPCKilled( entity victim, entity attacker, var damageInfo )
 {
 	DestroyDroppedWeapon( victim )
@@ -98,7 +105,7 @@ void function TryAlwaysDestroyDroppedWeapon_Threaded()
 
 	while( true )
 	{
-		if( !file.weaponDropsEnabled ) // handles situations we change file.weaponDropsEnabled mid-game
+		if( !file.alwaysDestroyDroppedWeapon ) // handles situations we change file.alwaysDestroyDroppedWeapon mid-game
 			ClearDroppedWeapons()
 		WaitFrame()
 	}
