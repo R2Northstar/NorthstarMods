@@ -165,7 +165,6 @@ void function GamemodeFD_Init()
 	AddTurretRepairCallback( IncrementPlayerstat_TurretRevives )
 	//death Callbacks
 	AddCallback_OnNPCKilled( OnNpcDeath )
-	AddCallback_OnPlayerAssist( OnPlayerAssist )
 	AddCallback_OnPlayerKilled( GamemodeFD_OnPlayerKilled )
 	AddDeathCallback( "npc_frag_drone", OnTickDeath ) // ticks dont come up in the other callback because of course they dont
 
@@ -536,13 +535,6 @@ void function TickSpawnThreaded( entity tick )
 	}
 }
 
-void function OnPlayerAssist( entity attacker, entity victim )
-{
-	file.players[attacker].defenseScoreThisRound++
-	if( victim.IsTitan() )
-		AddPlayerScore( attacker, "TitanAssist" )
-}
-
 void function OnNpcDeath( entity victim, entity attacker, var damageInfo )
 {
 	//Killing unwanted NPCs instantly causes a crash
@@ -558,7 +550,10 @@ void function OnNpcDeath( entity victim, entity attacker, var damageInfo )
 	}
 	
 	if( attacker.GetClassName() == "npc_turret_sentry" && IsValidPlayer( attacker.GetBossPlayer() ) )
+	{
 		file.playerAwardStats[attacker.GetBossPlayer()]["turretKills"]++
+		file.players[attacker.GetBossPlayer()].defenseScoreThisRound += 2
+	}
 		
 	if( victim.IsTitan() && attacker in file.players )
 		file.playerAwardStats[attacker]["titanKills"]++
@@ -634,19 +629,51 @@ void function OnNpcDeath( entity victim, entity attacker, var damageInfo )
 	if ( money != 0 )
 		AddMoneyToPlayer( attacker , money )
 
-	if ( DamageInfo_GetCustomDamageType( damageInfo ) & DF_HEADSHOT )
-		AddPlayerScore( attacker, "NPCHeadshot" )
+	if( attacker.GetClassName() != "npc_turret_sentry" ) //Turret kills do not chain killstreaks
+	{
+		if ( DamageInfo_GetCustomDamageType( damageInfo ) & DF_HEADSHOT )
+			AddPlayerScore( attacker, "NPCHeadshot" )
+			
+		attacker.s.currentKillstreak++
+		if ( attacker.s.currentKillstreak == 4 )
+			AddPlayerScore( attacker, "Mayhem" )
+		else if ( attacker.s.currentKillstreak == 8 )
+			AddPlayerScore( attacker, "Onslaught" )
 		
-	attacker.s.currentKillstreak++
-	if ( attacker.s.currentKillstreak == 4 )
-		AddPlayerScore( attacker, "Mayhem" )
-	else if ( attacker.s.currentKillstreak == 8 )
-		AddPlayerScore( attacker, "Onslaught" )
-	
-	attacker.s.lastKillTime = Time()
+		if ( Time() - attacker.s.lastKillTime > CASCADINGKILL_REQUIREMENT_TIME )
+		{
+			attacker.s.currentTimedKillstreak = 0
+			attacker.s.currentKillstreak = 0
+			attacker.s.lastKillTime = Time()
+		}
+	}
+
 	attacker.SetPlayerGameStat( PGS_DETONATION_SCORE, attacker.GetPlayerGameStat( PGS_ASSAULT_SCORE ) + attacker.GetPlayerGameStat( PGS_DEFENSE_SCORE ) )
 	
-	if( !attacker.IsTitan() && victim.IsTitan() )
+	if( victim.IsTitan() )
+	{
+		entity soul = victim.GetTitanSoul()
+		if ( IsValid( soul ) )
+		{
+			table<int, bool> alreadyAssisted
+			foreach( DamageHistoryStruct attackerInfo in soul.e.recentDamageHistory )
+			{
+				if ( !IsValid( attackerInfo.attacker ) || !attackerInfo.attacker.IsPlayer() || attackerInfo.attacker == soul )
+					continue
+					
+				bool exists = attackerInfo.attacker.GetEncodedEHandle() in alreadyAssisted ? true : false
+				if( attackerInfo.attacker != attacker && !exists )
+				{
+					alreadyAssisted[attackerInfo.attacker.GetEncodedEHandle()] <- true
+					AddPlayerScore(attackerInfo.attacker, "TitanAssist" )
+					file.players[attackerInfo.attacker].defenseScoreThisRound += 5
+					Remote_CallFunction_NonReplay( attackerInfo.attacker, "ServerCallback_SetAssistInformation", attackerInfo.damageSourceId, attacker.GetEncodedEHandle(), soul.GetEncodedEHandle(), attackerInfo.time ) 
+				}
+			}
+		}
+	}
+	
+	if( attacker.GetClassName() != "npc_turret_sentry" && !attacker.IsTitan() && victim.IsTitan() )
 	{
 		string titanCharacterName = GetTitanCharacterName( victim )
 		
@@ -697,12 +724,7 @@ void function OnNpcDeath( entity victim, entity attacker, var damageInfo )
 		}
 	}
 	
-	if ( Time() - attacker.s.lastKillTime > CASCADINGKILL_REQUIREMENT_TIME )
-	{
-		attacker.s.currentKillstreak = 0
-		attacker.s.currentTimedKillstreak = 0
-		attacker.s.lastKillTime = Time()
-	}
+	attacker.s.lastKillTime = Time()
 	
 	//Elite Titan battery drop code, they drops Amped Batteries on higher difficulties as reward
 	if ( victim.IsTitan() && victim.ai.bossTitanType == 1 )
@@ -1138,9 +1160,12 @@ bool function runWave( int waveIndex, bool shouldDoBuyTime )
 		restetWaveEvents()
 		SetPlayerDeathsHidden( true )
 		
-		wait 4
-		AllPlayersMuteAll( 2 )
-		wait 1
+		if( GetGlobalNetInt( "FD_restartsRemaining" ) > 0 )
+		{
+			wait 4
+			AllPlayersMuteAll( 2 )
+			wait 1
+		}
 		
 		/* Ayylmao kill the player to prevent server crash because the Titan selection menu needs to be disabled after Wave 1 for Wave Restarts, and that causes
 		a crash on transition if any player is using a Titan. Until a better solution is found, this extremely horrible method will do */

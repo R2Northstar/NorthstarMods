@@ -158,7 +158,7 @@ void function SquadNav_Thread( array<entity> npcs, string routeName, int nodesTo
 	}
 }
 
-void function droneNav_thread( entity npc, string routeName, int nodesToSkip= 0, float nextDistance = 64.0, bool shouldLoop = false )
+void function droneNav_thread( entity npc, string routeName, int nodesToSkip = 1, float nextDistance = 64.0, bool shouldLoop = false )
 {
 	npc.EndSignal( "OnDeath" )
 	npc.EndSignal( "OnDestroy" )
