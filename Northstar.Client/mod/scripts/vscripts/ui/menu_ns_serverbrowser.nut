@@ -1089,7 +1089,7 @@ void function ThreadedAuthAndConnectToServer( string password = "" )
 
 		DialogData dialogData
 		dialogData.header = "#ERROR"
-		dialogData.message = Localize("#NS_SERVERBROWSER_CONNECTIONFAILED") + "\n\n" + reason
+		dialogData.message = "" + reason
 		dialogData.image = $"ui/menu/common/dialog_error"
 
 		#if PC_PROG
