@@ -551,7 +551,7 @@ void function HardpointThink( HardpointStruct hardpoint )
 				// i have no idea why but putting it CAPTURE_POINT_STATE_AMPING will say 'CONTESTED' on the UI
 				// since whether the point is contested is checked above, putting the hardpoint state to a value of 8 fixes it somehow
 				if(GetHardpointState(hardpoint)<=CAPTURE_POINT_STATE_AMPING)
-					SetHardpointState(hardpoint, 8 ) 
+					SetHardpointState( hardpoint, 8 ) 
 				SetHardpointCaptureProgress( hardpoint, min( 2.0, GetHardpointCaptureProgress( hardpoint ) + ( deltaTime / HARDPOINT_AMPED_DELAY * capperAmount ) ) )
 				if(GetHardpointCaptureProgress(hardpoint)==2.0&&!(GetHardpointState(hardpoint)==CAPTURE_POINT_STATE_AMPED))
 				{
