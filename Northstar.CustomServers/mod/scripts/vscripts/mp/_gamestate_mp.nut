@@ -209,9 +209,13 @@ void function GameStateEnter_Prematch()
 	
 	SetServerVar( "gameEndTime", Time() + timeLimit + ClassicMP_GetIntroLength() )
 	SetServerVar( "roundEndTime", Time() + ClassicMP_GetIntroLength() + GameMode_GetRoundTimeLimit( GAMETYPE ) * 60 )
-	
+
 	if ( !GetClassicMPMode() && !ClassicMP_ShouldTryIntroAndEpilogueWithoutClassicMP() )
 		thread StartGameWithoutClassicMP()
+
+	// have to recover from the screen fade caused by pickLoadout
+	foreach ( entity player in GetPlayerArray() )
+		ScreenFadeFromBlack( player, 3.0, 1.0 ) 
 }
 
 void function StartGameWithoutClassicMP()

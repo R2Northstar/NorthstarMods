@@ -37,6 +37,7 @@ struct DropShipSequenceDate
 
 struct 
 {
+	array<entity> validDropshipSpawns
 	array<DropShipSequenceDate> dropShipSequenceDateList
 
 	// these used to be IntroDropship[2]s but i wanted to be able to use array.getrandom so they have to be actual arrays
@@ -49,11 +50,35 @@ struct
 
 void function ClassicMP_DefaultDropshipIntro_Setup()
 {
-	SetPickLoadoutEnabled( true ) // required to make client play warpjump sound
-	SetPickLoadoutDuration( 8.0 ) // for dropship intro, we only need set pick loadout duration to fit warpjump sound
+	InitValidDropshipSpawns()
 	InitIntroDropshipSequenceData()
 	AddCallback_OnClientConnected( DropshipIntro_OnClientConnected )	
 	AddCallback_GameStateEnter( eGameState.Prematch, OnPrematchStart )
+}
+
+void function InitValidDropshipSpawns()
+{
+	array<entity> dropshipSpawns = GetEntArrayByClass_Expensive( "info_spawnpoint_dropship_start" )
+	foreach ( entity dropshipSpawn in dropshipSpawns )
+	{
+		if ( GameModeRemove( dropshipSpawn ) ) // this is hardcoded by respawn, should add some fix to it
+			continue
+		/* // should never use GetSpawnpointGamemodeOverride() on dropship spawns, since spawnpoints like for "gamemode_at" break dropship spawns
+		if ( dropshipSpawn.HasKey( "gamemode_" + GetSpawnpointGamemodeOverride() ) )
+		{
+			if ( dropshipSpawn.kv[ "gamemode_" + GetSpawnpointGamemodeOverride() ] == "0" )
+				continue
+		}
+		*/
+		
+		file.validDropshipSpawns.append( dropshipSpawn )
+	}
+
+	if ( file.validDropshipSpawns.len() == 4 ) // only setup pickLoadout if there do have proper dropship spawns
+	{
+		SetPickLoadoutEnabled( true ) // required to make client play warpjump sound
+		SetPickLoadoutDuration( 8.0 ) // for dropship intro, we only need set pick loadout duration to fit warpjump sound
+	}
 }
 
 void function InitIntroDropshipSequenceData()
@@ -141,7 +166,9 @@ void function DropshipIntro_OnClientConnected( entity player )
 {
 	if ( GetGameState() == eGameState.Prematch )
 	{
-		if ( file.introStartTime + SPAWN_ON_GROUND_TIME < Time() ) // very late joiner, just spawn them onto ground like valinilla
+		// if dropship spawns are not good for this mode, just spawn players on ground
+		// also for very late joiner
+		if ( file.validDropshipSpawns.len() != 4 || file.introStartTime + SPAWN_ON_GROUND_TIME < Time() )
 			thread SpawnPlayerOnGround( player )
 		else
 			thread SpawnPlayerIntoDropship( player )
@@ -160,23 +187,23 @@ void function OnPrematchStart()
 	file.militiaDropships.clear()
 	file.imcDropships.clear()
 	
-	array<entity> validDropshipSpawns
-	array<entity> dropshipSpawns = GetEntArrayByClass_Expensive( "info_spawnpoint_dropship_start" )
-	foreach ( entity dropshipSpawn in dropshipSpawns )
+	// if dropship spawns are not good for this mode, just spawn players on ground
+	if ( file.validDropshipSpawns.len() != 4 )
 	{
-		if ( dropshipSpawn.HasKey( "gamemode_" + GetSpawnpointGamemodeOverride() ) )
-			if ( dropshipSpawn.kv[ "gamemode_" + GetSpawnpointGamemodeOverride() ] == "0" )
-				continue
-		
-		validDropshipSpawns.append( dropshipSpawn )
+		foreach ( entity player in GetPlayerArray() )
+		{
+			if ( !IsPrivateMatchSpectator( player ) )
+				thread SpawnPlayerOnGround( player )
+			else
+				RespawnPrivateMatchSpectator( player )
+		}
+
+		thread EndIntroWhenFinished()
+		return
 	}
 	
-	// if no dropship spawns for this mode, just allow any dropship spawns
-	if ( validDropshipSpawns.len() < 2 )
-		validDropshipSpawns = dropshipSpawns
-	
 	// spawn dropships
-	foreach ( entity dropshipSpawn in validDropshipSpawns )
+	foreach ( entity dropshipSpawn in file.validDropshipSpawns )
 	{
 		// todo: possibly make this only spawn dropships if we've got enough players to need them
 		int createTeam = HasSwitchedSides() ? GetOtherTeam( dropshipSpawn.GetTeam() ) : dropshipSpawn.GetTeam() 
@@ -187,23 +214,25 @@ void function OnPrematchStart()
 
 		// create entity
 		entity dropship = CreateDropship( createTeam, dropshipSpawn.GetOrigin(), dropshipSpawn.GetAngles() )
-		
+		SetSpawnOption_AISettings( dropship, "npc_dropship_hero" ) // proper aisettings
+
 		teamDropships.append( clone emptyDropship )
 		teamDropships[ teamDropships.len() - 1 ].dropship = dropship
 		
 		AddAnimEvent( dropship, "dropship_warpout", WarpoutEffect )
-		dropship.SetValueForModelKey( $"models/vehicle/crow_dropship/crow_dropship_hero.mdl" )
-		dropship.SetModel( $"models/vehicle/crow_dropship/crow_dropship_hero.mdl" ) 
+		// as respawn's settings, IMC team goes default
+		dropship.SetValueForModelKey( $"models/vehicle/goblin_dropship/goblin_dropship_hero.mdl" )
+		dropship.SetModel( $"models/vehicle/goblin_dropship/goblin_dropship_hero.mdl" ) 
 		
 		DispatchSpawn( dropship )
 		
 		// have to do this after dispatch otherwise it won't work for some reason
 		// weirdly enough, tf2 actually does use different dropships for imc and militia, despite these concepts not really being a thing for players in tf2
 		// probably was just missed by devs, but keeping it in for accuracy
-		if ( dropshipSpawn.GetTeam() == TEAM_IMC )
-			dropship.SetModel( $"models/vehicle/goblin_dropship/goblin_dropship_hero.mdl" )
-		else
+		if ( dropshipSpawn.GetTeam() == TEAM_MILITIA )
 			dropship.SetModel( $"models/vehicle/crow_dropship/crow_dropship_hero.mdl" )
+		else // as respawn's settings, IMC team goes default
+			dropship.SetModel( $"models/vehicle/goblin_dropship/goblin_dropship_hero.mdl" )
 		
 		thread PlayAnim( dropship, "dropship_classic_mp_flyin" )
 	}
@@ -221,7 +250,7 @@ void function OnPrematchStart()
 
 void function EndIntroWhenFinished()
 {
-	wait 15.0
+	wait DROPSHIP_INTRO_LENGTH
 	ClassicMP_OnIntroFinished()
 }
 
@@ -235,10 +264,10 @@ void function SpawnPlayerOnGround( entity player )
 	RespawnAsPilot( player )
 	player.FreezeControlsOnServer()
 	AddCinematicFlag( player, CE_FLAG_CLASSIC_MP_SPAWNING )
-	ScreenFadeFromBlack( player, 0.5, 0.5 )
+	ScreenFadeFromBlack( player, 3.0, 1.0 )
 
 	waitthread WaitForIntroOver( player ) // wait for intro over
-	
+
 	player.UnfreezeControlsOnServer() // restore player movements
 	RemoveCinematicFlag( player, CE_FLAG_CLASSIC_MP_SPAWNING )
 	// do gamemode announcement
@@ -309,9 +338,13 @@ void function SpawnPlayerIntoDropship( entity player )
 				break
 			}
 		}
+		// fix over here: if player have found a dropship to seat in, should break the foreach()
+		// otherwise one player will take up both dropships, making other players seating in random dropships
+		if ( IsValid( playerDropship.dropship ) )
+			break
 	}
-					
-	if ( playerDropship.dropship == null ) // can't find a valid dropship!
+
+	if ( !IsValid( playerDropship.dropship ) ) // can't find a valid dropship!
 	{
 		// if we're at this point, we have more players than we do dropships, so just pick a random one
 		playerDropship = teamDropships.getrandom()
@@ -325,7 +358,7 @@ void function SpawnPlayerIntoDropship( entity player )
 	
 	// hide hud and fade screen out from black
 	AddCinematicFlag( player, CE_FLAG_CLASSIC_MP_SPAWNING )
-	ScreenFadeFromBlack( player, 0.5, 0.5 )
+	ScreenFadeFromBlack( player, 3.0, 1.0 )
 	// faction leaders are done clientside, spawn them here
 	Remote_CallFunction_NonReplay( player, "ServerCallback_SpawnFactionCommanderInDropship", playerDropship.dropship.GetEncodedEHandle(), file.introStartTime )
 
@@ -373,18 +406,34 @@ void function PlayerJumpsFromDropship( entity player )
 
 	int moveLockEffect = StatusEffect_AddEndless( player, eStatusEffect.move_slow, 1.0 ) // 1.0 will lock player's movement
 
-	OnThreadEnd( function() : ( player, moveLockEffect )
-	{
-		if ( IsValid( player ) )
+	OnThreadEnd
+	( 
+		function() : ( player, moveLockEffect )
 		{
-			// defensive fix, restore movements
-			StatusEffect_Stop( player, moveLockEffect )
-			// show weapon viewmodel and hud
-			player.EnableWeaponViewModel()
-			DeployAndEnableWeapons(player)
-			RemoveCinematicFlag( player, CE_FLAG_CLASSIC_MP_SPAWNING )
+			if ( IsValid( player ) )
+			{
+				// defensive fix, restore movements
+				StatusEffect_Stop( player, moveLockEffect )
+				// show weapon viewmodel and hud
+				player.EnableWeaponViewModel()
+				DeployAndEnableWeapons(player)
+				RemoveCinematicFlag( player, CE_FLAG_CLASSIC_MP_SPAWNING )
+				
+				if ( IsAlive( player ) ) // not resetting through death
+				{
+					if ( Loadouts_CanGivePilotLoadout( player ) ) // to fit vanilla: give loadout upon touched ground, so they'll have weapon's first deploy animation
+						Loadouts_TryGivePilotLoadout( player )
+					else // fix for northstar: we may disabled loadout grade period, should update their weapon to make first deploy animation show up
+					{
+						StorePilotWeapons( player )
+						RetrievePilotWeapons( player )
+					}
+				}
+				else
+					player.Anim_Stop() // stop sequence for dead players
+			}
 		}
-	})
+	)
 		
 	// wait for intro timer to be fully done
 	wait ( file.introStartTime + DROPSHIP_INTRO_LENGTH ) - Time()
@@ -394,7 +443,32 @@ void function PlayerJumpsFromDropship( entity player )
 	player.ConsumeDoubleJump() // disable double jump
 
 	while ( !player.IsOnGround() && !player.IsWallRunning() && !player.IsWallHanging() ) // todo this needs tweaking
+	{
+		if ( IsPlayerNearGround( player ) ) // we remove the movelock when player getting close to ground, so they won't feel dizzy upon first move
+			StatusEffect_Stop( player, moveLockEffect )
+
 		WaitFrame()
+	}
 
 	TryGameModeAnnouncement( player )
+}
+
+bool function IsPlayerNearGround( entity player, float checkHeight = 128 )
+{
+	array<entity> ignoreEnts
+	// always ignore all npcs and players, try to hit onto ground
+	ignoreEnts.extend( GetPlayerArray() )
+	ignoreEnts.extend( GetNPCArray() )
+
+	vector traceStart = player.GetOrigin()
+	vector traceEnd = traceStart - < 0, 0, checkHeight >
+
+	TraceResults downTrace = TraceLine( traceStart, traceEnd, ignoreEnts, TRACE_MASK_SHOT, TRACE_COLLISION_GROUP_NONE )
+	entity hitEnt = downTrace.hitEnt
+	if ( !IsValid( hitEnt ) ) // we cannot trace any entity
+		return false
+	if ( !hitEnt.IsWorld() ) // we're not traced onto ground
+		return false
+
+	return true
 }
