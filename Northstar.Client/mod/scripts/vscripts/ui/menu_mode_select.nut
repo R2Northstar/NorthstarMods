@@ -46,6 +46,8 @@ void function InitModesMenu()
 
 	AddMenuEventHandler( file.menu, eUIEvent.MENU_CLOSE, OnCloseModesMenu )
 	AddMenuEventHandler( file.menu, eUIEvent.MENU_OPEN, OnOpenModesMenu )
+	AddButtonEventHandler( Hud_GetChild( file.menu, "BtnModeListUpArrow"), UIE_CLICK, OnUpArrowSelected )
+	AddButtonEventHandler( Hud_GetChild( file.menu, "BtnModeListDownArrow"), UIE_CLICK, OnDownArrowSelected )
 
 	array<var> buttons = GetElementsByClassname( file.menu, "ModeSelectorPanel" )
 	foreach ( var panel in buttons )
@@ -253,8 +255,8 @@ void function FlushMouseDeltaBuffer()
 
 void function SliderBarUpdate()
 {
-	var sliderButton = Hud_GetChild( file.menu , "BtnServerListSlider" )
-	var sliderPanel = Hud_GetChild( file.menu , "BtnServerListSliderPanel" )
+	var sliderButton = Hud_GetChild( file.menu , "BtnModeListSlider" )
+	var sliderPanel = Hud_GetChild( file.menu , "BtnModeListSliderPanel" )
 	var movementCapture = Hud_GetChild( file.menu , "MouseMovementCapture" )
 
 	Hud_SetFocused( sliderButton )
@@ -284,8 +286,8 @@ void function SliderBarUpdate()
 
 void function UpdateListSliderHeight( float modes )
 {
-	var sliderButton = Hud_GetChild( file.menu , "BtnServerListSlider" )
-	var sliderPanel = Hud_GetChild( file.menu , "BtnServerListSliderPanel" )
+	var sliderButton = Hud_GetChild( file.menu , "BtnModeListSlider" )
+	var sliderPanel = Hud_GetChild( file.menu , "BtnModeListSliderPanel" )
 	var movementCapture = Hud_GetChild( file.menu , "MouseMovementCapture" )
 
 	float maxHeight = 596.0 * ( GetScreenSize()[1] / 1080.0 )
@@ -304,8 +306,8 @@ void function UpdateListSliderHeight( float modes )
 
 void function UpdateListSliderPosition( int modes )
 {
-	var sliderButton = Hud_GetChild( file.menu , "BtnServerListSlider" )
-	var sliderPanel = Hud_GetChild( file.menu , "BtnServerListSliderPanel" )
+	var sliderButton = Hud_GetChild( file.menu , "BtnModeListSlider" )
+	var sliderPanel = Hud_GetChild( file.menu , "BtnModeListSliderPanel" )
 	var movementCapture = Hud_GetChild( file.menu , "MouseMovementCapture" )
 
 	float minYPos = -40.0 * ( GetScreenSize()[1] / 1080.0 )
@@ -337,6 +339,32 @@ void function OnScrollUp( var button )
 	if ( file.scrollOffset < 0 ) {
 		file.scrollOffset = 0
 	}
+	UpdateVisibleModes()
+	UpdateListSliderPosition( file.sortedModes.len() )
+}
+
+void function OnDownArrowSelected( var button )
+{
+	if ( file.sortedModes.len() <= MODES_PER_PAGE ) return
+	file.scrollOffset += 1
+	if ( file.scrollOffset + MODES_PER_PAGE > file.sortedModes.len() )
+	{
+		file.scrollOffset = file.sortedModes.len() - MODES_PER_PAGE
+	}
+
+	UpdateVisibleModes()
+	UpdateListSliderPosition( file.sortedModes.len() )
+}
+
+
+void function OnUpArrowSelected( var button )
+{
+	file.scrollOffset -= 1
+	if ( file.scrollOffset < 0 )
+	{
+		file.scrollOffset = 0
+	}
+
 	UpdateVisibleModes()
 	UpdateListSliderPosition( file.sortedModes.len() )
 }

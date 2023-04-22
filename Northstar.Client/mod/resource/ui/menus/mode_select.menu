@@ -393,7 +393,7 @@ resource/ui/menus/mode_select.menu
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // SLIDER
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-		BtnServerListUpArrow
+		BtnModeListUpArrow
 		{
 			ControlName RuiButton
 			InheritProperties RuiSmallButton
@@ -411,7 +411,7 @@ resource/ui/menus/mode_select.menu
 			pin_to_sibling_corner TOP_LEFT
 		}
 
-		BtnServerListUpArrowPanel
+		BtnModeListUpArrowPanel
 		{
 			ControlName RuiPanel
 			wide 40
@@ -429,7 +429,7 @@ resource/ui/menus/mode_select.menu
 			pin_to_sibling_corner TOP_LEFT
 		}
 
-		BtnServerListDownArrow
+		BtnModeListDownArrow
 		{
 			ControlName RuiButton
 			InheritProperties RuiSmallButton
@@ -447,7 +447,7 @@ resource/ui/menus/mode_select.menu
 			pin_to_sibling_corner TOP_LEFT
 		}
 
-		BtnServerListDownArrowPanel
+		BtnModeListDownArrowPanel
 		{
 			ControlName RuiPanel
 			wide 40
@@ -465,7 +465,7 @@ resource/ui/menus/mode_select.menu
 			pin_to_sibling_corner TOP_LEFT
 		}
 
-		BtnServerListSlider
+		BtnModeListSlider
 		{
 			ControlName RuiButton
 			InheritProperties RuiSmallButton
@@ -484,7 +484,7 @@ resource/ui/menus/mode_select.menu
 			pin_to_sibling_corner TOP_LEFT
 		}
 
-		BtnServerListSliderPanel
+		BtnModeListSliderPanel
 		{
 			ControlName RuiPanel
 			wide 40
