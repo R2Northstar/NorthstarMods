@@ -85,7 +85,7 @@ void function OnOpenModesMenu()
 	}
 }
 
-void function OnCloseodesMenu()
+void function OnCloseModesMenu()
 {
 	try
 	{
@@ -322,13 +322,13 @@ void function UpdateListSliderPosition( int modes )
 
 void function OnScrollDown( var button )
 {
-	if (file.serversArrayFiltered.len() <= MODES_PER_PAGE) return
+	if (file.sortedModes.len() <= MODES_PER_PAGE) return
 	file.scrollOffset += 5
-	if (file.scrollOffset + MODES_PER_PAGE > file.serversArrayFiltered.len()) {
-		file.scrollOffset = file.serversArrayFiltered.len() - MODES_PER_PAGE
+	if (file.scrollOffset + MODES_PER_PAGE > file.sortedModes.len()) {
+		file.scrollOffset = file.sortedModes.len() - MODES_PER_PAGE
 	}
-	UpdateShownPage()
-	UpdateListSliderPosition( file.serversArrayFiltered.len() )
+	UpdateVisibleModes()
+	UpdateListSliderPosition( file.sortedModes.len() )
 }
 
 void function OnScrollUp( var button )
@@ -337,8 +337,8 @@ void function OnScrollUp( var button )
 	if ( file.scrollOffset < 0 ) {
 		file.scrollOffset = 0
 	}
-	UpdateShownPage()
-	UpdateListSliderPosition( file.serversArrayFiltered.len() )
+	UpdateVisibleModes()
+	UpdateListSliderPosition( file.sortedModes.len() )
 }
 
 bool function IsStringCategory( string str )
