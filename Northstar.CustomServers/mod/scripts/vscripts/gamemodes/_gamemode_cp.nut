@@ -649,9 +649,10 @@ void function OnHardpointEntered( entity trigger, entity player )
 		hardpoint.militiaCappers.append( player )
 	foreach(CP_PlayerStruct playerStruct in file.players)
 		if(playerStruct.player == player)
+		{
 			playerStruct.isOnHardpoint = true
-
-	player.SetPlayerNetInt( "playerHardpointID", hardpoint.hardpoint.GetHardpointID() )
+			player.SetPlayerNetInt( "playerHardpointID", hardpoint.hardpoint.GetHardpointID() )
+		}
 }
 
 void function OnHardpointLeft( entity trigger, entity player )
@@ -667,9 +668,10 @@ void function OnHardpointLeft( entity trigger, entity player )
 		FindAndRemove( hardpoint.militiaCappers, player )
 	foreach(CP_PlayerStruct playerStruct in file.players)
 		if(playerStruct.player == player)
+		{
 			playerStruct.isOnHardpoint = false
-		
-	player.SetPlayerNetInt( "playerHardpointID", 69 ) // an arbitary number to remove the hud from the player
+			player.SetPlayerNetInt( "playerHardpointID", 69 ) // an arbitary number to remove the hud from the player
+		}
 }
 
 string function CaptureStateToString( int state )
