@@ -4,6 +4,9 @@ untyped
 global function AddNorthstarServerBrowserMenu
 global function ThreadedAuthAndConnectToServer
 
+global function AddConnectToServerCallback
+global function RemoveConnectToServerCallback
+global function TriggerConnectToServerCallbacks
 
 // Stop peeking
 
@@ -92,6 +95,8 @@ struct {
 	array<var> serversMap
 	array<var> serversGamemode
 	array<var> serversRegion
+
+	array< void functionref( ServerInfo ) > connectCallbacks
 } file
 
 
@@ -1225,4 +1230,28 @@ void function SortServerListByRegion_Activate( var button )
 	filterDirection.serverRegion = !filterDirection.serverRegion
 
 	UpdateShownPage()
+}
+
+//////////////////////////////////////
+// Callbacks
+//////////////////////////////////////
+
+void function AddConnectToServerCallback( void functionref( ServerInfo ) callback )
+{
+	if ( file.connectCallbacks.find( callback ) >= 0 )
+		throw "callback already registered"
+	file.connectCallbacks.append( callback )
+}
+
+void function RemoveConnectToServerCallback( void functionref( ServerInfo ) callback )
+{
+	file.connectCallbacks.fastremovebyvalue( callback )
+}
+
+void function TriggerConnectToServerCallbacks()
+{
+	foreach( callback in file.connectCallbacks )
+	{
+		callback( file.lastSelectedServer )
+	}
 }
