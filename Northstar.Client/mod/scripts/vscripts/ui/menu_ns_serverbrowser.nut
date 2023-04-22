@@ -1027,7 +1027,10 @@ void function OnServerSelected( var button )
 		AdvanceMenu( GetMenu( "ConnectWithPasswordMenu" ) )
 	}
 	else
+	{
+		TriggerConnectToServerCallbacks()
 		thread ThreadedAuthAndConnectToServer()
+	}
 }
 
 
