@@ -56,6 +56,13 @@ void function InitModesMenu()
 		AddEventHandlerToButton( panel, "BtnMode", UIE_CLICK, ModeButton_Click )
 	}
 
+	Hud_SetText( Hud_GetChild( file.menu, "SwtModeLabel" ), "#MODE_MENU_SWITCH" )
+	SetButtonRuiText( Hud_GetChild( file.menu, "SwtModeLabel" ), "" )
+	for( int i = 0; i < eModeMenuModeCategory.SIZE; i++ )
+	{
+		Hud_DialogList_AddListItem( Hud_GetChild( file.menu, "SwtModeLabel" ) , GetCategoryStringFromEnum(i), string(i) )
+	}
+
 	AddMenuFooterOption( file.menu, BUTTON_A, "#A_BUTTON_SELECT" )
 	AddMenuFooterOption( file.menu, BUTTON_B, "#B_BUTTON_BACK", "#BACK" )
 }
