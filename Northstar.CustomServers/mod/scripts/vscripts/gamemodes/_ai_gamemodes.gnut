@@ -132,7 +132,7 @@ void function HotDrop_Spawnpoint( vector origin, int team, float impactTime, boo
 
 	int index = GetParticleSystemIndex( $"P_ar_titan_droppoint" )
 
-	if( hasFriendlyWarning ) // also warn friendly players, if we enabled friendly fire...
+	if( hasFriendlyWarning )
 	{
 		entity effectFriendly = StartParticleEffectInWorld_ReturnEntity( index, origin, surfaceNormal )
 		SetTeam( effectFriendly, team )
