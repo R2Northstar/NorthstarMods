@@ -139,6 +139,10 @@ void function OnOpenModesMenu()
 	RegisterButtonPressedCallback( MOUSE_WHEEL_UP , OnScrollUp )
 	RegisterButtonPressedCallback( MOUSE_WHEEL_DOWN , OnScrollDown )
 
+	// Reset filters
+	file.searchString = ""
+	file.searchEnum = -1
+
 	// We rebuild the modes array on open menu to make sure
 	// all modes get listed
 	BuildModesArray()
