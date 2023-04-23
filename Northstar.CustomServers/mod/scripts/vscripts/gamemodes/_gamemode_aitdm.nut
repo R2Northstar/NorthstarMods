@@ -400,6 +400,7 @@ int function GetSpawnPointIndex( array< entity > points, int team )
 void function SquadHandler( array<entity> guys )
 {
 	// show the squad enemy radar
+	array<entity> players = GetPlayerArrayOfEnemies( team )
 	foreach ( entity guy in guys )
 	{
 		if ( IsAlive( guy ) )
@@ -431,8 +432,6 @@ void function SquadHandler( array<entity> guys )
 	
 	vector point
 	point = points[ RandomInt( points.len() ) ].GetOrigin()
-	
-	array<entity> players = GetPlayerArrayOfEnemies( team )
 	
 	// Setup AI, first assault point
 	foreach ( guy in guys )
