@@ -1,5 +1,6 @@
 untyped
 global function InitModesMenu
+global function NSSetModeCategory
 
 global enum eModeMenuModeCategory
 {
@@ -42,6 +43,9 @@ struct {
 
 	string searchString
 	int searchEnum
+
+	// Table of category overrides
+	table<string,int> categoryOverrides
 
 	// List of all modes we know
 	array<ListEntry_t> modes
@@ -86,6 +90,18 @@ void function InitModesMenu()
 
 	AddMenuFooterOption( file.menu, BUTTON_A, "#A_BUTTON_SELECT" )
 	AddMenuFooterOption( file.menu, BUTTON_B, "#B_BUTTON_BACK", "#BACK" )
+}
+
+void function NSSetModeCategory( string mode, int category )
+{
+	if( mode in file.categoryOverrides )
+	{
+		file.categoryOverrides[mode] = category
+		printt( "Overwriting category for mode:", mode )
+		return
+	}
+
+	file.categoryOverrides[mode] <- category
 }
 
 void function OnBtnFiltersClear_Activate( var b )
@@ -259,14 +275,9 @@ void function BuildSortedModesArray()
 
 	// Build sorted list of categories
 	array<string> categories
-	foreach( ListEntry_t entry in file.modes )
+	for( int i = 0; i < eModeMenuModeCategory.SIZE; i++ )
 	{
-		if( GetConVarInt("modemenu_mode_filter") != -1 && GetConVarInt("modemenu_mode_filter") != entry.category )
-			continue
-
-		string category = Localize( GetCategoryStringFromEnum( entry.category ) )
-		if( !categories.contains(category) )
-			categories.append( category )
+		categories.append( Localize( GetCategoryStringFromEnum( i ) ) )
 	}
 
 	categories.sort( SortStringAlphabetize )
@@ -278,10 +289,13 @@ void function BuildSortedModesArray()
 		array<string> modes
 		foreach( ListEntry_t entry in file.modes )
 		{
-			if( Localize( GetCategoryStringFromEnum( entry.category ) ) != category )
+			int iCategory = entry.category
+			if( entry.mode in file.categoryOverrides )
+				iCategory = file.categoryOverrides[entry.mode]
+			
+			if( Localize( GetCategoryStringFromEnum( iCategory ) ) != category )
 				continue
 
-			//string mode = Localize( GetGameModeDisplayName( entry.mode ) )
 			string mode = entry.mode
 
 			if( file.searchString != "" && Localize(GetGameModeDisplayName(mode)).tolower().find(file.searchString.tolower()) == null )
