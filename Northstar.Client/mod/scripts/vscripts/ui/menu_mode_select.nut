@@ -277,7 +277,7 @@ void function BuildSortedModesArray()
 	array<string> categories
 	for( int i = 0; i < eModeMenuModeCategory.SIZE; i++ )
 	{
-		categories.append( Localize( GetCategoryStringFromEnum( i ) ) )
+		categories.append( GetCategoryStringFromEnum( i ) )
 	}
 
 	categories.sort( SortStringAlphabetize )
@@ -293,7 +293,7 @@ void function BuildSortedModesArray()
 			if( entry.mode in file.categoryOverrides )
 				iCategory = file.categoryOverrides[entry.mode]
 			
-			if( Localize( GetCategoryStringFromEnum( iCategory ) ) != category )
+			if( GetCategoryStringFromEnum( iCategory ) != category )
 				continue
 
 			string mode = entry.mode
