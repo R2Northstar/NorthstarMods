@@ -78,10 +78,10 @@ Press Yes if you agree to this. This choice can be changed in the mods menu at a
 		"featured_mode_rocket_arena" "Rocket Arena"
 		"featured_mode_shotguns_snipers" "Armed and Dangerous"
 		"iron_rules" "Iron Titan Rules"
-
+    
 		"cp_amped_capture_points" "Amped Hardpoints"
 		"coliseum_loadouts_enabled" "Coliseum Loadouts"
-	
+    
 		"aitdm_archer_grunts" "Archer Grunts"
 	
 		// northstar.custom localisation is just deciding not to work, so putting it here for now
