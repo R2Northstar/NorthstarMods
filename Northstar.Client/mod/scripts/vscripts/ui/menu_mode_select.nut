@@ -214,6 +214,7 @@ void function BuildModesArray()
 				break
 			case "tdm":
 			case "ctf":
+			case "mfd":
 			case "ps":
 			case "cp":
 			case "speedball":
@@ -221,7 +222,6 @@ void function BuildModesArray()
 			case "holopilot_lf":
 				entry.category = eModeMenuModeCategory.PVP
 				break
-			case "mfd":
 			case "ffa":
 			case "fra":
 				entry.category = eModeMenuModeCategory.FFA
