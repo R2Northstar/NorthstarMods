@@ -185,6 +185,7 @@ void function BuildModesArray()
 			case "tdm":
 			case "ctf":
 			case "ps":
+			case "cp":
 			case "speedball":
 			case "rocket_lf":
 			case "holopilot_lf":
