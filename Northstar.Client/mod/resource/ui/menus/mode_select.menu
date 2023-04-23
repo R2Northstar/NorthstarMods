@@ -55,7 +55,7 @@ resource/ui/menus/mode_select.menu
 		}
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-//	TEXT MODE PANEL
+//	NEXT MODE PANEL
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 		NextModeImageFrame
@@ -154,11 +154,78 @@ resource/ui/menus/mode_select.menu
 			ypos					682
 			wide					860
 			tall					156
-			labelText				""
-			visible				    1
-			bgcolor_override        "0 0 0 0"
-			paintbackground         1
-			rui "ui/control_options_description.rpak"
+			zpos					-1
+
+			rui						"ui/control_options_description.rpak"
+		}
+
+		BtnModeLabel
+		{
+			ControlName			RuiButton
+			InheritProperties	RuiSmallButton
+			labelText			"#SEARCHBAR_LABEL"
+			textAlignment		west
+			classname			FilterPanelChild
+
+			wide 500
+			xpos -18
+			ypos -16
+
+			pin_to_sibling FiltersPanel
+			pin_corner_to_sibling TOP_LEFT
+			pin_to_sibling_corner TOP_LEFT
+		}
+
+		BtnModeSearch
+		{
+			ControlName TextEntry
+			classname FilterPanelChild
+			zpos 100 // This works around input weirdness when the control is constructed by code instead of VGUI blackbox.
+			xpos -400
+			ypos -5
+			wide 390
+			tall 30
+			textHidden 0
+			editable 1
+			font Default_21
+			allowRightClickMenu 0
+			allowSpecialCharacters 0
+			unicode 1
+
+			pin_to_sibling BtnModeLabel
+			pin_corner_to_sibling TOP_LEFT
+			pin_to_sibling_corner TOP_RIGHT
+		}
+
+		SwtModeLabel
+		{
+			ControlName RuiButton
+			InheritProperties SwitchButton
+			labelText "#MODE_MENU_FILTER"
+			ConVar "modemenu_mode_filter"
+			classname FilterPanelChild
+			wide 500
+			ypos 2
+
+			pin_to_sibling BtnModeLabel
+			pin_corner_to_sibling TOP_LEFT
+			pin_to_sibling_corner BOTTOM_LEFT
+		}
+
+		BtnModeFiltersClear
+		{
+			ControlName			RuiButton
+			InheritProperties	RuiSmallButton
+			labelText			"#CLEAR_FILTERS"
+			textAlignment		west
+			classname			FilterPanelChild
+
+			wide 100
+			ypos 2
+
+			pin_to_sibling SwtModeLabel
+			pin_corner_to_sibling TOP_LEFT
+			pin_to_sibling_corner BOTTOM_LEFT
 		}
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
