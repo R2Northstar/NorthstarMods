@@ -399,6 +399,7 @@ int function GetSpawnPointIndex( array< entity > points, int team )
 // AI can also flee deeper into their zone suggesting someone spent way too much time on this
 void function SquadHandler( array<entity> guys )
 {
+	int team = guys[0].GetTeam()
 	// show the squad enemy radar
 	array<entity> players = GetPlayerArrayOfEnemies( team )
 	foreach ( entity guy in guys )
@@ -412,7 +413,6 @@ void function SquadHandler( array<entity> guys )
 
 	// Not all maps have assaultpoints / have weird assault points ( looking at you ac )
 	// So we use enemies with a large radius
-	int team = guys[0].GetTeam()
 	while ( GetNPCArrayOfEnemies( team ).len() == 0 ) // if we can't find any enemy npcs, keep waiting
 		WaitFrame()
 
