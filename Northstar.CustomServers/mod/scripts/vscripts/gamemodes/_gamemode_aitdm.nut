@@ -399,6 +399,16 @@ int function GetSpawnPointIndex( array< entity > points, int team )
 // AI can also flee deeper into their zone suggesting someone spent way too much time on this
 void function SquadHandler( array<entity> guys )
 {
+	// show the squad enemy radar
+	foreach ( entity guy in guys )
+	{
+		if ( IsAlive( guy ) )
+		{
+			foreach ( player in players )
+				guy.Minimap_AlwaysShow( 0, player )
+		}
+	}
+
 	// Not all maps have assaultpoints / have weird assault points ( looking at you ac )
 	// So we use enemies with a large radius
 	int team = guys[0].GetTeam()
@@ -430,10 +440,6 @@ void function SquadHandler( array<entity> guys )
 		guy.EnableNPCFlag( NPC_ALLOW_PATROL | NPC_ALLOW_INVESTIGATE | NPC_ALLOW_HAND_SIGNALS | NPC_ALLOW_FLEE )
 		guy.AssaultPoint( point )
 		guy.AssaultSetGoalRadius( 1600 ) // 1600 is minimum for npc_stalker, works fine for others
-		
-		// show on enemy radar
-		foreach ( player in players )
-			guy.Minimap_AlwaysShow( 0, player )
 
 		//thread AITdm_CleanupBoredNPCThread( guy )
 	}
