@@ -45,7 +45,7 @@
 		},
 		{
 			"Name": "modemenu_mode_filter",
-			"DefaultValue": "0"
+			"DefaultValue": "-1"
 		}
 	],
 	"Scripts": [

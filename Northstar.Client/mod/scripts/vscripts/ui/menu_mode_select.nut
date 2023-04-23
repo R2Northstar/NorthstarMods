@@ -29,6 +29,9 @@ struct {
 	int scrollOffset
 	var menu
 
+	string searchString
+	int searchEnum
+
 	// List of all modes we know
 	array<ListEntry_t> modes
 
@@ -49,6 +52,12 @@ void function InitModesMenu()
 	AddButtonEventHandler( Hud_GetChild( file.menu, "BtnModeListUpArrow"), UIE_CLICK, OnUpArrowSelected )
 	AddButtonEventHandler( Hud_GetChild( file.menu, "BtnModeListDownArrow"), UIE_CLICK, OnDownArrowSelected )
 
+	AddButtonEventHandler( Hud_GetChild( file.menu, "BtnModeLabel"), UIE_CHANGE, FilterAndUpdateList )
+	AddButtonEventHandler( Hud_GetChild( file.menu, "BtnModeSearch"), UIE_CHANGE, FilterAndUpdateList )
+	AddButtonEventHandler( Hud_GetChild( file.menu, "SwtModeLabel"), UIE_CHANGE, FilterAndUpdateList )
+
+	AddButtonEventHandler( Hud_GetChild( file.menu, "BtnModeFiltersClear"), UIE_CLICK, OnBtnFiltersClear_Activate )
+
 	array<var> buttons = GetElementsByClassname( file.menu, "ModeSelectorPanel" )
 	foreach ( var panel in buttons )
 	{
@@ -58,6 +67,7 @@ void function InitModesMenu()
 
 	Hud_SetText( Hud_GetChild( file.menu, "SwtModeLabel" ), "#MODE_MENU_SWITCH" )
 	SetButtonRuiText( Hud_GetChild( file.menu, "SwtModeLabel" ), "" )
+	Hud_DialogList_AddListItem( Hud_GetChild( file.menu, "SwtModeLabel" ) , "#MODE_MENU_ALL", "-1" )
 	for( int i = 0; i < eModeMenuModeCategory.SIZE; i++ )
 	{
 		Hud_DialogList_AddListItem( Hud_GetChild( file.menu, "SwtModeLabel" ) , GetCategoryStringFromEnum(i), string(i) )
@@ -65,6 +75,27 @@ void function InitModesMenu()
 
 	AddMenuFooterOption( file.menu, BUTTON_A, "#A_BUTTON_SELECT" )
 	AddMenuFooterOption( file.menu, BUTTON_B, "#B_BUTTON_BACK", "#BACK" )
+}
+
+void function OnBtnFiltersClear_Activate( var b )
+{
+	file.searchString = ""
+	file.searchEnum = -1
+
+	SetConVarInt( "modemenu_mode_filter", -1 )
+	Hud_SetText( Hud_GetChild( file.menu, "BtnModeSearch"), "" )
+}
+
+void function FilterAndUpdateList( var n )
+{
+	file.searchString = Hud_GetUTF8Text( Hud_GetChild( file.menu, "BtnModeSearch" ) )
+	file.searchEnum = GetConVarInt( "modemenu_mode_filter" )
+
+	BuildSortedModesArray()
+	UpdateListSliderHeight(float(file.sortedModes.len()))
+	UpdateListSliderPosition(0)
+	file.scrollOffset = 0
+	UpdateVisibleModes()
 }
 
 void function OnOpenModesMenu()
@@ -210,6 +241,9 @@ void function BuildSortedModesArray()
 	array<string> categories
 	foreach( ListEntry_t entry in file.modes )
 	{
+		if( GetConVarInt("modemenu_mode_filter") != -1 && GetConVarInt("modemenu_mode_filter") != entry.category )
+			continue
+
 		string category = Localize( GetCategoryStringFromEnum( entry.category ) )
 		if( !categories.contains(category) )
 			categories.append( category )
@@ -229,11 +263,18 @@ void function BuildSortedModesArray()
 
 			//string mode = Localize( GetGameModeDisplayName( entry.mode ) )
 			string mode = entry.mode
+
+			if( file.searchString != "" && Localize(GetGameModeDisplayName(mode)).tolower().find(file.searchString.tolower()) == null )
+				continue
+
 			if( !modes.contains(mode) )
 				modes.append( mode )
 		}
 
 		modes.sort( SortModesAlphabetize )
+
+		if( modes.len() == 0 )
+			continue
 
 		// Add to final list we then display
 		file.sortedModes.append( category )
