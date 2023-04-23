@@ -15,6 +15,17 @@ global enum eModeMenuModeCategory
 	SIZE
 }
 
+// List of blocked modes due to them being unfinished
+const array<string> blockedModes =
+[
+	"at",
+	"fd_easy",
+	"fd_normal",
+	"fd_hard",
+	"fd_master",
+	"fd_insane"
+]
+
 struct ListEntry_t {
 	string mode
 	int category
@@ -473,6 +484,7 @@ void function UpdateVisibleModes()
 		// Show the panel
 		Hud_SetEnabled( panel, true )
 		Hud_SetVisible( panel, true )
+		Hud_SetLocked( button, false )
 		//SetButtonRuiText( Hud_GetChild( buttons[ i ], "BtnMode" ), mode )
 
 		//Hud_SetEnabled( Hud_GetChild( buttons[ i ], "BtnMode" ), true )
@@ -488,17 +500,14 @@ void function UpdateVisibleModes()
 		else
 		{
 			Hud_SetEnabled( button, true )
-
-			if ( !ModeSettings_RequiresAI( mode ) || mode == "aitdm" )
-				Hud_SetLocked( Hud_GetChild( buttons[ i ], "BtnMode" ), false )
-			else
-				Hud_SetLocked( Hud_GetChild( buttons[ i ], "BtnMode" ), true )
-
 			SetButtonRuiText( button, mode )
+
+			if( blockedModes.contains( file.sortedModes[ modeIndex ] ) )
+				Hud_SetLocked( button, true )
 
 			if ( !PrivateMatch_IsValidMapModeCombo( PrivateMatch_GetSelectedMap(), mode ) && !IsNorthstarServer() )
 			{
-				Hud_SetLocked( buttons[ i ], true )
+				Hud_SetLocked( button, true )
 				SetButtonRuiText( button, mode )
 			}
 		}
