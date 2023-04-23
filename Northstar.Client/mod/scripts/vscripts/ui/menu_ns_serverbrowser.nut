@@ -1058,18 +1058,6 @@ void function ThreadedAuthAndConnectToServer( string password = "" )
 	}
 
 	file.cancelConnection = false
-	NSSetLoading( true )
-	NSUpdateServerInfo(
-		NSGetServerID( file.lastSelectedServer ),
-		NSGetServerName( file.lastSelectedServer ),
-		password,
-		NSGetServerPlayerCount( file.lastSelectedServer ),
-		NSGetServerMaxPlayerCount( file.lastSelectedServer ),
-		NSGetServerMap( file.lastSelectedServer ),
-		Localize( GetMapDisplayName( NSGetServerMap( file.lastSelectedServer ) ) ),
-		NSGetServerPlaylist( file.lastSelectedServer ),
-		Localize( GetPlaylistDisplayName( NSGetServerPlaylist( file.lastSelectedServer ) ) )
-	)
 
 	if ( NSWasAuthSuccessful() )
 	{
@@ -1097,9 +1085,11 @@ void function ThreadedAuthAndConnectToServer( string password = "" )
 	}
 	else
 	{
+		string reason = NSGetAuthFailReason()
+
 		DialogData dialogData
 		dialogData.header = "#ERROR"
-		dialogData.message = "Authentication Failed"
+		dialogData.message = reason
 		dialogData.image = $"ui/menu/common/dialog_error"
 
 		#if PC_PROG
