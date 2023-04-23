@@ -1744,7 +1744,7 @@ void function FW_createHarvester()
 	fw_harvesterImc.harvester.Minimap_SetHeightTracking( true )
 	fw_harvesterImc.harvester.Minimap_SetZOrder( MINIMAP_Z_OBJECT )
 	fw_harvesterImc.harvester.Minimap_SetCustomState( eMinimapObject_prop_script.FD_HARVESTER )
-	AddEntityCallback_OnDamaged( fw_harvesterImc.harvester, OnHarvesterDamaged )
+	AddEntityCallback_OnFinalDamaged( fw_harvesterImc.harvester, OnHarvesterDamaged )
 	AddEntityCallback_OnPostDamaged( fw_harvesterImc.harvester, OnHarvesterPostDamaged )
 	
 	// imc havester settings
@@ -1770,7 +1770,7 @@ void function FW_createHarvester()
 	fw_harvesterMlt.harvester.Minimap_SetHeightTracking( true )
 	fw_harvesterMlt.harvester.Minimap_SetZOrder( MINIMAP_Z_OBJECT )
 	fw_harvesterMlt.harvester.Minimap_SetCustomState( eMinimapObject_prop_script.FD_HARVESTER )
-	AddEntityCallback_OnDamaged( fw_harvesterMlt.harvester, OnHarvesterDamaged )
+	AddEntityCallback_OnFinalDamaged( fw_harvesterMlt.harvester, OnHarvesterDamaged )
 	AddEntityCallback_OnPostDamaged( fw_harvesterMlt.harvester, OnHarvesterPostDamaged )
 
 	// mlt havester settings
@@ -1816,9 +1816,7 @@ void function InitHarvesterDamageMods()
 	const float DOT_DAMAGE_FRAC = 0.5
 
 	// Core balancing
-	// Laser Core does 7x damage since each radial laser can hit (it fires 7). It caps at 1x default damage in Laser Core's damage callback,
-	// so the /7 part can be removed when final damage callbacks are implemented for harvesters (as it would get capped before this runs)
-	FW_AddHarvesterDamageSourceModifier( eDamageSourceId.mp_titancore_laser_cannon, CORE_DAMAGE_FRAC / 7.0 )
+	FW_AddHarvesterDamageSourceModifier( eDamageSourceId.mp_titancore_laser_cannon, CORE_DAMAGE_FRAC )
 	FW_AddHarvesterDamageSourceModifier( eDamageSourceId.mp_titancore_salvo_core, CORE_DAMAGE_FRAC )
 	FW_AddHarvesterDamageSourceModifier( eDamageSourceId.mp_titanweapon_flightcore_rockets, CORE_DAMAGE_FRAC )
 	FW_AddHarvesterDamageSourceModifier( eDamageSourceId.mp_titancore_shift_core, CORE_DAMAGE_FRAC )
