@@ -32,6 +32,7 @@ struct ListEntry_t {
 	int category
 }
 
+// Slider mouse delta buffer
 struct {
 	int deltaX = 0
 	int deltaY = 0
@@ -138,6 +139,8 @@ void function OnOpenModesMenu()
 	RegisterButtonPressedCallback( MOUSE_WHEEL_UP , OnScrollUp )
 	RegisterButtonPressedCallback( MOUSE_WHEEL_DOWN , OnScrollDown )
 
+	// We rebuild the modes array on open menu to make sure
+	// all modes get listed
 	BuildModesArray()
 	BuildSortedModesArray()
 
@@ -145,7 +148,7 @@ void function OnOpenModesMenu()
 	UpdateListSliderPosition(file.sortedModes.len())
 	UpdateVisibleModes()
 
-	// set to the first mode if there's no mode focused
+	// Set to the first mode if there's no mode focused
 	if ( level.ui.privatematch_mode == 0 )
 	{
 		array<var> panels = GetElementsByClassname( file.menu, "ModeSelectorPanel" )
@@ -463,7 +466,7 @@ bool function IsStringCategory( string str )
 }
 
 /////////////////////////////
-// OLD
+// LIST
 /////////////////////////////
 
 void function UpdateVisibleModes()
@@ -499,17 +502,11 @@ void function UpdateVisibleModes()
 		Hud_SetEnabled( panel, true )
 		Hud_SetVisible( panel, true )
 		Hud_SetLocked( button, false )
-		//SetButtonRuiText( Hud_GetChild( buttons[ i ], "BtnMode" ), mode )
-
-		//Hud_SetEnabled( Hud_GetChild( buttons[ i ], "BtnMode" ), true )
-		//Hud_SetVisible( Hud_GetChild( buttons[ i ], "BtnMode" ), true )
 
 		if( bIsCategory )
 		{
 			Hud_SetText( header, mode )
-			//Hud_SetLocked( Hud_GetChild( buttons[ i ], "BtnMode" ), false )
 			Hud_SetEnabled( button, false )
-			//Hud_SetLocked( Hud_GetChild( buttons[ i ], "BtnMode" ), true )
 		}
 		else
 		{
