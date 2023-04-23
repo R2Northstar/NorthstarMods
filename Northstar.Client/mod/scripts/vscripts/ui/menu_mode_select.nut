@@ -280,6 +280,9 @@ void function BuildSortedModesArray()
 	array<string> categories
 	for( int i = 0; i < eModeMenuModeCategory.SIZE; i++ )
 	{
+		if( file.searchEnum != -1 && file.searchEnum != i )
+			continue
+
 		categories.append( GetCategoryStringFromEnum( i ) )
 	}
 
