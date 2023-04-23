@@ -115,11 +115,15 @@ void function OnPlayerConnected( entity player )
 void function HandleScoreEvent( entity victim, entity attacker, var damageInfo )
 {
 	// Basic checks
-	if ( !( victim != attacker && attacker.IsPlayer() || attacker.IsTitan() && attacker.GetBossPlayer() != null && GetGameState() == eGameState.Playing ) )
+	if ( victim == attacker || !( attacker.IsPlayer() || attacker.IsTitan() ) || GetGameState() != eGameState.Playing )
 		return
-	
+
 	// Hacked spectre filter
 	if ( victim.GetOwner() == attacker )
+		return
+	
+	// NPC titans without an owner player will not count towards any team's score
+	if ( attacker.IsNPC() && attacker.IsTitan() && !IsValid( GetPetTitanOwner( attacker ) ) )
 		return
 	
 	// Split score so we can check if we are over the score max
