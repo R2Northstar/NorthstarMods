@@ -84,6 +84,13 @@ void function OnBtnFiltersClear_Activate( var b )
 
 	SetConVarInt( "modemenu_mode_filter", -1 )
 	Hud_SetText( Hud_GetChild( file.menu, "BtnModeSearch"), "" )
+
+	file.scrollOffset = 0
+
+	BuildSortedModesArray()
+	UpdateListSliderHeight(float(file.sortedModes.len()))
+	UpdateListSliderPosition(file.sortedModes.len())
+	UpdateVisibleModes()
 }
 
 void function FilterAndUpdateList( var n )
@@ -91,10 +98,11 @@ void function FilterAndUpdateList( var n )
 	file.searchString = Hud_GetUTF8Text( Hud_GetChild( file.menu, "BtnModeSearch" ) )
 	file.searchEnum = GetConVarInt( "modemenu_mode_filter" )
 
+	file.scrollOffset = 0
+
 	BuildSortedModesArray()
 	UpdateListSliderHeight(float(file.sortedModes.len()))
-	UpdateListSliderPosition(0)
-	file.scrollOffset = 0
+	UpdateListSliderPosition(file.sortedModes.len())
 	UpdateVisibleModes()
 }
 
@@ -107,7 +115,7 @@ void function OnOpenModesMenu()
 	BuildSortedModesArray()
 
 	UpdateListSliderHeight(float(file.sortedModes.len()))
-	UpdateListSliderPosition(0)
+	UpdateListSliderPosition(file.sortedModes.len())
 	UpdateVisibleModes()
 
 	// set to the first mode if there's no mode focused
@@ -303,6 +311,9 @@ void function FlushMouseDeltaBuffer()
 
 void function SliderBarUpdate()
 {
+	if( file.sortedModes.len() < MODES_PER_PAGE )
+		return
+
 	var sliderButton = Hud_GetChild( file.menu , "BtnModeListSlider" )
 	var sliderPanel = Hud_GetChild( file.menu , "BtnModeListSliderPanel" )
 	var movementCapture = Hud_GetChild( file.menu , "MouseMovementCapture" )
@@ -354,6 +365,9 @@ void function UpdateListSliderHeight( float modes )
 
 void function UpdateListSliderPosition( int modes )
 {
+	if( modes < MODES_PER_PAGE )
+		return
+
 	var sliderButton = Hud_GetChild( file.menu , "BtnModeListSlider" )
 	var sliderPanel = Hud_GetChild( file.menu , "BtnModeListSliderPanel" )
 	var movementCapture = Hud_GetChild( file.menu , "MouseMovementCapture" )
