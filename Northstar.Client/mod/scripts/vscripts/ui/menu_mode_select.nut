@@ -356,8 +356,9 @@ void function SliderBarUpdate()
 
 	Hud_SetFocused( sliderButton )
 
-	float minYPos = -40.0 * ( GetScreenSize()[1] / 1080.0 )
-	float maxHeight = 596.0  * ( GetScreenSize()[1] / 1080.0 )
+    int[2] screenSize = GetScreenSize()
+	float minYPos = -40.0 * ( screenSize[1] / 1080.0 )
+	float maxHeight = 596.0  * ( screenSize[1] / 1080.0 )
 	float maxYPos = minYPos - ( maxHeight - Hud_GetHeight( sliderPanel ) )
 	float useableSpace = maxHeight - Hud_GetHeight( sliderPanel )
 
