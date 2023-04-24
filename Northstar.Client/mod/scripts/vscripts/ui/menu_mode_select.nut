@@ -385,8 +385,9 @@ void function UpdateListSliderHeight( float modes )
 	var sliderPanel = Hud_GetChild( file.menu , "BtnModeListSliderPanel" )
 	var movementCapture = Hud_GetChild( file.menu , "MouseMovementCapture" )
 
-	float maxHeight = 596.0 * ( GetScreenSize()[1] / 1080.0 )
-	float minHeight = 80.0 * ( GetScreenSize()[1] / 1080.0 )
+    int[2] screenSize = GetScreenSize()
+	float maxHeight = 596.0 * ( screenSize[1] / 1080.0 )
+	float minHeight = 80.0 * ( screenSize[1] / 1080.0 )
 
 	float height = maxHeight * ( MODES_PER_PAGE / modes )
 
