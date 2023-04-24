@@ -393,9 +393,9 @@ void function UpdateListSliderHeight( float modes )
 	if ( height > maxHeight ) height = maxHeight
 	if ( height < minHeight ) height = minHeight
 
-	Hud_SetHeight( sliderButton , height )
-	Hud_SetHeight( sliderPanel , height )
-	Hud_SetHeight( movementCapture , height )
+	Hud_SetHeight( sliderButton, height )
+	Hud_SetHeight( sliderPanel, height )
+	Hud_SetHeight( movementCapture, height )
 }
 
 
