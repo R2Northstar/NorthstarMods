@@ -56,7 +56,6 @@ Choisissez Oui si vous êtes d'accord. Ce choix peut être modifié à tout inst
 		"timelimit" "Limite de temps"
 		"roundtimelimit" "Limite de temps (manche)"
 		"respawnprotection" "Temps protection réapparition"
-		"late_join_respawn" "Enable late join respawn"
 
 		"pilot_health_multiplier" "Multiplicateur de santé"
 		"respawn_delay" "Délai de réapparition"

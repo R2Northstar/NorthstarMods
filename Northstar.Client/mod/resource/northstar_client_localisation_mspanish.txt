@@ -56,7 +56,6 @@ Si estas de acuerdo con esto, presiona SI. Esta decision puede ser cambiada en e
 		"timelimit" "Tiempo limite"
 		"roundtimelimit" "Tiempo limite (basado en rondas)"
 		"respawnprotection" "Tiempo de proteccion en reaparición"
-		"late_join_respawn" "Enable late join respawn"
 
 		"pilot_health_multiplier" "Multiplicador de salud"
 		"respawn_delay" "Tiempo de Respawn"

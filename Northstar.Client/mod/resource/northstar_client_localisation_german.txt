@@ -55,7 +55,6 @@ Drücke Ja, um zuzustimmen. Du kannst diese Entscheidung jederzeit im Modmenü �
 		"roundscorelimit" "Höchstpunktzahl (rundenbasiert)"
 		"timelimit" "Zeitlimit"
 		"roundtimelimit" "Zeitlimit (rundenbasiert)"
-		"late_join_respawn" "Enable late join respawn"
 
 		"pilot_health_multiplier" "HP Multiplikator"
 		"respawn_delay" "Respawn-Verzögerung"

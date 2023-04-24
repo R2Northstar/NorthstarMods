@@ -54,7 +54,6 @@ Premi Sì se sei d'accordo. Questa scelta può essere modificata in qualsiasi mo
 		"timelimit" "Limite di Tempo"
 		"roundtimelimit" "Limite di Tempo (per round)"
 		"respawnprotection", "Tempo Protezione di Respawn"
-		"late_join_respawn" "Enable late join respawn"
 
 		"pilot_health_multiplier" "Moltiplicatore di Salute"
 		"respawn_delay" "Tempo di Respawn"

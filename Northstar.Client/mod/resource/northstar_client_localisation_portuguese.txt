@@ -56,7 +56,6 @@ Clique em Sim se você concorda. Esta escolha pode ser alterada a qualquer momen
 		"timelimit" "Tempo limite"
 		"roundtimelimit" "Tempo limite (por round)"
 		"respawnprotection" "Proteção de reaparecimento"
-		"late_join_respawn" "Enable late join respawn"
 
 		"pilot_health_multiplier" "Multiplicador de vida"
 		"respawn_delay" "Delay de reaparecimento"
