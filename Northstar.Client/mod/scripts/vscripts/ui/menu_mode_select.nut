@@ -356,7 +356,7 @@ void function SliderBarUpdate()
 
 	Hud_SetFocused( sliderButton )
 
-    int[2] screenSize = GetScreenSize()
+	int[2] screenSize = GetScreenSize()
 	float minYPos = -40.0 * ( screenSize[1] / 1080.0 )
 	float maxHeight = 596.0  * ( screenSize[1] / 1080.0 )
 	float maxYPos = minYPos - ( maxHeight - Hud_GetHeight( sliderPanel ) )
@@ -386,7 +386,7 @@ void function UpdateListSliderHeight( float modes )
 	var sliderPanel = Hud_GetChild( file.menu , "BtnModeListSliderPanel" )
 	var movementCapture = Hud_GetChild( file.menu , "MouseMovementCapture" )
 
-    int[2] screenSize = GetScreenSize()
+	int[2] screenSize = GetScreenSize()
 	float maxHeight = 596.0 * ( screenSize[1] / 1080.0 )
 	float minHeight = 80.0 * ( screenSize[1] / 1080.0 )
 
