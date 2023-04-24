@@ -404,9 +404,9 @@ void function UpdateListSliderPosition( int modes )
 	if( modes < MODES_PER_PAGE )
 		return
 
-	var sliderButton = Hud_GetChild( file.menu , "BtnModeListSlider" )
-	var sliderPanel = Hud_GetChild( file.menu , "BtnModeListSliderPanel" )
-	var movementCapture = Hud_GetChild( file.menu , "MouseMovementCapture" )
+	var sliderButton = Hud_GetChild( file.menu, "BtnModeListSlider" )
+	var sliderPanel = Hud_GetChild( file.menu, "BtnModeListSliderPanel" )
+	var movementCapture = Hud_GetChild( file.menu, "MouseMovementCapture" )
 
 	float minYPos = -40.0 * ( GetScreenSize()[1] / 1080.0 )
 	float useableSpace = (596.0 * ( GetScreenSize()[1] / 1080.0 ) - Hud_GetHeight( sliderPanel ) )
