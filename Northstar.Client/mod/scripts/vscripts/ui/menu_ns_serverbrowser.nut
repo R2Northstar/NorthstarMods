@@ -70,7 +70,6 @@ struct serverStruct {
 struct {
 	// UI state vars
 	var menu
-	// int lastSelectedServer = 999
 	int focusedServerIndex = 0
 	int scrollOffset = 0
 	bool serverListRequestFailed = false
@@ -956,8 +955,6 @@ void function OnServerSelected( var button )
 	if ( NSIsRequestingServerList() || NSGetServerCount() == 0 || file.serverListRequestFailed )
 		return
 
-	// !!! TODO
-
 	ServerInfo server = file.focusedServer
 
 	file.lastSelectedServer = server
@@ -1244,7 +1241,7 @@ void function SortServerListByRegion_Activate( var button )
 void function AddConnectToServerCallback( void functionref( ServerInfo ) callback )
 {
 	if ( file.connectCallbacks.find( callback ) >= 0 )
-		throw "callback already registered"
+		throw "ConnectToServerCallback has been registered twice. Duplicate callbacks are not allowed."
 	file.connectCallbacks.append( callback )
 }
 
