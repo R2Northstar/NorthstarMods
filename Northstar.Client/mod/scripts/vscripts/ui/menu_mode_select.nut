@@ -359,7 +359,7 @@ void function SliderBarUpdate()
 	float minYPos = -40.0 * ( GetScreenSize()[1] / 1080.0 )
 	float maxHeight = 596.0  * ( GetScreenSize()[1] / 1080.0 )
 	float maxYPos = minYPos - ( maxHeight - Hud_GetHeight( sliderPanel ) )
-	float useableSpace = ( maxHeight - Hud_GetHeight( sliderPanel ) )
+	float useableSpace = maxHeight - Hud_GetHeight( sliderPanel )
 
 	float jump = minYPos - ( useableSpace / ( float( file.sortedModes.len() ) ) )
 
