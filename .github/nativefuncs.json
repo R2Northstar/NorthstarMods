@@ -421,6 +421,12 @@
 			"helpText":"Returns whether or not a given path leads to a folder.",
 			"returnTypeString":"bool",
 			"argTypes":"string path"
+    },
+    {
+			"name":"NSPushGameStateData",
+			"helpText":"",
+			"returnTypeString":"void",
+			"argTypes":"struct gamestate"
 		}
 	],
 	"UI":[
@@ -783,6 +789,12 @@
 			"helpText":"Returns whether or not a given path leads to a folder.",
 			"returnTypeString":"bool",
 			"argTypes":"string path"
+    },
+    {
+			"name":"NSPushUIPresence",
+			"helpText":"",
+			"returnTypeString":"void",
+			"argTypes":"struct presence"
 		}
 	]
 }
