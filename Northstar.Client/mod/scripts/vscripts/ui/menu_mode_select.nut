@@ -415,9 +415,9 @@ void function UpdateListSliderPosition( int modes )
 
 	if ( jump > minYPos ) jump = minYPos
 
-	Hud_SetPos( sliderButton , 2, jump )
-	Hud_SetPos( sliderPanel , 2, jump )
-	Hud_SetPos( movementCapture , 2, jump )
+	Hud_SetPos( sliderButton, 2, jump )
+	Hud_SetPos( sliderPanel, 2, jump )
+	Hud_SetPos( movementCapture, 2, jump )
 }
 
 void function OnScrollDown( var button )
