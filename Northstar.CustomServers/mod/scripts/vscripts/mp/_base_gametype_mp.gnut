@@ -383,7 +383,12 @@ void function PostDeathThread_MP( entity player, var damageInfo ) // based on ga
 		
 		wait respawnDelay
 
-		thread ForceRespawnMeSignalAfterDelay( player )
+		int forceRespawn = GetCurrentPlaylistVarInt( "player_force_respawn", -1 )
+
+		// -1 is disabled, anything over is the time we wait in seconds
+		// before respawning the player
+		if( forceRespawn >= 0 )
+			thread ForceRespawnMeSignalAfterDelay( player, forceRespawn )
 				
 		player.WaitSignal( "RespawnMe" ) // set in base_gametype: ClientCommand_RespawnPlayer
 		
