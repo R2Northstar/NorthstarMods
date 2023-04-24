@@ -20,7 +20,7 @@ global function AITdm_SetLevelReapers
 struct
 {
 	// Due to team based escalation everything is an array
-	array< int > levels = [] //[ LEVEL_SPECTRES, LEVEL_SPECTRES ] // since we added modification should leave these to the start of spawner
+	array< int > levels = [] // since we added modification should init starter level int Spawner()
 	array< array< string > > podEntities = [ [ "npc_soldier" ], [ "npc_soldier" ] ]
 	array< bool > reapers = [ false, false ]
 
@@ -117,11 +117,9 @@ void function HandleScoreEvent( entity victim, entity attacker, var damageInfo )
 	// Basic checks
 	if ( victim == attacker || !( attacker.IsPlayer() || attacker.IsTitan() ) || GetGameState() != eGameState.Playing )
 		return
-
 	// Hacked spectre filter
 	if ( victim.GetOwner() == attacker )
 		return
-	
 	// NPC titans without an owner player will not count towards any team's score
 	if ( attacker.IsNPC() && attacker.IsTitan() && !IsValid( GetPetTitanOwner( attacker ) ) )
 		return
