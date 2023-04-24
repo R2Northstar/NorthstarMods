@@ -79,9 +79,14 @@ void function RespawnProtection( entity player , float time ){
 			player.SetInvulnerable()
 		}
 		else if( player.IsTitan() )
+		{
 			player.SetInvulnerable()
+		}
 		else
+		{
 			EnableDemigod( player )
+		}
+
 		//start a highlight
 		waitthread ProtectionHighlightThink( player, time )
 	}
