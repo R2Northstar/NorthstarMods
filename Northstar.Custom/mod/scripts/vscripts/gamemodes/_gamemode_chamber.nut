@@ -11,15 +11,9 @@ void function GamemodeChamber_Init()
 	Riff_ForceBoostAvailability( eBoostAvailability.Disabled )
 	ClassicMP_ForceDisableEpilogue( true )
 
-	AddCallback_OnClientConnected( ChamberInitPlayer )
 	AddCallback_OnPlayerKilled( ChamberOnPlayerKilled )
-	AddCallback_OnPlayerRespawned( UpdateLoadout )
-
-}
-
-void function ChamberInitPlayer( entity player )
-{
-	UpdateLoadout( player )
+	//AddCallback_OnPlayerRespawned( UpdateLoadout ) // should never set up loadout in respawn function
+	AddCallback_OnPlayerGetsNewPilotLoadout( OnPlayerGetsNewPilotLoadout )
 }
 
 int function GetChamberWingmanN(){
@@ -71,6 +65,11 @@ void function ChamberOnPlayerKilled( entity victim, entity attacker, var damageI
 		}
 		SetRoundWinningKillReplayAttacker(attacker)
 	}
+}
+
+void function OnPlayerGetsNewPilotLoadout( entity player, PilotLoadoutDef p )
+{
+	UpdateLoadout( player )
 }
 
 void function UpdateLoadout( entity player )

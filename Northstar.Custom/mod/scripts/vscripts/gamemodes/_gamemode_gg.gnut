@@ -11,7 +11,8 @@ void function GamemodeGG_Init()
 	Riff_ForceTitanAvailability( eTitanAvailability.Never )
 	Riff_ForceBoostAvailability( eBoostAvailability.Disabled )
 
-	AddCallback_OnPlayerRespawned( OnPlayerRespawned )
+	AddCallback_OnPlayerRespawned( OnPlayerRespawned ) // should never set up loadout in respawn function
+	AddCallback_OnPlayerGetsNewPilotLoadout( OnPlayerGetsNewPilotLoadout )
 	AddCallback_OnPlayerKilled( OnPlayerKilled )
 	AddCallback_OnClientDisconnected( OnPlayerDisconnected )
 
@@ -36,7 +37,7 @@ void function OnPlayerDisconnected(entity player)
 
 void function OnPlayerRespawned( entity player )
 {
-	UpdateLoadout( player )
+	// should never set up loadout in respawn function
 	thread OnPlayerRespawned_Threaded( player )
 }
 
@@ -47,6 +48,11 @@ void function OnPlayerRespawned_Threaded( entity player )
 	WaitFrame()
 	if ( IsValid( player ) )
 		PlayerEarnMeter_SetMode( player, eEarnMeterMode.DISABLED )
+}
+
+void function OnPlayerGetsNewPilotLoadout( entity player, PilotLoadoutDef p )
+{
+	UpdateLoadout( player )
 }
 
 void function OnPlayerKilled( entity victim, entity attacker, var damageInfo )

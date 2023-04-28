@@ -19,7 +19,8 @@ void function GamemodeInfection_Init()
 	SetShouldPlayerStartBleedoutFunc( InfectionShouldPlayerStartBleedout )
 	AddCallback_OnClientConnected( InfectionInitPlayer )
 	AddCallback_OnPlayerKilled( InfectionOnPlayerKilled )
-	AddCallback_OnPlayerRespawned( RespawnInfected )
+	AddCallback_OnPlayerRespawned( RespawnInfected ) // should never set up loadout in respawn function
+	AddCallback_OnPlayerGetsNewPilotLoadout( InfectionPlayerLoadout )
 	AddCallback_GameStateEnter( eGameState.Playing, SelectFirstInfected )
 
 	SetTimeoutWinnerDecisionFunc( TimeoutCheckSurvivors )
@@ -49,6 +50,7 @@ void function SelectFirstInfectedDelayed()
 
 	InfectPlayer( infected )
 	RespawnInfected( infected )
+	InfectedLoadout( infected )
 }
 
 void function InfectionOnPlayerKilled( entity victim, entity attacker, var damageInfo )
@@ -102,6 +104,23 @@ void function RespawnInfected( entity player )
 		file.playersToNotifyOfInfection.remove( file.playersToNotifyOfInfection.find( player ) )
 	}
 
+	// should never set up loadout in respawn function
+	// stats for infected
+	StimPlayer( player, 9999.9 ) // can't do endless since we don't get the visual effect in endless
+
+	thread PlayInfectedSounds( player )
+}
+
+void function InfectionPlayerLoadout( entity player, PilotLoadoutDef p )
+{
+	InfectedLoadout( player )
+}
+
+void function InfectedLoadout( entity player )
+{
+	if ( player.GetTeam() != INFECTION_TEAM_INFECTED )
+		return
+
 	// set camo to pond scum
 	player.SetSkin( 1 )
 	player.SetCamo( 110 )
@@ -109,10 +128,7 @@ void function RespawnInfected( entity player )
 	// if human, remove helmet bodygroup, human models have some weird bloody white thing underneath their helmet that works well for this, imo
 	if ( !player.IsMechanical() )
 		player.SetBodygroup( player.FindBodyGroup( "head" ), 1 )
-
-	// stats for infected
-	StimPlayer( player, 9999.9 ) // can't do endless since we don't get the visual effect in endless
-
+	
 	// scale health with num of infected, with 50 as base health
 	player.SetMaxHealth( ( GetPlayerArrayOfTeam( INFECTION_TEAM_SURVIVOR ).len() + 1 ) * 10 )
 
@@ -122,7 +138,7 @@ void function RespawnInfected( entity player )
 
 	foreach ( entity weapon in player.GetOffhandWeapons() )
 		player.TakeWeaponNow( weapon.GetWeaponClassName() )
-
+	
 	// TEMP: give archer so player so player has a weapon which lets them use offhands
 	// need to replace this with a custom empty weapon at some point
 	//player.GiveWeapon( "mp_weapon_rocket_launcher" )
@@ -130,7 +146,6 @@ void function RespawnInfected( entity player )
 	player.GiveOffhandWeapon( "melee_pilot_emptyhanded", OFFHAND_MELEE )
 
 	thread GiveAirAccel(player)
-	thread PlayInfectedSounds( player )
 }
 
 void function GiveAirAccel(entity player)

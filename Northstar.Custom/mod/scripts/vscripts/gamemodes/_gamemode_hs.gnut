@@ -23,7 +23,8 @@ void function GamemodeHideAndSeek_Init()
 	ClassicMP_SetCustomIntro( GamemodeHideAndSeekIntroSetup, 0.0 )
 	ClassicMP_ForceDisableEpilogue( true )
 	
-	AddCallback_OnPlayerRespawned( SetupHideAndSeekPlayer )
+	AddCallback_OnPlayerRespawned( SetupHideAndSeekPlayer ) // should never set up loadout in respawn function
+	AddCallback_OnPlayerGetsNewPilotLoadout( HideAndSeekPlayerLoadout )
 	AddCallback_OnPlayerKilled( TryNotifyLastPlayerAlive )
 	AddSpawnCallback( "info_intermission", SetIntermissionCam )
 	AddSpawnCallback( "info_spawnpoint_droppod_start", AddDroppodSpawn )
@@ -151,20 +152,11 @@ void function GlobalSeekerIntroThread()
 
 void function SetupHideAndSeekPlayer( entity player )
 {
-	foreach ( entity weapon in player.GetMainWeapons() )
-		player.TakeWeapon( weapon.GetWeaponClassName() )
-	
-	player.TakeWeapon( player.GetOffhandWeapon( OFFHAND_ORDNANCE ).GetWeaponClassName() )
-	
-	player.GiveWeapon( "mp_weapon_rocket_launcher" )
-	player.SetActiveWeaponByName( "mp_weapon_rocket_launcher" )
-
+	// should never set up loadout in respawn function
 	Highlight_SetFriendlyHighlight( player, "sp_friendly_pilot" )
 
 	if ( player.GetTeam() == HIDEANDSEEK_TEAM_HIDER )
 	{
-		player.TakeWeapon( player.GetMeleeWeapon().GetWeaponClassName() )
-	
 		// set visibility flags if we're hiding, so seekers can't see us on intermission cam
 		if ( Time() - file.hidingStartTime < file.hidingTime )
 			player.kv.VisiblityFlags = ENTITY_VISIBLE_TO_FRIENDLY
@@ -173,6 +165,20 @@ void function SetupHideAndSeekPlayer( entity player )
 		Highlight_ClearEnemyHighlight( player )
 		thread PlayHintSoundsForHider( player )
 	}
+}
+
+void function HideAndSeekPlayerLoadout( entity player, PilotLoadoutDef p )
+{
+	foreach ( entity weapon in player.GetMainWeapons() )
+		player.TakeWeapon( weapon.GetWeaponClassName() )
+	
+	player.TakeWeapon( player.GetOffhandWeapon( OFFHAND_ORDNANCE ).GetWeaponClassName() )
+	
+	player.GiveWeapon( "mp_weapon_rocket_launcher" )
+	player.SetActiveWeaponByName( "mp_weapon_rocket_launcher" )
+
+	if ( player.GetTeam() == HIDEANDSEEK_TEAM_HIDER )
+		player.TakeWeapon( player.GetMeleeWeapon().GetWeaponClassName() )
 	else
 		player.TakeWeapon( "mp_weapon_grenade_sonar" ) // seekers should not have pulse blade
 }

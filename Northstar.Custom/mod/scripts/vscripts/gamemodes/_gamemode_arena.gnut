@@ -24,7 +24,7 @@ void function GameModeArena_Init()
 
 	ClassicMP_SetCustomIntro( GameModeArena_BuyPhaseSetup, 30.0 )
 	AddCallback_EntitiesDidLoad( CreateBoostStores )
-	AddCallback_OnPlayerRespawned( SetupArenaLoadoutForPlayer )
+	AddCallback_OnPlayerGetsNewPilotLoadout( SetupArenaLoadoutForPlayer ) // should never set up loadout in respawn function
 }
 
 // intro / buy phase
@@ -165,10 +165,8 @@ void function DamageLeavingPlayers( vector imcOrigin, vector militiaOrigin )
 	}
 }
 
-void function SetupArenaLoadoutForPlayer( entity player )
+void function SetupArenaLoadoutForPlayer( entity player, PilotLoadoutDef playerLoadout )
 {
-	PilotLoadoutDef playerLoadout = clone GetActivePilotLoadout( player )
-
 	if ( GetGameState() == eGameState.Prematch ) // buy phase
 	{
 		playerLoadout.primary = ""

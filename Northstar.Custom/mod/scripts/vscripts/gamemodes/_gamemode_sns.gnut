@@ -26,7 +26,8 @@ void function SNS_Init()
 	Riff_ForceBoostAvailability( eBoostAvailability.Disabled )
 
 	AddCallback_OnPlayerKilled( OnPlayerKilled )
-	AddCallback_OnPlayerRespawned( OnPlayerRespawned )
+	AddCallback_OnPlayerRespawned( OnPlayerRespawned ) // should never set up loadout in respawn function
+	AddCallback_OnPlayerGetsNewPilotLoadout( OnPlayerGetsNewPilotLoadout )
 	AddCallback_OnClientDisconnected(OnPlayerDisconnected)
 	AddCallback_GameStateEnter( eGameState.WinnerDetermined, OnWinnerDetermined )
 
@@ -128,6 +129,24 @@ void function OnWinnerDetermined()
 
 void function OnPlayerRespawned( entity player )
 {
+	// should never set up loadout in respawn function
+	if (player == GetWinningPlayer())
+		SetHighlight( player )
+
+	thread OnPlayerRespawned_Threaded( player )
+}
+
+void function OnPlayerRespawned_Threaded( entity player )
+{
+	// bit of a hack, need to rework earnmeter code to have better support for completely disabling it
+	// rn though this just waits for earnmeter code to set the mode before we set it back
+	WaitFrame()
+	if ( IsValid( player ) )
+		PlayerEarnMeter_SetMode( player, eEarnMeterMode.DISABLED )
+}
+
+void function OnPlayerGetsNewPilotLoadout( entity player, PilotLoadoutDef p )
+{
 	foreach ( entity weapon in player.GetMainWeapons() )
 		player.TakeWeaponNow( weapon.GetWeaponClassName() )
 	
@@ -143,20 +162,6 @@ void function OnPlayerRespawned( entity player )
 	player.GiveOffhandWeapon( "melee_pilot_emptyhanded", OFFHAND_MELEE )
 	player.GiveOffhandWeapon( file.offhand_weapon, OFFHAND_RIGHT )
 	player.GiveOffhandWeapon( "mp_weapon_grenade_sonar", OFFHAND_LEFT )
-
-	if (player == GetWinningPlayer())
-		SetHighlight( player )
-
-	thread OnPlayerRespawned_Threaded( player )
-}
-
-void function OnPlayerRespawned_Threaded( entity player )
-{
-	// bit of a hack, need to rework earnmeter code to have better support for completely disabling it
-	// rn though this just waits for earnmeter code to set the mode before we set it back
-	WaitFrame()
-	if ( IsValid( player ) )
-		PlayerEarnMeter_SetMode( player, eEarnMeterMode.DISABLED )
 }
 
 entity function GetWinningPlayer() 
