@@ -1138,7 +1138,7 @@ void function AT_BankActiveThink( entity bank )
 	svGlobal.levelEnt.EndSignal( "GameStateChanged" )
 	bank.EndSignal( "OnDestroy" )
 	
-	// bank closed!
+	// Banks closed
 	OnThreadEnd
 	(
 		function(): ( bank )
@@ -1146,58 +1146,59 @@ void function AT_BankActiveThink( entity bank )
 			if ( IsValid( bank ) )
 			{
 				bank.Signal( "ATBankClosed" )
-				// update use prompt
-				if ( GetGameState() != eGameState.Playing ) // game has ended!
-					bank.UnsetUsable() // disable prompt
+
+				// Update use prompt
+				if ( GetGameState() != eGameState.Playing )
+					bank.UnsetUsable()
 				else
 					bank.SetUsePrompts( "#AT_USE_BANK_CLOSED", "#AT_USE_BANK_CLOSED" )
 
 				thread PlayAnim( bank, "mh_active_2_inactive" )
 				FadeOutSoundOnEntity( bank, "Mobile_Hardpoint_Idle", 0.5 )
-				// hide on minimap
 				bank.Minimap_Hide( TEAM_IMC, null )
 				bank.Minimap_Hide( TEAM_MILITIA, null )
 			}
 		}
 	)
 
-	// update use prompt
-	bank.SetUsable() // make sure it's usable
+	// Update use prompt to usable
+	bank.SetUsable()
 	bank.SetUsePrompts( "#AT_USE_BANK", "#AT_USE_BANK_PC" )
 
 	thread PlayAnim( bank, "mh_inactive_2_active" )
 	EmitSoundOnEntity( bank, "Mobile_Hardpoint_Idle" )
 
-	// show minimap icon for bank
+	// Show minimap icon for bank
 	bank.Minimap_AlwaysShow( TEAM_IMC, null )
 	bank.Minimap_AlwaysShow( TEAM_MILITIA, null )
 	bank.Minimap_SetCustomState( eMinimapObject_prop_script.AT_BANK )
 	
-	// wait for bank close or game end
+	// Wait for bank close or game end
 	while ( GetGlobalNetBool( "banksOpen" ) )
 		WaitFrame()
 }
 
 function OnPlayerUseBank( bank, player )
 {
-	// we do nothing if bank is closed, but we need to make them always usable for showing prompts
+	// Banks are always usable so that we can show the use prompt
+	// Only allow deposit when banks are open
 	if ( !GetGlobalNetBool( "banksOpen" ) )
 		return
 
 	expect entity( bank )
 	expect entity( player )
 
-	// no bonus!
+	// Player has no bonus, try to send a tip using SendHUDMessage
 	if ( AT_GetPlayerBonusPoints( player ) == 0 )
 	{
-		TrySendHudMessageToPlayer( player, "#AT_USE_BANK_NO_BONUS_HINT" )
+		ATSendDepositTipToPlayer( player, "#AT_USE_BANK_NO_BONUS_HINT" )
 		return
 	}
 
-	thread PlayerUploadingBonus( bank, player )
+	thread PlayerUploadingBonus_Threaded( bank, player )
 }
 
-bool function TrySendHudMessageToPlayer( entity player, string message )
+bool function ATSendDepositTipToPlayer( entity player, string message )
 {
 	if ( Time() < file.playerHudMessageAllowedTime[ player ] )
 		return false
@@ -1208,8 +1209,9 @@ bool function TrySendHudMessageToPlayer( entity player, string message )
 	return true
 }
 
-void function PlayerUploadingBonus( entity bank, entity player )
+void function PlayerUploadingBonus_Threaded( entity bank, entity player )
 {
+	// Prevent more than one instance of this thread running
 	if ( file.playerBankUploading[ player ] )
 		return
 
@@ -1218,46 +1220,46 @@ void function PlayerUploadingBonus( entity bank, entity player )
 	player.EndSignal( "OnDestroy" )
 	player.EndSignal( "OnDeath" )
 
-	// mark as player uploading, so they can't use the bank multiple times
 	file.playerBankUploading[ player ] = true
 
-	table results =
-	{
-		uploadSuccess = false
-		depositedPoints = 0
-	}
+	bool uploadSuccess = false
+	int depositedPoints = 0
 
+	// Cleanup and call finish deposit func
 	OnThreadEnd
 	(
-		function(): ( player, results )
+		function(): ( player, uploadSuccess, depositedPoints )
 		{
 			if ( IsValid( player ) )
 			{
 				file.playerBankUploading[ player ] = false
-				// clean up looping sound
+
+				// Clean up looping sound
 				StopSoundOnEntity( player, "HUD_MP_BountyHunt_BankBonusPts_Ticker_Loop_1P" )
 				StopSoundOnEntity( player, "HUD_MP_BountyHunt_BankBonusPts_Ticker_Loop_3P" )
 
-				// do medal event
+				// Do medal event
+				// TODO: Check if vanilla actually do.s this every time you finish depositing???
 				AddPlayerScore( player, "AttritionCashedBonus" )
-				// do server callback
+
+				// Do server callback
 				Remote_CallFunction_NonReplay( 
 					player, 
 					"ServerCallback_AT_FinishDeposit",
-					expect int( results.depositedPoints ) // deposit
+					depositedPoints // deposit
 				)
 
 				player.SetPlayerNetBool( "AT_playerUploading", false )
 
-				if ( results.uploadSuccess ) // player deposited all remaining bonus
+				if ( uploadSuccess ) // Player deposited all remaining bonus
 				{
-					// emit uploading successful sound
+					// Emit uploading successful sound
 					EmitSoundOnEntityOnlyToPlayer( player, player, "HUD_MP_BountyHunt_BankBonusPts_Deposit_End_Successful_1P" )
 					EmitSoundOnEntityExceptToPlayer( player, player, "HUD_MP_BountyHunt_BankBonusPts_Deposit_End_Successful_3P" )
 				}
-				else // player killed or left the bank radius
+				else // Player was killed or left the bank radius
 				{
-					// emit uploading failed sound
+					// Emit uploading failed sound
 					EmitSoundOnEntityOnlyToPlayer( player, player, "HUD_MP_BountyHunt_BankBonusPts_Deposit_End_Unsuccessful_1P" )
 					EmitSoundOnEntityExceptToPlayer( player, player, "HUD_MP_BountyHunt_BankBonusPts_Deposit_End_Unsuccessful_3P" )
 				}
@@ -1265,15 +1267,15 @@ void function PlayerUploadingBonus( entity bank, entity player )
 		}
 	)
 
-	// uploading start sound
+	// Uploading start sound
 	EmitSoundOnEntityOnlyToPlayer( player, player, "HUD_MP_BountyHunt_BankBonusPts_Deposit_Start_1P" )
 	EmitSoundOnEntityExceptToPlayer( player, player, "HUD_MP_BountyHunt_BankBonusPts_Deposit_Start_3P" )
 	EmitSoundOnEntityOnlyToPlayer( player, player, "HUD_MP_BountyHunt_BankBonusPts_Ticker_Loop_1P" )
 	EmitSoundOnEntityExceptToPlayer( player, player, "HUD_MP_BountyHunt_BankBonusPts_Ticker_Loop_3P" )
 
 	player.SetPlayerNetBool( "AT_playerUploading", true )
-	//AT_AddPlayerEarnedPoints( player, AT_GetPlayerBonusPoints( player ) ) // earned points, seems unused
-	// uploading bonus
+	
+	// Upload bonus while the player is within range of the bank
 	while ( Distance( player.GetOrigin(), bank.GetOrigin() ) <= AT_BANK_DEPOSIT_RADIUS )
 	{
 		// Calling this moves the "Uploading..." graphic to the same place it is
@@ -1281,18 +1283,19 @@ void function PlayerUploadingBonus( entity bank, entity player )
 		Remote_CallFunction_NonReplay( player, "ServerCallback_AT_ShowRespawnBonusLoss" )
 
 		int bonusToUpload = int( min( AT_BANK_DEPOSIT_RATE, AT_GetPlayerBonusPoints( player ) ) )
-		if ( bonusToUpload == 0 ) // no bonus left
+
+		// No more bonus to upload, return
+		if ( bonusToUpload == 0 )
 		{
-			results.uploadSuccess = true // mark as this is a success uploading
+			uploadSuccess = true
 			return
 		}
 
-		// remove bonus points
+		// Remove bonus points and add them to total poins
 		AT_AddPlayerBonusPoints( player, -bonusToUpload )
-		// add to total points
 		AT_AddPlayerTotalPoints( player, bonusToUpload )
 
-		results.depositedPoints += bonusToUpload
+		depositedPoints += bonusToUpload
 		WaitFrame()
 	}
 }
