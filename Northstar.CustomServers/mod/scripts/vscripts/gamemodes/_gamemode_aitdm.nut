@@ -2,7 +2,7 @@ untyped
 global function GamemodeAITdm_Init
 
 // these are now default settings
-const int SQUADS_PER_TEAM = 4 // was 3
+const int SQUADS_PER_TEAM = 4
 
 const int REAPERS_PER_TEAM = 2
 
@@ -20,7 +20,7 @@ global function AITdm_SetLevelReapers
 struct
 {
 	// Due to team based escalation everything is an array
-	array< int > levels = [] // since we added modification should init starter level int Spawner()
+	array< int > levels = [] // Initilazed in `Spawner_Threaded`
 	array< array< string > > podEntities = [ [ "npc_soldier" ], [ "npc_soldier" ] ]
 	array< bool > reapers = [ false, false ]
 
