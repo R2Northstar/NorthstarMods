@@ -576,3 +576,4 @@ void function AITdm_CleanupBoredNPCThread( entity guy )
 	print( "cleaning up bored npc: " + guy + " from team " + guy.GetTeam() )
 	guy.Destroy()
 }
+
