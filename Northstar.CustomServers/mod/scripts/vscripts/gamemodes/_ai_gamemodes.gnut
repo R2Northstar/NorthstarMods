@@ -106,6 +106,7 @@ void function AiGameModes_SpawnReaper( vector pos, vector rot, int team, string 
 	Highlight_SetFriendlyHighlight( reaper, "sp_enemy_pilot" )
 	reaper.Highlight_SetParam( 1, 0, < 1,1,1 > )
 	SetDefaultMPEnemyHighlight( reaper )
+	Highlight_SetEnemyHighlight( reaper, "enemy_titan" )
 
 	SetSpawnOption_Titanfall( reaper )
 	SetSpawnOption_Warpfall( reaper )
