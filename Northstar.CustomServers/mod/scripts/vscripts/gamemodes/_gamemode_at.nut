@@ -1292,7 +1292,7 @@ void function PlayerUploadingBonus_Threaded( entity bank, entity player )
 		if ( bonusToUpload == 0 )
 		{
 			uploadInfo.uploadSuccess = true
-			break
+			return
 		}
 
 		// Remove bonus points and add them to total poins
