@@ -585,7 +585,9 @@ void function AT_AddToPlayerTeamScore( entity player, int amount )
 
 	// Check score so we dont go over max
 	if ( GameRules_GetTeamScore(player.GetTeam()) + amount > GetScoreLimit_FromPlaylist() )
+	{
 		amount = GetScoreLimit_FromPlaylist() - GameRules_GetTeamScore(player.GetTeam())
+	}
 	
 	// update score difference
 	AddTeamScore( player.GetTeam(), amount )
@@ -1403,7 +1405,7 @@ void function AT_HandleSquadSpawn( array<entity> guys, AT_WaveOrigin campData, i
 	foreach ( entity guy in guys )
 	{
 		// TODO: NPCs still seem to go outside their camp ???
-		guy.EnableNPCFlag( NPC_ALLOW_PATROL | NPC_ALLOW_HAND_SIGNALS | NPC_ALLOW_FLEE )
+		//guy.EnableNPCFlag( NPC_ALLOW_PATROL | NPC_ALLOW_HAND_SIGNALS | NPC_ALLOW_FLEE )
 
 		// tracking lifetime
 		AddToScriptManagedEntArray( scriptManagerId, guy )
@@ -1430,8 +1432,9 @@ void function AT_ForceAssaultAroundCamp( entity guy, AT_WaveOrigin campData )
 		guy.AssaultPoint( goalPos )
 		guy.AssaultSetGoalRadius( goalRadius )
 		guy.AssaultSetFightRadius( 0 ) 
+		guy.AssaultSetArrivalTolerance( int(goalRadius) )
 
-		wait RandomFloatRange( 5, 10 ) // make randomness
+		wait RandomFloatRange( 1, 5 ) // make randomness
 	}
 }
 
