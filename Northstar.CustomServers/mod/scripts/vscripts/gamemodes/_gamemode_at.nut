@@ -1419,12 +1419,9 @@ void function AT_SpawnDroppodSquad( AT_WaveOrigin campData, int spawnId, string 
 		void function( array<entity> guys ) : ( campData, spawnId, aiType, scriptManagerId ) 
 		{
 			AT_HandleSquadSpawn( guys, campData, spawnId, aiType, scriptManagerId )
-		}
+		},
+		eDropPodFlag.DISSOLVE_AFTER_DISEMBARKS
 	)
-
-	// NOTE: VoyageDB added an extra argument to AiGameModes_SpawnDropPod for spawn flags
-	//       adding eDropPodFlag.DISSOLVE_AFTER_DISEMBARKS. With how navmeshes are right now
-	//       we might want to add this too
 }
 
 void function AT_HandleSquadSpawn( array<entity> guys, AT_WaveOrigin campData, int spawnId, string aiType, int scriptManagerId )
