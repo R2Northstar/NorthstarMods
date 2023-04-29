@@ -124,7 +124,6 @@ void function RateSpawnpoints_AT( int checkclass, array<entity> spawnpoints, int
 }
 
 
-// TODO: Game didnt end once score was reached while banking???
 
 ////////////////////////////////////////
 ///// GAMESTATE CALLBACK FUNCTIONS /////
