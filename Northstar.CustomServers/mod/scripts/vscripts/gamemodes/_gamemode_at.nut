@@ -383,6 +383,10 @@ void function OnEntitiesDidLoad()
 ///// SCORING FUNCITONS /////
 /////////////////////////////
 
+// TODO: Don't reward in postmatch
+// TODO: Dropping a titan on a bounty with it's dome-shield still up rewards you the bonus, but
+//       it doesn't actually damage the bounty titan
+
 void function AT_ScoreEventsValueSetUp()
 {
 	ScoreEvent_SetEarnMeterValues( "KillTitan", 0.10, 0.15 )
@@ -706,7 +710,8 @@ void function AT_GameLoop_Threaded()
 		}
 	)*/
 	
-	wait AT_FIRST_WAVE_START_DELAY - AT_WAVE_TRANSITION_DELAY // initial wait before first wave
+	// Initial wait before first wave
+	wait AT_FIRST_WAVE_START_DELAY - AT_WAVE_TRANSITION_DELAY
 	
 	int lastWaveId = -1
 	for ( int waveCount = 1; ; waveCount++ )
@@ -715,12 +720,10 @@ void function AT_GameLoop_Threaded()
 	
 		// cap to number of real waves
 		int waveId = ( waveCount - 1 ) / 2
-		// cap to third wave. final wave is not finished
 		int waveCapAmount = 2
-		if ( waveId > GetWaveDataSize() - waveCapAmount )
-			waveId = GetWaveDataSize() - waveCapAmount
+		waveId = int( min( waveId, GetWaveDataSize() - waveCapAmount ) )
 
-		// new wave dialogue
+		// New wave dialogue
 		bool waveChanged = lastWaveId != waveId
 		if ( waveChanged )
 		{
@@ -758,7 +761,7 @@ void function AT_GameLoop_Threaded()
 		
 		wait AT_WAVE_TRANSITION_DELAY
 		
-		// run the wave
+		// Run the wave
 		thread AT_CampSpawnThink( waveId, isBossWave )
 
 		if ( !isBossWave )
@@ -868,14 +871,14 @@ void function AT_CampSpawnThink( int waveId, bool isBossWave )
 			allCampsToUse.append( campStruct )
 	}
 
+	// TODO: make this better
 	// HACK: don't know why respawn did multiple phase3 camps on explanet and rise, have to do a check
 	int campsMaxUse = waveId == 0 ? 1 : 2 // first wave always use 1 camp
 	if ( allCampsToUse.len() > campsMaxUse ) // overloaded camps!
 	{
 		while ( true )
 		{
-			WaitFrame()
-			// randomly pick
+			// Randomly pick the correct number of camps for this wave
 			array<AT_WaveOrigin> pickedCamps
 			array<AT_WaveOrigin> tempCampsArray = clone allCampsToUse
 			for ( int i = 0; i < campsMaxUse; i++ )
@@ -886,8 +889,9 @@ void function AT_CampSpawnThink( int waveId, bool isBossWave )
 			}
 			tempCampsArray = pickedCamps
 
+			// Check if the camps are colliding
 			bool campsCollide = false
-			if ( campsMaxUse > 1 ) // multiple camps!
+			if ( campsMaxUse > 1 )
 			{
 				// check collision
 				array<vector> campOrigin
@@ -896,9 +900,13 @@ void function AT_CampSpawnThink( int waveId, bool isBossWave )
 				{
 					vector curCampOrg = campStruct.origin
 					float curCampRad = campStruct.radius
+
+					// Symetric arrays so we can happily index both in same for loop
 					campOrigin.append( curCampOrg )
 					campRadius.append( curCampRad )
-					if ( i == 0 ) // first camp in array
+
+					// First entry, we have no other camps to compare against yet
+					if ( i == 0 )
 						continue
 					
 					for ( int j = 0; j < campOrigin.len(); j++ )
@@ -917,6 +925,7 @@ void function AT_CampSpawnThink( int waveId, bool isBossWave )
 							break
 						}
 					}
+
 					if ( campsCollide )
 						break
 				}
@@ -992,12 +1001,11 @@ void function AT_CampSpawnThink( int waveId, bool isBossWave )
 		{
 			foreach ( AT_SpawnData data in curSpawnData )
 			{
-				switch ( data.aitype )
-				{
-					case "npc_titan":
-						thread AT_BountyTitanEvent( curCampData, spawnId, data )
-						break
-				}
+				if( data.aitype != "npc_titan" )
+					continue
+				
+				thread AT_BountyTitanEvent( curCampData, spawnId, data )
+				break
 			}
 		}
 	}
@@ -1011,7 +1019,10 @@ void function CampProgressThink( int spawnId, int totalNPCsToSpawn )
 
 	// initial wait
 	SetGlobalNetFloat( campProgressName, 1.0 )
+
+	// TODO: random wait, make this a constant ??
 	wait 3.0
+
 	while ( true )
 	{
 		int npcsLeft
@@ -1038,9 +1049,11 @@ void function CampProgressThink( int spawnId, int totalNPCsToSpawn )
 			entity campEnt = GetGlobalNetEnt( campEntVarName )
 			if ( IsValid( campEnt ) )
 				campEnt.Signal( "ATCampClean" ) // destroy the camp ent
+
 			// check if both camps being destroyed
 			if ( !IsValid( GetGlobalNetEnt( "camp1Ent" ) ) && !IsValid( GetGlobalNetEnt( "camp2Ent" ) ) )
 				svGlobal.levelEnt.Signal( "ATAllCampsClean" ) // end the wave
+			
 			return
 		}
 
@@ -1095,6 +1108,7 @@ void function TrackWaveEndForCampInfo( entity tracker, entity mapIconEnt )
 			// camp cleaned, wave or game ended, destroy the camp info
 			if ( IsValid( tracker ) )
 				tracker.Destroy()
+			
 			if ( IsValid( mapIconEnt ) )
 				mapIconEnt.Destroy()
 		}
@@ -1417,6 +1431,7 @@ void function AT_HandleSquadSpawn( array<entity> guys, AT_WaveOrigin campData, i
 {
 	foreach ( entity guy in guys )
 	{
+		// TODO: NPCs still seem to go outside their camp ???
 		guy.EnableNPCFlag( NPC_ALLOW_PATROL | NPC_ALLOW_HAND_SIGNALS | NPC_ALLOW_FLEE )
 
 		// tracking lifetime
