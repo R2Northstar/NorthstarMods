@@ -11,12 +11,13 @@ global function RateSpawnpoints_AT
 
 
 // Bank settings
-const float AT_BANKS_OPEN_DURATION = 45.0
-const int AT_BANK_DEPOSIT_RATE = 10 // Amount deposited per second
-const int AT_BANK_DEPOSIT_RADIUS = 256
+const float AT_BANKS_OPEN_DURATION = 45.0   // Bank open time
+const int   AT_BANK_DEPOSIT_RATE = 10       // Amount deposited per second
+const int   AT_BANK_DEPOSIT_RADIUS = 256    // bank radius for depositing
 const float AT_BANK_FORCE_CLOSE_DELAY = 4.0 // If all bonus money has been deposited close the banks after this constant early
 
-// HACK score events... respawn made things in AT_SetScoreEventOverride() really messed up, have to do some hack here
+// TODO: The reference function no longer exists, check if this still holds true
+// VoyageDB: HACK score events... respawn made things in AT_SetScoreEventOverride() really messed up, have to do some hack here
 const array<string> AT_ENABLE_SCOREEVENTS = 
 [
 	// these are disabled in AT_SetScoreEventOverride(), but related scoreEvents are not implemented into gamemode
@@ -33,17 +34,18 @@ const array<string> AT_DISABLE_SCOREEVENTS =
 
 // Wave settings
 // General
-const int AT_AI_TEAM = TEAM_BOTH // Allow AI to attack and be attacked by both player teams
-const float AT_FIRST_WAVE_START_DELAY = 10.0 // First wave has an extra delay before begining
-const float AT_WAVE_TRANSITION_DELAY = 5.0 // Time between each wave and banks opening/closing
+const int   AT_AI_TEAM = TEAM_BOTH               // Allow AI to attack and be attacked by both player teams
+const float AT_FIRST_WAVE_START_DELAY = 10.0     // First wave has an extra delay before begining
+const float AT_WAVE_TRANSITION_DELAY = 5.0       // Time between each wave and banks opening/closing
 const float AT_WAVE_END_ANNOUNCEMENT_DELAY = 1.0 // Extra wait before announcing wave cleaned
 
 // Squad settings
 const int AT_DROPPOD_SQUADS_ALLOWED_ON_FIELD = 4 // default is 4 droppod squads on field, won't use if AT_USE_TOTAL_ALLOWED_ON_FIELD_CHECK turns on // TODO: verify this
 
 // Titan bounty settings
-const float AT_BOUNTY_TITAN_CHECK_DELAY = 10.0 // wait for bounty titans landing before we start checking their life state
+const float AT_BOUNTY_TITAN_CHECK_DELAY = 10.0    // wait for bounty titans landing before we start checking their life state
 const float AT_BOUNTY_TITAN_HEALTH_MULTIPLIER = 3 // TODO: Verify this
+
 // Titan boss settings, check sh_gamemode_at.nut for more info
 const array<string> AT_BOUNTY_TITANS_AI_SETTINGS =
 [
@@ -1601,9 +1603,6 @@ void function OnNPCTitanFinalDamaged( entity titan, var damageInfo )
 		OnBountyTitanDamaged( titan, damageInfo )
 }
 
-// Tracked entities will require their own "wallet"
-// for titans it should be used for rounding error compenstation
-// for infantry it sould be used to store money if the npc kills a player
 void function OnBountyTitanDamaged( entity titan, var damageInfo )
 {
 	entity attacker = DamageInfo_GetAttacker( damageInfo )
