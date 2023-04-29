@@ -87,7 +87,6 @@ void function SetGameState( int newState )
 {
 	if ( newState == GetGameState() )
 		return
-
 	SetServerVar( "gameStateChangeTime", Time() )
 	SetServerVar( "gameState", newState )
 	svGlobal.levelEnt.Signal( "GameStateChanged" )
@@ -246,32 +245,6 @@ void function GameStateEnter_Playing_Threaded()
 				SetGameState( eGameState.SuddenDeath )
 			else
 				SetWinner( winningTeam )
-		}
-		else
-		{
-			// HACK: This used to be checked in AddTeamScore
-			//       Problem is when banks were open and the score limit was reached in bounty hunt the gamestate would be correctly set using
-			//       SetWinner, but the match would never end. moving this code to here fixed this issue
-			//       Ask Fifty or Spoon if you want more info, but this is pretty much all we know
-			int winningTeam
-			if( IsRoundBased() )
-				winningTeam = GetWinningTeam()
-			else
-				winningTeam = GetWinningTeamWithFFASupport()
-			int scoreLimit
-			if ( IsRoundBased() )
-				scoreLimit = GameMode_GetRoundScoreLimit( GAMETYPE )
-			else
-				scoreLimit = GameMode_GetScoreLimit( GAMETYPE )
-
-			if ( winningTeam < TEAM_UNASSIGNED ) // no valid winner
-				winningTeam = TEAM_UNASSIGNED
-
-			int score = GameRules_GetTeamScore( winningTeam )
-			if ( score >= scoreLimit || GetGameState() == eGameState.SuddenDeath )
-				SetWinner( winningTeam, "#GAMEMODE_SCORE_LIMIT_REACHED", "#GAMEMODE_SCORE_LIMIT_REACHED" )
-			else if ( ( file.switchSidesBased && !file.hasSwitchedSides ) && score >= ( scoreLimit.tofloat() / 2.0 ) )
-				SetGameState( eGameState.SwitchingSides )
 		}
 		
 		WaitFrame()
@@ -846,14 +819,11 @@ void function AddTeamScore( int team, int amount )
 		scoreLimit = GameMode_GetRoundScoreLimit( GAMETYPE )
 	else
 		scoreLimit = GameMode_GetScoreLimit( GAMETYPE )
-	
-	/*
 	int score = GameRules_GetTeamScore( team )
 	if ( score >= scoreLimit || GetGameState() == eGameState.SuddenDeath )
 		SetWinner( team )
 	else if ( ( file.switchSidesBased && !file.hasSwitchedSides ) && score >= ( scoreLimit.tofloat() / 2.0 ) )
 		SetGameState( eGameState.SwitchingSides )
-	*/
 }
 
 void function SetTimeoutWinnerDecisionFunc( int functionref() callback )

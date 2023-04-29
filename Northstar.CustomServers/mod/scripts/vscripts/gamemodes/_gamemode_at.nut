@@ -95,8 +95,6 @@ void function GamemodeAt_Init()
 	// camp
 	RegisterSignal( "ATCampClean" )
 	RegisterSignal( "ATAllCampsClean" )
-	// bank
-	RegisterSignal( "ATBankClosed" )
 
 	// Set-up score callbacks
 	ScoreEvent_SetupEarnMeterValuesForMixedModes()
@@ -1135,8 +1133,6 @@ void function AT_BankActiveThink( entity bank )
 		{
 			if ( IsValid( bank ) )
 			{
-				bank.Signal( "ATBankClosed" )
-
 				// Update use prompt
 				if ( GetGameState() != eGameState.Playing )
 					bank.UnsetUsable()
@@ -1185,7 +1181,9 @@ function OnPlayerUseBank( bank, player )
 		return
 	}
 
-	thread PlayerUploadingBonus_Threaded( bank, player )
+	// Prevent more than one instance of this thread running
+	if ( !file.playerBankUploading[ player ] )
+		thread PlayerUploadingBonus_Threaded( bank, player )
 }
 
 bool function ATSendDepositTipToPlayer( entity player, string message )
@@ -1201,12 +1199,7 @@ bool function ATSendDepositTipToPlayer( entity player, string message )
 
 void function PlayerUploadingBonus_Threaded( entity bank, entity player )
 {
-	// Prevent more than one instance of this thread running
-	if ( file.playerBankUploading[ player ] )
-		return
-
 	bank.EndSignal( "OnDestroy" )
-	bank.EndSignal( "ATBankClosed" )
 	player.EndSignal( "OnDestroy" )
 	player.EndSignal( "OnDeath" )
 
@@ -1266,7 +1259,7 @@ void function PlayerUploadingBonus_Threaded( entity bank, entity player )
 	player.SetPlayerNetBool( "AT_playerUploading", true )
 	
 	// Upload bonus while the player is within range of the bank
-	while ( Distance( player.GetOrigin(), bank.GetOrigin() ) <= AT_BANK_DEPOSIT_RADIUS )
+	while ( Distance( player.GetOrigin(), bank.GetOrigin() ) <= AT_BANK_DEPOSIT_RADIUS && GetGlobalNetBool( "banksOpen" ) )
 	{
 		// Calling this moves the "Uploading..." graphic to the same place it is
 		// in vanilla
