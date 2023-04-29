@@ -126,6 +126,7 @@ void function RateSpawnpoints_AT( int checkclass, array<entity> spawnpoints, int
 }
 
 
+// TODO: Game didnt end once score was reached while banking???
 
 ////////////////////////////////////////
 ///// GAMESTATE CALLBACK FUNCTIONS /////
@@ -579,10 +580,15 @@ void function AT_PlayerBonusLoss( entity player, int bonusLoss )
 // team score meter
 void function AT_AddToPlayerTeamScore( entity player, int amount )
 {
-	// update score difference
-	AddTeamScore( player.GetTeam(), amount )
 	// add to scoreboard
 	player.AddToPlayerGameStat( PGS_ASSAULT_SCORE, amount )
+
+	// Check score so we dont go over max
+	if ( GameRules_GetTeamScore(player.GetTeam()) + amount > GetScoreLimit_FromPlaylist() )
+		amount = GetScoreLimit_FromPlaylist() - GameRules_GetTeamScore(player.GetTeam())
+	
+	// update score difference
+	AddTeamScore( player.GetTeam(), amount )
 }
 
 // bonus points, players earn from killing
