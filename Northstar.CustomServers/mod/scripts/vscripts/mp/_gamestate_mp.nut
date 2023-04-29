@@ -247,8 +247,12 @@ void function GameStateEnter_Playing_Threaded()
 			else
 				SetWinner( winningTeam )
 		}
-		else // scoring check
+		else
 		{
+			// HACK: This used to be checked in AddTeamScore
+			//       Problem is when banks were open and the score limit was reached in bounty hunt the gamestate would be correctly set using
+			//       SetWinner, but the match would never end. moving this code to here fixed this issue
+			//       Ask Fifty or Spoon if you want more info, but this is pretty much all we know
 			int winningTeam
 			if( IsRoundBased() )
 				winningTeam = GetWinningTeam()
