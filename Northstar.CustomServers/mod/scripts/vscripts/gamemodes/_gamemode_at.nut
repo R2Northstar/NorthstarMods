@@ -587,6 +587,8 @@ void function AT_AddToPlayerTeamScore( entity player, int amount )
 	if ( GameRules_GetTeamScore(player.GetTeam()) + amount > GetScoreLimit_FromPlaylist() )
 	{
 		amount = GetScoreLimit_FromPlaylist() - GameRules_GetTeamScore(player.GetTeam())
+		// HACK: game sometimes doesnt end when score limit is reached
+		SetWinner( player.GetTeam() )
 	}
 	
 	// update score difference
