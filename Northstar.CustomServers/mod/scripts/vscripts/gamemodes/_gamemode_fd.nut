@@ -86,7 +86,6 @@ struct {
 	array<entity> playersInDropship
 }file
 
-
 const array<string> DROPSHIP_IDLE_ANIMS_POV = [
 
 	"ptpov_ds_coop_side_intro_gen_idle_B",
@@ -195,15 +194,16 @@ void function GamemodeFD_Init()
 	elitesAllowed = GetConVarBool( "ns_fd_allow_elite_titans" )
 	titanfallblockAllowed = GetConVarBool( "ns_fd_allow_titanfall_block" )
 	Riff_ForceSetSpawnAsTitan( eSpawnAsTitan.Never ) //On vanilla players can never spawn as Titans regardless if theyre ready
+	level.nv.spawnAsTitan = eSpawnAsTitan.Never
 }
 
 void function ScoreEvent_SetupEarnMeterValuesForFrontierDefense()
 {
-	ScoreEvent_SetEarnMeterValues( "FDAirDroneKilled", 0.0, 0.03 )
-	ScoreEvent_SetEarnMeterValues( "FDGruntKilled", 0.0, 0.03 )
-	ScoreEvent_SetEarnMeterValues( "FDSpectreKilled", 0.0, 0.03 )
-	ScoreEvent_SetEarnMeterValues( "FDStalkerKilled", 0.0, 0.03 )
-	ScoreEvent_SetEarnMeterValues( "FDSuperSpectreKilled", 0.0, 0.05 )
+	ScoreEvent_SetEarnMeterValues( "FDAirDroneKilled", 0.0, 0.05 )
+	ScoreEvent_SetEarnMeterValues( "FDGruntKilled", 0.0, 0.05 )
+	ScoreEvent_SetEarnMeterValues( "FDSpectreKilled", 0.0, 0.05 )
+	ScoreEvent_SetEarnMeterValues( "FDStalkerKilled", 0.0, 0.05 )
+	ScoreEvent_SetEarnMeterValues( "FDSuperSpectreKilled", 0.0, 0.1 )
 	ScoreEvent_SetEarnMeterValues( "Execution", 0.0, 0.1 )
 	ScoreEvent_SetEarnMeterValues( "PilotBatteryApplied", 0.0, 0.35 )
 	ScoreEvent_SetEarnMeterValues( "PilotBatteryStolen", 0.0, 0.35 )
@@ -243,8 +243,8 @@ void function FD_BoostPurchaseCallback( entity player, BoostStoreData data )
 
 void function FD_PlayerRespawnCallback( entity player )
 {
-	if( IsHarvesterAlive( fd_harvester.harvester ) )
-		thread FD_PlayerRespawnThreaded( player )	
+	if( IsHarvesterAlive( fd_harvester.harvester ) && GetGameState() == eGameState.Playing )
+		thread FD_PlayerRespawnThreaded( player )
 }
 
 void function FD_PlayerRespawnThreaded( entity player )
@@ -266,7 +266,7 @@ void function FD_PlayerRespawnThreaded( entity player )
 	//Respawning as titan also ignores this because err, makes no sense
 	if ( player.IsTitan() )
 		return
-	if( file.dropshipState == eDropshipState.Returning || GetGameState() != eGameState.Playing || file.playersInShip >=4 || GetGlobalNetInt( "FD_waveState") == WAVE_STATE_BREAK || GetGlobalNetInt( "FD_waveState") == WAVE_STATE_COMPLETE || GetConVarBool( "ns_fd_disable_respawn_dropship" ) )
+	if( file.dropshipState == eDropshipState.Returning || file.playersInShip >=4 || GetGlobalNetInt( "FD_waveState") == WAVE_STATE_BREAK || GetGlobalNetInt( "FD_waveState") == WAVE_STATE_COMPLETE || GetConVarBool( "ns_fd_disable_respawn_dropship" ) )
 	{
 		//Teleport player to a more reliable location if they spawn on ground, some maps picks too far away spawns from the Harvester and Shop (i.e Colony, Homestead, Drydock)
 		if( IsValidPlayer( player ) && !player.IsTitan() )
@@ -279,11 +279,11 @@ void function FD_PlayerRespawnThreaded( entity player )
 
 	player.SetInvulnerable()
 	player.SetNoTarget( true )
+	
 	ScreenFadeFromBlack( player, 1.5, 0.5 )
+	
 	if( file.dropshipState == eDropshipState.Idle )
-	{
 		thread FD_DropshipSpawnDropship()
-	}
 
 	if( IsValidPlayer( player ) && IsValid( file.dropship ) )
 	{
@@ -298,6 +298,7 @@ void function FD_PlayerRespawnThreaded( entity player )
 		thread FirstPersonSequence( idleSequence, player, file.dropship )
 		file.playersInDropship.append( player )
 	}
+	
 	else if( IsValidPlayer( player ) )
 	{
 		player.ClearInvulnerable()
@@ -343,8 +344,9 @@ void function FD_TeamReserveDepositOrWithdrawCallback( entity player, string act
 
 void function GamemodeFD_OnPlayerKilled( entity victim, entity attacker, var damageInfo )
 {
-	if( !IsHarvesterAlive( fd_harvester.harvester ) )
+	if( !IsHarvesterAlive( fd_harvester.harvester ) || GetGameState() != eGameState.Playing )
 		return
+		
 	if( FD_PlayerInDropship( victim ) )
 	{
 		victim.ClearParent()
@@ -387,9 +389,8 @@ void function GamemodeFD_OnPlayerKilled( entity victim, entity attacker, var dam
 void function FD_UsedCoreCallback( entity titan, entity weapon )
 {
 	if( !( titan in file.players ) )
-	{
 		return
-	}
+		
 	file.playerAwardStats[titan]["coresUsed"] += 1
 }
 
@@ -415,8 +416,6 @@ void function GamemodeFD_InitPlayer( entity player )
 			Remote_CallFunction_NonReplay( player, "ServerCallback_FD_NotifyStoreOpen" )
 	}
 
-	if( PlayerEarnMeter_Enabled() ) // first wave is index 0
-		PlayerEarnMeter_AddEarnedAndOwned( player, 1.0, 1.0 )
 	// unfortunate that i cant seem to find a nice callback for them exiting that menu but thisll have to do
 	thread TryDisableTitanSelectionForPlayerAfterDelay( player, TEAM_TITAN_SELECT_DURATION_MIDGAME )
 	thread TrackDeployedArcTrapThisRound( player )
@@ -483,7 +482,11 @@ void function TryDisableTitanSelectionForPlayerAfterDelay( entity player, float 
 
 	wait waitAmount
 	if ( PlayerEarnMeter_Enabled() )
+	{
 		DisableTitanSelectionForPlayer( player )
+		if( GetGlobalNetInt( "FD_waveState") == WAVE_STATE_BREAK ) //On wave break, let joiners have their Titan instantly
+			PlayerEarnMeter_AddEarnedAndOwned( player, 1.0, 1.0 )
+	}
 }
 
 void function SetTurretSettings_threaded( entity player )
@@ -629,7 +632,7 @@ void function OnNpcDeath( entity victim, entity attacker, var damageInfo )
 	if ( money != 0 )
 		AddMoneyToPlayer( attacker , money )
 
-	if( attacker.GetClassName() != "npc_turret_sentry" ) //Turret kills do not chain killstreaks
+	if( !attacker.GetBossPlayer() ) //Turret and Auto-Titan kills do not chain killstreaks
 	{
 		if ( DamageInfo_GetCustomDamageType( damageInfo ) & DF_HEADSHOT )
 			AddPlayerScore( attacker, "NPCHeadshot" )
@@ -673,7 +676,7 @@ void function OnNpcDeath( entity victim, entity attacker, var damageInfo )
 		}
 	}
 	
-	if( attacker.GetClassName() != "npc_turret_sentry" && !attacker.IsTitan() && victim.IsTitan() )
+	if( !attacker.GetBossPlayer() && !attacker.IsTitan() && victim.IsTitan() )
 	{
 		string titanCharacterName = GetTitanCharacterName( victim )
 		
@@ -692,30 +695,21 @@ void function OnNpcDeath( entity victim, entity attacker, var damageInfo )
 		switch( titanCharacterName )
 		{
 			case "ion":
-			case "elite ion":
 				PlayFactionDialogueToPlayer( "kc_pilotkillIon", attacker )
 				return
 			case "tone":
-			case "elite tone":
-			case "mortar titan":
 				PlayFactionDialogueToPlayer( "kc_pilotkillTone", attacker )
 				return
 			case "legion":
-			case "elite legion":
-			case "nuke titan":
 				PlayFactionDialogueToPlayer( "kc_pilotkillLegion", attacker )
 				return
 			case "scorch":
-			case "elite scorch":
 				PlayFactionDialogueToPlayer( "kc_pilotkillScorch", attacker )
 				return
 			case "ronin":
-			case "elite ronin":
-			case "arc titan":
 				PlayFactionDialogueToPlayer( "kc_pilotkillRonin", attacker )
 				return
 			case "northstar":
-			case "elite northstar":
 				PlayFactionDialogueToPlayer( "kc_pilotkillNorthstar", attacker )
 				return
 			default:
@@ -777,7 +771,7 @@ bool function useShieldBoost( entity player, array<string> args )
 		EmitSoundAtPosition( TEAM_UNASSIGNED, fd_harvester.harvester.GetOrigin(), "UI_TitanBattery_Pilot_Give_TitanBattery" )
 		SetGlobalNetTime( "FD_harvesterInvulTime", Time() + 5 )
 		AddPlayerScore( player, "FDShieldHarvester" )
-		MessageToTeam( TEAM_MILITIA,eEventNotifications.FD_PlayerBoostedHarvesterShield, null, player )
+		MessageToTeam( TEAM_MILITIA,eEventNotifications.FD_PlayerBoostedHarvesterShield, player, player )
 		player.SetPlayerNetInt( "numHarvesterShieldBoost", player.GetPlayerNetInt( "numHarvesterShieldBoost" ) - 1 )
 		file.playerAwardStats[player]["harvesterHeals"]++
 		player.AddToPlayerGameStat( PGS_DEFENSE_SCORE, FD_SCORE_SHIELD_HARVESTER )
@@ -820,7 +814,6 @@ void function mainGameLoop()
 		if( file.waveRestart )
 		{
 			showShop = true
-			level.nv.titanAvailability = eTitanAvailability.Default
 			PlayerEarnMeter_SetEnabled( true )
 			foreach( entity player in GetPlayerArray() )
 			{
@@ -1009,10 +1002,12 @@ bool function runWave( int waveIndex, bool shouldDoBuyTime )
 	file.havesterWasDamaged = false
 	file.harvesterShieldDown = false
 	SetEnemyAmountNetVars( waveIndex )
+
 	for( int i = 0; i < 20; i++ )//Number of npc type ids
 	{
 		file.harvesterDamageSource.append( 0.0 )
 	}
+
 	foreach( entity player in GetPlayerArray() )
 	{
 		file.players[player].diedThisRound = false
@@ -1219,9 +1214,12 @@ bool function runWave( int waveIndex, bool shouldDoBuyTime )
 		
 		file.playerAwardStats[highestScore_player]["mvp"]++
 		AddPlayerScore( highestScore_player, "FDWaveMVP" )
+		
 		foreach( entity player in GetPlayerArray() )
+		{
 			if( !file.havesterWasDamaged )
 				AddPlayerScore( player, "FDTeamFlawlessWave" )
+		}
 		
 		wait 1
 		
@@ -1261,9 +1259,12 @@ bool function runWave( int waveIndex, bool shouldDoBuyTime )
 	
 	foreach( entity player in GetPlayerArray() )
 	{
-		AddPlayerScore( player, "FDSupportBonus", null, "", file.players[player].defenseScoreThisRound )
-		player.AddToPlayerGameStat( PGS_DEFENSE_SCORE, file.players[player].defenseScoreThisRound )
-		player.SetPlayerGameStat( PGS_DETONATION_SCORE, player.GetPlayerGameStat( PGS_ASSAULT_SCORE ) + player.GetPlayerGameStat( PGS_DEFENSE_SCORE ) )
+		if( file.players[player].defenseScoreThisRound > 0 )
+		{
+			AddPlayerScore( player, "FDSupportBonus", null, "", file.players[player].defenseScoreThisRound )
+			player.AddToPlayerGameStat( PGS_DEFENSE_SCORE, file.players[player].defenseScoreThisRound )
+			player.SetPlayerGameStat( PGS_DETONATION_SCORE, player.GetPlayerGameStat( PGS_ASSAULT_SCORE ) + player.GetPlayerGameStat( PGS_DEFENSE_SCORE ) )
+		}
 	}
 	
 	wait 1
@@ -1500,6 +1501,7 @@ void function FD_Epilogue_threaded()
 	foreach(entity player in GetPlayerArray() )
 	{
 		player.FreezeControlsOnServer()
+		MuteHalfTime( player )
 		foreach( string ref in GetFDStatRefs() )
 		{
 			if( !( ref in awardOwners ) )
@@ -1584,20 +1586,7 @@ void function FD_Epilogue_threaded()
 		}
 		Remote_CallFunction_NonReplay( player, "ServerCallback_ShowGameStats", Time() + 19 )
 	}
-	/* //debugging prints
-	foreach( entity player, table< string, float > data in file.playerAwardStats)
-	{
-		printt("Stats for", player)
-		foreach( string ref, float val in data )
-		{
-			printt("    ",ref,val)
-		}
-	}
-	foreach( string ref, entity player in awardOwners )
-	{
-		printt( player, ref, awardValues[ref] )
-	}
-	*/
+	
 	wait 20
 	SetGameState(eGameState.Postmatch)
 }
@@ -1606,11 +1595,12 @@ void function IncrementPlayerstat_TurretRevives( entity turret, entity player, e
 {
 	file.playerAwardStats[player]["turretsRepaired"]++
 	EmitSoundOnEntityOnlyToPlayer( player, player, "UI_InGame_FD_RepairTurret" )
-	player.AddToPlayerGameStat( PGS_DEFENSE_SCORE, FD_SCORE_REPAIR_TURRET )
 	AddPlayerScore( player, "FDRepairTurret" )
+	player.AddToPlayerGameStat( PGS_DEFENSE_SCORE, FD_SCORE_REPAIR_TURRET )
+	player.SetPlayerGameStat( PGS_DETONATION_SCORE, player.GetPlayerGameStat( PGS_ASSAULT_SCORE ) + player.GetPlayerGameStat( PGS_DEFENSE_SCORE ) )
 	
 	if( player != owner )
-		PlayFactionDialogueToPlayer( "fd_turretOnline", owner )
+		MessageToTeam( TEAM_MILITIA, eEventNotifications.FD_TurretRepair, null, player, owner.GetEncodedEHandle() )
 }
 
 void function SpawnCallback_SafeTitanSpawnTime( entity ent )
@@ -1687,6 +1677,7 @@ void function OnHarvesterDamaged( entity harvester, var damageInfo )
 		break
 		
 		case eDamageSourceId.mp_titanweapon_rocketeer_rocketstream: //Mortar titans also do pose a threat if left unchecked for too long
+		case eDamageSourceId.mp_weapon_rocket_launcher: //Idk apparently the Archer that mortar spectres uses has no special damage type
     	damageAmount *= 4
 		break
 		
@@ -1697,7 +1688,7 @@ void function OnHarvesterDamaged( entity harvester, var damageInfo )
     	damageAmount *= 0.25
 		break
 	}
-	
+
 	float shieldPercent = ( ( harvester.GetShieldHealth().tofloat() / harvester.GetShieldHealthMax() ) * 100 )
 	if ( shieldPercent < 100 && !file.harvesterShieldDown )
 	{
@@ -1744,7 +1735,7 @@ void function OnHarvesterDamaged( entity harvester, var damageInfo )
 			file.harvesterShieldDown = true // prevent shield dialogues from repeating
 		}
 		
-		file.harvesterDamageTaken = file.harvesterDamageTaken + damageAmount // track damage for wave recaps
+		file.harvesterDamageTaken += damageAmount // track damage for wave recaps
 		float newHealth = harvester.GetHealth() - damageAmount
 		float oldhealthpercent = ( ( harvester.GetHealth().tofloat() / harvester.GetMaxHealth() ) * 100 )
 		float healthpercent = ( ( newHealth / harvester.GetMaxHealth() ) * 100 )
@@ -1820,6 +1811,7 @@ void function OnHarvesterDamaged( entity harvester, var damageInfo )
 		break
 		
 		case eDamageSourceId.mp_titanweapon_rocketeer_rocketstream:
+		case eDamageSourceId.mp_weapon_rocket_launcher:
     	DamageInfo_SetDamage( damageInfo, DamageInfo_GetDamage( damageInfo ) * 4 )
 		break
 	}
@@ -2580,9 +2572,9 @@ void function FD_DropshipSpawnDropship()
 	}
 	if ( file.playersInDropship.len() > 0 ) //Only one player in dropship is needed to warn about them respawning
 		PlayFactionDialogueToTeam( "fd_pilotRespawn" , TEAM_MILITIA )
-	file.playersInDropship.clear()
 
 	wait 8
+	file.playersInDropship.clear()
 	file.dropshipState = eDropshipState.Idle
 }
 

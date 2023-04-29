@@ -92,6 +92,7 @@ global enum FD_IncomingWarnings
 	EnemyTitansIncoming,
 	MortarTitanIntro,
 	NukeTitanIntro,
+	NukeTitanIntro,
 	ArcTitanIntro,
 	TitanfallBlocked,
 	PreNukeTitan,
@@ -911,26 +912,24 @@ void function spawnSmoke( SmokeEvent smokeEvent, SpawnEvent spawnEvent, FlowCont
 	
 	EmitSoundAtPosition( TEAM_UNASSIGNED, smokeEvent.position, "SmokeWall_Launch" )
 	
-	entity smokenade = CreateEntity( "prop_physics" )
-	smokenade.SetValueForModelKey( $"models/dev/empty_physics.mdl" )
-	smokenade.kv.SpawnAsPhysicsMover = 1
+	entity smokenade = CreateEntity( "prop_script" )
+	entity mover = CreateOwnedScriptMover( smokenade )
+	smokenade.SetValueForModelKey( $"models/weapons/grenades/smoke_grenade_projectile.mdl" )
 	smokenade.kv.spawnflags = 0
 	smokenade.kv.solid = 0
 	smokenade.kv.fadedist = 0
-	smokenade.kv.physdamagescale = 0.1
-	smokenade.kv.inertiaScale = 1.0
 	smokenade.kv.renderamt = 255
 	smokenade.kv.rendercolor = "255 255 255"
-	smokenade.SetOrigin( smokeEvent.position + < 0, 0, 2560 > )
-	SetTeam( smokenade, TEAM_BOTH )
+	smokenade.SetParent( mover, "", false, 0 )
+	mover.SetOrigin( smokeEvent.position + < 0, 0, 8192 > )
 	DispatchSpawn( smokenade )
-	smokenade.SetOrigin( smokeEvent.position + < 0, 0, 2560 > )
 	PlayLoopFXOnEntity( $"Rocket_Smoke_SMALL_Titan_2", smokenade )
 	PlayLoopFXOnEntity( $"weapon_kraber_projectile", smokenade )
-	smokenade.SetVelocity( < 0, 0, -3250 > )
+	mover.NonPhysicsMoveTo( smokeEvent.position, 0.65, 0, 0 )
 	wait 0.65
 	Smokescreen(smokescreen)
 	smokenade.Destroy()
+	mover.Destroy()
 }
 
 void function spawnDrones( SmokeEvent smokeEvent, SpawnEvent spawnEvent, FlowControlEvent flowControlEvent, SoundEvent soundEvent )
