@@ -1450,7 +1450,7 @@ void function AT_ForceAssaultAroundCamp( entity guy, AT_WaveOrigin campData )
 		guy.AssaultSetFightRadius( 0 ) 
 		guy.AssaultSetArrivalTolerance( int(goalRadius) )
 
-		WaitSignal( guy, "OnFinishedAssault", "OnFailedToPath" )
+		wait RandomFloatRange( 1, 5 )
 	}
 }
 
