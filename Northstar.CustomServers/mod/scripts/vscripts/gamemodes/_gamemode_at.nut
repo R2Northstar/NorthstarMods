@@ -714,7 +714,7 @@ void function AT_GameLoop_Threaded()
 	wait AT_FIRST_WAVE_START_DELAY - AT_WAVE_TRANSITION_DELAY
 	
 	int lastWaveId = -1
-	for ( int waveCount = 1; ; waveCount++ )
+	for ( int waveCount = 5; ; waveCount++ )
 	{
 		wait AT_WAVE_TRANSITION_DELAY
 	
@@ -871,75 +871,41 @@ void function AT_CampSpawnThink( int waveId, bool isBossWave )
 			allCampsToUse.append( campStruct )
 	}
 
-	// TODO: make this better
-	// HACK: don't know why respawn did multiple phase3 camps on explanet and rise, have to do a check
-	int campsMaxUse = waveId == 0 ? 1 : 2 // first wave always use 1 camp
-	if ( allCampsToUse.len() > campsMaxUse ) // overloaded camps!
+	// HACK
+	// There's too many phase3 camps on exoplanet and rise, make sure we always have the correct count
+	int maxCampsForWave = waveId == 0 ? 1 : 2
+	while( allCampsToUse.len() > maxCampsForWave )
 	{
-		while ( true )
+		// Get the required number of camps
+		array<AT_WaveOrigin> tempCamps
+		for( int i = 0; i < maxCampsForWave; i++ )
+			tempCamps.append( allCampsToUse[RandomInt( allCampsToUse.len() )] )
+		
+
+		// Check if they're intersecting, if they are, try again
+		bool intersecting = false
+		for( int i = 0; i < tempCamps.len(); i++ )
 		{
-			// Randomly pick the correct number of camps for this wave
-			array<AT_WaveOrigin> pickedCamps
-			array<AT_WaveOrigin> tempCampsArray = clone allCampsToUse
-			for ( int i = 0; i < campsMaxUse; i++ )
+			AT_WaveOrigin campA = tempCamps[i]
+			for( int j = 0; j < tempCamps.len(); j++ )
 			{
-				AT_WaveOrigin randomCamp = tempCampsArray[ RandomInt( tempCampsArray.len() ) ]
-				pickedCamps.append( randomCamp )
-				tempCampsArray.removebyvalue( randomCamp )
-			}
-			tempCampsArray = pickedCamps
-
-			// Check if the camps are colliding
-			bool campsCollide = false
-			if ( campsMaxUse > 1 )
-			{
-				// check collision
-				array<vector> campOrigin
-				array<float> campRadius
-				foreach ( int i, AT_WaveOrigin campStruct in tempCampsArray )
-				{
-					vector curCampOrg = campStruct.origin
-					float curCampRad = campStruct.radius
-
-					// Symetric arrays so we can happily index both in same for loop
-					campOrigin.append( curCampOrg )
-					campRadius.append( curCampRad )
-
-					// First entry, we have no other camps to compare against yet
-					if ( i == 0 )
-						continue
-					
-					for ( int j = 0; j < campOrigin.len(); j++ )
-					{
-						vector otherCampOrg = campOrigin[ j ]
-						float otherCampRad = campRadius[ j ]
-						if ( otherCampOrg == curCampOrg && otherCampRad == curCampRad ) // same camp
-							continue
-						float campDist = Distance( curCampOrg, otherCampOrg )
-						float idealDist = curCampRad + otherCampRad
-						//print( "campDist:" + string( campDist ) )
-						//print( "idealDist: " + string( idealDist ) )
-						if ( campDist < idealDist ) // do collide with each other
-						{
-							campsCollide = true
-							break
-						}
-					}
-
-					if ( campsCollide )
-						break
-				}
-			}
-
-			//print( "campsCollide: " + string( campsCollide ) )
-			if ( !campsCollide )
-			{
-				allCampsToUse = tempCampsArray
-				break // reached here, we break the loop
+				// Don't compare the same two camps
+				if( j == i )
+					continue
+				
+				AT_WaveOrigin campB = tempCamps[j]
+				
+				if( Distance( campA.origin, campB.origin ) < campA.radius + campB.radius )
+					intersecting = true
 			}
 		}
+
+		if( !intersecting )
+			allCampsToUse = tempCamps
+		
+		// If we ever get really unlucky just wait a frame
+		WaitFrame()
 	}
-	// HACK end
 
 	foreach ( int spawnId, AT_WaveOrigin curCampData in allCampsToUse )
 	{
