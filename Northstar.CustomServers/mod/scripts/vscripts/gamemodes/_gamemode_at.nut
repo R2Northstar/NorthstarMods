@@ -587,8 +587,6 @@ void function AT_AddToPlayerTeamScore( entity player, int amount )
 	if ( GameRules_GetTeamScore(player.GetTeam()) + amount > GetScoreLimit_FromPlaylist() )
 	{
 		amount = GetScoreLimit_FromPlaylist() - GameRules_GetTeamScore(player.GetTeam())
-		// HACK: game sometimes doesnt end when score limit is reached
-		SetWinner( player.GetTeam() )
 	}
 	
 	// update score difference
@@ -709,7 +707,7 @@ void function AT_GameLoop_Threaded()
 	
 	// game end func
 	// TODO: Cant seem to be able to get this crash ???
-	/*OnThreadEnd
+	OnThreadEnd
 	( 
 		function()
 		{
@@ -720,7 +718,7 @@ void function AT_GameLoop_Threaded()
 				SetGlobalNetBool( "banksOpen", false )
 			}
 		}
-	)*/
+	)
 	
 	// Initial wait before first wave
 	wait AT_FIRST_WAVE_START_DELAY - AT_WAVE_TRANSITION_DELAY
