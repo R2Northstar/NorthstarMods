@@ -1197,6 +1197,12 @@ bool function ATSendDepositTipToPlayer( entity player, string message )
 	return true
 }
 
+struct AT_playerUploadStruct
+{
+	bool uploadSuccess = false
+	int depositedPoints = 0
+}
+
 void function PlayerUploadingBonus_Threaded( entity bank, entity player )
 {
 	bank.EndSignal( "OnDestroy" )
@@ -1205,13 +1211,15 @@ void function PlayerUploadingBonus_Threaded( entity bank, entity player )
 
 	file.playerBankUploading[ player ] = true
 
-	bool uploadSuccess = false
-	int depositedPoints = 0
+	// this literally only exists because structs are passed by ref,
+	// and primitives like ints and bools are passed by val
+	// which meant that the OnThreadEnd was just getting 0 and false
+	AT_playerUploadStruct uploadInfo
 
 	// Cleanup and call finish deposit func
 	OnThreadEnd
 	(
-		function(): ( player, uploadSuccess, depositedPoints )
+		function(): ( player, uploadInfo )
 		{
 			if ( IsValid( player ) )
 			{
@@ -1229,16 +1237,30 @@ void function PlayerUploadingBonus_Threaded( entity bank, entity player )
 				Remote_CallFunction_NonReplay( 
 					player, 
 					"ServerCallback_AT_FinishDeposit",
-					depositedPoints // deposit
+					uploadInfo.depositedPoints // deposit
 				)
 
 				player.SetPlayerNetBool( "AT_playerUploading", false )
 
-				if ( uploadSuccess ) // Player deposited all remaining bonus
+				if ( uploadInfo.uploadSuccess ) // Player deposited all remaining bonus
 				{
 					// Emit uploading successful sound
 					EmitSoundOnEntityOnlyToPlayer( player, player, "HUD_MP_BountyHunt_BankBonusPts_Deposit_End_Successful_1P" )
 					EmitSoundOnEntityExceptToPlayer( player, player, "HUD_MP_BountyHunt_BankBonusPts_Deposit_End_Successful_3P" )
+
+					// player is MVP
+					int ourScore = player.GetPlayerGameStat( PGS_ASSAULT_SCORE )
+					bool isMVP = true
+					foreach(teamPlayer in GetPlayerArrayOfTeam(player.GetTeam()))
+					{
+						if (ourScore < teamPlayer.GetPlayerGameStat( PGS_ASSAULT_SCORE ))
+						{
+							isMVP = false
+							break
+						}
+					}
+					if (isMVP)
+						PlayFactionDialogueToPlayer( "bh_mvp", player )
 				}
 				else // Player was killed or left the bank radius
 				{
@@ -1266,19 +1288,18 @@ void function PlayerUploadingBonus_Threaded( entity bank, entity player )
 		Remote_CallFunction_NonReplay( player, "ServerCallback_AT_ShowRespawnBonusLoss" )
 
 		int bonusToUpload = int( min( AT_BANK_DEPOSIT_RATE, AT_GetPlayerBonusPoints( player ) ) )
-
 		// No more bonus to upload, return
 		if ( bonusToUpload == 0 )
 		{
-			uploadSuccess = true
-			return
+			uploadInfo.uploadSuccess = true
+			break
 		}
 
 		// Remove bonus points and add them to total poins
 		AT_AddPlayerBonusPoints( player, -bonusToUpload )
 		AT_AddPlayerTotalPoints( player, bonusToUpload )
 
-		depositedPoints += bonusToUpload
+		uploadInfo.depositedPoints += bonusToUpload
 		WaitFrame()
 	}
 }
