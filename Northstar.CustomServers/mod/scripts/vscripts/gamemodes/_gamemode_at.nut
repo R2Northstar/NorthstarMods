@@ -1435,7 +1435,10 @@ void function AT_ForceAssaultAroundCamp( entity guy, AT_WaveOrigin campData )
 	guy.EndSignal( "OnDeath" )
 
 	// goal check
-	vector goalPos = campData.origin
+	vector ornull goalPos = NavMesh_ClampPointForAI(campData.origin, guy)
+	goalPos = goalPos == null ? campData.origin : goalPos
+	expect vector(goalPos)
+
 	float goalRadius = campData.radius / 4
 	float guyGoalRadius = guy.GetMinGoalRadius()
 	if ( guyGoalRadius > goalRadius ) // this npc cannot use forced goal radius?
@@ -1448,7 +1451,7 @@ void function AT_ForceAssaultAroundCamp( entity guy, AT_WaveOrigin campData )
 		guy.AssaultSetFightRadius( 0 ) 
 		guy.AssaultSetArrivalTolerance( int(goalRadius) )
 
-		wait RandomFloatRange( 1, 5 ) // make randomness
+		WaitSignal( guy, "OnFinishedAssault", "OnFailedToPath" )
 	}
 }
 
