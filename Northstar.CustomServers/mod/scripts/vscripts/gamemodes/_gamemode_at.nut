@@ -1415,6 +1415,12 @@ void function AT_DroppodSquadEvent_Single( AT_WaveOrigin campData, int spawnId, 
 	// get ent and create a script managed array for current event
 	string ent = data.aitype
 	int eventManager = CreateScriptManagedEntArray()
+
+	if( !(spawnId in file.campScriptEntArrays) )
+		file.campScriptEntArrays[spawnId] <- []
+	
+	file.campScriptEntArrays[spawnId].append(eventManager)
+
 	int totalAllowedOnField = data.totalAllowedOnField // mostly 12 for grunts and spectres, too much!
 	// start spawner
 	while ( true )
