@@ -124,7 +124,6 @@ void function RateSpawnpoints_AT( int checkclass, array<entity> spawnpoints, int
 }
 
 
-// TODO: Game didnt end once score was reached while banking???
 
 ////////////////////////////////////////
 ///// GAMESTATE CALLBACK FUNCTIONS /////
@@ -447,7 +446,15 @@ void function AT_PlayerOrNPCKilledScoreEvent( entity victim, entity attacker, va
 
 	// pet titan check
 	if ( victim.IsTitan() && IsValid( GetPetTitanOwner( victim ) ) )
+	{
+		if( GetPetTitanOwner( victim ) == attacker ) // Player ejected
+			return
+		
+		if( GetPetTitanOwner( victim ).IsPlayer() ) // Killed player npc titan
+			return
+		
 		scoreVal = ATTRITION_SCORE_TITAN_MIN
+	}
 
 	// killed npc
 	if ( victim.IsNPC() )
@@ -1451,7 +1458,7 @@ void function AT_ForceAssaultAroundCamp( entity guy, AT_WaveOrigin campData )
 		guy.AssaultSetFightRadius( 0 ) 
 		guy.AssaultSetArrivalTolerance( int(goalRadius) )
 
-		WaitSignal( guy, "OnFinishedAssault", "OnFailedToPath" )
+		wait RandomFloatRange( 1, 5 )
 	}
 }
 
