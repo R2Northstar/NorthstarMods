@@ -87,7 +87,7 @@ void function SetGameState( int newState )
 {
 	if ( newState == GetGameState() )
 		return
-	
+
 	SetServerVar( "gameStateChangeTime", Time() )
 	SetServerVar( "gameState", newState )
 	svGlobal.levelEnt.Signal( "GameStateChanged" )
@@ -820,7 +820,7 @@ void function AddTeamScore( int team, int amount )
 		scoreLimit = GameMode_GetRoundScoreLimit( GAMETYPE )
 	else
 		scoreLimit = GameMode_GetScoreLimit( GAMETYPE )
-	
+
 	int score = GameRules_GetTeamScore( team )
 	if ( score >= scoreLimit || GetGameState() == eGameState.SuddenDeath )
 		SetWinner( team )
