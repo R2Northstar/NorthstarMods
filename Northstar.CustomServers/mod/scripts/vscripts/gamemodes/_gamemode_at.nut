@@ -738,7 +738,7 @@ void function AT_GameLoop_Threaded()
 	wait AT_FIRST_WAVE_START_DELAY - AT_WAVE_TRANSITION_DELAY
 	
 	int lastWaveId = -1
-	for ( int waveCount = 1; ; waveCount++ )
+	for ( int waveCount = 5; ; waveCount++ )
 	{
 		wait AT_WAVE_TRANSITION_DELAY
 	
@@ -1509,6 +1509,11 @@ void function AT_ReaperEvent( AT_WaveOrigin campData, int spawnId, AT_SpawnData 
 
 	// create a script managed array for current event
 	int eventManager = CreateScriptManagedEntArray()
+
+	if( !(spawnId in file.campScriptEntArrays) )
+		file.campScriptEntArrays[spawnId] <- []
+	
+	file.campScriptEntArrays[spawnId].append(eventManager)
 	
 	int totalAllowedOnField = 1 // 1 allowed at the same time for heavy armor units
 	if ( AT_USE_TOTAL_ALLOWED_ON_FIELD_CHECK )
