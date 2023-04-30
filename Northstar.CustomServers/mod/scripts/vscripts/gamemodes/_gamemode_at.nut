@@ -1181,6 +1181,11 @@ function OnPlayerUseBank( bank, player )
 	expect entity( bank )
 	expect entity( player )
 
+	// bank.SetUsableByGroup( "pilot" ) didn't seem to work so we just
+	// exit here if player is in a titan
+	if( player.IsTitan() )
+		return
+
 	// Player has no bonus, try to send a tip using SendHUDMessage
 	if ( AT_GetPlayerBonusPoints( player ) == 0 )
 	{
