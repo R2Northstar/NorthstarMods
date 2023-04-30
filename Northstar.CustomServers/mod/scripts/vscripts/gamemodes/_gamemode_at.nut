@@ -450,6 +450,9 @@ void function AT_PlayerOrNPCKilledScoreEvent( entity victim, entity attacker, va
 		if( GetPetTitanOwner( victim ) == attacker ) // Player ejected
 			return
 		
+		if( GetPetTitanOwner( victim ).IsPlayer() ) // Killed player npc titan
+			return
+		
 		scoreVal = ATTRITION_SCORE_TITAN_MIN
 	}
 
