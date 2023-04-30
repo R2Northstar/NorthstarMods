@@ -738,7 +738,7 @@ void function AT_GameLoop_Threaded()
 	wait AT_FIRST_WAVE_START_DELAY - AT_WAVE_TRANSITION_DELAY
 	
 	int lastWaveId = -1
-	for ( int waveCount = 5; ; waveCount++ )
+	for ( int waveCount = 1; ; waveCount++ )
 	{
 		wait AT_WAVE_TRANSITION_DELAY
 	
