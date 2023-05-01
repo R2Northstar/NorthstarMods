@@ -389,7 +389,7 @@ void function OnEntitiesDidLoad()
 
 
 /////////////////////////////
-///// SCORING FUNCITONS /////
+///// SCORING FUNCTIONS /////
 /////////////////////////////
 
 // TODO: Don't reward in postmatch
@@ -706,13 +706,13 @@ void function AT_AddPlayerBonusPointsForEntityKilled( entity player, int amount,
 }
 
 /////////////////////////////////
-///// SCORING FUNCITONS END /////
+///// SCORING FUNCTIONS END /////
 /////////////////////////////////
 
 
 
 //////////////////////////////
-///// GAMELOOP FUNCITONS /////
+///// GAMELOOP FUNCTIONS /////
 //////////////////////////////
 
 void function AT_GameLoop_Threaded()
@@ -869,13 +869,13 @@ bool function ATAnyPlayerHasBonus()
 }
 
 //////////////////////////////////
-///// GAMELOOP FUNCITONS END /////
+///// GAMELOOP FUNCTIONS END /////
 //////////////////////////////////
 
 
 
 //////////////////////////
-///// CAMP FUNCITONS /////
+///// CAMP FUNCTIONS /////
 //////////////////////////
 
 void function AT_CampSpawnThink( int waveId, bool isBossWave )
@@ -943,11 +943,9 @@ void function AT_CampSpawnThink( int waveId, bool isBossWave )
 			// add to network variables
 			string npcNetVar = GetNPCNetVarName( spawnData.aitype, spawnId )
 			SetGlobalNetInt( npcNetVar, spawnData.totalToSpawn )
-			//print( "Setting " + npcNetVar + " to " + string( GetGlobalNetInt( npcNetVar ) ) )
 
 			totalNPCsToSpawn += spawnData.totalToSpawn
 		}
-		//print( "totalNPCsToSpawn: " + string( totalNPCsToSpawn ) )
 
 		if ( !isBossWave ) 
 		{
@@ -1026,10 +1024,8 @@ void function CampProgressThink( int spawnId, int totalNPCsToSpawn )
 			if ( netVarValue >= 0 ) // uninitialized network var starts from -1, avoid checking them
 				npcsLeft += netVarValue
 		}
-		//print( "npcsLeft: " + string( npcsLeft ) )
 
 		float campLeft = float( npcsLeft ) / float( totalNPCsToSpawn )
-		//print( "campLeft: " + string( campLeft ) )
 		SetGlobalNetFloat( campProgressName, campLeft )
 
 		if( npcsLeft <= AT_CAMP_BORED_NPCS_LEFT_TO_START_CLEANUP && cleanUpTime < 0.0 )
@@ -1054,7 +1050,6 @@ void function CampProgressThink( int spawnId, int totalNPCsToSpawn )
 
 		if ( campLeft <= 0.0 ) // camp wiped!
 		{
-			//print( "Camp " + campLetter + " has been wiped!" )
 			PlayFactionDialogueToTeam( "bh_cleared" + campLetter, TEAM_IMC )
 			PlayFactionDialogueToTeam( "bh_cleared" + campLetter, TEAM_MILITIA )
 
@@ -1150,13 +1145,13 @@ int function GetCampMinimapState( int id )
 }
 
 //////////////////////////////
-///// CAMP FUNCITONS END /////
+///// CAMP FUNCTIONS END /////
 //////////////////////////////
 
 
 
 //////////////////////////
-///// BANK FUNCITONS /////
+///// BANK FUNCTIONS /////
 //////////////////////////
 
 void function AT_BankActiveThink( entity bank )
@@ -1348,13 +1343,13 @@ void function PlayerUploadingBonus_Threaded( entity bank, entity player )
 }
 
 //////////////////////////////
-///// BANK FUNCITONS END /////
+///// BANK FUNCTIONS END /////
 //////////////////////////////
 
 
 
 /////////////////////////
-///// NPC FUNCITONS /////
+///// NPC FUNCTIONS /////
 /////////////////////////
 
 int function GetScriptManagedNPCArrayLength_Alive( int scriptManagerId )
@@ -1398,7 +1393,6 @@ void function AT_DroppodSquadEvent( AT_WaveOrigin campData, int spawnId, array<A
 			return
 
 		int npcOnFieldCount = GetScriptManagedNPCArrayLength_Alive( eventManager )
-		//print( "npcOnFieldCount: " + string( npcOnFieldCount ) )
 		while ( npcOnFieldCount >= totalAllowedOnField - SQUAD_SIZE ) // wait until we have lost more than 1 squad
 		{
 			WaitFrame()
@@ -1431,7 +1425,6 @@ void function AT_DroppodSquadEvent_Single( AT_WaveOrigin campData, int spawnId, 
 			return // stop any spawning functions
 
 		int npcOnFieldCount = GetScriptManagedNPCArrayLength_Alive( eventManager )
-		//print( "npcOnFieldCount: " + string( npcOnFieldCount ) )
 		while ( npcOnFieldCount >= totalAllowedOnField - SQUAD_SIZE ) // wait until we have less npcs than allowed count
 		{
 			WaitFrame()
@@ -1533,7 +1526,6 @@ void function AT_ReaperEvent( AT_WaveOrigin campData, int spawnId, AT_SpawnData 
 			return // stop any spawning functions
 
 		int npcOnFieldCount = GetScriptManagedNPCArrayLength_Alive( eventManager )
-		//print( "npcOnFieldCount: " + string( npcOnFieldCount ) )
 		while ( npcOnFieldCount >= totalAllowedOnField ) // wait until we have less npcs than allowed count
 		{
 			WaitFrame()
@@ -1596,7 +1588,6 @@ void function AT_BountyTitanEvent( AT_WaveOrigin campData, int spawnId, AT_Spawn
 			return // stop any spawning functions
 
 		int npcOnFieldCount = GetScriptManagedNPCArrayLength_Alive( eventManager )
-		//print( "npcOnFieldCount: " + string( npcOnFieldCount ) )
 		while ( npcOnFieldCount >= totalAllowedOnField ) // wait until we have less npcs than allowed count
 		{
 			WaitFrame()
@@ -1723,14 +1714,10 @@ void function OnBountyTitanDamaged( entity titan, var damageInfo )
 	int damageSegment = file.playerSavedBountyDamage[ attacker ][ titan ] / healthSegment
 	int savedDamageLeft = file.playerSavedBountyDamage[ attacker ][ titan ] % healthSegment
 	file.playerSavedBountyDamage[ attacker ][ titan ] = savedDamageLeft
-	//print( "damageSegment: " + string( damageSegment ) )
-	//print( "playerSavedBountyDamage: " + string( file.playerSavedBountyDamage[ attacker ][ titan ] ) )
 
 	float damageFrac = float( damageSegment ) / rewardSegment
 	int rewardLeft = file.bountyTitanRewards[ titan ]
 	int reward = int( ATTRITION_SCORE_BOSS_DAMAGE * damageFrac )
-	//print( "reward: " + string( reward ) )
-	//printt ( titan.GetMaxHealth(), DamageInfo_GetDamage( damageInfo ) )
 	if ( reward >= rewardLeft ) // overloaded shot?
 		reward = rewardLeft
 	file.bountyTitanRewards[ titan ] -= reward
@@ -1813,5 +1800,5 @@ string function GetNPCNetVarName( string className, int spawnId )
 }
 
 /////////////////////////////
-///// NPC FUNCITONS END /////
+///// NPC FUNCTIONS END /////
 /////////////////////////////
