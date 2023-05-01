@@ -19,7 +19,6 @@ global enum eModeMenuModeCategory
 // List of blocked modes due to them being unfinished
 const array<string> blockedModes =
 [
-	"at",
 	"fd_easy",
 	"fd_normal",
 	"fd_hard",
