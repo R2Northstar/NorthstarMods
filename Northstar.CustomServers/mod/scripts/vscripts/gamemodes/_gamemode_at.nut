@@ -594,6 +594,10 @@ void function AT_PlayerBonusLoss( entity player, int bonusLoss )
 // team score meter
 void function AT_AddToPlayerTeamScore( entity player, int amount )
 {
+	// do not award any score after the match is ended
+	if ( GetGameState() > eGameState.Playing )
+		return
+
 	// add to scoreboard
 	player.AddToPlayerGameStat( PGS_ASSAULT_SCORE, amount )
 
@@ -610,6 +614,10 @@ void function AT_AddToPlayerTeamScore( entity player, int amount )
 // bonus points, players earn from killing
 void function AT_AddPlayerBonusPoints( entity player, int amount )
 {
+	// do not award any score after the match is ended
+	if ( GetGameState() > eGameState.Playing )
+		return
+
 	// add to scoreboard
 	player.AddToPlayerGameStat( PGS_SCORE, amount )
 	AT_SetPlayerBonusPoints( player, player.GetPlayerNetInt( "AT_bonusPoints" ) + ( player.GetPlayerNetInt( "AT_bonusPoints256" ) * 256 ) + amount )
