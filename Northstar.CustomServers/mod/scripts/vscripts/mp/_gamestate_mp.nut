@@ -250,6 +250,7 @@ void function GameStateEnter_Playing_Threaded()
 		else // scoring check
 		{
 			int winningTeam = GetWinningTeamWithFFASupport()
+			int scoreLimit
 			if ( IsRoundBased() )
 				scoreLimit = GameMode_GetRoundScoreLimit( GAMETYPE )
 			else
