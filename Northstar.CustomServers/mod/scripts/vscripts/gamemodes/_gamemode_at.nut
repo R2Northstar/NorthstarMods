@@ -389,7 +389,7 @@ void function OnEntitiesDidLoad()
 
 
 /////////////////////////////
-///// SCORING FUNCITONS /////
+///// SCORING FUNCTIONS /////
 /////////////////////////////
 
 // TODO: Don't reward in postmatch
@@ -706,13 +706,13 @@ void function AT_AddPlayerBonusPointsForEntityKilled( entity player, int amount,
 }
 
 /////////////////////////////////
-///// SCORING FUNCITONS END /////
+///// SCORING FUNCTIONS END /////
 /////////////////////////////////
 
 
 
 //////////////////////////////
-///// GAMELOOP FUNCITONS /////
+///// GAMELOOP FUNCTIONS /////
 //////////////////////////////
 
 void function AT_GameLoop_Threaded()
@@ -869,13 +869,13 @@ bool function ATAnyPlayerHasBonus()
 }
 
 //////////////////////////////////
-///// GAMELOOP FUNCITONS END /////
+///// GAMELOOP FUNCTIONS END /////
 //////////////////////////////////
 
 
 
 //////////////////////////
-///// CAMP FUNCITONS /////
+///// CAMP FUNCTIONS /////
 //////////////////////////
 
 void function AT_CampSpawnThink( int waveId, bool isBossWave )
@@ -1150,13 +1150,13 @@ int function GetCampMinimapState( int id )
 }
 
 //////////////////////////////
-///// CAMP FUNCITONS END /////
+///// CAMP FUNCTIONS END /////
 //////////////////////////////
 
 
 
 //////////////////////////
-///// BANK FUNCITONS /////
+///// BANK FUNCTIONS /////
 //////////////////////////
 
 void function AT_BankActiveThink( entity bank )
@@ -1348,13 +1348,13 @@ void function PlayerUploadingBonus_Threaded( entity bank, entity player )
 }
 
 //////////////////////////////
-///// BANK FUNCITONS END /////
+///// BANK FUNCTIONS END /////
 //////////////////////////////
 
 
 
 /////////////////////////
-///// NPC FUNCITONS /////
+///// NPC FUNCTIONS /////
 /////////////////////////
 
 int function GetScriptManagedNPCArrayLength_Alive( int scriptManagerId )
@@ -1813,5 +1813,5 @@ string function GetNPCNetVarName( string className, int spawnId )
 }
 
 /////////////////////////////
-///// NPC FUNCITONS END /////
+///// NPC FUNCTIONS END /////
 /////////////////////////////
