@@ -86,7 +86,6 @@ bool function Bleedout_StartPlayerBleedout( entity player, entity attacker, var 
 		if( isLastPlayer )
 		{
 			// player will just die, done in sh_bleedout_damage.gnut
-			//player.Die( DamageInfo_GetAttacker( damageInfo ), DamageInfo_GetAttacker( damageInfo ), { damageSourceId = DamageInfo_GetDamageSourceIdentifier( damageInfo ) } )
 			return false
 		}
 	}
@@ -103,8 +102,6 @@ bool function Bleedout_StartPlayerBleedout( entity player, entity attacker, var 
 	
 	foreach( void functionref( entity, entity, var ) callbackFunc in file.Callbacks_OnPlayerStartBleedout )
 	{
-		//if ( IsValid( callbackFunc ) && !file.isBleeding[ player ] )
-			//callbackFunc( player )
 		callbackFunc( player, attacker, damageInfo )
 	}
 
@@ -116,10 +113,6 @@ bool function Bleedout_StartPlayerBleedout( entity player, entity attacker, var 
 	//Start selfhealing thread if enabled.
 	if ( Bleedout_GetSelfResEnabled() )
 		thread EnablePlayerSelfRes( player )
-
-	// now handled in sh_bleedout_damage.gnut
-	//if ( Bleedout_GetDeathOnTeamBleedout() )
-	//	CheckForTeamBleedout( player.GetTeam() )
 	
 	// bleedout successfully functioning
 	return true
@@ -139,8 +132,6 @@ void function PlayerDying( entity player )
 	array<int> ids = []
 	
 	// slow effect in ttf2 can be too much powerful
-	//ids.append( StatusEffect_AddEndless( player, eStatusEffect.move_slow, 0.25 ) )
-	//ids.append( StatusEffect_AddEndless( player, eStatusEffect.turn_slow, 0.3 ) )
 	ids.append( StatusEffect_AddEndless( player, eStatusEffect.move_slow, 0.2 ) )
 	ids.append( StatusEffect_AddEndless( player, eStatusEffect.turn_slow, 0.2 ) )
 
@@ -163,7 +154,6 @@ void function PlayerDying( entity player )
 	}
 
 	OnThreadEnd(
-	//function() : ( player, ids, forceHolster, playerTitle ) // i'm stupid sorry
 	function() : ( player, ids, forceHolster )
 		{
 			if ( IsValid( player ) )
@@ -327,8 +317,6 @@ void function PlayerAttemptRes( entity playerHealer, entity playerToRes )
 	if( !isSelfRes )
 		HolsterAndDisableWeapons( playerHealer )
 
-	//playerHealer.MovementDisable()
-	//playerToRes.MovementDisable()
 	// best way is to use a statusEffect, this will cause desync and auto IN_JUMP input
 	table<entity, int> statusEffectTable = {}
 	statusEffectTable[playerHealer] <- StatusEffect_AddEndless( playerHealer, eStatusEffect.move_slow, 1.0 ) // 1.0 will lock player's movement
@@ -368,7 +356,6 @@ void function PlayerAttemptRes( entity playerHealer, entity playerToRes )
 					DeployAndEnableWeapons( playerHealer )
 				}
 				playerHealer.SetTitle( "" )
-				//playerHealer.MovementEnable() // now handled by statusEffects
 				Remote_CallFunction_NonReplay( playerHealer, "ServerCallback_BLEEDOUT_StopFirstAidProgressBar", attemptID )
 				if ( playerHealer in statusEffectTable ) // defensive fix
 					StatusEffect_Stop( playerHealer, statusEffectTable[playerHealer] ) // restore movement
@@ -377,7 +364,6 @@ void function PlayerAttemptRes( entity playerHealer, entity playerToRes )
 			if ( IsValid( playerToRes ) )
 			{
 				file.IsGettingFirstAidFrom[ playerToRes ] = null
-				//playerToRes.MovementEnable() // now handled by statusEffects
 				Remote_CallFunction_NonReplay( playerToRes, "ServerCallback_BLEEDOUT_StopFirstAidProgressBar", attemptID )
 				if ( !isSelfRes && ( playerToRes in statusEffectTable ) ) // defensive fix
 					StatusEffect_Stop( playerToRes, statusEffectTable[playerToRes] ) // restore movement
@@ -419,12 +405,6 @@ void function PlayerAttemptRes( entity playerHealer, entity playerToRes )
 
 	foreach( void functionref( entity, entity ) callbackFunc in file.Callbacks_OnPlayerGiveFirstAid )
 	{
-		//if ( IsValid( callbackFunc ) )
-		//{
-			//Do not run this callback if player is self healing.
-		//	if ( playerHealer != playerToRes )
-		//		callbackFunc( playerHealer )
-		//}
 		callbackFunc( playerToRes, playerHealer )
 	}
 	//Heal player health, should be after callbacks done

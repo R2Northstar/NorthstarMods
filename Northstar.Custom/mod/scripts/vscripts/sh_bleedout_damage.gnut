@@ -147,16 +147,18 @@ void function HandleDamageForBleedout( entity player, var damageInfo )
 				if( realAttacker.IsPlayer() && attacker.IsPlayer() && realAttacker != player && realAttacker != attacker )
 				{ // player is killed by other players, redirect score to knockdowner, can't handle executions!
 					DamageInfo_SetDamage( damageInfo, player.GetHealth() - 1 )
-					player.TakeDamage( player.GetMaxHealth() + 1, 
-									   realAttacker, 
-									   realAttacker, 
-									   { // damage table
-										weapon = Bleedout_GetLastAttackerWeapon( player ), // do this work? for supporting tactical_cdr_on_kill
-										origin = DamageInfo_GetDamagePosition( damageInfo ), 
-										force = DamageInfo_GetDamageForce( damageInfo ), 
-										scriptType = DamageInfo_GetCustomDamageType( damageInfo ), 
-										damageSourceId = eDamageSourceId.bleedout // proper damageSource for now
-									   })
+					player.TakeDamage( 
+						player.GetMaxHealth() + 1, 
+						realAttacker, 
+						realAttacker, 
+						{ // damage table
+							weapon = Bleedout_GetLastAttackerWeapon( player ), // do this work? for supporting tactical_cdr_on_kill
+							origin = DamageInfo_GetDamagePosition( damageInfo ), 
+							force = DamageInfo_GetDamageForce( damageInfo ), 
+							scriptType = DamageInfo_GetCustomDamageType( damageInfo ), 
+							damageSourceId = eDamageSourceId.bleedout // proper damageSource for now
+						}
+					)
 				}
 			}
 		}
