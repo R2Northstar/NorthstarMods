@@ -1043,7 +1043,10 @@ void function CampProgressThink( int spawnId, int totalNPCsToSpawn )
 				foreach ( entity ent in entities )
 				{
 					if ( IsAlive( ent ) && ent.IsNPC() )
+					{
+						printt( "Killing bored AI " + ent.GetClassName() + " at " + ent.GetOrigin() )
 						ent.Die()
+					}
 				}
 			}
 		}
