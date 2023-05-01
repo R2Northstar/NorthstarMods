@@ -247,6 +247,23 @@ void function GameStateEnter_Playing_Threaded()
 			else
 				SetWinner( winningTeam )
 		}
+		else // scoring check
+		{
+			int winningTeam = GetWinningTeamWithFFASupport()
+			if ( IsRoundBased() )
+				scoreLimit = GameMode_GetRoundScoreLimit( GAMETYPE )
+			else
+				scoreLimit = GameMode_GetScoreLimit( GAMETYPE )
+			
+			if ( winningTeam < TEAM_UNASSIGNED ) // no valid winner
+				winningTeam = TEAM_UNASSIGNED
+
+			int score = GameRules_GetTeamScore( winningTeam )
+			if ( score >= scoreLimit || GetGameState() == eGameState.SuddenDeath )
+				SetWinner( winningTeam )
+			else if ( ( file.switchSidesBased && !file.hasSwitchedSides ) && score >= ( scoreLimit.tofloat() / 2.0 ) )
+				SetGameState( eGameState.SwitchingSides )
+		}
 		
 		WaitFrame()
 	}
@@ -812,20 +829,30 @@ void function UpdateGameWonThisFrameNextFrame()
 
 void function AddTeamScore( int team, int amount )
 {
-	GameRules_SetTeamScore( team, GameRules_GetTeamScore( team ) + amount )
-	GameRules_SetTeamScore2( team, GameRules_GetTeamScore2( team ) + amount )
-	
+	// using "fixedAmount" now
+	//GameRules_SetTeamScore( team, GameRules_GetTeamScore( team ) + amount )
+	//GameRules_SetTeamScore2( team, GameRules_GetTeamScore2( team ) + amount )
+
+	if( !GamePlayingOrSuddenDeath() ) // don't add score in other states!
+		return
+
+	int score = GameRules_GetTeamScore( team )
 	int scoreLimit
 	if ( IsRoundBased() )
 		scoreLimit = GameMode_GetRoundScoreLimit( GAMETYPE )
 	else
 		scoreLimit = GameMode_GetScoreLimit( GAMETYPE )
-		
-	int score = GameRules_GetTeamScore( team )
-	if ( score >= scoreLimit || GetGameState() == eGameState.SuddenDeath )
-		SetWinner( team )
-	else if ( ( file.switchSidesBased && !file.hasSwitchedSides ) && score >= ( scoreLimit.tofloat() / 2.0 ) )
-		SetGameState( eGameState.SwitchingSides )
+	
+	// switchsides based
+	if ( file.switchSidesBased && !file.hasSwitchedSides )
+		scoreLimit = int( scoreLimit.tofloat() / 2.0 ) + 1
+
+	int fixedAmount = score + amount > scoreLimit ? scoreLimit - score : amount // fix score amount so we don't go over scoreLimit
+
+	GameRules_SetTeamScore( team, GameRules_GetTeamScore( team ) + fixedAmount )
+	GameRules_SetTeamScore2( team, GameRules_GetTeamScore2( team ) + amount ) // round score is no need to use fixedAmount
+	
+	// winner decision shouldn't be handled by this function, some networkvar may stuck the game(eg. bounty hunt ones) if we SetWinner() right after adding team score
 }
 
 void function SetTimeoutWinnerDecisionFunc( int functionref() callback )
