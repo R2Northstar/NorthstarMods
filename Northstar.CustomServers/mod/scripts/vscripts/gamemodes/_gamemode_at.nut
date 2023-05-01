@@ -87,14 +87,14 @@ struct
 	array<AT_WaveOrigin> camps
 
 	// Used to track ScriptmanagedEntArrays of ai squads
-	table< int,array<int> > campScriptEntArrays
+	table< int, array<int> > campScriptEntArrays
 	
-	table<entity, bool> titanIsBountyBoss
-	table<entity, int> bountyTitanRewards
-	table<entity, int> npcStolenBonus
-	table<entity, bool> playerBankUploading
+	table< entity, bool > titanIsBountyBoss
+	table< entity, int > bountyTitanRewards
+	table< entity, int > npcStolenBonus
+	table< entity, bool > playerBankUploading
 	table< entity, table<entity, int> > playerSavedBountyDamage
-	table<entity, float> playerHudMessageAllowedTime
+	table< entity, float > playerHudMessageAllowedTime
 } file
 
 void function GamemodeAt_Init()
@@ -1051,7 +1051,10 @@ void function CampProgressThink( int spawnId, int totalNPCsToSpawn )
 				foreach ( entity ent in entities )
 				{
 					if ( IsAlive( ent ) && ent.IsNPC() )
+					{
+						printt( "Killing bored AI " + ent.GetClassName() + " at " + ent.GetOrigin() )
 						ent.Die()
+					}
 				}
 			}
 		}
