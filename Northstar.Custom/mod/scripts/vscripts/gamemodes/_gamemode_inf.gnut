@@ -138,7 +138,6 @@ void function InfectedLoadout( entity player )
 
 	foreach ( entity weapon in player.GetOffhandWeapons() )
 		player.TakeWeaponNow( weapon.GetWeaponClassName() )
-	
 	// TEMP: give archer so player so player has a weapon which lets them use offhands
 	// need to replace this with a custom empty weapon at some point
 	//player.GiveWeapon( "mp_weapon_rocket_launcher" )
