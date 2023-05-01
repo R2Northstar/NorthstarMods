@@ -117,15 +117,15 @@ void function GamemodeFW_Init()
 	// _battery_port.gnut needs this
 	RegisterSignal( "BatteryActivate" )
 
-	AiGameModes_SetGruntWeapons( [ "mp_weapon_rspn101", "mp_weapon_dmr", "mp_weapon_r97", "mp_weapon_lmg" ] )
-	AiGameModes_SetSpectreWeapons( [ "mp_weapon_hemlok_smg", "mp_weapon_doubletake", "mp_weapon_mastiff" ] )
+	AiGameModes_SetNPCWeapons( "npc_soldier", [ "mp_weapon_rspn101", "mp_weapon_dmr", "mp_weapon_r97", "mp_weapon_lmg" ] )
+	AiGameModes_SetNPCWeapons( "npc_spectre", [ "mp_weapon_hemlok_smg", "mp_weapon_doubletake", "mp_weapon_mastiff" ] )
 
 	AddCallback_EntitiesDidLoad( LoadEntities )
 	AddCallback_GameStateEnter( eGameState.Prematch, OnFWGamePrematch )
 	AddCallback_GameStateEnter( eGameState.Playing, OnFWGamePlaying )
 
 	AddSpawnCallback( "item_powerup", FWAddPowerUpIcon )
-	AddSpawnCallback( "npc_turret_mega", FWTurretHighlight )
+	AddSpawnCallback( "npc_turret_mega", OnFWTurretSpawned )
 
 	AddCallback_OnClientConnected( OnFWPlayerConnected )
 	AddCallback_PlayerClassChanged( OnFWPlayerClassChanged )
@@ -582,9 +582,6 @@ void function LoadEntities()
 					// create turret, spawn with no team and set it after game starts
 					entity turret = CreateNPC( "npc_turret_mega", TEAM_UNASSIGNED, info_target.GetOrigin(), info_target.GetAngles() )
 					SetSpawnOption_AISettings( turret, "npc_turret_mega_fortwar" )
-					SetDefaultMPEnemyHighlight( turret ) // for sonar highlights to work
-					Highlight_SetFriendlyHighlight( turret, "fw_friendly" )
-					AddEntityCallback_OnDamaged( turret, OnMegaTurretDamaged )
 					DispatchSpawn( turret )
 
 					turretsite.turret = turret
@@ -1384,19 +1381,23 @@ void function FWAreaThreatLevelThink_Threaded()
 ///// TURRET FUNCTIONS /////
 ////////////////////////////
 
-void function FWTurretHighlight( entity turret )
+void function OnFWTurretSpawned( entity turret )
 {
-    thread FWTurretHighlightThink( turret )
+	turret.EnableTurret() // always enabled
+	SetDefaultMPEnemyHighlight( turret ) // for sonar highlights to work
+	AddEntityCallback_OnDamaged( turret, OnMegaTurretDamaged )
+	thread FWTurretHighlightThink( turret )
 }
 
 // this will clear turret's highlight upon their death, for notifying players to fix them
 void function FWTurretHighlightThink( entity turret )
 {
-    turret.EndSignal( "OnDestroy" )
-    Highlight_SetFriendlyHighlight( turret, "fw_friendly" )
+	turret.EndSignal( "OnDestroy" )
+	WaitFrame() // wait a frame for other turret spawn options to set up
+	Highlight_SetFriendlyHighlight( turret, "fw_friendly" ) // initialize the highlight, they will show upon player's next respawn
 
-    turret.WaitSignal( "OnDeath" )
-    Highlight_ClearFriendlyHighlight( turret )
+	turret.WaitSignal( "OnDeath" )
+	Highlight_ClearFriendlyHighlight( turret )
 }
 
 // for battery_port, replace the turret with new one
@@ -1407,8 +1408,6 @@ entity function FW_ReplaceMegaTurret( entity perviousTurret )
 
 	entity turret = CreateNPC( "npc_turret_mega", perviousTurret.GetTeam(), perviousTurret.GetOrigin(), perviousTurret.GetAngles() )
 	SetSpawnOption_AISettings( turret, "npc_turret_mega_fortwar" )
-	SetDefaultMPEnemyHighlight( turret ) // for sonar highlights to work
-	AddEntityCallback_OnDamaged( turret, OnMegaTurretDamaged )
 	DispatchSpawn( turret )
 
 	// apply settings to new turret, must up on date
