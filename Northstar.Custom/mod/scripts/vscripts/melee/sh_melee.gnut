@@ -318,7 +318,8 @@ bool function CodeCallback_IsValidMeleeExecutionTarget( entity attacker, entity 
 
 	foreach ( callbackFunc in file.isValidMeleeExecutionTargetCallBacks )
 	{
-		if(!callbackFunc( attacker, target )) {
+		if( !callbackFunc( attacker, target ) )
+		{
 			return false
 		}
 	}
