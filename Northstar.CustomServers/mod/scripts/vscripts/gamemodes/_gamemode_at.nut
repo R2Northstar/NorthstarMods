@@ -75,10 +75,19 @@ const int AT_OBJECTIVE_BANK_OPEN = 109       // #AT_BANK_OPEN_OBJECTIVE
 // so that we dont spam it too much
 const float AT_PLAYER_HUD_MESSAGE_COOLDOWN = 2.5
 
+// Due to bad navmeshes NPCs may wonder off to bumfuck nowhere or the game
+// might teleport them into the map while trying to correct their position
+// This obviously breaks bounty hunt where the objective is to kill ALL ai
+// so we try to cleanup the camps after a set amount of time of inactivity
+const int   AT_CAMP_BORED_NPCS_LEFT_TO_START_CLEANUP = 3
+const float AT_CAMP_BORED_CLEANUP_WAIT = 60.0
 struct 
 {
 	array<entity> banks 
 	array<AT_WaveOrigin> camps
+
+	// Used to track ScriptmanagedEntArrays of ai squads
+	table< int,array<int> > campScriptEntArrays
 	
 	table<entity, bool> titanIsBountyBoss
 	table<entity, int> bountyTitanRewards
@@ -1004,6 +1013,8 @@ void function CampProgressThink( int spawnId, int totalNPCsToSpawn )
 	// TODO: random wait, make this a constant ??
 	wait 3.0
 
+	float cleanUpTime = -1.0
+
 	while ( true )
 	{
 		int npcsLeft
@@ -1020,6 +1031,26 @@ void function CampProgressThink( int spawnId, int totalNPCsToSpawn )
 		float campLeft = float( npcsLeft ) / float( totalNPCsToSpawn )
 		//print( "campLeft: " + string( campLeft ) )
 		SetGlobalNetFloat( campProgressName, campLeft )
+
+		if( npcsLeft <= AT_CAMP_BORED_NPCS_LEFT_TO_START_CLEANUP && cleanUpTime < 0.0 )
+		{
+			cleanUpTime = Time() + AT_CAMP_BORED_CLEANUP_WAIT
+			print("Cleanup timer started!")
+		}
+
+		if( Time() > cleanUpTime && cleanUpTime > 0.0 && spawnId in file.campScriptEntArrays )
+		{
+			foreach( int handle in file.campScriptEntArrays[spawnId] )
+			{
+				array<entity> entities = GetScriptManagedEntArray( handle )
+				entities.removebyvalue( null )
+				foreach ( entity ent in entities )
+				{
+					if ( IsAlive( ent ) && ent.IsNPC() )
+						ent.Die()
+				}
+			}
+		}
 
 		if ( campLeft <= 0.0 ) // camp wiped!
 		{
@@ -1181,6 +1212,11 @@ function OnPlayerUseBank( bank, player )
 	expect entity( bank )
 	expect entity( player )
 
+	// bank.SetUsableByGroup( "pilot" ) didn't seem to work so we just
+	// exit here if player is in a titan
+	if( player.IsTitan() )
+		return
+
 	// Player has no bonus, try to send a tip using SendHUDMessage
 	if ( AT_GetPlayerBonusPoints( player ) == 0 )
 	{
@@ -1340,6 +1376,11 @@ void function AT_DroppodSquadEvent( AT_WaveOrigin campData, int spawnId, array<A
 	// create a script managed array for all handled minions
 	int eventManager = CreateScriptManagedEntArray()
 
+	if( !(spawnId in file.campScriptEntArrays) )
+		file.campScriptEntArrays[spawnId] <- []
+	
+	file.campScriptEntArrays[spawnId].append(eventManager)
+
 	int totalAllowedOnField = SQUAD_SIZE * AT_DROPPOD_SQUADS_ALLOWED_ON_FIELD
 	while ( true )
 	{
@@ -1374,6 +1415,12 @@ void function AT_DroppodSquadEvent_Single( AT_WaveOrigin campData, int spawnId, 
 	// get ent and create a script managed array for current event
 	string ent = data.aitype
 	int eventManager = CreateScriptManagedEntArray()
+
+	if( !(spawnId in file.campScriptEntArrays) )
+		file.campScriptEntArrays[spawnId] <- []
+	
+	file.campScriptEntArrays[spawnId].append(eventManager)
+
 	int totalAllowedOnField = data.totalAllowedOnField // mostly 12 for grunts and spectres, too much!
 	// start spawner
 	while ( true )
@@ -1468,6 +1515,11 @@ void function AT_ReaperEvent( AT_WaveOrigin campData, int spawnId, AT_SpawnData 
 
 	// create a script managed array for current event
 	int eventManager = CreateScriptManagedEntArray()
+
+	if( !(spawnId in file.campScriptEntArrays) )
+		file.campScriptEntArrays[spawnId] <- []
+	
+	file.campScriptEntArrays[spawnId].append(eventManager)
 	
 	int totalAllowedOnField = 1 // 1 allowed at the same time for heavy armor units
 	if ( AT_USE_TOTAL_ALLOWED_ON_FIELD_CHECK )
