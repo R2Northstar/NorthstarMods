@@ -171,19 +171,15 @@ void function executeWave()
 			oneenemyleft = true
 		}
 		
-		//Force Cloak Drones to stay visible when a wave is about to end to avoid softlocking
+		//Kill Cloak Drones beforehand when a wave is about to end to avoid softlocking
 		array<entity> droneArray = GetNPCCloakedDrones()
 		foreach( entity cloakedDrone in droneArray )
 		{
 			if( IsValid( cloakedDrone ) && IsAlive( cloakedDrone ) )
 			{
-				cloakedDrone.DisableBehavior( "Follow" )
 				cloakedDrone.Show()
-				cloakedDrone.SetTitle( "#NPC_CLOAK_DRONE" )
 				cloakedDrone.Solid()
-				cloakedDrone.Minimap_AlwaysShow( TEAM_IMC, null )
-				cloakedDrone.Minimap_AlwaysShow( TEAM_MILITIA, null )
-				cloakedDrone.SetNoTarget( false )
+				cloakedDrone.Die()
 			}
 		}
 		
@@ -874,11 +870,9 @@ void function BlockFurtherTitanfalls( SmokeEvent smokeEvent, SpawnEvent spawnEve
 				ClearTitanAvailable( player )
 				SendHudMessage( player, "Titanfall Block: Titans cannot be summoned", -1, 0.5, 255, 255, 128, 255, 0.2, 5.0, 1.8 )
 			}
-			level.nv.titanAvailability = eTitanAvailability.Never
 		}
 		else
 		{
-			level.nv.titanAvailability = eTitanAvailability.Default
 			print( "Removing Titanfall Block Event" )
 			PlayerEarnMeter_SetEnabled( true )
 		}
@@ -902,13 +896,11 @@ void function spawnSmoke( SmokeEvent smokeEvent, SpawnEvent spawnEvent, FlowCont
 	smokescreen.origin = smokeEvent.position + < 0, 0, 96 >
 	smokescreen.angles = < 0, 0, 0 >
 	smokescreen.lifetime = smokeEvent.lifetime
-	smokescreen.fxXYRadius = 160
-	smokescreen.fxZRadius = 128
 	smokescreen.deploySound1p = "SmokeWall_Activate"
 	smokescreen.deploySound3p = "SmokeWall_Activate"
 	smokescreen.stopSound1p = "SmokeWall_Stop"
 	smokescreen.stopSound3p = "SmokeWall_Stop"
-	smokescreen.fxOffsets = [ < 128.0, 0.0, 0.0 >, < 0.0, 128.0, 0.0 >, < 0.0, 0.0, 0.0 >, < 0.0, -128.0, 0.0 >, < -128.0, 0.0, 0.0 >, < 0.0, 128.0, 0.0 > ]
+	smokescreen.fxOffsets = [ < -4.0, 0.0, 0.0 >, < 0.0, -4.0, 0.0 >, < 0.0, 0.0, -8.0 >, < 4.0, 0.0, 0.0 >, < 0.0, 4.0, 0.0 >, < 0.0, 0.0, 8.0 > ]
 	
 	EmitSoundAtPosition( TEAM_UNASSIGNED, smokeEvent.position, "SmokeWall_Launch" )
 	
@@ -920,6 +912,7 @@ void function spawnSmoke( SmokeEvent smokeEvent, SpawnEvent spawnEvent, FlowCont
 	smokenade.kv.fadedist = 0
 	smokenade.kv.renderamt = 255
 	smokenade.kv.rendercolor = "255 255 255"
+	smokenade.kv.scale = 3
 	smokenade.SetParent( mover, "", false, 0 )
 	mover.SetOrigin( smokeEvent.position + < 0, 0, 8192 > )
 	DispatchSpawn( smokenade )
@@ -938,7 +931,7 @@ void function spawnDrones( SmokeEvent smokeEvent, SpawnEvent spawnEvent, FlowCon
 	PingMinimap( spawnEvent.origin.x, spawnEvent.origin.y, 4, 600, 150, 0 )
 	array<vector> offsets = [ < 0, 32, 0 >, < 32, 0, 0 >, < 0, -32, 0 >, < -32, 0, 0 > ]
 
-	string squadName = MakeSquadName( TEAM_IMC, UniqueString( "ZiplineTable" ) )
+	string squadName = MakeSquadName( TEAM_IMC, UniqueString() )
 
 	for ( int i = 0; i < spawnEvent.spawnAmount; i++ )
     {
@@ -1009,7 +1002,7 @@ void function spawnArcTitan( SmokeEvent smokeEvent, SpawnEvent spawnEvent, FlowC
 		thread Drop_Spawnpoint( spawnEvent.origin, TEAM_IMC, 5 )
 	PingMinimap( spawnEvent.origin.x, spawnEvent.origin.y, 4, 600, 150, 0 )
 	entity npc = CreateArcTitan( TEAM_IMC, spawnEvent.origin, spawnEvent.angles )
-	npc.DisableNPCFlag( NPC_ALLOW_INVESTIGATE | NPC_USE_SHOOTING_COVER | NPC_ALLOW_PATROL )
+	//npc.DisableNPCFlag( NPC_ALLOW_INVESTIGATE | NPC_USE_SHOOTING_COVER | NPC_ALLOW_PATROL )
 	SetSpawnOption_Titanfall( npc )
 	SetTargetName( npc, GetTargetNameForID( spawnEvent.spawnType ) ) // required for client to create icons
 	SetSpawnOption_AISettings( npc, "npc_titan_stryder_leadwall_arc" )
@@ -1100,10 +1093,9 @@ void function spawnDroppodGrunts( SmokeEvent smokeEvent, SpawnEvent spawnEvent, 
 	SetTeam( pod, TEAM_IMC )
 	InitFireteamDropPod( pod )
 
-	string squadName = MakeSquadName( TEAM_IMC, UniqueString( "ZiplineTable" ) )
+	string squadName = MakeSquadName( TEAM_IMC, UniqueString() )
 	string at_weapon = GetConVarString( "ns_fd_grunt_at_weapon" )
 	string baseweapon = GetConVarString( "ns_fd_grunt_primary_weapon" )
-	string ordnance = GetConVarString( "ns_fd_grunt_grenade_type" )
 	array<entity> guys
 
 	for ( int i = 0; i < spawnEvent.spawnAmount; i++ )
@@ -1125,9 +1117,8 @@ void function spawnDroppodGrunts( SmokeEvent smokeEvent, SpawnEvent spawnEvent, 
 		guy.EnableNPCFlag(  NPC_ALLOW_INVESTIGATE | NPC_ALLOW_HAND_SIGNALS | NPC_ALLOW_FLEE )
 		guy.DisableNPCFlag( NPC_ALLOW_PATROL )
 		SetSpawnOption_Weapon( guy, baseweapon )
-		SetSpawnOption_Ordnance( guy, ordnance )
 		DispatchSpawn( guy )
-
+		guy.SetEfficientMode( true )
 		guy.SetParent( pod, "ATTACH", true )
 		SetSquad( guy, squadName )
 
@@ -1149,7 +1140,10 @@ void function spawnDroppodGrunts( SmokeEvent smokeEvent, SpawnEvent spawnEvent, 
 	waitthread LaunchAnimDropPod( pod, "pod_testpath", spawnEvent.origin, < 0, RandomIntRange( 0, 359 ), 0 > )
 	ActivateFireteamDropPod( pod, guys )
 	foreach( npc in guys )
+	{
+		npc.SetEfficientMode( false )
 		thread singleNav_thread( npc, spawnEvent.route )
+	}
 }
 
 //This function is based off the entire function chain called by AiGameModes_SpawnDropShip(), that function uses table data for modularization and while it
@@ -1158,10 +1152,9 @@ void function spawnDroppodGrunts( SmokeEvent smokeEvent, SpawnEvent spawnEvent, 
 void function spawnGruntDropship( SmokeEvent smokeEvent, SpawnEvent spawnEvent, FlowControlEvent flowControlEvent, SoundEvent soundEvent )
 { 
 	printt( "Spawning Grunt Dropship at: " + spawnEvent.origin )
-	string squadName = MakeSquadName( TEAM_IMC, UniqueString( "DropshipTable" ) )
+	string squadName = MakeSquadName( TEAM_IMC, UniqueString() )
 	string at_weapon = GetConVarString( "ns_fd_grunt_at_weapon" )
 	string baseweapon = GetConVarString( "ns_fd_grunt_primary_weapon" )
-	string ordnance = GetConVarString( "ns_fd_grunt_grenade_type" )
 	
 	vector origin 		= spawnEvent.origin
 	origin.z 		   += 448 //Expected to people make coordinates in the ground so we add this up for the hover height
@@ -1241,7 +1234,6 @@ void function spawnGruntDropship( SmokeEvent smokeEvent, SpawnEvent spawnEvent, 
 		guy.EnableNPCFlag(  NPC_ALLOW_INVESTIGATE | NPC_ALLOW_HAND_SIGNALS | NPC_ALLOW_FLEE )
 		guy.DisableNPCFlag( NPC_ALLOW_PATROL )
 		SetSpawnOption_Weapon( guy, baseweapon )
-		SetSpawnOption_Ordnance( guy, ordnance )
 		DispatchSpawn( guy )
 		
 		SetSquad( guy, squadName )
@@ -1298,7 +1290,7 @@ void function spawnDroppodStalker( SmokeEvent smokeEvent, SpawnEvent spawnEvent,
 	SetTeam( pod, TEAM_IMC )
 	InitFireteamDropPod( pod )
 
-	string squadName = MakeSquadName( TEAM_IMC, UniqueString( "ZiplineTable" ) )
+	string squadName = MakeSquadName( TEAM_IMC, UniqueString() )
 	array<entity> guys
 
 	for ( int i = 0; i < spawnEvent.spawnAmount; i++ )
@@ -1311,6 +1303,7 @@ void function spawnDroppodStalker( SmokeEvent smokeEvent, SpawnEvent spawnEvent,
 		guy.DisableNPCFlag( NPC_ALLOW_PATROL )
 		SetSpawnOption_AISettings( guy, "npc_stalker_fd" )
 		DispatchSpawn( guy )
+		guy.SetEfficientMode( true )
 		guy.SetParent( pod, "ATTACH", true )
 		SetSquad( guy, squadName )
 		guy.AssaultSetFightRadius( 0 ) // makes them keep moving instead of stopping to shoot you.
@@ -1327,9 +1320,7 @@ void function spawnDroppodStalker( SmokeEvent smokeEvent, SpawnEvent spawnEvent,
 			foreach( npc in guys )
 			{
 				npc.TakeActiveWeapon()
-				npc.SetNoTarget( false )
 				npc.EnableNPCFlag( NPC_DISABLE_SENSING | NPC_IGNORE_ALL )
-				npc.SetEnemy( fd_harvester.harvester )
 			}
 			break
 		case eFDDifficultyLevel.HARD:
@@ -1352,6 +1343,7 @@ void function spawnDroppodStalker( SmokeEvent smokeEvent, SpawnEvent spawnEvent,
 	ActivateFireteamDropPod( pod, guys )
 	foreach( npc in guys )
 	{
+		npc.SetEfficientMode( false )
 		thread FDStalkerThink( npc , fd_harvester.harvester )
 		thread singleNav_thread( npc, spawnEvent.route )
 	}
@@ -1365,7 +1357,8 @@ void function spawnDroppodSpectreMortar( SmokeEvent smokeEvent, SpawnEvent spawn
 	SetTeam( pod, TEAM_IMC )
 	InitFireteamDropPod( pod )
 
-	string squadName = MakeSquadName( TEAM_IMC, UniqueString( "ZiplineTable" ) )
+	string squadName = MakeSquadName( TEAM_IMC, UniqueString() )
+	string baseweapon = GetConVarString( "ns_fd_spectre_primary_weapon" )
 	array<entity> guys
 
 	for ( int i = 0; i < 4; i++ )
@@ -1375,8 +1368,10 @@ void function spawnDroppodSpectreMortar( SmokeEvent smokeEvent, SpawnEvent spawn
 		if( spawnEvent.entityGlobalKey != "" )
 			GlobalEventEntitys[ spawnEvent.entityGlobalKey + i.tostring() ] <- guy
 		SetTeam( guy, TEAM_IMC )
+		SetSpawnOption_Weapon( guy, baseweapon )
 		DispatchSpawn( guy )
 		spawnedNPCs.append(guy)
+		guy.SetEfficientMode( true )
 		guy.SetParent( pod, "ATTACH", true )
 		SetSquad( guy, squadName )
 		SetTargetName( guy, GetTargetNameForID(eFD_AITypeIDs.SPECTRE_MORTAR))
@@ -1387,8 +1382,10 @@ void function spawnDroppodSpectreMortar( SmokeEvent smokeEvent, SpawnEvent spawn
 	waitthread LaunchAnimDropPod( pod, "pod_testpath", spawnEvent.origin, < 0, RandomIntRange( 0, 359 ), 0 > )
     ActivateFireteamDropPod( pod, guys )
 	
-	thread MortarSpectreSquadThink( guys, fd_harvester.harvester )
+	foreach( npc in guys )
+		npc.SetEfficientMode( false )
 	
+	thread MortarSpectreSquadThink( guys, fd_harvester.harvester )
 }
 
 void function spawnGenericNPC( SmokeEvent smokeEvent, SpawnEvent spawnEvent, FlowControlEvent flowControlEvent, SoundEvent soundEvent )
@@ -1728,7 +1725,7 @@ void function SpawnTick( SmokeEvent smokeEvent, SpawnEvent spawnEvent, FlowContr
 	SetTeam( pod, TEAM_IMC )
 	InitFireteamDropPod( pod )
 
-	string squadName = MakeSquadName( TEAM_IMC, UniqueString( "ZiplineTable" ) )
+	string squadName = MakeSquadName( TEAM_IMC, UniqueString() )
 	array<entity> guys
 
 	for ( int i = 0; i < spawnEvent.spawnAmount; i++ )
@@ -1741,6 +1738,7 @@ void function SpawnTick( SmokeEvent smokeEvent, SpawnEvent spawnEvent, FlowContr
 		SetTeam( guy, TEAM_IMC )
 		guy.EnableNPCFlag(  NPC_ALLOW_INVESTIGATE )
 		DispatchSpawn( guy )
+		guy.SetEfficientMode( true )
 		AddMinimapForHumans( guy )
 		SetTargetName( guy, GetTargetNameForID( eFD_AITypeIDs.TICK ) )
 		guy.SetParent( pod, "ATTACH", true )
@@ -1755,6 +1753,7 @@ void function SpawnTick( SmokeEvent smokeEvent, SpawnEvent spawnEvent, FlowContr
 	foreach( guy in guys )
 	{
 		guy.Anim_Stop() //Intentionally cancel the Drop Pod exiting animation for Ticks because it doesnt work for them
+		guy.SetEfficientMode( false )
 		thread singleNav_thread( guy, spawnEvent.route )
 	}
 }

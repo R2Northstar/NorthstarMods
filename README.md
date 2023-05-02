@@ -42,7 +42,7 @@ Use these variables in your `autoexec_ns_server` cfg to control them:
 - `ns_fd_allow_titanfall_block` Default is 0, setting to 1 will allow some maps to make usage of the Titanfall Block event
 - `ns_fd_show_drop_points` Default is 0, setting to 1 will show Titanfall markers for spawning enemies akin to when you call your own Titan
 - `ns_fd_grunt_primary_weapon` Default is "mp_weapon_rspn101" which is R-201, set to another common weapon to make Grunts use them
-- `ns_fd_grunt_grenade_type` Default is "mp_weapon_frag_grenade" which is Frag Grenade, set to another grenade type to make Grunts toss them
+- `ns_fd_spectre_primary_weapon` Default is "mp_weapon_rspn101" which is R-201, set to another common weapon to make Mortar Spectres use them
 - `ns_fd_grunt_at_weapon` Default is "mp_weapon_defender", set to another anti-titan weapon to make Grunts use them on Master or Insane difficulty
 - `ns_fd_disable_respawn_dropship` Default is 0, setting to 1 makes players always respawn directly on ground nearby the Harvester or Shop
 - `ns_reaper_warpfall_kill` Default is 1, set to 0 if you don't want Reapers to kill Titans on their Warpfall

@@ -193,8 +193,6 @@ void function GamemodeFD_Init()
 	difficultyLevel = FD_GetDifficultyLevel() //Refresh this only on map load, to avoid midgame commands messing up with difficulties (i.e setting mp_gamemode fd_hard midgame in a regular match through console on local host would immediately make Stalkers spawns with EPG)
 	elitesAllowed = GetConVarBool( "ns_fd_allow_elite_titans" )
 	titanfallblockAllowed = GetConVarBool( "ns_fd_allow_titanfall_block" )
-	Riff_ForceSetSpawnAsTitan( eSpawnAsTitan.Never ) //On vanilla players can never spawn as Titans regardless if theyre ready
-	level.nv.spawnAsTitan = eSpawnAsTitan.Never
 }
 
 void function ScoreEvent_SetupEarnMeterValuesForFrontierDefense()
@@ -243,7 +241,7 @@ void function FD_BoostPurchaseCallback( entity player, BoostStoreData data )
 
 void function FD_PlayerRespawnCallback( entity player )
 {
-	if( IsHarvesterAlive( fd_harvester.harvester ) && GetGameState() == eGameState.Playing )
+	if( IsHarvesterAlive( fd_harvester.harvester ) )
 		thread FD_PlayerRespawnThreaded( player )
 }
 
@@ -266,7 +264,7 @@ void function FD_PlayerRespawnThreaded( entity player )
 	//Respawning as titan also ignores this because err, makes no sense
 	if ( player.IsTitan() )
 		return
-	if( file.dropshipState == eDropshipState.Returning || file.playersInShip >=4 || GetGlobalNetInt( "FD_waveState") == WAVE_STATE_BREAK || GetGlobalNetInt( "FD_waveState") == WAVE_STATE_COMPLETE || GetConVarBool( "ns_fd_disable_respawn_dropship" ) )
+	if( file.dropshipState == eDropshipState.Returning || file.playersInShip >=4 || GetGameState() != eGameState.Playing || GetGlobalNetInt( "FD_waveState") == WAVE_STATE_BREAK || GetGlobalNetInt( "FD_waveState") == WAVE_STATE_COMPLETE || GetConVarBool( "ns_fd_disable_respawn_dropship" ) )
 	{
 		//Teleport player to a more reliable location if they spawn on ground, some maps picks too far away spawns from the Harvester and Shop (i.e Colony, Homestead, Drydock)
 		if( IsValidPlayer( player ) && !player.IsTitan() )
@@ -1135,12 +1133,13 @@ bool function runWave( int waveIndex, bool shouldDoBuyTime )
 		
 		if( waveIndex > 0 )
 			SetShouldUsePickLoadoutScreen( false ) //Prevent loadout screen from appearing again post Wave 1 completion
+		
+		foreach( entity player in GetPlayerArray() )
+			Remote_CallFunction_NonReplay( player, "ServerCallback_FD_DisplayHarvesterKiller", GetGlobalNetInt( "FD_restartsRemaining" ), getHintForTypeId( highestDamageSource[0] ), highestDamageSource[0], highestDamage[0] / totalDamage, highestDamageSource[1], highestDamage[1] / totalDamage , highestDamageSource[2], highestDamage[2] / totalDamage )
 
 		if( GetGlobalNetInt( "FD_restartsRemaining" ) > 0 )
 		{
 			FD_DecrementRestarts()
-			foreach( entity player in GetPlayerArray() )
-				Remote_CallFunction_NonReplay( player, "ServerCallback_FD_DisplayHarvesterKiller", GetGlobalNetInt( "FD_restartsRemaining" ), getHintForTypeId( highestDamageSource[0] ), highestDamageSource[0], highestDamage[0] / totalDamage, highestDamageSource[1], highestDamage[1] / totalDamage , highestDamageSource[2], highestDamage[2] / totalDamage )
 		}
 		else
 		{
@@ -1155,12 +1154,7 @@ bool function runWave( int waveIndex, bool shouldDoBuyTime )
 		restetWaveEvents()
 		SetPlayerDeathsHidden( true )
 		
-		if( GetGlobalNetInt( "FD_restartsRemaining" ) > 0 )
-		{
-			wait 4
-			AllPlayersMuteAll( 2 )
-			wait 1
-		}
+		wait 5
 		
 		/* Ayylmao kill the player to prevent server crash because the Titan selection menu needs to be disabled after Wave 1 for Wave Restarts, and that causes
 		a crash on transition if any player is using a Titan. Until a better solution is found, this extremely horrible method will do */
@@ -2002,7 +1996,6 @@ void function DamageScaleByDifficulty( entity ent, var damageInfo )
 	if ( attacker.IsPlayer() && attacker.GetTeam() == TEAM_IMC ) // in case we ever want a PvP in Frontier Defense, don't scale their damage
 		return
 
-
 	if ( attacker == ent ) // dont scale self damage
 		return
 		
@@ -2015,7 +2008,7 @@ void function DamageScaleByDifficulty( entity ent, var damageInfo )
 		return
 	}
 	
-	if ( damageSourceID == eDamageSourceId.damagedef_stalker_powersupply_explosion_large_at && attacker.IsPlayer() && attacker.IsTitan() ) //Warn Titan players about Stalkers
+	if ( damageSourceID == eDamageSourceId.damagedef_stalker_powersupply_explosion_large_at && ent.IsPlayer() && ent.IsTitan() ) //Warn Titan players about Stalkers
 		PlayFactionDialogueToPlayer( "fd_stalkerExploNag", attacker )
 
 	DamageInfo_SetDamage( damageInfo, damageAmount * GetCurrentPlaylistVarFloat( "fd_player_damage_scalar", 1.0 ) )
