@@ -1,64 +1,28 @@
 {
 	"SERVER":[
 		{
-			"name":"NSGetModNames",
-			"helpText":"",
-			"returnTypeString":"array<string>",
-			"argTypes":""
-		},
-		{
-			"name":"NSIsModEnabled",
-			"helpText":"",
-			"returnTypeString":"bool",
-			"argTypes":"string modName"
-		},
-		{
 			"name":"NSSetModEnabled",
 			"helpText":"",
 			"returnTypeString":"void",
-			"argTypes":"string modName, bool enabled"
+			"argTypes":"int index, bool enabled"
 		},
 		{
-			"name":"NSGetModDescriptionByModName",
-			"helpText":"",
-			"returnTypeString":"string ornull",
-			"argTypes":"string modName"
-		},
-		{
-			"name":"NSGetModVersionByModName",
-			"helpText":"",
-			"returnTypeString":"string ornull",
-			"argTypes":"string modName"
-		},
-		{
-			"name":"NSGetModDownloadLinkByModName",
-			"helpText":"",
-			"returnTypeString":"string ornull",
-			"argTypes":"string modName"
-		},
-		{
-			"name":"NSGetModLoadPriority",
-			"helpText":"",
-			"returnTypeString":"int",
-			"argTypes":"string modName"
-		},
-		{
-			"name":"NSIsModRequiredOnClient",
-			"helpText":"",
-			"returnTypeString":"bool",
-			"argTypes":"string modName"
-		},
-		{
-			"name":"NSGetModConvarsByModName",
-			"helpText":"",
-			"returnTypeString":"array<string>",
-			"argTypes":"string modName"
+			"name":"NSGetMods",
+			"helpText":"Get all installed mods",
+			"returnTypeString":"array<Mod>",
+			"argTypes":""
 		},
 		{
 			"name":"NSGetInvalidMods",
+			"helpText":"Get all mods that are installed in a subfolder",
+			"returnTypeString":"array<Mod>",
+			"argTypes":""
+		},
+		{
+			"name":"NSReloadMods",
 			"helpText":"",
-			"returnTypeString":"array<string>",
-			"argTypes":"string modName"
+			"returnTypeString":"void",
+			"argTypes":""
 		},
 		{
 			"name":"DecodeJSON",
@@ -207,58 +171,28 @@
 			"argTypes":"int context, string text"
 		},
 		{
-			"name":"NSGetModNames",
-			"helpText":"",
-			"returnTypeString":"array<string>",
-			"argTypes":""
-		},
-		{
-			"name":"NSIsModEnabled",
-			"helpText":"",
-			"returnTypeString":"bool",
-			"argTypes":"string modName"
-		},
-		{
 			"name":"NSSetModEnabled",
 			"helpText":"",
 			"returnTypeString":"void",
-			"argTypes":"string modName, bool enabled"
+			"argTypes":"int index, bool enabled"
 		},
 		{
-			"name":"NSGetModDescriptionByModName",
-			"helpText":"",
-			"returnTypeString":"string",
-			"argTypes":"string modName"
+			"name":"NSGetMods",
+			"helpText":"Get all installed mods",
+			"returnTypeString":"array<Mod>",
+			"argTypes":""
 		},
 		{
-			"name":"NSGetModVersionByModName",
-			"helpText":"",
-			"returnTypeString":"string",
-			"argTypes":"string modName"
+			"name":"NSGetInvalidMods",
+			"helpText":"Get all mods that are installed in a subfolder",
+			"returnTypeString":"array<Mod>",
+			"argTypes":""
 		},
 		{
-			"name":"NSGetModDownloadLinkByModName",
+			"name":"NSReloadMods",
 			"helpText":"",
-			"returnTypeString":"string",
-			"argTypes":"string modName"
-		},
-		{
-			"name":"NSGetModLoadPriority",
-			"helpText":"",
-			"returnTypeString":"int",
-			"argTypes":"string modName"
-		},
-		{
-			"name":"NSIsModRequiredOnClient",
-			"helpText":"",
-			"returnTypeString":"bool",
-			"argTypes":"string modName"
-		},
-		{
-			"name":"NSGetModConvarsByModName",
-			"helpText":"",
-			"returnTypeString":"array<string>",
-			"argTypes":"string modName"
+			"returnTypeString":"void",
+			"argTypes":""
 		},
 		{
 			"name":"DecodeJSON",
@@ -365,58 +299,22 @@
 			"argTypes":"int promoDataKey"
 		},
 		{
-			"name":"NSGetModNames",
-			"helpText":"",
-			"returnTypeString":"array<string>",
-			"argTypes":""
-		},
-		{
-			"name":"NSIsModEnabled",
-			"helpText":"",
-			"returnTypeString":"bool",
-			"argTypes":"string modName"
-		},
-		{
 			"name":"NSSetModEnabled",
 			"helpText":"",
 			"returnTypeString":"void",
-			"argTypes":"string modName, bool enabled"
+			"argTypes":"int index, bool enabled"
 		},
 		{
-			"name":"NSGetModDescriptionByModName",
-			"helpText":"",
-			"returnTypeString":"string",
-			"argTypes":"string modName"
+			"name":"NSGetMods",
+			"helpText":"Get all installed mods",
+			"returnTypeString":"array<Mod>",
+			"argTypes":""
 		},
 		{
-			"name":"NSGetModVersionByModName",
-			"helpText":"",
-			"returnTypeString":"string",
-			"argTypes":"string modName"
-		},
-		{
-			"name":"NSGetModDownloadLinkByModName",
-			"helpText":"",
-			"returnTypeString":"string",
-			"argTypes":"string modName"
-		},
-		{
-			"name":"NSGetModLoadPriority",
-			"helpText":"",
-			"returnTypeString":"int",
-			"argTypes":"string modName"
-		},
-		{
-			"name":"NSIsModRequiredOnClient",
-			"helpText":"",
-			"returnTypeString":"bool",
-			"argTypes":"string modName"
-		},
-		{
-			"name":"NSGetModConvarsByModName",
-			"helpText":"",
-			"returnTypeString":"array<string>",
-			"argTypes":"string modName"
+			"name":"NSGetInvalidMods",
+			"helpText":"Get all mods that are installed in a subfolder",
+			"returnTypeString":"array<Mod>",
+			"argTypes":""
 		},
 		{
 			"name":"NSReloadMods",
