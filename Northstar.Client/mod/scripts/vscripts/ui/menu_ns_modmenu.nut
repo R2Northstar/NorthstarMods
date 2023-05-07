@@ -31,9 +31,9 @@ struct {
 } mouseDeltaBuffer
 
 struct {
-	array<PanelContent> mods
+	array<PanelContent> panels
 	var menu
-	array<var> panels
+	array<var> uiPanels
 	int scrollOffset = 0
 	array<string> enabledMods
 	var currentButton
@@ -70,7 +70,7 @@ void function AdvanceToModListMenu( var button )
 void function InitModMenu()
 {
 	file.menu = GetMenu( "ModListMenu" )
-	file.panels = GetElementsByClassname( file.menu, "ModSelectorPanel" )
+	file.uiPanels = GetElementsByClassname( file.menu, "ModSelectorPanel" )
 
 	var rui = Hud_GetRui( Hud_GetChild( file.menu, "WarningLegendImage" ) )
 	RuiSetImage( rui, "basicImage", $"ui/menu/common/dialog_error" )
@@ -78,7 +78,7 @@ void function InitModMenu()
 	RuiSetFloat( Hud_GetRui( Hud_GetChild( file.menu, "ModEnabledBar" ) ), "basicImageAlpha", 0.8 )
 
 	// Mod buttons
-	foreach ( var panel in file.panels )
+	foreach ( var panel in file.uiPanels )
 	{
 		var button = Hud_GetChild( panel, "BtnMod" )
 		AddButtonEventHandler( button, UIE_GET_FOCUS, OnModButtonFocused )
@@ -171,11 +171,11 @@ void function OnModMenuClosed()
 
 void function OnModButtonFocused( var button )
 {
-	if( int ( Hud_GetScriptID( Hud_GetParent( button ) ) ) > file.mods.len() )
+	if( int ( Hud_GetScriptID( Hud_GetParent( button ) ) ) > file.panels.len() )
 		return
 
 	file.currentButton = button
-	file.lastPanel = file.mods[ int ( Hud_GetScriptID( Hud_GetParent( button ) ) ) + file.scrollOffset - 1 ]
+	file.lastPanel = file.panels[ int ( Hud_GetScriptID( Hud_GetParent( button ) ) ) + file.scrollOffset - 1 ]
 	Mod lastMod = file.lastPanel.mod
 
 	var rui = Hud_GetRui( Hud_GetChild( file.menu, "LabelDetails" ) )
@@ -206,7 +206,7 @@ void function OnModButtonFocused( var button )
 
 void function OnModButtonPressed( var button )
 {
-	PanelContent pc = file.mods[ int ( Hud_GetScriptID( Hud_GetParent( button ) ) ) + file.scrollOffset - 1 ]
+	PanelContent pc = file.panels[ int ( Hud_GetScriptID( Hud_GetParent( button ) ) ) + file.scrollOffset - 1 ]
 	Mod mod = pc.mod
 
 	if ( pc.type == PanelType.INVALID_MOD )
@@ -219,7 +219,7 @@ void function OnModButtonPressed( var button )
 	{
 		NSSetModEnabled( mod.index, !mod.enabled )
 		mod.enabled = !mod.enabled
-		var panel = file.panels[ int ( Hud_GetScriptID( Hud_GetParent( button ) ) ) - 1 ]
+		var panel = file.uiPanels[ int ( Hud_GetScriptID( Hud_GetParent( button ) ) ) - 1 ]
 		SetControlBoxColor( Hud_GetChild( panel, "ControlBox" ), mod.enabled )
 		SetControlBarColor( mod.enabled )
 		SetModEnabledHelperImageAsset( Hud_GetChild( panel, "EnabledImage" ), mod )
@@ -241,7 +241,7 @@ void function OnAuthenticationAgreementButtonPressed( var button )
 
 void function OnModLinkButtonPressed( var button )
 {
-	string link = file.mods[ int ( Hud_GetScriptID( Hud_GetParent( file.currentButton ) ) ) + file.scrollOffset - 1 ].mod.link
+	string link = file.panels[ int ( Hud_GetScriptID( Hud_GetParent( file.currentButton ) ) ) + file.scrollOffset - 1 ].mod.link
 	if ( link.find("http://") != 0 && link.find("https://") != 0 )
 		link = format( "http://%s", link ) // links without the http or https protocol get opened in the internal browser
 	LaunchExternalWebBrowser( link, WEBBROWSER_FLAG_FORCEEXTERNAL )
@@ -293,12 +293,12 @@ void function CoreModToggleDialog( string mod )
 
 void function DisableMod()
 {
-	Mod mod = file.mods[ int ( Hud_GetScriptID( Hud_GetParent( file.currentButton ) ) ) + file.scrollOffset - 1 ].mod
+	Mod mod = file.panels[ int ( Hud_GetScriptID( Hud_GetParent( file.currentButton ) ) ) + file.scrollOffset - 1 ].mod
 
 	NSSetModEnabled( mod.index, false )
 	mod.enabled = false
 
-	var panel = file.panels[ int ( Hud_GetScriptID( Hud_GetParent( file.currentButton ) ) ) - 1]
+	var panel = file.uiPanels[ int ( Hud_GetScriptID( Hud_GetParent( file.currentButton ) ) ) - 1]
 	SetControlBoxColor( Hud_GetChild( panel, "ControlBox" ), mod.enabled )
 	SetControlBarColor( mod.enabled )
 	SetModEnabledHelperImageAsset( Hud_GetChild( panel, "EnabledImage" ), mod )
@@ -319,7 +319,7 @@ array<string> function GetEnabledModNames()
 
 void function HideAllPanels()
 {
-	foreach ( var panel in file.panels )
+	foreach ( var panel in file.uiPanels )
 	{
 		Hud_SetEnabled( panel, false )
 		Hud_SetVisible( panel, false )
@@ -345,7 +345,7 @@ void function AddInvalidModsToPanels()
 	header.name = Localize( "#INCORRECT_MODS_MODLIST_HEADER", invalidMods.len() )
 	headerPanel.mod = header
 
-	file.mods.append( headerPanel )
+	file.panels.append( headerPanel )
 
 	foreach ( invalidMod in invalidMods )
 	{
@@ -354,13 +354,13 @@ void function AddInvalidModsToPanels()
 
 		p.mod.enabled = false // the mod might not be explicitly disabled in enabledmods.json, but should always show as disabled in the list 
 
-		file.mods.append( p )
+		file.panels.append( p )
 	}
 }
 
 void function RefreshMods()
 {
-	file.mods.clear()
+	file.panels.clear()
 
 	string searchTerm = Hud_GetUTF8Text( Hud_GetChild( file.menu, "BtnModsSearch" ) ).tolower()
 	array<Mod> mods = NSGetMods()
@@ -410,24 +410,24 @@ void function RefreshMods()
 			pc.mod = m
 			pc.type = PanelType.HEADER
 
-			file.mods.append( pc )
+			file.panels.append( pc )
 		}
 
 		PanelContent pc
 		pc.type = PanelType.MOD
 		pc.mod = mod
-		file.mods.append( pc )
+		file.panels.append( pc )
 	}
 }
 
 void function DisplayModPanels()
 {
-	foreach ( int i, var panel in file.panels)
+	foreach ( int i, var panel in file.uiPanels)
 	{
-		if ( i >= file.mods.len() || file.scrollOffset + i >= file.mods.len() ) // don't try to show more panels than needed
+		if ( i >= file.panels.len() || file.scrollOffset + i >= file.panels.len() ) // don't try to show more panels than needed
 			break
 
-		PanelContent c = file.mods[ file.scrollOffset + i ]
+		PanelContent c = file.panels[ file.scrollOffset + i ]
 		Mod mod = c.mod
 		var btn = Hud_GetChild( panel, "BtnMod" )
 		var headerLabel = Hud_GetChild( panel, "Header" )
@@ -569,7 +569,7 @@ void function UpdateMouseDeltaBuffer(int x, int y)
 
 void function SliderBarUpdate()
 {
-	if ( file.mods.len() <= 15 )
+	if ( file.panels.len() <= 15 )
 		return
 
 	var sliderButton = Hud_GetChild( file.menu , "BtnModListSlider" )
@@ -583,7 +583,7 @@ void function SliderBarUpdate()
 	float maxYPos = minYPos - (maxHeight - Hud_GetHeight( sliderPanel ))
 	float useableSpace = (maxHeight - Hud_GetHeight( sliderPanel ))
 
-	float jump = minYPos - (useableSpace / ( float( file.mods.len())))
+	float jump = minYPos - (useableSpace / ( float( file.panels.len())))
 
 	// got local from official respaw scripts, without untyped throws an error
 	local pos =	Hud_GetPos(sliderButton)[1]
@@ -596,7 +596,7 @@ void function SliderBarUpdate()
 	Hud_SetPos( sliderPanel , 2, newPos )
 	Hud_SetPos( movementCapture , 2, newPos )
 
-	file.scrollOffset = -int( ( (newPos - minYPos) / useableSpace ) * ( file.mods.len() - PANELS_LEN) )
+	file.scrollOffset = -int( ( (newPos - minYPos) / useableSpace ) * ( file.panels.len() - PANELS_LEN) )
 	UpdateList()
 }
 
@@ -606,7 +606,7 @@ void function UpdateListSliderPosition()
 	var sliderPanel = Hud_GetChild( file.menu , "BtnModListSliderPanel" )
 	var movementCapture = Hud_GetChild( file.menu , "MouseMovementCapture" )
 
-	float mods = float ( file.mods.len() )
+	float mods = float ( file.panels.len() )
 
 	float minYPos = -40.0 * (GetScreenSize()[1] / 1080.0)
 	float useableSpace = (604.0 * (GetScreenSize()[1] / 1080.0) - Hud_GetHeight( sliderPanel ))
@@ -626,7 +626,7 @@ void function UpdateListSliderHeight()
 	var sliderPanel = Hud_GetChild( file.menu , "BtnModListSliderPanel" )
 	var movementCapture = Hud_GetChild( file.menu , "MouseMovementCapture" )
 
-	float mods = float ( file.mods.len() )
+	float mods = float ( file.panels.len() )
 
 	float maxHeight = 604.0 * (GetScreenSize()[1] / 1080.0)
 	float minHeight = 80.0 * (GetScreenSize()[1] / 1080.0)
@@ -643,10 +643,10 @@ void function UpdateListSliderHeight()
 
 void function OnScrollDown( var button )
 {
-	if ( file.mods.len() <= PANELS_LEN ) return
+	if ( file.panels.len() <= PANELS_LEN ) return
 	file.scrollOffset += 5
-	if (file.scrollOffset + PANELS_LEN > file.mods.len())
-		file.scrollOffset = file.mods.len() - PANELS_LEN
+	if (file.scrollOffset + PANELS_LEN > file.panels.len())
+		file.scrollOffset = file.panels.len() - PANELS_LEN
 	Hud_SetFocused( Hud_GetChild( file.menu, "BtnModListSlider" ) )
 	ValidateScrollOffset()
 }
@@ -662,10 +662,10 @@ void function OnScrollUp( var button )
 
 void function OnDownArrowSelected( var button )
 {
-	if ( file.mods.len() <= PANELS_LEN ) return
+	if ( file.panels.len() <= PANELS_LEN ) return
 	file.scrollOffset += 1
-	if (file.scrollOffset + PANELS_LEN > file.mods.len())
-		file.scrollOffset = file.mods.len() - PANELS_LEN
+	if (file.scrollOffset + PANELS_LEN > file.panels.len())
+		file.scrollOffset = file.panels.len() - PANELS_LEN
 	ValidateScrollOffset()
 }
 
@@ -680,8 +680,8 @@ void function OnUpArrowSelected( var button )
 void function ValidateScrollOffset()
 {
 	RefreshMods()
-	if( file.scrollOffset + 15  > file.mods.len() )
-		file.scrollOffset = file.mods.len() - 15
+	if( file.scrollOffset + 15  > file.panels.len() )
+		file.scrollOffset = file.panels.len() - 15
 	if( file.scrollOffset < 0 )
 		file.scrollOffset = 0
 	HideAllPanels()
