@@ -182,7 +182,7 @@ void function OnModButtonFocused( var button )
 
 	RuiSetGameTime( rui, "startTime", -99999.99 ) // make sure it skips the whole animation for showing this
 	RuiSetString( rui, "headerText", lastMod.name )
-	RuiSetString( rui, "messageText", FormatModDescription( lastMod ) )
+	RuiSetString( rui, "messageText", FormatPanelDescription( file.lastPanel ) )
 
 	// Add a button to open the link with if required
 	var linkButton = Hud_GetChild( file.menu, "ModPageButton" )
@@ -270,7 +270,7 @@ void function OnHideConVarsChange( var n )
 	if ( file.lastPanel.mod.name == "" ) // not sure if this is stil needed. Leaving it in just to be sure
 		return
 	var rui = Hud_GetRui( Hud_GetChild( file.menu, "LabelDetails" ) )
-	RuiSetString( rui, "messageText", FormatModDescription( file.lastPanel.mod ) )
+	RuiSetString( rui, "messageText", FormatPanelDescription( file.lastPanel ) )
 }
 
 // LIST LOGIC
@@ -521,6 +521,21 @@ vector function GetControlColorForMod( bool modEnabled )
 	unreachable
 }
 
+string function FormatPanelDescription( PanelContent panel )
+{
+	if ( panel.type == PanelType.INVALID_MOD )
+		return Localize(
+				"#INCORRECT_MOD_INSTALL_DESCRIPTION",
+				format(
+						"%s/mods%s",
+						panel.mod.installLocation.slice( 0, panel.mod.installLocation.find("/") ),
+						panel.mod.installLocation.slice( FindLast( panel.mod.installLocation, '/' ) )
+					),
+				panel.mod.installLocation
+			)
+	return FormatModDescription( panel.mod )
+}
+
 string function FormatModDescription( Mod mod )
 {
 	string ret
@@ -725,4 +740,13 @@ int function SortModsByAscendingPriority( Mod a, Mod b )
 	else if ( a. loadPriority < b.loadPriority )
 		return -1
 	return 0
+}
+
+int function FindLast(string s, int c)
+{
+	int index = -1
+	foreach( int i, sc in s )
+		if( sc == c )
+			index = i
+	return index
 }
