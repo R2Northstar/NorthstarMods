@@ -38,7 +38,7 @@ struct {
 	array<string> enabledMods
 	var currentButton
 	string searchTerm
-	Mod& lastMod
+	PanelContent& lastPanel
 } file
 
 const int PANELS_LEN = 15
@@ -175,20 +175,22 @@ void function OnModButtonFocused( var button )
 		return
 
 	file.currentButton = button
-	file.lastMod = file.mods[ int ( Hud_GetScriptID( Hud_GetParent( button ) ) ) + file.scrollOffset - 1 ].mod
+	file.lastPanel = file.mods[ int ( Hud_GetScriptID( Hud_GetParent( button ) ) ) + file.scrollOffset - 1 ]
+	Mod lastMod = file.lastPanel.mod
+
 	var rui = Hud_GetRui( Hud_GetChild( file.menu, "LabelDetails" ) )
 
 	RuiSetGameTime( rui, "startTime", -99999.99 ) // make sure it skips the whole animation for showing this
-	RuiSetString( rui, "headerText", file.lastMod.name )
-	RuiSetString( rui, "messageText", FormatModDescription( file.lastMod ) )
+	RuiSetString( rui, "headerText", lastMod.name )
+	RuiSetString( rui, "messageText", FormatModDescription( lastMod ) )
 
 	// Add a button to open the link with if required
 	var linkButton = Hud_GetChild( file.menu, "ModPageButton" )
-	if ( file.lastMod.link.len() )
+	if ( lastMod.link.len() )
 	{
 		Hud_SetEnabled( linkButton, true )
 		Hud_SetVisible( linkButton, true )
-		Hud_SetText( linkButton, file.lastMod.link )
+		Hud_SetText( linkButton, lastMod.link )
 	}
 	else
 	{
@@ -196,10 +198,10 @@ void function OnModButtonFocused( var button )
 		Hud_SetVisible( linkButton, false )
 	}
 
-	SetControlBarColor( file.lastMod.enabled )
+	SetControlBarColor( file.lastPanel.mod.enabled )
 
-	Hud_SetVisible( Hud_GetChild( file.menu, "WarningLegendLabel"  ), file.lastMod.requiredOnClient )
-	Hud_SetVisible( Hud_GetChild( file.menu, "WarningLegendImage"  ), file.lastMod.requiredOnClient )
+	Hud_SetVisible( Hud_GetChild( file.menu, "WarningLegendLabel"  ), file.lastPanel.mod.requiredOnClient )
+	Hud_SetVisible( Hud_GetChild( file.menu, "WarningLegendImage"  ), file.lastPanel.mod.requiredOnClient )
 }
 
 void function OnModButtonPressed( var button )
@@ -265,10 +267,10 @@ void function OnBtnFiltersClear_Activate( var button )
 
 void function OnHideConVarsChange( var n )
 {
-	if ( file.lastMod.name == "" ) // not sure if this is stil needed. Leaving it in just to be sure
+	if ( file.lastPanel.mod.name == "" ) // not sure if this is stil needed. Leaving it in just to be sure
 		return
 	var rui = Hud_GetRui( Hud_GetChild( file.menu, "LabelDetails" ) )
-	RuiSetString( rui, "messageText", FormatModDescription( file.lastMod ) )
+	RuiSetString( rui, "messageText", FormatModDescription( file.lastPanel.mod ) )
 }
 
 // LIST LOGIC
@@ -340,7 +342,7 @@ void function AddInvalidModsToPanels()
 	
 	PanelContent headerPanel = { type = PanelType.HEADER, ... }
 	Mod header
-	header.name = format( "Incorrectly installed mods (%i)", invalidMods.len() )
+	header.name = Localize( "#INCORRECT_MODS_MODLIST_HEADER", invalidMods.len() )
 	headerPanel.mod = header
 
 	file.mods.append( headerPanel )
