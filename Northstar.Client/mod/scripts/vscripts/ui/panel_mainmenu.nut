@@ -63,7 +63,6 @@ void function InitMainMenuPanel()
 		void function( var button )
 		{ 
 			AdvanceMenu( GetMenu( "ModListMenu" ) )
-			ScrollToModListIndex( 0 )
 		}
 	)
 
@@ -201,9 +200,11 @@ void function ShowInvalidModsHint()
 {
 	wait 1.0 // wait a bit before showing the warning to give UI a chance to not lag / load
 
-	array< table< string, string > > invalidMods = NSGetInvalidMods()
-	if( !invalidMods.len() )
+	array<Mod> invalidMods = NSGetInvalidMods()
+
+	if( !invalidMods.len() ) // Don't show if all mods are installed correctly
 		return
+
 	var panel = Hud_GetChild( file.panel, "NSInvalidModsHint" )
 
 	int width = Hud_GetWidth( Hud_GetChild( panel, "Text" ) ) + 110 // autowide is a bit scuffed and doesn't take everything into account
@@ -453,9 +454,10 @@ void function UpdatePlayButton( var button )
 			{
 				// restrict non-vanilla players from accessing official servers
 				bool hasNonVanillaMods = false
-				foreach ( string modName in NSGetModNames() )
+
+				foreach ( Mod mod in NSGetMods() )
 				{
-					if ( NSIsModEnabled( modName ) && NSIsModRequiredOnClient( modName ) )
+					if( mod.enabled && mod.requiredOnClient )
 					{
 						hasNonVanillaMods = true
 						break
