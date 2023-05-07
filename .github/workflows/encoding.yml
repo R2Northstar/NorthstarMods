@@ -6,8 +6,16 @@ jobs:
     runs-on: ubuntu-20.04
     steps:
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
       - name: Check localization files encoding
         run: |
           files=$(ls Northstar.Client/mod/resource/northstar_client_localisation_*.txt)
           IFS=$'\n'; files=($files); unset IFS; ! file --mime "${files[@]}" | grep -v "charset=utf-16le"
+  check-missing-translations:
+    runs-on: ubuntu-20.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+      - name: Look out for missing translations
+        run: node .github/build/find-missing-translations.js
+        continue-on-error: true
