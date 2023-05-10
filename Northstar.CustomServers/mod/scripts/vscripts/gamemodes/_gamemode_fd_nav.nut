@@ -51,10 +51,13 @@ void function singleNav_thread( entity npc, string routeName, int nodesToSkip = 
 
 	//Do not make Ticks ignore potential targets just to charge at the Harvester
 	//Arc Titans apparently also stops to fight players on place rather that fiercely push forward
-	if ( npc.GetClassName() == "npc_frag_drone" || npcName == "npc_titan_stryder_leadwall_arc" )
+	if ( npc.GetClassName() == "npc_frag_drone" )
 		npc.AssaultSetFightRadius( expect int( npc.Dev_GetAISettingByKeyField( "LookDistDefault_Combat" ) ) )
 	else
 		npc.AssaultSetFightRadius( 0 )
+		
+	if ( npcName == "empTitan" )
+		npc.AssaultSetFightRadius( 2000 )
 	
 	int FailCount = 0
 	while ( targetNode != null )

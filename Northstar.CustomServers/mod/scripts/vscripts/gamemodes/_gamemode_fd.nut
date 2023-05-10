@@ -246,8 +246,7 @@ void function FD_BoostPurchaseCallback( entity player, BoostStoreData data )
 
 void function FD_PlayerRespawnCallback( entity player )
 {
-	if( IsHarvesterAlive( fd_harvester.harvester ) )
-		thread FD_PlayerRespawnThreaded( player )
+	thread FD_PlayerRespawnThreaded( player )
 }
 
 void function FD_PlayerRespawnThreaded( entity player )
@@ -267,7 +266,7 @@ void function FD_PlayerRespawnThreaded( entity player )
 	//If the wave is on break joiners can buy stuff with the time remaining
 	//Also more than 4 players, additionals will spawn directly on ground
 	//Respawning as titan also ignores this because err, makes no sense
-	if ( player.IsTitan() )
+	if ( player.IsTitan() || !IsHarvesterAlive( fd_harvester.harvester ) )
 		return
 	if( file.dropshipState == eDropshipState.Returning || file.playersInShip >=4 || GetGameState() != eGameState.Playing || GetGlobalNetInt( "FD_waveState") == WAVE_STATE_BREAK || GetGlobalNetInt( "FD_waveState") == WAVE_STATE_COMPLETE || GetConVarBool( "ns_fd_disable_respawn_dropship" ) )
 	{
@@ -302,7 +301,13 @@ void function FD_PlayerRespawnThreaded( entity player )
 		file.playersInDropship.append( player )
 	}
 	
-	else if( IsValidPlayer( player ) )
+	thread FD_DelayRespawnProtection( player )
+}
+
+void function FD_DelayRespawnProtection( entity player )
+{
+	wait 5
+	if( IsValidPlayer( player ) )
 	{
 		player.ClearInvulnerable()
 		player.SetNoTarget( false )
@@ -2013,7 +2018,7 @@ void function DamageScaleByDifficulty( entity ent, var damageInfo )
 		return
 	}
 	
-	if ( damageSourceID == eDamageSourceId.damagedef_stalker_powersupply_explosion_large_at && ent.IsPlayer() && ent.IsTitan() ) //Warn Titan players about Stalkers
+	if ( damageSourceID == eDamageSourceId.damagedef_stalker_powersupply_explosion_large_at && ent.IsPlayer() && ent.GetTitanSoul() ) //Warn Titan players about Stalkers
 		PlayFactionDialogueToPlayer( "fd_stalkerExploNag", attacker )
 
 	DamageInfo_SetDamage( damageInfo, damageAmount * GetCurrentPlaylistVarFloat( "fd_player_damage_scalar", 1.0 ) )
