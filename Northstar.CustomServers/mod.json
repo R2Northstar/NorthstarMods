@@ -84,11 +84,11 @@
 		},
 		{
 			"Name": "ns_fd_grunt_primary_weapon",
-			"DefaultValue": "mp_weapon_rspn101"
+			"DefaultValue": "mp_weapon_rspn101,mp_weapon_car,mp_weapon_alternator_smg,mp_weapon_hemlok_smg,mp_weapon_r97"
 		},
 		{
 			"Name": "ns_fd_spectre_primary_weapon",
-			"DefaultValue": "mp_weapon_rspn101"
+			"DefaultValue": "mp_weapon_rspn101,mp_weapon_car,mp_weapon_alternator_smg,mp_weapon_hemlok_smg,mp_weapon_r97"
 		},
 		{
 			"Name": "ns_fd_disable_respawn_dropship",

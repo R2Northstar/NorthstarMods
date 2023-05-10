@@ -120,6 +120,11 @@ global enum FD_TitanType
 global table< string, entity > GlobalEventEntitys
 global array< array<WaveEvent> > waveEvents
 
+global string Cvar_gruntweapons
+global array<string> FD_GruntWeapons
+global string Cvar_spectreweapons
+global array<string> FD_SpectreWeapons
+
 void function executeWave()
 {	
 	int currentWave = GetGlobalNetInt( "FD_currentWave" ) + 1
@@ -1095,7 +1100,6 @@ void function spawnDroppodGrunts( SmokeEvent smokeEvent, SpawnEvent spawnEvent, 
 
 	string squadName = MakeSquadName( TEAM_IMC, UniqueString() )
 	string at_weapon = GetConVarString( "ns_fd_grunt_at_weapon" )
-	string baseweapon = GetConVarString( "ns_fd_grunt_primary_weapon" )
 	array<entity> guys
 
 	for ( int i = 0; i < spawnEvent.spawnAmount; i++ )
@@ -1116,7 +1120,11 @@ void function spawnDroppodGrunts( SmokeEvent smokeEvent, SpawnEvent spawnEvent, 
 		SetTeam( guy, TEAM_IMC )
 		guy.EnableNPCFlag(  NPC_ALLOW_INVESTIGATE | NPC_ALLOW_HAND_SIGNALS | NPC_ALLOW_FLEE )
 		guy.DisableNPCFlag( NPC_ALLOW_PATROL )
-		SetSpawnOption_Weapon( guy, baseweapon )
+		if ( FD_GruntWeapons.len() > 0 )
+		{
+			string baseweapon = FD_GruntWeapons[ RandomInt( FD_GruntWeapons.len() ) ]
+			SetSpawnOption_Weapon( guy, baseweapon )
+		}
 		DispatchSpawn( guy )
 		guy.SetEfficientMode( true )
 		guy.SetParent( pod, "ATTACH", true )
@@ -1154,7 +1162,6 @@ void function spawnGruntDropship( SmokeEvent smokeEvent, SpawnEvent spawnEvent, 
 	printt( "Spawning Grunt Dropship at: " + spawnEvent.origin )
 	string squadName = MakeSquadName( TEAM_IMC, UniqueString() )
 	string at_weapon = GetConVarString( "ns_fd_grunt_at_weapon" )
-	string baseweapon = GetConVarString( "ns_fd_grunt_primary_weapon" )
 	
 	vector origin 		= spawnEvent.origin
 	origin.z 		   += 448 //Expected to people make coordinates in the ground so we add this up for the hover height
@@ -1233,7 +1240,11 @@ void function spawnGruntDropship( SmokeEvent smokeEvent, SpawnEvent spawnEvent, 
 		SetTeam( guy, TEAM_IMC )
 		guy.EnableNPCFlag(  NPC_ALLOW_INVESTIGATE | NPC_ALLOW_HAND_SIGNALS | NPC_ALLOW_FLEE )
 		guy.DisableNPCFlag( NPC_ALLOW_PATROL )
-		SetSpawnOption_Weapon( guy, baseweapon )
+		if ( FD_GruntWeapons.len() > 0 )
+		{
+			string baseweapon = FD_GruntWeapons[ RandomInt( FD_GruntWeapons.len() ) ]
+			SetSpawnOption_Weapon( guy, baseweapon )
+		}
 		DispatchSpawn( guy )
 		
 		SetSquad( guy, squadName )
@@ -1358,7 +1369,6 @@ void function spawnDroppodSpectreMortar( SmokeEvent smokeEvent, SpawnEvent spawn
 	InitFireteamDropPod( pod )
 
 	string squadName = MakeSquadName( TEAM_IMC, UniqueString() )
-	string baseweapon = GetConVarString( "ns_fd_spectre_primary_weapon" )
 	array<entity> guys
 
 	for ( int i = 0; i < 4; i++ )
@@ -1368,7 +1378,11 @@ void function spawnDroppodSpectreMortar( SmokeEvent smokeEvent, SpawnEvent spawn
 		if( spawnEvent.entityGlobalKey != "" )
 			GlobalEventEntitys[ spawnEvent.entityGlobalKey + i.tostring() ] <- guy
 		SetTeam( guy, TEAM_IMC )
-		SetSpawnOption_Weapon( guy, baseweapon )
+		if ( FD_SpectreWeapons.len() > 0 )
+		{
+			string baseweapon = FD_SpectreWeapons[ RandomInt( FD_SpectreWeapons.len() ) ]
+			SetSpawnOption_Weapon( guy, baseweapon )
+		}
 		DispatchSpawn( guy )
 		spawnedNPCs.append(guy)
 		guy.SetEfficientMode( true )

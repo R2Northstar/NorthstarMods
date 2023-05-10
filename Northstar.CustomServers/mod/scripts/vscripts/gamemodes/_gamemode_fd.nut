@@ -193,6 +193,11 @@ void function GamemodeFD_Init()
 	difficultyLevel = FD_GetDifficultyLevel() //Refresh this only on map load, to avoid midgame commands messing up with difficulties (i.e setting mp_gamemode fd_hard midgame in a regular match through console on local host would immediately make Stalkers spawns with EPG)
 	elitesAllowed = GetConVarBool( "ns_fd_allow_elite_titans" )
 	titanfallblockAllowed = GetConVarBool( "ns_fd_allow_titanfall_block" )
+	
+	Cvar_gruntweapons = GetConVarString( "ns_fd_grunt_primary_weapon" )
+	FD_GruntWeapons = split( Cvar_gruntweapons, "," )
+	Cvar_spectreweapons = GetConVarString( "ns_fd_spectre_primary_weapon" )
+	FD_SpectreWeapons = split( Cvar_spectreweapons, "," )
 }
 
 void function ScoreEvent_SetupEarnMeterValuesForFrontierDefense()
