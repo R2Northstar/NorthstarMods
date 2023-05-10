@@ -161,7 +161,6 @@ void function PlayerInventory_TakeAllInventoryItems( entity player )
 
 void function PlayerInventory_RefreshEquippedState( entity player )
 {
-	
 }
 
 void function PlayerInventory_StartCriticalSection( entity player )
