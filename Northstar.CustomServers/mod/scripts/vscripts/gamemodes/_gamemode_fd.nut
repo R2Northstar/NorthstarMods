@@ -28,26 +28,11 @@ struct player_struct_fd{
 	int defenseScoreThisRound
 	int moneyThisRound
 	array< entity > deployedEntityThisRound
-	/*
-	int totalMVPs
-	int mortarUnitsKilled
-	int moneySpend
-	int coresUsed
-	float longestTitanLife
-	int turretsRepaired
-	int moneyShared
-	float timeNearHarvester //dont know how to track
-	float longestLife
-	int heals //dont know what to track
-	int titanKills
-	float damageDealt
-	int harvesterHeals
-	int turretKills
-	*/
 	float lastRespawn
 	float lastTitanDrop
 	float lastNearHarvester
 	bool leaveHarvester
+	bool boughtAmpedWeapons
 }
 
 global HarvesterStruct& fd_harvester
@@ -252,13 +237,14 @@ void function FD_PlayerRespawnCallback( entity player )
 void function FD_PlayerRespawnThreaded( entity player )
 {
 	WaitFrame()
-	if( player in file.players )
-		file.players[player].lastRespawn = Time()
-	if( GetCurrentPlaylistVarInt( "fd_at_unlimited_ammo", 1 ) )
-		FD_GivePlayerInfiniteAntiTitanAmmo( player )
-	if ( GetGlobalNetInt( "FD_currentWave" ) == 0 )
+	
+	if( IsValidPlayer( player ) )
 	{
-		if ( IsValid( player ) )
+		if( player in file.players )
+			file.players[player].lastRespawn = Time()
+		if( GetCurrentPlaylistVarInt( "fd_at_unlimited_ammo", 1 ) )
+			FD_GivePlayerInfiniteAntiTitanAmmo( player )
+		if ( GetGlobalNetInt( "FD_currentWave" ) == 0 )
 			PlayerEarnMeter_SetMode( player, 0 )
 	}
 	
@@ -278,11 +264,13 @@ void function FD_PlayerRespawnThreaded( entity player )
 		}
 		return
 	}
-
-	player.SetInvulnerable()
-	player.SetNoTarget( true )
 	
-	ScreenFadeFromBlack( player, 1.5, 0.5 )
+	if( IsValidPlayer( player ) )
+	{
+		player.SetInvulnerable()
+		player.SetNoTarget( true )
+		ScreenFadeFromBlack( player, 1.5, 0.5 )
+	}
 	
 	if( file.dropshipState == eDropshipState.Idle )
 		thread FD_DropshipSpawnDropship()
@@ -2018,8 +2006,8 @@ void function DamageScaleByDifficulty( entity ent, var damageInfo )
 		return
 	}
 	
-	if ( damageSourceID == eDamageSourceId.damagedef_stalker_powersupply_explosion_large_at && ent.IsPlayer() && ent.GetTitanSoul() ) //Warn Titan players about Stalkers
-		PlayFactionDialogueToPlayer( "fd_stalkerExploNag", attacker )
+	if ( damageSourceID == eDamageSourceId.damagedef_stalker_powersupply_explosion_large_at && ent.IsPlayer() && ent.IsTitan() ) //Warn Titan players about Stalkers
+		PlayFactionDialogueToPlayer( "fd_stalkerExploNag", ent )
 
 	DamageInfo_SetDamage( damageInfo, damageAmount * GetCurrentPlaylistVarFloat( "fd_player_damage_scalar", 1.0 ) )
 }
@@ -2473,6 +2461,9 @@ void function OnPlayerDisconnectedOrDestroyed( entity player )
 			npc.Destroy()
 	}
 	file.players[ player ].deployedEntityThisRound.clear()
+	
+	if( file.playersInDropship.contains( player ) )
+		file.playersInDropship.fastremovebyvalue( player )
 }
 
 void function ClearInValidTurret()

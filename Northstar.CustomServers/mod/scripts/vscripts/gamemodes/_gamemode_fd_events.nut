@@ -1623,12 +1623,12 @@ void function spawnNukeTitan( SmokeEvent smokeEvent, SpawnEvent spawnEvent, Flow
 	npc.EnableNPCMoveFlag( NPCMF_WALK_ALWAYS | NPCMF_WALK_NONCOMBAT | NPCMF_IGNORE_CLUSTER_DANGER_TIME )
 	npc.DisableNPCMoveFlag( NPCMF_PREFER_SPRINT | NPCMF_FOLLOW_SAFE_PATHS )
 	npc.DisableNPCFlag( NPC_DIRECTIONAL_MELEE )
-	npc.SetCapabilityFlag( bits_CAP_SYNCED_MELEE_ATTACK, false )
 	npc.AssaultSetFightRadius( 0 )
 	StatusEffect_AddEndless( npc, eStatusEffect.move_slow, 0.5 )
 	StatusEffect_AddEndless( npc, eStatusEffect.turn_slow, 0.5 )
 	StatusEffect_AddEndless( npc, eStatusEffect.dodge_speed_slow, 0.5 )
 	DispatchSpawn( npc )
+	npc.SetCapabilityFlag( bits_CAP_SYNCED_MELEE_ATTACK, false )
 	if( spawnEvent.entityGlobalKey != "" )
 		GlobalEventEntitys[spawnEvent.entityGlobalKey] <- npc
 	spawnedNPCs.append( npc )
