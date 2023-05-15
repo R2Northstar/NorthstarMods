@@ -1016,7 +1016,6 @@ void function spawnArcTitan( SmokeEvent smokeEvent, SpawnEvent spawnEvent, FlowC
 	AddMinimapForTitans( npc )
 	npc.WaitSignal( "TitanHotDropComplete" )
 	npc.GetTitanSoul().SetTitanSoulNetBool( "showOverheadIcon", true )
-	npc.AssaultSetFightRadius( 0 )
 	GlobalEventEntitys[spawnEvent.entityGlobalKey] <- npc
 	thread singleNav_thread( npc, spawnEvent.route )
 	thread EMPTitanThinkConstant( npc )
@@ -1679,9 +1678,11 @@ void function spawnSniperTitan( SmokeEvent smokeEvent, SpawnEvent spawnEvent, Fl
 		SlowEnemyMovementBasedOnDifficulty( npc )
 	}
 	SetTargetName( npc, GetTargetNameForID( spawnEvent.spawnType ) ) // required for client to create icons
+	npc.DisableNPCFlag( NPC_ALLOW_INVESTIGATE )
 	DispatchSpawn( npc )
 	if( spawnEvent.entityGlobalKey != "" )
 		GlobalEventEntitys[spawnEvent.entityGlobalKey] <- npc
+	npc.AssaultSetFightRadius( 0 )
 	spawnedNPCs.append( npc )
 	AddMinimapForTitans( npc )
 	npc.WaitSignal( "TitanHotDropComplete" )
@@ -1709,6 +1710,7 @@ void function SpawnToneSniperTitan( SmokeEvent smokeEvent, SpawnEvent spawnEvent
 		SlowEnemyMovementBasedOnDifficulty( npc )
 	}
 	SetTargetName( npc, GetTargetNameForID( spawnEvent.spawnType ) ) // required for client to create icons
+	npc.DisableNPCFlag( NPC_ALLOW_INVESTIGATE )
 	DispatchSpawn( npc )
 	if( spawnEvent.entityGlobalKey != "" )
 		GlobalEventEntitys[spawnEvent.entityGlobalKey] <- npc

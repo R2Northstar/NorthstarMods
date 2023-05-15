@@ -3,7 +3,7 @@ untyped
 global function MoveToSniperPosition
 global function SniperTitanThink
 
-const float SNIPER_TITAN_POSITION_SEARCH_RANGE = 4120
+const float SNIPER_TITAN_POSITION_SEARCH_RANGE = 8192
 
 
 
@@ -82,7 +82,7 @@ void function SniperTitanThink( entity titan, entity generator)
 		}
 	)
 	titan.SetEnemyChangeCallback( EnemyChanged)
-	thread CheckEnemy( titan ,generator)
+	//thread CheckEnemy( titan ,generator)
 	while( true )
 	{
 		WaitFrame()
@@ -108,13 +108,14 @@ void function CheckEnemy(entity titan,entity generator)
 		wait 1
 		if (!IsValid(titan.GetEnemy()))
 			continue
-
+		/*
 		if (!titan.CanSee(titan.GetEnemy()) && titan.GetEnemy() == generator)
 		{
 			waitthread CreateSniperTarget( titan , generator)
 			wait 1 // wait for 1 second so the signal doesn't get called too soon
 			table result = WaitSignal( titan, "SniperSwitchedEnemy" )
 		}
+		*/
 	}
 }
 
@@ -136,6 +137,7 @@ void function CreateSniperTarget(entity titan,entity generator)
 		result = TraceLine( origin, generator.GetOrigin() + <0, 0, 250>, titan )
 	}
 	entity snipertarget = CreateEntity( "info_target" )
+	snipertarget.SetOrigin( result.endPos )
 	DispatchSpawn( snipertarget )
 	snipertarget.SetOrigin( result.endPos ) // in front of the harvester i hope
 	SetTeam( snipertarget, TEAM_MILITIA )
@@ -155,7 +157,7 @@ void function CreateSniperTarget(entity titan,entity generator)
 	)
 }
 
-void function EnemyChanged( entity titan)
+void function EnemyChanged( entity titan )
 {
 	titan.Signal( "SniperSwitchedEnemy" )
 	entity enemy = titan.GetEnemy()

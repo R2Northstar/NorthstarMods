@@ -14,7 +14,8 @@ void function singleNav_thread( entity npc, string routeName, int nodesToSkip = 
 	if( !npc.IsNPC() )
 		return
 	if ( nextDistance == -1 )
-		nextDistance = npc.GetMinGoalRadius()
+		nextDistance = 256
+		//nextDistance = npc.GetMinGoalRadius()
 
 	npc.AssaultSetGoalHeight( 512 )
 	string npcName = npc.GetTargetName()
@@ -52,12 +53,10 @@ void function singleNav_thread( entity npc, string routeName, int nodesToSkip = 
 	//Do not make Ticks ignore potential targets just to charge at the Harvester
 	if ( npc.GetClassName() == "npc_frag_drone" )
 		npc.AssaultSetFightRadius( expect int( npc.Dev_GetAISettingByKeyField( "LookDistDefault_Combat" ) ) )
+	else if ( npcName == "empTitan" ) //Arc Titans apparently also stops to fight players on place rather that fiercely push forward
+		npc.AssaultSetFightRadius( 2000 )
 	else
 		npc.AssaultSetFightRadius( 0 )
-		
-	//Arc Titans apparently also stops to fight players on place rather that fiercely push forward
-	if ( npcName == "empTitan" )
-		npc.AssaultSetFightRadius( 2000 )
 	
 	int FailCount = 0
 	while ( targetNode != null )

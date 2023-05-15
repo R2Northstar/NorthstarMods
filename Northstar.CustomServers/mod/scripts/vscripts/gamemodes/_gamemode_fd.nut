@@ -183,6 +183,9 @@ void function GamemodeFD_Init()
 	FD_GruntWeapons = split( Cvar_gruntweapons, "," )
 	Cvar_spectreweapons = GetConVarString( "ns_fd_spectre_primary_weapon" )
 	FD_SpectreWeapons = split( Cvar_spectreweapons, "," )
+	
+	for( int i = 0; i < 20; i++ )//Setup NPC array for Harvester Damage tracking
+		file.harvesterDamageSource.append(0.0)
 }
 
 void function ScoreEvent_SetupEarnMeterValuesForFrontierDefense()
@@ -306,6 +309,28 @@ void function FD_OnPlayerGetsNewPilotLoadout( entity player, PilotLoadoutDef loa
 {
 	if( GetCurrentPlaylistVarInt( "fd_at_unlimited_ammo", 1 ) )
 		FD_GivePlayerInfiniteAntiTitanAmmo( player )
+		
+	//If player has bought the Amped Weapons before, keep it for the new weapons
+	if ( player.s.hasPermenantAmpedWeapons )
+	{
+		array<entity> weapons = player.GetMainWeapons()
+		foreach ( entity weapon in weapons )
+		{
+			weapon.RemoveMod( "silencer" )
+			foreach ( string mod in GetWeaponBurnMods( weapon.GetWeaponClassName() ) )
+			{
+				try
+				{
+					weapon.AddMod( mod )
+				}
+				catch( ex )
+				{
+					weapons.removebyvalue( weapon )
+				}
+			}
+			weapon.SetScriptFlags0( weapon.GetScriptFlags0() | WEAPONFLAG_AMPED )
+		}
+	}
 }
 
 void function FD_GivePlayerInfiniteAntiTitanAmmo( entity player )
@@ -360,6 +385,7 @@ void function GamemodeFD_OnPlayerKilled( entity victim, entity attacker, var dam
 	victim.s.currentKillstreak = 0
 	victim.s.lastKillTime = 0.0
 	victim.s.currentTimedKillstreak = 0
+	victim.s.hasPermenantAmpedWeapons = false
 
 	//play voicelines for amount of players alive
 	array<entity> militiaplayers = GetPlayerArrayOfTeam( TEAM_MILITIA )
@@ -402,6 +428,7 @@ void function GamemodeFD_InitPlayer( entity player )
 		awardStats[statRef] <- 0.0
 	}
 	file.playerAwardStats[player] <- awardStats
+	player.s.hasPermenantAmpedWeapons <- false
 	thread SetTurretSettings_threaded( player )
 	// only start the highlight when we start playing, not during dropship
 	if ( GetGameState() >= eGameState.Playing )
@@ -1001,7 +1028,7 @@ bool function runWave( int waveIndex, bool shouldDoBuyTime )
 
 	for( int i = 0; i < 20; i++ )//Number of npc type ids
 	{
-		file.harvesterDamageSource.append( 0.0 )
+		file.harvesterDamageSource[i] = 0
 	}
 
 	foreach( entity player in GetPlayerArray() )
@@ -1728,6 +1755,10 @@ void function OnHarvesterDamaged( entity harvester, var damageInfo )
 		}
 		
 		file.harvesterDamageTaken += damageAmount // track damage for wave recaps
+		
+		if (attackerTypeID > -1 )//Only track damage from existing ids
+			file.harvesterDamageSource[attackerTypeID] += damageAmount
+			
 		float newHealth = harvester.GetHealth() - damageAmount
 		float oldhealthpercent = ( ( harvester.GetHealth().tofloat() / harvester.GetMaxHealth() ) * 100 )
 		float healthpercent = ( ( newHealth / harvester.GetMaxHealth() ) * 100 )
@@ -2589,8 +2620,6 @@ void function FD_DropshipDropPlayer(entity player,int playerDropshipIndex)
 		WaittillAnimDone( player )
 		player.ClearParent()
 		ClearPlayerAnimViewEntity( player )
-		player.ClearInvulnerable()
-		player.SetNoTarget( false )
 	}
 }
 
