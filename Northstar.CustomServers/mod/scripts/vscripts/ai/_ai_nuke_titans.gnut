@@ -12,6 +12,8 @@ void function AutoTitan_SelfDestruct( entity titan )
 	if ( titan.ContextAction_IsBusy() )
 		titan.ContextAction_ClearBusy()
 
+	titan.SetNPCMoveSpeedScale( 0.01 )
+	titan.Anim_Stop()
 	thread TitanEjectPlayer( titan )
 }
 

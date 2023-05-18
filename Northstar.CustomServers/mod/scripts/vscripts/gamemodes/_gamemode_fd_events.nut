@@ -12,6 +12,8 @@ global function CreateDroppodStalkerEvent
 global function CreateDroppodSpectreMortarEvent
 global function CreateWaitUntilAliveEvent
 global function CreateWaitUntilAliveWeightedEvent
+global function CreateWaitForDeathOfEntitiesEvent
+global function CreateWaitForLessThanTypeIDEvent
 global function CreateCloakDroneEvent
 global function CreateDroppodTickEvent
 global function CreateSpawnDroneEvent
@@ -640,18 +642,18 @@ WaveEvent function CreateMonarchTitanEvent( vector origin, vector angles, string
 	return event
 }
 
-WaveEvent function CreateWaitForDeathOfEntitysEvent( array<string> waitGlobalDataKey, int nextEventIndex, int executeOnThisCall = 1 )
+WaveEvent function CreateWaitForDeathOfEntitiesEvent( array<string> waitGlobalDataKey, int nextEventIndex, int executeOnThisCall = 1 )
 {
 	WaveEvent event
 	event.eventFunction = waitForDeathOfEntitys
 	event.executeOnThisCall = executeOnThisCall
 	event.nextEventIndex = nextEventIndex
-	event. shouldThread = false
+	event.shouldThread = false
 	event.flowControlEvent.waitGlobalDataKey = waitGlobalDataKey
 	return event
 }
 
-WaveEvent function CreateWaitForLessThanTypedEvent(int aiTypeId,int amount,int nextEventIndex,int executeOnThisCall = 1 )
+WaveEvent function CreateWaitForLessThanTypeIDEvent(int aiTypeId,int amount,int nextEventIndex,int executeOnThisCall = 1 )
 {
 	WaveEvent event
 	event.eventFunction = waitForLessThanAliveTyped
@@ -898,14 +900,20 @@ void function spawnSmoke( SmokeEvent smokeEvent, SpawnEvent spawnEvent, FlowCont
 	SmokescreenStruct smokescreen
 	smokescreen.smokescreenFX = $"P_smokescreen_FD"
 	smokescreen.isElectric = false
-	smokescreen.origin = smokeEvent.position + < 0, 0, 96 >
+	smokescreen.origin = smokeEvent.position + < 0, 0, 64 >
 	smokescreen.angles = < 0, 0, 0 >
+	smokescreen.fxXYRadius = 160
+	smokescreen.fxZRadius = 128
 	smokescreen.lifetime = smokeEvent.lifetime
 	smokescreen.deploySound1p = "SmokeWall_Activate"
 	smokescreen.deploySound3p = "SmokeWall_Activate"
 	smokescreen.stopSound1p = "SmokeWall_Stop"
 	smokescreen.stopSound3p = "SmokeWall_Stop"
-	smokescreen.fxOffsets = [ < -4.0, 0.0, 0.0 >, < 0.0, -4.0, 0.0 >, < 0.0, 0.0, -8.0 >, < 4.0, 0.0, 0.0 >, < 0.0, 4.0, 0.0 >, < 0.0, 0.0, 8.0 > ]
+	
+	float fxOffset = 200.0
+	float fxHeightOffset = 148.0
+	
+	smokescreen.fxOffsets = [ < -fxOffset, 0.0, 20.0>, <0.0, fxOffset, 20.0>, <0.0, -fxOffset, 20.0>, <0.0, 0.0, fxHeightOffset>, < -fxOffset, 0.0, fxHeightOffset> ]
 	
 	EmitSoundAtPosition( TEAM_UNASSIGNED, smokeEvent.position, "SmokeWall_Launch" )
 	
@@ -914,10 +922,10 @@ void function spawnSmoke( SmokeEvent smokeEvent, SpawnEvent spawnEvent, FlowCont
 	smokenade.SetValueForModelKey( $"models/weapons/grenades/smoke_grenade_projectile.mdl" )
 	smokenade.kv.spawnflags = 0
 	smokenade.kv.solid = 0
-	smokenade.kv.fadedist = 0
+	smokenade.kv.fadescale = 0
 	smokenade.kv.renderamt = 255
 	smokenade.kv.rendercolor = "255 255 255"
-	smokenade.kv.scale = 3
+	smokenade.kv.modelscale = 3
 	smokenade.SetParent( mover, "", false, 0 )
 	mover.SetOrigin( smokeEvent.position + < 0, 0, 8192 > )
 	DispatchSpawn( smokenade )
@@ -990,7 +998,7 @@ void function waitForLessThanAliveTyped( SmokeEvent smokeEvent, SpawnEvent spawn
 		int amount
 		foreach( entity npc in spawnedNPCs )
 		{
-			if( FD_GetAITypeID_ByString( npc.GetTargetName() ) ) //TODO getaitypeid_bystring does not contain all possible strings
+			if( FD_GetAITypeID_ByString( npc.GetTargetName() ) == flowControlEvent.waitEntityType ) //TODO getaitypeid_bystring does not contain all possible strings
 				amount++
 		}
 		if( amount <= flowControlEvent.waitAmount )
@@ -1007,7 +1015,7 @@ void function spawnArcTitan( SmokeEvent smokeEvent, SpawnEvent spawnEvent, FlowC
 		thread Drop_Spawnpoint( spawnEvent.origin, TEAM_IMC, 5 )
 	PingMinimap( spawnEvent.origin.x, spawnEvent.origin.y, 4, 600, 150, 0 )
 	entity npc = CreateArcTitan( TEAM_IMC, spawnEvent.origin, spawnEvent.angles )
-	//npc.DisableNPCFlag( NPC_ALLOW_INVESTIGATE | NPC_USE_SHOOTING_COVER | NPC_ALLOW_PATROL )
+	npc.DisableNPCFlag( NPC_ALLOW_INVESTIGATE | NPC_USE_SHOOTING_COVER | NPC_ALLOW_PATROL )
 	SetSpawnOption_Titanfall( npc )
 	SetTargetName( npc, GetTargetNameForID( spawnEvent.spawnType ) ) // required for client to create icons
 	SetSpawnOption_AISettings( npc, "npc_titan_stryder_leadwall_arc" )
@@ -1058,10 +1066,13 @@ void function spawnSuperSpectre( SmokeEvent smokeEvent, SpawnEvent spawnEvent, F
 	if( spawnEvent.entityGlobalKey != "" )
 		GlobalEventEntitys[spawnEvent.entityGlobalKey] <- npc
 	DispatchSpawn( npc )
+	npc.SetAllowMelee( true )
+	npc.SetAllowSpecialJump( true )
 	SetTargetName( npc, GetTargetNameForID( spawnEvent.spawnType ) )
 	AddMinimapForHumans( npc )
 	thread SuperSpectre_WarpFall( npc )
 	npc.WaitSignal( "WarpfallComplete" )
+	npc.SetCapabilityFlag( bits_CAP_MOVE_TRAVERSE, true )
 	thread singleNav_thread( npc, spawnEvent.route )
 }
 
@@ -1081,10 +1092,13 @@ void function spawnSuperSpectreWithMinion( SmokeEvent smokeEvent, SpawnEvent spa
 	if( spawnEvent.entityGlobalKey != "" )
 		GlobalEventEntitys[spawnEvent.entityGlobalKey] <- npc
 	DispatchSpawn( npc )
+	npc.SetAllowMelee( true )
+	npc.SetAllowSpecialJump( true )
 	SetTargetName( npc, GetTargetNameForID( spawnEvent.spawnType ) )
 	AddMinimapForHumans( npc )
 	thread SuperSpectre_WarpFall( npc )
 	npc.WaitSignal( "WarpfallComplete" )
+	npc.SetCapabilityFlag( bits_CAP_MOVE_TRAVERSE, true )
 	thread ReaperMinionLauncherThink( npc )
 
 }
@@ -1279,7 +1293,7 @@ void function spawnGruntDropship( SmokeEvent smokeEvent, SpawnEvent spawnEvent, 
 			if ( guy.GetParent() )
 				guy.Die() //Kill grunts that didn't manage to drop off the ship
 			else
-				thread singleNav_thread( guy, spawnEvent.route ) //Since grunts ziplines far away from each other, it's better them just path individually
+				thread singleNav_thread( guy, spawnEvent.route )
 		}
 	}
 	WaittillAnimDone( dropship )
@@ -1445,7 +1459,10 @@ void function SpawnIonTitan( SmokeEvent smokeEvent, SpawnEvent spawnEvent, FlowC
 	}
 	else
 	{
-		SetSpawnOption_AISettings( npc, "npc_titan_atlas_stickybomb_boss_fd" )
+		if ( difficultyLevel == eFDDifficultyLevel.EASY || difficultyLevel == eFDDifficultyLevel.NORMAL )
+			SetSpawnOption_AISettings( npc, "npc_titan_atlas_stickybomb" )
+		else
+			SetSpawnOption_AISettings( npc, "npc_titan_atlas_stickybomb_boss_fd" )
 		SlowEnemyMovementBasedOnDifficulty( npc )
 	}
 	SetTargetName( npc, GetTargetNameForID( spawnEvent.spawnType ) ) // required for client to create icons
@@ -1477,7 +1494,10 @@ void function SpawnScorchTitan( SmokeEvent smokeEvent, SpawnEvent spawnEvent, Fl
 		/* I don't wanna know if this is vanilla behavior or not, i stopped accepting Scorches should aimbot the moment i got killed in the frame the respawn
 		dropship made me and another guy vulnerable and this motherfucker simply decided to snipe us midair, not even Northstars does this all the time but
 		this son of a bitch does whenever he has the chance, so now i made sure hes a drunk guy who cant handle shit even on his face */
-		SetSpawnOption_AISettings( npc, "npc_titan_ogre_meteor_boss_fd" )
+		if ( difficultyLevel == eFDDifficultyLevel.EASY || difficultyLevel == eFDDifficultyLevel.NORMAL )
+			SetSpawnOption_AISettings( npc, "npc_titan_ogre_meteor" )
+		else
+			SetSpawnOption_AISettings( npc, "npc_titan_ogre_meteor_boss_fd" )
 		npc.kv.AccuracyMultiplier = 0.5
 		npc.kv.WeaponProficiency = eWeaponProficiency.AVERAGE
 		SlowEnemyMovementBasedOnDifficulty( npc )
@@ -1508,7 +1528,12 @@ void function SpawnRoninTitan( SmokeEvent smokeEvent, SpawnEvent spawnEvent, Flo
 		SetTitanAsElite( npc )
 	}
 	else
-		SetSpawnOption_AISettings (npc, "npc_titan_stryder_leadwall_boss_fd" )
+	{
+		if ( difficultyLevel == eFDDifficultyLevel.EASY || difficultyLevel == eFDDifficultyLevel.NORMAL )
+			SetSpawnOption_AISettings (npc, "npc_titan_stryder_leadwall" )
+		else
+			SetSpawnOption_AISettings (npc, "npc_titan_stryder_leadwall_boss_fd" )
+	}
 	SetTargetName( npc, GetTargetNameForID( spawnEvent.spawnType ) ) // required for client to create icons
 	DispatchSpawn( npc )
 	if( spawnEvent.entityGlobalKey != "" )
@@ -1536,7 +1561,10 @@ void function SpawnToneTitan( SmokeEvent smokeEvent, SpawnEvent spawnEvent, Flow
 	}
 	else
 	{
-		SetSpawnOption_AISettings( npc, "npc_titan_atlas_tracker_boss_fd" )
+		if ( difficultyLevel == eFDDifficultyLevel.EASY || difficultyLevel == eFDDifficultyLevel.NORMAL )
+			SetSpawnOption_AISettings( npc, "npc_titan_atlas_tracker" )
+		else
+			SetSpawnOption_AISettings( npc, "npc_titan_atlas_tracker_boss_fd" )
 		SlowEnemyMovementBasedOnDifficulty( npc )
 	}
 	SetTargetName( npc, GetTargetNameForID( spawnEvent.spawnType ) ) // required for client to create icons
@@ -1565,7 +1593,10 @@ void function SpawnLegionTitan( SmokeEvent smokeEvent, SpawnEvent spawnEvent, Fl
 	}
 	else
 	{
-		SetSpawnOption_AISettings( npc, "npc_titan_ogre_minigun_boss_fd" )
+		if ( difficultyLevel == eFDDifficultyLevel.EASY || difficultyLevel == eFDDifficultyLevel.NORMAL )
+			SetSpawnOption_AISettings( npc, "npc_titan_ogre_minigun" )
+		else
+			SetSpawnOption_AISettings( npc, "npc_titan_ogre_minigun_boss_fd" )
 		SlowEnemyMovementBasedOnDifficulty( npc )
 	}
 	SetTargetName( npc, GetTargetNameForID( spawnEvent.spawnType ) ) // required for client to create icons
@@ -1594,7 +1625,10 @@ void function SpawnMonarchTitan( SmokeEvent smokeEvent, SpawnEvent spawnEvent, F
 	}
 	else
 	{
-		SetSpawnOption_AISettings( npc,"npc_titan_atlas_vanguard_boss_fd" )
+		if ( difficultyLevel == eFDDifficultyLevel.EASY || difficultyLevel == eFDDifficultyLevel.NORMAL )
+			SetSpawnOption_AISettings( npc,"npc_titan_atlas_vanguard" )
+		else
+			SetSpawnOption_AISettings( npc,"npc_titan_atlas_vanguard_boss_fd" )
 		SlowEnemyMovementBasedOnDifficulty( npc )
 	}
 	SetTargetName( npc, GetTargetNameForID( spawnEvent.spawnType ) ) // required for client to create icons
@@ -1623,10 +1657,10 @@ void function spawnNukeTitan( SmokeEvent smokeEvent, SpawnEvent spawnEvent, Flow
 	npc.DisableNPCMoveFlag( NPCMF_PREFER_SPRINT | NPCMF_FOLLOW_SAFE_PATHS )
 	npc.DisableNPCFlag( NPC_DIRECTIONAL_MELEE )
 	npc.AssaultSetFightRadius( 0 )
-	StatusEffect_AddEndless( npc, eStatusEffect.move_slow, 0.5 )
-	StatusEffect_AddEndless( npc, eStatusEffect.turn_slow, 0.5 )
-	StatusEffect_AddEndless( npc, eStatusEffect.dodge_speed_slow, 0.5 )
+	npc.SetNPCMoveSpeedScale( 0.5 )
 	DispatchSpawn( npc )
+	npc.SetCapabilityFlag( bits_CAP_INNATE_MELEE_ATTACK1, false )
+	npc.SetCapabilityFlag( bits_CAP_INNATE_MELEE_ATTACK2, false )
 	npc.SetCapabilityFlag( bits_CAP_SYNCED_MELEE_ATTACK, false )
 	if( spawnEvent.entityGlobalKey != "" )
 		GlobalEventEntitys[spawnEvent.entityGlobalKey] <- npc
@@ -1754,6 +1788,8 @@ void function SpawnTick( SmokeEvent smokeEvent, SpawnEvent spawnEvent, FlowContr
 		SetTeam( guy, TEAM_IMC )
 		guy.EnableNPCFlag(  NPC_ALLOW_INVESTIGATE )
 		DispatchSpawn( guy )
+		if( GetConVarBool( "ns_fd_differentiate_ticks" ) )
+			guy.SetModel( $"models/robots/drone_frag/drone_frag.mdl" )
 		guy.SetEfficientMode( true )
 		AddMinimapForHumans( guy )
 		SetTargetName( guy, GetTargetNameForID( eFD_AITypeIDs.TICK ) )
@@ -1917,19 +1953,19 @@ void function AddMinimapForHumans( entity human )
 
 void function SlowEnemyMovementBasedOnDifficulty( entity npc )
 {
-	//This is not exactly vanilla behavior i think, but generally it's good to make enemies slower on higher difficulties due their amped damage and full health or shield
+	//This is not exact vanilla behavior i think, but enemies definetely moves slower on Frontier Defense than player autotitans
 	switch ( difficultyLevel )
 	{
 		case eFDDifficultyLevel.EASY:
 		case eFDDifficultyLevel.NORMAL:
-			StatusEffect_AddEndless( npc, eStatusEffect.move_slow, 0.25 )
-			StatusEffect_AddEndless( npc, eStatusEffect.dodge_speed_slow, 0.5 )
+			npc.SetNPCMoveSpeedScale( 0.75 )
+			npc.SetDangerousAreaReactionTime( 200 )
 			break
 		case eFDDifficultyLevel.HARD:
 		case eFDDifficultyLevel.MASTER:
 		case eFDDifficultyLevel.INSANE:
-			StatusEffect_AddEndless( npc, eStatusEffect.move_slow, 0.5 )
-			StatusEffect_AddEndless( npc, eStatusEffect.dodge_speed_slow, 0.5 )
+			npc.SetNPCMoveSpeedScale( 0.5 )
+			npc.SetDangerousAreaReactionTime( 200 )
 			break
 	}
 }

@@ -88,10 +88,14 @@
 		},
 		{
 			"Name": "ns_fd_spectre_primary_weapon",
-			"DefaultValue": "mp_weapon_rspn101,mp_weapon_car,mp_weapon_alternator_smg,mp_weapon_hemlok_smg,mp_weapon_r97"
+			"DefaultValue": "mp_weapon_hemlok,mp_weapon_vinson,mp_weapon_g2,mp_weapon_mastiff,mp_weapon_shotgun"
 		},
 		{
 			"Name": "ns_fd_disable_respawn_dropship",
+			"DefaultValue": "0"
+		},
+		{
+			"Name": "ns_fd_differentiate_ticks",
 			"DefaultValue": "0"
 		},
 		{

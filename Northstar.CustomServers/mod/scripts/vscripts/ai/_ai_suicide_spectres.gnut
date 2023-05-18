@@ -462,7 +462,10 @@ void function SpectreOverloads( entity spectre )
 	}
 	else
 	{
+		spectre.SetNPCMoveSpeedScale( 0.01 )
+		spectre.Anim_Stop()
 		string anim = "sp_suicide_spectre_explode_stand"
+
 		var overrideAnim = spectre.Dev_GetAISettingByKeyField( "OverrideOverloadAnim" )
 
 		if ( overrideAnim != null )
