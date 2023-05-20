@@ -64,6 +64,10 @@ void function OnPlayerKilled( entity victim, entity attacker, var damageInfo )
 	}
 	else
 	{
+		 // Heal & stim attacker after kill
+        if ( IsAlive(attacker) && GetCurrentPlaylistVarInt("gg_heal_attacker", 1) != 0 ) 
+        	attacker.SetHealth(attacker.GetMaxHealth())
+        
 		if ( DamageInfo_GetDamageSourceIdentifier( damageInfo ) != eDamageSourceId.melee_pilot_emptyhanded )
 		{
 			float percentageReward = GetCurrentPlaylistVarFloat( "gg_kill_reward", 1.0 )
