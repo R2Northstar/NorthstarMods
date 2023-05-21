@@ -100,6 +100,7 @@
 		"gg_kill_reward" "擊殺進度值佔比"
 		"gg_assist_reward" "助攻進度值佔比"
 		"gg_execution_reward" "處決進度值佔比"
+		"gg_heal_attacker" "Heal killer"
 
 		"PL_tt" "泰坦鬼抓人"
 		"PL_tt_lobby" "泰坦鬼抓人大廳"

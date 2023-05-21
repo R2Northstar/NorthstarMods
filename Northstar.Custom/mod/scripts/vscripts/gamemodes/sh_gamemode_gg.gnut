@@ -37,7 +37,7 @@ void function CreateGamemodeGG()
 	AddPrivateMatchModeSettingArbitrary( "#GAMEMODE_gg", "gg_kill_reward", "1.0" )
 	AddPrivateMatchModeSettingArbitrary( "#GAMEMODE_gg", "gg_assist_reward", "0.0" )
 	AddPrivateMatchModeSettingArbitrary( "#GAMEMODE_gg", "gg_execution_reward", "1.0" )
-	AddPrivateMatchModeSettingArbitrary( "#GAMEMODE_gg", "gg_heal_attacker", "1" )
+	AddPrivateMatchModeSettingEnum( "#GAMEMODE_gg", "gg_heal_attacker", [ "#SETTING_DISABLED", "#SETTING_ENABLED" ], "0" )
 
 	// Custom Weapons
 	int index = 0

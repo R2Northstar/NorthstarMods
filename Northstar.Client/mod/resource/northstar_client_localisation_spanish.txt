@@ -100,6 +100,7 @@ Presiona Sí al estar de acuerdo. Esta opcion se puede cambiar en el menú de mo
 		"gg_kill_reward" "Porcentaje de recompensa por Eliminación"
 		"gg_assist_reward" "Porcentaje de recompensa por Assist"
 		"gg_execution_reward" "Porcentaje de recompensa por Ejecucción"
+		"gg_heal_attacker" "Heal killer"
 
 		"PL_tt" "Titan Tag"
 		"PL_tt_lobby" "Vestíbulo de Titan Tag"
@@ -318,6 +319,6 @@ Presiona Sí al estar de acuerdo. Esta opcion se puede cambiar en el menú de mo
 		"PLAYER_NOT_FOUND"                "No se encontró la cuenta del jugador"
 		"INVALID_MASTERSERVER_TOKEN"      "Token de jugador expirado o invalido"
 		"JSON_PARSE_ERROR"                "Error procesando respuesta json"
-		"UNSUPPORTED_VERSION"             "La versión que estas usando ya no esta soportada" 
+		"UNSUPPORTED_VERSION"             "La versión que estas usando ya no esta soportada"
 	}
 }

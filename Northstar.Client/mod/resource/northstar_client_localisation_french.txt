@@ -100,6 +100,7 @@ Choisissez Oui si vous êtes d'accord. Ce choix peut être modifié à tout inst
 		"gg_kill_reward" "Récompense pourcentage de frags"
 		"gg_assist_reward" "Récompense pourcentage d'assistances"
 		"gg_execution_reward" "Récompense pourcentage d'exécutions"
+		"gg_heal_attacker" "Heal killer"
 
 		"PL_tt" "Titan tag"
 		"PL_tt_lobby" "Lobby: Titan tag"

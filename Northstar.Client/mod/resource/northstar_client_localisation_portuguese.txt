@@ -98,6 +98,7 @@ Clique em Sim se você concorda. Esta escolha pode ser alterada a qualquer momen
 		"gg_kill_reward" "% recompensa/morte"
 		"gg_assist_reward" "% recompensa/assist"
 		"gg_execution_reward" "% recompensa/execução"
+		"gg_heal_attacker" "Heal killer"
 
 		"PL_tt" "Titan Tag"
 		"PL_tt_lobby" "Saguão de Titan Tag"
