@@ -100,7 +100,7 @@ Press Yes if you agree to this. This choice can be changed in the mods menu at a
 		"gg_kill_reward" "Kill Percentage Reward"
 		"gg_assist_reward" "Assist Percentage Reward"
 		"gg_execution_reward" "Execution Percentage Reward"
-		"gg_heal_attacker" "Heal killer"
+		"gg_heal_attacker" "Heal on kill"
 
 		"PL_tt" "Titan Tag"
 		"PL_tt_lobby" "Titan Tag Lobby"

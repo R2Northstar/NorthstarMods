@@ -100,7 +100,7 @@ Presiona Sí al estar de acuerdo. Esta opcion se puede cambiar en el menú de mo
 		"gg_kill_reward" "Porcentaje de recompensa por Eliminación"
 		"gg_assist_reward" "Porcentaje de recompensa por Assist"
 		"gg_execution_reward" "Porcentaje de recompensa por Ejecucción"
-		"gg_heal_attacker" "Heal killer"
+		"gg_heal_attacker" "Heal on kill"
 
 		"PL_tt" "Titan Tag"
 		"PL_tt_lobby" "Vestíbulo de Titan Tag"
