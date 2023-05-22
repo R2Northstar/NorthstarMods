@@ -318,6 +318,11 @@ Si estas de acuerdo con esto, presiona SI. Esta decision puede ser cambiada en e
 		"PLAYER_NOT_FOUND"                "No se encontró la cuenta del jugador"
 		"INVALID_MASTERSERVER_TOKEN"      "Token de jugador expirado o invalido"
 		"JSON_PARSE_ERROR"                "Error procesando respuesta json"
-		"UNSUPPORTED_VERSION"             "La versión que estas usando ya no esta soportada" 
+		"UNSUPPORTED_VERSION"             "La versión que estas usando ya no esta soportada"
+
+		// Incorrect Mod Installation
+		"INCORRECT_MOD_INSTALL_TOAST" "Algunos de tus mods están instalados incorrectamente. Haz clic aquí para obtener más información."
+		"INCORRECT_MODS_MODLIST_HEADER" "Mods instalados incorrectamente (%s1)"
+		"INCORRECT_MOD_INSTALL_DESCRIPTION" "Este mod está instalado incorrectamente. Cada mod tiene un archivo llamado "mod.json" en su directorio raíz, sin embargo para este mod no fue encontrado.\n\nUbicación esperada: %s1/mod.json\nUbicación encontrada: %s2/mod.json\n\nAsegúrese de que tanto el archivo mod.json como el directorio mod son hijos directos de su carpeta mod."
 	}
 }

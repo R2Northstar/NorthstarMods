@@ -319,5 +319,10 @@ Choisissez Oui si vous êtes d'accord. Ce choix peut être modifié à tout inst
 		"INVALID_MASTERSERVER_TOKEN"     "Jeton du server maître invalide ou expiré"
 		"JSON_PARSE_ERROR"                 "Une erreur est survenue durant l'analyse JSON"
 		"UNSUPPORTED_VERSION"             "La version que vous utilisez n'est plus supportée"
+
+		// Incorrect Mod Installation
+		"INCORRECT_MOD_INSTALL_TOAST"		"Certains mods sont mal installés. Cliquez ici pour plus d'informations."
+		"INCORRECT_MODS_MODLIST_HEADER"		"Mods incorrectement installés (%s1)"
+		"INCORRECT_MOD_INSTALL_DESCRIPTION"	"Ce mod n'a pas correctement été installé. Chaque mod a un fichier nommé \"mod.json\" à sa racine, et celui-ci n'a pas été trouvé pour ce mod.\n\nEmplacement attendu : %s1/mod.json\nEmplacement trouvé : %s2/mod.json\n\nVérifiez que le fichier \"mod.json\" ainsi que le dossier \"mod\" sont directement contenus dans le répertoire du mod."
 	}
 }

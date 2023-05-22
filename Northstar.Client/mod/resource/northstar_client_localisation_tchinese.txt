@@ -323,5 +323,10 @@
 		"INVALID_MASTERSERVER_TOKEN"     "主伺服器token過期或無效"
 		"JSON_PARSE_ERROR"                 "讀取json回應時發生錯誤"
 		"UNSUPPORTED_VERSION"             "您的遊戲版本過低"
+
+		// Incorrect Mod Installation
+		"INCORRECT_MOD_INSTALL_TOAST" "你的一些MOD被错误地安装。点击这里获取更多信息。"
+		"INCORRECT_MODS_MODLIST_HEADER" "不正确地安装了MODs (%s1)"
+		"INCORRECT_MOD_INSTALL_DESCRIPTION" "这个MOD的安装不正确。每个mod在它的根目录下都有一个叫mod.json的文件，但是对于这个mod来说，它没有被找到。\n\n预期的位置：%s1/mod.json/n找到的位置：%s2/mod.json\n\n确保mod.json文件和mod目录都是你mod文件夹的直接子文件夹。"
 	}
 }

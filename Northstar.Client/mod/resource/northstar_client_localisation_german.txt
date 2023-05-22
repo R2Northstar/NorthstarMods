@@ -310,5 +310,10 @@ Dr체cke Ja, um zuzustimmen. Du kannst diese Entscheidung jederzeit im Modmen체 �
 		"INVALID_MASTERSERVER_TOKEN"     "Ung체ltiger oder abgelaufener Token vom Masterserver"
 		"JSON_PARSE_ERROR"                 "Fehler beim Verarbeiten der JSON-Antwort"
 		"UNSUPPORTED_VERSION"             "Die Version die du benutzt ist nicht l채nger unterst체tzt"
+
+		// Incorrect Mod Installation
+		"INCORRECT_MOD_INSTALL_TOAST" "Einige Ihrer Mods sind nicht korrekt installiert. Klicken Sie hier f체r weitere Informationen."
+		"INCORRECT_MODS_MODLIST_HEADER" "Fehlerhaft installierte Mods (%s1)"
+		"INCORRECT_MOD_INSTALL_DESCRIPTION" "Dieser Mod ist nicht korrekt installiert. Jede Mod hat eine Datei namens "mod.json" in ihrem Stammverzeichnis, aber f체r diese Mod wurde sie nicht gefunden.\n\nErwarteter Speicherort: %s1/mod.json\nGefundener Speicherort: %s2/mod.json\n\nStellen Sie sicher, dass sowohl die mod.json-Datei als auch das mod-Verzeichnis direkte Unterordner Ihres mod-Ordners sind."
 	}
 }

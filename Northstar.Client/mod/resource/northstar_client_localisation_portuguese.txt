@@ -306,5 +306,10 @@ Clique em Sim se você concorda. Esta escolha pode ser alterada a qualquer momen
 		// In-game chat
 		"HUD_CHAT_WHISPER_PREFIX" "[WHISPER]"
 		"HUD_CHAT_SERVER_PREFIX" "[SERVER]"
+
+		// Incorrect Mod Install
+		"INCORRECT_MOD_INSTALL_TOAST" "Alguns dos teus mods estão incorrectamente instalados. Clique aqui para mais informações."
+		"INCORRECT_MODS_MODLIST_HEADER" "Mods instalados incorrectamente (%s1)"
+		"INCORRECT_MOD_INSTALL_DESCRIPTION" "Este mod está instalado incorrectamente. Todos os mods têm um ficheiro chamado \"mod.json\" no seu directório raiz, mas para este mod não foi encontrado.\n\nLocalização esperada: %s1/mod.json\nLocalização encontrada: %s2/mod.json\n\nCertifica-te de que o ficheiro mod.json e o directório mod são filhos directos da tua pasta mod."
 	}
 }
