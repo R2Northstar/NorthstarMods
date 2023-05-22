@@ -319,5 +319,10 @@ Premi Sì se sei d'accordo. Questa scelta può essere modificata in qualsiasi mo
 		"INVALID_MASTERSERVER_TOKEN"     "Token Masterserver invalido o scaduto"
 		"JSON_PARSE_ERROR"                 "Errore nell'analisi di risposta json"
 		"UNSUPPORTED_VERSION"             "La versione che stai usando non è più supportata"
+
+		// Incorrect Mod Installation
+		"INCORRECT_MOD_INSTALL_TOAST" "Alcune mod non sono state installate correttamente. Clicca qui per maggiori informazioni."
+		"INCORRECT_MODS_MODLIST_HEADER" "Mod installate in modo errato (%s1)"
+		"INCORRECT_MOD_INSTALL_DESCRIPTION" "Questa mod non è stata installata correttamente. Ogni mod ha un file chiamato "mod.json" nella sua directory principale, ma per questa mod non è stato trovato.\n\nPosizione attesa: %s1/mod.json\nPosizione trovata: %s2/mod.json\n\nAssicurarsi che sia il file mod.json che la directory mod siano figli diretti della cartella mod".
 	}
 }
