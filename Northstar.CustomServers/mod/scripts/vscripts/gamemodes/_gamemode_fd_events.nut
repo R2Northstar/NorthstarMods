@@ -49,6 +49,7 @@ global struct SpawnEvent{
 	string entityGlobalKey
 	bool shouldLoop = false
 	int titanType = 0
+	float spawnradius = 0.0
 }
 
 global struct FlowControlEvent{
@@ -126,6 +127,8 @@ global string Cvar_gruntweapons
 global array<string> FD_GruntWeapons
 global string Cvar_spectreweapons
 global array<string> FD_SpectreWeapons
+
+const FD_TITAN_AOE_REACTTIME = 20
 
 void function executeWave()
 {	
@@ -286,7 +289,7 @@ WaveEvent function CreateSmokeEvent( vector position, float lifetime, int nextEv
 	return event
 }
 
-WaveEvent function CreateArcTitanEvent( vector origin, vector angles, string route, int nextEventIndex, int executeOnThisCall = 1, string entityGlobalKey = "" )
+WaveEvent function CreateArcTitanEvent( vector origin, vector angles, string route, int nextEventIndex, int executeOnThisCall = 1, string entityGlobalKey = "", float spawnradius = 0.0 )
 {
 	WaveEvent event
 	event.eventFunction = spawnArcTitan
@@ -299,10 +302,11 @@ WaveEvent function CreateArcTitanEvent( vector origin, vector angles, string rou
 	event.spawnEvent.angles = angles
 	event.spawnEvent.route = route
 	event.spawnEvent.entityGlobalKey = entityGlobalKey
+	event.spawnEvent.spawnradius = spawnradius
 	return event
 }
 
-WaveEvent function CreateSuperSpectreEvent( vector origin, vector angles, string route, int nextEventIndex, int executeOnThisCall = 1, string entityGlobalKey = "" )
+WaveEvent function CreateSuperSpectreEvent( vector origin, vector angles, string route, int nextEventIndex, int executeOnThisCall = 1, string entityGlobalKey = "", float spawnradius = 0.0 )
 {
 	WaveEvent event
 	event.eventFunction = spawnSuperSpectre
@@ -315,10 +319,11 @@ WaveEvent function CreateSuperSpectreEvent( vector origin, vector angles, string
 	event.spawnEvent.angles = angles
 	event.spawnEvent.route = route
 	event.spawnEvent.entityGlobalKey = entityGlobalKey
+	event.spawnEvent.spawnradius = spawnradius
 	return event
 }
 
-WaveEvent function CreateSuperSpectreEventWithMinion( vector origin, vector angles, string route, int nextEventIndex, int executeOnThisCall = 1, string entityGlobalKey = "" )
+WaveEvent function CreateSuperSpectreEventWithMinion( vector origin, vector angles, string route, int nextEventIndex, int executeOnThisCall = 1, string entityGlobalKey = "", float spawnradius = 0.0 )
 {
 	WaveEvent event
 	event.eventFunction = spawnSuperSpectreWithMinion
@@ -331,10 +336,11 @@ WaveEvent function CreateSuperSpectreEventWithMinion( vector origin, vector angl
 	event.spawnEvent.angles = angles
 	event.spawnEvent.route = route
 	event.spawnEvent.entityGlobalKey = entityGlobalKey
+	event.spawnEvent.spawnradius = spawnradius
 	return event
 }
 
-WaveEvent function CreateDroppodGruntEvent( vector origin, string route, int nextEventIndex, int executeOnThisCall = 1, string entityGlobalKey = "" )
+WaveEvent function CreateDroppodGruntEvent( vector origin, string route, int nextEventIndex, int executeOnThisCall = 1, string entityGlobalKey = "", float spawnradius = 0.0 )
 {
 	WaveEvent event
 	event.eventFunction = spawnDroppodGrunts
@@ -346,10 +352,11 @@ WaveEvent function CreateDroppodGruntEvent( vector origin, string route, int nex
 	event.spawnEvent.origin = origin
 	event.spawnEvent.route = route
 	event.spawnEvent.entityGlobalKey = entityGlobalKey
+	event.spawnEvent.spawnradius = spawnradius
 	return event
 }
 
-WaveEvent function CreateDroppodStalkerEvent( vector origin, string route, int nextEventIndex, int executeOnThisCall = 1, string entityGlobalKey = "" )
+WaveEvent function CreateDroppodStalkerEvent( vector origin, string route, int nextEventIndex, int executeOnThisCall = 1, string entityGlobalKey = "", float spawnradius = 0.0 )
 {
 	WaveEvent event
 	event.eventFunction = spawnDroppodStalker
@@ -361,10 +368,11 @@ WaveEvent function CreateDroppodStalkerEvent( vector origin, string route, int n
 	event.spawnEvent.origin = origin
 	event.spawnEvent.route = route
 	event.spawnEvent.entityGlobalKey = entityGlobalKey
+	event.spawnEvent.spawnradius = spawnradius
 	return event
 }
 
-WaveEvent function CreateDroppodSpectreMortarEvent( vector origin, string route, int nextEventIndex, int executeOnThisCall = 1, string entityGlobalKey = "" )
+WaveEvent function CreateDroppodSpectreMortarEvent( vector origin, string route, int nextEventIndex, int executeOnThisCall = 1, string entityGlobalKey = "", float spawnradius = 0.0 )
 {
 	WaveEvent event
 	event.eventFunction = spawnDroppodSpectreMortar
@@ -376,6 +384,7 @@ WaveEvent function CreateDroppodSpectreMortarEvent( vector origin, string route,
 	event.spawnEvent.origin = origin
 	event.spawnEvent.route = route
 	event.spawnEvent.entityGlobalKey = entityGlobalKey
+	event.spawnEvent.spawnradius = spawnradius
 	return event
 }
 
@@ -412,7 +421,7 @@ WaveEvent function CreateWaitUntilAliveWeightedEvent( int amount, int nextEventI
 	return event
 }
 
-WaveEvent function CreateGenericSpawnEvent( string npcClassName, vector origin, vector angles, string route, int spawnType, int spawnAmount, int nextEventIndex, int executeOnThisCall = 1, string entityGlobalKey = "" )
+WaveEvent function CreateGenericSpawnEvent( string npcClassName, vector origin, vector angles, string route, int spawnType, int spawnAmount, int nextEventIndex, int executeOnThisCall = 1, string entityGlobalKey = "", float spawnradius = 0.0 )
 {
 	WaveEvent event
 	event.eventFunction = spawnGenericNPC
@@ -426,10 +435,11 @@ WaveEvent function CreateGenericSpawnEvent( string npcClassName, vector origin, 
 	event.spawnEvent.spawnType = spawnType
 	event.spawnEvent.spawnAmount = spawnAmount
 	event.spawnEvent.entityGlobalKey = entityGlobalKey
+	event.spawnEvent.spawnradius = spawnradius
 	return event
 }
 
-WaveEvent function CreateGenericTitanSpawnWithAiSettingsEvent( string npcClassName, string aiSettings, vector origin, vector angles, string route, int spawnType, int spawnAmount, int nextEventIndex, int executeOnThisCall = 1, string entityGlobalKey = "" )
+WaveEvent function CreateGenericTitanSpawnWithAiSettingsEvent( string npcClassName, string aiSettings, vector origin, vector angles, string route, int spawnType, int spawnAmount, int nextEventIndex, int executeOnThisCall = 1, string entityGlobalKey = "", float spawnradius = 0.0 )
 {
 	WaveEvent event
 	event.eventFunction = spawnGenericNPCTitanwithSettings
@@ -444,10 +454,11 @@ WaveEvent function CreateGenericTitanSpawnWithAiSettingsEvent( string npcClassNa
 	event.spawnEvent.spawnType = spawnType
 	event.spawnEvent.spawnAmount = spawnAmount
 	event.spawnEvent.entityGlobalKey = entityGlobalKey
+	event.spawnEvent.spawnradius = spawnradius
 	return event
 }
 
-WaveEvent function CreateNukeTitanEvent( vector origin, vector angles, string route, int nextEventIndex, int executeOnThisCall = 1, string entityGlobalKey = "" )
+WaveEvent function CreateNukeTitanEvent( vector origin, vector angles, string route, int nextEventIndex, int executeOnThisCall = 1, string entityGlobalKey = "", float spawnradius = 0.0 )
 {
 	WaveEvent event
 	event.eventFunction = spawnNukeTitan
@@ -460,10 +471,11 @@ WaveEvent function CreateNukeTitanEvent( vector origin, vector angles, string ro
 	event.spawnEvent.angles = angles
 	event.spawnEvent.route = route
 	event.spawnEvent.entityGlobalKey = entityGlobalKey
+	event.spawnEvent.spawnradius = spawnradius
 	return event
 }
 
-WaveEvent function CreateMortarTitanEvent( vector origin, vector angles, int nextEventIndex, int executeOnThisCall = 1, string entityGlobalKey = "" )
+WaveEvent function CreateMortarTitanEvent( vector origin, vector angles, int nextEventIndex, int executeOnThisCall = 1, string entityGlobalKey = "", float spawnradius = 0.0 )
 {
 	WaveEvent event
 	event.eventFunction = spawnMortarTitan
@@ -475,6 +487,7 @@ WaveEvent function CreateMortarTitanEvent( vector origin, vector angles, int nex
 	event.spawnEvent.origin = origin
 	event.spawnEvent.angles = angles
 	event.spawnEvent.entityGlobalKey = entityGlobalKey
+	event.spawnEvent.spawnradius = spawnradius
 	return event
 }
 
@@ -493,7 +506,7 @@ WaveEvent function CreateCloakDroneEvent( vector origin, vector angles, int next
 	return event
 }
 
-WaveEvent function CreateDroppodTickEvent( vector origin, int amount, string route, int nextEventIndex, int executeOnThisCall = 1, string entityGlobalKey = "" )
+WaveEvent function CreateDroppodTickEvent( vector origin, int amount, string route, int nextEventIndex, int executeOnThisCall = 1, string entityGlobalKey = "", float spawnradius = 0.0 )
 {
 	WaveEvent event
 	event.eventFunction = SpawnTick
@@ -504,10 +517,11 @@ WaveEvent function CreateDroppodTickEvent( vector origin, int amount, string rou
 	event.spawnEvent.spawnAmount = amount
 	event.spawnEvent.origin = origin
 	event.spawnEvent.entityGlobalKey = entityGlobalKey
+	event.spawnEvent.spawnradius = spawnradius
 	return event
 }
 
-WaveEvent function CreateNorthstarSniperTitanEvent( vector origin, vector angles, int nextEventIndex, int executeOnThisCall = 1, string entityGlobalKey = "", int titanType = FD_TitanType.TITAN_COMMON )
+WaveEvent function CreateNorthstarSniperTitanEvent( vector origin, vector angles, int nextEventIndex, int executeOnThisCall = 1, string entityGlobalKey = "", int titanType = FD_TitanType.TITAN_COMMON, float spawnradius = 0.0 )
 {
 	WaveEvent event
 	event.eventFunction = spawnSniperTitan
@@ -520,10 +534,11 @@ WaveEvent function CreateNorthstarSniperTitanEvent( vector origin, vector angles
 	event.spawnEvent.angles = angles
 	event.spawnEvent.entityGlobalKey = entityGlobalKey
 	event.spawnEvent.titanType = titanType
+	event.spawnEvent.spawnradius = spawnradius
 	return event
 }
 
-WaveEvent function CreateToneSniperTitanEvent( vector origin, vector angles, int nextEventIndex, int executeOnThisCall = 1, string entityGlobalKey = "", int titanType = FD_TitanType.TITAN_COMMON )
+WaveEvent function CreateToneSniperTitanEvent( vector origin, vector angles, int nextEventIndex, int executeOnThisCall = 1, string entityGlobalKey = "", int titanType = FD_TitanType.TITAN_COMMON, float spawnradius = 0.0 )
 {
 	WaveEvent event
 	event.eventFunction = SpawnToneSniperTitan
@@ -536,11 +551,12 @@ WaveEvent function CreateToneSniperTitanEvent( vector origin, vector angles, int
 	event.spawnEvent.angles = angles
 	event.spawnEvent.entityGlobalKey = entityGlobalKey
 	event.spawnEvent.titanType = titanType
+	event.spawnEvent.spawnradius = spawnradius
 	return event
 }
 
 
-WaveEvent function CreateIonTitanEvent( vector origin, vector angles, string route, int nextEventIndex, int executeOnThisCall = 1, string entityGlobalKey = "", int titanType = FD_TitanType.TITAN_COMMON )
+WaveEvent function CreateIonTitanEvent( vector origin, vector angles, string route, int nextEventIndex, int executeOnThisCall = 1, string entityGlobalKey = "", int titanType = FD_TitanType.TITAN_COMMON, float spawnradius = 0.0 )
 {
 	WaveEvent event
 	event.eventFunction = SpawnIonTitan
@@ -554,10 +570,11 @@ WaveEvent function CreateIonTitanEvent( vector origin, vector angles, string rou
 	event.spawnEvent.route = route
 	event.spawnEvent.entityGlobalKey = entityGlobalKey
 	event.spawnEvent.titanType = titanType
+	event.spawnEvent.spawnradius = spawnradius
 	return event
 }
 
-WaveEvent function CreateScorchTitanEvent( vector origin, vector angles, string route, int nextEventIndex, int executeOnThisCall = 1, string entityGlobalKey = "", int titanType = FD_TitanType.TITAN_COMMON )
+WaveEvent function CreateScorchTitanEvent( vector origin, vector angles, string route, int nextEventIndex, int executeOnThisCall = 1, string entityGlobalKey = "", int titanType = FD_TitanType.TITAN_COMMON, float spawnradius = 0.0 )
 {
 	WaveEvent event
 	event.eventFunction = SpawnScorchTitan
@@ -571,10 +588,11 @@ WaveEvent function CreateScorchTitanEvent( vector origin, vector angles, string 
 	event.spawnEvent.route = route
 	event.spawnEvent.entityGlobalKey = entityGlobalKey
 	event.spawnEvent.titanType = titanType
+	event.spawnEvent.spawnradius = spawnradius
 	return event
 }
 
-WaveEvent function CreateRoninTitanEvent( vector origin, vector angles, string route, int nextEventIndex, int executeOnThisCall = 1, string entityGlobalKey = "", int titanType = FD_TitanType.TITAN_COMMON )
+WaveEvent function CreateRoninTitanEvent( vector origin, vector angles, string route, int nextEventIndex, int executeOnThisCall = 1, string entityGlobalKey = "", int titanType = FD_TitanType.TITAN_COMMON, float spawnradius = 0.0 )
 {
 	WaveEvent event
 	event.eventFunction = SpawnRoninTitan
@@ -588,10 +606,11 @@ WaveEvent function CreateRoninTitanEvent( vector origin, vector angles, string r
 	event.spawnEvent.route = route
 	event.spawnEvent.entityGlobalKey = entityGlobalKey
 	event.spawnEvent.titanType = titanType
+	event.spawnEvent.spawnradius = spawnradius
 	return event
 }
 
-WaveEvent function CreateToneTitanEvent( vector origin, vector angles, string route, int nextEventIndex, int executeOnThisCall = 1, string entityGlobalKey = "", int titanType = FD_TitanType.TITAN_COMMON )
+WaveEvent function CreateToneTitanEvent( vector origin, vector angles, string route, int nextEventIndex, int executeOnThisCall = 1, string entityGlobalKey = "", int titanType = FD_TitanType.TITAN_COMMON, float spawnradius = 0.0 )
 {
 	WaveEvent event
 	event.eventFunction = SpawnToneTitan
@@ -605,10 +624,11 @@ WaveEvent function CreateToneTitanEvent( vector origin, vector angles, string ro
 	event.spawnEvent.route = route
 	event.spawnEvent.entityGlobalKey = entityGlobalKey
 	event.spawnEvent.titanType = titanType
+	event.spawnEvent.spawnradius = spawnradius
 	return event
 }
 
-WaveEvent function CreateLegionTitanEvent( vector origin, vector angles, string route, int nextEventIndex, int executeOnThisCall = 1, string entityGlobalKey = "", int titanType = FD_TitanType.TITAN_COMMON )
+WaveEvent function CreateLegionTitanEvent( vector origin, vector angles, string route, int nextEventIndex, int executeOnThisCall = 1, string entityGlobalKey = "", int titanType = FD_TitanType.TITAN_COMMON, float spawnradius = 0.0 )
 {
 	WaveEvent event
 	event.eventFunction = SpawnLegionTitan
@@ -622,10 +642,11 @@ WaveEvent function CreateLegionTitanEvent( vector origin, vector angles, string 
 	event.spawnEvent.route = route
 	event.spawnEvent.entityGlobalKey = entityGlobalKey
 	event.spawnEvent.titanType = titanType
+	event.spawnEvent.spawnradius = spawnradius
 	return event
 }
 
-WaveEvent function CreateMonarchTitanEvent( vector origin, vector angles, string route, int nextEventIndex, int executeOnThisCall = 1, string entityGlobalKey = "", int titanType = FD_TitanType.TITAN_COMMON )
+WaveEvent function CreateMonarchTitanEvent( vector origin, vector angles, string route, int nextEventIndex, int executeOnThisCall = 1, string entityGlobalKey = "", int titanType = FD_TitanType.TITAN_COMMON, float spawnradius = 0.0 )
 {
 	WaveEvent event
 	event.eventFunction = SpawnMonarchTitan
@@ -639,6 +660,7 @@ WaveEvent function CreateMonarchTitanEvent( vector origin, vector angles, string
 	event.spawnEvent.route = route
 	event.spawnEvent.entityGlobalKey = entityGlobalKey
 	event.spawnEvent.titanType = titanType
+	event.spawnEvent.spawnradius = spawnradius
 	return event
 }
 
@@ -665,7 +687,7 @@ WaveEvent function CreateWaitForLessThanTypeIDEvent(int aiTypeId,int amount,int 
 	return event
 }
 
-WaveEvent function CreateSpawnDroneEvent(vector origin,vector angles,string route,int nextEventIndex, bool shouldLoop = true, int executeOnThisCall = 1,string entityGlobalKey="")
+WaveEvent function CreateSpawnDroneEvent(vector origin,vector angles,string route,int nextEventIndex, bool shouldLoop = true, int executeOnThisCall = 1, string entityGlobalKey="" , float spawnradius = 0.0)
 {
 	WaveEvent event
 	event.eventFunction = spawnDrones
@@ -678,6 +700,7 @@ WaveEvent function CreateSpawnDroneEvent(vector origin,vector angles,string rout
 	event.spawnEvent.entityGlobalKey = entityGlobalKey
 	event.spawnEvent.route = route
 	event.spawnEvent.shouldLoop = shouldLoop
+	event.spawnEvent.spawnradius = spawnradius
 	return event
 }
 
@@ -875,7 +898,8 @@ void function BlockFurtherTitanfalls( SmokeEvent smokeEvent, SpawnEvent spawnEve
 			{
 				PlayerEarnMeter_Reset( player )
 				ClearTitanAvailable( player )
-				SendHudMessage( player, "Titanfall Block: Titans cannot be summoned", -1, 0.5, 255, 255, 128, 255, 0.2, 5.0, 1.8 )
+				//SendHudMessage( player, "Titanfall Block: Titans cannot be summoned", -1, 0.5, 255, 255, 128, 255, 0.2, 5.0, 1.8 )
+				NSSendLargeMessageToPlayer( player, "Titanfall Block", "Titans cannot be summoned anymore, avoid losing your Titan at all costs!", 20, "rui/callsigns/callsign_94_col" )
 			}
 		}
 		else
@@ -891,7 +915,14 @@ void function PlayWarning( SmokeEvent smokeEvent, SpawnEvent spawnEvent, FlowCon
 	if ( !titanfallblockAllowed && soundEvent.soundEventName == "fd_waveNoTitanDrops" || !elitesAllowed && soundEvent.soundEventName == "fd_waveTypeEliteTitan" )
 		return
 	else
+	{
+		if( soundEvent.soundEventName == "fd_waveTypeEliteTitan" )
+		{
+			foreach( entity player in GetPlayerArray() )
+				NSSendLargeMessageToPlayer( player, "Elite Titan", "Always coated white. Huge health, huge shield, moves faster and can use cores. Drops batteries on death.", 20, "rui/callsigns/callsign_17_col" )
+		}
 		PlayFactionDialogueToTeam( soundEvent.soundEventName, TEAM_MILITIA )
+	}
 }
 
 void function spawnSmoke( SmokeEvent smokeEvent, SpawnEvent spawnEvent, FlowControlEvent flowControlEvent, SoundEvent soundEvent )
@@ -900,7 +931,7 @@ void function spawnSmoke( SmokeEvent smokeEvent, SpawnEvent spawnEvent, FlowCont
 	SmokescreenStruct smokescreen
 	smokescreen.smokescreenFX = $"P_smokescreen_FD"
 	smokescreen.isElectric = false
-	smokescreen.origin = smokeEvent.position + < 0, 0, 64 >
+	smokescreen.origin = smokeEvent.position //+ < 0, 0, 64 >
 	smokescreen.angles = < 0, 0, 0 >
 	smokescreen.fxXYRadius = 160
 	smokescreen.fxZRadius = 128
@@ -919,7 +950,8 @@ void function spawnSmoke( SmokeEvent smokeEvent, SpawnEvent spawnEvent, FlowCont
 	
 	entity smokenade = CreateEntity( "prop_script" )
 	entity mover = CreateOwnedScriptMover( smokenade )
-	smokenade.SetValueForModelKey( $"models/weapons/grenades/smoke_grenade_projectile.mdl" )
+	//smokenade.SetValueForModelKey( $"models/weapons/grenades/smoke_grenade_projectile.mdl" )
+	smokenade.SetValueForModelKey( $"models/weapons/bullets/projectile_rocket_large.mdl" )
 	smokenade.kv.spawnflags = 0
 	smokenade.kv.solid = 0
 	smokenade.kv.fadescale = 0
@@ -928,12 +960,14 @@ void function spawnSmoke( SmokeEvent smokeEvent, SpawnEvent spawnEvent, FlowCont
 	smokenade.kv.modelscale = 3
 	smokenade.SetParent( mover, "", false, 0 )
 	mover.SetOrigin( smokeEvent.position + < 0, 0, 8192 > )
+	mover.SetAngles( < 90, 0, 0 > )
 	DispatchSpawn( smokenade )
 	PlayLoopFXOnEntity( $"Rocket_Smoke_SMALL_Titan_2", smokenade )
 	PlayLoopFXOnEntity( $"weapon_kraber_projectile", smokenade )
-	mover.NonPhysicsMoveTo( smokeEvent.position, 0.65, 0, 0 )
-	wait 0.65
+	mover.NonPhysicsMoveTo( smokeEvent.position, 1.0, 0, 0 )
+	wait 1
 	Smokescreen(smokescreen)
+	wait 0.2
 	smokenade.Destroy()
 	mover.Destroy()
 }
@@ -1015,12 +1049,13 @@ void function spawnArcTitan( SmokeEvent smokeEvent, SpawnEvent spawnEvent, FlowC
 		thread Drop_Spawnpoint( spawnEvent.origin, TEAM_IMC, 5 )
 	PingMinimap( spawnEvent.origin.x, spawnEvent.origin.y, 4, 600, 150, 0 )
 	entity npc = CreateArcTitan( TEAM_IMC, spawnEvent.origin, spawnEvent.angles )
-	npc.DisableNPCFlag( NPC_ALLOW_INVESTIGATE | NPC_USE_SHOOTING_COVER | NPC_ALLOW_PATROL )
 	SetSpawnOption_Titanfall( npc )
 	SetTargetName( npc, GetTargetNameForID( spawnEvent.spawnType ) ) // required for client to create icons
 	SetSpawnOption_AISettings( npc, "npc_titan_stryder_leadwall_arc" )
 	spawnedNPCs.append( npc )
 	DispatchSpawn( npc )
+	npc.DisableNPCFlag( NPC_ALLOW_INVESTIGATE | NPC_USE_SHOOTING_COVER | NPC_ALLOW_PATROL )
+	npc.SetEnemyChangeCallback( OnFDHarvesterTargeted )
 	AddMinimapForTitans( npc )
 	npc.WaitSignal( "TitanHotDropComplete" )
 	npc.GetTitanSoul().SetTitanSoulNetBool( "showOverheadIcon", true )
@@ -1131,14 +1166,14 @@ void function spawnDroppodGrunts( SmokeEvent smokeEvent, SpawnEvent spawnEvent, 
 		if( spawnEvent.entityGlobalKey != "" )
 			GlobalEventEntitys[ spawnEvent.entityGlobalKey+ i.tostring() ] <- guy
 		SetTeam( guy, TEAM_IMC )
-		guy.EnableNPCFlag(  NPC_ALLOW_INVESTIGATE | NPC_ALLOW_HAND_SIGNALS | NPC_ALLOW_FLEE )
-		guy.DisableNPCFlag( NPC_ALLOW_PATROL )
 		if ( FD_GruntWeapons.len() > 0 )
 		{
 			string baseweapon = FD_GruntWeapons[ RandomInt( FD_GruntWeapons.len() ) ]
 			SetSpawnOption_Weapon( guy, baseweapon )
 		}
 		DispatchSpawn( guy )
+		guy.EnableNPCFlag(  NPC_ALLOW_INVESTIGATE | NPC_ALLOW_HAND_SIGNALS | NPC_ALLOW_FLEE )
+		guy.DisableNPCFlag( NPC_ALLOW_PATROL )
 		guy.SetEfficientMode( true )
 		guy.SetParent( pod, "ATTACH", true )
 		SetSquad( guy, squadName )
@@ -1187,7 +1222,7 @@ void function spawnGruntDropship( SmokeEvent smokeEvent, SpawnEvent spawnEvent, 
 	CallinData drop
 	InitCallinData( drop )
 	SetCallinStyle( drop, style )
-	drop.dist 			= 1800
+	drop.dist 			= 2000
 	drop.origin 		= origin
 	drop.yaw 			= yaw
 	
@@ -1251,15 +1286,14 @@ void function spawnGruntDropship( SmokeEvent smokeEvent, SpawnEvent spawnEvent, 
 		if( spawnEvent.entityGlobalKey != "" )
 			GlobalEventEntitys[ spawnEvent.entityGlobalKey+ i.tostring() ] <- guy
 		SetTeam( guy, TEAM_IMC )
-		guy.EnableNPCFlag(  NPC_ALLOW_INVESTIGATE | NPC_ALLOW_HAND_SIGNALS | NPC_ALLOW_FLEE )
-		guy.DisableNPCFlag( NPC_ALLOW_PATROL )
 		if ( FD_GruntWeapons.len() > 0 )
 		{
 			string baseweapon = FD_GruntWeapons[ RandomInt( FD_GruntWeapons.len() ) ]
 			SetSpawnOption_Weapon( guy, baseweapon )
 		}
 		DispatchSpawn( guy )
-		
+		guy.EnableNPCFlag(  NPC_ALLOW_INVESTIGATE | NPC_ALLOW_HAND_SIGNALS | NPC_ALLOW_FLEE )
+		guy.DisableNPCFlag( NPC_ALLOW_PATROL )
 		SetSquad( guy, squadName )
 		
 		if ( i < GetCurrentPlaylistVarInt( "fd_grunt_at_weapon_users", 0 ) )
@@ -1323,10 +1357,10 @@ void function spawnDroppodStalker( SmokeEvent smokeEvent, SpawnEvent spawnEvent,
 		if( spawnEvent.entityGlobalKey != "" )
 			GlobalEventEntitys[ spawnEvent.entityGlobalKey + i.tostring() ] <- guy
 		SetTeam( guy, TEAM_IMC )
-		guy.EnableNPCFlag(  NPC_ALLOW_INVESTIGATE | NPC_ALLOW_HAND_SIGNALS | NPC_ALLOW_FLEE )
-		guy.DisableNPCFlag( NPC_ALLOW_PATROL )
 		SetSpawnOption_AISettings( guy, "npc_stalker_fd" )
 		DispatchSpawn( guy )
+		guy.EnableNPCFlag(  NPC_ALLOW_INVESTIGATE | NPC_ALLOW_HAND_SIGNALS | NPC_ALLOW_FLEE )
+		guy.DisableNPCFlag( NPC_ALLOW_PATROL )
 		guy.SetEfficientMode( true )
 		guy.SetParent( pod, "ATTACH", true )
 		SetSquad( guy, squadName )
@@ -1397,6 +1431,8 @@ void function spawnDroppodSpectreMortar( SmokeEvent smokeEvent, SpawnEvent spawn
 			SetSpawnOption_Weapon( guy, baseweapon )
 		}
 		DispatchSpawn( guy )
+		guy.AssaultSetFightRadius( 0 )
+		guy.DisableNPCFlag( NPC_ALLOW_INVESTIGATE | NPC_USE_SHOOTING_COVER | NPC_ALLOW_PATROL )
 		spawnedNPCs.append(guy)
 		guy.SetEfficientMode( true )
 		guy.SetParent( pod, "ATTACH", true )
@@ -1467,6 +1503,10 @@ void function SpawnIonTitan( SmokeEvent smokeEvent, SpawnEvent spawnEvent, FlowC
 	}
 	SetTargetName( npc, GetTargetNameForID( spawnEvent.spawnType ) ) // required for client to create icons
 	DispatchSpawn( npc )
+	npc.SetEnemyChangeCallback( OnFDHarvesterTargeted )
+	if ( spawnEvent.titanType == 1 && elitesAllowed )
+		npc.EnableNPCFlag( NPC_NO_PAIN | NPC_NO_GESTURE_PAIN )
+	npc.SetDangerousAreaReactionTime( FD_TITAN_AOE_REACTTIME )
 	if( spawnEvent.entityGlobalKey != "" )
 		GlobalEventEntitys[spawnEvent.entityGlobalKey] <- npc
 	spawnedNPCs.append( npc )
@@ -1505,6 +1545,10 @@ void function SpawnScorchTitan( SmokeEvent smokeEvent, SpawnEvent spawnEvent, Fl
 	
 	SetTargetName( npc, GetTargetNameForID( spawnEvent.spawnType ) ) // required for client to create icons
 	DispatchSpawn( npc )
+	npc.SetEnemyChangeCallback( OnFDHarvesterTargeted )
+	if ( spawnEvent.titanType == 1 && elitesAllowed )
+		npc.EnableNPCFlag( NPC_NO_PAIN | NPC_NO_GESTURE_PAIN )
+	npc.SetDangerousAreaReactionTime( FD_TITAN_AOE_REACTTIME )
 	if( spawnEvent.entityGlobalKey != "" )
 		GlobalEventEntitys[spawnEvent.entityGlobalKey] <- npc
 	spawnedNPCs.append( npc )
@@ -1536,6 +1580,9 @@ void function SpawnRoninTitan( SmokeEvent smokeEvent, SpawnEvent spawnEvent, Flo
 	}
 	SetTargetName( npc, GetTargetNameForID( spawnEvent.spawnType ) ) // required for client to create icons
 	DispatchSpawn( npc )
+	npc.SetEnemyChangeCallback( OnFDHarvesterTargeted )
+	if ( spawnEvent.titanType == 1 && elitesAllowed )
+		npc.EnableNPCFlag( NPC_NO_PAIN | NPC_NO_GESTURE_PAIN )
 	if( spawnEvent.entityGlobalKey != "" )
 		GlobalEventEntitys[spawnEvent.entityGlobalKey] <- npc
 	spawnedNPCs.append( npc )
@@ -1569,6 +1616,10 @@ void function SpawnToneTitan( SmokeEvent smokeEvent, SpawnEvent spawnEvent, Flow
 	}
 	SetTargetName( npc, GetTargetNameForID( spawnEvent.spawnType ) ) // required for client to create icons
 	DispatchSpawn( npc )
+	npc.SetEnemyChangeCallback( OnFDHarvesterTargeted )
+	if ( spawnEvent.titanType == 1 && elitesAllowed )
+		npc.EnableNPCFlag( NPC_NO_PAIN | NPC_NO_GESTURE_PAIN )
+	npc.SetDangerousAreaReactionTime( FD_TITAN_AOE_REACTTIME )
 	if( spawnEvent.entityGlobalKey != "" )
 		GlobalEventEntitys[spawnEvent.entityGlobalKey] <- npc
 	spawnedNPCs.append( npc )
@@ -1601,6 +1652,10 @@ void function SpawnLegionTitan( SmokeEvent smokeEvent, SpawnEvent spawnEvent, Fl
 	}
 	SetTargetName( npc, GetTargetNameForID( spawnEvent.spawnType ) ) // required for client to create icons
 	DispatchSpawn( npc )
+	npc.SetEnemyChangeCallback( OnFDHarvesterTargeted )
+	if ( spawnEvent.titanType == 1 && elitesAllowed )
+		npc.EnableNPCFlag( NPC_NO_PAIN | NPC_NO_GESTURE_PAIN )
+	npc.SetDangerousAreaReactionTime( FD_TITAN_AOE_REACTTIME )
 	if( spawnEvent.entityGlobalKey != "" )
 		GlobalEventEntitys[spawnEvent.entityGlobalKey] <- npc
 	spawnedNPCs.append( npc )
@@ -1633,6 +1688,10 @@ void function SpawnMonarchTitan( SmokeEvent smokeEvent, SpawnEvent spawnEvent, F
 	}
 	SetTargetName( npc, GetTargetNameForID( spawnEvent.spawnType ) ) // required for client to create icons
 	DispatchSpawn( npc )
+	npc.SetEnemyChangeCallback( OnFDHarvesterTargeted )
+	if ( spawnEvent.titanType == 1 && elitesAllowed )
+		npc.EnableNPCFlag( NPC_NO_PAIN | NPC_NO_GESTURE_PAIN )
+	npc.SetDangerousAreaReactionTime( FD_TITAN_AOE_REACTTIME )
 	if( spawnEvent.entityGlobalKey != "" )
 		GlobalEventEntitys[spawnEvent.entityGlobalKey] <- npc
 	spawnedNPCs.append( npc )
@@ -1653,12 +1712,12 @@ void function spawnNukeTitan( SmokeEvent smokeEvent, SpawnEvent spawnEvent, Flow
 	SetSpawnOption_Melee( npc, "null" )
 	SetSpawnOption_Titanfall( npc )
 	SetTargetName( npc, GetTargetNameForID( spawnEvent.spawnType ) ) // required for client to create icons
+	DispatchSpawn( npc )
 	npc.EnableNPCMoveFlag( NPCMF_WALK_ALWAYS | NPCMF_WALK_NONCOMBAT | NPCMF_IGNORE_CLUSTER_DANGER_TIME )
 	npc.DisableNPCMoveFlag( NPCMF_PREFER_SPRINT | NPCMF_FOLLOW_SAFE_PATHS )
 	npc.DisableNPCFlag( NPC_DIRECTIONAL_MELEE )
 	npc.AssaultSetFightRadius( 0 )
 	npc.SetNPCMoveSpeedScale( 0.5 )
-	DispatchSpawn( npc )
 	npc.SetCapabilityFlag( bits_CAP_INNATE_MELEE_ATTACK1, false )
 	npc.SetCapabilityFlag( bits_CAP_INNATE_MELEE_ATTACK2, false )
 	npc.SetCapabilityFlag( bits_CAP_SYNCED_MELEE_ATTACK, false )
@@ -1684,6 +1743,9 @@ void function spawnMortarTitan( SmokeEvent smokeEvent, SpawnEvent spawnEvent, Fl
 	SetSpawnOption_Titanfall( npc )
 	SetTargetName( npc, GetTargetNameForID( spawnEvent.spawnType ) ) // required for client to create icons
 	DispatchSpawn( npc )
+	npc.SetSkin( 2 )
+	npc.SetCamo( 1 )
+	npc.SetDangerousAreaReactionTime( FD_TITAN_AOE_REACTTIME )
 	if( spawnEvent.entityGlobalKey != "" )
 		GlobalEventEntitys[spawnEvent.entityGlobalKey] <- npc
 	spawnedNPCs.append( npc )
@@ -1712,8 +1774,11 @@ void function spawnSniperTitan( SmokeEvent smokeEvent, SpawnEvent spawnEvent, Fl
 		SlowEnemyMovementBasedOnDifficulty( npc )
 	}
 	SetTargetName( npc, GetTargetNameForID( spawnEvent.spawnType ) ) // required for client to create icons
-	npc.DisableNPCFlag( NPC_ALLOW_INVESTIGATE )
 	DispatchSpawn( npc )
+	if ( spawnEvent.titanType == 1 && elitesAllowed )
+		npc.EnableNPCFlag( NPC_NO_PAIN | NPC_NO_GESTURE_PAIN )
+	npc.DisableNPCFlag( NPC_ALLOW_INVESTIGATE )
+	npc.SetDangerousAreaReactionTime( FD_TITAN_AOE_REACTTIME )
 	if( spawnEvent.entityGlobalKey != "" )
 		GlobalEventEntitys[spawnEvent.entityGlobalKey] <- npc
 	npc.AssaultSetFightRadius( 0 )
@@ -1744,8 +1809,16 @@ void function SpawnToneSniperTitan( SmokeEvent smokeEvent, SpawnEvent spawnEvent
 		SlowEnemyMovementBasedOnDifficulty( npc )
 	}
 	SetTargetName( npc, GetTargetNameForID( spawnEvent.spawnType ) ) // required for client to create icons
-	npc.DisableNPCFlag( NPC_ALLOW_INVESTIGATE )
 	DispatchSpawn( npc )
+	if ( spawnEvent.titanType == 1 && elitesAllowed )
+		npc.EnableNPCFlag( NPC_NO_PAIN | NPC_NO_GESTURE_PAIN )
+	npc.DisableNPCFlag( NPC_ALLOW_INVESTIGATE )
+	if ( spawnEvent.titanType == 0 )
+	{
+		npc.SetSkin( 8 )
+		npc.SetCamo( -1 )
+	}
+	npc.SetDangerousAreaReactionTime( FD_TITAN_AOE_REACTTIME )
 	if( spawnEvent.entityGlobalKey != "" )
 		GlobalEventEntitys[spawnEvent.entityGlobalKey] <- npc
 	npc.AssaultSetFightRadius( 0 )
@@ -1786,8 +1859,8 @@ void function SpawnTick( SmokeEvent smokeEvent, SpawnEvent spawnEvent, FlowContr
 		SetSpawnOption_AISettings( guy, "npc_frag_drone_fd" )
 		SetSpawnOption_Alert( guy )
 		SetTeam( guy, TEAM_IMC )
-		guy.EnableNPCFlag(  NPC_ALLOW_INVESTIGATE )
 		DispatchSpawn( guy )
+		guy.EnableNPCFlag(  NPC_ALLOW_INVESTIGATE )
 		if( GetConVarBool( "ns_fd_differentiate_ticks" ) )
 			guy.SetModel( $"models/robots/drone_frag/drone_frag.mdl" )
 		guy.SetEfficientMode( true )
@@ -1959,13 +2032,11 @@ void function SlowEnemyMovementBasedOnDifficulty( entity npc )
 		case eFDDifficultyLevel.EASY:
 		case eFDDifficultyLevel.NORMAL:
 			npc.SetNPCMoveSpeedScale( 0.75 )
-			npc.SetDangerousAreaReactionTime( 200 )
 			break
 		case eFDDifficultyLevel.HARD:
 		case eFDDifficultyLevel.MASTER:
 		case eFDDifficultyLevel.INSANE:
 			npc.SetNPCMoveSpeedScale( 0.5 )
-			npc.SetDangerousAreaReactionTime( 200 )
 			break
 	}
 }
@@ -1983,7 +2054,6 @@ void function SetTitanAsElite( entity npc )
 		npc.kv.skip_boss_intro = 1
 		npc.kv.AccuracyMultiplier = 5
 		npc.kv.WeaponProficiency = eWeaponProficiency.PERFECT
-		npc.EnableNPCFlag( NPC_NO_PAIN | NPC_NO_GESTURE_PAIN )
 	}
 }
 
@@ -2019,6 +2089,25 @@ void function Drop_Spawnpoint( vector origin, int team, float impactTime )
 	{
 		if ( IsValid( targetEffect ) )
 			EffectStop( targetEffect )
+	}
+}
+
+void function OnFDHarvesterTargeted( entity titan )
+{
+	entity enemy = titan.GetEnemy()
+	if ( enemy == fd_harvester.harvester )
+	{
+		titan.DisableNPCFlag( NPC_DIRECTIONAL_MELEE )
+		titan.SetCapabilityFlag( bits_CAP_INNATE_MELEE_ATTACK1, false )
+		titan.SetCapabilityFlag( bits_CAP_INNATE_MELEE_ATTACK2, false )
+		titan.SetAllowMelee( false )
+	}
+	else
+	{
+		titan.EnableNPCFlag( NPC_DIRECTIONAL_MELEE )
+		titan.SetCapabilityFlag( bits_CAP_INNATE_MELEE_ATTACK1, true )
+		titan.SetCapabilityFlag( bits_CAP_INNATE_MELEE_ATTACK2, true )
+		titan.SetAllowMelee( true )
 	}
 }
 
