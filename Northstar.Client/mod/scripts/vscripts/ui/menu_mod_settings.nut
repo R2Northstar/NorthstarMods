@@ -1,11 +1,11 @@
 untyped
 global function AddModSettingsMenu
-global function NSModSettingsAddConVarSetting
-global function NSModSettingsAddConVarSettingEnum
-global function NSModSettingsAddConVarSettingSlider
-global function NSModSettingsAddButton
-global function NSModSettingsAddModTitle
-global function NSModSettingsAddModCategory
+global function ModSettings_AddSetting
+global function ModSettings_AddEnumSetting
+global function ModSettings_AddSliderSetting
+global function ModSettings_AddButton
+global function ModSettings_AddModTitle
+global function ModSettings_AddModCategory
 global function PureModulo
 
 // Legacy functions for backwards compatability. These will be removed eventually
@@ -95,13 +95,13 @@ void function InitModMenu()
 	/////////////////////////////
 
 	/*
-	NSModSettingsAddModTitle( "^FF000000EXAMPLE" )
-	NSModSettingsAddModCategory( "I wasted way too much time on this..." )
-	NSModSettingsAddButton( "This is a custom button you can click on!", void function() : ()
+	ModSettings_AddModTitle( "^FF000000EXAMPLE" )
+	ModSettings_AddModCategory( "I wasted way too much time on this..." )
+	ModSettings_AddButton( "This is a custom button you can click on!", void function() : ()
 	{
 		print( "HELLOOOOOO" )
 	} )
-	NSModSettingsAddConVarSettingEnum( "filter_mods", "Very Huge Enum Example", split( "Never gonna give you up Never gonna let you down Never gonna run around and desert you Never gonna make you cry Never gonna say goodbye Never gonna tell a lie and hurt you", " " ) )
+	ModSettings_AddEnumSetting( "filter_mods", "Very Huge Enum Example", split( "Never gonna give you up Never gonna let you down Never gonna run around and desert you Never gonna make you cry Never gonna say goodbye Never gonna tell a lie and hurt you", " " ) )
 	*/
 	// Nuke weird rui on filter switch :D
 	// RuiSetString( Hud_GetRui( Hud_GetChild( file.menu, "SwtBtnShowFilter" ) ), "buttonText", "" )
@@ -740,7 +740,7 @@ void function OnModMenuClosed()
 	file.isOpen = false
 }
 
-void function NSModSettingsAddModTitle( string modName, int stackPos = 2 )
+void function ModSettings_AddModTitle( string modName, int stackPos = 2 )
 {
 	file.currentMod = modName
 	if ( file.conVarList.len() > 0 )
@@ -775,10 +775,10 @@ void function NSModSettingsAddModTitle( string modName, int stackPos = 2 )
 
 void function AddModTitle( string modName, int stackPos = 2 )
 {
-	NSModSettingsAddModTitle( modName, stackPos + 1 )
+	ModSettings_AddModTitle( modName, stackPos + 1 )
 }
 
-void function NSModSettingsAddModCategory( string catName, int stackPos = 2 )
+void function ModSettings_AddModCategory( string catName, int stackPos = 2 )
 {
 	if ( !( getstackinfos( stackPos )[ "func" ] in file.setFuncs ) )
 		throw getstackinfos( stackPos )[ "src" ] + " #" + getstackinfos( stackPos )[ "line" ] + "\nCannot add a category before a mod title!"
@@ -804,10 +804,10 @@ void function NSModSettingsAddModCategory( string catName, int stackPos = 2 )
 
 void function AddModCategory( string catName, int stackPos = 2 )
 {
-	NSModSettingsAddModCategory( catName, stackPos + 1 )
+	ModSettings_AddModCategory( catName, stackPos + 1 )
 }
 
-void function NSModSettingsAddButton( string buttonLabel, void functionref() onPress, int stackPos = 2 )
+void function ModSettings_AddButton( string buttonLabel, void functionref() onPress, int stackPos = 2 )
 {
 	if ( !( getstackinfos( stackPos )[ "func" ] in file.setFuncs ) || !file.setFuncs[ expect string( getstackinfos( stackPos )[ "func" ] ) ] )
 		throw getstackinfos( stackPos )[ "src" ] + " #" + getstackinfos( stackPos )[ "line" ] + "\nCannot add a button before a category and mod title!"
@@ -825,10 +825,10 @@ void function NSModSettingsAddButton( string buttonLabel, void functionref() onP
 
 void function AddModSettingsButton( string buttonLabel, void functionref() onPress, int stackPos = 2 )
 {
-	NSModSettingsAddButton( buttonLabel, onPress, stackPos + 1 )
+	ModSettings_AddButton( buttonLabel, onPress, stackPos + 1 )
 }
 
-void function NSModSettingsAddConVarSetting( string conVar, string displayName, string type = "", int stackPos = 2 )
+void function ModSettings_AddSetting( string conVar, string displayName, string type = "", int stackPos = 2 )
 {
 	if ( !( getstackinfos( stackPos )[ "func" ] in file.setFuncs ) || !file.setFuncs[ expect string( getstackinfos( stackPos )[ "func" ] ) ] )
 		throw getstackinfos( stackPos )[ "src" ] + " #" + getstackinfos( stackPos )[ "line" ] + "\nCannot add a setting before a category and mod title!"
@@ -845,10 +845,10 @@ void function NSModSettingsAddConVarSetting( string conVar, string displayName, 
 
 void function AddConVarSetting( string conVar, string displayName, string type = "", int stackPos = 2 )
 {
-	NSModSettingsAddConVarSetting( conVar, displayName, type, stackPos + 1 )
+	ModSettings_AddSetting( conVar, displayName, type, stackPos + 1 )
 }
 
-void function NSModSettingsAddConVarSettingSlider( string conVar, string displayName, float min = 0.0, float max = 1.0, float stepSize = 0.1, bool forceClamp = false, int stackPos = 2 )
+void function ModSettings_AddSliderSetting( string conVar, string displayName, float min = 0.0, float max = 1.0, float stepSize = 0.1, bool forceClamp = false, int stackPos = 2 )
 {
 	if ( !( getstackinfos( stackPos )[ "func" ] in file.setFuncs ) || !file.setFuncs[ expect string( getstackinfos( stackPos )[ "func" ] ) ] )
 		throw getstackinfos( stackPos )[ "src" ] + " #" + getstackinfos( stackPos )[ "line" ] + "\nCannot add a setting before a category and mod title!"
@@ -870,10 +870,10 @@ void function NSModSettingsAddConVarSettingSlider( string conVar, string display
 
 void function AddConVarSettingSlider( string conVar, string displayName, float min = 0.0, float max = 1.0, float stepSize = 0.1, bool forceClamp = false, int stackPos = 2 )
 {
-	NSModSettingsAddConVarSettingSlider( conVar, displayName, min, max, stepSize, forceClamp, stackPos + 1 )
+	ModSettings_AddSliderSetting( conVar, displayName, min, max, stepSize, forceClamp, stackPos + 1 )
 }
 
-void function NSModSettingsAddConVarSettingEnum( string conVar, string displayName, array<string> values, int stackPos = 2 )
+void function ModSettings_AddEnumSetting( string conVar, string displayName, array<string> values, int stackPos = 2 )
 {
 	if ( !( getstackinfos( stackPos )[ "func" ] in file.setFuncs ) || !file.setFuncs[ expect string( getstackinfos( stackPos )[ "func" ] ) ] )
 		throw getstackinfos( stackPos )[ "src" ] + " #" + getstackinfos( stackPos )[ "line" ] + "\nCannot add a setting before a category and mod title!"
@@ -896,7 +896,7 @@ void function NSModSettingsAddConVarSettingEnum( string conVar, string displayNa
 
 void function AddConVarSettingEnum( string conVar, string displayName, array<string> values, int stackPos = 2 )
 {
-	NSModSettingsAddConVarSettingEnum( conVar, displayName, values, stackPos + 1 )
+	ModSettings_AddEnumSetting( conVar, displayName, values, stackPos + 1 )
 }
 
 void function OnSliderChange( var button )
