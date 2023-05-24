@@ -39,7 +39,7 @@ void function singleNav_thread( entity npc, string routeName, int nodesToSkip = 
 			}
 		}
 		
-		printt("Entity had no route defined: using nearest node: " + targetNode.kv.targetname )
+		printt("Entity had no route defined, using nearest node: " + targetNode.kv.route_name )
 	}
 	else
 		targetNode = GetRouteStart( routeName )

@@ -128,7 +128,7 @@ global array<string> FD_GruntWeapons
 global string Cvar_spectreweapons
 global array<string> FD_SpectreWeapons
 
-const FD_TITAN_AOE_REACTTIME = 20
+const FD_TITAN_AOE_REACTTIME = 3 //This is in seconds
 
 void function executeWave()
 {	
@@ -898,8 +898,7 @@ void function BlockFurtherTitanfalls( SmokeEvent smokeEvent, SpawnEvent spawnEve
 			{
 				PlayerEarnMeter_Reset( player )
 				ClearTitanAvailable( player )
-				//SendHudMessage( player, "Titanfall Block: Titans cannot be summoned", -1, 0.5, 255, 255, 128, 255, 0.2, 5.0, 1.8 )
-				NSSendLargeMessageToPlayer( player, "Titanfall Block", "Titans cannot be summoned anymore, avoid losing your Titan at all costs!", 20, "rui/callsigns/callsign_94_col" )
+				NSSendLargeMessageToPlayer( player, "Titanfall Block", "Titans cannot be summoned anymore, avoid losing your Titan!", 20, "rui/callsigns/callsign_94_col" )
 			}
 		}
 		else
@@ -919,7 +918,7 @@ void function PlayWarning( SmokeEvent smokeEvent, SpawnEvent spawnEvent, FlowCon
 		if( soundEvent.soundEventName == "fd_waveTypeEliteTitan" )
 		{
 			foreach( entity player in GetPlayerArray() )
-				NSSendLargeMessageToPlayer( player, "Elite Titan", "Always coated white. Huge health, huge shield, moves faster and can use cores. Drops batteries on death.", 20, "rui/callsigns/callsign_17_col" )
+				NSSendLargeMessageToPlayer( player, "Elite Titan", "Always coated white. Huge health, huge shield, greater aiming, moves faster and can use Core. Drops battery on death.", 30, "rui/callsigns/callsign_17_col" )
 		}
 		PlayFactionDialogueToTeam( soundEvent.soundEventName, TEAM_MILITIA )
 	}
@@ -931,7 +930,7 @@ void function spawnSmoke( SmokeEvent smokeEvent, SpawnEvent spawnEvent, FlowCont
 	SmokescreenStruct smokescreen
 	smokescreen.smokescreenFX = $"P_smokescreen_FD"
 	smokescreen.isElectric = false
-	smokescreen.origin = smokeEvent.position //+ < 0, 0, 64 >
+	smokescreen.origin = smokeEvent.position
 	smokescreen.angles = < 0, 0, 0 >
 	smokescreen.fxXYRadius = 160
 	smokescreen.fxZRadius = 128
@@ -950,14 +949,12 @@ void function spawnSmoke( SmokeEvent smokeEvent, SpawnEvent spawnEvent, FlowCont
 	
 	entity smokenade = CreateEntity( "prop_script" )
 	entity mover = CreateOwnedScriptMover( smokenade )
-	//smokenade.SetValueForModelKey( $"models/weapons/grenades/smoke_grenade_projectile.mdl" )
 	smokenade.SetValueForModelKey( $"models/weapons/bullets/projectile_rocket_large.mdl" )
 	smokenade.kv.spawnflags = 0
 	smokenade.kv.solid = 0
 	smokenade.kv.fadescale = 0
 	smokenade.kv.renderamt = 255
 	smokenade.kv.rendercolor = "255 255 255"
-	smokenade.kv.modelscale = 3
 	smokenade.SetParent( mover, "", false, 0 )
 	mover.SetOrigin( smokeEvent.position + < 0, 0, 8192 > )
 	mover.SetAngles( < 90, 0, 0 > )
@@ -1056,6 +1053,7 @@ void function spawnArcTitan( SmokeEvent smokeEvent, SpawnEvent spawnEvent, FlowC
 	DispatchSpawn( npc )
 	npc.DisableNPCFlag( NPC_ALLOW_INVESTIGATE | NPC_USE_SHOOTING_COVER | NPC_ALLOW_PATROL )
 	npc.SetEnemyChangeCallback( OnFDHarvesterTargeted )
+	npc.SetDangerousAreaReactionTime( FD_TITAN_AOE_REACTTIME )
 	AddMinimapForTitans( npc )
 	npc.WaitSignal( "TitanHotDropComplete" )
 	npc.GetTitanSoul().SetTitanSoulNetBool( "showOverheadIcon", true )
@@ -1222,7 +1220,7 @@ void function spawnGruntDropship( SmokeEvent smokeEvent, SpawnEvent spawnEvent, 
 	CallinData drop
 	InitCallinData( drop )
 	SetCallinStyle( drop, style )
-	drop.dist 			= 2000
+	drop.dist 			= 1800
 	drop.origin 		= origin
 	drop.yaw 			= yaw
 	
@@ -1586,6 +1584,7 @@ void function SpawnRoninTitan( SmokeEvent smokeEvent, SpawnEvent spawnEvent, Flo
 	if( spawnEvent.entityGlobalKey != "" )
 		GlobalEventEntitys[spawnEvent.entityGlobalKey] <- npc
 	spawnedNPCs.append( npc )
+	npc.SetDangerousAreaReactionTime( FD_TITAN_AOE_REACTTIME )
 	AddMinimapForTitans( npc )
 	npc.WaitSignal( "TitanHotDropComplete" )
 	npc.GetTitanSoul().SetTitanSoulNetBool( "showOverheadIcon", true )
@@ -2104,10 +2103,10 @@ void function OnFDHarvesterTargeted( entity titan )
 	}
 	else
 	{
+		titan.SetAllowMelee( true )
 		titan.EnableNPCFlag( NPC_DIRECTIONAL_MELEE )
 		titan.SetCapabilityFlag( bits_CAP_INNATE_MELEE_ATTACK1, true )
 		titan.SetCapabilityFlag( bits_CAP_INNATE_MELEE_ATTACK2, true )
-		titan.SetAllowMelee( true )
 	}
 }
 

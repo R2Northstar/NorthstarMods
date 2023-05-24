@@ -99,6 +99,10 @@
 			"DefaultValue": "0"
 		},
 		{
+			"Name": "ns_fd_rodeo_highlight",
+			"DefaultValue": "1"
+		},
+		{
 			"Name": "ns_reaper_warpfall_kill",
 			"DefaultValue": "1"
 		}

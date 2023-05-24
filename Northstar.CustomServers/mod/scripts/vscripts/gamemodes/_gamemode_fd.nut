@@ -19,9 +19,6 @@ enum eDropshipState{
 	_count_
 }
 
-
-
-
 struct player_struct_fd{
 	bool diedThisRound
 	int assaultScoreThisRound
@@ -32,7 +29,6 @@ struct player_struct_fd{
 	float lastTitanDrop
 	float lastNearHarvester
 	bool leaveHarvester
-	bool boughtAmpedWeapons
 }
 
 global HarvesterStruct& fd_harvester
@@ -49,8 +45,6 @@ global array<string> waveAnnouncement = ["","","","",""]
 global int difficultyLevel
 global bool elitesAllowed
 global bool titanfallblockAllowed
-
-
 
 struct {
 	array<entity> aiSpawnpoints
@@ -112,6 +106,7 @@ void function GamemodeFD_Init()
 
 	SetRoundBased( true )
 	SetShouldUseRoundWinningKillReplay( false )
+	SetKillcamsEnabled( false )
 	SetTimeoutWinnerDecisionFunc( FD_TimeOutCheck )
 	Riff_ForceBoostAvailability( eBoostAvailability.Disabled )
 	PlayerEarnMeter_SetEnabled( false )
@@ -129,6 +124,8 @@ void function GamemodeFD_Init()
 	AddCallback_OnClientDisconnected( OnPlayerDisconnectedOrDestroyed )
 	AddCallback_OnPlayerGetsNewPilotLoadout( FD_OnPlayerGetsNewPilotLoadout )
 	ClassicMP_SetEpilogue( FD_SetupEpilogue )
+	AddOnRodeoStartedCallback( FD_PilotStartRodeo )
+	AddOnRodeoEndedCallback( FD_PilotEndRodeo )
 
 	//Damage Callbacks
 	AddDamageByCallback( "player", FD_DamageByPlayerCallback )
@@ -268,6 +265,7 @@ void function FD_PlayerRespawnThreaded( entity player )
 	
 	if( IsValidPlayer( player ) )
 	{
+		player.Highlight_SetParam( 1, 0, < 0, 0, 0 > )
 		player.SetInvulnerable()
 		player.SetNoTarget( true )
 		ScreenFadeFromBlack( player, 1.5, 0.5 )
@@ -460,14 +458,14 @@ void function TrackDeployedArcTrapThisRound( entity player )
 	OnThreadEnd(
 		function() : ( player )
 		{
-			if ( IsValid( player ) )
+			if ( IsValidPlayer( player ) )
 				OnPlayerDisconnectedOrDestroyed( player )
 			else
 				ClearInValidTurret()
 		}
 	)
 
-	while( IsValid( player ) )
+	while( IsValidPlayer( player ) )
 	{
 		entity ArcTrap = expect entity ( player.WaitSignal( "DeployArcTrap" ).projectile )
 		file.players[ player ].deployedEntityThisRound.append( ArcTrap )
@@ -482,7 +480,7 @@ void function TryDisableTitanSelectionForPlayerAfterDelay( entity player, float 
 	OnThreadEnd(
 		function() : ( player )
 		{
-			if( IsValid( player ) )
+			if( IsValidPlayer( player ) )
 			{
 				DisableTitanSelectionForPlayer( player )
 			}
@@ -539,6 +537,7 @@ void function TickSpawnThreaded( entity tick )
 		tick.Minimap_SetCustomState( eMinimapObject_npc.AI_TDM_AI )
 		tick.EnableNPCFlag( NPC_ALLOW_INVESTIGATE )
 		thread singleNav_thread( tick, "" )
+		//tick.AssaultPointClamped( fd_harvester.harvester.GetOrigin() + < 0, 0, 16 > )
 	}
 	else
 	{
@@ -741,6 +740,9 @@ void function OnNpcDeath( entity victim, entity attacker, var damageInfo )
 				AddPlayerScore( attacker, "TripleKill" )
 			else if ( attacker.s.currentTimedKillstreak >= MEGAKILL_REQUIREMENT_KILLS )
 				AddPlayerScore( attacker, "MegaKill" )
+			else if ( attacker.s.currentTimedKillstreak >= 6 )
+				foreach( entity player in GetPlayerArray() )
+					NSSendPopUpMessageToPlayer( player, attacker + " chained a huge titan killstreak as pilot!" )
 		}
 
 		switch( titanCharacterName )
@@ -1163,6 +1165,7 @@ bool function runWave( int waveIndex, bool shouldDoBuyTime )
 		else
 		{
 			SetRoundBased(false)
+			print( "Finishing match, no more retries left" )
 			foreach( entity player in GetPlayerArray() )
 			{
 				AddPlayerScore( player, "MatchComplete" )
@@ -1185,6 +1188,8 @@ bool function runWave( int waveIndex, bool shouldDoBuyTime )
 		foreach( entity player in GetPlayerArray() )
 		{
 			Highlight_ClearFriendlyHighlight( player ) //Clear Highlight for dropship animation
+			PlayerEarnMeter_Reset( player )
+			ClearTitanAvailable( player )
 			if ( IsAlive( player ) )
 				player.Die()
 		}
@@ -1412,7 +1417,7 @@ bool function runWave( int waveIndex, bool shouldDoBuyTime )
 
 void function FD_StunLaserHealTeammate( entity player, entity target, int shieldRestoreAmount )
 {
-	if( IsValid( player ) && player in file.players )
+	if( IsValidPlayer( player ) && player in file.players )
 	{
 		file.playerAwardStats[player]["heals"] += float( shieldRestoreAmount )
 		player.AddToPlayerGameStat( PGS_DEFENSE_SCORE, shieldRestoreAmount / 100 )
@@ -1422,7 +1427,7 @@ void function FD_StunLaserHealTeammate( entity player, entity target, int shield
 
 void function FD_SmokeHealTeammate( entity player, entity target, int shieldRestoreAmount )
 {
-	if( IsValid( player ) && player in file.players )
+	if( IsValidPlayer( player ) && player in file.players )
 	{
 		file.playerAwardStats[player]["heals"] += float( shieldRestoreAmount )
 		player.AddToPlayerGameStat( PGS_DEFENSE_SCORE, shieldRestoreAmount / 100 )
@@ -1551,19 +1556,19 @@ void function FD_Epilogue_threaded()
 
 	foreach(string ref,entity player in awardOwners)
 	{
-
 		if( awardValues[ref] >  GetFDStatData( ref ).validityCheckValue ) //might be >=
 		{
 			awardResults[player] <- ref
 			awardResultValues[player] <- awardValues[ref]
 		}
-			
 	}
 
 	int gameMode = PersistenceGetEnumIndexForItemName( "gamemodes", GAMETYPE )
 	int map = PersistenceGetEnumIndexForItemName( "maps", GetMapName() )
 	int myIndex
 	int numPlayers = GetPlayerArray().len()
+	if( numPlayers > 4 ) //Cap cuz it crashes summary menu
+		numPlayers = 4
 
 	foreach( entity player in GetPlayerArray() )
 	{
@@ -1576,7 +1581,7 @@ void function FD_Epilogue_threaded()
 
 	foreach( entity player in GetPlayerArray() )
 	{
-		if( !IsValid( player ) )
+		if( !IsValidPlayer( player ) )
 			continue
 
 		int i = 0
@@ -2077,7 +2082,7 @@ void function HealthScaleByDifficulty( entity ent )
 	if (ent.IsTitan()&& IsValid(GetPetTitanOwner( ent ) ) ) // in case we ever want pvp in FD
 		return
 
-	if ( ent.IsTitan() && ent.ai.bossTitanType == 1 && GetConVarBool( "ns_fd_allow_elite_titans" ) )
+	if ( ent.IsTitan() && ent.ai.bossTitanType == 1 && elitesAllowed )
 	{
 		ent.SetMaxHealth( ent.GetMaxHealth() + 7500 )
 		ent.SetHealth( ent.GetMaxHealth() )
@@ -2477,7 +2482,7 @@ void function AddTurretSentry( entity turret )
 	Highlight_SetFriendlyHighlight( turret , "sp_friendly_hero" )
 	Highlight_SetOwnedHighlight( turret , "sp_friendly_hero" )
 	turret.Highlight_SetParam( 1, 0, < 0, 0, 0 > )
-	turret.Highlight_SetParam( 3, 0, <0.63, 0.80, 1.0> )
+	turret.Highlight_SetParam( 3, 0, HIGHLIGHT_COLOR_INTERACT )
 	entity player = turret.GetBossPlayer()
 	file.players[ player ].deployedEntityThisRound.append( turret )
 	AddEntityDestroyedCallback( turret, FD_OnEntityDestroyed )
@@ -2491,7 +2496,7 @@ function FD_OnEntityDestroyed( ent )
 	Assert( ent.IsValidInternal() )
 	entity player = IsTurret( ent ) ? ent.GetBossPlayer() : ent.GetOwner()
 
-	if( !IsValid( player ) )
+	if( !IsValidPlayer( player ) )
 		return
 
 	if( file.players[ player ].deployedEntityThisRound.contains( ent ) )
@@ -2500,7 +2505,7 @@ function FD_OnEntityDestroyed( ent )
 
 void function OnPlayerDisconnectedOrDestroyed( entity player )
 {
-	if( !IsValid( player ) )
+	if( !IsValidPlayer( player ) )
 	{
 		ClearInValidTurret()
 		return
@@ -2512,6 +2517,7 @@ void function OnPlayerDisconnectedOrDestroyed( entity player )
 		if ( IsValidPlayer( BossPlayer ) && IsValid( npc ) && player == BossPlayer )
 			npc.Destroy()
 	}
+	
 	file.players[ player ].deployedEntityThisRound.clear()
 	
 	if( file.playersInDropship.contains( player ) )
@@ -2531,24 +2537,20 @@ void function ClearInValidTurret()
 void function DisableTitanSelection()
 {
 	foreach ( entity player in GetPlayerArray() )
-	{
 		DisableTitanSelectionForPlayer( player )
-	}
 }
 
 void function EnableTitanSelection()
 {
 	foreach ( entity player in GetPlayerArray() )
-	{
 		EnableTitanSelectionForPlayer( player )
-	}
 }
 
 void function EnableTitanSelectionForPlayer( entity player )
 {
 	int enumCount = PersistenceGetEnumCount( "titanClasses" )
 
-	if( !IsValid( player ) )
+	if( !IsValidPlayer( player ) )
 		return
 
 	for ( int i = 0; i < enumCount; i++ )
@@ -2564,7 +2566,7 @@ void function DisableTitanSelectionForPlayer( entity player )
 {
 	int enumCount = PersistenceGetEnumCount( "titanClasses" )
 
-	if( !IsValid( player ) )
+	if( !IsValidPlayer( player ) )
 		return
 
 	for ( int i = 0; i < enumCount; i++ )
@@ -2581,7 +2583,7 @@ bool function FD_PlayerInDropship( entity player )
 	if( !IsValid( file.dropship ) )
 		return false
 
-	if( !IsValid( player ) )
+	if( !IsValidPlayer( player ) )
 		return false
 
 	foreach ( entity dropshipPlayer in file.playersInDropship )
@@ -2612,19 +2614,16 @@ void function FD_DropshipSpawnDropship()
 	thread PlayAnim(file.dropship, FD_DropshipGetAnimation())
 	file.dropship.WaitSignal( "deploy" )
 	file.dropshipState = eDropshipState.Returning
-	foreach( int i, entity player in file.playersInDropship )
-	{
-		thread FD_DropshipDropPlayer( player, i )
-	}
 	
-	if ( file.playersInDropship.len() > 0 ) //Only one player in dropship is needed to warn about them respawning
+	foreach( int i, entity player in file.playersInDropship )
+		thread FD_DropshipDropPlayer( player, i )
+	
+	if ( file.playersInDropship.len() > 0 && GetGameState() == eGameState.Playing ) //Only one player in dropship is needed to warn about them respawning
 	{
 		PlayFactionDialogueToTeam( "fd_pilotRespawn" , TEAM_MILITIA )
 		wait 3
-		#if BATTLECHATTER_ENABLED
 		if ( file.playersInDropship.len() > 0 )
 			PlayBattleChatterLine( file.playersInDropship[0], "bc_pIntroChat" )
-		#endif
 		wait 5
 	}
 	else
@@ -2638,7 +2637,7 @@ void function FD_DropshipDropPlayer(entity player,int playerDropshipIndex)
 {
 	player.EndSignal( "OnDestroy" )
 	//check the player
-	if( IsValid( player ) )
+	if( IsValidPlayer( player ) )
 	{
 		FirstPersonSequenceStruct jumpSequence
 		jumpSequence.firstPersonAnim = DROPSHIP_EXIT_ANIMS_POV[ playerDropshipIndex ]
@@ -2651,10 +2650,14 @@ void function FD_DropshipDropPlayer(entity player,int playerDropshipIndex)
 		
 		WaittillAnimDone( player )
 		
-		player.ClearParent()
-		ClearPlayerAnimViewEntity( player )
-		player.ClearInvulnerable()
-		player.SetNoTarget( false )
+		if( IsValidPlayer( player ) ) //Check again because the delay
+		{
+			player.ClearParent()
+			ClearPlayerAnimViewEntity( player )
+			player.ClearInvulnerable()
+			player.SetNoTarget( false )
+			player.Highlight_SetParam( 1, 0, HIGHLIGHT_COLOR_FRIENDLY )
+		}
 	}
 }
 
@@ -2686,6 +2689,19 @@ string function FD_DropshipGetAnimation()
 			return "dropship_coop_respawn_digsite" */
 	}
 	return "dropship_coop_respawn"
+}
+
+//Change the highlight color of pilots when rodeoing Titans because the voice feedback from Titan OS might not be enough to players awareness
+void function FD_PilotStartRodeo( entity pilot, entity titan )
+{
+	if ( GetConVarBool( "ns_fd_rodeo_highlight" ) )
+		pilot.Highlight_SetParam( 1, 0, < 0.5, 2.0, 0.5 > )
+}
+
+void function FD_PilotEndRodeo( entity pilot, entity titan )
+{
+	if ( GetConVarBool( "ns_fd_rodeo_highlight" ) )
+		pilot.Highlight_SetParam( 1, 0, HIGHLIGHT_COLOR_FRIENDLY )
 }
 
 void function FD_EmitSoundOnEntityOnlyToPlayer( entity targetEntity, entity player, string alias )
