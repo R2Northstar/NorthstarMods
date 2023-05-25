@@ -99,7 +99,7 @@ Premi Sì se sei d'accordo. Questa scelta può essere modificata in qualsiasi mo
 		"gg_kill_reward", "Punteggio Riconpensa Uccisione"
 		"gg_assist_reward", "Punteggio Ricompensa Assist"
 		"gg_execution_reward", "Punteggio Ricompensa Esecuzione"
-		"gg_heal_attacker" "Heal on kill"
+		"gg_heal_attacker" "Cura all'uccisione"
 
 		"PL_tt" "Titan Tag"
 		"PL_tt_lobby" "Lobby: Titan Tag"
