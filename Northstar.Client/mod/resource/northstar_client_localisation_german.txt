@@ -98,6 +98,7 @@ Drücke Ja, um zuzustimmen. Du kannst diese Entscheidung jederzeit im Modmenü �
 		"GAMEMODE_GG" "Gun Game"
 		"gg_kill_reward" "Killprozentbelohnung"
 		"gg_execution_reward" "Exekutierungsprozentbelohnung"
+		"gg_heal_attacker" "Heilung nach kill"
 
 		"PL_tt" "Titan Tag"
 		"PL_tt_lobby" "Titan Tag Lobby"
