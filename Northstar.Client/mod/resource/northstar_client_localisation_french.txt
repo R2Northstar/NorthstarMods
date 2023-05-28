@@ -324,5 +324,23 @@ Choisissez Oui si vous êtes d'accord. Ce choix peut être modifié à tout inst
 		"INCORRECT_MOD_INSTALL_TOAST"		"Certains mods sont mal installés. Cliquez ici pour plus d'informations."
 		"INCORRECT_MODS_MODLIST_HEADER"		"Mods incorrectement installés (%s1)"
 		"INCORRECT_MOD_INSTALL_DESCRIPTION"	"Ce mod n'a pas correctement été installé. Chaque mod a un fichier nommé \"mod.json\" à sa racine, et celui-ci n'a pas été trouvé pour ce mod.\n\nEmplacement attendu : %s1/mod.json\nEmplacement trouvé : %s2/mod.json\n\nVérifiez que le fichier \"mod.json\" ainsi que le dossier \"mod\" sont directement contenus dans le répertoire du mod."
+
+		"MOD_SETTINGS"                    "Paramètres de mod"
+		"NORTHSTAR_BASE_SETTINGS"        "Paramètres de base de Northstar"
+		"ONLY_HOST_MATCH_SETTINGS"        "Seul l'hôte peut changer les paramètres de match privé"
+		"ONLY_HOST_CAN_START_MATCH"        "Seul l'hôte peut lancer le match"
+		"MATCH_COUNTDOWN_LENGTH"        "Durée du compte à rebours de match privé"
+		"LOG_UNKNOWN_CLIENTCOMMANDS"    "Enregistrer les commandes client inconnues"
+		"DISALLOWED_TACTICALS"            "Capacités interdites"
+		"TACTICAL_REPLACEMENT"            "Capacités de remplacement"
+		"DISALLOWED_WEAPONS"            "Armes interdites"
+		"REPLACEMENT_WEAPON"            "Armes de remplacement"
+		"SHOULD_RETURN_TO_LOBBY"        "Retour au lobby après la fin du match"
+		"ARE_YOU_SURE"                    "Êtes-vous certain ?"
+		"WILL_RESET_ALL_SETTINGS"        "Ceci réinitialisera tous les paramètres de cette catégorie.\n\nCette action est irréversible."
+		"WILL_RESET_SETTING"            "Ceci réinitialisera le paramètre %s1 à sa valeur par défaut.\n\nCette action est irréversible."
+		"MOD_SETTINGS_SERVER"            "Serveur"
+		"MOD_SETTINGS_RESET"            "Réinitialiser"
+		"MOD_SETTINGS_RESET_ALL"        "Tout réinitialiser"
 	}
 }
