@@ -94,7 +94,7 @@ Premi Sì se sei d'accordo. Questa scelta può essere modificata in qualsiasi mo
 		"PL_gg_desc" "Ottieni un'uccisione con ogni arma per vincere."
 		"PL_gg_hint" "Ottieni una nuova arma ogni uccisione."
 		"PL_gg_abbr" "GG"
-		"GAMEMODE_GG" "Gioco d'Armi"
+		"GAMEMODE_GG" "Gioco delle Armi"
 		"aitdm_archer_grunts", "Scagnozzi Archer"
 		"gg_kill_reward", "Punteggio Ricompensa Uccisione"
 		"gg_assist_reward", "Punteggio Ricompensa Assist"
