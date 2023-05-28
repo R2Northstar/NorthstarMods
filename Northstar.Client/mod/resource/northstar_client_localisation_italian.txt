@@ -157,7 +157,7 @@ Premi Sì se sei d'accordo. Questa scelta può essere modificata in qualsiasi mo
 		"INFECTION_SURVIVE_LAST_SURVIVOR" "Sopravvivi."
 
 		"PL_tffa", "Titan Tutti contro Tutti"
-		"PL_tffa_lobby", "Titan Tutti contro Tutti Lobby"
+		"PL_tffa_lobby", "Lobby: Titan Tutti contro Tutti"
 		"PL_tffa_desc", "Ogni Pilota per sè, distruggi tutti i Titan Nemici."
 		"PL_tffa_hint", "Ogni Pilota per sè, distruggi tutti i Titan Nemici."
 		"PL_tffa_abbr", "TFFA"
