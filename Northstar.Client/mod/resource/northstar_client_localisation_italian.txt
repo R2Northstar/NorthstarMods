@@ -314,7 +314,7 @@ Premi Sì se sei d'accordo. Questa scelta può essere modificata in qualsiasi mo
 		"UNAUTHORIZED_GAMESERVER"         "Il server non è autorizzato a fare quella richiesta"
 		"UNAUTHORIZED_GAME"                "Stryder non è riuscito a confermare che questo account possieda Titanfall 2"
 		"UNAUTHORIZED_PWD"                 "Password errata"
-		"STRYDER_RESPONSE"                 "Non è stato possibile analizzare la risposta Stryder"
+		"STRYDER_RESPONSE"                 "Non è stato possibile analizzare la risposta di Stryder"
 		"PLAYER_NOT_FOUND"                 "Non è stato trovato l'account player"
 		"INVALID_MASTERSERVER_TOKEN"     "Token Masterserver invalido o scaduto"
 		"JSON_PARSE_ERROR"                 "Errore nell'analisi della risposta json"
