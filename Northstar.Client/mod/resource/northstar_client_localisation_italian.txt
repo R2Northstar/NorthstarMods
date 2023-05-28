@@ -130,7 +130,7 @@ Premi Sì se sei d'accordo. Questa scelta può essere modificata in qualsiasi mo
 		"PL_sns_abbr", "SNS"
 		"GAMEMODE_SNS", "Sticks and Stones"
 		"SCOREBOARD_BANKRUPTS", "Uccisioni Bancarotta"
-		"SNS_LEADER_BANKRUPT", "Il leader Punteggio andato in Bancarotta!"
+		"SNS_LEADER_BANKRUPT", "Il Leader punteggio è andato in Bancarotta!"
 		"SNS_LEADER_BANKRUPT_SUB", "%s1 è stato Resettato da %s2"
 		"SNS_BANKRUPT", "Bancarotta!"
 		"SNS_BANKRUPT_SUB", "Il Tuo Punteggio è stato Resettato da %s1"
