@@ -321,9 +321,9 @@ Choisissez Oui si vous êtes d'accord. Ce choix peut être modifié à tout inst
 		"UNSUPPORTED_VERSION"             "La version que vous utilisez n'est plus supportée"
 
 		// Incorrect Mod Installation
-		"INCORRECT_MOD_INSTALL_TOAST"		"Certains mods sont mal installés. Cliquez ici pour plus d'informations."
-		"INCORRECT_MODS_MODLIST_HEADER"		"Mods incorrectement installés (%s1)"
-		"INCORRECT_MOD_INSTALL_DESCRIPTION"	"Ce mod n'a pas correctement été installé. Chaque mod a un fichier nommé \"mod.json\" à sa racine, et celui-ci n'a pas été trouvé pour ce mod.\n\nEmplacement attendu : %s1/mod.json\nEmplacement trouvé : %s2/mod.json\n\nVérifiez que le fichier \"mod.json\" ainsi que le dossier \"mod\" sont directement contenus dans le répertoire du mod."
+		"INCORRECT_MOD_INSTALL_TOAST" "Certains de vos mods sont incorrectement installés. Cliquez ici pour plus d'informations."
+		"INCORRECT_MODS_MODLIST_HEADER" "Mods Incorrectement Installés (%s1)"
+		"INCORRECT_MOD_INSTALL_DESCRIPTION" "Ce mod est incorrectement installé. Chaque mod a un fichier appelé "mod.json" dans son répertoire principal, cependant pour ce mod, il n'a pas été trouvé.\n\nEmplacement attendu : %s1/mod.json\nEmplacement trouvé : %s2/mod.json\n\nAssurez-vous que le fichier mod.json et le répertoire mod sont des enfants directs de votre dossier mod."
 
 		"MOD_SETTINGS"                    "Paramètres de mod"
 		"NORTHSTAR_BASE_SETTINGS"        "Paramètres de base de Northstar"
