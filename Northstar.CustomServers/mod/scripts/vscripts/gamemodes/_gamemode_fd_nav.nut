@@ -19,7 +19,6 @@ void function singleNav_thread( entity npc, string routeName, int nodesToSkip = 
 	else if ( nextDistance == -1 )
 		nextDistance = 160
 
-	npc.AssaultSetGoalHeight( 512 )
 	string npcName = npc.GetTargetName()
 
 	WaitFrame()
@@ -49,11 +48,11 @@ void function singleNav_thread( entity npc, string routeName, int nodesToSkip = 
 		targetNode = targetNode.GetLinkEnt()
 
 	//Do not make Ticks ignore potential targets just to charge at the Harvester
+	//Arc Titans apparently also stops to fight players on place rather that fiercely push forward
+	//Combat Reapers seems to be a little agressive rather than just sprint to the Harvester mindlessly
 	if ( npc.GetClassName() == "npc_frag_drone" )
 		npc.AssaultSetFightRadius( expect int( npc.Dev_GetAISettingByKeyField( "LookDistDefault_Combat" ) ) )
-	else if ( npcName == "empTitan" ) //Arc Titans apparently also stops to fight players on place rather that fiercely push forward
-		npc.AssaultSetFightRadius( 1024 )
-	else if ( IsSuperSpectre( npc ) ) //Combat Reapers seems to be a little agressive rather than just sprint to the Harvester mindlessly
+	else if ( npcName == "empTitan" || IsSuperSpectre( npc ) )
 		npc.AssaultSetFightRadius( 800 )
 	else
 		npc.AssaultSetFightRadius( 0 )
@@ -160,7 +159,7 @@ void function SquadNav_Thread( array<entity> npcs, string routeName, int nodesTo
 	}
 }
 
-void function droneNav_thread( entity npc, string routeName, int nodesToSkip = 1, float nextDistance = 64.0, bool shouldLoop = false )
+void function droneNav_thread( entity npc, string routeName, int nodesToSkip = 0, float nextDistance = 16.0, bool shouldLoop = false )
 {
 	npc.EndSignal( "OnDeath" )
 	npc.EndSignal( "OnDestroy" )
@@ -207,9 +206,9 @@ void function droneNav_thread( entity npc, string routeName, int nodesToSkip = 1
 	{
 		if( !IsHarvesterAlive( fd_harvester.harvester ) )
 			return
-		npc.AssaultPoint( targetNode.GetOrigin() + <0, 0, 300> )
+		npc.AssaultPoint( targetNode.GetOrigin() + < 0, 0, 192 > )
 		npc.AssaultSetGoalRadius( nextDistance )
-		npc.AssaultSetGoalHeight( 100 )
+		npc.AssaultSetGoalHeight( 128 )
 		npc.AssaultSetFightRadius( 0 )
 		
 		table result = npc.WaitSignal( "OnFinishedAssault", "OnEnterGoalRadius", "OnFailedToPath" )

@@ -16,7 +16,6 @@ global struct HarvesterStruct {
 
 HarvesterStruct function SpawnHarvester( vector origin, vector angles, int health, int shieldHealth, int team )
 {
-    //entity harvester = CreateEntity( "prop_script" )
     entity harvester = CreatePropScript( $"models/props/generator_coop/generator_coop.mdl", origin, angles, SOLID_VPHYSICS )
     
     harvester.SetMaxHealth( health )
@@ -24,10 +23,10 @@ HarvesterStruct function SpawnHarvester( vector origin, vector angles, int healt
     harvester.SetShieldHealthMax( shieldHealth )
     harvester.SetShieldHealth( shieldHealth )
 	harvester.EnableAttackableByAI( 30, 0, AI_AP_FLAG_NONE )
-    SetObjectCanBeMeleed( harvester, false )
 	SetVisibleEntitiesInConeQueriableEnabled( harvester, true )
-    SetTeam(harvester,team)
+    SetTeam( harvester, team )
     AI_CreateDangerousArea_Static( harvester, null, 160, TEAM_INVALID, true, true, origin )
+	CreateNoSpawnArea( TEAM_ANY, TEAM_ANY, origin, 0, 128 )
     
     SetGlobalNetEnt( "FD_activeHarvester", harvester )
     
@@ -39,8 +38,6 @@ HarvesterStruct function SpawnHarvester( vector origin, vector angles, int healt
     
     entity rings = CreatePropDynamic( MODEL_HARVESTER_TOWER_RINGS, origin, angles, 6 )
     thread PlayAnim( rings, "generator_cycle_fast" )
-    
-    
     
     HarvesterStruct ret
     ret.harvester = harvester

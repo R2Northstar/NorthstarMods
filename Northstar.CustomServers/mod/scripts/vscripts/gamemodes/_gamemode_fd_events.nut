@@ -38,8 +38,8 @@ global struct SmokeEvent{
 }
 
 global struct SpawnEvent{
-	vector origin
-	vector angles
+	vector origin = < 0, 0, 0 >
+	vector angles = < 0, 0, 0 >
 	string route			//defines route taken by the ai
 	int skippedRouteNodes 	//defines how many route nodes will be skipped
 	int spawnType			//Just used for Wave Info but can be used for spawn too should contain aid of spawned enemys
@@ -894,11 +894,12 @@ void function BlockFurtherTitanfalls( SmokeEvent smokeEvent, SpawnEvent spawnEve
 		{
 			print( "Applying Titanfall Block Event" )
 			PlayerEarnMeter_SetEnabled( false )
+			thread ShowTitanfallBlockHint()
 			foreach( entity player in GetPlayerArray() )
 			{
 				PlayerEarnMeter_Reset( player )
 				ClearTitanAvailable( player )
-				NSSendLargeMessageToPlayer( player, "Titanfall Block", "Titans cannot be summoned anymore, avoid losing your Titan!", 20, "rui/callsigns/callsign_94_col" )
+				NSSendAnnouncementMessageToPlayer( player, "Titanfall Block", "Titans cannot be summoned anymore!", < 255, 255, 255 >, 150, 0 )
 			}
 		}
 		else
@@ -907,6 +908,13 @@ void function BlockFurtherTitanfalls( SmokeEvent smokeEvent, SpawnEvent spawnEve
 			PlayerEarnMeter_SetEnabled( true )
 		}
 	}
+}
+
+void function ShowTitanfallBlockHint()
+{
+	wait 10
+	foreach( entity player in GetPlayerArray() )
+		NSSendLargeMessageToPlayer( player, "Titanfall Block", "Further Titans cannot be summoned until the end of the wave, avoid losing your current Titan!", 60, "rui/callsigns/callsign_94_col" )
 }
 
 void function PlayWarning( SmokeEvent smokeEvent, SpawnEvent spawnEvent, FlowControlEvent flowControlEvent, SoundEvent soundEvent )
@@ -918,7 +926,7 @@ void function PlayWarning( SmokeEvent smokeEvent, SpawnEvent spawnEvent, FlowCon
 		if( soundEvent.soundEventName == "fd_waveTypeEliteTitan" )
 		{
 			foreach( entity player in GetPlayerArray() )
-				NSSendLargeMessageToPlayer( player, "Elite Titan", "Always coated white. Huge health, huge shield, greater aiming, moves faster and can use Core. Drops battery on death.", 30, "rui/callsigns/callsign_17_col" )
+				NSSendLargeMessageToPlayer( player, "Elite Titan", "Always coated white. Huge health, huge shield, greater aiming, moves faster and can use Core. Drops battery on death.", 60, "rui/callsigns/callsign_17_col" )
 		}
 		PlayFactionDialogueToTeam( soundEvent.soundEventName, TEAM_MILITIA )
 	}
@@ -979,30 +987,21 @@ void function spawnDrones( SmokeEvent smokeEvent, SpawnEvent spawnEvent, FlowCon
 
 	for ( int i = 0; i < spawnEvent.spawnAmount; i++ )
     {
-		entity guy
-
-		guy = CreateGenericDrone( TEAM_IMC, spawnEvent.origin + offsets[i], spawnEvent.angles )
+		entity guy = CreateGenericDrone( TEAM_IMC, spawnEvent.origin + offsets[i], spawnEvent.angles )
 		SetSpawnOption_AISettings( guy, "npc_drone_plasma_fd" )
-
 		if( spawnEvent.entityGlobalKey != "" )
 			GlobalEventEntitys[ spawnEvent.entityGlobalKey + i.tostring() ] <- guy
 		SetTeam( guy, TEAM_IMC )
+		DispatchSpawn( guy )
 		guy.DisableNPCFlag( NPC_ALLOW_INVESTIGATE )
 		guy.EnableNPCFlag( NPC_STAY_CLOSE_TO_SQUAD )
 		guy.EnableNPCMoveFlag( NPCMF_WALK_ALWAYS | NPCMF_PREFER_SPRINT )
-		DispatchSpawn( guy )
-
-		//guy.GiveWeapon("mp_weapon_engineer_combat_drone")
-
 		SetSquad( guy, squadName )
-
 		SetTargetName( guy, GetTargetNameForID( eFD_AITypeIDs.DRONE ) )
 		AddMinimapForHumans( guy )
 		spawnedNPCs.append( guy )
-		thread droneNav_thread(guy, spawnEvent.route, 0, 500, spawnEvent.shouldLoop )
+		thread droneNav_thread(guy, spawnEvent.route, 0, 16, spawnEvent.shouldLoop )
 	}
-
-
 }
 
 void function waitForDeathOfEntitys( SmokeEvent smokeEvent, SpawnEvent spawnEvent, FlowControlEvent flowControlEvent, SoundEvent soundEvent )
@@ -1036,7 +1035,6 @@ void function waitForLessThanAliveTyped( SmokeEvent smokeEvent, SpawnEvent spawn
 			break
 		WaitFrame()
 	}
-	
 }
 
 void function spawnArcTitan( SmokeEvent smokeEvent, SpawnEvent spawnEvent, FlowControlEvent flowControlEvent, SoundEvent soundEvent )
@@ -1060,7 +1058,6 @@ void function spawnArcTitan( SmokeEvent smokeEvent, SpawnEvent spawnEvent, FlowC
 	GlobalEventEntitys[spawnEvent.entityGlobalKey] <- npc
 	thread singleNav_thread( npc, spawnEvent.route )
 	thread EMPTitanThinkConstant( npc )
-
 }
 
 void function waitForTime( SmokeEvent smokeEvent, SpawnEvent spawnEvent, FlowControlEvent flowControlEvent, SoundEvent soundEvent )
@@ -1876,9 +1873,12 @@ void function SpawnTick( SmokeEvent smokeEvent, SpawnEvent spawnEvent, FlowContr
 	ActivateFireteamDropPod( pod, guys )
 	foreach( guy in guys )
 	{
-		guy.Anim_Stop() //Intentionally cancel the Drop Pod exiting animation for Ticks because it doesnt work for them
-		guy.SetEfficientMode( false )
-		thread singleNav_thread( guy, spawnEvent.route )
+		if( IsValid( guy ) )
+		{
+			guy.Anim_Stop() //Intentionally cancel the Drop Pod exiting animation for Ticks because it doesnt work for them
+			guy.SetEfficientMode( false )
+			thread singleNav_thread( guy, spawnEvent.route )
+		}
 	}
 }
 
@@ -2096,9 +2096,9 @@ void function OnFDHarvesterTargeted( entity titan )
 	entity enemy = titan.GetEnemy()
 	if ( enemy == fd_harvester.harvester )
 	{
-		titan.DisableNPCFlag( NPC_DIRECTIONAL_MELEE )
 		titan.SetCapabilityFlag( bits_CAP_INNATE_MELEE_ATTACK1, false )
 		titan.SetCapabilityFlag( bits_CAP_INNATE_MELEE_ATTACK2, false )
+		titan.DisableNPCFlag( NPC_DIRECTIONAL_MELEE )
 		titan.SetAllowMelee( false )
 	}
 	else
@@ -2114,6 +2114,6 @@ void function WinWave()
 {
 	foreach( WaveEvent e in waveEvents[GetGlobalNetInt( "FD_currentWave" )] )
 	{
-		e.timesExecuted = e.executeOnThisCall	
+		e.timesExecuted = e.executeOnThisCall
 	}
 }

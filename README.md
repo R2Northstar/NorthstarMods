@@ -10,6 +10,7 @@ Branch made to expand Frontier Defense feature set by adding back cut content wh
 - Titanfall Block event (cut content)
 - Elite Titans variants (cut content)
 - Enemy Titans moves slower as they used to do in vanilla (Except Ronins, Mortars and Elites)
+- Enemy Titans will not melee the Harvester anymore as in vanilla
 - Nuke Titans moves even slower, are unlikely to melee and always spawn with shields regardless difficulty set as they also do in vanilla
 - Harvester have proper damage filters, meaning certain enemies will hit it harder, again similar to vanilla behavior
 - Aside from Forwardbase Kodai, Homestead and Rise, all other maps works with custom wave data, Colony, Glitch and Boomtown included
