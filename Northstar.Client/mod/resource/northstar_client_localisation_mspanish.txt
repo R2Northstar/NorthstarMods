@@ -285,11 +285,12 @@ Si estas de acuerdo con esto, presiona SI. Esta decision puede ser cambiada en e
 		"HIDE_FULL_FILTER" "Ocultar servidores llenos"
 		"HIDE_EMPTY_FILTER" "Ocultar servidores vacios"
 		"HIDE_PROT_FILTER" "Ocultar servidores protegidos"
-		
+
 		"SERVER_DESCRIPTION" "Descripcion"
 		"SERVER_REQUIRED_MODS" "Mods requeridos"
 		"SERVER_MODS" "Mods"
 		"INSTALLED_MODS" "Mods instalados"
+		"DISABLED_MODS" "Mods desactivados"
 		"OUTDATED_MODS" "Mods obsoletos"
 		"MISSING_MODS" "Mods faltantes"
 		"CLEAR_FILTERS" "LIMPIAR"

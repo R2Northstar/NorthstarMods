@@ -290,6 +290,7 @@ Press Yes if you agree to this. This choice can be changed in the mods menu at a
 		"SERVER_REQUIRED_MODS" "Required Mods"
 		"SERVER_MODS" "Mods"
 		"INSTALLED_MODS" "Installed Mods"
+		"DISABLED_MODS" "Disabled Mods"
 		"OUTDATED_MODS" "Outdated Mods"
 		"MISSING_MODS" "Missing Mods"
 		"CLEAR_FILTERS" "CLEAR"

@@ -233,6 +233,7 @@
 		"SERVER_REQUIRED_MODS" "Требуемые моды"
 		"SERVER_MODS" "Моды"
 		"INSTALLED_MODS" "Установленные моды"
+		"DISABLED_MODS" "Отключенные моды"
 		"OUTDATED_MODS" "Устаревшие моды"
 		"MISSING_MODS" "Отсутствующие моды"
 		"CLEAR_FILTERS" "ОЧИСТИТЬ"

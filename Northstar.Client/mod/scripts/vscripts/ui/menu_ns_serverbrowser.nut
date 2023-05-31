@@ -1049,6 +1049,7 @@ string function FillInServerModsLabel( array<RequiredModInfo> mods )
 {
 	string ret
 	string installed_mods = ""
+	string disabled_mods = ""
 	string outdated_mods = ""
 	string missing_mods = ""
 
@@ -1066,12 +1067,21 @@ string function FillInServerModsLabel( array<RequiredModInfo> mods )
 		if( ( serverModVersion.len() != clientModVersion.len() || serverModVersion[0] != clientModVersion[0] || serverModVersion[1] > clientModVersion[1] ) ) {
 			outdated_mods += format( " - %s v%s -> v%s\n", mod.name, NSGetModVersionByModName( mod.name ), mod.version )
 			continue
-		} 
+		}
+
+		if(NSIsModEnabled( mod.name ) && mod.name != "Northstar.Custom") {
+			disabled_mods += format( " - %s v%s\n", mod.name, mod.version )
+			continue
+		}
+
 		installed_mods += format( " - %s v%s\n", mod.name, mod.version )
 	}
 
 	if(installed_mods != "") {
 		ret += (Localize("#INSTALLED_MODS") + ":\n" + installed_mods + "\n")
+	}
+	if(disabled_mods != "") {
+		ret += (Localize("#DISABLED_MODS") + ":\n" + disabled_mods + "\n")
 	}
 	if(outdated_mods != "") {
 		ret += (Localize("#OUTDATED_MODS") + ":\n" + outdated_mods + "\n")

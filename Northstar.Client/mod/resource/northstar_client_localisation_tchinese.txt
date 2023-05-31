@@ -290,6 +290,7 @@
 		"SERVER_REQUIRED_MODS" "必須的模組"
 		"SERVER_MODS" "Mod內容"
 		"INSTALLED_MODS" "已安裝的模組"
+		"DISABLED_MODS" "禁用的模組"
 		"OUTDATED_MODS" "已過時的模組"
 		"MISSING_MODS" "遺失的模組"
 		"CLEAR_FILTERS" "清除"

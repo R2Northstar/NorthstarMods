@@ -288,6 +288,7 @@ Clique em Sim se você concorda. Esta escolha pode ser alterada a qualquer momen
 		"SERVER_REQUIRED_MODS" "Mods obrigatórios"
 		"SERVER_MODS" "Mods"
 		"INSTALLED_MODS" "Mods instalados"
+		"DISABLED_MODS" "Mods desativados"
 		"OUTDATED_MODS" "Mods desatualizados"
 		"MISSING_MODS" "Mods ausentes"
 		"CLEAR_FILTERS" "LIMPAR"

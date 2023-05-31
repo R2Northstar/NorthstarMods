@@ -290,6 +290,7 @@ Presiona Sí al estar de acuerdo. Esta opcion se puede cambiar en el menú de mo
 		"SERVER_REQUIRED_MODS" "Mods requeridos"
 		"SERVER_MODS" "Mods"
 		"INSTALLED_MODS" "Mods instalados"
+		"DISABLED_MODS" "Mods desactivados"
 		"OUTDATED_MODS" "Mods obsoletos"
 		"MISSING_MODS" "Mods faltantes"
 		"CLEAR_FILTERS" "LIMPIAR"

@@ -289,6 +289,7 @@ Premi Sì se sei d'accordo. Questa scelta può essere modificata in qualsiasi mo
 		"SERVER_REQUIRED_MODS" "Mod richiesti"
 		"SERVER_MODS" "Mod"
 		"INSTALLED_MODS" "Mod installati"
+		"DISABLED_MODS" "Mod disabilitati"
 		"OUTDATED_MODS" "Mod obsoleti"
 		"MISSING_MODS" "Mod mancanti"
 		"CLEAR_FILTERS" "CANC"

@@ -312,11 +312,12 @@
 		"HIDE_FULL_FILTER" "満員のサーバーを非表示"
 		"HIDE_EMPTY_FILTER" "参加者のいないサーバーを非表示"
 		"HIDE_PROT_FILTER" "保護されたサーバーを非表示"
-		
+
 		"SERVER_DESCRIPTION" "概要"
 		"SERVER_REQUIRED_MODS" "必要なMod"
 		"SERVER_MODS" "Mod"
 		"INSTALLED_MODS" "インストール済みMod"
+		"DISABLED_MODS" "無効化されたMod"
 		"OUTDATED_MODS" "古いMod"
 		"MISSING_MODS" "不足しているMod"
 		"CLEAR_FILTERS" "クリア"

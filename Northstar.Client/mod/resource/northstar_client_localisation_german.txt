@@ -281,6 +281,7 @@ Drücke Ja, um zuzustimmen. Du kannst diese Entscheidung jederzeit im Modmenü �
 		"SERVER_REQUIRED_MODS" "Erforderliche Mods"
 		"SERVER_MODS" "Mods"
 		"INSTALLED_MODS" "Installierte Mods"
+		"DISABLED_MODS" "Deaktivierte Mods"
 		"OUTDATED_MODS" "Veraltete Mods"
 		"MISSING_MODS" "Fehlende Mods"
 		"CLEAR_FILTERS" "LEEREN"

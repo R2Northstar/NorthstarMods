@@ -290,6 +290,7 @@ Choisissez Oui si vous êtes d'accord. Ce choix peut être modifié à tout inst
 		"SERVER_REQUIRED_MODS" "Mods requis"
 		"SERVER_MODS" "Mods"
 		"INSTALLED_MODS" "Mods installés"
+		"DISABLED_MODS" "Mods désactivés"
 		"OUTDATED_MODS" "Mods obsolètes"
 		"MISSING_MODS" "Mods manquants"
 		"CLEAR_FILTERS" "RESET"
