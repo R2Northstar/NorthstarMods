@@ -262,7 +262,7 @@ Drücke Ja, um zuzustimmen. Du kannst diese Entscheidung jederzeit im Modmenü �
 		"SP_SKYWAY_V1" "Die Faltwaffe"
 		"SP_SKYWAY_V1_CLASSIC_DESC" "BT und Cooper werden von Kuben Blist gefangen genommen."
 
-		// Better.Serverbrowser
+		// Better Server Browser
 		"SERVERS_COLUMN" "Server"
 		"PLAYERS_COLUMN" "Spieler"
 		"MAP_COLUMN" "Karte"
@@ -271,11 +271,18 @@ Drücke Ja, um zuzustimmen. Du kannst diese Entscheidung jederzeit im Modmenü �
 		"SEARCHBAR_LABEL" "Suche:"
 		"MAP_FILTER" "Karte"
 		"GAMEMODE_FILTER" "Modus"
+		"REGION_FILTER" "Regionen filtern"
+		"MODS_FILTER" "Mods filtern"
 		"HIDE_FULL_FILTER" "Volle Server verstecken"
 		"HIDE_EMPTY_FILTER" "Leere Server verstecken"
 		"HIDE_PROT_FILTER" "Geschützte Server verstecken"
+
 		"SERVER_DESCRIPTION" "Beschreibung"
+		"SERVER_REQUIRED_MODS" "Erforderliche Mods"
 		"SERVER_MODS" "Mods"
+		"INSTALLED_MODS" "Installierte Mods"
+		"OUTDATED_MODS" "Veraltete Mods"
+		"MISSING_MODS" "Fehlende Mods"
 		"CLEAR_FILTERS" "LEEREN"
 		"JOIN_BUTTON" "JOIN"
 

@@ -17,18 +17,26 @@
 			"Name": "filter_hide_protected",
 			"DefaultValue": "0"
 		},
-		{
-			"Name": "filter_map",
-			"DefaultValue": "0"
-		},
-		{
-			"Name": "filter_gamemode",
-			"DefaultValue": "0"
-		},
-		{
-			"Name": "filter_mods",
-			"DefaultValue": "0"
-		},
+        {
+            "Name": "filter_map",
+            "DefaultValue": "SWITCH_ANY"
+        },
+        {
+            "Name": "filter_gamemode",
+            "DefaultValue": "SWITCH_ANY"
+        },
+        {
+        	"Name": "filter_region",
+            "DefaultValue": "SWITCH_ANY"
+        },
+        {
+            "Name": "filter_mods",
+            "DefaultValue": "SWITCH_ANY"
+        },
+        {
+            "Name": "filter_mods_types",
+            "DefaultValue": "SWITCH_ANY"
+        },
 		{
 			"Name": "filter_map_hide_locked",
 			"DefaultValue": "0"
@@ -128,7 +136,16 @@
     	{
 			"Path": "ui/ui_mouse_capture.nut",
 			"RunOn": "UI"
-		}
+		},
+		{
+            "Path": "ui/menu_sb_map_select.nut",
+            "RunOn": "UI"
+        },
+        {
+            "Path": "ui/menu_sb_mode_select.nut",
+            "RunOn": "UI"
+        }
+
 	],
 	"Localisation": [
 		"resource/northstar_client_localisation_%language%.txt"

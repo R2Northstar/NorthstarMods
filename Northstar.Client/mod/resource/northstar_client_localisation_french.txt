@@ -271,7 +271,7 @@ Choisissez Oui si vous êtes d'accord. Ce choix peut être modifié à tout inst
 		"SP_SKYWAY_V1" "Le Distordeur"
 		"SP_SKYWAY_V1_CLASSIC_DESC" "BT et Cooper sont capturés par Kuben Blisk."
 
-		// Better.Serverbrowser
+		// Better Server Browser
 		"SERVERS_COLUMN" "Serveurs"
 		"PLAYERS_COLUMN" "Joueurs"
 		"MAP_COLUMN" "Carte"
@@ -280,11 +280,18 @@ Choisissez Oui si vous êtes d'accord. Ce choix peut être modifié à tout inst
 		"SEARCHBAR_LABEL" "Recherche :"
 		"MAP_FILTER" "Carte"
 		"GAMEMODE_FILTER" "Mode de jeu"
+		"REGION_FILTER" "Filtrer les régions"
+		"MODS_FILTER" "Filtrer les mods"
 		"HIDE_FULL_FILTER" "Cacher les serveurs remplis"
 		"HIDE_EMPTY_FILTER" "Cacher les serveurs vides"
 		"HIDE_PROT_FILTER" "Cacher les serveurs mot de passe"
+
 		"SERVER_DESCRIPTION" "Description"
+		"SERVER_REQUIRED_MODS" "Mods requis"
 		"SERVER_MODS" "Mods"
+		"INSTALLED_MODS" "Mods installés"
+		"OUTDATED_MODS" "Mods obsolètes"
+		"MISSING_MODS" "Mods manquants"
 		"CLEAR_FILTERS" "RESET"
 		"JOIN_BUTTON" "REJOINDRE"
 

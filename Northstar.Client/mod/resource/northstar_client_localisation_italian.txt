@@ -270,7 +270,7 @@ Premi Sì se sei d'accordo. Questa scelta può essere modificata in qualsiasi mo
 		"SP_SKYWAY_V1" "L'Arma da Piegamento"
 		"SP_SKYWAY_V1_CLASSIC_DESC" "BT e Cooper vengono catturati da Kuben Blisk."
 
-		// Better.Serverbrowser
+		// Better Server Browser
 		"SERVERS_COLUMN" "Server"
 		"PLAYERS_COLUMN" "Giocatori"
 		"MAP_COLUMN" "Mappa"
@@ -279,11 +279,18 @@ Premi Sì se sei d'accordo. Questa scelta può essere modificata in qualsiasi mo
 		"SEARCHBAR_LABEL" "Cerca:"
 		"MAP_FILTER" "Mappa"
 		"GAMEMODE_FILTER" "Modalità"
+		"REGION_FILTER" "Filtra regioni"
+		"MODS_FILTER" "Filtra mod"
 		"HIDE_FULL_FILTER" "Nascondi i server pieni"
 		"HIDE_EMPTY_FILTER" "Nascondi i server vuoti"
 		"HIDE_PROT_FILTER" "Nascondi i server protetti"
+
 		"SERVER_DESCRIPTION" "Descrizione"
+		"SERVER_REQUIRED_MODS" "Mod richiesti"
 		"SERVER_MODS" "Mod"
+		"INSTALLED_MODS" "Mod installati"
+		"OUTDATED_MODS" "Mod obsoleti"
+		"MISSING_MODS" "Mod mancanti"
 		"CLEAR_FILTERS" "CANC"
 		"JOIN_BUTTON" "ENTRA"
 

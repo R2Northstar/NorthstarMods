@@ -298,7 +298,7 @@
 		"SP_SKYWAY_V1" "フォールド・ウェポン"
 		"SP_SKYWAY_V1_CLASSIC_DESC" "BTとクーパーがクーベン・ブリスクに捕まってしまう。"
 
-		// Better.Serverbrowser
+		// Better Server Browser
 		"SERVERS_COLUMN" "サーバー"
 		"PLAYERS_COLUMN" "プレイヤー"
 		"MAP_COLUMN" "マップ"
@@ -307,11 +307,18 @@
 		"SEARCHBAR_LABEL" "検索:"
 		"MAP_FILTER" "マップ"
 		"GAMEMODE_FILTER" "ゲームモード"
+		"REGION_FILTER" "地域フィルター"
+		"MODS_FILTER" "Modフィルター"
 		"HIDE_FULL_FILTER" "満員のサーバーを非表示"
 		"HIDE_EMPTY_FILTER" "参加者のいないサーバーを非表示"
 		"HIDE_PROT_FILTER" "保護されたサーバーを非表示"
+		
 		"SERVER_DESCRIPTION" "概要"
+		"SERVER_REQUIRED_MODS" "必要なMod"
 		"SERVER_MODS" "Mod"
+		"INSTALLED_MODS" "インストール済みMod"
+		"OUTDATED_MODS" "古いMod"
+		"MISSING_MODS" "不足しているMod"
 		"CLEAR_FILTERS" "クリア"
 		"JOIN_BUTTON" "参加"
 

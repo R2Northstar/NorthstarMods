@@ -271,7 +271,7 @@ Si estas de acuerdo con esto, presiona SI. Esta decision puede ser cambiada en e
 		"SP_SKYWAY_V1" "El Arma moldeadora"
 		"SP_SKYWAY_V1_CLASSIC_DESC" "Kuben Blisk captura a BT y Cooper."
 
-		// Better.Serverbrowser
+		// Better Server Browser
 		"SERVERS_COLUMN" "Sevidores"
 		"PLAYERS_COLUMN" "Jugadores"
 		"MAP_COLUMN" "Mapa"
@@ -280,11 +280,18 @@ Si estas de acuerdo con esto, presiona SI. Esta decision puede ser cambiada en e
 		"SEARCHBAR_LABEL" "Buscar:"
 		"MAP_FILTER" "Mapa"
 		"GAMEMODE_FILTER" "Modo de juego"
+		"REGION_FILTER" "Filtrar regiones"
+		"MODS_FILTER" "Filtrar mods"
 		"HIDE_FULL_FILTER" "Ocultar servidores llenos"
 		"HIDE_EMPTY_FILTER" "Ocultar servidores vacios"
 		"HIDE_PROT_FILTER" "Ocultar servidores protegidos"
+		
 		"SERVER_DESCRIPTION" "Descripcion"
+		"SERVER_REQUIRED_MODS" "Mods requeridos"
 		"SERVER_MODS" "Mods"
+		"INSTALLED_MODS" "Mods instalados"
+		"OUTDATED_MODS" "Mods obsoletos"
+		"MISSING_MODS" "Mods faltantes"
 		"CLEAR_FILTERS" "LIMPIAR"
 		"JOIN_BUTTON" "UNIR"
 

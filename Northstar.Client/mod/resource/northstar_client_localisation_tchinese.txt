@@ -271,7 +271,7 @@
 		"SP_SKYWAY_V1" "The Fold Weapon"
 		"SP_SKYWAY_V1_CLASSIC_DESC" "BT and Cooper are captured by Kuben Blisk."
 
-		// Better.Serverbrowser
+		// Better Server Browser
 		"SERVERS_COLUMN" "伺服器"
 		"PLAYERS_COLUMN" "玩家"
 		"MAP_COLUMN" "地圖"
@@ -280,11 +280,18 @@
 		"SEARCHBAR_LABEL" "搜尋："
 		"MAP_FILTER" "地圖"
 		"GAMEMODE_FILTER" "遊戲模式"
+		"REGION_FILTER" "過濾地區"
+		"MODS_FILTER" "過濾模組"
 		"HIDE_FULL_FILTER" "隱藏滿伺服器"
 		"HIDE_EMPTY_FILTER" "隱藏空伺服器"
 		"HIDE_PROT_FILTER" "隱藏密碼伺服器"
+		
 		"SERVER_DESCRIPTION" "說明"
+		"SERVER_REQUIRED_MODS" "必須的模組"
 		"SERVER_MODS" "Mod內容"
+		"INSTALLED_MODS" "已安裝的模組"
+		"OUTDATED_MODS" "已過時的模組"
+		"MISSING_MODS" "遺失的模組"
 		"CLEAR_FILTERS" "清除"
 		"JOIN_BUTTON" "加入"
 

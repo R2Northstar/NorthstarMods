@@ -19,6 +19,7 @@ struct {
 	int deltaY = 0
 } mouseDeltaBuffer
 
+
 // Filters
 struct {
 	bool hideFull = false
@@ -26,10 +27,14 @@ struct {
 	bool hideProtected = false
 	bool useSearch = false
 	string searchTerm
-	array<string> filterMaps
+	// array<string> tfl2Maps = [ "mp_lobby" ,"mp_forwardbase_kodai", "mp_grave", "mp_homestead", "mp_thaw", "mp_black_water_canal", "mp_eden", "mp_drydock", "mp_crashsite3", "mp_complex3", "mp_angel_city", "mp_colony02", "mp_glitch", "mp_relic02", "mp_wargames", "mp_rise", "mp_lf_stacks", "mp_lf_deck", "mp_lf_meadow", "mp_lf_traffic", "mp_lf_township", "mp_lf_uma", "mp_coliseum", "mp_coliseum_column" ]
 	string filterMap
-	array<string> filterGamemodes
+	// array<string> tfl2Gamemodes = [ "aitdm", "at", "coliseum", "cp", "ctf", "fd_easy", "fd_normal", "fd_hard", "fd_insane", "fd_master", "lts", "mfd", "ps", "solo", "tdm", "ttdm", "lf"]
 	string filterGamemode
+	array<string> filterRegions = [ "SWITCH_ANY" ]
+	string filterRegion
+	string filterMods
+	string filterModsTypes
 } filterArguments
 
 
@@ -116,35 +121,36 @@ void function AddNorthstarServerBrowserMenu()
 	AddMenu( "ServerBrowserMenu", $"resource/ui/menus/server_browser.menu", InitServerBrowserMenu, "#MENU_SERVER_BROWSER" )
 }
 
-void function UpdatePrivateMatchModesAndMaps()
-{
-	array<string> realMaps = [ "mp_lobby" ]
-	realMaps.extend( GetPrivateMatchMaps() )
+// Not usefull anymore : Alpha EDIT
+// void function UpdatePrivateMatchModesAndMaps()
+// {
+// 	array<string> realMaps = [ "mp_lobby" ]
+// 	realMaps.extend( GetPrivateMatchMaps() )
 
-	foreach ( int enum_, string map in realMaps )
-	{
-		if ( filterArguments.filterMaps.find( map ) != -1 )
-			continue
+// 	foreach ( int enum_, string map in realMaps )
+// 	{
+// 		if ( filterArguments.filterMaps.find( map ) != -1 )
+// 			continue
 
-		filterArguments.filterMaps.append( map )
+// 		filterArguments.filterMaps.append( map )
 
-		string localized = GetMapDisplayName( map )
-		Hud_DialogList_AddListItem( Hud_GetChild( file.menu, "SwtBtnSelectMap" ) , localized, string( enum_ + 1 ) )
-	}
+// 		string localized = GetMapDisplayName( map )
+// 		// Hud_DialogList_AddListItem( Hud_GetChild( file.menu, "SwtBtnSelectMap" ) , localized, string( enum_ + 1 ) )
+// 	}
 
-	array<string> realModes = [ "private_match" ]
-	realModes.extend( GetPrivateMatchModes() )
+// 	array<string> realModes = [ "private_match" ]
+// 	realModes.extend( GetPrivateMatchModes() )
 
-	foreach( int enum_, string mode in realModes )
-	{
-		string localized = GetGameModeDisplayName( mode )
-		if ( filterArguments.filterGamemodes.find( localized ) != -1 )
-			continue
+// 	foreach( int enum_, string mode in realModes )
+// 	{	
+// 		string localized = GetGameModeDisplayName( mode )
+// 		if ( filterArguments.filterGamemodes.find( localized ) != -1 )
+// 			continue
 
-		filterArguments.filterGamemodes.append( localized )
-		Hud_DialogList_AddListItem( Hud_GetChild( file.menu, "SwtBtnSelectGamemode" ) , localized, string( enum_ + 1 ) )
-	}
-}
+// 		filterArguments.filterGamemodes.append( localized )
+// 		// Hud_DialogList_AddListItem( Hud_GetChild( file.menu, "SwtBtnSelectGamemode" ) , localized, string( enum_ + 1 ) )
+// 	}
+// }
 
 void function InitServerBrowserMenu()
 {
@@ -161,11 +167,11 @@ void function InitServerBrowserMenu()
 	file.serversGamemode = GetElementsByClassname( file.menu, "ServerGamemode" )
 	file.serversRegion = GetElementsByClassname( file.menu, "Serverregion" )
 
-	filterArguments.filterMaps = [ "SWITCH_ANY" ]
-	Hud_DialogList_AddListItem( Hud_GetChild( file.menu, "SwtBtnSelectMap" ), "SWITCH_ANY", "0" )
+	// filterArguments.filterMaps = [ "SWITCH_ANY" ]
+	// Hud_DialogList_AddListItem( Hud_GetChild( file.menu, "SwtBtnSelectMap" ), "SWITCH_ANY", "0" )
 
-	filterArguments.filterGamemodes = [ "SWITCH_ANY" ]
-	Hud_DialogList_AddListItem( Hud_GetChild( file.menu, "SwtBtnSelectGamemode" ), "SWITCH_ANY", "0" )
+	// filterArguments.filterGamemodes = [ "SWITCH_ANY" ]
+	// Hud_DialogList_AddListItem( Hud_GetChild( file.menu, "SwtBtnSelectGamemode" ), "SWITCH_ANY", "0" )
 
 	// Event handlers
 	AddMenuEventHandler( file.menu, eUIEvent.MENU_CLOSE, OnCloseServerBrowserMenu )
@@ -196,6 +202,8 @@ void function InitServerBrowserMenu()
 
 
 	AddButtonEventHandler( Hud_GetChild( file.menu, "BtnFiltersClear"), UIE_CLICK, OnBtnFiltersClear_Activate )
+	AddButtonEventHandler( Hud_GetChild( file.menu, "BtnMapFiltersClear"), UIE_CLICK, OnBtnMapFiltersClear_Activate )
+	AddButtonEventHandler( Hud_GetChild( file.menu, "BtnGamemodeFiltersClear"), UIE_CLICK, OnBtnGamemodeFiltersClear_Activate )
 
 
 	AddButtonEventHandler( Hud_GetChild( file.menu, "BtnServerNameTab"), UIE_CLICK, SortServerListByName_Activate )
@@ -205,8 +213,11 @@ void function InitServerBrowserMenu()
 	AddButtonEventHandler( Hud_GetChild( file.menu, "BtnServerRegionTab"), UIE_CLICK, SortServerListByRegion_Activate )
 
 
-	AddButtonEventHandler( Hud_GetChild( file.menu, "SwtBtnSelectMap"), UIE_CHANGE, FilterAndUpdateList )
-	AddButtonEventHandler( Hud_GetChild( file.menu, "SwtBtnSelectGamemode"), UIE_CHANGE, FilterAndUpdateList )
+	AddButtonEventHandler( Hud_GetChild( file.menu, "SwtBtnSelectMap"), UIE_CLICK, OnSelectMapButton_Activate ) // FilterAndUpdateList <-Alpha EDIT
+	AddButtonEventHandler( Hud_GetChild( file.menu, "SwtBtnSelectGamemode"), UIE_CLICK, OnSelectModeButton_Activate ) // FilterAndUpdateList <-Alpha EDIT
+	AddButtonEventHandler( Hud_GetChild( file.menu, "SwtBtnSelectRegion"), UIE_CHANGE, FilterAndUpdateList ) // Alpha ADD
+	AddButtonEventHandler( Hud_GetChild( file.menu, "SwtBtnSelectMods"), UIE_CHANGE, FilterAndUpdateList ) // Alpha ADD
+	AddButtonEventHandler( Hud_GetChild( file.menu, "SwtBtnSelectModsTypes"), UIE_CHANGE, FilterAndUpdateList ) // Alpha ADD
 	AddButtonEventHandler( Hud_GetChild( file.menu, "SwtBtnHideFull"), UIE_CHANGE, FilterAndUpdateList )
 	AddButtonEventHandler( Hud_GetChild( file.menu, "SwtBtnHideEmpty"), UIE_CHANGE, FilterAndUpdateList )
 	AddButtonEventHandler( Hud_GetChild( file.menu, "SwtBtnHideProtected"), UIE_CHANGE, FilterAndUpdateList )
@@ -220,25 +231,55 @@ void function InitServerBrowserMenu()
 	AddButtonEventHandler( Hud_GetChild( file.menu, "ConnectingButton"), UIE_CLICK, ConnectingButton_Activate )
 
 
-	// Hidden cause no need, if server descriptions become too long use this
-	Hud_SetEnabled( Hud_GetChild( file.menu, "BtnServerDescription"), false )
-	Hud_SetEnabled( Hud_GetChild( file.menu, "BtnServerMods"), false )
-	Hud_SetText( Hud_GetChild( file.menu, "BtnServerDescription"), "" )
-	Hud_SetText( Hud_GetChild( file.menu, "BtnServerMods"), "" )
+	// Hidden cause no need, if server descriptions become too long uncommente this
+	// Hud_SetEnabled( Hud_GetChild( file.menu, "BtnServerDescription"), false )
+	// Hud_SetEnabled( Hud_GetChild( file.menu, "BtnServerMods"), false )
+	// Hud_SetText( Hud_GetChild( file.menu, "BtnServerDescription"), "" )
+	// Hud_SetText( Hud_GetChild( file.menu, "BtnServerMods"), "" )
+	Hud_SetEnabled( Hud_GetChild( file.menu, "SwtBtnSelectModsTypes"), false )
+	Hud_SetText( Hud_GetChild( file.menu, "SwtBtnSelectModsTypes"), "" )
 
 
 	// Rui is a pain
+	RuiSetString( Hud_GetRui( Hud_GetChild( file.menu, "SwtBtnSelectMap") ), "buttonText", "" ) // Alpha EDIT
+	RuiSetString( Hud_GetRui( Hud_GetChild( file.menu, "SwtBtnSelectGamemode") ), "buttonText", "" ) // Alpha EDIT
+	RuiSetString( Hud_GetRui( Hud_GetChild( file.menu, "SwtBtnSelectRegion") ), "buttonText", "" ) // Alpha ADD
+	RuiSetString( Hud_GetRui( Hud_GetChild( file.menu, "SwtBtnSelectMods") ), "buttonText", "" ) // Alpha ADD
+	RuiSetString( Hud_GetRui( Hud_GetChild( file.menu, "SwtBtnSelectModsTypes") ), "buttonText", "" ) // Alpha ADD
 	RuiSetString( Hud_GetRui( Hud_GetChild( file.menu, "SwtBtnHideFull") ), "buttonText", "" )
 	RuiSetString( Hud_GetRui( Hud_GetChild( file.menu, "SwtBtnHideEmpty") ), "buttonText", "" )
 	RuiSetString( Hud_GetRui( Hud_GetChild( file.menu, "SwtBtnHideProtected") ), "buttonText", "" )
-	RuiSetString( Hud_GetRui( Hud_GetChild( file.menu, "SwtBtnSelectMap") ), "buttonText", "" )
-	RuiSetString( Hud_GetRui( Hud_GetChild( file.menu, "SwtBtnSelectGamemode") ), "buttonText", "" )
-
 
 	ToggleConnectingHUD(false)
 
+	
+	// Hud_SetLocked( Hud_GetChild( file.menu, "SwtBtnSelectMap"), false )
+	// Hud_SetLocked( Hud_GetChild( file.menu, "SwtBtnSelectGamemode"), false )
+
 	// UI was cut off on some aspect ratios; not perfect
 	UpdateServerInfoBasedOnRes()
+}
+
+////////////////////////////
+// Button
+////////////////////////////
+
+void function OnSelectMapButton_Activate( var button )
+{
+	if ( Hud_IsLocked( button ) )
+		return
+
+	OnCloseServerBrowserMenu()
+	AdvanceMenu( GetMenu( "SB_MapsMenu" ) )
+}
+
+void function OnSelectModeButton_Activate( var button )
+{	
+	if ( Hud_IsLocked( button ) )
+		return
+
+	OnCloseServerBrowserMenu()
+	AdvanceMenu( GetMenu( "SB_ModesMenu" ) )
 }
 
 ////////////////////////////
@@ -406,7 +447,8 @@ void function UpdateServerInfoBasedOnRes()
 void function OnCloseServerBrowserMenu()
 {
 	try
-	{
+	{	
+		printt("Close Server Browser Menu")
 		DeregisterButtonPressedCallback( MOUSE_WHEEL_UP , OnScrollUp )
 		DeregisterButtonPressedCallback( MOUSE_WHEEL_DOWN , OnScrollDown )
 		DeregisterButtonPressedCallback( KEY_TAB , OnKeyTabPressed )
@@ -417,10 +459,11 @@ void function OnCloseServerBrowserMenu()
 }
 
 void function OnServerBrowserMenuOpened()
-{
+{	
+	printt("Open Server Browser Menu")
 	Hud_SetText( Hud_GetChild( file.menu, "InGamePlayerLabel" ), Localize( "#INGAME_PLAYERS", "0" ) )
 	Hud_SetText( Hud_GetChild( file.menu, "TotalServerLabel" ),  Localize( "#TOTAL_SERVERS", "0" ) )
-	UpdatePrivateMatchModesAndMaps()
+	// UpdatePrivateMatchModesAndMaps()
 	Hud_SetText( Hud_GetChild( file.menu, "Title" ), "#MENU_TITLE_SERVER_BROWSER" )
 	UI_SetPresentationType( ePresentationType.KNOWLEDGEBASE_MAIN )
 
@@ -435,7 +478,6 @@ void function OnServerBrowserMenuOpened()
 	filterDirection.sortingBy = sortingBy.DEFAULT
 
 	thread WaitForServerListRequest()
-
 
 	RegisterButtonPressedCallback( MOUSE_WHEEL_UP , OnScrollUp )
 	RegisterButtonPressedCallback( MOUSE_WHEEL_DOWN , OnScrollDown )
@@ -594,7 +636,7 @@ bool function IsSearchBarFocused()
 
 
 ////////////////////////////
-// Unused
+// Used : Alpha
 ////////////////////////////
 void function ShowServerDescription( var button )
 {
@@ -633,8 +675,25 @@ void function OnBtnFiltersClear_Activate( var button )
 	SetConVarBool( "filter_hide_empty", false )
 	SetConVarBool( "filter_hide_full", false )
 	SetConVarBool( "filter_hide_protected", false )
-	SetConVarInt( "filter_map", 0 )
-	SetConVarInt( "filter_gamemode", 0 )
+	SetConVarString( "filter_map", "SWITCH_ANY" )
+	SetConVarString( "filter_gamemode", "SWITCH_ANY" )
+	SetConVarString( "filter_region", "SWITCH_ANY" )
+	SetConVarString( "filter_mods", "SWITCH_ANY" )
+	SetConVarString( "filter_mods_types", "SWITCH_ANY" )
+
+	FilterAndUpdateList(0)
+}
+
+void function OnBtnMapFiltersClear_Activate( var button )
+{
+	SetConVarString( "filter_map", "SWITCH_ANY" )
+
+	FilterAndUpdateList(0)
+}
+
+void function OnBtnGamemodeFiltersClear_Activate( var button )
+{
+	SetConVarString( "filter_gamemode", "SWITCH_ANY" )
 
 	FilterAndUpdateList(0)
 }
@@ -643,11 +702,17 @@ void function FilterAndUpdateList( var n )
 {
 	filterArguments.searchTerm = Hud_GetUTF8Text( Hud_GetChild( file.menu, "BtnServerSearch" ) )
 	if ( filterArguments.searchTerm == "" ) filterArguments.useSearch = false else filterArguments.useSearch = true
-	filterArguments.filterMap = filterArguments.filterMaps[ GetConVarInt( "filter_map" ) ]
-	filterArguments.filterGamemode = filterArguments.filterGamemodes[ GetConVarInt( "filter_gamemode" ) ]
+	filterArguments.filterMap = GetConVarString("filter_map")  // filterArguments.filterMaps[ GetConVarInt( "filter_map" ) ]
+	filterArguments.filterGamemode = GetConVarString("filter_gamemode") // filterArguments.filterGamemodes[ GetConVarInt( "filter_gamemode" ) ]
+	filterArguments.filterRegion = GetConVarString("filter_region")
+	filterArguments.filterMods = GetConVarString("filter_mods")
+	filterArguments.filterModsTypes = GetConVarString("filter_mods_types")
 	filterArguments.hideEmpty = GetConVarBool( "filter_hide_empty" )
 	filterArguments.hideFull = GetConVarBool( "filter_hide_full" )
 	filterArguments.hideProtected = GetConVarBool( "filter_hide_protected" )
+
+	Hud_SetText( Hud_GetChild( file.menu, "LabelMapSelected" ), "#" + filterArguments.filterMap )
+	Hud_SetText( Hud_GetChild( file.menu, "LabelGamemodeSelected" ),"#" + filterArguments.filterGamemode )
 
 	file.scrollOffset = 0
 	UpdateListSliderPosition( file.filteredServers.len() )
@@ -716,6 +781,7 @@ void function WaitForServerListRequest()
 	for ( int i = 0; i < BUTTONS_PER_PAGE; i++)
 	{
 		Hud_SetVisible( file.serversProtected[ i ], false )
+		printt(file.serverButtons[ i ])
 		Hud_SetVisible( file.serverButtons[ i ], false )
 		Hud_SetText( file.serversName[ i ], "" )
 		Hud_SetText( file.playerCountLabels[ i ], "" )
@@ -758,6 +824,11 @@ void function FilterServerList()
 	{
 		totalPlayers += server.playerCount
 
+		if(filterArguments.filterRegions.find(server.region) == -1) {
+			Hud_DialogList_AddListItem( Hud_GetChild( file.menu, "SwtBtnSelectRegion" ) , server.region,  server.region )
+			filterArguments.filterRegions.append(server.region)
+		}
+
 		// Filters
 		if ( filterArguments.hideEmpty && server.playerCount == 0 )
 			continue;
@@ -772,6 +843,9 @@ void function FilterServerList()
 			continue;
 		
 		if ( filterArguments.filterGamemode != "SWITCH_ANY" && filterArguments.filterGamemode != GetGameModeDisplayName(server.playlist) )
+			continue;
+		
+		if ( filterArguments.filterRegion != "SWITCH_ANY" && filterArguments.filterRegion != server.region )
 			continue;
 	
 		// Search
@@ -799,7 +873,38 @@ void function FilterServerList()
 				continue;
 		}
 
-		file.filteredServers.append( server )
+		if(filterArguments.filterMods != "SWITCH_ANY") {
+			bool hasMissingMod = false
+			bool hasOutdatedMod = false
+			foreach(RequiredModInfo mod in server.requiredMods) {
+
+				if( !NSGetModNames().contains( mod.name ) ) {
+					hasMissingMod = true
+					continue
+				}
+
+				array<int> serverModVersion = StringArrayToIntArray( split( mod.version, ".") )
+				array<int> clientModVersion = StringArrayToIntArray( split( NSGetModVersionByModName( mod.name ), "." ))
+
+				if( ( serverModVersion[0] != clientModVersion[0] || serverModVersion[1] > clientModVersion[1] )) {
+					hasOutdatedMod = true
+					continue
+				} 
+			}
+
+			if(!hasMissingMod && !hasOutdatedMod && filterArguments.filterMods == "INSTALLED") {
+				file.filteredServers.append( server )
+				continue
+			} else if(hasOutdatedMod && filterArguments.filterMods == "OUTDATED") {
+				file.filteredServers.append( server )
+				continue
+			} else if(hasMissingMod && filterArguments.filterMods == "MISSING") {
+				file.filteredServers.append( server )
+				continue
+			}
+		} else {
+			file.filteredServers.append( server )
+		}
 	}
 	
 	// Update player and server count
@@ -911,9 +1016,12 @@ void function DisplayFocusedServerInfo( int scriptID )
 	Hud_SetVisible( Hud_GetChild( menu, "BtnServerMods" ), true )
 	Hud_SetVisible( Hud_GetChild( menu, "BtnServerJoin" ), true )
 	// text panels
-	Hud_SetVisible( Hud_GetChild( menu, "LabelDescription" ), true )
-	Hud_SetVisible( Hud_GetChild( menu, "LabelMods" ), false )
-	Hud_SetText( Hud_GetChild( menu, "LabelDescription" ), server.description + "\n\nRequired Mods:\n" + FillInServerModsLabel( server.requiredMods ) )
+	if(!Hud_IsVisible( Hud_GetChild( menu, "LabelDescription" ) ) && !Hud_IsVisible( Hud_GetChild( menu, "LabelMods" ) ) ) {
+		Hud_SetVisible( Hud_GetChild( menu, "LabelDescription" ), true ) // removed this so player don't need to always reselect mod section
+		// Hud_SetVisible( Hud_GetChild( menu, "LabelMods" ), false ) // removed this so player don't need to always reselect mod section
+	}
+	Hud_SetText( Hud_GetChild( menu, "LabelDescription" ), server.description)
+	Hud_SetText( Hud_GetChild( menu, "LabelMods" ), FillInServerModsLabel( server.requiredMods ) )
 
 	// map name/image/server name
 	string map = server.map
@@ -940,15 +1048,40 @@ void function DisplayFocusedServerInfo( int scriptID )
 string function FillInServerModsLabel( array<RequiredModInfo> mods )
 {
 	string ret
+	string installed_mods = ""
+	string outdated_mods = ""
+	string missing_mods = ""
 
 	foreach ( RequiredModInfo mod in mods )
 	{
-		ret += format( "  %s v%s\n", mod.name, mod.version )
+
+		if( !NSGetModNames().contains( mod.name ) ) {
+			missing_mods += format( " - %s v%s\n", mod.name, mod.version )
+			continue
+		}
+
+		array<int> serverModVersion = StringArrayToIntArray( split( mod.version, ".") )
+		array<int> clientModVersion = StringArrayToIntArray( split( NSGetModVersionByModName( mod.name ), "." ))
+
+		if( ( serverModVersion.len() != clientModVersion.len() || serverModVersion[0] != clientModVersion[0] || serverModVersion[1] > clientModVersion[1] ) ) {
+			outdated_mods += format( " - %s v%s -> v%s\n", mod.name, NSGetModVersionByModName( mod.name ), mod.version )
+			continue
+		} 
+		installed_mods += format( " - %s v%s\n", mod.name, mod.version )
+	}
+
+	if(installed_mods != "") {
+		ret += (Localize("#INSTALLED_MODS") + ":\n" + installed_mods + "\n")
+	}
+	if(outdated_mods != "") {
+		ret += (Localize("#OUTDATED_MODS") + ":\n" + outdated_mods + "\n")
+	}
+	if(missing_mods != "") {
+		ret += (Localize("#MISSING_MODS") + ":\n" + missing_mods + "\n")
 	}
 
 	return ret
 }
-
 
 void function OnServerSelected( var button )
 {
@@ -1256,4 +1389,16 @@ void function TriggerConnectToServerCallbacks()
 	{
 		callback( file.lastSelectedServer )
 	}
+}
+
+//////////////////////////////////////
+// Mixe : ADD Alpha
+//////////////////////////////////////
+
+array<int> function StringArrayToIntArray(array<string> stringArray) {
+	array<int> intarray = []
+	foreach (string str in stringArray) {
+		intarray.append( str.tointeger())
+	}
+	return intarray
 }

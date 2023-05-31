@@ -214,7 +214,7 @@
 		"SP_SKYWAY_V1" "Сложенное оружие"
 		"SP_SKYWAY_V1_CLASSIC_DESC" "БT и Купер были захвачены Кубеном Блиском."
 
-		// Better.Serverbrowser
+		// Better Server Browser
 		"SERVERS_COLUMN" "Сервера"
 		"PLAYERS_COLUMN" "Игроки"
 		"MAP_COLUMN" "Карта"
@@ -223,11 +223,18 @@
 		"SEARCHBAR_LABEL" "Поиск:"
 		"MAP_FILTER" "Карта"
 		"GAMEMODE_FILTER" "Режим игры"
+		"REGION_FILTER" "Фильтр регионов"
+		"MODS_FILTER" "Фильтр модов"
 		"HIDE_FULL_FILTER" "Скрывать полные сервера"
 		"HIDE_EMPTY_FILTER" "Скрывать пустые сервера"
 		"HIDE_PROT_FILTER" "Скрывать закрытые сервера"
+
 		"SERVER_DESCRIPTION" "Описание"
+		"SERVER_REQUIRED_MODS" "Требуемые моды"
 		"SERVER_MODS" "Моды"
+		"INSTALLED_MODS" "Установленные моды"
+		"OUTDATED_MODS" "Устаревшие моды"
+		"MISSING_MODS" "Отсутствующие моды"
 		"CLEAR_FILTERS" "ОЧИСТИТЬ"
 		"JOIN_BUTTON" "ПРИСОЕДИНИТЬСЯ"
 

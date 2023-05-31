@@ -269,7 +269,7 @@ Clique em Sim se você concorda. Esta escolha pode ser alterada a qualquer momen
 		"SP_SKYWAY_V1" "A Arma Quântica"
 		"SP_SKYWAY_V1_CLASSIC_DESC" "BT e Cooper são capturados por Kuben Blisk."
 
-		// Better.Serverbrowser
+		// Better Server Browser
 		"SERVERS_COLUMN" "Servidores"
 		"PLAYERS_COLUMN" "Jogadores"
 		"MAP_COLUMN" "Mapa"
@@ -278,11 +278,18 @@ Clique em Sim se você concorda. Esta escolha pode ser alterada a qualquer momen
 		"SEARCHBAR_LABEL" "Buscar:"
 		"MAP_FILTER" "Mapa"
 		"GAMEMODE_FILTER" "Modo"
+		"REGION_FILTER" "Filtrar regiões"
+		"MODS_FILTER" "Filtrar mods"
 		"HIDE_FULL_FILTER" "Esconder servidores cheios"
 		"HIDE_EMPTY_FILTER" "Esconder servidores vazios"
 		"HIDE_PROT_FILTER" "Esconder servidores com senha"
+		
 		"SERVER_DESCRIPTION" "Descrição"
+		"SERVER_REQUIRED_MODS" "Mods obrigatórios"
 		"SERVER_MODS" "Mods"
+		"INSTALLED_MODS" "Mods instalados"
+		"OUTDATED_MODS" "Mods desatualizados"
+		"MISSING_MODS" "Mods ausentes"
 		"CLEAR_FILTERS" "LIMPAR"
 		"JOIN_BUTTON" "Entrar"
 

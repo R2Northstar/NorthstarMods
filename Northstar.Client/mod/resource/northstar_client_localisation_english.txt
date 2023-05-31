@@ -271,7 +271,7 @@ Press Yes if you agree to this. This choice can be changed in the mods menu at a
 		"SP_SKYWAY_V1" "The Fold Weapon"
 		"SP_SKYWAY_V1_CLASSIC_DESC" "BT and Cooper are captured by Kuben Blisk."
 
-		// Better.Serverbrowser
+		// Better Server Browser
 		"SERVERS_COLUMN" "Servers"
 		"PLAYERS_COLUMN" "Players"
 		"MAP_COLUMN" "Map"
@@ -280,11 +280,18 @@ Press Yes if you agree to this. This choice can be changed in the mods menu at a
 		"SEARCHBAR_LABEL" "Search:"
 		"MAP_FILTER" "Map"
 		"GAMEMODE_FILTER" "Gamemode"
+		"REGION_FILTER" "Filter Regions"
+		"MODS_FILTER" "Filter Mods"
 		"HIDE_FULL_FILTER" "Hide Full Servers"
 		"HIDE_EMPTY_FILTER" "Hide Empty Servers"
 		"HIDE_PROT_FILTER" "Hide Protected Servers"
+
 		"SERVER_DESCRIPTION" "Description"
+		"SERVER_REQUIRED_MODS" "Required Mods"
 		"SERVER_MODS" "Mods"
+		"INSTALLED_MODS" "Installed Mods"
+		"OUTDATED_MODS" "Outdated Mods"
+		"MISSING_MODS" "Missing Mods"
 		"CLEAR_FILTERS" "CLEAR"
 		"JOIN_BUTTON" "JOIN"
 
