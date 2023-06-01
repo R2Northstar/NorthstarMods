@@ -13,6 +13,7 @@ global function TriggerConnectToServerCallbacks
 const int BUTTONS_PER_PAGE = 15 // Number of servers we show
 const float DOUBLE_CLICK_TIME_MS = 0.4 // Max time between clicks for double click registering 
 const int MAX_NUMBER_OF_LINES = 9 // The total number of ligne in both required mod label and description label befor cut off
+const int MAX_LETTER_PER_ROWS = 38
 
 // Stores mouse delta used for scroll bar
 struct {
@@ -702,7 +703,6 @@ void function OnBtnFiltersClear_Activate( var button )
 	SetConVarString( "filter_gamemode", "SWITCH_ANY" )
 	SetConVarString( "filter_region", "SWITCH_ANY" )
 	SetConVarString( "filter_mods", "SWITCH_ANY" )
-	SetConVarString( "filter_mods_types", "SWITCH_ANY" )
 
 	FilterAndUpdateList(0)
 }
@@ -1039,8 +1039,8 @@ void function DisplayFocusedServerInfo( int scriptID )
 	Hud_SetVisible( Hud_GetChild( menu, "BtnServerJoin" ), true )
 	// text panels
 
-	file.serverDetailsDescriptionStrings = split((server.description), "\n")
-	file.serverDetailsModsStrings = split(FillInServerModsLabel( server.requiredMods ), "\n") 
+	file.serverDetailsDescriptionStrings = split(FormatServerDescriptionLabel(server.description), "\n")
+	file.serverDetailsModsStrings = split(FormatServerModsLabel( server.requiredMods ), "\n") 
 
 	if(!Hud_IsVisible( Hud_GetChild( menu, "LabelDescription" ) ) && !Hud_IsVisible( Hud_GetChild( menu, "LabelMods" ) ) ) {
 
@@ -1051,7 +1051,7 @@ void function DisplayFocusedServerInfo( int scriptID )
 	UpdateServerDetails()
 
 	// Hud_SetText( Hud_GetChild( menu, "LabelDescription" ), server.description)
-	// Hud_SetText( Hud_GetChild( menu, "LabelMods" ), FillInServerModsLabel( server.requiredMods ) )
+	// Hud_SetText( Hud_GetChild( menu, "LabelMods" ), FormatServerModsLabel( server.requiredMods ) )
 
 	// map name/image/server name
 	string map = server.map
@@ -1075,7 +1075,30 @@ void function DisplayFocusedServerInfo( int scriptID )
 		Hud_SetText( Hud_GetChild( menu, "NextGameModeName" ), "#NS_SERVERBROWSER_UNKNOWNMODE" )
 }
 
-string function FillInServerModsLabel( array<RequiredModInfo> mods )
+string function FormatServerDescriptionLabel( string description ) {
+
+	string ret = ""
+	int numLetter = 0
+
+	foreach(string word in split(description, " ")) {
+		if( numLetter + word.len() + 1 <= MAX_LETTER_PER_ROWS) {
+			if(numLetter != 0) {
+				ret += " "
+				numLetter ++
+			}
+			numLetter += word.len()
+			ret += word
+		} else {
+			ret += "\n"
+			numLetter = word.len()
+			ret += word
+		}
+	}
+
+	return ret
+}
+
+string function FormatServerModsLabel( array<RequiredModInfo> mods )
 {
 	string ret
 	string installed_mods = ""
@@ -1114,7 +1137,7 @@ string function FillInServerModsLabel( array<RequiredModInfo> mods )
 		ret += (Localize("#DISABLED_MODS") + ":\n" + disabled_mods)
 	}
 	if(outdated_mods != "") {
-		ret += (Localize("#OUTDATED_MODS") + ":\n" + outdated_mods)
+		ret += (Localize("#OUTDATED_MODS") + ":\n" + outdated_mods) 
 	}
 	if(missing_mods != "") {
 		ret += (Localize("#MISSING_MODS") + ":\n" + missing_mods)
@@ -1567,14 +1590,6 @@ void function UpdateServerDetails() {
 
 	file.serverDetailsNumberOfLines = file.serverDetailsActiveStrings.len()
 
-	if(file.serverDetailsNumberOfLines > MAX_NUMBER_OF_LINES) {
-		
-		Hud_SetWidth( file.serverDetailsActiveLabel, 460 * (GetScreenSize()[0] / 1920.0) )
-
-	} else {
-		Hud_SetWidth( file.serverDetailsActiveLabel, 500 * (GetScreenSize()[0] / 1920.0) )
-	}
-
 	UpdateServerDetails_SliderHeight()
 
 }
@@ -1617,11 +1632,11 @@ void function UpdateServerDetailsSliderPosition()
 	var sliderPanel = Hud_GetChild( file.menu , "BtnLabelListSliderPanel" )
 	var movementCapture = Hud_GetChild( file.menu , "MouseMovementCaptureLabel" )
 
-	float minYPos = 40.0 * (GetScreenSize()[1] / 1080.0)
+	float minYPos = 0.0 * (GetScreenSize()[1] / 1080.0)
 	float maxHeight = 180.0 * (GetScreenSize()[1] / 1080.0)
 	float useableSpace = ( maxHeight - Hud_GetHeight( sliderPanel ))
 
-	float jump = ((maxHeight - minYPos) / float( file.serverDetailsNumberOfLines - MAX_NUMBER_OF_LINES)) *  float( file.serverDetailsScrollOffset )
+	float jump = ((useableSpace - minYPos) / float( file.serverDetailsNumberOfLines - MAX_NUMBER_OF_LINES)) *  float( file.serverDetailsScrollOffset )
 
 	Hud_SetPos( sliderButton , 2, jump )
 	Hud_SetPos( sliderPanel , 2, jump )
