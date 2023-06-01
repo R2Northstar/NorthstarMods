@@ -52,20 +52,7 @@ void function UpdateVisibleModes()
 		Hud_SetEnabled( buttons[ i ], true )		
 		Hud_SetVisible( buttons[ i ], true )
 
-		Hud_SetLocked( buttons[ i ], false )
-
-		// Remove the thing that grayed gamemode
-		// // This check is refactored in the new mode menu so we can just ignore this atrocity
-		// if ( !ModeSettings_RequiresAI( modesArray[ modeIndex ] ) || modesArray[ modeIndex ] == "aitdm" || modesArray[ modeIndex ] == "at" )
-		// 	Hud_SetLocked( buttons[ i ], false )
-		// else
-		// 	Hud_SetLocked( buttons[ i ], true )
-		
-		// if ( !PrivateMatch_IsValidMapModeCombo( PrivateMatch_GetSelectedMap(), modesArray[ modeIndex ] ) && !IsNorthstarServer() )
-		// {
-		// 	Hud_SetLocked( buttons[ i ], true )
-		// 	SetButtonRuiText( buttons[ i ], Localize( "#PRIVATE_MATCH_UNAVAILABLE", Localize( GetGameModeDisplayName( modesArray[ modeIndex ] ) ) ) )
-		// }		
+		Hud_SetLocked( buttons[ i ], false )	
 	}
 }
 
@@ -113,14 +100,8 @@ void function ModeButton_Click( var button )
 	int modeID = int( Hud_GetScriptID( button ) ) + ( file.currentModePage * MODES_PER_PAGE )
 
 	array<string> modesArray = GetPrivateMatchModes()
-	string modeName = GetGameModeDisplayName(modesArray[ modeID ]) // Edit Alpha
+	string modeName = GetGameModeDisplayName(modesArray[ modeID ])
 
-	// on modded servers set us to the first map for that mode automatically
-	// need this for coliseum mainly which is literally impossible to select without this
-	// if ( IsNorthstarServer() && !PrivateMatch_IsValidMapModeCombo( PrivateMatch_GetSelectedMap(), modesArray[ modeID ] ) )
-		// ClientCommand( "SetCustomMap " + GetPrivateMatchMapsForMode( modeName )[ 0 ] )
-		
-	// set it
 	SetConVarString("filter_gamemode", modeName)
 	CloseActiveMenu()
 }

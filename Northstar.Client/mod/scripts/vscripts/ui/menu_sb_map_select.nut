@@ -18,9 +18,6 @@ struct {
 } mouseDeltaBuffer
 
 struct {
-	// int mapsPerPage = 21
-	// int currentMapPage
-	
 	array< var > gridInfos
 	array< var > gridButtons
 	
@@ -60,14 +57,6 @@ void function SB_InitMapsMenu()
 	AddButtonEventHandler( Hud_GetChild( file.menu, "BtnMapGridUpArrow"), UIE_CLICK, OnUpArrowSelected )
 	AddButtonEventHandler( Hud_GetChild( file.menu, "BtnMapGridDownArrow"), UIE_CLICK, OnDownArrowSelected )
 	
-	// Filter thing not usefull anymore since evry map are ungrayed
-	// AddButtonEventHandler( Hud_GetChild( file.menu, "BtnFiltersClear"), UIE_CLICK, OnBtnFiltersClear_Activate )
-	
-	// AddButtonEventHandler( Hud_GetChild( file.menu, "SwtBtnHideLocked"), UIE_CHANGE, OnFiltersChanged )
-	// AddButtonEventHandler( Hud_GetChild( file.menu, "BtnMapsSearch"), UIE_CHANGE, OnFiltersChanged )
-	
-	// RuiSetString( Hud_GetRui( Hud_GetChild( file.menu, "SwtBtnhideLocked")), "buttonText", "")
-	
 	file.gridInfos = GetElementsByClassname( file.menu, "MapGridInfo" )
 	
 	file.gridButtons = GetElementsByClassname( file.menu, "MapGridButtons" )
@@ -94,14 +83,13 @@ void function OnCloseMapsMenu()
 	{
 		DeregisterButtonPressedCallback(MOUSE_WHEEL_UP , OnScrollUp)
 		DeregisterButtonPressedCallback(MOUSE_WHEEL_DOWN , OnScrollDown)
-		//DeregisterButtonPressedCallback(KEY_TAB , OnKeyTabPressed)
 	}
 	catch ( ex ) {}
 }
 
 void function OnOpenMapsMenu()
 {	
-	file.mapsArrayFiltered = GetPrivateMatchMaps() // Remove this If you want to re-enable the filter
+	file.mapsArrayFiltered = GetPrivateMatchMaps()
 	
 	RefreshList()
 	
@@ -109,7 +97,6 @@ void function OnOpenMapsMenu()
 	
 	RegisterButtonPressedCallback(MOUSE_WHEEL_UP , OnScrollUp)
 	RegisterButtonPressedCallback(MOUSE_WHEEL_DOWN , OnScrollDown)
-	//RegisterButtonPressedCallback(KEY_TAB , OnKeyTabPressed)
 }
 
 void function OnHitDummyTop( var button )
@@ -161,7 +148,6 @@ void function OnHitDummyBottom( var button )
 void function RefreshList()
 {
 	file.scrollOffset = 0
-	// FilterMapsArray() // Not usefull to filter map anymore
 	UpdateMapsGrid()
 	if ( file.mapsArrayFiltered.len() != 0 )
 		UpdateMapsInfo( file.mapsArrayFiltered[0] )
@@ -170,23 +156,13 @@ void function RefreshList()
 	UpdateNextMapInfo()
 }
 
-// Filter related stuff
-// void function OnFiltersChanged( var button )
-// {
-// 	FilterMapsArray()
-// 	RefreshList()
-// }
-
-void function MapButton_Activate( var button ) // Edit Alpha
+void function MapButton_Activate( var button )
 {
 	if ( !AmIPartyLeader() && GetPartySize() > 1 )
 		return
 
 	int mapID = int( Hud_GetScriptID(  button  ) )
 	string mapName = file.mapsArrayFiltered[ mapID + file.scrollOffset * GRID_COLUMN_NUMBER ]
-	
-	if ( IsLocked( mapName ) )
-		return
 	
 	printt( mapName, mapID )
 
@@ -253,37 +229,10 @@ void function UpdateMapsGrid()
 		RuiSetImage( Hud_GetRui( mapImage ), "basicImage", GetMapImageForMapName( name ) )
 		Hud_SetText( mapName, GetMapDisplayName( name ) )
 		
-		if ( IsLocked( name ) )
-			LockMapButton( element )
-		
 		Hud_SetVisible( file.gridButtons[ _index ], true )
 		MakeMapButtonVisible( element )
 	}
 }
-// Filter related stuff
-// void function FilterMapsArray()
-// {
-// 	file.mapsArrayFiltered.clear()
-	
-// 	string searchTerm = Hud_GetUTF8Text( Hud_GetChild( file.menu, "BtnMapsSearch" ) )
-	
-// 	bool useSearch =  searchTerm != ""
-// 	bool hideLocked = bool( GetConVarInt( "filter_map_hide_locked" ) )
-	
-// 	foreach ( string map in GetPrivateMatchMaps() )
-// 	{
-// 		bool containsTerm = Localize( GetMapDisplayName( map ) ).tolower().find( searchTerm.tolower() ) == null ? false : true
-		
-// 		if ( hideLocked && !IsLocked( map ) && ( useSearch == true ? containsTerm : true ) )
-// 		{
-// 			file.mapsArrayFiltered.append( map )
-// 		}
-// 		else if ( !hideLocked && ( useSearch == true ? containsTerm : true ) )
-// 		{
-// 			file.mapsArrayFiltered.append( map )
-// 		}
-// 	}
-// }
 
 void function HideAllMapButtons()
 {
@@ -311,28 +260,6 @@ void function LockMapButton( var element )
 	var mapFG = Hud_GetChild( element, "MapNameLockedForeground" )
 	
 	Hud_SetVisible( mapFG, true )
-}
-
-bool function IsLocked( string map )
-{
-	// Make unable to lock map
-	// bool sp = map.find( "sp_" ) == 0 && PrivateMatch_GetSelectedMode() != "sp_coop"
-	// if ( sp )
-	// 	return true
-
-	// if ( IsItemInEntitlementUnlock( map ) && IsValid( GetUIPlayer() ) )
-	// {
-	// 	if ( IsItemLocked( GetUIPlayer(), map ) && GetCurrentPlaylistVarInt( map + "_available" , 0 ) == 0 )
-	// 	{
-	// 		return true
-	// 	}
-	// }
-	
-	// if ( !PrivateMatch_IsValidMapModeCombo( map, PrivateMatch_GetSelectedMode() ) )
-	// 	return true
-	
-	
-	return false
 }
 
 //////////////////////////////
@@ -440,8 +367,6 @@ void function UpdateListSliderPosition()
 	float useableSpace = (749.0 * (GetScreenSize()[1] / 1080.0) - Hud_GetHeight( sliderPanel )) // 582
 
 	float jump = minYPos - ( useableSpace / ( maps - float( GRID_ROW_NUMBER ) ) * file.scrollOffset )
-
-	//jump = jump * (GetScreenSize()[1] / 1080.0)
 
 	if ( jump > minYPos ) jump = minYPos
 

@@ -1014,9 +1014,9 @@ void function InitMenus()
 
 	AddMenu( "PrivateLobbyMenu", $"resource/ui/menus/private_lobby.menu", InitPrivateMatchMenu, "#PRIVATE_MATCH" )
 	AddMenu( "MapsMenu", $"resource/ui/menus/map_select.menu", InitMapsMenu )
-	AddMenu( "SB_MapsMenu", $"resource/ui/menus/sb_map_select.menu", SB_InitMapsMenu )	// ADD : Alpha
+	AddMenu( "SB_MapsMenu", $"resource/ui/menus/sb_map_select.menu", SB_InitMapsMenu )
 	AddMenu( "ModesMenu", $"resource/ui/menus/mode_select.menu", InitModesMenu )
-	AddMenu( "SB_ModesMenu", $"resource/ui/menus/mode_select.menu", SB_InitModesMenu ) // ADD : Alpha
+	AddMenu( "SB_ModesMenu", $"resource/ui/menus/mode_select.menu", SB_InitModesMenu )
 	AddMenu( "MatchSettingsMenu", $"resource/ui/menus/match_settings.menu", InitMatchSettingsMenu )
 
 	AddMenu( "Advocate_Letter", $"resource/ui/menus/advocate_letter.menu", InitAdvocateLetterMenu )
