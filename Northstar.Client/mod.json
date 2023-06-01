@@ -33,10 +33,6 @@
             "Name": "filter_mods",
             "DefaultValue": "SWITCH_ANY"
         },
-        {
-            "Name": "filter_mods_types",
-            "DefaultValue": "SWITCH_ANY"
-        },
 		{
 			"Name": "filter_map_hide_locked",
 			"DefaultValue": "0"

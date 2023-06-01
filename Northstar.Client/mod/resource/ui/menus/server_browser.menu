@@ -2366,13 +2366,13 @@ resource/ui/menus/mods_browse.menu
 		navDown SwtBtnHideFull
 	}
 
-	// Don't know what to do with this button - Disabled
+	// Don't know what to do with this button - Disabled : Future favorite ???
 	SwtBtnSelectModsTypes
 	{
 		ControlName RuiButton
 		InheritProperties SwitchButton
 		labelText "#MODS_TYPES_FILTER"
-		ConVar "filter_mods_types"
+		ConVar ""
 		classname FilterPanelChild
 		wide 500
 
@@ -2654,8 +2654,8 @@ resource/ui/menus/mods_browse.menu
 		{
 			ControlName Label
 			textAlignment north
-			tall 250 // 420 EDIT : Alpha
-			wide 460
+			tall 260 // 420 EDIT : Alpha
+			wide 500
 			ypos 2 // -300 EDIT : Alpha
 			// xpos -20
 			labelText ""
@@ -2693,8 +2693,8 @@ resource/ui/menus/mods_browse.menu
 		{
 			ControlName Label
 			textAlignment north
-			tall 250
-			wide 460
+			tall 260
+			wide 500
 			ypos -2 // -330 EDIT : Alpha
 			// xpos -20
 
@@ -2713,7 +2713,7 @@ resource/ui/menus/mods_browse.menu
 			InheritProperties RuiSmallButton
 			labelText "#JOIN_BUTTON"
 			wide 466 // 80 // <- edit alpha
-			xpos -17
+			xpos -6 //17
 			ypos -57
 			zpos 90
 
@@ -2731,131 +2731,131 @@ resource/ui/menus/mods_browse.menu
 
 		///////////////////////////////////// SLIDER BAR FOR BOTH LABEL ////////////////////////
 
-		// BtnLabelListUpArrow
-		// {
-		// 	ControlName RuiButton
-		// 	InheritProperties RuiSmallButton
-		// 	//labelText "A"
-		// 	wide 40
-		// 	tall 40
-		// 	xpos 2
-		// 	ypos 2
+		BtnLabelListUpArrow
+		{
+			ControlName RuiButton
+			InheritProperties RuiSmallButton
+			//labelText "A"
+			wide 40
+			tall 40
+			// xpos 2
+			// ypos 2
 	
-		// 	image "vgui/hud/white"
-		// 	drawColor "255 255 255 128"
+			image "vgui/hud/white"
+			drawColor "255 255 255 128"
 	
-		// 	pin_to_sibling ServerDetailsPanel
-		// 	pin_corner_to_sibling TOP_RIGHT
-		// 	pin_to_sibling_corner TOP_LEFT
-		// }
+			pin_to_sibling BtnServerMods
+			pin_corner_to_sibling TOP_RIGHT
+			pin_to_sibling_corner BOTTOM_RIGHT
+		}
 	
-		// BtnLabelListUpArrowPanel
-		// {
-		// 	ControlName RuiPanel
-		// 	wide 40
-		// 	tall 40
-		// 	xpos 2
-		// 	ypos 2
+		BtnLabelListUpArrowPanel
+		{
+			ControlName RuiPanel
+			wide 40
+			tall 40
+			// xpos 2
+			// ypos 2
 	
-		// 	rui "ui/control_options_description.rpak"
+			rui "ui/control_options_description.rpak"
 	
-		// 	visible 1
-		// 	zpos -1
+			visible 1
+			zpos -1
 	
-		// 	pin_to_sibling ServerDetailsPanel
-		// 	pin_corner_to_sibling TOP_RIGHT
-		// 	pin_to_sibling_corner TOP_LEFT
-		// }
+			pin_to_sibling BtnServerMods
+			pin_corner_to_sibling TOP_RIGHT
+			pin_to_sibling_corner BOTTOM_RIGHT
+		}
+
+		BtnLabelListSlider
+		{
+			ControlName RuiButton
+			InheritProperties RuiSmallButton
+			//labelText "V"
+			wide 40
+			tall 180
+			// xpos 2
+			// ypos -42
+			zpos 0
 	
-		// BtnLabelListDownArrow
-		// {
-		// 	ControlName RuiButton
-		// 	InheritProperties RuiSmallButton
-		// 	//labelText "V"
-		// 	wide 40
-		// 	tall 40
-		// 	xpos 2
-		// 	ypos -604
+			image "vgui/hud/white"
+			drawColor "255 255 255 128"
 	
-		// 	image "vgui/hud/white"
-		// 	drawColor "255 255 255 128"
+			pin_to_sibling BtnLabelListUpArrow
+			pin_corner_to_sibling TOP_RIGHT
+			pin_to_sibling_corner BOTTOM_RIGHT
+		}
 	
-		// 	pin_to_sibling ServerDetailsPanel
-		// 	pin_corner_to_sibling TOP_RIGHT
-		// 	pin_to_sibling_corner TOP_LEFT
-		// }
+		BtnLabelListSliderPanel
+		{
+			ControlName RuiPanel
+			wide 40
+			tall 180
+			// xpos 2
+			// ypos -42
 	
-		// BtnLabelListDownArrowPanel
-		// {
-		// 	ControlName RuiPanel
-		// 	wide 40
-		// 	tall 40
-		// 	xpos 2
-		// 	ypos -604
+			rui "ui/control_options_description.rpak"
 	
-		// 	rui "ui/control_options_description.rpak"
+			visible 1
+			zpos -1
 	
-		// 	visible 1
-		// 	zpos -1
+			pin_to_sibling BtnLabelListUpArrow
+			pin_corner_to_sibling TOP_RIGHT
+			pin_to_sibling_corner BOTTOM_RIGHT
+		}
 	
-		// 	pin_to_sibling ServerDetailsPanel
-		// 	pin_corner_to_sibling TOP_RIGHT
-		// 	pin_to_sibling_corner TOP_LEFT
-		// }
+		BtnLabelListDownArrow
+		{
+			ControlName RuiButton
+			InheritProperties RuiSmallButton
+			//labelText "V"
+			wide 40
+			tall 40
+			// xpos 2
+			ypos 180
 	
-		// BtnLabelListSlider
-		// {
-		// 	ControlName RuiButton
-		// 	InheritProperties RuiSmallButton
-		// 	//labelText "V"
-		// 	wide 40
-		// 	tall 562
-		// 	xpos 2
-		// 	ypos -42
-		// 	zpos 0
+			image "vgui/hud/white"
+			drawColor "255 255 255 128"
 	
-		// 	image "vgui/hud/white"
-		// 	drawColor "255 255 255 128"
+			pin_to_sibling BtnLabelListUpArrow
+			pin_corner_to_sibling TOP_RIGHT
+			pin_to_sibling_corner BOTTOM_RIGHT
+		}
 	
-		// 	pin_to_sibling ServerDetailsPanel
-		// 	pin_corner_to_sibling TOP_RIGHT
-		// 	pin_to_sibling_corner TOP_LEFT
-		// }
+		BtnLabelListDownArrowPanel
+		{
+			ControlName RuiPanel
+			wide 40
+			tall 40
+			// xpos 2
+			ypos 180
 	
-		// BtnServerListSliderPanel
-		// {
-		// 	ControlName RuiPanel
-		// 	wide 40
-		// 	tall 562
-		// 	xpos 2
-		// 	ypos -42
+			rui "ui/control_options_description.rpak"
 	
-		// 	rui "ui/control_options_description.rpak"
+			visible 1
+			zpos -1
 	
-		// 	visible 1
-		// 	zpos -1
+			pin_to_sibling BtnLabelListUpArrow
+			pin_corner_to_sibling TOP_RIGHT
+			pin_to_sibling_corner BOTTOM_RIGHT
+		}
 	
-		// 	pin_to_sibling ServerDetailsPanel
-		// 	pin_corner_to_sibling TOP_RIGHT
-		// 	pin_to_sibling_corner TOP_LEFT
-		// }
+		// sh_menu_models.gnut has a global function which gets called when
+		// left mouse button gets called while hovering and has mouse
+		// deltaX; deltaY which we can yoink for ourselfes
+		MouseMovementCaptureLabel
+		{
+				ControlName CMouseMovementCapturePanel
+				wide 40
+				tall 185
+				// xpos 2
+				// ypos -42
+				zpos 1
 	
-		// // sh_menu_models.gnut has a global function which gets called when
-		// // left mouse button gets called while hovering and has mouse
-		// // deltaX; deltaY which we can yoink for ourselfes
-		// MouseMovementCapture
-		// {
-		// 		ControlName CMouseMovementCapturePanel
-		// 		wide 40
-		// 		tall 562
-		// 		xpos 2
-		// 		ypos -42
-		// 		zpos 1
-	
-		// 		pin_to_sibling ServerDetailsPanel
-		// 		pin_corner_to_sibling TOP_RIGHT
-		// 		pin_to_sibling_corner TOP_LEFT
-		// }
+				pin_to_sibling BtnLabelListUpArrow
+				pin_corner_to_sibling TOP_RIGHT
+				pin_to_sibling_corner BOTTOM_RIGHT
+		}
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
