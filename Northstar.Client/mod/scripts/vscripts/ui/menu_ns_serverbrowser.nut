@@ -223,6 +223,10 @@ void function InitServerBrowserMenu()
 	ToggleConnectingHUD(false)
 	ToggleServerDetailsSlideBar(false)
 
+	// UI resize stuff
+	Hud_SetWidth(Hud_GetChild( file.menu, "BtnServerSearch"), (500 * ( GetScreenSize()[0] / 1920.0 )) - Hud_GetWidth(Hud_GetChild( file.menu, "BtnSearchLabel")) + Hud_GetPos(Hud_GetChild( file.menu, "BtnServerSearch"))[0] - 10 * ( GetScreenSize()[0] / 1920.0 ))
+	Hud_SetWidth(Hud_GetChild( file.menu, "BtnSearchLabel"), 500 * ( GetScreenSize()[0] / 1920.0 ))
+	
 	// UI was cut off on some aspect ratios; not perfect
 	UpdateServerInfoBasedOnRes()
 }
