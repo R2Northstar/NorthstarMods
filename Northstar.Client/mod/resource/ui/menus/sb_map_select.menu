@@ -18,8 +18,8 @@ resource/ui/menus/sb_map_select.menu
 		
 		Vignette
 		{
-				ControlName ImagePanel
-				InheritProperties MenuVignette
+			ControlName ImagePanel
+			InheritProperties MenuVignette
 		}
 		
 		MenuTitle

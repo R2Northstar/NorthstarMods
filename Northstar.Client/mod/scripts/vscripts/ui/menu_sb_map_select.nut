@@ -8,7 +8,6 @@ global function SB_InitMapsMenu
 const int GRID_COLUMN_NUMBER = 4
 const int GRID_ROW_NUMBER = 5
 
-const int ROW_PER_SCROLL = 1
 const int MAPS_PER_PAGE = GRID_COLUMN_NUMBER * GRID_ROW_NUMBER
 
 
@@ -21,7 +20,7 @@ struct {
 	array< var > gridInfos
 	array< var > gridButtons
 	
-	array< string > mapsArrayFiltered
+	array< string > mapsArray
 	
 	int scrollOffset = 0
 	
@@ -89,7 +88,7 @@ void function OnCloseMapsMenu()
 
 void function OnOpenMapsMenu()
 {	
-	file.mapsArrayFiltered = GetPrivateMatchMaps()
+	file.mapsArray = GetPrivateMatchMaps()
 	
 	RefreshList()
 	
@@ -118,17 +117,17 @@ void function OnHitDummyTop( var button )
 
 void function OnHitDummyBottom( var button )
 {
-	if ( file.mapsArrayFiltered.len() <= GRID_ROW_NUMBER || file.mapsArrayFiltered.len() <= MAPS_PER_PAGE ) // 12
+	if ( file.mapsArray.len() <= GRID_ROW_NUMBER || file.mapsArray.len() <= MAPS_PER_PAGE ) // 12
 		return
 		
 	file.scrollOffset += 1
 	
 	int compensate = 0
-	if ( file.mapsArrayFiltered.len() % GRID_COLUMN_NUMBER != 0 )
+	if ( file.mapsArray.len() % GRID_COLUMN_NUMBER != 0 )
 		compensate = 1
 	
-	if ((file.scrollOffset + GRID_ROW_NUMBER) * GRID_COLUMN_NUMBER > file.mapsArrayFiltered.len())
-		file.scrollOffset = (file.mapsArrayFiltered.len() - GRID_ROW_NUMBER * GRID_COLUMN_NUMBER) / GRID_COLUMN_NUMBER + compensate
+	if ((file.scrollOffset + GRID_ROW_NUMBER) * GRID_COLUMN_NUMBER > file.mapsArray.len())
+		file.scrollOffset = (file.mapsArray.len() - GRID_ROW_NUMBER * GRID_COLUMN_NUMBER) / GRID_COLUMN_NUMBER + compensate
 	
 	UpdateMapsGrid()
 	UpdateListSliderPosition()
@@ -136,8 +135,8 @@ void function OnHitDummyBottom( var button )
 	
 	int scriptID = file.lastSelectedID
 	
-	if( scriptID > file.mapsArrayFiltered.len() - 1 - file.scrollOffset * GRID_COLUMN_NUMBER )
-		scriptID = file.mapsArrayFiltered.len() - file.scrollOffset * GRID_COLUMN_NUMBER - 1
+	if( scriptID > file.mapsArray.len() - 1 - file.scrollOffset * GRID_COLUMN_NUMBER )
+		scriptID = file.mapsArray.len() - file.scrollOffset * GRID_COLUMN_NUMBER - 1
 	
 	
 	var lastButton = file.gridButtons[ scriptID ]
@@ -149,8 +148,8 @@ void function RefreshList()
 {
 	file.scrollOffset = 0
 	UpdateMapsGrid()
-	if ( file.mapsArrayFiltered.len() != 0 )
-		UpdateMapsInfo( file.mapsArrayFiltered[0] )
+	if ( file.mapsArray.len() != 0 )
+		UpdateMapsInfo( file.mapsArray[0] )
 	UpdateListSliderHeight()
 	UpdateListSliderPosition()
 	UpdateNextMapInfo()
@@ -162,7 +161,7 @@ void function MapButton_Activate( var button )
 		return
 
 	int mapID = int( Hud_GetScriptID(  button  ) )
-	string mapName = file.mapsArrayFiltered[ mapID + file.scrollOffset * GRID_COLUMN_NUMBER ]
+	string mapName = file.mapsArray[ mapID + file.scrollOffset * GRID_COLUMN_NUMBER ]
 	
 	printt( mapName, mapID )
 
@@ -174,7 +173,7 @@ void function MapButton_Activate( var button )
 void function MapButton_Focus( var button )
 {
 	int mapID = int( Hud_GetScriptID(  button  ) )
-	string mapName = file.mapsArrayFiltered[ mapID + file.scrollOffset * GRID_COLUMN_NUMBER ]
+	string mapName = file.mapsArray[ mapID + file.scrollOffset * GRID_COLUMN_NUMBER ]
 	
 	file.lastSelectedID = mapID
 	
@@ -199,7 +198,7 @@ void function UpdateMapsInfo( string map )
 
 void function UpdateNextMapInfo()
 {
-	array< string > mapsArray = file.mapsArrayFiltered
+	array< string > mapsArray = file.mapsArray
 	
 	if( !mapsArray.len() )
 		return
@@ -212,8 +211,9 @@ void function UpdateMapsGrid()
 {	
 	HideAllMapButtons()
 	
-	array< string > mapsArray = file.mapsArrayFiltered
+	array< string > mapsArray = file.mapsArray
 	
+	printt(file.scrollOffset)
 	
 	int trueOffset = file.scrollOffset * GRID_COLUMN_NUMBER
 	
@@ -282,7 +282,7 @@ void function FlushMouseDeltaBuffer()
 
 void function SliderBarUpdate()
 {
-	if ( file.mapsArrayFiltered.len() <= GRID_ROW_NUMBER || file.mapsArrayFiltered.len() <= MAPS_PER_PAGE )
+	if ( file.mapsArray.len() <= GRID_ROW_NUMBER || file.mapsArray.len() <= MAPS_PER_PAGE )
 	{
 		FlushMouseDeltaBuffer()
 		return
@@ -299,7 +299,7 @@ void function SliderBarUpdate()
 	float maxYPos = minYPos - (maxHeight - Hud_GetHeight( sliderPanel ))
 	float useableSpace = ( maxHeight - Hud_GetHeight( sliderPanel ))
 
-	float jump = minYPos - ( useableSpace / (  file.mapsArrayFiltered.len() / GRID_COLUMN_NUMBER + 1 ))
+	float jump = minYPos - ( useableSpace / (  file.mapsArray.len() / GRID_COLUMN_NUMBER + 1 ))
 
 	// got local from official respaw scripts, without untyped throws an error
 	local pos =	Hud_GetPos(sliderButton)[1]
@@ -314,10 +314,10 @@ void function SliderBarUpdate()
 	Hud_SetPos( movementCapture , 2, newPos )
 
 	int compensate = 0
-	if ( file.mapsArrayFiltered.len() % GRID_COLUMN_NUMBER != 0 )
+	if ( file.mapsArray.len() % GRID_COLUMN_NUMBER != 0 )
 		compensate = 1
 
-	file.scrollOffset = -int( ( (newPos - minYPos) / useableSpace ) * ( file.mapsArrayFiltered.len() / GRID_COLUMN_NUMBER + compensate - GRID_ROW_NUMBER) )
+	file.scrollOffset = -int( ( (newPos - minYPos) / useableSpace ) * ( file.mapsArray.len() / GRID_COLUMN_NUMBER + compensate - GRID_ROW_NUMBER) )
 	UpdateMapsGrid()
 }
 
@@ -327,14 +327,14 @@ void function UpdateListSliderHeight()
 	var sliderPanel = Hud_GetChild( file.menu , "BtnMapGridSliderPanel" )
 	var movementCapture = Hud_GetChild( file.menu , "MouseMovementCapture" )
 	
-	float maps = file.mapsArrayFiltered.len() / float( GRID_COLUMN_NUMBER ) 
+	float maps = file.mapsArray.len() / float( GRID_COLUMN_NUMBER ) 
 
 	float maxHeight = 749.0 * (GetScreenSize()[1] / 1080.0) // 582
 	float minHeight = 80.0 * (GetScreenSize()[1] / 1080.0)
 
 	float height = maxHeight * ( float( GRID_ROW_NUMBER ) / maps )
 
-	printt(file.mapsArrayFiltered.len())
+	printt(file.mapsArray.len())
 	printt(maps)
 	printt(maxHeight)
 	printt(height)
@@ -350,7 +350,7 @@ void function UpdateListSliderHeight()
 
 void function UpdateListSliderPosition()
 {
-	if ( file.mapsArrayFiltered.len() == MAPS_PER_PAGE ) // 12
+	if ( file.mapsArray.len() == MAPS_PER_PAGE ) // 12
 		return
 	
 	var sliderButton = Hud_GetChild( file.menu , "BtnMapGridSlider" )
@@ -358,10 +358,10 @@ void function UpdateListSliderPosition()
 	var movementCapture = Hud_GetChild( file.menu , "MouseMovementCapture" )
 	
 	int compensate = 0
-	if ( file.mapsArrayFiltered.len() % GRID_COLUMN_NUMBER != 0 )
+	if ( file.mapsArray.len() % GRID_COLUMN_NUMBER != 0 )
 		compensate = 1
 	
-	float maps = float ( file.mapsArrayFiltered.len() / GRID_COLUMN_NUMBER + compensate )
+	float maps = float ( file.mapsArray.len() / GRID_COLUMN_NUMBER + compensate )
 
 	float minYPos = -42.0 * (GetScreenSize()[1] / 1080.0)
 	float useableSpace = (749.0 * (GetScreenSize()[1] / 1080.0) - Hud_GetHeight( sliderPanel )) // 582
@@ -377,14 +377,10 @@ void function UpdateListSliderPosition()
 
 void function OnDownArrowSelected( var button )
 {
-	if ( file.mapsArrayFiltered.len() <= GRID_ROW_NUMBER || file.mapsArrayFiltered.len() <= MAPS_PER_PAGE ) return // 12
-	if ( file.scrollOffset + 5 > file.mapsArrayFiltered.len() / GRID_COLUMN_NUMBER && file.mapsArrayFiltered.len() % GRID_COLUMN_NUMBER == 0 ) return
+	if(file.scrollOffset * GRID_COLUMN_NUMBER + GRID_ROW_NUMBER * GRID_COLUMN_NUMBER >= file.mapsArray.len()) return
 	
 	file.scrollOffset += 1
 
-	if ((file.scrollOffset + GRID_ROW_NUMBER) * GRID_COLUMN_NUMBER > file.mapsArrayFiltered.len()) {
-		file.scrollOffset = (file.mapsArrayFiltered.len() - GRID_ROW_NUMBER * GRID_COLUMN_NUMBER) / GRID_COLUMN_NUMBER + 1
-	}
 	UpdateMapsGrid()
 	UpdateListSliderPosition()
 }
@@ -402,18 +398,16 @@ void function OnUpArrowSelected( var button )
 
 void function OnScrollDown( var button )
 {
-	if ( file.mapsArrayFiltered.len() <= GRID_ROW_NUMBER || file.mapsArrayFiltered.len() <= MAPS_PER_PAGE ) return // 12
-	file.scrollOffset += ROW_PER_SCROLL
-	if ((file.scrollOffset + GRID_ROW_NUMBER) * GRID_COLUMN_NUMBER > file.mapsArrayFiltered.len()) {
-		file.scrollOffset = (file.mapsArrayFiltered.len() - GRID_ROW_NUMBER * GRID_COLUMN_NUMBER) / GRID_COLUMN_NUMBER + 1
-	}
+	if(file.scrollOffset * GRID_COLUMN_NUMBER + GRID_ROW_NUMBER * GRID_COLUMN_NUMBER >= file.mapsArray.len()) return
+	file.scrollOffset += 1
+
 	UpdateMapsGrid()
 	UpdateListSliderPosition()
 }
 
 void function OnScrollUp( var button )
 {
-	file.scrollOffset -= ROW_PER_SCROLL
+	file.scrollOffset -= 1
 	if (file.scrollOffset < 0) {
 		file.scrollOffset = 0
 	}
