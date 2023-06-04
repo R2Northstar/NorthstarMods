@@ -2596,25 +2596,6 @@ resource/ui/menus/mods_browse.menu
 			navRight BtnServerMods
 		}
 
-		LabelDescription
-		{
-			ControlName Label
-			textAlignment north
-			tall 260
-			wide 500
-			ypos -2
-			xpos -2
-			labelText ""
-
-			wrap 1
-			visible 1
-			// zpos -1
-
-			pin_to_sibling BtnServerDescription
-			pin_corner_to_sibling TOP_LEFT
-			pin_to_sibling_corner BOTTOM_LEFT
-		}
-
 		BtnServerMods
 		{
 			ControlName RuiButton
@@ -2635,7 +2616,7 @@ resource/ui/menus/mods_browse.menu
 			// navRight
 		}
 
-		LabelMods
+		LabelServerDetails
 		{
 			ControlName Label
 			textAlignment north
@@ -2643,6 +2624,7 @@ resource/ui/menus/mods_browse.menu
 			wide 500
 			ypos -2
 			xpos -2
+			labelText ""
 
 			wrap 1
 			visible 1

@@ -83,7 +83,7 @@ struct {
 	int focusedServerIndex = 0
 	int scrollOffset = 0
 	int serverDetailsScrollOffset = 0
-	int serverDetailsNumberOfLines = 0
+	bool isRequiredModsListShow = false
 	bool serverListRequestFailed = false
 	float serverSelectedTime = 0
 	float serverSelectedTimeLast = 0
@@ -91,12 +91,11 @@ struct {
 	bool shouldFocus = true
 	bool cancelConnection = false
 
-	// Server Details labels and string (description & mods)
+	// Server Details string (description & mods)
 	array<string> serverDetailsModsStrings
 	array<string> serverDetailsDescriptionStrings
 
 	array<string> serverDetailsActiveStrings
-	var serverDetailsActiveLabel
 	
 	// filtered array of servers
 	array<serverStruct> serversArrayFiltered
@@ -397,8 +396,7 @@ void function UpdateServerInfoBasedOnRes()
 		Hud_SetWidth( Hud_GetChild(file.menu, "ServerName"), 392)
 		Hud_SetWidth( Hud_GetChild(file.menu, "NextMapImage"), 400)
 		Hud_SetWidth( Hud_GetChild(file.menu, "NextMapBack"), 400)
-		Hud_SetWidth( Hud_GetChild(file.menu, "LabelMods"), 360)
-		Hud_SetWidth( Hud_GetChild(file.menu, "LabelDescription"), 360)
+		Hud_SetWidth( Hud_GetChild(file.menu, "LabelServerDetails"), 360)
 		Hud_SetWidth( Hud_GetChild(file.menu, "ServerDetailsPanel"), 400)
 	}
 	if( FloatsEqual( float( GetScreenSize()[0] ) / float( GetScreenSize()[1] ) , 1.3, 0.055 ) ) // 4/3
@@ -406,8 +404,7 @@ void function UpdateServerInfoBasedOnRes()
 		Hud_SetWidth( Hud_GetChild(file.menu, "ServerName"), 292)
 		Hud_SetWidth( Hud_GetChild(file.menu, "NextMapImage"), 300)
 		Hud_SetWidth( Hud_GetChild(file.menu, "NextMapBack"), 300)
-		Hud_SetWidth( Hud_GetChild(file.menu, "LabelMods"), 260)
-		Hud_SetWidth( Hud_GetChild(file.menu, "LabelDescription"), 260)
+		Hud_SetWidth( Hud_GetChild(file.menu, "LabelServerDetails"), 260)
 		Hud_SetWidth( Hud_GetChild(file.menu, "ServerDetailsPanel"), 300)
 	}
 }
@@ -610,18 +607,16 @@ bool function IsSearchBarFocused()
 ////////////////////////////
 void function ShowServerDescription( var button )
 {
-	Hud_SetVisible( Hud_GetChild( file.menu, "LabelDescription" ), true )
-	Hud_SetVisible( Hud_GetChild( file.menu, "LabelMods" ), false )
-
-	UpdateServerDetails()
+	file.serverDetailsActiveStrings = file.serverDetailsDescriptionStrings
+	file.isRequiredModsListShow = false
+	UpdateServerDetails_SliderHeight()
 }
 
 void function ShowServerMods( var button )
 {
-	Hud_SetVisible( Hud_GetChild( file.menu, "LabelDescription" ), false )
-	Hud_SetVisible( Hud_GetChild( file.menu, "LabelMods" ), true )
-
-	UpdateServerDetails()
+	file.serverDetailsActiveStrings = file.serverDetailsModsStrings
+	file.isRequiredModsListShow = true
+	UpdateServerDetails_SliderHeight()
 }
 
 ////////////////////////////
@@ -632,8 +627,7 @@ void function HideServerInfo()
 	Hud_SetVisible( Hud_GetChild( file.menu, "BtnServerDescription" ), false )
 	Hud_SetVisible( Hud_GetChild( file.menu, "BtnServerMods" ), false )
 	Hud_SetVisible( Hud_GetChild( file.menu, "BtnServerJoin" ), false )
-	Hud_SetVisible( Hud_GetChild( file.menu, "LabelDescription" ), false )
-	Hud_SetVisible( Hud_GetChild( file.menu, "LabelMods" ), false )
+	Hud_SetVisible( Hud_GetChild( file.menu, "LabelServerDetails" ), false )
 	Hud_SetVisible( Hud_GetChild( file.menu, "NextMapImage" ), false )
 	Hud_SetVisible( Hud_GetChild( file.menu, "NextMapBack" ), false )
 	Hud_SetVisible( Hud_GetChild( file.menu, "NextMapName" ), false )
@@ -987,18 +981,20 @@ void function DisplayFocusedServerInfo( int scriptID )
 	Hud_SetVisible( Hud_GetChild( menu, "BtnServerDescription" ), true )
 	Hud_SetVisible( Hud_GetChild( menu, "BtnServerMods" ), true )
 	Hud_SetVisible( Hud_GetChild( menu, "BtnServerJoin" ), true )
+	Hud_SetVisible( Hud_GetChild( menu, "LabelServerDetails" ), true)
 	// text panels
 
 	file.serverDetailsDescriptionStrings = split(FormatServerDescriptionLabel(server.description), "\n")
 	file.serverDetailsModsStrings = split(FormatServerModsLabel( server.requiredMods ), "\n") 
 
-	if(!Hud_IsVisible( Hud_GetChild( menu, "LabelDescription" ) ) && !Hud_IsVisible( Hud_GetChild( menu, "LabelMods" ) ) ) {
+	if(!file.isRequiredModsListShow) {
+		file.serverDetailsActiveStrings = file.serverDetailsDescriptionStrings
 
-		Hud_SetVisible( Hud_GetChild( menu, "LabelDescription" ), true )
+	} else {
+		file.serverDetailsActiveStrings = file.serverDetailsModsStrings
+	}
 
-	} 
-
-	UpdateServerDetails()
+	UpdateServerDetails_SliderHeight()
 
 	// map name/image/server name
 	string map = server.map
@@ -1419,7 +1415,7 @@ array<int> function StringArrayToIntArray(array<string> stringArray) {
 
 void function ServerDetailSliderBarUpdate()
 {
-	if ( file.serverDetailsNumberOfLines <= MAX_NUMBER_OF_LINES )
+	if ( file.serverDetailsActiveStrings.len() <= MAX_NUMBER_OF_LINES )
 	{
 		FlushMouseDeltaBuffer_ServerDetail()
 		return
@@ -1449,11 +1445,7 @@ void function ServerDetailSliderBarUpdate()
 	Hud_SetPos( sliderPanel , 2, newPos )
 	Hud_SetPos( movementCapture , 2, newPos )
 
-	// int compensate = 0
-	// if ( file.mapsArrayFiltered.len() % GRID_COLUMN_NUMBER != 0 )
-	// 	compensate = 1
-
-	file.serverDetailsScrollOffset = int( ( (newPos - minYPos) / useableSpace ) * ( file.serverDetailsNumberOfLines - MAX_NUMBER_OF_LINES) )
+	file.serverDetailsScrollOffset = int( ( (newPos - minYPos) / useableSpace ) * ( file.serverDetailsActiveStrings.len() - MAX_NUMBER_OF_LINES) )
 	UpdateServerDetails_Label()
 }
 
@@ -1466,7 +1458,7 @@ void function UpdateServerDetails_SliderHeight()
 	float maxHeight = 180.0 * ( GetScreenSize()[1] / 1080.0 )
 	float minHeight = 40.0 * ( GetScreenSize()[1] / 1080.0 )
 
-	float height = maxHeight * ( MAX_NUMBER_OF_LINES / float( file.serverDetailsNumberOfLines ) )
+	float height = maxHeight * ( MAX_NUMBER_OF_LINES / float( file.serverDetailsActiveStrings.len() ) )
 
 	if ( height > maxHeight ) height = maxHeight
 	if ( height < minHeight ) height = minHeight
@@ -1502,7 +1494,7 @@ void function UpdateMouseDeltaBuffer_ServerDetail(int x, int y)
 void function UpdateServerDetails_Label() {
 	string texteToDisplay
 
-	if(file.serverDetailsNumberOfLines > MAX_NUMBER_OF_LINES) {
+	if(file.serverDetailsActiveStrings.len() > MAX_NUMBER_OF_LINES) {
 		ToggleServerDetailsSlideBar(true)
 
 		for( int i = 0; i < MAX_NUMBER_OF_LINES; i++) {
@@ -1518,25 +1510,7 @@ void function UpdateServerDetails_Label() {
 		
 	}
 
-	Hud_SetText(file.serverDetailsActiveLabel, texteToDisplay)
-
-}
-
-void function UpdateServerDetails() {
-
-	if(Hud_IsVisible( Hud_GetChild( file.menu, "LabelDescription" ) ) ) {
-		
-		file.serverDetailsActiveStrings = file.serverDetailsDescriptionStrings
-		file.serverDetailsActiveLabel = Hud_GetChild( file.menu, "LabelDescription" )
-
-	} else if(Hud_IsVisible( Hud_GetChild( file.menu, "LabelMods" ) ) ) {
-		file.serverDetailsActiveStrings = file.serverDetailsModsStrings
-		file.serverDetailsActiveLabel = Hud_GetChild( file.menu, "LabelMods" )
-	}
-
-	file.serverDetailsNumberOfLines = file.serverDetailsActiveStrings.len()
-
-	UpdateServerDetails_SliderHeight()
+	Hud_SetText(Hud_GetChild( file.menu, "LabelServerDetails" ), texteToDisplay)
 
 }
 
@@ -1555,11 +1529,11 @@ void function ToggleServerDetailsSlideBar(bool value) {
 
 void function ServerDetails_OnDownArrowSelected( var button )
 {
-	if ( ( file.serverDetailsScrollOffset + MAX_NUMBER_OF_LINES ) >= file.serverDetailsNumberOfLines) return
+	if ( ( file.serverDetailsScrollOffset + MAX_NUMBER_OF_LINES ) >= file.serverDetailsActiveStrings.len()) return
 
 	file.serverDetailsScrollOffset += 1
 
-	UpdateServerDetailsSliderPosition()
+	UpdateServerDetails_SliderPosition()
 }
 
 
@@ -1569,10 +1543,10 @@ void function ServerDetails_OnUpSelected( var button )
 
 	file.serverDetailsScrollOffset -= 1
 
-	UpdateServerDetailsSliderPosition()
+	UpdateServerDetails_SliderPosition()
 }
 
-void function UpdateServerDetailsSliderPosition()
+void function UpdateServerDetails_SliderPosition()
 {
 	var sliderButton = Hud_GetChild( file.menu , "BtnLabelListSlider" )
 	var sliderPanel = Hud_GetChild( file.menu , "BtnLabelListSliderPanel" )
@@ -1582,7 +1556,7 @@ void function UpdateServerDetailsSliderPosition()
 	float maxHeight = 180.0 * (GetScreenSize()[1] / 1080.0)
 	float useableSpace = ( maxHeight - Hud_GetHeight( sliderPanel ))
 
-	float jump = ((useableSpace - minYPos) / float( file.serverDetailsNumberOfLines - MAX_NUMBER_OF_LINES)) *  float( file.serverDetailsScrollOffset )
+	float jump = ((useableSpace - minYPos) / float( file.serverDetailsActiveStrings.len() - MAX_NUMBER_OF_LINES)) *  float( file.serverDetailsScrollOffset )
 
 	Hud_SetPos( sliderButton , 2, jump )
 	Hud_SetPos( sliderPanel , 2, jump )
