@@ -177,7 +177,7 @@ void function InitServerBrowserMenu()
 	AddButtonEventHandler( Hud_GetChild( file.menu, "BtnServerListDownArrow"), UIE_CLICK, OnDownArrowSelected )
 	AddButtonEventHandler( Hud_GetChild( file.menu, "BtnDummyAfterFilterClear"), UIE_GET_FOCUS, OnHitDummyAfterFilterClear )
 
-	AddButtonEventHandler( Hud_GetChild( file.menu, "BtnLabelListUpArrow"), UIE_CLICK, ServerDetails_OnUpSelected )
+	AddButtonEventHandler( Hud_GetChild( file.menu, "BtnLabelListUpArrow"), UIE_CLICK, ServerDetails_OnUpArrowSelected )
 	AddButtonEventHandler( Hud_GetChild( file.menu, "BtnLabelListDownArrow"), UIE_CLICK, ServerDetails_OnDownArrowSelected )
 
 
@@ -346,24 +346,32 @@ void function UpdateListSliderPosition( int servers )
 }
 
 void function OnScrollDown( var button )
-{
-	if (file.filteredServers.len() <= BUTTONS_PER_PAGE) return
-	file.scrollOffset += 5
-	if (file.scrollOffset + BUTTONS_PER_PAGE > file.filteredServers.len()) {
-		file.scrollOffset = file.filteredServers.len() - BUTTONS_PER_PAGE
+{	
+	if(GetElementsByClassname(file.menu, "ServerDetails").contains( GetFocus() )) {
+		ServerDetails_OnDownArrowSelected( button )
+	} else {
+		if (file.filteredServers.len() <= BUTTONS_PER_PAGE) return
+		file.scrollOffset += 5
+		if (file.scrollOffset + BUTTONS_PER_PAGE > file.filteredServers.len()) {
+			file.scrollOffset = file.filteredServers.len() - BUTTONS_PER_PAGE
+		}
+		UpdateShownPage()
+		UpdateListSliderPosition( file.filteredServers.len() )
 	}
-	UpdateShownPage()
-	UpdateListSliderPosition( file.filteredServers.len() )
 }
 
 void function OnScrollUp( var button )
-{
-	file.scrollOffset -= 5
-	if ( file.scrollOffset < 0 ) {
-		file.scrollOffset = 0
+{	
+	if(GetElementsByClassname(file.menu, "ServerDetails").contains( GetFocus() )) {
+		ServerDetails_OnUpArrowSelected( button )
+	} else {
+		file.scrollOffset -= 5
+		if ( file.scrollOffset < 0 ) {
+			file.scrollOffset = 0
+		}
+		UpdateShownPage()
+		UpdateListSliderPosition( file.filteredServers.len() )
 	}
-	UpdateShownPage()
-	UpdateListSliderPosition( file.filteredServers.len() )
 }
 
 ////////////////////////////
@@ -1537,7 +1545,7 @@ void function ServerDetails_OnDownArrowSelected( var button )
 }
 
 
-void function ServerDetails_OnUpSelected( var button )
+void function ServerDetails_OnUpArrowSelected( var button )
 {
 	if ( file.serverDetailsScrollOffset  == 0) return
 

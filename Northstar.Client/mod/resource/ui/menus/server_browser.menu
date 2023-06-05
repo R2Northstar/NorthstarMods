@@ -2467,6 +2467,8 @@ resource/ui/menus/mods_browse.menu
 			wrap 1
 			visible 1
 			zpos -1
+
+			classname ServerDetails
 		}
 
 		NextMapImage
@@ -2478,6 +2480,8 @@ resource/ui/menus/mods_browse.menu
 			scaleImage 1
 
 			rui "ui/basic_menu_image.rpak"
+
+			classname ServerDetails
 
 			pin_to_sibling ServerDetailsPanel
 			pin_corner_to_sibling TOP_RIGHT
@@ -2492,6 +2496,8 @@ resource/ui/menus/mods_browse.menu
 			rui "ui/control_options_description.rpak"
 			visible 0
 			zpos 1
+
+			classname ServerDetails
 
 			pin_to_sibling ServerDetailsPanel
 			pin_corner_to_sibling TOP_LEFT
@@ -2515,6 +2521,8 @@ resource/ui/menus/mods_browse.menu
 			font Default_43_DropShadow
 			allcaps 1
 			fgcolor_override "255 255 255 255"
+
+			classname ServerDetails
 		}
 		NextGameModeName
 		{
@@ -2534,6 +2542,8 @@ resource/ui/menus/mods_browse.menu
 			font Default_28_DropShadow
 			allcaps 1
 			fgcolor_override "255 255 255 255"
+
+			classname ServerDetails
 		}
 		NextModeIcon
 		{
@@ -2546,6 +2556,8 @@ resource/ui/menus/mods_browse.menu
 			zpos 1
 
 			rui "ui/basic_image_add.rpak"
+
+			classname ServerDetails
 
 			pin_to_sibling NextGameModeName
 			pin_corner_to_sibling BOTTOM_RIGHT
@@ -2570,6 +2582,8 @@ resource/ui/menus/mods_browse.menu
 			allcaps 1
 			fgcolor_override "255 255 255 255"
 
+			classname ServerDetails
+
 			pin_to_sibling ServerDetailsPanel
 			pin_corner_to_sibling TOP_LEFT
 			pin_to_sibling_corner TOP_LEFT
@@ -2583,8 +2597,9 @@ resource/ui/menus/mods_browse.menu
 
 			textAlignment center
 			wide 250
-			// zpos 999
 			ypos -1
+
+			classname ServerDetails
 
 			pin_to_sibling NextMapImage
 			pin_corner_to_sibling TOP_LEFT
@@ -2604,7 +2619,7 @@ resource/ui/menus/mods_browse.menu
 
 			textAlignment center
 			wide 250
-			// zpos 999
+			classname ServerDetails
 
 			pin_to_sibling BtnServerDescription
 			pin_corner_to_sibling TOP_LEFT
@@ -2628,7 +2643,7 @@ resource/ui/menus/mods_browse.menu
 
 			wrap 1
 			visible 1
-			// zpos -1
+			classname ServerDetails
 
 			pin_to_sibling BtnServerDescription
 			pin_corner_to_sibling TOP_LEFT
@@ -2646,6 +2661,8 @@ resource/ui/menus/mods_browse.menu
 			zpos 90
 
 			scriptID 999
+
+			classname ServerDetails
 
 			pin_to_sibling ServerDetailsPanel
 			pin_corner_to_sibling TOP_RIGHT
@@ -2669,6 +2686,8 @@ resource/ui/menus/mods_browse.menu
 	
 			image "vgui/hud/white"
 			drawColor "255 255 255 128"
+
+			classname ServerDetails
 	
 			pin_to_sibling BtnServerMods
 			pin_corner_to_sibling TOP_RIGHT
@@ -2686,6 +2705,8 @@ resource/ui/menus/mods_browse.menu
 	
 			visible 1
 			zpos -1
+
+			classname ServerDetails
 	
 			pin_to_sibling BtnServerMods
 			pin_corner_to_sibling TOP_RIGHT
@@ -2702,6 +2723,8 @@ resource/ui/menus/mods_browse.menu
 	
 			image "vgui/hud/white"
 			drawColor "255 255 255 128"
+
+			classname ServerDetails
 	
 			pin_to_sibling BtnLabelListUpArrow
 			pin_corner_to_sibling TOP_RIGHT
@@ -2718,6 +2741,8 @@ resource/ui/menus/mods_browse.menu
 	
 			visible 1
 			zpos -1
+
+			classname ServerDetails
 	
 			pin_to_sibling BtnLabelListUpArrow
 			pin_corner_to_sibling TOP_RIGHT
@@ -2735,6 +2760,8 @@ resource/ui/menus/mods_browse.menu
 	
 			image "vgui/hud/white"
 			drawColor "255 255 255 128"
+
+			classname ServerDetails
 	
 			pin_to_sibling BtnLabelListUpArrow
 			pin_corner_to_sibling TOP_RIGHT
@@ -2753,6 +2780,8 @@ resource/ui/menus/mods_browse.menu
 	
 			visible 1
 			zpos -1
+
+			classname ServerDetails
 	
 			pin_to_sibling BtnLabelListUpArrow
 			pin_corner_to_sibling TOP_RIGHT
@@ -2764,14 +2793,16 @@ resource/ui/menus/mods_browse.menu
 		// deltaX; deltaY which we can yoink for ourselfes
 		MouseMovementCaptureLabel
 		{
-				ControlName CMouseMovementCapturePanel
-				wide 40
-				tall 180
-				zpos 1
+			ControlName CMouseMovementCapturePanel
+			wide 40
+			tall 180
+			zpos 1
 
-				pin_to_sibling BtnLabelListUpArrow
-				pin_corner_to_sibling TOP_RIGHT
-				pin_to_sibling_corner BOTTOM_RIGHT
+			classname ServerDetails
+
+			pin_to_sibling BtnLabelListUpArrow
+			pin_corner_to_sibling TOP_RIGHT
+			pin_to_sibling_corner BOTTOM_RIGHT
 		}
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
