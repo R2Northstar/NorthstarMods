@@ -27,6 +27,15 @@ const float DAMAGEHUD_GRENADE_DEBOUNCE_TIME = 0.4
 const float DAMAGEHUD_GRENADE_DEBOUNCE_TIME_LOWSPEED = 0.15
 const float DAMAGEHUD_GRENADE_DEBOUNCE_TIME_LOWSPEED_VELOCITYCUTOFF = 500.0
 
+global enum eShowProjectileIndicator
+{
+	PILOTS_ONLY,
+	TITANS_ONLY,
+	ALL,
+}
+
+// weaponname, eShowProjectileIndicator
+global table< string, int > showProjectileIndicators
 
 struct {
 	array<table> damageArrows
@@ -661,23 +670,25 @@ function TryAddGrenadeIndicator( grenade, weaponName )
 		return
 
 	var className = grenade.GetClassName()
-	float damageRadius = 0.0
+	string projectileWeaponName = grenade.ProjectileGetWeaponClassName()
 
-	if ( className == "grenade" )
+	// show indicators for all grenades
+	if ( className != "grenade" )
 	{
-		damageRadius = grenade.GetDamageRadius()
-	}
-	else if ( grenade.ProjectileGetWeaponClassName() == "mp_titanweapon_arc_ball" )
-	{
-		// arc ball doesn't arc to pilots so no need to show the warning
-		if ( !player.IsTitan() )
+		// show indicators for added weapon projectiles
+		if ( className in showProjectileIndicators || projectileWeaponName in showProjectileIndicators )
+		{
+			int showType = showProjectileIndicators[ projectileWeaponName ]
+			bool playerIsTitan = player.IsTitan()
+
+			if ( showType == eShowProjectileIndicator.PILOTS_ONLY && playerIsTitan
+				|| showType == eShowProjectileIndicator.TITANS_ONLY && !playerIsTitan )
+				return
+		}
+		else
+		{
 			return
-
-		damageRadius = BALL_LIGHTNING_ZAP_RADIUS
-	}
-	else
-	{
-		return
+		}
 	}
 
 	float radius = grenade.GetExplosionRadius()

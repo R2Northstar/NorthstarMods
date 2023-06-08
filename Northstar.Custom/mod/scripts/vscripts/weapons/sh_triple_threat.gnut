@@ -48,6 +48,10 @@ function MpTitanweaponTripleThreat_Init()
 	PrecacheParticleSystem( FX_MINE_LIGHT )
 	PrecacheParticleSystem( FX_TRIPLE_IGNITION )
 	PrecacheParticleSystem( FX_TRIPLE_IGNITION_BURN )
+
+	#if CLIENT
+		showProjectileIndicators.mp_titanweapon_triplethreat <- eShowProjectileIndicator.ALL
+	#endif
 }
 
 var function OnWeaponPrimaryAttack_titanweapon_triplethreat( entity weapon, WeaponPrimaryAttackParams attackParams )
