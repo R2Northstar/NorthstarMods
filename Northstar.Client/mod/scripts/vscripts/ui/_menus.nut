@@ -189,7 +189,6 @@ void function CancelLevelLoadingInfinite()
 		UICodeCallback_LevelLoadingFinished( true )
 		Disconnect()
 	}
-	return
 }
 
 // Return true to show load screen, false to not show load screen.
