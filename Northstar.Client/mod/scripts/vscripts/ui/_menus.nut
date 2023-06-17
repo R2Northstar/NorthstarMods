@@ -188,6 +188,7 @@ void function CancelLevelLoading()
 		printt("CancelLevelLoading disconnected because loading took too long")
 		UICodeCallback_LevelLoadingFinished( true )
 		Disconnect()
+		OpenErrorDialog( "Loading timed out (Over 30 seconds)" )
 	}
 }
 
