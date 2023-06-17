@@ -178,14 +178,14 @@ void function UICodeCallback_ToggleInGameMenu()
 	}
 }
 
-void function CancelLevelLoadingInfinite()
+void function CancelLevelLoading()
 {
 	//Singleplayer "Continue" counts as finished loading and shouldn't be affected
-	print("CancelLevelLoadingInfinite has Initialized")
+	print("CancelLevelLoading has Initialized")
 	wait 30
 	if (uiGlobal.isLoading == true)
 	{
-		printt("CancelLevelLoadingInfinite disconnected because loading took too long")
+		printt("CancelLevelLoading disconnected because loading took too long")
 		UICodeCallback_LevelLoadingFinished( true )
 		Disconnect()
 	}
@@ -217,7 +217,7 @@ bool function UICodeCallback_LevelLoadingStarted( string levelname )
 	if ( !Console_IsSignedIn() )
 		return false
 #endif
-	thread CancelLevelLoadingInfinite()
+	thread CancelLevelLoading()
 	return true
 }
 
