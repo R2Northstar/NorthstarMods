@@ -178,6 +178,20 @@ void function UICodeCallback_ToggleInGameMenu()
 	}
 }
 
+void function CancelLevelLoadingInfinite()
+{
+	//Singleplayer "Continue" counts as finished loading and shouldn't be affected
+	print("CancelLevelLoadingInfinite has Initialized")
+	wait 30
+	if (uiGlobal.isLoading == true)
+	{
+		printt("CancelLevelLoadingInfinite disconnected because loading took too long")
+		UICodeCallback_LevelLoadingFinished( true )
+		Disconnect()
+	}
+	return
+}
+
 // Return true to show load screen, false to not show load screen.
 // levelname can be "" because the level to load isn't always known when the load screen starts
 bool function UICodeCallback_LevelLoadingStarted( string levelname )
@@ -204,7 +218,7 @@ bool function UICodeCallback_LevelLoadingStarted( string levelname )
 	if ( !Console_IsSignedIn() )
 		return false
 #endif
-
+	thread CancelLevelLoadingInfinite()
 	return true
 }
 
