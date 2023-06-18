@@ -1,10 +1,7 @@
 untyped
 globalize_all_functions
 
-void function NorthstarCodeCallback_GenerateGameState() {
-
-    GameStateStruct gs
-
+GameStateStruct function NorthstarCodeCallback_GenerateGameState( GameStateStruct gs ) {
     int highestScore = 0
     int secondHighest = 0
 
@@ -40,6 +37,6 @@ void function NorthstarCodeCallback_GenerateGameState() {
 		gs.timeEnd = expect float(level.nv.roundEndTime - Time())
 	else
 		gs.timeEnd = expect float(level.nv.gameEndTime - Time())
-
-    NSPushGameStateData(gs)
+    
+    return gs
 }
