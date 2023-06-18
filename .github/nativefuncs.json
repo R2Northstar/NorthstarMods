@@ -325,12 +325,6 @@
 			"helpText":"Whether or not HTTP requests can be made to a private network address. You can enable this by starting the game with -allowlocalhttp.",
 			"returnTypeString":"bool",
 			"argTypes":""
-		},
-		{
-			"name":"NSPushGameStateData",
-			"helpText":"",
-			"returnTypeString":"void",
-			"argTypes":"struct gamestate"
 		}
 	],
 	"UI":[
@@ -579,12 +573,6 @@
 			"helpText":"Whether or not HTTP requests can be made to a private network address. You can enable this by starting the game with -allowlocalhttp.",
 			"returnTypeString":"bool",
 			"argTypes":""
-		},
-		{
-			"name":"NSPushUIPresence",
-			"helpText":"",
-			"returnTypeString":"void",
-			"argTypes":"struct presence"
 		}
 	]
 }
