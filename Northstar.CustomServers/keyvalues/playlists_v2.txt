@@ -6,6 +6,7 @@ playlists
 		{
 			vars
 			{
+				player_force_respawn 5
 			}
 		}
 	}
