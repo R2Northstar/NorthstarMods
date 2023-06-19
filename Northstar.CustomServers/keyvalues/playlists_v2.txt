@@ -1,0 +1,12 @@
+playlists
+{
+	Gamemodes
+	{
+		defaults
+		{
+			vars
+			{
+			}
+		}
+	}
+}
