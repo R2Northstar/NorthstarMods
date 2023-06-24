@@ -12,6 +12,6 @@ void function AddTitanXP( entity player, int amount )
 	if ( TitanGetLevel( player, titan ) != oldLevel )
 	{
 		Remote_CallFunction_NonReplay( player, "ServerCallback_TitanLeveledUp", shTitanXP.titanClasses.find( titan ), TitanGetGen( player, titan ), TitanGetLevel( player, titan ) )
-		AddXP( player, 1 )
+		AddPlayerScore( player, "TitanLevelUp" )
 	}
 }

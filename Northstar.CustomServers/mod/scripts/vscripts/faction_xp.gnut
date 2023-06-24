@@ -9,5 +9,5 @@ void function AddFactionXP( entity player, int amount )
 	
 	// note: no notif for faction level up
 	if ( FactionGetLevel( player, faction ) != oldLevel )
-		AddXP( player, 1 )
+		AddPlayerScore( player, "FactionLevelUp" )
 }
