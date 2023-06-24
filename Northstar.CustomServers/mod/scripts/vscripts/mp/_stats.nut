@@ -57,9 +57,11 @@ void function UpdateTitanWeaponDamageStat(entity attacker, float savedDamage, va
 
 }
 
-void function UpdateTitanCoreEarnedStat( entity player, entity titan )
+void function UpdateTitanCoreEarnedStat( entity player, entity titan, int count = 1 )
 {
-
+	string ref = "titanStats[" + GetTitanClass(titan) + "].coresEarned"
+	player.SetPersistentVar(ref, player.GetPersistentVarAsInt(ref) + count)
+	// todo, callbacks
 }
 
 void function PreScoreEventUpdateStats(entity attacker, entity ent)
