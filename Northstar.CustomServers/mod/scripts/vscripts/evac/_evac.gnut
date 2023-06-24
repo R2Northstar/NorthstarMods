@@ -422,6 +422,38 @@ void function Evac( int evacTeam, float initialWait, float arrivalTime, float wa
 		foreach ( entity otherPlayer in GetPlayerArray() )
 			Remote_CallFunction_NonReplay( otherPlayer, "ServerCallback_EvacObit", player.GetEncodedEHandle() )
 	}
+
+	// award player score to evacing team
+	int evacCount = 0
+	entity lastEvacPlayer
+	foreach (entity player in GetPlayerArrayOfTeam(dropship.GetTeam()))
+	{
+		if (!PlayerInDropship( player, dropship ))
+			continue
+		
+		evacCount++
+		// for sole survivor things
+		lastEvacPlayer = player
+	}
+
+	bool allEvac = evacCount == GetPlayerArrayOfTeam(dropship.GetTeam()).len()
+
+	foreach(entity player in GetPlayerArrayOfTeam(dropship.GetTeam()))
+	{
+		if (!PlayerInDropship( player, dropship ))
+			continue
+
+		AddPlayerScore( player, "HotZoneExtract" )
+
+		if (allEvac)
+			AddPlayerScore( player, "TeamBonusFullEvac" )
+	}
+
+	// sole survivor (but not the only one on the team)
+	if (evacCount == 1 && !allEvac)
+	{
+		AddPlayerScore( lastEvacPlayer, "SoleSurvivor" )
+	}
 }
 
 void function AddPlayerToEvacDropship( entity dropship, entity player ) 
@@ -507,6 +539,15 @@ void function CheckIfAnyPlayerLeft( int evacTeam )
 			SetTeamActiveObjective( evacTeam, "EG_DropshipExtractEvacPlayersKilled" )
 			SetTeamActiveObjective( GetOtherTeam( evacTeam ), "EG_StopExtractEvacPlayersKilled" )
 			thread EvacEpilogueCompleted( null )
+
+			// score for killing the entire evacing team
+			foreach (entity player in GetPlayerArray())
+			{
+				if (player.GetTeam() == evacTeam)
+					continue
+
+				AddPlayerScore( player, "TeamBonusKilledAll")
+			}
 		}
 	)
 	while( true )
