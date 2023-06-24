@@ -37,14 +37,14 @@ float function PlayerStat_GetCurrentFloat(entity player, string statCategory, st
 	return 0
 }
 
-void function UpdatePlayerStat(entity player, string statCategory, string subStat, int count = 0)
+void function UpdatePlayerStat(entity player, string statCategory, string subStat, int count = 1)
 {
 
 }
 
 void function IncrementPlayerDidPilotExecutionWhileCloaked(entity player)
 {
-
+	player.SetPersistentVar("killStats.pilotExecutePilotWhileCloaked", player.GetPersistentVarAsInt("killStats.pilotExecutePilotWhileCloaked") + 1)
 }
 
 void function UpdateTitanDamageStat(entity attacker, float savedDamage, var damageInfo)
