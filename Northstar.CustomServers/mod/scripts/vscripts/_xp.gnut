@@ -1,6 +1,7 @@
 global function SvXP_Init
 global function PlayerProgressionAllowed
 global function HandleXPGainForScoreEvent
+global function AddXP
 
 void function SvXP_Init()
 {
@@ -50,10 +51,15 @@ void function HandleXPGainForScoreEvent( entity player, ScoreEvent event )
 		return
 
 	// global xp
+	AddXP( player, xpValue )
+}
+
+void function AddXP( entity player, int amount )
+{
 	int oldXp = player.GetPersistentVarAsInt( "xp" )
 	if(oldXp<0) oldXp = 0
 	int oldLevel = GetLevelForXP( oldXp )
-	player.SetPersistentVar( "xp", min( oldXp + xpValue, PlayerGetMaxXPPerGen() ) )
+	player.SetPersistentVar( "xp", min( oldXp + amount, PlayerGetMaxXPPerGen() ) )
 	player.XPChanged() // network xp change to client, gen can't change here
 
 	int newXp = player.GetPersistentVarAsInt( "xp" )
