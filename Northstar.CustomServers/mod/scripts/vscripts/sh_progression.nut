@@ -18,6 +18,7 @@ void function Progression_Init()
 	#if SERVER
 	AddCallback_OnClientDisconnected(OnClientDisconnected)
 	AddClientCommandCallback( "ns_progression", ClientCommand_SetProgression )
+	AddCallback_GameStateEnter( eGameState.Playing, OnPlaying)
 	#elseif CLIENT
 	AddCallback_OnClientScriptInit(OnClientScriptInit)
 	#endif
@@ -37,6 +38,12 @@ bool function ProgressionEnabledForPlayer(entity player)
 }
 
 #if SERVER
+
+void function OnPlaying()
+{
+	SetUIVar( level, "penalizeDisconnect", false ) // dont show the "you will lose merits thing"
+	SetUIVar( level, "showGameSummary", true ) // show the EOG summary xp thing
+}
 
 void function OnClientDisconnected(entity player)
 {
