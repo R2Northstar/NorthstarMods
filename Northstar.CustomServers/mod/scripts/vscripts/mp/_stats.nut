@@ -59,7 +59,7 @@ void function UpdateTitanWeaponDamageStat(entity attacker, float savedDamage, va
 
 void function UpdateTitanCoreEarnedStat( entity player, entity titan, int count = 1 )
 {
-	string ref = "titanStats[" + GetTitanClass(titan) + "].coresEarned"
+	string ref = "titanStats[" + GetTitanCharacterName(titan) + "].coresEarned"
 	player.SetPersistentVar(ref, player.GetPersistentVarAsInt(ref) + count)
 	// todo, callbacks
 }
