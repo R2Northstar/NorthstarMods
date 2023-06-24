@@ -3,6 +3,7 @@ global function ProgressionEnabledForPlayer
 #if SERVER
 #else
 global function Progression_SetPreference
+global function Progression_GetPreference
 #endif
 
 #if SERVER
@@ -79,6 +80,11 @@ void function Progression_SetPreference(bool enabled)
     #elseif UI
     ClientCommand( "ns_progression " + enabled.tointeger())
     #endif
+}
+
+bool function Progression_GetPreference()
+{
+    return GetConVarBool("ns_progression_enabled")
 }
 
 #endif

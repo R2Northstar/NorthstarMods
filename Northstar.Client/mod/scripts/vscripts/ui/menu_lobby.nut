@@ -178,6 +178,9 @@ void function InitLobbyMenu()
 	AddMenuFooterOption( menu, BUTTON_B, "#B_BUTTON_BACK", "#BACK" )
 	AddMenuFooterOption( menu, BUTTON_BACK, "#BACK_BUTTON_POSTGAME_REPORT", "#POSTGAME_REPORT", OpenPostGameMenu, IsPostGameMenuValid )
 	AddMenuFooterOption( menu, BUTTON_TRIGGER_RIGHT, "#R_TRIGGER_CHAT", "", null, IsVoiceChatPushToTalk )
+	// Client side progression toggle
+	AddMenuFooterOption( menu, BUTTON_Y, "#Y_BUTTON_ENABLE_PROGRESSION", "#ENABLE_PROGRESSION", EnableProgression, ProgressionIsDisabled )
+	AddMenuFooterOption( menu, BUTTON_Y, "#Y_BUTTON_DISABLE_PROGRESSION", "#DISABLE_PROGRESSION", DisableProgression, ProgressionIsEnabled )
 
 	InitChatroom( menu )
 
@@ -224,6 +227,43 @@ void function InitLobbyMenu()
 	RegisterSignal( "PutPlayerInMatchmakingAfterDelay" )
 	RegisterSignal( "CancelRestartingMatchmaking" )
 	RegisterSignal( "LeaveParty" )
+}
+
+bool function ProgressionIsEnabled()
+{
+	return Progression_GetPreference()
+}
+bool function ProgressionIsDisabled()
+{
+	return !Progression_GetPreference()
+}
+
+void function EnableProgression( var button )
+{
+	Progression_SetPreference(true)
+	DialogData dialogData
+	dialogData.menu = GetMenu( "AnnouncementDialog" )
+	dialogData.header = "#PROGRESSION_ENABLED_HEADER"
+	dialogData.message = "#PROGRESSION_ENABLED_BODY"
+	dialogData.image = $"ui/menu/common/dialog_announcement_1"
+
+	AddDialogButton( dialogData, "#OK" )
+
+	OpenDialog( dialogData )
+}
+
+void function DisableProgression( var button )
+{
+	Progression_SetPreference(false)
+	DialogData dialogData
+	dialogData.menu = GetMenu( "AnnouncementDialog" )
+	dialogData.header = "#PROGRESSION_DISABLED_HEADER"
+	dialogData.message = "#PROGRESSION_DISABLED_BODY"
+	dialogData.image = $"ui/menu/common/dialog_announcement_1"
+
+	AddDialogButton( dialogData, "#OK" )
+	
+	OpenDialog( dialogData )
 }
 
 void function SetupComboButtonTest( var menu )
