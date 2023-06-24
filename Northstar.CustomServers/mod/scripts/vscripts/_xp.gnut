@@ -29,15 +29,10 @@ bool function PlayerProgressionAllowed( entity player )
 void function HandleXPGainForScoreEvent( entity player, ScoreEvent event )
 {
 	// note: obviously all xp stuff can be cheated in if people want to on customs, this is mainly just here for fun for those who want it and feature completeness
-	// most score events don't have this, so we'll set this to the xp value of other categories later if needed
+
 	int xpValue = ScoreEvent_GetXPValue( event )
 	int weaponXp = ScoreEvent_GetXPValueWeapon( event )
 	int titanXp = ScoreEvent_GetXPValueTitan( event )
-
-	if ( xpValue < weaponXp )
-		xpValue = weaponXp
-	else if ( xpValue < titanXp )
-		xpValue = titanXp
 
 	entity weapon = player.GetActiveWeapon()
 	if ( IsValid( weapon ) && ShouldTrackXPForWeapon( weapon.GetWeaponClassName() ) )
@@ -47,13 +42,7 @@ void function HandleXPGainForScoreEvent( entity player, ScoreEvent event )
 	if ( titanXp != 0 || player.IsTitan() )
 		AddTitanXP( player, xpValue )
 
-	// most events don't have faction xp but almost everything should give it
 	int factionXp = ScoreEvent_GetXPValueFaction( event )
-	if ( xpValue > factionXp )
-		factionXp = xpValue
-	else if ( xpValue < factionXp )
-		xpValue = factionXp
-
 	if ( factionXp != 0 )
 		AddFactionXP( player, factionXp )
 
