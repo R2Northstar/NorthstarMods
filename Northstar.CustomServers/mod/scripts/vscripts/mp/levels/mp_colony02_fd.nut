@@ -1,21 +1,13 @@
 global function initFrontierDefenseData
 void function initFrontierDefenseData()
 {
+	AddCallback_RegisterCustomFDContent( RegisterCustomFDContent )
     shopPosition = < 1433.63, 558.16 , 60.45>
 	shopAngles = < 0, 0, 0 >
 	FD_spawnPosition = < 830, -194, 112 >
 	FD_spawnAngles = < 0, 180, 0 >
 	FD_groundspawnPosition = < 1334, -273, 201 >
 	FD_groundspawnAngles = < 0, 90, 0 >
-	
-	AddStationaryAIPosition(< 419, -2064, 259 >, eStationaryAIPositionTypes.LAUNCHER_REAPER)
-	AddStationaryAIPosition(< -1802, -2730, 154 >, eStationaryAIPositionTypes.LAUNCHER_REAPER)
-	AddStationaryAIPosition(< -2100, -793, 117 >, eStationaryAIPositionTypes.LAUNCHER_REAPER)
-	AddStationaryAIPosition(< -1616, 1274, 25 >, eStationaryAIPositionTypes.LAUNCHER_REAPER)
-	AddStationaryAIPosition(< 275, 3180, -50 >, eStationaryAIPositionTypes.LAUNCHER_REAPER)
-	AddStationaryAIPosition(< 2601, 4366, 53 >, eStationaryAIPositionTypes.LAUNCHER_REAPER)
-	AddStationaryAIPosition(< 430, 6167, -94 >, eStationaryAIPositionTypes.LAUNCHER_REAPER)
-	AddStationaryAIPosition(< -682, 3820, 6 >, eStationaryAIPositionTypes.LAUNCHER_REAPER)
 
 	int index = 1
 
@@ -697,4 +689,16 @@ void function initFrontierDefenseData()
 	wave5.append(CreateWaitForTimeEvent(0.5,index++))
 	wave5.append(CreateArcTitanEvent(< -3549 , -2264 , 123 >,< 0 , 0 , 0 >,"",0))
 	waveEvents.append(wave5)
+}
+
+void function RegisterCustomFDContent()
+{
+	AddStationaryAIPosition(< 419, -2064, 259 >, eStationaryAIPositionTypes.LAUNCHER_REAPER)
+	AddStationaryAIPosition(< -1802, -2730, 154 >, eStationaryAIPositionTypes.LAUNCHER_REAPER)
+	AddStationaryAIPosition(< -2100, -793, 117 >, eStationaryAIPositionTypes.LAUNCHER_REAPER)
+	AddStationaryAIPosition(< -1616, 1274, 25 >, eStationaryAIPositionTypes.LAUNCHER_REAPER)
+	AddStationaryAIPosition(< 275, 3180, -50 >, eStationaryAIPositionTypes.LAUNCHER_REAPER)
+	AddStationaryAIPosition(< 2601, 4366, 53 >, eStationaryAIPositionTypes.LAUNCHER_REAPER)
+	AddStationaryAIPosition(< 430, 6167, -94 >, eStationaryAIPositionTypes.LAUNCHER_REAPER)
+	AddStationaryAIPosition(< -682, 3820, 6 >, eStationaryAIPositionTypes.LAUNCHER_REAPER)
 }

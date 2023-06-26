@@ -1,8 +1,8 @@
 global function singleNav_thread
-global function SquadNav_Thread
 global function droneNav_thread
 global function getRoute
 global function Dev_MarkRoute
+global function NPCStuckTracker
 
 
 
@@ -10,6 +10,7 @@ void function singleNav_thread( entity npc, string routeName, int nodesToSkip = 
 {
 	npc.EndSignal( "OnDeath" )
 	npc.EndSignal( "OnDestroy" )
+	npc.EndSignal( "OnLeeched" )
 
 	if( !npc.IsNPC() )
 		return
@@ -22,30 +23,54 @@ void function singleNav_thread( entity npc, string routeName, int nodesToSkip = 
 	string npcName = npc.GetTargetName()
 
 	WaitFrame()
-
+	float dist = 65535
 	entity targetNode
-	if ( routeName == "" )
+	string routetaken
+	
+	if( !npc.IsTitan() )
+		thread NPCStuckTracker( npc )
+	
+	if( !useCustomFDLoad )
 	{
-		float dist = 65535
-		foreach ( entity node in routeNodes )
+		if ( routeName == "" )
 		{
-			if( !node.HasKey( "route_name" ) )
-				continue
-			if ( Distance( npc.GetOrigin(), node.GetOrigin() ) < dist )
+			foreach ( entity node in routeNodes )
 			{
-				dist = Distance( npc.GetOrigin(), node.GetOrigin() )
-				targetNode = node
+				if( !node.HasKey( "route_name" ) )
+					continue
+				if ( Distance( npc.GetOrigin(), node.GetOrigin() ) < dist )
+				{
+					dist = Distance( npc.GetOrigin(), node.GetOrigin() )
+					targetNode = node
+				}
 			}
+			
+			printt("Entity had no route defined, using nearest node: " + targetNode.kv.route_name )
 		}
-		
-		printt("Entity had no route defined, using nearest node: " + targetNode.kv.route_name )
+		else
+			targetNode = GetRouteStart( routeName )
+
+		// skip nodes
+		for ( int i = 0; i < nodesToSkip; i++ )
+			targetNode = targetNode.GetLinkEnt()
 	}
 	else
-		targetNode = GetRouteStart( routeName )
-
-	// skip nodes
-	for ( int i = 0; i < nodesToSkip; i++ )
-		targetNode = targetNode.GetLinkEnt()
+	{
+		if ( routeName == "" )
+		{
+			foreach ( routename, routeamount in routes )
+			{
+				if ( Distance( npc.GetOrigin(), routeamount[0] ) < dist )
+				{
+					dist = Distance( npc.GetOrigin(), routeamount[0] )
+					routetaken = routename
+				}
+			}
+			printt("Entity had no route defined, using nearest custom route: " + routetaken )
+		}
+		else
+			routetaken = routeName
+	}
 
 	//Do not make Ticks ignore potential targets just to charge at the Harvester
 	//Arc Titans apparently also stops to fight players on place rather that fiercely push forward
@@ -57,17 +82,40 @@ void function singleNav_thread( entity npc, string routeName, int nodesToSkip = 
 	else
 		npc.AssaultSetFightRadius( 0 )
 	
-	int FailCount = 0
-	while ( targetNode != null )
+	if( !useCustomFDLoad )
 	{
-		if( !IsHarvesterAlive( fd_harvester.harvester ) )
-			return
-		npc.AssaultPointClamped( targetNode.GetOrigin() )
-		npc.AssaultSetGoalRadius( nextDistance )
-		
-		table result = npc.WaitSignal( "OnFinishedAssault", "OnEnterGoalRadius", "OnFailedToPath" )
-		
-		targetNode = targetNode.GetLinkEnt()
+		while ( targetNode != null )
+		{
+			if( !IsHarvesterAlive( fd_harvester.harvester ) )
+				return
+			npc.AssaultPointClamped( targetNode.GetOrigin() )
+			npc.AssaultSetGoalRadius( nextDistance )
+			
+			table result = npc.WaitSignal( "OnFinishedAssault", "OnEnterGoalRadius", "OnFailedToPath" )
+			
+			targetNode = targetNode.GetLinkEnt()
+		}
+	}
+	
+	else
+	{
+		int routeindex = nodesToSkip
+		vector routepoint = routes[routetaken][routeindex]
+		while ( true )
+		{
+			if( !IsHarvesterAlive( fd_harvester.harvester ) )
+				return
+			npc.AssaultPointClamped( routepoint )
+			npc.AssaultSetGoalRadius( nextDistance )
+			
+			table result = npc.WaitSignal( "OnFinishedAssault", "OnEnterGoalRadius", "OnFailedToPath" )
+			
+			routeindex++
+			if( routeindex < routes[routetaken].len() )
+				routepoint = routes[routetaken][routeindex]
+			else
+				break
+		}
 	}
 
 	if ( ( npc.GetClassName() == "npc_frag_drone" || npc.GetClassName() == "npc_stalker" ) && IsHarvesterAlive( fd_harvester.harvester ) )
@@ -77,149 +125,128 @@ void function singleNav_thread( entity npc, string routeName, int nodesToSkip = 
 	}
 
 	npc.Signal( "FD_ReachedHarvester" )
-	
-	while ( IsAlive( npc ) && !npc.IsTitan() ) //Track if AI is properly pathing, otherwise after one minute, it will suicide to prevent softlocking
-	{
-		table result = npc.WaitSignal( "OnSeeEnemy", "OnFinishedAssault", "OnEnterGoalRadius", "OnFailedToPath" )
-		if( result.signal == "OnFailedToPath" )
-		{
-			if( FailCount == 60 )
-				npc.Die()
-			FailCount++
-		}
-		else
-			FailCount = 0
-
-		wait 1
-	}
 }
 
-void function SquadNav_Thread( array<entity> npcs, string routeName, int nodesToSkip = 0, float nextDistance = 64.0 )
-{
-	//TODO this function wont stop when noone alive anymore also it only works half of the time
-	
-	/* This function actually is not working AT ALL, all what it actually does is pick the entire chain of nodes of a route send everyone directly to the
-	last node, apparently it is also the function responsible for not allowing Grunts and Stalkers to execute their Drop Pod exit animation. The reason of
-	that is solely because SquadAssaultOrigin is a chained function which leads to SendAIToAssaultPoint which has guy.Anim_Stop(), so basically that is
-	the problem. */
-	
-	/*
-	array<entity> routeArray = getRoute(routeName)
-	WaitFrame()//so other code setting up what happens on signals is run before this
-	if(routeArray.len()==0)
-		return
-	int nodeIndex = 0
-	foreach(entity node in routeArray)
-	{
-		if(!IsHarvesterAlive(fd_harvester.harvester))
-			return
-		if(nodeIndex++ < nodesToSkip)
-			continue
-		
-		SquadAssaultOrigin(npcs,node.GetOrigin(),nextDistance)
-	}*/
-	// NEW STUFF
-	WaitFrame() // so other code setting up what happens on signals is run before this
-
-	entity targetNode
-	if ( routeName == "" )
-	{
-		float dist = 65535
-		foreach ( entity node in routeNodes )
-		{
-			if( !node.HasKey( "route_name" ) )
-				continue
-			if ( Distance( npcs[0].GetOrigin(), node.GetOrigin() ) < dist )
-			{
-				dist = Distance( npcs[0].GetOrigin(), node.GetOrigin() )
-				targetNode = node
-			}
-		}
-		printt("Entity had no route defined: using nearest node: " + targetNode.kv.route_name)
-	}
-	else
-	{
-		targetNode = GetRouteStart( routeName )
-	}
-
-	// skip nodes
-	for ( int i = 0; i < nodesToSkip; i++ )
-	{
-		targetNode = targetNode.GetLinkEnt()
-	}
-	
-	while ( targetNode != null && npcs.len() > 0 )
-	{
-		if( !IsHarvesterAlive( fd_harvester.harvester ) )
-			return
-		
-		SquadAssaultOrigin( npcs, targetNode.GetOrigin() , nextDistance )
-		
-		targetNode = targetNode.GetLinkEnt()
-	}
-}
-
-void function droneNav_thread( entity npc, string routeName, int nodesToSkip = 0, float nextDistance = 16.0, bool shouldLoop = false )
+void function droneNav_thread( entity npc, string routeName, int nodesToSkip = 0, float nextDistance = 64.0, bool shouldLoop = false )
 {
 	npc.EndSignal( "OnDeath" )
 	npc.EndSignal( "OnDestroy" )
+	npc.EndSignal( "OnLeeched" )
 
 	if( !npc.IsNPC() )
 		return
 
+	WaitFrame()
 
-	// NEW STUFF
-	WaitFrame() // so other code setting up what happens on signals is run before this
-
+	float dist = 65535
 	entity targetNode
 	entity firstNode
-	if ( routeName == "" )
+	string routetaken
+	
+	if( !npc.IsTitan() )
+		thread NPCStuckTracker( npc )
+	
+	if( !useCustomFDLoad )
 	{
-		float dist = 65535
-		foreach ( entity node in routeNodes )
+		if ( routeName == "" )
 		{
-			if( !node.HasKey( "route_name" ) )
-				continue
-			if ( Distance( npc.GetOrigin(), node.GetOrigin() ) < dist )
+			foreach ( entity node in routeNodes )
 			{
-				dist = Distance( npc.GetOrigin(), node.GetOrigin() )
-				targetNode = node
-				firstNode = node
+				if( !node.HasKey( "route_name" ) )
+					continue
+				if ( Distance( npc.GetOrigin(), node.GetOrigin() ) < dist )
+				{
+					dist = Distance( npc.GetOrigin(), node.GetOrigin() )
+					targetNode = node
+					firstNode = node
+				}
 			}
+			printt( "Entity had no route defined, using nearest node: " + targetNode.kv.route_name )
 		}
-		printt( "Entity had no route defined: using nearest node: " + targetNode.kv.route_name )
+		else
+			targetNode = GetRouteStart( routeName )
+
+		// skip nodes
+		for ( int i = 0; i < nodesToSkip; i++ )
+		{
+			targetNode = targetNode.GetLinkEnt()
+			firstNode = targetNode.GetLinkEnt()
+		}
 	}
 	else
 	{
-		targetNode = GetRouteStart( routeName )
-	}
-
-	// skip nodes
-	for ( int i = 0; i < nodesToSkip; i++ )
-	{
-		targetNode = targetNode.GetLinkEnt()
-		firstNode = targetNode.GetLinkEnt()
-	}
-
-	
-	while ( targetNode != null )
-	{
-		if( !IsHarvesterAlive( fd_harvester.harvester ) )
-			return
-		npc.AssaultPoint( targetNode.GetOrigin() + < 0, 0, 192 > )
-		npc.AssaultSetGoalRadius( nextDistance )
-		npc.AssaultSetGoalHeight( 128 )
-		npc.AssaultSetFightRadius( 0 )
-		
-		table result = npc.WaitSignal( "OnFinishedAssault", "OnEnterGoalRadius", "OnFailedToPath" )
-		
-		targetNode = targetNode.GetLinkEnt()
-		if ( targetNode == null )
-			printt( "drone finished pathing" )
-		if ( targetNode == null && shouldLoop )
+		if ( routeName == "" )
 		{
-			printt( "drone reached end of loop, looping" )
-			targetNode = firstNode
+			foreach ( routename, routeamount in routes )
+			{
+				if ( Distance( npc.GetOrigin(), routeamount[0] ) < dist )
+				{
+					dist = Distance( npc.GetOrigin(), routeamount[0] )
+					routetaken = routename
+				}
+			}
+			printt("Entity had no route defined, using nearest custom route: " + routetaken )
+		}
+		else
+			routetaken = routeName
+	}
+
+	if( !useCustomFDLoad )
+	{
+		while ( targetNode != null )
+		{
+			if( !IsHarvesterAlive( fd_harvester.harvester ) )
+				return
+			npc.AssaultPoint( targetNode.GetOrigin() + < 0, 0, 192 > )
+			npc.AssaultSetGoalRadius( nextDistance )
+			npc.AssaultSetGoalHeight( 128 )
+			npc.AssaultSetFightRadius( 0 )
+			
+			table result = npc.WaitSignal( "OnFinishedAssault", "OnEnterGoalRadius", "OnFailedToPath" )
+			
+			targetNode = targetNode.GetLinkEnt()
+			if ( targetNode == null )
+				printt( "drone finished pathing" )
+			if ( targetNode == null && shouldLoop )
+			{
+				printt( "drone reached end of loop, looping" )
+				targetNode = firstNode
+			}
+		}
+	}
+	
+	else
+	{
+		int routeindex = nodesToSkip
+		vector routepoint = routes[routetaken][routeindex]
+		while ( true )
+		{
+			if( !IsHarvesterAlive( fd_harvester.harvester ) )
+				return
+			npc.AssaultPoint( routepoint + < 0, 0, 192 > )
+			npc.AssaultSetGoalRadius( nextDistance )
+			npc.AssaultSetGoalHeight( 128 )
+			npc.AssaultSetFightRadius( 0 )
+			
+			table result = npc.WaitSignal( "OnFinishedAssault", "OnEnterGoalRadius", "OnFailedToPath" )
+			
+			routeindex++
+			if( routeindex < routes[routetaken].len() )
+				routepoint = routes[routetaken][routeindex]
+			else
+			{
+				if( shouldLoop )
+				{
+					printt( "drone reached end of loop, looping" )
+					routeindex = 0
+					routepoint = routes[routetaken][routeindex]
+				}
+				else
+				{
+					printt( "drone finished pathing" )
+					break
+				}
+			}
 		}
 	}
 
@@ -269,5 +296,27 @@ void function Dev_MarkRoute( string routename )
 	foreach( entity e in getRoute( routename ) )
 	{
 		DebugDrawSphere( e.GetOrigin(), 30.0, 255, 0, 255, false, 40 )
+	}
+}
+
+void function NPCStuckTracker( entity npc ) //Track if AI is properly pathing, otherwise after one minute, it will suicide to prevent softlocking
+{
+	npc.EndSignal( "OnDeath" )
+	npc.EndSignal( "OnDestroy" )
+	
+	int FailCount = 0
+	while ( IsAlive( npc ) )
+	{
+		table result = npc.WaitSignal( "OnSeeEnemy", "OnFinishedAssault", "OnEnterGoalRadius", "OnFailedToPath" )
+		if( result.signal == "OnFailedToPath" )
+		{
+			if( FailCount == 60 )
+				npc.Die()
+			FailCount++
+		}
+		else
+			FailCount = 0
+			
+		wait 1
 	}
 }

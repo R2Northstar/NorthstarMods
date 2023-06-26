@@ -11,7 +11,7 @@ Branch made to expand Frontier Defense feature set by adding back cut content wh
 - Elite Titans variants (cut content)
 - Enemy Titans moves slower as they used to do in vanilla (Except Ronins, Mortars and Elites)
 - Enemy Titans will not melee the Harvester anymore as in vanilla
-- Nuke Titans moves even slower, are unlikely to melee and always spawn with shields regardless difficulty set as they also do in vanilla
+- Nuke Titans will never melee and always spawn with shields regardless difficulty set as they also do in vanilla
 - Harvester have proper damage filters, meaning certain enemies will hit it harder, again similar to vanilla behavior
 - Aside from Forwardbase Kodai, Homestead and Rise, all other maps works with custom wave data, Colony, Glitch and Boomtown included
 - During wave break time, players do not respawn on dropship, neither new connecting players
@@ -23,6 +23,7 @@ Branch made to expand Frontier Defense feature set by adding back cut content wh
 - Fixes Grunts not being able to use their Anti-Titan weaponry
 - Failsafe code that kills stuck Grunts and Stalkers inside geometry to prevent softlocking
 - Properly setup the tutorial hints to appear only once per match, and not every time they attempt to trigger
+- Some Live Fire Maps are playable, and have some differences on mechanics than normal maps
 
 ## Titanfall Block and Elite Titan Events
 
@@ -35,6 +36,21 @@ Branch made to expand Frontier Defense feature set by adding back cut content wh
 - They can potentially use their Cores
 - Drop a Battery on Easy and Regular Difficulties or drop an Amped Battery in Hard, Master and Insane difficulties similar to campaign Titans
 
+## Live Fire Gameplay Changes
+
+- Deck, Township, UMA are playable
+- Pilot-only gameplay
+- Only 3 Waves with huge amounts of non-stop spawning enemies, infantry mostly
+- Loadouts can be changed at any time during a wave in the Loadout Crates
+- Droz and Davis helps players in person by guarding the Harvester
+- Players recieve the double amount of money when completing a wave
+- Players can have 3 Turrets instead of 2
+- Players have no grenades
+- Players have limited Anti-Titan ammo, restock possible at Loadout Crate
+- Grunts will always have one shield captain in their squads and will always have Anti-Titan weapons
+- Stalkers will always spawn with EPG independant of the difficulty setting
+- Players have a single "public" Titan to use called 'Helper Titan', pilots approaching this Titan gains ownership, staying away clears it
+
 ## New console variables
 
 Use these variables in your `autoexec_ns_server` cfg to control them:
@@ -45,9 +61,12 @@ Use these variables in your `autoexec_ns_server` cfg to control them:
 - `ns_fd_grunt_primary_weapon` Array of weapons that Grunts are allowed to use, they will randomly chose one of those to spawn with
 - `ns_fd_spectre_primary_weapon` Array of weapons that Spectres are allowed to use, they will randomly chose one of those to spawn with
 - `ns_fd_grunt_at_weapon` Default is "mp_weapon_defender", set to another anti-titan weapon to make Grunts use them on Master or Insane difficulty
+- `ns_fd_grunt_grenade` Default is "mp_weapon_frag_grenade", set to another grenade type to make Grunts use them
 - `ns_fd_disable_respawn_dropship` Default is 0, setting to 1 makes players always respawn directly on ground nearby the Harvester or Shop
 - `ns_fd_differentiate_ticks` Default is 0, setting to 1 will make Ticks from Drop Pod spawns to use the campaign model to tell players they counts towards wave completion
 - `ns_fd_rodeo_highlight` Default is 1, setting to 0 disables the new behavior of pilots highlight becoming green whenever they rodeo any Titan
+- `ns_fd_min_numplayers_to_start` Default is 1, this is the required amount of players in a match in order for the game to start the waves
+- `ns_fd_easymode_smartpistol` Default is 0, setting it to 1 will make players have the Smart Pistol as secondary weapon in Easy difficulty mode
 - `ns_reaper_warpfall_kill` Default is 1, set to 0 if you don't want Reapers to kill Titans on their Warpfall
 - `ns_ronin_fair_phase` Default is 0, setting to 1 will make Ronin not kill himself if he materializes inside an enemy Titan from Phase Shift, instead he will only apply 5000 damage to the target titan
 
@@ -58,3 +77,4 @@ These are playlist overrides you can include in your server settings to control 
 - You can also do the same to shield captains by using `fd_grunt_shield_captains`, same rules applies from above setting
 - With this branch of Frontier Defense, it's possible to change the time between waves with `fd_wave_buy_time`, default is 60 seconds
 - It's possible to enable the campaign behavior of picking up batteries by setting `rodeo_battery_disembark_to_pickup` to 0, so running over batteries as Titan picks them up
+- It's also possible to enable the Titanfall 1 behavior of hacking spectres by setting `enable_spectre_hacking`to 1

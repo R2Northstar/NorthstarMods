@@ -1,6 +1,7 @@
 global function initFrontierDefenseData
 void function initFrontierDefenseData()
 {
+	AddCallback_RegisterCustomFDContent( RegisterCustomFDContent )
     shopPosition = < -1376.33, -2147.87 , -510>
 	shopAngles = < 0, -90, 0 >
 	FD_spawnPosition = < -1736, -1505, 261 >
@@ -998,7 +999,6 @@ void function initFrontierDefenseData()
 	wave5.append(CreateArcTitanEvent(< -2254 , 2209 , -437 >,< 0 , -28 , 0 >,"",index++))
 	wave5.append(CreateWaitForTimeEvent( 5.0, index++ ) )
 	wave5.append(CreateWaitUntilAliveEvent( 6, index++ ) )
-	wave5.append(CreateWarningEvent( FD_IncomingWarnings.NoMoreTitansInWave, index++ ) )
 	wave5.append(CreateSpawnDroneEvent(< 3056 , -2845 , 2816 >,< 0 , 0 , 0 >,"rightDrone",index++))
 	wave5.append(CreateWaitForTimeEvent( 0.5, index++ ) )
 	wave5.append(CreateSpawnDroneEvent(< 3056 , -2845 , 2816 >,< 0 , 0 , 0 >,"rightDrone",index++))
@@ -1009,4 +1009,17 @@ void function initFrontierDefenseData()
 	wave5.append(CreateWaitForTimeEvent( 0.5, index++ ) )
 	wave5.append(CreateSpawnDroneEvent(< 3056 , -2845 , 2816 >,< 0 , 0 , 0 >,"rightDrone",0))
     waveEvents.append(wave5)
+}
+
+void function RegisterCustomFDContent()
+{
+	entity Prowler1 = CreateNPC( "npc_prowler", TEAM_IMC, < 344, -1493, -194 >, < 0, 0, 0 > )
+	entity Prowler2 = CreateNPC( "npc_prowler", TEAM_IMC, < 88, -3942, -236 >, < 0, 0, 0 > )
+	entity Prowler3 = CreateNPC( "npc_prowler", TEAM_IMC, < 2403, 837, -297 >, < 0, 0, 0 > )
+	entity Prowler4 = CreateNPC( "npc_prowler", TEAM_IMC, < 763, 2439, -376 >, < 0, 0, 0 > )
+	
+	DispatchSpawn( Prowler1 )
+	DispatchSpawn( Prowler2 )
+	DispatchSpawn( Prowler3 )
+	DispatchSpawn( Prowler4 )
 }

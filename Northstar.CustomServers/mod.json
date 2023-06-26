@@ -63,6 +63,10 @@
 			"DefaultValue": "0"
 		},
 		{
+			"Name": "ns_fd_min_numplayers_to_start",
+			"DefaultValue": "1"
+		},
+		{
 			"Name": "ns_fd_allow_elite_titans",
 			"DefaultValue": "0"
 		},
@@ -79,12 +83,20 @@
 			"DefaultValue": "0"
 		},
 		{
+			"Name": "ns_fd_easymode_smartpistol",
+			"DefaultValue": "0"
+		},
+		{
 			"Name": "ns_fd_grunt_at_weapon",
 			"DefaultValue": "mp_weapon_defender"
 		},
 		{
 			"Name": "ns_fd_grunt_primary_weapon",
 			"DefaultValue": "mp_weapon_rspn101,mp_weapon_car,mp_weapon_alternator_smg,mp_weapon_hemlok_smg,mp_weapon_r97"
+		},
+		{
+			"Name": "ns_fd_grunt_grenade",
+			"DefaultValue": "mp_weapon_frag_grenade"
 		},
 		{
 			"Name": "ns_fd_spectre_primary_weapon",

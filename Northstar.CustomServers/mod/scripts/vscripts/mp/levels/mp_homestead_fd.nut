@@ -8,11 +8,11 @@ void function initFrontierDefenseData()
 	FD_groundspawnPosition = < -1507, -3346, -128 >
 	FD_groundspawnAngles = < 0, 45, 0 >
 	
-	waveAnnouncement[0] = "fd_introEasy"
-	waveAnnouncement[1] = "fd_waveTypeTitanMortar"
-	waveAnnouncement[2] = "fd_waveComboNukeMortar"
-	waveAnnouncement[3] = "fd_waveTypeReapers"
-	waveAnnouncement[4] = "fd_waveComboNukeTrain"
+	waveAnnouncement.append("fd_introEasy")
+	waveAnnouncement.append("fd_waveTypeTitanMortar")
+	waveAnnouncement.append("fd_waveComboNukeMortar")
+	waveAnnouncement.append("fd_waveTypeReapers")
+	waveAnnouncement.append("fd_waveComboNukeTrain")
 	
 	AddStationaryAIPosition(< 6328, -968, -155 >, eStationaryAIPositionTypes.LAUNCHER_REAPER)
 	AddStationaryAIPosition(< -2498, 1079, -160 >, eStationaryAIPositionTypes.LAUNCHER_REAPER)

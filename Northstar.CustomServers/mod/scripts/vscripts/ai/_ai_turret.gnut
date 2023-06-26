@@ -6,6 +6,7 @@ global function SetUsePromptForPanel
 global function IsTurretActive
 global function TurretRefundThink
 global function RevivableTurret_DamageCallback
+global function HeavyTurret_DamageCallback
 global function RevivableTurret_Revive
 global function RepairTurret_WaveBreak
 global function AddTurretRepairCallback
@@ -53,7 +54,8 @@ void function TurretRefundThink( entity turret )
 	turret.EndSignal( "CancelRefund" )
 	turret.EndSignal( "TurretOffline" )
 
-	while( turret.e.burnReward == "" || !IsTurretActive( turret ) ){
+	while( turret.e.burnReward == "" || !IsTurretActive( turret ) )
+	{
 		WaitFrame()
 	}
 	turret.SetUsable()
@@ -99,6 +101,19 @@ void function RevivableTurret_DamageCallback( entity turret, var damageInfo )
 	}
 }
 
+void function HeavyTurret_DamageCallback( entity turret, var damageInfo )
+{
+	if( turret.GetHealth() <= DamageInfo_GetDamage( damageInfo ) )
+	{
+		turret.Signal( "TurretOffline" )
+		turret.SetHealth( 1 )
+		DamageInfo_SetDamage( damageInfo, 0.0 )
+		turret.DisableTurret()
+		turret.EnableNPCFlag( NPC_IGNORE_ALL )
+		MakeTurretInvulnerable( turret )
+	}
+}
+
 void function RevivableTurretThink( entity turret )
 {	
 	entity player = expect entity( turret.WaitSignal( "OnPlayerUse" ).player )
@@ -117,11 +132,10 @@ void function RevivableTurret_Revive( entity turret )
 
 	turret.UnsetUsable()
 	turret.SetHealth( turret.GetMaxHealth() )
-	turret.Anim_ScriptedPlay( "deploy" )
 	turret.Highlight_SetParam( 1, 0, < 0 ,0 ,0 > )
-	turret.Highlight_SetParam( 3, 0, < 0 ,0 ,0 > )
-	wait 1
+	turret.Highlight_SetParam( 3, 0, HIGHLIGHT_COLOR_INTERACT )
 	turret.EnableTurret()
+	turret.Anim_Play("deploy")
 	turret.DisableNPCFlag( NPC_IGNORE_ALL )
 	MakeTurretVulnerable( turret )
 	thread TurretRefundThink( turret )
@@ -136,11 +150,9 @@ void function RevivableTurret_Kill( entity turret )
 			PlayFactionDialogueToPlayer( "fd_turretOffline", turretOwner )
 	
 	turret.EnableNPCFlag( NPC_IGNORE_ALL )
-	turret.Anim_ScriptedPlay( "undeploy" )
 	MakeTurretInvulnerable( turret )
-	turret.Highlight_SetParam( 1, 0, < 1.25, 1.25, 0.2 > )
-	turret.Highlight_SetParam( 3, 0, < 1.25, 1.25, 0.2 > )
-	wait 1
+	turret.Highlight_SetParam( 1, 0, < 1.5, 1.5, 0.35 > )
+	turret.Highlight_SetParam( 3, 0, < 1.5, 1.5, 0.35 > )
 	turret.DisableTurret()
 }
 
@@ -149,11 +161,11 @@ void function RepairTurret_WaveBreak( entity turret )
 	if ( turret.GetHealth() == 1 )
 	{
 		turret.UnsetUsable()
-		turret.Anim_ScriptedPlay( "deploy" )
 		turret.EnableTurret()
+		turret.Anim_Play("deploy")
 		turret.DisableNPCFlag( NPC_IGNORE_ALL )
 		turret.Highlight_SetParam( 1, 0, < 0, 0, 0 > )
-		turret.Highlight_SetParam( 3, 0, < 0, 0, 0 > )
+		turret.Highlight_SetParam( 3, 0, HIGHLIGHT_COLOR_INTERACT )
 		MakeTurretVulnerable( turret )
 		thread TurretRefundThink( turret )
 	}

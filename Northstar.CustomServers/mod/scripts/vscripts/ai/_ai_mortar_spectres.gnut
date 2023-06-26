@@ -13,7 +13,7 @@ const float MORTAR_SPECTRE_REENGAGE_DELAY					= 7.0	// How long before a mortar 
 
 const float MORTAR_SPECTRE_TRACKER_SHIELD_MAX				= 1000.0  // just using 1000 for now, doesnt really matter as long as the shieldFrac is accurate enough
 
-const array<vector> MORTAR_SPECTRE_POSITION_OFFSETS = [ < 60, 0, 0 >, < 0, 60, 0 >, < -60, 0, 0 >, < 0, -60, 0 > ] // guessing
+const array<vector> MORTAR_SPECTRE_POSITION_OFFSETS = [ < 50, 0, 0 >, < 0, 50, 0 >, < -50, 0, 0 >, < 0, -50, 0 > ] // guessing
 
 array<vector> function MortarSpectreGetSquadFiringPositions( vector origin, vector testTarget )
 {
@@ -43,21 +43,26 @@ void function MortarSpectreSquadThink( array< entity > spectres, entity harveste
 		// should change this to use an average position or the start position or something but for now this is fine
 		mortarPosition = GetClosestAvailableStationaryPosition( spectres[0].GetOrigin(), MORTAR_SPECTRE_POSITION_SEARCH_RANGE, eStationaryAIPositionTypes.MORTAR_SPECTRE )
 	}
+	
+	expect StationaryAIPosition( mortarPosition )
+	ClaimStationaryAIPosition( mortarPosition )
+	
 	// create the entity responsible for managing this squad of spectres
 	// note: client shows the ui thing for this entity if the y angle is not 0
 	// it also shows the set up time thing based on the shield frac of the entity? weird
-	entity squadMarker = CreatePropScript( $"models/dev/empty_model.mdl", expect StationaryAIPosition( mortarPosition ).origin + < 0, 0, 150 >, < 0, 1, 0 > )
+	entity squadMarker = CreatePropScript( $"models/dev/empty_model.mdl", mortarPosition.origin + < 0, 0, 150 >, < 0, 1, 0 > )
 	SetTargetName( squadMarker, "mortarPosition" )
 	squadMarker.SetShieldHealthMax( MORTAR_SPECTRE_TRACKER_SHIELD_MAX )
 	squadMarker.Minimap_SetCustomState( eMinimapObject_prop_script.FD_MORTAR_POSITION )
+	squadMarker.kv.fadedist = 16384
 
-	thread MortarSpectreSquadDeathThink( spectres, squadMarker )
+	thread MortarSpectreSquadDeathThink( spectres, squadMarker, mortarPosition )
 	
 	// wait until at least 1 spectre has reached their position
 	int i = 0
 	foreach( entity spectre in spectres )
 	{
-		thread MortarSpectreMoveToMortarPosition( spectre, squadMarker, OriginToGround( expect StationaryAIPosition( mortarPosition ).origin + MORTAR_SPECTRE_POSITION_OFFSETS[i]  + < 0, 0, 100 > ) )
+		thread MortarSpectreMoveToMortarPosition( spectre, squadMarker, OriginToGround( mortarPosition.origin + MORTAR_SPECTRE_POSITION_OFFSETS[i]  + < 0, 0, 100 > ) )
 		
 		if ( i++ >= MORTAR_SPECTRE_POSITION_OFFSETS.len() )
 		{
@@ -90,7 +95,7 @@ void function MortarSpectreSquadThink( array< entity > spectres, entity harveste
 
 	foreach( entity spectre in spectres )
 	{
-		if ( IsValid( spectre ) )
+		if ( IsValid( spectre ) && IsAlive( spectre ) && spectre.GetTeam() == TEAM_IMC )
 			thread MortarSpectreAttack( spectre, harvester, squadMarker )
 	}
 }
@@ -100,6 +105,7 @@ void function MortarSpectreAttack( entity spectre, entity harvester, entity sign
 	spectre.EndSignal( "OnSyncedMeleeVictim" )
 	spectre.EndSignal( "OnDeath" )
 	spectre.EndSignal( "OnDestroy" )
+	spectre.EndSignal( "OnLeeched" )
 
 	string originalWeaponClassName
 	array<string> originalWeaponMods
@@ -108,7 +114,7 @@ void function MortarSpectreAttack( entity spectre, entity harvester, entity sign
 
 	thread MortarSpectreInterruptThink( spectre, harvester, signaler )
 
-	while( true )
+	while( IsValid( spectre ) && IsAlive( spectre ) && spectre.GetTeam() == TEAM_IMC )
 	{
 		array<entity> weapons = spectre.GetMainWeapons()
 		if ( weapons.len() == 0 )
@@ -142,10 +148,11 @@ void function MortarSpectreAttacksHarvester( entity spectre, entity harvester, e
 	spectre.EndSignal( "OnSyncedMeleeVictim" )
 	spectre.EndSignal( "OnDeath" )
 	spectre.EndSignal( "OnDestroy" )
+	spectre.EndSignal( "OnLeeched" )
 
 	entity weapon = spectre.GetActiveWeapon()
 	wait RandomFloatRange( 0, 4 ) // this is a complete guess, idk how long it takes for them to shoot normally
-	while ( true )
+	while ( IsValid( spectre ) && IsAlive( spectre ) && spectre.GetTeam() == TEAM_IMC )
 	{
 		// if the spectre drops the weapon, or if something somehow steals it, we should stop firing missiles from it
 		if ( weapon.GetWeaponOwner() != spectre )
@@ -157,7 +164,7 @@ void function MortarSpectreAttacksHarvester( entity spectre, entity harvester, e
 	}
 }
 
-void function MortarSpectreSquadDeathThink( array< entity > spectres, entity signaler )
+void function MortarSpectreSquadDeathThink( array< entity > spectres, entity signaler, StationaryAIPosition mortarPosition )
 {
 	int numAlive = spectres.len() // assume all alive at start
 	while ( numAlive != 0 )
@@ -166,12 +173,13 @@ void function MortarSpectreSquadDeathThink( array< entity > spectres, entity sig
 		numAlive = spectres.len()
 		foreach ( entity spectre in spectres )
 		{
-			if ( IsValid( spectre ) && IsAlive( spectre ) )
+			if ( IsValid( spectre ) && IsAlive( spectre ) && spectre.GetTeam() == TEAM_IMC )
 				continue
 			numAlive--
 		}
 	}
 	signaler.Destroy()
+	ReleaseStationaryAIPosition( mortarPosition )
 }
 
 void function MortarSpectreMoveToMortarPosition( entity spectre, entity signaler, vector position )
@@ -179,8 +187,9 @@ void function MortarSpectreMoveToMortarPosition( entity spectre, entity signaler
 	spectre.EndSignal( "OnSyncedMeleeVictim" )
 	spectre.EndSignal( "OnDeath" )
 	spectre.EndSignal( "OnDestroy" )
+	spectre.EndSignal( "OnLeeched" )
 
-	spectre.AssaultPoint( position )
+	spectre.AssaultPointClamped( position )
 	spectre.AssaultSetGoalRadius( spectre.GetMinGoalRadius() )
 	spectre.AssaultSetFightRadius( 0 )
 	
@@ -194,10 +203,11 @@ void function MortarSpectreInterruptThink( entity spectre, entity harvester, ent
 	spectre.EndSignal( "OnSyncedMeleeVictim" )
 	spectre.EndSignal( "OnDeath" )
 	spectre.EndSignal( "OnDestroy" )
+	spectre.EndSignal( "OnLeeched" )
 
 	float oldHealth = spectre.GetHealth().tofloat()
 
-	while ( true )
+	while ( IsValid( spectre ) && IsAlive( spectre ) && spectre.GetTeam() == TEAM_IMC )
 	{
 		WaitFrame()
 		// check if we have taken enough damage to warrant an interruption, and we are close enough to the mortar position

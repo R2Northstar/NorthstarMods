@@ -1,0 +1,6 @@
+When: "SERVER"
+Scripts:
+[
+	mp/levels/mp_lf_deck.nut
+	mp/levels/mp_lf_deck_fd.nut
+]

@@ -197,8 +197,7 @@ void function FDStalkerThink( entity npc, entity generator )
 		WaitFrame()
 
 		// cant sprint with 1 leg
-		// also upped to 1800 so that stalkers sprint from roughly their vanilla positions, could probably do it based on % of distance left to go?
-		if ( DistanceSqr( npc.GetOrigin(), generator.GetOrigin() ) < (1800 * 1800)  )
+		if ( DistanceSqr( npc.GetOrigin(), generator.GetOrigin() ) < (1024 * 1024)  )
 		{
 			if(!IsCrawling( npc ) && !npc.s.isSprinting)
 			{
