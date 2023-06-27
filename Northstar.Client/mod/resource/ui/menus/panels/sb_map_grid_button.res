@@ -1,4 +1,4 @@
-"resource/ui/menus/panels/map_grid_button.res"
+"resource/ui/menus/panels/sb_map_grid_button.res"
 {
 	MapImage
 	{
