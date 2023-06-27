@@ -86,7 +86,7 @@ void function UpdatePilotLoadoutPanel( var loadoutPanel, PilotLoadoutDef loadout
 	else if ( loadout.primarySkinIndex == 1 ) // camo
 		primaryAppearanceImage = CamoSkin_GetImage( CamoSkins_GetByIndex( loadout.primaryCamoIndex ) )
 	else // warpaint skin
-		primaryAppearanceImage = GetItemImage( GetSkinRefFromWeaponRefAndPersistenceValue( loadout.primary, loadout.primarySkinIndex ) )
+		primaryAppearanceImage = GetItemImageFromWeaponRefAndPersistenceValue( loadout.primary, loadout.primarySkinIndex )
 
 	asset secondaryAppearanceImage
 	if ( loadout.secondarySkinIndex == 0 ) // default skin
@@ -94,7 +94,7 @@ void function UpdatePilotLoadoutPanel( var loadoutPanel, PilotLoadoutDef loadout
 	else if ( loadout.secondarySkinIndex == 1 ) // camo
 		secondaryAppearanceImage = CamoSkin_GetImage( CamoSkins_GetByIndex( loadout.secondaryCamoIndex ) )
 	else // warpaint skin
-		secondaryAppearanceImage = GetItemImage( GetSkinRefFromWeaponRefAndPersistenceValue( loadout.secondary, loadout.secondarySkinIndex ) )
+		secondaryAppearanceImage = GetItemImageFromWeaponRefAndPersistenceValue( loadout.secondary, loadout.secondarySkinIndex )
 
 	asset weapon3AppearanceImage
 	if ( loadout.weapon3SkinIndex == 0 ) // default skin
@@ -102,7 +102,7 @@ void function UpdatePilotLoadoutPanel( var loadoutPanel, PilotLoadoutDef loadout
 	else if ( loadout.weapon3SkinIndex == 1 ) // camo
 		weapon3AppearanceImage = CamoSkin_GetImage( CamoSkins_GetByIndex( loadout.weapon3CamoIndex ) )
 	else // warpaint skin
-		weapon3AppearanceImage = GetItemImage( GetSkinRefFromWeaponRefAndPersistenceValue( loadout.weapon3, loadout.weapon3SkinIndex ) )
+		weapon3AppearanceImage = GetItemImageFromWeaponRefAndPersistenceValue( loadout.weapon3, loadout.weapon3SkinIndex )
 
 	RuiSetImage( Hud_GetRui( Hud_GetChild( loadoutPanel, "ButtonPilotCamo" ) ), "camoImage", pilotAppearanceImage )
 	RuiSetImage( Hud_GetRui( Hud_GetChild( loadoutPanel, "ButtonPrimarySkin" ) ), "camoImage", primaryAppearanceImage )
@@ -281,4 +281,9 @@ void function UpdatePilotLoadoutPanelBinds( var loadoutPanel )
 
 	//SetLabelRuiText( Hud_GetChild( loadoutPanel, "TacticalBind" ), Localize( "%offhand1%" ) )
 	//SetLabelRuiText( Hud_GetChild( loadoutPanel, "OrdnanceBind" ), Localize( "%offhand0%" ) )
+}
+
+asset function GetItemImageFromWeaponRefAndPersistenceValue(string weaponRef, int persistenceValue)
+{
+	return GetItemImage( GetSkinRefFromWeaponRefAndPersistenceValue( weaponRef, persistenceValue ) )
 }
