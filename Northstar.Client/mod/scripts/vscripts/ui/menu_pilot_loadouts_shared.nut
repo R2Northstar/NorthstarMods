@@ -285,5 +285,12 @@ void function UpdatePilotLoadoutPanelBinds( var loadoutPanel )
 
 asset function GetItemImageFromWeaponRefAndPersistenceValue(string weaponRef, int persistenceValue)
 {
-	return GetItemImage( GetSkinRefFromWeaponRefAndPersistenceValue( weaponRef, persistenceValue ) )
+	string skinRef = GetSkinRefFromWeaponRefAndPersistenceValue( weaponRef, persistenceValue )
+	if (!IsRefValid(skinRef))
+	{
+		// invalid ref, use default
+		return $"rui/menu/common/appearance_button_swatch"
+	}
+
+	return GetItemImage( skinRef )
 }
