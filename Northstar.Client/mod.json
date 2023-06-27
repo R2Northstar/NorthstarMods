@@ -17,22 +17,22 @@
 			"Name": "filter_hide_protected",
 			"DefaultValue": "0"
 		},
-        {
-            "Name": "filter_map",
-            "DefaultValue": "SWITCH_ANY"
-        },
-        {
-            "Name": "filter_gamemode",
-            "DefaultValue": "SWITCH_ANY"
-        },
-        {
-        	"Name": "filter_region",
-            "DefaultValue": "SWITCH_ANY"
-        },
-        {
-            "Name": "filter_mods",
-            "DefaultValue": "SWITCH_ANY"
-        },
+		{
+			"Name": "filter_map",
+			"DefaultValue": "SWITCH_ANY"
+		},
+		{
+			"Name": "filter_gamemode",
+			"DefaultValue": "SWITCH_ANY"
+		},
+		{
+			"Name": "filter_region",
+			"DefaultValue": "SWITCH_ANY"
+		},
+		{
+			"Name": "filter_mods",
+			"DefaultValue": "SWITCH_ANY"
+		},
 		{
 			"Name": "filter_map_hide_locked",
 			"DefaultValue": "0"
