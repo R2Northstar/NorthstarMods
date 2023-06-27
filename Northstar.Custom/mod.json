@@ -1,7 +1,7 @@
 {
 	"Name": "Northstar.Custom",
 	"Description": "Custom content for Northstar: extra weapons, gamemodes, etc.",
-	"Version": "1.10.0",
+	"Version": "1.14.0",
 	"LoadPriority": 1,
 	"RequiredOnClient": true,
 	"ConVars": [
@@ -29,10 +29,7 @@
 	"Scripts": [
 		{
 			"Path": "sh_northstar_custom_precache.gnut",
-			"RunOn": "( CLIENT || SERVER ) && MP",
-			"ClientCallback": {
-				"After": "NorthstarCustomPrecache"
-			},
+			"RunOn": "SERVER && MP",
 			"ServerCallback": {
 				"After": "NorthstarCustomPrecache"
 			}
