@@ -19,7 +19,13 @@ void function Stats_Init()
 
 void function AddStatCallback(string statCategory, string statAlias, string statSubAlias, void functionref(entity, float, string) callback, string subRef)
 {
-
+	// callback signature is ( entity player, float changeInValue, string itemRef )
+	// example args:
+	// category,       statAlias,     statSubAlias
+	// "weapon_stats", "titanDamage", "mp_titanweapon_predator_cannon"
+	//printt(statCategory + " " + statAlias + " " + statSubAlias)
+	string str = GetPersistenceString(statCategory, statAlias, statSubAlias)
+	printt(str)
 }
 
 void function Stats_SaveStatDelayed(entity player, string statCategory, string statAlias, string statSubAlias)
@@ -77,4 +83,51 @@ void function PostScoreEventUpdateStats(entity attacker, entity ent)
 void function Stats_OnPlayerDidDamage(entity player, var damageInfo)
 {
 
+}
+
+string function GetPersistenceString(string statCategory, string statAlias, string statSubAlias = "")
+{
+	string ret = ""
+
+	bool isArray = false
+
+	switch (statCategory)
+	{
+	case "titan_stats":
+		ret += "titanStats"
+		isArray = true
+		break
+	case "distance_stats":
+		ret += "distanceStats"
+		break
+	case "kills_stats":
+		ret += "killStats"
+		break
+	case "weapon_kill_stats":
+		ret += "weaponKillStats"
+		isArray = true
+		break
+	case "weapon_stats":
+		ret += "weaponStats"
+		isArray = true
+		break
+	case "game_stats":
+		ret += "gameStats"
+		break
+	case "fd_stats":
+		ret += "fdStats"
+		break
+	case "misc_stats":
+		ret += "miscStats"
+		break
+	default:
+		throw "Unimplemented statCategory: " + statCategory
+	}
+
+	if (isArray)
+		ret += "[" + statSubAlias + "]"
+
+	ret += "." + statAlias
+
+	return ret
 }
