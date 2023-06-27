@@ -128,19 +128,19 @@
 			"UICallback":{
 				"Before": "AddModSettingsMenu"
       		}
-    	},
-    	{
+		},
+		{
 			"Path": "ui/ui_mouse_capture.nut",
 			"RunOn": "UI"
 		},
 		{
-            "Path": "ui/menu_sb_map_select.nut",
-            "RunOn": "UI"
-        },
-        {
-            "Path": "ui/menu_sb_mode_select.nut",
-            "RunOn": "UI"
-        }
+			"Path": "ui/menu_sb_map_select.nut",
+			"RunOn": "UI"
+		},
+		{
+			"Path": "ui/menu_sb_mode_select.nut",
+			"RunOn": "UI"
+		}
 
 	],
 	"Localisation": [
