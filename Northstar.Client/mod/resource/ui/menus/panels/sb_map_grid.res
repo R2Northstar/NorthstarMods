@@ -9,7 +9,7 @@
 		Classname MapGridInfo
 		scriptID 0
 		
-		controlSettingsFile "resource/ui/menus/panels/sb_map_grid_button.res"
+		controlSettingsFile "resource/ui/menus/panels/map_grid_button.res"
 	}
 	
 	GridInfo1x0
@@ -22,7 +22,7 @@
 		Classname MapGridInfo
 		scriptID 1
 		
-		controlSettingsFile "resource/ui/menus/panels/sb_map_grid_button.res"
+		controlSettingsFile "resource/ui/menus/panels/map_grid_button.res"
 		
 
 		pin_to_sibling GridInfo0x0
@@ -40,7 +40,7 @@
 		Classname MapGridInfo
 		scriptID 2
 		
-		controlSettingsFile "resource/ui/menus/panels/sb_map_grid_button.res"
+		controlSettingsFile "resource/ui/menus/panels/map_grid_button.res"
 		
     
 		pin_to_sibling GridInfo1x0
@@ -58,7 +58,7 @@
 		Classname MapGridInfo
 		scriptID 3
 		
-		controlSettingsFile "resource/ui/menus/panels/sb_map_grid_button.res"
+		controlSettingsFile "resource/ui/menus/panels/map_grid_button.res"
 		
     
 		pin_to_sibling GridInfo2x0
@@ -76,7 +76,7 @@
 		Classname MapGridInfo
 		scriptID 4
 		
-		controlSettingsFile "resource/ui/menus/panels/sb_map_grid_button.res"
+		controlSettingsFile "resource/ui/menus/panels/map_grid_button.res"
 		
     
 		pin_to_sibling GridInfo0x0
@@ -94,7 +94,7 @@
 		Classname MapGridInfo
 		scriptID 5
 		
-		controlSettingsFile "resource/ui/menus/panels/sb_map_grid_button.res"
+		controlSettingsFile "resource/ui/menus/panels/map_grid_button.res"
 		
 
 		pin_to_sibling GridInfo0x1
@@ -113,7 +113,7 @@
 		Classname MapGridInfo
 		scriptID 6
 		
-		controlSettingsFile "resource/ui/menus/panels/sb_map_grid_button.res"
+		controlSettingsFile "resource/ui/menus/panels/map_grid_button.res"
 		
 
 		pin_to_sibling GridInfo1x1
@@ -132,7 +132,7 @@
 		Classname MapGridInfo
 		scriptID 7
 		
-		controlSettingsFile "resource/ui/menus/panels/sb_map_grid_button.res"
+		controlSettingsFile "resource/ui/menus/panels/map_grid_button.res"
 		
 
 		pin_to_sibling GridInfo2x1
@@ -151,7 +151,7 @@
 		Classname MapGridInfo
 		scriptID 8
 		
-		controlSettingsFile "resource/ui/menus/panels/sb_map_grid_button.res"
+		controlSettingsFile "resource/ui/menus/panels/map_grid_button.res"
 		
 
 		pin_to_sibling GridInfo0x1
@@ -170,7 +170,7 @@
 		Classname MapGridInfo
 		scriptID 9
 		
-		controlSettingsFile "resource/ui/menus/panels/sb_map_grid_button.res"
+		controlSettingsFile "resource/ui/menus/panels/map_grid_button.res"
 		
 
 		pin_to_sibling GridInfo0x2
@@ -189,7 +189,7 @@
 		Classname MapGridInfo
 		scriptID 10
 		
-		controlSettingsFile "resource/ui/menus/panels/sb_map_grid_button.res"
+		controlSettingsFile "resource/ui/menus/panels/map_grid_button.res"
 		
 
 		pin_to_sibling GridInfo1x2
@@ -208,7 +208,7 @@
 		Classname MapGridInfo
 		scriptID 11
 		
-		controlSettingsFile "resource/ui/menus/panels/sb_map_grid_button.res"
+		controlSettingsFile "resource/ui/menus/panels/map_grid_button.res"
 		
 
 		pin_to_sibling GridInfo2x2
@@ -227,7 +227,7 @@
 		Classname MapGridInfo
 		scriptID 12
 		
-		controlSettingsFile "resource/ui/menus/panels/sb_map_grid_button.res"
+		controlSettingsFile "resource/ui/menus/panels/map_grid_button.res"
 		
 
 		pin_to_sibling GridInfo0x2
@@ -246,7 +246,7 @@
 		Classname MapGridInfo
 		scriptID 13
 		
-		controlSettingsFile "resource/ui/menus/panels/sb_map_grid_button.res"
+		controlSettingsFile "resource/ui/menus/panels/map_grid_button.res"
 		
 
 		pin_to_sibling GridInfo0x3
@@ -265,7 +265,7 @@
 		Classname MapGridInfo
 		scriptID 14
 		
-		controlSettingsFile "resource/ui/menus/panels/sb_map_grid_button.res"
+		controlSettingsFile "resource/ui/menus/panels/map_grid_button.res"
 		
 
 		pin_to_sibling GridInfo1x3
@@ -284,7 +284,7 @@
 		Classname MapGridInfo
 		scriptID 15
 		
-		controlSettingsFile "resource/ui/menus/panels/sb_map_grid_button.res"
+		controlSettingsFile "resource/ui/menus/panels/map_grid_button.res"
 		
 
 		pin_to_sibling GridInfo2x3
@@ -303,7 +303,7 @@
 		Classname MapGridInfo
 		scriptID 16
 		
-		controlSettingsFile "resource/ui/menus/panels/sb_map_grid_button.res"
+		controlSettingsFile "resource/ui/menus/panels/map_grid_button.res"
 		
 
 		pin_to_sibling GridInfo0x3
@@ -322,7 +322,7 @@
 		Classname MapGridInfo
 		scriptID 17
 		
-		controlSettingsFile "resource/ui/menus/panels/sb_map_grid_button.res"
+		controlSettingsFile "resource/ui/menus/panels/map_grid_button.res"
 		
 
 		pin_to_sibling GridInfo0x4
@@ -341,7 +341,7 @@
 		Classname MapGridInfo
 		scriptID 18
 		
-		controlSettingsFile "resource/ui/menus/panels/sb_map_grid_button.res"
+		controlSettingsFile "resource/ui/menus/panels/map_grid_button.res"
 		
 
 		pin_to_sibling GridInfo1x4
@@ -360,7 +360,7 @@
 		Classname MapGridInfo
 		scriptID 19
 		
-		controlSettingsFile "resource/ui/menus/panels/sb_map_grid_button.res"
+		controlSettingsFile "resource/ui/menus/panels/map_grid_button.res"
 		
 
 		pin_to_sibling GridInfo2x4
