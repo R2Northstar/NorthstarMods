@@ -282,7 +282,6 @@ void function UICodeCallback_UIInit()
 	MenuAdvocateLetter_Init()
 	MenuCredits_Init()
 	MenuMapSelect_Init()
-	SB_MenuMapSelect_Init()
 
 	RegisterSignal( "LevelShutdown" )
 	RegisterSignal( "CleanupInGameMenus" )
