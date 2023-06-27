@@ -1061,6 +1061,14 @@ void function ThreadedAuthAndConnectToServer( string password = "" )
 	{
 		bool modsChanged
 
+		// disable all RequiredOnClient mods, ones that are
+		// needed by the server will be enabled in the next loop
+		foreach ( string modName in NSGetModNames() )
+		{
+			if ( NSIsModRequiredOnClient( modName ) )
+				NSSetModEnabled( modName, false )
+		}
+
 		// unload mods we don't need, load necessary ones and reload mods before connecting
 		foreach ( RequiredModInfo mod in file.lastSelectedServer.requiredMods )
 		{
