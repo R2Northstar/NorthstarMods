@@ -24,10 +24,12 @@ void function Stats_Init()
 {
 	AddCallback_OnPlayerKilled(OnPlayerKilled)
 	AddCallback_OnPlayerRespawned(OnPlayerRespawned)
-	//AddCallback_OnClientConnected(OnClientConnected)
+	AddCallback_OnClientConnected(OnClientConnected)
 	AddCallback_OnClientDisconnected(OnClientDisconnected)
+	AddCallback_GameStateEnter( eGameState.Epilogue, OnEpilogueStarted )
 
 	thread TrackMoveState_Threaded()
+	thread SaveStatsPeriodically_Threaded()
 }
 
 void function AddStatCallback(string statCategory, string statAlias, string statSubAlias, void functionref(entity, float, string) callback, string subRef)
@@ -61,6 +63,29 @@ void function Stats_SaveStatDelayed(entity player, string statCategory, string s
 		return
 
 	Stats_SaveStat( player, statCategory, statAlias, statSubAlias )
+}
+
+void function Stats_SaveAllStats(entity player)
+{
+	if (player in file.cachedIntStatChanges)
+	{
+		foreach(string key, int val in file.cachedIntStatChanges[player])
+		{
+			player.SetPersistentVar( key, player.GetPersistentVarAsInt(key) + val )
+		}
+		
+		delete file.cachedIntStatChanges[player]
+	}
+	// save cached float stat change
+	if (player in file.cachedFloatStatChanges)
+	{
+		foreach(string key, float val in file.cachedFloatStatChanges[player])
+		{
+			player.SetPersistentVar( key, expect float(player.GetPersistentVar(key)) + val )
+		}
+		
+		delete file.cachedFloatStatChanges[player]
+	}
 }
 
 void function Stats_SaveStat(entity player, string statCategory, string statAlias, string statSubAlias)
@@ -170,6 +195,35 @@ void function Stats_IncrementStat( entity player, string statCategory, string st
 	string str = GetStatVar( statCategory, statAlias, statSubAlias )
 	int type = GetStatVarType( statCategory, statAlias, statSubAlias )
 
+	// stupid exception because respawn set this up as an int in script
+	// but it is actually a float, so the game will crash if we don't fix it somewhere
+	// i dont feel like committing all of sh_stats.gnut so im doing this instead
+	if (str == "mapStats[%mapname%].hoursPlayed[%gamemode%]")
+		type = ePlayerStatType.FLOAT
+
+	// this is rather hacky
+	string mode = GAMETYPE
+	string difficulty = ""
+	array<string> splitted = split(mode, "_")
+	mode = splitted[0]
+	if (splitted.len() > 1)
+		difficulty = splitted[1]
+
+	string saveVar = Stats_GetFixedSaveVar( str, GetMapName(), mode, difficulty )
+	// check if the map and mode exist in persistence
+	try
+	{
+		PersistenceGetEnumIndexForItemName( "gamemodes", mode )
+		PersistenceGetEnumIndexForItemName( "maps", GetMapName() )
+	}	
+	catch( ex )
+	{
+		// if we have an invalid mode or map for persistence, and it is used in the 
+		if (str != saveVar)
+			return
+	}
+	str = saveVar
+
 	switch (type)
 	{
 	case ePlayerStatType.INT:
@@ -212,8 +266,14 @@ void function Stats_RunCallbacks( string statVar, entity player, float change )
 	}
 }
 
+void function OnClientConnected(entity player)
+{
+	Stats_IncrementStat( player, "game_stats", "game_joined", "", 1.0 )
+}
+
 void function OnClientDisconnected(entity player)
 {
+	Stats_SaveAllStats(player)
 	// maybe we can save this stuff, but idk if we can access persistence in this callback
 	if (player in file.cachedIntStatChanges)
 		delete file.cachedIntStatChanges[player]
@@ -232,6 +292,45 @@ void function OnPlayerRespawned( entity player )
 	thread SetLastPosForDistanceStatValid_Threaded(player, true)
 }
 
+void function OnEpilogueStarted()
+{
+	// award players for match completed, wins, and losses
+	foreach (entity player in GetPlayerArray())
+	{
+		Stats_IncrementStat( player, "game_stats", "game_completed", "", 1.0 )
+
+		if (player.GetTeam() == GetWinningTeam())
+			Stats_IncrementStat( player, "game_stats", "game_won", "", 1.0 )
+		else
+			Stats_IncrementStat( player, "game_stats", "game_lost", "", 1.0 )
+	}
+	// award mvp and top 3 in each team
+	if (!IsFFAGame())
+	{
+		string gamemode = GameRules_GetGameMode()
+		int functionref( entity, entity ) compareFunc = GameMode_GetScoreCompareFunc( gamemode )
+
+		for(int team = 0; team < MAX_TEAMS; team++)
+		{
+			array<entity> players = GetPlayerArrayOfTeam(team)
+			if ( compareFunc == null )
+			{
+				printt( "gamemode doesn't have a compare func to get the top 3")
+				return
+			}
+			players.sort( compareFunc )
+			int max = min( players.len(), 3 ).tointeger()
+			for (int i = 0; i < max; i++)
+			{
+				if (i == 0)
+					Stats_IncrementStat( players[i], "game_stats", "mvp", "", 1.0 )
+				Stats_IncrementStat( players[i], "game_stats", "top3OnTeam", "", 1.0 )
+			}
+		}
+		
+	}
+}
+
 void function SetLastPosForDistanceStatValid_Threaded(entity player, bool val)
 {
 	WaitFrame()
@@ -246,8 +345,11 @@ void function TrackMoveState_Threaded()
 	if (IsLobby())
 		return
 
-	float lastTickTime = Time()
+	while (GetGameState() < eGameState.Playing)
+		WaitFrame()
 
+	float lastTickTime = Time()
+	
 	while(true)
 	{
 		// track distance stats
@@ -263,8 +365,8 @@ void function TrackMoveState_Threaded()
 				Stats_IncrementStat( player, "distance_stats", "total", "", distMiles )
 				if ( player.IsTitan() )
 				{
-					Stats_IncrementStat( player, "distance_stats", "asTitan", GetTitanCharacterName( player ), distMiles )
-					Stats_IncrementStat( player, "distance_stats", "asTitanTotal", "", distMiles )
+					Stats_IncrementStat( player, "distance_stats", GetTitanCharacterName( player ), "", distMiles )
+					Stats_IncrementStat( player, "distance_stats", "asTitan", "", distMiles )
 				}
 				else
 					Stats_IncrementStat( player, "distance_stats", "asPilot", "", distMiles )
@@ -293,11 +395,65 @@ void function TrackMoveState_Threaded()
 			player.p.lastPosForDistanceStat = player.GetOrigin()
 		}
 
+		float timeSeconds = Time() - lastTickTime
+		float timeHours = timeSeconds / 3600.0
+
 		// track time stats
 		foreach (entity player in GetPlayerArray())
 		{
+			// first tick i dont count
+			if (timeSeconds == 0)
+				break
+			
+			// more generic time stats
+			Stats_IncrementStat( player, "time_stats", "hours_total", "", timeHours )
+			if ( player.IsTitan() )
+			{
+				Stats_IncrementStat( player, "time_stats", "hours_as_titan_" + GetTitanCharacterName( player ), "", timeHours )
+				Stats_IncrementStat( player, "time_stats", "hours_as_titan", "", timeHours )
+			}
+			else
+				Stats_IncrementStat( player, "time_stats", "hours_as_pilot", "", timeHours )
+
+			string state = ""
+			// specific time stats
+			if (!IsAlive(player))
+				state = "hours_dead"
+			else if (player.IsWallHanging())
+				state = "hours_wallhanging"
+			else if (player.IsWallRunning())
+				state = "hours_wallrunning"
+			else if (!player.IsOnGround())
+				state = "hours_inAir"
+			
+			if (state != "")
+				Stats_IncrementStat( player, "time_stats", state, "", timeHours )
+
+			// weapon time stats
+			entity activeWeapon = player.GetActiveWeapon()
+			Stats_IncrementStat( player, "weapon_stats", "hoursUsed", activeWeapon.GetWeaponClassName(), timeHours )
+			foreach(entity weapon in player.GetMainWeapons())
+			{
+				Stats_IncrementStat( player, "weapon_stats", "hoursEquipped", weapon.GetWeaponClassName(), timeHours )
+			}
+
+			// map time stats
+			Stats_IncrementStat( player, "game_stats", "hoursPlayed", "", timeHours )
 		}
+
+		lastTickTime = Time()
 		// not rly worth doing this every frame, just a couple of times per second should be fine
 		wait 0.25
+	}
+}
+
+// this is kinda shit
+void function SaveStatsPeriodically_Threaded()
+{
+	while(true)
+	{
+		foreach(entity player in GetPlayerArray())
+			Stats_SaveAllStats(player)
+		wait 5
 	}
 }
