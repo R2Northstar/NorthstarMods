@@ -18,6 +18,8 @@ struct {
 
 	table< entity, table< string, int > > cachedIntStatChanges
 	table< table< string, float > > cachedFloatStatChanges
+
+	bool isFirstStrike = true
 } file
 
 void function Stats_Init()
@@ -189,7 +191,10 @@ void function Stats_OnPlayerDidDamage(entity player, var damageInfo)
 void function Stats_IncrementStat( entity player, string statCategory, string statAlias, string statSubAlias, float amount )
 {
 	if (!IsValidStat(statCategory, statAlias, statSubAlias))
+	{
+		printt("invalid stat: " + statCategory + " : " + statAlias + " : " + statSubAlias)
 		return
+	}
 
 
 	string str = GetStatVar( statCategory, statAlias, statSubAlias )
@@ -285,6 +290,12 @@ void function OnClientDisconnected(entity player)
 void function OnPlayerKilled( entity victim, entity attacker, var damageInfo )
 {
 	thread SetLastPosForDistanceStatValid_Threaded(victim, false)
+
+	if (file.isFirstStrike && attacker.IsPlayer())
+	{
+		UpdatePlayerStat( attacker, "kills_stats", "firstStrikes" )
+		file.isFirstStrike = false
+	}
 }
 
 void function OnPlayerRespawned( entity player )
@@ -365,7 +376,7 @@ void function TrackMoveState_Threaded()
 				Stats_IncrementStat( player, "distance_stats", "total", "", distMiles )
 				if ( player.IsTitan() )
 				{
-					Stats_IncrementStat( player, "distance_stats", GetTitanCharacterName( player ), "", distMiles )
+					Stats_IncrementStat( player, "distance_stats", "asTitan_" + GetTitanCharacterName( player ), "", distMiles )
 					Stats_IncrementStat( player, "distance_stats", "asTitan", "", distMiles )
 				}
 				else
@@ -439,6 +450,14 @@ void function TrackMoveState_Threaded()
 
 			// map time stats
 			Stats_IncrementStat( player, "game_stats", "hoursPlayed", "", timeHours )
+
+			// eject stats
+			if (Time() - player.p.lastEjectTime <= timeSeconds)
+			{
+				Stats_IncrementStat( player, "misc_stats", "timesEjected", "", timeHours )
+				if (GetNuclearPayload( player ) > 0)
+					Stats_IncrementStat( player, "misc_stats", "timesEjectedNuclear", "", timeHours )
+			}
 		}
 
 		lastTickTime = Time()
