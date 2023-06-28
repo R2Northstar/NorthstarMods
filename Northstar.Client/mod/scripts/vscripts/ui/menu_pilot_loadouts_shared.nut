@@ -288,7 +288,11 @@ asset function GetItemImageFromWeaponRefAndPersistenceValue(string weaponRef, in
 	string skinRef = GetSkinRefFromWeaponRefAndPersistenceValue( weaponRef, persistenceValue )
 	if (!IsRefValid(skinRef))
 	{
-		SetCachedLoadoutValue(GetUIPlayer(), "pilot", uiGlobal.editingLoadoutIndex, loadoutProperty, "0")
+		if (uiGlobal.editingLoadoutIndex != -1)
+		{
+			printt( "Resetting invalid " + loadoutProperty + " for weapon " + weaponRef )
+			SetCachedLoadoutValue(GetUIPlayer(), "pilot", uiGlobal.editingLoadoutIndex, loadoutProperty, "0")
+		}
 		return $"rui/menu/common/appearance_button_swatch"
 	}
 
