@@ -30,7 +30,6 @@ bool function ProgressionEnabledForPlayer(entity player)
 	if (player in file.progressionEnabled)
 		return file.progressionEnabled[player]
 	
-	printt("Player " + player.GetPlayerName() + " has not sent a progression preference")
 	return false
 	#else
 	return GetConVarBool("ns_progression_enabled")
