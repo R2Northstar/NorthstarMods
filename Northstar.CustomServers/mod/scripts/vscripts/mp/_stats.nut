@@ -23,8 +23,11 @@ struct {
 void function Stats_Init()
 {
 	AddCallback_OnPlayerKilled(OnPlayerKilled)
+	AddCallback_OnPlayerRespawned(OnPlayerRespawned)
 	//AddCallback_OnClientConnected(OnClientConnected)
 	AddCallback_OnClientDisconnected(OnClientDisconnected)
+
+	thread TrackMoveState_Threaded()
 }
 
 void function AddStatCallback(string statCategory, string statAlias, string statSubAlias, void functionref(entity, float, string) callback, string subRef)
@@ -221,5 +224,80 @@ void function OnClientDisconnected(entity player)
 
 void function OnPlayerKilled( entity victim, entity attacker, var damageInfo )
 {
-	// todo
+	thread SetLastPosForDistanceStatValid_Threaded(victim, false)
+}
+
+void function OnPlayerRespawned( entity player )
+{
+	thread SetLastPosForDistanceStatValid_Threaded(player, true)
+}
+
+void function SetLastPosForDistanceStatValid_Threaded(entity player, bool val)
+{
+	WaitFrame()
+	if (!IsValid(player))
+		return
+	player.p.lastPosForDistanceStatValid = val
+}
+
+void function TrackMoveState_Threaded()
+{
+	// just to be safe
+	if (IsLobby())
+		return
+
+	float lastTickTime = Time()
+
+	while(true)
+	{
+		// track distance stats
+		foreach (entity player in GetPlayerArray())
+		{
+			if (player.p.lastPosForDistanceStatValid)
+			{
+				// not 100% sure on using Distance2D over Distance tbh
+				float distInches = Distance2D(player.p.lastPosForDistanceStat, player.GetOrigin())
+				float distMiles = distInches / 63360.0
+
+				// more generic distance stats
+				Stats_IncrementStat( player, "distance_stats", "total", "", distMiles )
+				if ( player.IsTitan() )
+				{
+					Stats_IncrementStat( player, "distance_stats", "asTitan", GetTitanCharacterName( player ), distMiles )
+					Stats_IncrementStat( player, "distance_stats", "asTitanTotal", "", distMiles )
+				}
+				else
+					Stats_IncrementStat( player, "distance_stats", "asPilot", "", distMiles )
+
+
+				string state = ""
+				// specific distance stats
+				if (player.IsWallRunning())
+					state = "wallrunning"
+				else if (PlayerIsRodeoingTitan(player))
+				{
+					if (player.GetTitanSoulBeingRodeoed().GetTeam() == player.GetTeam())
+						state = "onFriendlyTitan"
+					else
+						state = "onEnemyTitan"
+				}
+				else if (player.IsZiplining())
+					state = "ziplining"
+				else if (!player.IsOnGround())
+					state = "inAir"
+
+				if (state != "")
+					Stats_IncrementStat( player, "distance_stats", state, "", distMiles )
+			}
+
+			player.p.lastPosForDistanceStat = player.GetOrigin()
+		}
+
+		// track time stats
+		foreach (entity player in GetPlayerArray())
+		{
+		}
+		// not rly worth doing this every frame, just a couple of times per second should be fine
+		wait 0.25
+	}
 }
