@@ -444,6 +444,7 @@ void function Evac( int evacTeam, float initialWait, float arrivalTime, float wa
 			continue
 
 		AddPlayerScore( player, "HotZoneExtract" )
+		UpdatePlayerStat( player, "misc_stats", "evacsSurvived" )
 
 		if (allEvac)
 			AddPlayerScore( player, "TeamBonusFullEvac" )
@@ -503,6 +504,8 @@ void function AddPlayerToEvacDropship( entity dropship, entity player )
 		
 	thread FirstPersonSequence( idleFp, player, dropship )
 	ViewConeWide( player ) // gotta do this after for some reason, adding it to idleFp does not work for some reason
+
+	UpdatePlayerStat( player, "misc_stats", "evacsAttempted" )
 }
 
 bool function PlayerInDropship( entity player, entity dropship )
