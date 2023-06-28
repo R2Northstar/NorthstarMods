@@ -28,20 +28,14 @@ void function Stats_Init()
 }
 
 void function AddStatCallback(string statCategory, string statAlias, string statSubAlias, void functionref(entity, float, string) callback, string subRef)
-{
-	// callback signature is ( entity player, float changeInValue, string itemRef )
-	// example args:
-	// category,       statAlias,     statSubAlias
-	// "weapon_stats", "titanDamage", "mp_titanweapon_predator_cannon"
-	//printt(statCategory + " " + statAlias + " " + statSubAlias)
-	
+{	
 	if (!IsValidStat(statCategory, statAlias, statSubAlias))
 		throw "INVALID STAT: " + statCategory + " : " + statAlias + " : " + statSubAlias
 	
 	
 	string str = GetStatVar(statCategory, statAlias, statSubAlias)
-	printt(str)
-	printt(statCategory + " : " + statAlias + " : " + statSubAlias)
+	//printt(str)
+	//printt(statCategory + " : " + statAlias + " : " + statSubAlias)
 	if (str in file.refs)
 	{
 		file.refs[str].append(subRef)
@@ -52,8 +46,6 @@ void function AddStatCallback(string statCategory, string statAlias, string stat
 		file.refs[str] <- [subRef]
 		file.callbacks[str] <- [callback]
 	}
-
-	
 }
 
 // a lot of this file seems to be doing caching of stats in some way
