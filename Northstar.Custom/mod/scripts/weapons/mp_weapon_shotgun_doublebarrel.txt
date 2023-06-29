@@ -209,6 +209,7 @@ WeaponData
 	"zoom_fov"										"50"
 	"reload_time" 									"1.85"
 	"reload_time_late1"								"1.45"
+	"reload_time_late2"								"1.45"
 	"reloadempty_time"								"1.85"
 	"reloadempty_time_late1"						"1.15
 	"reloadempty_time_late2"						"1"
