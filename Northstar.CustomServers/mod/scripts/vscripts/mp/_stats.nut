@@ -291,10 +291,68 @@ void function OnPlayerKilled( entity victim, entity attacker, var damageInfo )
 {
 	thread SetLastPosForDistanceStatValid_Threaded(victim, false)
 
-	if (file.isFirstStrike && attacker.IsPlayer())
+	// awards death stats
+	// handle NPCs killing players
+	// handle players killing players (death stats only)
+
+	//bySpectres
+	//byGrunts
+	//total
+	//totalPVP
+	//asPilot
+	//asTitan_<chassis>
+	//byPilots
+	//byNPCTitans_<chassis>
+	//byTitan_<chassis>
+	//suicides
+	//whileEjecting
+
+	if (victim.p.pilotEjecting)
+		Stats_IncrementStat( victim, "deaths_stats", "whileEjecting", "", 1.0 )
+}
+
+void function OnNPCKilled( entity victim, entity attacker, var damageInfo )
+{
+	// handle NPCs killing NPCs
+	// pass on players killing NPCs
+	if (attacker.IsPlayer())
+		PlayerKilledEntity( victim, attacker, damageInfo )
+}
+
+void function PlayerKilledEntity( entity victim, entity attacker, var damageInfo )
+{
+	// handle players killing NPCs
+	// pass on players killing players
+	if (victim.IsPlayer())
+		PlayerKilledPlayer( victim, attacker, damageInfo )
+}
+
+void function PlayerKilledPlayer( entity victim, entity attacker, var damageInfo )
+{
+	// doesnt award death stats
+	// handle players killing players (no death stats)
+
+
+	// handle first strike stat
+	if (file.isFirstStrike)
 	{
 		UpdatePlayerStat( attacker, "kills_stats", "firstStrikes" )
 		file.isFirstStrike = false
+	}
+
+	// handle victim ejecting
+	if (victim.p.pilotEjecting)
+	{
+		Stats_IncrementStat( attacker, "kills_stats", "ejectingPilots", "", 1.0 )
+
+		entity weapon = DamageInfo_GetWeapon(damageInfo)
+		if (IsValid(weapon))
+			Stats_IncrementStat( attacker, "weapon_kill_stats", "ejecting_pilots", weapon.GetWeaponClassName(), 1.0 )
+	}
+	// handle attacker ejecting
+	if (attacker.p.pilotEjecting)
+	{
+		Stats_IncrementStat( attacker, "kills_stats", "whileEjecting", "", 1.0 )
 	}
 }
 
@@ -442,22 +500,17 @@ void function TrackMoveState_Threaded()
 
 			// weapon time stats
 			entity activeWeapon = player.GetActiveWeapon()
-			Stats_IncrementStat( player, "weapon_stats", "hoursUsed", activeWeapon.GetWeaponClassName(), timeHours )
-			foreach(entity weapon in player.GetMainWeapons())
+			if (IsValid(activeWeapon))
 			{
-				Stats_IncrementStat( player, "weapon_stats", "hoursEquipped", weapon.GetWeaponClassName(), timeHours )
+				Stats_IncrementStat( player, "weapon_stats", "hoursUsed", activeWeapon.GetWeaponClassName(), timeHours )
+				foreach(entity weapon in player.GetMainWeapons())
+				{
+					Stats_IncrementStat( player, "weapon_stats", "hoursEquipped", weapon.GetWeaponClassName(), timeHours )
+				}
 			}
 
 			// map time stats
 			Stats_IncrementStat( player, "game_stats", "hoursPlayed", "", timeHours )
-
-			// eject stats
-			if (Time() - player.p.lastEjectTime <= timeSeconds)
-			{
-				Stats_IncrementStat( player, "misc_stats", "timesEjected", "", timeHours )
-				if (GetNuclearPayload( player ) > 0)
-					Stats_IncrementStat( player, "misc_stats", "timesEjectedNuclear", "", timeHours )
-			}
 		}
 
 		lastTickTime = Time()
