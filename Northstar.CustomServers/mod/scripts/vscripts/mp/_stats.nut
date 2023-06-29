@@ -157,6 +157,8 @@ void function UpdateTitanWeaponDamageStat(entity attacker, float savedDamage, va
 		return
 
 	string weaponName = GetWeaponClassNameFromDamageInfo(damageInfo)
+	if (weaponName == "")
+		return
 
 	Stats_IncrementStat( attacker, "weapon_stats", "titanDamage", weaponName, savedDamage )
 }
@@ -343,6 +345,19 @@ void function OnPlayerKilled( entity victim, entity attacker, var damageInfo )
 			Stats_IncrementStat( victim, "deaths_stats", "byNPCTitans__" + GetTitanCharacterName(attacker), "", 1.0 )
 		else
 			Stats_IncrementStat( victim, "deaths_stats", "byTitan_" + GetTitanCharacterName(attacker), "", 1.0 )
+
+		// pet titan kill stats
+		if (IsPetTitan(attacker))
+		{
+			entity owner = attacker.GetTitanSoul().GetBossPlayer()
+			if (IsValid(owner))
+			{
+				if (owner.GetPetTitanMode() == eNPCTitanMode.FOLLOW)
+					Stats_IncrementStat( owner, "kills_stats", "petTitanKillsFollowMode", "", 1.0 )
+				else
+					Stats_IncrementStat( owner, "kills_stats", "petTitanKillsGuardMode", "", 1.0 )
+			}
+		}
 	}
 	else
 		Stats_IncrementStat( victim, "deaths_stats", "byPilots", "", 1.0 )
@@ -386,13 +401,11 @@ void function PlayerKilledEntity( entity victim, entity attacker, var damageInfo
 	if (victim.IsPlayer())
 	{
 		PlayerKilledPlayer( victim, attacker, damageInfo )
-		return
 	}
 	
 	// handle unique damage source tracking
 	
 	int damageSource = DamageInfo_GetDamageSourceIdentifier( damageInfo )
-	printt(DamageSourceIDToString(damageSource))
 	switch (damageSource)
 	{
 	case eDamageSourceId.melee_pilot_emptyhanded:
@@ -418,6 +431,25 @@ void function PlayerKilledEntity( entity victim, entity attacker, var damageInfo
 		break
 	case eDamageSourceId.rodeo_battery_removal:
 		Stats_IncrementStat( attacker, "kills_stats", "rodeo_total", "", 1.0)
+		break
+	case eDamageSourceId.human_execution:
+		Stats_IncrementStat( attacker, "kills_stats", "pilotExecution", "", 1.0)
+		break
+	case eDamageSourceId.titan_execution:
+		// this is handled here because auto titans
+		// oh my god why does this one need specifically a capitalised titan character name
+		string name = GetTitanCharacterName(attacker)
+		foreach(key, val in GetCapitalizedTitanTypes())
+		{
+			if (val == name)
+			{
+				name = key
+				break
+			}
+		}
+		Stats_IncrementStat( attacker, "kills_stats", "titanExocution" + name, "", 1.0)
+		if ( IsPlayerPrimeTitan(attacker) )
+			Stats_IncrementStat( attacker, "titan_stats", "executionsAsPrime", GetTitanCharacterName(attacker), 1.0)
 		break
 	default:
 		break
@@ -463,7 +495,37 @@ void function PlayerKilledPlayer( entity victim, entity attacker, var damageInfo
 
 	if ( DamageInfo_GetCustomDamageType( damageInfo ) & DF_HEADSHOT )
 		Stats_IncrementStat( attacker, "kills_stats", "pilot_headshots_total", "", 1.0 )
+	
+	if ( attacker.IsTitan() )
+	{
+		Stats_IncrementStat( attacker, "kills_stats", "asTitan_" + GetTitanCharacterName(attacker), "", 1.0 )
+
+		if ( victim.IsTitan() )
+		{
+			Stats_IncrementStat( attacker, "titan_stats", "titansTotal", GetTitanCharacterName(attacker), 1.0 )
+			if (attacker.GetTitanSoul().IsDoomed())
+				Stats_IncrementStat( attacker, "kills_stats", "totalTitansWhileDoomed", "", 1.0 )
+		}
+		else
+		{
+			Stats_IncrementStat( attacker, "kills_stats", "pilots", "", 1.0 )
+			Stats_IncrementStat( attacker, "kills_stats", "totalPilots", "", 1.0 )
+			Stats_IncrementStat( attacker, "titan_stats", "pilots", GetTitanCharacterName(attacker), 1.0 )
+		}
 		
+		if ( IsPlayerPrimeTitan(attacker) )
+		{
+			if ( victim.IsTitan() )
+				Stats_IncrementStat( attacker, "titan_stats", "titansAsPrime", GetTitanCharacterName(attacker), 1.0 )
+			else
+				Stats_IncrementStat( attacker, "titan_stats", "pilotsAsPrime", GetTitanCharacterName(attacker), 1.0 )
+		}
+	}
+	else
+	{
+		Stats_IncrementStat( attacker, "kills_stats", "asPilot", "", 1.0 )
+		
+	}
 
 	// handle unique damage source tracking
 	
@@ -499,8 +561,10 @@ void function PlayerKilledPlayer( entity victim, entity attacker, var damageInfo
 	case eDamageSourceId.damagedef_titan_step:
 		Stats_IncrementStat( attacker, "kills_stats", "titanStepCrushPilot", "", 1.0)
 		break
-	case eDamageSourceId.rodeo_battery_removal:
-		Stats_IncrementStat( attacker, "kills_stats", "rodeo_total", "", 1.0)
+	case eDamageSourceId.human_execution:
+		string execution = attacker.p.lastExecutionUsed
+		Stats_IncrementStat( attacker, "kills_stats", "pilotExecutePilotUsing_" + execution, "", 1.0)
+		Stats_IncrementStat( attacker, "kills_stats", "pilotExecutePilot", "", 1.0)
 		break
 	default:
 		break
@@ -688,6 +752,8 @@ string function GetWeaponClassNameFromDamageInfo(var damageInfo)
 	if (!IsValid(weapon))
 	{
 		entity inflictor = DamageInfo_GetInflictor(damageInfo)
+		if (!IsValid(inflictor))
+			return ""
 		if (inflictor.IsProjectile())
 			return inflictor.ProjectileGetWeaponClassName()
 		else
