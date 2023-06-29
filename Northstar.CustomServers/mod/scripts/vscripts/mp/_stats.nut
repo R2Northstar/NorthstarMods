@@ -25,6 +25,7 @@ struct {
 void function Stats_Init()
 {
 	AddCallback_OnPlayerKilled(OnPlayerKilled)
+	AddCallback_OnNPCKilled(OnNPCKilled)
 	AddCallback_OnPlayerRespawned(OnPlayerRespawned)
 	AddCallback_OnClientConnected(OnClientConnected)
 	AddCallback_OnClientDisconnected(OnClientDisconnected)
@@ -155,11 +156,9 @@ void function UpdateTitanWeaponDamageStat(entity attacker, float savedDamage, va
 	if (!IsValid(attacker))
 		return
 
-	entity weapon = DamageInfo_GetWeapon(damageInfo)
-	if (!IsValid(weapon))
-		return
+	string weaponName = GetWeaponClassNameFromDamageInfo(damageInfo)
 
-	Stats_IncrementStat( attacker, "weapon_stats", "titanDamage", weapon.GetWeaponClassName(), savedDamage )
+	Stats_IncrementStat( attacker, "weapon_stats", "titanDamage", weaponName, savedDamage )
 }
 
 void function UpdateTitanCoreEarnedStat( entity player, entity titan, int count = 1 )
@@ -183,9 +182,22 @@ void function PostScoreEventUpdateStats(entity attacker, entity ent)
 
 }
 
-void function Stats_OnPlayerDidDamage(entity player, var damageInfo)
+void function Stats_OnPlayerDidDamage(entity victim, var damageInfo)
 {
+	entity attacker = DamageInfo_GetAttacker(damageInfo)
+	if (!attacker.IsPlayer() && IsPetTitan(attacker))
+		attacker = attacker.GetBossPlayer()
 
+	string weaponName = GetWeaponClassNameFromDamageInfo(damageInfo)
+	if (weaponName == "")
+		return
+
+	Stats_IncrementStat( attacker, "weapon_stats", "shotsHit", weaponName, 1.0 )
+
+	if ( DamageInfo_GetCustomDamageType( damageInfo ) & DF_CRITICAL )
+		Stats_IncrementStat( attacker, "weapon_stats", "critHits", weaponName, 1.0 )
+	if ( DamageInfo_GetCustomDamageType( damageInfo ) & DF_HEADSHOT )
+		Stats_IncrementStat( attacker, "weapon_stats", "headshots", weaponName, 1.0 )
 }
 
 void function Stats_IncrementStat( entity player, string statCategory, string statAlias, string statSubAlias, float amount )
@@ -335,7 +347,7 @@ void function OnPlayerKilled( entity victim, entity attacker, var damageInfo )
 	else
 		Stats_IncrementStat( victim, "deaths_stats", "byPilots", "", 1.0 )
 
-	if (victim == attacker)
+	if ( IsSuicide( attacker, victim, DamageInfo_GetDamageSourceIdentifier(damageInfo) ) )
 		Stats_IncrementStat( victim, "deaths_stats", "suicides", "", 1.0 )
 
 	if (victim.p.pilotEjecting)
@@ -372,7 +384,44 @@ void function PlayerKilledEntity( entity victim, entity attacker, var damageInfo
 	// handle players killing NPCs
 	// pass on players killing players
 	if (victim.IsPlayer())
+	{
 		PlayerKilledPlayer( victim, attacker, damageInfo )
+		return
+	}
+	
+	// handle unique damage source tracking
+	
+	int damageSource = DamageInfo_GetDamageSourceIdentifier( damageInfo )
+	printt(DamageSourceIDToString(damageSource))
+	switch (damageSource)
+	{
+	case eDamageSourceId.melee_pilot_emptyhanded:
+	case eDamageSourceId.melee_pilot_emptyhanded:
+	case eDamageSourceId.melee_pilot_arena:
+	case eDamageSourceId.melee_pilot_sword:
+		Stats_IncrementStat( attacker, "kills_stats", "pilotKickMelee", "", 1.0)
+		break
+	case eDamageSourceId.melee_titan_punch:
+	case eDamageSourceId.melee_titan_punch_ion:
+	case eDamageSourceId.melee_titan_punch_tone:
+	case eDamageSourceId.melee_titan_punch_legion:
+	case eDamageSourceId.melee_titan_punch_scorch:
+	case eDamageSourceId.melee_titan_punch_northstar:
+	case eDamageSourceId.melee_titan_punch_fighter:
+	case eDamageSourceId.melee_titan_punch_vanguard:
+	case eDamageSourceId.melee_titan_sword:
+	case eDamageSourceId.melee_titan_sword_aoe:
+		Stats_IncrementStat( attacker, "kills_stats", "titanMelee", "", 1.0)
+		break
+	case eDamageSourceId.damagedef_titan_step:
+		Stats_IncrementStat( attacker, "kills_stats", "titanStepCrush", "", 1.0)
+		break
+	case eDamageSourceId.rodeo_battery_removal:
+		Stats_IncrementStat( attacker, "kills_stats", "rodeo_total", "", 1.0)
+		break
+	default:
+		break
+	}
 }
 
 void function PlayerKilledPlayer( entity victim, entity attacker, var damageInfo )
@@ -381,7 +430,7 @@ void function PlayerKilledPlayer( entity victim, entity attacker, var damageInfo
 	// handle players killing players (no death stats)
 
 	// nothing to award other than suicide, which is handled in OnPlayerKilled
-	if (victim == attacker)
+	if ( IsSuicide( attacker, victim, DamageInfo_GetDamageSourceIdentifier(damageInfo) ) )
 		return
 
 	// handle first strike stat
@@ -392,13 +441,13 @@ void function PlayerKilledPlayer( entity victim, entity attacker, var damageInfo
 	}
 
 	// handle victim ejecting
-	if (victim.p.pilotEjecting)
+	if (false)//if (victim.p.pilotEjecting) REMOVE COMMENT
 	{
 		Stats_IncrementStat( attacker, "kills_stats", "ejectingPilots", "", 1.0 )
 
-		entity weapon = DamageInfo_GetWeapon(damageInfo)
-		if (IsValid(weapon))
-			Stats_IncrementStat( attacker, "weapon_kill_stats", "ejecting_pilots", weapon.GetWeaponClassName(), 1.0 )
+		string weaponName = GetWeaponClassNameFromDamageInfo(damageInfo)
+		if (weaponName != "")
+			Stats_IncrementStat( attacker, "weapon_kill_stats", "ejecting_pilots", weaponName, 1.0 )
 	}
 	// handle attacker ejecting
 	if (attacker.p.pilotEjecting)
@@ -411,6 +460,51 @@ void function PlayerKilledPlayer( entity victim, entity attacker, var damageInfo
 
 	if (GetDecoyActiveCountForPlayer( attacker ))
 		Stats_IncrementStat( attacker, "kills_stats", "pilotKillsWithHoloPilotActive", "", 1.0 )
+
+	if ( DamageInfo_GetCustomDamageType( damageInfo ) & DF_HEADSHOT )
+		Stats_IncrementStat( attacker, "kills_stats", "pilot_headshots_total", "", 1.0 )
+		
+
+	// handle unique damage source tracking
+	
+	int damageSource = DamageInfo_GetDamageSourceIdentifier( damageInfo )
+	printt(DamageSourceIDToString(damageSource))
+	switch (damageSource)
+	{
+	case eDamageSourceId.melee_pilot_emptyhanded:
+	case eDamageSourceId.melee_pilot_emptyhanded:
+	case eDamageSourceId.melee_pilot_arena:
+	case eDamageSourceId.melee_pilot_sword:
+		Stats_IncrementStat( attacker, "kills_stats", "pilotKickMeleePilot", "", 1.0)
+		break
+	case eDamageSourceId.melee_titan_punch:
+	case eDamageSourceId.melee_titan_punch_ion:
+	case eDamageSourceId.melee_titan_punch_tone:
+	case eDamageSourceId.melee_titan_punch_legion:
+	case eDamageSourceId.melee_titan_punch_scorch:
+	case eDamageSourceId.melee_titan_punch_northstar:
+	case eDamageSourceId.melee_titan_punch_fighter:
+	case eDamageSourceId.melee_titan_punch_vanguard:
+	case eDamageSourceId.melee_titan_sword:
+	case eDamageSourceId.melee_titan_sword_aoe:
+		Stats_IncrementStat( attacker, "kills_stats", "titanMeleePilot", "", 1.0)
+		break
+	case eDamageSourceId.damagedef_nuclear_core:
+		Stats_IncrementStat( attacker, "kills_stats", "nuclearCore", "", 1.0 )
+		break
+	case eDamageSourceId.damagedef_titan_fall:
+	case eDamageSourceId.damagedef_titan_hotdrop:
+		Stats_IncrementStat( attacker, "kills_stats", "titanFallKill", "", 1.0 )
+		break
+	case eDamageSourceId.damagedef_titan_step:
+		Stats_IncrementStat( attacker, "kills_stats", "titanStepCrushPilot", "", 1.0)
+		break
+	case eDamageSourceId.rodeo_battery_removal:
+		Stats_IncrementStat( attacker, "kills_stats", "rodeo_total", "", 1.0)
+		break
+	default:
+		break
+	}
 }
 
 void function OnPlayerRespawned( entity player )
@@ -585,4 +679,24 @@ void function SaveStatsPeriodically_Threaded()
 			Stats_SaveAllStats(player)
 		wait 5
 	}
+}
+
+string function GetWeaponClassNameFromDamageInfo(var damageInfo)
+{
+	entity weapon = DamageInfo_GetWeapon( damageInfo )
+	
+	if (!IsValid(weapon))
+	{
+		entity inflictor = DamageInfo_GetInflictor(damageInfo)
+		if (inflictor.IsProjectile())
+			return inflictor.ProjectileGetWeaponClassName()
+		else
+			return ""
+	}
+	else
+	{
+		return weapon.GetWeaponClassName()
+	}
+
+	unreachable
 }
