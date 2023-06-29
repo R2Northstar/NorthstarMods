@@ -295,17 +295,48 @@ void function OnPlayerKilled( entity victim, entity attacker, var damageInfo )
 	// handle NPCs killing players
 	// handle players killing players (death stats only)
 
-	//bySpectres
-	//byGrunts
-	//total
-	//totalPVP
-	//asPilot
-	//asTitan_<chassis>
-	//byPilots
-	//byNPCTitans_<chassis>
-	//byTitan_<chassis>
-	//suicides
-	//whileEjecting
+	// death_stats
+	//   bySpectres
+	//   byGrunts
+	//   total
+	//   totalPVP
+	//   asPilot
+	//   asTitan_<chassis>
+	//   byPilots
+	//   byNPCTitans_<chassis>
+	//   byTitan_<chassis>
+	//   suicides
+	//   whileEjecting
+
+	Stats_IncrementStat( victim, "deaths_stats", "total", "", 1.0 )
+
+	if (attacker.IsPlayer())
+		Stats_IncrementStat( victim, "deaths_stats", "totalPVP", "", 1.0 )
+
+	if (IsGrunt(attacker))
+		Stats_IncrementStat( victim, "deaths_stats", "byGrunts", "", 1.0 )
+	if (IsSpectre(attacker))
+		Stats_IncrementStat( victim, "deaths_stats", "bySpectres", "", 1.0 )
+
+	if (victim.IsTitan())
+	{
+		Stats_IncrementStat( victim, "deaths_stats", "asTitan_" + GetTitanCharacterName(victim), "", 1.0 )
+	}
+	else
+		Stats_IncrementStat( victim, "deaths_stats", "asPilot", "", 1.0 )
+
+	if (attacker.IsTitan())
+	{
+		if (attacker.IsNPC())
+			Stats_IncrementStat( victim, "deaths_stats", "byNPCTitans__" + GetTitanCharacterName(attacker), "", 1.0 )
+		else
+			Stats_IncrementStat( victim, "deaths_stats", "byTitan_" + GetTitanCharacterName(attacker), "", 1.0 )
+	}
+	else
+		Stats_IncrementStat( victim, "deaths_stats", "byPilots", "", 1.0 )
+
+	if (victim == attacker)
+		Stats_IncrementStat( victim, "deaths_stats", "suicides", "", 1.0 )
 
 	if (victim.p.pilotEjecting)
 		Stats_IncrementStat( victim, "deaths_stats", "whileEjecting", "", 1.0 )
@@ -313,10 +344,27 @@ void function OnPlayerKilled( entity victim, entity attacker, var damageInfo )
 
 void function OnNPCKilled( entity victim, entity attacker, var damageInfo )
 {
-	// handle NPCs killing NPCs
+	// handle NPCs killing NPCs (auto titans)
+	// pass on players killing NPCs
+	// still unfinished
+
 	// pass on players killing NPCs
 	if (attacker.IsPlayer())
+	{
 		PlayerKilledEntity( victim, attacker, damageInfo )
+		return
+	}
+	
+	// handle NPCs killing NPCs (auto titans)
+	if (!IsPetTitan(attacker))
+		return
+	
+	entity player = attacker.GetTitanSoul().GetBossPlayer()
+	if (!IsValid(player))
+		return
+
+	Stats_IncrementStat( player, "kills_stats", "total", "", 1.0 )
+	Stats_IncrementStat( player, "kills_stats", "totalNPC", "", 1.0 )
 }
 
 void function PlayerKilledEntity( entity victim, entity attacker, var damageInfo )
@@ -332,6 +380,9 @@ void function PlayerKilledPlayer( entity victim, entity attacker, var damageInfo
 	// doesnt award death stats
 	// handle players killing players (no death stats)
 
+	// nothing to award other than suicide, which is handled in OnPlayerKilled
+	if (victim == attacker)
+		return
 
 	// handle first strike stat
 	if (file.isFirstStrike)
@@ -354,6 +405,12 @@ void function PlayerKilledPlayer( entity victim, entity attacker, var damageInfo
 	{
 		Stats_IncrementStat( attacker, "kills_stats", "whileEjecting", "", 1.0 )
 	}
+
+	if (GetAmpedWallsActiveCountForPlayer( attacker ))
+		Stats_IncrementStat( attacker, "kills_stats", "pilotKillsWithAmpedWallActive", "", 1.0 )
+
+	if (GetDecoyActiveCountForPlayer( attacker ))
+		Stats_IncrementStat( attacker, "kills_stats", "pilotKillsWithHoloPilotActive", "", 1.0 )
 }
 
 void function OnPlayerRespawned( entity player )
