@@ -1,0 +1,41 @@
+"Basic"
+{
+	"$surfaceprop" "glass"
+
+	"$basetexture" "models\weapons\attachments\twinbarrel\ammo_counter_numbers_col"
+	"$selfillummask" "models\weapons\attachments\twinbarrel\ammo_counter_numbers_ilm"
+	"$translucent" "1"
+	"$decal" 1 
+	"$decalscale" 0.25
+
+	"$ammo" "0"
+	"$atlasFrames" "[16 1]"
+	"$atlasFrameStart" "[0 0]"
+	
+	"Proxies"
+	{
+		"ClipAmmo"
+		{
+			"resultVar" "$ammo"
+		}
+	
+		"NumericCounterAtlasFrame"
+		{
+			"value"						"$ammo"
+			"digitIndex"				"0"
+			"resultAtlasFrameIndexVar"	"$atlasFrameStart[0]"
+		}
+	
+		"TextureAtlas"
+		{
+			"frameSize"		"$atlasFrames"
+			"frameStart"	"$atlasFrameStart"
+			"resultVar"		"$basetexturetransform"
+		}
+
+		"ClipAmmoColor"
+		{
+			"resultVar"			"$color"
+		}
+	}
+}
