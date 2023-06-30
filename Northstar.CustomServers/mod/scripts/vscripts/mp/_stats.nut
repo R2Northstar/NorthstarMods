@@ -176,12 +176,12 @@ void function UpdateTitanCoreEarnedStat( entity player, entity titan, int count 
 
 void function PreScoreEventUpdateStats(entity attacker, entity ent)
 {
-
+	// used to track kill streaks ending i think (that stuff gets reset during score event update)
 }
 
 void function PostScoreEventUpdateStats(entity attacker, entity ent)
 {
-
+	// used to track kill streaks starting maybe
 }
 
 void function Stats_OnPlayerDidDamage(entity victim, var damageInfo)
@@ -222,13 +222,11 @@ void function Stats_IncrementStat( entity player, string statCategory, string st
 
 	// this is rather hacky
 	string mode = GAMETYPE
-	string difficulty = ""
-	array<string> splitted = split(mode, "_")
-	mode = splitted[0]
-	if (splitted.len() > 1)
-		difficulty = splitted[1]
+	int difficulty = GetDifficultyLevel()
+	if (difficulty >= 5)
+		return
 
-	string saveVar = Stats_GetFixedSaveVar( str, GetMapName(), mode, difficulty )
+	string saveVar = Stats_GetFixedSaveVar( str, GetMapName(), mode, difficulty.tostring() )
 	// check if the map and mode exist in persistence
 	try
 	{
@@ -237,9 +235,13 @@ void function Stats_IncrementStat( entity player, string statCategory, string st
 	}	
 	catch( ex )
 	{
-		// if we have an invalid mode or map for persistence, and it is used in the 
+		// if we have an invalid mode or map for persistence, and it is used in the
+		// persistence string, we can't save the persistence so we have to just return
 		if (str != saveVar)
+		{
+			printt(ex)
 			return
+		}
 	}
 	str = saveVar
 
