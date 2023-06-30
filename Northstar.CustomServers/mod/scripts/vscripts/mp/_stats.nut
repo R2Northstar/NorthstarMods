@@ -24,14 +24,14 @@ struct {
 
 void function Stats_Init()
 {
-	AddCallback_OnPlayerKilled(OnPlayerKilled)
-	AddCallback_OnNPCKilled(OnNPCKilled)
+	AddCallback_OnPlayerKilled(OnPlayerOrNPCKilled)
+	AddCallback_OnNPCKilled(OnPlayerOrNPCKilled)
 	AddCallback_OnPlayerRespawned(OnPlayerRespawned)
 	AddCallback_OnClientConnected(OnClientConnected)
 	AddCallback_OnClientDisconnected(OnClientDisconnected)
 	AddCallback_GameStateEnter( eGameState.Epilogue, OnEpilogueStarted )
 
-	thread TrackMoveState_Threaded()
+	thread HandleDistanceAndTimeStats_Threaded()
 	thread SaveStatsPeriodically_Threaded()
 }
 
@@ -156,7 +156,7 @@ void function UpdateTitanWeaponDamageStat(entity attacker, float savedDamage, va
 	if (!IsValid(attacker))
 		return
 
-	string weaponName = GetWeaponClassNameFromDamageInfo(damageInfo)
+	string weaponName = GetPersistenceRefFromDamageInfo(damageInfo)
 	if (weaponName == "")
 		return
 
@@ -186,11 +186,16 @@ void function PostScoreEventUpdateStats(entity attacker, entity ent)
 
 void function Stats_OnPlayerDidDamage(entity victim, var damageInfo)
 {
+	// try and get the player
 	entity attacker = DamageInfo_GetAttacker(damageInfo)
-	if (!attacker.IsPlayer() && IsPetTitan(attacker))
-		attacker = attacker.GetBossPlayer()
+	// get the player from their titan
+	if (attacker.IsTitan() && IsPetTitan(attacker))
+		attacker = attacker.GetTitanSoul().GetBossPlayer()
 
-	string weaponName = GetWeaponClassNameFromDamageInfo(damageInfo)
+	if (!attacker.IsPlayer())
+		return
+
+	string weaponName = GetPersistenceRefFromDamageInfo(damageInfo)
 	if (weaponName == "")
 		return
 
@@ -209,7 +214,6 @@ void function Stats_IncrementStat( entity player, string statCategory, string st
 		printt("invalid stat: " + statCategory + " : " + statAlias + " : " + statSubAlias)
 		return
 	}
-
 
 	string str = GetStatVar( statCategory, statAlias, statSubAlias )
 	int type = GetStatVarType( statCategory, statAlias, statSubAlias )
@@ -303,274 +307,96 @@ void function OnClientDisconnected(entity player)
 		delete file.cachedFloatStatChanges[player]
 }
 
-void function OnPlayerKilled( entity victim, entity attacker, var damageInfo )
+void function OnPlayerOrNPCKilled( entity victim, entity attacker, var damageInfo )
 {
-	thread SetLastPosForDistanceStatValid_Threaded(victim, false)
-
-	// awards death stats
-	// handle NPCs killing players
-	// handle players killing players (death stats only)
-
-	// death_stats
-	//   bySpectres
-	//   byGrunts
-	//   total
-	//   totalPVP
-	//   asPilot
-	//   asTitan_<chassis>
-	//   byPilots
-	//   byNPCTitans_<chassis>
-	//   byTitan_<chassis>
-	//   suicides
-	//   whileEjecting
-
-	Stats_IncrementStat( victim, "deaths_stats", "total", "", 1.0 )
-
-	if (attacker.IsPlayer())
-		Stats_IncrementStat( victim, "deaths_stats", "totalPVP", "", 1.0 )
-
-	if (IsGrunt(attacker))
-		Stats_IncrementStat( victim, "deaths_stats", "byGrunts", "", 1.0 )
-	if (IsSpectre(attacker))
-		Stats_IncrementStat( victim, "deaths_stats", "bySpectres", "", 1.0 )
-
-	if (victim.IsTitan())
-	{
-		Stats_IncrementStat( victim, "deaths_stats", "asTitan_" + GetTitanCharacterName(victim), "", 1.0 )
-	}
-	else
-		Stats_IncrementStat( victim, "deaths_stats", "asPilot", "", 1.0 )
-
-	if (attacker.IsTitan())
-	{
-		if (attacker.IsNPC())
-			Stats_IncrementStat( victim, "deaths_stats", "byNPCTitans__" + GetTitanCharacterName(attacker), "", 1.0 )
-		else
-			Stats_IncrementStat( victim, "deaths_stats", "byTitan_" + GetTitanCharacterName(attacker), "", 1.0 )
-
-		// pet titan kill stats
-		if (IsPetTitan(attacker))
-		{
-			entity owner = attacker.GetTitanSoul().GetBossPlayer()
-			if (IsValid(owner))
-			{
-				if (owner.GetPetTitanMode() == eNPCTitanMode.FOLLOW)
-					Stats_IncrementStat( owner, "kills_stats", "petTitanKillsFollowMode", "", 1.0 )
-				else
-					Stats_IncrementStat( owner, "kills_stats", "petTitanKillsGuardMode", "", 1.0 )
-			}
-		}
-	}
-	else
-		Stats_IncrementStat( victim, "deaths_stats", "byPilots", "", 1.0 )
-
-	if ( IsSuicide( attacker, victim, DamageInfo_GetDamageSourceIdentifier(damageInfo) ) )
-		Stats_IncrementStat( victim, "deaths_stats", "suicides", "", 1.0 )
-
-	if (victim.p.pilotEjecting)
-		Stats_IncrementStat( victim, "deaths_stats", "whileEjecting", "", 1.0 )
+	if ( victim.IsPlayer() )
+		thread SetLastPosForDistanceStatValid_Threaded( victim, false ) 
+	
+	HandleDeathStats( victim, attacker, damageInfo )
+	HandleKillStats( victim, attacker, damageInfo )
+	HandleWeaponKillStats( victim, attacker, damageInfo )
 }
 
-void function OnNPCKilled( entity victim, entity attacker, var damageInfo )
+void function HandleDeathStats( entity player, entity attacker, var damageInfo )
 {
-	// handle NPCs killing NPCs (auto titans)
-	// pass on players killing NPCs
-	// still unfinished
-
-	// pass on players killing NPCs
-	if (attacker.IsPlayer())
-	{
-		PlayerKilledEntity( victim, attacker, damageInfo )
+	if (!IsValid(player) || !player.IsPlayer())
 		return
+	
+	// total
+	// totalPVP
+	// asPilot
+	// asTitan_<chassis>
+	// byPilots
+	// byTitan_<chassis>
+	// bySpectres
+	// byGrunts
+	// byNPCTitans_<chassis>
+	// suicides
+	// whileEjecting
+	
+	// total
+	Stats_IncrementStat( player, "deaths_stats", "total", "", 1.0 )
+
+	// these all rely on the attacker being valid
+	if ( IsValid(attacker) )
+	{
+		// totalPVP
+		// note: I'm not sure if owned entities count towards totalPVP
+		// such as auto-titans, turrets, etc.
+		if ( attacker.IsPlayer() || attacker.GetBossPlayer() )
+			Stats_IncrementStat( player, "deaths_stats", "totalPVP", "", 1.0 )
+
+		// byPilots
+		if ( IsPilot(attacker) )
+			Stats_IncrementStat( player, "deaths_stats", "byPilots", "", 1.0 )
+
+		// byTitan_<chassis>
+		if ( attacker.IsTitan() && attacker.IsPlayer() )
+			Stats_IncrementStat( player, "deaths_stats", "byTitan_" + GetTitanCharacterName(attacker), "", 1.0 )
+
+		// bySpectres
+		if ( IsSpectre(attacker) )
+			Stats_IncrementStat( player, "deaths_stats", "bySpectres", "", 1.0 )
+
+		// byGrunts
+		if ( IsGrunt(attacker) )
+			Stats_IncrementStat( player, "deaths_stats", "byGrunts", "", 1.0 )
+
+		// byNPCTitans_<chassis>
+		if ( attacker.IsTitan() && attacker.IsNPC() )
+			Stats_IncrementStat( player, "deaths_stats", "byNPCTitans_" + GetTitanCharacterName(attacker), "", 1.0 )
 	}
 	
-	// handle NPCs killing NPCs (auto titans)
-	if (!IsPetTitan(attacker))
-		return
-	
-	entity player = attacker.GetTitanSoul().GetBossPlayer()
-	if (!IsValid(player))
-		return
+	// asPilot
+	if ( IsPilot(player) )
+		Stats_IncrementStat( player, "deaths_stats", "asPilot", "", 1.0 )
 
-	Stats_IncrementStat( player, "kills_stats", "total", "", 1.0 )
-	Stats_IncrementStat( player, "kills_stats", "totalNPC", "", 1.0 )
+	// asTitan_<chassis>
+	if ( player.IsTitan() )
+		Stats_IncrementStat( player, "deaths_stats", "asTitan_" + GetTitanCharacterName(player), "", 1.0 )
+
+	// suicides
+	if ( IsSuicide( attacker, player, DamageInfo_GetDamageSourceIdentifier(damageInfo) ) )
+		Stats_IncrementStat( player, "deaths_stats", "suicides", "", 1.0 )
+
+	// whileEjecting
+	if ( player.p.pilotEjecting )
+		Stats_IncrementStat( player, "deaths_stats", "whileEjecting", "", 1.0 )
 }
 
-void function PlayerKilledEntity( entity victim, entity attacker, var damageInfo )
+void function HandleWeaponKillStats( entity attacker, entity victim, var damageInfo )
 {
-	// handle players killing NPCs
-	// pass on players killing players
-	if (victim.IsPlayer())
-	{
-		PlayerKilledPlayer( victim, attacker, damageInfo )
-	}
-	
-	// handle unique damage source tracking
-	
-	int damageSource = DamageInfo_GetDamageSourceIdentifier( damageInfo )
-	switch (damageSource)
-	{
-	case eDamageSourceId.melee_pilot_emptyhanded:
-	case eDamageSourceId.melee_pilot_emptyhanded:
-	case eDamageSourceId.melee_pilot_arena:
-	case eDamageSourceId.melee_pilot_sword:
-		Stats_IncrementStat( attacker, "kills_stats", "pilotKickMelee", "", 1.0)
-		break
-	case eDamageSourceId.melee_titan_punch:
-	case eDamageSourceId.melee_titan_punch_ion:
-	case eDamageSourceId.melee_titan_punch_tone:
-	case eDamageSourceId.melee_titan_punch_legion:
-	case eDamageSourceId.melee_titan_punch_scorch:
-	case eDamageSourceId.melee_titan_punch_northstar:
-	case eDamageSourceId.melee_titan_punch_fighter:
-	case eDamageSourceId.melee_titan_punch_vanguard:
-	case eDamageSourceId.melee_titan_sword:
-	case eDamageSourceId.melee_titan_sword_aoe:
-		Stats_IncrementStat( attacker, "kills_stats", "titanMelee", "", 1.0)
-		break
-	case eDamageSourceId.damagedef_titan_step:
-		Stats_IncrementStat( attacker, "kills_stats", "titanStepCrush", "", 1.0)
-		break
-	case eDamageSourceId.rodeo_battery_removal:
-		Stats_IncrementStat( attacker, "kills_stats", "rodeo_total", "", 1.0)
-		break
-	case eDamageSourceId.human_execution:
-		Stats_IncrementStat( attacker, "kills_stats", "pilotExecution", "", 1.0)
-		break
-	case eDamageSourceId.titan_execution:
-		// this is handled here because auto titans
-		// oh my god why does this one need specifically a capitalised titan character name
-		string name = GetTitanCharacterName(attacker)
-		foreach(key, val in GetCapitalizedTitanTypes())
-		{
-			if (val == name)
-			{
-				name = key
-				break
-			}
-		}
-		Stats_IncrementStat( attacker, "kills_stats", "titanExocution" + name, "", 1.0)
-		if ( IsPlayerPrimeTitan(attacker) )
-			Stats_IncrementStat( attacker, "titan_stats", "executionsAsPrime", GetTitanCharacterName(attacker), 1.0)
-		break
-	default:
-		break
-	}
+
 }
 
-void function PlayerKilledPlayer( entity victim, entity attacker, var damageInfo )
+void function HandleKillStats( entity player, entity victim, var damageInfo )
 {
-	// doesnt award death stats
-	// handle players killing players (no death stats)
 
-	// nothing to award other than suicide, which is handled in OnPlayerKilled
-	if ( IsSuicide( attacker, victim, DamageInfo_GetDamageSourceIdentifier(damageInfo) ) )
-		return
+}
 
-	// handle first strike stat
-	if (file.isFirstStrike)
-	{
-		UpdatePlayerStat( attacker, "kills_stats", "firstStrikes" )
-		file.isFirstStrike = false
-	}
+void function HandleGameStats( int winningTeam )
+{
 
-	// handle victim ejecting
-	if (false)//if (victim.p.pilotEjecting) REMOVE COMMENT
-	{
-		Stats_IncrementStat( attacker, "kills_stats", "ejectingPilots", "", 1.0 )
-
-		string weaponName = GetWeaponClassNameFromDamageInfo(damageInfo)
-		if (weaponName != "")
-			Stats_IncrementStat( attacker, "weapon_kill_stats", "ejecting_pilots", weaponName, 1.0 )
-	}
-	// handle attacker ejecting
-	if (attacker.p.pilotEjecting)
-	{
-		Stats_IncrementStat( attacker, "kills_stats", "whileEjecting", "", 1.0 )
-	}
-
-	if (GetAmpedWallsActiveCountForPlayer( attacker ))
-		Stats_IncrementStat( attacker, "kills_stats", "pilotKillsWithAmpedWallActive", "", 1.0 )
-
-	if (GetDecoyActiveCountForPlayer( attacker ))
-		Stats_IncrementStat( attacker, "kills_stats", "pilotKillsWithHoloPilotActive", "", 1.0 )
-
-	if ( DamageInfo_GetCustomDamageType( damageInfo ) & DF_HEADSHOT )
-		Stats_IncrementStat( attacker, "kills_stats", "pilot_headshots_total", "", 1.0 )
-	
-	if ( attacker.IsTitan() )
-	{
-		Stats_IncrementStat( attacker, "kills_stats", "asTitan_" + GetTitanCharacterName(attacker), "", 1.0 )
-
-		if ( victim.IsTitan() )
-		{
-			Stats_IncrementStat( attacker, "titan_stats", "titansTotal", GetTitanCharacterName(attacker), 1.0 )
-			if (attacker.GetTitanSoul().IsDoomed())
-				Stats_IncrementStat( attacker, "kills_stats", "totalTitansWhileDoomed", "", 1.0 )
-		}
-		else
-		{
-			Stats_IncrementStat( attacker, "kills_stats", "pilots", "", 1.0 )
-			Stats_IncrementStat( attacker, "kills_stats", "totalPilots", "", 1.0 )
-			Stats_IncrementStat( attacker, "titan_stats", "pilots", GetTitanCharacterName(attacker), 1.0 )
-		}
-		
-		if ( IsPlayerPrimeTitan(attacker) )
-		{
-			if ( victim.IsTitan() )
-				Stats_IncrementStat( attacker, "titan_stats", "titansAsPrime", GetTitanCharacterName(attacker), 1.0 )
-			else
-				Stats_IncrementStat( attacker, "titan_stats", "pilotsAsPrime", GetTitanCharacterName(attacker), 1.0 )
-		}
-	}
-	else
-	{
-		Stats_IncrementStat( attacker, "kills_stats", "asPilot", "", 1.0 )
-		
-	}
-
-	// handle unique damage source tracking
-	
-	int damageSource = DamageInfo_GetDamageSourceIdentifier( damageInfo )
-	printt(DamageSourceIDToString(damageSource))
-	switch (damageSource)
-	{
-	case eDamageSourceId.melee_pilot_emptyhanded:
-	case eDamageSourceId.melee_pilot_emptyhanded:
-	case eDamageSourceId.melee_pilot_arena:
-	case eDamageSourceId.melee_pilot_sword:
-		Stats_IncrementStat( attacker, "kills_stats", "pilotKickMeleePilot", "", 1.0)
-		break
-	case eDamageSourceId.melee_titan_punch:
-	case eDamageSourceId.melee_titan_punch_ion:
-	case eDamageSourceId.melee_titan_punch_tone:
-	case eDamageSourceId.melee_titan_punch_legion:
-	case eDamageSourceId.melee_titan_punch_scorch:
-	case eDamageSourceId.melee_titan_punch_northstar:
-	case eDamageSourceId.melee_titan_punch_fighter:
-	case eDamageSourceId.melee_titan_punch_vanguard:
-	case eDamageSourceId.melee_titan_sword:
-	case eDamageSourceId.melee_titan_sword_aoe:
-		Stats_IncrementStat( attacker, "kills_stats", "titanMeleePilot", "", 1.0)
-		break
-	case eDamageSourceId.damagedef_nuclear_core:
-		Stats_IncrementStat( attacker, "kills_stats", "nuclearCore", "", 1.0 )
-		break
-	case eDamageSourceId.damagedef_titan_fall:
-	case eDamageSourceId.damagedef_titan_hotdrop:
-		Stats_IncrementStat( attacker, "kills_stats", "titanFallKill", "", 1.0 )
-		break
-	case eDamageSourceId.damagedef_titan_step:
-		Stats_IncrementStat( attacker, "kills_stats", "titanStepCrushPilot", "", 1.0)
-		break
-	case eDamageSourceId.human_execution:
-		string execution = attacker.p.lastExecutionUsed
-		Stats_IncrementStat( attacker, "kills_stats", "pilotExecutePilotUsing_" + execution, "", 1.0)
-		Stats_IncrementStat( attacker, "kills_stats", "pilotExecutePilot", "", 1.0)
-		break
-	default:
-		break
-	}
 }
 
 void function OnPlayerRespawned( entity player )
@@ -625,7 +451,7 @@ void function SetLastPosForDistanceStatValid_Threaded(entity player, bool val)
 	player.p.lastPosForDistanceStatValid = val
 }
 
-void function TrackMoveState_Threaded()
+void function HandleDistanceAndTimeStats_Threaded()
 {
 	// just to be safe
 	if (IsLobby())
@@ -747,24 +573,15 @@ void function SaveStatsPeriodically_Threaded()
 	}
 }
 
-string function GetWeaponClassNameFromDamageInfo(var damageInfo)
+string function GetPersistenceRefFromDamageInfo(var damageInfo)
 {
-	entity weapon = DamageInfo_GetWeapon( damageInfo )
-	
-	if (!IsValid(weapon))
+	string damageSourceString = DamageSourceIDToString( DamageInfo_GetDamageSourceIdentifier( damageInfo ) )
+
+	foreach(str in shGlobalMP.statsItemsList)
 	{
-		entity inflictor = DamageInfo_GetInflictor(damageInfo)
-		if (!IsValid(inflictor))
-			return ""
-		if (inflictor.IsProjectile())
-			return inflictor.ProjectileGetWeaponClassName()
-		else
-			return ""
-	}
-	else
-	{
-		return weapon.GetWeaponClassName()
+		if (str == damageSourceString)
+			return damageSourceString
 	}
 
-	unreachable
+	return ""
 }
