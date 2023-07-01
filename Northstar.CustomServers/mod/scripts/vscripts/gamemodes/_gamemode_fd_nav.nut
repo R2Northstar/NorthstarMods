@@ -4,7 +4,13 @@ global function getRoute
 global function Dev_MarkRoute
 global function NPCStuckTracker
 
-
+/*
+  _  _  ___   ___   _  _             _              _    _              ___  _           __   __ 
+ | \| || _ \ / __| | \| | __ _ __ __(_) __ _  __ _ | |_ (_) ___  _ _   / __|| |_  _  _  / _| / _|
+ | .` ||  _/| (__  | .` |/ _` |\ V /| |/ _` |/ _` ||  _|| |/ _ \| ' \  \__ \|  _|| || ||  _||  _|
+ |_|\_||_|   \___| |_|\_|\__,_| \_/ |_|\__, |\__,_| \__||_|\___/|_||_| |___/ \__| \_,_||_|  |_|  
+                                       |___/                                                     
+*/
 
 void function singleNav_thread( entity npc, string routeName, int nodesToSkip = 1, float nextDistance = -1.0, bool shouldLoop = false )
 {
@@ -26,6 +32,10 @@ void function singleNav_thread( entity npc, string routeName, int nodesToSkip = 
 	float dist = 65535
 	entity targetNode
 	string routetaken
+	string GuySquadName = expect string( npc.kv.squadname )
+	array<entity> squad
+	if ( GuySquadName != "" )
+		squad = GetNPCArrayBySquad( GuySquadName )
 	
 	if( !npc.IsTitan() )
 		thread NPCStuckTracker( npc )
@@ -38,14 +48,28 @@ void function singleNav_thread( entity npc, string routeName, int nodesToSkip = 
 			{
 				if( !node.HasKey( "route_name" ) )
 					continue
-				if ( Distance( npc.GetOrigin(), node.GetOrigin() ) < dist )
+				if( squad.len() > 0 )
+				{
+					if ( Distance( squad[0].GetOrigin(), node.GetOrigin() ) < dist )
+					{
+						dist = Distance( squad[0].GetOrigin(), node.GetOrigin() )
+						targetNode = node
+					}
+				}
+				else if ( Distance( npc.GetOrigin(), node.GetOrigin() ) < dist )
 				{
 					dist = Distance( npc.GetOrigin(), node.GetOrigin() )
 					targetNode = node
 				}
 			}
 			
-			printt("Entity had no route defined, using nearest node: " + targetNode.kv.route_name )
+			if( squad.len() > 0 )
+			{
+				if( npc == squad[0] )
+					printt( "Squad entities had no route defined, using nearest node: " + targetNode.kv.route_name )
+			}
+			else
+				printt( "Single entity had no route defined, using nearest node: " + targetNode.kv.route_name )
 		}
 		else
 			targetNode = GetRouteStart( routeName )
@@ -60,13 +84,27 @@ void function singleNav_thread( entity npc, string routeName, int nodesToSkip = 
 		{
 			foreach ( routename, routeamount in routes )
 			{
-				if ( Distance( npc.GetOrigin(), routeamount[0] ) < dist )
+				if( squad.len() > 0 )
+				{
+					if ( Distance( squad[0].GetOrigin(), routeamount[0] ) < dist )
+					{
+						dist = Distance( squad[0].GetOrigin(), routeamount[0] )
+						routetaken = routename
+					}
+				}
+				else if ( Distance( npc.GetOrigin(), routeamount[0] ) < dist )
 				{
 					dist = Distance( npc.GetOrigin(), routeamount[0] )
 					routetaken = routename
 				}
 			}
-			printt("Entity had no route defined, using nearest custom route: " + routetaken )
+			if( squad.len() > 0 )
+			{
+				if( npc == squad[0] )
+					printt( "Squad entities had no route defined, using nearest node: " + routetaken )
+			}
+			else
+				printt( "Single entity had no route defined, using nearest node: " + routetaken )
 		}
 		else
 			routetaken = routeName
@@ -137,11 +175,14 @@ void function droneNav_thread( entity npc, string routeName, int nodesToSkip = 0
 		return
 
 	WaitFrame()
-
 	float dist = 65535
 	entity targetNode
 	entity firstNode
 	string routetaken
+	string GuySquadName = expect string( npc.kv.squadname )
+	array<entity> squad
+	if ( GuySquadName != "" )
+		squad = GetNPCArrayBySquad( GuySquadName )
 	
 	if( !npc.IsTitan() )
 		thread NPCStuckTracker( npc )
@@ -154,14 +195,29 @@ void function droneNav_thread( entity npc, string routeName, int nodesToSkip = 0
 			{
 				if( !node.HasKey( "route_name" ) )
 					continue
-				if ( Distance( npc.GetOrigin(), node.GetOrigin() ) < dist )
+				if( squad.len() > 0 )
+				{
+					if ( Distance( squad[0].GetOrigin(), node.GetOrigin() ) < dist )
+					{
+						dist = Distance( squad[0].GetOrigin(), node.GetOrigin() )
+						targetNode = node
+						firstNode = node
+					}
+				}
+				else if ( Distance( npc.GetOrigin(), node.GetOrigin() ) < dist )
 				{
 					dist = Distance( npc.GetOrigin(), node.GetOrigin() )
 					targetNode = node
 					firstNode = node
 				}
 			}
-			printt( "Entity had no route defined, using nearest node: " + targetNode.kv.route_name )
+			if( squad.len() > 0 )
+			{
+				if( npc == squad[0] )
+					printt( "Squad entities had no route defined, using nearest node: " + targetNode.kv.route_name )
+			}
+			else
+				printt( "Single entity had no route defined, using nearest node: " + targetNode.kv.route_name )
 		}
 		else
 			targetNode = GetRouteStart( routeName )
@@ -179,13 +235,27 @@ void function droneNav_thread( entity npc, string routeName, int nodesToSkip = 0
 		{
 			foreach ( routename, routeamount in routes )
 			{
-				if ( Distance( npc.GetOrigin(), routeamount[0] ) < dist )
+				if( squad.len() > 0 )
+				{
+					if ( Distance( squad[0].GetOrigin(), routeamount[0] ) < dist )
+					{
+						dist = Distance( squad[0].GetOrigin(), routeamount[0] )
+						routetaken = routename
+					}
+				}
+				else if ( Distance( npc.GetOrigin(), routeamount[0] ) < dist )
 				{
 					dist = Distance( npc.GetOrigin(), routeamount[0] )
 					routetaken = routename
 				}
 			}
-			printt("Entity had no route defined, using nearest custom route: " + routetaken )
+			if( squad.len() > 0 )
+			{
+				if( npc == squad[0] )
+					printt( "Squad entities had no route defined, using nearest node: " + routetaken )
+			}
+			else
+				printt( "Single entity had no route defined, using nearest node: " + routetaken )
 		}
 		else
 			routetaken = routeName

@@ -611,14 +611,22 @@ function PlayerBeginsTitanRodeo( entity player, RodeoPackageStruct rodeoPackage,
 
 				if ( IsAlive( player ) )
 				{
-					int attachIndex = newRodeoTitan.LookupAttachment( rodeoPackage.attachPoint )
-					vector startPos = newRodeoTitan.GetAttachmentOrigin( attachIndex )
-
-					if ( !PlayerCanTeleportHere( player, startPos, newRodeoTitan ) )
+					vector startPos
+					if( IsValid( newRodeoTitan ) )
 					{
-						startPos = newRodeoTitan.GetOrigin()
+						int attachIndex = newRodeoTitan.LookupAttachment( rodeoPackage.attachPoint )
+						startPos = newRodeoTitan.GetAttachmentOrigin( attachIndex )
+
 						if ( !PlayerCanTeleportHere( player, startPos, newRodeoTitan ) )
-							startPos = player.GetOrigin()
+						{
+							startPos = newRodeoTitan.GetOrigin()
+							if ( !PlayerCanTeleportHere( player, startPos, newRodeoTitan ) )
+								startPos = player.GetOrigin()
+						}
+					}
+					else
+					{
+						startPos = player.GetOrigin()
 					}
 
 					thread PlayerJumpsOffRodeoTarget( player, newRodeoTitan, startPos )

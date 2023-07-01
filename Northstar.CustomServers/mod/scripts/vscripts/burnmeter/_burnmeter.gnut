@@ -249,6 +249,10 @@ void function RunBurnCardUseFunc( entity player, string itemRef )
 	print( itemRef )
 
 	void functionref( entity ) ornull func = BurnReward_GetByRef( itemRef ).rewardAvailableCallback
+	#if BATTLECHATTER_ENABLED
+	if( itemRef == "burnmeter_amped_weapons_permanent" || itemRef == "burnmeter_amped_weapons" )
+		PlayBattleChatterLine( player, "bc_pAmp" )
+	#endif
 	if ( func != null )
 		( expect void functionref( entity ) ( func ) )( player )
 	else

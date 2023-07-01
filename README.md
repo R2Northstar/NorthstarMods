@@ -77,4 +77,4 @@ These are playlist overrides you can include in your server settings to control 
 - You can also do the same to shield captains by using `fd_grunt_shield_captains`, same rules applies from above setting
 - With this branch of Frontier Defense, it's possible to change the time between waves with `fd_wave_buy_time`, default is 60 seconds
 - It's possible to enable the campaign behavior of picking up batteries by setting `rodeo_battery_disembark_to_pickup` to 0, so running over batteries as Titan picks them up
-- It's also possible to enable the Titanfall 1 behavior of hacking spectres by setting `enable_spectre_hacking`to 1
+- It's also possible to enable the Titanfall 1 behavior of hacking spectres by setting `enable_spectre_hacking` to 1

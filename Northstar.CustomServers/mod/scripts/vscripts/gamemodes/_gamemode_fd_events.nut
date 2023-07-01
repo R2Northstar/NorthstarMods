@@ -142,12 +142,7 @@ const FD_TITAN_AOE_REACTTIME = 3 //This is in seconds
 void function executeWave()
 {	
 	int currentWave = GetGlobalNetInt( "FD_currentWave" ) + 1
-	bool tenenemiesleft = false
-	bool fiveenemiesleft = false
-	bool fourenemiesleft = false
-	bool threeenemiesleft = false
-	bool twoemiesleft = false
-	bool oneenemyleft = false
+	int enemyCount
 	print( "Wave Start: " + currentWave )
 	thread runEvents( 0 )
 	
@@ -159,38 +154,38 @@ void function executeWave()
 	//Do a secondary wait for alive enemies after all events executed
 	while( IsHarvesterAlive( fd_harvester.harvester ) && GetGlobalNetInt( "FD_AICount_Current" ) > 0 )
 	{
-		if ( GetGlobalNetInt( "FD_AICount_Current" ) == 10 && !tenenemiesleft )
+		if( enemyCount != GetGlobalNetInt( "FD_AICount_Current" ) )
 		{
-			PlayFactionDialogueToTeam( "fd_waveCleanup" , TEAM_MILITIA )
-			tenenemiesleft = true
-		}
-		if ( GetGlobalNetInt( "FD_AICount_Current" ) == 5 && !fiveenemiesleft )
-		{
-			PlayFactionDialogueToTeam( "fd_waveCleanup5" , TEAM_MILITIA )
-			fiveenemiesleft = true
-		}
-		if ( GetGlobalNetInt( "FD_AICount_Current" ) == 4 && !fourenemiesleft )
-		{
-			PlayFactionDialogueToTeam( "fd_waveCleanup4" , TEAM_MILITIA )
-			fourenemiesleft = true
-		}
-		if ( GetGlobalNetInt( "FD_AICount_Current" ) == 3 && !threeenemiesleft )
-		{
-			PlayFactionDialogueToTeam( "fd_waveCleanup3" , TEAM_MILITIA )
-			threeenemiesleft = true
-		}
-		if ( GetGlobalNetInt( "FD_AICount_Current" ) == 2 && !twoemiesleft )
-		{
-			PlayFactionDialogueToTeam( "fd_waveCleanup2" , TEAM_MILITIA )
-			twoemiesleft = true
-		}
-		if ( GetGlobalNetInt( "FD_AICount_Current" ) == 1 && !oneenemyleft )
-		{
-			PlayFactionDialogueToTeam( "fd_waveCleanup1" , TEAM_MILITIA )
-			oneenemyleft = true
+			enemyCount = GetGlobalNetInt( "FD_AICount_Current" )
+			switch( enemyCount )
+			{
+				case 10:
+				PlayFactionDialogueToTeam( "fd_waveCleanup" , TEAM_MILITIA )
+				break
+				
+				case 5:
+				PlayFactionDialogueToTeam( "fd_waveCleanup5" , TEAM_MILITIA )
+				break
+				
+				case 4:
+				PlayFactionDialogueToTeam( "fd_waveCleanup4" , TEAM_MILITIA )
+				break
+				
+				case 3:
+				PlayFactionDialogueToTeam( "fd_waveCleanup3" , TEAM_MILITIA )
+				break
+				
+				case 2:
+				PlayFactionDialogueToTeam( "fd_waveCleanup2" , TEAM_MILITIA )
+				break
+				
+				case 1:
+				PlayFactionDialogueToTeam( "fd_waveCleanup1" , TEAM_MILITIA )
+				break
+			}
 		}
 		
-		if ( GetGlobalNetInt( "FD_AICount_Current" ) == 1 )
+		if ( GetGlobalNetInt( "FD_AICount_Current" ) >= 10 )
 		{
 			//Kill Cloak Drones beforehand when a wave is about to end to avoid softlocking
 			array<entity> droneArray = GetNPCCloakedDrones()
@@ -273,21 +268,14 @@ void function restetWaveEvents()
 	}
 }
 
-
-
-
-
-
-
-/****************************************************************************************************************\
-####### #     # ####### #     # #######     #####  ####### #     # ####### ######     #    ####### ####### ######
-#       #     # #       ##    #    #       #     # #       ##    # #       #     #   # #      #    #     # #     #
-#       #     # #       # #   #    #       #       #       # #   # #       #     #  #   #     #    #     # #     #
-#####   #     # #####   #  #  #    #       #  #### #####   #  #  # #####   ######  #     #    #    #     # ######
-#        #   #  #       #   # #    #       #     # #       #   # # #       #   #   #######    #    #     # #   #
-#         # #   #       #    ##    #       #     # #       #    ## #       #    #  #     #    #    #     # #    #
-#######    #    ####### #     #    #        #####  ####### #     # ####### #     # #     #    #    ####### #     #
-\*****************************************************************************************************************/
+/*
+███████╗██╗   ██╗███████╗███╗   ██╗████████╗     ██████╗ ███████╗███╗   ██╗███████╗██████╗  █████╗ ████████╗ ██████╗ ██████╗ ███████╗
+██╔════╝██║   ██║██╔════╝████╗  ██║╚══██╔══╝    ██╔════╝ ██╔════╝████╗  ██║██╔════╝██╔══██╗██╔══██╗╚══██╔══╝██╔═══██╗██╔══██╗██╔════╝
+█████╗  ██║   ██║█████╗  ██╔██╗ ██║   ██║       ██║  ███╗█████╗  ██╔██╗ ██║█████╗  ██████╔╝███████║   ██║   ██║   ██║██████╔╝███████╗
+██╔══╝  ╚██╗ ██╔╝██╔══╝  ██║╚██╗██║   ██║       ██║   ██║██╔══╝  ██║╚██╗██║██╔══╝  ██╔══██╗██╔══██║   ██║   ██║   ██║██╔══██╗╚════██║
+███████╗ ╚████╔╝ ███████╗██║ ╚████║   ██║       ╚██████╔╝███████╗██║ ╚████║███████╗██║  ██║██║  ██║   ██║   ╚██████╔╝██║  ██║███████║
+╚══════╝  ╚═══╝  ╚══════╝╚═╝  ╚═══╝   ╚═╝        ╚═════╝ ╚══════╝╚═╝  ╚═══╝╚══════╝╚═╝  ╚═╝╚═╝  ╚═╝   ╚═╝    ╚═════╝ ╚═╝  ╚═╝╚══════╝
+*/
 
 WaveEvent function CreateSmokeEvent( vector position, float lifetime, int nextEventIndex, int executeOnThisCall = 1 )
 {
@@ -888,15 +876,14 @@ WaveEvent function CreateGruntDropshipEvent( vector origin, vector angles, int a
 	return event
 }
 
-/************************************************************************************************************\
-####### #     # ####### #     # #######    ####### #     # #     #  #####  ####### ### ####### #     #  #####
-#       #     # #       ##    #    #       #       #     # ##    # #     #    #     #  #     # ##    # #     #
-#       #     # #       # #   #    #       #       #     # # #   # #          #     #  #     # # #   # #
-#####   #     # #####   #  #  #    #       #####   #     # #  #  # #          #     #  #     # #  #  #  #####
-#        #   #  #       #   # #    #       #       #     # #   # # #          #     #  #     # #   # #       #
-#         # #   #       #    ##    #       #       #     # #    ## #     #    #     #  #     # #    ## #     #
-#######    #    ####### #     #    #       #        #####  #     #  #####     #    ### ####### #     #  #####
-\************************************************************************************************************/
+/*
+███████╗██╗   ██╗███████╗███╗   ██╗████████╗    ███████╗██╗   ██╗███╗   ██╗ ██████╗████████╗██╗ ██████╗ ███╗   ██╗███████╗
+██╔════╝██║   ██║██╔════╝████╗  ██║╚══██╔══╝    ██╔════╝██║   ██║████╗  ██║██╔════╝╚══██╔══╝██║██╔═══██╗████╗  ██║██╔════╝
+█████╗  ██║   ██║█████╗  ██╔██╗ ██║   ██║       █████╗  ██║   ██║██╔██╗ ██║██║        ██║   ██║██║   ██║██╔██╗ ██║███████╗
+██╔══╝  ╚██╗ ██╔╝██╔══╝  ██║╚██╗██║   ██║       ██╔══╝  ██║   ██║██║╚██╗██║██║        ██║   ██║██║   ██║██║╚██╗██║╚════██║
+███████╗ ╚████╔╝ ███████╗██║ ╚████║   ██║       ██║     ╚██████╔╝██║ ╚████║╚██████╗   ██║   ██║╚██████╔╝██║ ╚████║███████║
+╚══════╝  ╚═══╝  ╚══════╝╚═╝  ╚═══╝   ╚═╝       ╚═╝      ╚═════╝ ╚═╝  ╚═══╝ ╚═════╝   ╚═╝   ╚═╝ ╚═════╝ ╚═╝  ╚═══╝╚══════╝
+*/
 
 //Hack by using one of the existing struct vars, hopefully nothing will break
 void function BlockFurtherTitanfalls( SmokeEvent smokeEvent, SpawnEvent spawnEvent, FlowControlEvent flowControlEvent, SoundEvent soundEvent )
@@ -1949,17 +1936,14 @@ void function SpawnTick( SmokeEvent smokeEvent, SpawnEvent spawnEvent, FlowContr
 }
 
 
-
-/****************************************************************************************\
-####### #     # ####### #     # #######    #     # ####### #       ######  ####### ######
-#       #     # #       ##    #    #       #     # #       #       #     # #       #     #
-#       #     # #       # #   #    #       #     # #       #       #     # #       #     #
-#####   #     # #####   #  #  #    #       ####### #####   #       ######  #####   ######
-#        #   #  #       #   # #    #       #     # #       #       #       #       #   #
-#         # #   #       #    ##    #       #     # #       #       #       #       #    #
-#######    #    ####### #     #    #       #     # ####### ####### #       ####### #     #
-\****************************************************************************************/
-
+/*
+███████╗██╗   ██╗███████╗███╗   ██╗████████╗    ██╗  ██╗███████╗██╗     ██████╗ ███████╗██████╗ ███████╗
+██╔════╝██║   ██║██╔════╝████╗  ██║╚══██╔══╝    ██║  ██║██╔════╝██║     ██╔══██╗██╔════╝██╔══██╗██╔════╝
+█████╗  ██║   ██║█████╗  ██╔██╗ ██║   ██║       ███████║█████╗  ██║     ██████╔╝█████╗  ██████╔╝███████╗
+██╔══╝  ╚██╗ ██╔╝██╔══╝  ██║╚██╗██║   ██║       ██╔══██║██╔══╝  ██║     ██╔═══╝ ██╔══╝  ██╔══██╗╚════██║
+███████╗ ╚████╔╝ ███████╗██║ ╚████║   ██║       ██║  ██║███████╗███████╗██║     ███████╗██║  ██║███████║
+╚══════╝  ╚═══╝  ╚══════╝╚═╝  ╚═══╝   ╚═╝       ╚═╝  ╚═╝╚══════╝╚══════╝╚═╝     ╚══════╝╚═╝  ╚═╝╚══════╝
+*/
 
 void function PingMinimap( float x, float y, float duration, float spreadRadius, float ringRadius, int colorIndex )
 {
@@ -2267,6 +2251,15 @@ void function WinWave()
 	}
 }
 
+/*
+███████╗██╗  ██╗████████╗██████╗  █████╗      ██████╗ ██████╗ ███╗   ██╗████████╗███████╗███╗   ██╗████████╗
+██╔════╝╚██╗██╔╝╚══██╔══╝██╔══██╗██╔══██╗    ██╔════╝██╔═══██╗████╗  ██║╚══██╔══╝██╔════╝████╗  ██║╚══██╔══╝
+█████╗   ╚███╔╝    ██║   ██████╔╝███████║    ██║     ██║   ██║██╔██╗ ██║   ██║   █████╗  ██╔██╗ ██║   ██║   
+██╔══╝   ██╔██╗    ██║   ██╔══██╗██╔══██║    ██║     ██║   ██║██║╚██╗██║   ██║   ██╔══╝  ██║╚██╗██║   ██║   
+███████╗██╔╝ ██╗   ██║   ██║  ██║██║  ██║    ╚██████╗╚██████╔╝██║ ╚████║   ██║   ███████╗██║ ╚████║   ██║   
+╚══════╝╚═╝  ╚═╝   ╚═╝   ╚═╝  ╚═╝╚═╝  ╚═╝     ╚═════╝ ╚═════╝ ╚═╝  ╚═══╝   ╚═╝   ╚══════╝╚═╝  ╚═══╝   ╚═╝   
+*/
+
 void function SpawnDrozFD( vector spawnpos, vector angles )
 {
 	entity Droz = CreateEntity( "npc_pilot_elite" )
@@ -2348,7 +2341,7 @@ void function SpawnFDHeavyTurret( vector spawnpos, vector angles, vector ornull 
 	HeavyTurret.SetMaxHealth( 10000 )
 	HeavyTurret.SetHealth( 10000 )
 	HeavyTurret.SetShieldHealth( 2500 )
-	HeavyTurret.kv.AccuracyMultiplier = 10.0
+	HeavyTurret.kv.AccuracyMultiplier = 100.0
 	HeavyTurret.kv.reactChance = 100
 	HeavyTurret.kv.WeaponProficiency = eWeaponProficiency.PERFECT
 	HeavyTurret.SetNoTarget( false )
@@ -2492,7 +2485,8 @@ void function OnAwayFromLFTitan( entity trig, entity activator )
 void function LFTitanHideEarnMeterOnLeaveProximity( entity player )
 {
 	WaitFrame()
-	PlayerEarnMeter_SetMode( player, 0 )
+	if( IsValidPlayer( player ) )
+		PlayerEarnMeter_SetMode( player, 0 )
 }
 
 void function LFTitanShieldAndHealthRegenThink( entity soul )
@@ -2547,7 +2541,8 @@ void function LFTitanShieldAndHealthRegenThink( entity soul )
 			fullhp = false
 			titan.SetHealth( min( titan.GetMaxHealth(), titan.GetHealth() + 10 ) )
 		}
-		else if( IsAlive( titan ) && titan.GetHealth() >= titan.GetMaxHealth() && !soul.IsDoomed() && !fullhp )
+		
+		if( IsAlive( titan ) && titan.GetHealth() >= ( titan.GetMaxHealth() - 10 ) && !soul.IsDoomed() && !fullhp )
 		{
 			fullhp = true
 			UndoomTitan_Body( titan )
