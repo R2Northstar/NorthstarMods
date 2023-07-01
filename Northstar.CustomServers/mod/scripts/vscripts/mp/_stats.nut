@@ -386,17 +386,86 @@ void function HandleDeathStats( entity player, entity attacker, var damageInfo )
 
 void function HandleWeaponKillStats( entity attacker, entity victim, var damageInfo )
 {
-
+	// total
+	// pilots
+	// ejecting_pilots
+	// titansTotal
+	// assistsTotal
+	// killingSprees
+	// spectres
+	// marvins
+	// grunts
+	// ai
+	// titans_<chassis>
+	// npcTitans_<chassis>
 }
 
 void function HandleKillStats( entity player, entity victim, var damageInfo )
 {
-
-}
-
-void function HandleGameStats( int winningTeam )
-{
-
+	// total
+	// totalWhileUsingBurnCard
+	// titansWhileTitanBCActive
+	// totalPVP
+	// pilots
+	// spectres
+	// marvins
+	// grunts
+	// totalTitans
+	// totalPilots
+	// totalNPC
+	// totalTitansWhileDoomed
+	// asPilot
+	// totalAssists
+	// asTitan_<chassis>
+	// killingSpressAs_<chassis>
+	// firstStrikes
+	// ejectingPilots
+	// whileEjecting
+	// cloakedPilots
+	// whileCloaked
+	// wallrunningPilots
+	// whileWallrunning
+	// wallhangingPilots
+	// whileWallhanging
+	// pilotExecution
+	// pilotExecutePilot
+	// pilotExecutePilotWhileCloaked
+	// pilotKillsWithHoloPilotActive
+	// pilotKillsWithAmpedWallActive
+	// pilotExecutePilotUsing_<execution>
+	// pilotKickMelee
+	// pilotKickMeleePilot
+	// titanMelee
+	// titanMeleePilot
+	// titanStepCrush
+	// titanStepCrushPilot
+	// titanExocution<capitalisedChassis>
+	// titanFallKill
+	// petTitanKillsFollowMode
+	// petTitanKillsGuardMode
+	// rodeo_total
+	// pilot_headshots_total
+	// evacShips
+	// flyers
+	// nuclearCore
+	// evacuatingEnemies
+	// coopChallenge_NukeTitan_Kills
+	// coopChallenge_MortarTitan_Kills
+	// coopChallenge_EmpTitan_Kills
+	// coopChallenge_SuicideSpectre_Kills
+	// coopChallenge_Turret_Kills
+	// coopChallenge_CloakDrone_Kills
+	// coopChallenge_BubbleShieldGrunt_Kills
+	// coopChallenge_Dropship_Kills
+	// coopChallenge_Sniper_Kills
+	// ampedVortexKills
+	// meleeWhileCloaked
+	// pilotKillsWhileUsingActiveRadarPulse
+	// titanKillsAsPilot
+	// pilotKillsWhileStimActive
+	// pilotKillsAsTitan
+	// pilotKillsAsPilot
+	// titanKillsAsTitan
 }
 
 void function OnPlayerRespawned( entity player )
