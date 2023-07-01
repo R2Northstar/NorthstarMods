@@ -8,7 +8,7 @@ WeaponData
 
 	"menu_icon"										"rui/weapon_icons/mp_weapon_shotgun_doublebarrel"
 	"hud_icon"										"rui/weapon_icons/mp_weapon_shotgun_doublebarrel"
-
+	"viewmodel_offset_hip" 							"2 -2 -2"
 	"weaponClass" 									"human"
 	"weaponSubClass"								"shotgun"
 	"body_type"										"light"
@@ -206,15 +206,15 @@ WeaponData
 	"fire_rate"   									"2.75"
 	"zoom_time_in"									"0.25"
 	"zoom_time_out"   								"0.2"
-	"zoom_fov"										"50"
+	"zoom_fov"										"55"
 	"reload_time" 									"1.85"
 	"reload_time_late1" 							"1.15"
 	"reloadempty_time"								"1.85"
 	"reloadempty_time_late1"						"1.15"
-	"holster_time"									"0.5"
-	"deploy_time" 									"0.8"
+	"holster_time"									"0.5"  
+	"deploy_time" 									"0.66" 
 	"lower_time"  									"0.25"
-	"raise_time"  									"0.3"
+	"raise_time"  									"0.3"  
 	"vortex_refire_behavior"  						"bullet"
 	"allow_empty_fire"								"0"
 	"reload_enabled"  								"1"
@@ -223,7 +223,7 @@ WeaponData
 	"trigger_snipercam"   							"0"
 	"allow_headshots" 								"1"
 	"primary_fire_does_not_block_sprint"			"0"
-	"ads_move_speed_scale"							"0.5"
+	"ads_move_speed_scale"							"0.75"
 	"aimassist_disable_hipfire"						"0"
 	"aimassist_disable_ads"							"0"
 	"aimassist_disable_hipfire_titansonly"			"1"
@@ -274,13 +274,14 @@ WeaponData
 	"viewmodel_shake_right"							"0.0"
 
 	// Bob
-	"bob_cycle_time"  								"0.4"
-	"bob_vert_dist"   								"0.19"
+	// Bob
+	"bob_cycle_time"  								"0.45"
+	"bob_vert_dist"   								"0.1"
 	"bob_horz_dist"   								"0.1"
 	"bob_max_speed"   								"150"
 	"bob_pitch"   									"0.75"
-	"bob_yaw" 										"-1.7"
-	"bob_roll"										"1.2"
+	"bob_yaw" 										"0.5"
+	"bob_roll"										"-0.75"
 
 	// Bob_Zoomed
 	"bob_cycle_time_zoomed"  						"0.4"
@@ -377,13 +378,7 @@ WeaponData
 	"deploycatch_time"								"1.33"
 	"sprintcycle_time"								".55"
 
-	// Bodygroups:
-	"bodygroup1_name"	"sight_aog04"
-	"bodygroup1_set"	"0"
-	"bodygroup2_name"	"sight_hcog"
-	"bodygroup2_set"	"0"
-	"bodygroup3_name"	"sight_holo"
-	"bodygroup3_set"	"0"
+
 
     "clip_bodygroup"						"twinbshotgun_magazine"
     "clip_bodygroup_index_shown"			"0"
@@ -396,81 +391,6 @@ WeaponData
 	{
 		iron_sights
 		{
-		}
-		holosight
-		{
-			"bodygroup1_set"	    "0"
-			"bodygroup2_set"	    "0"
-			"bodygroup3_set"	    "1"
-			"bodygroup4_set"		"0"
-
-			"dof_zoom_nearDepthStart"						"2.161"
-			"dof_zoom_nearDepthEnd"							"8.204"
-			"viewmodel_offset_ads"							"0 -1.1 -1.16"
-			"ui7_enable"		"1"
-			dof_zoom_focusArea_horizontal					0.062
-			dof_zoom_focusArea_top							0.10
-			dof_zoom_focusArea_bottom						-0.040
-		}
-		redline_sight
-		{
-			"bodygroup1_set"	    "1"
-			"bodygroup2_set"	    "0"
-			"bodygroup3_set"	    "0"
-			"bodygroup4_set"		"0"
-			"ui1_enable"		"0"
-			"ui2_enable"		"0"
-			"ui3_enable"		"1"
-			"dof_zoom_nearDepthStart"						"4.491"
-			"dof_zoom_nearDepthEnd"							"5.545"
-			"viewmodel_offset_ads"							"0 -3.6 -0.51"
-			"zoom_fov"						"25"
-			dof_zoom_focusArea_horizontal					0.085
-			dof_zoom_focusArea_top							0.080
-			dof_zoom_focusArea_bottom						-0.047
-		}
-		threat_scope
-		{
-			"bodygroup1_set"	    "0"
-			"bodygroup2_set"	    "1"
-			"bodygroup3_set"	    "0"
-			"bodygroup4_set"		"0"
-			"ui1_enable"		"0"
-			"ui2_enable"		"0"
-			"ui4_enable"		"1"
-
-			"dof_zoom_nearDepthStart"						"3.737"
-			"dof_zoom_nearDepthEnd"							"5.7"
-			"viewmodel_offset_ads"							"0 -3.7 -0.56"
-
-			"threat_scope_enabled"			"1"
-			"threat_scope_bounds_tagname1"	"SCR_TR_CRO"
-			"threat_scope_bounds_tagname2"	"SCR_BL_CRO"
-			dof_zoom_focusArea_horizontal					0.068
-			dof_zoom_focusArea_top							0.065
-			dof_zoom_focusArea_bottom						-0.046
-		}
-		pas_fast_reload
-		{
-			"reload_time"								"*0.7"
-			"reload_time_late1"							"*0.7"
-			"reloadempty_time"							"*0.7"
-			"reloadempty_time_late1"					"*0.7"
-		}
-		tactical_cdr_on_kill
-		{
-
-		}
-		extended_ammo
-		{
-			"ammo_stockpile_max"						"120"
-			"ammo_clip_size"   							"10"
-			"ammo_default_total"						"120"
-		}
-		pro_screen
-		{
-			"ui8_enable"		"1"
-			"bodygroup6_set"	"1"
 		}
 		pas_run_and_gun
 		{
@@ -503,88 +423,7 @@ WeaponData
 		}
 	}
 
-	"ui1_enable"		"1"
-	UiData1
-	{
-		"ui"							"ui/w1128_ammo_counter"
-		"mesh"					"models/weapons/attachments/w1128_rui_lower"
-		Args
-		{
-			zoomFrac					player_zoomfrac
-			ammo						weapon_ammo
-			clipSize					weapon_clipSize
-		}
-	}
-
-	"ui2_enable"		"1"
-	UiData2
-	{
-		"ui"							"ui/w1128_upper_ammo_counter"
-		"mesh"					"models/weapons/attachments/w1128_rui_upper"
-		Args
-		{
-			vis							player_zoomfrac
-			ammo						weapon_ammo
-			clipSize					weapon_clipSize
-		}
-	}
-
-	"ui3_enable"		"0"
-	"ui3_draw_cloaked"	"1"
-	UiData3
-	{
-		"ui"								"ui/acgs_redline"
-		"mesh"							"models/weapons/attachments/acgs_rui_upper"
-		Args
-		{
-			vis							player_zoomfrac
-			ammo						weapon_ammo
-			clipSize						weapon_clipSize
-		}
-	}
-
-	"ui4_enable"		"0"
-	"ui4_draw_cloaked"	"1"
-	UiData4
-	{
-		"ui"							"ui/cro_threat_front"
-		"mesh"					"models/weapons/attachments/cro_rui_upper"
-		Args
-		{
-			zoomFrac					player_zoomfrac
-			ammo						weapon_ammo
-			clipSize					weapon_clipSize
-		}
-	}
-
-	"ui7_enable"		"0"
-	"ui7_draw_cloaked"	"1"
-	UiData7
-	{
-		"ui"							"ui/holo_scope"
-		"mesh"					"models/weapons/attachments/holo_rui_upper"
-		Args
-		{
-			vis					player_zoomfrac
-			ammo						weapon_ammo
-			clipSize					weapon_clipSize
-			clipCount					weapon_stockpileClipCount
-		}
-	}
-
-	"ui8_enable"		"0"
-	UiData8
-	{
-		"ui"									"ui/pro_screen_panel"
-		"mesh"							"models/weapons/attachments/pro_screen_rui_upper"
-		Args
-		{
-			proValue							proscreen_int0
-			proOwnedByPlayer			proscreen_owner_is_player
-		}
-	}
-
-
+	
 	active_crosshair_count				"1"
 	rui_crosshair_index					"0"
 
