@@ -315,6 +315,7 @@ void function OnPlayerOrNPCKilled( entity victim, entity attacker, var damageInf
 	HandleDeathStats( victim, attacker, damageInfo )
 	HandleKillStats( victim, attacker, damageInfo )
 	HandleWeaponKillStats( victim, attacker, damageInfo )
+	HandleTitanStats( victim, attacker, damageInfo )
 }
 
 void function HandleDeathStats( entity player, entity attacker, var damageInfo )
@@ -386,6 +387,30 @@ void function HandleDeathStats( entity player, entity attacker, var damageInfo )
 
 void function HandleWeaponKillStats( entity attacker, entity victim, var damageInfo )
 {
+	if ( !IsValid(attacker) )
+		return
+
+	// get the player and it's pet titan
+	entity player
+	entity playerPetTitan
+	if ( attacker.IsPlayer() )
+	{
+		// the player is just the attacker
+		player = attacker
+		playerPetTitan = player.GetPetTitan()
+	}
+	else if ( attacker.IsTitan() && IsPetTitan(attacker) )
+	{
+		// the attacker is the player's auto titan
+		player = attacker.GetTitanSoul().GetBossPlayer()
+		playerPetTitan = attacker
+	}
+	else
+	{
+		// attacker could be something like an NPC, or worldspawn
+		return
+	}
+
 	// total
 	// pilots
 	// ejecting_pilots
@@ -400,8 +425,32 @@ void function HandleWeaponKillStats( entity attacker, entity victim, var damageI
 	// npcTitans_<chassis>
 }
 
-void function HandleKillStats( entity player, entity victim, var damageInfo )
+void function HandleKillStats( entity attacker, entity victim, var damageInfo )
 {
+	if ( !IsValid(attacker) )
+		return
+
+	// get the player and it's pet titan
+	entity player
+	entity playerPetTitan
+	if ( attacker.IsPlayer() )
+	{
+		// the player is just the attacker
+		player = attacker
+		playerPetTitan = player.GetPetTitan()
+	}
+	else if ( attacker.IsTitan() && IsPetTitan(attacker) )
+	{
+		// the attacker is the player's auto titan
+		player = attacker.GetTitanSoul().GetBossPlayer()
+		playerPetTitan = attacker
+	}
+	else
+	{
+		// attacker could be something like an NPC, or worldspawn
+		return
+	}
+
 	// total
 	// totalWhileUsingBurnCard
 	// titansWhileTitanBCActive
@@ -466,6 +515,19 @@ void function HandleKillStats( entity player, entity victim, var damageInfo )
 	// pilotKillsAsTitan
 	// pilotKillsAsPilot
 	// titanKillsAsTitan
+}
+
+void function HandleTitanStats( entity attacker, entity victim, var damageInfo )
+{
+	// pilots
+	// titansTotal
+	// titanDamage - HANDLED ELSEWHERE
+	// coresEarned - HANDLED ELSEWHERE
+	// pilotsAsPrime
+	// titansAsPrime
+	// executionsAsPrime
+	// matchesByDifficulty
+	// perfectMatchesByDifficulty
 }
 
 void function OnPlayerRespawned( entity player )
