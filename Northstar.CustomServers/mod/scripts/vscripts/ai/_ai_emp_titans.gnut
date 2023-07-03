@@ -3,7 +3,6 @@ untyped
 global function EmpTitans_Init
 
 global function EMPTitanThinkConstant
-global function IsEMPTitan
 
 const DAMAGE_AGAINST_TITANS 			= 150
 const DAMAGE_AGAINST_PILOTS 			= 40
@@ -11,11 +10,6 @@ const DAMAGE_AGAINST_PILOTS 			= 40
 const EMP_DAMAGE_TICK_RATE = 0.3
 const FX_EMP_FIELD						= $"P_xo_emp_field"
 const FX_EMP_FIELD_1P					= $"P_body_emp_1P"
-
-struct
-{
-	array<entity> empTitans
-} file
 
 function EmpTitans_Init()
 {
@@ -38,7 +32,6 @@ void function EMPTitanThinkConstant( entity titan )
 
 	//Used to identify this titan as an arc titan
 	// SetTargetName( titan, "empTitan" ) // unable to do this due to FD reasons
-	file.empTitans.append( titan )
 
 	//Wait for titan to stand up and exit bubble shield before deploying arc ability.
 	WaitTillHotDropComplete( titan )
@@ -95,8 +88,6 @@ void function EMPTitanThinkConstant( entity titan )
 			{
 				StopSoundOnEntity( titan, "EMP_Titan_Electrical_Field" )
 				EnableTitanRodeo( titan ) //Make the arc titan rodeoable now that it is no longer electrified.
-				if (file.empTitans.find( titan ) )
-					file.empTitans.remove( file.empTitans.find( titan ) )
 			}
 
 			foreach ( particleSystem in particles )
@@ -117,7 +108,7 @@ void function EMPTitanThinkConstant( entity titan )
 	{
 		origin = titan.GetAttachmentOrigin( attachID )
 
-		RadiusDamage(
+   		RadiusDamage(
    			origin,									// center
    			titan,									// attacker
    			titan,									// inflictor
@@ -143,7 +134,7 @@ void function EmpField_DamagedEntity( entity target, var damageInfo )
 	entity titan = DamageInfo_GetAttacker( damageInfo )
 
 	if ( !IsValid( titan ) )
-		return
+		 return
 
 	local className = target.GetClassName()
 	if ( className == "rpg_missile" || className == "npc_turret_sentry" || className == "grenade" )
@@ -187,9 +178,4 @@ void function EmpField_DamagedEntity( entity target, var damageInfo )
 string function GetEMPAttachmentForTitan( entity titan )
 {
 	return  "hijack"
-}
-
-bool function IsEMPTitan( entity titan )
-{
-	return file.empTitans.find( titan ) != -1 ? true : false
 }

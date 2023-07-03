@@ -54,7 +54,9 @@ void function MortarSpectreSquadThink( array< entity > spectres, entity harveste
 	SetTargetName( squadMarker, "mortarPosition" )
 	squadMarker.SetShieldHealthMax( MORTAR_SPECTRE_TRACKER_SHIELD_MAX )
 	squadMarker.Minimap_SetCustomState( eMinimapObject_prop_script.FD_MORTAR_POSITION )
-	squadMarker.kv.fadedist = 16384
+	squadMarker.DisableHibernation()
+	squadMarker.EnableRenderAlways()
+	squadMarker.kv.fadedist = 32768
 
 	thread MortarSpectreSquadDeathThink( spectres, squadMarker, mortarPosition )
 	

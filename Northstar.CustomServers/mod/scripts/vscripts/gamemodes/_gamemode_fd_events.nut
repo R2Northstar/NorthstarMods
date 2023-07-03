@@ -914,9 +914,11 @@ void function BlockFurtherTitanfalls( SmokeEvent smokeEvent, SpawnEvent spawnEve
 
 void function ShowTitanfallBlockHint()
 {
+	#if SERVER
 	wait 10
 	foreach( entity player in GetPlayerArray() )
 		NSSendLargeMessageToPlayer( player, "Titanfall Block", "Further Titans cannot be summoned until the end of the wave, avoid losing your current Titan!", 60, "rui/callsigns/callsign_94_col" )
+	#endif
 }
 
 void function PlayWarning( SmokeEvent smokeEvent, SpawnEvent spawnEvent, FlowControlEvent flowControlEvent, SoundEvent soundEvent )
@@ -925,11 +927,13 @@ void function PlayWarning( SmokeEvent smokeEvent, SpawnEvent spawnEvent, FlowCon
 		return
 	else
 	{
+		#if SERVER
 		if( soundEvent.soundEventName == "fd_waveTypeEliteTitan" )
 		{
 			foreach( entity player in GetPlayerArray() )
 				NSSendLargeMessageToPlayer( player, "Elite Titan", "Always coated white. Huge health, huge shield, greater aiming, moves faster and can use Core. Drops battery on death.", 60, "rui/callsigns/callsign_17_col" )
 		}
+		#endif
 		PlayFactionDialogueToTeam( soundEvent.soundEventName, TEAM_MILITIA )
 	}
 }
@@ -2382,7 +2386,6 @@ void function SpawnLFMapTitan_Threaded( vector spawnpos, vector angles )
 	thread MonitorPublicTitan( npc )
 	npc.DisableNPCFlag( NPC_ALLOW_INVESTIGATE | NPC_ALLOW_PATROL )
 	npc.DisableBehavior("Follow")
-	npc.SetTitle( "Helper Titan" )
 	DisableTitanRodeo( npc )
 	
 	TakeWeaponsForArray( npc, npc.GetMainWeapons() )
@@ -2454,11 +2457,10 @@ void function OnNearbyLFTitan( entity trig, entity activator )
 	
 	entity titan = trig.GetParent()
 	entity soul = titan.GetTitanSoul()
-	if( !titan.IsPlayer() && !titan.GetBossPlayer() && Distance2D( activator.GetOrigin(), titan.GetOrigin() ) > 191 )
+	if( !titan.IsPlayer() && !IsValid( GetPetTitanOwner( titan ) ) && Distance2D( activator.GetOrigin(), titan.GetOrigin() ) > 191 )
 	{
 		activator.SetPetTitan( titan )
 		titan.SetBossPlayer( activator )
-		titan.SetTitle( "Helper Titan" )
 	}
 }
 
@@ -2475,7 +2477,6 @@ void function OnAwayFromLFTitan( entity trig, entity activator )
 	if( !titan.IsPlayer() && Distance2D( titan.GetOrigin(), activator.GetOrigin() ) > 192 )
 	{
 		titan.ClearBossPlayer()
-		titan.SetTitle( "Helper Titan" )
 		soul.ClearBossPlayer()
 		activator.SetPetTitan( null )
 		thread LFTitanHideEarnMeterOnLeaveProximity( activator )
@@ -2550,6 +2551,7 @@ void function LFTitanShieldAndHealthRegenThink( entity soul )
 		
 		lastShieldHealth = shieldHealth
 		lastTime = Time()
+		titan.SetTitle( "Helper Titan" )
 		WaitFrame()
 	}
 }

@@ -7,7 +7,6 @@ global function IsTurretActive
 global function TurretRefundThink
 global function RevivableTurret_DamageCallback
 global function HeavyTurret_DamageCallback
-global function RevivableTurret_Revive
 global function RepairTurret_WaveBreak
 global function AddTurretRepairCallback
 
@@ -55,9 +54,8 @@ void function TurretRefundThink( entity turret )
 	turret.EndSignal( "TurretOffline" )
 
 	while( turret.e.burnReward == "" || !IsTurretActive( turret ) )
-	{
 		WaitFrame()
-	}
+	
 	turret.SetUsable()
 	turret.SetUsableByGroup( "owner pilot" )
 	turret.SetUsePrompts( "#REFUND_HOLD_USE", "#REFUND_PRESS_USE" )
@@ -95,8 +93,8 @@ void function RevivableTurret_DamageCallback( entity turret, var damageInfo )
 		turret.SetUsable()
 		turret.SetUsableByGroup( "friendlies pilot" )
 		turret.SetUsePrompts( "#TURRET_WAKEUP_HOLD_USE", "#TURRET_WAKEUP_PRESS_USE" )
-		thread RevivableTurretThink( turret )
 		thread RevivableTurret_Kill( turret )
+		thread RevivableTurretThink( turret )
 		DamageInfo_SetDamage( damageInfo, 0.0 )
 	}
 }
@@ -118,13 +116,15 @@ void function RevivableTurretThink( entity turret )
 {	
 	entity player = expect entity( turret.WaitSignal( "OnPlayerUse" ).player )
 	entity owner = turret.GetBossPlayer()
-	foreach ( callbackFunc in file.turretRepairCallbacks )
+	if ( !IsTurretActive( turret ) )
 	{
-		callbackFunc( turret, player, owner )
+		thread RevivableTurret_Revive( turret )
+		foreach ( callbackFunc in file.turretRepairCallbacks )
+		{
+			callbackFunc( turret, player, owner )
+		}
 	}
-	thread RevivableTurret_Revive( turret )
 }
-
 
 void function RevivableTurret_Revive( entity turret )
 {
@@ -138,6 +138,7 @@ void function RevivableTurret_Revive( entity turret )
 	turret.Anim_Play("deploy")
 	turret.DisableNPCFlag( NPC_IGNORE_ALL )
 	MakeTurretVulnerable( turret )
+	turret.SetNoTargetSmartAmmo( true )
 	thread TurretRefundThink( turret )
 }
 
@@ -146,8 +147,8 @@ void function RevivableTurret_Kill( entity turret )
 	turret.EndSignal( "OnDestroy" )
 
 	entity turretOwner = turret.GetBossPlayer()
-		if( IsValidPlayer( turretOwner ) )
-			PlayFactionDialogueToPlayer( "fd_turretOffline", turretOwner )
+	if( IsValidPlayer( turretOwner ) )
+		PlayFactionDialogueToPlayer( "fd_turretOffline", turretOwner )
 	
 	turret.EnableNPCFlag( NPC_IGNORE_ALL )
 	MakeTurretInvulnerable( turret )
@@ -167,6 +168,7 @@ void function RepairTurret_WaveBreak( entity turret )
 		turret.Highlight_SetParam( 1, 0, < 0, 0, 0 > )
 		turret.Highlight_SetParam( 3, 0, HIGHLIGHT_COLOR_INTERACT )
 		MakeTurretVulnerable( turret )
+		turret.SetNoTargetSmartAmmo( true )
 		thread TurretRefundThink( turret )
 	}
 	
