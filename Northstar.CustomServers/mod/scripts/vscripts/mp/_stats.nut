@@ -1,3 +1,5 @@
+untyped // because entity.s
+
 global function Stats_Init
 global function AddStatCallback
 global function Stats_SaveStatDelayed
@@ -13,8 +15,8 @@ global function PostScoreEventUpdateStats
 global function Stats_OnPlayerDidDamage
 
 struct {
-	table<string, array<string> > refs
-	table<string, array< void functionref(entity, float, string) > > callbacks
+	table< string, array<string> > refs
+	table< string, array< void functionref(entity, float, string) > > callbacks
 
 	table< entity, table< string, int > > cachedIntStatChanges
 	table< table< string, float > > cachedFloatStatChanges
@@ -42,8 +44,7 @@ void function AddStatCallback(string statCategory, string statAlias, string stat
 	
 	
 	string str = GetStatVar(statCategory, statAlias, statSubAlias)
-	//printt(str)
-	//printt(statCategory + " : " + statAlias + " : " + statSubAlias)
+
 	if (str in file.refs)
 	{
 		file.refs[str].append(subRef)
@@ -181,7 +182,17 @@ void function PreScoreEventUpdateStats(entity attacker, entity ent)
 
 void function PostScoreEventUpdateStats(entity attacker, entity ent)
 {
+	if ( !attacker.IsPlayer() )
+		return
 	// used to track kill streaks starting maybe
+	if ( attacker.s.currentKillstreak == KILLINGSPREE_KILL_REQUIREMENT )
+	{
+		// killingSpressAs_<chassis>
+		if ( attacker.IsTitan() )
+			Stats_IncrementStat( attacker, "kills_stats", "killingSpressAs_" + GetTitanCharacterName(attacker), "", 1.0 )
+		
+
+	}
 }
 
 void function Stats_OnPlayerDidDamage(entity victim, var damageInfo)
@@ -324,18 +335,6 @@ void function HandleDeathStats( entity player, entity attacker, var damageInfo )
 		return
 	
 	// total
-	// totalPVP
-	// asPilot
-	// asTitan_<chassis>
-	// byPilots
-	// byTitan_<chassis>
-	// bySpectres
-	// byGrunts
-	// byNPCTitans_<chassis>
-	// suicides
-	// whileEjecting
-	
-	// total
 	Stats_IncrementStat( player, "deaths_stats", "total", "", 1.0 )
 
 	// these all rely on the attacker being valid
@@ -425,11 +424,10 @@ void function HandleWeaponKillStats( entity attacker, entity victim, var damageI
 	// npcTitans_<chassis>
 }
 
-void function HandleKillStats( entity attacker, entity victim, var damageInfo )
+void function HandleKillStats( entity victim, entity attacker, var damageInfo )
 {
 	if ( !IsValid(attacker) )
 		return
-
 	// get the player and it's pet titan
 	entity player
 	entity playerPetTitan
@@ -451,70 +449,220 @@ void function HandleKillStats( entity attacker, entity victim, var damageInfo )
 		return
 	}
 
+	// check things once, for performance
+	int damageSource = DamageInfo_GetDamageSourceIdentifier( damageInfo )
+	bool victimIsPlayer = victim.IsPlayer()
+	bool victimIsNPC = victim.IsNPC()
+	bool victimIsPilot = IsPilot(victim)
+	bool victimIsTitan = victim.IsTitan()
+
 	// total
-	// totalWhileUsingBurnCard
-	// titansWhileTitanBCActive
+	Stats_IncrementStat( player, "kills_stats", "total", "", 1.0 )
+
 	// totalPVP
+	if ( victimIsPlayer )
+		Stats_IncrementStat( player, "kills_stats", "totalPVP", "", 1.0 )
+
 	// pilots
+	if ( victimIsPilot )
+		Stats_IncrementStat( player, "kills_stats", "pilots", "", 1.0 )
+
 	// spectres
+	if ( IsSpectre(victim) )
+		Stats_IncrementStat( player, "kills_stats", "spectres", "", 1.0 )
+
 	// marvins
+	if ( IsMarvin(victim) )
+		Stats_IncrementStat( player, "kills_stats", "marvins", "", 1.0 )
+
 	// grunts
+	if ( IsGrunt(victim) )
+		Stats_IncrementStat( player, "kills_stats", "grunts", "", 1.0 )
+
 	// totalTitans
+	if ( victimIsTitan )
+		Stats_IncrementStat( player, "kills_stats", "totalTitans", "", 1.0 )
+
 	// totalPilots
+	if ( victimIsPilot )
+		Stats_IncrementStat( player, "kills_stats", "totalPilots", "", 1.0 )
+
 	// totalNPC
+	if ( victimIsNPC )
+		Stats_IncrementStat( player, "kills_stats", "totalNPC", "", 1.0 )
+
 	// totalTitansWhileDoomed
+	if ( victimIsTitan && attacker.IsTitan() && GetDoomedState(attacker) )
+		Stats_IncrementStat( player, "kills_stats", "totalTitansWhileDoomed", "", 1.0 )
+
 	// asPilot
+	if ( IsPilot(attacker) )
+		Stats_IncrementStat( player, "kills_stats", "asPilot", "", 1.0 )
+
 	// totalAssists
+	// note: eww
+	table<int, bool> alreadyAssisted
+	foreach( DamageHistoryStruct attackerInfo in victim.e.recentDamageHistory )
+	{
+		if ( !IsValid( attackerInfo.attacker ) || !attackerInfo.attacker.IsPlayer() || attackerInfo.attacker == victim )
+			continue
+
+		bool exists = attackerInfo.attacker.GetEncodedEHandle() in alreadyAssisted ? true : false
+		if( attackerInfo.attacker != attacker && !exists )
+		{
+			alreadyAssisted[attackerInfo.attacker.GetEncodedEHandle()] <- true
+			Stats_IncrementStat( attackerInfo.attacker, "kills_stats", "totalAssists", "", 1.0 )
+		}
+	}
+
 	// asTitan_<chassis>
-	// killingSpressAs_<chassis>
+	if ( player.IsTitan() )
+		Stats_IncrementStat( player, "kills_stats", "asTitan_" + GetTitanCharacterName(player), "", 1.0 )
+
 	// firstStrikes
+	if ( file.isFirstStrike && attacker.IsPlayer() )
+	{
+		Stats_IncrementStat( player, "kills_stats", "firstStrikes", "", 1.0 )
+		file.isFirstStrike = false
+	}
+
 	// ejectingPilots
+	if ( victimIsPilot && victim.p.pilotEjecting )
+		Stats_IncrementStat( player, "kills_stats", "ejectingPilots", "", 1.0 )
+
 	// whileEjecting
+	if ( attacker.IsPlayer() && attacker.p.pilotEjecting )
+		Stats_IncrementStat( player, "kills_stats", "whileEjecting", "", 1.0 )
+
 	// cloakedPilots
+	if ( victimIsPilot && IsCloaked(victim) )
+		Stats_IncrementStat( player, "kills_stats", "cloakedPilots", "", 1.0 )
+
 	// whileCloaked
+	if ( attacker == player && IsCloaked(attacker) )
+		Stats_IncrementStat( player, "kills_stats", "whileCloaked", "", 1.0 )
+
 	// wallrunningPilots
+	if ( victimIsPilot && victim.IsWallRunning() )
+		Stats_IncrementStat( player, "kills_stats", "wallrunningPilots", "", 1.0 )
+
 	// whileWallrunning
+	if ( attacker == player && attacker.IsWallRunning() )
+		Stats_IncrementStat( player, "kills_stats", "whileWallrunning", "", 1.0 )
+
 	// wallhangingPilots
+	if ( victimIsPilot && victim.IsWallHanging() )
+		Stats_IncrementStat( player, "kills_stats", "wallhangingPilots", "", 1.0 )
+
 	// whileWallhanging
+	if ( attacker == player && attacker.IsWallHanging() )
+		Stats_IncrementStat( player, "kills_stats", "whileWallhanging", "", 1.0 )
+
 	// pilotExecution
+	if ( damageSource == eDamageSourceId.human_execution )
+		Stats_IncrementStat( player, "kills_stats", "pilotExecution", "", 1.0 )
+
 	// pilotExecutePilot
-	// pilotExecutePilotWhileCloaked
+	if ( victimIsPilot && damageSource == eDamageSourceId.human_execution )
+		Stats_IncrementStat( player, "kills_stats", "pilotExecutePilot", "", 1.0 )
+
 	// pilotKillsWithHoloPilotActive
+	if ( victimIsPilot && GetDecoyActiveCountForPlayer(player) > 0 )
+		Stats_IncrementStat( player, "kills_stats", "pilotKillsWithAmpedWallActive", "", 1.0 )
+
 	// pilotKillsWithAmpedWallActive
+	if ( victimIsPilot && GetAmpedWallsActiveCountForPlayer(player) > 0 )
+		Stats_IncrementStat( player, "kills_stats", "pilotKillsWithAmpedWallActive", "", 1.0 )
+
 	// pilotExecutePilotUsing_<execution>
+	if ( victimIsPilot && damageSource == eDamageSourceId.human_execution )
+		Stats_IncrementStat( player, "kills_stats", "pilotExecutePilotUsing_" + player.p.lastExecutionUsed, "", 1.0 )
+
 	// pilotKickMelee
+	if ( damageSource == eDamageSourceId.human_melee )
+		Stats_IncrementStat( player, "kills_stats", "pilotKickMelee", "", 1.0 )
+
 	// pilotKickMeleePilot
+	if ( victimIsPilot && damageSource == eDamageSourceId.human_melee )
+		Stats_IncrementStat( player, "kills_stats", "pilotKickMeleePilot", "", 1.0 )
+
 	// titanMelee
+	if ( DamageIsTitanMelee(damageSource) )
+		Stats_IncrementStat( player, "kills_stats", "titanMelee", "", 1.0 )
+
 	// titanMeleePilot
+	if ( victimIsPilot && DamageIsTitanMelee(damageSource) )
+		Stats_IncrementStat( player, "kills_stats", "titanMeleePilot", "", 1.0 )
+
 	// titanStepCrush
+	if ( IsTitanCrushDamage(damageInfo) )
+		Stats_IncrementStat( player, "kills_stats", "titanStepCrush", "", 1.0 )
+
 	// titanStepCrushPilot
+	if ( victimIsPilot && IsTitanCrushDamage(damageInfo) )
+		Stats_IncrementStat( player, "kills_stats", "titanStepCrushPilot", "", 1.0 )
+
 	// titanExocution<capitalisedChassis>
+	// note: RESPAWN WHY? EXPLAIN
+	if ( damageSource == eDamageSourceId.titan_execution )
+	{
+		string titanName = GetTitanCharacterName(player)
+		titanName = titanName.slice( 0, 1 ).toupper() + titanName.slice( 1, titanName.len() )
+		Stats_IncrementStat( player, "kills_stats", "titanExocution" + titanName, "", 1.0 )
+	}
+
 	// titanFallKill
+	if ( damageSource == eDamageSourceId.damagedef_titan_fall )
+		Stats_IncrementStat( player, "kills_stats", "titanFallKill", "", 1.0 )
+
 	// petTitanKillsFollowMode
+	if ( attacker == playerPetTitan && player.GetPetTitanMode() == eNPCTitanMode.FOLLOW )
+		Stats_IncrementStat( player, "kills_stats", "petTitanKillsFollowMode", "", 1.0 )
+
 	// petTitanKillsGuardMode
+	if ( attacker == playerPetTitan && player.GetPetTitanMode() == eNPCTitanMode.STAY )
+		Stats_IncrementStat( player, "kills_stats", "petTitanKillsGuardMode", "", 1.0 )
+
 	// rodeo_total
+	if ( damageSource == eDamageSourceId.rodeo_battery_removal )
+		Stats_IncrementStat( player, "kills_stats", "rodeo_total", "", 1.0 )
+
 	// pilot_headshots_total
+	
+
 	// evacShips
+
+
 	// flyers
+
+
 	// nuclearCore
+
+
 	// evacuatingEnemies
-	// coopChallenge_NukeTitan_Kills
-	// coopChallenge_MortarTitan_Kills
-	// coopChallenge_EmpTitan_Kills
-	// coopChallenge_SuicideSpectre_Kills
-	// coopChallenge_Turret_Kills
-	// coopChallenge_CloakDrone_Kills
-	// coopChallenge_BubbleShieldGrunt_Kills
-	// coopChallenge_Dropship_Kills
-	// coopChallenge_Sniper_Kills
-	// ampedVortexKills
+
+
 	// meleeWhileCloaked
+
+
 	// pilotKillsWhileUsingActiveRadarPulse
+
+	
 	// titanKillsAsPilot
+
+
 	// pilotKillsWhileStimActive
+
+
 	// pilotKillsAsTitan
+
+
 	// pilotKillsAsPilot
+
+
 	// titanKillsAsTitan
+
+
 }
 
 void function HandleTitanStats( entity attacker, entity victim, var damageInfo )
@@ -715,4 +863,28 @@ string function GetPersistenceRefFromDamageInfo(var damageInfo)
 	}
 
 	return ""
+}
+
+bool function DamageIsTitanMelee( int damageSourceId )
+{
+	if ( damageSourceId == eDamageSourceId.melee_titan_punch )
+		return true
+	else if ( damageSourceId == eDamageSourceId.melee_titan_punch_ion )
+		return true
+	else if ( damageSourceId == eDamageSourceId.melee_titan_punch_legion )
+		return true
+	else if ( damageSourceId == eDamageSourceId.melee_titan_punch_tone )
+		return true
+	else if ( damageSourceId == eDamageSourceId.melee_titan_punch_scorch )
+		return true
+	else if ( damageSourceId == eDamageSourceId.melee_titan_punch_northstar )
+		return true
+	else if ( damageSourceId == eDamageSourceId.melee_titan_punch_fighter )
+		return true
+	else if ( damageSourceId == eDamageSourceId.melee_titan_sword )
+		return true
+	else if ( damageSourceId == eDamageSourceId.melee_titan_sword_aoe )
+		return true
+
+	return false
 }
