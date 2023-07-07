@@ -178,29 +178,6 @@ void function UICodeCallback_ToggleInGameMenu()
 	}
 }
 
-void function TimeoutHandler()
-{
-	//Singleplayer "Continue" counts as finished loading and shouldn't be affected
-	printt( "TimeoutHandler has Initialized" )
-	const int timeoutThreshold = 30 // how long this function will wait before disconnecting
-	for ( int i = 0; i < timeoutThreshold; i++ ) //Ensure that they aren't disconnected if they leave and rejoin multiple servers
-	{
-		wait 1
-		if ( uiGlobal.isLoading == false )
-		{
-			printt( "TimeoutHandler cancelled because it detected a successful load" )
-			return //Cancel function if the client is no longer loading (If there is a better way to stop a threaded function please let me know)
-		}
-	}
-	if ( uiGlobal.isLoading == true ) //Disconnects client after 30 seconds of loading
-	{
-		printt( "TimeoutHandler disconnected because loading took too long" )
-		UICodeCallback_LevelLoadingFinished( true ) //Removes loading screen
-		Disconnect() // Loads menu
-		OpenErrorDialog( format( "Loading timed out (Over %i seconds)", timeoutThreshold ) ) //Opens error dialog to notify user
-	}
-}
-
 // Return true to show load screen, false to not show load screen.
 // levelname can be "" because the level to load isn't always known when the load screen starts
 bool function UICodeCallback_LevelLoadingStarted( string levelname )
@@ -227,7 +204,7 @@ bool function UICodeCallback_LevelLoadingStarted( string levelname )
 	if ( !Console_IsSignedIn() )
 		return false
 #endif
-	thread TimeoutHandler()
+	
 	return true
 }
 
