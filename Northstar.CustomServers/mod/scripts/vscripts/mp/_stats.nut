@@ -628,40 +628,40 @@ void function HandleKillStats( entity victim, entity attacker, var damageInfo )
 		Stats_IncrementStat( player, "kills_stats", "rodeo_total", "", 1.0 )
 
 	// pilot_headshots_total
-	
+	if ( victimIsPilot && DamageInfo_GetCustomDamageType( damageInfo ) & DF_HEADSHOT )
+		Stats_IncrementStat( player, "kills_stats", "pilot_headshots_total", "", 1.0 )
 
 	// evacShips
-
-
-	// flyers
-
+	if ( IsEvacDropship(victim) )
+		Stats_IncrementStat( player, "kills_stats", "evacShips", "", 1.0 )
 
 	// nuclearCore
-
-
-	// evacuatingEnemies
-
+	if ( damageSource == eDamageSourceId.damagedef_nuclear_core )
+		Stats_IncrementStat( player, "kills_stats", "nuclearCore", "", 1.0 )
 
 	// meleeWhileCloaked
-
-
-	// pilotKillsWhileUsingActiveRadarPulse
-
+	if ( IsCloaked(attacker) && damageSource == eDamageSourceId.human_melee )
+		Stats_IncrementStat( player, "kills_stats", "meleeWhileCloaked", "", 1.0 )
 	
 	// titanKillsAsPilot
-
+	if ( victimIsTitan && IsPilot(attacker) )
+		Stats_IncrementStat( player, "kills_stats", "titanKillsAsPilot", "", 1.0 )
 
 	// pilotKillsWhileStimActive
-
+	if ( victimIsPilot && StatusEffect_Get( attacker, eStatusEffect.stim_visual_effect ) <= 0 )
+		Stats_IncrementStat( player, "kills_stats", "pilotKillsWhileStimActive", "", 1.0 )
 
 	// pilotKillsAsTitan
-
+	if ( victimIsPilot && attacker.IsTitan() )
+		Stats_IncrementStat( player, "kills_stats", "pilotKillsAsTitan", "", 1.0 )
 
 	// pilotKillsAsPilot
-
+	if ( victimIsPilot && IsPilot(attacker) )
+		Stats_IncrementStat( player, "kills_stats", "pilotKillsAsPilot", "", 1.0 )
 
 	// titanKillsAsTitan
-
+	if ( victimIsTitan && attacker.IsTitan() )
+		Stats_IncrementStat( player, "kills_stats", "titanKillsAsTitan", "", 1.0 )
 
 }
 
