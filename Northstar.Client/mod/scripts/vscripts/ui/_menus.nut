@@ -204,7 +204,7 @@ bool function UICodeCallback_LevelLoadingStarted( string levelname )
 	if ( !Console_IsSignedIn() )
 		return false
 #endif
-	
+
 	return true
 }
 
