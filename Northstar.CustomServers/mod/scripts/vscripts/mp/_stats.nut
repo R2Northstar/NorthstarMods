@@ -667,15 +667,56 @@ void function HandleKillStats( entity victim, entity attacker, var damageInfo )
 
 void function HandleTitanStats( entity attacker, entity victim, var damageInfo )
 {
+	if ( !IsValid(attacker) )
+		return
+
+	// get the player and it's pet titan
+	entity player
+	entity playerPetTitan
+	if ( attacker.IsPlayer() )
+	{
+		// the player is just the attacker
+		player = attacker
+		playerPetTitan = player.GetPetTitan()
+	}
+	else if ( attacker.IsTitan() && IsPetTitan(attacker) )
+	{
+		// the attacker is the player's auto titan
+		player = attacker.GetTitanSoul().GetBossPlayer()
+		playerPetTitan = attacker
+	}
+	else
+	{
+		// attacker could be something like an NPC, or worldspawn
+		return
+	}
+
+	int damageSource = DamageInfo_GetDamageSourceIdentifier( damageInfo )
+	bool victimIsPlayer = victim.IsPlayer()
+	bool victimIsNPC = victim.IsNPC()
+	bool victimIsPilot = IsPilot(victim)
+	bool victimIsTitan = victim.IsTitan()
+	bool titanIsPrime = IsTitanClassPrime( GetTitanClass(playerPetTitan) )
+
 	// pilots
+	if ( victimIsPilot && attacker.IsTitan() )
+		Stats_IncrementStat( player, "titan_stats", "pilots", "", 1.0 )
+
 	// titansTotal
-	// titanDamage - HANDLED ELSEWHERE
-	// coresEarned - HANDLED ELSEWHERE
+	if ( victimIsTitan && attacker.IsTitan() )
+		Stats_IncrementStat( player, "titan_stats", "titansTotal", "", 1.0 )
+
 	// pilotsAsPrime
+	if ( victimIsPilot && attacker.IsTitan() && titanIsPrime )
+		Stats_IncrementStat( player, "titan_stats", "pilotsAsPrime", "", 1.0 )
+
 	// titansAsPrime
+	if ( victimIsTitan && attacker.IsTitan() && titanIsPrime )
+		Stats_IncrementStat( player, "titan_stats", "titansAsPrime", "", 1.0 )
+
 	// executionsAsPrime
-	// matchesByDifficulty
-	// perfectMatchesByDifficulty
+	if ( damageSource == eDamageSourceId.titan_execution && attacker.IsTitan() && titanIsPrime )
+		Stats_IncrementStat( player, "titan_stats", "executionsAsPrime", "", 1.0 )
 }
 
 void function OnPlayerRespawned( entity player )
