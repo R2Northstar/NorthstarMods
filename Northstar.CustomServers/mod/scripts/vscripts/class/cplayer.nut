@@ -69,7 +69,7 @@ function CodeCallback_RegisterClass_CPlayer()
 
 		Assert( !this.GetParent(), this + " should not have a parent yet! - Parent: " + this.GetParent() )
 		Assert( this.s.respawnCount <= 1 || IsMultiplayer(), "Tried to respawn in single player, see callstack" )
-		Assert( this.IsEntAlive(), this + "Tried to respawn when it is already alive") // Crash failsafe when loading via dropship, North
+		Assert( this.IsEntAlive(), this + "Tried to respawn when it is already alive") // Crash failsafe when loading via dropship
 		this.Code_RespawnPlayer( ent )
 	}
 
