@@ -211,6 +211,21 @@ void function GamemodeFD_Init()
 	
 	for( int i = 0; i < 20; i++ ) //Setup NPC array for Harvester Damage tracking
 		file.harvesterDamageSource.append(0.0)
+	
+	switch ( difficultyLevel )
+	{
+		case eFDDifficultyLevel.EASY:
+			SetAILethality( eAILethality.Low )
+			break
+		case eFDDifficultyLevel.NORMAL:
+			SetAILethality( eAILethality.Medium )
+			break
+		case eFDDifficultyLevel.HARD:
+		case eFDDifficultyLevel.MASTER:
+		case eFDDifficultyLevel.INSANE:
+			SetAILethality( eAILethality.High )
+			break
+	}
 }
 
 void function ScoreEvent_SetupEarnMeterValuesForFrontierDefense()
@@ -662,13 +677,8 @@ void function TryDisableTitanSelectionForPlayerAfterDelay( entity player, float 
 			PlayerEarnMeter_AddEarnedAndOwned( player, 1.0, 1.0 )
 	}
 	
-	#if SERVER
 	else if ( waveNumber > 0 && !PlayerEarnMeter_Enabled() && !file.isLiveFireMap ) //Lets joiners know why their Titan Meter is not building up if they joined during a Titanfall Block event
-	{
-		wait 10
-		NSSendLargeMessageToPlayer( player, "Titanfall Block Active", "Your titan cannot be summoned, but you can help team mates not losing theirs, steal batteries!", 50, "rui/callsigns/callsign_94_col" )
-	}
-	#endif
+		ShowTitanfallBlockHintToPlayer( player )
 }
 
 void function SetTurretSettings_threaded( entity player )

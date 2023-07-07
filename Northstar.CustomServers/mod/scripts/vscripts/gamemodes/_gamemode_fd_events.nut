@@ -35,6 +35,7 @@ global function SpawnDrozFD
 global function SpawnDavisFD
 global function SpawnFDHeavyTurret
 global function SpawnLFMapTitan
+global function ShowTitanfallBlockHintToPlayer
 
 global struct SmokeEvent{
 	vector position
@@ -918,6 +919,14 @@ void function ShowTitanfallBlockHint()
 	wait 10
 	foreach( entity player in GetPlayerArray() )
 		NSSendLargeMessageToPlayer( player, "Titanfall Block", "Further Titans cannot be summoned until the end of the wave, avoid losing your current Titan!", 60, "rui/callsigns/callsign_94_col" )
+	#endif
+}
+
+void function ShowTitanfallBlockHintToPlayer( entity player )
+{
+	#if SERVER
+	wait 10
+	NSSendLargeMessageToPlayer( player, "Titanfall Block Active", "Your titan cannot be summoned, but you can help team mates not losing theirs, steal batteries!", 50, "rui/callsigns/callsign_94_col" )
 	#endif
 }
 
