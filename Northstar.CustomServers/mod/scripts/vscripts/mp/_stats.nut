@@ -16,7 +16,7 @@ global function Stats_OnPlayerDidDamage
 
 struct {
 	table< string, array<string> > refs
-	table< string, array< void functionref(entity, float, string) > > callbacks
+	table< string, array< void functionref( entity, float, string ) > > callbacks
 
 	table< entity, table< string, int > > cachedIntStatChanges
 	table< table< string, float > > cachedFloatStatChanges
@@ -26,29 +26,29 @@ struct {
 
 void function Stats_Init()
 {
-	AddCallback_OnPlayerKilled(OnPlayerOrNPCKilled)
-	AddCallback_OnNPCKilled(OnPlayerOrNPCKilled)
-	AddCallback_OnPlayerRespawned(OnPlayerRespawned)
-	AddCallback_OnClientConnected(OnClientConnected)
-	AddCallback_OnClientDisconnected(OnClientDisconnected)
+	AddCallback_OnPlayerKilled( OnPlayerOrNPCKilled )
+	AddCallback_OnNPCKilled( OnPlayerOrNPCKilled )
+	AddCallback_OnPlayerRespawned( OnPlayerRespawned )
+	AddCallback_OnClientConnected( OnClientConnected )
+	AddCallback_OnClientDisconnected( OnClientDisconnected )
 	AddCallback_GameStateEnter( eGameState.Epilogue, OnEpilogueStarted )
 
 	thread HandleDistanceAndTimeStats_Threaded()
 	thread SaveStatsPeriodically_Threaded()
 }
 
-void function AddStatCallback(string statCategory, string statAlias, string statSubAlias, void functionref(entity, float, string) callback, string subRef)
+void function AddStatCallback( string statCategory, string statAlias, string statSubAlias, void functionref( entity, float, string ) callback, string subRef )
 {	
-	if (!IsValidStat(statCategory, statAlias, statSubAlias))
+	if ( !IsValidStat( statCategory, statAlias, statSubAlias ) )
 		throw "INVALID STAT: " + statCategory + " : " + statAlias + " : " + statSubAlias
 	
 	
-	string str = GetStatVar(statCategory, statAlias, statSubAlias)
+	string str = GetStatVar( statCategory, statAlias, statSubAlias )
 
-	if (str in file.refs)
+	if ( str in file.refs )
 	{
-		file.refs[str].append(subRef)
-		file.callbacks[str].append(callback)
+		file.refs[str].append( subRef )
+		file.callbacks[str].append( callback )
 	}
 	else
 	{
@@ -58,107 +58,107 @@ void function AddStatCallback(string statCategory, string statAlias, string stat
 }
 
 // a lot of this file seems to be doing caching of stats in some way
-void function Stats_SaveStatDelayed(entity player, string statCategory, string statAlias, string statSubAlias)
+void function Stats_SaveStatDelayed( entity player, string statCategory, string statAlias, string statSubAlias )
 {
 	// idk how long the delay is meant to be but whatever
 	WaitFrame()
 
-	if (!IsValid(player))
+	if ( !IsValid( player ) )
 		return
 
 	Stats_SaveStat( player, statCategory, statAlias, statSubAlias )
 }
 
-void function Stats_SaveAllStats(entity player)
+void function Stats_SaveAllStats( entity player )
 {
-	if (player in file.cachedIntStatChanges)
+	if ( player in file.cachedIntStatChanges )
 	{
-		foreach(string key, int val in file.cachedIntStatChanges[player])
+		foreach( string key, int val in file.cachedIntStatChanges[player] )
 		{
-			player.SetPersistentVar( key, player.GetPersistentVarAsInt(key) + val )
+			player.SetPersistentVar( key, player.GetPersistentVarAsInt( key ) + val )
 		}
 		
 		delete file.cachedIntStatChanges[player]
 	}
 	// save cached float stat change
-	if (player in file.cachedFloatStatChanges)
+	if ( player in file.cachedFloatStatChanges )
 	{
-		foreach(string key, float val in file.cachedFloatStatChanges[player])
+		foreach( string key, float val in file.cachedFloatStatChanges[player] )
 		{
-			player.SetPersistentVar( key, expect float(player.GetPersistentVar(key)) + val )
+			player.SetPersistentVar( key, expect float( player.GetPersistentVar( key ) ) + val )
 		}
 		
 		delete file.cachedFloatStatChanges[player]
 	}
 }
 
-void function Stats_SaveStat(entity player, string statCategory, string statAlias, string statSubAlias)
+void function Stats_SaveStat( entity player, string statCategory, string statAlias, string statSubAlias )
 {
-	string str = GetStatVar(statCategory, statAlias, statSubAlias)
+	string str = GetStatVar( statCategory, statAlias, statSubAlias )
 	// save cached int stat change
-	if (player in file.cachedIntStatChanges && str in file.cachedIntStatChanges[player])
+	if ( player in file.cachedIntStatChanges && str in file.cachedIntStatChanges[player] )
 	{
-		player.SetPersistentVar( str, player.GetPersistentVarAsInt(str) + file.cachedIntStatChanges[player][str] )
+		player.SetPersistentVar( str, player.GetPersistentVarAsInt( str ) + file.cachedIntStatChanges[player][str] )
 		delete file.cachedIntStatChanges[player][str]
 		return
 	}
 	// save cached float stat change
-	if (player in file.cachedFloatStatChanges && str in file.cachedFloatStatChanges[player])
+	if ( player in file.cachedFloatStatChanges && str in file.cachedFloatStatChanges[player] )
 	{
-		player.SetPersistentVar( str, expect float(player.GetPersistentVar(str)) + file.cachedFloatStatChanges[player][str] )
+		player.SetPersistentVar( str, expect float( player.GetPersistentVar( str ) ) + file.cachedFloatStatChanges[player][str] )
 		delete file.cachedFloatStatChanges[player][str]
 		return
 	}
 }
 
 // this gets the cached change, not the actual value
-int function PlayerStat_GetCurrentInt(entity player, string statCategory, string statAlias, string statSubAlias)
+int function PlayerStat_GetCurrentInt( entity player, string statCategory, string statAlias, string statSubAlias )
 {
-	string str = GetStatVar(statCategory, statAlias, statSubAlias)
+	string str = GetStatVar( statCategory, statAlias, statSubAlias )
 
-	if (player in file.cachedIntStatChanges && str in file.cachedIntStatChanges[player])
+	if ( player in file.cachedIntStatChanges && str in file.cachedIntStatChanges[player] )
 		return file.cachedIntStatChanges[player][str]
 	return 0
 }
 
 // this gets the cached change, not the actual value
-float function PlayerStat_GetCurrentFloat(entity player, string statCategory, string statAlias, string statSubAlias)
+float function PlayerStat_GetCurrentFloat( entity player, string statCategory, string statAlias, string statSubAlias )
 {
-	string str = GetStatVar(statCategory, statAlias, statSubAlias)
+	string str = GetStatVar( statCategory, statAlias, statSubAlias )
 
-	if (player in file.cachedFloatStatChanges && str in file.cachedFloatStatChanges[player])
+	if ( player in file.cachedFloatStatChanges && str in file.cachedFloatStatChanges[player] )
 		return file.cachedFloatStatChanges[player][str]
 	return 0
 }
 
-void function UpdatePlayerStat(entity player, string statCategory, string subStat, int count = 1)
+void function UpdatePlayerStat( entity player, string statCategory, string subStat, int count = 1 )
 {
-	if (!IsValid(player))
+	if ( !IsValid( player ) )
 		return
 		
 	Stats_IncrementStat( player, statCategory, subStat, "", count.tofloat() )
 }
 
-void function IncrementPlayerDidPilotExecutionWhileCloaked(entity player)
+void function IncrementPlayerDidPilotExecutionWhileCloaked( entity player )
 {
-	UpdatePlayerStat(player, "kills_stats", "pilotExecutePilotWhileCloaked")
+	UpdatePlayerStat( player, "kills_stats", "pilotExecutePilotWhileCloaked" )
 }
 
-void function UpdateTitanDamageStat(entity attacker, float savedDamage, var damageInfo)
+void function UpdateTitanDamageStat( entity attacker, float savedDamage, var damageInfo )
 {
-	if (!IsValid(attacker))
+	if ( !IsValid( attacker ) )
 		return
 		
 	Stats_IncrementStat( attacker, "titan_stats", "titanDamage", GetTitanCharacterName( attacker ), savedDamage )
 }
 
-void function UpdateTitanWeaponDamageStat(entity attacker, float savedDamage, var damageInfo)
+void function UpdateTitanWeaponDamageStat( entity attacker, float savedDamage, var damageInfo )
 {
-	if (!IsValid(attacker))
+	if ( !IsValid( attacker ) )
 		return
 
-	string weaponName = GetPersistenceRefFromDamageInfo(damageInfo)
-	if (weaponName == "")
+	string weaponName = GetPersistenceRefFromDamageInfo( damageInfo )
+	if ( weaponName == "" )
 		return
 
 	Stats_IncrementStat( attacker, "weapon_stats", "titanDamage", weaponName, savedDamage )
@@ -166,21 +166,21 @@ void function UpdateTitanWeaponDamageStat(entity attacker, float savedDamage, va
 
 void function UpdateTitanCoreEarnedStat( entity player, entity titan, int count = 1 )
 {
-	if (!IsValid(player))
+	if ( !IsValid( player ) )
 		return
 
-	if (!IsValid(titan))
+	if ( !IsValid( titan ) )
 		return
 
 	Stats_IncrementStat( player, "titan_stats", "coresEarned", GetTitanCharacterName( titan ), count.tofloat() )
 }
 
-void function PreScoreEventUpdateStats(entity attacker, entity ent)
+void function PreScoreEventUpdateStats( entity attacker, entity ent )
 {
-	// used to track kill streaks ending i think (that stuff gets reset during score event update)
+	// used to track kill streaks ending i think ( that stuff gets reset during score event update )
 }
 
-void function PostScoreEventUpdateStats(entity attacker, entity ent)
+void function PostScoreEventUpdateStats( entity attacker, entity ent )
 {
 	if ( !attacker.IsPlayer() )
 		return
@@ -189,25 +189,25 @@ void function PostScoreEventUpdateStats(entity attacker, entity ent)
 	{
 		// killingSpressAs_<chassis>
 		if ( attacker.IsTitan() )
-			Stats_IncrementStat( attacker, "kills_stats", "killingSpressAs_" + GetTitanCharacterName(attacker), "", 1.0 )
+			Stats_IncrementStat( attacker, "kills_stats", "killingSpressAs_" + GetTitanCharacterName( attacker ), "", 1.0 )
 		
 
 	}
 }
 
-void function Stats_OnPlayerDidDamage(entity victim, var damageInfo)
+void function Stats_OnPlayerDidDamage( entity victim, var damageInfo )
 {
 	// try and get the player
-	entity attacker = DamageInfo_GetAttacker(damageInfo)
+	entity attacker = DamageInfo_GetAttacker( damageInfo )
 	// get the player from their titan
-	if (attacker.IsTitan() && IsPetTitan(attacker))
+	if ( attacker.IsTitan() && IsPetTitan( attacker ) )
 		attacker = attacker.GetTitanSoul().GetBossPlayer()
 
-	if (!attacker.IsPlayer())
+	if ( !attacker.IsPlayer() )
 		return
 
-	string weaponName = GetPersistenceRefFromDamageInfo(damageInfo)
-	if (weaponName == "")
+	string weaponName = GetPersistenceRefFromDamageInfo( damageInfo )
+	if ( weaponName == "" )
 		return
 
 	Stats_IncrementStat( attacker, "weapon_stats", "shotsHit", weaponName, 1.0 )
@@ -220,9 +220,9 @@ void function Stats_OnPlayerDidDamage(entity victim, var damageInfo)
 
 void function Stats_IncrementStat( entity player, string statCategory, string statAlias, string statSubAlias, float amount )
 {
-	if (!IsValidStat(statCategory, statAlias, statSubAlias))
+	if ( !IsValidStat( statCategory, statAlias, statSubAlias ) )
 	{
-		printt("invalid stat: " + statCategory + " : " + statAlias + " : " + statSubAlias)
+		printt( "invalid stat: " + statCategory + " : " + statAlias + " : " + statSubAlias )
 		return
 	}
 
@@ -232,13 +232,13 @@ void function Stats_IncrementStat( entity player, string statCategory, string st
 	// stupid exception because respawn set this up as an int in script
 	// but it is actually a float, so the game will crash if we don't fix it somewhere
 	// i dont feel like committing all of sh_stats.gnut so im doing this instead
-	if (str == "mapStats[%mapname%].hoursPlayed[%gamemode%]")
+	if ( str == "mapStats[%mapname%].hoursPlayed[%gamemode%]" )
 		type = ePlayerStatType.FLOAT
 
 	// this is rather hacky
 	string mode = GAMETYPE
 	int difficulty = GetDifficultyLevel()
-	if (difficulty >= 5)
+	if ( difficulty >= 5 )
 		return
 
 	string saveVar = Stats_GetFixedSaveVar( str, GetMapName(), mode, difficulty.tostring() )
@@ -252,30 +252,30 @@ void function Stats_IncrementStat( entity player, string statCategory, string st
 	{
 		// if we have an invalid mode or map for persistence, and it is used in the
 		// persistence string, we can't save the persistence so we have to just return
-		if (str != saveVar)
+		if ( str != saveVar )
 		{
-			printt(ex)
+			printt( ex )
 			return
 		}
 	}
 	str = saveVar
 
-	switch (type)
+	switch ( type )
 	{
 	case ePlayerStatType.INT:
 		// populate table if needed
-		if (!(player in file.cachedIntStatChanges))
+		if ( !( player in file.cachedIntStatChanges ) )
 			file.cachedIntStatChanges[player] <- {}
-		if (!(str in file.cachedIntStatChanges[player]))
+		if ( !( str in file.cachedIntStatChanges[player] ) )
 			file.cachedIntStatChanges[player][str] <- 0
 		
 		file.cachedIntStatChanges[player][str] += amount.tointeger()
 		break
 	case ePlayerStatType.FLOAT:
 		// populate table if needed
-		if (!(player in file.cachedFloatStatChanges))
+		if ( !( player in file.cachedFloatStatChanges ) )
 			file.cachedFloatStatChanges[player] <- {}
-		if (!(str in file.cachedFloatStatChanges[player]))
+		if ( !( str in file.cachedFloatStatChanges[player] ) )
 			file.cachedFloatStatChanges[player][str] <- 0.0
 		
 		file.cachedFloatStatChanges[player][str] += amount
@@ -290,31 +290,31 @@ void function Stats_IncrementStat( entity player, string statCategory, string st
 
 void function Stats_RunCallbacks( string statVar, entity player, float change )
 {
-	if (!(statVar in file.refs))
+	if ( !( statVar in file.refs ) )
 		return
 	
-	for(int i = 0; i < file.refs[statVar].len(); i++)
+	for( int i = 0; i < file.refs[statVar].len(); i++ )
 	{
 		string ref = file.refs[statVar][i]
-		void functionref(entity, float, string) callback = file.callbacks[statVar][i]
+		void functionref( entity, float, string ) callback = file.callbacks[statVar][i]
 
 		callback( player, change, ref )
 	}
 }
 
-void function OnClientConnected(entity player)
+void function OnClientConnected( entity player )
 {
 	Stats_IncrementStat( player, "game_stats", "game_joined", "", 1.0 )
 }
 
-void function OnClientDisconnected(entity player)
+void function OnClientDisconnected( entity player )
 {
-	Stats_SaveAllStats(player)
+	Stats_SaveAllStats( player )
 	// maybe we can save this stuff, but idk if we can access persistence in this callback
-	if (player in file.cachedIntStatChanges)
+	if ( player in file.cachedIntStatChanges )
 		delete file.cachedIntStatChanges[player]
 
-	if (player in file.cachedFloatStatChanges)
+	if ( player in file.cachedFloatStatChanges )
 		delete file.cachedFloatStatChanges[player]
 }
 
@@ -331,14 +331,14 @@ void function OnPlayerOrNPCKilled( entity victim, entity attacker, var damageInf
 
 void function HandleDeathStats( entity player, entity attacker, var damageInfo )
 {
-	if (!IsValid(player) || !player.IsPlayer())
+	if ( !IsValid( player ) || !player.IsPlayer() )
 		return
 	
 	// total
 	Stats_IncrementStat( player, "deaths_stats", "total", "", 1.0 )
 
 	// these all rely on the attacker being valid
-	if ( IsValid(attacker) )
+	if ( IsValid( attacker ) )
 	{
 		// totalPVP
 		// note: I'm not sure if owned entities count towards totalPVP
@@ -347,36 +347,36 @@ void function HandleDeathStats( entity player, entity attacker, var damageInfo )
 			Stats_IncrementStat( player, "deaths_stats", "totalPVP", "", 1.0 )
 
 		// byPilots
-		if ( IsPilot(attacker) )
+		if ( IsPilot( attacker ) )
 			Stats_IncrementStat( player, "deaths_stats", "byPilots", "", 1.0 )
 
 		// byTitan_<chassis>
 		if ( attacker.IsTitan() && attacker.IsPlayer() )
-			Stats_IncrementStat( player, "deaths_stats", "byTitan_" + GetTitanCharacterName(attacker), "", 1.0 )
+			Stats_IncrementStat( player, "deaths_stats", "byTitan_" + GetTitanCharacterName( attacker ), "", 1.0 )
 
 		// bySpectres
-		if ( IsSpectre(attacker) )
+		if ( IsSpectre( attacker ) )
 			Stats_IncrementStat( player, "deaths_stats", "bySpectres", "", 1.0 )
 
 		// byGrunts
-		if ( IsGrunt(attacker) )
+		if ( IsGrunt( attacker ) )
 			Stats_IncrementStat( player, "deaths_stats", "byGrunts", "", 1.0 )
 
 		// byNPCTitans_<chassis>
 		if ( attacker.IsTitan() && attacker.IsNPC() )
-			Stats_IncrementStat( player, "deaths_stats", "byNPCTitans_" + GetTitanCharacterName(attacker), "", 1.0 )
+			Stats_IncrementStat( player, "deaths_stats", "byNPCTitans_" + GetTitanCharacterName( attacker ), "", 1.0 )
 	}
 	
 	// asPilot
-	if ( IsPilot(player) )
+	if ( IsPilot( player ) )
 		Stats_IncrementStat( player, "deaths_stats", "asPilot", "", 1.0 )
 
 	// asTitan_<chassis>
 	if ( player.IsTitan() )
-		Stats_IncrementStat( player, "deaths_stats", "asTitan_" + GetTitanCharacterName(player), "", 1.0 )
+		Stats_IncrementStat( player, "deaths_stats", "asTitan_" + GetTitanCharacterName( player ), "", 1.0 )
 
 	// suicides
-	if ( IsSuicide( attacker, player, DamageInfo_GetDamageSourceIdentifier(damageInfo) ) )
+	if ( IsSuicide( attacker, player, DamageInfo_GetDamageSourceIdentifier( damageInfo ) ) )
 		Stats_IncrementStat( player, "deaths_stats", "suicides", "", 1.0 )
 
 	// whileEjecting
@@ -386,7 +386,7 @@ void function HandleDeathStats( entity player, entity attacker, var damageInfo )
 
 void function HandleWeaponKillStats( entity attacker, entity victim, var damageInfo )
 {
-	if ( !IsValid(attacker) )
+	if ( !IsValid( attacker ) )
 		return
 
 	// get the player and it's pet titan
@@ -398,7 +398,7 @@ void function HandleWeaponKillStats( entity attacker, entity victim, var damageI
 		player = attacker
 		playerPetTitan = player.GetPetTitan()
 	}
-	else if ( attacker.IsTitan() && IsPetTitan(attacker) )
+	else if ( attacker.IsTitan() && IsPetTitan( attacker ) )
 	{
 		// the attacker is the player's auto titan
 		player = attacker.GetTitanSoul().GetBossPlayer()
@@ -426,7 +426,7 @@ void function HandleWeaponKillStats( entity attacker, entity victim, var damageI
 
 void function HandleKillStats( entity victim, entity attacker, var damageInfo )
 {
-	if ( !IsValid(attacker) )
+	if ( !IsValid( attacker ) )
 		return
 	// get the player and it's pet titan
 	entity player
@@ -437,7 +437,7 @@ void function HandleKillStats( entity victim, entity attacker, var damageInfo )
 		player = attacker
 		playerPetTitan = player.GetPetTitan()
 	}
-	else if ( attacker.IsTitan() && IsPetTitan(attacker) )
+	else if ( attacker.IsTitan() && IsPetTitan( attacker ) )
 	{
 		// the attacker is the player's auto titan
 		player = attacker.GetTitanSoul().GetBossPlayer()
@@ -453,7 +453,7 @@ void function HandleKillStats( entity victim, entity attacker, var damageInfo )
 	int damageSource = DamageInfo_GetDamageSourceIdentifier( damageInfo )
 	bool victimIsPlayer = victim.IsPlayer()
 	bool victimIsNPC = victim.IsNPC()
-	bool victimIsPilot = IsPilot(victim)
+	bool victimIsPilot = IsPilot( victim )
 	bool victimIsTitan = victim.IsTitan()
 
 	// total
@@ -468,15 +468,15 @@ void function HandleKillStats( entity victim, entity attacker, var damageInfo )
 		Stats_IncrementStat( player, "kills_stats", "pilots", "", 1.0 )
 
 	// spectres
-	if ( IsSpectre(victim) )
+	if ( IsSpectre( victim ) )
 		Stats_IncrementStat( player, "kills_stats", "spectres", "", 1.0 )
 
 	// marvins
-	if ( IsMarvin(victim) )
+	if ( IsMarvin( victim ) )
 		Stats_IncrementStat( player, "kills_stats", "marvins", "", 1.0 )
 
 	// grunts
-	if ( IsGrunt(victim) )
+	if ( IsGrunt( victim ) )
 		Stats_IncrementStat( player, "kills_stats", "grunts", "", 1.0 )
 
 	// totalTitans
@@ -492,11 +492,11 @@ void function HandleKillStats( entity victim, entity attacker, var damageInfo )
 		Stats_IncrementStat( player, "kills_stats", "totalNPC", "", 1.0 )
 
 	// totalTitansWhileDoomed
-	if ( victimIsTitan && attacker.IsTitan() && GetDoomedState(attacker) )
+	if ( victimIsTitan && attacker.IsTitan() && GetDoomedState( attacker ) )
 		Stats_IncrementStat( player, "kills_stats", "totalTitansWhileDoomed", "", 1.0 )
 
 	// asPilot
-	if ( IsPilot(attacker) )
+	if ( IsPilot( attacker ) )
 		Stats_IncrementStat( player, "kills_stats", "asPilot", "", 1.0 )
 
 	// totalAssists
@@ -517,7 +517,7 @@ void function HandleKillStats( entity victim, entity attacker, var damageInfo )
 
 	// asTitan_<chassis>
 	if ( player.IsTitan() )
-		Stats_IncrementStat( player, "kills_stats", "asTitan_" + GetTitanCharacterName(player), "", 1.0 )
+		Stats_IncrementStat( player, "kills_stats", "asTitan_" + GetTitanCharacterName( player ), "", 1.0 )
 
 	// firstStrikes
 	if ( file.isFirstStrike && attacker.IsPlayer() )
@@ -535,11 +535,11 @@ void function HandleKillStats( entity victim, entity attacker, var damageInfo )
 		Stats_IncrementStat( player, "kills_stats", "whileEjecting", "", 1.0 )
 
 	// cloakedPilots
-	if ( victimIsPilot && IsCloaked(victim) )
+	if ( victimIsPilot && IsCloaked( victim ) )
 		Stats_IncrementStat( player, "kills_stats", "cloakedPilots", "", 1.0 )
 
 	// whileCloaked
-	if ( attacker == player && IsCloaked(attacker) )
+	if ( attacker == player && IsCloaked( attacker ) )
 		Stats_IncrementStat( player, "kills_stats", "whileCloaked", "", 1.0 )
 
 	// wallrunningPilots
@@ -567,11 +567,11 @@ void function HandleKillStats( entity victim, entity attacker, var damageInfo )
 		Stats_IncrementStat( player, "kills_stats", "pilotExecutePilot", "", 1.0 )
 
 	// pilotKillsWithHoloPilotActive
-	if ( victimIsPilot && GetDecoyActiveCountForPlayer(player) > 0 )
+	if ( victimIsPilot && GetDecoyActiveCountForPlayer( player ) > 0 )
 		Stats_IncrementStat( player, "kills_stats", "pilotKillsWithAmpedWallActive", "", 1.0 )
 
 	// pilotKillsWithAmpedWallActive
-	if ( victimIsPilot && GetAmpedWallsActiveCountForPlayer(player) > 0 )
+	if ( victimIsPilot && GetAmpedWallsActiveCountForPlayer( player ) > 0 )
 		Stats_IncrementStat( player, "kills_stats", "pilotKillsWithAmpedWallActive", "", 1.0 )
 
 	// pilotExecutePilotUsing_<execution>
@@ -587,26 +587,26 @@ void function HandleKillStats( entity victim, entity attacker, var damageInfo )
 		Stats_IncrementStat( player, "kills_stats", "pilotKickMeleePilot", "", 1.0 )
 
 	// titanMelee
-	if ( DamageIsTitanMelee(damageSource) )
+	if ( DamageIsTitanMelee( damageSource ) )
 		Stats_IncrementStat( player, "kills_stats", "titanMelee", "", 1.0 )
 
 	// titanMeleePilot
-	if ( victimIsPilot && DamageIsTitanMelee(damageSource) )
+	if ( victimIsPilot && DamageIsTitanMelee( damageSource ) )
 		Stats_IncrementStat( player, "kills_stats", "titanMeleePilot", "", 1.0 )
 
 	// titanStepCrush
-	if ( IsTitanCrushDamage(damageInfo) )
+	if ( IsTitanCrushDamage( damageInfo ) )
 		Stats_IncrementStat( player, "kills_stats", "titanStepCrush", "", 1.0 )
 
 	// titanStepCrushPilot
-	if ( victimIsPilot && IsTitanCrushDamage(damageInfo) )
+	if ( victimIsPilot && IsTitanCrushDamage( damageInfo ) )
 		Stats_IncrementStat( player, "kills_stats", "titanStepCrushPilot", "", 1.0 )
 
 	// titanExocution<capitalisedChassis>
 	// note: RESPAWN WHY? EXPLAIN
 	if ( damageSource == eDamageSourceId.titan_execution )
 	{
-		string titanName = GetTitanCharacterName(player)
+		string titanName = GetTitanCharacterName( player )
 		titanName = titanName.slice( 0, 1 ).toupper() + titanName.slice( 1, titanName.len() )
 		Stats_IncrementStat( player, "kills_stats", "titanExocution" + titanName, "", 1.0 )
 	}
@@ -632,7 +632,7 @@ void function HandleKillStats( entity victim, entity attacker, var damageInfo )
 		Stats_IncrementStat( player, "kills_stats", "pilot_headshots_total", "", 1.0 )
 
 	// evacShips
-	if ( IsEvacDropship(victim) )
+	if ( IsEvacDropship( victim ) )
 		Stats_IncrementStat( player, "kills_stats", "evacShips", "", 1.0 )
 
 	// nuclearCore
@@ -640,11 +640,11 @@ void function HandleKillStats( entity victim, entity attacker, var damageInfo )
 		Stats_IncrementStat( player, "kills_stats", "nuclearCore", "", 1.0 )
 
 	// meleeWhileCloaked
-	if ( IsCloaked(attacker) && damageSource == eDamageSourceId.human_melee )
+	if ( IsCloaked( attacker ) && damageSource == eDamageSourceId.human_melee )
 		Stats_IncrementStat( player, "kills_stats", "meleeWhileCloaked", "", 1.0 )
 	
 	// titanKillsAsPilot
-	if ( victimIsTitan && IsPilot(attacker) )
+	if ( victimIsTitan && IsPilot( attacker ) )
 		Stats_IncrementStat( player, "kills_stats", "titanKillsAsPilot", "", 1.0 )
 
 	// pilotKillsWhileStimActive
@@ -656,7 +656,7 @@ void function HandleKillStats( entity victim, entity attacker, var damageInfo )
 		Stats_IncrementStat( player, "kills_stats", "pilotKillsAsTitan", "", 1.0 )
 
 	// pilotKillsAsPilot
-	if ( victimIsPilot && IsPilot(attacker) )
+	if ( victimIsPilot && IsPilot( attacker ) )
 		Stats_IncrementStat( player, "kills_stats", "pilotKillsAsPilot", "", 1.0 )
 
 	// titanKillsAsTitan
@@ -667,7 +667,7 @@ void function HandleKillStats( entity victim, entity attacker, var damageInfo )
 
 void function HandleTitanStats( entity attacker, entity victim, var damageInfo )
 {
-	if ( !IsValid(attacker) )
+	if ( !IsValid( attacker ) )
 		return
 
 	// get the player and it's pet titan
@@ -679,7 +679,7 @@ void function HandleTitanStats( entity attacker, entity victim, var damageInfo )
 		player = attacker
 		playerPetTitan = player.GetPetTitan()
 	}
-	else if ( attacker.IsTitan() && IsPetTitan(attacker) )
+	else if ( attacker.IsTitan() && IsPetTitan( attacker ) )
 	{
 		// the attacker is the player's auto titan
 		player = attacker.GetTitanSoul().GetBossPlayer()
@@ -694,67 +694,67 @@ void function HandleTitanStats( entity attacker, entity victim, var damageInfo )
 	int damageSource = DamageInfo_GetDamageSourceIdentifier( damageInfo )
 	bool victimIsPlayer = victim.IsPlayer()
 	bool victimIsNPC = victim.IsNPC()
-	bool victimIsPilot = IsPilot(victim)
+	bool victimIsPilot = IsPilot( victim )
 	bool victimIsTitan = victim.IsTitan()
-	bool titanIsPrime = IsTitanClassPrime( GetTitanClass(playerPetTitan) )
+	bool titanIsPrime = IsTitanPrimeTitan( playerPetTitan )
 
 	// pilots
 	if ( victimIsPilot && attacker.IsTitan() )
-		Stats_IncrementStat( player, "titan_stats", "pilots", "", 1.0 )
+		Stats_IncrementStat( player, "titan_stats", "pilots", GetTitanCharacterName( attacker ), 1.0 )
 
 	// titansTotal
 	if ( victimIsTitan && attacker.IsTitan() )
-		Stats_IncrementStat( player, "titan_stats", "titansTotal", "", 1.0 )
+		Stats_IncrementStat( player, "titan_stats", "titansTotal", GetTitanCharacterName( attacker ), 1.0 )
 
 	// pilotsAsPrime
 	if ( victimIsPilot && attacker.IsTitan() && titanIsPrime )
-		Stats_IncrementStat( player, "titan_stats", "pilotsAsPrime", "", 1.0 )
+		Stats_IncrementStat( player, "titan_stats", "pilotsAsPrime", GetTitanCharacterName( attacker ), 1.0 )
 
 	// titansAsPrime
 	if ( victimIsTitan && attacker.IsTitan() && titanIsPrime )
-		Stats_IncrementStat( player, "titan_stats", "titansAsPrime", "", 1.0 )
+		Stats_IncrementStat( player, "titan_stats", "titansAsPrime", GetTitanCharacterName( attacker ), 1.0 )
 
 	// executionsAsPrime
 	if ( damageSource == eDamageSourceId.titan_execution && attacker.IsTitan() && titanIsPrime )
-		Stats_IncrementStat( player, "titan_stats", "executionsAsPrime", "", 1.0 )
+		Stats_IncrementStat( player, "titan_stats", "executionsAsPrime", GetTitanCharacterName( attacker ), 1.0 )
 }
 
 void function OnPlayerRespawned( entity player )
 {
-	thread SetLastPosForDistanceStatValid_Threaded(player, true)
+	thread SetLastPosForDistanceStatValid_Threaded( player, true )
 }
 
 void function OnEpilogueStarted()
 {
 	// award players for match completed, wins, and losses
-	foreach (entity player in GetPlayerArray())
+	foreach ( entity player in GetPlayerArray() )
 	{
 		Stats_IncrementStat( player, "game_stats", "game_completed", "", 1.0 )
 
-		if (player.GetTeam() == GetWinningTeam())
+		if ( player.GetTeam() == GetWinningTeam() )
 			Stats_IncrementStat( player, "game_stats", "game_won", "", 1.0 )
 		else
 			Stats_IncrementStat( player, "game_stats", "game_lost", "", 1.0 )
 	}
 	// award mvp and top 3 in each team
-	if (!IsFFAGame())
+	if ( !IsFFAGame() )
 	{
 		string gamemode = GameRules_GetGameMode()
 		int functionref( entity, entity ) compareFunc = GameMode_GetScoreCompareFunc( gamemode )
 
-		for(int team = 0; team < MAX_TEAMS; team++)
+		for( int team = 0; team < MAX_TEAMS; team++ )
 		{
-			array<entity> players = GetPlayerArrayOfTeam(team)
+			array<entity> players = GetPlayerArrayOfTeam( team )
 			if ( compareFunc == null )
 			{
-				printt( "gamemode doesn't have a compare func to get the top 3")
+				printt( "gamemode doesn't have a compare func to get the top 3" )
 				return
 			}
 			players.sort( compareFunc )
 			int max = min( players.len(), 3 ).tointeger()
-			for (int i = 0; i < max; i++)
+			for ( int i = 0; i < max; i++ )
 			{
-				if (i == 0)
+				if ( i == 0 )
 					Stats_IncrementStat( players[i], "game_stats", "mvp", "", 1.0 )
 				Stats_IncrementStat( players[i], "game_stats", "top3OnTeam", "", 1.0 )
 			}
@@ -763,10 +763,10 @@ void function OnEpilogueStarted()
 	}
 }
 
-void function SetLastPosForDistanceStatValid_Threaded(entity player, bool val)
+void function SetLastPosForDistanceStatValid_Threaded( entity player, bool val )
 {
 	WaitFrame()
-	if (!IsValid(player))
+	if ( !IsValid( player ) )
 		return
 	player.p.lastPosForDistanceStatValid = val
 }
@@ -774,23 +774,23 @@ void function SetLastPosForDistanceStatValid_Threaded(entity player, bool val)
 void function HandleDistanceAndTimeStats_Threaded()
 {
 	// just to be safe
-	if (IsLobby())
+	if ( IsLobby() )
 		return
 
-	while (GetGameState() < eGameState.Playing)
+	while ( GetGameState() < eGameState.Playing )
 		WaitFrame()
 
 	float lastTickTime = Time()
 	
-	while(true)
+	while( true )
 	{
 		// track distance stats
-		foreach (entity player in GetPlayerArray())
+		foreach ( entity player in GetPlayerArray() )
 		{
-			if (player.p.lastPosForDistanceStatValid)
+			if ( player.p.lastPosForDistanceStatValid )
 			{
 				// not 100% sure on using Distance2D over Distance tbh
-				float distInches = Distance2D(player.p.lastPosForDistanceStat, player.GetOrigin())
+				float distInches = Distance2D( player.p.lastPosForDistanceStat, player.GetOrigin() )
 				float distMiles = distInches / 63360.0
 
 				// more generic distance stats
@@ -806,21 +806,21 @@ void function HandleDistanceAndTimeStats_Threaded()
 
 				string state = ""
 				// specific distance stats
-				if (player.IsWallRunning())
+				if ( player.IsWallRunning() )
 					state = "wallrunning"
-				else if (PlayerIsRodeoingTitan(player))
+				else if ( PlayerIsRodeoingTitan( player ) )
 				{
-					if (player.GetTitanSoulBeingRodeoed().GetTeam() == player.GetTeam())
+					if ( player.GetTitanSoulBeingRodeoed().GetTeam() == player.GetTeam() )
 						state = "onFriendlyTitan"
 					else
 						state = "onEnemyTitan"
 				}
-				else if (player.IsZiplining())
+				else if ( player.IsZiplining() )
 					state = "ziplining"
-				else if (!player.IsOnGround())
+				else if ( !player.IsOnGround() )
 					state = "inAir"
 
-				if (state != "")
+				if ( state != "" )
 					Stats_IncrementStat( player, "distance_stats", state, "", distMiles )
 			}
 
@@ -831,10 +831,10 @@ void function HandleDistanceAndTimeStats_Threaded()
 		float timeHours = timeSeconds / 3600.0
 
 		// track time stats
-		foreach (entity player in GetPlayerArray())
+		foreach ( entity player in GetPlayerArray() )
 		{
 			// first tick i dont count
-			if (timeSeconds == 0)
+			if ( timeSeconds == 0 )
 				break
 			
 			// more generic time stats
@@ -849,24 +849,24 @@ void function HandleDistanceAndTimeStats_Threaded()
 
 			string state = ""
 			// specific time stats
-			if (!IsAlive(player))
+			if ( !IsAlive( player ) )
 				state = "hours_dead"
-			else if (player.IsWallHanging())
+			else if ( player.IsWallHanging() )
 				state = "hours_wallhanging"
-			else if (player.IsWallRunning())
+			else if ( player.IsWallRunning() )
 				state = "hours_wallrunning"
-			else if (!player.IsOnGround())
+			else if ( !player.IsOnGround() )
 				state = "hours_inAir"
 			
-			if (state != "")
+			if ( state != "" )
 				Stats_IncrementStat( player, "time_stats", state, "", timeHours )
 
 			// weapon time stats
 			entity activeWeapon = player.GetActiveWeapon()
-			if (IsValid(activeWeapon))
+			if ( IsValid( activeWeapon ) )
 			{
 				Stats_IncrementStat( player, "weapon_stats", "hoursUsed", activeWeapon.GetWeaponClassName(), timeHours )
-				foreach(entity weapon in player.GetMainWeapons())
+				foreach( entity weapon in player.GetMainWeapons() )
 				{
 					Stats_IncrementStat( player, "weapon_stats", "hoursEquipped", weapon.GetWeaponClassName(), timeHours )
 				}
@@ -885,21 +885,21 @@ void function HandleDistanceAndTimeStats_Threaded()
 // this is kinda shit
 void function SaveStatsPeriodically_Threaded()
 {
-	while(true)
+	while( true )
 	{
-		foreach(entity player in GetPlayerArray())
-			Stats_SaveAllStats(player)
+		foreach( entity player in GetPlayerArray() )
+			Stats_SaveAllStats( player )
 		wait 5
 	}
 }
 
-string function GetPersistenceRefFromDamageInfo(var damageInfo)
+string function GetPersistenceRefFromDamageInfo( var damageInfo )
 {
 	string damageSourceString = DamageSourceIDToString( DamageInfo_GetDamageSourceIdentifier( damageInfo ) )
 
-	foreach(str in shGlobalMP.statsItemsList)
+	foreach( str in shGlobalMP.statsItemsList )
 	{
-		if (str == damageSourceString)
+		if ( str == damageSourceString )
 			return damageSourceString
 	}
 
