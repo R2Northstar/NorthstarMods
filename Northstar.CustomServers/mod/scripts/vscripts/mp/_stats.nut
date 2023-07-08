@@ -858,13 +858,9 @@ void function OnEpilogueStarted()
 		}
 		// add new game data
 		player.SetPersistentVar( "kdratio_match[0]", kdratio_match )
-		printt("KD: " + kdratio_match)
 		player.SetPersistentVar( "kdratiopvp_match[0]", kdratiopvp_match )
-		printt("KD (PVP): " + kdratiopvp_match)
 		player.SetPersistentVar( "kdratio_lifetime", kdratio_lifetime )
-		printt("KD (LIFETIME): " + kdratio_lifetime)
 		player.SetPersistentVar( "kdratio_lifetime_pvp", kdratio_lifetimepvp )
-		printt("KD (LIFETIME PVP): " + kdratio_lifetimepvp)
 	}
 
 	// award mvp and top 3 in each team
