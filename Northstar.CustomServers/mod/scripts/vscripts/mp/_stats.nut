@@ -21,6 +21,11 @@ struct {
 	table< entity, table< string, int > > cachedIntStatChanges
 	table< table< string, float > > cachedFloatStatChanges
 
+	table< entity, float > playerKills
+	table< entity, float > playerKillsPvp
+	table< entity, float > playerDeaths
+	table< entity, float > playerDeathsPvp
+
 	bool isFirstStrike = true
 } file
 
@@ -339,6 +344,10 @@ void function HandleDeathStats( entity player, entity attacker, var damageInfo )
 	if ( !IsValid( player ) || !player.IsPlayer() )
 		return
 	
+	if ( player in file.playerDeaths )
+		file.playerDeaths[player]++
+	else
+		file.playerDeaths[player] <- 1.0
 	// total
 	Stats_IncrementStat( player, "deaths_stats", "total", "", 1.0 )
 
@@ -349,7 +358,13 @@ void function HandleDeathStats( entity player, entity attacker, var damageInfo )
 		// note: I'm not sure if owned entities count towards totalPVP
 		// such as auto-titans, turrets, etc.
 		if ( attacker.IsPlayer() || attacker.GetBossPlayer() )
+		{
+			if ( player in file.playerDeathsPvp )
+				file.playerDeathsPvp[player]++
+			else
+				file.playerDeathsPvp[player] <- 1.0
 			Stats_IncrementStat( player, "deaths_stats", "totalPVP", "", 1.0 )
+		}
 
 		// byPilots
 		if ( IsPilot( attacker ) )
@@ -499,12 +514,22 @@ void function HandleKillStats( entity victim, entity attacker, var damageInfo )
 	bool victimIsPilot = IsPilot( victim )
 	bool victimIsTitan = victim.IsTitan()
 
+	if ( player in file.playerKills )
+		file.playerKills[player]++
+	else
+		file.playerKills[player] <- 1.0
 	// total
 	Stats_IncrementStat( player, "kills_stats", "total", "", 1.0 )
 
 	// totalPVP
 	if ( victimIsPlayer )
+	{
+		if ( player in file.playerKillsPvp )
+			file.playerKillsPvp[player]++
+		else
+			file.playerKillsPvp[player] <- 1.0
 		Stats_IncrementStat( player, "kills_stats", "totalPVP", "", 1.0 )
+	}
 
 	// pilots
 	if ( victimIsPilot )
@@ -747,7 +772,7 @@ void function HandleTitanStats( entity victim, entity attacker, var damageInfo )
 	bool victimIsNPC = victim.IsNPC()
 	bool victimIsPilot = IsPilot( victim )
 	bool victimIsTitan = victim.IsTitan()
-	bool titanIsPrime = IsTitanPrimeTitan( playerPetTitan )
+	bool titanIsPrime = victimIsTitan && IsTitanPrimeTitan( playerPetTitan )
 
 	// pilots
 	if ( victimIsPilot && attacker.IsTitan() )
@@ -787,6 +812,61 @@ void function OnEpilogueStarted()
 		else
 			Stats_IncrementStat( player, "game_stats", "game_lost", "", 1.0 )
 	}
+
+	// update player's KD
+	foreach ( entity player in GetPlayerArray() )
+	{
+		// kd stats
+		// index 0 is most recent game
+		// index 9 is least recent game
+		float playerKills = ( player in file.playerKills ) ? file.playerKills[player] : 0.0
+		float playerDeaths = ( player in file.playerDeaths ) ? file.playerDeaths[player] : 0.0
+		float kdratio_match
+		if ( playerDeaths == 0.0 )
+			kdratio_match = playerKills
+		else
+			kdratio_match = playerKills / playerDeaths
+
+		float playerKillsPvp = ( player in file.playerKillsPvp ) ? file.playerKillsPvp[player] : 0.0
+		float playerDeathsPvp = ( player in file.playerDeathsPvp ) ? file.playerDeathsPvp[player] : 0.0
+		float kdratiopvp_match
+		if ( playerDeathsPvp == 0.0 )
+			kdratiopvp_match = playerKillsPvp
+		else
+			kdratiopvp_match = playerKillsPvp / playerDeathsPvp
+
+		float totalDeaths = player.GetPersistentVarAsInt("deathStats.total").tofloat()
+		float totalKills = player.GetPersistentVarAsInt("killStats.total").tofloat()
+		float totalDeathsPvp = player.GetPersistentVarAsInt("deathStats.totalPVP").tofloat()
+		float totalKillsPvp = player.GetPersistentVarAsInt("killStats.totalPVP").tofloat()
+		float kdratio_lifetime
+		if ( totalDeaths == 0.0 )
+			kdratio_lifetime = totalKills
+		else
+			kdratio_lifetime = totalKills / totalDeaths
+		float kdratio_lifetimepvp
+		if ( totalDeathsPvp == 0.0 )
+			kdratio_lifetimepvp = totalKillsPvp
+		else
+			kdratio_lifetimepvp = totalKillsPvp / totalDeathsPvp
+		
+		// shift stats by 1 to make room for new game data
+		for ( int i = NUM_GAMES_TRACK_KDRATIO - 2; i >= 0; --i )
+		{
+			player.SetPersistentVar( "kdratio_match[" + (i + 1) + "]", player.GetPersistentVar("kdratio_match[" + i + "]") )
+			player.SetPersistentVar( "kdratiopvp_match[" + (i + 1) + "]", player.GetPersistentVar("kdratiopvp_match[" + i + "]") )
+		}
+		// add new game data
+		player.SetPersistentVar( "kdratio_match[0]", kdratio_match )
+		printt("KD: " + kdratio_match)
+		player.SetPersistentVar( "kdratiopvp_match[0]", kdratiopvp_match )
+		printt("KD (PVP): " + kdratiopvp_match)
+		player.SetPersistentVar( "kdratio_lifetime", kdratio_lifetime )
+		printt("KD (LIFETIME): " + kdratio_lifetime)
+		player.SetPersistentVar( "kdratio_lifetime_pvp", kdratio_lifetimepvp )
+		printt("KD (LIFETIME PVP): " + kdratio_lifetimepvp)
+	}
+
 	// award mvp and top 3 in each team
 	if ( !IsFFAGame() )
 	{
