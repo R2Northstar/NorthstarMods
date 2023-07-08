@@ -190,8 +190,13 @@ void function PostScoreEventUpdateStats( entity attacker, entity ent )
 		// killingSpressAs_<chassis>
 		if ( attacker.IsTitan() )
 			Stats_IncrementStat( attacker, "kills_stats", "killingSpressAs_" + GetTitanCharacterName( attacker ), "", 1.0 )
-		
 
+		entity weapon = attacker.GetActiveWeapon()
+		// I guess if you dont have a valid active weapon when you get awarded a killing spree
+		// you dont get the stat. Too bad!
+		if ( !IsValid( weapon ) )
+			return
+		Stats_IncrementStat( attacker, "weapon_stats", "killingSprees", weapon.GetWeaponClassName(), 1.0 )
 	}
 }
 
@@ -384,7 +389,7 @@ void function HandleDeathStats( entity player, entity attacker, var damageInfo )
 		Stats_IncrementStat( player, "deaths_stats", "whileEjecting", "", 1.0 )
 }
 
-void function HandleWeaponKillStats( entity attacker, entity victim, var damageInfo )
+void function HandleWeaponKillStats( entity victim, entity attacker, var damageInfo )
 {
 	if ( !IsValid( attacker ) )
 		return
@@ -410,18 +415,56 @@ void function HandleWeaponKillStats( entity attacker, entity victim, var damageI
 		return
 	}
 
+	string damageSourceStr = GetPersistenceRefFromDamageInfo( damageInfo )
+	// cant do weapon stats for no weapon
+	if ( damageSourceStr == "" )
+		return
+
+	// check things once, for performance
+	int damageSource = DamageInfo_GetDamageSourceIdentifier( damageInfo )
+	bool victimIsPlayer = victim.IsPlayer()
+	bool victimIsNPC = victim.IsNPC()
+	bool victimIsPilot = IsPilot( victim )
+	bool victimIsTitan = victim.IsTitan()
+
 	// total
+	Stats_IncrementStat( attacker, "weapon_kill_stats", "total", damageSourceStr, 1.0 )
+
 	// pilots
+	if ( victimIsPilot )
+		Stats_IncrementStat( attacker, "weapon_kill_stats", "pilots", damageSourceStr, 1.0 )
+
 	// ejecting_pilots
+	if ( victimIsPilot && victim.p.pilotEjecting )
+		Stats_IncrementStat( attacker, "weapon_kill_stats", "ejecting_pilots", damageSourceStr, 1.0 )
+
 	// titansTotal
-	// assistsTotal
-	// killingSprees
+	if ( victimIsTitan )
+		Stats_IncrementStat( attacker, "weapon_kill_stats", "titansTotal", damageSourceStr, 1.0 )
+
 	// spectres
+	if ( IsSpectre( victim ) )
+		Stats_IncrementStat( attacker, "weapon_kill_stats", "spectres", damageSourceStr, 1.0 )
+
 	// marvins
+	if ( IsMarvin( victim ) )
+		Stats_IncrementStat( attacker, "weapon_kill_stats", "marvins", damageSourceStr, 1.0 )
+
 	// grunts
+	if ( IsGrunt( victim ) )
+		Stats_IncrementStat( attacker, "weapon_kill_stats", "grunts", damageSourceStr, 1.0 )
+
 	// ai
+	if ( victimIsNPC )
+		Stats_IncrementStat( attacker, "weapon_kill_stats", "ai", damageSourceStr, 1.0 )
+
 	// titans_<chassis>
+	if ( victimIsPlayer && victimIsTitan )
+		Stats_IncrementStat( attacker, "weapon_kill_stats", "titans_" + GetTitanCharacterName( victim ), damageSourceStr, 1.0 )
+
 	// npcTitans_<chassis>
+	if ( victimIsNPC && victimIsTitan )
+		Stats_IncrementStat( attacker, "weapon_kill_stats", "npcTitans_" + GetTitanCharacterName( victim.GetPetTitan() ), damageSourceStr, 1.0 )
 }
 
 void function HandleKillStats( entity victim, entity attacker, var damageInfo )
@@ -500,6 +543,7 @@ void function HandleKillStats( entity victim, entity attacker, var damageInfo )
 		Stats_IncrementStat( player, "kills_stats", "asPilot", "", 1.0 )
 
 	// totalAssists
+	// assistsTotal ( weapon_stats )
 	// note: eww
 	table<int, bool> alreadyAssisted
 	foreach( DamageHistoryStruct attackerInfo in victim.e.recentDamageHistory )
@@ -512,6 +556,13 @@ void function HandleKillStats( entity victim, entity attacker, var damageInfo )
 		{
 			alreadyAssisted[attackerInfo.attacker.GetEncodedEHandle()] <- true
 			Stats_IncrementStat( attackerInfo.attacker, "kills_stats", "totalAssists", "", 1.0 )
+			
+			entity weapon = attacker.GetActiveWeapon()
+			// I guess if you dont have a valid active weapon when you get awarded an assist
+			// you dont get the stat. Too bad!
+			if ( !IsValid( weapon ) )
+				continue
+			Stats_IncrementStat( attacker, "weapon_stats", "assistsTotal", weapon.GetWeaponClassName(), 1.0 )
 		}
 	}
 
@@ -520,7 +571,7 @@ void function HandleKillStats( entity victim, entity attacker, var damageInfo )
 		Stats_IncrementStat( player, "kills_stats", "asTitan_" + GetTitanCharacterName( player ), "", 1.0 )
 
 	// firstStrikes
-	if ( file.isFirstStrike && attacker.IsPlayer() )
+	if ( file.isFirstStrike && attacker.IsPlayer() && victimIsPlayer )
 	{
 		Stats_IncrementStat( player, "kills_stats", "firstStrikes", "", 1.0 )
 		file.isFirstStrike = false
@@ -665,7 +716,7 @@ void function HandleKillStats( entity victim, entity attacker, var damageInfo )
 
 }
 
-void function HandleTitanStats( entity attacker, entity victim, var damageInfo )
+void function HandleTitanStats( entity victim, entity attacker, var damageInfo )
 {
 	if ( !IsValid( attacker ) )
 		return
