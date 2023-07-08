@@ -16,81 +16,89 @@ struct {
 void function Progression_Init()
 {
 	#if SERVER
-	AddCallback_OnClientDisconnected(OnClientDisconnected)
+	AddCallback_OnClientDisconnected( OnClientDisconnected )
 	AddClientCommandCallback( "ns_progression", ClientCommand_SetProgression )
-	AddCallback_GameStateEnter( eGameState.Playing, OnPlaying)
+	AddCallback_GameStateEnter( eGameState.Playing, OnPlaying )
 	#elseif CLIENT
-	AddCallback_OnClientScriptInit(OnClientScriptInit)
+	AddCallback_OnClientScriptInit( OnClientScriptInit )
 	#endif
 }
 
-bool function ProgressionEnabledForPlayer(entity player)
+bool function ProgressionEnabledForPlayer( entity player )
 {
 	#if SERVER
-	if (player in file.progressionEnabled)
+	if ( player in file.progressionEnabled )
 		return file.progressionEnabled[player]
 	
 	return false
 	#else
-	return GetConVarBool("ns_progression_enabled")
+	return GetConVarBool( "ns_progression_enabled" )
 	#endif
 }
 
 #if SERVER
-
 void function OnPlaying()
 {
 	SetUIVar( level, "penalizeDisconnect", false ) // dont show the "you will lose merits thing"
 	SetUIVar( level, "showGameSummary", true ) // show the EOG summary xp thing
 }
 
-void function OnClientDisconnected(entity player)
+void function OnClientDisconnected( entity player )
 {
 	// cleanup table when player leaves
-	if (player in file.progressionEnabled)
+	if ( player in file.progressionEnabled )
 		delete file.progressionEnabled[player]
 }
 
 bool function ClientCommand_SetProgression( entity player, array<string> args )
 {
-	if (args.len() != 1)
+	if ( args.len() != 1 )
 		return false
-	if (args[0] != "0" && args[0] != "1")
+	if ( args[0] != "0" && args[0] != "1" )
 		return false
 	
 	file.progressionEnabled[player] <- args[0] == "1"
+
+	// loadout validation when progression is turned on
+	if ( file.progressionEnabled[player] )
+		ValidateEquippedItems( player )
+
 	return true
 }
-
-#else // CLIENT || UI
-
-#if CLIENT
-
-void function OnClientScriptInit(entity player)
-{
-	// unsure if this is needed, just being safe
-	if (player != GetLocalClientPlayer())
-		return
-
-	Progression_SetPreference(GetConVarBool("ns_progression_enabled"))
-}
-
 #endif
 
-void function Progression_SetPreference(bool enabled)
+#if CLIENT
+void function OnClientScriptInit( entity player )
+{
+	// unsure if this is needed, just being safe
+	if ( player != GetLocalClientPlayer() )
+		return
+
+	Progression_SetPreference( GetConVarBool( "ns_progression_enabled" ) )
+}
+#endif
+
+#if CLIENT || UI
+void function Progression_SetPreference( bool enabled )
 {
 	SetConVarBool( "ns_progression_enabled", enabled )
 
 	#if CLIENT
-	GetLocalClientPlayer().ClientCommand("ns_progression " + enabled.tointeger())
+	GetLocalClientPlayer().ClientCommand( "ns_progression " + enabled.tointeger() )
 	#elseif UI
-	ClientCommand( "ns_progression " + enabled.tointeger())
+	ClientCommand( "ns_progression " + enabled.tointeger() )
 	#endif
 }
 
 bool function Progression_GetPreference()
 {
-	return GetConVarBool("ns_progression_enabled")
+	return GetConVarBool( "ns_progression_enabled" )
 }
+#endif
 
+#if SERVER
+void function ValidateEquippedItems( entity player )
+{
+
+}
 #endif
