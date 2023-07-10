@@ -104,7 +104,11 @@ void function UpdateCachedLoadouts_Delayed()
 	#else
 	RunUIScript( "UpdateCachedLoadouts" ) // keep client and UI synced
 	#endif
-	UpdateCachedLoadouts()
+
+	#if UI
+	uiGlobal.pilotSpawnLoadoutIndex = GetPersistentSpawnLoadoutIndex( GetUIPlayer(), "pilot" )
+	uiGlobal.titanSpawnLoadoutIndex = GetPersistentSpawnLoadoutIndex( GetUIPlayer(), "titan" )
+	#endif
 }
 #endif
 
@@ -155,58 +159,96 @@ void function ValidateEquippedItems( entity player )
 	{
 		printt( "- VALIDATING TITAN LOADOUT: " + titanLoadoutIndex )
 
-		bool hasChanged = false
+		bool isSelected = titanLoadoutIndex == player.GetPersistentVarAsInt( "titanSpawnLoadout.index" )
 		TitanLoadoutDef loadout = GetTitanLoadoutFromPersistentData( player, titanLoadoutIndex )
 		TitanLoadoutDef defaultLoadout = shGlobal.defaultTitanLoadouts[titanLoadoutIndex]
 
-		// titanClass
 		// primaryMod
+
 		// special
+
 		// antirodeo
+
 		// passive1
+
 		// passive2
+
 		// passive3
+
 		// passive4
+
 		// passive5
+
 		// passive6
+
 		// titanExecution
+
 		// skinIndex
+
 		// camoIndex
+
 		// decalIndex
+		string noseArtRef = GetNoseArtRefFromTitanClassAndPersistenceValue( loadout.titanClass, loadout.decalIndex )
+		if ( loadout.decalIndex != defaultLoadout.decalIndex && IsItemLocked( player, noseArtRef ) )
+		{
+			printt( "  - NOSE ART EQUIPPED WHEN LOCKED, RESETTING" )
+			player.SetPersistentVar( "titanLoadouts[" + titanLoadoutIndex + "].decalIndex", defaultLoadout.decalIndex )
+		}
+
 		// primarySkinIndex
+
+
 		// primaryCamoIndex
+
 		// isPrime
+
 		// primeSkinIndex
+
 		// primeCamoIndex
+
 		// primeDecalIndex
+		string primeNoseArtRef = GetNoseArtRefFromTitanClassAndPersistenceValue( loadout.titanClass, loadout.primeDecalIndex )
+		if ( loadout.primeDecalIndex != defaultLoadout.primeDecalIndex && IsItemLocked( player, primeNoseArtRef) )
+		{
+			printt( "  - PRIME NOSE ART EQUIPPED WHEN LOCKED, RESETTING" )
+			player.SetPersistentVar( "titanLoadouts[" + titanLoadoutIndex + "].primeDecalIndex", defaultLoadout.primeDecalIndex )
+		}
 
 		// showArmBadge - equipped and shouldnt be able to
 		if ( loadout.showArmBadge && !CanEquipArmBadge( player, loadout.titanClass ) )
 		{
 			printt( "  - ARM BADGE EQUIPPED WHEN LOCKED, RESETTING" )
 			player.SetPersistentVar( "titanLoadouts[" + titanLoadoutIndex + "].showArmBadge", defaultLoadout.showArmBadge )
-			hasChanged = true
 		}
 
-		if ( hasChanged )
+		// equipped titan loadout
+		if ( isSelected && IsItemLocked( player, loadout.titanClass ) )
 		{
-			Remote_CallFunction_NonReplay( player, "ServerCallback_UpdateTitanModel", titanLoadoutIndex )
+			printt( "- SELECTED TITAN LOADOUT IS LOCKED, RESETTING" )
+			ClientCommand( player, "RequestTitanLoadout " + 0 )
+			Remote_CallFunction_NonReplay( player, "ServerCallback_UpdateTitanModel", 0 )
 		}
-		
 	}
+
 	Remote_CallFunction_NonReplay( player, "UpdateAllCachedTitanLoadouts" )
 
 	// pilot loadouts
 	for ( int pilotLoadoutIndex = 0; pilotLoadoutIndex < NUM_PERSISTENT_PILOT_LOADOUTS; pilotLoadoutIndex++ )
 	{
-		bool hasChanged = false
-		if ( hasChanged )
+		bool isSelected = pilotLoadoutIndex == player.GetPersistentVarAsInt( "pilotSpawnLoadout.index" )
+
+		// so much to do oh my god
+		
+		// equipped pilot loadout
+		if ( isSelected && IsItemLocked( player, "pilot_loadout_" + ( pilotLoadoutIndex + 1 ) ) )
 		{
-			Remote_CallFunction_NonReplay( player, "ServerCallback_UpdatePilotModel", pilotLoadoutIndex )
+			printt( "- SELECTED PILOT LOADOUT IS LOCKED, RESETTING" )
+			ClientCommand( player, "RequestPilotLoadout 0" )
+			Remote_CallFunction_NonReplay( player, "ServerCallback_UpdatePilotModel", 0 )
 		}
 	}
-	Remote_CallFunction_NonReplay( player, "UpdateAllCachedPilotLoadouts" )
 
+	Remote_CallFunction_NonReplay( player, "UpdateAllCachedPilotLoadouts" )
 
 	printt( "ITEM VALIDATION COMPLETE FOR PLAYER: " + player.GetPlayerName() )
 }
