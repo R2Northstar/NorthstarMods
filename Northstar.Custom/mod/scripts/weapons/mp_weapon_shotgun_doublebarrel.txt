@@ -32,7 +32,7 @@ WeaponData
 
 	// Models
 	"viewmodel"   									"models/weapons/twinbshotgun/ptpov_twinbshotgun.mdl"
-	"playermodel" 									"models/weapons/at_rifle/ptpov_at_rifle.mdl"
+	"playermodel" 									"models/weapons/twinbshotgun/w_twinbshotgun.mdl"
 
 	// Effects
 	"tracer_effect"   								"weapon_tracers_shotgun"
@@ -377,7 +377,6 @@ WeaponData
 	"deployfirst_time"								"1.25"
 	"deploycatch_time"								"1.33"
 	"sprintcycle_time"								".55"
-
 
 
     "clip_bodygroup"						"twinbshotgun_magazine"
