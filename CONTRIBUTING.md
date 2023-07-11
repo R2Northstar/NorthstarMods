@@ -15,8 +15,9 @@ When creating issues, whether to track a bug or suggest a feature, please try to
 ## Making pull requests
 When creating a pull request please follow this set of rules:
 1. **1 Fix/Feature should equal to 1 Pull Request.** The more you do in 1 PR the longer it'll take to merge.
-2. Properly format your code. As we currently don't have a formatter we're very lax on this. That doesn't mean you don't have to try to format your code.
-3. **Mention how to test your changes / add a test mod to make it easier to test**
+2. Mark your Pull Request as draft if it isnt finished just yet.
+3. Properly format your code. As we currently don't have a formatter we're very lax on this. That doesn't mean you don't have to try to format your code.
+4. **Mention how to test your changes / add a test mod to make it easier to test**
 
 ## Formatting code
 A basic set of rules you should follow when creating a Pull Request
