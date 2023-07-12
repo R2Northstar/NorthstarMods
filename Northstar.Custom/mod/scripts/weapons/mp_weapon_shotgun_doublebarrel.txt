@@ -31,8 +31,8 @@ WeaponData
 	"stat_rof"										"30"
 
 	// Models
-	"viewmodel"   									"models/weapons/twinbshotgun/ptpov_twinbshotgun.mdl"
-	"playermodel" 									"models/weapons/twinbshotgun/w_twinbshotgun.mdl"
+	"viewmodel"   									"models/weapons/shotgun_doublebarrel/ptpov_shotgun_doublebarrel.mdl"
+	"playermodel" 									"models/weapons/shotgun_doublebarrel/w_shotgun_doublebarrel.mdl"
 
 	// Effects
 	"tracer_effect"   								"weapon_tracers_shotgun"
