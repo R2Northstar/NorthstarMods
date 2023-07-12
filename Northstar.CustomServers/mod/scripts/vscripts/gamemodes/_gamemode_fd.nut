@@ -215,12 +215,14 @@ void function GamemodeFD_Init()
 	switch ( difficultyLevel )
 	{
 		case eFDDifficultyLevel.EASY:
-			SetAILethality( eAILethality.Low )
+			SetAILethality( eAILethality.VeryLow )
 			break
 		case eFDDifficultyLevel.NORMAL:
-			SetAILethality( eAILethality.Medium )
+			SetAILethality( eAILethality.Low )
 			break
 		case eFDDifficultyLevel.HARD:
+			SetAILethality( eAILethality.Medium )
+			break
 		case eFDDifficultyLevel.MASTER:
 		case eFDDifficultyLevel.INSANE:
 			SetAILethality( eAILethality.High )
@@ -559,7 +561,7 @@ void function GamemodeFD_InitPlayer( entity player )
 	{
 		Highlight_SetFriendlyHighlight( player, "sp_friendly_hero" )
 		
-		if( GetGlobalNetInt( "FD_waveState") == WAVE_STATE_BREAK ) //Prevent people who joins midgame from not being able to ready up
+		if( GetGlobalNetInt( "FD_waveState" ) == WAVE_STATE_BREAK ) //Prevent people who joins midgame from not being able to ready up
 		{
 			Remote_CallFunction_NonReplay( player, "ServerCallback_FD_NotifyStoreOpen" )
 			player.s.extracashnag = Time() + 30
@@ -659,16 +661,8 @@ void function TryDisableTitanSelectionForPlayerAfterDelay( entity player, float 
 {
 	player.EndSignal( "OnDestroy" )//Do a crash protect when wait delay
 
-	OnThreadEnd(
-		function() : ( player )
-		{
-			if( IsValidPlayer( player ) && PlayerEarnMeter_Enabled() )
-				DisableTitanSelectionForPlayer( player )
-		}
-	)
-
 	wait waitAmount
-	int waveNumber = GetGlobalNetInt( "FD_currentWave" )
+	int waveNumber = GetGlobalNetInt( "FD_currentWave" ) + 1
 	
 	if ( PlayerEarnMeter_Enabled() )
 	{
@@ -677,7 +671,7 @@ void function TryDisableTitanSelectionForPlayerAfterDelay( entity player, float 
 			PlayerEarnMeter_AddEarnedAndOwned( player, 1.0, 1.0 )
 	}
 	
-	else if ( waveNumber > 0 && !PlayerEarnMeter_Enabled() && !file.isLiveFireMap ) //Lets joiners know why their Titan Meter is not building up if they joined during a Titanfall Block event
+	else if ( waveNumber > 1 && !PlayerEarnMeter_Enabled() && !file.isLiveFireMap ) //Lets joiners know why their Titan Meter is not building up if they joined during a Titanfall Block event
 		ShowTitanfallBlockHintToPlayer( player )
 }
 
@@ -947,11 +941,8 @@ void function OnNpcDeath( entity victim, entity attacker, var damageInfo )
 				AddPlayerScore( attacker, "TripleKill" )
 			else if ( attacker.s.currentTimedKillstreak == MEGAKILL_REQUIREMENT_KILLS )
 				AddPlayerScore( attacker, "MegaKill" )
-			#if SERVER
 			else if ( attacker.s.currentTimedKillstreak == 6 )
-				foreach( entity player in GetPlayerArray() )
-					NSSendAnnouncementMessageToPlayer( player, attacker.GetPlayerName(), "Chained a huge titan killstreak as pilot!", < 255, 128, 32 >, 50, 5 )
-			#endif
+				ShowLargePilotKillStreak( attacker )
 		}
 
 		switch( titanCharacterName )
@@ -1055,10 +1046,7 @@ void function mainGameLoop()
 	{
 		if( Time() > warntime )
 		{
-			#if SERVER
-			foreach( entity player in GetPlayerArray() )
-				NSSendAnnouncementMessageToPlayer( player, "#HUD_WAITING_FOR_PLAYERS_BASIC", "Minimum of: " + GetConVarInt( "ns_fd_min_numplayers_to_start" ) + " to start", < 255, 255, 255 >, 50, 5 )
-			#endif
+			ShowWaitingForMorePlayers()
 			warntime = Time() + 45.0
 		}
 		WaitFrame()
@@ -1086,6 +1074,17 @@ void function mainGameLoop()
 	bool showShop = false
 	for( int i = GetGlobalNetInt( "FD_currentWave" ); i < waveEvents.len(); i++ )
 	{
+		//Wait per wave as well
+		while( GetPlayerArrayOfTeam( TEAM_MILITIA ).len() <= GetConVarInt( "ns_fd_min_numplayers_to_start" ) - 1 )
+		{
+			if( Time() > warntime )
+			{
+				ShowWaitingForMorePlayers()
+				warntime = Time() + 45.0
+			}
+			WaitFrame()
+		}
+		
 		if( file.waveRestart )
 		{
 			if( waveNumber > 0 )
@@ -1482,7 +1481,7 @@ bool function runWave( int waveIndex, bool shouldDoBuyTime )
 				player.ClearInvulnerable()
 				player.SetNoTarget( false )
 				player.ClearParent() //Dropship parenting causes observer mode crash
-				if ( IsAlive( player ) )
+				if ( IsAlive( player ) && player.IsTitan() )
 					player.Die()
 			}
 		}
@@ -1527,10 +1526,10 @@ bool function runWave( int waveIndex, bool shouldDoBuyTime )
 		//Game won code
 		print( "No more pending Waves, match won" )
 		
-		if( GetPlayerArray().len() > 0 )
+		if( GetPlayerArrayOfTeam( TEAM_MILITIA ).len() >= 0 )
 		{
 			highestScore = 0;
-			highestScore_player = GetPlayerArray()[0]
+			highestScore_player = GetPlayerArrayOfTeam( TEAM_MILITIA )[0]
 		}
 		
 		else
@@ -1544,11 +1543,6 @@ bool function runWave( int waveIndex, bool shouldDoBuyTime )
 		{
 			if( !file.players[player].diedThisRound )
 				AddPlayerScore( player, "FDDidntDie" )
-			if( highestScore < ( file.players[player].assaultScoreThisRound + file.players[player].defenseScoreThisRound ) )
-			{
-				highestScore = file.players[player].assaultScoreThisRound + file.players[player].defenseScoreThisRound
-				highestScore_player = player
-			}
 		}
 		
 		SetRoundBased(false)
@@ -1562,6 +1556,14 @@ bool function runWave( int waveIndex, bool shouldDoBuyTime )
 		
 		wait 1
 		
+		foreach( entity player in GetPlayerArrayOfTeam( TEAM_MILITIA ) )
+		{
+			if( highestScore < ( file.players[player].assaultScoreThisRound + file.players[player].defenseScoreThisRound ) )
+			{
+				highestScore = file.players[player].assaultScoreThisRound + file.players[player].defenseScoreThisRound
+				highestScore_player = player
+			}
+		}
 		file.playerAwardStats[highestScore_player]["mvp"]++
 		AddPlayerScore( highestScore_player, "FDWaveMVP" )
 		
@@ -1672,32 +1674,36 @@ bool function runWave( int waveIndex, bool shouldDoBuyTime )
 	wait 2
 	print( "Showing Player Stats: Wave MVP" )
 	
-	if( GetPlayerArrayOfTeam( TEAM_MILITIA ).len() > 0 )
+	if( GetPlayerArrayOfTeam( TEAM_MILITIA ).len() >= 0 )
 	{
 		highestScore = 0;
 		highestScore_player = GetPlayerArray()[0]
-	}
-	
-	foreach( entity player in GetPlayerArrayOfTeam( TEAM_MILITIA ) )
-	{
-		if( highestScore < ( file.players[player].assaultScoreThisRound + file.players[player].defenseScoreThisRound ) )
+		foreach( entity player in GetPlayerArrayOfTeam( TEAM_MILITIA ) )
 		{
-			highestScore = file.players[player].assaultScoreThisRound + file.players[player].defenseScoreThisRound
-			highestScore_player = player
+			if( highestScore < ( file.players[player].assaultScoreThisRound + file.players[player].defenseScoreThisRound ) )
+			{
+				highestScore = file.players[player].assaultScoreThisRound + file.players[player].defenseScoreThisRound
+				highestScore_player = player
+			}
+		}
+		
+		file.playerAwardStats[highestScore_player]["mvp"]++
+		AddPlayerScore( highestScore_player, "FDWaveMVP" )
+		if( !file.isLiveFireMap )
+			AddMoneyToPlayer( highestScore_player, 100 )
+		else
+			AddMoneyToPlayer( highestScore_player, 200 )
+		highestScore_player.AddToPlayerGameStat( PGS_ASSAULT_SCORE, FD_SCORE_MVP )
+		UpdatePlayerScoreboard( highestScore_player )
+		FD_EmitSoundOnEntityOnlyToPlayer( highestScore_player, highestScore_player, "HUD_MP_BountyHunt_BankBonusPts_Deposit_Start_1P" )
+		foreach( entity player in GetPlayerArrayOfTeam( TEAM_MILITIA ) )
+		{
+			if ( player == highestScore_player )
+				continue
+			
+			Remote_CallFunction_NonReplay( player, "ServerCallback_FD_NotifyMVP", highestScore_player.GetEncodedEHandle() )
 		}
 	}
-	
-	file.playerAwardStats[highestScore_player]["mvp"]++
-	AddPlayerScore( highestScore_player, "FDWaveMVP" )
-	if( !file.isLiveFireMap )
-		AddMoneyToPlayer( highestScore_player, 100 )
-	else
-		AddMoneyToPlayer( highestScore_player, 200 )
-	highestScore_player.AddToPlayerGameStat( PGS_ASSAULT_SCORE, FD_SCORE_MVP )
-	UpdatePlayerScoreboard( highestScore_player )
-	FD_EmitSoundOnEntityOnlyToPlayer( highestScore_player, highestScore_player, "HUD_MP_BountyHunt_BankBonusPts_Deposit_Start_1P" )
-	foreach( entity player in GetPlayerArrayOfTeam( TEAM_MILITIA ) )
-		Remote_CallFunction_NonReplay( player, "ServerCallback_FD_NotifyMVP", highestScore_player.GetEncodedEHandle() )
 	
 	wait 2
 	print( "Showing Player Stats: Flawless Defense" )
@@ -1727,7 +1733,7 @@ bool function runWave( int waveIndex, bool shouldDoBuyTime )
 	wait 2
 
 	print( "Waiting buy time" )
-	if( waveIndex<waveEvents.len() )
+	if( waveIndex < waveEvents.len() )
 		SetGlobalNetTime( "FD_nextWaveStartTime", Time() + GetCurrentPlaylistVarFloat( "fd_wave_buy_time", 60 ) )
 
 	return true
@@ -1964,7 +1970,7 @@ void function SpawnCallback_SafeTitanSpawnTime( entity ent )
 	if( ent.IsTitan() && IsValid( GetPetTitanOwner( ent ) ) && ent.GetTeam() == TEAM_MILITIA )
 	{
 		Highlight_SetFriendlyHighlight( ent, "sp_friendly_hero" ) //Friendly Titans should have highlight overlays
-		ent.EnableNPCFlag( NPCMF_PREFER_SPRINT | NPC_ALLOW_INVESTIGATE | NPC_IGNORE_FRIENDLY_SOUND | NPC_NEW_ENEMY_FROM_SOUND | NPC_TEAM_SPOTTED_ENEMY | NPC_AIM_DIRECT_AT_ENEMY )
+		ent.EnableNPCFlag( NPCMF_PREFER_SPRINT | NPC_ALLOW_INVESTIGATE | NPC_IGNORE_FRIENDLY_SOUND | NPC_NEW_ENEMY_FROM_SOUND | NPC_TEAM_SPOTTED_ENEMY | NPC_AIM_DIRECT_AT_ENEMY | NPC_ALLOW_HAND_SIGNALS )
 		if( !GetGlobalNetBool( "FD_waveActive" ) )
 			ent.EnableNPCMoveFlag( NPCMF_WALK_NONCOMBAT | NPCMF_IGNORE_CLUSTER_DANGER_TIME | NPCMF_DISABLE_DANGEROUS_AREA_DISPLACEMENT )
 		entity player = GetPetTitanOwner( ent )
@@ -2028,7 +2034,7 @@ void function OnHarvesterDamaged( entity harvester, var damageInfo )
 	if( attacker.GetTeam() == TEAM_MILITIA )
 		return
 	
-	int PlayersInMatch = GetPlayerArrayOfTeam( TEAM_MILITIA ).len()
+	int PlayersInMatch = GetPlayerArrayOfTeam( TEAM_MILITIA ).len() + 1
 	
 	if ( PlayersInMatch > 4 ) //Additional players should not be considered
 		PlayersInMatch = 4
@@ -2384,7 +2390,11 @@ void function initNetVars()
 	if( !file.isLiveFireMap )
 		SetGlobalNetInt( "burn_turretLimit", 2 )
 	else
+	{
+		SetGlobalNetBool( "titanEjectEnabled", false ) //Disable ejection for Helper Titan
 		SetGlobalNetInt( "burn_turretLimit", 3 ) //Live Fire maps are brutal with spawns so, good to have more turrets
+	}
+		
 	if(!FD_HasRestarted())
 	{
 		bool showShop = false
@@ -2917,7 +2927,7 @@ void function OnPlayerDisconnectedOrDestroyed( entity player )
 	foreach ( entity npc in GetEntArrayByClass_Expensive( "C_AI_BaseNPC" ) )
 	{
 		entity BossPlayer = npc.GetBossPlayer()
-		if ( IsValidPlayer( BossPlayer ) && IsValid( npc ) && player == BossPlayer )
+		if ( !IsValidPlayer( BossPlayer ) && IsValid( npc ) && npc.GetTeam() == TEAM_MILITIA ) //player == BossPlayer )
 			npc.Destroy()
 	}
 	
@@ -3087,6 +3097,7 @@ string function FD_DropshipGetAnimation()
 			return "dropship_coop_respawn_homestead" //Homestead Flight path has a very very jank coordinate where the drop point actually is
 		case "mp_colony02":
 			return "dropship_coop_respawn_lagoon" //Could use the default animation, but this one works nicely for Colony
+		case "mp_complex3":
 		case "mp_grave":
 			return "dropship_coop_respawn_outpost" //Boomtown has low ceiling and this one matches perfectly for it (default clips alot into ceiling geo)
 		case "mp_thaw":
@@ -3237,24 +3248,26 @@ void function RegisterPostSummaryScreenForMatch( bool matchwon )
 	else
 		WaveMilestone = 0
 	
-	int Composition = 0
+	int Composition = 1
 	
-	if( GetPlayerArrayOfTeam( TEAM_MILITIA ).len() >= 2 && !file.isLiveFireMap )
+	if( GetPlayerArrayOfTeam( TEAM_MILITIA ).len() >= 1 && !file.isLiveFireMap )
 	{
-		entity player1titan = GetPlayerArrayOfTeam( TEAM_MILITIA )[0]
-		entity player2titan = GetPlayerArrayOfTeam( TEAM_MILITIA )[1]
-		int suitIndex1 = GetPersistentSpawnLoadoutIndex( player1titan, "titan" )
-		int suitIndex2 = GetPersistentSpawnLoadoutIndex( player2titan, "titan" )
-		
 		foreach( entity player in GetPlayerArrayOfTeam( TEAM_MILITIA ) )
 		{
-			int suitIndex = GetPersistentSpawnLoadoutIndex( player, "titan" )
-			if( suitIndex == suitIndex1 && player == player1titan || suitIndex == suitIndex2 && player == player2titan )
-				continue
-			if( suitIndex != suitIndex1 || suitIndex != suitIndex2 )
-				Composition = 1
+			int suitIndex1 = GetPersistentSpawnLoadoutIndex( player, "titan" )
+			foreach( entity otherplayer in GetPlayerArrayOfTeam( TEAM_MILITIA ) )
+			{
+				int suitIndex2 = GetPersistentSpawnLoadoutIndex( otherplayer, "titan" )
+				if( player == otherplayer )
+					continue
+				
+				if( suitIndex2 == suitIndex1 )
+					Composition = 0
+			}
 		}
 	}
+	else
+		Composition = 0
 	
 	foreach( entity player in GetPlayerArrayOfTeam( TEAM_MILITIA ) )
 	{
@@ -3299,8 +3312,14 @@ void function RegisterPostSummaryScreenForMatch( bool matchwon )
 				player.SetPersistentVar( "mapStats[" + GetMapName() + "].perfectMatchesByDifficulty[" + difficultyLevel + "]", matchperf + 1 )
 			}
 			
-			foreach( entity otherplayer in GetPlayerArray() )
+			Remote_CallFunction_NonReplay( player, "ServerCallback_SquadLeaderBonus", player.GetEncodedEHandle() )
+			foreach( entity otherplayer in GetPlayerArrayOfTeam( TEAM_MILITIA ) )
+			{
+				if( player == otherplayer )
+					continue
+				
 				Remote_CallFunction_NonReplay( player, "ServerCallback_SquadLeaderBonus", otherplayer.GetEncodedEHandle() )
+			}
 				
 			switch( difficultyLevel )
 			{

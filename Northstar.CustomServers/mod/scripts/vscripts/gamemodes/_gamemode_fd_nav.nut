@@ -113,9 +113,10 @@ void function singleNav_thread( entity npc, string routeName, int nodesToSkip = 
 	//Do not make Ticks ignore potential targets just to charge at the Harvester
 	//Arc Titans apparently also stops to fight players on place rather that fiercely push forward
 	//Combat Reapers seems to be a little agressive rather than just sprint to the Harvester mindlessly
+	//Elite Titans will be fighting players since they can push to the Harvester way more easily than the common titans
 	if ( npc.GetClassName() == "npc_frag_drone" )
 		npc.AssaultSetFightRadius( expect int( npc.Dev_GetAISettingByKeyField( "LookDistDefault_Combat" ) ) )
-	else if ( npcName == "empTitan" || IsSuperSpectre( npc ) )
+	else if ( npcName == "empTitan" || IsSuperSpectre( npc ) || npc.ai.bossTitanType == TITAN_MERC )
 		npc.AssaultSetFightRadius( 800 )
 	else
 		npc.AssaultSetFightRadius( 0 )

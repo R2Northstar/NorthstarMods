@@ -23,8 +23,8 @@ void function initFrontierDefenseData()
 	AddStationaryAIPosition(< 1081, 4256, 129 >, eStationaryAIPositionTypes.LAUNCHER_REAPER)
 	
 	//Add those OOB because some "smart" fellas wont stop climbing these places to snipe with Charge Rifle/Archer and do nothing else
-	AddOutOfBoundsTriggerWithParams( < -80, 1156, 1452 >, 192, 640 ) //Center Radio Tower
-	AddOutOfBoundsTriggerWithParams( < -1727, 1225, 1482 >, 128, 512 ) //Sea Food building Antenna
+	AddOutOfBoundsTriggerWithParams( < -75, 1146, 1360 >, 160, 320 ) //Center Radio Tower
+	AddOutOfBoundsTriggerWithParams( < -1720, 1243, 1360 >, 80, 256 ) //Sea Food building Antenna
 
 	int index = 1
 	

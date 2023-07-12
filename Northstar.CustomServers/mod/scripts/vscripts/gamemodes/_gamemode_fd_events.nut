@@ -36,6 +36,8 @@ global function SpawnDavisFD
 global function SpawnFDHeavyTurret
 global function SpawnLFMapTitan
 global function ShowTitanfallBlockHintToPlayer
+global function ShowLargePilotKillStreak
+global function ShowWaitingForMorePlayers
 
 global struct SmokeEvent{
 	vector position
@@ -926,7 +928,24 @@ void function ShowTitanfallBlockHintToPlayer( entity player )
 {
 	#if SERVER
 	wait 10
-	NSSendLargeMessageToPlayer( player, "Titanfall Block Active", "Your titan cannot be summoned, but you can help team mates not losing theirs, steal batteries!", 50, "rui/callsigns/callsign_94_col" )
+	IsValidPlayer( player )
+		NSSendLargeMessageToPlayer( player, "Titanfall Block Active", "Your titan cannot be summoned, but you can help team mates not losing theirs, steal batteries!", 50, "rui/callsigns/callsign_94_col" )
+	#endif
+}
+
+void function ShowLargePilotKillStreak( entity streaker )
+{
+	#if SERVER
+	foreach( entity player in GetPlayerArray() )
+		NSSendAnnouncementMessageToPlayer( player, streaker.GetPlayerName(), "Chained a huge titan killstreak as pilot!", < 255, 128, 32 >, 50, 5 )
+	#endif
+}
+
+void function ShowWaitingForMorePlayers()
+{
+	#if SERVER
+	foreach( entity player in GetPlayerArray() )
+		NSSendAnnouncementMessageToPlayer( player, "#HUD_WAITING_FOR_PLAYERS_BASIC", "Minimum of: " + GetConVarInt( "ns_fd_min_numplayers_to_start" ) + " to start", < 255, 255, 255 >, 50, 5 )
 	#endif
 }
 
@@ -1213,6 +1232,7 @@ void function spawnDroppodGrunts( SmokeEvent smokeEvent, SpawnEvent spawnEvent, 
 		guy.DisableNPCFlag( NPC_ALLOW_PATROL )
 		guy.SetEfficientMode( true )
 		guy.SetParent( pod, "ATTACH", true )
+		guy.SetBehaviorSelector( "behavior_sp_soldier" )
 		SetSquad( guy, squadName )
 
 		// should this grunt have an anti titan weapon instead of its normal weapon?
@@ -1230,6 +1250,7 @@ void function spawnDroppodGrunts( SmokeEvent smokeEvent, SpawnEvent spawnEvent, 
 	foreach( npc in guys )
 	{
 		npc.SetEfficientMode( false )
+		npc.SetEnemyChangeCallback( GruntTargetsTitan )
 		thread singleNav_thread( npc, spawnEvent.route )
 	}
 }
@@ -1333,6 +1354,7 @@ void function spawnGruntDropship( SmokeEvent smokeEvent, SpawnEvent spawnEvent, 
 		AddMinimapForHumans( guy )
 		spawnedNPCs.append( guy )
 		guys.append( guy )
+		guy.SetBehaviorSelector( "behavior_sp_soldier" )
 		
 		table Table = CreateDropshipAnimTable( dropship, "both", i )
 		thread GuyDeploysOffShip( guy, Table )
@@ -1349,7 +1371,10 @@ void function spawnGruntDropship( SmokeEvent smokeEvent, SpawnEvent spawnEvent, 
 			if ( guy.GetParent() )
 				guy.Die() //Kill grunts that didn't manage to drop off the ship
 			else
+			{
+				guy.SetEnemyChangeCallback( GruntTargetsTitan )
 				thread singleNav_thread( guy, spawnEvent.route )
+			}
 		}
 	}
 	WaittillAnimDone( dropship )
@@ -2226,10 +2251,30 @@ void function OnFDHarvesterTargeted( entity titan )
 		titan.SetCapabilityFlag( bits_CAP_INNATE_MELEE_ATTACK1 | bits_CAP_INNATE_MELEE_ATTACK2 | bits_CAP_SYNCED_MELEE_ATTACK, false )
 		titan.DisableNPCFlag( NPC_DIRECTIONAL_MELEE )
 	}
-	else
+	else if( enemy != null )
 	{
 		titan.EnableNPCFlag( NPC_DIRECTIONAL_MELEE )
-		titan.SetCapabilityFlag( bits_CAP_INNATE_MELEE_ATTACK1 | bits_CAP_INNATE_MELEE_ATTACK2 | bits_CAP_SYNCED_MELEE_ATTACK, true )
+		if( enemy.IsTitan() )
+		{
+			titan.SetCapabilityFlag( bits_CAP_INNATE_MELEE_ATTACK1 | bits_CAP_INNATE_MELEE_ATTACK2, false )
+			titan.SetCapabilityFlag( bits_CAP_SYNCED_MELEE_ATTACK, true )
+		}
+		else
+		{
+			titan.SetCapabilityFlag( bits_CAP_INNATE_MELEE_ATTACK1 | bits_CAP_INNATE_MELEE_ATTACK2 | bits_CAP_SYNCED_MELEE_ATTACK, true )
+		}
+	}
+}
+
+void function GruntTargetsTitan( entity guy )
+{
+	entity enemy = guy.GetEnemy()
+	if( enemy != null )
+	{
+		if( enemy.IsTitan() )
+			guy.AssaultSetFightRadius( 800 )
+		else
+			guy.AssaultSetFightRadius( 0 )
 	}
 }
 

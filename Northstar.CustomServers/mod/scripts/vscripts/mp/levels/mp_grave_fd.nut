@@ -934,6 +934,8 @@ void function RegisterCustomFDContent()
 	AddStationaryAIPosition(< 6879, -1677, 2408 >, eStationaryAIPositionTypes.LAUNCHER_REAPER)
 	AddStationaryAIPosition(< 4461, -6723, 2242 >, eStationaryAIPositionTypes.LAUNCHER_REAPER)
 	
+	AddOutOfBoundsTriggerWithParams( < 5584, -4354, 3053 >, 200, 256 )
+	
 	routes[ "townInfantryCrossroad" ] <- []
 	routes[ "townInfantryCrossroad" ].append( < 6756, -3414, 2236 > )
 	routes[ "townInfantryCrossroad" ].append( < 4888, -3853, 2264 > )

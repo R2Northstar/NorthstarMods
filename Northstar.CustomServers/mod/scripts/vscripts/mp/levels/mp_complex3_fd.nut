@@ -5,7 +5,7 @@ void function initFrontierDefenseData()
 	AddCallback_RegisterCustomFDContent( RegisterCustomFDContent )
     shopPosition = < -8255, -1517, 580 >
 	shopAngles = < 0, 45, 0 >
-	FD_spawnPosition = < -7206, -375, 1930 >
+	FD_spawnPosition = < -6481, 98, 2250 >
 	FD_spawnAngles = < 0, 15, 0 >
 	FD_groundspawnPosition = < -5785, -152, 580 >
 	FD_groundspawnAngles = < 0, 85, 0 >
