@@ -241,7 +241,7 @@ bool function ProgressionIsDisabled()
 void function EnableProgression( var button )
 {
 	Progression_SetPreference(true)
-	thread UpdateCachedLoadouts_Delayed()
+	UpdateCachedLoadouts_Delayed()
 	DialogData dialogData
 	dialogData.menu = GetMenu( "AnnouncementDialog" )
 	dialogData.header = "#PROGRESSION_ENABLED_HEADER"
