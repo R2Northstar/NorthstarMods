@@ -160,6 +160,14 @@ void function ValidateEquippedItems( entity player )
 		printt( "- FACTION IS LOCKED, RESETTING" )
 		player.SetPersistentVar( "factionChoice", "faction_marauder" ) // im so sorry that i am setting you to use sarah, you don't deserve this
 	}
+	
+	// boost
+	BurnReward reward = BurnReward_GetById( player.GetPersistentVarAsInt( "burnmeterSlot" ) )
+	if ( IsItemLocked( player, reward.ref ) )
+	{
+		printt( "- BOOST IS LOCKED, RESETTING" )
+		player.SetPersistentVar( "burnmeterSlot", BurnReward_GetByRef( "burnmeter_amped_weapons" ).id )
+	}
 
 	// titan loadouts
 	for ( int titanLoadoutIndex = 0; titanLoadoutIndex < NUM_PERSISTENT_TITAN_LOADOUTS; titanLoadoutIndex++ )
@@ -399,7 +407,26 @@ void function ValidateEquippedItems( entity player )
 		PilotLoadoutDef loadout = GetPilotLoadout( player, pilotLoadoutIndex )
 		PilotLoadoutDef defaultLoadout = shGlobal.defaultPilotLoadouts[pilotLoadoutIndex]
 
-		// so much to do oh my god
+		// tactical
+		// ordnance
+		// race (gender)
+		// camoIndex
+		// skinIndex
+		// primary weapon
+		// primary weapon mods
+		// primary weapon camoIndex
+		// primary weapon skinIndex
+		// secondary weapon
+		// secondary weapon mods
+		// secondary weapon camoIndex
+		// secondary weapon skinIndex
+		// weapon3
+		// weapon3 mods
+		// weapon3 camoIndex
+		// weapon3 skinIndex
+		// kit 1
+		// kit 2
+		// execution
 		
 		// equipped pilot loadout
 		if ( isSelected && IsItemLocked( player, "pilot_loadout_" + ( pilotLoadoutIndex + 1 ) ) )
