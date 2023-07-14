@@ -34,7 +34,7 @@ A basic set of rules you should follow when creating a Pull Request
 - Each function should have a header doc comment
   ```cpp
   ///-----------------------------------------------------------------------------
-  /// NSSendInfoMessageToPlayer() - Sends a string message to player
+  /// Sends a string message to player
   /// Returns true if it succeeded
   ///-----------------------------------------------------------------------------
   bool function NSSendInfoMessageToPlayer( entity player, string text )
