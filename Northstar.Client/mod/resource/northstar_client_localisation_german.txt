@@ -315,5 +315,6 @@ Dr체cke Ja, um zuzustimmen. Du kannst diese Entscheidung jederzeit im Modmen체 �
 		"INCORRECT_MOD_INSTALL_TOAST" "Einige Ihrer Mods sind nicht korrekt installiert. Klicken Sie hier f체r weitere Informationen."
 		"INCORRECT_MODS_MODLIST_HEADER" "Fehlerhaft installierte Mods (%s1)"
 		"INCORRECT_MOD_INSTALL_DESCRIPTION" "Dieser Mod ist nicht korrekt installiert. Jede Mod hat eine Datei namens "mod.json" in ihrem Stammverzeichnis, aber f체r diese Mod wurde sie nicht gefunden.\n\nErwarteter Speicherort: %s1/mod.json\nGefundener Speicherort: %s2/mod.json\n\nStellen Sie sicher, dass sowohl die mod.json-Datei als auch das mod-Verzeichnis direkte Unterordner Ihres mod-Ordners sind."
+		"SNS_LEADER_BANKRUPT_SUB"             "%s1 Wurde Von %s2 Zur체ckgesetzt"
 	}
 }

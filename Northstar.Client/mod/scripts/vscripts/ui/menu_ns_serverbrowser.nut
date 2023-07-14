@@ -1064,18 +1064,47 @@ void function ThreadedAuthAndConnectToServer( string password = "" )
 
 	if ( NSWasAuthSuccessful() )
 	{
-		bool modsChanged
+		bool modsChanged = false
 
-		// unload mods we don't need, load necessary ones and reload mods before connecting
+		// disable all RequiredOnClient mods that are not required by the server and are currently enabled
+		foreach ( string modName in NSGetModNames() )
+		{
+			if ( NSIsModRequiredOnClient( modName ) && NSIsModEnabled( modName ) )
+			{
+				// find the mod name in the list of server required mods
+				bool found = false
+				foreach ( RequiredModInfo mod in file.lastSelectedServer.requiredMods )
+				{
+					if (mod.name == modName)
+					{
+						found = true
+						break
+					}
+				}
+				// if we didnt find the mod name, disable the mod
+				if (!found)
+				{
+					modsChanged = true
+					NSSetModEnabled( modName, false )
+				}
+			}
+		}
+
+		// enable all RequiredOnClient mods that are required by the server and are currently disabled
 		foreach ( RequiredModInfo mod in file.lastSelectedServer.requiredMods )
 		{
 			Mod ornull localMod = GetModByName( mod.name )
-			expect Mod( localMod )
-			if ( localMod.requiredOnClient )
+			
+			if( localMod == null )
 			{
-				bool setModEnabled = file.lastSelectedServer.requiredMods.contains( mod )
-				modsChanged = modsChanged || localMod.enabled != setModEnabled
-				NSSetModEnabled( localMod.index, setModEnabled )
+				throw format( "Tried joining server without required mod %s. Please report this Bug.", mod.name )
+			}
+
+			expect Mod( localMod )
+			if( localMod.requiredOnClient )
+			{
+				modsChanged = true
+				NSSetModEnabled( localMod.name, true )
 			}
 		}
 
