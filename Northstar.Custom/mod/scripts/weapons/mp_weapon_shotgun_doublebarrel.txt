@@ -53,15 +53,20 @@ WeaponData
 	"spread_wallhanging"  							"8.5"
 
 		// Damage - When Used by Players
+	"damage_type" 									"bullet"
 	"damage_near_distance"							"300"
 	"damage_far_distance" 							"700"
 	"damage_near_value"   							"220"
 	"damage_far_value"								"25"
-	"damage_falloff_type"							"inverse"
-	"damage_inverse_distance"						"130"
 	"damage_near_value_titanarmor"					"130"
 	"damage_far_value_titanarmor" 					"10"
+
 	"damage_rodeo" 									"700"
+	"damage_falloff_type"							"inverse"
+	"damage_inverse_distance"						"130"
+	"damage_falloff_type"							"inverse"
+	"damage_inverse_distance"						"100"
+	"damage_flags"									"DF_SHOTGUN | DF_BULLET | DF_KNOCK_BACK | DF_DISMEMBERMENT"
 
 		"damage_headshot_scale"							"1.25"
 
@@ -120,10 +125,6 @@ WeaponData
 	"fx_muzzle_flash_world"							"mflash_shotgun_FULL"
 	"fx_muzzle_flash_attach"						"muzzle_flash"
 
-	"damage_type" 									"bullet"
-	"damage_falloff_type"							"inverse"
-	"damage_inverse_distance"						"100"
-	"damage_flags"									"DF_SHOTGUN | DF_BULLET | DF_KNOCK_BACK | DF_DISMEMBERMENT"
 
 	"impulse_force"   								"800"
 
