@@ -274,7 +274,6 @@ WeaponData
 	"viewmodel_shake_right"							"0.0"
 
 	// Bob
-	// Bob
 	"bob_cycle_time"  								"0.45"
 	"bob_vert_dist"   								"0.1"
 	"bob_horz_dist"   								"0.1"
