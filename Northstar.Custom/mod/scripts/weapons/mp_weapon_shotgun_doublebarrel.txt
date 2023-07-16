@@ -11,7 +11,7 @@ WeaponData
 	"weaponClass" 									"human"
 	"weaponSubClass"								"shotgun"
 	"body_type"										"light"
-	"fire_mode"   									"auto"
+	"fire_mode"   									"semi-auto"
 	"pickup_hold_prompt"  							"Hold [USE] [WEAPONNAME]"
 	"pickup_press_prompt" 							"[USE] [WEAPONNAME]"
 	"minimap_reveal_distance"						"32000"
