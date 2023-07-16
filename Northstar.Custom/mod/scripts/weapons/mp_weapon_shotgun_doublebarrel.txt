@@ -5,7 +5,6 @@ WeaponData
 	"shortprintname"								"#WPN_SHOTGUN_DBLBARREL_SHORT"
 	"description" 									"#WPN_SHOTGUN_DBLBARREL_DESC"
 	"longdesc"										"#WPN_SHOTGUN_DBLBARREL_LONGDESC"
-
 	"menu_icon"										"rui/weapon_icons/mp_weapon_shotgun_doublebarrel"
 	"hud_icon"										"rui/weapon_icons/mp_weapon_shotgun_doublebarrel"
 	"viewmodel_offset_hip" 							"2 -2 -2"
@@ -95,7 +94,7 @@ WeaponData
 
 		"aimassist_adspull_weaponclass"					"broad"
 
-	// Ammo
+		// Ammo
 		"ammo_clip_size"   								"2"
 
 		// Damage - When Used by Players
@@ -211,10 +210,10 @@ WeaponData
 	"reload_time_late1" 							"1.15"
 	"reloadempty_time"								"1.85"
 	"reloadempty_time_late1"						"1.15"
-	"holster_time"									"0.5"  
-	"deploy_time" 									"0.66" 
+	"holster_time"									"0.5"
+	"deploy_time" 									"0.66"
 	"lower_time"  									"0.25"
-	"raise_time"  									"0.3"  
+	"raise_time"  									"0.3"
 	"vortex_refire_behavior"  						"bullet"
 	"allow_empty_fire"								"0"
 	"reload_enabled"  								"1"
