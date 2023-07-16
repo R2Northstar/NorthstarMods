@@ -17,7 +17,7 @@ WeaponData
 	"aimassist_adspull_weaponclass"					"broad"
 	"minimap_reveal_distance"						"32000"
 	"fast_swap_to"									"0"
-	"leveled_pickup"								"1"
+	"leveled_pickup"								"0"
 
 	// Models
 	"viewmodel"   									"models/weapons/shotgun_doublebarrel/ptpov_shotgun_doublebarrel.mdl"
