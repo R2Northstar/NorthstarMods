@@ -78,6 +78,16 @@ WeaponData
 		"damage_heavyarmor_nontitan_scale"				"0.35"
 
 
+		// Ammo
+	"ammo_stockpile_max"							"40"
+	"ammo_default_total"							"40"
+	"ammo_clip_size"   								"2"
+	"ammo_no_remove_from_stockpile"					"1"
+	"ammo_min_to_fire"								"1"
+
+
+
+
 	// Effects
 	"tracer_effect"   								"weapon_tracers_shotgun"
 	"impact_effect_table" 							"inc_bullet"
@@ -123,16 +133,6 @@ WeaponData
 
    "titanarmor_critical_hit_required"              "1"
 	"critical_hit"									"1"
-
-		"ammo_default_total"							"40"
-		"ammo_stockpile_max"							"40"
-		"ammo_no_remove_from_stockpile"					"1"
-		"ammo_min_to_fire"								"1"
-
-
-		// Ammo
-		"ammo_clip_size"   								"2"
-
 
 
 	// NPC
