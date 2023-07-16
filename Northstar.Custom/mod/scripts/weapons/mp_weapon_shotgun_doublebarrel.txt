@@ -40,6 +40,18 @@ WeaponData
 	"stat_accuracy"   								"65"
 	"stat_rof"										"30"
 
+		// Spread
+	"spread_stand_hip"								"8.5"
+	"spread_stand_hip_run"							"8.5"
+	"spread_stand_hip_sprint"                       "8.5"
+	"spread_crouch_hip"   							"8.5"
+	"spread_air_hip"  								"8.5"
+	"spread_stand_ads"								"8.5"
+	"spread_crouch_ads"   							"8.5"
+	"spread_air_ads"  								"8.5"
+	"spread_wallrunning"  							"8.5"
+	"spread_wallhanging"  							"8.5"
+
 	// Effects
 	"tracer_effect"   								"weapon_tracers_shotgun"
 	"impact_effect_table" 							"inc_bullet"
@@ -119,18 +131,6 @@ WeaponData
 		"enable_highlight_networking_on_creation"		"1"
 
 		"damage_heavyarmor_nontitan_scale"				"0.35"
-
-		// Spread
-		"spread_stand_hip"								"8.5"
-		"spread_stand_hip_run"							"8.5"
-		"spread_stand_hip_sprint"                       "8.5"
-		"spread_crouch_hip"   							"8.5"
-		"spread_air_hip"  								"8.5"
-		"spread_stand_ads"								"8.5"
-		"spread_crouch_ads"   							"8.5"
-		"spread_air_ads"  								"8.5"
-		"spread_wallrunning"  							"8.5"
-		"spread_wallhanging"  							"8.5"
 
 
 
