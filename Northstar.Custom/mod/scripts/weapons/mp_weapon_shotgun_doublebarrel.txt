@@ -19,8 +19,18 @@ WeaponData
 	"fast_swap_to"									"0"
 	"leveled_pickup"								"1"
 
+	// Models
+	"viewmodel"   									"models/weapons/shotgun_doublebarrel/ptpov_shotgun_doublebarrel.mdl"
+	"playermodel" 									"models/weapons/shotgun_doublebarrel/w_shotgun_doublebarrel.mdl"
+
 	"OnWeaponPrimaryAttack"							"OnWeaponPrimaryAttack_weapon_shotgun"
 	"OnWeaponNpcPrimaryAttack"						"OnWeaponNpcPrimaryAttack_weapon_shotgun"
+
+	"viewmodel_offset_ads"							"0 0 0"
+	"dof_zoom_nearDepthStart"						"2.000"
+	"dof_zoom_nearDepthEnd"							"4.750"
+	"dof_nearDepthStart"							"3.683"
+	"dof_nearDepthEnd"								"5.300"
 
 	// Menu
 	"menu_category"                                 "shotgun"
@@ -29,10 +39,6 @@ WeaponData
 	"stat_range"  									"70"
 	"stat_accuracy"   								"65"
 	"stat_rof"										"30"
-
-	// Models
-	"viewmodel"   									"models/weapons/shotgun_doublebarrel/ptpov_shotgun_doublebarrel.mdl"
-	"playermodel" 									"models/weapons/shotgun_doublebarrel/w_shotgun_doublebarrel.mdl"
 
 	// Effects
 	"tracer_effect"   								"weapon_tracers_shotgun"
@@ -195,12 +201,6 @@ WeaponData
 	"npc_max_burst"									"1"
 	"npc_rest_time_between_bursts_min"				"0.5"
 	"npc_rest_time_between_bursts_max"				"0.7"
-
-	"viewmodel_offset_ads"							"0 0 0"
-	"dof_zoom_nearDepthStart"						"2.000"
-	"dof_zoom_nearDepthEnd"							"4.750"
-	"dof_nearDepthStart"							"3.683"
-	"dof_nearDepthEnd"								"5.300"
 
 	// Behavior
 	"fire_rate"   									"2.75"
