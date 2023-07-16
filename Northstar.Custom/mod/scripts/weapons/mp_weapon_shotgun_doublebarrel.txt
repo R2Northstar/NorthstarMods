@@ -1,10 +1,10 @@
 WeaponData
 {
 	// General
-	"printname"   									"2R"
-	"shortprintname"								"2R"
-	"description" 									"Double Barrel Shotgun"
-	"longdesc"										"Double Barrel Shotgun"
+	"printname"   									"#WPN_SHOTGUN_DBLBARREL"
+	"shortprintname"								"#WPN_SHOTGUN_DBLBARREL_SHORT"
+	"description" 									"#WPN_SHOTGUN_DBLBARREL_DESC"
+	"longdesc"										"#WPN_SHOTGUN_DBLBARREL_LONGDESC"
 
 	"menu_icon"										"rui/weapon_icons/mp_weapon_shotgun_doublebarrel"
 	"hud_icon"										"rui/weapon_icons/mp_weapon_shotgun_doublebarrel"
