@@ -26,6 +26,7 @@ WeaponData
 	"OnWeaponPrimaryAttack"							"OnWeaponPrimaryAttack_weapon_shotgun"
 	"OnWeaponNpcPrimaryAttack"						"OnWeaponNpcPrimaryAttack_weapon_shotgun"
 
+
 	"viewmodel_offset_ads"							"0 0 0"
 	"dof_zoom_nearDepthStart"						"2.000"
 	"dof_zoom_nearDepthEnd"							"4.750"
