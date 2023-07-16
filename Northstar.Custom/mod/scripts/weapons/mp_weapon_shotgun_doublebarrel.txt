@@ -85,8 +85,6 @@ WeaponData
    "titanarmor_critical_hit_required"              "1"
 	"critical_hit"									"1"
 
-	MP_BASE
-	{
 		"ammo_default_total"							"40"
 		"ammo_stockpile_max"							"40"
 		"ammo_no_remove_from_stockpile"					"1"
@@ -118,7 +116,7 @@ WeaponData
 		"npc_damage_near_value_titanarmor"				"40"
 		"npc_damage_far_value_titanarmor" 				"0"
 
-		"enable_highlight_networking_on_creation"		"<KEEP_DEFAULT>"
+		"enable_highlight_networking_on_creation"		"1"
 
 		"damage_heavyarmor_nontitan_scale"				"0.35"
 
@@ -133,55 +131,9 @@ WeaponData
 		"spread_air_ads"  								"8.5"
 		"spread_wallrunning"  							"8.5"
 		"spread_wallhanging"  							"8.5"
-	}
 
-	SP_BASE
-	{
-		"ammo_default_total"							"40"
-		"ammo_stockpile_max"							"64"
-		"ammo_no_remove_from_stockpile"					"0"
-		"ammo_min_to_fire"								"1"
 
-		"aimassist_adspull_weaponclass"					"broad_sp"
 
-		// Ammo
-		"ammo_clip_size"   								"8"
-
-		// Damage - When Used by Players
-		"damage_near_value"   							"100"
-		"damage_far_value"								"15"
-		"damage_near_value_titanarmor"					"200"
-		"damage_far_value_titanarmor" 					"20"
-		"damage_rodeo" 									"550"
-		"damage_near_distance"							"400"
-		"damage_far_distance" 							"1000"
-
-		"damage_headshot_scale"							"2"
-
-		"red_crosshair_range" 							"1000"
-
-		// Damage - When Used by NPCs
-		"npc_damage_near_value"   						"25"
-		"npc_damage_far_value"							"13"
-		"npc_damage_near_value_titanarmor"				"40"
-		"npc_damage_far_value_titanarmor" 				"0"
-
-		"enable_highlight_networking_on_creation"		"1"
-
-		"damage_heavyarmor_nontitan_scale"				"1"
-
-		// Spread
-		"spread_stand_hip"								"7"
-		"spread_stand_hip_run"							"7"
-		"spread_stand_hip_sprint"                       "7"
-		"spread_crouch_hip"   							"7"
-		"spread_air_hip"  								"7"
-		"spread_stand_ads"								"7"
-		"spread_crouch_ads"   							"7"
-		"spread_air_ads"  								"7"
-		"spread_wallrunning"  							"7"
-		"spread_wallhanging"  							"7"
-	}
 
 	// NPC
 	"proficiency_poor_spreadscale"					"7.0"
