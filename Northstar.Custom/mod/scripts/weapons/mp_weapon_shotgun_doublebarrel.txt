@@ -52,6 +52,32 @@ WeaponData
 	"spread_wallrunning"  							"8.5"
 	"spread_wallhanging"  							"8.5"
 
+		// Damage - When Used by Players
+	"damage_near_distance"							"300"
+	"damage_far_distance" 							"700"
+	"damage_near_value"   							"220"
+	"damage_far_value"								"25"
+	"damage_falloff_type"							"inverse"
+	"damage_inverse_distance"						"130"
+	"damage_near_value_titanarmor"					"130"
+	"damage_far_value_titanarmor" 					"10"
+	"damage_rodeo" 									"700"
+
+		"damage_headshot_scale"							"1.25"
+
+		"red_crosshair_range" 							"750"
+
+		// Damage - When Used by NPCs
+		"npc_damage_near_value"   						"25"
+		"npc_damage_far_value"							"13"
+		"npc_damage_near_value_titanarmor"				"40"
+		"npc_damage_far_value_titanarmor" 				"0"
+
+		"enable_highlight_networking_on_creation"		"1"
+
+		"damage_heavyarmor_nontitan_scale"				"0.35"
+
+
 	// Effects
 	"tracer_effect"   								"weapon_tracers_shotgun"
 	"impact_effect_table" 							"inc_bullet"
@@ -106,32 +132,6 @@ WeaponData
 
 		// Ammo
 		"ammo_clip_size"   								"2"
-
-		// Damage - When Used by Players
-	"damage_near_distance"							"300"
-	"damage_far_distance" 							"700"
-	"damage_near_value"   							"220"
-	"damage_far_value"								"25"
-	"damage_falloff_type"							"inverse"
-	"damage_inverse_distance"						"130"
-	"damage_near_value_titanarmor"					"130"
-	"damage_far_value_titanarmor" 					"10"
-	"damage_rodeo" 									"700"
-
-		"damage_headshot_scale"							"1.25"
-
-		"red_crosshair_range" 							"750"
-
-		// Damage - When Used by NPCs
-		"npc_damage_near_value"   						"25"
-		"npc_damage_far_value"							"13"
-		"npc_damage_near_value_titanarmor"				"40"
-		"npc_damage_far_value_titanarmor" 				"0"
-
-		"enable_highlight_networking_on_creation"		"1"
-
-		"damage_heavyarmor_nontitan_scale"				"0.35"
-
 
 
 
