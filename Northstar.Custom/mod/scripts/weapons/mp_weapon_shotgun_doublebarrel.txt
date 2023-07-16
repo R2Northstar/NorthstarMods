@@ -106,7 +106,7 @@ WeaponData
 	"vortex_absorb_effect"							"wpn_vortex_projectile_shotgun_FP"
 	"vortex_absorb_effect_third_person"				"wpn_vortex_projectile_shotgun"
 	"vortex_absorb_sound"							"Vortex_Shield_AbsorbBulletSmall"
-	"vortex_absorb_sound_1P_VS_3P"					"Vortex_Shield_AbsorbBulletSmall_1P_VS_3P"
+	"vortex_absorb_sound_1p_vs_3p"					"Vortex_Shield_AbsorbBulletSmall_1P_VS_3P"
 	"projectile_adjust_to_gun_barrel"				"1"
 
 	"sound_dryfire"									"shotgun_dryfire"
