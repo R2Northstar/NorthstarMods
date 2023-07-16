@@ -85,7 +85,6 @@ WeaponData
 	"ammo_no_remove_from_stockpile"					"1"
 	"ammo_min_to_fire"								"1"
 
-
 	"reload_time" 									"1.85"
 	"reload_time_late1" 							"1.15"
 	"reloadempty_time"								"1.85"
