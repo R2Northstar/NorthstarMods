@@ -14,6 +14,7 @@ WeaponData
 	"fire_mode"   									"semi-auto"
 	"pickup_hold_prompt"  							"Hold [USE] [WEAPONNAME]"
 	"pickup_press_prompt" 							"[USE] [WEAPONNAME]"
+	"aimassist_adspull_weaponclass"					"broad"
 	"minimap_reveal_distance"						"32000"
 	"fast_swap_to"									"0"
 	"leveled_pickup"								"1"
@@ -90,7 +91,6 @@ WeaponData
 		"ammo_no_remove_from_stockpile"					"1"
 		"ammo_min_to_fire"								"1"
 
-		"aimassist_adspull_weaponclass"					"broad"
 
 		// Ammo
 		"ammo_clip_size"   								"2"
