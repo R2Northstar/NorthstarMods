@@ -40,6 +40,10 @@ WeaponData
 	"stat_accuracy"   								"65"
 	"stat_rof"										"30"
 
+	"impulse_force"   								"800"
+
+	"impact_effect_table" 							"inc_bullet"
+
 		// Spread
 	"spread_stand_hip"								"8.5"
 	"spread_stand_hip_run"							"8.5"
@@ -98,7 +102,6 @@ WeaponData
 
 	// Effects
 	"tracer_effect"   								"weapon_tracers_shotgun"
-	"impact_effect_table" 							"inc_bullet"
 	"vortex_absorb_effect"							"wpn_vortex_projectile_shotgun_FP"
 	"vortex_absorb_effect_third_person"				"wpn_vortex_projectile_shotgun"
 	"vortex_absorb_sound"							"Vortex_Shield_AbsorbBulletSmall"
@@ -126,9 +129,9 @@ WeaponData
 	"fx_muzzle_flash_attach"						"muzzle_flash"
 
 
-	"impulse_force"   								"800"
 
 	"critical_hit_damage_scale"						"1"
+	"critical_hit"									"1"
 
 	dof_zoom_focusArea_horizontal					0.036
 	dof_zoom_focusArea_top							0.070
@@ -136,7 +139,6 @@ WeaponData
 
 
    "titanarmor_critical_hit_required"              "1"
-	"critical_hit"									"1"
 
 
 	// Behavior
