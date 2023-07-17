@@ -16,7 +16,6 @@ WeaponData
 	"pickup_press_prompt" 							"[USE] [WEAPONNAME]"
 	"aimassist_adspull_weaponclass"					"broad"
 	"minimap_reveal_distance"						"32000"
-	"fast_swap_to"									"0"
 	"leveled_pickup"								"0"
 
 	// Models
