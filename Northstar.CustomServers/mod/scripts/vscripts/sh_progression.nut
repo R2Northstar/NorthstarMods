@@ -76,6 +76,7 @@ void function OnClientScriptInit( entity player )
 		return
 
 	Progression_SetPreference( GetConVarBool( "ns_progression_enabled" ) )
+	UpdateCachedLoadouts_Delayed()
 }
 #endif
 
@@ -407,33 +408,543 @@ void function ValidateEquippedItems( entity player )
 		PilotLoadoutDef loadout = GetPilotLoadout( player, pilotLoadoutIndex )
 		PilotLoadoutDef defaultLoadout = shGlobal.defaultPilotLoadouts[pilotLoadoutIndex]
 
+		// note: for readability, I have added {} around the different items,
+		// so that you can collapse them in visual studio code (and other good IDEs)
+
 		// tactical
+		{
+			if ( !IsRefValid( loadout.suit ) )
+			{
+				printt( "  - TACTICAL IS INVALID, RESETTING" )
+				player.SetPersistentVar( "pilotLoadouts[" + pilotLoadoutIndex + "].suit", defaultLoadout.suit )
+			}
+			else if ( IsItemLocked( player, loadout.suit ) )
+			{
+				printt( "  - TACTICAL IS LOCKED, RESETTING" )
+				player.SetPersistentVar( "pilotLoadouts[" + pilotLoadoutIndex + "].suit", defaultLoadout.suit )
+			}
+		}
+		
 		// ordnance
+		{
+			if ( !IsRefValid( loadout.ordnance ) )
+			{
+				printt( "  - ORDNANCE IS INVALID, RESETTING" )
+				player.SetPersistentVar( "pilotLoadouts[" + pilotLoadoutIndex + "].ordnance", defaultLoadout.ordnance )
+			}
+			else if ( IsItemLocked( player, loadout.ordnance ) )
+			{
+				printt( "  - ORDNANCE IS LOCKED, RESETTING" )
+				player.SetPersistentVar( "pilotLoadouts[" + pilotLoadoutIndex + "].ordnance", defaultLoadout.ordnance )
+			}
+		}
+
 		// race (gender)
+		{
+			if ( !IsRefValid( loadout.race ) )
+			{
+				printt( "  - GENDER IS INVALID, RESETTING" )
+				player.SetPersistentVar( "pilotLoadouts[" + pilotLoadoutIndex + "].race", defaultLoadout.race )
+			}
+			else if ( IsItemLocked( player, loadout.race ) )
+			{
+				printt( "  - GENDER IS LOCKED, RESETTING" )
+				player.SetPersistentVar( "pilotLoadouts[" + pilotLoadoutIndex + "].race", defaultLoadout.race )
+			}
+		}
+
 		// camoIndex
 		// skinIndex
+		{
+			if ( loadout.skinIndex == PILOT_SKIN_INDEX_CAMO )
+			{
+				array<ItemData> camoSkins = GetAllItemsOfType( eItemTypes.CAMO_SKIN_PILOT )
+				if ( loadout.camoIndex >= camoSkins.len() || loadout.camoIndex < 0 )
+				{
+					printt( "  - INVALID PILOT CAMO/SKIN, RESETTING" )
+					player.SetPersistentVar( "pilotLoadouts[" + pilotLoadoutIndex + "].skinIndex", defaultLoadout.skinIndex )
+					player.SetPersistentVar( "pilotLoadouts[" + pilotLoadoutIndex + "].camoIndex", defaultLoadout.camoIndex )
+				}
+				else
+				{
+					ItemData camoSkin = camoSkins[loadout.camoIndex]
+					if ( IsItemLocked( player, camoSkin.ref ) )
+					{
+						printt( "  - PILOT CAMO/SKIN EQUIPPED WHEN LOCKED, RESETTING" )
+						player.SetPersistentVar( "pilotLoadouts[" + pilotLoadoutIndex + "].skinIndex", defaultLoadout.skinIndex )
+						player.SetPersistentVar( "pilotLoadouts[" + pilotLoadoutIndex + "].camoIndex", defaultLoadout.camoIndex )
+					}
+				}
+			}
+			else if ( loadout.skinIndex == 0 )
+			{
+				if (loadout.camoIndex != 0 )
+				{
+					printt( "  - INVALID PILOT CAMO/SKIN, RESETTING" )
+					player.SetPersistentVar( "pilotLoadouts[" + pilotLoadoutIndex + "].skinIndex", defaultLoadout.skinIndex )
+					player.SetPersistentVar( "pilotLoadouts[" + pilotLoadoutIndex + "].camoIndex", defaultLoadout.camoIndex )
+				}
+			}
+			else
+			{
+				// pilots can't have skins other than 0 and 1 right?
+				printt( "  - INVALID PILOT SKIN, RESETTING" )
+				player.SetPersistentVar( "pilotLoadouts[" + pilotLoadoutIndex + "].skinIndex", defaultLoadout.skinIndex )
+				player.SetPersistentVar( "pilotLoadouts[" + pilotLoadoutIndex + "].camoIndex", defaultLoadout.camoIndex )
+			}
+		}
+
 		// primary weapon
+		{
+			if ( !IsRefValid( loadout.primary ) || GetItemType( loadout.primary ) != eItemTypes.PILOT_PRIMARY )
+			{
+				printt( "  - PRIMARY WEAPON IS LOCKED, RESETTING" )
+				player.SetPersistentVar( "pilotLoadouts[" + pilotLoadoutIndex + "].primary", defaultLoadout.primary )
+			}
+			else if ( IsItemLocked( player, loadout.primary ) )
+			{
+				printt( "  - PRIMARY WEAPON IS LOCKED, RESETTING" )
+				player.SetPersistentVar( "pilotLoadouts[" + pilotLoadoutIndex + "].primary", defaultLoadout.primary )
+			}
+		}
+
 		// primary weapon mods
+		{
+			// mod1
+			if ( loadout.primaryMod1 == "")
+			{
+				// do nothing
+			}
+			else if ( !HasSubitem( loadout.primary, loadout.primaryMod1 ) )
+			{
+				printt( "  - PRIMARY WEAPON MOD 1 IS INVALID, RESETTING" )
+				player.SetPersistentVar( "pilotLoadouts[" + pilotLoadoutIndex + "].primaryMod1", defaultLoadout.primaryMod1 )
+			}
+			else if ( IsSubItemLocked( player, loadout.primaryMod1, loadout.primary ) )
+			{
+				printt( "  - PRIMARY WEAPON MOD 1 IS LOCKED, RESETTING" )
+				player.SetPersistentVar( "pilotLoadouts[" + pilotLoadoutIndex + "].primaryMod1", defaultLoadout.primaryMod1 )
+			}
+			// mod2
+			if ( loadout.primaryMod2 == "")
+			{
+				// do nothing
+			}
+			else if ( IsSubItemLocked( player, "primarymod2", loadout.primary ) )
+			{
+				printt( "  - PRIMARY WEAPON MOD 2 SLOT IS LOCKED, RESETTING" )
+				player.SetPersistentVar( "pilotLoadouts[" + pilotLoadoutIndex + "].primaryMod2", defaultLoadout.primaryMod2 )
+			}
+			else if ( !HasSubitem( loadout.primary, loadout.primaryMod2 ) )
+			{
+				printt( "  - PRIMARY WEAPON MOD 2 IS INVALID, RESETTING" )
+				player.SetPersistentVar( "pilotLoadouts[" + pilotLoadoutIndex + "].primaryMod2", defaultLoadout.primaryMod2 )
+			}
+			else if ( IsSubItemLocked( player, loadout.primaryMod2, loadout.primary ) )
+			{
+				printt( "  - PRIMARY WEAPON MOD 2 IS LOCKED, RESETTING" )
+				player.SetPersistentVar( "pilotLoadouts[" + pilotLoadoutIndex + "].primaryMod2", defaultLoadout.primaryMod2 )
+			}
+			else if ( loadout.primaryMod2 == loadout.primaryMod1 && loadout.primaryMod2 != "" )
+			{
+				printt( "  - PRIMARY WEAPON MOD 2 IS DUPLICATE, RESETTING" )
+				player.SetPersistentVar( "pilotLoadouts[" + pilotLoadoutIndex + "].primaryMod2", defaultLoadout.primaryMod2 )
+			}
+			else if ( loadout.primaryAttachment == "threat_scope" )
+			{
+				printt( "  - PRIMARY WEAPON MOD 2 IS SET WITH THREAT SCOPE, RESETTING" )
+				player.SetPersistentVar( "pilotLoadouts[" + pilotLoadoutIndex + "].primaryMod2", defaultLoadout.primaryMod2 )
+			}
+			// attachment
+			if ( loadout.primaryAttachment == "" )
+			{
+				// do nothing
+			}
+			else if ( !HasSubitem( loadout.primary, loadout.primaryAttachment ) )
+			{
+				printt( "  - PRIMARY WEAPON ATTACHMENT IS INVALID, RESETTING" )
+				player.SetPersistentVar( "pilotLoadouts[" + pilotLoadoutIndex + "].primaryAttachment", defaultLoadout.primaryAttachment )
+			}
+			else if ( IsSubItemLocked( player, loadout.primaryAttachment, loadout.primary ) )
+			{
+				printt( "  - PRIMARY WEAPON ATTACHMENT IS LOCKED, RESETTING" )
+				player.SetPersistentVar( "pilotLoadouts[" + pilotLoadoutIndex + "].primaryAttachment", defaultLoadout.primaryAttachment )
+			}
+			// mod3 (pro screen)
+			if ( loadout.primaryMod3 == "" )
+			{
+				// do nothing
+			}
+			else if ( loadout.primaryMod3 == "pro_screen" )
+			{
+				// fuck you and your three mod slot stuff
+				printt( "  - PRIMARY WEAPON PRO SCREEN IS INVALID, RESETTING" )
+				player.SetPersistentVar( "pilotLoadouts[" + pilotLoadoutIndex + "].primaryMod3", defaultLoadout.primaryMod3 )
+			}
+			else if ( IsSubItemLocked( player, loadout.primaryMod3, loadout.primary ) )
+			{
+				printt( "  - PRIMARY WEAPON PRO SCREEN IS LOCKED, RESETTING" )
+				player.SetPersistentVar( "pilotLoadouts[" + pilotLoadoutIndex + "].primaryMod3", defaultLoadout.primaryMod3 )
+			}
+		}
+
 		// primary weapon camoIndex
 		// primary weapon skinIndex
+		{
+			if ( loadout.primarySkinIndex == WEAPON_SKIN_INDEX_CAMO )
+			{
+				array<ItemData> camoSkins = GetAllItemsOfType( eItemTypes.CAMO_SKIN )
+				if ( loadout.primaryCamoIndex >= camoSkins.len() || loadout.primaryCamoIndex < 0 )
+				{
+					printt( "  - INVALID PRIMARY WEAPON CAMO/SKIN, RESETTING" )
+					player.SetPersistentVar( "pilotLoadouts[" + pilotLoadoutIndex + "].primarySkinIndex", defaultLoadout.primarySkinIndex )
+					player.SetPersistentVar( "pilotLoadouts[" + pilotLoadoutIndex + "].primaryCamoIndex", defaultLoadout.primaryCamoIndex )
+				}
+				else
+				{
+					ItemData camoSkin = camoSkins[loadout.primaryCamoIndex]
+					if ( IsSubItemLocked( player, camoSkin.ref, loadout.primary ) )
+					{
+						printt( "  - PRIMARY WEAPON CAMO/SKIN EQUIPPED WHEN LOCKED, RESETTING" )
+						player.SetPersistentVar( "pilotLoadouts[" + pilotLoadoutIndex + "].primarySkinIndex", defaultLoadout.primarySkinIndex )
+						player.SetPersistentVar( "pilotLoadouts[" + pilotLoadoutIndex + "].primaryCamoIndex", defaultLoadout.primaryCamoIndex )
+					}
+				}
+			}
+			else if ( loadout.primarySkinIndex == 0 )
+			{
+				if (loadout.primaryCamoIndex != 0 )
+				{
+					printt( "  - INVALID PRIMARY WEAPON CAMO/SKIN, RESETTING" )
+					player.SetPersistentVar( "pilotLoadouts[" + pilotLoadoutIndex + "].primarySkinIndex", defaultLoadout.primarySkinIndex )
+					player.SetPersistentVar( "pilotLoadouts[" + pilotLoadoutIndex + "].primaryCamoIndex", defaultLoadout.primaryCamoIndex )
+				}
+			}
+			else if ( IsSubItemLocked( player, GetWeaponWarpaintRefByIndex( loadout.primarySkinIndex, loadout.primary ), loadout.primary ) )
+			{
+				printt( "  - PRIMARY WEAPON SKIN LOCKED, RESETTING" )
+				player.SetPersistentVar( "pilotLoadouts[" + pilotLoadoutIndex + "].primarySkinIndex", defaultLoadout.primarySkinIndex )
+				player.SetPersistentVar( "pilotLoadouts[" + pilotLoadoutIndex + "].primaryCamoIndex", defaultLoadout.primaryCamoIndex )
+			}
+		}
+
 		// secondary weapon
+		{
+			if ( !IsRefValid( loadout.secondary ) || GetItemType( loadout.secondary ) != eItemTypes.PILOT_SECONDARY )
+			{
+				printt( "  - SECONDARY WEAPON IS LOCKED, RESETTING" )
+				string ref = defaultLoadout.secondary
+				if ( loadout.secondary == ref ) // item dupes swap
+				{
+					ref = defaultLoadout.weapon3
+				}
+				else if ( ItemsInSameMenuCategory( loadout.secondary, ref ) ) // category dupes assign value to other slot and swap
+				{
+					ref = defaultLoadout.weapon3
+				}
+				player.SetPersistentVar( "pilotLoadouts[" + pilotLoadoutIndex + "].secondary", ref )
+			}
+			else if ( IsItemLocked( player, loadout.secondary ) )
+			{
+				printt( "  - SECONDARY WEAPON IS LOCKED, RESETTING" )
+				string ref = defaultLoadout.secondary
+				if ( loadout.weapon3 == ref ) // item dupes swap
+				{
+					ref = defaultLoadout.weapon3
+				}
+				else if ( ItemsInSameMenuCategory( loadout.weapon3, ref ) ) // category dupes assign value to other slot and swap
+				{
+					ref = defaultLoadout.weapon3
+				}
+
+				player.SetPersistentVar( "pilotLoadouts[" + pilotLoadoutIndex + "].secondary", ref )
+			}
+		}
+
 		// secondary weapon mods
+		{
+			// mod1
+			if ( loadout.secondaryMod1 == "")
+			{
+				// do nothing
+			}
+			else if ( !HasSubitem( loadout.secondary, loadout.secondaryMod1 ) )
+			{
+				printt( "  - SECONDARY WEAPON MOD 1 IS INVALID, RESETTING" )
+				player.SetPersistentVar( "pilotLoadouts[" + pilotLoadoutIndex + "].secondaryMod1", defaultLoadout.secondaryMod1 )
+			}
+			else if ( IsSubItemLocked( player, loadout.secondaryMod1, loadout.secondary ) )
+			{
+				printt( "  - SECONDARY WEAPON MOD 1 IS LOCKED, RESETTING" )
+				player.SetPersistentVar( "pilotLoadouts[" + pilotLoadoutIndex + "].secondaryMod1", defaultLoadout.secondaryMod1 )
+			}
+			// mod2
+			if ( loadout.secondaryMod2 == "")
+			{
+				// do nothing
+			}
+			else if ( IsSubItemLocked( player, "secondarymod2", loadout.secondary ) )
+			{
+				printt( "  - SECONDARY WEAPON MOD 2 SLOT IS LOCKED, RESETTING" )
+				player.SetPersistentVar( "pilotLoadouts[" + pilotLoadoutIndex + "].secondaryMod2", defaultLoadout.secondaryMod2 )
+			}
+			else if ( !HasSubitem( loadout.secondary, loadout.secondaryMod2 ) )
+			{
+				printt( "  - SECONDARY WEAPON MOD 2 IS INVALID, RESETTING" )
+				player.SetPersistentVar( "pilotLoadouts[" + pilotLoadoutIndex + "].secondaryMod2", defaultLoadout.secondaryMod2 )
+			}
+			else if ( IsSubItemLocked( player, loadout.secondaryMod2, loadout.secondary ) )
+			{
+				printt( "  - SECONDARY WEAPON MOD 2 IS LOCKED, RESETTING" )
+				player.SetPersistentVar( "pilotLoadouts[" + pilotLoadoutIndex + "].secondaryMod2", defaultLoadout.secondaryMod2 )
+			}
+			else if ( loadout.secondaryMod2 == loadout.secondaryMod1 && loadout.secondaryMod2 != "" )
+			{
+				printt( "  - SECONDARY WEAPON MOD 2 IS DUPLICATE, RESETTING" )
+				player.SetPersistentVar( "pilotLoadouts[" + pilotLoadoutIndex + "].secondaryMod2", defaultLoadout.secondaryMod2 )
+			}
+			// mod3 (pro screen)
+			if ( loadout.secondaryMod3 == "" )
+			{
+				// do nothing
+			}
+			else if ( loadout.secondaryMod3 == "pro_screen" )
+			{
+				// fuck you and your three mod slot stuff
+				printt( "  - SECONDARY WEAPON PRO SCREEN IS INVALID, RESETTING" )
+				player.SetPersistentVar( "pilotLoadouts[" + pilotLoadoutIndex + "].secondaryMod3", defaultLoadout.secondaryMod3 )
+			}
+			else if ( IsSubItemLocked( player, "secondarymod3", loadout.secondary ) )
+			{
+				printt( "  - SECONDARY WEAPON PRO SCREEN IS LOCKED, RESETTING" )
+				player.SetPersistentVar( "pilotLoadouts[" + pilotLoadoutIndex + "].secondaryMod3", defaultLoadout.secondaryMod3 )
+			}
+		}
+
 		// secondary weapon camoIndex
 		// secondary weapon skinIndex
+		{
+			if ( loadout.secondarySkinIndex == WEAPON_SKIN_INDEX_CAMO )
+			{
+				array<ItemData> camoSkins = GetAllItemsOfType( eItemTypes.CAMO_SKIN )
+				if ( loadout.secondaryCamoIndex >= camoSkins.len() || loadout.secondaryCamoIndex < 0 )
+				{
+					printt( "  - INVALID SECONDARY WEAPON CAMO/SKIN, RESETTING" )
+					player.SetPersistentVar( "pilotLoadouts[" + pilotLoadoutIndex + "].secondarySkinIndex", defaultLoadout.secondarySkinIndex )
+					player.SetPersistentVar( "pilotLoadouts[" + pilotLoadoutIndex + "].secondaryCamoIndex", defaultLoadout.secondaryCamoIndex )
+				}
+				else
+				{
+					ItemData camoSkin = camoSkins[loadout.secondaryCamoIndex]
+					if ( IsSubItemLocked( player, camoSkin.ref, loadout.secondary ) )
+					{
+						printt( "  - SECONDARY WEAPON CAMO/SKIN EQUIPPED WHEN LOCKED, RESETTING" )
+						player.SetPersistentVar( "pilotLoadouts[" + pilotLoadoutIndex + "].secondarySkinIndex", defaultLoadout.secondarySkinIndex )
+						player.SetPersistentVar( "pilotLoadouts[" + pilotLoadoutIndex + "].secondaryCamoIndex", defaultLoadout.secondaryCamoIndex )
+					}
+				}
+			}
+			else if ( loadout.secondarySkinIndex == 0 )
+			{
+				if (loadout.secondaryCamoIndex != 0 )
+				{
+					printt( "  - INVALID SECONDARY WEAPON CAMO/SKIN, RESETTING" )
+					player.SetPersistentVar( "pilotLoadouts[" + pilotLoadoutIndex + "].secondarySkinIndex", defaultLoadout.secondarySkinIndex )
+					player.SetPersistentVar( "pilotLoadouts[" + pilotLoadoutIndex + "].secondaryCamoIndex", defaultLoadout.secondaryCamoIndex )
+				}
+			}
+			else if ( IsSubItemLocked( player, GetWeaponWarpaintRefByIndex( loadout.secondarySkinIndex, loadout.secondary ), loadout.secondary ) )
+			{
+				printt( "  - SECONDARY WEAPON SKIN LOCKED, RESETTING" )
+				player.SetPersistentVar( "pilotLoadouts[" + pilotLoadoutIndex + "].secondarySkinIndex", defaultLoadout.secondarySkinIndex )
+				player.SetPersistentVar( "pilotLoadouts[" + pilotLoadoutIndex + "].secondaryCamoIndex", defaultLoadout.secondaryCamoIndex )
+			}
+		}
+
 		// weapon3
+		// note: these are always eItemTypes.PILOT_SECONDARY
+		{
+			if ( !IsRefValid( loadout.weapon3 ) || GetItemType( loadout.weapon3 ) != eItemTypes.PILOT_SECONDARY )
+			{
+				printt( "  - WEAPON3 WEAPON IS LOCKED, RESETTING" )
+				string ref = defaultLoadout.weapon3
+				if ( loadout.weapon3 == ref ) // item dupes swap
+				{
+					ref = defaultLoadout.secondary
+				}
+				else if ( ItemsInSameMenuCategory( loadout.weapon3, ref ) ) // category dupes assign value to other slot and swap
+				{
+					ref = defaultLoadout.secondary
+				}
+				player.SetPersistentVar( "pilotLoadouts[" + pilotLoadoutIndex + "].weapon3", ref )
+			}
+			else if ( IsItemLocked( player, loadout.weapon3 ) )
+			{
+				printt( "  - TERTIARY WEAPON IS LOCKED, RESETTING" )
+				string ref = defaultLoadout.weapon3
+				if ( loadout.secondary == ref ) // item dupes swap
+				{
+					ref = defaultLoadout.secondary
+				}
+				else if ( ItemsInSameMenuCategory( loadout.secondary, ref ) ) // category dupes assign value to other slot and swap
+				{
+					ref = defaultLoadout.secondary
+				}
+				player.SetPersistentVar( "pilotLoadouts[" + pilotLoadoutIndex + "].weapon3", ref )
+			}
+		}
+
 		// weapon3 mods
+		{
+			// mod1
+			if ( loadout.weapon3Mod1 == "" )
+			{
+				// do nothing
+			}
+			else if ( !HasSubitem( loadout.weapon3, loadout.weapon3Mod1 ) )
+			{
+				printt( "  - WEAPON3 MOD 1 IS INVALID, RESETTING" )
+				player.SetPersistentVar( "pilotLoadouts[" + pilotLoadoutIndex + "].weapon3Mod1", defaultLoadout.weapon3Mod1 )
+			}
+			else if ( IsSubItemLocked( player, loadout.weapon3Mod1, loadout.weapon3 ) )
+			{
+				printt( "  - WEAPON3 MOD 1 IS LOCKED, RESETTING" )
+				player.SetPersistentVar( "pilotLoadouts[" + pilotLoadoutIndex + "].weapon3Mod1", defaultLoadout.weapon3Mod1 )
+			}
+			// mod2
+			if ( loadout.weapon3Mod2 == "" )
+			{
+				// do nothing
+			}
+			else if ( IsSubItemLocked( player, "secondarymod2", loadout.weapon3 ) )
+			{
+				printt( "  - WEAPON3 MOD 2 SLOT IS LOCKED, RESETTING" )
+				player.SetPersistentVar( "pilotLoadouts[" + pilotLoadoutIndex + "].weapon3Mod2", defaultLoadout.weapon3Mod2 )
+			}
+			else if ( !HasSubitem( loadout.weapon3, loadout.weapon3Mod2 ) )
+			{
+				printt( "  - WEAPON3 MOD 2 IS INVALID, RESETTING" )
+				player.SetPersistentVar( "pilotLoadouts[" + pilotLoadoutIndex + "].weapon3Mod2", defaultLoadout.weapon3Mod2 )
+			}
+			else if ( IsSubItemLocked( player, loadout.weapon3Mod2, loadout.weapon3 ) )
+			{
+				printt( "  - WEAPON3 MOD 2 IS LOCKED, RESETTING" )
+				player.SetPersistentVar( "pilotLoadouts[" + pilotLoadoutIndex + "].weapon3Mod2", defaultLoadout.weapon3Mod2 )
+			}
+			else if ( loadout.weapon3Mod2 == loadout.weapon3Mod1 && loadout.weapon3Mod2 != "" )
+			{
+				printt( "  - WEAPON3 MOD 2 IS DUPLICATE, RESETTING" )
+				player.SetPersistentVar( "pilotLoadouts[" + pilotLoadoutIndex + "].weapon3Mod2", defaultLoadout.weapon3Mod2 )
+			}
+			// mod3 (pro screen)
+			if ( loadout.weapon3Mod3 == "" )
+			{
+				// do nothing
+			}
+			else if ( loadout.weapon3Mod3 != "pro_screen" )
+			{
+				// fuck you and your three mod slot stuff
+				printt( "  - WEAPON3 PRO SCREEN IS INVALID, RESETTING" )
+				player.SetPersistentVar( "pilotLoadouts[" + pilotLoadoutIndex + "].weapon3Mod3", defaultLoadout.weapon3Mod3 )
+			}
+			else if ( IsSubItemLocked( player, "secondarymod3", loadout.weapon3 ) )
+			{
+				printt( "  - WEAPON3 PRO SCREEN IS LOCKED, RESETTING" )
+				player.SetPersistentVar( "pilotLoadouts[" + pilotLoadoutIndex + "].weapon3Mod3", defaultLoadout.weapon3Mod3 )
+			}
+		}
+
 		// weapon3 camoIndex
 		// weapon3 skinIndex
+		{
+			if ( loadout.weapon3SkinIndex == WEAPON_SKIN_INDEX_CAMO )
+			{
+				array<ItemData> camoSkins = GetAllItemsOfType( eItemTypes.CAMO_SKIN )
+				if ( loadout.weapon3CamoIndex >= camoSkins.len() || loadout.weapon3CamoIndex < 0 )
+				{
+					printt( "  - INVALID TERTIARY WEAPON CAMO/SKIN, RESETTING" )
+					player.SetPersistentVar( "pilotLoadouts[" + pilotLoadoutIndex + "].weapon3SkinIndex", defaultLoadout.weapon3SkinIndex )
+					player.SetPersistentVar( "pilotLoadouts[" + pilotLoadoutIndex + "].weapon3CamoIndex", defaultLoadout.weapon3CamoIndex )
+				}
+				else
+				{
+					ItemData camoSkin = camoSkins[loadout.weapon3CamoIndex]
+					if ( IsSubItemLocked( player, camoSkin.ref, loadout.weapon3 ) )
+					{
+						printt( "  - TERTIARY WEAPON CAMO/SKIN EQUIPPED WHEN LOCKED, RESETTING" )
+						player.SetPersistentVar( "pilotLoadouts[" + pilotLoadoutIndex + "].weapon3SkinIndex", defaultLoadout.weapon3SkinIndex )
+						player.SetPersistentVar( "pilotLoadouts[" + pilotLoadoutIndex + "].weapon3CamoIndex", defaultLoadout.weapon3CamoIndex )
+					}
+				}
+			}
+			else if ( loadout.weapon3SkinIndex == 0 )
+			{
+				if (loadout.weapon3CamoIndex != 0 )
+				{
+					printt( "  - INVALID TERTIARY WEAPON CAMO/SKIN, RESETTING" )
+					player.SetPersistentVar( "pilotLoadouts[" + pilotLoadoutIndex + "].weapon3SkinIndex", defaultLoadout.weapon3SkinIndex )
+					player.SetPersistentVar( "pilotLoadouts[" + pilotLoadoutIndex + "].weapon3CamoIndex", defaultLoadout.weapon3CamoIndex )
+				}
+			}
+			else if ( IsSubItemLocked( player, GetWeaponWarpaintRefByIndex( loadout.weapon3SkinIndex, loadout.weapon3 ), loadout.weapon3 ) )
+			{
+				printt( "  - TERTIARY WEAPON SKIN LOCKED, RESETTING" )
+				player.SetPersistentVar( "pilotLoadouts[" + pilotLoadoutIndex + "].weapon3SkinIndex", defaultLoadout.weapon3SkinIndex )
+				player.SetPersistentVar( "pilotLoadouts[" + pilotLoadoutIndex + "].weapon3CamoIndex", defaultLoadout.weapon3CamoIndex )
+			}
+		}
+
 		// kit 1
+		{
+			if ( !IsRefValid( loadout.passive1 ) || GetItemType( loadout.passive1 ) != eItemTypes.PILOT_PASSIVE1 )
+			{
+				printt( "  - KIT 1 IS INVALID, RESETTING" )
+				player.SetPersistentVar( "pilotLoadouts[" + pilotLoadoutIndex + "].passive1", defaultLoadout.passive1 )
+			}
+			else if ( IsItemLocked( player, loadout.passive1 ) )
+			{
+				printt( "  - KIT 1 IS LOCKED, RESETTING" )
+				player.SetPersistentVar( "pilotLoadouts[" + pilotLoadoutIndex + "].passive1", defaultLoadout.passive1 )
+			}
+		}
+
 		// kit 2
+		{
+			if ( !IsRefValid( loadout.passive2 ) || GetItemType( loadout.passive2 ) != eItemTypes.PILOT_PASSIVE2 )
+			{
+				printt( "  - KIT 2 IS INVALID, RESETTING" )
+				player.SetPersistentVar( "pilotLoadouts[" + pilotLoadoutIndex + "].passive2", defaultLoadout.passive2 )
+			}
+			else if ( IsItemLocked( player, loadout.passive2 ) )
+			{
+				printt( "  - KIT 2 IS LOCKED, RESETTING" )
+				player.SetPersistentVar( "pilotLoadouts[" + pilotLoadoutIndex + "].passive2", defaultLoadout.passive2 )
+			}
+		}
+
 		// execution
+		// note: not sure why defaultLoadout has this set to "", but neck snap should be default
+		{
+			if ( !IsRefValid( loadout.execution ) || GetItemType( loadout.execution ) != eItemTypes.PILOT_EXECUTION )
+			{
+				printt( "  - EXECUTION IS INVALID, RESETTING" )
+				player.SetPersistentVar( "pilotLoadouts[" + pilotLoadoutIndex + "].execution", "execution_neck_snap" )
+			}
+			else if ( IsItemLocked( player, loadout.execution ) )
+			{
+				printt( "  - EXECUTION IS LOCKED, RESETTING" )
+				player.SetPersistentVar( "pilotLoadouts[" + pilotLoadoutIndex + "].execution", "execution_neck_snap" )
+			}
+		}
 		
 		// equipped pilot loadout
-		if ( isSelected && IsItemLocked( player, "pilot_loadout_" + ( pilotLoadoutIndex + 1 ) ) )
 		{
-			printt( "  - SELECTED PILOT LOADOUT IS LOCKED, RESETTING" )
-			player.SetPersistentVar( "pilotSpawnLoadout.index", 0 )
-			Remote_CallFunction_NonReplay( player, "ServerCallback_UpdatePilotModel", 0 )
+			if ( isSelected && IsItemLocked( player, "pilot_loadout_" + ( pilotLoadoutIndex + 1 ) ) )
+			{
+				printt( "  - SELECTED PILOT LOADOUT IS LOCKED, RESETTING" )
+				player.SetPersistentVar( "pilotSpawnLoadout.index", 0 )
+				Remote_CallFunction_NonReplay( player, "ServerCallback_UpdatePilotModel", 0 )
+			}
 		}
 	}
 
@@ -479,38 +990,40 @@ TitanLoadoutDef function GetTitanLoadout( entity player, int loadoutIndex )
 	return loadout
 }
 
+// basically just PopulatePilotLoadoutFromPersistentData but without validation, we are doing the validation in a better way
+// that doesnt just kick the player and reset the entire loadout, since we want to only reset parts of the loadout that we need
 PilotLoadoutDef function GetPilotLoadout( entity player, int loadoutIndex )
 {
 	PilotLoadoutDef loadout
 
-	loadout.name 				= GetValidatedPersistentLoadoutValue( player, "pilot", loadoutIndex, "name" )
-	loadout.suit 				= GetValidatedPersistentLoadoutValue( player, "pilot", loadoutIndex, "suit" )
-	loadout.race 				= GetValidatedPersistentLoadoutValue( player, "pilot", loadoutIndex, "race" )
-	loadout.execution 			= GetValidatedPersistentLoadoutValue( player, "pilot", loadoutIndex, "execution" )
-	loadout.primary 			= GetValidatedPersistentLoadoutValue( player, "pilot", loadoutIndex, "primary" )
-	loadout.primaryAttachment	= GetValidatedPersistentLoadoutValue( player, "pilot", loadoutIndex, "primaryAttachment" )
-	loadout.primaryMod1			= GetValidatedPersistentLoadoutValue( player, "pilot", loadoutIndex, "primaryMod1" )
-	loadout.primaryMod2			= GetValidatedPersistentLoadoutValue( player, "pilot", loadoutIndex, "primaryMod2" )
-	loadout.primaryMod3			= GetValidatedPersistentLoadoutValue( player, "pilot", loadoutIndex, "primaryMod3" )
-	loadout.secondary 			= GetValidatedPersistentLoadoutValue( player, "pilot", loadoutIndex, "secondary" )
-	loadout.secondaryMod1		= GetValidatedPersistentLoadoutValue( player, "pilot", loadoutIndex, "secondaryMod1" )
-	loadout.secondaryMod2		= GetValidatedPersistentLoadoutValue( player, "pilot", loadoutIndex, "secondaryMod2" )
-	loadout.secondaryMod3		= GetValidatedPersistentLoadoutValue( player, "pilot", loadoutIndex, "secondaryMod3" )
-	loadout.weapon3 			= GetValidatedPersistentLoadoutValue( player, "pilot", loadoutIndex, "weapon3" )
-	loadout.weapon3Mod1			= GetValidatedPersistentLoadoutValue( player, "pilot", loadoutIndex, "weapon3Mod1" )
-	loadout.weapon3Mod2			= GetValidatedPersistentLoadoutValue( player, "pilot", loadoutIndex, "weapon3Mod2" )
-	loadout.weapon3Mod3			= GetValidatedPersistentLoadoutValue( player, "pilot", loadoutIndex, "weapon3Mod3" )
-	loadout.ordnance 			= GetValidatedPersistentLoadoutValue( player, "pilot", loadoutIndex, "ordnance" )
-	loadout.passive1 			= GetValidatedPersistentLoadoutValue( player, "pilot", loadoutIndex, "passive1" )
-	loadout.passive2 			= GetValidatedPersistentLoadoutValue( player, "pilot", loadoutIndex, "passive2" )
-	loadout.camoIndex			= GetValidatedPersistentLoadoutValueInt( player, "pilot", loadoutIndex, "camoIndex" )
-	loadout.skinIndex			= GetValidatedPersistentLoadoutValueInt( player, "pilot", loadoutIndex, "skinIndex" ) //Important: Skin index needs to be gotten after camoIndex for loadout validation purposes
-	loadout.primaryCamoIndex	= GetValidatedPersistentLoadoutValueInt( player, "pilot", loadoutIndex, "primaryCamoIndex" )
-	loadout.primarySkinIndex	= GetValidatedPersistentLoadoutValueInt( player, "pilot", loadoutIndex, "primarySkinIndex" ) //Important: Skin index needs to be gotten after camoIndex for loadout validation purposes
-	loadout.secondaryCamoIndex	= GetValidatedPersistentLoadoutValueInt( player, "pilot", loadoutIndex, "secondaryCamoIndex" )
-	loadout.secondarySkinIndex	= GetValidatedPersistentLoadoutValueInt( player, "pilot", loadoutIndex, "secondarySkinIndex" ) //Important: Skin index needs to be gotten after camoIndex for loadout validation purposes
-	loadout.weapon3CamoIndex	= GetValidatedPersistentLoadoutValueInt( player, "pilot", loadoutIndex, "weapon3CamoIndex" )
-	loadout.weapon3SkinIndex	= GetValidatedPersistentLoadoutValueInt( player, "pilot", loadoutIndex, "weapon3SkinIndex" ) //Important: Skin index needs to be gotten after camoIndex for loadout validation purposes
+	loadout.name 				= GetPersistentLoadoutValue( player, "pilot", loadoutIndex, "name" )
+	loadout.suit 				= GetPersistentLoadoutValue( player, "pilot", loadoutIndex, "suit" )
+	loadout.race 				= GetPersistentLoadoutValue( player, "pilot", loadoutIndex, "race" )
+	loadout.execution 			= GetPersistentLoadoutValue( player, "pilot", loadoutIndex, "execution" )
+	loadout.primary 			= GetPersistentLoadoutValue( player, "pilot", loadoutIndex, "primary" )
+	loadout.primaryAttachment	= GetPersistentLoadoutValue( player, "pilot", loadoutIndex, "primaryAttachment" )
+	loadout.primaryMod1			= GetPersistentLoadoutValue( player, "pilot", loadoutIndex, "primaryMod1" )
+	loadout.primaryMod2			= GetPersistentLoadoutValue( player, "pilot", loadoutIndex, "primaryMod2" )
+	loadout.primaryMod3			= GetPersistentLoadoutValue( player, "pilot", loadoutIndex, "primaryMod3" )
+	loadout.secondary 			= GetPersistentLoadoutValue( player, "pilot", loadoutIndex, "secondary" )
+	loadout.secondaryMod1		= GetPersistentLoadoutValue( player, "pilot", loadoutIndex, "secondaryMod1" )
+	loadout.secondaryMod2		= GetPersistentLoadoutValue( player, "pilot", loadoutIndex, "secondaryMod2" )
+	loadout.secondaryMod3		= GetPersistentLoadoutValue( player, "pilot", loadoutIndex, "secondaryMod3" )
+	loadout.weapon3 			= GetPersistentLoadoutValue( player, "pilot", loadoutIndex, "weapon3" )
+	loadout.weapon3Mod1			= GetPersistentLoadoutValue( player, "pilot", loadoutIndex, "weapon3Mod1" )
+	loadout.weapon3Mod2			= GetPersistentLoadoutValue( player, "pilot", loadoutIndex, "weapon3Mod2" )
+	loadout.weapon3Mod3			= GetPersistentLoadoutValue( player, "pilot", loadoutIndex, "weapon3Mod3" )
+	loadout.ordnance 			= GetPersistentLoadoutValue( player, "pilot", loadoutIndex, "ordnance" )
+	loadout.passive1 			= GetPersistentLoadoutValue( player, "pilot", loadoutIndex, "passive1" )
+	loadout.passive2 			= GetPersistentLoadoutValue( player, "pilot", loadoutIndex, "passive2" )
+	loadout.camoIndex			= GetPersistentLoadoutValueInt( player, "pilot", loadoutIndex, "camoIndex" )
+	loadout.skinIndex			= GetPersistentLoadoutValueInt( player, "pilot", loadoutIndex, "skinIndex" ) //Important: Skin index needs to be gotten after camoIndex for loadout validation purposes
+	loadout.primaryCamoIndex	= GetPersistentLoadoutValueInt( player, "pilot", loadoutIndex, "primaryCamoIndex" )
+	loadout.primarySkinIndex	= GetPersistentLoadoutValueInt( player, "pilot", loadoutIndex, "primarySkinIndex" ) //Important: Skin index needs to be gotten after camoIndex for loadout validation purposes
+	loadout.secondaryCamoIndex	= GetPersistentLoadoutValueInt( player, "pilot", loadoutIndex, "secondaryCamoIndex" )
+	loadout.secondarySkinIndex	= GetPersistentLoadoutValueInt( player, "pilot", loadoutIndex, "secondarySkinIndex" ) //Important: Skin index needs to be gotten after camoIndex for loadout validation purposes
+	loadout.weapon3CamoIndex	= GetPersistentLoadoutValueInt( player, "pilot", loadoutIndex, "weapon3CamoIndex" )
+	loadout.weapon3SkinIndex	= GetPersistentLoadoutValueInt( player, "pilot", loadoutIndex, "weapon3SkinIndex" ) //Important: Skin index needs to be gotten after camoIndex for loadout validation purposes
 
 	UpdateDerivedPilotLoadoutData( loadout )
 
@@ -546,5 +1059,21 @@ bool function CanEquipArmBadge( entity player, string titanClass )
 	}
 
 	return !IsSubItemLocked( player, skinRef, titanClass )
+}
+
+string function GetWeaponWarpaintRefByIndex( int skinIndex, string parentRef )
+{
+	ItemData parentItem = GetItemData( parentRef )
+	foreach ( subItem in parentItem.subitems )
+	{
+		if ( GetSubitemType( parentRef, subItem.ref ) != eItemTypes.WEAPON_SKIN )
+			continue
+		if ( subItem.i.skinIndex != skinIndex )
+			continue
+
+		return subItem.ref
+	}
+
+	return INVALID_REF
 }
 #endif
