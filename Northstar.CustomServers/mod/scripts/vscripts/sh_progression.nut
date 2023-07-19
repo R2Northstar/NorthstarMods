@@ -1,7 +1,6 @@
 global function Progression_Init
 global function ProgressionEnabledForPlayer
-#if SERVER
-#else
+#if CLIENT || UI
 global function Progression_SetPreference
 global function Progression_GetPreference
 global function UpdateCachedLoadouts_Delayed
