@@ -835,10 +835,10 @@ void function OnEpilogueStarted()
 		else
 			kdratiopvp_match = playerKillsPvp / playerDeathsPvp
 
-		float totalDeaths = player.GetPersistentVarAsInt("deathStats.total").tofloat()
-		float totalKills = player.GetPersistentVarAsInt("killStats.total").tofloat()
-		float totalDeathsPvp = player.GetPersistentVarAsInt("deathStats.totalPVP").tofloat()
-		float totalKillsPvp = player.GetPersistentVarAsInt("killStats.totalPVP").tofloat()
+		float totalDeaths = player.GetPersistentVarAsInt( "deathStats.total" ).tofloat()
+		float totalKills = player.GetPersistentVarAsInt( "killStats.total" ).tofloat()
+		float totalDeathsPvp = player.GetPersistentVarAsInt( "deathStats.totalPVP" ).tofloat()
+		float totalKillsPvp = player.GetPersistentVarAsInt( "killStats.totalPVP" ).tofloat()
 		float kdratio_lifetime
 		if ( totalDeaths == 0.0 )
 			kdratio_lifetime = totalKills
@@ -853,8 +853,8 @@ void function OnEpilogueStarted()
 		// shift stats by 1 to make room for new game data
 		for ( int i = NUM_GAMES_TRACK_KDRATIO - 2; i >= 0; --i )
 		{
-			player.SetPersistentVar( "kdratio_match[" + (i + 1) + "]", player.GetPersistentVar("kdratio_match[" + i + "]") )
-			player.SetPersistentVar( "kdratiopvp_match[" + (i + 1) + "]", player.GetPersistentVar("kdratiopvp_match[" + i + "]") )
+			player.SetPersistentVar( "kdratio_match[" + ( i + 1 ) + "]", player.GetPersistentVar( "kdratio_match[" + i + "]" ) )
+			player.SetPersistentVar( "kdratiopvp_match[" + ( i + 1 ) + "]", player.GetPersistentVar( "kdratiopvp_match[" + i + "]" ) )
 		}
 		// add new game data
 		player.SetPersistentVar( "kdratio_match[0]", kdratio_match )

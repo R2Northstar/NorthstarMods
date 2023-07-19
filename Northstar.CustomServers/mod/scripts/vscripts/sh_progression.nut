@@ -264,7 +264,7 @@ void function ValidateEquippedItems( entity player )
 		}
 		else if ( loadout.skinIndex == 0 )
 		{
-			if (loadout.camoIndex != 0 )
+			if ( loadout.camoIndex != 0 )
 			{
 				printt( "  - INVALID TITAN CAMO/SKIN, RESETTING" )
 				player.SetPersistentVar( "titanLoadouts[" + titanLoadoutIndex + "].skinIndex", defaultLoadout.skinIndex )
@@ -359,7 +359,7 @@ void function ValidateEquippedItems( entity player )
 		}
 		else if ( loadout.primeSkinIndex == 0 )
 		{
-			if (loadout.primeCamoIndex != 0 )
+			if ( loadout.primeCamoIndex != 0 )
 			{
 				printt( "  - INVALID TITAN CAMO/SKIN, RESETTING" )
 				player.SetPersistentVar( "titanLoadouts[" + titanLoadoutIndex + "].primeSkinIndex", defaultLoadout.primeSkinIndex )
@@ -439,7 +439,7 @@ void function ValidateEquippedItems( entity player )
 			}
 		}
 
-		// race (gender)
+		// race ( gender )
 		{
 			if ( !IsRefValid( loadout.race ) )
 			{
@@ -478,7 +478,7 @@ void function ValidateEquippedItems( entity player )
 			}
 			else if ( loadout.skinIndex == 0 )
 			{
-				if (loadout.camoIndex != 0 )
+				if ( loadout.camoIndex != 0 )
 				{
 					printt( "  - INVALID PILOT CAMO/SKIN, RESETTING" )
 					player.SetPersistentVar( "pilotLoadouts[" + pilotLoadoutIndex + "].skinIndex", defaultLoadout.skinIndex )
@@ -511,7 +511,7 @@ void function ValidateEquippedItems( entity player )
 		// primary weapon mods
 		{
 			// mod1
-			if ( loadout.primaryMod1 == "")
+			if ( loadout.primaryMod1 == "" )
 			{
 				// do nothing
 			}
@@ -526,7 +526,7 @@ void function ValidateEquippedItems( entity player )
 				player.SetPersistentVar( "pilotLoadouts[" + pilotLoadoutIndex + "].primaryMod1", defaultLoadout.primaryMod1 )
 			}
 			// mod2
-			if ( loadout.primaryMod2 == "")
+			if ( loadout.primaryMod2 == "" )
 			{
 				// do nothing
 			}
@@ -613,7 +613,7 @@ void function ValidateEquippedItems( entity player )
 			}
 			else if ( loadout.primarySkinIndex == 0 )
 			{
-				if (loadout.primaryCamoIndex != 0 )
+				if ( loadout.primaryCamoIndex != 0 )
 				{
 					printt( "  - INVALID PRIMARY WEAPON CAMO/SKIN, RESETTING" )
 					player.SetPersistentVar( "pilotLoadouts[" + pilotLoadoutIndex + "].primarySkinIndex", defaultLoadout.primarySkinIndex )
@@ -664,7 +664,7 @@ void function ValidateEquippedItems( entity player )
 		// secondary weapon mods
 		{
 			// mod1
-			if ( loadout.secondaryMod1 == "")
+			if ( loadout.secondaryMod1 == "" )
 			{
 				// do nothing
 			}
@@ -679,7 +679,7 @@ void function ValidateEquippedItems( entity player )
 				player.SetPersistentVar( "pilotLoadouts[" + pilotLoadoutIndex + "].secondaryMod1", defaultLoadout.secondaryMod1 )
 			}
 			// mod2
-			if ( loadout.secondaryMod2 == "")
+			if ( loadout.secondaryMod2 == "" )
 			{
 				// do nothing
 			}
@@ -746,7 +746,7 @@ void function ValidateEquippedItems( entity player )
 			}
 			else if ( loadout.secondarySkinIndex == 0 )
 			{
-				if (loadout.secondaryCamoIndex != 0 )
+				if ( loadout.secondaryCamoIndex != 0 )
 				{
 					printt( "  - INVALID SECONDARY WEAPON CAMO/SKIN, RESETTING" )
 					player.SetPersistentVar( "pilotLoadouts[" + pilotLoadoutIndex + "].secondarySkinIndex", defaultLoadout.secondarySkinIndex )
@@ -879,7 +879,7 @@ void function ValidateEquippedItems( entity player )
 			}
 			else if ( loadout.weapon3SkinIndex == 0 )
 			{
-				if (loadout.weapon3CamoIndex != 0 )
+				if ( loadout.weapon3CamoIndex != 0 )
 				{
 					printt( "  - INVALID TERTIARY WEAPON CAMO/SKIN, RESETTING" )
 					player.SetPersistentVar( "pilotLoadouts[" + pilotLoadoutIndex + "].weapon3SkinIndex", defaultLoadout.weapon3SkinIndex )
