@@ -1,8 +1,9 @@
 {
 	"Name": "Northstar.Client",
 	"Description": "Various ui and client changes to fix bugs and add better support for mods",
-	"Version": "1.10.0",
+	"Version": "1.16.0",
 	"LoadPriority": 0,
+	"InitScript": "cl_northstar_client_init.nut",
 	"ConVars": [
 		{
 			"Name": "filter_hide_empty",
@@ -114,6 +115,17 @@
 			"RunOn": "UI"
 		},
 		{
+			"Path": "ui/ns_slider.nut",
+			"RunOn": "UI"
+		},
+		{
+			"Path": "ui/menu_mod_settings.nut",
+			"RunOn": "UI",
+			"UICallback":{
+				"Before": "AddModSettingsMenu"
+      		}
+    	},
+    	{
 			"Path": "ui/ui_mouse_capture.nut",
 			"RunOn": "UI"
 		}
