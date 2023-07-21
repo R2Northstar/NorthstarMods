@@ -8,6 +8,10 @@ void function initFrontierDefenseData()
 	FD_groundspawnPosition = < 1869, -938, -63 >
 	FD_groundspawnAngles = < 0, 90, 0 >
 	
+	FD_DropPodSpawns.append(< 3424, -523, 8 >)
+	FD_DropPodSpawns.append(< 2266, 584, 56 >)
+	FD_DropPodSpawns.append(< 3154, -1491, -63 >)
+	
 	AddStationaryAIPosition(< 1467, -4900, -187 >, eStationaryAIPositionTypes.LAUNCHER_REAPER)
 	AddStationaryAIPosition(< 3807, -5108, -384 >, eStationaryAIPositionTypes.LAUNCHER_REAPER)
 	AddStationaryAIPosition(< 2688, 3293, -156 >, eStationaryAIPositionTypes.LAUNCHER_REAPER)

@@ -7,6 +7,10 @@ void function initFrontierDefenseData()
 	FD_spawnAngles = < 0, 0, 0 >
 	FD_groundspawnPosition = < -3126, -1181, 129 >
 	FD_groundspawnAngles = < 0, 0, 0 >
+	
+	FD_DropPodSpawns.append(< -2906, -265, 264 >)
+	FD_DropPodSpawns.append(< -4569, -647, 314 >)
+	FD_DropPodSpawns.append(< -2950, -1857, 268 >)
 
 	int index = 1
 

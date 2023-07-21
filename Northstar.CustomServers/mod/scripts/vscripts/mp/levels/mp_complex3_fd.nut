@@ -5,11 +5,15 @@ void function initFrontierDefenseData()
 	AddCallback_RegisterCustomFDContent( RegisterCustomFDContent )
     shopPosition = < -8255, -1517, 580 >
 	shopAngles = < 0, 45, 0 >
-	FD_spawnPosition = < -6481, 98, 2250 >
-	FD_spawnAngles = < 0, 15, 0 >
+	FD_spawnPosition = < -6348, -1096, 2560 >
+	FD_spawnAngles = < 0, 0, 0 >
 	FD_groundspawnPosition = < -5785, -152, 580 >
 	FD_groundspawnAngles = < 0, 85, 0 >
 	FD_CustomHarvesterLocation = < -7451, -81, 588 >
+	
+	FD_DropPodSpawns.append(< -7036, 290, 696 >)
+	FD_DropPodSpawns.append(< -6680, -721, 524 >)
+	FD_DropPodSpawns.append(< -7372, -1314, 696 >)
 	
 	waveAnnouncement.append("fd_introEasy")
 	waveAnnouncement.append("fd_waveTypeTitanReg")
@@ -466,6 +470,8 @@ void function initFrontierDefenseData()
 
 void function RegisterCustomFDContent()
 {
+	SpawnFDHeavyTurret( < -6658, -75, 696 >, < 0, 135, 0 >, < -6778, -132, 580 >, < 0, 45, 0 > )
+	
 	AddStationaryAIPosition(< -627, -1734, 512 >, eStationaryAIPositionTypes.MORTAR_TITAN)
 	AddStationaryAIPosition(< -1697, 1006, 562 >, eStationaryAIPositionTypes.MORTAR_TITAN)
 	AddStationaryAIPosition(< -580, -2899, 512 >, eStationaryAIPositionTypes.MORTAR_TITAN)

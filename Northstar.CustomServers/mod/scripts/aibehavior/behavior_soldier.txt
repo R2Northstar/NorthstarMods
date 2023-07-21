@@ -41,7 +41,7 @@ Selector Combat
 	SelectSchedule_EvasiveLowAmmo
 
 	CAI_Combatant::SelectSchedule_MoveToSquadAssignedNode
-	SelectSchedule_ThrowGrenade
+	//SelectSchedule_ThrowGrenade
 	SelectSchedule_RangeAttackEvasive
 	SelectSchedule_RangeAttackTwitch
 	SelectSchedule_RangeAttack

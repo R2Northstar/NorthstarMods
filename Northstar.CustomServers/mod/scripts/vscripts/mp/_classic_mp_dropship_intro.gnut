@@ -170,7 +170,9 @@ void function SpawnPlayerIntoDropship( entity player )
 	IntroDropship playerDropship
 	int playerDropshipIndex = -1
 	foreach ( IntroDropship dropship in teamDropships )
+	{
 		for ( int i = 0; i < dropship.players.len(); i++ )
+		{
 			if ( dropship.players[ i ] == null )
 			{
 				playerDropship = dropship
@@ -179,6 +181,8 @@ void function SpawnPlayerIntoDropship( entity player )
 				dropship.players[ i ] = player
 				break
 			}
+		}
+	}
 					
 	if ( playerDropship.dropship == null )
 	{
@@ -219,7 +223,13 @@ void function SpawnPlayerIntoDropship( entity player )
 	jumpSequence.thirdPersonAnim = DROPSHIP_JUMP_ANIMS[ playerDropshipIndex ]
 	jumpSequence.attachment = "ORIGIN"
 	jumpSequence.setInitialTime = max( 0.0, Time() - ( file.introStartTime + 11.0 ) )  // pretty sure you should do this with GetScriptedAnimEventCycleFrac?
+	jumpSequence.blendTime = 1.0
 	// idk unsure how to use that, all i know is getsequenceduration > the length it actually should be
+	
+	#if BATTLECHATTER_ENABLED
+	if( playerDropshipIndex == 0 )
+		PlayBattleChatterLine( player, "bc_pIntroChat" )
+	#endif
 	
 	thread FirstPersonSequence( jumpSequence, player, playerDropship.dropship )
 	WaittillAnimDone( player ) // somehow this is better than just waiting for the blocking FirstPersonSequence call?

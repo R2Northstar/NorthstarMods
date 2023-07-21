@@ -897,14 +897,11 @@ void function BlockFurtherTitanfalls( SmokeEvent smokeEvent, SpawnEvent spawnEve
 		{
 			print( "Applying Titanfall Block Event" )
 			PlayerEarnMeter_SetEnabled( false )
-			thread ShowTitanfallBlockHint()
+			thread AnnounceTitanfallBlock()
 			foreach( entity player in GetPlayerArray() )
 			{
 				PlayerEarnMeter_Reset( player )
 				ClearTitanAvailable( player )
-				#if SERVER
-				NSSendAnnouncementMessageToPlayer( player, "Titanfall Block", "Titans cannot be summoned anymore!", < 255, 255, 255 >, 150, 0 )
-				#endif
 			}
 		}
 		else
@@ -915,9 +912,11 @@ void function BlockFurtherTitanfalls( SmokeEvent smokeEvent, SpawnEvent spawnEve
 	}
 }
 
-void function ShowTitanfallBlockHint()
+void function AnnounceTitanfallBlock()
 {
 	#if SERVER
+	foreach( entity player in GetPlayerArray() )
+		NSSendAnnouncementMessageToPlayer( player, "Titanfall Block", "Titans cannot be summoned anymore!", < 255, 255, 255 >, 150, 0 )
 	wait 10
 	foreach( entity player in GetPlayerArray() )
 		NSSendLargeMessageToPlayer( player, "Titanfall Block", "Further Titans cannot be summoned until the end of the wave, avoid losing your current Titan!", 60, "rui/callsigns/callsign_94_col" )
@@ -929,7 +928,7 @@ void function ShowTitanfallBlockHintToPlayer( entity player )
 	#if SERVER
 	wait 10
 	IsValidPlayer( player )
-		NSSendLargeMessageToPlayer( player, "Titanfall Block Active", "Your titan cannot be summoned, but you can help team mates not losing theirs, steal batteries!", 50, "rui/callsigns/callsign_94_col" )
+		NSSendLargeMessageToPlayer( player, "Titanfall Block Active", "Your titan cannot be summoned, but you can help team mates not losing theirs, steal batteries!", 60, "rui/callsigns/callsign_94_col" )
 	#endif
 }
 
@@ -1031,13 +1030,12 @@ void function spawnDrones( SmokeEvent smokeEvent, SpawnEvent spawnEvent, FlowCon
 		SetTeam( guy, TEAM_IMC )
 		DispatchSpawn( guy )
 		guy.DisableNPCFlag( NPC_ALLOW_INVESTIGATE )
-		guy.EnableNPCFlag( NPC_STAY_CLOSE_TO_SQUAD )
-		guy.EnableNPCMoveFlag( NPCMF_WALK_ALWAYS | NPCMF_PREFER_SPRINT )
+		guy.EnableNPCMoveFlag( NPCMF_PREFER_SPRINT )
 		SetSquad( guy, squadName )
 		SetTargetName( guy, GetTargetNameForID( eFD_AITypeIDs.DRONE ) )
 		AddMinimapForHumans( guy )
 		spawnedNPCs.append( guy )
-		thread droneNav_thread(guy, spawnEvent.route, 0, 64, spawnEvent.shouldLoop )
+		thread droneNav_thread(guy, spawnEvent.route, 0, 128, spawnEvent.shouldLoop )
 	}
 }
 
@@ -1221,7 +1219,7 @@ void function spawnDroppodGrunts( SmokeEvent smokeEvent, SpawnEvent spawnEvent, 
 		if( spawnEvent.entityGlobalKey != "" )
 			GlobalEventEntitys[ spawnEvent.entityGlobalKey+ i.tostring() ] <- guy
 		SetTeam( guy, TEAM_IMC )
-		if ( FD_GruntWeapons.len() > 0 )
+		if ( FD_GruntWeapons.len() > -1 )
 		{
 			string baseweapon = FD_GruntWeapons[ RandomInt( FD_GruntWeapons.len() ) ]
 			SetSpawnOption_Weapon( guy, baseweapon )
@@ -1234,13 +1232,19 @@ void function spawnDroppodGrunts( SmokeEvent smokeEvent, SpawnEvent spawnEvent, 
 		guy.SetParent( pod, "ATTACH", true )
 		guy.SetBehaviorSelector( "behavior_sp_soldier" )
 		SetSquad( guy, squadName )
+		if( GetMapName().find( "mp_lf_" ) != null )
+			guy.EnableNPCFlag( NPC_NO_WEAPON_DROP )
 
 		// should this grunt have an anti titan weapon instead of its normal weapon?
 		if ( i < GetCurrentPlaylistVarInt( "fd_grunt_at_weapon_users", 0 ) || GetMapName().find( "mp_lf_" ) != null )
 			guy.GiveWeapon( at_weapon )
 
 		SetTargetName( guy, GetTargetNameForID( eFD_AITypeIDs.GRUNT ) ) // do shield captains get their own target name in vanilla?
-		AddMinimapForHumans( guy )
+		guy.MakeInvisible()
+		entity weapon = guy.GetActiveWeapon()
+		if ( IsValid( weapon ) )
+			weapon.MakeInvisible()
+		
 		spawnedNPCs.append( guy )
 		guys.append( guy )
 	}
@@ -1249,6 +1253,7 @@ void function spawnDroppodGrunts( SmokeEvent smokeEvent, SpawnEvent spawnEvent, 
 	ActivateFireteamDropPod( pod, guys )
 	foreach( npc in guys )
 	{
+		AddMinimapForHumans( npc )
 		npc.SetEfficientMode( false )
 		npc.SetEnemyChangeCallback( GruntTargetsTitan )
 		thread singleNav_thread( npc, spawnEvent.route )
@@ -1336,7 +1341,7 @@ void function spawnGruntDropship( SmokeEvent smokeEvent, SpawnEvent spawnEvent, 
 		if( spawnEvent.entityGlobalKey != "" )
 			GlobalEventEntitys[ spawnEvent.entityGlobalKey+ i.tostring() ] <- guy
 		SetTeam( guy, TEAM_IMC )
-		if ( FD_GruntWeapons.len() > 0 )
+		if ( FD_GruntWeapons.len() > -1 )
 		{
 			string baseweapon = FD_GruntWeapons[ RandomInt( FD_GruntWeapons.len() ) ]
 			SetSpawnOption_Weapon( guy, baseweapon )
@@ -1345,6 +1350,7 @@ void function spawnGruntDropship( SmokeEvent smokeEvent, SpawnEvent spawnEvent, 
 		DispatchSpawn( guy )
 		guy.EnableNPCFlag(  NPC_ALLOW_INVESTIGATE | NPC_ALLOW_HAND_SIGNALS | NPC_ALLOW_FLEE )
 		guy.DisableNPCFlag( NPC_ALLOW_PATROL )
+		guy.SetBehaviorSelector( "behavior_sp_soldier" )
 		SetSquad( guy, squadName )
 		
 		if ( i < GetCurrentPlaylistVarInt( "fd_grunt_at_weapon_users", 0 ) )
@@ -1354,7 +1360,6 @@ void function spawnGruntDropship( SmokeEvent smokeEvent, SpawnEvent spawnEvent, 
 		AddMinimapForHumans( guy )
 		spawnedNPCs.append( guy )
 		guys.append( guy )
-		guy.SetBehaviorSelector( "behavior_sp_soldier" )
 		
 		table Table = CreateDropshipAnimTable( dropship, "both", i )
 		thread GuyDeploysOffShip( guy, Table )
@@ -1405,7 +1410,7 @@ void function spawnDroppodStalker( SmokeEvent smokeEvent, SpawnEvent spawnEvent,
 		guy.SetParent( pod, "ATTACH", true )
 		SetSquad( guy, squadName )
 		guy.AssaultSetFightRadius( 0 ) // makes them keep moving instead of stopping to shoot you.
-		AddMinimapForHumans( guy )
+		guy.MakeInvisible()
 		spawnedNPCs.append( guy )
 		SetTargetName( guy, GetTargetNameForID( eFD_AITypeIDs.STALKER ) )
 		guys.append( guy )
@@ -1429,6 +1434,9 @@ void function spawnDroppodStalker( SmokeEvent smokeEvent, SpawnEvent spawnEvent,
 				npc.TakeActiveWeapon()
 				npc.GiveWeapon( "mp_weapon_epg", [] )
 				npc.SetActiveWeaponByName( "mp_weapon_epg" )
+				entity weapon = npc.GetActiveWeapon()
+				if ( IsValid( weapon ) )
+					weapon.MakeInvisible()
 			}
 			break
 
@@ -1445,6 +1453,11 @@ void function spawnDroppodStalker( SmokeEvent smokeEvent, SpawnEvent spawnEvent,
 			npc.GiveWeapon( "mp_weapon_epg", [] )
 			npc.SetActiveWeaponByName( "mp_weapon_epg" )
 			npc.DisableNPCFlag( NPC_DISABLE_SENSING | NPC_IGNORE_ALL )
+			npc.EnableNPCFlag( NPC_NO_WEAPON_DROP )
+			
+			entity weapon = npc.GetActiveWeapon()
+			if ( IsValid( weapon ) )
+				weapon.MakeInvisible()
 		}
 	}
 
@@ -1452,6 +1465,7 @@ void function spawnDroppodStalker( SmokeEvent smokeEvent, SpawnEvent spawnEvent,
 	ActivateFireteamDropPod( pod, guys )
 	foreach( npc in guys )
 	{
+		AddMinimapForHumans( npc )
 		npc.SetEfficientMode( false )
 		thread FDStalkerThink( npc , fd_harvester.harvester )
 		thread singleNav_thread( npc, spawnEvent.route )
@@ -1476,7 +1490,7 @@ void function spawnDroppodSpectreMortar( SmokeEvent smokeEvent, SpawnEvent spawn
 		if( spawnEvent.entityGlobalKey != "" )
 			GlobalEventEntitys[ spawnEvent.entityGlobalKey + i.tostring() ] <- guy
 		SetTeam( guy, TEAM_IMC )
-		if ( FD_SpectreWeapons.len() > 0 )
+		if ( FD_SpectreWeapons.len() > -1 )
 		{
 			string baseweapon = FD_SpectreWeapons[ RandomInt( FD_SpectreWeapons.len() ) ]
 			SetSpawnOption_Weapon( guy, baseweapon )
@@ -1491,7 +1505,7 @@ void function spawnDroppodSpectreMortar( SmokeEvent smokeEvent, SpawnEvent spawn
 		guy.SetParent( pod, "ATTACH", true )
 		SetSquad( guy, squadName )
 		SetTargetName( guy, GetTargetNameForID(eFD_AITypeIDs.SPECTRE_MORTAR))
-		AddMinimapForHumans(guy)
+		guy.MakeInvisible()
 		guys.append( guy )
     }
 
@@ -1500,6 +1514,7 @@ void function spawnDroppodSpectreMortar( SmokeEvent smokeEvent, SpawnEvent spawn
 	
 	foreach( npc in guys )
 	{
+		AddMinimapForHumans( npc )
 		npc.SetEfficientMode( false )
 		thread NPCStuckTracker( npc )
 	}
@@ -1535,7 +1550,6 @@ void function spawnGenericNPCTitanwithSettings( SmokeEvent smokeEvent, SpawnEven
 	npc.GetTitanSoul().SetTitanSoulNetBool( "showOverheadIcon", true )
 }
 
-
 void function SpawnIonTitan( SmokeEvent smokeEvent, SpawnEvent spawnEvent, FlowControlEvent flowControlEvent, SoundEvent soundEvent )
 {
 	printt( "Spawning Ion Titan at: " + spawnEvent.origin )
@@ -1565,6 +1579,7 @@ void function SpawnIonTitan( SmokeEvent smokeEvent, SpawnEvent spawnEvent, FlowC
 	{
 		npc.EnableNPCFlag( NPC_NO_PAIN | NPC_NO_GESTURE_PAIN )
 		npc.SetActivityModifier( ACT_MODIFIER_STAGGER, false )
+		npc.SetCapabilityFlag( bits_CAP_NO_HIT_SQUADMATES, false )
 	}
 	npc.SetDangerousAreaReactionTime( FD_TITAN_AOE_REACTTIME )
 	if( spawnEvent.entityGlobalKey != "" )
@@ -1611,6 +1626,7 @@ void function SpawnScorchTitan( SmokeEvent smokeEvent, SpawnEvent spawnEvent, Fl
 	{
 		npc.EnableNPCFlag( NPC_NO_PAIN | NPC_NO_GESTURE_PAIN )
 		npc.SetActivityModifier( ACT_MODIFIER_STAGGER, false )
+		npc.SetCapabilityFlag( bits_CAP_NO_HIT_SQUADMATES, false )
 	}
 	npc.SetDangerousAreaReactionTime( FD_TITAN_AOE_REACTTIME )
 	if( spawnEvent.entityGlobalKey != "" )
@@ -1652,6 +1668,7 @@ void function SpawnRoninTitan( SmokeEvent smokeEvent, SpawnEvent spawnEvent, Flo
 	{
 		npc.EnableNPCFlag( NPC_NO_PAIN | NPC_NO_GESTURE_PAIN )
 		npc.SetActivityModifier( ACT_MODIFIER_STAGGER, false )
+		npc.SetCapabilityFlag( bits_CAP_NO_HIT_SQUADMATES, false )
 	}
 	else
 		npc.SetEnemyChangeCallback( OnFDHarvesterTargeted )
@@ -1695,6 +1712,7 @@ void function SpawnToneTitan( SmokeEvent smokeEvent, SpawnEvent spawnEvent, Flow
 	{
 		npc.EnableNPCFlag( NPC_NO_PAIN | NPC_NO_GESTURE_PAIN )
 		npc.SetActivityModifier( ACT_MODIFIER_STAGGER, false )
+		npc.SetCapabilityFlag( bits_CAP_NO_HIT_SQUADMATES, false )
 	}
 	npc.SetDangerousAreaReactionTime( FD_TITAN_AOE_REACTTIME )
 	if( spawnEvent.entityGlobalKey != "" )
@@ -1735,6 +1753,7 @@ void function SpawnLegionTitan( SmokeEvent smokeEvent, SpawnEvent spawnEvent, Fl
 	{
 		npc.EnableNPCFlag( NPC_NO_PAIN | NPC_NO_GESTURE_PAIN )
 		npc.SetActivityModifier( ACT_MODIFIER_STAGGER, false )
+		npc.SetCapabilityFlag( bits_CAP_NO_HIT_SQUADMATES, false )
 	}
 	npc.SetDangerousAreaReactionTime( FD_TITAN_AOE_REACTTIME )
 	if( spawnEvent.entityGlobalKey != "" )
@@ -1775,6 +1794,7 @@ void function SpawnMonarchTitan( SmokeEvent smokeEvent, SpawnEvent spawnEvent, F
 	{
 		npc.EnableNPCFlag( NPC_NO_PAIN | NPC_NO_GESTURE_PAIN )
 		npc.SetActivityModifier( ACT_MODIFIER_STAGGER, false )
+		npc.SetCapabilityFlag( bits_CAP_NO_HIT_SQUADMATES, false )
 	}
 	npc.SetDangerousAreaReactionTime( FD_TITAN_AOE_REACTTIME )
 	if( spawnEvent.entityGlobalKey != "" )
@@ -1872,7 +1892,6 @@ void function spawnSniperTitan( SmokeEvent smokeEvent, SpawnEvent spawnEvent, Fl
 	npc.WaitSignal( "TitanHotDropComplete" )
 	npc.GetTitanSoul().SetTitanSoulNetBool( "showOverheadIcon", true )
 	thread SniperTitanThink( npc, fd_harvester.harvester )
-
 }
 
 void function SpawnToneSniperTitan( SmokeEvent smokeEvent, SpawnEvent spawnEvent, FlowControlEvent flowControlEvent, SoundEvent soundEvent )
@@ -1956,6 +1975,7 @@ void function SpawnTick( SmokeEvent smokeEvent, SpawnEvent spawnEvent, FlowContr
 		guy.SetParent( pod, "ATTACH", true )
 		SetSquad( guy, squadName )
 		spawnedNPCs.append( guy )
+		guy.MakeInvisible()
 		guy.AssaultSetFightRadius( expect int( guy.Dev_GetAISettingByKeyField( "LookDistDefault_Combat" ) ) ) // make the ticks target players very aggressively
 		guys.append( guy )
 	}
@@ -1966,6 +1986,7 @@ void function SpawnTick( SmokeEvent smokeEvent, SpawnEvent spawnEvent, FlowContr
 	{
 		if( IsValid( guy ) )
 		{
+			guy.MakeVisible()
 			guy.Anim_Stop() //Intentionally cancel the Drop Pod exiting animation for Ticks because it doesnt work for them
 			guy.SetEfficientMode( false )
 			thread singleNav_thread( guy, spawnEvent.route )
@@ -2256,8 +2277,8 @@ void function OnFDHarvesterTargeted( entity titan )
 		titan.EnableNPCFlag( NPC_DIRECTIONAL_MELEE )
 		if( enemy.IsTitan() )
 		{
-			titan.SetCapabilityFlag( bits_CAP_INNATE_MELEE_ATTACK1 | bits_CAP_INNATE_MELEE_ATTACK2, false )
 			titan.SetCapabilityFlag( bits_CAP_SYNCED_MELEE_ATTACK, true )
+			titan.SetCapabilityFlag( bits_CAP_INNATE_MELEE_ATTACK1 | bits_CAP_INNATE_MELEE_ATTACK2, false )
 		}
 		else
 		{
@@ -2606,6 +2627,7 @@ void function LFTitanShieldAndHealthRegenThink( entity soul )
 		lastShieldHealth = shieldHealth
 		lastTime = Time()
 		titan.SetTitle( "Helper Titan" )
+		ShowName( titan )
 		WaitFrame()
 	}
 }

@@ -8,6 +8,10 @@ void function initFrontierDefenseData()
 	FD_groundspawnPosition = < -1507, -3346, -128 >
 	FD_groundspawnAngles = < 0, 45, 0 >
 	
+	FD_DropPodSpawns.append(< -282, -5350, -113 >)
+	FD_DropPodSpawns.append(< -1702, -3692, -120 >)
+	FD_DropPodSpawns.append(< -1506, -1284, 30 >)
+	
 	waveAnnouncement.append("fd_introEasy")
 	waveAnnouncement.append("fd_waveTypeTitanMortar")
 	waveAnnouncement.append("fd_waveComboNukeMortar")

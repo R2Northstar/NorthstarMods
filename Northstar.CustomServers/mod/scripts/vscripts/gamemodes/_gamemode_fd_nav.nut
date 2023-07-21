@@ -1,7 +1,6 @@
 global function singleNav_thread
 global function droneNav_thread
-global function getRoute
-global function Dev_MarkRoute
+global function Dev_ShowRoute
 global function NPCStuckTracker
 
 /*
@@ -131,7 +130,13 @@ void function singleNav_thread( entity npc, string routeName, int nodesToSkip = 
 			npc.AssaultSetGoalRadius( nextDistance )
 			
 			table result = npc.WaitSignal( "OnFinishedAssault", "OnEnterGoalRadius", "OnFailedToPath" )
-			
+			/* if( result.signal == "OnFailedToPath" && !npc.IsTitan() && !IsSuperSpectre( npc ) )
+			{
+				vector ornull clampedPos = NavMesh_ClampPointForAI( targetNode.GetOrigin(), npc )
+				if ( clampedPos != null )
+					npc.SetOrigin( expect vector( clampedPos ) )
+			}
+			*/
 			targetNode = targetNode.GetLinkEnt()
 		}
 	}
@@ -335,39 +340,80 @@ entity function GetRouteStart( string routeName )
 	}
 }
 
-array<entity> function getRoute( string routeName )
+void function Dev_ShowRoute( string routename, int routetype = 0 )
 {
-	array<entity> ret
-	array<entity> currentNode = []
-	foreach(entity node in routeNodes)
+	if( !useCustomFDLoad )
 	{
-		if( !node.HasKey( "route_name" ) )
-			continue
-		if( node.kv.route_name == routeName )
-		{
-			currentNode =  [node]
-			break
-		}
+		if( routetype == 1 )
+			thread TitanTracksPathing( routename )
+		else if( routetype == 2 )
+			thread DroneTracksPathing( routename )
+		else
+			thread GruntTracksPathing( routename )
 	}
-	if( currentNode.len() == 0 )
-	{
-		printt( "Route not found" )
-		return []
-	}
-	while( currentNode.len() != 0 )
-	{
-		ret.append( currentNode[0] )
-		currentNode = currentNode[0].GetLinkEntArray()
-	}
-	return ret
 }
 
-void function Dev_MarkRoute( string routename )
+void function GruntTracksPathing( string route )
 {
-	foreach( entity e in getRoute( routename ) )
+	entity guy = CreateSoldier( TEAM_MILITIA, GetRouteStart( route ).GetOrigin(), < 0, 0, 0 > )
+	DispatchSpawn( guy )
+	PlayLoopFXOnEntity( $"P_ar_holopilot_trail", guy, "CHESTFOCUS" )
+	
+	guy.NotSolid()
+	guy.EnableNPCFlag( NPC_DISABLE_SENSING | NPC_IGNORE_ALL )
+	guy.EnableNPCMoveFlag( NPCMF_PREFER_SPRINT )
+	NPC_NoTarget( guy )
+	
+	WaitFrame()
+	guy.SetTitle( route )
+	while ( IsAlive( guy ) )
 	{
-		DebugDrawSphere( e.GetOrigin(), 30.0, 255, 0, 255, false, 40 )
+		thread singleNav_thread( guy, route )
+		table result = guy.WaitSignal( "FD_ReachedHarvester" )
+		wait 5.0
+		guy.SetOrigin( GetRouteStart( route ).GetOrigin() ) //restart route
 	}
+}
+
+void function TitanTracksPathing( string route )
+{
+	entity guy = CreateNPCTitan( "titan_stryder", TEAM_MILITIA, GetRouteStart( route ).GetOrigin(), < 0, 0, 0 > )
+	SetSpawnOption_AISettings( guy, "npc_titan_stryder_leadwall" )
+	DispatchSpawn( guy )
+	PlayLoopFXOnEntity( $"P_ar_holopilot_trail", guy, "CHESTFOCUS" )
+	
+	guy.NotSolid()
+	guy.EnableNPCFlag( NPC_DISABLE_SENSING | NPC_IGNORE_ALL )
+	guy.EnableNPCMoveFlag( NPCMF_PREFER_SPRINT )
+	NPC_NoTarget( guy )
+	
+	WaitFrame()
+	guy.SetTitle( route )
+	ShowName( guy )
+	while ( IsAlive( guy ) )
+	{
+		thread singleNav_thread( guy, route )
+		table result = guy.WaitSignal( "FD_ReachedHarvester" )
+		guy.SetOrigin( GetRouteStart( route ).GetOrigin() ) //restart route
+		wait 0.5
+	}
+}
+
+void function DroneTracksPathing( string route )
+{
+	entity guy = CreateGenericDrone( TEAM_MILITIA, GetRouteStart( route ).GetOrigin() + < 0, 0, 32 >, < 0, 0, 0 > )
+	SetSpawnOption_AISettings( guy, "npc_drone_plasma_fd" )
+	DispatchSpawn( guy )
+	PlayLoopFXOnEntity( $"P_ar_holopilot_trail", guy )
+	
+	guy.NotSolid()
+	guy.EnableNPCFlag( NPC_DISABLE_SENSING | NPC_IGNORE_ALL )
+	guy.EnableNPCMoveFlag( NPCMF_PREFER_SPRINT )
+	NPC_NoTarget( guy )
+	
+	WaitFrame()
+	guy.SetTitle( route )
+	thread droneNav_thread( guy, route )
 }
 
 void function NPCStuckTracker( entity npc ) //Track if AI is properly pathing, otherwise after one minute, it will suicide to prevent softlocking
