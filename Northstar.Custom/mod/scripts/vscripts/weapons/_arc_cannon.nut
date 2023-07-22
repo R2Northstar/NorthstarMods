@@ -552,16 +552,16 @@ function ZapTarget( zapInfo, target, beamStartPos, beamEndPos, chainNum = 1 )
 		int damageNearValue = eWeaponVar.damage_near_value
 		int damageFarValueTitanArmor = eWeaponVar.damage_far_value_titanarmor
 		int damageNearValueTitanArmor = eWeaponVar.damage_near_value_titanarmor
-		int damageNearDistance = eWeaponVar.damage_near_distance
 		int damageFarDistance = eWeaponVar.damage_far_distance
+		int damageNearDistance = eWeaponVar.damage_near_distance
 		if ( zapInfo.player.IsNPC() )
 		{
 			damageFarValue = eWeaponVar.npc_damage_far_value
 			damageNearValue = eWeaponVar.npc_damage_near_value
 			damageFarValueTitanArmor = eWeaponVar.npc_damage_far_value_titanarmor
 			damageNearValueTitanArmor = eWeaponVar.npc_damage_near_value_titanarmor
-			damageNearDistance = eWeaponVar.npc_damage_near_distance
 			damageFarDistance = eWeaponVar.npc_damage_far_distance
+			damageNearDistance = eWeaponVar.npc_damage_near_distance
 		}
 
 		if ( IsValid( target ) && IsValid( zapInfo.player ) )
