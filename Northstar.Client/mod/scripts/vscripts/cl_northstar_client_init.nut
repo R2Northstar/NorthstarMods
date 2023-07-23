@@ -41,3 +41,18 @@ global struct ServerInfo
     string region
     array< RequiredModInfo > requiredMods
 }
+
+global struct Mod
+{
+    int index
+    string name
+    string description
+    string version
+    string link
+    string installLocation
+    int loadPriority
+    bool requiredOnClient
+    bool enabled
+    array<string> conVars
+}
+

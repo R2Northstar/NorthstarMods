@@ -959,13 +959,16 @@ void function OnServerSelected( var button )
 
 	file.lastSelectedServer = server
 
-	foreach ( RequiredModInfo mod in server.requiredMods )
+	foreach ( RequiredModInfo requiredMod in server.requiredMods )
 	{
-		if ( !NSGetModNames().contains( mod.name ) )
+		Mod ornull localMod = GetModByName( requiredMod.name )
+		bool modNotInstalled
+
+		if ( localMod == null )
 		{
 			DialogData dialogData
 			dialogData.header = "#ERROR"
-			dialogData.message = format( "Missing mod \"%s\" v%s", mod.name, mod.version )
+			dialogData.message = format( "Missing mod \"%s\" v%s", requiredMod.name, requiredMod.version )
 			dialogData.image = $"ui/menu/common/dialog_error"
 
 			#if PC_PROG
@@ -981,9 +984,11 @@ void function OnServerSelected( var button )
 		}
 		else
 		{
+			expect Mod( localMod )
+
 			// this uses semver https://semver.org
-			array<string> serverModVersion = split( mod.name, "." )
-			array<string> clientModVersion = split( NSGetModVersionByModName( mod.name ), "." )
+			array<string> serverModVersion = split( requiredMod.name, "." )
+			array<string> clientModVersion = split( localMod.name, "." )
 
 			bool semverFail = false
 			// if server has invalid semver don't bother checking
@@ -1001,7 +1006,7 @@ void function OnServerSelected( var button )
 			{
 				DialogData dialogData
 				dialogData.header = "#ERROR"
-				dialogData.message = format( "Server has mod \"%s\" v%s while we have v%s", mod.name, mod.version, NSGetModVersionByModName( mod.name ) )
+				dialogData.message = format( "Server has mod \"%s\" v%s while we have v%s", requiredMod.name, requiredMod.version, localMod.version )
 				dialogData.image = $"ui/menu/common/dialog_error"
 
 				#if PC_PROG
@@ -1088,10 +1093,18 @@ void function ThreadedAuthAndConnectToServer( string password = "" )
 		// enable all RequiredOnClient mods that are required by the server and are currently disabled
 		foreach ( RequiredModInfo mod in file.lastSelectedServer.requiredMods )
 		{
-			if ( NSIsModRequiredOnClient( mod.name ) && !NSIsModEnabled( mod.name ))
+			Mod ornull localMod = GetModByName( mod.name )
+			
+			if( localMod == null )
+			{
+				throw format( "Tried joining server without required mod %s. Please report this Bug.", mod.name )
+			}
+
+			expect Mod( localMod )
+			if( localMod.requiredOnClient )
 			{
 				modsChanged = true
-				NSSetModEnabled( mod.name, true )
+				NSSetModEnabled( localMod.name, true )
 			}
 		}
 

@@ -320,6 +320,11 @@ Premi Sì se sei d'accordo. Questa scelta può essere modificata in qualsiasi mo
 		"JSON_PARSE_ERROR"                 "Errore nell'analisi della risposta json"
 		"UNSUPPORTED_VERSION"             "La versione che stai usando non è più supportata"
 
+		// Incorrect Mod Installation
+		"INCORRECT_MOD_INSTALL_TOAST" "Alcune delle tue mods sono state installate incorrettamente. Clicca qui per avere più info."
+		"INCORRECT_MODS_MODLIST_HEADER" "Mods Installate Incorrettamente (%s1)"
+		"INCORRECT_MOD_INSTALL_DESCRIPTION" "Questa mod è installata incorrettamente. Tutte le mod hanno un file chiamato \"mod.json\" nella loro cartella principale, ma non è stata trovata in questa mod.\n\nPosizione aspettata: %s1/mod.json\nFound location: %s2/mod.json\n\nAssicurati che sia il file mod.json che mod directory siano sottocategorie dirette della tua cartella mod."	}
+
 		"MOD_SETTINGS"				"Impostazioni Mod"
 		"NORTHSTAR_BASE_SETTINGS"		"Impostazioni base Northstar"
 		"ONLY_HOST_MATCH_SETTINGS"		"Solo l'Host può modificare le impostazioni della Partita Privata"

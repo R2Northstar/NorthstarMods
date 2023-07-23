@@ -321,6 +321,11 @@ Press Yes if you agree to this. This choice can be changed in the mods menu at a
 		"INVALID_MASTERSERVER_TOKEN" 	"Invalid or expired masterserver token"
 		"JSON_PARSE_ERROR" 				"Error parsing json response"
 		"UNSUPPORTED_VERSION" 			"The version you are using is no longer supported"
+
+		// Incorrect Mod Installation
+		"INCORRECT_MOD_INSTALL_TOAST"		"Some of your mods are incorrectly installed. Click here for more info."
+		"INCORRECT_MODS_MODLIST_HEADER"		"Incorrectly Installed Mods (%s1)"
+		"INCORRECT_MOD_INSTALL_DESCRIPTION"	"This mod is incorrectly installed. Every mod has a file called \"mod.json\" in its root directory, however for this mod it was not found.\n\nExpected location: %s1/mod.json\nFound location: %s2/mod.json\n\nMake sure both mod.json file and mod directory are direct children of your mod folder."
 		
 		// Mod Settings
 		"MOD_SETTINGS"					"Mod Settings"

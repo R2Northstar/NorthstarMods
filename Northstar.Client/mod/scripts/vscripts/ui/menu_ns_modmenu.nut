@@ -3,20 +3,18 @@ untyped
 global function AddNorthstarModMenu
 global function AddNorthstarModMenu_MainMenuFooter
 global function ReloadMods
+global function GetModByName
 
-
-struct modData {
-	string name = ""
-	string version = ""
-	string link = ""
-	int loadPriority = 0
-	bool enabled = false
-	array<string> conVars = []
+enum PanelType
+{
+	MOD,
+	INVALID_MOD,
+	HEADER,
 }
 
-struct panelContent {
-	modData& mod
-	bool isHeader = false
+struct PanelContent {
+	Mod& mod
+	int type // PanelType
 }
 
 enum filterShow {
@@ -33,18 +31,25 @@ struct {
 } mouseDeltaBuffer
 
 struct {
-	array<panelContent> mods
+	array<PanelContent> panels
 	var menu
-	array<var> panels
+	array<var> uiPanels
 	int scrollOffset = 0
 	array<string> enabledMods
 	var currentButton
 	string searchTerm
-	modData& lastMod
+	PanelContent& lastPanel
 } file
 
 const int PANELS_LEN = 15
 const string[3] CORE_MODS = ["Northstar.Client", "Northstar.Coop", "Northstar.CustomServers"] // Shows a warning if you try to disable these
+
+Mod ornull function GetModByName( string name )
+{
+	foreach ( mod in NSGetMods() )
+		if ( mod.name == name )
+			return mod
+}
 
 void function AddNorthstarModMenu()
 {
@@ -65,7 +70,7 @@ void function AdvanceToModListMenu( var button )
 void function InitModMenu()
 {
 	file.menu = GetMenu( "ModListMenu" )
-	file.panels = GetElementsByClassname( file.menu, "ModSelectorPanel" )
+	file.uiPanels = GetElementsByClassname( file.menu, "ModSelectorPanel" )
 
 	var rui = Hud_GetRui( Hud_GetChild( file.menu, "WarningLegendImage" ) )
 	RuiSetImage( rui, "basicImage", $"ui/menu/common/dialog_error" )
@@ -73,7 +78,7 @@ void function InitModMenu()
 	RuiSetFloat( Hud_GetRui( Hud_GetChild( file.menu, "ModEnabledBar" ) ), "basicImageAlpha", 0.8 )
 
 	// Mod buttons
-	foreach ( var panel in file.panels )
+	foreach ( var panel in file.uiPanels )
 	{
 		var button = Hud_GetChild( panel, "BtnMod" )
 		AddButtonEventHandler( button, UIE_GET_FOCUS, OnModButtonFocused )
@@ -131,7 +136,7 @@ void function InitModMenu()
 
 void function OnModMenuOpened()
 {
-	file.enabledMods = GetEnabledModsArray() // used to check if mods should be reloaded
+	file.enabledMods = GetEnabledModNames() // used to check if mods should be reloaded
 
 	UpdateList()
 	UpdateListSliderHeight()
@@ -150,7 +155,7 @@ void function OnModMenuClosed()
 	}
 	catch ( ex ) {}
 
-	array<string> current = GetEnabledModsArray()
+	array<string> current = GetEnabledModNames()
 	bool reload
 	foreach ( string mod in current )
 	{
@@ -166,26 +171,26 @@ void function OnModMenuClosed()
 
 void function OnModButtonFocused( var button )
 {
-	if( int ( Hud_GetScriptID( Hud_GetParent( button ) ) ) > file.mods.len() )
+	if( int ( Hud_GetScriptID( Hud_GetParent( button ) ) ) > file.panels.len() )
 		return
 
 	file.currentButton = button
-	file.lastMod = file.mods[ int ( Hud_GetScriptID( Hud_GetParent( button ) ) ) + file.scrollOffset - 1 ].mod
-	string modName = file.lastMod.name
+	file.lastPanel = file.panels[ int ( Hud_GetScriptID( Hud_GetParent( button ) ) ) + file.scrollOffset - 1 ]
+	Mod lastMod = file.lastPanel.mod
+
 	var rui = Hud_GetRui( Hud_GetChild( file.menu, "LabelDetails" ) )
 
 	RuiSetGameTime( rui, "startTime", -99999.99 ) // make sure it skips the whole animation for showing this
-	RuiSetString( rui, "headerText", modName )
-	RuiSetString( rui, "messageText", FormatModDescription( modName ) )
+	RuiSetString( rui, "headerText", lastMod.name )
+	RuiSetString( rui, "messageText", FormatPanelDescription( file.lastPanel ) )
 
 	// Add a button to open the link with if required
-	string link = NSGetModDownloadLinkByModName( modName )
 	var linkButton = Hud_GetChild( file.menu, "ModPageButton" )
-	if ( link.len() )
+	if ( lastMod.link.len() )
 	{
 		Hud_SetEnabled( linkButton, true )
 		Hud_SetVisible( linkButton, true )
-		Hud_SetText( linkButton, link )
+		Hud_SetText( linkButton, lastMod.link )
 	}
 	else
 	{
@@ -193,26 +198,32 @@ void function OnModButtonFocused( var button )
 		Hud_SetVisible( linkButton, false )
 	}
 
-	SetControlBarColor( modName )
+	SetControlBarColor( file.lastPanel.mod.enabled )
 
-	bool required = NSIsModRequiredOnClient( modName )
-	Hud_SetVisible( Hud_GetChild( file.menu, "WarningLegendLabel"  ), required )
-	Hud_SetVisible( Hud_GetChild( file.menu, "WarningLegendImage"  ), required )
+	Hud_SetVisible( Hud_GetChild( file.menu, "WarningLegendLabel"  ), file.lastPanel.mod.requiredOnClient )
+	Hud_SetVisible( Hud_GetChild( file.menu, "WarningLegendImage"  ), file.lastPanel.mod.requiredOnClient )
 }
 
 void function OnModButtonPressed( var button )
 {
-	string modName = file.mods[ int ( Hud_GetScriptID( Hud_GetParent( button ) ) ) + file.scrollOffset - 1 ].mod.name
-	if ( StaticFind( modName ) && NSIsModEnabled( modName ) )
+	PanelContent pc = file.panels[ int ( Hud_GetScriptID( Hud_GetParent( button ) ) ) + file.scrollOffset - 1 ]
+	Mod mod = pc.mod
+
+	if ( pc.type == PanelType.INVALID_MOD )
+		return
+
+	string modName = mod.name
+	if ( StaticFind( modName ) && mod.enabled )
 		CoreModToggleDialog( modName )
 	else
 	{
-		NSSetModEnabled( modName, !NSIsModEnabled( modName ) )
-		var panel = file.panels[ int ( Hud_GetScriptID( Hud_GetParent( button ) ) ) - 1 ]
-		SetControlBoxColor( Hud_GetChild( panel, "ControlBox" ), modName )
-		SetControlBarColor( modName )
-		SetModEnabledHelperImageAsset( Hud_GetChild( panel, "EnabledImage" ), modName )
-		// RefreshMods()
+		NSSetModEnabled( mod.index, !mod.enabled )
+		mod.enabled = !mod.enabled
+		var panel = file.uiPanels[ int ( Hud_GetScriptID( Hud_GetParent( button ) ) ) - 1 ]
+		SetControlBoxColor( Hud_GetChild( panel, "ControlBox" ), mod.enabled )
+		SetControlBarColor( mod.enabled )
+		SetModEnabledHelperImageAsset( Hud_GetChild( panel, "EnabledImage" ), mod )
+
 		UpdateListSliderPosition()
 		UpdateListSliderHeight()
 	}
@@ -230,10 +241,9 @@ void function OnAuthenticationAgreementButtonPressed( var button )
 
 void function OnModLinkButtonPressed( var button )
 {
-	string modName = file.mods[ int ( Hud_GetScriptID( Hud_GetParent( file.currentButton ) ) ) + file.scrollOffset - 1 ].mod.name
-	string link = NSGetModDownloadLinkByModName( modName )
+	string link = file.panels[ int ( Hud_GetScriptID( Hud_GetParent( file.currentButton ) ) ) + file.scrollOffset - 1 ].mod.link
 	if ( link.find("http://") != 0 && link.find("https://") != 0 )
-		link = "http://" + link // links without the http or https protocol get opened in the internal browser
+		link = format( "http://%s", link ) // links without the http or https protocol get opened in the internal browser
 	LaunchExternalWebBrowser( link, WEBBROWSER_FLAG_FORCEEXTERNAL )
 }
 
@@ -257,11 +267,10 @@ void function OnBtnFiltersClear_Activate( var button )
 
 void function OnHideConVarsChange( var n )
 {
-	string modName = file.lastMod.name
-	if ( modName == "" )
+	if ( file.lastPanel.mod.name == "" ) // not sure if this is stil needed. Leaving it in just to be sure
 		return
 	var rui = Hud_GetRui( Hud_GetChild( file.menu, "LabelDetails" ) )
-	RuiSetString( rui, "messageText", FormatModDescription( modName ) )
+	RuiSetString( rui, "messageText", FormatPanelDescription( file.lastPanel ) )
 }
 
 // LIST LOGIC
@@ -284,31 +293,33 @@ void function CoreModToggleDialog( string mod )
 
 void function DisableMod()
 {
-	string modName = file.mods[ int ( Hud_GetScriptID( Hud_GetParent( file.currentButton ) ) ) + file.scrollOffset - 1 ].mod.name
-	NSSetModEnabled( modName, false )
+	Mod mod = file.panels[ int ( Hud_GetScriptID( Hud_GetParent( file.currentButton ) ) ) + file.scrollOffset - 1 ].mod
 
-	var panel = file.panels[ int ( Hud_GetScriptID( Hud_GetParent( file.currentButton ) ) ) - 1]
-	SetControlBoxColor( Hud_GetChild( panel, "ControlBox" ), modName )
-	SetControlBarColor( modName )
-	SetModEnabledHelperImageAsset( Hud_GetChild( panel, "EnabledImage" ), modName )
+	NSSetModEnabled( mod.index, false )
+	mod.enabled = false
+
+	var panel = file.uiPanels[ int ( Hud_GetScriptID( Hud_GetParent( file.currentButton ) ) ) - 1]
+	SetControlBoxColor( Hud_GetChild( panel, "ControlBox" ), mod.enabled )
+	SetControlBarColor( mod.enabled )
+	SetModEnabledHelperImageAsset( Hud_GetChild( panel, "EnabledImage" ), mod )
 
 	RefreshMods()
 }
 
-array<string> function GetEnabledModsArray()
+array<string> function GetEnabledModNames()
 {
 	array<string> enabledMods
-	foreach ( string mod in NSGetModNames() )
+	foreach ( Mod mod in NSGetMods() )
 	{
-		if ( NSIsModEnabled( mod ) )
-			enabledMods.append( mod )
+		if ( mod.enabled )
+			enabledMods.append( mod.name )
 	}
 	return enabledMods
 }
 
 void function HideAllPanels()
 {
-	foreach ( var panel in file.panels )
+	foreach ( var panel in file.uiPanels )
 	{
 		Hud_SetEnabled( panel, false )
 		Hud_SetVisible( panel, false )
@@ -322,161 +333,173 @@ void function UpdateList()
 	DisplayModPanels()
 }
 
+void function AddInvalidModsToPanels()
+{
+	array<Mod> invalidMods = NSGetInvalidMods()
+
+	if ( !invalidMods.len() )
+		return
+	
+	PanelContent headerPanel = { type = PanelType.HEADER, ... }
+	Mod header
+	header.name = Localize( "#INCORRECT_MODS_MODLIST_HEADER", invalidMods.len() )
+	headerPanel.mod = header
+
+	file.panels.append( headerPanel )
+
+	foreach ( invalidMod in invalidMods )
+	{
+		PanelContent p = { type = PanelType.INVALID_MOD, ... }
+		p.mod = invalidMod
+
+		p.mod.enabled = false // the mod might not be explicitly disabled in enabledmods.json, but should always show as disabled in the list 
+
+		file.panels.append( p )
+	}
+}
+
 void function RefreshMods()
 {
-	array<string> modNames = NSGetModNames()
-	file.mods.clear()
+	file.panels.clear()
 
-	bool reverse = GetConVarBool( "modlist_reverse" )
-
-	int lastLoadPriority = reverse ? NSGetModLoadPriority( modNames[ modNames.len() - 1 ] ) + 1 : -1 
 	string searchTerm = Hud_GetUTF8Text( Hud_GetChild( file.menu, "BtnModsSearch" ) ).tolower()
+	array<Mod> mods = NSGetMods()
+	bool reverse = GetConVarBool( "modlist_reverse" )
+	int lastLoadPriority = -1
 
-	for ( int i = reverse ? modNames.len() - 1 : 0;
-		reverse ? ( i >= 0 ) : ( i < modNames.len() );
-		i += ( reverse ? -1 : 1) )
+	mods.sort( SortModsByAscendingPriority )
+
+	if ( reverse )
 	{
-		string mod = modNames[i]
+		mods.reverse()
+		if ( mods.len() )
+			lastLoadPriority = mods[0].loadPriority + 1
+	}
 
-		if ( searchTerm.len() && mod.tolower().find( searchTerm ) == null )
+	AddInvalidModsToPanels()
+
+	foreach ( mod in mods )
+	{
+		if ( searchTerm.len() && mod.name.tolower().find( searchTerm ) == null )
 			continue
 
-		bool enabled = NSIsModEnabled( mod )
-		bool required = NSIsModRequiredOnClient( mod )
 		switch ( GetConVarInt( "filter_mods" ) )
 		{
 			case filterShow.ONLY_ENABLED:
-				if ( !enabled )
+				if ( !mod.enabled )
 					continue
-				break
 			case filterShow.ONLY_DISABLED:
-				if ( enabled )
+				if ( mod.enabled )
 					continue
-				break
 			case filterShow.ONLY_REQUIRED:
-				if ( !required )
+				if ( !mod.requiredOnClient )
 					continue
-				break
 			case filterShow.ONLY_NOT_REQUIRED:
-				if( required )
+				if( mod.requiredOnClient )
 					continue
-				break
 		}
 
-		int pr = NSGetModLoadPriority( mod )
-
-		if ( reverse ? pr < lastLoadPriority : pr > lastLoadPriority )
+		if ( reverse ? mod.loadPriority < lastLoadPriority : mod.loadPriority > lastLoadPriority )
 		{
-			modData m
-			m.name = pr.tostring()
+			lastLoadPriority = mod.loadPriority
 
-			panelContent c
-			c.mod = m
-			c.isHeader = true
-			file.mods.append( c )
-			lastLoadPriority = pr
+			Mod m
+			m.name = format( "Load Priority: %i", mod.loadPriority )
+
+			PanelContent pc
+			pc.mod = m
+			pc.type = PanelType.HEADER
+
+			file.panels.append( pc )
 		}
 
-		modData m
-		m.name = mod
-		m.version = NSGetModVersionByModName( mod )
-		m.link = NSGetModDownloadLinkByModName( mod )
-		m.loadPriority = NSGetModLoadPriority( mod )
-		m.enabled = enabled
-		m.conVars = NSGetModConvarsByModName( mod )
-
-		panelContent c
-		c.mod = m
-
-		file.mods.append( c )
+		PanelContent pc
+		pc.type = PanelType.MOD
+		pc.mod = mod
+		file.panels.append( pc )
 	}
 }
 
 void function DisplayModPanels()
 {
-	foreach ( int i, var panel in file.panels)
+	foreach ( int i, var panel in file.uiPanels)
 	{
-		if ( i >= file.mods.len() || file.scrollOffset + i >= file.mods.len() ) // don't try to show more panels than needed
+		if ( i >= file.panels.len() || file.scrollOffset + i >= file.panels.len() ) // don't try to show more panels than needed
 			break
 
-		panelContent c = file.mods[ file.scrollOffset + i ]
-		modData mod = c.mod
+		PanelContent c = file.panels[ file.scrollOffset + i ]
+		Mod mod = c.mod
 		var btn = Hud_GetChild( panel, "BtnMod" )
 		var headerLabel = Hud_GetChild( panel, "Header" )
 		var box = Hud_GetChild( panel, "ControlBox" )
 		var line = Hud_GetChild( panel, "BottomLine" )
 		var warning = Hud_GetChild( panel, "WarningImage" )
 		var enabledImage = Hud_GetChild( panel, "EnabledImage" )
-		
-		if ( c.isHeader )
+
+		switch ( c.type )
 		{
-			Hud_SetEnabled( btn, false )
-			Hud_SetVisible( btn, false )
+			case PanelType.HEADER:
+				Hud_SetEnabled( btn, false )
+				Hud_SetVisible( btn, false )
 
-			Hud_SetText( headerLabel, "Load Priority: " + mod.name )
-			Hud_SetVisible( headerLabel, true )
+				Hud_SetText( headerLabel, mod.name )
+				Hud_SetVisible( headerLabel, true )
 
-			Hud_SetVisible( box, false )
-			Hud_SetVisible( line, true )
+				Hud_SetVisible( box, false )
+				Hud_SetVisible( line, true )
 
-			Hud_SetVisible( warning, false )
-			Hud_SetVisible( enabledImage, false )
-		}
-		else
-		{
-			Hud_SetEnabled( btn, true )
-			Hud_SetVisible( btn, true )
-			Hud_SetText( btn, mod.name )
+				Hud_SetVisible( warning, false )
+				Hud_SetVisible( enabledImage, false )
+				break
 
-			Hud_SetVisible( headerLabel, false )
+			case PanelType.MOD:
+			case PanelType.INVALID_MOD:
+				Hud_SetEnabled( btn, true )
+				Hud_SetVisible( btn, true )
+				Hud_SetText( btn, mod.name )
 
-			SetControlBoxColor( box, mod.name )
-			Hud_SetVisible( box, true )
-			Hud_SetVisible( line, false )
+				Hud_SetVisible( headerLabel, false )
 
-			Hud_SetVisible( warning, NSIsModRequiredOnClient( c.mod.name ) )
+				SetControlBoxColor( box, mod.enabled )
+				Hud_SetVisible( box, true )
+				Hud_SetVisible( line, false )
 
-			SetModEnabledHelperImageAsset( enabledImage, c.mod.name )
+				Hud_SetVisible( warning, c.mod.requiredOnClient )
+
+				SetModEnabledHelperImageAsset( enabledImage, c.mod )
+				break
 		}
 		Hud_SetVisible( panel, true )
 	}
 }
 
-void function SetModEnabledHelperImageAsset( var panel, string modName )
+void function SetModEnabledHelperImageAsset( var panel, Mod mod )
 {
-	if( NSIsModEnabled( modName ) )
+	if( mod.enabled )
 		RuiSetImage( Hud_GetRui( panel ), "basicImage", $"rui/menu/common/merit_state_success" )
 	else
 		RuiSetImage( Hud_GetRui( panel ), "basicImage", $"rui/menu/common/merit_state_failure" )
-	RuiSetFloat3(Hud_GetRui( panel ), "basicImageColor", GetControlColorForMod( modName ) )
+	RuiSetFloat3(Hud_GetRui( panel ), "basicImageColor", GetControlColorForMod( mod.enabled ) )
 	Hud_SetVisible( panel, true )
 }
 
-void function SetControlBoxColor( var box, string modName )
+void function SetControlBoxColor( var box, bool modEnabled )
 {
 	var rui = Hud_GetRui( box )
-	// if ( NSIsModEnabled( modName ) )
-	// 	RuiSetFloat3(rui, "basicImageColor", <0,1,0>)
-	// else
-	// 	RuiSetFloat3(rui, "basicImageColor", <1,0,0>)
-	RuiSetFloat3(rui, "basicImageColor", GetControlColorForMod( modName ) )
+	RuiSetFloat3(rui, "basicImageColor", GetControlColorForMod( modEnabled ) )
 }
 
-void function SetControlBarColor( string modName )
+void function SetControlBarColor( bool modEnabled )
 {
 	var bar_element = Hud_GetChild( file.menu, "ModEnabledBar" )
 	var bar = Hud_GetRui( bar_element )
-	// if ( NSIsModEnabled( modName ) )
-	// 	RuiSetFloat3(bar, "basicImageColor", <0,1,0>)
-	// else
-	// 	RuiSetFloat3(bar, "basicImageColor", <1,0,0>)
-	RuiSetFloat3(bar, "basicImageColor", GetControlColorForMod( modName ) )
+	RuiSetFloat3(bar, "basicImageColor", GetControlColorForMod( modEnabled ) )
 	Hud_SetVisible( bar_element, true )
 }
 
-vector function GetControlColorForMod( string modName )
+vector function GetControlColorForMod( bool modEnabled )
 {
-	if ( NSIsModEnabled( modName ) )
+	if ( modEnabled )
 		switch ( GetConVarInt( "colorblind_mode" ) )
 		{
 			case 1:
@@ -498,17 +521,32 @@ vector function GetControlColorForMod( string modName )
 	unreachable
 }
 
-string function FormatModDescription( string modName )
+string function FormatPanelDescription( PanelContent panel )
+{
+	if ( panel.type == PanelType.INVALID_MOD )
+		return Localize(
+				"#INCORRECT_MOD_INSTALL_DESCRIPTION",
+				format(
+						"%s/mods%s",
+						panel.mod.installLocation.slice( 0, panel.mod.installLocation.find("/") ),
+						panel.mod.installLocation.slice( FindLast( panel.mod.installLocation, '/' ) )
+					),
+				panel.mod.installLocation
+			)
+	return FormatModDescription( panel.mod )
+}
+
+string function FormatModDescription( Mod mod )
 {
 	string ret
 	// version
-	ret += format( "Version %s\n", NSGetModVersionByModName( modName ) )
+	ret += format( "Version %s\n", mod.version )
 
 	// load priority
-	ret += format( "Load Priority: %i\n", NSGetModLoadPriority( modName ) )
+	ret += format( "Load Priority: %i\n", mod.loadPriority )
 
 	// convars
-	array<string> modCvars = NSGetModConvarsByModName( modName )
+	array<string> modCvars = mod.conVars
 	if ( modCvars.len() != 0 && GetConVarBool( "modlist_show_convars" ) )
 	{
 		ret += "ConVars: "
@@ -525,7 +563,7 @@ string function FormatModDescription( string modName )
 	}
 
 	// description
-	ret += format( "\n%s\n", NSGetModDescriptionByModName( modName ) )
+	ret += format( "\n%s\n", mod.description )
 
 	return ret
 }
@@ -546,7 +584,7 @@ void function UpdateMouseDeltaBuffer(int x, int y)
 
 void function SliderBarUpdate()
 {
-	if ( file.mods.len() <= 15 )
+	if ( file.panels.len() <= 15 )
 		return
 
 	var sliderButton = Hud_GetChild( file.menu , "BtnModListSlider" )
@@ -560,7 +598,7 @@ void function SliderBarUpdate()
 	float maxYPos = minYPos - (maxHeight - Hud_GetHeight( sliderPanel ))
 	float useableSpace = (maxHeight - Hud_GetHeight( sliderPanel ))
 
-	float jump = minYPos - (useableSpace / ( float( file.mods.len())))
+	float jump = minYPos - (useableSpace / ( float( file.panels.len())))
 
 	// got local from official respaw scripts, without untyped throws an error
 	local pos =	Hud_GetPos(sliderButton)[1]
@@ -573,7 +611,7 @@ void function SliderBarUpdate()
 	Hud_SetPos( sliderPanel , 2, newPos )
 	Hud_SetPos( movementCapture , 2, newPos )
 
-	file.scrollOffset = -int( ( (newPos - minYPos) / useableSpace ) * ( file.mods.len() - PANELS_LEN) )
+	file.scrollOffset = -int( ( (newPos - minYPos) / useableSpace ) * ( file.panels.len() - PANELS_LEN) )
 	UpdateList()
 }
 
@@ -583,7 +621,7 @@ void function UpdateListSliderPosition()
 	var sliderPanel = Hud_GetChild( file.menu , "BtnModListSliderPanel" )
 	var movementCapture = Hud_GetChild( file.menu , "MouseMovementCapture" )
 
-	float mods = float ( file.mods.len() )
+	float mods = float ( file.panels.len() )
 
 	float minYPos = -40.0 * (GetScreenSize()[1] / 1080.0)
 	float useableSpace = (604.0 * (GetScreenSize()[1] / 1080.0) - Hud_GetHeight( sliderPanel ))
@@ -603,7 +641,7 @@ void function UpdateListSliderHeight()
 	var sliderPanel = Hud_GetChild( file.menu , "BtnModListSliderPanel" )
 	var movementCapture = Hud_GetChild( file.menu , "MouseMovementCapture" )
 
-	float mods = float ( file.mods.len() )
+	float mods = float ( file.panels.len() )
 
 	float maxHeight = 604.0 * (GetScreenSize()[1] / 1080.0)
 	float minHeight = 80.0 * (GetScreenSize()[1] / 1080.0)
@@ -620,10 +658,10 @@ void function UpdateListSliderHeight()
 
 void function OnScrollDown( var button )
 {
-	if ( file.mods.len() <= PANELS_LEN ) return
+	if ( file.panels.len() <= PANELS_LEN ) return
 	file.scrollOffset += 5
-	if (file.scrollOffset + PANELS_LEN > file.mods.len())
-		file.scrollOffset = file.mods.len() - PANELS_LEN
+	if (file.scrollOffset + PANELS_LEN > file.panels.len())
+		file.scrollOffset = file.panels.len() - PANELS_LEN
 	Hud_SetFocused( Hud_GetChild( file.menu, "BtnModListSlider" ) )
 	ValidateScrollOffset()
 }
@@ -639,10 +677,10 @@ void function OnScrollUp( var button )
 
 void function OnDownArrowSelected( var button )
 {
-	if ( file.mods.len() <= PANELS_LEN ) return
+	if ( file.panels.len() <= PANELS_LEN ) return
 	file.scrollOffset += 1
-	if (file.scrollOffset + PANELS_LEN > file.mods.len())
-		file.scrollOffset = file.mods.len() - PANELS_LEN
+	if (file.scrollOffset + PANELS_LEN > file.panels.len())
+		file.scrollOffset = file.panels.len() - PANELS_LEN
 	ValidateScrollOffset()
 }
 
@@ -657,8 +695,8 @@ void function OnUpArrowSelected( var button )
 void function ValidateScrollOffset()
 {
 	RefreshMods()
-	if( file.scrollOffset + 15  > file.mods.len() )
-		file.scrollOffset = file.mods.len() - 15
+	if( file.scrollOffset + 15  > file.panels.len() )
+		file.scrollOffset = file.panels.len() - 15
 	if( file.scrollOffset < 0 )
 		file.scrollOffset = 0
 	HideAllPanels()
@@ -689,4 +727,26 @@ void function ReloadMods()
 
 	// note: the logic for this seems really odd, unsure why it doesn't seem to update, since the same code seems to get run irregardless of whether we've read weapon data before
 	ClientCommand( "uiscript_reset" )
+}
+
+////////////
+// Sorting
+////////////
+
+int function SortModsByAscendingPriority( Mod a, Mod b )
+{
+	if ( a.loadPriority > b.loadPriority )
+		return 1
+	else if ( a. loadPriority < b.loadPriority )
+		return -1
+	return 0
+}
+
+int function FindLast(string s, int c)
+{
+	int index = -1
+	foreach( int i, sc in s )
+		if( sc == c )
+			index = i
+	return index
 }

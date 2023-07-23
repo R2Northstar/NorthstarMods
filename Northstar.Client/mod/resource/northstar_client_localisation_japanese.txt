@@ -349,5 +349,10 @@
 		"UNSUPPORTED_VERSION" 			"現在使用しているバージョンはサポートされていません\n(The version you are using is no longer supported)"
 
 		// Translation done by Zetryox and CYakigasi
+
+		// Incorrect Mod Installation
+		"INCORRECT_MOD_INSTALL_TOAST" "一部のMODが誤ってインストールされています。詳しくはここをクリックしてください。"
+		"INCORRECT_MODS_MODLIST_HEADER" "不正にインストールされたMOD (%s1)"
+		"INCORRECT_MOD_INSTALL_DESCRIPTION" "このMODは正しくインストールされていません。すべてのMODはルートディレクトリに「mod.json」というファイルを持ちますが、このMODでは見つかりませんでした\n\nExpected location: %s1/mod.json\nFound location: %s2/mod.json\n\nMODフォルダから直接MODディレクトリとmod.jsonファイルの両方を確認する"
 	}
 }
