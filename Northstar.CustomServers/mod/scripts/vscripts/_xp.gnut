@@ -34,30 +34,28 @@ void function HandleXPGainForScoreEvent( entity player, ScoreEvent event )
 	int xpValue = ScoreEvent_GetXPValue( event )
 	int weaponXp = ScoreEvent_GetXPValueWeapon( event )
 	int titanXp = ScoreEvent_GetXPValueTitan( event )
+	int factionXp = ScoreEvent_GetXPValueFaction( event )
 
 	entity weapon = player.GetActiveWeapon()
-	if ( IsValid( weapon ) && ShouldTrackXPForWeapon( weapon.GetWeaponClassName() ) )
+	if ( IsValid( weapon ) && ShouldTrackXPForWeapon( weapon.GetWeaponClassName() ) && weaponXp != 0 )
 		AddWeaponXP( player, weaponXp )
 
 	// if we specifically gain titan xp, then give titan xp no matter what, otherwise only give it when we're in a titan
-	if ( titanXp != 0 || player.IsTitan() )
+	if ( titanXp != 0 )
 		AddTitanXP( player, titanXp )
 
-	int factionXp = ScoreEvent_GetXPValueFaction( event )
 	if ( factionXp != 0 )
 		AddFactionXP( player, factionXp )
 
-	if ( xpValue == 0 )
-		return
-
 	// global xp
-	AddXP( player, xpValue )
+	if ( xpValue != 0 )
+		AddXP( player, xpValue )
 }
 
 void function AddXP( entity player, int amount )
 {
 	int oldXp = player.GetPersistentVarAsInt( "xp" )
-	if(oldXp<0) oldXp = 0
+	if( oldXp < 0 ) oldXp = 0
 	int oldLevel = GetLevelForXP( oldXp )
 	player.SetPersistentVar( "xp", min( oldXp + amount, PlayerGetMaxXPPerGen() ) )
 	player.XPChanged() // network xp change to client, gen can't change here
