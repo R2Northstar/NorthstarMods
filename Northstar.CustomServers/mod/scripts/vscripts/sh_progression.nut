@@ -6,11 +6,14 @@ global function Progression_GetPreference
 global function UpdateCachedLoadouts_Delayed
 #endif
 
-#if SERVER
+
 struct {
+	#if SERVER
 	table<entity, bool> progressionEnabled
+	#else
+	bool isUpdatingCachedLoadouts = false
+	#endif
 } file
-#endif
 
 
 void function Progression_Init()
@@ -97,14 +100,22 @@ bool function Progression_GetPreference()
 
 void function UpdateCachedLoadouts_Delayed()
 {
+	if ( file.isUpdatingCachedLoadouts )
+		return
+
+	file.isUpdatingCachedLoadouts = true
+
+	#if UI
+	RunClientScript( "UpdateCachedLoadouts_Delayed" ) // keep client and UI synced
+	#else if CLIENT
+	RunUIScript( "UpdateCachedLoadouts_Delayed" ) // keep client and UI synced
+	#endif
+
 	thread UpdateCachedLoadouts_Threaded()
 }
 
 void function UpdateCachedLoadouts_Threaded()
 {
-	#if UI
-	RunClientScript( "UpdateCachedLoadouts_Delayed" ) // keep client and UI synced
-	#endif
 	wait 1.0 // give the server time to network our new persistence
 
 	#if UI
@@ -127,6 +138,8 @@ void function UpdateCachedLoadouts_Threaded()
 	UpdateTitanModel( player, GetPersistentSpawnLoadoutIndex( player, "titan" ) )
 	UpdatePilotModel( player, GetPersistentSpawnLoadoutIndex( player, "pilot" ) )
 	#endif
+
+	file.isUpdatingCachedLoadouts = false
 }
 #endif
 
