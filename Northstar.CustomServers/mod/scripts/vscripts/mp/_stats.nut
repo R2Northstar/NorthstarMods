@@ -581,13 +581,17 @@ void function HandleKillStats( entity victim, entity attacker, var damageInfo )
 		{
 			alreadyAssisted[attackerInfo.attacker.GetEncodedEHandle()] <- true
 			Stats_IncrementStat( attackerInfo.attacker, "kills_stats", "totalAssists", "", 1.0 )
+
+			string source = DamageSourceIDToString( attackerInfo.damageSourceId )
+			foreach( str in shGlobalMP.statsItemsList )
+			{
+				if ( str == source )
+				{
+					Stats_IncrementStat( attacker, "weapon_kill_stats", "assistsTotal", source, 1.0 )
+					break
+				}
+			}
 			
-			entity weapon = attacker.GetActiveWeapon()
-			// I guess if you dont have a valid active weapon when you get awarded an assist
-			// you dont get the stat. Too bad!
-			if ( !IsValid( weapon ) )
-				continue
-			Stats_IncrementStat( attacker, "weapon_kill_stats", "assistsTotal", weapon.GetWeaponClassName(), 1.0 )
 		}
 	}
 
