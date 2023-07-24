@@ -568,7 +568,7 @@ void function HandleKillStats( entity victim, entity attacker, var damageInfo )
 		Stats_IncrementStat( player, "kills_stats", "asPilot", "", 1.0 )
 
 	// totalAssists
-	// assistsTotal ( weapon_stats )
+	// assistsTotal ( weapon_kill_stats )
 	// note: eww
 	table<int, bool> alreadyAssisted
 	foreach( DamageHistoryStruct attackerInfo in victim.e.recentDamageHistory )
@@ -587,7 +587,7 @@ void function HandleKillStats( entity victim, entity attacker, var damageInfo )
 			// you dont get the stat. Too bad!
 			if ( !IsValid( weapon ) )
 				continue
-			Stats_IncrementStat( attacker, "weapon_stats", "assistsTotal", weapon.GetWeaponClassName(), 1.0 )
+			Stats_IncrementStat( attacker, "weapon_kill_stats", "assistsTotal", weapon.GetWeaponClassName(), 1.0 )
 		}
 	}
 
