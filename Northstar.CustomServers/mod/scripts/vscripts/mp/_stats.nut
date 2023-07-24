@@ -583,15 +583,9 @@ void function HandleKillStats( entity victim, entity attacker, var damageInfo )
 			Stats_IncrementStat( attackerInfo.attacker, "kills_stats", "totalAssists", "", 1.0 )
 
 			string source = DamageSourceIDToString( attackerInfo.damageSourceId )
-			foreach( str in shGlobalMP.statsItemsList )
-			{
-				if ( str == source )
-				{
-					Stats_IncrementStat( attacker, "weapon_kill_stats", "assistsTotal", source, 1.0 )
-					break
-				}
-			}
-			
+
+			if ( IsValidStatItemString( source ) ) 
+				Stats_IncrementStat( attacker, "weapon_kill_stats", "assistsTotal", source, 1.0 )
 		}
 	}
 
@@ -996,10 +990,13 @@ void function HandleDistanceAndTimeStats_Threaded()
 			entity activeWeapon = player.GetActiveWeapon()
 			if ( IsValid( activeWeapon ) )
 			{
-				Stats_IncrementStat( player, "weapon_stats", "hoursUsed", activeWeapon.GetWeaponClassName(), timeHours )
+				if ( IsValidStatItemString( activeWeapon.GetWeaponClassName() ) )
+					Stats_IncrementStat( player, "weapon_stats", "hoursUsed", activeWeapon.GetWeaponClassName(), timeHours )
+
 				foreach( entity weapon in player.GetMainWeapons() )
 				{
-					Stats_IncrementStat( player, "weapon_stats", "hoursEquipped", weapon.GetWeaponClassName(), timeHours )
+					if ( IsValidStatItemString( weapon.GetWeaponClassName() ) )
+						Stats_IncrementStat( player, "weapon_stats", "hoursEquipped", weapon.GetWeaponClassName(), timeHours )
 				}
 			}
 
@@ -1022,6 +1019,17 @@ void function SaveStatsPeriodically_Threaded()
 			Stats_SaveAllStats( player )
 		wait 5
 	}
+}
+
+bool function IsValidStatItemString( string item )
+{
+	foreach( str in shGlobalMP.statsItemsList )
+	{
+		if ( str == item )
+			return true
+	}
+
+	return false
 }
 
 string function GetPersistenceRefFromDamageInfo( var damageInfo )
