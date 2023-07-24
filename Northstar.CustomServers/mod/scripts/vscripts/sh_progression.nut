@@ -40,7 +40,6 @@ bool function ProgressionEnabledForPlayer( entity player )
 void function OnPlaying()
 {
 	SetUIVar( level, "penalizeDisconnect", false ) // dont show the "you will lose merits thing"
-	SetUIVar( level, "showGameSummary", true ) // show the EOG summary xp thing
 }
 
 void function OnClientDisconnected( entity player )
