@@ -811,6 +811,18 @@ void function OnEpilogueStarted()
 			Stats_IncrementStat( player, "game_stats", "game_lost", "", 1.0 )
 	}
 
+	if ( IsValidGamemodeString( GAMETYPE ) )
+	{
+		// award players with matches played on the mode
+		foreach ( entity player in GetPlayerArray() )
+		{
+			Stats_IncrementStat( player, "game_stats", "mode_played", GAMETYPE, 1.0 )
+
+			if ( player.GetTeam() == GetWinningTeam() )
+				Stats_IncrementStat( player, "game_stats", "mode_won", GAMETYPE, 1.0 )
+		}
+	}
+
 	// update player's KD
 	foreach ( entity player in GetPlayerArray() )
 	{
@@ -1019,6 +1031,20 @@ void function SaveStatsPeriodically_Threaded()
 			Stats_SaveAllStats( player )
 		wait 5
 	}
+}
+
+bool function IsValidGamemodeString( string mode )
+{
+	int gameModeCount = PersistenceGetEnumCount( "gameModes" )
+	for ( int modeIndex = 0; modeIndex < gameModeCount; modeIndex++ )
+	{
+		string gameModeName = PersistenceGetEnumItemNameForIndex( "gameModes", modeIndex )
+
+		if ( gameModeName == mode )
+			return true
+	}
+
+	return false
 }
 
 bool function IsValidStatItemString( string item )
