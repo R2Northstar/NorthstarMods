@@ -123,11 +123,7 @@ void function UpdateCachedLoadouts_Threaded()
 {
 	wait 1.0 // give the server time to network our new persistence
 
-	#if UI
 	UpdateCachedLoadouts()
-	#else // CLIENT
-	UpdateCachedLoadouts()
-	#endif
 
 	// below here is just making all the menu models update properly and such
 
