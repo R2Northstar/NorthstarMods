@@ -201,7 +201,7 @@ void function PostScoreEventUpdateStats( entity attacker, entity ent )
 		// you dont get the stat. Too bad!
 		if ( !IsValid( weapon ) )
 			return
-		Stats_IncrementStat( attacker, "weapon_stats", "killingSprees", weapon.GetWeaponClassName(), 1.0 )
+		Stats_IncrementStat( attacker, "weapon_kill_stats", "killingSprees", weapon.GetWeaponClassName(), 1.0 )
 	}
 }
 
