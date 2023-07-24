@@ -475,6 +475,8 @@ void function AddPlayerToEvacDropship( entity dropship, entity player )
 	if ( !PlayerInDropship( player, dropship ) )
 		return
 
+	UpdatePlayerStat( player, "misc_stats", "evacsAttempted" )
+
     // need to cancel if the dropship dies
     dropship.EndSignal( "OnDeath", "OnDestroy" )
 
@@ -504,8 +506,6 @@ void function AddPlayerToEvacDropship( entity dropship, entity player )
 		
 	thread FirstPersonSequence( idleFp, player, dropship )
 	ViewConeWide( player ) // gotta do this after for some reason, adding it to idleFp does not work for some reason
-
-	UpdatePlayerStat( player, "misc_stats", "evacsAttempted" )
 }
 
 bool function PlayerInDropship( entity player, entity dropship )
