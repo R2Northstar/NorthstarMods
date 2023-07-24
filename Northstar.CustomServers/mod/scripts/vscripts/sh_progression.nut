@@ -6,14 +6,19 @@ global function Progression_GetPreference
 global function UpdateCachedLoadouts_Delayed
 #endif
 
+// SO FOR SOME GOD DAMN REASON, PUTTING THESE INTO ONE STRUCT
+// AND PUTTING THE #if STUFF AROUND THE VARS CAUSES A COMPILE
+// ERROR, SO I HAVE TO DO THIS AWFULNESS
 
+#if SERVER
 struct {
-	#if SERVER
 	table<entity, bool> progressionEnabled
-	#else
-	bool isUpdatingCachedLoadouts = false
-	#endif
 } file
+#else // UI || CLIENT
+struct {
+	bool isUpdatingCachedLoadouts = false
+} file
+#endif
 
 
 void function Progression_Init()
