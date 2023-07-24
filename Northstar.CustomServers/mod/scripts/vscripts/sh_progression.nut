@@ -39,7 +39,7 @@ bool function ProgressionEnabledForPlayer( entity player )
 		return file.progressionEnabled[player]
 	
 	return false
-	#else
+	#else // CLIENT || UI
 	return GetConVarBool( "ns_progression_enabled" )
 	#endif
 }
@@ -93,7 +93,7 @@ void function Progression_SetPreference( bool enabled )
 
 	#if CLIENT
 	GetLocalClientPlayer().ClientCommand( "ns_progression " + enabled.tointeger() )
-	#elseif UI
+	#else // UI
 	ClientCommand( "ns_progression " + enabled.tointeger() )
 	#endif
 }
@@ -112,7 +112,7 @@ void function UpdateCachedLoadouts_Delayed()
 
 	#if UI
 	RunClientScript( "UpdateCachedLoadouts_Delayed" ) // keep client and UI synced
-	#else if CLIENT
+	#else // CLIENT
 	RunUIScript( "UpdateCachedLoadouts_Delayed" ) // keep client and UI synced
 	#endif
 
@@ -125,7 +125,7 @@ void function UpdateCachedLoadouts_Threaded()
 
 	#if UI
 	UpdateCachedLoadouts()
-	#else
+	#else // CLIENT
 	UpdateCachedLoadouts()
 	#endif
 
