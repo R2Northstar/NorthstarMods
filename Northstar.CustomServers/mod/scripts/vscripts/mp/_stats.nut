@@ -443,43 +443,43 @@ void function HandleWeaponKillStats( entity victim, entity attacker, var damageI
 	bool victimIsTitan = victim.IsTitan()
 
 	// total
-	Stats_IncrementStat( attacker, "weapon_kill_stats", "total", damageSourceStr, 1.0 )
+	Stats_IncrementStat( player, "weapon_kill_stats", "total", damageSourceStr, 1.0 )
 
 	// pilots
 	if ( victimIsPilot )
-		Stats_IncrementStat( attacker, "weapon_kill_stats", "pilots", damageSourceStr, 1.0 )
+		Stats_IncrementStat( player, "weapon_kill_stats", "pilots", damageSourceStr, 1.0 )
 
 	// ejecting_pilots
 	if ( victimIsPilot && victim.p.pilotEjecting )
-		Stats_IncrementStat( attacker, "weapon_kill_stats", "ejecting_pilots", damageSourceStr, 1.0 )
+		Stats_IncrementStat( player, "weapon_kill_stats", "ejecting_pilots", damageSourceStr, 1.0 )
 
 	// titansTotal
 	if ( victimIsTitan )
-		Stats_IncrementStat( attacker, "weapon_kill_stats", "titansTotal", damageSourceStr, 1.0 )
+		Stats_IncrementStat( player, "weapon_kill_stats", "titansTotal", damageSourceStr, 1.0 )
 
 	// spectres
 	if ( IsSpectre( victim ) )
-		Stats_IncrementStat( attacker, "weapon_kill_stats", "spectres", damageSourceStr, 1.0 )
+		Stats_IncrementStat( player, "weapon_kill_stats", "spectres", damageSourceStr, 1.0 )
 
 	// marvins
 	if ( IsMarvin( victim ) )
-		Stats_IncrementStat( attacker, "weapon_kill_stats", "marvins", damageSourceStr, 1.0 )
+		Stats_IncrementStat( player, "weapon_kill_stats", "marvins", damageSourceStr, 1.0 )
 
 	// grunts
 	if ( IsGrunt( victim ) )
-		Stats_IncrementStat( attacker, "weapon_kill_stats", "grunts", damageSourceStr, 1.0 )
+		Stats_IncrementStat( player, "weapon_kill_stats", "grunts", damageSourceStr, 1.0 )
 
 	// ai
 	if ( victimIsNPC )
-		Stats_IncrementStat( attacker, "weapon_kill_stats", "ai", damageSourceStr, 1.0 )
+		Stats_IncrementStat( player, "weapon_kill_stats", "ai", damageSourceStr, 1.0 )
 
 	// titans_<chassis>
 	if ( victimIsPlayer && victimIsTitan )
-		Stats_IncrementStat( attacker, "weapon_kill_stats", "titans_" + GetTitanCharacterName( victim ), damageSourceStr, 1.0 )
+		Stats_IncrementStat( player, "weapon_kill_stats", "titans_" + GetTitanCharacterName( victim ), damageSourceStr, 1.0 )
 
 	// npcTitans_<chassis>
 	if ( victimIsNPC && victimIsTitan )
-		Stats_IncrementStat( attacker, "weapon_kill_stats", "npcTitans_" + GetTitanCharacterName( victim.GetPetTitan() ), damageSourceStr, 1.0 )
+		Stats_IncrementStat( player, "weapon_kill_stats", "npcTitans_" + GetTitanCharacterName( victim ), damageSourceStr, 1.0 )
 }
 
 void function HandleKillStats( entity victim, entity attacker, var damageInfo )
@@ -772,7 +772,7 @@ void function HandleTitanStats( entity victim, entity attacker, var damageInfo )
 	bool victimIsNPC = victim.IsNPC()
 	bool victimIsPilot = IsPilot( victim )
 	bool victimIsTitan = victim.IsTitan()
-	bool titanIsPrime = victimIsTitan && IsTitanPrimeTitan( playerPetTitan )
+	bool titanIsPrime = IsTitanPrimeTitan( player )
 
 	// pilots
 	if ( victimIsPilot && attacker.IsTitan() )
