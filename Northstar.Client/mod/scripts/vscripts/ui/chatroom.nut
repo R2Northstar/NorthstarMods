@@ -308,6 +308,8 @@ void function UICodeCallback_ShowUserInfo( string hardware, string userId )
 {
 	Signal( uiGlobal.signalDummy, "StopUserInfoLookups" )
 
+	//printt( "Showing user info for UID " + userId + " on hardware " + hardware )
+
 	file.userInfoPanel_userId = userId
 	file.userInfoPanel_hardware = hardware
 
