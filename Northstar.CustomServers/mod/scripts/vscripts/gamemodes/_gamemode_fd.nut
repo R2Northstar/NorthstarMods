@@ -3652,7 +3652,7 @@ function HTUseBatteryFunc( batteryPortvar, playervar )
 		return
 	
 	float ownedValue = PlayerEarnMeter_GetOwnedFrac( player )
-	PlayerEarnMeter_SetOwnedFrac( player, ownedValue + 0.5 )
+	PlayerEarnMeter_SetOwnedFrac( player, clamp( ownedValue + 0.5, 0.0, 1.0) )
 	
 	file.playerAwardStats[player]["turretsRepaired"]++
 	AddPlayerScore( player, "FDRepairTurret" )
