@@ -1,7 +1,7 @@
 {
 	"Name": "Northstar.CustomServers",
 	"Description": "Attempts to recreate the behaviour of vanilla Titanfall 2 servers, as well as changing some scripts to allow better support for mods",
-	"Version": "1.17.0",
+	"Version": "1.18.0",
 	"LoadPriority": 0,
 	"ConVars": [
 		{
@@ -76,6 +76,10 @@
 		},
 		{
 			"Name": "ns_fd_allow_titanfall_block",
+			"DefaultValue": "0"
+		},
+		{
+			"Name": "ns_fd_arc_titans_uses_arc_cannon",
 			"DefaultValue": "0"
 		},
 		{
