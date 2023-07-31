@@ -79,10 +79,6 @@
 			"DefaultValue": "0"
 		},
 		{
-			"Name": "ns_fd_arc_titans_uses_arc_cannon",
-			"DefaultValue": "0"
-		},
-		{
 			"Name": "ns_fd_show_drop_points",
 			"DefaultValue": "0"
 		},
