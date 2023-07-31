@@ -50,6 +50,7 @@ global array<string> waveAnnouncement = []
 global int difficultyLevel
 global bool elitesAllowed
 global bool titanfallblockAllowed
+global bool arcTitansUsesArcCannon
 global bool useCustomFDLoad
 
 struct {
@@ -82,7 +83,6 @@ typedef LoadCustomFDContent void functionref()
 array<LoadCustomFDContent> CustomFDContent
 
 const array<string> DROPSHIP_IDLE_ANIMS_POV = [
-
 	"ptpov_ds_coop_side_intro_gen_idle_B",
 	"ptpov_ds_coop_side_intro_gen_idle_A",
 	"ptpov_ds_coop_side_intro_gen_idle_C",
@@ -90,7 +90,6 @@ const array<string> DROPSHIP_IDLE_ANIMS_POV = [
 ]
 
 const array<string> DROPSHIP_IDLE_ANIMS = [
-
 	"pt_ds_coop_side_intro_gen_idle_B",
 	"pt_ds_coop_side_intro_gen_idle_A",
 	"pt_ds_coop_side_intro_gen_idle_C",
@@ -201,6 +200,7 @@ void function GamemodeFD_Init()
 	difficultyLevel = FD_GetDifficultyLevel() //Refresh this only on map load, to avoid midgame commands messing up with difficulties (i.e setting mp_gamemode fd_hard midgame in a regular match through console on local host would immediately make Stalkers spawns with EPG)
 	elitesAllowed = GetConVarBool( "ns_fd_allow_elite_titans" )
 	titanfallblockAllowed = GetConVarBool( "ns_fd_allow_titanfall_block" )
+	arcTitansUsesArcCannon = GetConVarBool( "ns_fd_arc_titans_uses_arc_cannon" )
 	file.easymodeSmartPistol = GetConVarBool( "ns_fd_easymode_smartpistol" )
 	
 	Cvar_gruntgrenade = GetConVarString( "ns_fd_grunt_grenade" )
@@ -406,12 +406,11 @@ void function initNetVars()
 
 
 /* Main Gamemode Flow
-    __  ___      _          ______                                         __        ________             
-   /  |/  /___ _(_)___     / ____/___ _____ ___  ___  ____ ___  ____  ____/ /__     / ____/ /___ _      __
-  / /|_/ / __ `/ / __ \   / / __/ __ `/ __ `__ \/ _ \/ __ `__ \/ __ \/ __  / _ \   / /_  / / __ \ | /| / /
- / /  / / /_/ / / / / /  / /_/ / /_/ / / / / / /  __/ / / / / / /_/ / /_/ /  __/  / __/ / / /_/ / |/ |/ / 
-/_/  /_/\__,_/_/_/ /_/   \____/\__,_/_/ /_/ /_/\___/_/ /_/ /_/\____/\__,_/\___/  /_/   /_/\____/|__/|__/  
-
+███    ███  █████  ██ ███    ██      ██████   █████  ███    ███ ███████ ███    ███  ██████  ██████  ███████     ███████ ██       ██████  ██     ██ 
+████  ████ ██   ██ ██ ████   ██     ██       ██   ██ ████  ████ ██      ████  ████ ██    ██ ██   ██ ██          ██      ██      ██    ██ ██     ██ 
+██ ████ ██ ███████ ██ ██ ██  ██     ██   ███ ███████ ██ ████ ██ █████   ██ ████ ██ ██    ██ ██   ██ █████       █████   ██      ██    ██ ██  █  ██ 
+██  ██  ██ ██   ██ ██ ██  ██ ██     ██    ██ ██   ██ ██  ██  ██ ██      ██  ██  ██ ██    ██ ██   ██ ██          ██      ██      ██    ██ ██ ███ ██ 
+██      ██ ██   ██ ██ ██   ████      ██████  ██   ██ ██      ██ ███████ ██      ██  ██████  ██████  ███████     ██      ███████  ██████   ███ ███  
 */
 
 void function FD_createHarvester()
@@ -425,6 +424,7 @@ void function FD_createHarvester()
 	fd_harvester.harvester.Minimap_SetHeightTracking( true )
 	fd_harvester.harvester.Minimap_SetZOrder( MINIMAP_Z_OBJECT )
 	fd_harvester.harvester.Minimap_SetCustomState( eMinimapObject_prop_script.FD_HARVESTER )
+	fd_harvester.harvester.SetTakeDamageType( DAMAGE_EVENTS_ONLY )
 	AddEntityCallback_OnDamaged( fd_harvester.harvester, OnHarvesterDamaged )
 	thread CreateHarvesterHintTrigger( fd_harvester.harvester )
 	
@@ -473,7 +473,7 @@ void function mainGameLoop()
 		WaitFrame()
 	}
 	
-	if( !file.waveRestart )
+	if( GetGlobalNetInt( "FD_currentWave" ) == 0 )
 		PlayFactionDialogueToTeam( "fd_modeDesc", TEAM_MILITIA )
 	startHarvester()
 	
@@ -624,21 +624,18 @@ bool function runWave( int waveIndex, bool shouldDoBuyTime )
 			WaitFrame()
 		}
 		wait 0.6
-		parentCrate.Minimap_Hide( TEAM_MILITIA, null )
-		CloseBoostStores()
 		MessageToTeam( TEAM_MILITIA, eEventNotifications.FD_StoreClosing )
 		print( "Closing Shop" )
+		wait 4
+		parentCrate.Minimap_Hide( TEAM_MILITIA, null )
+		CloseBoostStores()
 	}
-	
-	else
+	else if ( waveIndex > 0 )
 	{
 		SetGlobalNetInt( "FD_waveState", WAVE_STATE_BREAK )
-		SetGlobalNetTime( "FD_nextWaveStartTime", Time() )
-		wait 5
+		SetGlobalNetTime( "FD_nextWaveStartTime", Time() + 15.0 )
+		wait 15
 	}
-	
-	if ( waveIndex > 0 )
-		wait 4
 	
 	SetGlobalNetInt( "FD_waveState", WAVE_STATE_INCOMING )
 	EarnMeterMP_SetPassiveMeterGainEnabled( true )
@@ -919,6 +916,7 @@ bool function runWave( int waveIndex, bool shouldDoBuyTime )
 	FD_AttemptToRepairTurrets()
 	
 	print( "Showing Player Stats: Wave Complete" )
+	SetJoinInProgressBonus( GetCurrentPlaylistVarInt( "fd_money_per_round", 600 ) )
 	foreach( entity player in GetPlayerArrayOfTeam( TEAM_MILITIA ) )
 	{
 		if ( isSecondWave() )
@@ -932,12 +930,12 @@ bool function runWave( int waveIndex, bool shouldDoBuyTime )
 		else
 			AddMoneyToPlayer( player, GetCurrentPlaylistVarInt( "fd_money_per_round", 600 ) * 2 )
 		UpdatePlayerScoreboard( player )
-		SetJoinInProgressBonus( GetCurrentPlaylistVarInt( "fd_money_per_round" ,600 ) )
 		FD_EmitSoundOnEntityOnlyToPlayer( player, player, "HUD_MP_BountyHunt_BankBonusPts_Deposit_Start_1P" )
 		FD_EmitSoundOnEntityOnlyToPlayer( player, player, "HUD_MP_BountyHunt_BankBonusPts_Ticker_Loop_1P" )
 	}
 	wait 2
 	print( "Showing Player Stats: No Deaths This Wave" )
+	SetJoinInProgressBonus( 100 )
 	foreach( entity player in GetPlayerArrayOfTeam( TEAM_MILITIA ) )
 	{
 		if( !file.players[player].diedThisRound )
@@ -954,7 +952,7 @@ bool function runWave( int waveIndex, bool shouldDoBuyTime )
 	}
 	wait 2
 	print( "Showing Player Stats: Wave MVP" )
-	
+	SetJoinInProgressBonus( 100 )
 	if( GetPlayerArrayOfTeam( TEAM_MILITIA ).len() >= 0 )
 	{
 		highestScore = 0;
@@ -988,6 +986,7 @@ bool function runWave( int waveIndex, bool shouldDoBuyTime )
 	
 	wait 2
 	print( "Showing Player Stats: Flawless Defense" )
+	SetJoinInProgressBonus( 100 )
 	foreach( entity player in GetPlayerArrayOfTeam( TEAM_MILITIA ) )
 	{
 		if( !file.harvesterWasDamaged )
@@ -1145,12 +1144,11 @@ void function FD_Epilogue_threaded()
 
 
 /* Player Setup
-    ____  __                         _____      __            
-   / __ \/ /___ ___  _____  _____   / ___/___  / /___  ______ 
-  / /_/ / / __ `/ / / / _ \/ ___/   \__ \/ _ \/ __/ / / / __ \
- / ____/ / /_/ / /_/ /  __/ /      ___/ /  __/ /_/ /_/ / /_/ /
-/_/   /_/\__,_/\__, /\___/_/      /____/\___/\__/\__,_/ .___/ 
-              /____/                                 /_/      
+██████  ██       █████  ██    ██ ███████ ██████      ███████ ███████ ████████ ██    ██ ██████  
+██   ██ ██      ██   ██  ██  ██  ██      ██   ██     ██      ██         ██    ██    ██ ██   ██ 
+██████  ██      ███████   ████   █████   ██████      ███████ █████      ██    ██    ██ ██████  
+██      ██      ██   ██    ██    ██      ██   ██          ██ ██         ██    ██    ██ ██      
+██      ███████ ██   ██    ██    ███████ ██   ██     ███████ ███████    ██     ██████  ██      
 */
 
 void function GamemodeFD_InitPlayer( entity player )
@@ -1431,7 +1429,7 @@ void function TrackDeployedArcTrapThisRound( entity player )
 
 	while( IsValidPlayer( player ) )
 	{
-		entity ArcTrap = expect entity ( player.WaitSignal( "DeployArcTrap" ).projectile )
+		entity ArcTrap = expect entity( player.WaitSignal( "DeployArcTrap" ).projectile )
 		if( player.GetTeam() == TEAM_IMC ) //Remove the ability of IMC players deploying Arc Traps for the defending players
 			ArcTrap.Destroy()
 		
@@ -1532,12 +1530,11 @@ void function FD_PilotEndRodeo( entity pilot, entity titan )
 
 
 /* Player Respawn Logic
-    ____  __                         ____                                          __                _     
-   / __ \/ /___ ___  _____  _____   / __ \___  _________  ____ __      ______     / /   ____  ____ _(_)____
-  / /_/ / / __ `/ / / / _ \/ ___/  / /_/ / _ \/ ___/ __ \/ __ `/ | /| / / __ \   / /   / __ \/ __ `/ / ___/
- / ____/ / /_/ / /_/ /  __/ /     / _, _/  __(__  ) /_/ / /_/ /| |/ |/ / / / /  / /___/ /_/ / /_/ / / /__  
-/_/   /_/\__,_/\__, /\___/_/     /_/ |_|\___/____/ .___/\__,_/ |__/|__/_/ /_/  /_____/\____/\__, /_/\___/  
-              /____/                            /_/                                        /____/          
+██████  ██       █████  ██    ██ ███████ ██████      ██████  ███████ ███████ ██████   █████  ██     ██ ███    ██     ██       ██████   ██████  ██  ██████ 
+██   ██ ██      ██   ██  ██  ██  ██      ██   ██     ██   ██ ██      ██      ██   ██ ██   ██ ██     ██ ████   ██     ██      ██    ██ ██       ██ ██      
+██████  ██      ███████   ████   █████   ██████      ██████  █████   ███████ ██████  ███████ ██  █  ██ ██ ██  ██     ██      ██    ██ ██   ███ ██ ██      
+██      ██      ██   ██    ██    ██      ██   ██     ██   ██ ██           ██ ██      ██   ██ ██ ███ ██ ██  ██ ██     ██      ██    ██ ██    ██ ██ ██      
+██      ███████ ██   ██    ██    ███████ ██   ██     ██   ██ ███████ ███████ ██      ██   ██  ███ ███  ██   ████     ███████  ██████   ██████  ██  ██████ 
 */
 
 void function RateSpawnpoints_FD( int checkClass, array<entity> spawnpoints, int team, entity player )
@@ -1641,12 +1638,11 @@ void function FD_PlayerRespawnThreaded( entity player )
 
 
 /* Damage Logic
-    ____                                      __                _     
-   / __ \____ _____ ___  ____ _____ ____     / /   ____  ____ _(_)____
-  / / / / __ `/ __ `__ \/ __ `/ __ `/ _ \   / /   / __ \/ __ `/ / ___/
- / /_/ / /_/ / / / / / / /_/ / /_/ /  __/  / /___/ /_/ / /_/ / / /__  
-/_____/\__,_/_/ /_/ /_/\__,_/\__, /\___/  /_____/\____/\__, /_/\___/  
-                            /____/                    /____/          
+██████   █████  ███    ███  █████   ██████  ███████     ██       ██████   ██████  ██  ██████ 
+██   ██ ██   ██ ████  ████ ██   ██ ██       ██          ██      ██    ██ ██       ██ ██      
+██   ██ ███████ ██ ████ ██ ███████ ██   ███ █████       ██      ██    ██ ██   ███ ██ ██      
+██   ██ ██   ██ ██  ██  ██ ██   ██ ██    ██ ██          ██      ██    ██ ██    ██ ██ ██      
+██████  ██   ██ ██      ██ ██   ██  ██████  ███████     ███████  ██████   ██████  ██  ██████ 
 */
 
 void function FD_DamageByPlayerCallback( entity victim, var damageInfo )
@@ -1997,12 +1993,11 @@ void function OnHarvesterDamaged( entity harvester, var damageInfo )
 
 
 /* Spawn Logic
-   _____                               __                _     
-  / ___/____  ____ __      ______     / /   ____  ____ _(_)____
-  \__ \/ __ \/ __ `/ | /| / / __ \   / /   / __ \/ __ `/ / ___/
- ___/ / /_/ / /_/ /| |/ |/ / / / /  / /___/ /_/ / /_/ / / /__  
-/____/ .___/\__,_/ |__/|__/_/ /_/  /_____/\____/\__, /_/\___/  
-    /_/                                        /____/          
+███████ ██████   █████  ██     ██ ███    ██     ██       ██████   ██████  ██  ██████ 
+██      ██   ██ ██   ██ ██     ██ ████   ██     ██      ██    ██ ██       ██ ██      
+███████ ██████  ███████ ██  █  ██ ██ ██  ██     ██      ██    ██ ██   ███ ██ ██      
+     ██ ██      ██   ██ ██ ███ ██ ██  ██ ██     ██      ██    ██ ██    ██ ██ ██      
+███████ ██      ██   ██  ███ ███  ██   ████     ███████  ██████   ██████  ██  ██████ 
 */
 
 void function HealthScaleByDifficulty( entity ent )
@@ -2135,12 +2130,11 @@ void function AddTurretSentry( entity turret )
 
 
 /* Death Logic
-    ____             __  __       __                _     
-   / __ \___  ____ _/ /_/ /_     / /   ____  ____ _(_)____
-  / / / / _ \/ __ `/ __/ __ \   / /   / __ \/ __ `/ / ___/
- / /_/ /  __/ /_/ / /_/ / / /  / /___/ /_/ / /_/ / / /__  
-/_____/\___/\__,_/\__/_/ /_/  /_____/\____/\__, /_/\___/  
-                                          /____/          
+██████  ███████  █████  ████████ ██   ██     ██       ██████   ██████  ██  ██████ 
+██   ██ ██      ██   ██    ██    ██   ██     ██      ██    ██ ██       ██ ██      
+██   ██ █████   ███████    ██    ███████     ██      ██    ██ ██   ███ ██ ██      
+██   ██ ██      ██   ██    ██    ██   ██     ██      ██    ██ ██    ██ ██ ██      
+██████  ███████ ██   ██    ██    ██   ██     ███████  ██████   ██████  ██  ██████ 
 */
 
 void function GamemodeFD_OnPlayerKilled( entity victim, entity attacker, var damageInfo )
@@ -2225,7 +2219,7 @@ void function OnNpcDeath( entity victim, entity attacker, var damageInfo )
 		DeathCallback_CalculateTitanAliveTime( victim )
 	}
 	
-	if( IsPlayerControlledTurret( attacker ) )
+	if( IsTurret( attacker ) && attacker.GetBossPlayer() in file.players )
 	{
 		file.playerAwardStats[attacker.GetBossPlayer()]["turretKills"] += 1.0
 		file.players[attacker.GetBossPlayer()].defenseScoreThisRound += 2
@@ -2316,7 +2310,7 @@ void function OnNpcDeath( entity victim, entity attacker, var damageInfo )
 	if ( money != 0 )
 		AddMoneyToPlayer( attacker , money )
 
-	if( !IsNPCTitan( attacker ) || !IsPlayerControlledTurret( attacker ) ) //Turret and Auto-Titan kills should not chain killstreaks
+	if( !attacker.GetBossPlayer() || !attacker.GetOwner() ) //Turret and Auto-Titan kills should not chain killstreaks
 	{
 		if ( DamageInfo_GetCustomDamageType( damageInfo ) & DF_HEADSHOT )
 			AddPlayerScore( attacker, "NPCHeadshot" )
@@ -2393,7 +2387,7 @@ void function OnNpcDeath( entity victim, entity attacker, var damageInfo )
 		}
 	}
 	
-	if( ( !IsNPCTitan( attacker ) || !IsPlayerControlledTurret( attacker ) ) && ( !attacker.IsTitan() && victim.IsTitan() ) )
+	if( ( !attacker.GetBossPlayer() || !attacker.GetOwner() ) && ( !attacker.IsTitan() && victim.IsTitan() ) )
 	{
 		string titanCharacterName = GetTitanCharacterName( victim )
 		
@@ -2534,12 +2528,11 @@ void function ClearInValidTurret()
 
 
 /* Harvester Logic
-    __  __                           __               __                _     
-   / / / /___ _______   _____  _____/ /____  _____   / /   ____  ____ _(_)____
-  / /_/ / __ `/ ___/ | / / _ \/ ___/ __/ _ \/ ___/  / /   / __ \/ __ `/ / ___/
- / __  / /_/ / /   | |/ /  __(__  ) /_/  __/ /     / /___/ /_/ / /_/ / / /__  
-/_/ /_/\__,_/_/    |___/\___/____/\__/\___/_/     /_____/\____/\__, /_/\___/  
-                                                              /____/          
+██   ██  █████  ██████  ██    ██ ███████ ███████ ████████ ███████ ██████      ██       ██████   ██████  ██  ██████ 
+██   ██ ██   ██ ██   ██ ██    ██ ██      ██         ██    ██      ██   ██     ██      ██    ██ ██       ██ ██      
+███████ ███████ ██████  ██    ██ █████   ███████    ██    █████   ██████      ██      ██    ██ ██   ███ ██ ██      
+██   ██ ██   ██ ██   ██  ██  ██  ██           ██    ██    ██      ██   ██     ██      ██    ██ ██    ██ ██ ██      
+██   ██ ██   ██ ██   ██   ████   ███████ ███████    ██    ███████ ██   ██     ███████  ██████   ██████  ██  ██████ 
 */
 
 void function startHarvester()
@@ -2757,12 +2750,11 @@ void function OnLeaveNearHarvesterTrigger( entity trig, entity activator )
 
 												  
 /* Dropship Functions
-    ____                        __    _          ______                 __  _                 
-   / __ \_________  ____  _____/ /_  (_)___     / ____/_  ______  _____/ /_(_)___  ____  _____
-  / / / / ___/ __ \/ __ \/ ___/ __ \/ / __ \   / /_  / / / / __ \/ ___/ __/ / __ \/ __ \/ ___/
- / /_/ / /  / /_/ / /_/ (__  ) / / / / /_/ /  / __/ / /_/ / / / / /__/ /_/ / /_/ / / / (__  ) 
-/_____/_/   \____/ .___/____/_/ /_/_/ .___/  /_/    \__,_/_/ /_/\___/\__/_/\____/_/ /_/____/  
-                /_/                /_/                                                        
+██████  ██████   ██████  ██████  ███████ ██   ██ ██ ██████      ███████ ██    ██ ███    ██  ██████ ████████ ██  ██████  ███    ██ ███████ 
+██   ██ ██   ██ ██    ██ ██   ██ ██      ██   ██ ██ ██   ██     ██      ██    ██ ████   ██ ██         ██    ██ ██    ██ ████   ██ ██      
+██   ██ ██████  ██    ██ ██████  ███████ ███████ ██ ██████      █████   ██    ██ ██ ██  ██ ██         ██    ██ ██    ██ ██ ██  ██ ███████ 
+██   ██ ██   ██ ██    ██ ██           ██ ██   ██ ██ ██          ██      ██    ██ ██  ██ ██ ██         ██    ██ ██    ██ ██  ██ ██      ██ 
+██████  ██   ██  ██████  ██      ███████ ██   ██ ██ ██          ██       ██████  ██   ████  ██████    ██    ██  ██████  ██   ████ ███████ 
 */
 
 bool function FD_PlayerInDropship( entity player )
@@ -2946,13 +2938,11 @@ string function FD_DropshipGetAnimation()
 
 
 /* Score System
-   _____                         _____            __               
-  / ___/_________  ________     / ___/__  _______/ /____  ____ ___ 
-  \__ \/ ___/ __ \/ ___/ _ \    \__ \/ / / / ___/ __/ _ \/ __ `__ \
- ___/ / /__/ /_/ / /  /  __/   ___/ / /_/ (__  ) /_/  __/ / / / / /
-/____/\___/\____/_/   \___/   /____/\__, /____/\__/\___/_/ /_/ /_/ 
-                                   /____/                          
-								   
+███████  ██████  ██████  ██████  ███████     ███████ ██    ██ ███████ ████████ ███████ ███    ███ 
+██      ██      ██    ██ ██   ██ ██          ██       ██  ██  ██         ██    ██      ████  ████ 
+███████ ██      ██    ██ ██████  █████       ███████   ████   ███████    ██    █████   ██ ████ ██ 
+     ██ ██      ██    ██ ██   ██ ██               ██    ██         ██    ██    ██      ██  ██  ██ 
+███████  ██████  ██████  ██   ██ ███████     ███████    ██    ███████    ██    ███████ ██      ██ 
 */
 
 void function UpdatePlayerScoreboard( entity player )
@@ -3090,12 +3080,11 @@ void function IncrementPlayerstat_TurretRevives( entity turret, entity player, e
 
 
 /* Tool functions
-  ______            __   ______                 __  _                 
- /_  __/___  ____  / /  / ____/_  ______  _____/ /_(_)___  ____  _____
-  / / / __ \/ __ \/ /  / /_  / / / / __ \/ ___/ __/ / __ \/ __ \/ ___/
- / / / /_/ / /_/ / /  / __/ / /_/ / / / / /__/ /_/ / /_/ / / / (__  ) 
-/_/  \____/\____/_/  /_/    \__,_/_/ /_/\___/\__/_/\____/_/ /_/____/  
-                                                                      
+████████  ██████   ██████  ██          ███████ ██    ██ ███    ██  ██████ ████████ ██  ██████  ███    ██ ███████ 
+   ██    ██    ██ ██    ██ ██          ██      ██    ██ ████   ██ ██         ██    ██ ██    ██ ████   ██ ██      
+   ██    ██    ██ ██    ██ ██          █████   ██    ██ ██ ██  ██ ██         ██    ██ ██    ██ ██ ██  ██ ███████ 
+   ██    ██    ██ ██    ██ ██          ██      ██    ██ ██  ██ ██ ██         ██    ██ ██    ██ ██  ██ ██      ██ 
+   ██     ██████   ██████  ███████     ██       ██████  ██   ████  ██████    ██    ██  ██████  ██   ████ ███████ 
 */
 
 bool function isFinalWave()
@@ -3611,13 +3600,22 @@ function FD_UpdateTitanBehavior()
 	}
 }
 
+
+
+
+
+
+
+
+
+
+
 /* NS Extra Content
-    _   _______    ______     __                ______            __             __ 
-   / | / / ___/   / ____/  __/ /__________ _   / ____/___  ____  / /____  ____  / /_
-  /  |/ /\__ \   / __/ | |/_/ __/ ___/ __ `/  / /   / __ \/ __ \/ __/ _ \/ __ \/ __/
- / /|  /___/ /  / /____>  </ /_/ /  / /_/ /  / /___/ /_/ / / / / /_/  __/ / / / /_  
-/_/ |_//____/  /_____/_/|_|\__/_/   \__,_/   \____/\____/_/ /_/\__/\___/_/ /_/\__/  
-                                                                                    
+███    ██ ███████     ███████ ██   ██ ████████ ██████   █████       ██████  ██████  ███    ██ ████████ ███████ ███    ██ ████████ 
+████   ██ ██          ██       ██ ██     ██    ██   ██ ██   ██     ██      ██    ██ ████   ██    ██    ██      ████   ██    ██    
+██ ██  ██ ███████     █████     ███      ██    ██████  ███████     ██      ██    ██ ██ ██  ██    ██    █████   ██ ██  ██    ██    
+██  ██ ██      ██     ██       ██ ██     ██    ██   ██ ██   ██     ██      ██    ██ ██  ██ ██    ██    ██      ██  ██ ██    ██    
+██   ████ ███████     ███████ ██   ██    ██    ██   ██ ██   ██      ██████  ██████  ██   ████    ██    ███████ ██   ████    ██    
 */
 
 void function HT_BatteryPort( entity batteryPort, entity turret )
@@ -3641,7 +3639,7 @@ function HTBatteryPortUseCheck( batteryPortvar, playervar )
     if( !IsValid( turret ) )
         return false
 
-    return ( PlayerHasBattery( player ) && player.GetTeam() == turret.GetTeam() )
+    return ( PlayerHasBattery( player ) && player.GetTeam() == turret.GetTeam() && turret.GetHealth() < turret.GetMaxHealth() )
 }
 
 function HTUseBatteryFunc( batteryPortvar, playervar )
@@ -3653,9 +3651,12 @@ function HTUseBatteryFunc( batteryPortvar, playervar )
 	if( !IsValid( player ) || turret.GetHealth() == turret.GetMaxHealth() )
 		return
 	
+	float ownedValue = PlayerEarnMeter_GetOwnedFrac( player )
+	PlayerEarnMeter_SetOwnedFrac( player, ownedValue + 0.5 )
+	
 	file.playerAwardStats[player]["turretsRepaired"]++
 	AddPlayerScore( player, "FDRepairTurret" )
-	PlayerEarnMeter_AddEarnedAndOwned( player, 0.0, 0.5 )
+	PlayerEarnMeter_AddEarnedAndOwned( player, 0.0, 0.7 )
 	player.AddToPlayerGameStat( PGS_DEFENSE_SCORE, FD_SCORE_REPAIR_TURRET )
 	UpdatePlayerScoreboard( player )
 	

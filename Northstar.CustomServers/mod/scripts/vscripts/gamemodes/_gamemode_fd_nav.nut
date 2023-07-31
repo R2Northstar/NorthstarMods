@@ -4,11 +4,12 @@ global function Dev_ShowRoute
 global function NPCStuckTracker
 
 /*
-  _  _  ___   ___   _  _             _              _    _              ___  _           __   __ 
- | \| || _ \ / __| | \| | __ _ __ __(_) __ _  __ _ | |_ (_) ___  _ _   / __|| |_  _  _  / _| / _|
- | .` ||  _/| (__  | .` |/ _` |\ V /| |/ _` |/ _` ||  _|| |/ _ \| ' \  \__ \|  _|| || ||  _||  _|
- |_|\_||_|   \___| |_|\_|\__,_| \_/ |_|\__, |\__,_| \__||_|\___/|_||_| |___/ \__| \_,_||_|  |_|  
-                                       |___/                                                     
+███╗   ██╗██████╗  ██████╗    ███╗   ██╗ █████╗ ██╗   ██╗██╗ ██████╗  █████╗ ████████╗██╗ ██████╗ ███╗   ██╗
+████╗  ██║██╔══██╗██╔════╝    ████╗  ██║██╔══██╗██║   ██║██║██╔════╝ ██╔══██╗╚══██╔══╝██║██╔═══██╗████╗  ██║
+██╔██╗ ██║██████╔╝██║         ██╔██╗ ██║███████║██║   ██║██║██║  ███╗███████║   ██║   ██║██║   ██║██╔██╗ ██║
+██║╚██╗██║██╔═══╝ ██║         ██║╚██╗██║██╔══██║╚██╗ ██╔╝██║██║   ██║██╔══██║   ██║   ██║██║   ██║██║╚██╗██║
+██║ ╚████║██║     ╚██████╗    ██║ ╚████║██║  ██║ ╚████╔╝ ██║╚██████╔╝██║  ██║   ██║   ██║╚██████╔╝██║ ╚████║
+╚═╝  ╚═══╝╚═╝      ╚═════╝    ╚═╝  ╚═══╝╚═╝  ╚═╝  ╚═══╝  ╚═╝ ╚═════╝ ╚═╝  ╚═╝   ╚═╝   ╚═╝ ╚═════╝ ╚═╝  ╚═══╝
 */
 
 void function singleNav_thread( entity npc, string routeName, int nodesToSkip = 1, float nextDistance = -1.0, bool shouldLoop = false )
@@ -17,8 +18,7 @@ void function singleNav_thread( entity npc, string routeName, int nodesToSkip = 
 	npc.EndSignal( "OnDestroy" )
 	npc.EndSignal( "OnLeeched" )
 
-	if( !npc.IsNPC() )
-		return
+	Assert( IsValid( npc ) && npc.IsNPC(), "AI Navigation function called in non-NPC entity: " + npc )
 	
 	if ( nextDistance == -1 && npc.IsTitan() )
 		nextDistance = npc.GetMinGoalRadius()
@@ -130,13 +130,18 @@ void function singleNav_thread( entity npc, string routeName, int nodesToSkip = 
 			npc.AssaultSetGoalRadius( nextDistance )
 			
 			table result = npc.WaitSignal( "OnFinishedAssault", "OnEnterGoalRadius", "OnFailedToPath" )
-			/* if( result.signal == "OnFailedToPath" && !npc.IsTitan() && !IsSuperSpectre( npc ) )
+			
+			if( result.signal == "OnFailedToPath" && !npc.IsTitan() && !IsSuperSpectre( npc ) )
 			{
-				vector ornull clampedPos = NavMesh_ClampPointForAI( targetNode.GetOrigin(), npc )
-				if ( clampedPos != null )
-					npc.SetOrigin( expect vector( clampedPos ) )
+				entity enemy = npc.GetEnemy()
+				if( EntityInSolid( npc ) && enemy == null )
+				{
+					vector ornull clampedPos = NavMesh_ClampPointForAIWithExtents( targetNode.GetOrigin(), npc, < 80, 80, 256 > )
+					if ( clampedPos != null && Distance2D( npc.GetOrigin(), expect vector( clampedPos ) ) < 512 )
+						npc.SetOrigin( expect vector( clampedPos ) )
+				}
 			}
-			*/
+			
 			targetNode = targetNode.GetLinkEnt()
 		}
 	}
@@ -153,7 +158,24 @@ void function singleNav_thread( entity npc, string routeName, int nodesToSkip = 
 			npc.AssaultSetGoalRadius( nextDistance )
 			
 			table result = npc.WaitSignal( "OnFinishedAssault", "OnEnterGoalRadius", "OnFailedToPath" )
-			
+			/*
+			if( result.signal == "OnFailedToPath" && !npc.IsTitan() && !IsSuperSpectre( npc ) )
+			{
+				entity enemy = npc.GetEnemy()
+				if( EntityInSolid( npc ) && enemy != null )
+				{
+					vector ornull clampedPos = NavMesh_ClampPointForAIWithExtents( npc.GetOrigin(), npc, < 80, 80, 250 > )
+					if ( clampedPos != null )
+						npc.SetOrigin( expect vector( clampedPos ) )
+				}
+				else
+				{
+					vector ornull clampedPos = NavMesh_ClampPointForAIWithExtents( routepoint, npc, < 80, 80, 80 > )
+					if ( clampedPos != null && Distance2D( npc.GetOrigin(), expect vector( clampedPos ) ) < 512 )
+						npc.SetOrigin( expect vector( clampedPos ) )
+				}
+			}
+			*/
 			routeindex++
 			if( routeindex < routes[routetaken].len() )
 				routepoint = routes[routetaken][routeindex]
@@ -177,8 +199,7 @@ void function droneNav_thread( entity npc, string routeName, int nodesToSkip = 0
 	npc.EndSignal( "OnDestroy" )
 	npc.EndSignal( "OnLeeched" )
 
-	if( !npc.IsNPC() )
-		return
+	Assert( IsValid( npc ) && npc.IsNPC(), "AI Navigation function called in non-NPC entity: " + npc )
 
 	WaitFrame()
 	float dist = 65535
@@ -345,8 +366,6 @@ void function Dev_ShowRoute( string routename, int routetype = 0 )
 	if( !useCustomFDLoad )
 	{
 		if( routetype == 1 )
-			thread TitanTracksPathing( routename )
-		else if( routetype == 2 )
 			thread DroneTracksPathing( routename )
 		else
 			thread GruntTracksPathing( routename )
@@ -369,33 +388,9 @@ void function GruntTracksPathing( string route )
 	while ( IsAlive( guy ) )
 	{
 		thread singleNav_thread( guy, route )
-		table result = guy.WaitSignal( "FD_ReachedHarvester" )
+		table result = guy.WaitSignal( "OnFinishedAssault", "OnEnterGoalRadius", "FD_ReachedHarvester" )
 		wait 5.0
-		guy.SetOrigin( GetRouteStart( route ).GetOrigin() ) //restart route
-	}
-}
-
-void function TitanTracksPathing( string route )
-{
-	entity guy = CreateNPCTitan( "titan_stryder", TEAM_MILITIA, GetRouteStart( route ).GetOrigin(), < 0, 0, 0 > )
-	SetSpawnOption_AISettings( guy, "npc_titan_stryder_leadwall" )
-	DispatchSpawn( guy )
-	PlayLoopFXOnEntity( $"P_ar_holopilot_trail", guy, "CHESTFOCUS" )
-	
-	guy.NotSolid()
-	guy.EnableNPCFlag( NPC_DISABLE_SENSING | NPC_IGNORE_ALL )
-	guy.EnableNPCMoveFlag( NPCMF_PREFER_SPRINT )
-	NPC_NoTarget( guy )
-	
-	WaitFrame()
-	guy.SetTitle( route )
-	ShowName( guy )
-	while ( IsAlive( guy ) )
-	{
-		thread singleNav_thread( guy, route )
-		table result = guy.WaitSignal( "FD_ReachedHarvester" )
-		guy.SetOrigin( GetRouteStart( route ).GetOrigin() ) //restart route
-		wait 0.5
+		guy.Destroy()
 	}
 }
 
@@ -427,6 +422,14 @@ void function NPCStuckTracker( entity npc ) //Track if AI is properly pathing, o
 		table result = npc.WaitSignal( "OnSeeEnemy", "OnFinishedAssault", "OnEnterGoalRadius", "OnFailedToPath" )
 		if( result.signal == "OnFailedToPath" )
 		{
+			if ( EntityInSolid( npc ) )
+			{
+				vector ornull clampedPos
+				clampedPos = NavMesh_ClampPointForAIWithExtents( npc.GetOrigin(), npc, < 60, 60, 160 > )
+
+				if ( clampedPos != null )
+					npc.SetOrigin( expect vector( clampedPos ) )
+			}
 			if( FailCount == 60 )
 				npc.Die()
 			FailCount++

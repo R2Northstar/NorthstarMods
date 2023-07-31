@@ -1786,8 +1786,6 @@ void function Rodeo_ApplyBatteryToTitan( entity battery, entity titan )
 		{
 			titan.SetHealth( totalHealth )
 			soul.SetShieldHealth( soul.GetShieldHealthMax() )
-			if( titan.GetHealth() >= maxHealth && !soul.IsDoomed() )
-				UndoomTitan_Body( titan )
 		}
 	}
 
