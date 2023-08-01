@@ -66,6 +66,7 @@ Use these variables in your `autoexec_ns_server` cfg to control them:
 - `ns_fd_differentiate_ticks` Default is 0, setting to 1 will make Ticks from Drop Pod spawns to use the campaign model to tell players they counts towards wave completion
 - `ns_fd_rodeo_highlight` Default is 1, setting to 0 disables the new behavior of pilots highlight becoming green whenever they rodeo any Titan
 - `ns_fd_min_numplayers_to_start` Default is 1, this is the required amount of players in a match in order for the game to start the waves
+- `ns_fd_arc_titans_uses_arc_cannon` Default is 0, setting it to 1 makes Arc Titans uses the Arc Cannon instead of Leadwall
 - `ns_fd_easymode_smartpistol` Default is 0, setting it to 1 will make players have the Smart Pistol as secondary weapon in Easy difficulty mode
 - `ns_reaper_warpfall_kill` Default is 1, set to 0 if you don't want Reapers to kill Titans on their Warpfall
 - `ns_ronin_fair_phase` Default is 0, setting to 1 will make Ronin not kill himself if he materializes inside an enemy Titan from Phase Shift, instead he will only apply 5000 damage to the target titan
