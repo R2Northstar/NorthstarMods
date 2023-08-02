@@ -99,19 +99,19 @@ void function Stats_SaveAllStats( entity player )
 
 void function Stats_SaveStat( entity player, string statCategory, string statAlias, string statSubAlias )
 {
-	string str = GetStatVar( statCategory, statAlias, statSubAlias )
+	string stat = GetStatVar( statCategory, statAlias, statSubAlias )
 	// save cached int stat change
-	if ( player in file.cachedIntStatChanges && str in file.cachedIntStatChanges[player] )
+	if ( player in file.cachedIntStatChanges && stat in file.cachedIntStatChanges[ player ] )
 	{
-		player.SetPersistentVar( str, player.GetPersistentVarAsInt( str ) + file.cachedIntStatChanges[player][str] )
-		delete file.cachedIntStatChanges[player][str]
+		player.SetPersistentVar( stat, player.GetPersistentVarAsInt( stat ) + file.cachedIntStatChanges[ player ][ stat ] )
+		delete file.cachedIntStatChanges[ player ][ stat ]
 		return
 	}
 	// save cached float stat change
-	if ( player in file.cachedFloatStatChanges && str in file.cachedFloatStatChanges[player] )
+	if ( player in file.cachedFloatStatChanges && stat in file.cachedFloatStatChanges[ player ] )
 	{
-		player.SetPersistentVar( str, expect float( player.GetPersistentVar( str ) ) + file.cachedFloatStatChanges[player][str] )
-		delete file.cachedFloatStatChanges[player][str]
+		player.SetPersistentVar( stat, expect float( player.GetPersistentVar( stat ) ) + file.cachedFloatStatChanges[ player ][ stat ] )
+		delete file.cachedFloatStatChanges[ player ][ stat ]
 		return
 	}
 }
