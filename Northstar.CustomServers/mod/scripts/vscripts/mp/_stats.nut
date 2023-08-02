@@ -48,17 +48,17 @@ void function AddStatCallback( string statCategory, string statAlias, string sta
 		throw "INVALID STAT: " + statCategory + " : " + statAlias + " : " + statSubAlias
 	
 	
-	string str = GetStatVar( statCategory, statAlias, statSubAlias )
+	string statVar = GetStatVar( statCategory, statAlias, statSubAlias )
 
-	if ( str in file.refs )
+	if ( statVar in file.refs )
 	{
-		file.refs[str].append( subRef )
-		file.callbacks[str].append( callback )
+		file.refs[ statVar ].append( subRef )
+		file.callbacks[ statVar ].append( callback )
 	}
 	else
 	{
-		file.refs[str] <- [subRef]
-		file.callbacks[str] <- [callback]
+		file.refs[ statVar ] <- [ subRef ]
+		file.callbacks[ statVar ] <- [ callback ]
 	}
 }
 
