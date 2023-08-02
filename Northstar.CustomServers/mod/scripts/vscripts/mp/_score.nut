@@ -236,7 +236,7 @@ void function ScoreEvent_MatchComplete( int winningTeam )
 	foreach( entity player in GetPlayerArray() )
 	{
 		AddPlayerScore( player, "MatchComplete" )
-		if (player.GetTeam() == winningTeam)
+		if ( player.GetTeam() == winningTeam )
 			AddPlayerScore( player, "MatchVictory" )
 	}
 }

@@ -801,7 +801,7 @@ void function SetWinner( int team, string winningReason = "", string losingReaso
 		else
 			SetGameState( eGameState.WinnerDetermined )
 
-		ScoreEvent_MatchComplete(team)
+		ScoreEvent_MatchComplete( team )
 	}
 }
 
