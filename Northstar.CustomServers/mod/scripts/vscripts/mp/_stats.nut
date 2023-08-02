@@ -45,7 +45,7 @@ void function Stats_Init()
 void function AddStatCallback( string statCategory, string statAlias, string statSubAlias, void functionref( entity, float, string ) callback, string subRef )
 {	
 	if ( !IsValidStat( statCategory, statAlias, statSubAlias ) )
-		throw "INVALID STAT: " + statCategory + " : " + statAlias + " : " + statSubAlias
+		throw format( "INVALID STAT: %s : %s : %s", statCategory, statAlias, statSubAlias )
 	
 	
 	string statVar = GetStatVar( statCategory, statAlias, statSubAlias )
