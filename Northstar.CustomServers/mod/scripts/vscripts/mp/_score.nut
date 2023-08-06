@@ -49,6 +49,7 @@ void function AddPlayerScore( entity targetPlayer, string scoreEventName, entity
 	float ownValue = event.earnMeterOwnValue * scale
 	
 	PlayerEarnMeter_AddEarnedAndOwned( targetPlayer, earnValue * scale, ownValue * scale )
+	SharedEarnMeter_AddEarnedAndOwned( targetPlayer, earnValue, ownValue )
 	
 	// PlayerEarnMeter_AddEarnedAndOwned handles this scaling by itself, we just need to do this for the visual stuff
 	float pilotScaleVar = ( expect string ( GetCurrentPlaylistVarOrUseValue( "earn_meter_pilot_multiplier", "1" ) ) ).tofloat()

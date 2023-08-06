@@ -193,7 +193,7 @@ void function singleNav_thread( entity npc, string routeName, int nodesToSkip = 
 	npc.Signal( "FD_ReachedHarvester" )
 }
 
-void function droneNav_thread( entity npc, string routeName, int nodesToSkip = 0, float nextDistance = 64.0, bool shouldLoop = false )
+void function droneNav_thread( entity npc, string routeName, int nodesToSkip = 0, float nextDistance = 128.0, bool shouldLoop = false )
 {
 	npc.EndSignal( "OnDeath" )
 	npc.EndSignal( "OnDestroy" )
@@ -361,14 +361,25 @@ entity function GetRouteStart( string routeName )
 	}
 }
 
-void function Dev_ShowRoute( string routename, int routetype = 0 )
+void function Dev_ShowRoute( bool includedrones = false )
 {
 	if( !useCustomFDLoad )
 	{
-		if( routetype == 1 )
-			thread DroneTracksPathing( routename )
-		else
-			thread GruntTracksPathing( routename )
+		string routename
+		foreach( entity node in routeNodes )
+		{
+			if( !node.HasKey( "route_name" ) )
+				continue
+				
+			routename = expect string( node.kv.route_name )
+			if( routename.tolower().find( "drone" ) && includedrones )
+				thread DroneTracksPathing( routename )
+			else
+			{
+				if( !routename.tolower().find( "drone" ) || !routename.tolower().find( "reaper" ) )
+					thread GruntTracksPathing( routename )
+			}
+		}
 	}
 }
 
@@ -385,12 +396,13 @@ void function GruntTracksPathing( string route )
 	
 	WaitFrame()
 	guy.SetTitle( route )
-	while ( IsAlive( guy ) )
+	while( IsAlive( guy ) )
 	{
 		thread singleNav_thread( guy, route )
-		table result = guy.WaitSignal( "OnFinishedAssault", "OnEnterGoalRadius", "FD_ReachedHarvester" )
+		table result = guy.WaitSignal( "FD_ReachedHarvester" )
 		wait 5.0
-		guy.Destroy()
+		if( IsValid( guy ) )
+			guy.SetOrigin( GetRouteStart( route ).GetOrigin() )
 	}
 }
 
@@ -422,15 +434,7 @@ void function NPCStuckTracker( entity npc ) //Track if AI is properly pathing, o
 		table result = npc.WaitSignal( "OnSeeEnemy", "OnFinishedAssault", "OnEnterGoalRadius", "OnFailedToPath" )
 		if( result.signal == "OnFailedToPath" )
 		{
-			if ( EntityInSolid( npc ) )
-			{
-				vector ornull clampedPos
-				clampedPos = NavMesh_ClampPointForAIWithExtents( npc.GetOrigin(), npc, < 60, 60, 160 > )
-
-				if ( clampedPos != null )
-					npc.SetOrigin( expect vector( clampedPos ) )
-			}
-			if( FailCount == 60 )
+			if( FailCount == 10 )
 				npc.Die()
 			FailCount++
 		}

@@ -13,6 +13,7 @@ global function EnableTitanSelectionForPlayer
 global function FD_DropshipSetAnimationOverride
 global function HT_BatteryPort
 global function AddCallback_RegisterCustomFDContent
+global function AddFDCustomProp
 
 enum eDropshipState{
 	Idle,
@@ -158,6 +159,7 @@ void function GamemodeFD_Init()
 	AddDamageCallback( "npc_turret_sentry", DamageScaleByDifficulty )
 	AddDamageCallback( "npc_turret_sentry", RevivableTurret_DamageCallback )
 	AddDamageCallback( "npc_turret_mega", HeavyTurret_DamageCallback )
+	AddDamageFinalCallback( "npc_titan", FD_DamageToMoney )
 	
 	//Spawn Callbacks
 	AddSpawnCallback( "npc_titan", HealthScaleByDifficulty )
@@ -318,6 +320,15 @@ void function AddCallback_RegisterCustomFDContent( LoadCustomFDContent callback 
 	CustomFDContent.append( callback )
 }
 
+void function AddFDCustomProp( asset modelasset, vector origin, vector angles )
+{
+	entity prop = CreatePropScript( modelasset, origin, angles, 6 )
+	ToggleNPCPathsForEntity( prop, false )
+	prop.SetAIObstacle( true )
+	prop.SetTakeDamageType( DAMAGE_NO )
+	prop.SetScriptPropFlags( SPF_DISABLE_CAN_BE_MELEED | SPF_BLOCKS_AI_NAVIGATION )
+}
+
 void function LoadEntities()
 {
 	CreateBoostStoreLocation( TEAM_MILITIA, shopPosition, shopAngles )
@@ -339,9 +350,11 @@ void function LoadEntities()
 					file.harvesterLocationForRespawn = info_target.GetOrigin()
 					break
 				case "info_fd_mode_model":
-					entity prop = CreatePropDynamicLightweight( info_target.GetModelName(), info_target.GetOrigin(), info_target.GetAngles(), 6 )
+					entity prop = CreatePropScript( info_target.GetModelName(), info_target.GetOrigin(), info_target.GetAngles(), 6 )
 					ToggleNPCPathsForEntity( prop, false )
 					prop.SetAIObstacle( true )
+					prop.SetTakeDamageType( DAMAGE_NO )
+					prop.SetScriptPropFlags( SPF_DISABLE_CAN_BE_MELEED | SPF_BLOCKS_AI_NAVIGATION )
 					break
 				case "info_fd_ai_position":
 					AddStationaryAIPosition( info_target.GetOrigin(), int( info_target.kv.aiType ) )
@@ -384,10 +397,10 @@ void function initNetVars()
 		SetGlobalNetInt( "burn_turretLimit", 3 ) //Live Fire maps are brutal with spawns so, good to have more turrets
 	}
 		
-	if(!FD_HasRestarted())
+	if( !FD_HasRestarted() )
 	{
 		bool showShop = false
-		SetGlobalNetInt( "FD_currentWave", 0 )
+		SetGlobalNetInt( "FD_currentWave", WAVE_STATE_NONE )
 		if( FD_IsDifficultyLevelOrHigher( eFDDifficultyLevel.INSANE ) )
 			FD_SetNumAllowedRestarts( 0 )
 		else
@@ -425,8 +438,12 @@ void function FD_createHarvester()
 	fd_harvester.harvester.Minimap_SetZOrder( MINIMAP_Z_OBJECT )
 	fd_harvester.harvester.Minimap_SetCustomState( eMinimapObject_prop_script.FD_HARVESTER )
 	fd_harvester.harvester.SetTakeDamageType( DAMAGE_EVENTS_ONLY )
+	ToggleNPCPathsForEntity( fd_harvester.harvester, false )
+	fd_harvester.harvester.SetAIObstacle( true )
+	fd_harvester.harvester.SetScriptPropFlags( SPF_DISABLE_CAN_BE_MELEED | SPF_BLOCKS_AI_NAVIGATION )
 	AddEntityCallback_OnDamaged( fd_harvester.harvester, OnHarvesterDamaged )
 	thread CreateHarvesterHintTrigger( fd_harvester.harvester )
+	SetGlobalNetInt( "FD_waveState", WAVE_STATE_NONE )
 	
 	SetPlayerDeathsHidden( false )
 	if( !file.waveRestart )
@@ -525,7 +542,7 @@ void function mainGameLoop()
 			
 			wait 1
 			
-			if( !file.isLiveFireMap )
+			if( !file.isLiveFireMap && waveNumber > 0 )
 			{
 				PlayerEarnMeter_SetEnabled( true )
 				foreach( entity player in GetPlayerArray() )
@@ -1510,7 +1527,10 @@ void function DisableTitanSelectionForPlayer( entity player )
 void function FD_PilotStartRodeo( entity pilot, entity titan )
 {
 	if ( GetConVarBool( "ns_fd_rodeo_highlight" ) )
+	{
 		pilot.Highlight_SetParam( 1, 0, < 0.5, 2.0, 0.5 > )
+		pilot.SetNameVisibleToFriendly( true ) //Disabling it for other gamemodes is alright but this helps seeing friends rodeoing AI
+	}
 }
 
 void function FD_PilotEndRodeo( entity pilot, entity titan )
@@ -1650,17 +1670,34 @@ void function FD_DamageByPlayerCallback( entity victim, var damageInfo )
 	entity player = DamageInfo_GetAttacker( damageInfo )
 	if( !( player in file.players ) )
 		return
-	float damage = min( victim.GetMaxHealth(), DamageInfo_GetDamage( damageInfo ) )
+	float damage = min( victim.GetHealth(), DamageInfo_GetDamage( damageInfo ) )
 	file.playerAwardStats[player]["damageDealt"] += damage
 	file.players[player].assaultScoreThisRound += damage.tointeger() / 100
+}
+
+void function FD_DamageToMoney( entity victim, var damageInfo )
+{
+	entity attacker = DamageInfo_GetAttacker( damageInfo )
+	float damage = min( victim.GetHealth(), DamageInfo_GetDamage( damageInfo ) )
 	
-	if( victim.IsTitan() && victim.GetShieldHealth() <= 0 )
+	if( attacker.GetTeam() == TEAM_MILITIA && attacker.IsPlayer() )
 	{
-		//Money Damage goes here
-		bool isDoomed = GetDoomedState( victim )
-		if ( !isDoomed )
+		if( victim.IsTitan() && victim.GetTeam() == TEAM_IMC )
 		{
+			if ( !( "moneydamage" in victim.s ) )
+				victim.s.moneydamage <- 0.0
 			
+			entity soul = victim.GetTitanSoul()
+			if ( !GetDoomedState( victim ) && soul.GetShieldHealth() <= 0 )
+			{
+				float moneybuffer = victim.GetMaxHealth() / 50.0
+				victim.s.moneydamage += damage
+				while( victim.s.moneydamage >= moneybuffer )
+				{
+					victim.s.moneydamage -= moneybuffer
+					AddMoneyToPlayer( attacker, 1 )
+				}
+			}
 		}
 	}
 }
@@ -1762,7 +1799,7 @@ void function OnHarvesterDamaged( entity harvester, var damageInfo )
 		SendHudMessage( attacker, "You cannot attack the Harvester, only the AI, help the AI attack it!", -1, 0.4, 255, 255, 255, 255, 0.15, 3.0, 0.5 )
 		return
 	}
-	else if ( IsValid( GetPetTitanOwner( attacker )) && attacker.GetTeam() == TEAM_IMC )
+	else if ( IsValid( GetPetTitanOwner( attacker ) ) && attacker.GetTeam() == TEAM_IMC )
 		return
 
 	int damageSourceID = DamageInfo_GetDamageSourceIdentifier( damageInfo )
@@ -1838,6 +1875,7 @@ void function OnHarvesterDamaged( entity harvester, var damageInfo )
 			break
 			
 			case eFD_AITypeIDs.GRUNT:
+			case eFD_AITypeIDs.SPECTRE:
 			PlayFactionDialogueToTeam( "fd_nagKillInfantry", TEAM_MILITIA )
 			break
 			
@@ -1866,7 +1904,7 @@ void function OnHarvesterDamaged( entity harvester, var damageInfo )
 	{
 		file.harvesterDamageTaken += damageAmount // track damage for wave recaps
 		
-		if (attackerTypeID > -1 ) //Only track damage from existing ids
+		if ( attackerTypeID > -1 ) //Only track damage from existing ids
 			file.harvesterDamageSource[attackerTypeID] += damageAmount
 			
 		float newHealth = harvester.GetHealth() - damageAmount
@@ -1951,6 +1989,7 @@ void function OnHarvesterDamaged( entity harvester, var damageInfo )
 		DamageInfo_SetDamage( damageInfo, DamageInfo_GetDamage( damageInfo ) / 4 )
 		break
 
+		case eDamageSourceId.mp_titanweapon_arc_cannon:
 		case eDamageSourceId.damagedef_nuclear_core: //Multiplier for Nuke Titans against shield is lower because the discrepancy between Harvester health pool and Shield amount pool
     	DamageInfo_SetDamage( damageInfo, DamageInfo_GetDamage( damageInfo ) * 6 )
 		break
@@ -1963,16 +2002,13 @@ void function OnHarvesterDamaged( entity harvester, var damageInfo )
 		
 		case eDamageSourceId.damagedef_stalker_powersupply_explosion_large:
 		case eDamageSourceId.damagedef_frag_drone_explode_FD:
+		case eDamageSourceId.mp_titanweapon_rocketeer_rocketstream:
+		case eDamageSourceId.mp_weapon_rocket_launcher:
     	DamageInfo_SetDamage( damageInfo, DamageInfo_GetDamage( damageInfo ) * 4 )
 		break
 		
 		case eDamageSourceId.mp_weapon_droneplasma:
     	DamageInfo_SetDamage( damageInfo, DamageInfo_GetDamage( damageInfo ) * 10 )
-		break
-		
-		case eDamageSourceId.mp_titanweapon_rocketeer_rocketstream:
-		case eDamageSourceId.mp_weapon_rocket_launcher:
-    	DamageInfo_SetDamage( damageInfo, DamageInfo_GetDamage( damageInfo ) * 4 )
 		break
 	}
 
@@ -2085,12 +2121,6 @@ void function TickSpawnThreaded( entity tick )
 	{
 		if ( IsAlive( tick ) && tick.GetTeam() == TEAM_IMC ) //In case you wonder, this is to immediately kill Ticks spawned by Reapers AFTER wave completion
 			tick.Destroy()
-	}
-	
-	if( tick.GetTeam() == TEAM_MILITIA )
-	{
-		NPC_NoTarget( tick )
-		tick.SetAISettings( "npc_frag_drone_fd" )
 	}
 }
 
@@ -2219,10 +2249,11 @@ void function OnNpcDeath( entity victim, entity attacker, var damageInfo )
 		DeathCallback_CalculateTitanAliveTime( victim )
 	}
 	
-	if( IsTurret( attacker ) && attacker.GetBossPlayer() in file.players )
+	entity inflictor = DamageInfo_GetInflictor( damageInfo )
+	if( IsPlayerControlledTurret( inflictor ) && inflictor.GetBossPlayer() == attacker && attacker in file.players )
 	{
-		file.playerAwardStats[attacker.GetBossPlayer()]["turretKills"] += 1.0
-		file.players[attacker.GetBossPlayer()].defenseScoreThisRound += 2
+		file.playerAwardStats[attacker]["turretKills"] += 1.0
+		file.players[attacker].defenseScoreThisRound += 2
 	}
 	
 	if( victim.IsTitan() && attacker in file.players )
@@ -2245,7 +2276,7 @@ void function OnNpcDeath( entity victim, entity attacker, var damageInfo )
 		SetGlobalNetInt( "FD_AICount_Current", GetGlobalNetInt( "FD_AICount_Current" ) - 1 )
 	}
 
-	if ( victim.GetOwner() == attacker || !attacker.IsPlayer() || attacker == victim || victim.GetBossPlayer() == attacker )
+	if ( victim.GetOwner() == attacker || !attacker.IsPlayer() || attacker == victim || victim.GetBossPlayer() == attacker || !IsValid( attacker ) )
 		return
 
 	int money = 0
@@ -2265,9 +2296,6 @@ void function OnNpcDeath( entity victim, entity attacker, var damageInfo )
 		
 		switch ( victim.GetClassName() )
 		{
-			case "npc_frag_drone": //Ticks gives no money due to Reapers being able to spam them
-				money = 0
-				break
 			case "npc_soldier":
 				AddPlayerScore( attacker, "FDGruntKilled" )
 				attacker.AddToPlayerGameStat( PGS_ASSAULT_SCORE, FD_SCORE_GRUNT )
@@ -2298,7 +2326,6 @@ void function OnNpcDeath( entity victim, entity attacker, var damageInfo )
 			case "npc_titan":
 				AddPlayerScore( attacker, "FDTitanKilled" )
 				attacker.AddToPlayerGameStat( PGS_ASSAULT_SCORE, FD_SCORE_TITAN )
-				money = 50
 				break
 			default:
 				money = 0
@@ -2310,7 +2337,7 @@ void function OnNpcDeath( entity victim, entity attacker, var damageInfo )
 	if ( money != 0 )
 		AddMoneyToPlayer( attacker , money )
 
-	if( !attacker.GetBossPlayer() || !attacker.GetOwner() ) //Turret and Auto-Titan kills should not chain killstreaks
+	if( !inflictor.IsNPC() ) //Turret and Auto-Titan kills should not chain killstreaks
 	{
 		if ( DamageInfo_GetCustomDamageType( damageInfo ) & DF_HEADSHOT )
 			AddPlayerScore( attacker, "NPCHeadshot" )
@@ -2387,7 +2414,7 @@ void function OnNpcDeath( entity victim, entity attacker, var damageInfo )
 		}
 	}
 	
-	if( ( !attacker.GetBossPlayer() || !attacker.GetOwner() ) && ( !attacker.IsTitan() && victim.IsTitan() ) )
+	if( inflictor == attacker && !attacker.IsTitan() && victim.IsTitan() )
 	{
 		string titanCharacterName = GetTitanCharacterName( victim )
 		
@@ -2481,16 +2508,6 @@ void function OnTickDeath( entity victim, var damageInfo )
 		SetGlobalNetInt( "FD_AICount_Ticks", GetGlobalNetInt( "FD_AICount_Ticks" ) -1 )
 		SetGlobalNetInt( "FD_AICount_Current", GetGlobalNetInt( "FD_AICount_Current" ) -1 )
 	}
-	
-	/* Nuclear Ticks
-	else if( victim.GetTeam() == TEAM_MILITIA )
-	{
-		EmitSoundAtPosition( victim.GetTeam(), victim.GetOrigin(), "ai_reaper_nukedestruct_explo_3p" )
-		PlayFX( $"P_sup_spectre_death_nuke", victim.GetOrigin(), victim.GetAngles() )
-		for ( int i = 0; i < 20; i++ )
-			Explosion_DamageDefSimple( damagedef_frag_drone_throwable_PLAYER, victim.GetOrigin(), victim, victim,  victim.GetOrigin() )
-	}
-	*/
 }
 
 function FD_OnEntityDestroyed( ent )
@@ -2860,6 +2877,11 @@ void function FD_DropshipDropPlayer( entity player, int playerDropshipIndex )
 		jumpSequence.blendTime = 0.0
 		jumpSequence.viewConeFunction = ViewConeNarrow
 
+		#if BATTLECHATTER_ENABLED
+		if( playerDropshipIndex == 0 )
+			PlayBattleChatterLine( player, "bc_pIntroChat" )
+		#endif
+		
 		thread FirstPersonSequence( jumpSequence, player, file.dropship )
 		WaittillAnimDone( player )
 		
@@ -2868,10 +2890,6 @@ void function FD_DropshipDropPlayer( entity player, int playerDropshipIndex )
 			player.ClearParent()
 			ClearPlayerAnimViewEntity( player )
 			thread FD_PlayerRespawnGrace( player )
-			#if BATTLECHATTER_ENABLED
-			if( playerDropshipIndex == 0 )
-				PlayBattleChatterLine( player, "bc_pIntroChat" )
-			#endif
 		}
 	}
 }
@@ -3247,18 +3265,18 @@ void function RegisterPostSummaryScreenForMatch( bool matchwon )
 array<int> function getHighestEnemyAmountsForWave( int waveIndex )
 {
 	table<int,int> npcs
-	npcs[eFD_AITypeIDs.TITAN] <- 0
 	npcs[eFD_AITypeIDs.TITAN_NUKE] <- 0
 	npcs[eFD_AITypeIDs.TITAN_ARC] <- 0
 	npcs[eFD_AITypeIDs.TITAN_MORTAR] <- 0
-	npcs[eFD_AITypeIDs.GRUNT] <- 0
-	npcs[eFD_AITypeIDs.SPECTRE] <- 0
-	npcs[eFD_AITypeIDs.SPECTRE_MORTAR] <- 0
-	npcs[eFD_AITypeIDs.STALKER] <- 0
-	npcs[eFD_AITypeIDs.REAPER] <- 0
+	npcs[eFD_AITypeIDs.TITAN] <- 0
 	npcs[eFD_AITypeIDs.TICK] <- 0
-	npcs[eFD_AITypeIDs.DRONE] <- 0
+	npcs[eFD_AITypeIDs.REAPER] <- 0
+	npcs[eFD_AITypeIDs.SPECTRE_MORTAR] <- 0
 	npcs[eFD_AITypeIDs.DRONE_CLOAK] <- 0
+	npcs[eFD_AITypeIDs.SPECTRE] <- 0
+	npcs[eFD_AITypeIDs.STALKER] <- 0
+	npcs[eFD_AITypeIDs.DRONE] <- 0
+	npcs[eFD_AITypeIDs.GRUNT] <- 0
 	// npcs[eFD_AITypeIDs.RONIN] <- 0
 	// npcs[eFD_AITypeIDs.NORTHSTAR] <- 0
 	// npcs[eFD_AITypeIDs.SCORCH] <- 0
@@ -3290,29 +3308,76 @@ array<int> function getHighestEnemyAmountsForWave( int waveIndex )
 				npcs[e.spawnEvent.spawnType] += e.spawnEvent.spawnAmount
 		}
 	}
-	array<int> ret = [ -1, -1, -1, -1, -1, -1, -1, -1, -1 ]
-	foreach( int key, int value in npcs )
-	{
-		if( value == 0 )
-			continue
-		int lowestArrayIndex = 0
-		bool keyIsSet = false
-		foreach( index, int arrayValue in ret )
-		{
-			if( arrayValue == -1 )
-			{
-				ret[index] = key
-				keyIsSet = true
-				break
-			}
-			if( npcs[ ret[lowestArrayIndex] ] > npcs[ ret[index] ] )
-				lowestArrayIndex = index
-		}
-		if( ( !keyIsSet ) && ( npcs[ ret[lowestArrayIndex] ] < value ) )
-			ret[lowestArrayIndex] = key
-	}
+	
+	array<int> ret = []
+	
+	if( npcs[eFD_AITypeIDs.TITAN_NUKE] > 0 )
+		ret.append( eFD_AITypeIDs.TITAN_NUKE )
+		
+	if( npcs[eFD_AITypeIDs.TITAN_ARC] > 0 )
+		ret.append( eFD_AITypeIDs.TITAN_ARC )
+		
+	if( npcs[eFD_AITypeIDs.TITAN_MORTAR] > 0 )
+		ret.append( eFD_AITypeIDs.TITAN_MORTAR )
+		
+	if( npcs[eFD_AITypeIDs.TITAN] > 0 )
+		ret.append( eFD_AITypeIDs.TITAN )
+		
+	if( npcs[eFD_AITypeIDs.TICK] > 0 )
+		ret.append( eFD_AITypeIDs.TICK )
+		
+	if( npcs[eFD_AITypeIDs.REAPER] > 0 )
+		ret.append( eFD_AITypeIDs.REAPER )
+		
+	if( npcs[eFD_AITypeIDs.SPECTRE_MORTAR] > 0 )
+		ret.append( eFD_AITypeIDs.SPECTRE_MORTAR )
+		
+	if( npcs[eFD_AITypeIDs.DRONE_CLOAK] > 0 )
+		ret.append( eFD_AITypeIDs.DRONE_CLOAK )
+		
+	if( npcs[eFD_AITypeIDs.SPECTRE] > 0 )
+		ret.append( eFD_AITypeIDs.SPECTRE )
+		
+	if( npcs[eFD_AITypeIDs.STALKER] > 0 )
+		ret.append( eFD_AITypeIDs.STALKER )
+		
+	if( npcs[eFD_AITypeIDs.DRONE] > 0 )
+		ret.append( eFD_AITypeIDs.DRONE )
+		
+	if( npcs[eFD_AITypeIDs.GRUNT] > 0 )
+		ret.append( eFD_AITypeIDs.GRUNT )
+	
+	while( ret.len() < 9 ) //Fill empty slots for return
+		ret.append( -1 )
+	
+	print( "ENEMIES ON THIS WAVE:" )
 	foreach( int val in ret )
-		printt( "ArrayVal", val )
+	{
+		if( val == eFD_AITypeIDs.TITAN_NUKE )
+			printt( "Nuke Titans:", GetGlobalNetInt( "FD_AICount_Titan_Nuke" ) )
+		if( val == eFD_AITypeIDs.TITAN_ARC )
+			printt( "Arc Titans:", GetGlobalNetInt( "FD_AICount_Titan_Arc" ) )
+		if( val == eFD_AITypeIDs.TITAN_MORTAR )
+			printt( "Mortar Titans:", GetGlobalNetInt( "FD_AICount_Titan_Mortar" ) )
+		if( val == eFD_AITypeIDs.TITAN )
+			printt( "Titans:", GetGlobalNetInt( "FD_AICount_Titan" ) )
+		if( val == eFD_AITypeIDs.TICK )
+			printt( "Ticks:", GetGlobalNetInt( "FD_AICount_Ticks" ) )
+		if( val == eFD_AITypeIDs.REAPER )
+			printt( "Reapers:", GetGlobalNetInt( "FD_AICount_Reaper" ) )
+		if( val == eFD_AITypeIDs.SPECTRE_MORTAR )
+			printt( "Mortar Spectres:", GetGlobalNetInt( "FD_AICount_Spectre_Mortar" ) )
+		if( val == eFD_AITypeIDs.DRONE_CLOAK )
+			printt( "Cloak Drones:", GetGlobalNetInt( "FD_AICount_Drone_Cloak" ) )
+		if( val == eFD_AITypeIDs.SPECTRE )
+			printt( "Spectres:", GetGlobalNetInt( "FD_AICount_Spectre" ) )
+		if( val == eFD_AITypeIDs.STALKER )
+			printt( "Stalkers:", GetGlobalNetInt( "FD_AICount_Stalker" ) )
+		if( val == eFD_AITypeIDs.DRONE )
+			printt( "Drones:", GetGlobalNetInt( "FD_AICount_Drone" ) )
+		if( val == eFD_AITypeIDs.GRUNT )
+			printt( "Grunts:", GetGlobalNetInt( "FD_AICount_Grunt" ) )
+	}
 	return ret
 }
 
@@ -3320,18 +3385,18 @@ void function SetEnemyAmountNetVars( int waveIndex )
 {
 	int total = 0
 	table<int,int> npcs
-	npcs[eFD_AITypeIDs.TITAN] <- 0
 	npcs[eFD_AITypeIDs.TITAN_NUKE] <- 0
 	npcs[eFD_AITypeIDs.TITAN_ARC] <- 0
 	npcs[eFD_AITypeIDs.TITAN_MORTAR] <- 0
-	npcs[eFD_AITypeIDs.GRUNT] <- 0
-	npcs[eFD_AITypeIDs.SPECTRE] <- 0
-	npcs[eFD_AITypeIDs.SPECTRE_MORTAR] <- 0
-	npcs[eFD_AITypeIDs.STALKER] <- 0
-	npcs[eFD_AITypeIDs.REAPER] <- 0
+	npcs[eFD_AITypeIDs.TITAN] <- 0
 	npcs[eFD_AITypeIDs.TICK] <- 0
-	npcs[eFD_AITypeIDs.DRONE] <- 0
+	npcs[eFD_AITypeIDs.REAPER] <- 0
+	npcs[eFD_AITypeIDs.SPECTRE_MORTAR] <- 0
 	npcs[eFD_AITypeIDs.DRONE_CLOAK] <- 0
+	npcs[eFD_AITypeIDs.SPECTRE] <- 0
+	npcs[eFD_AITypeIDs.STALKER] <- 0
+	npcs[eFD_AITypeIDs.DRONE] <- 0
+	npcs[eFD_AITypeIDs.GRUNT] <- 0
 	// npcs[eFD_AITypeIDs.RONIN] <- 0
 	// npcs[eFD_AITypeIDs.NORTHSTAR] <- 0
 	// npcs[eFD_AITypeIDs.SCORCH] <- 0
@@ -3365,18 +3430,18 @@ void function SetEnemyAmountNetVars( int waveIndex )
 		}
 		total+= e.spawnEvent.spawnAmount
 	}
-	SetGlobalNetInt( "FD_AICount_Titan", npcs[eFD_AITypeIDs.TITAN] )
 	SetGlobalNetInt( "FD_AICount_Titan_Nuke", npcs[eFD_AITypeIDs.TITAN_NUKE] )
-	SetGlobalNetInt( "FD_AICount_Titan_Mortar", npcs[eFD_AITypeIDs.TITAN_MORTAR] )
 	SetGlobalNetInt( "FD_AICount_Titan_Arc", npcs[eFD_AITypeIDs.TITAN_ARC] )
-	SetGlobalNetInt( "FD_AICount_Grunt", npcs[eFD_AITypeIDs.GRUNT] )
-	SetGlobalNetInt( "FD_AICount_Spectre", npcs[eFD_AITypeIDs.SPECTRE] )
-	SetGlobalNetInt( "FD_AICount_Spectre_Mortar", npcs[eFD_AITypeIDs.SPECTRE_MORTAR] )
-	SetGlobalNetInt( "FD_AICount_Stalker", npcs[eFD_AITypeIDs.STALKER] )
-	SetGlobalNetInt( "FD_AICount_Reaper", npcs[eFD_AITypeIDs.REAPER] )
+	SetGlobalNetInt( "FD_AICount_Titan_Mortar", npcs[eFD_AITypeIDs.TITAN_MORTAR] )
+	SetGlobalNetInt( "FD_AICount_Titan", npcs[eFD_AITypeIDs.TITAN] )
 	SetGlobalNetInt( "FD_AICount_Ticks", npcs[eFD_AITypeIDs.TICK] )
-	SetGlobalNetInt( "FD_AICount_Drone", npcs[eFD_AITypeIDs.DRONE] )
+	SetGlobalNetInt( "FD_AICount_Reaper", npcs[eFD_AITypeIDs.REAPER] )
+	SetGlobalNetInt( "FD_AICount_Spectre_Mortar", npcs[eFD_AITypeIDs.SPECTRE_MORTAR] )
 	SetGlobalNetInt( "FD_AICount_Drone_Cloak", npcs[eFD_AITypeIDs.DRONE_CLOAK] )
+	SetGlobalNetInt( "FD_AICount_Spectre", npcs[eFD_AITypeIDs.SPECTRE] )
+	SetGlobalNetInt( "FD_AICount_Stalker", npcs[eFD_AITypeIDs.STALKER] )
+	SetGlobalNetInt( "FD_AICount_Drone", npcs[eFD_AITypeIDs.DRONE] )
+	SetGlobalNetInt( "FD_AICount_Grunt", npcs[eFD_AITypeIDs.GRUNT] )
 	SetGlobalNetInt( "FD_AICount_Current", total )
 	SetGlobalNetInt( "FD_AICount_Total", total )
 }

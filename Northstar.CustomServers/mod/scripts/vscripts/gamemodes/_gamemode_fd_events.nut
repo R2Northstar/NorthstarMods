@@ -10,6 +10,7 @@ global function CreateGenericSpawnEvent
 global function CreateGenericTitanSpawnWithAiSettingsEvent
 global function CreateDroppodStalkerEvent
 global function CreateDroppodSpectreMortarEvent
+global function CreateDroppodSpectreEvent
 global function CreateWaitUntilAliveEvent
 global function CreateWaitUntilAliveWeightedEvent //Ngl but this is confusing af to "guess" how the fuck the weights works, say 15 means 3 Titans, but what if i want only the titans to count? i can't because 15 infantry units may get in the way, this a bad way to control the spawning flow -Zanieon
 global function CreateWaitForAllTitansDeadEvent
@@ -271,7 +272,7 @@ void function restetWaveEvents()
 	}
 }
 
-/*
+/* Event Generators
 ███████╗██╗   ██╗███████╗███╗   ██╗████████╗     ██████╗ ███████╗███╗   ██╗███████╗██████╗  █████╗ ████████╗ ██████╗ ██████╗ ███████╗
 ██╔════╝██║   ██║██╔════╝████╗  ██║╚══██╔══╝    ██╔════╝ ██╔════╝████╗  ██║██╔════╝██╔══██╗██╔══██╗╚══██╔══╝██╔═══██╗██╔══██╗██╔════╝
 █████╗  ██║   ██║█████╗  ██╔██╗ ██║   ██║       ██║  ███╗█████╗  ██╔██╗ ██║█████╗  ██████╔╝███████║   ██║   ██║   ██║██████╔╝███████╗
@@ -383,6 +384,22 @@ WaveEvent function CreateDroppodSpectreMortarEvent( vector origin, string route,
 	event.nextEventIndex = nextEventIndex
 	event.shouldThread = true
 	event.spawnEvent.spawnType= eFD_AITypeIDs.SPECTRE_MORTAR
+	event.spawnEvent.spawnAmount = 4
+	event.spawnEvent.origin = origin
+	event.spawnEvent.route = route
+	event.spawnEvent.entityGlobalKey = entityGlobalKey
+	event.spawnEvent.spawnradius = spawnradius
+	return event
+}
+
+WaveEvent function CreateDroppodSpectreEvent( vector origin, string route, int nextEventIndex, int executeOnThisCall = 1, string entityGlobalKey = "", float spawnradius = 0.0 )
+{
+	WaveEvent event
+	event.eventFunction = spawnDroppodSpectre
+	event.executeOnThisCall = executeOnThisCall
+	event.nextEventIndex = nextEventIndex
+	event.shouldThread = true
+	event.spawnEvent.spawnType= eFD_AITypeIDs.SPECTRE
 	event.spawnEvent.spawnAmount = 4
 	event.spawnEvent.origin = origin
 	event.spawnEvent.route = route
@@ -879,7 +896,7 @@ WaveEvent function CreateGruntDropshipEvent( vector origin, vector angles, int a
 	return event
 }
 
-/*
+/* Event Functions
 ███████╗██╗   ██╗███████╗███╗   ██╗████████╗    ███████╗██╗   ██╗███╗   ██╗ ██████╗████████╗██╗ ██████╗ ███╗   ██╗███████╗
 ██╔════╝██║   ██║██╔════╝████╗  ██║╚══██╔══╝    ██╔════╝██║   ██║████╗  ██║██╔════╝╚══██╔══╝██║██╔═══██╗████╗  ██║██╔════╝
 █████╗  ██║   ██║█████╗  ██╔██╗ ██║   ██║       █████╗  ██║   ██║██╔██╗ ██║██║        ██║   ██║██║   ██║██╔██╗ ██║███████╗
@@ -1095,7 +1112,6 @@ void function spawnArcTitan( SmokeEvent smokeEvent, SpawnEvent spawnEvent, FlowC
 	
 	npc.DisableNPCFlag( NPC_ALLOW_INVESTIGATE | NPC_USE_SHOOTING_COVER | NPC_ALLOW_PATROL )
 	npc.EnableNPCMoveFlag( NPCMF_PREFER_SPRINT )
-	npc.SetEnemyChangeCallback( OnFDHarvesterTargeted )
 	npc.SetDangerousAreaReactionTime( FD_TITAN_AOE_REACTTIME )
 	AddMinimapForTitans( npc )
 	npc.WaitSignal( "TitanHotDropComplete" )
@@ -1216,7 +1232,7 @@ void function spawnDroppodGrunts( SmokeEvent smokeEvent, SpawnEvent spawnEvent, 
 	for ( int i = 0; i < spawnEvent.spawnAmount; i++ )
     {
 		entity guy = CreateSoldier( TEAM_IMC, spawnEvent.origin, < 0, 0, 0 > )
-		
+		SetSpawnflags( guy, SF_NPC_START_EFFICIENT )
 		// should this grunt be a shield captain?
 		if (i < GetCurrentPlaylistVarInt( "fd_grunt_shield_captains", 0 ) || i == 1 && GetMapName().find( "mp_lf_" ) != null )
 		{
@@ -1236,9 +1252,7 @@ void function spawnDroppodGrunts( SmokeEvent smokeEvent, SpawnEvent spawnEvent, 
 			guy.kv.grenadeWeaponName = Cvar_gruntgrenade
 		}
 		DispatchSpawn( guy )
-		guy.EnableNPCFlag(  NPC_ALLOW_INVESTIGATE | NPC_ALLOW_HAND_SIGNALS | NPC_ALLOW_FLEE )
-		guy.DisableNPCFlag( NPC_ALLOW_PATROL )
-		guy.SetEfficientMode( true )
+		SetupGruntBehaviorFlags( guy )
 		guy.SetParent( pod, "ATTACH", true )
 		SetSquad( guy, squadName )
 		if( GetMapName().find( "mp_lf_" ) != null )
@@ -1248,7 +1262,7 @@ void function spawnDroppodGrunts( SmokeEvent smokeEvent, SpawnEvent spawnEvent, 
 		if ( i < GetCurrentPlaylistVarInt( "fd_grunt_at_weapon_users", 0 ) || GetMapName().find( "mp_lf_" ) != null )
 			guy.GiveWeapon( at_weapon )
 
-		SetTargetName( guy, GetTargetNameForID( eFD_AITypeIDs.GRUNT ) ) // do shield captains get their own target name in vanilla?
+		SetTargetName( guy, GetTargetNameForID( eFD_AITypeIDs.GRUNT ) )
 		guy.MakeInvisible()
 		entity weapon = guy.GetActiveWeapon()
 		if ( IsValid( weapon ) )
@@ -1339,7 +1353,7 @@ void function spawnGruntDropship( SmokeEvent smokeEvent, SpawnEvent spawnEvent, 
 	for ( int i = 0; i < spawnEvent.spawnAmount; i++ )
     {
 		entity guy = CreateSoldier( TEAM_IMC, spawnEvent.origin, < 0, 0, 0 > )
-		
+		SetSpawnflags( guy, SF_NPC_START_EFFICIENT )
 		if (i < GetCurrentPlaylistVarInt( "fd_grunt_shield_captains", 0 ) )
 		{
 			if ( GetConVarBool( "ns_fd_allow_true_shield_captains" ) )
@@ -1358,8 +1372,7 @@ void function spawnGruntDropship( SmokeEvent smokeEvent, SpawnEvent spawnEvent, 
 			guy.kv.grenadeWeaponName = Cvar_gruntgrenade
 		}
 		DispatchSpawn( guy )
-		guy.EnableNPCFlag(  NPC_ALLOW_INVESTIGATE | NPC_ALLOW_HAND_SIGNALS | NPC_ALLOW_FLEE )
-		guy.DisableNPCFlag( NPC_ALLOW_PATROL )
+		SetupGruntBehaviorFlags( guy )
 		SetSquad( guy, squadName )
 		
 		if ( i < GetCurrentPlaylistVarInt( "fd_grunt_at_weapon_users", 0 ) )
@@ -1389,6 +1402,7 @@ void function spawnGruntDropship( SmokeEvent smokeEvent, SpawnEvent spawnEvent, 
 			}
 			else
 			{
+				guy.SetEfficientMode( false )
 				guy.SetEnemyChangeCallback( GruntTargetsTitan )
 				thread singleNav_thread( guy, spawnEvent.route )
 			}
@@ -1411,6 +1425,7 @@ void function spawnDroppodStalker( SmokeEvent smokeEvent, SpawnEvent spawnEvent,
 	for ( int i = 0; i < spawnEvent.spawnAmount; i++ )
 	{
 		entity guy = CreateStalker( TEAM_IMC, spawnEvent.origin, < 0, 0, 0 > )
+		SetSpawnflags( guy, SF_NPC_START_EFFICIENT )
 		if( spawnEvent.entityGlobalKey != "" )
 			GlobalEventEntitys[ spawnEvent.entityGlobalKey + i.tostring() ] <- guy
 		SetTeam( guy, TEAM_IMC )
@@ -1418,7 +1433,6 @@ void function spawnDroppodStalker( SmokeEvent smokeEvent, SpawnEvent spawnEvent,
 		DispatchSpawn( guy )
 		guy.EnableNPCFlag(  NPC_ALLOW_INVESTIGATE | NPC_ALLOW_HAND_SIGNALS | NPC_ALLOW_FLEE )
 		guy.DisableNPCFlag( NPC_ALLOW_PATROL )
-		guy.SetEfficientMode( true )
 		guy.SetParent( pod, "ATTACH", true )
 		SetSquad( guy, squadName )
 		guy.AssaultSetFightRadius( 0 ) // makes them keep moving instead of stopping to shoot you.
@@ -1498,6 +1512,7 @@ void function spawnDroppodSpectreMortar( SmokeEvent smokeEvent, SpawnEvent spawn
 	for ( int i = 0; i < 4; i++ )
 	{
 		entity guy = CreateSpectre( TEAM_IMC, spawnEvent.origin,< 0, 0, 0 > )
+		SetSpawnflags( guy, SF_NPC_START_EFFICIENT )
 		SetSpawnOption_AISettings( guy, "npc_spectre_mortar" )
 		if( spawnEvent.entityGlobalKey != "" )
 			GlobalEventEntitys[ spawnEvent.entityGlobalKey + i.tostring() ] <- guy
@@ -1513,7 +1528,6 @@ void function spawnDroppodSpectreMortar( SmokeEvent smokeEvent, SpawnEvent spawn
 		guy.DisableNPCFlag( NPC_ALLOW_INVESTIGATE | NPC_USE_SHOOTING_COVER | NPC_ALLOW_PATROL )
 		guy.EnableNPCFlag( NPC_NO_WEAPON_DROP )
 		spawnedNPCs.append(guy)
-		guy.SetEfficientMode( true )
 		guy.SetParent( pod, "ATTACH", true )
 		SetSquad( guy, squadName )
 		SetTargetName( guy, GetTargetNameForID(eFD_AITypeIDs.SPECTRE_MORTAR))
@@ -1532,6 +1546,55 @@ void function spawnDroppodSpectreMortar( SmokeEvent smokeEvent, SpawnEvent spawn
 	}
 	
 	thread MortarSpectreSquadThink( guys, fd_harvester.harvester )
+}
+
+void function spawnDroppodSpectre( SmokeEvent smokeEvent, SpawnEvent spawnEvent, FlowControlEvent flowControlEvent, SoundEvent soundEvent )
+{
+	printt( "Spawning Spectres Drop Pod at: " + spawnEvent.origin )
+	PingMinimap( spawnEvent.origin.x, spawnEvent.origin.y, 4, 600, 150, 0 )
+		entity pod = CreateDropPod( spawnEvent.origin, < 0, RandomIntRange( 0, 359 ), 0 > )
+	SetTeam( pod, TEAM_IMC )
+	InitFireteamDropPod( pod )
+
+	string squadName = MakeSquadName( TEAM_IMC, UniqueString() )
+	array<entity> guys
+
+	for ( int i = 0; i < 4; i++ )
+	{
+		entity guy = CreateSpectre( TEAM_IMC, spawnEvent.origin,< 0, 0, 0 > )
+		SetSpawnflags( guy, SF_NPC_START_EFFICIENT )
+		SetSpawnOption_AISettings( guy, "npc_spectre" )
+		if( spawnEvent.entityGlobalKey != "" )
+			GlobalEventEntitys[ spawnEvent.entityGlobalKey + i.tostring() ] <- guy
+		SetTeam( guy, TEAM_IMC )
+		if ( FD_SpectreWeapons.len() > -1 )
+		{
+			string baseweapon = FD_SpectreWeapons[ RandomInt( FD_SpectreWeapons.len() ) ]
+			SetSpawnOption_Weapon( guy, baseweapon )
+		}
+		guy.kv.reactChance = 100
+		DispatchSpawn( guy )
+		guy.AssaultSetFightRadius( 0 )
+		guy.DisableNPCFlag( NPC_ALLOW_INVESTIGATE | NPC_USE_SHOOTING_COVER | NPC_ALLOW_PATROL )
+		guy.EnableNPCFlag( NPC_NO_WEAPON_DROP )
+		spawnedNPCs.append(guy)
+		guy.SetParent( pod, "ATTACH", true )
+		SetSquad( guy, squadName )
+		SetTargetName( guy, GetTargetNameForID(eFD_AITypeIDs.SPECTRE))
+		guy.MakeInvisible()
+		guys.append( guy )
+    }
+
+	waitthread LaunchAnimDropPod( pod, "pod_testpath", spawnEvent.origin, < 0, RandomIntRange( 0, 359 ), 0 > )
+    ActivateFireteamDropPod( pod, guys )
+	
+	foreach( npc in guys )
+	{
+		AddMinimapForHumans( npc )
+		npc.SetEfficientMode( false )
+		thread NPCStuckTracker( npc )
+		thread singleNav_thread( npc, spawnEvent.route )
+	}
 }
 
 void function spawnGenericNPC( SmokeEvent smokeEvent, SpawnEvent spawnEvent, FlowControlEvent flowControlEvent, SoundEvent soundEvent )
@@ -1586,7 +1649,6 @@ void function SpawnIonTitan( SmokeEvent smokeEvent, SpawnEvent spawnEvent, FlowC
 	}
 	SetTargetName( npc, GetTargetNameForID( spawnEvent.spawnType ) ) // required for client to create icons
 	DispatchSpawn( npc )
-	npc.SetEnemyChangeCallback( OnFDHarvesterTargeted )
 	if ( spawnEvent.titanType == 1 && elitesAllowed )
 	{
 		npc.EnableNPCFlag( NPC_NO_PAIN | NPC_NO_GESTURE_PAIN )
@@ -1635,7 +1697,6 @@ void function SpawnScorchTitan( SmokeEvent smokeEvent, SpawnEvent spawnEvent, Fl
 	
 	SetTargetName( npc, GetTargetNameForID( spawnEvent.spawnType ) ) // required for client to create icons
 	DispatchSpawn( npc )
-	npc.SetEnemyChangeCallback( OnFDHarvesterTargeted )
 	if ( spawnEvent.titanType == 1 && elitesAllowed )
 	{
 		npc.EnableNPCFlag( NPC_NO_PAIN | NPC_NO_GESTURE_PAIN )
@@ -1687,8 +1748,6 @@ void function SpawnRoninTitan( SmokeEvent smokeEvent, SpawnEvent spawnEvent, Flo
 		npc.SetCapabilityFlag( bits_CAP_NO_HIT_SQUADMATES, false )
 		HideCrit( npc )
 	}
-	else
-		npc.SetEnemyChangeCallback( OnFDHarvesterTargeted )
 	if( spawnEvent.entityGlobalKey != "" )
 		GlobalEventEntitys[spawnEvent.entityGlobalKey] <- npc
 	spawnedNPCs.append( npc )
@@ -1724,7 +1783,6 @@ void function SpawnToneTitan( SmokeEvent smokeEvent, SpawnEvent spawnEvent, Flow
 	}
 	SetTargetName( npc, GetTargetNameForID( spawnEvent.spawnType ) ) // required for client to create icons
 	DispatchSpawn( npc )
-	npc.SetEnemyChangeCallback( OnFDHarvesterTargeted )
 	if ( spawnEvent.titanType == 1 && elitesAllowed )
 	{
 		npc.EnableNPCFlag( NPC_NO_PAIN | NPC_NO_GESTURE_PAIN )
@@ -1767,7 +1825,6 @@ void function SpawnLegionTitan( SmokeEvent smokeEvent, SpawnEvent spawnEvent, Fl
 	}
 	SetTargetName( npc, GetTargetNameForID( spawnEvent.spawnType ) ) // required for client to create icons
 	DispatchSpawn( npc )
-	npc.SetEnemyChangeCallback( OnFDHarvesterTargeted )
 	if ( spawnEvent.titanType == 1 && elitesAllowed )
 	{
 		npc.EnableNPCFlag( NPC_NO_PAIN | NPC_NO_GESTURE_PAIN )
@@ -1809,7 +1866,6 @@ void function SpawnMonarchTitan( SmokeEvent smokeEvent, SpawnEvent spawnEvent, F
 	}
 	SetTargetName( npc, GetTargetNameForID( spawnEvent.spawnType ) ) // required for client to create icons
 	DispatchSpawn( npc )
-	npc.SetEnemyChangeCallback( OnFDHarvesterTargeted )
 	if ( spawnEvent.titanType == 1 && elitesAllowed )
 	{
 		npc.EnableNPCFlag( NPC_NO_PAIN | NPC_NO_GESTURE_PAIN )
@@ -1996,6 +2052,7 @@ void function SpawnTick( SmokeEvent smokeEvent, SpawnEvent spawnEvent, FlowContr
 	for ( int i = 0; i < spawnEvent.spawnAmount; i++ )
 	{
 		entity guy = CreateFragDrone( TEAM_IMC, spawnEvent.origin, < 0, 0, 0 > )
+		SetSpawnflags( guy, SF_NPC_START_EFFICIENT )
 		if( spawnEvent.entityGlobalKey != "" )
 			GlobalEventEntitys[ spawnEvent.entityGlobalKey + i.tostring() ] <- guy
 		SetSpawnOption_AISettings( guy, "npc_frag_drone_fd" )
@@ -2005,7 +2062,6 @@ void function SpawnTick( SmokeEvent smokeEvent, SpawnEvent spawnEvent, FlowContr
 		guy.EnableNPCFlag(  NPC_ALLOW_INVESTIGATE )
 		if( GetConVarBool( "ns_fd_differentiate_ticks" ) )
 			guy.SetModel( $"models/robots/drone_frag/drone_frag.mdl" )
-		guy.SetEfficientMode( true )
 		SetTargetName( guy, GetTargetNameForID( eFD_AITypeIDs.TICK ) )
 		guy.SetParent( pod, "ATTACH", true )
 		SetSquad( guy, squadName )
@@ -2031,7 +2087,7 @@ void function SpawnTick( SmokeEvent smokeEvent, SpawnEvent spawnEvent, FlowContr
 }
 
 
-/*
+/* Event Helpers
 ███████╗██╗   ██╗███████╗███╗   ██╗████████╗    ██╗  ██╗███████╗██╗     ██████╗ ███████╗██████╗ ███████╗
 ██╔════╝██║   ██║██╔════╝████╗  ██║╚══██╔══╝    ██║  ██║██╔════╝██║     ██╔══██╗██╔════╝██╔══██╗██╔════╝
 █████╗  ██║   ██║█████╗  ██╔██╗ ██║   ██║       ███████║█████╗  ██║     ██████╔╝█████╗  ██████╔╝███████╗
@@ -2228,6 +2284,14 @@ void function AddMinimapForHumans( entity human )
 	human.Minimap_SetHeightTracking( true )
 	human.Minimap_SetCustomState( eMinimapObject_npc.AI_TDM_AI )
 }
+/* NPC Functions
+███╗   ██╗██████╗  ██████╗    ███████╗██╗   ██╗███╗   ██╗ ██████╗████████╗██╗ ██████╗ ███╗   ██╗███████╗
+████╗  ██║██╔══██╗██╔════╝    ██╔════╝██║   ██║████╗  ██║██╔════╝╚══██╔══╝██║██╔═══██╗████╗  ██║██╔════╝
+██╔██╗ ██║██████╔╝██║         █████╗  ██║   ██║██╔██╗ ██║██║        ██║   ██║██║   ██║██╔██╗ ██║███████╗
+██║╚██╗██║██╔═══╝ ██║         ██╔══╝  ██║   ██║██║╚██╗██║██║        ██║   ██║██║   ██║██║╚██╗██║╚════██║
+██║ ╚████║██║     ╚██████╗    ██║     ╚██████╔╝██║ ╚████║╚██████╗   ██║   ██║╚██████╔╝██║ ╚████║███████║
+╚═╝  ╚═══╝╚═╝      ╚═════╝    ╚═╝      ╚═════╝ ╚═╝  ╚═══╝ ╚═════╝   ╚═╝   ╚═╝ ╚═════╝ ╚═╝  ╚═══╝╚══════╝
+*/
 
 void function SlowEnemyMovementBasedOnDifficulty( entity npc )
 {
@@ -2248,6 +2312,51 @@ void function SlowEnemyMovementBasedOnDifficulty( entity npc )
 	}
 }
 
+void function SetupGruntBehaviorFlags( entity npc )
+{
+	Assert( IsValid( npc ) && IsGrunt( npc ), "Entity is not a Grunt: " + npc )
+	
+	switch ( difficultyLevel )
+	{
+		case eFDDifficultyLevel.EASY:
+		case eFDDifficultyLevel.NORMAL:
+			npc.EnableNPCFlag( NPC_ALLOW_INVESTIGATE | NPC_ALLOW_HAND_SIGNALS | NPC_ALLOW_FLEE )
+			npc.DisableNPCFlag( NPC_ALLOW_PATROL )
+			break
+		case eFDDifficultyLevel.HARD:
+		case eFDDifficultyLevel.MASTER:
+		case eFDDifficultyLevel.INSANE:
+			npc.EnableNPCFlag( NPC_ALLOW_HAND_SIGNALS )
+			npc.DisableNPCFlag( NPC_ALLOW_INVESTIGATE | NPC_ALLOW_PATROL | NPC_ALLOW_FLEE )
+			break
+	}
+}
+
+void function GruntTargetsTitan( entity npc )
+{
+	Assert( IsValid( npc ) && IsGrunt( npc ), "Entity is not a Grunt: " + npc )
+	
+	entity enemy = npc.GetEnemy()
+	if( enemy != null )
+	{
+		switch ( difficultyLevel )
+		{
+			case eFDDifficultyLevel.EASY:
+			case eFDDifficultyLevel.NORMAL:
+				if( enemy.IsTitan() )
+					npc.AssaultSetFightRadius( 800 )
+				else
+					npc.AssaultSetFightRadius( 0 )
+				break
+			case eFDDifficultyLevel.HARD:
+			case eFDDifficultyLevel.MASTER:
+			case eFDDifficultyLevel.INSANE:
+				npc.AssaultSetFightRadius( 0 )
+				break
+		}
+	}
+}
+
 void function SetTitanAsElite( entity npc )
 {
 	if( GetGameState() != eGameState.Playing || !IsHarvesterAlive( fd_harvester.harvester ) )
@@ -2261,6 +2370,7 @@ void function SetTitanAsElite( entity npc )
 		npc.kv.AccuracyMultiplier = 5
 		npc.kv.reactChance = 100
 		npc.kv.WeaponProficiency = eWeaponProficiency.PERFECT
+		SetSpawnflags( npc, SF_TITAN_SOUL_NO_DOOMED_EVASSIVE_COMBAT )
 	}
 }
 
@@ -2278,6 +2388,23 @@ void function MonitorEliteTitanCore( entity npc )
 		SetCoreCharged( soul )
 }
 
+void function WinWave()
+{
+	foreach( WaveEvent e in waveEvents[GetGlobalNetInt( "FD_currentWave" )] )
+	{
+		e.timesExecuted = e.executeOnThisCall
+	}
+}
+
+/* Extra Content
+███████╗██╗  ██╗████████╗██████╗  █████╗      ██████╗ ██████╗ ███╗   ██╗████████╗███████╗███╗   ██╗████████╗
+██╔════╝╚██╗██╔╝╚══██╔══╝██╔══██╗██╔══██╗    ██╔════╝██╔═══██╗████╗  ██║╚══██╔══╝██╔════╝████╗  ██║╚══██╔══╝
+█████╗   ╚███╔╝    ██║   ██████╔╝███████║    ██║     ██║   ██║██╔██╗ ██║   ██║   █████╗  ██╔██╗ ██║   ██║   
+██╔══╝   ██╔██╗    ██║   ██╔══██╗██╔══██║    ██║     ██║   ██║██║╚██╗██║   ██║   ██╔══╝  ██║╚██╗██║   ██║   
+███████╗██╔╝ ██╗   ██║   ██║  ██║██║  ██║    ╚██████╗╚██████╔╝██║ ╚████║   ██║   ███████╗██║ ╚████║   ██║   
+╚══════╝╚═╝  ╚═╝   ╚═╝   ╚═╝  ╚═╝╚═╝  ╚═╝     ╚═════╝ ╚═════╝ ╚═╝  ╚═══╝   ╚═╝   ╚══════╝╚═╝  ╚═══╝   ╚═╝   
+*/
+
 void function Drop_Spawnpoint( vector origin, int team, float impactTime )
 {
 	vector surfaceNormal = < 0, 0, 1 >
@@ -2292,41 +2419,6 @@ void function Drop_Spawnpoint( vector origin, int team, float impactTime )
 	wait impactTime
 	
 	EffectStop( effectEnemy )
-}
-
-void function OnFDHarvesterTargeted( entity titan )
-{
-	entity enemy = titan.GetEnemy()
-	if ( enemy == fd_harvester.harvester )
-	{
-		titan.SetCapabilityFlag( bits_CAP_INNATE_MELEE_ATTACK1 | bits_CAP_INNATE_MELEE_ATTACK2 | bits_CAP_SYNCED_MELEE_ATTACK, false )
-		titan.DisableNPCFlag( NPC_DIRECTIONAL_MELEE )
-	}
-	else if( enemy != null )
-	{
-		titan.EnableNPCFlag( NPC_DIRECTIONAL_MELEE )
-		if( enemy.IsTitan() )
-		{
-			titan.SetCapabilityFlag( bits_CAP_SYNCED_MELEE_ATTACK, true )
-			titan.SetCapabilityFlag( bits_CAP_INNATE_MELEE_ATTACK1 | bits_CAP_INNATE_MELEE_ATTACK2, false )
-		}
-		else
-		{
-			titan.SetCapabilityFlag( bits_CAP_INNATE_MELEE_ATTACK1 | bits_CAP_INNATE_MELEE_ATTACK2 | bits_CAP_SYNCED_MELEE_ATTACK, true )
-		}
-	}
-}
-
-void function GruntTargetsTitan( entity guy )
-{
-	entity enemy = guy.GetEnemy()
-	if( enemy != null )
-	{
-		if( enemy.IsTitan() )
-			guy.AssaultSetFightRadius( 800 )
-		else
-			guy.AssaultSetFightRadius( 0 )
-	}
 }
 
 vector function GetSkyCeiling( vector point )
@@ -2351,23 +2443,6 @@ vector function GetSkyCeiling( vector point )
 
 	return skyOrigin
 }
-
-void function WinWave()
-{
-	foreach( WaveEvent e in waveEvents[GetGlobalNetInt( "FD_currentWave" )] )
-	{
-		e.timesExecuted = e.executeOnThisCall
-	}
-}
-
-/*
-███████╗██╗  ██╗████████╗██████╗  █████╗      ██████╗ ██████╗ ███╗   ██╗████████╗███████╗███╗   ██╗████████╗
-██╔════╝╚██╗██╔╝╚══██╔══╝██╔══██╗██╔══██╗    ██╔════╝██╔═══██╗████╗  ██║╚══██╔══╝██╔════╝████╗  ██║╚══██╔══╝
-█████╗   ╚███╔╝    ██║   ██████╔╝███████║    ██║     ██║   ██║██╔██╗ ██║   ██║   █████╗  ██╔██╗ ██║   ██║   
-██╔══╝   ██╔██╗    ██║   ██╔══██╗██╔══██║    ██║     ██║   ██║██║╚██╗██║   ██║   ██╔══╝  ██║╚██╗██║   ██║   
-███████╗██╔╝ ██╗   ██║   ██║  ██║██║  ██║    ╚██████╗╚██████╔╝██║ ╚████║   ██║   ███████╗██║ ╚████║   ██║   
-╚══════╝╚═╝  ╚═╝   ╚═╝   ╚═╝  ╚═╝╚═╝  ╚═╝     ╚═════╝ ╚═════╝ ╚═╝  ╚═══╝   ╚═╝   ╚══════╝╚═╝  ╚═══╝   ╚═╝   
-*/
 
 void function SpawnDrozFD( vector spawnpos, vector angles )
 {
@@ -2540,11 +2615,7 @@ void function MonitorPublicTitan( entity titan )
 		}
 	)
 
-	while( 1 )
-	{
-		trig.SetOrigin( titan.GetOrigin() )
-		WaitFrame()
-	}
+	WaitForever()
 }
 
 void function SetRespawnOfHelperTitan()
