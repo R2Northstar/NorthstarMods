@@ -93,6 +93,9 @@ function AiSoldiers_Init()
 	InitMilitiaTitles()
 
 	AddCallback_OnClientConnecting( AiSoldiers_InitPlayer )
+	#if GRUNT_CHATTER_MP_ENABLED
+		AddCallback_OnNPCKilled( GruntChatter_OnNPCKilled )
+	#endif
 
 	if ( GetDeveloperLevel() > 0 )
 		AddClientCommandCallback( "SpawnViewGrunt", ClientCommand_SpawnViewGrunt )
@@ -457,6 +460,35 @@ void function TrySpottedCallout( entity guy, entity enemy )
 	}
 }
 
+void function GruntChatter_OnNPCKilled( entity npcKilled, entity attacker, var damageInfo )
+{
+	if ( IsGrunt( npcKilled ) )
+	{
+		string deadGuySquadName = expect string( npcKilled.kv.squadname )
+		if ( deadGuySquadName == "" )
+			return
+
+		array<entity> squad = GetNPCArrayBySquad( deadGuySquadName )
+
+		entity speakingSquadMate = null
+
+		foreach( squadMate in squad )
+		{
+			if ( IsGrunt( squadMate ) )
+			{
+				speakingSquadMate = squadMate
+				break
+			}
+		}
+		if ( speakingSquadMate == null )
+			return
+
+		if ( squad.len() == 1 )
+			PlayGruntChatterMPLine( speakingSquadMate, "bc_squaddeplete" )
+		else if ( squad.len() > 0  )
+			PlayGruntChatterMPLine( speakingSquadMate, "bc_allygruntdown" )
+	}
+}
 
 //////////////////////////////////////////////////////////
 string function GetPlayerSpectreSquadName( entity player )
