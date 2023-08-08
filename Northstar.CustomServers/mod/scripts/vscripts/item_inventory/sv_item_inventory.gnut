@@ -8,6 +8,7 @@ global function PlayerInventory_EndCriticalSectionForWeaponOnEndFrame
 global function PlayerInventory_PushInventoryItem
 global function PlayerInventory_PushInventoryItemByBurnRef
 global function PlayerInventory_PopInventoryItem
+global function PlayerInventory_TakeAllInventoryItems
 global function PlayerInventory_CountBurnRef
 
 struct
@@ -19,11 +20,20 @@ void function Sv_ItemInventory_Init()
 {
 	AddCallback_OnClientConnected( Sv_ItemInventory_OnClientConnected )
 	AddCallback_OnPlayerGetsNewPilotLoadout( Sv_ItemInventory_OnPlayerGetsNewPilotLoadout )
+	AddCallback_GameStateEnter( eGameState.Prematch, PrematchClearInventory )
 }
 
 void function Sv_ItemInventory_OnClientConnected( entity player )
 {
 	file.playerInventoryStacks[ player ] <- []
+}
+
+void function PrematchClearInventory() // vanilla behavior
+{
+	foreach( entity player in GetPlayerArray() )
+	{
+		PlayerInventory_TakeAllInventoryItems( player )
+	}
 }
 
 void function Sv_ItemInventory_OnPlayerGetsNewPilotLoadout( entity player, PilotLoadoutDef newPilotLoadout )
@@ -138,6 +148,14 @@ void function PlayerInventory_PopInventoryItem( entity player )
 		}
 	}
 
+	return
+}
+
+void function PlayerInventory_TakeAllInventoryItems( entity player )
+{
+	file.playerInventoryStacks[ player ].clear()
+	waitthread PlayerInventory_TakeInventoryItem( player )
+	player.SetPlayerNetInt( "itemInventoryCount", 0 )
 	return
 }
 
