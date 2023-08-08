@@ -661,7 +661,8 @@ function ZapTarget( zapInfo, target, beamStartPos, beamEndPos, chainNum = 1 )
 				asset effect
 				string tag
 				entity weapon = expect entity( zapInfo.weapon )
-				if(IsValid( weapon )){
+				if ( IsValid( weapon ) )
+				{
 					target.TakeDamage( damageAmount, zapInfo.player, zapInfo.player, { origin = beamEndPos, force = Vector(0,0,0), scriptType = deathPackage, weapon = zapInfo.weapon, damageSourceId = dmgSourceID,criticalHitScale = zapInfo.weapon.GetWeaponSettingFloat( eWeaponVar.critical_hit_damage_scale ) } )
 				}
 				//vector dir = Normalize( beamEndPos - beamStartPos )
