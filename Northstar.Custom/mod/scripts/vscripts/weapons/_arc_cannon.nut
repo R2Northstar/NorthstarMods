@@ -660,7 +660,11 @@ function ZapTarget( zapInfo, target, beamStartPos, beamEndPos, chainNum = 1 )
 				// Do 3rd person effect on the body
 				asset effect
 				string tag
-				target.TakeDamage( damageAmount, zapInfo.player, zapInfo.player, { origin = beamEndPos, force = Vector(0,0,0), scriptType = deathPackage, weapon = zapInfo.weapon, damageSourceId = dmgSourceID,criticalHitScale = zapInfo.weapon.GetWeaponSettingFloat( eWeaponVar.critical_hit_damage_scale ) } )
+
+				entity weapon = expect entity( zapInfo.weapon )
+				if(IsValid( weapon )){
+					target.TakeDamage( damageAmount, zapInfo.player, zapInfo.player, { origin = beamEndPos, force = Vector(0,0,0), scriptType = deathPackage, weapon = zapInfo.weapon, damageSourceId = dmgSourceID,criticalHitScale = zapInfo.weapon.GetWeaponSettingFloat( eWeaponVar.critical_hit_damage_scale ) } )
+				}
 				//vector dir = Normalize( beamEndPos - beamStartPos )
 				//vector velocity = dir * 600
 				//PushPlayerAway( target, velocity )
