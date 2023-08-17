@@ -12,9 +12,10 @@ Branch made to expand Frontier Defense feature set by adding back cut content wh
 - Enemy Titans moves slower as they used to do in vanilla (Except Ronins, Mortars and Elites)
 - Enemy Titans will not melee the Harvester anymore as in vanilla
 - Nuke Titans will never melee and always spawn with shields regardless difficulty set as they also do in vanilla
+- Arc Titans have an option to use the Arc Cannon instead of Leadwall, making them similar to what they were in Titanfall 1
 - Harvester have proper damage filters, meaning certain enemies will hit it harder, again similar to vanilla behavior
-- Aside from Forwardbase Kodai, Homestead and Rise, all other maps works with custom wave data, Colony, Glitch and Boomtown included
-- During wave break time, players do not respawn on dropship, neither new connecting players
+- Forwardbase Kodai, Homestead, Rise, Angel City and Drydock have waves based off vanilla spawns, all other maps utilizes custom waves
+- During wave break time, players do not respawn on dropship, neither new connecting players, they will deploy via Drop Pod instead
 - Reapers will deploy ticks, despite them still not being able to parkour through the map, they still pose a high threat
 - Like in vanilla, Titan selection menu now only appears on match start, and players can still select another Titan during the entirety of Wave 1, after that, Titans selection locks and Wave Restarts does not bring the Titan selection menu anymore
 - Fixes Autotitans not having overlay on them to see them through walls
@@ -29,11 +30,13 @@ Branch made to expand Frontier Defense feature set by adding back cut content wh
 
 `Titanfall Block` is a mechanic where Davis will say he can't drop a Titan anymore in the middle of a wave, from that moment until the end of the wave all players will stop earning their Titan meters, if their meter is full and ready to call, it will empty and lock on 0%. Pilots with Titans will still remain with theirs, losing it is permanent. This mechanic brings up a whole new perspective for players whereas they should play more carefully with their Titans, and those who lost theirs should be aiding the others by stealing batteries from the enemies.
 
-`Elite Titans` are buffed up variants of normal Titans, they are:
+`Elite Titans` are buffed up variants of normal Titans, they are piloted by Grunts with the following properties:
+- Uses Prime Titan models
 - Not affected by the difficulty rules, meaning they will always spawn with a huge shield amount and an even bigger health pool
-- They do not move slower like the normal Titans
-- They have better accuracy
-- They can potentially use their Cores
+- No slower movement like the normal Titans
+- Better accuracy
+- Can use their Cores
+- They can Execute Players
 - Drop a Battery on Easy and Regular Difficulties or drop an Amped Battery in Hard, Master and Insane difficulties similar to campaign Titans
 
 ## Live Fire Gameplay Changes
