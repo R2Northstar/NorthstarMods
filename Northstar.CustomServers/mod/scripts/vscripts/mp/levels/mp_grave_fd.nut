@@ -880,16 +880,6 @@ void function RegisterCustomFDContent()
 {
 	SpawnFDHeavyTurret( < 2628, -5387, 2226 >, < 0, 45, 0 >, < 2540, -5300, 2226 >, < 0, -90, 0 > )
 	
-	AddFDCustomProp( $"models/vehicles_r2/vehicles/samson/samson.mdl", < 4405, -2837, 2088 >, < 0, -180, 0 > )
-	AddFDCustomProp( $"models/vehicles_r2/vehicles/samson/samson.mdl", < 2552, -2627, 2183 >, < 0, -125, 0 > )
-	AddFDCustomProp( $"models/vehicles_r2/vehicles/samson/samson.mdl", < 3010, -4890, 2242 >, < 0, 135, 0 > )
-	AddFDCustomProp( $"models/vehicles_r2/vehicles/samson/samson.mdl", < 6544, -3788, 2242 >, < 0, -135, 0 > )
-	AddFDCustomProp( $"models/vehicles_r2/vehicles/samson/samson.mdl", < 5693, -5105, 2242 >, < 0, 0, 0 > )
-	AddFDCustomProp( $"models/vehicle/vehicle_truck_modular/vehicle_truck_modular_closed_bed_runoff.mdl", < -1345, -2913, 2004 >, < 0, -90, 0 > )
-	AddFDCustomProp( $"models/vehicle/vehicle_truck_modular/vehicle_truck_modular_closed_bed_runoff.mdl", < 7566, -5137, 2213 >, < -3, -135, 0 > )
-	AddFDCustomProp( $"models/vehicle/vehicle_truck_modular/vehicle_truck_modular_closed_bed_runoff.mdl", < 8249, -6205, 2235 >, < 0, -90, 0 > )
-	AddFDCustomProp( $"models/vehicle/vehicle_truck_modular/vehicle_truck_modular_closed_bed_runoff.mdl", < 5450, -2574, 2231 >, < 0, 90, 0 > )
-	
 	AddStationaryAIPosition(< 1808, -1942, 2167 >, eStationaryAIPositionTypes.SNIPER_TITAN)
 	AddStationaryAIPosition(< 4503, -6460, 2242 >, eStationaryAIPositionTypes.SNIPER_TITAN)
 	AddStationaryAIPosition(< 5025, -3465, 2253 >, eStationaryAIPositionTypes.SNIPER_TITAN)

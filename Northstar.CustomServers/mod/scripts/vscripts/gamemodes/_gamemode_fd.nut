@@ -160,6 +160,7 @@ void function GamemodeFD_Init()
 	AddDamageCallback( "npc_turret_sentry", RevivableTurret_DamageCallback )
 	AddDamageCallback( "npc_turret_mega", HeavyTurret_DamageCallback )
 	AddDamageFinalCallback( "npc_titan", FD_DamageToMoney )
+	AddCallback_OnTitanDoomed( EliteTitanExecutionCheck )
 	
 	//Spawn Callbacks
 	AddSpawnCallback( "npc_titan", HealthScaleByDifficulty )
@@ -274,22 +275,22 @@ void function UpdateEarnMeter_ByPlayersInMatch()
 	switch( numplayers.len() )
 	{
 		case 0:
+			ScoreEvent_SetEarnMeterValues( "FDAirDroneKilled", 0.0, 0.4 )
+			ScoreEvent_SetEarnMeterValues( "FDGruntKilled", 0.0, 0.4 )
+			ScoreEvent_SetEarnMeterValues( "FDSpectreKilled", 0.0, 0.4 )
+			ScoreEvent_SetEarnMeterValues( "FDStalkerKilled", 0.0, 0.4 )
+			ScoreEvent_SetEarnMeterValues( "FDSuperSpectreKilled", 0.0, 0.85 )
+			ScoreEvent_SetEarnMeterValues( "Execution", 0.0, 1.0 )
+			ScoreEvent_SetEarnMeterValues( "PilotBatteryApplied", 0.0, 1.0 )
+			ScoreEvent_SetEarnMeterValues( "PilotBatteryStolen", 0.0, 1.0 )
+			break
+		case 1:
 			ScoreEvent_SetEarnMeterValues( "FDAirDroneKilled", 0.0, 0.3 )
 			ScoreEvent_SetEarnMeterValues( "FDGruntKilled", 0.0, 0.3 )
 			ScoreEvent_SetEarnMeterValues( "FDSpectreKilled", 0.0, 0.3 )
 			ScoreEvent_SetEarnMeterValues( "FDStalkerKilled", 0.0, 0.3 )
 			ScoreEvent_SetEarnMeterValues( "FDSuperSpectreKilled", 0.0, 0.5 )
-			ScoreEvent_SetEarnMeterValues( "Execution", 0.0, 0.5 )
-			ScoreEvent_SetEarnMeterValues( "PilotBatteryApplied", 0.0, 1.0 )
-			ScoreEvent_SetEarnMeterValues( "PilotBatteryStolen", 0.0, 1.0 )
-			break
-		case 1:
-			ScoreEvent_SetEarnMeterValues( "FDAirDroneKilled", 0.0, 0.2 )
-			ScoreEvent_SetEarnMeterValues( "FDGruntKilled", 0.0, 0.2 )
-			ScoreEvent_SetEarnMeterValues( "FDSpectreKilled", 0.0, 0.2 )
-			ScoreEvent_SetEarnMeterValues( "FDStalkerKilled", 0.0, 0.2 )
-			ScoreEvent_SetEarnMeterValues( "FDSuperSpectreKilled", 0.0, 0.3 )
-			ScoreEvent_SetEarnMeterValues( "Execution", 0.0, 0.3 )
+			ScoreEvent_SetEarnMeterValues( "Execution", 0.0, 0.8 )
 			ScoreEvent_SetEarnMeterValues( "PilotBatteryApplied", 0.0, 0.8 )
 			ScoreEvent_SetEarnMeterValues( "PilotBatteryStolen", 0.0, 0.8 )
 			break
@@ -490,10 +491,7 @@ void function mainGameLoop()
 		WaitFrame()
 	}
 	
-	if( GetGlobalNetInt( "FD_currentWave" ) == 0 )
-		PlayFactionDialogueToTeam( "fd_modeDesc", TEAM_MILITIA )
 	startHarvester()
-	
 	int waveNumber = GetGlobalNetInt( "FD_currentWave" )
 	
 	if( !file.waveRestart )
@@ -1057,7 +1055,7 @@ void function FD_Epilogue_threaded()
 	AllPlayersMuteAll( 4 )
 	wait 5
 	AllPlayersUnMuteAll()
-	foreach(entity player in GetPlayerArrayOfTeam( TEAM_MILITIA ) )
+	foreach( entity player in GetPlayerArrayOfTeam( TEAM_MILITIA ) )
 	{
 		MuteHalfTime( player )
 		player.FreezeControlsOnServer()
@@ -1078,7 +1076,7 @@ void function FD_Epilogue_threaded()
 	table<entity, string> awardResults
 	table<entity, float> awardResultValues
 
-	foreach(string ref,entity player in awardOwners)
+	foreach( string ref,entity player in awardOwners )
 	{
 		if( awardValues[ref] >  GetFDStatData( ref ).validityCheckValue ) //might be >=
 		{
@@ -1269,6 +1267,9 @@ void function OnPlayerDisconnectedOrDestroyed( entity player )
 	if( file.playersInDropship.contains( player ) )
 		file.playersInDropship.fastremovebyvalue( player )
 	
+	foreach( string ref in GetFDStatRefs() ) //Clear out disconnecting players so the postcards don't show less than 4 when server has more than 4 slots
+		file.playerAwardStats[player][ref] = 0.0
+	
 	UpdateEarnMeter_ByPlayersInMatch()
 	
 	foreach ( entity npc in GetEntArrayByClass_Expensive( "C_AI_BaseNPC" ) )
@@ -1280,7 +1281,7 @@ void function OnPlayerDisconnectedOrDestroyed( entity player )
 	
 	if( !IsValidPlayer( player ) )
 	{
-		ClearInValidTurret()
+		ClearInvalidTurret()
 		return
 	}
 }
@@ -1440,7 +1441,7 @@ void function TrackDeployedArcTrapThisRound( entity player )
 			if ( IsValidPlayer( player ) )
 				OnPlayerDisconnectedOrDestroyed( player )
 			else
-				ClearInValidTurret()
+				ClearInvalidTurret()
 		}
 	)
 
@@ -1467,6 +1468,8 @@ void function TryDisableTitanSelectionForPlayerAfterDelay( entity player, float 
 		DisableTitanSelectionForPlayer( player )
 		if( GetGlobalNetInt( "FD_waveState") == WAVE_STATE_BREAK ) //On wave break, let joiners have their Titan instantly
 			PlayerEarnMeter_AddEarnedAndOwned( player, 1.0, 1.0 )
+		else if( GetGlobalNetInt( "FD_waveState") == WAVE_STATE_IN_PROGRESS )
+			MessageToPlayer( player, eEventNotifications.FD_AnnounceWaveStart )
 	}
 	
 	else if ( waveNumber > 1 && !PlayerEarnMeter_Enabled() && !file.isLiveFireMap ) //Lets joiners know why their Titan Meter is not building up if they joined during a Titanfall Block event
@@ -1702,14 +1705,53 @@ void function FD_DamageToMoney( entity victim, var damageInfo )
 	}
 }
 
+void function EliteTitanExecutionCheck( entity ent, var damageInfo )
+{
+	int damageType = DamageInfo_GetCustomDamageType( damageInfo )
+	entity attacker = DamageInfo_GetAttacker( damageInfo )
+
+	if ( !IsAlive( ent ) || !attacker || ent.GetTeam() != TEAM_MILITIA || attacker == ent || !ent.IsTitan() )
+		return
+	
+	entity soul = ent.GetTitanSoul()
+	if( attacker.IsNPC() && attacker.IsTitan() )
+	{
+		if( IsValid( soul ) && attacker.ai.bossTitanType == TITAN_MERC && (damageType & DF_MELEE) )
+		{
+			if( CodeCallback_IsValidMeleeExecutionTarget( attacker, ent ) && !GetDoomedState( attacker ) ) //Doomed Elites cant execute
+			{
+				//If the player is already doomed, then just execute, if the next melee damage brings it to Doom state, wait to execute
+				if( GetDoomedState( ent ) )
+				{
+					thread PlayerTriesSyncedMelee( attacker, ent )
+					ent.SetNoTarget( true ) //Prevents other nearby AI Titans from Moshing the victim
+				}
+				else
+					thread EliteExecutionDelayed( attacker, ent )
+			}
+		}
+	}
+}
+
+void function EliteExecutionDelayed( entity attacker, entity ent )
+{
+	wait 0.1
+	entity soul = ent.GetTitanSoul()
+	if( CodeCallback_IsValidMeleeExecutionTarget( attacker, ent ) && ent.IsTitan() && IsValid( soul ) && !GetDoomedState( attacker ) )
+	{
+		if( GetDoomedState( ent ) && (!SoulHasPassive( soul, ePassives.PAS_RONIN_AUTOSHIFT ) || !SoulHasPassive( soul, ePassives.PAS_AUTO_EJECT )) ) //Respect Stealth Auto-Eject and Phase-Reflex
+		{
+			thread PlayerTriesSyncedMelee( attacker, ent )
+			ent.SetNoTarget( true ) //Again, no Moshing against the victim
+		}
+	}
+}
+
 void function DamageScaleByDifficulty( entity ent, var damageInfo )
 {
 	entity attacker = DamageInfo_GetAttacker( damageInfo )
 
-	if ( !attacker )
-		return
-
-	if ( ent.GetTeam() != TEAM_MILITIA )
+	if ( !attacker || ent.GetTeam() != TEAM_MILITIA || attacker == ent )
 		return
 
 	int damageSourceID = DamageInfo_GetDamageSourceIdentifier( damageInfo )
@@ -1724,7 +1766,7 @@ void function DamageScaleByDifficulty( entity ent, var damageInfo )
 	{
 		if ( attacker.IsPlayer() && !GetGlobalNetBool( "FD_waveActive" ) )
 		{
-			SendHudMessage( attacker, "Do NOT Attack Defending players during Wave Breaks!", -1, 0.4, 255, 255, 255, 255, 0.15, 3.0, 0.5 )
+			SendHudMessage( attacker, "Do NOT Attack Defending players during Wave Breaks!", -1, 0.4, 255, 0, 0, 255, 0.15, 3.0, 0.5 )
 			if( IsAlive( attacker ) )
 				attacker.Die()
 			return
@@ -1741,38 +1783,47 @@ void function DamageScaleByDifficulty( entity ent, var damageInfo )
 				case eDamageSourceId.mp_weapon_softball:
 				case eDamageSourceId.mp_weapon_satchel:
 				case eDamageSourceId.mp_weapon_pulse_lmg:
-				DamageInfo_SetDamage( damageInfo, damageAmount * 0.2 )
+				DamageInfo_ScaleDamage( damageInfo, 0.2 )
 				break
 				
 				default:
-				DamageInfo_SetDamage( damageInfo, damageAmount * 0.4 )
+				DamageInfo_ScaleDamage( damageInfo, 0.4 )
 			}
 			return
 		}
 		else if( IsValid( GetPetTitanOwner( attacker ) ) )
 		{
-			DamageInfo_SetDamage( damageInfo, damageAmount * 0.4 )
+			DamageInfo_ScaleDamage( damageInfo, 0.4 )
 			return
 		}
 	}
-
-	if ( attacker == ent ) // dont scale self damage
-		return
 	
-	//Arc Waves and Charge Rifles do not scale (Both Arc/Ronin Titans and Grunts can chomp too much health if they land these attacks on the player)
-	if ( damageSourceID == eDamageSourceId.mp_titanweapon_arc_wave || damageSourceID == eDamageSourceId.mp_weapon_defender || damageSourceID == eDamageSourceId.mp_weapon_rocket_launcher || damageSourceID == eDamageSourceId.mp_weapon_arc_launcher )
-		return
-		
-	if ( damageSourceID == eDamageSourceId.prowler_melee ) //Prowlers being basically hitkill on FD ain't fun
+	//Arc Waves and AT-Weapons do not scale (Both Arc/Ronin Titans and Grunts can chomp too much health if they land these attacks on the player)
+	switch( damageSourceID )
 	{
-		DamageInfo_SetDamage( damageInfo, damageAmount * 0.2 )
+		case eDamageSourceId.mp_titanweapon_arc_wave:
+		case eDamageSourceId.mp_weapon_defender:
+		case eDamageSourceId.mp_weapon_rocket_launcher:
+		case eDamageSourceId.mp_weapon_arc_launcher:
+		return
+		case eDamageSourceId.prowler_melee: //Prowlers being basically hitkill on FD ain't fun
+		DamageInfo_ScaleDamage( damageInfo, 0.2 )
 		return
 	}
+	
+	int damageType = DamageInfo_GetCustomDamageType( damageInfo )
+	if( difficultyLevel == eFDDifficultyLevel.EASY || difficultyLevel == eFDDifficultyLevel.NORMAL ) //Buff Elites melee damage only for non-multiplied damage difficulties
+	{
+		if( attacker.IsNPC() && attacker.IsTitan() && attacker.ai.bossTitanType == TITAN_MERC && (damageType & DF_MELEE) && !GetDoomedState( attacker ) )
+			DamageInfo_ScaleDamage( damageInfo, 1.5 )
+	}
+	
+	EliteTitanExecutionCheck( ent, damageInfo )
 	
 	if ( damageSourceID == eDamageSourceId.damagedef_stalker_powersupply_explosion_large_at && ent.IsPlayer() && ent.IsTitan() ) //Warn Titan players about Stalkers
 		PlayFactionDialogueToPlayer( "fd_stalkerExploNag", ent )
 
-	DamageInfo_SetDamage( damageInfo, damageAmount * GetCurrentPlaylistVarFloat( "fd_player_damage_scalar", 1.0 ) )
+	DamageInfo_ScaleDamage( damageInfo, GetCurrentPlaylistVarFloat( "fd_player_damage_scalar", 1.0 ) )
 }
 
 void function OnHarvesterDamaged( entity harvester, var damageInfo )
@@ -1822,7 +1873,7 @@ void function OnHarvesterDamaged( entity harvester, var damageInfo )
 
 	fd_harvester.lastDamage = Time()
 
-	damageAmount = ( damageAmount * GetCurrentPlaylistVarFloat( "fd_player_damage_scalar", 1.0 ) )
+	damageAmount *= GetCurrentPlaylistVarFloat( "fd_player_damage_scalar", 1.0 )
 	damageAmount *= MultiplierPerPlayer * PlayersInMatch
 	
 	//All of this is factored after difficulty damage multipliers, so probably on Master and Insane difficulty only one Nuke Titan should almost end the Harvester even with full shields
@@ -1978,7 +2029,7 @@ void function OnHarvesterDamaged( entity harvester, var damageInfo )
 	{
 		//Laser core does absurd damage against Harvester shield
 		case eDamageSourceId.mp_titancore_laser_cannon:
-		DamageInfo_SetDamage( damageInfo, DamageInfo_GetDamage( damageInfo ) / 10 )
+		DamageInfo_ScaleDamage( damageInfo, 0.1 )
 		break
 		
 		//Other cores kinda does too but not as much
@@ -1986,36 +2037,31 @@ void function OnHarvesterDamaged( entity harvester, var damageInfo )
 		case eDamageSourceId.mp_titanweapon_flightcore_rockets:
 		case eDamageSourceId.mp_titancore_flame_wave:
 		case eDamageSourceId.mp_titanweapon_sniper:
-		DamageInfo_SetDamage( damageInfo, DamageInfo_GetDamage( damageInfo ) / 4 )
+		DamageInfo_ScaleDamage( damageInfo, 0.25 )
 		break
 
 		case eDamageSourceId.mp_titanweapon_arc_cannon:
 		case eDamageSourceId.damagedef_nuclear_core: //Multiplier for Nuke Titans against shield is lower because the discrepancy between Harvester health pool and Shield amount pool
-    	DamageInfo_SetDamage( damageInfo, DamageInfo_GetDamage( damageInfo ) * 6 )
+    	DamageInfo_ScaleDamage( damageInfo, 6.0 )
 		break
 	
 		case eDamageSourceId.damagedef_stalker_powersupply_explosion_small:
 		case eDamageSourceId.mp_weapon_super_spectre:
 		case eDamageSourceId.super_spectre_melee:
-    	DamageInfo_SetDamage( damageInfo, DamageInfo_GetDamage( damageInfo ) * 2 )
+    	DamageInfo_ScaleDamage( damageInfo, 2.0 )
 		break
 		
 		case eDamageSourceId.damagedef_stalker_powersupply_explosion_large:
 		case eDamageSourceId.damagedef_frag_drone_explode_FD:
 		case eDamageSourceId.mp_titanweapon_rocketeer_rocketstream:
 		case eDamageSourceId.mp_weapon_rocket_launcher:
-    	DamageInfo_SetDamage( damageInfo, DamageInfo_GetDamage( damageInfo ) * 4 )
+    	DamageInfo_ScaleDamage( damageInfo, 4.0 )
 		break
 		
 		case eDamageSourceId.mp_weapon_droneplasma:
-    	DamageInfo_SetDamage( damageInfo, DamageInfo_GetDamage( damageInfo ) * 10 )
+    	DamageInfo_ScaleDamage( damageInfo, 10.0 )
 		break
 	}
-
-	/*
-	if ( attacker.IsPlayer() )
-		attacker.NotifyDidDamage( harvester, DamageInfo_GetHitBox( damageInfo ), DamageInfo_GetDamagePosition( damageInfo ), DamageInfo_GetCustomDamageType( damageInfo ), DamageInfo_GetDamage( damageInfo ), DamageInfo_GetDamageFlags( damageInfo ), DamageInfo_GetHitGroup( damageInfo ), DamageInfo_GetWeapon( damageInfo ), DamageInfo_GetDistFromAttackOrigin( damageInfo ) )
-	*/
 }
 
 
@@ -2045,21 +2091,7 @@ void function HealthScaleByDifficulty( entity ent )
 	if ( ent.IsTitan() && IsValid( GetPetTitanOwner( ent ) ) ) // in case we ever want pvp in FD
 		return
 
-	if ( ent.IsTitan() && ent.ai.bossTitanType == TITAN_MERC && elitesAllowed )
-	{
-		if( ent.GetAISettingsName() == "npc_titan_ogre_minigun_boss_fd_elite" )
-			ent.SetMaxHealth( ent.GetMaxHealth() + 15000 )
-		else
-			ent.SetMaxHealth( ent.GetMaxHealth() + 7500 )
-		ent.SetHealth( ent.GetMaxHealth() )
-		entity soul = ent.GetTitanSoul()
-		if( IsValid( soul ) )
-		{
-			soul.SetShieldHealthMax( 7500 )
-			soul.SetShieldHealth( 7500 )
-		}
-	}
-	else if ( ent.IsTitan() && ent.ai.bossTitanType == 0 )
+	if ( ent.IsTitan() && ent.ai.bossTitanType == 0 )
 		ent.SetMaxHealth( ent.GetMaxHealth() + GetCurrentPlaylistVarInt( "fd_titan_health_adjust", 0 ) )
 	else
 		ent.SetMaxHealth( ent.GetMaxHealth() + GetCurrentPlaylistVarInt( "fd_reaper_health_adjust", 0 ) )
@@ -2136,7 +2168,7 @@ void function AddTurretSentry( entity turret )
 		turret.SetHealth( DEPLOYABLE_TURRET_HEALTH )
 		turret.kv.AccuracyMultiplier = DEPLOYABLE_TURRET_ACCURACY_MULTIPLIER
 		turret.ai.buddhaMode = true
-		turret.SetNoTargetSmartAmmo( true ) //Prevents enemy Legion Smart Core to target them automatically
+		SetPreventSmartAmmoLock( turret, true ) //Prevents enemy Legion Smart Core to target them automatically
 		Highlight_SetFriendlyHighlight( turret , "sp_friendly_hero" )
 		Highlight_SetOwnedHighlight( turret , "sp_friendly_hero" )
 		turret.Highlight_SetParam( 1, 0, < 0, 0, 0 > )
@@ -2228,11 +2260,26 @@ void function GamemodeFD_OnPlayerKilled( entity victim, entity attacker, var dam
 
 void function OnNpcDeath( entity victim, entity attacker, var damageInfo )
 {
+	vector vec = RandomVec( 150 )
+	vector origin = victim.GetOrigin() + < 0, 0, 128 >
+	
 	//Killing unwanted NPCs instantly causes a crash
 	switch ( victim.GetClassName() )
 	{
 		case "npc_gunship":
-		case "npc_dropship":
+		case "npc_dropship": //Actually gonna make Dropship drop a "candy" if players manage to destroy it as a reward for that
+			entity battery = Rodeo_CreateBatteryPack()
+			battery.SetSkin( 2 )
+			battery.SetOrigin( origin )
+			battery.SetVelocity( < vec.x, vec.y, 400 > )
+			foreach( fx in battery.e.fxArray )
+				EffectStop( fx )
+			battery.e.fxArray.clear()
+			int attachID = battery.LookupAttachment( "fx_center" )
+			asset fx = BATTERY_FX_AMPED
+			if( IsValid( battery ) )
+				battery.e.fxArray.append( StartParticleEffectOnEntity_ReturnEntity( battery, GetParticleSystemIndex( fx ), FX_PATTACH_POINT_FOLLOW, attachID ) )
+			return
 		case "npc_marvin":
 		case "npc_prowler":
 		case "npc_pilot_elite":
@@ -2250,6 +2297,9 @@ void function OnNpcDeath( entity victim, entity attacker, var damageInfo )
 	}
 	
 	entity inflictor = DamageInfo_GetInflictor( damageInfo )
+	int victimTypeID = FD_GetAITypeID_ByString( victim.GetTargetName() )
+	int findIndex = spawnedNPCs.find( victim )
+	
 	if( IsPlayerControlledTurret( inflictor ) && inflictor.GetBossPlayer() == attacker && attacker in file.players )
 	{
 		file.playerAwardStats[attacker]["turretKills"] += 1.0
@@ -2258,14 +2308,11 @@ void function OnNpcDeath( entity victim, entity attacker, var damageInfo )
 	
 	if( victim.IsTitan() && attacker in file.players )
 		file.playerAwardStats[attacker]["titanKills"] += 1.0
-		
-	int victimTypeID = FD_GetAITypeID_ByString( victim.GetTargetName() )
 	
 	if( victimTypeID == eFD_AITypeIDs.TITAN_MORTAR || victimTypeID == eFD_AITypeIDs.SPECTRE_MORTAR )
 		if( attacker in file.players )
 			file.playerAwardStats[attacker]["mortarUnitsKilled"] += 1.0
 	
-	int findIndex = spawnedNPCs.find( victim )
 	if ( findIndex != -1 )
 	{
 		spawnedNPCs.remove( findIndex )
@@ -2337,22 +2384,25 @@ void function OnNpcDeath( entity victim, entity attacker, var damageInfo )
 	if ( money != 0 )
 		AddMoneyToPlayer( attacker , money )
 
-	if( !inflictor.IsNPC() ) //Turret and Auto-Titan kills should not chain killstreaks
+	if( IsValid( inflictor ) )
 	{
-		if ( DamageInfo_GetCustomDamageType( damageInfo ) & DF_HEADSHOT )
-			AddPlayerScore( attacker, "NPCHeadshot" )
-			
-		attacker.s.currentKillstreak++
-		if ( attacker.s.currentKillstreak == 4 )
-			AddPlayerScore( attacker, "Mayhem" )
-		else if ( attacker.s.currentKillstreak == 8 )
-			AddPlayerScore( attacker, "Onslaught" )
-		
-		if ( Time() - attacker.s.lastKillTime > CASCADINGKILL_REQUIREMENT_TIME )
+		if( !inflictor.IsNPC() && attacker.IsPlayer() ) //Turret and Auto-Titan kills should not chain killstreaks
 		{
-			attacker.s.currentTimedKillstreak = 0
-			attacker.s.currentKillstreak = 0
-			attacker.s.lastKillTime = Time()
+			if ( DamageInfo_GetCustomDamageType( damageInfo ) & DF_HEADSHOT )
+				AddPlayerScore( attacker, "NPCHeadshot" )
+				
+			attacker.s.currentKillstreak++
+			if ( attacker.s.currentKillstreak == 4 )
+				AddPlayerScore( attacker, "Mayhem" )
+			else if ( attacker.s.currentKillstreak == 8 )
+				AddPlayerScore( attacker, "Onslaught" )
+			
+			if ( Time() - attacker.s.lastKillTime > CASCADINGKILL_REQUIREMENT_TIME )
+			{
+				attacker.s.currentTimedKillstreak = 0
+				attacker.s.currentKillstreak = 0
+				attacker.s.lastKillTime = Time()
+			}
 		}
 	}
 
@@ -2386,8 +2436,6 @@ void function OnNpcDeath( entity victim, entity attacker, var damageInfo )
 	//Elite Titan battery drop code, they drops Amped Batteries on higher difficulties as reward
 	if ( victim.IsTitan() && victim.ai.bossTitanType == TITAN_MERC )
 	{
-		vector vec = RandomVec( 150 )
-		vector origin = victim.GetOrigin() + < 0, 0, 128 >
 		switch ( difficultyLevel )
 		{
 			case eFDDifficultyLevel.EASY:
@@ -2414,47 +2462,50 @@ void function OnNpcDeath( entity victim, entity attacker, var damageInfo )
 		}
 	}
 	
-	if( inflictor == attacker && !attacker.IsTitan() && victim.IsTitan() )
+	if( IsValid( inflictor ) )
 	{
-		string titanCharacterName = GetTitanCharacterName( victim )
-		
-		if ( Time() - attacker.s.lastKillTime <= CASCADINGKILL_REQUIREMENT_TIME )
+		if( !inflictor.IsNPC() && !attacker.IsTitan() && victim.IsTitan() )
 		{
-			attacker.s.currentTimedKillstreak++
+			string titanCharacterName = GetTitanCharacterName( victim )
 			
-			if ( attacker.s.currentTimedKillstreak == DOUBLEKILL_REQUIREMENT_KILLS )
-				AddPlayerScore( attacker, "DoubleKill" )
-			else if ( attacker.s.currentTimedKillstreak == TRIPLEKILL_REQUIREMENT_KILLS )
-				AddPlayerScore( attacker, "TripleKill" )
-			else if ( attacker.s.currentTimedKillstreak == MEGAKILL_REQUIREMENT_KILLS )
-				AddPlayerScore( attacker, "MegaKill" )
-			else if ( attacker.s.currentTimedKillstreak == 6 )
-				ShowLargePilotKillStreak( attacker )
-		}
+			if ( Time() - attacker.s.lastKillTime <= CASCADINGKILL_REQUIREMENT_TIME )
+			{
+				attacker.s.currentTimedKillstreak++
+				
+				if ( attacker.s.currentTimedKillstreak == DOUBLEKILL_REQUIREMENT_KILLS )
+					AddPlayerScore( attacker, "DoubleKill" )
+				else if ( attacker.s.currentTimedKillstreak == TRIPLEKILL_REQUIREMENT_KILLS )
+					AddPlayerScore( attacker, "TripleKill" )
+				else if ( attacker.s.currentTimedKillstreak == MEGAKILL_REQUIREMENT_KILLS )
+					AddPlayerScore( attacker, "MegaKill" )
+				else if ( attacker.s.currentTimedKillstreak == 6 )
+					ShowLargePilotKillStreak( attacker )
+			}
 
-		switch( titanCharacterName )
-		{
-			case "ion":
-				PlayFactionDialogueToPlayer( "kc_pilotkillIon", attacker )
-				break
-			case "tone":
-				PlayFactionDialogueToPlayer( "kc_pilotkillTone", attacker )
-				break
-			case "legion":
-				PlayFactionDialogueToPlayer( "kc_pilotkillLegion", attacker )
-				break
-			case "scorch":
-				PlayFactionDialogueToPlayer( "kc_pilotkillScorch", attacker )
-				break
-			case "ronin":
-				PlayFactionDialogueToPlayer( "kc_pilotkillRonin", attacker )
-				break
-			case "northstar":
-				PlayFactionDialogueToPlayer( "kc_pilotkillNorthstar", attacker )
-				break
-			default:
-				PlayFactionDialogueToPlayer( "kc_pilotkilltitan", attacker )
-				break
+			switch( titanCharacterName )
+			{
+				case "ion":
+					PlayFactionDialogueToPlayer( "kc_pilotkillIon", attacker )
+					break
+				case "tone":
+					PlayFactionDialogueToPlayer( "kc_pilotkillTone", attacker )
+					break
+				case "legion":
+					PlayFactionDialogueToPlayer( "kc_pilotkillLegion", attacker )
+					break
+				case "scorch":
+					PlayFactionDialogueToPlayer( "kc_pilotkillScorch", attacker )
+					break
+				case "ronin":
+					PlayFactionDialogueToPlayer( "kc_pilotkillRonin", attacker )
+					break
+				case "northstar":
+					PlayFactionDialogueToPlayer( "kc_pilotkillNorthstar", attacker )
+					break
+				default:
+					PlayFactionDialogueToPlayer( "kc_pilotkilltitan", attacker )
+					break
+			}
 		}
 	}
 }
@@ -2524,7 +2575,7 @@ function FD_OnEntityDestroyed( ent )
 		file.players[ player ].deployedEntityThisRound.fastremovebyvalue( ent )
 }
 
-void function ClearInValidTurret()
+void function ClearInvalidTurret()
 {
 	foreach( entity turret in GetNPCArrayByClass( "npc_turret_sentry" ) )
 	{
@@ -3716,12 +3767,14 @@ function HTUseBatteryFunc( batteryPortvar, playervar )
 	if( !IsValid( player ) || turret.GetHealth() == turret.GetMaxHealth() )
 		return
 	
-	float ownedValue = PlayerEarnMeter_GetOwnedFrac( player )
-	PlayerEarnMeter_SetOwnedFrac( player, clamp( ownedValue + 0.5, 0.0, 1.0) )
+	if ( PlayerEarnMeter_Enabled() )
+	{
+		float ownedValue = PlayerEarnMeter_GetOwnedFrac( player )
+		PlayerEarnMeter_SetOwnedFrac( player, clamp( ownedValue + 0.5, 0.0, 1.0) )
+	}
 	
 	file.playerAwardStats[player]["turretsRepaired"]++
 	AddPlayerScore( player, "FDRepairTurret" )
-	PlayerEarnMeter_AddEarnedAndOwned( player, 0.0, 0.7 )
 	player.AddToPlayerGameStat( PGS_DEFENSE_SCORE, FD_SCORE_REPAIR_TURRET )
 	UpdatePlayerScoreboard( player )
 	

@@ -2,37 +2,48 @@
 npc_titan_ogre_meteor_boss_fd_elite
 {
 	title 						"Elite Scorch"
+	showTitle					1
 	WeaponCapacity				"FromLoadout"
-	npc_titan_player_settings	"titan_ogre_meteor"
+	npc_titan_player_settings	"titan_ogre_scorch_prime"
 
 	BehaviorSelector			"behavior_titan_ogre_meteor"
 	
 	footstep_type			"scorch"
 
-	PainOnHeavyDamageThreshold		0
-	PainOnRepeatDamageThreshold		0
-	RepeatDamageTimeInterval		30
-	breakOutOfPainDamageThreshold	100
-	lightPainMinInterval			20
-	heavyPainMinInterval			40
+	painOnSurpriseHit				0
+	painWhileRunning				0
 	
-	evasiveCombatShieldPct				0
-	evasiveCombatHealthSegmentPct		0
-	evasiveCombatTotalHealthDiffPct 	0.1
-	evasiveCombatHealthChangeRateDiff	-7500
-	aggressiveCombatHealthSegmentPct	0.9
-	aggressiveCombatTotalHealthDiffPct 	0
-	aggresiveCombatHealthChangeRateDiff	-100
+	StrafeDodgeDamage				1500
+	PainOnHeavyDamageThreshold		10000
+	PainOnRepeatDamageThreshold		10000
+	RepeatDamageTimeInterval		30
+	breakOutOfPainDamageThreshold	5000
+	lightPainMinInterval			30
+	heavyPainMinInterval			60
+	reactChanceDefault				100
+	reactBulletChanceDefault		100
+	
+	evasiveCombatShieldPct					0.0
+	evasiveCombatHealthSegmentPct			0.0
+	evasiveCombatTotalHealthDiffPct 		0.1
+	evasiveCombatHealthChangeRateDiff		-7500
+	aggressiveCombatHealthSegmentPct		0.99
+	aggressiveCombatTotalHealthDiffPct 		0.1
+	aggressiveCombatHealthChangeRateDiff	-400
+	
+	aiEnemy_immediateThreatDist				800
+	aiEnemy_usePriorityDist					4000
+	chaseTryRunningDodgeWhenAimedAtMinDist	800
 	
 	waitBetweenWeaponBurst			0
 	resetBurstOnStopShootOverlay	1
 	
-	dodgePeriod					2
-	maxDodgePerPeriod			4
-
-	primaryCamoIndex 31
-	primarySkinIndex 1
+	blockPeriod					7
+	maxBlockPerPeriod			3
 	
+	dodgePeriod					2
+	maxDodgePerPeriod			1
+
 	titanCamoIndex 31
 	titanDecalIndex 0
 	titanSkinIndex 2

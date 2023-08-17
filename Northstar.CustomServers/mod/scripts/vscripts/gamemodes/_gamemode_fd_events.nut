@@ -975,11 +975,21 @@ void function PlayWarning( SmokeEvent smokeEvent, SpawnEvent spawnEvent, FlowCon
 		if( soundEvent.soundEventName == "fd_waveTypeEliteTitan" )
 		{
 			foreach( entity player in GetPlayerArray() )
-				NSSendLargeMessageToPlayer( player, "Elite Titan", "Always coated white. Huge health, huge shield, greater aiming, moves faster and can use Core. Drops battery on death.", 60, "rui/callsigns/callsign_17_col" )
+				thread AnnounceEliteTitansToPlayers( player )
 		}
 		#endif
 		PlayFactionDialogueToTeam( soundEvent.soundEventName, TEAM_MILITIA )
 	}
+}
+
+void function AnnounceEliteTitansToPlayers( entity player )
+{
+	#if SERVER
+	NSSendLargeMessageToPlayer( player, "Elite Titan", "Prime white chassis. Huge HP, huge shield, greater aiming, moves faster and can use Core. Drops battery on death.", 60, "rui/callsigns/callsign_17_col" )
+	wait 10
+	IsValidPlayer( player )
+		NSSendInfoMessageToPlayer( player, "WARNING: Elite Titans can execute players!" )
+	#endif
 }
 
 void function spawnSmoke( SmokeEvent smokeEvent, SpawnEvent spawnEvent, FlowControlEvent flowControlEvent, SoundEvent soundEvent )
@@ -1013,10 +1023,11 @@ void function spawnSmoke( SmokeEvent smokeEvent, SpawnEvent spawnEvent, FlowCont
 	smokenade.SetValueForModelKey( $"models/weapons/bullets/projectile_rocket_large.mdl" )
 	smokenade.kv.spawnflags = 0
 	smokenade.kv.solid = 0
-	smokenade.kv.fadescale = 0
+	smokenade.kv.fadedist = 32768
 	smokenade.kv.renderamt = 255
 	smokenade.kv.rendercolor = "255 255 255"
 	smokenade.SetParent( mover, "", false, 0 )
+	smokenade.EnableRenderAlways()
 	mover.SetOrigin( skypos )
 	mover.SetAngles( < 90, 0, 0 > )
 	DispatchSpawn( smokenade )
@@ -1295,19 +1306,19 @@ void function spawnGruntDropship( SmokeEvent smokeEvent, SpawnEvent spawnEvent, 
 	vector origin 		= spawnEvent.origin
 	origin.z 		   += 640 //Expected to people make coordinates in the ground so we add this up for the hover height
 	float yaw 			= spawnEvent.angles.y
-	int health 			= 7800
+	int health 			= 10000
+	int shield 			= 5000
 	
 	CallinData drop
 	InitCallinData( drop )
 	SetCallinStyle( drop, eDropStyle.ZIPLINE_NPC )
-	drop.dist 			= 1800
+	drop.dist 			= 1300
 	drop.origin 		= origin
 	drop.yaw 			= yaw
 	drop.team 			= TEAM_IMC
 	drop.squadname 		= squadName
 	
 	FlightPath flightPath
-	
 	flightPath = GetAnalysisForModel( DROPSHIP_MODEL, DROPSHIP_DROP_ANIM )
 	entity ref = CreateScriptRef()
 	ref.SetOrigin( origin )
@@ -1325,8 +1336,10 @@ void function spawnGruntDropship( SmokeEvent smokeEvent, SpawnEvent spawnEvent, 
 	SetSpawnOption_SquadName( dropship, squadName )
 	dropship.kv.solid = SOLID_VPHYSICS
 	DispatchSpawn( dropship )
-	dropship.SetHealth( health )
 	dropship.SetMaxHealth( health )
+	dropship.SetHealth( health )
+	dropship.SetShieldHealthMax( shield )
+	dropship.SetShieldHealth( shield )
 	dropship.EndSignal( "OnDeath" )
 	dropship.Signal( "WarpedIn" )
 	ref.Signal( "WarpedIn" )
@@ -1631,13 +1644,14 @@ void function SpawnIonTitan( SmokeEvent smokeEvent, SpawnEvent spawnEvent, FlowC
 	if ( GetConVarBool( "ns_fd_show_drop_points" ) )
 		thread Drop_Spawnpoint( spawnEvent.origin, TEAM_IMC, 5 )
 	PingMinimap( spawnEvent.origin.x, spawnEvent.origin.y, 4, 600, 150, 0 )
-	entity npc = CreateNPCTitan( "titan_atlas", TEAM_IMC, spawnEvent.origin, spawnEvent.angles)
+	entity npc = CreateNPCTitan( "titan_atlas", TEAM_IMC, spawnEvent.origin, spawnEvent.angles )
 	SetSpawnOption_Titanfall( npc )
 	npc.kv.reactChance = 60
 	if ( spawnEvent.titanType == 1 && elitesAllowed )
 	{
 		SetSpawnOption_AISettings( npc, "npc_titan_atlas_stickybomb_boss_fd_elite" )
 		SetTitanAsElite( npc )
+		SetSpawnOption_TitanSoulPassive4( npc, "pas_ion_lasercannon" )
 	}
 	else
 	{
@@ -1651,11 +1665,10 @@ void function SpawnIonTitan( SmokeEvent smokeEvent, SpawnEvent spawnEvent, FlowC
 	DispatchSpawn( npc )
 	if ( spawnEvent.titanType == 1 && elitesAllowed )
 	{
-		npc.EnableNPCFlag( NPC_NO_PAIN | NPC_NO_GESTURE_PAIN )
-		npc.SetActivityModifier( ACT_MODIFIER_STAGGER, false )
-		npc.SetCapabilityFlag( bits_CAP_NO_HIT_SQUADMATES, false )
-		HideCrit( npc )
-		ShowName( npc )
+		SetEliteTitanPostSpawn( npc )
+		npc.SetMaxHealth( npc.GetMaxHealth() + 7500 )
+		npc.SetHealth( npc.GetMaxHealth() )
+		npc.GetTitanSoul().soul.titanLoadout.titanExecution = "execution_ion_prime"
 	}
 	npc.SetDangerousAreaReactionTime( FD_TITAN_AOE_REACTTIME )
 	if( spawnEvent.entityGlobalKey != "" )
@@ -1680,6 +1693,8 @@ void function SpawnScorchTitan( SmokeEvent smokeEvent, SpawnEvent spawnEvent, Fl
 	{
 		SetSpawnOption_AISettings( npc, "npc_titan_ogre_meteor_boss_fd_elite" )
 		SetTitanAsElite( npc )
+		SetSpawnOption_TitanSoulPassive4( npc, "pas_scorch_flamecore" )
+		SetSpawnOption_TitanSoulPassive5( npc, "pas_scorch_selfdmg" )
 	}
 	else
 	{
@@ -1699,11 +1714,14 @@ void function SpawnScorchTitan( SmokeEvent smokeEvent, SpawnEvent spawnEvent, Fl
 	DispatchSpawn( npc )
 	if ( spawnEvent.titanType == 1 && elitesAllowed )
 	{
-		npc.EnableNPCFlag( NPC_NO_PAIN | NPC_NO_GESTURE_PAIN )
-		npc.SetActivityModifier( ACT_MODIFIER_STAGGER, false )
-		npc.SetCapabilityFlag( bits_CAP_NO_HIT_SQUADMATES, false )
-		HideCrit( npc )
-		ShowName( npc )
+		SetEliteTitanPostSpawn( npc )
+		npc.SetMaxHealth( npc.GetMaxHealth() + 7500 )
+		npc.SetHealth( npc.GetMaxHealth() )
+		npc.GetTitanSoul().soul.titanLoadout.titanExecution = "execution_scorch_prime"
+		
+		array<entity> primaryWeapons = npc.GetMainWeapons()
+		entity weapon = primaryWeapons[0]
+		weapon.AddMod( "fd_wpn_upgrade_2" )
 	}
 	npc.SetDangerousAreaReactionTime( FD_TITAN_AOE_REACTTIME )
 	if( spawnEvent.entityGlobalKey != "" )
@@ -1721,20 +1739,22 @@ void function SpawnRoninTitan( SmokeEvent smokeEvent, SpawnEvent spawnEvent, Flo
 	if ( GetConVarBool( "ns_fd_show_drop_points" ) )
 		thread Drop_Spawnpoint( spawnEvent.origin, TEAM_IMC, 5 )
 	PingMinimap( spawnEvent.origin.x, spawnEvent.origin.y, 4, 600, 150, 0 )
-	entity npc = CreateNPCTitan( "titan_stryder", TEAM_IMC, spawnEvent.origin, spawnEvent.angles)
+	entity npc = CreateNPCTitan( "titan_stryder", TEAM_IMC, spawnEvent.origin, spawnEvent.angles )
 	SetSpawnOption_Titanfall( npc )
 	npc.kv.reactChance = 60
 	if ( spawnEvent.titanType == 1 && elitesAllowed )
 	{
-		SetSpawnOption_AISettings (npc, "npc_titan_stryder_leadwall_boss_fd_elite" )
+		SetSpawnOption_AISettings( npc, "npc_titan_stryder_leadwall_boss_fd_elite" )
 		SetTitanAsElite( npc )
+		SetSpawnOption_TitanSoulPassive4( npc, "pas_ronin_swordcore" )
+		SetSpawnOption_TitanSoulPassive5( npc, "pas_ronin_weapon" )
 	}
 	else
 	{
 		if ( difficultyLevel == eFDDifficultyLevel.EASY || difficultyLevel == eFDDifficultyLevel.NORMAL )
-			SetSpawnOption_AISettings (npc, "npc_titan_stryder_leadwall" )
+			SetSpawnOption_AISettings( npc, "npc_titan_stryder_leadwall" )
 		else
-			SetSpawnOption_AISettings (npc, "npc_titan_stryder_leadwall_boss_fd" )
+			SetSpawnOption_AISettings( npc, "npc_titan_stryder_leadwall_boss_fd" )
 		
 		npc.kv.AccuracyMultiplier = 0.7
 		npc.kv.WeaponProficiency = eWeaponProficiency.AVERAGE
@@ -1743,10 +1763,12 @@ void function SpawnRoninTitan( SmokeEvent smokeEvent, SpawnEvent spawnEvent, Flo
 	DispatchSpawn( npc )
 	if ( spawnEvent.titanType == 1 && elitesAllowed )
 	{
-		npc.EnableNPCFlag( NPC_NO_PAIN | NPC_NO_GESTURE_PAIN )
-		npc.SetActivityModifier( ACT_MODIFIER_STAGGER, false )
-		npc.SetCapabilityFlag( bits_CAP_NO_HIT_SQUADMATES, false )
-		HideCrit( npc )
+		SetEliteTitanPostSpawn( npc )
+		npc.SetMaxHealth( npc.GetMaxHealth() + 7500 )
+		npc.SetHealth( npc.GetMaxHealth() )
+		npc.GetTitanSoul().soul.titanLoadout.titanExecution = "execution_ronin"
+		
+		npc.GetOffhandWeapon( OFFHAND_MELEE ).AddMod( "fd_sword_upgrade" )
 	}
 	if( spawnEvent.entityGlobalKey != "" )
 		GlobalEventEntitys[spawnEvent.entityGlobalKey] <- npc
@@ -1764,14 +1786,16 @@ void function SpawnToneTitan( SmokeEvent smokeEvent, SpawnEvent spawnEvent, Flow
 	if ( GetConVarBool( "ns_fd_show_drop_points" ) )
 		thread Drop_Spawnpoint( spawnEvent.origin, TEAM_IMC, 5 )
 	PingMinimap( spawnEvent.origin.x, spawnEvent.origin.y, 4, 600, 150, 0 )
-	entity npc = CreateNPCTitan( "titan_atlas", TEAM_IMC, spawnEvent.origin, spawnEvent.angles)
-	SetSpawnOption_AISettings( npc, "npc_titan_atlas_tracker_boss_fd" )
+	entity npc = CreateNPCTitan( "titan_atlas", TEAM_IMC, spawnEvent.origin, spawnEvent.angles )
 	SetSpawnOption_Titanfall( npc )
 	npc.kv.reactChance = 60
 	if ( spawnEvent.titanType == 1 && elitesAllowed )
 	{
 		SetSpawnOption_AISettings( npc, "npc_titan_atlas_tracker_boss_fd_elite" )
 		SetTitanAsElite( npc )
+		SetSpawnOption_TitanSoulPassive4( npc, "pas_tone_sonar" )
+		SetSpawnOption_TitanSoulPassive5( npc, "pas_tone_wall" )
+		SetSpawnOption_TitanSoulPassive6( npc, "pas_tone_rockets" )
 	}
 	else
 	{
@@ -1785,11 +1809,14 @@ void function SpawnToneTitan( SmokeEvent smokeEvent, SpawnEvent spawnEvent, Flow
 	DispatchSpawn( npc )
 	if ( spawnEvent.titanType == 1 && elitesAllowed )
 	{
-		npc.EnableNPCFlag( NPC_NO_PAIN | NPC_NO_GESTURE_PAIN )
-		npc.SetActivityModifier( ACT_MODIFIER_STAGGER, false )
-		npc.SetCapabilityFlag( bits_CAP_NO_HIT_SQUADMATES, false )
-		HideCrit( npc )
-		ShowName( npc )
+		SetEliteTitanPostSpawn( npc )
+		npc.SetMaxHealth( npc.GetMaxHealth() + 7500 )
+		npc.SetHealth( npc.GetMaxHealth() )
+		npc.GetTitanSoul().soul.titanLoadout.titanExecution = "execution_tone"
+		
+		entity tonesonar = npc.GetOffhandWeapon( OFFHAND_ANTIRODEO )
+		tonesonar.AddMod( "fd_sonar_duration" )
+		tonesonar.AddMod( "fd_sonar_damage_amp" )
 	}
 	npc.SetDangerousAreaReactionTime( FD_TITAN_AOE_REACTTIME )
 	if( spawnEvent.entityGlobalKey != "" )
@@ -1814,6 +1841,7 @@ void function SpawnLegionTitan( SmokeEvent smokeEvent, SpawnEvent spawnEvent, Fl
 	{
 		SetSpawnOption_AISettings( npc, "npc_titan_ogre_minigun_boss_fd_elite" )
 		SetTitanAsElite( npc )
+		SetSpawnOption_TitanSoulPassive4( npc, "pas_legion_spinup" )
 	}
 	else
 	{
@@ -1827,10 +1855,23 @@ void function SpawnLegionTitan( SmokeEvent smokeEvent, SpawnEvent spawnEvent, Fl
 	DispatchSpawn( npc )
 	if ( spawnEvent.titanType == 1 && elitesAllowed )
 	{
-		npc.EnableNPCFlag( NPC_NO_PAIN | NPC_NO_GESTURE_PAIN )
-		npc.SetActivityModifier( ACT_MODIFIER_STAGGER, false )
-		npc.SetCapabilityFlag( bits_CAP_NO_HIT_SQUADMATES, false )
-		HideCrit( npc )
+		SetEliteTitanPostSpawn( npc )
+		npc.SetMaxHealth( npc.GetMaxHealth() + 15000 )
+		npc.SetHealth( npc.GetMaxHealth() )
+		npc.kv.AccuracyMultiplier = 10.0 //Elite Legions don't ever use their cores, but this shall compensate passively, considering the gun's spread
+		npc.GetTitanSoul().soul.titanLoadout.titanExecution = "execution_legion"
+		
+		array<entity> primaryWeapons = npc.GetMainWeapons()
+		entity maingun = primaryWeapons[0]
+		maingun.AddMod( "fd_closerange_helper" )
+		maingun.AddMod( "fd_longrange_helper" )
+		maingun.AddMod( "fd_piercing_shots" )
+		maingun.AddMod( "SiegeMode" )
+		
+		entity gunshield = npc.GetOffhandWeapon( OFFHAND_SPECIAL )
+		gunshield.AddMod( "npc_more_shield" )
+		gunshield.AddMod( "npc_infinite_shield" )
+		gunshield.AddMod( "SiegeMode" )
 	}
 	npc.SetDangerousAreaReactionTime( FD_TITAN_AOE_REACTTIME )
 	if( spawnEvent.entityGlobalKey != "" )
@@ -1868,11 +1909,20 @@ void function SpawnMonarchTitan( SmokeEvent smokeEvent, SpawnEvent spawnEvent, F
 	DispatchSpawn( npc )
 	if ( spawnEvent.titanType == 1 && elitesAllowed )
 	{
-		npc.EnableNPCFlag( NPC_NO_PAIN | NPC_NO_GESTURE_PAIN )
-		npc.SetActivityModifier( ACT_MODIFIER_STAGGER, false )
-		npc.SetCapabilityFlag( bits_CAP_NO_HIT_SQUADMATES, false )
-		HideCrit( npc )
-		ShowName( npc )
+		SetEliteTitanPostSpawn( npc )
+		npc.SetMaxHealth( npc.GetMaxHealth() + 7500 )
+		npc.SetHealth( npc.GetMaxHealth() )
+		npc.GetTitanSoul().soul.titanLoadout.titanExecution = "execution_vanguard"
+		
+		array<entity> primaryWeapons = npc.GetMainWeapons()
+		entity maingun = primaryWeapons[0]
+		maingun.AddMod( "arc_rounds" )
+		maingun.AddMod( "rapid_reload" )
+		maingun.AddMod( "fd_vanguard_weapon_1" )
+		maingun.AddMod( "fd_vanguard_weapon_2" )
+		
+		npc.TakeOffhandWeapon( OFFHAND_ORDNANCE )
+		npc.GiveOffhandWeapon( "mp_titanweapon_shoulder_rockets", OFFHAND_ORDNANCE, ["mod_ordnance_core","upgradeCore_MissileRack_Vanguard"] )
 	}
 	npc.SetDangerousAreaReactionTime( FD_TITAN_AOE_REACTTIME )
 	if( spawnEvent.entityGlobalKey != "" )
@@ -1943,7 +1993,7 @@ void function spawnSniperTitan( SmokeEvent smokeEvent, SpawnEvent spawnEvent, Fl
 	if ( GetConVarBool( "ns_fd_show_drop_points" ) )
 		thread Drop_Spawnpoint( spawnEvent.origin, TEAM_IMC, 5 )
 	PingMinimap( spawnEvent.origin.x, spawnEvent.origin.y, 4, 600, 150, 0 )
-	entity npc = CreateNPCTitan( "titan_stryder", TEAM_IMC, spawnEvent.origin, spawnEvent.angles)
+	entity npc = CreateNPCTitan( "titan_stryder", TEAM_IMC, spawnEvent.origin, spawnEvent.angles )
 	SetSpawnOption_Titanfall( npc )
 	SetSpawnOption_Alert( npc )
 	npc.kv.AccuracyMultiplier = 2
@@ -1952,6 +2002,8 @@ void function spawnSniperTitan( SmokeEvent smokeEvent, SpawnEvent spawnEvent, Fl
 	{
 		SetSpawnOption_AISettings( npc, "npc_titan_stryder_sniper_boss_fd_elite" )
 		SetTitanAsElite( npc )
+		SetSpawnOption_TitanSoulPassive4( npc, "pas_northstar_cluster" )
+		SetSpawnOption_TitanSoulPassive5( npc, "pas_northstar_trap" )
 	}
 	else
 	{
@@ -1962,11 +2014,14 @@ void function spawnSniperTitan( SmokeEvent smokeEvent, SpawnEvent spawnEvent, Fl
 	DispatchSpawn( npc )
 	if ( spawnEvent.titanType == 1 && elitesAllowed )
 	{
-		npc.EnableNPCFlag( NPC_NO_PAIN | NPC_NO_GESTURE_PAIN )
-		npc.SetActivityModifier( ACT_MODIFIER_STAGGER, false )
-		npc.SetCapabilityFlag( bits_CAP_NO_HIT_SQUADMATES, false )
-		HideCrit( npc )
-		ShowName( npc )
+		SetEliteTitanPostSpawn( npc )
+		npc.SetMaxHealth( npc.GetMaxHealth() + 7500 )
+		npc.SetHealth( npc.GetMaxHealth() )
+		npc.GetTitanSoul().soul.titanLoadout.titanExecution = "execution_northstar"
+		
+		entity tethertrap = npc.GetOffhandWeapon( OFFHAND_SPECIAL )
+		tethertrap.AddMod( "fd_explosive_trap" )
+		tethertrap.AddMod( "fd_trap_charges" )
 	}
 	npc.DisableNPCFlag( NPC_ALLOW_INVESTIGATE )
 	npc.SetDangerousAreaReactionTime( FD_TITAN_AOE_REACTTIME )
@@ -1994,6 +2049,9 @@ void function SpawnToneSniperTitan( SmokeEvent smokeEvent, SpawnEvent spawnEvent
 	{
 		SetSpawnOption_AISettings( npc, "npc_titan_atlas_tracker_fd_sniper_elite" )
 		SetTitanAsElite( npc )
+		SetSpawnOption_TitanSoulPassive4( npc, "pas_tone_sonar" )
+		SetSpawnOption_TitanSoulPassive5( npc, "pas_tone_wall" )
+		SetSpawnOption_TitanSoulPassive6( npc, "pas_tone_rockets" )
 	}
 	else
 	{
@@ -2004,18 +2062,21 @@ void function SpawnToneSniperTitan( SmokeEvent smokeEvent, SpawnEvent spawnEvent
 	DispatchSpawn( npc )
 	if ( spawnEvent.titanType == 1 && elitesAllowed )
 	{
-		npc.EnableNPCFlag( NPC_NO_PAIN | NPC_NO_GESTURE_PAIN )
-		npc.SetActivityModifier( ACT_MODIFIER_STAGGER, false )
-		npc.SetCapabilityFlag( bits_CAP_NO_HIT_SQUADMATES, false )
-		HideCrit( npc )
-		ShowName( npc )
+		SetEliteTitanPostSpawn( npc )
+		npc.SetMaxHealth( npc.GetMaxHealth() + 7500 )
+		npc.SetHealth( npc.GetMaxHealth() )
+		npc.GetTitanSoul().soul.titanLoadout.titanExecution = "execution_tone_prime"
+		
+		entity tonesonar = npc.GetOffhandWeapon( OFFHAND_ANTIRODEO )
+		tonesonar.AddMod( "fd_sonar_duration" )
+		tonesonar.AddMod( "fd_sonar_damage_amp" )
 	}
-	npc.DisableNPCFlag( NPC_ALLOW_INVESTIGATE )
-	if ( spawnEvent.titanType == 0 )
+	else
 	{
 		npc.SetSkin( 8 )
 		npc.SetCamo( -1 )
 	}
+	npc.DisableNPCFlag( NPC_ALLOW_INVESTIGATE )
 	npc.SetDangerousAreaReactionTime( FD_TITAN_AOE_REACTTIME )
 	if( spawnEvent.entityGlobalKey != "" )
 		GlobalEventEntitys[spawnEvent.entityGlobalKey] <- npc
@@ -2098,7 +2159,7 @@ void function SpawnTick( SmokeEvent smokeEvent, SpawnEvent spawnEvent, FlowContr
 
 void function PingMinimap( float x, float y, float duration, float spreadRadius, float ringRadius, int colorIndex )
 {
-	foreach( entity player in GetPlayerArray() )
+	foreach( entity player in GetPlayerArrayOfTeam( TEAM_MILITIA ) )
 	{
 		Remote_CallFunction_NonReplay( player, "ServerCallback_FD_PingMinimap", x, y, duration, spreadRadius, ringRadius, colorIndex )
 		EmitSoundOnEntityOnlyToPlayer( player, player, "coop_minimap_ping" )
@@ -2362,15 +2423,45 @@ void function SetTitanAsElite( entity npc )
 	if( GetGameState() != eGameState.Playing || !IsHarvesterAlive( fd_harvester.harvester ) )
 		return
 	
+	Assert( IsValid( npc ) && npc.IsTitan(), "Entity is not a Titan to set as Elite: " + npc )
 	if ( npc.IsTitan() && elitesAllowed )
 	{
 		thread MonitorEliteTitanCore( npc )
 		SetSpawnOption_NPCTitan( npc, TITAN_MERC )
 		SetSpawnOption_TitanSoulPassive1( npc, "pas_enhanced_titan_ai" )
-		npc.kv.AccuracyMultiplier = 5
+		SetSpawnOption_TitanSoulPassive2( npc, "pas_defensive_core" )
+		SetSpawnOption_TitanSoulPassive3( npc, "pas_assault_reactor" )
+		npc.kv.AccuracyMultiplier = 5.0
 		npc.kv.reactChance = 100
 		npc.kv.WeaponProficiency = eWeaponProficiency.PERFECT
 		SetSpawnflags( npc, SF_TITAN_SOUL_NO_DOOMED_EVASSIVE_COMBAT )
+	}
+}
+
+void function SetEliteTitanPostSpawn( entity npc )
+{
+	if( GetGameState() != eGameState.Playing || !IsHarvesterAlive( fd_harvester.harvester ) )
+		return
+	
+	Assert( IsValid( npc ) && npc.IsTitan(), "Entity is not a Titan to set as Elite: " + npc )
+	if ( npc.IsTitan() && elitesAllowed )
+	{
+		npc.EnableNPCFlag( NPC_NO_PAIN | NPC_NO_GESTURE_PAIN | NPCMF_PREFER_SPRINT | NPC_AIM_DIRECT_AT_ENEMY )
+		npc.DisableNPCFlag( NPC_PAIN_IN_SCRIPTED_ANIM )
+		npc.EnableNPCMoveFlag( NPCMF_IGNORE_CLUSTER_DANGER_TIME )
+		npc.DisableNPCMoveFlag( NPCMF_WALK_NONCOMBAT )
+		npc.SetCapabilityFlag( bits_CAP_NO_HIT_SQUADMATES, false )
+		SetTitanWeaponSkin( npc )
+		HideCrit( npc )
+		ShowName( npc )
+		
+		entity soul = npc.GetTitanSoul()
+		if( IsValid( soul ) )
+		{
+			soul.SetPreventCrits( true )
+			soul.SetShieldHealthMax( 7500 )
+			soul.SetShieldHealth( 7500 )
+		}
 	}
 }
 
@@ -2442,6 +2533,19 @@ vector function GetSkyCeiling( vector point )
 	}
 
 	return skyOrigin
+}
+
+void function SetTitanWeaponSkin( entity npc, int skinindex = 1, int camoindex = 31 )
+{
+	Assert( IsValid( npc ) && npc.IsTitan(), "Entity is not a Titan to set as Elite: " + npc )
+	
+	if ( npc.IsTitan() )
+	{
+		array<entity> primaryWeapons = npc.GetMainWeapons()
+		entity weapon = primaryWeapons[0]
+		weapon.SetSkin( skinindex )
+		weapon.SetCamo( camoindex )
+	}
 }
 
 void function SpawnDrozFD( vector spawnpos, vector angles )
@@ -2567,7 +2671,7 @@ void function SpawnLFMapTitan_Threaded( vector spawnpos, vector angles )
 	npc.DisableNPCFlag( NPC_ALLOW_INVESTIGATE | NPC_ALLOW_PATROL )
 	npc.DisableBehavior("Follow")
 	DisableTitanRodeo( npc )
-	
+	npc.GetTitanSoul().soul.titanLoadout.titanExecution = "execution_vanguard"
 	TakeWeaponsForArray( npc, npc.GetMainWeapons() )
 	npc.TakeOffhandWeapon( OFFHAND_ORDNANCE )
 	npc.TakeOffhandWeapon( OFFHAND_SPECIAL )
@@ -2578,10 +2682,7 @@ void function SpawnLFMapTitan_Threaded( vector spawnpos, vector angles )
 	npc.GiveOffhandWeapon( "mp_titanweapon_salvo_rockets", OFFHAND_ORDNANCE )
 	npc.GiveOffhandWeapon( "mp_titanability_laser_trip", OFFHAND_ANTIRODEO, ["pas_ion_tripwire"] )
 	
-	array<entity> primaryWeapons = npc.GetMainWeapons()
-	entity weapon = primaryWeapons[0]
-	weapon.SetSkin( 1 )
-	weapon.SetCamo( 31 )
+	SetTitanWeaponSkin( npc )
 	
 	npc.WaitSignal( "TitanHotDropComplete" )
 	thread TitanKneel( npc )

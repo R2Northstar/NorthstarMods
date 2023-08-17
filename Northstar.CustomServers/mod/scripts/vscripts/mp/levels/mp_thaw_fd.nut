@@ -1017,10 +1017,10 @@ void function initFrontierDefenseData()
 
 void function RegisterCustomFDContent()
 {
-	entity Prowler1 = CreateNPC( "npc_prowler", TEAM_IMC, < 344, -1493, -194 >, < 0, 0, 0 > )
-	entity Prowler2 = CreateNPC( "npc_prowler", TEAM_IMC, < 88, -3942, -236 >, < 0, 0, 0 > )
-	entity Prowler3 = CreateNPC( "npc_prowler", TEAM_IMC, < 2403, 837, -297 >, < 0, 0, 0 > )
-	entity Prowler4 = CreateNPC( "npc_prowler", TEAM_IMC, < 763, 2439, -376 >, < 0, 0, 0 > )
+	entity Prowler1 = CreateNPC( "npc_prowler", TEAM_DAMAGE_ALL, < 344, -1493, -194 >, < 0, 0, 0 > )
+	entity Prowler2 = CreateNPC( "npc_prowler", TEAM_DAMAGE_ALL, < 88, -3942, -236 >, < 0, 0, 0 > )
+	entity Prowler3 = CreateNPC( "npc_prowler", TEAM_DAMAGE_ALL, < 2403, 837, -297 >, < 0, 0, 0 > )
+	entity Prowler4 = CreateNPC( "npc_prowler", TEAM_DAMAGE_ALL, < 763, 2439, -376 >, < 0, 0, 0 > )
 	
 	DispatchSpawn( Prowler1 )
 	DispatchSpawn( Prowler2 )
