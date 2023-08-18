@@ -2397,6 +2397,9 @@ void function GruntTargetsTitan( entity npc )
 {
 	Assert( IsValid( npc ) && IsGrunt( npc ), "Entity is not a Grunt: " + npc )
 	
+	OnEnemyChanged_TryHeavyArmorWeapon( npc )
+	OnEnemyChanged_MinionUpdateAimSettingsForEnemy( npc )
+	
 	entity enemy = npc.GetEnemy()
 	if( enemy != null )
 	{
@@ -2669,7 +2672,7 @@ void function SpawnLFMapTitan_Threaded( vector spawnpos, vector angles )
 		thread LFTitanShieldAndHealthRegenThink( soul )
 	thread MonitorPublicTitan( npc )
 	npc.DisableNPCFlag( NPC_ALLOW_INVESTIGATE | NPC_ALLOW_PATROL )
-	npc.DisableBehavior("Follow")
+	npc.DisableBehavior( "Follow" )
 	DisableTitanRodeo( npc )
 	npc.GetTitanSoul().soul.titanLoadout.titanExecution = "execution_vanguard"
 	TakeWeaponsForArray( npc, npc.GetMainWeapons() )
@@ -2688,35 +2691,46 @@ void function SpawnLFMapTitan_Threaded( vector spawnpos, vector angles )
 	thread TitanKneel( npc )
 }
 
-void function MonitorPublicTitan( entity titan )
+void function MonitorPublicTitan( entity monitoredtitan )
 {
-	entity soul = titan.GetTitanSoul()
-	entity trig = CreateEntity( "trigger_cylinder" )
-	trig.SetRadius( 192 )
-	trig.SetAboveHeight( 192 )
-	trig.SetBelowHeight( 32 )
-	trig.SetOrigin( titan.GetOrigin() )
-	trig.SetParent( titan )
-	trig.kv.triggerFilterNpc = "none"
-	trig.kv.triggerFilterPlayer = "all"
-	SetTeam( trig, TEAM_MILITIA )
-	DispatchSpawn( trig )
-	trig.SetEnterCallback( OnNearbyLFTitan )
-	trig.SetLeaveCallback( OnAwayFromLFTitan )
-
+	entity soul = monitoredtitan.GetTitanSoul()
 	soul.EndSignal( "OnDestroy" )
 	soul.EndSignal( "OnDeath" )
-
+	
 	OnThreadEnd(
-		function() : ( trig )
+		function () : ( soul )
 		{
-			if ( IsValid( trig ) )
-				trig.Destroy()
 			thread SetRespawnOfHelperTitan()
 		}
 	)
-
-	WaitForever()
+	
+	while( true )
+	{
+		entity titan = soul.GetTitan()
+		entity titanowner = GetPetTitanOwner( titan )
+		
+		foreach( entity player in GetPlayerArrayOfTeam( TEAM_MILITIA ) )
+		{
+			if( !titan.IsPlayer() )
+			{
+				if( !IsValid( titanowner ) && Distance( player.GetOrigin(), titan.GetOrigin() ) < 191 )
+				{
+					player.SetPetTitan( titan )
+					titan.SetBossPlayer( player )
+				}
+			}
+		}
+		
+		if( IsValid( titanowner ) && Distance( titanowner.GetOrigin(), titan.GetOrigin() ) > 192 )
+		{
+			titan.ClearBossPlayer()
+			soul.ClearBossPlayer()
+			titanowner.SetPetTitan( null )
+			thread LFTitanHideEarnMeterOnLeaveProximity( titanowner )
+		}
+		
+		wait 0.25
+	}
 }
 
 void function SetRespawnOfHelperTitan()
@@ -2742,25 +2756,6 @@ void function OnNearbyLFTitan( entity trig, entity activator )
 	{
 		activator.SetPetTitan( titan )
 		titan.SetBossPlayer( activator )
-	}
-}
-
-void function OnAwayFromLFTitan( entity trig, entity activator )
-{
-	if( !IsValidPlayer( activator ) )
-		return
-	
-	if( activator.GetTeam() != TEAM_MILITIA || activator.IsTitan() )
-		return
-	
-	entity titan = trig.GetParent()
-	entity soul = titan.GetTitanSoul()
-	if( !titan.IsPlayer() && Distance2D( titan.GetOrigin(), activator.GetOrigin() ) > 192 )
-	{
-		titan.ClearBossPlayer()
-		soul.ClearBossPlayer()
-		activator.SetPetTitan( null )
-		thread LFTitanHideEarnMeterOnLeaveProximity( activator )
 	}
 }
 
