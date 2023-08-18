@@ -1,0 +1,165 @@
+untyped
+
+global function MoveToSniperPosition
+global function SniperTitanThink
+
+const float SNIPER_TITAN_POSITION_SEARCH_RANGE = 8192
+
+
+
+void function MoveToSniperPosition( entity titan, vector origin, entity target )
+{
+	titan.EndSignal( "OnSyncedMeleeVictim" )
+	titan.EndSignal( "OnDeath" )
+	titan.EndSignal( "OnDestroy" )
+	target.EndSignal( "OnDeath" )
+	target.EndSignal( "OnDestroy" )
+
+	titan.SetHearingSensitivity( 0 )
+	titan.EnableNPCMoveFlag( NPCMF_PREFER_SPRINT )
+
+	float goalRadius = titan.GetMinGoalRadius()
+
+	OnThreadEnd(
+		function() : ( titan )
+		{
+			if ( !IsValid( titan ) )
+				return
+
+			local classname = titan.GetClassName()
+			titan.DisableNPCMoveFlag( NPCMF_PREFER_SPRINT )
+		}
+	)
+
+	local tries = 0
+	while( true )
+	{
+		local dist = Distance( titan.GetOrigin(), origin )
+		if ( dist <= goalRadius * 2 )
+			break
+
+		printt( "Sniper titan moving toward his goal", dist, tries++ )
+		titan.AssaultPoint( origin )
+		titan.AssaultSetGoalRadius( goalRadius )
+		titan.AssaultSetFightRadius( 0 )
+		local result = WaitSignal( titan, "OnFinishedAssault", "OnEnterGoalRadius" )
+		printt( "Sniper titan done moving into position")
+	}
+}
+
+void function SniperTitanThink( entity titan, entity generator)
+{
+	titan.EndSignal( "OnSyncedMeleeVictim" )
+	titan.EndSignal( "OnDeath" )
+	titan.EndSignal( "OnDestroy" )
+	generator.EndSignal( "OnDeath" )
+	generator.EndSignal( "OnDestroy" )
+
+	entity soul = titan.GetTitanSoul()
+	soul.EndSignal( "OnDestroy" )
+
+	titan.SetScriptName( "sniper_titan" )
+
+	WaitTillHotDropComplete( titan )
+
+	float minEngagementDuration = 5
+	StationaryAIPosition ornull sniperPosition = GetClosestAvailableStationaryPosition( titan.GetOrigin(), SNIPER_TITAN_POSITION_SEARCH_RANGE, eStationaryAIPositionTypes.SNIPER_TITAN )
+	while ( sniperPosition == null )
+	{
+		// incase all stationary titan positions are in use wait for one to become available
+		wait 5
+		sniperPosition = GetClosestAvailableStationaryPosition( titan.GetOrigin(), SNIPER_TITAN_POSITION_SEARCH_RANGE, eStationaryAIPositionTypes.SNIPER_TITAN )
+	}
+
+	expect StationaryAIPosition( sniperPosition )
+
+	ClaimStationaryAIPosition( sniperPosition )
+
+	OnThreadEnd(
+		function() : ( sniperPosition )
+		{
+			// release sniper position when dead
+			ReleaseStationaryAIPosition( sniperPosition )
+		}
+	)
+	
+	titan.SetEnemyChangeCallback( EnemyChanged )
+
+	while( true )
+	{
+		WaitFrame()
+		vector origin = sniperPosition.origin
+		waitthread MoveToSniperPosition( titan, origin, generator )
+
+		thread SniperTitanAttack( titan, generator )
+
+		waitthread WaitForInterruption( titan, generator )
+	}
+}
+
+void function EnemyChanged( entity titan )
+{
+	entity enemy = titan.GetEnemy()
+	if ( !IsValid( enemy ) ) // if you have no enemy, focus on attacking the harvester
+		thread SniperTitanAttack( titan, fd_harvester.harvester )
+}
+
+function SniperTitanAttack( entity titan, entity target )
+{
+	titan.EndSignal( "OnSyncedMeleeVictim" )
+	titan.EndSignal( "OnDeath" )
+	titan.EndSignal( "OnDestroy" )
+
+	OnThreadEnd(
+		function() : ( titan )
+		{
+			if ( !IsValid( titan ) )
+				return
+		}
+	)
+	
+	if( IsValid( target ) )
+		titan.SetEnemy( target )
+}
+
+void function WaitForInterruption( entity titan ,entity generator)
+{
+	Assert( IsNewThread(), "Must be threaded off" )
+
+	titan.EndSignal( "OnSyncedMeleeVictim" )
+	titan.EndSignal( "OnDeath" )
+	titan.EndSignal( "OnDestroy" )
+	generator.EndSignal( "OnDeath" )
+	generator.EndSignal( "OnDestroy" )
+
+	entity soul = titan.GetTitanSoul()
+	soul.EndSignal( "OnDestroy" )
+
+	float playerProximityDistSqr = pow( 256, 2 )
+	float healthBreakOff = ( titan.GetHealth() + soul.GetShieldHealth() ) * 0.9
+
+	while( true )
+	{
+		if ( IsEnemyWithinDist( titan, playerProximityDistSqr ) )
+			break
+		if ( ( titan.GetHealth() + soul.GetShieldHealth() ) < healthBreakOff )
+			break
+		wait 1
+	}
+
+	titan.ClearEnemy()
+}
+
+bool function IsEnemyWithinDist( entity titan, float dist )
+{
+	vector origin = titan.GetOrigin()
+	array<entity> players = GetPlayerArrayOfEnemies_Alive( titan.GetTeam() )
+
+	foreach( player in players )
+	{
+		if ( DistanceSqr( player.GetOrigin(), origin ) < dist )
+			return true
+	}
+
+	return false
+}

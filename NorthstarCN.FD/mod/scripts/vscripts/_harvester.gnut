@@ -1,0 +1,139 @@
+global function SpawnHarvester
+global function generateBeamFX
+global function sparksBeamFX
+global function generateShieldFX
+global function GetHarvesterBeamTriLerpColor
+
+global const HARVESTER_ANIM_IDLE			= "generator_idle"
+global const HARVESTER_ANIM_ACTIVATING		= "generator_rise"
+global const HARVESTER_ANIM_ACTIVE			= "generator_cycle_fast"
+global const HARVESTER_ANIM_ACTIVE_LOWHP	= "generator_cycle_slow"
+global const HARVESTER_ANIM_DESTROYED		= "generator_fall"
+
+global const HARVESTER_SND_STARTUP			= "coop_generator_startup"
+
+global const HARVESTER_SND_HEALTHY			= "coop_generator_ambient_healthy"
+global const HARVESTER_SND_DAMAGED			= "coop_generator_ambient_damaged"
+global const HARVESTER_SND_CRITICAL			= "coop_generator_ambient_critical"
+global const HARVESTER_SND_DESTROYED		= "coop_generator_destroyed"
+global const HARVESTER_SND_UNSTABLE			= "coop_generator_electrical_arcs"
+
+global const HARVESTER_SND_SHIELDFROMZERO	= "coop_generator_shieldrecharge_start"
+global const HARVESTER_SND_SHIELDFROMMID	= "coop_generator_shieldrecharge_resumeclick"
+global const HARVESTER_SND_SHIELDREGENLOOP	= "coop_generator_shieldrecharge_resume"
+global const HARVESTER_SND_SHIELDFULL		= "coop_generator_shieldrecharge_end"
+global const HARVESTER_SND_SHIELDBREAK		= "coop_generator_shielddown"
+
+global const HARVESTER_SND_KLAXON			= "coop_generator_underattack_alarm"
+
+const HARVESTER_BEAM_HEALTHY				= < 80, 180, 255 >
+const HARVESTER_BEAM_MEDIUM					= < 255, 192, 96 >
+const HARVESTER_BEAM_CRITICAL				= < 255, 64, 16 >
+
+global struct HarvesterStruct {
+	entity harvester
+	entity particleBeam
+	entity particleSparks
+	entity particleShield
+	entity rings
+	float lastDamage
+	bool shieldBoost
+	bool harvesterShieldDown
+	float harvesterDamageTaken
+	bool havesterWasDamaged
+}
+
+HarvesterStruct function SpawnHarvester( vector origin, vector angles, int health, int shieldHealth, int team )
+{
+	entity harvester = CreatePropScript( $"models/props/generator_coop/generator_coop.mdl", origin, angles, SOLID_VPHYSICS )
+
+	harvester.SetMaxHealth( health )
+	harvester.SetHealth( health )
+	harvester.SetShieldHealthMax( shieldHealth )
+	harvester.SetShieldHealth( shieldHealth )
+	harvester.EnableAttackableByAI( 30, 0, AI_AP_FLAG_NONE )
+	ToggleNPCPathsForEntity( harvester, false )
+	harvester.SetAIObstacle( true )
+	SetCustomSmartAmmoTarget( harvester, true )
+	SetObjectCanBeMeleed( harvester, true )
+	SetVisibleEntitiesInConeQueriableEnabled( harvester, true )
+	SetTeam( harvester, team )
+	AI_CreateDangerousArea_Static( harvester, null, 160, TEAM_INVALID, true, true, origin )
+	CreateNoSpawnArea( TEAM_ANY, TEAM_ANY, origin, 0, 160 ) //Prevent people calling Titans inside the Harvester
+
+	entity rings = CreatePropDynamic( MODEL_HARVESTER_TOWER_RINGS, origin, angles, 0 )
+	rings.Anim_Play( HARVESTER_ANIM_IDLE ) //Start with Harvester deactivated, gamemodes should handle animations in their local scripts
+
+	HarvesterStruct ret
+	ret.harvester = harvester
+	ret.lastDamage = Time()
+	ret.rings = rings
+
+	return ret
+}
+
+HarvesterStruct function generateBeamFX( HarvesterStruct harvester )
+{
+	entity Harvester_Beam = StartParticleEffectOnEntity_ReturnEntity( harvester.harvester, GetParticleSystemIndex( FX_HARVESTER_BEAM ), FX_PATTACH_ABSORIGIN_FOLLOW ,0 )
+	EffectSetControlPointVector( Harvester_Beam, 1, GetShieldTriLerpColor( 0.0 ) )
+	harvester.particleBeam = Harvester_Beam
+	Harvester_Beam.DisableHibernation()
+	return harvester
+}
+
+HarvesterStruct function sparksBeamFX( HarvesterStruct harvester )
+{
+	entity Harvester_Sparks = StartParticleEffectOnEntity_ReturnEntity( harvester.harvester, GetParticleSystemIndex( FX_HARVESTER_HEALTH_LOW ), FX_PATTACH_ABSORIGIN_FOLLOW ,0 )
+	EffectSetControlPointVector( Harvester_Sparks, 1, GetShieldTriLerpColor( 0.0 ) )
+	harvester.particleSparks = Harvester_Sparks
+	Harvester_Sparks.DisableHibernation()
+	return harvester
+}
+
+HarvesterStruct function generateShieldFX( HarvesterStruct harvester )
+{
+	entity Harvester_Shield = StartParticleEffectOnEntity_ReturnEntity( harvester.harvester, GetParticleSystemIndex( FX_HARVESTER_OVERSHIELD ), FX_PATTACH_ABSORIGIN_FOLLOW, 0 )
+	EffectSetControlPointVector( Harvester_Shield, 1, GetShieldTriLerpColor( 0.0 ) )
+	harvester.particleShield = Harvester_Shield
+	return harvester
+}
+
+vector function GetHarvesterBeamTriLerpColor( float frac )
+{
+	return GetTriLerpColor( frac, HARVESTER_BEAM_HEALTHY, HARVESTER_BEAM_MEDIUM, HARVESTER_BEAM_CRITICAL )
+}
+
+//Unfortunately, repeat function here because it's not global in _vortex.nut, good thing though is setting up better transition points between harvester health stages
+vector function GetTriLerpColor( float fraction, vector color1, vector color2, vector color3 )
+{
+	float crossover1 = 0.33
+	float crossover2 = 0.66
+
+	float r, g, b
+
+	// 0 = full charge, 1 = no charge remaining
+	if ( fraction < crossover1 )
+	{
+		r = Graph( fraction, 0, crossover1, color1.x, color2.x )
+		g = Graph( fraction, 0, crossover1, color1.y, color2.y )
+		b = Graph( fraction, 0, crossover1, color1.z, color2.z )
+		return <r, g, b>
+	}
+	else if ( fraction < crossover2 )
+	{
+		r = Graph( fraction, crossover1, crossover2, color2.x, color3.x )
+		g = Graph( fraction, crossover1, crossover2, color2.y, color3.y )
+		b = Graph( fraction, crossover1, crossover2, color2.z, color3.z )
+		return <r, g, b>
+	}
+	else
+	{
+		// for the last bit of overload timer, keep it max danger color
+		r = color3.x
+		g = color3.y
+		b = color3.z
+		return <r, g, b>
+	}
+
+	unreachable
+}

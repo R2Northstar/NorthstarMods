@@ -1,0 +1,44 @@
+// atm this is just a stub script since hardpoints are only really used in hardpoint
+// respawn probably tried to share this code across multiple modes but atm we just dont need to do that 
+
+global function Hardpoints_Init
+
+global function CapturePoint_GetStartProgress
+global function CapturePoint_GetCappingTeam
+global function CapturePoint_GetOwningTeam
+global function CapturePoint_GetGoalProgress
+
+
+void function Hardpoints_Init()
+{
+	RegisterSignal( "StopHardpointBehavior" )
+}
+
+float function CapturePoint_GetStartProgress( entity hardpoint )
+{	
+	return GetGlobalNetFloat( "objective" + GetHardpointGroup(hardpoint) + "Progress" )
+}
+
+int function CapturePoint_GetCappingTeam( entity hardpoint )
+{	
+	return GetGlobalNetInt( "objective" + GetHardpointGroup(hardpoint) + "CappingTeam" )
+}
+
+int function CapturePoint_GetOwningTeam( entity hardpoint )
+{
+	return hardpoint.GetTeam()
+}
+
+float function CapturePoint_GetGoalProgress( entity hardpoint )
+{	
+	
+	return GetGlobalNetFloat( "objective" + GetHardpointGroup(hardpoint) + "Progress" )
+} 
+
+string function GetHardpointGroup(entity hardpoint) //Hardpoint Entity B on Homestead is missing the Hardpoint Group KeyValue
+{
+	if((GetMapName()=="mp_homestead")&&(!hardpoint.HasKey("hardpointGroup")))
+		return "B"
+
+	return string(hardpoint.kv.hardpointGroup)
+}

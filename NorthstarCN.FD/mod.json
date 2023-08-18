@@ -1,0 +1,232 @@
+{
+	"Name": "Northstar.CustomServers",
+	"Description": "Attempts to recreate the behaviour of vanilla Titanfall 2 servers, as well as changing some scripts to allow better support for mods",
+	"Version": "1.18.0",
+	"LoadPriority": 0,
+	"ConVars": [
+		{
+			"Name": "ns_lobby_type",
+			"DefaultValue": "0"
+		},
+		{
+			"Name": "ns_is_modded_server",
+			"DefaultValue": "1",
+			"Flags": 8192
+		},
+		{
+			"Name": "ns_should_return_to_lobby",
+			"DefaultValue": "1"
+		},
+		{
+			"Name": "ns_allow_spectators",
+			"DefaultValue": "0",
+			"Flags": 8192
+		},
+		{
+			"Name": "ns_private_match_last_mode",
+			"DefaultValue": "tdm"
+		},
+		{
+			"Name": "ns_private_match_last_map",
+			"DefaultValue": "mp_forwardbase_kodai"
+		},
+		{
+			"Name": "ns_private_match_only_host_can_change_settings",
+			"DefaultValue": "0"
+		},
+		{
+			"Name": "ns_private_match_only_host_can_start",
+			"DefaultValue": "0"
+		},
+		{
+			"Name": "ns_private_match_countdown_length",
+			"DefaultValue": "15"
+		},
+		{
+			"Name": "ns_private_match_override_maxplayers",
+			"DefaultValue": "1"
+		},
+		{
+			"Name": "ns_should_log_unknown_clientcommands",
+			"DefaultValue": "1"
+		},
+		{
+			"Name": "ns_allow_kill_commands",
+			"DefaultValue": "0"
+		},
+		{
+			"Name": "ns_use_phase_fix",
+			"DefaultValue": "1"
+		},
+		{
+			"Name": "ns_ronin_fair_phase",
+			"DefaultValue": "0"
+		},
+		{
+			"Name": "ns_fd_min_numplayers_to_start",
+			"DefaultValue": "1"
+		},
+		{
+			"Name": "ns_fd_allow_elite_titans",
+			"DefaultValue": "0"
+		},
+		{
+			"Name": "ns_fd_allow_true_shield_captains",
+			"DefaultValue": "0"
+		},
+		{
+			"Name": "ns_fd_allow_titanfall_block",
+			"DefaultValue": "0"
+		},
+		{
+			"Name": "ns_fd_arc_titans_uses_arc_cannon",
+			"DefaultValue": "0"
+		},
+		{
+			"Name": "ns_fd_show_drop_points",
+			"DefaultValue": "0"
+		},
+		{
+			"Name": "ns_fd_easymode_smartpistol",
+			"DefaultValue": "0"
+		},
+		{
+			"Name": "ns_fd_grunt_at_weapon",
+			"DefaultValue": "mp_weapon_defender"
+		},
+		{
+			"Name": "ns_fd_grunt_primary_weapon",
+			"DefaultValue": "mp_weapon_rspn101,mp_weapon_car,mp_weapon_alternator_smg,mp_weapon_hemlok_smg,mp_weapon_r97"
+		},
+		{
+			"Name": "ns_fd_grunt_grenade",
+			"DefaultValue": "mp_weapon_frag_grenade"
+		},
+		{
+			"Name": "ns_fd_spectre_primary_weapon",
+			"DefaultValue": "mp_weapon_hemlok,mp_weapon_vinson,mp_weapon_g2,mp_weapon_mastiff,mp_weapon_shotgun"
+		},
+		{
+			"Name": "ns_fd_disable_respawn_dropship",
+			"DefaultValue": "0"
+		},
+		{
+			"Name": "ns_fd_differentiate_ticks",
+			"DefaultValue": "0"
+		},
+		{
+			"Name": "ns_fd_rodeo_highlight",
+			"DefaultValue": "1"
+		},
+		{
+			"Name": "ns_reaper_warpfall_kill",
+			"DefaultValue": "1"
+		}
+	],
+	"Scripts": [
+		{
+			"Path": "_custom_codecallbacks.gnut",
+			"RunOn": "SERVER"
+		},
+		{
+			"Path": "_northstar_cheatcommands.nut",
+			"RunOn": "SERVER",
+			"ServerCallback": {
+				"After": "NorthstarCheatCommands_Init"
+			}
+		},
+		{
+			"Path": "_chat.gnut",
+			"RunOn": "SERVER"
+		},
+		{
+			"Path": "_misc_stubs.gnut",
+			"RunOn": "SERVER && MP"
+		},
+		{
+			"Path": "_store.gnut",
+			"RunOn": "SERVER && MP"
+		},
+		{
+			"Path": "_script_movers.gnut",
+			"RunOn": "SERVER && MP"
+		},
+		{
+			"Path": "sh_northstar_utils.gnut",
+			"RunOn": "CLIENT || SERVER || UI"
+		},
+		{
+			"Path": "mp/levels/_lf_maps_shared.gnut",
+			"RunOn": "SERVER && MP"
+		},
+		{
+			"Path": "gamemodes/sh_gamemodes_custom.gnut",
+			"RunOn": "(CLIENT || SERVER) && MP"
+		},
+		{
+			"Path": "sh_remote_functions_mp_custom.gnut",
+			"RunOn": "(CLIENT || SERVER) && MP"
+		},
+		{
+			"Path": "sh_server_to_client_stringcommands.gnut",
+			"RunOn": "CLIENT || SERVER"
+		},
+		{
+			"Path": "gamemodes/_gamemode_fra.nut",
+			"RunOn": "SERVER && MP",
+			"ServerCallback": {
+				"Before": "GamemodeFRA_AddAdditionalInitCallback"
+			}
+		},
+		{
+			"Path": "mp/_classic_mp_dropship_intro.gnut",
+			"RunOn": "SERVER && MP"
+		},
+		{
+			"Path": "mp/_classic_mp_no_intro.gnut",
+			"RunOn": "SERVER && MP"
+		},
+		{
+			"Path": "mp/_spectator.gnut",
+			"RunOn": "SERVER && MP",
+			"ServerCallback": {
+				"After": "Spectator_Init"
+			}
+		},
+		{
+			"Path": "_loadouts_mp.gnut",
+			"RunOn": "SERVER && MP",
+			"ServerCallback": {
+				"After": "SvLoadoutsMP_Init"
+			}
+		},
+		{
+			"Path": "lobby/sh_private_lobby_modes_init.gnut",
+			"RunOn": "( SERVER || CLIENT ) && MP"
+		},
+
+		{
+			"Path": "_respawn_protection.gnut",
+			"RunOn": "SERVER && MP",
+			"ServerCallback": {
+				"Before": "RespawnProtection_Init"
+			}
+		},
+		{
+			"Path": "/ai/_ai_turret_sentry.gnut",
+			"RunOn": "SERVER && MP",
+			"ServerCallback": {
+				"After": "AiTurretSentry_Init"
+			}
+		},
+
+		{
+			"Path": "gamemodes/_gamemode_fd_events.nut",
+			"RunOn": "( SERVER ) && MP"
+		},
+		{
+			"Path": "gamemodes/_gamemode_fd_nav.nut",
+			"RunOn": "( SERVER ) && MP"
+		}
+	]
+}
