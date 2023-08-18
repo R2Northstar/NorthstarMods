@@ -25,11 +25,11 @@
       "Name": "ns_force_melee",
       "DefaultValue": ""
     },
-		{
-			"Name": "embark_style",
-			"Flags":640,
-			"DefaultValue": "0"
-		}
+    {
+      "Name": "embark_style",
+      "Flags":640,
+      "DefaultValue": "0"
+    }
   ],
   "Scripts": [
     {
@@ -440,13 +440,13 @@
       "Path": "sh_northstar_safe_io.gnut",
       "RunOn": "CLIENT || SERVER || UI"
     },
-		{
-			"Path": "embark_settings.nut",
-			"RunOn": "UI",
-			"UICallback": {
-				"Before": "EmbarkSettings_Init"
-			}
-		}
+    {
+      "Path": "embark_settings.nut",
+      "RunOn": "UI",
+      "UICallback": {
+       "Before": "EmbarkSettings_Init"
+     }
+    }
   ],
   "Localisation": [
     "resource/northstar_custom_%language%.txt"
