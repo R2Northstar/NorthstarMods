@@ -55,6 +55,8 @@ void function UpdateVisibleModes()
 		// This check is refactored in the new mode menu so we can just ignore this atrocity
 		if ( !ModeSettings_RequiresAI( modesArray[ modeIndex ] ) || modesArray[ modeIndex ] == "aitdm" || modesArray[ modeIndex ] == "at" )
 			Hud_SetLocked( buttons[ i ], false )
+		else if( IsFDMode( modesArray[ i ] ) )
+			Hud_SetLocked( buttons[ i ], false )
 		else
 			Hud_SetLocked( buttons[ i ], true )
 		

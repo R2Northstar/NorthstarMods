@@ -31,7 +31,7 @@ void function EMPTitanThinkConstant( entity titan )
 	DisableTitanRodeo( titan )
 
 	//Used to identify this titan as an arc titan
-	SetTargetName( titan, "empTitan" )
+	// SetTargetName( titan, "empTitan" ) // unable to do this due to FD reasons
 
 	//Wait for titan to stand up and exit bubble shield before deploying arc ability.
 	WaitTillHotDropComplete( titan )

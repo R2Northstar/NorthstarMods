@@ -326,13 +326,23 @@ void function GameStateEnter_WinnerDetermined_Threaded()
 	else if ( IsRoundBased() || !ClassicMP_ShouldRunEpilogue() )
 	{
 		// these numbers are temp and should really be based on consts of some kind
-		foreach( entity player in GetPlayerArray() )
+		if( GameRules_GetGameMode() == "fd" )
 		{
-			player.FreezeControlsOnServer()
-			ScreenFadeToBlackForever( player, 4.0 )
+			wait 6
+			foreach( entity player in GetPlayerArray() )
+				ScreenFadeToBlackForever( player, 2.0 )
+			wait 4
 		}
-		
-		wait ROUND_WINNING_KILL_REPLAY_LENGTH_OF_REPLAY
+		else
+		{
+			foreach( entity player in GetPlayerArray() )
+			{
+				player.FreezeControlsOnServer()
+				ScreenFadeToBlackForever( player, 4.0 )
+			}
+			
+			wait ROUND_WINNING_KILL_REPLAY_LENGTH_OF_REPLAY
+		}
 		CleanUpEntitiesForRoundEnd() // fade should be done by this point, so cleanup stuff now when people won't see
 		
 		foreach( entity player in GetPlayerArray() )
@@ -377,6 +387,7 @@ void function GameStateEnter_WinnerDetermined_Threaded()
 		else
 			SetGameState( eGameState.Postmatch )
 	}
+	AllPlayersUnMuteAll()
 }
 
 void function PlayerWatchesRoundWinningKillReplay( entity player, float replayLength )
@@ -706,7 +717,7 @@ void function CleanUpEntitiesForRoundEnd()
 	
 	foreach ( entity npc in GetNPCArray() )
 	{
-		if ( !IsValid( npc ) || !IsAlive( npc ) )
+		if ( !IsValid( npc ) || !IsAlive( npc ) || GameRules_GetGameMode() == "fd" && ( npc.GetClassName() == "npc_turret_sentry" || npc.GetClassName() == "npc_turret_mega" ) ) //Let the FD cleanup function handle turrets
 			continue
 		// kill rather than destroy, as destroying will cause issues with children which is an issue especially for dropships and titans
 		npc.Die( svGlobal.worldspawn, svGlobal.worldspawn, { damageSourceId = eDamageSourceId.round_end } )

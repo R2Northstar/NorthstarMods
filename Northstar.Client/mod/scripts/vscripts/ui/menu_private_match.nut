@@ -588,11 +588,11 @@ function UpdatePrivateMatchButtons()
 			Hud_SetLocked( file.inviteFriendsButton, false )
 
 		string modeName = PrivateMatch_GetSelectedMode()
-		bool settingsLocked = IsFDMode( modeName )
+		bool settingsLocked = false
 
 		if ( settingsLocked && uiGlobal.activeMenu == GetMenu( "MatchSettingsMenu" ) )
 			CloseActiveMenu()
-
+		
 		Hud_SetLocked( file.matchSettingsButton, settingsLocked )
 	}
 }

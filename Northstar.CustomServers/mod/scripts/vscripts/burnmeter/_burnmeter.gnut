@@ -67,6 +67,7 @@ void function BurnMeter_Init()
 	AddCallback_OnClientConnected( InitBurncardsForLateJoiner )
 
 	AddCallback_OnPlayerRespawned( StartPhaseRewindLifetime )
+	AddCallback_OnPlayerRespawned( InitialisePermenantAmpedWeaponsForPlayer )
 	AddCallback_OnTitanBecomesPilot( RemoveAmpedWeaponsForTitanPilot )
 
 	// necessary signals
@@ -248,6 +249,10 @@ void function RunBurnCardUseFunc( entity player, string itemRef )
 	print( itemRef )
 
 	void functionref( entity ) ornull func = BurnReward_GetByRef( itemRef ).rewardAvailableCallback
+	#if BATTLECHATTER_ENABLED
+	if( itemRef == "burnmeter_amped_weapons_permanent" || itemRef == "burnmeter_amped_weapons" )
+		PlayBattleChatterLine( player, "bc_pAmp" )
+	#endif
 	if ( func != null )
 		( expect void functionref( entity ) ( func ) )( player )
 	else
@@ -345,9 +350,10 @@ void function PlayerUsesAmpedWeaponsBurncardThreaded( entity player )
 
 void function RemoveAmpedWeaponsForTitanPilot( entity player, entity titan )
 {
-	foreach ( entity weapon in player.GetMainWeapons() )
-		foreach ( string mod in GetWeaponBurnMods( weapon.GetWeaponClassName() ) )
-			weapon.RemoveMod( mod )
+	if ( !( "hasPermenantAmpedWeapons" in player.s ) || !player.s.hasPermenantAmpedWeapons )
+		foreach ( entity weapon in player.GetMainWeapons() )
+			foreach ( string mod in GetWeaponBurnMods( weapon.GetWeaponClassName() ) )
+				weapon.RemoveMod( mod )
 }
 
 void function PlayerUsesSmartPistolBurncard( entity player )
@@ -568,8 +574,15 @@ void function PlayerUsesNukeBurncardThreaded( entity player )
 	thread TitanEjectPlayer( titan, true )
 }
 
+void function InitialisePermenantAmpedWeaponsForPlayer( entity player )
+{
+	player.s.hasPermenantAmpedWeapons <- false
+}
+
 void function PlayerUsesPermanentAmpedWeaponsBurncard( entity player )
 {
+	player.s.hasPermenantAmpedWeapons = true
+
 	array<entity> weapons = player.GetMainWeapons()
 	//weapons.extend( player.GetOffhandWeapons() ) // idk? unsure of vanilla behaviour here
 	foreach ( entity weapon in weapons )

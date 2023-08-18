@@ -223,7 +223,7 @@ entity function CreateOgre( int team, vector origin, vector angles, array<string
 entity function CreateArcTitan( int team, vector origin, vector angles, array<string> settingsMods = [] )
 {
 	entity npc = CreateNPCTitan( "titan_stryder", team, origin, angles, settingsMods )
-	SetSpawnOption_AISettings( npc, "npc_titan_arc" )
+	SetSpawnOption_AISettings( npc, "npc_titan_stryder_leadwall_arc" )
 	return npc
 }
 

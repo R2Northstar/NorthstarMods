@@ -3,6 +3,7 @@ global function SvLoadoutsMP_Init
 
 global function SetLoadoutGracePeriodEnabled
 global function SetWeaponDropsEnabled
+global function SetAllowLoadoutChangeFunc
 
 global function AddCallback_OnTryGetTitanLoadout
 global function GetTitanLoadoutForPlayer
@@ -22,6 +23,8 @@ struct {
 	array< TryGetTitanLoadoutCallbackType > onTryGetTitanLoadoutCallbacks
 	
 	array<entity> dirtyLoadouts
+
+	bool functionref( entity ) allowChangeLoadoutFunc = null
 } file
 
 void function SvLoadoutsMP_Init()
@@ -58,6 +61,11 @@ void function SvLoadoutsMP_Init()
 void function SetLoadoutGracePeriodEnabled( bool enabled )
 {
 	file.loadoutGracePeriodEnabled = enabled
+}
+
+void function SetAllowLoadoutChangeFunc( bool functionref( entity ) func )
+{
+	file.allowChangeLoadoutFunc = func
 }
 
 void function SetWeaponDropsEnabled( bool enabled )
@@ -303,7 +311,7 @@ void function TryGivePilotLoadoutForGracePeriod( entity player )
 		else
 			respawnTimeReal = expect float( player.s.respawnTime )
 		
-		if ( ( ( Time() - respawnTimeReal <= CLASS_CHANGE_GRACE_PERIOD || GetGameState() < eGameState.Playing ) && file.loadoutGracePeriodEnabled ) || player.p.usingLoadoutCrate )
+		if ( ( ( Time() - respawnTimeReal <= CLASS_CHANGE_GRACE_PERIOD || GetGameState() < eGameState.Playing ) && file.loadoutGracePeriodEnabled ) || player.p.usingLoadoutCrate || ( file.allowChangeLoadoutFunc != null && file.allowChangeLoadoutFunc( player ) ) )
 		{
 			if ( !Loadouts_CanGivePilotLoadout( player ) && player.GetParent() != null && ( HasCinematicFlag( player, CE_FLAG_INTRO ) || HasCinematicFlag( player, CE_FLAG_CLASSIC_MP_SPAWNING ) || HasCinematicFlag( player, CE_FLAG_WAVE_SPAWNING ) ) )
 				thread GiveLoadoutWhenIntroOver( player )

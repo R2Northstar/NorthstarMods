@@ -93,6 +93,9 @@ function AiSoldiers_Init()
 	InitMilitiaTitles()
 
 	AddCallback_OnClientConnecting( AiSoldiers_InitPlayer )
+	#if GRUNT_CHATTER_MP_ENABLED
+		AddCallback_OnNPCKilled( GruntChatter_OnNPCKilled )
+	#endif
 
 	if ( GetDeveloperLevel() > 0 )
 		AddClientCommandCallback( "SpawnViewGrunt", ClientCommand_SpawnViewGrunt )
@@ -333,7 +336,7 @@ bool function AssignNPCAppropriateWeaponFromWeapons( entity npc, array<entity> w
 	// first try to find an appropriate weapon
 	foreach ( weapon in weapons )
 	{
-		bool isAntiTitan = weapon.GetWeaponType() == WT_ANTITITAN
+		bool isAntiTitan = weapon.GetWeaponInfoFileKeyField( "holster_type" ) == "anti_titan"
 		if ( isAntiTitan == isRocketTarget )
 		{
 			// found a weapon to use
@@ -370,7 +373,7 @@ void function OnEnemyChanged_TryHeavyArmorWeapon( entity npc )
 		return
 	}
 
-	bool isActiveWeapon_AntiTitan = activeWeapon.GetWeaponType() == WT_ANTITITAN
+	bool isActiveWeapon_AntiTitan = activeWeapon.GetWeaponInfoFileKeyField( "holster_type" ) == "anti_titan"
 
 	// already using an appropriate weapon?
 	if ( isActiveWeapon_AntiTitan == isRocketTarget )
@@ -457,6 +460,35 @@ void function TrySpottedCallout( entity guy, entity enemy )
 	}
 }
 
+void function GruntChatter_OnNPCKilled( entity npcKilled, entity attacker, var damageInfo )
+{
+	if ( IsGrunt( npcKilled ) )
+	{
+		string deadGuySquadName = expect string( npcKilled.kv.squadname )
+		if ( deadGuySquadName == "" )
+			return
+
+		array<entity> squad = GetNPCArrayBySquad( deadGuySquadName )
+
+		entity speakingSquadMate = null
+
+		foreach( squadMate in squad )
+		{
+			if ( IsGrunt( squadMate ) )
+			{
+				speakingSquadMate = squadMate
+				break
+			}
+		}
+		if ( speakingSquadMate == null )
+			return
+
+		if ( squad.len() == 1 )
+			PlayGruntChatterMPLine( speakingSquadMate, "bc_squaddeplete" )
+		else if ( squad.len() > 0  )
+			PlayGruntChatterMPLine( speakingSquadMate, "bc_allygruntdown" )
+	}
+}
 
 //////////////////////////////////////////////////////////
 string function GetPlayerSpectreSquadName( entity player )

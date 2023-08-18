@@ -91,6 +91,7 @@ void function EarnMeterMP_PlayerLifeThink( entity player )
 	EarnObject pilotReward = PlayerEarnMeter_GetReward( player ) 
 	float pilotRewardFrac = PlayerEarnMeter_GetRewardFrac( player )
 	int lastEarnMeterMode = PlayerEarnMeter_GetMode( player )
+	bool saidTitanSoon = false
 	float lastPassiveGainTime = Time()
 
 	OnThreadEnd(
@@ -148,6 +149,14 @@ void function EarnMeterMP_PlayerLifeThink( entity player )
 
 		if ( lastEarnMeterMode == eEarnMeterMode.DEFAULT )
 		{
+			if ( PlayerEarnMeter_GetOwnedFrac( player ) >= 0.75 && PlayerEarnMeter_GetOwnedFrac( player ) < 0.95 && !saidTitanSoon )
+			{
+				PlayFactionDialogueToPlayer( "mp_titanSoon", player )
+				saidTitanSoon = true
+			}
+			else if( PlayerEarnMeter_GetOwnedFrac( player ) < 0.75 )
+				saidTitanSoon = false
+			
 			if ( PlayerEarnMeter_GetOwnedFrac( player ) < 1.0 )
 				PlayerEarnMeter_DisableGoal( player )
 			else if ( player.GetPlayerNetInt( "goalState" ) != eRewardState.UNAVAILABLE )

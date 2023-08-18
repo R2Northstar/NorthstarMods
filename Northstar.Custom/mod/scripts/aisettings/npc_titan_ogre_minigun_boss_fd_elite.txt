@@ -1,0 +1,48 @@
+#base "npc_titan_ogre_minigun_boss_fd.txt"
+npc_titan_ogre_minigun_boss_fd_elite
+{
+	title 							"Elite Legion"
+	showTitle						1
+	npc_titan_player_settings		"titan_ogre_legion_prime"
+	
+	painOnSurpriseHit				0
+	painWhileRunning				0
+	
+	PainOnHeavyDamageThreshold		10000
+	PainOnRepeatDamageThreshold		10000
+	RepeatDamageTimeInterval		30
+	breakOutOfPainDamageThreshold	5000
+	lightPainMinInterval			30
+	heavyPainMinInterval			60
+	reactChanceDefault				100
+	reactBulletChanceDefault		100
+	
+	evasiveCombatShieldPct					0.0
+	evasiveCombatHealthSegmentPct			0.0
+	evasiveCombatTotalHealthDiffPct 		0.1
+	evasiveCombatHealthChangeRateDiff		-7500
+	aggressiveCombatHealthSegmentPct		0.99
+	aggressiveCombatTotalHealthDiffPct 		0.1
+	aggressiveCombatHealthChangeRateDiff	-400
+	
+	aiEnemy_immediateThreatDist				800
+	aiEnemy_usePriorityDist					4000
+	chaseTryRunningDodgeWhenAimedAtMinDist	800
+	
+	waitBetweenWeaponBurst			0
+	resetBurstOnStopShootOverlay	1
+	
+	blockPeriod					7
+	maxBlockPerPeriod			3
+	
+	dodgePeriod					2
+	maxDodgePerPeriod			4
+	
+	aimAngularSpeed			10
+	aimConeCos 				0.75
+	aimConeCloseCos			1.0
+
+	titanCamoIndex 31
+	titanDecalIndex 0
+	titanSkinIndex 2
+}

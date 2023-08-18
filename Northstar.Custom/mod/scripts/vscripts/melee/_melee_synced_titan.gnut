@@ -192,8 +192,8 @@ bool function MeleeThread_TitanVsTitan_Internal( SyncedMelee action, entity atta
 
 				if ( dataStruct.setAttackerDemigod )
 					DisableDemigod( attacker )
-
-				attacker.PlayerMelee_SetState( PLAYER_MELEE_STATE_NONE )
+				if( attacker.IsPlayer() )
+					attacker.PlayerMelee_SetState( PLAYER_MELEE_STATE_NONE )
 			}
 		}
 	)
@@ -212,10 +212,12 @@ bool function MeleeThread_TitanVsTitan_Internal( SyncedMelee action, entity atta
 		burnCardTarget = target
 	}
 
-	attacker.PlayerMelee_ExecutionStartAttacker( 0 )
+	if( attacker.IsPlayer() )
+		attacker.PlayerMelee_ExecutionStartAttacker( 0 )
 	target.PlayerMelee_ExecutionStartTarget( attacker )
 
-	attacker.Lunge_ClearTarget()
+	if( attacker.IsPlayer() )
+		attacker.Lunge_ClearTarget()
 
 	ForceTitanSustainedDischargeEnd( target )
 
@@ -577,16 +579,24 @@ function MeleeThread_TitanRipsPilot( table e, SyncedMelee action, entity attacke
 
 			if ( IsValid( attacker ) )
 			{
-				attacker.UnforceStand()
 				attacker.ClearParent()
-				ClearPlayerAnimViewEntity( attacker )
-				DeployAndEnableWeapons( attacker )
-				attacker.PlayerMelee_ExecutionEndAttacker()
+				if( attacker.IsPlayer() )
+				{
+					attacker.UnforceStand()
+					ClearPlayerAnimViewEntity( attacker )
+					attacker.PlayerMelee_ExecutionEndAttacker()
+					DeployViewModelAndEnableWeapons( attacker )
+				}
+				else
+				{
+					Highlight_ClearEnemyHighlight( attacker )
+					EnableWeapons( attacker, [] )
+				}
 
 				if ( IsAlive( attacker ) )
 				{
-					// if we got into solid, teleport back to safe place
 					PutEntityInSafeSpot( attacker, null, null, expect vector( e.attackerStartOrg ), attacker.GetOrigin() )
+					attacker.SetActiveWeaponBySlot( 0 )
 				}
 			}
 
@@ -1090,9 +1100,7 @@ void function TitanVsTitan_3p( SyncedMelee action, entity attacker, entity targe
 	FirstPersonSequenceStruct attackerBodySequence
 
 	bool titanHasPilot = target.IsPlayer()
-	#if HAS_BOSS_AI
-		titanHasPilot = titanHasPilot || ( IsBossTitan( target ) )
-	#endif
+	titanHasPilot = titanHasPilot || ( IsEliteTitan( target ) )
 
 	if ( attacker.IsPlayer() )
 	{
@@ -1158,12 +1166,19 @@ void function TitanVsTitan_3p( SyncedMelee action, entity attacker, entity targe
 				DeleteAnimEvent( attacker, "rocket_pod_fire_left" )
 				DeleteAnimEvent( attacker, "rocket_pod_fire_right" )
 
-				attacker.UnforceStand()
 				attacker.ClearParent()
-				ClearPlayerAnimViewEntity( attacker )
-				attacker.PlayerMelee_ExecutionEndAttacker()
 				ForceTitanSustainedDischargeEnd( attacker )
-				DeployViewModelAndEnableWeapons( attacker ) //Melee anims need to use this to stop players from firing weapons but for the weapon to still show up in the 3p anims
+				if( attacker.IsPlayer() )
+				{
+					attacker.UnforceStand()
+					ClearPlayerAnimViewEntity( attacker )
+					attacker.PlayerMelee_ExecutionEndAttacker()
+					DeployViewModelAndEnableWeapons( attacker )
+				}
+				
+				else
+					EnableWeapons( attacker, [] )
+				
 				if ( IsAlive( attacker ) )
 				{
 					if ( !isAttackerRef && IsValid( target ) )
@@ -1177,7 +1192,8 @@ void function TitanVsTitan_3p( SyncedMelee action, entity attacker, entity targe
 
 					if ( attacker.IsTitan() )
 					{
-						Remote_CallFunction_Replay( attacker, "SCB_PlayTitanCockpitSounds" )
+						if ( attacker.IsPlayer() )
+							Remote_CallFunction_Replay( attacker, "SCB_PlayTitanCockpitSounds" )
 						#if TITAN_EXECUTION_GIVES_BATTERY
 							Rodeo_GiveExecutingTitanABattery( attacker )
 						#else
@@ -1613,4 +1629,19 @@ void function Rocket_Pod( entity guy, string tag, entity victim )
 
 	if ( oldOffhandWeapon )
  		guy.GiveOffhandWeapon( oldOffhandWeapon.GetWeaponClassName(), 0, oldOffhandWeapon.GetMods() )
+}
+
+bool function IsEliteTitan( entity titan )
+{
+	if ( titan.GetTeam() != TEAM_IMC )
+		return false
+
+	switch ( titan.ai.bossTitanType )
+	{
+		case TITAN_MERC:
+		case TITAN_BOSS:
+			return true
+	}
+
+	return false
 }

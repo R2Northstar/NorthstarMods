@@ -30,7 +30,7 @@ const SPAWN_ENEMY_TOO_CLOSE_RANGE_SQR		= 1048576 	// Don't spawn guys if the tar
 const SPAWN_HIDDEN_ENEMY_WITHIN_RANGE_SQR	= 1048576 	// If the enemy can't bee seen, and they are within in this range (1024^2), spawn dudes to find him.
 const SPAWN_ENEMY_ABOVE_HEIGHT  			= 128		// If the enemy is at least this high up, then spawn dudes to find him.
 const SPAWN_FUSE_TIME						= 2.0	  	// How long after being fired before the spawner explodes and spawns a spectre.
-const SPAWN_PROJECTILE_AIR_TIME				= 3.0    	// How long the spawn project will be in the air before hitting the ground.
+const SPAWN_PROJECTILE_AIR_TIME				= 1.0    	// How long the spawn project will be in the air before hitting the ground. (Originally 3 seconds, but i changed until navmeshes gets jump points -Zanieon)
 const SPECTRE_EXPLOSION_DMG_MULTIPLIER		= 1.2 		// +20%
 const DEV_DEBUG_PRINTS						= false
 
@@ -716,13 +716,12 @@ function SuperSpectre_WarpFall( entity ai )
 
 	e.smokeFx.Destroy()
 	PlayFX( $"droppod_impact", origin )
-
-	Explosion_DamageDefSimple(
-		damagedef_reaper_fall,
-		origin,
-		ai,								// attacker
-		ai,								// inflictor
-		origin )
+	
+	//Added option to control if Reapers should kill Titans on their warpfall, or just do considerable damage
+	if ( GetConVarBool( "ns_reaper_warpfall_kill" ) )
+		Explosion_DamageDefSimple( damagedef_reaper_fall, origin, ai, ai, origin )
+	else
+		Explosion_DamageDefSimple( damagedef_reaper_groundslam,	origin,	ai,	ai,	origin )
 
 	wait 0.1
 }

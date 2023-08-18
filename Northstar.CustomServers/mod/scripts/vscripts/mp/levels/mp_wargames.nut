@@ -22,14 +22,20 @@ void function CodeCallback_MapInit()
 	AddDeathCallback( "npc_spectre", WargamesDissolveDeadEntity )
 	AddDeathCallback( "npc_pilot_elite", WargamesDissolveDeadEntity )
 	AddDeathCallback( "npc_marvin", WargamesDissolveDeadEntity )
-	
 	AddSpawnCallback( "info_spawnpoint_marvin", AddMarvinSpawner )
 	AddCallback_GameStateEnter( eGameState.Prematch, SpawnMarvinsForRound )
 	
-	// currently disabled until finished: intro
-	if ( !IsFFAGame() )
-		ClassicMP_SetLevelIntro( WargamesIntroSetup, 20.0 )
+	// Load Frontier Defense Data
+	if( GameRules_GetGameMode() == "fd" )
+		initFrontierDefenseData()
+	else
+	{
+		// currently disabled until finished: intro
+		if ( !IsFFAGame() )
+			ClassicMP_SetLevelIntro( WargamesIntroSetup, 20.0 )
+	}
 }
+
 
 void function AddEvacNodes()
 {

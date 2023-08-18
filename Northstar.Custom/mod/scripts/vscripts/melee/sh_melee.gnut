@@ -195,8 +195,23 @@ bool function CodeCallback_IsValidMeleeExecutionTarget( entity attacker, entity 
 	if ( attacker == target )
 		return false
 
-	if ( !ShouldPlayerExecuteTarget( attacker, target ) )
-		return false
+	// npc execution case
+	if ( attacker.IsPlayer() )
+	{
+		if ( !ShouldPlayerExecuteTarget( attacker, target ) )
+			return false
+	}
+
+	if( attacker.IsPlayer() )
+	{
+		if( attacker.IsZiplining() )
+			return false
+	}
+	if( target.IsPlayer() )
+	{
+		if( target.IsZiplining() )
+			return false
+	}
 
 	if ( !attacker.IsOnGround() && attacker.IsHuman() )
 		return false
@@ -219,11 +234,8 @@ bool function CodeCallback_IsValidMeleeExecutionTarget( entity attacker, entity 
 
 	if ( attacker.IsTitan() && target.IsTitan() )
 	{
-		// no melee execute for berserker
-		if ( PlayerHasPassive( attacker, ePassives.PAS_BERSERKER ) )
-			return false
-
-		if ( PlayerHasPassive( attacker, ePassives.PAS_SHIFT_CORE ) )
+		entity meleeWeapon = attacker.GetMeleeWeapon()
+		if ( meleeWeapon.HasMod( "berserker_core_punch" ) || meleeWeapon.HasMod( "super_charged" ) || meleeWeapon.HasMod( "super_charged_SP" ) )
 			return false
 
 		if ( HasSoul( target ) && target.GetTitanSoul().IsEjecting() )
@@ -247,19 +259,22 @@ bool function CodeCallback_IsValidMeleeExecutionTarget( entity attacker, entity 
 		}
 	}
 
-	if ( !CheckVerticallyCloseEnough( attacker, target ) )
-		return false
+	// npc execution case
+	if ( attacker.IsPlayer() )
+	{
+		if ( !CheckVerticallyCloseEnough( attacker, target ) )
+			return false
 
-	//No necksnaps while wall running or mantling
-	if ( attacker.IsWallRunning() )
-		return false
+		//No necksnaps while wall running or mantling
+		if ( attacker.IsWallRunning() )
+			return false
 
-	if ( attacker.IsTraversing() )
-		return false
+		if ( attacker.IsTraversing() )
+			return false
+	}
 
 	if ( target.IsPlayer() ) //Disallow execution on a bunch of player-only actions
 	{
-
 		if ( target.IsHuman() )
 		{
 			if ( target.IsWallRunning() )
@@ -313,9 +328,14 @@ bool function CodeCallback_IsValidMeleeExecutionTarget( entity attacker, entity 
 	if ( action == null )
 		return false
 
-	if ( !PlayerMelee_IsExecutionReachable( attacker, target, 0.3 ) )
-		return false
+	// npc execution case
+	if ( attacker.IsPlayer() )
+	{
+		if ( !PlayerMelee_IsExecutionReachable( attacker, target, 0.3 ) )
+			return false
+	}
 
+	// modified callback from northstar
 	foreach ( callbackFunc in file.isValidMeleeExecutionTargetCallBacks )
 	{
 		if ( !callbackFunc( attacker, target ) )
@@ -323,6 +343,7 @@ bool function CodeCallback_IsValidMeleeExecutionTarget( entity attacker, entity 
 			return false
 		}
 	}
+	//
 
 	return true
 }
@@ -509,24 +530,27 @@ bool function PlayerTriesSyncedMelee( entity player, entity target )
 	if ( target.ContextAction_IsBusy() )
 		return false
 
-	if ( player.IsTitan() )
+	if( player.IsPlayer() )
 	{
+		if ( player.IsTitan() )
+		{
 #if SERVER
-		player.PlayerMelee_SetState( PLAYER_MELEE_STATE_TITAN_EXECUTION )
+			player.PlayerMelee_SetState( PLAYER_MELEE_STATE_TITAN_EXECUTION )
 #else
-		player.PlayerMelee_SetState( PLAYER_MELEE_STATE_TITAN_EXECUTION_PREDICTED )
+			player.PlayerMelee_SetState( PLAYER_MELEE_STATE_TITAN_EXECUTION_PREDICTED )
 #endif
-	}
-	else
-	{
+		}
+		else
+		{
 #if SERVER
-		player.PlayerMelee_SetState( PLAYER_MELEE_STATE_HUMAN_EXECUTION )
+			player.PlayerMelee_SetState( PLAYER_MELEE_STATE_HUMAN_EXECUTION )
 #else
-		player.PlayerMelee_SetState( PLAYER_MELEE_STATE_HUMAN_EXECUTION_PREDICTED )
+			player.PlayerMelee_SetState( PLAYER_MELEE_STATE_HUMAN_EXECUTION_PREDICTED )
 #endif
+		}
 	}
 
-	if ( !player.Lunge_IsActive() || !player.Lunge_IsGroundExecute() || !player.Lunge_IsLungingToEntity() || (player.Lunge_GetTargetEntity() != target) )
+	if ( player.IsPlayer() && (!player.Lunge_IsActive() || !player.Lunge_IsGroundExecute() || !player.Lunge_IsLungingToEntity() || (player.Lunge_GetTargetEntity() != target)) )
 	{
 #if SERVER
 		print( "SERVER: " + player + " is calling Lunge_SetTargetEntity() from PlayerTriesSyncedMelee()\n" )
@@ -563,14 +587,15 @@ bool function PlayerTriesSyncedMelee( entity player, entity target )
 	if ( IsValid( target ) && target.IsPlayer() )
 	{
 		AddCinematicFlag( target, CE_FLAG_TITAN_3P_CAM )
-		AddCinematicFlag( player, CE_FLAG_EXECUTION )
+		AddCinematicFlag( target, CE_FLAG_EXECUTION )
 	}
 #endif
 
 	bool success = DoSyncedMelee( player, target )
 	if ( !success )
 	{
-		player.Lunge_ClearTarget()
+		if( player.IsPlayer() )
+			player.Lunge_ClearTarget()
 	}
 
 	return success
@@ -592,7 +617,8 @@ bool function DoSyncedMelee( entity player, entity target )
 #if SERVER
 	if ( player.IsPlayer() )
 	{
-		PlayerMelee_StartLagCompensateTargetForLunge( player, target )
+		if ( player.Lunge_IsActive() )
+			PlayerMelee_StartLagCompensateTargetForLunge( player, target )
 	}
 #endif // #if SERVER
 
@@ -604,7 +630,8 @@ bool function DoSyncedMelee( entity player, entity target )
 
 		player.ForceStand()
 		player.UnforceStand()
-		PlayerMelee_FinishLagCompensateTarget( player )
+		if ( player.Lunge_IsActive() )
+			PlayerMelee_FinishLagCompensateTarget( player )
 	}
 #endif // #if SERVER
 
@@ -621,7 +648,8 @@ bool function DoSyncedMelee( entity player, entity target )
 	target.Signal( "OnSyncedMeleeVictim" )
 
 #if SERVER
-	player.p.lastExecutionUsed = action.ref
+	if ( player.IsPlayer() )
+		player.p.lastExecutionUsed = action.ref
 
 	if ( actions in file.syncedMeleeServerCallbacks )
 		thread SyncedMeleeServerCallbacks( actions, action, player, target )
