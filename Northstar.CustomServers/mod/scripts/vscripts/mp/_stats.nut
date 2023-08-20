@@ -63,10 +63,10 @@ void function AddStatCallback( string statCategory, string statAlias, string sta
 }
 
 // a lot of this file seems to be doing caching of stats in some way
-void function Stats_SaveStatDelayed( entity player, string statCategory, string statAlias, string statSubAlias )
+void function Stats_SaveStatDelayed( entity player, string statCategory, string statAlias, string statSubAlias, float delay = 0.1 )
 {
 	// idk how long the delay is meant to be but whatever
-	WaitFrame()
+	wait delay
 
 	if ( !IsValid( player ) )
 		return
