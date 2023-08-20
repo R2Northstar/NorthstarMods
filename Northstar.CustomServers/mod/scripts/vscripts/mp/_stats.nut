@@ -52,13 +52,13 @@ void function AddStatCallback( string statCategory, string statAlias, string sta
 
 	if ( str in file.refs )
 	{
-		file.refs[str].append( subRef )
-		file.callbacks[str].append( callback )
+		file.refs[ str ].append( subRef )
+		file.callbacks[ str ].append( callback )
 	}
 	else
 	{
-		file.refs[str] <- [subRef]
-		file.callbacks[str] <- [callback]
+		file.refs[ str ] <- [ subRef ]
+		file.callbacks[ str ] <- [ callback ]
 	}
 }
 
@@ -78,22 +78,22 @@ void function Stats_SaveAllStats( entity player )
 {
 	if ( player in file.cachedIntStatChanges )
 	{
-		foreach( string key, int val in file.cachedIntStatChanges[player] )
+		foreach( string key, int val in file.cachedIntStatChanges[ player ] )
 		{
 			player.SetPersistentVar( key, player.GetPersistentVarAsInt( key ) + val )
 		}
 		
-		delete file.cachedIntStatChanges[player]
+		delete file.cachedIntStatChanges[ player ]
 	}
 	// save cached float stat change
 	if ( player in file.cachedFloatStatChanges )
 	{
-		foreach( string key, float val in file.cachedFloatStatChanges[player] )
+		foreach( string key, float val in file.cachedFloatStatChanges[ player ] )
 		{
 			player.SetPersistentVar( key, expect float( player.GetPersistentVar( key ) ) + val )
 		}
 		
-		delete file.cachedFloatStatChanges[player]
+		delete file.cachedFloatStatChanges[ player ]
 	}
 }
 
@@ -101,17 +101,17 @@ void function Stats_SaveStat( entity player, string statCategory, string statAli
 {
 	string str = GetStatVar( statCategory, statAlias, statSubAlias )
 	// save cached int stat change
-	if ( player in file.cachedIntStatChanges && str in file.cachedIntStatChanges[player] )
+	if ( player in file.cachedIntStatChanges && str in file.cachedIntStatChanges[ player ] )
 	{
-		player.SetPersistentVar( str, player.GetPersistentVarAsInt( str ) + file.cachedIntStatChanges[player][str] )
-		delete file.cachedIntStatChanges[player][str]
+		player.SetPersistentVar( str, player.GetPersistentVarAsInt( str ) + file.cachedIntStatChanges[ player ][ str ] )
+		delete file.cachedIntStatChanges[ player ][ str ]
 		return
 	}
 	// save cached float stat change
-	if ( player in file.cachedFloatStatChanges && str in file.cachedFloatStatChanges[player] )
+	if ( player in file.cachedFloatStatChanges && str in file.cachedFloatStatChanges[ player ] )
 	{
-		player.SetPersistentVar( str, expect float( player.GetPersistentVar( str ) ) + file.cachedFloatStatChanges[player][str] )
-		delete file.cachedFloatStatChanges[player][str]
+		player.SetPersistentVar( str, expect float( player.GetPersistentVar( str ) ) + file.cachedFloatStatChanges[ player ][ str ] )
+		delete file.cachedFloatStatChanges[ player ][ str ]
 		return
 	}
 }
@@ -121,8 +121,8 @@ int function PlayerStat_GetCurrentInt( entity player, string statCategory, strin
 {
 	string str = GetStatVar( statCategory, statAlias, statSubAlias )
 
-	if ( player in file.cachedIntStatChanges && str in file.cachedIntStatChanges[player] )
-		return file.cachedIntStatChanges[player][str]
+	if ( player in file.cachedIntStatChanges && str in file.cachedIntStatChanges[ player ] )
+		return file.cachedIntStatChanges[ player ][ str ]
 	return 0
 }
 
@@ -131,8 +131,8 @@ float function PlayerStat_GetCurrentFloat( entity player, string statCategory, s
 {
 	string str = GetStatVar( statCategory, statAlias, statSubAlias )
 
-	if ( player in file.cachedFloatStatChanges && str in file.cachedFloatStatChanges[player] )
-		return file.cachedFloatStatChanges[player][str]
+	if ( player in file.cachedFloatStatChanges && str in file.cachedFloatStatChanges[ player ] )
+		return file.cachedFloatStatChanges[ player ][ str ]
 	return 0
 }
 
@@ -275,20 +275,20 @@ void function Stats_IncrementStat( entity player, string statCategory, string st
 	case ePlayerStatType.INT:
 		// populate table if needed
 		if ( !( player in file.cachedIntStatChanges ) )
-			file.cachedIntStatChanges[player] <- {}
-		if ( !( str in file.cachedIntStatChanges[player] ) )
-			file.cachedIntStatChanges[player][str] <- 0
+			file.cachedIntStatChanges[ player ] <- {}
+		if ( !( str in file.cachedIntStatChanges[ player ] ) )
+			file.cachedIntStatChanges[ player ][ str ] <- 0
 		
-		file.cachedIntStatChanges[player][str] += amount.tointeger()
+		file.cachedIntStatChanges[ player ][ str ] += amount.tointeger()
 		break
 	case ePlayerStatType.FLOAT:
 		// populate table if needed
 		if ( !( player in file.cachedFloatStatChanges ) )
-			file.cachedFloatStatChanges[player] <- {}
-		if ( !( str in file.cachedFloatStatChanges[player] ) )
-			file.cachedFloatStatChanges[player][str] <- 0.0
+			file.cachedFloatStatChanges[ player ] <- {}
+		if ( !( str in file.cachedFloatStatChanges[ player ] ) )
+			file.cachedFloatStatChanges[ player ][ str ] <- 0.0
 		
-		file.cachedFloatStatChanges[player][str] += amount
+		file.cachedFloatStatChanges[ player ][ str ] += amount
 		break
 	default:
 		throw "UNIMPLEMENTED STAT TYPE: " + type
@@ -303,10 +303,10 @@ void function Stats_RunCallbacks( string statVar, entity player, float change )
 	if ( !( statVar in file.refs ) )
 		return
 	
-	for( int i = 0; i < file.refs[statVar].len(); i++ )
+	for( int i = 0; i < file.refs[ statVar ].len(); i++ )
 	{
-		string ref = file.refs[statVar][i]
-		void functionref( entity, float, string ) callback = file.callbacks[statVar][i]
+		string ref = file.refs[ statVar ][ i ]
+		void functionref( entity, float, string ) callback = file.callbacks[ statVar ][ i ]
 
 		callback( player, change, ref )
 	}
@@ -322,10 +322,10 @@ void function OnClientDisconnected( entity player )
 	Stats_SaveAllStats( player )
 	// maybe we can save this stuff, but idk if we can access persistence in this callback
 	if ( player in file.cachedIntStatChanges )
-		delete file.cachedIntStatChanges[player]
+		delete file.cachedIntStatChanges[ player ]
 
 	if ( player in file.cachedFloatStatChanges )
-		delete file.cachedFloatStatChanges[player]
+		delete file.cachedFloatStatChanges[ player ]
 }
 
 void function OnPlayerOrNPCKilled( entity victim, entity attacker, var damageInfo )
@@ -345,9 +345,9 @@ void function HandleDeathStats( entity player, entity attacker, var damageInfo )
 		return
 	
 	if ( player in file.playerDeaths )
-		file.playerDeaths[player]++
+		file.playerDeaths[ player ]++
 	else
-		file.playerDeaths[player] <- 1.0
+		file.playerDeaths[ player ] <- 1.0
 	// total
 	Stats_IncrementStat( player, "deaths_stats", "total", "", 1.0 )
 
@@ -360,9 +360,9 @@ void function HandleDeathStats( entity player, entity attacker, var damageInfo )
 		if ( attacker.IsPlayer() || attacker.GetBossPlayer() )
 		{
 			if ( player in file.playerDeathsPvp )
-				file.playerDeathsPvp[player]++
+				file.playerDeathsPvp[ player ]++
 			else
-				file.playerDeathsPvp[player] <- 1.0
+				file.playerDeathsPvp[ player ] <- 1.0
 			Stats_IncrementStat( player, "deaths_stats", "totalPVP", "", 1.0 )
 		}
 
@@ -515,9 +515,9 @@ void function HandleKillStats( entity victim, entity attacker, var damageInfo )
 	bool victimIsTitan = victim.IsTitan()
 
 	if ( player in file.playerKills )
-		file.playerKills[player]++
+		file.playerKills[ player ]++
 	else
-		file.playerKills[player] <- 1.0
+		file.playerKills[ player ] <- 1.0
 	// total
 	Stats_IncrementStat( player, "kills_stats", "total", "", 1.0 )
 
@@ -525,9 +525,9 @@ void function HandleKillStats( entity victim, entity attacker, var damageInfo )
 	if ( victimIsPlayer )
 	{
 		if ( player in file.playerKillsPvp )
-			file.playerKillsPvp[player]++
+			file.playerKillsPvp[ player ]++
 		else
-			file.playerKillsPvp[player] <- 1.0
+			file.playerKillsPvp[ player ] <- 1.0
 		Stats_IncrementStat( player, "kills_stats", "totalPVP", "", 1.0 )
 	}
 
@@ -579,7 +579,7 @@ void function HandleKillStats( entity victim, entity attacker, var damageInfo )
 		bool exists = attackerInfo.attacker.GetEncodedEHandle() in alreadyAssisted ? true : false
 		if( attackerInfo.attacker != attacker && !exists )
 		{
-			alreadyAssisted[attackerInfo.attacker.GetEncodedEHandle()] <- true
+			alreadyAssisted[ attackerInfo.attacker.GetEncodedEHandle() ] <- true
 			Stats_IncrementStat( attackerInfo.attacker, "kills_stats", "totalAssists", "", 1.0 )
 
 			string source = DamageSourceIDToString( attackerInfo.damageSourceId )
@@ -829,16 +829,16 @@ void function OnEpilogueStarted()
 		// kd stats
 		// index 0 is most recent game
 		// index 9 is least recent game
-		float playerKills = ( player in file.playerKills ) ? file.playerKills[player] : 0.0
-		float playerDeaths = ( player in file.playerDeaths ) ? file.playerDeaths[player] : 0.0
+		float playerKills = ( player in file.playerKills ) ? file.playerKills[ player ] : 0.0
+		float playerDeaths = ( player in file.playerDeaths ) ? file.playerDeaths[ player ] : 0.0
 		float kdratio_match
 		if ( playerDeaths == 0.0 )
 			kdratio_match = playerKills
 		else
 			kdratio_match = playerKills / playerDeaths
 
-		float playerKillsPvp = ( player in file.playerKillsPvp ) ? file.playerKillsPvp[player] : 0.0
-		float playerDeathsPvp = ( player in file.playerDeathsPvp ) ? file.playerDeathsPvp[player] : 0.0
+		float playerKillsPvp = ( player in file.playerKillsPvp ) ? file.playerKillsPvp[ player ] : 0.0
+		float playerDeathsPvp = ( player in file.playerDeathsPvp ) ? file.playerDeathsPvp[ player ] : 0.0
 		float kdratiopvp_match
 		if ( playerDeathsPvp == 0.0 )
 			kdratiopvp_match = playerKillsPvp
@@ -892,8 +892,8 @@ void function OnEpilogueStarted()
 			for ( int i = 0; i < maxAwards; i++ )
 			{
 				if ( i == 0 )
-					Stats_IncrementStat( players[i], "game_stats", "mvp", "", 1.0 )
-				Stats_IncrementStat( players[i], "game_stats", "top3OnTeam", "", 1.0 )
+					Stats_IncrementStat( players[ i ], "game_stats", "mvp", "", 1.0 )
+				Stats_IncrementStat( players[ i ], "game_stats", "top3OnTeam", "", 1.0 )
 			}
 		}
 		

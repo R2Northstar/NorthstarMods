@@ -233,6 +233,7 @@ bool function ProgressionIsEnabled()
 {
 	return Progression_GetPreference()
 }
+
 bool function ProgressionIsDisabled()
 {
 	return !Progression_GetPreference()
@@ -240,8 +241,11 @@ bool function ProgressionIsDisabled()
 
 void function EnableProgression( var button )
 {
-	Progression_SetPreference(true)
+	Progression_SetPreference( true )
+
+	// update the cache just in case something changed
 	UpdateCachedLoadouts_Delayed()
+
 	DialogData dialogData
 	dialogData.menu = GetMenu( "AnnouncementDialog" )
 	dialogData.header = "#PROGRESSION_ENABLED_HEADER"
@@ -255,7 +259,8 @@ void function EnableProgression( var button )
 
 void function DisableProgression( var button )
 {
-	Progression_SetPreference(false)
+	Progression_SetPreference( false )
+
 	DialogData dialogData
 	dialogData.menu = GetMenu( "AnnouncementDialog" )
 	dialogData.header = "#PROGRESSION_DISABLED_HEADER"
