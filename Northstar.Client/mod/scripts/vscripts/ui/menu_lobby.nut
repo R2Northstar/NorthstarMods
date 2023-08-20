@@ -228,16 +228,6 @@ void function InitLobbyMenu()
 	RegisterSignal( "LeaveParty" )
 }
 
-bool function ProgressionIsEnabled()
-{
-	return Progression_GetPreference()
-}
-
-bool function ProgressionIsDisabled()
-{
-	return !Progression_GetPreference()
-}
-
 void function ShowToggleProgressionDialog( var button )
 {
 	bool enabled = Progression_GetPreference()
