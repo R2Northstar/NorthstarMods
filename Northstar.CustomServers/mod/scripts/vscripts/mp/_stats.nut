@@ -45,28 +45,28 @@ void function Stats_Init()
 void function AddStatCallback( string statCategory, string statAlias, string statSubAlias, void functionref( entity, float, string ) callback, string subRef )
 {	
 	if ( !IsValidStat( statCategory, statAlias, statSubAlias ) )
-		throw "INVALID STAT: " + statCategory + " : " + statAlias + " : " + statSubAlias
+		throw format( "INVALID STAT: %s : %s : %s", statCategory, statAlias, statSubAlias )
 	
 	
-	string str = GetStatVar( statCategory, statAlias, statSubAlias )
+	string statVar = GetStatVar( statCategory, statAlias, statSubAlias )
 
-	if ( str in file.refs )
+	if ( statVar in file.refs )
 	{
-		file.refs[ str ].append( subRef )
-		file.callbacks[ str ].append( callback )
+		file.refs[ statVar ].append( subRef )
+		file.callbacks[ statVar ].append( callback )
 	}
 	else
 	{
-		file.refs[ str ] <- [ subRef ]
-		file.callbacks[ str ] <- [ callback ]
+		file.refs[ statVar ] <- [ subRef ]
+		file.callbacks[ statVar ] <- [ callback ]
 	}
 }
 
 // a lot of this file seems to be doing caching of stats in some way
-void function Stats_SaveStatDelayed( entity player, string statCategory, string statAlias, string statSubAlias )
+void function Stats_SaveStatDelayed( entity player, string statCategory, string statAlias, string statSubAlias, float delay = 0.1 )
 {
 	// idk how long the delay is meant to be but whatever
-	WaitFrame()
+	wait delay
 
 	if ( !IsValid( player ) )
 		return
@@ -99,19 +99,19 @@ void function Stats_SaveAllStats( entity player )
 
 void function Stats_SaveStat( entity player, string statCategory, string statAlias, string statSubAlias )
 {
-	string str = GetStatVar( statCategory, statAlias, statSubAlias )
+	string stat = GetStatVar( statCategory, statAlias, statSubAlias )
 	// save cached int stat change
-	if ( player in file.cachedIntStatChanges && str in file.cachedIntStatChanges[ player ] )
+	if ( player in file.cachedIntStatChanges && stat in file.cachedIntStatChanges[ player ] )
 	{
-		player.SetPersistentVar( str, player.GetPersistentVarAsInt( str ) + file.cachedIntStatChanges[ player ][ str ] )
-		delete file.cachedIntStatChanges[ player ][ str ]
+		player.SetPersistentVar( stat, player.GetPersistentVarAsInt( stat ) + file.cachedIntStatChanges[ player ][ stat ] )
+		delete file.cachedIntStatChanges[ player ][ stat ]
 		return
 	}
 	// save cached float stat change
-	if ( player in file.cachedFloatStatChanges && str in file.cachedFloatStatChanges[ player ] )
+	if ( player in file.cachedFloatStatChanges && stat in file.cachedFloatStatChanges[ player ] )
 	{
-		player.SetPersistentVar( str, expect float( player.GetPersistentVar( str ) ) + file.cachedFloatStatChanges[ player ][ str ] )
-		delete file.cachedFloatStatChanges[ player ][ str ]
+		player.SetPersistentVar( stat, expect float( player.GetPersistentVar( stat ) ) + file.cachedFloatStatChanges[ player ][ stat ] )
+		delete file.cachedFloatStatChanges[ player ][ stat ]
 		return
 	}
 }

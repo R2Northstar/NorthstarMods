@@ -426,9 +426,9 @@ void function Evac( int evacTeam, float initialWait, float arrivalTime, float wa
 	// award player score to evacing team
 	int evacCount = 0
 	entity lastEvacPlayer
-	foreach (entity player in GetPlayerArrayOfTeam(dropship.GetTeam()))
+	foreach ( entity player in GetPlayerArrayOfTeam( dropship.GetTeam() ) )
 	{
-		if (!PlayerInDropship( player, dropship ))
+		if ( !PlayerInDropship( player, dropship ) )
 			continue
 		
 		evacCount++
@@ -436,22 +436,22 @@ void function Evac( int evacTeam, float initialWait, float arrivalTime, float wa
 		lastEvacPlayer = player
 	}
 
-	bool allEvac = evacCount == GetPlayerArrayOfTeam(dropship.GetTeam()).len()
+	bool allEvac = evacCount == GetPlayerArrayOfTeam( dropship.GetTeam() ).len()
 
 	foreach(entity player in GetPlayerArrayOfTeam(dropship.GetTeam()))
 	{
-		if (!PlayerInDropship( player, dropship ))
+		if ( !PlayerInDropship( player, dropship ) )
 			continue
 
 		AddPlayerScore( player, "HotZoneExtract" )
 		UpdatePlayerStat( player, "misc_stats", "evacsSurvived" )
 
-		if (allEvac)
+		if ( allEvac )
 			AddPlayerScore( player, "TeamBonusFullEvac" )
 	}
 
 	// sole survivor (but not the only one on the team)
-	if (evacCount == 1 && !allEvac)
+	if ( evacCount == 1 && !allEvac )
 	{
 		AddPlayerScore( lastEvacPlayer, "SoleSurvivor" )
 	}
@@ -544,9 +544,9 @@ void function CheckIfAnyPlayerLeft( int evacTeam )
 			thread EvacEpilogueCompleted( null )
 
 			// score for killing the entire evacing team
-			foreach (entity player in GetPlayerArray())
+			foreach ( entity player in GetPlayerArray() )
 			{
-				if (player.GetTeam() == evacTeam)
+				if ( player.GetTeam() == evacTeam )
 					continue
 
 				AddPlayerScore( player, "TeamBonusKilledAll")
