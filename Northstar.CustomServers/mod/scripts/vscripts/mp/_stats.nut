@@ -888,8 +888,8 @@ void function OnEpilogueStarted()
 				return
 			}
 			players.sort( compareFunc )
-			int max = min( players.len(), 3 ).tointeger()
-			for ( int i = 0; i < max; i++ )
+			int maxAwards = int( min( players.len(), 3 ) )
+			for ( int i = 0; i < maxAwards; i++ )
 			{
 				if ( i == 0 )
 					Stats_IncrementStat( players[i], "game_stats", "mvp", "", 1.0 )
