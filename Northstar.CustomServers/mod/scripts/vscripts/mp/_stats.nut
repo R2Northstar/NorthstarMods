@@ -1073,24 +1073,20 @@ string function GetPersistenceRefFromDamageInfo( var damageInfo )
 
 bool function DamageIsTitanMelee( int damageSourceId )
 {
-	if ( damageSourceId == eDamageSourceId.melee_titan_punch )
-		return true
-	else if ( damageSourceId == eDamageSourceId.melee_titan_punch_ion )
-		return true
-	else if ( damageSourceId == eDamageSourceId.melee_titan_punch_legion )
-		return true
-	else if ( damageSourceId == eDamageSourceId.melee_titan_punch_tone )
-		return true
-	else if ( damageSourceId == eDamageSourceId.melee_titan_punch_scorch )
-		return true
-	else if ( damageSourceId == eDamageSourceId.melee_titan_punch_northstar )
-		return true
-	else if ( damageSourceId == eDamageSourceId.melee_titan_punch_fighter )
-		return true
-	else if ( damageSourceId == eDamageSourceId.melee_titan_sword )
-		return true
-	else if ( damageSourceId == eDamageSourceId.melee_titan_sword_aoe )
-		return true
-
-	return false
+	switch( damageSourceId )
+	{
+		case eDamageSourceId.melee_titan_punch:
+		case eDamageSourceId.melee_titan_punch_ion:
+		case eDamageSourceId.melee_titan_punch_legion:
+		case eDamageSourceId.melee_titan_punch_tone:
+		case eDamageSourceId.melee_titan_punch_scorch:
+		case eDamageSourceId.melee_titan_punch_northstar:
+		case eDamageSourceId.melee_titan_punch_fighter:
+		case eDamageSourceId.melee_titan_sword:
+		case eDamageSourceId.melee_titan_sword_aoe:
+			return true
+		default:
+			return true
+	}
+	unreachable
 }
