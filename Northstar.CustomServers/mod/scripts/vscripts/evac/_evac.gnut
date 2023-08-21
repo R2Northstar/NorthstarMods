@@ -425,20 +425,20 @@ void function Evac( int evacTeam, float initialWait, float arrivalTime, float wa
 
 	// award player score to evacing team
 	int evacCount = 0
-	entity lastEvacPlayer
-	foreach ( entity player in GetPlayerArrayOfTeam( dropship.GetTeam() ) )
+	array<entity> evacingPlayers = GetPlayerArrayOfTeam( dropship.GetTeam() ) // all players that are supposed to evac in the dropship
+
+	// count how many players are in the dropship
+	foreach ( entity player in evacingPlayers )
 	{
 		if ( !PlayerInDropship( player, dropship ) )
 			continue
 		
 		evacCount++
-		// for sole survivor things
-		lastEvacPlayer = player
 	}
 
-	bool allEvac = evacCount == GetPlayerArrayOfTeam( dropship.GetTeam() ).len()
+	bool allEvac = evacCount == evacingPlayers.len()
 
-	foreach(entity player in GetPlayerArrayOfTeam(dropship.GetTeam()))
+	foreach(entity player in evacingPlayers)
 	{
 		if ( !PlayerInDropship( player, dropship ) )
 			continue
@@ -453,7 +453,8 @@ void function Evac( int evacTeam, float initialWait, float arrivalTime, float wa
 	// sole survivor (but not the only one on the team)
 	if ( evacCount == 1 && !allEvac )
 	{
-		AddPlayerScore( lastEvacPlayer, "SoleSurvivor" )
+		// we can assume there is one player in the array because otherwise evacCount wouldn't be 1
+		AddPlayerScore( evacingPlayers[0], "SoleSurvivor" )
 	}
 }
 
