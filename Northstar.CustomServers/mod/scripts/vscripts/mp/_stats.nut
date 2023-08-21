@@ -863,8 +863,8 @@ void function OnEpilogueStarted()
 		// shift stats by 1 to make room for new game data
 		for ( int i = NUM_GAMES_TRACK_KDRATIO - 2; i >= 0; --i )
 		{
-			player.SetPersistentVar( "kdratio_match[" + ( i + 1 ) + "]", player.GetPersistentVar( "kdratio_match[" + i + "]" ) )
-			player.SetPersistentVar( "kdratiopvp_match[" + ( i + 1 ) + "]", player.GetPersistentVar( "kdratiopvp_match[" + i + "]" ) )
+			player.SetPersistentVar( format( "kdratio_match[%i]", ( i + 1 ) ), player.GetPersistentVar( format("kdratio_match[%i]", i ) ) )
+			player.SetPersistentVar( format( "kdratiopvp_match[%i]", ( i + 1 ) ), player.GetPersistentVar( format( "kdratiopvp_match[%i]", i ) ) )
 		}
 		// add new game data
 		player.SetPersistentVar( "kdratio_match[0]", kdratio_match )
