@@ -358,5 +358,7 @@ Press Yes if you agree to this. This choice can be changed in the mods menu at a
 
 		"PROGRESSION_DISABLED_HEADER"	"Progression Disabled!"
 		"PROGRESSION_DISABLED_BODY"		"^CCCC0000Progression has been disabled.^\n\nTitans, Weapons, Factions, Skins, etc. will all be unlocked and usable at any time.\n\nThis can be changed at any time in the multiplayer lobby."
+	
+		"PROGRESSION_ANNOUNCEMENT_BODY"	"^CCCC0000Progression can now be enabled!^\n\nNorthstar now supports vanilla progression, meaning you can choose to unlock Weapons, Skins, Titans, etc. through levelling up and completing challenges.\n\nYou can enable progression using the button at the bottom of the lobby screen.\n\nThis can be changed at any time."
 	}
 }
