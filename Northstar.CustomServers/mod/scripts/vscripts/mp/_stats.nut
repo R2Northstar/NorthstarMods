@@ -1086,7 +1086,7 @@ bool function DamageIsTitanMelee( int damageSourceId )
 		case eDamageSourceId.melee_titan_sword_aoe:
 			return true
 		default:
-			return true
+			return false
 	}
 	unreachable
 }
