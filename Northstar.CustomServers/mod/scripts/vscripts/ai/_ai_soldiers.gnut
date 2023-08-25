@@ -457,6 +457,7 @@ void function TrySpottedCallout( entity guy, entity enemy )
 	}
 }
 
+
 //////////////////////////////////////////////////////////
 string function GetPlayerSpectreSquadName( entity player )
 {
