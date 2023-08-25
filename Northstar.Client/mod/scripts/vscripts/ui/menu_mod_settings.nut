@@ -449,7 +449,7 @@ void function UpdateList()
 	}
 	file.updatingList = false
 
-	if ( file.conVarList.len() <= 0 )
+	if ( file.conVarList.len() <= 6 )
 	{
 		Hud_SetVisible( Hud_GetChild( file.menu, "NoResultLabel" ), true )
 		Hud_SetText( Hud_GetChild( file.menu, "NoResultLabel" ), "#NO_MODS" )
