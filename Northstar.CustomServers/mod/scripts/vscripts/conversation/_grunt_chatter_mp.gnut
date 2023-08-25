@@ -40,7 +40,6 @@ void function GruntChatter_OnPlayerOrNPCKilled( entity deadGuy, entity attacker,
 
 void function GruntChatter_TryFriendlyDown( entity deadGuy )
 {
-	float searchRange = -1.0
 	entity closestGrunt = GruntChatter_FindClosestFriendlyHumanGrunt_LOS( deadGuy.GetOrigin(), deadGuy.GetTeam(), CHATTER_FRIENDLY_GRUNT_DOWN_DIST_MAX )
 	if ( !closestGrunt )
 		return
@@ -79,11 +78,9 @@ void function GruntChatter_TrySquadDepleted( entity deadGuy )
 
 void function GruntChatter_TryEnemyDown( entity deadGuy )
 {
-	float searchRange = -1.0
 	if ( deadGuy.IsTitan() )
-	{
-		searchRange = CHATTER_ENEMY_TITAN_DOWN_DIST_MAX
-		entity closestGrunt = GruntChatter_FindClosestEnemyHumanGrunt_LOS( deadGuy.GetOrigin(), deadGuy.GetTeam(), searchRange )
+	{ 
+		entity closestGrunt = GruntChatter_FindClosestEnemyHumanGrunt_LOS( deadGuy.GetOrigin(), deadGuy.GetTeam(), CHATTER_ENEMY_TITAN_DOWN_DIST_MAX )
 		if ( !closestGrunt )
 			return
 
