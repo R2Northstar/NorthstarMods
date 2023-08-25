@@ -1,7 +1,7 @@
 {
 	"Name": "Northstar.Custom",
 	"Description": "Custom content for Northstar: extra weapons, gamemodes, etc.",
-	"Version": "1.10.0",
+	"Version": "1.16.0",
 	"LoadPriority": 1,
 	"RequiredOnClient": true,
 	"ConVars": [
@@ -29,16 +29,17 @@
 	"Scripts": [
 		{
 			"Path": "sh_northstar_custom_precache.gnut",
-			"RunOn": "( CLIENT || SERVER ) && MP",
-			"ClientCallback": {
-				"After": "NorthstarCustomPrecache"
-			},
+			"RunOn": "SERVER && MP",
 			"ServerCallback": {
 				"After": "NorthstarCustomPrecache"
 			}
 		},
 		{
 			"Path": "weapons/mp_weapon_peacekraber.nut",
+			"RunOn": "( CLIENT || SERVER ) && MP"
+		},
+		{
+			"Path": "weapons/mp_titanweapon_arc_cannon.nut",
 			"RunOn": "( CLIENT || SERVER ) && MP"
 		},
 		{
@@ -447,6 +448,10 @@
 		},
 		{
 			"Path":  "sh_northstar_http_requests.gnut",
+			"RunOn": "CLIENT || SERVER || UI"
+		},
+		{
+			"Path": "sh_northstar_safe_io.gnut",
 			"RunOn": "CLIENT || SERVER || UI"
 		}
 	],
