@@ -31,7 +31,7 @@ void function SvLoadoutsMP_Init()
 	// most of these are fairly insecure right now, could break pdata if called maliciously, need fixing eventually
 	RegisterSignal( "EndUpdateCachedLoadouts" )
 	RegisterSignal( "GracePeriodDone" ) // temp to get weapons\_weapon_utility.nut:2271 to behave
-	FlagInit("WeaponDropsAllowed")
+	FlagInit( "WeaponDropsAllowed", true )
 
 	AddCallback_OnClientConnected( LoadoutsMPInitPlayer )
 	
