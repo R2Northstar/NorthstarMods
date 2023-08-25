@@ -908,6 +908,11 @@ void function SetLastPosForDistanceStatValid_Threaded( entity player, bool val )
 	player.p.lastPosForDistanceStatValid = val
 }
 
+// Respawn did this through stuff found in _entitystructs.gnut (stuff like stats_wallrunTime)
+// but their implementation seems kinda bad. The advantage it has over this method is not polling
+// every 0.25 seconds, and using movement callbacks and stuff instead. However, since i can't find
+// callbacks for things like changing weapon, i would have to poll for that *anyway* and thus,
+// there is no point in doing things Respawn's way here
 void function HandleDistanceAndTimeStats_Threaded()
 {
 	// just to be safe
