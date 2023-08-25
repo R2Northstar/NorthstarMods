@@ -82,6 +82,9 @@ struct {
 void function AddModSettingsMenu()
 {
 	AddMenu( "ModSettings", $"resource/ui/menus/mod_settings.menu", InitModMenu )
+	AddModTitle( "^656dce00Northstar.Client" )
+	AddModCategory( "#MISC" )
+	ModSettings_AddSetting( "ns_max_load_time", "#MAX_LOAD", "int" )
 }
 
 void function InitModMenu()
@@ -343,6 +346,7 @@ void function UpdateListSliderHeight()
 
 void function UpdateList()
 {
+
 	Hud_SetFocused( Hud_GetChild( file.menu, "BtnModsSearch" ) )
 	file.updatingList = true
 
@@ -949,6 +953,7 @@ void function SendTextPanelChanges( var textPanel )
 					ThrowInvalidValue( "This setting is an integer, and only accepts whole numbers." )
 					Hud_SetText( textPanel, GetConVarString( c.conVar ) )
 				}
+				break
 			case "bool":
 				if ( newSetting != "0" && newSetting != "1" )
 				{
