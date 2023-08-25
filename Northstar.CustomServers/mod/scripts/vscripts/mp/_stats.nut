@@ -43,11 +43,11 @@ void function Stats_Init()
 }
 
 void function AddStatCallback( string statCategory, string statAlias, string statSubAlias, void functionref( entity, float, string ) callback, string subRef )
-{	
+{
 	if ( !IsValidStat( statCategory, statAlias, statSubAlias ) )
 		throw format( "INVALID STAT: %s : %s : %s", statCategory, statAlias, statSubAlias )
-	
-	
+
+
 	string statVar = GetStatVar( statCategory, statAlias, statSubAlias )
 
 	if ( statVar in file.refs )
@@ -82,7 +82,7 @@ void function Stats_SaveAllStats( entity player )
 		{
 			player.SetPersistentVar( key, player.GetPersistentVarAsInt( key ) + val )
 		}
-		
+
 		delete file.cachedIntStatChanges[ player ]
 	}
 	// save cached float stat change
@@ -92,7 +92,7 @@ void function Stats_SaveAllStats( entity player )
 		{
 			player.SetPersistentVar( key, expect float( player.GetPersistentVar( key ) ) + val )
 		}
-		
+
 		delete file.cachedFloatStatChanges[ player ]
 	}
 }
@@ -140,7 +140,7 @@ void function UpdatePlayerStat( entity player, string statCategory, string subSt
 {
 	if ( !IsValid( player ) )
 		return
-		
+
 	Stats_IncrementStat( player, statCategory, subStat, "", count.tofloat() )
 }
 
@@ -153,7 +153,7 @@ void function UpdateTitanDamageStat( entity attacker, float savedDamage, var dam
 {
 	if ( !IsValid( attacker ) )
 		return
-		
+
 	Stats_IncrementStat( attacker, "titan_stats", "titanDamage", GetTitanCharacterName( attacker ), savedDamage )
 }
 
@@ -257,7 +257,7 @@ void function Stats_IncrementStat( entity player, string statCategory, string st
 	{
 		PersistenceGetEnumIndexForItemName( "gamemodes", mode )
 		PersistenceGetEnumIndexForItemName( "maps", GetMapName() )
-	}	
+	}
 	catch( ex )
 	{
 		// if we have an invalid mode or map for persistence, and it is used in the
@@ -278,7 +278,7 @@ void function Stats_IncrementStat( entity player, string statCategory, string st
 			file.cachedIntStatChanges[ player ] <- {}
 		if ( !( str in file.cachedIntStatChanges[ player ] ) )
 			file.cachedIntStatChanges[ player ][ str ] <- 0
-		
+
 		file.cachedIntStatChanges[ player ][ str ] += amount.tointeger()
 		break
 	case ePlayerStatType.FLOAT:
@@ -287,13 +287,13 @@ void function Stats_IncrementStat( entity player, string statCategory, string st
 			file.cachedFloatStatChanges[ player ] <- {}
 		if ( !( str in file.cachedFloatStatChanges[ player ] ) )
 			file.cachedFloatStatChanges[ player ][ str ] <- 0.0
-		
+
 		file.cachedFloatStatChanges[ player ][ str ] += amount
 		break
 	default:
 		throw "UNIMPLEMENTED STAT TYPE: " + type
 	}
-	
+
 	// amount here is never used
 	Stats_RunCallbacks( str, player, amount )
 }
@@ -302,7 +302,7 @@ void function Stats_RunCallbacks( string statVar, entity player, float change )
 {
 	if ( !( statVar in file.refs ) )
 		return
-	
+
 	for( int i = 0; i < file.refs[ statVar ].len(); i++ )
 	{
 		string ref = file.refs[ statVar ][ i ]
@@ -331,8 +331,8 @@ void function OnClientDisconnected( entity player )
 void function OnPlayerOrNPCKilled( entity victim, entity attacker, var damageInfo )
 {
 	if ( victim.IsPlayer() )
-		thread SetLastPosForDistanceStatValid_Threaded( victim, false ) 
-	
+		thread SetLastPosForDistanceStatValid_Threaded( victim, false )
+
 	HandleDeathStats( victim, attacker, damageInfo )
 	HandleKillStats( victim, attacker, damageInfo )
 	HandleWeaponKillStats( victim, attacker, damageInfo )
@@ -343,7 +343,7 @@ void function HandleDeathStats( entity player, entity attacker, var damageInfo )
 {
 	if ( !IsValid( player ) || !player.IsPlayer() )
 		return
-	
+
 	if ( player in file.playerDeaths )
 		file.playerDeaths[ player ]++
 	else
@@ -386,7 +386,7 @@ void function HandleDeathStats( entity player, entity attacker, var damageInfo )
 		if ( attacker.IsTitan() && attacker.IsNPC() )
 			Stats_IncrementStat( player, "deaths_stats", "byNPCTitans_" + GetTitanCharacterName( attacker ), "", 1.0 )
 	}
-	
+
 	// asPilot
 	if ( IsPilot( player ) )
 		Stats_IncrementStat( player, "deaths_stats", "asPilot", "", 1.0 )
@@ -584,7 +584,7 @@ void function HandleKillStats( entity victim, entity attacker, var damageInfo )
 
 			string source = DamageSourceIDToString( attackerInfo.damageSourceId )
 
-			if ( IsValidStatItemString( source ) ) 
+			if ( IsValidStatItemString( source ) )
 				Stats_IncrementStat( attacker, "weapon_kill_stats", "assistsTotal", source, 1.0 )
 		}
 	}
@@ -716,7 +716,7 @@ void function HandleKillStats( entity victim, entity attacker, var damageInfo )
 	// meleeWhileCloaked
 	if ( IsCloaked( attacker ) && damageSource == eDamageSourceId.human_melee )
 		Stats_IncrementStat( player, "kills_stats", "meleeWhileCloaked", "", 1.0 )
-	
+
 	// titanKillsAsPilot
 	if ( victimIsTitan && IsPilot( attacker ) )
 		Stats_IncrementStat( player, "kills_stats", "titanKillsAsPilot", "", 1.0 )
@@ -859,7 +859,7 @@ void function OnEpilogueStarted()
 			kdratio_lifetimepvp = totalKillsPvp
 		else
 			kdratio_lifetimepvp = totalKillsPvp / totalDeathsPvp
-		
+
 		// shift stats by 1 to make room for new game data
 		for ( int i = NUM_GAMES_TRACK_KDRATIO - 2; i >= 0; --i )
 		{
@@ -896,7 +896,7 @@ void function OnEpilogueStarted()
 				Stats_IncrementStat( players[ i ], "game_stats", "top3OnTeam", "", 1.0 )
 			}
 		}
-		
+
 	}
 }
 
@@ -918,7 +918,7 @@ void function HandleDistanceAndTimeStats_Threaded()
 		WaitFrame()
 
 	float lastTickTime = Time()
-	
+
 	while( true )
 	{
 		// track distance stats
@@ -973,7 +973,7 @@ void function HandleDistanceAndTimeStats_Threaded()
 			// first tick i dont count
 			if ( timeSeconds == 0 )
 				break
-			
+
 			// more generic time stats
 			Stats_IncrementStat( player, "time_stats", "hours_total", "", timeHours )
 			if ( player.IsTitan() )
@@ -994,7 +994,7 @@ void function HandleDistanceAndTimeStats_Threaded()
 				state = "hours_wallrunning"
 			else if ( !player.IsOnGround() )
 				state = "hours_inAir"
-			
+
 			if ( state != "" )
 				Stats_IncrementStat( player, "time_stats", state, "", timeHours )
 
