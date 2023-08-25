@@ -183,16 +183,15 @@ void function TimeoutHandler()
 {
 	//Singleplayer "Continue" counts as finished loading and shouldn't be affected
 	printt( "TimeoutHandler has Initialized" )
-	const int timeoutThreshold = 30 // how long this function will wait before disconnecting
 	EndSignal( uiGlobal.signalDummy, "LevelShutdown" ) // Cancels thread if map is unloaded
 
-	wait timeoutThreshold
+	wait GetConVarFloat( "ns_max_load_time" )
 	if ( uiGlobal.isLoading == true ) //Disconnects client after 30 seconds of loading
 	{
 		printt( "TimeoutHandler disconnected because loading took too long" )
 		UICodeCallback_LevelLoadingFinished( true ) //Removes loading screen
 		Disconnect() // Loads menu
-		OpenErrorDialog( format( "Loading timed out (Over %i seconds)", timeoutThreshold ) ) //Opens error dialog to notify user
+		OpenErrorDialog( format( "Loading timed out (Over %i seconds)", GetConVarInt( "ns_max_load_time" ) ) ) //Opens error dialog to notify user
 	}
 }
 
