@@ -642,7 +642,7 @@ void function HandleKillStats( entity victim, entity attacker, var damageInfo )
 
 	// pilotKillsWithHoloPilotActive
 	if ( victimIsPilot && GetDecoyActiveCountForPlayer( player ) > 0 )
-		Stats_IncrementStat( player, "kills_stats", "pilotKillsWithAmpedWallActive", "", 1.0 )
+		Stats_IncrementStat( player, "kills_stats", "pilotKillsWithHoloPilotActive", "", 1.0 )
 
 	// pilotKillsWithAmpedWallActive
 	if ( victimIsPilot && GetAmpedWallsActiveCountForPlayer( player ) > 0 )
