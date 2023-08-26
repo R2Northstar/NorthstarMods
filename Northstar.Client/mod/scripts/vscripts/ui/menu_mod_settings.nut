@@ -83,8 +83,8 @@ void function AddModSettingsMenu()
 {
 	AddMenu( "ModSettings", $"resource/ui/menus/mod_settings.menu", InitModMenu )
 	AddModTitle( "^656dce00Northstar.Client" )
-	AddModCategory( "#MISC" )
-	ModSettings_AddSetting( "ns_max_load_time", "#MAX_LOAD", "int" )
+	AddModCategory( "#STATS_MISC" )
+	ModSettings_AddSetting( "ns_max_load_time", "#MAX_LOAD", "float" )
 }
 
 void function InitModMenu()
@@ -449,7 +449,7 @@ void function UpdateList()
 	}
 	file.updatingList = false
 
-	if ( file.conVarList.len() <= 0 )
+	if ( file.conVarList.len() <= 6 )
 	{
 		Hud_SetVisible( Hud_GetChild( file.menu, "NoResultLabel" ), true )
 		Hud_SetText( Hud_GetChild( file.menu, "NoResultLabel" ), "#NO_MODS" )
