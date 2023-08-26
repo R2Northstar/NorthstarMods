@@ -82,6 +82,7 @@ struct {
 void function AddModSettingsMenu()
 {
 	AddMenu( "ModSettings", $"resource/ui/menus/mod_settings.menu", InitModMenu )
+
 	AddModTitle( "^656dce00Northstar.Client" )
 	AddModCategory( "#STATS_MISC" )
 	ModSettings_AddSetting( "ns_max_load_time", "#MAX_LOAD", "float" )
