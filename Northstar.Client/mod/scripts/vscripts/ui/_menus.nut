@@ -188,7 +188,7 @@ void function TimeoutHandler()
 	wait maxLoadTime
 	if ( uiGlobal.isLoading == true ) //Disconnects client after 30 seconds of loading
 	{
-		printt( format( "TimeoutHandler disconnected because loading took too long (%i seconds)", maxLoadTime ) )
+		printt( format( "TimeoutHandler disconnected because loading took too long (%f seconds)", maxLoadTime ) )
 		UICodeCallback_LevelLoadingFinished( true ) //Removes loading screen
 		Disconnect() // Loads menu
 		OpenErrorDialog( format( Localize( "#MAX_LOAD_ERROR" ), maxLoadTime ) ) //Opens error dialog to notify user
