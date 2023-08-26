@@ -186,7 +186,7 @@ void function TimeoutHandler()
 
 	float maxLoadTime = GetConVarFloat( "ns_max_load_time" )
 	wait maxLoadTime
-	if ( uiGlobal.isLoading == true ) //Disconnects client after 30 seconds of loading
+	if ( uiGlobal.isLoading ) //Disconnects client after 30 seconds of loading
 	{
 		printt( format( "TimeoutHandler disconnected because loading took too long (%f seconds)", maxLoadTime ) )
 		UICodeCallback_LevelLoadingFinished( true ) //Removes loading screen
