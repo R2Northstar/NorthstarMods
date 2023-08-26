@@ -191,7 +191,7 @@ void function TimeoutHandler()
 		printt( format( "TimeoutHandler disconnected because loading took too long (%i seconds)", maxLoadTime ) )
 		UICodeCallback_LevelLoadingFinished( true ) //Removes loading screen
 		Disconnect() // Loads menu
-		OpenErrorDialog( format( Localize("#MAX_LOAD_ERROR"), maxLoadTime ) ) //Opens error dialog to notify user
+		OpenErrorDialog( format( Localize( "#MAX_LOAD_ERROR" ), maxLoadTime ) ) //Opens error dialog to notify user
 	}
 }
 
