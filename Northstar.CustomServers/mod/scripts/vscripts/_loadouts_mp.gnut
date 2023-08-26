@@ -60,7 +60,7 @@ void function SetLoadoutGracePeriodEnabled( bool enabled )
 
 void function SetWeaponDropsEnabled( bool enabled )
 {
-	if( !enabled )
+	if( enabled )
 		FlagSet("WeaponDropsAllowed")
 	else 
 		FlagClear("WeaponDropsAllowed")
