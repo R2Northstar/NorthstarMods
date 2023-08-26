@@ -45,7 +45,7 @@ struct
 	]
 
 	table<entity, AccumulatedDamageData> playerAccumulatedDamageData
-	array< void functionref( entity ) > WeaponDroppedCallbacks
+	array< void functionref( entity ) > weaponDroppedCallbacks
 } file
 
 void function CodeCallback_Init()
@@ -1036,7 +1036,7 @@ void function CodeCallback_OnServerAnimEvent( entity ent, string eventName )
 
 void function AddCallback_OnWeaponDropped( void functionref( entity ) callback ) 
 {
-	file.WeaponDroppedCallbacks.append( callback )
+	file.weaponDroppedCallbacks.append( callback )
 }
 
 void function CodeCallback_WeaponDropped( entity weapon )
@@ -1051,7 +1051,7 @@ void function CodeCallback_WeaponDropped( entity weapon )
 		return
 	}
 
-	foreach( callback in file.WeaponDroppedCallbacks )
+	foreach( callback in file.weaponDroppedCallbacks )
 		callback( weapon )
 }
 #endif // #if MP
