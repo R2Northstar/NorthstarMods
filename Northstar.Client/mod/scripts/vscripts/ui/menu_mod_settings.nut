@@ -346,7 +346,6 @@ void function UpdateListSliderHeight()
 
 void function UpdateList()
 {
-
 	Hud_SetFocused( Hud_GetChild( file.menu, "BtnModsSearch" ) )
 	file.updatingList = true
 
