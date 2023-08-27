@@ -1,7 +1,7 @@
 untyped
 globalize_all_functions
 
-GameStateStruct function NorthstarCodeCallback_GenerateGameState( GameStateStruct gs ) {
+GameStateStruct function DiscordRPC_GenerateGameState( GameStateStruct gs ) {
     int highestScore = 0
     int secondHighest = 0
 

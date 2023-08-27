@@ -1,7 +1,7 @@
 untyped
 globalize_all_functions
 
-UIPresenceStruct function NorthstarCodeCallback_GenerateUIPresence( UIPresenceStruct uis ) {
+UIPresenceStruct function DiscordRPC_GenerateUIPresence( UIPresenceStruct uis ) {
 	if (uiGlobal.isLoading)
 		uis.game_state = eDiscordGameState.LOADING;
 	else if (uiGlobal.loadedLevel == "")
