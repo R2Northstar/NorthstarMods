@@ -2,7 +2,9 @@ untyped
 // Only way to get Hud_GetPos(sliderButton) working was to use untyped
 
 global function AddNorthstarServerBrowserMenu
-global function ThreadedAuthAndConnectToServer
+
+global function JoinServer
+global function CancelJoinServer
 
 global function AddConnectToServerCallback
 global function RemoveConnectToServerCallback
@@ -370,7 +372,7 @@ void function ToggleConnectingHUD( bool vis )
 
 void function ConnectingButton_Activate( var button )
 {
-	file.cancelConnection = true
+	CancelJoinServer()
 }
 
 ////////////////////////////
@@ -1025,99 +1027,7 @@ void function OnServerSelected( var button )
 	}
 	else
 	{
-		TriggerConnectToServerCallbacks()
-		thread ThreadedAuthAndConnectToServer()
-	}
-}
-
-
-void function ThreadedAuthAndConnectToServer( string password = "" )
-{
-	if ( NSIsAuthenticatingWithServer() )
-		return
-
-	NSTryAuthWithServer( file.lastSelectedServer.index, password )
-
-	ToggleConnectingHUD( true )
-
-	while ( NSIsAuthenticatingWithServer() && !file.cancelConnection )
-	{
-		WaitFrame()
-	}
-
-	ToggleConnectingHUD( false )
-
-	if ( file.cancelConnection )
-	{
-		file.cancelConnection = false
-		// re-focus server list
-		Hud_SetFocused( Hud_GetChild( file.menu, "BtnServer" + ( file.serverButtonFocusedID + 1 ) ) )
-		return
-	}
-
-	file.cancelConnection = false
-
-	if ( NSWasAuthSuccessful() )
-	{
-		bool modsChanged = false
-
-		// disable all RequiredOnClient mods that are not required by the server and are currently enabled
-		foreach ( string modName in NSGetModNames() )
-		{
-			if ( NSIsModRequiredOnClient( modName ) && NSIsModEnabled( modName ) )
-			{
-				// find the mod name in the list of server required mods
-				bool found = false
-				foreach ( RequiredModInfo mod in file.lastSelectedServer.requiredMods )
-				{
-					if (mod.name == modName)
-					{
-						found = true
-						break
-					}
-				}
-				// if we didnt find the mod name, disable the mod
-				if (!found)
-				{
-					modsChanged = true
-					NSSetModEnabled( modName, false )
-				}
-			}
-		}
-
-		// enable all RequiredOnClient mods that are required by the server and are currently disabled
-		foreach ( RequiredModInfo mod in file.lastSelectedServer.requiredMods )
-		{
-			if ( NSIsModRequiredOnClient( mod.name ) && !NSIsModEnabled( mod.name ))
-			{
-				modsChanged = true
-				NSSetModEnabled( mod.name, true )
-			}
-		}
-
-		// only actually reload if we need to since the uiscript reset on reload lags hard
-		if ( modsChanged )
-			ReloadMods()
-
-		NSConnectToAuthedServer()
-	}
-	else
-	{
-		string reason = NSGetAuthFailReason()
-
-		DialogData dialogData
-		dialogData.header = "#ERROR"
-		dialogData.message = reason
-		dialogData.image = $"ui/menu/common/dialog_error"
-
-		#if PC_PROG
-			AddDialogButton( dialogData, "#DISMISS" )
-
-			AddDialogFooter( dialogData, "#A_BUTTON_SELECT" )
-		#endif // PC_PROG
-		AddDialogFooter( dialogData, "#B_BUTTON_DISMISS_RUI" )
-
-		OpenDialog( dialogData )
+		thread NSJoinServer( file.lastSelectedServer )
 	}
 }
 
@@ -1274,10 +1184,119 @@ void function RemoveConnectToServerCallback( void functionref( ServerInfo ) call
 	file.connectCallbacks.fastremovebyvalue( callback )
 }
 
-void function TriggerConnectToServerCallbacks()
+void function TriggerConnectToServerCallbacks( ServerInfo ornull targetServer = null )
 {
+	ServerInfo server
+	if (targetServer == null)
+	{
+		targetServer = file.lastSelectedServer
+	}
+
 	foreach( callback in file.connectCallbacks )
 	{
-		callback( file.lastSelectedServer )
+		callback( expect ServerInfo( targetServer ) )
 	}
+}
+
+void function CancelJoinServer()
+{
+	file.cancelConnection = true
+}
+
+bool function JoinServer( ServerInfo server, string password = "" )
+{
+	if ( NSIsAuthenticatingWithServer() )
+		return false
+
+	print("Connecting to server " + server.name)
+	TriggerConnectToServerCallbacks( server )
+	NSTryAuthWithServer( server.index, password )
+
+	print(IsValid(file.menu))
+
+	ToggleConnectingHUD( true )
+
+	while ( NSIsAuthenticatingWithServer() && !file.cancelConnection )
+	{
+		WaitFrame()
+	}
+
+	ToggleConnectingHUD( false )
+
+	if ( file.cancelConnection )
+	{
+		file.cancelConnection = false
+		// re-focus server list
+		// Hud_SetFocused( Hud_GetChild( file.menu, "BtnServer" + ( file.serverButtonFocusedID + 1 ) ) )
+		return false
+	}
+
+	file.cancelConnection = false
+
+	if ( NSWasAuthSuccessful() )
+	{
+		bool modsChanged = false
+
+		// disable all RequiredOnClient mods that are not required by the server and are currently enabled
+		foreach ( string modName in NSGetModNames() )
+		{
+			if ( NSIsModRequiredOnClient( modName ) && NSIsModEnabled( modName ) )
+			{
+				// find the mod name in the list of server required mods
+				bool found = false
+				foreach ( RequiredModInfo mod in server.requiredMods )
+				{
+					if (mod.name == modName)
+					{
+						found = true
+						break
+					}
+				}
+				// if we didnt find the mod name, disable the mod
+				if (!found)
+				{
+					modsChanged = true
+					NSSetModEnabled( modName, false )
+				}
+			}
+		}
+
+		// enable all RequiredOnClient mods that are required by the server and are currently disabled
+		foreach ( RequiredModInfo mod in server.requiredMods )
+		{
+			if ( NSIsModRequiredOnClient( mod.name ) && !NSIsModEnabled( mod.name ))
+			{
+				modsChanged = true
+				NSSetModEnabled( mod.name, true )
+			}
+		}
+
+		// only actually reload if we need to since the uiscript reset on reload lags hard
+		if ( modsChanged )
+			ReloadMods()
+
+		print("Connecting to server " + server.name + " again")
+		NSConnectToAuthedServer()
+		return true
+	}
+	else
+	{
+		string reason = NSGetAuthFailReason()
+
+		DialogData dialogData
+		dialogData.header = "#ERROR"
+		dialogData.message = reason
+		dialogData.image = $"ui/menu/common/dialog_error"
+
+		#if PC_PROG
+			AddDialogButton( dialogData, "#DISMISS" )
+
+			AddDialogFooter( dialogData, "#A_BUTTON_SELECT" )
+		#endif // PC_PROG
+		AddDialogFooter( dialogData, "#B_BUTTON_DISMISS_RUI" )
+
+		OpenDialog( dialogData )
+		return false
+	}
+	return false
 }
