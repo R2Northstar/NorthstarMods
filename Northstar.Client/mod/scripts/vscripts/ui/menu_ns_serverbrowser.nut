@@ -1027,7 +1027,7 @@ void function OnServerSelected( var button )
 	}
 	else
 	{
-		thread NSJoinServer( file.lastSelectedServer )
+		thread JoinServer( file.lastSelectedServer )
 	}
 }
 
