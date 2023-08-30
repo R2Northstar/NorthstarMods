@@ -1023,11 +1023,12 @@ void function OnServerSelected( var button )
 	if ( server.requiresPassword )
 	{
 		OnCloseServerBrowserMenu()
+		SetPasswordTargetServer( file.lastSelectedServer )
 		AdvanceMenu( GetMenu( "ConnectWithPasswordMenu" ) )
 	}
 	else
 	{
-		thread NSJoinServer( file.lastSelectedServer )
+		thread JoinServer( file.lastSelectedServer )
 	}
 }
 
@@ -1208,11 +1209,13 @@ bool function JoinServer( ServerInfo server, string password = "" )
 	if ( NSIsAuthenticatingWithServer() )
 		return false
 
-	print("Connecting to server " + server.name)
+	print("Connecting to server " + server.name + " with id of " + server.id)
+	if ( password != "" )
+	{
+		print ( "password is: " + password )
+	}
 	TriggerConnectToServerCallbacks( server )
 	NSTryAuthWithServer( server.index, password )
-
-	print(IsValid(file.menu))
 
 	ToggleConnectingHUD( true )
 
@@ -1275,7 +1278,6 @@ bool function JoinServer( ServerInfo server, string password = "" )
 		if ( modsChanged )
 			ReloadMods()
 
-		print("Connecting to server " + server.name + " again")
 		NSConnectToAuthedServer()
 		return true
 	}
