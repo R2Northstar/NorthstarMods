@@ -264,6 +264,9 @@ void function SetupComboButtonTest( var menu )
 		file.inviteRoomButton = AddComboButton( comboStruct, headerIndex, buttonIndex++, "#MENU_TITLE_INVITE_ROOM" )
 		Hud_AddEventHandler( file.inviteRoomButton, UIE_CLICK, DoRoomInviteIfAllowed )	
 	}
+	
+	file.toggleMenuModeButton = AddComboButton( comboStruct, headerIndex, buttonIndex++, "#MENU_LOBBY_SWITCH_FD" )
+	Hud_AddEventHandler( file.toggleMenuModeButton, UIE_CLICK, ToggleLobbyMode )
 
 	file.inviteFriendsButton = AddComboButton( comboStruct, headerIndex, buttonIndex++, "#MENU_TITLE_INVITE_FRIENDS" )
 	Hud_AddEventHandler( file.inviteFriendsButton, UIE_CLICK, InviteFriendsIfAllowed )
@@ -273,9 +276,6 @@ void function SetupComboButtonTest( var menu )
 		Hud_SetEnabled( file.inviteFriendsButton, false )
 		Hud_SetVisible( file.inviteFriendsButton, false )
 	}
-
-	// file.toggleMenuModeButton = AddComboButton( comboStruct, headerIndex, buttonIndex++, "#MENU_LOBBY_SWITCH_FD" )
-	// Hud_AddEventHandler( file.toggleMenuModeButton, UIE_CLICK, ToggleLobbyMode )
 
 	headerIndex++
 	buttonIndex = 0
@@ -434,7 +434,8 @@ void function CreatePartyAndInviteFriends()
 
 void function ToggleLobbyMode( var button )
 {
-	Lobby_ToggleFDMode()
+	//Lobby_ToggleFDMode()
+	AdvanceMenu( GetMenu( "FDMenu" ) )
 }
 
 void function Lobby_ToggleFDMode()

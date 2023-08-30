@@ -164,10 +164,14 @@ string function GetSelectedBurncardRefFromWeaponOrPlayer( entity weapon, entity 
 
 				case "mp_ability_turretweapon":
 					// turret has 2 burncards, antititan and antipilot
-					if( weapon.HasMod( "burnmeter_at_turret_weapon" ) || weapon.HasMod( "burnmeter_at_turret_weapon_inf" ) )
+					if( weapon.HasMod( "burnmeter_at_turret_weapon" ) )
 						return "burnmeter_at_turret_weapon"
-					else
+					else if( weapon.HasMod( "burnmeter_at_turret_weapon_inf" ) )
+						return "burnmeter_at_turret_weapon_infinite"
+					else if( weapon.HasMod( "burnmeter_ap_turret_weapon" ) )
 						return "burnmeter_ap_turret_weapon"
+					else if( weapon.HasMod( "burnmeter_ap_turret_weapon_inf" ) )
+						return "burnmeter_ap_turret_weapon_infinite"
 
 				// note: cloak and stim both have burn_card_weapon_mod mods, but they aren't used and don't call burncard code at all, likely for tf1 infinite stim/cloak burncards?
 

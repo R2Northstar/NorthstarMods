@@ -194,6 +194,12 @@ bool function CodeCallback_IsValidMeleeExecutionTarget( entity attacker, entity 
 {
 	if ( attacker == target )
 		return false
+	
+	if ( !attacker.IsOnGround() || !target.IsOnGround() )
+		return false
+		
+	if ( attacker.GetParent() || target.GetParent() )
+		return false
 
 	// npc execution case
 	if ( attacker.IsPlayer() )
@@ -241,10 +247,7 @@ bool function CodeCallback_IsValidMeleeExecutionTarget( entity attacker, entity 
 		if ( HasSoul( target ) && target.GetTitanSoul().IsEjecting() )
 			return false
 
-		if ( attacker.ContextAction_IsActive() )
-			return false
-
-		if ( target.ContextAction_IsActive() )
+		if ( attacker.ContextAction_IsActive() || target.ContextAction_IsActive() )
 			return false
 
 		if ( GetCurrentPlaylistVarInt( "vortex_blocks_melee", 0 ) == 1 )

@@ -37,6 +37,7 @@ Branch made to expand Frontier Defense feature set by adding back cut content wh
 - Better accuracy
 - Can use their Cores
 - They can Execute Players
+- They can use e-smoke to kill pilots trying to rodeo them
 - Drop a Battery on Easy and Regular Difficulties or drop an Amped Battery in Hard, Master and Insane difficulties similar to campaign Titans
 
 ## Live Fire Gameplay Changes

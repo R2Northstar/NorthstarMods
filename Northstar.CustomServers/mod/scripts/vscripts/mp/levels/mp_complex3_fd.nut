@@ -471,6 +471,15 @@ void function initFrontierDefenseData()
 
 void function RegisterCustomFDContent()
 {
+	array<entity> dropshipSpawns = GetEntArrayByClass_Expensive( "info_spawnpoint_dropship_start" )
+	foreach ( entity dropshipSpawn in dropshipSpawns )
+		dropshipSpawn.Destroy()
+	
+	AddFDCustomShipStart( < -7667, -651, 1946 >, < 0, -15, 0 >, TEAM_MILITIA )
+	AddFDCustomShipStart( < -6585, 283, 1946 >, < 0, -135, 0 >, TEAM_MILITIA )
+	AddFDCustomShipStart( < -1960, 372, 1400 >, < 0, -90, 0 >, TEAM_IMC )
+	AddFDCustomShipStart( < -992, 531, 1400 >, < 0, -90, 0 >, TEAM_IMC )
+	
 	SpawnFDHeavyTurret( < -6658, -75, 696 >, < 0, 135, 0 >, < -6778, -132, 580 >, < 0, 45, 0 > )
 	
 	AddStationaryAIPosition(< -627, -1734, 512 >, eStationaryAIPositionTypes.MORTAR_TITAN)

@@ -705,7 +705,7 @@ void function CleanUpEntitiesForRoundEnd()
 {
 	// this function should clean up any and all entities that need to be removed between rounds, ideally at a point where it isn't noticable to players
 	SetPlayerDeathsHidden( true ) // hide death sounds and such so people won't notice they're dying
-	
+	svGlobal.levelEnt.Signal( "CleanUpEntitiesForRoundEnd" ) 
 	foreach ( entity player in GetPlayerArray() )
 	{
 		ClearTitanAvailable( player )
@@ -730,7 +730,6 @@ void function CleanUpEntitiesForRoundEnd()
 		battery.Destroy()
 	
 	// allow other scripts to clean stuff up too
-	svGlobal.levelEnt.Signal( "CleanUpEntitiesForRoundEnd" ) 
 	foreach ( void functionref() callback in file.roundEndCleanupCallbacks )
 		callback()
 	

@@ -223,7 +223,6 @@ void function SpawnPlayerIntoDropship( entity player )
 	jumpSequence.thirdPersonAnim = DROPSHIP_JUMP_ANIMS[ playerDropshipIndex ]
 	jumpSequence.attachment = "ORIGIN"
 	jumpSequence.setInitialTime = max( 0.0, Time() - ( file.introStartTime + 11.0 ) )  // pretty sure you should do this with GetScriptedAnimEventCycleFrac?
-	jumpSequence.blendTime = 1.0
 	// idk unsure how to use that, all i know is getsequenceduration > the length it actually should be
 	
 	#if BATTLECHATTER_ENABLED

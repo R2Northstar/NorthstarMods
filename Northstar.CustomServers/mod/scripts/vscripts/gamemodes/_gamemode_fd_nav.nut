@@ -193,7 +193,7 @@ void function singleNav_thread( entity npc, string routeName, int nodesToSkip = 
 	npc.Signal( "FD_ReachedHarvester" )
 }
 
-void function droneNav_thread( entity npc, string routeName, int nodesToSkip = 0, float nextDistance = 128.0, bool shouldLoop = false )
+void function droneNav_thread( entity npc, string routeName, int nodesToSkip = 0, float nextDistance = 160.0, bool shouldLoop = false )
 {
 	npc.EndSignal( "OnDeath" )
 	npc.EndSignal( "OnDestroy" )
@@ -372,6 +372,7 @@ void function Dev_ShowRoute( bool includedrones = false )
 				continue
 				
 			routename = expect string( node.kv.route_name )
+			entity routetitle = CreatePointMessage( routename, node.GetOrigin() + < 0, 0, 32 >, 800 )
 			if( routename.tolower().find( "drone" ) && includedrones )
 				thread DroneTracksPathing( routename )
 			else

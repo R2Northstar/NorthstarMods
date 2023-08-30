@@ -4,18 +4,74 @@ npc_titan_atlas_stickybomb_boss_fd_elite
 	title 							"Elite Ion"
 	showTitle						1
 	npc_titan_player_settings		"titan_atlas_ion_prime"
+	BehaviorSelector				"behavior_titan_elite"
 	
 	painOnSurpriseHit				0
 	painWhileRunning				0
 	
-	PainOnHeavyDamageThreshold		10000
+	minConsecutiveDodgeTime			1
+	StrafeDodgeDamage				400
+	
+	PainOnHeavyDamageThreshold		0
 	PainOnRepeatDamageThreshold		10000
 	RepeatDamageTimeInterval		30
 	breakOutOfPainDamageThreshold	5000
 	lightPainMinInterval			30
 	heavyPainMinInterval			60
+	
+	meleeInterval					1
+	meleeChargeInterval				1
+	meleeMaxCombo					3
+	chaseOnlyReachable				1
+	
 	reactChanceDefault				100
 	reactBulletChanceDefault		100
+	reactionTime					0.2
+	reactInterval					0.5
+	
+	FOV_Vert_Offset					10
+
+	FOV_Idle_Near_Horz				360
+	FOV_Idle_Near_Vert				180
+	FOV_Idle_Far_Horz				360
+	FOV_Idle_Far_Vert				180
+
+	FOV_Alert_Near_Horz				360
+	FOV_Alert_Near_Vert				180
+	FOV_Alert_Far_Horz				360
+	FOV_Alert_Far_Vert				180
+
+	FOV_Combat_Near_Horz			360
+	FOV_Combat_Near_Vert			180
+	FOV_Combat_Far_Horz				360
+	FOV_Combat_Far_Vert				180
+
+	faceEnemyToleranceAngle			45
+	faceEnemyStrictToleranceAngle	45
+	faceEnemyWhileMovingDist 		3500
+	faceEnemyWhileMovingDuration	1
+	moveYawSpeed					30
+	
+	NoticeForgetPostTime	2.0
+	NoticeForgetPreTime		1.0
+	NoticeDistNear_Alert	600
+	NoticeDistNear_Combat	600
+	NoticeDistNear_Idle		150
+	NoticeDistFar_Alert		3000
+	NoticeDistFar_Combat	4000
+	NoticeDistFar_Idle		2000
+	NoticeTimeNear_Alert	0.1
+	NoticeTimeNear_Combat	0.1
+	NoticeTimeNear_Idle		0.1
+	NoticeTimeFar_Alert		0.3
+	NoticeTimeFar_Combat	0.3
+	NoticeTimeFar_Idle		0.3
+	NoticeTimePeripheral_Alert	0.3
+	NoticeTimePeripheral_Combat 0.3
+	NoticeTimePeripheral_Idle	0.3
+	
+	aiEnemy_usePriorityDist			4000
+	aiEnemy_immediateThreatDist		800
 	
 	evasiveCombatShieldPct					0.0
 	evasiveCombatHealthSegmentPct			0.0
@@ -23,7 +79,7 @@ npc_titan_atlas_stickybomb_boss_fd_elite
 	evasiveCombatHealthChangeRateDiff		-7500
 	aggressiveCombatHealthSegmentPct		0.99
 	aggressiveCombatTotalHealthDiffPct 		0.1
-	aggressiveCombatHealthChangeRateDiff	-400
+	aggresiveCombatHealthChangeRateDiff		-400
 	
 	aiEnemy_immediateThreatDist				800
 	aiEnemy_usePriorityDist					4000
@@ -32,13 +88,17 @@ npc_titan_atlas_stickybomb_boss_fd_elite
 	waitBetweenWeaponBurst			0
 	resetBurstOnStopShootOverlay	1
 	
-	blockPeriod					7
-	maxBlockPerPeriod			3
+	blockPeriod					2
+	maxBlockPerPeriod			2
 	
 	dodgePeriod					2
-	maxDodgePerPeriod			3
+	maxDodgePerPeriod			2
 
 	titanCamoIndex 31
 	titanDecalIndex 0
 	titanSkinIndex 2
+	
+	sharedEnergyTotal 1500
+	sharedEnergyRegenDelay 0.1
+	sharedEnergyRegenRate 200.0
 }

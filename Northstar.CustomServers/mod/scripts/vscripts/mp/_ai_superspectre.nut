@@ -30,7 +30,7 @@ const SPAWN_ENEMY_TOO_CLOSE_RANGE_SQR		= 1048576 	// Don't spawn guys if the tar
 const SPAWN_HIDDEN_ENEMY_WITHIN_RANGE_SQR	= 1048576 	// If the enemy can't bee seen, and they are within in this range (1024^2), spawn dudes to find him.
 const SPAWN_ENEMY_ABOVE_HEIGHT  			= 128		// If the enemy is at least this high up, then spawn dudes to find him.
 const SPAWN_FUSE_TIME						= 2.0	  	// How long after being fired before the spawner explodes and spawns a spectre.
-const SPAWN_PROJECTILE_AIR_TIME				= 1.0    	// How long the spawn project will be in the air before hitting the ground. (Originally 3 seconds, but i changed until navmeshes gets jump points -Zanieon)
+const SPAWN_PROJECTILE_AIR_TIME				= 3.0    	// How long the spawn project will be in the air before hitting the ground.
 const SPECTRE_EXPLOSION_DMG_MULTIPLIER		= 1.2 		// +20%
 const DEV_DEBUG_PRINTS						= false
 
@@ -398,17 +398,17 @@ void function ReaperMinionLauncherThink( entity reaper )
 
 		if ( Distance( reaper.GetOrigin(), launchPos.origin ) > 96 )
 		{
-			printt( reaper," ASSAULT:", launchPos.origin, Distance( reaper.GetOrigin(), launchPos.origin ) )
+			//printt( reaper," ASSAULT:", launchPos.origin, Distance( reaper.GetOrigin(), launchPos.origin ) )
 			reaper.AssaultPoint( launchPos.origin )
 			table signalData = WaitSignal( reaper, "OnFinishedAssault", "OnEnterGoalRadius", "OnFailedToPath" )
-			printt( reaper," END ASSAULT:", launchPos.origin, signalData.signal )
+			//printt( reaper," END ASSAULT:", launchPos.origin, signalData.signal )
 			if ( signalData.signal == "OnFailedToPath" )
 				continue
 		}
 
-		printt( reaper," LAUNCH:", launchPos.origin )
+		//printt( reaper," LAUNCH:", launchPos.origin )
 		waitthread Reaper_LaunchFragDrone_Think( reaper, "npc_frag_drone_fd" )
-		printt( reaper," END LAUNCH:", launchPos.origin )
+		//printt( reaper," END LAUNCH:", launchPos.origin )
 		while ( GetScriptManagedEntArrayLen( reaper.ai.activeMinionEntArrayID ) > 2 )
 			WaitFrame()
 	}
@@ -447,7 +447,7 @@ void function Reaper_LaunchFragDrone_Think( entity reaper, string fragDroneSetti
 		}
 	)
 
-	printt( reaper, "   BEGIN LAUNCHING: ", minionsToSpawn, reaper.GetCurScheduleName() )
+	//printt( reaper, "   BEGIN LAUNCHING: ", minionsToSpawn, reaper.GetCurScheduleName() )
 
 	reaper.EndSignal( "OnDeath" )
 
@@ -464,7 +464,7 @@ void function Reaper_LaunchFragDrone_Think( entity reaper, string fragDroneSetti
 			if ( minionsToSpawn <= 0 )
 				break
 
-			printt( reaper, "    LAUNCHING: ", minionsToSpawn )
+			//printt( reaper, "    LAUNCHING: ", minionsToSpawn )
 			thread LaunchSpawnerProjectile( reaper, targetOrigin, activeMinions_EntArrayID, fragDroneSettings )
 			minionsToSpawn--
 

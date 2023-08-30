@@ -39,6 +39,7 @@ global function SpawnLFMapTitan
 global function ShowTitanfallBlockHintToPlayer
 global function ShowLargePilotKillStreak
 global function ShowWaitingForMorePlayers
+global function SetupGruntSpectreWeapons
 
 global struct SmokeEvent{
 	vector position
@@ -130,16 +131,15 @@ global enum FD_TitanType
 struct {
 	vector helperTitanSpawnPos
 	vector helperTitanAngles
+	string Cvar_gruntweapons
+	array<string> FD_GruntWeapons
+	string Cvar_gruntgrenade
+	string Cvar_spectreweapons
+	array<string> FD_SpectreWeapons
 }file
 
 global table< string, entity > GlobalEventEntitys
 global array< array<WaveEvent> > waveEvents
-
-global string Cvar_gruntweapons
-global array<string> FD_GruntWeapons
-global string Cvar_gruntgrenade
-global string Cvar_spectreweapons
-global array<string> FD_SpectreWeapons
 
 const FD_TITAN_AOE_REACTTIME = 3 //This is in seconds
 
@@ -189,7 +189,7 @@ void function executeWave()
 			}
 		}
 		
-		if ( GetGlobalNetInt( "FD_AICount_Current" ) >= 10 )
+		if ( GetGlobalNetInt( "FD_AICount_Current" ) <= 10 && GetGlobalNetInt( "FD_AICount_Drone_Cloak" ) > 0  )
 		{
 			//Kill Cloak Drones beforehand when a wave is about to end to avoid softlocking
 			array<entity> droneArray = GetNPCCloakedDrones()
@@ -1063,7 +1063,7 @@ void function spawnDrones( SmokeEvent smokeEvent, SpawnEvent spawnEvent, FlowCon
 		SetTargetName( guy, GetTargetNameForID( eFD_AITypeIDs.DRONE ) )
 		AddMinimapForHumans( guy )
 		spawnedNPCs.append( guy )
-		thread droneNav_thread(guy, spawnEvent.route, 0, 128, spawnEvent.shouldLoop )
+		thread droneNav_thread(guy, spawnEvent.route, 0, 160, spawnEvent.shouldLoop )
 	}
 }
 
@@ -1113,12 +1113,14 @@ void function spawnArcTitan( SmokeEvent smokeEvent, SpawnEvent spawnEvent, FlowC
 	SetSpawnOption_AISettings( npc, "npc_titan_stryder_leadwall_arc" )
 	SetSpawnOption_Alert( npc )
 	spawnedNPCs.append( npc )
-	npc.kv.reactChance = 60
 	DispatchSpawn( npc )
+	npc.kv.reactChance = 50
 	if ( arcTitansUsesArcCannon ) //SetSpawnOption_Weapon is not working for Arc Titans so take current and give Arc Cannon
 	{
 		TakeWeaponsForArray( npc, npc.GetMainWeapons() )
 		npc.GiveWeapon( "mp_titanweapon_arc_cannon" )
+		npc.kv.AccuracyMultiplier = 0.6
+		npc.kv.WeaponProficiency = eWeaponProficiency.AVERAGE
 	}
 	
 	npc.DisableNPCFlag( NPC_ALLOW_INVESTIGATE | NPC_USE_SHOOTING_COVER | NPC_ALLOW_PATROL )
@@ -1256,12 +1258,7 @@ void function spawnDroppodGrunts( SmokeEvent smokeEvent, SpawnEvent spawnEvent, 
 		if( spawnEvent.entityGlobalKey != "" )
 			GlobalEventEntitys[ spawnEvent.entityGlobalKey+ i.tostring() ] <- guy
 		SetTeam( guy, TEAM_IMC )
-		if ( FD_GruntWeapons.len() > -1 )
-		{
-			string baseweapon = FD_GruntWeapons[ RandomInt( FD_GruntWeapons.len() ) ]
-			SetSpawnOption_Weapon( guy, baseweapon )
-			guy.kv.grenadeWeaponName = Cvar_gruntgrenade
-		}
+		guy.kv.grenadeWeaponName = file.Cvar_gruntgrenade
 		DispatchSpawn( guy )
 		SetupGruntBehaviorFlags( guy )
 		guy.SetParent( pod, "ATTACH", true )
@@ -1269,6 +1266,7 @@ void function spawnDroppodGrunts( SmokeEvent smokeEvent, SpawnEvent spawnEvent, 
 		if( GetMapName().find( "mp_lf_" ) != null )
 			guy.EnableNPCFlag( NPC_NO_WEAPON_DROP )
 
+		GiveMinionFDLoadout( guy )
 		// should this grunt have an anti titan weapon instead of its normal weapon?
 		if ( i < GetCurrentPlaylistVarInt( "fd_grunt_at_weapon_users", 0 ) || GetMapName().find( "mp_lf_" ) != null )
 			guy.GiveWeapon( at_weapon )
@@ -1378,16 +1376,12 @@ void function spawnGruntDropship( SmokeEvent smokeEvent, SpawnEvent spawnEvent, 
 		if( spawnEvent.entityGlobalKey != "" )
 			GlobalEventEntitys[ spawnEvent.entityGlobalKey+ i.tostring() ] <- guy
 		SetTeam( guy, TEAM_IMC )
-		if ( FD_GruntWeapons.len() > -1 )
-		{
-			string baseweapon = FD_GruntWeapons[ RandomInt( FD_GruntWeapons.len() ) ]
-			SetSpawnOption_Weapon( guy, baseweapon )
-			guy.kv.grenadeWeaponName = Cvar_gruntgrenade
-		}
+		guy.kv.grenadeWeaponName = file.Cvar_gruntgrenade
 		DispatchSpawn( guy )
 		SetupGruntBehaviorFlags( guy )
 		SetSquad( guy, squadName )
 		
+		GiveMinionFDLoadout( guy )
 		if ( i < GetCurrentPlaylistVarInt( "fd_grunt_at_weapon_users", 0 ) )
 			guy.GiveWeapon( at_weapon )
 		
@@ -1444,7 +1438,7 @@ void function spawnDroppodStalker( SmokeEvent smokeEvent, SpawnEvent spawnEvent,
 		SetTeam( guy, TEAM_IMC )
 		SetSpawnOption_AISettings( guy, "npc_stalker_fd" )
 		DispatchSpawn( guy )
-		guy.EnableNPCFlag(  NPC_ALLOW_INVESTIGATE | NPC_ALLOW_HAND_SIGNALS | NPC_ALLOW_FLEE )
+		guy.EnableNPCFlag(  NPC_ALLOW_INVESTIGATE | NPC_NO_WEAPON_DROP )
 		guy.DisableNPCFlag( NPC_ALLOW_PATROL )
 		guy.SetParent( pod, "ATTACH", true )
 		SetSquad( guy, squadName )
@@ -1492,7 +1486,6 @@ void function spawnDroppodStalker( SmokeEvent smokeEvent, SpawnEvent spawnEvent,
 			npc.GiveWeapon( "mp_weapon_epg", [] )
 			npc.SetActiveWeaponByName( "mp_weapon_epg" )
 			npc.DisableNPCFlag( NPC_DISABLE_SENSING | NPC_IGNORE_ALL )
-			npc.EnableNPCFlag( NPC_NO_WEAPON_DROP )
 			
 			entity weapon = npc.GetActiveWeapon()
 			if ( IsValid( weapon ) )
@@ -1530,13 +1523,9 @@ void function spawnDroppodSpectreMortar( SmokeEvent smokeEvent, SpawnEvent spawn
 		if( spawnEvent.entityGlobalKey != "" )
 			GlobalEventEntitys[ spawnEvent.entityGlobalKey + i.tostring() ] <- guy
 		SetTeam( guy, TEAM_IMC )
-		if ( FD_SpectreWeapons.len() > -1 )
-		{
-			string baseweapon = FD_SpectreWeapons[ RandomInt( FD_SpectreWeapons.len() ) ]
-			SetSpawnOption_Weapon( guy, baseweapon )
-		}
 		guy.kv.reactChance = 100
 		DispatchSpawn( guy )
+		GiveMinionFDLoadout( guy )
 		guy.AssaultSetFightRadius( 0 )
 		guy.DisableNPCFlag( NPC_ALLOW_INVESTIGATE | NPC_USE_SHOOTING_COVER | NPC_ALLOW_PATROL )
 		guy.EnableNPCFlag( NPC_NO_WEAPON_DROP )
@@ -1580,13 +1569,9 @@ void function spawnDroppodSpectre( SmokeEvent smokeEvent, SpawnEvent spawnEvent,
 		if( spawnEvent.entityGlobalKey != "" )
 			GlobalEventEntitys[ spawnEvent.entityGlobalKey + i.tostring() ] <- guy
 		SetTeam( guy, TEAM_IMC )
-		if ( FD_SpectreWeapons.len() > -1 )
-		{
-			string baseweapon = FD_SpectreWeapons[ RandomInt( FD_SpectreWeapons.len() ) ]
-			SetSpawnOption_Weapon( guy, baseweapon )
-		}
 		guy.kv.reactChance = 100
 		DispatchSpawn( guy )
+		GiveMinionFDLoadout( guy )
 		guy.AssaultSetFightRadius( 0 )
 		guy.DisableNPCFlag( NPC_ALLOW_INVESTIGATE | NPC_USE_SHOOTING_COVER | NPC_ALLOW_PATROL )
 		guy.EnableNPCFlag( NPC_NO_WEAPON_DROP )
@@ -1668,9 +1653,11 @@ void function SpawnIonTitan( SmokeEvent smokeEvent, SpawnEvent spawnEvent, FlowC
 		SetEliteTitanPostSpawn( npc )
 		npc.SetMaxHealth( npc.GetMaxHealth() + 7500 )
 		npc.SetHealth( npc.GetMaxHealth() )
-		npc.GetTitanSoul().soul.titanLoadout.titanExecution = "execution_ion_prime"
+		npc.GetTitanSoul().soul.titanLoadout.titanExecution = "execution_ion"
+		npc.SetDangerousAreaReactionTime( 0 )
 	}
-	npc.SetDangerousAreaReactionTime( FD_TITAN_AOE_REACTTIME )
+	else
+		npc.SetDangerousAreaReactionTime( FD_TITAN_AOE_REACTTIME )
 	if( spawnEvent.entityGlobalKey != "" )
 		GlobalEventEntitys[spawnEvent.entityGlobalKey] <- npc
 	spawnedNPCs.append( npc )
@@ -1688,7 +1675,6 @@ void function SpawnScorchTitan( SmokeEvent smokeEvent, SpawnEvent spawnEvent, Fl
 	PingMinimap( spawnEvent.origin.x, spawnEvent.origin.y, 4, 600, 150, 0 )
 	entity npc = CreateNPCTitan( "titan_ogre", TEAM_IMC, spawnEvent.origin, spawnEvent.angles )
 	SetSpawnOption_Titanfall( npc )
-	npc.kv.reactChance = 60
 	if ( spawnEvent.titanType == 1 && elitesAllowed )
 	{
 		SetSpawnOption_AISettings( npc, "npc_titan_ogre_meteor_boss_fd_elite" )
@@ -1698,15 +1684,10 @@ void function SpawnScorchTitan( SmokeEvent smokeEvent, SpawnEvent spawnEvent, Fl
 	}
 	else
 	{
-		/* I don't wanna know if this is vanilla behavior or not, i stopped accepting Scorches should aimbot the moment i got killed in the frame the respawn
-		dropship made me and another guy vulnerable and this motherfucker simply decided to snipe us midair, not even Northstars does this all the time but
-		this son of a bitch does whenever he has the chance, so now i made sure hes a drunk guy who cant handle shit even on his face */
 		if ( difficultyLevel == eFDDifficultyLevel.EASY || difficultyLevel == eFDDifficultyLevel.NORMAL )
 			SetSpawnOption_AISettings( npc, "npc_titan_ogre_meteor" )
 		else
 			SetSpawnOption_AISettings( npc, "npc_titan_ogre_meteor_boss_fd" )
-		npc.kv.AccuracyMultiplier = 0.5
-		npc.kv.WeaponProficiency = eWeaponProficiency.AVERAGE
 		SlowEnemyMovementBasedOnDifficulty( npc )
 	}
 	
@@ -1722,8 +1703,15 @@ void function SpawnScorchTitan( SmokeEvent smokeEvent, SpawnEvent spawnEvent, Fl
 		array<entity> primaryWeapons = npc.GetMainWeapons()
 		entity weapon = primaryWeapons[0]
 		weapon.AddMod( "fd_wpn_upgrade_2" )
+		npc.SetDangerousAreaReactionTime( 0 )
 	}
-	npc.SetDangerousAreaReactionTime( FD_TITAN_AOE_REACTTIME )
+	else
+	{
+		npc.kv.reactChance = 60
+		npc.kv.AccuracyMultiplier = 0.5
+		npc.kv.WeaponProficiency = eWeaponProficiency.AVERAGE
+		npc.SetDangerousAreaReactionTime( FD_TITAN_AOE_REACTTIME )
+	}
 	if( spawnEvent.entityGlobalKey != "" )
 		GlobalEventEntitys[spawnEvent.entityGlobalKey] <- npc
 	spawnedNPCs.append( npc )
@@ -1748,6 +1736,7 @@ void function SpawnRoninTitan( SmokeEvent smokeEvent, SpawnEvent spawnEvent, Flo
 		SetTitanAsElite( npc )
 		SetSpawnOption_TitanSoulPassive4( npc, "pas_ronin_swordcore" )
 		SetSpawnOption_TitanSoulPassive5( npc, "pas_ronin_weapon" )
+		SetSpawnOption_TitanSoulPassive6( npc, "pas_ronin_phase" )
 	}
 	else
 	{
@@ -1755,9 +1744,6 @@ void function SpawnRoninTitan( SmokeEvent smokeEvent, SpawnEvent spawnEvent, Flo
 			SetSpawnOption_AISettings( npc, "npc_titan_stryder_leadwall" )
 		else
 			SetSpawnOption_AISettings( npc, "npc_titan_stryder_leadwall_boss_fd" )
-		
-		npc.kv.AccuracyMultiplier = 0.7
-		npc.kv.WeaponProficiency = eWeaponProficiency.AVERAGE
 	}
 	SetTargetName( npc, GetTargetNameForID( spawnEvent.spawnType ) ) // required for client to create icons
 	DispatchSpawn( npc )
@@ -1769,6 +1755,12 @@ void function SpawnRoninTitan( SmokeEvent smokeEvent, SpawnEvent spawnEvent, Flo
 		npc.GetTitanSoul().soul.titanLoadout.titanExecution = "execution_ronin"
 		
 		npc.GetOffhandWeapon( OFFHAND_MELEE ).AddMod( "fd_sword_upgrade" )
+		npc.SetDangerousAreaReactionTime( 0 )
+	}
+	else
+	{
+		npc.kv.AccuracyMultiplier = 0.7
+		npc.kv.WeaponProficiency = eWeaponProficiency.AVERAGE
 	}
 	if( spawnEvent.entityGlobalKey != "" )
 		GlobalEventEntitys[spawnEvent.entityGlobalKey] <- npc
@@ -1817,8 +1809,10 @@ void function SpawnToneTitan( SmokeEvent smokeEvent, SpawnEvent spawnEvent, Flow
 		entity tonesonar = npc.GetOffhandWeapon( OFFHAND_ANTIRODEO )
 		tonesonar.AddMod( "fd_sonar_duration" )
 		tonesonar.AddMod( "fd_sonar_damage_amp" )
+		npc.SetDangerousAreaReactionTime( 0 )
 	}
-	npc.SetDangerousAreaReactionTime( FD_TITAN_AOE_REACTTIME )
+	else
+		npc.SetDangerousAreaReactionTime( FD_TITAN_AOE_REACTTIME )
 	if( spawnEvent.entityGlobalKey != "" )
 		GlobalEventEntitys[spawnEvent.entityGlobalKey] <- npc
 	spawnedNPCs.append( npc )
@@ -1872,8 +1866,10 @@ void function SpawnLegionTitan( SmokeEvent smokeEvent, SpawnEvent spawnEvent, Fl
 		gunshield.AddMod( "npc_more_shield" )
 		gunshield.AddMod( "npc_infinite_shield" )
 		gunshield.AddMod( "SiegeMode" )
+		npc.SetDangerousAreaReactionTime( 0 )
 	}
-	npc.SetDangerousAreaReactionTime( FD_TITAN_AOE_REACTTIME )
+	else
+		npc.SetDangerousAreaReactionTime( FD_TITAN_AOE_REACTTIME )
 	if( spawnEvent.entityGlobalKey != "" )
 		GlobalEventEntitys[spawnEvent.entityGlobalKey] <- npc
 	spawnedNPCs.append( npc )
@@ -1920,11 +1916,14 @@ void function SpawnMonarchTitan( SmokeEvent smokeEvent, SpawnEvent spawnEvent, F
 		maingun.AddMod( "rapid_reload" )
 		maingun.AddMod( "fd_vanguard_weapon_1" )
 		maingun.AddMod( "fd_vanguard_weapon_2" )
+		maingun.AddMod( "fd_vanguard_utility_1" )
 		
 		npc.TakeOffhandWeapon( OFFHAND_ORDNANCE )
 		npc.GiveOffhandWeapon( "mp_titanweapon_shoulder_rockets", OFFHAND_ORDNANCE, ["mod_ordnance_core","upgradeCore_MissileRack_Vanguard"] )
+		npc.SetDangerousAreaReactionTime( 0 )
 	}
-	npc.SetDangerousAreaReactionTime( FD_TITAN_AOE_REACTTIME )
+	else
+		npc.SetDangerousAreaReactionTime( FD_TITAN_AOE_REACTTIME )
 	if( spawnEvent.entityGlobalKey != "" )
 		GlobalEventEntitys[spawnEvent.entityGlobalKey] <- npc
 	spawnedNPCs.append( npc )
@@ -1947,11 +1946,12 @@ void function spawnNukeTitan( SmokeEvent smokeEvent, SpawnEvent spawnEvent, Flow
 	npc.kv.reactChance = 60
 	SetTargetName( npc, GetTargetNameForID( spawnEvent.spawnType ) ) // required for client to create icons
 	DispatchSpawn( npc )
-	npc.EnableNPCMoveFlag( NPCMF_WALK_ALWAYS | NPCMF_WALK_NONCOMBAT | NPCMF_IGNORE_CLUSTER_DANGER_TIME | NPCMF_DISABLE_DANGEROUS_AREA_DISPLACEMENT )
-	npc.DisableNPCMoveFlag( NPCMF_PREFER_SPRINT | NPCMF_FOLLOW_SAFE_PATHS )
+	npc.EnableNPCMoveFlag( NPCMF_WALK_ALWAYS | NPCMF_WALK_NONCOMBAT )
+	npc.DisableNPCMoveFlag( NPCMF_PREFER_SPRINT )
 	npc.DisableNPCFlag( NPC_DIRECTIONAL_MELEE )
 	npc.AssaultSetFightRadius( 0 )
 	SlowEnemyMovementBasedOnDifficulty( npc )
+	npc.SetDangerousAreaReactionTime( 15 ) //Lasts longer than any AoE the game has
 	npc.SetCapabilityFlag( bits_CAP_INNATE_MELEE_ATTACK1 | bits_CAP_INNATE_MELEE_ATTACK2 | bits_CAP_SYNCED_MELEE_ATTACK , false )
 	if( spawnEvent.entityGlobalKey != "" )
 		GlobalEventEntitys[spawnEvent.entityGlobalKey] <- npc
@@ -1977,6 +1977,8 @@ void function spawnMortarTitan( SmokeEvent smokeEvent, SpawnEvent spawnEvent, Fl
 	DispatchSpawn( npc )
 	npc.SetSkin( 2 )
 	npc.SetCamo( 1 )
+	npc.DisableNPCFlag( NPC_ALLOW_INVESTIGATE )
+	npc.DisableNPCMoveFlag( NPCMF_WALK_NONCOMBAT )
 	npc.SetDangerousAreaReactionTime( FD_TITAN_AOE_REACTTIME )
 	if( spawnEvent.entityGlobalKey != "" )
 		GlobalEventEntitys[spawnEvent.entityGlobalKey] <- npc
@@ -2022,8 +2024,10 @@ void function spawnSniperTitan( SmokeEvent smokeEvent, SpawnEvent spawnEvent, Fl
 		entity tethertrap = npc.GetOffhandWeapon( OFFHAND_SPECIAL )
 		tethertrap.AddMod( "fd_explosive_trap" )
 		tethertrap.AddMod( "fd_trap_charges" )
+		npc.SetDangerousAreaReactionTime( 0 )
 	}
 	npc.DisableNPCFlag( NPC_ALLOW_INVESTIGATE )
+	npc.DisableNPCMoveFlag( NPCMF_WALK_NONCOMBAT )
 	npc.SetDangerousAreaReactionTime( FD_TITAN_AOE_REACTTIME )
 	if( spawnEvent.entityGlobalKey != "" )
 		GlobalEventEntitys[spawnEvent.entityGlobalKey] <- npc
@@ -2070,14 +2074,16 @@ void function SpawnToneSniperTitan( SmokeEvent smokeEvent, SpawnEvent spawnEvent
 		entity tonesonar = npc.GetOffhandWeapon( OFFHAND_ANTIRODEO )
 		tonesonar.AddMod( "fd_sonar_duration" )
 		tonesonar.AddMod( "fd_sonar_damage_amp" )
+		npc.SetDangerousAreaReactionTime( 0 )
 	}
 	else
 	{
 		npc.SetSkin( 8 )
 		npc.SetCamo( -1 )
+		npc.SetDangerousAreaReactionTime( FD_TITAN_AOE_REACTTIME )
 	}
 	npc.DisableNPCFlag( NPC_ALLOW_INVESTIGATE )
-	npc.SetDangerousAreaReactionTime( FD_TITAN_AOE_REACTTIME )
+	npc.DisableNPCMoveFlag( NPCMF_WALK_NONCOMBAT )
 	if( spawnEvent.entityGlobalKey != "" )
 		GlobalEventEntitys[spawnEvent.entityGlobalKey] <- npc
 	npc.AssaultSetFightRadius( 0 )
@@ -2171,17 +2177,12 @@ void function waitUntilLessThanAmountAlive( int amount )
 	int deduct = 0
 	foreach ( entity npc in spawnedNPCs )
 	{
-		if( !IsValid(npc) )
+		if( !IsValid( npc ) || IsValid( GetPetTitanOwner( npc ) ) || npc.GetTeam() == TEAM_MILITIA )
 		{
 			deduct++
 			continue
 		}
-		if( IsValid( GetPetTitanOwner( npc ) ) )
-		{
-			deduct++
-			continue
-		}
-		if( npc.GetTeam() == TEAM_MILITIA )
+		if( IsAirDrone( npc ) && GetDroneType( npc ) == "drone_type_cloaked" )
 		{
 			deduct++
 			continue
@@ -2194,17 +2195,12 @@ void function waitUntilLessThanAmountAlive( int amount )
 		deduct = 0
 		foreach ( entity npc in spawnedNPCs )
 		{
-			if( !IsValid( npc ) )
+			if( !IsValid( npc ) || IsValid( GetPetTitanOwner( npc ) ) || npc.GetTeam() == TEAM_MILITIA )
 			{
 				deduct++
 				continue
 			}
-			if( IsValid( GetPetTitanOwner( npc ) ) )
-			{
-				deduct++
-				continue
-			}
-			if( npc.GetTeam() == TEAM_MILITIA )
+			if( IsAirDrone( npc ) && GetDroneType( npc ) == "drone_type_cloaked" )
 			{
 				deduct++
 				continue
@@ -2222,22 +2218,12 @@ void function waitForDeathOfTitans( int amount )
 	int deduct = 0
 	foreach ( entity npc in spawnedNPCs )
 	{
-		if( !IsValid(npc) )
-		{
-			deduct++
-			continue
-		}
-		if( IsValid( GetPetTitanOwner( npc ) ) )
+		if( !IsValid( npc ) || IsValid( GetPetTitanOwner( npc ) ) || npc.GetTeam() == TEAM_MILITIA )
 		{
 			deduct++
 			continue
 		}
 		if( !npc.IsTitan() )
-		{
-			deduct++
-			continue
-		}
-		if( npc.GetTeam() == TEAM_MILITIA )
 		{
 			deduct++
 			continue
@@ -2250,17 +2236,7 @@ void function waitForDeathOfTitans( int amount )
 		deduct = 0
 		foreach ( entity npc in spawnedNPCs )
 		{
-			if( !IsValid( npc ) )
-			{
-				deduct++
-				continue
-			}
-			if( IsValid( GetPetTitanOwner( npc ) ) )
-			{
-				deduct++
-				continue
-			}
-			if( npc.GetTeam() == TEAM_MILITIA )
+			if( !IsValid( npc ) || IsValid( GetPetTitanOwner( npc ) ) || npc.GetTeam() == TEAM_MILITIA )
 			{
 				deduct++
 				continue
@@ -2284,13 +2260,10 @@ void function waitUntilLessThanAmountAliveWeighted( int amount, int humanWeight 
 	int aliveNPCsWeighted = 0;
 	foreach( npc in spawnedNPCs )
 	{	
-		if( !IsValid( npc ) )
-			continue
-
-		if( IsValid( GetPetTitanOwner( npc ) ) )
+		if( !IsValid( npc ) || IsValid( GetPetTitanOwner( npc ) ) || npc.GetTeam() == TEAM_MILITIA )
 			continue
 		
-		if( npc.GetTeam() == TEAM_MILITIA )
+		if( IsAirDrone( npc ) && GetDroneType( npc ) == "drone_type_cloaked" )
 			continue
 		
 		if( npc.IsTitan() )
@@ -2306,13 +2279,10 @@ void function waitUntilLessThanAmountAliveWeighted( int amount, int humanWeight 
 			aliveNPCsWeighted = 0;
 			foreach( npc in spawnedNPCs )
 			{	
-				if( !IsValid( npc ) )
+				if( !IsValid( npc ) || IsValid( GetPetTitanOwner( npc ) ) || npc.GetTeam() == TEAM_MILITIA )
 					continue
-				
-				if( IsValid( GetPetTitanOwner( npc ) ) )
-					continue
-				
-				if( npc.GetTeam() == TEAM_MILITIA )
+					
+				if( IsAirDrone( npc ) && GetDroneType( npc ) == "drone_type_cloaked" )
 					continue
 				
 				if( npc.IsTitan() )
@@ -2345,6 +2315,8 @@ void function AddMinimapForHumans( entity human )
 	human.Minimap_SetHeightTracking( true )
 	human.Minimap_SetCustomState( eMinimapObject_npc.AI_TDM_AI )
 }
+
+
 /* NPC Functions
 ███╗   ██╗██████╗  ██████╗    ███████╗██╗   ██╗███╗   ██╗ ██████╗████████╗██╗ ██████╗ ███╗   ██╗███████╗
 ████╗  ██║██╔══██╗██╔════╝    ██╔════╝██║   ██║████╗  ██║██╔════╝╚══██╔══╝██║██╔═══██╗████╗  ██║██╔════╝
@@ -2353,6 +2325,44 @@ void function AddMinimapForHumans( entity human )
 ██║ ╚████║██║     ╚██████╗    ██║     ╚██████╔╝██║ ╚████║╚██████╗   ██║   ██║╚██████╔╝██║ ╚████║███████║
 ╚═╝  ╚═══╝╚═╝      ╚═════╝    ╚═╝      ╚═════╝ ╚═╝  ╚═══╝ ╚═════╝   ╚═╝   ╚═╝ ╚═════╝ ╚═╝  ╚═══╝╚══════╝
 */
+
+void function SetupGruntSpectreWeapons()
+{
+	file.Cvar_gruntgrenade = GetConVarString( "ns_fd_grunt_grenade" )
+	file.Cvar_gruntweapons = GetConVarString( "ns_fd_grunt_primary_weapon" )
+	file.FD_GruntWeapons = split( file.Cvar_gruntweapons, "," )
+	file.Cvar_spectreweapons = GetConVarString( "ns_fd_spectre_primary_weapon" )
+	file.FD_SpectreWeapons = split( file.Cvar_spectreweapons, "," )
+}
+
+void function GiveMinionFDLoadout( entity npc )
+{
+	Assert( IsValid( npc ) && IsMinion( npc ), "Entity is not a spectre or grunt: " + npc )
+	string className = npc.GetClassName()
+	
+	if( className == "npc_soldier" )
+	{
+		npc.SetBehaviorSelector( "behavior_sp_soldier" ) //So they can use grenades and secondaries
+		if ( file.FD_GruntWeapons.len() > -1 )
+		{
+			TakeAllWeapons( npc )
+			string baseweapon = file.FD_GruntWeapons[ RandomInt( file.FD_GruntWeapons.len() ) ]
+			npc.GiveWeapon( baseweapon )
+			npc.GiveWeapon( "mp_weapon_wingman" )
+			npc.kv.grenadeWeaponName = file.Cvar_gruntgrenade
+		}
+	}
+	
+	else if( className == "npc_spectre" )
+	{
+		if ( file.FD_SpectreWeapons.len() > -1 )
+		{
+			TakeAllWeapons( npc )
+			string baseweapon = file.FD_SpectreWeapons[ RandomInt( file.FD_SpectreWeapons.len() ) ]
+			npc.GiveWeapon( baseweapon )
+		}
+	}
+}
 
 void function SlowEnemyMovementBasedOnDifficulty( entity npc )
 {
@@ -2381,14 +2391,14 @@ void function SetupGruntBehaviorFlags( entity npc )
 	{
 		case eFDDifficultyLevel.EASY:
 		case eFDDifficultyLevel.NORMAL:
-			npc.EnableNPCFlag( NPC_ALLOW_INVESTIGATE | NPC_ALLOW_HAND_SIGNALS | NPC_ALLOW_FLEE )
-			npc.DisableNPCFlag( NPC_ALLOW_PATROL )
+			npc.EnableNPCFlag( NPC_ALLOW_HAND_SIGNALS | NPC_ALLOW_FLEE | NPC_USE_SHOOTING_COVER )
+			npc.DisableNPCFlag( NPC_ALLOW_INVESTIGATE | NPC_ALLOW_PATROL )
 			break
 		case eFDDifficultyLevel.HARD:
 		case eFDDifficultyLevel.MASTER:
 		case eFDDifficultyLevel.INSANE:
 			npc.EnableNPCFlag( NPC_ALLOW_HAND_SIGNALS )
-			npc.DisableNPCFlag( NPC_ALLOW_INVESTIGATE | NPC_ALLOW_PATROL | NPC_ALLOW_FLEE )
+			npc.DisableNPCFlag( NPC_ALLOW_INVESTIGATE | NPC_ALLOW_PATROL | NPC_ALLOW_FLEE | NPC_USE_SHOOTING_COVER )
 			break
 	}
 }
@@ -2397,8 +2407,7 @@ void function GruntTargetsTitan( entity npc )
 {
 	Assert( IsValid( npc ) && IsGrunt( npc ), "Entity is not a Grunt: " + npc )
 	
-	OnEnemyChanged_TryHeavyArmorWeapon( npc )
-	OnEnemyChanged_MinionUpdateAimSettingsForEnemy( npc )
+	OnEnemyChanged_MinionSwitchToHeavyArmorWeapon( npc )
 	
 	entity enemy = npc.GetEnemy()
 	if( enemy != null )
@@ -2429,15 +2438,11 @@ void function SetTitanAsElite( entity npc )
 	Assert( IsValid( npc ) && npc.IsTitan(), "Entity is not a Titan to set as Elite: " + npc )
 	if ( npc.IsTitan() && elitesAllowed )
 	{
-		thread MonitorEliteTitanCore( npc )
 		SetSpawnOption_NPCTitan( npc, TITAN_MERC )
 		SetSpawnOption_TitanSoulPassive1( npc, "pas_enhanced_titan_ai" )
 		SetSpawnOption_TitanSoulPassive2( npc, "pas_defensive_core" )
 		SetSpawnOption_TitanSoulPassive3( npc, "pas_assault_reactor" )
-		npc.kv.AccuracyMultiplier = 5.0
-		npc.kv.reactChance = 100
-		npc.kv.WeaponProficiency = eWeaponProficiency.PERFECT
-		SetSpawnflags( npc, SF_TITAN_SOUL_NO_DOOMED_EVASSIVE_COMBAT )
+		//SetSpawnflags( npc, SF_TITAN_SOUL_NO_DOOMED_EVASSIVE_COMBAT )
 	}
 }
 
@@ -2449,13 +2454,17 @@ void function SetEliteTitanPostSpawn( entity npc )
 	Assert( IsValid( npc ) && npc.IsTitan(), "Entity is not a Titan to set as Elite: " + npc )
 	if ( npc.IsTitan() && elitesAllowed )
 	{
-		npc.EnableNPCFlag( NPC_NO_PAIN | NPC_NO_GESTURE_PAIN | NPCMF_PREFER_SPRINT | NPC_AIM_DIRECT_AT_ENEMY )
+		npc.EnableNPCFlag( NPC_NO_PAIN | NPC_NO_GESTURE_PAIN | NPC_NEW_ENEMY_FROM_SOUND ) //NPC_AIM_DIRECT_AT_ENEMY
+		npc.EnableNPCMoveFlag( NPCMF_PREFER_SPRINT )
 		npc.DisableNPCFlag( NPC_PAIN_IN_SCRIPTED_ANIM )
-		npc.EnableNPCMoveFlag( NPCMF_IGNORE_CLUSTER_DANGER_TIME )
 		npc.DisableNPCMoveFlag( NPCMF_WALK_NONCOMBAT )
 		npc.SetCapabilityFlag( bits_CAP_NO_HIT_SQUADMATES, false )
+		npc.SetDefaultSchedule( "SCHED_ALERT_WALK" )
+		npc.kv.AccuracyMultiplier = 5.0
+		npc.kv.WeaponProficiency = eWeaponProficiency.PERFECT
 		SetTitanWeaponSkin( npc )
 		HideCrit( npc )
+		npc.SetTitle( npc.GetSettingTitle() )
 		ShowName( npc )
 		
 		entity soul = npc.GetTitanSoul()
@@ -2465,21 +2474,49 @@ void function SetEliteTitanPostSpawn( entity npc )
 			soul.SetShieldHealthMax( 7500 )
 			soul.SetShieldHealth( 7500 )
 		}
+		
+		thread MonitorEliteTitanCore( npc )
 	}
 }
 
 void function MonitorEliteTitanCore( entity npc )
 {
-	wait 6
-	
-	if( GetGameState() != eGameState.Playing || !IsHarvesterAlive( fd_harvester.harvester ) )
+	Assert( IsValid( npc ) && npc.IsTitan(), "Entity is not a Titan to set as Elite: " + npc )
+	entity soul = npc.GetTitanSoul()
+	if ( !IsValid( soul ) )
 		return
 	
-	AddCreditToTitanCoreBuilder( npc, 1.0 )
-	GiveOffhandElectricSmoke( npc )
-	entity soul = npc.GetTitanSoul()
-	if ( IsValid( soul ) )
-		SetCoreCharged( soul )
+	soul.EndSignal( "OnDestroy" )
+	soul.EndSignal( "OnDeath" )
+	
+	while( true )
+	{
+		SoulTitanCore_SetNextAvailableTime( soul, 1.0 )
+		
+		npc.WaitSignal( "CoreBegin" )
+		wait 0.1
+		
+		soul.SetShieldHealthMax( 7500 )
+		soul.SetShieldHealth( 7500 )
+		
+		entity meleeWeapon = npc.GetMeleeWeapon()
+		if( meleeWeapon.HasMod( "super_charged" ) || meleeWeapon.HasMod( "super_charged_SP" ) ) //Hack for Elite Ronin
+			npc.SetAISettings( "npc_titan_stryder_leadwall_shift_core_elite" )
+		
+		npc.WaitSignal( "CoreEnd" )
+		switch ( difficultyLevel )
+		{
+			case eFDDifficultyLevel.EASY:
+			case eFDDifficultyLevel.NORMAL:
+			case eFDDifficultyLevel.HARD:
+				wait RandomFloatRange( 20.0, 40.0 )
+				break
+			case eFDDifficultyLevel.MASTER:
+			case eFDDifficultyLevel.INSANE:
+				wait RandomFloatRange( 40.0, 60.0 )
+				break
+		}
+	}
 }
 
 void function WinWave()
@@ -2489,6 +2526,7 @@ void function WinWave()
 		e.timesExecuted = e.executeOnThisCall
 	}
 }
+
 
 /* Extra Content
 ███████╗██╗  ██╗████████╗██████╗  █████╗      ██████╗ ██████╗ ███╗   ██╗████████╗███████╗███╗   ██╗████████╗
@@ -2540,7 +2578,7 @@ vector function GetSkyCeiling( vector point )
 
 void function SetTitanWeaponSkin( entity npc, int skinindex = 1, int camoindex = 31 )
 {
-	Assert( IsValid( npc ) && npc.IsTitan(), "Entity is not a Titan to set as Elite: " + npc )
+	Assert( IsValid( npc ) && npc.IsTitan(), "Entity is not a Titan: " + npc )
 	
 	if ( npc.IsTitan() )
 	{
@@ -2554,7 +2592,7 @@ void function SetTitanWeaponSkin( entity npc, int skinindex = 1, int camoindex =
 void function SpawnDrozFD( vector spawnpos, vector angles )
 {
 	entity Droz = CreateEntity( "npc_pilot_elite" )
-	SetTargetName( Droz, "#NPC_DROZ_NAME" )
+	SetTargetName( Droz, "NPCPilotDroz" )
 	Droz.SetTitle( "#NPC_DROZ_NAME" )
 	Droz.SetOrigin( spawnpos )
 	Droz.SetAngles( angles )
@@ -2588,7 +2626,7 @@ void function SpawnDrozFD( vector spawnpos, vector angles )
 void function SpawnDavisFD( vector spawnpos, vector angles )
 {
 	entity Davis = CreateEntity( "npc_pilot_elite" )
-	SetTargetName( Davis, "#NPC_DAVIS_NAME" )
+	SetTargetName( Davis, "NPCPilotDavis" )
 	Davis.SetTitle( "#NPC_DAVIS_NAME" )
 	Davis.SetOrigin( spawnpos )
 	Davis.SetAngles( angles )
@@ -2740,23 +2778,6 @@ void function SetRespawnOfHelperTitan()
 	wait 120
 	if( GetGameState() == eGameState.Playing )
 		thread SpawnLFMapTitan( file.helperTitanSpawnPos, file.helperTitanAngles )
-}
-
-void function OnNearbyLFTitan( entity trig, entity activator )
-{
-	if( !IsValidPlayer( activator ) )
-		return
-	
-	if( activator.GetTeam() != TEAM_MILITIA || activator.IsTitan() )
-		return
-	
-	entity titan = trig.GetParent()
-	entity soul = titan.GetTitanSoul()
-	if( !titan.IsPlayer() && !IsValid( GetPetTitanOwner( titan ) ) && Distance2D( activator.GetOrigin(), titan.GetOrigin() ) > 191 )
-	{
-		activator.SetPetTitan( titan )
-		titan.SetBossPlayer( activator )
-	}
 }
 
 void function LFTitanHideEarnMeterOnLeaveProximity( entity player )

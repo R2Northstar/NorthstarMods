@@ -944,6 +944,7 @@ void function MeleeThread_OgreVsTitan( SyncedMelee action, entity attacker, enti
 				attacker.ClearParent()
 				ClearPlayerAnimViewEntity( attacker )
 				EnableWeapons( attacker, [] )
+				attacker.SetActiveWeaponBySlot( 0 )
 				attacker.PlayerMelee_ExecutionEndAttacker()
 
 				if ( IsAlive( attacker ) )
@@ -1081,14 +1082,30 @@ void function TitanVsTitan_3p( SyncedMelee action, entity attacker, entity targe
 	// END HACK FOR SP!!!
 
 	if ( !target.IsNPC() )
+	{
 		HolsterViewModelAndDisableWeapons( target )  //Melee anims need to use this to stop players from firing weapons but for the weapon to still show up in the 3p anims
+		if ( attacker.IsNPC() ) //Defensive fix for the anim events not happening when the attacker is a NPC
+		{
+			ForceTitanRodeoToEnd( target )
+			DisableTitanRodeo( target )
+		}
+	}
 	else
+	{
+		target.EnableNPCFlag( NPC_IGNORE_ALL | NPC_DISABLE_SENSING )
 		DisableWeapons( target, [] )
+	}
 
 	if ( attacker.IsPlayer() )
 	{
 		HolsterViewModelAndDisableWeapons( attacker )  //Melee anims need to use this to stop players from firing weapons but for the weapon to still show up in the 3p anims
 		attacker.Anim_StopGesture( DEFAULT_SCRIPTED_ANIMATION_BLEND_TIME )
+	}
+	else
+	{
+		attacker.EnableNPCFlag( NPC_IGNORE_ALL | NPC_DISABLE_SENSING )
+		ForceTitanRodeoToEnd( attacker )  //Anim event of disabling Rodeos on attacker like players does, does not happen to NPCs
+		DisableTitanRodeo( attacker )
 	}
 
 	//	attacker.SetInvulnerable()
@@ -1177,7 +1194,12 @@ void function TitanVsTitan_3p( SyncedMelee action, entity attacker, entity targe
 				}
 				
 				else
+				{
+					attacker.DisableNPCFlag( NPC_IGNORE_ALL | NPC_DISABLE_SENSING )
 					EnableWeapons( attacker, [] )
+					attacker.SetActiveWeaponBySlot( 0 )
+					EnableTitanRodeo( attacker ) //Assuming everything went alright, re-enable rodeos on NPC Titans
+				}
 				
 				if ( IsAlive( attacker ) )
 				{
@@ -1255,6 +1277,9 @@ void function TitanVsTitan_3p( SyncedMelee action, entity attacker, entity targe
 						PutEntityInSafeSpot( target, attacker, null, target.GetOrigin(), target.GetOrigin() )
 					}
 				}
+				int attachID = target.LookupAttachment( "CHESTFOCUS" )
+				vector explodeorigin = target.GetAttachmentOrigin( attachID )
+				PlayFX( $"xo_exp_death", explodeorigin )
 			}
 
 			if ( IsValid( attackerViewBody ) )

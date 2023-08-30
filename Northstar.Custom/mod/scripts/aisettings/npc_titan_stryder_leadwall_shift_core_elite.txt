@@ -1,0 +1,37 @@
+#base "npc_titan_stryder_leadwall_boss_fd_elite.txt"
+npc_titan_stryder_leadwall_shift_core_elite
+{
+	BehaviorSelector			"behavior_titan_melee_core_elite"
+
+	chaseStopDist				100
+   	chaseStopDistHeavyArmor		100
+
+   	circleStrafeDist			150
+
+ 	dodgePeriod					1
+	maxDodgePerPeriod			4
+
+	meleeInterval					0.2
+	meleeChargeInterval				0.2
+	meleeMaxCombo					8
+	chaseOnlyReachable				1
+
+	MeleeDamageMin					500
+	MeleeDamageMax					500
+	MeleeDamageMinHeavyArmor		2000
+	MeleeDamageMaxHeavyArmor		2000
+	MeleeDamageRadius				150
+	MeleeDamageForce				3000000
+	MeleeChargeDamageForce 			3200000
+	MeleeRange						200
+	MeleeChargeRange				300
+	MeleeChargeDamageRadius			150
+	MeleeChargeDamageHeight			150
+	MeleeChargeDamageMin			600
+	MeleeChargeDamageMax			600
+	MeleeChargeDamageMinHeavyArmor	2000
+	MeleeChargeDamageMaxHeavyArmor	2000
+
+	evasiveCombatHealthChangeRateDiff	-7500
+	aggresiveCombatHealthChangeRateDiff	-400
+}
