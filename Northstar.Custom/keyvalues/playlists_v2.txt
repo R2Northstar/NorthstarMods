@@ -46,7 +46,6 @@ playlists
 				max_players 12
 				max_teams 12
 				classic_mp 1
-				
 				scorelimit 21 // temp until we have a way of dynamically setting non-default scorelimit in code
 				
 				gamemode_score_hint #GAMEMODE_SCORE_HINT_FFA
@@ -294,7 +293,8 @@ playlists
 				image varietypack
 				//mixtape_slot 7
 				mixtape_timeout 120
-				visible 0
+				mixtape_promo_slot 6
+				visible 1
 			}
 			gamemodes
 			{
@@ -376,7 +376,8 @@ playlists
 				hint #PL_inf_hint
 				image ps
 				abbreviation #PL_inf_abbr
-				visible 0
+				mixtape_promo_slot 8
+				visible 1
 			}
 			gamemodes
 			{
@@ -530,6 +531,8 @@ playlists
 				scorelimit 5
 				roundtimelimit 2
 				roundscorelimit 5
+				mixtape_promo_slot 1
+				visible 1
 				
 				gamemode_score_hint #GAMEMODE_SCORE_HINT_TDM
 			}	
@@ -575,6 +578,9 @@ playlists
 				classic_mp 1
 				scorelimit 100
 				timelimit 15
+				
+				mixtape_promo_slot 5
+				visible 1
 				
 				gamemode_score_hint #GAMEMODE_SCORE_HINT_TDM
 			}	
@@ -728,7 +734,8 @@ playlists
 				image ps
 				//mixtape_slot 7
 				mixtape_timeout 120
-				visible 0
+				mixtape_promo_slot 7
+				visible 1
 			}
 			gamemodes
 			{
@@ -896,6 +903,152 @@ playlists
 						mp_coliseum_column 1
 					}
 				}
+			}
+		}
+		rocket_lf
+		{
+			inherit defaults
+			vars
+			{
+				name #PL_rocket_arena
+				lobbytitle #PL_rocket_arena_lobby
+				description #PL_rocket_arena_desc
+				abbreviation #PL_rocket_arena_abbr
+				image lf
+				visible 0
+				scorelimit 50
+				roundtimelimit 2.0
+				featured_mode_rocket_arena 1
+				boosts_enabled 1
+			}
+			gamemodes
+			{
+				speedball
+				{
+					maps
+					{
+						mp_lf_stacks 1
+						mp_lf_township 1
+						mp_lf_uma 1
+						mp_lf_traffic 1
+						mp_lf_deck 1
+						mp_lf_meadow 1
+					}
+				}
+			}
+		}
+		phase_aitdm
+		{
+			inherit defaults
+			vars
+			{
+				name "#PL_all_phase"
+				lobbytitle #PL_all_phase_lobby
+				description #PL_all_phase_desc
+				abbreviation #PL_all_phase_abbr
+				image aitdm
+				visible 0
+				featured_mode_all_phase 1
+			}
+			gamemodes
+			{
+				aitdm
+				{
+				}
+			}
+		}
+		spicy_aitdm
+		{
+			inherit defaults
+			vars
+			{
+				name "#PL_all_spicy"
+				lobbytitle #PL_all_spicy_lobby
+				description #PL_all_spicy_desc
+				abbreviation #PL_all_spicy_abbr
+				image aitdm
+				visible 0
+				featured_mode_all_ticks 1
+			}
+			gamemodes
+			{
+				aitdm
+				{
+				}
+			}
+		}
+		fd_insane
+		{
+			inherit fd
+			vars
+			{
+                name #PL_fd_insane
+                lobbytitle #PL_fd_insane_lobby
+                description #PL_fd_insane_desc
+                image fd_insane
+				visible 0
+				promo_note #MP_HOMESTEAD
+			}
+			gamemodes
+			{
+				fd
+				{}
+			}
+			gamemodesWithAncestor
+			{
+				fd_insane
+				{
+					maps
+					{
+						mp_homestead 1
+					}
+				}
+			}
+		}
+		turbo_lts
+		{
+			inherit defaults
+			vars
+			{
+				name #PL_turbo_last_titan_standing
+				lobbytitle #PL_turbo_last_titan_standing_lobby
+				description #PL_turbo_last_titan_standing_desc
+				abbreviation #PL_turbo_last_titan_standing_abbr
+				image lts
+				visible 0
+				featured_mode_turbo_titans 1
+				earn_meter_titan_multiplier 2.0
+			}
+			gamemodes
+			{
+				lts
+				{
+				}
+			}
+		}
+		private_match
+		{
+			inherit defaults
+			vars
+			{
+				name #PL_private_match
+				lobbytitle #PL_private_match_lobby
+				description #PL_private_match_desc
+				image private_match
+
+				max_players 16
+				lobby_countdown 5
+				ranking_supported 0
+				mixtape_promo_slot 0
+				double_xp_enabled 0
+				visible 1
+
+				// default custom settings
+				match_visibility 2
+				pilot_health_multiplier 1.0
+				earn_meter_pilot_multiplier 1.0
+				earn_meter_pilot_overdrive 1
+				earn_meter_titan_multiplier 1.0
 			}
 		}
 	}
