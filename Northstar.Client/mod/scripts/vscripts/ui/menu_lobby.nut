@@ -1671,6 +1671,7 @@ void function StartNSMatchmaking( array<string> selectedPlaylists )
 	Hud_Show( statusEl )
 	
 	wait 3.0 //Fancy delay just because server finder is pratically immediate, whole block above is to show "fake" matchmaking search
+	MatchmakingSetCountdownTimer( 0.0, true )
 	MatchmakingSetCountdownVisible( false )
 	
 	NSClearRecievedServerList()
@@ -1787,12 +1788,13 @@ void function MatchmakedAuthAndConnectToServer( ServerInfo matchmakedserver, str
 		
 		EmitUISound( MATCHMAKING_AUDIO_CONNECTING )
 		MatchmakingSetSearchText( "#MATCHMAKING_MATCH_CONNECTING" )
+		MatchmakingSetCountdownTimer( 0.0, true )
 		MatchmakingSetCountdownVisible( false )
 		HideMatchmakingStatusIcons()
 		Hud_Hide( statusEl )
-		OpenConnectingDialog()
+		ShowServerConnectingInfo( matchmakedserver.name, matchmakedserver.description + "\n\nServer Mods:\n" + FillInServerModsLabel( matchmakedserver.requiredMods ) )
 		
-		wait 2.0
+		wait 5.0
 		
 		MatchmakingSetSearchVisible( false )
 		
@@ -1823,4 +1825,30 @@ void function MatchmakedAuthAndConnectToServer( ServerInfo matchmakedserver, str
 		AddDialogFooter( dialogData, "#B_BUTTON_DISMISS_RUI" )
 		OpenDialog( dialogData )
 	}
+}
+
+void function ShowServerConnectingInfo( string servername = "", string servercontext = "" )
+{
+	CloseAllDialogs()
+
+	string connectingserver = "Found Server" + ": " + servername
+	
+	Hud_Hide( uiGlobal.ConfirmMenuMessage )
+	Hud_Hide( uiGlobal.ConfirmMenuErrorCode )
+
+	DialogData dialogData
+	dialogData.header = connectingserver
+	dialogData.message = servercontext
+	dialogData.showSpinner = true
+
+	OpenDialog( dialogData )
+}
+
+string function FillInServerModsLabel( array<RequiredModInfo> mods )
+{
+	string ret
+	foreach ( RequiredModInfo mod in mods )
+		ret += format( "  %s v%s\n", mod.name, mod.version )
+
+	return ret
 }
