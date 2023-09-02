@@ -1041,7 +1041,7 @@ void function AddCallback_OnWeaponDropped( void functionref( entity ) callback )
 
 void function CodeCallback_WeaponDropped( entity weapon )
 {
-	//shamelessly taken form SP
+	// shamelessly taken form SP
 	if ( !IsValid( weapon ) )
 		return
 	//Might look a bit hacky to put it here, but thats how SP does it
