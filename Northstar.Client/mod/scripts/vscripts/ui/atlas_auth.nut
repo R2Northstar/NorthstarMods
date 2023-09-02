@@ -39,7 +39,7 @@ void function AtlasAuthDialog_Threaded()
 	AddDialogButton( dialogData, Localize( "#AUTHENTICATION_FAILED_HELP" ), void function() {
 		// todo: get MS to redirect, so i can use an MS link or something?
 		// also todo: link using # to the error code given, needs work on wiki side of things
-		string link = format( "%s/wiki", GetConVarString( "ns_masterserver_hostname" ) ) 
+		string link = "https://r2northstar.gitbook.io/r2northstar-wiki/installing-northstar/troubleshooting"
 		LaunchExternalWebBrowser( link, WEBBROWSER_FLAG_FORCEEXTERNAL )
 	} )
 
