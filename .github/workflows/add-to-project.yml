@@ -1,4 +1,4 @@
-name: Adds all Issues and Pull Requests to the project board
+name: add-to-project
 
 on:
   issues:
@@ -13,7 +13,7 @@ jobs:
     name: Add to project
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/add-to-project@0.5.0
+      - uses: actions/add-to-project@v0.5.0
         with:
           project-url: https://github.com/users/ASpoonPlaysGames/projects/4
           github-token: ${{ secrets.ADD_TO_PROJECT_PAT }}
