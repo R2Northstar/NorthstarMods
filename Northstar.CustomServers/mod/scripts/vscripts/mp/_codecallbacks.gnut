@@ -1044,7 +1044,8 @@ void function CodeCallback_WeaponDropped( entity weapon )
 	// shamelessly taken form SP
 	if ( !IsValid( weapon ) )
 		return
-	//Might look a bit hacky to put it here, but thats how SP does it
+
+	// Might look a bit hacky to put it here, but thats how SP does it
 	if ( !Flag( "WeaponDropsAllowed" ) )
 	{
 		weapon.Destroy()
