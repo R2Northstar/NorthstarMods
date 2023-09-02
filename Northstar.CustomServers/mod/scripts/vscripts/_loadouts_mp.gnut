@@ -63,7 +63,7 @@ void function SetWeaponDropsEnabled( bool enabled )
 	if( enabled )
 		FlagSet( "WeaponDropsAllowed" )
 	else 
-		FlagClear("WeaponDropsAllowed")
+		FlagClear( "WeaponDropsAllowed" )
 }
 
 void function AddCallback_OnTryGetTitanLoadout( TryGetTitanLoadoutCallbackType callback )
