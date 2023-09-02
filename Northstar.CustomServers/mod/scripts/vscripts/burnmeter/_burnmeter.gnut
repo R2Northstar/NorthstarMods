@@ -265,6 +265,8 @@ void function UseBurnCardWeapon( entity weapon, entity player )
 		PlayerEarnMeter_SetRewardUsed( player )
 
 	thread PlayerInventory_PopInventoryItem( player )
+
+	UpdatePlayerStat( player, "misc_stats", "boostsActivated" )
 }
 
 void function UseBurnCardWeaponInCriticalSection( entity weapon, entity ownerPlayer )
@@ -294,10 +296,14 @@ void function InitBurnMeterPersistentData( entity player )
 void function PlayerUsesAmpedWeaponsBurncard( entity player )
 {
 	thread PlayerUsesAmpedWeaponsBurncardThreaded( player )
+	
 }
 
 void function PlayerUsesAmpedWeaponsBurncardThreaded( entity player )
 {
+	player.Signal( "StopAmpedWeapons" ) 
+	player.EndSignal("StopAmpedWeapons")
+	
 	array<entity> weapons = player.GetMainWeapons()
 	//weapons.extend( player.GetOffhandWeapons() ) // idk? unsure of vanilla behaviour here
 	foreach ( entity weapon in weapons )
