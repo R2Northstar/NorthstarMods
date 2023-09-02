@@ -324,7 +324,7 @@ Press Yes if you agree to this. This choice can be changed in the mods menu at a
 
 		"AUTHENTICATION_FAILED_HEADER"		"Authentication Failed"
 		"AUTHENTICATION_FAILED_BODY"		"Failed to authenticate with Atlas!"
-		"AUTHENTICATION_FAILED_ERROR_CODE"	"Error code: %s1"
+		"AUTHENTICATION_FAILED_ERROR_CODE"	"Error code: ^DB6F2C00%s1^"
 		"AUTHENTICATION_FAILED_HELP"		"Help"
 		
 		// Mod Settings
