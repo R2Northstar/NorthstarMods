@@ -1208,10 +1208,6 @@ bool function JoinServer( ServerInfo server, string password = "" )
 		return false
 
 	printt( format( "Connecting to server %s with id of %s", server.name, server.id ) )
-	if ( password != "" )
-	{
-		print ( "password is: " + password )
-	}
 
 	TriggerConnectToServerCallbacks( server )
 	NSTryAuthWithServer( server.index, password )
