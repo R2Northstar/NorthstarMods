@@ -2127,8 +2127,13 @@ void function EntityDemigod_TryAdjustDamageInfo( entity ent, var damageInfo )
 		return
 
 	int bottomLimit = 5
+	// Set it up so that you at least take 1 damage, for hit indicators etc to trigger
 	if ( ent.GetHealth() <= bottomLimit )
-		ent.SetHealth( bottomLimit + 1 ) //Set it up so that you at least take 1 damage, for hit indicators etc to trigger
+	{
+		// Prevent going over max health to avoid a server crash.
+		int newHealth = bottomLimit + 1
+		ent.SetHealth( ent.GetMaxHealth() < newHealth ? ent.GetMaxHealth() : newHealth )
+	}
 
 	int health = ent.GetHealth()
 
@@ -4012,7 +4017,7 @@ int function GameTime_TimeLeftMinutes()
 	if ( GetGameState() == eGameState.Prematch )
 		return int( ( expect float( GetServerVar( "gameStartTime" ) ) - Time()) / 60.0 )
 
-	return floor( GameTime_TimeLimitMinutes() - GameTime_PlayingTime() / 60 ).tointeger()
+	return floor( GameTime_PlayingTime() / 60 ).tointeger()
 }
 
 int function GameTime_TimeLeftSeconds()
@@ -4020,30 +4025,25 @@ int function GameTime_TimeLeftSeconds()
 	if ( GetGameState() == eGameState.Prematch )
 		return int( expect float( GetServerVar( "gameStartTime" ) ) - Time() )
 
-	return floor( GameTime_TimeLimitSeconds() - GameTime_PlayingTime() ).tointeger()
+	return GameTime_PlayingTime().tointeger()
 }
 
+// WARN: this function includes WaitingForPlayers and Prematch duration!
 int function GameTime_Seconds()
 {
 	return floor( Time() ).tointeger()
 }
 
+// WARN: this function includes WaitingForPlayers Prematch duration!
 int function GameTime_Minutes()
 {
 	return int( floor( GameTime_Seconds() / 60 ) )
 }
 
+// this function only counts the time limit during eGameState.Playing
 float function GameTime_PlayingTime()
 {
-	return GameTime_PlayingTimeSince( Time() )
-}
-
-float function GameTime_PlayingTimeSince( float sinceTime )
-{
 	int gameState = GetGameState()
-	
-	// temp fix because i have no fucking clue why this crashes
-
 	if ( gameState < eGameState.Playing )
 		return 0
 
@@ -4052,17 +4052,15 @@ float function GameTime_PlayingTimeSince( float sinceTime )
 		if ( gameState > eGameState.SuddenDeath )
 			return (expect float( GetServerVar( "roundEndTime" ) ) - expect float( GetServerVar( "roundStartTime" ) ) )
 		else
-			return sinceTime - expect float( GetServerVar( "roundStartTime" ) )
-	
+			return floor( expect float( GetServerVar( "roundEndTime" ) ) - Time() )
 	}
 	else
 	{
 		if ( gameState > eGameState.SuddenDeath )
 			return (expect float( GetServerVar( "gameEndTime" ) ) - expect float( GetServerVar( "gameStartTime" ) ) )
 		else
-			return sinceTime - expect float( GetServerVar( "gameStartTime" ) )
+			return floor( expect float( GetServerVar( "gameEndTime" ) ) - Time() )
 	}
-	
 	unreachable
 }
 
