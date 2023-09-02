@@ -1187,15 +1187,13 @@ void function RemoveConnectToServerCallback( void functionref( ServerInfo ) call
 
 void function TriggerConnectToServerCallbacks( ServerInfo ornull targetServer = null )
 {
-	ServerInfo server
-	if (targetServer == null)
-	{
+	if ( !targetServer )
 		targetServer = file.lastSelectedServer
-	}
 
+expect ServerInfo( targetServer )
 	foreach( callback in file.connectCallbacks )
 	{
-		callback( expect ServerInfo( targetServer ) )
+		callback( targetServer )
 	}
 }
 
