@@ -1212,23 +1212,20 @@ bool function JoinServer( ServerInfo server, string password = "" )
 	{
 		print ( "password is: " + password )
 	}
+
 	TriggerConnectToServerCallbacks( server )
 	NSTryAuthWithServer( server.index, password )
 
 	ToggleConnectingHUD( true )
 
 	while ( NSIsAuthenticatingWithServer() && !file.cancelConnection )
-	{
 		WaitFrame()
-	}
 
 	ToggleConnectingHUD( false )
 
 	if ( file.cancelConnection )
 	{
 		file.cancelConnection = false
-		// re-focus server list
-		// Hud_SetFocused( Hud_GetChild( file.menu, "BtnServer" + ( file.serverButtonFocusedID + 1 ) ) )
 		return false
 	}
 
