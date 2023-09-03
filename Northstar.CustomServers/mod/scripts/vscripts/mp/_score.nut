@@ -134,9 +134,9 @@ void function ScoreEvent_PlayerKilled( entity victim, entity attacker, var damag
 	
 	// untimed killstreaks
 	attacker.s.currentKillstreak++
-	if ( attacker.s.currentKillstreak == 3 )
+	if ( attacker.s.currentKillstreak == KILLINGSPREE_KILL_REQUIREMENT )
 		AddPlayerScore( attacker, "KillingSpree" )
-	else if ( attacker.s.currentKillstreak == 5 )
+	else if ( attacker.s.currentKillstreak == RAMPAGE_KILL_REQUIREMENT )
 		AddPlayerScore( attacker, "Rampage" )
 	
 	// increment untimed killstreaks against specific players
