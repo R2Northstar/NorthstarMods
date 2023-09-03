@@ -1191,6 +1191,7 @@ void function TriggerConnectToServerCallbacks( ServerInfo ornull targetServer = 
 		targetServer = file.lastSelectedServer
 
 expect ServerInfo( targetServer )
+expect ServerInfo( targetServer )
 	foreach( callback in file.connectCallbacks )
 	{
 		callback( targetServer )
