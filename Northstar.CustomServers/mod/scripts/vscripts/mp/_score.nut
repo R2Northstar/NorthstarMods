@@ -139,7 +139,7 @@ void function ScoreEvent_PlayerKilled( entity victim, entity attacker, var damag
 	// revenge + quick revenge
 	if ( attacker.p.lastKiller == victim )
 	{
-		if ( GetPlayerLastRespawnTime( attacker ) - QUICK_REVENGE_TIME_LIMIT > 0 )
+		if ( Time() - GetPlayerLastRespawnTime( attacker ) < QUICK_REVENGE_TIME_LIMIT )
 			AddPlayerScore( attacker, "QuickRevenge" )
 		else
 			AddPlayerScore( attacker, "Revenge" )
