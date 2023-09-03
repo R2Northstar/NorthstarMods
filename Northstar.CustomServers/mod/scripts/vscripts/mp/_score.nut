@@ -247,12 +247,26 @@ void function ScoreEvent_NPCKilled( entity victim, entity attacker, var damageIn
 		return
 
 	// mayhem/onslaught (timed killstreaks vs AI)
+	
+	// reset before checking
+	if ( Time() - attacker.s.lastKillTime_Mayhem > MAYHEM_REQUIREMENT_TIME )
+	{
+		attacker.s.currentTimedKillstreak_Mayhem = 0
+		attacker.s.lastKillTime_Mayhem = Time()
+	}
 	if ( Time() - attacker.s.lastKillTime_Mayhem <= MAYHEM_REQUIREMENT_TIME )
 	{
 		attacker.s.currentTimedKillstreak_Mayhem++
 		
 		if ( attacker.s.currentTimedKillstreak_Mayhem == MAYHEM_REQUIREMENT_KILLS )
 			AddPlayerScore( attacker, "Mayhem" )
+	}
+
+	// reset before checking
+	if ( Time() - attacker.s.lastKillTime_Onslaught > ONSLAUGHT_REQUIREMENT_TIME )
+	{
+		attacker.s.currentTimedKillstreak_Onslaught = 0
+		attacker.s.lastKillTime_Onslaught = Time()
 	}
 	if ( Time() - attacker.s.lastKillTime_Onslaught <= ONSLAUGHT_REQUIREMENT_TIME )
 	{
@@ -261,9 +275,6 @@ void function ScoreEvent_NPCKilled( entity victim, entity attacker, var damageIn
 		if ( attacker.s.currentTimedKillstreak_Onslaught == ONSLAUGHT_REQUIREMENT_KILLS )
 			AddPlayerScore( attacker, "Onslaught" )
 	}
-
-	attacker.s.currentTimedKillstreak_Mayhem = Time()
-	attacker.s.currentTimedKillstreak_Onslaught = Time()
 }
 
 void function ScoreEvent_MatchComplete( int winningTeam )
