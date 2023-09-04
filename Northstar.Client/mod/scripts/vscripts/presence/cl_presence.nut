@@ -37,6 +37,5 @@ GameStateStruct function DiscordRPC_GenerateGameState( GameStateStruct gs ) {
 		gs.timeEnd = expect float(level.nv.roundEndTime - Time())
 	else
 		gs.timeEnd = expect float(level.nv.gameEndTime - Time())
-    
     return gs
 }
