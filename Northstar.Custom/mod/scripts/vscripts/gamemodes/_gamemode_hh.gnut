@@ -156,9 +156,6 @@ bool function PlayerInRenderDistance( entity origin )
 void function CreateEndgoals() {
 	RemoveBatts()
 
-	foreach (entity player in GetPlayerArray())
-		thread Spawnmsg(player)
-
 	if (file.hasmadespawns)
 		return
 
