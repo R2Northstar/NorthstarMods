@@ -46,7 +46,7 @@ Presiona Sí al estar de acuerdo. Esta opcion se puede cambiar en el menú de mo
 		// mode settings
 		"MODE_SETTING_CATEGORY_PILOT" "Piloto"
 		"MODE_SETTING_CATEGORY_TITAN" "Titán"
-		"MODE_SETTING_CATEGORY_RIFF" "Riffs"
+		"MODE_SETTING_CATEGORY_RIFF" "Fragmento"
 		"MODE_SETTING_CATEGORY_MATCH" "Partida"
 
 		"classic_mp" "Multijugador Clasico"
@@ -85,11 +85,11 @@ Presiona Sí al estar de acuerdo. Esta opcion se puede cambiar en el menú de mo
 		"aitdm_archer_grunts" "Soldado Archer"
 
 		// northstar.custom localisation is just deciding not to work, so putting it here for now
-		"PL_sbox" "Sandbox"
+		"PL_sbox" "Custom"
 		"PL_sbox_lobby" "Vestíbulo de juego abierto"
 		"PL_sbox_desc" "Como \"gmod\" pero peor"
 		"PL_sbox_abbr" "SBOX"
-		"GAMEMODE_SBOX" "Sandbox"
+		"GAMEMODE_SBOX" "CUstom"
 
 		"PL_gg" "Carrera armamentística"
 		"PL_gg_lobby" "Vestíbulo de Carrera armamentística"
@@ -186,7 +186,7 @@ Presiona Sí al estar de acuerdo. Esta opcion se puede cambiar en el menú de mo
 		"GAMEMODE_fw" "Guerra fronteriza"
 		"PL_fw" "Guerra fronteriza"
 		"PL_fw_lobby" "Vestíbulo de Guerra fronteriza"
-		"PL_fw_desc" "Destruye el cosechador del enemigo y protege el tuyo."
+		"PL_fw_desc" "Destruye el cosechador del enemigo y protege el tuyo"
 		"PL_fw_abbr" "FW"
 
 		"GAMEMODE_kr" "Carrera por muertes"
@@ -205,8 +205,8 @@ Presiona Sí al estar de acuerdo. Esta opcion se puede cambiar en el menú de mo
 		"KR_YOUR_KILLRACE_OVER" "Tu carrera ha acabado"
 		"KR_YOUR_KILLRACE_SCORE" "Has obtenido %s1 bajas."
 
-		"GAMEMODE_fastball" "Fastball"
-		"PL_fastball" "Fastball"
+		"GAMEMODE_fastball" "Lanzamiento"
+		"PL_fastball" "Lanzamiento"
 		"PL_fastball_lobby" "Vestíbulo de Fastball"
 		"PL_fastball_desc" "Muerte permanente. Piratea paneles de control para ganar rondas y hacer reaparecer a tus compañeros de equipo."
 		"PL_fastball_hint" "Muerte permanente. Piratea paneles de control para ganar rondas y hacer reaparecer a tus compañeros de equipo."
@@ -263,7 +263,7 @@ Presiona Sí al estar de acuerdo. Esta opcion se puede cambiar en el menú de mo
 		"SP_BEACON_CLASSIC_DESC" "Cooper y BT intentan contactar con lo que queda de la flota para alertar de los planes de IMC."
 
 		"SP_TDAY" "Prueba de fuego"
-		"SP_TDAY_CLASSIC_DESC" "Las habilidades de Cooper al mando de su titán se ponen a prueba en una batalla total para capturar el Arca."
+		"SP_TDAY_CLASSIC_DESC" "Las habilidades de Cooper al mando de su titán se ponen a prueba en una batalla total para capturar el Arca"
 
 		"SP_S2S" "El Arca"
 		"SP_S2S_CLASSIC_DESC" "Cooper y BT van de nave en nave en busca del Arca."
@@ -284,7 +284,7 @@ Presiona Sí al estar de acuerdo. Esta opcion se puede cambiar en el menú de mo
 		"HIDE_EMPTY_FILTER" "Esconder servidores vacios"
 		"HIDE_PROT_FILTER" "Esconder servidores protegidos"
 		"SERVER_DESCRIPTION" "Descripción"
-		"SERVER_MODS" "Mods"
+		"SERVER_MODS" "Modificaciones"
 		"CLEAR_FILTERS" "LIMPIAR"
 		"JOIN_BUTTON" "UNIR"
 
