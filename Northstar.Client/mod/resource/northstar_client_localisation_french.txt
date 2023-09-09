@@ -341,5 +341,14 @@ Choisissez Oui si vous êtes d'accord. Ce choix peut être modifié à tout inst
 		"SHOW_ONLY_NOT_REQUIRED"        "Uniquement les mods optionnels"
 		"NO_RESULTS"        "Aucun résultat."
 		"NO_MODS"        "Aucun paramètre trouvé ! Installez d'autres mods depuis ^5588FF00northstar.thunderstore.io^0."
+		"player_force_respawn"        "Réapparition forcée"
+		"PROGRESSION_TOGGLE_ENABLED_HEADER"        "Désactiver la progression ?"
+		"PROGRESSION_TOGGLE_ENABLED_BODY"        "Les Titans, Armes, Factions, Skins, et autres seront débloqués et utilisables en tout temps.\n\nPeut être changé à n'importe que moment dans le salon multijoueurs."
+		"PROGRESSION_TOGGLE_DISABLED_HEADER"        "Activer la progression ?"
+		"PROGRESSION_ENABLED_HEADER"        "Progression activée !"
+		"PROGRESSION_DISABLED_HEADER"        "Progression désactivée !"
+		"PROGRESSION_DISABLED_BODY"        "^CCCC0000La progression a été désactivée.^\n\nLes Titans, Armes, Factions, Skins, et autres seront débloqués et utilisables en tout temps.\n\nPeut être changé à n'importe que moment dans le salon multijoueurs."
+		"PROGRESSION_TOGGLE_DISABLED_BODY"        "Les Titans, Armes, Factions, Skins et autres seront débloqués par la monté en niveau ou par leur achats en mérites.\n\nPeut être changé à n'importe que moment dans le salon multijoueurs.\n\n^CC000000Warning : Si vous équiper des objets que vous n'avez pas encore débloqués, ils seront déséquipés !"
+		"PROGRESSION_ENABLED_BODY"        "^CCCC0000La progression a été activée.^\n\nLes Titans, Armes, Factions, Skins et autres seront débloqués par la monté en niveau ou par leur achats en mérites.\n\nPeut être changé à n'importe que moment dans le salon multijoueurs."
 	}
 }
