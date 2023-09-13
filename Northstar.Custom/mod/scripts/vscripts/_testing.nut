@@ -28,10 +28,10 @@ struct {
 
 void function Testing_Init()
 {
-	// string testCategory, string testName, var functionref() testFunc, var expectedResult
-	AddTest( "Example Tests", "example succeeding test", ExampleTest_ReturnsTrue, true )
-	AddTest( "Example Tests", "example failing test", ExampleTest_ReturnsFalse, true )
-	AddTest( "Example Tests", "example erroring test", ExampleTest_ThrowsError, true )
+	// tests for the testing functions :)
+	//AddTest( "Example Tests", "example succeeding test", ExampleTest_ReturnsTrue, true )
+	//AddTest( "Example Tests", "example failing test", ExampleTest_ReturnsFalse, true )
+	//AddTest( "Example Tests", "example erroring test", ExampleTest_ThrowsError, true )
 }
 
 var function ExampleTest_ReturnsFalse()
