@@ -32,6 +32,14 @@ void function Testing_Init()
 	//AddTest( "Example Tests", "example succeeding test", ExampleTest_ReturnsTrue, true )
 	//AddTest( "Example Tests", "example failing test", ExampleTest_ReturnsFalse, true )
 	//AddTest( "Example Tests", "example erroring test", ExampleTest_ThrowsError, true )
+	AddTest( "Example Tests", "example test with args", var function() {
+		return ExampleTest_HasArgs_ReturnsNonVar( 2, 3 )
+	}, 6 )
+}
+
+int function ExampleTest_HasArgs_ReturnsNonVar( int first, int second )
+{
+	return first * second
 }
 
 var function ExampleTest_ReturnsFalse()
