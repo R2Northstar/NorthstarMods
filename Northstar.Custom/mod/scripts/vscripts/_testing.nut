@@ -227,7 +227,7 @@ void function PrintCategoryResults( string category )
 	int categoryErrored = 0
 
 	printt( format( "Results for category: '%s'", category ) )
-	foreach ( test in categoryTests )
+	foreach ( test in file.tests[ category ] )
 	{
 		if ( test.completed )
 		{
