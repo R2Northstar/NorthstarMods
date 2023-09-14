@@ -297,6 +297,9 @@ Press Yes if you agree to this. This choice can be changed in the mods menu at a
 		"INGAME_PLAYERS" "Players: ^6BA6C400%s1"
 		"TOTAL_SERVERS" "Servers: ^C46C6C00%s1"
 
+		"MISSING_MOD" "Missing mod \"%s1\" v%s2"
+		"WRONG_MOD_VERSION" "Server has mod \"%s1\" v%s2 while we have v%s3"
+
 		// Mods menu
 		"SHOW" "Show"
 		"SHOW_ALL" "All"
