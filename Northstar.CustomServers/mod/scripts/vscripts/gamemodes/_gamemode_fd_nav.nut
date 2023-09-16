@@ -116,7 +116,7 @@ void function singleNav_thread( entity npc, string routeName, int nodesToSkip = 
 	if ( npc.GetClassName() == "npc_frag_drone" )
 		npc.AssaultSetFightRadius( expect int( npc.Dev_GetAISettingByKeyField( "LookDistDefault_Combat" ) ) )
 	else if ( npcName == "empTitan" || IsSuperSpectre( npc ) || npc.ai.bossTitanType == TITAN_MERC )
-		npc.AssaultSetFightRadius( 800 )
+		npc.AssaultSetFightRadius( 1200 )
 	else
 		npc.AssaultSetFightRadius( 0 )
 	
@@ -131,6 +131,7 @@ void function singleNav_thread( entity npc, string routeName, int nodesToSkip = 
 			
 			table result = npc.WaitSignal( "OnFinishedAssault", "OnEnterGoalRadius", "OnFailedToPath" )
 			
+			/*
 			if( result.signal == "OnFailedToPath" && !npc.IsTitan() && !IsSuperSpectre( npc ) )
 			{
 				entity enemy = npc.GetEnemy()
@@ -141,6 +142,7 @@ void function singleNav_thread( entity npc, string routeName, int nodesToSkip = 
 						npc.SetOrigin( expect vector( clampedPos ) )
 				}
 			}
+			*/
 			
 			targetNode = targetNode.GetLinkEnt()
 		}
@@ -375,11 +377,10 @@ void function Dev_ShowRoute( bool includedrones = false )
 			entity routetitle = CreatePointMessage( routename, node.GetOrigin() + < 0, 0, 32 >, 800 )
 			if( routename.tolower().find( "drone" ) && includedrones )
 				thread DroneTracksPathing( routename )
+			else if( routename.tolower().find( "drone" ) || routename.tolower().find( "reaper" ) )
+				continue
 			else
-			{
-				if( !routename.tolower().find( "drone" ) || !routename.tolower().find( "reaper" ) )
-					thread GruntTracksPathing( routename )
-			}
+				thread GruntTracksPathing( routename )
 		}
 	}
 }

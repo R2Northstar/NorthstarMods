@@ -590,7 +590,7 @@ void function PlayerUsesPermanentAmpedWeaponsBurncard( entity player )
 	player.s.hasPermenantAmpedWeapons = true
 
 	array<entity> weapons = player.GetMainWeapons()
-	//weapons.extend( player.GetOffhandWeapons() ) // idk? unsure of vanilla behaviour here
+	weapons.extend( player.GetOffhandWeapons() ) // idk? unsure of vanilla behaviour here
 	foreach ( entity weapon in weapons )
 	{
 		weapon.RemoveMod( "silencer" ) // both this and the burnmod will override firing fx, if a second one overrides this we crash

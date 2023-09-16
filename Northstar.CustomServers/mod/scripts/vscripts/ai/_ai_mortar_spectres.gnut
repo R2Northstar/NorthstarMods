@@ -1,55 +1,49 @@
 untyped
 
+global function MortarSpectreSquadThink
 global function MortarSpectreGetSquadFiringPositions
 
-global function MortarSpectreSquadThink
-
-global function SpectresPlayAnim
-
-const float MORTAR_SPECTRE_ABORT_ATTACK_HEALTH_FRAC			= 0.50	// will stop mortar attack if any of the spectres health gets below 50% of their current health.
-const float MORTAR_SPECTRE_POSITION_SEARCH_RANGE			= 6144  //3072	// How far away from their spawn point a mortar spectre squad will look for positions to mortar from.
-const float MORTAR_SPECTRE_ENGAGE_DELAY						= 3.0	// How long before a mortar spectre squad start to attack the generator if interrupted getting to their mortar position.
-const float MORTAR_SPECTRE_REENGAGE_DELAY					= 7.0	// How long before a mortar spectre squad goes back to attacking the generator after breaking of an attack.
-
+const float MORTAR_SPECTRE_POSITION_SEARCH_RANGE			= 8192  // How far away from their spawn point a mortar spectre squad will look for positions to siege from
 const float MORTAR_SPECTRE_TRACKER_SHIELD_MAX				= 1000.0  // just using 1000 for now, doesnt really matter as long as the shieldFrac is accurate enough
+const float MORTAR_SPECTRE_SIGHT_DISTANCE					= 1000.0  // Maximum distance the Spectres can detect players rather attack the Harvester
 
-const array<vector> MORTAR_SPECTRE_POSITION_OFFSETS = [ < 50, 0, 0 >, < 0, 50, 0 >, < -50, 0, 0 >, < 0, -50, 0 > ] // guessing
+const array<vector> MORTAR_SPECTRE_POSITION_OFFSETS = [ < 50, 0, 0 >, < 0, 50, 0 >, < -50, 0, 0 >, < 0, -50, 0 > ]
 
 array<vector> function MortarSpectreGetSquadFiringPositions( vector origin, vector testTarget )
 {
 	array<vector> ret
 	foreach ( vector position in MORTAR_SPECTRE_POSITION_OFFSETS )
-	{
-		ret.append( OriginToGround( testTarget + position + < 0, 0, 100 > ) ) // offsetting by 100 up so that OriginToGround doesnt put it down a floor
-	}
+		ret.append( OriginToGround( testTarget + position + < 0, 0, 128 > ) ) //Offset 128 units up so it traces back down in sloped ground if needed
 	return ret
 }
 
-// --------------------------------------------------------------------
-// MORTAR SPECTRE LOGIC
-// --------------------------------------------------------------------
+/*
+███╗   ███╗ ██████╗ ██████╗ ████████╗ █████╗ ██████╗     ███████╗██████╗ ███████╗ ██████╗████████╗██████╗ ███████╗    ██╗      ██████╗  ██████╗ ██╗ ██████╗
+████╗ ████║██╔═══██╗██╔══██╗╚══██╔══╝██╔══██╗██╔══██╗    ██╔════╝██╔══██╗██╔════╝██╔════╝╚══██╔══╝██╔══██╗██╔════╝    ██║     ██╔═══██╗██╔════╝ ██║██╔════╝
+██╔████╔██║██║   ██║██████╔╝   ██║   ███████║██████╔╝    ███████╗██████╔╝█████╗  ██║        ██║   ██████╔╝█████╗      ██║     ██║   ██║██║  ███╗██║██║     
+██║╚██╔╝██║██║   ██║██╔══██╗   ██║   ██╔══██║██╔══██╗    ╚════██║██╔═══╝ ██╔══╝  ██║        ██║   ██╔══██╗██╔══╝      ██║     ██║   ██║██║   ██║██║██║     
+██║ ╚═╝ ██║╚██████╔╝██║  ██║   ██║   ██║  ██║██║  ██║    ███████║██║     ███████╗╚██████╗   ██║   ██║  ██║███████╗    ███████╗╚██████╔╝╚██████╔╝██║╚██████╗
+╚═╝     ╚═╝ ╚═════╝ ╚═╝  ╚═╝   ╚═╝   ╚═╝  ╚═╝╚═╝  ╚═╝    ╚══════╝╚═╝     ╚══════╝ ╚═════╝   ╚═╝   ╚═╝  ╚═╝╚══════╝    ╚══════╝ ╚═════╝  ╚═════╝ ╚═╝ ╚═════╝
+*/
 
 void function MortarSpectreSquadThink( array< entity > spectres, entity harvester )
 {
-	if ( spectres.len() == 0)
+	if ( !spectres.len() )
 		return
 
-	// get the closest available stationary position for mortar spectres
-	StationaryAIPosition ornull mortarPosition = GetClosestAvailableStationaryPosition( /* spectres[0] isnt ideal but the spectres all spawn in the same position atm */ spectres[0].GetOrigin(), MORTAR_SPECTRE_POSITION_SEARCH_RANGE, eStationaryAIPositionTypes.MORTAR_SPECTRE )
+	StationaryAIPosition ornull mortarPosition = GetClosestAvailableStationaryPosition( spectres[0].GetOrigin(), MORTAR_SPECTRE_POSITION_SEARCH_RANGE, eStationaryAIPositionTypes.MORTAR_SPECTRE )
 	while ( mortarPosition == null )
 	{
 		// in case all stationary spectre positions are in use wait for one to become available
 		wait 5
-		// should change this to use an average position or the start position or something but for now this is fine
+		// pick first spectre on squad to look for mortar spots, it wont matter much using GetOrigin or GetSquadCentroid since they just left the Drop Pod and are all near each other
 		mortarPosition = GetClosestAvailableStationaryPosition( spectres[0].GetOrigin(), MORTAR_SPECTRE_POSITION_SEARCH_RANGE, eStationaryAIPositionTypes.MORTAR_SPECTRE )
 	}
 	
 	expect StationaryAIPosition( mortarPosition )
-	ClaimStationaryAIPosition( mortarPosition )
+	ClaimStationaryAIPosition( mortarPosition ) //Prevent other squads from using this mortar spot
 	
-	// create the entity responsible for managing this squad of spectres
-	// note: client shows the ui thing for this entity if the y angle is not 0
-	// it also shows the set up time thing based on the shield frac of the entity? weird
+	//Create icon handler for when at least one spectre arrives at the mortar spot
 	entity squadMarker = CreatePropScript( $"models/dev/empty_model.mdl", mortarPosition.origin + < 0, 0, 150 >, < 0, 1, 0 > )
 	SetTargetName( squadMarker, "mortarPosition" )
 	squadMarker.SetShieldHealthMax( MORTAR_SPECTRE_TRACKER_SHIELD_MAX )
@@ -57,118 +51,106 @@ void function MortarSpectreSquadThink( array< entity > spectres, entity harveste
 	squadMarker.DisableHibernation()
 	squadMarker.EnableRenderAlways()
 	squadMarker.kv.fadedist = 32768
-
-	thread MortarSpectreSquadDeathThink( spectres, squadMarker, mortarPosition )
 	
-	// wait until at least 1 spectre has reached their position
+	thread MortarSpectreSquadDeathThink( spectres, squadMarker, mortarPosition ) //Track squad status for icon and spot states
+	entity mortarfaketarget = CreateInfoTarget( mortarPosition.origin, < 0, 0, 0 > ) //Proxy target where the Mortar Spectres will actually aim to
+	
+	vector dir = harvester.GetOrigin() - mortarPosition.origin
+	vector shieldangle = VectorToAngles( dir )
+	shieldangle.x = 0
+	shieldangle.z = 0
+	vector targetoffset = PositionOffsetFromOriginAngles( mortarPosition.origin, shieldangle, 200, 0, 0 )
+	mortarfaketarget.SetOrigin( targetoffset + < 0, 0, 400> )
+	mortarfaketarget.SetParent( squadMarker, "", true )
+	
 	int i = 0
 	foreach( entity spectre in spectres )
 	{
-		thread MortarSpectreMoveToMortarPosition( spectre, squadMarker, OriginToGround( mortarPosition.origin + MORTAR_SPECTRE_POSITION_OFFSETS[i]  + < 0, 0, 100 > ) )
+		spectre.ai.mortarTarget = harvester //Register Harvester as their true target to hit instead of proxy
+		spectre.ai.carryBarrel = mortarfaketarget //Keep track of proxy target for the function that handles target switching and weaponry
+		spectre.SetScriptName( "mortar_spectre" )
+		thread MortarSpectreMoveToMortarPosition( spectre, squadMarker, mortarPosition.origin + MORTAR_SPECTRE_POSITION_OFFSETS[i] ) //Hopefull they will path to their target spot
 		
-		if ( i++ >= MORTAR_SPECTRE_POSITION_OFFSETS.len() )
-		{
+		if ( i++ >= MORTAR_SPECTRE_POSITION_OFFSETS.len() ) //Crash protect if Spectre Squad has more than 4
 			i = 0
-		}
 	}
-	squadMarker.WaitSignal( "BeginMortarAttack" )
-	// show the ui thing
-	squadMarker.SetAngles( < 0, 0, 0 > )
-	// start the setup timer
-	float setupEndTime = Time() + GetCurrentPlaylistVarFloat( "fd_mortar_spectre_setup_time", 5 ) // default to 5 seconds
-	// wait for setup timer
+	
+	squadMarker.WaitSignal( "BeginMortarAttack" ) //Wait until at least one spectre reached the siege spot
+	squadMarker.SetAngles( < 0, 0, 0 > ) //Angle in the icon prop is used as a visbility toggle
+	
+	//Buildup Siege Icon and Place Shield
+	float setupEndTime = Time() + GetCurrentPlaylistVarFloat( "fd_mortar_spectre_setup_time", 5 )
+	entity mortarshield
+	if ( FD_IsDifficultyLevelOrHigher( eFDDifficultyLevel.HARD ) && IsValid( squadMarker ) ) //From what i could observe, Mortar Spectres don't use a playlistvar, they only check difficulty
+	{
+		vector shieldoffset = PositionOffsetFromOriginAngles( mortarPosition.origin, shieldangle, 80, 1, 1 )
+		mortarshield = CreateShieldWithSettings( OriginToGround( shieldoffset + < 0, 0, 128> ), shieldangle, 128, 96, 150, 9999.0, TURRET_SHIELD_WALL_HEALTH, $"P_pilot_cover_shield" )
+		mortarshield.SetParent( squadMarker, "", true )
+		mortarshield.EndSignal( "OnDestroy" )
+		mortarshield.SetBlocksRadiusDamage( true )
+		mortarshield.DisableVortexBlockLOS()
+		UpdateShieldWallColorForFrac( mortarshield.e.shieldWallFX, GetHealthFrac( mortarshield ) )
+	}
+	
+	ArrayRemoveDead( spectres ) //Remove dead squadmates from tracking
+	
 	while ( Time() < setupEndTime )
 	{
 		if ( !IsValid( squadMarker ) )
-		{
 			break
-		}
-		float timeRemainingFrac = ( setupEndTime - Time() ) / GetCurrentPlaylistVarFloat( "fd_mortar_spectre_setup_time", 5 ) // default to 5 seconds
+		
+		float timeRemainingFrac = ( setupEndTime - Time() ) / GetCurrentPlaylistVarFloat( "fd_mortar_spectre_setup_time", 5 )
 		squadMarker.SetShieldHealth( ( 1 - timeRemainingFrac ) * MORTAR_SPECTRE_TRACKER_SHIELD_MAX )
 		WaitFrame()
 	}
 	
-
-	if ( GetCurrentPlaylistVarFloat( "fd_grunt_shield_captains", 1 ) ) // idk if correct or not? doest seem to be a playlist var for mortar spectre shield
+	if ( IsValid( squadMarker ) )
+		squadMarker.SetShieldHealth( MORTAR_SPECTRE_TRACKER_SHIELD_MAX ) //Set to Max Shield so it doesn't have a pixel gap remaining
+	
+	ArrayRemoveDead( spectres ) //Remove again due to delay
+	if( IsValid( mortarfaketarget ) ) //Enable the Proxy to be targeted by the Spectres
 	{
-		// create shield here
-		
+		SetTeam( mortarfaketarget, TEAM_MILITIA )
+		mortarfaketarget.EnableAttackableByAI( 10, 0, AI_AP_FLAG_NONE )
 	}
-
-	foreach( entity spectre in spectres )
+	
+	foreach( entity spectre in spectres ) //Trigger the function responsible for handling target switching and weapons from them
 	{
-		if ( IsValid( spectre ) && IsAlive( spectre ) && spectre.GetTeam() == TEAM_IMC )
-			thread MortarSpectreAttack( spectre, harvester, squadMarker )
+		if( IsValid( spectre ) )
+		{
+			spectre.ClearEnemy()
+			spectre.SetEnemy( mortarfaketarget )
+			thread MortarSpectreHarvesterSiege( spectre )
+		}
 	}
 }
 
-void function MortarSpectreAttack( entity spectre, entity harvester, entity signaler )
+void function MortarSpectreMoveToMortarPosition( entity spectre, entity signaler, vector position )
 {
-	spectre.EndSignal( "OnSyncedMeleeVictim" )
 	spectre.EndSignal( "OnDeath" )
 	spectre.EndSignal( "OnDestroy" )
 	spectre.EndSignal( "OnLeeched" )
 
-	string originalWeaponClassName
-	array<string> originalWeaponMods
-
-	spectre.ai.mortarTarget = harvester
-
-	thread MortarSpectreInterruptThink( spectre, harvester, signaler )
-
-	while( IsValid( spectre ) && IsAlive( spectre ) && spectre.GetTeam() == TEAM_IMC )
-	{
-		array<entity> weapons = spectre.GetMainWeapons()
-		if ( weapons.len() == 0 )
-			break
-		entity weapon = weapons[0]
-		if ( !IsValid( weapon ) )
-			break
-		originalWeaponClassName = weapon.GetWeaponClassName()
-		originalWeaponMods = weapon.GetMods()
-
-		spectre.TakeWeaponNow( weapon.GetWeaponClassName() )
-		spectre.GiveWeapon( "mp_weapon_rocket_launcher", [ "fd_mortar_mode" ] )
-		thread MortarSpectreAttacksHarvester( spectre, harvester, signaler )
-
-		spectre.WaitSignal( "InterruptMortarAttack" )
-
-		spectre.TakeWeaponNow( "mp_weapon_rocket_launcher" )
-		spectre.GiveWeapon( originalWeaponClassName, originalWeaponMods )
-
-
-		wait MORTAR_SPECTRE_REENGAGE_DELAY
-		if ( !IsValid( spectre ) )
-			break
-	}
-}
-
-// this should hopefully be replaced with an animation that fires the mortar rockets properly, but i cant find it, so this will have to do
-void function MortarSpectreAttacksHarvester( entity spectre, entity harvester, entity signaler )
-{
-	spectre.EndSignal( "InterruptMortarAttack" )
-	spectre.EndSignal( "OnSyncedMeleeVictim" )
-	spectre.EndSignal( "OnDeath" )
-	spectre.EndSignal( "OnDestroy" )
-	spectre.EndSignal( "OnLeeched" )
-
-	entity weapon = spectre.GetActiveWeapon()
-	wait RandomFloatRange( 0, 4 ) // this is a complete guess, idk how long it takes for them to shoot normally
-	while ( IsValid( spectre ) && IsAlive( spectre ) && spectre.GetTeam() == TEAM_IMC )
-	{
-		// if the spectre drops the weapon, or if something somehow steals it, we should stop firing missiles from it
-		if ( weapon.GetWeaponOwner() != spectre )
-			break
-		entity missile = weapon.FireWeaponMissile( spectre.GetOrigin(), < 0, 0, 90 >, 1800.0, damageTypes.projectileImpact, damageTypes.explosive, false, PROJECTILE_NOT_PREDICTED )
-		weapon.SetWeaponPrimaryAmmoCount( weapon.GetWeaponPrimaryAmmoCount() - 1 ) // remove the ammo manually
-		MortarMissileFiredCallback( missile, spectre )
-		wait RandomFloatRange( 6, 10 ) // this is a complete guess, idk how long it takes for them to shoot normally
-	}
+	spectre.AssaultPointClamped( position )
+	spectre.AssaultSetGoalRadius( spectre.GetMinGoalRadius() )
+	spectre.AssaultSetGoalHeight( 128 )
+	spectre.AssaultSetFightRadius( 0 )
+	spectre.SetLookDistOverride( MORTAR_SPECTRE_SIGHT_DISTANCE )
+	spectre.EnableNPCFlag( NPC_NEW_ENEMY_FROM_SOUND | NPC_TEAM_SPOTTED_ENEMY | NPC_NO_WEAPON_DROP )
+	spectre.DisableNPCFlag( NPC_ALLOW_INVESTIGATE | NPC_USE_SHOOTING_COVER | NPC_ALLOW_PATROL )
+	spectre.kv.FieldOfView = 0.5 //Widen visual awareness more
+	spectre.kv.FieldOfViewAlert = 0.2 //Widen visual awareness more
+	spectre.kv.alwaysalert = 1
+	spectre.kv.reactChance = 100
+	
+	table result = spectre.WaitSignal( "OnFinishedAssault", "OnFailedToPath" )
+	if ( result.signal == "OnFinishedAssault" )
+		signaler.Signal( "BeginMortarAttack" )
 }
 
 void function MortarSpectreSquadDeathThink( array< entity > spectres, entity signaler, StationaryAIPosition mortarPosition )
 {
-	int numAlive = spectres.len() // assume all alive at start
+	int numAlive = spectres.len()
 	while ( numAlive != 0 )
 	{
 		WaitFrame()
@@ -181,69 +163,82 @@ void function MortarSpectreSquadDeathThink( array< entity > spectres, entity sig
 		}
 	}
 	signaler.Destroy()
-	ReleaseStationaryAIPosition( mortarPosition )
+	ReleaseStationaryAIPosition( mortarPosition ) //Free the spot if everyone died
 }
 
-void function MortarSpectreMoveToMortarPosition( entity spectre, entity signaler, vector position )
+void function MortarSpectreHarvesterSiege( entity npc ) //Swap between Archer or primary if the Harvester is the Target
 {
-	spectre.EndSignal( "OnSyncedMeleeVictim" )
-	spectre.EndSignal( "OnDeath" )
-	spectre.EndSignal( "OnDestroy" )
-	spectre.EndSignal( "OnLeeched" )
-
-	spectre.AssaultPointClamped( position )
-	spectre.AssaultSetGoalRadius( spectre.GetMinGoalRadius() )
-	spectre.AssaultSetFightRadius( 0 )
+	npc.EndSignal( "OnDeath" )
+	npc.EndSignal( "OnDestroy" )
+	npc.EndSignal( "OnLeeched" )
 	
-	table result = spectre.WaitSignal( "OnFinishedAssault", "OnFailedToPath" )
-	if ( result.signal == "OnFinishedAssault" )
-		signaler.Signal( "BeginMortarAttack" )
-}
-
-void function MortarSpectreInterruptThink( entity spectre, entity harvester, entity signaler )
-{
-	spectre.EndSignal( "OnSyncedMeleeVictim" )
-	spectre.EndSignal( "OnDeath" )
-	spectre.EndSignal( "OnDestroy" )
-	spectre.EndSignal( "OnLeeched" )
-
-	float oldHealth = spectre.GetHealth().tofloat()
-
-	while ( IsValid( spectre ) && IsAlive( spectre ) && spectre.GetTeam() == TEAM_IMC )
+	string originalWeaponClassName
+	array<string> originalWeaponMods
+	array<entity> weapons = npc.GetMainWeapons()
+	if ( weapons.len() )
 	{
-		WaitFrame()
-		// check if we have taken enough damage to warrant an interruption, and we are close enough to the mortar position
-		if ( spectre.GetHealth().tofloat() / oldHealth < MORTAR_SPECTRE_ABORT_ATTACK_HEALTH_FRAC && Distance2D( spectre.GetOrigin(), signaler.GetOrigin() ) <= 80  ) // random magic 80 for now
+		entity weapon = weapons[0]
+		if ( IsValid( weapon ) )
 		{
-			oldHealth = spectre.GetHealth().tofloat()
-			spectre.Signal( "InterruptMortarAttack" )
-			continue
-		}
-
-		if ( IsValid( spectre.GetEnemy() ) && spectre.CanSee( spectre.GetEnemy() ) && !IsCloaked( spectre.GetEnemy() ) )
-		{
-			oldHealth = spectre.GetHealth().tofloat()
-			spectre.Signal( "InterruptMortarAttack" )
+			originalWeaponClassName = weapon.GetWeaponClassName()
+			originalWeaponMods = weapon.GetMods()
 		}
 	}
-}
-
-void function SpectresPlayAnim( string anim )
-{
-	foreach (entity spectre in GetNPCArrayByClass("npc_spectre"))
+	
+	OnThreadEnd(
+		function () : ( npc, originalWeaponClassName, originalWeaponMods )
+		{
+			if(  IsValid( npc ) && IsAlive( npc ) )
+			{
+				array<entity> primaryWeapons = npc.GetMainWeapons()
+				if( primaryWeapons.len() )
+				{
+					entity primarygun = primaryWeapons[0]
+					if( IsValid( primarygun ) && primarygun.GetWeaponClassName() == "mp_weapon_rocket_launcher" )
+					{
+						npc.TakeWeapon( primarygun.GetWeaponClassName() )
+						npc.GiveWeapon( originalWeaponClassName, originalWeaponMods )
+					}
+				}
+			}
+		}
+	)
+	
+	while( npc.GetTeam() == TEAM_IMC ) //Counts only for non-hacked Spectres
 	{
-		thread thing( anim, spectre)
-	}
-}
-
-void function thing( string anim, entity spectre )
-{
-	try
-	{
-		PlayAnim( spectre, anim)
-	}
-	catch (ex)
-	{
-		print(ex)
+		entity enemy = npc.GetEnemy()
+		array<entity> primaryWeapons = npc.GetMainWeapons()
+		if( primaryWeapons.len() )
+		{
+			entity primarygun = primaryWeapons[0]
+			if( IsValid( primarygun ) )
+			{
+				if( IsValid( enemy ) && enemy != npc.ai.carryBarrel && Distance( enemy.GetOrigin(), npc.GetOrigin() ) > MORTAR_SPECTRE_SIGHT_DISTANCE )
+					npc.ClearEnemy()
+				
+				if( enemy == null )
+					npc.SetEnemy( npc.ai.carryBarrel )
+				
+				if( enemy == npc.ai.carryBarrel )
+				{
+					if( primarygun.GetWeaponClassName() != "mp_weapon_rocket_launcher" )
+					{
+						npc.TakeWeapon( primarygun.GetWeaponClassName() )
+						entity mortararcher = npc.GiveWeapon( "mp_weapon_rocket_launcher", [ "fd_mortar_mode" ] )
+						mortararcher.w.missileFiredCallback = MortarMissileFiredCallback
+					}
+				}
+				
+				else
+				{
+					if( primarygun.GetWeaponClassName() != originalWeaponClassName )
+					{
+						npc.TakeWeapon( primarygun.GetWeaponClassName() )
+						npc.GiveWeapon( originalWeaponClassName, originalWeaponMods )
+					}
+				}
+			}
+		}
+		wait 1
 	}
 }

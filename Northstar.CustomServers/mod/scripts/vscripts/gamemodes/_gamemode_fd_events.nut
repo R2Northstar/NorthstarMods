@@ -131,17 +131,15 @@ global enum FD_TitanType
 struct {
 	vector helperTitanSpawnPos
 	vector helperTitanAngles
-	string Cvar_gruntweapons
 	array<string> FD_GruntWeapons
 	string Cvar_gruntgrenade
-	string Cvar_spectreweapons
 	array<string> FD_SpectreWeapons
 }file
 
 global table< string, entity > GlobalEventEntitys
 global array< array<WaveEvent> > waveEvents
 
-const FD_TITAN_AOE_REACTTIME = 3 //This is in seconds
+const float FD_TITAN_AOE_REACTTIME = 3.0 //This is in seconds
 
 void function executeWave()
 {	
@@ -1465,7 +1463,7 @@ void function spawnDroppodStalker( SmokeEvent smokeEvent, SpawnEvent spawnEvent,
 			foreach( npc in guys )
 			{
 				npc.TakeActiveWeapon()
-				npc.GiveWeapon( "mp_weapon_epg", [] )
+				npc.GiveWeapon( "mp_weapon_epg", ["slowProjectile"] )
 				npc.SetActiveWeaponByName( "mp_weapon_epg" )
 				entity weapon = npc.GetActiveWeapon()
 				if ( IsValid( weapon ) )
@@ -1483,7 +1481,7 @@ void function spawnDroppodStalker( SmokeEvent smokeEvent, SpawnEvent spawnEvent,
 		foreach( npc in guys )
 		{
 			npc.TakeActiveWeapon()
-			npc.GiveWeapon( "mp_weapon_epg", [] )
+			npc.GiveWeapon( "mp_weapon_epg", ["slowProjectile"] )
 			npc.SetActiveWeaponByName( "mp_weapon_epg" )
 			npc.DisableNPCFlag( NPC_DISABLE_SENSING | NPC_IGNORE_ALL )
 			
@@ -1523,12 +1521,8 @@ void function spawnDroppodSpectreMortar( SmokeEvent smokeEvent, SpawnEvent spawn
 		if( spawnEvent.entityGlobalKey != "" )
 			GlobalEventEntitys[ spawnEvent.entityGlobalKey + i.tostring() ] <- guy
 		SetTeam( guy, TEAM_IMC )
-		guy.kv.reactChance = 100
 		DispatchSpawn( guy )
 		GiveMinionFDLoadout( guy )
-		guy.AssaultSetFightRadius( 0 )
-		guy.DisableNPCFlag( NPC_ALLOW_INVESTIGATE | NPC_USE_SHOOTING_COVER | NPC_ALLOW_PATROL )
-		guy.EnableNPCFlag( NPC_NO_WEAPON_DROP )
 		spawnedNPCs.append(guy)
 		guy.SetParent( pod, "ATTACH", true )
 		SetSquad( guy, squadName )
@@ -1852,19 +1846,22 @@ void function SpawnLegionTitan( SmokeEvent smokeEvent, SpawnEvent spawnEvent, Fl
 		SetEliteTitanPostSpawn( npc )
 		npc.SetMaxHealth( npc.GetMaxHealth() + 15000 )
 		npc.SetHealth( npc.GetMaxHealth() )
-		npc.kv.AccuracyMultiplier = 10.0 //Elite Legions don't ever use their cores, but this shall compensate passively, considering the gun's spread
-		npc.GetTitanSoul().soul.titanLoadout.titanExecution = "execution_legion"
+		npc.kv.AccuracyMultiplier = 1.0 //Ironically lowering their accuracy increases the chance of them hitting the enemy
+		npc.GetTitanSoul().soul.titanLoadout.titanExecution = "execution_random_5"
 		
 		array<entity> primaryWeapons = npc.GetMainWeapons()
 		entity maingun = primaryWeapons[0]
 		maingun.AddMod( "fd_closerange_helper" )
 		maingun.AddMod( "fd_longrange_helper" )
 		maingun.AddMod( "fd_piercing_shots" )
+		maingun.AddMod( "fd_gun_shield_redirect" )
 		maingun.AddMod( "SiegeMode" )
 		
 		entity gunshield = npc.GetOffhandWeapon( OFFHAND_SPECIAL )
 		gunshield.AddMod( "npc_more_shield" )
 		gunshield.AddMod( "npc_infinite_shield" )
+		gunshield.AddMod( "fd_gun_shield" )
+		gunshield.AddMod( "fd_gun_shield_redirect" )
 		gunshield.AddMod( "SiegeMode" )
 		npc.SetDangerousAreaReactionTime( 0 )
 	}
@@ -1909,6 +1906,7 @@ void function SpawnMonarchTitan( SmokeEvent smokeEvent, SpawnEvent spawnEvent, F
 		npc.SetMaxHealth( npc.GetMaxHealth() + 7500 )
 		npc.SetHealth( npc.GetMaxHealth() )
 		npc.GetTitanSoul().soul.titanLoadout.titanExecution = "execution_vanguard"
+		npc.GetTitanSoul().SetTitanSoulNetInt( "upgradeCount", 3 )
 		
 		array<entity> primaryWeapons = npc.GetMainWeapons()
 		entity maingun = primaryWeapons[0]
@@ -2019,16 +2017,17 @@ void function spawnSniperTitan( SmokeEvent smokeEvent, SpawnEvent spawnEvent, Fl
 		SetEliteTitanPostSpawn( npc )
 		npc.SetMaxHealth( npc.GetMaxHealth() + 7500 )
 		npc.SetHealth( npc.GetMaxHealth() )
-		npc.GetTitanSoul().soul.titanLoadout.titanExecution = "execution_northstar"
+		npc.GetTitanSoul().soul.titanLoadout.titanExecution = "execution_random_2"
 		
 		entity tethertrap = npc.GetOffhandWeapon( OFFHAND_SPECIAL )
 		tethertrap.AddMod( "fd_explosive_trap" )
 		tethertrap.AddMod( "fd_trap_charges" )
 		npc.SetDangerousAreaReactionTime( 0 )
 	}
+	else
+		npc.SetDangerousAreaReactionTime( FD_TITAN_AOE_REACTTIME )
 	npc.DisableNPCFlag( NPC_ALLOW_INVESTIGATE )
 	npc.DisableNPCMoveFlag( NPCMF_WALK_NONCOMBAT )
-	npc.SetDangerousAreaReactionTime( FD_TITAN_AOE_REACTTIME )
 	if( spawnEvent.entityGlobalKey != "" )
 		GlobalEventEntitys[spawnEvent.entityGlobalKey] <- npc
 	npc.AssaultSetFightRadius( 0 )
@@ -2329,10 +2328,12 @@ void function AddMinimapForHumans( entity human )
 void function SetupGruntSpectreWeapons()
 {
 	file.Cvar_gruntgrenade = GetConVarString( "ns_fd_grunt_grenade" )
-	file.Cvar_gruntweapons = GetConVarString( "ns_fd_grunt_primary_weapon" )
-	file.FD_GruntWeapons = split( file.Cvar_gruntweapons, "," )
-	file.Cvar_spectreweapons = GetConVarString( "ns_fd_spectre_primary_weapon" )
-	file.FD_SpectreWeapons = split( file.Cvar_spectreweapons, "," )
+	
+	string Cvar_gruntweapons = GetConVarString( "ns_fd_grunt_primary_weapon" )
+	file.FD_GruntWeapons = split( Cvar_gruntweapons, "," )
+	
+	string Cvar_spectreweapons = GetConVarString( "ns_fd_spectre_primary_weapon" )
+	file.FD_SpectreWeapons = split( Cvar_spectreweapons, "," )
 }
 
 void function GiveMinionFDLoadout( entity npc )
@@ -2372,6 +2373,8 @@ void function SlowEnemyMovementBasedOnDifficulty( entity npc )
 	switch ( difficultyLevel )
 	{
 		case eFDDifficultyLevel.EASY:
+			npc.SetNPCMoveSpeedScale( 1.0 )
+			break
 		case eFDDifficultyLevel.NORMAL:
 			npc.SetNPCMoveSpeedScale( 0.75 )
 			break
@@ -2496,8 +2499,8 @@ void function MonitorEliteTitanCore( entity npc )
 		npc.WaitSignal( "CoreBegin" )
 		wait 0.1
 		
-		soul.SetShieldHealthMax( 7500 )
-		soul.SetShieldHealth( 7500 )
+		soul.SetShieldHealthMax( 2500 )
+		soul.SetShieldHealth( 2500 )
 		
 		entity meleeWeapon = npc.GetMeleeWeapon()
 		if( meleeWeapon.HasMod( "super_charged" ) || meleeWeapon.HasMod( "super_charged_SP" ) ) //Hack for Elite Ronin
@@ -2792,8 +2795,8 @@ void function LFTitanShieldAndHealthRegenThink( entity soul )
 	soul.EndSignal( "OnDestroy" )
 	soul.EndSignal( "OnDeath" )
 
-	soul.SetShieldHealthMax( 2500 )
-	soul.SetShieldHealth( 2500 )
+	soul.SetShieldHealthMax( 3750 )
+	soul.SetShieldHealth( 3750 )
 
 	int lastShieldHealth = soul.GetShieldHealth()
 	bool shieldHealthSound = false

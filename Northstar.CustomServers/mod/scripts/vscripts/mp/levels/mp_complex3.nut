@@ -3,14 +3,14 @@ global function SwitchComplexRingsSpeed
 
 void function CodeCallback_MapInit()
 {
-	AddCallback_EntitiesDidLoad( InitComplexRings )
+	AddCallback_EntitiesDidLoad( InitComplex )
 	
 	//Load Frontier Defense Data
 	if( GameRules_GetGameMode() == "fd" )
 		initFrontierDefenseData()
 }
 
-void function InitComplexRings()
+void function InitComplex()
 {
 	entity rings = GetEntByScriptName( "rings_pristine" )
 	rings.Anim_Play( "animated_slow" )

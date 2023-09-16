@@ -20,7 +20,6 @@ void function initFrontierDefenseData()
 	AddStationaryAIPosition(< -2037, 1772, -383 >, eStationaryAIPositionTypes.LAUNCHER_REAPER)
 	AddStationaryAIPosition(< -1263, -2628, -94 >, eStationaryAIPositionTypes.LAUNCHER_REAPER)
 	
-	AddStationaryAIPosition(< 1181, -2295, -127 >, eStationaryAIPositionTypes.MORTAR_SPECTRE)
 	AddStationaryAIPosition(< 3733, -3327, 8 >, eStationaryAIPositionTypes.MORTAR_SPECTRE)
 	AddStationaryAIPosition(< 1890, 4512, -128 >, eStationaryAIPositionTypes.MORTAR_SPECTRE)
 	AddStationaryAIPosition(< 1890, 4512, -128 >, eStationaryAIPositionTypes.MORTAR_SPECTRE)

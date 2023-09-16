@@ -7,7 +7,6 @@ Selector Common
 	SelectSchedule_DangerousClusterStandoff
 	SelectSchedule_ChangeToDesiredStance
 	SelectSchedule_SyncedMeleeAttack
-	CNPC_Titan::SelectSchedule_GotoDefensivePlacement
 	SelectSchedule_LayeredBehavior
 Selector_End
 
@@ -37,6 +36,7 @@ Selector Combat
 	SelectSchedule_EnemyTooClose
 	SelectSchedule_ChargeAttack
 	SelectSchedule_CombatFace
+	SelectSchedule_WeaponBlocked
 Selector_End
 
 Selector CombatAggressive
@@ -50,6 +50,7 @@ Selector CombatAggressive
 	SelectSchedule_EnemyTooClose
 	SelectSchedule_ChargeAttack
 	SelectSchedule_CombatFace
+	SelectSchedule_WeaponBlocked
 Selector_End
 
 
@@ -65,4 +66,5 @@ Selector CombatEvasive
 	SelectSchedule_RangeAttack
 	SelectSchedule_EngagementDistMin
 	SelectSchedule_CombatFace
+	SelectSchedule_WeaponBlocked
 Selector_End

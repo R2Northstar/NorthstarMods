@@ -16,6 +16,8 @@ void function AddWeaponXP( entity player, int amount )
 		Remote_CallFunction_NonReplay( player, "ServerCallback_WeaponLeveledUp", shWeaponXP.weaponClassNames.find( weaponClassname ), WeaponGetGen( player, weaponClassname ), WeaponGetLevel( player, weaponClassname ) )
 		AddPlayerScore( player, "WeaponLevelUp" )
 	}
+	else
+		Remote_CallFunction_NonReplay( player, "ServerCallback_WeaponXPAdded", shWeaponXP.weaponClassNames.find( weaponClassname ), WeaponGetXP( player, weaponClassname ), amount )
 
 	// proscreen 
 	if ( player == activeWeapon.GetProScreenOwner() )

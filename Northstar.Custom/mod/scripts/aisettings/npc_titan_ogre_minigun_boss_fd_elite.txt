@@ -21,14 +21,14 @@ npc_titan_ogre_minigun_boss_fd_elite
 	
 	MeleeRange						250
 	MeleeChargeRange				300
-	MeleeChargeDamageMinHeavyArmor	1500
-	MeleeChargeDamageMaxHeavyArmor	1500
-	MeleeDamageMinHeavyArmor		1500
-	MeleeDamageMaxHeavyArmor		1500
+	MeleeChargeDamageMinHeavyArmor	2500
+	MeleeChargeDamageMaxHeavyArmor	2500
+	MeleeDamageMinHeavyArmor		2500
+	MeleeDamageMaxHeavyArmor		2500
 	
-	meleeInterval					1
-	meleeChargeInterval				1
-	meleeMaxCombo					4
+	meleeInterval					2
+	meleeChargeInterval				2
+	meleeMaxCombo					1
 	chaseOnlyReachable				1
 	
 	reactChanceDefault				100
@@ -96,13 +96,13 @@ npc_titan_ogre_minigun_boss_fd_elite
 	resetBurstOnStopShootOverlay	1
 	
 	blockPeriod					2
-	maxBlockPerPeriod			2
+	maxBlockPerPeriod			1
 	
 	dodgePeriod					2
 	maxDodgePerPeriod			2
 	
 	aimAngularSpeed			10
-	aimConeCos 				0.9
+	aimConeCos 				1.0
 	aimConeCloseCos			1.0
 
 	titanCamoIndex 31

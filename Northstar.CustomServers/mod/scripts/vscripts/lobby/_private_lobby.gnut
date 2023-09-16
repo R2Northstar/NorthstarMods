@@ -5,6 +5,7 @@ global function PrivateLobby_Init
 struct {
 	int startState
 	string map = "mp_forwardbase_kodai"
+	array<string> maplist
 	string mode = "aitdm"
 } file 
 
@@ -14,6 +15,9 @@ void function PrivateLobby_Init()
 	
 	file.map = GetConVarString( "ns_private_match_last_map" )
 	file.mode = GetConVarString( "ns_private_match_last_mode" )
+	
+	string cvar_maprotation = GetConVarString( "ns_private_match_map_rotation" )
+	file.maplist = split( cvar_maprotation, "," )
 	
 	thread SetupPrivateMatchUIVarsWhenReady()
 	
@@ -31,8 +35,31 @@ void function SetupPrivateMatchUIVarsWhenReady()
 {
 	// have to wait until end of first frame for SetUIVar to work
 	WaitEndFrame()
+	if ( GetConVarBool( "ns_private_match_auto_rotation_start" ) )
+	{
+		int i = 0
+		foreach ( map in file.maplist )
+		{
+			if ( map == file.map )
+				break
+			i++
+		}
+		
+		i += 1
+		
+		if( i >= file.maplist.len() )
+			file.map = file.maplist[0]
+		else
+			file.map = file.maplist[i]
+	}
 	SetUIVar( level, "privatematch_map", GetPrivateMatchMapIndex( file.map ) )
 	SetUIVar( level, "privatematch_mode", GetPrivateMatchModeIndex( file.mode ) )
+	
+	if ( GetConVarBool( "ns_private_match_auto_rotation_start" ) )
+	{
+		file.startState = ePrivateMatchStartState.STARTING
+		thread StartMatch( true )
+	}
 }
 
 bool function ClientCommandCallback_PrivateMatchLaunch( entity player, array<string> args )
@@ -130,15 +157,17 @@ bool function ClientCommandCallback_PrivateMatchToggleSpectate( entity player, a
 	return true
 }
 
-void function StartMatch()
+void function StartMatch( bool isAutostart = false )
 {	
 	// set starting uivar
 	SetUIVar( level, "privatematch_starting", ePrivateMatchStartState.STARTING )
 	
 	// start countdown
-	SetUIVar( level, "gameStartTime", Time() + GetConVarFloat( "ns_private_match_countdown_length" ) ) 
 	float countdownEndTime = Time() + GetConVarFloat( "ns_private_match_countdown_length" )
+	if( isAutostart )
+		countdownEndTime = Time() + 30.0
 	
+	SetUIVar( level, "gameStartTime", countdownEndTime ) 
 	// can't use start here because we need to check stuff
 	while ( Time() < countdownEndTime )
 	{
