@@ -1602,7 +1602,10 @@ bool function IsPetTitan( titan )
 {
 	Assert( titan.IsTitan() )
 
-	return titan.GetTitanSoul().GetBossPlayer()	!= null
+	if ( !titan.GetTitanSoul() )
+		return false
+	
+	return titan.GetTitanSoul().GetBossPlayer() != null
 }
 
 vector function StringToVector( string vecString, string delimiter = " " )
