@@ -524,6 +524,7 @@ void function mainGameLoop()
 			wait 14
 	}
 
+	thread FD_AlivePlayersMonitor()
 	bool showShop = false
 	for( int i = GetGlobalNetInt( "FD_currentWave" ); i < waveEvents.len(); i++ )
 	{
@@ -621,14 +622,14 @@ bool function runWave( int waveIndex, bool shouldDoBuyTime )
 	
 	if( waveIndex < waveAnnouncement.len() && waveAnnouncement[waveIndex] != "" && !file.waveRestart )
 	{
-		PlayFactionDialogueToTeam( waveAnnouncement[waveIndex] , TEAM_MILITIA )
+		PlayFactionDialogueToTeam( waveAnnouncement[waveIndex], TEAM_MILITIA )
 		if( waveIndex == 0 )
 			wait 5
 	}
 	if( file.waveRestart )
 	{
 		file.waveRestart = false
-		MessageToTeam( TEAM_MILITIA,eEventNotifications.FD_WaveRestart )
+		MessageToTeam( TEAM_MILITIA, eEventNotifications.FD_WaveRestart )
 	}
 	
 	if( shouldDoBuyTime )
@@ -892,22 +893,6 @@ bool function runWave( int waveIndex, bool shouldDoBuyTime )
 			
 		wait 1
 		
-		foreach(entity player in GetPlayerArrayOfTeam( TEAM_MILITIA ) )
-		{
-			if( IsAlive( player ) )
-			{
-				float timeAlive = Time() - file.players[player].lastRespawn
-				if( player in file.playerAwardStats && timeAlive > file.playerAwardStats[player]["longestLife"] )
-					file.playerAwardStats[player]["longestLife"] = timeAlive
-			}
-			if( IsValid( player.GetPetTitan() ) )
-			{
-				float timeAlive = Time() - file.players[player].lastTitanDrop
-				if( player in file.playerAwardStats && timeAlive > file.playerAwardStats[player]["longestTitanLife"] )
-					file.playerAwardStats[player]["longestTitanLife"] = timeAlive
-			}
-		}
-		
 		RegisterPostSummaryScreenForMatch( true )
 		
 		return true
@@ -1050,6 +1035,26 @@ bool function runWave( int waveIndex, bool shouldDoBuyTime )
 		SetGlobalNetTime( "FD_nextWaveStartTime", Time() + GetCurrentPlaylistVarFloat( "fd_wave_buy_time", 60 ) )
 
 	return true
+}
+
+void function FD_AlivePlayersMonitor()
+{
+	svGlobal.levelEnt.EndSignal( "RoundEnd" )
+	
+	while( true )
+	{
+		foreach( entity player in GetPlayerArrayOfTeam( TEAM_MILITIA ) )
+		{
+			if( IsAlive( player ) && player in file.playerAwardStats )
+			{
+				file.playerAwardStats[player]["longestLife"] += 1.0
+				if( IsValid( GetSoulFromPlayer( player ) ) )
+					file.playerAwardStats[player]["longestTitanLife"] += 1.0
+			}
+		}
+		
+		wait 1.0
+	}
 }
 
 void function FD_SetupEpilogue()
@@ -1870,7 +1875,7 @@ void function DamageScaleByDifficulty( entity ent, var damageInfo )
 	if ( damageSourceID == eDamageSourceId.damagedef_stalker_powersupply_explosion_large_at && ent.IsPlayer() && ent.IsTitan() ) //Warn Titan players about Stalkers
 		PlayFactionDialogueToPlayer( "fd_stalkerExploNag", ent )
 
-	if( IsMinion( attacker ) || IsStalker( attacker ) || IsFragDrone( attacker ) ) //On Vanilla, Light Infantry does not scale damage to players
+	if( difficultyLevel >= eFDDifficultyLevel.MASTER && ( IsMinion( attacker ) || IsStalker( attacker ) || IsFragDrone( attacker ) ) ) //On Vanilla, Light Infantry does not scale damage to players for Hard or below
 		return
 	
 	DamageInfo_ScaleDamage( damageInfo, GetCurrentPlaylistVarFloat( "fd_player_damage_scalar", 1.0 ) )

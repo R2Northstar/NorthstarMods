@@ -20,7 +20,7 @@ void function singleNav_thread( entity npc, string routeName, int nodesToSkip = 
 
 	Assert( IsValid( npc ) && npc.IsNPC(), "AI Navigation function called in non-NPC entity: " + npc )
 	
-	if ( nextDistance == -1 && npc.IsTitan() )
+	if ( nextDistance == -1 && ( npc.IsTitan() || IsSpectre( npc ) ) )
 		nextDistance = npc.GetMinGoalRadius()
 	else if ( nextDistance == -1 )
 		nextDistance = 160

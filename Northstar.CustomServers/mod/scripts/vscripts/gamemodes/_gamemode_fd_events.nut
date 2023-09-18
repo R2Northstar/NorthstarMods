@@ -1112,15 +1112,15 @@ void function spawnArcTitan( SmokeEvent smokeEvent, SpawnEvent spawnEvent, FlowC
 	SetSpawnOption_Alert( npc )
 	spawnedNPCs.append( npc )
 	DispatchSpawn( npc )
-	npc.kv.reactChance = 50
 	if ( arcTitansUsesArcCannon ) //SetSpawnOption_Weapon is not working for Arc Titans so take current and give Arc Cannon
 	{
 		TakeWeaponsForArray( npc, npc.GetMainWeapons() )
 		npc.GiveWeapon( "mp_titanweapon_arc_cannon" )
 		npc.kv.AccuracyMultiplier = 0.6
-		npc.kv.WeaponProficiency = eWeaponProficiency.AVERAGE
 	}
 	
+	npc.kv.reactChance = 50
+	npc.kv.WeaponProficiency = eWeaponProficiency.POOR //This is because on Vanilla, Arc Titans don't spam Arc Waves as much and that is related to weapon proficiency
 	npc.DisableNPCFlag( NPC_ALLOW_INVESTIGATE | NPC_USE_SHOOTING_COVER | NPC_ALLOW_PATROL )
 	npc.EnableNPCMoveFlag( NPCMF_PREFER_SPRINT )
 	npc.SetDangerousAreaReactionTime( FD_TITAN_AOE_REACTTIME )
@@ -2605,8 +2605,8 @@ void function SpawnDrozFD( vector spawnpos, vector angles )
 	Droz.kv.physdamagescale = 1.0
 	SetSpawnOption_SquadName( Droz, "TLRDD" )
 	SetSpawnOption_Special( Droz, "mp_ability_holopilot", ["pas_power_cell"] )
-	SetSpawnOption_Weapon( Droz, "mp_weapon_arena1" )
-	SetSpawnOption_Sidearm( Droz, "mp_weapon_semipistol" )
+	SetSpawnOption_Weapon( Droz, "mp_weapon_epg", ["extended_ammo"] )
+	SetSpawnOption_Sidearm( Droz, "mp_weapon_shotgun_pistol" )
 	SetTeam( Droz, TEAM_MILITIA )
 	DispatchSpawn( Droz )
 	NPC_NoTarget( Droz )
@@ -2619,7 +2619,8 @@ void function SpawnDrozFD( vector spawnpos, vector angles )
 	Droz.kv.AccuracyMultiplier = 10.0
 	Droz.kv.reactChance = 100
 	Droz.kv.WeaponProficiency = eWeaponProficiency.PERFECT
-	Droz.SetBehaviorSelector( "behavior_pilot_elite_assassin_cqb" )
+	//Droz.SetBehaviorSelector( "behavior_pilot_elite_assassin_cqb" )
+	Droz.SetBehaviorSelector( "behavior_sp_soldier" )
 	Droz.AssaultSetGoalRadius( 640 )
 	Droz.AssaultSetGoalHeight( 1024 )
 	Droz.AssaultSetFightRadius( 640 )
@@ -2639,8 +2640,8 @@ void function SpawnDavisFD( vector spawnpos, vector angles )
 	Davis.kv.physdamagescale = 1.0
 	SetSpawnOption_SquadName( Davis, "TLRDD" )
 	SetSpawnOption_Special( Davis, "mp_ability_shifter_super", ["pas_power_cell"] )
-	SetSpawnOption_Weapon( Davis, "mp_weapon_arena1" )
-	SetSpawnOption_Sidearm( Davis, "mp_weapon_semipistol" )
+	SetSpawnOption_Weapon( Davis, "mp_weapon_epg", ["extended_ammo"] )
+	SetSpawnOption_Sidearm( Davis, "mp_weapon_shotgun_pistol" )
 	SetTeam( Davis, TEAM_MILITIA )
 	DispatchSpawn( Davis )
 	NPC_NoTarget( Davis )
@@ -2652,7 +2653,8 @@ void function SpawnDavisFD( vector spawnpos, vector angles )
 	Davis.kv.AccuracyMultiplier = 10.0
 	Davis.kv.reactChance = 100
 	Davis.kv.WeaponProficiency = eWeaponProficiency.PERFECT
-	Davis.SetBehaviorSelector( "behavior_pilot_elite_assassin_cqb" )
+	//Davis.SetBehaviorSelector( "behavior_pilot_elite_assassin_cqb" )
+	Davis.SetBehaviorSelector( "behavior_sp_soldier" )
 	Davis.AssaultSetGoalRadius( 640 )
 	Davis.AssaultSetGoalHeight( 1024 )
 	Davis.AssaultSetFightRadius( 640 )
