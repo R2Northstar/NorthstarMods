@@ -190,9 +190,7 @@ void function UpdateMarksForKill( entity victim, entity attacker, var damageInfo
 	{
 		// handle suicides. Not sure what the actual message is that vanilla shows for this
 		// but this will prevent crashing for now
-		entity actualAttacker = attacker
-		if ( IsSuicide( victim, attacker, DamageInfo_GetDamageSourceIdentifier( damageInfo ) ) )
-			actualAttacker = victim
+		entity actualAttacker = IsSuicide( victim, attacker, DamageInfo_GetDamageSourceIdentifier( damageInfo ) ) ? victim : attacker
 
 		MessageToAll( eEventNotifications.MarkedForDeathKill, null, victim, actualAttacker.GetEncodedEHandle() )
 		svGlobal.levelEnt.Signal( "MarkKilled", { mark = victim } )
