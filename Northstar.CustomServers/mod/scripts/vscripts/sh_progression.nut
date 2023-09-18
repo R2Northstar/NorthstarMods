@@ -168,7 +168,6 @@ void function ValidateEquippedItems( entity player )
 		printt( "- BANNER CARD IS LOCKED, RESETTING" )
 		PlayerCallingCard_SetActiveByRef( player, "callsign_16_col" ) // copied from _persistentdata.gnut
 	}
-	
 
 	// patch
 	CallsignIcon icon = PlayerCallsignIcon_GetActive( player )
