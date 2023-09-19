@@ -64,6 +64,7 @@ struct {
 	float harvesterDamageTaken
 	table<entity, player_struct_fd> players
 	table<entity, table<string, float> > playerAwardStats
+	table<string, int> playerHasTitanSelectionLocked
 	entity harvester_info
 	bool waveRestart = false
 	bool easymodeSmartPistol = false
@@ -836,9 +837,9 @@ bool function runWave( int waveIndex, bool shouldDoBuyTime )
 		//Game won code
 		print( "No more pending Waves, match won" )
 		
-		if( GetPlayerArrayOfTeam( TEAM_MILITIA ).len() >= 0 )
+		if( GetPlayerArrayOfTeam( TEAM_MILITIA ).len() )
 		{
-			highestScore = 0;
+			highestScore = 0
 			highestScore_player = GetPlayerArrayOfTeam( TEAM_MILITIA )[0]
 		}
 		
@@ -880,12 +881,17 @@ bool function runWave( int waveIndex, bool shouldDoBuyTime )
 		
 		wait 1
 		
-		foreach( entity player in GetPlayerArrayOfTeam( TEAM_MILITIA ) )
+		if( !file.harvesterWasDamaged )
 		{
-			if( !file.harvesterWasDamaged )
+			foreach( entity player in GetPlayerArrayOfTeam( TEAM_MILITIA ) )
 				AddPlayerScore( player, "FDTeamFlawlessWave" )
 		}
 		
+		wait 1
+		
+		foreach( entity player in GetPlayerArrayOfTeam( TEAM_MILITIA ) )
+			AddPlayerScore( player, "FDTeamFinalWave" )
+			
 		wait 1
 		
 		foreach( entity player in GetPlayerArrayOfTeam( TEAM_MILITIA ) )
@@ -970,10 +976,10 @@ bool function runWave( int waveIndex, bool shouldDoBuyTime )
 	wait 2
 	print( "Showing Player Stats: Wave MVP" )
 	SetJoinInProgressBonus( 100 )
-	if( GetPlayerArrayOfTeam( TEAM_MILITIA ).len() >= 0 )
+	if( GetPlayerArrayOfTeam( TEAM_MILITIA ).len() )
 	{
-		highestScore = 0;
-		highestScore_player = GetPlayerArray()[0]
+		highestScore = 0
+		highestScore_player = GetPlayerArrayOfTeam( TEAM_MILITIA )[0]
 		foreach( entity player in GetPlayerArrayOfTeam( TEAM_MILITIA ) )
 		{
 			if( highestScore < ( file.players[player].assaultScoreThisRound + file.players[player].defenseScoreThisRound ) )
@@ -1218,7 +1224,20 @@ void function GamemodeFD_InitPlayer( entity player )
 		player.SetPersistentVar( "previousFDUnlockPoints[" + FDTitan + "]", player.GetPersistentVarAsInt( "titanFDUnlockPoints[" + FDTitan + "]" ) )
 
 	if( !file.isLiveFireMap )
+	{
 		thread TryDisableTitanSelectionForPlayerAfterDelay( player )
+		
+		string playerUID = player.GetUID()
+		if( playerUID in file.playerHasTitanSelectionLocked ) //Prevent people from doing the server rejoin exploit to swap titans midmatch after Wave 1
+		{
+			player.SetPersistentVar( "activeTitanLoadoutIndex", file.playerHasTitanSelectionLocked[ playerUID ]  )
+			int loadoutIndex = GetPersistentSpawnLoadoutIndex( player, "titan" )
+			TitanLoadoutDef loadout = GetTitanLoadoutFromPersistentData( player, loadoutIndex )
+			SetActiveTitanLoadoutIndex( player, loadoutIndex )
+			SetActiveTitanLoadout( player )
+			DisableTitanSelectionForPlayer( player )
+		}
+	}
 	thread TrackDeployedArcTrapThisRound( player )
 	
 	thread UpdateEarnMeter_ByPlayersInMatch()
@@ -1554,9 +1573,16 @@ void function DisableTitanSelectionForPlayer( entity player )
 	for ( int i = 0; i < enumCount; i++ )
 	{
 		string enumName = PersistenceGetEnumItemNameForIndex( "titanClasses", i )
-		string selectedEnumName = PersistenceGetEnumItemNameForIndex( "titanClasses", player.GetPersistentVarAsInt( "activeTitanLoadoutIndex" ) )
+		string selectedEnumName = PersistenceGetEnumItemNameForIndex( "titanClasses", GetPersistentSpawnLoadoutIndex( player, "titan" ) )
 		if ( enumName != "" && enumName != selectedEnumName )
 			player.SetPersistentVar( "titanClassLockState[" + enumName + "]", TITAN_CLASS_LOCK_STATE_LOCKED )
+		
+		string playerUID = player.GetUID()
+		if( !( playerUID in file.playerHasTitanSelectionLocked ) )
+		{
+			player.SetPersistentVar( "activeTitanLoadoutIndex", GetPersistentSpawnLoadoutIndex( player, "titan" ) - 1 )
+			file.playerHasTitanSelectionLocked[ playerUID ] <- player.GetPersistentVarAsInt( "activeTitanLoadoutIndex" )
+		}
 	}
 }
 
@@ -3539,6 +3565,7 @@ void function SetEnemyAmountNetVars( int waveIndex )
 	{
 		if( e.spawnEvent.spawnAmount == 0 )
 			continue
+		
 		switch( e.spawnEvent.spawnType )
 		{
 			case( eFD_AITypeIDs.TITAN ):

@@ -5,7 +5,17 @@ global function Progression_SetPreference
 global function Progression_GetPreference
 global function UpdateCachedLoadouts_Delayed
 #endif
+#if SP // literally just stub the global functions and call it a day
 
+void function Progression_Init() {}
+bool function ProgressionEnabledForPlayer( entity player ) { return false }
+#if CLIENT || UI
+void function Progression_SetPreference( bool enabled ) {}
+bool function Progression_GetPreference() { return false }
+void function UpdateCachedLoadouts_Delayed() {}
+#endif // CLIENT || UI
+
+#else // MP || UI basically
 // SO FOR SOME GOD DAMN REASON, PUTTING THESE INTO ONE STRUCT
 // AND PUTTING THE #if STUFF AROUND THE VARS CAUSES A COMPILE
 // ERROR, SO I HAVE TO DO THIS AWFULNESS
@@ -26,6 +36,7 @@ void function Progression_Init()
 	#if SERVER
 	AddCallback_OnClientDisconnected( OnClientDisconnected )
 	AddClientCommandCallback( "ns_progression", ClientCommand_SetProgression )
+	AddClientCommandCallback( "ns_resettitanaegis", ClientCommand_ResetTitanAegis )
 	AddCallback_GameStateEnter( eGameState.Playing, OnPlaying )
 	#elseif CLIENT
 	AddCallback_OnClientScriptInit( OnClientScriptInit )
@@ -69,6 +80,17 @@ bool function ClientCommand_SetProgression( entity player, array<string> args )
 	// loadout validation when progression is turned on
 	if ( file.progressionEnabled[player] )
 		ValidateEquippedItems( player )
+
+	return true
+}
+
+bool function ClientCommand_ResetTitanAegis( entity player, array<string> args )
+{
+	int suitIndex = GetPersistentSpawnLoadoutIndex( player, "titan" )
+	player.SetPersistentVar( "titanFDUnlockPoints[" + suitIndex + "]", 0 )
+	player.SetPersistentVar( "previousFDUnlockPoints[" + suitIndex + "]", 0 )
+	player.SetPersistentVar( "fdTitanXP[" + suitIndex + "]", 0 )
+	player.SetPersistentVar( "fdPreviousTitanXP[" + suitIndex + "]", 0 )
 
 	return true
 }
@@ -1088,4 +1110,6 @@ string function GetWeaponWarpaintRefByIndex( int skinIndex, string parentRef )
 
 	return INVALID_REF
 }
-#endif
+#endif // SERVER
+
+#endif // MP

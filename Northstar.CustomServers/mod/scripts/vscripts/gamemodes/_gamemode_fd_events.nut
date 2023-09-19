@@ -934,7 +934,7 @@ void function AnnounceTitanfallBlock()
 		NSSendAnnouncementMessageToPlayer( player, "Titanfall Block", "Titans cannot be summoned anymore!", < 255, 255, 255 >, 150, 0 )
 	wait 10
 	foreach( entity player in GetPlayerArray() )
-		NSSendLargeMessageToPlayer( player, "Titanfall Block", "Further Titans cannot be summoned until the end of the wave, avoid losing your current Titan!", 60, "rui/callsigns/callsign_94_col" )
+		NSSendLargeMessageToPlayer( player, "Titanfall Block", "Further Titans cannot be summoned until the end of the wave, avoid losing your current Titan!", 60, "rui/callsigns/callsign_hidden" )
 	#endif
 }
 
@@ -943,7 +943,7 @@ void function ShowTitanfallBlockHintToPlayer( entity player )
 	#if SERVER
 	wait 10
 	IsValidPlayer( player )
-		NSSendLargeMessageToPlayer( player, "Titanfall Block Active", "Your titan cannot be summoned, but you can help team mates not losing theirs, steal batteries!", 60, "rui/callsigns/callsign_14_col" )
+		NSSendLargeMessageToPlayer( player, "Titanfall Block Active", "Your titan cannot be summoned, but you can help team mates not losing theirs, steal batteries!", 60, "rui/callsigns/callsign_hidden" )
 	#endif
 }
 
@@ -1014,7 +1014,7 @@ void function spawnSmoke( SmokeEvent smokeEvent, SpawnEvent spawnEvent, FlowCont
 	
 	smokescreen.fxOffsets = [ < -fxOffset, 0.0, 20.0>, <0.0, fxOffset, 20.0>, <0.0, -fxOffset, 20.0>, <0.0, 0.0, fxHeightOffset>, < -fxOffset, 0.0, fxHeightOffset> ]
 	
-	EmitSoundAtPosition( TEAM_UNASSIGNED, groundpos, "SmokeWall_Launch" )
+	EmitSoundAtPosition( TEAM_ANY, groundpos, "SmokeWall_Launch" )
 	
 	entity smokenade = CreateEntity( "prop_script" )
 	entity mover = CreateOwnedScriptMover( smokenade )
