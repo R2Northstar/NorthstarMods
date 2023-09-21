@@ -18,6 +18,8 @@ void function initFrontierDefenseData()
 	waveAnnouncement.append("fd_waveComboNukeMortar")
 	waveAnnouncement.append("fd_waveComboArcNuke")
 	
+	AddOutOfBoundsTriggerWithParams( < 1935, -752, 1382 >, 160, 512 ) //Add OOB because some "smart" fellas wont stop climbing that water tank tower to snipe with Charge Rifle/Archer and do nothing else
+	
 	AddStationaryAIPosition(< -295, 3262, -128>, eStationaryAIPositionTypes.MORTAR_SPECTRE )
 	AddStationaryAIPosition(< 1844, 4549, -130>, eStationaryAIPositionTypes.MORTAR_SPECTRE )
 	AddStationaryAIPosition(< 3790, -2236, -128>, eStationaryAIPositionTypes.MORTAR_SPECTRE )
@@ -26,7 +28,7 @@ void function initFrontierDefenseData()
 	int index = 1
 	
     array<WaveEvent> wave1
-	wave1.append(CreateWarningEvent( FD_IncomingWarnings.Infantry, index++ ))
+	wave1.append(CreateWarningEvent( FD_IncomingWarnings.Infantry,index++))
 	wave1.append(CreateDroppodGruntEvent(< 386, 2347, -257>,"",index++))
 	wave1.append(CreateWaitForTimeEvent(1.4,index++))
 	wave1.append(CreateDroppodGruntEvent(< 2465, 2750, -224>,"",index++))

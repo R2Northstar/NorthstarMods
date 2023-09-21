@@ -678,6 +678,7 @@ function SuperSpectre_WarpFall( entity ai )
 
 	local e = {}
 	e.warpfx <- PlayFX( TURBO_WARP_FX, warpPos + < 0, 0, -104 >, mover.GetAngles() )
+	e.warpfx.DisableHibernation()
 	e.smokeFx <- null
 
 	OnThreadEnd(
@@ -706,6 +707,7 @@ function SuperSpectre_WarpFall( entity ai )
 	ai.Show()
 
 	e.smokeFx = PlayFXOnEntity( TURBO_WARP_COMPANY, ai, "", <0.0, 0.0, 152.0> )
+	e.smokeFx.DisableHibernation()
 
 	local time = 0.2
 	mover.MoveTo( origin, time, 0, 0 )

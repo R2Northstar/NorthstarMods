@@ -133,10 +133,10 @@ void function GamemodeFD_Init()
 	SetGetDifficultyFunc( FD_GetDifficultyLevel )
 	
 	//Live Fire map check
-	if( GetMapName().find( "mp_lf_" ) == null )
+	if( GetMapName().find( "mp_lf_" ) == null ) //Maps with Titans, show titan select menu in this mode
 	{
 		SetShouldUsePickLoadoutScreen( true )
-		TeamTitanSelectMenu_Init() // show the titan select menu in this mode
+		TeamTitanSelectMenu_Init()
 	}
 	else
 		file.isLiveFireMap = true
@@ -164,11 +164,9 @@ void function GamemodeFD_Init()
 	
 	//Spawn Callbacks
 	AddSpawnCallback( "npc_titan", HealthScaleByDifficulty )
-	AddSpawnCallback( "npc_titan", SpawnCallback_SafeTitanSpawnTime )
 	AddSpawnCallback( "npc_super_spectre", HealthScaleByDifficulty )
 	AddSpawnCallback( "npc_frag_drone", OnTickSpawn )
 	AddCallback_OnPlayerRespawned( FD_PlayerRespawnCallback )
-	AddCallback_OnPlayerRespawned( SpawnCallback_SafeTitanSpawnTime )
 	AddSpawnCallback( "npc_turret_sentry", AddTurretSentry )
 	AddTurretRepairCallback( IncrementPlayerstat_TurretRevives )
 	
@@ -362,11 +360,7 @@ void function LoadEntities()
 					file.harvesterLocationForRespawn = info_target.GetOrigin()
 					break
 				case "info_fd_mode_model":
-					entity prop = CreatePropScript( info_target.GetModelName(), info_target.GetOrigin(), info_target.GetAngles(), 6 )
-					ToggleNPCPathsForEntity( prop, false )
-					prop.SetAIObstacle( true )
-					prop.SetTakeDamageType( DAMAGE_NO )
-					prop.SetScriptPropFlags( SPF_DISABLE_CAN_BE_MELEED | SPF_BLOCKS_AI_NAVIGATION )
+					AddFDCustomProp( info_target.GetModelName(), info_target.GetOrigin(), info_target.GetAngles() )
 					break
 				case "info_fd_ai_position":
 					AddStationaryAIPosition( info_target.GetOrigin(), int( info_target.kv.aiType ) )
@@ -856,8 +850,8 @@ bool function runWave( int waveIndex, bool shouldDoBuyTime )
 				AddPlayerScore( player, "FDDidntDie" )
 		}
 		
-		SetRoundBased(false)
-		SetWinner(TEAM_MILITIA)
+		SetRoundBased( false )
+		SetWinner( TEAM_MILITIA )
 		PlayFactionDialogueToTeam( "fd_matchVictory", TEAM_MILITIA )
 		
 		wait 1
@@ -1230,10 +1224,8 @@ void function GamemodeFD_InitPlayer( entity player )
 		string playerUID = player.GetUID()
 		if( playerUID in file.playerHasTitanSelectionLocked ) //Prevent people from doing the server rejoin exploit to swap titans midmatch after Wave 1
 		{
-			player.SetPersistentVar( "activeTitanLoadoutIndex", file.playerHasTitanSelectionLocked[ playerUID ]  )
-			int loadoutIndex = GetPersistentSpawnLoadoutIndex( player, "titan" )
-			TitanLoadoutDef loadout = GetTitanLoadoutFromPersistentData( player, loadoutIndex )
-			SetActiveTitanLoadoutIndex( player, loadoutIndex )
+			player.SetPersistentVar( "activeTitanLoadoutIndex", file.playerHasTitanSelectionLocked[ playerUID ] )
+			SetActiveTitanLoadoutIndex( player, file.playerHasTitanSelectionLocked[ playerUID ] + 1 )
 			SetActiveTitanLoadout( player )
 			DisableTitanSelectionForPlayer( player )
 		}
@@ -1496,7 +1488,7 @@ void function TryDisableTitanSelectionForPlayerAfterDelay( entity player )
 		{
 			if ( IsValidPlayer( player ) && GetGameState() == eGameState.Playing )
 			{
-				int waveNumber = GetGlobalNetInt( "FD_currentWave" ) + 1
+				int waveNumber = GetGlobalNetInt( "FD_currentWave" )
 				
 				UnMuteAll( player ) //I've got reports of people having problems with muted audio when joining midgame
 		
@@ -1507,7 +1499,11 @@ void function TryDisableTitanSelectionForPlayerAfterDelay( entity player )
 				}
 				else if( GetGlobalNetInt( "FD_waveState" ) == WAVE_STATE_IN_PROGRESS || GetGlobalNetInt( "FD_waveState" ) == WAVE_STATE_INCOMING ) //Announces which wave players are in right after they leave the Titan Selection Menu, this is to prevent the whole wave not having music for them
 				{
+					array<int> enemys = getHighestEnemyAmountsForWave( waveNumber )
+					
 					MessageToPlayer( player, eEventNotifications.FD_AnnounceWaveStart )
+					Remote_CallFunction_NonReplay( player, "ServerCallback_FD_UpdateWaveInfo", enemys[0], enemys[1], enemys[2], enemys[3], enemys[4], enemys[5], enemys[6], enemys[7], enemys[8] ) //Avoid joining players having blank scoreboard menu
+					
 					if( player.GetParent() ) //Dropship check, because TTS Menu applies and removes player Invulnerability in its own way
 						player.SetInvulnerable()
 				}
@@ -1518,7 +1514,7 @@ void function TryDisableTitanSelectionForPlayerAfterDelay( entity player )
 					if( GetGlobalNetInt( "FD_waveState" ) == WAVE_STATE_BREAK ) //On wave break, let joiners have their Titan instantly
 						PlayerEarnMeter_AddEarnedAndOwned( player, 1.0, 1.0 )
 				}
-				else if ( waveNumber > 1 && !PlayerEarnMeter_Enabled() && !file.isLiveFireMap ) //Let joiners know why their Titan Meter is not building up if they joined during a Titanfall Block event
+				else if ( waveNumber > 0 && !PlayerEarnMeter_Enabled() && !file.isLiveFireMap ) //Let joiners know why their Titan Meter is not building up if they joined during a Titanfall Block event
 					thread ShowTitanfallBlockHintToPlayer( player )
 			}
 		}
@@ -1569,21 +1565,21 @@ void function DisableTitanSelectionForPlayer( entity player )
 
 	if( !IsValidPlayer( player ) )
 		return
-
+	
+	player.SetPersistentVar( "activeTitanLoadoutIndex", GetPersistentSpawnLoadoutIndex( player, "titan" ) - 1 )
+	string selectedEnumName = PersistenceGetEnumItemNameForIndex( "titanClasses", player.GetPersistentVarAsInt( "activeTitanLoadoutIndex" ) + 1 )
+	
 	for ( int i = 0; i < enumCount; i++ )
 	{
 		string enumName = PersistenceGetEnumItemNameForIndex( "titanClasses", i )
-		string selectedEnumName = PersistenceGetEnumItemNameForIndex( "titanClasses", GetPersistentSpawnLoadoutIndex( player, "titan" ) )
 		if ( enumName != "" && enumName != selectedEnumName )
 			player.SetPersistentVar( "titanClassLockState[" + enumName + "]", TITAN_CLASS_LOCK_STATE_LOCKED )
-		
-		string playerUID = player.GetUID()
-		if( !( playerUID in file.playerHasTitanSelectionLocked ) )
-		{
-			player.SetPersistentVar( "activeTitanLoadoutIndex", GetPersistentSpawnLoadoutIndex( player, "titan" ) - 1 )
-			file.playerHasTitanSelectionLocked[ playerUID ] <- player.GetPersistentVarAsInt( "activeTitanLoadoutIndex" )
-		}
 	}
+	
+	player.SetPersistentVar( "titanClassLockState[" + selectedEnumName + "]", TITAN_CLASS_LOCK_STATE_AVAILABLE ) //Ensure selected one stays avaliable
+	string playerUID = player.GetUID()
+	if( !( playerUID in file.playerHasTitanSelectionLocked ) )
+		file.playerHasTitanSelectionLocked[ playerUID ] <- player.GetPersistentVarAsInt( "activeTitanLoadoutIndex" )
 }
 
 //Change the highlight color of pilots when rodeoing Titans because the voice feedback from Titan OS might not be enough to players awareness
@@ -1663,7 +1659,10 @@ void function FD_PlayerRespawnThreaded( entity player )
 		if( player.GetTeam() == TEAM_IMC )
 			player.Minimap_AlwaysShow( TEAM_MILITIA, null )
 		else if( player.GetTeam() == TEAM_MILITIA && player.s.didthepvpglitch )
+		{
 			SetTeam( player, TEAM_IMC )
+			player.Minimap_AlwaysShow( TEAM_MILITIA, null )
+		}
 	}
 	else
 		return
@@ -1886,7 +1885,6 @@ void function DamageScaleByDifficulty( entity ent, var damageInfo )
 				vector refVec = endOrigin - startOrigin
 				vector refPos = endOrigin - refVec * 0.5
 				
-				CreateShake( refPos, 10, 105, 1.25, 768 )
 				PlayFX( $"P_impact_exp_XLG_metal", refPos )
 				EmitSoundAtPosition( attacker.GetTeam(), refPos, "Explo_Satchel_Impact_3P" )
 				EmitSoundAtPosition( attacker.GetTeam(), refPos, "Explo_FragGrenade_Impact_3P" )
@@ -1901,7 +1899,7 @@ void function DamageScaleByDifficulty( entity ent, var damageInfo )
 	if ( damageSourceID == eDamageSourceId.damagedef_stalker_powersupply_explosion_large_at && ent.IsPlayer() && ent.IsTitan() ) //Warn Titan players about Stalkers
 		PlayFactionDialogueToPlayer( "fd_stalkerExploNag", ent )
 
-	if( difficultyLevel >= eFDDifficultyLevel.MASTER && ( IsMinion( attacker ) || IsStalker( attacker ) || IsFragDrone( attacker ) ) ) //On Vanilla, Light Infantry does not scale damage to players for Hard or below
+	if( difficultyLevel < eFDDifficultyLevel.MASTER && ( IsMinion( attacker ) || IsStalker( attacker ) || IsFragDrone( attacker ) ) ) //On Vanilla, Light Infantry does not scale damage to players for Hard or below
 		return
 	
 	DamageInfo_ScaleDamage( damageInfo, GetCurrentPlaylistVarFloat( "fd_player_damage_scalar", 1.0 ) )
@@ -2202,8 +2200,11 @@ void function OnHarvesterDamaged( entity harvester, var damageInfo )
 
 void function HealthScaleByDifficulty( entity ent )
 {
-	if ( ent.GetTeam() != TEAM_IMC )
+	if ( ent.GetTeam() == TEAM_MILITIA )
+	{
+		FD_UpdateTitanBehavior()
 		return
+	}
 
 
 	if ( ent.IsTitan() && IsValid( GetPetTitanOwner( ent ) ) ) // in case we ever want pvp in FD
@@ -2228,25 +2229,6 @@ void function HealthScaleByDifficulty( entity ent )
 			soul.SetShieldHealth( 2500 )
 		}
 	}
-}
-
-void function SpawnCallback_SafeTitanSpawnTime( entity ent )
-{
-	if( ent.IsTitan() && IsValid( GetPetTitanOwner( ent ) ) && ent.GetTeam() == TEAM_MILITIA )
-	{
-		Highlight_SetFriendlyHighlight( ent, "sp_friendly_hero" ) //Friendly Titans should have highlight overlays
-		ent.EnableNPCFlag( NPCMF_PREFER_SPRINT | NPC_ALLOW_INVESTIGATE | NPC_IGNORE_FRIENDLY_SOUND | NPC_NEW_ENEMY_FROM_SOUND | NPC_TEAM_SPOTTED_ENEMY | NPC_AIM_DIRECT_AT_ENEMY | NPC_ALLOW_HAND_SIGNALS )
-		if( !GetGlobalNetBool( "FD_waveActive" ) )
-			ent.EnableNPCMoveFlag( NPCMF_WALK_NONCOMBAT | NPCMF_IGNORE_CLUSTER_DANGER_TIME | NPCMF_DISABLE_DANGEROUS_AREA_DISPLACEMENT )
-		entity player = GetPetTitanOwner( ent )
-		file.players[player].lastTitanDrop = Time()
-		SetSquad( ent, "TLRPlayers" )
-	}
-	else if( ent.IsTitan() && ent.GetTeam() == TEAM_MILITIA && ent in file.players )
-		file.players[ent].lastTitanDrop = Time()
-	
-	if( ent.GetTeam() == TEAM_IMC )
-		ent.Minimap_AlwaysShow( TEAM_MILITIA, null )
 }
 
 void function OnTickSpawn( entity tick )
@@ -2349,8 +2331,6 @@ void function GamemodeFD_OnPlayerKilled( entity victim, entity attacker, var dam
 			thread PvPGlitchMonitor( victim )
 		return
 	}
-	
-	DeathCallback_CalculateTitanAliveTime( victim )
 		
 	if( FD_PlayerInDropship( victim ) )
 	{
@@ -2434,7 +2414,6 @@ void function OnNpcDeath( entity victim, entity attacker, var damageInfo )
 	if( victim.IsTitan() && victim.GetTeam() == TEAM_MILITIA && victim.GetBossPlayer() )
 	{
 		file.titanPerfectWin = false //Remove perfect win
-		DeathCallback_CalculateTitanAliveTime( victim )
 	}
 	
 	entity inflictor = DamageInfo_GetInflictor( damageInfo )
@@ -2677,23 +2656,6 @@ void function OnNPCLeechedFD( entity victim, entity attacker )
 	}
 	
 	UpdatePlayerScoreboard( attacker )
-}
-
-void function DeathCallback_CalculateTitanAliveTime( entity ent )
-{
-	if( ent.IsTitan() && IsValid( GetPetTitanOwner( ent ) ) && ent.GetTeam() == TEAM_MILITIA )
-	{
-		entity player = GetPetTitanOwner( ent )
-		float aliveTime = file.players[player].lastTitanDrop - Time()
-		if( player in file.playerAwardStats && aliveTime > file.playerAwardStats[player]["longestTitanLife"] )
-			file.playerAwardStats[player]["longestTitanLife"] = aliveTime
-	}
-	else if( ent.IsTitan() && ent.GetTeam() == TEAM_MILITIA && ent in file.players )
-	{
-		float aliveTime = file.players[ent].lastTitanDrop - Time()
-		if( ent in file.playerAwardStats && aliveTime > file.playerAwardStats[ent]["longestTitanLife"] )
-			file.playerAwardStats[ent]["longestTitanLife"] = aliveTime
-	}
 }
 
 void function OnTickDeath( entity victim, var damageInfo )
@@ -3503,35 +3465,7 @@ array<int> function getHighestEnemyAmountsForWave( int waveIndex )
 	
 	while( ret.len() < 9 ) //Fill empty slots for return
 		ret.append( -1 )
-	
-	print( "ENEMIES ON THIS WAVE:" )
-	foreach( int val in ret )
-	{
-		if( val == eFD_AITypeIDs.TITAN_NUKE )
-			printt( "Nuke Titans:", GetGlobalNetInt( "FD_AICount_Titan_Nuke" ) )
-		if( val == eFD_AITypeIDs.TITAN_ARC )
-			printt( "Arc Titans:", GetGlobalNetInt( "FD_AICount_Titan_Arc" ) )
-		if( val == eFD_AITypeIDs.TITAN_MORTAR )
-			printt( "Mortar Titans:", GetGlobalNetInt( "FD_AICount_Titan_Mortar" ) )
-		if( val == eFD_AITypeIDs.TITAN )
-			printt( "Titans:", GetGlobalNetInt( "FD_AICount_Titan" ) )
-		if( val == eFD_AITypeIDs.TICK )
-			printt( "Ticks:", GetGlobalNetInt( "FD_AICount_Ticks" ) )
-		if( val == eFD_AITypeIDs.REAPER )
-			printt( "Reapers:", GetGlobalNetInt( "FD_AICount_Reaper" ) )
-		if( val == eFD_AITypeIDs.SPECTRE_MORTAR )
-			printt( "Mortar Spectres:", GetGlobalNetInt( "FD_AICount_Spectre_Mortar" ) )
-		if( val == eFD_AITypeIDs.DRONE_CLOAK )
-			printt( "Cloak Drones:", GetGlobalNetInt( "FD_AICount_Drone_Cloak" ) )
-		if( val == eFD_AITypeIDs.SPECTRE )
-			printt( "Spectres:", GetGlobalNetInt( "FD_AICount_Spectre" ) )
-		if( val == eFD_AITypeIDs.STALKER )
-			printt( "Stalkers:", GetGlobalNetInt( "FD_AICount_Stalker" ) )
-		if( val == eFD_AITypeIDs.DRONE )
-			printt( "Drones:", GetGlobalNetInt( "FD_AICount_Drone" ) )
-		if( val == eFD_AITypeIDs.GRUNT )
-			printt( "Grunts:", GetGlobalNetInt( "FD_AICount_Grunt" ) )
-	}
+
 	return ret
 }
 
@@ -3599,6 +3533,32 @@ void function SetEnemyAmountNetVars( int waveIndex )
 	SetGlobalNetInt( "FD_AICount_Grunt", npcs[eFD_AITypeIDs.GRUNT] )
 	SetGlobalNetInt( "FD_AICount_Current", total )
 	SetGlobalNetInt( "FD_AICount_Total", total )
+	
+	print( "ENEMIES ON THIS WAVE:" )
+	if( GetGlobalNetInt( "FD_AICount_Titan_Nuke" ) > 0 )
+		printt( "Nuke Titans:", GetGlobalNetInt( "FD_AICount_Titan_Nuke" ) )
+	if( GetGlobalNetInt( "FD_AICount_Titan_Arc" ) > 0  )
+		printt( "Arc Titans:", GetGlobalNetInt( "FD_AICount_Titan_Arc" ) )
+	if( GetGlobalNetInt( "FD_AICount_Titan_Mortar" ) > 0  )
+		printt( "Mortar Titans:", GetGlobalNetInt( "FD_AICount_Titan_Mortar" ) )
+	if( GetGlobalNetInt( "FD_AICount_Titan" ) > 0  )
+		printt( "Titans:", GetGlobalNetInt( "FD_AICount_Titan" ) )
+	if( GetGlobalNetInt( "FD_AICount_Ticks" ) > 0  )
+		printt( "Ticks:", GetGlobalNetInt( "FD_AICount_Ticks" ) )
+	if( GetGlobalNetInt( "FD_AICount_Reaper" ) > 0  )
+		printt( "Reapers:", GetGlobalNetInt( "FD_AICount_Reaper" ) )
+	if( GetGlobalNetInt( "FD_AICount_Spectre_Mortar" ) > 0  )
+		printt( "Mortar Spectres:", GetGlobalNetInt( "FD_AICount_Spectre_Mortar" ) )
+	if( GetGlobalNetInt( "FD_AICount_Drone_Cloak" ) > 0  )
+		printt( "Cloak Drones:", GetGlobalNetInt( "FD_AICount_Drone_Cloak" ) )
+	if( GetGlobalNetInt( "FD_AICount_Spectre" ) > 0  )
+		printt( "Spectres:", GetGlobalNetInt( "FD_AICount_Spectre" ) )
+	if( GetGlobalNetInt( "FD_AICount_Stalker" ) > 0  )
+		printt( "Stalkers:", GetGlobalNetInt( "FD_AICount_Stalker" ) )
+	if( GetGlobalNetInt( "FD_AICount_Drone" ) > 0  )
+		printt( "Drones:", GetGlobalNetInt( "FD_AICount_Drone" ) )
+	if( GetGlobalNetInt( "FD_AICount_Grunt" ) > 0  )
+		printt( "Grunts:", GetGlobalNetInt( "FD_AICount_Grunt" ) )
 }
 
 void function FD_WaveCleanup()

@@ -114,7 +114,7 @@ void function singleNav_thread( entity npc, string routeName, int nodesToSkip = 
 	//Combat Reapers seems to be a little agressive rather than just sprint to the Harvester mindlessly
 	//Elite Titans will be fighting players since they can push to the Harvester way more easily than the common titans
 	if ( npc.GetClassName() == "npc_frag_drone" )
-		npc.AssaultSetFightRadius( expect int( npc.Dev_GetAISettingByKeyField( "LookDistDefault_Combat" ) ) )
+		npc.AssaultSetFightRadius( 300 )
 	else if ( npcName == "empTitan" || IsSuperSpectre( npc ) || npc.ai.bossTitanType == TITAN_MERC )
 		npc.AssaultSetFightRadius( 1200 )
 	else

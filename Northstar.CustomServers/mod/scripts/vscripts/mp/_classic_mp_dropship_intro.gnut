@@ -117,7 +117,7 @@ void function OnPrematchStart()
 	
 	foreach ( entity player in GetPlayerArray() )
 	{
-		if ( !IsPrivateMatchSpectator( player ) )
+		if( !IsPrivateMatchSpectator( player ) )
 			thread SpawnPlayerIntoDropship( player )
 		else
 			RespawnPrivateMatchSpectator( player )
@@ -160,7 +160,7 @@ void function SpawnPlayerIntoDropship( entity player )
 
 	player.EndSignal( "OnDeath" )
 	
-	// find the player's dropship and seat
+	//Find the player's dropship and seat
 	array<IntroDropship> teamDropships
 	if ( player.GetTeam() == TEAM_MILITIA )
 		teamDropships = file.militiaDropships
@@ -169,24 +169,27 @@ void function SpawnPlayerIntoDropship( entity player )
 	
 	IntroDropship playerDropship
 	int playerDropshipIndex = -1
-	foreach ( IntroDropship dropship in teamDropships )
+	foreach( IntroDropship dropship in teamDropships )
 	{
-		for ( int i = 0; i < dropship.players.len(); i++ )
+		if( dropship.playersInDropship >= MAX_DROPSHIP_PLAYERS )
+			continue
+		
+		for( int i = 0; i < MAX_DROPSHIP_PLAYERS; i++ )
 		{
-			if ( dropship.players[ i ] == null )
+			if( dropship.players[ i ] == null )
 			{
 				playerDropship = dropship
 				playerDropshipIndex = i
 				
 				dropship.players[ i ] = player
+				dropship.playersInDropship++
 				break
 			}
 		}
 	}
 					
-	if ( playerDropship.dropship == null )
+	if( playerDropship.dropship == null ) //If we're at this point, we have more players than we do dropships, so just pick a random one
 	{
-		// if we're at this point, we have more players than we do dropships, so just pick a random one
 		playerDropship = teamDropships.getrandom()
 		playerDropshipIndex = RandomInt( MAX_DROPSHIP_PLAYERS )
 	}
@@ -222,6 +225,7 @@ void function SpawnPlayerIntoDropship( entity player )
 	jumpSequence.firstPersonAnim = DROPSHIP_JUMP_ANIMS_POV[ playerDropshipIndex ]
 	jumpSequence.thirdPersonAnim = DROPSHIP_JUMP_ANIMS[ playerDropshipIndex ]
 	jumpSequence.attachment = "ORIGIN"
+	jumpSequence.viewConeFunction = ViewConeFree
 	jumpSequence.setInitialTime = max( 0.0, Time() - ( file.introStartTime + 11.0 ) )  // pretty sure you should do this with GetScriptedAnimEventCycleFrac?
 	// idk unsure how to use that, all i know is getsequenceduration > the length it actually should be
 	

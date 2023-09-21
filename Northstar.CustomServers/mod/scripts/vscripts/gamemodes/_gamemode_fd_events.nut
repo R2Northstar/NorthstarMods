@@ -1120,7 +1120,7 @@ void function spawnArcTitan( SmokeEvent smokeEvent, SpawnEvent spawnEvent, FlowC
 	}
 	
 	npc.kv.reactChance = 50
-	npc.kv.WeaponProficiency = eWeaponProficiency.POOR //This is because on Vanilla, Arc Titans don't spam Arc Waves as much and that is related to weapon proficiency
+	npc.kv.WeaponProficiency = eWeaponProficiency.AVERAGE //This is because on Vanilla, Arc Titans don't spam Arc Waves as much and that is related to weapon proficiency
 	npc.DisableNPCFlag( NPC_ALLOW_INVESTIGATE | NPC_USE_SHOOTING_COVER | NPC_ALLOW_PATROL )
 	npc.EnableNPCMoveFlag( NPCMF_PREFER_SPRINT )
 	npc.SetDangerousAreaReactionTime( FD_TITAN_AOE_REACTTIME )
@@ -2344,7 +2344,7 @@ void function GiveMinionFDLoadout( entity npc )
 	if( className == "npc_soldier" )
 	{
 		npc.SetBehaviorSelector( "behavior_sp_soldier" ) //So they can use grenades and secondaries
-		if ( file.FD_GruntWeapons.len() > -1 )
+		if ( file.FD_GruntWeapons.len() )
 		{
 			TakeAllWeapons( npc )
 			string baseweapon = file.FD_GruntWeapons[ RandomInt( file.FD_GruntWeapons.len() ) ]
@@ -2356,7 +2356,7 @@ void function GiveMinionFDLoadout( entity npc )
 	
 	else if( className == "npc_spectre" )
 	{
-		if ( file.FD_SpectreWeapons.len() > -1 )
+		if ( file.FD_SpectreWeapons.len() )
 		{
 			TakeAllWeapons( npc )
 			string baseweapon = file.FD_SpectreWeapons[ RandomInt( file.FD_SpectreWeapons.len() ) ]

@@ -58,9 +58,18 @@ HarvesterStruct function SpawnHarvester( vector origin, vector angles, int healt
 	SetObjectCanBeMeleed( harvester, true )
 	SetVisibleEntitiesInConeQueriableEnabled( harvester, true )
 	SetTeam( harvester, team )
-	AI_CreateDangerousArea_Static( harvester, null, 160, TEAM_INVALID, true, true, origin )
+	AI_CreateDangerousArea_Static( harvester, null, 160, TEAM_ANY, true, true, origin )
 	CreateNoSpawnArea( TEAM_ANY, TEAM_ANY, origin, 0, 160 ) //Prevent people calling Titans inside the Harvester
 
+	entity blackbox = CreatePropScript( MODEL_HARVESTER_TOWER_COLLISION, origin, angles, 0 )
+	ToggleNPCPathsForEntity( blackbox, false )
+	blackbox.Solid()
+	blackbox.Hide()
+	blackbox.SetAIObstacle( true )
+	blackbox.SetTakeDamageType( DAMAGE_NO )
+	blackbox.SetScriptPropFlags( SPF_BLOCKS_AI_NAVIGATION )
+	blackbox.SetParent( harvester ) //Parenting so when Harvester gets destroyed, this also goes with it
+	
 	entity rings = CreatePropDynamic( MODEL_HARVESTER_TOWER_RINGS, origin, angles, 0 )
 	rings.Anim_Play( HARVESTER_ANIM_IDLE ) //Start with Harvester deactivated, gamemodes should handle animations in their local scripts
 

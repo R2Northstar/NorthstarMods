@@ -87,13 +87,14 @@ void function LaserCannonPassiveDuration( entity soul, entity weapon )
 	entity titan = soul.GetTitan()
 	
 	soul.EndSignal( "OnDestroy" )
+	weapon.EndSignal( "OnDestroy" )
 	soul.EndSignal( "OnDeath" )
 	titan.EndSignal( "CoreEnd" )
 	
 	wait 1.0
 	
 	float coreFrac = soul.GetTitanSoulNetFloat( "coreExpireFrac" )
-	while( true )
+	while( IsValid( weapon ) )
 	{
 		coreFrac = soul.GetTitanSoulNetFloat( "coreExpireFrac" )
 		weapon.SetSustainedDischargeFractionForced( coreFrac )

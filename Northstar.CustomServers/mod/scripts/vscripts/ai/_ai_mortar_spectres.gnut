@@ -36,8 +36,11 @@ void function MortarSpectreSquadThink( array< entity > spectres, entity harveste
 	{
 		// in case all stationary spectre positions are in use wait for one to become available
 		wait 5
-		// pick first spectre on squad to look for mortar spots, it wont matter much using GetOrigin or GetSquadCentroid since they just left the Drop Pod and are all near each other
-		mortarPosition = GetClosestAvailableStationaryPosition( spectres[0].GetOrigin(), MORTAR_SPECTRE_POSITION_SEARCH_RANGE, eStationaryAIPositionTypes.MORTAR_SPECTRE )
+		// pick first spectre on array to look for mortar spots, it wont matter much because GetSquadCentroid counts towards all alive ones in a squad
+		ArrayRemoveDead( spectres )
+		if ( !spectres.len() )
+			return
+		mortarPosition = GetClosestAvailableStationaryPosition( spectres[0].GetSquadCentroid(), MORTAR_SPECTRE_POSITION_SEARCH_RANGE, eStationaryAIPositionTypes.MORTAR_SPECTRE )
 	}
 	
 	expect StationaryAIPosition( mortarPosition )
