@@ -46,6 +46,8 @@ void function Leeching_Init()
 	RegisterSignal( "OnStopLeeched" )
 	RegisterSignal( "EnableLeeching" )
 
+	AddCallback_EntityChangedTeam( "player", PlayerChangedTeam )
+
 	// Spectre leech
 	LeechFuncInfo spectre
 	spectre.classname 	= "npc_spectre"
@@ -87,6 +89,19 @@ void function Leeching_Init()
 	physbox.classname 	= "func_physbox"
 	physbox.DoLeech 	= Leech_FuncPhysbox
 	file.leechFuncs[physbox.classname] <- physbox
+}
+
+// move all leeched npcs over to the new team
+void function PlayerChangedTeam( entity player )
+{
+	foreach( ent in GetLeechedEnts( player ) )
+	{
+		// skip non-npcs, not sure which cases this would be but yeah
+		if ( !ent.IsNPC() )
+			return
+		
+		SetTeam( npc, player.GetTeam() )
+	}
 }
 
 void function EnableLeeching( entity self )
