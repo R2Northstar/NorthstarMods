@@ -489,7 +489,7 @@ resource/ui/menus/modlist.menu
 			ControlName	Label
 
 			labelText	"#MOD_REQUIRED_WARNING"
-			wide 500
+			wide 800
 			tall 50
 			visible 0
 
