@@ -1447,7 +1447,7 @@ void function spawnDroppodStalker( SmokeEvent smokeEvent, SpawnEvent spawnEvent,
 		guys.append( guy )
 	}
 
-	switch ( difficultyLevel )
+	switch( difficultyLevel )
 	{
 		case eFDDifficultyLevel.EASY:
 		case eFDDifficultyLevel.NORMAL: // easy and normal stalkers have no weapons

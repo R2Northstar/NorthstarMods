@@ -24,7 +24,17 @@
 		{
 			"Name": "ns_force_melee",
 			"DefaultValue": ""
-		}
+		},
+		{
+            "Name": "ns_fd_elite_minimap_icontype",
+            "DefaultValue": "0",
+			"Flags": 16777216
+        },
+        {
+            "Name": "ns_fd_elite_overhead_icontype",
+            "DefaultValue": "1",
+			"Flags": 16777216
+        }
 	],
 	"Scripts": [
 		{
@@ -121,6 +131,13 @@
 		{
 			"Path": "gamemodes/cl_gamemode_fw.nut",
 			"RunOn": "CLIENT && MP"
+		},
+		{
+			"Path": "ui/ns_gamemode_fd.nut",
+            "RunOn": "UI",
+            "UICallback": {
+                "Before": "EliteIconSettings_Init"
+            }
 		},
 		{
 			"Path": "gamemodes/gg_earn_meter/sh_gg_earn_meter.gnut",

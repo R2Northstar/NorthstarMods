@@ -46,6 +46,7 @@ Selector CombatAggressive
 	SelectSchedule_MeleeAttack
 	SelectSchedule_StrafeDodge
 	SelectSchedule_ForwardDodge
+	SelectSchedule_CircleStrafe
 	SelectSchedule_ChaseEnemy
 	SelectSchedule_StationaryLowAmmo
 	SelectSchedule_RangeAttack

@@ -94,7 +94,7 @@ void function LaserCannonPassiveDuration( entity soul, entity weapon )
 	wait 1.0
 	
 	float coreFrac = soul.GetTitanSoulNetFloat( "coreExpireFrac" )
-	while( IsValid( weapon ) )
+	while( IsValid( weapon ) && coreFrac > 0.01 )
 	{
 		coreFrac = soul.GetTitanSoulNetFloat( "coreExpireFrac" )
 		weapon.SetSustainedDischargeFractionForced( coreFrac )
@@ -207,7 +207,6 @@ bool function OnAbilityStart_LaserCannon( entity weapon )
 	if ( soul == null )
 		soul = player
 
-	thread LaserCannonPassiveDuration( soul, weapon )
 	if ( !player.ContextAction_IsMeleeExecution() ) //don't do this during executions
 	{
 		StatusEffect_AddTimed( soul, eStatusEffect.turn_slow, SEVERITY_SLOWTURN_LASERCORE, stunDuration + fadetime, fadetime )
@@ -222,6 +221,7 @@ bool function OnAbilityStart_LaserCannon( entity weapon )
 		EmitSoundOnEntityOnlyToPlayer( player, player, LASER_FIRE_SOUND_1P )
 		EmitSoundOnEntityExceptToPlayer( player, player, "Titan_Core_Laser_FireStart_3P" )
 		EmitSoundOnEntityExceptToPlayer( player, player, "Titan_Core_Laser_FireBeam_3P" )
+		thread LaserCannonPassiveDuration( soul, weapon )
 	}
 	else
 	{

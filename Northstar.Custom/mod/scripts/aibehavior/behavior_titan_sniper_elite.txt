@@ -30,6 +30,7 @@ Selector Combat
 	SelectSchedule_StrafeDodge
 	SelectSchedule_ShootJump
 	SelectSchedule_MeleeAttack
+	SelectSchedule_CircleStrafe
 	SelectSchedule_BackwardDodge
 	SelectSchedule_EngagementDistMin
 	SelectSchedule_StationaryLowAmmo
@@ -43,6 +44,7 @@ Selector_End
 Selector CombatAggressive
 
 	SelectSchedule_MeleeAttack
+	SelectSchedule_CircleStrafe
 	SelectSchedule_StrafeDodge
 	SelectSchedule_ShootJump
 	SelectSchedule_ForwardDodge

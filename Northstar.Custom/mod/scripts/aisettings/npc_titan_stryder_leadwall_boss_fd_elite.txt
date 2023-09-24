@@ -72,9 +72,6 @@ npc_titan_stryder_leadwall_boss_fd_elite
 	NoticeTimePeripheral_Combat 0.3
 	NoticeTimePeripheral_Idle	0.3
 	
-	aiEnemy_usePriorityDist			4000
-	aiEnemy_immediateThreatDist		800
-	
 	evasiveCombatShieldPct					0.0
 	evasiveCombatHealthSegmentPct			0.0
 	evasiveCombatTotalHealthDiffPct 		0.1

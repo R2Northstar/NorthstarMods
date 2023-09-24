@@ -1224,11 +1224,12 @@ void function GamemodeFD_InitPlayer( entity player )
 		string playerUID = player.GetUID()
 		if( playerUID in file.playerHasTitanSelectionLocked ) //Prevent people from doing the server rejoin exploit to swap titans midmatch after Wave 1
 		{
-			player.SetPersistentVar( "activeTitanLoadoutIndex", file.playerHasTitanSelectionLocked[ playerUID ] )
-			SetActiveTitanLoadoutIndex( player, file.playerHasTitanSelectionLocked[ playerUID ] + 1 )
+			SetActiveTitanLoadoutIndex( player, file.playerHasTitanSelectionLocked[ playerUID ] )
 			SetActiveTitanLoadout( player )
 			DisableTitanSelectionForPlayer( player )
 		}
+		else
+			EnableTitanSelectionForPlayer( player )
 	}
 	thread TrackDeployedArcTrapThisRound( player )
 	
@@ -1550,12 +1551,60 @@ void function EnableTitanSelectionForPlayer( entity player )
 
 	if( !IsValidPlayer( player ) )
 		return
-
+	
 	for ( int i = 0; i < enumCount; i++ )
 	{
 		string enumName = PersistenceGetEnumItemNameForIndex( "titanClasses", i )
 		if ( enumName != "" )
-			player.SetPersistentVar( "titanClassLockState[" + enumName + "]", TITAN_CLASS_LOCK_STATE_AVAILABLE )
+		{
+			int AegisLevel = FD_TitanGetLevelForXP( enumName, FD_TitanGetXP( player, enumName ) )
+			switch( difficultyLevel )
+			{
+				case eFDDifficultyLevel.EASY:
+				case eFDDifficultyLevel.NORMAL:
+					player.SetPersistentVar( "titanClassLockState[" + enumName + "]", TITAN_CLASS_LOCK_STATE_AVAILABLE )
+					break
+				case eFDDifficultyLevel.HARD:
+					if( GetItemUnlockType( "fd_hard" ) == eUnlockType.STAT && AegisLevel <= int( GetStatUnlockStatVal( "fd_hard" ) ) )
+						player.SetPersistentVar( "titanClassLockState[" + enumName + "]", TITAN_CLASS_LOCK_STATE_LEVELRECOMMENDED )
+					break
+				case eFDDifficultyLevel.MASTER:
+					if( GetItemUnlockType( "fd_master" ) == eUnlockType.STAT && AegisLevel <= int( GetStatUnlockStatVal( "fd_master" ) ) )
+						player.SetPersistentVar( "titanClassLockState[" + enumName + "]", TITAN_CLASS_LOCK_STATE_LEVELREQUIRED )
+					break
+				case eFDDifficultyLevel.INSANE:
+					if( GetItemUnlockType( "fd_insane" ) == eUnlockType.STAT && AegisLevel <= int( GetStatUnlockStatVal( "fd_insane" ) ) )
+						player.SetPersistentVar( "titanClassLockState[" + enumName + "]", TITAN_CLASS_LOCK_STATE_LEVELREQUIRED )
+					break
+
+				default:
+					player.SetPersistentVar( "titanClassLockState[" + enumName + "]", TITAN_CLASS_LOCK_STATE_AVAILABLE )
+
+			}
+		}
+	}
+	
+	int HighestAegis = 0
+	string highestAegisTitan
+	bool allTitansLocked = true
+	for ( int i = 0; i < enumCount; i++ )
+	{
+		string enumName = PersistenceGetEnumItemNameForIndex( "titanClasses", i )
+		if ( enumName != "" )
+		{
+			if( player.GetPersistentVarAsInt( "titanClassLockState[" + enumName + "]" ) == TITAN_CLASS_LOCK_STATE_AVAILABLE )
+				allTitansLocked = false
+		}
+	}
+	
+	if ( allTitansLocked )
+	{
+		for ( int i = 0; i < enumCount; i++ )
+		{
+			string enumName = PersistenceGetEnumItemNameForIndex( "titanClasses", i )
+			if ( enumName != "" )
+				player.SetPersistentVar( "titanClassLockState[" + highestAegisTitan + "]", TITAN_CLASS_LOCK_STATE_LEVELRECOMMENDED )
+		}
 	}
 }
 
@@ -1566,8 +1615,8 @@ void function DisableTitanSelectionForPlayer( entity player )
 	if( !IsValidPlayer( player ) )
 		return
 	
-	player.SetPersistentVar( "activeTitanLoadoutIndex", GetPersistentSpawnLoadoutIndex( player, "titan" ) - 1 )
-	string selectedEnumName = PersistenceGetEnumItemNameForIndex( "titanClasses", player.GetPersistentVarAsInt( "activeTitanLoadoutIndex" ) + 1 )
+	int suitIndex = GetPersistentSpawnLoadoutIndex( player, "titan" )
+	string selectedEnumName = GetItemRefOfTypeByIndex( eItemTypes.TITAN, suitIndex )
 	
 	for ( int i = 0; i < enumCount; i++ )
 	{
@@ -1579,7 +1628,7 @@ void function DisableTitanSelectionForPlayer( entity player )
 	player.SetPersistentVar( "titanClassLockState[" + selectedEnumName + "]", TITAN_CLASS_LOCK_STATE_AVAILABLE ) //Ensure selected one stays avaliable
 	string playerUID = player.GetUID()
 	if( !( playerUID in file.playerHasTitanSelectionLocked ) )
-		file.playerHasTitanSelectionLocked[ playerUID ] <- player.GetPersistentVarAsInt( "activeTitanLoadoutIndex" )
+		file.playerHasTitanSelectionLocked[ playerUID ] <- suitIndex
 }
 
 //Change the highlight color of pilots when rodeoing Titans because the voice feedback from Titan OS might not be enough to players awareness
@@ -3263,11 +3312,9 @@ void function RegisterPostSummaryScreenForMatch( bool matchwon )
 		int fdXPamount = 0
 		int suitIndex = GetPersistentSpawnLoadoutIndex( player, "titan" )
 		string titanRef = GetItemRefOfTypeByIndex( eItemTypes.TITAN, suitIndex )
-		int matchesplayed = player.GetPersistentVarAsInt( "titanStats[" + titanRef + "].matchesByDifficulty[" + difficultyLevel + "]" )
-		player.SetPersistentVar( "titanStats[" + titanRef + "].matchesByDifficulty[" + difficultyLevel + "]", matchesplayed + 1 )
-		
-		int matchdiff = player.GetPersistentVarAsInt( "mapStats[" + GetMapName() + "].matchesByDifficulty[" + difficultyLevel + "]" )
-		player.SetPersistentVar( "mapStats[" + GetMapName() + "].matchesByDifficulty[" + difficultyLevel + "]", matchdiff + 1 )
+
+		UpdatePlayerStat( player, "titan_stats", "matchesByDifficulty", 1, titanRef )
+		UpdatePlayerStat( player, "game_stats", "games_completed_fd" )
 		
 		player.SetPersistentVar( "matchWin", matchwon )
 		player.SetPersistentVar( "matchComplete", true )
@@ -3292,32 +3339,30 @@ void function RegisterPostSummaryScreenForMatch( bool matchwon )
 		
 		if( matchwon )
 		{
-			int matchwins = player.GetPersistentVarAsInt( "mapStats[" + GetMapName() + "].winsByDifficulty[" + difficultyLevel + "]" )
-			player.SetPersistentVar( "mapStats[" + GetMapName() + "].winsByDifficulty[" + difficultyLevel + "]", matchwins + 1 )
+			UpdatePlayerStat( player, "game_stats", "games_won_fd" )
 			
 			if( file.titanPerfectWin && file.pilotPerfectWin && file.harvesterPerfectWin )
 			{
-				int matchperf = player.GetPersistentVarAsInt( "mapStats[" + GetMapName() + "].perfectMatchesByDifficulty[" + difficultyLevel + "]" )
-				player.SetPersistentVar( "mapStats[" + GetMapName() + "].perfectMatchesByDifficulty[" + difficultyLevel + "]", matchperf + 1 )
+				UpdatePlayerStat( player, "game_stats", "perfectMatches" )
+				UpdatePlayerStat( player, "titan_stats", "perfectMatchesByDifficulty", 1, titanRef )
 			}
 			
 			Remote_CallFunction_NonReplay( player, "ServerCallback_SquadLeaderBonus", player.GetEncodedEHandle() )
 			foreach( entity otherplayer in GetPlayerArrayOfTeam( TEAM_MILITIA ) )
 			{
-				if( player == otherplayer )
-					continue
-				
-				Remote_CallFunction_NonReplay( player, "ServerCallback_SquadLeaderBonus", otherplayer.GetEncodedEHandle() )
+				if( player != otherplayer )
+					Remote_CallFunction_NonReplay( player, "ServerCallback_SquadLeaderBonus", otherplayer.GetEncodedEHandle() )
 			}
 				
+			int diffbonus = 0
 			switch( difficultyLevel )
 			{
 				case eFDDifficultyLevel.EASY:
 					UpdatePlayerStat( player, "fd_stats", "easyWins" )
 					player.SetPersistentVar( "fd_match[" + eFDXPType.EASY_VICTORY + "]", FD_XP_EASY_WIN )
 					player.SetPersistentVar( "fd_count[" + eFDXPType.EASY_VICTORY + "]", FD_XP_EASY_WIN )
-					//player.SetPersistentVar( "fd_match[" + eFDXPType.DIFFICULTY_BONUS + "]", FD_XP_EASY_BONUS_SCALE )
-					//player.SetPersistentVar( "fd_count[" + eFDXPType.DIFFICULTY_BONUS + "]", FD_XP_EASY_BONUS_SCALE )
+					//player.SetPersistentVar( "fd_match[" + eFDXPType.DIFFICULTY_BONUS + "]", FD_XP_VICTORY )
+					//player.SetPersistentVar( "fd_count[" + eFDXPType.DIFFICULTY_BONUS + "]", FD_XP_VICTORY )
 					//player.SetPersistentVar( "fd_match[" + eFDXPType.WARPAINT_BONUS + "]", FD_XP_EASY_WAVE_BONUS )
 					//player.SetPersistentVar( "fd_count[" + eFDXPType.WARPAINT_BONUS + "]", FD_XP_EASY_WAVE_BONUS )
 					fdXPamount += FD_XP_EASY_WIN
@@ -3326,43 +3371,49 @@ void function RegisterPostSummaryScreenForMatch( bool matchwon )
 					UpdatePlayerStat( player, "fd_stats", "normalWins" )
 					player.SetPersistentVar( "fd_match[" + eFDXPType.NORMAL_VICTORY + "]", FD_XP_NORMAL_WIN )
 					player.SetPersistentVar( "fd_count[" + eFDXPType.NORMAL_VICTORY + "]", FD_XP_NORMAL_WIN )
-					//player.SetPersistentVar( "fd_match[" + eFDXPType.DIFFICULTY_BONUS + "]", FD_XP_NORMAL_BONUS_SCALE )
-					//player.SetPersistentVar( "fd_count[" + eFDXPType.DIFFICULTY_BONUS + "]", FD_XP_NORMAL_BONUS_SCALE )
+					//player.SetPersistentVar( "fd_match[" + eFDXPType.DIFFICULTY_BONUS + "]", FD_XP_VICTORY )
+					//player.SetPersistentVar( "fd_count[" + eFDXPType.DIFFICULTY_BONUS + "]", FD_XP_VICTORY )
 					//player.SetPersistentVar( "fd_match[" + eFDXPType.WARPAINT_BONUS + "]", FD_XP_NORMAL_WAVE_BONUS )
 					//player.SetPersistentVar( "fd_count[" + eFDXPType.WARPAINT_BONUS + "]", FD_XP_NORMAL_WAVE_BONUS )
 					fdXPamount += FD_XP_NORMAL_WIN
 					break
 				case eFDDifficultyLevel.HARD:
+					diffbonus = FD_XP_VICTORY + FD_XP_VICTORY_HARD_BONUS
+					diffbonus *= FD_XP_HARD_BONUS_SCALE
 					UpdatePlayerStat( player, "fd_stats", "hardWins" )
 					player.SetPersistentVar( "fd_match[" + eFDXPType.HARD_VICTORY + "]", FD_XP_HARD_WIN )
 					player.SetPersistentVar( "fd_count[" + eFDXPType.HARD_VICTORY + "]", FD_XP_HARD_WIN )
-					player.SetPersistentVar( "fd_match[" + eFDXPType.DIFFICULTY_BONUS + "]", FD_XP_HARD_BONUS_SCALE )
-					player.SetPersistentVar( "fd_count[" + eFDXPType.DIFFICULTY_BONUS + "]", FD_XP_HARD_BONUS_SCALE )
+					player.SetPersistentVar( "fd_match[" + eFDXPType.DIFFICULTY_BONUS + "]", diffbonus )
+					player.SetPersistentVar( "fd_count[" + eFDXPType.DIFFICULTY_BONUS + "]", diffbonus )
 					player.SetPersistentVar( "fd_match[" + eFDXPType.WARPAINT_BONUS + "]", FD_XP_HARD_WAVE_BONUS )
 					player.SetPersistentVar( "fd_count[" + eFDXPType.WARPAINT_BONUS + "]", FD_XP_HARD_WAVE_BONUS )
-					fdXPamount += FD_XP_HARD_WIN + FD_XP_HARD_WAVE_BONUS + FD_XP_HARD_BONUS_SCALE
+					fdXPamount += FD_XP_HARD_WIN + FD_XP_HARD_WAVE_BONUS + diffbonus
 					break
 				case eFDDifficultyLevel.MASTER:
+					diffbonus = FD_XP_VICTORY + FD_XP_VICTORY_MASTER_BONUS
+					diffbonus *= FD_XP_MASTER_BONUS_SCALE
 					UpdatePlayerStat( player, "fd_stats", "masterWins" )
 					player.SetPersistentVar( "fd_match[" + eFDXPType.MASTER_VICTORY + "]", FD_XP_MASTER_WIN )
 					player.SetPersistentVar( "fd_count[" + eFDXPType.MASTER_VICTORY + "]", FD_XP_MASTER_WIN )
-					player.SetPersistentVar( "fd_match[" + eFDXPType.DIFFICULTY_BONUS + "]", FD_XP_MASTER_BONUS_SCALE )
-					player.SetPersistentVar( "fd_count[" + eFDXPType.DIFFICULTY_BONUS + "]", FD_XP_MASTER_BONUS_SCALE )
+					player.SetPersistentVar( "fd_match[" + eFDXPType.DIFFICULTY_BONUS + "]", diffbonus )
+					player.SetPersistentVar( "fd_count[" + eFDXPType.DIFFICULTY_BONUS + "]", diffbonus )
 					player.SetPersistentVar( "fd_match[" + eFDXPType.WARPAINT_BONUS + "]", FD_XP_MASTER_WAVE_BONUS )
 					player.SetPersistentVar( "fd_count[" + eFDXPType.WARPAINT_BONUS + "]", FD_XP_MASTER_WAVE_BONUS )
-					fdXPamount += FD_XP_MASTER_WIN + FD_XP_MASTER_WAVE_BONUS + FD_XP_MASTER_BONUS_SCALE
+					fdXPamount += FD_XP_MASTER_WIN + FD_XP_MASTER_WAVE_BONUS + diffbonus
 					break
 				case eFDDifficultyLevel.INSANE:
+					diffbonus = FD_XP_VICTORY + FD_XP_VICTORY_INSANE_BONUS
+					diffbonus *= FD_XP_INSANE_BONUS_SCALE
 					UpdatePlayerStat( player, "fd_stats", "insaneWins" )
 					player.SetPersistentVar( "fd_match[" + eFDXPType.INSANE_VICTORY + "]", FD_XP_INSANE_WIN )
 					player.SetPersistentVar( "fd_count[" + eFDXPType.INSANE_VICTORY + "]", FD_XP_INSANE_WIN )
-					player.SetPersistentVar( "fd_match[" + eFDXPType.DIFFICULTY_BONUS + "]", FD_XP_INSANE_BONUS_SCALE )
-					player.SetPersistentVar( "fd_count[" + eFDXPType.DIFFICULTY_BONUS + "]", FD_XP_INSANE_BONUS_SCALE )
+					player.SetPersistentVar( "fd_match[" + eFDXPType.DIFFICULTY_BONUS + "]", diffbonus )
+					player.SetPersistentVar( "fd_count[" + eFDXPType.DIFFICULTY_BONUS + "]", diffbonus )
 					player.SetPersistentVar( "fd_match[" + eFDXPType.WARPAINT_BONUS + "]", FD_XP_INSANE_WAVE_BONUS )
 					player.SetPersistentVar( "fd_count[" + eFDXPType.WARPAINT_BONUS + "]", FD_XP_INSANE_WAVE_BONUS )
 					player.SetPersistentVar( "fd_match[" + eFDXPType.RETRIES_REMAINING + "]", 0 )
 					player.SetPersistentVar( "fd_count[" + eFDXPType.RETRIES_REMAINING + "]", 0 )
-					fdXPamount += FD_XP_INSANE_WIN + FD_XP_INSANE_WAVE_BONUS + FD_XP_INSANE_BONUS_SCALE
+					fdXPamount += FD_XP_INSANE_WIN + FD_XP_INSANE_WAVE_BONUS + diffbonus
 					break
 				unreachable
 			}
@@ -3374,6 +3425,17 @@ void function RegisterPostSummaryScreenForMatch( bool matchwon )
 		Player_GiveFDUnlockPoints( player, endingLevel - startingLevel )
 		TitanLoadoutDef loadout = GetActiveTitanLoadout( player )
 		AwardRandomItemsForFDTitanLevels( player, loadout.titanClass, startingLevel, endingLevel )
+		
+		int enumCount = PersistenceGetEnumCount( "titanClasses" )
+		int HighestAegis = 0
+		for ( int i = 0; i < enumCount; i++ )
+		{
+			string enumName = PersistenceGetEnumItemNameForIndex( "titanClasses", i )
+			int AegisLevel = FD_TitanGetLevelForXP( enumName, FD_TitanGetXP( player, enumName ) )
+			if ( HighestAegis < AegisLevel )
+				HighestAegis = AegisLevel
+		}
+		player.SetPersistentVar( "fdStats.highestTitanFDLevel", HighestAegis )
 	}
 	SetUIVar( level, "showGameSummary", true )
 }

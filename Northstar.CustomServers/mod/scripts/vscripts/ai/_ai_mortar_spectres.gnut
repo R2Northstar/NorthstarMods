@@ -47,13 +47,15 @@ void function MortarSpectreSquadThink( array< entity > spectres, entity harveste
 	ClaimStationaryAIPosition( mortarPosition ) //Prevent other squads from using this mortar spot
 	
 	//Create icon handler for when at least one spectre arrives at the mortar spot
-	entity squadMarker = CreatePropScript( $"models/dev/empty_model.mdl", mortarPosition.origin + < 0, 0, 150 >, < 0, 1, 0 > )
+	entity squadMarker = CreatePropScript( $"models/dev/empty_model.mdl", mortarPosition.origin + < 0, 0, 160 >, < 0, 1, 0 > )
 	SetTargetName( squadMarker, "mortarPosition" )
 	squadMarker.SetShieldHealthMax( MORTAR_SPECTRE_TRACKER_SHIELD_MAX )
 	squadMarker.Minimap_SetCustomState( eMinimapObject_prop_script.FD_MORTAR_POSITION )
+	squadMarker.SetScriptName( "mortarPosition" )
 	squadMarker.DisableHibernation()
 	squadMarker.EnableRenderAlways()
 	squadMarker.kv.fadedist = 32768
+	squadMarker.EndSignal( "OnDestroy" )
 	
 	thread MortarSpectreSquadDeathThink( spectres, squadMarker, mortarPosition ) //Track squad status for icon and spot states
 	entity mortarfaketarget = CreateInfoTarget( mortarPosition.origin, < 0, 0, 0 > ) //Proxy target where the Mortar Spectres will actually aim to
@@ -71,7 +73,6 @@ void function MortarSpectreSquadThink( array< entity > spectres, entity harveste
 	{
 		spectre.ai.mortarTarget = harvester //Register Harvester as their true target to hit instead of proxy
 		spectre.ai.carryBarrel = mortarfaketarget //Keep track of proxy target for the function that handles target switching and weaponry
-		spectre.SetScriptName( "mortar_spectre" )
 		thread MortarSpectreMoveToMortarPosition( spectre, squadMarker, mortarPosition.origin + MORTAR_SPECTRE_POSITION_OFFSETS[i] ) //Hopefull they will path to their target spot
 		
 		if ( i++ >= MORTAR_SPECTRE_POSITION_OFFSETS.len() ) //Crash protect if Spectre Squad has more than 4
@@ -80,6 +81,11 @@ void function MortarSpectreSquadThink( array< entity > spectres, entity harveste
 	
 	squadMarker.WaitSignal( "BeginMortarAttack" ) //Wait until at least one spectre reached the siege spot
 	squadMarker.SetAngles( < 0, 0, 0 > ) //Angle in the icon prop is used as a visbility toggle
+	squadMarker.Minimap_AlwaysShow( TEAM_MILITIA, null )
+	squadMarker.Minimap_SetAlignUpright( true )
+	squadMarker.Minimap_SetClampToEdge( true )
+	squadMarker.Minimap_SetHeightTracking( true )
+	squadMarker.Minimap_SetZOrder( MINIMAP_Z_PLAYER )
 	
 	//Buildup Siege Icon and Place Shield
 	float setupEndTime = Time() + GetCurrentPlaylistVarFloat( "fd_mortar_spectre_setup_time", 5 )
@@ -227,7 +233,7 @@ void function MortarSpectreHarvesterSiege( entity npc ) //Swap between Archer or
 					if( primarygun.GetWeaponClassName() != "mp_weapon_rocket_launcher" )
 					{
 						npc.TakeWeapon( primarygun.GetWeaponClassName() )
-						entity mortararcher = npc.GiveWeapon( "mp_weapon_rocket_launcher", [ "fd_mortar_mode" ] )
+						entity mortararcher = npc.GiveWeapon( "mp_weapon_rocket_launcher", ["fd_mortar_mode"] )
 						mortararcher.w.missileFiredCallback = MortarMissileFiredCallback
 					}
 				}

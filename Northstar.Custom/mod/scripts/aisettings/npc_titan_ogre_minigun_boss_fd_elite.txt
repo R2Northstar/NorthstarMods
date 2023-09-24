@@ -77,9 +77,6 @@ npc_titan_ogre_minigun_boss_fd_elite
 	NoticeTimePeripheral_Combat 0.3
 	NoticeTimePeripheral_Idle	0.3
 	
-	aiEnemy_usePriorityDist			4000
-	aiEnemy_immediateThreatDist		800
-	
 	evasiveCombatShieldPct					0.0
 	evasiveCombatHealthSegmentPct			0.0
 	evasiveCombatTotalHealthDiffPct 		0.1
@@ -90,7 +87,6 @@ npc_titan_ogre_minigun_boss_fd_elite
 	
 	aiEnemy_immediateThreatDist				800
 	aiEnemy_usePriorityDist					4000
-	chaseTryRunningDodgeWhenAimedAtMinDist	800
 	
 	waitBetweenWeaponBurst			0
 	resetBurstOnStopShootOverlay	1
@@ -98,8 +94,9 @@ npc_titan_ogre_minigun_boss_fd_elite
 	blockPeriod					2
 	maxBlockPerPeriod			1
 	
-	dodgePeriod					2
+	dodgePeriod					1
 	maxDodgePerPeriod			2
+	circleStrafeDist			600
 	
 	aimAngularSpeed			10
 	aimConeCos 				1.0

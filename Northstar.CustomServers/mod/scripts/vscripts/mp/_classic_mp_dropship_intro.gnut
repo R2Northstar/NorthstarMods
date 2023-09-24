@@ -174,7 +174,7 @@ void function SpawnPlayerIntoDropship( entity player )
 		if( dropship.playersInDropship >= MAX_DROPSHIP_PLAYERS )
 			continue
 		
-		for( int i = 0; i < MAX_DROPSHIP_PLAYERS; i++ )
+		for( int i = 0; i < dropship.players.len(); i++ )
 		{
 			if( dropship.players[ i ] == null )
 			{
