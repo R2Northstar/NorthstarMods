@@ -1585,7 +1585,6 @@ void function EnableTitanSelectionForPlayer( entity player )
 	}
 	
 	int HighestAegis = 0
-	string highestAegisTitan
 	bool allTitansLocked = true
 	for ( int i = 0; i < enumCount; i++ )
 	{
@@ -1603,7 +1602,7 @@ void function EnableTitanSelectionForPlayer( entity player )
 		{
 			string enumName = PersistenceGetEnumItemNameForIndex( "titanClasses", i )
 			if ( enumName != "" )
-				player.SetPersistentVar( "titanClassLockState[" + highestAegisTitan + "]", TITAN_CLASS_LOCK_STATE_LEVELRECOMMENDED )
+				player.SetPersistentVar( "titanClassLockState[" + enumName + "]", TITAN_CLASS_LOCK_STATE_LEVELRECOMMENDED )
 		}
 	}
 }
