@@ -48,7 +48,7 @@ struct {
 	float roundWinningKillReplayTime
 	entity roundWinningKillReplayVictim
 	entity roundWinningKillReplayAttacker
-	entity roundWinningKillReplayInflictor // this is either the inflictor or the attacker if inflictor is not valid
+	int roundWinningKillReplayInflictorEHandle // this is either the inflictor or the attacker if inflictor is not valid
 	int roundWinningKillReplayMethodOfDeath
 	float roundWinningKillReplayTimeOfDeath
 	float roundWinningKillReplayHealthFrac
@@ -320,7 +320,7 @@ void function GameStateEnter_WinnerDetermined_Threaded()
 		
 		WaitFrame() // prevent a race condition with PlayerWatchesRoundWinningKillReplay
 		file.roundWinningKillReplayAttacker = null // clear this
-		file.roundWinningKillReplayInflictor = null
+		file.roundWinningKillReplayInflictorEHandle = -1
 		
 		if ( killcamsWereEnabled )
 			SetKillcamsEnabled( true )
@@ -393,11 +393,11 @@ void function PlayerWatchesRoundWinningKillReplay( entity player, float replayLe
 	player.SetPredictionEnabled( false ) // prediction fucks with replays
 	
 	entity attacker = file.roundWinningKillReplayAttacker
-	entity inflictor = file.roundWinningKillReplayInflictor
+	int inflictorEHandle = file.roundWinningKillReplayInflictorEHandle
 	if ( IsValid( attacker ) )
 	{
 		player.SetKillReplayDelay( Time() - replayLength, THIRD_PERSON_KILL_REPLAY_ALWAYS )
-		player.SetKillReplayInflictorEHandle( inflictor.GetEncodedEHandle() )
+		player.SetKillReplayInflictorEHandle( inflictorEHandle )
 		player.SetKillReplayVictim( file.roundWinningKillReplayVictim )
 		player.SetViewIndex( attacker.GetIndexForEntity() )
 		player.SetIsReplayRoundWinning( true )
@@ -463,7 +463,7 @@ void function GameStateEnter_SwitchingSides_Threaded()
 	svGlobal.levelEnt.Signal( "RoundEnd" ) // might be good to get a new signal for this? not 100% necessary tho i think
 	SetServerVar( "switchedSides", 1 )
 	file.roundWinningKillReplayAttacker = null // reset this after replay
-	file.roundWinningKillReplayInflictor = null
+	file.roundWinningKillReplayInflictorEHandle = -1
 	
 	if ( file.usePickLoadoutScreen )
 		SetGameState( eGameState.PickLoadout )
@@ -486,9 +486,9 @@ void function PlayerWatchesSwitchingSidesKillReplay( entity player, bool doRepla
 		// delay seems weird for switchingsides? ends literally the frame the flag is collected
 	
 		entity attacker = file.roundWinningKillReplayAttacker
-		entity inflictor = file.roundWinningKillReplayInflictor
+		int inflictorEHandle = file.roundWinningKillReplayInflictorEHandle
 		player.SetKillReplayDelay( Time() - replayLength, THIRD_PERSON_KILL_REPLAY_ALWAYS )
-		player.SetKillReplayInflictorEHandle( inflictor.GetEncodedEHandle() )
+		player.SetKillReplayInflictorEHandle( inflictorEHandle )
 		player.SetKillReplayVictim( file.roundWinningKillReplayVictim )
 		player.SetViewIndex( attacker.GetIndexForEntity() )
 		player.SetIsReplayRoundWinning( true )
@@ -594,7 +594,7 @@ void function OnPlayerKilled( entity victim, entity attacker, var damageInfo )
 		file.roundWinningKillReplayTime = Time()
 		file.roundWinningKillReplayVictim = victim
 		file.roundWinningKillReplayAttacker = attacker
-		file.roundWinningKillReplayInflictor = IsValid( inflictor ) ? inflictor : attacker
+		file.roundWinningKillReplayInflictorEHandle = (IsValid( inflictor ) ? inflictor : attacker).GetEncodedEHandle()
 		file.roundWinningKillReplayMethodOfDeath = DamageInfo_GetDamageSourceIdentifier( damageInfo )
 		file.roundWinningKillReplayTimeOfDeath = Time()
 		file.roundWinningKillReplayHealthFrac = GetHealthFrac( attacker )
@@ -657,7 +657,7 @@ void function OnTitanKilled( entity victim, var damageInfo )
 		file.roundWinningKillReplayTime = Time()
 		file.roundWinningKillReplayVictim = victim
 		file.roundWinningKillReplayAttacker = attacker
-		file.roundWinningKillReplayInflictor = IsValid( inflictor ) ? inflictor : attacker
+		file.roundWinningKillReplayInflictorEHandle = (IsValid( inflictor ) ? inflictor : attacker).GetEncodedEHandle()
 		file.roundWinningKillReplayMethodOfDeath = DamageInfo_GetDamageSourceIdentifier( damageInfo )
 		file.roundWinningKillReplayTimeOfDeath = Time()
 		file.roundWinningKillReplayHealthFrac = GetHealthFrac( attacker )
@@ -772,12 +772,12 @@ void function SetRoundWinningKillReplayKillClasses( bool pilot, bool titan )
 	file.roundWinningKillReplayTrackTitanKills = titan // player kills in titans should get tracked anyway, might be worth renaming this
 }
 
-void function SetRoundWinningKillReplayAttacker( entity attacker )
+void function SetRoundWinningKillReplayAttacker( entity attacker, int inflictorEHandle = -1 )
 {
 	file.roundWinningKillReplayTime = Time()
 	file.roundWinningKillReplayHealthFrac = GetHealthFrac( attacker )
 	file.roundWinningKillReplayAttacker = attacker
-	file.roundWinningKillReplayInflictor = attacker
+	file.roundWinningKillReplayInflictorEHandle = inflictorEHandle == -1 ? attacker.GetEncodedEHandle() : inflictorEHandle
 	file.roundWinningKillReplayTimeOfDeath = Time()
 }
 
