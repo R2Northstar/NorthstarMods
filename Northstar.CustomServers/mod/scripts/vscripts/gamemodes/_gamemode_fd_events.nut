@@ -2354,7 +2354,7 @@ void function GiveMinionFDLoadout( entity npc )
 		if ( file.FD_GruntWeapons.len() )
 		{
 			TakeAllWeapons( npc )
-			string baseweapon = file.FD_GruntWeapons[ RandomInt( file.FD_GruntWeapons.len() ) ]
+			string baseweapon = file.FD_GruntWeapons.getrandom()
 			npc.GiveWeapon( baseweapon )
 			npc.GiveWeapon( "mp_weapon_wingman" )
 			npc.kv.grenadeWeaponName = file.Cvar_gruntgrenade
@@ -2366,7 +2366,7 @@ void function GiveMinionFDLoadout( entity npc )
 		if ( file.FD_SpectreWeapons.len() )
 		{
 			TakeAllWeapons( npc )
-			string baseweapon = file.FD_SpectreWeapons[ RandomInt( file.FD_SpectreWeapons.len() ) ]
+			string baseweapon = file.FD_SpectreWeapons.getrandom()
 			npc.GiveWeapon( baseweapon )
 		}
 	}

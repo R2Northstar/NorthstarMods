@@ -1392,7 +1392,7 @@ bool function allPlayersReady()
 		if( player.s.extracashnag < Time() && GetPlayerMoney( player ) >= 100 )
 		{
 			player.s.extracashnag = Time() + 20
-			if( RandomInt( 100 ) > 50 )
+			if( CoinFlip() )
 				PlayFactionDialogueToPlayer( "fd_playerCashNagSurplus", player )
 			else
 				PlayFactionDialogueToPlayer( "fd_playerCashNagReg", player )
@@ -1754,7 +1754,6 @@ void function FD_PlayerRespawnThreaded( entity player )
 	if( IsValidPlayer( player ) && IsValid( file.dropship ) && !player.IsTitan() )
 	{
 		//Attach player
-		file.playersInShip++
 		FirstPersonSequenceStruct idleSequence
 		idleSequence.firstPersonAnim = DROPSHIP_IDLE_ANIMS_POV[ file.playersInShip ]
 		idleSequence.thirdPersonAnim = DROPSHIP_IDLE_ANIMS[ file.playersInShip ]
@@ -1764,6 +1763,7 @@ void function FD_PlayerRespawnThreaded( entity player )
 		idleSequence.hideProxy = true
 		thread FirstPersonSequence( idleSequence, player, file.dropship )
 		file.playersInDropship.append( player )
+		file.playersInShip++
 	}
 }
 
@@ -2184,7 +2184,7 @@ void function OnHarvesterDamaged( entity harvester, var damageInfo )
 				fd_harvester.rings.Anim_Play( HARVESTER_ANIM_ACTIVE_LOWHP )
 				file.harvesterHalfHealth = true
 			}
-			if( RandomInt( 100 ) > 50 )
+			if( CoinFlip() )
 				PlayFactionDialogueToTeam( "fd_baseHealth50", TEAM_MILITIA )
 			else
 				PlayFactionDialogueToTeam( "fd_baseHealth50nag", TEAM_MILITIA )
@@ -2196,7 +2196,7 @@ void function OnHarvesterDamaged( entity harvester, var damageInfo )
 			EmitSoundOnEntity( harvester, HARVESTER_SND_CRITICAL )
 			EmitSoundOnEntity( harvester, HARVESTER_SND_UNSTABLE )
 			
-			if( RandomInt( 100 ) > 50 )
+			if( CoinFlip() )
 				PlayFactionDialogueToTeam( "fd_baseHealth25", TEAM_MILITIA )
 			else
 				PlayFactionDialogueToTeam( "fd_baseHealth25nag", TEAM_MILITIA )
@@ -2204,7 +2204,7 @@ void function OnHarvesterDamaged( entity harvester, var damageInfo )
 
 		if( healthpercent <= 15 )
 		{
-			if( RandomInt( 100 ) > 50 )
+			if( CoinFlip() )
 				PlayFactionDialogueToTeam( "fd_baseLowHealth", TEAM_MILITIA )
 			else
 				PlayFactionDialogueToTeam( "fd_baseShieldLowHolding", TEAM_MILITIA )
@@ -2702,6 +2702,9 @@ void function OnNPCLeechedFD( entity victim, entity attacker )
 	{
 		attacker.AddToPlayerGameStat( PGS_ASSAULT_SCORE, FD_SCORE_SPECTRE )
 		AddMoneyToPlayer( attacker, 10 )
+		victim.kv.AccuracyMultiplier = 1.0
+		victim.kv.WeaponProficiency = eWeaponProficiency.AVERAGE
+		victim.SetBehaviorSelector( "behavior_spectre" )
 	}
 	
 	UpdatePlayerScoreboard( attacker )
@@ -2832,7 +2835,7 @@ void function HarvesterThink()
 				file.harvesterShieldDown = false
 				if ( GetGlobalNetBool( "FD_waveActive" ) && harvester.GetShieldHealth() < harvester.GetShieldHealthMax() / 2 )
 				{
-					if( RandomInt( 100 ) > 50 )
+					if( CoinFlip() )
 						PlayFactionDialogueToTeam( "fd_baseShieldRecharging", TEAM_MILITIA )
 					else
 						PlayFactionDialogueToTeam( "fd_baseShieldRechargingShort", TEAM_MILITIA )
@@ -2939,7 +2942,7 @@ bool function FD_PlayerInDropship( entity player )
 
 void function FD_SpawnPlayerDroppod( entity player )
 {
-	vector PodOrigin = FD_DropPodSpawns[ RandomInt( FD_DropPodSpawns.len() ) ]
+	vector PodOrigin = FD_DropPodSpawns.getrandom()
 	int PodAngle = RandomIntRange( 0, 359 )
 	
 	entity pod = CreateDropPod( PodOrigin, < 0, 0, 0 > )
