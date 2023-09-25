@@ -1564,8 +1564,15 @@ void function spawnDroppodSpectre( SmokeEvent smokeEvent, SpawnEvent spawnEvent,
 			GlobalEventEntitys[ spawnEvent.entityGlobalKey + i.tostring() ] <- guy
 		SetTeam( guy, TEAM_IMC )
 		guy.kv.reactChance = 100
+		guy.kv.grenadeWeaponName = "mp_weapon_thermite_grenade"
 		DispatchSpawn( guy )
-		GiveMinionFDLoadout( guy )
+		TakeAllWeapons( guy )
+		guy.GiveWeapon( "mp_weapon_smr", ["extended_ammo","pas_fast_reload"] )
+		guy.GiveWeapon( "mp_weapon_rocket_launcher", ["at_unlimited_ammo"] )
+		guy.GiveWeapon( "mp_weapon_shotgun_pistol", ["extended_ammo","pas_fast_reload"] )
+		guy.SetBehaviorSelector( "behavior_sp_soldier" )
+		guy.kv.AccuracyMultiplier = 4.0
+		guy.kv.WeaponProficiency = eWeaponProficiency.PERFECT
 		guy.AssaultSetFightRadius( 0 )
 		guy.DisableNPCFlag( NPC_ALLOW_INVESTIGATE | NPC_USE_SHOOTING_COVER | NPC_ALLOW_PATROL )
 		guy.EnableNPCFlag( NPC_NO_WEAPON_DROP )

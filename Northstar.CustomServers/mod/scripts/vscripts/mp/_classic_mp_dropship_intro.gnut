@@ -171,17 +171,16 @@ void function SpawnPlayerIntoDropship( entity player )
 	int playerDropshipIndex = -1
 	foreach( IntroDropship dropship in teamDropships )
 	{
-		if( dropship.playersInDropship >= MAX_DROPSHIP_PLAYERS )
+		if( dropship.playersInDropship > MAX_DROPSHIP_PLAYERS )
 			continue
 		
-		for( int i = 0; i < dropship.players.len(); i++ )
+		foreach( index, playerslot in dropship.players )
 		{
-			if( dropship.players[ i ] == null )
+			if( dropship.players[index] == null )
 			{
 				playerDropship = dropship
-				playerDropshipIndex = i
-				
-				dropship.players[ i ] = player
+				playerDropshipIndex = index
+				dropship.players[index] = player
 				dropship.playersInDropship++
 				break
 			}

@@ -1591,7 +1591,7 @@ void function EnableTitanSelectionForPlayer( entity player )
 		string enumName = PersistenceGetEnumItemNameForIndex( "titanClasses", i )
 		if ( enumName != "" )
 		{
-			if( player.GetPersistentVarAsInt( "titanClassLockState[" + enumName + "]" ) == TITAN_CLASS_LOCK_STATE_AVAILABLE )
+			if( player.GetPersistentVarAsInt( "titanClassLockState[" + enumName + "]" ) == TITAN_CLASS_LOCK_STATE_AVAILABLE || player.GetPersistentVarAsInt( "titanClassLockState[" + enumName + "]" ) == TITAN_CLASS_LOCK_STATE_LEVELRECOMMENDED )
 				allTitansLocked = false
 		}
 	}
@@ -1754,9 +1754,10 @@ void function FD_PlayerRespawnThreaded( entity player )
 	if( IsValidPlayer( player ) && IsValid( file.dropship ) && !player.IsTitan() )
 	{
 		//Attach player
+		file.playersInShip++
 		FirstPersonSequenceStruct idleSequence
 		idleSequence.firstPersonAnim = DROPSHIP_IDLE_ANIMS_POV[ file.playersInShip ]
-		idleSequence.thirdPersonAnim = DROPSHIP_IDLE_ANIMS[ file.playersInShip++ ]
+		idleSequence.thirdPersonAnim = DROPSHIP_IDLE_ANIMS[ file.playersInShip ]
 		idleSequence.attachment = "ORIGIN"
 		idleSequence.teleport = true
 		idleSequence.viewConeFunction = ViewConeNarrow

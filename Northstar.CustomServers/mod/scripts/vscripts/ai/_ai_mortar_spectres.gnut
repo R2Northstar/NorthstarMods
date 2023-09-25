@@ -51,6 +51,9 @@ void function MortarSpectreSquadThink( array< entity > spectres, entity harveste
 	SetTargetName( squadMarker, "mortarPosition" )
 	squadMarker.SetShieldHealthMax( MORTAR_SPECTRE_TRACKER_SHIELD_MAX )
 	squadMarker.Minimap_SetCustomState( eMinimapObject_prop_script.FD_MORTAR_POSITION )
+	squadMarker.Minimap_SetAlignUpright( true )
+	squadMarker.Minimap_SetClampToEdge( true )
+	squadMarker.Minimap_SetZOrder( MINIMAP_Z_OBJECT )
 	squadMarker.SetScriptName( "mortarPosition" )
 	squadMarker.DisableHibernation()
 	squadMarker.EnableRenderAlways()
@@ -82,10 +85,6 @@ void function MortarSpectreSquadThink( array< entity > spectres, entity harveste
 	squadMarker.WaitSignal( "BeginMortarAttack" ) //Wait until at least one spectre reached the siege spot
 	squadMarker.SetAngles( < 0, 0, 0 > ) //Angle in the icon prop is used as a visbility toggle
 	squadMarker.Minimap_AlwaysShow( TEAM_MILITIA, null )
-	squadMarker.Minimap_SetAlignUpright( true )
-	squadMarker.Minimap_SetClampToEdge( true )
-	squadMarker.Minimap_SetHeightTracking( true )
-	squadMarker.Minimap_SetZOrder( MINIMAP_Z_PLAYER )
 	
 	//Buildup Siege Icon and Place Shield
 	float setupEndTime = Time() + GetCurrentPlaylistVarFloat( "fd_mortar_spectre_setup_time", 5 )
@@ -154,7 +153,11 @@ void function MortarSpectreMoveToMortarPosition( entity spectre, entity signaler
 	
 	table result = spectre.WaitSignal( "OnFinishedAssault", "OnFailedToPath" )
 	if ( result.signal == "OnFinishedAssault" )
+	{
+		spectre.Minimap_Hide( TEAM_IMC, null )
+		spectre.Minimap_Hide( TEAM_MILITIA, null )
 		signaler.Signal( "BeginMortarAttack" )
+	}
 }
 
 void function MortarSpectreSquadDeathThink( array< entity > spectres, entity signaler, StationaryAIPosition mortarPosition )
