@@ -13,6 +13,8 @@ global function SetTimerBased
 global function SetShouldUseRoundWinningKillReplay
 global function SetRoundWinningKillReplayKillClasses
 global function SetRoundWinningKillReplayAttacker
+global function SetCallback_TryUseProjectileReplay
+global function ShouldTryUseProjectileReplay
 global function SetWinner
 global function SetTimeoutWinnerDecisionFunc
 global function AddTeamScore
@@ -48,13 +50,27 @@ struct {
 	float roundWinningKillReplayTime
 	entity roundWinningKillReplayVictim
 	entity roundWinningKillReplayAttacker
-	int roundWinningKillReplayInflictorEHandle // this is either the inflictor or the attacker if inflictor is not valid
+	int roundWinningKillReplayInflictorEHandle // this is either the inflictor or the attacker
 	int roundWinningKillReplayMethodOfDeath
 	float roundWinningKillReplayTimeOfDeath
 	float roundWinningKillReplayHealthFrac
 	
 	array<void functionref()> roundEndCleanupCallbacks
+	bool functionref( entity victim, entity attacker, var damageInfo, bool isRoundEnd ) shouldTryUseProjectileReplayCallback
 } file
+
+void function SetCallback_TryUseProjectileReplay( bool functionref( entity victim, entity attacker, var damageInfo, bool isRoundEnd ) callback )
+{
+	file.shouldTryUseProjectileReplayCallback = callback
+}
+
+bool function ShouldTryUseProjectileReplay( entity victim, entity attacker, var damageInfo, bool isRoundEnd )
+{
+	if ( file.shouldTryUseProjectileReplayCallback != null )
+		return file.shouldTryUseProjectileReplayCallback( victim, attacker, damageInfo, isRoundEnd )
+	// default to true (vanilla behaviour)
+	return true
+}
 
 void function PIN_GameStart()
 {
@@ -393,11 +409,10 @@ void function PlayerWatchesRoundWinningKillReplay( entity player, float replayLe
 	player.SetPredictionEnabled( false ) // prediction fucks with replays
 	
 	entity attacker = file.roundWinningKillReplayAttacker
-	int inflictorEHandle = file.roundWinningKillReplayInflictorEHandle
 	if ( IsValid( attacker ) )
 	{
 		player.SetKillReplayDelay( Time() - replayLength, THIRD_PERSON_KILL_REPLAY_ALWAYS )
-		player.SetKillReplayInflictorEHandle( inflictorEHandle )
+		player.SetKillReplayInflictorEHandle( file.roundWinningKillReplayInflictorEHandle )
 		player.SetKillReplayVictim( file.roundWinningKillReplayVictim )
 		player.SetViewIndex( attacker.GetIndexForEntity() )
 		player.SetIsReplayRoundWinning( true )
@@ -486,9 +501,8 @@ void function PlayerWatchesSwitchingSidesKillReplay( entity player, bool doRepla
 		// delay seems weird for switchingsides? ends literally the frame the flag is collected
 	
 		entity attacker = file.roundWinningKillReplayAttacker
-		int inflictorEHandle = file.roundWinningKillReplayInflictorEHandle
 		player.SetKillReplayDelay( Time() - replayLength, THIRD_PERSON_KILL_REPLAY_ALWAYS )
-		player.SetKillReplayInflictorEHandle( inflictorEHandle != -1 ? inflictorEHandle : attacker.GetEncodedEHandle() )
+		player.SetKillReplayInflictorEHandle( file.roundWinningKillReplayInflictorEHandle )
 		player.SetKillReplayVictim( file.roundWinningKillReplayVictim )
 		player.SetViewIndex( attacker.GetIndexForEntity() )
 		player.SetIsReplayRoundWinning( true )
@@ -584,6 +598,7 @@ void function OnPlayerKilled( entity victim, entity attacker, var damageInfo )
 	}
 
 	entity inflictor = DamageInfo_GetInflictor( damageInfo )
+	bool shouldUseInflictor = IsValid( inflictor ) && ShouldTryUseProjectileReplay( victim, attacker, damageInfo, true )
 
 	// set round winning killreplay info here if we're tracking pilot kills
 	// todo: make this not count environmental deaths like falls, unsure how to prevent this
@@ -594,7 +609,7 @@ void function OnPlayerKilled( entity victim, entity attacker, var damageInfo )
 		file.roundWinningKillReplayTime = Time()
 		file.roundWinningKillReplayVictim = victim
 		file.roundWinningKillReplayAttacker = attacker
-		file.roundWinningKillReplayInflictorEHandle = (IsValid( inflictor ) ? inflictor : attacker).GetEncodedEHandle()
+		file.roundWinningKillReplayInflictorEHandle = (shouldUseInflictor ? inflictor : attacker).GetEncodedEHandle()
 		file.roundWinningKillReplayMethodOfDeath = DamageInfo_GetDamageSourceIdentifier( damageInfo )
 		file.roundWinningKillReplayTimeOfDeath = Time()
 		file.roundWinningKillReplayHealthFrac = GetHealthFrac( attacker )

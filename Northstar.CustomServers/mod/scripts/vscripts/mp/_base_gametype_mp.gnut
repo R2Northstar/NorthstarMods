@@ -297,7 +297,7 @@ void function PostDeathThread_MP( entity player, var damageInfo ) // based on ga
 	entity attacker = DamageInfo_GetAttacker( damageInfo )
 	entity inflictor = DamageInfo_GetInflictor( damageInfo )
 	int eHandle = attacker.GetEncodedEHandle()
-	if (inflictor)
+	if ( inflictor && ShouldTryUseProjectileReplay( player, attacker, damageInfo, false ) )
 		eHandle = inflictor.GetEncodedEHandle()
 	int methodOfDeath = DamageInfo_GetDamageSourceIdentifier( damageInfo )
 
