@@ -488,7 +488,7 @@ void function PlayerWatchesSwitchingSidesKillReplay( entity player, bool doRepla
 		entity attacker = file.roundWinningKillReplayAttacker
 		int inflictorEHandle = file.roundWinningKillReplayInflictorEHandle
 		player.SetKillReplayDelay( Time() - replayLength, THIRD_PERSON_KILL_REPLAY_ALWAYS )
-		player.SetKillReplayInflictorEHandle( inflictorEHandle )
+		player.SetKillReplayInflictorEHandle( inflictorEHandle != -1 ? inflictorEHandle : attacker.GetEncodedEHandle() )
 		player.SetKillReplayVictim( file.roundWinningKillReplayVictim )
 		player.SetViewIndex( attacker.GetIndexForEntity() )
 		player.SetIsReplayRoundWinning( true )
