@@ -126,7 +126,7 @@ void function GamemodeFD_Init()
 	SetRoundBased( true )
 	SetTimerBased( false ) //Disable loss by timer because the wait feature will truly idle servers until people joins
 	SetShouldUseRoundWinningKillReplay( false )
-	SetKillcamsEnabled( false ) //Only disabling Killcams because it's PvE
+	SetKillcamsEnabled( false ) //Only disabling Killcams because it's PvE, also seems to reduce server network load a little bit
 	Riff_ForceBoostAvailability( eBoostAvailability.Disabled )
 	PlayerEarnMeter_SetEnabled( false )
 	SetAllowLoadoutChangeFunc( FD_ShouldAllowChangeLoadout )
@@ -275,42 +275,42 @@ void function UpdateEarnMeter_ByPlayersInMatch()
 	switch( numplayers.len() )
 	{
 		case 1:
-			ScoreEvent_SetEarnMeterValues( "FDAirDroneKilled", 0.0, 0.4 )
-			ScoreEvent_SetEarnMeterValues( "FDGruntKilled", 0.0, 0.4 )
-			ScoreEvent_SetEarnMeterValues( "FDSpectreKilled", 0.0, 0.4 )
-			ScoreEvent_SetEarnMeterValues( "FDStalkerKilled", 0.0, 0.4 )
-			ScoreEvent_SetEarnMeterValues( "FDSuperSpectreKilled", 0.0, 0.85 )
-			ScoreEvent_SetEarnMeterValues( "Execution", 0.0, 1.0 )
+			ScoreEvent_SetEarnMeterValues( "FDAirDroneKilled", 0.0, 0.25 )
+			ScoreEvent_SetEarnMeterValues( "FDGruntKilled", 0.0, 0.25 )
+			ScoreEvent_SetEarnMeterValues( "FDSpectreKilled", 0.0, 0.25 )
+			ScoreEvent_SetEarnMeterValues( "FDStalkerKilled", 0.0, 0.25 )
+			ScoreEvent_SetEarnMeterValues( "FDSuperSpectreKilled", 0.0, 0.4 )
+			ScoreEvent_SetEarnMeterValues( "Execution", 0.0, 0.5 )
 			ScoreEvent_SetEarnMeterValues( "PilotBatteryApplied", 0.0, 1.0 )
 			ScoreEvent_SetEarnMeterValues( "PilotBatteryStolen", 0.0, 1.0 )
 			break
 		case 2:
-			ScoreEvent_SetEarnMeterValues( "FDAirDroneKilled", 0.0, 0.3 )
-			ScoreEvent_SetEarnMeterValues( "FDGruntKilled", 0.0, 0.3 )
-			ScoreEvent_SetEarnMeterValues( "FDSpectreKilled", 0.0, 0.3 )
-			ScoreEvent_SetEarnMeterValues( "FDStalkerKilled", 0.0, 0.3 )
-			ScoreEvent_SetEarnMeterValues( "FDSuperSpectreKilled", 0.0, 0.5 )
-			ScoreEvent_SetEarnMeterValues( "Execution", 0.0, 0.8 )
-			ScoreEvent_SetEarnMeterValues( "PilotBatteryApplied", 0.0, 0.8 )
-			ScoreEvent_SetEarnMeterValues( "PilotBatteryStolen", 0.0, 0.8 )
-			break
-		case 3:
 			ScoreEvent_SetEarnMeterValues( "FDAirDroneKilled", 0.0, 0.1 )
 			ScoreEvent_SetEarnMeterValues( "FDGruntKilled", 0.0, 0.1 )
 			ScoreEvent_SetEarnMeterValues( "FDSpectreKilled", 0.0, 0.1 )
 			ScoreEvent_SetEarnMeterValues( "FDStalkerKilled", 0.0, 0.1 )
 			ScoreEvent_SetEarnMeterValues( "FDSuperSpectreKilled", 0.0, 0.2 )
-			ScoreEvent_SetEarnMeterValues( "Execution", 0.0, 0.2 )
+			ScoreEvent_SetEarnMeterValues( "Execution", 0.0, 0.25 )
+			ScoreEvent_SetEarnMeterValues( "PilotBatteryApplied", 0.0, 0.8 )
+			ScoreEvent_SetEarnMeterValues( "PilotBatteryStolen", 0.0, 0.8 )
+			break
+		case 3:
+			ScoreEvent_SetEarnMeterValues( "FDAirDroneKilled", 0.0, 0.05 )
+			ScoreEvent_SetEarnMeterValues( "FDGruntKilled", 0.0, 0.05 )
+			ScoreEvent_SetEarnMeterValues( "FDSpectreKilled", 0.0, 0.05 )
+			ScoreEvent_SetEarnMeterValues( "FDStalkerKilled", 0.0, 0.5 )
+			ScoreEvent_SetEarnMeterValues( "FDSuperSpectreKilled", 0.0, 0.15 )
+			ScoreEvent_SetEarnMeterValues( "Execution", 0.0, 0.15 )
 			ScoreEvent_SetEarnMeterValues( "PilotBatteryApplied", 0.0, 0.5 )
 			ScoreEvent_SetEarnMeterValues( "PilotBatteryStolen", 0.0, 0.5 )
 			break
 		default:
-			ScoreEvent_SetEarnMeterValues( "FDAirDroneKilled", 0.0, 0.05 )
-			ScoreEvent_SetEarnMeterValues( "FDGruntKilled", 0.0, 0.05 )
-			ScoreEvent_SetEarnMeterValues( "FDSpectreKilled", 0.0, 0.05 )
-			ScoreEvent_SetEarnMeterValues( "FDStalkerKilled", 0.0, 0.05 )
-			ScoreEvent_SetEarnMeterValues( "FDSuperSpectreKilled", 0.0, 0.1 )
-			ScoreEvent_SetEarnMeterValues( "Execution", 0.0, 0.1 )
+			ScoreEvent_SetEarnMeterValues( "FDAirDroneKilled", 0.0, 0.015 )
+			ScoreEvent_SetEarnMeterValues( "FDGruntKilled", 0.0, 0.015 )
+			ScoreEvent_SetEarnMeterValues( "FDSpectreKilled", 0.0, 0.015 )
+			ScoreEvent_SetEarnMeterValues( "FDStalkerKilled", 0.0, 0.015 )
+			ScoreEvent_SetEarnMeterValues( "FDSuperSpectreKilled", 0.0, 0.075 )
+			ScoreEvent_SetEarnMeterValues( "Execution", 0.0, 0.075 )
 			ScoreEvent_SetEarnMeterValues( "PilotBatteryApplied", 0.0, 0.35 )
 			ScoreEvent_SetEarnMeterValues( "PilotBatteryStolen", 0.0, 0.35 )
 	}
@@ -1229,7 +1229,7 @@ void function GamemodeFD_InitPlayer( entity player )
 			DisableTitanSelectionForPlayer( player )
 		}
 		else
-			EnableTitanSelectionForPlayer( player )
+			EnableTitanSelectionForPlayer( player ) //This is actually used in here to sort which Titans such player can use in the difficulty being played
 	}
 	thread TrackDeployedArcTrapThisRound( player )
 	
@@ -1285,10 +1285,10 @@ void function OnPlayerDisconnectedOrDestroyed( entity player )
 	if( file.playersInDropship.contains( player ) )
 		file.playersInDropship.fastremovebyvalue( player )
 	
-	if ( player in file.playerAwardStats ) //Clear out disconnecting players so the postcards don't show less than 4 when server has more than 4 slots
+	if( player in file.playerAwardStats ) //Clear out disconnecting players so the postcards don't show less than 4 when server has more than 4 slots
 		delete file.playerAwardStats[player]
 	
-	foreach ( entity npc in GetNPCArray() )
+	foreach( entity npc in GetNPCArray() )
 	{
 		entity BossPlayer = npc.GetBossPlayer()
 		if ( IsValidPlayer( BossPlayer ) && IsValid( npc ) && npc.GetTeam() == TEAM_MILITIA && ( IsMinion( npc ) || IsFragDrone( npc ) ) )
@@ -1437,7 +1437,7 @@ bool function useShieldBoost( entity player, array<string> args )
 	{
 		fd_harvester.harvester.SetShieldHealth( fd_harvester.harvester.GetShieldHealthMax() )
 		
-		//If shield is down and someone uses Shield Boost, Harvester Shield Particle FX wasn't spawning
+		//If shield is down and someone uses Shield Boost, Harvester Shield Particle FX wasn't spawning (Vanilla bug)
 		if( !IsValid( fd_harvester.particleShield ) )
 			generateShieldFX( fd_harvester )
 		
@@ -1584,7 +1584,6 @@ void function EnableTitanSelectionForPlayer( entity player )
 		}
 	}
 	
-	int HighestAegis = 0
 	bool allTitansLocked = true
 	for ( int i = 0; i < enumCount; i++ )
 	{
@@ -2298,6 +2297,7 @@ void function TickSpawnThreaded( entity tick )
 		tick.Minimap_AlwaysShow( TEAM_IMC, null )
 		tick.Minimap_AlwaysShow( TEAM_MILITIA, null )
 		tick.Minimap_SetHeightTracking( true )
+		tick.Minimap_SetZOrder( MINIMAP_Z_NPC )
 		tick.Minimap_SetCustomState( eMinimapObject_npc.AI_TDM_AI )
 		tick.EnableNPCFlag( NPC_ALLOW_INVESTIGATE )
 		if( tick.GetTeam() == TEAM_IMC )
@@ -2319,6 +2319,7 @@ void function AddTurretSentry( entity turret )
 		
 		turret.Minimap_AlwaysShow( TEAM_MILITIA, null )
 		turret.Minimap_SetHeightTracking( true )
+		turret.Minimap_SetZOrder( MINIMAP_Z_NPC )
 		turret.Minimap_SetCustomState( eMinimapObject_npc.FD_TURRET )
 		turret.SetMaxHealth( DEPLOYABLE_TURRET_HEALTH )
 		turret.SetHealth( DEPLOYABLE_TURRET_HEALTH )
@@ -2705,6 +2706,7 @@ void function OnNPCLeechedFD( entity victim, entity attacker )
 		victim.kv.AccuracyMultiplier = 1.0
 		victim.kv.WeaponProficiency = eWeaponProficiency.AVERAGE
 		victim.SetBehaviorSelector( "behavior_spectre" )
+		victim.Minimap_AlwaysShow( TEAM_MILITIA, null )
 	}
 	
 	UpdatePlayerScoreboard( attacker )
@@ -2712,12 +2714,21 @@ void function OnNPCLeechedFD( entity victim, entity attacker )
 
 void function OnTickDeath( entity victim, var damageInfo )
 {
+	entity attacker = DamageInfo_GetAttacker( damageInfo )
+	
 	int findIndex = spawnedNPCs.find( victim )
 	if ( findIndex != -1 )
 	{
 		spawnedNPCs.remove( findIndex )
 		SetGlobalNetInt( "FD_AICount_Ticks", GetGlobalNetInt( "FD_AICount_Ticks" ) -1 )
 		SetGlobalNetInt( "FD_AICount_Current", GetGlobalNetInt( "FD_AICount_Current" ) -1 )
+	}
+	
+	if ( IsValid( attacker ) && attacker.IsPlayer() )
+	{
+		AddPlayerScore( attacker, "FDGruntKilled" )
+		attacker.AddToPlayerGameStat( PGS_ASSAULT_SCORE, FD_SCORE_GRUNT )
+		AddMoneyToPlayer( attacker , 5 )
 	}
 }
 

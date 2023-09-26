@@ -204,6 +204,7 @@ void function executeWave()
 		
 		WaitFrame()
 	}
+	wait 0.5
 	print( "Enemy pool reached 0, doing a full npc scan" )
 	
 	//Lastly, ensure everyone is indeed dead to proceed
@@ -2309,6 +2310,7 @@ void function AddMinimapForTitans( entity titan )
 	titan.Minimap_AlwaysShow( TEAM_IMC, null )
 	titan.Minimap_AlwaysShow( TEAM_MILITIA, null )
 	titan.Minimap_SetHeightTracking( true )
+	titan.Minimap_SetZOrder( MINIMAP_Z_NPC )
 	titan.Minimap_SetCustomState( eMinimapObject_npc_titan.AT_BOUNTY_BOSS )
 }
 
@@ -2319,6 +2321,7 @@ void function AddMinimapForHumans( entity human )
 	human.Minimap_AlwaysShow( TEAM_IMC, null )
 	human.Minimap_AlwaysShow( TEAM_MILITIA, null )
 	human.Minimap_SetHeightTracking( true )
+	human.Minimap_SetZOrder( MINIMAP_Z_NPC )
 	human.Minimap_SetCustomState( eMinimapObject_npc.AI_TDM_AI )
 }
 
@@ -2616,6 +2619,7 @@ void function SpawnDrozFD( vector spawnpos, vector angles )
 	SetSpawnOption_Sidearm( Droz, "mp_weapon_shotgun_pistol" )
 	SetTeam( Droz, TEAM_MILITIA )
 	DispatchSpawn( Droz )
+	AddMinimapForHumans( Droz )
 	NPC_NoTarget( Droz )
 	Droz.SetModel( FD_MODEL_DROZ )
 	Droz.SetSkin( 2 )
@@ -2651,6 +2655,7 @@ void function SpawnDavisFD( vector spawnpos, vector angles )
 	SetSpawnOption_Sidearm( Davis, "mp_weapon_shotgun_pistol" )
 	SetTeam( Davis, TEAM_MILITIA )
 	DispatchSpawn( Davis )
+	AddMinimapForHumans( Davis )
 	NPC_NoTarget( Davis )
 	Davis.SetModel( FD_MODEL_DAVIS )
 	Davis.EnableNPCFlag( NPC_ALLOW_INVESTIGATE | NPC_ALLOW_HAND_SIGNALS | NPC_NO_PAIN | NPC_NO_GESTURE_PAIN | NPC_ALLOW_PATROL | NPC_IGNORE_FRIENDLY_SOUND | NPC_NEW_ENEMY_FROM_SOUND | NPC_TEAM_SPOTTED_ENEMY | NPC_AIM_DIRECT_AT_ENEMY )

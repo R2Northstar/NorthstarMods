@@ -50,10 +50,11 @@ void function MortarSpectreSquadThink( array< entity > spectres, entity harveste
 	entity squadMarker = CreatePropScript( $"models/dev/empty_model.mdl", mortarPosition.origin + < 0, 0, 160 >, < 0, 1, 0 > )
 	SetTargetName( squadMarker, "mortarPosition" )
 	squadMarker.SetShieldHealthMax( MORTAR_SPECTRE_TRACKER_SHIELD_MAX )
-	squadMarker.Minimap_SetCustomState( eMinimapObject_prop_script.FD_MORTAR_POSITION )
 	squadMarker.Minimap_SetAlignUpright( true )
 	squadMarker.Minimap_SetClampToEdge( true )
+	squadMarker.Minimap_SetHeightTracking( true )
 	squadMarker.Minimap_SetZOrder( MINIMAP_Z_OBJECT )
+	squadMarker.Minimap_SetCustomState( eMinimapObject_prop_script.FD_MORTAR_POSITION )
 	squadMarker.SetScriptName( "mortarPosition" )
 	squadMarker.DisableHibernation()
 	squadMarker.EnableRenderAlways()
@@ -85,6 +86,7 @@ void function MortarSpectreSquadThink( array< entity > spectres, entity harveste
 	squadMarker.WaitSignal( "BeginMortarAttack" ) //Wait until at least one spectre reached the siege spot
 	squadMarker.SetAngles( < 0, 0, 0 > ) //Angle in the icon prop is used as a visbility toggle
 	squadMarker.Minimap_AlwaysShow( TEAM_MILITIA, null )
+	thread MortarIconCloakCheck( squadMarker, spectres )
 	
 	//Buildup Siege Icon and Place Shield
 	float setupEndTime = Time() + GetCurrentPlaylistVarFloat( "fd_mortar_spectre_setup_time", 5 )
@@ -160,7 +162,7 @@ void function MortarSpectreMoveToMortarPosition( entity spectre, entity signaler
 	}
 }
 
-void function MortarSpectreSquadDeathThink( array< entity > spectres, entity signaler, StationaryAIPosition mortarPosition )
+void function MortarSpectreSquadDeathThink( array<entity> spectres, entity signaler, StationaryAIPosition mortarPosition )
 {
 	int numAlive = spectres.len()
 	while ( numAlive != 0 )
@@ -176,6 +178,32 @@ void function MortarSpectreSquadDeathThink( array< entity > spectres, entity sig
 	}
 	signaler.Destroy()
 	ReleaseStationaryAIPosition( mortarPosition ) //Free the spot if everyone died
+}
+
+void function MortarIconCloakCheck( entity mortaricon, array<entity> spectres )
+{
+	mortaricon.EndSignal( "OnDestroy" )
+	
+	while( IsValid( mortaricon ) )
+	{
+		bool squadCloaked = true
+		foreach( entity spectre in spectres )
+		{
+			if ( IsValid( spectre ) && IsAlive( spectre ) && !IsCloaked( spectre ) && spectre.GetTeam() == TEAM_IMC )
+				squadCloaked = false
+		}
+		if( squadCloaked )
+		{
+			mortaricon.SetAngles( < 0, 1, 0> )
+			mortaricon.Minimap_Hide( TEAM_MILITIA, null )
+		}
+		else
+		{
+			mortaricon.SetAngles( < 0, 0, 0> )
+			mortaricon.Minimap_AlwaysShow( TEAM_MILITIA, null )
+		}
+		wait 0.5
+	}
 }
 
 void function MortarSpectreHarvesterSiege( entity npc ) //Swap between Archer or primary if the Harvester is the Target

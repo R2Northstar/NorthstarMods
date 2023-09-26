@@ -21,7 +21,7 @@ void function initFrontierDefenseData()
 	int index = 1
 	
     array<WaveEvent> wave1
-	wave1.append(CreateWarningEvent( FD_IncomingWarnings.Infantry, index++ ))
+	wave1.append(CreateWarningEvent( FD_IncomingWarnings.Infantry,index++))
 	wave1.append(CreateDroppodGruntEvent(< -877, 699, -290>,"",index++))
 	wave1.append(CreateWaitForTimeEvent( 1.0, index++ ) )
 	wave1.append(CreateDroppodGruntEvent(< 586, 100, -191>,"",index++))

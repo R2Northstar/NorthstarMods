@@ -64,118 +64,118 @@ void function initFrontierDefenseData()
     array<WaveEvent> wave1
 	for( spawnamount = 0; spawnamount < 8; spawnamount++ )
 	{
-		wave1.append(CreateDroppodGruntEvent( infantryspawns[ RandomInt( infantryspawns.len() ) ] ,"",index++))
+		wave1.append(CreateDroppodGruntEvent( infantryspawns.getrandom() ,"",index++))
 		wave1.append(CreateWaitForTimeEvent( RandomFloatRange( 0.1, 0.6 ),index++))
 		wave1.append(CreateWaitUntilAliveEvent( 20, index++ ) )
 	}
 	for( spawnamount = 0; spawnamount < 12; spawnamount++ )
 	{
-		wave1.append(CreateDroppodGruntEvent( infantryspawns[ RandomInt( infantryspawns.len() ) ] ,"",index++))
+		wave1.append(CreateDroppodGruntEvent( infantryspawns.getrandom() ,"",index++))
 		wave1.append(CreateWaitForTimeEvent( RandomFloatRange( 0.1, 0.6 ),index++))
 		wave1.append(CreateWaitUntilAliveEvent( 20, index++ ) )
-		wave1.append(CreateDroppodStalkerEvent( infantryspawns[ RandomInt( infantryspawns.len() ) ] ,"",index++))
+		wave1.append(CreateDroppodStalkerEvent( infantryspawns.getrandom() ,"",index++))
 		wave1.append(CreateWaitForTimeEvent( RandomFloatRange( 0.1, 0.6 ),index++))
 		wave1.append(CreateWaitUntilAliveEvent( 20, index++ ) )
 	}
 	for( spawnamount = 0; spawnamount < 4; spawnamount++ )
 	{
-		wave1.append(CreateDroppodStalkerEvent( infantryspawns[ RandomInt( infantryspawns.len() ) ] ,"",index++))
+		wave1.append(CreateDroppodStalkerEvent( infantryspawns.getrandom() ,"",index++))
 		wave1.append(CreateWaitForTimeEvent( RandomFloatRange( 0.1, 0.6 ),index++))
 		wave1.append(CreateWaitUntilAliveEvent( 20, index++ ) )
 	}
-	wave1.append(CreateDroppodStalkerEvent( infantryspawns[ RandomInt( infantryspawns.len() ) ] ,"",0))
+	wave1.append(CreateDroppodStalkerEvent( infantryspawns.getrandom() ,"",0))
     waveEvents.append(wave1)
 	index = 1
 	array<WaveEvent> wave2
 	for( spawnamount = 0; spawnamount < 10; spawnamount++ )
 	{
-		wave2.append(CreateDroppodGruntEvent( infantryspawns[ RandomInt( infantryspawns.len() ) ] ,"",index++))
+		wave2.append(CreateDroppodGruntEvent( infantryspawns.getrandom() ,"",index++))
 		wave2.append(CreateWaitForTimeEvent( RandomFloatRange( 0.1, 0.6 ),index++))
 		wave2.append(CreateWaitUntilAliveEvent( 20, index++ ) )
-		wave2.append(CreateDroppodStalkerEvent( infantryspawns[ RandomInt( infantryspawns.len() ) ] ,"",index++))
+		wave2.append(CreateDroppodStalkerEvent( infantryspawns.getrandom() ,"",index++))
 		wave2.append(CreateWaitForTimeEvent( RandomFloatRange( 0.1, 0.6 ),index++))
 		wave2.append(CreateWaitUntilAliveEvent( 20, index++ ) )
 	}
 	for( spawnamount = 0; spawnamount < 16; spawnamount++ )
 	{
-		wave2.append(CreateDroppodGruntEvent( infantryspawns[ RandomInt( infantryspawns.len() ) ] ,"",index++))
+		wave2.append(CreateDroppodGruntEvent( infantryspawns.getrandom() ,"",index++))
 		wave2.append(CreateWaitForTimeEvent( RandomFloatRange( 0.1, 0.6 ),index++))
 		wave2.append(CreateWaitUntilAliveEvent( 20, index++ ) )
-		wave2.append(CreateDroppodStalkerEvent( infantryspawns[ RandomInt( infantryspawns.len() ) ] ,"",index++))
+		wave2.append(CreateDroppodStalkerEvent( infantryspawns.getrandom() ,"",index++))
 		wave2.append(CreateWaitForTimeEvent( RandomFloatRange( 0.1, 0.6 ),index++))
 		wave2.append(CreateWaitUntilAliveEvent( 20, index++ ) )
-		wave2.append(CreateDroppodTickEvent( tickspawns[ RandomInt( tickspawns.len() ) ],4,"",index++))
+		wave2.append(CreateDroppodTickEvent( tickspawns.getrandom(),4,"",index++))
 		wave2.append(CreateWaitForTimeEvent( RandomFloatRange( 0.1, 0.6 ),index++))
 		wave2.append(CreateWaitUntilAliveEvent( 20, index++ ) )
 	}
 	for( spawnamount = 0; spawnamount < 8; spawnamount++ )
 	{
-		wave2.append(CreateDroppodGruntEvent( infantryspawns[ RandomInt( infantryspawns.len() ) ] ,"",index++))
+		wave2.append(CreateDroppodGruntEvent( infantryspawns.getrandom() ,"",index++))
 		wave2.append(CreateWaitForTimeEvent( RandomFloatRange( 0.1, 0.6 ),index++))
 		wave2.append(CreateWaitUntilAliveEvent( 20, index++ ) )
-		wave2.append(CreateSuperSpectreEvent( reaperspawns[ RandomInt( reaperspawns.len() ) ] , < 0, 90, 0> ,"reapersMain",index++))
+		wave2.append(CreateSuperSpectreEvent( reaperspawns.getrandom() , < 0, 90, 0> ,"reapersMain",index++))
 		wave2.append(CreateWaitForTimeEvent( RandomFloatRange( 0.1, 0.6 ),index++))
 		wave2.append(CreateWaitUntilAliveEvent( 20, index++ ) )
-		wave2.append(CreateDroppodTickEvent( tickspawns[ RandomInt( tickspawns.len() ) ] ,4,"",index++))
+		wave2.append(CreateDroppodTickEvent( tickspawns.getrandom() ,4,"",index++))
 		wave2.append(CreateWaitForTimeEvent( RandomFloatRange( 0.1, 0.6 ),index++))
 		wave2.append(CreateWaitUntilAliveEvent( 20, index++ ) )
 	}
-	wave2.append(CreateSuperSpectreEvent( reaperspawns[ RandomInt( reaperspawns.len() ) ] , < 0, 90, 0> ,"reapersMain",0))
+	wave2.append(CreateSuperSpectreEvent( reaperspawns.getrandom() , < 0, 90, 0> ,"reapersMain",0))
     waveEvents.append(wave2)
 	index = 1
 	array<WaveEvent> wave3
 	for( spawnamount = 0; spawnamount < 4; spawnamount++ )
 	{
-		wave3.append(CreateDroppodGruntEvent( infantryspawns[ RandomInt( infantryspawns.len() ) ] ,"",index++))
+		wave3.append(CreateDroppodGruntEvent( infantryspawns.getrandom() ,"",index++))
 		wave3.append(CreateWaitForTimeEvent( RandomFloatRange( 0.1, 0.6 ),index++))
 		wave3.append(CreateWaitUntilAliveEvent( 20, index++ ) )
 	}
 	for( spawnamount = 0; spawnamount < 16; spawnamount++ )
 	{
-		wave3.append(CreateDroppodGruntEvent( infantryspawns[ RandomInt( infantryspawns.len() ) ] ,"",index++))
+		wave3.append(CreateDroppodGruntEvent( infantryspawns.getrandom() ,"",index++))
 		wave3.append(CreateWaitForTimeEvent( RandomFloatRange( 0.1, 0.6 ),index++))
 		wave3.append(CreateWaitUntilAliveEvent( 20, index++ ) )
-		wave3.append(CreateDroppodStalkerEvent( infantryspawns[ RandomInt( infantryspawns.len() ) ] ,"",index++))
+		wave3.append(CreateDroppodStalkerEvent( infantryspawns.getrandom() ,"",index++))
 		wave3.append(CreateWaitForTimeEvent( RandomFloatRange( 0.1, 0.6 ),index++))
 		wave3.append(CreateWaitUntilAliveEvent( 20, index++ ) )
-		wave3.append(CreateDroppodTickEvent( tickspawns[ RandomInt( tickspawns.len() ) ],4,"",index++))
+		wave3.append(CreateDroppodTickEvent( tickspawns.getrandom(),4,"",index++))
 		wave3.append(CreateWaitForTimeEvent( RandomFloatRange( 0.1, 0.6 ),index++))
 		wave3.append(CreateWaitUntilAliveEvent( 20, index++ ) )
 	}
 	for( spawnamount = 0; spawnamount < 16; spawnamount++ )
 	{
-		wave3.append(CreateDroppodGruntEvent( infantryspawns[ RandomInt( infantryspawns.len() ) ] ,"",index++))
+		wave3.append(CreateDroppodGruntEvent( infantryspawns.getrandom() ,"",index++))
 		wave3.append(CreateWaitForTimeEvent( RandomFloatRange( 0.1, 0.6 ),index++))
 		wave3.append(CreateWaitUntilAliveEvent( 20, index++ ) )
-		wave3.append(CreateSuperSpectreEvent( reaperspawns[ RandomInt( reaperspawns.len() ) ] , < 0, 90, 0> ,"reapersMain",index++))
+		wave3.append(CreateSuperSpectreEvent( reaperspawns.getrandom() , < 0, 90, 0> ,"reapersMain",index++))
 		wave3.append(CreateWaitForTimeEvent( RandomFloatRange( 0.1, 0.6 ),index++))
 		wave3.append(CreateWaitUntilAliveEvent( 20, index++ ) )
-		wave3.append(CreateDroppodTickEvent( tickspawns[ RandomInt( tickspawns.len() ) ] ,4,"",index++))
+		wave3.append(CreateDroppodTickEvent( tickspawns.getrandom() ,4,"",index++))
 		wave3.append(CreateWaitForTimeEvent( RandomFloatRange( 0.1, 0.6 ),index++))
 		wave3.append(CreateWaitUntilAliveEvent( 20, index++ ) )
 	}
 	for( spawnamount = 0; spawnamount < 32; spawnamount++ )
 	{
-		wave3.append(CreateSuperSpectreEvent( reaperspawns[ RandomInt( reaperspawns.len() ) ] , < 0, 90, 0> ,"reapersMain",index++))
+		wave3.append(CreateSuperSpectreEvent( reaperspawns.getrandom() , < 0, 90, 0> ,"reapersMain",index++))
 		wave3.append(CreateWaitForTimeEvent( RandomFloatRange( 0.1, 0.6 ),index++))
 		wave3.append(CreateWaitUntilAliveEvent( 20, index++ ) )
 	}
 	for( spawnamount = 0; spawnamount < 8; spawnamount++ )
 	{
-		wave3.append(CreateSuperSpectreEvent( infantryspawns[ RandomInt( infantryspawns.len() ) ] , < 0, 90, 0> ,"reapersMain",index++))
+		wave3.append(CreateSuperSpectreEvent( infantryspawns.getrandom() , < 0, 90, 0> ,"reapersMain",index++))
 		wave3.append(CreateWaitForTimeEvent( RandomFloatRange( 0.1, 0.6 ),index++))
 		wave3.append(CreateWaitUntilAliveEvent( 20, index++ ) )
-		wave3.append(CreateDroppodTickEvent( tickspawns[ RandomInt( tickspawns.len() ) ] ,4,"",index++))
+		wave3.append(CreateDroppodTickEvent( tickspawns.getrandom() ,4,"",index++))
 		wave3.append(CreateWaitForTimeEvent( RandomFloatRange( 0.1, 0.6 ),index++))
 		wave3.append(CreateWaitUntilAliveEvent( 20, index++ ) )
 	}
 	for( spawnamount = 0; spawnamount < 64; spawnamount++ )
 	{
-		wave3.append(CreateSuperSpectreEvent( reaperspawns[ RandomInt( reaperspawns.len() ) ] , < 0, 90, 0> ,"reapersMain",index++))
+		wave3.append(CreateSuperSpectreEvent( reaperspawns.getrandom() , < 0, 90, 0> ,"reapersMain",index++))
 		wave3.append(CreateWaitForTimeEvent( RandomFloatRange( 0.1, 0.6 ),index++))
 		wave3.append(CreateWaitUntilAliveEvent( 20, index++ ) )
 	}
-	wave3.append(CreateSuperSpectreEvent( reaperspawns[ RandomInt( reaperspawns.len() ) ] , < 0, 90, 0> ,"reapersMain",0))
+	wave3.append(CreateSuperSpectreEvent( reaperspawns.getrandom() , < 0, 90, 0> ,"reapersMain",0))
     waveEvents.append(wave3)
 }
 
