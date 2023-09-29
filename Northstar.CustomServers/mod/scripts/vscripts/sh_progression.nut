@@ -5,6 +5,7 @@ global function Progression_SetPreference
 global function Progression_GetPreference
 global function UpdateCachedLoadouts_Delayed
 #endif
+
 #if SP // literally just stub the global functions and call it a day
 
 void function Progression_Init() {}
@@ -16,6 +17,7 @@ void function UpdateCachedLoadouts_Delayed() {}
 #endif // CLIENT || UI
 
 #else // MP || UI basically
+
 // SO FOR SOME GOD DAMN REASON, PUTTING THESE INTO ONE STRUCT
 // AND PUTTING THE #if STUFF AROUND THE VARS CAUSES A COMPILE
 // ERROR, SO I HAVE TO DO THIS AWFULNESS
@@ -36,7 +38,6 @@ void function Progression_Init()
 	#if SERVER
 	AddCallback_OnClientDisconnected( OnClientDisconnected )
 	AddClientCommandCallback( "ns_progression", ClientCommand_SetProgression )
-	AddClientCommandCallback( "ns_resettitanaegis", ClientCommand_ResetTitanAegis )
 	AddCallback_GameStateEnter( eGameState.Playing, OnPlaying )
 	#elseif CLIENT
 	AddCallback_OnClientScriptInit( OnClientScriptInit )
@@ -81,29 +82,6 @@ bool function ClientCommand_SetProgression( entity player, array<string> args )
 	if ( file.progressionEnabled[player] )
 		ValidateEquippedItems( player )
 
-	return true
-}
-
-bool function ClientCommand_ResetTitanAegis( entity player, array<string> args )
-{
-	int suitIndex = GetPersistentSpawnLoadoutIndex( player, "titan" )
-	player.SetPersistentVar( "titanFDUnlockPoints[" + suitIndex + "]", 0 )
-	player.SetPersistentVar( "previousFDUnlockPoints[" + suitIndex + "]", 0 )
-	player.SetPersistentVar( "fdTitanXP[" + suitIndex + "]", 0 )
-	player.SetPersistentVar( "fdPreviousTitanXP[" + suitIndex + "]", 0 )
-	
-	//Refresh Highest Aegis Titan since we might get all of them back to 1 if players wants
-	int enumCount = PersistenceGetEnumCount( "titanClasses" )
-	int HighestAegis = 0
-	for ( int i = 0; i < enumCount; i++ )
-	{
-		string enumName = PersistenceGetEnumItemNameForIndex( "titanClasses", i )
-		int AegisLevel = FD_TitanGetLevelForXP( enumName, FD_TitanGetXP( player, enumName ) )
-		if ( HighestAegis < AegisLevel )
-			HighestAegis = AegisLevel
-	}
-	player.SetPersistentVar( "fdStats.highestTitanFDLevel", HighestAegis )
-	
 	return true
 }
 #endif
@@ -290,7 +268,7 @@ void function ValidateEquippedItems( entity player )
 		// camoIndex
 		if ( loadout.skinIndex == TITAN_SKIN_INDEX_CAMO )
 		{
-			array<ItemData> camoSkins = GetAllItemsOfType( eItemTypes.CAMO_SKIN_TITAN )
+			array<ItemData> camoSkins = GetAllItemsOfType( eItemTypes.CAMO_SKIN )
 			if ( loadout.camoIndex >= camoSkins.len() || loadout.camoIndex < 0 )
 			{
 				printt( "  - INVALID TITAN CAMO/SKIN, RESETTING" )
