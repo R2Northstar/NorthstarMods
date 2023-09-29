@@ -5700,6 +5700,12 @@ bool function IsSubItemLocked( entity player, string ref, string parentRef )
 {
 	if ( DevEverythingUnlocked( player ) )
 		return false
+	
+	if ( IsItemPurchasableEntitlement( ref, parentRef ) )
+		return false
+	
+	if ( GetItemType( ref ) == eItemTypes.PRIME_TITAN || GetSubitemType( parentRef, ref ) == eItemTypes.PRIME_TITAN )
+		return false
 
 	if ( IsItemInEntitlementUnlock( ref, parentRef ) )
 	{
@@ -5724,7 +5730,7 @@ bool function IsSubItemLocked( entity player, string ref, string parentRef )
 
 	if ( IsItemLocked( player, parentRef ) )
 		return true
-
+	
 	if ( GetSubItemUnlockType( ref, parentRef ) == eUnlockType.STAT )
 	{
 		if ( !IsSubItemLockedForStat( player, ref, parentRef) )
@@ -5818,6 +5824,12 @@ bool function IsSubItemLocked( entity player, string ref, string parentRef )
 bool function IsItemLocked( entity player, string ref )
 {
 	if ( DevEverythingUnlocked( player ) )
+		return false
+	
+	if ( IsItemPurchasableEntitlement( ref ) )
+		return false
+	
+	if ( GetItemType( ref ) == eItemTypes.PRIME_TITAN )
 		return false
 
 	if ( IsItemInEntitlementUnlock( ref ) )
