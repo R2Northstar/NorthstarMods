@@ -5730,6 +5730,7 @@ bool function IsSubItemLocked( entity player, string ref, string parentRef )
 
 	if ( IsItemLocked( player, parentRef ) )
 		return true
+
 	if ( GetSubItemUnlockType( ref, parentRef ) == eUnlockType.STAT )
 	{
 		if ( !IsSubItemLockedForStat( player, ref, parentRef) )
