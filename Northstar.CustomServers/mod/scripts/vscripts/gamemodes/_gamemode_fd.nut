@@ -175,6 +175,15 @@ void function GamemodeFD_Init()
 	AddCallback_NPCLeeched( OnNPCLeechedFD )
 	AddCallback_OnPlayerKilled( GamemodeFD_OnPlayerKilled )
 	AddDeathCallback( "npc_frag_drone", OnTickDeath ) // ticks dont come up in the other callback because of course they dont
+	// Actually we should use death callback for all kinds of npcs
+	// because AddCallback_OnNPCKilled() is not gonna be called if attacker invalid( eg. player executing a npc but they disconnected for some reason )
+	AddDeathCallback( "npc_soldier", FD_GenericNPCDeath )
+	AddDeathCallback( "npc_spectre", FD_GenericNPCDeath )
+	AddDeathCallback( "npc_stalker", FD_GenericNPCDeath )
+	AddDeathCallback( "npc_super_spectre", FD_GenericNPCDeath )
+	AddDeathCallback( "npc_prowler", FD_GenericNPCDeath )
+	AddDeathCallback( "npc_drone", FD_GenericNPCDeath )
+	AddDeathCallback( "npc_titan", FD_GenericNPCDeath )
 
 	//Command Callbacks
 	AddClientCommandCallback( "FD_ToggleReady", ClientCommandCallbackToggleReady )
@@ -2484,16 +2493,6 @@ void function OnNpcDeath( entity victim, entity attacker, var damageInfo )
 	if( victimTypeID == eFD_AITypeIDs.TITAN_MORTAR || victimTypeID == eFD_AITypeIDs.SPECTRE_MORTAR )
 		if( attacker in file.playerAwardStats )
 			file.playerAwardStats[attacker]["mortarUnitsKilled"] += 1.0
-	
-	if ( findIndex != -1 )
-	{
-		spawnedNPCs.remove( findIndex )
-		string netIndex = GetAiNetIdFromTargetName( victim.GetTargetName() )
-		if( netIndex != "" )
-			SetGlobalNetInt( netIndex, GetGlobalNetInt( netIndex ) - 1 )
-
-		SetGlobalNetInt( "FD_AICount_Current", GetGlobalNetInt( "FD_AICount_Current" ) - 1 )
-	}
 
 	if ( victim.GetOwner() == attacker || !attacker.IsPlayer() || attacker == victim || victim.GetBossPlayer() == attacker || !IsValid( attacker ) )
 		return
@@ -2683,6 +2682,22 @@ void function OnNpcDeath( entity victim, entity attacker, var damageInfo )
 					break
 			}
 		}
+	}
+}
+
+// this is required to track every npc's death
+// because AddCallback_OnNPCKilled() is not gonna be called if attacker invalid( eg. player executing a npc but they disconnected for some reason )
+void function FD_GenericNPCDeath( entity npc, var damageInfo )
+{
+	int findIndex = spawnedNPCs.find( npc )
+	if ( findIndex != -1 )
+	{
+		spawnedNPCs.remove( findIndex )
+		string netIndex = GetAiNetIdFromTargetName( npc.GetTargetName() )
+		if( netIndex != "" )
+			SetGlobalNetInt( netIndex, GetGlobalNetInt( netIndex ) - 1 )
+
+		SetGlobalNetInt( "FD_AICount_Current", GetGlobalNetInt( "FD_AICount_Current" ) - 1 )
 	}
 }
 
