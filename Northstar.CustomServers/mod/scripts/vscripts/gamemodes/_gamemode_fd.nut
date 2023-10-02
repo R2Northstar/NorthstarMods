@@ -559,6 +559,7 @@ void function mainGameLoop()
 				PlayerInventory_TakeAllInventoryItems( player )
 			}
 			SetGlobalNetTime( "FD_nextWaveStartTime", Time() + 75 )
+			thread FD_AttemptToRepairTurrets()
 		}
 
 		if( !runWave( i, showShop ) )
@@ -949,6 +950,7 @@ bool function runWave( int waveIndex, bool shouldDoBuyTime )
 	//Player scoring
 	MessageToTeam( TEAM_MILITIA, eEventNotifications.FD_NotifyWaveBonusIncoming )
 	wait 2
+	thread FD_AttemptToRepairTurrets()
 	foreach( entity player in GetPlayerArray() )
 	{
 		if ( isSecondWave() )
@@ -2169,6 +2171,13 @@ void function FD_EmitSoundOnEntityOnlyToPlayer( entity targetEntity, entity play
 		return
 
 	EmitSoundOnEntityOnlyToPlayer( targetEntity, player, alias )
+}
+
+function FD_AttemptToRepairTurrets()
+{
+	//Repair turret on here rather than in the executeWave(), softlocking reasons
+	foreach (entity turret in GetEntArrayByClass_Expensive( "npc_turret_sentry" ) )
+		RepairTurret_WaveBreak( turret )
 }
 
 int function FD_TimeOutCheck()
