@@ -88,7 +88,10 @@ bool function ClientCommand_SetProgression( entity player, array<string> args )
 
 bool function ClientCommand_ResetTitanAegis( entity player, array<string> args )
 {
-	int suitIndex = GetPersistentSpawnLoadoutIndex( player, "titan" )
+	if ( !args.len() )
+		return false
+	
+	int suitIndex = args[0].tointeger()
 	player.SetPersistentVar( "titanFDUnlockPoints[" + suitIndex + "]", 0 )
 	player.SetPersistentVar( "previousFDUnlockPoints[" + suitIndex + "]", 0 )
 	player.SetPersistentVar( "fdTitanXP[" + suitIndex + "]", 0 )
