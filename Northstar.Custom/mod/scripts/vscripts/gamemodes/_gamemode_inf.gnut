@@ -44,11 +44,16 @@ void function SelectFirstInfectedDelayed()
 {
 	wait 10.0 + RandomFloat( 5.0 )
 
-	// wait until we have at least one player
-	while ( !GetPlayerArray().len() )
-		wait 10.0
+	array<entity> players = GetPlayerArray()
 
-	entity infected = GetPlayerArray().getrandom()
+	if ( !players.len() )
+	{
+		printt( "Couldn't select first infected: player array was empty" )
+		SetWinner( INFECTION_TEAM_SURVIVOR )
+		return
+	}
+
+	entity infected = players.getrandom()
 
 	InfectPlayer( infected )
 	RespawnInfected( infected )
