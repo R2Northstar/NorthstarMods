@@ -7,6 +7,7 @@ global function IsTurretActive
 global function TurretRefundThink
 global function RevivableTurret_DamageCallback
 global function RevivableTurret_Revive
+global function RepairTurret_WaveBreak
 global function AddTurretRepairCallback
 
 struct
