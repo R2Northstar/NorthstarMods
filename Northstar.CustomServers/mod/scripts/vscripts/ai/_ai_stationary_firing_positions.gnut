@@ -6,6 +6,7 @@ global function GetClosestAvailableStationaryPosition
 global function ClaimStationaryAIPosition
 global function ReleaseStationaryAIPosition
 global function DebugDrawStationaryAiPositions
+global function AnyStationaryPositionsAvailable
 
 global enum eStationaryAIPositionTypes
 {
@@ -135,6 +136,19 @@ void function ValidateAndFinalizePendingStationaryPositions()
 		//Make sure we have positions for given AI type after we validate and finalize positions.
 		Assert( file.stationaryPositions[ type ].len(), "No valid stationary positions for type " + type + " remain after validation. Adjust positions and retry." )
 	}
+}
+
+bool function AnyStationaryPositionsAvailable( int type )
+{
+	array<StationaryAIPosition> positions = file.stationaryPositions[type]
+
+	foreach ( position in positions )
+	{
+		if ( !position.inUse )
+			return true
+	}
+
+	return false
 }
 
 StationaryAIPosition function GetClosestAvailableStationaryPosition( vector origin, float maxDist, int type )

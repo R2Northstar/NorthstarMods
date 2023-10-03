@@ -304,15 +304,12 @@ void function MortarTitanThink( entity titan, entity generator )
 	WaitTillHotDropComplete( titan )
 
 	float minEngagementDuration = 5
-	StationaryAIPosition ornull mortarPosition = GetClosestAvailableStationaryPosition( titan.GetOrigin(), MORTAR_TITAN_POSITION_SEARCH_RANGE, eStationaryAIPositionTypes.MORTAR_TITAN )
-	while ( mortarPosition == null )
-	{
-		// incase all stationary titan positions are in use wait for one to become available
-		wait 5
-		mortarPosition = GetClosestAvailableStationaryPosition( titan.GetOrigin(), MORTAR_TITAN_POSITION_SEARCH_RANGE, eStationaryAIPositionTypes.MORTAR_TITAN )
-	}
 
-	expect StationaryAIPosition( mortarPosition )
+	// incase all stationary titan positions are in use wait for one to become available
+	while ( !AnyStationaryPositionsAvailable( eStationaryAIPositionTypes.MORTAR_TITAN ) )
+		wait 5
+
+	StationaryAIPosition mortarPosition = GetClosestAvailableStationaryPosition( titan.GetOrigin(), MORTAR_TITAN_POSITION_SEARCH_RANGE, eStationaryAIPositionTypes.MORTAR_TITAN )
 
 	ClaimStationaryAIPosition( mortarPosition )
 
