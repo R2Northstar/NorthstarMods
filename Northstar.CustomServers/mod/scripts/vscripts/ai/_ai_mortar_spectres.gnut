@@ -44,7 +44,7 @@ void function MortarSpectreSquadThink( array< entity > spectres, entity harveste
 	// create the entity responsible for managing this squad of spectres
 	// note: client shows the ui thing for this entity if the y angle is not 0
 	// it also shows the set up time thing based on the shield frac of the entity? weird
-	entity squadMarker = CreatePropScript( $"models/dev/empty_model.mdl", expect StationaryAIPosition( mortarPosition ).origin + < 0, 0, 150 >, < 0, 1, 0 > )
+	entity squadMarker = CreatePropScript( $"models/dev/empty_model.mdl", mortarPosition.origin + < 0, 0, 150 >, < 0, 1, 0 > )
 	SetTargetName( squadMarker, "mortarPosition" )
 	squadMarker.SetShieldHealthMax( MORTAR_SPECTRE_TRACKER_SHIELD_MAX )
 	squadMarker.Minimap_SetCustomState( eMinimapObject_prop_script.FD_MORTAR_POSITION )
@@ -55,7 +55,7 @@ void function MortarSpectreSquadThink( array< entity > spectres, entity harveste
 	int i = 0
 	foreach( entity spectre in spectres )
 	{
-		thread MortarSpectreMoveToMortarPosition( spectre, squadMarker, OriginToGround( expect StationaryAIPosition( mortarPosition ).origin + MORTAR_SPECTRE_POSITION_OFFSETS[i]  + < 0, 0, 100 > ) )
+		thread MortarSpectreMoveToMortarPosition( spectre, squadMarker, OriginToGround( mortarPosition.origin + MORTAR_SPECTRE_POSITION_OFFSETS[i]  + < 0, 0, 100 > ) )
 		
 		if ( i++ >= MORTAR_SPECTRE_POSITION_OFFSETS.len() )
 		{
