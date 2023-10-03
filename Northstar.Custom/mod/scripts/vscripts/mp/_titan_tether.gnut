@@ -90,11 +90,24 @@ void function TetherCleanup( entity owner, entity startEnt, entity endEnt, Tethe
 	vector anchorOrigin = tetherData.anchor.GetOrigin()
 
 	OnThreadEnd(
-	function() : ( owner, anchorOrigin, endEnt, tetherID, statusEffectId, isExplosiveTether )
+	function() : ( owner, anchorOrigin, endEnt, tetherID, tetherData, statusEffectId, isExplosiveTether )
 		{
 			if ( isExplosiveTether && IsValid( owner ) && IsValid( endEnt ) )
 			{
-				Explosion_DamageDefSimple( damagedef_fd_tether_trap, anchorOrigin,owner, owner, anchorOrigin + < 0, 0, 32 > )
+				//Explosion_DamageDefSimple( damagedef_fd_tether_trap, anchorOrigin, owner, tetherData.anchor, anchorOrigin + < 0, 0, 32 > )
+				RadiusDamage(
+						anchorOrigin + < 0, 0, 32 >,					// center
+						owner,											// attacker
+						tetherData.anchor,								// inflictor
+						1000,											// damage
+						1000,											// damageHeavyArmor
+						350,											// innerRadius
+						350,											// outerRadius
+						SF_ENVEXPLOSION_NO_DAMAGEOWNER,					// flags
+						0,												// distanceFromAttacker
+						100,											// explosionForce
+						DF_RAGDOLL | DF_EXPLOSION,						// scriptDamageFlags
+						eDamageSourceId.damagedef_fd_tether_trap )		// scriptDamageSourceIdentifier
 			}
 
 			foreach ( index, tetherData in file.activeTitanTethers )
