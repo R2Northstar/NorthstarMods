@@ -1,7 +1,7 @@
 {
 	"Name": "Northstar.Client",
 	"Description": "Various ui and client changes to fix bugs and add better support for mods",
-	"Version": "1.16.0",
+	"Version": "1.19.0",
 	"LoadPriority": 0,
 	"InitScript": "cl_northstar_client_init.nut",
 	"ConVars": [
@@ -128,6 +128,13 @@
     	{
 			"Path": "ui/ui_mouse_capture.nut",
 			"RunOn": "UI"
+		},
+		{
+			"Path": "ui/atlas_auth.nut",
+			"RunOn": "UI",
+			"UICallback": {
+				"After": "AtlasAuthDialog"
+			}
 		}
 	],
 	"Localisation": [
