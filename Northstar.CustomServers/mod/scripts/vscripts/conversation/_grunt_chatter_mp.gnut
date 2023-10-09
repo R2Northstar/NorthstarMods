@@ -210,8 +210,5 @@ bool function GruntChatter_IsGruntTypeEligibleForChatter( entity grunt )
 		return false
 
 	// mechanical grunts don't chatter
-	if ( grunt.IsMechanical() )
-		return false
-
-	return true
+	return !grunt.isMechanical()
 }
