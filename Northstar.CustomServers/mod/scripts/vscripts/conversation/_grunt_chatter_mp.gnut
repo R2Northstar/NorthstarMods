@@ -198,10 +198,7 @@ bool function GruntChatter_CanGruntChatterNow( entity grunt )
 
 	string squadname = expect string( grunt.kv.squadname )
 	// we only care about this because the grunt conversation system wants it
-	if ( squadname == "" )
-		return false
-
-	return true
+	return squadname != ""
 }
 
 bool function GruntChatter_IsGruntTypeEligibleForChatter( entity grunt )
