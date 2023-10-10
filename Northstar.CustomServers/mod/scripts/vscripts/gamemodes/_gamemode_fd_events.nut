@@ -30,7 +30,7 @@ global function CreateWarningEvent
 global function CreateTitanfallBlockEvent //Careful when using this, it really changes gameplay perspective for players and can make a wave impossible to beat (Use 1 to Block, and 0 to Unblock midwave)
 global function CreateGruntDropshipEvent //This one always requires testing after usage because sometimes Grunts wont zipline to the ground, also good to explicitly set up their route, or they may do some long pathing
 global function executeWave
-global function restetWaveEvents
+global function resetWaveEvents
 global function WinWave
 global function SpawnDrozFD
 global function SpawnDavisFD
@@ -83,6 +83,17 @@ global struct WaveEvent{
 	SpawnEvent spawnEvent
 	FlowControlEvent flowControlEvent
 	SoundEvent soundEvent
+	int spawnInDifficulty
+}
+
+global enum eFDSD //Shortened from eFDSpawn_Difficulty to not make scripts too horrible to read
+{
+	EASY 		= 1 << 0,
+	NORMAL		= 1 << 1,
+	HARD 		= 1 << 2,
+	MASTER		= 1 << 3,
+	INSANE		= 1 << 4,
+	ALL			= 1 << 5
 }
 
 global enum FD_IncomingWarnings
@@ -217,7 +228,7 @@ void function executeWave()
 
 void function KillLooseTicksFromReapers()
 {
-	foreach (entity tick in GetEntArrayByClass_Expensive( "npc_frag_drone" ) )
+	foreach( entity tick in GetEntArrayByClass_Expensive( "npc_frag_drone" ) )
 	{
 		if ( IsAlive( tick ) )
 			tick.Destroy()
@@ -238,22 +249,54 @@ void function runEvents( int firstExecuteIndex )
 {	
 	print( "Events Start" )
 	WaveEvent currentEvent = waveEvents[GetGlobalNetInt( "FD_currentWave" )][firstExecuteIndex]
+	bool skipevent = false
 	
-	while(true)
-	{	
+	while( true )
+	{
 		currentEvent.timesExecuted++
-		if(currentEvent.timesExecuted!=currentEvent.executeOnThisCall)
+		
+		if( !( currentEvent.spawnInDifficulty & eFDSD.ALL ) )
+		{
+			switch( difficultyLevel )
+			{
+				case eFDDifficultyLevel.EASY:
+					if( !( currentEvent.spawnInDifficulty & eFDSD.EASY ) )
+						skipevent = true
+					break
+				case eFDDifficultyLevel.NORMAL:
+					if( !( currentEvent.spawnInDifficulty & eFDSD.NORMAL ) )
+						skipevent = true
+					break
+				case eFDDifficultyLevel.HARD:
+					if( !( currentEvent.spawnInDifficulty & eFDSD.HARD ) )
+						skipevent = true
+					break
+				case eFDDifficultyLevel.MASTER:
+					if( !( currentEvent.spawnInDifficulty & eFDSD.MASTER ) )
+						skipevent = true
+					break
+				case eFDDifficultyLevel.INSANE:
+					if( !( currentEvent.spawnInDifficulty & eFDSD.INSANE ) )
+						skipevent = true
+					break
+			}
+		}
+		
+		if( currentEvent.timesExecuted != currentEvent.executeOnThisCall )
 			return
 
 		if( !IsHarvesterAlive(fd_harvester.harvester ) )
 			return
+		
+		if( !skipevent )
+		{
+			if( currentEvent.shouldThread )
+				thread currentEvent.eventFunction( currentEvent.smokeEvent, currentEvent.spawnEvent, currentEvent.flowControlEvent, currentEvent.soundEvent )
 
-		if( currentEvent.shouldThread )
-			thread currentEvent.eventFunction( currentEvent.smokeEvent, currentEvent.spawnEvent, currentEvent.flowControlEvent, currentEvent.soundEvent )
-
-		else
-			currentEvent.eventFunction( currentEvent.smokeEvent, currentEvent.spawnEvent, currentEvent.flowControlEvent, currentEvent.soundEvent )
-			
+			else
+				currentEvent.eventFunction( currentEvent.smokeEvent, currentEvent.spawnEvent, currentEvent.flowControlEvent, currentEvent.soundEvent )
+		}
+		
 		if( currentEvent.nextEventIndex == 0 )
 		{
 			print( "Event Index 0 reached, finishing wave" )
@@ -263,12 +306,10 @@ void function runEvents( int firstExecuteIndex )
 	}
 }
 
-void function restetWaveEvents()
+void function resetWaveEvents()
 {
 	foreach( WaveEvent event in waveEvents[GetGlobalNetInt( "FD_currentWave" )] )
-	{
 		event.timesExecuted = 0
-	}
 }
 
 /* Event Generators
@@ -280,7 +321,7 @@ void function restetWaveEvents()
 ╚══════╝  ╚═══╝  ╚══════╝╚═╝  ╚═══╝   ╚═╝        ╚═════╝ ╚══════╝╚═╝  ╚═══╝╚══════╝╚═╝  ╚═╝╚═╝  ╚═╝   ╚═╝    ╚═════╝ ╚═╝  ╚═╝╚══════╝
 */
 
-WaveEvent function CreateSmokeEvent( vector position, float lifetime, int nextEventIndex, int executeOnThisCall = 1 )
+WaveEvent function CreateSmokeEvent( vector position, float lifetime, int nextEventIndex, int executeOnThisCall = 1, int spawnInDifficulty = eFDSD.ALL )
 {
 	WaveEvent event
 	event.eventFunction = spawnSmoke
@@ -289,10 +330,11 @@ WaveEvent function CreateSmokeEvent( vector position, float lifetime, int nextEv
 	event.shouldThread = true
 	event.smokeEvent.position = position
 	event.smokeEvent.lifetime = lifetime
+	event.spawnInDifficulty = spawnInDifficulty
 	return event
 }
 
-WaveEvent function CreateArcTitanEvent( vector origin, vector angles, string route, int nextEventIndex, int executeOnThisCall = 1, string entityGlobalKey = "", float spawnradius = 0.0 )
+WaveEvent function CreateArcTitanEvent( vector origin, vector angles, string route, int nextEventIndex, int executeOnThisCall = 1, string entityGlobalKey = "", float spawnradius = 0.0, int spawnInDifficulty = eFDSD.ALL )
 {
 	WaveEvent event
 	event.eventFunction = spawnArcTitan
@@ -306,10 +348,11 @@ WaveEvent function CreateArcTitanEvent( vector origin, vector angles, string rou
 	event.spawnEvent.route = route
 	event.spawnEvent.entityGlobalKey = entityGlobalKey
 	event.spawnEvent.spawnradius = spawnradius
+	event.spawnInDifficulty = spawnInDifficulty
 	return event
 }
 
-WaveEvent function CreateSuperSpectreEvent( vector origin, vector angles, string route, int nextEventIndex, int executeOnThisCall = 1, string entityGlobalKey = "", float spawnradius = 0.0 )
+WaveEvent function CreateSuperSpectreEvent( vector origin, vector angles, string route, int nextEventIndex, int executeOnThisCall = 1, string entityGlobalKey = "", float spawnradius = 0.0, int spawnInDifficulty = eFDSD.ALL )
 {
 	WaveEvent event
 	event.eventFunction = spawnSuperSpectre
@@ -323,10 +366,11 @@ WaveEvent function CreateSuperSpectreEvent( vector origin, vector angles, string
 	event.spawnEvent.route = route
 	event.spawnEvent.entityGlobalKey = entityGlobalKey
 	event.spawnEvent.spawnradius = spawnradius
+	event.spawnInDifficulty = spawnInDifficulty
 	return event
 }
 
-WaveEvent function CreateSuperSpectreEventWithMinion( vector origin, vector angles, string route, int nextEventIndex, int executeOnThisCall = 1, string entityGlobalKey = "", float spawnradius = 0.0 )
+WaveEvent function CreateSuperSpectreEventWithMinion( vector origin, vector angles, string route, int nextEventIndex, int executeOnThisCall = 1, string entityGlobalKey = "", float spawnradius = 0.0, int spawnInDifficulty = eFDSD.ALL )
 {
 	WaveEvent event
 	event.eventFunction = spawnSuperSpectreWithMinion
@@ -340,10 +384,11 @@ WaveEvent function CreateSuperSpectreEventWithMinion( vector origin, vector angl
 	event.spawnEvent.route = route
 	event.spawnEvent.entityGlobalKey = entityGlobalKey
 	event.spawnEvent.spawnradius = spawnradius
+	event.spawnInDifficulty = spawnInDifficulty
 	return event
 }
 
-WaveEvent function CreateDroppodGruntEvent( vector origin, string route, int nextEventIndex, int executeOnThisCall = 1, string entityGlobalKey = "", float spawnradius = 0.0 )
+WaveEvent function CreateDroppodGruntEvent( vector origin, string route, int nextEventIndex, int executeOnThisCall = 1, string entityGlobalKey = "", float spawnradius = 0.0, int spawnInDifficulty = eFDSD.ALL )
 {
 	WaveEvent event
 	event.eventFunction = spawnDroppodGrunts
@@ -356,10 +401,11 @@ WaveEvent function CreateDroppodGruntEvent( vector origin, string route, int nex
 	event.spawnEvent.route = route
 	event.spawnEvent.entityGlobalKey = entityGlobalKey
 	event.spawnEvent.spawnradius = spawnradius
+	event.spawnInDifficulty = spawnInDifficulty
 	return event
 }
 
-WaveEvent function CreateDroppodStalkerEvent( vector origin, string route, int nextEventIndex, int executeOnThisCall = 1, string entityGlobalKey = "", float spawnradius = 0.0 )
+WaveEvent function CreateDroppodStalkerEvent( vector origin, string route, int nextEventIndex, int executeOnThisCall = 1, string entityGlobalKey = "", float spawnradius = 0.0, int spawnInDifficulty = eFDSD.ALL )
 {
 	WaveEvent event
 	event.eventFunction = spawnDroppodStalker
@@ -372,10 +418,11 @@ WaveEvent function CreateDroppodStalkerEvent( vector origin, string route, int n
 	event.spawnEvent.route = route
 	event.spawnEvent.entityGlobalKey = entityGlobalKey
 	event.spawnEvent.spawnradius = spawnradius
+	event.spawnInDifficulty = spawnInDifficulty
 	return event
 }
 
-WaveEvent function CreateDroppodSpectreMortarEvent( vector origin, string route, int nextEventIndex, int executeOnThisCall = 1, string entityGlobalKey = "", float spawnradius = 0.0 )
+WaveEvent function CreateDroppodSpectreMortarEvent( vector origin, string route, int nextEventIndex, int executeOnThisCall = 1, string entityGlobalKey = "", float spawnradius = 0.0, int spawnInDifficulty = eFDSD.ALL )
 {
 	WaveEvent event
 	event.eventFunction = spawnDroppodSpectreMortar
@@ -388,10 +435,11 @@ WaveEvent function CreateDroppodSpectreMortarEvent( vector origin, string route,
 	event.spawnEvent.route = route
 	event.spawnEvent.entityGlobalKey = entityGlobalKey
 	event.spawnEvent.spawnradius = spawnradius
+	event.spawnInDifficulty = spawnInDifficulty
 	return event
 }
 
-WaveEvent function CreateDroppodSpectreEvent( vector origin, string route, int nextEventIndex, int executeOnThisCall = 1, string entityGlobalKey = "", float spawnradius = 0.0 )
+WaveEvent function CreateDroppodSpectreEvent( vector origin, string route, int nextEventIndex, int executeOnThisCall = 1, string entityGlobalKey = "", float spawnradius = 0.0, int spawnInDifficulty = eFDSD.ALL )
 {
 	WaveEvent event
 	event.eventFunction = spawnDroppodSpectre
@@ -404,10 +452,11 @@ WaveEvent function CreateDroppodSpectreEvent( vector origin, string route, int n
 	event.spawnEvent.route = route
 	event.spawnEvent.entityGlobalKey = entityGlobalKey
 	event.spawnEvent.spawnradius = spawnradius
+	event.spawnInDifficulty = spawnInDifficulty
 	return event
 }
 
-WaveEvent function CreateWaitForTimeEvent( float waitTime, int nextEventIndex, int executeOnThisCall = 1 )
+WaveEvent function CreateWaitForTimeEvent( float waitTime, int nextEventIndex, int executeOnThisCall = 1, int spawnInDifficulty = eFDSD.ALL )
 {
 	WaveEvent event
 	event.shouldThread = false
@@ -415,10 +464,11 @@ WaveEvent function CreateWaitForTimeEvent( float waitTime, int nextEventIndex, i
 	event.executeOnThisCall = executeOnThisCall
 	event.nextEventIndex = nextEventIndex
 	event.flowControlEvent.waitTime = waitTime
+	event.spawnInDifficulty = spawnInDifficulty
 	return event
 }
 
-WaveEvent function CreateWaitUntilAliveEvent( int amount, int nextEventIndex, int executeOnThisCall = 1 )
+WaveEvent function CreateWaitUntilAliveEvent( int amount, int nextEventIndex, int executeOnThisCall = 1, int spawnInDifficulty = eFDSD.ALL )
 {
 	WaveEvent event
 	event.eventFunction = waitUntilLessThanAmountAliveEvent
@@ -426,10 +476,11 @@ WaveEvent function CreateWaitUntilAliveEvent( int amount, int nextEventIndex, in
 	event.nextEventIndex = nextEventIndex
 	event.shouldThread = false
 	event.flowControlEvent.waitAmount = amount
+	event.spawnInDifficulty = spawnInDifficulty
 	return event
 }
 
-WaveEvent function CreateWaitUntilAliveWeightedEvent( int amount, int nextEventIndex, int executeOnThisCall = 1 )
+WaveEvent function CreateWaitUntilAliveWeightedEvent( int amount, int nextEventIndex, int executeOnThisCall = 1, int spawnInDifficulty = eFDSD.ALL )
 {
 	WaveEvent event
 	event.eventFunction = waitUntilLessThanAmountAliveEventWeighted
@@ -437,10 +488,11 @@ WaveEvent function CreateWaitUntilAliveWeightedEvent( int amount, int nextEventI
 	event.nextEventIndex = nextEventIndex
 	event.shouldThread = false
 	event.flowControlEvent.waitAmount = amount
+	event.spawnInDifficulty = spawnInDifficulty
 	return event
 }
 
-WaveEvent function CreateWaitForAllTitansDeadEvent( int amount, int nextEventIndex, int executeOnThisCall = 1 )
+WaveEvent function CreateWaitForAllTitansDeadEvent( int amount, int nextEventIndex, int executeOnThisCall = 1, int spawnInDifficulty = eFDSD.ALL )
 {
 	WaveEvent event
 	event.eventFunction = waitForDeathOfTitansEvent
@@ -448,10 +500,11 @@ WaveEvent function CreateWaitForAllTitansDeadEvent( int amount, int nextEventInd
 	event.nextEventIndex = nextEventIndex
 	event.shouldThread = false
 	event.flowControlEvent.waitAmount = amount
+	event.spawnInDifficulty = spawnInDifficulty
 	return event
 }
 
-WaveEvent function CreateWaitForLessThanTypeIDEvent(int aiTypeId,int amount,int nextEventIndex,int executeOnThisCall = 1 )
+WaveEvent function CreateWaitForLessThanTypeIDEvent(int aiTypeId,int amount,int nextEventIndex,int executeOnThisCall = 1, int spawnInDifficulty = eFDSD.ALL )
 {
 	WaveEvent event
 	event.eventFunction = waitForLessThanAliveTyped
@@ -460,10 +513,11 @@ WaveEvent function CreateWaitForLessThanTypeIDEvent(int aiTypeId,int amount,int 
 	event.shouldThread = false
 	event.flowControlEvent.waitAmount = amount
 	event.flowControlEvent.waitEntityType = aiTypeId
+	event.spawnInDifficulty = spawnInDifficulty
 	return event
 }
 
-WaveEvent function CreateGenericSpawnEvent( string npcClassName, vector origin, vector angles, string route, int spawnType, int spawnAmount, int nextEventIndex, int executeOnThisCall = 1, string entityGlobalKey = "", float spawnradius = 0.0 )
+WaveEvent function CreateGenericSpawnEvent( string npcClassName, vector origin, vector angles, string route, int spawnType, int spawnAmount, int nextEventIndex, int executeOnThisCall = 1, string entityGlobalKey = "", float spawnradius = 0.0, int spawnInDifficulty = eFDSD.ALL )
 {
 	WaveEvent event
 	event.eventFunction = spawnGenericNPC
@@ -478,10 +532,11 @@ WaveEvent function CreateGenericSpawnEvent( string npcClassName, vector origin, 
 	event.spawnEvent.spawnAmount = spawnAmount
 	event.spawnEvent.entityGlobalKey = entityGlobalKey
 	event.spawnEvent.spawnradius = spawnradius
+	event.spawnInDifficulty = spawnInDifficulty
 	return event
 }
 
-WaveEvent function CreateGenericTitanSpawnWithAiSettingsEvent( string npcClassName, string aiSettings, vector origin, vector angles, string route, int spawnType, int spawnAmount, int nextEventIndex, int executeOnThisCall = 1, string entityGlobalKey = "", float spawnradius = 0.0 )
+WaveEvent function CreateGenericTitanSpawnWithAiSettingsEvent( string npcClassName, string aiSettings, vector origin, vector angles, string route, int spawnType, int spawnAmount, int nextEventIndex, int executeOnThisCall = 1, string entityGlobalKey = "", float spawnradius = 0.0, int spawnInDifficulty = eFDSD.ALL )
 {
 	WaveEvent event
 	event.eventFunction = spawnGenericNPCTitanwithSettings
@@ -497,10 +552,11 @@ WaveEvent function CreateGenericTitanSpawnWithAiSettingsEvent( string npcClassNa
 	event.spawnEvent.spawnAmount = spawnAmount
 	event.spawnEvent.entityGlobalKey = entityGlobalKey
 	event.spawnEvent.spawnradius = spawnradius
+	event.spawnInDifficulty = spawnInDifficulty
 	return event
 }
 
-WaveEvent function CreateNukeTitanEvent( vector origin, vector angles, string route, int nextEventIndex, int executeOnThisCall = 1, string entityGlobalKey = "", float spawnradius = 0.0 )
+WaveEvent function CreateNukeTitanEvent( vector origin, vector angles, string route, int nextEventIndex, int executeOnThisCall = 1, string entityGlobalKey = "", float spawnradius = 0.0, int spawnInDifficulty = eFDSD.ALL )
 {
 	WaveEvent event
 	event.eventFunction = spawnNukeTitan
@@ -514,10 +570,11 @@ WaveEvent function CreateNukeTitanEvent( vector origin, vector angles, string ro
 	event.spawnEvent.route = route
 	event.spawnEvent.entityGlobalKey = entityGlobalKey
 	event.spawnEvent.spawnradius = spawnradius
+	event.spawnInDifficulty = spawnInDifficulty
 	return event
 }
 
-WaveEvent function CreateMortarTitanEvent( vector origin, vector angles, int nextEventIndex, int executeOnThisCall = 1, string entityGlobalKey = "", float spawnradius = 0.0 )
+WaveEvent function CreateMortarTitanEvent( vector origin, vector angles, int nextEventIndex, int executeOnThisCall = 1, string entityGlobalKey = "", float spawnradius = 0.0, int spawnInDifficulty = eFDSD.ALL )
 {
 	WaveEvent event
 	event.eventFunction = spawnMortarTitan
@@ -530,10 +587,11 @@ WaveEvent function CreateMortarTitanEvent( vector origin, vector angles, int nex
 	event.spawnEvent.angles = angles
 	event.spawnEvent.entityGlobalKey = entityGlobalKey
 	event.spawnEvent.spawnradius = spawnradius
+	event.spawnInDifficulty = spawnInDifficulty
 	return event
 }
 
-WaveEvent function CreateCloakDroneEvent( vector origin, vector angles, int nextEventIndex, int executeOnThisCall = 1, string entityGlobalKey = "" )
+WaveEvent function CreateCloakDroneEvent( vector origin, vector angles, int nextEventIndex, int executeOnThisCall = 1, string entityGlobalKey = "", float spawnradius = 0.0, int spawnInDifficulty = eFDSD.ALL )
 {
 	WaveEvent event
 	event.eventFunction = fd_spawnCloakDrone
@@ -545,10 +603,11 @@ WaveEvent function CreateCloakDroneEvent( vector origin, vector angles, int next
 	event.spawnEvent.origin = origin
 	event.spawnEvent.angles = angles
 	event.spawnEvent.entityGlobalKey = entityGlobalKey
+	event.spawnInDifficulty = spawnInDifficulty
 	return event
 }
 
-WaveEvent function CreateDroppodTickEvent( vector origin, int amount, string route, int nextEventIndex, int executeOnThisCall = 1, string entityGlobalKey = "", float spawnradius = 0.0 )
+WaveEvent function CreateDroppodTickEvent( vector origin, int amount, string route, int nextEventIndex, int executeOnThisCall = 1, string entityGlobalKey = "", float spawnradius = 0.0, int spawnInDifficulty = eFDSD.ALL )
 {
 	WaveEvent event
 	event.eventFunction = SpawnTick
@@ -560,10 +619,11 @@ WaveEvent function CreateDroppodTickEvent( vector origin, int amount, string rou
 	event.spawnEvent.origin = origin
 	event.spawnEvent.entityGlobalKey = entityGlobalKey
 	event.spawnEvent.spawnradius = spawnradius
+	event.spawnInDifficulty = spawnInDifficulty
 	return event
 }
 
-WaveEvent function CreateNorthstarSniperTitanEvent( vector origin, vector angles, int nextEventIndex, int executeOnThisCall = 1, string entityGlobalKey = "", int titanType = FD_TitanType.TITAN_COMMON, float spawnradius = 0.0 )
+WaveEvent function CreateNorthstarSniperTitanEvent( vector origin, vector angles, int nextEventIndex, int executeOnThisCall = 1, string entityGlobalKey = "", int titanType = FD_TitanType.TITAN_COMMON, float spawnradius = 0.0, int spawnInDifficulty = eFDSD.ALL )
 {
 	WaveEvent event
 	event.eventFunction = spawnSniperTitan
@@ -577,10 +637,11 @@ WaveEvent function CreateNorthstarSniperTitanEvent( vector origin, vector angles
 	event.spawnEvent.entityGlobalKey = entityGlobalKey
 	event.spawnEvent.titanType = titanType
 	event.spawnEvent.spawnradius = spawnradius
+	event.spawnInDifficulty = spawnInDifficulty
 	return event
 }
 
-WaveEvent function CreateToneSniperTitanEvent( vector origin, vector angles, int nextEventIndex, int executeOnThisCall = 1, string entityGlobalKey = "", int titanType = FD_TitanType.TITAN_COMMON, float spawnradius = 0.0 )
+WaveEvent function CreateToneSniperTitanEvent( vector origin, vector angles, int nextEventIndex, int executeOnThisCall = 1, string entityGlobalKey = "", int titanType = FD_TitanType.TITAN_COMMON, float spawnradius = 0.0, int spawnInDifficulty = eFDSD.ALL )
 {
 	WaveEvent event
 	event.eventFunction = SpawnToneSniperTitan
@@ -594,11 +655,12 @@ WaveEvent function CreateToneSniperTitanEvent( vector origin, vector angles, int
 	event.spawnEvent.entityGlobalKey = entityGlobalKey
 	event.spawnEvent.titanType = titanType
 	event.spawnEvent.spawnradius = spawnradius
+	event.spawnInDifficulty = spawnInDifficulty
 	return event
 }
 
 
-WaveEvent function CreateIonTitanEvent( vector origin, vector angles, string route, int nextEventIndex, int executeOnThisCall = 1, string entityGlobalKey = "", int titanType = FD_TitanType.TITAN_COMMON, float spawnradius = 0.0 )
+WaveEvent function CreateIonTitanEvent( vector origin, vector angles, string route, int nextEventIndex, int executeOnThisCall = 1, string entityGlobalKey = "", int titanType = FD_TitanType.TITAN_COMMON, float spawnradius = 0.0, int spawnInDifficulty = eFDSD.ALL )
 {
 	WaveEvent event
 	event.eventFunction = SpawnIonTitan
@@ -613,10 +675,11 @@ WaveEvent function CreateIonTitanEvent( vector origin, vector angles, string rou
 	event.spawnEvent.entityGlobalKey = entityGlobalKey
 	event.spawnEvent.titanType = titanType
 	event.spawnEvent.spawnradius = spawnradius
+	event.spawnInDifficulty = spawnInDifficulty
 	return event
 }
 
-WaveEvent function CreateScorchTitanEvent( vector origin, vector angles, string route, int nextEventIndex, int executeOnThisCall = 1, string entityGlobalKey = "", int titanType = FD_TitanType.TITAN_COMMON, float spawnradius = 0.0 )
+WaveEvent function CreateScorchTitanEvent( vector origin, vector angles, string route, int nextEventIndex, int executeOnThisCall = 1, string entityGlobalKey = "", int titanType = FD_TitanType.TITAN_COMMON, float spawnradius = 0.0, int spawnInDifficulty = eFDSD.ALL )
 {
 	WaveEvent event
 	event.eventFunction = SpawnScorchTitan
@@ -631,10 +694,11 @@ WaveEvent function CreateScorchTitanEvent( vector origin, vector angles, string 
 	event.spawnEvent.entityGlobalKey = entityGlobalKey
 	event.spawnEvent.titanType = titanType
 	event.spawnEvent.spawnradius = spawnradius
+	event.spawnInDifficulty = spawnInDifficulty
 	return event
 }
 
-WaveEvent function CreateRoninTitanEvent( vector origin, vector angles, string route, int nextEventIndex, int executeOnThisCall = 1, string entityGlobalKey = "", int titanType = FD_TitanType.TITAN_COMMON, float spawnradius = 0.0 )
+WaveEvent function CreateRoninTitanEvent( vector origin, vector angles, string route, int nextEventIndex, int executeOnThisCall = 1, string entityGlobalKey = "", int titanType = FD_TitanType.TITAN_COMMON, float spawnradius = 0.0, int spawnInDifficulty = eFDSD.ALL )
 {
 	WaveEvent event
 	event.eventFunction = SpawnRoninTitan
@@ -649,10 +713,11 @@ WaveEvent function CreateRoninTitanEvent( vector origin, vector angles, string r
 	event.spawnEvent.entityGlobalKey = entityGlobalKey
 	event.spawnEvent.titanType = titanType
 	event.spawnEvent.spawnradius = spawnradius
+	event.spawnInDifficulty = spawnInDifficulty
 	return event
 }
 
-WaveEvent function CreateToneTitanEvent( vector origin, vector angles, string route, int nextEventIndex, int executeOnThisCall = 1, string entityGlobalKey = "", int titanType = FD_TitanType.TITAN_COMMON, float spawnradius = 0.0 )
+WaveEvent function CreateToneTitanEvent( vector origin, vector angles, string route, int nextEventIndex, int executeOnThisCall = 1, string entityGlobalKey = "", int titanType = FD_TitanType.TITAN_COMMON, float spawnradius = 0.0, int spawnInDifficulty = eFDSD.ALL )
 {
 	WaveEvent event
 	event.eventFunction = SpawnToneTitan
@@ -667,10 +732,11 @@ WaveEvent function CreateToneTitanEvent( vector origin, vector angles, string ro
 	event.spawnEvent.entityGlobalKey = entityGlobalKey
 	event.spawnEvent.titanType = titanType
 	event.spawnEvent.spawnradius = spawnradius
+	event.spawnInDifficulty = spawnInDifficulty
 	return event
 }
 
-WaveEvent function CreateLegionTitanEvent( vector origin, vector angles, string route, int nextEventIndex, int executeOnThisCall = 1, string entityGlobalKey = "", int titanType = FD_TitanType.TITAN_COMMON, float spawnradius = 0.0 )
+WaveEvent function CreateLegionTitanEvent( vector origin, vector angles, string route, int nextEventIndex, int executeOnThisCall = 1, string entityGlobalKey = "", int titanType = FD_TitanType.TITAN_COMMON, float spawnradius = 0.0, int spawnInDifficulty = eFDSD.ALL )
 {
 	WaveEvent event
 	event.eventFunction = SpawnLegionTitan
@@ -685,10 +751,11 @@ WaveEvent function CreateLegionTitanEvent( vector origin, vector angles, string 
 	event.spawnEvent.entityGlobalKey = entityGlobalKey
 	event.spawnEvent.titanType = titanType
 	event.spawnEvent.spawnradius = spawnradius
+	event.spawnInDifficulty = spawnInDifficulty
 	return event
 }
 
-WaveEvent function CreateMonarchTitanEvent( vector origin, vector angles, string route, int nextEventIndex, int executeOnThisCall = 1, string entityGlobalKey = "", int titanType = FD_TitanType.TITAN_COMMON, float spawnradius = 0.0 )
+WaveEvent function CreateMonarchTitanEvent( vector origin, vector angles, string route, int nextEventIndex, int executeOnThisCall = 1, string entityGlobalKey = "", int titanType = FD_TitanType.TITAN_COMMON, float spawnradius = 0.0, int spawnInDifficulty = eFDSD.ALL )
 {
 	WaveEvent event
 	event.eventFunction = SpawnMonarchTitan
@@ -703,10 +770,11 @@ WaveEvent function CreateMonarchTitanEvent( vector origin, vector angles, string
 	event.spawnEvent.entityGlobalKey = entityGlobalKey
 	event.spawnEvent.titanType = titanType
 	event.spawnEvent.spawnradius = spawnradius
+	event.spawnInDifficulty = spawnInDifficulty
 	return event
 }
 
-WaveEvent function CreateSpawnDroneEvent(vector origin,vector angles,string route,int nextEventIndex, bool shouldLoop = true, int executeOnThisCall = 1, string entityGlobalKey="" , float spawnradius = 0.0)
+WaveEvent function CreateSpawnDroneEvent(vector origin,vector angles,string route,int nextEventIndex, bool shouldLoop = true, int executeOnThisCall = 1, string entityGlobalKey="" , float spawnradius = 0.0, int spawnInDifficulty = eFDSD.ALL )
 {
 	WaveEvent event
 	event.eventFunction = spawnDrones
@@ -720,16 +788,18 @@ WaveEvent function CreateSpawnDroneEvent(vector origin,vector angles,string rout
 	event.spawnEvent.route = route
 	event.spawnEvent.shouldLoop = shouldLoop
 	event.spawnEvent.spawnradius = spawnradius
+	event.spawnInDifficulty = spawnInDifficulty
 	return event
 }
 
-WaveEvent function CreateWarningEvent( int warningType, int nextEventIndex, int executeOnThisCall = 1 )
+WaveEvent function CreateWarningEvent( int warningType, int nextEventIndex, int executeOnThisCall = 1, int spawnInDifficulty = eFDSD.ALL )
 {
 	WaveEvent event
 	event.eventFunction = PlayWarning
 	event.executeOnThisCall = executeOnThisCall
 	event.nextEventIndex = nextEventIndex
 	event.shouldThread = false
+	event.spawnInDifficulty = spawnInDifficulty
 
 	switch(warningType)
 	{
@@ -869,7 +939,7 @@ WaveEvent function CreateWarningEvent( int warningType, int nextEventIndex, int 
 	return event
 }
 
-WaveEvent function CreateTitanfallBlockEvent( int amount, int nextEventIndex, int executeOnThisCall = 1 )
+WaveEvent function CreateTitanfallBlockEvent( int amount, int nextEventIndex, int executeOnThisCall = 1, int spawnInDifficulty = eFDSD.ALL )
 {
 	WaveEvent event
 	event.eventFunction = BlockFurtherTitanfalls
@@ -877,10 +947,11 @@ WaveEvent function CreateTitanfallBlockEvent( int amount, int nextEventIndex, in
 	event.nextEventIndex = nextEventIndex
 	event.shouldThread = false
 	event.flowControlEvent.waitAmount = amount
+	event.spawnInDifficulty = spawnInDifficulty
 	return event
 }
 
-WaveEvent function CreateGruntDropshipEvent( vector origin, vector angles, int amount, string route, int nextEventIndex, int executeOnThisCall = 1, string entityGlobalKey = "" )
+WaveEvent function CreateGruntDropshipEvent( vector origin, vector angles, int amount, string route, int nextEventIndex, int executeOnThisCall = 1, string entityGlobalKey = "", int spawnInDifficulty = eFDSD.ALL )
 {
 	WaveEvent event
 	event.eventFunction = spawnGruntDropship
@@ -892,6 +963,7 @@ WaveEvent function CreateGruntDropshipEvent( vector origin, vector angles, int a
 	event.spawnEvent.origin = origin
 	event.spawnEvent.angles = angles
 	event.spawnEvent.entityGlobalKey = entityGlobalKey
+	event.spawnInDifficulty = spawnInDifficulty
 	return event
 }
 
@@ -1981,8 +2053,8 @@ void function spawnMortarTitan( SmokeEvent smokeEvent, SpawnEvent spawnEvent, Fl
 	SetSpawnOption_Alert( npc )
 	SetTargetName( npc, GetTargetNameForID( spawnEvent.spawnType ) ) // required for client to create icons
 	DispatchSpawn( npc )
-	npc.SetSkin( 2 )
-	npc.SetCamo( 1 )
+	npc.SetSkin( 1 )
+	npc.SetCamo( -1 )
 	npc.DisableNPCFlag( NPC_ALLOW_INVESTIGATE )
 	npc.DisableNPCMoveFlag( NPCMF_WALK_NONCOMBAT )
 	npc.SetDangerousAreaReactionTime( FD_TITAN_AOE_REACTTIME )
@@ -2085,8 +2157,8 @@ void function SpawnToneSniperTitan( SmokeEvent smokeEvent, SpawnEvent spawnEvent
 	}
 	else
 	{
-		npc.SetSkin( 8 )
-		npc.SetCamo( -1 )
+		npc.SetSkin( 6 )
+		npc.SetCamo( 2 )
 		npc.SetDangerousAreaReactionTime( FD_TITAN_AOE_REACTTIME )
 	}
 	npc.DisableNPCFlag( NPC_ALLOW_INVESTIGATE )
@@ -2359,7 +2431,6 @@ void function GiveMinionFDLoadout( entity npc )
 			TakeAllWeapons( npc )
 			string baseweapon = file.FD_GruntWeapons.getrandom()
 			npc.GiveWeapon( baseweapon )
-			npc.GiveWeapon( "mp_weapon_wingman" )
 			npc.kv.grenadeWeaponName = file.Cvar_gruntgrenade
 		}
 	}
@@ -2404,8 +2475,16 @@ void function SetupGruntBehaviorFlags( entity npc )
 	{
 		case eFDDifficultyLevel.EASY:
 		case eFDDifficultyLevel.NORMAL:
-			npc.EnableNPCFlag( NPC_ALLOW_HAND_SIGNALS | NPC_ALLOW_FLEE | NPC_USE_SHOOTING_COVER )
-			npc.DisableNPCFlag( NPC_ALLOW_INVESTIGATE | NPC_ALLOW_PATROL )
+			if( GetMapName().find( "mp_lf_" ) != null )
+			{
+				npc.EnableNPCFlag( NPC_ALLOW_HAND_SIGNALS )
+				npc.DisableNPCFlag( NPC_ALLOW_INVESTIGATE | NPC_ALLOW_PATROL | NPC_ALLOW_FLEE | NPC_USE_SHOOTING_COVER )
+			}
+			else
+			{
+				npc.EnableNPCFlag( NPC_ALLOW_HAND_SIGNALS | NPC_ALLOW_FLEE | NPC_USE_SHOOTING_COVER )
+				npc.DisableNPCFlag( NPC_ALLOW_INVESTIGATE | NPC_ALLOW_PATROL )
+			}
 			break
 		case eFDDifficultyLevel.HARD:
 		case eFDDifficultyLevel.MASTER:
@@ -2429,7 +2508,7 @@ void function GruntTargetsTitan( entity npc )
 		{
 			case eFDDifficultyLevel.EASY:
 			case eFDDifficultyLevel.NORMAL:
-				if( enemy.IsTitan() )
+				if( enemy.IsTitan() && GetMapName().find( "mp_lf_" ) == null )
 					npc.AssaultSetFightRadius( 800 )
 				else
 					npc.AssaultSetFightRadius( 0 )
@@ -2455,7 +2534,7 @@ void function SetTitanAsElite( entity npc )
 		SetSpawnOption_TitanSoulPassive1( npc, "pas_enhanced_titan_ai" )
 		SetSpawnOption_TitanSoulPassive2( npc, "pas_defensive_core" )
 		SetSpawnOption_TitanSoulPassive3( npc, "pas_assault_reactor" )
-		//SetSpawnflags( npc, SF_TITAN_SOUL_NO_DOOMED_EVASSIVE_COMBAT )
+		SetSpawnflags( npc, SF_TITAN_SOUL_NO_DOOMED_EVASSIVE_COMBAT )
 	}
 }
 
@@ -2467,8 +2546,8 @@ void function SetEliteTitanPostSpawn( entity npc )
 	Assert( IsValid( npc ) && npc.IsTitan(), "Entity is not a Titan to set as Elite: " + npc )
 	if ( npc.IsTitan() && elitesAllowed )
 	{
-		npc.EnableNPCFlag( NPC_NO_PAIN | NPC_NO_GESTURE_PAIN | NPC_NEW_ENEMY_FROM_SOUND ) //NPC_AIM_DIRECT_AT_ENEMY
-		npc.EnableNPCMoveFlag( NPCMF_PREFER_SPRINT )
+		npc.EnableNPCFlag( NPC_NO_PAIN | NPC_NO_GESTURE_PAIN | NPC_NEW_ENEMY_FROM_SOUND | NPC_DIRECTIONAL_MELEE | NPC_IGNORE_FRIENDLY_SOUND ) //NPC_AIM_DIRECT_AT_ENEMY
+		npc.EnableNPCMoveFlag( NPCMF_PREFER_SPRINT | NPCMF_DISABLE_ARRIVALS | NPCMF_DISABLE_MOVE_TRANSITIONS )
 		npc.DisableNPCFlag( NPC_PAIN_IN_SCRIPTED_ANIM )
 		npc.DisableNPCMoveFlag( NPCMF_WALK_NONCOMBAT )
 		npc.SetCapabilityFlag( bits_CAP_NO_HIT_SQUADMATES, false )
@@ -2509,14 +2588,21 @@ void function MonitorEliteTitanCore( entity npc )
 		npc.WaitSignal( "CoreBegin" )
 		wait 0.1
 		
-		soul.SetShieldHealthMax( 2500 )
-		soul.SetShieldHealth( 2500 )
+		soul.SetShieldHealthMax( 3750 )
+		soul.SetShieldHealth( 3750 )
 		
 		entity meleeWeapon = npc.GetMeleeWeapon()
 		if( meleeWeapon.HasMod( "super_charged" ) || meleeWeapon.HasMod( "super_charged_SP" ) ) //Hack for Elite Ronin
 			npc.SetAISettings( "npc_titan_stryder_leadwall_shift_core_elite" )
+			
+		if( npc.GetAISettingsName() == "npc_titan_stryder_sniper_boss_fd_elite" ) //So Northstar can move around while doing her Flight Core
+			npc.AssaultSetFightRadius( 1200 )
 		
 		npc.WaitSignal( "CoreEnd" )
+		
+		if( npc.GetAISettingsName() == "npc_titan_stryder_sniper_boss_fd_elite" ) //Northstar finished Core, she should return to her sniping spot
+			npc.AssaultSetFightRadius( 0 )
+		
 		switch ( difficultyLevel )
 		{
 			case eFDDifficultyLevel.EASY:
@@ -2625,7 +2711,7 @@ void function SpawnDrozFD( vector spawnpos, vector angles )
 	Droz.SetSkin( 2 )
 	Droz.EnableNPCFlag( NPC_ALLOW_INVESTIGATE | NPC_ALLOW_HAND_SIGNALS | NPC_NO_PAIN | NPC_NO_GESTURE_PAIN | NPC_ALLOW_PATROL | NPC_IGNORE_FRIENDLY_SOUND | NPC_NEW_ENEMY_FROM_SOUND | NPC_TEAM_SPOTTED_ENEMY | NPC_AIM_DIRECT_AT_ENEMY )
 	Droz.DisableNPCFlag( NPC_ALLOW_FLEE )
-	Droz.EnableNPCMoveFlag( NPCMF_PREFER_SPRINT | NPCMF_WALK_NONCOMBAT | NPCMF_IGNORE_CLUSTER_DANGER_TIME | NPCMF_DISABLE_DANGEROUS_AREA_DISPLACEMENT )
+	Droz.EnableNPCMoveFlag( NPCMF_PREFER_SPRINT | NPCMF_WALK_NONCOMBAT )
 	Droz.ai.buddhaMode = true //Plot Armor going hard
 	Droz.kv.AccuracyMultiplier = 10.0
 	Droz.kv.reactChance = 100
@@ -2660,7 +2746,7 @@ void function SpawnDavisFD( vector spawnpos, vector angles )
 	Davis.SetModel( FD_MODEL_DAVIS )
 	Davis.EnableNPCFlag( NPC_ALLOW_INVESTIGATE | NPC_ALLOW_HAND_SIGNALS | NPC_NO_PAIN | NPC_NO_GESTURE_PAIN | NPC_ALLOW_PATROL | NPC_IGNORE_FRIENDLY_SOUND | NPC_NEW_ENEMY_FROM_SOUND | NPC_TEAM_SPOTTED_ENEMY | NPC_AIM_DIRECT_AT_ENEMY )
 	Davis.DisableNPCFlag( NPC_ALLOW_FLEE )
-	Davis.EnableNPCMoveFlag( NPCMF_PREFER_SPRINT | NPCMF_WALK_NONCOMBAT | NPCMF_IGNORE_CLUSTER_DANGER_TIME | NPCMF_DISABLE_DANGEROUS_AREA_DISPLACEMENT )
+	Davis.EnableNPCMoveFlag( NPCMF_PREFER_SPRINT | NPCMF_WALK_NONCOMBAT )
 	Davis.ai.buddhaMode = true //Plot Armor going hard
 	Davis.kv.AccuracyMultiplier = 10.0
 	Davis.kv.reactChance = 100

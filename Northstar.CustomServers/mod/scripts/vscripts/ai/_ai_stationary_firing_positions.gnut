@@ -137,7 +137,7 @@ void function ValidateAndFinalizePendingStationaryPositions()
 	}
 }
 
-StationaryAIPosition function GetClosestAvailableStationaryPosition( vector origin, float maxDist, int type )
+StationaryAIPosition ornull function GetClosestAvailableStationaryPosition( vector origin, float maxDist, int type )
 {
 
 	array<StationaryAIPosition> resultArray = []
@@ -168,14 +168,12 @@ StationaryAIPosition function GetClosestAvailableStationaryPosition( vector orig
 
 		// if too far, throw warning and continue search beyond maxDist
 		if ( result.distanceSqr > maxDistSqr )
-		{
 			CodeWarning( "Couldn't find a mortar position within " + maxDist + " units for type " + type + " around " + origin.tostring() + " that wasn't in use. Expanding Search. Add more AddStationaryTitanPositions to the map near this point." )
-		}
 
 		return position
 	}
-
-	unreachable
+	
+	return null //Unreachable gives a script crash, returning null allows the while loops to keep going without that
 }
 
 StationaryAIPosition function GetRandomStationaryPosition( vector origin, float maxDist, int type )

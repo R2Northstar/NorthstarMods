@@ -352,7 +352,7 @@ void function PostDeathThread_MP( entity player, var damageInfo ) // based on ga
 	wait deathcamLength
 	
 	// use info_intermission camera after deathcam, if it exists
-	if ( file.intermissionCamera != null )
+	if ( file.intermissionCamera != null && !player.GetParent() )
 	{
 		player.SetObserverModeStaticPosition( file.intermissionCamera.GetOrigin() )
 		player.SetObserverModeStaticAngles( file.intermissionCamera.GetAngles() )
@@ -403,7 +403,7 @@ void function PostDeathThread_MP( entity player, var damageInfo ) // based on ga
 		
 		ClearRespawnAvailable( player ) // need so the respawn icon doesn't show for like a frame on next death
 			
-		if ( ( expect bool( player.GetPersistentVar( "spawnAsTitan" ) ) && IsTitanAvailable( player ) ) || ( Riff_SpawnAsTitan() > 0 && Riff_ShouldSpawnAsTitan( player ) ) )	// spawn as titan
+		if ( ( expect bool( player.GetPersistentVar( "spawnAsTitan" ) ) && Riff_IsTitanAvailable( player ) ) || ( Riff_SpawnAsTitan() > 0 && Riff_ShouldSpawnAsTitan( player ) ) )	// spawn as titan
 			thread RespawnAsTitan( player )
 		else // spawn as pilot
 			RespawnAsPilot( player )
@@ -628,10 +628,14 @@ void function SetRecalculateRespawnAsTitanStartPointCallback( entity functionref
 
 bool function ShouldEntTakeDamage_SPMP( entity ent, var damageInfo )
 {
+	// dropships are immune to being crushed
+	if ( ( IsDropship( ent ) || IsEvacDropship( ent ) ) && IsTitanCrushDamage( damageInfo ) )
+		return false
+	
 	return true
 }
 
-float function GetTitanBuildTime(entity player)
+float function GetTitanBuildTime( entity player )
 {
 	return 100.0
 }

@@ -378,7 +378,15 @@ void function ReaperMinionLauncherThink( entity reaper )
 	if ( GetBugReproNum() != 221936 )
 		reaper.kv.squadname = ""
 
-	StationaryAIPosition launchPos = GetClosestAvailableStationaryPosition( reaper.GetOrigin(), 8000, eStationaryAIPositionTypes.LAUNCHER_REAPER )
+	reaper.EndSignal( "OnDeath" )
+	StationaryAIPosition ornull launchPos = GetClosestAvailableStationaryPosition( reaper.GetOrigin(), 8000, eStationaryAIPositionTypes.LAUNCHER_REAPER )
+	while ( launchPos == null )
+	{
+		// incase all stationary reaper positions are in use wait for one to become available
+		wait 5
+		launchPos = GetClosestAvailableStationaryPosition( reaper.GetOrigin(), 8000, eStationaryAIPositionTypes.LAUNCHER_REAPER )
+	}
+	expect StationaryAIPosition( launchPos )
 	launchPos.inUse = true
 
 	OnThreadEnd(
@@ -387,8 +395,7 @@ void function ReaperMinionLauncherThink( entity reaper )
 			launchPos.inUse = false
 		}
 	)
-
-	reaper.EndSignal( "OnDeath" )
+	
 	reaper.AssaultSetFightRadius( 96 )
 	reaper.AssaultSetGoalRadius( reaper.GetMinGoalRadius() )
 

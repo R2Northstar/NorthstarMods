@@ -49,7 +49,7 @@ Branch made to expand Frontier Defense feature set by adding back cut content wh
 - Droz and Davis helps players in person by guarding the Harvester
 - Players recieve the double amount of money when completing a wave
 - Players can have 3 Turrets instead of 2
-- Players have no grenades
+- Players forcibly have gravity star as grenade
 - Players have limited Anti-Titan ammo, restock possible at Loadout Crate
 - Grunts will always have one shield captain in their squads and will always have Anti-Titan weapons
 - Stalkers will always spawn with EPG independant of the difficulty setting

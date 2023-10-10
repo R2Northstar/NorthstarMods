@@ -86,12 +86,17 @@ bool function ClientCommand_SetProgression( entity player, array<string> args )
 
 bool function ClientCommand_ResetTitanAegis( entity player, array<string> args )
 {
-	int suitIndex = GetPersistentSpawnLoadoutIndex( player, "titan" )
+	if ( !args.len() )
+		return false
+	
+	int suitIndex = args[0].tointeger()
 	player.SetPersistentVar( "titanFDUnlockPoints[" + suitIndex + "]", 0 )
 	player.SetPersistentVar( "previousFDUnlockPoints[" + suitIndex + "]", 0 )
 	player.SetPersistentVar( "fdTitanXP[" + suitIndex + "]", 0 )
 	player.SetPersistentVar( "fdPreviousTitanXP[" + suitIndex + "]", 0 )
-
+	
+	RecalculateHighestTitanFDLevel( player )
+	
 	return true
 }
 #endif
@@ -278,7 +283,7 @@ void function ValidateEquippedItems( entity player )
 		// camoIndex
 		if ( loadout.skinIndex == TITAN_SKIN_INDEX_CAMO )
 		{
-			array<ItemData> camoSkins = GetAllItemsOfType( eItemTypes.CAMO_SKIN )
+			array<ItemData> camoSkins = GetAllItemsOfType( eItemTypes.CAMO_SKIN_TITAN )
 			if ( loadout.camoIndex >= camoSkins.len() || loadout.camoIndex < 0 )
 			{
 				printt( "  - INVALID TITAN CAMO/SKIN, RESETTING" )
@@ -373,7 +378,7 @@ void function ValidateEquippedItems( entity player )
 		// primeCamoIndex
 		if ( loadout.primeSkinIndex == TITAN_SKIN_INDEX_CAMO )
 		{
-			array<ItemData> camoSkins = GetAllItemsOfType( eItemTypes.CAMO_SKIN )
+			array<ItemData> camoSkins = GetAllItemsOfType( eItemTypes.CAMO_SKIN_TITAN )
 			if ( loadout.primeCamoIndex >= camoSkins.len() || loadout.primeCamoIndex < 0 )
 			{
 				printt( "  - INVALID TITAN CAMO/SKIN, RESETTING" )
@@ -654,15 +659,11 @@ void function ValidateEquippedItems( entity player )
 					player.SetPersistentVar( "pilotLoadouts[" + pilotLoadoutIndex + "].primaryCamoIndex", defaultLoadout.primaryCamoIndex )
 				}
 			}
-			else
+			else if ( IsSubItemLocked( player, GetWeaponWarpaintRefByIndex( loadout.primarySkinIndex, loadout.primary ), loadout.primary ) )
 			{
-				string warpaintRef = GetWeaponWarpaintRefByIndex( loadout.primarySkinIndex, loadout.primary )
-				if ( warpaintRef == INVALID_REF || IsSubItemLocked( player, warpaintRef, loadout.primary ) )
-				{
-					printt( "  - PRIMARY WEAPON SKIN LOCKED/INVALID, RESETTING" )
-					player.SetPersistentVar( "pilotLoadouts[" + pilotLoadoutIndex + "].primarySkinIndex", defaultLoadout.primarySkinIndex )
-					player.SetPersistentVar( "pilotLoadouts[" + pilotLoadoutIndex + "].primaryCamoIndex", defaultLoadout.primaryCamoIndex )
-				}
+				printt( "  - PRIMARY WEAPON SKIN LOCKED, RESETTING" )
+				player.SetPersistentVar( "pilotLoadouts[" + pilotLoadoutIndex + "].primarySkinIndex", defaultLoadout.primarySkinIndex )
+				player.SetPersistentVar( "pilotLoadouts[" + pilotLoadoutIndex + "].primaryCamoIndex", defaultLoadout.primaryCamoIndex )
 			}
 		}
 
@@ -791,15 +792,11 @@ void function ValidateEquippedItems( entity player )
 					player.SetPersistentVar( "pilotLoadouts[" + pilotLoadoutIndex + "].secondaryCamoIndex", defaultLoadout.secondaryCamoIndex )
 				}
 			}
-			else
+			else if ( IsSubItemLocked( player, GetWeaponWarpaintRefByIndex( loadout.secondarySkinIndex, loadout.secondary ), loadout.secondary ) )
 			{
-				string warpaintRef = GetWeaponWarpaintRefByIndex( loadout.secondarySkinIndex, loadout.secondary )
-				if ( warpaintRef == INVALID_REF || IsSubItemLocked( player, warpaintRef, loadout.secondary ) )
-				{
-					printt( "  - SECONDARY WEAPON SKIN LOCKED/INVALID, RESETTING" )
-					player.SetPersistentVar( "pilotLoadouts[" + pilotLoadoutIndex + "].secondarySkinIndex", defaultLoadout.secondarySkinIndex )
-					player.SetPersistentVar( "pilotLoadouts[" + pilotLoadoutIndex + "].secondaryCamoIndex", defaultLoadout.secondaryCamoIndex )
-				}
+				printt( "  - SECONDARY WEAPON SKIN LOCKED, RESETTING" )
+				player.SetPersistentVar( "pilotLoadouts[" + pilotLoadoutIndex + "].secondarySkinIndex", defaultLoadout.secondarySkinIndex )
+				player.SetPersistentVar( "pilotLoadouts[" + pilotLoadoutIndex + "].secondaryCamoIndex", defaultLoadout.secondaryCamoIndex )
 			}
 		}
 
@@ -928,15 +925,11 @@ void function ValidateEquippedItems( entity player )
 					player.SetPersistentVar( "pilotLoadouts[" + pilotLoadoutIndex + "].weapon3CamoIndex", defaultLoadout.weapon3CamoIndex )
 				}
 			}
-			else
+			else if ( IsSubItemLocked( player, GetWeaponWarpaintRefByIndex( loadout.weapon3SkinIndex, loadout.weapon3 ), loadout.weapon3 ) )
 			{
-				string warpaintRef = GetWeaponWarpaintRefByIndex( loadout.weapon3SkinIndex, loadout.weapon3 )
-				if ( warpaintRef == INVALID_REF || IsSubItemLocked( player, warpaintRef, loadout.weapon3 ) )
-				{
-					printt( "  - TERTIARY WEAPON SKIN LOCKED/INVALID, RESETTING" )
-					player.SetPersistentVar( "pilotLoadouts[" + pilotLoadoutIndex + "].weapon3SkinIndex", defaultLoadout.weapon3SkinIndex )
-					player.SetPersistentVar( "pilotLoadouts[" + pilotLoadoutIndex + "].weapon3CamoIndex", defaultLoadout.weapon3CamoIndex )
-				}
+				printt( "  - TERTIARY WEAPON SKIN LOCKED, RESETTING" )
+				player.SetPersistentVar( "pilotLoadouts[" + pilotLoadoutIndex + "].weapon3SkinIndex", defaultLoadout.weapon3SkinIndex )
+				player.SetPersistentVar( "pilotLoadouts[" + pilotLoadoutIndex + "].weapon3CamoIndex", defaultLoadout.weapon3CamoIndex )
 			}
 		}
 

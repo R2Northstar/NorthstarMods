@@ -8,6 +8,7 @@ global function ScoreEvent_TitanDoomed
 global function ScoreEvent_TitanKilled
 global function ScoreEvent_NPCKilled
 global function ScoreEvent_MatchComplete
+global function ScoreEvent_RoundComplete
 
 global function ScoreEvent_SetEarnMeterValues
 global function ScoreEvent_SetupEarnMeterValuesForMixedModes
@@ -222,18 +223,29 @@ void function ScoreEvent_TitanKilled( entity victim, entity attacker, var damage
 			AddPlayerScore( attacker, "KillTitan" )
 	}
 
-	table<int, bool> alreadyAssisted
-	foreach( DamageHistoryStruct attackerInfo in victim.e.recentDamageHistory )
+	entity soul = victim.GetTitanSoul()
+	if ( IsValid( soul ) )
 	{
-		if ( !IsValid( attackerInfo.attacker ) || !attackerInfo.attacker.IsPlayer() || attackerInfo.attacker == victim )
-			continue
-			
-		bool exists = attackerInfo.attacker.GetEncodedEHandle() in alreadyAssisted ? true : false
-		if( attackerInfo.attacker != attacker && !exists )
+		table<int, bool> alreadyAssisted
+		
+		foreach( DamageHistoryStruct attackerInfo in soul.e.recentDamageHistory )
 		{
-			alreadyAssisted[attackerInfo.attacker.GetEncodedEHandle()] <- true
-			AddPlayerScore(attackerInfo.attacker, "TitanAssist" )
-			Remote_CallFunction_NonReplay( attackerInfo.attacker, "ServerCallback_SetAssistInformation", attackerInfo.damageSourceId, attacker.GetEncodedEHandle(), victim.GetEncodedEHandle(), attackerInfo.time ) 
+			if ( !IsValid( attackerInfo.attacker ) || !attackerInfo.attacker.IsPlayer() || attackerInfo.attacker == soul )
+				continue
+			
+			string damageSourceString = DamageSourceIDToString( attackerInfo.damageSourceId )
+			bool exists = attackerInfo.attacker.GetEncodedEHandle() in alreadyAssisted ? true : false
+			if( attackerInfo.attacker != attacker && !exists )
+			{
+				alreadyAssisted[attackerInfo.attacker.GetEncodedEHandle()] <- true
+				AddPlayerScore(attackerInfo.attacker, "TitanAssist" )
+				foreach( str in shGlobalMP.statsItemsList )
+				{
+					if ( str == damageSourceString )
+						UpdatePlayerStat( attacker, "weapon_kill_stats", "assistsTotal", 1, damageSourceString )
+				}
+				Remote_CallFunction_NonReplay( attackerInfo.attacker, "ServerCallback_SetAssistInformation", attackerInfo.damageSourceId, attacker.GetEncodedEHandle(), soul.GetEncodedEHandle(), attackerInfo.time ) 
+			}
 		}
 	}
 
@@ -289,8 +301,14 @@ void function ScoreEvent_MatchComplete( int winningTeam )
 	foreach( entity player in GetPlayerArray() )
 	{
 		AddPlayerScore( player, "MatchComplete" )
+		SetPlayerChallengeMatchComplete( player )
 		if ( player.GetTeam() == winningTeam )
+		{
 			AddPlayerScore( player, "MatchVictory" )
+			SetPlayerChallengeMatchWon( player, true )
+		}
+		else
+			SetPlayerChallengeMatchWon( player, false )
 	}
 }
 

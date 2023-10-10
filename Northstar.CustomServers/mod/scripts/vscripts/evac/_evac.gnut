@@ -402,7 +402,10 @@ void function Evac( int evacTeam, float initialWait, float arrivalTime, float wa
 		if ( !PlayerInDropship( player, dropship ) )
 		{
 			if ( player.GetTeam() == dropship.GetTeam() )
+			{
 				SetPlayerActiveObjective( player, "EG_DropshipExtractFailedEscape" )
+				SetPlayerChallengeEvacState( player, false )
+			}
 				
 			continue
 		}
@@ -445,6 +448,7 @@ void function Evac( int evacTeam, float initialWait, float arrivalTime, float wa
 
 		AddPlayerScore( player, "HotZoneExtract" )
 		UpdatePlayerStat( player, "misc_stats", "evacsSurvived" )
+		SetPlayerChallengeEvacState( player, true )
 
 		if ( allEvac )
 			AddPlayerScore( player, "TeamBonusFullEvac" )
@@ -525,6 +529,7 @@ void function EvacDropshipKilled( entity dropship, var damageInfo )
 	{
 		if ( IsValid( player ) )
 		{
+			SetPlayerChallengeEvacState( player, false )
 			player.ClearParent()
 			player.Die( DamageInfo_GetAttacker( damageInfo ), DamageInfo_GetWeapon( damageInfo ), { damageSourceId = eDamageSourceId.evac_dropship_explosion, scriptType = DF_GIB } )
 		}
