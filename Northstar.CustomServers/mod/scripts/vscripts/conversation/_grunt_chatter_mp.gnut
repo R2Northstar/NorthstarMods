@@ -14,6 +14,20 @@ void function GruntChatter_MP_Init()
 	AddCallback_OnNPCKilled( GruntChatter_OnPlayerOrNPCKilled )
 }
 
+
+
+
+/*=====================================================================================================================================================
+   _____                      _      _____  _             _    _                __  __         _  _    _         _                           
+  / ____|                    | |    / ____|| |           | |  | |              |  \/  |       | || |  (_)       | |                          
+ | |  __  _ __  _   _  _ __  | |_  | |     | |__    __ _ | |_ | |_  ___  _ __  | \  / | _   _ | || |_  _  _ __  | |  __ _  _   _   ___  _ __ 
+ | | |_ || '__|| | | || '_ \ | __| | |     | '_ \  / _` || __|| __|/ _ \| '__| | |\/| || | | || || __|| || '_ \ | | / _` || | | | / _ \| '__|
+ | |__| || |   | |_| || | | || |_  | |____ | | | || (_| || |_ | |_|  __/| |    | |  | || |_| || || |_ | || |_) || || (_| || |_| ||  __/| |   
+  \_____||_|    \__,_||_| |_| \__|  \_____||_| |_| \__,_| \__| \__|\___||_|    |_|  |_| \__,_||_| \__||_|| .__/ |_| \__,_| \__, | \___||_|   
+                                                                                                         | |                __/ |            
+                                                                                                         |_|               |___/             
+/*===================================================================================================================================================*/
+													   
 void function PlayGruntChatterMPLine( entity grunt, string conversationType )
 {
 	#if !GRUNT_CHATTER_MP_ENABLED
@@ -27,10 +41,14 @@ void function PlayGruntChatterMPLine( entity grunt, string conversationType )
 
 void function GruntChatter_OnPlayerOrNPCKilled( entity deadGuy, entity attacker, var damageInfo )
 {
-	if ( !IsValid( deadGuy ) )
+	if ( !IsValid( deadGuy ) || !IsValid( attacker ) )
 		return
-		
-	GruntChatter_TryEnemyDown( deadGuy )
+	
+	if( IsGrunt( attacker ) && IsPilot( deadGuy ) )
+		PlayGruntChatterMPLine( attacker, "bc_killenemypilot" )
+	else
+		GruntChatter_TryEnemyTitanDown( deadGuy )
+	
 	if ( IsGrunt( deadGuy ) )
 	{
 		GruntChatter_TryFriendlyDown( deadGuy )
@@ -76,7 +94,7 @@ void function GruntChatter_TrySquadDepleted( entity deadGuy )
 	PlayGruntChatterMPLine( lastSquadMember, "bc_squaddeplete" )
 }
 
-void function GruntChatter_TryEnemyDown( entity deadGuy )
+void function GruntChatter_TryEnemyTitanDown( entity deadGuy )
 {
 	if ( deadGuy.IsTitan() )
 	{ 
@@ -180,10 +198,7 @@ bool function GruntChatter_CanGruntChatterNow( entity grunt )
 
 	string squadname = expect string( grunt.kv.squadname )
 	// we only care about this because the grunt conversation system wants it
-	if ( squadname == "" )
-		return false
-
-	return true
+	return squadname != ""
 }
 
 bool function GruntChatter_IsGruntTypeEligibleForChatter( entity grunt )
@@ -192,8 +207,5 @@ bool function GruntChatter_IsGruntTypeEligibleForChatter( entity grunt )
 		return false
 
 	// mechanical grunts don't chatter
-	if ( grunt.IsMechanical() )
-		return false
-
-	return true
+	return !grunt.IsMechanical()
 }
