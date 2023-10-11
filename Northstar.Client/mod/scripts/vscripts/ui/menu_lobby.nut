@@ -41,8 +41,6 @@ global function OnStoreButton_Activate
 global function OnStoreBundlesButton_Activate
 global function OnStoreNewReleasesButton_Activate
 
-global function StartNSMatchmaking
-
 const string MATCHMAKING_AUDIO_CONNECTING = "menu_campaignsummary_titanunlocked"
 
 struct
@@ -290,59 +288,24 @@ void function SetupComboButtonTest( var menu )
 	int buttonIndex = 0
 	file.playHeader = AddComboButtonHeader( comboStruct, headerIndex, "#MENU_HEADER_PLAY" )
 	
-	bool isModded = IsNorthstarServer()
-	
-	
-	// this will be the server browser
-	
-	file.findGameButton = AddComboButton( comboStruct, headerIndex, buttonIndex++, "#MENU_TITLE_FIND_GAME" )
-	file.lobbyButtons.append( file.findGameButton )
-	Hud_AddEventHandler( file.findGameButton, UIE_CLICK, BigPlayButton1_Activate )
-	
+	// server browser
 	file.findGameButton = AddComboButton( comboStruct, headerIndex, buttonIndex++, "#MENU_TITLE_SERVER_BROWSER" )
 	file.lobbyButtons.append( file.findGameButton )
 	Hud_SetLocked( file.findGameButton, true )
 	Hud_AddEventHandler( file.findGameButton, UIE_CLICK, OpenServerBrowser )
-		
-	/*
-	if ( isModded )
-	{
-		file.findGameButton = AddComboButton( comboStruct, headerIndex, buttonIndex++, "#MENU_TITLE_SERVER_BROWSER" )
-		file.lobbyButtons.append( file.findGameButton )
-		Hud_SetLocked( file.findGameButton, true )
-		Hud_AddEventHandler( file.findGameButton, UIE_CLICK, OpenServerBrowser )
-	}
-	else
-	{
-		file.findGameButton = AddComboButton( comboStruct, headerIndex, buttonIndex++, "#MENU_TITLE_FIND_GAME" )
-		file.lobbyButtons.append( file.findGameButton )
-		Hud_AddEventHandler( file.findGameButton, UIE_CLICK, BigPlayButton1_Activate )
-	}
-	*/
 
-	// this is used for launching private matches now
-	if ( isModded )
-	{
-		file.inviteRoomButton = AddComboButton( comboStruct, headerIndex, buttonIndex++, "#PRIVATE_MATCH" )
-		Hud_AddEventHandler( file.inviteRoomButton, UIE_CLICK, StartPrivateMatch )
-	}
-	else
-	{
-		file.inviteRoomButton = AddComboButton( comboStruct, headerIndex, buttonIndex++, "#MENU_TITLE_INVITE_ROOM" )
-		Hud_AddEventHandler( file.inviteRoomButton, UIE_CLICK, DoRoomInviteIfAllowed )	
-	}
-	
-	//file.toggleMenuModeButton = AddComboButton( comboStruct, headerIndex, buttonIndex++, "#MENU_LOBBY_SWITCH_FD" )
-	//Hud_AddEventHandler( file.toggleMenuModeButton, UIE_CLICK, ToggleLobbyMode )
+	// private match
+	file.inviteRoomButton = AddComboButton( comboStruct, headerIndex, buttonIndex++, "#PRIVATE_MATCH" )
+	Hud_AddEventHandler( file.inviteRoomButton, UIE_CLICK, StartPrivateMatch )
 
 	file.inviteFriendsButton = AddComboButton( comboStruct, headerIndex, buttonIndex++, "#MENU_TITLE_INVITE_FRIENDS" )
 	Hud_AddEventHandler( file.inviteFriendsButton, UIE_CLICK, InviteFriendsIfAllowed )
-	
-	if ( isModded )
-	{
-		Hud_SetEnabled( file.inviteFriendsButton, false )
-		Hud_SetVisible( file.inviteFriendsButton, false )
-	}
+
+	Hud_SetEnabled( file.inviteFriendsButton, false )
+	Hud_SetVisible( file.inviteFriendsButton, false )
+
+	// file.toggleMenuModeButton = AddComboButton( comboStruct, headerIndex, buttonIndex++, "#MENU_LOBBY_SWITCH_FD" )
+	// Hud_AddEventHandler( file.toggleMenuModeButton, UIE_CLICK, ToggleLobbyMode )
 
 	headerIndex++
 	buttonIndex = 0
@@ -501,8 +464,7 @@ void function CreatePartyAndInviteFriends()
 
 void function ToggleLobbyMode( var button )
 {
-	//Lobby_ToggleFDMode()
-	AdvanceMenu( GetMenu( "FDMenu" ) )
+	Lobby_ToggleFDMode()
 }
 
 void function Lobby_ToggleFDMode()
@@ -1075,6 +1037,7 @@ void function UpdateMatchmakingStatus()
 					int mapIdx = int( GetMyMatchmakingStatusParam( 3 ) )
 					int modeIdx = int( GetMyMatchmakingStatusParam( 4 ) )
 					string playlistList = GetMyMatchmakingStatusParam( 5 )
+
 					{
 						string statusText = Localize( "#MATCHMAKING_PLAYLISTS" )
 						RuiSetString( Hud_GetRui( statusEl ), "statusText", statusText )
@@ -1267,7 +1230,7 @@ void function BigPlayButton1_Activate( var button )
 	if ( Hud_IsLocked( button ) )
 		return
 
-	//SendOpenInvite( false )
+	SendOpenInvite( false )
 	OpenSelectedPlaylistMenu()
 }
 
@@ -1303,7 +1266,7 @@ function UpdateLobbyUI()
 	uiGlobal.updatingLobbyUI = true
 
 	thread UpdateLobbyType()
-	//thread UpdateMatchmakingStatus() Commented this one out because it's responsible for the Native Matchmaking which updates menu constantly, not needed for Northstar
+	thread UpdateMatchmakingStatus()
 	thread UpdateChatroomThread()
 	//thread UpdateInviteJoinButton()
 	thread UpdateInviteFriendsToNetworkButton()
@@ -1693,215 +1656,4 @@ void function Lobby_SetFDModeBasedOnSearching( string playlistToSearch )
 	}
 
 	Lobby_SetFDMode( isFDMode )
-}
-
-
-void function StartNSMatchmaking( array<string> selectedPlaylists )
-{
-	MatchmakingSetCountdownTimer( Time() + 4.0, false )
-	MatchmakingSetSearchText( "#MATCHMAKING_SEARCHING_FOR_MATCH" )
-	MatchmakingSetSearchVisible( true )
-	MatchmakingSetCountdownVisible( true )
-	ShowMatchmakingStatusIcons()
-	
-	var searchMenu = GetMenu( "SearchMenu" )
-	AdvanceMenu( searchMenu )
-	var statusEl = Hud_GetChild( searchMenu, "MatchmakingStatusBig" )
-			
-	string statusText = Localize( "#MATCHMAKING_PLAYLISTS" )
-	RuiSetString( Hud_GetRui( statusEl ), "statusText", statusText )
-	for ( int idx = 1; idx <= 5; ++idx )
-		RuiSetString( Hud_GetRui( statusEl ), ("bulletPointText" + idx), "" )
-
-	const int MAX_SHOWN_PLAYLISTS = 9
-	int searchingCount = minint( selectedPlaylists.len(), MAX_SHOWN_PLAYLISTS )
-	RuiSetInt( Hud_GetRui( statusEl ), "playlistCount", searchingCount )
-	for( int idx = 0; idx < searchingCount; ++idx )
-	{
-		asset playlistThumbnail = GetPlaylistThumbnailImage( selectedPlaylists[idx] )
-		RuiSetImage( Hud_GetRui( statusEl ), format( "playlistIcon%d", idx ), playlistThumbnail )
-	}
-	Hud_Show( statusEl )
-	
-	wait 3.0 //Fancy delay just because server finder is pratically immediate, whole block above is to show "fake" matchmaking search
-	MatchmakingSetCountdownTimer( 0.0, true )
-	MatchmakingSetCountdownVisible( false )
-	
-	NSClearRecievedServerList()
-	NSRequestServerList()
-	
-	while ( NSIsRequestingServerList() )
-		WaitFrame()
-	
-	array<ServerInfo> servers = NSGetGameServers()
-	array<ServerInfo> PlaylistServers
-	array<ServerInfo> filteredServers
-	
-	foreach( index, string playlist in selectedPlaylists )
-	{
-		foreach ( ServerInfo server in servers )
-		{
-			if ( server.playlist == playlist )
-				PlaylistServers.append( server )
-		}
-	}
-	
-	foreach ( ServerInfo server in PlaylistServers )
-	{
-		if ( server.playerCount == 0 || server.playerCount == server.maxPlayerCount || server.requiresPassword )
-			continue;
-
-		filteredServers.append( server )
-	}
-	
-	if( filteredServers.len() )
-		thread MatchmakedAuthAndConnectToServer( filteredServers[ RandomInt( filteredServers.len() ) ] )
-	else
-	{
-		foreach ( ServerInfo server in PlaylistServers ) //If we failed to find servers with players in it, consider joining empty ones
-		{
-			if ( server.playerCount == server.maxPlayerCount || server.requiresPassword )
-				continue;
-			
-			filteredServers.append( server )
-		}
-		
-		if( filteredServers.len() )
-			thread MatchmakedAuthAndConnectToServer( filteredServers[ RandomInt( filteredServers.len() ) ] )
-		else
-		{
-			MatchmakingSetSearchVisible( false )
-			HideMatchmakingStatusIcons()
-			Hud_Hide( statusEl )
-			
-			if ( uiGlobal.activeMenu == searchMenu )
-				CloseActiveMenu()
-			
-			DialogData dialogData
-			dialogData.header = "#ERROR"
-			dialogData.message = "#MATCHMAKING_NOSERVERS"
-			dialogData.image = $"ui/menu/common/dialog_error"
-
-			#if PC_PROG
-				AddDialogButton( dialogData, "#DISMISS" )
-				AddDialogFooter( dialogData, "#A_BUTTON_SELECT" )
-			#endif // PC_PROG
-			
-			AddDialogFooter( dialogData, "#B_BUTTON_DISMISS_RUI" )
-			OpenDialog( dialogData )
-			return
-		}
-	}
-}
-
-void function MatchmakedAuthAndConnectToServer( ServerInfo matchmakedserver, string password = "" )
-{
-	var statusEl = Hud_GetChild( GetMenu( "SearchMenu" ), "MatchmakingStatusBig" )
-	if ( NSIsAuthenticatingWithServer() )
-		return
-
-	NSTryAuthWithServer( matchmakedserver.index, password )
-
-	while ( NSIsAuthenticatingWithServer() )
-		WaitFrame()
-	
-	if ( NSWasAuthSuccessful() )
-	{
-		bool modsChanged = false
-
-		foreach ( string modName in NSGetModNames() )
-		{
-			if ( NSIsModRequiredOnClient( modName ) && NSIsModEnabled( modName ) )
-			{
-				bool found = false
-				foreach ( RequiredModInfo mod in matchmakedserver.requiredMods )
-				{
-					if (mod.name == modName)
-					{
-						found = true
-						break
-					}
-				}
-				if (!found)
-				{
-					modsChanged = true
-					NSSetModEnabled( modName, false )
-				}
-			}
-		}
-
-		foreach ( RequiredModInfo mod in matchmakedserver.requiredMods )
-		{
-			if ( NSIsModRequiredOnClient( mod.name ) && !NSIsModEnabled( mod.name ))
-			{
-				modsChanged = true
-				NSSetModEnabled( mod.name, true )
-			}
-		}
-		
-		EmitUISound( MATCHMAKING_AUDIO_CONNECTING )
-		MatchmakingSetSearchText( "#MATCHMAKING_MATCH_CONNECTING" )
-		MatchmakingSetCountdownTimer( 0.0, true )
-		MatchmakingSetCountdownVisible( false )
-		HideMatchmakingStatusIcons()
-		Hud_Hide( statusEl )
-		ShowServerConnectingInfo( matchmakedserver.name, matchmakedserver.description + "\n\nServer Mods:\n" + FillInServerModsLabel( matchmakedserver.requiredMods ) )
-		
-		wait 5.0
-		
-		MatchmakingSetSearchVisible( false )
-		
-		if ( modsChanged )
-			ReloadMods()
-
-		NSConnectToAuthedServer()
-	}
-	else
-	{
-		MatchmakingSetSearchVisible( false )
-		HideMatchmakingStatusIcons()
-		Hud_Hide( statusEl )
-		if ( uiGlobal.activeMenu == GetMenu( "SearchMenu" ) )
-			CloseActiveMenu()
-		string reason = NSGetAuthFailReason()
-
-		DialogData dialogData
-		dialogData.header = "#ERROR"
-		dialogData.message = reason
-		dialogData.image = $"ui/menu/common/dialog_error"
-
-		#if PC_PROG
-			AddDialogButton( dialogData, "#DISMISS" )
-			AddDialogFooter( dialogData, "#A_BUTTON_SELECT" )
-		#endif // PC_PROG
-		
-		AddDialogFooter( dialogData, "#B_BUTTON_DISMISS_RUI" )
-		OpenDialog( dialogData )
-	}
-}
-
-void function ShowServerConnectingInfo( string servername = "", string servercontext = "" )
-{
-	CloseAllDialogs()
-
-	string connectingserver = "Found Server" + ": " + servername
-	
-	Hud_Hide( uiGlobal.ConfirmMenuMessage )
-	Hud_Hide( uiGlobal.ConfirmMenuErrorCode )
-
-	DialogData dialogData
-	dialogData.header = connectingserver
-	dialogData.message = servercontext
-	dialogData.showSpinner = true
-
-	OpenDialog( dialogData )
-}
-
-string function FillInServerModsLabel( array<RequiredModInfo> mods )
-{
-	string ret
-	foreach ( RequiredModInfo mod in mods )
-		ret += format( "  %s v%s\n", mod.name, mod.version )
-
-	return ret
 }
