@@ -141,7 +141,7 @@ void function UpdatePlayerStat( entity player, string statCategory, string subSt
 	if ( !IsValid( player ) )
 		return
 
-	Stats_IncrementStat( player, statCategory, subStat, alias, count.tofloat() )
+	Stats_IncrementStat( player, statCategory, subStat, statAlias, count.tofloat() )
 }
 
 void function IncrementPlayerDidPilotExecutionWhileCloaked( entity player )
