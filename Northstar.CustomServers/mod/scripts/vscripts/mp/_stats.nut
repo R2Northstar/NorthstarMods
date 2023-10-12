@@ -136,7 +136,7 @@ float function PlayerStat_GetCurrentFloat( entity player, string statCategory, s
 	return 0
 }
 
-void function UpdatePlayerStat( entity player, string statCategory, string subStat, int count = 1, string alias = "" )
+void function UpdatePlayerStat( entity player, string statCategory, string subStat, int count = 1, string statAlias = "" )
 {
 	if ( !IsValid( player ) )
 		return
