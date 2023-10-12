@@ -573,12 +573,12 @@ function UpdatePrivateMatchButtons()
 		Hud_SetLocked( file.selectModeButton, false )
 
 		string modeName = PrivateMatch_GetSelectedMode()
-		bool settingsLocked = false
+		//bool settingsLocked = IsFDMode( modeName )
 
-		if ( settingsLocked && uiGlobal.activeMenu == GetMenu( "MatchSettingsMenu" ) )
-			CloseActiveMenu()
-		
-		Hud_SetLocked( file.matchSettingsButton, settingsLocked )
+		//if ( settingsLocked && uiGlobal.activeMenu == GetMenu( "MatchSettingsMenu" ) )
+		//	CloseActiveMenu()
+
+		Hud_SetLocked( file.matchSettingsButton, false )
 	}
 }
 
