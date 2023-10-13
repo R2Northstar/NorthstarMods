@@ -5698,7 +5698,13 @@ bool function IsUnlockValid( string ref, string parentRef = "" )
 
 bool function IsSubItemLocked( entity player, string ref, string parentRef )
 {
-	if ( DevEverythingUnlocked() )
+	if ( DevEverythingUnlocked( player ) )
+		return false
+	
+	if ( IsItemPurchasableEntitlement( ref, parentRef ) )
+		return false
+	
+	if ( GetItemType( ref ) == eItemTypes.PRIME_TITAN || GetSubitemType( parentRef, ref ) == eItemTypes.PRIME_TITAN )
 		return false
 
 	if ( IsItemInEntitlementUnlock( ref, parentRef ) )
@@ -5817,7 +5823,13 @@ bool function IsSubItemLocked( entity player, string ref, string parentRef )
 
 bool function IsItemLocked( entity player, string ref )
 {
-	if ( DevEverythingUnlocked() )
+	if ( DevEverythingUnlocked( player ) )
+		return false
+	
+	if ( IsItemPurchasableEntitlement( ref ) )
+		return false
+	
+	if ( GetItemType( ref ) == eItemTypes.PRIME_TITAN )
 		return false
 
 	if ( IsItemInEntitlementUnlock( ref ) )
@@ -5906,7 +5918,7 @@ bool function IsItemLockedForEntitlement( entity player, string ref, string pare
 
 bool function IsSubItemOwned( entity player, string ref, string parentRef )
 {
-	if ( DevEverythingUnlocked() )
+	if ( DevEverythingUnlocked( player ) )
 		return false
 
 	Assert( IsValid( player ) )
@@ -5990,7 +6002,7 @@ bool function IsSubItemOwned( entity player, string ref, string parentRef )
 
 bool function IsItemOwned( entity player, string ref )
 {
-	if ( DevEverythingUnlocked() )
+	if ( DevEverythingUnlocked( player ) )
 		return false
 
 	Assert( IsValid( player ) )
