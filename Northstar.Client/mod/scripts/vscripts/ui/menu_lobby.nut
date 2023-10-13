@@ -296,14 +296,13 @@ void function SetupComboButtonTest( var menu )
 	
 	file.findGameButton = AddComboButton( comboStruct, headerIndex, buttonIndex++, "#MENU_TITLE_SERVER_BROWSER" )
 	file.lobbyButtons.append( file.findGameButton )
-	Hud_SetLocked( file.findGameButton, true )
 	Hud_AddEventHandler( file.findGameButton, UIE_CLICK, OpenServerBrowser )
+	
+	file.inviteFriendsButton = AddComboButton( comboStruct, headerIndex, buttonIndex++, "#MENU_TITLE_INVITE_FRIENDS" )
+	Hud_AddEventHandler( file.inviteFriendsButton, UIE_CLICK, InviteFriendsIfAllowed )
 
 	file.inviteRoomButton = AddComboButton( comboStruct, headerIndex, buttonIndex++, "#PRIVATE_MATCH" )
 	Hud_AddEventHandler( file.inviteRoomButton, UIE_CLICK, StartPrivateMatch )
-
-	file.inviteFriendsButton = AddComboButton( comboStruct, headerIndex, buttonIndex++, "#MENU_TITLE_INVITE_FRIENDS" )
-	Hud_AddEventHandler( file.inviteFriendsButton, UIE_CLICK, InviteFriendsIfAllowed )
 
 	Hud_SetEnabled( file.inviteFriendsButton, false )
 	Hud_SetVisible( file.inviteFriendsButton, false )

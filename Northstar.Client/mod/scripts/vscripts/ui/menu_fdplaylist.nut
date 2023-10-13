@@ -64,6 +64,7 @@ void function InitFDPlaylistMenu()
 
 	AddMenuFooterOption( file.menu, BUTTON_A, "#A_BUTTON_SELECT" )
 	AddMenuFooterOption( file.menu, BUTTON_B, "#B_BUTTON_BACK", "#BACK" )
+	//AddMenuFooterOption( file.menu, BUTTON_Y, "#Y_BUTTON_RESET_AEGIS", "#RESET_AEGIS", ShowTitanResetDialog )
 
 	for ( int idx = 0; idx < 4; ++idx )
 	{
@@ -482,8 +483,12 @@ void function TitanButton_OnClick( var button )
 		OpenBuyItemDialog( file.titanButtons, button, GetItemName( loadout.titanClass ), loadout.titanClass )
 		return
 	}
-
+	
+	if ( scriptID != uiGlobal.titanSpawnLoadoutIndex )
+		EmitUISound( "Menu_LoadOut_Titan_Select" )
+	
 	uiGlobal.titanSpawnLoadoutIndex = scriptID
+	ClientCommand( "RequestTitanLoadout " + scriptID )
 	SetEditLoadout( "titan", scriptID )
 	RunMenuClientFunction( "SetEditingTitanLoadoutIndex", scriptID )
 	AdvanceMenu( GetMenu( "EditTitanLoadoutMenu" ) )
@@ -502,7 +507,6 @@ void function TitanButton_OnFocused( var button )
 	RunMenuClientFunction( "UpdateTitanModel", scriptID )
 	RunMenuClientFunction( "SetEditingTitanLoadoutIndex", scriptID )
 	UpdateFDPanel( file.fdProperties, scriptID, true )
-	uiGlobal.titanSpawnLoadoutIndex = scriptID
 }
 
 void function OnFDMenu_NavigateBack()
@@ -524,4 +528,32 @@ bool function IsDifficultyOrTitanButtonSelected()
 			return true
 
 	return false
+}
+
+void function ShowTitanResetDialog( var button )
+{
+	DialogData dialogData
+	dialogData.header = "#RESET_AEGIS_TITLE"
+	dialogData.message = "#RESET_AEGIS_DESCRIPTION"
+	dialogData.image = $"rui/menu/common/fd_titan_upgrades"
+
+	AddDialogButton( dialogData, "#NO" )
+	AddDialogButton( dialogData, "#YES", ResetCurrentTitanAegis )
+
+	OpenDialog( dialogData )
+}
+
+void function ResetCurrentTitanAegis()
+{
+	EmitUISound( "ui_rankedsummary_demotion" )
+	ClientCommand( "ns_resettitanaegis " + uiGlobal.titanSpawnLoadoutIndex )
+	thread TitanAegisResetRefresh_Delayed() //Small time for pdata to refresh so we update the Aegis Ranks bar
+}
+
+void function TitanAegisResetRefresh_Delayed()
+{
+	wait 0.1
+	RunMenuClientFunction( "UpdateTitanModel", uiGlobal.titanSpawnLoadoutIndex )
+	RunMenuClientFunction( "SetEditingTitanLoadoutIndex", uiGlobal.titanSpawnLoadoutIndex )
+	UpdateFDPanel( file.fdProperties, uiGlobal.titanSpawnLoadoutIndex, true )
 }

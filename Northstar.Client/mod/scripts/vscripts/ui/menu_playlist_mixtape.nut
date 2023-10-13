@@ -577,11 +577,31 @@ void function OnOpenPlaylistMixtapeMenu()
 		Hud_SetText( Hud_GetChild( file.mixtapeMenu, "PlayerCount" ), "#PLAYLIST_PLAYERCOUNT_MIXTAPE_SCREEN", regionDesc, worldDesc )
 	}
 
+	thread ShowPlayercount() //Override Playercount with Northstar version
+	
 	SetChecklistIconButtonsVisible( true )
 
 	RefreshDescriptionTitle( false )
 
 	thread DelayedSetFocusThread( file.playButton )
+}
+
+void function ShowPlayercount()
+{
+	NSClearRecievedServerList()
+	NSRequestServerList()
+	
+	Hud_SetText( Hud_GetChild( file.mixtapeMenu, "PlayerCount" ), "#INGAME_PLAYERS", 0, 0 )
+	
+	while ( NSIsRequestingServerList() )
+		WaitFrame()
+	
+	array<ServerInfo> servers = NSGetGameServers()
+	int totalPlayers = 0
+	foreach ( ServerInfo server in servers )
+		totalPlayers += server.playerCount
+	
+	Hud_SetText( Hud_GetChild( file.mixtapeMenu, "PlayerCount" ), "#INGAME_PLAYERS", totalPlayers, totalPlayers )
 }
 
 bool function IsDialogUp()
