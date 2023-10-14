@@ -36,7 +36,7 @@ void function Stats_Init()
 	AddCallback_OnPlayerRespawned( OnPlayerRespawned )
 	AddCallback_OnClientConnected( OnClientConnected )
 	AddCallback_OnClientDisconnected( OnClientDisconnected )
-	AddCallback_GameStateEnter( eGameState.Epilogue, OnEpilogueStarted )
+	AddCallback_GameStateEnter( eGameState.WinnerDetermined, OnWinnerDetermined )
 
 	thread HandleDistanceAndTimeStats_Threaded()
 	thread SaveStatsPeriodically_Threaded()
@@ -136,12 +136,12 @@ float function PlayerStat_GetCurrentFloat( entity player, string statCategory, s
 	return 0
 }
 
-void function UpdatePlayerStat( entity player, string statCategory, string subStat, int count = 1 )
+void function UpdatePlayerStat( entity player, string statCategory, string subStat, int count = 1, string statAlias = "" )
 {
 	if ( !IsValid( player ) )
 		return
 
-	Stats_IncrementStat( player, statCategory, subStat, "", count.tofloat() )
+	Stats_IncrementStat( player, statCategory, subStat, statAlias, count.tofloat() )
 }
 
 void function IncrementPlayerDidPilotExecutionWhileCloaked( entity player )
@@ -798,7 +798,7 @@ void function OnPlayerRespawned( entity player )
 	thread SetLastPosForDistanceStatValid_Threaded( player, true )
 }
 
-void function OnEpilogueStarted()
+void function OnWinnerDetermined()
 {
 	// award players for match completed, wins, and losses
 	foreach ( entity player in GetPlayerArray() )
