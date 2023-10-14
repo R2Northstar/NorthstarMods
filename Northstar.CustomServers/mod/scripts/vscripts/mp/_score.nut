@@ -233,17 +233,11 @@ void function ScoreEvent_TitanKilled( entity victim, entity attacker, var damage
 			if ( !IsValid( attackerInfo.attacker ) || !attackerInfo.attacker.IsPlayer() || attackerInfo.attacker == soul )
 				continue
 			
-			string damageSourceString = DamageSourceIDToString( attackerInfo.damageSourceId )
 			bool exists = attackerInfo.attacker.GetEncodedEHandle() in alreadyAssisted ? true : false
 			if( attackerInfo.attacker != attacker && !exists )
 			{
 				alreadyAssisted[attackerInfo.attacker.GetEncodedEHandle()] <- true
 				AddPlayerScore(attackerInfo.attacker, "TitanAssist" )
-				foreach( str in shGlobalMP.statsItemsList )
-				{
-					if ( str == damageSourceString )
-						UpdatePlayerStat( attacker, "weapon_kill_stats", "assistsTotal", 1, damageSourceString )
-				}
 				Remote_CallFunction_NonReplay( attackerInfo.attacker, "ServerCallback_SetAssistInformation", attackerInfo.damageSourceId, attacker.GetEncodedEHandle(), soul.GetEncodedEHandle(), attackerInfo.time ) 
 			}
 		}
