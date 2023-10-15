@@ -5,7 +5,6 @@
 	{
 		// This file needs to be encoded as UTF-16 LE
 
-		"MULTIPLAYER_LAUNCH" "Launch Vanilla" // says "Launch Multiplayer" in vanilla, which can be misleading
 		"MENU_LAUNCH_NORTHSTAR" "Launch Northstar"
 		"MENU_TITLE_MODS" "Mods"
 		"RELOAD_MODS" "Reload Mods"
