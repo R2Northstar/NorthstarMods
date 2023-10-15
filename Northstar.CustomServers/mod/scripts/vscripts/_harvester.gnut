@@ -27,7 +27,9 @@ HarvesterStruct function SpawnHarvester( vector origin, vector angles, int healt
     harvester.SetShieldHealthMax( shieldHealth )
     harvester.SetShieldHealth( shieldHealth )
     harvester.EnableAttackableByAI( 30, 0, AI_AP_FLAG_NONE )
-    SetObjectCanBeMeleed( harvester, false )
+    SetCustomSmartAmmoTarget( harvester, true )
+    SetObjectCanBeMeleed( harvester, true )
+    SetVisibleEntitiesInConeQueriableEnabled( harvester, true )
     SetTeam(harvester,team)
     // create dangerous area to all AI because we dont want any AI clipping into the harvester ever
     // radius of 90 cos thats like 7.5 metres? AI shouldnt rally need to get closer than that (except nuke titans and stalkers)
