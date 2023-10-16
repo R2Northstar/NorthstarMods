@@ -27,6 +27,7 @@ struct player_struct_fd{
 	int assaultScoreThisRound
 	int defenseScoreThisRound
 	int moneyThisRound
+	int wavesCompleted
 	float lastRespawnLifespan
 	float lastTitanDrop
 }
@@ -245,16 +246,15 @@ void function ScoreEvent_SetupScoreValuesForFrontierDefense()
 	ScoreEvent_SetDisplayType( GetScoreEvent( "FDSpectreKilled" ), eEventDisplayType.MEDAL | eEventDisplayType.CENTER )
 	ScoreEvent_SetDisplayType( GetScoreEvent( "FDStalkerKilled" ), eEventDisplayType.MEDAL | eEventDisplayType.CENTER )
 	ScoreEvent_SetDisplayType( GetScoreEvent( "FDSuperSpectreKilled" ), eEventDisplayType.MEDAL | eEventDisplayType.CENTER )
-	ScoreEvent_SetDisplayType( GetScoreEvent( "LeechSpectre" ), eEventDisplayType.MEDAL | eEventDisplayType.CENTER )
+	ScoreEvent_SetDisplayType( GetScoreEvent( "KillDropship" ), eEventDisplayType.MEDAL | eEventDisplayType.CENTER )
 	ScoreEvent_SetDisplayType( GetScoreEvent( "Execution" ), eEventDisplayType.MEDAL_FORCED | eEventDisplayType.CENTER )
 	ScoreEvent_SetDisplayType( GetScoreEvent( "FDTeamHeal" ), eEventDisplayType.MEDAL_FORCED | eEventDisplayType.GAMEMODE | eEventDisplayType.SHOW_SCORE )
 	
-	ScoreEvent_SetXPValueWeapon( GetScoreEvent( "Mayhem" ), 1 )
-	ScoreEvent_SetXPValueWeapon( GetScoreEvent( "Onslaught" ), 1 )
 	ScoreEvent_SetXPValueWeapon( GetScoreEvent( "FDTitanKilled" ), 1 )
 	ScoreEvent_SetXPValueWeapon( GetScoreEvent( "KillDropship" ), 1 )
 	ScoreEvent_SetXPValueTitan( GetScoreEvent( "FDTitanKilled" ), 1 )
 	ScoreEvent_SetXPValueTitan( GetScoreEvent( "KillDropship" ), 1 )
+	ScoreEvent_SetXPValueFaction( GetScoreEvent( "ChallengeFD" ), 1 )
 	
 	ScoreEvent_SetMedalText( GetScoreEvent( "KillDropship" ), "#SCORE_EVENT_DESTROYED_GOBLIN" )
 	ScoreEvent_SetSplashText( GetScoreEvent( "KillDropship" ), "#SCORE_EVENT_DESTROYED_GOBLIN" )
@@ -268,7 +268,6 @@ void function ScoreEvent_SetupScoreValuesForFrontierDefense()
 	ScoreEvent_Disable( GetScoreEvent( "KillTitan" ) )
 	ScoreEvent_Disable( GetScoreEvent( "KillPilot" ) )
 	ScoreEvent_Disable( GetScoreEvent( "TitanKillTitan" ) )
-	ScoreEvent_Disable( GetScoreEvent( "LeechDrone" ) )
 }
 
 void function UpdateEarnMeter_ByPlayersInMatch()
@@ -845,7 +844,7 @@ bool function runWave( int waveIndex, bool shouldDoBuyTime )
 	SetGlobalNetBool( "FD_waveActive", false )
 	FD_UpdateTitanBehavior()
 	foreach( entity player in GetPlayerArrayOfTeam( TEAM_MILITIA ) )
-		player.s.completedwaves++
+		file.players[player].wavesCompleted++
 		
 	if ( isFinalWave() && IsHarvesterAlive( fd_harvester.harvester ) )
 	{
@@ -880,7 +879,7 @@ bool function runWave( int waveIndex, bool shouldDoBuyTime )
 		SetWinner( TEAM_MILITIA )
 		PlayFactionDialogueToTeam( "fd_matchVictory", TEAM_MILITIA )
 		
-		wait 1
+		wait 2
 		
 		foreach( entity player in GetPlayerArrayOfTeam( TEAM_MILITIA ) )
 			AddPlayerScore( player, "FDTeamWave" )
@@ -911,12 +910,7 @@ bool function runWave( int waveIndex, bool shouldDoBuyTime )
 		
 		foreach( entity player in GetPlayerArrayOfTeam( TEAM_MILITIA ) )
 			AddPlayerScore( player, "FDTeamFinalWave" )
-			
-		wait 1
 		
-		foreach( entity player in GetPlayerArrayOfTeam( TEAM_MILITIA ) )
-			AddPlayerScore( player, "MatchVictory" )
-			
 		wait 1
 		
 		RegisterPostSummaryScreenForMatch( true )
@@ -931,7 +925,7 @@ bool function runWave( int waveIndex, bool shouldDoBuyTime )
 	foreach( entity player in GetPlayerArrayOfTeam( TEAM_MILITIA ) )
 	{
 		UpdatePlayerStat( player, "fd_stats", "wavesComplete" )
-		if( player.s.completedwaves == 3 )
+		if( file.players[player].wavesCompleted == 3 )
 		{
 			AddPlayerScore( player, "ChallengeFD" )
 			SetPlayerChallengeMeritScore( player )
@@ -1233,7 +1227,6 @@ void function GamemodeFD_InitPlayer( entity player )
 	
 	player.s.hasPermenantAmpedWeapons <- false
 	player.s.extracashnag <- Time()
-	player.s.completedwaves <- 0
 	player.s.didthepvpglitch <- false
 	player.s.isbeingmonitored <- false
 	thread SetTurretSettings_threaded( player )
@@ -1832,20 +1825,23 @@ void function FD_DamageToMoney( entity victim, var damageInfo )
 	
 	if( attacker.GetTeam() == TEAM_MILITIA && attacker.IsPlayer() )
 	{
-		if( victim.IsTitan() && victim.GetTeam() == TEAM_IMC )
+		if( attacker.IsTitan() || !attacker.IsTitan() && IsHitEffectiveVsTitan( victim, DamageInfo_GetCustomDamageType( damageInfo ) ) )
 		{
-			if ( !( "moneydamage" in victim.s ) )
-				victim.s.moneydamage <- 0.0
-			
-			entity soul = victim.GetTitanSoul()
-			if ( !GetDoomedState( victim ) && soul.GetShieldHealth() <= 0 )
+			if( victim.IsTitan() && victim.GetTeam() == TEAM_IMC )
 			{
-				float moneybuffer = ceil( victim.GetMaxHealth() / 50.0 )
-				victim.s.moneydamage += damage
-				while( victim.s.moneydamage >= moneybuffer )
+				if ( !( "moneydamage" in victim.s ) )
+					victim.s.moneydamage <- 0.0
+				
+				entity soul = victim.GetTitanSoul()
+				if ( !GetDoomedState( victim ) && soul.GetShieldHealth() <= 0 )
 				{
-					victim.s.moneydamage -= moneybuffer
-					AddMoneyToPlayer( attacker, 1 )
+					float moneybuffer = ceil( victim.GetMaxHealth() / 50.0 )
+					victim.s.moneydamage += damage
+					while( victim.s.moneydamage >= moneybuffer )
+					{
+						victim.s.moneydamage -= moneybuffer
+						AddMoneyToPlayer( attacker, 1 )
+					}
 				}
 			}
 		}
@@ -1868,7 +1864,7 @@ void function EliteTitanExecutionCheck( entity ent, var damageInfo )
 			if( CodeCallback_IsValidMeleeExecutionTarget( attacker, ent ) && !GetDoomedState( attacker ) ) //Doomed Elites cant execute
 			{
 				//If the player is already doomed, then just execute, if the next melee damage brings it to Doom state, wait to execute
-				if( GetDoomedState( ent ) )
+				if( GetDoomedState( ent ) && (!SoulHasPassive( soul, ePassives.PAS_RONIN_AUTOSHIFT ) || !SoulHasPassive( soul, ePassives.PAS_AUTO_EJECT )) )
 				{
 					thread PlayerTriesSyncedMelee( attacker, ent )
 					ent.SetNoTarget( true ) //Prevents other nearby AI Titans from Moshing the victim
@@ -2086,13 +2082,13 @@ void function OnHarvesterDamaged( entity harvester, var damageInfo )
 			break
 
 			case eDamageSourceId.damagedef_nuclear_core:
+			case eDamageSourceId.mp_titanweapon_arc_cannon:
 			damageAmount *= 6
 			break
 		
 			case eDamageSourceId.damagedef_stalker_powersupply_explosion_small:
 			case eDamageSourceId.mp_weapon_super_spectre:
 			case eDamageSourceId.super_spectre_melee:
-			case eDamageSourceId.mp_titanweapon_arc_cannon:
 			damageAmount *= 2
 			break
 			
@@ -2573,8 +2569,11 @@ void function FD_OnNPCDeath( entity victim, entity attacker, var damageInfo )
 			bool canWeaponEarnXp = IsValid( weapon ) && ShouldTrackXPForWeapon( weapon.GetWeaponClassName() ) ? true : false
 			
 			attacker.s.currentKillstreak++
-			if ( attacker.s.currentKillstreak == 8 && canWeaponEarnXp )
+			if ( attacker.s.currentKillstreak >= 5 && canWeaponEarnXp )
+			{
 				AddWeaponXP( attacker, 1 )
+				attacker.s.currentKillstreak = 0
+			}
 			
 			if ( Time() - attacker.s.lastKillTime > CASCADINGKILL_REQUIREMENT_TIME )
 			{
@@ -3321,7 +3320,7 @@ void function RegisterPostSummaryScreenForMatch( bool matchwon )
 		player.SetPersistentVar( "lastFDDifficulty", difficultyLevel )
 		player.SetPersistentVar( "lastFDTitanRef", titanRef )
 		
-		player.SetPersistentVar( "fd_match[" + eFDXPType.WAVES_COMPLETED + "]", expect int( player.s.completedwaves ) )
+		player.SetPersistentVar( "fd_match[" + eFDXPType.WAVES_COMPLETED + "]", file.players[player].wavesCompleted )
 		player.SetPersistentVar( "fd_match[" + eFDXPType.WAVES_ATTEMPTED + "]", GetGlobalNetInt( "FD_currentWave" ) + WaveMilestone )
 		player.SetPersistentVar( "fd_match[" + eFDXPType.PERFECT_COMPOSITION + "]", Composition )
 		player.SetPersistentVar( "fd_match[" + eFDXPType.RETRIES_REMAINING + "]", GetGlobalNetInt( "FD_restartsRemaining" ) )
@@ -3332,7 +3331,7 @@ void function RegisterPostSummaryScreenForMatch( bool matchwon )
 		player.SetPersistentVar( "fd_count[" + eFDXPType.RETRIES_REMAINING + "]", 2 )
 		
 		fdXPamount += GetGlobalNetInt( "FD_restartsRemaining" )
-		fdXPamount += expect int( player.s.completedwaves ) + Composition
+		fdXPamount += file.players[player].wavesCompleted + Composition
 		fdXPamount += GetGlobalNetInt( "FD_currentWave" ) + WaveMilestone
 		
 		if( matchwon )

@@ -88,12 +88,12 @@ global struct WaveEvent{
 
 global enum eFDSD //Shortened from eFDSpawn_Difficulty to not make scripts too horrible to read
 {
-	EASY 		= 1 << 0,
-	NORMAL		= 1 << 1,
-	HARD 		= 1 << 2,
-	MASTER		= 1 << 3,
-	INSANE		= 1 << 4,
-	ALL			= 1 << 5
+	EASY,
+	NORMAL,
+	HARD,
+	MASTER,
+	INSANE,
+	ALL
 }
 
 global enum FD_IncomingWarnings
@@ -254,6 +254,9 @@ void function runEvents( int firstExecuteIndex )
 	while( true )
 	{
 		currentEvent.timesExecuted++
+			
+		if( currentEvent.timesExecuted != currentEvent.executeOnThisCall )
+			return
 		
 		if( !( currentEvent.spawnInDifficulty & eFDSD.ALL ) )
 		{
@@ -281,9 +284,6 @@ void function runEvents( int firstExecuteIndex )
 					break
 			}
 		}
-		
-		if( currentEvent.timesExecuted != currentEvent.executeOnThisCall )
-			return
 
 		if( !IsHarvesterAlive(fd_harvester.harvester ) )
 			return
@@ -2554,6 +2554,7 @@ void function SetEliteTitanPostSpawn( entity npc )
 		npc.SetDefaultSchedule( "SCHED_ALERT_WALK" )
 		npc.kv.AccuracyMultiplier = 5.0
 		npc.kv.WeaponProficiency = eWeaponProficiency.PERFECT
+		npc.SetTargetInfoIcon( GetTitanCoreIcon( GetTitanCharacterName( npc ) ) )
 		SetTitanWeaponSkin( npc )
 		HideCrit( npc )
 		npc.SetTitle( npc.GetSettingTitle() )

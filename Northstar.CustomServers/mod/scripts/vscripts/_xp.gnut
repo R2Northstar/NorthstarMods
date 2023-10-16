@@ -16,10 +16,10 @@ void function SetupPlayerPreviousXPValues( entity player )
 		player.SetPersistentVar( "previousFactionXP[" + xpFaction + "]", FactionGetXP( player, xpFaction ) )
 
 	foreach ( string xpTitan in shTitanXP.titanClasses )
+	{
 		player.SetPersistentVar( "previousTitanXP[" + xpTitan + "]", TitanGetXP( player, xpTitan ) )
-	
-	foreach ( string xpFDTitan in shTitanXP.titanClasses )
-		player.SetPersistentVar( "fdPreviousTitanXP[" + xpFDTitan + "]", FD_TitanGetXP( player, xpFDTitan ) )
+		player.SetPersistentVar( "fdPreviousTitanXP[" + xpTitan + "]", FD_TitanGetXP( player, xpTitan ) )
+	}
 
 	foreach ( string xpWeapon in shWeaponXP.weaponClassNames )
 		player.SetPersistentVar( GetItemPersistenceStruct( xpWeapon ) + ".previousWeaponXP", WeaponGetXP( player, xpWeapon ) )
