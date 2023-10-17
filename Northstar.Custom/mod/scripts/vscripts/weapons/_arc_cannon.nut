@@ -548,7 +548,6 @@ function ZapTarget( zapInfo, target, beamStartPos, beamEndPos, chainNum = 1 )
 		int damageNearValueTitanArmor = eWeaponVar.damage_near_value_titanarmor
 		int damageFarDistance = eWeaponVar.damage_far_distance
 		int damageNearDistance = eWeaponVar.damage_near_distance
-
 		if ( zapInfo.player.IsNPC() )
 		{
 			damageFarValue = eWeaponVar.npc_damage_far_value
@@ -643,9 +642,7 @@ function ZapTarget( zapInfo, target, beamStartPos, beamEndPos, chainNum = 1 )
 				// Do 3rd person effect on the body
 				asset effect
 				string tag
-
 				target.TakeDamage( damageAmount, zapInfo.player, zapInfo.player, { origin = beamEndPos, force = Vector(0,0,0), scriptType = deathPackage, weapon = zapInfo.weapon, damageSourceId = dmgSourceID,criticalHitScale = critScale } )
-
 				//vector dir = Normalize( beamEndPos - beamStartPos )
 				//vector velocity = dir * 600
 				//PushPlayerAway( target, velocity )
