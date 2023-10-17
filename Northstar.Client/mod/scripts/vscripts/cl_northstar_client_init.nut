@@ -46,3 +46,10 @@ global struct ServerInfo
     string region
     array< RequiredModInfo > requiredMods
 }
+
+global struct MasterServerAuthResult
+{
+    bool success
+    string errorCode
+    string errorMessage
+}
