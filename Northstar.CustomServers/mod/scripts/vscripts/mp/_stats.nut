@@ -264,7 +264,7 @@ void function Stats_IncrementStat( entity player, string statCategory, string st
 		// persistence string, we can't save the persistence so we have to just return
 		if ( str != saveVar )
 		{
-			printt( ex )
+			//printt( ex, str, GetMapName(), mode ) // commented because people don't like it when i print errors to the console
 			return
 		}
 	}
