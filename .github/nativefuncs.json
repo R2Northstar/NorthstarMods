@@ -717,6 +717,12 @@
 			"helpText":"Returns whether or not a given path leads to a folder.",
 			"returnTypeString":"bool",
 			"argTypes":"string path"
-    }
+    },
+		{
+			"name":"NSGetMasterServerAuthResult",
+			"helpText":"",
+			"returnTypeString":"MasterServerAuthResult",
+			"argTypes":""
+		}
 	]
 }
