@@ -4,13 +4,13 @@ globalize_all_functions
 UIPresenceStruct function DiscordRPC_GenerateUIPresence( UIPresenceStruct uis )
 {
 	if ( uiGlobal.isLoading )
-		uis.game_state = eDiscordGameState.LOADING;
+		uis.gameState = eDiscordGameState.LOADING;
 	else if ( uiGlobal.loadedLevel == "" )
-		uis.game_state = eDiscordGameState.MAINMENU;
+		uis.gameState = eDiscordGameState.MAINMENU;
 	else if ( IsLobby() || uiGlobal.loadedLevel == "mp_lobby" )
-		uis.game_state = eDiscordGameState.LOBBY;
+		uis.gameState = eDiscordGameState.LOBBY;
 	else
-		uis.game_state = eDiscordGameState.INGAME;
+		uis.gameState = eDiscordGameState.INGAME;
 
 	return uis
 }

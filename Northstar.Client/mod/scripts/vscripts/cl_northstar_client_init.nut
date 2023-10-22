@@ -1,7 +1,7 @@
 global enum eDiscordGameState
 {
-	LOADING = 0
-	MAINMENU
+    LOADING = 0
+    MAINMENU
     LOBBY
     INGAME
 }
@@ -23,7 +23,7 @@ global struct GameStateStruct {
 }
 
 global struct UIPresenceStruct {
-	int game_state
+    int gameState
 }
 
 global struct RequiredModInfo
