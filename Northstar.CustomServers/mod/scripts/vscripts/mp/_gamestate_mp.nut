@@ -369,6 +369,7 @@ void function GameStateEnter_WinnerDetermined_Threaded()
 	}
 	else
 	{
+		RegisterChallenges_OnMatchEnd()
 		if ( ClassicMP_ShouldRunEpilogue() )
 		{
 			ClassicMP_SetupEpilogue()
@@ -797,11 +798,51 @@ void function SetWinner( int team, string winningReason = "", string losingReaso
 			}
 			
 			SetGameState( eGameState.WinnerDetermined )
+			ScoreEvent_RoundComplete( team )
 		}
 		else
+		{
 			SetGameState( eGameState.WinnerDetermined )
+			ScoreEvent_MatchComplete( team )
+			
+			array<entity> players = GetPlayerArray()
+			int functionref( entity, entity ) compareFunc = GameMode_GetScoreCompareFunc( GAMETYPE )
+			if ( compareFunc != null )
+			{
+				players.sort( compareFunc )
+				int playerCount = players.len()
+				int currentPlace = 1
+				for ( int i = 0; i < 3; i++ )
+				{
+					if ( i >= playerCount )
+						continue
+					
+					if ( i > 0 && compareFunc( players[i - 1], players[i] ) != 0 )
+						currentPlace += 1
 
-		ScoreEvent_MatchComplete( team )
+					switch( currentPlace )
+					{
+						case 1:
+							SetPlayerChallengeSquadLeader( players[i] )
+							UpdatePlayerStat( players[i], "game_stats", "mvp" )
+							UpdatePlayerStat( players[i], "game_stats", "top3OnTeam" )
+							break
+						case 2:
+							UpdatePlayerStat( players[i], "game_stats", "top3OnTeam" )
+							break
+						case 3:
+							UpdatePlayerStat( players[i], "game_stats", "top3OnTeam" )
+							break
+					}
+				}
+			}
+			
+			foreach( entity xpplayer in players )
+			{
+				if ( xpplayer.GetPlayerNetInt( "xpMultiplier" ) > 0 || GetCurrentPlaylistVarInt( "double_xp_enabled", 0 ) == 1 )
+					xpplayer.SetPersistentVar( "matchSquadBonus", true )
+			}
+		}
 	}
 }
 
