@@ -157,6 +157,7 @@ void function SpawnPlayerIntoDropship( entity player )
 	})
 	
 	WaitFrame()
+	UnMuteAll( player )
 
 	player.EndSignal( "OnDeath" )
 	

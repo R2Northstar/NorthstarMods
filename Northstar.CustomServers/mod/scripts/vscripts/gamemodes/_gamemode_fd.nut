@@ -54,6 +54,8 @@ global bool useCustomFDLoad
 
 const float FD_HARVESTER_PERIMETER_DIST = 1200.0
 
+typedef LoadCustomFDContent void functionref()
+
 struct {
 	array<entity> aiSpawnpoints
 	array<entity> smokePoints
@@ -79,10 +81,8 @@ struct {
 	int playersInShip
 	entity dropship
 	array<entity> playersInDropship
+	array<LoadCustomFDContent> CustomFDContent
 }file
-
-typedef LoadCustomFDContent void functionref()
-array<LoadCustomFDContent> CustomFDContent
 
 const array<string> DROPSHIP_IDLE_ANIMS_POV = [
 	"ptpov_ds_coop_side_intro_gen_idle_B",
@@ -133,7 +133,8 @@ void function GamemodeFD_Init()
 	PlayerEarnMeter_SetEnabled( false )
 	SetAllowLoadoutChangeFunc( FD_ShouldAllowChangeLoadout )
 	SetGetDifficultyFunc( FD_GetDifficultyLevel )
-	
+	AddCallback_OnTryGetTitanLoadout( FD_CheckTitanLoadoutConsistency )
+
 	//Live Fire map check
 	if( GetMapName().find( "mp_lf_" ) == null ) //Maps with Titans, show titan select menu in this mode
 	{
@@ -329,7 +330,7 @@ void function UpdateEarnMeter_ByPlayersInMatch()
 
 void function AddCallback_RegisterCustomFDContent( LoadCustomFDContent callback )
 {
-	CustomFDContent.append( callback )
+	file.CustomFDContent.append( callback )
 }
 
 void function AddFDCustomProp( asset modelasset, vector origin, vector angles )
@@ -355,7 +356,7 @@ void function LoadEntities()
 {
 	CreateBoostStoreLocation( TEAM_MILITIA, shopPosition, shopAngles )
 	
-	foreach ( callback in CustomFDContent )
+	foreach ( callback in file.CustomFDContent )
 		callback()
 	
 	foreach ( entity info_target in GetEntArrayByClass_Expensive( "info_target" ) )
@@ -446,7 +447,6 @@ void function initNetVars()
 
 void function FD_createHarvester()
 {
-	AllPlayersUnMuteAll()
 	fd_harvester = SpawnHarvester( file.harvester_info.GetOrigin(), file.harvester_info.GetAngles(), GetCurrentPlaylistVarInt( "fd_harvester_health", 25000 ), GetCurrentPlaylistVarInt( "fd_harvester_shield", 6000 ), TEAM_MILITIA )
 	SetGlobalNetEnt( "FD_activeHarvester", fd_harvester.harvester )
 	fd_harvester.harvester.Minimap_SetAlignUpright( true )
@@ -1244,7 +1244,7 @@ void function GamemodeFD_InitPlayer( entity player )
 		thread TryDisableTitanSelectionForPlayerAfterDelay( player )
 		
 		string playerUID = player.GetUID()
-		if( playerUID in file.playerHasTitanSelectionLocked ) //Prevent people from doing the server rejoin exploit to swap titans midmatch after Wave 1
+		if( playerUID in file.playerHasTitanSelectionLocked )
 		{
 			SetActiveTitanLoadoutIndex( player, file.playerHasTitanSelectionLocked[ playerUID ] )
 			SetActiveTitanLoadout( player )
@@ -1387,6 +1387,26 @@ void function FD_GiveSmartPistol( entity player )
 	}
 }
 
+//This is to ensure people will also not circumvent the selection lock by selecting titans in the esc menu after the titan selection menu
+sTryGetTitanLoadoutCallbackReturn function FD_CheckTitanLoadoutConsistency( entity player, TitanLoadoutDef loadout, bool wasChanged )
+{
+	sTryGetTitanLoadoutCallbackReturn LoadoutReturn
+	
+	LoadoutReturn.wasChanged = wasChanged
+	LoadoutReturn.loadout = loadout
+	
+	if( !file.isLiveFireMap )
+	{
+		string playerUID = player.GetUID()
+		if( PlayerEarnMeter_Enabled() && playerUID in file.playerHasTitanSelectionLocked )
+		{
+			SetActiveTitanLoadoutIndex( player, file.playerHasTitanSelectionLocked[ playerUID ] )
+			SetActiveTitanLoadout( player )
+		}
+	}
+	return LoadoutReturn
+}
+
 void function FD_BoostPurchaseCallback( entity player, BoostStoreData data )
 {
 	player.s.extracashnag = Time() + 30
@@ -1433,7 +1453,7 @@ bool function ClientCommandCallbackToggleReady( entity player, array<string> arg
 	if( args[0] == "true" )
 	{
 		player.SetPlayerNetBool( "FD_readyForNextWave", true )
-		MessageToTeam( TEAM_MILITIA,eEventNotifications.FD_PlayerReady, null, player )
+		MessageToTeam( TEAM_MILITIA, eEventNotifications.FD_PlayerReady, null, player )
 	}
 	if( args[0] == "false" )
 		player.SetPlayerNetBool( "FD_readyForNextWave", false )
@@ -1536,6 +1556,12 @@ void function TryDisableTitanSelectionForPlayerAfterDelay( entity player )
 				
 				if ( PlayerEarnMeter_Enabled() )
 				{
+					string playerUID = player.GetUID()
+					if( playerUID in file.playerHasTitanSelectionLocked ) //Prevent people from doing the server rejoin exploit to swap titans midmatch after Wave 1
+					{
+						SetActiveTitanLoadoutIndex( player, file.playerHasTitanSelectionLocked[ playerUID ] )
+						SetActiveTitanLoadout( player )
+					}
 					DisableTitanSelectionForPlayer( player )
 					if( GetGlobalNetInt( "FD_waveState" ) == WAVE_STATE_BREAK ) //On wave break, let joiners have their Titan instantly
 						PlayerEarnMeter_AddEarnedAndOwned( player, 1.0, 1.0 )
@@ -2277,6 +2303,8 @@ void function HealthScaleByDifficulty( entity ent )
 	if ( ent.GetTeam() == TEAM_MILITIA )
 	{
 		FD_UpdateTitanBehavior()
+		Highlight_SetFriendlyHighlight( ent, "sp_friendly_hero" )
+		ent.Highlight_SetParam( 1, 0, HIGHLIGHT_COLOR_FRIENDLY )
 		return
 	}
 
@@ -2352,9 +2380,7 @@ void function AddTurretSentry( entity turret )
 		turret.kv.AccuracyMultiplier = DEPLOYABLE_TURRET_ACCURACY_MULTIPLIER
 		turret.ai.buddhaMode = true
 		SetPreventSmartAmmoLock( turret, true ) //Prevents enemy Legion Smart Core to target them automatically
-		Highlight_SetFriendlyHighlight( turret , "sp_friendly_hero" )
 		Highlight_SetOwnedHighlight( turret , "sp_friendly_hero" )
-		turret.Highlight_SetParam( 1, 0, < 0, 0, 0 > )
 		turret.Highlight_SetParam( 3, 0, HIGHLIGHT_COLOR_INTERACT )
 		
 		if( turret.e.fd_roundDeployed == -1 )
@@ -2551,7 +2577,7 @@ void function FD_OnNPCDeath( entity victim, entity attacker, var damageInfo )
 		foreach( player in GetPlayerArray() )
 			Remote_CallFunction_NonReplay( player, "ServerCallback_OnTitanKilled", attacker.GetEncodedEHandle(), victim.GetEncodedEHandle(), scriptDamageType, damageSourceId )
 		
-		if( damageSourceId == eDamageSourceId.rodeo_forced_titan_eject )
+		if( damageSourceId == eDamageSourceId.rodeo_forced_titan_eject || damageSourceId == eDamageSourceId.core_overload )
 			UpdatePlayerStat( attacker, "fd_stats", "rodeoNukes" )
 	}
 	
@@ -2609,8 +2635,6 @@ void function FD_OnNPCDeath( entity victim, entity attacker, var damageInfo )
 	{
 		if( !inflictor.IsNPC() && !attacker.IsTitan() && victim.IsTitan() )
 		{
-			string titanCharacterName = GetTitanCharacterName( victim )
-			
 			if ( Time() - attacker.s.lastKillTime <= CASCADINGKILL_REQUIREMENT_TIME )
 			{
 				attacker.s.currentTimedKillstreak++
@@ -2625,7 +2649,7 @@ void function FD_OnNPCDeath( entity victim, entity attacker, var damageInfo )
 					ShowLargePilotKillStreak( attacker )
 			}
 
-			switch( titanCharacterName )
+			switch( GetTitanCharacterName( victim ) )
 			{
 				case "ion":
 					PlayFactionDialogueToPlayer( "kc_pilotkillIon", attacker )
@@ -3452,34 +3476,7 @@ array<int> function getHighestEnemyAmountsForWave( int waveIndex )
 
 	foreach( WaveEvent e in waveEvents[waveIndex] )
 	{
-		if( !( e.spawnInDifficulty & eFDSD.ALL ) )
-		{
-			switch( difficultyLevel )
-			{
-				case eFDDifficultyLevel.EASY:
-					if( !( e.spawnInDifficulty & eFDSD.EASY ) )
-						skipevent = true
-					break
-				case eFDDifficultyLevel.NORMAL:
-					if( !( e.spawnInDifficulty & eFDSD.NORMAL ) )
-						skipevent = true
-					break
-				case eFDDifficultyLevel.HARD:
-					if( !( e.spawnInDifficulty & eFDSD.HARD ) )
-						skipevent = true
-					break
-				case eFDDifficultyLevel.MASTER:
-					if( !( e.spawnInDifficulty & eFDSD.MASTER ) )
-						skipevent = true
-					break
-				case eFDDifficultyLevel.INSANE:
-					if( !( e.spawnInDifficulty & eFDSD.INSANE ) )
-						skipevent = true
-					break
-			}
-		}
-		
-		if( e.spawnEvent.spawnAmount == 0 || skipevent )
+		if( e.spawnEvent.spawnAmount == 0 || ShouldSkipEventForDifficulty( e ) )
 			continue
 		
 		switch( e.spawnEvent.spawnType )
@@ -3573,34 +3570,7 @@ void function SetEnemyAmountNetVars( int waveIndex )
 
 	foreach( WaveEvent e in waveEvents[waveIndex] )
 	{
-		if( !( e.spawnInDifficulty & eFDSD.ALL ) )
-		{
-			switch( difficultyLevel )
-			{
-				case eFDDifficultyLevel.EASY:
-					if( !( e.spawnInDifficulty & eFDSD.EASY ) )
-						skipevent = true
-					break
-				case eFDDifficultyLevel.NORMAL:
-					if( !( e.spawnInDifficulty & eFDSD.NORMAL ) )
-						skipevent = true
-					break
-				case eFDDifficultyLevel.HARD:
-					if( !( e.spawnInDifficulty & eFDSD.HARD ) )
-						skipevent = true
-					break
-				case eFDDifficultyLevel.MASTER:
-					if( !( e.spawnInDifficulty & eFDSD.MASTER ) )
-						skipevent = true
-					break
-				case eFDDifficultyLevel.INSANE:
-					if( !( e.spawnInDifficulty & eFDSD.INSANE ) )
-						skipevent = true
-					break
-			}
-		}
-		
-		if( e.spawnEvent.spawnAmount == 0 || skipevent )
+		if( e.spawnEvent.spawnAmount == 0 || ShouldSkipEventForDifficulty( e ) )
 			continue
 		
 		switch( e.spawnEvent.spawnType )
@@ -3884,89 +3854,6 @@ function FD_UpdateTitanBehavior()
 	}
 }
 
-void function EliteTitanElectricSmoke( entity titan )
-{
-	Assert( IsValid( titan ) && titan.IsTitan(), "Entity is not a Titan: " + titan )
-	
-	entity soul = titan.GetTitanSoul()
-	soul.EndSignal( "OnDestroy" )
-	soul.EndSignal( "OnDeath" )
-	
-	wait RandomFloatRange( 1.0, 2.0 )
-	
-	if( IsValid( titan ) && IsValid( soul ) && !titan.ContextAction_IsMeleeExecution() )
-	{
-		GiveOffhandElectricSmoke( titan )
-		entity smokeinventory = titan.GetOffhandWeapon( OFFHAND_INVENTORY )
-		if ( smokeinventory != null )
-		{
-			if( GetTitanCharacterName( titan ) == "vanguard" && !smokeinventory.HasMod( "maelstrom" ) )
-				smokeinventory.AddMod( "maelstrom" )
-			
-			EliteTitanSmokescreen( titan, smokeinventory )
-		}
-	}
-}
-
-void function EliteTitanSmokescreen( entity ent, entity weapon )
-{
-	SmokescreenStruct smokescreen
-	array<entity> primaryWeapons = ent.GetMainWeapons()
-	
-	if( !primaryWeapons.len() )
-		return
-		
-	entity maingun = primaryWeapons[0]
-	if ( IsValid( maingun ) && maingun.HasMod( "fd_vanguard_utility_1" ) )
-		smokescreen.smokescreenFX = FX_ELECTRIC_SMOKESCREEN_HEAL
-	smokescreen.isElectric = true
-	smokescreen.ownerTeam = ent.GetTeam()
-	smokescreen.attacker = ent
-	smokescreen.inflictor = ent
-	smokescreen.weaponOrProjectile = weapon
-	smokescreen.damageInnerRadius = 320.0
-	smokescreen.damageOuterRadius = 375.0
-	smokescreen.dangerousAreaRadius = 1.0
-	if ( weapon.HasMod( "maelstrom" ) )
-	{
-		smokescreen.dpsPilot = 90
-		smokescreen.dpsTitan = 1350
-		smokescreen.deploySound1p = SFX_SMOKE_DEPLOY_BURN_1P
-		smokescreen.deploySound3p = SFX_SMOKE_DEPLOY_BURN_3P
-	}
-	else
-	{
-		smokescreen.dpsPilot = 45
-		smokescreen.dpsTitan = 450
-	}
-	smokescreen.damageDelay = 1.0
-	smokescreen.blockLOS = false
-
-	vector eyeAngles = <0.0, ent.EyeAngles().y, 0.0>
-	smokescreen.angles = eyeAngles
-
-	vector forward = AnglesToForward( eyeAngles )
-	vector testPos = ent.GetOrigin() + forward * 240.0
-	vector basePos = testPos
-
-	float trace = TraceLineSimple( ent.EyePosition(), testPos, ent )
-	if ( trace != 1.0 )
-		basePos = ent.GetOrigin()
-
-	float fxOffset = 200.0
-	float fxHeightOffset = 148.0
-
-	smokescreen.origin = basePos
-
-	smokescreen.fxOffsets = [ < -fxOffset, 0.0, 20.0>,
-							  <0.0, fxOffset, 20.0>,
-							  <0.0, -fxOffset, 20.0>,
-							  <0.0, 0.0, fxHeightOffset>,
-							  < -fxOffset, 0.0, fxHeightOffset> ]
-
-	Smokescreen( smokescreen )
-}
-
 void function FD_LootBatteryDrop( entity batteryent, bool dropAmped = false )
 {
 	vector vec = RandomVec( 150 )
@@ -4033,6 +3920,7 @@ void function HT_BatteryPort( entity batteryPort, entity turret )
 	batteryPort.s.useBattery <- HTUseBatteryFunc
 	batteryPort.s.hackAvaliable = false
 	batteryPort.SetUsableByGroup( "friendlies pilot" )
+	thread BatteryPortGlowcheck( batteryPort, turret )
 }
 
 function HTBatteryPortUseCheck( batteryPortvar, playervar )
@@ -4073,4 +3961,25 @@ function HTUseBatteryFunc( batteryPortvar, playervar )
 	
 	turret.SetHealth( turret.GetMaxHealth() )
     turret.SetShieldHealth( 2500 )
+}
+
+void function BatteryPortGlowcheck( entity batteryPort, entity turret )
+{
+	batteryPort.EndSignal( "OnDestroy" )
+	turret.EndSignal( "OnDestroy" )
+	
+	while( true )
+	{
+		turret.WaitSignal( "TurretOffline" )
+		
+		Highlight_SetFriendlyHighlight( turret, "sp_objective_entity" )
+		turret.Highlight_SetParam( 1, 0, < 1.5, 1.5, 0.35 > )
+		batteryPort.Highlight_SetParam( 1, 0, < 0.5, 2.0, 0.5 > )
+		
+		while( turret.GetHealth() <= 1 )
+			WaitFrame()
+		
+		Highlight_ClearFriendlyHighlight( turret )
+		batteryPort.Highlight_SetParam( 1, 0, < 0.0, 0.0, 0.0 > )
+	}
 }

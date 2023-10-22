@@ -109,15 +109,8 @@ void function singleNav_thread( entity npc, string routeName, int nodesToSkip = 
 			routetaken = routeName
 	}
 
-	//Do not make Ticks ignore potential targets just to charge at the Harvester
-	//Arc Titans apparently also stops to fight players on place rather that fiercely push forward
-	//Combat Reapers seems to be a little agressive rather than just sprint to the Harvester mindlessly
-	//Elite Titans will be fighting players since they can push to the Harvester way more easily than the common titans
-	if ( npc.GetClassName() == "npc_frag_drone" )
-		npc.AssaultSetFightRadius( 300 )
-	else if ( npcName == "empTitan" || IsSuperSpectre( npc ) || npc.ai.bossTitanType == TITAN_MERC )
-		npc.AssaultSetFightRadius( 1200 )
-	else
+	//Ticks, Arc Titans, Combat Reapers and Elite Titans have their own Fight Radii defined in spawn code
+	if ( npc.GetClassName() != "npc_frag_drone" && npcName != "empTitan" && !IsSuperSpectre( npc ) && npc.ai.bossTitanType != TITAN_MERC )
 		npc.AssaultSetFightRadius( 0 )
 	
 	if( !useCustomFDLoad )
@@ -189,7 +182,7 @@ void function singleNav_thread( entity npc, string routeName, int nodesToSkip = 
 	if ( ( npc.GetClassName() == "npc_frag_drone" || npc.GetClassName() == "npc_stalker" ) && IsHarvesterAlive( fd_harvester.harvester ) )
 	{
 		npc.AssaultPointClamped( fd_harvester.harvester.GetOrigin() + < 0, 0, 16 > )
-		npc.AssaultSetGoalRadius( 64 )
+		npc.AssaultSetGoalRadius( 128 )
 	}
 
 	npc.Signal( "FD_ReachedHarvester" )
@@ -215,6 +208,9 @@ void function droneNav_thread( entity npc, string routeName, int nodesToSkip = 0
 	
 	if( !npc.IsTitan() )
 		thread NPCStuckTracker( npc )
+	
+	npc.AssaultSetGoalHeight( 128 )
+	npc.AssaultSetFightRadius( 0 )
 	
 	if( !useCustomFDLoad )
 	{
@@ -298,8 +294,6 @@ void function droneNav_thread( entity npc, string routeName, int nodesToSkip = 0
 				return
 			npc.AssaultPoint( targetNode.GetOrigin() + < 0, 0, 192 > )
 			npc.AssaultSetGoalRadius( nextDistance )
-			npc.AssaultSetGoalHeight( 128 )
-			npc.AssaultSetFightRadius( 0 )
 			
 			table result = npc.WaitSignal( "OnFinishedAssault", "OnEnterGoalRadius", "OnFailedToPath" )
 			
@@ -324,8 +318,6 @@ void function droneNav_thread( entity npc, string routeName, int nodesToSkip = 0
 				return
 			npc.AssaultPoint( routepoint + < 0, 0, 192 > )
 			npc.AssaultSetGoalRadius( nextDistance )
-			npc.AssaultSetGoalHeight( 128 )
-			npc.AssaultSetFightRadius( 0 )
 			
 			table result = npc.WaitSignal( "OnFinishedAssault", "OnEnterGoalRadius", "OnFailedToPath" )
 			

@@ -8,13 +8,6 @@ global function SetAllowLoadoutChangeFunc
 global function AddCallback_OnTryGetTitanLoadout
 global function GetTitanLoadoutForPlayer
 
-global struct sTryGetTitanLoadoutCallbackReturn
-{
-	bool wasChanged = false
-	bool runMoreCallbacks = true
-	TitanLoadoutDef& loadout
-}
-
 typedef TryGetTitanLoadoutCallbackType sTryGetTitanLoadoutCallbackReturn functionref( entity player, TitanLoadoutDef loadout, bool wasChanged )
 
 struct {

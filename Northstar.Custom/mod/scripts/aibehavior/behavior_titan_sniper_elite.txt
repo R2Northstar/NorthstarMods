@@ -5,7 +5,7 @@ Selector Common
 	CNPC_Titan::SelectSchedule_TitanFlightCore
 	CNPC_Titan::SelectSchedule_PhysEntKnock
 	SelectSchedule_DisplaceFromDangerousArea
-	SelectSchedule_DangerousClusterStandoff
+	//SelectSchedule_DangerousClusterStandoff
 	SelectSchedule_ChangeToDesiredStance
 	SelectSchedule_SyncedMeleeAttack
 	CNPC_Titan::SelectSchedule_GotoDefensivePlacement
@@ -37,6 +37,7 @@ Selector Combat
 	SelectSchedule_RangeAttackEvasive
 	SelectSchedule_RangeAttack
 	SelectSchedule_WeaponBlocked
+	SelectSchedule_CantSeeEnemy
 	SelectSchedule_CombatFace
 Selector_End
 
@@ -52,7 +53,9 @@ Selector CombatAggressive
 	SelectSchedule_StationaryLowAmmo
 	SelectSchedule_RangeAttackEvasive
 	SelectSchedule_RangeAttack
+	//SelectSchedule_ChargeAttack
 	SelectSchedule_WeaponBlocked
+	SelectSchedule_CantSeeEnemy
 	SelectSchedule_CombatFace
 Selector_End
 
@@ -69,6 +72,8 @@ Selector CombatEvasive
 	SelectSchedule_EvasiveLowAmmo
 	SelectSchedule_RangeAttackEvasive
 	SelectSchedule_RangeAttack
+	SelectSchedule_EnemyTooClose
 	SelectSchedule_WeaponBlocked
+	SelectSchedule_CantSeeEnemy
 	SelectSchedule_CombatFace
 Selector_End

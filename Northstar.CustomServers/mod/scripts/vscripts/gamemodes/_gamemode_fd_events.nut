@@ -32,6 +32,7 @@ global function CreateGruntDropshipEvent //This one always requires testing afte
 global function executeWave
 global function resetWaveEvents
 global function WinWave
+global function ShouldSkipEventForDifficulty
 global function SpawnDrozFD
 global function SpawnDavisFD
 global function SpawnFDHeavyTurret
@@ -40,6 +41,7 @@ global function ShowTitanfallBlockHintToPlayer
 global function ShowLargePilotKillStreak
 global function ShowWaitingForMorePlayers
 global function SetupGruntSpectreWeapons
+global function EliteTitanElectricSmoke
 
 global struct SmokeEvent{
 	vector position
@@ -88,12 +90,12 @@ global struct WaveEvent{
 
 global enum eFDSD //Shortened from eFDSpawn_Difficulty to not make scripts too horrible to read
 {
-	EASY,
-	NORMAL,
-	HARD,
-	MASTER,
-	INSANE,
-	ALL
+	ALL		= 1 << 0,
+	EASY	= 1 << 1,
+	NORMAL	= 1 << 2,
+	HARD	= 1 << 3,
+	MASTER	= 1 << 4,
+	INSANE	= 1 << 5
 }
 
 global enum FD_IncomingWarnings
@@ -257,42 +259,14 @@ void function runEvents( int firstExecuteIndex )
 			
 		if( currentEvent.timesExecuted != currentEvent.executeOnThisCall )
 			return
-		
-		if( !( currentEvent.spawnInDifficulty & eFDSD.ALL ) )
-		{
-			switch( difficultyLevel )
-			{
-				case eFDDifficultyLevel.EASY:
-					if( !( currentEvent.spawnInDifficulty & eFDSD.EASY ) )
-						skipevent = true
-					break
-				case eFDDifficultyLevel.NORMAL:
-					if( !( currentEvent.spawnInDifficulty & eFDSD.NORMAL ) )
-						skipevent = true
-					break
-				case eFDDifficultyLevel.HARD:
-					if( !( currentEvent.spawnInDifficulty & eFDSD.HARD ) )
-						skipevent = true
-					break
-				case eFDDifficultyLevel.MASTER:
-					if( !( currentEvent.spawnInDifficulty & eFDSD.MASTER ) )
-						skipevent = true
-					break
-				case eFDDifficultyLevel.INSANE:
-					if( !( currentEvent.spawnInDifficulty & eFDSD.INSANE ) )
-						skipevent = true
-					break
-			}
-		}
 
 		if( !IsHarvesterAlive(fd_harvester.harvester ) )
 			return
 		
-		if( !skipevent )
+		if( !ShouldSkipEventForDifficulty( currentEvent ) )
 		{
 			if( currentEvent.shouldThread )
 				thread currentEvent.eventFunction( currentEvent.smokeEvent, currentEvent.spawnEvent, currentEvent.flowControlEvent, currentEvent.soundEvent )
-
 			else
 				currentEvent.eventFunction( currentEvent.smokeEvent, currentEvent.spawnEvent, currentEvent.flowControlEvent, currentEvent.soundEvent )
 		}
@@ -311,6 +285,11 @@ void function resetWaveEvents()
 	foreach( WaveEvent event in waveEvents[GetGlobalNetInt( "FD_currentWave" )] )
 		event.timesExecuted = 0
 }
+
+
+
+
+
 
 /* Event Generators
 ███████╗██╗   ██╗███████╗███╗   ██╗████████╗     ██████╗ ███████╗███╗   ██╗███████╗██████╗  █████╗ ████████╗ ██████╗ ██████╗ ███████╗
@@ -1011,31 +990,6 @@ void function AnnounceTitanfallBlock()
 	#endif
 }
 
-void function ShowTitanfallBlockHintToPlayer( entity player )
-{
-	#if SERVER
-	wait 10
-	IsValidPlayer( player )
-		NSSendLargeMessageToPlayer( player, "Titanfall Block Active", "Your titan cannot be summoned, but you can help team mates not losing theirs, steal batteries!", 60, "rui/callsigns/callsign_hidden" )
-	#endif
-}
-
-void function ShowLargePilotKillStreak( entity streaker )
-{
-	#if SERVER
-	foreach( entity player in GetPlayerArray() )
-		NSSendAnnouncementMessageToPlayer( player, streaker.GetPlayerName(), "Chained a huge titan killstreak as pilot!", < 255, 128, 32 >, 50, 5 )
-	#endif
-}
-
-void function ShowWaitingForMorePlayers()
-{
-	#if SERVER
-	foreach( entity player in GetPlayerArray() )
-		NSSendAnnouncementMessageToPlayer( player, "#HUD_WAITING_FOR_PLAYERS_BASIC", "Minimum of: " + GetConVarInt( "ns_fd_min_numplayers_to_start" ) + " to start", < 255, 255, 255 >, 50, 5 )
-	#endif
-}
-
 void function PlayWarning( SmokeEvent smokeEvent, SpawnEvent spawnEvent, FlowControlEvent flowControlEvent, SoundEvent soundEvent )
 {
 	if ( !titanfallblockAllowed && soundEvent.soundEventName == "fd_waveNoTitanDrops" || !elitesAllowed && soundEvent.soundEventName == "fd_waveTypeEliteTitan" )
@@ -1051,16 +1005,6 @@ void function PlayWarning( SmokeEvent smokeEvent, SpawnEvent spawnEvent, FlowCon
 		#endif
 		PlayFactionDialogueToTeam( soundEvent.soundEventName, TEAM_MILITIA )
 	}
-}
-
-void function AnnounceEliteTitansToPlayers( entity player )
-{
-	#if SERVER
-	NSSendLargeMessageToPlayer( player, "Elite Titan", "Prime white chassis. Huge HP, huge shield, greater aiming, moves faster and can use Core. Drops battery on death.", 60, "rui/callsigns/callsign_17_col" )
-	wait 10
-	IsValidPlayer( player )
-		NSSendInfoMessageToPlayer( player, "WARNING: Elite Titans can execute players!" )
-	#endif
 }
 
 void function spawnSmoke( SmokeEvent smokeEvent, SpawnEvent spawnEvent, FlowControlEvent flowControlEvent, SoundEvent soundEvent )
@@ -1104,9 +1048,9 @@ void function spawnSmoke( SmokeEvent smokeEvent, SpawnEvent spawnEvent, FlowCont
 	DispatchSpawn( smokenade )
 	PlayLoopFXOnEntity( $"weapon_kraber_projectile", smokenade, "exhaust" )
 	PlayLoopFXOnEntity( $"Rocket_Smoke_Large", smokenade, "exhaust" )
-	mover.NonPhysicsMoveTo( groundpos, 1.0, 0, 0 )
-	wait 1
-	Smokescreen(smokescreen)
+	mover.NonPhysicsMoveTo( groundpos, 1.5, 0, 0 )
+	wait 1.5
+	Smokescreen( smokescreen )
 	wait 0.2
 	smokenade.Destroy()
 	mover.Destroy()
@@ -1116,9 +1060,8 @@ void function spawnDrones( SmokeEvent smokeEvent, SpawnEvent spawnEvent, FlowCon
 {
 	printt( "Spawning Drones at: " + spawnEvent.origin )
 	PingMinimap( spawnEvent.origin.x, spawnEvent.origin.y, 4, 600, 150, 0 )
-
+	
 	string squadName = MakeSquadName( TEAM_IMC, UniqueString() )
-
 	for ( int i = 0; i < spawnEvent.spawnAmount; i++ )
     {
 		vector offsets = Vector( RandomFloatRange( -40, 40 ), RandomFloatRange( -40, 40 ), RandomFloatRange( -40, 40 ) )
@@ -1134,7 +1077,7 @@ void function spawnDrones( SmokeEvent smokeEvent, SpawnEvent spawnEvent, FlowCon
 		SetTargetName( guy, GetTargetNameForID( eFD_AITypeIDs.DRONE ) )
 		AddMinimapForHumans( guy )
 		spawnedNPCs.append( guy )
-		thread droneNav_thread(guy, spawnEvent.route, 0, 160, spawnEvent.shouldLoop )
+		thread droneNav_thread( guy, spawnEvent.route, 0, 160, spawnEvent.shouldLoop )
 	}
 }
 
@@ -1195,7 +1138,6 @@ void function spawnArcTitan( SmokeEvent smokeEvent, SpawnEvent spawnEvent, FlowC
 	npc.kv.reactChance = 50
 	npc.kv.WeaponProficiency = eWeaponProficiency.AVERAGE //This is because on Vanilla, Arc Titans don't spam Arc Waves as much and that is related to weapon proficiency
 	npc.DisableNPCFlag( NPC_ALLOW_INVESTIGATE | NPC_USE_SHOOTING_COVER | NPC_ALLOW_PATROL )
-	npc.EnableNPCMoveFlag( NPCMF_PREFER_SPRINT )
 	npc.SetDangerousAreaReactionTime( FD_TITAN_AOE_REACTTIME )
 	AddMinimapForTitans( npc )
 	npc.WaitSignal( "TitanHotDropComplete" )
@@ -1204,6 +1146,19 @@ void function spawnArcTitan( SmokeEvent smokeEvent, SpawnEvent spawnEvent, FlowC
 		GlobalEventEntitys[spawnEvent.entityGlobalKey] <- npc
 	thread singleNav_thread( npc, spawnEvent.route )
 	thread EMPTitanThinkConstant( npc )
+	switch ( difficultyLevel )
+	{
+		case eFDDifficultyLevel.EASY:
+		case eFDDifficultyLevel.NORMAL:
+			npc.AssaultSetFightRadius( 1200 )
+			break
+		case eFDDifficultyLevel.HARD:
+		case eFDDifficultyLevel.MASTER:
+		case eFDDifficultyLevel.INSANE:
+			npc.AssaultSetFightRadius( 0 )
+			npc.EnableNPCMoveFlag( NPCMF_PREFER_SPRINT )
+			break
+	}
 }
 
 void function waitForTime( SmokeEvent smokeEvent, SpawnEvent spawnEvent, FlowControlEvent flowControlEvent, SoundEvent soundEvent )
@@ -1264,6 +1219,18 @@ void function spawnSuperSpectre( SmokeEvent smokeEvent, SpawnEvent spawnEvent, F
 	npc.WaitSignal( "WarpfallComplete" )
 	//npc.SetCapabilityFlag( bits_CAP_MOVE_TRAVERSE, true )
 	thread singleNav_thread( npc, spawnEvent.route )
+	switch ( difficultyLevel )
+	{
+		case eFDDifficultyLevel.EASY:
+		case eFDDifficultyLevel.NORMAL:
+			npc.AssaultSetFightRadius( 1200 )
+			break
+		case eFDDifficultyLevel.HARD:
+		case eFDDifficultyLevel.MASTER:
+		case eFDDifficultyLevel.INSANE:
+			npc.AssaultSetFightRadius( 0 )
+			break
+	}
 }
 
 void function spawnSuperSpectreWithMinion( SmokeEvent smokeEvent, SpawnEvent spawnEvent, FlowControlEvent flowControlEvent, SoundEvent soundEvent )
@@ -1467,23 +1434,20 @@ void function spawnGruntDropship( SmokeEvent smokeEvent, SpawnEvent spawnEvent, 
 	
 	EmitSoundOnEntity( dropship, dropshipSound )
 	thread PlayAnimTeleport( dropship, DROPSHIP_DROP_ANIM, ref, 0 )
-	ArrayRemoveDead( guys )
 	wait 12
+	ArrayRemoveDead( guys )
 	foreach( guy in guys )
 	{
-		if ( IsAlive( guy ) )
+		if ( guy.GetParent() )
 		{
-			if ( guy.GetParent() )
-			{
-				guy.EnableNPCFlag( NPC_NO_WEAPON_DROP )
-				guy.Die( svGlobal.worldspawn, svGlobal.worldspawn, { scriptType = DF_DISSOLVE, damageSourceId = damagedef_crush } ) //Kill grunts that didn't manage to drop off the ship
-			}
-			else
-			{
-				guy.SetEfficientMode( false )
-				guy.SetEnemyChangeCallback( GruntTargetsTitan )
-				thread singleNav_thread( guy, spawnEvent.route )
-			}
+			guy.EnableNPCFlag( NPC_NO_WEAPON_DROP )
+			guy.Die( svGlobal.worldspawn, svGlobal.worldspawn, { scriptType = DF_DISSOLVE, damageSourceId = damagedef_crush } ) //Kill grunts that didn't manage to drop off the ship
+		}
+		else
+		{
+			guy.SetEfficientMode( false )
+			guy.SetEnemyChangeCallback( GruntTargetsTitan )
+			thread singleNav_thread( guy, spawnEvent.route )
 		}
 	}
 	WaittillAnimDone( dropship )
@@ -1647,7 +1611,7 @@ void function spawnDroppodSpectre( SmokeEvent smokeEvent, SpawnEvent spawnEvent,
 		guy.kv.AccuracyMultiplier = 4.0
 		guy.kv.WeaponProficiency = eWeaponProficiency.PERFECT
 		guy.AssaultSetFightRadius( 0 )
-		guy.DisableNPCFlag( NPC_ALLOW_INVESTIGATE | NPC_USE_SHOOTING_COVER | NPC_ALLOW_PATROL )
+		guy.DisableNPCFlag( NPC_ALLOW_INVESTIGATE | NPC_USE_SHOOTING_COVER | NPC_ALLOW_PATROL | NPC_ALLOW_FLEE )
 		guy.EnableNPCFlag( NPC_NO_WEAPON_DROP )
 		spawnedNPCs.append(guy)
 		guy.SetParent( pod, "ATTACH", true )
@@ -1883,6 +1847,12 @@ void function SpawnToneTitan( SmokeEvent smokeEvent, SpawnEvent spawnEvent, Flow
 		entity tonesonar = npc.GetOffhandWeapon( OFFHAND_ANTIRODEO )
 		tonesonar.AddMod( "fd_sonar_duration" )
 		tonesonar.AddMod( "fd_sonar_damage_amp" )
+		
+		array<entity> primaryWeapons = npc.GetMainWeapons()
+		entity maingun = primaryWeapons[0]
+		maingun.AddMod( "fast_reload" )
+		maingun.AddMod( "extended_ammo" )
+		
 		npc.SetDangerousAreaReactionTime( 0 )
 	}
 	else
@@ -1995,9 +1965,15 @@ void function SpawnMonarchTitan( SmokeEvent smokeEvent, SpawnEvent spawnEvent, F
 		maingun.AddMod( "fd_vanguard_weapon_1" )
 		maingun.AddMod( "fd_vanguard_weapon_2" )
 		maingun.AddMod( "fd_vanguard_utility_1" )
+		maingun.AddMod( "fd_vanguard_utility_2" )
 		
 		npc.TakeOffhandWeapon( OFFHAND_ORDNANCE )
-		npc.GiveOffhandWeapon( "mp_titanweapon_shoulder_rockets", OFFHAND_ORDNANCE, ["mod_ordnance_core","upgradeCore_MissileRack_Vanguard"] )
+		npc.GiveOffhandWeapon( "mp_titanweapon_shoulder_rockets", OFFHAND_ORDNANCE, ["mod_ordnance_core","upgradeCore_MissileRack_Vanguard","dev_mod_low_recharge"] )
+		
+		entity shieldLaser = npc.GetOffhandWeapon( OFFHAND_SPECIAL )
+		shieldLaser.AddMod( "energy_field" )
+		shieldLaser.AddMod( "burn_mod_titan_laser_lite" )
+		
 		npc.SetDangerousAreaReactionTime( 0 )
 	}
 	else
@@ -2099,9 +2075,22 @@ void function spawnSniperTitan( SmokeEvent smokeEvent, SpawnEvent spawnEvent, Fl
 		npc.SetHealth( npc.GetMaxHealth() )
 		npc.GetTitanSoul().soul.titanLoadout.titanExecution = "execution_random_2"
 		
+		array<entity> primaryWeapons = npc.GetMainWeapons()
+		entity maingun = primaryWeapons[0]
+		maingun.AddMod( "instant_shot" )
+		maingun.AddMod( "fast_reload" )
+		maingun.AddMod( "pas_northstar_weapon" )
+		maingun.AddMod( "burn_mod_titan_sniper" )
+		
 		entity tethertrap = npc.GetOffhandWeapon( OFFHAND_SPECIAL )
-		tethertrap.AddMod( "fd_explosive_trap" )
 		tethertrap.AddMod( "fd_trap_charges" )
+		tethertrap.AddMod( "fd_explosive_trap" )
+		
+		entity clustermissile = npc.GetOffhandWeapon( OFFHAND_ORDNANCE )
+		clustermissile.AddMod( "fd_twin_cluster" )
+		clustermissile.AddMod( "dev_mod_low_recharge" )
+		clustermissile.AddMod( "burn_mod_titan_dumbfire_rockets" )
+		
 		npc.SetDangerousAreaReactionTime( 0 )
 	}
 	else
@@ -2153,6 +2142,12 @@ void function SpawnToneSniperTitan( SmokeEvent smokeEvent, SpawnEvent spawnEvent
 		entity tonesonar = npc.GetOffhandWeapon( OFFHAND_ANTIRODEO )
 		tonesonar.AddMod( "fd_sonar_duration" )
 		tonesonar.AddMod( "fd_sonar_damage_amp" )
+		
+		array<entity> primaryWeapons = npc.GetMainWeapons()
+		entity maingun = primaryWeapons[0]
+		maingun.AddMod( "fast_reload" )
+		maingun.AddMod( "extended_ammo" )
+		
 		npc.SetDangerousAreaReactionTime( 0 )
 	}
 	else
@@ -2213,7 +2208,7 @@ void function SpawnTick( SmokeEvent smokeEvent, SpawnEvent spawnEvent, FlowContr
 		SetSquad( guy, squadName )
 		spawnedNPCs.append( guy )
 		guy.MakeInvisible()
-		guy.AssaultSetFightRadius( expect int( guy.Dev_GetAISettingByKeyField( "LookDistDefault_Combat" ) ) ) // make the ticks target players very aggressively
+		guy.AssaultSetFightRadius( 400 )
 		guys.append( guy )
 	}
 	
@@ -2555,6 +2550,7 @@ void function SetEliteTitanPostSpawn( entity npc )
 		npc.kv.AccuracyMultiplier = 5.0
 		npc.kv.WeaponProficiency = eWeaponProficiency.PERFECT
 		npc.SetTargetInfoIcon( GetTitanCoreIcon( GetTitanCharacterName( npc ) ) )
+		npc.AssaultSetFightRadius( 2000 )
 		SetTitanWeaponSkin( npc )
 		HideCrit( npc )
 		npc.SetTitle( npc.GetSettingTitle() )
@@ -2565,10 +2561,13 @@ void function SetEliteTitanPostSpawn( entity npc )
 		{
 			soul.SetPreventCrits( true )
 			soul.SetShieldHealthMax( 7500 )
-			soul.SetShieldHealth( 7500 )
+			soul.SetShieldHealth( soul.GetShieldHealthMax() )
 		}
 		
-		thread MonitorEliteTitanCore( npc )
+		if( GetTitanCharacterName( npc ) == "vanguard" ) //Monarchs never use their core, but can track their shields to simulate a player-like behavior
+			thread MonitorEliteMonarchShield( npc )
+		else
+			thread MonitorEliteTitanCore( npc )
 	}
 }
 
@@ -2590,7 +2589,7 @@ void function MonitorEliteTitanCore( entity npc )
 		wait 0.1
 		
 		soul.SetShieldHealthMax( 3750 )
-		soul.SetShieldHealth( 3750 )
+		soul.SetShieldHealth( soul.GetShieldHealthMax() )
 		
 		entity meleeWeapon = npc.GetMeleeWeapon()
 		if( meleeWeapon.HasMod( "super_charged" ) || meleeWeapon.HasMod( "super_charged_SP" ) ) //Hack for Elite Ronin
@@ -2619,6 +2618,134 @@ void function MonitorEliteTitanCore( entity npc )
 	}
 }
 
+void function MonitorEliteMonarchShield( entity npc )
+{
+	Assert( IsValid( npc ) && npc.IsTitan() && GetTitanCharacterName( npc ) == "vanguard", "Entity is not a Elite Monarch Titan: " + npc )
+	entity soul = npc.GetTitanSoul()
+	if ( !IsValid( soul ) )
+		return
+	
+	soul.EndSignal( "OnDestroy" )
+	soul.EndSignal( "OnDeath" )
+	
+	float coretime = Time()
+	float smoketime = Time()
+	
+	while( true )
+	{
+		while( soul.GetShieldHealth() > soul.GetShieldHealthMax() * 0.1 )
+			WaitFrame()
+		
+		while( npc.ContextAction_IsBusy() ) //Wait for Arc Traps stuns or other actions
+			WaitFrame()
+		
+		wait RandomFloatRange( 1.0, 2.5 )
+		
+		if( coretime <= Time() )
+		{
+			entity coreEffect = CreateCoreEffect( npc, $"P_titan_core_atlas_blast" )
+			EmitSoundOnEntity( npc, "Titan_Monarch_Smart_Core_Activated_3P" )
+			soul.SetShieldHealth( soul.GetShieldHealthMax() )
+			entity shake = CreateShake( npc.GetOrigin(), 16.0, 5.0, 2.5, 1500.0 )
+			shake.SetParent( npc, "CHESTFOCUS" )
+			wait 2.5
+			shake.Destroy()
+			coreEffect.Destroy()
+			coretime = Time() + RandomFloatRange( 20.0, 40.0 )
+		}
+		else
+		{
+			smoketime = Time() + 6.0
+			thread EliteTitanElectricSmoke( npc )
+			soul.SetDefensivePlacement( smoketime, 160, 0, true, npc.GetOrigin(), VectorToAngles( npc.GetAngles() ) )
+			wait RandomFloatRange( 5.0, 10.0 ) //Wait a bit before repeating process to not get too spammy
+		}
+	}
+}
+
+void function EliteTitanElectricSmoke( entity titan )
+{
+	Assert( IsValid( titan ) && titan.IsTitan(), "Entity is not a Titan: " + titan )
+	
+	entity soul = titan.GetTitanSoul()
+	soul.EndSignal( "OnDestroy" )
+	soul.EndSignal( "OnDeath" )
+	
+	wait RandomFloatRange( 1.0, 2.0 )
+	
+	if( IsValid( titan ) && IsValid( soul ) && !titan.ContextAction_IsMeleeExecution() )
+	{
+		GiveOffhandElectricSmoke( titan )
+		entity smokeinventory = titan.GetOffhandWeapon( OFFHAND_INVENTORY )
+		if ( smokeinventory != null )
+		{
+			if( GetTitanCharacterName( titan ) == "vanguard" && !smokeinventory.HasMod( "maelstrom" ) )
+				smokeinventory.AddMod( "maelstrom" )
+			
+			EliteTitanSmokescreen( titan, smokeinventory )
+		}
+	}
+}
+
+void function EliteTitanSmokescreen( entity ent, entity weapon )
+{
+	SmokescreenStruct smokescreen
+	array<entity> primaryWeapons = ent.GetMainWeapons()
+	
+	if( !primaryWeapons.len() )
+		return
+		
+	entity maingun = primaryWeapons[0]
+	if ( IsValid( maingun ) && maingun.HasMod( "fd_vanguard_utility_1" ) )
+		smokescreen.smokescreenFX = FX_ELECTRIC_SMOKESCREEN_HEAL
+	smokescreen.isElectric = true
+	smokescreen.ownerTeam = ent.GetTeam()
+	smokescreen.attacker = ent
+	smokescreen.inflictor = ent
+	smokescreen.weaponOrProjectile = weapon
+	smokescreen.damageInnerRadius = 320.0
+	smokescreen.damageOuterRadius = 375.0
+	smokescreen.dangerousAreaRadius = 1.0
+	if ( weapon.HasMod( "maelstrom" ) )
+	{
+		smokescreen.dpsPilot = 90
+		smokescreen.dpsTitan = 1350
+		smokescreen.deploySound1p = SFX_SMOKE_DEPLOY_BURN_1P
+		smokescreen.deploySound3p = SFX_SMOKE_DEPLOY_BURN_3P
+	}
+	else
+	{
+		smokescreen.dpsPilot = 45
+		smokescreen.dpsTitan = 450
+	}
+	smokescreen.damageDelay = 1.0
+	smokescreen.blockLOS = false
+
+	vector eyeAngles = <0.0, ent.EyeAngles().y, 0.0>
+	smokescreen.angles = eyeAngles
+
+	vector forward = AnglesToForward( eyeAngles )
+	vector testPos = ent.GetOrigin() + forward * 240.0
+	vector basePos = testPos
+
+	float trace = TraceLineSimple( ent.EyePosition(), testPos, ent )
+	if ( trace != 1.0 )
+		basePos = ent.GetOrigin()
+
+	float fxOffset = 200.0
+	float fxHeightOffset = 148.0
+
+	smokescreen.origin = basePos
+
+	smokescreen.fxOffsets = [ < -fxOffset, 0.0, 20.0>,
+							  <0.0, fxOffset, 20.0>,
+							  <0.0, -fxOffset, 20.0>,
+							  <0.0, 0.0, fxHeightOffset>,
+							  < -fxOffset, 0.0, fxHeightOffset> ]
+
+	Smokescreen( smokescreen )
+}
+
 void function WinWave()
 {
 	foreach( WaveEvent e in waveEvents[GetGlobalNetInt( "FD_currentWave" )] )
@@ -2626,6 +2753,36 @@ void function WinWave()
 		e.timesExecuted = e.executeOnThisCall
 	}
 }
+
+bool function ShouldSkipEventForDifficulty( WaveEvent event )
+{
+	bool allDifficulties = ( event.spawnInDifficulty & eFDSD.ALL ) ? true : false
+	bool easySpawn = ( event.spawnInDifficulty & eFDSD.EASY ) ? true : false
+	bool normalSpawn = ( event.spawnInDifficulty & eFDSD.NORMAL ) ? true : false
+	bool hardSpawn = ( event.spawnInDifficulty & eFDSD.HARD ) ? true : false
+	bool masterSpawn = ( event.spawnInDifficulty & eFDSD.MASTER ) ? true : false
+	bool insaneSpawn = ( event.spawnInDifficulty & eFDSD.INSANE ) ? true : false
+	
+	if( !allDifficulties )
+	{
+		if( difficultyLevel == eFDDifficultyLevel.EASY )
+			return !easySpawn
+		if( difficultyLevel == eFDDifficultyLevel.NORMAL )
+			return !normalSpawn
+		if( difficultyLevel == eFDDifficultyLevel.HARD )
+			return !hardSpawn
+		if( difficultyLevel == eFDDifficultyLevel.MASTER )
+			return !masterSpawn
+		if( difficultyLevel == eFDDifficultyLevel.INSANE )
+			return !insaneSpawn
+		return true
+	}
+	return false
+}
+
+
+
+
 
 
 /* Extra Content
@@ -2636,6 +2793,41 @@ void function WinWave()
 ███████╗██╔╝ ██╗   ██║   ██║  ██║██║  ██║    ╚██████╗╚██████╔╝██║ ╚████║   ██║   ███████╗██║ ╚████║   ██║   
 ╚══════╝╚═╝  ╚═╝   ╚═╝   ╚═╝  ╚═╝╚═╝  ╚═╝     ╚═════╝ ╚═════╝ ╚═╝  ╚═══╝   ╚═╝   ╚══════╝╚═╝  ╚═══╝   ╚═╝   
 */
+
+void function ShowLargePilotKillStreak( entity streaker )
+{
+	#if SERVER
+	foreach( entity player in GetPlayerArray() )
+		NSSendAnnouncementMessageToPlayer( player, streaker.GetPlayerName(), "Chained a huge titan killstreak as pilot!", < 255, 128, 32 >, 50, 5 )
+	#endif
+}
+
+void function ShowWaitingForMorePlayers()
+{
+	#if SERVER
+	foreach( entity player in GetPlayerArray() )
+		NSSendAnnouncementMessageToPlayer( player, "#HUD_WAITING_FOR_PLAYERS_BASIC", "Minimum of: " + GetConVarInt( "ns_fd_min_numplayers_to_start" ) + " to start", < 255, 255, 255 >, 50, 5 )
+	#endif
+}
+
+void function AnnounceEliteTitansToPlayers( entity player )
+{
+	#if SERVER
+	NSSendLargeMessageToPlayer( player, "Elite Titan", "Prime white chassis. Huge HP, huge shield, greater aiming, moves faster and can use Core. Drops battery on death.", 60, "rui/callsigns/callsign_17_col" )
+	wait 10
+	IsValidPlayer( player )
+		NSSendInfoMessageToPlayer( player, "WARNING: Elite Titans can execute players!" )
+	#endif
+}
+
+void function ShowTitanfallBlockHintToPlayer( entity player )
+{
+	#if SERVER
+	wait 10
+	IsValidPlayer( player )
+		NSSendLargeMessageToPlayer( player, "Titanfall Block Active", "Your titan cannot be summoned, but you can help team mates not losing theirs, steal batteries!", 60, "rui/callsigns/callsign_hidden" )
+	#endif
+}
 
 void function Drop_Spawnpoint( vector origin, int team, float impactTime )
 {
@@ -2782,6 +2974,8 @@ void function SpawnFDHeavyTurret( vector spawnpos, vector angles, vector ornull 
 	if ( battportpos != null && battportangles != null )
 	{
 		entity TurretBatteryPort = CreatePropScript( $"models/props/battery_port/battery_port_animated.mdl", expect vector( battportpos ) + < 0, 0, 12 >, battportangles, 6 )
+		Highlight_SetFriendlyHighlight( TurretBatteryPort, "sp_friendly_hero" )
+		TurretBatteryPort.Highlight_SetParam( 1, 0, < 0.0, 0.0, 0.0 > )
 		entity TurretBatteryPortBase = CreatePropDynamicLightweight( $"models/props/turret_base/turret_base.mdl", battportpos, battportangles, 6 )
 		HT_BatteryPort( TurretBatteryPort, HeavyTurret )
 	}

@@ -4,7 +4,7 @@ Selector Common
 	CNPC_Titan::SelectSchedule_TitanCore
 	CNPC_Titan::SelectSchedule_PhysEntKnock
 	SelectSchedule_DisplaceFromDangerousArea
-	SelectSchedule_DangerousClusterStandoff
+	//SelectSchedule_DangerousClusterStandoff
 	SelectSchedule_ChangeToDesiredStance
 	SelectSchedule_LayeredBehavior
 Selector_End
@@ -31,6 +31,7 @@ Selector Combat
 	SelectSchedule_CircleStrafe
 	SelectSchedule_StationaryLowAmmo
 	SelectSchedule_WeaponBlocked
+	SelectSchedule_CantSeeEnemy
 	SelectSchedule_CombatFace
 Selector_End
 

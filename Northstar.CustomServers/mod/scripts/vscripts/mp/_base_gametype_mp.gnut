@@ -496,6 +496,15 @@ void function RespawnAsTitan( entity player, bool manualPosition = false )
 	
 	AddCinematicFlag( player, CE_FLAG_CLASSIC_MP_SPAWNING ) // hide hud
 	
+	#if HAS_STATS
+	UpdatePlayerStat( player, "misc_stats", "titanFalls" )
+	#endif
+	#if SERVER && MP
+		PIN_AddToPlayerCountStat( player, "titanfalls" )
+		int TitanFallXP = player.GetPersistentVarAsInt( "xp_match[" + XP_TYPE.TITAN_FALL + "]" )
+		player.SetPersistentVar( "xp_match[" + XP_TYPE.TITAN_FALL + "]", TitanFallXP + 1 )
+	#endif
+	
 	// do titanfall scoreevent
 	if ( !level.firstTitanfall )
 	{

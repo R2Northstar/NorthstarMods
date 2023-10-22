@@ -61,7 +61,7 @@ void function AddPlayerScore( entity targetPlayer, string scoreEventName, entity
 	}
 	
 	PlayerEarnMeter_AddEarnedAndOwned( targetPlayer, earnValue * scale, ownValue * scale )
-	SharedEarnMeter_AddEarnedAndOwned( targetPlayer, earnValue , ownValue )
+	SharedEarnMeter_AddEarnedAndOwned( targetPlayer, earnValue, ownValue )
 	
 	// PlayerEarnMeter_AddEarnedAndOwned handles this scaling by itself, we just need to do this for the visual stuff
 	float pilotScaleVar = ( expect string ( GetCurrentPlaylistVarOrUseValue( "earn_meter_pilot_multiplier", "1" ) ) ).tofloat()
@@ -78,7 +78,7 @@ void function AddPlayerScore( entity targetPlayer, string scoreEventName, entity
 		ownValue *= pilotScaleVar
 	}
 	
-	Remote_CallFunction_NonReplay( targetPlayer, "ServerCallback_ScoreEvent", event.eventId, event.pointValue, event.displayType, associatedHandle, ownValue, earnValue )
+	Remote_CallFunction_NonReplay( targetPlayer, "ServerCallback_ScoreEvent", event.eventId, event.pointValue, event.displayType, associatedHandle, earnValue, ownValue )
 	
 	if ( event.displayType & eEventDisplayType.CALLINGCARD ) // callingcardevents are shown to all players
 	{

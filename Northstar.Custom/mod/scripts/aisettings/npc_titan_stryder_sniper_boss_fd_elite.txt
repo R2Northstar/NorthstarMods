@@ -26,8 +26,8 @@ npc_titan_stryder_sniper_boss_fd_elite
 	
 	reactChanceDefault				100
 	reactBulletChanceDefault		100
-	reactionTime					0.2
-	reactInterval					0.5
+	reactionTime					0.5
+	reactInterval					1.0
 	
 	FOV_Vert_Offset					10
 
@@ -72,10 +72,10 @@ npc_titan_stryder_sniper_boss_fd_elite
 	
 	evasiveCombatShieldPct					0.0
 	evasiveCombatHealthSegmentPct			0.0
-	evasiveCombatTotalHealthDiffPct 		0.1
+	evasiveCombatTotalHealthDiffPct 		0.2
 	evasiveCombatHealthChangeRateDiff		-7500
-	aggressiveCombatHealthSegmentPct		0.99
-	aggressiveCombatTotalHealthDiffPct 		0.1
+	aggressiveCombatHealthSegmentPct		0.9
+	aggressiveCombatTotalHealthDiffPct 		0.2
 	aggresiveCombatHealthChangeRateDiff		-400
 	
 	waitBetweenWeaponBurst			0
@@ -85,7 +85,8 @@ npc_titan_stryder_sniper_boss_fd_elite
 	maxBlockPerPeriod			2
 	
 	dodgePeriod					2
-	maxDodgePerPeriod			2
+	maxDodgePerPeriod			1
+	circleStrafeDist			1200
 
 	titanCamoIndex 31
 	titanDecalIndex 0
