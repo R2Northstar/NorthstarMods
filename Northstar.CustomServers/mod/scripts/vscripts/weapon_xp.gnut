@@ -10,6 +10,7 @@ void function AddWeaponXP( entity player, int amount )
 	
 	// increment xp
 	player.SetPersistentVar( GetItemPersistenceStruct( weaponClassname ) + ".weaponXP", min( WeaponGetXP( player, weaponClassname ) + amount, WeaponGetMaxXP( weaponClassname ) ) )
+	Remote_CallFunction_NonReplay( player, "ServerCallback_WeaponXPAdded", shWeaponXP.weaponClassNames.find( weaponClassname ), WeaponGetXP( player, weaponClassname ), amount )
 	
 	// level up notif
 	if ( WeaponGetLevel( player, weaponClassname ) != oldLevel )
@@ -20,8 +21,6 @@ void function AddWeaponXP( entity player, int amount )
 		AwardRandomItemsForWeaponLevels( player, weaponClassname, oldLevel, WeaponGetLevel( player, weaponClassname ) )
 		player.SetPersistentVar( "xp_match[" + XP_TYPE.WEAPON_LEVELED + "]", WeaponXPMatch + 1 )
 	}
-	else
-		Remote_CallFunction_NonReplay( player, "ServerCallback_WeaponXPAdded", shWeaponXP.weaponClassNames.find( weaponClassname ), WeaponGetXP( player, weaponClassname ), amount )
 
 	// proscreen 
 	if ( player == activeWeapon.GetProScreenOwner() )

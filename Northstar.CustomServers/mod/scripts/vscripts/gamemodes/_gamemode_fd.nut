@@ -133,7 +133,6 @@ void function GamemodeFD_Init()
 	PlayerEarnMeter_SetEnabled( false )
 	SetAllowLoadoutChangeFunc( FD_ShouldAllowChangeLoadout )
 	SetGetDifficultyFunc( FD_GetDifficultyLevel )
-	AddCallback_OnTryGetTitanLoadout( FD_CheckTitanLoadoutConsistency )
 
 	//Live Fire map check
 	if( GetMapName().find( "mp_lf_" ) == null ) //Maps with Titans, show titan select menu in this mode
@@ -1246,6 +1245,7 @@ void function GamemodeFD_InitPlayer( entity player )
 		string playerUID = player.GetUID()
 		if( playerUID in file.playerHasTitanSelectionLocked )
 		{
+			player.SetPersistentVar( "activeTitanLoadoutIndex", file.playerHasTitanSelectionLocked[ playerUID ] + 1 )
 			SetActiveTitanLoadoutIndex( player, file.playerHasTitanSelectionLocked[ playerUID ] )
 			SetActiveTitanLoadout( player )
 			DisableTitanSelectionForPlayer( player )
@@ -1385,26 +1385,6 @@ void function FD_GiveSmartPistol( entity player )
 		player.TakeWeaponNow( weaponEnt.GetWeaponClassName() )
 		player.GiveWeapon( "mp_weapon_smart_pistol", ["og_pilot"] )
 	}
-}
-
-//This is to ensure people will also not circumvent the selection lock by selecting titans in the esc menu after the titan selection menu
-sTryGetTitanLoadoutCallbackReturn function FD_CheckTitanLoadoutConsistency( entity player, TitanLoadoutDef loadout, bool wasChanged )
-{
-	sTryGetTitanLoadoutCallbackReturn LoadoutReturn
-	
-	LoadoutReturn.wasChanged = wasChanged
-	LoadoutReturn.loadout = loadout
-	
-	if( !file.isLiveFireMap )
-	{
-		string playerUID = player.GetUID()
-		if( PlayerEarnMeter_Enabled() && playerUID in file.playerHasTitanSelectionLocked )
-		{
-			SetActiveTitanLoadoutIndex( player, file.playerHasTitanSelectionLocked[ playerUID ] )
-			SetActiveTitanLoadout( player )
-		}
-	}
-	return LoadoutReturn
 }
 
 void function FD_BoostPurchaseCallback( entity player, BoostStoreData data )
@@ -1556,12 +1536,6 @@ void function TryDisableTitanSelectionForPlayerAfterDelay( entity player )
 				
 				if ( PlayerEarnMeter_Enabled() )
 				{
-					string playerUID = player.GetUID()
-					if( playerUID in file.playerHasTitanSelectionLocked ) //Prevent people from doing the server rejoin exploit to swap titans midmatch after Wave 1
-					{
-						SetActiveTitanLoadoutIndex( player, file.playerHasTitanSelectionLocked[ playerUID ] )
-						SetActiveTitanLoadout( player )
-					}
 					DisableTitanSelectionForPlayer( player )
 					if( GetGlobalNetInt( "FD_waveState" ) == WAVE_STATE_BREAK ) //On wave break, let joiners have their Titan instantly
 						PlayerEarnMeter_AddEarnedAndOwned( player, 1.0, 1.0 )
@@ -1665,6 +1639,11 @@ void function DisableTitanSelectionForPlayer( entity player )
 		return
 	
 	int suitIndex = GetPersistentSpawnLoadoutIndex( player, "titan" )
+	
+	string playerUID = player.GetUID()
+	if( playerUID in file.playerHasTitanSelectionLocked ) //Override if player is rejoining with a different titan selected from lobby to bypass lock
+		suitIndex = file.playerHasTitanSelectionLocked[ playerUID ]
+	
 	string selectedEnumName = GetItemRefOfTypeByIndex( eItemTypes.TITAN, suitIndex )
 	
 	for ( int i = 0; i < enumCount; i++ )
@@ -1675,7 +1654,6 @@ void function DisableTitanSelectionForPlayer( entity player )
 	}
 	
 	player.SetPersistentVar( "titanClassLockState[" + selectedEnumName + "]", TITAN_CLASS_LOCK_STATE_AVAILABLE ) //Ensure selected one stays avaliable
-	string playerUID = player.GetUID()
 	if( !( playerUID in file.playerHasTitanSelectionLocked ) )
 		file.playerHasTitanSelectionLocked[ playerUID ] <- suitIndex
 }

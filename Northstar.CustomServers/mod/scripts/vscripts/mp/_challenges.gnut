@@ -143,8 +143,10 @@ void function SetPlayerChallengeSquadLeader( entity player )
 	Player_GiveDoubleXP( player, 1 )
 	foreach( entity teamplayer in GetPlayerArrayOfTeam( player.GetTeam() ) )
 	{
-		if( teamplayer != player )
-			Remote_CallFunction_NonReplay( player, "ServerCallback_SquadLeaderBonus", teamplayer.GetEncodedEHandle() )
+		if( teamplayer == player )
+			continue
+		
+		Remote_CallFunction_NonReplay( player, "ServerCallback_SquadLeaderBonus", teamplayer.GetEncodedEHandle() )
 	}
 }
 
