@@ -1541,7 +1541,7 @@ void function RecalculateHighestTitanFDLevel( entity player )
 		string enumName = PersistenceGetEnumItemNameForIndex( "titanClasses", i )
 		int aegisLevel = FD_TitanGetLevelForXP( enumName, FD_TitanGetXP( player, enumName ) )
 		if ( highestAegis < aegisLevel )
-			HighestAegis = AegisLevel
+			highestAegis = AegisLevel
 	}
 	player.SetPersistentVar( "fdStats.highestTitanFDLevel", highestAegis )
 }
