@@ -952,6 +952,11 @@ string function FillInServerModsLabel( array<RequiredModInfo> mods )
 
 void function OnServerSelected( var button )
 {
+	thread OnServerSelected_Threaded( button )
+}
+
+void function OnServerSelected_Threaded( var button )
+{
 	if ( NSIsRequestingServerList() || NSGetServerCount() == 0 || file.serverListRequestFailed )
 		return
 
