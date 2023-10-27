@@ -12,3 +12,11 @@ Issues in this repository should be created if they are related to these domains
 - `Northstar.Coop` - Soon™.
 - `Northstar.Custom` - Northstar custom content.
 - `Northstar.CustomServer` - Server config files and scripts necessary for multiplayer.
+
+### Translating
+
+Translations can be submitted via [weblate](https://translate.harmony.tf/projects/northstar/client/).
+
+<a href="https://translate.harmony.tf/engage/northstar/">
+<img src="https://translate.harmony.tf/widgets/northstar/-/client/multi-auto.svg" alt="Translation status" />
+</a>
