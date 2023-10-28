@@ -1,7 +1,7 @@
 {
 	"Name": "Northstar.Client",
 	"Description": "Various ui and client changes to fix bugs and add better support for mods",
-	"Version": "1.16.0",
+	"Version": "1.19.0",
 	"LoadPriority": 0,
 	"InitScript": "cl_northstar_client_init.nut",
 	"ConVars": [
@@ -40,12 +40,12 @@
 		{
 			"Name": "modlist_show_convars",
 			"DefaultValue": "0",
-			"Flags": 16777216
+			"Flags": "ARCHIVE_PLAYERPROFILE"
 		},
 		{
 			"Name": "modlist_reverse",
 			"DefaultValue": "0",
-			"Flags": 16777216
+			"Flags": "ARCHIVE_PLAYERPROFILE"
 		}
 	],
 	"Scripts": [
@@ -140,8 +140,14 @@
 		{
 			"Path": "ui/menu_sb_mode_select.nut",
 			"RunOn": "UI"
+    },
+    {
+			"Path": "ui/atlas_auth.nut",
+			"RunOn": "UI",
+			"UICallback": {
+				"After": "AtlasAuthDialog"
+			}
 		}
-
 	],
 	"Localisation": [
 		"resource/northstar_client_localisation_%language%.txt"
