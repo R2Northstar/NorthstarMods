@@ -18,8 +18,8 @@ void function SB_InitModesMenu()
 	AddMenuFooterOption( menu, BUTTON_A, "#A_BUTTON_SELECT" )
 	AddMenuFooterOption( menu, BUTTON_B, "#B_BUTTON_BACK", "#BACK" )
 	
-	AddMenuFooterOption( menu, BUTTON_SHOULDER_LEFT, "#PRIVATE_MATCH_PAGE_PREV", "#PRIVATE_MATCH_PAGE_PREV", CycleModesBack, IsNorthstarServer )
-	AddMenuFooterOption( menu, BUTTON_SHOULDER_RIGHT, "#PRIVATE_MATCH_PAGE_NEXT", "#PRIVATE_MATCH_PAGE_NEXT", CycleModesForward, IsNorthstarServer )
+	AddMenuFooterOption( menu, BUTTON_SHOULDER_LEFT, "#PRIVATE_MATCH_PAGE_PREV", "#PRIVATE_MATCH_PAGE_PREV", CycleModesBack )
+	AddMenuFooterOption( menu, BUTTON_SHOULDER_RIGHT, "#PRIVATE_MATCH_PAGE_NEXT", "#PRIVATE_MATCH_PAGE_NEXT", CycleModesForward )
 }
 
 void function OnOpenModesMenu()
@@ -80,9 +80,7 @@ void function ModeButton_GetFocus( var button )
 
 	string mapName = PrivateMatch_GetSelectedMap()
 	bool mapSupportsMode = PrivateMatch_IsValidMapModeCombo( mapName, modeName )
-	if ( !mapSupportsMode && !IsNorthstarServer() )
-		Hud_SetText( nextModeDesc, Localize( "#PRIVATE_MATCH_MODE_NO_MAP_SUPPORT", Localize( GetGameModeDisplayName( modeName ) ), Localize( GetMapDisplayName( mapName ) ) ) )
-	else if ( IsFDMode( modeName ) ) // HACK!
+	if ( IsFDMode( modeName ) ) // HACK!
 		Hud_SetText( nextModeDesc, Localize( "#FD_PLAYERS_DESC", Localize( GetGameModeDisplayHint( modeName ) ) ) )
 	else
 		Hud_SetText( nextModeDesc, GetGameModeDisplayHint( modeName ) )
