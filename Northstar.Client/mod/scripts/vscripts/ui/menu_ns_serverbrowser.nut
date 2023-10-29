@@ -971,25 +971,32 @@ void function OnServerSelected_Threaded( var button )
 			// Check if mod can be auto-downloaded
 			bool modIsVerified = NSIsModDownloadable( mod.name, mod.version )
 
-			DialogData dialogData
-			dialogData.header = "#ERROR"
-			dialogData.message = format( "Missing mod \"%s\" v%s", mod.name, mod.version )
-			dialogData.image = $"ui/menu/common/dialog_error"
-
-			if (!modIsVerified) {
+			// Display an error message if not
+			if (!modIsVerified)
+			{
+				DialogData dialogData
+				dialogData.header = "#ERROR"
+				dialogData.message = format( "Missing mod \"%s\" v%s", mod.name, mod.version )
 				dialogData.message += "\n(mod is not verified, and couldn't be downloaded automatically)"
+				dialogData.image = $"ui/menu/common/dialog_error"
+
+				#if PC_PROG
+					AddDialogButton( dialogData, "#DISMISS" )
+
+					AddDialogFooter( dialogData, "#A_BUTTON_SELECT" )
+				#endif // PC_PROG
+				AddDialogFooter( dialogData, "#B_BUTTON_DISMISS_RUI" )
+
+				OpenDialog( dialogData )
+
+				return
 			}
 
-			#if PC_PROG
-				AddDialogButton( dialogData, "#DISMISS" )
-
-				AddDialogFooter( dialogData, "#A_BUTTON_SELECT" )
-			#endif // PC_PROG
-			AddDialogFooter( dialogData, "#B_BUTTON_DISMISS_RUI" )
-
-			OpenDialog( dialogData )
-
-			return
+			// Launch download
+			else
+			{
+				DownloadMod( mod )
+			}
 		}
 		else
 		{
@@ -1039,6 +1046,30 @@ void function OnServerSelected_Threaded( var button )
 	{
 		TriggerConnectToServerCallbacks()
 		thread ThreadedAuthAndConnectToServer()
+	}
+}
+
+
+void function DownloadMod( RequiredModInfo mod )
+{
+	// Downloading mod UI
+	DialogData dialogData
+	dialogData.header = Localize( "#DOWNLOADING_MOD_TITLE" )
+	dialogData.message = Localize( "#DOWNLOADING_MOD_TEXT", mod.name, mod.version )
+	dialogData.showSpinner = true;
+	// Prevent user from closing dialog
+	dialogData.forceChoice = true;
+
+	OpenDialog( dialogData )
+	// Save reference to UI elements, to update their content
+	var menu = GetMenu( "Dialog" )
+	var header = Hud_GetChild( menu, "DialogHeader" )
+	var body = GetSingleElementByClassname( menu, "DialogMessageClass" )
+
+	// simulate downloading
+	while (true)
+	{
+		WaitFrame()
 	}
 }
 
