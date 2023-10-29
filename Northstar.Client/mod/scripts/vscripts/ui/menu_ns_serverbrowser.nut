@@ -1070,10 +1070,31 @@ void function DownloadMod( RequiredModInfo mod )
 	// Start actual mod downloading
 	NSDownloadMod( mod.name, mod.version )
 
-	// simulate downloading
-	while (true)
+	ModInstallState state = NSGetModInstallState()
+	while (state.status < eModInstallStatus.DONE)
 	{
+		state = NSGetModInstallState()
+		UpdateModDownloadDialog( mod, state, menu, header, body )
 		WaitFrame()
+	}
+
+	print("Mod status: " + state.status)
+}
+
+void function UpdateModDownloadDialog( RequiredModInfo mod, ModInstallState state, var menu, var header, var body )
+{
+	switch (state.status) {
+		case eModInstallStatus.DOWNLOADING:
+			Hud_SetText( header, "DOWNLOADING MOD..." )
+			break;
+		case eModInstallStatus.CHECKSUMING:
+			Hud_SetText( header, "CHECKSUMING MOD..." )
+			break;
+		case eModInstallStatus.EXTRACTING:
+			Hud_SetText( header, "EXTRACTING MOD..." )
+			break;
+		default:
+			break;
 	}
 }
 
