@@ -1057,14 +1057,18 @@ void function DownloadMod( RequiredModInfo mod )
 	dialogData.header = Localize( "#DOWNLOADING_MOD_TITLE" )
 	dialogData.message = Localize( "#DOWNLOADING_MOD_TEXT", mod.name, mod.version )
 	dialogData.showSpinner = true;
+
 	// Prevent user from closing dialog
 	dialogData.forceChoice = true;
-
 	OpenDialog( dialogData )
+
 	// Save reference to UI elements, to update their content
 	var menu = GetMenu( "Dialog" )
 	var header = Hud_GetChild( menu, "DialogHeader" )
 	var body = GetSingleElementByClassname( menu, "DialogMessageClass" )
+
+	// Start actual mod downloading
+	NSDownloadMod( mod.name, mod.version )
 
 	// simulate downloading
 	while (true)
