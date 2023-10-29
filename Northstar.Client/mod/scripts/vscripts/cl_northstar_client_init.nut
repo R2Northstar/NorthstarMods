@@ -48,3 +48,26 @@ global struct MasterServerAuthResult
     string errorCode
     string errorMessage
 }
+
+global enum eModInstallStatus
+{
+    DOWNLOADING,
+    CHECKSUMING,
+    EXTRACTING,
+    DONE,
+    FAILED,
+    FAILED_READING_ARCHIVE,
+    FAILED_WRITING_TO_DISK,
+    MOD_FETCHING_FAILED,
+    MOD_CORRUPTED,
+    NO_DISK_SPACE_AVAILABLE,
+    NOT_FOUND
+}
+
+global struct ModInstallState
+{
+    int status
+    int progress
+    int total
+    float ratio
+}
