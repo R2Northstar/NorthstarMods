@@ -961,8 +961,10 @@ void function OnServerSelected_Threaded( var button )
 		return
 
 	ServerInfo server = file.focusedServer
-
 	file.lastSelectedServer = server
+
+	// Count mods that have been successfully downloaded
+	int downloadedMods = 0;
 
 	foreach ( RequiredModInfo mod in server.requiredMods )
 	{
@@ -996,6 +998,7 @@ void function OnServerSelected_Threaded( var button )
 			else
 			{
 				DownloadMod( mod )
+				downloadedMods++
 			}
 		}
 		else
@@ -1035,6 +1038,13 @@ void function OnServerSelected_Threaded( var button )
 				return
 			}
 		}
+	}
+
+	// Make Northstar aware new mods have been added
+	if ( downloadedMods > 0 )
+	{
+		print("Some new mods have been downloaded or enabled, reloading mods.")
+		NSReloadMods();
 	}
 
 	if ( server.requiresPassword )
