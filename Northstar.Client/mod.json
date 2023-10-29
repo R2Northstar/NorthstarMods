@@ -83,6 +83,10 @@
 			}
 		},
 		{
+			"Path": "ui/menu_ns_moddownload.nut",
+			"RunOn": "UI"
+		},
+		{
 			"Path": "ui/menu_ns_serverbrowser.nut",
 			"RunOn": "UI",
 			"UICallback": {
