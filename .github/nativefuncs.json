@@ -62,6 +62,12 @@
 
 		},
 		{
+			"name": "NSDownloadMod",
+			"helpText": "downloads a given mod from distant API to local game profile",
+			"returnTypeString": "void",
+			"argTypes": "string name, string version"
+		},
+		{
 			"name":"DecodeJSON",
 			"helpText":"converts a json string to a squirrel table",
 			"returnTypeString":"table",
