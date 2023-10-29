@@ -968,10 +968,17 @@ void function OnServerSelected_Threaded( var button )
 	{
 		if ( !NSGetModNames().contains( mod.name ) )
 		{
+			// Check if mod can be auto-downloaded
+			bool modIsVerified = NSIsModDownloadable( mod.name, mod.version )
+
 			DialogData dialogData
 			dialogData.header = "#ERROR"
 			dialogData.message = format( "Missing mod \"%s\" v%s", mod.name, mod.version )
 			dialogData.image = $"ui/menu/common/dialog_error"
+
+			if (!modIsVerified) {
+				dialogData.message += "\n(mod is not verified, and couldn't be downloaded automatically)"
+			}
 
 			#if PC_PROG
 				AddDialogButton( dialogData, "#DISMISS" )
