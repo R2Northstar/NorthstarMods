@@ -68,6 +68,12 @@
 			"argTypes": "string name, string version"
 		},
 		{
+			"name": "NSGetModInstallState",
+			"helpText": "get status of the mod currently being installed",
+			"returnTypeString": "ModInstallState",
+			"argTypes": ""
+		},
+		{
 			"name":"DecodeJSON",
 			"helpText":"converts a json string to a squirrel table",
 			"returnTypeString":"table",
