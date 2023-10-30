@@ -44,6 +44,9 @@ void function DownloadMod( RequiredModInfo mod )
 	}
 
 	print("Mod status: " + state.status)
+
+	// Close loading dialog
+	CloseActiveMenu()
 }
 
 void function UpdateModDownloadDialog( RequiredModInfo mod, ModInstallState state, var menu, var header, var body )
