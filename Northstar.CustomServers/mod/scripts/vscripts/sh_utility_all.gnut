@@ -348,7 +348,6 @@ string function GetMapDisplayDesc( string mapname )
 	return "#" + mapname + "_CLASSIC_DESC"
 }
 
-///-----------------------------------------------------------------------------
 /// Sends a string message to player
 /// * `baseString` - The input string to search through
 /// * `searchString` - Find this substring...
@@ -357,7 +356,6 @@ string function GetMapDisplayDesc( string mapname )
 /// * `caseInsensitive` - Whether to consider casing (upper/lower)
 ///
 /// Returns the updated string
-///-----------------------------------------------------------------------------
 string function StringReplace( string baseString, string searchString, string replaceString, bool replaceAll = false, bool caseInsensitive = false )
 {
 	bool loopedOnce = false
