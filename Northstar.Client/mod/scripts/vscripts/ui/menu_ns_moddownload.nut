@@ -1,4 +1,5 @@
 global function DownloadMod
+global function DisplayModDownloadErrorDialog
 
 global enum eModInstallStatus
 {
@@ -15,7 +16,7 @@ global enum eModInstallStatus
     NOT_FOUND
 }
 
-void function DownloadMod( RequiredModInfo mod )
+bool function DownloadMod( RequiredModInfo mod )
 {
 	// Downloading mod UI
 	DialogData dialogData
@@ -47,6 +48,8 @@ void function DownloadMod( RequiredModInfo mod )
 
 	// Close loading dialog
 	CloseActiveMenu()
+
+	return state.status == eModInstallStatus.DONE
 }
 
 void function UpdateModDownloadDialog( RequiredModInfo mod, ModInstallState state, var menu, var header, var body )
@@ -64,4 +67,46 @@ void function UpdateModDownloadDialog( RequiredModInfo mod, ModInstallState stat
 		default:
 			break;
 	}
+}
+
+void function DisplayModDownloadErrorDialog( string modName )
+{
+	ModInstallState state = NSGetModInstallState()
+
+	DialogData dialogData
+	dialogData.header = Localize( "#FAILED_DOWNLOADING", modName )
+	dialogData.image = $"ui/menu/common/dialog_error"
+
+	switch (state.status) {
+    	case eModInstallStatus.FAILED_READING_ARCHIVE:
+			dialogData.message = Localize( "#FAILED_READING_ARCHIVE" )
+			break
+    	case eModInstallStatus.FAILED_WRITING_TO_DISK:
+			dialogData.message = Localize( "#FAILED_WRITING_TO_DISK" )
+			break
+    	case eModInstallStatus.MOD_FETCHING_FAILED:
+			dialogData.message = Localize( "#MOD_FETCHING_FAILED" )
+			break
+    	case eModInstallStatus.MOD_CORRUPTED:
+			dialogData.message = Localize( "#MOD_CORRUPTED" )
+			break
+    	case eModInstallStatus.NO_DISK_SPACE_AVAILABLE:
+			dialogData.message = Localize( "#NO_DISK_SPACE_AVAILABLE" )
+			break
+    	case eModInstallStatus.NOT_FOUND:
+			dialogData.message = Localize( "#NOT_FOUND" )
+			break
+		case eModInstallStatus.FAILED:
+		default:
+			dialogData.message = Localize( "#FAILED" )
+			break;
+	}
+
+	#if PC_PROG
+		AddDialogButton( dialogData, "#DISMISS" )
+		AddDialogFooter( dialogData, "#A_BUTTON_SELECT" )
+	#endif
+	AddDialogFooter( dialogData, "#B_BUTTON_DISMISS_RUI" )
+
+	OpenDialog( dialogData )
 }
