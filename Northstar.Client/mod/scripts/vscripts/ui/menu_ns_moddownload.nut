@@ -52,6 +52,8 @@ bool function DownloadMod( RequiredModInfo mod )
 	return state.status == eModInstallStatus.DONE
 }
 
+const int MB = 1024*1000;
+
 void function UpdateModDownloadDialog( RequiredModInfo mod, ModInstallState state, var menu, var header, var body )
 {
 	switch (state.status) {
@@ -62,7 +64,8 @@ void function UpdateModDownloadDialog( RequiredModInfo mod, ModInstallState stat
 			Hud_SetText( header, "CHECKSUMING MOD..." )
 			break;
 		case eModInstallStatus.EXTRACTING:
-			Hud_SetText( header, "EXTRACTING MOD..." )
+			Hud_SetText( header, format( "EXTRACTING MOD (%s", string(state.ratio) ) + "%)")
+			Hud_SetText( body, format( "Extracting %s v%s...\n(%i/%i MB)", mod.name, mod.version, floor(state.progress / MB), floor(state.total / MB) ) )
 			break;
 		default:
 			break;
