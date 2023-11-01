@@ -58,7 +58,8 @@ void function UpdateModDownloadDialog( RequiredModInfo mod, ModInstallState stat
 {
 	switch (state.status) {
 		case eModInstallStatus.DOWNLOADING:
-			Hud_SetText( header, "DOWNLOADING MOD..." )
+			Hud_SetText( header, format( "DOWNLOADING MOD (%s", string(state.ratio) ) + "%)")
+			Hud_SetText( body, format( "Downloading %s v%s...\n(%i/%i MB)", mod.name, mod.version, floor(state.progress / MB), floor(state.total / MB) ) )
 			break;
 		case eModInstallStatus.CHECKSUMING:
 			Hud_SetText( header, "CHECKSUMING MOD..." )
