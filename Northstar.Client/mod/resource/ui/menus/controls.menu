@@ -1,0 +1,610 @@
+resource/ui/menus/controls.menu
+{
+	menu
+	{
+		ControlName				Frame
+		xpos					0
+		ypos					0
+		zpos					3
+		wide					f0
+		tall					f0
+		autoResize				0
+		visible					1
+		enabled					1
+		pinCorner				0
+		PaintBackgroundType		0
+		infocus_bgcolor_override	"0 0 0 0"
+		outoffocus_bgcolor_override	"0 0 0 0"
+
+		Vignette
+		{
+			ControlName             ImagePanel
+			InheritProperties       MenuVignette
+		}
+
+		MenuTitle
+		{
+			ControlName				Label
+			InheritProperties		MenuTitle
+			labelText				"#CONTROLS"
+		}
+
+		ImgTopBar
+		{
+			ControlName				ImagePanel
+			InheritProperties		MenuTopBar
+		}
+
+		MatchmakingStatus
+		{
+			ControlName				CNestedPanel
+			xpos					0
+			ypos					0
+			wide					f0
+			tall					f0
+			visible					1
+			controlSettingsFile		"resource/ui/menus/panels/matchmaking_status.res"
+		}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+		LblMenuItemDescription
+		{
+			ControlName				RuiPanel
+			xpos					975
+			ypos					158
+			tall					370
+			wide 					844
+			rui                     "ui/control_options_description.rpak"
+		}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+		// General subheader
+		ImgGeneralSubheaderBackground
+		{
+			ControlName				ImagePanel
+			InheritProperties		SubheaderBackground
+			xpos					96
+			ypos					160
+		}
+		LblGeneralSubheaderText
+		{
+			ControlName				Label
+			InheritProperties		SubheaderText
+			pin_to_sibling			ImgGeneralSubheaderBackground
+			pin_corner_to_sibling	LEFT
+			pin_to_sibling_corner	LEFT
+			labelText				"#GENERAL"
+		}
+
+		SwchAutoSprint
+		{
+			ControlName				RuiButton
+			InheritProperties		ControlsSwitchButton
+			style					DialogListButton
+			pin_to_sibling			ImgGeneralSubheaderBackground
+			pin_corner_to_sibling	TOP_LEFT
+			pin_to_sibling_corner	BOTTOM_LEFT
+			xpos					-22
+			navUp					BtnControllerOpenAdvancedMenu [$GAMECONSOLE]
+			navUp					SwchMouseInvertY [!$GAMECONSOLE]
+			navDown					SwchHoldToRodeo
+			tabPosition				1
+			ConVar					"autosprint_type"
+			list
+			{
+				"#MENU_AUTOMATIC_SPRINT_OFF"			0
+				"#MENU_AUTOMATIC_SPRINT_ON"				1
+				"#MENU_AUTOMATIC_SPRINT_ON_PILOTONLY"	2
+				"#MENU_AUTOMATIC_SPRINT_ON_TITANONLY"	3
+			}
+		}
+		SwchHoldToRodeo
+		{
+			ControlName				RuiButton
+			InheritProperties		ControlsSwitchButton
+			style					DialogListButton
+			pin_to_sibling			SwchAutoSprint
+			pin_corner_to_sibling	TOP_LEFT
+			pin_to_sibling_corner	BOTTOM_LEFT
+			navUp					SwchAutoSprint
+			navDown					BtnGamepadLayout
+			ConVar					"cl_hold_to_rodeo_enable"
+			list
+			{
+				"#SETTING_OFF"		    0
+				"#SETTING_ON"		    1
+				"#SETTING_FRIENDLY"		2
+			}
+		}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+		// Mouse/Keyboard subheader
+		ImgMouseKeyboardSubheaderBackground	[!$GAMECONSOLE]
+		{
+			ControlName				ImagePanel
+			InheritProperties		SubheaderBackground
+			xpos					950
+			ypos					570
+		}
+		LblMouseKeyboardSubheaderText [!$GAMECONSOLE]
+		{
+			ControlName				Label
+			InheritProperties		SubheaderText
+			pin_to_sibling			ImgMouseKeyboardSubheaderBackground
+			pin_corner_to_sibling	LEFT
+			pin_to_sibling_corner	LEFT
+			labelText				"#MOUSE_KEYBOARD"
+		}
+
+		// Mouse/Keyboard options
+		BtnMouseKeyboardBindings [!$GAMECONSOLE]
+		{
+			ControlName				RuiButton
+			InheritProperties		WideButton
+			pin_to_sibling			ImgMouseKeyboardSubheaderBackground
+			pin_corner_to_sibling	TOP_LEFT
+			pin_to_sibling_corner	BOTTOM_LEFT
+			xpos					-22
+			navUp					BtnControllerOpenAdvancedMenu
+			navDown					SldMouseSensitivity
+			tabPosition				2
+		}
+		SldMouseSensitivity	[!$GAMECONSOLE]
+		{
+			ControlName				SliderControl
+			InheritProperties		SliderControl
+			pin_to_sibling			BtnMouseKeyboardBindings
+			pin_corner_to_sibling	TOP_LEFT
+			pin_to_sibling_corner	BOTTOM_LEFT
+			navUp					BtnMouseKeyboardBindings
+			navDown					SldMouseSensitivityZoomed
+			minValue				0.0
+			maxValue				20.0
+			stepSize				0.2
+			conCommand				"mouse_sensitivity"
+			BtnDropButton
+			{
+				ControlName				RuiButton
+				InheritProperties		WideButton
+				clip 					0
+				autoResize				1
+				pinCorner				0
+				visible					1
+				enabled					1
+				style					SliderButton
+				command					""
+			}
+		}
+		TextEntryMouseSensitivity [!$GAMECONSOLE]
+		{
+			ControlName				TextEntry
+			xpos                    8
+			wide					50
+			tall					30
+			visible					1
+			enabled					1
+			textHidden				0
+			editable				1
+			maxchars				5
+			NumericInputOnly		1
+			textAlignment			"east"
+			font 					Default_21
+			keyboardTitle			"#ENTER_YOUR_EMAIL"
+			keyboardDescription		"#ENTER_YOUR_EMAIL_DESC"
+			allowRightClickMenu		0
+			allowSpecialCharacters	0
+			unicode					0
+			syncedConVar            "mouse_sensitivity"
+			showConVarAsFloat		1
+
+			pin_to_sibling			SldMouseSensitivity
+			pin_corner_to_sibling	LEFT
+			pin_to_sibling_corner	RIGHT
+		}
+		SldMouseSensitivityZoomed	[!$GAMECONSOLE]
+		{
+			ControlName				SliderControl
+			InheritProperties		SliderControl
+			pin_to_sibling			SldMouseSensitivity
+			pin_corner_to_sibling	TOP_LEFT
+			pin_to_sibling_corner	BOTTOM_LEFT
+			navUp					SldMouseSensitivity
+			navDown					SwchMouseAcceleration
+			minValue				0.0
+			maxValue				20.0
+			stepSize				0.2
+			conCommand				"mouse_sensitivity_zoomed"
+			BtnDropButton
+			{
+				ControlName				RuiButton
+				InheritProperties		WideButton
+				clip 					0
+				autoResize				1
+				pinCorner				0
+				visible					1
+				enabled					1
+				style					SliderButton
+				command					""
+			}
+		}
+		TextEntryMouseSensitivityZoomed [!$GAMECONSOLE]
+		{
+			ControlName				TextEntry
+			xpos                    8
+			wide					50
+			tall					30
+			visible					1
+			enabled					1
+			textHidden				0
+			editable				1
+			maxchars				5
+			NumericInputOnly		1
+			textAlignment			"east"
+			font 					Default_21
+			keyboardTitle			"#ENTER_YOUR_EMAIL"
+			keyboardDescription		"#ENTER_YOUR_EMAIL_DESC"
+			allowRightClickMenu		0
+			allowSpecialCharacters	0
+			unicode					0
+			syncedConVar            "mouse_sensitivity_zoomed"
+			showConVarAsFloat		1
+
+			pin_to_sibling			SldMouseSensitivityZoomed
+			pin_corner_to_sibling	LEFT
+			pin_to_sibling_corner	RIGHT
+		}
+
+		SwchMouseAcceleration [!$GAMECONSOLE]
+		{
+			ControlName				RuiButton
+			InheritProperties		ControlsSwitchButton
+			style					DialogListButton
+			pin_to_sibling			SldMouseSensitivityZoomed
+			pin_corner_to_sibling	TOP_LEFT
+			pin_to_sibling_corner	BOTTOM_LEFT
+			navUp					SldMouseSensitivityZoomed
+			navDown					SwchMouseInvertY
+			ConVar 					"m_acceleration"
+			list
+			{
+				"#SETTING_OFF"		0
+				"#SETTING_ON"		1
+			}
+		}
+		SwchMouseInvertY [!$GAMECONSOLE]
+		{
+			ControlName				RuiButton
+			InheritProperties		ControlsSwitchButton
+			style					DialogListButton
+			pin_to_sibling			SwchMouseAcceleration
+			pin_corner_to_sibling	TOP_LEFT
+			pin_to_sibling_corner	BOTTOM_LEFT
+			navUp					SwchMouseAcceleration
+			navDown					SwchAutoSprint
+			ConVar 					"m_invert_pitch"
+			list
+			{
+				"#SETTING_OFF"		0
+				"#SETTING_ON"		1
+			}
+		}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+		// Gamepad subheader
+		ImgGamepadSubheaderBackground
+		{
+			ControlName				ImagePanel
+			InheritProperties		SubheaderBackground
+			xpos					96
+			ypos					330
+		}
+		LblGamepadSubheaderText
+		{
+			ControlName				Label
+			InheritProperties		SubheaderText
+			pin_to_sibling			ImgGamepadSubheaderBackground
+			pin_corner_to_sibling	LEFT
+			pin_to_sibling_corner	LEFT
+			labelText				"#CONTROLLER"
+		}
+
+		// Gamepad options
+		BtnGamepadLayout
+		{
+			ControlName				RuiButton
+			InheritProperties		WideButton
+			pin_to_sibling			ImgGamepadSubheaderBackground
+			pin_corner_to_sibling	TOP_LEFT
+			pin_to_sibling_corner	BOTTOM_LEFT
+			xpos					-22
+			navUp					SwchHoldToRodeo
+			navDown					SwchHoldToCrouch
+			tabPosition				2
+		}
+		LblGamepadLayout
+		{
+			ControlName				Label
+			InheritProperties		AdvControlsLabel
+			pin_to_sibling			BtnGamepadLayout
+			pin_corner_to_sibling	RIGHT
+			pin_to_sibling_corner	RIGHT
+			xpos					-10
+			zpos					-2
+			auto_tall_tocontents	1
+
+			fgcolor_override		"255 255 255 127"
+			labelText				"..."
+		}
+
+		SwchHoldToCrouch
+		{
+			ControlName				RuiButton
+			InheritProperties		ControlsSwitchButton
+			style					DialogListButton
+			pin_to_sibling			BtnGamepadLayout
+			pin_corner_to_sibling	TOP_LEFT
+			pin_to_sibling_corner	BOTTOM_LEFT
+			navUp					BtnGamepadLayout
+			navDown					SwchToggleGamepadADS
+			ConVar					"gamepad_togglecrouch_hold"
+			list
+			{
+				"#HOLDTOCROUCH_OFF"	0
+				"#HOLDTOCROUCH_ON"	1
+			}
+		}
+		SwchToggleGamepadADS
+		{
+			ControlName				RuiButton
+			InheritProperties		ControlsSwitchButton
+			style					DialogListButton
+			pin_to_sibling			SwchHoldToCrouch
+			pin_corner_to_sibling	TOP_LEFT
+			pin_to_sibling_corner	BOTTOM_LEFT
+			navUp					SwchHoldToCrouch
+			navDown					SwchLookSensitivity
+			ConVar					"gamepad_toggle_ads"
+			list
+			{
+				"#GAMEPAD_TOGGLE_ADS_OFF"	0
+				"#GAMEPAD_TOGGLE_ADS_ON"	1
+			}
+		}
+		SwchLookSensitivity
+		{
+			ControlName				RuiButton
+			InheritProperties		ControlsSwitchButton
+			style					DialogListButton
+			pin_to_sibling			SwchToggleGamepadADS
+			pin_corner_to_sibling	TOP_LEFT
+			pin_to_sibling_corner	BOTTOM_LEFT
+			navUp					SwchToggleGamepadADS
+			navDown					SwchLookSensitivityADS
+			ConVar					"gamepad_aim_speed"
+			list
+			{
+				"#SETTING_SENSITIVITY_VERYLOW"		0
+				"#SETTING_SENSITIVITY_LOW"			1
+				"#SETTING_SENSITIVITY_DEFAULT"		2
+				"#SETTING_SENSITIVITY_HIGH"			3
+				"#SETTING_SENSITIVITY_VERY_HIGH"	4
+				"#SETTING_SENSITIVITY_SUPER_HIGH"	5
+				"#SETTING_SENSITIVITY_ULTRA_HIGH"	6
+				"#SETTING_SENSITIVITY_INSANE"		7
+			}
+		}
+		SwchLookSensitivity_AdvLabel
+		{
+			ControlName				Label
+			InheritProperties		AdvControlsLabel
+			pin_to_sibling			SwchLookSensitivity
+			pin_corner_to_sibling	TOP_LEFT
+			pin_to_sibling_corner	TOP_RIGHT
+			xpos					0
+			ypos					-8
+			font					DefaultBold_27_DropShadow
+			labelText				"*"
+		}
+		SwchLookSensitivityADS
+		{
+			ControlName				RuiButton
+			InheritProperties		ControlsSwitchButton
+			style					DialogListButton
+			pin_to_sibling			SwchLookSensitivity
+			pin_corner_to_sibling	TOP_LEFT
+			pin_to_sibling_corner	BOTTOM_LEFT
+			navUp					SwchLookSensitivity
+			navDown					SwchLookAiming
+			ConVar					"gamepad_aim_speed_ads"
+			list
+			{
+				"#SETTING_SENSITIVITY_SAME"			-1
+				"#SETTING_SENSITIVITY_VERYLOW"		0
+				"#SETTING_SENSITIVITY_LOW"			1
+				"#SETTING_SENSITIVITY_DEFAULT_NUM"	2
+				"#SETTING_SENSITIVITY_HIGH"			3
+				"#SETTING_SENSITIVITY_VERY_HIGH"	4
+				"#SETTING_SENSITIVITY_SUPER_HIGH"	5
+				"#SETTING_SENSITIVITY_ULTRA_HIGH"	6
+				"#SETTING_SENSITIVITY_INSANE"		7
+			}
+		}
+		SwchLookSensitivityADS_AdvLabel
+		{
+			ControlName				Label
+			InheritProperties		AdvControlsLabel
+			pin_to_sibling			SwchLookSensitivityADS
+			pin_corner_to_sibling	TOP_LEFT
+			pin_to_sibling_corner	TOP_RIGHT
+			xpos					0
+			ypos					-8
+			font					DefaultBold_27_DropShadow
+			labelText				"*"
+		}
+		SwchLookAiming
+		{
+			ControlName				RuiButton
+			InheritProperties		ControlsSwitchButton
+			style					DialogListButton
+			pin_to_sibling			SwchLookSensitivityADS
+			pin_corner_to_sibling	TOP_LEFT
+			pin_to_sibling_corner	BOTTOM_LEFT
+			navUp					SwchLookSensitivityADS
+			navDown					SwchLookDeadzone
+			ConVar					"gamepad_look_curve"
+			list
+			{
+				"#LOOKSTICK_AIMING_0"		0
+				"#LOOKSTICK_AIMING_1"		1
+				"#LOOKSTICK_AIMING_2"		2
+				"#LOOKSTICK_AIMING_3"		3
+				"#LOOKSTICK_AIMING_4"		4
+			}
+		}
+		SwchLookAiming_AdvLabel
+		{
+			ControlName				Label
+			InheritProperties		AdvControlsLabel
+			pin_to_sibling			SwchLookAiming
+			pin_corner_to_sibling	TOP_LEFT
+			pin_to_sibling_corner	TOP_RIGHT
+			xpos					0
+			ypos					-8
+			font					DefaultBold_27_DropShadow
+			labelText				"*"
+		}
+		SwchLookDeadzone
+		{
+			ControlName				RuiButton
+			InheritProperties		ControlsSwitchButton
+			style					DialogListButton
+			pin_to_sibling			SwchLookAiming
+			pin_corner_to_sibling	TOP_LEFT
+			pin_to_sibling_corner	BOTTOM_LEFT
+			navUp					SwchLookAiming
+			navDown					SwchLookInvert
+			ConVar					"gamepad_deadzone_index_look"
+			list
+			{
+				"#SETTING_NONE"		0
+				"#SETTING_SMALL"	1
+				"#SETTING_LARGE"	2
+			}
+		}
+		SwchLookDeadzone_AdvLabel
+		{
+			ControlName				Label
+			InheritProperties		AdvControlsLabel
+			pin_to_sibling			SwchLookDeadzone
+			pin_corner_to_sibling	TOP_LEFT
+			pin_to_sibling_corner	TOP_RIGHT
+			xpos					0
+			ypos					-8
+			font					DefaultBold_27_DropShadow
+			labelText				"*"
+		}
+		SwchLookInvert
+		{
+			ControlName				RuiButton
+			InheritProperties		ControlsSwitchButton
+			style					DialogListButton
+			pin_to_sibling			SwchLookDeadzone
+			pin_corner_to_sibling	TOP_LEFT
+			pin_to_sibling_corner	BOTTOM_LEFT
+			navUp					SwchLookDeadzone
+			navDown					SwchMoveDeadzone
+			ConVar					"joy_inverty"
+			list
+			{
+				"#SETTING_OFF"			0
+				"#SETTING_INVERTED"		1
+			}
+		}
+		SwchMoveDeadzone
+		{
+			ControlName				RuiButton
+			InheritProperties		ControlsSwitchButton
+			style					DialogListButton
+			pin_to_sibling			SwchLookInvert
+			pin_corner_to_sibling	TOP_LEFT
+			pin_to_sibling_corner	BOTTOM_LEFT
+			navUp					SwchLookInvert
+			navDown					SwchVibration
+			ConVar					"gamepad_deadzone_index_move"
+			list
+			{
+				"#SETTING_SMALL"	1
+				"#SETTING_LARGE"	2
+			}
+		}
+		SwchVibration
+		{
+			ControlName				RuiButton
+			InheritProperties		ControlsSwitchButton
+			style					DialogListButton
+			pin_to_sibling			SwchMoveDeadzone
+			pin_corner_to_sibling	TOP_LEFT
+			pin_to_sibling_corner	BOTTOM_LEFT
+			navUp					SwchMoveDeadzone
+			navDown					BtnControllerOpenAdvancedMenu
+			ConVar					"joy_rumble"
+			list
+			{
+				"#SETTING_OFF"		0
+				"#SETTING_ON"		1
+			}
+		}
+		BtnControllerOpenAdvancedMenu
+		{
+			ControlName				RuiButton
+			InheritProperties		ControlsSwitchButton
+			style					DialogListButton
+			pin_to_sibling			SwchVibration
+			pin_corner_to_sibling	TOP_LEFT
+			pin_to_sibling_corner	BOTTOM_LEFT
+			navUp					SwchVibration
+			navDown					SwchAutoSprint [$GAMECONSOLE]
+			navDown					BtnMouseKeyboardBindings [!$GAMECONSOLE]
+		}
+		LblAdvControllerOff
+		{
+			ControlName				Label
+			InheritProperties		AdvControlsLabel
+			pin_to_sibling			BtnControllerOpenAdvancedMenu
+			pin_corner_to_sibling	RIGHT
+			pin_to_sibling_corner	RIGHT
+			xpos					-10
+			zpos					2
+			auto_tall_tocontents	1
+
+			fgcolor_override		"255 255 255 127"
+			labelText				"#SETTING_DISABLED"
+		}
+		LblAdvControllerOn
+		{
+			ControlName				Label
+			InheritProperties		AdvControlsLabel
+			pin_to_sibling			BtnControllerOpenAdvancedMenu
+			pin_corner_to_sibling	RIGHT
+			pin_to_sibling_corner	RIGHT
+			xpos					-10
+			zpos					2
+			auto_tall_tocontents	1
+
+			labelText				"#SETTING_ENABLED"
+		}
+
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+		FooterButtons
+		{
+			ControlName				CNestedPanel
+			InheritProperties       FooterButtons
+		}
+	}
+}
