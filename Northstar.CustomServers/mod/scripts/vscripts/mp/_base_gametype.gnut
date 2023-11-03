@@ -831,6 +831,27 @@ bool function PlayerOrNPCKilled( entity ent, var damageInfo )
 	return true
 }
 
+void function HandleAssists( entity victim, var damageInfo )
+{
+	if( !victim.IsPlayer() )
+		return
+
+	entity attacker = GetAttackerOrLastAttacker( victim, damageInfo )
+	table<int, bool> alreadyAssisted
+	foreach( DamageHistoryStruct attackerInfo in victim.e.recentDamageHistory )
+	{
+        if ( !IsValid( attackerInfo.attacker ) || !attackerInfo.attacker.IsPlayer() || attackerInfo.attacker == victim )
+             continue
+
+		if( attackerInfo.attacker != attacker && !( attackerInfo.attacker.GetEncodedEHandle() in alreadyAssisted ) )
+		{
+			alreadyAssisted[attackerInfo.attacker.GetEncodedEHandle()] <- true
+			foreach ( callback in svGlobal.onPlayerAssistCallbacks )
+				callback( attacker, victim )
+		}
+	}
+}
+
 // used to calculate build time credit in special cases. Cloak Drones and Suicide Spectres use it for now.
 float function CalculateBuildTimeCredit( entity attacker, entity target, float damage, int health, int maxHealth, string playlistVarStr, float defaultCredit )
 {
