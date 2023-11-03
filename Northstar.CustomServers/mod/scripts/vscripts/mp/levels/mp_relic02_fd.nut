@@ -5,6 +5,12 @@ void function initFrontierDefenseData()
 	shopAngles = <0, 180, 0>
 	FD_spawnPosition = < 2919.59, -4426.63, 2242 >
 	FD_spawnAngles = < 0, 0, 0 >
+	FD_groundspawnPosition = < 2343, -5258, 128 >
+	FD_groundspawnAngles = < 0, 135, 0 >
+	
+	FD_DropPodSpawns.append(< 2677, -5238, 127 >)
+	FD_DropPodSpawns.append(< 5106, -4429, 143 >)
+	FD_DropPodSpawns.append(< 3306, -3815, 644 >)
 
 	int index = 1
 

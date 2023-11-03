@@ -4,11 +4,10 @@ void function CodeCallback_MapInit()
 {
 	AddDeathCallback( "player", GlitchDissolveDeadEntity )	
 	AddDeathCallback( "npc_soldier", GlitchDissolveDeadEntity )
-	AddDeathCallback( "npc_spectre", GlitchDissolveDeadEntity )
 	AddDeathCallback( "npc_pilot_elite", GlitchDissolveDeadEntity )
 	
 	// Load Frontier Defense Data
-	if( GameRules_GetGameMode() == "fd" )
+	if( GameRules_GetGameMode() == FD )
 		initFrontierDefenseData()
 }
 

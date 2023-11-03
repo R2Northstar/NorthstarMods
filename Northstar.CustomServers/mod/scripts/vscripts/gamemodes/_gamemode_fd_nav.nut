@@ -31,6 +31,7 @@ void function singleNav_thread( entity npc, string routeName, int nodesToSkip = 
 	float dist = 65535
 	entity targetNode
 	string routetaken
+	string routeCompare
 	string GuySquadName = expect string( npc.kv.squadname )
 	array<entity> squad
 	if ( GuySquadName != "" )
@@ -47,6 +48,14 @@ void function singleNav_thread( entity npc, string routeName, int nodesToSkip = 
 			{
 				if( !node.HasKey( "route_name" ) )
 					continue
+				
+				routeCompare = expect string( node.kv.route_name ).tolower()
+				if( routeCompare.find( "drone" ) ) //Skip dedicated Drone Routes to avoid unwanted behavior
+					continue
+				
+				if( routeCompare.find( "infantry" ) && ( npc.IsTitan() || IsSuperSpectre( npc ) ) ) //Also skip dedicated infantry Routes for Titans and Reapers
+					continue
+				
 				if( squad.len() > 0 )
 				{
 					if ( Distance( squad[0].GetOrigin(), node.GetOrigin() ) < dist )
@@ -61,7 +70,7 @@ void function singleNav_thread( entity npc, string routeName, int nodesToSkip = 
 					targetNode = node
 				}
 			}
-			
+			#if SERVER && DEV
 			if( squad.len() > 0 )
 			{
 				if( npc == squad[0] )
@@ -69,6 +78,7 @@ void function singleNav_thread( entity npc, string routeName, int nodesToSkip = 
 			}
 			else
 				printt( "Single entity had no route defined, using nearest node: " + targetNode.kv.route_name )
+			#endif
 		}
 		else
 			targetNode = GetRouteStart( routeName )
@@ -83,6 +93,13 @@ void function singleNav_thread( entity npc, string routeName, int nodesToSkip = 
 		{
 			foreach ( routename, routeamount in routes )
 			{
+				routeCompare = routename.tolower()
+				if( routeCompare.find( "drone" ) ) //Skip dedicated Drone Routes to avoid unwanted behavior
+					continue
+				
+				if( routeCompare.find( "infantry" ) && ( npc.IsTitan() || IsSuperSpectre( npc ) ) ) //Also skip dedicated infantry Routes for Titans and Reapers
+					continue
+				
 				if( squad.len() > 0 )
 				{
 					if ( Distance( squad[0].GetOrigin(), routeamount[0] ) < dist )
@@ -97,6 +114,7 @@ void function singleNav_thread( entity npc, string routeName, int nodesToSkip = 
 					routetaken = routename
 				}
 			}
+			#if SERVER && DEV
 			if( squad.len() > 0 )
 			{
 				if( npc == squad[0] )
@@ -104,6 +122,7 @@ void function singleNav_thread( entity npc, string routeName, int nodesToSkip = 
 			}
 			else
 				printt( "Single entity had no route defined, using nearest node: " + routetaken )
+			#endif
 		}
 		else
 			routetaken = routeName
@@ -236,6 +255,7 @@ void function droneNav_thread( entity npc, string routeName, int nodesToSkip = 0
 					firstNode = node
 				}
 			}
+			#if SERVER && DEV
 			if( squad.len() > 0 )
 			{
 				if( npc == squad[0] )
@@ -243,6 +263,7 @@ void function droneNav_thread( entity npc, string routeName, int nodesToSkip = 0
 			}
 			else
 				printt( "Single entity had no route defined, using nearest node: " + targetNode.kv.route_name )
+			#endif
 		}
 		else
 			targetNode = GetRouteStart( routeName )
@@ -274,6 +295,7 @@ void function droneNav_thread( entity npc, string routeName, int nodesToSkip = 0
 					routetaken = routename
 				}
 			}
+			#if SERVER && DEV
 			if( squad.len() > 0 )
 			{
 				if( npc == squad[0] )
@@ -281,6 +303,7 @@ void function droneNav_thread( entity npc, string routeName, int nodesToSkip = 0
 			}
 			else
 				printt( "Single entity had no route defined, using nearest node: " + routetaken )
+			#endif
 		}
 		else
 			routetaken = routeName
@@ -298,11 +321,15 @@ void function droneNav_thread( entity npc, string routeName, int nodesToSkip = 0
 			table result = npc.WaitSignal( "OnFinishedAssault", "OnEnterGoalRadius", "OnFailedToPath" )
 			
 			targetNode = targetNode.GetLinkEnt()
+			#if SERVER && DEV
 			if ( targetNode == null )
 				printt( "drone finished pathing" )
+			#endif
 			if ( targetNode == null && shouldLoop )
 			{
+				#if SERVER && DEV
 				printt( "drone reached end of loop, looping" )
+				#endif
 				targetNode = firstNode
 			}
 		}
@@ -328,13 +355,17 @@ void function droneNav_thread( entity npc, string routeName, int nodesToSkip = 0
 			{
 				if( shouldLoop )
 				{
+					#if SERVER && DEV
 					printt( "drone reached end of loop, looping" )
+					#endif
 					routeindex = 0
 					routepoint = routes[routetaken][routeindex]
 				}
 				else
 				{
+					#if SERVER && DEV
 					printt( "drone finished pathing" )
+					#endif
 					break
 				}
 			}

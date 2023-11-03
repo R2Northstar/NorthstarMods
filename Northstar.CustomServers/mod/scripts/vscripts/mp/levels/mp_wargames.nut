@@ -26,7 +26,7 @@ void function CodeCallback_MapInit()
 	AddCallback_GameStateEnter( eGameState.Prematch, SpawnMarvinsForRound )
 	
 	// Load Frontier Defense Data
-	if( GameRules_GetGameMode() == "fd" )
+	if( GameRules_GetGameMode() == FD )
 		initFrontierDefenseData()
 	else
 	{

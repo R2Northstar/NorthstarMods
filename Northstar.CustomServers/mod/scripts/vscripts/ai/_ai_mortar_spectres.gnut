@@ -3,9 +3,9 @@ untyped
 global function MortarSpectreSquadThink
 global function MortarSpectreGetSquadFiringPositions
 
-const float MORTAR_SPECTRE_POSITION_SEARCH_RANGE			= 8192  // How far away from their spawn point a mortar spectre squad will look for positions to siege from
-const float MORTAR_SPECTRE_TRACKER_SHIELD_MAX				= 1000.0  // just using 1000 for now, doesnt really matter as long as the shieldFrac is accurate enough
-const float MORTAR_SPECTRE_SIGHT_DISTANCE					= 1000.0  // Maximum distance the Spectres can detect players rather attack the Harvester
+const float MORTAR_SPECTRE_POSITION_SEARCH_RANGE			= 4096  // How far away from their spawn point a mortar spectre squad will look for positions to siege from
+const float MORTAR_SPECTRE_TRACKER_SHIELD_MAX				= 1000  // just using 1000 for now, doesnt really matter as long as the shieldFrac is accurate enough
+const float MORTAR_SPECTRE_SIGHT_DISTANCE					= 1000  // Maximum distance the Spectres can detect players rather attack the Harvester
 
 const array<vector> MORTAR_SPECTRE_POSITION_OFFSETS = [ < 50, 0, 0 >, < 0, 50, 0 >, < -50, 0, 0 >, < 0, -50, 0 > ]
 
@@ -63,6 +63,7 @@ void function MortarSpectreSquadThink( array< entity > spectres, entity harveste
 	
 	thread MortarSpectreSquadDeathThink( spectres, squadMarker, mortarPosition ) //Track squad status for icon and spot states
 	entity mortarfaketarget = CreateInfoTarget( mortarPosition.origin, < 0, 0, 0 > ) //Proxy target where the Mortar Spectres will actually aim to
+	SetVisibleEntitiesInConeQueriableEnabled( mortarfaketarget, false ) //Prevent any AI to scan the proxy as a target unless explicitly set
 	
 	vector dir = harvester.GetOrigin() - mortarPosition.origin
 	vector shieldangle = VectorToAngles( dir )
@@ -93,9 +94,9 @@ void function MortarSpectreSquadThink( array< entity > spectres, entity harveste
 	entity mortarshield
 	if ( FD_IsDifficultyLevelOrHigher( eFDDifficultyLevel.HARD ) && IsValid( squadMarker ) ) //From what i could observe, Mortar Spectres don't use a playlistvar, they only check difficulty
 	{
-		vector shieldoffset = PositionOffsetFromOriginAngles( mortarPosition.origin, shieldangle, 80, 1, 1 )
+		vector shieldoffset = PositionOffsetFromOriginAngles( mortarPosition.origin, shieldangle, 80, 0, 0 )
 		mortarshield = CreateShieldWithSettings( OriginToGround( shieldoffset + < 0, 0, 128> ), shieldangle, 128, 96, 150, 9999.0, TURRET_SHIELD_WALL_HEALTH, $"P_pilot_cover_shield" )
-		mortarshield.SetParent( squadMarker, "", true )
+		mortarshield.SetParent( squadMarker, "", true ) //Parent to the Mortar Icon, so when that gets destroyed, this also goes with it
 		mortarshield.EndSignal( "OnDestroy" )
 		mortarshield.SetBlocksRadiusDamage( true )
 		mortarshield.DisableVortexBlockLOS()
@@ -115,13 +116,13 @@ void function MortarSpectreSquadThink( array< entity > spectres, entity harveste
 	}
 	
 	if ( IsValid( squadMarker ) )
-		squadMarker.SetShieldHealth( MORTAR_SPECTRE_TRACKER_SHIELD_MAX ) //Set to Max Shield so it doesn't have a pixel gap remaining
+		squadMarker.SetShieldHealth( MORTAR_SPECTRE_TRACKER_SHIELD_MAX ) //Set to Max Shield so it does the flare effect that the Spectres are ready to siege
 	
 	ArrayRemoveDead( spectres ) //Remove again due to delay
 	if( IsValid( mortarfaketarget ) ) //Enable the Proxy to be targeted by the Spectres
 	{
 		SetTeam( mortarfaketarget, TEAM_MILITIA )
-		mortarfaketarget.EnableAttackableByAI( 10, 0, AI_AP_FLAG_NONE )
+		mortarfaketarget.EnableAttackableByAI( 0, 0, AI_AP_FLAG_NONE )
 	}
 	
 	foreach( entity spectre in spectres ) //Trigger the function responsible for handling target switching and weapons from them

@@ -4,7 +4,7 @@ Branch made to expand Frontier Defense feature set by adding back cut content wh
 
 ## Notable differences from main gamemode_fd branch:
 
-- Droz & Davis are way more talkative as they used to be in vanilla
+- Droz & Davis are way more talkative as they used to be in vanilla (probably even more since they are using some cut lines that vanilla never plays)
 - Several maps had their navmeshes rebuilt to mitigate enemies from idling on place
 - Grunt Dropship spawn event
 - Titanfall Block event (cut content)
@@ -40,9 +40,10 @@ Branch made to expand Frontier Defense feature set by adding back cut content wh
 - They can use e-smoke to kill pilots trying to rodeo them
 - Drop a Battery on Easy and Regular Difficulties or drop an Amped Battery in Hard, Master and Insane difficulties similar to campaign Titans
 
-## Live Fire Gameplay Changes
+## Live-Fire Frontier Defense
 
-- Deck, Township, UMA are playable
+Uses its own playlist mode now, you need to setup gamemode and playlist variable to `fd_livefire` for server hosting, the gameplay rules are:
+- Meadow, Deck, Township, UMA are playable
 - Pilot-only gameplay
 - Only 3 Waves with huge amounts of non-stop spawning enemies, infantry mostly
 - Loadouts can be changed at any time during a wave in the Loadout Crates

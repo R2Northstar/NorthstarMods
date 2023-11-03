@@ -46,7 +46,6 @@ playlists
 				max_players 12
 				max_teams 12
 				classic_mp 1
-				
 				scorelimit 21 // temp until we have a way of dynamically setting non-default scorelimit in code
 				
 				gamemode_score_hint #GAMEMODE_SCORE_HINT_FFA
@@ -351,31 +350,22 @@ playlists
  				gamemode_bullet_004	#GAMEMODE_BULLET_FD_004
  				gamemode_bullet_005	#GAMEMODE_BULLET_FD_005
  			}
- 			maps
- 			{
-                mp_lf_stacks 1
-				mp_lf_deck 1
-				mp_lf_meadow 1
-				mp_lf_traffic 1
-				mp_lf_township 1
-				mp_lf_uma 1
-				mp_forwardbase_kodai 1
-				mp_grave 1
-				mp_homestead 1
-				mp_thaw 1
-				mp_black_water_canal 1
-				mp_eden 1
-				mp_drydock 1
-				mp_crashsite3 1
-				mp_complex3 1
+			maps
+			{
 				mp_angel_city 1
+				mp_black_water_canal 1
+				mp_grave 1
 				mp_colony02 1
+				mp_complex3 1
+				mp_drydock 1
+				mp_eden 1
+				mp_thaw 1
+				mp_forwardbase_kodai 1
 				mp_glitch 1
-				mp_relic02 1
-				mp_wargames 1
+				mp_homestead 1
 				mp_rise 1
-				mp_coliseum_column 1
- 			}
+				mp_wargames 1
+			}
  		}
 		fd_easy
 		{
@@ -403,31 +393,6 @@ playlists
 
 				earn_meter_pilot_multiplier		0.7
 			}
-			maps
- 			{
-                mp_lf_stacks 1
-				mp_lf_deck 1
-				mp_lf_meadow 1
-				mp_lf_traffic 1
-				mp_lf_township 1
-				mp_lf_uma 1
-				mp_forwardbase_kodai 1
-				mp_grave 1
-				mp_homestead 1
-				mp_thaw 1
-				mp_black_water_canal 1
-				mp_eden 1
-				mp_drydock 1
-				mp_crashsite3 1
-				mp_complex3 1
-				mp_angel_city 1
-				mp_colony02 1
-				mp_glitch 1
-				mp_relic02 1
-				mp_wargames 1
-				mp_rise 1
-				mp_coliseum_column 1
- 			}
 		}
 		fd_normal
 		{
@@ -454,31 +419,6 @@ playlists
 
 				earn_meter_pilot_multiplier		0.7
 			}
-			maps
- 			{
-                mp_lf_stacks 1
-				mp_lf_deck 1
-				mp_lf_meadow 1
-				mp_lf_traffic 1
-				mp_lf_township 1
-				mp_lf_uma 1
-				mp_forwardbase_kodai 1
-				mp_grave 1
-				mp_homestead 1
-				mp_thaw 1
-				mp_black_water_canal 1
-				mp_eden 1
-				mp_drydock 1
-				mp_crashsite3 1
-				mp_complex3 1
-				mp_angel_city 1
-				mp_colony02 1
-				mp_glitch 1
-				mp_relic02 1
-				mp_wargames 1
-				mp_rise 1
-				mp_coliseum_column 1
- 			}
 		}
 		fd_hard
 		{
@@ -505,31 +445,6 @@ playlists
 
 				earn_meter_pilot_multiplier	0.7
 			}
-			maps
- 			{
-                mp_lf_stacks 1
-				mp_lf_deck 1
-				mp_lf_meadow 1
-				mp_lf_traffic 1
-				mp_lf_township 1
-				mp_lf_uma 1
-				mp_forwardbase_kodai 1
-				mp_grave 1
-				mp_homestead 1
-				mp_thaw 1
-				mp_black_water_canal 1
-				mp_eden 1
-				mp_drydock 1
-				mp_crashsite3 1
-				mp_complex3 1
-				mp_angel_city 1
-				mp_colony02 1
-				mp_glitch 1
-				mp_relic02 1
-				mp_wargames 1
-				mp_rise 1
-				mp_coliseum_column 1
- 			}
 		}
 		fd_master
 		{
@@ -557,31 +472,6 @@ playlists
 
 				earn_meter_pilot_multiplier	0.7
 			}
-			maps
- 			{
-                mp_lf_stacks 1
-				mp_lf_deck 1
-				mp_lf_meadow 1
-				mp_lf_traffic 1
-				mp_lf_township 1
-				mp_lf_uma 1
-				mp_forwardbase_kodai 1
-				mp_grave 1
-				mp_homestead 1
-				mp_thaw 1
-				mp_black_water_canal 1
-				mp_eden 1
-				mp_drydock 1
-				mp_crashsite3 1
-				mp_complex3 1
-				mp_angel_city 1
-				mp_colony02 1
-				mp_glitch 1
-				mp_relic02 1
-				mp_wargames 1
-				mp_rise 1
-				mp_coliseum_column 1
- 			}
 		}
 		fd_insane
 		{
@@ -611,31 +501,54 @@ playlists
 
 				earn_meter_pilot_multiplier	0.5
 			}
+		}
+		fd_livefire
+		{
+			inherit fd
+			vars
+			{
+                name #PL_fd_lf
+                lobbytitle #PL_fd_lf
+                description #PL_fd_lf_desc
+ 				abbreviation #PL_fd_lf_abbr
+                image aitdm
+                fd_difficulty 1
+				boost_store_team_reserve 1
+				riff_minimap_state 1
+				rodeo_battery_disembark_to_pickup 0
+                roundscorelimit 1
+				skyshow_enabled 0
+				max_players 6
+				player_force_respawn 5
+
+				fd_titan_health_adjust			0
+				fd_reaper_health_adjust 		0
+				fd_grunt_at_weapon_users		4
+				fd_grunt_shield_captains		1
+				fd_money_per_round				1200
+				fd_at_unlimited_ammo            0
+				
+				override_boost_cost_burnmeter_harvester_shield 1000
+				override_boost_cost_burnmeter_arc_trap 900
+				override_boost_cost_burnmeter_ap_turret_weapon_infinite 1000
+				override_boost_cost_burnmeter_rodeo_grenade 1200
+				override_boost_cost_burnmeter_amped_weapons_permanent 250
+				override_boost_cost_burnmeter_instant_battery 1500
+				
+				gamemode_score_hint #GAMEMODE_SCORE_HINT_FD
+ 				gamemode_bullet_001	#GAMEMODE_BULLET_LFFD_001
+ 				gamemode_bullet_002	#GAMEMODE_BULLET_LFFD_002
+ 				gamemode_bullet_003	#GAMEMODE_BULLET_LFFD_003
+ 				gamemode_bullet_004	#GAMEMODE_BULLET_LFFD_004
+ 				gamemode_bullet_005	#GAMEMODE_BULLET_LFFD_005
+			}
 			maps
- 			{
-                mp_lf_stacks 1
+			{
 				mp_lf_deck 1
-				mp_lf_meadow 1
-				mp_lf_traffic 1
 				mp_lf_township 1
 				mp_lf_uma 1
-				mp_forwardbase_kodai 1
-				mp_grave 1
-				mp_homestead 1
-				mp_thaw 1
-				mp_black_water_canal 1
-				mp_eden 1
-				mp_drydock 1
-				mp_crashsite3 1
-				mp_complex3 1
-				mp_angel_city 1
-				mp_colony02 1
-				mp_glitch 1
-				mp_relic02 1
-				mp_wargames 1
-				mp_rise 1
-				mp_coliseum_column 1
- 			}
+				mp_lf_meadow 1
+			}
 		}
 	}
 	Playlists
@@ -649,10 +562,9 @@ playlists
 				lobbytitle #PL_gg_lobby
 				description #PL_gg_desc
 				abbreviation #PL_gg_abbr
-				image varietypack
-				//mixtape_slot 7
-				mixtape_timeout 120
-				visible 0
+				image tdm
+				mixtape_promo_slot 6
+				visible 1
 			}
 			gamemodes
 			{
@@ -696,7 +608,8 @@ playlists
 				hint #PL_tt_hint
 				image lts
 				abbreviation #PL_tt_abbr
-				visible 0
+				mixtape_promo_slot 4
+				visible 1
 			}
 			gamemodes
 			{
@@ -732,9 +645,10 @@ playlists
 				lobbytitle #PL_inf_lobby
 				description #PL_inf_desc
 				hint #PL_inf_hint
-				image ps
+				image fnf
 				abbreviation #PL_inf_abbr
-				visible 0
+				mixtape_promo_slot 7
+				visible 1
 			}
 			gamemodes
 			{
@@ -838,6 +752,8 @@ playlists
 				classic_mp 1
 				timelimit 7.5
 				scorelimit 99999 // arbitrarily high number
+				mixtape_slot 5
+				visible 1
 			}
 			gamemodes
 			{
@@ -888,6 +804,8 @@ playlists
 				scorelimit 5
 				roundtimelimit 2
 				roundscorelimit 5
+				mixtape_promo_slot 1
+				visible 1
 				
 				gamemode_score_hint #GAMEMODE_SCORE_HINT_TDM
 			}	
@@ -933,6 +851,9 @@ playlists
 				classic_mp 1
 				scorelimit 100
 				timelimit 15
+				
+				mixtape_promo_slot 8
+				visible 1
 				
 				gamemode_score_hint #GAMEMODE_SCORE_HINT_TDM
 			}	
@@ -1029,9 +950,11 @@ playlists
 				description #PL_hs_desc
 				hint #PL_hs_hint
 				abbreviation #PL_hs_abbr
-				image tdm
+				image fnf
 				timelimit 10
 				max_players 16
+				mixtape_slot 8
+				visible 1
 				
 				gamemode_score_hint #GAMEMODE_SCORE_HINT_TDM
 			}
@@ -1083,10 +1006,10 @@ playlists
 				lobbytitle #PL_chamber_lobby
 				description #PL_chamber_desc
 				abbreviation #PL_chamber_abbr
-				image ps
-				//mixtape_slot 7
+				image cp
+				mixtape_slot 10
 				mixtape_timeout 120
-				visible 0
+				visible 1
 			}
 			gamemodes
 			{
@@ -1131,10 +1054,10 @@ playlists
 				lobbytitle #PL_hidden_lobby
 				description #PL_hidden_desc
 				abbreviation #PL_hidden_abbr
-				image ps
-				//mixtape_slot 7
+				image fw
+				mixtape_slot 9
 				mixtape_timeout 120
-				visible 0
+				visible 1
 			}
 			gamemodes
 			{
@@ -1189,18 +1112,18 @@ playlists
 				{
 					maps
 					{
-							mp_forwardbase_kodai 1
-									mp_grave 1
-									mp_homestead 1
-									mp_thaw 1
-									mp_black_water_canal 1
-									mp_eden 1
-									mp_drydock 1
-									mp_crashsite3 1
-									mp_complex3 1
-									mp_angel_city 1
-									mp_colony02 1
-									mp_glitch 1
+						mp_forwardbase_kodai 1
+						mp_grave 1
+						mp_homestead 1
+						mp_thaw 1
+						mp_black_water_canal 1
+						mp_eden 1
+						mp_drydock 1
+						mp_crashsite3 1
+						mp_complex3 1
+						mp_angel_city 1
+						mp_colony02 1
+						mp_glitch 1
 						mp_relic02 1
 						mp_wargames 1
 						mp_rise 1
@@ -1218,8 +1141,9 @@ playlists
 				description #PL_sns_desc
 				hint #PL_sns_desc
 				abbreviation #PL_sns_abbr
-				image ps
-				visible 0
+				image lf
+				mixtape_slot 11
+				visible 1
 				
 				gamemode_score_hint #GAMEMODE_SCORE_HINT_FFA
 			}	
@@ -1256,36 +1180,273 @@ playlists
 				}
 			}
 		}
+		rocket_lf
+		{
+			inherit defaults
+			vars
+			{
+				name #PL_rocket_arena
+				lobbytitle #PL_rocket_arena_lobby
+				description #PL_rocket_arena_desc
+				abbreviation #PL_rocket_arena_abbr
+				image lf
+				visible 0
+				scorelimit 50
+				roundtimelimit 2.0
+				featured_mode_rocket_arena 1
+				boosts_enabled 1
+			}
+			gamemodes
+			{
+				speedball
+				{
+					maps
+					{
+						mp_lf_stacks 1
+						mp_lf_township 1
+						mp_lf_uma 1
+						mp_lf_traffic 1
+						mp_lf_deck 1
+						mp_lf_meadow 1
+					}
+				}
+			}
+		}
+		phase_aitdm
+		{
+			inherit defaults
+			vars
+			{
+				name "#PL_all_phase"
+				lobbytitle #PL_all_phase_lobby
+				description #PL_all_phase_desc
+				abbreviation #PL_all_phase_abbr
+				image aitdm
+				visible 0
+				featured_mode_all_phase 1
+			}
+			gamemodes
+			{
+				aitdm
+				{
+				}
+			}
+		}
+		spicy_aitdm
+		{
+			inherit defaults
+			vars
+			{
+				name "#PL_all_spicy"
+				lobbytitle #PL_all_spicy_lobby
+				description #PL_all_spicy_desc
+				abbreviation #PL_all_spicy_abbr
+				image aitdm
+				visible 0
+				featured_mode_all_ticks 1
+			}
+			gamemodes
+			{
+				aitdm
+				{
+				}
+			}
+		}
+		turbo_ttdm
+		{
+			inherit defaults
+			vars
+			{
+				name #PL_titan_brawl_turbo
+				lobbytitle #PL_titan_brawl_turbo_lobby
+				description #PL_titan_brawl_turbo_desc
+				abbreviation #PL_titan_brawl_turbo_abbr
+				image ttdm
+				visible 0
+				max_players 10
+				scorelimit 30
+				//mixtape_slot 8
+				boosts_enabled 1
+				respawn_delay 10
+
+				featured_mode_turbo_titans 1
+				earn_meter_titan_multiplier 2.0
+			}
+			gamemodes
+			{
+				ttdm
+				{
+				    maps
+				    {
+				        mp_glitch 1
+				        mp_colony02 1
+				        mp_wargames 1
+				        mp_eden 1
+				        mp_drydock 1
+						mp_black_water_canal 1
+						mp_thaw 1
+						mp_homestead 1
+						mp_forwardbase_kodai 1
+						mp_angel_city 1
+						mp_grave 1
+						mp_rise 1
+				    }
+				}
+			}
+		}
+		coliseum
+		{
+			inherit defaults
+			vars
+			{
+				name #PL_coliseum
+				lobbytitle #PL_coliseum_lobby
+				description #PL_coliseum_desc
+				image coliseum
+				//mixtape_promo_slot 4
+				visible 0
+			}
+			gamemodes
+			{
+				coliseum {}
+			}
+		}
+		fd_insane
+		{
+			inherit fd
+			vars
+			{
+                name #PL_fd_insane
+                lobbytitle #PL_fd_insane_lobby
+                description #PL_fd_insane_desc
+                image fd_insane
+				visible 1
+			}
+			gamemodes
+			{
+				fd
+				{}
+			}
+			gamemodesWithAncestor
+			{
+				fd_insane
+				{
+					maps
+					{
+						mp_angel_city 1
+						mp_black_water_canal 1
+						mp_grave 1
+						mp_colony02 1
+						mp_complex3 1
+						mp_drydock 1
+						mp_eden 1
+						mp_thaw 1
+						mp_forwardbase_kodai 1
+						mp_glitch 1
+						mp_homestead 1
+						mp_rise 1
+						mp_wargames 1
+					}
+				}
+			}
+		}
+		turbo_lts
+		{
+			inherit defaults
+			vars
+			{
+				name #PL_turbo_last_titan_standing
+				lobbytitle #PL_turbo_last_titan_standing_lobby
+				description #PL_turbo_last_titan_standing_desc
+				abbreviation #PL_turbo_last_titan_standing_abbr
+				image lts
+				visible 0
+				featured_mode_turbo_titans 1
+				earn_meter_titan_multiplier 2.0
+			}
+			gamemodes
+			{
+				lts
+				{
+				}
+			}
+		}
+		fd_livefire
+		{
+			inherit fd
+			vars
+			{
+                name #PL_fd_lf
+                lobbytitle #PL_fd_lf
+                description #PL_fd_lf_desc
+ 				abbreviation #PL_fd_lf_abbr
+                image aitdm
+				visible 1
+				mixtape_promo_slot 5
+				promo_note #PL_atcoop_hint
+			}
+			gamemodes
+			{
+				fd
+				{}
+			}
+			gamemodesWithAncestor
+			{
+				fd_livefire
+				{
+					maps
+					{
+						mp_lf_deck 1
+						mp_lf_township 1
+						mp_lf_uma 1
+						mp_lf_meadow 1
+					}
+				}
+			}
+		}
 		private_match
 		{
+			inherit defaults
+			vars
+			{
+				name #PL_private_match
+				lobbytitle #PL_private_match_lobby
+				description #PL_private_match_desc
+				image private_match
+
+				max_players 16
+				lobby_countdown 5
+				ranking_supported 0
+				mixtape_promo_slot 0
+				double_xp_enabled 0
+				visible 1
+
+				// default custom settings
+				match_visibility 2
+				pilot_health_multiplier 1.0
+				earn_meter_pilot_multiplier 1.0
+				earn_meter_pilot_overdrive 1
+				earn_meter_titan_multiplier 1.0
+			}
 			gamemodes
 			{
 				fd_easy
 				{
 					maps
 					{
-						mp_lf_stacks 1
-						mp_lf_deck 1
-						mp_lf_meadow 1
-						mp_lf_traffic 1
-						mp_lf_township 1
-						mp_lf_uma 1
-						mp_forwardbase_kodai 1
-						mp_grave 1
-						mp_homestead 1
-						mp_thaw 1
-						mp_black_water_canal 1
-						mp_eden 1
-						mp_drydock 1
-						mp_crashsite3 1
-						mp_complex3 1
 						mp_angel_city 1
+						mp_black_water_canal 1
+						mp_grave 1
 						mp_colony02 1
+						mp_complex3 1
+						mp_drydock 1
+						mp_eden 1
+						mp_thaw 1
+						mp_forwardbase_kodai 1
 						mp_glitch 1
-						mp_relic02 1
-						mp_wargames 1
+						mp_homestead 1
 						mp_rise 1
-						mp_coliseum_column 1
+						mp_wargames 1
 					}
 				}
 				
@@ -1293,28 +1454,19 @@ playlists
 				{
 					maps
 					{
-						mp_lf_stacks 1
-						mp_lf_deck 1
-						mp_lf_meadow 1
-						mp_lf_traffic 1
-						mp_lf_township 1
-						mp_lf_uma 1
-						mp_forwardbase_kodai 1
-						mp_grave 1
-						mp_homestead 1
-						mp_thaw 1
-						mp_black_water_canal 1
-						mp_eden 1
-						mp_drydock 1
-						mp_crashsite3 1
-						mp_complex3 1
 						mp_angel_city 1
+						mp_black_water_canal 1
+						mp_grave 1
 						mp_colony02 1
+						mp_complex3 1
+						mp_drydock 1
+						mp_eden 1
+						mp_thaw 1
+						mp_forwardbase_kodai 1
 						mp_glitch 1
-						mp_relic02 1
-						mp_wargames 1
+						mp_homestead 1
 						mp_rise 1
-						mp_coliseum_column 1
+						mp_wargames 1
 					}
 				}
 
@@ -1322,28 +1474,19 @@ playlists
 				{
 					maps
 					{
-						mp_lf_stacks 1
-						mp_lf_deck 1
-						mp_lf_meadow 1
-						mp_lf_traffic 1
-						mp_lf_township 1
-						mp_lf_uma 1
-						mp_forwardbase_kodai 1
-						mp_grave 1
-						mp_homestead 1
-						mp_thaw 1
-						mp_black_water_canal 1
-						mp_eden 1
-						mp_drydock 1
-						mp_crashsite3 1
-						mp_complex3 1
 						mp_angel_city 1
+						mp_black_water_canal 1
+						mp_grave 1
 						mp_colony02 1
+						mp_complex3 1
+						mp_drydock 1
+						mp_eden 1
+						mp_thaw 1
+						mp_forwardbase_kodai 1
 						mp_glitch 1
-						mp_relic02 1
-						mp_wargames 1
+						mp_homestead 1
 						mp_rise 1
-						mp_coliseum_column 1
+						mp_wargames 1
 					}
 				}
 
@@ -1351,28 +1494,19 @@ playlists
 				{
 					maps
 					{
-						mp_lf_stacks 1
-						mp_lf_deck 1
-						mp_lf_meadow 1
-						mp_lf_traffic 1
-						mp_lf_township 1
-						mp_lf_uma 1
-						mp_forwardbase_kodai 1
-						mp_grave 1
-						mp_homestead 1
-						mp_thaw 1
-						mp_black_water_canal 1
-						mp_eden 1
-						mp_drydock 1
-						mp_crashsite3 1
-						mp_complex3 1
 						mp_angel_city 1
+						mp_black_water_canal 1
+						mp_grave 1
 						mp_colony02 1
+						mp_complex3 1
+						mp_drydock 1
+						mp_eden 1
+						mp_thaw 1
+						mp_forwardbase_kodai 1
 						mp_glitch 1
-						mp_relic02 1
-						mp_wargames 1
+						mp_homestead 1
 						mp_rise 1
-						mp_coliseum_column 1
+						mp_wargames 1
 					}
 				}
 
@@ -1380,28 +1514,30 @@ playlists
 				{
 					maps
 					{
-						mp_lf_stacks 1
+						mp_angel_city 1
+						mp_black_water_canal 1
+						mp_grave 1
+						mp_colony02 1
+						mp_complex3 1
+						mp_drydock 1
+						mp_eden 1
+						mp_thaw 1
+						mp_forwardbase_kodai 1
+						mp_glitch 1
+						mp_homestead 1
+						mp_rise 1
+						mp_wargames 1
+					}
+				}
+				
+				fd_livefire
+				{
+					maps
+					{
 						mp_lf_deck 1
-						mp_lf_meadow 1
-						mp_lf_traffic 1
 						mp_lf_township 1
 						mp_lf_uma 1
-						mp_forwardbase_kodai 1
-						mp_grave 1
-						mp_homestead 1
-						mp_thaw 1
-						mp_black_water_canal 1
-						mp_eden 1
-						mp_drydock 1
-						mp_crashsite3 1
-						mp_complex3 1
-						mp_angel_city 1
-						mp_colony02 1
-						mp_glitch 1
-						mp_relic02 1
-						mp_wargames 1
-						mp_rise 1
-						mp_coliseum_column 1
+						mp_lf_meadow 1
 					}
 				}
 			}

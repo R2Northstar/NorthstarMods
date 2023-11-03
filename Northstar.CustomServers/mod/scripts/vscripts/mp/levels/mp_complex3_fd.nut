@@ -475,6 +475,13 @@ void function RegisterCustomFDContent()
 	foreach ( entity dropshipSpawn in dropshipSpawns )
 		dropshipSpawn.Destroy()
 	
+	array<entity> triggers = GetEntArrayByClass_Expensive( "trigger_hurt" )
+	foreach ( entity trigger in triggers )
+	{
+		if( trigger.kv.damageSourceName == "burn" )
+			trigger.kv.triggerFilterNpc = "none"
+	}
+	
 	entity Prowler1 = CreateNPC( "npc_prowler", TEAM_DAMAGE_ALL, < -3148, -331, 516>,< 0, 0, 0> )
 	entity Prowler2 = CreateNPC( "npc_prowler", TEAM_DAMAGE_ALL, < -3732, 474, 545>,< 0, 0, 0 > )
 	entity Prowler3 = CreateNPC( "npc_prowler", TEAM_DAMAGE_ALL, < -3797, -897, 597>,< 0, 0, 0 > )

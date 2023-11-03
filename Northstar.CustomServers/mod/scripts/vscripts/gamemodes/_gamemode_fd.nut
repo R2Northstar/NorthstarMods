@@ -30,6 +30,8 @@ struct player_struct_fd{
 	int wavesCompleted
 	float lastRespawnLifespan
 	float lastTitanDrop
+	bool pilotPerfectWin
+	bool titanPerfectWin
 }
 
 global HarvesterStruct& fd_harvester
@@ -71,8 +73,6 @@ struct {
 	bool waveRestart = false
 	bool easymodeSmartPistol = false
 	bool harvesterPerfectWin = true
-	bool pilotPerfectWin = true
-	bool titanPerfectWin = true
 	bool isLiveFireMap = false
 	vector harvesterLocationForRespawn = < 0, 0, 0 >
 	
@@ -639,7 +639,7 @@ bool function runWave( int waveIndex, bool shouldDoBuyTime )
 	{
 		PlayFactionDialogueToTeam( waveAnnouncement[waveIndex], TEAM_MILITIA )
 		if( waveIndex == 0 )
-			wait 5
+			wait 8
 	}
 	if( file.waveRestart )
 	{
@@ -684,6 +684,7 @@ bool function runWave( int waveIndex, bool shouldDoBuyTime )
 		wait 15
 	}
 	
+	print( "STARTING WAVE" )
 	SetGlobalNetInt( "FD_waveState", WAVE_STATE_INCOMING )
 	EarnMeterMP_SetPassiveMeterGainEnabled( true )
 	foreach( entity player in GetPlayerArray() )
@@ -951,7 +952,7 @@ bool function runWave( int waveIndex, bool shouldDoBuyTime )
 	MessageToTeam( TEAM_MILITIA, eEventNotifications.FD_NotifyWaveBonusIncoming )
 	wait 2
 	
-	print( "Trying to repair turrets during wave break" )
+	print( "Repairing turrets in wave break" )
 	thread FD_AttemptToRepairTurrets()
 	
 	print( "Showing Player Stats: Wave Complete" )
@@ -1216,6 +1217,8 @@ void function GamemodeFD_InitPlayer( entity player )
 {
 	player_struct_fd data
 	data.diedThisRound = false
+	data.pilotPerfectWin = true
+	data.titanPerfectWin = true
 	file.players[player] <- data
 	
 	table<string, float> awardStats
@@ -1332,10 +1335,7 @@ void function FD_OnPlayerGetsNewPilotLoadout( entity player, PilotLoadoutDef loa
 		FD_GiveSmartPistol( player )
 		
 	if( file.isLiveFireMap )
-	{
-		player.TakeOffhandWeapon( OFFHAND_ORDNANCE )
-		player.GiveOffhandWeapon( "mp_weapon_grenade_gravity", OFFHAND_ORDNANCE )
-	}
+		ReplacePlayerOrdnance( player, "mp_weapon_grenade_gravity" )
 	
 	//If player has bought the Amped Weapons before, keep it for the new weapons
 	if ( player.s.hasPermenantAmpedWeapons )
@@ -1707,7 +1707,7 @@ void function RateSpawnpoints_FD( int checkClass, array<entity> spawnpoints, int
 	{
 		float rating
 		if( team == TEAM_MILITIA )
-			rating = 1.0 - ( Distance2D( spawnpoint.GetOrigin(), file.harvesterLocationForRespawn ) / 1000.0 )
+			rating = clamp( 1.0 - ( Distance2D( spawnpoint.GetOrigin(), file.harvesterLocationForRespawn ) / 1000.0 ), 0.0, 1.0 )
 		else
 			rating = clamp( ( Distance2D( spawnpoint.GetOrigin(), file.harvesterLocationForRespawn ) / 5000.0 ), 0.0, 1.0 )
 		spawnpoint.CalculateRating( checkClass, player.GetTeam(), rating, rating )
@@ -1898,12 +1898,31 @@ void function DamageScaleByDifficulty( entity ent, var damageInfo )
 {
 	entity attacker = DamageInfo_GetAttacker( damageInfo )
 	entity inflictor = DamageInfo_GetInflictor( damageInfo )
+	int damageSourceID = DamageInfo_GetDamageSourceIdentifier( damageInfo )
 	
-	if ( !attacker || ent.GetTeam() != TEAM_MILITIA )
+	if ( !attacker || !damageSourceID )
 		return
 	
-	int damageSourceID = DamageInfo_GetDamageSourceIdentifier( damageInfo )
-	if ( !damageSourceID )
+	/* I should really NOT be doing this, but jfc Scorch is just so broken in FD it's hard to find a good balance difficulty for other titans
+	when this mf just DoT everyone and spam flame core all the time, so yeah... double the effort for this guy to kill Elites */
+	if( ent.GetTeam() == TEAM_IMC && ent.ai.bossTitanType == TITAN_MERC && attacker.GetTeam() == TEAM_MILITIA )
+	{
+		switch( damageSourceID )
+		{
+			case eDamageSourceId.mp_titanweapon_flame_wall:
+			case eDamageSourceId.mp_titanweapon_flame_ring:
+			case eDamageSourceId.mp_titanweapon_meteor:
+			case eDamageSourceId.mp_titanweapon_meteor_thermite:
+			case eDamageSourceId.mp_titanweapon_meteor_thermite_charged:
+			case eDamageSourceId.mp_titancore_flame_wave:
+			case eDamageSourceId.mp_titancore_flame_wave_secondary:
+			case eDamageSourceId.mp_titanweapon_heat_shield:
+			DamageInfo_ScaleDamage( damageInfo, 0.5 )
+			break
+		}
+	}
+	
+	if ( ent.GetTeam() != TEAM_MILITIA )
 		return
 	
 	//IMC Players being a distraction will do less damage, countermeasure to smoothen the stress put onto the Defending players
@@ -2427,7 +2446,7 @@ void function GamemodeFD_OnPlayerKilled( entity victim, entity attacker, var dam
 		file.playerAwardStats[victim]["longestLife"] = 0.0 //Reset to count again
 	}
 	
-	file.pilotPerfectWin = false //Remove perfect win
+	file.players[victim].pilotPerfectWin = false //Remove perfect win for this player
 	
 	if( GetGlobalNetInt( "FD_waveState") != WAVE_STATE_BREAK )
 		file.players[victim].diedThisRound = true
@@ -2475,10 +2494,8 @@ void function FD_OnNPCDeath( entity victim, entity attacker, var damageInfo )
 	if( attacker.IsPlayer() && attacker.GetTeam() == TEAM_IMC ) //Give nothing for IMC players
 		return
 	
-	if( victim.IsTitan() && victim.GetTeam() == TEAM_MILITIA && victim.GetBossPlayer() )
-	{
-		file.titanPerfectWin = false //Remove perfect win
-	}
+	if( victim.IsTitan() && victim.GetTeam() == TEAM_MILITIA && IsValid( victim.GetBossPlayer() ) )
+		file.players[victim.GetBossPlayer()].titanPerfectWin = false //Remove perfect win for the owner of the Titan
 	
 	entity inflictor = DamageInfo_GetInflictor( damageInfo )
 	int victimTypeID = FD_GetAITypeID_ByString( victim.GetTargetName() )
@@ -3340,7 +3357,7 @@ void function RegisterPostSummaryScreenForMatch( bool matchwon )
 		{
 			UpdatePlayerStat( player, "game_stats", "games_won_fd" )
 			
-			if( file.titanPerfectWin && file.pilotPerfectWin && file.harvesterPerfectWin )
+			if( file.players[player].pilotPerfectWin && file.players[player].titanPerfectWin && file.harvesterPerfectWin )
 			{
 				UpdatePlayerStat( player, "game_stats", "perfectMatches" )
 				UpdatePlayerStat( player, "titan_stats", "perfectMatchesByDifficulty", 1, titanRef )

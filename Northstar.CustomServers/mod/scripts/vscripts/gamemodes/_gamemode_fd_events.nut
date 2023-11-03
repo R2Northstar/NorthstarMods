@@ -158,7 +158,7 @@ void function executeWave()
 {	
 	int currentWave = GetGlobalNetInt( "FD_currentWave" ) + 1
 	int enemyCount
-	print( "Wave Start: " + currentWave )
+	print( "WAVE START: " + currentWave )
 	thread runEvents( 0 )
 	
 	//Wait for all events to execute
@@ -251,7 +251,6 @@ void function runEvents( int firstExecuteIndex )
 {	
 	print( "Events Start" )
 	WaveEvent currentEvent = waveEvents[GetGlobalNetInt( "FD_currentWave" )][firstExecuteIndex]
-	bool skipevent = false
 	
 	while( true )
 	{
@@ -1012,10 +1011,13 @@ void function spawnSmoke( SmokeEvent smokeEvent, SpawnEvent spawnEvent, FlowCont
 	vector skypos = GetSkyCeiling( smokeEvent.position )
 	vector groundpos = OriginToGround( skypos )
 	
+	#if SERVER && DEV
 	printt( "Spawning Smoke at: " + smokeEvent.position )
+	#endif
 	SmokescreenStruct smokescreen
 	smokescreen.smokescreenFX = $"P_smokescreen_FD"
 	smokescreen.isElectric = false
+	smokescreen.shouldHibernate = false
 	smokescreen.origin = groundpos
 	smokescreen.angles = < 0, 0, 0 >
 	smokescreen.fxXYRadius = 160
@@ -1058,7 +1060,9 @@ void function spawnSmoke( SmokeEvent smokeEvent, SpawnEvent spawnEvent, FlowCont
 
 void function spawnDrones( SmokeEvent smokeEvent, SpawnEvent spawnEvent, FlowControlEvent flowControlEvent, SoundEvent soundEvent )
 {
+	#if SERVER && DEV
 	printt( "Spawning Drones at: " + spawnEvent.origin )
+	#endif
 	PingMinimap( spawnEvent.origin.x, spawnEvent.origin.y, 4, 600, 150, 0 )
 	
 	string squadName = MakeSquadName( TEAM_IMC, UniqueString() )
@@ -1117,7 +1121,9 @@ void function waitForLessThanAliveTyped( SmokeEvent smokeEvent, SpawnEvent spawn
 
 void function spawnArcTitan( SmokeEvent smokeEvent, SpawnEvent spawnEvent, FlowControlEvent flowControlEvent, SoundEvent soundEvent )
 {
+	#if SERVER && DEV
 	printt( "Spawning Arc Titan at: " + spawnEvent.origin )
+	#endif
 	if ( GetConVarBool( "ns_fd_show_drop_points" ) )
 		thread Drop_Spawnpoint( spawnEvent.origin, TEAM_IMC, 5 )
 	PingMinimap( spawnEvent.origin.x, spawnEvent.origin.y, 4, 600, 150, 0 )
@@ -1146,18 +1152,21 @@ void function spawnArcTitan( SmokeEvent smokeEvent, SpawnEvent spawnEvent, FlowC
 		GlobalEventEntitys[spawnEvent.entityGlobalKey] <- npc
 	thread singleNav_thread( npc, spawnEvent.route )
 	thread EMPTitanThinkConstant( npc )
-	switch ( difficultyLevel )
+	if( GetMapName().find( "mp_lf_" ) == null )
 	{
-		case eFDDifficultyLevel.EASY:
-		case eFDDifficultyLevel.NORMAL:
-			npc.AssaultSetFightRadius( 1200 )
-			break
-		case eFDDifficultyLevel.HARD:
-		case eFDDifficultyLevel.MASTER:
-		case eFDDifficultyLevel.INSANE:
-			npc.AssaultSetFightRadius( 0 )
-			npc.EnableNPCMoveFlag( NPCMF_PREFER_SPRINT )
-			break
+		switch ( difficultyLevel )
+		{
+			case eFDDifficultyLevel.EASY:
+			case eFDDifficultyLevel.NORMAL:
+				npc.AssaultSetFightRadius( 1200 )
+				break
+			case eFDDifficultyLevel.HARD:
+			case eFDDifficultyLevel.MASTER:
+			case eFDDifficultyLevel.INSANE:
+				npc.AssaultSetFightRadius( 0 )
+				npc.EnableNPCMoveFlag( NPCMF_PREFER_SPRINT )
+				break
+		}
 	}
 }
 
@@ -1197,7 +1206,9 @@ void function spawnSuperSpectre( SmokeEvent smokeEvent, SpawnEvent spawnEvent, F
 		spawnorigin.z += 128 //Ensure we're above all playable geometry
 		spawnorigin = OriginToGround( spawnorigin )
 	}
+	#if SERVER && DEV
 	printt( "Spawning Common Reaper at: " + spawnEvent.origin )
+	#endif
 	if ( GetConVarBool( "ns_fd_show_drop_points" ) )
 		thread Drop_Spawnpoint( spawnorigin, TEAM_IMC, 5.7 )
 	PingMinimap( spawnorigin.x, spawnorigin.y, 4, 600, 150, 0 )
@@ -1219,17 +1230,20 @@ void function spawnSuperSpectre( SmokeEvent smokeEvent, SpawnEvent spawnEvent, F
 	npc.WaitSignal( "WarpfallComplete" )
 	//npc.SetCapabilityFlag( bits_CAP_MOVE_TRAVERSE, true )
 	thread singleNav_thread( npc, spawnEvent.route )
-	switch ( difficultyLevel )
+	if( GetMapName().find( "mp_lf_" ) == null )
 	{
-		case eFDDifficultyLevel.EASY:
-		case eFDDifficultyLevel.NORMAL:
-			npc.AssaultSetFightRadius( 1200 )
-			break
-		case eFDDifficultyLevel.HARD:
-		case eFDDifficultyLevel.MASTER:
-		case eFDDifficultyLevel.INSANE:
-			npc.AssaultSetFightRadius( 0 )
-			break
+		switch ( difficultyLevel )
+		{
+			case eFDDifficultyLevel.EASY:
+			case eFDDifficultyLevel.NORMAL:
+				npc.AssaultSetFightRadius( 1200 )
+				break
+			case eFDDifficultyLevel.HARD:
+			case eFDDifficultyLevel.MASTER:
+			case eFDDifficultyLevel.INSANE:
+				npc.AssaultSetFightRadius( 0 )
+				break
+		}
 	}
 }
 
@@ -1243,7 +1257,9 @@ void function spawnSuperSpectreWithMinion( SmokeEvent smokeEvent, SpawnEvent spa
 		spawnorigin.z += 128 //Ensure we're above all playable geometry
 		spawnorigin = OriginToGround( spawnorigin )
 	}
+	#if SERVER && DEV
 	printt( "Spawning Tick-deployer Reaper at: " + spawnEvent.origin )
+	#endif
 	if ( GetConVarBool( "ns_fd_show_drop_points" ) )
 		thread Drop_Spawnpoint( spawnorigin, TEAM_IMC, 5.7 )
 	PingMinimap( spawnorigin.x, spawnorigin.y, 4, 600, 150, 0 )
@@ -1270,7 +1286,9 @@ void function spawnSuperSpectreWithMinion( SmokeEvent smokeEvent, SpawnEvent spa
 
 void function spawnDroppodGrunts( SmokeEvent smokeEvent, SpawnEvent spawnEvent, FlowControlEvent flowControlEvent, SoundEvent soundEvent )
 {
+	#if SERVER && DEV
 	printt( "Spawning Grunt Drop Pod at: " + spawnEvent.origin )
+	#endif
 	PingMinimap( spawnEvent.origin.x, spawnEvent.origin.y, 4, 600, 150, 0 )
 	entity pod = CreateDropPod( spawnEvent.origin, < 0, RandomIntRange( 0, 359 ), 0 > )
 	SetTeam( pod, TEAM_IMC )
@@ -1335,7 +1353,9 @@ void function spawnDroppodGrunts( SmokeEvent smokeEvent, SpawnEvent spawnEvent, 
 //specific nodes found in the maps, that is not needed here, full control over the coordinates where the dropship will drop grunts is better.
 void function spawnGruntDropship( SmokeEvent smokeEvent, SpawnEvent spawnEvent, FlowControlEvent flowControlEvent, SoundEvent soundEvent )
 { 
+	#if SERVER && DEV
 	printt( "Spawning Grunt Dropship at: " + spawnEvent.origin )
+	#endif
 	string squadName = MakeSquadName( TEAM_IMC, UniqueString() )
 	string at_weapon = GetConVarString( "ns_fd_grunt_at_weapon" )
 	
@@ -1455,7 +1475,9 @@ void function spawnGruntDropship( SmokeEvent smokeEvent, SpawnEvent spawnEvent, 
 
 void function spawnDroppodStalker( SmokeEvent smokeEvent, SpawnEvent spawnEvent, FlowControlEvent flowControlEvent, SoundEvent soundEvent )
 {
+	#if SERVER && DEV
 	printt( "Spawning Stalker Drop Pod at: " + spawnEvent.origin )
+	#endif
 	PingMinimap( spawnEvent.origin.x, spawnEvent.origin.y, 4, 600, 150, 0 )
 	entity pod = CreateDropPod( spawnEvent.origin, < 0, RandomIntRange( 0, 359 ), 0 > )
 	SetTeam( pod, TEAM_IMC )
@@ -1512,21 +1534,6 @@ void function spawnDroppodStalker( SmokeEvent smokeEvent, SpawnEvent spawnEvent,
 			unreachable
 
 	}
-	
-	if( GetMapName().find( "mp_lf_" ) != null )
-	{
-		foreach( npc in guys )
-		{
-			npc.TakeActiveWeapon()
-			npc.GiveWeapon( "mp_weapon_epg", ["slowProjectile"] )
-			npc.SetActiveWeaponByName( "mp_weapon_epg" )
-			npc.DisableNPCFlag( NPC_DISABLE_SENSING | NPC_IGNORE_ALL )
-			
-			entity weapon = npc.GetActiveWeapon()
-			if ( IsValid( weapon ) )
-				weapon.MakeInvisible()
-		}
-	}
 
 	waitthread LaunchAnimDropPod( pod, "pod_testpath", spawnEvent.origin, < 0, RandomIntRange( 0, 359 ), 0 > )
 	ActivateFireteamDropPod( pod, guys )
@@ -1541,7 +1548,9 @@ void function spawnDroppodStalker( SmokeEvent smokeEvent, SpawnEvent spawnEvent,
 
 void function spawnDroppodSpectreMortar( SmokeEvent smokeEvent, SpawnEvent spawnEvent, FlowControlEvent flowControlEvent, SoundEvent soundEvent )
 {
+	#if SERVER && DEV
 	printt( "Spawning Mortar Spectre Drop Pod at: " + spawnEvent.origin )
+	#endif
 	PingMinimap( spawnEvent.origin.x, spawnEvent.origin.y, 4, 600, 150, 0 )
 		entity pod = CreateDropPod( spawnEvent.origin, < 0, RandomIntRange( 0, 359 ), 0 > )
 	SetTeam( pod, TEAM_IMC )
@@ -1583,7 +1592,9 @@ void function spawnDroppodSpectreMortar( SmokeEvent smokeEvent, SpawnEvent spawn
 
 void function spawnDroppodSpectre( SmokeEvent smokeEvent, SpawnEvent spawnEvent, FlowControlEvent flowControlEvent, SoundEvent soundEvent )
 {
+	#if SERVER && DEV
 	printt( "Spawning Spectres Drop Pod at: " + spawnEvent.origin )
+	#endif
 	PingMinimap( spawnEvent.origin.x, spawnEvent.origin.y, 4, 600, 150, 0 )
 		entity pod = CreateDropPod( spawnEvent.origin, < 0, RandomIntRange( 0, 359 ), 0 > )
 	SetTeam( pod, TEAM_IMC )
@@ -1635,7 +1646,9 @@ void function spawnDroppodSpectre( SmokeEvent smokeEvent, SpawnEvent spawnEvent,
 
 void function spawnGenericNPC( SmokeEvent smokeEvent, SpawnEvent spawnEvent, FlowControlEvent flowControlEvent, SoundEvent soundEvent )
 {
+	#if SERVER && DEV
 	printt( "Spawning Generic NPC at: ", spawnEvent.origin )
+	#endif
 	PingMinimap( spawnEvent.origin.x, spawnEvent.origin.y, 4, 600, 150, 0 )
 	entity npc = CreateNPC( spawnEvent.npcClassName, TEAM_IMC, spawnEvent.origin, spawnEvent.angles )
 	if( spawnEvent.entityGlobalKey != "" )
@@ -1645,7 +1658,9 @@ void function spawnGenericNPC( SmokeEvent smokeEvent, SpawnEvent spawnEvent, Flo
 
 void function spawnGenericNPCTitanwithSettings( SmokeEvent smokeEvent, SpawnEvent spawnEvent, FlowControlEvent flowControlEvent, SoundEvent soundEvent )
 {
+	#if SERVER && DEV
 	printt( "Spawning Generic NPC Titan at: " + spawnEvent.origin )
+	#endif
 	PingMinimap( spawnEvent.origin.x, spawnEvent.origin.y, 4, 600, 150, 0 )
 	entity npc = CreateNPCTitan( spawnEvent.npcClassName, TEAM_IMC, spawnEvent.origin, spawnEvent.angles )
 	if( spawnEvent.aiSettings == "npc_titan_atlas_tracker_fd_sniper" )
@@ -1663,7 +1678,9 @@ void function spawnGenericNPCTitanwithSettings( SmokeEvent smokeEvent, SpawnEven
 
 void function SpawnIonTitan( SmokeEvent smokeEvent, SpawnEvent spawnEvent, FlowControlEvent flowControlEvent, SoundEvent soundEvent )
 {
+	#if SERVER && DEV
 	printt( "Spawning Ion Titan at: " + spawnEvent.origin )
+	#endif
 	if ( GetConVarBool( "ns_fd_show_drop_points" ) )
 		thread Drop_Spawnpoint( spawnEvent.origin, TEAM_IMC, 5 )
 	PingMinimap( spawnEvent.origin.x, spawnEvent.origin.y, 4, 600, 150, 0 )
@@ -1707,7 +1724,9 @@ void function SpawnIonTitan( SmokeEvent smokeEvent, SpawnEvent spawnEvent, FlowC
 
 void function SpawnScorchTitan( SmokeEvent smokeEvent, SpawnEvent spawnEvent, FlowControlEvent flowControlEvent, SoundEvent soundEvent )
 {
+	#if SERVER && DEV
 	printt( "Spawning Scorch Titan at: " + spawnEvent.origin )
+	#endif
 	if ( GetConVarBool( "ns_fd_show_drop_points" ) )
 		thread Drop_Spawnpoint( spawnEvent.origin, TEAM_IMC, 5 )
 	PingMinimap( spawnEvent.origin.x, spawnEvent.origin.y, 4, 600, 150, 0 )
@@ -1761,7 +1780,9 @@ void function SpawnScorchTitan( SmokeEvent smokeEvent, SpawnEvent spawnEvent, Fl
 
 void function SpawnRoninTitan( SmokeEvent smokeEvent, SpawnEvent spawnEvent, FlowControlEvent flowControlEvent, SoundEvent soundEvent )
 {
+	#if SERVER && DEV
 	printt( "Spawning Ronin Titan at: " + spawnEvent.origin )
+	#endif
 	if ( GetConVarBool( "ns_fd_show_drop_points" ) )
 		thread Drop_Spawnpoint( spawnEvent.origin, TEAM_IMC, 5 )
 	PingMinimap( spawnEvent.origin.x, spawnEvent.origin.y, 4, 600, 150, 0 )
@@ -1812,7 +1833,9 @@ void function SpawnRoninTitan( SmokeEvent smokeEvent, SpawnEvent spawnEvent, Flo
 
 void function SpawnToneTitan( SmokeEvent smokeEvent, SpawnEvent spawnEvent, FlowControlEvent flowControlEvent, SoundEvent soundEvent )
 {
+	#if SERVER && DEV
 	printt( "Spawning Tone Titan at: " + spawnEvent.origin )
+	#endif
 	if ( GetConVarBool( "ns_fd_show_drop_points" ) )
 		thread Drop_Spawnpoint( spawnEvent.origin, TEAM_IMC, 5 )
 	PingMinimap( spawnEvent.origin.x, spawnEvent.origin.y, 4, 600, 150, 0 )
@@ -1868,7 +1891,9 @@ void function SpawnToneTitan( SmokeEvent smokeEvent, SpawnEvent spawnEvent, Flow
 
 void function SpawnLegionTitan( SmokeEvent smokeEvent, SpawnEvent spawnEvent, FlowControlEvent flowControlEvent, SoundEvent soundEvent )
 {
+	#if SERVER && DEV
 	printt( "Spawning Legion Titan at: " + spawnEvent.origin )
+	#endif
 	if ( GetConVarBool( "ns_fd_show_drop_points" ) )
 		thread Drop_Spawnpoint( spawnEvent.origin, TEAM_IMC, 5 )
 	PingMinimap( spawnEvent.origin.x, spawnEvent.origin.y, 4, 600, 150, 0 )
@@ -1928,7 +1953,9 @@ void function SpawnLegionTitan( SmokeEvent smokeEvent, SpawnEvent spawnEvent, Fl
 
 void function SpawnMonarchTitan( SmokeEvent smokeEvent, SpawnEvent spawnEvent, FlowControlEvent flowControlEvent, SoundEvent soundEvent )
 {
+	#if SERVER && DEV
 	printt( "Spawning Monarch Titan at: " + spawnEvent.origin )
+	#endif
 	if ( GetConVarBool( "ns_fd_show_drop_points" ) )
 		thread Drop_Spawnpoint( spawnEvent.origin, TEAM_IMC, 5 )
 	PingMinimap( spawnEvent.origin.x, spawnEvent.origin.y, 4, 600, 150, 0 )
@@ -1989,7 +2016,9 @@ void function SpawnMonarchTitan( SmokeEvent smokeEvent, SpawnEvent spawnEvent, F
 
 void function spawnNukeTitan( SmokeEvent smokeEvent, SpawnEvent spawnEvent, FlowControlEvent flowControlEvent, SoundEvent soundEvent )
 {
+	#if SERVER && DEV
 	printt( "Spawning Nuke Titan at: " + spawnEvent.origin )
+	#endif
 	if ( GetConVarBool( "ns_fd_show_drop_points" ) )
 		thread Drop_Spawnpoint( spawnEvent.origin, TEAM_IMC, 5 )
 	PingMinimap( spawnEvent.origin.x, spawnEvent.origin.y, 4, 600, 150, 0 )
@@ -2019,7 +2048,9 @@ void function spawnNukeTitan( SmokeEvent smokeEvent, SpawnEvent spawnEvent, Flow
 
 void function spawnMortarTitan( SmokeEvent smokeEvent, SpawnEvent spawnEvent, FlowControlEvent flowControlEvent, SoundEvent soundEvent )
 {
+	#if SERVER && DEV
 	printt( "Spawning Mortar Titan at: " + spawnEvent.origin )
+	#endif
 	if ( GetConVarBool( "ns_fd_show_drop_points" ) )
 		thread Drop_Spawnpoint( spawnEvent.origin, TEAM_IMC, 5 )
 	PingMinimap( spawnEvent.origin.x, spawnEvent.origin.y, 4, 600, 150, 0 )
@@ -2045,7 +2076,9 @@ void function spawnMortarTitan( SmokeEvent smokeEvent, SpawnEvent spawnEvent, Fl
 
 void function spawnSniperTitan( SmokeEvent smokeEvent, SpawnEvent spawnEvent, FlowControlEvent flowControlEvent, SoundEvent soundEvent )
 {
+	#if SERVER && DEV
 	printt( "Spawning Northstar Titan at: " + spawnEvent.origin )
+	#endif
 	if ( GetConVarBool( "ns_fd_show_drop_points" ) )
 		thread Drop_Spawnpoint( spawnEvent.origin, TEAM_IMC, 5 )
 	PingMinimap( spawnEvent.origin.x, spawnEvent.origin.y, 4, 600, 150, 0 )
@@ -2109,7 +2142,9 @@ void function spawnSniperTitan( SmokeEvent smokeEvent, SpawnEvent spawnEvent, Fl
 
 void function SpawnToneSniperTitan( SmokeEvent smokeEvent, SpawnEvent spawnEvent, FlowControlEvent flowControlEvent, SoundEvent soundEvent )
 {
+	#if SERVER && DEV
 	printt( "Spawning Sniper Tone Titan at: " + spawnEvent.origin )
+	#endif
 	if ( GetConVarBool( "ns_fd_show_drop_points" ) )
 		thread Drop_Spawnpoint( spawnEvent.origin, TEAM_IMC, 5 )
 	PingMinimap( spawnEvent.origin.x, spawnEvent.origin.y, 4, 600, 150, 0 )
@@ -2170,7 +2205,9 @@ void function SpawnToneSniperTitan( SmokeEvent smokeEvent, SpawnEvent spawnEvent
 
 void function fd_spawnCloakDrone( SmokeEvent smokeEvent, SpawnEvent spawnEvent,FlowControlEvent flowControlEvent,SoundEvent soundEvent )
 {
+	#if SERVER && DEV
 	printt( "Spawning Cloak Drone at: " + spawnEvent.origin )
+	#endif
 	entity npc = SpawnCloakDrone( TEAM_IMC, spawnEvent.origin, spawnEvent.angles, fd_harvester.harvester.GetOrigin() )
 	spawnedNPCs.append( npc )
 	if( spawnEvent.entityGlobalKey != "" )
@@ -2181,7 +2218,9 @@ void function fd_spawnCloakDrone( SmokeEvent smokeEvent, SpawnEvent spawnEvent,F
 
 void function SpawnTick( SmokeEvent smokeEvent, SpawnEvent spawnEvent, FlowControlEvent flowControlEvent, SoundEvent soundEvent )
 {
+	#if SERVER && DEV
 	printt( "Spawning Tick Drop Pod at: " + spawnEvent.origin )
+	#endif
 	PingMinimap( spawnEvent.origin.x, spawnEvent.origin.y, 4, 600, 150, 0 )
 	entity pod = CreateDropPod( spawnEvent.origin, < 0, RandomIntRange( 0, 359 ), 0 > )
 	SetTeam( pod, TEAM_IMC )
@@ -2655,9 +2694,7 @@ void function MonitorEliteMonarchShield( entity npc )
 		}
 		else
 		{
-			smoketime = Time() + 6.0
 			thread EliteTitanElectricSmoke( npc )
-			soul.SetDefensivePlacement( smoketime, 160, 0, true, npc.GetOrigin(), VectorToAngles( npc.GetAngles() ) )
 			wait RandomFloatRange( 5.0, 10.0 ) //Wait a bit before repeating process to not get too spammy
 		}
 	}

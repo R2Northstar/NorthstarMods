@@ -4,18 +4,16 @@ void function CodeCallback_MapInit()
 {
 	SetupLiveFireMaps()
 	
-	// Load Frontier Defense Data, Marvins needs to be disabled for this gamemode due the extra bandwidth and NPC soft limit (where the game starts showing artifacts on rendering)
-	if( GameRules_GetGameMode() == "fd" )
+	// Load Frontier Defense Data
+	if( GameRules_GetGameMode() == FD )
 		initFrontierDefenseData()
-	else
-	{	
-		// worker drone model
-		PrecacheModel( $"models/robots/aerial_unmanned_worker/aerial_unmanned_worker.mdl" )
+	
+	// worker drone model
+	PrecacheModel( $"models/robots/aerial_unmanned_worker/aerial_unmanned_worker.mdl" )
 		
-		// note: this map has no marvin spawns, have to spawn them using idle nodes
-		AddSpawnCallback_ScriptName( "worker_drone_spawn", DeckSpawnWorkerDrone )
-		AddSpawnCallback_ScriptName( "marvin_idle_node", DeckSpawnMarvinForIdleNode )
-	}
+	// note: this map has no marvin spawns, have to spawn them using idle nodes
+	AddSpawnCallback_ScriptName( "worker_drone_spawn", DeckSpawnWorkerDrone )
+	AddSpawnCallback_ScriptName( "marvin_idle_node", DeckSpawnMarvinForIdleNode )
 }
 
 void function DeckSpawnWorkerDrone( entity spawnpoint )

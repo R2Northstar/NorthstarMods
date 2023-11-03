@@ -133,7 +133,7 @@ void function initFrontierDefenseData()
 	{
 		wave3.append(CreateSuperSpectreEvent( reaperspawns.getrandom() , < 0, 90, 0> ,"",index++))
 		wave3.append(CreateWaitForTimeEvent( RandomFloatRange( 0.1, 0.6 ),index++))
-		wave3.append(CreateWaitUntilAliveEvent( 20, index++ ) )
+		wave3.append(CreateWaitUntilAliveEvent( 32, index++ ) )
 	}
 	for( spawnamount = 0; spawnamount < 16; spawnamount++ )
 	{
@@ -148,7 +148,7 @@ void function initFrontierDefenseData()
 	{
 		wave3.append(CreateSuperSpectreEvent( reaperspawns.getrandom() , < 0, 90, 0> ,"",index++))
 		wave3.append(CreateWaitForTimeEvent( RandomFloatRange( 0.1, 0.6 ),index++))
-		wave3.append(CreateWaitUntilAliveEvent( 20, index++ ) )
+		wave3.append(CreateWaitUntilAliveEvent( 32, index++ ) )
 	}
 	wave3.append(CreateSuperSpectreEvent( reaperspawns.getrandom() , < 0, 90, 0> ,"",0))
 	waveEvents.append(wave3)

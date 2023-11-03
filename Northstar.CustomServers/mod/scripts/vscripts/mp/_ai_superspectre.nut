@@ -730,7 +730,7 @@ function SuperSpectre_WarpFall( entity ai )
 	if ( GetConVarBool( "ns_reaper_warpfall_kill" ) )
 		Explosion_DamageDefSimple( damagedef_reaper_fall, origin, ai, ai, origin )
 	else
-		Explosion_DamageDefSimple( damagedef_reaper_groundslam,	origin,	ai,	ai,	origin )
+		RadiusDamage( origin, ai, ai, 85, 2500, 128, 256, SF_ENVEXPLOSION_NO_DAMAGEOWNER, 0, 100, DF_RAGDOLL | DF_EXPLOSION, eDamageSourceId.damagedef_reaper_fall )
 
 	wait 0.1
 }

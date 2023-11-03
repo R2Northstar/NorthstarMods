@@ -1,0 +1,6 @@
+When: "SERVER"
+Scripts:
+[
+	mp/levels/mp_lf_meadow.nut
+	mp/levels/mp_lf_meadow_fd.nut
+]

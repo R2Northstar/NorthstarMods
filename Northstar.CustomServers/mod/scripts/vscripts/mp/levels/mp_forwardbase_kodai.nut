@@ -17,7 +17,7 @@ void function CodeCallback_MapInit()
 	AddSpawnCallbackEditorClass( "script_ref", "script_power_up_other", FixBatterySpawns )
 
 	// Load Frontier Defense Data
-	if( GameRules_GetGameMode() == "fd" )
+	if( GameRules_GetGameMode() == FD )
 		initFrontierDefenseData()
 }
 
