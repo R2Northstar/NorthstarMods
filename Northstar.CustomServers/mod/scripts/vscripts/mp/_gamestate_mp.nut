@@ -578,6 +578,8 @@ void function OnPlayerKilled( entity victim, entity attacker, var damageInfo )
 		else
 			return
 	}
+	
+	ShowDeathHint( victim, damageInfo )
 
 	// set round winning killreplay info here if we're tracking pilot kills
 	// todo: make this not count environmental deaths like falls, unsure how to prevent this
@@ -828,19 +830,15 @@ void function SetWinner( int team, string winningReason = "", string losingReaso
 							UpdatePlayerStat( players[i], "game_stats", "top3OnTeam" )
 							break
 						case 2:
+							SetPlayerChallengeSquadLeader( players[i] )
 							UpdatePlayerStat( players[i], "game_stats", "top3OnTeam" )
 							break
 						case 3:
+							SetPlayerChallengeSquadLeader( players[i] )
 							UpdatePlayerStat( players[i], "game_stats", "top3OnTeam" )
 							break
 					}
 				}
-			}
-			
-			foreach( entity xpplayer in players )
-			{
-				if ( xpplayer.GetPlayerNetInt( "xpMultiplier" ) > 0 || GetCurrentPlaylistVarInt( "double_xp_enabled", 0 ) == 1 )
-					xpplayer.SetPersistentVar( "matchSquadBonus", true )
 			}
 		}
 	}
