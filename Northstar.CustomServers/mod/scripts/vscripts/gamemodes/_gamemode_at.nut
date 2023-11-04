@@ -95,7 +95,6 @@ struct
 	table< entity, bool > playerBankUploading
 	table< entity, table<entity, int> > playerSavedBountyDamage
 	table< entity, float > playerHudMessageAllowedTime
-	table< entity, bool > playerChallenge
 } file
 
 void function GamemodeAt_Init()
@@ -163,7 +162,6 @@ void function InitialiseATPlayer( entity player )
 	Remote_CallFunction_NonReplay( player, "ServerCallback_AT_OnPlayerConnected" )
 	player.SetPlayerNetInt( "AT_bonusPointMult", 1 )
 	file.playerBankUploading[ player ] <- false
-	file.playerChallenge[ player ] <- false
 	file.playerSavedBountyDamage[ player ] <- {}
 	file.playerHudMessageAllowedTime[ player ] <- 0.0
 	thread AT_PlayerTitleThink( player )
@@ -180,6 +178,12 @@ void function AT_PlayerTitleThink( entity player )
 		{
 			// Set player money count
 			player.SetTitle( "$" + string( AT_GetPlayerBonusPoints( player ) ) )
+			
+			if( AT_GetPlayerBonusPoints( player ) >= 600 && !HasPlayerCompletedMeritScore( player ) ) //Challenge is: "Earn $600."
+			{
+				AddPlayerScore( player, "ChallengeATAssault" )
+				SetPlayerChallengeMeritScore( player )
+			}
 		}
 		else if ( GetGameState() >= eGameState.WinnerDetermined )
 		{
@@ -601,13 +605,6 @@ void function AT_AddToPlayerTeamScore( entity player, int amount )
 
 	// add to scoreboard
 	player.AddToPlayerGameStat( PGS_ASSAULT_SCORE, amount )
-	
-	if( player.GetPlayerGameStat( PGS_ASSAULT_SCORE ) >= 600 && !file.playerChallenge[player] ) //Challenge is: "Earn 600 points."
-	{
-		file.playerChallenge[player] = true
-		AddPlayerScore( player, "ChallengeATAssault" )
-		SetPlayerChallengeMeritScore( player )
-	}
 
 	// Check score so we dont go over max
 	if ( GameRules_GetTeamScore(player.GetTeam()) + amount > GetScoreLimit_FromPlaylist() )

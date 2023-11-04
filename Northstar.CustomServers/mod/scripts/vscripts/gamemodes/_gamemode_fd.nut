@@ -913,6 +913,19 @@ bool function runWave( int waveIndex, bool shouldDoBuyTime )
 		
 		wait 1
 		
+		if( file.isLiveFireMap ) //Repeat this one here because the block below is never reached since Live Fire Maps are only 3 Waves
+		{
+			foreach( entity player in GetPlayerArrayOfTeam( TEAM_MILITIA ) )
+			{
+				UpdatePlayerStat( player, "fd_stats", "wavesComplete" )
+				if( file.players[player].wavesCompleted == 3 )
+				{
+					AddPlayerScore( player, "ChallengeFD" )
+					SetPlayerChallengeMeritScore( player )
+				}
+			}
+		}
+		
 		RegisterPostSummaryScreenForMatch( true )
 		
 		return true
