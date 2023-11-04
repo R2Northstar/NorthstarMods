@@ -1245,6 +1245,8 @@ void function spawnSuperSpectre( SmokeEvent smokeEvent, SpawnEvent spawnEvent, F
 				break
 		}
 	}
+	else
+		npc.AssaultSetFightRadius( 600 ) //Bit of combat space so they can at least melee turrets when near them
 }
 
 void function spawnSuperSpectreWithMinion( SmokeEvent smokeEvent, SpawnEvent spawnEvent, FlowControlEvent flowControlEvent, SoundEvent soundEvent )
@@ -1302,8 +1304,7 @@ void function spawnDroppodGrunts( SmokeEvent smokeEvent, SpawnEvent spawnEvent, 
     {
 		entity guy = CreateSoldier( TEAM_IMC, spawnEvent.origin, < 0, 0, 0 > )
 		SetSpawnflags( guy, SF_NPC_START_EFFICIENT )
-		// should this grunt be a shield captain?
-		if (i < GetCurrentPlaylistVarInt( "fd_grunt_shield_captains", 0 ) || i == 1 && GetMapName().find( "mp_lf_" ) != null )
+		if (i < GetCurrentPlaylistVarInt( "fd_grunt_shield_captains", 0 ) )
 		{
 			if ( GetConVarBool( "ns_fd_allow_true_shield_captains" ) )
 				SetSpawnOption_AISettings( guy, "npc_soldier_shield_captain" )
@@ -1323,8 +1324,7 @@ void function spawnDroppodGrunts( SmokeEvent smokeEvent, SpawnEvent spawnEvent, 
 			guy.EnableNPCFlag( NPC_NO_WEAPON_DROP )
 
 		GiveMinionFDLoadout( guy )
-		// should this grunt have an anti titan weapon instead of its normal weapon?
-		if ( i < GetCurrentPlaylistVarInt( "fd_grunt_at_weapon_users", 0 ) || GetMapName().find( "mp_lf_" ) != null )
+		if ( i < GetCurrentPlaylistVarInt( "fd_grunt_at_weapon_users", 0 ) )
 			guy.GiveWeapon( at_weapon )
 
 		SetTargetName( guy, GetTargetNameForID( eFD_AITypeIDs.GRUNT ) )

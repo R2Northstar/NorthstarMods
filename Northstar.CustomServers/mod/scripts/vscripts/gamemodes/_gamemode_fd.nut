@@ -978,10 +978,7 @@ bool function runWave( int waveIndex, bool shouldDoBuyTime )
 			PlayFactionDialogueToPlayer( "fd_wavePayoutAddtnl", player )
 
 		AddPlayerScore( player, "FDTeamWave" )
-		if( !file.isLiveFireMap )
-			AddMoneyToPlayer( player, GetCurrentPlaylistVarInt( "fd_money_per_round", 600 ) )
-		else
-			AddMoneyToPlayer( player, GetCurrentPlaylistVarInt( "fd_money_per_round", 600 ) * 2 )
+		AddMoneyToPlayer( player, GetCurrentPlaylistVarInt( "fd_money_per_round", 600 ) )
 		UpdatePlayerScoreboard( player )
 		FD_EmitSoundOnEntityOnlyToPlayer( player, player, "HUD_MP_BountyHunt_BankBonusPts_Deposit_Start_1P" )
 		FD_EmitSoundOnEntityOnlyToPlayer( player, player, "HUD_MP_BountyHunt_BankBonusPts_Ticker_Loop_1P" )
@@ -996,10 +993,7 @@ bool function runWave( int waveIndex, bool shouldDoBuyTime )
 			AddPlayerScore( player, "FDDidntDie" )
 			player.AddToPlayerGameStat( PGS_ASSAULT_SCORE, FD_SCORE_DIDNT_DIE )
 			UpdatePlayerScoreboard( player )
-			if( !file.isLiveFireMap )
-				AddMoneyToPlayer( player, 100 )
-			else
-				AddMoneyToPlayer( player, 200 )
+			AddMoneyToPlayer( player, 100 )
 			FD_EmitSoundOnEntityOnlyToPlayer( player, player, "HUD_MP_BountyHunt_BankBonusPts_Deposit_Start_1P" )
 		}
 	}
@@ -1022,10 +1016,7 @@ bool function runWave( int waveIndex, bool shouldDoBuyTime )
 		if( highestScore_player in file.playerAwardStats )
 			file.playerAwardStats[highestScore_player]["mvp"] += 1.0
 		AddPlayerScore( highestScore_player, "FDWaveMVP" )
-		if( !file.isLiveFireMap )
-			AddMoneyToPlayer( highestScore_player, 100 )
-		else
-			AddMoneyToPlayer( highestScore_player, 200 )
+		AddMoneyToPlayer( highestScore_player, 100 )
 		highestScore_player.AddToPlayerGameStat( PGS_ASSAULT_SCORE, FD_SCORE_MVP )
 		UpdatePlayerScoreboard( highestScore_player )
 		FD_EmitSoundOnEntityOnlyToPlayer( highestScore_player, highestScore_player, "HUD_MP_BountyHunt_BankBonusPts_Deposit_Start_1P" )
@@ -1046,10 +1037,7 @@ bool function runWave( int waveIndex, bool shouldDoBuyTime )
 		if( !file.harvesterWasDamaged )
 		{
 			AddPlayerScore( player, "FDTeamFlawlessWave" )
-			if( !file.isLiveFireMap )
-				AddMoneyToPlayer( player, 100 )
-			else
-				AddMoneyToPlayer( player, 200 )
+			AddMoneyToPlayer( player, 100 )
 			player.AddToPlayerGameStat( PGS_ASSAULT_SCORE, FD_SCORE_TEAM_FLAWLESS_WAVE )
 			FD_EmitSoundOnEntityOnlyToPlayer( player, player, "HUD_MP_BountyHunt_BankBonusPts_Deposit_Start_1P" )
 		}
