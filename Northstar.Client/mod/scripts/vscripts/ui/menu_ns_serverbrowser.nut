@@ -964,6 +964,7 @@ void function OnServerSelected_Threaded( var button )
 	file.lastSelectedServer = server
 
 	// Count mods that have been successfully downloaded
+	bool autoDownloadAllowed = GetConVarInt( "cl_mod_download" ) == 1
 	int downloadedMods = 0;
 
 	foreach ( RequiredModInfo mod in server.requiredMods )
@@ -974,13 +975,19 @@ void function OnServerSelected_Threaded( var button )
 			bool modIsVerified = NSIsModDownloadable( mod.name, mod.version )
 
 			// Display an error message if not
-			if (!modIsVerified)
+			if (!modIsVerified || !autoDownloadAllowed)
 			{
 				DialogData dialogData
 				dialogData.header = "#ERROR"
 				dialogData.message = format( "Missing mod \"%s\" v%s", mod.name, mod.version )
-				dialogData.message += "\n(mod is not verified, and couldn't be downloaded automatically)"
 				dialogData.image = $"ui/menu/common/dialog_error"
+
+				// Specify error
+				if (!modIsVerified) {
+					dialogData.message += "\n(mod is not verified, and couldn't be downloaded automatically)"
+				} else if (!autoDownloadAllowed) {
+					dialogData.message += "\n(automatic mod downloading is disabled)"
+				}
 
 				#if PC_PROG
 					AddDialogButton( dialogData, "#DISMISS" )
