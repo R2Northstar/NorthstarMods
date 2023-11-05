@@ -18,8 +18,7 @@ void function AddTitanXP( entity player, int amount )
 		AddPlayerScore( player, "TitanLevelUp" )
 		IncrementPlayerChallengeTitanLeveledUp( player )
 		player.SetPersistentVar( "xp_match[" + XP_TYPE.TITAN_LEVELED + "]", TitanXPMatch + 1 )
-		if( TitanLevelHasRandomUnlock( TitanGetRawLevel( player, titan ) ) )
-			AwardRandomItemsForTitanLevels( player, titan, oldLevel, TitanGetLevel( player, titan ) )
+		AwardRandomItemsForTitanLevels( player, titan, oldLevel, TitanGetLevel( player, titan ) )
 	}
 }
 
@@ -32,6 +31,5 @@ void function AddFDTitanXP( entity player, int fdXPamount )
 	int endingLevel = FD_TitanGetLevelForXP( titanRef, FD_TitanGetXP( player, titanRef ) )
 	
 	Player_GiveFDUnlockPoints( player, endingLevel - startingLevel )
-	if( FDTitanLevelHasRandomUnlock( FD_TitanGetRawLevel( player, titan ) ) )
-		AwardRandomItemsForFDTitanLevels( player, titanRef, startingLevel, endingLevel )
+	AwardRandomItemsForFDTitanLevels( player, titanRef, startingLevel, endingLevel )
 }

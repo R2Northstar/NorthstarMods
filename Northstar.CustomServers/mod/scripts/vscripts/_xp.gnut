@@ -76,7 +76,6 @@ void function AddXP( entity player, int amount )
 	if ( newLevel != oldLevel )
 	{
 		Remote_CallFunction_NonReplay( player, "ServerCallback_PlayerLeveledUp", player.GetPersistentVarAsInt( "gen" ), newLevel )
-		if( PlayerLevelHasRandomUnlock( PlayerGetRawLevel( player ) ) )
-			AwardRandomItemsForPlayerLevels( player, player.GetPersistentVarAsInt( "gen" ), newLevel )
+		AwardRandomItemsForPlayerLevels( player, player.GetPersistentVarAsInt( "gen" ), newLevel )
 	}
 }
