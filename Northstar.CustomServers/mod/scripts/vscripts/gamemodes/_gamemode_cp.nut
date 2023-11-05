@@ -327,12 +327,17 @@ void function GamemodeCP_InitPlayer(entity player)
 	playerStruct.timeOnPoints = [0.0,0.0,0.0]
 	playerStruct.isOnHardpoint = false
 	file.players.append(playerStruct)
+	file.playerAssaultPoints[player] <- 0
+	file.playerDefensePoints[player] <- 0
 	thread PlayerThink(playerStruct)
 }
 
 void function GamemodeCP_RemovePlayer(entity player)
 {
-
+	if(player in file.playerAssaultPoints)
+		delete file.playerAssaultPoints[player]
+	if(player in file.playerDefensePoints)
+		delete file.playerDefensePoints[player]
 	foreach(index,CP_PlayerStruct playerStruct in file.players)
 	{
 		if(playerStruct.player==player)

@@ -597,8 +597,6 @@ void function OnPlayerKilled( entity victim, entity attacker, var damageInfo )
 		else
 			return
 	}
-	
-	ShowDeathHint( victim, damageInfo )
 
 	entity inflictor = DamageInfo_GetInflictor( damageInfo )
 	bool shouldUseInflictor = IsValid( inflictor ) && ShouldTryUseProjectileReplay( victim, attacker, damageInfo, true )

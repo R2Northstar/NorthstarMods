@@ -13,8 +13,9 @@ void function AddFactionXP( entity player, int amount )
 	if ( FactionGetLevel( player, faction ) != oldLevel )
 	{
 		AddPlayerScore( player, "FactionLevelUp" )
-		AwardRandomItemsForFactionLevels( player, faction, oldLevel, FactionGetLevel( player, faction ) )
 		IncrementPlayerChallengeFactionLeveledUp( player )
 		player.SetPersistentVar( "xp_match[" + XP_TYPE.FACTION_LEVELED + "]", FactionXPMatch + 1 )
+		if( FactionLevelHasRandomUnlock( FactionGetRawLevel( player, faction ) ) )
+			AwardRandomItemsForFactionLevels( player, faction, oldLevel, FactionGetLevel( player, faction ) )
 	}
 }
