@@ -28,7 +28,6 @@ Selector Combat
 	SelectSchedule_ForwardDodge
 	SelectSchedule_ChaseEnemy
 	SelectSchedule_EngagementDistMax
-	SelectSchedule_CircleStrafe
 	SelectSchedule_StationaryLowAmmo
 	SelectSchedule_WeaponBlocked
 	SelectSchedule_CantSeeEnemy

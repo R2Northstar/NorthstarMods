@@ -46,11 +46,11 @@ npc_titan_atlas_tracker_fd_sniper_elite
 	FOV_Combat_Far_Horz				360
 	FOV_Combat_Far_Vert				180
 
-	faceEnemyToleranceAngle			45
-	faceEnemyStrictToleranceAngle	45
+	faceEnemyToleranceAngle			65
+	faceEnemyStrictToleranceAngle	65
 	faceEnemyWhileMovingDist 		3500
 	faceEnemyWhileMovingDuration	1
-	moveYawSpeed					30
+	moveYawSpeed					90
 	
 	NoticeForgetPostTime	2.0
 	NoticeForgetPreTime		1.0
@@ -71,12 +71,17 @@ npc_titan_atlas_tracker_fd_sniper_elite
 	NoticeTimePeripheral_Idle	0.3
 	
 	evasiveCombatShieldPct					0.0
+	
 	evasiveCombatHealthSegmentPct			0.0
+	aggressiveCombatHealthSegmentPct		0.0
+	
 	evasiveCombatTotalHealthDiffPct 		0.2
-	evasiveCombatHealthChangeRateDiff		-7500
-	aggressiveCombatHealthSegmentPct		0.9
-	aggressiveCombatTotalHealthDiffPct 		0.2
-	aggresiveCombatHealthChangeRateDiff		-400
+	aggressiveCombatTotalHealthDiffPct 		0.8
+	
+	evasiveCombatHealthChangeRateDiff		-10000
+	aggresiveCombatHealthChangeRateDiff		-500
+	
+	aiEnemy_immediateThreatDist				600
 	
 	waitBetweenWeaponBurst			0
 	resetBurstOnStopShootOverlay	1

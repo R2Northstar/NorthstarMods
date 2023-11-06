@@ -17,8 +17,8 @@ void function AddTitanXP( entity player, int amount )
 		Remote_CallFunction_NonReplay( player, "ServerCallback_TitanLeveledUp", shTitanXP.titanClasses.find( titan ), TitanGetGen( player, titan ), TitanGetLevel( player, titan ) )
 		AddPlayerScore( player, "TitanLevelUp" )
 		IncrementPlayerChallengeTitanLeveledUp( player )
-		AwardRandomItemsForTitanLevels( player, titan, oldLevel, TitanGetLevel( player, titan ) )
 		player.SetPersistentVar( "xp_match[" + XP_TYPE.TITAN_LEVELED + "]", TitanXPMatch + 1 )
+		AwardRandomItemsForTitanLevels( player, titan, oldLevel, TitanGetLevel( player, titan ) )
 	}
 }
 

@@ -50,10 +50,16 @@ void function singleNav_thread( entity npc, string routeName, int nodesToSkip = 
 					continue
 				
 				routeCompare = expect string( node.kv.route_name ).tolower()
-				if( routeCompare.find( "drone" ) ) //Skip dedicated Drone Routes to avoid unwanted behavior
+				if( routeCompare.find( "drone" ) && !IsAirDrone( npc ) ) //Non-Drones skips
 					continue
 				
-				if( routeCompare.find( "infantry" ) && ( npc.IsTitan() || IsSuperSpectre( npc ) ) ) //Also skip dedicated infantry Routes for Titans and Reapers
+				if( routeCompare.find( "infantry" ) && !IsMinion( npc ) ) //Non-Grunt or Spectres skips
+					continue
+				
+				if( routeCompare.find( "reaper" ) && !IsSuperSpectre( npc ) ) //Non-Reapers skips
+					continue
+				
+				if( routeCompare.find( "tick" ) && !IsFragDrone( npc ) ) //Non-Ticks skip (War Games uses this mostly)
 					continue
 				
 				if( squad.len() > 0 )
@@ -94,10 +100,16 @@ void function singleNav_thread( entity npc, string routeName, int nodesToSkip = 
 			foreach ( routename, routeamount in routes )
 			{
 				routeCompare = routename.tolower()
-				if( routeCompare.find( "drone" ) ) //Skip dedicated Drone Routes to avoid unwanted behavior
+				if( routeCompare.find( "drone" ) && !IsAirDrone( npc ) ) //Non-Drones skips
 					continue
 				
-				if( routeCompare.find( "infantry" ) && ( npc.IsTitan() || IsSuperSpectre( npc ) ) ) //Also skip dedicated infantry Routes for Titans and Reapers
+				if( routeCompare.find( "infantry" ) && !IsMinion( npc ) ) //Non-Grunt or Spectres skips
+					continue
+				
+				if( routeCompare.find( "reaper" ) && !IsSuperSpectre( npc ) ) //Non-Reapers skips
+					continue
+				
+				if( routeCompare.find( "tick" ) && !IsFragDrone( npc ) ) //Non-Ticks skip (War Games uses this mostly)
 					continue
 				
 				if( squad.len() > 0 )

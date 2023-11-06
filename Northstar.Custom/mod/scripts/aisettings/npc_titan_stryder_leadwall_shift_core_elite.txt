@@ -6,10 +6,10 @@ npc_titan_stryder_leadwall_shift_core_elite
 	chaseStopDist				100
    	chaseStopDistHeavyArmor		100
 
-   	circleStrafeDist			150
+   	circleStrafeDist			400
 
- 	dodgePeriod					1
-	maxDodgePerPeriod			4
+ 	dodgePeriod					8
+	maxDodgePerPeriod			2
 
 	meleeInterval					0.2
 	meleeChargeInterval				0.2
@@ -21,8 +21,6 @@ npc_titan_stryder_leadwall_shift_core_elite
 	MeleeDamageMinHeavyArmor		2000
 	MeleeDamageMaxHeavyArmor		2000
 	MeleeDamageRadius				150
-	MeleeDamageForce				3000000
-	MeleeChargeDamageForce 			3200000
 	MeleeRange						200
 	MeleeChargeRange				300
 	MeleeChargeDamageRadius			150
@@ -32,6 +30,6 @@ npc_titan_stryder_leadwall_shift_core_elite
 	MeleeChargeDamageMinHeavyArmor	2000
 	MeleeChargeDamageMaxHeavyArmor	2000
 
-	evasiveCombatHealthChangeRateDiff	-7500
+	evasiveCombatHealthChangeRateDiff	-15000
 	aggresiveCombatHealthChangeRateDiff	-400
 }

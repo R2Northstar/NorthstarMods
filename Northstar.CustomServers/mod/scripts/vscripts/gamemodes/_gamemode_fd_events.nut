@@ -2247,7 +2247,7 @@ void function SpawnTick( SmokeEvent smokeEvent, SpawnEvent spawnEvent, FlowContr
 		SetSquad( guy, squadName )
 		spawnedNPCs.append( guy )
 		guy.MakeInvisible()
-		guy.AssaultSetFightRadius( 400 )
+		guy.AssaultSetFightRadius( 600 )
 		guys.append( guy )
 	}
 	

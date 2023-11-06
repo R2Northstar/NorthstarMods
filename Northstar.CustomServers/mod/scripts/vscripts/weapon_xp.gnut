@@ -18,8 +18,8 @@ void function AddWeaponXP( entity player, int amount )
 		Remote_CallFunction_NonReplay( player, "ServerCallback_WeaponLeveledUp", shWeaponXP.weaponClassNames.find( weaponClassname ), WeaponGetGen( player, weaponClassname ), WeaponGetLevel( player, weaponClassname ) )
 		AddPlayerScore( player, "WeaponLevelUp" )
 		IncrementPlayerChallengeWeaponLeveledUp( player )
-		AwardRandomItemsForWeaponLevels( player, weaponClassname, oldLevel, WeaponGetLevel( player, weaponClassname ) )
 		player.SetPersistentVar( "xp_match[" + XP_TYPE.WEAPON_LEVELED + "]", WeaponXPMatch + 1 )
+		AwardRandomItemsForWeaponLevels( player, weaponClassname, oldLevel, WeaponGetLevel( player, weaponClassname ) )
 	}
 
 	// proscreen 
