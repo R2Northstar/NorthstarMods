@@ -66,6 +66,7 @@ function BaseGametype_Init()
 	RegisterSignal( "SimulateGameScore" )
 	RegisterSignal( "ObserverThread" )
 	RegisterSignal( "CE_FLAGS_CHANGED" )
+	RegisterSignal( "player_exits_droppod" ) //Required for Drop Pod Animations from Titanfall 1, has no real use tho
 
 	RegisterSignal( "Stop_OnStartTouch_EntityOutOfBounds" )
 	RegisterSignal( "Stop_OnEndTouch_EntityBackInBounds" )

@@ -195,8 +195,8 @@ bool function CodeCallback_IsValidMeleeExecutionTarget( entity attacker, entity 
 	if ( attacker == target )
 		return false
 	
-	if ( !attacker.IsOnGround() || !target.IsOnGround() )
-		return false
+	//if ( !attacker.IsOnGround() || !target.IsOnGround() )
+	//	return false
 		
 	if ( attacker.GetParent() || target.GetParent() )
 		return false
@@ -402,32 +402,32 @@ bool function CodeCallback_IsValidMeleeAttackTarget( entity attacker, entity tar
 
 void function CodeCallback_OnMeleePressed( entity player )
 {
-#if SERVER
+#if SERVER && DEV
 	print( "SERVER: " + player + " pressed melee\n" )
-#else
+#elseif CLIENT && DEV
 	print( "CLIENT: " + player + " pressed melee\n" )
 #endif
 
 	if ( !Melee_IsAllowed( player ) )
 	{
-#if SERVER
+#if SERVER && DEV
 		print( "SERVER: Melee_IsAllowed() for " + player + " is false\n" )
-#else
+#elseif CLIENT && DEV
 		print( "CLIENT: Melee_IsAllowed() for " + player + " is false\n" )
 #endif
 		return
 	}
 
-#if SERVER
+#if SERVER && DEV
 	if ( svGlobal.cloakBreaksOnMelee && IsCloaked( player ) )
 		player.SetCloakFlicker( 1.0, 2.0 )
 #endif // #if SERVER
 
 	if ( player.IsWeaponDisabled() )
 	{
-#if SERVER
+#if SERVER && DEV
 		print( "SERVER: IsWeaponDisabled() for " + player + " is true\n" )
-#else
+#elseif CLIENT && DEV
 		print( "CLIENT: IsWeaponDisabled() for " + player + " is true\n" )
 #endif
 		return
@@ -435,9 +435,9 @@ void function CodeCallback_OnMeleePressed( entity player )
 
 	if ( player.PlayerMelee_GetState() != PLAYER_MELEE_STATE_NONE )
 	{
-#if SERVER
+#if SERVER && DEV
 		print( "SERVER: PlayerMelee_GetState() for " + player + " is " + player.PlayerMelee_GetState() + "\n" )
-#else
+#elseif CLIENT && DEV
 		print( "CLIENT: PlayerMelee_GetState() for " + player + " is " + player.PlayerMelee_GetState() + "\n" )
 #endif
 		return
@@ -445,9 +445,9 @@ void function CodeCallback_OnMeleePressed( entity player )
 
 	if ( !IsAlive( player ) )
 	{
-#if SERVER
+#if SERVER && DEV
 		print( "SERVER: " + player + " is dead\n" )
-#else
+#elseif CLIENT && DEV
 		print( "CLIENT: " + player + " is dead\n" )
 #endif
 		return
@@ -555,9 +555,9 @@ bool function PlayerTriesSyncedMelee( entity player, entity target )
 
 	if ( player.IsPlayer() && (!player.Lunge_IsActive() || !player.Lunge_IsGroundExecute() || !player.Lunge_IsLungingToEntity() || (player.Lunge_GetTargetEntity() != target)) )
 	{
-#if SERVER
+#if SERVER && DEV
 		print( "SERVER: " + player + " is calling Lunge_SetTargetEntity() from PlayerTriesSyncedMelee()\n" )
-#else
+#elseif CLIENT && DEV
 		print( "CLIENT: " + player + " is calling Lunge_SetTargetEntity() from PlayerTriesSyncedMelee()\n" )
 #endif
 		player.Lunge_SetTargetEntity( target, false )
@@ -1037,9 +1037,9 @@ SyncedMeleeChooser ornull function GetSyncedMeleeChooserForPlayerVsTarget( entit
 void function CodeCallback_OnMeleeAttackAnimEvent( entity player )
 {
 	Assert( IsValid( player ) )
-#if SERVER
+#if SERVER && DEV
 	print( "SERVER: " + player + " is calling CodeCallback_OnMeleeAttackAnimEvent()\n" )
-#else
+#elseif CLIENT && DEV
 	print( "CLIENT: " + player + " is calling CodeCallback_OnMeleeAttackAnimEvent()\n" )
 #endif
 	if ( player.PlayerMelee_IsAttackActive() )

@@ -112,6 +112,34 @@ const array<string> DROPSHIP_EXIT_ANIMS = [
 	"pt_ds_coop_side_intro_gen_exit_D"
 ]
 
+const array<string> DROPPOD_IDLE_ANIMS = [
+	"dp_idle_A",
+	"dp_idle_C",
+	"dp_idle_D",
+	"dp_idle_B"
+]
+
+const array<string> DROPPOD_IDLE_ANIMS_POV = [
+	"ptpov_droppod_drop_front_L",
+	"ptpov_droppod_drop_front_R",
+	"ptpov_droppod_drop_back_R",
+	"ptpov_droppod_drop_back_L"
+]
+
+const array<string> DROPPOD_EXIT_ANIMS = [
+	"dp_exit_A",
+	"dp_exit_C",
+	"dp_exit_D",
+	"dp_exit_B"
+]
+
+const array<string> DROPPOD_EXIT_ANIMS_POV = [
+	"ptpov_droppod_exit_front_L",
+	"ptpov_droppod_exit_front_R",
+	"ptpov_droppod_exit_back_R",
+	"ptpov_droppod_exit_back_L"
+]
+
 void function GamemodeFD_Init()
 {
 	PrecacheModel( MODEL_ATTRITION_BANK )
@@ -252,6 +280,7 @@ void function ScoreEvent_SetupScoreValuesForFrontierDefense()
 	
 	ScoreEvent_SetXPValueWeapon( GetScoreEvent( "FDTitanKilled" ), 1 )
 	ScoreEvent_SetXPValueWeapon( GetScoreEvent( "KillDropship" ), 1 )
+	ScoreEvent_SetXPValueWeapon( GetScoreEvent( "TitanAssist" ), 1 )
 	ScoreEvent_SetXPValueTitan( GetScoreEvent( "FDTitanKilled" ), 1 )
 	ScoreEvent_SetXPValueTitan( GetScoreEvent( "KillDropship" ), 1 )
 	ScoreEvent_SetXPValueFaction( GetScoreEvent( "ChallengeFD" ), 1 )
@@ -340,6 +369,7 @@ void function AddFDCustomProp( asset modelasset, vector origin, vector angles )
 	prop.SetAIObstacle( true )
 	prop.SetTakeDamageType( DAMAGE_NO )
 	prop.SetScriptPropFlags( SPF_DISABLE_CAN_BE_MELEED | SPF_BLOCKS_AI_NAVIGATION | SPF_CUSTOM_SCRIPT_3 )
+	prop.AllowMantle()
 }
 
 void function AddFDCustomShipStart( vector origin, vector angles, int team )
@@ -776,7 +806,7 @@ bool function runWave( int waveIndex, bool shouldDoBuyTime )
 
 		if( GetGlobalNetInt( "FD_restartsRemaining" ) > 0 )
 		{
-			SetWinner( TEAM_IMC )
+			SetWinner( TEAM_IMC, "", "#FD_TOTAL_DEFEAT_HINT" )
 			PlayFactionDialogueToTeam( "fd_baseDeath", TEAM_MILITIA )
 			foreach( entity player in GetPlayerArrayOfTeam( TEAM_MILITIA ) )
 			{
@@ -788,7 +818,7 @@ bool function runWave( int waveIndex, bool shouldDoBuyTime )
 		else
 		{
 			SetRoundBased( false )
-			SetWinner( TEAM_IMC )
+			SetWinner( TEAM_IMC, "", "#FD_TOTAL_DEFEAT_HINT" )
 			print( "Finishing match, no more retries left" )
 			RegisterPostSummaryScreenForMatch( false )
 			PlayFactionDialogueToTeam( "fd_matchDefeat" , TEAM_MILITIA )
@@ -860,7 +890,7 @@ bool function runWave( int waveIndex, bool shouldDoBuyTime )
 		else
 		{
 			SetRoundBased( false )
-			SetWinner( TEAM_MILITIA )
+			SetWinner( TEAM_MILITIA, "#FD_TOTAL_DEFEAT_HINT", "#FD_TOTAL_VICTORY_HINT" )
 			return true
 		}
 		
@@ -876,7 +906,7 @@ bool function runWave( int waveIndex, bool shouldDoBuyTime )
 		}
 		
 		SetRoundBased( false )
-		SetWinner( TEAM_MILITIA )
+		SetWinner( TEAM_MILITIA, "#FD_TOTAL_DEFEAT_HINT", "#FD_TOTAL_VICTORY_HINT" )
 		PlayFactionDialogueToTeam( "fd_matchVictory", TEAM_MILITIA )
 		
 		wait 2
@@ -913,16 +943,13 @@ bool function runWave( int waveIndex, bool shouldDoBuyTime )
 		
 		wait 1
 		
-		if( file.isLiveFireMap ) //Repeat this one here because the block below is never reached since Live Fire Maps are only 3 Waves
+		foreach( entity player in GetPlayerArrayOfTeam( TEAM_MILITIA ) )  //Repeat this one here because the block below is never reached due to return, and late joiners might not get the reward
 		{
-			foreach( entity player in GetPlayerArrayOfTeam( TEAM_MILITIA ) )
+			UpdatePlayerStat( player, "fd_stats", "wavesComplete" )
+			if( file.players[player].wavesCompleted == 3 )
 			{
-				UpdatePlayerStat( player, "fd_stats", "wavesComplete" )
-				if( file.players[player].wavesCompleted == 3 )
-				{
-					AddPlayerScore( player, "ChallengeFD" )
-					SetPlayerChallengeMeritScore( player )
-				}
+				AddPlayerScore( player, "ChallengeFD" )
+				SetPlayerChallengeMeritScore( player )
 			}
 		}
 		
@@ -1869,7 +1896,7 @@ void function EliteTitanExecutionCheck( entity ent, var damageInfo )
 			if( CodeCallback_IsValidMeleeExecutionTarget( attacker, ent ) && !GetDoomedState( attacker ) ) //Doomed Elites cant execute
 			{
 				//If the player is already doomed, then just execute, if the next melee damage brings it to Doom state, wait to execute
-				if( GetDoomedState( ent ) && (!SoulHasPassive( soul, ePassives.PAS_RONIN_AUTOSHIFT ) || !SoulHasPassive( soul, ePassives.PAS_AUTO_EJECT )) )
+				if( GetDoomedState( ent ) && (!SoulHasPassive( soul, ePassives.PAS_RONIN_AUTOSHIFT ) || !SoulHasPassive( soul, ePassives.PAS_AUTO_EJECT ) || !ent.IsPhaseShifted() ))
 				{
 					thread PlayerTriesSyncedMelee( attacker, ent )
 					ent.SetNoTarget( true ) //Prevents other nearby AI Titans from Moshing the victim
@@ -1887,7 +1914,7 @@ void function EliteExecutionDelayed( entity attacker, entity ent )
 	entity soul = ent.GetTitanSoul()
 	if( CodeCallback_IsValidMeleeExecutionTarget( attacker, ent ) && ent.IsTitan() && IsValid( soul ) && !GetDoomedState( attacker ) )
 	{
-		if( GetDoomedState( ent ) && (!SoulHasPassive( soul, ePassives.PAS_RONIN_AUTOSHIFT ) || !SoulHasPassive( soul, ePassives.PAS_AUTO_EJECT )) ) //Respect Stealth Auto-Eject and Phase-Reflex
+		if( GetDoomedState( ent ) && (!SoulHasPassive( soul, ePassives.PAS_RONIN_AUTOSHIFT ) || !SoulHasPassive( soul, ePassives.PAS_AUTO_EJECT ) || !ent.IsPhaseShifted() ))
 		{
 			thread PlayerTriesSyncedMelee( attacker, ent )
 			ent.SetNoTarget( true ) //Again, no Moshing against the victim
@@ -2106,7 +2133,6 @@ void function OnHarvesterDamaged( entity harvester, var damageInfo )
 			break
 
 			case eDamageSourceId.damagedef_nuclear_core:
-			case eDamageSourceId.mp_titanweapon_arc_cannon:
 			damageAmount *= 6
 			break
 		
@@ -2124,6 +2150,7 @@ void function OnHarvesterDamaged( entity harvester, var damageInfo )
 			break
 			
 			case eDamageSourceId.mp_weapon_droneplasma:
+			case eDamageSourceId.mp_titanweapon_arc_cannon:
 			damageAmount *= 10.0
 			break
 		}
@@ -2956,6 +2983,7 @@ void function FD_SpawnPlayerDroppod( entity player )
 {
 	vector PodOrigin = FD_DropPodSpawns.getrandom()
 	int PodAngle = RandomIntRange( 0, 359 )
+	int animIdx = RandomIntRange( 0, 3 )
 	
 	entity pod = CreateDropPod( PodOrigin, < 0, 0, 0 > )
 	SetTeam( pod, TEAM_MILITIA )
@@ -2963,18 +2991,43 @@ void function FD_SpawnPlayerDroppod( entity player )
 	player.SetOrigin( PodOrigin )
 	player.SetAngles( < 0, PodAngle, 0 > )
 	player.SetParent( pod, "ATTACH", true )
-	player.MakeInvisible()
 	HolsterAndDisableWeapons( player )
 	player.DisableWeaponViewModel()
 	
+	FirstPersonSequenceStruct podSequence
+	podSequence.firstPersonAnim = DROPPOD_IDLE_ANIMS_POV[animIdx]
+	podSequence.thirdPersonAnim = DROPPOD_IDLE_ANIMS[animIdx]
+	podSequence.attachment = "ATTACH"
+	podSequence.blendTime = 0.0
+	podSequence.hideProxy = false
+	podSequence.viewConeFunction = ViewConeRampFree
+	
+	thread FirstPersonSequence( podSequence, player, pod )
 	waitthread LaunchAnimDropPod( pod, "pod_testpath", PodOrigin, < 0, PodAngle, 0 > )
 	thread DropPodActiveThink( pod )
-	pod.NotSolid()
+	
 	if( IsValidPlayer( player ) )
 	{
-		player.MakeVisible()
+		podSequence.firstPersonAnim = DROPPOD_EXIT_ANIMS_POV[animIdx]
+		podSequence.thirdPersonAnim = DROPPOD_EXIT_ANIMS[animIdx]
+		podSequence.attachment = "ATTACH"
+		podSequence.blendTime = 0.0
+		podSequence.hideProxy = false
+		podSequence.viewConeFunction = ViewConeRampFree
+		
+		thread FirstPersonSequence( podSequence, player, pod )
+	}
+	
+	player.EndSignal( "OnDestroy" )
+	WaittillAnimDone( player )
+	
+	if( IsValidPlayer( player ) )
+	{
+		pod.NotSolid()
 		player.ClearParent()
 		player.EnableWeaponViewModel()
+		PutEntityInSafeSpot( player, null, null, pod.GetOrigin(), player.GetOrigin() )
+		ClearPlayerAnimViewEntity( player )
 		DeployAndEnableWeapons( player )
 		thread FD_PlayerRespawnGrace( player )
 	}

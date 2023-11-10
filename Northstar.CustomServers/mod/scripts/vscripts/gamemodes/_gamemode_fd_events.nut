@@ -164,7 +164,7 @@ void function executeWave()
 	//Wait for all events to execute
 	while( IsHarvesterAlive( fd_harvester.harvester ) && !allEventsExecuted( GetGlobalNetInt( "FD_currentWave" ) ) )
 		WaitFrame()
-	print( "All events executed, waiting for enemies completion" )
+	print( "All Events executed, waiting on players to finish the wave" )
 	
 	//Do a secondary wait for alive enemies after all events executed
 	while( IsHarvesterAlive( fd_harvester.harvester ) && GetGlobalNetInt( "FD_AICount_Current" ) > 0 )
@@ -218,7 +218,7 @@ void function executeWave()
 		WaitFrame()
 	}
 	wait 0.5
-	print( "Enemy pool reached 0, doing a full npc scan" )
+	print( "All enemies from wave eliminated" )
 	
 	//Lastly, ensure everyone is indeed dead to proceed
 	waitUntilLessThanAmountAlive( 0 )
@@ -270,11 +270,9 @@ void function runEvents( int firstExecuteIndex )
 				currentEvent.eventFunction( currentEvent.smokeEvent, currentEvent.spawnEvent, currentEvent.flowControlEvent, currentEvent.soundEvent )
 		}
 		
-		if( currentEvent.nextEventIndex == 0 )
-		{
-			print( "Event Index 0 reached, finishing wave" )
+		if( currentEvent.nextEventIndex == 0 || currentEvent.nextEventIndex > waveEvents[GetGlobalNetInt( "FD_currentWave" )].len() )
 			return
-		}
+		
 		currentEvent = waveEvents[GetGlobalNetInt( "FD_currentWave" )][currentEvent.nextEventIndex]
 	}
 }
@@ -2278,10 +2276,13 @@ void function SpawnTick( SmokeEvent smokeEvent, SpawnEvent spawnEvent, FlowContr
 
 void function PingMinimap( float x, float y, float duration, float spreadRadius, float ringRadius, int colorIndex )
 {
-	foreach( entity player in GetPlayerArrayOfTeam( TEAM_MILITIA ) )
+	if( GetCurrentPlaylistVarFloat( "riff_minimap_state", 0 ) == 0 )
 	{
-		Remote_CallFunction_NonReplay( player, "ServerCallback_FD_PingMinimap", x, y, duration, spreadRadius, ringRadius, colorIndex )
-		EmitSoundOnEntityOnlyToPlayer( player, player, "coop_minimap_ping" )
+		foreach( entity player in GetPlayerArrayOfTeam( TEAM_MILITIA ) )
+		{
+			Remote_CallFunction_NonReplay( player, "ServerCallback_FD_PingMinimap", x, y, duration, spreadRadius, ringRadius, colorIndex )
+			EmitSoundOnEntityOnlyToPlayer( player, player, "coop_minimap_ping" )
+		}
 	}
 }
 
@@ -2585,11 +2586,13 @@ void function SetEliteTitanPostSpawn( entity npc )
 		npc.DisableNPCFlag( NPC_PAIN_IN_SCRIPTED_ANIM )
 		npc.DisableNPCMoveFlag( NPCMF_WALK_NONCOMBAT )
 		npc.SetCapabilityFlag( bits_CAP_NO_HIT_SQUADMATES, false )
-		npc.SetDefaultSchedule( "SCHED_ALERT_WALK" )
+		npc.SetDefaultSchedule( "SCHED_CHASE_ENEMY" )
 		npc.kv.AccuracyMultiplier = 5.0
 		npc.kv.WeaponProficiency = eWeaponProficiency.PERFECT
 		npc.SetTargetInfoIcon( GetTitanCoreIcon( GetTitanCharacterName( npc ) ) )
 		npc.AssaultSetFightRadius( 2000 )
+		npc.SetEngagementDistVsWeak( 0, 800 )
+		npc.SetEngagementDistVsStrong( 800, 2000 )
 		SetTitanWeaponSkin( npc )
 		HideCrit( npc )
 		npc.SetTitle( npc.GetSettingTitle() )
@@ -2668,7 +2671,6 @@ void function MonitorEliteMonarchShield( entity npc )
 	soul.EndSignal( "OnDeath" )
 	
 	float coretime = Time()
-	float smoketime = Time()
 	
 	while( true )
 	{

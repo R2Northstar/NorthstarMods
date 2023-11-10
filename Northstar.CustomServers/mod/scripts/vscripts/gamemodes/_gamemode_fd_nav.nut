@@ -53,7 +53,7 @@ void function singleNav_thread( entity npc, string routeName, int nodesToSkip = 
 				if( routeCompare.find( "drone" ) && !IsAirDrone( npc ) ) //Non-Drones skips
 					continue
 				
-				if( routeCompare.find( "infantry" ) && !IsMinion( npc ) ) //Non-Grunt or Spectres skips
+				if( routeCompare.find( "infantry" ) && !(IsMinion( npc ) || IsStalker( npc )) ) //Non-Grunt, Spectres, Stalker skips
 					continue
 				
 				if( routeCompare.find( "reaper" ) && !IsSuperSpectre( npc ) ) //Non-Reapers skips
@@ -103,7 +103,7 @@ void function singleNav_thread( entity npc, string routeName, int nodesToSkip = 
 				if( routeCompare.find( "drone" ) && !IsAirDrone( npc ) ) //Non-Drones skips
 					continue
 				
-				if( routeCompare.find( "infantry" ) && !IsMinion( npc ) ) //Non-Grunt or Spectres skips
+				if( routeCompare.find( "infantry" ) && !(IsMinion( npc ) || IsStalker( npc )) ) //Non-Grunt, Spectres, Stalker skips
 					continue
 				
 				if( routeCompare.find( "reaper" ) && !IsSuperSpectre( npc ) ) //Non-Reapers skips
