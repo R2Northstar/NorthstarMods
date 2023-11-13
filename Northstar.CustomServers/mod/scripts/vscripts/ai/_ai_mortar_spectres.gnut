@@ -28,7 +28,7 @@ array<vector> function MortarSpectreGetSquadFiringPositions( vector origin, vect
 
 void function MortarSpectreSquadThink( array< entity > spectres, entity harvester )
 {
-	if ( !spectres.len() )
+	if ( !spectres.len() || !IsValid( harvester ) )
 		return
 
 	StationaryAIPosition ornull mortarPosition = GetClosestAvailableStationaryPosition( spectres[0].GetOrigin(), MORTAR_SPECTRE_POSITION_SEARCH_RANGE, eStationaryAIPositionTypes.MORTAR_SPECTRE )
@@ -61,16 +61,14 @@ void function MortarSpectreSquadThink( array< entity > spectres, entity harveste
 	squadMarker.kv.fadedist = 32768
 	squadMarker.EndSignal( "OnDestroy" )
 	
-	thread MortarSpectreSquadDeathThink( spectres, squadMarker, mortarPosition ) //Track squad status for icon and spot states
-	entity mortarfaketarget = CreateInfoTarget( mortarPosition.origin, < 0, 0, 0 > ) //Proxy target where the Mortar Spectres will actually aim to
-	SetVisibleEntitiesInConeQueriableEnabled( mortarfaketarget, false ) //Prevent any AI to scan the proxy as a target unless explicitly set
-	
 	vector dir = harvester.GetOrigin() - mortarPosition.origin
 	vector shieldangle = VectorToAngles( dir )
 	shieldangle.x = 0
 	shieldangle.z = 0
-	vector targetoffset = PositionOffsetFromOriginAngles( mortarPosition.origin, shieldangle, 200, 0, 0 )
-	mortarfaketarget.SetOrigin( targetoffset + < 0, 0, 400> )
+	vector targetoffset = PositionOffsetFromOriginAngles( mortarPosition.origin, shieldangle, 150, 0, 0 )
+	
+	thread MortarSpectreSquadDeathThink( spectres, squadMarker, mortarPosition ) //Track squad status for icon and spot states
+	entity mortarfaketarget = CreateInfoTarget( targetoffset + < 0, 0, 320 >, < 0, 0, 0 > ) //Proxy target where the Mortar Spectres will actually aim to
 	mortarfaketarget.SetParent( squadMarker, "", true )
 	
 	int i = 0
@@ -121,7 +119,7 @@ void function MortarSpectreSquadThink( array< entity > spectres, entity harveste
 	ArrayRemoveDead( spectres ) //Remove again due to delay
 	if( IsValid( mortarfaketarget ) ) //Enable the Proxy to be targeted by the Spectres
 	{
-		SetTeam( mortarfaketarget, TEAM_MILITIA )
+		SetTeam( mortarfaketarget, TEAM_UNASSIGNED ) //TEAM_UNASSIGNED, FIRST_GAME_TEAM, TEAM_SPECTATOR, TEAM_4/5/6
 		mortarfaketarget.EnableAttackableByAI( 0, 0, AI_AP_FLAG_NONE )
 	}
 	
@@ -129,8 +127,10 @@ void function MortarSpectreSquadThink( array< entity > spectres, entity harveste
 	{
 		if( IsValid( spectre ) )
 		{
-			spectre.ClearEnemy()
+			spectre.SetHearingSensitivity( 0 )
+			spectre.ClearAllEnemyMemory()
 			spectre.SetEnemy( mortarfaketarget )
+			spectre.LockEnemy( mortarfaketarget )
 			thread MortarSpectreHarvesterSiege( spectre )
 		}
 	}
@@ -147,14 +147,10 @@ void function MortarSpectreMoveToMortarPosition( entity spectre, entity signaler
 	spectre.AssaultSetGoalHeight( 128 )
 	spectre.AssaultSetFightRadius( 0 )
 	spectre.SetLookDistOverride( MORTAR_SPECTRE_SIGHT_DISTANCE )
-	spectre.EnableNPCFlag( NPC_NEW_ENEMY_FROM_SOUND | NPC_TEAM_SPOTTED_ENEMY | NPC_NO_WEAPON_DROP )
-	spectre.DisableNPCFlag( NPC_ALLOW_INVESTIGATE | NPC_USE_SHOOTING_COVER | NPC_ALLOW_PATROL )
-	spectre.kv.FieldOfView = 0.5 //Widen visual awareness more
-	spectre.kv.FieldOfViewAlert = 0.2 //Widen visual awareness more
-	spectre.kv.alwaysalert = 1
-	spectre.kv.reactChance = 100
+	spectre.EnableNPCFlag( NPC_NO_WEAPON_DROP | NPC_NEW_ENEMY_FROM_SOUND | NPC_TEAM_SPOTTED_ENEMY )
+	spectre.DisableNPCFlag( NPC_ALLOW_INVESTIGATE | NPC_USE_SHOOTING_COVER | NPC_ALLOW_PATROL | NPC_ALLOW_FLEE )
 	
-	table result = spectre.WaitSignal( "OnFinishedAssault", "OnFailedToPath" )
+	table result = spectre.WaitSignal( "OnFinishedAssault" )
 	if ( result.signal == "OnFinishedAssault" )
 	{
 		spectre.Minimap_Hide( TEAM_IMC, null )
@@ -248,18 +244,36 @@ void function MortarSpectreHarvesterSiege( entity npc ) //Swap between Archer or
 	while( npc.GetTeam() == TEAM_IMC ) //Counts only for non-hacked Spectres
 	{
 		entity enemy = npc.GetEnemy()
+		entity closestEnemy = npc.GetClosestEnemy()
 		array<entity> primaryWeapons = npc.GetMainWeapons()
+		
+		if( IsValid( enemy ) && enemy != npc.ai.carryBarrel && Distance( enemy.GetOrigin(), npc.GetOrigin() ) > MORTAR_SPECTRE_SIGHT_DISTANCE )
+		{
+			npc.ClearAllEnemyMemory()
+			npc.SetHearingSensitivity( 0 )
+		}
+		
+		if( IsValid( closestEnemy ) && IsAlive( closestEnemy ) && Distance( closestEnemy.GetOrigin(), npc.GetOrigin() ) < MORTAR_SPECTRE_SIGHT_DISTANCE )
+		{
+			if( enemy == npc.ai.carryBarrel )
+			{
+				npc.ClearEnemy()
+				npc.SetEnemy( closestEnemy )
+			}
+			npc.SetHearingSensitivity( 1 )
+		}
+		
+		if( enemy == null || IsValid( enemy ) && !npc.CanSee( enemy ) && enemy != npc.ai.carryBarrel )
+		{
+			npc.SetEnemy( npc.ai.carryBarrel )
+			npc.LockEnemy( npc.ai.carryBarrel )
+		}
+		
 		if( primaryWeapons.len() )
 		{
 			entity primarygun = primaryWeapons[0]
 			if( IsValid( primarygun ) )
 			{
-				if( IsValid( enemy ) && enemy != npc.ai.carryBarrel && Distance( enemy.GetOrigin(), npc.GetOrigin() ) > MORTAR_SPECTRE_SIGHT_DISTANCE )
-					npc.ClearEnemy()
-				
-				if( enemy == null )
-					npc.SetEnemy( npc.ai.carryBarrel )
-				
 				if( enemy == npc.ai.carryBarrel )
 				{
 					if( primarygun.GetWeaponClassName() != "mp_weapon_rocket_launcher" )
@@ -280,6 +294,6 @@ void function MortarSpectreHarvesterSiege( entity npc ) //Swap between Archer or
 				}
 			}
 		}
-		wait 1
+		wait 0.5
 	}
 }

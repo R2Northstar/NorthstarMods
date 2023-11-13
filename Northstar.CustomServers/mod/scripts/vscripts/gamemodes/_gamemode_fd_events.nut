@@ -2677,7 +2677,7 @@ void function MonitorEliteMonarchShield( entity npc )
 		while( soul.GetShieldHealth() > soul.GetShieldHealthMax() * 0.1 )
 			WaitFrame()
 		
-		while( npc.ContextAction_IsBusy() ) //Wait for Arc Traps stuns or other actions
+		while( npc.ContextAction_IsBusy() || npc.ContextAction_IsMeleeExecution() ) //Wait for Arc Traps stuns or other actions
 			WaitFrame()
 		
 		wait RandomFloatRange( 1.0, 2.5 )

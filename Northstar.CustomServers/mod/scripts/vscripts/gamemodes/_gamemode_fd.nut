@@ -361,9 +361,10 @@ void function AddCallback_RegisterCustomFDContent( LoadCustomFDContent callback 
 	file.CustomFDContent.append( callback )
 }
 
-void function AddFDCustomProp( asset modelasset, vector origin, vector angles )
+void function AddFDCustomProp( asset modelasset, vector origin, vector angles, float scale = 1.0 )
 {
 	entity prop = CreatePropScript( modelasset, origin, angles, 6 )
+	prop.kv.modelscale = scale
 	ToggleNPCPathsForEntity( prop, false )
 	prop.Solid()
 	prop.SetAIObstacle( true )
@@ -806,7 +807,7 @@ bool function runWave( int waveIndex, bool shouldDoBuyTime )
 
 		if( GetGlobalNetInt( "FD_restartsRemaining" ) > 0 )
 		{
-			SetWinner( TEAM_IMC, "", "#FD_TOTAL_DEFEAT_HINT" )
+			SetWinner( TEAM_IMC, "#FD_TOTAL_DEFEAT_HINT", "#FD_TOTAL_DEFEAT_HINT" )
 			PlayFactionDialogueToTeam( "fd_baseDeath", TEAM_MILITIA )
 			foreach( entity player in GetPlayerArrayOfTeam( TEAM_MILITIA ) )
 			{
@@ -818,7 +819,7 @@ bool function runWave( int waveIndex, bool shouldDoBuyTime )
 		else
 		{
 			SetRoundBased( false )
-			SetWinner( TEAM_IMC, "", "#FD_TOTAL_DEFEAT_HINT" )
+			SetWinner( TEAM_IMC, "#FD_TOTAL_DEFEAT_HINT", "#FD_TOTAL_DEFEAT_HINT" )
 			print( "Finishing match, no more retries left" )
 			RegisterPostSummaryScreenForMatch( false )
 			PlayFactionDialogueToTeam( "fd_matchDefeat" , TEAM_MILITIA )
@@ -890,7 +891,7 @@ bool function runWave( int waveIndex, bool shouldDoBuyTime )
 		else
 		{
 			SetRoundBased( false )
-			SetWinner( TEAM_MILITIA, "#FD_TOTAL_DEFEAT_HINT", "#FD_TOTAL_VICTORY_HINT" )
+			SetWinner( TEAM_MILITIA, "#FD_TOTAL_VICTORY_HINT", "#FD_TOTAL_VICTORY_HINT" )
 			return true
 		}
 		
@@ -906,7 +907,7 @@ bool function runWave( int waveIndex, bool shouldDoBuyTime )
 		}
 		
 		SetRoundBased( false )
-		SetWinner( TEAM_MILITIA, "#FD_TOTAL_DEFEAT_HINT", "#FD_TOTAL_VICTORY_HINT" )
+		SetWinner( TEAM_MILITIA, "#FD_TOTAL_VICTORY_HINT", "#FD_TOTAL_VICTORY_HINT" )
 		PlayFactionDialogueToTeam( "fd_matchVictory", TEAM_MILITIA )
 		
 		wait 2
@@ -2992,7 +2993,6 @@ void function FD_SpawnPlayerDroppod( entity player )
 	player.SetAngles( < 0, PodAngle, 0 > )
 	player.SetParent( pod, "ATTACH", true )
 	HolsterAndDisableWeapons( player )
-	player.DisableWeaponViewModel()
 	
 	FirstPersonSequenceStruct podSequence
 	podSequence.firstPersonAnim = DROPPOD_IDLE_ANIMS_POV[animIdx]
@@ -3028,7 +3028,8 @@ void function FD_SpawnPlayerDroppod( entity player )
 		player.EnableWeaponViewModel()
 		PutEntityInSafeSpot( player, null, null, pod.GetOrigin(), player.GetOrigin() )
 		ClearPlayerAnimViewEntity( player )
-		DeployAndEnableWeapons( player )
+		player.EnableWeaponWithSlowDeploy() //DeployWeapon()
+		EnableOffhandWeapons( player )
 		thread FD_PlayerRespawnGrace( player )
 	}
 }
@@ -3091,6 +3092,8 @@ void function FD_DropshipDropPlayer( entity player, int playerDropshipIndex )
 	//check the player
 	if( IsValid( player ) && !player.IsTitan() )
 	{
+		player.EnableWeaponWithSlowDeploy() //DeployWeapon()
+		
 		FirstPersonSequenceStruct jumpSequence
 		jumpSequence.firstPersonAnim = DROPSHIP_EXIT_ANIMS_POV[ playerDropshipIndex ]
 		jumpSequence.thirdPersonAnim = DROPSHIP_EXIT_ANIMS[ playerDropshipIndex ]
