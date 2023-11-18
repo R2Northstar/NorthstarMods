@@ -422,7 +422,7 @@ void function ValidateEquippedItems( entity player )
 		}
 	}
 
-	if ( selectedTitanLoadoutIndex < 0 || selectedTitanLoadoutIndex > NUM_PERSISTENT_TITAN_LOADOUTS )
+	if ( selectedTitanLoadoutIndex < 0 || selectedTitanLoadoutIndex >= NUM_PERSISTENT_TITAN_LOADOUTS )
 	{
 		printt( "- SELECTED TITAN CLASS IS INVALID, RESETTING" )
 		player.SetPersistentVar( "titanSpawnLoadout.index", 0 )
