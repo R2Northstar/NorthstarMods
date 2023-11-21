@@ -28,12 +28,12 @@
 		{
             "Name": "ns_fd_elite_minimap_icontype",
             "DefaultValue": "0",
-			"Flags": 16777216
+			"Flags": "ARCHIVE_PLAYERPROFILE"
         },
         {
             "Name": "ns_fd_elite_overhead_icontype",
             "DefaultValue": "1",
-			"Flags": 16777216
+			"Flags": "ARCHIVE_PLAYERPROFILE"
         }
 	],
 	"Scripts": [
@@ -451,7 +451,14 @@
 		{
 			"Path": "sh_northstar_safe_io.gnut",
 			"RunOn": "CLIENT || SERVER || UI"
-		}
+		},
+		{
+			"Path": "ai/_ai_elite_titans.nut",
+			"RunOn": "SERVER && MP",
+			"ServerCallback": {
+				"After": "EliteTitans_Init"
+			}
+		},
 	],
 
 	"Localisation": [

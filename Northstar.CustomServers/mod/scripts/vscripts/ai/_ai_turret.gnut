@@ -155,8 +155,8 @@ void function RevivableTurret_Kill( entity turret )
 	MakeTurretInvulnerable( turret )
 	Highlight_SetFriendlyHighlight( turret, "sp_objective_entity" )
 	Highlight_SetOwnedHighlight( turret, "sp_objective_entity" )
-	turret.Highlight_SetParam( 1, 0, < 1.5, 1.5, 0.35 > )
-	turret.Highlight_SetParam( 3, 0, < 1.5, 1.5, 0.35 > )
+	turret.Highlight_SetParam( 1, 0, HIGHLIGHT_COLOR_OBJECTIVE )
+	turret.Highlight_SetParam( 3, 0, HIGHLIGHT_COLOR_OBJECTIVE )
 	turret.DisableTurret()
 }
 

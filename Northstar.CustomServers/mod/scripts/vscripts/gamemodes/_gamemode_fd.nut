@@ -343,11 +343,11 @@ void function UpdateEarnMeter_ByPlayersInMatch()
 			ScoreEvent_SetEarnMeterValues( "PilotBatteryStolen", 0.0, 0.5 )
 			break
 		default:
-			ScoreEvent_SetEarnMeterValues( "FDAirDroneKilled", 0.0, 0.043 )
-			ScoreEvent_SetEarnMeterValues( "FDGruntKilled", 0.0, 0.043 )
-			ScoreEvent_SetEarnMeterValues( "FDSpectreKilled", 0.0, 0.043 )
-			ScoreEvent_SetEarnMeterValues( "FDStalkerKilled", 0.0, 0.043 )
-			ScoreEvent_SetEarnMeterValues( "LeechSpectre", 0.0, 0.043 )
+			ScoreEvent_SetEarnMeterValues( "FDAirDroneKilled", 0.0, 0.04 )
+			ScoreEvent_SetEarnMeterValues( "FDGruntKilled", 0.0, 0.04 )
+			ScoreEvent_SetEarnMeterValues( "FDSpectreKilled", 0.0, 0.04 )
+			ScoreEvent_SetEarnMeterValues( "FDStalkerKilled", 0.0, 0.04 )
+			ScoreEvent_SetEarnMeterValues( "LeechSpectre", 0.0, 0.04 )
 			ScoreEvent_SetEarnMeterValues( "FDSuperSpectreKilled", 0.0, 0.1 )
 			ScoreEvent_SetEarnMeterValues( "Execution", 0.0, 0.1 )
 			ScoreEvent_SetEarnMeterValues( "KillDropship", 0.0, 0.1 )
@@ -1695,15 +1695,8 @@ void function FD_PilotStartRodeo( entity pilot, entity titan )
 		pilot.Highlight_SetParam( 1, 0, < 0.5, 2.0, 0.5 > )
 		pilot.SetNameVisibleToFriendly( true ) //Disabling it for other gamemodes is alright but this helps seeing friends rodeoing AI
 	}
-	if ( !PlayerHasPassive( pilot, ePassives.PAS_STEALTH_MOVEMENT ) )
-	{
-		if( titan.IsNPC() && titan.GetTeam() == TEAM_IMC )
-		{
-			if( titan.ai.bossTitanType == TITAN_MERC )
-				thread EliteTitanElectricSmoke( titan )
-			UpdatePlayerStat( pilot, "fd_stats", "rodeos" )
-		}
-	}
+	if( titan.GetTeam() == TEAM_IMC )
+		UpdatePlayerStat( pilot, "fd_stats", "rodeos" )
 }
 
 void function FD_PilotEndRodeo( entity pilot, entity titan )
@@ -1877,48 +1870,6 @@ void function FD_DamageToMoney( entity victim, var damageInfo )
 					}
 				}
 			}
-		}
-	}
-}
-
-void function EliteTitanExecutionCheck( entity ent, var damageInfo )
-{
-	int damageType = DamageInfo_GetCustomDamageType( damageInfo )
-	entity attacker = DamageInfo_GetAttacker( damageInfo )
-
-	if ( !IsAlive( ent ) || !attacker || ent.GetTeam() != TEAM_MILITIA || attacker == ent || !ent.IsTitan() )
-		return
-	
-	entity soul = ent.GetTitanSoul()
-	if( attacker.IsNPC() && attacker.IsTitan() )
-	{
-		if( IsValid( soul ) && attacker.ai.bossTitanType == TITAN_MERC && (damageType & DF_MELEE) )
-		{
-			if( CodeCallback_IsValidMeleeExecutionTarget( attacker, ent ) && !GetDoomedState( attacker ) ) //Doomed Elites cant execute
-			{
-				//If the player is already doomed, then just execute, if the next melee damage brings it to Doom state, wait to execute
-				if( GetDoomedState( ent ) && (!SoulHasPassive( soul, ePassives.PAS_RONIN_AUTOSHIFT ) || !SoulHasPassive( soul, ePassives.PAS_AUTO_EJECT ) || !ent.IsPhaseShifted() ))
-				{
-					thread PlayerTriesSyncedMelee( attacker, ent )
-					ent.SetNoTarget( true ) //Prevents other nearby AI Titans from Moshing the victim
-				}
-				else
-					thread EliteExecutionDelayed( attacker, ent )
-			}
-		}
-	}
-}
-
-void function EliteExecutionDelayed( entity attacker, entity ent )
-{
-	wait 0.1
-	entity soul = ent.GetTitanSoul()
-	if( CodeCallback_IsValidMeleeExecutionTarget( attacker, ent ) && ent.IsTitan() && IsValid( soul ) && !GetDoomedState( attacker ) )
-	{
-		if( GetDoomedState( ent ) && (!SoulHasPassive( soul, ePassives.PAS_RONIN_AUTOSHIFT ) || !SoulHasPassive( soul, ePassives.PAS_AUTO_EJECT ) || !ent.IsPhaseShifted() ))
-		{
-			thread PlayerTriesSyncedMelee( attacker, ent )
-			ent.SetNoTarget( true ) //Again, no Moshing against the victim
 		}
 	}
 }
@@ -2506,12 +2457,16 @@ void function GamemodeFD_OnPlayerKilled( entity victim, entity attacker, var dam
 
 void function FD_OnNPCDeath( entity victim, entity attacker, var damageInfo )
 {
+	if( attacker.IsPlayer() && attacker.GetTeam() == TEAM_IMC ) //Give nothing for IMC players
+		return
+	
 	//Killing unwanted NPCs instantly causes a crash
 	switch ( victim.GetClassName() )
 	{
 		case "npc_gunship":
 		case "npc_dropship": //Actually gonna make Dropship drop a "candy" if players manage to destroy it as a reward for that
 			FD_LootBatteryDrop( victim, true )
+			AddPlayerScore( attacker, "KillDropship" )
 			return
 		case "npc_marvin":
 		case "npc_prowler":
@@ -2519,9 +2474,6 @@ void function FD_OnNPCDeath( entity victim, entity attacker, var damageInfo )
 		case "npc_turret_sentry":
 			return
 	}
-	
-	if( attacker.IsPlayer() && attacker.GetTeam() == TEAM_IMC ) //Give nothing for IMC players
-		return
 	
 	if( victim.IsTitan() && victim.GetTeam() == TEAM_MILITIA && IsValid( victim.GetBossPlayer() ) )
 		file.players[victim.GetBossPlayer()].titanPerfectWin = false //Remove perfect win for the owner of the Titan
@@ -3028,7 +2980,7 @@ void function FD_SpawnPlayerDroppod( entity player )
 		player.EnableWeaponViewModel()
 		PutEntityInSafeSpot( player, null, null, pod.GetOrigin(), player.GetOrigin() )
 		ClearPlayerAnimViewEntity( player )
-		player.EnableWeaponWithSlowDeploy() //DeployWeapon()
+		Loadouts_OnUsedLoadoutCrate( player )
 		EnableOffhandWeapons( player )
 		thread FD_PlayerRespawnGrace( player )
 	}
@@ -3092,7 +3044,8 @@ void function FD_DropshipDropPlayer( entity player, int playerDropshipIndex )
 	//check the player
 	if( IsValid( player ) && !player.IsTitan() )
 	{
-		player.EnableWeaponWithSlowDeploy() //DeployWeapon()
+		Loadouts_OnUsedLoadoutCrate( player )
+		EnableOffhandWeapons( player )
 		
 		FirstPersonSequenceStruct jumpSequence
 		jumpSequence.firstPersonAnim = DROPSHIP_EXIT_ANIMS_POV[ playerDropshipIndex ]
@@ -3146,8 +3099,8 @@ void function FD_DropshipSetAnimationOverride(string animation)
 
 string function FD_DropshipGetAnimation()
 {
-	if(file.animationOverride!="")
-	return file.animationOverride
+	if( file.animationOverride != "" )
+		return file.animationOverride
 
 	switch( GetMapName() )
 	{
@@ -3229,8 +3182,6 @@ void function FD_SmokeHealTeammate( entity player, entity target, int shieldRest
 
 void function FD_BatteryHealTeammate( entity rider, entity titan, entity battery )
 {
-	entity BatteryParent = battery.GetParent()
-	entity TargetTitan
 	entity soul = titan.GetTitanSoul()
 	int healingAmount = GetSegmentHealthForTitan( titan )
 	int shieldHealth = soul.GetShieldHealth()
@@ -3244,16 +3195,6 @@ void function FD_BatteryHealTeammate( entity rider, entity titan, entity battery
 	int totalHealth = minint( titan.GetMaxHealth(), titan.GetHealth() + addHealth )
 	int TotalHealing = shieldDifference + totalHealth
 	int HealScore = TotalHealing / 100
-	
-	if( titan.IsPlayer() )
-		TargetTitan = titan
-	else if( titan.GetBossPlayer() != null )
-		TargetTitan = titan.GetBossPlayer()
-	else
-		return
-
-	if( BatteryParent == TargetTitan )
-		return
 
 	if( IsValidPlayer( rider ) )
 	{
@@ -4025,7 +3966,7 @@ void function BatteryPortGlowcheck( entity batteryPort, entity turret )
 		turret.WaitSignal( "TurretOffline" )
 		
 		Highlight_SetFriendlyHighlight( turret, "sp_objective_entity" )
-		turret.Highlight_SetParam( 1, 0, < 1.5, 1.5, 0.35 > )
+		turret.Highlight_SetParam( 1, 0, HIGHLIGHT_COLOR_OBJECTIVE )
 		batteryPort.Highlight_SetParam( 1, 0, < 0.5, 2.0, 0.5 > )
 		
 		while( turret.GetHealth() <= 1 )
