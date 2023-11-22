@@ -48,7 +48,10 @@ const EMBARK_FADE_TIME = 0.2
 #else
 const EMBARK_FADE_TIME = 0.3
 #endif
-
+enum eTitanEmbarkType {
+    Default,
+    First_Person,
+}
 struct
 {
 	asset cockpitLightFX = $"xo_cockpit_dlight"
@@ -954,6 +957,8 @@ function TitanEmbark_PlayerEmbarks( entity player, entity titan, table e )
 	#if MP
 	if ( GetCurrentPlaylistVarInt( "fp_embark_enabled", 0 ) == 1 && !doFirstPersonAnim )
 		FirstPersonSequenceForce1P( sequence, player, titan  )
+	else if(player.GetUserInfoInt("embark_style", 0) == eTitanEmbarkType.First_Person)
+		FirstPersonSequenceForce1P( sequence, player, titan  )
 	#endif
 
 	thread FirstPersonSequence( sequence, player, titan )
@@ -1015,7 +1020,8 @@ void function Embark_DelayedFadeOut( entity player, entity titan, float delay )
 		
 	wait delay - EMBARK_FADE_TIME
 
-	if ( GetCurrentPlaylistVarInt( "fp_embark_enabled", 0 ) == 0 )
+	if ( GetCurrentPlaylistVarInt( "fp_embark_enabled", 0 ) == 0 || 
+	player.GetUserInfoInt("embark_style", eTitanEmbarkType.Default) == eTitanEmbarkType.First_Person)
 	{
 		ScreenFadeToBlack( player, EMBARK_FADE_TIME, EMBARK_FADE_TIME + 0.2 ) // a little extra so we stay black
 		wait EMBARK_FADE_TIME
@@ -1088,7 +1094,8 @@ void function PhaseEmbarkPhaseStart( entity player )
 	PlayPhaseShiftDisappearFX( player )
 	EmitSoundOnEntity( player, "pilot_phaseembark_activate_3p" )
 	
-	if ( GetCurrentPlaylistVarInt( "fp_embark_enabled", 0 ) == 1 )
+	if ( GetCurrentPlaylistVarInt( "fp_embark_enabled", 0 ) == 1 ||
+	player.GetUserInfoInt("embark_style", eTitanEmbarkType.Default) == eTitanEmbarkType.First_Person)
 		player.PhaseShiftBegin( 0.0, 0.2 )
 	
 	thread PhaseEmbarkPhaseCleanup( player )
@@ -1117,7 +1124,8 @@ void function PhaseEmbarkPhaseStop( entity player )
 	PlayPhaseShiftDisappearFX( player )
 	EmitSoundOnEntity( player, "pilot_phaseembark_end_3p" )
 	
-	if ( GetCurrentPlaylistVarInt( "fp_embark_enabled", 0 ) == 1 )
+	if ( GetCurrentPlaylistVarInt( "fp_embark_enabled", 0 ) == 1 ||
+	player.GetUserInfoInt("embark_style", eTitanEmbarkType.Default) == eTitanEmbarkType.First_Person)
 		player.PhaseShiftCancel()
 }
 
