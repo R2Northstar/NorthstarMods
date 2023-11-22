@@ -1969,7 +1969,10 @@ void function DamageScaleByDifficulty( entity ent, var damageInfo )
 			}
 		}
 		
+		#if SERVER
 		EliteTitanExecutionCheck( ent, damageInfo )
+		#endif
+		
 		return
 	}
 	
