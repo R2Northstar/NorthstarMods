@@ -982,11 +982,10 @@ void function OnServerSelected_Threaded( var button )
 				dialogData.message = Localize ("#MISSING_MOD", mod.name, mod.version )
 				dialogData.image = $"ui/menu/common/dialog_error"
 
-				// Specify error
-				if (!modIsVerified) {
+				// Specify error (only if autoDownloadAllowed is set)
+				if (autoDownloadAllowed)
+				{
 					dialogData.message += "\n" + Localize( "#MOD_NOT_VERIFIED" )
-				} else if (!autoDownloadAllowed) {
-					dialogData.message += "\n" + Localize( "#MOD_DL_DISABLED" )
 				}
 
 				#if PC_PROG
