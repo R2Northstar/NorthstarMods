@@ -65,7 +65,7 @@ void function UpdateModDownloadDialog( RequiredModInfo mod, ModInstallState stat
 			Hud_SetText( header, Localize( "#CHECKSUMING" ) )
 			break;
 		case eModInstallStatus.EXTRACTING:
-			Hud_SetText( header, Localize( "#EXTRACTING_MOD_TITLE", string(state.ratio) )
+			Hud_SetText( header, Localize( "#EXTRACTING_MOD_TITLE", string(state.ratio) ) )
 			Hud_SetText( body, Localize( "#EXTRACTING_MOD_TEXT", mod.name, mod.version, floor(state.progress / MB), floor(state.total / MB) ) )
 			break;
 		default:
