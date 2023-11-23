@@ -1,6 +1,5 @@
 global function DownloadMod
 global function DisplayModDownloadErrorDialog
-global function InitModDownloadControlsMenu
 
 global enum eModInstallStatus
 {
@@ -114,21 +113,4 @@ void function DisplayModDownloadErrorDialog( string modName )
 	AddDialogFooter( dialogData, "#B_BUTTON_DISMISS_RUI" )
 
 	OpenDialog( dialogData )
-}
-
-void function InitModDownloadControlsMenu()
-{
-	string buttonName = "Automatic mod downloading"
-	string description = "Activate this option to automatically download mods that are required by a server to join it."
-
-	// Setup button
-	var menu = GetMenu( "ControlsMenu" )
-	var button = Hud_GetChild( menu, "SwchModDownload" )
-	var itemDescriptionBox = Hud_GetChild( menu, "LblMenuItemDescription" )
-	RuiSetString( Hud_GetRui( button ), "buttonText", buttonName )
-
-	// Setting description handler
-	AddButtonEventHandler( button, UIE_GET_FOCUS, void function( var button ): ( description, itemDescriptionBox ) {
-		RuiSetString( Hud_GetRui( itemDescriptionBox ), "description", description )
-	})
 }
