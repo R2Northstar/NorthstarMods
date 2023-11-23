@@ -137,6 +137,9 @@
 			}
 		}
 	],
+	"Dependencies": {
+		"HAS_NORTHSTAR_CUSTOM": "Northstar.Custom"
+	},
 	"Localisation": [
 		"resource/northstar_client_localisation_%language%.txt"
 	]
