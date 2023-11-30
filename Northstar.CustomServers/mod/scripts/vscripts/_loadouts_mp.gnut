@@ -195,7 +195,7 @@ bool function ClientCommandCallback_SwapSecondaryAndWeapon3PersistentLoadoutData
 	int index = args[0].tointeger()
 	
 	if ( !IsValidPilotLoadoutIndex(index) )
-		index = 0
+		return false
 
 	PilotLoadoutDef loadout = GetPilotLoadoutFromPersistentData( player, index )
 
