@@ -931,47 +931,47 @@ void function HandleDistanceAndTimeStats_Threaded()
 		// track distance stats
 		foreach ( entity player in GetPlayerArray() )
 		{
-			if ( IsValid(player) )
+			if ( !IsValid( player ) )
+				continue
+				
+			if ( player.p.lastPosForDistanceStatValid )
 			{
-				if ( player.p.lastPosForDistanceStatValid )
+				// not 100% sure on using Distance2D over Distance tbh
+				float distInches = Distance2D( player.p.lastPosForDistanceStat, player.GetOrigin() )
+				float distMiles = distInches / 63360.0
+
+				// more generic distance stats
+				Stats_IncrementStat( player, "distance_stats", "total", "", distMiles )
+				if ( player.IsTitan() )
 				{
-					// not 100% sure on using Distance2D over Distance tbh
-					float distInches = Distance2D( player.p.lastPosForDistanceStat, player.GetOrigin() )
-					float distMiles = distInches / 63360.0
-
-					// more generic distance stats
-					Stats_IncrementStat( player, "distance_stats", "total", "", distMiles )
-					if ( player.IsTitan() )
-					{
-						Stats_IncrementStat( player, "distance_stats", "asTitan_" + GetTitanCharacterName( player ), "", distMiles )
-						Stats_IncrementStat( player, "distance_stats", "asTitan", "", distMiles )
-					}
-					else
-						Stats_IncrementStat( player, "distance_stats", "asPilot", "", distMiles )
-
-
-					string state = ""
-					// specific distance stats
-					if ( player.IsWallRunning() )
-						state = "wallrunning"
-					else if ( PlayerIsRodeoingTitan( player ) )
-					{
-						if ( player.GetTitanSoulBeingRodeoed().GetTeam() == player.GetTeam() )
-							state = "onFriendlyTitan"
-						else
-							state = "onEnemyTitan"
-					}
-					else if ( player.IsZiplining() )
-						state = "ziplining"
-					else if ( !player.IsOnGround() )
-						state = "inAir"
-
-					if ( state != "" )
-						Stats_IncrementStat( player, "distance_stats", state, "", distMiles )
+					Stats_IncrementStat( player, "distance_stats", "asTitan_" + GetTitanCharacterName( player ), "", distMiles )
+					Stats_IncrementStat( player, "distance_stats", "asTitan", "", distMiles )
 				}
+				else
+					Stats_IncrementStat( player, "distance_stats", "asPilot", "", distMiles )
 
-				player.p.lastPosForDistanceStat = player.GetOrigin()
+
+				string state = ""
+				// specific distance stats
+				if ( player.IsWallRunning() )
+					state = "wallrunning"
+				else if ( PlayerIsRodeoingTitan( player ) )
+				{
+					if ( player.GetTitanSoulBeingRodeoed().GetTeam() == player.GetTeam() )
+						state = "onFriendlyTitan"
+					else
+						state = "onEnemyTitan"
+				}
+				else if ( player.IsZiplining() )
+					state = "ziplining"
+				else if ( !player.IsOnGround() )
+					state = "inAir"
+
+				if ( state != "" )
+					Stats_IncrementStat( player, "distance_stats", state, "", distMiles )
 			}
+
+			player.p.lastPosForDistanceStat = player.GetOrigin()
 		}
 
 		float timeSeconds = Time() - lastTickTime
