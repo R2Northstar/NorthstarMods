@@ -24,6 +24,11 @@
 		{
 			"Name": "ns_force_melee",
 			"DefaultValue": ""
+		},
+		{
+			"Name": "ns_show_event_models",
+			"DefaultValue": "1",
+			"Flags": "ARCHIVE_PLAYERPROFILE"
 		}
 	],
 	"Scripts": [
@@ -434,6 +439,23 @@
 		{
 			"Path": "sh_northstar_safe_io.gnut",
 			"RunOn": "CLIENT || SERVER || UI"
+		},
+		{
+			"Path": "sh_event_models.gnut",
+			"RunOn": "( CLIENT || SERVER ) && LOBBY",
+			"ClientCallback": {
+				"Before": "EventModelsInit"
+			},
+			"ServerCallback": {
+				"Before": "EventModelsInit"
+			}
+		},
+		{
+			"Path": "ui_ns_custom_mod_settings.gnut",
+			"RunOn": "UI",
+			"UICallback":{
+				"Before": "NSCustomModSettings"
+			}
 		}
 	],
 
