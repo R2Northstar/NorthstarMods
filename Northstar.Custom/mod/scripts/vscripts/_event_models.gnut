@@ -5,8 +5,6 @@ void function EventModelsInit()
 	PrecacheModel( $"models/northstar/desertlands_holiday_tree.mdl" )
 	PrecacheModel( $"models/northstar/floor.mdl" )
 
-#if SERVER
-	
 	if( !GetConVarBool( "ns_show_event_models" ) )
 		return
 	
@@ -14,12 +12,9 @@ void function EventModelsInit()
 	int month = expect int( timeParts[ "month" ] )
 	int day = expect int( timeParts[ "day" ] )
 
-
 	if( ( ( month == 12 ) && ( day >= 18 ) ) || ( ( month == 1 ) && ( day <= 6 ) ) )
 	{
 		CreatePropDynamic( $"models/northstar/desertlands_holiday_tree.mdl", < -60, 740, 30 >, < 0, 0, 0 >, SOLID_VPHYSICS, 1000 )
 		CreatePropDynamic( $"models/northstar/floor.mdl", < -60, 740, 30 >, < 0, 0, 0 >, SOLID_VPHYSICS, 1000 )
 	}
-#endif
-
 }

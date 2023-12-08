@@ -441,17 +441,14 @@
 			"RunOn": "CLIENT || SERVER || UI"
 		},
 		{
-			"Path": "sh_event_models.gnut",
-			"RunOn": "( CLIENT || SERVER ) && LOBBY",
-			"ClientCallback": {
-				"Before": "EventModelsInit"
-			},
+			"Path": "_event_models.gnut",
+			"RunOn": "SERVER && LOBBY",
 			"ServerCallback": {
 				"Before": "EventModelsInit"
 			}
 		},
 		{
-			"Path": "ui_ns_custom_mod_settings.gnut",
+			"Path": "ui/ns_custom_mod_settings.gnut",
 			"RunOn": "UI",
 			"UICallback":{
 				"Before": "NSCustomModSettings"
