@@ -9,7 +9,7 @@ void function EventModelsInit()
 	int month = expect int( timeParts[ "month" ] )
 	int day = expect int( timeParts[ "day" ] )
 
-	if( ( ( month == 12 ) && ( day >= 1 ) ) || ( ( month == 1 ) && ( day <= 6 ) ) )
+	if( ( ( month == 12 ) && ( day >= 18 ) ) || ( ( month == 1 ) && ( day <= 6 ) ) )
 	{
 		PrecacheModel( $"models/northstar/desertlands_holiday_tree.mdl" )
 		PrecacheModel( $"models/northstar/floor.mdl" )
