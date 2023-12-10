@@ -33,10 +33,10 @@ Selector Combat
 	SelectSchedule_ShootJump
 	SelectSchedule_MeleeAttack
 	//SelectSchedule_CircleStrafe
-	SelectSchedule_BackwardDodge
 	SelectSchedule_EngagementDistMin
 	SelectSchedule_StationaryLowAmmo
 	SelectSchedule_RangeAttackEvasive
+	SelectSchedule_RangeAttack2
 	SelectSchedule_RangeAttack
 	SelectSchedule_WeaponBlocked
 	SelectSchedule_CantSeeEnemy
@@ -53,7 +53,7 @@ Selector CombatAggressive
 	SelectSchedule_ShootJump
 	SelectSchedule_ChaseEnemy
 	SelectSchedule_StationaryLowAmmo
-	SelectSchedule_RangeAttackEvasive
+	SelectSchedule_RangeAttack2
 	SelectSchedule_RangeAttack
 	SelectSchedule_WeaponBlocked
 	SelectSchedule_CantSeeEnemy
@@ -75,6 +75,6 @@ Selector CombatEvasive
 	SelectSchedule_RangeAttack
 	SelectSchedule_EnemyTooClose
 	SelectSchedule_WeaponBlocked
-	//SelectSchedule_CantSeeEnemy
+	SelectSchedule_CantSeeEnemy
 	SelectSchedule_CombatFace
 Selector_End

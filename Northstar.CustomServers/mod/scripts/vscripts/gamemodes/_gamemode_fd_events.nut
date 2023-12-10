@@ -2115,6 +2115,7 @@ void function spawnSniperTitan( SmokeEvent smokeEvent, SpawnEvent spawnEvent, Fl
 		entity tethertrap = npc.GetOffhandWeapon( OFFHAND_SPECIAL )
 		tethertrap.AddMod( "fd_trap_charges" )
 		tethertrap.AddMod( "fd_explosive_trap" )
+		tethertrap.AddMod( "pas_northstar_trap" )
 		
 		entity clustermissile = npc.GetOffhandWeapon( OFFHAND_ORDNANCE )
 		clustermissile.AddMod( "fd_twin_cluster" )
@@ -2767,6 +2768,7 @@ void function SpawnFDHeavyTurret( vector spawnpos, vector angles, vector ornull 
 	HeavyTurret.kv.reactChance = 100
 	HeavyTurret.kv.WeaponProficiency = eWeaponProficiency.PERFECT
 	HeavyTurret.SetNoTarget( false )
+	HeavyTurret.SetLookDistOverride( 2600 )
 	
 	if ( battportpos != null && battportangles != null )
 	{

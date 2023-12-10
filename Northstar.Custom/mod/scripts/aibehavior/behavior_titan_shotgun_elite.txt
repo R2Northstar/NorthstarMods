@@ -31,13 +31,11 @@ Selector Combat
 	SelectSchedule_ForwardDodge
 	SelectSchedule_MeleeAttack
 	SelectSchedule_ChaseEnemy
-	//SelectSchedule_CircleStrafe
+	SelectSchedule_AtEnemyLKP
 	SelectSchedule_StationaryLowAmmo
 	SelectSchedule_RangeAttack
 	SelectSchedule_EngagementDistMin
 	SelectSchedule_MoveToWeaponRange
-	//SelectSchedule_EnemyTooClose
-	//SelectSchedule_ChargeAttack
 	SelectSchedule_CombatFace
 	SelectSchedule_CantSeeEnemy
 	SelectSchedule_WeaponBlocked
@@ -50,10 +48,11 @@ Selector CombatAggressive
 	SelectSchedule_BackwardDodge
 	SelectSchedule_ForwardDodge
 	SelectSchedule_ChaseEnemy
+	SelectSchedule_AtEnemyLKP
 	SelectSchedule_StationaryLowAmmo
 	SelectSchedule_RangeAttack
+	SelectSchedule_EngagementDistMin
 	SelectSchedule_MoveToWeaponRange
-	//SelectSchedule_EnemyTooClose
 	SelectSchedule_CombatFace
 	SelectSchedule_CantSeeEnemy
 	SelectSchedule_WeaponBlocked

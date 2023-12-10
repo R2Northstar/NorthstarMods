@@ -21,15 +21,19 @@ npc_titan_stryder_leadwall_boss_fd_elite
 	
 	meleeInterval					1
 	meleeChargeInterval				1
+	meleeChargeSprintDist			800
 	meleeMaxCombo					8
 	chaseOnlyReachable				1
-	MeleeRange						200
-	MeleeChargeRange				300
+	MeleeRange						325
+	MeleeChargeRange				400
+	chaseStopDist					800
+   	chaseStopDistHeavyArmor			400
 	
 	reactChanceDefault				100
 	reactBulletChanceDefault		100
 	reactionTime					0.5
 	reactInterval					1.0
+	suppressLSP_duration			5
 	
 	FOV_Vert_Offset					10
 
@@ -51,8 +55,9 @@ npc_titan_stryder_leadwall_boss_fd_elite
 	faceEnemyToleranceAngle			65
 	faceEnemyStrictToleranceAngle	65
 	faceEnemyWhileMovingDist 		3500
-	faceEnemyWhileMovingDuration	1
+	faceEnemyWhileMovingDuration	6
 	moveYawSpeed					90
+	allowTurn45Anims				0
 	
 	NoticeForgetPostTime	2.0
 	NoticeForgetPreTime		1.0
@@ -81,7 +86,7 @@ npc_titan_stryder_leadwall_boss_fd_elite
 	aggressiveCombatTotalHealthDiffPct 		0.1
 	
 	evasiveCombatHealthChangeRateDiff		-10000
-	aggresiveCombatHealthChangeRateDiff		-500
+	aggresiveCombatHealthChangeRateDiff		500
 	
 	aiEnemy_immediateThreatDist				600
 	aiEnemy_usePriorityDist					4000
@@ -89,7 +94,7 @@ npc_titan_stryder_leadwall_boss_fd_elite
 	waitBetweenWeaponBurst			0
 	resetBurstOnStopShootOverlay	1
 	
-	blockPeriod					2
+	blockPeriod					5
 	maxBlockPerPeriod			5
 	
 	dodgePeriod					2

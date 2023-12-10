@@ -31,7 +31,6 @@ Selector Combat
 	SelectSchedule_ForwardDodge
 	SelectSchedule_MeleeAttack
 	SelectSchedule_BackwardDodge
-	SelectSchedule_EngagementDistMax
 	SelectSchedule_EngagementDistMin
 	//SelectSchedule_CircleStrafe
 	SelectSchedule_StationaryLowAmmo
@@ -50,8 +49,9 @@ Selector CombatAggressive
 	SelectSchedule_BackwardDodge
 	SelectSchedule_ForwardDodge
 	SelectSchedule_ChaseEnemy
+	SelectSchedule_AtEnemyLKP
 	SelectSchedule_StationaryLowAmmo
-	SelectSchedule_RangeAttackEvasive
+	SelectSchedule_RangeAttack2
 	SelectSchedule_RangeAttack
 	SelectSchedule_CombatFace
 	SelectSchedule_CantSeeEnemy
@@ -66,9 +66,10 @@ Selector CombatEvasive
 	SelectSchedule_BackwardDodge
 	SelectSchedule_ForwardDodge
 	//SelectSchedule_TakeCoverFromEnemy health > 0.1
-	SelectSchedule_EngagementDistMin
+	SelectSchedule_EngagementDistMax
 	SelectSchedule_EvasiveLowAmmo
 	SelectSchedule_RangeAttackEvasive
+	SelectSchedule_RangeAttack2
 	SelectSchedule_RangeAttack
 	SelectSchedule_EnemyTooClose
 	SelectSchedule_CombatFace

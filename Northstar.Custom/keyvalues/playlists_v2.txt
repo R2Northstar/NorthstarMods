@@ -2,6 +2,13 @@ playlists
 {
 	Gamemodes
 	{
+		defaults
+		{
+			vars
+			{
+				player_force_respawn 5
+			}
+		}
 		sbox
 		{
 			inherit defaults
@@ -363,6 +370,7 @@ playlists
 				mp_forwardbase_kodai 1
 				mp_glitch 1
 				mp_homestead 1
+				mp_relic02 1
 				mp_rise 1
 				mp_wargames 1
 			}
@@ -527,6 +535,8 @@ playlists
 				fd_grunt_shield_captains		1
 				fd_money_per_round				1200
 				fd_at_unlimited_ammo            0
+				fd_harvester_health 			15000
+				fd_harvester_shield 			4000
 				
 				override_boost_cost_burnmeter_harvester_shield 1000
 				override_boost_cost_burnmeter_arc_trap 900
@@ -1344,6 +1354,7 @@ playlists
 						mp_forwardbase_kodai 1
 						mp_glitch 1
 						mp_homestead 1
+						mp_relic02 1
 						mp_rise 1
 						mp_wargames 1
 					}
@@ -1445,6 +1456,7 @@ playlists
 						mp_forwardbase_kodai 1
 						mp_glitch 1
 						mp_homestead 1
+						mp_relic02 1
 						mp_rise 1
 						mp_wargames 1
 					}
@@ -1465,6 +1477,7 @@ playlists
 						mp_forwardbase_kodai 1
 						mp_glitch 1
 						mp_homestead 1
+						mp_relic02 1
 						mp_rise 1
 						mp_wargames 1
 					}
@@ -1485,6 +1498,7 @@ playlists
 						mp_forwardbase_kodai 1
 						mp_glitch 1
 						mp_homestead 1
+						mp_relic02 1
 						mp_rise 1
 						mp_wargames 1
 					}
@@ -1505,6 +1519,7 @@ playlists
 						mp_forwardbase_kodai 1
 						mp_glitch 1
 						mp_homestead 1
+						mp_relic02 1
 						mp_rise 1
 						mp_wargames 1
 					}
@@ -1525,6 +1540,7 @@ playlists
 						mp_forwardbase_kodai 1
 						mp_glitch 1
 						mp_homestead 1
+						mp_relic02 1
 						mp_rise 1
 						mp_wargames 1
 					}

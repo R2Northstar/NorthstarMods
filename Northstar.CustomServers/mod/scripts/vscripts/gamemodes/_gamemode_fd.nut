@@ -19,7 +19,6 @@ enum eDropshipState{
 	Idle,
 	InProgress,
 	Returning
-	_count_
 }
 
 struct player_struct_fd{
@@ -369,7 +368,7 @@ void function AddFDCustomProp( asset modelasset, vector origin, vector angles, f
 	prop.Solid()
 	prop.SetAIObstacle( true )
 	prop.SetTakeDamageType( DAMAGE_NO )
-	prop.SetScriptPropFlags( SPF_DISABLE_CAN_BE_MELEED | SPF_BLOCKS_AI_NAVIGATION | SPF_CUSTOM_SCRIPT_3 )
+	prop.SetScriptPropFlags( SPF_BLOCKS_AI_NAVIGATION | PROP_IS_VALID_FOR_TURRET_PLACEMENT )
 	prop.AllowMantle()
 }
 
@@ -450,10 +449,16 @@ void function initNetVars()
 	{
 		bool showShop = false
 		SetGlobalNetInt( "FD_currentWave", WAVE_STATE_NONE )
-		if( FD_IsDifficultyLevelOrHigher( eFDDifficultyLevel.INSANE ) )
+		if( FD_IsDifficultyLevelOrHigher( eFDDifficultyLevel.INSANE ) || file.isLiveFireMap )
+		{
+			FD_SetMaxAllowedRestarts( 0 )
 			FD_SetNumAllowedRestarts( 0 )
+		}
 		else
+		{
+			FD_SetMaxAllowedRestarts( 2 )
 			FD_SetNumAllowedRestarts( 2 )
+		}
 	}
 }
 
@@ -585,22 +590,8 @@ void function mainGameLoop()
 				SetGlobalNetTime( "FD_nextWaveStartTime", Time() + GetCurrentPlaylistVarFloat( "fd_wave_buy_time", 60 ) )
 			}
 			
-			//In case we get a wave restart and the dropship didn't complete animation previously
-			file.dropshipState = eDropshipState.Idle
-			file.playersInShip = 0
-			file.playersInDropship.clear()
-			file.harvesterHalfHealth = false
-			file.harvesterShieldDown = false
-			
-			foreach( entity player in GetPlayerArray() )
-			{
-				SetMoneyForPlayer( player, file.players[player].moneyThisRound )
-				player.SetPlayerNetInt( "numHarvesterShieldBoost", 0 )
-				player.SetPlayerNetInt( "numSuperRodeoGrenades", 0 )
-				PlayerInventory_TakeAllInventoryItems( player )
-				PlayerEarnMeter_Reset( player )
-			}
-			thread FD_AttemptToRepairTurrets()
+			WaveRestart_ResetDropshipState()
+			WaveRestart_ResetPlayersInventory()
 			
 			wait 1
 			
@@ -613,6 +604,8 @@ void function mainGameLoop()
 					PlayerEarnMeter_AddEarnedAndOwned( player, 1.0, 1.0 )
 				}
 			}
+			
+			thread FD_AttemptToRepairTurrets()
 		}
 
 		if( !runWave( i, showShop ) )
@@ -805,7 +798,7 @@ bool function runWave( int waveIndex, bool shouldDoBuyTime )
 		if( waveIndex > 0 && !file.isLiveFireMap )
 			SetShouldUsePickLoadoutScreen( false ) //Prevent loadout screen from appearing again post Wave 1 completion
 
-		if( GetGlobalNetInt( "FD_restartsRemaining" ) > 0 )
+		if( FD_GetNumRestartsLeft() > 0 )
 		{
 			SetWinner( TEAM_IMC, "#FD_TOTAL_DEFEAT_HINT", "#FD_TOTAL_DEFEAT_HINT" )
 			PlayFactionDialogueToTeam( "fd_baseDeath", TEAM_MILITIA )
@@ -826,7 +819,7 @@ bool function runWave( int waveIndex, bool shouldDoBuyTime )
 		}
 		
 		wait 8
-		if( GetGlobalNetInt( "FD_restartsRemaining" ) > 0 )
+		if( FD_PlayersHaveRestartsLeft() )
 		{
 			FD_DecrementRestarts() //Decrement restarts in here to avoid issues
 			foreach( entity player in GetPlayerArray() )
@@ -956,7 +949,7 @@ bool function runWave( int waveIndex, bool shouldDoBuyTime )
 		
 		RegisterPostSummaryScreenForMatch( true )
 		
-		return true
+		return false //False so it breaks the loop in the main function that handles the waves
 	}
 	
 	MessageToTeam( TEAM_MILITIA, eEventNotifications.FD_AnnounceWaveEnd )
@@ -988,13 +981,13 @@ bool function runWave( int waveIndex, bool shouldDoBuyTime )
 	}
 
 	wait 5
-
-	//Player scoring
-	MessageToTeam( TEAM_MILITIA, eEventNotifications.FD_NotifyWaveBonusIncoming )
-	wait 2
 	
 	print( "Repairing turrets in wave break" )
 	thread FD_AttemptToRepairTurrets()
+	
+	//Player scoring
+	MessageToTeam( TEAM_MILITIA, eEventNotifications.FD_NotifyWaveBonusIncoming )
+	wait 2
 	
 	print( "Showing Player Stats: Wave Complete" )
 	SetJoinInProgressBonus( GetCurrentPlaylistVarInt( "fd_money_per_round", 600 ) )
@@ -1085,7 +1078,7 @@ bool function runWave( int waveIndex, bool shouldDoBuyTime )
 	print( "Waiting buy time" )
 	if( waveIndex < waveEvents.len() )
 		SetGlobalNetTime( "FD_nextWaveStartTime", Time() + GetCurrentPlaylistVarFloat( "fd_wave_buy_time", 60 ) )
-
+	
 	return true
 }
 
@@ -1685,6 +1678,18 @@ void function DisableTitanSelectionForPlayer( entity player )
 	player.SetPersistentVar( "titanClassLockState[" + selectedEnumName + "]", TITAN_CLASS_LOCK_STATE_AVAILABLE ) //Ensure selected one stays avaliable
 	if( !( playerUID in file.playerHasTitanSelectionLocked ) )
 		file.playerHasTitanSelectionLocked[ playerUID ] <- suitIndex
+}
+
+void function WaveRestart_ResetPlayersInventory()
+{
+	foreach( entity player in GetPlayerArray() )
+	{
+		SetMoneyForPlayer( player, file.players[player].moneyThisRound )
+		player.SetPlayerNetInt( "numHarvesterShieldBoost", 0 )
+		player.SetPlayerNetInt( "numSuperRodeoGrenades", 0 )
+		PlayerInventory_TakeAllInventoryItems( player )
+		PlayerEarnMeter_Reset( player )
+	}
 }
 
 //Change the highlight color of pilots when rodeoing Titans because the voice feedback from Titan OS might not be enough to players awareness
@@ -2971,12 +2976,10 @@ void function FD_SpawnPlayerDroppod( entity player )
 		podSequence.viewConeFunction = ViewConeRampFree
 		
 		thread FirstPersonSequence( podSequence, player, pod )
+		WaittillAnimDone( player )
 	}
 	
-	player.EndSignal( "OnDestroy" )
-	WaittillAnimDone( player )
-	
-	if( IsValidPlayer( player ) )
+	if( IsValidPlayer( player ) ) //Double check for crash sanity stuff after wait
 	{
 		pod.NotSolid()
 		player.ClearParent()
@@ -3095,6 +3098,15 @@ void function FD_PlayerRespawnGrace( entity player )
 	wait 5.0
 }
 
+void function WaveRestart_ResetDropshipState()
+{
+	file.dropshipState = eDropshipState.Idle
+	file.playersInShip = 0
+	file.playersInDropship.clear()
+	file.harvesterHalfHealth = false
+	file.harvesterShieldDown = false
+}
+
 void function FD_DropshipSetAnimationOverride(string animation)
 {
 	file.animationOverride = animation
@@ -3111,6 +3123,7 @@ string function FD_DropshipGetAnimation()
 			return "dropship_coop_respawn_homestead"
 		
 		case "mp_colony02": //Could use the default animation, but this one works nicely for Colony
+		case "mp_relic02": //Also works for Relic so it goes above IMS Odyssey if rotated
 			return "dropship_coop_respawn_lagoon"
 		
 		case "mp_complex3": //Complex also have some clipping paths with other flight path anims
@@ -3191,6 +3204,7 @@ void function FD_BatteryHealTeammate( entity rider, entity titan, entity battery
 	int shieldMaxHealth = soul.GetShieldHealthMax()
 	int shieldDifference = shieldMaxHealth - shieldHealth
 	bool batteryIsAmped = IsAmpedBattery( battery )
+	float coreFrac = GetCurrentPlaylistVarFloat( "battery_core_frac", 0.2 )
 	float ampedHealthSegmentFrac = GetCurrentPlaylistVarFloat( "amped_battery_health_frac", 2.0 )
 	float healthSegmentFrac = GetCurrentPlaylistVarFloat( "battery_health_frac", 0.5 )
 	float frac = batteryIsAmped ? ampedHealthSegmentFrac : healthSegmentFrac
@@ -3199,6 +3213,9 @@ void function FD_BatteryHealTeammate( entity rider, entity titan, entity battery
 	int TotalHealing = shieldDifference + totalHealth
 	int HealScore = TotalHealing / 100
 
+	if( batteryIsAmped )
+		AddCreditToTitanCoreBuilder( titan, coreFrac )
+	
 	if( IsValidPlayer( rider ) )
 	{
 		AddPlayerScore( rider, "FDTeamHeal", null, "", HealScore )

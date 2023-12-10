@@ -26,15 +26,13 @@ Selector_End
 Selector Combat
 
 	SelectSchedule_StrafeDodge
-	SelectSchedule_BackwardDodge
 	SelectSchedule_ForwardDodge
-	//SelectSchedule_CircleStrafe
 	SelectSchedule_MeleeAttack
 	SelectSchedule_ChaseEnemy
+	SelectSchedule_AtEnemyLKP
 	SelectSchedule_StationaryLowAmmo
-	SelectSchedule_RangeAttackEvasive
-	SelectSchedule_RangeAttack
 	SelectSchedule_EngagementDistMin
+	SelectSchedule_RangeAttack
 	SelectSchedule_CombatFace
 	SelectSchedule_CantSeeEnemy
 	SelectSchedule_WeaponBlocked
@@ -44,10 +42,11 @@ Selector CombatAggressive
 
 	SelectSchedule_MeleeAttack
 	SelectSchedule_StrafeDodge
-	SelectSchedule_BackwardDodge
 	SelectSchedule_ForwardDodge
 	SelectSchedule_ChaseEnemy
+	SelectSchedule_AtEnemyLKP
 	SelectSchedule_StationaryLowAmmo
+	SelectSchedule_EngagementDistMin
 	SelectSchedule_RangeAttack
 	SelectSchedule_CombatFace
 	SelectSchedule_CantSeeEnemy

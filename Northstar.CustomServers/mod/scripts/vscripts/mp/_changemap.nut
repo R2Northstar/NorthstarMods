@@ -113,6 +113,20 @@ void function PopulatePostgameData()
 		array<entity> otherPlayers = GetPlayerArray()
 		array<int> scoreTypes = GameMode_GetScoreboardColumnScoreTypes( GAMETYPE )
 		int persistenceArrayCount = PersistenceGetArrayCount( "postGameData.players" )
+		
+		//Clear scoreboard first in case current match finished with less players than previous
+		//The reason for this is that the post-scoreboard would mix playersets from both matches resulting in a confusing scoreboard
+		for( int i = 0; i < persistenceArrayCount; i++ )
+		{
+			player.SetPersistentVar( "postGameData.players[" + i + "].team", TEAM_UNASSIGNED )
+			player.SetPersistentVar( "postGameData.players[" + i + "].name", "" )
+			player.SetPersistentVar( "postGameData.players[" + i + "].xuid", "" )
+			player.SetPersistentVar( "postGameData.players[" + i + "].callsignIconIndex", -1 )
+			
+			for ( int j = 0; j < scoreTypes.len(); j++ )
+				player.SetPersistentVar( "postGameData.players[" + i + "].scores[" + j + "]", -1 )
+		}
+		
 		for ( int i = 0; i < min( otherPlayers.len(), persistenceArrayCount ); i++ )
 		{
 			player.SetPersistentVar( "postGameData.players[" + i + "].team", otherPlayers[ i ].GetTeam() )

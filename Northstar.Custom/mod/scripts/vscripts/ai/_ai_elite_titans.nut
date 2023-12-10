@@ -69,8 +69,18 @@ void function EliteTitanExecutionCheck( entity ent, var damageInfo )
 
 void function EliteExecutionDelayed( entity attacker, entity ent )
 {
-	wait 0.1
+	Assert( IsValid( attacker ) && attacker.IsTitan(), "Executioner is not an Elite Titan: " + attacker )
+	attacker.EndSignal( "OnDestroy" )
+	attacker.EndSignal( "OnDeath" )
+	
+	Assert( IsValid( ent ) && ent.IsTitan(), "Victim is not a Titan: " + ent )
 	entity soul = ent.GetTitanSoul()
+	
+	soul.EndSignal( "OnDestroy" )
+	soul.EndSignal( "OnDeath" )
+	
+	wait 0.1
+	
 	if( CodeCallback_IsValidMeleeExecutionTarget( attacker, ent ) && ent.IsTitan() && IsValid( soul ) && !GetDoomedState( attacker ) )
 	{
 		if( GetDoomedState( ent ) && (!SoulHasPassive( soul, ePassives.PAS_RONIN_AUTOSHIFT ) || !SoulHasPassive( soul, ePassives.PAS_AUTO_EJECT ) || !ent.IsPhaseShifted() ))
@@ -106,17 +116,17 @@ void function SetEliteTitanPostSpawn( entity npc )
 	if ( npc.IsTitan() )
 	{
 		npc.EnableNPCFlag( NPC_NO_PAIN | NPC_NO_GESTURE_PAIN | NPC_NEW_ENEMY_FROM_SOUND | NPC_DIRECTIONAL_MELEE | NPC_IGNORE_FRIENDLY_SOUND ) //NPC_AIM_DIRECT_AT_ENEMY
-		npc.EnableNPCMoveFlag( NPCMF_PREFER_SPRINT | NPCMF_DISABLE_ARRIVALS | NPCMF_DISABLE_MOVE_TRANSITIONS )
-		npc.DisableNPCFlag( NPC_PAIN_IN_SCRIPTED_ANIM )
+		npc.EnableNPCMoveFlag( NPCMF_PREFER_SPRINT | NPCMF_DISABLE_MOVE_TRANSITIONS )
+		npc.DisableNPCFlag( NPC_PAIN_IN_SCRIPTED_ANIM | NPC_ALLOW_FLEE | NPC_USE_SHOOTING_COVER )
 		npc.DisableNPCMoveFlag( NPCMF_WALK_NONCOMBAT )
 		npc.SetCapabilityFlag( bits_CAP_NO_HIT_SQUADMATES, false )
-		npc.SetDefaultSchedule( "SCHED_CHASE_ENEMY" )
+		npc.SetDefaultSchedule( "SCHED_COMBAT_WALK" )
 		npc.kv.AccuracyMultiplier = 5.0
 		npc.kv.WeaponProficiency = eWeaponProficiency.PERFECT
 		npc.SetTargetInfoIcon( GetTitanCoreIcon( GetTitanCharacterName( npc ) ) )
 		npc.AssaultSetFightRadius( 2000 )
 		npc.SetEngagementDistVsWeak( 0, 800 )
-		npc.SetEngagementDistVsStrong( 800, 2000 )
+		npc.SetEngagementDistVsStrong( 0, 800 )
 		SetTitanWeaponSkin( npc )
 		HideCrit( npc )
 		npc.SetTitle( npc.GetSettingTitle() )
@@ -126,7 +136,7 @@ void function SetEliteTitanPostSpawn( entity npc )
 		if( IsValid( soul ) )
 		{
 			soul.SetPreventCrits( true )
-			soul.SetShieldHealthMax( 7500 )
+			soul.SetShieldHealthMax( 8000 )
 			soul.SetShieldHealth( soul.GetShieldHealthMax() )
 		}
 		
@@ -154,20 +164,13 @@ void function MonitorEliteTitanCore( entity npc )
 		npc.WaitSignal( "CoreBegin" )
 		wait 0.1
 		
-		soul.SetShieldHealthMax( 3750 )
-		soul.SetShieldHealth( soul.GetShieldHealthMax() )
+		soul.SetShieldHealth( soul.GetShieldHealthMax() / 2 )
 		
 		entity meleeWeapon = npc.GetMeleeWeapon()
 		if( meleeWeapon.HasMod( "super_charged" ) || meleeWeapon.HasMod( "super_charged_SP" ) ) //Hack for Elite Ronin
 			npc.SetAISettings( "npc_titan_stryder_leadwall_shift_core_elite" )
-			
-		if( npc.GetAISettingsName() == "npc_titan_stryder_sniper_boss_fd_elite" ) //So Northstar can move around while doing her Flight Core
-			npc.AssaultSetFightRadius( 1200 )
 		
 		npc.WaitSignal( "CoreEnd" )
-		
-		if( npc.GetAISettingsName() == "npc_titan_stryder_sniper_boss_fd_elite" ) //Northstar finished Core, she should return to her sniping spot
-			npc.AssaultSetFightRadius( 0 )
 		
 		switch ( difficultyLevel )
 		{

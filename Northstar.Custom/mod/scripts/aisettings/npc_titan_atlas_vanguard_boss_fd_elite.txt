@@ -18,7 +18,7 @@ npc_titan_atlas_vanguard_boss_fd_elite
 	lightPainMinInterval			30
 	heavyPainMinInterval			60
 	
-	MeleeRange						250
+	MeleeRange						280
 	MeleeChargeRange				300
 	MeleeChargeDamageMinHeavyArmor	1125
 	MeleeChargeDamageMaxHeavyArmor	1125
@@ -27,13 +27,17 @@ npc_titan_atlas_vanguard_boss_fd_elite
 	
 	meleeInterval					1
 	meleeChargeInterval				1
+	meleeChargeSprintDist			800
 	meleeMaxCombo					4
 	chaseOnlyReachable				1
+	chaseStopDist					2000
+   	chaseStopDistHeavyArmor			400
 	
 	reactChanceDefault				100
 	reactBulletChanceDefault		100
 	reactionTime					0.5
 	reactInterval					1.0
+	suppressLSP_duration			5
 	
 	FOV_Vert_Offset					10
 
@@ -55,8 +59,9 @@ npc_titan_atlas_vanguard_boss_fd_elite
 	faceEnemyToleranceAngle			65
 	faceEnemyStrictToleranceAngle	65
 	faceEnemyWhileMovingDist 		3500
-	faceEnemyWhileMovingDuration	1
+	faceEnemyWhileMovingDuration	6
 	moveYawSpeed					90
+	allowTurn45Anims				0
 	
 	NoticeForgetPostTime	2.0
 	NoticeForgetPreTime		1.0
@@ -85,7 +90,7 @@ npc_titan_atlas_vanguard_boss_fd_elite
 	aggressiveCombatTotalHealthDiffPct 		0.1
 	
 	evasiveCombatHealthChangeRateDiff		-10000
-	aggresiveCombatHealthChangeRateDiff		-500
+	aggresiveCombatHealthChangeRateDiff		500
 	
 	aiEnemy_immediateThreatDist				600
 	aiEnemy_usePriorityDist					4000
@@ -93,7 +98,7 @@ npc_titan_atlas_vanguard_boss_fd_elite
 	waitBetweenWeaponBurst			0
 	resetBurstOnStopShootOverlay	1
 	
-	blockPeriod					5
+	blockPeriod					10
 	maxBlockPerPeriod			2
 	
 	dodgePeriod					2

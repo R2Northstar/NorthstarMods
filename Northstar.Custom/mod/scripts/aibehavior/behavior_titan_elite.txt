@@ -8,7 +8,6 @@ Selector Common
 	SelectSchedule_ChangeToDesiredStance
 	SelectSchedule_SyncedMeleeAttack
 	SelectSchedule_PressToInitiateSyncedMeleeAttack
-	CNPC_Titan::SelectSchedule_GotoDefensivePlacement
 	SelectSchedule_LayeredBehavior
 Selector_End
 
@@ -31,12 +30,11 @@ Selector Combat
 	SelectSchedule_BackwardDodge
 	SelectSchedule_ForwardDodge
 	SelectSchedule_MeleeAttack
-	SelectSchedule_EngagementDistMax
-	//SelectSchedule_CircleStrafe
+	SelectSchedule_ChaseEnemy
+	SelectSchedule_AtEnemyLKP
 	SelectSchedule_StationaryLowAmmo
-	SelectSchedule_RangeAttackEvasive
-	SelectSchedule_RangeAttack
 	SelectSchedule_EngagementDistMin
+	SelectSchedule_RangeAttack
 	SelectSchedule_CombatFace
 	SelectSchedule_CantSeeEnemy
 	SelectSchedule_WeaponBlocked
@@ -46,11 +44,11 @@ Selector CombatAggressive
 
 	SelectSchedule_MeleeAttack
 	SelectSchedule_StrafeDodge
-	SelectSchedule_BackwardDodge
 	SelectSchedule_ForwardDodge
 	SelectSchedule_ChaseEnemy
+	SelectSchedule_AtEnemyLKP
 	SelectSchedule_StationaryLowAmmo
-	//SelectSchedule_RangeAttackEvasive
+	SelectSchedule_EngagementDistMin
 	SelectSchedule_RangeAttack
 	SelectSchedule_CombatFace
 	SelectSchedule_CantSeeEnemy

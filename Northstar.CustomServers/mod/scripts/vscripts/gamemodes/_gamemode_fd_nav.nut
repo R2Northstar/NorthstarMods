@@ -418,11 +418,28 @@ void function Dev_ShowRoute( bool includedrones = false )
 				thread GruntTracksPathing( routename )
 		}
 	}
+	else
+	{
+		foreach( routename, routeamount in routes )
+		{
+			entity routetitle = CreatePointMessage( routename, routeamount[0], 800 )
+			if( includedrones && routename.tolower().find( "drone" ) )
+				thread DroneTracksPathing( routename )
+			else
+				thread GruntTracksPathing( routename )
+		}
+	}
 }
 
 void function GruntTracksPathing( string route )
 {
-	entity guy = CreateSoldier( TEAM_MILITIA, GetRouteStart( route ).GetOrigin(), < 0, 0, 0 > )
+	vector routeorigin = < 0, 0, 0 >
+	if( useCustomFDLoad )
+		routeorigin = routes[route][0]
+	else
+		routeorigin = GetRouteStart( route ).GetOrigin()
+	
+	entity guy = CreateSoldier( TEAM_MILITIA, routeorigin, < 0, 0, 0 > )
 	DispatchSpawn( guy )
 	PlayLoopFXOnEntity( $"P_ar_holopilot_trail", guy, "CHESTFOCUS" )
 	
@@ -439,13 +456,19 @@ void function GruntTracksPathing( string route )
 		table result = guy.WaitSignal( "FD_ReachedHarvester" )
 		wait 5.0
 		if( IsValid( guy ) )
-			guy.SetOrigin( GetRouteStart( route ).GetOrigin() )
+			guy.SetOrigin( routeorigin )
 	}
 }
 
 void function DroneTracksPathing( string route )
 {
-	entity guy = CreateGenericDrone( TEAM_MILITIA, GetRouteStart( route ).GetOrigin() + < 0, 0, 32 >, < 0, 0, 0 > )
+	vector routeorigin = < 0, 0, 0 >
+	if( useCustomFDLoad )
+		routeorigin = routes[route][0]
+	else
+		routeorigin = GetRouteStart( route ).GetOrigin()
+	
+	entity guy = CreateGenericDrone( TEAM_MILITIA, routeorigin + < 0, 0, 32 >, < 0, 0, 0 > )
 	SetSpawnOption_AISettings( guy, "npc_drone_plasma_fd" )
 	DispatchSpawn( guy )
 	PlayLoopFXOnEntity( $"P_ar_holopilot_trail", guy )
