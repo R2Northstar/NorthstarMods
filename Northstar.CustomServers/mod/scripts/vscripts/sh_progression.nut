@@ -86,6 +86,11 @@ bool function ClientCommand_SetProgression( entity player, array<string> args )
 	return true
 }
 
+/// Resets a specific Titan's Aegis rank back to `0`
+/// * `player` - The player entity to perform the action on
+/// * `args` - The arguments passed from the client command. `args[0]` should be an integer corresponding to the index of the Titan to reset.
+///
+/// Returns `true` on success and `false` on missing args.
 bool function ClientCommand_ResetTitanAegis( entity player, array<string> args )
 {
 	if ( !args.len() )
