@@ -56,21 +56,22 @@ const int MB = 1024*1000;
 
 void function UpdateModDownloadDialog( RequiredModInfo mod, ModInstallState state, var menu, var header, var body )
 {
-	switch (state.status) {
-		case eModInstallStatus.DOWNLOADING:
-			Hud_SetText( header, Localize( "#DOWNLOADING_MOD_TITLE_W_PROGRESS", string(state.ratio) ))
-			Hud_SetText( body, Localize( "#DOWNLOADING_MOD_TEXT_W_PROGRESS", mod.name, mod.version, floor(state.progress / MB), floor(state.total / MB) ) )
-			break;
-		case eModInstallStatus.CHECKSUMING:
-			Hud_SetText( header, Localize( "#CHECKSUMING_TITLE" ) )
-			Hud_SetText( body, Localize( "#CHECKSUMING_TEXT", mod.name, mod.version ) )
-			break;
-		case eModInstallStatus.EXTRACTING:
-			Hud_SetText( header, Localize( "#EXTRACTING_MOD_TITLE", string(state.ratio) ) )
-			Hud_SetText( body, Localize( "#EXTRACTING_MOD_TEXT", mod.name, mod.version, floor(state.progress / MB), floor(state.total / MB) ) )
-			break;
-		default:
-			break;
+	switch ( state.status )
+	{
+	case eModInstallStatus.DOWNLOADING:
+		Hud_SetText( header, Localize( "#DOWNLOADING_MOD_TITLE_W_PROGRESS", string( state.ratio ) ) )
+		Hud_SetText( body, Localize( "#DOWNLOADING_MOD_TEXT_W_PROGRESS", mod.name, mod.version, floor( state.progress / MB ), floor( state.total / MB ) ) )
+		break
+	case eModInstallStatus.CHECKSUMING:
+		Hud_SetText( header, Localize( "#CHECKSUMING_TITLE" ) )
+		Hud_SetText( body, Localize( "#CHECKSUMING_TEXT", mod.name, mod.version ) )
+		break
+	case eModInstallStatus.EXTRACTING:
+		Hud_SetText( header, Localize( "#EXTRACTING_MOD_TITLE", string( state.ratio ) ) )
+		Hud_SetText( body, Localize( "#EXTRACTING_MOD_TEXT", mod.name, mod.version, floor( state.progress / MB ), floor( state.total / MB ) ) )
+		break
+	default:
+		break
 	}
 }
 
