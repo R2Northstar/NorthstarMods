@@ -975,7 +975,7 @@ void function OnServerSelected_Threaded( var button )
 			bool modIsVerified = NSIsModDownloadable( mod.name, mod.version )
 
 			// Display an error message if not
-			if (!modIsVerified || !autoDownloadAllowed)
+			if ( !modIsVerified || !autoDownloadAllowed )
 			{
 				DialogData dialogData
 				dialogData.header = "#ERROR"
