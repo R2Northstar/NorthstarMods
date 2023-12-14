@@ -990,8 +990,7 @@ void function OnServerSelected_Threaded( var button )
 
 				AddDialogButton( dialogData, "#DISMISS" )
 
-					AddDialogFooter( dialogData, "#A_BUTTON_SELECT" )
-				#endif // PC_PROG
+				AddDialogFooter( dialogData, "#A_BUTTON_SELECT" )
 				AddDialogFooter( dialogData, "#B_BUTTON_DISMISS_RUI" )
 
 				OpenDialog( dialogData )
