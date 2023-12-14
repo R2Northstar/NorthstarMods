@@ -136,12 +136,12 @@ float function PlayerStat_GetCurrentFloat( entity player, string statCategory, s
 	return 0
 }
 
-void function UpdatePlayerStat( entity player, string statCategory, string subStat, int count = 1 )
+void function UpdatePlayerStat( entity player, string statCategory, string subStat, int count = 1, string statAlias = "" )
 {
 	if ( !IsValid( player ) )
 		return
 
-	Stats_IncrementStat( player, statCategory, subStat, "", count.tofloat() )
+	Stats_IncrementStat( player, statCategory, subStat, statAlias, count.tofloat() )
 }
 
 void function IncrementPlayerDidPilotExecutionWhileCloaked( entity player )
@@ -264,7 +264,7 @@ void function Stats_IncrementStat( entity player, string statCategory, string st
 		// persistence string, we can't save the persistence so we have to just return
 		if ( str != saveVar )
 		{
-			printt( ex )
+			//printt( ex, str, GetMapName(), mode ) // Commented out due to spamming logs on invalid modes (e.g. Gun Game, Infection, ...)
 			return
 		}
 	}
@@ -571,9 +571,11 @@ void function HandleKillStats( entity victim, entity attacker, var damageInfo )
 	// assistsTotal ( weapon_kill_stats )
 	// note: eww
 	table<int, bool> alreadyAssisted
-	foreach( DamageHistoryStruct attackerInfo in victim.e.recentDamageHistory )
+	// titans store their recentDamageHistory in the soul
+	entity assistVictim = ( victim.IsTitan() && IsValid( victim.GetTitanSoul() ) ) ? victim.GetTitanSoul() : victim 
+	foreach( DamageHistoryStruct attackerInfo in assistVictim.e.recentDamageHistory )
 	{
-		if ( !IsValid( attackerInfo.attacker ) || !attackerInfo.attacker.IsPlayer() || attackerInfo.attacker == victim )
+		if ( !IsValid( attackerInfo.attacker ) || !attackerInfo.attacker.IsPlayer() || attackerInfo.attacker == assistVictim )
 			continue
 
 		bool exists = attackerInfo.attacker.GetEncodedEHandle() in alreadyAssisted ? true : false
@@ -585,7 +587,7 @@ void function HandleKillStats( entity victim, entity attacker, var damageInfo )
 			string source = DamageSourceIDToString( attackerInfo.damageSourceId )
 
 			if ( IsValidStatItemString( source ) )
-				Stats_IncrementStat( attacker, "weapon_kill_stats", "assistsTotal", source, 1.0 )
+				Stats_IncrementStat( attackerInfo.attacker, "weapon_kill_stats", "assistsTotal", source, 1.0 )
 		}
 	}
 
