@@ -16,6 +16,8 @@ global enum eModInstallStatus
     NOT_FOUND
 }
 
+const int MB = 1024*1000;
+
 bool function DownloadMod( RequiredModInfo mod )
 {
 	// Downloading mod UI
@@ -51,8 +53,6 @@ bool function DownloadMod( RequiredModInfo mod )
 
 	return state.status == eModInstallStatus.DONE
 }
-
-const int MB = 1024*1000;
 
 void function UpdateModDownloadDialog( RequiredModInfo mod, ModInstallState state, var menu, var header, var body )
 {
