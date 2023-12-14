@@ -979,7 +979,7 @@ void function OnServerSelected_Threaded( var button )
 			{
 				DialogData dialogData
 				dialogData.header = "#ERROR"
-				dialogData.message = Localize ("#MISSING_MOD", mod.name, mod.version )
+				dialogData.message = Localize( "#MISSING_MOD", mod.name, mod.version )
 				dialogData.image = $"ui/menu/common/dialog_error"
 
 				// Specify error (only if autoDownloadAllowed is set)
