@@ -9,6 +9,7 @@ void function EventModelsInit()
 	int month = expect int( timeParts[ "month" ] )
 	int day = expect int( timeParts[ "day" ] )
 
+	// 18th December to 6th January
 	if( ( ( month == 12 ) && ( day >= 18 ) ) || ( ( month == 1 ) && ( day <= 6 ) ) )
 	{
 		PrecacheModel( $"models/northstartee/winter_holiday_tree.mdl" )
