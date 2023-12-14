@@ -988,8 +988,7 @@ void function OnServerSelected_Threaded( var button )
 					dialogData.message += "\n" + Localize( "#MOD_NOT_VERIFIED" )
 				}
 
-				#if PC_PROG
-					AddDialogButton( dialogData, "#DISMISS" )
+				AddDialogButton( dialogData, "#DISMISS" )
 
 					AddDialogFooter( dialogData, "#A_BUTTON_SELECT" )
 				#endif // PC_PROG
