@@ -6,7 +6,7 @@
 	"InitScript": "cl_northstar_client_init.nut",
 	"ConVars": [
 		{
-			"Name": "cl_mod_download",
+			"Name": "allow_mod_auto_download",
 			"DefaultValue": "0"
 		},
 		{

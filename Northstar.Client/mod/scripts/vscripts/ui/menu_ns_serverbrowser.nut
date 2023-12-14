@@ -964,7 +964,7 @@ void function OnServerSelected_Threaded( var button )
 	file.lastSelectedServer = server
 
 	// Count mods that have been successfully downloaded
-	bool autoDownloadAllowed = GetConVarInt( "cl_mod_download" ) == 1
+	bool autoDownloadAllowed = GetConVarInt( "allow_mod_auto_download" ) == 1
 	int downloadedMods = 0;
 
 	foreach ( RequiredModInfo mod in server.requiredMods )
