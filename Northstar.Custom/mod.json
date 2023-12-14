@@ -451,9 +451,9 @@
 			},
 			"UICallback": {
 				"Before": "Testing_Init"
-      }
-    },
-    {
+			}
+		},
+		{
 			"Path": "_event_models.gnut",
 			"RunOn": "SERVER && LOBBY",
 			"ServerCallback": {
