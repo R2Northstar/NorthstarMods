@@ -1001,10 +1001,12 @@ void function OnServerSelected_Threaded( var button )
 			// Launch download
 			else
 			{
-				if ( DownloadMod( mod ) ) {
+				if ( DownloadMod( mod ) )
+				{
 					downloadedMods++
 				}
-				else {
+				else
+				{
 					DisplayModDownloadErrorDialog( mod.name )
 					return
 				}
