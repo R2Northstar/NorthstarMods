@@ -983,7 +983,7 @@ void function OnServerSelected_Threaded( var button )
 				dialogData.image = $"ui/menu/common/dialog_error"
 
 				// Specify error (only if autoDownloadAllowed is set)
-				if (autoDownloadAllowed)
+				if ( autoDownloadAllowed )
 				{
 					dialogData.message += "\n" + Localize( "#MOD_NOT_VERIFIED" )
 				}
