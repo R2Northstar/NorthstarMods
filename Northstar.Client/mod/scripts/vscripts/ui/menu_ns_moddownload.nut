@@ -37,7 +37,7 @@ bool function DownloadMod( RequiredModInfo mod )
 	NSDownloadMod( mod.name, mod.version )
 
 	ModInstallState state = NSGetModInstallState()
-	while (state.status < eModInstallStatus.DONE)
+	while ( state.status < eModInstallStatus.DONE )
 	{
 		state = NSGetModInstallState()
 		UpdateModDownloadDialog( mod, state, menu, header, body )
