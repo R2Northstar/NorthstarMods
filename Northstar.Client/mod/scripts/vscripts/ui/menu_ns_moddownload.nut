@@ -83,29 +83,30 @@ void function DisplayModDownloadErrorDialog( string modName )
 	dialogData.header = Localize( "#FAILED_DOWNLOADING", modName )
 	dialogData.image = $"ui/menu/common/dialog_error"
 
-	switch (state.status) {
-    	case eModInstallStatus.FAILED_READING_ARCHIVE:
-			dialogData.message = Localize( "#FAILED_READING_ARCHIVE" )
-			break
-    	case eModInstallStatus.FAILED_WRITING_TO_DISK:
-			dialogData.message = Localize( "#FAILED_WRITING_TO_DISK" )
-			break
-    	case eModInstallStatus.MOD_FETCHING_FAILED:
-			dialogData.message = Localize( "#MOD_FETCHING_FAILED" )
-			break
-    	case eModInstallStatus.MOD_CORRUPTED:
-			dialogData.message = Localize( "#MOD_CORRUPTED" )
-			break
-    	case eModInstallStatus.NO_DISK_SPACE_AVAILABLE:
-			dialogData.message = Localize( "#NO_DISK_SPACE_AVAILABLE" )
-			break
-    	case eModInstallStatus.NOT_FOUND:
-			dialogData.message = Localize( "#NOT_FOUND" )
-			break
-		case eModInstallStatus.FAILED:
-		default:
-			dialogData.message = Localize( "#FAILED" )
-			break;
+	switch ( state.status )
+	{
+    case eModInstallStatus.FAILED_READING_ARCHIVE:
+		dialogData.message = Localize( "#FAILED_READING_ARCHIVE" )
+		break
+    case eModInstallStatus.FAILED_WRITING_TO_DISK:
+		dialogData.message = Localize( "#FAILED_WRITING_TO_DISK" )
+		break
+    case eModInstallStatus.MOD_FETCHING_FAILED:
+		dialogData.message = Localize( "#MOD_FETCHING_FAILED" )
+		break
+    case eModInstallStatus.MOD_CORRUPTED:
+		dialogData.message = Localize( "#MOD_CORRUPTED" )
+		break
+    case eModInstallStatus.NO_DISK_SPACE_AVAILABLE:
+		dialogData.message = Localize( "#NO_DISK_SPACE_AVAILABLE" )
+		break
+    case eModInstallStatus.NOT_FOUND:
+		dialogData.message = Localize( "#NOT_FOUND" )
+		break
+	case eModInstallStatus.FAILED:
+	default:
+		dialogData.message = Localize( "#FAILED" )
+		break
 	}
 
 	#if PC_PROG
