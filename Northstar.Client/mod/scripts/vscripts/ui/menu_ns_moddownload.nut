@@ -109,10 +109,8 @@ void function DisplayModDownloadErrorDialog( string modName )
 		break
 	}
 
-	#if PC_PROG
-		AddDialogButton( dialogData, "#DISMISS" )
-		AddDialogFooter( dialogData, "#A_BUTTON_SELECT" )
-	#endif
+	AddDialogButton( dialogData, "#DISMISS" )
+	AddDialogFooter( dialogData, "#A_BUTTON_SELECT" )
 	AddDialogFooter( dialogData, "#B_BUTTON_DISMISS_RUI" )
 
 	OpenDialog( dialogData )
