@@ -1054,7 +1054,7 @@ void function OnServerSelected_Threaded( var button )
 	// Make Northstar aware new mods have been added
 	if ( downloadedMods > 0 )
 	{
-		print("Some new mods have been downloaded or enabled, reloading mods.")
+		print( "Some new mods have been downloaded or enabled, reloading mods." )
 		NSReloadMods();
 	}
 
