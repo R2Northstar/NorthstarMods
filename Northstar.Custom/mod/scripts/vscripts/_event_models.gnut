@@ -11,10 +11,10 @@ void function EventModelsInit()
 
 	if( ( ( month == 12 ) && ( day >= 18 ) ) || ( ( month == 1 ) && ( day <= 6 ) ) )
 	{
-		PrecacheModel( $"models/northstar/desertlands_holiday_tree.mdl" )
-		PrecacheModel( $"models/northstar/floor.mdl" )
+		PrecacheModel( $"models/northstartee/winter_holiday_tree.mdl" )
+		PrecacheModel( $"models/northstartree/winter_holiday_floor.mdl" )
 
-		CreatePropDynamic( $"models/northstar/desertlands_holiday_tree.mdl", < -60, 740, 30 >, < 0, 0, 0 >, SOLID_VPHYSICS, 1000 )
-		CreatePropDynamic( $"models/northstar/floor.mdl", < -60, 740, 30 >, < 0, 0, 0 >, SOLID_VPHYSICS, 1000 )
+		CreatePropDynamic( $"models/northstartree/winter_holiday_tree.mdl", < -60, 740, 30 >, < 0, 0, 0 >, SOLID_VPHYSICS, 1000 )
+		CreatePropDynamic( $"models/northstartree/winter_holiday_floor.mdl", < -60, 740, 30 >, < 0, 0, 0 >, SOLID_VPHYSICS, 1000 )
 	}
 }
