@@ -998,8 +998,7 @@ void function OnServerSelected_Threaded( var button )
 				return
 			}
 
-			// Launch download
-			else
+			else // Launch download
 			{
 				if ( DownloadMod( mod ) )
 				{
