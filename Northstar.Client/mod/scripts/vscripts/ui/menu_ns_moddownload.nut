@@ -105,7 +105,7 @@ void function DisplayModDownloadErrorDialog( string modName )
 		break
 	case eModInstallStatus.FAILED:
 	default:
-		dialogData.message = Localize( "#FAILED" )
+		dialogData.message = Localize( "#MOD_FETCHING_FAILED_GENERAL" )
 		break
 	}
 

@@ -385,6 +385,6 @@ Press Yes if you agree to this. This choice can be changed in the mods menu at a
 		"MOD_FETCHING_FAILED"				"Mod archive could not be downloaded from Thunderstore."
 		"MOD_CORRUPTED"						"Downloaded archive checksum does not match verified signature."
 		"NO_DISK_SPACE_AVAILABLE"			"There is not enough space on your disk."
-		"FAILED"							"Mod extraction failed. Check logs for more details."
+		"MOD_FETCHING_FAILED_GENERAL"		"Mod extraction failed. Check logs for more details."
 	}
 }
