@@ -44,7 +44,7 @@ bool function DownloadMod( RequiredModInfo mod )
 		WaitFrame()
 	}
 
-	print("Mod status: " + state.status)
+	printt( "Mod status:", state.status )
 
 	// Close loading dialog
 	CloseActiveMenu()
