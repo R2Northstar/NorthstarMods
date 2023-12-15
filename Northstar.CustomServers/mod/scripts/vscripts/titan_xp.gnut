@@ -31,5 +31,7 @@ void function AddFDTitanXP( entity player, int fdXPamount )
 	int endingLevel = FD_TitanGetLevelForXP( titanRef, FD_TitanGetXP( player, titanRef ) )
 	
 	Player_GiveFDUnlockPoints( player, endingLevel - startingLevel )
-	AwardRandomItemsForFDTitanLevels( player, titanRef, startingLevel, endingLevel )
+	
+	if( ProgressionEnabledForPlayer( player ) )
+		AwardRandomItemsForFDTitanLevels( player, titanRef, startingLevel, endingLevel )
 }

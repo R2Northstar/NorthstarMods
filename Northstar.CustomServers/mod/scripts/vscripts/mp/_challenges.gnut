@@ -197,6 +197,9 @@ void function SetPlayerChallengeMatchComplete( entity player )
 
 void function SetPlayerChallengeSquadLeader( entity player )
 {
+	if( !ProgressionEnabledForPlayer( player ) )
+		return
+	
 	Remote_CallFunction_NonReplay( player, "ServerCallback_SquadLeaderDoubleXP" )
 	Remote_CallFunction_NonReplay( player, "ServerCallback_SquadLeaderBonus", player.GetEncodedEHandle() )
 	player.SetPersistentVar( "matchSquadBonus", true )
