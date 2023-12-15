@@ -29,7 +29,6 @@ global const float DROPSHIP_INTRO_LENGTH = 15.0 // TODO tweak this
 struct IntroDropship
 {
 	entity dropship
-
 	int playersInDropship
 	entity[MAX_DROPSHIP_PLAYERS] players
 }
@@ -128,7 +127,7 @@ void function OnPrematchStart()
 
 void function EndIntroWhenFinished()
 {
-	wait 15.0
+	wait DROPSHIP_INTRO_LENGTH
 	ClassicMP_OnIntroFinished()
 }
 
@@ -157,7 +156,6 @@ void function SpawnPlayerIntoDropship( entity player )
 	})
 	
 	WaitFrame()
-	UnMuteAll( player )
 
 	player.EndSignal( "OnDeath" )
 	
@@ -177,17 +175,20 @@ void function SpawnPlayerIntoDropship( entity player )
 		
 		foreach( index, playerslot in dropship.players )
 		{
-			if( dropship.players[index] == null )
+			if( dropship.playersInDropship > MAX_DROPSHIP_PLAYERS + 1 )
+				break
+			
+			dropship.playersInDropship++
+			if( !IsValid( dropship.players[index] ) )
 			{
 				playerDropship = dropship
 				playerDropshipIndex = index
 				dropship.players[index] = player
-				dropship.playersInDropship++
 				break
 			}
 		}
 	}
-					
+	
 	if( playerDropship.dropship == null ) //If we're at this point, we have more players than we do dropships, so just pick a random one
 	{
 		playerDropship = teamDropships.getrandom()
@@ -199,6 +200,7 @@ void function SpawnPlayerIntoDropship( entity player )
 		player.RespawnPlayer( null )
 	HolsterAndDisableWeapons(player)
 	player.DisableWeaponViewModel()
+	UnMuteAll( player )
 	
 	// hide hud and fade screen out from black
 	AddCinematicFlag( player, CE_FLAG_CLASSIC_MP_SPAWNING )

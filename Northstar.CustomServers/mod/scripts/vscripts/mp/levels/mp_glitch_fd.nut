@@ -1165,7 +1165,7 @@ void function RegisterCustomFDContent()
 	
 	AddStationaryAIPosition(< 1724, 1079, 3 >, eStationaryAIPositionTypes.MORTAR_TITAN)
 	AddStationaryAIPosition(< 1991, -210, -12 >, eStationaryAIPositionTypes.MORTAR_TITAN)
-	AddStationaryAIPosition(< 2851, 2404, -4 >, eStationaryAIPositionTypes.MORTAR_TITAN)
+	AddStationaryAIPosition(< 2917, 2182, 4 >, eStationaryAIPositionTypes.MORTAR_TITAN)
 	AddStationaryAIPosition(< 1506, 2299, 100 >, eStationaryAIPositionTypes.MORTAR_TITAN)
 	AddStationaryAIPosition(< 197, 460, 0 >, eStationaryAIPositionTypes.MORTAR_TITAN)
 	AddStationaryAIPosition(< 897, 1408, 33 >, eStationaryAIPositionTypes.MORTAR_TITAN)

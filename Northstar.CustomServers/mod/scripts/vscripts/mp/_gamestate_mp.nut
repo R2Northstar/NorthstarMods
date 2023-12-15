@@ -367,6 +367,8 @@ void function GameStateEnter_WinnerDetermined_Threaded()
 			player.UnfreezeControlsOnServer()
 	}
 	
+	wait 2 //Required to properly restart without players in Titans crashing it in FD
+	
 	if ( IsRoundBased() )
 	{
 		svGlobal.levelEnt.Signal( "RoundEnd" )
@@ -393,7 +395,7 @@ void function GameStateEnter_WinnerDetermined_Threaded()
 		else if ( file.usePickLoadoutScreen )
 			SetGameState( eGameState.PickLoadout )
 		else
-			SetGameState ( eGameState.Prematch )
+			SetGameState( eGameState.Prematch )
 	}
 	else
 	{
@@ -609,10 +611,17 @@ void function OnPlayerKilled( entity victim, entity attacker, var damageInfo )
 			return
 	}
 	
-	ShowDeathHint( victim, damageInfo )
-
 	entity inflictor = DamageInfo_GetInflictor( damageInfo )
 	bool shouldUseInflictor = IsValid( inflictor ) && ShouldTryUseProjectileReplay( victim, attacker, damageInfo, true )
+	if( victim.IsPlayer() )
+	{
+		victim.p.numberOfDeaths++
+		if( !ShowDeathHint( victim, damageInfo ) )
+		{
+			if( IsValid( attacker ) && attacker.IsNPC() && attacker.ai.bossTitanType == 0 )
+				GetBestDeathHintForNPCTitle( victim, attacker.GetTitle() )
+		}
+	}
 
 	// set round winning killreplay info here if we're tracking pilot kills
 	// todo: make this not count environmental deaths like falls, unsure how to prevent this
@@ -738,16 +747,20 @@ void function CleanUpEntitiesForRoundEnd()
 	svGlobal.levelEnt.Signal( "CleanUpEntitiesForRoundEnd" ) 
 	foreach ( entity player in GetPlayerArray() )
 	{
+		PlayerEarnMeter_Reset( player )
 		ClearTitanAvailable( player )
 		PROTO_CleanupTrackedProjectiles( player )
 		player.SetPlayerNetInt( "batteryCount", 0 ) 
+		player.ClearInvulnerable()
+		player.SetNoTarget( false )
+		player.ClearParent() //Dropship parenting causes observer mode crash
 		if ( IsAlive( player ) )
 			player.Die( svGlobal.worldspawn, svGlobal.worldspawn, { damageSourceId = eDamageSourceId.round_end } )
 	}
 	
 	foreach ( entity npc in GetNPCArray() )
 	{
-		if ( !IsValid( npc ) || !IsAlive( npc ) || GameRules_GetGameMode() == "fd" && ( npc.GetClassName() == "npc_turret_sentry" || npc.GetClassName() == "npc_turret_mega" ) ) //Let the FD cleanup function handle turrets
+		if ( !IsValid( npc ) || !IsAlive( npc ) || GameRules_GetGameMode() == FD && ( npc.GetClassName() == "npc_turret_sentry" || npc.GetClassName() == "npc_turret_mega" ) ) //Let the FD cleanup function handle turrets
 			continue
 		// kill rather than destroy, as destroying will cause issues with children which is an issue especially for dropships and titans
 		npc.Die( svGlobal.worldspawn, svGlobal.worldspawn, { damageSourceId = eDamageSourceId.round_end } )
@@ -763,6 +776,7 @@ void function CleanUpEntitiesForRoundEnd()
 	foreach ( void functionref() callback in file.roundEndCleanupCallbacks )
 		callback()
 	
+	WaitFrame()
 	SetPlayerDeathsHidden( false )
 }
 

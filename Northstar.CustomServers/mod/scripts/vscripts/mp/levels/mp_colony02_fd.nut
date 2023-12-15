@@ -2,7 +2,7 @@ global function initFrontierDefenseData
 void function initFrontierDefenseData()
 {
 	AddCallback_RegisterCustomFDContent( RegisterCustomFDContent )
-    shopPosition = < 1433.63, 558.16 , 60.45>
+    shopPosition = < 1179, 561, 60 >
 	shopAngles = < 0, 0, 0 >
 	FD_spawnPosition = < 830, -194, 112 >
 	FD_spawnAngles = < 0, 180, 0 >
@@ -701,6 +701,13 @@ void function RegisterCustomFDContent()
 	foreach ( entity dropshipSpawn in dropshipSpawns )
 		dropshipSpawn.Destroy()
 	
+	/*
+	array<entity> aiPositions = GetEntArrayByClass_Expensive( "info_target" )
+	foreach ( entity position in aiPositions )
+		if( position.HasKey( "editorclass" ) && position.kv.editorclass == "info_fd_ai_position" )
+			position.Destroy()
+	*/
+	
 	AddFDCustomShipStart( < 1967, 1863, 660 >, < 0, -120, 0 >, TEAM_MILITIA )
 	AddFDCustomShipStart( < 1180, 1863, 660 >, < 0, -90, 0 >, TEAM_MILITIA )
 	AddFDCustomShipStart( < -4614, 3969, 1280 >, < 0, -45, 0 >, TEAM_IMC )
@@ -714,12 +721,76 @@ void function RegisterCustomFDContent()
 	AddFDCustomProp( $"models/imc_base/cargo_container_imc_01_red.mdl", < 1804, 2535, -8 >, < 0, 0, 0 > )
 	AddFDCustomProp( $"models/imc_base/cargo_container_imc_01_red.mdl", < 1410, 2501, 182 >, < 0, 0, 0 > )
 	AddFDCustomProp( $"models/containers/cargo_container_white_separate.mdl", < 1635, 2390, 182 >, < 0, 90, 0 > )
+	
 	AddFDCustomProp( $"models/imc_base/cargo_container_imc_01_red.mdl", < 2444, 1930, 16 >, < 0, 0, 0 > )
 	AddFDCustomProp( $"models/imc_base/cargo_container_imc_01_white.mdl", < 2444, 2033, 16 >, < 0, 0, 0 > )
 	AddFDCustomProp( $"models/imc_base/cargo_container_imc_01_blue.mdl", < 2444, 1930, 114 >, < 0, 0, 0 > )
 	AddFDCustomProp( $"models/imc_base/cargo_container_imc_01_blue.mdl", < 2444, 2033, 114 >, < 0, 0, 0 > )
 	AddFDCustomProp( $"models/imc_base/cargo_container_imc_01_white_open.mdl", < 2444, 1983, 212 >, < 0, 45, 0 > )
 	AddFDCustomProp( $"models/containers/cargo_container_white_separate.mdl", < 2328, 2020, 4 >, < 0, 0, 0 > )
+	
+	AddFDCustomProp( $"models/imc_base/cargo_container_imc_01_white.mdl", < 1210, 3017, -5 >, < 0, -45, 0 > )
+	AddFDCustomProp( $"models/imc_base/cargo_container_imc_01_blue.mdl", < 1329, 3073, 5 >, < 0, 90, 0 > )
+	AddFDCustomProp( $"models/imc_base/cargo_container_imc_01_blue.mdl", < 1210, 3021, 92 >, < 0, 90, 0 > )
+	AddFDCustomProp( $"models/containers/cargo_container_white_separate.mdl", < 1311, 3072, 102 >, < 0, 0, 0 > )
+	
+	AddFDCustomProp( $"models/imc_base/cargo_container_imc_01_white_open.mdl", < -188, 4469, 6 >, < 0, 0, 0 > )
+	AddFDCustomProp( $"models/imc_base/cargo_container_imc_01_white_open.mdl", < -310, 4469, 6 >, < 0, 0, 0 > )
+	AddFDCustomProp( $"models/imc_base/cargo_container_imc_01_white_open.mdl", < -431, 4469, 6 >, < 0, 0, 0 > )
+	AddFDCustomProp( $"models/imc_base/cargo_container_imc_01_red.mdl", < -432, 4469, 104 >, < 0, 0, 0 > )
+	AddFDCustomProp( $"models/imc_base/cargo_container_imc_01_red.mdl", < -309, 4469, 104 >, < 0, 0, 0 > )
+	AddFDCustomProp( $"models/imc_base/cargo_container_imc_01_blue.mdl", < -188, 4469, 104 >, < 0, 0, 0 > )
+	AddFDCustomProp( $"models/imc_base/cargo_container_imc_01_blue.mdl", < -309, 4566, -5 >, < 0, 0, 0 > )
+	AddFDCustomProp( $"models/containers/cargo_container_white_separate.mdl", < -210, 4473, 203 >, < 0, 90, 0 > )
+	AddFDCustomProp( $"models/containers/cargo_container_white_separate.mdl", < -172, 4569, -5 >, < 0, 90, 0 > )
+	
+	AddFDCustomProp( $"models/imc_base/cargo_container_imc_01_blue.mdl", < -569, -1010, 159 >, < 0, 90, 0 > )
+	AddFDCustomProp( $"models/imc_base/cargo_container_imc_01_red.mdl", < -569, -1137, 159 >, < 0, 90, 0 > )
+	AddFDCustomProp( $"models/imc_base/cargo_container_imc_01_red.mdl", < -569, -1010, 257 >, < 0, 90, 0 > )
+	AddFDCustomProp( $"models/imc_base/cargo_container_imc_01_white.mdl", < -569, -1137, 257 >, < 0, 90, 0 > )
+	AddFDCustomProp( $"models/imc_base/cargo_container_imc_01_white_open.mdl", < -573, -1072, 353 >, < 0, 90, 0 > )
+	
+	AddFDCustomProp( $"models/imc_base/cargo_container_imc_01_blue.mdl", < -1142, -1081, 159 >, < 0, 0, 0 > )
+	AddFDCustomProp( $"models/imc_base/cargo_container_imc_01_blue.mdl", < -1269, -1081, 159 >, < 0, 0, 0 > )
+	AddFDCustomProp( $"models/imc_base/cargo_container_imc_01_blue.mdl", < -1396, -1081, 159 >, < 0, 0, 0 > )
+	AddFDCustomProp( $"models/imc_base/cargo_container_imc_01_white_open.mdl", < -1142, -978, 142 >, < 0, 0, 0 > )
+	AddFDCustomProp( $"models/imc_base/cargo_container_imc_01_white_open.mdl", < -1269, -978, 142 >, < 0, 0, 0 > )
+	AddFDCustomProp( $"models/imc_base/cargo_container_imc_01_white_open.mdl", < -1395, -978, 142 >, < 0, 0, 0 > )
+	AddFDCustomProp( $"models/imc_base/cargo_container_imc_01_white_open.mdl", < -1142, -1081, 256 >, < 0, 0, 0 > )
+	AddFDCustomProp( $"models/imc_base/cargo_container_imc_01_white_open.mdl", < -1269, -1081, 256 >, < 0, 0, 0 > )
+	AddFDCustomProp( $"models/imc_base/cargo_container_imc_01_white_open.mdl", < -1395, -1081, 256 >, < 0, 0, 0 > )
+	AddFDCustomProp( $"models/imc_base/cargo_container_imc_01_red.mdl", < -1269, -978, 238 >, < 0, 0, 0 > )
+	AddFDCustomProp( $"models/imc_base/cargo_container_imc_01_red.mdl", < -1394, -978, 238 >, < 0, 0, 0 > )
+	AddFDCustomProp( $"models/imc_base/cargo_container_imc_01_red.mdl", < -1164, -1084, 352 >, < 0, 0, 0 > )
+	AddFDCustomProp( $"models/containers/cargo_container_white_separate.mdl", < -1029, -1091, 156 >, < 0, 0, 0 > )
+	AddFDCustomProp( $"models/containers/cargo_container_white_separate.mdl", < -1369, -1092, 352 >, < 0, 90, 0 > )
+	AddFDCustomProp( $"models/imc_base/cargo_container_imc_01_blue.mdl", < -1406, -868, 115 >, < 0, 90, 0 > )
+	AddFDCustomProp( $"models/imc_base/cargo_container_imc_01_blue.mdl", < -1406, -868, 213 >, < 0, 90, 0 > )
+	AddFDCustomProp( $"models/imc_base/cargo_container_imc_01_red.mdl", < -1132, -1201, 165 >, < 0, 90, 0 > )
+	AddFDCustomProp( $"models/imc_base/cargo_container_imc_01_red.mdl", < -1132, -1201, 264 >, < 0, 90, 0 > )
+	
+	AddFDCustomProp( $"models/barriers/sandbags_large_01.mdl", < 1307, 3816, 157 >, < 0, 180, 0 > )
+	AddFDCustomProp( $"models/barriers/sandbags_large_01.mdl", < 1181, 3686, 157 >, < 0, -90, 0 > )
+	AddFDCustomProp( $"models/barriers/sandbags_curved_01.mdl", < 1173, 3738, 157 >, < 0, -90, 0 > )
+	AddFDCustomProp( $"models/barriers/sandbags_curved_01.mdl", < 1258, 3554, 157 >, < 0, 0, 0 > )
+	
+	AddFDCustomProp( $"models/barriers/sandbags_large_01.mdl", < -503, 2807, 157 >, < 0, 160, 0 > )
+	AddFDCustomProp( $"models/barriers/sandbags_large_01.mdl", < -666, 2727, 157 >, < 0, -110, 0 > )
+	AddFDCustomProp( $"models/barriers/sandbags_curved_01.mdl", < -656, 2779, 157 >, < 0, -110, 0 > )
+	AddFDCustomProp( $"models/barriers/sandbags_curved_01.mdl", < -639, 2577, 157 >, < 0, -20, 0 > )
+	
+	AddFDCustomProp( $"models/barriers/sandbags_large_01.mdl", < -1384, 917, 328 >, < 0, 0, 0 > )
+	AddFDCustomProp( $"models/barriers/sandbags_large_01.mdl", < -1270, 917, 328 >, < 0, 0, 0 > )
+	AddFDCustomProp( $"models/barriers/sandbags_large_01.mdl", < -1156, 917, 328 >, < 0, 0, 0 > )
+	AddFDCustomProp( $"models/barriers/sandbags_large_01.mdl", < -1324, 530, 328 >, < 0, 0, 0 > )
+	AddFDCustomProp( $"models/barriers/sandbags_large_01.mdl", < -1211, 530, 328 >, < 0, 0, 0 > )
+	
+	AddFDCustomProp( $"models/barriers/sandbags_large_01.mdl", < -240, -888, 557 >, < 0, 250, 0 > )
+	AddFDCustomProp( $"models/barriers/sandbags_large_01.mdl", < -161, -1057, 557 >, < 0, -20, 0 > )
+	AddFDCustomProp( $"models/barriers/sandbags_curved_01.mdl", < -212, -1044, 557 >, < 0, -20, 0 > )
+	
+	AddFDCustomProp( $"models/barriers/sandbags_large_01.mdl", < 37, 3063, 233 >, < 0, 160, 0 > )
+	AddFDCustomProp( $"models/barriers/sandbags_large_01.mdl", < 147, 3023, 233 >, < 0, 160, 0 > )
 	
 	CreateZipline( < 2061, 3293, 640 >, < 177, 2433, 676 > )
 	CreateZipline( < 145, 2363, 585 >, < -1084, 772, 603 > )

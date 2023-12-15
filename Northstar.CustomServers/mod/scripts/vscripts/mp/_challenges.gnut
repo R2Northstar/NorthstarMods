@@ -8,7 +8,6 @@ global function IncrementPlayerChallengeTitanLeveledUp			//Hooked in titan_xp.gn
 global function IncrementPlayerChallengeWeaponLeveledUp			//Hooked in weapon_xp.gnut
 global function IncrementPlayerChallengeFactionLeveledUp		//Hooked in faction_xp.gnut (invisible but necessary for post-summary menu)
 global function RegisterChallenges_OnMatchEnd					//Hooked in _gamestate_mp.gnut
-global function MatchChallenges_SetHappyHourActive				//Quite sure this is called from Network code, which Northstar currently don't have
 
 global function HasPlayerCompletedMeritScore					//Check from gamemodes to not reapply SetPlayerChallengeMeritScore
 global function SetupGenericTDMChallenge						//Used by gamemodes which simply adopts the: "Kill 3 Pilots without dying." Challenge
@@ -70,11 +69,6 @@ void function SetupPlayerMenuChallenges( entity player )
 	Remote_CallFunction_UI( player, "SCB_SetTitanMeritCount", 0 )
 }
 
-void function MatchChallenges_SetHappyHourActive()
-{
-	file.isHappyHourActive = true
-}
-
 void function SetupGenericTDMChallenge()
 {
 	AddCallback_OnPlayerKilled( TDMChallenges_OnPlayerKilled )
@@ -97,9 +91,9 @@ void function RemovePlayerFromChallengePool( entity player )
 
 void function RegisterChallenges_OnMatchEnd()
 {
-	if( file.isHappyHourActive )
+	foreach( player in GetPlayerArray() )
 	{
-		foreach( player in GetPlayerArray() )
+		if( ShouldAwardHappyHourBonus( player ) )
 		{
 			AddPlayerScore( player, "HappyHourBonus" )
 			player.SetPersistentVar( "xp_match[" + XP_TYPE.HAPPY_HOUR + "]", 5 ) //The XP Given from Happy Hour Score is 5 merits
@@ -203,6 +197,9 @@ void function SetPlayerChallengeMatchComplete( entity player )
 
 void function SetPlayerChallengeSquadLeader( entity player )
 {
+	if( !ProgressionEnabledForPlayer( player ) )
+		return
+	
 	Remote_CallFunction_NonReplay( player, "ServerCallback_SquadLeaderDoubleXP" )
 	Remote_CallFunction_NonReplay( player, "ServerCallback_SquadLeaderBonus", player.GetEncodedEHandle() )
 	player.SetPersistentVar( "matchSquadBonus", true )

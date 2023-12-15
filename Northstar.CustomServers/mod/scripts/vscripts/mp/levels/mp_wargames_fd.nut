@@ -603,13 +603,13 @@ void function RegisterCustomFDContentOGSetup()
 		}
 	}
 			
-	AddStationaryAIPosition(< -1718, -2074, -128 >, eStationaryAIPositionTypes.LAUNCHER_REAPER)
-	AddStationaryAIPosition(< -413, -1763, 64 >, eStationaryAIPositionTypes.LAUNCHER_REAPER)
-	AddStationaryAIPosition(< 1536, 648, 143 >, eStationaryAIPositionTypes.LAUNCHER_REAPER)
-	AddStationaryAIPosition(< 776, -1172, 40 >, eStationaryAIPositionTypes.LAUNCHER_REAPER)
-	AddStationaryAIPosition(< -1345, -3028, -191 >, eStationaryAIPositionTypes.LAUNCHER_REAPER)
+	AddStationaryAIPosition(< -1622, -2052, -128 >, eStationaryAIPositionTypes.LAUNCHER_REAPER)
+	AddStationaryAIPosition(< -467, -1348, 64 >, eStationaryAIPositionTypes.LAUNCHER_REAPER)
+	AddStationaryAIPosition(< 1578, 689, 143 >, eStationaryAIPositionTypes.LAUNCHER_REAPER)
+	AddStationaryAIPosition(< 820, -1217, 40 >, eStationaryAIPositionTypes.LAUNCHER_REAPER)
+	AddStationaryAIPosition(< -1345, -3101, -191 >, eStationaryAIPositionTypes.LAUNCHER_REAPER)
 	AddStationaryAIPosition(< -959, -510, -143 >, eStationaryAIPositionTypes.LAUNCHER_REAPER)
-	AddStationaryAIPosition(< -3970, -280, -127 >, eStationaryAIPositionTypes.LAUNCHER_REAPER)
+	AddStationaryAIPosition(< -4150, -396, -127 >, eStationaryAIPositionTypes.LAUNCHER_REAPER)
 	AddStationaryAIPosition(< -552, -434, -31 >, eStationaryAIPositionTypes.LAUNCHER_REAPER)
 	
 	AddStationaryAIPosition(< -2096, -185, -128 >, eStationaryAIPositionTypes.MORTAR_SPECTRE)
