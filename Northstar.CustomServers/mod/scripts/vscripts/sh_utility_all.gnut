@@ -1540,19 +1540,20 @@ array<string> function GetAvailableTitanRefs( entity player )
 	return availableTitanRefs
 }
 
+/// Gets the highest Titan FD level and stores it in the corresponding persistent var.
+/// * `player` - The player entity to perform the action on
 void function RecalculateHighestTitanFDLevel( entity player )
 {
-	//Refresh Highest Aegis Titan since we might get all of them back to 1 if players wants
 	int enumCount = PersistenceGetEnumCount( "titanClasses" )
-	int HighestAegis = 0
+	int highestAegis = 0
 	for ( int i = 0; i < enumCount; i++ )
 	{
 		string enumName = PersistenceGetEnumItemNameForIndex( "titanClasses", i )
-		int AegisLevel = FD_TitanGetLevelForXP( enumName, FD_TitanGetXP( player, enumName ) )
-		if ( HighestAegis < AegisLevel )
-			HighestAegis = AegisLevel
+		int aegisLevel = FD_TitanGetLevelForXP( enumName, FD_TitanGetXP( player, enumName ) )
+		if ( highestAegis < aegisLevel )
+			highestAegis = aegisLevel
 	}
-	player.SetPersistentVar( "fdStats.highestTitanFDLevel", HighestAegis )
+	player.SetPersistentVar( "fdStats.highestTitanFDLevel", highestAegis )
 }
 
 #if MP

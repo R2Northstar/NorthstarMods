@@ -5,6 +5,7 @@ global function Progression_SetPreference
 global function Progression_GetPreference
 global function UpdateCachedLoadouts_Delayed
 #endif
+
 #if SP // literally just stub the global functions and call it a day
 
 void function Progression_Init() {}
@@ -16,6 +17,7 @@ void function UpdateCachedLoadouts_Delayed() {}
 #endif // CLIENT || UI
 
 #else // MP || UI basically
+
 // SO FOR SOME GOD DAMN REASON, PUTTING THESE INTO ONE STRUCT
 // AND PUTTING THE #if STUFF AROUND THE VARS CAUSES A COMPILE
 // ERROR, SO I HAVE TO DO THIS AWFULNESS
@@ -84,6 +86,11 @@ bool function ClientCommand_SetProgression( entity player, array<string> args )
 	return true
 }
 
+/// Resets a specific Titan's Aegis rank back to `0`
+/// * `player` - The player entity to perform the action on
+/// * `args` - The arguments passed from the client command. `args[0]` should be an integer corresponding to the index of the Titan to reset.
+///
+/// Returns `true` on success and `false` on missing args.
 bool function ClientCommand_ResetTitanAegis( entity player, array<string> args )
 {
 	if ( !args.len() )
@@ -95,6 +102,7 @@ bool function ClientCommand_ResetTitanAegis( entity player, array<string> args )
 	player.SetPersistentVar( "fdTitanXP[" + suitIndex + "]", 0 )
 	player.SetPersistentVar( "fdPreviousTitanXP[" + suitIndex + "]", 0 )
 	
+	// Refresh Highest Aegis Titan since we might get all of them back to 1 if players wants
 	RecalculateHighestTitanFDLevel( player )
 	
 	return true
@@ -659,11 +667,15 @@ void function ValidateEquippedItems( entity player )
 					player.SetPersistentVar( "pilotLoadouts[" + pilotLoadoutIndex + "].primaryCamoIndex", defaultLoadout.primaryCamoIndex )
 				}
 			}
-			else if ( IsSubItemLocked( player, GetWeaponWarpaintRefByIndex( loadout.primarySkinIndex, loadout.primary ), loadout.primary ) )
+			else
 			{
-				printt( "  - PRIMARY WEAPON SKIN LOCKED, RESETTING" )
-				player.SetPersistentVar( "pilotLoadouts[" + pilotLoadoutIndex + "].primarySkinIndex", defaultLoadout.primarySkinIndex )
-				player.SetPersistentVar( "pilotLoadouts[" + pilotLoadoutIndex + "].primaryCamoIndex", defaultLoadout.primaryCamoIndex )
+				string warpaintRef = GetWeaponWarpaintRefByIndex( loadout.primarySkinIndex, loadout.primary )
+				if ( warpaintRef == INVALID_REF || IsSubItemLocked( player, warpaintRef, loadout.primary ) )
+				{
+					printt( "  - PRIMARY WEAPON SKIN LOCKED/INVALID, RESETTING" )
+					player.SetPersistentVar( "pilotLoadouts[" + pilotLoadoutIndex + "].primarySkinIndex", defaultLoadout.primarySkinIndex )
+					player.SetPersistentVar( "pilotLoadouts[" + pilotLoadoutIndex + "].primaryCamoIndex", defaultLoadout.primaryCamoIndex )
+				}
 			}
 		}
 
@@ -792,11 +804,15 @@ void function ValidateEquippedItems( entity player )
 					player.SetPersistentVar( "pilotLoadouts[" + pilotLoadoutIndex + "].secondaryCamoIndex", defaultLoadout.secondaryCamoIndex )
 				}
 			}
-			else if ( IsSubItemLocked( player, GetWeaponWarpaintRefByIndex( loadout.secondarySkinIndex, loadout.secondary ), loadout.secondary ) )
+			else
 			{
-				printt( "  - SECONDARY WEAPON SKIN LOCKED, RESETTING" )
-				player.SetPersistentVar( "pilotLoadouts[" + pilotLoadoutIndex + "].secondarySkinIndex", defaultLoadout.secondarySkinIndex )
-				player.SetPersistentVar( "pilotLoadouts[" + pilotLoadoutIndex + "].secondaryCamoIndex", defaultLoadout.secondaryCamoIndex )
+				string warpaintRef = GetWeaponWarpaintRefByIndex( loadout.secondarySkinIndex, loadout.secondary )
+				if ( warpaintRef == INVALID_REF || IsSubItemLocked( player, warpaintRef, loadout.secondary ) )
+				{
+					printt( "  - SECONDARY WEAPON SKIN LOCKED/INVALID, RESETTING" )
+					player.SetPersistentVar( "pilotLoadouts[" + pilotLoadoutIndex + "].secondarySkinIndex", defaultLoadout.secondarySkinIndex )
+					player.SetPersistentVar( "pilotLoadouts[" + pilotLoadoutIndex + "].secondaryCamoIndex", defaultLoadout.secondaryCamoIndex )
+				}
 			}
 		}
 
@@ -925,11 +941,15 @@ void function ValidateEquippedItems( entity player )
 					player.SetPersistentVar( "pilotLoadouts[" + pilotLoadoutIndex + "].weapon3CamoIndex", defaultLoadout.weapon3CamoIndex )
 				}
 			}
-			else if ( IsSubItemLocked( player, GetWeaponWarpaintRefByIndex( loadout.weapon3SkinIndex, loadout.weapon3 ), loadout.weapon3 ) )
+			else
 			{
-				printt( "  - TERTIARY WEAPON SKIN LOCKED, RESETTING" )
-				player.SetPersistentVar( "pilotLoadouts[" + pilotLoadoutIndex + "].weapon3SkinIndex", defaultLoadout.weapon3SkinIndex )
-				player.SetPersistentVar( "pilotLoadouts[" + pilotLoadoutIndex + "].weapon3CamoIndex", defaultLoadout.weapon3CamoIndex )
+				string warpaintRef = GetWeaponWarpaintRefByIndex( loadout.weapon3SkinIndex, loadout.weapon3 )
+				if ( warpaintRef == INVALID_REF || IsSubItemLocked( player, warpaintRef, loadout.weapon3 ) )
+				{
+					printt( "  - TERTIARY WEAPON SKIN LOCKED/INVALID, RESETTING" )
+					player.SetPersistentVar( "pilotLoadouts[" + pilotLoadoutIndex + "].weapon3SkinIndex", defaultLoadout.weapon3SkinIndex )
+					player.SetPersistentVar( "pilotLoadouts[" + pilotLoadoutIndex + "].weapon3CamoIndex", defaultLoadout.weapon3CamoIndex )
+				}
 			}
 		}
 
