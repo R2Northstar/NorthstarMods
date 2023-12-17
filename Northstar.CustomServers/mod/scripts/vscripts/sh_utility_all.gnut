@@ -1556,7 +1556,6 @@ void function RecalculateHighestTitanFDLevel( entity player )
 	player.SetPersistentVar( "fdStats.highestTitanFDLevel", highestAegis )
 }
 
-#if MP
 string function GetTitanRefForLoadoutIndex( entity player, int loadoutIndex )
 {
 	TitanLoadoutDef loadout = GetTitanLoadoutFromPersistentData( player, loadoutIndex )
