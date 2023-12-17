@@ -482,10 +482,10 @@ void function RegisterCustomFDContent()
 			trigger.kv.triggerFilterNpc = "none"
 	}
 	
-	entity Prowler1 = CreateNPC( "npc_prowler", TEAM_DAMAGE_ALL, < -3148, -331, 516>,< 0, 0, 0> )
-	entity Prowler2 = CreateNPC( "npc_prowler", TEAM_DAMAGE_ALL, < -3732, 474, 545>,< 0, 0, 0 > )
-	entity Prowler3 = CreateNPC( "npc_prowler", TEAM_DAMAGE_ALL, < -3797, -897, 597>,< 0, 0, 0 > )
-	entity Prowler4 = CreateNPC( "npc_prowler", TEAM_DAMAGE_ALL, < -3266, 239, 600>,< 0, 0, 0 > )
+	entity Prowler1 = CreateNPC( "npc_prowler", TEAM_DAMAGE_ALL, < -3148, -331, 516 >,< 0, 0, 0 > )
+	entity Prowler2 = CreateNPC( "npc_prowler", TEAM_DAMAGE_ALL, < -3732, 474, 545 >,< 0, 0, 0 > )
+	entity Prowler3 = CreateNPC( "npc_prowler", TEAM_DAMAGE_ALL, < -3797, -897, 597 >,< 0, 0, 0 > )
+	entity Prowler4 = CreateNPC( "npc_prowler", TEAM_DAMAGE_ALL, < -3266, 239, 600 >,< 0, 0, 0 > )
 	DispatchSpawn( Prowler1 )
 	DispatchSpawn( Prowler2 )
 	DispatchSpawn( Prowler3 )
