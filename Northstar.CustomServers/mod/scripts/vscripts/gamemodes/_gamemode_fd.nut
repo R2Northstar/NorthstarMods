@@ -33,6 +33,11 @@ struct player_struct_fd{
 	bool titanPerfectWin
 }
 
+struct player_struct_score{
+	int savedCombatScore
+	int savedSupportScore
+}
+
 global HarvesterStruct& fd_harvester
 global vector shopPosition
 global vector shopAngles = < 0, 0, 0 >
@@ -58,21 +63,25 @@ const float FD_HARVESTER_PERIMETER_DIST = 1200.0
 typedef LoadCustomFDContent void functionref()
 
 struct {
-	array<entity> aiSpawnpoints
 	array<entity> smokePoints
 	array<float> harvesterDamageSource
 	bool harvesterWasDamaged
 	bool harvesterShieldDown
 	bool harvesterHalfHealth
 	float harvesterDamageTaken
+	
 	table<entity, player_struct_fd> players
 	table<entity, table<string, float> > playerAwardStats
 	table<string, int> playerHasTitanSelectionLocked
+	table<string, player_struct_score> playerSavedScore
+	
 	entity harvester_info
+	
 	bool waveRestart = false
 	bool easymodeSmartPistol = false
 	bool harvesterPerfectWin = true
 	bool isLiveFireMap = false
+	
 	vector harvesterLocationForRespawn = < 0, 0, 0 >
 	
 	string animationOverride = ""
@@ -80,6 +89,7 @@ struct {
 	int playersInShip
 	entity dropship
 	array<entity> playersInDropship
+	
 	array<LoadCustomFDContent> CustomFDContent
 }file
 
@@ -273,9 +283,9 @@ void function ScoreEvent_SetupScoreValuesForFrontierDefense()
 	ScoreEvent_SetDisplayType( GetScoreEvent( "FDSpectreKilled" ), eEventDisplayType.MEDAL | eEventDisplayType.CENTER )
 	ScoreEvent_SetDisplayType( GetScoreEvent( "FDStalkerKilled" ), eEventDisplayType.MEDAL | eEventDisplayType.CENTER )
 	ScoreEvent_SetDisplayType( GetScoreEvent( "FDSuperSpectreKilled" ), eEventDisplayType.MEDAL | eEventDisplayType.CENTER )
-	ScoreEvent_SetDisplayType( GetScoreEvent( "KillDropship" ), eEventDisplayType.MEDAL | eEventDisplayType.CENTER )
 	ScoreEvent_SetDisplayType( GetScoreEvent( "Execution" ), eEventDisplayType.MEDAL_FORCED | eEventDisplayType.CENTER )
 	ScoreEvent_SetDisplayType( GetScoreEvent( "FDTeamHeal" ), eEventDisplayType.MEDAL_FORCED | eEventDisplayType.GAMEMODE | eEventDisplayType.SHOW_SCORE )
+	ScoreEvent_SetDisplayType( GetScoreEvent( "KillDropship" ), eEventDisplayType.CENTER )
 	
 	ScoreEvent_SetXPValueWeapon( GetScoreEvent( "FDTitanKilled" ), 1 )
 	ScoreEvent_SetXPValueWeapon( GetScoreEvent( "KillDropship" ), 1 )
@@ -283,9 +293,6 @@ void function ScoreEvent_SetupScoreValuesForFrontierDefense()
 	ScoreEvent_SetXPValueTitan( GetScoreEvent( "FDTitanKilled" ), 1 )
 	ScoreEvent_SetXPValueTitan( GetScoreEvent( "KillDropship" ), 1 )
 	ScoreEvent_SetXPValueFaction( GetScoreEvent( "ChallengeFD" ), 1 )
-	
-	ScoreEvent_SetMedalText( GetScoreEvent( "KillDropship" ), "#SCORE_EVENT_DESTROYED_GOBLIN" )
-	ScoreEvent_SetSplashText( GetScoreEvent( "KillDropship" ), "#SCORE_EVENT_DESTROYED_GOBLIN" )
 	
 	ScoreEvent_Disable( GetScoreEvent( "KillGrunt" ) )
 	ScoreEvent_Disable( GetScoreEvent( "KillDrone" ) )
@@ -300,7 +307,7 @@ void function ScoreEvent_SetupScoreValuesForFrontierDefense()
 
 void function UpdateEarnMeter_ByPlayersInMatch()
 {
-	WaitFrame() //Waitframe because i have no idea why it doesn't update properly in the frame a player leaves
+	WaitFrame() //Waitframe because the disconnecting player still exist in the current frame of the disconnection callbacks
 	array<entity> numplayers = GetPlayerArrayOfTeam( TEAM_MILITIA )
 	
 	switch( numplayers.len() )
@@ -360,11 +367,10 @@ void function AddCallback_RegisterCustomFDContent( LoadCustomFDContent callback 
 	file.CustomFDContent.append( callback )
 }
 
-void function AddFDCustomProp( asset modelasset, vector origin, vector angles, float scale = 1.0 )
+void function AddFDCustomProp( asset modelasset, vector origin, vector angles )
 {
 	entity prop = CreatePropScript( modelasset, origin, angles, 6 )
-	prop.kv.modelscale = scale
-	ToggleNPCPathsForEntity( prop, false )
+	ToggleNPCPathsForEntity( prop, true )
 	prop.Solid()
 	prop.SetAIObstacle( true )
 	prop.SetTakeDamageType( DAMAGE_NO )
@@ -823,16 +829,7 @@ bool function runWave( int waveIndex, bool shouldDoBuyTime )
 		{
 			FD_DecrementRestarts() //Decrement restarts in here to avoid issues
 			foreach( entity player in GetPlayerArray() )
-			{
 				Highlight_ClearFriendlyHighlight( player ) //Clear Highlight for dropship animation
-				PlayerEarnMeter_Reset( player )
-				ClearTitanAvailable( player )
-				player.ClearInvulnerable()
-				player.SetNoTarget( false )
-				player.ClearParent() //Dropship parenting causes observer mode crash
-				if ( IsAlive( player ) && player.IsTitan() )
-					player.Die()
-			}
 		}
 		
 		return false
@@ -1263,11 +1260,18 @@ void function GamemodeFD_InitPlayer( entity player )
 	foreach ( string FDTitan in shTitanXP.titanClasses )
 		player.SetPersistentVar( "previousFDUnlockPoints[" + FDTitan + "]", player.GetPersistentVarAsInt( "titanFDUnlockPoints[" + FDTitan + "]" ) )
 
+	string playerUID = player.GetUID()
+	if( playerUID in file.playerSavedScore )
+	{
+		player.AddToPlayerGameStat( PGS_ASSAULT_SCORE, file.playerSavedScore[ playerUID ].savedCombatScore )
+		player.AddToPlayerGameStat( PGS_DEFENSE_SCORE, file.playerSavedScore[ playerUID ].savedSupportScore )
+		UpdatePlayerScoreboard( player )
+	}
+	
 	if( !file.isLiveFireMap )
 	{
 		thread TryDisableTitanSelectionForPlayerAfterDelay( player )
 		
-		string playerUID = player.GetUID()
 		if( playerUID in file.playerHasTitanSelectionLocked )
 		{
 			player.SetPersistentVar( "activeTitanLoadoutIndex", file.playerHasTitanSelectionLocked[ playerUID ] + 1 )
@@ -1334,6 +1338,21 @@ void function OnPlayerDisconnectedOrDestroyed( entity player )
 	
 	if( player in file.playerAwardStats ) //Clear out disconnecting players so the postcards don't show less than 4 when server has more than 4 slots
 		delete file.playerAwardStats[player]
+	
+	string playerUID = player.GetUID()
+	if( playerUID in file.playerSavedScore )
+	{
+		file.playerSavedScore[ playerUID ].savedCombatScore = player.GetPlayerGameStat( PGS_ASSAULT_SCORE )
+		file.playerSavedScore[ playerUID ].savedSupportScore = player.GetPlayerGameStat( PGS_DEFENSE_SCORE )
+	}
+	else
+	{
+		player_struct_score playerBackupScore
+		playerBackupScore.savedCombatScore = player.GetPlayerGameStat( PGS_ASSAULT_SCORE )
+		playerBackupScore.savedSupportScore = player.GetPlayerGameStat( PGS_DEFENSE_SCORE )
+	
+		file.playerSavedScore[ playerUID ] <- playerBackupScore
+	}
 	
 	foreach( entity npc in GetNPCArray() )
 	{
@@ -1488,12 +1507,15 @@ bool function useShieldBoost( entity player, array<string> args )
 		if( !IsValid( fd_harvester.particleShield ) )
 			generateShieldFX( fd_harvester )
 		
+		int boostcount = player.GetPlayerNetInt( "numHarvesterShieldBoost" )
+		boostcount--
+		
 		fd_harvester.lastDamage = Time() - GENERATOR_SHIELD_REGEN_DELAY
 		EmitSoundOnEntity( fd_harvester.harvester, "UI_TitanBattery_Pilot_Give_TitanBattery" )
 		SetGlobalNetTime( "FD_harvesterInvulTime", Time() + 5 )
 		AddPlayerScore( player, "FDShieldHarvester" )
 		MessageToTeam( TEAM_MILITIA,eEventNotifications.FD_PlayerBoostedHarvesterShield, player, player )
-		player.SetPlayerNetInt( "numHarvesterShieldBoost", player.GetPlayerNetInt( "numHarvesterShieldBoost" ) - 1 )
+		player.SetPlayerNetInt( "numHarvesterShieldBoost", boostcount )
 		if( player in file.playerAwardStats )
 			file.playerAwardStats[player]["harvesterHeals"] += 1.0
 		player.AddToPlayerGameStat( PGS_DEFENSE_SCORE, FD_SCORE_SHIELD_HARVESTER )
@@ -3032,11 +3054,7 @@ void function FD_DropshipSpawnDropship()
 		}
 	}
 	
-	wait 4
-	
-	//file.dropship.Anim_ScriptedAddGestureSequence( "dropship_close_doorR", false )
-	
-	wait 4
+	wait 8
 	
 	file.playersInDropship.clear()
 	file.playersInShip = 0 //Do it again in here to avoid dropship not appearing anymore after a while if theres too many players in a match

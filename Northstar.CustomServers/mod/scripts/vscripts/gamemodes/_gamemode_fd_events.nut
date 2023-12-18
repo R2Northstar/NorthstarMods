@@ -2783,6 +2783,7 @@ void function SpawnFDHeavyTurret( vector spawnpos, vector angles, vector ornull 
 	{
 		NPC_NoTarget( HeavyTurret )
 		HeavyTurret.SetInvulnerable()
+		HeavyTurret.SetValidHealthBarTarget( false )
 	}
 }
 
@@ -2811,13 +2812,13 @@ void function SpawnLFMapTitan_Threaded( vector spawnpos, vector angles )
 	DisableTitanRodeo( npc )
 	npc.GetTitanSoul().soul.titanLoadout.titanExecution = "execution_vanguard"
 	TakeWeaponsForArray( npc, npc.GetMainWeapons() )
-	npc.TakeOffhandWeapon( OFFHAND_ORDNANCE )
-	npc.TakeOffhandWeapon( OFFHAND_SPECIAL )
+	npc.TakeOffhandWeapon( OFFHAND_RIGHT )
+	npc.TakeOffhandWeapon( OFFHAND_LEFT )
 	npc.TakeOffhandWeapon( OFFHAND_ANTIRODEO )
 	
 	npc.GiveWeapon( "mp_titanweapon_xo16_vanguard", ["arc_rounds","rapid_reload","fd_vanguard_weapon_1","fd_vanguard_weapon_2"] )
-	npc.GiveOffhandWeapon( "mp_titanweapon_dumbfire_rockets", OFFHAND_SPECIAL )
-	npc.GiveOffhandWeapon( "mp_titanweapon_salvo_rockets", OFFHAND_ORDNANCE )
+	npc.GiveOffhandWeapon( "mp_titanweapon_dumbfire_rockets", OFFHAND_LEFT )
+	npc.GiveOffhandWeapon( "mp_titanweapon_salvo_rockets", OFFHAND_RIGHT )
 	npc.GiveOffhandWeapon( "mp_titanability_laser_trip", OFFHAND_ANTIRODEO, ["pas_ion_tripwire"] )
 	
 	SetTitanWeaponSkin( npc )
