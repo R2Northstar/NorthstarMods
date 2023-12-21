@@ -178,21 +178,21 @@ void function GameStateEnter_PickLoadout()
 
 void function GameStateEnter_PickLoadout_Threaded()
 {
-    float pickloadoutLength = 20.0 // may need tweaking
-    SetServerVar( "minPickLoadOutTime", Time() + pickloadoutLength )
+	float pickloadoutLength = 20.0 // may need tweaking
+	SetServerVar( "minPickLoadOutTime", Time() + pickloadoutLength )
 
-    // titan selection menu can change minPickLoadOutTime so we need to wait manually until we hit the time
-    while ( Time() < GetServerVar( "minPickLoadOutTime" ) )
-        WaitFrame()
+	// titan selection menu can change minPickLoadOutTime so we need to wait manually until we hit the time
+	while ( Time() < GetServerVar( "minPickLoadOutTime" ) )
+		WaitFrame()
 
-    //added by Khalmee for the sake of fixing LTS spectator mode
-    foreach(player in GetPlayerArray()){
-        if(IsPrivateMatchSpectator(player))
-        InitialisePrivateMatchSpectatorPlayer( player )
-    }
-    //end of Khalmee changes
+	//added by Khalmee for the sake of fixing LTS spectator mode
+	foreach(player in GetPlayerArray()){
+		if(IsPrivateMatchSpectator(player))
+		InitialisePrivateMatchSpectatorPlayer( player )
+	}
+	//end of Khalmee changes
 
-    SetGameState( eGameState.Prematch )
+	SetGameState( eGameState.Prematch )
 }
 
 // eGameState.Prematch
