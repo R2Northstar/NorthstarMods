@@ -14,7 +14,7 @@ Branch made to expand Frontier Defense feature set by adding back cut content wh
 - Nuke Titans will never melee and always spawn with shields regardless difficulty set as they also do in vanilla
 - Arc Titans have an option to use the Arc Cannon instead of Leadwall, making them similar to what they were in Titanfall 1
 - Harvester have proper damage filters, meaning certain enemies will hit it harder, again similar to vanilla behavior
-- Forwardbase Kodai, Homestead, Rise, Angel City and Drydock have waves based off vanilla spawns, all other maps utilizes custom waves
+- All maps from vanilla have waves based on their respective spawns, all other maps utilizes custom waves
 - During wave break time, players do not respawn on dropship, neither new connecting players, they will deploy via Drop Pod instead
 - Reapers will deploy ticks, despite them still not being able to parkour through the map, they still pose a high threat
 - Like in vanilla, Titan selection menu now only appears on match start, and players can still select another Titan during the entirety of Wave 1, after that, Titans selection locks and Wave Restarts does not bring the Titan selection menu anymore
