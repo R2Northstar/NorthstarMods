@@ -185,6 +185,12 @@ void function GameStateEnter_PickLoadout_Threaded()
 	while ( Time() < GetServerVar( "minPickLoadOutTime" ) )
 		WaitFrame()
 	
+	foreach ( player in GetPlayerArray() )
+	{
+		if ( IsPrivateMatchSpectator( player ) )
+			InitialisePrivateMatchSpectatorPlayer( player )
+	}
+	
 	SetGameState( eGameState.Prematch )
 }
 
@@ -392,7 +398,7 @@ void function GameStateEnter_WinnerDetermined_Threaded()
 		}
 		else if ( file.switchSidesBased && !file.hasSwitchedSides && highestScore >= ( roundScoreLimit.tofloat() / 2.0 ) ) // round up
 			SetGameState( eGameState.SwitchingSides ) // note: switchingsides will handle setting to pickloadout and prematch by itself
-		else if ( file.usePickLoadoutScreen )
+		else if ( file.usePickLoadoutScreen && GetCurrentPlaylistVarInt( "pick_loadout_every_round", 1 ) ) //Playlist var needs to be enabled as well
 			SetGameState( eGameState.PickLoadout )
 		else
 			SetGameState( eGameState.Prematch )
@@ -494,7 +500,7 @@ void function GameStateEnter_SwitchingSides_Threaded()
 	file.roundWinningKillReplayAttacker = null // reset this after replay
 	file.roundWinningKillReplayInflictorEHandle = -1
 	
-	if ( file.usePickLoadoutScreen )
+	if ( file.usePickLoadoutScreen && GetCurrentPlaylistVarInt( "pick_loadout_every_round", 1 ) ) //Playlist var needs to be enabled too
 		SetGameState( eGameState.PickLoadout )
 	else
 		SetGameState ( eGameState.Prematch )
@@ -830,27 +836,27 @@ void function SetWinner( int team, string winningReason = "", string losingReaso
 	
 	file.gameWonThisFrame = true
 	thread UpdateGameWonThisFrameNextFrame()
+	if ( winningReason == "" )
 	
-	if ( winningReason.len() == 0 )
 		file.announceRoundWinnerWinningSubstr = 0
 	else
 		file.announceRoundWinnerWinningSubstr = GetStringID( winningReason )
-	
-	if ( losingReason.len() == 0 )
+		
+	if ( losingReason == "" )
 		file.announceRoundWinnerLosingSubstr = 0
 	else
 		file.announceRoundWinnerLosingSubstr = GetStringID( losingReason )
 	
+	if ( team != TEAM_UNASSIGNED )
+	{
+		GameRules_SetTeamScore( team, GameRules_GetTeamScore( team ) + 1 )
+		GameRules_SetTeamScore2( team, GameRules_GetTeamScore2( team ) + 1 )
+	}
+	
 	if ( GamePlayingOrSuddenDeath() )
 	{
 		if ( IsRoundBased() )
-		{	
-			if ( team != TEAM_UNASSIGNED )
-			{
-				GameRules_SetTeamScore( team, GameRules_GetTeamScore( team ) + 1 )
-				GameRules_SetTeamScore2( team, GameRules_GetTeamScore2( team ) + 1 )
-			}
-			
+		{
 			SetGameState( eGameState.WinnerDetermined )
 			ScoreEvent_RoundComplete( team )
 		}

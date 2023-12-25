@@ -2,6 +2,7 @@ global function SpawnHarvester
 global function generateBeamFX
 global function sparksBeamFX
 global function generateShieldFX
+global function playHarvesterDestructionFX
 global function GetHarvesterBeamTriLerpColor
 
 global const HARVESTER_ANIM_IDLE			= "generator_idle"
@@ -28,7 +29,7 @@ global const HARVESTER_SND_KLAXON			= "coop_generator_underattack_alarm"
 
 const HARVESTER_BEAM_HEALTHY				= < 80, 180, 255 >
 const HARVESTER_BEAM_MEDIUM					= < 255, 192, 96 >
-const HARVESTER_BEAM_CRITICAL				= < 255, 64, 16 >
+const HARVESTER_BEAM_CRITICAL				= < 255, 96, 32 >
 
 global struct HarvesterStruct {
 	entity harvester
@@ -36,6 +37,7 @@ global struct HarvesterStruct {
 	entity particleSparks
 	entity particleShield
 	entity rings
+	array <entity> particleFXArray
 	float lastDamage
 	bool shieldBoost
 	bool harvesterShieldDown
@@ -104,6 +106,22 @@ HarvesterStruct function generateShieldFX( HarvesterStruct harvester )
 	entity Harvester_Shield = StartParticleEffectOnEntity_ReturnEntity( harvester.harvester, GetParticleSystemIndex( FX_HARVESTER_OVERSHIELD ), FX_PATTACH_ABSORIGIN_FOLLOW, 0 )
 	EffectSetControlPointVector( Harvester_Shield, 1, GetShieldTriLerpColor( 0.0 ) )
 	harvester.particleShield = Harvester_Shield
+	Harvester_Shield.DisableHibernation()
+	return harvester
+}
+
+HarvesterStruct function playHarvesterDestructionFX( HarvesterStruct harvester )
+{
+	foreach( entity pFX in harvester.particleFXArray )
+	{
+		if( IsValid( pFX ) )
+			pFX.Destroy()
+	}
+	
+	harvester.particleFXArray.clear()
+	entity harvExpFX = PlayFX( $"P_harvester_beam_end", harvester.harvester.GetOrigin() )
+	harvExpFX.DisableHibernation()
+	harvExpFX.Destroy()
 	return harvester
 }
 

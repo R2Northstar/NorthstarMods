@@ -603,14 +603,14 @@ void function RegisterCustomFDContentOGSetup()
 		}
 	}
 			
-	AddStationaryAIPosition(< -1622, -2052, -128 >, eStationaryAIPositionTypes.LAUNCHER_REAPER)
+	AddStationaryAIPosition(< -2683, -3385, -127 >, eStationaryAIPositionTypes.LAUNCHER_REAPER)
 	AddStationaryAIPosition(< -467, -1348, 64 >, eStationaryAIPositionTypes.LAUNCHER_REAPER)
 	AddStationaryAIPosition(< 1578, 689, 143 >, eStationaryAIPositionTypes.LAUNCHER_REAPER)
 	AddStationaryAIPosition(< 820, -1217, 40 >, eStationaryAIPositionTypes.LAUNCHER_REAPER)
-	AddStationaryAIPosition(< -1345, -3101, -191 >, eStationaryAIPositionTypes.LAUNCHER_REAPER)
-	AddStationaryAIPosition(< -959, -510, -143 >, eStationaryAIPositionTypes.LAUNCHER_REAPER)
+	AddStationaryAIPosition(< 490, -3168, -128 >, eStationaryAIPositionTypes.LAUNCHER_REAPER)
+	AddStationaryAIPosition(< -959, 0, -143 >, eStationaryAIPositionTypes.LAUNCHER_REAPER)
 	AddStationaryAIPosition(< -4150, -396, -127 >, eStationaryAIPositionTypes.LAUNCHER_REAPER)
-	AddStationaryAIPosition(< -552, -434, -31 >, eStationaryAIPositionTypes.LAUNCHER_REAPER)
+	AddStationaryAIPosition(< 1758, 22, -257 >, eStationaryAIPositionTypes.LAUNCHER_REAPER)
 	
 	AddStationaryAIPosition(< -2096, -185, -128 >, eStationaryAIPositionTypes.MORTAR_SPECTRE)
 	AddStationaryAIPosition(< 2291, 625, 64 >, eStationaryAIPositionTypes.MORTAR_SPECTRE)

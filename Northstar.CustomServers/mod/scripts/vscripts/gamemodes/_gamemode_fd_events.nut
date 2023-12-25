@@ -1045,8 +1045,9 @@ void function spawnSmoke( SmokeEvent smokeEvent, SpawnEvent spawnEvent, FlowCont
 	mover.SetOrigin( skypos )
 	mover.SetAngles( < 90, 0, 0 > )
 	DispatchSpawn( smokenade )
-	PlayLoopFXOnEntity( $"weapon_kraber_projectile", smokenade, "exhaust" )
-	PlayLoopFXOnEntity( $"Rocket_Smoke_Large", smokenade, "exhaust" )
+	PlayLoopFXOnEntity( $"P_SmokeScreen_FD_trail", smokenade, "exhaust" )
+	//PlayLoopFXOnEntity( $"weapon_kraber_projectile", smokenade, "exhaust" )
+	//PlayLoopFXOnEntity( $"Rocket_Smoke_Large", smokenade, "exhaust" )
 	mover.NonPhysicsMoveTo( groundpos, 1.5, 0, 0 )
 	wait 1.5
 	Smokescreen( smokescreen )
@@ -1079,6 +1080,10 @@ void function spawnDrones( SmokeEvent smokeEvent, SpawnEvent spawnEvent, FlowCon
 		AddMinimapForHumans( guy )
 		spawnedNPCs.append( guy )
 		thread droneNav_thread( guy, spawnEvent.route, 0, 160, spawnEvent.shouldLoop )
+		
+		array<entity> primaryWeapons = guy.GetMainWeapons()
+		entity weapon = primaryWeapons[0]
+		weapon.AddMod( "fd_damage" )
 	}
 }
 
@@ -1226,6 +1231,11 @@ void function spawnSuperSpectre( SmokeEvent smokeEvent, SpawnEvent spawnEvent, F
 	thread SuperSpectre_WarpFall( npc )
 	npc.WaitSignal( "WarpfallComplete" )
 	//npc.SetCapabilityFlag( bits_CAP_MOVE_TRAVERSE, true )
+	
+	array<entity> primaryWeapons = npc.GetMainWeapons()
+	entity weapon = primaryWeapons[0]
+	weapon.AddMod( "aggressive_ai_fd" )
+	
 	thread singleNav_thread( npc, spawnEvent.route )
 	if( GetMapName().find( "mp_lf_" ) == null )
 	{
@@ -1279,6 +1289,11 @@ void function spawnSuperSpectreWithMinion( SmokeEvent smokeEvent, SpawnEvent spa
 	thread SuperSpectre_WarpFall( npc )
 	npc.WaitSignal( "WarpfallComplete" )
 	//npc.SetCapabilityFlag( bits_CAP_MOVE_TRAVERSE, true )
+	
+	array<entity> primaryWeapons = npc.GetMainWeapons()
+	entity weapon = primaryWeapons[0]
+	weapon.AddMod( "aggressive_ai_fd" )
+	
 	thread ReaperMinionLauncherThink( npc )
 
 }
@@ -1716,6 +1731,7 @@ void function SpawnIonTitan( SmokeEvent smokeEvent, SpawnEvent spawnEvent, FlowC
 	AddMinimapForTitans( npc )
 	npc.WaitSignal( "TitanHotDropComplete" )
 	npc.GetTitanSoul().SetTitanSoulNetBool( "showOverheadIcon", true )
+	GiveShieldByDifficulty( npc )
 	thread singleNav_thread( npc, spawnEvent.route )
 }
 
@@ -1772,6 +1788,7 @@ void function SpawnScorchTitan( SmokeEvent smokeEvent, SpawnEvent spawnEvent, Fl
 	AddMinimapForTitans( npc )
 	npc.WaitSignal( "TitanHotDropComplete" )
 	npc.GetTitanSoul().SetTitanSoulNetBool( "showOverheadIcon", true )
+	GiveShieldByDifficulty( npc )
 	thread singleNav_thread( npc, spawnEvent.route )
 }
 
@@ -1825,6 +1842,7 @@ void function SpawnRoninTitan( SmokeEvent smokeEvent, SpawnEvent spawnEvent, Flo
 	AddMinimapForTitans( npc )
 	npc.WaitSignal( "TitanHotDropComplete" )
 	npc.GetTitanSoul().SetTitanSoulNetBool( "showOverheadIcon", true )
+	GiveShieldByDifficulty( npc )
 	thread singleNav_thread( npc, spawnEvent.route )
 }
 
@@ -1883,6 +1901,7 @@ void function SpawnToneTitan( SmokeEvent smokeEvent, SpawnEvent spawnEvent, Flow
 	AddMinimapForTitans( npc )
 	npc.WaitSignal( "TitanHotDropComplete" )
 	npc.GetTitanSoul().SetTitanSoulNetBool( "showOverheadIcon", true )
+	GiveShieldByDifficulty( npc )
 	thread singleNav_thread( npc, spawnEvent.route )
 }
 
@@ -1945,6 +1964,7 @@ void function SpawnLegionTitan( SmokeEvent smokeEvent, SpawnEvent spawnEvent, Fl
 	AddMinimapForTitans( npc )
 	npc.WaitSignal( "TitanHotDropComplete" )
 	npc.GetTitanSoul().SetTitanSoulNetBool( "showOverheadIcon", true )
+	GiveShieldByDifficulty( npc )
 	thread singleNav_thread( npc, spawnEvent.route )
 }
 
@@ -2008,6 +2028,7 @@ void function SpawnMonarchTitan( SmokeEvent smokeEvent, SpawnEvent spawnEvent, F
 	AddMinimapForTitans( npc )
 	npc.WaitSignal( "TitanHotDropComplete" )
 	npc.GetTitanSoul().SetTitanSoulNetBool( "showOverheadIcon", true )
+	GiveShieldByDifficulty( npc )
 	thread singleNav_thread( npc, spawnEvent.route )
 }
 
@@ -2039,6 +2060,7 @@ void function spawnNukeTitan( SmokeEvent smokeEvent, SpawnEvent spawnEvent, Flow
 	AddMinimapForTitans( npc )
 	npc.WaitSignal( "TitanHotDropComplete" )
 	npc.GetTitanSoul().SetTitanSoulNetBool( "showOverheadIcon", true )
+	GiveShieldByDifficulty( npc, true )
 	thread singleNav_thread( npc, spawnEvent.route )
 	thread NukeTitanThink( npc, fd_harvester.harvester )
 }
@@ -2068,6 +2090,7 @@ void function spawnMortarTitan( SmokeEvent smokeEvent, SpawnEvent spawnEvent, Fl
 	AddMinimapForTitans( npc )
 	npc.WaitSignal( "TitanHotDropComplete" )
 	npc.GetTitanSoul().SetTitanSoulNetBool( "showOverheadIcon", true )
+	GiveShieldByDifficulty( npc )
 	thread MortarTitanThink( npc, fd_harvester.harvester )
 }
 
@@ -2135,6 +2158,7 @@ void function spawnSniperTitan( SmokeEvent smokeEvent, SpawnEvent spawnEvent, Fl
 	AddMinimapForTitans( npc )
 	npc.WaitSignal( "TitanHotDropComplete" )
 	npc.GetTitanSoul().SetTitanSoulNetBool( "showOverheadIcon", true )
+	GiveShieldByDifficulty( npc )
 	thread SniperTitanThink( npc, fd_harvester.harvester )
 }
 
@@ -2198,6 +2222,7 @@ void function SpawnToneSniperTitan( SmokeEvent smokeEvent, SpawnEvent spawnEvent
 	AddMinimapForTitans( npc )
 	npc.WaitSignal( "TitanHotDropComplete" )
 	npc.GetTitanSoul().SetTitanSoulNetBool( "showOverheadIcon", true )
+	GiveShieldByDifficulty( npc )
 	thread SniperTitanThink( npc, fd_harvester.harvester )
 }
 
@@ -2506,25 +2531,22 @@ void function SetupGruntBehaviorFlags( entity npc )
 {
 	Assert( IsValid( npc ) && IsGrunt( npc ), "Entity is not a Grunt: " + npc )
 	
+	npc.EnableNPCFlag( NPC_ALLOW_HAND_SIGNALS )
 	switch ( difficultyLevel )
 	{
 		case eFDDifficultyLevel.EASY:
 		case eFDDifficultyLevel.NORMAL:
 			if( GetMapName().find( "mp_lf_" ) != null )
-			{
-				npc.EnableNPCFlag( NPC_ALLOW_HAND_SIGNALS )
 				npc.DisableNPCFlag( NPC_ALLOW_INVESTIGATE | NPC_ALLOW_PATROL | NPC_ALLOW_FLEE | NPC_USE_SHOOTING_COVER )
-			}
 			else
 			{
-				npc.EnableNPCFlag( NPC_ALLOW_HAND_SIGNALS | NPC_ALLOW_FLEE | NPC_USE_SHOOTING_COVER )
+				npc.EnableNPCFlag( NPC_ALLOW_FLEE | NPC_USE_SHOOTING_COVER )
 				npc.DisableNPCFlag( NPC_ALLOW_INVESTIGATE | NPC_ALLOW_PATROL )
 			}
 			break
 		case eFDDifficultyLevel.HARD:
 		case eFDDifficultyLevel.MASTER:
 		case eFDDifficultyLevel.INSANE:
-			npc.EnableNPCFlag( NPC_ALLOW_HAND_SIGNALS )
 			npc.DisableNPCFlag( NPC_ALLOW_INVESTIGATE | NPC_ALLOW_PATROL | NPC_ALLOW_FLEE | NPC_USE_SHOOTING_COVER )
 			break
 	}
@@ -2537,7 +2559,7 @@ void function GruntTargetsTitan( entity npc )
 	OnEnemyChanged_MinionSwitchToHeavyArmorWeapon( npc )
 	
 	entity enemy = npc.GetEnemy()
-	if( enemy != null )
+	if( IsValid( enemy ) )
 	{
 		switch ( difficultyLevel )
 		{
@@ -2557,12 +2579,22 @@ void function GruntTargetsTitan( entity npc )
 	}
 }
 
+void function GiveShieldByDifficulty( entity titan, bool forceGive = false )
+{
+	Assert( IsValid( titan ) && titan.IsNPC() && titan.IsTitan(), "Calling GiveShieldByDifficulty in a Non-Titan NPC: " + titan )
+	
+	if( GetCurrentPlaylistVarInt( "fd_pro_titan_shields", 0 ) && titan.IsTitan() || forceGive )
+	{
+		entity soul = titan.GetTitanSoul()
+		if( IsValid( soul ) )
+			soul.SetShieldHealth( soul.GetShieldHealthMax() )
+	}
+}
+
 void function WinWave()
 {
 	foreach( WaveEvent e in waveEvents[GetGlobalNetInt( "FD_currentWave" )] )
-	{
 		e.timesExecuted = e.executeOnThisCall
-	}
 }
 
 bool function ShouldSkipEventForDifficulty( WaveEvent event )
@@ -2762,8 +2794,9 @@ void function SpawnFDHeavyTurret( vector spawnpos, vector angles, vector ornull 
 	DispatchSpawn( HeavyTurret )
 	HeavyTurret.ai.buddhaMode = true
 	HeavyTurret.SetMaxHealth( 10000 )
-	HeavyTurret.SetHealth( 10000 )
-	HeavyTurret.SetShieldHealth( 2500 )
+	HeavyTurret.SetHealth( HeavyTurret.GetMaxHealth() )
+	HeavyTurret.SetShieldHealthMax( 2500 )
+	HeavyTurret.SetShieldHealth( HeavyTurret.GetShieldHealthMax() )
 	HeavyTurret.kv.AccuracyMultiplier = 100.0
 	HeavyTurret.kv.reactChance = 100
 	HeavyTurret.kv.WeaponProficiency = eWeaponProficiency.PERFECT
@@ -2891,12 +2924,12 @@ void function LFTitanShieldAndHealthRegenThink( entity soul )
 	soul.EndSignal( "OnDeath" )
 
 	soul.SetShieldHealthMax( 3750 )
-	soul.SetShieldHealth( 3750 )
 
 	int lastShieldHealth = soul.GetShieldHealth()
 	bool shieldHealthSound = false
 	bool fullhp = true
 	int maxShield = soul.GetShieldHealthMax()
+	soul.SetShieldHealth( maxShield )
 	float lastTime = Time()
 
 	while ( true )

@@ -53,7 +53,7 @@ void function MortarSpectreSquadThink( array< entity > spectres, entity harveste
 	squadMarker.Minimap_SetAlignUpright( true )
 	squadMarker.Minimap_SetClampToEdge( true )
 	squadMarker.Minimap_SetHeightTracking( true )
-	squadMarker.Minimap_SetZOrder( MINIMAP_Z_OBJECT )
+	squadMarker.Minimap_SetZOrder( MINIMAP_Z_NPC + 5 )
 	squadMarker.Minimap_SetCustomState( eMinimapObject_prop_script.FD_MORTAR_POSITION )
 	squadMarker.SetScriptName( "mortarPosition" )
 	squadMarker.DisableHibernation()
@@ -108,12 +108,15 @@ void function MortarSpectreSquadThink( array< entity > spectres, entity harveste
 		if ( !IsValid( squadMarker ) )
 			break
 		
-		float timeRemainingFrac = ( setupEndTime - Time() ) / GetCurrentPlaylistVarFloat( "fd_mortar_spectre_setup_time", 5 )
-		squadMarker.SetShieldHealth( ( 1 - timeRemainingFrac ) * MORTAR_SPECTRE_TRACKER_SHIELD_MAX )
+		if( FD_GetDifficultyLevel() != eFDDifficultyLevel.INSANE ) //Skip Icon for Insane as it hides all icons from everyone, including this
+		{
+			float timeRemainingFrac = ( setupEndTime - Time() ) / GetCurrentPlaylistVarFloat( "fd_mortar_spectre_setup_time", 5 )
+			squadMarker.SetShieldHealth( ( 1 - timeRemainingFrac ) * MORTAR_SPECTRE_TRACKER_SHIELD_MAX )
+		}
 		WaitFrame()
 	}
 	
-	if ( IsValid( squadMarker ) )
+	if ( IsValid( squadMarker ) && FD_GetDifficultyLevel() != eFDDifficultyLevel.INSANE )
 		squadMarker.SetShieldHealth( MORTAR_SPECTRE_TRACKER_SHIELD_MAX ) //Set to Max Shield so it does the flare effect that the Spectres are ready to siege
 	
 	ArrayRemoveDead( spectres ) //Remove again due to delay
@@ -150,13 +153,11 @@ void function MortarSpectreMoveToMortarPosition( entity spectre, entity signaler
 	spectre.EnableNPCFlag( NPC_NO_WEAPON_DROP | NPC_NEW_ENEMY_FROM_SOUND | NPC_TEAM_SPOTTED_ENEMY )
 	spectre.DisableNPCFlag( NPC_ALLOW_INVESTIGATE | NPC_USE_SHOOTING_COVER | NPC_ALLOW_PATROL | NPC_ALLOW_FLEE )
 	
-	table result = spectre.WaitSignal( "OnFinishedAssault" )
-	if ( result.signal == "OnFinishedAssault" )
-	{
-		spectre.Minimap_Hide( TEAM_IMC, null )
-		spectre.Minimap_Hide( TEAM_MILITIA, null )
-		signaler.Signal( "BeginMortarAttack" )
-	}
+	spectre.WaitSignal( "OnFinishedAssault" )
+	
+	//spectre.Minimap_Hide( TEAM_IMC, null )
+	//spectre.Minimap_Hide( TEAM_MILITIA, null )
+	signaler.Signal( "BeginMortarAttack" )
 }
 
 void function MortarSpectreSquadDeathThink( array<entity> spectres, entity signaler, StationaryAIPosition mortarPosition )
@@ -253,7 +254,7 @@ void function MortarSpectreHarvesterSiege( entity npc ) //Swap between Archer or
 			npc.SetHearingSensitivity( 0 )
 		}
 		
-		if( IsValid( closestEnemy ) && IsAlive( closestEnemy ) && Distance( closestEnemy.GetOrigin(), npc.GetOrigin() ) < MORTAR_SPECTRE_SIGHT_DISTANCE )
+		if( IsValid( closestEnemy ) && IsAlive( closestEnemy ) && npc.CanSee( closestEnemy ) && Distance( closestEnemy.GetOrigin(), npc.GetOrigin() ) < MORTAR_SPECTRE_SIGHT_DISTANCE )
 		{
 			if( enemy == npc.ai.carryBarrel )
 			{

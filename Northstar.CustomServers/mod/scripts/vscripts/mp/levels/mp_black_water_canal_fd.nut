@@ -1,9 +1,9 @@
 global function initFrontierDefenseData
 void function initFrontierDefenseData()
 {
-    shopPosition = < 3314, -846, -256>
+    shopPosition = < 3314, -846, -256 >
 	shopAngles = <0, -45, 0>
-	FD_spawnPosition = < 1664.43, 404.82, 0.0 >
+	FD_spawnPosition = < 1664, 404, 0 >
 	FD_spawnAngles = < 0, -90, 0 >
 	FD_groundspawnPosition = < 1869, -938, -63 >
 	FD_groundspawnAngles = < 0, 90, 0 >
@@ -16,7 +16,7 @@ void function initFrontierDefenseData()
 	waveAnnouncement.append("fd_waveTypeTitanReg")
 	waveAnnouncement.append("fd_introMedium")
 	waveAnnouncement.append("fd_waveComboNukeMortar")
-	waveAnnouncement.append("fd_waveComboArcNuke")
+	waveAnnouncement.append("fd_introHard")
 	
 	AddOutOfBoundsTriggerWithParams( < 1935, -752, 1382 >, 160, 512 ) //Add OOB because some "smart" fellas wont stop climbing that water tank tower to snipe with Charge Rifle/Archer and do nothing else
 	AddFDCustomProp( $"models/containers/container_medium_tanks_blue.mdl", < 184, 120, -8 >, < 0, 0, 0 > )

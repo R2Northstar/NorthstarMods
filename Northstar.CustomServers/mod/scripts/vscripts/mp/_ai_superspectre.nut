@@ -406,7 +406,7 @@ void function ReaperMinionLauncherThink( entity reaper )
 		if ( Distance( reaper.GetOrigin(), launchPos.origin ) > 96 )
 		{
 			//printt( reaper," ASSAULT:", launchPos.origin, Distance( reaper.GetOrigin(), launchPos.origin ) )
-			reaper.AssaultPoint( launchPos.origin )
+			reaper.AssaultPointClamped( launchPos.origin )
 			table signalData = WaitSignal( reaper, "OnFinishedAssault", "OnEnterGoalRadius", "OnFailedToPath" )
 			//printt( reaper," END ASSAULT:", launchPos.origin, signalData.signal )
 			if ( signalData.signal == "OnFailedToPath" )
@@ -436,7 +436,7 @@ void function Reaper_LaunchFragDrone_Think( entity reaper, string fragDroneSetti
 	if ( minionsToSpawn <= 0 )
 		return
 
-	array<vector> targetOrigins = GetFragDroneTargetOrigins( reaper, reaper.GetOrigin(), 200, 2000, 64, MAX_TICKS )
+	array<vector> targetOrigins = GetFragDroneTargetOrigins( reaper, reaper.GetOrigin(), 48, 200, 64, MAX_TICKS )
 
 	if ( targetOrigins.len() < minionsToSpawn )
 		return
@@ -520,7 +520,7 @@ array<vector> function GetFragDroneTargetOrigins( entity npc, vector origin, flo
 	if ( traceFrac < 1 )
 		return targetOrigins;
 
-	array< vector > randomSpots = NavMesh_RandomPositions_LargeArea( origin, HULL_HUMAN, randomCount, minRadius, maxRadius )
+	array< vector > randomSpots = NavMesh_RandomPositions( origin, HULL_HUMAN, randomCount, minRadius, maxRadius ) //_LargeArea
 
 	int numFragDrones = 0
 	foreach( spot in randomSpots )
