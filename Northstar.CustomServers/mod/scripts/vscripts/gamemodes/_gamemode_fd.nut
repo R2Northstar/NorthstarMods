@@ -36,6 +36,7 @@ struct player_struct_fd{
 struct player_struct_score{
 	int savedCombatScore
 	int savedSupportScore
+	int savedMoney
 }
 
 global HarvesterStruct& fd_harvester
@@ -81,6 +82,7 @@ struct {
 	bool easymodeSmartPistol = false
 	bool harvesterPerfectWin = true
 	bool isLiveFireMap = false
+	int moneyInBank = 0
 	
 	vector harvesterLocationForRespawn = < 0, 0, 0 >
 	
@@ -500,7 +502,18 @@ void function initNetVars()
 
 void function FD_createHarvester()
 {
-	fd_harvester = SpawnHarvester( file.harvester_info.GetOrigin(), file.harvester_info.GetAngles(), GetCurrentPlaylistVarInt( "fd_harvester_health", 25000 ), GetCurrentPlaylistVarInt( "fd_harvester_shield", 6000 ), TEAM_MILITIA )
+	if( IsValid( fd_harvester.harvester ) )
+	{
+		fd_harvester.harvester.SetHealth( GetCurrentPlaylistVarInt( "fd_harvester_health", 25000 ) )
+		fd_harvester.harvester.SetShieldHealth( GetCurrentPlaylistVarInt( "fd_harvester_shield", 6000 ) )
+		fd_harvester.harvester.ClearInvulnerable()
+		fd_harvester.rings.Anim_Play( HARVESTER_ANIM_IDLE )
+		StopSoundOnEntity( fd_harvester.harvester, HARVESTER_SND_DAMAGED )
+		StopSoundOnEntity( fd_harvester.harvester, HARVESTER_SND_UNSTABLE )
+	}
+	else
+		fd_harvester = SpawnHarvester( file.harvester_info.GetOrigin(), file.harvester_info.GetAngles(), GetCurrentPlaylistVarInt( "fd_harvester_health", 25000 ), GetCurrentPlaylistVarInt( "fd_harvester_shield", 6000 ), TEAM_MILITIA )
+	
 	SetGlobalNetEnt( "FD_activeHarvester", fd_harvester.harvester )
 	fd_harvester.harvester.Minimap_SetAlignUpright( true )
 	fd_harvester.harvester.Minimap_AlwaysShow( TEAM_IMC, null )
@@ -542,6 +555,7 @@ void function FD_createHarvester()
 			thread StratonHornetDogfightsIntense()
 	}
 	
+	UpdateTeamReserve( file.moneyInBank )
 	WaveRestart_ResetPlayersInventory() //Call it in here to not misinform players about items they had in previous wave restarts
 }
 
@@ -656,6 +670,7 @@ bool function runWave( int waveIndex, bool shouldDoBuyTime )
 	int highestScore
 	entity highestScore_player
 	SetEnemyAmountNetVars( waveIndex )
+	file.moneyInBank = GetTeamReserve()
 
 	for( int i = 0; i < 20; i++ )//Number of npc type ids
 		file.harvesterDamageSource[i] = 0
@@ -888,6 +903,9 @@ bool function runWave( int waveIndex, bool shouldDoBuyTime )
 		
 		else
 		{
+			//Reset IMC scorepoints to prevent ties and properly display winner in post-summary screen
+			GameRules_SetTeamScore( TEAM_IMC, 0 )
+			GameRules_SetTeamScore2( TEAM_IMC, 0 )
 			SetRoundBased( false )
 			SetWinner( TEAM_MILITIA, "#FD_TOTAL_VICTORY_HINT", "#FD_TOTAL_VICTORY_HINT" )
 			return true
@@ -1082,7 +1100,7 @@ bool function runWave( int waveIndex, bool shouldDoBuyTime )
 
 	print( "Waiting buy time" )
 	if( waveIndex < waveEvents.len() )
-		SetGlobalNetTime( "FD_nextWaveStartTime", Time() + GetCurrentPlaylistVarFloat( "fd_wave_buy_time", 60 ) )
+		SetGlobalNetTime( "FD_nextWaveStartTime", Time() + GetCurrentPlaylistVarFloat( "fd_wave_buy_time", 60 ) + 15.0 ) //Vanilla has built-in extra 15s
 	
 	return true
 }
@@ -1273,6 +1291,7 @@ void function GamemodeFD_InitPlayer( entity player )
 	{
 		player.AddToPlayerGameStat( PGS_ASSAULT_SCORE, file.playerSavedScore[ playerUID ].savedCombatScore )
 		player.AddToPlayerGameStat( PGS_DEFENSE_SCORE, file.playerSavedScore[ playerUID ].savedSupportScore )
+		SetMoneyForPlayer( player, file.playerSavedScore[ playerUID ].savedMoney )
 		UpdatePlayerScoreboard( player )
 	}
 	
@@ -1352,12 +1371,14 @@ void function OnPlayerDisconnectedOrDestroyed( entity player )
 	{
 		file.playerSavedScore[ playerUID ].savedCombatScore = player.GetPlayerGameStat( PGS_ASSAULT_SCORE )
 		file.playerSavedScore[ playerUID ].savedSupportScore = player.GetPlayerGameStat( PGS_DEFENSE_SCORE )
+		file.playerSavedScore[ playerUID ].savedMoney = GetPlayerMoney( player )
 	}
 	else
 	{
 		player_struct_score playerBackupScore
 		playerBackupScore.savedCombatScore = player.GetPlayerGameStat( PGS_ASSAULT_SCORE )
 		playerBackupScore.savedSupportScore = player.GetPlayerGameStat( PGS_DEFENSE_SCORE )
+		playerBackupScore.savedMoney = GetPlayerMoney( player )
 	
 		file.playerSavedScore[ playerUID ] <- playerBackupScore
 	}
@@ -2363,10 +2384,10 @@ void function OnTickSpawn( entity tick )
 void function TickSpawnThreaded( entity tick )
 {
 	WaitFrame()
-	if( GetGameState() != eGameState.Playing || !IsHarvesterAlive( fd_harvester.harvester ) || tick.GetParent() ) //Parented Ticks are Drop Pod ones, and those are handled by the function there itself
+	if( GetGameState() != eGameState.Playing || tick.GetParent() ) //Parented Ticks are Drop Pod ones, and those are handled by the function there itself
 		return
 
-	else if ( GetGlobalNetInt( "FD_waveState" ) == WAVE_STATE_IN_PROGRESS )
+	else if ( GetGlobalNetInt( "FD_waveState" ) == WAVE_STATE_IN_PROGRESS && IsHarvesterAlive( fd_harvester.harvester ) )
 	{
 		tick.kv.alwaysalert = 1
 		tick.Minimap_SetAlignUpright( true )
@@ -3704,8 +3725,10 @@ void function FD_WaveCleanup()
 			npc.Destroy()
 	}
 	
+	/*
 	if( IsValid( fd_harvester.harvester ) )
 		fd_harvester.harvester.Destroy() //Destroy harvester after match over
+	*/
 }
 
 int function getHintForTypeId( int typeId )
