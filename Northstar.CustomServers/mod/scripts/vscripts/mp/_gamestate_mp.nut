@@ -185,12 +185,11 @@ void function GameStateEnter_PickLoadout_Threaded()
 	while ( Time() < GetServerVar( "minPickLoadOutTime" ) )
 		WaitFrame()
 	
-	//added by Khalmee for the sake of fixing LTS spectator mode
+	// Fixes LTS spectator mode (fix by Khalmee, see #501 for more info)
 	foreach ( player in GetPlayerArray() ){
 		if ( IsPrivateMatchSpectator( player ) )
 			InitialisePrivateMatchSpectatorPlayer( player )
 	}
-	//end of Khalmee changes
 
 	SetGameState( eGameState.Prematch )
 }
