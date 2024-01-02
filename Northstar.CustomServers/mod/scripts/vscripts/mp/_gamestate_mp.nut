@@ -195,6 +195,7 @@ void function GameStateEnter_PickLoadout_Threaded()
 	SetGameState( eGameState.Prematch )
 }
 
+
 // eGameState.Prematch
 void function GameStateEnter_Prematch()
 {	
