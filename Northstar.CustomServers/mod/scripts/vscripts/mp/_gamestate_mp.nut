@@ -188,7 +188,7 @@ void function GameStateEnter_PickLoadout_Threaded()
 	//added by Khalmee for the sake of fixing LTS spectator mode
 	foreach ( player in GetPlayerArray() ){
 		if ( IsPrivateMatchSpectator( player ) )
-		InitialisePrivateMatchSpectatorPlayer( player )
+			InitialisePrivateMatchSpectatorPlayer( player )
 	}
 	//end of Khalmee changes
 
