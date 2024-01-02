@@ -184,7 +184,7 @@ void function GameStateEnter_PickLoadout_Threaded()
 	// titan selection menu can change minPickLoadOutTime so we need to wait manually until we hit the time
 	while ( Time() < GetServerVar( "minPickLoadOutTime" ) )
 		WaitFrame()
-
+	
 	//added by Khalmee for the sake of fixing LTS spectator mode
 	foreach ( player in GetPlayerArray() ){
 		if ( IsPrivateMatchSpectator( player ) )
