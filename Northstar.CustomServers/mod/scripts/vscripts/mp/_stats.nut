@@ -931,6 +931,9 @@ void function HandleDistanceAndTimeStats_Threaded()
 		// track distance stats
 		foreach ( entity player in GetPlayerArray() )
 		{
+			if ( !IsValid( player ) )
+				continue
+				
 			if ( player.p.lastPosForDistanceStatValid )
 			{
 				// not 100% sure on using Distance2D over Distance tbh
@@ -1035,7 +1038,10 @@ void function SaveStatsPeriodically_Threaded()
 	while( true )
 	{
 		foreach( entity player in GetPlayerArray() )
-			Stats_SaveAllStats( player )
+		{
+			if ( IsValid( player ) )
+				Stats_SaveAllStats( player )
+		}
 		wait 5
 	}
 }
