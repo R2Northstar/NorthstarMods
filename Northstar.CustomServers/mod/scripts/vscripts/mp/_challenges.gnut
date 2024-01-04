@@ -2,7 +2,6 @@ global function InitChallenges
 global function SetPlayerChallengeEvacState 					//Hooked in _evac.gnut
 global function SetPlayerChallengeMatchWon 						//Hooked in _score.nut
 global function SetPlayerChallengeMatchComplete					//Hooked in _score.nut
-global function SetPlayerChallengeSquadLeader					//Hooked in _gamestate_mp.nut
 global function SetPlayerChallengeMeritScore					//Up to gamemodes to use this directly if needed
 global function IncrementPlayerChallengeTitanLeveledUp			//Hooked in titan_xp.gnut
 global function IncrementPlayerChallengeWeaponLeveledUp			//Hooked in weapon_xp.gnut
@@ -91,8 +90,14 @@ void function RemovePlayerFromChallengePool( entity player )
 
 void function RegisterChallenges_OnMatchEnd()
 {
+	//30% Chance to trigger akin to vanilla, apply always since all players have paid cosmetics unlocked
+	bool eliteWarpaintRNG = ( RandomInt( 100 ) <= 30 ) ? true : false
+	
 	foreach( player in GetPlayerArray() )
 	{
+		if( eliteWarpaintRNG )
+			SetPlayerChallengeSquadLeader( player )
+		
 		if( ShouldAwardHappyHourBonus( player ) )
 		{
 			AddPlayerScore( player, "HappyHourBonus" )

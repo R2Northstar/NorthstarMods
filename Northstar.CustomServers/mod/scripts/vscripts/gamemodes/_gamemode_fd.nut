@@ -36,7 +36,6 @@ struct player_struct_fd{
 struct player_struct_score{
 	int savedCombatScore
 	int savedSupportScore
-	int savedMoney
 }
 
 global HarvesterStruct& fd_harvester
@@ -1291,7 +1290,6 @@ void function GamemodeFD_InitPlayer( entity player )
 	{
 		player.AddToPlayerGameStat( PGS_ASSAULT_SCORE, file.playerSavedScore[ playerUID ].savedCombatScore )
 		player.AddToPlayerGameStat( PGS_DEFENSE_SCORE, file.playerSavedScore[ playerUID ].savedSupportScore )
-		SetMoneyForPlayer( player, file.playerSavedScore[ playerUID ].savedMoney )
 		UpdatePlayerScoreboard( player )
 	}
 	
@@ -1371,14 +1369,12 @@ void function OnPlayerDisconnectedOrDestroyed( entity player )
 	{
 		file.playerSavedScore[ playerUID ].savedCombatScore = player.GetPlayerGameStat( PGS_ASSAULT_SCORE )
 		file.playerSavedScore[ playerUID ].savedSupportScore = player.GetPlayerGameStat( PGS_DEFENSE_SCORE )
-		file.playerSavedScore[ playerUID ].savedMoney = GetPlayerMoney( player )
 	}
 	else
 	{
 		player_struct_score playerBackupScore
 		playerBackupScore.savedCombatScore = player.GetPlayerGameStat( PGS_ASSAULT_SCORE )
 		playerBackupScore.savedSupportScore = player.GetPlayerGameStat( PGS_DEFENSE_SCORE )
-		playerBackupScore.savedMoney = GetPlayerMoney( player )
 	
 		file.playerSavedScore[ playerUID ] <- playerBackupScore
 	}

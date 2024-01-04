@@ -89,12 +89,13 @@ global struct WaveEvent{
 
 global enum eFDSD //Shortened from eFDSpawn_Difficulty to not make scripts too horrible to read
 {
-	ALL		= 1 << 0,
-	EASY	= 1 << 1,
-	NORMAL	= 1 << 2,
-	HARD	= 1 << 3,
-	MASTER	= 1 << 4,
-	INSANE	= 1 << 5
+	ALL			= 1 << 0,
+	EASY		= 1 << 1,
+	NORMAL		= 1 << 2,
+	HARD		= 1 << 3,
+	MASTER		= 1 << 4,
+	INSANE		= 1 << 5,
+	EXCLUSIVE	= 1 << 6
 }
 
 global enum FD_IncomingWarnings
@@ -269,7 +270,7 @@ void function runEvents( int firstExecuteIndex )
 				currentEvent.eventFunction( currentEvent.smokeEvent, currentEvent.spawnEvent, currentEvent.flowControlEvent, currentEvent.soundEvent )
 		}
 		
-		if( currentEvent.nextEventIndex == 0 || currentEvent.nextEventIndex > waveEvents[GetGlobalNetInt( "FD_currentWave" )].len() )
+		if( currentEvent.nextEventIndex == 0 || currentEvent.nextEventIndex >= waveEvents[GetGlobalNetInt( "FD_currentWave" )].len() )
 			return
 		
 		currentEvent = waveEvents[GetGlobalNetInt( "FD_currentWave" )][currentEvent.nextEventIndex]
@@ -2605,19 +2606,20 @@ bool function ShouldSkipEventForDifficulty( WaveEvent event )
 	bool hardSpawn = ( event.spawnInDifficulty & eFDSD.HARD ) ? true : false
 	bool masterSpawn = ( event.spawnInDifficulty & eFDSD.MASTER ) ? true : false
 	bool insaneSpawn = ( event.spawnInDifficulty & eFDSD.INSANE ) ? true : false
+	bool invertedFilter = ( event.spawnInDifficulty & eFDSD.EXCLUSIVE ) ? true : false
 	
 	if( !allDifficulties )
 	{
 		if( difficultyLevel == eFDDifficultyLevel.EASY )
-			return !easySpawn
+			return ( invertedFilter ? !easySpawn : easySpawn )
 		if( difficultyLevel == eFDDifficultyLevel.NORMAL )
-			return !normalSpawn
+			return ( invertedFilter ? !normalSpawn : normalSpawn )
 		if( difficultyLevel == eFDDifficultyLevel.HARD )
-			return !hardSpawn
+			return ( invertedFilter ? !hardSpawn : hardSpawn )
 		if( difficultyLevel == eFDDifficultyLevel.MASTER )
-			return !masterSpawn
+			return ( invertedFilter ? !masterSpawn : masterSpawn )
 		if( difficultyLevel == eFDDifficultyLevel.INSANE )
-			return !insaneSpawn
+			return ( invertedFilter ? !insaneSpawn : insaneSpawn )
 		return true
 	}
 	return false
