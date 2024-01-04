@@ -2021,12 +2021,23 @@ void function EnableTitanSelectionForPlayer( entity player )
 	}
 }
 
+bool function PlayerTitanLoadoutValid( int index )
+{
+	return ( index >= 0 ) && ( index < NUM_PERSISTENT_TITAN_LOADOUTS )
+}
+
 void function DisableTitanSelectionForPlayer( entity player )
 {
 	int enumCount = PersistenceGetEnumCount( "titanClasses" )
 
 	if( !IsValid( player ) )
 		return
+
+	if( !PlayerTitanLoadoutValid( GetActiveTitanLoadoutIndex( player ) ) || !PlayerTitanLoadoutValid( player.GetPersistentVarAsInt("activeTitanLoadoutIndex") ) )
+	{
+		SetActiveTitanLoadoutIndex( player, 0 )
+		player.SetPersistentVar( "activeTitanLoadoutIndex", 0 )
+	}
 
 	for ( int i = 0; i < enumCount; i++ )
 	{
