@@ -46,6 +46,7 @@ void function SelectFirstInfectedDelayed()
 
 	array<entity> players = GetPlayerArray()
 
+	// End game if server empty on infection select
 	if ( !players.len() )
 	{
 		printt( "Couldn't select first infected: player array was empty" )
