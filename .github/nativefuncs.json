@@ -179,6 +179,54 @@
 			"helpText":"Whether or not HTTP requests can be made to a private network address. You can enable this by starting the game with -allowlocalhttp.",
 			"returnTypeString":"bool",
 			"argTypes":""
+		},
+		{
+			"name":"NS_InternalLoadFile",
+			"helpText":"Loads a file asynchronously.",
+			"returnTypeString":"int",
+			"argTypes":"string file"
+		},
+		{
+			"name":"NSSaveFile",
+			"helpText":"Saves a file.",
+			"returnTypeString":"void",
+			"argTypes":"string file, string data"
+		},
+		{
+			"name":"NSSaveJSONFile",
+			"helpText":"Converts a squirrel table to a json string, then saves it to a file.",
+			"returnTypeString":"void",
+			"argTypes":"string file, table data"
+		},
+		{
+			"name":"NSDoesFileExist",
+			"helpText":"Checks whether or not a file exists.",
+			"returnTypeString":"bool",
+			"argTypes":"string file"
+		},
+		{
+			"name":"NSDeleteFile",
+			"helpText":"Deletes a file.",
+			"returnTypeString":"bool",
+			"argTypes":"string file"
+		},
+		{
+			"name":"NS_InternalGetAllFiles",
+			"helpText":"Returns an array of all files in a mod's save folder.",
+			"returnTypeString":"array<string>",
+			"argTypes":"string path"
+		},
+		{
+			"name":"NSGetFileSize",
+			"helpText":"Returns the size of a file, in KB, rounded down.",
+			"returnTypeString":"int",
+			"argTypes":"string file"
+		},
+		{
+			"name":"NSIsFolder",
+			"helpText":"Returns whether or not a given path leads to a folder.",
+			"returnTypeString":"bool",
+			"argTypes":"string path"
 		}
 	],
 	"CLIENT":[
@@ -327,11 +375,53 @@
 			"argTypes":""
 		},
 		{
-			"name":"NSPushGameStateData",
-			"helpText":"",
+			"name":"NS_InternalLoadFile",
+			"helpText":"Loads a file asynchronously.",
+			"returnTypeString":"int",
+			"argTypes":"string file"
+		},
+		{
+			"name":"NSSaveFile",
+			"helpText":"Saves a file.",
 			"returnTypeString":"void",
-			"argTypes":"struct gamestate"
-		}
+			"argTypes":"string file, string data"
+		},
+		{
+			"name":"NSSaveJSONFile",
+			"helpText":"Converts a squirrel table to a json string, then saves it to a file.",
+			"returnTypeString":"void",
+			"argTypes":"string file, table data"
+		},
+		{
+			"name":"NSDoesFileExist",
+			"helpText":"Checks whether or not a file exists.",
+			"returnTypeString":"bool",
+			"argTypes":"string file"
+		},
+		{
+			"name":"NSDeleteFile",
+			"helpText":"Deletes a file.",
+			"returnTypeString":"bool",
+			"argTypes":"string file"
+		},
+		{
+			"name":"NS_InternalGetAllFiles",
+			"helpText":"Returns an array of all files in a mod's save folder.",
+			"returnTypeString":"array<string>",
+			"argTypes":"string path"
+		},
+		{
+			"name":"NSGetFileSize",
+			"helpText":"Returns the size of a file, in KB, rounded down.",
+			"returnTypeString":"int",
+			"argTypes":"string file"
+		},
+		{
+			"name":"NSIsFolder",
+			"helpText":"Returns whether or not a given path leads to a folder.",
+			"returnTypeString":"bool",
+			"argTypes":"string path"
+    }
 	],
 	"UI":[
 		{
@@ -411,6 +501,25 @@
 			"helpText":"",
 			"returnTypeString":"array<string>",
 			"argTypes":"string modName"
+		},
+		{
+			"name": "NSIsModDownloadable",
+			"helpText": "checks whether a mod is verified and can be auto-downloaded",
+			"returnTypeString": "bool",
+			"argTypes": "string name, string version"
+
+		},
+		{
+			"name": "NSDownloadMod",
+			"helpText": "downloads a given mod from distant API to local game profile",
+			"returnTypeString": "void",
+			"argTypes": "string name, string version"
+		},
+		{
+			"name": "NSGetModInstallState",
+			"helpText": "get status of the mod currently being installed",
+			"returnTypeString": "ModInstallState",
+			"argTypes": ""
 		},
 		{
 			"name":"NSReloadMods",
@@ -581,10 +690,58 @@
 			"argTypes":""
 		},
 		{
-			"name":"NSPushUIPresence",
-			"helpText":"",
+			"name":"NS_InternalLoadFile",
+			"helpText":"Loads a file asynchronously.",
+			"returnTypeString":"int",
+			"argTypes":"string file"
+		},
+		{
+			"name":"NSSaveFile",
+			"helpText":"Saves a file.",
 			"returnTypeString":"void",
-			"argTypes":"struct presence"
+			"argTypes":"string file, string data"
+		},
+		{
+			"name":"NSSaveJSONFile",
+			"helpText":"Converts a squirrel table to a json string, then saves it to a file.",
+			"returnTypeString":"void",
+			"argTypes":"string file, table data"
+		},
+		{
+			"name":"NSDoesFileExist",
+			"helpText":"Checks whether or not a file exists.",
+			"returnTypeString":"bool",
+			"argTypes":"string file"
+		},
+		{
+			"name":"NSDeleteFile",
+			"helpText":"Deletes a file.",
+			"returnTypeString":"bool",
+			"argTypes":"string file"
+		},
+		{
+			"name":"NS_InternalGetAllFiles",
+			"helpText":"Returns an array of all files in a mod's save folder.",
+			"returnTypeString":"array<string>",
+			"argTypes":"string path"
+		},
+		{
+			"name":"NSGetFileSize",
+			"helpText":"Returns the size of a file, in KB, rounded down.",
+			"returnTypeString":"int",
+			"argTypes":"string file"
+		},
+		{
+			"name":"NSIsFolder",
+			"helpText":"Returns whether or not a given path leads to a folder.",
+			"returnTypeString":"bool",
+			"argTypes":"string path"
+    },
+		{
+			"name":"NSGetMasterServerAuthResult",
+			"helpText":"",
+			"returnTypeString":"MasterServerAuthResult",
+			"argTypes":""
 		}
 	]
 }
