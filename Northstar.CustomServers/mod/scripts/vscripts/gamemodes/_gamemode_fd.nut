@@ -19,30 +19,12 @@ enum eDropshipState{
 	_count_
 }
 
-
-
-
 struct player_struct_fd{
 	bool diedThisRound
-	int scoreThisRound
+	int assaultScoreThisRound
+	int defenseScoreThisRound
 	int moneyThisRound
 	array< entity > deployedEntityThisRound
-	/*
-	int totalMVPs
-	int mortarUnitsKilled
-	int moneySpend
-	int coresUsed
-	float longestTitanLife
-	int turretsRepaired
-	int moneyShared
-	float timeNearHarvester //dont know how to track
-	float longestLife
-	int heals //dont know what to track
-	int titanKills
-	float damageDealt
-	int harvesterHeals
-	int turretKills
-	*/
 	float lastRespawn
 	float lastTitanDrop
 	float lastNearHarvester
@@ -57,9 +39,6 @@ global vector FD_spawnAngles = < 0, 0, 0 >
 global table< string, array<vector> > routes
 global array<entity> routeNodes
 global array<entity> spawnedNPCs
-
-
-
 
 struct {
 	array<entity> aiSpawnpoints
@@ -80,7 +59,6 @@ struct {
 	entity dropship
 	array<entity> playersInDropship
 }file
-
 
 const array<string> DROPSHIP_IDLE_ANIMS_POV = [
 
@@ -124,6 +102,7 @@ void function GamemodeFD_Init()
 
 	SetRoundBased( true )
 	SetShouldUseRoundWinningKillReplay( false )
+	SetTimeoutWinnerDecisionFunc( FD_TimeOutCheck )
 	Riff_ForceBoostAvailability( eBoostAvailability.Disabled )
 	PlayerEarnMeter_SetEnabled( false )
 	SetShouldUsePickLoadoutScreen( true )
@@ -173,6 +152,7 @@ void function GamemodeFD_Init()
 	AddBatteryHealCallback( FD_BatteryHealTeammate )
 	AddSmokeHealCallback( FD_SmokeHealTeammate )
 	SetUsedCoreCallback( FD_UsedCoreCallback )
+	AddTurretRepairCallback( FD_TurretRepair )
 
 	//todo:are pointValueOverride exist?
 	//Score Event
@@ -215,21 +195,34 @@ void function FD_PlayerRespawnCallback( entity player )
 	if( player.GetPersistentVar( "spawnAsTitan" ) )
 		return
 
+	if( file.playersInShip >=4 )
+		return
+
 	player.SetInvulnerable()
 	if( file.dropshipState == eDropshipState.Idle )
 	{
 		thread FD_DropshipSpawnDropship()
 	}
-	//Attach player
-	FirstPersonSequenceStruct idleSequence
-	idleSequence.firstPersonAnim = DROPSHIP_IDLE_ANIMS_POV[ file.playersInShip ]
-	idleSequence.thirdPersonAnim = DROPSHIP_IDLE_ANIMS[ file.playersInShip++ ]
-	idleSequence.attachment = "ORIGIN"
-	idleSequence.teleport = true
-	idleSequence.viewConeFunction = ViewConeFree
-	idleSequence.hideProxy = true
-	thread FirstPersonSequence( idleSequence, player, file.dropship )
-	file.playersInDropship.append( player )
+
+	//try fix animation error
+	//if drop ship is busy,we should immediately respawn player
+	if( IsValidPlayer( player ) && IsValid( file.dropship ) )
+	{
+		//Attach player
+		FirstPersonSequenceStruct idleSequence
+		idleSequence.firstPersonAnim = DROPSHIP_IDLE_ANIMS_POV[ file.playersInShip ]
+		idleSequence.thirdPersonAnim = DROPSHIP_IDLE_ANIMS[ file.playersInShip++ ]
+		idleSequence.attachment = "ORIGIN"
+		idleSequence.teleport = true
+		idleSequence.viewConeFunction = ViewConeFree
+		idleSequence.hideProxy = true
+		thread FirstPersonSequence( idleSequence, player, file.dropship )
+		file.playersInDropship.append( player )
+	}
+	else if( IsValidPlayer( player ) )
+	{
+		player.ClearInvulnerable()
+	}
 }
 
 
@@ -277,6 +270,14 @@ void function FD_TeamReserveDepositOrWithdrawCallback( entity player, string act
 }
 void function GamemodeFD_OnPlayerKilled( entity victim, entity attacker, var damageInfo )
 {
+	//avoid crash while player accidental death in dropship
+	if( FD_PlayerInDropship( victim ) )
+	{
+		victim.ClearParent()
+		ClearPlayerAnimViewEntity( victim )
+		victim.ClearInvulnerable()
+	}
+
 	//set longest Time alive for end awards
 	float timeAlive = Time() - file.players[victim].lastRespawn
 	if(timeAlive>file.playerAwardStats[victim]["longestLife"])
@@ -424,6 +425,8 @@ void function OnNpcDeath( entity victim, entity attacker, var damageInfo )
 			SetGlobalNetInt( netIndex, GetGlobalNetInt( netIndex ) - 1 )
 
 		SetGlobalNetInt( "FD_AICount_Current", GetGlobalNetInt( "FD_AICount_Current" ) - 1 )
+		if( GetNPCCloakedDrones().len() == GetGlobalNetInt( "FD_AICount_Current" ) )
+			FD_ShowCloakedDrones()
 	}
 
 	if ( victim.GetOwner() == attacker || !attacker.IsPlayer() || ( attacker == victim ) || ( victim.GetBossPlayer() == attacker ) || victim.GetClassName() == "npc_turret_sentry" )
@@ -463,8 +466,7 @@ void function OnNpcDeath( entity victim, entity attacker, var damageInfo )
 	if ( money != 0 )
 		AddMoneyToPlayer( attacker , money )
 
-	attacker.AddToPlayerGameStat( PGS_ASSAULT_SCORE, playerScore ) // seems to be how combat score is counted
-	file.players[attacker].scoreThisRound += playerScore
+	file.players[attacker].assaultScoreThisRound += playerScore
 	table<int, bool> alreadyAssisted
 	foreach( DamageHistoryStruct attackerInfo in victim.e.recentDamageHistory )
 	{
@@ -475,11 +477,39 @@ void function OnNpcDeath( entity victim, entity attacker, var damageInfo )
 		if( attackerInfo.attacker != attacker && !exists )
 		{
 			alreadyAssisted[attackerInfo.attacker.GetEncodedEHandle()] <- true
-			attackerInfo.attacker.AddToPlayerGameStat( PGS_DEFENSE_SCORE, playerScore )		// i assume this is how support score gets added
+			file.players[attackerInfo.attacker].defenseScoreThisRound += playerScore		// i assume this is how support score gets added
 		}
 	}
 
 
+}
+
+void function FD_ShowCloakedDrones()
+{
+	array<entity> droneArray = GetNPCCloakedDrones()
+
+	if( droneArray.len() != GetGlobalNetInt( "FD_AICount_Current" ) )
+	{
+		CodeWarning( "Try remove cloaked drones in error way.Drone amount: " + droneArray.len() + " ,Npc amount: " + GetGlobalNetInt( "FD_AICount_Current" ) )
+		return
+	}
+
+	foreach( entity cloakedDrone in droneArray )
+	{
+		if( IsValid( cloakedDrone ) && IsAlive( cloakedDrone ) )
+		{
+			cloakedDrone.DisableBehavior( "Follow" )
+			cloakedDrone.Show()
+			cloakedDrone.s.fx.Fire( "start" )
+			cloakedDrone.SetTitle( "#NPC_CLOAK_DRONE" )
+			//Don't let them hidden again
+			//cloakedDrone.s.isHidden = false
+			cloakedDrone.Solid()
+			cloakedDrone.Minimap_AlwaysShow( TEAM_IMC, null )
+			cloakedDrone.Minimap_AlwaysShow( TEAM_MILITIA, null )
+			cloakedDrone.SetNoTarget( false )
+		}
+	}
 }
 
 void function RateSpawnpoints_FD( int _0, array<entity> _1, int _2, entity _3 )
@@ -519,7 +549,8 @@ void function mainGameLoop()
 	{
 		if( file.waveRestart )
 		{
-			showShop = true
+			if( i != 0 )
+				showShop = true
 			foreach( entity player in GetPlayerArray() )
 			{
 				SetMoneyForPlayer( player, file.players[player].moneyThisRound )
@@ -528,6 +559,7 @@ void function mainGameLoop()
 				PlayerInventory_TakeAllInventoryItems( player )
 			}
 			SetGlobalNetTime( "FD_nextWaveStartTime", Time() + 75 )
+			thread FD_AttemptToRepairTurrets()
 		}
 
 		if( !runWave( i, showShop ) )
@@ -710,7 +742,8 @@ bool function runWave( int waveIndex, bool shouldDoBuyTime )
 	foreach( entity player in GetPlayerArray() )
 	{
 		file.players[player].diedThisRound = false
-		file.players[player].scoreThisRound = 0
+		file.players[player].assaultScoreThisRound = 0
+		file.players[player].defenseScoreThisRound = 0
 		file.players[player].moneyThisRound = GetPlayerMoney( player )
 		file.players[ player ].deployedEntityThisRound.clear()
 	}
@@ -824,19 +857,37 @@ bool function runWave( int waveIndex, bool shouldDoBuyTime )
 		MessageToTeam( TEAM_MILITIA, eEventNotifications.FD_AnnounceWaveEnd )
 		foreach( entity player in GetPlayerArray() )
 		{
+			AddPlayerScore( player, "FDDamageBonus", null, "", file.players[player].assaultScoreThisRound )
+			AddScoreToPlayer( player, PGS_ASSAULT_SCORE )
+			wait 1
+			AddPlayerScore( player, "FDSupportBonus", null, "", file.players[player].defenseScoreThisRound )
+			AddScoreToPlayer( player, PGS_DEFENSE_SCORE )
+			AddScoreToPlayer( player, PGS_DETONATION_SCORE )
+			wait 1
 			AddPlayerScore( player, "FDTeamWave" )
 		}
 		wait 1
-		int highestScore = 0;
-		entity highestScore_player = GetPlayerArray()[0]
+		int highestScore
+		entity highestScore_player
+		if( GetPlayerArray().len() > 0 )
+		{
+			highestScore = 0;
+			highestScore_player = GetPlayerArray()[0]
+		}
+		else
+		{
+			SetRoundBased( false )
+			SetWinner( TEAM_MILITIA )
+			return true
+		}
 		foreach( entity player in GetPlayerArray() )
 		{
 
 			if( !file.players[player].diedThisRound )
 				AddPlayerScore( player, "FDDidntDie" )
-			if( highestScore < file.players[player].scoreThisRound )
+			if( highestScore < ( file.players[player].assaultScoreThisRound + file.players[player].defenseScoreThisRound ) )
 			{
-				highestScore = file.players[player].scoreThisRound
+				highestScore = file.players[player].assaultScoreThisRound + file.players[player].defenseScoreThisRound
 				highestScore_player = player
 			}
 
@@ -899,18 +950,27 @@ bool function runWave( int waveIndex, bool shouldDoBuyTime )
 	//Player scoring
 	MessageToTeam( TEAM_MILITIA, eEventNotifications.FD_NotifyWaveBonusIncoming )
 	wait 2
+	thread FD_AttemptToRepairTurrets()
 	foreach( entity player in GetPlayerArray() )
 	{
 		if ( isSecondWave() )
 			PlayFactionDialogueToPlayer( "fd_wavePayoutFirst", player )
 		else
 			PlayFactionDialogueToPlayer( "fd_wavePayoutAddtnl", player )
+
+		AddPlayerScore( player, "FDDamageBonus", null, "", file.players[player].assaultScoreThisRound )
+		AddScoreToPlayer( player, PGS_ASSAULT_SCORE )
+		wait 1
+		AddPlayerScore( player, "FDSupportBonus", null, "", file.players[player].defenseScoreThisRound )
+		AddScoreToPlayer( player, PGS_DEFENSE_SCORE )
+		AddScoreToPlayer( player, PGS_DETONATION_SCORE )
+		wait 1
 		AddPlayerScore( player, "FDTeamWave" )
 		AddMoneyToPlayer( player, GetCurrentPlaylistVarInt( "fd_money_per_round", 600 ) )
 		// is this in the right place? do we want to be adding for each player?
 		// this function is called "Set" but in reality it is "Add"
 		SetJoinInProgressBonus( GetCurrentPlaylistVarInt( "fd_money_per_round" ,600 ) )
-		EmitSoundOnEntityOnlyToPlayer( player, player, "HUD_MP_BountyHunt_BankBonusPts_Deposit_Start_1P" )
+		FD_EmitSoundOnEntityOnlyToPlayer( player, player, "HUD_MP_BountyHunt_BankBonusPts_Deposit_Start_1P" )
 	}
 	wait 1
 	foreach( entity player in GetPlayerArray() )
@@ -918,27 +978,44 @@ bool function runWave( int waveIndex, bool shouldDoBuyTime )
 		if( !file.players[player].diedThisRound )
 		{
 			AddPlayerScore( player, "FDDidntDie" )
-			player.AddToPlayerGameStat( PGS_ASSAULT_SCORE, FD_SCORE_DIDNT_DIE )
+			/*
+			AddScoreToPlayer( player, PGS_ASSAULT_SCORE, FD_SCORE_DIDNT_DIE )
+			AddScoreToPlayer( player, PGS_DETONATION_SCORE, FD_SCORE_DIDNT_DIE )
+			*/
 		}
 		AddMoneyToPlayer( player, 100 )
-		EmitSoundOnEntityOnlyToPlayer( player, player, "HUD_MP_BountyHunt_BankBonusPts_Deposit_Start_1P" )
+		FD_EmitSoundOnEntityOnlyToPlayer( player, player, "HUD_MP_BountyHunt_BankBonusPts_Deposit_Start_1P" )
 	}
 	wait 1
-	int highestScore = 0;
-	entity highestScore_player = GetPlayerArray()[0]
+	int highestScore
+	entity highestScore_player
+	if( GetPlayerArray().len() > 0 )
+	{
+		highestScore = 0;
+		highestScore_player = GetPlayerArray()[0]
+	}
+	else
+	{
+		SetRoundBased( false )
+		SetWinner( TEAM_MILITIA )
+		return true
+	}
 	foreach( entity player in GetPlayerArray() )
 	{
-		if( highestScore < file.players[player].scoreThisRound )
+		if( highestScore < ( file.players[player].assaultScoreThisRound + file.players[player].defenseScoreThisRound ) )
 		{
-			highestScore = file.players[player].scoreThisRound
+			highestScore = file.players[player].assaultScoreThisRound + file.players[player].defenseScoreThisRound
 			highestScore_player = player
 		}
 	}
 	file.playerAwardStats[highestScore_player]["mvp"]++
 	AddPlayerScore( highestScore_player, "FDWaveMVP" )
 	AddMoneyToPlayer( highestScore_player, 100 )
-	highestScore_player.AddToPlayerGameStat( PGS_ASSAULT_SCORE, FD_SCORE_MVP )
-	EmitSoundOnEntityOnlyToPlayer( highestScore_player, highestScore_player, "HUD_MP_BountyHunt_BankBonusPts_Deposit_Start_1P" )
+	/*
+	AddScoreToPlayer( highestScore_player, PGS_ASSAULT_SCORE, FD_SCORE_MVP )
+	AddScoreToPlayer( highestScore_player, PGS_DETONATION_SCORE, FD_SCORE_MVP )
+	*/
+	FD_EmitSoundOnEntityOnlyToPlayer( highestScore_player, highestScore_player, "HUD_MP_BountyHunt_BankBonusPts_Deposit_Start_1P" )
 	foreach( entity player in GetPlayerArray() )
 	{
 		Remote_CallFunction_NonReplay( player, "ServerCallback_FD_NotifyMVP", highestScore_player.GetEncodedEHandle() )
@@ -951,8 +1028,11 @@ bool function runWave( int waveIndex, bool shouldDoBuyTime )
 		{
 			AddPlayerScore( player, "FDTeamFlawlessWave" )
 			AddMoneyToPlayer( player, 100 )
-			player.AddToPlayerGameStat( PGS_ASSAULT_SCORE, FD_SCORE_TEAM_FLAWLESS_WAVE )
-			EmitSoundOnEntityOnlyToPlayer( player, player, "HUD_MP_BountyHunt_BankBonusPts_Deposit_Start_1P" )
+			/*
+			AddScoreToPlayer( player, PGS_ASSAULT_SCORE, FD_SCORE_TEAM_FLAWLESS_WAVE )
+			AddScoreToPlayer( player, PGS_DETONATION_SCORE, FD_SCORE_TEAM_FLAWLESS_WAVE )
+			*/
+			FD_EmitSoundOnEntityOnlyToPlayer( player, player, "HUD_MP_BountyHunt_BankBonusPts_Deposit_Start_1P" )
 		}
 	}
 
@@ -975,8 +1055,7 @@ void function FD_StunLaserHealTeammate( entity player, entity target, int shield
 {
 	if( IsValid( player ) && player in file.players ){
 		file.playerAwardStats[player]["heals"] += float( shieldRestoreAmount )
-		player.AddToPlayerGameStat( PGS_DEFENSE_SCORE, shieldRestoreAmount / 100 )
-		file.players[ player ].scoreThisRound += shieldRestoreAmount / 100
+		file.players[ player ].defenseScoreThisRound += shieldRestoreAmount / 100
 	}
 }
 
@@ -984,8 +1063,7 @@ void function FD_SmokeHealTeammate( entity player, entity target, int shieldRest
 {
 	if( IsValid( player ) && player in file.players ){
 		file.playerAwardStats[player]["heals"] += float( shieldRestoreAmount )
-		player.AddToPlayerGameStat( PGS_DEFENSE_SCORE, shieldRestoreAmount / 100 )
-		file.players[ player ].scoreThisRound += shieldRestoreAmount / 100
+		file.players[ player ].defenseScoreThisRound += shieldRestoreAmount / 100
 	}
 }
 
@@ -1014,8 +1092,7 @@ void function FD_BatteryHealTeammate( entity battery, entity titan, int shieldRe
 		currentHeal = shieldRestoreAmount + healthRestoreAmount
 		currentHealScore = currentHeal / 100
 		file.playerAwardStats[BatteryParent]["heals"] += float( currentHeal )
-		BatteryParent.AddToPlayerGameStat( PGS_DEFENSE_SCORE, currentHealScore )
-		file.players[ BatteryParent ].scoreThisRound += currentHealScore
+		file.players[ BatteryParent ].defenseScoreThisRound += currentHealScore
 	}
 }
 
@@ -1027,6 +1104,7 @@ void function FD_OnArcTrapTriggered( entity victim, var damageInfo )
 		return
 
 	AddPlayerScore( owner, "FDArcTrapTriggered" )
+	file.players[ owner ].defenseScoreThisRound += 1
 }
 
 void function FD_OnArcWaveDamage( entity ent, var damageInfo )
@@ -1053,6 +1131,7 @@ void function FD_OnSonarStart( entity ent, vector position, int sonarTeam, entit
 		return
 
 	AddPlayerScore( sonarOwner, "FDSonarPulse" )//should only triggered once during sonar time?
+	file.players[ sonarOwner ].defenseScoreThisRound += 1
 }
 
 void function FD_SetupEpilogue()
@@ -1177,9 +1256,16 @@ void function FD_Epilogue_threaded()
 	SetGameState(eGameState.Postmatch)
 }
 
-void function IncrementPlayerstat_TurretRevives( entity player )
+void function FD_TurretRepair( entity turret, entity player, entity owner )
 {
-	file.playerAwardStats[player]["turretsRepaired"]++
+	if( player != owner && IsValidPlayer( player ) && IsValidPlayer( owner ) )
+	{
+		int ownerEHandle = owner.GetEncodedEHandle()
+		AddPlayerScore( player, "FDRepairTurret" )
+		file.playerAwardStats[player]["turretsRepaired"]++
+		file.players[player].defenseScoreThisRound += FD_SCORE_REPAIR_TURRET
+		MessageToTeam( TEAM_MILITIA,eEventNotifications.FD_TurretRepair, null, player, ownerEHandle )
+	}
 }
 
 void function SpawnCallback_SafeTitanSpawnTime( entity ent )
@@ -1273,11 +1359,27 @@ void function OnHarvesterDamaged( entity harvester, var damageInfo )
 		file.havesterWasDamaged = true
 	}
 
-	if ( DamageInfo_GetDamageSourceIdentifier( damageInfo ) == eDamageSourceId.mp_titancore_laser_cannon )
-    	DamageInfo_SetDamage( damageInfo, DamageInfo_GetDamage( damageInfo ) / 10 ) // laser core shreds super well for some reason
+	if ( IsHarvesterAlive( harvester ) && DamageInfo_GetDamageSourceIdentifier( damageInfo ) == eDamageSourceId.mp_titancore_laser_cannon )
+    		DamageInfo_SetDamage( damageInfo, DamageInfo_GetDamage( damageInfo ) / 10 ) // laser core shreds super well for some reason
 
 	if ( attacker.IsPlayer() )
 		attacker.NotifyDidDamage( harvester, DamageInfo_GetHitBox( damageInfo ), DamageInfo_GetDamagePosition( damageInfo ), DamageInfo_GetCustomDamageType( damageInfo ), DamageInfo_GetDamage( damageInfo ), DamageInfo_GetDamageFlags( damageInfo ), DamageInfo_GetHitGroup( damageInfo ), DamageInfo_GetWeapon( damageInfo ), DamageInfo_GetDistFromAttackOrigin( damageInfo ) )
+}
+
+void function OnPostHarvesterDamaged( entity harvester, var damageInfo )
+{
+	if ( !IsValid( harvester ) )
+		return
+
+	if( fd_harvester.harvester != harvester )
+		return
+
+	float damageAmount = DamageInfo_GetDamage( damageInfo )
+	if( harvester.GetHealth() - damageAmount <= 0 )
+	{
+		harvester.SetHealth( 1 )
+		DamageInfo_SetDamage( damageInfo, 0.0 )
+	}
 }
 
 void function FD_NPCCleanup()
@@ -1435,9 +1537,10 @@ void function FD_DamageByPlayerCallback( entity victim, var damageInfo )
 	entity player = DamageInfo_GetAttacker( damageInfo )
 	if( !( player in file.players ) )
 		return
-	float damage = DamageInfo_GetDamage( damageInfo )
+
+	float damage = min( victim.GetMaxHealth(), DamageInfo_GetDamage( damageInfo ) )
 	file.playerAwardStats[player]["damageDealt"] += damage
-	file.players[ player ].scoreThisRound += damage.tointeger() //TODO NOT HOW SCORE WORKS
+	file.players[ player ].assaultScoreThisRound += ( damage.tointeger() / 100 ) //TODO NOT HOW SCORE WORKS
 	if( victim.IsTitan() )
 	{
 		//TODO Money and score for titan damage
@@ -1516,6 +1619,7 @@ void function FD_createHarvester()
 	fd_harvester.harvester.Minimap_SetZOrder( MINIMAP_Z_OBJECT )
 	fd_harvester.harvester.Minimap_SetCustomState( eMinimapObject_prop_script.FD_HARVESTER )
 	AddEntityCallback_OnDamaged( fd_harvester.harvester, OnHarvesterDamaged )
+	AddEntityCallback_OnPostDamaged( fd_harvester.harvester, OnPostHarvesterDamaged )
 	thread CreateHarvesterHintTrigger( fd_harvester.harvester )
 }
 
@@ -1562,7 +1666,13 @@ void function CreateHarvesterHintTrigger( entity harvester )
 
 void function OnEnterNearHarvesterTrigger( entity trig, entity activator )
 {
+	if( GetGameState() != eGameState.Playing )
+		return
+
 	if( !( activator in file.players ) )
+		return
+		
+	if( !IsHarvesterAlive( fd_harvester.harvester ) )
 		return
 		
 	if( GetGlobalNetInt( "FD_waveState" ) != WAVE_STATE_IN_PROGRESS )
@@ -1577,7 +1687,13 @@ void function OnEnterNearHarvesterTrigger( entity trig, entity activator )
 
 void function OnLeaveNearHarvesterTrigger( entity trig, entity activator )
 {
+	if( GetGameState() != eGameState.Playing )
+		return
+
 	if( !( activator in file.players ) )
+		return
+
+	if( !IsHarvesterAlive( fd_harvester.harvester ) )
 		return
 		
 	if( GetGlobalNetInt( "FD_waveState" ) != WAVE_STATE_IN_PROGRESS )
@@ -1905,12 +2021,23 @@ void function EnableTitanSelectionForPlayer( entity player )
 	}
 }
 
+bool function PlayerTitanLoadoutValid( int index )
+{
+	return ( index >= 0 ) && ( index < NUM_PERSISTENT_TITAN_LOADOUTS )
+}
+
 void function DisableTitanSelectionForPlayer( entity player )
 {
 	int enumCount = PersistenceGetEnumCount( "titanClasses" )
 
 	if( !IsValid( player ) )
 		return
+
+	if( !PlayerTitanLoadoutValid( GetActiveTitanLoadoutIndex( player ) ) || !PlayerTitanLoadoutValid( player.GetPersistentVarAsInt("activeTitanLoadoutIndex") ) )
+	{
+		SetActiveTitanLoadoutIndex( player, 0 )
+		player.SetPersistentVar( "activeTitanLoadoutIndex", 0 )
+	}
 
 	for ( int i = 0; i < enumCount; i++ )
 	{
@@ -1959,18 +2086,17 @@ void function FD_DropshipSpawnDropship()
 void function FD_DropshipDropPlayer(entity player,int playerDropshipIndex)
 {
 	player.EndSignal( "OnDestroy" )
-	FirstPersonSequenceStruct jumpSequence
-	jumpSequence.firstPersonAnim = DROPSHIP_EXIT_ANIMS_POV[ playerDropshipIndex ]
-	jumpSequence.thirdPersonAnim = DROPSHIP_EXIT_ANIMS[ playerDropshipIndex ]
-	jumpSequence.attachment = "ORIGIN"
-	jumpSequence.blendTime = 0.0
-	jumpSequence.viewConeFunction = ViewConeFree
 
-	thread FirstPersonSequence( jumpSequence, player, file.dropship )
-
-	//check the player
 	if( IsValid( player ) )
 	{
+		FirstPersonSequenceStruct jumpSequence
+		jumpSequence.firstPersonAnim = DROPSHIP_EXIT_ANIMS_POV[ playerDropshipIndex ]
+		jumpSequence.thirdPersonAnim = DROPSHIP_EXIT_ANIMS[ playerDropshipIndex ]
+		jumpSequence.attachment = "ORIGIN"
+		jumpSequence.blendTime = 0.0
+		jumpSequence.viewConeFunction = ViewConeFree
+
+		thread FirstPersonSequence( jumpSequence, player, file.dropship )
 		WaittillAnimDone( player )
 		player.ClearParent()
 		ClearPlayerAnimViewEntity( player )
@@ -2004,4 +2130,70 @@ string function FD_DropshipGetAnimation()
 		return "dropship_coop_respawn_digsite"
 	}
 	return "dropship_coop_respawn"
+}
+
+bool function FD_PlayerInDropship( entity player )
+{
+	if( !IsValid( file.dropship ) )
+		return false
+
+	if( !IsValid( player ) )
+		return false
+
+	foreach ( entity dropshipPlayer in file.playersInDropship )
+		if ( dropshipPlayer == player )
+			return true
+			
+	return false
+}
+
+void function AddScoreToPlayer( entity targetPlayer, int scoreType, int valueOverride = 0 )
+{
+	if( !IsValidPlayer( targetPlayer ) )
+		return
+
+	int amount = 0
+	switch( scoreType )
+	{
+		case PGS_ASSAULT_SCORE:		
+			amount = file.players[targetPlayer].assaultScoreThisRound
+			break
+		case PGS_DEFENSE_SCORE:
+			amount = file.players[targetPlayer].defenseScoreThisRound
+			break
+		case PGS_DETONATION_SCORE:
+			amount = file.players[targetPlayer].assaultScoreThisRound + file.players[targetPlayer].defenseScoreThisRound
+			break
+	}
+
+	if( valueOverride != 0 )
+		amount = valueOverride
+
+	if( IsValidPlayer( targetPlayer ) )
+		targetPlayer.AddToPlayerGameStat( scoreType, amount )
+}
+
+void function FD_EmitSoundOnEntityOnlyToPlayer( entity targetEntity, entity player, string alias )
+{
+	if( !IsValid( targetEntity ) )
+		return
+
+	if( !IsValidPlayer( player ) )
+		return
+
+	EmitSoundOnEntityOnlyToPlayer( targetEntity, player, alias )
+}
+
+function FD_AttemptToRepairTurrets()
+{
+	//Repair turret on here rather than in the executeWave(), softlocking reasons
+	foreach (entity turret in GetEntArrayByClass_Expensive( "npc_turret_sentry" ) )
+		RepairTurret_WaveBreak( turret )
+}
+
+int function FD_TimeOutCheck()
+{
+	//on timeout,always ai win the match
+	SetRoundBased( false )
+	return TEAM_IMC
 }

@@ -348,11 +348,17 @@ bool function ClientCommand_Withdraw( entity player, array<string> args )
 
 void function AddMoneyToPlayer( entity player, int points )
 {
+	if( !IsValid( player ) )
+		return
+
 	SetMoneyForPlayer( player, file.playerBonusData[ player ] + points )
 }
 
 void function SetMoneyForPlayer( entity player, int points )
 {
+	if( !IsValid( player ) )
+		return
+
 	file.playerBonusData[ player ] = int( Clamp( float( points ), 0, MAX_MONEY ) )
 
 	int bonusPoints = file.playerBonusData[ player ]
