@@ -2439,6 +2439,9 @@ void function waitUntilLessThanAmountAliveWeighted( int amount, int humanWeight 
 
 void function AddMinimapForTitans( entity titan )
 {
+	if( !IsValid( titan ) )
+		return
+	
 	titan.Minimap_SetAlignUpright( true )
 	titan.Minimap_AlwaysShow( TEAM_IMC, null )
 	titan.Minimap_AlwaysShow( TEAM_MILITIA, null )
@@ -2450,6 +2453,9 @@ void function AddMinimapForTitans( entity titan )
 // including drones
 void function AddMinimapForHumans( entity human )
 {
+	if( !IsValid( human ) )
+		return
+	
 	human.Minimap_SetAlignUpright( true )
 	human.Minimap_AlwaysShow( TEAM_IMC, null )
 	human.Minimap_AlwaysShow( TEAM_MILITIA, null )
