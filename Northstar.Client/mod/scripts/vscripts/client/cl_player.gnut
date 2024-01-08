@@ -82,7 +82,7 @@ struct {
 	// int hitGroup
 	// entity weapon
 	// float distanceFromAttackOrigin
-	array< void functionref( PlayerDidDamageParams ) onLocalPlayerDidDamageCallbacks
+	array< void functionref( PlayerDidDamageParams ) > onLocalPlayerDidDamageCallbacks
 } file
 
 struct BloodDecalParams
@@ -941,6 +941,7 @@ void function ClientCodeCallback_PlayerDidDamage( PlayerDidDamageParams params )
 	{
 		callback( params )
 	}
+	///////////////////////
 }
 
 void function PlayHitSound( entity victim, entity attacker, int damageFlags, bool isCritShot, bool victimIsHeavyArmor, bool isKillShot, int hitGroup )
