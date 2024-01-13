@@ -859,16 +859,13 @@ void function SetWinner( int team, string winningReason = "", string losingReaso
 					switch( currentPlace )
 					{
 						case 1:
-							SetPlayerChallengeSquadLeader( players[i] )
 							UpdatePlayerStat( players[i], "game_stats", "mvp" )
 							UpdatePlayerStat( players[i], "game_stats", "top3OnTeam" )
 							break
 						case 2:
-							SetPlayerChallengeSquadLeader( players[i] )
 							UpdatePlayerStat( players[i], "game_stats", "top3OnTeam" )
 							break
 						case 3:
-							SetPlayerChallengeSquadLeader( players[i] )
 							UpdatePlayerStat( players[i], "game_stats", "top3OnTeam" )
 							break
 					}
