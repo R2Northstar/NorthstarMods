@@ -137,7 +137,8 @@ void function InitMainMenuPanel()
 	//AddPanelFooterOption( file.panel, BUTTON_BACK, "", "", ClosePostGameMenu )
 
 	thread TrackInstallProgress()
-	UpdateCustomMainMenuPromos()
+	if ( GetConVarBool( "menu_show_promos" ) ) 
+		UpdateCustomMainMenuPromos()
 }
 
 void function OnShowMainMenuPanel()
