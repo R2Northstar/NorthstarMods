@@ -7,5 +7,5 @@ void function NSCustomModSettings()
 	ModSettings_AddEnumSetting( "ns_show_event_models", "Show Event Models", [ "#SETTING_OFF", "#SETTING_ON" ], 2 )
 
 	ModSettings_AddModCategory( "Menu Promos" )
-	ModSettings_AddEnumSetting( "menu_show_promos", "Show Main Menu Promos (requires mod reloading)", [ "#SETTING_OFF", "#SETTING_ON" ], 2)
+	ModSettings_AddEnumSetting( "menu_show_promos", "Show Main Menu Promos (requires mod reloading)", [ "#SETTING_OFF", "#SETTING_ON" ], 2 )
 }
