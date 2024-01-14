@@ -46,6 +46,10 @@
 			"Name": "modlist_reverse",
 			"DefaultValue": "0",
 			"Flags": "ARCHIVE_PLAYERPROFILE"
+		},
+		{
+			"Name": "menu_show_promos",
+			"DefaultValue": "1"
 		}
 	],
 	"Scripts": [
