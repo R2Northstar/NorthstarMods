@@ -10094,47 +10094,7 @@ void function InitUnlockAsEntitlement( string itemRef, string parentRef, int ent
 		unlock = file.entitlementUnlocks[fullRef]
 	}
 	
-	switch( entitlementId ) //This is horrible but better than changing IDs manually in every entry
-	{
-		case ET_BF1:
-		case ET_DELUXE_EDITION:
-		case ET_JUMPSTARTERKIT:
-		case ET_PREORDER:
-		case ET_DLC1_CALLSIGN:
-		case ET_DLC1_CAMO:
-		case ET_DLC1_ION:
-		case ET_DLC1_LEGION:
-		case ET_DLC1_NORTHSTAR:
-		case ET_DLC1_PRIME_ION:
-		case ET_DLC1_PRIME_SCORCH:
-		case ET_DLC1_RONIN:
-		case ET_DLC1_SCORCH:
-		case ET_DLC1_TONE:
-		case ET_DLC3_CALLSIGN:
-		case ET_DLC3_CAMO:
-		case ET_DLC3_ION:
-		case ET_DLC3_LEGION:
-		case ET_DLC3_NORTHSTAR:
-		case ET_DLC3_PRIME_LEGION:
-		case ET_DLC3_PRIME_NORTHSTAR:
-		case ET_DLC3_RONIN:
-		case ET_DLC3_SCORCH:
-		case ET_DLC3_TONE:
-		case ET_DLC5_CALLSIGN:
-		case ET_DLC5_CAMO:
-		case ET_DLC5_ION:
-		case ET_DLC5_LEGION:
-		case ET_DLC5_NORTHSTAR:
-		case ET_DLC5_PRIME_RONIN:
-		case ET_DLC5_PRIME_TONE:
-		case ET_DLC5_RONIN:
-		case ET_DLC5_SCORCH:
-		case ET_DLC5_TONE:
-			unlock.entitlementIds.append( 1 )
-			
-		default:
-			unlock.entitlementIds.append( entitlementId )
-	}
+	unlock.entitlementIds.append( 1 ) //Using 1 here instead of the huge DLC check i done previously seems to keep everything unlocked for real this time
 }
 
 array<int> function GetEntitlementIds( string itemRef, string parentRef = "" )
