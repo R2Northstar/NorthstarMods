@@ -10093,8 +10093,8 @@ void function InitUnlockAsEntitlement( string itemRef, string parentRef, int ent
 	{
 		unlock = file.entitlementUnlocks[fullRef]
 	}
-	
-	unlock.entitlementIds.append( 1 ) //Using 1 here instead of the huge DLC check i done previously seems to keep everything unlocked for real this time
+
+	unlock.entitlementIds.append( 1 ) // Using `1` here instead of the huge DLC check I done previously seems to keep everything unlocked for real this time
 }
 
 array<int> function GetEntitlementIds( string itemRef, string parentRef = "" )
