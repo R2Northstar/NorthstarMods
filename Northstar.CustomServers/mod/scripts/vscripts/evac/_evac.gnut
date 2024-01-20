@@ -280,6 +280,9 @@ void function Evac( int evacTeam, float initialWait, float arrivalTime, float wa
 		{
 			SetTeamActiveObjective( evacTeam, "EG_DropshipExtractDropshipDestroyed" )
 			SetTeamActiveObjective( GetOtherTeam( evacTeam ), "EG_DropshipExtractDropshipDestroyed" )
+			
+			foreach( entity player in GetPlayerArrayOfTeam( evacTeam ) )
+				SetPlayerChallengeEvacState( player, 0 )
 		}
 		
 		foreach ( entity player in dropship.s.evacSlots )
@@ -326,9 +329,9 @@ void function Evac( int evacTeam, float initialWait, float arrivalTime, float wa
 
 	// setup evac trigger
 	entity trigger = CreateEntity( "trigger_cylinder" )
-	trigger.SetRadius( 150 )
-	trigger.SetAboveHeight( 100 )
-	trigger.SetBelowHeight( 100 )
+	trigger.SetRadius( 200 )
+	trigger.SetAboveHeight( 200 )
+	trigger.SetBelowHeight( 200 )
 	trigger.SetOrigin( dropship.GetOrigin() )
 	trigger.SetParent( dropship, "ORIGIN" )
 	DispatchSpawn( trigger )
@@ -404,7 +407,7 @@ void function Evac( int evacTeam, float initialWait, float arrivalTime, float wa
 			if ( player.GetTeam() == dropship.GetTeam() )
 			{
 				SetPlayerActiveObjective( player, "EG_DropshipExtractFailedEscape" )
-				SetPlayerChallengeEvacState( player, false )
+				SetPlayerChallengeEvacState( player, 2 )
 			}
 				
 			continue
@@ -420,6 +423,7 @@ void function Evac( int evacTeam, float initialWait, float arrivalTime, float wa
 		Remote_CallFunction_NonReplay( player, "ServerCallback_DisableHudForEvac" )
 		Remote_CallFunction_NonReplay( player, "ServerCallback_SetClassicSkyScale", dropship.GetEncodedEHandle(), 0.7 )
 		Remote_CallFunction_NonReplay( player, "ServerCallback_SetMapSettings", 4.0, false, 0.4, 0.125 )
+		SetPlayerChallengeEvacState( player, 1 )
 		
 		// display player [Evacuated] in killfeed
 		foreach ( entity otherPlayer in GetPlayerArray() )
@@ -448,7 +452,6 @@ void function Evac( int evacTeam, float initialWait, float arrivalTime, float wa
 
 		AddPlayerScore( player, "HotZoneExtract" )
 		UpdatePlayerStat( player, "misc_stats", "evacsSurvived" )
-		SetPlayerChallengeEvacState( player, true )
 
 		if ( allEvac )
 			AddPlayerScore( player, "TeamBonusFullEvac" )
@@ -529,7 +532,6 @@ void function EvacDropshipKilled( entity dropship, var damageInfo )
 	{
 		if ( IsValid( player ) )
 		{
-			SetPlayerChallengeEvacState( player, false )
 			player.ClearParent()
 			player.Die( DamageInfo_GetAttacker( damageInfo ), DamageInfo_GetWeapon( damageInfo ), { damageSourceId = eDamageSourceId.evac_dropship_explosion, scriptType = DF_GIB } )
 		}

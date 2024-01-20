@@ -110,6 +110,7 @@ void function OnPlaying()
 void function OnPlayerConnected( entity player )
 {
 	Remote_CallFunction_NonReplay( player, "ServerCallback_AITDM_OnPlayerConnected" )
+	Remote_CallFunction_UI( player, "SCB_SetEvacMeritState", 0 )
 }
 
 // Used to handle both player and ai events
@@ -248,6 +249,7 @@ void function SpawnIntroBatch_Threaded( int team )
 			thread AiGameModes_SpawnDropPod( node.GetOrigin(), node.GetAngles(), team, "npc_soldier", SquadHandler )
 			
 			pods--
+			wait 0.5
 		}
 		else
 		{
@@ -258,6 +260,7 @@ void function SpawnIntroBatch_Threaded( int team )
 			thread AiGameModes_SpawnDropShip( node.GetOrigin(), node.GetAngles(), team, 4, SquadHandler )
 			
 			ships--
+			wait 1.0
 		}
 		
 		// Vanilla has a delay after first spawn
@@ -288,6 +291,16 @@ void function Spawner_Threaded( int team )
 		
 		// TODO: this should possibly not count scripted npc spawns, probably only the ones spawned by this script
 		array<entity> npcs = GetNPCArrayOfTeam( team )
+		
+		ArrayRemoveDead( npcs )
+		foreach ( entity npc in npcs )
+		{
+			if( IsMinion( npc ) || IsStalker( npc ) )
+				continue
+			
+			npcs.removebyvalue( npc ) //Remove Titans, Dropships, Turrets and Ticks from the equation, Reapers are picked separately
+		}
+		
 		int count = npcs.len()
 		int reaperCount = GetNPCArrayEx( "npc_super_spectre", team, -1, <0,0,0>, -1 ).len()
 		
@@ -303,28 +316,26 @@ void function Spawner_Threaded( int team )
 		}
 		
 		// NORMAL SPAWNS
-		if ( count < file.squadsPerTeam * 4 - 2 )
+		if ( count <= file.squadsPerTeam * 3 ) // x3 so means if theres one squad missing, try to spawn it back to keep 16 AI active per team
 		{
-			string ent = file.podEntities[ index ][ RandomInt( file.podEntities[ index ].len() ) ]
+			string ent = file.podEntities[ index ].getrandom()
 			
 			array< entity > points = GetZiplineDropshipSpawns()
-			// Prefer dropship when spawning grunts
-			if ( ent == "npc_soldier" && points.len() != 0 )
+			if ( ent == "npc_soldier" && points.len() && RandomInt( 100 ) >= 33 ) //Prefer using Dropship 2/3rd of the times
 			{
-				if ( RandomInt( points.len() ) )
-				{
-					entity node = points[ GetSpawnPointIndex( points, team ) ]
-					waitthread Aitdm_SpawnDropShip( node, team )
-					continue
-				}
+				entity node = points[ GetSpawnPointIndex( points, team ) ]
+				thread Aitdm_SpawnDropShip( node, team )
+				wait 3.0 //Wait 3 seconds because Dropships does not exist until they warp in, which takes about 3.7 seconds to happen because of the effect
 			}
-			
-			points = SpawnPoints_GetDropPod()
-			entity node = points[ GetSpawnPointIndex( points, team ) ]
-			waitthread AiGameModes_SpawnDropPod( node.GetOrigin(), node.GetAngles(), team, ent, SquadHandler )
+			else
+			{
+				points = SpawnPoints_GetDropPod()
+				entity node = points[ GetSpawnPointIndex( points, team ) ]
+				thread AiGameModes_SpawnDropPod( node.GetOrigin(), node.GetAngles(), team, ent, SquadHandler )
+			}
 		}
 		
-		WaitFrame()
+		wait 1.0 //Not really needed to check this every frame, also stacks with Dropship wait to Warp In
 	}
 }
 

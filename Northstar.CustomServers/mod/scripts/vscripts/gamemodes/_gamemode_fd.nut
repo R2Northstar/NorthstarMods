@@ -844,7 +844,6 @@ bool function runWave( int waveIndex, bool shouldDoBuyTime )
 			SetRoundBased( false )
 			SetWinner( TEAM_IMC, "#FD_TOTAL_DEFEAT_HINT", "#FD_TOTAL_DEFEAT_HINT" )
 			print( "Finishing match, no more retries left" )
-			RegisterPostSummaryScreenForMatch( false )
 			PlayFactionDialogueToTeam( "fd_matchDefeat", TEAM_MILITIA )
 		}
 		
@@ -856,6 +855,9 @@ bool function runWave( int waveIndex, bool shouldDoBuyTime )
 			foreach( entity player in GetPlayerArray() )
 				Highlight_ClearFriendlyHighlight( player ) //Clear Highlight for dropship animation
 		}
+		else
+			RegisterPostSummaryScreenForMatch( false ) //Do it here to override the settings established in _challenges.gnut
+		
 		return false
 	}
 
@@ -1713,6 +1715,11 @@ void function DisableTitanSelectionForPlayer( entity player )
 		return
 	
 	int suitIndex = GetPersistentSpawnLoadoutIndex( player, "titan" )
+	if( suitIndex > enumCount )
+	{
+		print( "Not locking Titans for " + player + " because selected titan is outside vanilla range, server is using custom Titans" )
+		return
+	}
 	
 	string playerUID = player.GetUID()
 	if( playerUID in file.playerHasTitanSelectionLocked ) //Override if player is rejoining with a different titan selected from lobby to bypass lock
@@ -1784,7 +1791,7 @@ void function RateSpawnpoints_FD( int checkClass, array<entity> spawnpoints, int
 {
 	foreach ( entity spawnpoint in spawnpoints )
 	{
-		float rating
+		float rating = 0.0
 		if( team == TEAM_MILITIA )
 			rating = clamp( 1.0 - ( Distance2D( spawnpoint.GetOrigin(), file.harvesterLocationForRespawn ) / 1000.0 ), 0.0, 1.0 )
 		else

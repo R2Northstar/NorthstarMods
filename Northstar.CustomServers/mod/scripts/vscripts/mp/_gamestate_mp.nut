@@ -270,7 +270,7 @@ void function GameStateEnter_Playing_Threaded()
 			else if ( file.suddenDeathBased && winningTeam == TEAM_UNASSIGNED ) // suddendeath if we draw and suddendeath is enabled and haven't switched sides
 				SetGameState( eGameState.SuddenDeath )
 			else
-				SetWinner( winningTeam )
+				SetWinner( winningTeam, "#GAMEMODE_TIME_LIMIT_REACHED", "#GAMEMODE_TIME_LIMIT_REACHED" )
 		}
 		
 		WaitFrame()
@@ -565,9 +565,9 @@ void function GameStateEnter_SuddenDeath()
 	if( mltElimited && imcElimited )
 		SetWinner( TEAM_UNASSIGNED )
 	else if( mltElimited )
-		SetWinner( TEAM_IMC )
+		SetWinner( TEAM_IMC, "#GAMEMODE_ENEMY_PILOTS_ELIMINATED", "#GAMEMODE_FRIENDLY_PILOTS_ELIMINATED" )
 	else if( imcElimited )
-		SetWinner( TEAM_MILITIA )
+		SetWinner( TEAM_MILITIA, "#GAMEMODE_ENEMY_PILOTS_ELIMINATED", "#GAMEMODE_FRIENDLY_PILOTS_ELIMINATED" )
 }
 
 
@@ -624,11 +624,7 @@ void function OnPlayerKilled( entity victim, entity attacker, var damageInfo )
 	if( victim.IsPlayer() )
 	{
 		victim.p.numberOfDeaths++
-		if( !ShowDeathHint( victim, damageInfo ) )
-		{
-			if( IsValid( attacker ) && attacker.IsNPC() && attacker.ai.bossTitanType == 0 )
-				GetBestDeathHintForNPCTitle( victim, attacker.GetTitle() )
-		}
+		ShowDeathHint( victim, damageInfo )
 	}
 
 	// set round winning killreplay info here if we're tracking pilot kills
@@ -675,6 +671,15 @@ void function OnPlayerKilled( entity victim, entity attacker, var damageInfo )
 			else
 				SetWinner( GetOtherTeam( victim.GetTeam() ), "#GAMEMODE_ENEMY_PILOTS_ELIMINATED", "#GAMEMODE_FRIENDLY_PILOTS_ELIMINATED" )
 		}
+	}
+	
+	array<entity> players = GetPlayerArrayOfTeam( victim.GetTeam() )
+	int functionref( entity, entity ) compareFunc = GameMode_GetScoreCompareFunc( GAMETYPE )
+	if ( compareFunc != null && players.len() )
+	{
+		players.sort( compareFunc )
+		if( victim == players[0] && attacker.IsPlayer() )
+			AddPlayerScore( attacker, "KilledMVP" )
 	}
 }
 
@@ -849,10 +854,51 @@ void function SetWinner( int team, string winningReason = "", string losingReaso
 	else
 		file.announceRoundWinnerLosingSubstr = GetStringID( losingReason )
 	
+	float endTime
+	if ( IsRoundBased() )
+		endTime = expect float( GetServerVar( "roundEndTime" ) )
+	else
+		endTime = expect float( GetServerVar( "gameEndTime" ) )
+	
 	if ( team != TEAM_UNASSIGNED )
 	{
-		GameRules_SetTeamScore( team, GameRules_GetTeamScore( team ) + 1 )
-		GameRules_SetTeamScore2( team, GameRules_GetTeamScore2( team ) + 1 )
+		if( !file.timerBased )
+		{
+			if( IsRoundBased() )
+			{
+				if( GameRules_GetTeamScore( team ) < GameMode_GetRoundScoreLimit( GAMETYPE ) )
+					GameRules_SetTeamScore( team, GameMode_GetRoundScoreLimit( GAMETYPE ) )
+					
+				if( GameRules_GetTeamScore2( team ) < GameMode_GetRoundScoreLimit( GAMETYPE ) )
+					GameRules_SetTeamScore2( team, GameMode_GetRoundScoreLimit( GAMETYPE ) )
+			}
+			else
+			{
+				if( GameRules_GetTeamScore( team ) < GameMode_GetScoreLimit( GAMETYPE ) )
+					GameRules_SetTeamScore( team, GameMode_GetScoreLimit( GAMETYPE ) )
+				
+				if( GameRules_GetTeamScore2( team ) < GameMode_GetScoreLimit( GAMETYPE ) )
+					GameRules_SetTeamScore2( team, GameMode_GetScoreLimit( GAMETYPE ) )
+			}
+		}
+		
+		else if( IsRoundBased() && Time() < endTime )
+		{
+			if( GameRules_GetTeamScore( team ) < GameMode_GetRoundScoreLimit( GAMETYPE ) )
+				GameRules_SetTeamScore( team, GameMode_GetRoundScoreLimit( GAMETYPE ) )
+				
+			if( GameRules_GetTeamScore2( team ) < GameMode_GetRoundScoreLimit( GAMETYPE ) )
+				GameRules_SetTeamScore2( team, GameMode_GetRoundScoreLimit( GAMETYPE ) )
+		}
+		
+		else if( Time() < endTime )
+		{
+			if( GameRules_GetTeamScore( team ) < GameMode_GetScoreLimit( GAMETYPE ) )
+				GameRules_SetTeamScore( team, GameMode_GetScoreLimit( GAMETYPE ) )
+			
+			if( GameRules_GetTeamScore2( team ) < GameMode_GetScoreLimit( GAMETYPE ) )
+				GameRules_SetTeamScore2( team, GameMode_GetScoreLimit( GAMETYPE ) )
+		}
 	}
 	
 	if ( GamePlayingOrSuddenDeath() )
@@ -914,14 +960,20 @@ void function AddTeamScore( int team, int amount )
 	GameRules_SetTeamScore2( team, GameRules_GetTeamScore2( team ) + amount )
 	
 	int scoreLimit
+	int score = GameRules_GetTeamScore( team )
+	
 	if ( IsRoundBased() )
 		scoreLimit = GameMode_GetRoundScoreLimit( GAMETYPE )
 	else
 		scoreLimit = GameMode_GetScoreLimit( GAMETYPE )
-		
-	int score = GameRules_GetTeamScore( team )
-	if ( score >= scoreLimit || GetGameState() == eGameState.SuddenDeath )
+	
+	if ( score >= scoreLimit && IsRoundBased() )
+		SetWinner( team, "#GAMEMODE_ROUND_LIMIT_REACHED", "#GAMEMODE_ROUND_LIMIT_REACHED" )
+	else if( score >= scoreLimit )
+		SetWinner( team, "#GAMEMODE_SCORE_LIMIT_REACHED", "#GAMEMODE_SCORE_LIMIT_REACHED" )
+	else if( GetGameState() == eGameState.SuddenDeath )
 		SetWinner( team )
+	
 	else if ( ( file.switchSidesBased && !file.hasSwitchedSides ) && score >= ( scoreLimit.tofloat() / 2.0 ) )
 		SetGameState( eGameState.SwitchingSides )
 }

@@ -472,7 +472,7 @@ void function RespawnAsPilot( entity player )
 	// respawn crash exploit hotfix
 	if(IsAlive( player )) return
 
-	player.RespawnPlayer( FindSpawnPoint( player, false, ( ShouldStartSpawn( player ) || Flag( "ForceStartSpawn" ) ) && !IsFFAGame() ) )
+	player.RespawnPlayer( FindSpawnPoint( player, false, ( ShouldStartSpawn( player ) || Flag( "ForceStartSpawn" ) ) ) )
 }
 
 void function RespawnAsTitan( entity player, bool manualPosition = false )
@@ -483,7 +483,7 @@ void function RespawnAsTitan( entity player, bool manualPosition = false )
 	player.Signal( "PlayerRespawnStarted" )
 
 	player.isSpawning = true
-	entity spawnpoint = FindSpawnPoint( player, true, ( ShouldStartSpawn( player ) || Flag( "ForceStartSpawn" ) ) && !IsFFAGame() )
+	entity spawnpoint = FindSpawnPoint( player, true, ( ShouldStartSpawn( player ) || Flag( "ForceStartSpawn" ) ) )
 
 	if ( file.recalculateRespawnAsTitanStartPointCallback != null )
 		spawnpoint = file.recalculateRespawnAsTitanStartPointCallback( player, spawnpoint )

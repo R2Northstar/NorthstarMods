@@ -38,11 +38,11 @@ void function InitChallenges()
 {
 #if (UI && CLIENT)
 
-	SCB_SetCompleteMeritState( 2 )
-	SCB_SetEvacMeritState( 2 )
-	SCB_SetMeritCount( 2 )
-	SCB_SetScoreMeritState( 2 )
-	SCB_SetWinMeritState( 2 )
+	SCB_SetCompleteMeritState( 4 )
+	SCB_SetEvacMeritState( 4 )
+	SCB_SetMeritCount( 4 )
+	SCB_SetScoreMeritState( 4 )
+	SCB_SetWinMeritState( 4 )
 	SCB_SetWeaponMeritCount( -1 )
 	SCB_SetTitanMeritCount( -1 )
 	
@@ -90,11 +90,17 @@ void function RemovePlayerFromChallengePool( entity player )
 
 void function RegisterChallenges_OnMatchEnd()
 {
-	//30% Chance to trigger akin to vanilla, apply always since all players have paid cosmetics unlocked
-	bool eliteWarpaintRNG = ( RandomInt( 100 ) <= 30 ) ? true : false
+	bool eliteWarpaintRNG = false
+	
+	if( RandomIntRange( 0, 100 ) <= 30 ) //30% Chance to trigger akin to vanilla, apply always since all players have paid cosmetics unlocked
+		eliteWarpaintRNG = true
 	
 	foreach( player in GetPlayerArray() )
 	{
+		player.SetPersistentVar( "isPostGameScoreboardValid", true )
+		player.SetPersistentVar( "isFDPostGameScoreboardValid", false ) //FD itself overrides this right after when match ends
+		SetUIVar( level, "showGameSummary", true )
+		
 		if( eliteWarpaintRNG )
 			SetPlayerChallengeSquadLeader( player )
 		
@@ -164,17 +170,21 @@ bool function HasPlayerCompletedMeritScore( entity player )
                                                                                                    
 =============================================================================================================*/
 
-void function SetPlayerChallengeEvacState( entity player, bool successEvac )
+void function SetPlayerChallengeEvacState( entity player, int successEvac = 0 )
 {
-	if( successEvac )
+	if( successEvac == 0 ) //Evac Ship destroyed
+		Remote_CallFunction_UI( player, "SCB_SetEvacMeritState", 2 )
+	
+	else if( successEvac == 1 ) //Player itself managed to evac
 	{
 		file.playerTotalMeritCount[ player ]++
 		Remote_CallFunction_UI( player, "SCB_SetEvacMeritState", 1 )
 		player.SetPersistentVar( "xp_match[" + XP_TYPE.EVAC + "]", 1 )
 		Remote_CallFunction_UI( player, "SCB_SetMeritCount", file.playerTotalMeritCount[ player ] )
 	}
-	else
-		Remote_CallFunction_UI( player, "SCB_SetEvacMeritState", -1 )
+	
+	else if( successEvac == 2 ) //Team managed to evac
+		Remote_CallFunction_UI( player, "SCB_SetEvacMeritState", 3 )
 }
 
 void function SetPlayerChallengeMatchWon( entity player, bool playerWon )
