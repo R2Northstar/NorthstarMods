@@ -556,12 +556,6 @@ void function FD_createHarvester()
 			thread StratonHornetDogfightsIntense()
 	}
 	
-	switch( GetMapName() ) //This one here is for the PVP Glitch which IMC players will spawn on Harvester side instead of the other one
-	{
-		case "mp_rise":
-			SetServerVar( "switchedSides", 1 )
-	}
-	
 	UpdateTeamReserve( file.moneyInBank )
 	WaveRestart_ResetPlayersInventory() //Call it in here to not misinform players about items they had in previous wave restarts
 }
@@ -1820,11 +1814,27 @@ void function FD_PlayerRespawnThreaded( entity player )
 		if( GetGlobalNetInt( "FD_currentWave" ) == 0 || file.isLiveFireMap )
 			PlayerEarnMeter_SetMode( player, 0 )
 		if( player.GetTeam() == TEAM_IMC )
+		{
 			player.Minimap_AlwaysShow( TEAM_MILITIA, null )
+			array<entity> spawnpoints = SpawnPoints_GetPilotStart( TEAM_IMC )
+			if( spawnpoints.len() )
+			{
+				entity imcspawn = spawnpoints.getrandom()
+				player.SetOrigin( imcspawn.GetOrigin() )
+				player.SetAngles( imcspawn.GetAngles() )
+			}
+		}
 		else if( player.GetTeam() == TEAM_MILITIA && player.s.didthepvpglitch )
 		{
 			SetTeam( player, TEAM_IMC )
 			player.Minimap_AlwaysShow( TEAM_MILITIA, null )
+			array<entity> spawnpoints = SpawnPoints_GetPilotStart( TEAM_IMC )
+			if( spawnpoints.len() )
+			{
+				entity imcspawn = spawnpoints.getrandom()
+				player.SetOrigin( imcspawn.GetOrigin() )
+				player.SetAngles( imcspawn.GetAngles() )
+			}
 		}
 	}
 	else
