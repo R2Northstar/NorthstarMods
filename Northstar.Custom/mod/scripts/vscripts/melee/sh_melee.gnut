@@ -241,6 +241,9 @@ bool function CodeCallback_IsValidMeleeExecutionTarget( entity attacker, entity 
 	if ( attacker.IsTitan() && target.IsTitan() )
 	{
 		entity meleeWeapon = attacker.GetMeleeWeapon()
+		if( !IsValid( meleeWeapon ) )
+			return false
+		
 		if ( meleeWeapon.HasMod( "berserker_core_punch" ) || meleeWeapon.HasMod( "super_charged" ) || meleeWeapon.HasMod( "super_charged_SP" ) )
 			return false
 

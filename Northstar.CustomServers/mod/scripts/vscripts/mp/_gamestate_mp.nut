@@ -375,7 +375,7 @@ void function GameStateEnter_WinnerDetermined_Threaded()
 			player.UnfreezeControlsOnServer()
 	}
 	
-	wait 2 //Required to properly restart without players in Titans crashing it in FD
+	wait CLEAR_PLAYERS_BUFFER //Required to properly restart without players in Titans crashing it in FD
 	
 	if ( IsRoundBased() )
 	{
@@ -407,6 +407,7 @@ void function GameStateEnter_WinnerDetermined_Threaded()
 	}
 	else
 	{
+		svGlobal.levelEnt.Signal( "GameEnd" )
 		RegisterChallenges_OnMatchEnd()
 		if ( ClassicMP_ShouldRunEpilogue() )
 		{
@@ -678,7 +679,7 @@ void function OnPlayerKilled( entity victim, entity attacker, var damageInfo )
 	if ( compareFunc != null && players.len() )
 	{
 		players.sort( compareFunc )
-		if( victim == players[0] && attacker.IsPlayer() )
+		if( victim == players[0] && attacker.IsPlayer() && attacker != victim )
 			AddPlayerScore( attacker, "KilledMVP" )
 	}
 }
@@ -837,6 +838,26 @@ void function SetRoundWinningKillReplayAttacker( entity attacker, int inflictorE
 	file.roundWinningKillReplayTimeOfDeath = Time()
 }
 
+void function DebounceScoreTie( int team )
+{
+	if( IsRoundBased() )
+	{
+		if( GameRules_GetTeamScore( team ) < GameMode_GetRoundScoreLimit( GAMETYPE ) )
+			GameRules_SetTeamScore( team, GameMode_GetRoundScoreLimit( GAMETYPE ) )
+					
+		if( GameRules_GetTeamScore2( team ) < GameMode_GetRoundScoreLimit( GAMETYPE ) )
+			GameRules_SetTeamScore2( team, GameMode_GetRoundScoreLimit( GAMETYPE ) )
+	}
+	else
+	{
+		if( GameRules_GetTeamScore( team ) < GameMode_GetScoreLimit( GAMETYPE ) )
+			GameRules_SetTeamScore( team, GameMode_GetScoreLimit( GAMETYPE ) )
+				
+		if( GameRules_GetTeamScore2( team ) < GameMode_GetScoreLimit( GAMETYPE ) )
+			GameRules_SetTeamScore2( team, GameMode_GetScoreLimit( GAMETYPE ) )
+	}
+}
+
 void function SetWinner( int team, string winningReason = "", string losingReason = "" )
 {	
 	SetServerVar( "winningTeam", team )
@@ -860,45 +881,23 @@ void function SetWinner( int team, string winningReason = "", string losingReaso
 	else
 		endTime = expect float( GetServerVar( "gameEndTime" ) )
 	
-	if ( team != TEAM_UNASSIGNED )
+	if( GameRules_GetGameMode() == FD ) //Reset IMC scorepoints to prevent ties and properly display winner in post-summary screen for FD
+	{
+		if( team == TEAM_MILITIA )
+		{
+			GameRules_SetTeamScore( TEAM_IMC, 0 )
+			GameRules_SetTeamScore2( TEAM_IMC, 0 )
+			GameRules_SetTeamScore( TEAM_MILITIA, 1 )
+			GameRules_SetTeamScore2( TEAM_MILITIA, 1 )
+		}
+	}
+	else if ( team != TEAM_UNASSIGNED && GameRules_GetGameMode() != FD )
 	{
 		if( !file.timerBased )
-		{
-			if( IsRoundBased() )
-			{
-				if( GameRules_GetTeamScore( team ) < GameMode_GetRoundScoreLimit( GAMETYPE ) )
-					GameRules_SetTeamScore( team, GameMode_GetRoundScoreLimit( GAMETYPE ) )
-					
-				if( GameRules_GetTeamScore2( team ) < GameMode_GetRoundScoreLimit( GAMETYPE ) )
-					GameRules_SetTeamScore2( team, GameMode_GetRoundScoreLimit( GAMETYPE ) )
-			}
-			else
-			{
-				if( GameRules_GetTeamScore( team ) < GameMode_GetScoreLimit( GAMETYPE ) )
-					GameRules_SetTeamScore( team, GameMode_GetScoreLimit( GAMETYPE ) )
-				
-				if( GameRules_GetTeamScore2( team ) < GameMode_GetScoreLimit( GAMETYPE ) )
-					GameRules_SetTeamScore2( team, GameMode_GetScoreLimit( GAMETYPE ) )
-			}
-		}
-		
-		else if( IsRoundBased() && Time() < endTime )
-		{
-			if( GameRules_GetTeamScore( team ) < GameMode_GetRoundScoreLimit( GAMETYPE ) )
-				GameRules_SetTeamScore( team, GameMode_GetRoundScoreLimit( GAMETYPE ) )
-				
-			if( GameRules_GetTeamScore2( team ) < GameMode_GetRoundScoreLimit( GAMETYPE ) )
-				GameRules_SetTeamScore2( team, GameMode_GetRoundScoreLimit( GAMETYPE ) )
-		}
+			DebounceScoreTie( team )
 		
 		else if( Time() < endTime )
-		{
-			if( GameRules_GetTeamScore( team ) < GameMode_GetScoreLimit( GAMETYPE ) )
-				GameRules_SetTeamScore( team, GameMode_GetScoreLimit( GAMETYPE ) )
-			
-			if( GameRules_GetTeamScore2( team ) < GameMode_GetScoreLimit( GAMETYPE ) )
-				GameRules_SetTeamScore2( team, GameMode_GetScoreLimit( GAMETYPE ) )
-		}
+			DebounceScoreTie( team )
 	}
 	
 	if ( GamePlayingOrSuddenDeath() )
@@ -1047,6 +1046,7 @@ float function GetTimeLimit_ForGameMode()
 
 void function DialoguePlayNormal()
 {
+	svGlobal.levelEnt.EndSignal( "GameEnd" )
 	int totalScore = GameMode_GetScoreLimit( GameRules_GetGameMode() )
 	int winningTeam
 	int losingTeam

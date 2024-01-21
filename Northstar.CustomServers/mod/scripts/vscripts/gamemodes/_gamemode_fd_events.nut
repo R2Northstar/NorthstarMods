@@ -2810,6 +2810,9 @@ void function SpawnFDHeavyTurret( vector spawnpos, vector angles, vector ornull 
 	HeavyTurret.kv.WeaponProficiency = eWeaponProficiency.PERFECT
 	HeavyTurret.SetNoTarget( false )
 	HeavyTurret.SetLookDistOverride( 2600 )
+	TakeWeaponsForArray( HeavyTurret, HeavyTurret.GetMainWeapons() )
+	entity turretGun = HeavyTurret.GiveWeapon( "mp_weapon_defender", ["PROTO_at_turret"] )
+	turretGun.kv.VisibilityFlags = ENTITY_VISIBLE_TO_NOBODY
 	
 	if ( battportpos != null && battportangles != null )
 	{

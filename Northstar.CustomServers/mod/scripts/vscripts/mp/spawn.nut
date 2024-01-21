@@ -130,7 +130,7 @@ entity function FindSpawnPoint( entity player, bool isTitan, bool useStartSpawnp
 {
 	int team = player.GetTeam()
 	if ( HasSwitchedSides() )
-		team = GetOtherTeam( team )
+		team = ( team == TEAM_MILITIA ) ? TEAM_IMC : TEAM_MILITIA
 
 	array<entity> spawnpoints
 	if ( useStartSpawnpoint )
@@ -227,13 +227,8 @@ bool function IsSpawnpointValid( entity spawnpoint, int team )
 	
 	int compareTeam = spawnpoint.GetTeam()
 	if ( HasSwitchedSides() )
-	{
-		if( compareTeam == TEAM_MILITIA )
-			compareTeam = TEAM_IMC
-		else if( compareTeam == TEAM_IMC )
-			compareTeam = TEAM_MILITIA
-	}
-		
+		compareTeam = ( compareTeam == TEAM_MILITIA ) ? TEAM_IMC : TEAM_MILITIA
+	
 	foreach ( bool functionref( entity, int ) customValidationRule in file.customSpawnpointValidationRules )
 		if ( !customValidationRule( spawnpoint, team ) )
 			return false
@@ -261,12 +256,14 @@ bool function IsSpawnpointValid( entity spawnpoint, int team )
 
     const minEnemyDist = 1000.0 // about 20 meters?
     // in rsquirrel extend returns null unlike in vanilla squirrel
-    array< entity > spawnBlockers = GetPlayerArrayEx( "any", compareTeam, TEAM_ANY, spawnpoint.GetOrigin(), minEnemyDist )
-    spawnBlockers.extend( GetProjectileArrayEx( "any", compareTeam, TEAM_ANY, spawnpoint.GetOrigin(), minEnemyDist ) )
-    spawnBlockers.extend( GetNPCArrayEx( "any", compareTeam, TEAM_ANY, spawnpoint.GetOrigin(), minEnemyDist ) )
+    array< entity > spawnBlockers = GetPlayerArrayEx( "any", TEAM_ANY, team, spawnpoint.GetOrigin(), minEnemyDist )
+    spawnBlockers.extend( GetProjectileArrayEx( "any", TEAM_ANY, team, spawnpoint.GetOrigin(), minEnemyDist ) )
+    spawnBlockers.extend( GetNPCArrayEx( "any", TEAM_ANY, team, spawnpoint.GetOrigin(), minEnemyDist ) )
 	foreach ( entity blocker in spawnBlockers )
+	{
 		if ( blocker.GetTeam() != team )
 			return false
+	}
 	
 	// los check
 	return !spawnpoint.IsVisibleToEnemies( team )

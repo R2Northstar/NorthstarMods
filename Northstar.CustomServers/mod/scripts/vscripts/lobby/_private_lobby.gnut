@@ -197,7 +197,7 @@ void function StartMatch( bool isAutostart = false )
 		print( "couldn't find playlist for gamemode " + file.mode )
 	}
 	
-	RefreshPlayerTeams()
+	RefreshPlayerTeams( isAutostart )
 	
 	SetConVarString( "ns_private_match_last_map", file.map )
 	SetConVarString( "ns_private_match_last_mode", file.mode )
@@ -210,7 +210,7 @@ void function StartMatch( bool isAutostart = false )
 	GameRules_ChangeMap( file.map, mode )
 }
 
-void function RefreshPlayerTeams()
+void function RefreshPlayerTeams( bool rerandomize = false )
 {
 	int maxTeams = GetGamemodeVarOrUseValue( file.mode, "max_teams", "2" ).tointeger()
 	int maxPlayers = GetGamemodeVarOrUseValue( file.mode, "max_players", "12" ).tointeger()
@@ -222,21 +222,26 @@ void function RefreshPlayerTeams()
 		for ( int i = 0; i < players.len(); i++ )
 			SetTeam( players[ i ], i + 7 ) // 7 is the lowest ffa team
 	}
-	else
+	else if( maxTeams > 1 )
 	{
 		bool lastSetMilitia = false
 		foreach ( entity player in GetPlayerArray() )
 		{
-			if ( player.GetTeam() == TEAM_MILITIA || player.GetTeam() == TEAM_IMC )
+			if ( !rerandomize && ( player.GetTeam() == TEAM_MILITIA || player.GetTeam() == TEAM_IMC ) )
 				continue
 				
 			if ( lastSetMilitia ) // ensure roughly evenish distribution
 				SetTeam( player, TEAM_IMC )
 			else
 				SetTeam( player, TEAM_MILITIA )
-				
+			
 			lastSetMilitia = !lastSetMilitia
 		}
+	}
+	else
+	{
+		foreach ( entity player in GetPlayerArray() )
+			SetTeam( player, TEAM_MILITIA )
 	}
 }
 

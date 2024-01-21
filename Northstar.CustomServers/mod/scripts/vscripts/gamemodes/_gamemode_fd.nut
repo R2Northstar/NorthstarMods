@@ -556,6 +556,12 @@ void function FD_createHarvester()
 			thread StratonHornetDogfightsIntense()
 	}
 	
+	switch( GetMapName() ) //This one here is for the PVP Glitch which IMC players will spawn on Harvester side instead of the other one
+	{
+		case "mp_rise":
+			SetServerVar( "switchedSides", 1 )
+	}
+	
 	UpdateTeamReserve( file.moneyInBank )
 	WaveRestart_ResetPlayersInventory() //Call it in here to not misinform players about items they had in previous wave restarts
 }
@@ -906,9 +912,6 @@ bool function runWave( int waveIndex, bool shouldDoBuyTime )
 		
 		else
 		{
-			//Reset IMC scorepoints to prevent ties and properly display winner in post-summary screen
-			GameRules_SetTeamScore( TEAM_IMC, 0 )
-			GameRules_SetTeamScore2( TEAM_IMC, 0 )
 			SetRoundBased( false )
 			SetWinner( TEAM_MILITIA, "#FD_TOTAL_VICTORY_HINT", "#FD_TOTAL_VICTORY_HINT" )
 			return true
@@ -1949,7 +1952,7 @@ void function DamageScaleByDifficulty( entity ent, var damageInfo )
 	
 	/* I should really NOT be doing this, but jfc Scorch is just so broken in FD it's hard to find a good balance difficulty for other titans
 	when this mf just DoT everyone and spam flame core all the time, so yeah... double the effort for this guy to kill Elites */
-	if( ent.GetTeam() == TEAM_IMC && ent.ai.bossTitanType == TITAN_MERC && attacker.GetTeam() == TEAM_MILITIA )
+	if( ent.IsNPC() && ent.GetTeam() == TEAM_IMC && ent.ai.bossTitanType == TITAN_MERC && attacker.GetTeam() == TEAM_MILITIA )
 	{
 		switch( damageSourceID )
 		{
