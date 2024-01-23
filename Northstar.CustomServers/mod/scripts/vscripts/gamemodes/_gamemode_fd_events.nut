@@ -2131,7 +2131,7 @@ void function spawnSniperTitan( SmokeEvent smokeEvent, SpawnEvent spawnEvent, Fl
 		
 		array<entity> primaryWeapons = npc.GetMainWeapons()
 		entity maingun = primaryWeapons[0]
-		maingun.AddMod( "instant_shot" )
+		maingun.AddMod( "quick_shot" )
 		maingun.AddMod( "fast_reload" )
 		maingun.AddMod( "pas_northstar_weapon" )
 		maingun.AddMod( "burn_mod_titan_sniper" )
@@ -2524,10 +2524,10 @@ void function SlowEnemyMovementBasedOnDifficulty( entity npc )
 			npc.SetNPCMoveSpeedScale( 1.0 )
 			break
 		case eFDDifficultyLevel.NORMAL:
-			npc.SetNPCMoveSpeedScale( 0.75 )
-			break
 		case eFDDifficultyLevel.HARD:
 		case eFDDifficultyLevel.MASTER:
+			npc.SetNPCMoveSpeedScale( 0.75 )
+			break
 		case eFDDifficultyLevel.INSANE:
 			npc.SetNPCMoveSpeedScale( 0.5 )
 			break
@@ -2563,26 +2563,27 @@ void function GruntTargetsTitan( entity npc )
 {
 	Assert( IsValid( npc ) && IsGrunt( npc ), "Entity is not a Grunt: " + npc )
 	
-	OnEnemyChanged_MinionSwitchToHeavyArmorWeapon( npc )
-	
 	entity enemy = npc.GetEnemy()
-	if( IsValid( enemy ) )
+	if( !IsValid( enemy ) )
+		return
+	
+	if( IsValid( fd_harvester.harvester ) && enemy != fd_harvester.harvester )
+		OnEnemyChanged_MinionSwitchToHeavyArmorWeapon( npc )
+	
+	switch ( difficultyLevel )
 	{
-		switch ( difficultyLevel )
-		{
-			case eFDDifficultyLevel.EASY:
-			case eFDDifficultyLevel.NORMAL:
-				if( enemy.IsTitan() && GetMapName().find( "mp_lf_" ) == null )
-					npc.AssaultSetFightRadius( 800 )
-				else
-					npc.AssaultSetFightRadius( 0 )
-				break
-			case eFDDifficultyLevel.HARD:
-			case eFDDifficultyLevel.MASTER:
-			case eFDDifficultyLevel.INSANE:
+		case eFDDifficultyLevel.EASY:
+		case eFDDifficultyLevel.NORMAL:
+			if( enemy.IsTitan() && GetMapName().find( "mp_lf_" ) == null )
+				npc.AssaultSetFightRadius( 800 )
+			else
 				npc.AssaultSetFightRadius( 0 )
-				break
-		}
+			break
+		case eFDDifficultyLevel.HARD:
+		case eFDDifficultyLevel.MASTER:
+		case eFDDifficultyLevel.INSANE:
+			npc.AssaultSetFightRadius( 0 )
+			break
 	}
 }
 
@@ -2811,8 +2812,9 @@ void function SpawnFDHeavyTurret( vector spawnpos, vector angles, vector ornull 
 	HeavyTurret.SetNoTarget( false )
 	HeavyTurret.SetLookDistOverride( 2600 )
 	TakeWeaponsForArray( HeavyTurret, HeavyTurret.GetMainWeapons() )
-	entity turretGun = HeavyTurret.GiveWeapon( "mp_weapon_defender", ["PROTO_at_turret"] )
+	entity turretGun = HeavyTurret.GiveWeapon( "mp_weapon_arc_launcher", ["at_unlimited_ammo"] )
 	turretGun.kv.VisibilityFlags = ENTITY_VISIBLE_TO_NOBODY
+	thread HeavyTurretAmmoHack( HeavyTurret )
 	
 	if ( battportpos != null && battportangles != null )
 	{
@@ -2828,6 +2830,26 @@ void function SpawnFDHeavyTurret( vector spawnpos, vector angles, vector ornull 
 		NPC_NoTarget( HeavyTurret )
 		HeavyTurret.SetInvulnerable()
 		HeavyTurret.SetValidHealthBarTarget( false )
+	}
+}
+
+void function HeavyTurretAmmoHack( entity turret )
+{
+	turret.EndSignal( "OnDestroy" )
+	
+	while( true )
+	{
+		if( turret.GetHealth() > 1 )
+		{
+			entity maingun = turret.GetMainWeapons()[0]
+			int weaponMax = maingun.GetWeaponPrimaryClipCountMax()
+			int ammo = maingun.GetWeaponPrimaryClipCount()
+			
+			if ( IsValid( maingun ) && ammo < weaponMax )
+				maingun.SetWeaponPrimaryClipCount( maingun.GetWeaponPrimaryClipCountMax() )
+		}
+		
+		wait 0.5
 	}
 }
 

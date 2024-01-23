@@ -521,6 +521,7 @@ void function FD_createHarvester()
 		fd_harvester.harvester.Minimap_SetZOrder( MINIMAP_Z_OBJECT )
 		fd_harvester.harvester.Minimap_SetCustomState( eMinimapObject_prop_script.FD_HARVESTER )
 		fd_harvester.harvester.SetTakeDamageType( DAMAGE_EVENTS_ONLY )
+		fd_harvester.harvester.SetArmorType( ARMOR_TYPE_HEAVY )
 		ToggleNPCPathsForEntity( fd_harvester.harvester, false )
 		fd_harvester.harvester.SetAIObstacle( true )
 		fd_harvester.harvester.SetScriptPropFlags( SPF_DISABLE_CAN_BE_MELEED | SPF_BLOCKS_AI_NAVIGATION )
@@ -1534,7 +1535,10 @@ bool function useShieldBoost( entity player, array<string> args )
 		
 		//If shield is down and someone uses Shield Boost, Harvester Shield Particle FX wasn't spawning (Vanilla bug)
 		if( !IsValid( fd_harvester.particleShield ) )
+		{
 			generateShieldFX( fd_harvester )
+			file.harvesterShieldDown = false //Assume this was set to true since shields went down
+		}
 		
 		int boostcount = player.GetPlayerNetInt( "numHarvesterShieldBoost" )
 		boostcount--
@@ -2008,7 +2012,7 @@ void function DamageScaleByDifficulty( entity ent, var damageInfo )
 				case eDamageSourceId.mp_weapon_softball:
 				case eDamageSourceId.mp_weapon_satchel:
 				case eDamageSourceId.mp_weapon_pulse_lmg:
-				DamageInfo_ScaleDamage( damageInfo, 0.2 )
+				DamageInfo_ScaleDamage( damageInfo, 0.1 )
 				break
 				
 				default:
@@ -2115,6 +2119,7 @@ void function OnHarvesterDamaged( entity harvester, var damageInfo )
 	}
 
 	int damageSourceID = DamageInfo_GetDamageSourceIdentifier( damageInfo )
+	entity weapon = DamageInfo_GetWeapon( damageInfo )
 	int attackerTypeID = FD_GetAITypeID_ByString( attacker.GetTargetName() )
 	float damageAmount = DamageInfo_GetDamage( damageInfo )
 	
@@ -2125,6 +2130,9 @@ void function OnHarvesterDamaged( entity harvester, var damageInfo )
 		return
 	}
 	
+	if ( IsValid( weapon ) && HeavyArmorCriticalHitRequired( damageInfo ) && IsValid( attacker ) && !attacker.IsTitan() ) //Small change since Grunts will do 0 damage with normal guns because Harvester uses heavy armor
+		damageAmount = float( weapon.GetWeaponSettingInt( eWeaponVar.damage_near_value ) )
+	
 	int PlayersInMatch = GetPlayerArrayOfTeam( TEAM_MILITIA ).len() + 1
 	
 	if ( PlayersInMatch > 4 ) //Additional players should not be considered
@@ -2132,7 +2140,7 @@ void function OnHarvesterDamaged( entity harvester, var damageInfo )
 	
 	float MultiplierPerPlayer = 0.25
 
-	if ( !damageSourceID && !damageAmount && !attacker )
+	if ( !damageSourceID || !damageAmount || !IsValid( attacker ) )
 	{
 		DamageInfo_ScaleDamage( damageInfo, 0.0 )
 		return
@@ -2140,90 +2148,40 @@ void function OnHarvesterDamaged( entity harvester, var damageInfo )
 
 	fd_harvester.lastDamage = Time()
 
-	if( difficultyLevel == eFDDifficultyLevel.EASY )
+	if( difficultyLevel == eFDDifficultyLevel.EASY ) //Not sure if its a check vanilla does, but stuff does a bit less damage on Easy
 		damageAmount *= 0.8
 	else
 		damageAmount *= GetCurrentPlaylistVarFloat( "fd_player_damage_scalar", 1.0 )
 	damageAmount *= MultiplierPerPlayer * PlayersInMatch
 	
-	//All of this is factored BEFORE difficulty damage multipliers, so probably on Master and Insane difficulty only one Nuke Titan should almost end the Harvester even with full shields
-	//Master and Insane difficulties tends to spawn less enemies as well, so players should be paying attention against those enemies
-	//These are approximate values accordingly to vanilla
-	if( harvester.GetShieldHealth() > 0 )
+	//All of this multiplies after difficulty damage scalar
+	//These are not 1:1 to vanilla yet just for gameplay sanity, since on vanilla there are atrocious things that can happen which will be restored later
+	switch( damageSourceID )
 	{
-		switch( damageSourceID )
-		{
-			case eDamageSourceId.mp_titancore_laser_cannon:
-			damageAmount *= 0.05
-			break
-			
-			case eDamageSourceId.mp_titancore_salvo_core:
-			case eDamageSourceId.mp_titanweapon_flightcore_rockets:
-			case eDamageSourceId.mp_titancore_flame_wave:
-			case eDamageSourceId.mp_titanweapon_sniper:
-			damageAmount *= 0.25
-			break
+		case eDamageSourceId.mp_titancore_laser_cannon:
+		case eDamageSourceId.mp_titancore_salvo_core:
+		case eDamageSourceId.mp_titanweapon_flightcore_rockets:
+		case eDamageSourceId.mp_titancore_flame_wave:
+		damageAmount *= 0.1
+		break
 		
-			case eDamageSourceId.damagedef_stalker_powersupply_explosion_small:
-			case eDamageSourceId.mp_weapon_super_spectre:
-			case eDamageSourceId.super_spectre_melee:
-			damageAmount *= 2
-			break
-			
-			case eDamageSourceId.damagedef_stalker_powersupply_explosion_large:
-			case eDamageSourceId.damagedef_frag_drone_explode_FD:
-			case eDamageSourceId.mp_titanweapon_rocketeer_rocketstream:
-			case eDamageSourceId.mp_weapon_rocket_launcher:
-			case eDamageSourceId.mp_weapon_droneplasma:
-			damageAmount *= 4
-			break
-			
-			case eDamageSourceId.damagedef_nuclear_core:
-			damageAmount *= 6
-			break
-			
-			case eDamageSourceId.mp_titanweapon_arc_cannon:
-			damageAmount *= 10.0
-			break
-			
-			case eDamageSourceId.mp_weapon_grenade_emp:
-			damageAmount *= 30.0
-			break
-		}
-	}
-	
-	else
-	{
-		switch( damageSourceID )
-		{
-			case eDamageSourceId.damagedef_nuclear_core: //A single Nuke Titan should already be a high threat to the Harvester
-			damageAmount *= 10
-			break
-			
-			case eDamageSourceId.damagedef_stalker_powersupply_explosion_large:
-			case eDamageSourceId.damagedef_frag_drone_explode_FD: //Not sure, Ticks feels off
-			case eDamageSourceId.mp_titanweapon_rocketeer_rocketstream: //Mortar titans also do pose a threat if left unchecked for too long
-			case eDamageSourceId.mp_weapon_rocket_launcher: //Idk apparently the Archer that mortar spectres uses has no special damage type
-			case eDamageSourceId.mp_weapon_droneplasma: //Not sure too, Plasma Drones also seems off
-			damageAmount *= 4
-			break
+		case eDamageSourceId.mp_titanweapon_meteor:
+		case eDamageSourceId.mp_titanweapon_meteor_thermite:
+		case eDamageSourceId.mp_titanweapon_meteor_thermite_charged:
+		damageAmount *= 0.5
+		break
 		
-			case eDamageSourceId.damagedef_stalker_powersupply_explosion_small:
-			damageAmount *= 2 //Stalkers should also be able to take a little more from Harvester as in vanilla
-			break
-			
-			//Actually for Cores its better reduce their damage because a single Elite could just disintegrate Harvester within 2 seconds
-			case eDamageSourceId.mp_titancore_flame_wave:
-			case eDamageSourceId.mp_titancore_salvo_core:
-			case eDamageSourceId.mp_titanweapon_flightcore_rockets:
-			case eDamageSourceId.mp_titanweapon_sniper:
-			damageAmount *= 0.25
-			break
-			
-			case eDamageSourceId.mp_titancore_laser_cannon:
-			damageAmount *= 0.05
-			break
-		}
+		case eDamageSourceId.damagedef_nuclear_core:
+		damageAmount *= GENERATOR_DAMAGE_NUKE_CORE_MULTIPLIER
+		break
+		
+		case eDamageSourceId.mp_titanweapon_rocketeer_rocketstream:
+		damageAmount *= GENERATOR_DAMAGE_MORTAR_ROCKET_MULTIPLIER
+		break
+		
+		case eDamageSourceId.mp_weapon_grenade_emp:
+		damageAmount *= 2.0
+		break
 	}
 	
 	float shieldPercent = ( ( harvester.GetShieldHealth().tofloat() / harvester.GetShieldHealthMax() ) * 100 )
@@ -2253,7 +2211,7 @@ void function OnHarvesterDamaged( entity harvester, var damageInfo )
 			break
 			
 			case eFD_AITypeIDs.TITAN_NUKE:
-			if( Distance2D( attacker.GetOrigin(), harvester.GetOrigin() ) < FD_HARVESTER_PERIMETER_DIST ) //Do this because bullets from Nuke Titans may trigger the speech from too far
+			if( Distance2D( attacker.GetOrigin(), harvester.GetOrigin() ) < 2000 ) //Do this because bullets from Nuke Titans may trigger the speech from too far
 				PlayFactionDialogueToTeam( "fd_nukeTitanNearBase", TEAM_MILITIA )
 			else
 				PlayFactionDialogueToTeam( "fd_baseShieldTakingDmg", TEAM_MILITIA )

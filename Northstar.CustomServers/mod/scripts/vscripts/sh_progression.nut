@@ -97,6 +97,23 @@ bool function ClientCommand_ResetTitanAegis( entity player, array<string> args )
 		return false
 	
 	int suitIndex = args[0].tointeger()
+	
+	//Idfk why don't ask, but these fucking 3 Titans have indexes swapped for reasons beyond Lovecraftian gods comprehension
+	//Tone index points to Northstar, Northstar points to Ronin and Ronin points to Tone, had to do this to proper make them reset their Aegis
+	switch ( args[0] )
+	{
+		case "2":
+		suitIndex = 4
+		break
+		
+		case "3":
+		suitIndex = 2
+		break
+		
+		case "4":
+		suitIndex = 3
+		break
+	}
 	player.SetPersistentVar( "titanFDUnlockPoints[" + suitIndex + "]", 0 )
 	player.SetPersistentVar( "previousFDUnlockPoints[" + suitIndex + "]", 0 )
 	player.SetPersistentVar( "fdTitanXP[" + suitIndex + "]", 0 )
