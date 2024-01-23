@@ -64,9 +64,8 @@ void function InitFDPlaylistMenu()
 
 	AddMenuFooterOption( file.menu, BUTTON_A, "#A_BUTTON_SELECT" )
 	AddMenuFooterOption( file.menu, BUTTON_B, "#B_BUTTON_BACK", "#BACK" )
-	//AddMenuFooterOption( file.menu, BUTTON_Y, "#Y_BUTTON_RESET_AEGIS", "#RESET_AEGIS", ShowTitanResetDialog )
 
-	for ( int idx = 0; idx < 4; ++idx )
+	for ( int idx = 0; idx < 5; ++idx )
 	{
 		string buttonName = ("BtnPlaylistIcon" + format( "%02d", idx ))
 		var button = Hud_GetChild( file.menu, buttonName )
@@ -122,7 +121,7 @@ void function InitFDPlaylistMenu()
 	file.playDescriptionBox = Hud_GetChild( file.menu, "PlayLabelDetails" )
 
 	file.tutorialButton = Hud_GetChild( file.menu, "TutorialButton" )
-	AddButtonEventHandler( file.tutorialButton, UIE_CLICK, OnTutorialButtonClick )
+	AddButtonEventHandler( file.tutorialButton, UIE_CLICK, ShowTitanResetDialog )
 }
 
 void function OnOpenFDMenu()
@@ -174,16 +173,9 @@ void function OnOpenFDMenu()
 	RefreshCreditsAvailable()
 	Lobby_SetFDMode( true )
 
-	if ( GetPlaylistVarOrUseValue( "defaults", "fd_tutorial_url", "" ) != "" )
-	{
-		var rui = Hud_GetRui( file.tutorialButton )
-		RuiSetString( rui, "buttonText", GetPlaylistVarOrUseValue( "defaults", "fd_tutorial_title", "" ) )
-		Hud_Show( file.tutorialButton )
-	}
-	else
-	{
-		Hud_Hide( file.tutorialButton )
-	}
+	var rui = Hud_GetRui( file.tutorialButton )
+	RuiSetString( rui, "buttonText", "#RESET_AEGIS" )
+	Hud_Show( file.tutorialButton )
 }
 
 void function OnCloseFDMenu()
@@ -418,6 +410,8 @@ string function BuildPlayWarningMessageTop( array<string> pl )
 		return Localize( "#MENU_FD_DIFFICULTY_SEARCH_3", pldn(pl,0), pldn(pl,1), pldn(pl,2) )
 		case 4:
 		return Localize( "#MENU_FD_DIFFICULTY_SEARCH_4", pldn(pl,0), pldn(pl,1), pldn(pl,2), pldn(pl,3) )
+		case 5:
+		return Localize( "#MENU_FD_DIFFICULTY_SEARCH_5" )
 	}
 	unreachable
 }

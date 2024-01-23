@@ -1,0 +1,721 @@
+#base "combo_buttons.res"
+resource/ui/menus/playlist_mixtape.menu
+{
+	menu
+	{
+		ControlName				Frame
+		xpos					0
+		ypos					0
+		zpos					3
+		wide					f0
+		tall					f0
+		autoResize				0
+		pinCorner				0
+		visible					1
+		enabled					1
+		PaintBackgroundType		0
+		infocus_bgcolor_override	"0 0 0 0"
+		outoffocus_bgcolor_override	"0 0 0 0"
+
+        Vignette
+        {
+            ControlName             ImagePanel
+            InheritProperties       MenuVignette
+        }
+
+		MenuTitle
+		{
+			ControlName				Label
+			InheritProperties		MenuTitle
+			labelText				"#KNB_MENU_HEADER"
+		}
+
+		ImgTopBar
+		{
+			ControlName				ImagePanel
+			InheritProperties		MenuTopBar
+		}
+
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+	BackgroundLeft
+	{
+		ControlName				ImagePanel
+		InheritProperties		R2_ContentBackground
+		ypos					170
+		wide					%100
+		tall					552
+		visible					1
+		drawColor				"0 0 0 100"
+	}
+
+	PlayButton
+	{
+		ControlName			RuiButton
+		Classname			GridButtonClass
+		InheritProperties	Playlist_Button
+		xpos			56
+		//xpos			196
+		ypos			197
+		wide			648
+		tall			324
+		visible			1
+		scaleImage		1
+		tabPosition		1
+		drawColor		"255 255 255 255"
+
+		//navDown				PickButton
+		navDown					BtnPlaylistIcon00
+		navRight				PromoButton00
+
+		rightClickEvents	1
+		zpos			1
+	}
+
+	PromoButton09
+	{
+		ControlName			RuiButton
+		Classname			GridButtonClass
+		InheritProperties	PvE_Button
+		xpos			30
+		ypos			10
+		wide			358
+		tall			324
+		visible			1
+		scaleImage		1
+		tabPosition		1
+		drawColor		"255 255 255 255"
+
+		navDown				PromoButton05
+		navLeft				PromoButton00
+
+		rightClickEvents	0
+		zpos			    1
+
+		scriptID		9
+		pin_to_sibling			PromoButton00
+		pin_corner_to_sibling	TOP_LEFT
+		pin_to_sibling_corner	TOP_RIGHT
+	}
+
+	PickButton
+	{
+		ControlName				RuiButton
+		InheritProperties		RuiKNBSubjectButton
+//		InheritProperties		RuiStartMatchButton
+		pin_to_sibling			PlayButton
+		pin_corner_to_sibling	TOP_RIGHT
+		pin_to_sibling_corner	BOTTOM_RIGHT
+		xpos					-20
+		ypos					0
+		navUp					PlayButton
+		navRight				PromoButton00
+	}
+
+	PromoButton00
+	{
+		ControlName			RuiButton
+		Classname			GridButtonClass
+		InheritProperties	Playlist_Button
+		pin_to_sibling			PlayButton
+		pin_corner_to_sibling	TOP_LEFT
+		pin_to_sibling_corner	TOP_RIGHT
+		xpos			30
+		ypos			-10
+		wide			358
+		tall			153
+		visible			1
+		scaleImage		1
+		tabPosition		1
+		drawColor		"255 255 255 255"
+
+		navDown		PromoButton01
+		navLeft		PlayButton
+		navRight	PromoButton09
+
+		scriptID		0
+		rightClickEvents	1
+		zpos			1
+	}
+
+	PromoButton01
+	{
+		ControlName			RuiButton
+		Classname			GridButtonClass
+		InheritProperties	Playlist_Button
+		pin_to_sibling			PromoButton00
+		pin_corner_to_sibling	TOP_LEFT
+		pin_to_sibling_corner	BOTTOM_LEFT
+		xpos			0
+		ypos			0
+		wide			358
+		tall			153
+		visible			1
+		scaleImage		1
+		tabPosition		1
+		drawColor		"255 255 255 255"
+
+		navUp		PromoButton00
+		navDown		PromoButton04
+		navLeft		PlayButton
+		navRight	PromoButton09
+
+		scriptID		1
+		rightClickEvents	1
+		zpos			1
+	}
+
+	PromoButton02
+	{
+		ControlName			RuiButton
+		Classname			GridButtonClass
+		InheritProperties	Playlist_Button
+		pin_to_sibling			PromoButton00
+		pin_corner_to_sibling	TOP_LEFT
+		pin_to_sibling_corner	TOP_RIGHT
+		xpos			30
+		ypos			0
+		wide			358
+		tall			153
+		visible			1
+		scaleImage		1
+		tabPosition		1
+		drawColor		"255 255 255 255"
+
+		navLeft		PromoButton00
+		navDown		PromoButton03
+		navRight    PromoButton06
+
+		scriptID		2
+		rightClickEvents	1
+		zpos			1
+	}
+
+	PromoButton03
+	{
+		ControlName			RuiButton
+		Classname			GridButtonClass
+		InheritProperties	Playlist_Button
+		pin_to_sibling			PromoButton02
+		pin_corner_to_sibling	TOP_LEFT
+		pin_to_sibling_corner	BOTTOM_LEFT
+		xpos			0
+		ypos			0
+		wide			358
+		tall			153
+		visible			1
+		scaleImage		1
+		tabPosition		1
+		drawColor		"255 255 255 255"
+
+		navUp		PromoButton02
+		navLeft		PromoButton01
+		navDown		PromoButton05
+		navRight    PromoButton07
+
+		scriptID		3
+		rightClickEvents	1
+		zpos			1
+	}
+
+	PromoButton04
+	{
+		ControlName			RuiButton
+		Classname			GridButtonClass
+		InheritProperties	Playlist_Button
+		pin_to_sibling			PromoButton01
+		pin_corner_to_sibling	TOP_LEFT
+		pin_to_sibling_corner	BOTTOM_LEFT
+		xpos			0
+		ypos			0
+		wide			358
+		tall			153
+		visible			1
+		scaleImage		1
+		tabPosition		1
+		drawColor		"255 255 255 255"
+
+		navUp		PromoButton01
+		navLeft		PlayButton
+		navRight	PromoButton05
+		navDown		BtnPlaylistIcon00
+
+		scriptID		4
+		rightClickEvents	1
+		zpos			1
+	}
+
+	PromoButton05
+	{
+		ControlName			RuiButton
+		Classname			GridButtonClass
+		InheritProperties	Playlist_Button
+		pin_to_sibling			PromoButton03
+		pin_corner_to_sibling	TOP_LEFT
+		pin_to_sibling_corner	BOTTOM_LEFT
+		xpos			0
+		ypos			0
+		wide			358
+		tall			153
+		visible			1
+		scaleImage		1
+		tabPosition		1
+		drawColor		"255 255 255 255"
+
+		navUp		PromoButton09
+		navLeft		PromoButton04
+	    navRight    PromoButton08
+		navDown		BtnPlaylistIcon00
+
+		scriptID		5
+		rightClickEvents	1
+		zpos			1
+	}
+
+	PromoButton06
+	{
+		ControlName			RuiButton
+		Classname			GridButtonClass
+		InheritProperties	Playlist_Button
+		pin_to_sibling			PromoButton02
+		pin_corner_to_sibling	TOP_LEFT
+		pin_to_sibling_corner	TOP_RIGHT
+		xpos			30
+		ypos			0
+		wide			358
+		tall			153
+		visible			1
+		scaleImage		1
+		tabPosition		1
+		drawColor		"255 255 255 255"
+
+		navDown		PromoButton07
+		navLeft     PromoButton02
+
+		scriptID		6
+		rightClickEvents	1
+		zpos			1
+	}
+	PromoButton07
+	{
+		ControlName			RuiButton
+		Classname			GridButtonClass
+		InheritProperties	Playlist_Button
+		pin_to_sibling			PromoButton06
+		pin_corner_to_sibling	TOP_LEFT
+		pin_to_sibling_corner	BOTTOM_LEFT
+		xpos			0
+		ypos			0
+		wide			358
+		tall			153
+		visible			1
+		scaleImage		1
+		tabPosition		1
+		drawColor		"255 255 255 255"
+
+		navUp		PromoButton06
+		navDown		PromoButton08
+		navLeft     PromoButton03
+
+		scriptID		7
+		rightClickEvents	1
+		zpos			1
+	}
+	PromoButton08
+	{
+		ControlName			RuiButton
+		Classname			GridButtonClass
+		InheritProperties	Playlist_Button
+		pin_to_sibling			PromoButton07
+		pin_corner_to_sibling	TOP_LEFT
+		pin_to_sibling_corner	BOTTOM_LEFT
+		xpos			0
+		ypos			0
+		wide			358
+		tall			153
+		visible			1
+		scaleImage		1
+		tabPosition		1
+		drawColor		"255 255 255 255"
+
+		navUp		PromoButton07
+		navLeft     PromoButton05
+
+		scriptID		8
+		rightClickEvents	1
+		zpos			1
+	}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    FocusDescription
+    {
+        ControlName				Label
+        wide					648
+        auto_tall_tocontents	1
+        visible					1
+        labelText				""
+        font					Default_28
+        textAlignment			north-west
+        wrap					1
+
+        pin_to_sibling			PlayButton
+        pin_corner_to_sibling	TOP_LEFT
+        pin_to_sibling_corner	BOTTOM_LEFT
+    }
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+	DetailsBackground
+	{
+		ControlName				ImagePanel
+		InheritProperties		R2_ContentBackground
+		ypos					732
+		wide					%100
+		tall					220
+		visible					1
+		//drawColor				"0 0 0 220"
+	}
+
+	ContentDescriptionTitle
+	{
+		ControlName				Label
+		InheritProperties		R2_ContentDescriptionTitle
+		font					DefaultBold_44
+		labelText				"<ContentDescriptionTitle>"
+		ypos					-540
+		xpos                    0
+		fgcolor_override		"255 184 0 255"
+		allcaps					0
+		auto_wide_tocontents    1
+
+		pin_to_sibling			PlayButton
+		pin_corner_to_sibling	TOP_LEFT
+		pin_to_sibling_corner	TOP_LEFT
+	}
+
+	NotifyNewTitle
+	{
+		ControlName				Label
+		InheritProperties		R2_ContentDescriptionTitle
+		font					DefaultBold_44
+		labelText				"<NotifyNewTitle>"
+		ypos					5
+		xpos                    30
+		fgcolor_override		"0 229 65 255"
+
+		pin_to_sibling			BtnPlaylistIcon00
+		pin_corner_to_sibling	TOP_RIGHT
+		pin_to_sibling_corner	TOP_LEFT
+	}
+
+	ContentDescription
+	{
+		ControlName				Label
+		InheritProperties		R2_ContentDescription
+		labelText				"<ContentDescription>"
+		font					Default_38
+		xpos					16
+		ypos					0
+		zpos					3 // Needed or clicking on the background can hide this
+		wide					%50
+		tall					100
+		wrap					1
+		auto_tall_tocontents 	1
+        textalign               north
+		textAlignment			north
+		fgcolor_override		"255 184 0 255"
+
+        font		Default_27             [!$JAPANESE && !$TCHINESE]
+        font		Default_31             [$JAPANESE || $TCHINESE]
+
+		pin_to_sibling			ContentDescriptionTitle
+		pin_corner_to_sibling	LEFT
+		pin_to_sibling_corner	RIGHT
+	}
+
+	BtnPlaylistIcon00
+	{
+		ControlName				RuiButton
+		InheritProperties		RuiMixtapeChecklistIconButton
+		navUp					PlayButton
+		navRight				BtnPlaylistIcon01
+		rightClickEvents		1
+		scriptID				0
+
+		pin_to_sibling			ContentDescriptionTitle
+		pin_corner_to_sibling	TOP_LEFT
+		pin_to_sibling_corner	BOTTOM_LEFT
+		//ypos					-60
+		xpos                    4
+	}
+	BtnPlaylistIcon01
+	{
+		ControlName				RuiButton
+		InheritProperties		RuiMixtapeChecklistIconButton
+		navUp					PlayButton
+		navLeft					BtnPlaylistIcon00
+		navRight				BtnPlaylistIcon02
+		rightClickEvents		1
+		scriptID				1
+
+		pin_to_sibling			BtnPlaylistIcon00
+		pin_corner_to_sibling	TOP_LEFT
+		pin_to_sibling_corner	TOP_RIGHT
+		xpos                    20
+	}
+	BtnPlaylistIcon02
+	{
+		ControlName				RuiButton
+		InheritProperties		RuiMixtapeChecklistIconButton
+		navUp					PlayButton
+		navLeft					BtnPlaylistIcon01
+		navRight				BtnPlaylistIcon03
+		rightClickEvents		1
+		scriptID				2
+
+		pin_to_sibling			BtnPlaylistIcon01
+		pin_corner_to_sibling	TOP_LEFT
+		pin_to_sibling_corner	TOP_RIGHT
+		xpos                    20
+	}
+	BtnPlaylistIcon03
+	{
+		ControlName				RuiButton
+		InheritProperties		RuiMixtapeChecklistIconButton
+		navUp					PlayButton
+		navLeft					BtnPlaylistIcon02
+		navRight				BtnPlaylistIcon04
+		rightClickEvents		1
+		scriptID				3
+
+		pin_to_sibling			BtnPlaylistIcon02
+		pin_corner_to_sibling	TOP_LEFT
+		pin_to_sibling_corner	TOP_RIGHT
+		xpos                    20
+	}
+	BtnPlaylistIcon04
+	{
+		ControlName				RuiButton
+		InheritProperties		RuiMixtapeChecklistIconButton
+		navUp					PlayButton
+		navLeft					BtnPlaylistIcon03
+		navRight				BtnPlaylistIcon05
+		rightClickEvents		1
+		scriptID				4
+
+		pin_to_sibling			BtnPlaylistIcon03
+		pin_corner_to_sibling	TOP_LEFT
+		pin_to_sibling_corner	TOP_RIGHT
+		xpos                    20
+	}
+	BtnPlaylistIcon05
+	{
+		ControlName				RuiButton
+		InheritProperties		RuiMixtapeChecklistIconButton
+		navUp					PlayButton
+		navLeft					BtnPlaylistIcon04
+		navRight				BtnPlaylistIcon06
+		rightClickEvents		1
+		scriptID				5
+
+		pin_to_sibling			BtnPlaylistIcon04
+		pin_corner_to_sibling	TOP_LEFT
+		pin_to_sibling_corner	TOP_RIGHT
+		xpos                    20
+	}
+	BtnPlaylistIcon06
+	{
+		ControlName				RuiButton
+		InheritProperties		RuiMixtapeChecklistIconButton
+		navUp					PlayButton
+		navLeft					BtnPlaylistIcon05
+		navRight				BtnPlaylistIcon07
+		rightClickEvents		1
+		scriptID				6
+
+		pin_to_sibling			BtnPlaylistIcon05
+		pin_corner_to_sibling	TOP_LEFT
+		pin_to_sibling_corner	TOP_RIGHT
+		xpos                    20
+	}
+	BtnPlaylistIcon07
+	{
+		ControlName				RuiButton
+		InheritProperties		RuiMixtapeChecklistIconButton
+		navUp					PlayButton
+		navLeft					BtnPlaylistIcon06
+		navRight				BtnPlaylistIcon08
+		rightClickEvents		1
+		scriptID				7
+
+		pin_to_sibling			BtnPlaylistIcon06
+		pin_corner_to_sibling	TOP_LEFT
+		pin_to_sibling_corner	TOP_RIGHT
+		xpos                    20
+	}
+	BtnPlaylistIcon08
+	{
+		ControlName				RuiButton
+		InheritProperties		RuiMixtapeChecklistIconButton
+		navUp					PlayButton
+		navLeft					BtnPlaylistIcon07
+		navRight				BtnPlaylistIcon09
+		rightClickEvents		1
+		scriptID				8
+
+		pin_to_sibling			BtnPlaylistIcon07
+		pin_corner_to_sibling	TOP_LEFT
+		pin_to_sibling_corner	TOP_RIGHT
+		xpos                    20
+	}
+	BtnPlaylistIcon09
+	{
+		ControlName				RuiButton
+		InheritProperties		RuiMixtapeChecklistIconButton
+		navUp					PlayButton
+		navLeft					BtnPlaylistIcon08
+		navRight				BtnPlaylistIcon10
+		rightClickEvents		1
+		scriptID				9
+
+		pin_to_sibling			BtnPlaylistIcon08
+		pin_corner_to_sibling	TOP_LEFT
+		pin_to_sibling_corner	TOP_RIGHT
+		xpos                    20
+	}
+	BtnPlaylistIcon10
+	{
+		ControlName				RuiButton
+		InheritProperties		RuiMixtapeChecklistIconButton
+		navUp					PlayButton
+		navLeft					BtnPlaylistIcon09
+		navRight				BtnPlaylistIcon11
+		rightClickEvents		1
+		scriptID				10
+
+		pin_to_sibling			BtnPlaylistIcon09
+		pin_corner_to_sibling	TOP_LEFT
+		pin_to_sibling_corner	TOP_RIGHT
+		xpos                    20
+	}
+	BtnPlaylistIcon11
+	{
+		ControlName				RuiButton
+		InheritProperties		RuiMixtapeChecklistIconButton
+		navUp					PlayButton
+		navLeft					BtnPlaylistIcon10
+		navRight				BtnPlaylistIcon12
+		rightClickEvents		1
+		scriptID				11
+
+		pin_to_sibling			BtnPlaylistIcon10
+		pin_corner_to_sibling	TOP_LEFT
+		pin_to_sibling_corner	TOP_RIGHT
+		xpos                    20
+	}
+	BtnPlaylistIcon12
+	{
+		ControlName				RuiButton
+		InheritProperties		RuiMixtapeChecklistIconButton
+		navUp					PlayButton
+		navLeft					BtnPlaylistIcon11
+		navRight				BtnPlaylistIcon13
+		rightClickEvents		1
+		scriptID				12
+
+		pin_to_sibling			BtnPlaylistIcon11
+		pin_corner_to_sibling	TOP_LEFT
+		pin_to_sibling_corner	TOP_RIGHT
+		xpos                    20
+	}
+	BtnPlaylistIcon13
+	{
+		ControlName				RuiButton
+		InheritProperties		RuiMixtapeChecklistIconButton
+		navUp					PlayButton
+		navLeft					BtnPlaylistIcon12
+		navRight				BtnPlaylistIcon14
+		rightClickEvents		1
+		scriptID				13
+
+		pin_to_sibling			BtnPlaylistIcon12
+		pin_corner_to_sibling	TOP_LEFT
+		pin_to_sibling_corner	TOP_RIGHT
+		xpos                    20
+	}
+	BtnPlaylistIcon14
+	{
+		ControlName				RuiButton
+		InheritProperties		RuiMixtapeChecklistIconButton
+		navUp					PlayButton
+		navLeft					BtnPlaylistIcon13
+		//navRight				BtnPlaylistIcon15
+		rightClickEvents		1
+		scriptID				14
+
+		pin_to_sibling			BtnPlaylistIcon13
+		pin_corner_to_sibling	TOP_LEFT
+		pin_to_sibling_corner	TOP_RIGHT
+		xpos                    20
+	}
+
+	PlayerCount
+	{
+		ControlName				Label
+		labelText				"<PlayerCountPlayerCount>"
+		auto_wide_tocontents    1
+		tall                    30
+		ypos					40
+		xpos					-540
+
+		font					Default_27
+		allcaps					0
+		fgcolor_override		"255 255 255 255"
+
+		pin_to_sibling			DetailsBackground
+		pin_corner_to_sibling	TOP_RIGHT
+		pin_to_sibling_corner	BOTTOM_RIGHT
+		textAlignment			east
+	}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	//	LabelDetails
+	//	{
+	//		ControlName				RuiPanel
+	//		xpos					925
+	//		ypos					160
+	//		wide 					850
+	//		tall					300
+	//		rui 					"ui/knowledgebase_panel_main.rpak"
+	//		wrap					1
+	//		visible					1
+	//		zpos					1
+	//	}
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+		ButtonRowAnchor
+		{
+			ControlName				Label
+			labelText				""
+
+			xpos                    96
+			ypos                    160
+		}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+		ButtonTooltip
+		{
+			ControlName				CNestedPanel
+			InheritProperties		ButtonTooltip
+		}
+
+		FooterButtons
+		{
+			ControlName				CNestedPanel
+			InheritProperties       FooterButtons
+		}
+	}
+}

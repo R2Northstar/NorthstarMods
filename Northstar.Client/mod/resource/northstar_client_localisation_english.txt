@@ -215,6 +215,13 @@ Press Yes if you agree to this. This choice can be changed in the mods menu at a
 		"SCOREBOARD_FASTBALL_HACKS" "Panels Captured"
 
 		"GAMEMODE_ctf_comp" "Competitive CTF"
+		
+		"PL_privmatch" "Host Server"
+		"PL_privmatch_lobby" "Server Lobby"
+		"PL_privmatch_desc" "Host a listen server, in a map and mode of your choice. Up to 16 Players."
+		
+		"MENU_FD_DIFFICULTY_SEARCH_5"		"Search for all Frontier Defense games"
+		"MENU_HEADER_SERVER_LOBBY"			"Server Lobby"
 
 		// mode settings
 		"MODE_SETTING_CATEGORY_PROMODE" "Promode"

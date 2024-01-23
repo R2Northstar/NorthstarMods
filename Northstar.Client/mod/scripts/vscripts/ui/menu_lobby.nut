@@ -1663,6 +1663,7 @@ void function Lobby_SetFDModeBasedOnSearching( string playlistToSearch )
 
 void function StartNSMatchmaking( array<string> selectedPlaylists )
 {
+	EndSignal( uiGlobal.signalDummy, "LevelShutdown" )
 	MatchmakingSetCountdownTimer( Time() + 4.0, false )
 	MatchmakingSetSearchText( "#MATCHMAKING_SEARCHING_FOR_MATCH" )
 	MatchmakingSetSearchVisible( true )
@@ -1761,6 +1762,8 @@ void function StartNSMatchmaking( array<string> selectedPlaylists )
 
 void function MatchmakedAuthAndConnectToServer( ServerInfo matchmakedserver, string password = "" )
 {
+	EndSignal( uiGlobal.signalDummy, "CancelRestartingMatchmaking" )
+	EndSignal( uiGlobal.signalDummy, "LevelShutdown" )
 	var statusEl = Hud_GetChild( GetMenu( "SearchMenu" ), "MatchmakingStatusBig" )
 	if ( NSIsAuthenticatingWithServer() )
 		return
@@ -1806,8 +1809,8 @@ void function MatchmakedAuthAndConnectToServer( ServerInfo matchmakedserver, str
 		
 		EmitUISound( MATCHMAKING_AUDIO_CONNECTING )
 		MatchmakingSetSearchText( "#MATCHMAKING_MATCH_CONNECTING" )
-		MatchmakingSetCountdownTimer( 0.0, true )
-		MatchmakingSetCountdownVisible( false )
+		MatchmakingSetCountdownTimer( Time() + 5.0, false )
+		MatchmakingSetCountdownVisible( true )
 		HideMatchmakingStatusIcons()
 		Hud_Hide( statusEl )
 		ShowServerConnectingInfo( matchmakedserver.name, matchmakedserver.description + "\n\nServer Mods:\n" + FillInServerModsLabel( matchmakedserver.requiredMods ) )
@@ -1858,8 +1861,29 @@ void function ShowServerConnectingInfo( string servername = "", string servercon
 	dialogData.header = connectingserver
 	dialogData.message = servercontext
 	dialogData.showSpinner = true
-
+	
+	#if PC_PROG
+		AddDialogButton( dialogData, "#CANCEL", CancelServerConnect )
+		AddDialogFooter( dialogData, "#A_BUTTON_SELECT" )
+	#endif // PC_PROG
+		
+	AddDialogFooter( dialogData, "#B_BUTTON_CANCEL" )
 	OpenDialog( dialogData )
+}
+
+void function CancelServerConnect()
+{
+	Signal( uiGlobal.signalDummy, "CancelRestartingMatchmaking" )
+	var statusEl = Hud_GetChild( GetMenu( "SearchMenu" ), "MatchmakingStatusBig" )
+	MatchmakingSetSearchVisible( false )
+	MatchmakingSetCountdownTimer( 0.0, true )
+	MatchmakingSetCountdownVisible( false )
+	HideMatchmakingStatusIcons()
+	Hud_Hide( statusEl )
+	if ( uiGlobal.activeMenu == GetMenu( "SearchMenu" ) )
+		CloseActiveMenu()
+	CloseAllDialogs()
+	Lobby_SetFDMode( false )
 }
 
 string function FillInServerModsLabel( array<RequiredModInfo> mods )
