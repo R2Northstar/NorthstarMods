@@ -88,7 +88,7 @@ bool function ClientCommand_SetProgression( entity player, array<string> args )
 
 /// Resets a specific Titan's Aegis rank back to `0`
 /// * `player` - The player entity to perform the action on
-/// * `args` - The arguments passed from the client command. `args[0]` should be an integer corresponding to the index of the Titan to reset.
+/// * `args` - The arguments passed from the client command. `args[0]` should be a string corresponding to the chassis name of the Titan to reset.
 ///
 /// Returns `true` on success and `false` on missing args.
 bool function ClientCommand_ResetTitanAegis( entity player, array<string> args )
@@ -96,30 +96,14 @@ bool function ClientCommand_ResetTitanAegis( entity player, array<string> args )
 	if ( !args.len() )
 		return false
 	
-	int suitIndex = args[0].tointeger()
+	string titanRef = args[0]
+	int suitIndex = PersistenceGetEnumIndexForItemName( "titanClasses", titanRef )
 	
-	//Idfk why don't ask, but these fucking 3 Titans have indexes swapped for reasons beyond Lovecraftian gods comprehension
-	//Tone index points to Northstar, Northstar points to Ronin and Ronin points to Tone, had to do this to proper make them reset their Aegis
-	switch ( args[0] )
-	{
-		case "2":
-		suitIndex = 4
-		break
-		
-		case "3":
-		suitIndex = 2
-		break
-		
-		case "4":
-		suitIndex = 3
-		break
-	}
 	player.SetPersistentVar( "titanFDUnlockPoints[" + suitIndex + "]", 0 )
 	player.SetPersistentVar( "previousFDUnlockPoints[" + suitIndex + "]", 0 )
 	player.SetPersistentVar( "fdTitanXP[" + suitIndex + "]", 0 )
 	player.SetPersistentVar( "fdPreviousTitanXP[" + suitIndex + "]", 0 )
 	
-	// Refresh Highest Aegis Titan since we might get all of them back to 1 if players wants
 	RecalculateHighestTitanFDLevel( player )
 	
 	return true
