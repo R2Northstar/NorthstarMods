@@ -29,7 +29,7 @@ void function GamemodeInfection_Init()
 
 void function InfectionInitPlayer( entity player )
 {
-	if ( GetGameState() < eGameState.Playing )
+	if ( GetGameState() < eGameState.Playing || !file.hasHadFirstInfection ) // per Gecko's suggestion, make anyone joining before first infected to stay as survivor instead
 		SetTeam( player, INFECTION_TEAM_SURVIVOR )
 	else
 		InfectPlayer( player )
@@ -45,7 +45,16 @@ void function SelectFirstInfectedDelayed()
 	wait 10.0 + RandomFloat( 5.0 )
 
 	array<entity> players = GetPlayerArray()
-	entity infected = players[ RandomInt( players.len() ) ]
+
+	// End game if server empty on selecting infected
+	if ( !players.len() )
+	{
+		printt( "Couldn't select first infected: player array was empty" )
+		SetWinner( INFECTION_TEAM_SURVIVOR )
+		return
+	}
+
+	entity infected = players.getrandom()
 
 	InfectPlayer( infected )
 	RespawnInfected( infected )
@@ -185,6 +194,8 @@ void function SetLastSurvivor( entity player )
 		Remote_CallFunction_NonReplay( otherPlayer, "ServerCallback_AnnounceLastSurvivor", player.GetEncodedEHandle() )
 
 	Highlight_SetEnemyHighlight( player, "enemy_sonar" )
+	StatusEffect_AddEndless( player, eStatusEffect.sonar_detected, 1.0 ) // sonar is better here so the player themselves see the SONAR DETECTED warning.
+
 	if ( SpawnPoints_GetTitan().len() > 0 )
 		thread CreateTitanForPlayerAndHotdrop( player, GetTitanReplacementPoint( player, false ) )
 

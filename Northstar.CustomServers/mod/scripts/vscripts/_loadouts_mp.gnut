@@ -179,6 +179,8 @@ bool function ClientCommandCallback_SetPersistentLoadoutValue( entity player, ar
 	if ( args[0] == "pilot" )
 		SetPlayerLoadoutDirty( player ) 
 	
+	UnlockAchievement( player, achievements.CUSTOMIZE_LOADOUT )
+	
 	return true
 }
 
@@ -191,6 +193,10 @@ bool function ClientCommandCallback_SwapSecondaryAndWeapon3PersistentLoadoutData
 	
 	// get loadout
 	int index = args[0].tointeger()
+	
+	if ( !IsValidPilotLoadoutIndex(index) )
+		return false
+
 	PilotLoadoutDef loadout = GetPilotLoadoutFromPersistentData( player, index )
 
 	// swap loadouts
@@ -222,7 +228,6 @@ bool function ClientCommandCallback_SetBurnCardPersistenceSlot( entity player, a
 	
 	print( player + " SetBurnCardPersistenceSlot " + args[0] )
 	
-	// insecure, could be used to set invalid burnmeterslot potentially
 	if ( IsRefValidAndOfType( args[0], eItemTypes.BURN_METER_REWARD ) )
 		player.SetPersistentVar( "burnmeterSlot", BurnReward_GetByRef( args[0] ).id )
 	else
