@@ -348,6 +348,14 @@ string function GetMapDisplayDesc( string mapname )
 	return "#" + mapname + "_CLASSIC_DESC"
 }
 
+/// Sends a string message to player
+/// * `baseString` - The input string to search through
+/// * `searchString` - Find this substring...
+/// * `replaceString` - ...and replace with this substring
+/// * `replaceAll` - Whether to replace all occurences or just the first
+/// * `caseInsensitive` - Whether to consider casing (upper/lower)
+///
+/// Returns the updated string
 string function StringReplace( string baseString, string searchString, string replaceString, bool replaceAll = false, bool caseInsensitive = false )
 {
 	bool loopedOnce = false
@@ -362,7 +370,7 @@ string function StringReplace( string baseString, string searchString, string re
 		source = part1 + replaceString + part2
 
 		loopedOnce = true
-		findResult = source.find( searchString )
+		findResult = source.find( searchString, findResult + replaceString.len() )
 	}
 
 	return baseString
@@ -386,8 +394,12 @@ float function RoundToNearestMultiplier( float value, float multiplier )
 	return value
 }
 
-function DevEverythingUnlocked()
+function DevEverythingUnlocked( entity player = null )
 {
+	// check if player has opted into progression or not
+	if ( player != null && ProgressionEnabledForPlayer( player ) )
+		return false
+
 	return EverythingUnlockedConVarEnabled()
 }
 
@@ -1528,7 +1540,23 @@ array<string> function GetAvailableTitanRefs( entity player )
 	return availableTitanRefs
 }
 
+/// Gets the highest Titan FD level and stores it in the corresponding persistent var.
+/// * `player` - The player entity to perform the action on
 #if MP
+void function RecalculateHighestTitanFDLevel( entity player )
+{
+	int enumCount = PersistenceGetEnumCount( "titanClasses" )
+	int highestAegis = 0
+	for ( int i = 0; i < enumCount; i++ )
+	{
+		string enumName = PersistenceGetEnumItemNameForIndex( "titanClasses", i )
+		int aegisLevel = FD_TitanGetLevelForXP( enumName, FD_TitanGetXP( player, enumName ) )
+		if ( highestAegis < aegisLevel )
+			highestAegis = aegisLevel
+	}
+	player.SetPersistentVar( "fdStats.highestTitanFDLevel", highestAegis )
+}
+
 string function GetTitanRefForLoadoutIndex( entity player, int loadoutIndex )
 {
 	TitanLoadoutDef loadout = GetTitanLoadoutFromPersistentData( player, loadoutIndex )
