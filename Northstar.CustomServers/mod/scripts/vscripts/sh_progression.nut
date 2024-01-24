@@ -89,6 +89,7 @@ bool function ClientCommand_SetProgression( entity player, array<string> args )
 /// Resets a specific Titan's Aegis rank back to `0`
 /// * `player` - The player entity to perform the action on
 /// * `args` - The arguments passed from the client command. `args[0]` should be a string corresponding to the chassis name of the Titan to reset.
+/// * `chassis name` - Valid chassis are: Ion, Tone, Vanguard, Northstar, Ronin, Legion and Scorch.
 ///
 /// Returns `true` on success and `false` on missing args.
 bool function ClientCommand_ResetTitanAegis( entity player, array<string> args )
@@ -97,6 +98,9 @@ bool function ClientCommand_ResetTitanAegis( entity player, array<string> args )
 		return false
 	
 	string titanRef = args[0]
+	if( !PersistenceEnumValueIsValid( "titanClasses", titanRef ) )
+		return false
+	
 	int suitIndex = PersistenceGetEnumIndexForItemName( "titanClasses", titanRef )
 	
 	player.SetPersistentVar( "titanFDUnlockPoints[" + suitIndex + "]", 0 )
