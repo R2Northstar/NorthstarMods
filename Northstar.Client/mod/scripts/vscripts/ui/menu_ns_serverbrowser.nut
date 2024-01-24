@@ -952,32 +952,64 @@ string function FillInServerModsLabel( array<RequiredModInfo> mods )
 
 void function OnServerSelected( var button )
 {
+	thread OnServerSelected_Threaded( button )
+}
+
+void function OnServerSelected_Threaded( var button )
+{
 	if ( NSIsRequestingServerList() || NSGetServerCount() == 0 || file.serverListRequestFailed )
 		return
 
 	ServerInfo server = file.focusedServer
-
 	file.lastSelectedServer = server
+
+	// Count mods that have been successfully downloaded
+	bool autoDownloadAllowed = GetConVarBool( "allow_mod_auto_download" )
+	int downloadedMods = 0;
 
 	foreach ( RequiredModInfo mod in server.requiredMods )
 	{
 		if ( !NSGetModNames().contains( mod.name ) )
 		{
-			DialogData dialogData
-			dialogData.header = "#ERROR"
-			dialogData.message = format( "Missing mod \"%s\" v%s", mod.name, mod.version )
-			dialogData.image = $"ui/menu/common/dialog_error"
+			// Check if mod can be auto-downloaded
+			bool modIsVerified = NSIsModDownloadable( mod.name, mod.version )
 
-			#if PC_PROG
+			// Display an error message if not
+			if ( !modIsVerified || !autoDownloadAllowed )
+			{
+				DialogData dialogData
+				dialogData.header = "#ERROR"
+				dialogData.message = Localize( "#MISSING_MOD", mod.name, mod.version )
+				dialogData.image = $"ui/menu/common/dialog_error"
+
+				// Specify error (only if autoDownloadAllowed is set)
+				if ( autoDownloadAllowed )
+				{
+					dialogData.message += "\n" + Localize( "#MOD_NOT_VERIFIED" )
+				}
+
 				AddDialogButton( dialogData, "#DISMISS" )
 
 				AddDialogFooter( dialogData, "#A_BUTTON_SELECT" )
-			#endif // PC_PROG
-			AddDialogFooter( dialogData, "#B_BUTTON_DISMISS_RUI" )
+				AddDialogFooter( dialogData, "#B_BUTTON_DISMISS_RUI" )
 
-			OpenDialog( dialogData )
+				OpenDialog( dialogData )
 
-			return
+				return
+			}
+
+			else // Launch download
+			{
+				if ( DownloadMod( mod ) )
+				{
+					downloadedMods++
+				}
+				else
+				{
+					DisplayModDownloadErrorDialog( mod.name )
+					return
+				}
+			}
 		}
 		else
 		{
@@ -1001,7 +1033,7 @@ void function OnServerSelected( var button )
 			{
 				DialogData dialogData
 				dialogData.header = "#ERROR"
-				dialogData.message = format( "Server has mod \"%s\" v%s while we have v%s", mod.name, mod.version, NSGetModVersionByModName( mod.name ) )
+				dialogData.message = Localize( "#WRONG_MOD_VERSION", mod.name, mod.version, NSGetModVersionByModName( mod.name ) )
 				dialogData.image = $"ui/menu/common/dialog_error"
 
 				#if PC_PROG
@@ -1026,12 +1058,12 @@ void function OnServerSelected( var button )
 	else
 	{
 		TriggerConnectToServerCallbacks()
-		thread ThreadedAuthAndConnectToServer()
+		thread ThreadedAuthAndConnectToServer( "", downloadedMods != 0 )
 	}
 }
 
 
-void function ThreadedAuthAndConnectToServer( string password = "" )
+void function ThreadedAuthAndConnectToServer( string password = "", bool modsChanged = false )
 {
 	if ( NSIsAuthenticatingWithServer() )
 		return
@@ -1059,8 +1091,6 @@ void function ThreadedAuthAndConnectToServer( string password = "" )
 
 	if ( NSWasAuthSuccessful() )
 	{
-		bool modsChanged = false
-
 		// disable all RequiredOnClient mods that are not required by the server and are currently enabled
 		foreach ( string modName in NSGetModNames() )
 		{
@@ -1274,10 +1304,16 @@ void function RemoveConnectToServerCallback( void functionref( ServerInfo ) call
 	file.connectCallbacks.fastremovebyvalue( callback )
 }
 
-void function TriggerConnectToServerCallbacks()
+void function TriggerConnectToServerCallbacks( ServerInfo ornull targetServer = null )
 {
+	ServerInfo server;
+	if (targetServer == null)
+	{
+		targetServer = file.lastSelectedServer
+	}
+
 	foreach( callback in file.connectCallbacks )
 	{
-		callback( file.lastSelectedServer )
+		callback( expect ServerInfo( targetServer ) )
 	}
 }
