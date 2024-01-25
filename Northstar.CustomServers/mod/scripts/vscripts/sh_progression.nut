@@ -97,7 +97,7 @@ bool function ClientCommand_ResetTitanAegis( entity player, array<string> args )
 	if ( !args.len() )
 		return false
 	
-	string titanRef = args[0]
+	string titanRef = args[0].tolower()
 	if( !PersistenceEnumValueIsValid( "titanClasses", titanRef ) )
 		return false
 	
