@@ -108,6 +108,7 @@ bool function ClientCommand_ResetTitanAegis( entity player, array<string> args )
 	player.SetPersistentVar( "fdTitanXP[" + suitIndex + "]", 0 )
 	player.SetPersistentVar( "fdPreviousTitanXP[" + suitIndex + "]", 0 )
 	
+	// Refresh Highest Aegis Titan since we might get all of them back to 1 if players wants
 	RecalculateHighestTitanFDLevel( player )
 	
 	return true
