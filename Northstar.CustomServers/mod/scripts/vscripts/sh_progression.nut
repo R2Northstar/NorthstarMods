@@ -38,6 +38,7 @@ void function Progression_Init()
 	#if SERVER
 	AddCallback_OnClientDisconnected( OnClientDisconnected )
 	AddClientCommandCallback( "ns_progression", ClientCommand_SetProgression )
+	AddClientCommandCallback( "ns_resettitanaegis", ClientCommand_ResetTitanAegis )
 	AddCallback_GameStateEnter( eGameState.Playing, OnPlaying )
 	#elseif CLIENT
 	AddCallback_OnClientScriptInit( OnClientScriptInit )
@@ -82,6 +83,34 @@ bool function ClientCommand_SetProgression( entity player, array<string> args )
 	if ( file.progressionEnabled[player] )
 		ValidateEquippedItems( player )
 
+	return true
+}
+
+/// Resets a specific Titan's Aegis rank back to `0`
+/// * `player` - The player entity to perform the action on
+/// * `args` - The arguments passed from the client command. `args[0]` should be a string corresponding to the chassis name of the Titan to reset.
+/// Valid chassis are: ion, tone, vanguard, northstar, ronin, legion, and scorch.
+///
+/// Returns `true` on success and `false` on missing args.
+bool function ClientCommand_ResetTitanAegis( entity player, array<string> args )
+{
+	if ( !args.len() )
+		return false
+	
+	string titanRef = args[0].tolower()
+	if( !PersistenceEnumValueIsValid( "titanClasses", titanRef ) )
+		return false
+	
+	int suitIndex = PersistenceGetEnumIndexForItemName( "titanClasses", titanRef )
+	
+	player.SetPersistentVar( "titanFDUnlockPoints[" + suitIndex + "]", 0 )
+	player.SetPersistentVar( "previousFDUnlockPoints[" + suitIndex + "]", 0 )
+	player.SetPersistentVar( "fdTitanXP[" + suitIndex + "]", 0 )
+	player.SetPersistentVar( "fdPreviousTitanXP[" + suitIndex + "]", 0 )
+	
+	// Refresh Highest Aegis Titan since we might get all of them back to 1 if players wants
+	RecalculateHighestTitanFDLevel( player )
+	
 	return true
 }
 #endif
@@ -268,7 +297,7 @@ void function ValidateEquippedItems( entity player )
 		// camoIndex
 		if ( loadout.skinIndex == TITAN_SKIN_INDEX_CAMO )
 		{
-			array<ItemData> camoSkins = GetAllItemsOfType( eItemTypes.CAMO_SKIN )
+			array<ItemData> camoSkins = GetAllItemsOfType( eItemTypes.CAMO_SKIN_TITAN )
 			if ( loadout.camoIndex >= camoSkins.len() || loadout.camoIndex < 0 )
 			{
 				printt( "  - INVALID TITAN CAMO/SKIN, RESETTING" )
@@ -363,7 +392,7 @@ void function ValidateEquippedItems( entity player )
 		// primeCamoIndex
 		if ( loadout.primeSkinIndex == TITAN_SKIN_INDEX_CAMO )
 		{
-			array<ItemData> camoSkins = GetAllItemsOfType( eItemTypes.CAMO_SKIN )
+			array<ItemData> camoSkins = GetAllItemsOfType( eItemTypes.CAMO_SKIN_TITAN )
 			if ( loadout.primeCamoIndex >= camoSkins.len() || loadout.primeCamoIndex < 0 )
 			{
 				printt( "  - INVALID TITAN CAMO/SKIN, RESETTING" )
