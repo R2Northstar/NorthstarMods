@@ -381,7 +381,8 @@ void function GameStateEnter_WinnerDetermined_Threaded()
 	{
 		svGlobal.levelEnt.Signal( "RoundEnd" )
 		int roundsPlayed = expect int ( GetServerVar( "roundsPlayed" ) )
-		SetServerVar( "roundsPlayed", roundsPlayed + 1 )
+		roundsPlayed++
+		SetServerVar( "roundsPlayed", roundsPlayed )
 		
 		int winningTeam = GetWinningTeamWithFFASupport()
 		
@@ -575,19 +576,26 @@ void function GameStateEnter_SuddenDeath()
 // eGameState.Postmatch
 void function GameStateEnter_Postmatch()
 {
+	SetKillcamsEnabled( false ) //Disable kill replays on this moment just to ensure no camera problems
 	foreach ( entity player in GetPlayerArray() )
 	{
 		player.FreezeControlsOnServer()
+		player.SetNoTarget( true ) //Stop AI from targeting this player at this state of the match
+		player.SetInvulnerable() //Players could still die to some post-damaging stuff they might release (i.e: Electric Smokes, AI)
 		thread ForceFadeToBlack( player )
 	}
-		
+	
 	thread GameStateEnter_Postmatch_Threaded()
 }
 
 void function GameStateEnter_Postmatch_Threaded()
 {
 	wait GAME_POSTMATCH_LENGTH
-
+	
+	AllPlayersMuteAll( 2 ) //Vanilla has a fadeout in sound right before it really finishes the match
+	
+	wait 2.0
+	
 	GameRules_EndMatch()
 }
 
@@ -774,8 +782,12 @@ void function CleanUpEntitiesForRoundEnd()
 	
 	foreach ( entity npc in GetNPCArray() )
 	{
-		if ( !IsValid( npc ) || !IsAlive( npc ) || GameRules_GetGameMode() == FD && ( npc.GetClassName() == "npc_turret_sentry" || npc.GetClassName() == "npc_turret_mega" ) ) //Let the FD cleanup function handle turrets
+		if ( !IsValid( npc ) || !IsAlive( npc ) )
 			continue
+		
+		if( npc.e.fd_roundDeployed != -1 ) //FD uses this var to cleanup stuff placed in current wave restart 
+			continue
+		
 		// kill rather than destroy, as destroying will cause issues with children which is an issue especially for dropships and titans
 		npc.Die( svGlobal.worldspawn, svGlobal.worldspawn, { damageSourceId = eDamageSourceId.round_end } )
 	}
@@ -1030,7 +1042,14 @@ bool function ShouldRunEvac()
 
 void function GiveTitanToPlayer( entity player )
 {
-
+	if( !IsValid( player ) )
+		return
+	
+	if( !player.IsPlayer() )
+		return
+	
+	PlayerEarnMeter_SetMode( player, 1 )
+	PlayerEarnMeter_AddEarnedAndOwned( player, 1.0, 1.0 )
 }
 
 float function GetTimeLimit_ForGameMode()

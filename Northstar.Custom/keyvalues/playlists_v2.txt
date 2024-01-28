@@ -364,6 +364,7 @@ playlists
 				mp_grave 1
 				mp_colony02 1
 				mp_complex3 1
+				mp_crashsite3 1
 				mp_drydock 1
 				mp_eden 1
 				mp_thaw 1
@@ -536,7 +537,9 @@ playlists
 				fd_money_per_round				1200
 				fd_at_unlimited_ammo            0
 				fd_harvester_health 			15000
-				fd_harvester_shield 			4000
+				fd_harvester_shield 			3000
+				fd_harvester_regen_delay		2.5
+				fd_harvester_regen_time			5.0
 				
 				override_boost_cost_burnmeter_harvester_shield 1000
 				override_boost_cost_burnmeter_arc_trap 900
@@ -1151,7 +1154,7 @@ playlists
 				description #PL_sns_desc
 				hint #PL_sns_desc
 				abbreviation #PL_sns_abbr
-				image lf
+				image ffa
 				mixtape_slot 11
 				visible 1
 				
@@ -1354,8 +1357,8 @@ playlists
 						mp_forwardbase_kodai 1
 						mp_glitch 1
 						mp_homestead 1
-						mp_relic02 1
 						mp_rise 1
+						mp_relic02 1
 						mp_wargames 1
 					}
 				}
@@ -1409,6 +1412,7 @@ playlists
 					{
 						mp_lf_deck 1
 						mp_lf_township 1
+						mp_lf_traffic 1
 						mp_lf_uma 1
 						mp_lf_meadow 1
 					}
@@ -1420,9 +1424,9 @@ playlists
 			inherit defaults
 			vars
 			{
-				name #PL_private_match
-				lobbytitle #PL_private_match_lobby
-				description #PL_private_match_desc
+				name #PL_privmatch
+				lobbytitle #PL_privmatch_lobby
+				description #PL_privmatch_desc
 				image private_match
 
 				max_players 16
@@ -1450,6 +1454,7 @@ playlists
 						mp_grave 1
 						mp_colony02 1
 						mp_complex3 1
+						mp_crashsite3 1
 						mp_drydock 1
 						mp_eden 1
 						mp_thaw 1
@@ -1471,6 +1476,7 @@ playlists
 						mp_grave 1
 						mp_colony02 1
 						mp_complex3 1
+						mp_crashsite3 1
 						mp_drydock 1
 						mp_eden 1
 						mp_thaw 1
@@ -1492,6 +1498,7 @@ playlists
 						mp_grave 1
 						mp_colony02 1
 						mp_complex3 1
+						mp_crashsite3 1
 						mp_drydock 1
 						mp_eden 1
 						mp_thaw 1
@@ -1513,6 +1520,7 @@ playlists
 						mp_grave 1
 						mp_colony02 1
 						mp_complex3 1
+						mp_crashsite3 1
 						mp_drydock 1
 						mp_eden 1
 						mp_thaw 1
@@ -1534,6 +1542,7 @@ playlists
 						mp_grave 1
 						mp_colony02 1
 						mp_complex3 1
+						mp_crashsite3 1
 						mp_drydock 1
 						mp_eden 1
 						mp_thaw 1

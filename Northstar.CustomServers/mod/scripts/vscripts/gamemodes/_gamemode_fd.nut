@@ -464,21 +464,11 @@ void function initNetVars()
 		SetGlobalNetInt( "burn_turretLimit", 3 ) //Live Fire maps are brutal with spawns so, good to have more turrets
 	}
 	
-	if( !FD_HasRestarted() )
-	{
-		bool showShop = false
-		SetGlobalNetInt( "FD_currentWave", WAVE_STATE_NONE )
-		if( FD_IsDifficultyLevelOrHigher( eFDDifficultyLevel.INSANE ) || file.isLiveFireMap )
-		{
-			FD_SetMaxAllowedRestarts( 0 )
-			FD_SetNumAllowedRestarts( 0 )
-		}
-		else
-		{
-			FD_SetMaxAllowedRestarts( 2 )
-			FD_SetNumAllowedRestarts( 2 )
-		}
-	}
+	SetGlobalNetInt( "FD_currentWave", 0 )
+	
+	int maxRestarts = GetCurrentPlaylistVarInt( "roundscorelimit", 3 ) - 1 //Minus one because current round already counts
+	FD_SetMaxAllowedRestarts( maxRestarts )
+	FD_SetNumAllowedRestarts( maxRestarts )
 }
 
 
@@ -631,10 +621,7 @@ void function mainGameLoop()
 			{
 				PlayerEarnMeter_SetEnabled( true )
 				foreach( entity player in GetPlayerArray() )
-				{
-					PlayerEarnMeter_SetMode( player, 1 )
-					PlayerEarnMeter_AddEarnedAndOwned( player, 1.0, 1.0 )
-				}
+					GiveTitanToPlayer( player )
 			}
 			
 			thread FD_AttemptToRepairTurrets()
@@ -649,14 +636,14 @@ void function mainGameLoop()
 			if( !file.isLiveFireMap )
 			{
 				PlayerEarnMeter_SetEnabled( true )
+				
 				foreach( entity player in GetPlayerArray() )
 				{
-					PlayerEarnMeter_SetMode( player, 1 ) // show the earn meter
-					PlayerEarnMeter_AddEarnedAndOwned( player, 1.0, 1.0 )
-					//Play twice in a row to not make its volume so subtle
+					GiveTitanToPlayer( player )
 					EmitSoundOnEntityOnlyToPlayer( player, player, "UI_InGame_FD_TitanSelected" )
 					EmitSoundOnEntityOnlyToPlayer( player, player, "UI_InGame_FD_TitanSelected" )
 				}
+				
 				DisableTitanSelection()
 				PlayFactionDialogueToTeam( "fd_titanReadyNag", TEAM_MILITIA )
 				wait 5
@@ -1149,9 +1136,9 @@ void function FD_Epilogue_threaded()
 	wait 2
 	AllPlayersMuteAll( 4 )
 	wait 5
-	AllPlayersUnMuteAll()
 	foreach( entity player in GetPlayerArrayOfTeam( TEAM_MILITIA ) )
 	{
+		StopSoundOnEntity( player, "4_second_fadeout" )
 		MuteHalfTime( player )
 		player.FreezeControlsOnServer()
 		foreach( string ref in GetFDStatRefs() )
@@ -1943,12 +1930,14 @@ void function FD_DamageToMoney( entity victim, var damageInfo )
 				if ( !GetDoomedState( victim ) && soul.GetShieldHealth() <= 0 )
 				{
 					float moneybuffer = ceil( victim.GetMaxHealth() / 50.0 )
+					int moneyThisFrame = 1
 					victim.s.moneydamage += damage
 					while( victim.s.moneydamage >= moneybuffer )
 					{
 						victim.s.moneydamage -= moneybuffer
-						AddMoneyToPlayer( attacker, 1 )
+						moneyThisFrame++
 					}
+					AddMoneyToPlayer( attacker, moneyThisFrame )
 				}
 			}
 		}
@@ -2011,6 +2000,8 @@ void function DamageScaleByDifficulty( entity ent, var damageInfo )
 				case eDamageSourceId.mp_weapon_epg:
 				case eDamageSourceId.mp_weapon_softball:
 				case eDamageSourceId.mp_weapon_satchel:
+				case eDamageSourceId.mp_weapon_frag_grenade:
+				case eDamageSourceId.mp_weapon_thermite_grenade:
 				case eDamageSourceId.mp_weapon_pulse_lmg:
 				DamageInfo_ScaleDamage( damageInfo, 0.1 )
 				break
@@ -2085,6 +2076,28 @@ void function HarvesterShieldInvulnCheck( entity harvester, var damageInfo, floa
 		harvester.SetShieldHealth( harvester.GetShieldHealthMax() )
 		actualShieldDamage = 0.0
 	}
+	
+	//If Arc Titans uses Arc Cannon then their Electric Aura wont devastate Harvester Shield as a tradeoff, the Arc Cannon itself will do that instead
+	int damageSourceID = DamageInfo_GetDamageSourceIdentifier( damageInfo )
+	if( arcTitansUsesArcCannon )
+	{
+		switch( damageSourceID )
+		{
+			case eDamageSourceId.titanEmpField:
+			actualShieldDamage = 200.0
+			break
+			
+			case eDamageSourceId.mp_titanweapon_arc_cannon:
+			actualShieldDamage = 1500
+			break
+			
+			case eDamageSourceId.mp_weapon_grenade_emp:
+			actualShieldDamage = 1200
+			break
+		}
+	}
+	
+	DamageInfo_SetDamage( damageInfo, actualShieldDamage )
 }
 
 void function OnHarvesterDamaged( entity harvester, var damageInfo )
@@ -2158,6 +2171,7 @@ void function OnHarvesterDamaged( entity harvester, var damageInfo )
 	//These are not 1:1 to vanilla yet just for gameplay sanity, since on vanilla there are atrocious things that can happen which will be restored later
 	switch( damageSourceID )
 	{
+		//One of the atrocious things from vanilla is that AI can earn core on Hard or higher and remove the Harvester from existence
 		case eDamageSourceId.mp_titancore_laser_cannon:
 		case eDamageSourceId.mp_titancore_salvo_core:
 		case eDamageSourceId.mp_titanweapon_flightcore_rockets:
@@ -2165,24 +2179,25 @@ void function OnHarvesterDamaged( entity harvester, var damageInfo )
 		damageAmount *= 0.1
 		break
 		
+		//Apparently Scorches does half damage because their thermite really just chomps the harvester really quick
 		case eDamageSourceId.mp_titanweapon_meteor:
 		case eDamageSourceId.mp_titanweapon_meteor_thermite:
 		case eDamageSourceId.mp_titanweapon_meteor_thermite_charged:
 		damageAmount *= 0.5
 		break
 		
+		//Taken from consts, 1:1 to vanilla formula
 		case eDamageSourceId.damagedef_nuclear_core:
 		damageAmount *= GENERATOR_DAMAGE_NUKE_CORE_MULTIPLIER
 		break
 		
+		//Taken from consts, 1:1 to vanilla formula
 		case eDamageSourceId.mp_titanweapon_rocketeer_rocketstream:
 		damageAmount *= GENERATOR_DAMAGE_MORTAR_ROCKET_MULTIPLIER
 		break
-		
-		case eDamageSourceId.mp_weapon_grenade_emp:
-		damageAmount *= 2.0
-		break
 	}
+	
+	harvester.GetShieldHealth()
 	
 	float shieldPercent = ( ( harvester.GetShieldHealth().tofloat() / harvester.GetShieldHealthMax() ) * 100 )
 	if ( shieldPercent < 100 && !file.harvesterShieldDown )
@@ -2398,6 +2413,7 @@ void function AddTurretSentry( entity turret )
 		turret.SetHealth( DEPLOYABLE_TURRET_HEALTH )
 		turret.kv.AccuracyMultiplier = DEPLOYABLE_TURRET_ACCURACY_MULTIPLIER
 		turret.ai.buddhaMode = true
+		turret.EnableNPCFlag( NPC_NO_PAIN | NPC_NO_GESTURE_PAIN | NPC_IGNORE_FRIENDLY_SOUND | NPC_NEW_ENEMY_FROM_SOUND | NPC_TEAM_SPOTTED_ENEMY )
 		SetPreventSmartAmmoLock( turret, true ) //Prevents enemy Legion Smart Core to target them automatically
 		Highlight_SetOwnedHighlight( turret , "sp_friendly_hero" )
 		turret.Highlight_SetParam( 3, 0, HIGHLIGHT_COLOR_INTERACT )
@@ -2452,7 +2468,7 @@ void function GamemodeFD_OnPlayerKilled( entity victim, entity attacker, var dam
 			thread PvPGlitchMonitor( victim )
 		return
 	}
-		
+	
 	if( FD_PlayerInDropship( victim ) )
 	{
 		victim.ClearParent()
@@ -2499,6 +2515,10 @@ void function GamemodeFD_OnPlayerKilled( entity victim, entity attacker, var dam
 
 void function FD_OnNPCDeath( entity victim, entity attacker, var damageInfo )
 {
+	entity inflictor = DamageInfo_GetInflictor( damageInfo )
+	int scriptDamageType = DamageInfo_GetCustomDamageType( damageInfo )
+	int damageSourceId = DamageInfo_GetDamageSourceIdentifier( damageInfo )
+	
 	if( attacker.IsPlayer() && attacker.GetTeam() == TEAM_IMC ) //Give nothing for IMC players
 		return
 	
@@ -2520,13 +2540,15 @@ void function FD_OnNPCDeath( entity victim, entity attacker, var damageInfo )
 	if( victim.IsTitan() && victim.GetTeam() == TEAM_MILITIA && IsValid( victim.GetBossPlayer() ) )
 		file.players[victim.GetBossPlayer()].titanPerfectWin = false //Remove perfect win for the owner of the Titan
 	
-	entity inflictor = DamageInfo_GetInflictor( damageInfo )
 	int victimTypeID = FD_GetAITypeID_ByString( victim.GetTargetName() )
 	
 	if( IsPlayerControlledTurret( inflictor ) && inflictor.GetBossPlayer() == attacker && attacker in file.players )
 	{
 		if( attacker in file.playerAwardStats )
 			file.playerAwardStats[attacker]["turretKills"] += 1.0
+		if( "totalScore" in inflictor.s )
+			inflictor.s.totalScore += 2
+		
 		file.players[attacker].defenseScoreThisRound += 2
 		UpdatePlayerStat( attacker, "fd_stats", "turretKills" )
 	}
@@ -2537,18 +2559,20 @@ void function FD_OnNPCDeath( entity victim, entity attacker, var damageInfo )
 	if( victimTypeID == eFD_AITypeIDs.TITAN_MORTAR || victimTypeID == eFD_AITypeIDs.SPECTRE_MORTAR )
 		if( attacker in file.playerAwardStats )
 			file.playerAwardStats[attacker]["mortarUnitsKilled"] += 1.0
-
+	
+	if( attacker.IsNPC() && attacker.GetClassName() == "npc_turret_mega" )
+	{
+		foreach( player in GetPlayerArray() )
+				Remote_CallFunction_NonReplay( player, "ServerCallback_OnTitanKilled", attacker.GetEncodedEHandle(), victim.GetEncodedEHandle(), scriptDamageType, damageSourceId )
+	}
+	
 	if ( victim.GetOwner() == attacker || !attacker.IsPlayer() || attacker == victim || victim.GetBossPlayer() == attacker || !IsValid( attacker ) )
 		return
 
 	int money = 0
-	int scriptDamageType = DamageInfo_GetCustomDamageType( damageInfo )
-	int damageSourceId = DamageInfo_GetDamageSourceIdentifier( damageInfo )
-
 	if ( victim.IsNPC() )
 	{
 		//Play the subtle kill sound and immediately sets NPCs as nonsolid to prevent them bodyblocking further shots from hitting alive allies behind
-		EmitSoundOnEntityOnlyToPlayer( attacker, attacker, "HUD_Grunt_Killed_Indicator" )
 		victim.NotSolid()
 		victim.Minimap_Hide( TEAM_IMC, null )
 		victim.Minimap_Hide( TEAM_MILITIA, null )
@@ -2592,15 +2616,28 @@ void function FD_OnNPCDeath( entity victim, entity attacker, var damageInfo )
 			default:
 				money = 0
 		}
-		foreach( player in GetPlayerArray() )
-			Remote_CallFunction_NonReplay( player, "ServerCallback_OnTitanKilled", attacker.GetEncodedEHandle(), victim.GetEncodedEHandle(), scriptDamageType, damageSourceId )
+		
+		if( victim.IsTitan() )
+		{
+			foreach( player in GetPlayerArray() )
+				Remote_CallFunction_NonReplay( player, "ServerCallback_OnTitanKilled", attacker.GetEncodedEHandle(), victim.GetEncodedEHandle(), scriptDamageType, damageSourceId )
+		}
+		else
+		{
+			foreach( player in GetPlayerArray() )
+				Remote_CallFunction_NonReplay( player, "ServerCallback_OnEntityKilled", attacker.GetEncodedEHandle(), victim.GetEncodedEHandle(), scriptDamageType, damageSourceId )
+		}
 		
 		if( damageSourceId == eDamageSourceId.rodeo_forced_titan_eject || damageSourceId == eDamageSourceId.core_overload )
 			UpdatePlayerStat( attacker, "fd_stats", "rodeoNukes" )
 	}
 	
 	if ( money != 0 )
+	{
+		if( IsValid( victim ) ) //Drones returns null because they stop existing right on death frame
+			Remote_CallFunction_NonReplay( attacker, "ServerCallback_FD_MoneyFly", victim.GetEncodedEHandle(), money )
 		AddMoneyToPlayer( attacker , money )
+	}
 
 	if( IsValid( inflictor ) )
 	{
@@ -2731,9 +2768,12 @@ void function OnTickDeath( entity victim, var damageInfo )
 		spawnedNPCs.remove( findIndex )
 		SetGlobalNetInt( "FD_AICount_Ticks", GetGlobalNetInt( "FD_AICount_Ticks" ) -1 )
 		SetGlobalNetInt( "FD_AICount_Current", GetGlobalNetInt( "FD_AICount_Current" ) -1 )
+		victim.Minimap_Hide( TEAM_IMC, null )
+		victim.Minimap_Hide( TEAM_MILITIA, null )
 		
 		if ( IsValid( attacker ) && attacker.IsPlayer() )
 		{
+			EmitSoundOnEntityOnlyToPlayer( attacker, attacker, "HUD_Grunt_Killed_Indicator" )
 			AddPlayerScore( attacker, "FDGruntKilled" )
 			attacker.AddToPlayerGameStat( PGS_ASSAULT_SCORE, FD_SCORE_GRUNT )
 			AddMoneyToPlayer( attacker , 5 )

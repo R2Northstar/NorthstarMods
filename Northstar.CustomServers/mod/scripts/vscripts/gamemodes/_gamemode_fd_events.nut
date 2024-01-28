@@ -2043,7 +2043,6 @@ void function spawnNukeTitan( SmokeEvent smokeEvent, SpawnEvent spawnEvent, Flow
 	PingMinimap( spawnEvent.origin.x, spawnEvent.origin.y, 4, 600, 150, 0 )
 	entity npc = CreateNPCTitan( "titan_ogre", TEAM_IMC, spawnEvent.origin, spawnEvent.angles )
 	SetSpawnOption_AISettings( npc, "npc_titan_ogre_minigun_nuke" )
-	SetSpawnOption_Melee( npc, "null" )
 	SetSpawnOption_Titanfall( npc )
 	npc.kv.reactChance = 60
 	SetTargetName( npc, GetTargetNameForID( spawnEvent.spawnType ) ) // required for client to create icons
@@ -2811,6 +2810,9 @@ void function SpawnFDHeavyTurret( vector spawnpos, vector angles, vector ornull 
 	HeavyTurret.kv.WeaponProficiency = eWeaponProficiency.PERFECT
 	HeavyTurret.SetNoTarget( false )
 	HeavyTurret.SetLookDistOverride( 2600 )
+	HeavyTurret.Anim_ScriptedPlayActivityByName( "ACT_UNDEPLOY", true, 0.1 )
+	HeavyTurret.EnableNPCFlag( NPC_NO_PAIN | NPC_NO_GESTURE_PAIN | NPC_IGNORE_FRIENDLY_SOUND | NPC_NEW_ENEMY_FROM_SOUND | NPC_TEAM_SPOTTED_ENEMY )
+	
 	TakeWeaponsForArray( HeavyTurret, HeavyTurret.GetMainWeapons() )
 	entity turretGun = HeavyTurret.GiveWeapon( "mp_weapon_arc_launcher", ["at_unlimited_ammo"] )
 	turretGun.kv.VisibilityFlags = ENTITY_VISIBLE_TO_NOBODY
