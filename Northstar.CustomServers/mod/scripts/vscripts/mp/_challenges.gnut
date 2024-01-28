@@ -61,6 +61,7 @@ void function SetupPlayerMenuChallenges( entity player )
 	file.playerChallenge[ player ] <- false
 	
 	Remote_CallFunction_UI( player, "SCB_SetCompleteMeritState", 0 )
+	Remote_CallFunction_UI( player, "SCB_SetEvacMeritState", 4 ) //4 tells RUI to hide it
 	Remote_CallFunction_UI( player, "SCB_SetMeritCount", 0 )
 	Remote_CallFunction_UI( player, "SCB_SetScoreMeritState", 0 )
 	Remote_CallFunction_UI( player, "SCB_SetWinMeritState", 0 )
