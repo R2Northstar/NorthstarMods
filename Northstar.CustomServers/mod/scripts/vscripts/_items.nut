@@ -8293,7 +8293,7 @@ bool function ClientCommand_UseDoubleXP( entity player, array<string> args )
 	if ( Player_GetDoubleXPCount( player ) < 1 )
 		return true
 
-	if ( player.GetPlayerNetInt( "xpMultiplier" ) )
+	if ( player.GetPlayerNetInt( "xpMultiplier" ) >= 2 )
 		return true
 
 	int currentDoubleXP = Player_GetDoubleXPCount( player )
@@ -10093,8 +10093,8 @@ void function InitUnlockAsEntitlement( string itemRef, string parentRef, int ent
 	{
 		unlock = file.entitlementUnlocks[fullRef]
 	}
-
-	unlock.entitlementIds.append( entitlementId )
+	
+	unlock.entitlementIds.append( 1 ) //Using 1 here instead of the huge DLC check i done previously seems to keep everything unlocked for real this time
 }
 
 array<int> function GetEntitlementIds( string itemRef, string parentRef = "" )
