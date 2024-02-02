@@ -2634,8 +2634,8 @@ void function FD_OnNPCDeath( entity victim, entity attacker, var damageInfo )
 	
 	if ( money != 0 )
 	{
-		if( IsValid( victim ) ) //Drones returns null because they stop existing right on death frame
-			Remote_CallFunction_NonReplay( attacker, "ServerCallback_FD_MoneyFly", victim.GetEncodedEHandle(), money )
+		//if( victim.GetClassName() != npc_drone ) //Drones returns null because they stop existing right on death frame
+		//	Remote_CallFunction_NonReplay( attacker, "ServerCallback_FD_MoneyFly", victim.GetEncodedEHandle(), money )
 		AddMoneyToPlayer( attacker , money )
 	}
 
