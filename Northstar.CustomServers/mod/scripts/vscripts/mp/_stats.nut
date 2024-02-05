@@ -587,7 +587,7 @@ void function HandleKillStats( entity victim, entity attacker, var damageInfo )
 			string source = DamageSourceIDToString( attackerInfo.damageSourceId )
 
 			if ( IsValidStatItemString( source ) )
-				Stats_IncrementStat( attacker, "weapon_kill_stats", "assistsTotal", source, 1.0 )
+				Stats_IncrementStat( attackerInfo.attacker, "weapon_kill_stats", "assistsTotal", source, 1.0 )
 		}
 	}
 
@@ -931,6 +931,9 @@ void function HandleDistanceAndTimeStats_Threaded()
 		// track distance stats
 		foreach ( entity player in GetPlayerArray() )
 		{
+			if ( !IsValid( player ) )
+				continue
+				
 			if ( player.p.lastPosForDistanceStatValid )
 			{
 				// not 100% sure on using Distance2D over Distance tbh
@@ -1035,7 +1038,10 @@ void function SaveStatsPeriodically_Threaded()
 	while( true )
 	{
 		foreach( entity player in GetPlayerArray() )
-			Stats_SaveAllStats( player )
+		{
+			if ( IsValid( player ) )
+				Stats_SaveAllStats( player )
+		}
 		wait 5
 	}
 }

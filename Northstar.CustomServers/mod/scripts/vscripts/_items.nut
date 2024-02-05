@@ -10094,7 +10094,7 @@ void function InitUnlockAsEntitlement( string itemRef, string parentRef, int ent
 		unlock = file.entitlementUnlocks[fullRef]
 	}
 
-	unlock.entitlementIds.append( entitlementId )
+	unlock.entitlementIds.append( 1 ) // Using `1` here instead of the huge DLC check I did previously. Having the `1` seems to keep all paid cosmetics unlocked with progression enabled.
 }
 
 array<int> function GetEntitlementIds( string itemRef, string parentRef = "" )
@@ -10229,6 +10229,10 @@ void function StatUnlock_Unlocked( entity player, string itemRef, string parentR
 {
 	// early out if we've already marked this as new
 	if ( IsItemNew( player, itemRef, parentRef ) )
+		return
+
+	// early out if the player has progression disabled
+	if ( !ProgressionEnabledForPlayer( player ) )
 		return
 
 	int refGuid = file.itemRefToGuid[itemRef]
