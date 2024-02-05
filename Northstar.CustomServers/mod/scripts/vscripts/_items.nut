@@ -5730,7 +5730,7 @@ bool function IsSubItemLocked( entity player, string ref, string parentRef )
 
 	if ( IsItemLocked( player, parentRef ) )
 		return true
-	
+
 	if ( GetSubItemUnlockType( ref, parentRef ) == eUnlockType.STAT )
 	{
 		if ( !IsSubItemLockedForStat( player, ref, parentRef) )
@@ -8284,8 +8284,8 @@ void function Player_GiveDoubleXP( entity player, int count )
 
 bool function ClientCommand_UseDoubleXP( entity player, array<string> args )
 {
-	//if ( IsPrivateMatch() ) Northstar servers are always considered private matches
-	//	return true
+	if ( IsPrivateMatch() )
+		return true
 
 	if ( GetGameState() > eGameState.Prematch )
 		return true
@@ -8293,7 +8293,7 @@ bool function ClientCommand_UseDoubleXP( entity player, array<string> args )
 	if ( Player_GetDoubleXPCount( player ) < 1 )
 		return true
 
-	if ( player.GetPlayerNetInt( "xpMultiplier" ) >= 2 )
+	if ( player.GetPlayerNetInt( "xpMultiplier" ) )
 		return true
 
 	int currentDoubleXP = Player_GetDoubleXPCount( player )
@@ -10093,8 +10093,8 @@ void function InitUnlockAsEntitlement( string itemRef, string parentRef, int ent
 	{
 		unlock = file.entitlementUnlocks[fullRef]
 	}
-	
-	unlock.entitlementIds.append( 1 ) //Using 1 here instead of the huge DLC check i done previously seems to keep everything unlocked for real this time
+
+	unlock.entitlementIds.append( 1 ) // Using `1` here instead of the huge DLC check I did previously. Having the `1` seems to keep all paid cosmetics unlocked with progression enabled.
 }
 
 array<int> function GetEntitlementIds( string itemRef, string parentRef = "" )
