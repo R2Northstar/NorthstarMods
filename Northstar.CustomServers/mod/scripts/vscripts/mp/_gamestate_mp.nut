@@ -785,7 +785,7 @@ void function CleanUpEntitiesForRoundEnd()
 		if ( !IsValid( npc ) || !IsAlive( npc ) )
 			continue
 		
-		if( npc.e.fd_roundDeployed != -1 ) //FD uses this var to cleanup stuff placed in current wave restart 
+		if( npc.e.fd_roundDeployed != -1 || npc.ai.buddhaMode ) //FD uses this var to cleanup stuff placed in current wave restart, buddha is for offline Turrets
 			continue
 		
 		// kill rather than destroy, as destroying will cause issues with children which is an issue especially for dropships and titans

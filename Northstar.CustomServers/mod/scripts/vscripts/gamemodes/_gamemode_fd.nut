@@ -3735,10 +3735,10 @@ void function FD_WaveCleanup()
 	
 	foreach ( entity npc in GetNPCArray() ) //Turret Handling
 	{
-		if( IsValidPlayer( npc.GetBossPlayer() ) && npc.e.fd_roundDeployed != GetGlobalNetInt( "FD_currentWave" ) || npc.GetClassName() == "npc_turret_mega" )
+		if( IsValidPlayer( npc.GetBossPlayer() ) && npc.e.fd_roundDeployed != GetGlobalNetInt( "FD_currentWave" ) || npc.GetClassName() == "npc_turret_mega" || npc.ai.buddhaMode )
 			continue
 		if ( IsValid( npc ) )
-			npc.Destroy()
+			npc.Die( svGlobal.worldspawn, svGlobal.worldspawn, { damageSourceId = eDamageSourceId.round_end } )
 	}
 	
 	/*
