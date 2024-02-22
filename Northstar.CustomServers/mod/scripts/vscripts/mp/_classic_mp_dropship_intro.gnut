@@ -29,7 +29,7 @@ global const float DROPSHIP_INTRO_LENGTH = 15.0 // TODO tweak this
 struct IntroDropship
 {
 	entity dropship
-	int playersInDropship
+	int playersInDropship = 0
 	entity[MAX_DROPSHIP_PLAYERS] players
 }
 
@@ -135,10 +135,10 @@ void function SpawnPlayerIntoDropship( entity player )
 {
 	player.EndSignal( "OnDestroy" )
 
+	player.s.dropshipIntroIsJumping <- false
 	if ( IsAlive( player ) )
 		player.Die() // kill them so we don't have any issues respawning them later
 	
-	player.s.dropshipIntroIsJumping <- false
 	OnThreadEnd( function() : ( player )
 	{	
 		if ( IsValid( player ) )
@@ -156,7 +156,11 @@ void function SpawnPlayerIntoDropship( entity player )
 	})
 	
 	WaitFrame()
-
+	
+	// respawn player and holster their weapons so they aren't out
+	if ( !IsAlive( player ) )
+		player.RespawnPlayer( null )
+	
 	player.EndSignal( "OnDeath" )
 	
 	//Find the player's dropship and seat
@@ -167,7 +171,7 @@ void function SpawnPlayerIntoDropship( entity player )
 		teamDropships = file.imcDropships
 	
 	IntroDropship playerDropship
-	int playerDropshipIndex = -1
+	int playerDropshipIndex = RandomInt( MAX_DROPSHIP_PLAYERS )
 	foreach( IntroDropship dropship in teamDropships )
 	{
 		if( dropship.playersInDropship >= MAX_DROPSHIP_PLAYERS )
@@ -175,11 +179,14 @@ void function SpawnPlayerIntoDropship( entity player )
 		
 		foreach( index, playerslot in dropship.players )
 		{
-			if( !IsValid( dropship.players[index] ) )
+			if( dropship.playersInDropship >= MAX_DROPSHIP_PLAYERS )
+				continue
+			
+			if( !IsValid( dropship.players[dropship.playersInDropship] ) )
 			{
 				playerDropship = dropship
-				playerDropshipIndex = index
-				dropship.players[index] = player
+				playerDropshipIndex = dropship.playersInDropship
+				dropship.players[dropship.playersInDropship] = player
 				dropship.playersInDropship++
 				break
 			}
@@ -187,24 +194,26 @@ void function SpawnPlayerIntoDropship( entity player )
 	}
 	
 	if( playerDropship.dropship == null ) //If we're at this point, we have more players than we do dropships, so just pick a random one
-	{
 		playerDropship = teamDropships.getrandom()
-		playerDropshipIndex = RandomInt( MAX_DROPSHIP_PLAYERS )
-	}
 	
-	// respawn player and holster their weapons so they aren't out
-	if ( !IsAlive( player ) )
-		player.RespawnPlayer( null )
 	HolsterAndDisableWeapons(player)
 	player.DisableWeaponViewModel()
 	UnMuteAll( player )
+	StopSoundOnEntity( player, "Duck_For_FrontierDefenseTitanSelectScreen" )
 	
 	// hide hud and fade screen out from black
 	AddCinematicFlag( player, CE_FLAG_CLASSIC_MP_SPAWNING )
 	ScreenFadeFromBlack( player, 0.5, 0.5 )
 	// faction leaders are done clientside, spawn them here
-	Remote_CallFunction_NonReplay( player, "ServerCallback_SpawnFactionCommanderInDropship", playerDropship.dropship.GetEncodedEHandle(), file.introStartTime )
-
+	if( GameRules_GetGameMode() == FD )
+	{
+		if( player.GetTeam() == TEAM_MILITIA ) //IMC Side will have empty Intro Dropship for FD in specific
+			Remote_CallFunction_NonReplay( player, "ServerCallback_SpawnFactionCommanderInDropship", playerDropship.dropship.GetEncodedEHandle(), file.introStartTime )
+	}
+	else
+		Remote_CallFunction_NonReplay( player, "ServerCallback_SpawnFactionCommanderInDropship", playerDropship.dropship.GetEncodedEHandle(), file.introStartTime )
+	
+	Remote_CallFunction_NonReplay( player, "ServerCallback_CreateDropShipIntLighting", playerDropship.dropship.GetEncodedEHandle(), playerDropship.dropship.GetTeam() )
 	// do firstperson sequence	
 	FirstPersonSequenceStruct idleSequence
 	idleSequence.firstPersonAnim = DROPSHIP_IDLE_ANIMS_POV[ playerDropshipIndex ]
@@ -216,9 +225,8 @@ void function SpawnPlayerIntoDropship( entity player )
 	idleSequence.setInitialTime = Time() - file.introStartTime
 	thread FirstPersonSequence( idleSequence, player, playerDropship.dropship )
 	WaittillAnimDone( player )
-	
 	// todo: possibly rework this to actually get the time the idle anim takes and start the starttime of the jump sequence for very late joiners using that
-			
+	
 	// jump sequence
 	FirstPersonSequenceStruct jumpSequence
 	jumpSequence.firstPersonAnim = DROPSHIP_JUMP_ANIMS_POV[ playerDropshipIndex ]
@@ -236,7 +244,7 @@ void function SpawnPlayerIntoDropship( entity player )
 	thread FirstPersonSequence( jumpSequence, player, playerDropship.dropship )
 	WaittillAnimDone( player ) // somehow this is better than just waiting for the blocking FirstPersonSequence call?
 	
-	player.s.dropshipIntroIsJumping <- true
+	player.s.dropshipIntroIsJumping = true
 	thread PlayerJumpsFromDropship( player )
 }
 
@@ -252,7 +260,7 @@ void function PlayerJumpsFromDropship( entity player )
 			// show weapon viewmodel and hud and let them move again
 			player.MovementEnable()
 			player.EnableWeaponViewModel()
-			DeployAndEnableWeapons(player)
+			DeployAndEnableWeapons( player )
 			RemoveCinematicFlag( player, CE_FLAG_CLASSIC_MP_SPAWNING )
 		}
 	})

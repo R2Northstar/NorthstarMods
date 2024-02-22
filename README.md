@@ -16,7 +16,7 @@ Branch made to expand Frontier Defense feature set by adding back cut content wh
 - Harvester have proper damage filters, meaning certain enemies will hit it harder, again similar to vanilla behavior
 - All maps from vanilla have waves based on their respective spawns, all other maps utilizes custom waves
 - During wave break time, players do not respawn on dropship, neither new connecting players, they will deploy via Drop Pod instead
-- Reapers will deploy ticks, despite them still not being able to parkour through the map, they still pose a high threat
+- Reapers will deploy ticks, despite them still not being able to jump on rooftops, they still pose a high threat
 - Like in vanilla, Titan selection menu now only appears on match start, and players can still select another Titan during the entirety of Wave 1, after that, Titans selection locks and Wave Restarts does not bring the Titan selection menu anymore
 - Fixes Autotitans not having overlay on them to see them through walls
 - Fixes Offline turrets not having their yellow overlay, neither their repair sound
@@ -39,6 +39,8 @@ Branch made to expand Frontier Defense feature set by adding back cut content wh
 - They can Execute Players
 - They can use e-smoke to kill pilots trying to rodeo them
 - Drop a Battery on Easy and Regular Difficulties or drop an Amped Battery in Hard, Master and Insane difficulties similar to campaign Titans
+
+*Warning: Elite Titans' melee have a special mechanic called ENF (Execution Next Frame), in which said Elite Titan will immediately chain execution the first frame the game registers a titan as doomed (auto or player) from the melee attack that has doomed them! This mechanic respects Stealth Auto-Eject and Ronin's Phase Reflex, and will not trigger immediate execution.*
 
 ## Live-Fire Frontier Defense
 

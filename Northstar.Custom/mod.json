@@ -1,7 +1,7 @@
 {
 	"Name": "Northstar.Custom",
 	"Description": "Custom content for Northstar: extra weapons, gamemodes, etc.",
-	"Version": "1.22.0",
+	"Version": "1.24.0",
 	"LoadPriority": 1,
 	"RequiredOnClient": true,
 	"ConVars": [
@@ -39,7 +39,12 @@
             "Name": "ns_fd_elite_overhead_icontype",
             "DefaultValue": "1",
 			"Flags": "ARCHIVE_PLAYERPROFILE"
-        }
+        },
+		{
+			"Name": "embark_style",
+			"DefaultValue": "0",
+			"Flags": 640
+		}
 	],
 	"Scripts": [
 		{

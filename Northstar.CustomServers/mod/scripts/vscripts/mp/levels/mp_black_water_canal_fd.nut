@@ -21,6 +21,8 @@ void function initFrontierDefenseData()
 	AddOutOfBoundsTriggerWithParams( < 1935, -752, 1382 >, 160, 512 ) //Add OOB because some "smart" fellas wont stop climbing that water tank tower to snipe with Charge Rifle/Archer and do nothing else
 	AddFDCustomProp( $"models/containers/container_medium_tanks_blue.mdl", < 184, 120, -8 >, < 0, 0, 0 > )
 	AddFDCustomProp( $"models/containers/container_medium_tanks_blue.mdl", < 553, -427, -8 >, < 0, 0, 0 > )
+	AddFDCustomTitanStart( < 3668, -174, -347 >, < 0, 135, 0 > )
+	AddFDCustomTitanStart( < 432, -1397, 0 >, < 0, 45, 0 > )
 	
 	AddStationaryAIPosition(< -295, 3262, -128>, eStationaryAIPositionTypes.MORTAR_SPECTRE )
 	AddStationaryAIPosition(< 1844, 4549, -130>, eStationaryAIPositionTypes.MORTAR_SPECTRE )

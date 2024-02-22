@@ -47,7 +47,7 @@ global struct HarvesterStruct {
 
 HarvesterStruct function SpawnHarvester( vector origin, vector angles, int health, int shieldHealth, int team )
 {
-	entity harvester = CreatePropScript( $"models/props/generator_coop/generator_coop.mdl", origin, angles, SOLID_VPHYSICS )
+	entity harvester = CreatePropScript( MODEL_HARVESTER_TOWER, origin, angles, SOLID_VPHYSICS )
 
 	harvester.SetMaxHealth( health )
 	harvester.SetHealth( health )
@@ -60,8 +60,8 @@ HarvesterStruct function SpawnHarvester( vector origin, vector angles, int healt
 	SetObjectCanBeMeleed( harvester, true )
 	SetVisibleEntitiesInConeQueriableEnabled( harvester, true )
 	SetTeam( harvester, team )
-	AI_CreateDangerousArea_Static( harvester, null, 160, TEAM_ANY, true, true, origin )
-	CreateNoSpawnArea( TEAM_ANY, TEAM_ANY, origin, 0, 160 ) //Prevent people calling Titans inside the Harvester
+	AI_CreateDangerousArea_Static( harvester, null, 160, TEAM_INVALID, true, true, origin )
+	CreateNoSpawnArea( TEAM_INVALID, TEAM_INVALID, origin, 0, 160 ) //Prevent people calling Titans inside the Harvester
 
 	entity blackbox = CreatePropScript( MODEL_HARVESTER_TOWER_COLLISION, origin, angles, 0 )
 	ToggleNPCPathsForEntity( blackbox, false )
@@ -110,8 +110,14 @@ HarvesterStruct function generateShieldFX( HarvesterStruct harvester )
 	return harvester
 }
 
-HarvesterStruct function playHarvesterDestructionFX( HarvesterStruct harvester )
+void function playHarvesterDestructionFX( HarvesterStruct harvester )
 {
+	if( IsValid( harvester.particleBeam ) )
+		harvester.particleBeam.Destroy()
+	
+	if( IsValid( harvester.particleSparks ) )
+		harvester.particleSparks.Destroy()
+	
 	foreach( entity pFX in harvester.particleFXArray )
 	{
 		if( IsValid( pFX ) )
@@ -120,9 +126,16 @@ HarvesterStruct function playHarvesterDestructionFX( HarvesterStruct harvester )
 	
 	harvester.particleFXArray.clear()
 	entity harvExpFX = PlayFX( $"P_harvester_beam_end", harvester.harvester.GetOrigin() )
-	harvExpFX.DisableHibernation()
 	harvExpFX.Destroy()
-	return harvester
+	
+	StopSoundOnEntity( harvester.harvester, HARVESTER_SND_HEALTHY )
+	StopSoundOnEntity( harvester.harvester, HARVESTER_SND_DAMAGED )
+	StopSoundOnEntity( harvester.harvester, HARVESTER_SND_CRITICAL )
+	StopSoundOnEntity( harvester.harvester, HARVESTER_SND_UNSTABLE )
+	
+	EmitSoundOnEntity( harvester.harvester, HARVESTER_SND_DESTROYED )
+	EmitSoundOnEntity( harvester.harvester, "ai_reaper_nukedestruct_explo_3p" )
+	EmitSoundOnEntity( harvester.harvester, "bt_beacon_controlroom_dish_explosion" )
 }
 
 vector function GetHarvesterBeamTriLerpColor( float frac )

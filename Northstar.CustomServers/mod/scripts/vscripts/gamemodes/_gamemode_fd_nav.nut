@@ -483,7 +483,7 @@ void function DroneTracksPathing( string route )
 	thread droneNav_thread( guy, route )
 }
 
-void function NPCStuckTracker( entity npc ) //Track if AI is properly pathing, otherwise after one minute, it will suicide to prevent softlocking
+void function NPCStuckTracker( entity npc ) //Track if AI is properly pathing, otherwise after ten seconds, it will suicide to prevent softlocking
 {
 	npc.EndSignal( "OnDeath" )
 	npc.EndSignal( "OnDestroy" )

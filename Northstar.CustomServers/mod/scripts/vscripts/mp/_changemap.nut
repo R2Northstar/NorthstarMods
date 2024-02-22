@@ -64,6 +64,7 @@ void function PopulatePostgameData()
 	foreach ( entity player in GetPlayerArray() )
 	{
 		int teams = GetCurrentPlaylistVarInt( "max_teams", 2 )
+		int playerPerTeam = GetCurrentPlaylistVarInt( "max_players", 16 )
 		bool standardTeams = teams != 2
 		
 		int enumModeIndex = 0
@@ -81,14 +82,14 @@ void function PopulatePostgameData()
 		player.SetPersistentVar( "postGameData.gameMode", enumModeIndex )
 		player.SetPersistentVar( "postGameData.map", enumMapIndex )
 		player.SetPersistentVar( "postGameData.teams", standardTeams )
-		player.SetPersistentVar( "postGameData.maxTeamSize", teams )
+		player.SetPersistentVar( "postGameData.maxTeamSize", playerPerTeam )
 		player.SetPersistentVar( "postGameData.privateMatch", true )
 		player.SetPersistentVar( "postGameData.ranked", true )
 		player.SetPersistentVar( "postGameData.hadMatchLossProtection", false )
 		
 		player.SetPersistentVar( "isFDPostGameScoreboardValid", GAMETYPE == FD )
 		
-		if ( standardTeams )
+		if ( standardTeams && teams > 1 ) //FD is still triggering this somehow even though its setting max teams to 1
 		{
 			if ( player.GetTeam() == TEAM_MILITIA )
 			{
@@ -108,6 +109,8 @@ void function PopulatePostgameData()
 		{
 			player.SetPersistentVar( "postGameData.factionMCOR", GetFactionChoice( player ) )
 			player.SetPersistentVar( "postGameData.scoreMCOR", GameRules_GetTeamScore( player.GetTeam() ) )
+			player.SetPersistentVar( "postGameData.factionIMC", GetEnemyFaction( player ) )
+			player.SetPersistentVar( "postGameData.scoreIMC", 0 )
 		}
 		
 		array<entity> otherPlayers = GetPlayerArray()
@@ -121,6 +124,8 @@ void function PopulatePostgameData()
 			player.SetPersistentVar( "postGameData.players[" + i + "].team", TEAM_UNASSIGNED )
 			player.SetPersistentVar( "postGameData.players[" + i + "].name", "" )
 			player.SetPersistentVar( "postGameData.players[" + i + "].xuid", "" )
+			player.SetPersistentVar( "postGameData.players[" + i + "].level", -1 )
+			player.SetPersistentVar( "postGameData.players[" + i + "].gen", -1 )
 			player.SetPersistentVar( "postGameData.players[" + i + "].callsignIconIndex", -1 )
 			
 			for ( int j = 0; j < scoreTypes.len(); j++ )
@@ -132,6 +137,8 @@ void function PopulatePostgameData()
 			player.SetPersistentVar( "postGameData.players[" + i + "].team", otherPlayers[ i ].GetTeam() )
 			player.SetPersistentVar( "postGameData.players[" + i + "].name", otherPlayers[ i ].GetPlayerName() )
 			player.SetPersistentVar( "postGameData.players[" + i + "].xuid", otherPlayers[ i ].GetUID() )
+			player.SetPersistentVar( "postGameData.players[" + i + "].level", otherPlayers[ i ].GetLevel() )
+			player.SetPersistentVar( "postGameData.players[" + i + "].gen", otherPlayers[ i ].GetGen() )
 			player.SetPersistentVar( "postGameData.players[" + i + "].callsignIconIndex", otherPlayers[ i ].GetPersistentVarAsInt( "activeCallsignIconIndex" ) )
 			
 			for ( int j = 0; j < scoreTypes.len(); j++ )

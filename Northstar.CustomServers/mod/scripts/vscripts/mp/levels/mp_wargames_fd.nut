@@ -18,6 +18,11 @@ void function initFrontierDefenseData()
 	waveAnnouncement.append("fd_soonArcTitans")
 	waveAnnouncement.append("fd_waveTypeTicks")
 	waveAnnouncement.append("fd_introMedium")
+	
+	AddFDCustomTitanStart( < -1601, 3696, -255 >, < 0, -135, 0 > )
+	AddFDCustomTitanStart( < -947, 3696, -255 >, < 0, -45, 0 > )
+	
+	AI_CreateDangerousArea_Static( svGlobal.worldspawn, null, 160, TEAM_INVALID, true, true, < 2259, 2363, -127 > )
 
 	int index = 1
 

@@ -18,6 +18,9 @@ void function initFrontierDefenseData()
 	waveAnnouncement.append("fd_waveTypeFlyers")
 	waveAnnouncement.append("fd_waveTypeTitanArc")
 	
+	AddFDCustomTitanStart( < 1563, 1481, 256 >, < 0, 180, 0 > )
+	AddFDCustomTitanStart( < 258, 144, 404 >, < 0, 0, 0 > )
+	
 	AddStationaryAIPosition(< 576, -3436, 141 >, eStationaryAIPositionTypes.LAUNCHER_REAPER)
 	AddStationaryAIPosition(< 3468, -3461, 0 >, eStationaryAIPositionTypes.LAUNCHER_REAPER)
 	AddStationaryAIPosition(< 3256, 3423, -47 >, eStationaryAIPositionTypes.LAUNCHER_REAPER)

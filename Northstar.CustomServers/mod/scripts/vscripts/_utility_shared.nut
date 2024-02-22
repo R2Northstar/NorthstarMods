@@ -1601,9 +1601,6 @@ float function GetPulseFrac( rate = 1, startTime = 0 )
 bool function IsPetTitan( titan )
 {
 	Assert( titan.IsTitan() )
-	
-	if ( !titan.GetTitanSoul() )
-		return false
 
 	if ( !titan.GetTitanSoul() )
 		return false
@@ -3285,16 +3282,13 @@ bool function PlayerCanSpawnIntoTitan( entity player )
 
 	entity titan = player.GetPetTitan()
 
-	if ( !IsAlive( titan ) )
+	if ( !IsAlive( titan ) || GetDoomedState( titan ) )
 		return false
 
-	if ( GetDoomedState( titan ) )
+	if ( titan.ContextAction_IsBusy() || titan.ContextAction_IsMeleeExecution() )
 		return false
 
-	if ( titan.ContextAction_IsActive() )
-		return false
-
-	return false // turned off until todd figures out how to enable
+	return true // turned off until todd figures out how to enable
 }
 
 array< vector > function EntitiesToOrigins( array< entity > ents )

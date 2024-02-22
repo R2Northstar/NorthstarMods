@@ -7,6 +7,7 @@ global function WaittillGameStateOrHigher
 global function AddCallback_OnRoundEndCleanup
 
 global function SetShouldUsePickLoadoutScreen
+global function SetShouldSpectateInPickLoadoutScreen
 global function SetSwitchSidesBased
 global function SetSuddenDeathBased
 global function SetTimerBased
@@ -22,6 +23,7 @@ global function GetWinningTeamWithFFASupport
 
 global function GameState_GetTimeLimitOverride
 global function IsRoundBasedGameOver
+global function SpectatePlayerDuringPickLoadout
 global function ShouldRunEvac
 global function GiveTitanToPlayer
 global function GetTimeLimit_ForGameMode
@@ -29,6 +31,7 @@ global function GetTimeLimit_ForGameMode
 struct {
 	// used for togglable parts of gamestate
 	bool usePickLoadoutScreen
+	bool spectateInPickLoadoutScreen = false
 	bool switchSidesBased
 	bool suddenDeathBased
 	bool timerBased = true
@@ -96,6 +99,8 @@ void function PIN_GameStart()
 	
 	AddCallback_OnPlayerKilled( OnPlayerKilled )
 	AddDeathCallback( "npc_titan", OnTitanKilled )
+	AddCallback_EntityChangedTeam( "player", OnPlayerChangedTeam )
+	PilotBattery_SetMaxCount( GetCurrentPlaylistVarInt( "pilot_battery_inventory_size", 1 ) )
 	
 	RegisterSignal( "CleanUpEntitiesForRoundEnd" )
 }
@@ -147,17 +152,18 @@ void function GameStateEnter_WaitingForPlayers()
 	thread WaitForPlayers() // like 90% sure there should be a way to get number of loading clients on server but idk it
 }
 
-void function WaitForPlayers( )
+void function WaitForPlayers()
 {
 	// note: atm if someone disconnects as this happens the game will just wait forever
 	float endTime = Time() + 30.0
 	
+	SetServerVar( "connectionTimeout", endTime )
 	while ( ( GetPendingClientsCount() != 0 && endTime > Time() ) || GetPlayerArray().len() == 0 )
 		WaitFrame()
 	
-	print( "done waiting!" )
+	print( "Finished waiting for players, starting match." )
 	
-	wait 1.0 // bit nicer
+	wait 1.0
 	if ( file.usePickLoadoutScreen )
 		SetGameState( eGameState.PickLoadout )
 	else
@@ -201,7 +207,7 @@ void function GameStateEnter_Prematch()
 	
 	if ( !GetClassicMPMode() && !ClassicMP_ShouldTryIntroAndEpilogueWithoutClassicMP() )
 		thread StartGameWithoutClassicMP()
-
+	
 	// Initialise any spectators. Hopefully they are all initialised already in CodeCallback_OnClientConnectionCompleted
 	// (_base_gametype_mp.gnut) but for modes like LTS this doesn't seem to happen late enough to work properly.
 	foreach ( player in GetPlayerArray() )
@@ -351,32 +357,37 @@ void function GameStateEnter_WinnerDetermined_Threaded()
 	}
 	else if ( IsRoundBased() || !ClassicMP_ShouldRunEpilogue() )
 	{
-		// these numbers are temp and should really be based on consts of some kind
-		if( GameRules_GetGameMode() == FD )
+		//Observation from vanilla hints that the round ends after 10 seconds and setups player control from the gamemode
+		foreach( entity player in GetPlayerArray() )
 		{
-			wait 6
-			foreach( entity player in GetPlayerArray() )
-				ScreenFadeToBlackForever( player, 2.0 )
-			wait 4
-		}
-		else
-		{
-			foreach( entity player in GetPlayerArray() )
-			{
+			if( level.endOfRoundPlayerState == ENDROUND_FREEZE )
 				player.FreezeControlsOnServer()
-				ScreenFadeToBlackForever( player, 4.0 )
+			else if( level.endOfRoundPlayerState == ENDROUND_MOVEONLY )
+			{
+				player.HolsterWeapon()
+				player.Server_TurnOffhandWeaponsDisabledOn()
 			}
-			
-			wait ROUND_WINNING_KILL_REPLAY_LENGTH_OF_REPLAY
 		}
-		CleanUpEntitiesForRoundEnd() // fade should be done by this point, so cleanup stuff now when people won't see
+		
+		wait 6
 		
 		foreach( entity player in GetPlayerArray() )
+			ScreenFadeToBlackForever( player, 2.0 )
+		
+		wait 4
+		
+		CleanUpEntitiesForRoundEnd()
+		foreach( entity player in GetPlayerArray() )
+		{
 			player.UnfreezeControlsOnServer()
+			player.DeployWeapon()
+			player.Server_TurnOffhandWeaponsDisabledOff()
+		}
 	}
 	
 	wait CLEAR_PLAYERS_BUFFER //Required to properly restart without players in Titans crashing it in FD
 	
+	ClearDroppedWeapons()
 	if ( IsRoundBased() )
 	{
 		svGlobal.levelEnt.Signal( "RoundEnd" )
@@ -418,6 +429,7 @@ void function GameStateEnter_WinnerDetermined_Threaded()
 		else
 			SetGameState( eGameState.Postmatch )
 	}
+	
 	AllPlayersUnMuteAll()
 }
 
@@ -815,6 +827,16 @@ void function SetShouldUsePickLoadoutScreen( bool shouldUse )
 	file.usePickLoadoutScreen = shouldUse
 }
 
+void function SetShouldSpectateInPickLoadoutScreen( bool shouldSpec )
+{
+	file.spectateInPickLoadoutScreen = shouldSpec
+}
+
+bool function SpectatePlayerDuringPickLoadout()
+{
+	return ( file.usePickLoadoutScreen && file.spectateInPickLoadoutScreen )
+}
+
 void function SetSwitchSidesBased( bool switchSides )
 {
 	file.switchSidesBased = switchSides
@@ -876,8 +898,8 @@ void function SetWinner( int team, string winningReason = "", string losingReaso
 	
 	file.gameWonThisFrame = true
 	thread UpdateGameWonThisFrameNextFrame()
-	if ( winningReason == "" )
 	
+	if ( winningReason == "" )
 		file.announceRoundWinnerWinningSubstr = 0
 	else
 		file.announceRoundWinnerWinningSubstr = GetStringID( winningReason )
@@ -898,12 +920,15 @@ void function SetWinner( int team, string winningReason = "", string losingReaso
 		if( team == TEAM_MILITIA )
 		{
 			GameRules_SetTeamScore( TEAM_IMC, 0 )
-			GameRules_SetTeamScore2( TEAM_IMC, 0 )
 			GameRules_SetTeamScore( TEAM_MILITIA, 1 )
-			GameRules_SetTeamScore2( TEAM_MILITIA, 1 )
+		}
+		else if( team == TEAM_IMC && !IsRoundBased() )
+		{
+			GameRules_SetTeamScore( TEAM_IMC, 1 )
+			GameRules_SetTeamScore( TEAM_MILITIA, 0 )
 		}
 	}
-	else if ( team != TEAM_UNASSIGNED && GameRules_GetGameMode() != FD )
+	else if ( team != TEAM_UNASSIGNED )
 	{
 		if( !file.timerBased )
 			DebounceScoreTie( team )
@@ -1048,7 +1073,7 @@ void function GiveTitanToPlayer( entity player )
 	if( !player.IsPlayer() )
 		return
 	
-	PlayerEarnMeter_SetMode( player, 1 )
+	PlayerEarnMeter_SetMode( player, eEarnMeterMode.DEFAULT )
 	PlayerEarnMeter_AddEarnedAndOwned( player, 1.0, 1.0 )
 }
 
@@ -1146,5 +1171,20 @@ void function DialoguePlayWinnerDetermined()
 	{
 		PlayFactionDialogueToTeam( "scoring_won", winningTeam )
 		PlayFactionDialogueToTeam( "scoring_lost", losingTeam )
+	}
+}
+
+void function OnPlayerChangedTeam( entity player )
+{
+	if ( !player.hasConnected ) //Prevents players who just joined to trigger below code, as server always pre setups their teams
+		return
+	
+	NotifyClientsOfTeamChange( player, GetOtherTeam( player.GetTeam() ), player.GetTeam() )
+	
+	foreach( npc in GetNPCArray() )
+	{
+		entity bossPlayer = npc.GetBossPlayer()
+		if ( IsValidPlayer( bossPlayer ) && bossPlayer == player && IsAlive( npc ) )
+			SetTeam( npc, player.GetTeam() )
 	}
 }

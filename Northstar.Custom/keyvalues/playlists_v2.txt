@@ -309,6 +309,7 @@ playlists
  				titan_rebuild_time 240
  				spawn_zone_enabled 1
                 respawn_delay 4
+				player_force_respawn 15
                 timelimit 30
                 skyshow_enabled 1
                 max_teams 1
@@ -334,6 +335,7 @@ playlists
 				fd_wave_buy_time				60.0
 				fd_pro_titan_shields			0
 				fd_at_unlimited_ammo            1
+				fd_money_flyouts				0
 				enable_match_progress_update	0
 				color		"0 184 254 255"
 				aegis_upgrades 1
@@ -522,6 +524,7 @@ playlists
  				abbreviation #PL_fd_lf_abbr
                 image aitdm
                 fd_difficulty 1
+				fd_money_flyouts 1
 				boost_store_team_reserve 1
 				riff_minimap_state 1
 				rodeo_battery_disembark_to_pickup 0
@@ -529,6 +532,7 @@ playlists
 				skyshow_enabled 0
 				max_players 6
 				player_force_respawn 5
+				aegis_upgrades 0 //Helper Titan doesn't have Aegis
 
 				fd_titan_health_adjust			0
 				fd_reaper_health_adjust 		0

@@ -547,6 +547,9 @@ void function RegisterCustomFDContent()
 				position.Destroy()
 		}
 	}
+		
+	AddFDCustomTitanStart( < -2221, 5230, 128 >, < 0, -105, 0 > )
+	AddFDCustomTitanStart( < -3058, 4741, 102 >, < 0, -15, 0 > )
 	
 	AddStationaryAIPosition(< 1435, -2271, 121 >, eStationaryAIPositionTypes.LAUNCHER_REAPER)
 	AddStationaryAIPosition(< 406, -2364, 14 >, eStationaryAIPositionTypes.LAUNCHER_REAPER)

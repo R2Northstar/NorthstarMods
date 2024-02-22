@@ -2,8 +2,8 @@ global function initFrontierDefenseData
 void function initFrontierDefenseData()
 {
     shopPosition = < -5028, -618, 382 >
-	FD_spawnPosition = < -5065, -838, 1105 >
-	FD_spawnAngles = < 0, 20, 0 >
+	FD_spawnPosition = < -5076, -1381, 1600 >
+	FD_spawnAngles = < 0, 35, 0 >
 	FD_groundspawnPosition = < -5301, -1111, 385 >
 	FD_groundspawnAngles = < 0, 45, 0 >
 	
@@ -16,6 +16,9 @@ void function initFrontierDefenseData()
 	waveAnnouncement.append("fd_waveComboArcNuke")
 	waveAnnouncement.append("fd_waveTypeFlyers")
 	waveAnnouncement.append("fd_waveComboMultiMix")
+	
+	AddFDCustomTitanStart( < -5678, -1146, 384 >, < 0, 0, 0 > )
+	AddFDCustomTitanStart( < -5537, 275, 300 >, < 0, 0, 0 > )
 	
 	AddStationaryAIPosition(< 3941, 1566, 86 >, eStationaryAIPositionTypes.LAUNCHER_REAPER)
 	AddStationaryAIPosition(< 3175, 1615, 65 >, eStationaryAIPositionTypes.LAUNCHER_REAPER)

@@ -535,6 +535,9 @@ void function RegisterCustomFDContent()
 	AddFDCustomShipStart( < -655, -1239, 2671 >, < 0, 180, 0 >, TEAM_IMC )
 	AddFDCustomShipStart( < -1052, -1799, 2671 >, < 0, 135, 0 >, TEAM_IMC )
 	
+	AddFDCustomTitanStart( < -10155, -1483, 600 >, < 0, 0, 0 > )
+	AddFDCustomTitanStart( < -8916, -1655, 607 >, < 0, -75, 0 > )
+	
 	entity Prowler1 = CreateNPC( "npc_prowler", TEAM_DAMAGE_ALL, < -6615, 1631, 1359 >,< 0, 0, 0 > )
 	entity Prowler2 = CreateNPC( "npc_prowler", TEAM_DAMAGE_ALL, < -6545, 1874, 1359 >,< 0, 0, 0 > )
 	entity Prowler3 = CreateNPC( "npc_prowler", TEAM_DAMAGE_ALL, < -6153, 1392, 1365 >,< 0, 0, 0 > )

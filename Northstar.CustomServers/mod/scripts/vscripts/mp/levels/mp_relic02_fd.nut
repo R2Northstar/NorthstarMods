@@ -343,6 +343,9 @@ void function RegisterCustomFDContent()
 		if( position.HasKey( "editorclass" ) && position.kv.editorclass == "info_fd_ai_position" )
 			position.Destroy()
 	
+	AddFDCustomTitanStart( < 4858, -4093, 173 >, < 0, 180, 0 > )
+	AddFDCustomTitanStart( < 4748, -5300, 21 >, < 0, 180, 0 > )
+	
 	AddStationaryAIPosition(< -4425, -1440, 341 >, eStationaryAIPositionTypes.MORTAR_TITAN)
 	AddStationaryAIPosition(< -5544, -2340, 279 >, eStationaryAIPositionTypes.MORTAR_TITAN)
 	AddStationaryAIPosition(< -4394, -3911, 402 >, eStationaryAIPositionTypes.MORTAR_TITAN)

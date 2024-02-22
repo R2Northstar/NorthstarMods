@@ -436,7 +436,7 @@ void function Reaper_LaunchFragDrone_Think( entity reaper, string fragDroneSetti
 	if ( minionsToSpawn <= 0 )
 		return
 
-	array<vector> targetOrigins = GetFragDroneTargetOrigins( reaper, reaper.GetOrigin(), 48, 200, 64, MAX_TICKS )
+	array<vector> targetOrigins = GetFragDroneTargetOrigins( reaper, reaper.GetOrigin(), 64, 200, 6, MAX_TICKS )
 
 	if ( targetOrigins.len() < minionsToSpawn )
 		return

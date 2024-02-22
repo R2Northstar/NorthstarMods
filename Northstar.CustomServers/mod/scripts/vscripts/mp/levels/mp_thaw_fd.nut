@@ -17,6 +17,9 @@ void function initFrontierDefenseData()
 	waveAnnouncement.append("fd_soonNukeTitans")
 	waveAnnouncement.append("fd_waveTypeFlyers")
 	waveAnnouncement.append("fd_waveComboNukeMortar")
+	
+	AddFDCustomTitanStart( < -2776, -1603, -364 >, < 0, -45, 0 > )
+	AddFDCustomTitanStart( < -1960, -3785, -467 >, < 0, 90, 0 > )
 
 	int index = 1
 	

@@ -217,11 +217,11 @@ void function executeWave()
 		
 		WaitFrame()
 	}
-	wait 0.5
-	print( "All enemies from wave eliminated" )
 	
 	//Lastly, ensure everyone is indeed dead to proceed
 	waitUntilLessThanAmountAlive( 0 )
+	wait 0.5
+	print( "All enemies from wave eliminated" )
 	
 	//Kill all unwanted Ticks from Reapers
 	print( "Purging all remaining Ticks deployed by Reapers" )
@@ -1082,9 +1082,7 @@ void function spawnDrones( SmokeEvent smokeEvent, SpawnEvent spawnEvent, FlowCon
 		spawnedNPCs.append( guy )
 		thread droneNav_thread( guy, spawnEvent.route, 0, 160, spawnEvent.shouldLoop )
 		
-		array<entity> primaryWeapons = guy.GetMainWeapons()
-		entity weapon = primaryWeapons[0]
-		weapon.AddMod( "fd_damage" )
+		guy.GetMainWeapons()[0].AddMod( "fd_damage" )
 	}
 }
 
@@ -1119,57 +1117,6 @@ void function waitForLessThanAliveTyped( SmokeEvent smokeEvent, SpawnEvent spawn
 		if( amount <= flowControlEvent.waitAmount )
 			break
 		WaitFrame()
-	}
-}
-
-void function spawnArcTitan( SmokeEvent smokeEvent, SpawnEvent spawnEvent, FlowControlEvent flowControlEvent, SoundEvent soundEvent )
-{
-	#if SERVER && DEV
-	printt( "Spawning Arc Titan at: " + spawnEvent.origin )
-	#endif
-	if ( GetConVarBool( "ns_fd_show_drop_points" ) )
-		thread Drop_Spawnpoint( spawnEvent.origin, TEAM_IMC, 5 )
-	PingMinimap( spawnEvent.origin.x, spawnEvent.origin.y, 4, 600, 150, 0 )
-	entity npc = CreateArcTitan( TEAM_IMC, spawnEvent.origin, spawnEvent.angles )
-	SetSpawnOption_Titanfall( npc )
-	SetTargetName( npc, GetTargetNameForID( spawnEvent.spawnType ) ) // required for client to create icons
-	SetSpawnOption_AISettings( npc, "npc_titan_stryder_leadwall_arc" )
-	SetSpawnOption_Alert( npc )
-	spawnedNPCs.append( npc )
-	DispatchSpawn( npc )
-	if ( arcTitansUsesArcCannon ) //SetSpawnOption_Weapon is not working for Arc Titans so take current and give Arc Cannon
-	{
-		TakeWeaponsForArray( npc, npc.GetMainWeapons() )
-		npc.GiveWeapon( "mp_titanweapon_arc_cannon" )
-		npc.kv.AccuracyMultiplier = 0.6
-	}
-	
-	npc.kv.reactChance = 50
-	npc.kv.WeaponProficiency = eWeaponProficiency.AVERAGE //This is because on Vanilla, Arc Titans don't spam Arc Waves as much and that is related to weapon proficiency
-	npc.DisableNPCFlag( NPC_ALLOW_INVESTIGATE | NPC_USE_SHOOTING_COVER | NPC_ALLOW_PATROL )
-	npc.SetDangerousAreaReactionTime( FD_TITAN_AOE_REACTTIME )
-	AddMinimapForTitans( npc )
-	npc.WaitSignal( "TitanHotDropComplete" )
-	npc.GetTitanSoul().SetTitanSoulNetBool( "showOverheadIcon", true )
-	if( spawnEvent.entityGlobalKey != "" )
-		GlobalEventEntitys[spawnEvent.entityGlobalKey] <- npc
-	thread singleNav_thread( npc, spawnEvent.route )
-	thread EMPTitanThinkConstant( npc )
-	if( GetMapName().find( "mp_lf_" ) == null )
-	{
-		switch ( difficultyLevel )
-		{
-			case eFDDifficultyLevel.EASY:
-			case eFDDifficultyLevel.NORMAL:
-				npc.AssaultSetFightRadius( 1200 )
-				break
-			case eFDDifficultyLevel.HARD:
-			case eFDDifficultyLevel.MASTER:
-			case eFDDifficultyLevel.INSANE:
-				npc.AssaultSetFightRadius( 0 )
-				npc.EnableNPCMoveFlag( NPCMF_PREFER_SPRINT )
-				break
-		}
 	}
 }
 
@@ -1231,11 +1178,12 @@ void function spawnSuperSpectre( SmokeEvent smokeEvent, SpawnEvent spawnEvent, F
 	AddMinimapForHumans( npc )
 	thread SuperSpectre_WarpFall( npc )
 	npc.WaitSignal( "WarpfallComplete" )
+	
+	if( !IsAlive( npc ) )
+		return
 	//npc.SetCapabilityFlag( bits_CAP_MOVE_TRAVERSE, true )
 	
-	array<entity> primaryWeapons = npc.GetMainWeapons()
-	entity weapon = primaryWeapons[0]
-	weapon.AddMod( "aggressive_ai_fd" )
+	npc.GetMainWeapons()[0].AddMod( "aggressive_ai_fd" )
 	
 	thread singleNav_thread( npc, spawnEvent.route )
 	if( GetMapName().find( "mp_lf_" ) == null )
@@ -1254,7 +1202,7 @@ void function spawnSuperSpectre( SmokeEvent smokeEvent, SpawnEvent spawnEvent, F
 		}
 	}
 	else
-		npc.AssaultSetFightRadius( 600 ) //Bit of combat space so they can at least melee turrets when near them
+		npc.AssaultSetFightRadius( 800 ) //Bit of combat space so they can at least melee turrets when near them
 }
 
 void function spawnSuperSpectreWithMinion( SmokeEvent smokeEvent, SpawnEvent spawnEvent, FlowControlEvent flowControlEvent, SoundEvent soundEvent )
@@ -1289,11 +1237,11 @@ void function spawnSuperSpectreWithMinion( SmokeEvent smokeEvent, SpawnEvent spa
 	AddMinimapForHumans( npc )
 	thread SuperSpectre_WarpFall( npc )
 	npc.WaitSignal( "WarpfallComplete" )
-	//npc.SetCapabilityFlag( bits_CAP_MOVE_TRAVERSE, true )
 	
-	array<entity> primaryWeapons = npc.GetMainWeapons()
-	entity weapon = primaryWeapons[0]
-	weapon.AddMod( "aggressive_ai_fd" )
+	if( !IsAlive( npc ) )
+		return
+	
+	npc.GetMainWeapons()[0].AddMod( "aggressive_ai_fd" )
 	
 	thread ReaperMinionLauncherThink( npc )
 
@@ -1352,6 +1300,7 @@ void function spawnDroppodGrunts( SmokeEvent smokeEvent, SpawnEvent spawnEvent, 
 	
 	waitthread LaunchAnimDropPod( pod, "pod_testpath", spawnEvent.origin, < 0, RandomIntRange( 0, 359 ), 0 > )
 	ActivateFireteamDropPod( pod, guys )
+	ArrayRemoveDead( guys )
 	foreach( npc in guys )
 	{
 		AddMinimapForHumans( npc )
@@ -1550,6 +1499,7 @@ void function spawnDroppodStalker( SmokeEvent smokeEvent, SpawnEvent spawnEvent,
 
 	waitthread LaunchAnimDropPod( pod, "pod_testpath", spawnEvent.origin, < 0, RandomIntRange( 0, 359 ), 0 > )
 	ActivateFireteamDropPod( pod, guys )
+	ArrayRemoveDead( guys )
 	foreach( npc in guys )
 	{
 		AddMinimapForHumans( npc )
@@ -1592,7 +1542,7 @@ void function spawnDroppodSpectreMortar( SmokeEvent smokeEvent, SpawnEvent spawn
 
 	waitthread LaunchAnimDropPod( pod, "pod_testpath", spawnEvent.origin, < 0, RandomIntRange( 0, 359 ), 0 > )
     ActivateFireteamDropPod( pod, guys )
-	
+	ArrayRemoveDead( guys )
 	foreach( npc in guys )
 	{
 		AddMinimapForHumans( npc )
@@ -1647,7 +1597,7 @@ void function spawnDroppodSpectre( SmokeEvent smokeEvent, SpawnEvent spawnEvent,
 
 	waitthread LaunchAnimDropPod( pod, "pod_testpath", spawnEvent.origin, < 0, RandomIntRange( 0, 359 ), 0 > )
     ActivateFireteamDropPod( pod, guys )
-	
+	ArrayRemoveDead( guys )
 	foreach( npc in guys )
 	{
 		AddMinimapForHumans( npc )
@@ -1685,8 +1635,69 @@ void function spawnGenericNPCTitanwithSettings( SmokeEvent smokeEvent, SpawnEven
 		GlobalEventEntitys[spawnEvent.entityGlobalKey] <- npc
 	spawnedNPCs.append( npc )
 	AddMinimapForTitans( npc )
-	npc.WaitSignal( "TitanHotDropComplete" )
+	WaitTillHotDropComplete( npc )
+	
+	if( !IsAlive( npc ) )
+		return
+	
 	npc.GetTitanSoul().SetTitanSoulNetBool( "showOverheadIcon", true )
+}
+
+void function spawnArcTitan( SmokeEvent smokeEvent, SpawnEvent spawnEvent, FlowControlEvent flowControlEvent, SoundEvent soundEvent )
+{
+	#if SERVER && DEV
+	printt( "Spawning Arc Titan at: " + spawnEvent.origin )
+	#endif
+	if ( GetConVarBool( "ns_fd_show_drop_points" ) )
+		thread Drop_Spawnpoint( spawnEvent.origin, TEAM_IMC, 5 )
+	PingMinimap( spawnEvent.origin.x, spawnEvent.origin.y, 4, 600, 150, 0 )
+	entity npc = CreateArcTitan( TEAM_IMC, spawnEvent.origin, spawnEvent.angles )
+	SetSpawnOption_Titanfall( npc )
+	SetTargetName( npc, GetTargetNameForID( spawnEvent.spawnType ) ) // required for client to create icons
+	SetSpawnOption_AISettings( npc, "npc_titan_stryder_leadwall_arc" )
+	SetSpawnOption_Alert( npc )
+	spawnedNPCs.append( npc )
+	DispatchSpawn( npc )
+	
+	npc.kv.reactChance = 50
+	npc.kv.WeaponProficiency = eWeaponProficiency.AVERAGE //This is because on Vanilla, Arc Titans don't spam Arc Waves as much and that is related to weapon proficiency
+	if ( arcTitansUsesArcCannon ) //SetSpawnOption_Weapon is not working for Arc Titans so take current and give Arc Cannon
+	{
+		TakeWeaponsForArray( npc, npc.GetMainWeapons() )
+		npc.GiveWeapon( "mp_titanweapon_arc_cannon" )
+		npc.kv.AccuracyMultiplier = 0.5
+		npc.kv.WeaponProficiency = eWeaponProficiency.POOR
+	}
+	
+	npc.DisableNPCFlag( NPC_ALLOW_INVESTIGATE | NPC_USE_SHOOTING_COVER | NPC_ALLOW_PATROL )
+	npc.SetDangerousAreaReactionTime( FD_TITAN_AOE_REACTTIME )
+	AddMinimapForTitans( npc )
+	WaitTillHotDropComplete( npc )
+	
+	if( !IsAlive( npc ) )
+		return
+	
+	thread EMPTitanThinkConstant( npc )
+	npc.GetTitanSoul().SetTitanSoulNetBool( "showOverheadIcon", true )
+	if( spawnEvent.entityGlobalKey != "" )
+		GlobalEventEntitys[spawnEvent.entityGlobalKey] <- npc
+	thread singleNav_thread( npc, spawnEvent.route )
+	if( GetMapName().find( "mp_lf_" ) == null )
+	{
+		switch ( difficultyLevel )
+		{
+			case eFDDifficultyLevel.EASY:
+			case eFDDifficultyLevel.NORMAL:
+				npc.AssaultSetFightRadius( 1200 )
+				break
+			case eFDDifficultyLevel.HARD:
+			case eFDDifficultyLevel.MASTER:
+			case eFDDifficultyLevel.INSANE:
+				npc.AssaultSetFightRadius( 0 )
+				npc.EnableNPCMoveFlag( NPCMF_PREFER_SPRINT )
+				break
+		}
+	}
 }
 
 void function SpawnIonTitan( SmokeEvent smokeEvent, SpawnEvent spawnEvent, FlowControlEvent flowControlEvent, SoundEvent soundEvent )
@@ -1730,7 +1741,11 @@ void function SpawnIonTitan( SmokeEvent smokeEvent, SpawnEvent spawnEvent, FlowC
 		GlobalEventEntitys[spawnEvent.entityGlobalKey] <- npc
 	spawnedNPCs.append( npc )
 	AddMinimapForTitans( npc )
-	npc.WaitSignal( "TitanHotDropComplete" )
+	WaitTillHotDropComplete( npc )
+	
+	if( !IsAlive( npc ) )
+		return
+	
 	npc.GetTitanSoul().SetTitanSoulNetBool( "showOverheadIcon", true )
 	GiveShieldByDifficulty( npc )
 	thread singleNav_thread( npc, spawnEvent.route )
@@ -1787,7 +1802,11 @@ void function SpawnScorchTitan( SmokeEvent smokeEvent, SpawnEvent spawnEvent, Fl
 		GlobalEventEntitys[spawnEvent.entityGlobalKey] <- npc
 	spawnedNPCs.append( npc )
 	AddMinimapForTitans( npc )
-	npc.WaitSignal( "TitanHotDropComplete" )
+	WaitTillHotDropComplete( npc )
+	
+	if( !IsAlive( npc ) )
+		return
+	
 	npc.GetTitanSoul().SetTitanSoulNetBool( "showOverheadIcon", true )
 	GiveShieldByDifficulty( npc )
 	thread singleNav_thread( npc, spawnEvent.route )
@@ -1841,7 +1860,11 @@ void function SpawnRoninTitan( SmokeEvent smokeEvent, SpawnEvent spawnEvent, Flo
 	spawnedNPCs.append( npc )
 	npc.SetDangerousAreaReactionTime( FD_TITAN_AOE_REACTTIME )
 	AddMinimapForTitans( npc )
-	npc.WaitSignal( "TitanHotDropComplete" )
+	WaitTillHotDropComplete( npc )
+	
+	if( !IsAlive( npc ) )
+		return
+	
 	npc.GetTitanSoul().SetTitanSoulNetBool( "showOverheadIcon", true )
 	GiveShieldByDifficulty( npc )
 	thread singleNav_thread( npc, spawnEvent.route )
@@ -1900,7 +1923,11 @@ void function SpawnToneTitan( SmokeEvent smokeEvent, SpawnEvent spawnEvent, Flow
 		GlobalEventEntitys[spawnEvent.entityGlobalKey] <- npc
 	spawnedNPCs.append( npc )
 	AddMinimapForTitans( npc )
-	npc.WaitSignal( "TitanHotDropComplete" )
+	WaitTillHotDropComplete( npc )
+	
+	if( !IsAlive( npc ) )
+		return
+	
 	npc.GetTitanSoul().SetTitanSoulNetBool( "showOverheadIcon", true )
 	GiveShieldByDifficulty( npc )
 	thread singleNav_thread( npc, spawnEvent.route )
@@ -1963,7 +1990,11 @@ void function SpawnLegionTitan( SmokeEvent smokeEvent, SpawnEvent spawnEvent, Fl
 		GlobalEventEntitys[spawnEvent.entityGlobalKey] <- npc
 	spawnedNPCs.append( npc )
 	AddMinimapForTitans( npc )
-	npc.WaitSignal( "TitanHotDropComplete" )
+	WaitTillHotDropComplete( npc )
+	
+	if( !IsAlive( npc ) )
+		return
+	
 	npc.GetTitanSoul().SetTitanSoulNetBool( "showOverheadIcon", true )
 	GiveShieldByDifficulty( npc )
 	thread singleNav_thread( npc, spawnEvent.route )
@@ -2027,7 +2058,11 @@ void function SpawnMonarchTitan( SmokeEvent smokeEvent, SpawnEvent spawnEvent, F
 		GlobalEventEntitys[spawnEvent.entityGlobalKey] <- npc
 	spawnedNPCs.append( npc )
 	AddMinimapForTitans( npc )
-	npc.WaitSignal( "TitanHotDropComplete" )
+	WaitTillHotDropComplete( npc )
+	
+	if( !IsAlive( npc ) )
+		return
+	
 	npc.GetTitanSoul().SetTitanSoulNetBool( "showOverheadIcon", true )
 	GiveShieldByDifficulty( npc )
 	thread singleNav_thread( npc, spawnEvent.route )
@@ -2058,11 +2093,14 @@ void function spawnNukeTitan( SmokeEvent smokeEvent, SpawnEvent spawnEvent, Flow
 		GlobalEventEntitys[spawnEvent.entityGlobalKey] <- npc
 	spawnedNPCs.append( npc )
 	AddMinimapForTitans( npc )
-	npc.WaitSignal( "TitanHotDropComplete" )
+	NukeTitanThink( npc, fd_harvester.harvester )
+	
+	if( !IsAlive( npc ) )
+		return
+	
 	npc.GetTitanSoul().SetTitanSoulNetBool( "showOverheadIcon", true )
 	GiveShieldByDifficulty( npc, true )
 	thread singleNav_thread( npc, spawnEvent.route )
-	thread NukeTitanThink( npc, fd_harvester.harvester )
 }
 
 void function spawnMortarTitan( SmokeEvent smokeEvent, SpawnEvent spawnEvent, FlowControlEvent flowControlEvent, SoundEvent soundEvent )
@@ -2079,6 +2117,8 @@ void function spawnMortarTitan( SmokeEvent smokeEvent, SpawnEvent spawnEvent, Fl
 	SetSpawnOption_Alert( npc )
 	SetTargetName( npc, GetTargetNameForID( spawnEvent.spawnType ) ) // required for client to create icons
 	DispatchSpawn( npc )
+	npc.TakeOffhandWeapon( OFFHAND_RIGHT )
+	npc.GiveOffhandWeapon( "mp_titanweapon_shoulder_rockets", OFFHAND_RIGHT )
 	npc.SetSkin( 1 )
 	npc.SetCamo( -1 )
 	npc.DisableNPCFlag( NPC_ALLOW_INVESTIGATE )
@@ -2088,10 +2128,14 @@ void function spawnMortarTitan( SmokeEvent smokeEvent, SpawnEvent spawnEvent, Fl
 		GlobalEventEntitys[spawnEvent.entityGlobalKey] <- npc
 	spawnedNPCs.append( npc )
 	AddMinimapForTitans( npc )
-	npc.WaitSignal( "TitanHotDropComplete" )
+	WaitTillHotDropComplete( npc )
+	
+	if( !IsAlive( npc ) )
+		return
+	
+	thread MortarTitanThink( npc, fd_harvester.harvester )
 	npc.GetTitanSoul().SetTitanSoulNetBool( "showOverheadIcon", true )
 	GiveShieldByDifficulty( npc )
-	thread MortarTitanThink( npc, fd_harvester.harvester )
 }
 
 void function spawnSniperTitan( SmokeEvent smokeEvent, SpawnEvent spawnEvent, FlowControlEvent flowControlEvent, SoundEvent soundEvent )
@@ -2156,10 +2200,14 @@ void function spawnSniperTitan( SmokeEvent smokeEvent, SpawnEvent spawnEvent, Fl
 	npc.AssaultSetFightRadius( 0 )
 	spawnedNPCs.append( npc )
 	AddMinimapForTitans( npc )
-	npc.WaitSignal( "TitanHotDropComplete" )
+	WaitTillHotDropComplete( npc )
+	
+	if( !IsAlive( npc ) )
+		return
+	
+	thread SniperTitanThink( npc, fd_harvester.harvester )
 	npc.GetTitanSoul().SetTitanSoulNetBool( "showOverheadIcon", true )
 	GiveShieldByDifficulty( npc )
-	thread SniperTitanThink( npc, fd_harvester.harvester )
 }
 
 void function SpawnToneSniperTitan( SmokeEvent smokeEvent, SpawnEvent spawnEvent, FlowControlEvent flowControlEvent, SoundEvent soundEvent )
@@ -2220,10 +2268,14 @@ void function SpawnToneSniperTitan( SmokeEvent smokeEvent, SpawnEvent spawnEvent
 	npc.AssaultSetFightRadius( 0 )
 	spawnedNPCs.append( npc )
 	AddMinimapForTitans( npc )
-	npc.WaitSignal( "TitanHotDropComplete" )
+	WaitTillHotDropComplete( npc )
+	
+	if( !IsAlive( npc ) )
+		return
+	
+	thread SniperTitanThink( npc, fd_harvester.harvester )
 	npc.GetTitanSoul().SetTitanSoulNetBool( "showOverheadIcon", true )
 	GiveShieldByDifficulty( npc )
-	thread SniperTitanThink( npc, fd_harvester.harvester )
 }
 
 void function fd_spawnCloakDrone( SmokeEvent smokeEvent, SpawnEvent spawnEvent,FlowControlEvent flowControlEvent,SoundEvent soundEvent )
@@ -2810,7 +2862,6 @@ void function SpawnFDHeavyTurret( vector spawnpos, vector angles, vector ornull 
 	HeavyTurret.kv.WeaponProficiency = eWeaponProficiency.PERFECT
 	HeavyTurret.SetNoTarget( false )
 	HeavyTurret.SetLookDistOverride( 2600 )
-	HeavyTurret.Anim_ScriptedPlayActivityByName( "ACT_UNDEPLOY", true, 0.1 )
 	HeavyTurret.EnableNPCFlag( NPC_NO_PAIN | NPC_NO_GESTURE_PAIN | NPC_IGNORE_FRIENDLY_SOUND | NPC_NEW_ENEMY_FROM_SOUND | NPC_TEAM_SPOTTED_ENEMY )
 	
 	TakeWeaponsForArray( HeavyTurret, HeavyTurret.GetMainWeapons() )
@@ -2864,35 +2915,40 @@ void function SpawnLFMapTitan_Threaded( vector spawnpos, vector angles )
 {
 	file.helperTitanSpawnPos = spawnpos
 	file.helperTitanAngles = angles
-	entity npc = CreateNPCTitan( "titan_atlas_tracker", TEAM_MILITIA, spawnpos, angles, ["turbo_titan","pas_dash_recharge"] )
-	SetSpawnOption_AISettings( npc, "npc_titan_atlas_tracker" )
+	entity npc = CreateNPCTitan( "titan_stryder_ronin_prime", TEAM_MILITIA, spawnpos, angles, ["pas_titan_hardcore_settings","sflag_bc_dash_capacity","pas_dash_recharge"] )
+	SetSpawnOption_AISettings( npc, "npc_titan_auto_stryder_ronin_prime" )
 	SetSpawnOption_Warpfall( npc )
 	DispatchSpawn( npc )
+	npc.SetSkin( 2 )
+	npc.SetCamo( 135 )
 	entity soul = npc.GetTitanSoul()
 	npc.ClearBossPlayer()
 	soul.ClearBossPlayer()
 	soul.capturable = true
 	if( IsValid( soul ) )
 		thread LFTitanShieldAndHealthRegenThink( soul )
-	thread MonitorPublicTitan( npc )
 	npc.DisableNPCFlag( NPC_ALLOW_INVESTIGATE | NPC_ALLOW_PATROL )
 	npc.DisableBehavior( "Follow" )
 	DisableTitanRodeo( npc )
-	npc.GetTitanSoul().soul.titanLoadout.titanExecution = "execution_vanguard"
+	npc.GetTitanSoul().soul.titanLoadout.titanExecution = "execution_ronin"
 	TakeWeaponsForArray( npc, npc.GetMainWeapons() )
 	npc.TakeOffhandWeapon( OFFHAND_RIGHT )
 	npc.TakeOffhandWeapon( OFFHAND_LEFT )
 	npc.TakeOffhandWeapon( OFFHAND_ANTIRODEO )
+	npc.TakeOffhandWeapon( OFFHAND_EQUIPMENT )
 	
-	npc.GiveWeapon( "mp_titanweapon_xo16_vanguard", ["arc_rounds","rapid_reload","fd_vanguard_weapon_1","fd_vanguard_weapon_2"] )
-	npc.GiveOffhandWeapon( "mp_titanweapon_dumbfire_rockets", OFFHAND_LEFT )
+	npc.GiveWeapon( "mp_titanweapon_rocketeer_rocketstream" )
+	npc.GiveOffhandWeapon( "mp_titanability_basic_block", OFFHAND_LEFT )
 	npc.GiveOffhandWeapon( "mp_titanweapon_salvo_rockets", OFFHAND_RIGHT )
 	npc.GiveOffhandWeapon( "mp_titanability_laser_trip", OFFHAND_ANTIRODEO, ["pas_ion_tripwire"] )
+	npc.GiveOffhandWeapon( "mp_titancore_shift_core", OFFHAND_EQUIPMENT )
+	npc.GiveOffhandWeapon( "melee_titan_sword", OFFHAND_MELEE )
 	
 	SetTitanWeaponSkin( npc )
 	
 	npc.WaitSignal( "TitanHotDropComplete" )
 	thread TitanKneel( npc )
+	thread MonitorPublicTitan( npc )
 }
 
 void function MonitorPublicTitan( entity monitoredtitan )
@@ -2942,7 +2998,7 @@ void function SetRespawnOfHelperTitan()
 	svGlobal.levelEnt.EndSignal( "CleanUpEntitiesForRoundEnd" ) //Stop respawn because it gonna respawn through the wave restart code itself
 	
 	wait 120
-	if( GetGameState() == eGameState.Playing )
+	if( GamePlaying() )
 		thread SpawnLFMapTitan( file.helperTitanSpawnPos, file.helperTitanAngles )
 }
 
@@ -2950,7 +3006,7 @@ void function LFTitanHideEarnMeterOnLeaveProximity( entity player )
 {
 	WaitFrame()
 	if( IsValidPlayer( player ) )
-		PlayerEarnMeter_SetMode( player, 0 )
+		PlayerEarnMeter_SetMode( player, eEarnMeterMode.DISABLED )
 }
 
 void function LFTitanShieldAndHealthRegenThink( entity soul )
@@ -2980,8 +3036,6 @@ void function LFTitanShieldAndHealthRegenThink( entity soul )
 		{
 		 	EmitSoundOnEntityOnlyToPlayer( titan, titan, "titan_energyshield_up_1P" )
 		 	shieldHealthSound = true
-		 	if ( titan.IsTitan() )
-		 		GiveFriendlyRodeoPlayerProtection( titan )
 		}
 		else if ( shieldHealthSound && shieldHealth == soul.GetShieldHealthMax() )
 			shieldHealthSound = false

@@ -447,6 +447,9 @@ void function RegisterCustomFDContent()
 	AddFDCustomShipStart( < -4614, 3969, 1280 >, < 0, -45, 0 >, TEAM_IMC )
 	AddFDCustomShipStart( < -3501, 4923, 1280 >, < 0, -45, 0 >, TEAM_IMC )
 	
+	AddFDCustomTitanStart( < 1336, 3, 37 >, < 0, 90, 0 > )
+	AddFDCustomTitanStart( < 2762, 1840, 72 >, < 0, 180, 0 > )
+	
 	AddFDCustomProp( $"models/imc_base/cargo_container_imc_01_blue.mdl", < 1682, 2485, -8 >, < 0, 90, 0 > )
 	AddFDCustomProp( $"models/imc_base/cargo_container_imc_01_blue.mdl", < 1672, 2366, -4 >, < 0, 0, 0 > )
 	AddFDCustomProp( $"models/imc_base/cargo_container_imc_01_white.mdl", < 1809, 2412, -8 >, < 0, -45, 0 > )

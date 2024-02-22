@@ -18,7 +18,9 @@ void function AddTitanXP( entity player, int amount )
 		AddPlayerScore( player, "TitanLevelUp" )
 		IncrementPlayerChallengeTitanLeveledUp( player )
 		player.SetPersistentVar( "xp_match[" + XP_TYPE.TITAN_LEVELED + "]", TitanXPMatch + 1 )
-		AwardRandomItemsForTitanLevels( player, titan, oldLevel, TitanGetLevel( player, titan ) )
+		
+		if( ProgressionEnabledForPlayer( player ) )
+			AwardRandomItemsForTitanLevels( player, titan, oldLevel, TitanGetLevel( player, titan ) )
 	}
 }
 
