@@ -47,6 +47,7 @@ void function BaseGametype_Init_MPSP()
 	RegisterSignal( "KillCamOver" )
 
 	file.shouldDoRespawnForLatePlayer = GetCurrentPlaylistVarInt( "late_join_respawn", 1 ) == 1
+	FlagInit( "WeaponDropsAllowed", true )
 }
 
 void function SetIntermissionCamera( entity camera )
