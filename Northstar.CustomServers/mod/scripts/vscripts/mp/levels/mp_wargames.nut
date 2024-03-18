@@ -50,31 +50,12 @@ void function AddEvacNodes()
 // dissolve effects
 void function WargamesDissolveDeadEntity( entity deadEnt, var damageInfo )
 {
-	if ( deadEnt.IsPlayer() || GamePlayingOrSuddenDeath() || GetGameState() == eGameState.Epilogue )
-	{
-		deadEnt.Dissolve( ENTITY_DISSOLVE_CHAR, < 0, 0, 0 >, 0 )
-		EmitSoundAtPosition( TEAM_UNASSIGNED, deadEnt.GetOrigin(), "Object_Dissolve" )
-		
-		if ( deadEnt.IsPlayer() )
-			thread EnsureWargamesDeathEffectIsClearedForPlayer( deadEnt )
-	}
-}
-
-void function EnsureWargamesDeathEffectIsClearedForPlayer( entity player )
-{
-	// this is slightly shit but whatever lol
-	player.EndSignal( "OnDestroy" )
+	EmitSoundAtPosition( TEAM_UNASSIGNED, deadEnt.GetOrigin(), "Object_Dissolve" )
 	
-	float startTime = Time()
-	while ( player.kv.VisibilityFlags != "0" )
-	{
-		if ( Time() > startTime + 4.0 ) // if we wait too long, just ignore
-			return
-	
-		WaitFrame() 
-	}
-	
-	player.kv.VisibilityFlags = ENTITY_VISIBLE_TO_EVERYONE
+	if ( deadEnt.IsPlayer() )
+		deadEnt.DissolveNonLethal( ENTITY_DISSOLVE_CHAR, < 0, 0, 0 >, 500 )
+	else
+		deadEnt.Dissolve( ENTITY_DISSOLVE_CHAR, < 0, 0, 0 >, 500 )
 }
 
 void function AddMarvinSpawner( entity spawn )

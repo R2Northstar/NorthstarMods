@@ -1,0 +1,2683 @@
+global function SpawnWave_Init
+
+global function eventIterator_FrontierDefense
+
+global function AISpawn_SetupNPCWeapons
+global function AISpawn_SetupNPCAntiTitanWeapons
+
+global function WaveSpawn_TitanSpawn
+global function WaveSpawn_ReaperSpawn
+global function WaveSpawn_InfantrySpawn
+global function WaveSpawn_SmokeWall
+global function WaveSpawn_Announce
+global function WaveSpawn_Delay
+global function WaveSpawn_WaitEnemyAliveAmount
+global function WaveSpawn_WaitSubGroup
+global function WaveSpawn_RunCustomFunction
+global function WaveSpawn_TitanfallBlock
+
+global function AddMinimapForTitans
+global function AddMinimapForHumans
+global function PingMinimap
+global function Drop_Spawnpoint
+global function GiveShieldByDifficulty
+
+global function allEventsExecuted
+global function resetWaveEvents
+global function ShouldSkipEventForDifficulty
+
+global function GetArcTitanWeaponOption
+global function EliteTitansEnabled
+global function TitanfallBlockEnabled
+
+global enum eFDSD //Shortened from eFDSpawn_Difficulty to not make scripts too horrible to read
+{
+	ALL			= 1 << 0,
+	EASY		= 1 << 1,
+	NORMAL		= 1 << 2,
+	HARD		= 1 << 3,
+	MASTER		= 1 << 4,
+	INSANE		= 1 << 5,
+	EXCLUSIVE	= 1 << 6
+}
+
+global enum eFDTT //Shortened from eFD_TitanType
+{
+	TITAN_COMMON,
+	TITAN_ELITE
+}
+
+global enum eFDHT //Shortened from eFD_HullType
+{
+	ALL,
+	SMALL,
+	MEDIUM,
+	TITAN
+}
+
+global struct WaveSpawnEvent{
+	bool shouldThread = true
+	vector origin = < 0, 0, 0 >
+	vector angles = < 0, 0, 0 >
+	string route = ""
+	int spawnType
+	int spawnAmount = 1
+	bool shouldLoop = false
+	bool titanBlocked = false
+	int titanType = eFDTT.TITAN_COMMON
+	float spawnradius = 0.0
+	int spawnInDifficulty = eFDSD.ALL
+	string soundEventName = ""
+	float waitTime = 0.0
+	int waitAmount = 0
+	int waitHullType = eFDHT.ALL
+	float smokeDuration = 90.0
+	string waveSubGroupName = ""
+	string waveSubGroupWait = ""
+	bool executed = false
+	bool isAnnounceEvent = false
+	table modExtraData = {}
+	void functionref( WaveSpawnEvent ornull ) eventFunction = null
+}
+
+struct{
+	int difficultyLevel = 0
+	table< string, array<string> > defaultNPCWeapons
+	table< string, array<string> > defaultNPCATWeapons
+	table< string, array<WaveSpawnEvent> > waveSubGroups
+	array<string> waveActiveSubGroups
+	string gruntGrenadeClass = "mp_weapon_frag_grenade"
+	int gruntAmountWithATWeapons = 0
+	int gruntAmountWithShields = 0
+	bool shouldUseCampaignShieldCaptains = false
+	bool shouldUseCampaignTicks = false
+	bool arcTitanShouldUseArcCannon = false
+	bool allowEliteTitans = false
+	bool allowTitanfallBlock = false
+	bool allowGruntGrenades = false
+	bool visibleDropPoints = false
+	
+	int eliteTitanHPBonus_Ion = 7500
+	int eliteTitanHPBonus_Scorch = 7500
+	int eliteTitanHPBonus_Northstar = 7500
+	int eliteTitanHPBonus_Ronin = 7500
+	int eliteTitanHPBonus_Tone = 7500
+	int eliteTitanHPBonus_Legion = 15000
+	int eliteTitanHPBonus_Monarch = 7500
+}file
+
+global array< array<WaveSpawnEvent> > WaveSpawnEvents
+
+const float FD_TITAN_AOE_REACTTIME = 3.0 //This is in seconds
+
+
+
+
+
+
+
+
+
+
+/* Init
+██╗███╗   ██╗██╗████████╗██╗ █████╗ ██╗     ██╗███████╗ █████╗ ████████╗██╗ ██████╗ ███╗   ██╗
+██║████╗  ██║██║╚══██╔══╝██║██╔══██╗██║     ██║╚══███╔╝██╔══██╗╚══██╔══╝██║██╔═══██╗████╗  ██║
+██║██╔██╗ ██║██║   ██║   ██║███████║██║     ██║  ███╔╝ ███████║   ██║   ██║██║   ██║██╔██╗ ██║
+██║██║╚██╗██║██║   ██║   ██║██╔══██║██║     ██║ ███╔╝  ██╔══██║   ██║   ██║██║   ██║██║╚██╗██║
+██║██║ ╚████║██║   ██║   ██║██║  ██║███████╗██║███████╗██║  ██║   ██║   ██║╚██████╔╝██║ ╚████║
+╚═╝╚═╝  ╚═══╝╚═╝   ╚═╝   ╚═╝╚═╝  ╚═╝╚══════╝╚═╝╚══════╝╚═╝  ╚═╝   ╚═╝   ╚═╝ ╚═════╝ ╚═╝  ╚═══╝
+*/
+
+void function SpawnWave_Init()
+{
+	RegisterSignal( "StopWaveSpawner" )
+	
+	file.difficultyLevel = FD_GetDifficultyLevel() //Refresh this only on map load, to avoid midgame commands messing up with difficulties (i.e setting mp_gamemode fd_hard midgame in a regular match through console on local host would immediately make Stalkers spawns with EPG)
+	file.allowEliteTitans = GetCurrentPlaylistVarInt( "fd_allow_elite_titans", 0 ) == 1
+	file.allowTitanfallBlock = GetCurrentPlaylistVarInt( "fd_allow_titanfall_block", 0 ) == 1
+	file.arcTitanShouldUseArcCannon = GetCurrentPlaylistVarInt( "fd_arc_titans_uses_arc_cannon", 0 ) == 1
+	file.gruntAmountWithShields = GetCurrentPlaylistVarInt( "fd_grunt_shield_captains", 0 )
+	file.gruntAmountWithATWeapons = GetCurrentPlaylistVarInt( "fd_grunt_at_weapon_users", 0 )
+	file.shouldUseCampaignShieldCaptains = GetCurrentPlaylistVarInt( "fd_campaign_shield_captains", 0 ) == 1
+	file.shouldUseCampaignTicks = GetCurrentPlaylistVarInt( "fd_campaign_ticks", 0 ) == 1
+	file.allowGruntGrenades = GetCurrentPlaylistVarInt( "fd_grunts_uses_grenades", 0 ) == 1
+	file.visibleDropPoints = GetCurrentPlaylistVarInt( "fd_visible_drop_points", 0 ) == 1
+	
+	SetupEliteTitansHealthCaps()
+	
+	if( GetConVarString( "ns_fd_grunt_grenade" ) != "" )
+		file.gruntGrenadeClass = GetConVarString( "ns_fd_grunt_grenade" )
+}
+
+void function AISpawn_SetupNPCWeapons( string npcClass, array<string> weapons )
+{
+	if ( !( npcClass in file.defaultNPCWeapons ) )
+		file.defaultNPCWeapons[ npcClass ] <- []
+
+	file.defaultNPCWeapons[ npcClass ] = weapons
+}
+
+void function AISpawn_SetupNPCAntiTitanWeapons( string npcClass, array<string> weapons )
+{
+	if ( !( npcClass in file.defaultNPCATWeapons ) )
+		file.defaultNPCATWeapons[ npcClass ] <- []
+
+	file.defaultNPCATWeapons[ npcClass ] = weapons
+}
+
+void function eventIterator_FrontierDefense()
+{
+	print( "Event Iterator Started" )
+	svGlobal.levelEnt.EndSignal( "StopWaveSpawner" )
+	
+	OnThreadEnd(
+		function() : ()
+		{
+			file.waveSubGroups.clear()
+		}
+	)
+	
+	int waveIndex = GetGlobalNetInt( "FD_currentWave" )
+	SplitWaveSubgroups( waveIndex )
+	
+	foreach( WaveSpawnEvent currentEvent in WaveSpawnEvents[waveIndex] )
+	{
+		if( !IsHarvesterAlive( fd_harvester.harvester ) )
+			break
+		
+		if( currentEvent.waveSubGroupName != "" )
+		{
+			if( file.waveActiveSubGroups.find( currentEvent.waveSubGroupName ) == -1 )
+				thread eventIterator_SubGroup( waveIndex, currentEvent.waveSubGroupName )
+			else
+				continue
+		}
+		
+		currentEvent.executed = true
+		
+		if( ShouldSkipEventForDifficulty( currentEvent ) )
+			continue
+		
+		if( currentEvent.soundEventName != "" && !currentEvent.isAnnounceEvent )
+			thread PlayWarning( currentEvent )
+
+		if( currentEvent.shouldThread )
+		{
+			if( currentEvent.eventFunction != null )
+				thread currentEvent.eventFunction( currentEvent )
+			
+			if( currentEvent.waitTime > 0 )
+				wait currentEvent.waitTime
+		}
+
+		else
+		{
+			if( currentEvent.eventFunction != null )
+				currentEvent.eventFunction( currentEvent )
+		}
+	}
+}
+
+void function eventIterator_SubGroup( int waveIndex, string subGroupName )
+{
+	print( "SubGroup Event Iterator Started: " + subGroupName )
+	svGlobal.levelEnt.EndSignal( "StopWaveSpawner" )
+	
+	OnThreadEnd(
+		function() : ( subGroupName )
+		{
+			delete file.waveSubGroups[ subGroupName ]
+			
+			if( file.waveActiveSubGroups.find( subGroupName ) != -1 )
+				file.waveActiveSubGroups.removebyvalue( subGroupName )
+		}
+	)
+	
+	file.waveActiveSubGroups.append( subGroupName )
+	foreach( WaveSpawnEvent currentEvent in file.waveSubGroups[ subGroupName ] )
+	{
+		if( !IsHarvesterAlive( fd_harvester.harvester ) )
+			break
+		
+		currentEvent.executed = true
+		
+		if( ShouldSkipEventForDifficulty( currentEvent ) )
+			continue
+		
+		if( currentEvent.soundEventName != "" && !currentEvent.isAnnounceEvent )
+			thread PlayWarning( currentEvent )
+
+		if( currentEvent.shouldThread )
+		{
+			if( currentEvent.eventFunction != null )
+				thread currentEvent.eventFunction( currentEvent )
+			
+			if( currentEvent.waitTime > 0 )
+				wait currentEvent.waitTime
+		}
+
+		else
+		{
+			if( currentEvent.eventFunction != null )
+				currentEvent.eventFunction( currentEvent )
+		}
+	}
+}
+
+
+
+
+
+
+
+
+
+
+
+/* Wave Spawn Functions
+██╗    ██╗ █████╗ ██╗   ██╗███████╗    ███████╗██████╗  █████╗ ██╗    ██╗███╗   ██╗    ███████╗██╗   ██╗███╗   ██╗ ██████╗████████╗██╗ ██████╗ ███╗   ██╗███████╗
+██║    ██║██╔══██╗██║   ██║██╔════╝    ██╔════╝██╔══██╗██╔══██╗██║    ██║████╗  ██║    ██╔════╝██║   ██║████╗  ██║██╔════╝╚══██╔══╝██║██╔═══██╗████╗  ██║██╔════╝
+██║ █╗ ██║███████║██║   ██║█████╗      ███████╗██████╔╝███████║██║ █╗ ██║██╔██╗ ██║    █████╗  ██║   ██║██╔██╗ ██║██║        ██║   ██║██║   ██║██╔██╗ ██║███████╗
+██║███╗██║██╔══██║╚██╗ ██╔╝██╔══╝      ╚════██║██╔═══╝ ██╔══██║██║███╗██║██║╚██╗██║    ██╔══╝  ██║   ██║██║╚██╗██║██║        ██║   ██║██║   ██║██║╚██╗██║╚════██║
+╚███╔███╔╝██║  ██║ ╚████╔╝ ███████╗    ███████║██║     ██║  ██║╚███╔███╔╝██║ ╚████║    ██║     ╚██████╔╝██║ ╚████║╚██████╗   ██║   ██║╚██████╔╝██║ ╚████║███████║
+ ╚══╝╚══╝ ╚═╝  ╚═╝  ╚═══╝  ╚══════╝    ╚══════╝╚═╝     ╚═╝  ╚═╝ ╚══╝╚══╝ ╚═╝  ╚═══╝    ╚═╝      ╚═════╝ ╚═╝  ╚═══╝ ╚═════╝   ╚═╝   ╚═╝ ╚═════╝ ╚═╝  ╚═══╝╚══════╝
+*/
+
+void function WaveSpawn_TitanSpawn( array<WaveSpawnEvent> waveName, string spawnType = "", vector origin = < 0, 0, 0 >, float angle = 0.0, string route = "", float waitTime = 0.5, string soundEventName = "", float spawnradius = 0.0, int spawnInDifficulty = eFDSD.ALL, int titanType = eFDTT.TITAN_COMMON, string subGroupName = "" )
+{
+	WaveSpawnEvent event
+	
+	switch( spawnType.tolower() )
+	{
+		case "arc titan":
+		case "arc_titan":
+		case "arctitan":
+		case "arc":
+			event.spawnType = eFD_AITypeIDs.TITAN_ARC
+			event.eventFunction = SpawnArcTitan
+			break
+		
+		case "nuke titan":
+		case "nuke_titan":
+		case "nuketitan":
+		case "nuke":
+			event.spawnType = eFD_AITypeIDs.TITAN_NUKE
+			event.eventFunction = SpawnNukeTitan
+			break
+		
+		case "mortar titan":
+		case "mortar_titan":
+		case "mortartitan":
+		case "mortar":
+			event.spawnType = eFD_AITypeIDs.TITAN_MORTAR
+			event.eventFunction = SpawnMortarTitan
+			break
+		
+		case "ronin titan":
+		case "ronin_titan":
+		case "ronintitan":
+		case "ronin":
+			event.spawnType = eFD_AITypeIDs.RONIN
+			event.eventFunction = SpawnRoninTitan
+			break
+		
+		case "northstar titan":
+		case "northstar_titan":
+		case "northstartitan":
+		case "northstar":
+			event.spawnType = eFD_AITypeIDs.NORTHSTAR
+			event.eventFunction = SpawnSniperTitan
+			break
+		
+		case "scorch titan":
+		case "scorch_titan":
+		case "scorchtitan":
+		case "scorch":
+			event.spawnType = eFD_AITypeIDs.SCORCH
+			event.eventFunction = SpawnScorchTitan
+			break
+		
+		case "legion titan":
+		case "legion_titan":
+		case "legiontitan":
+		case "legion":
+			event.spawnType = eFD_AITypeIDs.LEGION
+			event.eventFunction = SpawnLegionTitan
+			break
+		
+		case "tone titan":
+		case "tone_titan":
+		case "tonetitan":
+		case "tone":
+			event.spawnType = eFD_AITypeIDs.TONE
+			event.eventFunction = SpawnToneTitan
+			break
+		
+		case "ion titan":
+		case "ion_titan":
+		case "iontitan":
+		case "ion":
+			event.spawnType = eFD_AITypeIDs.ION
+			event.eventFunction = SpawnIonTitan
+			break
+		
+		case "monarch titan":
+		case "monarch_titan":
+		case "monarchtitan":
+		case "monarch":
+			event.spawnType = eFD_AITypeIDs.MONARCH
+			event.eventFunction = SpawnMonarchTitan
+			break
+		
+		case "sniper titan":
+		case "sniper_titan":
+		case "tone sniper":
+		case "sniper":
+			event.spawnType = eFD_AITypeIDs.TITAN_SNIPER
+			event.eventFunction = SpawnToneSniperTitan
+			break
+		
+		default:
+			CodeWarning( "Spawn type string " + spawnType + " couldn't be interpreted (typo maybe?)" )
+			unreachable
+	}
+	
+	event.origin = origin
+	event.angles = < 0, angle, 0 >
+	event.route = route
+	event.spawnradius = spawnradius
+	event.titanType = titanType
+	event.spawnInDifficulty = spawnInDifficulty
+	event.soundEventName = soundEventName
+	event.waitTime = waitTime
+	event.waveSubGroupName = subGroupName
+	waveName.append(event)
+}
+
+void function WaveSpawn_ReaperSpawn( array<WaveSpawnEvent> waveName, string spawnType = "", vector origin = < 0, 0, 0 >, float angle = 0.0, string route = "", float waitTime = 0.5, string soundEventName = "", float spawnradius = 0.0, int spawnInDifficulty = eFDSD.ALL, string subGroupName = "" )
+{
+	WaveSpawnEvent event
+	
+	switch( spawnType.tolower() )
+	{
+		case "tick reaper":
+		case "ticks reaper":
+		case "tick_reaper":
+		case "ticks_reaper":
+		case "tickreaper":
+		case "reaper tick":
+		case "reaper ticks":
+		case "reaper_tick":
+		case "reaper_ticks":
+		case "reapertick":
+		case "reaperticks":
+		case "tick":
+		case "ticks":
+			event.titanType = eFDTT.TITAN_ELITE
+			break
+	}
+	
+	event.eventFunction = SpawnSuperSpectre
+	event.spawnType = eFD_AITypeIDs.REAPER
+	event.origin = origin
+	event.angles = < 0, angle, 0 >
+	event.route = route
+	event.spawnradius = spawnradius
+	event.spawnInDifficulty = spawnInDifficulty
+	event.soundEventName = soundEventName
+	event.waitTime = waitTime
+	event.waveSubGroupName = subGroupName
+	waveName.append(event)
+}
+
+void function WaveSpawn_InfantrySpawn( array<WaveSpawnEvent> waveName, string spawnType = "", vector origin = < 0, 0, 0 >, float angle = 0.0, string route = "", float waitTime = 0.5, string soundEventName = "", float spawnradius = 0.0, int spawnInDifficulty = eFDSD.ALL, int spawnAmount = 4, string subGroupName = "" )
+{
+	WaveSpawnEvent event
+	
+	event.spawnAmount = spawnAmount
+	switch( spawnType.tolower() )
+	{
+		case "pod_grunt":
+		case "podgrunt":
+		case "droppod_grunt":
+		case "droppodgrunt":
+			event.spawnType = eFD_AITypeIDs.GRUNT
+			event.eventFunction = SpawnDroppodGrunts
+			break
+		
+		case "dropship_grunt":
+		case "dropshipgrunt":
+			event.spawnType = eFD_AITypeIDs.GRUNT
+			event.eventFunction = SpawnGruntDropship
+			break
+		
+		case "stalker":
+		case "stalkers":
+			event.spawnType = eFD_AITypeIDs.STALKER
+			event.eventFunction = SpawnDroppodStalker
+			break
+		
+		case "spectre":
+		case "spectres":
+			event.spawnType = eFD_AITypeIDs.SPECTRE
+			event.eventFunction = SpawnDroppodSpectre
+			break
+		
+		case "mortarspectre":
+		case "mortarspectres":
+		case "spectre mortar":
+		case "spectremortar":
+			event.spawnType = eFD_AITypeIDs.SPECTRE_MORTAR
+			event.eventFunction = SpawnDroppodSpectreMortar
+			break
+		
+		case "tick":
+		case "ticks":
+			event.spawnType = eFD_AITypeIDs.TICK
+			event.eventFunction = SpawnTick
+			break
+		
+		case "drone":
+		case "drones":
+			event.spawnType = eFD_AITypeIDs.DRONE
+			event.eventFunction = SpawnDrones
+			break
+		
+		case "cloak":
+		case "cloakdrone":
+			event.spawnType = eFD_AITypeIDs.DRONE_CLOAK
+			event.eventFunction = SpawnCloakingDrone
+			event.spawnAmount = 1 //Multiple Cloaks will not spawn, their spawn function don't support that
+			break
+		
+		default:
+			CodeWarning( "Spawn type string " + spawnType + " couldn't be interpreted (typo maybe?)" )
+			unreachable
+	}
+	
+	event.origin = origin
+	event.angles = < 0, angle, 0 >
+	event.route = route
+	event.spawnradius = spawnradius
+	event.spawnInDifficulty = spawnInDifficulty
+	event.soundEventName = soundEventName
+	event.waitTime = waitTime
+	event.waveSubGroupName = subGroupName
+	waveName.append(event)
+}
+
+void function WaveSpawn_SmokeWall( array<WaveSpawnEvent> waveName, vector origin = < 0, 0, 0 >, float waitTime = 0.5, float durationTime = 90.0, int spawnInDifficulty = eFDSD.ALL, string subGroupName = "" )
+{
+	WaveSpawnEvent event
+	
+	event.spawnAmount = 0
+	event.eventFunction = SpawnSmoke
+	event.origin = origin
+	event.spawnInDifficulty = spawnInDifficulty
+	event.waitTime = waitTime
+	event.smokeDuration = durationTime
+	event.waveSubGroupName = subGroupName
+	waveName.append(event)
+}
+
+void function WaveSpawn_Announce( array<WaveSpawnEvent> waveName, string soundAlias = "", float waitTime = 0.5, int spawnInDifficulty = eFDSD.ALL, string subGroupName = "" )
+{
+	WaveSpawnEvent event
+	
+	switch( soundAlias.tolower() ) //Adjust some presets if needed
+	{
+		case "cloakdrone":
+		case "cloak":
+		event.soundEventName = "fd_incCloakDroneClump"
+		break
+		
+		case "arctitan":
+		case "arc":
+		event.soundEventName = "fd_incArcTitanClump"
+		break
+		
+		case "reapers":
+		case "reaper":
+		event.soundEventName = "fd_incReaperClump"
+		break
+		
+		case "mortartitan":
+		case "mortar":
+		event.soundEventName = "fd_incTitansMortarClump"
+		break
+		
+		case "nuketitan":
+		case "nuke":
+		event.soundEventName = "fd_incTitansNukeClump"
+		break
+		
+		case "reaperalt":
+		case "reaper2":
+		event.soundEventName = "fd_waveTypeReapers"
+		break
+		
+		case "ticks":
+		case "tick":
+		event.soundEventName = "fd_waveTypeTicks"
+		break
+		
+		case "stalkers":
+		case "stalker":
+		event.soundEventName = "fd_waveTypeStalkers"
+		break
+		
+		case "mortarspectre":
+		event.soundEventName = "fd_waveTypeMortarSpectre"
+		break
+		
+		case "reapertick":
+		case "tickreaper":
+		event.soundEventName = "fd_waveTypeReaperTicks"
+		break
+		
+		case "flyers":
+		case "drones":
+		case "drone":
+		event.soundEventName = "fd_waveTypeFlyers"
+		break
+		
+		case "elitetitan":
+		case "elitetitans":
+		case "elites":
+		case "elite":
+		event.soundEventName = "fd_waveTypeEliteTitan"
+		break
+		
+		case "infantry":
+		event.soundEventName = "fd_waveTypeInfantry"
+		break
+		
+		case "cloakdroneintro":
+		case "cloakintro":
+		event.soundEventName = "fd_waveTypeCloakDrone"
+		break
+		
+		case "enemytitansincoming":
+		case "incomingtitans":
+		event.soundEventName = "fd_waveTypeTitanReg"
+		break
+		
+		case "mortartitanintro":
+		case "mortarintro":
+		event.soundEventName = "fd_waveTypeTitanMortar"
+		break
+		
+		case "nuketitanintro":
+		case "nukeintro":
+		event.soundEventName = "fd_waveTypeTitanNuke"
+		break
+		
+		case "arctitanintro":
+		case "arcintro":
+		event.soundEventName = "fd_waveTypeTitanArc"
+		break
+		
+		case "titanfallblock":
+		case "tfblock":
+		event.soundEventName = "fd_waveNoTitanDrops"
+		break
+		
+		case "prenuketitan":
+		case "prenuke":
+		event.soundEventName = "fd_soonNukeTitans"
+		break
+		
+		case "premortartitan":
+		case "premortar":
+		event.soundEventName = "fd_soonMortarTitans"
+		break
+		
+		case "prearctitan":
+		case "prearc":
+		event.soundEventName = "fd_soonArcTitans"
+		break
+		
+		case "everything":
+		event.soundEventName = "fd_waveComboMultiMix"
+		break
+		
+		case "lightwave":
+		event.soundEventName = "fd_introEasy"
+		break
+		
+		case "mediumwave":
+		event.soundEventName = "fd_introMedium"
+		break
+		
+		case "heavywave":
+		event.soundEventName = "fd_introHard"
+		break
+		
+		case "nomoreenemytitans":
+		case "nomoreenemytitan":
+		case "nomoretitans":
+		case "nomoretitan":
+		event.soundEventName = "fd_waveNoTitans"
+		break
+		
+		case "arcalt":
+		case "arc2":
+		event.soundEventName = "fd_nagKillTitanEMP"
+		break
+		
+		case "nukemortar":
+		case "mortarnuke":
+		event.soundEventName = "fd_waveComboNukeMortar"
+		break
+		
+		case "arcmortar":
+		case "mortararc":
+		event.soundEventName = "fd_waveComboArcMortar"
+		break
+		
+		case "arcnuke":
+		case "nukearc":
+		event.soundEventName = "fd_waveComboArcNuke"
+		break
+		
+		case "cloaknuke":
+		case "nukecloak":
+		event.soundEventName = "fd_waveComboNukeCloak"
+		break
+		
+		case "nuketrain":
+		event.soundEventName = "fd_waveComboNukeTrain"
+		break
+		
+		default:
+			CodeWarning( "Sound string " + soundAlias + " couldn't be interpreted and will return empty (typo maybe?)" )
+	}
+	
+	event.spawnAmount = 0
+	event.eventFunction = PlayWarning
+	event.isAnnounceEvent = true
+	event.waitTime = waitTime
+	event.spawnInDifficulty = spawnInDifficulty
+	event.waveSubGroupName = subGroupName
+	waveName.append(event)
+}
+
+void function WaveSpawn_Delay( array<WaveSpawnEvent> waveName, float waitTime = 0.5, int spawnInDifficulty = eFDSD.ALL, string subGroupName = "" )
+{
+	WaveSpawnEvent event
+	
+	event.spawnAmount = 0
+	event.waitTime = waitTime
+	event.spawnInDifficulty = spawnInDifficulty
+	event.waveSubGroupName = subGroupName
+	waveName.append(event)
+}
+
+void function WaveSpawn_WaitEnemyAliveAmount( array<WaveSpawnEvent> waveName, int waitAmount = 0, int waitHullType = eFDHT.ALL, int spawnInDifficulty = eFDSD.ALL, string subGroupName = "" )
+{
+	WaveSpawnEvent event
+	
+	event.spawnAmount = 0
+	event.eventFunction = waitUntilLessThanAmountAliveEvent
+	event.shouldThread = false
+	event.waitHullType = waitHullType
+	event.waitAmount = waitAmount
+	event.waveSubGroupName = subGroupName
+	waveName.append(event)
+}
+
+void function WaveSpawn_WaitSubGroup( array<WaveSpawnEvent> waveName, string subGroupName = "", int spawnInDifficulty = eFDSD.ALL )
+{
+	WaveSpawnEvent event
+	
+	event.spawnAmount = 0
+	event.eventFunction = waitWaveSubGroup
+	event.shouldThread = false
+	event.waveSubGroupWait = subGroupName
+	waveName.append(event)
+}
+
+void function WaveSpawn_RunCustomFunction( array<WaveSpawnEvent> waveName, void functionref( WaveSpawnEvent ornull ) func, int spawnInDifficulty = eFDSD.ALL, string subGroupName = "" )
+{
+	WaveSpawnEvent event
+	
+	event.spawnAmount = 0
+	event.eventFunction = func
+	event.waveSubGroupName = subGroupName
+	waveName.append(event)
+}
+
+void function WaveSpawn_TitanfallBlock( array<WaveSpawnEvent> waveName, bool shouldBlock = true, float waitTime = 0.5, int spawnInDifficulty = eFDSD.ALL, string subGroupName = "" )
+{
+	WaveSpawnEvent event
+	
+	event.spawnAmount = 0
+	event.eventFunction = BlockFurtherTitanfalls
+	event.titanBlocked = shouldBlock
+	event.waitTime = waitTime
+	event.waveSubGroupName = subGroupName
+	waveName.append(event)
+}
+
+
+
+
+
+
+
+
+
+
+/* Titan Spawn Funcs
+████████╗██╗████████╗ █████╗ ███╗   ██╗    ███████╗██████╗  █████╗ ██╗    ██╗███╗   ██╗    ███████╗██╗   ██╗███╗   ██╗ ██████╗███████╗
+╚══██╔══╝██║╚══██╔══╝██╔══██╗████╗  ██║    ██╔════╝██╔══██╗██╔══██╗██║    ██║████╗  ██║    ██╔════╝██║   ██║████╗  ██║██╔════╝██╔════╝
+   ██║   ██║   ██║   ███████║██╔██╗ ██║    ███████╗██████╔╝███████║██║ █╗ ██║██╔██╗ ██║    █████╗  ██║   ██║██╔██╗ ██║██║     ███████╗
+   ██║   ██║   ██║   ██╔══██║██║╚██╗██║    ╚════██║██╔═══╝ ██╔══██║██║███╗██║██║╚██╗██║    ██╔══╝  ██║   ██║██║╚██╗██║██║     ╚════██║
+   ██║   ██║   ██║   ██║  ██║██║ ╚████║    ███████║██║     ██║  ██║╚███╔███╔╝██║ ╚████║    ██║     ╚██████╔╝██║ ╚████║╚██████╗███████║
+   ╚═╝   ╚═╝   ╚═╝   ╚═╝  ╚═╝╚═╝  ╚═══╝    ╚══════╝╚═╝     ╚═╝  ╚═╝ ╚══╝╚══╝ ╚═╝  ╚═══╝    ╚═╝      ╚═════╝ ╚═╝  ╚═══╝ ╚═════╝╚══════╝
+*/
+
+void function SpawnArcTitan( WaveSpawnEvent ornull spawnEvent )
+{
+	if( !spawnEvent )
+		return
+
+	expect WaveSpawnEvent( spawnEvent )
+	vector spawnorigin = spawnEvent.origin
+	if( spawnEvent.spawnradius > 0 )
+	{
+		spawnorigin.x += RandomFloatRange( -spawnEvent.spawnradius, spawnEvent.spawnradius )
+		spawnorigin.y += RandomFloatRange( -spawnEvent.spawnradius, spawnEvent.spawnradius )
+		spawnorigin.z += 128 //Ensure we're above all playable geometry
+		spawnorigin = OriginToGround( spawnorigin )
+	}
+	
+	#if SERVER && DEV
+	printt( "Spawning Arc Titan at: " + spawnorigin )
+	#endif
+	
+	thread Drop_Spawnpoint( spawnorigin, TEAM_IMC, 5 )
+	
+	PingMinimap( spawnorigin.x, spawnorigin.y, 4, 600, 150, 0 )
+	
+	entity npc = CreateArcTitan( TEAM_IMC, spawnorigin, spawnEvent.angles )
+	SetSpawnOption_Titanfall( npc )
+	SetTargetName( npc, GetTargetNameForID( spawnEvent.spawnType ) ) // required for client to create icons
+	SetSpawnOption_AISettings( npc, "npc_titan_stryder_leadwall_arc" )
+	SetSpawnOption_Alert( npc )
+	spawnedNPCs.append( npc )
+	DispatchSpawn( npc )
+	
+	npc.kv.reactChance = 50
+	npc.kv.WeaponProficiency = eWeaponProficiency.AVERAGE //This is because on Vanilla, Arc Titans don't spam Arc Waves as much and that is related to weapon proficiency
+	if ( file.arcTitanShouldUseArcCannon ) //SetSpawnOption_Weapon doesn't work for Arc Titans so take current and give Arc Cannon
+	{
+		TakeWeaponsForArray( npc, npc.GetMainWeapons() )
+		npc.GiveWeapon( "mp_titanweapon_arc_cannon" )
+		npc.kv.AccuracyMultiplier = 0.5
+		npc.kv.WeaponProficiency = eWeaponProficiency.POOR
+	}
+	
+	npc.DisableNPCFlag( NPC_ALLOW_INVESTIGATE | NPC_USE_SHOOTING_COVER | NPC_ALLOW_PATROL )
+	npc.SetDangerousAreaReactionTime( FD_TITAN_AOE_REACTTIME )
+	AddMinimapForTitans( npc )
+	npc.EndSignal( "OnDeath" )
+	npc.EndSignal( "OnDestroy" )
+	WaitTillHotDropComplete( npc )
+	
+	thread EMPTitanThinkConstant( npc )
+	npc.GetTitanSoul().SetTitanSoulNetBool( "showOverheadIcon", true )
+	thread singleNav_thread( npc, spawnEvent.route )
+	if( GetMapName().find( "mp_lf_" ) == null )
+	{
+		switch ( file.difficultyLevel )
+		{
+			case eFDDifficultyLevel.EASY:
+			case eFDDifficultyLevel.NORMAL:
+				npc.AssaultSetFightRadius( 1200 )
+				break
+			case eFDDifficultyLevel.HARD:
+			case eFDDifficultyLevel.MASTER:
+			case eFDDifficultyLevel.INSANE:
+				npc.AssaultSetFightRadius( 0 )
+				npc.EnableNPCMoveFlag( NPCMF_PREFER_SPRINT )
+				break
+		}
+	}
+}
+
+void function SpawnNukeTitan( WaveSpawnEvent ornull spawnEvent )
+{
+	if( !spawnEvent )
+		return
+
+	expect WaveSpawnEvent( spawnEvent )
+	vector spawnorigin = spawnEvent.origin
+	if( spawnEvent.spawnradius > 0 )
+	{
+		spawnorigin.x += RandomFloatRange( -spawnEvent.spawnradius, spawnEvent.spawnradius )
+		spawnorigin.y += RandomFloatRange( -spawnEvent.spawnradius, spawnEvent.spawnradius )
+		spawnorigin.z += 128 //Ensure we're above all playable geometry
+		spawnorigin = OriginToGround( spawnorigin )
+	}
+	
+	#if SERVER && DEV
+	printt( "Spawning Nuke Titan at: " + spawnorigin )
+	#endif
+	
+	thread Drop_Spawnpoint( spawnorigin, TEAM_IMC, 5 )
+	
+	PingMinimap( spawnorigin.x, spawnorigin.y, 4, 600, 150, 0 )
+	
+	entity npc = CreateNPCTitan( "titan_ogre", TEAM_IMC, spawnorigin, spawnEvent.angles )
+	SetSpawnOption_AISettings( npc, "npc_titan_ogre_minigun_nuke" )
+	SetSpawnOption_Titanfall( npc )
+	npc.kv.reactChance = 60
+	SetTargetName( npc, GetTargetNameForID( spawnEvent.spawnType ) ) // required for client to create icons
+	DispatchSpawn( npc )
+	npc.EnableNPCMoveFlag( NPCMF_WALK_ALWAYS | NPCMF_WALK_NONCOMBAT )
+	npc.DisableNPCMoveFlag( NPCMF_PREFER_SPRINT )
+	npc.DisableNPCFlag( NPC_DIRECTIONAL_MELEE )
+	npc.AssaultSetFightRadius( 0 )
+	SlowEnemyMovementBasedOnDifficulty( npc )
+	npc.SetDangerousAreaReactionTime( 30 ) //Lasts longer than any AoE the game has
+	npc.SetCapabilityFlag( bits_CAP_INNATE_MELEE_ATTACK1 | bits_CAP_INNATE_MELEE_ATTACK2 | bits_CAP_SYNCED_MELEE_ATTACK , false )
+	spawnedNPCs.append( npc )
+	AddMinimapForTitans( npc )
+	npc.EndSignal( "OnDeath" )
+	npc.EndSignal( "OnDestroy" )
+	NukeTitanThink( npc, fd_harvester.harvester )
+	
+	npc.GetTitanSoul().SetTitanSoulNetBool( "showOverheadIcon", true )
+	GiveShieldByDifficulty( npc, true )
+	thread singleNav_thread( npc, spawnEvent.route )
+}
+
+void function SpawnMortarTitan( WaveSpawnEvent ornull spawnEvent )
+{
+	if( !spawnEvent )
+		return
+
+	expect WaveSpawnEvent( spawnEvent )
+	vector spawnorigin = spawnEvent.origin
+	if( spawnEvent.spawnradius > 0 )
+	{
+		spawnorigin.x += RandomFloatRange( -spawnEvent.spawnradius, spawnEvent.spawnradius )
+		spawnorigin.y += RandomFloatRange( -spawnEvent.spawnradius, spawnEvent.spawnradius )
+		spawnorigin.z += 128 //Ensure we're above all playable geometry
+		spawnorigin = OriginToGround( spawnorigin )
+	}
+	
+	#if SERVER && DEV
+	printt( "Spawning Mortar Titan at: " + spawnorigin )
+	#endif
+	
+	thread Drop_Spawnpoint( spawnorigin, TEAM_IMC, 5 )
+	
+	PingMinimap( spawnorigin.x, spawnorigin.y, 4, 600, 150, 0 )
+	
+	entity npc = CreateNPCTitan( "titan_atlas", TEAM_IMC, spawnorigin, spawnEvent.angles )
+	SetSpawnOption_AISettings( npc, "npc_titan_atlas_tracker_mortar" )
+	SetSpawnOption_Titanfall( npc )
+	SetSpawnOption_Alert( npc )
+	SetTargetName( npc, GetTargetNameForID( spawnEvent.spawnType ) ) // required for client to create icons
+	DispatchSpawn( npc )
+	npc.TakeOffhandWeapon( OFFHAND_RIGHT )
+	npc.GiveOffhandWeapon( "mp_titanweapon_shoulder_rockets", OFFHAND_RIGHT )
+	npc.SetSkin( 1 )
+	npc.SetCamo( -1 )
+	npc.DisableNPCFlag( NPC_ALLOW_INVESTIGATE )
+	npc.DisableNPCMoveFlag( NPCMF_WALK_NONCOMBAT )
+	npc.SetDangerousAreaReactionTime( FD_TITAN_AOE_REACTTIME )
+	spawnedNPCs.append( npc )
+	AddMinimapForTitans( npc )
+	npc.EndSignal( "OnDeath" )
+	npc.EndSignal( "OnDestroy" )
+	WaitTillHotDropComplete( npc )
+	
+	thread MortarTitanThink( npc, fd_harvester.harvester )
+	npc.GetTitanSoul().SetTitanSoulNetBool( "showOverheadIcon", true )
+	GiveShieldByDifficulty( npc )
+}
+
+void function SpawnSniperTitan( WaveSpawnEvent ornull spawnEvent )
+{
+	if( !spawnEvent )
+		return
+
+	expect WaveSpawnEvent( spawnEvent )
+	vector spawnorigin = spawnEvent.origin
+	if( spawnEvent.spawnradius > 0 )
+	{
+		spawnorigin.x += RandomFloatRange( -spawnEvent.spawnradius, spawnEvent.spawnradius )
+		spawnorigin.y += RandomFloatRange( -spawnEvent.spawnradius, spawnEvent.spawnradius )
+		spawnorigin.z += 128 //Ensure we're above all playable geometry
+		spawnorigin = OriginToGround( spawnorigin )
+	}
+	
+	#if SERVER && DEV
+	printt( "Spawning Northstar Titan at: " + spawnorigin )
+	#endif
+	
+	thread Drop_Spawnpoint( spawnorigin, TEAM_IMC, 5 )
+	
+	PingMinimap( spawnorigin.x, spawnorigin.y, 4, 600, 150, 0 )
+	
+	entity npc = CreateNPCTitan( "titan_stryder", TEAM_IMC, spawnorigin, spawnEvent.angles )
+	SetSpawnOption_Titanfall( npc )
+	SetSpawnOption_Alert( npc )
+	npc.kv.AccuracyMultiplier = 2
+	npc.kv.reactChance = 60
+	if ( spawnEvent.titanType == 1 && file.allowEliteTitans )
+	{
+		SetSpawnOption_AISettings( npc, "npc_titan_stryder_sniper_boss_fd_elite" )
+		SetTitanAsElite( npc )
+		SetSpawnOption_TitanSoulPassive4( npc, "pas_northstar_cluster" )
+		SetSpawnOption_TitanSoulPassive5( npc, "pas_northstar_trap" )
+	}
+	else
+	{
+		SetSpawnOption_AISettings( npc, "npc_titan_stryder_sniper_fd" )
+		SlowEnemyMovementBasedOnDifficulty( npc )
+	}
+	SetTargetName( npc, GetTargetNameForID( spawnEvent.spawnType ) ) // required for client to create icons
+	DispatchSpawn( npc )
+	npc.SetDangerousAreaReactionTime( FD_TITAN_AOE_REACTTIME )
+	if ( spawnEvent.titanType == 1 && file.allowEliteTitans )
+	{
+		SetEliteTitanPostSpawn( npc )
+		npc.SetMaxHealth( npc.GetMaxHealth() + file.eliteTitanHPBonus_Northstar )
+		npc.SetHealth( npc.GetMaxHealth() )
+		npc.GetTitanSoul().soul.titanLoadout.titanExecution = "execution_random_2"
+		
+		array<entity> primaryWeapons = npc.GetMainWeapons()
+		entity maingun = primaryWeapons[0]
+		maingun.AddMod( "instant_shot" )
+		maingun.AddMod( "fast_reload" )
+		maingun.AddMod( "pas_northstar_weapon" )
+		maingun.AddMod( "burn_mod_titan_sniper" )
+		
+		entity tethertrap = npc.GetOffhandWeapon( OFFHAND_SPECIAL )
+		tethertrap.AddMod( "fd_trap_charges" )
+		tethertrap.AddMod( "fd_explosive_trap" )
+		tethertrap.AddMod( "pas_northstar_trap" )
+		
+		entity clustermissile = npc.GetOffhandWeapon( OFFHAND_ORDNANCE )
+		clustermissile.AddMod( "fd_twin_cluster" )
+		clustermissile.AddMod( "dev_mod_low_recharge" )
+		clustermissile.AddMod( "burn_mod_titan_dumbfire_rockets" )
+		
+		npc.SetDangerousAreaReactionTime( 0 )
+	}
+	npc.DisableNPCFlag( NPC_ALLOW_INVESTIGATE )
+	npc.DisableNPCMoveFlag( NPCMF_WALK_NONCOMBAT )
+	npc.AssaultSetFightRadius( 0 )
+	spawnedNPCs.append( npc )
+	AddMinimapForTitans( npc )
+	npc.EndSignal( "OnDeath" )
+	npc.EndSignal( "OnDestroy" )
+	WaitTillHotDropComplete( npc )
+	
+	thread SniperTitanThink( npc, fd_harvester.harvester )
+	npc.GetTitanSoul().SetTitanSoulNetBool( "showOverheadIcon", true )
+	GiveShieldByDifficulty( npc )
+}
+
+void function SpawnToneSniperTitan( WaveSpawnEvent ornull spawnEvent )
+{
+	if( !spawnEvent )
+		return
+
+	expect WaveSpawnEvent( spawnEvent )
+	vector spawnorigin = spawnEvent.origin
+	if( spawnEvent.spawnradius > 0 )
+	{
+		spawnorigin.x += RandomFloatRange( -spawnEvent.spawnradius, spawnEvent.spawnradius )
+		spawnorigin.y += RandomFloatRange( -spawnEvent.spawnradius, spawnEvent.spawnradius )
+		spawnorigin.z += 128 //Ensure we're above all playable geometry
+		spawnorigin = OriginToGround( spawnorigin )
+	}
+	
+	#if SERVER && DEV
+	printt( "Spawning Sniper Tone Titan at: " + spawnorigin )
+	#endif
+	
+	thread Drop_Spawnpoint( spawnorigin, TEAM_IMC, 5 )
+	
+	PingMinimap( spawnorigin.x, spawnorigin.y, 4, 600, 150, 0 )
+	
+	entity npc = CreateNPCTitan( "titan_atlas", TEAM_IMC, spawnorigin, spawnEvent.angles )
+	SetSpawnOption_Titanfall( npc )
+	npc.kv.AccuracyMultiplier = 2
+	npc.kv.reactChance = 60
+	if ( spawnEvent.titanType == 1 && file.allowEliteTitans )
+	{
+		SetSpawnOption_AISettings( npc, "npc_titan_atlas_tracker_fd_sniper_elite" )
+		SetTitanAsElite( npc )
+		SetSpawnOption_TitanSoulPassive4( npc, "pas_tone_sonar" )
+		SetSpawnOption_TitanSoulPassive5( npc, "pas_tone_wall" )
+		SetSpawnOption_TitanSoulPassive6( npc, "pas_tone_rockets" )
+	}
+	else
+	{
+		SetSpawnOption_AISettings( npc, "npc_titan_atlas_tracker_fd_sniper" )
+		SlowEnemyMovementBasedOnDifficulty( npc )
+	}
+	SetTargetName( npc, GetTargetNameForID( spawnEvent.spawnType ) ) // required for client to create icons
+	DispatchSpawn( npc )
+	npc.SetDangerousAreaReactionTime( FD_TITAN_AOE_REACTTIME )
+	if ( spawnEvent.titanType == 1 && file.allowEliteTitans )
+	{
+		SetEliteTitanPostSpawn( npc )
+		npc.SetMaxHealth( npc.GetMaxHealth() + file.eliteTitanHPBonus_Tone )
+		npc.SetHealth( npc.GetMaxHealth() )
+		npc.GetTitanSoul().soul.titanLoadout.titanExecution = "execution_tone_prime"
+		
+		entity tonesonar = npc.GetOffhandWeapon( OFFHAND_ANTIRODEO )
+		tonesonar.AddMod( "fd_sonar_duration" )
+		tonesonar.AddMod( "fd_sonar_damage_amp" )
+		
+		array<entity> primaryWeapons = npc.GetMainWeapons()
+		entity maingun = primaryWeapons[0]
+		maingun.AddMod( "fast_reload" )
+		maingun.AddMod( "extended_ammo" )
+		
+		npc.SetDangerousAreaReactionTime( 0 )
+	}
+	else
+	{
+		npc.SetSkin( 6 )
+		npc.SetCamo( 2 )
+	}
+	npc.DisableNPCFlag( NPC_ALLOW_INVESTIGATE )
+	npc.DisableNPCMoveFlag( NPCMF_WALK_NONCOMBAT )
+	npc.AssaultSetFightRadius( 0 )
+	spawnedNPCs.append( npc )
+	AddMinimapForTitans( npc )
+	npc.EndSignal( "OnDeath" )
+	npc.EndSignal( "OnDestroy" )
+	WaitTillHotDropComplete( npc )
+	
+	thread SniperTitanThink( npc, fd_harvester.harvester )
+	npc.GetTitanSoul().SetTitanSoulNetBool( "showOverheadIcon", true )
+	GiveShieldByDifficulty( npc )
+}
+
+void function SpawnIonTitan( WaveSpawnEvent ornull spawnEvent )
+{
+	if( !spawnEvent )
+		return
+
+	expect WaveSpawnEvent( spawnEvent )
+	vector spawnorigin = spawnEvent.origin
+	if( spawnEvent.spawnradius > 0 )
+	{
+		spawnorigin.x += RandomFloatRange( -spawnEvent.spawnradius, spawnEvent.spawnradius )
+		spawnorigin.y += RandomFloatRange( -spawnEvent.spawnradius, spawnEvent.spawnradius )
+		spawnorigin.z += 128 //Ensure we're above all playable geometry
+		spawnorigin = OriginToGround( spawnorigin )
+	}
+	
+	#if SERVER && DEV
+	printt( "Spawning Ion Titan at: " + spawnorigin )
+	#endif
+	
+	thread Drop_Spawnpoint( spawnEvent.origin, TEAM_IMC, 5 )
+	
+	PingMinimap( spawnorigin.x, spawnorigin.y, 4, 600, 150, 0 )
+	
+	entity npc = CreateNPCTitan( "titan_atlas", TEAM_IMC, spawnorigin, spawnEvent.angles )
+	SetSpawnOption_Titanfall( npc )
+	npc.kv.reactChance = 60
+	if ( spawnEvent.titanType == 1 && file.allowEliteTitans )
+	{
+		SetSpawnOption_AISettings( npc, "npc_titan_atlas_stickybomb_boss_fd_elite" )
+		SetTitanAsElite( npc )
+		SetSpawnOption_TitanSoulPassive4( npc, "pas_ion_lasercannon" )
+	}
+	else
+	{
+		if ( file.difficultyLevel == eFDDifficultyLevel.EASY || difficultyLevel == eFDDifficultyLevel.NORMAL )
+			SetSpawnOption_AISettings( npc, "npc_titan_atlas_stickybomb" )
+		else
+			SetSpawnOption_AISettings( npc, "npc_titan_atlas_stickybomb_boss_fd" )
+		SlowEnemyMovementBasedOnDifficulty( npc )
+	}
+	SetTargetName( npc, GetTargetNameForID( spawnEvent.spawnType ) ) // required for client to create icons
+	DispatchSpawn( npc )
+	npc.SetDangerousAreaReactionTime( FD_TITAN_AOE_REACTTIME )
+	if ( spawnEvent.titanType == 1 && file.allowEliteTitans )
+	{
+		SetEliteTitanPostSpawn( npc )
+		npc.SetMaxHealth( npc.GetMaxHealth() + file.eliteTitanHPBonus_Ion )
+		npc.SetHealth( npc.GetMaxHealth() )
+		npc.GetTitanSoul().soul.titanLoadout.titanExecution = "execution_ion"
+		npc.SetDangerousAreaReactionTime( 0 )
+	}
+	spawnedNPCs.append( npc )
+	AddMinimapForTitans( npc )
+	npc.EndSignal( "OnDeath" )
+	npc.EndSignal( "OnDestroy" )
+	WaitTillHotDropComplete( npc )
+	
+	npc.GetTitanSoul().SetTitanSoulNetBool( "showOverheadIcon", true )
+	GiveShieldByDifficulty( npc )
+	thread singleNav_thread( npc, spawnEvent.route )
+}
+
+void function SpawnScorchTitan( WaveSpawnEvent ornull spawnEvent )
+{
+	if( !spawnEvent )
+		return
+
+	expect WaveSpawnEvent( spawnEvent )
+	vector spawnorigin = spawnEvent.origin
+	if( spawnEvent.spawnradius > 0 )
+	{
+		spawnorigin.x += RandomFloatRange( -spawnEvent.spawnradius, spawnEvent.spawnradius )
+		spawnorigin.y += RandomFloatRange( -spawnEvent.spawnradius, spawnEvent.spawnradius )
+		spawnorigin.z += 128 //Ensure we're above all playable geometry
+		spawnorigin = OriginToGround( spawnorigin )
+	}
+	
+	#if SERVER && DEV
+	printt( "Spawning Scorch Titan at: " + spawnorigin )
+	#endif
+	
+	thread Drop_Spawnpoint( spawnorigin, TEAM_IMC, 5 )
+	
+	PingMinimap( spawnorigin.x, spawnorigin.y, 4, 600, 150, 0 )
+	
+	entity npc = CreateNPCTitan( "titan_ogre", TEAM_IMC, spawnorigin, spawnEvent.angles )
+	SetSpawnOption_Titanfall( npc )
+	if ( spawnEvent.titanType == 1 && file.allowEliteTitans )
+	{
+		SetSpawnOption_AISettings( npc, "npc_titan_ogre_meteor_boss_fd_elite" )
+		SetTitanAsElite( npc )
+		SetSpawnOption_TitanSoulPassive4( npc, "pas_scorch_flamecore" )
+		SetSpawnOption_TitanSoulPassive5( npc, "pas_scorch_selfdmg" )
+	}
+	else
+	{
+		if ( file.difficultyLevel == eFDDifficultyLevel.EASY || difficultyLevel == eFDDifficultyLevel.NORMAL )
+			SetSpawnOption_AISettings( npc, "npc_titan_ogre_meteor" )
+		else
+			SetSpawnOption_AISettings( npc, "npc_titan_ogre_meteor_boss_fd" )
+		SlowEnemyMovementBasedOnDifficulty( npc )
+	}
+	
+	SetTargetName( npc, GetTargetNameForID( spawnEvent.spawnType ) ) // required for client to create icons
+	DispatchSpawn( npc )
+	npc.SetDangerousAreaReactionTime( FD_TITAN_AOE_REACTTIME )
+	if ( spawnEvent.titanType == 1 && file.allowEliteTitans )
+	{
+		SetEliteTitanPostSpawn( npc )
+		npc.SetMaxHealth( npc.GetMaxHealth() + file.eliteTitanHPBonus_Scorch )
+		npc.SetHealth( npc.GetMaxHealth() )
+		npc.GetTitanSoul().soul.titanLoadout.titanExecution = "execution_scorch_prime"
+		
+		array<entity> primaryWeapons = npc.GetMainWeapons()
+		entity weapon = primaryWeapons[0]
+		weapon.AddMod( "fd_wpn_upgrade_2" )
+		npc.SetDangerousAreaReactionTime( 0 )
+	}
+	else
+	{
+		npc.kv.reactChance = 60
+		npc.kv.AccuracyMultiplier = 0.5
+		npc.kv.WeaponProficiency = eWeaponProficiency.AVERAGE
+	}
+	spawnedNPCs.append( npc )
+	AddMinimapForTitans( npc )
+	npc.EndSignal( "OnDeath" )
+	npc.EndSignal( "OnDestroy" )
+	WaitTillHotDropComplete( npc )
+	
+	npc.GetTitanSoul().SetTitanSoulNetBool( "showOverheadIcon", true )
+	GiveShieldByDifficulty( npc )
+	thread singleNav_thread( npc, spawnEvent.route )
+}
+
+void function SpawnRoninTitan( WaveSpawnEvent ornull spawnEvent )
+{
+	if( !spawnEvent )
+		return
+
+	expect WaveSpawnEvent( spawnEvent )
+	vector spawnorigin = spawnEvent.origin
+	if( spawnEvent.spawnradius > 0 )
+	{
+		spawnorigin.x += RandomFloatRange( -spawnEvent.spawnradius, spawnEvent.spawnradius )
+		spawnorigin.y += RandomFloatRange( -spawnEvent.spawnradius, spawnEvent.spawnradius )
+		spawnorigin.z += 128 //Ensure we're above all playable geometry
+		spawnorigin = OriginToGround( spawnorigin )
+	}
+	
+	#if SERVER && DEV
+	printt( "Spawning Ronin Titan at: " + spawnorigin )
+	#endif
+	
+	thread Drop_Spawnpoint( spawnorigin, TEAM_IMC, 5 )
+	
+	PingMinimap( spawnorigin.x, spawnorigin.y, 4, 600, 150, 0 )
+	
+	entity npc = CreateNPCTitan( "titan_stryder", TEAM_IMC, spawnorigin, spawnEvent.angles )
+	SetSpawnOption_Titanfall( npc )
+	npc.kv.reactChance = 60
+	if ( spawnEvent.titanType == 1 && file.allowEliteTitans )
+	{
+		SetSpawnOption_AISettings( npc, "npc_titan_stryder_leadwall_boss_fd_elite" )
+		SetTitanAsElite( npc )
+		SetSpawnOption_TitanSoulPassive4( npc, "pas_ronin_swordcore" )
+		SetSpawnOption_TitanSoulPassive5( npc, "pas_ronin_weapon" )
+		SetSpawnOption_TitanSoulPassive6( npc, "pas_ronin_phase" )
+	}
+	else
+	{
+		if ( file.difficultyLevel == eFDDifficultyLevel.EASY || difficultyLevel == eFDDifficultyLevel.NORMAL )
+			SetSpawnOption_AISettings( npc, "npc_titan_stryder_leadwall" )
+		else
+			SetSpawnOption_AISettings( npc, "npc_titan_stryder_leadwall_boss_fd" )
+	}
+	SetTargetName( npc, GetTargetNameForID( spawnEvent.spawnType ) ) // required for client to create icons
+	DispatchSpawn( npc )
+	npc.SetDangerousAreaReactionTime( FD_TITAN_AOE_REACTTIME )
+	if ( spawnEvent.titanType == 1 && file.allowEliteTitans )
+	{
+		SetEliteTitanPostSpawn( npc )
+		npc.SetMaxHealth( npc.GetMaxHealth() + file.eliteTitanHPBonus_Ronin )
+		npc.SetHealth( npc.GetMaxHealth() )
+		npc.GetTitanSoul().soul.titanLoadout.titanExecution = "execution_ronin"
+		
+		npc.GetOffhandWeapon( OFFHAND_MELEE ).AddMod( "fd_sword_upgrade" )
+		npc.SetDangerousAreaReactionTime( 0 )
+	}
+	else
+	{
+		npc.kv.AccuracyMultiplier = 0.7
+		npc.kv.WeaponProficiency = eWeaponProficiency.AVERAGE
+	}
+	spawnedNPCs.append( npc )
+	AddMinimapForTitans( npc )
+	npc.EndSignal( "OnDeath" )
+	npc.EndSignal( "OnDestroy" )
+	WaitTillHotDropComplete( npc )
+	
+	npc.GetTitanSoul().SetTitanSoulNetBool( "showOverheadIcon", true )
+	GiveShieldByDifficulty( npc )
+	thread singleNav_thread( npc, spawnEvent.route )
+}
+
+void function SpawnToneTitan( WaveSpawnEvent ornull spawnEvent )
+{
+	if( !spawnEvent )
+		return
+
+	expect WaveSpawnEvent( spawnEvent )
+	vector spawnorigin = spawnEvent.origin
+	if( spawnEvent.spawnradius > 0 )
+	{
+		spawnorigin.x += RandomFloatRange( -spawnEvent.spawnradius, spawnEvent.spawnradius )
+		spawnorigin.y += RandomFloatRange( -spawnEvent.spawnradius, spawnEvent.spawnradius )
+		spawnorigin.z += 128 //Ensure we're above all playable geometry
+		spawnorigin = OriginToGround( spawnorigin )
+	}
+	
+	#if SERVER && DEV
+	printt( "Spawning Tone Titan at: " + spawnorigin )
+	#endif
+	
+	thread Drop_Spawnpoint( spawnorigin, TEAM_IMC, 5 )
+	
+	PingMinimap( spawnorigin.x, spawnorigin.y, 4, 600, 150, 0 )
+	
+	entity npc = CreateNPCTitan( "titan_atlas", TEAM_IMC, spawnorigin, spawnEvent.angles )
+	SetSpawnOption_Titanfall( npc )
+	npc.kv.reactChance = 60
+	if ( spawnEvent.titanType == 1 && file.allowEliteTitans )
+	{
+		SetSpawnOption_AISettings( npc, "npc_titan_atlas_tracker_boss_fd_elite" )
+		SetTitanAsElite( npc )
+		SetSpawnOption_TitanSoulPassive4( npc, "pas_tone_sonar" )
+		SetSpawnOption_TitanSoulPassive5( npc, "pas_tone_wall" )
+		SetSpawnOption_TitanSoulPassive6( npc, "pas_tone_rockets" )
+	}
+	else
+	{
+		if ( file.difficultyLevel == eFDDifficultyLevel.EASY || difficultyLevel == eFDDifficultyLevel.NORMAL )
+			SetSpawnOption_AISettings( npc, "npc_titan_atlas_tracker" )
+		else
+			SetSpawnOption_AISettings( npc, "npc_titan_atlas_tracker_boss_fd" )
+		SlowEnemyMovementBasedOnDifficulty( npc )
+	}
+	SetTargetName( npc, GetTargetNameForID( spawnEvent.spawnType ) ) // required for client to create icons
+	DispatchSpawn( npc )
+	npc.SetDangerousAreaReactionTime( FD_TITAN_AOE_REACTTIME )
+	if ( spawnEvent.titanType == 1 && file.allowEliteTitans )
+	{
+		SetEliteTitanPostSpawn( npc )
+		npc.SetMaxHealth( npc.GetMaxHealth() + file.eliteTitanHPBonus_Tone )
+		npc.SetHealth( npc.GetMaxHealth() )
+		npc.GetTitanSoul().soul.titanLoadout.titanExecution = "execution_tone"
+		
+		entity tonesonar = npc.GetOffhandWeapon( OFFHAND_ANTIRODEO )
+		tonesonar.AddMod( "fd_sonar_duration" )
+		tonesonar.AddMod( "fd_sonar_damage_amp" )
+		
+		array<entity> primaryWeapons = npc.GetMainWeapons()
+		entity maingun = primaryWeapons[0]
+		maingun.AddMod( "fast_reload" )
+		maingun.AddMod( "extended_ammo" )
+		
+		npc.SetDangerousAreaReactionTime( 0 )
+	}
+	spawnedNPCs.append( npc )
+	AddMinimapForTitans( npc )
+	npc.EndSignal( "OnDeath" )
+	npc.EndSignal( "OnDestroy" )
+	WaitTillHotDropComplete( npc )
+	
+	npc.GetTitanSoul().SetTitanSoulNetBool( "showOverheadIcon", true )
+	GiveShieldByDifficulty( npc )
+	thread singleNav_thread( npc, spawnEvent.route )
+}
+
+void function SpawnLegionTitan( WaveSpawnEvent ornull spawnEvent )
+{
+	if( !spawnEvent )
+		return
+
+	expect WaveSpawnEvent( spawnEvent )
+	vector spawnorigin = spawnEvent.origin
+	if( spawnEvent.spawnradius > 0 )
+	{
+		spawnorigin.x += RandomFloatRange( -spawnEvent.spawnradius, spawnEvent.spawnradius )
+		spawnorigin.y += RandomFloatRange( -spawnEvent.spawnradius, spawnEvent.spawnradius )
+		spawnorigin.z += 128 //Ensure we're above all playable geometry
+		spawnorigin = OriginToGround( spawnorigin )
+	}
+	
+	#if SERVER && DEV
+	printt( "Spawning Legion Titan at: " + spawnorigin )
+	#endif
+	
+	thread Drop_Spawnpoint( spawnorigin, TEAM_IMC, 5 )
+	
+	PingMinimap( spawnorigin.x, spawnorigin.y, 4, 600, 150, 0 )
+	
+	entity npc = CreateNPCTitan( "titan_ogre", TEAM_IMC, spawnorigin, spawnEvent.angles )
+	SetSpawnOption_Titanfall( npc )
+	npc.kv.reactChance = 60
+	if ( spawnEvent.titanType == 1 && file.allowEliteTitans )
+	{
+		SetSpawnOption_AISettings( npc, "npc_titan_ogre_minigun_boss_fd_elite" )
+		SetTitanAsElite( npc )
+		SetSpawnOption_TitanSoulPassive4( npc, "pas_legion_spinup" )
+	}
+	else
+	{
+		if ( file.difficultyLevel == eFDDifficultyLevel.EASY || difficultyLevel == eFDDifficultyLevel.NORMAL )
+			SetSpawnOption_AISettings( npc, "npc_titan_ogre_minigun" )
+		else
+			SetSpawnOption_AISettings( npc, "npc_titan_ogre_minigun_boss_fd" )
+		SlowEnemyMovementBasedOnDifficulty( npc )
+	}
+	SetTargetName( npc, GetTargetNameForID( spawnEvent.spawnType ) ) // required for client to create icons
+	DispatchSpawn( npc )
+	npc.SetDangerousAreaReactionTime( FD_TITAN_AOE_REACTTIME )
+	if ( spawnEvent.titanType == 1 && file.allowEliteTitans )
+	{
+		SetEliteTitanPostSpawn( npc )
+		npc.SetMaxHealth( npc.GetMaxHealth() + file.eliteTitanHPBonus_Legion )
+		npc.SetHealth( npc.GetMaxHealth() )
+		npc.kv.AccuracyMultiplier = 1.0 //Ironically lowering their accuracy increases the chance of them hitting the enemy
+		npc.GetTitanSoul().soul.titanLoadout.titanExecution = "execution_random_5"
+		
+		array<entity> primaryWeapons = npc.GetMainWeapons()
+		entity maingun = primaryWeapons[0]
+		maingun.AddMod( "fd_closerange_helper" )
+		maingun.AddMod( "fd_longrange_helper" )
+		maingun.AddMod( "fd_piercing_shots" )
+		maingun.AddMod( "fd_gun_shield_redirect" )
+		maingun.AddMod( "SiegeMode" )
+		
+		entity gunshield = npc.GetOffhandWeapon( OFFHAND_SPECIAL )
+		gunshield.AddMod( "npc_more_shield" )
+		gunshield.AddMod( "npc_infinite_shield" )
+		gunshield.AddMod( "fd_gun_shield" )
+		gunshield.AddMod( "fd_gun_shield_redirect" )
+		gunshield.AddMod( "SiegeMode" )
+		npc.SetDangerousAreaReactionTime( 0 )
+	}
+	spawnedNPCs.append( npc )
+	AddMinimapForTitans( npc )
+	npc.EndSignal( "OnDeath" )
+	npc.EndSignal( "OnDestroy" )
+	WaitTillHotDropComplete( npc )
+	
+	npc.GetTitanSoul().SetTitanSoulNetBool( "showOverheadIcon", true )
+	GiveShieldByDifficulty( npc )
+	thread singleNav_thread( npc, spawnEvent.route )
+}
+
+void function SpawnMonarchTitan( WaveSpawnEvent ornull spawnEvent )
+{
+	if( !spawnEvent )
+		return
+
+	expect WaveSpawnEvent( spawnEvent )
+	vector spawnorigin = spawnEvent.origin
+	if( spawnEvent.spawnradius > 0 )
+	{
+		spawnorigin.x += RandomFloatRange( -spawnEvent.spawnradius, spawnEvent.spawnradius )
+		spawnorigin.y += RandomFloatRange( -spawnEvent.spawnradius, spawnEvent.spawnradius )
+		spawnorigin.z += 128 //Ensure we're above all playable geometry
+		spawnorigin = OriginToGround( spawnorigin )
+	}
+	
+	#if SERVER && DEV
+	printt( "Spawning Monarch Titan at: " + spawnorigin )
+	#endif
+	
+	thread Drop_Spawnpoint( spawnorigin, TEAM_IMC, 5 )
+	
+	PingMinimap( spawnorigin.x, spawnorigin.y, 4, 600, 150, 0 )
+	
+	entity npc = CreateNPCTitan( "titan_atlas", TEAM_IMC, spawnorigin, spawnEvent.angles )
+	SetSpawnOption_Titanfall( npc )
+	npc.kv.reactChance = 60
+	if ( spawnEvent.titanType == 1 && file.allowEliteTitans )
+	{
+		SetSpawnOption_AISettings( npc,"npc_titan_atlas_vanguard_boss_fd_elite" )
+		SetTitanAsElite( npc )
+	}
+	else
+	{
+		if ( file.difficultyLevel == eFDDifficultyLevel.EASY || difficultyLevel == eFDDifficultyLevel.NORMAL )
+			SetSpawnOption_AISettings( npc,"npc_titan_atlas_vanguard" )
+		else
+			SetSpawnOption_AISettings( npc,"npc_titan_atlas_vanguard_boss_fd" )
+		SlowEnemyMovementBasedOnDifficulty( npc )
+	}
+	SetTargetName( npc, GetTargetNameForID( spawnEvent.spawnType ) ) // required for client to create icons
+	DispatchSpawn( npc )
+	npc.SetDangerousAreaReactionTime( FD_TITAN_AOE_REACTTIME )
+	if ( spawnEvent.titanType == 1 && file.allowEliteTitans )
+	{
+		SetEliteTitanPostSpawn( npc )
+		npc.SetMaxHealth( npc.GetMaxHealth() + file.eliteTitanHPBonus_Monarch )
+		npc.SetHealth( npc.GetMaxHealth() )
+		npc.GetTitanSoul().soul.titanLoadout.titanExecution = "execution_vanguard"
+		npc.GetTitanSoul().SetTitanSoulNetInt( "upgradeCount", 3 )
+		
+		array<entity> primaryWeapons = npc.GetMainWeapons()
+		entity maingun = primaryWeapons[0]
+		maingun.AddMod( "arc_rounds" )
+		maingun.AddMod( "rapid_reload" )
+		maingun.AddMod( "fd_vanguard_weapon_1" )
+		maingun.AddMod( "fd_vanguard_weapon_2" )
+		maingun.AddMod( "fd_vanguard_utility_1" )
+		maingun.AddMod( "fd_vanguard_utility_2" )
+		
+		npc.TakeOffhandWeapon( OFFHAND_ORDNANCE )
+		npc.GiveOffhandWeapon( "mp_titanweapon_shoulder_rockets", OFFHAND_ORDNANCE, ["mod_ordnance_core","upgradeCore_MissileRack_Vanguard","dev_mod_low_recharge"] )
+		
+		entity shieldLaser = npc.GetOffhandWeapon( OFFHAND_SPECIAL )
+		shieldLaser.AddMod( "energy_field" )
+		shieldLaser.AddMod( "burn_mod_titan_laser_lite" )
+		
+		npc.SetDangerousAreaReactionTime( 0 )
+	}
+	spawnedNPCs.append( npc )
+	AddMinimapForTitans( npc )
+	npc.EndSignal( "OnDeath" )
+	npc.EndSignal( "OnDestroy" )
+	WaitTillHotDropComplete( npc )
+	
+	npc.GetTitanSoul().SetTitanSoulNetBool( "showOverheadIcon", true )
+	GiveShieldByDifficulty( npc )
+	thread singleNav_thread( npc, spawnEvent.route )
+}
+
+
+
+
+
+
+
+
+
+
+/* Reaper Spawn Funcs
+██████╗ ███████╗ █████╗ ██████╗ ███████╗██████╗     ███████╗██████╗  █████╗ ██╗    ██╗███╗   ██╗    ███████╗██╗   ██╗███╗   ██╗ ██████╗███████╗
+██╔══██╗██╔════╝██╔══██╗██╔══██╗██╔════╝██╔══██╗    ██╔════╝██╔══██╗██╔══██╗██║    ██║████╗  ██║    ██╔════╝██║   ██║████╗  ██║██╔════╝██╔════╝
+██████╔╝█████╗  ███████║██████╔╝█████╗  ██████╔╝    ███████╗██████╔╝███████║██║ █╗ ██║██╔██╗ ██║    █████╗  ██║   ██║██╔██╗ ██║██║     ███████╗
+██╔══██╗██╔══╝  ██╔══██║██╔═══╝ ██╔══╝  ██╔══██╗    ╚════██║██╔═══╝ ██╔══██║██║███╗██║██║╚██╗██║    ██╔══╝  ██║   ██║██║╚██╗██║██║     ╚════██║
+██║  ██║███████╗██║  ██║██║     ███████╗██║  ██║    ███████║██║     ██║  ██║╚███╔███╔╝██║ ╚████║    ██║     ╚██████╔╝██║ ╚████║╚██████╗███████║
+╚═╝  ╚═╝╚══════╝╚═╝  ╚═╝╚═╝     ╚══════╝╚═╝  ╚═╝    ╚══════╝╚═╝     ╚═╝  ╚═╝ ╚══╝╚══╝ ╚═╝  ╚═══╝    ╚═╝      ╚═════╝ ╚═╝  ╚═══╝ ╚═════╝╚══════╝
+*/
+
+void function SpawnSuperSpectre( WaveSpawnEvent ornull spawnEvent )
+{
+	if( !spawnEvent )
+		return
+
+	expect WaveSpawnEvent( spawnEvent )
+	
+	vector spawnorigin = spawnEvent.origin
+	if( spawnEvent.spawnradius > 0 )
+	{
+		spawnorigin.x += RandomFloatRange( -spawnEvent.spawnradius, spawnEvent.spawnradius )
+		spawnorigin.y += RandomFloatRange( -spawnEvent.spawnradius, spawnEvent.spawnradius )
+		spawnorigin.z += 128 //Ensure we're above all playable geometry
+		spawnorigin = OriginToGround( spawnorigin )
+	}
+	#if SERVER && DEV
+	printt( "Spawning Common Reaper at: " + spawnEvent.origin )
+	#endif
+	thread Drop_Spawnpoint( spawnorigin, TEAM_IMC, 5.7 )
+	PingMinimap( spawnorigin.x, spawnorigin.y, 4, 600, 150, 0 )
+	wait 4.7
+
+	entity npc = CreateSuperSpectre( TEAM_IMC, spawnorigin, spawnEvent.angles )
+	SetSpawnOption_AISettings( npc, "npc_super_spectre_fd" )
+	SetSpawnOption_Alert( npc )
+	spawnedNPCs.append( npc )
+	DispatchSpawn( npc )
+	npc.SetAllowSpecialJump( true )
+	SetTargetName( npc, GetTargetNameForID( spawnEvent.spawnType ) )
+	AddMinimapForHumans( npc )
+	thread SuperSpectre_WarpFall( npc )
+	npc.EndSignal( "OnDeath" )
+	npc.EndSignal( "OnDestroy" )
+	npc.WaitSignal( "WarpfallComplete" )
+	
+	//npc.SetCapabilityFlag( bits_CAP_MOVE_TRAVERSE, true )
+	
+	npc.GetMainWeapons()[0].AddMod( "aggressive_ai_fd" )
+	
+	if( spawnEvent.titanType == eFDTT.TITAN_ELITE )
+		thread ReaperMinionLauncherThink( npc )
+	else
+	{
+		thread singleNav_thread( npc, spawnEvent.route )
+		if( GetMapName().find( "mp_lf_" ) == null )
+		{
+			switch ( file.difficultyLevel )
+			{
+				case eFDDifficultyLevel.EASY:
+				case eFDDifficultyLevel.NORMAL:
+					npc.AssaultSetFightRadius( 2000 )
+					break
+				case eFDDifficultyLevel.HARD:
+				case eFDDifficultyLevel.MASTER:
+				case eFDDifficultyLevel.INSANE:
+					npc.AssaultSetFightRadius( 0 )
+					break
+			}
+		}
+		else
+			npc.AssaultSetFightRadius( 800 ) //Bit of combat space so they can at least melee turrets when near them
+	}
+}
+
+
+
+
+
+
+
+
+
+
+/* Infantry Spawn Funcs
+██╗███╗   ██╗███████╗ █████╗ ███╗   ██╗████████╗██████╗ ██╗   ██╗    ███████╗██████╗  █████╗ ██╗    ██╗███╗   ██╗    ███████╗██╗   ██╗███╗   ██╗ ██████╗███████╗
+██║████╗  ██║██╔════╝██╔══██╗████╗  ██║╚══██╔══╝██╔══██╗╚██╗ ██╔╝    ██╔════╝██╔══██╗██╔══██╗██║    ██║████╗  ██║    ██╔════╝██║   ██║████╗  ██║██╔════╝██╔════╝
+██║██╔██╗ ██║█████╗  ███████║██╔██╗ ██║   ██║   ██████╔╝ ╚████╔╝     ███████╗██████╔╝███████║██║ █╗ ██║██╔██╗ ██║    █████╗  ██║   ██║██╔██╗ ██║██║     ███████╗
+██║██║╚██╗██║██╔══╝  ██╔══██║██║╚██╗██║   ██║   ██╔══██╗  ╚██╔╝      ╚════██║██╔═══╝ ██╔══██║██║███╗██║██║╚██╗██║    ██╔══╝  ██║   ██║██║╚██╗██║██║     ╚════██║
+██║██║ ╚████║██║     ██║  ██║██║ ╚████║   ██║   ██║  ██║   ██║       ███████║██║     ██║  ██║╚███╔███╔╝██║ ╚████║    ██║     ╚██████╔╝██║ ╚████║╚██████╗███████║
+╚═╝╚═╝  ╚═══╝╚═╝     ╚═╝  ╚═╝╚═╝  ╚═══╝   ╚═╝   ╚═╝  ╚═╝   ╚═╝       ╚══════╝╚═╝     ╚═╝  ╚═╝ ╚══╝╚══╝ ╚═╝  ╚═══╝    ╚═╝      ╚═════╝ ╚═╝  ╚═══╝ ╚═════╝╚══════╝
+*/
+
+void function SpawnDroppodGrunts( WaveSpawnEvent ornull spawnEvent )
+{
+	if( !spawnEvent )
+		return
+
+	expect WaveSpawnEvent( spawnEvent )
+	
+	#if SERVER && DEV
+	printt( "Spawning Grunt Drop Pod at: " + spawnEvent.origin )
+	#endif
+	PingMinimap( spawnEvent.origin.x, spawnEvent.origin.y, 4, 600, 150, 0 )
+	entity pod = CreateDropPod( spawnEvent.origin, < 0, RandomIntRange( 0, 359 ), 0 > )
+	SetTeam( pod, TEAM_IMC )
+	InitFireteamDropPod( pod )
+
+	string squadName = MakeSquadName( TEAM_IMC, UniqueString() )
+	array<entity> guys
+
+	for ( int i = 0; i < spawnEvent.spawnAmount; i++ )
+    {
+		entity guy = CreateSoldier( TEAM_IMC, spawnEvent.origin, < 0, 0, 0 > )
+		SetSpawnflags( guy, SF_NPC_START_EFFICIENT )
+		if( i < file.gruntAmountWithShields )
+		{
+			if ( file.shouldUseCampaignShieldCaptains )
+				SetSpawnOption_AISettings( guy, "npc_soldier_shield_captain" )
+			else
+				thread ActivatePersonalShield( guy )
+		}
+		SetSpawnOption_Alert( guy )
+		guy.kv.grenadeWeaponName = file.gruntGrenadeClass
+		DispatchSpawn( guy )
+		SetupGruntBehaviorFlags( guy )
+		guy.SetParent( pod, "ATTACH", true )
+		SetSquad( guy, squadName )
+		if( GetMapName().find( "mp_lf_" ) != null )
+			guy.EnableNPCFlag( NPC_NO_WEAPON_DROP )
+
+		GiveMinionFDLoadout( guy )
+		if ( i < file.gruntAmountWithATWeapons )
+			guy.GiveWeapon( file.defaultNPCATWeapons[ guy.GetClassName() ].getrandom() )
+
+		SetTargetName( guy, GetTargetNameForID( eFD_AITypeIDs.GRUNT ) )
+		guy.MakeInvisible()
+		entity weapon = guy.GetActiveWeapon()
+		if ( IsValid( weapon ) )
+			weapon.MakeInvisible()
+		
+		spawnedNPCs.append( guy )
+		guys.append( guy )
+	}
+	
+	waitthread LaunchAnimDropPod( pod, "pod_testpath", spawnEvent.origin, < 0, RandomIntRange( 0, 359 ), 0 > )
+	ArrayRemoveDead( guys )
+	ActivateFireteamDropPod( pod, guys )
+	
+	if( !guys.len() )
+		CodeWarning( "Attempted to activate grunts from Drop Pod but the array is empty" )
+	
+	foreach( npc in guys )
+	{
+		AddMinimapForHumans( npc )
+		npc.SetEfficientMode( false )
+		npc.SetEnemyChangeCallback( GruntTargetsTitan )
+		thread singleNav_thread( npc, spawnEvent.route )
+	}
+}
+
+//This function is based off the entire function chain called by AiGameModes_SpawnDropShip(), that function uses table data for modularization and while it
+//works just fine if we simply use it here, there's no viable way to add the Grunts into the enemy count pool, plus that function also only works at
+//specific nodes found in the maps, that is not needed here, full control over the coordinates where the dropship will drop grunts is better.
+void function SpawnGruntDropship( WaveSpawnEvent ornull spawnEvent )
+{
+	if( !spawnEvent )
+		return
+
+	expect WaveSpawnEvent( spawnEvent )
+	
+	#if SERVER && DEV
+	printt( "Spawning Grunt Dropship at: " + spawnEvent.origin )
+	#endif
+	string squadName = MakeSquadName( TEAM_IMC, UniqueString() )
+	
+	vector origin 		= spawnEvent.origin
+	origin.z 		   += 640 //Expected to people make coordinates in the ground so we add this up for the hover height
+	float yaw 			= spawnEvent.angles.y
+	int health 			= 10000
+	int shield 			= 5000
+	
+	CallinData drop
+	InitCallinData( drop )
+	SetCallinStyle( drop, eDropStyle.ZIPLINE_NPC )
+	drop.dist 			= 1300
+	drop.origin 		= origin
+	drop.yaw 			= yaw
+	drop.team 			= TEAM_IMC
+	drop.squadname 		= squadName
+	
+	FlightPath flightPath
+	flightPath = GetAnalysisForModel( DROPSHIP_MODEL, DROPSHIP_DROP_ANIM )
+	entity ref = CreateScriptRef()
+	ref.SetOrigin( origin )
+	ref.SetAngles( < 0, yaw, 0 > )
+
+	Assert( IsNewThread(), "Must be threaded off" )
+
+	DropTable dropTable
+	dropTable.nodes = DropshipFindDropNodes( flightPath, origin, yaw, "both", true, IsLegalFlightPath_OverTime )
+	dropTable.valid = true
+	
+	asset model = GetFlightPathModel( "fp_crow_model" )
+	waitthread WarpinEffect( model, DROPSHIP_DROP_ANIM, ref.GetOrigin(), ref.GetAngles() )
+	entity dropship = CreateDropship( TEAM_IMC, ref.GetOrigin(), ref.GetAngles() )
+	SetSpawnOption_SquadName( dropship, squadName )
+	dropship.kv.solid = SOLID_VPHYSICS
+	DispatchSpawn( dropship )
+	dropship.SetMaxHealth( health )
+	dropship.SetHealth( health )
+	dropship.SetShieldHealthMax( shield )
+	dropship.SetShieldHealth( shield )
+	dropship.EndSignal( "OnDeath" )
+	dropship.Signal( "WarpedIn" )
+	ref.Signal( "WarpedIn" )
+	dropship.Minimap_AlwaysShow( TEAM_IMC, null )
+	dropship.Minimap_AlwaysShow( TEAM_MILITIA, null )
+	dropship.Minimap_SetHeightTracking( true )
+
+	AddDropshipDropTable( dropship, dropTable )
+	//string dropshipSound = "Goblin_IMC_TroopDeploy_Flyin"
+	string dropshipSound = "Beacon_Flying_3_ships_02"
+
+	OnThreadEnd(
+		function() : ( dropship, ref, dropshipSound )
+		{
+			ref.Destroy()
+			if ( IsValid( dropship ) )
+				StopSoundOnEntity( dropship, dropshipSound )
+			if ( IsAlive( dropship ) )
+				dropship.Destroy()
+		}
+	)
+	
+	array<entity> guys
+	
+	int dropshipCrewSize = spawnEvent.spawnAmount
+	if( dropshipCrewSize > 6 )
+	{
+		dropshipCrewSize = 6
+		CodeWarning( "Dropship has a maximum of 6 NPC slots, current value is: " + spawnEvent.spawnAmount )
+	}
+	for ( int i = 0; i < dropshipCrewSize; i++ )
+    {
+		entity guy = CreateSoldier( TEAM_IMC, spawnEvent.origin, < 0, 0, 0 > )
+		SetSpawnflags( guy, SF_NPC_START_EFFICIENT )
+		if( i < file.gruntAmountWithShields )
+		{
+			if ( file.shouldUseCampaignShieldCaptains )
+				SetSpawnOption_AISettings( guy, "npc_soldier_shield_captain" )
+			else
+				thread ActivatePersonalShield( guy )
+		}
+		SetSpawnOption_Alert( guy )
+		guy.kv.grenadeWeaponName = file.gruntGrenadeClass
+		DispatchSpawn( guy )
+		SetupGruntBehaviorFlags( guy )
+		SetSquad( guy, squadName )
+		
+		GiveMinionFDLoadout( guy )
+		if ( i < file.gruntAmountWithATWeapons )
+			guy.GiveWeapon( file.defaultNPCATWeapons[ guy.GetClassName() ].getrandom() )
+		
+		SetTargetName( guy, GetTargetNameForID( eFD_AITypeIDs.GRUNT ) )
+		AddMinimapForHumans( guy )
+		spawnedNPCs.append( guy )
+		guys.append( guy )
+		
+		table Table = CreateDropshipAnimTable( dropship, "both", i )
+		thread GuyDeploysOffShip( guy, Table )
+	}
+	
+	EmitSoundOnEntity( dropship, dropshipSound )
+	thread PlayAnimTeleport( dropship, DROPSHIP_DROP_ANIM, ref, 0 )
+	wait 12
+	ArrayRemoveDead( guys )
+	foreach( guy in guys )
+	{
+		if ( guy.GetParent() )
+		{
+			guy.EnableNPCFlag( NPC_NO_WEAPON_DROP )
+			guy.Die( svGlobal.worldspawn, svGlobal.worldspawn, { scriptType = DF_DISSOLVE, damageSourceId = damagedef_crush } ) //Kill grunts that didn't manage to drop off the ship
+		}
+		else
+		{
+			guy.SetEfficientMode( false )
+			guy.SetEnemyChangeCallback( GruntTargetsTitan )
+			thread singleNav_thread( guy, spawnEvent.route )
+		}
+	}
+	WaittillAnimDone( dropship )
+}
+
+void function SpawnDroppodStalker( WaveSpawnEvent ornull spawnEvent )
+{
+	if( !spawnEvent )
+		return
+
+	expect WaveSpawnEvent( spawnEvent )
+	
+	#if SERVER && DEV
+	printt( "Spawning Stalker Drop Pod at: " + spawnEvent.origin )
+	#endif
+	PingMinimap( spawnEvent.origin.x, spawnEvent.origin.y, 4, 600, 150, 0 )
+	entity pod = CreateDropPod( spawnEvent.origin, < 0, RandomIntRange( 0, 359 ), 0 > )
+	SetTeam( pod, TEAM_IMC )
+	InitFireteamDropPod( pod )
+
+	string squadName = MakeSquadName( TEAM_IMC, UniqueString() )
+	array<entity> guys
+
+	for ( int i = 0; i < spawnEvent.spawnAmount; i++ )
+	{
+		entity guy = CreateStalker( TEAM_IMC, spawnEvent.origin, < 0, 0, 0 > )
+		SetSpawnflags( guy, SF_NPC_START_EFFICIENT )
+		SetSpawnOption_AISettings( guy, "npc_stalker_fd" )
+		DispatchSpawn( guy )
+		guy.EnableNPCFlag(  NPC_ALLOW_INVESTIGATE | NPC_NO_WEAPON_DROP )
+		guy.DisableNPCFlag( NPC_ALLOW_PATROL )
+		guy.SetParent( pod, "ATTACH", true )
+		SetSquad( guy, squadName )
+		guy.AssaultSetFightRadius( 0 ) // makes them keep moving instead of stopping to shoot you.
+		guy.MakeInvisible()
+		spawnedNPCs.append( guy )
+		SetTargetName( guy, GetTargetNameForID( eFD_AITypeIDs.STALKER ) )
+		guys.append( guy )
+	}
+
+	switch( file.difficultyLevel )
+	{
+		case eFDDifficultyLevel.EASY:
+		case eFDDifficultyLevel.NORMAL: // easy and normal stalkers have no weapons
+			foreach( npc in guys )
+			{
+				npc.TakeActiveWeapon()
+				npc.EnableNPCFlag( NPC_DISABLE_SENSING | NPC_IGNORE_ALL )
+			}
+			break
+		case eFDDifficultyLevel.HARD:
+		case eFDDifficultyLevel.MASTER:
+		case eFDDifficultyLevel.INSANE: // give all EPGs
+			foreach( npc in guys )
+			{
+				npc.TakeActiveWeapon()
+				npc.GiveWeapon( "mp_weapon_epg", ["slowProjectile"] )
+				npc.SetActiveWeaponByName( "mp_weapon_epg" )
+				entity weapon = npc.GetActiveWeapon()
+				if ( IsValid( weapon ) )
+					weapon.MakeInvisible()
+			}
+			break
+
+		default:
+			unreachable
+
+	}
+
+	waitthread LaunchAnimDropPod( pod, "pod_testpath", spawnEvent.origin, < 0, RandomIntRange( 0, 359 ), 0 > )
+	ArrayRemoveDead( guys )
+	ActivateFireteamDropPod( pod, guys )
+	
+	if( !guys.len() )
+		CodeWarning( "Attempted to activate stalkers from Drop Pod but the array is empty" )
+	
+	foreach( npc in guys )
+	{
+		AddMinimapForHumans( npc )
+		npc.SetEfficientMode( false )
+		thread FDStalkerThink( npc , fd_harvester.harvester )
+		thread singleNav_thread( npc, spawnEvent.route )
+	}
+}
+
+void function SpawnDroppodSpectreMortar( WaveSpawnEvent ornull spawnEvent )
+{
+	if( !spawnEvent )
+		return
+
+	expect WaveSpawnEvent( spawnEvent )
+	
+	#if SERVER && DEV
+	printt( "Spawning Mortar Spectre Drop Pod at: " + spawnEvent.origin )
+	#endif
+	PingMinimap( spawnEvent.origin.x, spawnEvent.origin.y, 4, 600, 150, 0 )
+		entity pod = CreateDropPod( spawnEvent.origin, < 0, RandomIntRange( 0, 359 ), 0 > )
+	SetTeam( pod, TEAM_IMC )
+	InitFireteamDropPod( pod )
+
+	string squadName = MakeSquadName( TEAM_IMC, UniqueString() )
+	array<entity> guys
+
+	for ( int i = 0; i < 4; i++ )
+	{
+		entity guy = CreateSpectre( TEAM_IMC, spawnEvent.origin,< 0, 0, 0 > )
+		SetSpawnflags( guy, SF_NPC_START_EFFICIENT )
+		SetSpawnOption_AISettings( guy, "npc_spectre_mortar" )
+		DispatchSpawn( guy )
+		GiveMinionFDLoadout( guy )
+		spawnedNPCs.append( guy )
+		guy.SetParent( pod, "ATTACH", true )
+		SetSquad( guy, squadName )
+		SetTargetName( guy, GetTargetNameForID(eFD_AITypeIDs.SPECTRE_MORTAR))
+		guy.MakeInvisible()
+		guys.append( guy )
+    }
+
+	waitthread LaunchAnimDropPod( pod, "pod_testpath", spawnEvent.origin, < 0, RandomIntRange( 0, 359 ), 0 > )
+    ArrayRemoveDead( guys )
+	ActivateFireteamDropPod( pod, guys )
+	
+	if( !guys.len() )
+		CodeWarning( "Attempted to activate mortar spectres from Drop Pod but the array is empty" )
+	
+	foreach( npc in guys )
+	{
+		AddMinimapForHumans( npc )
+		npc.SetEfficientMode( false )
+		thread NPCStuckTracker( npc )
+	}
+	
+	thread MortarSpectreSquadThink( guys, fd_harvester.harvester )
+}
+
+void function SpawnDroppodSpectre( WaveSpawnEvent ornull spawnEvent )
+{
+	if( !spawnEvent )
+		return
+
+	expect WaveSpawnEvent( spawnEvent )
+	
+	#if SERVER && DEV
+	printt( "Spawning Spectres Drop Pod at: " + spawnEvent.origin )
+	#endif
+	PingMinimap( spawnEvent.origin.x, spawnEvent.origin.y, 4, 600, 150, 0 )
+		entity pod = CreateDropPod( spawnEvent.origin, < 0, RandomIntRange( 0, 359 ), 0 > )
+	SetTeam( pod, TEAM_IMC )
+	InitFireteamDropPod( pod )
+
+	string squadName = MakeSquadName( TEAM_IMC, UniqueString() )
+	array<entity> guys
+
+	for ( int i = 0; i < 4; i++ )
+	{
+		entity guy = CreateSpectre( TEAM_IMC, spawnEvent.origin,< 0, 0, 0 > )
+		SetSpawnflags( guy, SF_NPC_START_EFFICIENT )
+		SetSpawnOption_AISettings( guy, "npc_spectre" )
+		guy.kv.reactChance = 100
+		guy.kv.grenadeWeaponName = "mp_weapon_thermite_grenade"
+		DispatchSpawn( guy )
+		TakeAllWeapons( guy )
+		guy.GiveWeapon( "mp_weapon_smr", ["extended_ammo","pas_fast_reload"] )
+		guy.GiveWeapon( "mp_weapon_rocket_launcher", ["at_unlimited_ammo"] )
+		guy.GiveWeapon( "mp_weapon_shotgun_pistol", ["extended_ammo","pas_fast_reload"] )
+		guy.SetBehaviorSelector( "behavior_sp_soldier" )
+		guy.kv.AccuracyMultiplier = 4.0
+		guy.kv.WeaponProficiency = eWeaponProficiency.PERFECT
+		guy.AssaultSetFightRadius( 0 )
+		guy.DisableNPCFlag( NPC_ALLOW_INVESTIGATE | NPC_USE_SHOOTING_COVER | NPC_ALLOW_PATROL | NPC_ALLOW_FLEE )
+		guy.EnableNPCFlag( NPC_NO_WEAPON_DROP )
+		spawnedNPCs.append( guy )
+		guy.SetParent( pod, "ATTACH", true )
+		SetSquad( guy, squadName )
+		SetTargetName( guy, GetTargetNameForID(eFD_AITypeIDs.SPECTRE))
+		guy.MakeInvisible()
+		guys.append( guy )
+    }
+
+	waitthread LaunchAnimDropPod( pod, "pod_testpath", spawnEvent.origin, < 0, RandomIntRange( 0, 359 ), 0 > )
+    ArrayRemoveDead( guys )
+	ActivateFireteamDropPod( pod, guys )
+	
+	if( !guys.len() )
+		CodeWarning( "Attempted to activate spectres from Drop Pod but the array is empty" )
+	
+	foreach( npc in guys )
+	{
+		AddMinimapForHumans( npc )
+		npc.SetEfficientMode( false )
+		thread NPCStuckTracker( npc )
+		thread singleNav_thread( npc, spawnEvent.route )
+	}
+}
+
+void function SpawnTick( WaveSpawnEvent ornull spawnEvent )
+{
+	if( !spawnEvent )
+		return
+
+	expect WaveSpawnEvent( spawnEvent )
+	
+	#if SERVER && DEV
+	printt( "Spawning Tick Drop Pod at: " + spawnEvent.origin )
+	#endif
+	PingMinimap( spawnEvent.origin.x, spawnEvent.origin.y, 4, 600, 150, 0 )
+	entity pod = CreateDropPod( spawnEvent.origin, < 0, RandomIntRange( 0, 359 ), 0 > )
+	SetTeam( pod, TEAM_IMC )
+	InitFireteamDropPod( pod )
+
+	string squadName = MakeSquadName( TEAM_IMC, UniqueString() )
+	array<entity> guys
+
+	for ( int i = 0; i < spawnEvent.spawnAmount; i++ )
+	{
+		entity guy = CreateFragDrone( TEAM_IMC, spawnEvent.origin, < 0, 0, 0 > )
+		SetSpawnflags( guy, SF_NPC_START_EFFICIENT )
+		SetSpawnOption_AISettings( guy, "npc_frag_drone_fd" )
+		SetSpawnOption_Alert( guy )
+		DispatchSpawn( guy )
+		guy.EnableNPCFlag(  NPC_ALLOW_INVESTIGATE )
+		if( file.shouldUseCampaignTicks )
+			guy.SetModel( $"models/robots/drone_frag/drone_frag.mdl" )
+		SetTargetName( guy, GetTargetNameForID( eFD_AITypeIDs.TICK ) )
+		guy.SetParent( pod, "ATTACH", true )
+		SetSquad( guy, squadName )
+		spawnedNPCs.append( guy )
+		guy.MakeInvisible()
+		guy.AssaultSetFightRadius( 600 )
+		guys.append( guy )
+	}
+	
+	waitthread LaunchAnimDropPod( pod, "pod_testpath", spawnEvent.origin, < 0, RandomIntRange( 0, 359 ), 0 > )
+	ArrayRemoveDead( guys )
+	ActivateFireteamDropPod( pod, guys )
+	
+	if( !guys.len() )
+		CodeWarning( "Attempted to activate ticks from Drop Pod but the array is empty" )
+	
+	foreach( guy in guys )
+	{
+		if( IsValid( guy ) )
+		{
+			guy.MakeVisible()
+			guy.Anim_Stop() //Intentionally cancel the Drop Pod exiting animation for Ticks because it doesnt work for them
+			guy.SetEfficientMode( false )
+			AddMinimapForHumans( guy )
+			thread singleNav_thread( guy, spawnEvent.route )
+		}
+	}
+}
+
+void function SpawnCloakingDrone( WaveSpawnEvent ornull spawnEvent )
+{
+	if( !spawnEvent )
+		return
+
+	expect WaveSpawnEvent( spawnEvent )
+	
+	#if SERVER && DEV
+	printt( "Spawning Cloak Drone at: " + spawnEvent.origin )
+	#endif
+	entity npc = SpawnCloakDrone( TEAM_IMC, spawnEvent.origin, spawnEvent.angles, fd_harvester.harvester.GetOrigin() )
+	spawnedNPCs.append( npc )
+	SetTargetName( npc, GetTargetNameForID( spawnEvent.spawnType ) )
+	AddMinimapForHumans( npc )
+}
+
+void function SpawnDrones( WaveSpawnEvent ornull spawnEvent )
+{
+	if( !spawnEvent )
+		return
+
+	expect WaveSpawnEvent( spawnEvent )
+	
+	#if SERVER && DEV
+	printt( "Spawning Drones at: " + spawnEvent.origin )
+	#endif
+	PingMinimap( spawnEvent.origin.x, spawnEvent.origin.y, 4, 600, 150, 0 )
+	
+	string squadName = MakeSquadName( TEAM_IMC, UniqueString() )
+	for ( int i = 0; i < spawnEvent.spawnAmount; i++ )
+    {
+		vector offsets = Vector( RandomFloatRange( -40, 40 ), RandomFloatRange( -40, 40 ), RandomFloatRange( -40, 40 ) )
+		entity guy = CreateGenericDrone( TEAM_IMC, spawnEvent.origin + offsets, spawnEvent.angles )
+		SetSpawnOption_AISettings( guy, "npc_drone_plasma_fd" )
+		DispatchSpawn( guy )
+		guy.DisableNPCFlag( NPC_ALLOW_INVESTIGATE )
+		guy.EnableNPCMoveFlag( NPCMF_PREFER_SPRINT )
+		SetSquad( guy, squadName )
+		SetTargetName( guy, GetTargetNameForID( eFD_AITypeIDs.DRONE ) )
+		AddMinimapForHumans( guy )
+		spawnedNPCs.append( guy )
+		
+		thread droneNav_thread( guy, spawnEvent.route, 0, 160, spawnEvent.shouldLoop )
+		
+		guy.GetMainWeapons()[0].AddMod( "fd_damage" )
+	}
+}
+
+
+
+
+
+
+
+
+
+
+/* Misc Spawn Funcs
+███╗   ███╗██╗███████╗ ██████╗    ███████╗██████╗  █████╗ ██╗    ██╗███╗   ██╗    ███████╗██╗   ██╗███╗   ██╗ ██████╗███████╗
+████╗ ████║██║██╔════╝██╔════╝    ██╔════╝██╔══██╗██╔══██╗██║    ██║████╗  ██║    ██╔════╝██║   ██║████╗  ██║██╔════╝██╔════╝
+██╔████╔██║██║███████╗██║         ███████╗██████╔╝███████║██║ █╗ ██║██╔██╗ ██║    █████╗  ██║   ██║██╔██╗ ██║██║     ███████╗
+██║╚██╔╝██║██║╚════██║██║         ╚════██║██╔═══╝ ██╔══██║██║███╗██║██║╚██╗██║    ██╔══╝  ██║   ██║██║╚██╗██║██║     ╚════██║
+██║ ╚═╝ ██║██║███████║╚██████╗    ███████║██║     ██║  ██║╚███╔███╔╝██║ ╚████║    ██║     ╚██████╔╝██║ ╚████║╚██████╗███████║
+╚═╝     ╚═╝╚═╝╚══════╝ ╚═════╝    ╚══════╝╚═╝     ╚═╝  ╚═╝ ╚══╝╚══╝ ╚═╝  ╚═══╝    ╚═╝      ╚═════╝ ╚═╝  ╚═══╝ ╚═════╝╚══════╝
+*/
+
+void function SpawnSmoke( WaveSpawnEvent ornull spawnEvent )
+{
+	if( !spawnEvent )
+		return
+
+	expect WaveSpawnEvent( spawnEvent )
+	
+	vector skypos = GetSkyCeiling( spawnEvent.origin )
+	vector groundpos = OriginToGround( skypos )
+	
+	#if SERVER && DEV
+	printt( "Spawning Smoke at: " + spawnEvent.origin )
+	#endif
+	SmokescreenStruct smokescreen
+	smokescreen.smokescreenFX = $"P_smokescreen_FD"
+	smokescreen.isElectric = false
+	smokescreen.shouldHibernate = false
+	smokescreen.origin = groundpos
+	smokescreen.angles = < 0, 0, 0 >
+	smokescreen.fxXYRadius = 160
+	smokescreen.fxZRadius = 128
+	smokescreen.lifetime = spawnEvent.smokeDuration
+	smokescreen.deploySound1p = "SmokeWall_Activate"
+	smokescreen.deploySound3p = "SmokeWall_Activate"
+	smokescreen.stopSound1p = "SmokeWall_Stop"
+	smokescreen.stopSound3p = "SmokeWall_Stop"
+	
+	float fxOffset = 200.0
+	float fxHeightOffset = 148.0
+	
+	smokescreen.fxOffsets = [ < -fxOffset, 0.0, 20.0>, <0.0, fxOffset, 20.0>, <0.0, -fxOffset, 20.0>, <0.0, 0.0, fxHeightOffset>, < -fxOffset, 0.0, fxHeightOffset> ]
+	
+	EmitSoundAtPosition( TEAM_ANY, groundpos, "SmokeWall_Launch" )
+	
+	entity smokenade = CreateEntity( "prop_script" )
+	entity mover = CreateOwnedScriptMover( smokenade )
+	smokenade.SetValueForModelKey( $"models/weapons/bullets/projectile_rocket_large.mdl" )
+	smokenade.kv.spawnflags = 0
+	smokenade.kv.solid = 0
+	smokenade.kv.fadedist = 32768
+	smokenade.kv.renderamt = 255
+	smokenade.kv.rendercolor = "255 255 255"
+	smokenade.SetParent( mover, "", false, 0 )
+	smokenade.EnableRenderAlways()
+	mover.SetOrigin( skypos )
+	mover.SetAngles( < 90, 0, 0 > )
+	DispatchSpawn( smokenade )
+	PlayLoopFXOnEntity( $"P_SmokeScreen_FD_trail", smokenade, "exhaust" )
+	mover.NonPhysicsMoveTo( groundpos, 1.5, 0, 0 )
+	wait 1.5
+	Smokescreen( smokescreen )
+	wait 0.2
+	smokenade.Destroy()
+	mover.Destroy()
+}
+
+void function PlayWarning( WaveSpawnEvent ornull spawnEvent )
+{
+	if( !spawnEvent )
+		return
+
+	expect WaveSpawnEvent( spawnEvent )
+	
+	if ( !file.allowTitanfallBlock && spawnEvent.soundEventName == "fd_waveNoTitanDrops" || !file.allowEliteTitans && spawnEvent.soundEventName == "fd_waveTypeEliteTitan" )
+		return
+	else
+	{
+		#if SERVER
+		if( spawnEvent.soundEventName == "fd_waveTypeEliteTitan" )
+		{
+			foreach( entity player in GetPlayerArray() )
+				thread AnnounceEliteTitansToPlayers( player )
+		}
+		#endif
+		if( spawnEvent.soundEventName != "" ) //Sanity check just to prevent crashes from typos since the fallback is to return empty string
+			PlayFactionDialogueToTeam( spawnEvent.soundEventName, TEAM_MILITIA )
+	}
+}
+
+void function BlockFurtherTitanfalls( WaveSpawnEvent ornull spawnEvent )
+{
+	if( !spawnEvent )
+		return
+
+	expect WaveSpawnEvent( spawnEvent )
+	
+	if ( file.allowTitanfallBlock )
+	{
+		if ( spawnEvent.titanBlocked )
+		{
+			print( "Applying Titanfall Block Event" )
+			PlayerEarnMeter_SetEnabled( false )
+			thread AnnounceTitanfallBlock()
+			foreach( entity player in GetPlayerArray() )
+			{
+				PlayerEarnMeter_Reset( player )
+				ClearTitanAvailable( player )
+			}
+		}
+		else
+		{
+			print( "Removing Titanfall Block Event" )
+			PlayerEarnMeter_SetEnabled( true )
+		}
+	}
+}
+
+void function AnnounceEliteTitansToPlayers( entity player )
+{
+	#if SERVER
+	NSSendLargeMessageToPlayer( player, "Elite Titan", "Prime white chassis. Huge HP, huge shield, greater aiming, moves faster and can use Core. Drops battery on death.", 60, "rui/callsigns/callsign_17_col" )
+	wait 10
+	IsValidPlayer( player )
+		NSSendInfoMessageToPlayer( player, "WARNING: Elite Titans can execute players!" )
+	#endif
+}
+
+void function AnnounceTitanfallBlock()
+{
+	#if SERVER
+	foreach( entity player in GetPlayerArray() )
+		NSSendAnnouncementMessageToPlayer( player, "Titanfall Block", "Titans cannot be summoned anymore!", < 255, 255, 255 >, 150, 0 )
+	wait 10
+	foreach( entity player in GetPlayerArray() )
+		NSSendLargeMessageToPlayer( player, "Titanfall Block", "Further Titans cannot be summoned until the end of the wave, avoid losing your current Titan!", 60, "rui/callsigns/callsign_hidden" )
+	#endif
+}
+
+void function waitUntilLessThanAmountAliveEvent( WaveSpawnEvent ornull spawnEvent )
+{
+	if( !spawnEvent )
+		return
+
+	expect WaveSpawnEvent( spawnEvent )
+	
+	while( true )
+	{
+		WaitFrame()
+		array<entity> npcs = GetNPCArrayOfTeam( TEAM_IMC )
+		ArrayRemoveDead( npcs )
+		
+		if( spawnEvent.waitHullType != eFDHT.ALL )
+		{
+			foreach( entity npc in npcs )
+			{
+				switch ( spawnEvent.waitHullType )
+				{
+					case eFDHT.SMALL:
+						if( npc.IsTitan() || IsSuperSpectre( npc ) || IsProwler( npc ) )
+							npcs.removebyvalue( npc )
+						break
+						
+					case eFDHT.MEDIUM:
+						if( npc.IsTitan() || IsHumanSized( npc ) || IsAirDrone( npc ) || IsFragDrone( npc ) )
+							npcs.removebyvalue( npc )
+						break
+					
+					case eFDHT.TITAN:
+						if( IsSuperSpectre( npc ) || IsMinion( npc ) || IsStalker( npc ) || IsAirDrone( npc ) || IsFragDrone( npc ) )
+							npcs.removebyvalue( npc )
+						break
+				}
+			}
+		}
+		
+		foreach( entity npc in npcs )
+		{
+			if( spawnedNPCs.find( npc ) != -1 )
+				continue
+			
+			npcs.removebyvalue( npc )
+		}
+
+		if( npcs.len() <= spawnEvent.waitAmount )
+			break
+		
+		if( !IsHarvesterAlive( fd_harvester.harvester ) )
+			return
+	}
+}
+
+void function waitWaveSubGroup( WaveSpawnEvent ornull spawnEvent )
+{
+	if( !spawnEvent )
+		return
+
+	expect WaveSpawnEvent( spawnEvent )
+	
+	while( file.waveActiveSubGroups.find( spawnEvent.waveSubGroupWait ) != -1 )
+	{
+		WaitFrame()
+		
+		if( !IsHarvesterAlive( fd_harvester.harvester ) )
+			return
+	}
+}
+
+
+
+
+
+
+
+
+
+
+/* Tool Functions
+████████╗ ██████╗  ██████╗ ██╗         ███████╗██╗   ██╗███╗   ██╗ ██████╗████████╗██╗ ██████╗ ███╗   ██╗███████╗
+╚══██╔══╝██╔═══██╗██╔═══██╗██║         ██╔════╝██║   ██║████╗  ██║██╔════╝╚══██╔══╝██║██╔═══██╗████╗  ██║██╔════╝
+   ██║   ██║   ██║██║   ██║██║         █████╗  ██║   ██║██╔██╗ ██║██║        ██║   ██║██║   ██║██╔██╗ ██║███████╗
+   ██║   ██║   ██║██║   ██║██║         ██╔══╝  ██║   ██║██║╚██╗██║██║        ██║   ██║██║   ██║██║╚██╗██║╚════██║
+   ██║   ╚██████╔╝╚██████╔╝███████╗    ██║     ╚██████╔╝██║ ╚████║╚██████╗   ██║   ██║╚██████╔╝██║ ╚████║███████║
+   ╚═╝    ╚═════╝  ╚═════╝ ╚══════╝    ╚═╝      ╚═════╝ ╚═╝  ╚═══╝ ╚═════╝   ╚═╝   ╚═╝ ╚═════╝ ╚═╝  ╚═══╝╚══════╝
+*/
+
+void function Drop_Spawnpoint( vector origin, int team, float impactTime )
+{
+	if( !file.visibleDropPoints )
+		return
+	
+	vector surfaceNormal = < 0, 0, 1 >
+
+	int index = GetParticleSystemIndex( $"P_ar_titan_droppoint" )
+
+	entity effectEnemy = StartParticleEffectInWorld_ReturnEntity( index, origin, surfaceNormal )
+	SetTeam( effectEnemy, team )
+	EffectSetControlPointVector( effectEnemy, 1, < 255, 64, 16 > )
+	effectEnemy.kv.VisibilityFlags = ENTITY_VISIBLE_TO_ENEMY
+	
+	wait impactTime
+	
+	EffectStop( effectEnemy )
+}
+
+void function PingMinimap( float x, float y, float duration, float spreadRadius, float ringRadius, int colorIndex )
+{
+	if( GetCurrentPlaylistVarFloat( "riff_minimap_state", 0 ) == 0 )
+	{
+		foreach( entity player in GetPlayerArrayOfTeam( TEAM_MILITIA ) )
+		{
+			Remote_CallFunction_NonReplay( player, "ServerCallback_FD_PingMinimap", x, y, duration, spreadRadius, ringRadius, colorIndex )
+			if( GetCurrentPlaylistVarFloat( "fd_minimap_ping_sound", 0 ) == 1 )
+				EmitSoundOnEntityOnlyToPlayer( player, player, "coop_minimap_ping" )
+		}
+	}
+}
+
+void function AddMinimapForTitans( entity titan )
+{
+	if( !IsValid( titan ) )
+		return
+	
+	titan.Minimap_SetAlignUpright( true )
+	titan.Minimap_AlwaysShow( TEAM_IMC, null )
+	titan.Minimap_AlwaysShow( TEAM_MILITIA, null )
+	titan.Minimap_SetHeightTracking( true )
+	titan.Minimap_SetZOrder( MINIMAP_Z_NPC )
+	titan.Minimap_SetCustomState( eMinimapObject_npc_titan.AT_BOUNTY_BOSS )
+}
+
+void function AddMinimapForHumans( entity human )
+{
+	if( !IsValid( human ) )
+		return
+	
+	human.Minimap_SetAlignUpright( true )
+	human.Minimap_AlwaysShow( TEAM_IMC, null )
+	human.Minimap_AlwaysShow( TEAM_MILITIA, null )
+	human.Minimap_SetHeightTracking( true )
+	human.Minimap_SetZOrder( MINIMAP_Z_NPC )
+	human.Minimap_SetCustomState( eMinimapObject_npc.AI_TDM_AI )
+}
+
+void function GiveMinionFDLoadout( entity npc )
+{
+	Assert( IsValid( npc ) && IsMinion( npc ), "Entity is not a spectre or grunt: " + npc )
+	string className = npc.GetClassName()
+	
+	if( className == "npc_soldier" )
+	{
+		if( file.allowGruntGrenades ) //So they can use grenades and secondaries
+			npc.SetBehaviorSelector( "behavior_sp_soldier" )
+		
+		if ( file.defaultNPCWeapons[ className ].len() )
+		{
+			TakeAllWeapons( npc )
+			string baseweapon = file.defaultNPCWeapons[ className ].getrandom()
+			npc.GiveWeapon( baseweapon )
+			npc.kv.grenadeWeaponName = file.gruntGrenadeClass
+		}
+	}
+	
+	else if( className == "npc_spectre" )
+	{
+		if ( file.defaultNPCWeapons[ className ].len() )
+		{
+			TakeAllWeapons( npc )
+			string baseweapon = file.defaultNPCWeapons[ className ].getrandom()
+			npc.GiveWeapon( baseweapon )
+		}
+	}
+}
+
+void function SlowEnemyMovementBasedOnDifficulty( entity npc )
+{
+	//This is not exact vanilla behavior i think, but enemies definetely moves slower on Frontier Defense than player autotitans
+	Assert( IsValid( npc ) && npc.IsNPC(), "Tried to set up movespeed scale in non-NPC entity: " + npc )
+	
+	switch ( file.difficultyLevel )
+	{
+		case eFDDifficultyLevel.EASY:
+			npc.SetNPCMoveSpeedScale( 1.0 )
+			break
+		case eFDDifficultyLevel.NORMAL:
+		case eFDDifficultyLevel.HARD:
+		case eFDDifficultyLevel.MASTER:
+			npc.SetNPCMoveSpeedScale( 0.75 )
+			break
+		case eFDDifficultyLevel.INSANE:
+			npc.SetNPCMoveSpeedScale( 0.5 )
+			break
+	}
+}
+
+void function SetupGruntBehaviorFlags( entity npc )
+{
+	Assert( IsValid( npc ) && IsGrunt( npc ), "Entity is not a Grunt: " + npc )
+	
+	npc.EnableNPCFlag( NPC_ALLOW_HAND_SIGNALS )
+	switch ( file.difficultyLevel )
+	{
+		case eFDDifficultyLevel.EASY:
+		case eFDDifficultyLevel.NORMAL:
+			if( GetMapName().find( "mp_lf_" ) != null )
+				npc.DisableNPCFlag( NPC_ALLOW_INVESTIGATE | NPC_ALLOW_PATROL | NPC_ALLOW_FLEE | NPC_USE_SHOOTING_COVER )
+			else
+			{
+				npc.EnableNPCFlag( NPC_ALLOW_FLEE | NPC_USE_SHOOTING_COVER )
+				npc.DisableNPCFlag( NPC_ALLOW_INVESTIGATE | NPC_ALLOW_PATROL )
+			}
+			break
+		case eFDDifficultyLevel.HARD:
+		case eFDDifficultyLevel.MASTER:
+		case eFDDifficultyLevel.INSANE:
+			npc.DisableNPCFlag( NPC_ALLOW_INVESTIGATE | NPC_ALLOW_PATROL | NPC_ALLOW_FLEE | NPC_USE_SHOOTING_COVER )
+			break
+	}
+}
+
+void function GruntTargetsTitan( entity npc )
+{
+	Assert( IsValid( npc ) && IsGrunt( npc ), "Entity is not a Grunt: " + npc )
+	
+	entity enemy = npc.GetEnemy()
+	if( !IsValid( enemy ) )
+		return
+	
+	if( IsValid( fd_harvester.harvester ) && enemy != fd_harvester.harvester ) //Deliberate change from vanilla, Grunts uses Charge Rifles against the Harvester in there, but its disabled in here
+		OnEnemyChanged_MinionSwitchToHeavyArmorWeapon( npc )
+	
+	switch ( file.difficultyLevel )
+	{
+		case eFDDifficultyLevel.EASY:
+		case eFDDifficultyLevel.NORMAL:
+			if( enemy.IsTitan() && GetMapName().find( "mp_lf_" ) == null )
+				npc.AssaultSetFightRadius( 800 )
+			else
+				npc.AssaultSetFightRadius( 0 )
+			break
+		case eFDDifficultyLevel.HARD:
+		case eFDDifficultyLevel.MASTER:
+		case eFDDifficultyLevel.INSANE:
+			npc.AssaultSetFightRadius( 0 )
+			break
+	}
+}
+
+void function GiveShieldByDifficulty( entity titan, bool forceGive = false )
+{
+	Assert( IsValid( titan ) && titan.IsNPC() && titan.IsTitan(), "Calling GiveShieldByDifficulty in a Non-Titan NPC: " + titan )
+	
+	if( GetCurrentPlaylistVarInt( "fd_pro_titan_shields", 0 ) && titan.IsTitan() || forceGive )
+	{
+		entity soul = titan.GetTitanSoul()
+		if( IsValid( soul ) )
+			soul.SetShieldHealth( soul.GetShieldHealthMax() )
+	}
+}
+
+vector function GetSkyCeiling( vector point )
+{
+	vector skyOrigin = Vector( point.x, point.y, MAX_WORLD_COORD )
+	vector traceFromPos = point
+
+	while ( true )
+	{
+		TraceResults traceResult = TraceLine( traceFromPos, skyOrigin, [], TRACE_MASK_SHOT, TRACE_COLLISION_GROUP_NONE )
+
+		if ( traceResult.hitSky )
+		{
+			skyOrigin = traceResult.endPos
+			skyOrigin.z -= 1
+			break
+		}
+
+		traceFromPos = traceResult.endPos
+		traceFromPos.z += 1
+	}
+
+	return skyOrigin
+}
+
+bool function allEventsExecuted( int waveIndex ) 
+{
+	foreach( WaveSpawnEvent event in WaveSpawnEvents[waveIndex] )
+	{
+		if( !event.executed )
+			return false
+	}
+	return true
+}
+
+void function resetWaveEvents()
+{
+	foreach( WaveSpawnEvent event in WaveSpawnEvents[GetGlobalNetInt( "FD_currentWave" )] )
+		event.executed = false
+}
+
+void function SplitWaveSubgroups( int waveIndex ) 
+{
+	foreach( WaveSpawnEvent event in WaveSpawnEvents[waveIndex] )
+	{
+		if( event.waveSubGroupName != "" )
+		{
+			if( !( event.waveSubGroupName in file.waveSubGroups ) )
+				file.waveSubGroups[ event.waveSubGroupName ] <- []
+			
+			file.waveSubGroups[ event.waveSubGroupName ].append( event )
+		}
+	}
+}
+
+bool function ShouldSkipEventForDifficulty( WaveSpawnEvent event )
+{
+	bool allDifficulties = ( event.spawnInDifficulty & eFDSD.ALL ) ? true : false
+	bool easySpawn = ( event.spawnInDifficulty & eFDSD.EASY ) ? true : false
+	bool normalSpawn = ( event.spawnInDifficulty & eFDSD.NORMAL ) ? true : false
+	bool hardSpawn = ( event.spawnInDifficulty & eFDSD.HARD ) ? true : false
+	bool masterSpawn = ( event.spawnInDifficulty & eFDSD.MASTER ) ? true : false
+	bool insaneSpawn = ( event.spawnInDifficulty & eFDSD.INSANE ) ? true : false
+	bool invertedFilter = ( event.spawnInDifficulty & eFDSD.EXCLUSIVE ) ? true : false
+	
+	if( !allDifficulties )
+	{
+		if( file.difficultyLevel == eFDDifficultyLevel.EASY )
+			return ( invertedFilter ? !easySpawn : easySpawn )
+		if( file.difficultyLevel == eFDDifficultyLevel.NORMAL )
+			return ( invertedFilter ? !normalSpawn : normalSpawn )
+		if( file.difficultyLevel == eFDDifficultyLevel.HARD )
+			return ( invertedFilter ? !hardSpawn : hardSpawn )
+		if( file.difficultyLevel == eFDDifficultyLevel.MASTER )
+			return ( invertedFilter ? !masterSpawn : masterSpawn )
+		if( file.difficultyLevel == eFDDifficultyLevel.INSANE )
+			return ( invertedFilter ? !insaneSpawn : insaneSpawn )
+		return true
+	}
+	return false
+}
+
+bool function GetArcTitanWeaponOption()
+{
+	return file.arcTitanShouldUseArcCannon
+}
+
+bool function EliteTitansEnabled()
+{
+	return file.allowEliteTitans
+}
+
+bool function TitanfallBlockEnabled()
+{
+	return file.allowTitanfallBlock
+}
+
+void function SetupEliteTitansHealthCaps()
+{
+	file.eliteTitanHPBonus_Ion = GetCurrentPlaylistVarInt( "fd_elitetitan_hpbonus_ion", 7500 )
+	if( file.eliteTitanHPBonus_Ion < 2500 )
+		file.eliteTitanHPBonus_Ion = 2500
+	if( file.eliteTitanHPBonus_Ion > 15000 )
+		file.eliteTitanHPBonus_Ion = 15000
+	
+	file.eliteTitanHPBonus_Scorch = GetCurrentPlaylistVarInt( "fd_elitetitan_hpbonus_scorch", 7500 )
+	if( file.eliteTitanHPBonus_Scorch < 2500 )
+		file.eliteTitanHPBonus_Scorch = 2500
+	if( file.eliteTitanHPBonus_Scorch > 15000 )
+		file.eliteTitanHPBonus_Scorch = 15000
+	
+	file.eliteTitanHPBonus_Northstar = GetCurrentPlaylistVarInt( "fd_elitetitan_hpbonus_northstar", 7500 )
+	if( file.eliteTitanHPBonus_Northstar < 2500 )
+		file.eliteTitanHPBonus_Northstar = 2500
+	if( file.eliteTitanHPBonus_Northstar > 15000 )
+		file.eliteTitanHPBonus_Northstar = 15000
+	
+	file.eliteTitanHPBonus_Ronin = GetCurrentPlaylistVarInt( "fd_elitetitan_hpbonus_ronin", 7500 )
+	if( file.eliteTitanHPBonus_Ronin < 2500 )
+		file.eliteTitanHPBonus_Ronin = 2500
+	if( file.eliteTitanHPBonus_Ronin > 15000 )
+		file.eliteTitanHPBonus_Ronin = 15000
+	
+	file.eliteTitanHPBonus_Tone = GetCurrentPlaylistVarInt( "fd_elitetitan_hpbonus_tone", 7500 )
+	if( file.eliteTitanHPBonus_Tone < 2500 )
+		file.eliteTitanHPBonus_Tone = 2500
+	if( file.eliteTitanHPBonus_Tone > 15000 )
+		file.eliteTitanHPBonus_Tone = 15000
+	
+	file.eliteTitanHPBonus_Legion = GetCurrentPlaylistVarInt( "fd_elitetitan_hpbonus_legion", 15000 )
+	if( file.eliteTitanHPBonus_Legion < 2500 )
+		file.eliteTitanHPBonus_Legion = 2500
+	if( file.eliteTitanHPBonus_Legion > 15000 )
+		file.eliteTitanHPBonus_Legion = 15000
+	
+	file.eliteTitanHPBonus_Monarch = GetCurrentPlaylistVarInt( "fd_elitetitan_hpbonus_monarch", 7500 )
+	if( file.eliteTitanHPBonus_Monarch < 2500 )
+		file.eliteTitanHPBonus_Monarch = 2500
+	if( file.eliteTitanHPBonus_Monarch > 15000 )
+		file.eliteTitanHPBonus_Monarch = 15000
+}

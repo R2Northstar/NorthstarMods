@@ -71,56 +71,24 @@
 			"DefaultValue": "1"
 		},
 		{
-			"Name": "ns_fd_allow_elite_titans",
-			"DefaultValue": "0"
-		},
-		{
-			"Name": "ns_fd_allow_true_shield_captains",
-			"DefaultValue": "0"
-		},
-		{
-			"Name": "ns_fd_allow_titanfall_block",
-			"DefaultValue": "0"
-		},
-		{
-			"Name": "ns_fd_arc_titans_uses_arc_cannon",
-			"DefaultValue": "0"
-		},
-		{
-			"Name": "ns_fd_show_drop_points",
-			"DefaultValue": "0"
-		},
-		{
-			"Name": "ns_fd_easymode_smartpistol",
-			"DefaultValue": "0"
-		},
-		{
-			"Name": "ns_fd_grunt_at_weapon",
-			"DefaultValue": "mp_weapon_defender"
+			"Name": "ns_fd_infantry_at_weapons",
+			"DefaultValue": ""
 		},
 		{
 			"Name": "ns_fd_grunt_primary_weapon",
-			"DefaultValue": "mp_weapon_rspn101,mp_weapon_car,mp_weapon_alternator_smg,mp_weapon_hemlok_smg,mp_weapon_r97"
+			"DefaultValue": ""
 		},
 		{
 			"Name": "ns_fd_grunt_grenade",
-			"DefaultValue": "mp_weapon_frag_grenade"
+			"DefaultValue": ""
 		},
 		{
 			"Name": "ns_fd_spectre_primary_weapon",
-			"DefaultValue": "mp_weapon_hemlok,mp_weapon_vinson,mp_weapon_g2,mp_weapon_mastiff,mp_weapon_shotgun"
+			"DefaultValue": ""
 		},
 		{
 			"Name": "ns_fd_disable_respawn_dropship",
 			"DefaultValue": "0"
-		},
-		{
-			"Name": "ns_fd_differentiate_ticks",
-			"DefaultValue": "0"
-		},
-		{
-			"Name": "ns_fd_rodeo_highlight",
-			"DefaultValue": "1"
 		},
 		{
 			"Name": "ns_reaper_warpfall_kill",
@@ -235,10 +203,6 @@
 			"UICallback": {
 				"Before": "Progression_Init"
 			}
-		},
-		{
-			"Path": "gamemodes/_gamemode_fd_events.nut",
-			"RunOn": "( SERVER ) && MP"
 		},
 		{
 			"Path": "gamemodes/_gamemode_fd_nav.nut",

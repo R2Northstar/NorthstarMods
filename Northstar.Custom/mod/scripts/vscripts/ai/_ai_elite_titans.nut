@@ -14,7 +14,7 @@ global function SetTitanWeaponSkin
 ╚══════╝╚══════╝╚═╝   ╚═╝   ╚══════╝       ╚═╝   ╚═╝   ╚═╝   ╚═╝  ╚═╝╚═╝  ╚═══╝╚══════╝    ╚══════╝ ╚═════╝  ╚═════╝ ╚═╝ ╚═════╝
 
 This file handles most of the bulk required to make an NPC Titan become an Elite Titan, however some functions needs to be called when spawning in the
-local script file (i.e SetSpawnOption_AISettings or EliteTitanExecutionCheck in the damage callback to allow them to execute).
+local script file (i.e SetSpawnOption_AISettings).
 */
 
 
@@ -50,12 +50,12 @@ void function EliteTitanExecutionCheck( entity ent, var damageInfo )
 	entity soul = ent.GetTitanSoul()
 	if( attacker.IsNPC() && attacker.IsTitan() )
 	{
-		if( IsValid( soul ) && attacker.ai.bossTitanType == TITAN_MERC && (damageType & DF_MELEE) )
+		if( IsValid( soul ) && attacker.ai.bossTitanType == TITAN_MERC && ( damageType & DF_MELEE ) )
 		{
 			if( CodeCallback_IsValidMeleeExecutionTarget( attacker, ent ) && !GetDoomedState( attacker ) ) //Doomed Elites cannot execute
 			{
 				//If the player is already doomed, then just execute, if the next melee damage brings it to Doom state, wait to execute
-				if( GetDoomedState( ent ) && (!SoulHasPassive( soul, ePassives.PAS_RONIN_AUTOSHIFT ) || !SoulHasPassive( soul, ePassives.PAS_AUTO_EJECT ) || !ent.IsPhaseShifted() ))
+				if( GetDoomedState( ent ) && ( !SoulHasPassive( soul, ePassives.PAS_RONIN_AUTOSHIFT ) || !SoulHasPassive( soul, ePassives.PAS_AUTO_EJECT ) || !ent.IsPhaseShifted() ) )
 				{
 					thread PlayerTriesSyncedMelee( attacker, ent )
 					ent.SetNoTarget( true ) //Prevents other nearby AI Titans from Moshing the victim
@@ -83,7 +83,7 @@ void function EliteExecutionDelayed( entity attacker, entity ent )
 	
 	if( CodeCallback_IsValidMeleeExecutionTarget( attacker, ent ) && ent.IsTitan() && IsValid( soul ) && !GetDoomedState( attacker ) )
 	{
-		if( GetDoomedState( ent ) && (!SoulHasPassive( soul, ePassives.PAS_RONIN_AUTOSHIFT ) || !SoulHasPassive( soul, ePassives.PAS_AUTO_EJECT ) || !ent.IsPhaseShifted() ))
+		if( GetDoomedState( ent ) && ( !SoulHasPassive( soul, ePassives.PAS_RONIN_AUTOSHIFT ) || !SoulHasPassive( soul, ePassives.PAS_AUTO_EJECT ) || !ent.IsPhaseShifted() ) )
 		{
 			thread PlayerTriesSyncedMelee( attacker, ent )
 			ent.SetNoTarget( true ) //Again, no Moshing against the victim

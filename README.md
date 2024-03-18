@@ -50,7 +50,7 @@ Uses its own playlist mode now, you need to setup gamemode and playlist variable
 - Only 3 Waves with huge amounts of non-stop spawning enemies, infantry mostly
 - Loadouts can be changed at any time during a wave in the Loadout Crates
 - Droz and Davis helps players in person by guarding the Harvester
-- Players recieve the double amount of money when completing a wave
+- Players recieve the double amount of money bonuses when completing a wave
 - Players can have 3 Turrets instead of 2
 - Players forcibly have gravity star as grenade
 - Players have limited Anti-Titan ammo, restock possible at Loadout Crate
@@ -61,28 +61,35 @@ Uses its own playlist mode now, you need to setup gamemode and playlist variable
 ## New console variables
 
 Use these variables in your `autoexec_ns_server` cfg to control them:
-- `ns_fd_allow_elite_titans` Default is 0, set to 1 to allow Elite Titans to spawn in
-- `ns_fd_allow_true_shield_captains` Default is 0, set to 1 to allow Shield Captains from campaign to spawn in Master or Insane difficulty
-- `ns_fd_allow_titanfall_block` Default is 0, setting to 1 will allow some maps to make usage of the Titanfall Block event
-- `ns_fd_show_drop_points` Default is 0, setting to 1 will show Titanfall markers for spawning enemies akin to when you call your own Titan
 - `ns_fd_grunt_primary_weapon` Array of weapons that Grunts are allowed to use, they will randomly chose one of those to spawn with
 - `ns_fd_spectre_primary_weapon` Array of weapons that Spectres are allowed to use, they will randomly chose one of those to spawn with
-- `ns_fd_grunt_at_weapon` Default is "mp_weapon_defender", set to another anti-titan weapon to make Grunts use them on Master or Insane difficulty
-- `ns_fd_grunt_grenade` Default is "mp_weapon_frag_grenade", set to another grenade type to make Grunts use them
-- `ns_fd_disable_respawn_dropship` Default is 0, setting to 1 makes players always respawn directly on ground nearby the Harvester or Shop
-- `ns_fd_differentiate_ticks` Default is 0, setting to 1 will make Ticks from Drop Pod spawns to use the campaign model to tell players they counts towards wave completion
-- `ns_fd_rodeo_highlight` Default is 1, setting to 0 disables the new behavior of pilots highlight becoming green whenever they rodeo any Titan
+- `ns_fd_infantry_at_weapons` Array of weapons Anti-Titan weapons that Grunts and Spectres will attempt to use on Master or Insane difficulty, they will randomly chose one of those to spawn with
+- `ns_fd_grunt_grenade` Override the grenade type that Grunts can use
+- `ns_fd_disable_respawn_dropship` Default is 0, setting to 1 makes players respawn via Drop Pod or directly on ground nearby the Harvester or Shop
 - `ns_fd_min_numplayers_to_start` Default is 1, this is the required amount of players in a match in order for the game to start the waves
-- `ns_fd_arc_titans_uses_arc_cannon` Default is 0, setting it to 1 makes Arc Titans uses the Arc Cannon instead of Leadwall
-- `ns_fd_easymode_smartpistol` Default is 0, setting it to 1 will make players have the Smart Pistol as secondary weapon in Easy difficulty mode
 - `ns_reaper_warpfall_kill` Default is 1, set to 0 if you don't want Reapers to kill Titans on their Warpfall
 - `ns_ronin_fair_phase` Default is 0, setting to 1 will make Ronin not kill himself if he materializes inside an enemy Titan from Phase Shift, instead he will only apply 5000 damage to the target titan
+
+## New playlist variables
+
+Use these variables in your `setplaylistvaroverrides` argument to control them:
+- `fd_allow_elite_titans` Default is 0, set to 1 to allow Elite Titans to spawn in
+- `fd_allow_titanfall_block` Default is 0, setting to 1 will allow some maps to make usage of the Titanfall Block event
+- `fd_arc_titans_uses_arc_cannon` Default is 0, setting it to 1 makes Arc Titans uses the Arc Cannon instead of Leadwall
+- `fd_campaign_shield_captains` Default is 0, set to 1 to allow Shield Captains from campaign to spawn in Master or Insane difficulty
+- `fd_campaign_ticks` Default is 0, setting to 1 will make Ticks from Drop Pod spawns to use the campaign model to tell players they counts towards wave completion
+- `fd_grunts_uses_grenades` Default is 0, setting to 1 will allow Grunts to toss grenades
+- `fd_visible_drop_points` Default is 0, setting to 1 will show Titanfall markers for spawning enemies akin to when you call your own Titan
+- `fd_smart_pistol_easy_mode` Default is 0, setting it to 1 will make players have the Smart Pistol as secondary weapon in Easy difficulty mode
+- `fd_rodeo_highlight` Default is 0, setting to 1 enables the new behavior of pilots highlight becoming green whenever they rodeo any Titan
+- `fd_minimap_ping_sound` Default is 0, setting to 1 will play a subtle ping sound whenever minimap pings an enemy spawning
+- `fd_dropship_battery_drop` Default is 0, setting to 1 makes IMC Dropships drops an Amped Battery if they are killed
 
 ## Trivia hints for server hosters
 
 These are playlist overrides you can include in your server settings to control better how the match will behave:
 - You can actually force Grunts to use Anti-Titan weaponry outside Master and Insane difficulties, use `fd_grunt_at_weapon_users` with the amount of grunts you want to use AT weapons, can go from 1 to 4, this is based in the squads of Drop Pods, so 4 would be all Grunts using them
 - You can also do the same to shield captains by using `fd_grunt_shield_captains`, same rules applies from above setting
-- With this branch of Frontier Defense, it's possible to change the time between waves with `fd_wave_buy_time`, default is 60 seconds
+- It's possible to change the time of wave breaks duration with `fd_wave_buy_time`, default is 60 seconds
 - It's possible to enable the campaign behavior of picking up batteries by setting `rodeo_battery_disembark_to_pickup` to 0, so running over batteries as Titan picks them up
-- It's also possible to enable the Titanfall 1 behavior of hacking spectres by setting `enable_spectre_hacking` to 1
+- It's possible to enable the Titanfall 1 behavior of hacking spectres by setting `enable_spectre_hacking` to 1

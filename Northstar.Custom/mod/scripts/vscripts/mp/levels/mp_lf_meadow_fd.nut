@@ -12,8 +12,6 @@ void function initFrontierDefenseData()
 	FD_CustomHarvesterLocation = < 823, -1729, 10 >
 	FD_DefenseLocation = < 471, -932, 132 >
 	
-	int index = 1
-	
 	array<vector> infantryspawns = []
 	infantryspawns.append( < 201, 2066, 6 > )
 	infantryspawns.append( < 835, 2300, 31 > )
@@ -33,132 +31,131 @@ void function initFrontierDefenseData()
 	
 	int spawnamount
 	
-    array<WaveEvent> wave1
+	/*
+	 __      __                 _ 
+	 \ \    / /__ _ __ __ ___  / |
+	  \ \/\/ // _` |\ V // -_) | |
+	   \_/\_/ \__,_| \_/ \___| |_|
+	
+	*/
+    array<WaveSpawnEvent> wave1
 	for( spawnamount = 0; spawnamount < 16; spawnamount++ )
 	{
-		wave1.append(CreateDroppodGruntEvent( infantryspawns.getrandom() ,"",index++))
-		wave1.append(CreateWaitForTimeEvent( RandomFloatRange( 0.1, 0.6 ),index++))
-		wave1.append(CreateWaitUntilAliveEvent( 20, index++ ) )
-	}
-	for( spawnamount = 0; spawnamount < 16; spawnamount++ )
-	{
-		wave1.append(CreateDroppodGruntEvent( infantryspawns.getrandom() ,"",index++))
-		wave1.append(CreateWaitForTimeEvent( RandomFloatRange( 0.1, 0.6 ),index++))
-		wave1.append(CreateWaitUntilAliveEvent( 20, index++ ) )
-		wave1.append(CreateDroppodStalkerEvent( infantryspawns.getrandom() ,"",index++))
-		wave1.append(CreateWaitForTimeEvent( RandomFloatRange( 0.1, 0.6 ),index++))
-		wave1.append(CreateWaitUntilAliveEvent( 20, index++ ) )
+		WaveSpawn_InfantrySpawn( wave1, "PodGrunt", infantryspawns.getrandom(), 0.0, "", RandomFloatRange( 0.1, 0.6 ) )
+		WaveSpawn_WaitEnemyAliveAmount( wave1, 28 )
 	}
 	for( spawnamount = 0; spawnamount < 16; spawnamount++ )
 	{
-		wave1.append(CreateDroppodStalkerEvent( infantryspawns.getrandom() ,"",index++))
-		wave1.append(CreateWaitForTimeEvent( RandomFloatRange( 0.1, 0.6 ),index++))
-		wave1.append(CreateWaitUntilAliveEvent( 24, index++ ) )
+		WaveSpawn_InfantrySpawn( wave1, "PodGrunt", infantryspawns.getrandom(), 0.0, "", RandomFloatRange( 0.1, 0.6 ) )
+		WaveSpawn_WaitEnemyAliveAmount( wave1, 28 )
+		WaveSpawn_InfantrySpawn( wave1, "Stalker", infantryspawns.getrandom(), 0.0, "", RandomFloatRange( 0.1, 0.6 ) )
+		WaveSpawn_WaitEnemyAliveAmount( wave1, 28 )
 	}
-	wave1.append(CreateDroppodStalkerEvent( infantryspawns.getrandom() ,"",0))
-	waveEvents.append(wave1)
-	index = 1
-	array<WaveEvent> wave2
+	for( spawnamount = 0; spawnamount < 16; spawnamount++ )
+	{
+		WaveSpawn_InfantrySpawn( wave1, "Stalker", infantryspawns.getrandom(), 0.0, "", RandomFloatRange( 0.1, 0.6 ) )
+		WaveSpawn_WaitEnemyAliveAmount( wave1, 28 )
+	}
+	WaveSpawn_InfantrySpawn( wave1, "Stalker", infantryspawns.getrandom(), 0.0, "", RandomFloatRange( 0.1, 0.6 ) )
+	WaveSpawnEvents.append( wave1 )
+	
+	/*
+	 __      __                 ___ 
+	 \ \    / /__ _ __ __ ___  |_  )
+	  \ \/\/ // _` |\ V // -_)  / / 
+	   \_/\_/ \__,_| \_/ \___| /___|
+	
+	*/
+	array<WaveSpawnEvent> wave2
 	for( spawnamount = 0; spawnamount < 8; spawnamount++ )
 	{
-		wave2.append(CreateDroppodGruntEvent( infantryspawns.getrandom() ,"",index++))
-		wave2.append(CreateWaitForTimeEvent( RandomFloatRange( 0.1, 0.6 ),index++))
-		wave2.append(CreateWaitUntilAliveEvent( 20, index++ ) )
-		wave2.append(CreateDroppodStalkerEvent( infantryspawns.getrandom() ,"",index++))
-		wave2.append(CreateWaitForTimeEvent( RandomFloatRange( 0.1, 0.6 ),index++))
-		wave2.append(CreateWaitUntilAliveEvent( 20, index++ ) )
+		WaveSpawn_InfantrySpawn( wave2, "PodGrunt", infantryspawns.getrandom(), 0.0, "", RandomFloatRange( 0.1, 0.6 ) )
+		WaveSpawn_WaitEnemyAliveAmount( wave1, 28 )
+		WaveSpawn_InfantrySpawn( wave2, "Stalker", infantryspawns.getrandom(), 0.0, "", RandomFloatRange( 0.1, 0.6 ) )
+		WaveSpawn_WaitEnemyAliveAmount( wave2, 28 )
 	}
-	wave2.append(CreateToneTitanEvent( titanspawns.getrandom() , < 0, -90, 0> ,"titanLane",index++))
-	wave2.append(CreateWaitForTimeEvent( RandomFloatRange( 0.1, 0.6 ),index++))
-	wave2.append(CreateWaitUntilAliveEvent( 20, index++ ) )
+	WaveSpawn_TitanSpawn( wave2, "Tone", titanspawns.getrandom(), -90, "titanLane", RandomFloatRange( 0.1, 0.6 ) )
 	for( spawnamount = 0; spawnamount < 8; spawnamount++ )
 	{
-		wave2.append(CreateDroppodStalkerEvent( infantryspawns.getrandom() ,"",index++))
-		wave2.append(CreateWaitForTimeEvent( RandomFloatRange( 0.1, 0.6 ),index++))
-		wave2.append(CreateWaitUntilAliveEvent( 20, index++ ) )
-		wave2.append(CreateDroppodSpectreEvent( infantryspawns.getrandom() ,"",index++))
-		wave2.append(CreateWaitForTimeEvent( RandomFloatRange( 0.1, 0.6 ),index++))
-		wave2.append(CreateWaitUntilAliveEvent( 20, index++ ) )
+		WaveSpawn_InfantrySpawn( wave2, "Stalker", infantryspawns.getrandom(), 0.0, "", RandomFloatRange( 0.1, 0.6 ) )
+		WaveSpawn_WaitEnemyAliveAmount( wave2, 28 )
+		WaveSpawn_InfantrySpawn( wave2, "Spectre", infantryspawns.getrandom(), 0.0, "", RandomFloatRange( 0.1, 0.6 ) )
+		WaveSpawn_WaitEnemyAliveAmount( wave2, 28 )
 	}
-	wave2.append(CreateIonTitanEvent( titanspawns.getrandom() , < 0, -90, 0> ,"titanLane",index++))
-	wave2.append(CreateWaitForTimeEvent( RandomFloatRange( 0.1, 0.6 ),index++))
-	wave2.append(CreateWaitUntilAliveEvent( 20, index++ ) )
+	WaveSpawn_TitanSpawn( wave2, "Ion", titanspawns.getrandom(), -90, "titanLane", RandomFloatRange( 0.1, 0.6 ) )
 	for( spawnamount = 0; spawnamount < 8; spawnamount++ )
 	{
-		wave2.append(CreateDroppodGruntEvent( infantryspawns.getrandom() ,"",index++))
-		wave2.append(CreateWaitForTimeEvent( RandomFloatRange( 0.1, 0.6 ),index++))
-		wave2.append(CreateWaitUntilAliveEvent( 20, index++ ) )
-		wave2.append(CreateDroppodSpectreEvent( infantryspawns.getrandom() ,"",index++))
-		wave2.append(CreateWaitForTimeEvent( RandomFloatRange( 0.1, 0.6 ),index++))
-		wave2.append(CreateWaitUntilAliveEvent( 20, index++ ) )
+		WaveSpawn_InfantrySpawn( wave2, "PodGrunt", infantryspawns.getrandom(), 0.0, "", RandomFloatRange( 0.1, 0.6 ) )
+		WaveSpawn_WaitEnemyAliveAmount( wave2, 28 )
+		WaveSpawn_InfantrySpawn( wave2, "Spectre", infantryspawns.getrandom(), 0.0, "", RandomFloatRange( 0.1, 0.6 ) )
+		WaveSpawn_WaitEnemyAliveAmount( wave2, 28 )
 	}
-	wave2.append(CreateScorchTitanEvent( titanspawns.getrandom() , < 0, -90, 0> ,"titanLane",index++))
-	wave2.append(CreateWaitForTimeEvent( RandomFloatRange( 0.1, 0.6 ),index++))
+	WaveSpawn_TitanSpawn( wave2, "Scorch", titanspawns.getrandom(), -90, "titanLane", RandomFloatRange( 0.1, 0.6 ) )
 	for( spawnamount = 0; spawnamount < 8; spawnamount++ )
 	{
-		wave2.append(CreateDroppodGruntEvent( infantryspawns.getrandom() ,"",index++))
-		wave2.append(CreateWaitForTimeEvent( RandomFloatRange( 0.1, 0.6 ),index++))
-		wave2.append(CreateWaitUntilAliveEvent( 20, index++ ) )
-		wave2.append(CreateDroppodSpectreEvent( infantryspawns.getrandom() ,"",index++))
-		wave2.append(CreateWaitForTimeEvent( RandomFloatRange( 0.1, 0.6 ),index++))
-		wave2.append(CreateWaitUntilAliveEvent( 20, index++ ) )
-		wave2.append(CreateDroppodStalkerEvent( infantryspawns.getrandom() ,"",index++))
-		wave2.append(CreateWaitForTimeEvent( RandomFloatRange( 0.1, 0.6 ),index++))
-		wave2.append(CreateWaitUntilAliveEvent( 20, index++ ) )
+		WaveSpawn_InfantrySpawn( wave2, "PodGrunt", infantryspawns.getrandom(), 0.0, "", RandomFloatRange( 0.1, 0.6 ) )
+		WaveSpawn_WaitEnemyAliveAmount( wave2, 28 )
+		WaveSpawn_InfantrySpawn( wave2, "Spectre", infantryspawns.getrandom(), 0.0, "", RandomFloatRange( 0.1, 0.6 ) )
+		WaveSpawn_WaitEnemyAliveAmount( wave2, 28 )
+		WaveSpawn_InfantrySpawn( wave2, "Stalker", infantryspawns.getrandom(), 0.0, "", RandomFloatRange( 0.1, 0.6 ) )
+		WaveSpawn_WaitEnemyAliveAmount( wave2, 28 )
 	}
-	wave2.append(CreateDroppodSpectreEvent( infantryspawns.getrandom() ,"",0))
-	waveEvents.append(wave2)
-	index = 1
-	array<WaveEvent> wave3
+	WaveSpawn_InfantrySpawn( wave2, "Spectre", infantryspawns.getrandom(), 0.0, "", RandomFloatRange( 0.1, 0.6 ) )
+	
+	WaveSpawnEvents.append( wave2 )
+	
+	/*
+	 __      __                 ____
+	 \ \    / /__ _ __ __ ___  |__ /
+	  \ \/\/ // _` |\ V // -_)  |_ \
+	   \_/\_/ \__,_| \_/ \___| |___/
+	
+	*/
+	array<WaveSpawnEvent> wave3
 	for( spawnamount = 0; spawnamount < 8; spawnamount++ )
 	{
-		wave3.append(CreateDroppodGruntEvent( infantryspawns.getrandom() ,"",index++))
-		wave3.append(CreateWaitForTimeEvent( RandomFloatRange( 0.1, 0.6 ),index++))
-		wave3.append(CreateWaitUntilAliveEvent( 20, index++ ) )
-		wave3.append(CreateDroppodStalkerEvent( infantryspawns.getrandom() ,"",index++))
-		wave3.append(CreateWaitForTimeEvent( RandomFloatRange( 0.1, 0.6 ),index++))
-		wave3.append(CreateWaitUntilAliveEvent( 20, index++ ) )
+		WaveSpawn_InfantrySpawn( wave3, "PodGrunt", infantryspawns.getrandom(), 0.0, "", RandomFloatRange( 0.1, 0.6 ) )
+		WaveSpawn_WaitEnemyAliveAmount( wave3, 28 )
+		WaveSpawn_InfantrySpawn( wave3, "Stalker", infantryspawns.getrandom(), 0.0, "", RandomFloatRange( 0.1, 0.6 ) )
+		WaveSpawn_WaitEnemyAliveAmount( wave3, 28 )
 	}
-	wave3.append(CreateArcTitanEvent( titanspawns.getrandom() , < 0, -90, 0> ,"titanLane",index++))
-	wave3.append(CreateWaitForTimeEvent( RandomFloatRange( 0.1, 0.6 ),index++))
-	wave3.append(CreateWaitUntilAliveEvent( 20, index++ ) )
+	WaveSpawn_TitanSpawn( wave3, "ArcTitan", titanspawns.getrandom(), -90, "titanLane", RandomFloatRange( 0.1, 0.6 ) )
+	WaveSpawn_WaitEnemyAliveAmount( wave3, 28 )
 	for( spawnamount = 0; spawnamount < 8; spawnamount++ )
 	{
-		wave3.append(CreateDroppodStalkerEvent( infantryspawns.getrandom() ,"",index++))
-		wave3.append(CreateWaitForTimeEvent( RandomFloatRange( 0.1, 0.6 ),index++))
-		wave3.append(CreateWaitUntilAliveEvent( 20, index++ ) )
-		wave3.append(CreateDroppodSpectreEvent( infantryspawns.getrandom() ,"",index++))
-		wave3.append(CreateWaitForTimeEvent( RandomFloatRange( 0.1, 0.6 ),index++))
-		wave3.append(CreateWaitUntilAliveEvent( 20, index++ ) )
+		WaveSpawn_InfantrySpawn( wave3, "Stalker", infantryspawns.getrandom(), 0.0, "", RandomFloatRange( 0.1, 0.6 ) )
+		WaveSpawn_WaitEnemyAliveAmount( wave3, 28 )
+		WaveSpawn_InfantrySpawn( wave3, "Spectre", infantryspawns.getrandom(), 0.0, "", RandomFloatRange( 0.1, 0.6 ) )
+		WaveSpawn_WaitEnemyAliveAmount( wave3, 28 )
 	}
-	wave3.append(CreateNukeTitanEvent( titanspawns.getrandom() , < 0, -90, 0> ,"titanLane",index++))
-	wave3.append(CreateWaitForTimeEvent( RandomFloatRange( 0.1, 0.6 ),index++))
-	wave3.append(CreateWaitUntilAliveEvent( 20, index++ ) )
+	WaveSpawn_TitanSpawn( wave3, "Nuke", titanspawns.getrandom(), -90, "titanLane", RandomFloatRange( 0.1, 0.6 ) )
+	WaveSpawn_TitanSpawn( wave3, "Tone", titanspawns.getrandom(), -90, "titanLane", RandomFloatRange( 0.1, 0.6 ) )
+	WaveSpawn_WaitEnemyAliveAmount( wave3, 28 )
 	for( spawnamount = 0; spawnamount < 8; spawnamount++ )
 	{
-		wave3.append(CreateDroppodGruntEvent( infantryspawns.getrandom() ,"",index++))
-		wave3.append(CreateWaitForTimeEvent( RandomFloatRange( 0.1, 0.6 ),index++))
-		wave3.append(CreateWaitUntilAliveEvent( 20, index++ ) )
-		wave3.append(CreateDroppodSpectreEvent( infantryspawns.getrandom() ,"",index++))
-		wave3.append(CreateWaitForTimeEvent( RandomFloatRange( 0.1, 0.6 ),index++))
-		wave3.append(CreateWaitUntilAliveEvent( 20, index++ ) )
+		WaveSpawn_InfantrySpawn( wave3, "PodGrunt", infantryspawns.getrandom(), 0.0, "", RandomFloatRange( 0.1, 0.6 ) )
+		WaveSpawn_WaitEnemyAliveAmount( wave3, 28 )
+		WaveSpawn_InfantrySpawn( wave3, "Spectre", infantryspawns.getrandom(), 0.0, "", RandomFloatRange( 0.1, 0.6 ) )
+		WaveSpawn_WaitEnemyAliveAmount( wave3, 28 )
 	}
-	wave3.append(CreateMonarchTitanEvent( titanspawns.getrandom() , < 0, -90, 0> ,"titanLane",index++,1,"",FD_TitanType.TITAN_ELITE))
-	wave3.append(CreateWaitForTimeEvent( RandomFloatRange( 0.1, 0.6 ),index++))
+	WaveSpawn_TitanSpawn( wave3, "Monarch", titanspawns.getrandom(), -90, "titanLane", RandomFloatRange( 0.1, 0.6 ) )
+	WaveSpawn_TitanSpawn( wave3, "Nuke", titanspawns.getrandom(), -90, "titanLane", RandomFloatRange( 0.1, 0.6 ) )
+	WaveSpawn_WaitEnemyAliveAmount( wave3, 28 )
 	for( spawnamount = 0; spawnamount < 8; spawnamount++ )
 	{
-		wave3.append(CreateDroppodStalkerEvent( infantryspawns.getrandom() ,"",index++))
-		wave3.append(CreateWaitForTimeEvent( RandomFloatRange( 0.1, 0.6 ),index++))
-		wave3.append(CreateWaitUntilAliveEvent( 20, index++ ) )
-		wave3.append(CreateDroppodSpectreEvent( infantryspawns.getrandom() ,"",index++))
-		wave3.append(CreateWaitForTimeEvent( RandomFloatRange( 0.1, 0.6 ),index++))
-		wave3.append(CreateWaitUntilAliveEvent( 20, index++ ) )
-		wave3.append(CreateDroppodTickEvent( infantryspawns.getrandom() ,4,"",index++))
-		wave3.append(CreateWaitForTimeEvent( RandomFloatRange( 0.1, 0.6 ),index++))
-		wave3.append(CreateWaitUntilAliveEvent( 20, index++ ) )
+		WaveSpawn_InfantrySpawn( wave3, "Stalker", infantryspawns.getrandom(), 0.0, "", RandomFloatRange( 0.1, 0.6 ) )
+		WaveSpawn_WaitEnemyAliveAmount( wave3, 28 )
+		WaveSpawn_InfantrySpawn( wave3, "Spectre", infantryspawns.getrandom(), 0.0, "", RandomFloatRange( 0.1, 0.6 ) )
+		WaveSpawn_WaitEnemyAliveAmount( wave3, 28 )
+		WaveSpawn_InfantrySpawn( wave3, "Tick", infantryspawns.getrandom(), 0.0, "", RandomFloatRange( 0.1, 0.6 ) )
+		WaveSpawn_WaitEnemyAliveAmount( wave3, 28 )
 	}
-	wave3.append(CreateScorchTitanEvent( titanspawns.getrandom() , < 0, -90, 0> ,"titanLane",0,1,"",FD_TitanType.TITAN_ELITE))
-	waveEvents.append(wave3)
+	WaveSpawn_TitanSpawn( wave3, "Nuke", titanspawns.getrandom(), -90, "titanLane", RandomFloatRange( 0.1, 0.6 ) )
+	WaveSpawn_TitanSpawn( wave3, "ArcTitan", titanspawns.getrandom(), -90, "titanLane", RandomFloatRange( 0.1, 0.6 ) )
+	WaveSpawn_TitanSpawn( wave3, "Monarch", titanspawns.getrandom(), -90, "titanLane", RandomFloatRange( 0.1, 0.6 ) )
+	WaveSpawn_TitanSpawn( wave3, "Scorch", titanspawns.getrandom(), -90, "titanLane", RandomFloatRange( 0.1, 0.6 ) )
+	
+	WaveSpawnEvents.append( wave3 )
 }
 
 void function SpawnDrozAndDavisForFD()

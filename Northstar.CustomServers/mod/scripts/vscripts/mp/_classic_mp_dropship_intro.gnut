@@ -275,5 +275,6 @@ void function PlayerJumpsFromDropship( entity player )
 	while ( !player.IsOnGround() && !player.IsWallRunning() && !player.IsWallHanging() ) // todo this needs tweaking
 		WaitFrame()
 	
-	TryGameModeAnnouncement( player )
+	if ( GetRoundsPlayed() == 0 )
+		TryGameModeAnnouncement( player )
 }

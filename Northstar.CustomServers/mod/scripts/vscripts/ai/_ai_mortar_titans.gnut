@@ -16,7 +16,7 @@ global function MortarTitanStopAttack
 //global function MortarAIWaitToEngage
 
 const float MORTAR_TITAN_ABORT_ATTACK_HEALTH_FRAC			= 0.90	// will stop mortar attack if he's health gets below 90% of his current health.
-const float MORTAR_TITAN_POSITION_SEARCH_RANGE				= 4096 	// How far away from his spawn point a mortar titan will look for positions to mortar from.
+const float MORTAR_TITAN_POSITION_SEARCH_RANGE				= 8192	// How far away from his spawn point a mortar titan will look for positions to mortar from.
 const float MORTAR_TITAN_ENGAGE_DELAY						= 3.0	// How long before a mortar titan start to attack the generator if he's taken damage getting to his mortar position.
 const float MORTAR_TITAN_REENGAGE_DELAY						= 7.0	// How long before a mortar titan goes back to attacking the generator after breaking of an attack.
 

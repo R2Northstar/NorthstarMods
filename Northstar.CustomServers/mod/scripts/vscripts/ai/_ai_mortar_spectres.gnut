@@ -3,7 +3,7 @@ untyped
 global function MortarSpectreSquadThink
 global function MortarSpectreGetSquadFiringPositions
 
-const float MORTAR_SPECTRE_POSITION_SEARCH_RANGE			= 4096  // How far away from their spawn point a mortar spectre squad will look for positions to siege from
+const float MORTAR_SPECTRE_POSITION_SEARCH_RANGE			= 8192  // How far away from their spawn point a mortar spectre squad will look for positions to siege from
 const float MORTAR_SPECTRE_TRACKER_SHIELD_MAX				= 1000  // just using 1000 for now, doesnt really matter as long as the shieldFrac is accurate enough
 const float MORTAR_SPECTRE_SIGHT_DISTANCE					= 1000  // Maximum distance the Spectres can detect players rather attack the Harvester
 
