@@ -62,7 +62,7 @@ global struct WaveSpawnEvent{
 	string route = ""
 	int spawnType
 	int spawnAmount = 1
-	bool shouldLoop = false
+	bool shouldLoop = true
 	bool titanBlocked = false
 	int titanType = eFDTT.TITAN_COMMON
 	float spawnradius = 0.0

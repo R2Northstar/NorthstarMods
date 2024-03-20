@@ -2143,21 +2143,16 @@ void function DamageScaleByDifficulty( entity ent, var damageInfo )
 	{
 		if( damageSourceID == eDamageSourceId.auto_titan_melee || DamageInfo_GetCustomDamageType( damageInfo ) & DF_MELEE )
 		{
-			entity weapon = DamageInfo_GetWeapon( damageInfo )
-			if ( IsValid( weapon ) ) //Restore obituary messages for Elites because they are piloted by grunts and [Auto-Titan Melee] doesn't make sense due to that
-			{
-				if( weapon.GetWeaponClassName() == "melee_titan_sword" )
-				{
-					if( weapon.HasMod( "super_charged" ) )
-						DamageInfo_SetDamageSourceIdentifier( damageInfo, eDamageSourceId.mp_titancore_shift_core )
-					else
-						DamageInfo_SetDamageSourceIdentifier( damageInfo, eDamageSourceId.melee_titan_sword )
-				}
-				else
-					DamageInfo_SetDamageSourceIdentifier( damageInfo, eDamageSourceId.melee_titan_punch )
-			}
-			
 			DamageInfo_ScaleDamage( damageInfo, 2.5 )
+			DamageInfo_SetDamageSourceIdentifier( damageInfo, eDamageSourceId.melee_titan_punch ) //Restore obituary messages for Elites because they are piloted by grunts and [Auto-Titan Melee] doesn't make sense due to that
+			
+			if( GetTitanCharacterName( attacker ) == "ronin" )
+			{
+				if( TitanCoreInUse( attacker ) )
+					DamageInfo_SetDamageSourceIdentifier( damageInfo, eDamageSourceId.mp_titancore_shift_core )
+				else
+					DamageInfo_SetDamageSourceIdentifier( damageInfo, eDamageSourceId.melee_titan_sword )
+			}
 			
 			if( GetTitanCharacterName( attacker ) == "legion" && ent.IsTitan() ) //Elite Legions have Bison melee, but lack feedback about that, so this should tell players their melee hurts alot
 			{
@@ -2194,7 +2189,6 @@ void function DamageScaleByDifficulty( entity ent, var damageInfo )
 
 void function HarvesterShieldInvulnCheck( entity harvester, var damageInfo, float actualShieldDamage )
 {
-	float adjustedShieldDamage = actualShieldDamage
 	if ( !IsValid( harvester ) || !GetGlobalNetBool( "FD_waveActive" ) )
 	{
 		DamageInfo_ScaleDamage( damageInfo, 0.0 )
@@ -2210,7 +2204,7 @@ void function HarvesterShieldInvulnCheck( entity harvester, var damageInfo, floa
 	if ( GetGlobalNetTime( "FD_harvesterInvulTime" ) > Time() )
 	{
 		harvester.SetShieldHealth( harvester.GetShieldHealthMax() )
-		adjustedShieldDamage = 0.0
+		DamageInfo_SetDamage( damageInfo, 0.0 )
 	}
 	
 	int damageSourceID = DamageInfo_GetDamageSourceIdentifier( damageInfo )
@@ -2218,19 +2212,17 @@ void function HarvesterShieldInvulnCheck( entity harvester, var damageInfo, floa
 	{
 		case eDamageSourceId.titanEmpField: //If Arc Titans uses Arc Cannon then their Electric Aura wont devastate Harvester Shield as a tradeoff, the Arc Cannon itself will do that instead
 			if( GetArcTitanWeaponOption() )
-				adjustedShieldDamage = 25
+				DamageInfo_SetDamage( damageInfo, 25 )
 		break
 
 		case eDamageSourceId.mp_titanweapon_arc_cannon:
-		adjustedShieldDamage = 1500
+		DamageInfo_SetDamage( damageInfo, 1000 )
 		break
 			
 		case eDamageSourceId.mp_weapon_grenade_emp: //This is for Grunts using Arc Grenades, so they aren't totally useless
-		adjustedShieldDamage = 1000
+		DamageInfo_SetDamage( damageInfo, 750 )
 		break
 	}
-	
-	DamageInfo_SetDamage( damageInfo, adjustedShieldDamage )
 }
 
 void function OnHarvesterDamaged( entity harvester, var damageInfo )
@@ -2339,10 +2331,6 @@ void function OnHarvesterDamaged( entity harvester, var damageInfo )
 		
 		case eDamageSourceId.mp_weapon_smr: //SMR spectres doing 150 per missile is bad, so back to the 25 that they do to normal armor
 		damageAmount = 25
-		break
-		
-		case eDamageSourceId.mp_weapon_grenade_emp: //This is for Grunts using Arc Grenades, so they aren't totally useless
-		damageAmount = 1000
 		break
 	}
 	
