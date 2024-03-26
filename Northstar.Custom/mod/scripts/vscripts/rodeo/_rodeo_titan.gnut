@@ -27,6 +27,7 @@ global function Rodeo_PilotPicksUpBattery_Silent
 
 global function AddOnRodeoStartedCallback
 global function AddOnRodeoEndedCallback
+global function AddBatteryHealCallback
 
 global function PilotBattery_SetMaxCount
 global function ThrowRiderOff
@@ -92,6 +93,7 @@ struct
 {
 	array<void functionref(entity,entity)> onRodeoEndedCallbacks
 	array<void functionref(entity,entity)> onRodeoStartedCallbacks
+	array<void functionref(entity,entity,int,int)> batteryHealCallbacks
 
 	table<entity, AntiRodeoPlayerData> antiRodeoPlayerData
 
@@ -535,6 +537,12 @@ void function AddOnRodeoEndedCallback( void functionref(entity,entity) callbackF
 {
 	Assert (!( file.onRodeoEndedCallbacks.contains( callbackFunc ) ))
 	file.onRodeoEndedCallbacks.append( callbackFunc )
+}
+
+void function AddBatteryHealCallback( void functionref(entity,entity,int,int) callbackFunc )
+{
+	Assert (!( file.batteryHealCallbacks.contains( callbackFunc ) ))
+	file.batteryHealCallbacks.append( callbackFunc )
 }
 
 function PlayerBeginsTitanRodeo( entity player, RodeoPackageStruct rodeoPackage, entity rodeoTitan )
