@@ -1334,6 +1334,9 @@ int function ForceCastVarToInt( var value ) //HACK: working around inability to 
 	if ( typeof( value ) == "int" )
 		return ( expect int( value ) )
 
+	if ( value == null )
+		return -1
+	
 	return int( value )
 }
 #endif //Server only
