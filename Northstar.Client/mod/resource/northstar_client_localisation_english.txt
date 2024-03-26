@@ -164,6 +164,18 @@ Press Yes if you agree to this. This choice can be changed in the mods menu at a
 		"PL_tffa_abbr" "TFFA"
 		"GAMEMODE_TFFA" "Titan Free for All"
 
+		"PL_tbag" "Teabag Confirmed"
+		"PL_tbag_lobby" "Teabag Confirmed Lobby"
+		"PL_tbag_desc" "Killing enemy pilots drops a battery. Teabag it to score a point"
+		"PL_tbag_abbr" "TBAG"
+		"floatingduration" "Battery Duration"
+		"teabagcounter" "Teabag Counts"
+		"GAMEMODE_TBAG" "Teabag Confirmed"
+		"SCOREBOARD_GAVETEABAG" "Teabags Given"
+		"SCOREBOARD_DENYTEABAG" "Teabags Denied"
+		"TBAG_TEABAG_CONFIRMED" "Teabag Confirmed"
+		"TBAG_TEABAG_DENIED" "Teabag Denied"
+
 		"PL_hs" "Hide and Seek"
 		"PL_hs_lobby" "Hide and Seek Lobby"
 		"PL_hs_desc" "Hiders hide, seekers try to find them."
