@@ -1,12 +1,44 @@
 global function RespawnProtection_Init
+global function IsRespawnProtectionActive
+
+struct
+{
+	array< entity > players
+} file
 
 void function RespawnProtection_Init(){
+	RegisterSignal( "StopProtection" )
 	AddCallback_OnPlayerRespawned( OnPlayerRespawned )
 }
 
 void function OnPlayerRespawned( entity player )
 {
-	thread RespawnProtection(player,GetCurrentPlaylistVarFloat("respawnprotection",0.0))
+	float time = GetCurrentPlaylistVarFloat( "respawnprotection", 0.0 )
+	if( time > 0.0 )
+	{
+		AddButtonPressedPlayerInputCallback( player, IN_ATTACK, ForceStopProtection )
+		AddButtonPressedPlayerInputCallback( player, IN_OFFHAND0, ForceStopProtection )
+		AddButtonPressedPlayerInputCallback( player, IN_OFFHAND2, ForceStopProtection )
+		AddButtonPressedPlayerInputCallback( player, IN_OFFHAND4, ForceStopProtection )
+		AddButtonPressedPlayerInputCallback( player, IN_MELEE, ForceStopProtection )
+		AddButtonPressedPlayerInputCallback( player, IN_USE, ForceStopProtection )
+		thread RespawnProtection( player, time )
+	}
+}
+
+void function ForceStopProtection( entity player )
+{
+	player.Signal( "StopProtection" )
+}
+
+bool function IsRespawnProtectionActive( entity player )
+{
+	if ( player == null )
+		return false
+	if ( !IsValid( player ) )
+		return false
+
+	return file.players.contains( player )
 }
 
 void function RespawnProtection( entity player , float time ){
@@ -14,9 +46,20 @@ void function RespawnProtection( entity player , float time ){
 		function() : ( player )
 		{
 			//cancel protect if player attack
-			if( IsDemigod( player ) )
+			if( IsValid( player ) )
 			{
+				ForceStopProtection( player )
+				if( file.players.contains( player ) )
+					file.players.fastremovebyvalue( player )
+				RemoveButtonPressedPlayerInputCallback( player, IN_ATTACK, ForceStopProtection )
+				RemoveButtonPressedPlayerInputCallback( player, IN_OFFHAND0, ForceStopProtection )
+				RemoveButtonPressedPlayerInputCallback( player, IN_OFFHAND2, ForceStopProtection )
+				RemoveButtonPressedPlayerInputCallback( player, IN_OFFHAND4, ForceStopProtection )
+				RemoveButtonPressedPlayerInputCallback( player, IN_MELEE, ForceStopProtection )
+				RemoveButtonPressedPlayerInputCallback( player, IN_USE, ForceStopProtection )
+				SetDefaultMPEnemyHighlight( player )
 				DisableDemigod( player );
+				player.ClearInvulnerable()
 			}
 		}
 	)
@@ -24,16 +67,47 @@ void function RespawnProtection( entity player , float time ){
 	player.EndSignal( "OnDeath" )
 	player.EndSignal( "OnDestroy" )
 	player.EndSignal( "OnPrimaryAttack" )
+	player.EndSignal( "RodeoStarted" )
+	player.EndSignal( "StopProtection" )
 
-	if( IsDemigod( player ) )
+	if( IsValid( player ) )
 	{
-		DisableDemigod( player );
-	}
-	else{
 		//start protect
-		EnableDemigod( player )
-		wait time
-		//cancel protect
-		DisableDemigod( player );
+		if( player.GetPersistentVar( "spawnAsTitan" ) || Riff_SpawnAsTitan() )
+		{
+			player.WaitSignal( "PlayerEmbarkedTitan" )
+			player.SetInvulnerable()
+		}
+		else if( player.IsTitan() )
+		{
+			player.SetInvulnerable()
+		}
+		else
+		{
+			EnableDemigod( player )
+		}
+
+		//start a highlight
+		waitthread ProtectionHighlightThink( player, time )
+	}
+}
+
+void function ProtectionHighlightThink( entity player, float time )
+{
+	player.EndSignal( "OnDeath" )
+	player.EndSignal( "OnDestroy" )
+	player.EndSignal( "OnPrimaryAttack" )
+	player.EndSignal( "RodeoStarted" )
+	player.EndSignal( "StopProtection" )
+
+	float startTime = Time()
+	while( Time() - startTime <= time )
+	{
+		if( IsValid( player ) )
+		{
+			Highlight_SetEnemyHighlight( player, "sp_enemy_pilot" )
+			player.Highlight_SetParam( 2, 0, < 255,215,0 > )
+		}
+		WaitFrame()
 	}
 }
