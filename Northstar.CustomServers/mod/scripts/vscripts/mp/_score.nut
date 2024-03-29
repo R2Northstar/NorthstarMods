@@ -28,6 +28,10 @@ void function InitPlayerForScoreEvents( entity player )
 	player.s.currentKillstreak <- 0
 	player.s.lastKillTime <- 0.0
 	player.s.currentTimedKillstreak <- 0
+	player.s.lastKillTime_Mayhem <- 0.0
+	player.s.currentTimedKillstreak_Mayhem <- 0 
+	player.s.lastKillTime_Onslaught <- 0.0
+	player.s.currentTimedKillstreak_Onslaught <- 0 
 }
 
 void function AddPlayerScore( entity targetPlayer, string scoreEventName, entity associatedEnt = null, string noideawhatthisis = "", int pointValueOverride = -1 )
@@ -93,6 +97,7 @@ void function ScoreEvent_PlayerKilled( entity victim, entity attacker, var damag
 	victim.s.currentTimedKillstreak = 0
 	
 	victim.p.numberOfDeathsSinceLastKill++ // this is reset on kill
+	victim.p.lastKiller = attacker
 	
 	// have to do this early before we reset victim's player killstreaks
 	// nemesis when you kill a player that is dominating you
@@ -131,12 +136,20 @@ void function ScoreEvent_PlayerKilled( entity victim, entity attacker, var damag
 		attacker.p.numberOfDeathsSinceLastKill = 0
 	}
 	
+	// revenge + quick revenge
+	if ( attacker.p.lastKiller == victim )
+	{
+		if ( Time() - GetPlayerLastRespawnTime( attacker ) < QUICK_REVENGE_TIME_LIMIT )
+			AddPlayerScore( attacker, "QuickRevenge" )
+		else
+			AddPlayerScore( attacker, "Revenge" )
+	}
 	
 	// untimed killstreaks
 	attacker.s.currentKillstreak++
-	if ( attacker.s.currentKillstreak == 3 )
+	if ( attacker.s.currentKillstreak == KILLINGSPREE_KILL_REQUIREMENT )
 		AddPlayerScore( attacker, "KillingSpree" )
-	else if ( attacker.s.currentKillstreak == 5 )
+	else if ( attacker.s.currentKillstreak == RAMPAGE_KILL_REQUIREMENT )
 		AddPlayerScore( attacker, "Rampage" )
 	
 	// increment untimed killstreaks against specific players
@@ -202,18 +215,23 @@ void function ScoreEvent_TitanKilled( entity victim, entity attacker, var damage
 			AddPlayerScore( attacker, "KillTitan" )
 	}
 
-	table<int, bool> alreadyAssisted
-	foreach( DamageHistoryStruct attackerInfo in victim.e.recentDamageHistory )
+	entity soul = victim.GetTitanSoul()
+	if ( IsValid( soul ) )
 	{
-		if ( !IsValid( attackerInfo.attacker ) || !attackerInfo.attacker.IsPlayer() || attackerInfo.attacker == victim )
-			continue
-			
-		bool exists = attackerInfo.attacker.GetEncodedEHandle() in alreadyAssisted ? true : false
-		if( attackerInfo.attacker != attacker && !exists )
+		table<int, bool> alreadyAssisted
+		
+		foreach( DamageHistoryStruct attackerInfo in soul.e.recentDamageHistory )
 		{
-			alreadyAssisted[attackerInfo.attacker.GetEncodedEHandle()] <- true
-			AddPlayerScore(attackerInfo.attacker, "TitanAssist" )
-			Remote_CallFunction_NonReplay( attackerInfo.attacker, "ServerCallback_SetAssistInformation", attackerInfo.damageSourceId, attacker.GetEncodedEHandle(), victim.GetEncodedEHandle(), attackerInfo.time ) 
+			if ( !IsValid( attackerInfo.attacker ) || !attackerInfo.attacker.IsPlayer() || attackerInfo.attacker == soul )
+				continue
+			
+			bool exists = attackerInfo.attacker.GetEncodedEHandle() in alreadyAssisted ? true : false
+			if( attackerInfo.attacker != attacker && !exists )
+			{
+				alreadyAssisted[attackerInfo.attacker.GetEncodedEHandle()] <- true
+				AddPlayerScore(attackerInfo.attacker, "TitanAssist" )
+				Remote_CallFunction_NonReplay( attackerInfo.attacker, "ServerCallback_SetAssistInformation", attackerInfo.damageSourceId, attacker.GetEncodedEHandle(), soul.GetEncodedEHandle(), attackerInfo.time ) 
+			}
 		}
 	}
 
@@ -229,6 +247,39 @@ void function ScoreEvent_NPCKilled( entity victim, entity attacker, var damageIn
 		AddPlayerScore( attacker, ScoreEventForNPCKilled( victim, damageInfo ), victim )
 	}
 	catch ( ex ) {}
+
+	if ( !attacker.IsPlayer() )
+		return
+
+	// mayhem/onslaught (timed killstreaks vs AI)
+	
+	// reset before checking
+	if ( Time() - attacker.s.lastKillTime_Mayhem > MAYHEM_REQUIREMENT_TIME )
+	{
+		attacker.s.currentTimedKillstreak_Mayhem = 0
+		attacker.s.lastKillTime_Mayhem = Time()
+	}
+	if ( Time() - attacker.s.lastKillTime_Mayhem <= MAYHEM_REQUIREMENT_TIME )
+	{
+		attacker.s.currentTimedKillstreak_Mayhem++
+		
+		if ( attacker.s.currentTimedKillstreak_Mayhem == MAYHEM_REQUIREMENT_KILLS )
+			AddPlayerScore( attacker, "Mayhem" )
+	}
+
+	// reset before checking
+	if ( Time() - attacker.s.lastKillTime_Onslaught > ONSLAUGHT_REQUIREMENT_TIME )
+	{
+		attacker.s.currentTimedKillstreak_Onslaught = 0
+		attacker.s.lastKillTime_Onslaught = Time()
+	}
+	if ( Time() - attacker.s.lastKillTime_Onslaught <= ONSLAUGHT_REQUIREMENT_TIME )
+	{
+		attacker.s.currentTimedKillstreak_Onslaught++
+		
+		if ( attacker.s.currentTimedKillstreak_Onslaught == ONSLAUGHT_REQUIREMENT_KILLS )
+			AddPlayerScore( attacker, "Onslaught" )
+	}
 }
 
 void function ScoreEvent_MatchComplete( int winningTeam )
@@ -253,7 +304,7 @@ void function ScoreEvent_SetupEarnMeterValuesForMixedModes() // mixed modes in t
 {
 	// todo needs earn/overdrive values
 	// player-controlled stuff
-	ScoreEvent_SetEarnMeterValues( "KillPilot", 0.07, 0.15 )
+	ScoreEvent_SetEarnMeterValues( "KillPilot", 0.07, 0.15, 0.33 ) // 5% for titan cores
 	ScoreEvent_SetEarnMeterValues( "KillTitan", 0.0, 0.15 )
 	ScoreEvent_SetEarnMeterValues( "TitanKillTitan", 0.0, 0.0 ) // unsure
 	ScoreEvent_SetEarnMeterValues( "PilotBatteryStolen", 0.0, 0.35 ) // this actually just doesn't have overdrive in vanilla even

@@ -421,13 +421,7 @@
 			"helpText":"Returns whether or not a given path leads to a folder.",
 			"returnTypeString":"bool",
 			"argTypes":"string path"
-    },
-    {
-			"name":"NSPushGameStateData",
-			"helpText":"",
-			"returnTypeString":"void",
-			"argTypes":"struct gamestate"
-		}
+    }
 	],
 	"UI":[
 		{
@@ -507,6 +501,25 @@
 			"helpText":"",
 			"returnTypeString":"array<string>",
 			"argTypes":"string modName"
+		},
+		{
+			"name": "NSIsModDownloadable",
+			"helpText": "checks whether a mod is verified and can be auto-downloaded",
+			"returnTypeString": "bool",
+			"argTypes": "string name, string version"
+
+		},
+		{
+			"name": "NSDownloadMod",
+			"helpText": "downloads a given mod from distant API to local game profile",
+			"returnTypeString": "void",
+			"argTypes": "string name, string version"
+		},
+		{
+			"name": "NSGetModInstallState",
+			"helpText": "get status of the mod currently being installed",
+			"returnTypeString": "ModInstallState",
+			"argTypes": ""
 		},
 		{
 			"name":"NSReloadMods",
@@ -724,11 +737,11 @@
 			"returnTypeString":"bool",
 			"argTypes":"string path"
     },
-    {
-			"name":"NSPushUIPresence",
+		{
+			"name":"NSGetMasterServerAuthResult",
 			"helpText":"",
-			"returnTypeString":"void",
-			"argTypes":"struct presence"
+			"returnTypeString":"MasterServerAuthResult",
+			"argTypes":""
 		}
 	]
 }
