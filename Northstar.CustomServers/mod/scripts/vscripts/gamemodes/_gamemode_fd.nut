@@ -160,7 +160,6 @@ void function GamemodeFD_Init()
 {
 	PrecacheModel( MODEL_ATTRITION_BANK )
 	PrecacheModel( MODEL_IMC_SHIELD_CAPTAIN )
-	PrecacheModel( $"models/robots/drone_frag/drone_frag.mdl" )
 	PrecacheModel( $"models/creatures/prowler/r2_prowler.mdl" )
 	PrecacheParticleSystem( $"P_smokescreen_FD" )
 	
@@ -262,6 +261,7 @@ void function GamemodeFD_Init()
 	difficultyLevel = FD_GetDifficultyLevel() //Refresh this only on map load, to avoid midgame commands messing up with difficulties (i.e setting mp_gamemode fd_hard midgame in a regular match through console on local host would immediately make Stalkers spawns with EPG)
 	file.easymodeSmartPistol = GetCurrentPlaylistVarInt( "fd_smart_pistol_easy_mode", 0 ) == 1
 	
+	#if SERVER
 	if( GetConVarString( "ns_fd_grunt_primary_weapon" ) != "" )
 	{
 		string Cvar_gruntweapons = GetConVarString( "ns_fd_grunt_primary_weapon" )
@@ -295,6 +295,7 @@ void function GamemodeFD_Init()
 	
 	level.endOfRoundPlayerState = ENDROUND_FREE
 	EliteTitans_Init()
+	#endif
 	
 	for( int i = 0; i < 20; i++ ) //Setup NPC array for Harvester Damage tracking
 		file.harvesterDamageSource.append(0.0)
@@ -1476,6 +1477,9 @@ void function FD_OnPlayerGetsNewPilotLoadout( entity player, PilotLoadoutDef loa
 	if( file.isLiveFireMap )
 		ReplacePlayerOrdnance( player, "mp_weapon_grenade_gravity" )
 	
+	if( GetCurrentPlaylistVarInt( "featured_mode_all_ticks", 0 ) == 1 )
+		ReplacePlayerOrdnance( player, "mp_weapon_frag_drone", ["all_ticks"] )
+	
 	//If player has bought the Amped Weapons before, keep it for the new weapons
 	if ( "hasPermenantAmpedWeapons" in player.s && player.s.hasPermenantAmpedWeapons )
 	{
@@ -1610,6 +1614,7 @@ bool function useShieldBoost( entity player, array<string> args )
 		if( !IsValid( fd_harvester.particleShield ) )
 		{
 			generateShieldFX( fd_harvester )
+			EmitSoundOnEntity( fd_harvester.harvester, "shieldwall_deploy" )
 			file.harvesterShieldDown = false //Assume this was set to true since shields went down
 		}
 		
@@ -1617,7 +1622,6 @@ bool function useShieldBoost( entity player, array<string> args )
 		boostcount--
 		
 		fd_harvester.lastDamage = Time() - GENERATOR_SHIELD_REGEN_DELAY
-		EmitSoundOnEntity( fd_harvester.harvester, "shieldwall_deploy" )
 		SetGlobalNetTime( "FD_harvesterInvulTime", Time() + 5 )
 		AddPlayerScore( player, "FDShieldHarvester" )
 		MessageToTeam( TEAM_MILITIA,eEventNotifications.FD_PlayerBoostedHarvesterShield, player, player )
@@ -2207,10 +2211,7 @@ void function HarvesterShieldInvulnCheck( entity harvester, var damageInfo, floa
 	
 	int damageSourceID = DamageInfo_GetDamageSourceIdentifier( damageInfo )
 	if( damageSourceID == eDamageSourceId.titanEmpField && GetArcTitanWeaponOption() ) //If Arc Titans uses Arc Cannon then their Electric Aura wont devastate Harvester Shield as a tradeoff, the Arc Cannon itself will do that instead
-	{
-		DamageInfo_ScaleDamage( damageInfo, 0.0 )
-		DamageInfo_SetDamage( damageInfo, 0.0 )
-	}
+		harvester.SetShieldHealth( min( harvester.GetShieldHealthMax(), harvester.GetShieldHealth() + 900 ) ) //Have to do this way because the super despicable method Respawn did in ShieldModifyDamage function
 }
 
 void function OnHarvesterDamaged( entity harvester, var damageInfo )
@@ -2299,7 +2300,7 @@ void function OnHarvesterDamaged( entity harvester, var damageInfo )
 		case eDamageSourceId.mp_titanweapon_heat_shield:
 		case eDamageSourceId.mp_titanweapon_flame_wall:
 		case eDamageSourceId.mp_titanweapon_flame_ring:
-		damageAmount *= 0.1
+		damageAmount *= 0.025
 		break
 		
 		//Taken from consts, 1:1 to vanilla formula
@@ -2384,7 +2385,7 @@ void function OnHarvesterDamaged( entity harvester, var damageInfo )
 		
 		if( attackerTypeID in file.harvesterDamageSource ) //Only track damage from existing ids
 			file.harvesterDamageSource[attackerTypeID] += damageAmount
-			
+		
 		float newHealth = harvester.GetHealth() - damageAmount
 		float oldhealthpercent = ( ( harvester.GetHealth().tofloat() / harvester.GetMaxHealth() ) * 100 )
 		float healthpercent = ( ( newHealth / harvester.GetMaxHealth() ) * 100 )
