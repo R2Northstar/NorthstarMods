@@ -2,6 +2,7 @@ global function SetTitanAsElite
 global function SetEliteTitanPostSpawn
 global function EliteTitanExecutionCheck
 global function SetTitanWeaponSkin
+global function EliteTitans_Init
 
 
 
