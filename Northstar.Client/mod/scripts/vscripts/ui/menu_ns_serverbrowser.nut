@@ -4,6 +4,7 @@ untyped
 global function AddNorthstarServerBrowserMenu
 
 global function JoinServer
+global function JoinServerByName
 global function CancelJoinServer
 
 global function AddConnectToServerCallback
@@ -1322,9 +1323,37 @@ void function TriggerConnectToServerCallbacks( ServerInfo ornull targetServer = 
 	}
 }
 
+//////////////////////////////////////
+// Join server
+//////////////////////////////////////
+
 void function CancelJoinServer()
 {
 	file.cancelConnection = true
+}
+
+bool function JoinServerByName( string serverName, string password = "" )
+{
+	// Request list of online servers.
+	NSRequestServerList()
+	while ( NSIsRequestingServerList() )
+	{
+		WaitFrame() 
+	}
+
+	// Go through all servers that are currently online
+	foreach ( server in NSGetGameServers() )
+	{
+		// Join the server if it has the correct server name.
+		if ( server.name == serverName )
+		{
+			return JoinServer( server )
+		}
+	}
+
+	print( format( "Failed to connect to server %s: No such server", serverName ) )
+
+	return false
 }
 
 bool function JoinServer( ServerInfo server, string password = "" )
