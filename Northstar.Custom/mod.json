@@ -478,10 +478,7 @@
 		},
 		{
 			"Path": "ai/_ai_elite_titans.nut",
-			"RunOn": "SERVER && MP",
-			"ServerCallback": {
-				"After": "EliteTitans_Init"
-			}
+			"RunOn": "SERVER && MP"
 		},
 	],
 

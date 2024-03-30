@@ -5,12 +5,10 @@ void function initFrontierDefenseData()
 	AddCallback_RegisterCustomFDContent( RegisterCustomFDContent )
 	AddCallback_GameStateEnter( eGameState.Prematch, SpawnDrozAndDavisForFD )
 	
-	shopPosition = < -169, -1558, 160 >
-	shopAngles = < 0, 0, 0 >
-	FD_groundspawnPosition = < -612, -1573, 160 >
-	FD_groundspawnAngles = < 0, -45, 0 >
-	FD_CustomHarvesterLocation = < 1200, -1765, 4 >
-	FD_DefenseLocation = < 906, -1438, 70 >
+	PlaceFDShop( < -169, -1558, 160 > )
+	SetFDGroundSpawn( < -612, -1573, 160 >, < 0, -45, 0 > )
+	OverrideFDHarvesterLocation( < 1200, -1765, 4 > )
+	SetFDAIDefenseLocation( < 906, -1438, 70 > )
 	
 	int index = 1
 	
@@ -93,7 +91,7 @@ void function initFrontierDefenseData()
 		WaveSpawn_ReaperSpawn( wave2, "Reaper", reaperspawns.getrandom(), 90, "", RandomFloatRange( 0.1, 0.6 ) )
 		WaveSpawn_WaitEnemyAliveAmount( wave2, 28 )
 	}
-	wave2.append(CreateSuperSpectreEvent( reaperspawns.getrandom() , < 0, 90, 0> ,"",0))
+	WaveSpawn_ReaperSpawn( wave2, "Reaper", reaperspawns.getrandom(), 90, "", RandomFloatRange( 0.1, 0.6 ) )
 	
 	WaveSpawnEvents.append( wave2 )
 	index = 1

@@ -80,7 +80,7 @@ void function initFrontierDefenseData()
 	WaveSpawn_InfantrySpawn( wave1, "PodGrunt", < -774, -3387, 144 >, 0.0, "midHalfway_infantry", 0.4 )
 	WaveSpawn_InfantrySpawn( wave1, "PodGrunt", < -354, -1161, 256 >, 0.0, "infantyPerch_right3", 0.3 )
 	WaveSpawn_InfantrySpawn( wave1, "PodGrunt", < 488, 1548, 256 >, 0.0, "leftNear", 0.2 )
-	WaveSpawn_InfantrySpawn( wave1, "PodGrunt", < 177, 3409, 256 >, 0.0, "leftFar0" )
+	WaveSpawn_InfantrySpawn( wave1, "PodGrunt", < 177, 3409, 180 >, 0.0, "leftFar0" )
 	
 	WaveSpawnEvents.append( wave1 )
 	

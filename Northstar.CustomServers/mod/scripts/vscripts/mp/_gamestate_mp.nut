@@ -376,20 +376,23 @@ void function GameStateEnter_WinnerDetermined_Threaded()
 		
 		wait 4
 		
-		CleanUpEntitiesForRoundEnd()
-		foreach( entity player in GetPlayerArray() )
+		if( IsRoundBased() )
 		{
-			player.UnfreezeControlsOnServer()
-			player.DeployWeapon()
-			player.Server_TurnOffhandWeaponsDisabledOff()
+			CleanUpEntitiesForRoundEnd()
+			foreach( entity player in GetPlayerArray() )
+			{
+				player.UnfreezeControlsOnServer()
+				player.DeployWeapon()
+				player.Server_TurnOffhandWeaponsDisabledOff()
+			}
 		}
 	}
 	
 	wait CLEAR_PLAYERS_BUFFER //Required to properly restart without players in Titans crashing it in FD
 	
-	ClearDroppedWeapons()
 	if ( IsRoundBased() )
 	{
+		ClearDroppedWeapons()
 		svGlobal.levelEnt.Signal( "RoundEnd" )
 		int roundsPlayed = expect int ( GetServerVar( "roundsPlayed" ) )
 		roundsPlayed++

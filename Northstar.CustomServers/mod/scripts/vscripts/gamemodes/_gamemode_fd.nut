@@ -294,6 +294,7 @@ void function GamemodeFD_Init()
 	}
 	
 	level.endOfRoundPlayerState = ENDROUND_FREE
+	EliteTitans_Init()
 	
 	for( int i = 0; i < 20; i++ ) //Setup NPC array for Harvester Damage tracking
 		file.harvesterDamageSource.append(0.0)
@@ -726,8 +727,6 @@ void function mainGameLoop()
 				foreach( entity player in GetPlayerArray() )
 					GiveTitanToPlayer( player )
 			}
-			
-			thread FD_AttemptToRepairTurrets()
 		}
 
 		if( !runWave( currentWave, showShop ) )
@@ -974,10 +973,9 @@ bool function runWave( int waveIndex, bool shouldDoBuyTime )
 		{
 			SetWinner( TEAM_IMC )
 			PlayFactionDialogueToTeam( "fd_baseDeath", TEAM_MILITIA, true )
-			int restartsRemaining = FD_GetNumRestartsLeft()
 			foreach( entity player in GetPlayerArrayOfTeam( TEAM_MILITIA ) )
 			{
-				Remote_CallFunction_NonReplay( player, "ServerCallback_FD_DisplayHarvesterKiller", restartsRemaining, getHintForTypeId( highestDamageSource[0] ), highestDamageSource[0], highestDamage[0] / totalDamage, highestDamageSource[1], highestDamage[1] / totalDamage , highestDamageSource[2], highestDamage[2] / totalDamage )
+				Remote_CallFunction_NonReplay( player, "ServerCallback_FD_DisplayHarvesterKiller", FD_GetNumRestartsLeft(), getHintForTypeId( highestDamageSource[0] ), highestDamageSource[0], highestDamage[0] / totalDamage, highestDamageSource[1], highestDamage[1] / totalDamage , highestDamageSource[2], highestDamage[2] / totalDamage )
 				player.SetNoTarget( true )
 				player.SetInvulnerable()
 			}
@@ -1171,7 +1169,7 @@ void function WaveBreak_RegisterAttackOrSupportScore( int scoretype )
 
 void function WaveBreak_AnnounceHarvesterDamaged()
 {
-	if(!file.harvesterWasDamaged)
+	if( !file.harvesterWasDamaged )
 		PlayFactionDialogueToTeam( "fd_waveRecapPerfect", TEAM_MILITIA, true )
 	else
 	{
@@ -2208,20 +2206,10 @@ void function HarvesterShieldInvulnCheck( entity harvester, var damageInfo, floa
 	}
 	
 	int damageSourceID = DamageInfo_GetDamageSourceIdentifier( damageInfo )
-	switch( damageSourceID )
+	if( damageSourceID == eDamageSourceId.titanEmpField && GetArcTitanWeaponOption() ) //If Arc Titans uses Arc Cannon then their Electric Aura wont devastate Harvester Shield as a tradeoff, the Arc Cannon itself will do that instead
 	{
-		case eDamageSourceId.titanEmpField: //If Arc Titans uses Arc Cannon then their Electric Aura wont devastate Harvester Shield as a tradeoff, the Arc Cannon itself will do that instead
-			if( GetArcTitanWeaponOption() )
-				DamageInfo_SetDamage( damageInfo, 25 )
-		break
-
-		case eDamageSourceId.mp_titanweapon_arc_cannon:
-		DamageInfo_SetDamage( damageInfo, 1000 )
-		break
-			
-		case eDamageSourceId.mp_weapon_grenade_emp: //This is for Grunts using Arc Grenades, so they aren't totally useless
-		DamageInfo_SetDamage( damageInfo, 750 )
-		break
+		DamageInfo_ScaleDamage( damageInfo, 0.0 )
+		DamageInfo_SetDamage( damageInfo, 0.0 )
 	}
 }
 
@@ -2324,14 +2312,28 @@ void function OnHarvesterDamaged( entity harvester, var damageInfo )
 		damageAmount *= GENERATOR_DAMAGE_MORTAR_ROCKET_MULTIPLIER
 		break
 		
-		case eDamageSourceId.titanEmpField:
-			if( GetArcTitanWeaponOption() )
-				damageAmount = 25
-		break
-		
 		case eDamageSourceId.mp_weapon_smr: //SMR spectres doing 150 per missile is bad, so back to the 25 that they do to normal armor
 		damageAmount = 25
 		break
+	}
+	
+	if( harvester.GetShieldHealth() > 0 )
+	{
+		switch( damageSourceID )
+		{
+			case eDamageSourceId.titanEmpField: //If Arc Titans uses Arc Cannon then their Electric Aura wont devastate Harvester Shield as a tradeoff, the Arc Cannon itself will do that instead
+				if( GetArcTitanWeaponOption() )
+					damageAmount = 25
+			break
+
+			case eDamageSourceId.mp_titanweapon_arc_cannon:
+			damageAmount = 1200
+			break
+				
+			case eDamageSourceId.mp_weapon_grenade_emp: //This is for Grunts using Arc Grenades, so they aren't totally useless
+			damageAmount = 800
+			break
+		}
 	}
 	
 	float shieldPercent = ( ( harvester.GetShieldHealth().tofloat() / harvester.GetShieldHealthMax() ) * 100 )
@@ -2604,7 +2606,8 @@ void function AddTurretSentry( entity turret )
 		
 		thread TurretRefundThink( turret )
 		
-		turret.GetMainWeapons()[0].AddMod( "fd" )
+		if( turret.GetMainWeapons()[0].GetWeaponClassName() == "mp_weapon_yh803_bullet" )
+			turret.GetMainWeapons()[0].AddMod( "fd" )
 		
 		if( file.isLiveFireMap )
 		{
@@ -4094,6 +4097,8 @@ void function FD_WaveCleanup()
 
 	if( IsValid( fd_harvester.harvester ) )
 		fd_harvester.harvester.Destroy() //Destroy harvester after match over
+	
+	thread FD_AttemptToRepairTurrets() //Repair turrets during black screen that remained from previous waves
 }
 
 int function getHintForTypeId( int typeId )

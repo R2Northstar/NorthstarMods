@@ -737,11 +737,11 @@ void function WaveSpawn_WaitSubGroup( array<WaveSpawnEvent> waveName, string sub
 	waveName.append(event)
 }
 
-void function WaveSpawn_RunCustomFunction( array<WaveSpawnEvent> waveName, void functionref( WaveSpawnEvent ornull ) func, int spawnInDifficulty = eFDSD.ALL, string subGroupName = "" )
+void function WaveSpawn_RunCustomFunction( array<WaveSpawnEvent> waveName, void functionref( WaveSpawnEvent ornull ) func, int spawnInDifficulty = eFDSD.ALL, int spawnAmount = 0, string subGroupName = "" )
 {
 	WaveSpawnEvent event
 	
-	event.spawnAmount = 0
+	event.spawnAmount = spawnAmount
 	event.eventFunction = func
 	event.waveSubGroupName = subGroupName
 	waveName.append(event)
@@ -922,8 +922,6 @@ void function SpawnMortarTitan( WaveSpawnEvent ornull spawnEvent )
 	SetSpawnOption_Alert( npc )
 	SetTargetName( npc, GetTargetNameForID( spawnEvent.spawnType ) ) // required for client to create icons
 	DispatchSpawn( npc )
-	npc.TakeOffhandWeapon( OFFHAND_RIGHT )
-	npc.GiveOffhandWeapon( "mp_titanweapon_shoulder_rockets", OFFHAND_RIGHT )
 	npc.SetSkin( 1 )
 	npc.SetCamo( -1 )
 	npc.DisableNPCFlag( NPC_ALLOW_INVESTIGATE )
@@ -1819,8 +1817,8 @@ void function SpawnGruntDropship( WaveSpawnEvent ornull spawnEvent )
 		thread GuyDeploysOffShip( guy, Table )
 	}
 	
-	EmitSoundOnEntity( dropship, dropshipSound )
 	thread PlayAnimTeleport( dropship, DROPSHIP_DROP_ANIM, ref, 0 )
+	EmitSoundOnEntity( dropship, dropshipSound )
 	wait 12
 	ArrayRemoveDead( guys )
 	foreach( guy in guys )
@@ -1878,7 +1876,7 @@ void function SpawnDroppodStalker( WaveSpawnEvent ornull spawnEvent )
 	switch( file.difficultyLevel )
 	{
 		case eFDDifficultyLevel.EASY:
-		case eFDDifficultyLevel.NORMAL: // easy and normal stalkers have no weapons
+		case eFDDifficultyLevel.NORMAL:
 			foreach( npc in guys )
 			{
 				npc.TakeActiveWeapon()
@@ -1887,7 +1885,7 @@ void function SpawnDroppodStalker( WaveSpawnEvent ornull spawnEvent )
 			break
 		case eFDDifficultyLevel.HARD:
 		case eFDDifficultyLevel.MASTER:
-		case eFDDifficultyLevel.INSANE: // give all EPGs
+		case eFDDifficultyLevel.INSANE:
 			foreach( npc in guys )
 			{
 				npc.TakeActiveWeapon()
@@ -1998,8 +1996,6 @@ void function SpawnDroppodSpectre( WaveSpawnEvent ornull spawnEvent )
 		DispatchSpawn( guy )
 		TakeAllWeapons( guy )
 		guy.GiveWeapon( "mp_weapon_smr", ["extended_ammo","pas_fast_reload"] )
-		guy.GiveWeapon( "mp_weapon_rocket_launcher", ["at_unlimited_ammo"] )
-		guy.GiveWeapon( "mp_weapon_shotgun_pistol", ["extended_ammo","pas_fast_reload"] )
 		guy.SetBehaviorSelector( "behavior_sp_soldier" )
 		guy.kv.AccuracyMultiplier = 4.0
 		guy.kv.WeaponProficiency = eWeaponProficiency.PERFECT
@@ -2291,7 +2287,7 @@ void function waitUntilLessThanAmountAliveEvent( WaveSpawnEvent ornull spawnEven
 	while( true )
 	{
 		WaitFrame()
-		array<entity> npcs = GetNPCArrayOfTeam( TEAM_IMC )
+		array<entity> npcs = spawnedNPCs
 		ArrayRemoveDead( npcs )
 		
 		if( spawnEvent.waitHullType != eFDHT.ALL )
@@ -2320,10 +2316,8 @@ void function waitUntilLessThanAmountAliveEvent( WaveSpawnEvent ornull spawnEven
 		
 		foreach( entity npc in npcs )
 		{
-			if( spawnedNPCs.find( npc ) != -1 )
-				continue
-			
-			npcs.removebyvalue( npc )
+			if( npc.GetClassName() == "npc_drone_cloaked" ) //Remove Cloak Drones to avoid softlocks
+				npcs.removebyvalue( npc )
 		}
 
 		if( npcs.len() <= spawnEvent.waitAmount )

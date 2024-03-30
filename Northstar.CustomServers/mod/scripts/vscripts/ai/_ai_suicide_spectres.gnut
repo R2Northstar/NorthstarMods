@@ -51,6 +51,11 @@ void function SuicideSpectres_Init()
 
 	AddDamageCallback( "npc_frag_drone", SpectreSuicideOnDamaged_Callback )
 	AddDeathCallback( "npc_frag_drone", FragDroneDeath )
+	AddSpawnCallback( "npc_frag_drone", FragDroneSpawn )
+	
+	#if MP //Only MP needs precaching this due SP already having this model by default
+	PrecacheModel( $"models/robots/drone_frag/drone_frag.mdl" )
+	#endif
 }
 
 /************************************************************************************************\
@@ -64,6 +69,7 @@ void function SuicideSpectres_Init()
  ######  ########    ##     #######  ##
 
 \************************************************************************************************/
+
 void function MakeSuicideSpectre( entity spectre )
 {
 	spectre.SetAimAssistAllowed( true )
@@ -120,8 +126,17 @@ void function FragDroneDeath_Think( entity spectre, var damageInfo )
 	int team = GetExplosionTeamBasedOnGamemode( spectre )
 
 	int damageDef = GetDamageDefForFragDrone( spectre )
-
-	RadiusDamage_DamageDefSimple( damageDef, pos, attackerEnt, spectre, 0 )
+	
+	entity tickOwner = spectre.GetBossPlayer()
+	if( GetCurrentPlaylistVarInt( "player_nuke_ticks", 0 ) == 1 && IsValidPlayer( tickOwner ) )
+	{
+		RadiusDamage( pos, spectre, spectre, 350, 5000, 256, 512, SF_ENVEXPLOSION_NO_DAMAGEOWNER | SF_ENVEXPLOSION_MASK_BRUSHONLY, 0, 50000, DF_RAGDOLL | DF_EXPLOSION, eDamageSourceId.damagedef_frag_drone_throwable_PLAYER )
+		PlayFX( $"xo_exp_death", pos )
+		EmitSoundAtPosition( spectre.GetTeam(), pos, "ai_reaper_nukedestruct_explo_3p" )
+	}
+	else
+		RadiusDamage_DamageDefSimple( damageDef, pos, attackerEnt, spectre, 0 )
+	
 	EmitSoundAtPosition( spectre.GetTeam(), pos, expSFX )
 	CreateShake( pos, 10, 105, 1.25, 768 )
 	StartParticleEffectInWorld( expFX, fxOrg, Vector( 0, 0, 0 ) )
@@ -172,6 +187,27 @@ void function SuicideSpectreEnemyChanged( entity spectre )
 	// Spectre "Speaks"
 	if ( ( RandomFloat( 1.0 ) ) < 0.02 )
 		EmitSoundOnEntity( spectre, "diag_imc_spectre_gs_spotenemypilot_01_1" )
+}
+
+void function FragDroneSpawn( entity npc )
+{
+	thread FragDroneSpawn_Threaded( npc )
+}
+
+void function FragDroneSpawn_Threaded( entity npc )
+{
+	WaitFrame()
+	if( GetCurrentPlaylistVarInt( "player_nuke_ticks", 0 ) == 1 && IsTick( npc ) )
+	{
+		entity tickOwner = npc.GetBossPlayer()
+		if( IsValidPlayer( tickOwner ) )
+		{
+			npc.SetAISettings( "npc_frag_drone_fd" )
+			npc.SetModel( $"models/robots/drone_frag/drone_frag.mdl" )
+			npc.kv.modelscale = 2.0
+			npc.SetTitle( "Nuke Tick" )
+		}
+	}
 }
 
 /************************************************************************************************\

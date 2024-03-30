@@ -18,6 +18,10 @@ struct
 void function AiTurret_Init()
 {
 	RegisterSignal( "TurretOffline" )
+	PrecacheModel( $"models/robots/turret_rocket/turret_rocket.mdl" )
+	
+	AddSpawnCallback( "npc_turret_sentry", OnTurretSpawn )
+	AddDeathCallback( "npc_turret_sentry", OnTurretDeath )
 }
 
 entity function GetMegaTurretLinkedToPanel( entity panel )
@@ -35,15 +39,51 @@ void function SetUsePromptForPanel( var panel, var turret )
 
 }
 
+void function OnTurretSpawn( entity turret )
+{
+	turret.e.spawnTime = Time()
+	if( !( "totalScore" in turret.s ) )
+		turret.s.totalScore <- 0
+	
+	if( turret.GetAISettingsName() == "npc_turret_sentry_burn_card_at" || turret.GetAISettingsName() == "npc_turret_sentry_burn_card_at_fd" || turret.GetAISettingsName() == "npc_turret_sentry_burn_card_ap_fd" )
+	{
+		if( GetCurrentPlaylistVarInt( "enable_rocket_turrets", 0 ) == 1 )
+		{
+			turret.SetModel( $"models/robots/turret_rocket/turret_rocket.mdl" )
+			TakeWeaponsForArray( turret, turret.GetMainWeapons() )
+			turret.GiveWeapon( "mp_weapon_gunship_missile" )
+			turret.SetTitle( "Rocket Turret" )
+		}
+	}
+}
+
+void function OnTurretDeath( entity turret, var damageInfo )
+{
+	entity turretOwner = turret.GetBossPlayer()
+	
+	if( !IsValid( turretOwner ) )
+		return
+	
+	float turretLifeTime = Time() - turret.e.spawnTime
+	int turretKills = int( turret.kv.killCount )
+	int turretScore = expect int( turret.s.totalScore )
+	
+	Remote_CallFunction_NonReplay( turretOwner, "ServerCallback_TurretReport", turretLifeTime, turretKills, turretScore )
+}
+
 bool function IsTurretActive( entity turret )
 {
 	// ----- Turret State ----- //
 	// TURRET_SEARCHING , TURRET_INACTIVE , TURRET_ACTIVE , TURRET_DEPLOYING , TURRET_RETIRING , TURRET_DEAD //
 
-	bool turretsActive = turret.GetTurretState() == TURRET_DEPLOYING
-	turretsActive = turretsActive || turret.GetTurretState() == TURRET_SEARCHING
-	turretsActive = turretsActive || turret.GetTurretState() == TURRET_ACTIVE
-	return turretsActive
+	switch( turret.GetTurretState() )
+	{
+		case TURRET_DEPLOYING:
+		case TURRET_SEARCHING:
+		case TURRET_ACTIVE:
+			return true
+	}
+	return false
 }
 
 void function TurretRefundThink( entity turret )
@@ -91,7 +131,12 @@ void function RevivableTurret_DamageCallback( entity turret, var damageInfo )
 		turret.Signal( "TurretOffline" )
 		turret.SetHealth( 1 )
 		turret.SetUsable()
-		turret.SetUsableByGroup( "friendlies pilot" )
+		
+		if ( GetCurrentPlaylistVarInt( "fd_titans_can_repair_turrets", 0 ) == 1 )
+			turret.SetUsableByGroup( "friendlies" )
+		else
+			turret.SetUsableByGroup( "friendlies pilot" )
+		
 		turret.SetUsePrompts( "#TURRET_WAKEUP_HOLD_USE", "#TURRET_WAKEUP_PRESS_USE" )
 		thread RevivableTurret_Kill( turret )
 		thread RevivableTurretThink( turret )
@@ -140,6 +185,9 @@ void function RevivableTurret_Revive( entity turret )
 	turret.DisableNPCFlag( NPC_IGNORE_ALL )
 	MakeTurretVulnerable( turret )
 	turret.SetNoTargetSmartAmmo( true )
+	
+	wait 0.3
+	
 	thread TurretRefundThink( turret )
 }
 

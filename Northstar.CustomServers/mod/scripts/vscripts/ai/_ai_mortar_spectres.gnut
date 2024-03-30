@@ -83,9 +83,13 @@ void function MortarSpectreSquadThink( array< entity > spectres, entity harveste
 	}
 	
 	squadMarker.WaitSignal( "BeginMortarAttack" ) //Wait until at least one spectre reached the siege spot
-	squadMarker.SetAngles( < 0, 0, 0 > ) //Angle in the icon prop is used as a visbility toggle
-	squadMarker.Minimap_AlwaysShow( TEAM_MILITIA, null )
-	thread MortarIconCloakCheck( squadMarker, spectres )
+	
+	if( FD_GetDifficultyLevel() != eFDDifficultyLevel.INSANE )
+	{
+		squadMarker.SetAngles( < 0, 0, 0 > ) //Angle in the icon prop is used as a visbility toggle
+		squadMarker.Minimap_AlwaysShow( TEAM_MILITIA, null )
+		thread MortarIconCloakCheck( squadMarker, spectres )
+	}
 	
 	//Buildup Siege Icon and Place Shield
 	float setupEndTime = Time() + GetCurrentPlaylistVarFloat( "fd_mortar_spectre_setup_time", 5 )
@@ -93,12 +97,13 @@ void function MortarSpectreSquadThink( array< entity > spectres, entity harveste
 	if ( FD_IsDifficultyLevelOrHigher( eFDDifficultyLevel.HARD ) && IsValid( squadMarker ) ) //From what i could observe, Mortar Spectres don't use a playlistvar, they only check difficulty
 	{
 		vector shieldoffset = PositionOffsetFromOriginAngles( mortarPosition.origin, shieldangle, 80, 0, 0 )
-		mortarshield = CreateShieldWithSettings( OriginToGround( shieldoffset + < 0, 0, 128> ), shieldangle, 128, 96, 150, 9999.0, TURRET_SHIELD_WALL_HEALTH, $"P_pilot_cover_shield" )
+		mortarshield = CreateShieldWithSettings( OriginToGround( shieldoffset + < 0, 0, 128> ), shieldangle, 112, 80, 150, 9999.0, TURRET_SHIELD_WALL_HEALTH, $"P_pilot_cover_shield" )
 		mortarshield.SetParent( squadMarker, "", true ) //Parent to the Mortar Icon, so when that gets destroyed, this also goes with it
 		mortarshield.EndSignal( "OnDestroy" )
 		mortarshield.SetBlocksRadiusDamage( true )
 		mortarshield.DisableVortexBlockLOS()
 		UpdateShieldWallColorForFrac( mortarshield.e.shieldWallFX, GetHealthFrac( mortarshield ) )
+		thread MortarShieldCloakCheck( mortarshield, spectres )
 	}
 	
 	ArrayRemoveDead( spectres ) //Remove dead squadmates from tracking
@@ -122,7 +127,7 @@ void function MortarSpectreSquadThink( array< entity > spectres, entity harveste
 	ArrayRemoveDead( spectres ) //Remove again due to delay
 	if( IsValid( mortarfaketarget ) ) //Enable the Proxy to be targeted by the Spectres
 	{
-		SetTeam( mortarfaketarget, TEAM_UNASSIGNED ) //TEAM_UNASSIGNED, FIRST_GAME_TEAM, TEAM_SPECTATOR, TEAM_4/5/6
+		SetTeam( mortarfaketarget, TEAM_UNASSIGNED )
 		mortarfaketarget.EnableAttackableByAI( 0, 0, AI_AP_FLAG_NONE )
 	}
 	
@@ -200,6 +205,29 @@ void function MortarIconCloakCheck( entity mortaricon, array<entity> spectres )
 			mortaricon.SetAngles( < 0, 0, 0> )
 			mortaricon.Minimap_AlwaysShow( TEAM_MILITIA, null )
 		}
+		wait 0.5
+	}
+}
+
+void function MortarShieldCloakCheck( entity mortarshield, array<entity> spectres )
+{
+	mortarshield.EndSignal( "OnDestroy" )
+	
+	while( IsValid( mortarshield ) )
+	{
+		bool squadCloaked = true
+		foreach( entity spectre in spectres )
+		{
+			if ( IsValid( spectre ) && IsAlive( spectre ) && !IsCloaked( spectre ) && spectre.GetTeam() == TEAM_IMC )
+				squadCloaked = false
+		}
+		
+		if( squadCloaked )
+			EntFireByHandle( mortarshield.e.shieldWallFX, "Stop", "", 0, null, null )
+		
+		else
+			EntFireByHandle( mortarshield.e.shieldWallFX, "Start", "", 0, null, null )
+		
 		wait 0.5
 	}
 }

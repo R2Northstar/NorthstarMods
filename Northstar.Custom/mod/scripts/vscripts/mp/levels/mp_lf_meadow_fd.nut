@@ -5,12 +5,10 @@ void function initFrontierDefenseData()
 	AddCallback_RegisterCustomFDContent( RegisterCustomFDContent )
 	AddCallback_GameStateEnter( eGameState.Prematch, SpawnDrozAndDavisForFD )
 	
-	shopPosition = < 464, -616, 136 >
-	shopAngles = < 0, -90, 0 >
-	FD_groundspawnPosition = < 665, -689, 200 >
-	FD_groundspawnAngles = < 0, 135, 0 >
-	FD_CustomHarvesterLocation = < 823, -1729, 10 >
-	FD_DefenseLocation = < 471, -932, 132 >
+	PlaceFDShop( < 464, -616, 136 >, < 0, -90, 0 > )
+	SetFDGroundSpawn( < 665, -689, 200 >, < 0, 135, 0 > )
+	OverrideFDHarvesterLocation( < 823, -1729, 10 > )
+	SetFDAIDefenseLocation( < 471, -932, 132 > )
 	
 	array<vector> infantryspawns = []
 	infantryspawns.append( < 201, 2066, 6 > )

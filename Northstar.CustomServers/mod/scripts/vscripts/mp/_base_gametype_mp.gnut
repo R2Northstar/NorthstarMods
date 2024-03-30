@@ -43,7 +43,6 @@ void function BaseGametype_Init_MPSP()
 	AddCallback_OnPlayerKilled( CheckForAutoTitanDeath )
 	RegisterSignal( "PlayerRespawnStarted" )
 	RegisterSignal( "KillCamOver" )
-
 	FlagInit( "WeaponDropsAllowed", true )
 }
 
@@ -201,7 +200,7 @@ void function CodeCallback_OnClientConnectionCompleted( entity player )
 			thread SpectateTTSMenuPlayer( player )
 		else if ( RespawnsEnabled() )
 		{
-			if ( Riff_IsTitanAvailable( player ) ) //Riff_IsTitanAvailable handles the conditions to spawn player as Titan right away or not
+			if ( Riff_IsTitanAvailable( player ) || ShouldIntroSpawnAsTitan() ) //Handles the conditions to spawn player as Titan right away or not
 				thread RespawnAsTitan( player )
 			else
 				RespawnAsPilot( player )
@@ -527,6 +526,7 @@ void function RespawnAsPilot( entity player )
 	entity spawnpoint = FindSpawnPoint( player, false, ( ShouldStartSpawn( player ) || Flag( "ForceStartSpawn" ) ) )
 	DoRespawnPlayer( player, spawnpoint )
 	player.SetAngles( spawnpoint.GetAngles() )
+	CheckGameStateAfterSpawn( player )
 }
 
 void function RespawnAsTitan( entity player, bool normalTitanfall = false )
@@ -628,6 +628,8 @@ void function RespawnAsTitan( entity player, bool normalTitanfall = false )
 
 		if( IsValid( camera ) )
 			camera.Destroy()
+		
+		CheckGameStateAfterSpawn( player )
 	})
 	
 	titan.SetOrigin( spawnpoint.GetOrigin() )
@@ -715,6 +717,20 @@ void function CheckForAutoTitanDeath( entity victim, entity attacker, var damage
 void function SetRecalculateRespawnAsTitanStartPointCallback( entity functionref( entity player, entity basePoint ) callbackFunc )
 {
 	file.recalculateRespawnAsTitanStartPointCallback = callbackFunc
+}
+
+void function CheckGameStateAfterSpawn( entity player )
+{
+	if( GetGameState() > eGameState.Playing )
+	{
+		if( level.endOfRoundPlayerState == ENDROUND_FREEZE )
+			player.FreezeControlsOnServer()
+		else if( level.endOfRoundPlayerState == ENDROUND_MOVEONLY )
+		{
+			player.HolsterWeapon()
+			player.Server_TurnOffhandWeaponsDisabledOn()
+		}
+	}
 }
 
 // stuff to change later

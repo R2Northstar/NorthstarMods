@@ -84,6 +84,7 @@ Use these variables in your `setplaylistvaroverrides` argument to control them:
 - `fd_rodeo_highlight` Default is 0, setting to 1 enables the new behavior of pilots highlight becoming green whenever they rodeo any Titan
 - `fd_minimap_ping_sound` Default is 0, setting to 1 will play a subtle ping sound whenever minimap pings an enemy spawning
 - `fd_dropship_battery_drop` Default is 0, setting to 1 makes IMC Dropships drops an Amped Battery if they are killed
+- `enable_rocket_turrets` Default is 0, setting to 1 replaces the Sentry Turrets with the unused Rocket Turret
 
 ## Trivia hints for server hosters
 

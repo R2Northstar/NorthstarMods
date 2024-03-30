@@ -5,7 +5,7 @@ void function initFrontierDefenseData()
 	AddCallback_RegisterCustomFDContent( RegisterCustomFDContent )
 	AddCallback_GameStateEnter( eGameState.Prematch, SpawnDrozAndDavisForFD )
 	
-	 PlaceFDShop( < 360, -1504, 264 >, < 0, 90, 0 > )
+	PlaceFDShop( < 360, -1504, 264 >, < 0, 90, 0 > )
 	SetFDGroundSpawn( < 248, -1979, 8 >, < 0, 90, 0 > )
 	OverrideFDHarvesterLocation( < 512, -762, 1 > )
 	SetFDAIDefenseLocation( < 822, -880, 1 > )
