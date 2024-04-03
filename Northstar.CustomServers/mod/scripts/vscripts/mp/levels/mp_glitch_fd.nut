@@ -570,6 +570,7 @@ void function initFrontierDefenseData()
 	WaveSpawn_TitanSpawn( wave5, "ArcTitan", titanSpawns.getrandom(), 180, "" )
 	WaveSpawn_WaitEnemyAliveAmount( wave5, 0 )
 	
+	WaveSpawn_NukeTitanMoveStance( wave5, true, 0.0 )
 	WaveSpawn_Announce( wave5, "TitanfallBlock", 0.0 )
 	WaveSpawn_TitanfallBlock( wave5, true, 5.0 )
 	WaveSpawn_SmokeWall( wave5, < 2242, -225, 144 >, 0.2, 300 )

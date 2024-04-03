@@ -343,6 +343,7 @@ void function initFrontierDefenseData()
 	WaveSpawn_TitanSpawn( wave5, "Nuke", < -1298, -1508, 622 >, -90, "", 5.0 )
 	WaveSpawn_WaitEnemyAliveAmount( wave5, 0 )
 	
+	WaveSpawn_NukeTitanMoveStance( wave5, true, 5.0 )
 	WaveSpawn_Announce( wave5, "NukeTitan", 0.0 )
 	for( spawnamount = 0; spawnamount < 83; spawnamount++ )
 	{

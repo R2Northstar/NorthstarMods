@@ -15,6 +15,7 @@ global function WaveSpawn_WaitEnemyAliveAmount
 global function WaveSpawn_WaitSubGroup
 global function WaveSpawn_RunCustomFunction
 global function WaveSpawn_TitanfallBlock
+global function WaveSpawn_NukeTitanMoveStance
 
 global function AddMinimapForTitans
 global function AddMinimapForHumans
@@ -96,6 +97,7 @@ struct{
 	bool allowTitanfallBlock = false
 	bool allowGruntGrenades = false
 	bool visibleDropPoints = false
+	bool sprintNukeTitans = false
 	
 	int eliteTitanHPBonus_Ion = 7500
 	int eliteTitanHPBonus_Scorch = 7500
@@ -759,6 +761,18 @@ void function WaveSpawn_TitanfallBlock( array<WaveSpawnEvent> waveName, bool sho
 	waveName.append(event)
 }
 
+void function WaveSpawn_NukeTitanMoveStance( array<WaveSpawnEvent> waveName, bool shouldSprint = false, float waitTime = 0.5, int spawnInDifficulty = eFDSD.ALL, string subGroupName = "" )
+{
+	WaveSpawnEvent event
+	
+	event.spawnAmount = 0
+	event.eventFunction = SetNukeTitanMoveStance
+	event.titanBlocked = shouldSprint
+	event.waitTime = waitTime
+	event.waveSubGroupName = subGroupName
+	waveName.append(event)
+}
+
 
 
 
@@ -875,11 +889,19 @@ void function SpawnNukeTitan( WaveSpawnEvent ornull spawnEvent )
 	npc.kv.reactChance = 60
 	SetTargetName( npc, GetTargetNameForID( spawnEvent.spawnType ) ) // required for client to create icons
 	DispatchSpawn( npc )
-	npc.EnableNPCMoveFlag( NPCMF_WALK_ALWAYS | NPCMF_WALK_NONCOMBAT )
-	npc.DisableNPCMoveFlag( NPCMF_PREFER_SPRINT )
+	if( file.sprintNukeTitans )
+	{
+		npc.EnableNPCMoveFlag( NPCMF_PREFER_SPRINT )
+		npc.DisableNPCMoveFlag( NPCMF_WALK_NONCOMBAT | NPCMF_WALK_ALWAYS )
+	}
+	else
+	{
+		npc.EnableNPCMoveFlag( NPCMF_WALK_ALWAYS | NPCMF_WALK_NONCOMBAT )
+		npc.DisableNPCMoveFlag( NPCMF_PREFER_SPRINT )
+		SlowEnemyMovementBasedOnDifficulty( npc )
+	}
 	npc.DisableNPCFlag( NPC_DIRECTIONAL_MELEE )
 	npc.AssaultSetFightRadius( 0 )
-	SlowEnemyMovementBasedOnDifficulty( npc )
 	npc.SetDangerousAreaReactionTime( 30 ) //Lasts longer than any AoE the game has
 	npc.SetCapabilityFlag( bits_CAP_INNATE_MELEE_ATTACK1 | bits_CAP_INNATE_MELEE_ATTACK2 | bits_CAP_SYNCED_MELEE_ATTACK , false )
 	spawnedNPCs.append( npc )
@@ -2256,6 +2278,16 @@ void function BlockFurtherTitanfalls( WaveSpawnEvent ornull spawnEvent )
 	}
 }
 
+void function SetNukeTitanMoveStance( WaveSpawnEvent ornull spawnEvent )
+{
+	if( !spawnEvent )
+		return
+
+	expect WaveSpawnEvent( spawnEvent )
+	
+	file.sprintNukeTitans = spawnEvent.titanBlocked
+}
+
 void function AnnounceEliteTitansToPlayers( entity player )
 {
 	#if SERVER
@@ -2287,7 +2319,7 @@ void function waitUntilLessThanAmountAliveEvent( WaveSpawnEvent ornull spawnEven
 	while( true )
 	{
 		WaitFrame()
-		array<entity> npcs = spawnedNPCs
+		array<entity> npcs = clone spawnedNPCs
 		ArrayRemoveDead( npcs )
 		
 		if( spawnEvent.waitHullType != eFDHT.ALL )
@@ -2316,7 +2348,7 @@ void function waitUntilLessThanAmountAliveEvent( WaveSpawnEvent ornull spawnEven
 		
 		foreach( entity npc in npcs )
 		{
-			if( npc.GetClassName() == "npc_drone_cloaked" ) //Remove Cloak Drones to avoid softlocks
+			if( GetNPCCloakedDrones().find( npc ) != -1 ) //Remove Cloak Drones to avoid softlocks
 				npcs.removebyvalue( npc )
 		}
 
@@ -2571,6 +2603,7 @@ bool function allEventsExecuted( int waveIndex )
 
 void function resetWaveEvents()
 {
+	file.sprintNukeTitans = false
 	foreach( WaveSpawnEvent event in WaveSpawnEvents[GetGlobalNetInt( "FD_currentWave" )] )
 		event.executed = false
 }

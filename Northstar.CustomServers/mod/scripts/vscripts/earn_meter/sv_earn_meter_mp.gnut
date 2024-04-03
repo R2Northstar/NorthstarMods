@@ -116,7 +116,7 @@ void function EarnMeterMP_PlayerLifeThink( entity player )
 		if ( player.IsTitan() )
 		{
 			entity soul = player.GetTitanSoul()
-			if ( IsValid( soul ) && SoulTitanCore_GetExpireTime( soul ) > Time() )
+			if ( IsValid( soul ) && TitanCoreInUse( player ) )
 				desiredEarnMeterMode = eEarnMeterMode.CORE_ACTIVE
 			else
 				desiredEarnMeterMode = eEarnMeterMode.CORE
@@ -210,10 +210,7 @@ void function EarnMeterMP_BoostEarned( entity player )
 void function EarnMeterMP_TitanEarned( entity player )
 {
 	if ( EarnMeterMP_IsTitanEarnGametype() )
-	{
 		SetTitanAvailable( player )
-		//Remote_CallFunction_NonReplay( player, "ServerCallback_TitanReadyMessage" ) // broken for some reason
-	}
 	else
 	{
 		float oldRewardFrac = PlayerEarnMeter_GetRewardFrac( player )

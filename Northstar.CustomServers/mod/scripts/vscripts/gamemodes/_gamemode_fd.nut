@@ -68,7 +68,7 @@ struct {
 	array<string> waveAnnouncement = []
 	vector shopPosition
 	vector shopAngles = < 0, 0, 0 >
-	vector dropshipSpawnPosition
+	vector dropshipSpawnPosition  = < 0, 0, 0 >
 	vector dropshipSpawnAngles = < 0, 0, 0 >
 	vector groundSpawnPosition
 	vector groundSpawnAngles = < 0, 0, 0 >
@@ -1945,12 +1945,14 @@ void function FD_PlayerRespawnThreaded( entity player )
 		return
 	}
 	
-	if( file.dropshipState == eDropshipState.Returning || file.playersInShip >= 4 || GetGameState() != eGameState.Playing || !GetGlobalNetBool( "FD_waveActive" ) || GetConVarBool( "ns_fd_disable_respawn_dropship" ) || file.isLiveFireMap )
+	if( file.dropshipState == eDropshipState.Returning || file.playersInShip >= 4 || GetGameState() != eGameState.Playing || !GetGlobalNetBool( "FD_waveActive" ) || GetConVarBool( "ns_fd_disable_respawn_dropship" ) || file.isLiveFireMap || file.dropshipSpawnPosition == < 0, 0, 0 > )
 	{
 		//Teleport player to a more reliable location if they spawn on ground, some maps picks too far away spawns from the Harvester and Shop (i.e Colony, Homestead, Drydock)
 		if( IsValidPlayer( player ) && !player.IsTitan() )
 		{
-			if( !file.DropPodSpawns.len() || GetGameState() != eGameState.Playing )
+			if( file.dropshipSpawnPosition == < 0, 0, 0 > && file.DropPodSpawns.len() || GetConVarBool( "ns_fd_disable_respawn_dropship" ) && file.DropPodSpawns.len() )
+				thread FD_SpawnPlayerDroppod( player )
+			else if( !file.DropPodSpawns.len() || GetGameState() != eGameState.Playing )
 			{
 				player.SetOrigin( file.groundSpawnPosition )
 				player.SetAngles( file.groundSpawnAngles )
@@ -2288,7 +2290,6 @@ void function OnHarvesterDamaged( entity harvester, var damageInfo )
 		case eDamageSourceId.mp_titancore_laser_cannon:
 		case eDamageSourceId.mp_titancore_salvo_core:
 		case eDamageSourceId.mp_titanweapon_flightcore_rockets:
-		case eDamageSourceId.mp_titancore_flame_wave:
 		damageAmount *= 0.1
 		break
 		
@@ -2300,6 +2301,7 @@ void function OnHarvesterDamaged( entity harvester, var damageInfo )
 		case eDamageSourceId.mp_titanweapon_heat_shield:
 		case eDamageSourceId.mp_titanweapon_flame_wall:
 		case eDamageSourceId.mp_titanweapon_flame_ring:
+		case eDamageSourceId.mp_titancore_flame_wave:
 		damageAmount *= 0.025
 		break
 		
@@ -2937,6 +2939,7 @@ void function FD_OnNPCLeeched( entity victim, entity attacker )
 		victim.kv.WeaponProficiency = eWeaponProficiency.AVERAGE
 		victim.SetBehaviorSelector( "behavior_spectre" )
 		victim.Minimap_AlwaysShow( TEAM_MILITIA, null )
+		victim.ai.preventOwnerDamage = true
 	}
 }
 
@@ -2948,8 +2951,8 @@ void function OnTickDeath( entity victim, var damageInfo )
 	if ( findIndex != -1 )
 	{
 		spawnedNPCs.remove( findIndex )
-		SetGlobalNetInt( "FD_AICount_Ticks", GetGlobalNetInt( "FD_AICount_Ticks" ) -1 )
-		SetGlobalNetInt( "FD_AICount_Current", GetGlobalNetInt( "FD_AICount_Current" ) -1 )
+		SetGlobalNetInt( "FD_AICount_Ticks", GetGlobalNetInt( "FD_AICount_Ticks" ) - 1 )
+		SetGlobalNetInt( "FD_AICount_Current", GetGlobalNetInt( "FD_AICount_Current" ) - 1 )
 		victim.Minimap_Hide( TEAM_IMC, null )
 		victim.Minimap_Hide( TEAM_MILITIA, null )
 		
