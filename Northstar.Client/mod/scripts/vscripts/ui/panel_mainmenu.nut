@@ -393,6 +393,8 @@ void function UpdatePlayButton( var button )
 			isStryderAuthenticated = IsStryderAuthenticated()
 			isMPAllowed = true
 
+			bool isVanilla = VANILLA ? true : false
+
 			if ( DEBUG_PERMISSIONS )
 			{
 				printt( "isOriginConnected:", isOriginConnected )
@@ -429,7 +431,7 @@ void function UpdatePlayButton( var button )
 				message = "#AUTHENTICATIONAGREEMENT_NO"
 				file.mpButtonActivateFunc = null
 			}
-			else if ( button == file.mpButton && VANILLA )
+			else if ( button == file.mpButton && isVanilla )
 			{
 				file.mpButtonActivateFunc = LaunchMP
 			}
