@@ -126,6 +126,7 @@ void function OnSettingButtonPressed( var button )
 		Hud_SetGamemodeIdx( button, gamemodeIdx )
 		Hud_SetPlaylistVarName( button, setting.playlistVar )
 
+		// you'll get booted for this right now because the playlist native crap is fucked
 		ClientCommand( "PrivateMatchSetPlaylistVarOverride " + setting.playlistVar + " " + setting.enumValues[ enumVal ] )
 	}
 	else
