@@ -429,7 +429,7 @@ void function UpdatePlayButton( var button )
 				message = "#AUTHENTICATIONAGREEMENT_NO"
 				file.mpButtonActivateFunc = null
 			}
-			else if ( button == file.mpButton )
+			else if ( button == file.mpButton && VANILLA )
 			{
 				file.mpButtonActivateFunc = LaunchMP
 			}
