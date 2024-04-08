@@ -58,11 +58,10 @@ void function OnPrematchStart()
 {
 	ClassicMP_OnIntroStarted()
 
-	print( "starting dropship intro!" )
+	print( "Starting Dropship Intro!" )
 	file.introStartTime = Time()
 	
 	// make 2 empty dropship structs per team
-	IntroDropship emptyDropship
 	file.militiaDropships.clear()
 	file.imcDropships.clear()
 	
@@ -94,14 +93,15 @@ void function OnPrematchStart()
 		// create entity
 		entity dropship = CreateDropship( createTeam, dropshipSpawn.GetOrigin(), dropshipSpawn.GetAngles() )
 		
-		teamDropships.append( clone emptyDropship )
-		teamDropships[ teamDropships.len() - 1 ].dropship = dropship
-		
 		AddAnimEvent( dropship, "dropship_warpout", WarpoutEffect )
 		dropship.SetValueForModelKey( $"models/vehicle/crow_dropship/crow_dropship_hero.mdl" )
 		dropship.SetModel( $"models/vehicle/crow_dropship/crow_dropship_hero.mdl" ) 
 		
 		DispatchSpawn( dropship )
+		
+		IntroDropship emptyDropship
+		emptyDropship.dropship = dropship
+		teamDropships.append( emptyDropship )
 		
 		// have to do this after dispatch otherwise it won't work for some reason
 		// weirdly enough, tf2 actually does use different dropships for imc and militia, despite these concepts not really being a thing for players in tf2
@@ -135,7 +135,6 @@ void function SpawnPlayerIntoDropship( entity player )
 {
 	player.EndSignal( "OnDestroy" )
 
-	player.s.dropshipIntroIsJumping <- false
 	if ( IsAlive( player ) )
 		player.Die() // kill them so we don't have any issues respawning them later
 	
@@ -145,13 +144,6 @@ void function SpawnPlayerIntoDropship( entity player )
 		{
 			player.ClearParent()
 			ClearPlayerAnimViewEntity( player )
-			
-			if ( !player.s.dropshipIntroIsJumping )
-			{
-				player.MovementEnable()
-				player.EnableWeaponViewModel()
-				RemoveCinematicFlag( player, CE_FLAG_CLASSIC_MP_SPAWNING )
-			}
 		}
 	})
 	
@@ -193,10 +185,10 @@ void function SpawnPlayerIntoDropship( entity player )
 		}
 	}
 	
-	if( playerDropship.dropship == null ) //If we're at this point, we have more players than we do dropships, so just pick a random one
+	if( !IsAlive( playerDropship.dropship ) ) //If we're at this point, we have more players than we do dropships, so just pick a random one
 		playerDropship = teamDropships.getrandom()
 	
-	HolsterAndDisableWeapons(player)
+	HolsterAndDisableWeapons( player )
 	player.DisableWeaponViewModel()
 	UnMuteAll( player )
 	StopSoundOnEntity( player, "Duck_For_FrontierDefenseTitanSelectScreen" )
@@ -244,7 +236,6 @@ void function SpawnPlayerIntoDropship( entity player )
 	thread FirstPersonSequence( jumpSequence, player, playerDropship.dropship )
 	WaittillAnimDone( player ) // somehow this is better than just waiting for the blocking FirstPersonSequence call?
 	
-	player.s.dropshipIntroIsJumping = true
 	thread PlayerJumpsFromDropship( player )
 }
 
@@ -264,9 +255,7 @@ void function PlayerJumpsFromDropship( entity player )
 			RemoveCinematicFlag( player, CE_FLAG_CLASSIC_MP_SPAWNING )
 		}
 	})
-		
-	// wait for intro timer to be fully done
-	wait ( file.introStartTime + DROPSHIP_INTRO_LENGTH ) - Time()
+	
 	player.MovementDisable() // disable all movement but let them look around still
 	player.ConsumeDoubleJump() // movementdisable doesn't prevent double jumps
 	

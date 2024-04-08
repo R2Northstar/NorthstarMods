@@ -102,34 +102,34 @@ void function initFrontierDefenseData()
 		WaveSpawn_WaitEnemyAliveAmount( wave3, 28 )
 		WaveSpawn_InfantrySpawn( wave3, "Stalker", infantryspawns.getrandom(), 0.0, "lowerTunnelStraight", RandomFloatRange( 0.1, 0.6 ) )
 		WaveSpawn_WaitEnemyAliveAmount( wave3, 28 )
-		WaveSpawn_ReaperSpawn( wave2, "Reaper", reaperspawns.getrandom(), 90, "", RandomFloatRange( 0.1, 0.6 ) )
+		WaveSpawn_ReaperSpawn( wave3, "Reaper", reaperspawns.getrandom(), 90, "", RandomFloatRange( 0.1, 0.6 ) )
 		WaveSpawn_WaitEnemyAliveAmount( wave3, 28 )
 	}
 	for( spawnamount = 0; spawnamount < 16; spawnamount++ )
 	{
 		WaveSpawn_InfantrySpawn( wave3, "PodGrunt", infantryspawns.getrandom(), 0.0, "centerAlley", RandomFloatRange( 0.1, 0.6 ) )
 		WaveSpawn_WaitEnemyAliveAmount( wave3, 28 )
-		WaveSpawn_ReaperSpawn( wave2, "Reaper", reaperspawns.getrandom(), 90, "", RandomFloatRange( 0.1, 0.6 ) )
+		WaveSpawn_ReaperSpawn( wave3, "Reaper", reaperspawns.getrandom(), 90, "", RandomFloatRange( 0.1, 0.6 ) )
 		WaveSpawn_WaitEnemyAliveAmount( wave3, 28 )
 	}
 	for( spawnamount = 0; spawnamount < 64; spawnamount++ )
 	{
-		WaveSpawn_ReaperSpawn( wave2, "Reaper", reaperspawns.getrandom(), 90, "", RandomFloatRange( 0.1, 0.6 ) )
+		WaveSpawn_ReaperSpawn( wave3, "Reaper", reaperspawns.getrandom(), 90, "", RandomFloatRange( 0.1, 0.6 ) )
 		WaveSpawn_WaitEnemyAliveAmount( wave3, 32 )
 	}
 	for( spawnamount = 0; spawnamount < 16; spawnamount++ )
 	{
 		WaveSpawn_InfantrySpawn( wave3, "Spectre", infantryspawns.getrandom(), 0.0, "upperTunnelStraight", RandomFloatRange( 0.1, 0.6 ) )
 		WaveSpawn_WaitEnemyAliveAmount( wave3, 28 )
-		WaveSpawn_ReaperSpawn( wave2, "Reaper", reaperspawns.getrandom(), 90, "", RandomFloatRange( 0.1, 0.6 ) )
+		WaveSpawn_ReaperSpawn( wave3, "Reaper", reaperspawns.getrandom(), 90, "", RandomFloatRange( 0.1, 0.6 ) )
 		WaveSpawn_WaitEnemyAliveAmount( wave3, 28 )
 	}
 	for( spawnamount = 0; spawnamount < 128; spawnamount++ )
 	{
-		WaveSpawn_ReaperSpawn( wave2, "Reaper", reaperspawns.getrandom(), 90, "", RandomFloatRange( 0.1, 0.6 ) )
+		WaveSpawn_ReaperSpawn( wave3, "Reaper", reaperspawns.getrandom(), 90, "", RandomFloatRange( 0.1, 0.6 ) )
 		WaveSpawn_WaitEnemyAliveAmount( wave3, 32 )
 	}
-	WaveSpawn_ReaperSpawn( wave2, "Reaper", reaperspawns.getrandom(), 90, "", RandomFloatRange( 0.1, 0.6 ) )
+	WaveSpawn_ReaperSpawn( wave3, "Reaper", reaperspawns.getrandom(), 90, "", RandomFloatRange( 0.1, 0.6 ) )
 	
 	WaveSpawnEvents.append( wave3 )
 }

@@ -237,7 +237,7 @@ void function GamemodeFD_Init()
 
 	//Command Callbacks
 	AddClientCommandCallback( "FD_ToggleReady", ClientCommandCallbackToggleReady )
-	AddClientCommandCallback( "FD_UseHarvesterShieldBoost", useShieldBoost )
+	AddClientCommandCallback( "FD_UseHarvesterShieldBoost", ClientCommandCallbackUseShieldBoost )
 	AddClientCommandCallback( "FD_SetTutorialBit", ClientCommand_FDSetTutorialBit )
 	AddClientCommandCallback( "dropbattery", ClientCommandCallbackFDDropBattery )
 
@@ -298,7 +298,7 @@ void function GamemodeFD_Init()
 	#endif
 	
 	for( int i = 0; i < 20; i++ ) //Setup NPC array for Harvester Damage tracking
-		file.harvesterDamageSource.append(0.0)
+		file.harvesterDamageSource.append( 0.0 )
 	
 	switch ( difficultyLevel )
 	{
@@ -865,7 +865,7 @@ bool function runWave( int waveIndex, bool shouldDoBuyTime )
 		
 		while( Time() < GetGlobalNetTime( "FD_nextWaveStartTime" ) )
 		{
-			if( allPlayersReady() )
+			if( FD_CheckPlayersReady() )
 				SetGlobalNetTime( "FD_nextWaveStartTime", Time() )
 			WaitFrame()
 		}
@@ -1555,7 +1555,7 @@ void function FD_TeamReserveDepositOrWithdrawCallback( entity player, string act
 	}
 }
 
-bool function allPlayersReady()
+bool function FD_CheckPlayersReady()
 {
 	foreach( entity player in GetPlayerArrayOfTeam( TEAM_MILITIA ) )
 	{
@@ -1601,7 +1601,7 @@ bool function ClientCommandCallbackFDDropBattery( entity player, array<string> a
 	return true
 }
 
-bool function useShieldBoost( entity player, array<string> args )
+bool function ClientCommandCallbackUseShieldBoost( entity player, array<string> args )
 {
 	if( ( GetGlobalNetInt( "FD_waveState" ) == WAVE_STATE_BREAK || GetGlobalNetInt( "FD_waveState" ) == WAVE_STATE_NONE ) && player.GetPlayerNetInt( "numHarvesterShieldBoost" ) > 0 )
 		return false
@@ -2684,7 +2684,7 @@ void function GamemodeFD_OnPlayerKilled( entity victim, entity attacker, var dam
 	array<entity> militiaplayers = GetPlayerArrayOfTeam( TEAM_MILITIA )
 	int deaths = 0
 	foreach ( entity player in militiaplayers )
-		if ( !IsAlive( player ) || player.GetParent() && player.GetParent().GetClassName() == "npc_dropship" )
+		if ( !IsAlive( player ) || IsAlive( player.GetParent() ) && player.GetParent().GetClassName() == "npc_dropship" )
 			deaths++
 
 	foreach( entity player in GetPlayerArrayOfTeam( TEAM_MILITIA ) )

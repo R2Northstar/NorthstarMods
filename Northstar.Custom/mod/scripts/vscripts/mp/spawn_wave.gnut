@@ -111,6 +111,8 @@ struct{
 global array< array<WaveSpawnEvent> > WaveSpawnEvents
 
 const float FD_TITAN_AOE_REACTTIME = 3.0 //This is in seconds
+const int FD_ELITE_TITAN_MIN_HEALTH_CAP = 2500
+const int FD_ELITE_TITAN_MAX_HEALTH_CAP = 15000
 
 
 
@@ -1781,6 +1783,7 @@ void function SpawnGruntDropship( WaveSpawnEvent ornull spawnEvent )
 	dropship.SetShieldHealth( shield )
 	dropship.EndSignal( "OnDeath" )
 	dropship.Signal( "WarpedIn" )
+	dropship.DisableGrappleAttachment()
 	ref.Signal( "WarpedIn" )
 	dropship.Minimap_AlwaysShow( TEAM_IMC, null )
 	dropship.Minimap_AlwaysShow( TEAM_MILITIA, null )
@@ -2634,16 +2637,24 @@ bool function ShouldSkipEventForDifficulty( WaveSpawnEvent event )
 	
 	if( !allDifficulties )
 	{
-		if( file.difficultyLevel == eFDDifficultyLevel.EASY )
-			return ( invertedFilter ? !easySpawn : easySpawn )
-		if( file.difficultyLevel == eFDDifficultyLevel.NORMAL )
-			return ( invertedFilter ? !normalSpawn : normalSpawn )
-		if( file.difficultyLevel == eFDDifficultyLevel.HARD )
-			return ( invertedFilter ? !hardSpawn : hardSpawn )
-		if( file.difficultyLevel == eFDDifficultyLevel.MASTER )
-			return ( invertedFilter ? !masterSpawn : masterSpawn )
-		if( file.difficultyLevel == eFDDifficultyLevel.INSANE )
-			return ( invertedFilter ? !insaneSpawn : insaneSpawn )
+		switch( file.difficultyLevel )
+		{
+			case( eFDDifficultyLevel.EASY ):
+				return !invertedFilter && easySpawn
+			
+			case( eFDDifficultyLevel.NORMAL ):
+				return !invertedFilter && normalSpawn
+			
+			case( eFDDifficultyLevel.HARD ):
+				return !invertedFilter && hardSpawn
+			
+			case( eFDDifficultyLevel.MASTER ):
+				return !invertedFilter && masterSpawn
+			
+			case( eFDDifficultyLevel.INSANE ):
+				return !invertedFilter && insaneSpawn
+		}
+		
 		return true
 	}
 	return false
@@ -2667,44 +2678,44 @@ bool function TitanfallBlockEnabled()
 void function SetupEliteTitansHealthCaps()
 {
 	file.eliteTitanHPBonus_Ion = GetCurrentPlaylistVarInt( "fd_elitetitan_hpbonus_ion", 7500 )
-	if( file.eliteTitanHPBonus_Ion < 2500 )
-		file.eliteTitanHPBonus_Ion = 2500
-	if( file.eliteTitanHPBonus_Ion > 15000 )
-		file.eliteTitanHPBonus_Ion = 15000
+	if( file.eliteTitanHPBonus_Ion < FD_ELITE_TITAN_MIN_HEALTH_CAP )
+		file.eliteTitanHPBonus_Ion = FD_ELITE_TITAN_MIN_HEALTH_CAP
+	if( file.eliteTitanHPBonus_Ion > FD_ELITE_TITAN_MAX_HEALTH_CAP )
+		file.eliteTitanHPBonus_Ion = FD_ELITE_TITAN_MAX_HEALTH_CAP
 	
 	file.eliteTitanHPBonus_Scorch = GetCurrentPlaylistVarInt( "fd_elitetitan_hpbonus_scorch", 7500 )
-	if( file.eliteTitanHPBonus_Scorch < 2500 )
-		file.eliteTitanHPBonus_Scorch = 2500
-	if( file.eliteTitanHPBonus_Scorch > 15000 )
-		file.eliteTitanHPBonus_Scorch = 15000
+	if( file.eliteTitanHPBonus_Scorch < FD_ELITE_TITAN_MIN_HEALTH_CAP )
+		file.eliteTitanHPBonus_Scorch = FD_ELITE_TITAN_MIN_HEALTH_CAP
+	if( file.eliteTitanHPBonus_Scorch > FD_ELITE_TITAN_MAX_HEALTH_CAP )
+		file.eliteTitanHPBonus_Scorch = FD_ELITE_TITAN_MAX_HEALTH_CAP
 	
 	file.eliteTitanHPBonus_Northstar = GetCurrentPlaylistVarInt( "fd_elitetitan_hpbonus_northstar", 7500 )
-	if( file.eliteTitanHPBonus_Northstar < 2500 )
-		file.eliteTitanHPBonus_Northstar = 2500
-	if( file.eliteTitanHPBonus_Northstar > 15000 )
-		file.eliteTitanHPBonus_Northstar = 15000
+	if( file.eliteTitanHPBonus_Northstar < FD_ELITE_TITAN_MIN_HEALTH_CAP )
+		file.eliteTitanHPBonus_Northstar = FD_ELITE_TITAN_MIN_HEALTH_CAP
+	if( file.eliteTitanHPBonus_Northstar > FD_ELITE_TITAN_MAX_HEALTH_CAP )
+		file.eliteTitanHPBonus_Northstar = FD_ELITE_TITAN_MAX_HEALTH_CAP
 	
 	file.eliteTitanHPBonus_Ronin = GetCurrentPlaylistVarInt( "fd_elitetitan_hpbonus_ronin", 7500 )
-	if( file.eliteTitanHPBonus_Ronin < 2500 )
-		file.eliteTitanHPBonus_Ronin = 2500
-	if( file.eliteTitanHPBonus_Ronin > 15000 )
-		file.eliteTitanHPBonus_Ronin = 15000
+	if( file.eliteTitanHPBonus_Ronin < FD_ELITE_TITAN_MIN_HEALTH_CAP )
+		file.eliteTitanHPBonus_Ronin = FD_ELITE_TITAN_MIN_HEALTH_CAP
+	if( file.eliteTitanHPBonus_Ronin > FD_ELITE_TITAN_MAX_HEALTH_CAP )
+		file.eliteTitanHPBonus_Ronin = FD_ELITE_TITAN_MAX_HEALTH_CAP
 	
 	file.eliteTitanHPBonus_Tone = GetCurrentPlaylistVarInt( "fd_elitetitan_hpbonus_tone", 7500 )
-	if( file.eliteTitanHPBonus_Tone < 2500 )
-		file.eliteTitanHPBonus_Tone = 2500
-	if( file.eliteTitanHPBonus_Tone > 15000 )
-		file.eliteTitanHPBonus_Tone = 15000
+	if( file.eliteTitanHPBonus_Tone < FD_ELITE_TITAN_MIN_HEALTH_CAP )
+		file.eliteTitanHPBonus_Tone = FD_ELITE_TITAN_MIN_HEALTH_CAP
+	if( file.eliteTitanHPBonus_Tone > FD_ELITE_TITAN_MAX_HEALTH_CAP )
+		file.eliteTitanHPBonus_Tone = FD_ELITE_TITAN_MAX_HEALTH_CAP
 	
 	file.eliteTitanHPBonus_Legion = GetCurrentPlaylistVarInt( "fd_elitetitan_hpbonus_legion", 15000 )
-	if( file.eliteTitanHPBonus_Legion < 2500 )
-		file.eliteTitanHPBonus_Legion = 2500
-	if( file.eliteTitanHPBonus_Legion > 15000 )
-		file.eliteTitanHPBonus_Legion = 15000
+	if( file.eliteTitanHPBonus_Legion < FD_ELITE_TITAN_MIN_HEALTH_CAP )
+		file.eliteTitanHPBonus_Legion = FD_ELITE_TITAN_MIN_HEALTH_CAP
+	if( file.eliteTitanHPBonus_Legion > FD_ELITE_TITAN_MAX_HEALTH_CAP )
+		file.eliteTitanHPBonus_Legion = FD_ELITE_TITAN_MAX_HEALTH_CAP
 	
 	file.eliteTitanHPBonus_Monarch = GetCurrentPlaylistVarInt( "fd_elitetitan_hpbonus_monarch", 7500 )
-	if( file.eliteTitanHPBonus_Monarch < 2500 )
-		file.eliteTitanHPBonus_Monarch = 2500
-	if( file.eliteTitanHPBonus_Monarch > 15000 )
-		file.eliteTitanHPBonus_Monarch = 15000
+	if( file.eliteTitanHPBonus_Monarch < FD_ELITE_TITAN_MIN_HEALTH_CAP )
+		file.eliteTitanHPBonus_Monarch = FD_ELITE_TITAN_MIN_HEALTH_CAP
+	if( file.eliteTitanHPBonus_Monarch > FD_ELITE_TITAN_MAX_HEALTH_CAP )
+		file.eliteTitanHPBonus_Monarch = FD_ELITE_TITAN_MAX_HEALTH_CAP
 }

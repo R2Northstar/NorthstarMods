@@ -1097,9 +1097,9 @@ void function DialoguePlayNormal()
 	int totalScore = GameMode_GetScoreLimit( GameRules_GetGameMode() )
 	int winningTeam
 	int losingTeam
-	float diagIntervel = 71 // play a faction dailogue every 70 + 1s to prevent play together with winner dialogue
+	float diagIntervel = 91
 
-	while( GetGameState() == eGameState.Playing )
+	while( GamePlaying() )
 	{
 		wait diagIntervel
 		if( GameRules_GetTeamScore( TEAM_MILITIA ) < GameRules_GetTeamScore( TEAM_IMC ) )

@@ -5,7 +5,6 @@ void function initFrontierDefenseData()
 	AddCallback_RegisterCustomFDContent( RegisterCustomFDContent )
 	
     PlaceFDShop( < -8255, -1517, 580 >, < 0, 45, 0 > )
-	SetFDDropshipSpawn( < -6348, -1096, 2560 > )
 	SetFDGroundSpawn( < -5785, -152, 580 >, < 0, 85, 0 > )
 	OverrideFDHarvesterLocation( < -7451, -81, 588 >, < 0, 135, 0 > )
 	

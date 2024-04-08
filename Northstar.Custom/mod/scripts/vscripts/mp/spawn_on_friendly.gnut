@@ -360,6 +360,7 @@ void function LFTitanShieldAndHealthRegenThink( entity soul )
 		lastShieldHealth = shieldHealth
 		lastTime = Time()
 		titan.SetTitle( "Helper Titan" )
+		titan.SetHudInfoVisibilityTestAlwaysPasses( true )
 		ShowName( titan )
 		WaitFrame()
 	}
