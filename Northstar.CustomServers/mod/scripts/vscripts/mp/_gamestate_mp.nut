@@ -1021,7 +1021,7 @@ void function DialoguePlayWinnerDetermined()
 
 void function OnPlayerChangedTeam( entity player )
 {
-	if ( !player.hasConnected ) //Prevents players who just joined to trigger below code, as server always pre setups their teams
+	if ( !player.hasConnected ) // Prevents players who just joined to trigger below code, as server always pre setups their teams
 		return
 	
 	NotifyClientsOfTeamChange( player, GetOtherTeam( player.GetTeam() ), player.GetTeam() )
