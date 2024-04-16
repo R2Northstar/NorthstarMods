@@ -203,10 +203,6 @@
 			"UICallback": {
 				"Before": "Progression_Init"
 			}
-		},
-		{
-			"Path": "gamemodes/_gamemode_fd_nav.nut",
-			"RunOn": "( SERVER ) && MP"
 		}
 	]
 }
