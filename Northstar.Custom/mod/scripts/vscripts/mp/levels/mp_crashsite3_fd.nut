@@ -343,14 +343,14 @@ void function initFrontierDefenseData()
 	WaveSpawn_TitanSpawn( wave5, "Nuke", < -1298, -1508, 622 >, -90, "", 5.0 )
 	WaveSpawn_WaitEnemyAliveAmount( wave5, 0 )
 	
-	WaveSpawn_NukeTitanMoveStance( wave5, true, 5.0 )
-	WaveSpawn_Announce( wave5, "NukeTitan", 0.0 )
+	WaveSpawn_NukeTitanMoveStance( wave5, true, 5.0, eFDSD.EXCLUSIVE | eFDSD.EASY )
+	WaveSpawn_Announce( wave5, "NukeTitan", 0.0, eFDSD.EXCLUSIVE | eFDSD.EASY )
 	for( spawnamount = 0; spawnamount < 83; spawnamount++ )
 	{
-		WaveSpawn_TitanSpawn( wave5, "Nuke", nukeTitanSpawns.getrandom(), -90, "nukeTrainShort", 0.5 )
-		WaveSpawn_WaitEnemyAliveAmount( wave5, 24 )
+		WaveSpawn_TitanSpawn( wave5, "Nuke", nukeTitanSpawns.getrandom(), -90, "nukeTrainShort", 0.5, "", 0.0, eFDSD.EXCLUSIVE | eFDSD.EASY )
+		WaveSpawn_WaitEnemyAliveAmount( wave5, 24, eFDHT.ALL, eFDSD.EXCLUSIVE | eFDSD.EASY )
 	}
-	WaveSpawn_TitanSpawn( wave5, "Nuke", nukeTitanSpawns.getrandom(), -90, "nukeTrainShort" )
+	WaveSpawn_TitanSpawn( wave5, "Nuke", nukeTitanSpawns.getrandom(), -90, "nukeTrainShort", 0.5, "", 0.0, eFDSD.EXCLUSIVE | eFDSD.EASY )
 	
     WaveSpawnEvents.append( wave5 )
 }

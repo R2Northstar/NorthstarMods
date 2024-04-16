@@ -203,11 +203,11 @@ void function GamemodeFD_Init()
 
 	//Damage Callbacks
 	AddDamageByCallback( "player", FD_DamageByPlayerCallback )
-	AddDamageCallback( "player", DamageScaleByDifficulty )
-	AddDamageCallback( "npc_titan", DamageScaleByDifficulty )
-	AddDamageCallback( "npc_turret_sentry", DamageScaleByDifficulty )
-	AddDamageCallback( "npc_turret_sentry", RevivableTurret_DamageCallback )
-	AddDamageCallback( "npc_turret_mega", HeavyTurret_DamageCallback )
+	AddDamageFinalCallback( "player", DamageScaleByDifficulty )
+	AddDamageFinalCallback( "npc_titan", DamageScaleByDifficulty )
+	AddDamageFinalCallback( "npc_turret_sentry", DamageScaleByDifficulty )
+	AddDamageFinalCallback( "npc_turret_sentry", RevivableTurret_DamageCallback )
+	AddDamageFinalCallback( "npc_turret_mega", HeavyTurret_DamageCallback )
 	AddDamageFinalCallback( "npc_titan", FD_DamageToMoney )
 	AddDamageFinalCallback( "player", FD_DamageToMoney ) //PvP case, player Titans will give money
 	
@@ -624,7 +624,7 @@ void function FD_createHarvester()
 	
 	ToggleNPCPathsForEntity( fd_harvester.harvester, false )
 	AddEntityCallback_OnPostShieldDamage( fd_harvester.harvester, HarvesterShieldInvulnCheck )
-	AddEntityCallback_OnDamaged( fd_harvester.harvester, OnHarvesterDamaged )
+	AddEntityCallback_OnFinalDamaged( fd_harvester.harvester, OnHarvesterDamaged )
 	thread MonitorHarvesterProximity( fd_harvester.harvester )
 	SetGlobalNetInt( "FD_waveState", WAVE_STATE_NONE )
 	
@@ -2110,7 +2110,6 @@ void function DamageScaleByDifficulty( entity ent, var damageInfo )
 				case eDamageSourceId.mp_weapon_pulse_lmg:
 				case eDamageSourceId.damagedef_titan_fall:
 				case eDamageSourceId.damagedef_titan_hotdrop:
-				case eDamageSourceId.mp_titanweapon_sniper:
 				DamageInfo_ScaleDamage( damageInfo, 0.1 )
 				break
 				
@@ -2545,12 +2544,10 @@ void function OnEnemyNPCPlayerTitanSpawnThreaded( entity npc )
 	if( !IsAlive( npc ) )
 		return
 	
+	GiveShieldByDifficulty( npc, true )
 	entity soul = npc.GetTitanSoul()
 	if( IsValid( soul ) )
-	{
-		soul.SetShieldHealth( soul.GetShieldHealthMax() )
 		soul.SetTitanSoulNetBool( "showOverheadIcon", true )
-	}
 }
 
 void function OnTickSpawn( entity tick )
@@ -2561,7 +2558,7 @@ void function OnTickSpawn( entity tick )
 void function TickSpawnThreaded( entity tick )
 {
 	WaitFrame()
-	if( GetGameState() != eGameState.Playing || tick.GetParent() ) //Parented Ticks are Drop Pod ones, and those are handled by the function there itself
+	if( !GamePlaying() || IsValid( tick.GetParent() ) ) //Parented Ticks are Drop Pod ones, and those are handled by the function there itself
 		return
 
 	else if ( GetGlobalNetInt( "FD_waveState" ) == WAVE_STATE_IN_PROGRESS && IsHarvesterAlive( fd_harvester.harvester ) )
@@ -2575,7 +2572,7 @@ void function TickSpawnThreaded( entity tick )
 		tick.Minimap_SetCustomState( eMinimapObject_npc.AI_TDM_AI )
 		tick.EnableNPCFlag( NPC_ALLOW_INVESTIGATE )
 		if( tick.GetTeam() == TEAM_IMC )
-			thread singleNav_thread( tick, "" )
+			thread NPCNav_FD( tick, "" )
 	}
 	else
 	{
@@ -3184,7 +3181,7 @@ void function MonitorHarvesterProximity( entity harvester )
 
 
 
-												  
+
 /* Dropship Functions
 ██████  ██████   ██████  ██████  ███████ ██   ██ ██ ██████      ███████ ██    ██ ███    ██  ██████ ████████ ██  ██████  ███    ██ ███████ 
 ██   ██ ██   ██ ██    ██ ██   ██ ██      ██   ██ ██ ██   ██     ██      ██    ██ ████   ██ ██         ██    ██ ██    ██ ████   ██ ██      
