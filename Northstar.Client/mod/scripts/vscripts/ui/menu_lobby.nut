@@ -233,6 +233,9 @@ void function InitLobbyMenu()
 
 void function ShowToggleProgressionDialog( var button )
 {
+	if( Hud_IsLocked( button ) )
+		return;
+
 	bool enabled = Progression_GetPreference()
 
 	DialogData dialogData
