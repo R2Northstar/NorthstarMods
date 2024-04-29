@@ -632,10 +632,3 @@ void function Hud_SetNavDown( var buttonFrom, var buttonTo )
 {
 	buttonFrom.SetNavDown( buttonTo )
 }
-
-bool function IsNSLobby()
-{
-	int ret = GetConVarInt( "sv_lobbyType" ) // is 1 if hosted locally by player, not exactly R1's IsMatchmakingServer tier of useful but should be enough
-	//printt("IsNSLobby: " + ret)
-	return ret == 1
-}

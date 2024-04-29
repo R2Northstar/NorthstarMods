@@ -596,7 +596,7 @@ void function OnLobbyMenu_Open()
 	// code will start loading DLC info from first party unless already done
 	InitDLCStore()
 
-	thread HandleStateOfNSFooterButtons()
+	thread DoNSButtonState()
 
 	thread UpdateCachedNewItems()
 	if ( file.putPlayerInMatchmakingAfterDelay )
@@ -703,7 +703,7 @@ void function OnLobbyMenu_Open()
 	}
 }
 
-void function HandleStateOfNSFooterButtons()
+void function DoNSButtonState()
 {
 	Hud_SetLocked( file.progressionButton, true )
 	Hud_SetLocked( file.findGameButton, true )
@@ -723,7 +723,7 @@ void function HandleStateOfNSFooterButtons()
 	var serverBrowserButton
 	var privateMatchButton
 
-	if ( !IsNSLobby() )
+	if ( NSIsVanilla() )
 	{
 		Hud_SetLocked( file.progressionButton, true )
 
@@ -769,7 +769,7 @@ void function LobbyMenuUpdate( var menu )
 	while ( GetTopNonDialogMenu() == menu )
 	{
 		bool inPendingOpenInvite = InPendingOpenInvite()
-		if(!IsNSLobby())
+		if( NSIsVanilla() )
 		{
 			Hud_SetLocked( file.findGameButton, !IsPartyLeader() || inPendingOpenInvite )
 			Hud_SetLocked( file.inviteRoomButton, IsOpenInviteVisible() || GetPartySize() > 1 || inPendingOpenInvite )
