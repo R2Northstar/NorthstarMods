@@ -391,7 +391,7 @@ void function UpdatePlayButton( var button )
 			hasLatestPatch = Origin_IsUpToDate()
 			isOriginConnected = Origin_IsEnabled() ? Origin_IsOnline() : true
 			isStryderAuthenticated = IsStryderAuthenticated()
-			isMPAllowed = true
+			isMPAllowed = IsStryderAllowingMP()
 
 			if ( DEBUG_PERMISSIONS )
 			{
