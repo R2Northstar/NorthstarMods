@@ -710,7 +710,7 @@ void function DoNSButtonState()
 {
 	if ( NSIsVanilla() )
 	{
-		Hud_SetLocked( file.progressionButton, true )
+		Hud_SetVisible( file.progressionButton, false )
 
 		ComboButton_SetText( file.findGameButton, "#MENU_TITLE_FIND_GAME" )
 		ComboButton_SetText( file.inviteRoomButton, "#MENU_TITLE_INVITE_ROOM" )
@@ -718,7 +718,7 @@ void function DoNSButtonState()
 	} 
 	else
 	{
-		Hud_SetLocked( file.progressionButton, false )
+		Hud_SetVisible( file.progressionButton, true )
 
 		ComboButton_SetText( file.findGameButton, "#MENU_TITLE_SERVER_BROWSER" )
 		ComboButton_SetText( file.inviteRoomButton, "#PRIVATE_MATCH" )
