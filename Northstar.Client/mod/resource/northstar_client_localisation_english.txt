@@ -11,7 +11,6 @@
 		"WARNING" "Warning"
 		"CORE_MOD_DISABLE_WARNING"  "Disabling core mods can break your client!"
 		"DISABLE" "Disable"
-		"NS_CUSTOM_ENABLED" "Northstar.Custom is enabled, you should disable it and other mods that will cause issues with Vanilla."
 
 		"DIALOG_TITLE_INSTALLED_NORTHSTAR" "Thanks for installing Northstar!"
 		"AUTHENTICATION_AGREEMENT_DIALOG_TEXT" "For Northstar to work, it needs to authenticate using the Northstar master server. This will require sending your origin token to the master server, it will not be stored or used for any other purposes.

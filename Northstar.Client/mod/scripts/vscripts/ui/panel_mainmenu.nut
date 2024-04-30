@@ -587,14 +587,8 @@ void function OnPlayMPButton_Activate( var button )
 
 	if ( NSIsModEnabled( "Northstar.Custom" ) )
 	{
-		DialogData dialogData
-		dialogData.image = $"ui/menu/common/dialog_error"
-		dialogData.header = "#ERROR"
-		dialogData.message = "#NS_CUSTOM_ENABLED"
-
-		AddDialogButton( dialogData, "#OK", null )
-		OpenDialog( dialogData )
-		return
+		NSSetModEnabled( "Northstar.Custom", false )
+		ReloadMods()
 	}
 
 	if ( !Hud_IsLocked( button ) && file.mpButtonActivateFunc != null )
