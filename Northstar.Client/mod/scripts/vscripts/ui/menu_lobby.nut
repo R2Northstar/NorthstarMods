@@ -71,6 +71,7 @@ struct
 
 	int inboxHeaderIndex
 	var inboxButton
+	var switchButton
 
 	int customizeHeaderIndex
 	var pilotButton
@@ -361,6 +362,7 @@ void function SetupComboButtonTest( var menu )
 	file.lobbyButtons.append( networksInbox )
 	Hud_AddEventHandler( networksInbox, UIE_CLICK, OnInboxButton_Activate )
 	var switchButton = AddComboButton( comboStruct, headerIndex, buttonIndex++, "#COMMUNITY_SWITCHCOMMUNITY" )
+	file.switchButton = switchButton
 	Hud_AddEventHandler( switchButton, UIE_CLICK, OnSwitchButton_Activate )
 	var browseButton = AddComboButton( comboStruct, headerIndex, buttonIndex++, "#COMMUNITY_BROWSE_NETWORKS" )
 	file.lobbyButtons.append( browseButton )
@@ -715,6 +717,16 @@ void function DoNSButtonState()
 		ComboButton_SetText( file.findGameButton, "#MENU_TITLE_FIND_GAME" )
 		ComboButton_SetText( file.inviteRoomButton, "#MENU_TITLE_INVITE_ROOM" )
 		Hud_SetVisible( file.inviteFriendsButton, true )
+
+		Hud_SetLocked( file.inboxButton, false )
+		Hud_SetLocked( file.browseNetworkButton, false )
+		Hud_SetLocked( file.switchButton, false )
+		Hud_SetLocked( file.inviteFriendsToNetworkButton, false )
+
+		Hud_SetLocked( file.storeButton, false )
+		Hud_SetLocked( file.storeNewReleasesButton, false )
+		Hud_SetLocked( file.storeBundlesButton, false )
+
 	} 
 	else
 	{
@@ -723,6 +735,15 @@ void function DoNSButtonState()
 		ComboButton_SetText( file.findGameButton, "#MENU_TITLE_SERVER_BROWSER" )
 		ComboButton_SetText( file.inviteRoomButton, "#PRIVATE_MATCH" )
 		Hud_SetVisible( file.inviteFriendsButton, false )
+
+		Hud_SetLocked( file.inboxButton, true )
+		Hud_SetLocked( file.browseNetworkButton, true )
+		Hud_SetLocked( file.switchButton, true )
+		Hud_SetLocked( file.inviteFriendsToNetworkButton, true )
+
+		Hud_SetLocked( file.storeButton, true )
+		Hud_SetLocked( file.storeNewReleasesButton, true )
+		Hud_SetLocked( file.storeBundlesButton, true )
 	}
 }
 
@@ -1613,17 +1634,26 @@ void function SetPutPlayerInMatchmakingAfterDelay( bool value )
 
 void function OnStoreButton_Activate( var button )
 {
+	if( Hud_IsLocked( button ) )
+		return
+
 	LaunchGamePurchaseOrDLCStore()
 }
 
 void function OnStoreNewReleasesButton_Activate( var button )
 {
+	if( Hud_IsLocked( button ) )
+		return
+
 	//LaunchGamePurchaseOrDLCStore( [ "StoreMenu", "StoreMenu_NewReleases" ] )
 	LaunchGamePurchaseOrDLCStore( [ "StoreMenu", "StoreMenu_WeaponSkins" ] )
 }
 
 void function OnStoreBundlesButton_Activate( var button )
 {
+	if( Hud_IsLocked( button ) )
+		return
+
 	LaunchGamePurchaseOrDLCStore( [ "StoreMenu", "StoreMenu_Sales" ] )
 }
 
