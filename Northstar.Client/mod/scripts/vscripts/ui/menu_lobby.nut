@@ -66,8 +66,6 @@ struct
 	var inviteFriendsButton
 	var inviteFriendsToNetworkButton
 	var toggleMenuModeButton
-	var serverBrowserButton
-	var privateMatchButton
 
 	var networksMoreButton
 
@@ -307,14 +305,14 @@ void function SetupComboButtonTest( var menu )
 	Hud_AddEventHandler( file.inviteFriendsButton, UIE_CLICK, InviteFriendsIfAllowed )
 
 	// server browser
-	file.serverBrowserButton = AddComboButton( comboStruct, headerIndex, buttonIndex++, "#MENU_TITLE_SERVER_BROWSER" )
-	file.lobbyButtons.append( file.serverBrowserButton )
-	Hud_SetLocked( file.serverBrowserButton, true )
-	Hud_AddEventHandler( file.serverBrowserButton, UIE_CLICK, OpenServerBrowser )
+	// file.serverBrowserButton = AddComboButton( comboStruct, headerIndex, buttonIndex++, "#MENU_TITLE_SERVER_BROWSER" )
+	// file.lobbyButtons.append( file.serverBrowserButton )
+	// Hud_SetLocked( file.serverBrowserButton, true )
+	// Hud_AddEventHandler( file.serverBrowserButton, UIE_CLICK, OpenServerBrowser )
 
 	// private match
-	file.privateMatchButton = AddComboButton( comboStruct, headerIndex, buttonIndex++, "#PRIVATE_MATCH" )
-	Hud_AddEventHandler( file.privateMatchButton, UIE_CLICK, StartPrivateMatch )
+	// file.privateMatchButton = AddComboButton( comboStruct, headerIndex, buttonIndex++, "#PRIVATE_MATCH" )
+	// Hud_AddEventHandler( file.privateMatchButton, UIE_CLICK, StartPrivateMatch )
 
 
 	// Hud_SetEnabled( file.inviteFriendsButton, false )
@@ -428,22 +426,27 @@ void function DoRoomInviteIfAllowed( var button )
 	if ( Hud_IsLocked( button ) )
 		return
 
-	if ( !DoesCurrentCommunitySupportInvites() )
+	if ( !NSIsVanilla() )
+		StartPrivateMatch( button )
+	else
 	{
-		OnBrowseNetworksButton_Activate( button )
-		return
+		if ( !DoesCurrentCommunitySupportInvites() )
+		{
+			OnBrowseNetworksButton_Activate( button )
+			return
+		}
+
+		entity player = GetUIPlayer()
+
+		if ( IsValid( player ) && Player_NextAvailableMatchmakingTime( player ) > 0 )
+		{
+			DisplayMatchmakingPenaltyDialog( player )
+			return
+		}
+
+		SendOpenInvite( true )
+		OpenSelectedPlaylistMenu()
 	}
-
-	entity player = GetUIPlayer()
-
-	if ( IsValid( player ) && Player_NextAvailableMatchmakingTime( player ) > 0 )
-	{
-		DisplayMatchmakingPenaltyDialog( player )
-		return
-	}
-
-	SendOpenInvite( true )
-	OpenSelectedPlaylistMenu()
 }
 
 void function DisplayMatchmakingPenaltyDialog( entity player )
@@ -596,7 +599,7 @@ void function OnLobbyMenu_Open()
 	// code will start loading DLC info from first party unless already done
 	InitDLCStore()
 
-	thread DoNSButtonState()
+	DoNSButtonState()
 
 	thread UpdateCachedNewItems()
 	if ( file.putPlayerInMatchmakingAfterDelay )
@@ -705,47 +708,21 @@ void function OnLobbyMenu_Open()
 
 void function DoNSButtonState()
 {
-	Hud_SetLocked( file.progressionButton, true )
-	Hud_SetLocked( file.findGameButton, true )
-	Hud_SetLocked( file.inviteRoomButton, true )
-	Hud_SetLocked( file.inviteFriendsButton, true )
-	Hud_SetLocked( file.inviteFriendsToNetworkButton, true )
-	Hud_SetLocked( file.serverBrowserButton, true )
-	Hud_SetLocked( file.privateMatchButton, true )
-
-	wait 0.3
-
-	var findGameButton
-	var inviteRoomButton
-	var inviteFriendsButton
-	var inviteFriendsToNetworkButton
-	var toggleMenuModeButton
-	var serverBrowserButton
-	var privateMatchButton
-
 	if ( NSIsVanilla() )
 	{
 		Hud_SetLocked( file.progressionButton, true )
 
-		Hud_SetLocked( file.findGameButton, false )
-		Hud_SetLocked( file.inviteRoomButton, false )
-		Hud_SetLocked( file.inviteFriendsButton, false )
-		Hud_SetLocked( file.inviteFriendsToNetworkButton, false )
-
-		Hud_SetLocked( file.serverBrowserButton, true )
-		Hud_SetLocked( file.privateMatchButton, true )
+		ComboButton_SetText( file.findGameButton, "#MENU_TITLE_FIND_GAME" )
+		ComboButton_SetText( file.inviteRoomButton, "#MENU_TITLE_INVITE_ROOM" )
+		Hud_SetVisible( file.inviteFriendsButton, true )
 	} 
 	else
 	{
 		Hud_SetLocked( file.progressionButton, false )
 
-		Hud_SetLocked( file.findGameButton, true )
-		Hud_SetLocked( file.inviteRoomButton, true )
-		Hud_SetLocked( file.inviteFriendsButton, true )
-		Hud_SetLocked( file.inviteFriendsToNetworkButton, true )
-
-		Hud_SetLocked( file.serverBrowserButton, false )
-		Hud_SetLocked( file.privateMatchButton, false )
+		ComboButton_SetText( file.findGameButton, "#MENU_TITLE_SERVER_BROWSER" )
+		ComboButton_SetText( file.inviteRoomButton, "#PRIVATE_MATCH" )
+		Hud_SetVisible( file.inviteFriendsButton, false )
 	}
 }
 
@@ -1299,8 +1276,13 @@ void function BigPlayButton1_Activate( var button )
 	if ( Hud_IsLocked( button ) )
 		return
 
-	SendOpenInvite( false )
-	OpenSelectedPlaylistMenu()
+	if ( !NSIsVanilla() )
+		OpenServerBrowser( button )
+	else
+	{
+		SendOpenInvite( false )
+		OpenSelectedPlaylistMenu()
+	}
 }
 
 function EnableButton( button )
