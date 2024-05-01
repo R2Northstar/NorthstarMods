@@ -3,8 +3,8 @@ global function InitModesMenu
 struct {
 	int currentModePage
 	array<string> modes = [ // default modes in vanilla
-		"tdm",
 		"aitdm",
+		"tdm",
 		"cp",
 		"at",
 		"ctf",
