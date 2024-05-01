@@ -41,6 +41,8 @@ struct
 	var titanButton
 	var boostsButton
 	var storeButton
+	var storeNewReleasesButton
+	var storeBundlesButton
 	var factionButton
 	var bannerButton
 	var patchButton
@@ -313,10 +315,10 @@ void function SetupComboButtons( var menu, var navUpButton, var navDownButton  )
 	file.storeHeader = AddComboButtonHeader( comboStruct, headerIndex, "#MENU_HEADER_STORE" )
 	file.storeButton = AddComboButton( comboStruct, headerIndex, buttonIndex++, "#MENU_TITLE_STORE_BROWSE" )
 	Hud_AddEventHandler( file.storeButton, UIE_CLICK, OnStoreButton_Activate )
-	var storeNewReleasesButton = AddComboButton( comboStruct, headerIndex, buttonIndex++, "#MENU_TITLE_STORE_NEW_RELEASES" )
-	Hud_AddEventHandler( storeNewReleasesButton, UIE_CLICK, OnStoreNewReleasesButton_Activate )
-	var storeBundlesButton = AddComboButton( comboStruct, headerIndex, buttonIndex++, "#MENU_TITLE_STORE_BUNDLES" )
-	Hud_AddEventHandler( storeBundlesButton, UIE_CLICK, OnStoreBundlesButton_Activate )
+	file.storeNewReleasesButton = AddComboButton( comboStruct, headerIndex, buttonIndex++, "#MENU_TITLE_STORE_NEW_RELEASES" )
+	Hud_AddEventHandler( file.storeNewReleasesButton, UIE_CLICK, OnStoreNewReleasesButton_Activate )
+	file.storeBundlesButton = AddComboButton( comboStruct, headerIndex, buttonIndex++, "#MENU_TITLE_STORE_BUNDLES" )
+	Hud_AddEventHandler( file.storeBundlesButton, UIE_CLICK, OnStoreBundlesButton_Activate )
 
 	headerIndex++
 	buttonIndex = 0
@@ -566,6 +568,8 @@ function UpdatePrivateMatchButtons()
 {
 	var menu = file.menu
 
+	UpdateStoreButtons()
+
 	if ( level.ui.privatematch_starting == ePrivateMatchStartState.STARTING )
 	{
 		RHud_SetText( file.startMatchButton, "#STOP_MATCH" )
@@ -588,6 +592,22 @@ function UpdatePrivateMatchButtons()
 			CloseActiveMenu()
 
 		Hud_SetLocked( file.matchSettingsButton, settingsLocked )
+	}
+}
+
+function UpdateStoreButtons()
+{
+	if ( NSIsVanilla() )
+	{
+		Hud_SetLocked( file.storeButton, false )
+		Hud_SetLocked( file.storeNewReleasesButton, false )
+		Hud_SetLocked( file.storeBundlesButton, false )
+	} 
+	else
+	{
+		Hud_SetLocked( file.storeButton, true )
+		Hud_SetLocked( file.storeNewReleasesButton, true )
+		Hud_SetLocked( file.storeBundlesButton, true )
 	}
 }
 
