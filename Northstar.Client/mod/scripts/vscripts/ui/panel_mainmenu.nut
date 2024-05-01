@@ -145,6 +145,12 @@ void function OnShowMainMenuPanel()
 	Signal( uiGlobal.signalDummy, "EndShowMainMenuPanel" )
 	EndSignal( uiGlobal.signalDummy, "EndShowMainMenuPanel" )
 
+	if ( NSIsModEnabled( "Northstar.Custom" ) )
+	{
+		NSSetModEnabled( "Northstar.Custom", false )
+		ReloadMods()
+	}
+
 	foreach ( button in file.menuButtons )
 	{
 		int buttonID = int( Hud_GetScriptID( button ) )
@@ -584,12 +590,6 @@ void function OnPlayMPButton_Activate( var button )
 {
 	if ( file.mpButtonActivateFunc == null )
 		printt( "file.mpButtonActivateFunc is null" )
-
-	if ( NSIsModEnabled( "Northstar.Custom" ) )
-	{
-		NSSetModEnabled( "Northstar.Custom", false )
-		ReloadMods()
-	}
 
 	if ( !Hud_IsLocked( button ) && file.mpButtonActivateFunc != null )
 	{
