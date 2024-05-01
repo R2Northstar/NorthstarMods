@@ -1,7 +1,0 @@
-global function NSRemote_RegisterFunction
-
-void function NSRemote_RegisterFunction( string name )
-{
-    if( !NSIsVanilla() )
-        Remote_RegisterFunction( name );
-}

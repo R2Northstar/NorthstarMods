@@ -73,8 +73,6 @@ void function OnMainMenu_Open()
 	Signal( uiGlobal.signalDummy, "EndOnMainMenu_Open" )
 	EndSignal( uiGlobal.signalDummy, "EndOnMainMenu_Open" )
 
-	NSResetToken()
-
 	// SetConVarString( "communities_hostname", "" ) // disable communities due to crash exploits that are still possible through it
 
 	UpdatePromoData() // On script restarts this gives us the last data until the new request is complete
@@ -300,6 +298,7 @@ void function LaunchSPTrialMission()
 void function LaunchMP()
 {
 	uiGlobal.launching = eLaunching.MULTIPLAYER
+	NSResetToken()
 	LaunchGame()
 }
 
