@@ -40,7 +40,7 @@ void function FirstPersonSequenceForce1P_InitPlaylistVars()
 
 void function FirstPersonSequenceForce1P_RegisterCustomNetworkFunctions()
 {
-	Remote_RegisterFunction( "ServerCallback_HideHudForFPHackAnim" )
+	NSRemote_RegisterFunction( "ServerCallback_HideHudForFPHackAnim" )
 }
 
 #if SERVER

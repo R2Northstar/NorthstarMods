@@ -441,6 +441,10 @@
 			"RunOn": "CLIENT || SERVER || UI"
 		},
 		{
+			"Path": "sh_remote_wrapper.gnut",
+			"RunOn": "CLIENT || SERVER || UI"
+		},
+		{
 			"Path": "_testing.nut",
 			"RunOn": "CLIENT || SERVER || UI",
 			"ClientCallback": {

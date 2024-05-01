@@ -40,8 +40,8 @@ void function HideAndSeekRegisterNetworkVars()
 	if ( GAMETYPE != GAMEMODE_HIDEANDSEEK )
 		return
 		
-	Remote_RegisterFunction( "ServerCallback_ShowHideAndSeekCountdown" )
-	Remote_RegisterFunction( "ServerCallback_SeekersIncoming" )
-	Remote_RegisterFunction( "ServerCallback_LastHiderAlive" )
-	Remote_RegisterFunction( "ServerCallback_AnnounceHideAndSeekRole" )
+	NSRemote_RegisterFunction( "ServerCallback_ShowHideAndSeekCountdown" )
+	NSRemote_RegisterFunction( "ServerCallback_SeekersIncoming" )
+	NSRemote_RegisterFunction( "ServerCallback_LastHiderAlive" )
+	NSRemote_RegisterFunction( "ServerCallback_AnnounceHideAndSeekRole" )
 }

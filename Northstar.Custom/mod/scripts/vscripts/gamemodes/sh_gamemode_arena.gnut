@@ -37,13 +37,13 @@ void function ArenaRegisterNetworkVars()
 		return
 
 	// boost store stuff
-	Remote_RegisterFunction( "ServerCallback_OpenBoostStore" )
-	Remote_RegisterFunction( "ServerCallback_UpdateMoney" )
-    Remote_RegisterFunction( "ServerCallback_UpdateTeamReserve" )
-	Remote_RegisterFunction( "ServerCallback_UpdatePlayerHasBattery" )
-	Remote_RegisterFunction( "ServerCallback_UpdateAmpedWeaponState" )
-	Remote_RegisterFunction( "ServerCallback_BoostStoreTitanHint" )
-	Remote_RegisterFunction( "ServerCallback_UpdateTurretCount" )
+	NSRemote_RegisterFunction( "ServerCallback_OpenBoostStore" )
+	NSRemote_RegisterFunction( "ServerCallback_UpdateMoney" )
+    NSRemote_RegisterFunction( "ServerCallback_UpdateTeamReserve" )
+	NSRemote_RegisterFunction( "ServerCallback_UpdatePlayerHasBattery" )
+	NSRemote_RegisterFunction( "ServerCallback_UpdateAmpedWeaponState" )
+	NSRemote_RegisterFunction( "ServerCallback_BoostStoreTitanHint" )
+	NSRemote_RegisterFunction( "ServerCallback_UpdateTurretCount" )
 	
 	RegisterNetworkedVariable( "boostStoreOpen", SNDC_GLOBAL, SNVT_BOOL, false )
 	RegisterNetworkedVariable( "FD_money", SNDC_PLAYER_GLOBAL, SNVT_UNSIGNED_INT, 0 )
@@ -54,5 +54,5 @@ void function ArenaRegisterNetworkVars()
 	RegisterNetworkedVariable( "FD_waveActive", SNDC_GLOBAL, SNVT_BOOL, false )
 	
 	// arena-exclusive stuff
-	Remote_RegisterFunction( "ServerCallback_CreateMoneyParticles" )
+	NSRemote_RegisterFunction( "ServerCallback_CreateMoneyParticles" )
 }
