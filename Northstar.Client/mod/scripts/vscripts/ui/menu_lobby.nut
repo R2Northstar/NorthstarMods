@@ -335,8 +335,8 @@ void function SetupComboButtonTest( var menu )
 	Hud_AddEventHandler( titanButton, UIE_CLICK, AdvanceMenuEventHandler( GetMenu( "EditTitanLoadoutsMenu" ) ) )
 	file.boostsButton = AddComboButton( comboStruct, headerIndex, buttonIndex++, "#MENU_TITLE_BOOSTS" )
 	Hud_AddEventHandler( file.boostsButton, UIE_CLICK, AdvanceMenuEventHandler( GetMenu( "BurnCardMenu" ) ) )
-	file.progressionButton = AddComboButton( comboStruct, headerIndex, buttonIndex++, "#TOGGLE_PROGRESSION" )
-	Hud_AddEventHandler( file.progressionButton, UIE_CLICK, ShowToggleProgressionDialog )
+	// file.progressionButton = AddComboButton( comboStruct, headerIndex, buttonIndex++, "#TOGGLE_PROGRESSION" )
+	// Hud_AddEventHandler( file.progressionButton, UIE_CLICK, ShowToggleProgressionDialog )
 
 	headerIndex++
 	buttonIndex = 0
@@ -514,6 +514,9 @@ void function InviteFriendsIfAllowed( var button )
 {
 	if ( Hud_IsLocked( button ) )
 		return
+
+	if ( !NSIsVanilla() )
+		ShowToggleProgressionDialog( button )
 
 	entity player = GetUIPlayer()
 	if ( IsValid( player ) && Player_NextAvailableMatchmakingTime( player ) > 0 )
@@ -712,11 +715,9 @@ void function DoNSButtonState()
 {
 	if ( NSIsVanilla() )
 	{
-		Hud_SetVisible( file.progressionButton, false )
-
 		ComboButton_SetText( file.findGameButton, "#MENU_TITLE_FIND_GAME" )
 		ComboButton_SetText( file.inviteRoomButton, "#MENU_TITLE_INVITE_ROOM" )
-		Hud_SetVisible( file.inviteFriendsButton, true )
+		ComboButton_SetText( file.inviteFriendsButton, "#MENU_TITLE_INVITE_FRIENDS" )
 
 		Hud_SetLocked( file.inboxButton, false )
 		Hud_SetLocked( file.browseNetworkButton, false )
@@ -730,11 +731,9 @@ void function DoNSButtonState()
 	} 
 	else
 	{
-		Hud_SetVisible( file.progressionButton, true )
-
 		ComboButton_SetText( file.findGameButton, "#MENU_TITLE_SERVER_BROWSER" )
 		ComboButton_SetText( file.inviteRoomButton, "#PRIVATE_MATCH" )
-		Hud_SetVisible( file.inviteFriendsButton, false )
+		ComboButton_SetText( file.inviteFriendsButton, "#TOGGLE_PROGRESSION" )
 
 		Hud_SetLocked( file.inboxButton, true )
 		Hud_SetLocked( file.browseNetworkButton, true )
