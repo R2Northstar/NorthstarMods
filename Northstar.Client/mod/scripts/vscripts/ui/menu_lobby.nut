@@ -360,13 +360,13 @@ void function SetupComboButtonTest( var menu )
 	var networksInbox = AddComboButton( comboStruct, headerIndex, buttonIndex++, "#MENU_TITLE_INBOX" )
 	file.inboxButton = networksInbox
 	file.lobbyButtons.append( networksInbox )
-	Hud_AddEventHandler( networksInbox, UIE_CLICK, OnInboxButton_Activate )
+	Hud_AddEventHandler( networksInbox, UIE_CLICK, _OnInboxButton_Activate )
 	var switchButton = AddComboButton( comboStruct, headerIndex, buttonIndex++, "#COMMUNITY_SWITCHCOMMUNITY" )
 	file.switchButton = switchButton
-	Hud_AddEventHandler( switchButton, UIE_CLICK, OnSwitchButton_Activate )
+	Hud_AddEventHandler( switchButton, UIE_CLICK, _OnSwitchButton_Activate )
 	var browseButton = AddComboButton( comboStruct, headerIndex, buttonIndex++, "#COMMUNITY_BROWSE_NETWORKS" )
 	file.lobbyButtons.append( browseButton )
-	Hud_AddEventHandler( browseButton, UIE_CLICK, OnBrowseNetworksButton_Activate )
+	Hud_AddEventHandler( browseButton, UIE_CLICK, _OnBrowseNetworksButton_Activate )
 	file.browseNetworkButton = browseButton
 	#if NETWORK_INVITE
 		file.inviteFriendsToNetworkButton = AddComboButton( comboStruct, headerIndex, buttonIndex++, "#INVITE_FRIENDS" )
@@ -408,6 +408,30 @@ void function SetupComboButtonTest( var menu )
 	comboStruct.navDownButton = file.genUpButton
 
 	ComboButtons_Finalize( comboStruct )
+}
+
+void function _OnInboxButton_Activate( var button )
+{
+	if ( Hud_IsLocked( button ) )
+		return
+
+	OnInboxButton_Activate( button)
+}
+
+void function _OnSwitchButton_Activate( var button )
+{
+	if ( Hud_IsLocked( button ) )
+		return
+
+	OnSwitchButton_Activate( button)
+}
+
+void function _OnBrowseNetworksButton_Activate( var button )
+{
+	if ( Hud_IsLocked( button ) )
+		return
+
+	OnBrowseNetworksButton_Activate( button)
 }
 
 bool function MatchResultsExist()
