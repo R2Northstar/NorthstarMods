@@ -371,7 +371,7 @@ void function SetupComboButtonTest( var menu )
 	#if NETWORK_INVITE
 		file.inviteFriendsToNetworkButton = AddComboButton( comboStruct, headerIndex, buttonIndex++, "#INVITE_FRIENDS" )
 		file.lobbyButtons.append( file.inviteFriendsToNetworkButton )
-		Hud_AddEventHandler( file.inviteFriendsToNetworkButton, UIE_CLICK, OnInviteFriendsToNetworkButton_Activate )
+		Hud_AddEventHandler( file.inviteFriendsToNetworkButton, UIE_CLICK, _OnInviteFriendsToNetworkButton_Activate )
 	#endif
 
 	headerIndex++
@@ -408,6 +408,14 @@ void function SetupComboButtonTest( var menu )
 	comboStruct.navDownButton = file.genUpButton
 
 	ComboButtons_Finalize( comboStruct )
+}
+
+void function _OnInviteFriendsToNetworkButton_Activate( var button )
+{
+	if ( Hud_IsLocked( button ) )
+		return
+
+	OnInviteFriendsToNetworkButton_Activate( button )
 }
 
 void function _OnInboxButton_Activate( var button )
