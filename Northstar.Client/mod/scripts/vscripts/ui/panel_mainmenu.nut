@@ -32,6 +32,7 @@ struct
 
 	bool installing = false
 	bool stopNSLocalAuth = false
+	bool initialBoot = false
 } file
 
 const DEBUG_PERMISSIONS = false
@@ -144,6 +145,12 @@ void function OnShowMainMenuPanel()
 {
 	Signal( uiGlobal.signalDummy, "EndShowMainMenuPanel" )
 	EndSignal( uiGlobal.signalDummy, "EndShowMainMenuPanel" )
+
+	if( !file.initialBoot )
+	{
+		NSResetToken()
+		file.initialBoot = true
+	}
 
 	foreach ( button in file.menuButtons )
 	{
