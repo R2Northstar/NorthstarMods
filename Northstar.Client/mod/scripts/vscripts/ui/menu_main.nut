@@ -297,6 +297,7 @@ void function LaunchSPTrialMission()
 
 void function LaunchMP()
 {
+	NSResetToken()
 	uiGlobal.launching = eLaunching.MULTIPLAYER
 	LaunchGame()
 }

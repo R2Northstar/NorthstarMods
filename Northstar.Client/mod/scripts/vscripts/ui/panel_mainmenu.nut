@@ -32,7 +32,6 @@ struct
 
 	bool installing = false
 	bool stopNSLocalAuth = false
-	bool initialBoot = false
 } file
 
 const DEBUG_PERMISSIONS = false
@@ -146,11 +145,6 @@ void function OnShowMainMenuPanel()
 	Signal( uiGlobal.signalDummy, "EndShowMainMenuPanel" )
 	EndSignal( uiGlobal.signalDummy, "EndShowMainMenuPanel" )
 
-	if( !file.initialBoot )
-	{
-		NSResetToken()
-		file.initialBoot = true
-	}
 
 	foreach ( button in file.menuButtons )
 	{
@@ -400,7 +394,7 @@ void function UpdatePlayButton( var button )
 			isStryderAuthenticated = IsStryderAuthenticated()
 			isMPAllowed = IsStryderAllowingMP()
 
-			if ( DEBUG_PERMISSIONS )
+			if ( true )
 			{
 				printt( "isOriginConnected:", isOriginConnected )
 				printt( "isStryderAuthenticated:", isStryderAuthenticated )
@@ -424,7 +418,7 @@ void function UpdatePlayButton( var button )
 			else if ( button == file.mpButton && !isMPAllowed )
 			{
 				message = "#MULTIPLAYER_NOT_AVAILABLE"
-				file.mpButtonActivateFunc = null
+				// file.mpButtonActivateFunc = null
 			}
 			else if ( button == file.mpButton && !hasLatestPatch )
 			{
