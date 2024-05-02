@@ -394,7 +394,7 @@ void function UpdatePlayButton( var button )
 			isStryderAuthenticated = IsStryderAuthenticated()
 			isMPAllowed = IsStryderAllowingMP()
 
-			if ( true )
+			if ( DEBUG_PERMISSIONS )
 			{
 				printt( "isOriginConnected:", isOriginConnected )
 				printt( "isStryderAuthenticated:", isStryderAuthenticated )
