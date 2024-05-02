@@ -1613,6 +1613,11 @@ void function MatchmakingSetCountdownTimer( float time, bool useServerTime = tru
 
 void function OnLobbyLevelInit()
 {
+	if( NSIsVanilla() && ( !GetConVarBool( "ns_communities_disabled_override" ) ) )
+		SetConVarBool( "communities_enabled", true)
+	else
+		SetConVarBool( "communities_enabled", false)
+
 	UpdateCallsignElement( file.callsignCard )
 	RefreshCreditsAvailable()
 }
