@@ -755,6 +755,8 @@ void function DoNSButtonState()
 	} 
 	else
 	{
+		ClientCommand( "loadPlaylists" ) // reload playlists only on northstar so server-browser works
+
 		ComboButton_SetText( file.findGameButton, "#MENU_TITLE_SERVER_BROWSER" )
 		ComboButton_SetText( file.inviteRoomButton, "#PRIVATE_MATCH" )
 		ComboButton_SetText( file.inviteFriendsButton, "#TOGGLE_PROGRESSION" )

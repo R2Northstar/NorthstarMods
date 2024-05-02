@@ -844,6 +844,7 @@ function UpdatePlayerInfo()
 
 void function OnPrivateMatchMenu_Open()
 {
+	ClientCommand( "loadPlaylists" ) // reload playlists so the modes menu has the all the stuff to lock
 	Lobby_SetFDMode( false )
 	OnLobbyMenu_Open()
 }
