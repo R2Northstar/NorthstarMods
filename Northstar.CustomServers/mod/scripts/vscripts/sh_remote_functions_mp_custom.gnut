@@ -22,6 +22,6 @@ void function AddCallback_OnRegisteringCustomNetworkVars( void functionref() cal
 
 void function NSRemote_RegisterFunction( string name )
 {
-    if( !NSIsVanilla() )
+    if( !NSIsVanilla() || GetConVarBool( "ns_skip_vanilla_integrity_check" ) )
         Remote_RegisterFunction( name );
 }
