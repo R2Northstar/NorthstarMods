@@ -430,6 +430,10 @@ void function UpdatePlayButton( var button )
 				message = "#AUTHENTICATIONAGREEMENT_NO"
 				file.mpButtonActivateFunc = null
 			}
+			else if ( button == file.mpButton && GetConVarBool( "ns_skip_vanilla_integrity_check") )
+			{
+				file.mpButtonActivateFunc = null
+			}
 			else if ( button == file.mpButton )
 			{
 				file.mpButtonActivateFunc = LaunchMP
