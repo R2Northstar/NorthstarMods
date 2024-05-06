@@ -466,6 +466,10 @@
 			"UICallback":{
 				"Before": "NSCustomModSettings"
 			}
+		},
+		{
+			"Path":  "sh_northstar_mod_weapon_vars.gnut",
+			"RunOn": "CLIENT || SERVER"
 		}
 	],
 
