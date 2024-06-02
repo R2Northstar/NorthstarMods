@@ -9,11 +9,11 @@ const NUKE_TITAN_RANGE_CHECK_SLEEP_SECS = 1.0
 
 void function AutoTitan_SelfDestruct( entity titan )
 {
+	titan.Anim_Stop()
 	if ( titan.ContextAction_IsBusy() )
 		titan.ContextAction_ClearBusy()
 
 	titan.SetNPCMoveSpeedScale( 0.01 )
-	titan.Anim_Stop()
 	thread TitanEjectPlayer( titan )
 }
 
@@ -112,8 +112,10 @@ void function AutoTitan_NuclearPayload_PostDamageCallback( entity titan, var dam
 		return
 	}
 
+	#if SERVER && DEV
 	printt( "NUKE TITAN DOOMED TRIGGER HEALTH REACHED, NUKING! Health:", titan.s.doomedStateNukeTriggerHealth )
-
+	#endif
+	
 	thread AutoTitan_SelfDestruct( titan )
 }
 

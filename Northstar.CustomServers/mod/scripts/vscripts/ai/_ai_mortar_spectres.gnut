@@ -131,6 +131,7 @@ void function MortarSpectreSquadThink( array< entity > spectres, entity harveste
 		mortarfaketarget.EnableAttackableByAI( 0, 0, AI_AP_FLAG_NONE )
 	}
 	
+	i = 0
 	foreach( entity spectre in spectres ) //Trigger the function responsible for handling target switching and weapons from them
 	{
 		if( IsValid( spectre ) )
@@ -140,6 +141,10 @@ void function MortarSpectreSquadThink( array< entity > spectres, entity harveste
 			spectre.SetEnemy( mortarfaketarget )
 			spectre.LockEnemy( mortarfaketarget )
 			thread MortarSpectreHarvesterSiege( spectre )
+			
+			spectre.SetOrigin( mortarPosition.origin + MORTAR_SPECTRE_POSITION_OFFSETS[i] ) //Teleport them if they wander around which sometimes happens
+			if ( i++ >= MORTAR_SPECTRE_POSITION_OFFSETS.len() ) //Crash protect if Spectre Squad has more than 4
+				i = 0
 		}
 	}
 }

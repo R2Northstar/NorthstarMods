@@ -527,6 +527,10 @@ void function RespawnAsPilot( entity player )
 	DoRespawnPlayer( player, spawnpoint )
 	player.SetAngles( spawnpoint.GetAngles() )
 	CheckGameStateAfterSpawn( player )
+	
+	//Dying as Titan and respawning as Pilot keeps the Titan Icon over the player's name instead of reverting to the normal patch such player uses
+	CallsignIcon callsignIcon = PlayerCallsignIcon_GetActive( player )
+	player.SetTargetInfoIcon( callsignIcon.smallImage )
 }
 
 void function RespawnAsTitan( entity player, bool normalTitanfall = false )
@@ -558,6 +562,7 @@ void function RespawnAsTitan( entity player, bool normalTitanfall = false )
 	titan.SetOwner( player )
 	HideName( titan )
 	titan.UnsetUsable() // prevent embark prompt from showing up
+	ClearTitanAvailable( player ) // titanfall succeed, clear titan availability
 	
 	AddCinematicFlag( player, CE_FLAG_CLASSIC_MP_SPAWNING ) // hide hud
 	
@@ -619,6 +624,7 @@ void function RespawnAsTitan( entity player, bool normalTitanfall = false )
 		{
 			RemoveCinematicFlag( player, CE_FLAG_CLASSIC_MP_SPAWNING ) // show hud
 			player.isSpawning = false
+			EnableTitanExit( player )
 		}
 
 		if ( IsValid( titan ) )
@@ -646,8 +652,8 @@ void function RespawnAsTitan( entity player, bool normalTitanfall = false )
 	}
 	
 	player.RespawnPlayer( null ) // spawn player as pilot so they get their pilot loadout on embark
+	DisableTitanExit( player )
 	player.SetOrigin( titan.GetOrigin() )
-	ClearTitanAvailable( player ) // titanfall succeed, clear titan availability
 	
 	// don't make player titan when entity batteryContainer is not valid.
 	// This will prevent a servercrash that sometimes occur when evac is disabled and somebody is calling a titan in the defeat screen.

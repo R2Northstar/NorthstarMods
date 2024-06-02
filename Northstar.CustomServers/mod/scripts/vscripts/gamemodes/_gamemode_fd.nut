@@ -1752,15 +1752,19 @@ void function EnableTitanSelectionForPlayer( entity player )
 					if( GetItemUnlockType( "fd_master" ) == eUnlockType.STAT && AegisLevel <= int( GetStatUnlockStatVal( "fd_master" ) ) )
 						player.SetPersistentVar( "titanClassLockState[" + enumName + "]", TITAN_CLASS_LOCK_STATE_LEVELREQUIRED )
 					break
+				
 				case eFDDifficultyLevel.INSANE:
 					if( GetItemUnlockType( "fd_insane" ) == eUnlockType.STAT && AegisLevel <= int( GetStatUnlockStatVal( "fd_insane" ) ) )
 						player.SetPersistentVar( "titanClassLockState[" + enumName + "]", TITAN_CLASS_LOCK_STATE_LEVELREQUIRED )
 					break
-
+				
 				default:
 					player.SetPersistentVar( "titanClassLockState[" + enumName + "]", TITAN_CLASS_LOCK_STATE_AVAILABLE )
 
 			}
+			
+			if( !ProgressionEnabledForPlayer( player ) ) //Progression disabled, unlock everything regardless
+				player.SetPersistentVar( "titanClassLockState[" + enumName + "]", TITAN_CLASS_LOCK_STATE_AVAILABLE )
 		}
 	}
 	
@@ -2740,7 +2744,7 @@ void function FD_OnNPCDeath( entity victim, entity attacker, var damageInfo )
 		if( "totalScore" in inflictor.s )
 			inflictor.s.totalScore += 2
 		
-		file.players[attacker].defenseScoreThisRound += 2
+		file.players[attacker].defenseScoreThisRound += 5
 		UpdatePlayerStat( attacker, "fd_stats", "turretKills" )
 	}
 	
@@ -3498,7 +3502,7 @@ void function FD_OnArcTrapTriggered( entity victim, var damageInfo )
 		return
 
 	AddPlayerScore( owner, "FDArcTrapTriggered" ) //Triggers for every enemy shocked
-	file.players[owner].defenseScoreThisRound++
+	file.players[owner].defenseScoreThisRound += 4
 	UpdatePlayerStat( owner, "fd_stats", "arcMineZaps" )
 }
 
@@ -3510,7 +3514,7 @@ void function FD_OnArcWaveDamage( entity ent, var damageInfo )
 		return
 
 	AddPlayerScore( attacker, "FDArcWave" )
-	file.players[attacker].defenseScoreThisRound++
+	file.players[attacker].defenseScoreThisRound += 2
 }
 
 void function FD_OnTetherTrapTriggered( entity owner, entity endEnt )
@@ -3519,7 +3523,7 @@ void function FD_OnTetherTrapTriggered( entity owner, entity endEnt )
 		return
 
 	AddPlayerScore( owner, "FDTetherTriggered" )
-	file.players[owner].defenseScoreThisRound++
+	file.players[owner].defenseScoreThisRound += 2
 }
 
 void function FD_OnSonarStart( entity ent, vector position, int sonarTeam, entity sonarOwner )

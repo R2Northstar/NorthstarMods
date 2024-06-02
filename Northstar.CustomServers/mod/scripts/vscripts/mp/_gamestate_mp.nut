@@ -1177,6 +1177,9 @@ void function DialoguePlayWinnerDetermined()
 	}
 }
 
+// This is to move all NPCs that a player owns from one team to the other during a match
+/// Auto-Titans, Turrets, Ticks and Hacked Spectres will all move along together with the player to the new Team
+/// Also possibly prevents mods that spawns other types of NPCs that players can own from breaking when switching (i.e Drones, Hacked Reapers)
 void function OnPlayerChangedTeam( entity player )
 {
 	if ( !player.hasConnected ) //Prevents players who just joined to trigger below code, as server always pre setups their teams

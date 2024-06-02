@@ -2939,10 +2939,15 @@ void function NPCNav_FD( entity npc, string routeName, int nodesToSkip = 1, floa
 		}
 	}
 
+	npc.AssaultSetGoalHeight( 128 )
+	
 	if ( ( npc.GetClassName() == "npc_frag_drone" || npc.GetClassName() == "npc_stalker" ) && IsHarvesterAlive( fd_harvester.harvester ) )
-	{
 		npc.AssaultPointClamped( fd_harvester.harvester.GetOrigin() + < 0, 0, 16 > )
-		npc.AssaultSetGoalRadius( 128 )
+	
+	if ( npc.GetClassName() == "npc_soldier" || npc.GetClassName() == "npc_spectre" )
+	{
+		npc.AssaultSetFightRadius( 512 )
+		npc.SetEnemy( fd_harvester.harvester )
 	}
 
 	npc.Signal( "FD_ReachedHarvester" )
