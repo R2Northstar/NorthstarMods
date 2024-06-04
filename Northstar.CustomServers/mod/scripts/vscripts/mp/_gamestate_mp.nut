@@ -13,6 +13,8 @@ global function SetTimerBased
 global function SetShouldUseRoundWinningKillReplay
 global function SetRoundWinningKillReplayKillClasses
 global function SetRoundWinningKillReplayAttacker
+global function SetCallback_TryUseProjectileReplay
+global function ShouldTryUseProjectileReplay
 global function SetWinner
 global function SetTimeoutWinnerDecisionFunc
 global function AddTeamScore
@@ -48,12 +50,27 @@ struct {
 	float roundWinningKillReplayTime
 	entity roundWinningKillReplayVictim
 	entity roundWinningKillReplayAttacker
+	int roundWinningKillReplayInflictorEHandle // this is either the inflictor or the attacker
 	int roundWinningKillReplayMethodOfDeath
 	float roundWinningKillReplayTimeOfDeath
 	float roundWinningKillReplayHealthFrac
 	
 	array<void functionref()> roundEndCleanupCallbacks
+	bool functionref( entity victim, entity attacker, var damageInfo, bool isRoundEnd ) shouldTryUseProjectileReplayCallback
 } file
+
+void function SetCallback_TryUseProjectileReplay( bool functionref( entity victim, entity attacker, var damageInfo, bool isRoundEnd ) callback )
+{
+	file.shouldTryUseProjectileReplayCallback = callback
+}
+
+bool function ShouldTryUseProjectileReplay( entity victim, entity attacker, var damageInfo, bool isRoundEnd )
+{
+	if ( file.shouldTryUseProjectileReplayCallback != null )
+		return file.shouldTryUseProjectileReplayCallback( victim, attacker, damageInfo, isRoundEnd )
+	// default to true (vanilla behaviour)
+	return true
+}
 
 void function PIN_GameStart()
 {
@@ -79,6 +96,7 @@ void function PIN_GameStart()
 	
 	AddCallback_OnPlayerKilled( OnPlayerKilled )
 	AddDeathCallback( "npc_titan", OnTitanKilled )
+	AddCallback_EntityChangedTeam( "player", OnPlayerChangedTeam )
 	
 	RegisterSignal( "CleanUpEntitiesForRoundEnd" )
 }
@@ -184,6 +202,14 @@ void function GameStateEnter_Prematch()
 	
 	if ( !GetClassicMPMode() && !ClassicMP_ShouldTryIntroAndEpilogueWithoutClassicMP() )
 		thread StartGameWithoutClassicMP()
+
+	// Initialise any spectators. Hopefully they are all initialised already in CodeCallback_OnClientConnectionCompleted
+	// (_base_gametype_mp.gnut) but for modes like LTS this doesn't seem to happen late enough to work properly.
+	foreach ( player in GetPlayerArray() )
+	{
+		if ( IsPrivateMatchSpectator( player ) )
+			InitialisePrivateMatchSpectatorPlayer( player )
+	}
 }
 
 void function StartGameWithoutClassicMP()
@@ -319,6 +345,7 @@ void function GameStateEnter_WinnerDetermined_Threaded()
 		
 		WaitFrame() // prevent a race condition with PlayerWatchesRoundWinningKillReplay
 		file.roundWinningKillReplayAttacker = null // clear this
+		file.roundWinningKillReplayInflictorEHandle = -1
 		
 		if ( killcamsWereEnabled )
 			SetKillcamsEnabled( true )
@@ -394,7 +421,7 @@ void function PlayerWatchesRoundWinningKillReplay( entity player, float replayLe
 	if ( IsValid( attacker ) )
 	{
 		player.SetKillReplayDelay( Time() - replayLength, THIRD_PERSON_KILL_REPLAY_ALWAYS )
-		player.SetKillReplayInflictorEHandle( attacker.GetEncodedEHandle() )
+		player.SetKillReplayInflictorEHandle( file.roundWinningKillReplayInflictorEHandle )
 		player.SetKillReplayVictim( file.roundWinningKillReplayVictim )
 		player.SetViewIndex( attacker.GetIndexForEntity() )
 		player.SetIsReplayRoundWinning( true )
@@ -460,6 +487,7 @@ void function GameStateEnter_SwitchingSides_Threaded()
 	svGlobal.levelEnt.Signal( "RoundEnd" ) // might be good to get a new signal for this? not 100% necessary tho i think
 	SetServerVar( "switchedSides", 1 )
 	file.roundWinningKillReplayAttacker = null // reset this after replay
+	file.roundWinningKillReplayInflictorEHandle = -1
 	
 	if ( file.usePickLoadoutScreen )
 		SetGameState( eGameState.PickLoadout )
@@ -483,7 +511,7 @@ void function PlayerWatchesSwitchingSidesKillReplay( entity player, bool doRepla
 	
 		entity attacker = file.roundWinningKillReplayAttacker
 		player.SetKillReplayDelay( Time() - replayLength, THIRD_PERSON_KILL_REPLAY_ALWAYS )
-		player.SetKillReplayInflictorEHandle( attacker.GetEncodedEHandle() )
+		player.SetKillReplayInflictorEHandle( file.roundWinningKillReplayInflictorEHandle )
 		player.SetKillReplayVictim( file.roundWinningKillReplayVictim )
 		player.SetViewIndex( attacker.GetIndexForEntity() )
 		player.SetIsReplayRoundWinning( true )
@@ -578,6 +606,9 @@ void function OnPlayerKilled( entity victim, entity attacker, var damageInfo )
 			return
 	}
 
+	entity inflictor = DamageInfo_GetInflictor( damageInfo )
+	bool shouldUseInflictor = IsValid( inflictor ) && ShouldTryUseProjectileReplay( victim, attacker, damageInfo, true )
+
 	// set round winning killreplay info here if we're tracking pilot kills
 	// todo: make this not count environmental deaths like falls, unsure how to prevent this
 	if ( file.roundWinningKillReplayTrackPilotKills && victim != attacker && attacker != svGlobal.worldspawn && IsValid( attacker ) )
@@ -587,6 +618,7 @@ void function OnPlayerKilled( entity victim, entity attacker, var damageInfo )
 		file.roundWinningKillReplayTime = Time()
 		file.roundWinningKillReplayVictim = victim
 		file.roundWinningKillReplayAttacker = attacker
+		file.roundWinningKillReplayInflictorEHandle = ( shouldUseInflictor ? inflictor : attacker ).GetEncodedEHandle()
 		file.roundWinningKillReplayMethodOfDeath = DamageInfo_GetDamageSourceIdentifier( damageInfo )
 		file.roundWinningKillReplayTimeOfDeath = Time()
 		file.roundWinningKillReplayHealthFrac = GetHealthFrac( attacker )
@@ -637,6 +669,9 @@ void function OnTitanKilled( entity victim, var damageInfo )
 			return
 	}
 
+	entity inflictor = DamageInfo_GetInflictor( damageInfo )
+	bool shouldUseInflictor = IsValid( inflictor ) && ShouldTryUseProjectileReplay( victim, DamageInfo_GetAttacker( damageInfo ), damageInfo, true )
+
 	// set round winning killreplay info here if we're tracking titan kills
 	// todo: make this not count environmental deaths like falls, unsure how to prevent this
 	entity attacker = DamageInfo_GetAttacker( damageInfo )
@@ -647,6 +682,7 @@ void function OnTitanKilled( entity victim, var damageInfo )
 		file.roundWinningKillReplayTime = Time()
 		file.roundWinningKillReplayVictim = victim
 		file.roundWinningKillReplayAttacker = attacker
+		file.roundWinningKillReplayInflictorEHandle = ( shouldUseInflictor ? inflictor : attacker ).GetEncodedEHandle()
 		file.roundWinningKillReplayMethodOfDeath = DamageInfo_GetDamageSourceIdentifier( damageInfo )
 		file.roundWinningKillReplayTimeOfDeath = Time()
 		file.roundWinningKillReplayHealthFrac = GetHealthFrac( attacker )
@@ -761,11 +797,12 @@ void function SetRoundWinningKillReplayKillClasses( bool pilot, bool titan )
 	file.roundWinningKillReplayTrackTitanKills = titan // player kills in titans should get tracked anyway, might be worth renaming this
 }
 
-void function SetRoundWinningKillReplayAttacker( entity attacker )
+void function SetRoundWinningKillReplayAttacker( entity attacker, int inflictorEHandle = -1 )
 {
 	file.roundWinningKillReplayTime = Time()
 	file.roundWinningKillReplayHealthFrac = GetHealthFrac( attacker )
 	file.roundWinningKillReplayAttacker = attacker
+	file.roundWinningKillReplayInflictorEHandle = inflictorEHandle == -1 ? attacker.GetEncodedEHandle() : inflictorEHandle
 	file.roundWinningKillReplayTimeOfDeath = Time()
 }
 
@@ -979,5 +1016,23 @@ void function DialoguePlayWinnerDetermined()
 	{
 		PlayFactionDialogueToTeam( "scoring_won", winningTeam )
 		PlayFactionDialogueToTeam( "scoring_lost", losingTeam )
+	}
+}
+
+/// This is to move all NPCs that a player owns from one team to the other during a match
+/// Auto-Titans, Turrets, Ticks and Hacked Spectres will all move along together with the player to the new Team
+/// Also possibly prevents mods that spawns other types of NPCs that players can own from breaking when switching (i.e Drones, Hacked Reapers)
+void function OnPlayerChangedTeam( entity player )
+{
+	if ( !player.hasConnected ) // Prevents players who just joined to trigger below code, as server always pre setups their teams
+		return
+	
+	NotifyClientsOfTeamChange( player, GetOtherTeam( player.GetTeam() ), player.GetTeam() )
+	
+	foreach( npc in GetNPCArray() )
+	{
+		entity bossPlayer = npc.GetBossPlayer()
+		if ( IsValidPlayer( bossPlayer ) && bossPlayer == player && IsAlive( npc ) )
+			SetTeam( npc, player.GetTeam() )
 	}
 }
