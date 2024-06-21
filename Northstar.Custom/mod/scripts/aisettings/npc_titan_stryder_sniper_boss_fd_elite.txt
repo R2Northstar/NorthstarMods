@@ -26,8 +26,8 @@ npc_titan_stryder_sniper_boss_fd_elite
 	
 	reactChanceDefault				100
 	reactBulletChanceDefault		100
-	reactionTime					0.5
-	reactInterval					1.0
+	reactionTime					2
+	reactInterval					2
 	suppressLSP_duration			5
 	
 	FOV_Vert_Offset					10

@@ -860,7 +860,6 @@ void function SpawnArcTitan( WaveSpawnEvent ornull spawnEvent )
 			case eFDDifficultyLevel.MASTER:
 			case eFDDifficultyLevel.INSANE:
 				npc.AssaultSetFightRadius( 0 )
-				npc.EnableNPCMoveFlag( NPCMF_PREFER_SPRINT )
 				break
 		}
 	}
@@ -953,7 +952,6 @@ void function SpawnMortarTitan( WaveSpawnEvent ornull spawnEvent )
 	npc.SetSkin( 1 )
 	npc.SetCamo( -1 )
 	npc.DisableNPCFlag( NPC_ALLOW_INVESTIGATE )
-	npc.DisableNPCMoveFlag( NPCMF_WALK_NONCOMBAT )
 	npc.SetDangerousAreaReactionTime( FD_TITAN_AOE_REACTTIME )
 	spawnedNPCs.append( npc )
 	AddMinimapForTitans( npc )
@@ -1036,7 +1034,6 @@ void function SpawnSniperTitan( WaveSpawnEvent ornull spawnEvent )
 		npc.SetDangerousAreaReactionTime( 0 )
 	}
 	npc.DisableNPCFlag( NPC_ALLOW_INVESTIGATE )
-	npc.DisableNPCMoveFlag( NPCMF_WALK_NONCOMBAT )
 	npc.AssaultSetFightRadius( 0 )
 	spawnedNPCs.append( npc )
 	AddMinimapForTitans( npc )
@@ -1116,7 +1113,6 @@ void function SpawnToneSniperTitan( WaveSpawnEvent ornull spawnEvent )
 		npc.SetCamo( 2 )
 	}
 	npc.DisableNPCFlag( NPC_ALLOW_INVESTIGATE )
-	npc.DisableNPCMoveFlag( NPCMF_WALK_NONCOMBAT )
 	npc.AssaultSetFightRadius( 0 )
 	spawnedNPCs.append( npc )
 	AddMinimapForTitans( npc )
@@ -1179,6 +1175,11 @@ void function SpawnIonTitan( WaveSpawnEvent ornull spawnEvent )
 		npc.SetHealth( npc.GetMaxHealth() )
 		npc.GetTitanSoul().soul.titanLoadout.titanExecution = "execution_ion"
 		npc.SetDangerousAreaReactionTime( 0 )
+	}
+	else if ( GetPlayerArrayOfTeam( TEAM_MILITIA ).len() < 5 )
+	{
+		npc.EnableNPCMoveFlag( NPCMF_WALK_ALWAYS | NPCMF_WALK_NONCOMBAT )
+		npc.DisableNPCMoveFlag( NPCMF_PREFER_SPRINT )
 	}
 	spawnedNPCs.append( npc )
 	AddMinimapForTitans( npc )
@@ -1252,6 +1253,11 @@ void function SpawnScorchTitan( WaveSpawnEvent ornull spawnEvent )
 		npc.kv.reactChance = 60
 		npc.kv.AccuracyMultiplier = 0.5
 		npc.kv.WeaponProficiency = eWeaponProficiency.AVERAGE
+		if ( GetPlayerArrayOfTeam( TEAM_MILITIA ).len() < 4 )
+		{
+			npc.EnableNPCMoveFlag( NPCMF_WALK_ALWAYS | NPCMF_WALK_NONCOMBAT )
+			npc.DisableNPCMoveFlag( NPCMF_PREFER_SPRINT )
+		}
 	}
 	spawnedNPCs.append( npc )
 	AddMinimapForTitans( npc )
@@ -1322,6 +1328,11 @@ void function SpawnRoninTitan( WaveSpawnEvent ornull spawnEvent )
 	{
 		npc.kv.AccuracyMultiplier = 0.7
 		npc.kv.WeaponProficiency = eWeaponProficiency.AVERAGE
+		if ( GetPlayerArrayOfTeam( TEAM_MILITIA ).len() < 4 )
+		{
+			npc.EnableNPCMoveFlag( NPCMF_WALK_ALWAYS | NPCMF_WALK_NONCOMBAT )
+			npc.DisableNPCMoveFlag( NPCMF_PREFER_SPRINT )
+		}
 	}
 	spawnedNPCs.append( npc )
 	AddMinimapForTitans( npc )
@@ -1397,6 +1408,11 @@ void function SpawnToneTitan( WaveSpawnEvent ornull spawnEvent )
 		
 		npc.SetDangerousAreaReactionTime( 0 )
 	}
+	else if ( GetPlayerArrayOfTeam( TEAM_MILITIA ).len() < 5 )
+	{
+		npc.EnableNPCMoveFlag( NPCMF_WALK_ALWAYS | NPCMF_WALK_NONCOMBAT )
+		npc.DisableNPCMoveFlag( NPCMF_PREFER_SPRINT )
+	}
 	spawnedNPCs.append( npc )
 	AddMinimapForTitans( npc )
 	npc.EndSignal( "OnDeath" )
@@ -1464,16 +1480,16 @@ void function SpawnLegionTitan( WaveSpawnEvent ornull spawnEvent )
 		maingun.AddMod( "fd_closerange_helper" )
 		maingun.AddMod( "fd_longrange_helper" )
 		maingun.AddMod( "fd_piercing_shots" )
-		maingun.AddMod( "fd_gun_shield_redirect" )
-		maingun.AddMod( "SiegeMode" )
 		
 		entity gunshield = npc.GetOffhandWeapon( OFFHAND_SPECIAL )
-		gunshield.AddMod( "npc_more_shield" )
 		gunshield.AddMod( "npc_infinite_shield" )
 		gunshield.AddMod( "fd_gun_shield" )
-		gunshield.AddMod( "fd_gun_shield_redirect" )
-		gunshield.AddMod( "SiegeMode" )
 		npc.SetDangerousAreaReactionTime( 0 )
+	}
+	else if ( GetPlayerArrayOfTeam( TEAM_MILITIA ).len() < 5 )
+	{
+		npc.EnableNPCMoveFlag( NPCMF_WALK_ALWAYS | NPCMF_WALK_NONCOMBAT )
+		npc.DisableNPCMoveFlag( NPCMF_PREFER_SPRINT )
 	}
 	spawnedNPCs.append( npc )
 	AddMinimapForTitans( npc )
@@ -1553,6 +1569,11 @@ void function SpawnMonarchTitan( WaveSpawnEvent ornull spawnEvent )
 		shieldLaser.AddMod( "burn_mod_titan_laser_lite" )
 		
 		npc.SetDangerousAreaReactionTime( 0 )
+	}
+	else if ( GetPlayerArrayOfTeam( TEAM_MILITIA ).len() < 5 )
+	{
+		npc.EnableNPCMoveFlag( NPCMF_WALK_ALWAYS | NPCMF_WALK_NONCOMBAT )
+		npc.DisableNPCMoveFlag( NPCMF_PREFER_SPRINT )
 	}
 	spawnedNPCs.append( npc )
 	AddMinimapForTitans( npc )
@@ -2497,8 +2518,6 @@ void function SlowEnemyMovementBasedOnDifficulty( entity npc )
 	switch ( file.difficultyLevel )
 	{
 		case eFDDifficultyLevel.EASY:
-			npc.SetNPCMoveSpeedScale( 1.0 )
-			break
 		case eFDDifficultyLevel.NORMAL:
 		case eFDDifficultyLevel.HARD:
 		case eFDDifficultyLevel.MASTER:

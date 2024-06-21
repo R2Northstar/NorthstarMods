@@ -11,8 +11,8 @@ npc_titan_stryder_leadwall_shift_core_elite
  	dodgePeriod					8
 	maxDodgePerPeriod			2
 
-	meleeInterval					0.2
-	meleeChargeInterval				0.2
+	meleeInterval					1
+	meleeChargeInterval				1
 	meleeChargeSprintDist			600
 	meleeMaxCombo					8
 	chaseOnlyReachable				1

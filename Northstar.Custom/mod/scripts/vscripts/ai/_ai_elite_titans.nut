@@ -26,6 +26,7 @@ local script file (i.e SetSpawnOption_AISettings).
 void function EliteTitans_Init()
 {
 	AddOnRodeoStartedCallback( PilotStartRodeoOnEliteTitan )
+	AddCallback_OnTitanDoomed( Elite_NuclearPayload_DoomCallback )
 }
 
 void function PilotStartRodeoOnEliteTitan( entity pilot, entity titan )
@@ -163,15 +164,19 @@ void function MonitorEliteTitanCore( entity npc )
 		SoulTitanCore_SetNextAvailableTime( soul, 1.0 )
 		
 		npc.WaitSignal( "CoreBegin" )
-		wait 0.1
 		
-		soul.SetShieldHealth( soul.GetShieldHealthMax() / 2 )
+		if( soul.GetShieldHealth() < soul.GetShieldHealthMax() / 2 )
+			soul.SetShieldHealth( soul.GetShieldHealthMax() / 2 )
 		
 		entity meleeWeapon = npc.GetMeleeWeapon()
 		if( meleeWeapon.HasMod( "super_charged" ) || meleeWeapon.HasMod( "super_charged_SP" ) ) //Hack for Elite Ronin
+		{
 			npc.SetAISettings( "npc_titan_stryder_leadwall_shift_core_elite" )
+			npc.SetNPCMoveSpeedScale( 1.15 ) //Compensate AI lacking doing dashes like players does
+		}
 		
 		npc.WaitSignal( "CoreEnd" )
+		npc.SetNPCMoveSpeedScale( 1.0 )
 		
 		switch ( difficultyLevel )
 		{
@@ -209,6 +214,9 @@ void function MonitorEliteMonarchShield( entity npc )
 			WaitFrame()
 		
 		wait RandomFloatRange( 1.0, 2.5 )
+		
+		while( npc.ContextAction_IsBusy() || npc.ContextAction_IsMeleeExecution() ) //Wait again just because yes, within 2.5 seconds might get Arc Trap Zapped again
+			WaitFrame()
 		
 		if( coretime <= Time() )
 		{
@@ -323,5 +331,50 @@ void function SetTitanWeaponSkin( entity npc, int skinindex = 1, int camoindex =
 		entity weapon = primaryWeapons[0]
 		weapon.SetSkin( skinindex )
 		weapon.SetCamo( camoindex )
+	}
+}
+
+void function Elite_NuclearPayload_DoomCallback( entity titan, var damageInfo )
+{
+	if ( !IsAlive( titan ) )
+		return
+
+	if ( DamageInfo_GetDamageSourceIdentifier( damageInfo ) == eDamageSourceId.titan_execution )
+		return
+
+	entity soul = titan.GetTitanSoul()
+	if ( soul.IsEjecting() || GameRules_GetGameMode() != FD )
+		return
+	
+	if( IsAlive( titan ) && titan.IsNPC() && titan.GetTeam() == TEAM_IMC && titan.ai.bossTitanType == TITAN_MERC )
+		thread MonitorEliteDoomStateForEject( titan )
+}
+
+void function MonitorEliteDoomStateForEject( entity titan )
+{
+	entity soul = titan.GetTitanSoul()
+	soul.EndSignal( "OnDestroy" )
+	soul.EndSignal( "OnDeath" )
+	soul.EndSignal( "TitanEjectionStarted" )
+	
+	while( IsAlive( titan ) )
+	{
+		wait 1 //Check every second and not less for a more relaxed opportunity to kill the Elite without it Nuke ejecting, this ability should not be a highlight one
+		
+		int enemyInRange = 0
+		array< entity > surroundingEnemies = GetPlayerArrayEx( "any", TEAM_ANY, TEAM_ANY, titan.GetOrigin(), 640 )
+		surroundingEnemies.extend( GetNPCArrayEx( "npc_titan", TEAM_ANY, TEAM_ANY, titan.GetOrigin(), 640 ) ) //Turrets and hacked Spectres used to be considered but that would trigger code way too often
+		foreach ( entity enemy in surroundingEnemies )
+		{
+			if ( enemy.GetTeam() != titan.GetTeam() && IsAlive( enemy ) )
+				enemyInRange++
+		}
+
+		if ( IsAlive( titan ) && NPC_GetNuclearPayload( titan ) == 0 && enemyInRange >= 2 && !titan.ContextAction_IsMeleeExecution() )
+		{
+			NPC_SetNuclearPayload( titan )
+			thread TitanEjectPlayer( titan )
+			return
+		}
 	}
 }

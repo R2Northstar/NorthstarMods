@@ -183,21 +183,28 @@ void function FDStalkerThink( entity npc, entity generator )
 	generator.EndSignal( "OnDestroy" )
 	npc.s.isSprinting <- false
 	thread FDStalkerGetsStunned( npc )
+	
+	if( GetMapName().find( "mp_lf_" ) != null ) //Stalkers already sprints directly on Live Fire maps to up the challenge a bit
+	{
+		if( !IsCrawling( npc ) && !npc.s.isSprinting )
+			StalkerSetSprintStance( npc )
+	}
+	
 	while ( IsAlive( npc ) )
 	{
 		WaitFrame()
 
 		// cant sprint with 1 leg
-		if ( DistanceSqr( npc.GetOrigin(), generator.GetOrigin() ) < (1024 * 1024)  )
+		if ( Distance2D( npc.GetOrigin(), generator.GetOrigin() ) < 1024 )
 		{
 			if( !IsCrawling( npc ) && !npc.s.isSprinting )
 				StalkerSetSprintStance( npc )
 			
-			npc.AssaultPoint( generator.GetOrigin() )
+			npc.AssaultPointClamped( generator.GetOrigin() )
 		}
 
 		// upped from 230 to more accurately mimic vanilla i think?
-		if ( DistanceSqr( npc.GetOrigin(), generator.GetOrigin() ) > (275 * 275) )
+		if ( Distance2D( npc.GetOrigin(), generator.GetOrigin() ) > 275 )
 			continue
 
 		break
@@ -221,7 +228,7 @@ void function FDStalkerGetsStunned( entity npc )
 void function StalkerSetSprintStance( entity npc )
 {
 	entity weapon = npc.GetActiveWeapon()
-	if ( IsValid(weapon) )
+	if ( IsValid( weapon ) )
 		npc.TakeActiveWeapon() // when stalkers fall over on harvester they will randomly shoot their guns, we don't want that.
 	
 	npc.EnableNPCMoveFlag( NPCMF_PREFER_SPRINT )
@@ -334,10 +341,13 @@ bool function StalkerMeltingDown( entity npc )
 void function StalkerGearOverloads( entity npc, entity attacker = null )
 {
 	Assert( !StalkerMeltingDown( npc ) )
-
+	
+	if ( npc.Anim_IsActive() )
+		npc.Anim_Stop()
+	
 	if ( !IsCrawling( npc ) && StalkerCanCrawl( npc ) )
 		thread FallAndBecomeCrawlingStalker( npc )
-
+	
 	int bodyGroup = npc.FindBodyGroup( "gear" )
 
 	// hide gear
