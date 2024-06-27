@@ -49,7 +49,7 @@ Selector CombatAggressive
 	SelectSchedule_BackwardDodge
 	SelectSchedule_ForwardDodge
 	SelectSchedule_ChaseEnemy
-	//SelectSchedule_AtEnemyLKP
+	SelectSchedule_AtEnemyLKP
 	SelectSchedule_StationaryLowAmmo
 	SelectSchedule_RangeAttack2
 	SelectSchedule_RangeAttack

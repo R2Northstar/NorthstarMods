@@ -1383,16 +1383,6 @@ void function GamemodeFD_InitPlayer( entity player )
 	thread TrackDeployedArcTrapThisRound( player )
 	
 	thread UpdateEarnMeter_ByPlayersInMatch()
-	#if SERVER
-	if( GetPlayerArrayOfTeam( TEAM_MILITIA ).len() < 5 )
-	{
-		foreach( entity otherplayer in GetPlayerArrayOfTeam( TEAM_MILITIA ) )
-		{
-			if( otherplayer != player && GamePlaying() )
-				NSSendLargeMessageToPlayer( otherplayer, "#COOP_DIFFICULTY_UP", "#COOP_DIFFICULTY_BALANCE_HINT", 60, "rui/callsigns/callsign_hidden" )
-		}
-	}
-	#endif
 	
 	if( GetGlobalNetInt( "FD_waveState" ) == WAVE_STATE_BREAK && Time() + 30.0 > GetGlobalNetTime( "FD_nextWaveStartTime" ) && GetGlobalNetTime( "FD_nextWaveStartTime" ) > Time() )
 		SetGlobalNetTime( "FD_nextWaveStartTime", Time() + 40.0 )
@@ -1468,17 +1458,6 @@ void function OnPlayerDisconnectedOrDestroyed( entity player )
 		if ( IsValidPlayer( BossPlayer ) && IsAlive( npc ) && BossPlayer == player && npc.GetTeam() == TEAM_MILITIA && ( IsMinion( npc ) || IsFragDrone( npc ) ) )
 			npc.Die()
 	}
-	
-	#if SERVER
-	if( GetPlayerArrayOfTeam( TEAM_MILITIA ).len() < 5 )
-	{
-		foreach( entity otherplayer in GetPlayerArrayOfTeam( TEAM_MILITIA ) )
-		{
-			if( otherplayer != player && GamePlaying() )
-				NSSendLargeMessageToPlayer( otherplayer, "#COOP_DIFFICULTY_DOWN", "#COOP_DIFFICULTY_BALANCE_HINT", 60, "rui/callsigns/callsign_hidden" )
-		}
-	}
-	#endif
 }
 
 bool function FD_ShouldAllowChangeLoadout( entity player )
@@ -2531,6 +2510,7 @@ void function HealthScaleByDifficulty( entity ent )
 void function OnFriendlyNPCTitanSpawnThreaded( entity npc )
 {
 	FD_UpdateTitanBehavior()
+	WaitFrame()
 	WaitTillHotDropComplete( npc )
 	Highlight_SetFriendlyHighlight( npc, "sp_friendly_hero" )
 	npc.Highlight_SetParam( 1, 0, HIGHLIGHT_COLOR_FRIENDLY )
@@ -2569,6 +2549,7 @@ void function OnEnemyNPCPlayerTitanSpawnThreaded( entity npc )
 	}
 	
 	WaitTillHotDropComplete( npc )
+	WaitFrame()
 	SetTargetName( npc, GetTargetNameForID( aiTypeID ) )
 	
 	if( !IsAlive( npc ) )
@@ -3296,8 +3277,6 @@ void function FD_DropshipSpawnDropship()
 	file.playersInShip = 0
 	file.dropshipState = eDropshipState.InProgress
 	file.dropship = CreateDropship( TEAM_MILITIA, file.dropshipSpawnPosition, file.dropshipSpawnAngles )
-
-	file.dropship.SetModel( $"models/vehicle/crow_dropship/crow_dropship_hero.mdl" )
 	file.dropship.SetValueForModelKey( $"models/vehicle/crow_dropship/crow_dropship_hero.mdl" )
 
 	DispatchSpawn( file.dropship )
@@ -3493,28 +3472,32 @@ void function FD_SmokeHealTeammate( entity player, entity target, int shieldRest
 void function FD_BatteryHealTeammate( entity rider, entity titan, entity battery )
 {
 	entity soul = titan.GetTitanSoul()
-	int healingAmount = GetSegmentHealthForTitan( titan )
 	
-	float ampedHealthSegmentFrac = GetCurrentPlaylistVarFloat( "amped_battery_health_frac", 2.0 )
-	float healthSegmentFrac = GetCurrentPlaylistVarFloat( "battery_health_frac", 0.5 )
-	float frac = IsAmpedBattery( battery ) ? ampedHealthSegmentFrac : healthSegmentFrac
-	
-	int shieldDifference = soul.GetShieldHealthMax() - soul.GetShieldHealth()
-	int addHealth = int( healingAmount * frac )
-	int totalHealth = minint( titan.GetMaxHealth(), titan.GetHealth() + addHealth )
-	
-	int TotalHealing = shieldDifference + totalHealth
-	int HealScore = ( TotalHealing / 100 )
-
-	float coreFrac = GetCurrentPlaylistVarFloat( "battery_core_frac", 0.2 )
 	if( IsAmpedBattery( battery ) )
-		AddCreditToTitanCoreBuilder( titan, coreFrac )
+		AddCreditToTitanCoreBuilder( titan, GetCurrentPlaylistVarFloat( "battery_core_frac", 0.2 ) )
+	
+	thread FD_BatteryHealTeammate_Threaded( rider, titan, titan.GetHealth(), soul.GetShieldHealth() )
+}
+
+void function FD_BatteryHealTeammate_Threaded( entity rider, entity titan, int ogHealth, int ogShield )
+{
+	WaitFrame() //Do this way because it's ironically more accurate to track the health change when healing teammates with batteries
+	
+	entity soul = titan.GetTitanSoul()
+	
+	if( !IsValid( soul ) )
+		return
+	
+	int healAmount = titan.GetHealth() - ogHealth
+	int shieldAmount = soul.GetShieldHealth() - ogShield
+	int totalHealing = healAmount + shieldAmount
+	int HealScore = totalHealing / 100
 	
 	if( IsValidPlayer( rider ) )
 	{
 		AddPlayerScore( rider, "FDTeamHeal", null, "", HealScore )
 		if( rider in file.playerAwardStats )
-			file.playerAwardStats[rider]["heals"] += float( TotalHealing )
+			file.playerAwardStats[rider]["heals"] += float( totalHealing )
 		rider.AddToPlayerGameStat( PGS_DEFENSE_SCORE, HealScore )
 		UpdatePlayerScoreboard( rider )
 	}
@@ -3712,7 +3695,7 @@ void function FD_Epilogue_threaded()
 		{
 			if( !IsValidPlayer( medalPlayer ) )
 				continue
-
+			
 			if( i == 4 )
 				break
 

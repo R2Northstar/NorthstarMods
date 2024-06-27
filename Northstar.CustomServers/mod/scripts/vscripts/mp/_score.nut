@@ -54,7 +54,7 @@ void function AddPlayerScore( entity targetPlayer, string scoreEventName, entity
 	float earnValue = event.earnMeterEarnValue * scale
 	float ownValue = event.earnMeterOwnValue * scale
 	
-	if( !PlayerEarnMeter_Enabled() ) //Don't show earning points if earn meter is not enabled
+	if( !PlayerEarnMeter_Enabled() && !targetPlayer.IsTitan() ) //Don't show earning points if earn meter is not enabled and player is not a special case of being a titan
 	{
 		earnValue = 0.0
 		ownValue = 0.0

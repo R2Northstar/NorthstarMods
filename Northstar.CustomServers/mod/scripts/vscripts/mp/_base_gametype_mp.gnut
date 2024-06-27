@@ -646,6 +646,7 @@ void function RespawnAsTitan( entity player, bool normalTitanfall = false )
 	else
 	{
 		ScreenFadeFromBlack( player, 0.5, 0.5 )
+		Minimap_PingForTeam( titan.GetTeam(), spawnpoint.GetOrigin(), 64.0, titan.GetSequenceDuration( "at_hotdrop_drop_2knee_turbo" ), TEAM_COLOR_FRIENDLY / 255.0, 4, false )
 		waitthread PlayersTitanHotdrops( titan, spawnpoint.GetOrigin(), spawnpoint.GetAngles(), player, "at_hotdrop_drop_2knee_turbo" )
 		ScreenFadeToBlack( player, titan.GetSequenceDuration( "at_hotdrop_quickstand" ), 0.0 )
 		waitthread PlayAnimGravity( titan, "at_hotdrop_quickstand" )

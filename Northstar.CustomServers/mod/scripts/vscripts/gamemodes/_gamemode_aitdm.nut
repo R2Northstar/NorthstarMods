@@ -34,7 +34,7 @@ struct
 
 void function GamemodeAITdm_Init()
 {
-	SetSpawnpointGamemodeOverride( ATTRITION ) // use bounty hunt spawns as vanilla game has no spawns explicitly defined for aitdm
+	SetSpawnpointGamemodeOverride( TEAM_DEATHMATCH )
 
 	AddCallback_GameStateEnter( eGameState.Prematch, OnPrematchStart )
 	AddCallback_GameStateEnter( eGameState.Playing, OnPlaying )
@@ -48,9 +48,9 @@ void function GamemodeAITdm_Init()
 	
 	if ( GetCurrentPlaylistVarInt( "aitdm_archer_grunts", 0 ) == 0 )
 	{
-		AiGameModes_SetNPCWeapons( "npc_soldier", [ "mp_weapon_rspn101", "mp_weapon_dmr", "mp_weapon_r97", "mp_weapon_lmg" ] )
-		AiGameModes_SetNPCWeapons( "npc_spectre", [ "mp_weapon_hemlok_smg", "mp_weapon_doubletake", "mp_weapon_mastiff" ] )
-		AiGameModes_SetNPCWeapons( "npc_stalker", [ "mp_weapon_hemlok_smg", "mp_weapon_lstar", "mp_weapon_mastiff" ] )
+		AiGameModes_SetNPCWeapons( "npc_soldier", [ "mp_weapon_rspn101", "mp_weapon_dmr", "mp_weapon_vinson", "mp_weapon_hemlok_smg", "mp_weapon_mastiff", "mp_weapon_shotgun_pistol" ] )
+		AiGameModes_SetNPCWeapons( "npc_spectre", [ "mp_weapon_g2", "mp_weapon_doubletake", "mp_weapon_hemlok", "mp_weapon_rspn101_og", "mp_weapon_r97", "mp_weapon_shotgun_doublebarrel" ] )
+		AiGameModes_SetNPCWeapons( "npc_stalker", [ "mp_weapon_esaw", "mp_weapon_lstar", "mp_weapon_shotgun", "mp_weapon_lmg", "mp_weapon_smr", "mp_weapon_epg" ] )
 	}
 	else
 	{
@@ -61,6 +61,9 @@ void function GamemodeAITdm_Init()
 	
 	ScoreEvent_SetupEarnMeterValuesForMixedModes()
 	SetupGenericTDMChallenge()
+	SetAILethality( eAILethality.High )
+	
+	level.endOfRoundPlayerState = ENDROUND_FREE
 }
 
 // add settings
@@ -166,13 +169,13 @@ void function HandleScoreEvent( entity victim, entity attacker, var damageInfo )
 	teamScore = playerScore
 	
 	// Check score so we dont go over max
-	if ( GameRules_GetTeamScore(attacker.GetTeam()) + teamScore > GetScoreLimit_FromPlaylist() )
-		teamScore = GetScoreLimit_FromPlaylist() - GameRules_GetTeamScore(attacker.GetTeam())
+	if ( GameRules_GetTeamScore( attacker.GetTeam()) + teamScore > GetScoreLimit_FromPlaylist() )
+		teamScore = GetScoreLimit_FromPlaylist() - GameRules_GetTeamScore( attacker.GetTeam() )
 	
 	// Add score + update network int to trigger the "Score +n" popup
 	AddTeamScore( attacker.GetTeam(), teamScore )
 	attacker.AddToPlayerGameStat( PGS_ASSAULT_SCORE, playerScore )
-	attacker.SetPlayerNetInt("AT_bonusPoints", attacker.GetPlayerGameStat( PGS_ASSAULT_SCORE ) )
+	attacker.SetPlayerNetInt( "AT_bonusPoints", attacker.GetPlayerGameStat( PGS_ASSAULT_SCORE ) )
 }
 
 // When attrition starts both teams spawn ai on preset nodes, after that
@@ -260,7 +263,7 @@ void function SpawnIntroBatch_Threaded( int team )
 			thread AiGameModes_SpawnDropShip( node.GetOrigin(), node.GetAngles(), team, 4, SquadHandler )
 			
 			ships--
-			wait 1.0
+			wait 2.5
 		}
 		
 		// Vanilla has a delay after first spawn
@@ -321,7 +324,7 @@ void function Spawner_Threaded( int team )
 			string ent = file.podEntities[ index ].getrandom()
 			
 			array< entity > points = GetZiplineDropshipSpawns()
-			if ( ent == "npc_soldier" && points.len() && RandomInt( 100 ) >= 33 ) //Prefer using Dropship 2/3rd of the times
+			if ( ent == "npc_soldier" && points.len() && RandomInt( 100 ) >= 66 ) //Prefer using Dropship 1/3rd of the times
 			{
 				entity node = points[ GetSpawnPointIndex( points, team ) ]
 				thread Aitdm_SpawnDropShip( node, team )
@@ -515,7 +518,7 @@ void function ReaperHandler( entity reaper )
 	foreach ( player in players )
 		reaper.Minimap_AlwaysShow( 0, player )
 	
-	reaper.AssaultSetGoalRadius( 500 )
+	reaper.AssaultSetGoalRadius( 1200 )
 	
 	// Every 10 - 20 secs get a player and go to him
 	// Definetly not annoying or anything :)

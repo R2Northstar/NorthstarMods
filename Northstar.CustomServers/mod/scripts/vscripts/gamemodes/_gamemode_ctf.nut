@@ -36,12 +36,16 @@ void function CaptureTheFlag_Init()
 	SetRoundWinningKillReplayKillClasses( false, false ) // make these fully manual
 	
 	AddCallback_OnClientConnected( CTFInitPlayer )
+	AddCallback_OnClientDisconnected( CTFPlayerDisconnected )
 
 	AddCallback_GameStateEnter( eGameState.Prematch, CreateFlags )
 	AddCallback_GameStateEnter( eGameState.Epilogue, RemoveFlags )
+	AddCallback_GameStateEnter( eGameState.Playing, OnPlaying )
 	AddCallback_OnTouchHealthKit( "item_flag", OnFlagCollected )
 	AddCallback_OnPlayerKilled( OnPlayerKilled )
 	AddCallback_OnPilotBecomesTitan( DropFlagForBecomingTitan )
+	
+	AddSpawnCallback( "npc_titan", PlayerTitanSpawning )
 	
 	SetSpawnZoneRatingFunc( DecideSpawnZone_CTF )
 	AddSpawnpointValidationRule( VerifyCTFSpawnpoint )
@@ -75,46 +79,67 @@ void function RateSpawnpoints_CTF( int checkClass, array<entity> spawnpoints, in
 bool function VerifyCTFSpawnpoint( entity spawnpoint, int team )
 {
 	// ensure spawnpoints aren't too close to enemy base
+	vector allyFlagSpot
+	vector enemyFlagSpot
+	foreach ( entity spawn in GetEntArrayByClass_Expensive( "info_spawnpoint_flag" ) )
+	{
+		if( spawn.GetTeam() == team )
+			allyFlagSpot = spawn.GetOrigin()
+		else
+			enemyFlagSpot = spawn.GetOrigin()
+	}
 	
-	if ( HasSwitchedSides() )
-		team = GetOtherTeam( team )
+	if( Distance2D( spawnpoint.GetOrigin(), allyFlagSpot ) > Distance2D( spawnpoint.GetOrigin(), enemyFlagSpot ) )
+		return false
 	
-	array<entity> startSpawns = SpawnPoints_GetPilotStart( team )
-	array<entity> enemyStartSpawns = SpawnPoints_GetPilotStart( GetOtherTeam( team ) )
-	
-	vector averageFriendlySpawns
-	vector averageEnemySpawns
-	
-	foreach ( entity spawn in startSpawns )
-		averageFriendlySpawns += spawn.GetOrigin()
-	
-	averageFriendlySpawns /= startSpawns.len()
-	
-	foreach ( entity spawn in enemyStartSpawns )
-		averageEnemySpawns += spawn.GetOrigin()
-	
-	averageEnemySpawns /= startSpawns.len()
-	
-	return Distance2D( spawnpoint.GetOrigin(), averageEnemySpawns ) / Distance2D( averageFriendlySpawns, averageEnemySpawns ) > 0.35
+	return true
+}
+
+void function PlayerTitanSpawning( entity ent )
+{
+	thread OnFriendlyNPCTitanSpawnThreaded( ent )
+}
+
+void function OnFriendlyNPCTitanSpawnThreaded( entity npc )
+{
+	WaitFrame()
+	WaitTillHotDropComplete( npc )
+	Highlight_SetFriendlyHighlight( npc, "sp_friendly_hero" )
+	npc.Highlight_SetParam( 1, 0, HIGHLIGHT_COLOR_FRIENDLY )
 }
 
 void function CTFInitPlayer( entity player )
 {
-	if ( !IsValid( file.imcFlagSpawn ) )
+	if ( GetGameState() >= eGameState.Playing )
+		Highlight_SetFriendlyHighlight( player, "sp_friendly_hero" )
+	
+	if( !GamePlaying() )
 		return
 	
-	vector imcSpawn = file.imcFlagSpawn.GetOrigin()
-	Remote_CallFunction_NonReplay( player, "ServerCallback_SetFlagHomeOrigin", TEAM_IMC, imcSpawn.x, imcSpawn.y, imcSpawn.z )
+	if ( IsValid( file.imcFlagSpawn ) )
+	{
+		vector imcSpawn = file.imcFlagSpawn.GetOrigin()
+		Remote_CallFunction_NonReplay( player, "ServerCallback_SetFlagHomeOrigin", TEAM_IMC, imcSpawn.x, imcSpawn.y, imcSpawn.z )
+	}
 	
-	vector militiaSpawn = file.militiaFlagSpawn.GetOrigin()
-	Remote_CallFunction_NonReplay( player, "ServerCallback_SetFlagHomeOrigin", TEAM_MILITIA, militiaSpawn.x, militiaSpawn.y, militiaSpawn.z )
+	if ( IsValid( file.militiaFlagSpawn ) )
+	{
+		vector militiaSpawn = file.militiaFlagSpawn.GetOrigin()
+		Remote_CallFunction_NonReplay( player, "ServerCallback_SetFlagHomeOrigin", TEAM_MILITIA, militiaSpawn.x, militiaSpawn.y, militiaSpawn.z )
+	}
+}
+
+void function CTFPlayerDisconnected( entity player )
+{
+	if ( PlayerHasEnemyFlag( player ) )
+		DropFlag( player )
 }
 
 void function OnPlayerKilled( entity victim, entity attacker, var damageInfo )
 {
 	if ( !IsValid( GetFlagForTeam( GetOtherTeam( victim.GetTeam() ) ) ) ) // getting a crash idk
 		return
-	if ( GetFlagForTeam( GetOtherTeam( victim.GetTeam() ) ).GetParent() == victim )
+	if ( PlayerHasEnemyFlag( victim ) )
 	{
 		if ( victim != attacker && attacker.IsPlayer() )
 			AddPlayerScore( attacker, "FlagCarrierKill", victim )
@@ -130,7 +155,9 @@ void function CreateFlags()
 		file.imcFlagSpawn.Destroy()
 		file.imcFlag.Destroy()
 		file.imcFlagReturnTrigger.Destroy()
-		
+	}
+	if ( IsValid( file.militiaFlagSpawn ) )
+	{
 		file.militiaFlagSpawn.Destroy()
 		file.militiaFlag.Destroy()
 		file.militiaFlagReturnTrigger.Destroy()
@@ -147,7 +174,6 @@ void function CreateFlags()
 		bool shouldSwap = switchedSides 
 		if (!shouldSwap && SWAP_FLAG_MAPS.contains( GetMapName() ))
 			shouldSwap = !shouldSwap
-		
 
 		int flagTeam = spawn.GetTeam()
 		if ( shouldSwap )
@@ -155,12 +181,12 @@ void function CreateFlags()
 			flagTeam = GetOtherTeam( flagTeam )
 			SetTeam( spawn, flagTeam )
 		}
-	
+
 		// create flag base
 		entity base = CreatePropDynamic( CTF_FLAG_BASE_MODEL, spawn.GetOrigin(), spawn.GetAngles(), 0 )
 		SetTeam( base, spawn.GetTeam() )
 		svGlobal.flagSpawnPoints[ flagTeam ] = base
-		
+
 		// create flag
 		entity flag = CreateEntity( "item_flag" )
 		flag.SetValueForModelKey( CTF_FLAG_MODEL )
@@ -173,12 +199,12 @@ void function CreateFlags()
 		flag.SetModel( CTF_FLAG_MODEL )
 		flag.SetOrigin( spawn.GetOrigin() + < 0, 0, base.GetBoundingMaxs().z * 2 > ) // ensure flag doesn't spawn clipped into geometry
 		flag.SetVelocity( < 0, 0, 1 > )
-		
+
 		flag.s.canTake <- true
 		flag.s.playersReturning <- []
-		
+
 		level.teamFlags[ flag.GetTeam() ] <- flag
-			
+
 		entity returnTrigger = CreateEntity( "trigger_cylinder" )
 		SetTeam( returnTrigger, flagTeam )
 		returnTrigger.SetRadius( CTF_GetFlagReturnRadius() )
@@ -215,9 +241,6 @@ void function CreateFlags()
 	// reset the flag states, prevents issues where flag is home but doesnt think it's home when halftime goes
 	SetFlagStateForTeam( TEAM_MILITIA, eFlagState.None )
 	SetFlagStateForTeam( TEAM_IMC, eFlagState.None )
-	
-	foreach ( entity player in GetPlayerArray() )
-		CTFInitPlayer( player )
 }
 
 void function RemoveFlags()
@@ -225,12 +248,14 @@ void function RemoveFlags()
 	// destroy all the flag related things
 	if ( IsValid( file.imcFlagSpawn ) )
 	{
+		PlayFX( $"P_phase_shift_main", file.imcFlag.GetOrigin() )
 		file.imcFlagSpawn.Destroy()
 		file.imcFlag.Destroy()
 		file.imcFlagReturnTrigger.Destroy()
 	}
 	if ( IsValid( file.militiaFlagSpawn ) )
 	{
+		PlayFX( $"P_phase_shift_main", file.militiaFlag.GetOrigin() )
 		file.militiaFlagSpawn.Destroy()
 		file.militiaFlag.Destroy()
 		file.militiaFlagReturnTrigger.Destroy()
@@ -283,7 +308,8 @@ void function GiveFlag( entity player, entity flag )
 	flag.Signal( "ResetDropTimeout" )
 
 	flag.SetParent( player, "FLAG" )
-	thread DropFlagIfPhased( player, flag )
+	if( GetCurrentPlaylistVarInt( "phase_shift_drop_flag", 0 ) == 1 )
+		thread DropFlagIfPhased( player, flag )
 
 	// do notifications
 	MessageToPlayer( player, eEventNotifications.YouHaveTheEnemyFlag )
@@ -308,11 +334,14 @@ void function DropFlagIfPhased( entity player, entity flag )
 	
 	OnThreadEnd( function() : ( player ) 
 	{
-		if (GetGameState() == eGameState.Playing || GetGameState() == eGameState.SuddenDeath)
-			DropFlag( player, true )
+		if( IsValidPlayer( player ) )
+		{
+			if ( GetGameState() == eGameState.Playing || GetGameState() == eGameState.SuddenDeath )
+				DropFlag( player, true )
+		}
 	})
 	// the IsValid check is purely to prevent a crash due to a destroyed flag (epilogue)
-	while( IsValid(flag) && flag.GetParent() == player )
+	while( IsValid( flag ) && flag.GetParent() == player )
 		WaitFrame()
 }
 
@@ -324,6 +353,9 @@ void function DropFlagForBecomingTitan( entity pilot, entity titan )
 void function DropFlag( entity player, bool realDrop = true )
 {
 	entity flag = GetFlagForTeam( GetOtherTeam( player.GetTeam() ) )
+	
+	if( !IsValid( flag ) )
+		return
 	
 	if ( flag.GetParent() != player )
 		return
@@ -340,9 +372,9 @@ void function DropFlag( entity player, bool realDrop = true )
 		thread TrackFlagDropTimeout( flag )
 	
 		// add to capture assists
-		if ( player.GetTeam() == TEAM_IMC )
+		if ( player.GetTeam() == TEAM_IMC && !file.imcCaptureAssistList.contains( player ) )
 			file.imcCaptureAssistList.append( player )
-		else
+		else if( !file.militiaCaptureAssistList.contains( player ) )
 			file.militiaCaptureAssistList.append( player )
 
 		// do notifications
@@ -370,8 +402,9 @@ void function TrackFlagDropTimeout( entity flag )
 void function ResetFlag( entity flag )
 {
 	// prevents crash when flag is reset after it's been destroyed due to epilogue
-	if (!IsValid(flag))
+	if ( !IsValid( flag ) )
 		return
+	
 	// ensure we can't pickup the flag after it's been dropped but before it's been reset
 	flag.s.canTake = false
 	
@@ -397,7 +430,7 @@ void function ResetFlag( entity flag )
 void function CaptureFlag( entity player, entity flag )
 {
 	// can only capture flags during normal play or sudden death
-	if (GetGameState() != eGameState.Playing && GetGameState() != eGameState.SuddenDeath)
+	if ( GetGameState() != eGameState.Playing && GetGameState() != eGameState.SuddenDeath )
 	{
 		printt( player + " tried to capture the flag, but the game state was " + GetGameState() + " not " + eGameState.Playing + " or " + eGameState.SuddenDeath)
 		return
@@ -422,12 +455,15 @@ void function CaptureFlag( entity player, entity flag )
 	
 	foreach( entity assistPlayer in assistList )
 	{
-		if ( player != assistPlayer )
-			AddPlayerScore( assistPlayer, "FlagCaptureAssist", player )
-		if( !HasPlayerCompletedMeritScore( assistPlayer ) )
+		if( IsValidPlayer( assistPlayer ) )
 		{
-			AddPlayerScore( assistPlayer, "ChallengeCTFCapAssist" )
-			SetPlayerChallengeMeritScore( assistPlayer )
+			if ( player != assistPlayer )
+				AddPlayerScore( assistPlayer, "FlagCaptureAssist", player )
+			if( !HasPlayerCompletedMeritScore( assistPlayer ) )
+			{
+				AddPlayerScore( assistPlayer, "ChallengeCTFCapAssist" )
+				SetPlayerChallengeMeritScore( assistPlayer )
+			}
 		}
 	}
 		
@@ -437,13 +473,19 @@ void function CaptureFlag( entity player, entity flag )
 	MessageToPlayer( player, eEventNotifications.YouCapturedTheEnemyFlag )
 	EmitSoundOnEntityOnlyToPlayer( player, player, "UI_CTF_1P_PlayerScore" )
 	
+	if( !HasPlayerCompletedMeritScore( player ) )
+	{
+		AddPlayerScore( player, "ChallengeCTFRetAssist" )
+		SetPlayerChallengeMeritScore( player )
+	}
+	
 	MessageToTeam( team, eEventNotifications.PlayerCapturedEnemyFlag, player, player )
 	EmitSoundOnEntityToTeamExceptPlayer( flag, "UI_CTF_3P_TeamScore", player.GetTeam(), player )
 	
 	MessageToTeam( GetOtherTeam( team ), eEventNotifications.PlayerCapturedFriendlyFlag, player, player )
 	EmitSoundOnEntityToTeam( flag, "UI_CTF_3P_EnemyScores", flag.GetTeam() )
 	
-	if ( GameRules_GetTeamScore( team ) == GameMode_GetRoundScoreLimit( GAMETYPE ) - 1 )
+	if ( GameRules_GetTeamScore( team ) == GetRoundScoreLimit_FromPlaylist() - 1 )
 	{
 		PlayFactionDialogueToTeam( "ctf_notifyWin1more", team )
 		PlayFactionDialogueToTeam( "ctf_notifyLose1more", GetOtherTeam( team ) )
@@ -458,7 +500,7 @@ void function OnPlayerEntersFlagReturnTrigger( entity trigger, entity player )
 	else
 		flag = file.militiaFlag
 
-	if( !IsValid( flag ) || !IsValid( player ) )
+	if( !IsValid( flag ) || !IsValidPlayer( player ) )
 		return
 	
 	if ( !player.IsPlayer() || player.IsTitan() || player.GetTeam() != flag.GetTeam() || IsFlagHome( flag ) || flag.GetParent() != null )
@@ -474,7 +516,10 @@ void function OnPlayerExitsFlagReturnTrigger( entity trigger, entity player )
 		flag = file.imcFlag
 	else
 		flag = file.militiaFlag
-		
+	
+	if( !IsValid( flag ) || !IsValidPlayer( player ) )
+		return
+	
 	if ( !player.IsPlayer() || player.IsTitan() || player.GetTeam() != flag.GetTeam() || IsFlagHome( flag ) || flag.GetParent() != null )
 		return
 	
@@ -487,16 +532,20 @@ void function TryReturnFlag( entity player, entity flag )
 	Remote_CallFunction_NonReplay( player, "ServerCallback_CTF_StartReturnFlagProgressBar", Time() + CTF_GetFlagReturnTime() )
 	EmitSoundOnEntityOnlyToPlayer( player, player, "UI_CTF_1P_FlagReturnMeter" )
 	
-	OnThreadEnd( function() : ( player )
+	OnThreadEnd( function() : ( flag, player )
 	{
 		// cleanup
-		Remote_CallFunction_NonReplay( player, "ServerCallback_CTF_StopReturnFlagProgressBar" )
-		StopSoundOnEntity( player, "UI_CTF_1P_FlagReturnMeter" )
+		if( IsValidPlayer( player ) )
+		{
+			Remote_CallFunction_NonReplay( player, "ServerCallback_CTF_StopReturnFlagProgressBar" )
+			StopSoundOnEntity( player, "UI_CTF_1P_FlagReturnMeter" )
+		}
 	})
 	
 	player.EndSignal( "FlagReturnEnded" )
 	flag.EndSignal( "FlagReturnEnded" ) // avoid multiple players to return one flag at once
 	player.EndSignal( "OnDeath" )
+	player.EndSignal( "OnDestroy" )
 	
 	wait CTF_GetFlagReturnTime()
 	
@@ -504,7 +553,7 @@ void function TryReturnFlag( entity player, entity flag )
 	// return flag
 	ResetFlag( flag )
 	flag.Signal( "FlagReturnEnded" )
-
+	
 	// do notifications for return
 	MessageToPlayer( player, eEventNotifications.YouReturnedFriendlyFlag )
 	AddPlayerScore( player, "FlagReturn", player )
@@ -523,4 +572,10 @@ void function TryReturnFlag( entity player, entity flag )
 	MessageToTeam( GetOtherTeam( flag.GetTeam() ), eEventNotifications.PlayerReturnedEnemyFlag, null, player )
 	EmitSoundOnEntityToTeam( flag, "UI_CTF_3P_EnemyReturnsFlag", GetOtherTeam( flag.GetTeam() ) )
 	PlayFactionDialogueToTeam( "ctf_flagReturnedEnemy", GetOtherTeam( flag.GetTeam() ) )
+}
+
+void function OnPlaying()
+{
+	foreach ( entity player in GetPlayerArray() )
+		CTFInitPlayer( player )
 }

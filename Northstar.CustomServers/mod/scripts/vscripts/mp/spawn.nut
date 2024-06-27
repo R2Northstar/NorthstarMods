@@ -41,6 +41,27 @@ struct {
 	table<string, NoSpawnArea> noSpawnAreas
 } file
 
+
+
+
+
+
+
+
+
+
+
+/*
+
+██████╗  █████╗ ███████╗███████╗    ███████╗██╗   ██╗███╗   ██╗ ██████╗████████╗██╗ ██████╗ ███╗   ██╗███████╗
+██╔══██╗██╔══██╗██╔════╝██╔════╝    ██╔════╝██║   ██║████╗  ██║██╔════╝╚══██╔══╝██║██╔═══██╗████╗  ██║██╔════╝
+██████╔╝███████║███████╗█████╗      █████╗  ██║   ██║██╔██╗ ██║██║        ██║   ██║██║   ██║██╔██╗ ██║███████╗
+██╔══██╗██╔══██║╚════██║██╔══╝      ██╔══╝  ██║   ██║██║╚██╗██║██║        ██║   ██║██║   ██║██║╚██╗██║╚════██║
+██████╔╝██║  ██║███████║███████╗    ██║     ╚██████╔╝██║ ╚████║╚██████╗   ██║   ██║╚██████╔╝██║ ╚████║███████║
+╚═════╝ ╚═╝  ╚═╝╚══════╝╚══════╝    ╚═╝      ╚═════╝ ╚═╝  ╚═══╝ ╚═════╝   ╚═╝   ╚═╝ ╚═════╝ ╚═╝  ╚═══╝╚══════╝
+
+*/
+
 void function Spawn_Init()
 {	
 	AddSpawnCallback( "info_spawnpoint_human", InitSpawnpoint )
@@ -125,6 +146,26 @@ void function InitRatings( entity player, int team )
 	if ( player != null )
 		SpawnPoints_InitRatings( player, team ) // no idea what the second arg supposed to be lol
 }
+
+
+
+
+
+
+
+
+
+
+/*
+
+███████╗██████╗  █████╗ ██╗    ██╗███╗   ██╗    ██████╗  ██████╗ ██╗███╗   ██╗████████╗███████╗
+██╔════╝██╔══██╗██╔══██╗██║    ██║████╗  ██║    ██╔══██╗██╔═══██╗██║████╗  ██║╚══██╔══╝██╔════╝
+███████╗██████╔╝███████║██║ █╗ ██║██╔██╗ ██║    ██████╔╝██║   ██║██║██╔██╗ ██║   ██║   ███████╗
+╚════██║██╔═══╝ ██╔══██║██║███╗██║██║╚██╗██║    ██╔═══╝ ██║   ██║██║██║╚██╗██║   ██║   ╚════██║
+███████║██║     ██║  ██║╚███╔███╔╝██║ ╚████║    ██║     ╚██████╔╝██║██║ ╚████║   ██║   ███████║
+╚══════╝╚═╝     ╚═╝  ╚═╝ ╚══╝╚══╝ ╚═╝  ╚═══╝    ╚═╝      ╚═════╝ ╚═╝╚═╝  ╚═══╝   ╚═╝   ╚══════╝
+
+*/
 
 entity function FindSpawnPoint( entity player, bool isTitan, bool useStartSpawnpoint )
 {
@@ -254,25 +295,37 @@ bool function IsSpawnpointValid( entity spawnpoint, int team )
 			return false
 	}
 
-    const minEnemyDist = 1000.0 // about 20 meters?
-    // in rsquirrel extend returns null unlike in vanilla squirrel
-    array< entity > spawnBlockers = GetPlayerArrayEx( "any", TEAM_ANY, team, spawnpoint.GetOrigin(), minEnemyDist )
-    spawnBlockers.extend( GetProjectileArrayEx( "any", TEAM_ANY, team, spawnpoint.GetOrigin(), minEnemyDist ) )
-    spawnBlockers.extend( GetNPCArrayEx( "any", TEAM_ANY, team, spawnpoint.GetOrigin(), minEnemyDist ) )
-	foreach ( entity blocker in spawnBlockers )
-	{
-		if ( blocker.GetTeam() != team )
-			return false
-	}
+    const minEnemyDist = 1200.0
+    array< entity > spawnBlockers = GetPlayerArrayEx( "any", TEAM_ANY, spawnpoint.GetTeam(), spawnpoint.GetOrigin(), minEnemyDist )
+    spawnBlockers.extend( GetProjectileArrayEx( "any", TEAM_ANY, spawnpoint.GetTeam(), spawnpoint.GetOrigin(), minEnemyDist ) )
+    spawnBlockers.extend( GetNPCArrayEx( "any", TEAM_ANY, spawnpoint.GetTeam(), spawnpoint.GetOrigin(), minEnemyDist ) )
+	if ( spawnBlockers.len() )
+		return false
 	
 	// los check
 	return !spawnpoint.IsVisibleToEnemies( team )
 }
 
 
-// SPAWNPOINT RATING FUNCS BELOW
 
-// generic
+
+
+
+
+
+
+
+/*
+
+██████╗  ██████╗ ██╗███╗   ██╗████████╗    ██████╗  █████╗ ████████╗██╗███╗   ██╗ ██████╗ 
+██╔══██╗██╔═══██╗██║████╗  ██║╚══██╔══╝    ██╔══██╗██╔══██╗╚══██╔══╝██║████╗  ██║██╔════╝ 
+██████╔╝██║   ██║██║██╔██╗ ██║   ██║       ██████╔╝███████║   ██║   ██║██╔██╗ ██║██║  ███╗
+██╔═══╝ ██║   ██║██║██║╚██╗██║   ██║       ██╔══██╗██╔══██║   ██║   ██║██║╚██╗██║██║   ██║
+██║     ╚██████╔╝██║██║ ╚████║   ██║       ██║  ██║██║  ██║   ██║   ██║██║ ╚████║╚██████╔╝
+╚═╝      ╚═════╝ ╚═╝╚═╝  ╚═══╝   ╚═╝       ╚═╝  ╚═╝╚═╝  ╚═╝   ╚═╝   ╚═╝╚═╝  ╚═══╝ ╚═════╝ 
+
+*/
+
 struct {
 	array<vector> preferSpawnNodes
 } spawnStateGeneric
@@ -400,7 +453,26 @@ void function RateSpawnpoints_Frontline( int checkClass, array<entity> spawnpoin
 		spawnpoint.CalculateRating( checkClass, player.GetTeam(), rating, rating )
 }
 
-// spawnzones
+
+
+
+
+
+
+
+
+
+/*
+
+███████╗██████╗  █████╗ ██╗    ██╗███╗   ██╗███████╗ ██████╗ ███╗   ██╗███████╗███████╗
+██╔════╝██╔══██╗██╔══██╗██║    ██║████╗  ██║╚══███╔╝██╔═══██╗████╗  ██║██╔════╝██╔════╝
+███████╗██████╔╝███████║██║ █╗ ██║██╔██╗ ██║  ███╔╝ ██║   ██║██╔██╗ ██║█████╗  ███████╗
+╚════██║██╔═══╝ ██╔══██║██║███╗██║██║╚██╗██║ ███╔╝  ██║   ██║██║╚██╗██║██╔══╝  ╚════██║
+███████║██║     ██║  ██║╚███╔███╔╝██║ ╚████║███████╗╚██████╔╝██║ ╚████║███████╗███████║
+╚══════╝╚═╝     ╚═╝  ╚═╝ ╚══╝╚══╝ ╚═╝  ╚═══╝╚══════╝ ╚═════╝ ╚═╝  ╚═══╝╚══════╝╚══════╝
+
+*/
+
 struct {
 	array<entity> mapSpawnzoneTriggers
 	entity functionref( array<entity>, int ) spawnzoneRatingFunc
