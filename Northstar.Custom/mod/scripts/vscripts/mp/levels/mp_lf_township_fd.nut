@@ -109,14 +109,14 @@ void function initFrontierDefenseData()
 	
 	*/
 	array<WaveSpawnEvent> wave2
-	for( spawnamount = 0; spawnamount < 12; spawnamount++ )
+	for( spawnamount = 0; spawnamount < 10; spawnamount++ )
 	{
 		WaveSpawn_InfantrySpawn( wave2, "PodGrunt", infantryspawns.getrandom(), 0.0, "", RandomFloatRange( 0.1, 0.6 ) )
 		WaveSpawn_WaitEnemyAliveAmount( wave2, 28 )
 		WaveSpawn_InfantrySpawn( wave2, "Stalker", infantryspawns.getrandom(), 0.0, "", RandomFloatRange( 0.1, 0.6 ) )
 		WaveSpawn_WaitEnemyAliveAmount( wave2, 28 )
 	}
-	for( spawnamount = 0; spawnamount < 12; spawnamount++ )
+	for( spawnamount = 0; spawnamount < 10; spawnamount++ )
 	{
 		WaveSpawn_InfantrySpawn( wave2, "PodGrunt", infantryspawns.getrandom(), 0.0, "", RandomFloatRange( 0.1, 0.6 ) )
 		WaveSpawn_WaitEnemyAliveAmount( wave2, 28 )
@@ -138,7 +138,7 @@ void function initFrontierDefenseData()
 		WaveSpawn_ReaperSpawn( wave2, "Reaper", reaperspawns.getrandom(), -90, "titanMain", RandomFloatRange( 0.1, 0.6 ) )
 		WaveSpawn_WaitEnemyAliveAmount( wave2, 28 )
 	}
-	for( spawnamount = 0; spawnamount < 64; spawnamount++ )
+	for( spawnamount = 0; spawnamount < 16; spawnamount++ )
 	{
 		WaveSpawn_InfantrySpawn( wave2, "Ticks", infantryspawns.getrandom(), 0.0, "", RandomFloatRange( 0.1, 0.6 ) )
 		WaveSpawn_WaitEnemyAliveAmount( wave2, 28 )
@@ -170,7 +170,7 @@ void function initFrontierDefenseData()
 	}
 	
 	WaveSpawn_TitanSpawn( wave3, "ArcTitan", titanspawns.getrandom(), -90, "titanMain", RandomFloatRange( 0.1, 0.6 ) )
-	wave3.append(CreateWaitUntilAliveEvent( 28, index++ ) )
+	WaveSpawn_WaitEnemyAliveAmount( wave3, 28 )
 	
 	for( spawnamount = 0; spawnamount < 4; spawnamount++ )
 	{
@@ -183,11 +183,11 @@ void function initFrontierDefenseData()
 	}
 	
 	WaveSpawn_TitanSpawn( wave3, "ArcTitan", titanspawns.getrandom(), -90, "titanMain", RandomFloatRange( 0.1, 0.6 ) )
-	wave3.append(CreateWaitUntilAliveEvent( 28, index++ ) )
+	WaveSpawn_WaitEnemyAliveAmount( wave3, 28 )
 	
 	for( spawnamount = 0; spawnamount < 4; spawnamount++ )
 	{
-		wave3.append(CreateDroppodSpectreEvent( infantryspawns.getrandom() ,"",index++))
+		WaveSpawn_InfantrySpawn( wave3, "Spectre", infantryspawns.getrandom(), 0.0, "", RandomFloatRange( 0.1, 0.6 ) )
 		WaveSpawn_WaitEnemyAliveAmount( wave3, 28 )
 		WaveSpawn_InfantrySpawn( wave3, "Stalker", infantryspawns.getrandom(), 0.0, "", RandomFloatRange( 0.1, 0.6 ) )
 		WaveSpawn_WaitEnemyAliveAmount( wave3, 28 )
@@ -200,7 +200,7 @@ void function initFrontierDefenseData()
 	}
 	
 	WaveSpawn_TitanSpawn( wave3, "Nuke", titanspawns.getrandom(), -90, "titanMain", RandomFloatRange( 0.1, 0.6 ) )
-	wave3.append(CreateWaitUntilAliveEvent( 28, index++ ) )
+	WaveSpawn_WaitEnemyAliveAmount( wave3, 28 )
 	
 	for( spawnamount = 0; spawnamount < 4; spawnamount++ )
 	{
@@ -223,7 +223,7 @@ void function initFrontierDefenseData()
 	
 	for( spawnamount = 0; spawnamount < 4; spawnamount++ )
 	{
-		wave3.append(CreateDroppodSpectreEvent( infantryspawns.getrandom() ,"",index++))
+		WaveSpawn_InfantrySpawn( wave3, "Spectre", infantryspawns.getrandom(), 0.0, "", RandomFloatRange( 0.1, 0.6 ) )
 		WaveSpawn_WaitEnemyAliveAmount( wave3, 28 )
 		WaveSpawn_InfantrySpawn( wave3, "Stalker", infantryspawns.getrandom(), 0.0, "", RandomFloatRange( 0.1, 0.6 ) )
 		WaveSpawn_WaitEnemyAliveAmount( wave3, 28 )

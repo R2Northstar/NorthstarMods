@@ -3483,10 +3483,10 @@ void function FD_BatteryHealTeammate_Threaded( entity rider, entity titan, int o
 {
 	WaitFrame() //Do this way because it's ironically more accurate to track the health change when healing teammates with batteries
 	
-	entity soul = titan.GetTitanSoul()
-	
-	if( !IsValid( soul ) )
+	if( !IsAlive( titan ) )
 		return
+	
+	entity soul = titan.GetTitanSoul()
 	
 	int healAmount = titan.GetHealth() - ogHealth
 	int shieldAmount = soul.GetShieldHealth() - ogShield
@@ -3730,7 +3730,7 @@ bool function isFinalWave()
 
 bool function isSecondWave()
 {
-	return ( (GetGlobalNetInt( "FD_currentWave" ) + 1 ) == 1 )
+	return ( ( GetGlobalNetInt( "FD_currentWave" ) + 1 ) == 1 )
 }
 
 //Idk the precise behavior of the summary panel in vanilla, but this is the closest i got so far

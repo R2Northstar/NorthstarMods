@@ -162,7 +162,7 @@ void function initFrontierDefenseData()
 	}
 	for( spawnamount = 0; spawnamount < 8; spawnamount++ )
 	{
-		wave3.append(CreateSuperSpectreEvent( infantryspawns.getrandom() , < 0, 90, 0> ,"reapersMain",index++))
+		WaveSpawn_ReaperSpawn( wave3, "Reaper", reaperspawns.getrandom(), 90, "reapersMain", RandomFloatRange( 0.1, 0.6 ) )
 		WaveSpawn_WaitEnemyAliveAmount( wave3, 20 )
 		WaveSpawn_InfantrySpawn( wave3, "Ticks", infantryspawns.getrandom(), 0.0, "", RandomFloatRange( 0.1, 0.6 ) )
 		WaveSpawn_WaitEnemyAliveAmount( wave3, 20 )
