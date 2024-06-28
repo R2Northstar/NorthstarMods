@@ -135,10 +135,10 @@ void function OnPlayerRespawned( entity player )
 		player.TakeWeaponNow( weapon.GetWeaponClassName() )
 	
 	array<string> mods = ["sns", "pas_fast_ads", "tactical_cdr_on_kill", "pas_run_and_gun", "pas_fast_swap"]
-	player.GiveWeapon( "mp_weapon_wingman_n", mods)
+	player.GiveWeapon( "mp_weapon_ns_wingman_n", mods)
 	if (file.softball_enabled) {
 		mods.append("jump_kit") // the funny
-		player.GiveWeapon( "mp_weapon_softball", mods)
+		player.GiveWeapon( "mp_weapon_ns_softball", mods)
 	}
 	player.GiveOffhandWeapon( "melee_pilot_emptyhanded", OFFHAND_MELEE )
 	player.GiveOffhandWeapon( file.offhand_weapon, OFFHAND_RIGHT )

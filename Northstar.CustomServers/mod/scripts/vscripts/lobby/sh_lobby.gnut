@@ -16,8 +16,8 @@ global struct CustomMatchSettingContainer
 
 struct {
 	array<string> modes = [ // default modes in vanilla
-		"tdm",
 		"aitdm",
+		"tdm",
 		"cp",
 		"at",
 		"ctf",

@@ -64,9 +64,9 @@ void function CTFCompRegisterNetworkVars()
 	RegisterNetworkedVariable( "flagReturnProgress", SNDC_GLOBAL, SNVT_FLOAT_RANGE_OVER_TIME, 0.0, 0.0, 1.0 )
 	RegisterNetworkedVariable( "returningFlag", SNDC_PLAYER_EXCLUSIVE, SNVT_BOOL, false )
 
-	Remote_RegisterFunction( "ServerCallback_CTF_PlayMatchNearEndMusic" )
-	Remote_RegisterFunction( "ServerCallback_CTF_StartReturnFlagProgressBar" )
-	Remote_RegisterFunction( "ServerCallback_CTF_StopReturnFlagProgressBar" )
+	NSRemote_RegisterFunction( "ServerCallback_CTF_PlayMatchNearEndMusic" )
+	NSRemote_RegisterFunction( "ServerCallback_CTF_StartReturnFlagProgressBar" )
+	NSRemote_RegisterFunction( "ServerCallback_CTF_StopReturnFlagProgressBar" )
 
 	#if CLIENT
 		CLCaptureTheFlag_RegisterNetworkFunctions()

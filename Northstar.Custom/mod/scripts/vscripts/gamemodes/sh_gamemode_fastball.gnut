@@ -41,7 +41,7 @@ void function FastballRegisterNetworkVars()
 	if ( GAMETYPE != GAMEMODE_FASTBALL )
 		return
 	
-	Remote_RegisterFunction( "ServerCallback_FastballUpdatePanelRui" )
-	Remote_RegisterFunction( "ServerCallback_FastballPanelHacked" )
-	Remote_RegisterFunction( "ServerCallback_FastballRespawnPlayer" )
+	NSRemote_RegisterFunction( "ServerCallback_FastballUpdatePanelRui" )
+	NSRemote_RegisterFunction( "ServerCallback_FastballPanelHacked" )
+	NSRemote_RegisterFunction( "ServerCallback_FastballRespawnPlayer" )
 }
