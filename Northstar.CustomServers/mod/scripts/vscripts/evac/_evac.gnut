@@ -6,6 +6,10 @@ global function IsEvacDropship
 
 global function EvacEpilogueSetup
 global function Evac
+global function EvacEpiloguePlayerCanBoard
+global function EvacEpilogueShouldLeaveEarly
+global function EvacEpilogueCompleted
+global function SetRespawnAndWait
 
 const float EVAC_INITIAL_WAIT = 5.0
 const float EVAC_ARRIVAL_TIME = 40.0
@@ -255,14 +259,15 @@ void function Evac( int evacTeam, float initialWait, float arrivalTime, float wa
 	entity dropship = CreateDropship( evacTeam, evacNode.GetOrigin(), evacNode.GetAngles() )
 
 	thread DropShipTempHide( dropship ) // prevent showing model and health bar on spawn
-	dropship.SetModel( evacShip.shipModel )
 	dropship.SetValueForModelKey( evacShip.shipModel )
 
 	dropship.SetMaxHealth( EVAC_SHIP_HEALTH )
 	dropship.SetHealth( EVAC_SHIP_HEALTH )
+	dropship.SetShieldHealthMax( EVAC_SHIP_SHIELDS )
 	dropship.SetShieldHealth( EVAC_SHIP_SHIELDS )
 	SetTargetName( dropship, "#NPC_EVAC_DROPSHIP" )
 	DispatchSpawn( dropship )
+	dropship.SetModel( evacShip.shipModel )
 
 	// reduce nuclear core's damage
 	AddEntityCallback_OnDamaged( dropship, EvacDropshipDamaged )
@@ -282,7 +287,7 @@ void function Evac( int evacTeam, float initialWait, float arrivalTime, float wa
 		if( !IsValid( dropship ) )
 		{
 			SetTeamActiveObjective( evacTeam, "EG_DropshipExtractDropshipDestroyed" )
-			SetTeamActiveObjective( GetOtherTeam( evacTeam ), "EG_DropshipExtractDropshipDestroyed" )
+			SetTeamActiveObjective( GetOtherTeam( evacTeam ), "EG_StopExtractDropshipDestroyed" )
 			
 			foreach( entity player in GetPlayerArrayOfTeam( evacTeam ) )
 				SetPlayerChallengeEvacState( player, 0 )
@@ -416,7 +421,10 @@ void function Evac( int evacTeam, float initialWait, float arrivalTime, float wa
 			continue
 		}
 		
-		SetPlayerActiveObjective( player, "EG_DropshipExtractSuccessfulEscape" )
+		if( player.GetTeam() == evacTeam )
+			SetPlayerActiveObjective( player, "EG_DropshipExtractSuccessfulEscape" )
+		else
+			SetPlayerActiveObjective( player, "EG_StopExtractDropshipSuccessfulEscape" )
 
 		// let evacing team able to see the ship again
 		dropship.kv.VisibilityFlags = ENTITY_VISIBLE_TO_FRIENDLY
@@ -560,7 +568,7 @@ void function CheckIfAnyPlayerLeft( int evacTeam )
 				if ( player.GetTeam() == evacTeam )
 					continue
 
-				AddPlayerScore( player, "TeamBonusKilledAll")
+				AddPlayerScore( player, "TeamBonusKilledAll" )
 			}
 		}
 	)

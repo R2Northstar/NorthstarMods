@@ -3615,6 +3615,68 @@ void function FD_SetupEpilogue()
 
 void function FD_Epilogue()
 {
+	if( IsHarvesterAlive( fd_harvester.harvester ) )
+		thread FD_Epilogue_threaded()
+	else
+	{
+		StartEvacDropship()
+		NPC_NoTarget( fd_harvester.harvester )
+		
+		foreach ( entity npc in GetNPCArray() )
+		{
+			if( npc.GetTeam() == TEAM_IMC )
+			{
+				npc.ClearEnemy()
+				npc.AssaultPoint( fd_harvester.harvester.GetOrigin() )
+				npc.AssaultSetGoalRadius( 12000 )
+				npc.AssaultSetGoalHeight( 512 )
+				npc.AssaultSetFightRadius( 8000 )
+			}
+		}
+	}
+}
+
+void function StartEvacDropship()
+{
+	thread SetRespawnAndWait( false )
+	thread CheckIfAnyPlayerLeft( TEAM_MILITIA )
+	thread Evac( TEAM_MILITIA, 5.0, 20.0, 15.0, EvacEpiloguePlayerCanBoard, EvacEpilogueShouldLeaveEarly, FD_Epilogue_Evac )
+}
+
+void function CheckIfAnyPlayerLeft( int evacTeam )
+{
+	wait GAME_EPILOGUE_PLAYER_RESPAWN_LEEWAY
+	float startTime = Time()
+
+	OnThreadEnd(
+		function() : ( evacTeam )
+		{
+			SetTeamActiveObjective( evacTeam, "EG_DropshipExtractEvacPlayersKilled" )
+			SetTeamActiveObjective( GetOtherTeam( evacTeam ), "EG_StopExtractEvacPlayersKilled" )
+			thread FD_Epilogue_threaded()
+
+			// score for killing the entire evacing team
+			foreach ( entity player in GetPlayerArray() )
+			{
+				if ( player.GetTeam() == evacTeam )
+					continue
+
+				AddPlayerScore( player, "TeamBonusKilledAll" )
+			}
+		}
+	)
+	while( true )
+	{
+		if( GetPlayerArrayOfTeam_Alive( evacTeam ).len() == 0 )
+			break
+		if( GetGameState() == eGameState.Postmatch )
+			return
+		WaitFrame()
+	}
+}
+
+void function FD_Epilogue_Evac( entity dropship )
+{
 	thread FD_Epilogue_threaded()
 }
 
