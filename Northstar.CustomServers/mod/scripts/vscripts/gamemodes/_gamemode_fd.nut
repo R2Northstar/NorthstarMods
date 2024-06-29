@@ -3615,7 +3615,7 @@ void function FD_SetupEpilogue()
 
 void function FD_Epilogue()
 {
-	if( IsHarvesterAlive( fd_harvester.harvester ) )
+	if( IsHarvesterAlive( fd_harvester.harvester ) || file.isLiveFireMap )
 		thread FD_Epilogue_threaded()
 	else
 	{
