@@ -130,7 +130,7 @@ entity function FindSpawnPoint( entity player, bool isTitan, bool useStartSpawnp
 {
 	int team = player.GetTeam()
 	if ( HasSwitchedSides() )
-		team = GetOtherTeam( team )
+		team = ( team == TEAM_MILITIA ) ? TEAM_IMC : TEAM_MILITIA
 
 	array<entity> spawnpoints
 	if ( useStartSpawnpoint )
