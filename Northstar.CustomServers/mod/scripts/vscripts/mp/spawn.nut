@@ -41,27 +41,6 @@ struct {
 	table<string, NoSpawnArea> noSpawnAreas
 } file
 
-
-
-
-
-
-
-
-
-
-
-/*
-
-██████╗  █████╗ ███████╗███████╗    ███████╗██╗   ██╗███╗   ██╗ ██████╗████████╗██╗ ██████╗ ███╗   ██╗███████╗
-██╔══██╗██╔══██╗██╔════╝██╔════╝    ██╔════╝██║   ██║████╗  ██║██╔════╝╚══██╔══╝██║██╔═══██╗████╗  ██║██╔════╝
-██████╔╝███████║███████╗█████╗      █████╗  ██║   ██║██╔██╗ ██║██║        ██║   ██║██║   ██║██╔██╗ ██║███████╗
-██╔══██╗██╔══██║╚════██║██╔══╝      ██╔══╝  ██║   ██║██║╚██╗██║██║        ██║   ██║██║   ██║██║╚██╗██║╚════██║
-██████╔╝██║  ██║███████║███████╗    ██║     ╚██████╔╝██║ ╚████║╚██████╗   ██║   ██║╚██████╔╝██║ ╚████║███████║
-╚═════╝ ╚═╝  ╚═╝╚══════╝╚══════╝    ╚═╝      ╚═════╝ ╚═╝  ╚═══╝ ╚═════╝   ╚═╝   ╚═╝ ╚═════╝ ╚═╝  ╚═══╝╚══════╝
-
-*/
-
 void function Spawn_Init()
 {	
 	AddSpawnCallback( "info_spawnpoint_human", InitSpawnpoint )
@@ -147,31 +126,11 @@ void function InitRatings( entity player, int team )
 		SpawnPoints_InitRatings( player, team ) // no idea what the second arg supposed to be lol
 }
 
-
-
-
-
-
-
-
-
-
-/*
-
-███████╗██████╗  █████╗ ██╗    ██╗███╗   ██╗    ██████╗  ██████╗ ██╗███╗   ██╗████████╗███████╗
-██╔════╝██╔══██╗██╔══██╗██║    ██║████╗  ██║    ██╔══██╗██╔═══██╗██║████╗  ██║╚══██╔══╝██╔════╝
-███████╗██████╔╝███████║██║ █╗ ██║██╔██╗ ██║    ██████╔╝██║   ██║██║██╔██╗ ██║   ██║   ███████╗
-╚════██║██╔═══╝ ██╔══██║██║███╗██║██║╚██╗██║    ██╔═══╝ ██║   ██║██║██║╚██╗██║   ██║   ╚════██║
-███████║██║     ██║  ██║╚███╔███╔╝██║ ╚████║    ██║     ╚██████╔╝██║██║ ╚████║   ██║   ███████║
-╚══════╝╚═╝     ╚═╝  ╚═╝ ╚══╝╚══╝ ╚═╝  ╚═══╝    ╚═╝      ╚═════╝ ╚═╝╚═╝  ╚═══╝   ╚═╝   ╚══════╝
-
-*/
-
 entity function FindSpawnPoint( entity player, bool isTitan, bool useStartSpawnpoint )
 {
 	int team = player.GetTeam()
 	if ( HasSwitchedSides() )
-		team = ( team == TEAM_MILITIA ) ? TEAM_IMC : TEAM_MILITIA
+		team = GetOtherTeam( team )
 
 	array<entity> spawnpoints
 	if ( useStartSpawnpoint )
@@ -307,31 +266,15 @@ bool function IsSpawnpointValid( entity spawnpoint, int team )
 }
 
 
+// SPAWNPOINT RATING FUNCS BELOW
 
-
-
-
-
-
-
-
-/*
-
-██████╗  ██████╗ ██╗███╗   ██╗████████╗    ██████╗  █████╗ ████████╗██╗███╗   ██╗ ██████╗ 
-██╔══██╗██╔═══██╗██║████╗  ██║╚══██╔══╝    ██╔══██╗██╔══██╗╚══██╔══╝██║████╗  ██║██╔════╝ 
-██████╔╝██║   ██║██║██╔██╗ ██║   ██║       ██████╔╝███████║   ██║   ██║██╔██╗ ██║██║  ███╗
-██╔═══╝ ██║   ██║██║██║╚██╗██║   ██║       ██╔══██╗██╔══██║   ██║   ██║██║╚██╗██║██║   ██║
-██║     ╚██████╔╝██║██║ ╚████║   ██║       ██║  ██║██║  ██║   ██║   ██║██║ ╚████║╚██████╔╝
-╚═╝      ╚═════╝ ╚═╝╚═╝  ╚═══╝   ╚═╝       ╚═╝  ╚═╝╚═╝  ╚═╝   ╚═╝   ╚═╝╚═╝  ╚═══╝ ╚═════╝ 
-
-*/
-
+// generic
 struct {
 	array<vector> preferSpawnNodes
 } spawnStateGeneric
 
 void function RateSpawnpoints_Generic( int checkClass, array<entity> spawnpoints, int team, entity player )
-{
+{	
 	if ( !IsFFAGame() )
 	{
 		// use frontline spawns in 2-team modes
@@ -453,26 +396,7 @@ void function RateSpawnpoints_Frontline( int checkClass, array<entity> spawnpoin
 		spawnpoint.CalculateRating( checkClass, player.GetTeam(), rating, rating )
 }
 
-
-
-
-
-
-
-
-
-
-/*
-
-███████╗██████╗  █████╗ ██╗    ██╗███╗   ██╗███████╗ ██████╗ ███╗   ██╗███████╗███████╗
-██╔════╝██╔══██╗██╔══██╗██║    ██║████╗  ██║╚══███╔╝██╔═══██╗████╗  ██║██╔════╝██╔════╝
-███████╗██████╔╝███████║██║ █╗ ██║██╔██╗ ██║  ███╔╝ ██║   ██║██╔██╗ ██║█████╗  ███████╗
-╚════██║██╔═══╝ ██╔══██║██║███╗██║██║╚██╗██║ ███╔╝  ██║   ██║██║╚██╗██║██╔══╝  ╚════██║
-███████║██║     ██║  ██║╚███╔███╔╝██║ ╚████║███████╗╚██████╔╝██║ ╚████║███████╗███████║
-╚══════╝╚═╝     ╚═╝  ╚═╝ ╚══╝╚══╝ ╚═╝  ╚═══╝╚══════╝ ╚═════╝ ╚═╝  ╚═══╝╚══════╝╚══════╝
-
-*/
-
+// spawnzones
 struct {
 	array<entity> mapSpawnzoneTriggers
 	entity functionref( array<entity>, int ) spawnzoneRatingFunc
