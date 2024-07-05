@@ -201,7 +201,7 @@ void function UpdateMarksForKill( entity victim, entity attacker, var damageInfo
 
 		MessageToAll( eEventNotifications.MarkedForDeathKill, null, victim, actualAttacker.GetEncodedEHandle() )
 		svGlobal.levelEnt.Signal( "MarkKilled", { mark = victim } )
-
+		
 		if ( !isSuicide && attacker.IsPlayer() )
 		{
 			attacker.SetPlayerGameStat( PGS_ASSAULT_SCORE, attacker.GetPlayerGameStat( PGS_ASSAULT_SCORE ) + 1 )
