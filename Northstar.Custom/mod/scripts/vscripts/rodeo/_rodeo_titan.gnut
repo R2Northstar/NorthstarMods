@@ -832,6 +832,8 @@ void function RodeoPilotPullsOutWeapon( entity rodeoPilot, entity rodeoTitan, st
 void function TryBatteryStyleRodeo( entity rodeoPilot, entity rodeoTitan, entity titanSoul, RodeoPackageStruct rodeoPackage )
 {
 	titanSoul.EndSignal( "OnTitanDeath" )
+	titanSoul.EndSignal( "OnDestroy" )
+	rodeoTitan.EndSignal( "OnDestroy" )
 
 	string rodeoTitanType = rodeoPackage.rodeoTargetType
 	rodeoTitan = titanSoul.GetTitan()
@@ -896,9 +898,9 @@ void function TryBatteryStyleRodeo( entity rodeoPilot, entity rodeoTitan, entity
 		//This is default R1 style rodeo, with the panel ripped and ready to be shot at
 		FirstPersonSequenceStruct sequence
 		sequence.attachment = "hijack"
-		sequence.thirdPersonAnimIdle 	= GetAnimFromAlias( rodeoTitanType, "pt_rodeo_back_right_idle" )
-		sequence.firstPersonAnimIdle 		= GetAnimFromAlias( rodeoTitanType, "ptpov_rodeo_back_right_idle" )
-		sequence.useAnimatedRefAttachment  = true
+		sequence.thirdPersonAnimIdle = GetAnimFromAlias( rodeoTitanType, "pt_rodeo_back_right_idle" )
+		sequence.firstPersonAnimIdle = GetAnimFromAlias( rodeoTitanType, "ptpov_rodeo_back_right_idle" )
+		sequence.useAnimatedRefAttachment = true
 		thread FirstPersonSequence( sequence, rodeoPilot, rodeoTitan )
 
 		RodeoPilotPullsOutWeapon( rodeoPilot, rodeoTitan, rodeoTitanType )
@@ -938,12 +940,12 @@ void function TryBatteryStyleRodeo( entity rodeoPilot, entity rodeoTitan, entity
 void function ReTryBatteryStyleRodeo( entity rodeoPilot, entity rodeoTitan, entity titanSoul, RodeoPackageStruct rodeoPackage )
 {
 	titanSoul.EndSignal( "OnTitanDeath" )
+	titanSoul.EndSignal( "OnDestroy" )
+	rodeoTitan.EndSignal( "OnDestroy" )
 	
 	thread WatchForPlayerJumpingOffConstantRodeo( rodeoPilot ) //Allows player to Jump Off at any point
 	while( true )
 	{
-		wait 0.5 //Half Second so the Player doesn't pull Batteries ultra fast
-
 		#if MP
 		thread OpenRodeoNukeWindow( rodeoPilot, rodeoTitan ) //Keep repeating because the the end of the animation signals RodeoOver which ends this thread
 		if ( PlayerWantsToThrowNukeGrenade( rodeoPilot ) )
@@ -960,6 +962,7 @@ void function ReTryBatteryStyleRodeo( entity rodeoPilot, entity rodeoTitan, enti
 void function WatchForPlayerJumpingOffConstantRodeo( entity player )
 {
 	player.EndSignal( "OnDeath" )
+	player.EndSignal( "OnDestroy" )
 	player.EndSignal( "RodeoOver" )
 	
 	AddButtonPressedPlayerInputCallback( player, IN_JUMP, ForceEndRodeo )
