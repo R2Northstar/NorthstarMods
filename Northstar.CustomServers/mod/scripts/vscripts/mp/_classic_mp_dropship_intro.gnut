@@ -55,7 +55,7 @@ void function OnPrematchStart()
 {
 	ClassicMP_OnIntroStarted()
 
-	print( "Starting Dropship Intro!" )
+	print( "starting dropship intro!" )
 	file.introStartTime = Time()
 	
 	// Clear Dropship arrays of Teams for Match Restarts (i.e Half-Times)
@@ -78,7 +78,7 @@ void function OnPrematchStart()
 	if ( validDropshipSpawns.len() < 2 )
 		validDropshipSpawns = dropshipSpawns
 	
-	// Spawn the Dropships
+	// spawn dropships
 	foreach ( entity dropshipSpawn in validDropshipSpawns )
 	{
 		int createTeam = HasSwitchedSides() ? GetOtherTeam( dropshipSpawn.GetTeam() ) : dropshipSpawn.GetTeam() 
@@ -108,7 +108,7 @@ void function OnPrematchStart()
 	// Populate Dropships
 	foreach ( entity player in GetPlayerArray() )
 	{
-		if( !IsPrivateMatchSpectator( player ) )
+		if ( !IsPrivateMatchSpectator( player ) )
 		{
 			if( PlayerCanSpawn( player ) )
 				DoRespawnPlayer( player, null )
@@ -187,7 +187,7 @@ void function SpawnPlayerIntoDropship( entity player, int playerDropshipIndex, e
 		}
 	})
 	
-	HolsterAndDisableWeapons( player )
+	HolsterAndDisableWeapons(player)
 	player.DisableWeaponViewModel()
 	UnMuteAll( player )
 	StopSoundOnEntity( player, "Duck_For_FrontierDefenseTitanSelectScreen" )
@@ -209,7 +209,7 @@ void function SpawnPlayerIntoDropship( entity player, int playerDropshipIndex, e
 	idleSequence.setInitialTime = Time() - file.introStartTime
 	waitthread FirstPersonSequence( idleSequence, player, playerDropship )
 	// todo: possibly rework this to actually get the time the idle anim takes and start the starttime of the jump sequence for very late joiners using that
-	
+			
 	// jump sequence
 	FirstPersonSequenceStruct jumpSequence
 	jumpSequence.firstPersonAnim = DROPSHIP_JUMP_ANIMS_POV[ playerDropshipIndex ]
@@ -242,7 +242,7 @@ void function PlayerJumpsFromDropship( entity player )
 			// show weapon viewmodel and hud and let them move again
 			player.MovementEnable()
 			player.EnableWeaponViewModel()
-			DeployAndEnableWeapons( player )
+			DeployAndEnableWeapons(player)
 			RemoveCinematicFlag( player, CE_FLAG_CLASSIC_MP_SPAWNING )
 		}
 	})
