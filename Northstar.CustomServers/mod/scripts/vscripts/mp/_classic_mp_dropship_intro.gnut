@@ -225,7 +225,6 @@ void function SpawnPlayerIntoDropship( entity player, int playerDropshipIndex, e
 	#endif
 	
 	waitthread FirstPersonSequence( jumpSequence, player, playerDropship )
-	//WaittillAnimDone( player ) // somehow this is better than just waiting for the blocking FirstPersonSequence call?
 	
 	thread PlayerJumpsFromDropship( player )
 }
