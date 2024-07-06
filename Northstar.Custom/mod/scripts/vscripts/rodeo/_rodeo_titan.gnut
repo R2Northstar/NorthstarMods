@@ -734,6 +734,7 @@ function PlayerBeginsTitanRodeo( entity player, RodeoPackageStruct rodeoPackage,
 void function PlayRodeoFactionDialogueAfterDelay( entity player, float delay = 0.5 )
 {
 	player.EndSignal( "OnDeath" )
+	player.EndSignal( "OnDestroy" )
 	player.EndSignal( "RodeoOver" )
 
 	wait delay
@@ -833,7 +834,6 @@ void function TryBatteryStyleRodeo( entity rodeoPilot, entity rodeoTitan, entity
 {
 	titanSoul.EndSignal( "OnTitanDeath" )
 	titanSoul.EndSignal( "OnDestroy" )
-	rodeoTitan.EndSignal( "OnDestroy" )
 
 	string rodeoTitanType = rodeoPackage.rodeoTargetType
 	rodeoTitan = titanSoul.GetTitan()
@@ -941,7 +941,6 @@ void function ReTryBatteryStyleRodeo( entity rodeoPilot, entity rodeoTitan, enti
 {
 	titanSoul.EndSignal( "OnTitanDeath" )
 	titanSoul.EndSignal( "OnDestroy" )
-	rodeoTitan.EndSignal( "OnDestroy" )
 	
 	thread WatchForPlayerJumpingOffConstantRodeo( rodeoPilot ) //Allows player to Jump Off at any point
 	while( true )

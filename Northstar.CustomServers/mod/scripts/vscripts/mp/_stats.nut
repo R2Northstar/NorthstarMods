@@ -232,7 +232,9 @@ void function Stats_IncrementStat( entity player, string statCategory, string st
 {
 	if ( !IsValidStat( statCategory, statAlias, statSubAlias ) )
 	{
+		#if SERVER && DEV
 		printt( "invalid stat: " + statCategory + " : " + statAlias + " : " + statSubAlias )
+		#endif
 		return
 	}
 
@@ -334,6 +336,10 @@ void function OnPlayerOrNPCKilled( entity victim, entity attacker, var damageInf
 		thread SetLastPosForDistanceStatValid_Threaded( victim, false )
 
 	HandleDeathStats( victim, attacker, damageInfo )
+	
+	if( victim == attacker ) //Suicides are registering stats, afaik vanilla ignores them
+		return
+	
 	HandleKillStats( victim, attacker, damageInfo )
 	HandleWeaponKillStats( victim, attacker, damageInfo )
 	HandleTitanStats( victim, attacker, damageInfo )
@@ -489,6 +495,11 @@ void function HandleKillStats( entity victim, entity attacker, var damageInfo )
 	// get the player and it's pet titan
 	entity player
 	entity playerPetTitan
+	entity inflictor = DamageInfo_GetInflictor( damageInfo )
+	
+	if( IsValid( inflictor ) && inflictor.IsProjectile() ) //Attackers are always the final entity in the owning hierarchy, projectile owners though migh be a player's NPC minion (i.e Auto-Titans)
+		attacker = inflictor.GetOwner()
+	
 	if ( attacker.IsPlayer() )
 	{
 		// the player is just the attacker
@@ -932,7 +943,7 @@ void function HandleDistanceAndTimeStats_Threaded()
 		{
 			if ( !IsValid( player ) )
 				continue
-				
+			
 			if ( player.p.lastPosForDistanceStatValid )
 			{
 				// not 100% sure on using Distance2D over Distance tbh
