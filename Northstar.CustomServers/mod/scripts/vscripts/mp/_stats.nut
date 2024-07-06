@@ -493,6 +493,17 @@ void function HandleKillStats( entity victim, entity attacker, var damageInfo )
 	// get the player and it's pet titan
 	entity player
 	entity playerPetTitan
+	entity inflictor = DamageInfo_GetInflictor( damageInfo )
+	
+	if( IsValid( inflictor ) )
+	{
+		if( inflictor.IsProjectile() ) //Attackers are always the final entity in the owning hierarchy, projectile owners though migh be a player's NPC minion (i.e Auto-Titans)
+			attacker = inflictor.GetOwner()
+		
+		else if( inflictor.IsNPC() ) //NPCs are bypassed as Attackers if they are owned by players, instead they become just inflictors
+			attacker = inflictor
+	}
+	
 	if ( attacker.IsPlayer() )
 	{
 		// the player is just the attacker
