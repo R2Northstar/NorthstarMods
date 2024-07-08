@@ -55,7 +55,7 @@ void function OnPrematchStart()
 {
 	ClassicMP_OnIntroStarted()
 
-	print( "starting dropship intro!" )
+	print( "Starting Dropship Intro!" )
 	file.introStartTime = Time()
 	
 	// Clear Dropship arrays of Teams for Match Restarts (i.e Half-Times)
@@ -78,7 +78,7 @@ void function OnPrematchStart()
 	if ( validDropshipSpawns.len() < 2 )
 		validDropshipSpawns = dropshipSpawns
 	
-	// spawn dropships
+	// Spawn the Dropships
 	foreach ( entity dropshipSpawn in validDropshipSpawns )
 	{
 		int createTeam = HasSwitchedSides() ? GetOtherTeam( dropshipSpawn.GetTeam() ) : dropshipSpawn.GetTeam() 
@@ -108,7 +108,7 @@ void function OnPrematchStart()
 	// Populate Dropships
 	foreach ( entity player in GetPlayerArray() )
 	{
-		if ( !IsPrivateMatchSpectator( player ) )
+		if( !IsPrivateMatchSpectator( player ) )
 		{
 			if( PlayerCanSpawn( player ) )
 				DoRespawnPlayer( player, null )
@@ -196,8 +196,15 @@ void function SpawnPlayerIntoDropship( entity player, int playerDropshipIndex, e
 	AddCinematicFlag( player, CE_FLAG_CLASSIC_MP_SPAWNING )
 	ScreenFadeFromBlack( player, 0.5, 0.5 )
 	// faction leaders are done clientside, spawn them here
-	Remote_CallFunction_NonReplay( player, "ServerCallback_SpawnFactionCommanderInDropship", playerDropship.dropship.GetEncodedEHandle(), file.introStartTime )
-
+	if( GameRules_GetGameMode() == FD )
+	{
+		if( player.GetTeam() == TEAM_MILITIA ) //IMC Side will have empty Intro Dropship for FD in specific
+			Remote_CallFunction_NonReplay( player, "ServerCallback_SpawnFactionCommanderInDropship", playerDropship.GetEncodedEHandle(), file.introStartTime )
+	}
+	else
+		Remote_CallFunction_NonReplay( player, "ServerCallback_SpawnFactionCommanderInDropship", playerDropship.GetEncodedEHandle(), file.introStartTime )
+	
+	Remote_CallFunction_NonReplay( player, "ServerCallback_CreateDropShipIntLighting", playerDropship.GetEncodedEHandle(), playerDropship.GetTeam() )
 	// do firstperson sequence	
 	FirstPersonSequenceStruct idleSequence
 	idleSequence.firstPersonAnim = DROPSHIP_IDLE_ANIMS_POV[ playerDropshipIndex ]
@@ -209,7 +216,7 @@ void function SpawnPlayerIntoDropship( entity player, int playerDropshipIndex, e
 	idleSequence.setInitialTime = Time() - file.introStartTime
 	waitthread FirstPersonSequence( idleSequence, player, playerDropship )
 	// todo: possibly rework this to actually get the time the idle anim takes and start the starttime of the jump sequence for very late joiners using that
-			
+	
 	// jump sequence
 	FirstPersonSequenceStruct jumpSequence
 	jumpSequence.firstPersonAnim = DROPSHIP_JUMP_ANIMS_POV[ playerDropshipIndex ]
