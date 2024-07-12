@@ -515,6 +515,10 @@ void function HandleKillStats( entity victim, entity attacker, var damageInfo )
 		player = attacker.GetTitanSoul().GetBossPlayer()
 		playerPetTitan = attacker
 	}
+	else if ( attacker.IsPlayer() ) // Still checks this because worldspawn might be the attacker
+		player = attacker
+	else
+		return
 
 	// check things once, for performance
 	int damageSource = DamageInfo_GetDamageSourceIdentifier( damageInfo )
