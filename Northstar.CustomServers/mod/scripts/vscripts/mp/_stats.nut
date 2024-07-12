@@ -497,29 +497,23 @@ void function HandleKillStats( entity victim, entity attacker, var damageInfo )
 	
 	if( IsValid( inflictor ) )
 	{
-		if( inflictor.IsProjectile() && IsValid( inflictor.GetOwner() ) ) //Attackers are always the final entity in the owning hierarchy, projectile owners though migh be a player's NPC minion (i.e Auto-Titans)
+		if( inflictor.IsProjectile() && IsValid( inflictor.GetOwner() ) ) // Attackers are always the final entity in the owning hierarchy, projectile owners though migh be a player's NPC minion (i.e Auto-Titans)
 			attacker = inflictor.GetOwner()
 		
-		else if( inflictor.IsNPC() ) //NPCs are bypassed as Attackers if they are owned by players, instead they become just inflictors
+		else if( inflictor.IsNPC() ) // NPCs are bypassed as Attackers if they are owned by players, instead they become just inflictors
 			attacker = inflictor
 	}
 	
-	if ( attacker.IsPlayer() )
+	if( attacker.IsNPC() )
 	{
-		// the player is just the attacker
-		player = attacker
-		playerPetTitan = player.GetPetTitan()
-	}
-	else if ( attacker.IsTitan() && IsPetTitan( attacker ) )
-	{
-		// the attacker is the player's auto titan
+		if( !attacker.IsTitan() ) // Normal NPCs case
+			return
+		
+		if( !IsPetTitan( attacker ) ) // NPC Titans case
+			return
+		
 		player = attacker.GetTitanSoul().GetBossPlayer()
 		playerPetTitan = attacker
-	}
-	else
-	{
-		// attacker could be something like an NPC, or worldspawn
-		return
 	}
 
 	// check things once, for performance
