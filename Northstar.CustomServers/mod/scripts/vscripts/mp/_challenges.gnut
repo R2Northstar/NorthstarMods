@@ -60,6 +60,15 @@ void function SetupPlayerMenuChallenges( entity player )
 	file.pilotstreak[ player ] <- 0
 	file.playerChallenge[ player ] <- false
 	
+	thread SetupChallenges_Threaded( player )
+}
+
+void function SetupChallenges_Threaded( entity player )
+{
+	player.EndSignal( "OnDestroy" )
+	
+	WaitFrame()
+	
 	Remote_CallFunction_UI( player, "SCB_SetCompleteMeritState", 0 )
 	Remote_CallFunction_UI( player, "SCB_SetEvacMeritState", 4 ) //4 tells RUI to hide it
 	Remote_CallFunction_UI( player, "SCB_SetMeritCount", 0 )

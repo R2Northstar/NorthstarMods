@@ -426,7 +426,7 @@ void function SquadHandler( array<entity> guys )
 
 	// Not all maps have assaultpoints / have weird assault points ( looking at you ac )
 	// So we use enemies with a large radius
-	while ( GetNPCArrayOfEnemies( team ).len() == 0 ) // if we can't find any enemy npcs, keep waiting
+	while ( !GetNPCArrayOfEnemies( team ).len() ) // if we can't find any enemy npcs, keep waiting
 		WaitFrame()
 
 	// our waiting is end, check if any soldiers left
@@ -443,8 +443,7 @@ void function SquadHandler( array<entity> guys )
 
 	array<entity> points = GetNPCArrayOfEnemies( team )
 	
-	vector point
-	point = points[ RandomInt( points.len() ) ].GetOrigin()
+	vector point = points.getrandom().GetOrigin()
 	
 	// Setup AI, first assault point
 	foreach ( guy in guys )
@@ -459,36 +458,19 @@ void function SquadHandler( array<entity> guys )
 	// Every 5 - 15 secs change AssaultPoint
 	while ( true )
 	{	
-		foreach ( guy in guys )
-		{
-			// Check if alive
-			if ( !IsAlive( guy ) )
-			{
-				guys.removebyvalue( guy )
-				continue
-			}
-			// Stop func if our squad has been killed off
-			if ( guys.len() == 0 )
-				return
-		}
+		ArrayRemoveDead( guys )
+		if ( !guys.len() )
+			return
 
 		// Get point and send our whole squad to it
 		points = GetNPCArrayOfEnemies( team )
-		if ( points.len() == 0 ) // can't find any points here
+		while ( !points.len() )
 		{
-			// Have to wait some amount of time before continuing
-			// because if we don't the server will continue checking this
-			// forever, aren't loops fun?
-			// This definitely didn't waste ~8 hours of my time reverting various
-			// launcher PRs before finding this mods PR that caused servers to
-			// freeze forever before having their process killed by the dedi watchdog
-			// without any logging. If anyone reads this, PLEASE add logging to your scripts
-			// for when weird edge cases happen, it can literally only help debugging. -Spoon
 			WaitFrame()
-			continue
+			points = GetNPCArrayOfEnemies( team )
 		}
-			
-		point = points[ RandomInt( points.len() ) ].GetOrigin()
+		
+		point = points.getrandom().GetOrigin()
 		
 		foreach ( guy in guys )
 		{
@@ -496,7 +478,7 @@ void function SquadHandler( array<entity> guys )
 				guy.AssaultPoint( point )
 		}
 
-		wait RandomFloatRange(5.0,15.0)
+		wait RandomFloatRange( 5.0, 15.0 )
 	}
 }
 

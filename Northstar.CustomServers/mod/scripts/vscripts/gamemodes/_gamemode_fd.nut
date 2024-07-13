@@ -1691,7 +1691,7 @@ void function TryDisableTitanSelectionForPlayerAfterDelay( entity player )
 				{
 					DisableTitanSelectionForPlayer( player )
 					if( GetGlobalNetInt( "FD_waveState" ) == WAVE_STATE_BREAK ) //On wave break, let joiners have their Titan instantly
-						PlayerEarnMeter_AddEarnedAndOwned( player, 1.0, 1.0 )
+						GiveTitanToPlayer( player )
 				}
 				else if ( waveNumber > 0 && !PlayerEarnMeter_Enabled() && !file.isLiveFireMap ) //Let joiners know why their Titan Meter is not building up if they joined during a Titanfall Block event
 					thread ShowTitanfallBlockHintToPlayer( player )
@@ -1874,11 +1874,13 @@ void function RateSpawnpoints_FD( int checkClass, array<entity> spawnpoints, int
 	foreach ( entity spawnpoint in spawnpoints )
 	{
 		float rating = 0.0
-		if( team == TEAM_MILITIA )
-			rating = clamp( 1.0 - ( Distance2D( spawnpoint.GetOrigin(), file.harvesterLocation ) / 1000.0 ), 0.0, 1.0 )
+		float distance = Distance2D( spawnpoint.GetOrigin(), file.harvesterLocation )
+		if ( team == TEAM_MILITIA && distance < Distance2D( < 0, 0, 0 >, file.harvesterLocation ) )
+			rating = 10.0 * ( 1 - ( distance / 5000.0 ) )
 		else
-			rating = clamp( ( Distance2D( spawnpoint.GetOrigin(), file.harvesterLocation ) / 5000.0 ), 0.0, 1.0 )
-		spawnpoint.CalculateRating( checkClass, player.GetTeam(), rating, rating )
+			rating = Distance2D( spawnpoint.GetOrigin(), file.harvesterLocation )
+		
+		spawnpoint.CalculateRating( checkClass, team, rating, rating )
 	}
 }
 
@@ -1890,6 +1892,8 @@ void function FD_PlayerRespawnCallback( entity player )
 void function FD_PlayerRespawnThreaded( entity player )
 {
 	player.EndSignal( "OnDestroy" )
+	bool spawnAsTitan = expect bool( player.GetPersistentVar( "spawnAsTitan" ) )
+	
 	WaitFrame()
 	
 	if( IsValidPlayer( player ) )
@@ -1942,7 +1946,7 @@ void function FD_PlayerRespawnThreaded( entity player )
 			ScreenFadeFromBlack( player, 1.5, 0.5 )
 	}
 	
-	if ( player.IsTitan() )
+	if ( player.IsTitan() || spawnAsTitan )
 	{
 		thread FD_PlayerRespawnProtection( player )
 		return
@@ -3271,6 +3275,15 @@ void function FD_SpawnPlayerDroppod( entity player )
 
 void function FD_DropshipSpawnDropship()
 {
+	svGlobal.levelEnt.EndSignal( "RoundEnd" )
+	
+	OnThreadEnd( function() : ()
+	{
+		file.playersInDropship.clear()
+		file.playersInShip = 0 //Do it again in here to avoid dropship not appearing anymore after a while if theres too many players in a match
+		file.dropshipState = eDropshipState.Idle
+	})
+	
 	array<string> anims = GetRandomDropshipDropoffAnims()
 	asset model = GetFlightPathModel( "fp_crow_model" )
 	
@@ -3309,10 +3322,6 @@ void function FD_DropshipSpawnDropship()
 	}
 	
 	wait 8
-	
-	file.playersInDropship.clear()
-	file.playersInShip = 0 //Do it again in here to avoid dropship not appearing anymore after a while if theres too many players in a match
-	file.dropshipState = eDropshipState.Idle
 }
 
 void function FD_DropshipDropPlayer( entity player, int playerDropshipIndex )

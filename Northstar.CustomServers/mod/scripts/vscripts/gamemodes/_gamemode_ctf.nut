@@ -1,5 +1,4 @@
 untyped
-// this needs a refactor lol
 
 global function CaptureTheFlag_Init
 global function RateSpawnpoints_CTF
@@ -12,11 +11,9 @@ const array<string> SWAP_FLAG_MAPS = [
 struct {
 	entity imcFlagSpawn
 	entity imcFlag
-	entity imcFlagReturnTrigger
 	
 	entity militiaFlagSpawn
 	entity militiaFlag
-	entity militiaFlagReturnTrigger
 	
 	array<entity> imcCaptureAssistList
 	array<entity> militiaCaptureAssistList
@@ -47,7 +44,6 @@ void function CaptureTheFlag_Init()
 	
 	AddSpawnCallback( "npc_titan", PlayerTitanSpawning )
 	
-	SetSpawnZoneRatingFunc( DecideSpawnZone_CTF )
 	AddSpawnpointValidationRule( VerifyCTFSpawnpoint )
 	
 	RegisterSignal( "FlagReturnEnded" )
@@ -97,20 +93,25 @@ bool function VerifyCTFSpawnpoint( entity spawnpoint, int team )
 
 void function PlayerTitanSpawning( entity ent )
 {
-	thread OnFriendlyNPCTitanSpawnThreaded( ent )
+	if ( GetCurrentPlaylistVarInt( "ctf_friendly_hightlights", 0 ) != 0 )
+		thread OnFriendlyNPCTitanSpawnThreaded( ent )
 }
 
 void function OnFriendlyNPCTitanSpawnThreaded( entity npc )
 {
+	npc.EndSignal( "OnDestroy" )
+	
 	WaitFrame()
+	
 	WaitTillHotDropComplete( npc )
+	
 	Highlight_SetFriendlyHighlight( npc, "sp_friendly_hero" )
 	npc.Highlight_SetParam( 1, 0, HIGHLIGHT_COLOR_FRIENDLY )
 }
 
 void function CTFInitPlayer( entity player )
 {
-	if ( GetGameState() >= eGameState.Playing )
+	if ( GetGameState() >= eGameState.Playing && GetCurrentPlaylistVarInt( "ctf_friendly_hightlights", 0 ) != 0 )
 		Highlight_SetFriendlyHighlight( player, "sp_friendly_hero" )
 	
 	if( !GamePlaying() )
@@ -131,14 +132,16 @@ void function CTFInitPlayer( entity player )
 
 void function CTFPlayerDisconnected( entity player )
 {
+	//This has no validity checks on the player because the disconnection callback happens in the exact last frame the player entity still exists
 	if ( PlayerHasEnemyFlag( player ) )
-		DropFlag( player )
+		DropFlag( player ) //Prevent players kidnapping the flag into oblivion with them LOL
 }
 
 void function OnPlayerKilled( entity victim, entity attacker, var damageInfo )
 {
 	if ( !IsValid( GetFlagForTeam( GetOtherTeam( victim.GetTeam() ) ) ) ) // getting a crash idk
 		return
+	
 	if ( PlayerHasEnemyFlag( victim ) )
 	{
 		if ( victim != attacker && attacker.IsPlayer() )
@@ -154,13 +157,11 @@ void function CreateFlags()
 	{
 		file.imcFlagSpawn.Destroy()
 		file.imcFlag.Destroy()
-		file.imcFlagReturnTrigger.Destroy()
 	}
 	if ( IsValid( file.militiaFlagSpawn ) )
 	{
 		file.militiaFlagSpawn.Destroy()
 		file.militiaFlag.Destroy()
-		file.militiaFlagReturnTrigger.Destroy()
 	}
 
 	foreach ( entity spawn in GetEntArrayByClass_Expensive( "info_spawnpoint_flag" ) )
@@ -222,7 +223,6 @@ void function CreateFlags()
 		{
 			file.imcFlagSpawn = base
 			file.imcFlag = flag
-			file.imcFlagReturnTrigger = returnTrigger
 			
 			SetGlobalNetEnt( "imcFlag", file.imcFlag )
 			SetGlobalNetEnt( "imcFlagHome", file.imcFlagSpawn )
@@ -231,7 +231,6 @@ void function CreateFlags()
 		{
 			file.militiaFlagSpawn = base
 			file.militiaFlag = flag
-			file.militiaFlagReturnTrigger = returnTrigger
 			
 			SetGlobalNetEnt( "milFlag", file.militiaFlag )
 			SetGlobalNetEnt( "milFlagHome", file.militiaFlagSpawn )
@@ -248,17 +247,15 @@ void function RemoveFlags()
 	// destroy all the flag related things
 	if ( IsValid( file.imcFlagSpawn ) )
 	{
-		PlayFX( $"P_phase_shift_main", file.imcFlag.GetOrigin() )
+		PlayFX( $"P_phase_shift_main", file.imcFlagSpawn.GetOrigin() )
 		file.imcFlagSpawn.Destroy()
 		file.imcFlag.Destroy()
-		file.imcFlagReturnTrigger.Destroy()
 	}
 	if ( IsValid( file.militiaFlagSpawn ) )
 	{
-		PlayFX( $"P_phase_shift_main", file.militiaFlag.GetOrigin() )
+		PlayFX( $"P_phase_shift_main", file.militiaFlagSpawn.GetOrigin() )
 		file.militiaFlagSpawn.Destroy()
 		file.militiaFlag.Destroy()
-		file.militiaFlagReturnTrigger.Destroy()
 	}
 
 	// unsure if this is needed, since the flags are destroyed? idk
@@ -271,7 +268,8 @@ void function TrackFlagReturnTrigger( entity flag, entity returnTrigger )
 	// this is a bit of a hack, it seems parenting the return trigger to the flag actually sets the pickup radius of the flag to be the same as the trigger
 	// this isn't wanted since only pickups should use that additional radius
 	flag.EndSignal( "OnDestroy" )
-		
+	returnTrigger.EndSignal( "OnDestroy" )
+	
 	while ( true )
 	{
 		returnTrigger.SetOrigin( flag.GetOrigin() )
@@ -331,17 +329,18 @@ void function DropFlagIfPhased( entity player, entity flag )
 {
 	player.EndSignal( "StartPhaseShift" )
 	player.EndSignal( "OnDestroy" )
+	flag.EndSignal( "OnDestroy" )
 	
 	OnThreadEnd( function() : ( player ) 
 	{
-		if( IsValidPlayer( player ) )
+		if ( IsValidPlayer( player ) )
 		{
 			if ( GetGameState() == eGameState.Playing || GetGameState() == eGameState.SuddenDeath )
 				DropFlag( player, true )
 		}
 	})
-	// the IsValid check is purely to prevent a crash due to a destroyed flag (epilogue)
-	while( IsValid( flag ) && flag.GetParent() == player )
+
+	while( flag.GetParent() == player )
 		WaitFrame()
 }
 
@@ -455,7 +454,7 @@ void function CaptureFlag( entity player, entity flag )
 	
 	foreach( entity assistPlayer in assistList )
 	{
-		if( IsValidPlayer( assistPlayer ) )
+		if ( IsValidPlayer( assistPlayer ) )
 		{
 			if ( player != assistPlayer )
 				AddPlayerScore( assistPlayer, "FlagCaptureAssist", player )
@@ -474,10 +473,7 @@ void function CaptureFlag( entity player, entity flag )
 	EmitSoundOnEntityOnlyToPlayer( player, player, "UI_CTF_1P_PlayerScore" )
 	
 	if( !HasPlayerCompletedMeritScore( player ) )
-	{
-		AddPlayerScore( player, "ChallengeCTFRetAssist" )
 		SetPlayerChallengeMeritScore( player )
-	}
 	
 	MessageToTeam( team, eEventNotifications.PlayerCapturedEnemyFlag, player, player )
 	EmitSoundOnEntityToTeamExceptPlayer( flag, "UI_CTF_3P_TeamScore", player.GetTeam(), player )
@@ -489,6 +485,8 @@ void function CaptureFlag( entity player, entity flag )
 	{
 		PlayFactionDialogueToTeam( "ctf_notifyWin1more", team )
 		PlayFactionDialogueToTeam( "ctf_notifyLose1more", GetOtherTeam( team ) )
+		foreach( entity otherplayer in GetPlayerArray() )
+			Remote_CallFunction_NonReplay( otherplayer, "ServerCallback_CTF_PlayMatchNearEndMusic" )
 	}
 }
 
@@ -500,7 +498,7 @@ void function OnPlayerEntersFlagReturnTrigger( entity trigger, entity player )
 	else
 		flag = file.militiaFlag
 
-	if( !IsValid( flag ) || !IsValidPlayer( player ) )
+	if ( !IsValid( flag ) || !IsValidPlayer( player ) )
 		return
 	
 	if ( !player.IsPlayer() || player.IsTitan() || player.GetTeam() != flag.GetTeam() || IsFlagHome( flag ) || flag.GetParent() != null )
@@ -517,7 +515,7 @@ void function OnPlayerExitsFlagReturnTrigger( entity trigger, entity player )
 	else
 		flag = file.militiaFlag
 	
-	if( !IsValid( flag ) || !IsValidPlayer( player ) )
+	if ( !IsValid( flag ) || !IsValidPlayer( player ) )
 		return
 	
 	if ( !player.IsPlayer() || player.IsTitan() || player.GetTeam() != flag.GetTeam() || IsFlagHome( flag ) || flag.GetParent() != null )
@@ -535,7 +533,7 @@ void function TryReturnFlag( entity player, entity flag )
 	OnThreadEnd( function() : ( flag, player )
 	{
 		// cleanup
-		if( IsValidPlayer( player ) )
+		if ( IsValidPlayer( player ) )
 		{
 			Remote_CallFunction_NonReplay( player, "ServerCallback_CTF_StopReturnFlagProgressBar" )
 			StopSoundOnEntity( player, "UI_CTF_1P_FlagReturnMeter" )
@@ -559,7 +557,7 @@ void function TryReturnFlag( entity player, entity flag )
 	AddPlayerScore( player, "FlagReturn", player )
 	player.AddToPlayerGameStat( PGS_DEFENSE_SCORE, 1 )
 	
-	if( !HasPlayerCompletedMeritScore( player ) )
+	if ( !HasPlayerCompletedMeritScore( player ) )
 	{
 		AddPlayerScore( player, "ChallengeCTFRetAssist" )
 		SetPlayerChallengeMeritScore( player )

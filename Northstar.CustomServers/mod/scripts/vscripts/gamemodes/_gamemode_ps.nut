@@ -14,18 +14,13 @@ struct {
 
 void function GamemodePs_Init()
 {
+	SetSpawnpointGamemodeOverride( TEAM_DEATHMATCH )
 	Riff_ForceTitanAvailability( eTitanAvailability.Never )
-
+	
 	AddCallback_OnPlayerKilled( GiveScoreForPlayerKill )
 	ScoreEvent_SetupEarnMeterValuesForMixedModes()
 	SetTimeoutWinnerDecisionFunc( CheckScoreForDraw )
 	SetupGenericFFAChallenge()
-
-	// spawnzone stuff
-	SetShouldCreateMinimapSpawnZones( true )
-	
-	//AddCallback_OnPlayerKilled( CheckSpawnzoneSuspiciousDeaths )
-	//AddSpawnCallbackEditorClass( "trigger_multiple", "trigger_mp_spawn_zone", SpawnzoneTriggerInit )
 	
 	file.militiaPreviousSpawnZones = [ null, null, null ]
 	file.imcPreviousSpawnZones = [ null, null, null ]
