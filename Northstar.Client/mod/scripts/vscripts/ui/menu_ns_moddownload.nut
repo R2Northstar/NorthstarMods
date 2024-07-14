@@ -17,9 +17,13 @@ global enum eModInstallStatus
     NOT_FOUND
 }
 
+struct {
+	string serverName = ""
+} file
+
 const int MB = 1024*1000;
 
-bool function DownloadMod( RequiredModInfo mod )
+bool function DownloadMod( RequiredModInfo mod, string serverName )
 {
 	// Downloading mod UI
 	DialogData dialogData
@@ -35,6 +39,21 @@ bool function DownloadMod( RequiredModInfo mod )
 	var menu = GetMenu( "Dialog" )
 	var header = Hud_GetChild( menu, "DialogHeader" )
 	var body = GetSingleElementByClassname( menu, "DialogMessageClass" )
+
+	// Refresh verified mods list if trying to connect to a new server
+	if ( serverName != file.serverName )
+	{
+		NSFetchVerifiedModsManifesto()
+		file.serverName = serverName
+
+		ModInstallState state = NSGetModInstallState()
+		UpdateModDownloadDialog( mod, state, menu, header, body )
+		while ( state.status == eModInstallStatus.MANIFESTO_FETCHING )
+		{
+			state = NSGetModInstallState()
+			WaitFrame()
+		}
+	}
 
 	// Start actual mod downloading
 	NSDownloadMod( mod.name, mod.version )
