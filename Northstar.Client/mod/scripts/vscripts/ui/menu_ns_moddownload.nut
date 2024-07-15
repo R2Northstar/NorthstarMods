@@ -1,5 +1,6 @@
 global function DownloadMod
 global function DisplayModDownloadErrorDialog
+global function IsModDownloadable
 
 global enum eModInstallStatus
 {
@@ -23,6 +24,38 @@ struct {
 
 const int MB = 1024*1000;
 
+bool function IsModDownloadable( string modName, string modVersion, string serverName )
+{
+	// Refresh verified mods list if trying to connect to a new server
+	if ( serverName != file.serverName )
+	{
+		// Fetching UI
+		DialogData dialogData
+		dialogData.header = Localize( "#MANIFESTO_FETCHING_TITLE" )
+		dialogData.message = Localize( "#MANIFESTO_FETCHING_TEXT" )
+		dialogData.showSpinner = true;
+
+		// Prevent user from closing dialog
+		dialogData.forceChoice = true;
+		OpenDialog( dialogData )
+
+
+		NSFetchVerifiedModsManifesto()
+		file.serverName = serverName
+
+		ModInstallState state = NSGetModInstallState()
+		while ( state.status == eModInstallStatus.MANIFESTO_FETCHING )
+		{
+			state = NSGetModInstallState()
+			WaitFrame()
+		}
+
+		CloseActiveMenu()
+	}
+
+	return NSIsModDownloadable( modName, modVersion )
+}
+
 bool function DownloadMod( RequiredModInfo mod, string serverName )
 {
 	// Downloading mod UI
@@ -39,21 +72,6 @@ bool function DownloadMod( RequiredModInfo mod, string serverName )
 	var menu = GetMenu( "Dialog" )
 	var header = Hud_GetChild( menu, "DialogHeader" )
 	var body = GetSingleElementByClassname( menu, "DialogMessageClass" )
-
-	// Refresh verified mods list if trying to connect to a new server
-	if ( serverName != file.serverName )
-	{
-		NSFetchVerifiedModsManifesto()
-		file.serverName = serverName
-
-		ModInstallState state = NSGetModInstallState()
-		UpdateModDownloadDialog( mod, state, menu, header, body )
-		while ( state.status == eModInstallStatus.MANIFESTO_FETCHING )
-		{
-			state = NSGetModInstallState()
-			WaitFrame()
-		}
-	}
 
 	// Start actual mod downloading
 	NSDownloadMod( mod.name, mod.version )

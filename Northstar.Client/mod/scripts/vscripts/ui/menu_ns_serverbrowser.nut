@@ -971,44 +971,55 @@ void function OnServerSelected_Threaded( var button )
 	{
 		if ( !NSGetModNames().contains( mod.name ) )
 		{
-			// Check if mod can be auto-downloaded
-			bool modIsVerified = NSIsModDownloadable( mod.name, mod.version )
+			// Auto-download mod
+			if ( autoDownloadAllowed )
+			{
+				bool modIsVerified = IsModDownloadable( mod.name, mod.version, server.name )
 
-			// Display an error message if not
-			if ( !modIsVerified || !autoDownloadAllowed )
+				// Display error message if mod is not verified
+				if ( !modIsVerified )
+				{
+					DialogData dialogData
+					dialogData.header = "#ERROR"
+					dialogData.message = Localize( "#MISSING_MOD", mod.name, mod.version )
+					dialogData.message += "\n" + Localize( "#MOD_NOT_VERIFIED" )
+					dialogData.image = $"ui/menu/common/dialog_error"
+
+					AddDialogButton( dialogData, "#DISMISS" )
+					AddDialogFooter( dialogData, "#A_BUTTON_SELECT" )
+					AddDialogFooter( dialogData, "#B_BUTTON_DISMISS_RUI" )
+
+					OpenDialog( dialogData )
+					return
+				}
+				else
+				{
+					if ( DownloadMod( mod, server.name ) )
+					{
+						downloadedMods++
+					}
+					else
+					{
+						DisplayModDownloadErrorDialog( mod.name )
+						return
+					}
+				}
+			}
+
+			// Mod not found, display error message
+			else
 			{
 				DialogData dialogData
 				dialogData.header = "#ERROR"
 				dialogData.message = Localize( "#MISSING_MOD", mod.name, mod.version )
 				dialogData.image = $"ui/menu/common/dialog_error"
 
-				// Specify error (only if autoDownloadAllowed is set)
-				if ( autoDownloadAllowed )
-				{
-					dialogData.message += "\n" + Localize( "#MOD_NOT_VERIFIED" )
-				}
-
 				AddDialogButton( dialogData, "#DISMISS" )
-
 				AddDialogFooter( dialogData, "#A_BUTTON_SELECT" )
 				AddDialogFooter( dialogData, "#B_BUTTON_DISMISS_RUI" )
 
 				OpenDialog( dialogData )
-
 				return
-			}
-
-			else // Launch download
-			{
-				if ( DownloadMod( mod, server.name ) )
-				{
-					downloadedMods++
-				}
-				else
-				{
-					DisplayModDownloadErrorDialog( mod.name )
-					return
-				}
 			}
 		}
 		else
