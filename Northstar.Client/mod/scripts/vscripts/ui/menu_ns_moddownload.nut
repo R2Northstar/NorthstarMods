@@ -1,6 +1,6 @@
 global function DownloadMod
 global function DisplayModDownloadErrorDialog
-global function IsModDownloadable
+global function FetchVerifiedModsManifesto
 
 global enum eModInstallStatus
 {
@@ -18,42 +18,35 @@ global enum eModInstallStatus
     NOT_FOUND
 }
 
-struct {
-	string serverName = ""
-} file
-
 const int MB = 1024*1000;
 
-bool function IsModDownloadable( string modName, string modVersion, string serverName )
+
+void function FetchVerifiedModsManifesto()
 {
-	// Refresh verified mods list if trying to connect to a new server
-	if ( serverName != file.serverName )
+	print("Start fetching verified mods manifesto from the Internet")
+
+	// Fetching UI
+	DialogData dialogData
+	dialogData.header = Localize( "#MANIFESTO_FETCHING_TITLE" )
+	dialogData.message = Localize( "#MANIFESTO_FETCHING_TEXT" )
+	dialogData.showSpinner = true;
+
+	// Prevent user from closing dialog
+	dialogData.forceChoice = true;
+	OpenDialog( dialogData )
+
+	// Do the actual fetching
+	NSFetchVerifiedModsManifesto()
+
+	ModInstallState state = NSGetModInstallState()
+	while ( state.status == eModInstallStatus.MANIFESTO_FETCHING )
 	{
-		// Fetching UI
-		DialogData dialogData
-		dialogData.header = Localize( "#MANIFESTO_FETCHING_TITLE" )
-		dialogData.message = Localize( "#MANIFESTO_FETCHING_TEXT" )
-		dialogData.showSpinner = true;
-
-		// Prevent user from closing dialog
-		dialogData.forceChoice = true;
-		OpenDialog( dialogData )
-
-
-		NSFetchVerifiedModsManifesto()
-		file.serverName = serverName
-
-		ModInstallState state = NSGetModInstallState()
-		while ( state.status == eModInstallStatus.MANIFESTO_FETCHING )
-		{
-			state = NSGetModInstallState()
-			WaitFrame()
-		}
-
-		CloseActiveMenu()
+		state = NSGetModInstallState()
+		WaitFrame()
 	}
 
-	return NSIsModDownloadable( modName, modVersion )
+	// Close dialog when manifesto has been received
+	CloseActiveMenu()
 }
 
 bool function DownloadMod( RequiredModInfo mod, string serverName )

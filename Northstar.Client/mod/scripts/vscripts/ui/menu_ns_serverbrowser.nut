@@ -967,6 +967,26 @@ void function OnServerSelected_Threaded( var button )
 	bool autoDownloadAllowed = GetConVarBool( "allow_mod_auto_download" )
 	int downloadedMods = 0;
 
+	// Check out if there's any server-required mod that is not locally installed
+	array<string> modNames = NSGetModNames()
+	bool uninstalledModFound = false
+	foreach ( requiredModInfo in server.requiredMods )
+	{
+		if ( !modNames.contains( requiredModInfo.name ) )
+		{
+			uninstalledModFound = true
+			break
+		}
+	}
+	
+	// If yes, we fetch the verified mods manifesto, to check whether uninstalled
+	// mods can be installed through auto-download
+	if ( uninstalledModFound && autoDownloadAllowed )
+	{
+		print("Auto-download is allowed, checking if missing mods can be installed automatically.")
+		FetchVerifiedModsManifesto()
+	}
+
 	foreach ( RequiredModInfo mod in server.requiredMods )
 	{
 		if ( !NSGetModNames().contains( mod.name ) )
@@ -974,7 +994,7 @@ void function OnServerSelected_Threaded( var button )
 			// Auto-download mod
 			if ( autoDownloadAllowed )
 			{
-				bool modIsVerified = IsModDownloadable( mod.name, mod.version, server.name )
+				bool modIsVerified = NSIsModDownloadable( mod.name, mod.version )
 
 				// Display error message if mod is not verified
 				if ( !modIsVerified )
