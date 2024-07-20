@@ -1892,7 +1892,6 @@ void function FD_PlayerRespawnCallback( entity player )
 void function FD_PlayerRespawnThreaded( entity player )
 {
 	player.EndSignal( "OnDestroy" )
-	bool spawnAsTitan = expect bool( player.GetPersistentVar( "spawnAsTitan" ) )
 	
 	WaitFrame()
 	
@@ -1946,7 +1945,7 @@ void function FD_PlayerRespawnThreaded( entity player )
 			ScreenFadeFromBlack( player, 1.5, 0.5 )
 	}
 	
-	if ( player.IsTitan() || spawnAsTitan )
+	if ( player.IsTitan() )
 	{
 		thread FD_PlayerRespawnProtection( player )
 		return

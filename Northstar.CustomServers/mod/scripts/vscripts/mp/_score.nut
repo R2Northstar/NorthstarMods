@@ -54,7 +54,7 @@ void function AddPlayerScore( entity targetPlayer, string scoreEventName, entity
 	float earnValue = event.earnMeterEarnValue * scale
 	float ownValue = event.earnMeterOwnValue * scale
 	
-	if( !PlayerEarnMeter_Enabled() && !targetPlayer.IsTitan() ) //Don't show earning points if earn meter is not enabled and player is not a special case of being a titan
+	if( !PlayerEarnMeter_Enabled() && !targetPlayer.IsTitan() ) // Don't show earning points if earn meter is not enabled and player is not a special case of being a titan
 	{
 		earnValue = 0.0
 		ownValue = 0.0
@@ -69,8 +69,16 @@ void function AddPlayerScore( entity targetPlayer, string scoreEventName, entity
 	
 	if ( targetPlayer.IsTitan() )
 	{
-		earnValue *= titanScaleVar
-		ownValue *= titanScaleVar
+		if( targetPlayer.GetPlayerNetInt( EARNMETER_MODE ) == eEarnMeterMode.CORE_ACTIVE ) // While core is active, Titans can't gain meter
+		{
+			earnValue = 0.0
+			ownValue = 0.0
+		}
+		else
+		{
+			earnValue *= titanScaleVar
+			ownValue *= titanScaleVar
+		}
 	}
 	else
 	{
@@ -328,7 +336,7 @@ void function ScoreEvent_SetupEarnMeterValuesForMixedModes() // mixed modes in t
 {
 	// todo needs earn/overdrive values
 	// player-controlled stuff
-	ScoreEvent_SetEarnMeterValues( "KillPilot", 0.07, 0.15, 0.33 ) // 5% for titan cores
+	ScoreEvent_SetEarnMeterValues( "KillPilot", 0.07, 0.15, 0.33 )
 	ScoreEvent_SetEarnMeterValues( "KillTitan", 0.0, 0.15 )
 	ScoreEvent_SetEarnMeterValues( "TitanKillTitan", 0.0, 0.0 ) // unsure
 	ScoreEvent_SetEarnMeterValues( "PilotBatteryStolen", 0.0, 0.35 ) // this actually just doesn't have overdrive in vanilla even

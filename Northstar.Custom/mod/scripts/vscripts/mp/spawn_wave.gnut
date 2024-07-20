@@ -1649,20 +1649,7 @@ void function SpawnSuperSpectre( WaveSpawnEvent ornull spawnEvent )
 	{
 		thread NPCNav_FD( npc, spawnEvent.route )
 		if( GetMapName().find( "mp_lf_" ) == null )
-		{
-			switch ( file.difficultyLevel )
-			{
-				case eFDDifficultyLevel.EASY:
-				case eFDDifficultyLevel.NORMAL:
-					npc.AssaultSetFightRadius( 2000 )
-					break
-				case eFDDifficultyLevel.HARD:
-				case eFDDifficultyLevel.MASTER:
-				case eFDDifficultyLevel.INSANE:
-					npc.AssaultSetFightRadius( 0 )
-					break
-			}
-		}
+			npc.AssaultSetFightRadius( 2000 )
 		else
 			npc.AssaultSetFightRadius( 800 ) //Bit of combat space so they can at least melee turrets when near them
 	}
@@ -2146,6 +2133,7 @@ void function SpawnCloakingDrone( WaveSpawnEvent ornull spawnEvent )
 	#endif
 	entity npc = SpawnCloakDrone( TEAM_IMC, spawnEvent.origin, spawnEvent.angles, fd_harvester.harvester.GetOrigin() )
 	spawnedNPCs.append( npc )
+	PlayFX( $"P_phase_shift_main", spawnEvent.origin )
 	SetTargetName( npc, GetTargetNameForID( spawnEvent.spawnType ) )
 	AddMinimapForHumans( npc )
 }
@@ -2368,7 +2356,7 @@ void function waitUntilLessThanAmountAliveEvent( WaveSpawnEvent ornull spawnEven
 						break
 					
 					case eFDHT.TITAN:
-						if( IsSuperSpectre( npc ) || IsMinion( npc ) || IsStalker( npc ) || IsAirDrone( npc ) || IsFragDrone( npc ) )
+						if( IsSuperSpectre( npc ) || IsMinion( npc ) || IsStalker( npc ) || IsAirDrone( npc ) || IsFragDrone( npc ) || IsProwler( npc ) )
 							npcs.removebyvalue( npc )
 						break
 				}

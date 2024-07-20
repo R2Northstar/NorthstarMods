@@ -89,8 +89,12 @@ void function Spawn_Init()
 	
 	SpawnPoints_SetRatingMultipliers_Enemy( TD_TITAN, -10.0, -6.0, -1.0 )
 	SpawnPoints_SetRatingMultipliers_Enemy( TD_PILOT, -10.0, -6.0, -1.0 )
+	SpawnPoints_SetRatingMultipliers_Enemy( TD_AI, -2.0, -0.25, 0.0 )
+	
 	SpawnPoints_SetRatingMultipliers_Friendly( TD_TITAN, 0.25, 1.75, friendlyAIValue )
 	SpawnPoints_SetRatingMultipliers_Friendly( TD_PILOT, 0.25, 1.75, friendlyAIValue )
+	SpawnPoints_SetRatingMultipliers_Friendly( TD_AI, 0.5, 0.25, 0.0 )
+	
 	SpawnPoints_SetRatingMultiplier_PetTitan( 2.0 )
 	
 	file.shouldCreateMinimapSpawnzones = GetCurrentPlaylistVarInt( "spawn_zone_enabled", 1 ) != 0
@@ -186,8 +190,6 @@ string function GetSpawnpointGamemodeOverride()
 		return file.spawnpointGamemodeOverride
 	else
 		return GAMETYPE
-	
-	unreachable
 }
 
 
@@ -213,7 +215,7 @@ string function GetSpawnpointGamemodeOverride()
 entity function FindSpawnPoint( entity player, bool isTitan, bool useStartSpawnpoint )
 {
 	int team = player.GetTeam()
-
+	
 	array<entity> spawnpoints
 	if ( useStartSpawnpoint )
 		spawnpoints = isTitan ? SpawnPoints_GetTitanStart( team ) : SpawnPoints_GetPilotStart( team )
@@ -244,7 +246,7 @@ entity function FindSpawnPoint( entity player, bool isTitan, bool useStartSpawnp
 		spawnpoints = useStartSpawnpoint ? SpawnPoints_GetPilotStart( team ) : SpawnPoints_GetPilot()
 	}
 	
-	entity spawnpoint = GetBestSpawnpoint( player, spawnpoints )
+	entity spawnpoint = GetBestSpawnpoint( player, spawnpoints, isTitan )
 	
 	spawnpoint.s.lastUsedTime = Time()
 	player.SetLastSpawnPoint( spawnpoint )
@@ -254,9 +256,26 @@ entity function FindSpawnPoint( entity player, bool isTitan, bool useStartSpawnp
 	return spawnpoint
 }
 
-entity function GetBestSpawnpoint( entity player, array<entity> spawnpoints )
+entity function GetBestSpawnpoint( entity player, array<entity> spawnpoints, bool isTitan )
 {
 	array<entity> validSpawns
+	
+	// I know this looks hacky but the native funcs to get the spawns is returning null arrays for FFA idk why.
+	if( IsFFAGame() )
+	{
+		spawnpoints.clear()
+		if( isTitan )
+		{
+			spawnpoints = GetEntArrayByClass_Expensive( "info_spawnpoint_titan" )
+			spawnpoints.extend( GetEntArrayByClass_Expensive( "info_spawnpoint_titan_start" ) )
+		}
+		else
+		{
+			spawnpoints = GetEntArrayByClass_Expensive( "info_spawnpoint_human" )
+			spawnpoints.extend( GetEntArrayByClass_Expensive( "info_spawnpoint_human_start" ) )
+		}
+	}
+	
 	foreach ( entity spawnpoint in spawnpoints )
 	{
 		if ( IsSpawnpointValid( spawnpoint, player.GetTeam() ) )
@@ -281,10 +300,7 @@ entity function GetBestSpawnpoint( entity player, array<entity> spawnpoints )
 			validSpawns.append( start )
 		}
 		else
-		{
-			CodeWarning( "Map has no player spawns at all" )
-			unreachable
-		}
+			throw( "Map has no player spawns at all" )
 	}
 	
 	if( IsFFAGame() )
@@ -295,6 +311,9 @@ entity function GetBestSpawnpoint( entity player, array<entity> spawnpoints )
 
 bool function IsSpawnpointValid( entity spawnpoint, int team )
 {
+	if( IsFFAGame() && !spawnpoint.IsVisibleToEnemies( team ) )
+		return true
+	
 	if ( !spawnpoint.HasKey( "ignoreGamemode" ) || spawnpoint.HasKey( "ignoreGamemode" ) && spawnpoint.kv.ignoreGamemode == "0" ) // used by script-spawned spawnpoints
 	{
 		if ( file.spawnpointGamemodeOverride != "" )
@@ -306,9 +325,6 @@ bool function IsSpawnpointValid( entity spawnpoint, int team )
 		else if ( GameModeRemove( spawnpoint ) )
 			return false
 	}
-	
-	if( IsFFAGame() && !spawnpoint.IsVisibleToEnemies( team ) )
-		return true
 	
 	foreach ( bool functionref( entity, int ) customValidationRule in file.customSpawnpointValidationRules )
 		if ( !customValidationRule( spawnpoint, team ) )
@@ -453,7 +469,7 @@ bool function TeamHasDirtySpawnzone( int team )
 				if ( Time() - player.p.postDeathThreadStartTime < 20.0 && zone.ContainsPoint( player.p.deathOrigin ) )
 					numDeadInZone++
 			}
-				
+			
 			if ( numDeadInZone < teamPlayers.len() )
 				return false
 		}
@@ -523,17 +539,13 @@ entity function DecideSpawnZone_Generic( array<entity> spawnzones, int team )
 	if ( !spawnzones.len() )
 		return null
 	
-	int spawnCompareTeam = team
-	if ( HasSwitchedSides() )
-		spawnCompareTeam = ( spawnCompareTeam == TEAM_MILITIA ) ? TEAM_IMC : TEAM_MILITIA
-	
-	array<entity> startSpawns = SpawnPoints_GetPilotStart( spawnCompareTeam )
-	array<entity> enemyStartSpawns = SpawnPoints_GetPilotStart( GetOtherTeam( spawnCompareTeam ) )
+	array<entity> startSpawns = SpawnPoints_GetPilotStart( team )
+	array<entity> enemyStartSpawns = SpawnPoints_GetPilotStart( GetOtherTeam( team ) )
 	
 	if ( !startSpawns.len() || !enemyStartSpawns.len() )
 		return null
 
-	vector averageFriendlySpawns	
+	vector averageFriendlySpawns
 	foreach ( entity spawn in startSpawns )
 		averageFriendlySpawns += spawn.GetOrigin()
 
@@ -552,7 +564,7 @@ entity function DecideSpawnZone_Generic( array<entity> spawnzones, int team )
 		array<entity> possibleZones
 		foreach( zone, zoneProperties in mapSpawnZones )
 		{
-			if ( zoneProperties.controllingTeam == GetOtherTeam( spawnCompareTeam ) )
+			if ( zoneProperties.controllingTeam == GetOtherTeam( team ) )
 				continue
 			
 			bool spawnzoneHasEnemies = false
