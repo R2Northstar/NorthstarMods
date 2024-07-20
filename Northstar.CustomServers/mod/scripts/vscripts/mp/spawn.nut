@@ -188,8 +188,8 @@ string function GetSpawnpointGamemodeOverride()
 {
 	if ( file.spawnpointGamemodeOverride != "" )
 		return file.spawnpointGamemodeOverride
-	else
-		return GAMETYPE
+	
+	return GAMETYPE
 }
 
 
