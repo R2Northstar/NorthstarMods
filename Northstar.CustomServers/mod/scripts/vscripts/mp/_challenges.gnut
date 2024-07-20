@@ -65,6 +65,8 @@ void function SetupPlayerMenuChallenges( entity player )
 
 void function SetupChallenges_Threaded( entity player )
 {
+	player.EndSignal( "OnDestroy" )
+	
 	WaitFrame()
 	
 	Remote_CallFunction_UI( player, "SCB_SetCompleteMeritState", 0 )
