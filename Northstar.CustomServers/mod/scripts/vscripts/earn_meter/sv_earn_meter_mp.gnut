@@ -151,13 +151,16 @@ void function EarnMeterMP_PlayerLifeThink( entity player )
 
 		if ( lastEarnMeterMode == eEarnMeterMode.DEFAULT )
 		{
-			if ( PlayerEarnMeter_GetOwnedFrac( player ) >= 0.75 && PlayerEarnMeter_GetOwnedFrac( player ) < 0.95 && !saidTitanSoon )
+			if ( Riff_TitanAvailability() != eTitanAvailability.Never )
 			{
-				PlayFactionDialogueToPlayer( "mp_titanSoon", player )
-				saidTitanSoon = true
+				if ( PlayerEarnMeter_GetOwnedFrac( player ) >= 0.75 && PlayerEarnMeter_GetOwnedFrac( player ) < 0.95 && !saidTitanSoon )
+				{
+					PlayFactionDialogueToPlayer( "mp_titanSoon", player )
+					saidTitanSoon = true
+				}
+				else if( PlayerEarnMeter_GetOwnedFrac( player ) < 0.75 )
+					saidTitanSoon = false
 			}
-			else if( PlayerEarnMeter_GetOwnedFrac( player ) < 0.75 )
-				saidTitanSoon = false
 			
 			if ( PlayerEarnMeter_GetOwnedFrac( player ) < 1.0 )
 			{

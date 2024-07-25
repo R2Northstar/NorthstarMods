@@ -113,11 +113,22 @@ void function CodeCallback_OnClientConnectionStarted( entity player )
 
 	Assert( !player._entityVars )
 	InitEntityVars( player )
-
+	
 	// Added via AddCallback_OnClientConnecting
 	foreach ( callbackFunc in svGlobal.onClientConnectingCallbacks )
 	{
 		callbackFunc( player )
+	}
+	
+	if ( !IsLobby() && GetGameState() <= eGameState.Epilogue )
+	{
+		if ( GetCurrentPlaylistVarInt( "max_teams", 0 ) > 1 && !IsFFAGame() )
+		{
+			if( GetPlayerArrayOfTeam( TEAM_MILITIA ).len() > GetPlayerArrayOfTeam( TEAM_IMC ).len() )
+				SetTeam( player, TEAM_IMC )
+			else
+				SetTeam( player, TEAM_MILITIA )
+		}
 	}
 
 	printl( "Player connect started: " + player + "---UID:" + player.GetUID() )
@@ -482,8 +493,11 @@ void function ForceRespawnMeSignalAfterDelay( entity player, int delay = 5 )
 
 	wait delay
 
-	printt( format( "Forcing player respawn for player %s (took >%d seconds to respawn)", player.GetPlayerName(), delay ) )
-	player.Signal( "RespawnMe" )
+	if ( IsRespawnAvailable( player ) )
+	{
+		printt( format( "Forcing player respawn for player %s (took >%d seconds to respawn)", player.GetPlayerName(), delay ) )
+		player.Signal( "RespawnMe" )
+	}
 }
 
 void function PlayerWatchesKillReplayWrapper( entity player, entity attacker, float timeSinceAttackerSpawned, float timeOfDeath, float beforeTime, table replayTracker )
@@ -624,7 +638,6 @@ void function RespawnAsTitan( entity player, bool normalTitanfall = false )
 		{
 			RemoveCinematicFlag( player, CE_FLAG_CLASSIC_MP_SPAWNING ) // show hud
 			player.isSpawning = false
-			EnableTitanExit( player )
 		}
 
 		if ( IsValid( titan ) )
@@ -653,7 +666,6 @@ void function RespawnAsTitan( entity player, bool normalTitanfall = false )
 	}
 	
 	player.RespawnPlayer( null ) // spawn player as pilot so they get their pilot loadout on embark
-	DisableTitanExit( player )
 	player.SetOrigin( titan.GetOrigin() )
 	
 	// don't make player titan when entity batteryContainer is not valid.

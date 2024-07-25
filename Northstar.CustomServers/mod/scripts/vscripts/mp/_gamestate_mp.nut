@@ -37,9 +37,6 @@ struct {
 	bool timerBased = true
 	int functionref() timeoutWinnerDecisionFunc
 	
-	// for waitingforplayers
-	int numPlayersFullyConnected
-	
 	bool hasSwitchedSides
 	
 	int announceRoundWinnerWinningSubstr
@@ -146,9 +143,6 @@ void function GameStateEnter_WaitingForCustomStart()
 // eGameState.WaitingForPlayers
 void function GameStateEnter_WaitingForPlayers()
 {
-	foreach ( entity player in GetPlayerArray() )
-		WaitingForPlayers_ClientConnected( player )
-		
 	thread WaitForPlayers() // like 90% sure there should be a way to get number of loading clients on server but idk it
 }
 
@@ -158,16 +152,17 @@ void function WaitForPlayers()
 	float endTime = Time() + 30.0
 	
 	SetServerVar( "connectionTimeout", endTime )
-	while ( ( GetPendingClientsCount() != 0 && endTime > Time() ) || GetPlayerArray().len() == 0 )
+	while ( GetPendingClientsCount() != 0 && endTime > Time() || !GetPlayerArray().len() )
 		WaitFrame()
 	
 	print( "Finished waiting for players, starting match." )
 	
-	wait 1.0
+	wait 1
+	
 	if ( file.usePickLoadoutScreen )
 		SetGameState( eGameState.PickLoadout )
 	else
-		SetGameState( eGameState.Prematch ) 
+		SetGameState( eGameState.Prematch )
 }
 
 void function WaitingForPlayers_ClientConnected( entity player )
@@ -207,14 +202,6 @@ void function GameStateEnter_Prematch()
 	
 	if ( !GetClassicMPMode() && !ClassicMP_ShouldTryIntroAndEpilogueWithoutClassicMP() )
 		thread StartGameWithoutClassicMP()
-	
-	// Initialise any spectators. Hopefully they are all initialised already in CodeCallback_OnClientConnectionCompleted
-	// (_base_gametype_mp.gnut) but for modes like LTS this doesn't seem to happen late enough to work properly.
-	foreach ( player in GetPlayerArray() )
-	{
-		if ( IsPrivateMatchSpectator( player ) )
-			InitialisePrivateMatchSpectatorPlayer( player )
-	}
 }
 
 void function StartGameWithoutClassicMP()
@@ -675,7 +662,7 @@ void function OnPlayerKilled( entity victim, entity attacker, var damageInfo )
 	// note: pilotstitans is just win if enemy team runs out of either pilots or titans
 	if ( IsPilotEliminationBased() || GetGameState() == eGameState.SuddenDeath )
 	{
-		if ( GetPlayerArrayOfTeam_Alive( victim.GetTeam() ).len() == 0 )
+		if ( !GetPlayerArrayOfTeam_Alive( victim.GetTeam() ).len() )
 		{
 			// for ffa we need to manually get the last team alive 
 			if ( IsFFAGame() )
