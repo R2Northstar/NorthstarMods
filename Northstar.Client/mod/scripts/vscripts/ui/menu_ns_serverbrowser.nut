@@ -994,7 +994,7 @@ void function OnServerSelected_Threaded( var button )
 
 	foreach ( RequiredModInfo mod in server.requiredMods )
 	{
-		if ( !NSGetModNames().contains( mod.name ) )
+		if ( !NSGetModNames().contains( mod.name ) || NSGetModVersionByModName( mod.name ) != mod.version )
 		{
 			// Auto-download mod
 			if ( autoDownloadAllowed )
