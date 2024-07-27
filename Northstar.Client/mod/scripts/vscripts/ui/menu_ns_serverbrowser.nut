@@ -976,6 +976,9 @@ void function OnServerSelected_Threaded( var button )
 		{
 			uninstalledModFound = true
 			break
+		} else if ( NSGetModVersionByModName( requiredModInfo.name ) != requiredModInfo.version ) {
+			uninstalledModFound = true
+			break
 		}
 	}
 	
