@@ -974,9 +974,11 @@ void function OnServerSelected_Threaded( var button )
 	{
 		if ( !modNames.contains( requiredModInfo.name ) )
 		{
+			print( format ( "\"%s\" was not found locally, triggering manifesto fetching.", requiredModInfo.name ) )
 			uninstalledModFound = true
 			break
 		} else if ( NSGetModVersionByModName( requiredModInfo.name ) != requiredModInfo.version ) {
+			print( format ( "\"%s\" was found locally but has version \"%s\" while server requires \"%s\", triggering manifesto fetching.", requiredModInfo.name, NSGetModVersionByModName( requiredModInfo.name ), requiredModInfo.version ) )
 			uninstalledModFound = true
 			break
 		}
