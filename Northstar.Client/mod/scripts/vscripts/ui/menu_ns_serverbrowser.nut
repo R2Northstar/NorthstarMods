@@ -972,6 +972,10 @@ void function OnServerSelected_Threaded( var button )
 	bool uninstalledModFound = false
 	foreach ( requiredModInfo in server.requiredMods )
 	{
+		// Tolerate core mods having different versions
+		if ( requiredModInfo.name.len() > 10 && requiredModInfo.name.slice(0, 10) == "Northstar." )
+			continue
+
 		if ( !modNames.contains( requiredModInfo.name ) )
 		{
 			print( format ( "\"%s\" was not found locally, triggering manifesto fetching.", requiredModInfo.name ) )
@@ -994,6 +998,10 @@ void function OnServerSelected_Threaded( var button )
 
 	foreach ( RequiredModInfo mod in server.requiredMods )
 	{
+		// Tolerate core mods having different versions
+		if ( mod.name.len() > 10 && mod.name.slice(0, 10) == "Northstar." )
+			continue
+
 		if ( !NSGetModNames().contains( mod.name ) || NSGetModVersionByModName( mod.name ) != mod.version )
 		{
 			// Auto-download mod
@@ -1139,6 +1147,7 @@ void function ThreadedAuthAndConnectToServer( string password = "", bool modsCha
 					if (mod.name == modName)
 					{
 						found = true
+						print("TROUVE " + mod.name)
 						break
 					}
 				}
@@ -1154,6 +1163,7 @@ void function ThreadedAuthAndConnectToServer( string password = "", bool modsCha
 		// enable all RequiredOnClient mods that are required by the server and are currently disabled
 		foreach ( RequiredModInfo mod in file.lastSelectedServer.requiredMods )
 		{
+			print("=> " + mod.name)
 			if ( NSIsModRequiredOnClient( mod.name ) && !NSIsModEnabled( mod.name ))
 			{
 				modsChanged = true
@@ -1162,8 +1172,9 @@ void function ThreadedAuthAndConnectToServer( string password = "", bool modsCha
 		}
 
 		// only actually reload if we need to since the uiscript reset on reload lags hard
-		if ( modsChanged )
+		if ( modsChanged ) {
 			ReloadMods()
+		}
 
 		NSConnectToAuthedServer()
 	}
