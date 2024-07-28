@@ -1147,7 +1147,6 @@ void function ThreadedAuthAndConnectToServer( string password = "", bool modsCha
 					if (mod.name == modName)
 					{
 						found = true
-						print("TROUVE " + mod.name)
 						break
 					}
 				}
@@ -1172,9 +1171,8 @@ void function ThreadedAuthAndConnectToServer( string password = "", bool modsCha
 		}
 
 		// only actually reload if we need to since the uiscript reset on reload lags hard
-		if ( modsChanged ) {
+		if ( modsChanged )
 			ReloadMods()
-		}
 
 		NSConnectToAuthedServer()
 	}
