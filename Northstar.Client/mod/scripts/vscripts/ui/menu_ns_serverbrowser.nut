@@ -1092,25 +1092,30 @@ void function ThreadedAuthAndConnectToServer( string password = "", bool modsCha
 	if ( NSWasAuthSuccessful() )
 	{
 		// disable all RequiredOnClient mods that are not required by the server and are currently enabled
-		foreach ( string modName in NSGetModNames() )
+		foreach ( RequiredModInfo mod in NSGetModNamesAndVersions() )
 		{
-			if ( NSIsModRequiredOnClient( modName ) && NSIsModEnabled( modName ) )
+			string modName = mod.name
+			string modVersion = mod.version
+
+			if ( NSIsModRequiredOnClientWithVersion( modName, modVersion ) && NSIsModEnabledWithVersion( modName, modVersion ) )
 			{
 				// find the mod name in the list of server required mods
 				bool found = false
 				foreach ( RequiredModInfo mod in file.lastSelectedServer.requiredMods )
 				{
-					if (mod.name == modName)
+					if (mod.name == modName && mod.version == modVersion)
 					{
 						found = true
+						print(format("Found \"%s\" v%s", modName, modVersion))
 						break
 					}
 				}
-				// if we didnt find the mod name, disable the mod
+				// if we didn't find the mod name, disable the mod
 				if (!found)
 				{
 					modsChanged = true
-					NSSetModEnabled( modName, false )
+					NSSetModEnabledWithVersion( modName, modVersion, false )
+					print(format("Disabled \"%s\" v%s", modName, modVersion))
 				}
 			}
 		}
@@ -1118,10 +1123,14 @@ void function ThreadedAuthAndConnectToServer( string password = "", bool modsCha
 		// enable all RequiredOnClient mods that are required by the server and are currently disabled
 		foreach ( RequiredModInfo mod in file.lastSelectedServer.requiredMods )
 		{
-			if ( NSIsModRequiredOnClient( mod.name ) && !NSIsModEnabled( mod.name ))
+			string modName = mod.name
+			string modVersion = mod.version
+
+			if ( NSIsModRequiredOnClientWithVersion( modName, modVersion ) && !NSIsModEnabledWithVersion( modName, modVersion ) )
 			{
 				modsChanged = true
-				NSSetModEnabled( mod.name, true )
+				NSSetModEnabledWithVersion( modName, modVersion, true )
+				print(format("Enabled \"%s\" v%s", modName, modVersion))
 			}
 		}
 
