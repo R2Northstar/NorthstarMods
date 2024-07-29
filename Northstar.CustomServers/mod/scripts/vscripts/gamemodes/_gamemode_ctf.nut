@@ -69,7 +69,41 @@ void function CaptureTheFlag_Init()
 
 void function RateSpawnpoints_CTF( int checkClass, array<entity> spawnpoints, int team, entity player ) 
 {
-	RateSpawnpoints_SpawnZones( checkClass, spawnpoints, team, player )
+	vector allyFlagSpot
+	vector enemyFlagSpot
+	foreach ( entity spawn in GetEntArrayByClass_Expensive( "info_spawnpoint_flag" ) )
+	{
+		if( spawn.GetTeam() == team )
+			allyFlagSpot = spawn.GetOrigin()
+		else
+			enemyFlagSpot = spawn.GetOrigin()
+	}
+	
+	foreach ( entity spawn in spawnpoints )
+	{
+		float rating = 0.0
+		float allyFlagDistance = Distance2D( spawn.GetOrigin(), allyFlagSpot )
+		float enemyFlagDistance = Distance2D( spawn.GetOrigin(), enemyFlagSpot )
+		
+		if( enemyFlagDistance > allyFlagDistance )
+		{
+			rating += spawn.NearbyAllyScore( team, "ai" )
+			rating += spawn.NearbyAllyScore( team, "titan" )
+			rating += spawn.NearbyAllyScore( team, "pilot" )
+			
+			rating += spawn.NearbyEnemyScore( team, "ai" )
+			rating += spawn.NearbyEnemyScore( team, "titan" )
+			rating += spawn.NearbyEnemyScore( team, "pilot" )
+		
+			rating = rating / allyFlagDistance
+		}
+
+		if ( spawn == player.p.lastSpawnPoint )
+			rating += GetConVarFloat( "spawnpoint_last_spawn_rating" )
+		
+		spawn.CalculateRating( checkClass, team, rating, rating * 0.25 )
+	}
+	//RateSpawnpoints_SpawnZones( checkClass, spawnpoints, team, player )
 }
 
 bool function VerifyCTFSpawnpoint( entity spawnpoint, int team )
@@ -134,7 +168,22 @@ void function CTFPlayerDisconnected( entity player )
 {
 	//This has no validity checks on the player because the disconnection callback happens in the exact last frame the player entity still exists
 	if ( PlayerHasEnemyFlag( player ) )
-		DropFlag( player ) //Prevent players kidnapping the flag into oblivion with them LOL
+	{
+		entity flag = GetFlagForTeam( GetOtherTeam( player.GetTeam() ) )
+	
+		if( !IsValid( flag ) )
+			return
+	
+		if ( flag.GetParent() != player )
+			return
+		
+		flag.ClearParent()
+		flag.SetAngles( < 0, 0, 0 > )
+		flag.SetVelocity( < 0, 0, 0 > )
+		thread TrackFlagDropTimeout( flag )
+		SetFlagStateForTeam( flag.GetTeam(), eFlagState.Home )
+	}
+		
 }
 
 void function OnPlayerKilled( entity victim, entity attacker, var damageInfo )
@@ -205,19 +254,8 @@ void function CreateFlags()
 		flag.s.playersReturning <- []
 
 		level.teamFlags[ flag.GetTeam() ] <- flag
-
-		entity returnTrigger = CreateEntity( "trigger_cylinder" )
-		SetTeam( returnTrigger, flagTeam )
-		returnTrigger.SetRadius( CTF_GetFlagReturnRadius() )
-		returnTrigger.SetAboveHeight( CTF_GetFlagReturnRadius() )
-		returnTrigger.SetBelowHeight( CTF_GetFlagReturnRadius() )
 		
-		returnTrigger.SetEnterCallback( OnPlayerEntersFlagReturnTrigger )
-		returnTrigger.SetLeaveCallback( OnPlayerExitsFlagReturnTrigger )
-		
-		DispatchSpawn( returnTrigger )
-		
-		thread TrackFlagReturnTrigger( flag, returnTrigger )
+		thread FlagProximityTracker( flag )
 			
 		if ( flagTeam == TEAM_IMC )
 		{
@@ -263,16 +301,39 @@ void function RemoveFlags()
 	SetFlagStateForTeam( TEAM_IMC, eFlagState.None )
 }
 
-void function TrackFlagReturnTrigger( entity flag, entity returnTrigger )
+void function FlagProximityTracker( entity flag )
 {
-	// this is a bit of a hack, it seems parenting the return trigger to the flag actually sets the pickup radius of the flag to be the same as the trigger
-	// this isn't wanted since only pickups should use that additional radius
 	flag.EndSignal( "OnDestroy" )
-	returnTrigger.EndSignal( "OnDestroy" )
 	
-	while ( true )
+	array < entity > playerInsidePerimeter
+	while( true )
 	{
-		returnTrigger.SetOrigin( flag.GetOrigin() )
+		if( !playerInsidePerimeter.len() )
+			ArrayRemoveDead( playerInsidePerimeter )
+		
+		foreach ( player in GetPlayerArrayOfTeam_Alive( flag.GetTeam() ) )
+		{
+			if ( Distance( player.GetOrigin(), flag.GetOrigin() ) < CTF_GetFlagReturnRadius() )
+			{
+				if ( player.IsTitan() || player.GetTeam() != flag.GetTeam() || IsFlagHome( flag ) || flag.GetParent() != null )
+					continue
+				
+				if( playerInsidePerimeter.contains( player ) )
+					continue
+				
+				playerInsidePerimeter.append( player )
+				thread TryReturnFlag( player, flag )
+			}
+			else
+			{
+				if( playerInsidePerimeter.contains( player ) )
+				{
+					player.Signal( "FlagReturnEnded" ) // Cut the progress if outside range
+					playerInsidePerimeter.removebyvalue( player )
+				}
+			}
+		}
+		
 		WaitFrame()
 	}
 }
@@ -490,40 +551,6 @@ void function CaptureFlag( entity player, entity flag )
 	}
 }
 
-void function OnPlayerEntersFlagReturnTrigger( entity trigger, entity player )
-{
-	entity flag
-	if ( trigger.GetTeam() == TEAM_IMC )
-		flag = file.imcFlag
-	else
-		flag = file.militiaFlag
-
-	if ( !IsValid( flag ) || !IsValidPlayer( player ) )
-		return
-	
-	if ( !player.IsPlayer() || player.IsTitan() || player.GetTeam() != flag.GetTeam() || IsFlagHome( flag ) || flag.GetParent() != null )
-		return
-		
-	thread TryReturnFlag( player, flag )
-}
-
-void function OnPlayerExitsFlagReturnTrigger( entity trigger, entity player )
-{
-	entity flag
-	if ( trigger.GetTeam() == TEAM_IMC )
-		flag = file.imcFlag
-	else
-		flag = file.militiaFlag
-	
-	if ( !IsValid( flag ) || !IsValidPlayer( player ) )
-		return
-	
-	if ( !player.IsPlayer() || player.IsTitan() || player.GetTeam() != flag.GetTeam() || IsFlagHome( flag ) || flag.GetParent() != null )
-		return
-	
-	player.Signal( "FlagReturnEnded" )
-}	
-
 void function TryReturnFlag( entity player, entity flag )
 {
 	// start return progress bar
@@ -550,7 +577,10 @@ void function TryReturnFlag( entity player, entity flag )
 	// flag return succeeded
 	// return flag
 	ResetFlag( flag )
-	flag.Signal( "FlagReturnEnded" )
+	
+	MessageToTeam( flag.GetTeam(), eEventNotifications.PlayerReturnedFriendlyFlag, null, player )
+	EmitSoundOnEntityToTeam( flag, "UI_CTF_3P_TeamReturnsFlag", flag.GetTeam() )
+	PlayFactionDialogueToTeam( "ctf_flagReturnedFriendly", flag.GetTeam() )
 	
 	// do notifications for return
 	MessageToPlayer( player, eEventNotifications.YouReturnedFriendlyFlag )
@@ -563,13 +593,12 @@ void function TryReturnFlag( entity player, entity flag )
 		SetPlayerChallengeMeritScore( player )
 	}
 	
-	MessageToTeam( flag.GetTeam(), eEventNotifications.PlayerReturnedFriendlyFlag, null, player )
-	EmitSoundOnEntityToTeam( flag, "UI_CTF_3P_TeamReturnsFlag", flag.GetTeam() )
-	PlayFactionDialogueToTeam( "ctf_flagReturnedFriendly", flag.GetTeam() )
-	
 	MessageToTeam( GetOtherTeam( flag.GetTeam() ), eEventNotifications.PlayerReturnedEnemyFlag, null, player )
 	EmitSoundOnEntityToTeam( flag, "UI_CTF_3P_EnemyReturnsFlag", GetOtherTeam( flag.GetTeam() ) )
+	EmitSoundOnEntityOnlyToPlayer( player, player, "UI_CTF_1P_ReturnsFlag" )
 	PlayFactionDialogueToTeam( "ctf_flagReturnedEnemy", GetOtherTeam( flag.GetTeam() ) )
+	
+	flag.Signal( "FlagReturnEnded" )
 }
 
 void function OnPlaying()
