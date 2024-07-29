@@ -157,12 +157,9 @@ void function WaitForPlayers()
 	
 	print( "Finished waiting for players, starting match." )
 	
-	wait 1
+	wait 5
 	
-	if ( file.usePickLoadoutScreen )
-		SetGameState( eGameState.PickLoadout )
-	else
-		SetGameState( eGameState.Prematch )
+	SetGameState( eGameState.PickLoadout )
 }
 
 void function WaitingForPlayers_ClientConnected( entity player )
@@ -179,7 +176,10 @@ void function GameStateEnter_PickLoadout()
 
 void function GameStateEnter_PickLoadout_Threaded()
 {	
-	float pickloadoutLength = 30.0 // may need tweaking
+	float pickloadoutLength = 30.0
+	if ( !file.usePickLoadoutScreen )
+		pickloadoutLength = 5.0
+	
 	SetServerVar( "minPickLoadOutTime", Time() + pickloadoutLength )
 	
 	// titan selection menu can change minPickLoadOutTime so we need to wait manually until we hit the time
@@ -272,12 +272,6 @@ void function GameStateEnter_Playing_Threaded()
 
 
 // eGameState.WinnerDetermined
-// these are likely innacurate
-const float ROUND_END_FADE_KILLREPLAY = 1.0
-const float ROUND_END_DELAY_KILLREPLAY = 3.0 
-const float ROUND_END_FADE_NOKILLREPLAY = 8.0
-const float ROUND_END_DELAY_NOKILLREPLAY = 10.0 
-
 void function GameStateEnter_WinnerDetermined()
 {	
 	thread GameStateEnter_WinnerDetermined_Threaded()
@@ -306,6 +300,11 @@ void function GameStateEnter_WinnerDetermined_Threaded()
 	}
 	
 	WaitFrame() // wait a frame so other scripts can setup killreplay stuff
+	
+	if( IsRoundBased() )
+		svGlobal.levelEnt.Signal( "RoundEnd" )
+	else
+		svGlobal.levelEnt.Signal( "GameEnd" )
 	
 	// set gameEndTime to current time, so hud doesn't display time left in the match
 	SetServerVar( "gameEndTime", Time() )
@@ -380,7 +379,6 @@ void function GameStateEnter_WinnerDetermined_Threaded()
 	if ( IsRoundBased() )
 	{
 		ClearDroppedWeapons()
-		svGlobal.levelEnt.Signal( "RoundEnd" )
 		int roundsPlayed = expect int ( GetServerVar( "roundsPlayed" ) )
 		roundsPlayed++
 		SetServerVar( "roundsPlayed", roundsPlayed )
@@ -400,8 +398,6 @@ void function GameStateEnter_WinnerDetermined_Threaded()
 			else
 				SetGameState( eGameState.Postmatch )
 		}
-		else if ( file.switchSidesBased && !file.hasSwitchedSides && highestScore >= ( roundScoreLimit.tofloat() / 2.0 ) ) // round up
-			SetGameState( eGameState.SwitchingSides ) // note: switchingsides will handle setting to pickloadout and prematch by itself
 		else if ( file.usePickLoadoutScreen && GetCurrentPlaylistVarInt( "pick_loadout_every_round", 1 ) ) //Playlist var needs to be enabled as well
 			SetGameState( eGameState.PickLoadout )
 		else
@@ -409,7 +405,6 @@ void function GameStateEnter_WinnerDetermined_Threaded()
 	}
 	else
 	{
-		svGlobal.levelEnt.Signal( "GameEnd" )
 		RegisterChallenges_OnMatchEnd()
 		if ( ClassicMP_ShouldRunEpilogue() )
 		{
@@ -475,15 +470,17 @@ void function GameStateEnter_SwitchingSides_Threaded()
 		SetKillcamsEnabled( false )
 		
 	WaitFrame() // wait a frame so callbacks can set killreplay info
-
+	
+	svGlobal.levelEnt.Signal( "RoundEnd" )
+	
 	entity replayAttacker = file.roundWinningKillReplayAttacker
 	bool doReplay = Replay_IsEnabled() && IsRoundWinningKillReplayEnabled() && IsValid( replayAttacker ) && !IsRoundBased() // for roundbased modes, we've already done the replay
-				 && Time() - file.roundWinningKillReplayTime <= SWITCHING_SIDES_DELAY
+				 && Time() - file.roundWinningKillReplayTime <= ROUND_WINNING_KILL_REPLAY_LENGTH_OF_REPLAY
 	
 	float replayLength = SWITCHING_SIDES_DELAY_REPLAY // extra delay if no replay
 	if ( doReplay )
 	{		
-		replayLength = SWITCHING_SIDES_DELAY
+		replayLength = GAME_WINNER_DETERMINED_ROUND_WAIT_WITH_ROUND_WINNING_KILL_REPLAY_WAIT
 		if ( "respawnTime" in replayAttacker.s && Time() - replayAttacker.s.respawnTime < replayLength )
 			replayLength += Time() - expect float ( replayAttacker.s.respawnTime )
 			
@@ -493,15 +490,17 @@ void function GameStateEnter_SwitchingSides_Threaded()
 	foreach ( entity player in GetPlayerArray() )
 		thread PlayerWatchesSwitchingSidesKillReplay( player, doReplay, replayLength )
 
-	wait SWITCHING_SIDES_DELAY_REPLAY
-	CleanUpEntitiesForRoundEnd() // fade should be done by this point, so cleanup stuff now when people won't see
-	wait replayLength
+	thread DialogueAnnounceSwitchingSides()
+	wait GAME_WINNER_DETERMINED_ROUND_WAIT
 	
+	CleanUpEntitiesForRoundEnd() // fade should be done by this point, so cleanup stuff now when people won't see
+	wait ROUND_WINNING_KILL_REPLAY_ROUND_SCORE_ANNOUNCEMENT_DURATION
+	
+	ClearDroppedWeapons()
 	if ( killcamsWereEnabled )
 		SetKillcamsEnabled( true )
 	
 	file.hasSwitchedSides = true
-	svGlobal.levelEnt.Signal( "RoundEnd" ) // might be good to get a new signal for this? not 100% necessary tho i think
 	SetServerVar( "switchedSides", 1 )
 	file.roundWinningKillReplayAttacker = null // reset this after replay
 	file.roundWinningKillReplayInflictorEHandle = -1
@@ -511,6 +510,14 @@ void function GameStateEnter_SwitchingSides_Threaded()
 	else
 		SetGameState ( eGameState.Prematch )
 }
+
+void function DialogueAnnounceSwitchingSides()
+{
+	wait ROUND_WINNING_KILL_REPLAY_LENGTH_OF_REPLAY
+	foreach ( entity player in GetPlayerArray() )
+		PlayFactionDialogueToPlayer( "mp_sideSwitching", player )
+}
+
 
 void function PlayerWatchesSwitchingSidesKillReplay( entity player, bool doReplay, float replayLength )
 {
@@ -1002,7 +1009,17 @@ void function AddTeamScore( int team, int amount )
 		SetWinner( team )
 	
 	else if ( ( file.switchSidesBased && !file.hasSwitchedSides ) && score >= ( scoreLimit.tofloat() / 2.0 ) )
+	{
+		thread DialogueAnnounceHalftime()
 		SetGameState( eGameState.SwitchingSides )
+	}
+}
+
+void function DialogueAnnounceHalftime()
+{
+	wait 1.0
+	foreach ( entity player in GetPlayerArray() )
+		PlayFactionDialogueToPlayer( "mp_halftime", player )
 }
 
 void function SetTimeoutWinnerDecisionFunc( int functionref() callback )
@@ -1082,6 +1099,7 @@ float function GetTimeLimit_ForGameMode()
 void function DialoguePlayNormal()
 {
 	svGlobal.levelEnt.EndSignal( "GameEnd" )
+	svGlobal.levelEnt.EndSignal( "RoundEnd" )
 	int totalScore = GameMode_GetScoreLimit( GameRules_GetGameMode() )
 	int winningTeam
 	int losingTeam

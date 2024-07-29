@@ -91,13 +91,13 @@ void function OnPrematchStart()
 		AddAnimEvent( dropship, "dropship_warpout", WarpoutEffect )
 		
 		dropship.SetValueForModelKey( $"models/vehicle/crow_dropship/crow_dropship_hero.mdl" )
-		if ( dropshipSpawn.GetTeam() == TEAM_IMC )
+		if ( createTeam == TEAM_IMC )
 			dropship.SetValueForModelKey( $"models/vehicle/goblin_dropship/goblin_dropship_hero.mdl" )
 		
 		DispatchSpawn( dropship )
 		
 		dropship.SetModel( $"models/vehicle/crow_dropship/crow_dropship_hero.mdl" )
-		if ( dropshipSpawn.GetTeam() == TEAM_IMC )
+		if ( createTeam == TEAM_IMC )
 			dropship.SetModel( $"models/vehicle/goblin_dropship/goblin_dropship_hero.mdl" )
 		
 		teamDropships[ dropship ] <- [ null, null, null, null ]
@@ -189,6 +189,7 @@ void function SpawnPlayerIntoDropship( entity player, int playerDropshipIndex, e
 	
 	HolsterAndDisableWeapons( player )
 	player.DisableWeaponViewModel()
+	player.MovementDisable() // Disable all movement but let them look around still
 	UnMuteAll( player )
 	StopSoundOnEntity( player, "Duck_For_FrontierDefenseTitanSelectScreen" )
 	
@@ -231,7 +232,8 @@ void function SpawnPlayerIntoDropship( entity player, int playerDropshipIndex, e
 		PlayBattleChatterLine( player, "bc_pIntroChat" )
 	#endif
 	
-	waitthread FirstPersonSequence( jumpSequence, player, playerDropship )
+	thread FirstPersonSequence( jumpSequence, player, playerDropship )
+	wait player.GetSequenceDuration( DROPSHIP_JUMP_ANIMS[ playerDropshipIndex ] ) - 0.2
 	
 	thread PlayerJumpsFromDropship( player )
 }
@@ -257,12 +259,11 @@ void function PlayerJumpsFromDropship( entity player )
 	player.ClearParent()
 	WaitFrame()
 	player.SetVelocity( < 0, 0, -100 > ) // Toss players a bit down so it makes a smoother transition when jumping off the Dropship
-	player.MovementDisable() // Disable all movement but let them look around still
 	player.ConsumeDoubleJump() // MovementDisable doesn't prevent double jumps
 	WaitFrame()
 	while ( !player.IsOnGround() && !player.IsWallRunning() && !player.IsWallHanging() ) // todo this needs tweaking
 		WaitFrame()
 	
-	if ( GetRoundsPlayed() == 0 ) //Intro is announced only for the first round in Vanilla as certain gamemodes have different announcements for rounds restarts
+	if ( GetRoundsPlayed() == 0 || HasSwitchedSides() == 1 ) //Intro is announced only for the first round in Vanilla as certain gamemodes have different announcements for rounds restarts
 		TryGameModeAnnouncement( player )
 }

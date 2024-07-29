@@ -12,7 +12,6 @@ global function RespawnsEnabled
 global function CreateNoSpawnArea
 global function DeleteNoSpawnArea
 global function SpawnPointInNoSpawnArea
-global function IsSpawnpointValidDrop
 
 global function RateSpawnpoints_Generic
 global function RateSpawnpoints_Frontline
@@ -20,7 +19,7 @@ global function RateSpawnpoints_SpawnZones
 global function DecideSpawnZone_Generic
 
 global struct spawnZoneProperties{
-	int controllingTeam = -1
+	int controllingTeam = TEAM_UNASSIGNED
 	entity minimapEnt = null
 	float zoneRating = 0.0
 }
@@ -127,7 +126,7 @@ string function CreateNoSpawnArea( int blockSpecificTeam, int blockEnemiesOfTeam
 	
 	noSpawnArea.id = UniqueString( "noSpawnArea" )
 	
-	if( lifetime > 0 )
+	if ( lifetime > 0 )
 		thread NoSpawnAreaLifetime( noSpawnArea )
 	
 	file.noSpawnAreas.append( noSpawnArea )
@@ -142,7 +141,7 @@ void function NoSpawnAreaLifetime( NoSpawnArea noSpawnArea )
 
 void function DeleteNoSpawnArea( string noSpawnIdx )
 {
-	foreach( noSpawnArea in file.noSpawnAreas )
+	foreach ( noSpawnArea in file.noSpawnAreas )
 	{
 		if ( noSpawnArea.id == noSpawnIdx )
 			file.noSpawnAreas.removebyvalue( noSpawnArea )
@@ -151,9 +150,9 @@ void function DeleteNoSpawnArea( string noSpawnIdx )
 
 bool function SpawnPointInNoSpawnArea( vector vec, int team )
 {
-	foreach( noSpawnArea in file.noSpawnAreas )
+	foreach ( noSpawnArea in file.noSpawnAreas )
 	{
-		if( Distance( noSpawnArea.position, vec ) < noSpawnArea.radius )
+		if ( Distance( noSpawnArea.position, vec ) < noSpawnArea.radius )
 		{
 			if ( noSpawnArea.blockedTeam != TEAM_INVALID && noSpawnArea.blockedTeam == team )
 				return true
@@ -261,10 +260,10 @@ entity function GetBestSpawnpoint( entity player, array<entity> spawnpoints, boo
 	array<entity> validSpawns
 	
 	// I know this looks hacky but the native funcs to get the spawns is returning null arrays for FFA idk why.
-	if( IsFFAGame() )
+	if ( IsFFAGame() )
 	{
 		spawnpoints.clear()
-		if( isTitan )
+		if ( isTitan )
 		{
 			spawnpoints = GetEntArrayByClass_Expensive( "info_spawnpoint_titan" )
 			spawnpoints.extend( GetEntArrayByClass_Expensive( "info_spawnpoint_titan_start" ) )
@@ -303,7 +302,7 @@ entity function GetBestSpawnpoint( entity player, array<entity> spawnpoints, boo
 			throw( "Map has no player spawns at all" )
 	}
 	
-	if( IsFFAGame() )
+	if ( IsFFAGame() )
 		return validSpawns.getrandom()
 	
 	return validSpawns[0]
@@ -311,9 +310,6 @@ entity function GetBestSpawnpoint( entity player, array<entity> spawnpoints, boo
 
 bool function IsSpawnpointValid( entity spawnpoint, int team )
 {
-	if( IsFFAGame() && !spawnpoint.IsVisibleToEnemies( team ) )
-		return true
-	
 	if ( !spawnpoint.HasKey( "ignoreGamemode" ) || spawnpoint.HasKey( "ignoreGamemode" ) && spawnpoint.kv.ignoreGamemode == "0" ) // used by script-spawned spawnpoints
 	{
 		if ( file.spawnpointGamemodeOverride != "" )
@@ -333,16 +329,16 @@ bool function IsSpawnpointValid( entity spawnpoint, int team )
 	if ( !IsSpawnpointValidDrop( spawnpoint, team ) || Time() - spawnpoint.s.lastUsedTime <= 10.0 )
 		return false
 	
-	if( SpawnPointInNoSpawnArea( spawnpoint.GetOrigin(), team ) )
+	if ( SpawnPointInNoSpawnArea( spawnpoint.GetOrigin(), team ) )
 		return false
 
 	// Line of Sight Check, could use IsVisibleToEnemies but apparently that considers only players, not NPCs
 	array< entity > enemyTitans = GetTitanArrayOfEnemies( team )
-	if( GetConVarBool( "spawnpoint_avoid_npc_titan_sight" ) )
+	if ( GetConVarBool( "spawnpoint_avoid_npc_titan_sight" ) )
 	{
-		foreach( titan in enemyTitans )
+		foreach ( titan in enemyTitans )
 		{
-			if( IsAlive( titan ) && titan.IsNPC() && titan.CanSee( spawnpoint ) )
+			if ( IsAlive( titan ) && titan.IsNPC() && titan.CanSee( spawnpoint ) )
 				return false
 		}
 	}
@@ -372,7 +368,7 @@ bool function IsSpawnpointValid( entity spawnpoint, int team )
 
 void function RateSpawnpoints_Generic( int checkClass, array<entity> spawnpoints, int team, entity player )
 {
-	foreach( entity spawnpoint in spawnpoints )
+	foreach ( entity spawnpoint in spawnpoints )
 	{
 		float currentRating = 0.0
 		
@@ -386,12 +382,10 @@ void function RateSpawnpoints_Generic( int checkClass, array<entity> spawnpoints
 		currentRating += spawnpoint.NearbyEnemyScore( team, "titan" )
 		currentRating += spawnpoint.NearbyEnemyScore( team, "pilot" )
 		
-		if( spawnpoint == player.p.lastSpawnPoint ) // Reduce the rating of the spawn point used previously
+		if ( spawnpoint == player.p.lastSpawnPoint ) // Reduce the rating of the spawn point used previously
 			currentRating += GetConVarFloat( "spawnpoint_last_spawn_rating" )
 		
-		// The pet titan rating apparently is for enemies around this spawn point, not player's own
-		float ratingWithPetTitan = currentRating * 0.25
-		spawnpoint.CalculateRating( checkClass, team, currentRating, ratingWithPetTitan )
+		spawnpoint.CalculateRating( checkClass, team, currentRating, currentRating * 0.25 )
 	}
 }
 
@@ -400,16 +394,15 @@ void function RateSpawnpoints_Frontline( int checkClass, array<entity> spawnpoin
 	Frontline currentFrontline = GetFrontline( team )
 	
 	vector inverseFrontlineDir = currentFrontline.combatDir * -1
-	vector adjustedPosition = currentFrontline.origin + currentFrontline.combatDir * 4000
+	vector adjustedPosition = currentFrontline.origin + currentFrontline.combatDir * 8000
 	
 	SpawnPoints_InitFrontlineData( adjustedPosition, currentFrontline.combatDir, currentFrontline.origin, currentFrontline.friendlyCenter, 4000 )
 	
-	foreach( entity spawnpoint in spawnpoints )
+	foreach ( entity spawnpoint in spawnpoints )
 	{
 		float frontlineRating = spawnpoint.CalculateFrontlineRating()
-		float ratingWithPetTitan = frontlineRating * 0.25
 		
-		spawnpoint.CalculateRating( checkClass, team, frontlineRating, ratingWithPetTitan )
+		spawnpoint.CalculateRating( checkClass, team, frontlineRating, frontlineRating * 0.25 )
 	}
 }
 
@@ -435,12 +428,12 @@ void function RateSpawnpoints_Frontline( int checkClass, array<entity> spawnpoin
 
 void function ResetSpawnzones()
 {
-	foreach( zone, zoneProperties in mapSpawnZones )
+	foreach ( zone, zoneProperties in mapSpawnZones )
 	{
 		if ( IsValid( zoneProperties.minimapEnt ) )
 			zoneProperties.minimapEnt.Destroy()
 		
-		zoneProperties.controllingTeam = -1
+		zoneProperties.controllingTeam = TEAM_UNASSIGNED
 		zoneProperties.zoneRating = 0.0
 	}
 }
@@ -458,9 +451,9 @@ void function SetSpawnZoneRatingFunc( entity functionref( array<entity>, int ) r
 
 bool function TeamHasDirtySpawnzone( int team )
 {
-	foreach( zone, zoneProperties in mapSpawnZones )
+	foreach ( zone, zoneProperties in mapSpawnZones )
 	{
-		if( zoneProperties.controllingTeam == team )
+		if ( zoneProperties.controllingTeam == team )
 		{
 			int numDeadInZone = 0
 			array<entity> teamPlayers = GetPlayerArrayOfTeam( team )
@@ -510,7 +503,7 @@ void function RateSpawnpoints_SpawnZones( int checkClass, array<entity> spawnpoi
 	}
 	
 	array< entity > zoneTriggers
-	foreach( zone, zoneProperties in mapSpawnZones )
+	foreach ( zone, zoneProperties in mapSpawnZones )
 		zoneTriggers.append( zone )
 	
 	entity spawnzone = file.spawnzoneRatingFunc( zoneTriggers, player.GetTeam() )	
@@ -529,8 +522,7 @@ void function RateSpawnpoints_SpawnZones( int checkClass, array<entity> spawnpoi
 		else
 			rating = 2.0 * ( 1 - ( distance / 3000.0 ) )
 		
-		float ratingWithPetTitan = rating * 0.25
-		spawn.CalculateRating( checkClass, team, rating, ratingWithPetTitan )
+		spawn.CalculateRating( checkClass, team, rating, rating * 0.25 )
 	}
 }
 
@@ -562,7 +554,7 @@ entity function DecideSpawnZone_Generic( array<entity> spawnzones, int team )
 	if ( TeamHasDirtySpawnzone( team ) )
 	{
 		array<entity> possibleZones
-		foreach( zone, zoneProperties in mapSpawnZones )
+		foreach ( zone, zoneProperties in mapSpawnZones )
 		{
 			if ( zoneProperties.controllingTeam == GetOtherTeam( team ) )
 				continue
@@ -605,7 +597,7 @@ entity function DecideSpawnZone_Generic( array<entity> spawnzones, int team )
 		
 		if ( file.shouldCreateMinimapSpawnzones )
 		{
-			foreach( zone, zoneProperties in mapSpawnZones )
+			foreach ( zone, zoneProperties in mapSpawnZones )
 			{
 				if ( chosenZone == zone )
 					continue
@@ -617,13 +609,13 @@ entity function DecideSpawnZone_Generic( array<entity> spawnzones, int team )
 			CreateTeamSpawnZoneEntity( chosenZone, team )
 		}
 		
-		foreach( zone, zoneProperties in mapSpawnZones )
+		foreach ( zone, zoneProperties in mapSpawnZones )
 		{
 			if ( chosenZone == zone )
 				continue
 				
 			if ( zoneProperties.controllingTeam == team )
-				zoneProperties.controllingTeam = -1
+				zoneProperties.controllingTeam = TEAM_UNASSIGNED
 		}
 		
 		mapSpawnZones[chosenZone].controllingTeam = team
