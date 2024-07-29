@@ -1162,7 +1162,6 @@ void function ThreadedAuthAndConnectToServer( string password = "", bool modsCha
 		// enable all RequiredOnClient mods that are required by the server and are currently disabled
 		foreach ( RequiredModInfo mod in file.lastSelectedServer.requiredMods )
 		{
-			print("=> " + mod.name)
 			if ( NSIsModRequiredOnClient( mod.name ) && !NSIsModEnabled( mod.name ))
 			{
 				modsChanged = true
