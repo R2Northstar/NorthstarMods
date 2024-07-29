@@ -26,6 +26,17 @@ global struct UIPresenceStruct {
     int gameState
 }
 
+global struct ModInfo
+{
+	string name = ""
+	string version = ""
+	string downloadLink = ""
+	int loadPriority = 0
+	bool enabled = false
+	bool requiredOnClient = false
+	array<string> conVars = []
+}
+
 global struct RequiredModInfo
 {
     string name

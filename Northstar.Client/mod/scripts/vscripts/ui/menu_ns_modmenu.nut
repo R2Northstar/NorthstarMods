@@ -5,17 +5,8 @@ global function AddNorthstarModMenu_MainMenuFooter
 global function ReloadMods
 
 
-struct modData {
-	string name = ""
-	string version = ""
-	string link = ""
-	int loadPriority = 0
-	bool enabled = false
-	array<string> conVars = []
-}
-
 struct panelContent {
-	modData& mod
+	ModInfo& mod
 	bool isHeader = false
 }
 
@@ -40,7 +31,7 @@ struct {
 	array<string> enabledMods
 	var currentButton
 	string searchTerm
-	modData& lastMod
+	ModInfo& lastMod
 } file
 
 const int PANELS_LEN = 15
@@ -324,25 +315,26 @@ void function UpdateList()
 
 void function RefreshMods()
 {
-	array<string> modNames = NSGetModNames()
+	array<ModInfo> mods = NSGetModsInformation()
 	file.mods.clear()
 
 	bool reverse = GetConVarBool( "modlist_reverse" )
 
-	int lastLoadPriority = reverse ? NSGetModLoadPriority( modNames[ modNames.len() - 1 ] ) + 1 : -1 
+	int lastLoadPriority = reverse ? mods.top().loadPriority + 1 : -1
 	string searchTerm = Hud_GetUTF8Text( Hud_GetChild( file.menu, "BtnModsSearch" ) ).tolower()
 
-	for ( int i = reverse ? modNames.len() - 1 : 0;
-		reverse ? ( i >= 0 ) : ( i < modNames.len() );
+	for ( int i = reverse ? mods.len() - 1 : 0;
+		reverse ? ( i >= 0 ) : ( i < mods.len() );
 		i += ( reverse ? -1 : 1) )
 	{
-		string mod = modNames[i]
+		ModInfo mod = mods[i]
+		string modName = mod.name
 
-		if ( searchTerm.len() && mod.tolower().find( searchTerm ) == null )
+		if ( searchTerm.len() && modName.tolower().find( searchTerm ) == null )
 			continue
 
-		bool enabled = NSIsModEnabled( mod )
-		bool required = NSIsModRequiredOnClient( mod )
+		bool enabled = mod.enabled
+		bool required = mod.requiredOnClient
 		switch ( GetConVarInt( "filter_mods" ) )
 		{
 			case filterShow.ONLY_ENABLED:
@@ -363,11 +355,11 @@ void function RefreshMods()
 				break
 		}
 
-		int pr = NSGetModLoadPriority( mod )
+		int pr = mod.loadPriority
 
 		if ( reverse ? pr < lastLoadPriority : pr > lastLoadPriority )
 		{
-			modData m
+			ModInfo m
 			m.name = pr.tostring()
 
 			panelContent c
@@ -377,16 +369,8 @@ void function RefreshMods()
 			lastLoadPriority = pr
 		}
 
-		modData m
-		m.name = mod
-		m.version = NSGetModVersionByModName( mod )
-		m.link = NSGetModDownloadLinkByModName( mod )
-		m.loadPriority = NSGetModLoadPriority( mod )
-		m.enabled = enabled
-		m.conVars = NSGetModConvarsByModName( mod )
-
 		panelContent c
-		c.mod = m
+		c.mod = mod
 
 		file.mods.append( c )
 	}
@@ -400,7 +384,7 @@ void function DisplayModPanels()
 			break
 
 		panelContent c = file.mods[ file.scrollOffset + i ]
-		modData mod = c.mod
+		ModInfo mod = c.mod
 		var btn = Hud_GetChild( panel, "BtnMod" )
 		var headerLabel = Hud_GetChild( panel, "Header" )
 		var box = Hud_GetChild( panel, "ControlBox" )
