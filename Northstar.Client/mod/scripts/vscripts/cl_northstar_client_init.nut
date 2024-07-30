@@ -29,6 +29,7 @@ global struct UIPresenceStruct {
 global struct ModInfo
 {
 	string name = ""
+    string description = ""
 	string version = ""
 	string downloadLink = ""
 	int loadPriority = 0

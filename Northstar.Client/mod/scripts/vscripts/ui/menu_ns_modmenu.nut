@@ -514,7 +514,7 @@ string function FormatModDescription()
 	}
 
 	// description
-	ret += format( "\n%s\n", NSGetModDescriptionByModName( modName ) ) // TODO put description in NSGetModsInformation results
+	ret += format( "\n%s\n", mod.description )
 
 	return ret
 }
