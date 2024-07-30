@@ -25,12 +25,6 @@
 			"argTypes":"string modName"
 		},
 		{
-			"name":"NSGetModLoadPriority",
-			"helpText":"",
-			"returnTypeString":"int",
-			"argTypes":"string modName"
-		},
-		{
 			"name":"NSIsModRequiredOnClient",
 			"helpText":"",
 			"returnTypeString":"bool",
@@ -261,12 +255,6 @@
 			"argTypes":"string modName"
 		},
 		{
-			"name":"NSGetModLoadPriority",
-			"helpText":"",
-			"returnTypeString":"int",
-			"argTypes":"string modName"
-		},
-		{
 			"name":"NSIsModRequiredOnClient",
 			"helpText":"",
 			"returnTypeString":"bool",
@@ -446,12 +434,6 @@
 			"name":"NSGetModVersionByModName",
 			"helpText":"",
 			"returnTypeString":"string",
-			"argTypes":"string modName"
-		},
-		{
-			"name":"NSGetModLoadPriority",
-			"helpText":"",
-			"returnTypeString":"int",
 			"argTypes":"string modName"
 		},
 		{
