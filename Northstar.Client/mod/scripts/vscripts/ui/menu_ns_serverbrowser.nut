@@ -1142,7 +1142,7 @@ void function ThreadedAuthAndConnectToServer( string password = "" )
 		bool modsChanged = false
 
 		// disable all RequiredOnClient mods that are not required by the server and are currently enabled
-		foreach ( RequiredModInfo mod in NSGetModNamesAndVersions() )
+		foreach ( ModInfo mod in NSGetModsInformation() )
 		{
 			string modName = mod.name
 			string modVersion = mod.version
