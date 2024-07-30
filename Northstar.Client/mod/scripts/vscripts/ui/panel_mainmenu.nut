@@ -431,9 +431,10 @@ void function UpdatePlayButton( var button )
 			{
 				// restrict non-vanilla players from accessing official servers
 				bool hasNonVanillaMods = false
-				foreach ( string modName in NSGetModNames() )
+				foreach ( ModInfo mod in NSGetModsInformation() )
 				{
-					if ( NSIsModEnabled( modName ) && NSIsModRequiredOnClient( modName ) )
+					string modName = mod.name
+					if ( NSIsModEnabled( modName, mod.version ) && NSIsModRequiredOnClient( modName ) )
 					{
 						hasNonVanillaMods = true
 						break

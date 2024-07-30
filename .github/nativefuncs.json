@@ -10,7 +10,7 @@
 			"name":"NSIsModEnabled",
 			"helpText":"",
 			"returnTypeString":"bool",
-			"argTypes":"string modName"
+			"argTypes":"string modName, string modVersion"
 		},
 		{
 			"name":"NSSetModEnabled",
@@ -258,7 +258,7 @@
 			"name":"NSIsModEnabled",
 			"helpText":"",
 			"returnTypeString":"bool",
-			"argTypes":"string modName"
+			"argTypes":"string modName, string modVersion"
 		},
 		{
 			"name":"NSSetModEnabled",
@@ -458,7 +458,7 @@
 			"name":"NSIsModEnabled",
 			"helpText":"",
 			"returnTypeString":"bool",
-			"argTypes":"string modName"
+			"argTypes":"string modName, string modVersion"
 		},
 		{
 			"name":"NSSetModEnabled",

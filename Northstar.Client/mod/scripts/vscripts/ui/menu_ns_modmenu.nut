@@ -184,7 +184,7 @@ void function OnModButtonFocused( var button )
 		Hud_SetVisible( linkButton, false )
 	}
 
-	SetControlBarColor( modName )
+	SetControlBarColor( modName, file.lastMod.version )
 
 	bool required = NSIsModRequiredOnClient( modName )
 	Hud_SetVisible( Hud_GetChild( file.menu, "WarningLegendLabel"  ), required )
@@ -195,15 +195,15 @@ void function OnModButtonPressed( var button )
 {
 	ModInfo mod = file.mods[ int ( Hud_GetScriptID( Hud_GetParent( button ) ) ) + file.scrollOffset - 1 ].mod
 	string modName = mod.name
-	if ( StaticFind( modName ) && NSIsModEnabled( modName ) )
+	if ( StaticFind( modName ) && NSIsModEnabled( modName, mod.version ) )
 		CoreModToggleDialog( modName )
 	else
 	{
-		NSSetModEnabled( modName, mod.version, !NSIsModEnabled( modName ) )
+		NSSetModEnabled( modName, mod.version, !NSIsModEnabled( modName, mod.version ) )
 		var panel = file.panels[ int ( Hud_GetScriptID( Hud_GetParent( button ) ) ) - 1 ]
-		SetControlBoxColor( Hud_GetChild( panel, "ControlBox" ), modName )
-		SetControlBarColor( modName )
-		SetModEnabledHelperImageAsset( Hud_GetChild( panel, "EnabledImage" ), modName )
+		SetControlBoxColor( Hud_GetChild( panel, "ControlBox" ), modName, mod.version )
+		SetControlBarColor( modName, mod.version )
+		SetModEnabledHelperImageAsset( Hud_GetChild( panel, "EnabledImage" ), modName, mod.version )
 		// RefreshMods()
 		UpdateListSliderPosition()
 		UpdateListSliderHeight()
@@ -281,9 +281,9 @@ void function DisableMod()
 	NSSetModEnabled( modName, mod.version, false )
 
 	var panel = file.panels[ int ( Hud_GetScriptID( Hud_GetParent( file.currentButton ) ) ) - 1]
-	SetControlBoxColor( Hud_GetChild( panel, "ControlBox" ), modName )
-	SetControlBarColor( modName )
-	SetModEnabledHelperImageAsset( Hud_GetChild( panel, "EnabledImage" ), modName )
+	SetControlBoxColor( Hud_GetChild( panel, "ControlBox" ), modName, mod.version )
+	SetControlBarColor( modName, mod.version )
+	SetModEnabledHelperImageAsset( Hud_GetChild( panel, "EnabledImage" ), modName, mod.version )
 
 	RefreshMods()
 }
@@ -291,10 +291,10 @@ void function DisableMod()
 array<string> function GetEnabledModsArray()
 {
 	array<string> enabledMods
-	foreach ( string mod in NSGetModNames() )
+	foreach ( ModInfo mod in NSGetModsInformation() )
 	{
-		if ( NSIsModEnabled( mod ) )
-			enabledMods.append( mod )
+		if ( mod.enabled )
+			enabledMods.append( mod.name )
 	}
 	return enabledMods
 }
@@ -416,39 +416,39 @@ void function DisplayModPanels()
 
 			Hud_SetVisible( headerLabel, false )
 
-			SetControlBoxColor( box, mod.name )
+			SetControlBoxColor( box, mod.name, mod.version )
 			Hud_SetVisible( box, true )
 			Hud_SetVisible( line, false )
 
 			Hud_SetVisible( warning, NSIsModRequiredOnClient( c.mod.name ) )
 
-			SetModEnabledHelperImageAsset( enabledImage, c.mod.name )
+			SetModEnabledHelperImageAsset( enabledImage, c.mod.name, c.mod.version )
 		}
 		Hud_SetVisible( panel, true )
 	}
 }
 
-void function SetModEnabledHelperImageAsset( var panel, string modName )
+void function SetModEnabledHelperImageAsset( var panel, string modName, string modVersion )
 {
-	if( NSIsModEnabled( modName ) )
+	if( NSIsModEnabled( modName, modVersion ) )
 		RuiSetImage( Hud_GetRui( panel ), "basicImage", $"rui/menu/common/merit_state_success" )
 	else
 		RuiSetImage( Hud_GetRui( panel ), "basicImage", $"rui/menu/common/merit_state_failure" )
-	RuiSetFloat3(Hud_GetRui( panel ), "basicImageColor", GetControlColorForMod( modName ) )
+	RuiSetFloat3(Hud_GetRui( panel ), "basicImageColor", GetControlColorForMod( modName, modVersion ) )
 	Hud_SetVisible( panel, true )
 }
 
-void function SetControlBoxColor( var box, string modName )
+void function SetControlBoxColor( var box, string modName, string modVersion )
 {
 	var rui = Hud_GetRui( box )
 	// if ( NSIsModEnabled( modName ) )
 	// 	RuiSetFloat3(rui, "basicImageColor", <0,1,0>)
 	// else
 	// 	RuiSetFloat3(rui, "basicImageColor", <1,0,0>)
-	RuiSetFloat3(rui, "basicImageColor", GetControlColorForMod( modName ) )
+	RuiSetFloat3(rui, "basicImageColor", GetControlColorForMod( modName, modVersion ) )
 }
 
-void function SetControlBarColor( string modName )
+void function SetControlBarColor( string modName, string modVersion )
 {
 	var bar_element = Hud_GetChild( file.menu, "ModEnabledBar" )
 	var bar = Hud_GetRui( bar_element )
@@ -456,13 +456,13 @@ void function SetControlBarColor( string modName )
 	// 	RuiSetFloat3(bar, "basicImageColor", <0,1,0>)
 	// else
 	// 	RuiSetFloat3(bar, "basicImageColor", <1,0,0>)
-	RuiSetFloat3(bar, "basicImageColor", GetControlColorForMod( modName ) )
+	RuiSetFloat3(bar, "basicImageColor", GetControlColorForMod( modName, modVersion ) )
 	Hud_SetVisible( bar_element, true )
 }
 
-vector function GetControlColorForMod( string modName )
+vector function GetControlColorForMod( string modName, string modVersion )
 {
-	if ( NSIsModEnabled( modName ) )
+	if ( NSIsModEnabled( modName, modVersion ) )
 		switch ( GetConVarInt( "colorblind_mode" ) )
 		{
 			case 1:
