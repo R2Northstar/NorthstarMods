@@ -167,7 +167,7 @@ void function OnModButtonFocused( var button )
 
 	RuiSetGameTime( rui, "startTime", -99999.99 ) // make sure it skips the whole animation for showing this
 	RuiSetString( rui, "headerText", modName )
-	RuiSetString( rui, "messageText", FormatModDescription( modName ) )
+	RuiSetString( rui, "messageText", FormatModDescription() )
 
 	// Add a button to open the link with if required
 	string link = NSGetModDownloadLinkByModName( modName )
@@ -253,7 +253,7 @@ void function OnHideConVarsChange( var n )
 	if ( modName == "" )
 		return
 	var rui = Hud_GetRui( Hud_GetChild( file.menu, "LabelDetails" ) )
-	RuiSetString( rui, "messageText", FormatModDescription( modName ) )
+	RuiSetString( rui, "messageText", FormatModDescription() )
 }
 
 // LIST LOGIC
@@ -484,17 +484,20 @@ vector function GetControlColorForMod( string modName, string modVersion )
 	unreachable
 }
 
-string function FormatModDescription( string modName )
+string function FormatModDescription()
 {
+	ModInfo mod = file.lastMod
+	string modName = mod.name
+
 	string ret
 	// version
-	ret += format( "Version %s\n", NSGetModVersionByModName( modName ) )
+	ret += format( "Version %s\n", mod.version )
 
 	// load priority
-	ret += format( "Load Priority: %i\n", NSGetModLoadPriority( modName ) )
+	ret += format( "Load Priority: %i\n", mod.loadPriority )
 
 	// convars
-	array<string> modCvars = NSGetModConvarsByModName( modName )
+	array<string> modCvars = mod.conVars
 	if ( modCvars.len() != 0 && GetConVarBool( "modlist_show_convars" ) )
 	{
 		ret += "ConVars: "
@@ -511,7 +514,7 @@ string function FormatModDescription( string modName )
 	}
 
 	// description
-	ret += format( "\n%s\n", NSGetModDescriptionByModName( modName ) )
+	ret += format( "\n%s\n", NSGetModDescriptionByModName( modName ) ) // TODO put description in NSGetModsInformation results
 
 	return ret
 }
