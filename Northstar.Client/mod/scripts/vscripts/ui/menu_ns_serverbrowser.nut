@@ -1147,7 +1147,7 @@ void function ThreadedAuthAndConnectToServer( string password = "" )
 			string modName = mod.name
 			string modVersion = mod.version
 
-			if ( NSIsModRequiredOnClientWithVersion( modName, modVersion ) && NSIsModEnabled( modName, modVersion ) )
+			if ( mod.requiredOnClient && mod.enabled )
 			{
 				// find the mod name in the list of server required mods
 				bool found = false
@@ -1443,7 +1443,7 @@ bool function JoinServer( ServerInfo server, string password = "" )
 		{
 			string modName = mod.name
 
-			if ( NSIsModRequiredOnClient( modName ) && NSIsModEnabled( modName, mod.version ) )
+			if ( mod.requiredOnClient && mod.enabled )
 			{
 				// find the mod name in the list of server required mods
 				bool found = false

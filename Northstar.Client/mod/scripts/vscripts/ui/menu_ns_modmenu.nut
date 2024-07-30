@@ -186,7 +186,7 @@ void function OnModButtonFocused( var button )
 
 	SetControlBarColor( modName, file.lastMod.version )
 
-	bool required = NSIsModRequiredOnClient( modName )
+	bool required = file.lastMod.requiredOnClient
 	Hud_SetVisible( Hud_GetChild( file.menu, "WarningLegendLabel"  ), required )
 	Hud_SetVisible( Hud_GetChild( file.menu, "WarningLegendImage"  ), required )
 }
@@ -420,7 +420,7 @@ void function DisplayModPanels()
 			Hud_SetVisible( box, true )
 			Hud_SetVisible( line, false )
 
-			Hud_SetVisible( warning, NSIsModRequiredOnClient( c.mod.name ) )
+			Hud_SetVisible( warning, mod.requiredOnClient )
 
 			SetModEnabledHelperImageAsset( enabledImage, c.mod.name, c.mod.version )
 		}

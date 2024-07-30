@@ -434,7 +434,7 @@ void function UpdatePlayButton( var button )
 				foreach ( ModInfo mod in NSGetModsInformation() )
 				{
 					string modName = mod.name
-					if ( NSIsModEnabled( modName, mod.version ) && NSIsModRequiredOnClient( modName ) )
+					if ( mod.enabled && mod.requiredOnClient )
 					{
 						hasNonVanillaMods = true
 						break
