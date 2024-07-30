@@ -1176,7 +1176,7 @@ void function ThreadedAuthAndConnectToServer( string password = "" )
 			string modName = mod.name
 			string modVersion = mod.version
 
-			if ( NSIsModRequiredOnClientWithVersion( modName, modVersion ) && !NSIsModEnabled( modName, modVersion ) )
+			if ( NSIsModRequiredOnClient( modName, modVersion ) && !NSIsModEnabled( modName, modVersion ) )
 			{
 				modsChanged = true
 				NSSetModEnabled( modName, modVersion, true )
@@ -1467,7 +1467,7 @@ bool function JoinServer( ServerInfo server, string password = "" )
 		// enable all RequiredOnClient mods that are required by the server and are currently disabled
 		foreach ( RequiredModInfo mod in server.requiredMods )
 		{
-			if ( NSIsModRequiredOnClient( mod.name ) && !NSIsModEnabled( mod.name, mod.version ) )
+			if ( NSIsModRequiredOnClient( mod.name, mod.version ) && !NSIsModEnabled( mod.name, mod.version ) )
 			{
 				modsChanged = true
 				NSSetModEnabled( mod.name, mod.version, true )

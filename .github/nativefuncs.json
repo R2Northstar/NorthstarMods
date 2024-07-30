@@ -46,7 +46,7 @@
 			"name":"NSIsModRequiredOnClient",
 			"helpText":"",
 			"returnTypeString":"bool",
-			"argTypes":"string modName"
+			"argTypes":"string modName, string modVersion"
 		},
 		{
 			"name":"NSGetModConvarsByModName",
@@ -294,7 +294,7 @@
 			"name":"NSIsModRequiredOnClient",
 			"helpText":"",
 			"returnTypeString":"bool",
-			"argTypes":"string modName"
+			"argTypes":"string modName, string modVersion"
 		},
 		{
 			"name":"NSGetModConvarsByModName",
@@ -494,7 +494,7 @@
 			"name":"NSIsModRequiredOnClient",
 			"helpText":"",
 			"returnTypeString":"bool",
-			"argTypes":"string modName"
+			"argTypes":"string modName, string modVersion"
 		},
 		{
 			"name":"NSGetModConvarsByModName",
