@@ -16,7 +16,7 @@
 			"name":"NSSetModEnabled",
 			"helpText":"",
 			"returnTypeString":"void",
-			"argTypes":"string modName, bool enabled"
+			"argTypes":"string modName, string modVersion, bool enabled"
 		},
 		{
 			"name":"NSGetModDescriptionByModName",
@@ -264,7 +264,7 @@
 			"name":"NSSetModEnabled",
 			"helpText":"",
 			"returnTypeString":"void",
-			"argTypes":"string modName, bool enabled"
+			"argTypes":"string modName, string modVersion, bool enabled"
 		},
 		{
 			"name":"NSGetModDescriptionByModName",
@@ -464,7 +464,7 @@
 			"name":"NSSetModEnabled",
 			"helpText":"",
 			"returnTypeString":"void",
-			"argTypes":"string modName, bool enabled"
+			"argTypes":"string modName, string modVersion, bool enabled"
 		},
 		{
 			"name":"NSGetModDescriptionByModName",

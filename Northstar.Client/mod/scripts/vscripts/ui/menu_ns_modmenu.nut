@@ -193,12 +193,13 @@ void function OnModButtonFocused( var button )
 
 void function OnModButtonPressed( var button )
 {
-	string modName = file.mods[ int ( Hud_GetScriptID( Hud_GetParent( button ) ) ) + file.scrollOffset - 1 ].mod.name
+	ModInfo mod = file.mods[ int ( Hud_GetScriptID( Hud_GetParent( button ) ) ) + file.scrollOffset - 1 ].mod
+	string modName = mod.name
 	if ( StaticFind( modName ) && NSIsModEnabled( modName ) )
 		CoreModToggleDialog( modName )
 	else
 	{
-		NSSetModEnabled( modName, !NSIsModEnabled( modName ) )
+		NSSetModEnabled( modName, mod.version, !NSIsModEnabled( modName ) )
 		var panel = file.panels[ int ( Hud_GetScriptID( Hud_GetParent( button ) ) ) - 1 ]
 		SetControlBoxColor( Hud_GetChild( panel, "ControlBox" ), modName )
 		SetControlBarColor( modName )
@@ -275,8 +276,9 @@ void function CoreModToggleDialog( string mod )
 
 void function DisableMod()
 {
-	string modName = file.mods[ int ( Hud_GetScriptID( Hud_GetParent( file.currentButton ) ) ) + file.scrollOffset - 1 ].mod.name
-	NSSetModEnabled( modName, false )
+	ModInfo mod = file.mods[ int ( Hud_GetScriptID( Hud_GetParent( file.currentButton ) ) ) + file.scrollOffset - 1 ].mod
+	string modName = mod.name
+	NSSetModEnabled( modName, mod.version, false )
 
 	var panel = file.panels[ int ( Hud_GetScriptID( Hud_GetParent( file.currentButton ) ) ) - 1]
 	SetControlBoxColor( Hud_GetChild( panel, "ControlBox" ), modName )

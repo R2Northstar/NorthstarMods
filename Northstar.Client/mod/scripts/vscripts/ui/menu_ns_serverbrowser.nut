@@ -1164,7 +1164,7 @@ void function ThreadedAuthAndConnectToServer( string password = "" )
 				if (!found)
 				{
 					modsChanged = true
-					NSSetModEnabledWithVersion( modName, modVersion, false )
+					NSSetModEnabled( modName, modVersion, false )
 					print(format("Disabled \"%s\" v%s", modName, modVersion))
 				}
 			}
@@ -1179,7 +1179,7 @@ void function ThreadedAuthAndConnectToServer( string password = "" )
 			if ( NSIsModRequiredOnClientWithVersion( modName, modVersion ) && !NSIsModEnabledWithVersion( modName, modVersion ) )
 			{
 				modsChanged = true
-				NSSetModEnabledWithVersion( modName, modVersion, true )
+				NSSetModEnabled( modName, modVersion, true )
 				print(format("Enabled \"%s\" v%s", modName, modVersion))
 			}
 		}
@@ -1439,8 +1439,10 @@ bool function JoinServer( ServerInfo server, string password = "" )
 		bool modsChanged = false
 
 		// disable all RequiredOnClient mods that are not required by the server and are currently enabled
-		foreach ( string modName in NSGetModNames() )
+		foreach ( ModInfo mod in NSGetModsInformation() )
 		{
+			string modName = mod.name
+
 			if ( NSIsModRequiredOnClient( modName ) && NSIsModEnabled( modName ) )
 			{
 				// find the mod name in the list of server required mods
@@ -1457,7 +1459,7 @@ bool function JoinServer( ServerInfo server, string password = "" )
 				if ( !found )
 				{
 					modsChanged = true
-					NSSetModEnabled( modName, false )
+					NSSetModEnabled( modName, mod.version, false )
 				}
 			}
 		}
@@ -1468,7 +1470,7 @@ bool function JoinServer( ServerInfo server, string password = "" )
 			if ( NSIsModRequiredOnClient( mod.name ) && !NSIsModEnabled( mod.name ) )
 			{
 				modsChanged = true
-				NSSetModEnabled( mod.name, true )
+				NSSetModEnabled( mod.name, mod.version, true )
 			}
 		}
 
