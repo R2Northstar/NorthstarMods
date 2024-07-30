@@ -170,7 +170,7 @@ void function OnModButtonFocused( var button )
 	RuiSetString( rui, "messageText", FormatModDescription() )
 
 	// Add a button to open the link with if required
-	string link = NSGetModDownloadLinkByModName( modName )
+	string link = file.lastMod.downloadLink
 	var linkButton = Hud_GetChild( file.menu, "ModPageButton" )
 	if ( link.len() )
 	{
@@ -222,8 +222,8 @@ void function OnAuthenticationAgreementButtonPressed( var button )
 
 void function OnModLinkButtonPressed( var button )
 {
-	string modName = file.mods[ int ( Hud_GetScriptID( Hud_GetParent( file.currentButton ) ) ) + file.scrollOffset - 1 ].mod.name
-	string link = NSGetModDownloadLinkByModName( modName )
+	ModInfo mod = file.mods[ int ( Hud_GetScriptID( Hud_GetParent( file.currentButton ) ) ) + file.scrollOffset - 1 ].mod
+	string link = mod.downloadLink
 	if ( link.find("http://") != 0 && link.find("https://") != 0 )
 		link = "http://" + link // links without the http or https protocol get opened in the internal browser
 	LaunchExternalWebBrowser( link, WEBBROWSER_FLAG_FORCEEXTERNAL )

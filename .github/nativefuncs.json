@@ -25,12 +25,6 @@
 			"argTypes":"string modName"
 		},
 		{
-			"name":"NSGetModDownloadLinkByModName",
-			"helpText":"",
-			"returnTypeString":"string",
-			"argTypes":"string modName"
-		},
-		{
 			"name":"NSGetModLoadPriority",
 			"helpText":"",
 			"returnTypeString":"int",
@@ -267,12 +261,6 @@
 			"argTypes":"string modName"
 		},
 		{
-			"name":"NSGetModDownloadLinkByModName",
-			"helpText":"",
-			"returnTypeString":"string",
-			"argTypes":"string modName"
-		},
-		{
 			"name":"NSGetModLoadPriority",
 			"helpText":"",
 			"returnTypeString":"int",
@@ -456,12 +444,6 @@
 		},
 		{
 			"name":"NSGetModVersionByModName",
-			"helpText":"",
-			"returnTypeString":"string",
-			"argTypes":"string modName"
-		},
-		{
-			"name":"NSGetModDownloadLinkByModName",
 			"helpText":"",
 			"returnTypeString":"string",
 			"argTypes":"string modName"
