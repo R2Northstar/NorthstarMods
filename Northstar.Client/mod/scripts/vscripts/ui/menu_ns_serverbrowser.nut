@@ -1373,6 +1373,6 @@ void function TriggerConnectToServerCallbacks( ServerInfo ornull targetServer = 
 
 	foreach( callback in file.connectCallbacks )
 	{
-		callback( targetServer )
+		callback( expect ServerInfo( targetServer ) )
 	}
 }
