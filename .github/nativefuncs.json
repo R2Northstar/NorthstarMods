@@ -19,9 +19,9 @@
 			"argTypes":"string modName, string modVersion, bool enabled"
 		},
 		{
-			"name":"NSGetModVersionByModName",
+			"name":"NSGetModVersions",
 			"helpText":"",
-			"returnTypeString":"string",
+			"returnTypeString":"array<string>",
 			"argTypes":"string modName"
 		},
 		{
@@ -243,9 +243,9 @@
 			"argTypes":"string modName, string modVersion, bool enabled"
 		},
 		{
-			"name":"NSGetModVersionByModName",
+			"name":"NSGetModVersions",
 			"helpText":"",
-			"returnTypeString":"string",
+			"returnTypeString":"array<string>",
 			"argTypes":"string modName"
 		},
 		{
@@ -419,9 +419,9 @@
 			"argTypes":"string modName, string modVersion, bool enabled"
 		},
 		{
-			"name":"NSGetModVersionByModName",
+			"name":"NSGetModVersions",
 			"helpText":"",
-			"returnTypeString":"string",
+			"returnTypeString":"array<string>",
 			"argTypes":"string modName"
 		},
 		{
