@@ -31,12 +31,6 @@
 			"argTypes":"string modName, string modVersion"
 		},
 		{
-			"name":"NSGetModConvarsByModName",
-			"helpText":"",
-			"returnTypeString":"array<string>",
-			"argTypes":"string modName"
-		},
-		{
 			"name":"DecodeJSON",
 			"helpText":"converts a json string to a squirrel table",
 			"returnTypeString":"table",
@@ -261,12 +255,6 @@
 			"argTypes":"string modName, string modVersion"
 		},
 		{
-			"name":"NSGetModConvarsByModName",
-			"helpText":"",
-			"returnTypeString":"array<string>",
-			"argTypes":"string modName"
-		},
-		{
 			"name":"DecodeJSON",
 			"helpText":"converts a json string to a squirrel table",
 			"returnTypeString":"table",
@@ -441,12 +429,6 @@
 			"helpText":"",
 			"returnTypeString":"bool",
 			"argTypes":"string modName, string modVersion"
-		},
-		{
-			"name":"NSGetModConvarsByModName",
-			"helpText":"",
-			"returnTypeString":"array<string>",
-			"argTypes":"string modName"
 		},
 		{
 			"name": "NSFetchVerifiedModsManifesto",
