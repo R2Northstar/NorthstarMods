@@ -748,6 +748,7 @@ void function CheckGameStateAfterSpawn( entity player )
 		{
 			player.HolsterWeapon()
 			player.Server_TurnOffhandWeaponsDisabledOn()
+			Rodeo_Disallow( player ) // Temporarily disable rodeo ability because rodeo code allows weapons usage again
 		}
 	}
 }
