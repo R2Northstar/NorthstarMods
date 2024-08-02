@@ -327,6 +327,9 @@ void function CTFInitPlayer( entity player )
 void function CTFPlayerDisconnected( entity player )
 {
 	// This has no validity checks on the player because the disconnection callback happens in the exact last frame the player entity still exists
+	if( !GamePlaying() )
+		return
+	
 	if ( PlayerHasEnemyFlag( player ) )
 		DropFlag( player, false )
 }
