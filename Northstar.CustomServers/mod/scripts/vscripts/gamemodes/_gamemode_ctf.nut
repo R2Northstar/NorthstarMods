@@ -66,8 +66,6 @@ void function CaptureTheFlag_Init()
 	AddCallback_OnPlayerKilled( OnPlayerKilled )
 	AddCallback_OnPilotBecomesTitan( DropFlagForBecomingTitan )
 	
-	AddSpawnCallback( "npc_titan", PlayerTitanSpawning )
-	
 	AddSpawnpointValidationRule( VerifyCTFSpawnpoint )
 	
 	RegisterSignal( "ResetDropTimeout" )
@@ -176,12 +174,6 @@ void function CreateFlags()
 	
 	SetFlagStateForTeam( TEAM_MILITIA, eFlagState.None )
 	SetFlagStateForTeam( TEAM_IMC, eFlagState.None )
-	
-	if ( GetCurrentPlaylistVarInt( "ctf_friendly_hightlights", 0 ) != 0 )
-	{
-		foreach ( entity player in GetPlayerArray() )
-			Highlight_ClearFriendlyHighlight( player )
-	}
 }
 
 void function RemoveFlags()
@@ -260,24 +252,6 @@ bool function VerifyCTFSpawnpoint( entity spawnpoint, int team )
 	return true
 }
 
-void function PlayerTitanSpawning( entity ent )
-{
-	if ( GetCurrentPlaylistVarInt( "ctf_friendly_hightlights", 0 ) != 0 )
-		thread OnFriendlyNPCTitanSpawnThreaded( ent )
-}
-
-void function OnFriendlyNPCTitanSpawnThreaded( entity npc )
-{
-	npc.EndSignal( "OnDestroy" )
-	
-	WaitFrame()
-	
-	WaitTillHotDropComplete( npc )
-	
-	Highlight_SetFriendlyHighlight( npc, "sp_friendly_hero" )
-	npc.Highlight_SetParam( 1, 0, HIGHLIGHT_COLOR_FRIENDLY )
-}
-
 
 
 
@@ -305,9 +279,6 @@ void function OnPlaying()
 
 void function CTFInitPlayer( entity player )
 {
-	if ( GetGameState() >= eGameState.Playing && GetCurrentPlaylistVarInt( "ctf_friendly_hightlights", 0 ) != 0 )
-		Highlight_SetFriendlyHighlight( player, "sp_friendly_hero" )
-	
 	if( !GamePlaying() )
 		return
 	
