@@ -28,7 +28,7 @@ struct {
 	var menu
 	array<var> panels
 	int scrollOffset = 0
-	array<string> enabledMods
+	array<ModInfo> enabledMods
 	var currentButton
 	string searchTerm
 	ModInfo& lastMod
@@ -141,11 +141,22 @@ void function OnModMenuClosed()
 	}
 	catch ( ex ) {}
 
-	array<string> current = GetEnabledModsArray()
+	array<ModInfo> current = GetEnabledModsArray()
 	bool reload
-	foreach ( string mod in current )
+	foreach ( ModInfo mod in current )
 	{
-		if ( file.enabledMods.find(mod) == -1 )
+		bool notFound = true
+
+		foreach (ModInfo enMod in file.enabledMods )
+		{
+			if (mod.name == enMod.name && mod.version == enMod.version)
+			{
+				notFound = false
+				break
+			}
+		}
+
+		if (notFound)
 		{
 			reload = true
 			break
@@ -288,13 +299,13 @@ void function DisableMod()
 	RefreshMods()
 }
 
-array<string> function GetEnabledModsArray()
+array<ModInfo> function GetEnabledModsArray()
 {
-	array<string> enabledMods
+	array<ModInfo> enabledMods
 	foreach ( ModInfo mod in NSGetModsInformation() )
 	{
 		if ( mod.enabled )
-			enabledMods.append( mod.name )
+			enabledMods.append( mod )
 	}
 	return enabledMods
 }
