@@ -331,6 +331,9 @@ void function ServerCallback_CreateServerHUDMessage ( array<string> args )
 		case eMessageType.DELETE_STATUS:
 			thread DeleteStatusMessage( client.id )
 			break
+		case eMessageType.CHOICE:
+			thread ShowChoice_Threaded()
+			break
 	}
 }
 
@@ -447,6 +450,42 @@ void function ShowPollMessage_Threaded()
 	
 	client.poll.ruis.clear()
 	client.poll.pollActive = false
+}
+
+void function ShowChoice_Threaded()
+{
+	if( client.choice.active )
+		return
+
+	client.choice.active = true
+
+	// durations
+	float introDuration = 1.0
+	float promptDuration = client.choice.duration
+
+	// RUI creation
+	var rui = RuiCreate( $"ui/conversation.rpak", clGlobal.topoFullScreen, RUI_DRAW_HUD, 0 )
+	RuiSetFloat( rui, "startTime", Time() )
+	RuiSetFloat( rui, "introDuration", introDuration )
+	RuiSetFloat( rui, "timer", promptDuration )
+	RuiSetResolutionToScreenSize( rui )
+
+	// first answer
+	RuiSetString( rui, "text1", client.choice.option1 )
+	RuiSetBool( rui, "choice1Available", true )
+	RuiSetBool( rui, "choice1WasSelected", false )
+
+	// second answer
+	RuiSetString( rui, "text2", client.choice.option2 )
+	RuiSetBool( rui, "choice2Available", true )
+	RuiSetBool( rui, "choice2WasSelected", false )
+
+	client.choice.rui = rui
+
+	wait introDuration + promptDuration
+	RuiDestroyIfAlive( client.choice.rui )
+	client.choice.rui = null
+	client.choice.active = false
 }
 
 void function InfoMessageHandler_Threaded()
