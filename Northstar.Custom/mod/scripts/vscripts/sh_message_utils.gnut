@@ -3,6 +3,7 @@ global function MessageUtils_ServerInit
 
 global function NSCreatePollOnPlayer
 global function NSGetPlayerResponse
+global function NSCreateChoiceOnAllPlayers
 global function NSCreateChoiceOnPlayer
 global function NSGetPlayerChoiceResponse
 
@@ -199,6 +200,18 @@ int function NSGetPlayerResponse( entity player )
 		return -1
 	
 	return server.playerPollResponses[ player ] - 1
+}
+
+string function NSCreateChoiceOnAllPlayers( string option1, string option2, float duration )
+{
+	string key = UniqueString()
+	foreach( player in GetPlayerArray() )
+	{
+		if ( !IsValid( player ) )
+			continue
+		NSCreateChoiceOnPlayer( player, option1, option2, duration, key )
+	}
+	return key
 }
 
 string function NSCreateChoiceOnPlayer( entity player, string option1, string option2, float duration, string key = "" )
