@@ -3,6 +3,7 @@ global function MessageUtils_ServerInit
 
 global function NSCreatePollOnPlayer
 global function NSGetPlayerResponse
+global function NSCreateChoiceOnPlayer
 
 global function NSSendLargeMessageToPlayer
 global function NSSendPopUpMessageToPlayer
@@ -76,7 +77,8 @@ enum eMessageType
 	INFO,
 	CREATE_STATUS,
 	EDIT_STATUS,
-	DELETE_STATUS
+	DELETE_STATUS,
+	CHOICE
 }
 
 enum eDataType
@@ -92,7 +94,9 @@ enum eDataType
 	COLOR,
 	PRIORITY,
 	STYLE,
-	ID
+	ID,
+	CHOICE_OPTION,
+	CHOICE_DURATION
 }
 
 #if SERVER
@@ -166,6 +170,14 @@ int function NSGetPlayerResponse( entity player )
 		return -1
 	
 	return server.playerPollResponses[ player ] - 1
+}
+
+void function NSCreateChoiceOnPlayer( entity player, string option1, string option2, float duration )
+{
+	ServerToClientStringCommand( player, "ServerHUDMessagePut " + eDataType.CHOICE_OPTION + " " + option1 )
+	ServerToClientStringCommand( player, "ServerHUDMessagePut " + eDataType.CHOICE_OPTION + " " + option2 )
+	ServerToClientStringCommand( player, "ServerHUDMessagePut " + eDataType.CHOICE_DURATION + " " + duration )
+	ServerToClientStringCommand( player, "ServerHUDMessageShow " + eMessageType.CHOICE )
 }
 
 void function NSSendLargeMessageToPlayer( entity player, string title, string description, float duration, string image )
