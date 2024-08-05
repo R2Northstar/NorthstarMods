@@ -50,6 +50,15 @@ struct
 		bool pollActive
 		array<var> ruis
 	} poll
+
+	struct
+	{
+		string option1
+		string option2
+		float duration
+		bool active
+		var rui
+	} choice
 	
 	string id
 	tempMessage temp
@@ -281,6 +290,15 @@ void function ServerCallback_UpdateServerHUDMessage ( array<string> args )
 			break
 		case eDataType.ID:
 			client.id = args[1]
+			break
+		case eDataType.CHOICE_OPTION:
+			if (client.choice.option1.len() == 0)
+				client.choice.option1 = CombineArgsIntoString( args )
+			else
+				client.choice.option2 = CombineArgsIntoString( args )
+			break
+		case eDataType.CHOICE_DURATION:
+			client.choice.duration = args[1].tofloat()
 			break
 	}
 }
