@@ -229,6 +229,13 @@ void function NSSendInfoMessageToPlayer( entity player, string text )
 #if CLIENT
 void function MessageUtils_ClientInit()
 {
+	// Choice RUI signals
+	RegisterSignal( "DialogueChoice1" )
+	RegisterSignal( "DialogueChoice2" )
+	RegisterSignal( "DialogueChoiceTimeout" )
+	RegisterConCommandTriggeredCallback( "+scriptCommand1", Pressed_Choice1 )
+	RegisterConCommandTriggeredCallback( "+scriptCommand2", Pressed_Choice2 )
+
 	// ServerHUDMessageRequest <eMessageType>
 	AddServerToClientStringCommandCallback( "ServerHUDMessageShow", ServerCallback_CreateServerHUDMessage )
 	// ServerHUDMessageRequest <eDataType> <Data>
@@ -458,6 +465,7 @@ void function ShowChoice_Threaded()
 		return
 
 	client.choice.active = true
+	entity player = GetLocalViewPlayer()
 
 	// durations
 	float introDuration = 1.0
@@ -481,11 +489,18 @@ void function ShowChoice_Threaded()
 	RuiSetBool( rui, "choice2WasSelected", false )
 
 	client.choice.rui = rui
-	EmitSoundOnEntity( GetLocalViewPlayer(), "UI_PlayerDialogue_Selection" )
+	EmitSoundOnEntity( player, "UI_PlayerDialogue_Selection" )
 
-	wait introDuration + promptDuration
+	// Wait for player answer
+	thread DialogueChoiceTimeout( player, "DialogueChoice1", "DialogueChoice2", introDuration + promptDuration )
+	table results = WaitSignal( player, "DialogueChoice1", "DialogueChoice2", "DialogueChoiceTimeout" )
 
 	int choice = 0
+	if ( results.signal == "DialogueChoice1" )
+		choice = 1
+	else if ( results.signal == "DialogueChoice2" )
+		choice = 2
+
 	float textFadeOutDuration = choice == 0 ? 1.0 : 0.75
 	float responseDuration = choice == 0 ? 0.0 : 3.0
 	RuiSetFloat( client.choice.rui, "choiceMadeTime", Time() )
@@ -501,6 +516,29 @@ void function ShowChoice_Threaded()
 	client.choice.active = false
 	client.choice.option1 = ""
 	client.choice.option2 = ""
+}
+
+void function DialogueChoiceTimeout( entity player, string cancelTimeoutSignal_A, string cancelTimeoutSignal_B, float waitTime )
+{
+	EndSignal( player, "OnDeath" )
+	EndSignal( player, "OnDestroy" )
+	EndSignal( player, cancelTimeoutSignal_A )
+	EndSignal( player, cancelTimeoutSignal_B )
+
+	wait waitTime
+
+	if ( IsValid( player ) )
+		Signal( player, "DialogueChoiceTimeout" )
+}
+
+void function Pressed_Choice1( entity player )
+{
+	Signal( player, "DialogueChoice1" )
+}
+
+void function Pressed_Choice2( entity player )
+{
+	Signal( player, "DialogueChoice2" )
 }
 
 void function InfoMessageHandler_Threaded()
