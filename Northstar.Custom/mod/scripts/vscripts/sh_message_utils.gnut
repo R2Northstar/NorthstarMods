@@ -484,6 +484,18 @@ void function ShowChoice_Threaded()
 	EmitSoundOnEntity( GetLocalViewPlayer(), "UI_PlayerDialogue_Selection" )
 
 	wait introDuration + promptDuration
+
+	int choice = 0
+	float textFadeOutDuration = choice == 0 ? 1.0 : 0.75
+	float responseDuration = choice == 0 ? 0.0 : 3.0
+	RuiSetFloat( client.choice.rui, "choiceMadeTime", Time() )
+	RuiSetFloat( client.choice.rui, "choiceDuration", responseDuration )
+	RuiSetFloat( client.choice.rui, "textRemoveDuration", textFadeOutDuration )
+	RuiSetInt( client.choice.rui, "choiceMade", choice )
+
+	EmitSoundOnEntity( GetLocalViewPlayer(), choice == 0 ? "UI_PlayerDialogue_Notification" : "ui_holotutorial_Analyzingfinish" )
+	wait textFadeOutDuration + responseDuration
+
 	RuiDestroyIfAlive( client.choice.rui )
 	client.choice.rui = null
 	client.choice.active = false
