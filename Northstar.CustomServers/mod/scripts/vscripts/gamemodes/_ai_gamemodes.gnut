@@ -42,7 +42,7 @@ void function AiGameModes_SpawnDropShip( vector pos, vector rot, int team, int c
 	drop.dist 			= 768
 	drop.team 			= team
 	drop.squadname 	= squadName
-	SetDropTableSpawnFuncs( drop, CreateSoldier, count )
+	SetDropTableSpawnFuncs( drop, CreateDropshipSoldier, count )
 	SetCallinStyle( drop, eDropStyle.ZIPLINE_NPC )
   
 	thread RunDropshipDropoff( drop )
@@ -53,8 +53,14 @@ void function AiGameModes_SpawnDropShip( vector pos, vector rot, int team, int c
 	
 	foreach ( guy in guys )
 	{
-		SetUpNPCWeapons( guy )
-		guy.EnableNPCFlag( NPC_ALLOW_PATROL | NPC_ALLOW_INVESTIGATE | NPC_ALLOW_HAND_SIGNALS | NPC_ALLOW_FLEE )
+		foreach ( entity weapon in guy.GetMainWeapons() )
+		{
+			if ( weapon.GetWeaponClassName() == "mp_weapon_rocket_launcher" && GetCurrentPlaylistVarInt( "aitdm_archer_grunts", 0 ) == 0 )
+				guy.TakeWeapon( weapon.GetWeaponClassName() )
+		}
+		guy.SetBehaviorSelector( "behavior_sp_soldier" )
+		guy.AssaultSetFightRadius( 800 )
+		guy.EnableNPCFlag( NPC_ALLOW_PATROL | NPC_ALLOW_INVESTIGATE | NPC_ALLOW_HAND_SIGNALS | NPC_ALLOW_FLEE | NPC_NEW_ENEMY_FROM_SOUND | NPC_STAY_CLOSE_TO_SQUAD )
 	}
 	
 	if ( squadHandler != null )
@@ -67,24 +73,38 @@ void function AiGameModes_SpawnDropPod( vector pos, vector rot, int team, string
 	entity pod = CreateDropPod( pos, <0,0,0> )
 	
 	InitFireteamDropPod( pod, flags )
-		
-	waitthread LaunchAnimDropPod( pod, "pod_testpath", pos, rot )
-
+	
 	string squadName = MakeSquadName( team, UniqueString( "" ) )
 	array<entity> guys
 	for ( int i = 0; i < 4 ;i++ )
 	{
 		entity npc = CreateNPC( content, team, pos,<0,0,0> )
+		SetSpawnOption_Alert( npc )
+		SetUpNPCWeapons( npc )
 		DispatchSpawn( npc )
 		SetSquad( npc, squadName )
 		
-		SetUpNPCWeapons( npc )
-		
 		npc.SetParent( pod, "ATTACH", true )
 		
-		npc.EnableNPCFlag( NPC_ALLOW_PATROL | NPC_ALLOW_INVESTIGATE | NPC_ALLOW_HAND_SIGNALS | NPC_ALLOW_FLEE )
+		if( content == "npc_soldier" || content == "npc_spectre" )
+		{
+			npc.SetBehaviorSelector( "behavior_sp_soldier" )
+			//npc.GiveWeapon( "mp_weapon_defender", ["longNPCCharge"] )
+		}
+		
+		foreach ( entity weapon in npc.GetMainWeapons() )
+		{
+			if ( weapon.GetWeaponClassName() == "mp_weapon_rocket_launcher" && GetCurrentPlaylistVarInt( "aitdm_archer_grunts", 0 ) == 0 )
+				npc.TakeWeapon( weapon.GetWeaponClassName() )
+		}
+		
+		npc.MakeInvisible()
+		npc.AssaultSetFightRadius( 800 )
+		npc.EnableNPCFlag( NPC_ALLOW_PATROL | NPC_ALLOW_INVESTIGATE | NPC_ALLOW_HAND_SIGNALS | NPC_ALLOW_FLEE | NPC_NEW_ENEMY_FROM_SOUND | NPC_STAY_CLOSE_TO_SQUAD )
 		guys.append( npc )
 	}
+	
+	waitthread LaunchAnimDropPod( pod, "pod_testpath", pos, rot )
 	
 	ActivateFireteamDropPod( pod, guys )
 
@@ -119,6 +139,7 @@ void function AiGameModes_SpawnReaper( vector pos, vector rot, int team, string 
 
 	reaper.WaitSignal( "WarpfallComplete" )
 	ShowName( reaper ) // show name again after drop
+	reaper.EnableNPCFlag( NPC_ALLOW_PATROL | NPC_ALLOW_INVESTIGATE | NPC_NEW_ENEMY_FROM_SOUND | NPCMF_WALK_NONCOMBAT )
 	
 	if ( reaperHandler != null )
 		thread reaperHandler( reaper )
@@ -190,6 +211,13 @@ void function AiGameModes_SpawnTitan( vector pos, vector rot, int team, string s
 		thread titanHandler( titan )
 }
 
+entity function CreateDropshipSoldier( int team, vector origin, vector angles )
+{
+	entity gruntToSpawn = CreateNPC( "npc_soldier", team, origin, angles )
+	SetUpNPCWeapons( gruntToSpawn )
+	return gruntToSpawn
+}
+
 void function SetUpNPCWeapons( entity guy )
 {
 	string className = guy.GetClassName()
@@ -198,18 +226,13 @@ void function SetUpNPCWeapons( entity guy )
 	if ( className in file.npcWeaponsTable )
 		mainWeapons = file.npcWeaponsTable[ className ]
 	
-	if ( mainWeapons.len() == 0 ) // no valid weapons
+	if ( !mainWeapons.len() ) // no valid weapons
 		return
-
-	// take off existing main weapons, or sometimes they'll have a archer by default
-	foreach ( entity weapon in guy.GetMainWeapons() )
-		guy.TakeWeapon( weapon.GetWeaponClassName() )
 
 	if ( mainWeapons.len() > 0 )
 	{
 		string weaponName = mainWeapons[ RandomInt( mainWeapons.len() ) ]
-		guy.GiveWeapon( weaponName )
-		guy.SetActiveWeaponByName( weaponName )
+		SetSpawnOption_Weapon( guy, weaponName )
 	}
 }
 

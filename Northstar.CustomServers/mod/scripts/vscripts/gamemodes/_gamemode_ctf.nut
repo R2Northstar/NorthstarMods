@@ -492,7 +492,9 @@ void function DropFlag( entity player, bool realDrop = true )
 		else if( !file.militiaCaptureAssistList.contains( player ) )
 			file.militiaCaptureAssistList.append( player )
 
-		MessageToPlayer( player, eEventNotifications.YouDroppedTheEnemyFlag )
+		if( IsAlive( player ) )
+			MessageToPlayer( player, eEventNotifications.YouDroppedTheEnemyFlag )
+		
 		EmitSoundOnEntityOnlyToPlayer( player, player, "UI_CTF_1P_FlagDrop" )
 
 		MessageToTeam( player.GetTeam(), eEventNotifications.PlayerDroppedEnemyFlag, player, player )

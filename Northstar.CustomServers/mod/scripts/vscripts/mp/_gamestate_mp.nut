@@ -419,11 +419,11 @@ void function WaitForPlayers()
 	bool allClientsConnected = false
 	while ( !allClientsConnected && endTime > Time() )
 	{
-		array< entity > pendingLoadingClients = GetPlayerArray()
-		foreach ( player in pendingLoadingClients )
+		array< entity > pendingLoadingClients
+		foreach ( player in GetPlayerArray() )
 		{
-			if ( player.hasConnected && pendingLoadingClients.contains( player ) )
-				pendingLoadingClients.removebyvalue( player )
+			if ( !player.hasConnected )
+				pendingLoadingClients.append( player )
 		}
 		
 		if ( !pendingLoadingClients.len() )
@@ -574,7 +574,7 @@ void function GameStateEnter_Playing_Threaded()
 			endTime = expect float( GetServerVar( "roundEndTime" ) )
 		else
 			endTime = expect float( GetServerVar( "gameEndTime" ) )
-
+	
 		if ( Time() >= endTime && file.timerBased )
 		{
 			int winningTeam
@@ -818,7 +818,10 @@ void function GameStateEnter_SwitchingSides_Threaded()
 	float replayLength = ROUND_WINNING_KILL_REPLAY_STARTUP_WAIT
 	
 	foreach ( entity player in GetPlayerArray() )
-			ScreenFadeToBlackForever( player, 2.0 )
+	{
+		player.FreezeControlsOnServer()
+		ScreenFadeToBlackForever( player, 2.0 )
+	}
 	
 	if ( doReplay )
 	{

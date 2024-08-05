@@ -153,7 +153,7 @@ void function SpawnWave_Init()
 	
 	SetupEliteTitansHealthCaps()
 	
-	if( GetConVarString( "ns_fd_grunt_grenade" ) != "" )
+	if ( GetConVarString( "ns_fd_grunt_grenade" ) != "" )
 		file.gruntGrenadeClass = GetConVarString( "ns_fd_grunt_grenade" )
 }
 
@@ -188,14 +188,14 @@ void function eventIterator_FrontierDefense()
 	int waveIndex = GetGlobalNetInt( "FD_currentWave" )
 	SplitWaveSubgroups( waveIndex )
 	
-	foreach( WaveSpawnEvent currentEvent in WaveSpawnEvents[waveIndex] )
+	foreach ( WaveSpawnEvent currentEvent in WaveSpawnEvents[waveIndex] )
 	{
-		if( !IsHarvesterAlive( fd_harvester.harvester ) )
+		if ( !IsHarvesterAlive( fd_harvester.harvester ) )
 			break
 		
-		if( currentEvent.waveSubGroupName != "" )
+		if ( currentEvent.waveSubGroupName != "" )
 		{
-			if( file.waveActiveSubGroups.find( currentEvent.waveSubGroupName ) == -1 )
+			if ( file.waveActiveSubGroups.find( currentEvent.waveSubGroupName ) == -1 )
 				thread eventIterator_SubGroup( waveIndex, currentEvent.waveSubGroupName )
 			else
 				continue
@@ -203,24 +203,24 @@ void function eventIterator_FrontierDefense()
 		
 		currentEvent.executed = true
 		
-		if( ShouldSkipEventForDifficulty( currentEvent ) )
+		if ( ShouldSkipEventForDifficulty( currentEvent ) )
 			continue
 		
-		if( currentEvent.soundEventName != "" && !currentEvent.isAnnounceEvent )
+		if ( currentEvent.soundEventName != "" && !currentEvent.isAnnounceEvent )
 			thread PlayWarning( currentEvent )
 
-		if( currentEvent.shouldThread )
+		if ( currentEvent.shouldThread )
 		{
-			if( currentEvent.eventFunction != null )
+			if ( currentEvent.eventFunction != null )
 				thread currentEvent.eventFunction( currentEvent )
 			
-			if( currentEvent.waitTime > 0 )
+			if ( currentEvent.waitTime > 0 )
 				wait currentEvent.waitTime
 		}
 
 		else
 		{
-			if( currentEvent.eventFunction != null )
+			if ( currentEvent.eventFunction != null )
 				currentEvent.eventFunction( currentEvent )
 		}
 	}
@@ -236,37 +236,37 @@ void function eventIterator_SubGroup( int waveIndex, string subGroupName )
 		{
 			delete file.waveSubGroups[ subGroupName ]
 			
-			if( file.waveActiveSubGroups.find( subGroupName ) != -1 )
+			if ( file.waveActiveSubGroups.find( subGroupName ) != -1 )
 				file.waveActiveSubGroups.removebyvalue( subGroupName )
 		}
 	)
 	
 	file.waveActiveSubGroups.append( subGroupName )
-	foreach( WaveSpawnEvent currentEvent in file.waveSubGroups[ subGroupName ] )
+	foreach ( WaveSpawnEvent currentEvent in file.waveSubGroups[ subGroupName ] )
 	{
-		if( !IsHarvesterAlive( fd_harvester.harvester ) )
+		if ( !IsHarvesterAlive( fd_harvester.harvester ) )
 			break
 		
 		currentEvent.executed = true
 		
-		if( ShouldSkipEventForDifficulty( currentEvent ) )
+		if ( ShouldSkipEventForDifficulty( currentEvent ) )
 			continue
 		
-		if( currentEvent.soundEventName != "" && !currentEvent.isAnnounceEvent )
+		if ( currentEvent.soundEventName != "" && !currentEvent.isAnnounceEvent )
 			thread PlayWarning( currentEvent )
 
-		if( currentEvent.shouldThread )
+		if ( currentEvent.shouldThread )
 		{
-			if( currentEvent.eventFunction != null )
+			if ( currentEvent.eventFunction != null )
 				thread currentEvent.eventFunction( currentEvent )
 			
-			if( currentEvent.waitTime > 0 )
+			if ( currentEvent.waitTime > 0 )
 				wait currentEvent.waitTime
 		}
 
 		else
 		{
-			if( currentEvent.eventFunction != null )
+			if ( currentEvent.eventFunction != null )
 				currentEvent.eventFunction( currentEvent )
 		}
 	}
@@ -295,7 +295,7 @@ void function WaveSpawn_TitanSpawn( array<WaveSpawnEvent> waveName, string spawn
 {
 	WaveSpawnEvent event
 	
-	switch( spawnType.tolower() )
+	switch ( spawnType.tolower() )
 	{
 		case "arc titan":
 		case "arc_titan":
@@ -406,7 +406,7 @@ void function WaveSpawn_ReaperSpawn( array<WaveSpawnEvent> waveName, string spaw
 {
 	WaveSpawnEvent event
 	
-	switch( spawnType.tolower() )
+	switch ( spawnType.tolower() )
 	{
 		case "tick reaper":
 		case "ticks reaper":
@@ -443,7 +443,7 @@ void function WaveSpawn_InfantrySpawn( array<WaveSpawnEvent> waveName, string sp
 	WaveSpawnEvent event
 	
 	event.spawnAmount = spawnAmount
-	switch( spawnType.tolower() )
+	switch ( spawnType.tolower() )
 	{
 		case "pod_grunt":
 		case "podgrunt":
@@ -532,7 +532,7 @@ void function WaveSpawn_Announce( array<WaveSpawnEvent> waveName, string soundAl
 {
 	WaveSpawnEvent event
 	
-	switch( soundAlias.tolower() ) //Adjust some presets if needed
+	switch ( soundAlias.tolower() ) //Adjust some presets if needed
 	{
 		case "cloakdrone":
 		case "cloak":
@@ -799,12 +799,12 @@ void function WaveSpawn_NukeTitanMoveStance( array<WaveSpawnEvent> waveName, boo
 
 void function SpawnArcTitan( WaveSpawnEvent ornull spawnEvent )
 {
-	if( !spawnEvent )
+	if ( !spawnEvent )
 		return
 
 	expect WaveSpawnEvent( spawnEvent )
 	vector spawnorigin = spawnEvent.origin
-	if( spawnEvent.spawnradius > 0 )
+	if ( spawnEvent.spawnradius > 0 )
 	{
 		spawnorigin.x += RandomFloatRange( -spawnEvent.spawnradius, spawnEvent.spawnradius )
 		spawnorigin.y += RandomFloatRange( -spawnEvent.spawnradius, spawnEvent.spawnradius )
@@ -848,7 +848,7 @@ void function SpawnArcTitan( WaveSpawnEvent ornull spawnEvent )
 	thread EMPTitanThinkConstant( npc )
 	npc.GetTitanSoul().SetTitanSoulNetBool( "showOverheadIcon", true )
 	thread NPCNav_FD( npc, spawnEvent.route )
-	if( GetMapName().find( "mp_lf_" ) == null )
+	if ( GetMapName().find( "mp_lf_" ) == null )
 	{
 		switch ( file.difficultyLevel )
 		{
@@ -867,12 +867,12 @@ void function SpawnArcTitan( WaveSpawnEvent ornull spawnEvent )
 
 void function SpawnNukeTitan( WaveSpawnEvent ornull spawnEvent )
 {
-	if( !spawnEvent )
+	if ( !spawnEvent )
 		return
 
 	expect WaveSpawnEvent( spawnEvent )
 	vector spawnorigin = spawnEvent.origin
-	if( spawnEvent.spawnradius > 0 )
+	if ( spawnEvent.spawnradius > 0 )
 	{
 		spawnorigin.x += RandomFloatRange( -spawnEvent.spawnradius, spawnEvent.spawnradius )
 		spawnorigin.y += RandomFloatRange( -spawnEvent.spawnradius, spawnEvent.spawnradius )
@@ -894,7 +894,7 @@ void function SpawnNukeTitan( WaveSpawnEvent ornull spawnEvent )
 	npc.kv.reactChance = 60
 	SetTargetName( npc, GetTargetNameForID( spawnEvent.spawnType ) ) // required for client to create icons
 	DispatchSpawn( npc )
-	if( file.sprintNukeTitans )
+	if ( file.sprintNukeTitans )
 	{
 		npc.EnableNPCMoveFlag( NPCMF_PREFER_SPRINT )
 		npc.DisableNPCMoveFlag( NPCMF_WALK_NONCOMBAT | NPCMF_WALK_ALWAYS )
@@ -922,12 +922,12 @@ void function SpawnNukeTitan( WaveSpawnEvent ornull spawnEvent )
 
 void function SpawnMortarTitan( WaveSpawnEvent ornull spawnEvent )
 {
-	if( !spawnEvent )
+	if ( !spawnEvent )
 		return
 
 	expect WaveSpawnEvent( spawnEvent )
 	vector spawnorigin = spawnEvent.origin
-	if( spawnEvent.spawnradius > 0 )
+	if ( spawnEvent.spawnradius > 0 )
 	{
 		spawnorigin.x += RandomFloatRange( -spawnEvent.spawnradius, spawnEvent.spawnradius )
 		spawnorigin.y += RandomFloatRange( -spawnEvent.spawnradius, spawnEvent.spawnradius )
@@ -966,12 +966,12 @@ void function SpawnMortarTitan( WaveSpawnEvent ornull spawnEvent )
 
 void function SpawnSniperTitan( WaveSpawnEvent ornull spawnEvent )
 {
-	if( !spawnEvent )
+	if ( !spawnEvent )
 		return
 
 	expect WaveSpawnEvent( spawnEvent )
 	vector spawnorigin = spawnEvent.origin
-	if( spawnEvent.spawnradius > 0 )
+	if ( spawnEvent.spawnradius > 0 )
 	{
 		spawnorigin.x += RandomFloatRange( -spawnEvent.spawnradius, spawnEvent.spawnradius )
 		spawnorigin.y += RandomFloatRange( -spawnEvent.spawnradius, spawnEvent.spawnradius )
@@ -1048,12 +1048,12 @@ void function SpawnSniperTitan( WaveSpawnEvent ornull spawnEvent )
 
 void function SpawnToneSniperTitan( WaveSpawnEvent ornull spawnEvent )
 {
-	if( !spawnEvent )
+	if ( !spawnEvent )
 		return
 
 	expect WaveSpawnEvent( spawnEvent )
 	vector spawnorigin = spawnEvent.origin
-	if( spawnEvent.spawnradius > 0 )
+	if ( spawnEvent.spawnradius > 0 )
 	{
 		spawnorigin.x += RandomFloatRange( -spawnEvent.spawnradius, spawnEvent.spawnradius )
 		spawnorigin.y += RandomFloatRange( -spawnEvent.spawnradius, spawnEvent.spawnradius )
@@ -1127,12 +1127,12 @@ void function SpawnToneSniperTitan( WaveSpawnEvent ornull spawnEvent )
 
 void function SpawnIonTitan( WaveSpawnEvent ornull spawnEvent )
 {
-	if( !spawnEvent )
+	if ( !spawnEvent )
 		return
 
 	expect WaveSpawnEvent( spawnEvent )
 	vector spawnorigin = spawnEvent.origin
-	if( spawnEvent.spawnradius > 0 )
+	if ( spawnEvent.spawnradius > 0 )
 	{
 		spawnorigin.x += RandomFloatRange( -spawnEvent.spawnradius, spawnEvent.spawnradius )
 		spawnorigin.y += RandomFloatRange( -spawnEvent.spawnradius, spawnEvent.spawnradius )
@@ -1194,12 +1194,12 @@ void function SpawnIonTitan( WaveSpawnEvent ornull spawnEvent )
 
 void function SpawnScorchTitan( WaveSpawnEvent ornull spawnEvent )
 {
-	if( !spawnEvent )
+	if ( !spawnEvent )
 		return
 
 	expect WaveSpawnEvent( spawnEvent )
 	vector spawnorigin = spawnEvent.origin
-	if( spawnEvent.spawnradius > 0 )
+	if ( spawnEvent.spawnradius > 0 )
 	{
 		spawnorigin.x += RandomFloatRange( -spawnEvent.spawnradius, spawnEvent.spawnradius )
 		spawnorigin.y += RandomFloatRange( -spawnEvent.spawnradius, spawnEvent.spawnradius )
@@ -1272,12 +1272,12 @@ void function SpawnScorchTitan( WaveSpawnEvent ornull spawnEvent )
 
 void function SpawnRoninTitan( WaveSpawnEvent ornull spawnEvent )
 {
-	if( !spawnEvent )
+	if ( !spawnEvent )
 		return
 
 	expect WaveSpawnEvent( spawnEvent )
 	vector spawnorigin = spawnEvent.origin
-	if( spawnEvent.spawnradius > 0 )
+	if ( spawnEvent.spawnradius > 0 )
 	{
 		spawnorigin.x += RandomFloatRange( -spawnEvent.spawnradius, spawnEvent.spawnradius )
 		spawnorigin.y += RandomFloatRange( -spawnEvent.spawnradius, spawnEvent.spawnradius )
@@ -1347,12 +1347,12 @@ void function SpawnRoninTitan( WaveSpawnEvent ornull spawnEvent )
 
 void function SpawnToneTitan( WaveSpawnEvent ornull spawnEvent )
 {
-	if( !spawnEvent )
+	if ( !spawnEvent )
 		return
 
 	expect WaveSpawnEvent( spawnEvent )
 	vector spawnorigin = spawnEvent.origin
-	if( spawnEvent.spawnradius > 0 )
+	if ( spawnEvent.spawnradius > 0 )
 	{
 		spawnorigin.x += RandomFloatRange( -spawnEvent.spawnradius, spawnEvent.spawnradius )
 		spawnorigin.y += RandomFloatRange( -spawnEvent.spawnradius, spawnEvent.spawnradius )
@@ -1426,12 +1426,12 @@ void function SpawnToneTitan( WaveSpawnEvent ornull spawnEvent )
 
 void function SpawnLegionTitan( WaveSpawnEvent ornull spawnEvent )
 {
-	if( !spawnEvent )
+	if ( !spawnEvent )
 		return
 
 	expect WaveSpawnEvent( spawnEvent )
 	vector spawnorigin = spawnEvent.origin
-	if( spawnEvent.spawnradius > 0 )
+	if ( spawnEvent.spawnradius > 0 )
 	{
 		spawnorigin.x += RandomFloatRange( -spawnEvent.spawnradius, spawnEvent.spawnradius )
 		spawnorigin.y += RandomFloatRange( -spawnEvent.spawnradius, spawnEvent.spawnradius )
@@ -1504,12 +1504,12 @@ void function SpawnLegionTitan( WaveSpawnEvent ornull spawnEvent )
 
 void function SpawnMonarchTitan( WaveSpawnEvent ornull spawnEvent )
 {
-	if( !spawnEvent )
+	if ( !spawnEvent )
 		return
 
 	expect WaveSpawnEvent( spawnEvent )
 	vector spawnorigin = spawnEvent.origin
-	if( spawnEvent.spawnradius > 0 )
+	if ( spawnEvent.spawnradius > 0 )
 	{
 		spawnorigin.x += RandomFloatRange( -spawnEvent.spawnradius, spawnEvent.spawnradius )
 		spawnorigin.y += RandomFloatRange( -spawnEvent.spawnradius, spawnEvent.spawnradius )
@@ -1606,13 +1606,13 @@ void function SpawnMonarchTitan( WaveSpawnEvent ornull spawnEvent )
 
 void function SpawnSuperSpectre( WaveSpawnEvent ornull spawnEvent )
 {
-	if( !spawnEvent )
+	if ( !spawnEvent )
 		return
 
 	expect WaveSpawnEvent( spawnEvent )
 	
 	vector spawnorigin = spawnEvent.origin
-	if( spawnEvent.spawnradius > 0 )
+	if ( spawnEvent.spawnradius > 0 )
 	{
 		spawnorigin.x += RandomFloatRange( -spawnEvent.spawnradius, spawnEvent.spawnradius )
 		spawnorigin.y += RandomFloatRange( -spawnEvent.spawnradius, spawnEvent.spawnradius )
@@ -1643,12 +1643,12 @@ void function SpawnSuperSpectre( WaveSpawnEvent ornull spawnEvent )
 	
 	npc.GetMainWeapons()[0].AddMod( "aggressive_ai_fd" )
 	
-	if( spawnEvent.titanType == eFDTT.TITAN_ELITE )
+	if ( spawnEvent.titanType == eFDTT.TITAN_ELITE )
 		thread ReaperMinionLauncherThink( npc )
 	else
 	{
 		thread NPCNav_FD( npc, spawnEvent.route )
-		if( GetMapName().find( "mp_lf_" ) == null )
+		if ( GetMapName().find( "mp_lf_" ) == null )
 			npc.AssaultSetFightRadius( 2000 )
 		else
 			npc.AssaultSetFightRadius( 800 ) //Bit of combat space so they can at least melee turrets when near them
@@ -1675,7 +1675,7 @@ void function SpawnSuperSpectre( WaveSpawnEvent ornull spawnEvent )
 
 void function SpawnDroppodGrunts( WaveSpawnEvent ornull spawnEvent )
 {
-	if( !spawnEvent )
+	if ( !spawnEvent )
 		return
 
 	expect WaveSpawnEvent( spawnEvent )
@@ -1695,7 +1695,7 @@ void function SpawnDroppodGrunts( WaveSpawnEvent ornull spawnEvent )
     {
 		entity guy = CreateSoldier( TEAM_IMC, spawnEvent.origin, < 0, 0, 0 > )
 		SetSpawnflags( guy, SF_NPC_START_EFFICIENT )
-		if( i < file.gruntAmountWithShields )
+		if ( i < file.gruntAmountWithShields )
 		{
 			if ( file.shouldUseCampaignShieldCaptains )
 				SetSpawnOption_AISettings( guy, "npc_soldier_shield_captain" )
@@ -1704,14 +1704,20 @@ void function SpawnDroppodGrunts( WaveSpawnEvent ornull spawnEvent )
 		}
 		SetSpawnOption_Alert( guy )
 		guy.kv.grenadeWeaponName = file.gruntGrenadeClass
+		GiveMinionFDLoadout( guy )
 		DispatchSpawn( guy )
 		SetupGruntBehaviorFlags( guy )
 		guy.SetParent( pod, "ATTACH", true )
 		SetSquad( guy, squadName )
-		if( GetMapName().find( "mp_lf_" ) != null )
+		if ( GetMapName().find( "mp_lf_" ) != null )
 			guy.EnableNPCFlag( NPC_NO_WEAPON_DROP )
-
-		GiveMinionFDLoadout( guy )
+		
+		foreach ( entity weapon in guy.GetMainWeapons() )
+		{
+			if ( weapon.GetWeaponClassName() == "mp_weapon_rocket_launcher" )
+				guy.TakeWeapon( weapon.GetWeaponClassName() )
+		}
+		
 		if ( i < file.gruntAmountWithATWeapons )
 			guy.GiveWeapon( file.defaultNPCATWeapons[ guy.GetClassName() ].getrandom() )
 
@@ -1721,6 +1727,10 @@ void function SpawnDroppodGrunts( WaveSpawnEvent ornull spawnEvent )
 		if ( IsValid( weapon ) )
 			weapon.MakeInvisible()
 		
+		guy.kv.grenadeWeaponName = file.gruntGrenadeClass
+		if ( file.allowGruntGrenades ) //So they can use grenades and secondaries
+			guy.SetBehaviorSelector( "behavior_sp_soldier" )
+		
 		spawnedNPCs.append( guy )
 		guys.append( guy )
 	}
@@ -1729,10 +1739,10 @@ void function SpawnDroppodGrunts( WaveSpawnEvent ornull spawnEvent )
 	ArrayRemoveDead( guys )
 	ActivateFireteamDropPod( pod, guys )
 	
-	if( !guys.len() )
+	if ( !guys.len() )
 		CodeWarning( "Attempted to activate grunts from Drop Pod but the array is empty" )
 	
-	foreach( npc in guys )
+	foreach ( npc in guys )
 	{
 		AddMinimapForHumans( npc )
 		npc.SetEfficientMode( false )
@@ -1746,7 +1756,7 @@ void function SpawnDroppodGrunts( WaveSpawnEvent ornull spawnEvent )
 //specific nodes found in the maps, that is not needed here, full control over the coordinates where the dropship will drop grunts is better.
 void function SpawnGruntDropship( WaveSpawnEvent ornull spawnEvent )
 {
-	if( !spawnEvent )
+	if ( !spawnEvent )
 		return
 
 	expect WaveSpawnEvent( spawnEvent )
@@ -1820,7 +1830,7 @@ void function SpawnGruntDropship( WaveSpawnEvent ornull spawnEvent )
 	array<entity> guys
 	
 	int dropshipCrewSize = spawnEvent.spawnAmount
-	if( dropshipCrewSize > 6 )
+	if ( dropshipCrewSize > 6 )
 	{
 		dropshipCrewSize = 6
 		CodeWarning( "Dropship has a maximum of 6 NPC slots, current value is: " + spawnEvent.spawnAmount )
@@ -1829,7 +1839,7 @@ void function SpawnGruntDropship( WaveSpawnEvent ornull spawnEvent )
     {
 		entity guy = CreateSoldier( TEAM_IMC, spawnEvent.origin, < 0, 0, 0 > )
 		SetSpawnflags( guy, SF_NPC_START_EFFICIENT )
-		if( i < file.gruntAmountWithShields )
+		if ( i < file.gruntAmountWithShields )
 		{
 			if ( file.shouldUseCampaignShieldCaptains )
 				SetSpawnOption_AISettings( guy, "npc_soldier_shield_captain" )
@@ -1838,13 +1848,23 @@ void function SpawnGruntDropship( WaveSpawnEvent ornull spawnEvent )
 		}
 		SetSpawnOption_Alert( guy )
 		guy.kv.grenadeWeaponName = file.gruntGrenadeClass
+		GiveMinionFDLoadout( guy )
 		DispatchSpawn( guy )
 		SetupGruntBehaviorFlags( guy )
 		SetSquad( guy, squadName )
 		
-		GiveMinionFDLoadout( guy )
+		foreach ( entity weapon in guy.GetMainWeapons() )
+		{
+			if ( weapon.GetWeaponClassName() == "mp_weapon_rocket_launcher" )
+				guy.TakeWeapon( weapon.GetWeaponClassName() )
+		}
+		
 		if ( i < file.gruntAmountWithATWeapons )
 			guy.GiveWeapon( file.defaultNPCATWeapons[ guy.GetClassName() ].getrandom() )
+		
+		guy.kv.grenadeWeaponName = file.gruntGrenadeClass
+		if ( file.allowGruntGrenades ) //So they can use grenades and secondaries
+			guy.SetBehaviorSelector( "behavior_sp_soldier" )
 		
 		SetTargetName( guy, GetTargetNameForID( eFD_AITypeIDs.GRUNT ) )
 		AddMinimapForHumans( guy )
@@ -1859,7 +1879,7 @@ void function SpawnGruntDropship( WaveSpawnEvent ornull spawnEvent )
 	EmitSoundOnEntity( dropship, dropshipSound )
 	wait 12
 	ArrayRemoveDead( guys )
-	foreach( guy in guys )
+	foreach ( guy in guys )
 	{
 		if ( guy.GetParent() )
 		{
@@ -1878,7 +1898,7 @@ void function SpawnGruntDropship( WaveSpawnEvent ornull spawnEvent )
 
 void function SpawnDroppodStalker( WaveSpawnEvent ornull spawnEvent )
 {
-	if( !spawnEvent )
+	if ( !spawnEvent )
 		return
 
 	expect WaveSpawnEvent( spawnEvent )
@@ -1911,11 +1931,11 @@ void function SpawnDroppodStalker( WaveSpawnEvent ornull spawnEvent )
 		guys.append( guy )
 	}
 
-	switch( file.difficultyLevel )
+	switch ( file.difficultyLevel )
 	{
 		case eFDDifficultyLevel.EASY:
 		case eFDDifficultyLevel.NORMAL:
-			foreach( npc in guys )
+			foreach ( npc in guys )
 			{
 				npc.TakeActiveWeapon()
 				npc.EnableNPCFlag( NPC_DISABLE_SENSING | NPC_IGNORE_ALL )
@@ -1924,7 +1944,7 @@ void function SpawnDroppodStalker( WaveSpawnEvent ornull spawnEvent )
 		case eFDDifficultyLevel.HARD:
 		case eFDDifficultyLevel.MASTER:
 		case eFDDifficultyLevel.INSANE:
-			foreach( npc in guys )
+			foreach ( npc in guys )
 			{
 				npc.TakeActiveWeapon()
 				npc.GiveWeapon( "mp_weapon_epg", ["slowProjectile"] )
@@ -1944,10 +1964,10 @@ void function SpawnDroppodStalker( WaveSpawnEvent ornull spawnEvent )
 	ArrayRemoveDead( guys )
 	ActivateFireteamDropPod( pod, guys )
 	
-	if( !guys.len() )
+	if ( !guys.len() )
 		CodeWarning( "Attempted to activate stalkers from Drop Pod but the array is empty" )
 	
-	foreach( npc in guys )
+	foreach ( npc in guys )
 	{
 		AddMinimapForHumans( npc )
 		npc.SetEfficientMode( false )
@@ -1958,7 +1978,7 @@ void function SpawnDroppodStalker( WaveSpawnEvent ornull spawnEvent )
 
 void function SpawnDroppodSpectreMortar( WaveSpawnEvent ornull spawnEvent )
 {
-	if( !spawnEvent )
+	if ( !spawnEvent )
 		return
 
 	expect WaveSpawnEvent( spawnEvent )
@@ -1979,8 +1999,8 @@ void function SpawnDroppodSpectreMortar( WaveSpawnEvent ornull spawnEvent )
 		entity guy = CreateSpectre( TEAM_IMC, spawnEvent.origin,< 0, 0, 0 > )
 		SetSpawnflags( guy, SF_NPC_START_EFFICIENT )
 		SetSpawnOption_AISettings( guy, "npc_spectre_mortar" )
-		DispatchSpawn( guy )
 		GiveMinionFDLoadout( guy )
+		DispatchSpawn( guy )
 		spawnedNPCs.append( guy )
 		guy.SetParent( pod, "ATTACH", true )
 		SetSquad( guy, squadName )
@@ -1993,10 +2013,10 @@ void function SpawnDroppodSpectreMortar( WaveSpawnEvent ornull spawnEvent )
     ArrayRemoveDead( guys )
 	ActivateFireteamDropPod( pod, guys )
 	
-	if( !guys.len() )
+	if ( !guys.len() )
 		CodeWarning( "Attempted to activate mortar spectres from Drop Pod but the array is empty" )
 	
-	foreach( npc in guys )
+	foreach ( npc in guys )
 	{
 		AddMinimapForHumans( npc )
 		npc.SetEfficientMode( false )
@@ -2008,7 +2028,7 @@ void function SpawnDroppodSpectreMortar( WaveSpawnEvent ornull spawnEvent )
 
 void function SpawnDroppodSpectre( WaveSpawnEvent ornull spawnEvent )
 {
-	if( !spawnEvent )
+	if ( !spawnEvent )
 		return
 
 	expect WaveSpawnEvent( spawnEvent )
@@ -2052,10 +2072,10 @@ void function SpawnDroppodSpectre( WaveSpawnEvent ornull spawnEvent )
     ArrayRemoveDead( guys )
 	ActivateFireteamDropPod( pod, guys )
 	
-	if( !guys.len() )
+	if ( !guys.len() )
 		CodeWarning( "Attempted to activate spectres from Drop Pod but the array is empty" )
 	
-	foreach( npc in guys )
+	foreach ( npc in guys )
 	{
 		AddMinimapForHumans( npc )
 		npc.SetEfficientMode( false )
@@ -2066,7 +2086,7 @@ void function SpawnDroppodSpectre( WaveSpawnEvent ornull spawnEvent )
 
 void function SpawnTick( WaveSpawnEvent ornull spawnEvent )
 {
-	if( !spawnEvent )
+	if ( !spawnEvent )
 		return
 
 	expect WaveSpawnEvent( spawnEvent )
@@ -2090,7 +2110,7 @@ void function SpawnTick( WaveSpawnEvent ornull spawnEvent )
 		SetSpawnOption_Alert( guy )
 		DispatchSpawn( guy )
 		guy.EnableNPCFlag(  NPC_ALLOW_INVESTIGATE )
-		if( file.shouldUseCampaignTicks )
+		if ( file.shouldUseCampaignTicks )
 			guy.SetModel( $"models/robots/drone_frag/drone_frag.mdl" )
 		SetTargetName( guy, GetTargetNameForID( eFD_AITypeIDs.TICK ) )
 		guy.SetParent( pod, "ATTACH", true )
@@ -2105,12 +2125,12 @@ void function SpawnTick( WaveSpawnEvent ornull spawnEvent )
 	ArrayRemoveDead( guys )
 	ActivateFireteamDropPod( pod, guys )
 	
-	if( !guys.len() )
+	if ( !guys.len() )
 		CodeWarning( "Attempted to activate ticks from Drop Pod but the array is empty" )
 	
-	foreach( guy in guys )
+	foreach ( guy in guys )
 	{
-		if( IsValid( guy ) )
+		if ( IsValid( guy ) )
 		{
 			guy.MakeVisible()
 			guy.Anim_Stop() //Intentionally cancel the Drop Pod exiting animation for Ticks because it doesnt work for them
@@ -2123,7 +2143,7 @@ void function SpawnTick( WaveSpawnEvent ornull spawnEvent )
 
 void function SpawnCloakingDrone( WaveSpawnEvent ornull spawnEvent )
 {
-	if( !spawnEvent )
+	if ( !spawnEvent )
 		return
 
 	expect WaveSpawnEvent( spawnEvent )
@@ -2140,7 +2160,7 @@ void function SpawnCloakingDrone( WaveSpawnEvent ornull spawnEvent )
 
 void function SpawnDrones( WaveSpawnEvent ornull spawnEvent )
 {
-	if( !spawnEvent )
+	if ( !spawnEvent )
 		return
 
 	expect WaveSpawnEvent( spawnEvent )
@@ -2190,7 +2210,7 @@ void function SpawnDrones( WaveSpawnEvent ornull spawnEvent )
 
 void function SpawnSmoke( WaveSpawnEvent ornull spawnEvent )
 {
-	if( !spawnEvent )
+	if ( !spawnEvent )
 		return
 
 	expect WaveSpawnEvent( spawnEvent )
@@ -2246,7 +2266,7 @@ void function SpawnSmoke( WaveSpawnEvent ornull spawnEvent )
 
 void function PlayWarning( WaveSpawnEvent ornull spawnEvent )
 {
-	if( !spawnEvent )
+	if ( !spawnEvent )
 		return
 
 	expect WaveSpawnEvent( spawnEvent )
@@ -2256,20 +2276,20 @@ void function PlayWarning( WaveSpawnEvent ornull spawnEvent )
 	else
 	{
 		#if SERVER
-		if( spawnEvent.soundEventName == "fd_waveTypeEliteTitan" )
+		if ( spawnEvent.soundEventName == "fd_waveTypeEliteTitan" )
 		{
-			foreach( entity player in GetPlayerArray() )
+			foreach ( entity player in GetPlayerArray() )
 				thread AnnounceEliteTitansToPlayers( player )
 		}
 		#endif
-		if( spawnEvent.soundEventName != "" ) //Sanity check just to prevent crashes from typos since the fallback is to return empty string
+		if ( spawnEvent.soundEventName != "" ) //Sanity check just to prevent crashes from typos since the fallback is to return empty string
 			PlayFactionDialogueToTeam( spawnEvent.soundEventName, TEAM_MILITIA )
 	}
 }
 
 void function BlockFurtherTitanfalls( WaveSpawnEvent ornull spawnEvent )
 {
-	if( !spawnEvent )
+	if ( !spawnEvent )
 		return
 
 	expect WaveSpawnEvent( spawnEvent )
@@ -2281,7 +2301,7 @@ void function BlockFurtherTitanfalls( WaveSpawnEvent ornull spawnEvent )
 			print( "Applying Titanfall Block Event" )
 			PlayerEarnMeter_SetEnabled( false )
 			thread AnnounceTitanfallBlock()
-			foreach( entity player in GetPlayerArray() )
+			foreach ( entity player in GetPlayerArray() )
 			{
 				PlayerEarnMeter_Reset( player )
 				ClearTitanAvailable( player )
@@ -2297,7 +2317,7 @@ void function BlockFurtherTitanfalls( WaveSpawnEvent ornull spawnEvent )
 
 void function SetNukeTitanMoveStance( WaveSpawnEvent ornull spawnEvent )
 {
-	if( !spawnEvent )
+	if ( !spawnEvent )
 		return
 
 	expect WaveSpawnEvent( spawnEvent )
@@ -2318,17 +2338,17 @@ void function AnnounceEliteTitansToPlayers( entity player )
 void function AnnounceTitanfallBlock()
 {
 	#if SERVER
-	foreach( entity player in GetPlayerArray() )
+	foreach ( entity player in GetPlayerArray() )
 		NSSendAnnouncementMessageToPlayer( player, "Titanfall Block", "Titans cannot be summoned anymore!", < 255, 255, 255 >, 150, 0 )
 	wait 10
-	foreach( entity player in GetPlayerArray() )
+	foreach ( entity player in GetPlayerArray() )
 		NSSendLargeMessageToPlayer( player, "Titanfall Block", "Further Titans cannot be summoned until the end of the wave, avoid losing your current Titan!", 60, "rui/callsigns/callsign_hidden" )
 	#endif
 }
 
 void function waitUntilLessThanAmountAliveEvent( WaveSpawnEvent ornull spawnEvent )
 {
-	if( !spawnEvent )
+	if ( !spawnEvent )
 		return
 
 	expect WaveSpawnEvent( spawnEvent )
@@ -2339,47 +2359,47 @@ void function waitUntilLessThanAmountAliveEvent( WaveSpawnEvent ornull spawnEven
 		array<entity> npcs = clone spawnedNPCs
 		ArrayRemoveDead( npcs )
 		
-		if( spawnEvent.waitHullType != eFDHT.ALL )
+		if ( spawnEvent.waitHullType != eFDHT.ALL )
 		{
-			foreach( entity npc in npcs )
+			foreach ( entity npc in npcs )
 			{
 				switch ( spawnEvent.waitHullType )
 				{
 					case eFDHT.SMALL:
-						if( npc.IsTitan() || IsSuperSpectre( npc ) || IsProwler( npc ) )
+						if ( npc.IsTitan() || IsSuperSpectre( npc ) || IsProwler( npc ) )
 							npcs.removebyvalue( npc )
 						break
 						
 					case eFDHT.MEDIUM:
-						if( npc.IsTitan() || IsHumanSized( npc ) || IsAirDrone( npc ) || IsFragDrone( npc ) )
+						if ( npc.IsTitan() || IsHumanSized( npc ) || IsAirDrone( npc ) || IsFragDrone( npc ) )
 							npcs.removebyvalue( npc )
 						break
 					
 					case eFDHT.TITAN:
-						if( IsSuperSpectre( npc ) || IsMinion( npc ) || IsStalker( npc ) || IsAirDrone( npc ) || IsFragDrone( npc ) || IsProwler( npc ) )
+						if ( IsSuperSpectre( npc ) || IsMinion( npc ) || IsStalker( npc ) || IsAirDrone( npc ) || IsFragDrone( npc ) || IsProwler( npc ) )
 							npcs.removebyvalue( npc )
 						break
 				}
 			}
 		}
 		
-		foreach( entity npc in npcs )
+		foreach ( entity npc in npcs )
 		{
-			if( GetNPCCloakedDrones().find( npc ) != -1 ) //Remove Cloak Drones to avoid softlocks
+			if ( GetNPCCloakedDrones().find( npc ) != -1 ) //Remove Cloak Drones to avoid softlocks
 				npcs.removebyvalue( npc )
 		}
 
-		if( npcs.len() <= spawnEvent.waitAmount )
+		if ( npcs.len() <= spawnEvent.waitAmount )
 			break
 		
-		if( !IsHarvesterAlive( fd_harvester.harvester ) )
+		if ( !IsHarvesterAlive( fd_harvester.harvester ) )
 			return
 	}
 }
 
 void function waitWaveSubGroup( WaveSpawnEvent ornull spawnEvent )
 {
-	if( !spawnEvent )
+	if ( !spawnEvent )
 		return
 
 	expect WaveSpawnEvent( spawnEvent )
@@ -2388,7 +2408,7 @@ void function waitWaveSubGroup( WaveSpawnEvent ornull spawnEvent )
 	{
 		WaitFrame()
 		
-		if( !IsHarvesterAlive( fd_harvester.harvester ) )
+		if ( !IsHarvesterAlive( fd_harvester.harvester ) )
 			return
 	}
 }
@@ -2413,7 +2433,7 @@ void function waitWaveSubGroup( WaveSpawnEvent ornull spawnEvent )
 
 void function Drop_Spawnpoint( vector origin, int team, float impactTime )
 {
-	if( !file.visibleDropPoints )
+	if ( !file.visibleDropPoints )
 		return
 	
 	vector surfaceNormal = < 0, 0, 1 >
@@ -2432,12 +2452,12 @@ void function Drop_Spawnpoint( vector origin, int team, float impactTime )
 
 void function PingMinimap( float x, float y, float duration, float spreadRadius, float ringRadius, int colorIndex )
 {
-	if( GetCurrentPlaylistVarFloat( "riff_minimap_state", 0 ) == 0 )
+	if ( GetCurrentPlaylistVarFloat( "riff_minimap_state", 0 ) == 0 )
 	{
-		foreach( entity player in GetPlayerArrayOfTeam( TEAM_MILITIA ) )
+		foreach ( entity player in GetPlayerArrayOfTeam( TEAM_MILITIA ) )
 		{
 			Remote_CallFunction_NonReplay( player, "ServerCallback_FD_PingMinimap", x, y, duration, spreadRadius, ringRadius, colorIndex )
-			if( GetCurrentPlaylistVarFloat( "fd_minimap_ping_sound", 0 ) == 1 )
+			if ( GetCurrentPlaylistVarFloat( "fd_minimap_ping_sound", 0 ) == 1 )
 				EmitSoundOnEntityOnlyToPlayer( player, player, "coop_minimap_ping" )
 		}
 	}
@@ -2445,7 +2465,7 @@ void function PingMinimap( float x, float y, float duration, float spreadRadius,
 
 void function AddMinimapForTitans( entity titan )
 {
-	if( !IsValid( titan ) )
+	if ( !IsValid( titan ) )
 		return
 	
 	titan.Minimap_SetAlignUpright( true )
@@ -2458,7 +2478,7 @@ void function AddMinimapForTitans( entity titan )
 
 void function AddMinimapForHumans( entity human )
 {
-	if( !IsValid( human ) )
+	if ( !IsValid( human ) )
 		return
 	
 	human.Minimap_SetAlignUpright( true )
@@ -2474,16 +2494,12 @@ void function GiveMinionFDLoadout( entity npc )
 	Assert( IsValid( npc ) && IsMinion( npc ), "Entity is not a spectre or grunt: " + npc )
 	string className = npc.GetClassName()
 	
-	if( className == "npc_soldier" )
+	if ( className == "npc_soldier" )
 	{
-		if( file.allowGruntGrenades ) //So they can use grenades and secondaries
-			npc.SetBehaviorSelector( "behavior_sp_soldier" )
-		
 		if ( file.defaultNPCWeapons[ className ].len() )
 		{
-			TakeAllWeapons( npc )
 			string baseweapon = file.defaultNPCWeapons[ className ].getrandom()
-			npc.GiveWeapon( baseweapon )
+			SetSpawnOption_Weapon( npc, baseweapon )
 			npc.kv.grenadeWeaponName = file.gruntGrenadeClass
 		}
 	}
@@ -2492,9 +2508,8 @@ void function GiveMinionFDLoadout( entity npc )
 	{
 		if ( file.defaultNPCWeapons[ className ].len() )
 		{
-			TakeAllWeapons( npc )
 			string baseweapon = file.defaultNPCWeapons[ className ].getrandom()
-			npc.GiveWeapon( baseweapon )
+			SetSpawnOption_Weapon( npc, baseweapon )
 		}
 	}
 }
@@ -2527,7 +2542,7 @@ void function SetupGruntBehaviorFlags( entity npc )
 	{
 		case eFDDifficultyLevel.EASY:
 		case eFDDifficultyLevel.NORMAL:
-			if( GetMapName().find( "mp_lf_" ) != null )
+			if ( GetMapName().find( "mp_lf_" ) != null )
 				npc.DisableNPCFlag( NPC_ALLOW_INVESTIGATE | NPC_ALLOW_PATROL | NPC_ALLOW_FLEE | NPC_USE_SHOOTING_COVER )
 			else
 			{
@@ -2548,17 +2563,17 @@ void function GruntTargetsTitan( entity npc )
 	Assert( IsValid( npc ) && IsGrunt( npc ), "Entity is not a Grunt: " + npc )
 	
 	entity enemy = npc.GetEnemy()
-	if( !IsValid( enemy ) )
+	if ( !IsValid( enemy ) )
 		return
 	
-	if( IsValid( fd_harvester.harvester ) && enemy != fd_harvester.harvester ) //Deliberate change from vanilla, Grunts uses Charge Rifles against the Harvester in there, but its disabled in here
+	if ( IsValid( fd_harvester.harvester ) && enemy != fd_harvester.harvester ) //Deliberate change from vanilla, Grunts uses Charge Rifles against the Harvester in there, but its disabled in here
 		OnEnemyChanged_MinionSwitchToHeavyArmorWeapon( npc )
 	
 	switch ( file.difficultyLevel )
 	{
 		case eFDDifficultyLevel.EASY:
 		case eFDDifficultyLevel.NORMAL:
-			if( enemy.IsTitan() && GetMapName().find( "mp_lf_" ) == null )
+			if ( enemy.IsTitan() && GetMapName().find( "mp_lf_" ) == null )
 				npc.AssaultSetFightRadius( 800 )
 			else
 				npc.AssaultSetFightRadius( 0 )
@@ -2575,10 +2590,10 @@ void function GiveShieldByDifficulty( entity titan, bool forceGive = false )
 {
 	Assert( IsValid( titan ) && titan.IsNPC() && titan.IsTitan(), "Calling GiveShieldByDifficulty in a Non-Titan NPC: " + titan )
 	
-	if( GetCurrentPlaylistVarInt( "fd_pro_titan_shields", 0 ) && titan.IsTitan() || forceGive )
+	if ( GetCurrentPlaylistVarInt( "fd_pro_titan_shields", 0 ) && titan.IsTitan() || forceGive )
 	{
 		entity soul = titan.GetTitanSoul()
-		if( IsValid( soul ) )
+		if ( IsValid( soul ) )
 			soul.SetShieldHealth( soul.GetShieldHealthMax() )
 	}
 }
@@ -2608,9 +2623,9 @@ vector function GetSkyCeiling( vector point )
 
 bool function allEventsExecuted( int waveIndex ) 
 {
-	foreach( WaveSpawnEvent event in WaveSpawnEvents[waveIndex] )
+	foreach ( WaveSpawnEvent event in WaveSpawnEvents[waveIndex] )
 	{
-		if( !event.executed )
+		if ( !event.executed )
 			return false
 	}
 	return true
@@ -2619,17 +2634,17 @@ bool function allEventsExecuted( int waveIndex )
 void function resetWaveEvents()
 {
 	file.sprintNukeTitans = false
-	foreach( WaveSpawnEvent event in WaveSpawnEvents[GetGlobalNetInt( "FD_currentWave" )] )
+	foreach ( WaveSpawnEvent event in WaveSpawnEvents[GetGlobalNetInt( "FD_currentWave" )] )
 		event.executed = false
 }
 
 void function SplitWaveSubgroups( int waveIndex ) 
 {
-	foreach( WaveSpawnEvent event in WaveSpawnEvents[waveIndex] )
+	foreach ( WaveSpawnEvent event in WaveSpawnEvents[waveIndex] )
 	{
-		if( event.waveSubGroupName != "" )
+		if ( event.waveSubGroupName != "" )
 		{
-			if( !( event.waveSubGroupName in file.waveSubGroups ) )
+			if ( !( event.waveSubGroupName in file.waveSubGroups ) )
 				file.waveSubGroups[ event.waveSubGroupName ] <- []
 			
 			file.waveSubGroups[ event.waveSubGroupName ].append( event )
@@ -2647,9 +2662,9 @@ bool function ShouldSkipEventForDifficulty( WaveSpawnEvent event )
 	bool insaneSpawn = ( event.spawnInDifficulty & eFDSD.INSANE ) ? true : false
 	bool invertedFilter = ( event.spawnInDifficulty & eFDSD.EXCLUSIVE ) ? true : false
 	
-	if( !allDifficulties )
+	if ( !allDifficulties )
 	{
-		switch( file.difficultyLevel )
+		switch ( file.difficultyLevel )
 		{
 			case( eFDDifficultyLevel.EASY ):
 				return !invertedFilter && easySpawn
@@ -2690,45 +2705,45 @@ bool function TitanfallBlockEnabled()
 void function SetupEliteTitansHealthCaps()
 {
 	file.eliteTitanHPBonus_Ion = GetCurrentPlaylistVarInt( "fd_elitetitan_hpbonus_ion", 7500 )
-	if( file.eliteTitanHPBonus_Ion < FD_ELITE_TITAN_MIN_HEALTH_CAP )
+	if ( file.eliteTitanHPBonus_Ion < FD_ELITE_TITAN_MIN_HEALTH_CAP )
 		file.eliteTitanHPBonus_Ion = FD_ELITE_TITAN_MIN_HEALTH_CAP
-	if( file.eliteTitanHPBonus_Ion > FD_ELITE_TITAN_MAX_HEALTH_CAP )
+	if ( file.eliteTitanHPBonus_Ion > FD_ELITE_TITAN_MAX_HEALTH_CAP )
 		file.eliteTitanHPBonus_Ion = FD_ELITE_TITAN_MAX_HEALTH_CAP
 	
 	file.eliteTitanHPBonus_Scorch = GetCurrentPlaylistVarInt( "fd_elitetitan_hpbonus_scorch", 7500 )
-	if( file.eliteTitanHPBonus_Scorch < FD_ELITE_TITAN_MIN_HEALTH_CAP )
+	if ( file.eliteTitanHPBonus_Scorch < FD_ELITE_TITAN_MIN_HEALTH_CAP )
 		file.eliteTitanHPBonus_Scorch = FD_ELITE_TITAN_MIN_HEALTH_CAP
-	if( file.eliteTitanHPBonus_Scorch > FD_ELITE_TITAN_MAX_HEALTH_CAP )
+	if ( file.eliteTitanHPBonus_Scorch > FD_ELITE_TITAN_MAX_HEALTH_CAP )
 		file.eliteTitanHPBonus_Scorch = FD_ELITE_TITAN_MAX_HEALTH_CAP
 	
 	file.eliteTitanHPBonus_Northstar = GetCurrentPlaylistVarInt( "fd_elitetitan_hpbonus_northstar", 7500 )
-	if( file.eliteTitanHPBonus_Northstar < FD_ELITE_TITAN_MIN_HEALTH_CAP )
+	if ( file.eliteTitanHPBonus_Northstar < FD_ELITE_TITAN_MIN_HEALTH_CAP )
 		file.eliteTitanHPBonus_Northstar = FD_ELITE_TITAN_MIN_HEALTH_CAP
-	if( file.eliteTitanHPBonus_Northstar > FD_ELITE_TITAN_MAX_HEALTH_CAP )
+	if ( file.eliteTitanHPBonus_Northstar > FD_ELITE_TITAN_MAX_HEALTH_CAP )
 		file.eliteTitanHPBonus_Northstar = FD_ELITE_TITAN_MAX_HEALTH_CAP
 	
 	file.eliteTitanHPBonus_Ronin = GetCurrentPlaylistVarInt( "fd_elitetitan_hpbonus_ronin", 7500 )
-	if( file.eliteTitanHPBonus_Ronin < FD_ELITE_TITAN_MIN_HEALTH_CAP )
+	if ( file.eliteTitanHPBonus_Ronin < FD_ELITE_TITAN_MIN_HEALTH_CAP )
 		file.eliteTitanHPBonus_Ronin = FD_ELITE_TITAN_MIN_HEALTH_CAP
-	if( file.eliteTitanHPBonus_Ronin > FD_ELITE_TITAN_MAX_HEALTH_CAP )
+	if ( file.eliteTitanHPBonus_Ronin > FD_ELITE_TITAN_MAX_HEALTH_CAP )
 		file.eliteTitanHPBonus_Ronin = FD_ELITE_TITAN_MAX_HEALTH_CAP
 	
 	file.eliteTitanHPBonus_Tone = GetCurrentPlaylistVarInt( "fd_elitetitan_hpbonus_tone", 7500 )
-	if( file.eliteTitanHPBonus_Tone < FD_ELITE_TITAN_MIN_HEALTH_CAP )
+	if ( file.eliteTitanHPBonus_Tone < FD_ELITE_TITAN_MIN_HEALTH_CAP )
 		file.eliteTitanHPBonus_Tone = FD_ELITE_TITAN_MIN_HEALTH_CAP
-	if( file.eliteTitanHPBonus_Tone > FD_ELITE_TITAN_MAX_HEALTH_CAP )
+	if ( file.eliteTitanHPBonus_Tone > FD_ELITE_TITAN_MAX_HEALTH_CAP )
 		file.eliteTitanHPBonus_Tone = FD_ELITE_TITAN_MAX_HEALTH_CAP
 	
 	file.eliteTitanHPBonus_Legion = GetCurrentPlaylistVarInt( "fd_elitetitan_hpbonus_legion", 15000 )
-	if( file.eliteTitanHPBonus_Legion < FD_ELITE_TITAN_MIN_HEALTH_CAP )
+	if ( file.eliteTitanHPBonus_Legion < FD_ELITE_TITAN_MIN_HEALTH_CAP )
 		file.eliteTitanHPBonus_Legion = FD_ELITE_TITAN_MIN_HEALTH_CAP
-	if( file.eliteTitanHPBonus_Legion > FD_ELITE_TITAN_MAX_HEALTH_CAP )
+	if ( file.eliteTitanHPBonus_Legion > FD_ELITE_TITAN_MAX_HEALTH_CAP )
 		file.eliteTitanHPBonus_Legion = FD_ELITE_TITAN_MAX_HEALTH_CAP
 	
 	file.eliteTitanHPBonus_Monarch = GetCurrentPlaylistVarInt( "fd_elitetitan_hpbonus_monarch", 7500 )
-	if( file.eliteTitanHPBonus_Monarch < FD_ELITE_TITAN_MIN_HEALTH_CAP )
+	if ( file.eliteTitanHPBonus_Monarch < FD_ELITE_TITAN_MIN_HEALTH_CAP )
 		file.eliteTitanHPBonus_Monarch = FD_ELITE_TITAN_MIN_HEALTH_CAP
-	if( file.eliteTitanHPBonus_Monarch > FD_ELITE_TITAN_MAX_HEALTH_CAP )
+	if ( file.eliteTitanHPBonus_Monarch > FD_ELITE_TITAN_MAX_HEALTH_CAP )
 		file.eliteTitanHPBonus_Monarch = FD_ELITE_TITAN_MAX_HEALTH_CAP
 }
 
@@ -2774,32 +2789,32 @@ void function NPCNav_FD( entity npc, string routeName, int nodesToSkip = 1, floa
 	if ( GuySquadName != "" )
 		squad = GetNPCArrayBySquad( GuySquadName )
 	
-	if( !npc.IsTitan() )
+	if ( !npc.IsTitan() )
 		thread NPCStuckTracker( npc )
 	
-	if( !useCustomFDLoad )
+	if ( !useCustomFDLoad )
 	{
 		if ( routeName == "" )
 		{
 			foreach ( entity node in routeNodes )
 			{
-				if( !node.HasKey( "route_name" ) )
+				if ( !node.HasKey( "route_name" ) )
 					continue
 				
 				routeCompare = expect string( node.kv.route_name ).tolower()
-				if( routeCompare.find( "drone" ) && !IsAirDrone( npc ) ) //Non-Drones skips
+				if ( routeCompare.find( "drone" ) && !IsAirDrone( npc ) ) //Non-Drones skips
 					continue
 				
-				if( routeCompare.find( "infantry" ) && !(IsMinion( npc ) || IsStalker( npc )) ) //Non-Grunt, Spectres, Stalker skips
+				if ( routeCompare.find( "infantry" ) && !(IsMinion( npc ) || IsStalker( npc )) ) //Non-Grunt, Spectres, Stalker skips
 					continue
 				
-				if( routeCompare.find( "reaper" ) && !IsSuperSpectre( npc ) ) //Non-Reapers skips
+				if ( routeCompare.find( "reaper" ) && !IsSuperSpectre( npc ) ) //Non-Reapers skips
 					continue
 				
-				if( routeCompare.find( "tick" ) && !IsFragDrone( npc ) ) //Non-Ticks skip (War Games uses this mostly)
+				if ( routeCompare.find( "tick" ) && !IsFragDrone( npc ) ) //Non-Ticks skip (War Games uses this mostly)
 					continue
 				
-				if( squad.len() > 0 )
+				if ( squad.len() > 0 )
 				{
 					if ( Distance( squad[0].GetOrigin(), node.GetOrigin() ) < dist )
 					{
@@ -2814,9 +2829,9 @@ void function NPCNav_FD( entity npc, string routeName, int nodesToSkip = 1, floa
 				}
 			}
 			#if SERVER && DEV
-			if( squad.len() > 0 )
+			if ( squad.len() > 0 )
 			{
-				if( npc == squad[0] )
+				if ( npc == squad[0] )
 					printt( "Squad entities had no route defined, using nearest node: " + targetNode.kv.route_name )
 			}
 			else
@@ -2837,19 +2852,19 @@ void function NPCNav_FD( entity npc, string routeName, int nodesToSkip = 1, floa
 			foreach ( routename, routeamount in routes )
 			{
 				routeCompare = routename.tolower()
-				if( routeCompare.find( "drone" ) && !IsAirDrone( npc ) ) //Non-Drones skips
+				if ( routeCompare.find( "drone" ) && !IsAirDrone( npc ) ) //Non-Drones skips
 					continue
 				
-				if( routeCompare.find( "infantry" ) && !(IsMinion( npc ) || IsStalker( npc )) ) //Non-Grunt, Spectres, Stalker skips
+				if ( routeCompare.find( "infantry" ) && !(IsMinion( npc ) || IsStalker( npc )) ) //Non-Grunt, Spectres, Stalker skips
 					continue
 				
-				if( routeCompare.find( "reaper" ) && !IsSuperSpectre( npc ) ) //Non-Reapers skips
+				if ( routeCompare.find( "reaper" ) && !IsSuperSpectre( npc ) ) //Non-Reapers skips
 					continue
 				
-				if( routeCompare.find( "tick" ) && !IsFragDrone( npc ) ) //Non-Ticks skip (War Games uses this mostly)
+				if ( routeCompare.find( "tick" ) && !IsFragDrone( npc ) ) //Non-Ticks skip (War Games uses this mostly)
 					continue
 				
-				if( squad.len() > 0 )
+				if ( squad.len() > 0 )
 				{
 					if ( Distance( squad[0].GetOrigin(), routeamount[0] ) < dist )
 					{
@@ -2864,9 +2879,9 @@ void function NPCNav_FD( entity npc, string routeName, int nodesToSkip = 1, floa
 				}
 			}
 			#if SERVER && DEV
-			if( squad.len() > 0 )
+			if ( squad.len() > 0 )
 			{
-				if( npc == squad[0] )
+				if ( npc == squad[0] )
 					printt( "Squad entities had no route defined, using nearest node: " + routetaken )
 			}
 			else
@@ -2881,11 +2896,11 @@ void function NPCNav_FD( entity npc, string routeName, int nodesToSkip = 1, floa
 	if ( npc.GetClassName() != "npc_frag_drone" && npcName != "empTitan" && !IsSuperSpectre( npc ) && npc.ai.bossTitanType != TITAN_MERC )
 		npc.AssaultSetFightRadius( 0 )
 	
-	if( !useCustomFDLoad )
+	if ( !useCustomFDLoad )
 	{
 		while ( targetNode != null )
 		{
-			if( !IsHarvesterAlive( fd_harvester.harvester ) )
+			if ( !IsHarvesterAlive( fd_harvester.harvester ) )
 				return
 			npc.AssaultPointClamped( targetNode.GetOrigin() )
 			npc.AssaultSetGoalRadius( nextDistance )
@@ -2893,10 +2908,10 @@ void function NPCNav_FD( entity npc, string routeName, int nodesToSkip = 1, floa
 			table result = npc.WaitSignal( "OnFinishedAssault", "OnEnterGoalRadius", "OnFailedToPath" )
 			
 			/*
-			if( result.signal == "OnFailedToPath" && !npc.IsTitan() && !IsSuperSpectre( npc ) )
+			if ( result.signal == "OnFailedToPath" && !npc.IsTitan() && !IsSuperSpectre( npc ) )
 			{
 				entity enemy = npc.GetEnemy()
-				if( EntityInSolid( npc ) && enemy == null )
+				if ( EntityInSolid( npc ) && enemy == null )
 				{
 					vector ornull clampedPos = NavMesh_ClampPointForAIWithExtents( targetNode.GetOrigin(), npc, < 80, 80, 256 > )
 					if ( clampedPos != null && Distance2D( npc.GetOrigin(), expect vector( clampedPos ) ) < 512 )
@@ -2915,17 +2930,17 @@ void function NPCNav_FD( entity npc, string routeName, int nodesToSkip = 1, floa
 		vector routepoint = routes[routetaken][routeindex]
 		while ( true )
 		{
-			if( !IsHarvesterAlive( fd_harvester.harvester ) )
+			if ( !IsHarvesterAlive( fd_harvester.harvester ) )
 				return
 			npc.AssaultPointClamped( routepoint )
 			npc.AssaultSetGoalRadius( nextDistance )
 			
 			table result = npc.WaitSignal( "OnFinishedAssault", "OnEnterGoalRadius", "OnFailedToPath" )
 			/*
-			if( result.signal == "OnFailedToPath" && !npc.IsTitan() && !IsSuperSpectre( npc ) )
+			if ( result.signal == "OnFailedToPath" && !npc.IsTitan() && !IsSuperSpectre( npc ) )
 			{
 				entity enemy = npc.GetEnemy()
-				if( EntityInSolid( npc ) && enemy != null )
+				if ( EntityInSolid( npc ) && enemy != null )
 				{
 					vector ornull clampedPos = NavMesh_ClampPointForAIWithExtents( npc.GetOrigin(), npc, < 80, 80, 250 > )
 					if ( clampedPos != null )
@@ -2940,7 +2955,7 @@ void function NPCNav_FD( entity npc, string routeName, int nodesToSkip = 1, floa
 			}
 			*/
 			routeindex++
-			if( routeindex < routes[routetaken].len() )
+			if ( routeindex < routes[routetaken].len() )
 				routepoint = routes[routetaken][routeindex]
 			else
 				break
@@ -2979,21 +2994,21 @@ void function NPCDroneNav_FD( entity npc, string routeName, int nodesToSkip = 0,
 	if ( GuySquadName != "" )
 		squad = GetNPCArrayBySquad( GuySquadName )
 	
-	if( !npc.IsTitan() )
+	if ( !npc.IsTitan() )
 		thread NPCStuckTracker( npc )
 	
 	npc.AssaultSetGoalHeight( 128 )
 	npc.AssaultSetFightRadius( 0 )
 	
-	if( !useCustomFDLoad )
+	if ( !useCustomFDLoad )
 	{
 		if ( routeName == "" )
 		{
 			foreach ( entity node in routeNodes )
 			{
-				if( !node.HasKey( "route_name" ) )
+				if ( !node.HasKey( "route_name" ) )
 					continue
-				if( squad.len() > 0 )
+				if ( squad.len() > 0 )
 				{
 					if ( Distance( squad[0].GetOrigin(), node.GetOrigin() ) < dist )
 					{
@@ -3010,9 +3025,9 @@ void function NPCDroneNav_FD( entity npc, string routeName, int nodesToSkip = 0,
 				}
 			}
 			#if SERVER && DEV
-			if( squad.len() > 0 )
+			if ( squad.len() > 0 )
 			{
-				if( npc == squad[0] )
+				if ( npc == squad[0] )
 					printt( "Squad entities had no route defined, using nearest node: " + targetNode.kv.route_name )
 			}
 			else
@@ -3035,7 +3050,7 @@ void function NPCDroneNav_FD( entity npc, string routeName, int nodesToSkip = 0,
 		{
 			foreach ( routename, routeamount in routes )
 			{
-				if( squad.len() > 0 )
+				if ( squad.len() > 0 )
 				{
 					if ( Distance( squad[0].GetOrigin(), routeamount[0] ) < dist )
 					{
@@ -3050,9 +3065,9 @@ void function NPCDroneNav_FD( entity npc, string routeName, int nodesToSkip = 0,
 				}
 			}
 			#if SERVER && DEV
-			if( squad.len() > 0 )
+			if ( squad.len() > 0 )
 			{
-				if( npc == squad[0] )
+				if ( npc == squad[0] )
 					printt( "Squad entities had no route defined, using nearest node: " + routetaken )
 			}
 			else
@@ -3063,11 +3078,11 @@ void function NPCDroneNav_FD( entity npc, string routeName, int nodesToSkip = 0,
 			routetaken = routeName
 	}
 
-	if( !useCustomFDLoad )
+	if ( !useCustomFDLoad )
 	{
 		while ( targetNode != null )
 		{
-			if( !IsHarvesterAlive( fd_harvester.harvester ) )
+			if ( !IsHarvesterAlive( fd_harvester.harvester ) )
 				return
 			npc.AssaultPoint( targetNode.GetOrigin() + < 0, 0, 192 > )
 			npc.AssaultSetGoalRadius( nextDistance )
@@ -3095,7 +3110,7 @@ void function NPCDroneNav_FD( entity npc, string routeName, int nodesToSkip = 0,
 		vector routepoint = routes[routetaken][routeindex]
 		while ( true )
 		{
-			if( !IsHarvesterAlive( fd_harvester.harvester ) )
+			if ( !IsHarvesterAlive( fd_harvester.harvester ) )
 				return
 			npc.AssaultPoint( routepoint + < 0, 0, 192 > )
 			npc.AssaultSetGoalRadius( nextDistance )
@@ -3103,11 +3118,11 @@ void function NPCDroneNav_FD( entity npc, string routeName, int nodesToSkip = 0,
 			table result = npc.WaitSignal( "OnFinishedAssault", "OnEnterGoalRadius", "OnFailedToPath" )
 			
 			routeindex++
-			if( routeindex < routes[routetaken].len() )
+			if ( routeindex < routes[routetaken].len() )
 				routepoint = routes[routetaken][routeindex]
 			else
 			{
-				if( shouldLoop )
+				if ( shouldLoop )
 				{
 					#if SERVER && DEV
 					printt( "drone reached end of loop, looping" )
@@ -3131,30 +3146,30 @@ void function NPCDroneNav_FD( entity npc, string routeName, int nodesToSkip = 0,
 
 entity function GetRouteStart( string routeName )
 {
-	foreach( entity node in routeNodes )
+	foreach ( entity node in routeNodes )
 	{
-		if( !node.HasKey( "route_name" ) )
+		if ( !node.HasKey( "route_name" ) )
 			continue
-		if( expect string( node.kv.route_name ) == routeName )
+		if ( expect string( node.kv.route_name ) == routeName )
 			return node
 	}
 }
 
 void function Dev_ShowRoute( bool includedrones = false )
 {
-	if( !useCustomFDLoad )
+	if ( !useCustomFDLoad )
 	{
 		string routename
-		foreach( entity node in routeNodes )
+		foreach ( entity node in routeNodes )
 		{
-			if( !node.HasKey( "route_name" ) )
+			if ( !node.HasKey( "route_name" ) )
 				continue
 				
 			routename = expect string( node.kv.route_name )
 			entity routetitle = CreatePointMessage( routename, node.GetOrigin() + < 0, 0, 32 >, 800 )
-			if( routename.tolower().find( "drone" ) && includedrones )
+			if ( routename.tolower().find( "drone" ) && includedrones )
 				thread DroneTracksPathing( routename )
-			else if( routename.tolower().find( "drone" ) || routename.tolower().find( "reaper" ) )
+			else if ( routename.tolower().find( "drone" ) || routename.tolower().find( "reaper" ) )
 				continue
 			else
 				thread GruntTracksPathing( routename )
@@ -3162,10 +3177,10 @@ void function Dev_ShowRoute( bool includedrones = false )
 	}
 	else
 	{
-		foreach( routename, routeamount in routes )
+		foreach ( routename, routeamount in routes )
 		{
 			entity routetitle = CreatePointMessage( routename, routeamount[0], 800 )
-			if( includedrones && routename.tolower().find( "drone" ) )
+			if ( includedrones && routename.tolower().find( "drone" ) )
 				thread DroneTracksPathing( routename )
 			else
 				thread GruntTracksPathing( routename )
@@ -3176,7 +3191,7 @@ void function Dev_ShowRoute( bool includedrones = false )
 void function GruntTracksPathing( string route )
 {
 	vector routeorigin = < 0, 0, 0 >
-	if( useCustomFDLoad )
+	if ( useCustomFDLoad )
 		routeorigin = routes[route][0]
 	else
 		routeorigin = GetRouteStart( route ).GetOrigin()
@@ -3197,7 +3212,7 @@ void function GruntTracksPathing( string route )
 		thread NPCNav_FD( guy, route )
 		table result = guy.WaitSignal( "FD_ReachedHarvester" )
 		wait 5.0
-		if( IsValid( guy ) )
+		if ( IsValid( guy ) )
 			guy.SetOrigin( routeorigin )
 	}
 }
@@ -3205,7 +3220,7 @@ void function GruntTracksPathing( string route )
 void function DroneTracksPathing( string route )
 {
 	vector routeorigin = < 0, 0, 0 >
-	if( useCustomFDLoad )
+	if ( useCustomFDLoad )
 		routeorigin = routes[route][0]
 	else
 		routeorigin = GetRouteStart( route ).GetOrigin()
@@ -3234,9 +3249,9 @@ void function NPCStuckTracker( entity npc ) //Track if AI is properly pathing, o
 	while ( IsAlive( npc ) )
 	{
 		table result = npc.WaitSignal( "OnSeeEnemy", "OnFinishedAssault", "OnEnterGoalRadius", "OnFailedToPath" )
-		if( result.signal == "OnFailedToPath" )
+		if ( result.signal == "OnFailedToPath" )
 		{
-			if( FailCount == 10 )
+			if ( FailCount == 10 )
 				npc.Die()
 			FailCount++
 		}
