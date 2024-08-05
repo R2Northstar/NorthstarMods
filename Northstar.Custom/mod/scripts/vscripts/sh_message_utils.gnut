@@ -4,6 +4,7 @@ global function MessageUtils_ServerInit
 global function NSCreatePollOnPlayer
 global function NSGetPlayerResponse
 global function NSCreateChoiceOnPlayer
+global function NSGetPlayerChoiceResponse
 
 global function NSSendLargeMessageToPlayer
 global function NSSendPopUpMessageToPlayer
@@ -17,6 +18,7 @@ global function NSDeleteStatusMessageOnPlayer
 struct
 {
 	table<entity,int> playerPollResponses
+	table<entity,int> playerChoiceResponses
 } server
 #endif // SERVER
 
@@ -113,6 +115,7 @@ void function MessageUtils_ServerInit()
 {
 	AddClientCommandCallback( "vote", ClientCommand_Vote )
 	AddClientCommandCallback( "poll_respond", ClientCommand_PollRespond )
+	AddClientCommandCallback( "choice_respond", ClientCommand_ChoiceRespond )
 }
 
 bool function ClientCommand_Vote( entity player, array<string> args )
@@ -130,6 +133,15 @@ bool function ClientCommand_PollRespond( entity player, array<string> args )
 		return false
 	
 	server.playerPollResponses[player] <- args[0].tointeger()
+	return true
+}
+
+bool function ClientCommand_ChoiceRespond( entity player, array<string> args )
+{
+	if( args.len() == 0 )
+		return false
+
+	server.playerChoiceResponses[player] <- args[0].tointeger()
 	return true
 }
 
@@ -186,7 +198,17 @@ void function NSCreateChoiceOnPlayer( entity player, string option1, string opti
 	ServerToClientStringCommand( player, "ServerHUDMessagePut " + eDataType.CHOICE_OPTION + " " + option1 )
 	ServerToClientStringCommand( player, "ServerHUDMessagePut " + eDataType.CHOICE_OPTION + " " + option2 )
 	ServerToClientStringCommand( player, "ServerHUDMessagePut " + eDataType.CHOICE_DURATION + " " + duration )
+
+	server.playerChoiceResponses[player] <- 0 // Reset choice response table entry
 	ServerToClientStringCommand( player, "ServerHUDMessageShow " + eMessageType.CHOICE )
+}
+
+int function NSGetPlayerChoiceResponse( entity player )
+{
+	if( !( player in server.playerChoiceResponses ) )
+		return -1
+
+	return server.playerChoiceResponses[ player ]
 }
 
 void function NSSendLargeMessageToPlayer( entity player, string title, string description, float duration, string image )
@@ -534,11 +556,13 @@ void function DialogueChoiceTimeout( entity player, string cancelTimeoutSignal_A
 void function Pressed_Choice1( entity player )
 {
 	Signal( player, "DialogueChoice1" )
+	player.ClientCommand( "choice_respond 1" )
 }
 
 void function Pressed_Choice2( entity player )
 {
 	Signal( player, "DialogueChoice2" )
+	player.ClientCommand( "choice_respond 2" )
 }
 
 void function InfoMessageHandler_Threaded()
