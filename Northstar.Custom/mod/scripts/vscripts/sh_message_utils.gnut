@@ -499,6 +499,8 @@ void function ShowChoice_Threaded()
 	RuiDestroyIfAlive( client.choice.rui )
 	client.choice.rui = null
 	client.choice.active = false
+	client.choice.option1 = ""
+	client.choice.option2 = ""
 }
 
 void function InfoMessageHandler_Threaded()
