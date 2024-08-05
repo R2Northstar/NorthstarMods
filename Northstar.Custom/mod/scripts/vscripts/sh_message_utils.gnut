@@ -481,6 +481,7 @@ void function ShowChoice_Threaded()
 	RuiSetBool( rui, "choice2WasSelected", false )
 
 	client.choice.rui = rui
+	EmitSoundOnEntity( GetLocalViewPlayer(), "UI_PlayerDialogue_Selection" )
 
 	wait introDuration + promptDuration
 	RuiDestroyIfAlive( client.choice.rui )
