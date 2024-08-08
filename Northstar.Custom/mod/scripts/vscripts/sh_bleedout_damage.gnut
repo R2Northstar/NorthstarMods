@@ -22,10 +22,10 @@ void function BleedoutDamage_PreInit()
 
 void function Bleedout_RegisterRemoteFunctions()
 {
-	Remote_RegisterFunction( "ServerCallback_BLEEDOUT_StartFirstAidProgressBar" )
-	Remote_RegisterFunction( "ServerCallback_BLEEDOUT_StopFirstAidProgressBar" )
-	Remote_RegisterFunction( "ServerCallback_BLEEDOUT_ShowWoundedMarker" )
-	Remote_RegisterFunction( "ServerCallback_BLEEDOUT_HideWoundedMarker" )
+	NSRemote_RegisterFunction( "ServerCallback_BLEEDOUT_StartFirstAidProgressBar" )
+	NSRemote_RegisterFunction( "ServerCallback_BLEEDOUT_StopFirstAidProgressBar" )
+	NSRemote_RegisterFunction( "ServerCallback_BLEEDOUT_ShowWoundedMarker" )
+	NSRemote_RegisterFunction( "ServerCallback_BLEEDOUT_HideWoundedMarker" )
 }
 
 // copied from sh_bleedout

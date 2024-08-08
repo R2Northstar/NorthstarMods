@@ -86,7 +86,7 @@ void function UpdateLoadout( entity player )
 			player.TakeWeaponNow( weapon.GetWeaponClassName() )
 
 		array<string> mods = ["one_in_the_chamber"]
-		player.GiveWeapon( (GetChamberWingmanN() ? "mp_weapon_wingman_n" : "mp_weapon_wingman"), mods)
+		player.GiveWeapon( (GetChamberWingmanN() ? "mp_weapon_ns_wingman_n" : "mp_weapon_ns_wingman"), mods)
 		player.GiveOffhandWeapon( "melee_pilot_kunai", OFFHAND_MELEE )
 
 		thread SetAmmo( player )

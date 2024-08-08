@@ -46,6 +46,11 @@
 			"Name": "modlist_reverse",
 			"DefaultValue": "0",
 			"Flags": "ARCHIVE_PLAYERPROFILE"
+		},
+		{
+			"Name": "ns_communities_disabled_override",
+			"DefaultValue": "0",
+			"Flags": "ARCHIVE_PLAYERPROFILE"
 		}
 	],
 	"Scripts": [

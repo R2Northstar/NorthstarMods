@@ -43,9 +43,9 @@ void function KRRegisterNetworkVars()
 	if ( GAMETYPE != GAMEMODE_KR )
 		return
 		
-	Remote_RegisterFunction( "ServerCallback_FlagSpawnIncoming" )
-	Remote_RegisterFunction( "ServerCallback_NewKillRacer" )
-	Remote_RegisterFunction( "ServerCallback_EndKillrace" )
+	NSRemote_RegisterFunction( "ServerCallback_FlagSpawnIncoming" )
+	NSRemote_RegisterFunction( "ServerCallback_NewKillRacer" )
+	NSRemote_RegisterFunction( "ServerCallback_EndKillrace" )
 	
 	RegisterNetworkedVariable( "killRaceTime", SNDC_PLAYER_EXCLUSIVE, SNVT_TIME, 0.0 )
 	

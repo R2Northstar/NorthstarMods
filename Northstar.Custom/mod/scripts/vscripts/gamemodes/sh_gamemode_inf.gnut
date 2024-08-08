@@ -40,9 +40,9 @@ void function InfectionRegisterNetworkVars()
 	if ( GAMETYPE != GAMEMODE_INFECTION )
 		return
 
-	Remote_RegisterFunction( "ServerCallback_YouAreInfected" )
-	Remote_RegisterFunction( "ServerCallback_AnnounceFirstInfected" )
-	Remote_RegisterFunction( "ServerCallback_AnnounceLastSurvivor" )
+	NSRemote_RegisterFunction( "ServerCallback_YouAreInfected" )
+	NSRemote_RegisterFunction( "ServerCallback_AnnounceFirstInfected" )
+	NSRemote_RegisterFunction( "ServerCallback_AnnounceLastSurvivor" )
 }
 
 int function CompareAssaultScoreAndInfection( entity a, entity b )
