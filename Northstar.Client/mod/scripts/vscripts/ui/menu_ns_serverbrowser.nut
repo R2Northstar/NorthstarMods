@@ -981,10 +981,13 @@ void function OnServerSelected_Threaded( var button )
 			print( format ( "\"%s\" was not found locally, triggering manifesto fetching.", requiredModInfo.name ) )
 			uninstalledModFound = true
 			break
-		} else if ( NSGetModVersionByModName( requiredModInfo.name ) != requiredModInfo.version ) {
-			print( format ( "\"%s\" was found locally but has version \"%s\" while server requires \"%s\", triggering manifesto fetching.", requiredModInfo.name, NSGetModVersionByModName( requiredModInfo.name ), requiredModInfo.version ) )
-			uninstalledModFound = true
-			break
+		} else {
+			array<string> modVersions = NSGetModVersions( requiredModInfo.name )
+			if ( !modVersions.contains( requiredModInfo.version ) ) {
+				print( format ( "\"%s\" was found locally but has versions \"%s\" while server requires \"%s\", triggering manifesto fetching.", requiredModInfo.name, modVersions.tostring(), requiredModInfo.version ) )
+				uninstalledModFound = true
+				break
+			}
 		}
 	}
 	
@@ -1002,7 +1005,7 @@ void function OnServerSelected_Threaded( var button )
 		if ( mod.name.len() > 10 && mod.name.slice(0, 10) == "Northstar." )
 			continue
 
-		if ( !NSGetModNames().contains( mod.name ) || NSGetModVersionByModName( mod.name ) != mod.version )
+		if ( !NSGetModNames().contains( mod.name ) || !NSGetModVersions( mod.name ).contains( mod.version ) )
 		{
 			// Auto-download mod
 			if ( autoDownloadAllowed )
@@ -1055,8 +1058,11 @@ void function OnServerSelected_Threaded( var button )
 				return
 			}
 		}
+
+		// If we get here, means that mod version exists locally => we good
 		else
 		{
+			/*
 			// this uses semver https://semver.org
 			array<string> serverModVersion = split( mod.name, "." )
 			array<string> clientModVersion = split( NSGetModVersionByModName( mod.name ), "." )
@@ -1090,7 +1096,7 @@ void function OnServerSelected_Threaded( var button )
 				OpenDialog( dialogData )
 
 				return
-			}
+			}*/
 		}
 	}
 
@@ -1136,25 +1142,30 @@ void function ThreadedAuthAndConnectToServer( string password = "", bool modsCha
 	if ( NSWasAuthSuccessful() )
 	{
 		// disable all RequiredOnClient mods that are not required by the server and are currently enabled
-		foreach ( string modName in NSGetModNames() )
+		foreach ( ModInfo mod in NSGetModsInformation() )
 		{
-			if ( NSIsModRequiredOnClient( modName ) && NSIsModEnabled( modName ) )
+			string modName = mod.name
+			string modVersion = mod.version
+
+			if ( mod.requiredOnClient && mod.enabled )
 			{
 				// find the mod name in the list of server required mods
 				bool found = false
 				foreach ( RequiredModInfo mod in file.lastSelectedServer.requiredMods )
 				{
-					if (mod.name == modName)
+					if (mod.name == modName && mod.version == modVersion)
 					{
 						found = true
+						print(format("Found \"%s\" v%s", modName, modVersion))
 						break
 					}
 				}
-				// if we didnt find the mod name, disable the mod
+				// if we didn't find the mod name, disable the mod
 				if (!found)
 				{
 					modsChanged = true
-					NSSetModEnabled( modName, false )
+					NSSetModEnabled( modName, modVersion, false )
+					print(format("Disabled \"%s\" v%s", modName, modVersion))
 				}
 			}
 		}
@@ -1162,10 +1173,14 @@ void function ThreadedAuthAndConnectToServer( string password = "", bool modsCha
 		// enable all RequiredOnClient mods that are required by the server and are currently disabled
 		foreach ( RequiredModInfo mod in file.lastSelectedServer.requiredMods )
 		{
-			if ( NSIsModRequiredOnClient( mod.name ) && !NSIsModEnabled( mod.name ))
+			string modName = mod.name
+			string modVersion = mod.version
+
+			if ( NSIsModRequiredOnClient( modName, modVersion ) && !NSIsModEnabled( modName, modVersion ) )
 			{
 				modsChanged = true
-				NSSetModEnabled( mod.name, true )
+				NSSetModEnabled( modName, modVersion, true )
+				print(format("Enabled \"%s\" v%s", modName, modVersion))
 			}
 		}
 
