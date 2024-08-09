@@ -1377,7 +1377,8 @@ void function TriggerConnectToServerCallbacks( ServerInfo ornull targetServer = 
 	}
 }
 
+const array<string> CORE_MODS = ["Northstar.Client", "Northstar.Coop", "Northstar.CustomServers", "Northstar.Custom"]
 bool function IsCoreMod( string modName )
 {
-	return modName.len() > 10 && modName.slice(0, 10) == "Northstar."
+	return CORE_MODS.find( modName ) != -1
 }
