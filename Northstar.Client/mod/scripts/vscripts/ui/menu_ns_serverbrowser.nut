@@ -973,7 +973,7 @@ void function OnServerSelected_Threaded( var button )
 	foreach ( requiredModInfo in server.requiredMods )
 	{
 		// Tolerate core mods having different versions
-		if ( requiredModInfo.name.len() > 10 && requiredModInfo.name.slice(0, 10) == "Northstar." )
+		if ( IsCoreMod( requiredModInfo.name ) )
 			continue
 
 		if ( !modNames.contains( requiredModInfo.name ) )
@@ -1002,7 +1002,7 @@ void function OnServerSelected_Threaded( var button )
 	foreach ( RequiredModInfo mod in server.requiredMods )
 	{
 		// Tolerate core mods having different versions
-		if ( mod.name.len() > 10 && mod.name.slice(0, 10) == "Northstar." )
+		if ( IsCoreMod( mod.name ) )
 			continue
 
 		if ( !NSGetModNames().contains( mod.name ) || !NSGetModVersions( mod.name ).contains( mod.version ) )
@@ -1375,4 +1375,9 @@ void function TriggerConnectToServerCallbacks( ServerInfo ornull targetServer = 
 	{
 		callback( expect ServerInfo( targetServer ) )
 	}
+}
+
+bool function IsCoreMod( string modName )
+{
+	return modName.len() > 10 && modName.slice(0, 10) == "Northstar."
 }
