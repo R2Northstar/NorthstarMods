@@ -91,6 +91,21 @@ resource/ui/menus/mode_select.menu
             rui                     "ui/basic_image_add.rpak"
 			zpos					3
 		}
+		ModeIconImagePatch //For patch icons
+		{
+			ControlName 			RuiPanel
+			xpos                    0
+			ypos                    -16
+			wide					72
+			tall					72
+			visible 				1
+			scaleImage 				1
+			zpos					3
+			pin_to_sibling			NextModeImage
+			pin_corner_to_sibling	TOP_LEFT
+			pin_to_sibling_corner	TOP_LEFT
+			rui "ui/callsign_icon_button.rpak"
+		}
 
 		NextModeName
 		{
