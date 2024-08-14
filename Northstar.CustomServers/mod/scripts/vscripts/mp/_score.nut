@@ -8,6 +8,7 @@ global function ScoreEvent_TitanDoomed
 global function ScoreEvent_TitanKilled
 global function ScoreEvent_NPCKilled
 global function ScoreEvent_MatchComplete
+global function ScoreEvent_RoundComplete
 
 global function ScoreEvent_SetEarnMeterValues
 global function ScoreEvent_SetupEarnMeterValuesForMixedModes
@@ -287,8 +288,24 @@ void function ScoreEvent_MatchComplete( int winningTeam )
 	foreach( entity player in GetPlayerArray() )
 	{
 		AddPlayerScore( player, "MatchComplete" )
+		SetPlayerChallengeMatchComplete( player )
 		if ( player.GetTeam() == winningTeam )
+		{
 			AddPlayerScore( player, "MatchVictory" )
+			SetPlayerChallengeMatchWon( player, true )
+		}
+		else
+			SetPlayerChallengeMatchWon( player, false )
+	}
+}
+
+void function ScoreEvent_RoundComplete( int winningTeam )
+{
+	foreach( entity player in GetPlayerArray() )
+	{
+		AddPlayerScore( player, "RoundComplete" )
+		if ( player.GetTeam() == winningTeam )
+			AddPlayerScore( player, "RoundVictory" )
 	}
 }
 
@@ -304,7 +321,7 @@ void function ScoreEvent_SetupEarnMeterValuesForMixedModes() // mixed modes in t
 {
 	// todo needs earn/overdrive values
 	// player-controlled stuff
-	ScoreEvent_SetEarnMeterValues( "KillPilot", 0.07, 0.15 )
+	ScoreEvent_SetEarnMeterValues( "KillPilot", 0.07, 0.15, 0.33 ) // 5% for titan cores
 	ScoreEvent_SetEarnMeterValues( "KillTitan", 0.0, 0.15 )
 	ScoreEvent_SetEarnMeterValues( "TitanKillTitan", 0.0, 0.0 ) // unsure
 	ScoreEvent_SetEarnMeterValues( "PilotBatteryStolen", 0.0, 0.35 ) // this actually just doesn't have overdrive in vanilla even

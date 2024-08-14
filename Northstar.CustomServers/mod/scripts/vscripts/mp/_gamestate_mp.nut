@@ -96,6 +96,7 @@ void function PIN_GameStart()
 	
 	AddCallback_OnPlayerKilled( OnPlayerKilled )
 	AddDeathCallback( "npc_titan", OnTitanKilled )
+	AddCallback_EntityChangedTeam( "player", OnPlayerChangedTeam )
 	
 	RegisterSignal( "CleanUpEntitiesForRoundEnd" )
 }
@@ -395,6 +396,7 @@ void function GameStateEnter_WinnerDetermined_Threaded()
 	}
 	else
 	{
+		RegisterChallenges_OnMatchEnd()
 		if ( ClassicMP_ShouldRunEpilogue() )
 		{
 			ClassicMP_SetupEpilogue()
@@ -833,11 +835,45 @@ void function SetWinner( int team, string winningReason = "", string losingReaso
 			}
 			
 			SetGameState( eGameState.WinnerDetermined )
+			ScoreEvent_RoundComplete( team )
 		}
 		else
+		{
 			SetGameState( eGameState.WinnerDetermined )
+			ScoreEvent_MatchComplete( team )
+			
+			array<entity> players = GetPlayerArray()
+			int functionref( entity, entity ) compareFunc = GameMode_GetScoreCompareFunc( GAMETYPE )
+			if ( compareFunc != null )
+			{
+				players.sort( compareFunc )
+				int playerCount = players.len()
+				int currentPlace = 1
+				for ( int i = 0; i < 3; i++ )
+				{
+					if ( i >= playerCount )
+						continue
+					
+					if ( i > 0 && compareFunc( players[i - 1], players[i] ) != 0 )
+						currentPlace += 1
 
-		ScoreEvent_MatchComplete( team )
+					switch( currentPlace )
+					{
+						case 1:
+							UpdatePlayerStat( players[i], "game_stats", "mvp" )
+							UpdatePlayerStat( players[i], "game_stats", "mvp_total" )
+							UpdatePlayerStat( players[i], "game_stats", "top3OnTeam" )
+							break
+						case 2:
+							UpdatePlayerStat( players[i], "game_stats", "top3OnTeam" )
+							break
+						case 3:
+							UpdatePlayerStat( players[i], "game_stats", "top3OnTeam" )
+							break
+					}
+				}
+			}
+		}
 	}
 }
 
@@ -1015,5 +1051,23 @@ void function DialoguePlayWinnerDetermined()
 	{
 		PlayFactionDialogueToTeam( "scoring_won", winningTeam )
 		PlayFactionDialogueToTeam( "scoring_lost", losingTeam )
+	}
+}
+
+/// This is to move all NPCs that a player owns from one team to the other during a match
+/// Auto-Titans, Turrets, Ticks and Hacked Spectres will all move along together with the player to the new Team
+/// Also possibly prevents mods that spawns other types of NPCs that players can own from breaking when switching (i.e Drones, Hacked Reapers)
+void function OnPlayerChangedTeam( entity player )
+{
+	if ( !player.hasConnected ) // Prevents players who just joined to trigger below code, as server always pre setups their teams
+		return
+	
+	NotifyClientsOfTeamChange( player, GetOtherTeam( player.GetTeam() ), player.GetTeam() )
+	
+	foreach( npc in GetNPCArray() )
+	{
+		entity bossPlayer = npc.GetBossPlayer()
+		if ( IsValidPlayer( bossPlayer ) && bossPlayer == player && IsAlive( npc ) )
+			SetTeam( npc, player.GetTeam() )
 	}
 }
