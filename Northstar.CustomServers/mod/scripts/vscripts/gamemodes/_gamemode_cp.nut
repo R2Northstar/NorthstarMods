@@ -29,6 +29,8 @@ struct {
 
 	array<HardpointStruct> hardpoints
 	array<CP_PlayerStruct> players
+	table<entity,int> playerAssaultPoints
+	table<entity,int> playerDefensePoints
 } file
 
 void function GamemodeCP_Init()
@@ -112,11 +114,13 @@ void function GamemodeCP_OnPlayerKilled(entity victim, entity attacker, var dama
 			{
 				AddPlayerScore( attacker , "HardpointDefense", victim )
 				attacker.AddToPlayerGameStat(PGS_DEFENSE_SCORE,POINTVALUE_HARDPOINT_DEFENSE)
+				UpdatePlayerScoreForChallenge(attacker,0,POINTVALUE_HARDPOINT_DEFENSE)
 			}
 			else if((victimCP.hardpoint.GetTeam()==victim.GetTeam())||(GetHardpointCappingTeam(victimCP)==victim.GetTeam()))
 			{
 				AddPlayerScore( attacker, "HardpointAssault", victim )
 				attacker.AddToPlayerGameStat(PGS_ASSAULT_SCORE,POINTVALUE_HARDPOINT_ASSAULT)
+				UpdatePlayerScoreForChallenge(attacker,POINTVALUE_HARDPOINT_ASSAULT,0)
 			}
 		}
 	}
@@ -127,10 +131,12 @@ void function GamemodeCP_OnPlayerKilled(entity victim, entity attacker, var dama
 		{
 			AddPlayerScore( attacker , "HardpointSnipe", victim )
 			attacker.AddToPlayerGameStat(PGS_ASSAULT_SCORE,POINTVALUE_HARDPOINT_SNIPE)
+			UpdatePlayerScoreForChallenge(attacker,POINTVALUE_HARDPOINT_SNIPE,0)
 		}
 		else{
 			AddPlayerScore( attacker , "HardpointSiege", victim )
 			attacker.AddToPlayerGameStat(PGS_ASSAULT_SCORE,POINTVALUE_HARDPOINT_SIEGE)
+			UpdatePlayerScoreForChallenge(attacker,POINTVALUE_HARDPOINT_SIEGE,0)
 		}
 	}
 	else if(attackerCP.hardpoint!=null)//Perimeter Defense
@@ -138,6 +144,7 @@ void function GamemodeCP_OnPlayerKilled(entity victim, entity attacker, var dama
 		if(attackerCP.hardpoint.GetTeam()==attacker.GetTeam())
 			AddPlayerScore( attacker , "HardpointPerimeterDefense", victim)
 			attacker.AddToPlayerGameStat(PGS_DEFENSE_SCORE,POINTVALUE_HARDPOINT_PERIMETER_DEFENSE)
+			UpdatePlayerScoreForChallenge(attacker,0,POINTVALUE_HARDPOINT_PERIMETER_DEFENSE)
 	}
 
 	foreach(CP_PlayerStruct player in file.players) //Reset Victim Holdtime Counter
@@ -308,6 +315,7 @@ void function CapturePointForTeam(HardpointStruct hardpoint, int Team)
 		if(player.IsPlayer()){
 			AddPlayerScore(player,"ControlPointCapture")
 			player.AddToPlayerGameStat(PGS_ASSAULT_SCORE,POINTVALUE_HARDPOINT_CAPTURE)
+			UpdatePlayerScoreForChallenge(player,POINTVALUE_HARDPOINT_CAPTURE,0)
 		}
 	}
 }
@@ -319,12 +327,17 @@ void function GamemodeCP_InitPlayer(entity player)
 	playerStruct.timeOnPoints = [0.0,0.0,0.0]
 	playerStruct.isOnHardpoint = false
 	file.players.append(playerStruct)
+	file.playerAssaultPoints[player] <- 0
+	file.playerDefensePoints[player] <- 0
 	thread PlayerThink(playerStruct)
 }
 
 void function GamemodeCP_RemovePlayer(entity player)
 {
-
+	if(player in file.playerAssaultPoints)
+		delete file.playerAssaultPoints[player]
+	if(player in file.playerDefensePoints)
+		delete file.playerDefensePoints[player]
 	foreach(index,CP_PlayerStruct playerStruct in file.players)
 	{
 		if(playerStruct.player==player)
@@ -376,11 +389,13 @@ void function PlayerThink(CP_PlayerStruct player)
 						{
 							AddPlayerScore(player.player,"ControlPointAmpedHold")
 							player.player.AddToPlayerGameStat( PGS_DEFENSE_SCORE, POINTVALUE_HARDPOINT_AMPED_HOLD )
+							UpdatePlayerScoreForChallenge(player.player,0,POINTVALUE_HARDPOINT_AMPED_HOLD)
 						}
 						else
 						{
 							AddPlayerScore(player.player,"ControlPointHold")
 							player.player.AddToPlayerGameStat( PGS_DEFENSE_SCORE, POINTVALUE_HARDPOINT_HOLD )
+							UpdatePlayerScoreForChallenge(player.player,0,POINTVALUE_HARDPOINT_HOLD)
 						}
 					}
 					break
@@ -471,8 +486,10 @@ void function HardpointThink( HardpointStruct hardpoint )
 		}
 		else if(cappingTeam==TEAM_UNASSIGNED) // nobody on point
 		{
-			if((GetHardpointState(hardpoint)==CAPTURE_POINT_STATE_AMPED)||(GetHardpointState(hardpoint)==CAPTURE_POINT_STATE_AMPING))
+			if((GetHardpointState(hardpoint)>=CAPTURE_POINT_STATE_AMPED) || (GetHardpointState(hardpoint)==CAPTURE_POINT_STATE_SELF_UNAMPING))
 			{
+				if (GetHardpointState(hardpoint) == CAPTURE_POINT_STATE_AMPED)
+					SetHardpointState(hardpoint,CAPTURE_POINT_STATE_SELF_UNAMPING) // plays a pulsating effect on the UI only when the hardpoint is amped
 				SetHardpointCappingTeam(hardpoint,hardpointEnt.GetTeam())
 				SetHardpointCaptureProgress(hardpoint,max(1.0,GetHardpointCaptureProgress(hardpoint)-(deltaTime/HARDPOINT_AMPED_DELAY)))
 				if(GetHardpointCaptureProgress(hardpoint)<=1.001) // unamp
@@ -546,8 +563,10 @@ void function HardpointThink( HardpointStruct hardpoint )
 			}
 			else if(file.ampingEnabled)//amping or reamping
 			{
-				if(GetHardpointState(hardpoint)<CAPTURE_POINT_STATE_AMPING)
-				SetHardpointState(hardpoint,CAPTURE_POINT_STATE_AMPING)
+				// i have no idea why but putting it CAPTURE_POINT_STATE_AMPING will say 'CONTESTED' on the UI
+				// since whether the point is contested is checked above, putting the hardpoint state to a value of 8 fixes it somehow
+				if(GetHardpointState(hardpoint)<=CAPTURE_POINT_STATE_AMPING)
+					SetHardpointState( hardpoint, 8 ) 
 				SetHardpointCaptureProgress( hardpoint, min( 2.0, GetHardpointCaptureProgress( hardpoint ) + ( deltaTime / HARDPOINT_AMPED_DELAY * capperAmount ) ) )
 				if(GetHardpointCaptureProgress(hardpoint)==2.0&&!(GetHardpointState(hardpoint)==CAPTURE_POINT_STATE_AMPED))
 				{
@@ -570,6 +589,7 @@ void function HardpointThink( HardpointStruct hardpoint )
 							{
 								AddPlayerScore(player,"ControlPointAmped")
 								player.AddToPlayerGameStat(PGS_DEFENSE_SCORE,POINTVALUE_HARDPOINT_AMPED)
+								UpdatePlayerScoreForChallenge(player,0,POINTVALUE_HARDPOINT_AMPED)
 							}
 						}
 					}
@@ -645,7 +665,10 @@ void function OnHardpointEntered( entity trigger, entity player )
 		hardpoint.militiaCappers.append( player )
 	foreach(CP_PlayerStruct playerStruct in file.players)
 		if(playerStruct.player == player)
+		{
 			playerStruct.isOnHardpoint = true
+			player.SetPlayerNetInt( "playerHardpointID", hardpoint.hardpoint.GetHardpointID() )
+		}
 }
 
 void function OnHardpointLeft( entity trigger, entity player )
@@ -661,7 +684,10 @@ void function OnHardpointLeft( entity trigger, entity player )
 		FindAndRemove( hardpoint.militiaCappers, player )
 	foreach(CP_PlayerStruct playerStruct in file.players)
 		if(playerStruct.player == player)
+		{
 			playerStruct.isOnHardpoint = false
+			player.SetPlayerNetInt( "playerHardpointID", 69 ) // an arbitary number to remove the hud from the player
+		}
 }
 
 string function CaptureStateToString( int state )
@@ -675,6 +701,7 @@ string function CaptureStateToString( int state )
 		case CAPTURE_POINT_STATE_CAPTURED:
 			return "CAPTURED"
 		case CAPTURE_POINT_STATE_AMPING:
+		case 8:
 			return "AMPING"
 		case CAPTURE_POINT_STATE_AMPED:
 			return "AMPED"
@@ -702,4 +729,27 @@ string function GetHardpointGroup(entity hardpoint) //Hardpoint Entity B on Home
 		return "B"
 
 	return string(hardpoint.kv.hardpointGroup)
+}
+
+void function UpdatePlayerScoreForChallenge(entity player,int assaultpoints = 0,int defensepoints = 0)
+{
+	if(player in file.playerAssaultPoints)
+	{
+		file.playerAssaultPoints[player] += assaultpoints
+		if( file.playerAssaultPoints[player] >= 1000 && !HasPlayerCompletedMeritScore(player) )
+		{
+			AddPlayerScore(player,"ChallengeCPAssault")
+			SetPlayerChallengeMeritScore(player)
+		}
+	}
+	
+	if(player in file.playerDefensePoints)
+	{
+		file.playerDefensePoints[player] += defensepoints
+		if( file.playerDefensePoints[player] >= 500 && !HasPlayerCompletedMeritScore(player) )
+		{
+			AddPlayerScore(player,"ChallengeCPDefense")
+			SetPlayerChallengeMeritScore(player)
+		}
+	}
 }

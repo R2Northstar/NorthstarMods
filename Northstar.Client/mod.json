@@ -1,9 +1,14 @@
 {
 	"Name": "Northstar.Client",
 	"Description": "Various ui and client changes to fix bugs and add better support for mods",
-	"Version": "1.9.0",
+	"Version": "1.19.0",
 	"LoadPriority": 0,
+	"InitScript": "cl_northstar_client_init.nut",
 	"ConVars": [
+		{
+			"Name": "allow_mod_auto_download",
+			"DefaultValue": "0"
+		},
 		{
 			"Name": "filter_hide_empty",
 			"DefaultValue": "0"
@@ -31,15 +36,22 @@
 		{
 			"Name": "filter_map_hide_locked",
 			"DefaultValue": "0"
+		},
+		{
+			"Name": "modlist_show_convars",
+			"DefaultValue": "0",
+			"Flags": "ARCHIVE_PLAYERPROFILE"
+		},
+		{
+			"Name": "modlist_reverse",
+			"DefaultValue": "0",
+			"Flags": "ARCHIVE_PLAYERPROFILE"
 		}
 	],
 	"Scripts": [
 		{
 			"Path": "_custom_codecallbacks_client.gnut",
-			"RunOn": "CLIENT",
-			"ClientCallback": {
-				"Before": "NSSetupChathooksClient"
-			}
+			"RunOn": "CLIENT"
 		},
 		{
 			"Path": "client/cl_chat.gnut",
@@ -75,6 +87,10 @@
 			}
 		},
 		{
+			"Path": "ui/menu_ns_moddownload.nut",
+			"RunOn": "UI"
+		},
+		{
 			"Path": "ui/menu_ns_serverbrowser.nut",
 			"RunOn": "UI",
 			"UICallback": {
@@ -105,6 +121,28 @@
 		{
 			"Path": "ui/controller_prompts.nut",
 			"RunOn": "UI"
+		},
+		{
+			"Path": "ui/ns_slider.nut",
+			"RunOn": "UI"
+		},
+		{
+			"Path": "ui/menu_mod_settings.nut",
+			"RunOn": "UI",
+			"UICallback":{
+				"Before": "AddModSettingsMenu"
+      		}
+    	},
+    	{
+			"Path": "ui/ui_mouse_capture.nut",
+			"RunOn": "UI"
+		},
+		{
+			"Path": "ui/atlas_auth.nut",
+			"RunOn": "UI",
+			"UICallback": {
+				"After": "AtlasAuthDialog"
+			}
 		}
 	],
 	"Localisation": [

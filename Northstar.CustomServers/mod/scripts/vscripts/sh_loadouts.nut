@@ -785,7 +785,7 @@ bool function IsSettingPrimeTitanWithoutSetFile( entity player, string loadoutTy
 
 bool function SkipItemLockedCheck( entity player, string ref, string parentRef, string loadoutProperty ) //Hack: Skip entitlement related unlock checks for now. Can fail.
 {
-	if ( DevEverythingUnlocked() )
+	if ( DevEverythingUnlocked( player ) )
 		return true
 
 	//if ( IsItemInEntitlementUnlock( ref ) && IsLobby()  ) //TODO: Look into restricting this to lobby only? But entitlement checks can fail randomly...
@@ -2379,10 +2379,8 @@ bool function IsValidPilotLoadoutProperty( string propertyName )
 		case "weapon3Mod2":
 		case "weapon3Mod3":
 		case "ordnance":
-		case "special":
 		case "passive1":
 		case "passive2":
-		case "melee":
 		case "skinIndex":
 		case "camoIndex":
 		case "primarySkinIndex":
@@ -2403,7 +2401,6 @@ bool function IsValidTitanLoadoutProperty( string propertyName )
 	{
 		case "name":
 		case "titanClass":
-		case "setFile":
 		case "primaryMod":
 		case "special":
 		case "antirodeo":
@@ -3266,6 +3263,24 @@ string function Loadouts_GetSetFileForRequestedClass( entity player )
 		return loadout.race
 	}
 
+	#if DEV	
+	// these are #if DEV'd until they work as their function names describe they should
+	// atm these only exist to allow the #if DEV'd calls to them for bot code in this file to compile on retail
+	// bots don't work in retail at all, so this doesn't matter for us really, but these should be unDEV'd and api'd properly once they are functional
+	
+	PilotLoadoutDef function GetRandomPilotLoadout()
+	{
+		PilotLoadoutDef loadout
+		return loadout
+	}
+
+	TitanLoadoutDef function GetRandomTitanLoadout( string setFile )
+	{
+		TitanLoadoutDef loadout
+		return loadout
+	}
+	#endif
+
 	bool function Loadouts_TryGivePilotLoadout( entity player )
 	{
 		if ( !Loadouts_CanGivePilotLoadout( player ) )
@@ -3978,7 +3993,7 @@ bool function IsValidTitanLoadoutIndex( int loadoutIndex )
 
 bool function HasPrimeToMatchExecutionType( entity player, int itemType )
 {
-	if ( DevEverythingUnlocked() )
+	if ( DevEverythingUnlocked( player ) )
 		return true
 
 	switch( itemType )

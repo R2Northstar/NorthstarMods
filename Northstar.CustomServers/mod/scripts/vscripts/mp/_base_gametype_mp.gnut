@@ -19,6 +19,8 @@ global function ShouldEntTakeDamage_SPMP
 global function GetTitanBuildTime
 global function TitanPlayerHotDropsIntoLevel
 
+global function SetRecalculateRespawnAsTitanStartPointCallback
+
 struct {
 	bool killcamsEnabled = true
 	bool playerDeathsHidden = false
@@ -26,6 +28,8 @@ struct {
 	
 	entity intermissionCamera
 	array<entity> specCams 
+	
+	entity functionref( entity player, entity basePoint ) recalculateRespawnAsTitanStartPointCallback
 } file
 
 void function BaseGametype_Init_MPSP()
@@ -39,6 +43,8 @@ void function BaseGametype_Init_MPSP()
 	AddCallback_OnPlayerKilled( CheckForAutoTitanDeath )
 	RegisterSignal( "PlayerRespawnStarted" )
 	RegisterSignal( "KillCamOver" )
+
+	FlagInit( "WeaponDropsAllowed", true )
 }
 
 void function SetIntermissionCamera( entity camera )
@@ -129,6 +135,15 @@ void function CodeCallback_OnClientConnectionCompleted( entity player )
 	{
 		Lobby_OnClientConnectionCompleted( player )
 		return
+	}
+	else if ( !IsFDMode( GAMETYPE ) )
+	{
+		// reset this for non-fd modes
+		// for some reason the postgame scoreboard uses this to
+		// determine if it should show the FD aegis rank one
+		// FD should either set this in their own mode, or add an else
+		// to this if statement when it releases
+		player.SetPersistentVar( "lastFDTitanRef", "" )
 	}
 
 	player.hasConnected = true
@@ -270,6 +285,9 @@ void function PostDeathThread_MP( entity player, var damageInfo ) // based on ga
 	
 	ClearRespawnAvailable( player )
 
+	// reset this so that we default to pilot spawn
+	player.SetPersistentVar( "spawnAsTitan", false )
+
 	OnThreadEnd( function() : ( player )
 	{
 		if ( !IsValid( player ) )
@@ -279,6 +297,10 @@ void function PostDeathThread_MP( entity player, var damageInfo ) // based on ga
 	})
 
 	entity attacker = DamageInfo_GetAttacker( damageInfo )
+	entity inflictor = DamageInfo_GetInflictor( damageInfo )
+	int eHandle = attacker.GetEncodedEHandle()
+	if ( inflictor && ShouldTryUseProjectileReplay( player, attacker, damageInfo, false ) )
+		eHandle = inflictor.GetEncodedEHandle()
 	int methodOfDeath = DamageInfo_GetDamageSourceIdentifier( damageInfo )
 
 	table<int, bool> alreadyAssisted
@@ -298,6 +320,9 @@ void function PostDeathThread_MP( entity player, var damageInfo ) // based on ga
 				attackerInfo.attacker.AddToPlayerGameStat( PGS_ASSISTS, 1 )
 			}
 		}
+
+		if( attacker.IsPlayer() )	
+			Highlight_SetDeathRecapHighlight( attacker, "killer_outline" )
 	}
 
 	player.p.rematchOrigin = player.p.deathOrigin
@@ -355,7 +380,7 @@ void function PostDeathThread_MP( entity player, var damageInfo ) // based on ga
 		if ( "respawnTime" in attacker.s )
 			respawnTime = Time() - expect float ( attacker.s.respawnTime )
 		
-		thread PlayerWatchesKillReplayWrapper( player, attacker, respawnTime, timeOfDeath, beforeTime, replayTracker )		
+		thread PlayerWatchesKillReplayWrapper( player, attacker, eHandle, respawnTime, timeOfDeath, beforeTime, replayTracker )		
 	}
 
 	player.SetPlayerSettings( "spectator" ) // prevent a crash with going from titan => pilot on respawn
@@ -372,6 +397,13 @@ void function PostDeathThread_MP( entity player, var damageInfo ) // based on ga
 		SetRespawnAvailable( player )
 		
 		wait respawnDelay
+
+		int forceRespawn = GetCurrentPlaylistVarInt( "player_force_respawn", -1 )
+
+		// -1 is disabled, anything over is the time we wait in seconds
+		// before respawning the player
+		if( forceRespawn >= 0 )
+			thread ForceRespawnMeSignalAfterDelay( player, forceRespawn )
 				
 		player.WaitSignal( "RespawnMe" ) // set in base_gametype: ClientCommand_RespawnPlayer
 		
@@ -391,7 +423,22 @@ void function PostDeathThread_MP( entity player, var damageInfo ) // based on ga
 	}
 }
 
-void function PlayerWatchesKillReplayWrapper( entity player, entity attacker, float timeSinceAttackerSpawned, float timeOfDeath, float beforeTime, table replayTracker )
+// idk if this is a good delay or if it matches vanilla
+void function ForceRespawnMeSignalAfterDelay( entity player, int delay = 5 )
+{
+	player.EndSignal( "RespawnMe" )
+	player.EndSignal( "OnDestroy" )
+
+	if( player.IsWatchingKillReplay() )
+		player.WaitSignal( "KillCamOver" )
+
+	wait delay
+
+	printt( format( "Forcing player respawn for player %s (took >%d seconds to respawn)", player.GetPlayerName(), delay ) )
+	player.Signal( "RespawnMe" )
+}
+
+void function PlayerWatchesKillReplayWrapper( entity player, entity attacker, int eHandle, float timeSinceAttackerSpawned, float timeOfDeath, float beforeTime, table replayTracker )
 {
 	player.EndSignal( "RespawnMe" )
 	player.EndSignal( "OnRespawned" )
@@ -414,7 +461,7 @@ void function PlayerWatchesKillReplayWrapper( entity player, entity attacker, fl
 	})
 	
 	player.SetPredictionEnabled( false )
-	PlayerWatchesKillReplay( player, attacker.GetEncodedEHandle(), attacker.GetIndexForEntity(), timeSinceAttackerSpawned, timeOfDeath, beforeTime, replayTracker )
+	PlayerWatchesKillReplay( player, eHandle, attacker.GetIndexForEntity(), timeSinceAttackerSpawned, timeOfDeath, beforeTime, replayTracker )
 }
 
 void function DecideRespawnPlayer( entity player )
@@ -424,15 +471,24 @@ void function DecideRespawnPlayer( entity player )
 
 void function RespawnAsPilot( entity player )
 {
+	// respawn crash exploit hotfix
+	if(IsAlive( player )) return
+
 	player.RespawnPlayer( FindSpawnPoint( player, false, ( ShouldStartSpawn( player ) || Flag( "ForceStartSpawn" ) ) && !IsFFAGame() ) )
 }
 
 void function RespawnAsTitan( entity player, bool manualPosition = false )
 {
+	// respawn crash exploit hotfix
+	if(IsAlive( player )) return
+
 	player.Signal( "PlayerRespawnStarted" )
 
 	player.isSpawning = true
 	entity spawnpoint = FindSpawnPoint( player, true, ( ShouldStartSpawn( player ) || Flag( "ForceStartSpawn" ) ) && !IsFFAGame() )
+
+	if ( file.recalculateRespawnAsTitanStartPointCallback != null )
+		spawnpoint = file.recalculateRespawnAsTitanStartPointCallback( player, spawnpoint )
 
  	TitanLoadoutDef titanLoadout = GetTitanLoadoutForPlayer( player )
 	
@@ -447,7 +503,20 @@ void function RespawnAsTitan( entity player, bool manualPosition = false )
 	AddCinematicFlag( player, CE_FLAG_CLASSIC_MP_SPAWNING ) // hide hud
 	
 	// do titanfall scoreevent
-	AddPlayerScore( player, "Titanfall", player )
+	if ( !level.firstTitanfall )
+	{
+		AddPlayerScore( player, "FirstTitanfall", player )
+
+		#if HAS_STATS
+		UpdatePlayerStat( player, "misc_stats", "titanFallsFirst" )
+		#endif
+
+		level.firstTitanfall = true
+	}
+	else
+	{
+		AddPlayerScore( player, "Titanfall", player )
+	}
 	
 	entity camera = CreateTitanDropCamera( spawnpoint.GetAngles(), < 90, titan.GetAngles().y, 0 > )
 	camera.SetParent( titan )
@@ -478,7 +547,7 @@ void function RespawnAsTitan( entity player, bool manualPosition = false )
 			titan.Destroy() // pilotbecomestitan leaves an npc titan that we need to delete
 		else
 			RespawnAsPilot( player ) // this is 100% an edgecase, just avoid softlocking if we ever hit it in playable gamestates
-			
+		
 		camera.Fire( "Disable", "!activator", 0, player )
 		camera.Destroy()
 	})
@@ -487,6 +556,7 @@ void function RespawnAsTitan( entity player, bool manualPosition = false )
 		
 	player.RespawnPlayer( null ) // spawn player as pilot so they get their pilot loadout on embark
 	player.SetOrigin( titan.GetOrigin() )
+	ClearTitanAvailable( player ) // titanfall succeed, clear titan availability
 	
 	// don't make player titan when entity batteryContainer is not valid.
 	// This will prevent a servercrash that sometimes occur when evac is disabled and somebody is calling a titan in the defeat screen.
@@ -555,10 +625,19 @@ void function CheckForAutoTitanDeath( entity victim, entity attacker, var damage
 	}
 }
 
+void function SetRecalculateRespawnAsTitanStartPointCallback( entity functionref( entity player, entity basePoint ) callbackFunc )
+{
+	file.recalculateRespawnAsTitanStartPointCallback = callbackFunc
+}
+
 // stuff to change later
 
 bool function ShouldEntTakeDamage_SPMP( entity ent, var damageInfo )
 {
+	// dropships are immune to being crushed
+	if ( ( IsDropship( ent ) || IsEvacDropship( ent ) ) && IsTitanCrushDamage( damageInfo ) )
+		return false
+
 	return true
 }
 

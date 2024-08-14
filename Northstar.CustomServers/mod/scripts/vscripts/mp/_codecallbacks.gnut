@@ -21,6 +21,8 @@ global function SetTitanMeterGainScale
 
 #if MP
 global function CodeCallback_OnServerAnimEvent
+global function CodeCallback_WeaponDropped
+global function AddCallback_OnWeaponDropped
 #endif
 
 struct AccumulatedDamageData
@@ -43,6 +45,7 @@ struct
 	]
 
 	table<entity, AccumulatedDamageData> playerAccumulatedDamageData
+	array< void functionref( entity ) > weaponDroppedCallbacks
 } file
 
 void function CodeCallback_Init()
@@ -283,9 +286,23 @@ void function CodeCallback_DamagePlayerOrNPC( entity ent, var damageInfo )
 		return
 
 	RunClassDamageFinalCallbacks( ent, damageInfo )
+
 	#if VERBOSE_DAMAGE_PRINTOUTS
 		printt( "    after class damage final callbacks:", DamageInfo_GetDamage( damageInfo ) )
 	#endif
+	if ( DamageInfo_GetDamage( damageInfo ) == 0 )
+		return
+
+	// Added via AddEntityCallback_OnFinalDamaged
+	foreach ( callbackFunc in ent.e.entFinalDamageCallbacks )
+	{
+		callbackFunc( ent, damageInfo )
+	}
+
+	#if VERBOSE_DAMAGE_PRINTOUTS
+		printt( "    afterAddEntityCallback_OnFinalDamaged callbacks:", DamageInfo_GetDamage( damageInfo ) )
+	#endif
+
 	if ( DamageInfo_GetDamage( damageInfo ) == 0 )
 		return
 
@@ -1015,5 +1032,27 @@ void function CodeCallback_OnServerAnimEvent( entity ent, string eventName )
 	}
 
 	PerfEnd( PerfIndexServer.CB_OnServerAnimEvent )
+}
+
+void function AddCallback_OnWeaponDropped( void functionref( entity ) callback ) 
+{
+	file.weaponDroppedCallbacks.append( callback )
+}
+
+void function CodeCallback_WeaponDropped( entity weapon )
+{
+	// shamelessly taken form SP
+	if ( !IsValid( weapon ) )
+		return
+
+	// Might look a bit hacky to put it here, but thats how SP does it
+	if ( !Flag( "WeaponDropsAllowed" ) )
+	{
+		weapon.Destroy()
+		return
+	}
+
+	foreach( callback in file.weaponDroppedCallbacks )
+		callback( weapon )
 }
 #endif // #if MP

@@ -81,8 +81,9 @@ void function InitMainMenuPanel()
 	headerIndex++
 	buttonIndex = 0
 	var multiplayerHeader = AddComboButtonHeader( comboStruct, headerIndex, "#MULTIPLAYER_ALLCAPS" )
-	file.mpButton = AddComboButton( comboStruct, headerIndex, buttonIndex++, "#MULTIPLAYER_LAUNCH" )
-	Hud_AddEventHandler( file.mpButton, UIE_CLICK, OnPlayMPButton_Activate )
+	// "Launch Multiplayer" button removed because we don't support vanilla yet :clueless:
+	//file.mpButton = AddComboButton( comboStruct, headerIndex, buttonIndex++, "#MULTIPLAYER_LAUNCH" )
+	//Hud_AddEventHandler( file.mpButton, UIE_CLICK, OnPlayMPButton_Activate )
 	file.fdButton = AddComboButton( comboStruct, headerIndex, buttonIndex++, "#MENU_LAUNCH_NORTHSTAR" )
 	Hud_AddEventHandler( file.fdButton, UIE_CLICK, OnPlayFDButton_Activate )
 	Hud_SetLocked( file.fdButton, true )
@@ -101,6 +102,10 @@ void function InitMainMenuPanel()
 		var videoButton = AddComboButton( comboStruct, headerIndex, buttonIndex++, "#VIDEO" )
 		Hud_AddEventHandler( videoButton, UIE_CLICK, AdvanceMenuEventHandler( GetMenu( "VideoMenu" ) ) )
 	#endif
+	
+	// MOD SETTINGS
+	var modSettingsButton = AddComboButton( comboStruct, headerIndex, buttonIndex++, "#MOD_SETTINGS" )
+	Hud_AddEventHandler( modSettingsButton, UIE_CLICK, AdvanceMenuEventHandler( GetMenu( "ModSettings" ) ) )
 
 	var spotlightLargeButton = Hud_GetChild( file.spotlightPanel, "SpotlightLarge" )
 	spotlightLargeButton.SetNavLeft( file.spButtons[0] )
@@ -165,7 +170,8 @@ void function OnShowMainMenuPanel()
 	#endif // PS4_PROG
 
 	UpdateSPButtons()
-	thread UpdatePlayButton( file.mpButton )
+	// dont try and update the launch multiplayer button, because it doesn't exist
+	//thread UpdatePlayButton( file.mpButton )
 	thread UpdatePlayButton( file.fdButton )
 	thread MonitorTrialVersionChange()
 
@@ -455,7 +461,8 @@ void function UpdatePlayButton( var button )
 			message = ""
 		}
 
-		ComboButton_SetText( file.mpButton, buttonText )
+		// dont try and update the launch multiplayer button, because it doesn't exist
+		//ComboButton_SetText( file.mpButton, buttonText )
 
 		ComboButton_SetText( file.fdButton, "#MENU_LAUNCH_NORTHSTAR" )
 		//Hud_SetEnabled( file.fdButton, false )
@@ -527,7 +534,6 @@ void function OnPlayFDButton_Activate( var button ) // repurposed for launching 
 {
 	if ( !Hud_IsLocked( button ) )
 	{
-		SetConVarBool( "ns_is_modded_server", true )
 		SetConVarString( "communities_hostname", "" ) // disable communities due to crash exploits that are still possible through it
 		NSTryAuthWithLocalServer()
 		thread TryAuthWithLocalServer()
@@ -571,12 +577,12 @@ void function TryAuthWithLocalServer()
 	{
 		CloseAllDialogs()
 
-		var reason = NSGetAuthFailReason()
+		string reason = NSGetAuthFailReason()
 
 		DialogData dialogData
 		dialogData.image = $"ui/menu/common/dialog_error"
 		dialogData.header = "#ERROR"
-		dialogData.message = Localize("#NS_SERVERBROWSER_CONNECTIONFAILED") + "\nERROR: " + reason  + "\n" + Localize("#" + reason)
+		dialogData.message = reason
 
 		AddDialogButton( dialogData, "#OK", null )
 		OpenDialog( dialogData )
@@ -597,7 +603,6 @@ void function OnPlayMPButton_Activate( var button )
 	{
 		Lobby_SetAutoFDOpen( false )
 		// Lobby_SetFDMode( false )
-		SetConVarBool( "ns_is_modded_server", false )
 		thread file.mpButtonActivateFunc()
 	}
 }

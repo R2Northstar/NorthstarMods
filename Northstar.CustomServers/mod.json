@@ -1,18 +1,9 @@
 {
 	"Name": "Northstar.CustomServers",
 	"Description": "Attempts to recreate the behaviour of vanilla Titanfall 2 servers, as well as changing some scripts to allow better support for mods",
-	"Version": "1.9.0",
+	"Version": "1.19.0",
 	"LoadPriority": 0,
 	"ConVars": [
-		{
-			"Name": "ns_lobby_type",
-			"DefaultValue": "0"
-		},
-		{
-			"Name": "ns_is_modded_server",
-			"DefaultValue": "1",
-			"Flags": 8192
-		},
 		{
 			"Name": "ns_should_return_to_lobby",
 			"DefaultValue": "1"
@@ -20,7 +11,7 @@
 		{
 			"Name": "ns_allow_spectators",
 			"DefaultValue": "0",
-			"Flags": 8192
+			"Flags": "REPLICATED"
 		},
 		{
 			"Name": "ns_private_match_last_mode",
@@ -53,15 +44,17 @@
 		{
 			"Name": "ns_allow_kill_commands",
 			"DefaultValue": "0"
+		},
+		{
+			"Name": "ns_progression_enabled",
+			"DefaultValue": "0",
+			"Flags": "ARCHIVE_PLAYERPROFILE"
 		}
 	],
 	"Scripts": [
 		{
 			"Path": "_custom_codecallbacks.gnut",
-			"RunOn": "SERVER",
-			"ServerCallback": {
-				"Before": "NSSetupChathooksServer"
-			}
+			"RunOn": "SERVER"
 		},
 		{
 			"Path": "_northstar_cheatcommands.nut",
@@ -104,10 +97,7 @@
 		},
 		{
 			"Path": "sh_server_to_client_stringcommands.gnut",
-			"RunOn": "CLIENT || SERVER",
-			"ClientCallback": {
-				"After": "ServerToClientStringCommands_Init"
-			}
+			"RunOn": "CLIENT || SERVER"
 		},
 		{
 			"Path": "gamemodes/_gamemode_fra.nut",
@@ -148,6 +138,26 @@
 			"RunOn": "SERVER && MP",
 			"ServerCallback": {
 				"Before": "RespawnProtection_Init"
+			}
+		},
+		{
+			"Path": "/ai/_ai_turret_sentry.gnut",
+			"RunOn": "SERVER && MP",
+			"ServerCallback": {
+				"After": "AiTurretSentry_Init"
+			}
+		},
+		{
+			"Path": "sh_progression.nut",
+			"RunOn": "UI || SERVER || CLIENT",
+			"ServerCallback": {
+				"Before": "Progression_Init"
+			},
+			"ClientCallback": {
+				"Before": "Progression_Init"
+			},
+			"UICallback": {
+				"Before": "Progression_Init"
 			}
 		}
 	]
