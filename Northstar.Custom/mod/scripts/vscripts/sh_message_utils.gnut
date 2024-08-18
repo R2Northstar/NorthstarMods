@@ -202,24 +202,24 @@ int function NSGetPlayerResponse( entity player )
 	return server.playerPollResponses[ player ] - 1
 }
 
-string function NSCreateChoiceOnAllPlayers( string option1, string option2, float duration )
+string function NSCreateChoiceOnAllPlayers( array<string> options, float duration )
 {
 	string key = UniqueString()
 	foreach( player in GetPlayerArray() )
 	{
 		if ( !IsValid( player ) )
 			continue
-		NSCreateChoiceOnPlayer( player, option1, option2, duration, key )
+		NSCreateChoiceOnPlayer( player, options, duration, key )
 	}
 	return key
 }
 
-string function NSCreateChoiceOnPlayer( entity player, string option1, string option2, float duration, string key = "" )
+string function NSCreateChoiceOnPlayer( entity player, array<string> options, float duration, string key = "" )
 {
 	string id = key != "" ? key : UniqueString()
 
-	ServerToClientStringCommand( player, "ServerHUDMessagePut " + eDataType.CHOICE_OPTION + " " + option1 )
-	ServerToClientStringCommand( player, "ServerHUDMessagePut " + eDataType.CHOICE_OPTION + " " + option2 )
+	ServerToClientStringCommand( player, "ServerHUDMessagePut " + eDataType.CHOICE_OPTION + " " + options[0] )
+	ServerToClientStringCommand( player, "ServerHUDMessagePut " + eDataType.CHOICE_OPTION + " " + options[1] )
 	ServerToClientStringCommand( player, "ServerHUDMessagePut " + eDataType.CHOICE_DURATION + " " + duration )
 	ServerToClientStringCommand( player, "ServerHUDMessagePut " + eDataType.CHOICE_KEY + " " + id )
 
