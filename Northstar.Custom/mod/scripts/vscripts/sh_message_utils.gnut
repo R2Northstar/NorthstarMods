@@ -216,6 +216,11 @@ string function NSCreateChoiceOnAllPlayers( array<string> options, float duratio
 
 string function NSCreateChoiceOnPlayer( entity player, array<string> options, float duration, string key = "" )
 {
+	if ( ![1, 2].contains( options.len() ) )
+	{
+		throw "NSCreateChoiceOnPlayer expected one or two options (got " + options.len() + ")."
+	}
+
 	string id = key != "" ? key : UniqueString()
 
 	ServerToClientStringCommand( player, "ServerHUDMessagePut " + eDataType.CHOICE_OPTION + " " + options[0] )
