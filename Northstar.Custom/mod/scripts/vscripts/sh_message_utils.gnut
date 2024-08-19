@@ -16,6 +16,18 @@ global function NSCreateStatusMessageOnPlayer
 global function NSEditStatusMessageOnPlayer
 global function NSDeleteStatusMessageOnPlayer
 
+global enum ePlayerChoiceStatus
+{
+	UNKNOWN,
+	NOT_FOUND,				// no choice matching the key was found
+	NOT_FOUND_FOR_PLAYER,	// choice exists, but the player was not proposed with it
+
+	ONGOING,				// choice is currently proposed to the player, whom hasn't answered it yet
+	NOT_ANSWERED,			// player did not answer the choice (RUI timed out)
+	CHOICE_1,				// player selected first option
+	CHOICE_2				// player selected second option
+}
+
 struct
 {
 	table<entity,int> playerPollResponses
@@ -144,9 +156,28 @@ bool function ClientCommand_ChoiceRespond( entity player, array<string> args )
 	if( args.len() != 2 )
 		return false
 
-	int responseValue = args[0].tointeger()
-	string key = args[1]
+	// todo: what if args[0] is not an integer?
+	int responseCode = args[0].tointeger()
+	int responseValue = ePlayerChoiceStatus.NOT_FOUND
+	switch( responseCode )
+	{
+		case 0:
+			responseValue = ePlayerChoiceStatus.NOT_ANSWERED
+			break
+		case 1:
+			responseValue = ePlayerChoiceStatus.CHOICE_1
+			break
+		case 2:
+			responseValue = ePlayerChoiceStatus.CHOICE_2
+			break
+		default:
+			// todo: test this usecase
+			print( format( "Player %s sent incorrect choice response value (was %s).", player.GetPlayerName(), responseCode ) )
+			responseValue = ePlayerChoiceStatus.UNKNOWN
+			break
+	}
 
+	string key = args[1]
 	if ( !( key in server.playerChoiceResponses ) || !( player in server.playerChoiceResponses[key] ) )
 		return false
 
@@ -230,7 +261,7 @@ string function NSCreateChoiceOnPlayer( entity player, array<string> options, fl
 
 	if( !( id in server.playerChoiceResponses ) )
 		server.playerChoiceResponses[id] <- {}
-	server.playerChoiceResponses[id][player] <- -1 // Reset choice response table entry
+	server.playerChoiceResponses[id][player] <- ePlayerChoiceStatus.ONGOING // Reset choice response table entry
 	ServerToClientStringCommand( player, "ServerHUDMessageShow " + eMessageType.CHOICE )
 
 	return id
@@ -239,10 +270,10 @@ string function NSCreateChoiceOnPlayer( entity player, array<string> options, fl
 int function NSGetPlayerChoiceResponse( entity player, string key )
 {
 	if( !( key in server.playerChoiceResponses ) )
-		return -3
+		return ePlayerChoiceStatus.NOT_FOUND
 
 	if( !( player in server.playerChoiceResponses[key] ) )
-		return -2
+		return ePlayerChoiceStatus.NOT_FOUND_FOR_PLAYER
 
 	return server.playerChoiceResponses[ key ][ player ]
 }
