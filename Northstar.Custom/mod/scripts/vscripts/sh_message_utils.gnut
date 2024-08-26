@@ -19,13 +19,13 @@ global function NSDeleteStatusMessageOnPlayer
 global enum ePlayerChoiceStatus
 {
 	UNKNOWN,
-	NOT_FOUND,				// no choice matching the key was found
-	NOT_FOUND_FOR_PLAYER,	// choice exists, but the player was not proposed with it
+	NOT_FOUND,              // no choice matching the key was found
+	NOT_FOUND_FOR_PLAYER,   // choice exists, but the player was not proposed with it
 
-	ONGOING,				// choice is currently proposed to the player, whom hasn't answered it yet
-	NOT_ANSWERED,			// player did not answer the choice (RUI timed out)
-	CHOICE_1,				// player selected first option
-	CHOICE_2				// player selected second option
+	ONGOING,                // choice is currently proposed to the player, whom hasn't answered it yet
+	NOT_ANSWERED,           // player did not answer the choice (RUI timed out)
+	CHOICE_1,               // player selected first option
+	CHOICE_2                // player selected second option
 }
 
 struct
