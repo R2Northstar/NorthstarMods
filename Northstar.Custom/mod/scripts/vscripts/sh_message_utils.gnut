@@ -255,7 +255,11 @@ string function NSCreateChoiceOnPlayer( entity player, array<string> options, fl
 	string id = key != "" ? key : UniqueString()
 
 	ServerToClientStringCommand( player, "ServerHUDMessagePut " + eDataType.CHOICE_OPTION + " " + options[0] )
-	ServerToClientStringCommand( player, "ServerHUDMessagePut " + eDataType.CHOICE_OPTION + " " + options[1] )
+	if ( options.len() > 1 )
+	{
+		ServerToClientStringCommand( player, "ServerHUDMessagePut " + eDataType.CHOICE_OPTION + " " + options[1] )
+	}
+
 	ServerToClientStringCommand( player, "ServerHUDMessagePut " + eDataType.CHOICE_DURATION + " " + duration )
 	ServerToClientStringCommand( player, "ServerHUDMessagePut " + eDataType.CHOICE_KEY + " " + id )
 
@@ -576,16 +580,30 @@ void function ShowChoice_Threaded()
 	RuiSetBool( rui, "choice1WasSelected", false )
 
 	// second answer
-	RuiSetString( rui, "text2", client.choice.option2 )
-	RuiSetBool( rui, "choice2Available", true )
+	bool hasSecondOption = client.choice.option2 != ""
+	if ( hasSecondOption )
+	{
+		RuiSetString( rui, "text2", client.choice.option2 )
+	}
+	RuiSetBool( rui, "choice2Available", hasSecondOption )
 	RuiSetBool( rui, "choice2WasSelected", false )
+	RuiSetInt( rui, "numChoices", hasSecondOption ? 2 : 1 )
 
 	client.choice.rui = rui
 	EmitSoundOnEntity( player, "UI_PlayerDialogue_Selection" )
 
 	// Wait for player answer
-	thread DialogueChoiceTimeout( player, "DialogueChoice1", "DialogueChoice2", introDuration + promptDuration )
-	table results = WaitSignal( player, "DialogueChoice1", "DialogueChoice2", "DialogueChoiceTimeout" )
+	table results
+	if ( hasSecondOption )
+	{
+		thread DialogueChoiceTimeout( player, introDuration + promptDuration, "DialogueChoice1", "DialogueChoice2" )
+		results = WaitSignal( player, "DialogueChoice1", "DialogueChoice2", "DialogueChoiceTimeout" )
+	}
+	else
+	{
+		thread DialogueChoiceTimeout( player, introDuration + promptDuration, "DialogueChoice1" )
+		results = WaitSignal( player, "DialogueChoice1", "DialogueChoiceTimeout" )
+	}
 
 	int choice = 0
 	if ( results.signal == "DialogueChoice1" )
@@ -612,12 +630,15 @@ void function ShowChoice_Threaded()
 	client.choice.key = ""
 }
 
-void function DialogueChoiceTimeout( entity player, string cancelTimeoutSignal_A, string cancelTimeoutSignal_B, float waitTime )
+void function DialogueChoiceTimeout( entity player, float waitTime, string cancelTimeoutSignal_A, string cancelTimeoutSignal_B = "")
 {
 	EndSignal( player, "OnDeath" )
 	EndSignal( player, "OnDestroy" )
 	EndSignal( player, cancelTimeoutSignal_A )
-	EndSignal( player, cancelTimeoutSignal_B )
+	if ( cancelTimeoutSignal_B != "")
+	{
+		EndSignal( player, cancelTimeoutSignal_B )
+	}
 
 	wait waitTime
 
