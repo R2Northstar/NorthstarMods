@@ -496,6 +496,10 @@ void function ResetFlag( entity flag )
 	flag.Signal( "ResetDropTimeout" )
 }
 
+//-----------------------------------------------------------------------------
+// Purpose: Check proximity for flag returns
+// Input  : flag - The flag entity
+//-----------------------------------------------------------------------------
 void function FlagProximityTracker( entity flag )
 {
 	flag.EndSignal( "OnDestroy" )
