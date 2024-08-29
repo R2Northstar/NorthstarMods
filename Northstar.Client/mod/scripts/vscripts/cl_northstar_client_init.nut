@@ -35,6 +35,7 @@ global struct ModInfo
 	int loadPriority = 0
 	bool enabled = false
 	bool requiredOnClient = false
+	bool isRemote
 	array<string> conVars = []
 }
 
