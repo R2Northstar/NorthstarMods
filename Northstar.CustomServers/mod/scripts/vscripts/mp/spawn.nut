@@ -41,7 +41,6 @@ struct {
 	array<NoSpawnArea> noSpawnAreas
 	string spawnpointGamemodeOverride
 	array< bool functionref( entity, int ) > customSpawnpointValidationRules
-	entity functionref( array<entity>, int ) spawnzoneRatingFunc
 	bool shouldCreateMinimapSpawnzones
 } file
 
@@ -56,14 +55,11 @@ struct {
 
 
 /*
-
-██████╗  █████╗ ███████╗███████╗    ███████╗██╗   ██╗███╗   ██╗ ██████╗████████╗██╗ ██████╗ ███╗   ██╗███████╗
-██╔══██╗██╔══██╗██╔════╝██╔════╝    ██╔════╝██║   ██║████╗  ██║██╔════╝╚══██╔══╝██║██╔═══██╗████╗  ██║██╔════╝
-██████╔╝███████║███████╗█████╗      █████╗  ██║   ██║██╔██╗ ██║██║        ██║   ██║██║   ██║██╔██╗ ██║███████╗
-██╔══██╗██╔══██║╚════██║██╔══╝      ██╔══╝  ██║   ██║██║╚██╗██║██║        ██║   ██║██║   ██║██║╚██╗██║╚════██║
-██████╔╝██║  ██║███████║███████╗    ██║     ╚██████╔╝██║ ╚████║╚██████╗   ██║   ██║╚██████╔╝██║ ╚████║███████║
-╚═════╝ ╚═╝  ╚═╝╚══════╝╚══════╝    ╚═╝      ╚═════╝ ╚═╝  ╚═══╝ ╚═════╝   ╚═╝   ╚═╝ ╚═════╝ ╚═╝  ╚═══╝╚══════╝
-
+██████   █████  ███████ ███████     ███████ ██    ██ ███    ██  ██████ ████████ ██  ██████  ███    ██ ███████ 
+██   ██ ██   ██ ██      ██          ██      ██    ██ ████   ██ ██         ██    ██ ██    ██ ████   ██ ██      
+██████  ███████ ███████ █████       █████   ██    ██ ██ ██  ██ ██         ██    ██ ██    ██ ██ ██  ██ ███████ 
+██   ██ ██   ██      ██ ██          ██      ██    ██ ██  ██ ██ ██         ██    ██ ██    ██ ██  ██ ██      ██ 
+██████  ██   ██ ███████ ███████     ██       ██████  ██   ████  ██████    ██    ██  ██████  ██   ████ ███████ 
 */
 
 void function Spawn_Init()
@@ -201,14 +197,11 @@ string function GetSpawnpointGamemodeOverride()
 
 
 /*
-
-███████╗██████╗  █████╗ ██╗    ██╗███╗   ██╗     ██████╗ ██████╗ ██████╗ ███████╗██████╗ ██╗███╗   ██╗ ██████╗ 
-██╔════╝██╔══██╗██╔══██╗██║    ██║████╗  ██║    ██╔═══██╗██╔══██╗██╔══██╗██╔════╝██╔══██╗██║████╗  ██║██╔════╝ 
-███████╗██████╔╝███████║██║ █╗ ██║██╔██╗ ██║    ██║   ██║██████╔╝██║  ██║█████╗  ██████╔╝██║██╔██╗ ██║██║  ███╗
-╚════██║██╔═══╝ ██╔══██║██║███╗██║██║╚██╗██║    ██║   ██║██╔══██╗██║  ██║██╔══╝  ██╔══██╗██║██║╚██╗██║██║   ██║
-███████║██║     ██║  ██║╚███╔███╔╝██║ ╚████║    ╚██████╔╝██║  ██║██████╔╝███████╗██║  ██║██║██║ ╚████║╚██████╔╝
-╚══════╝╚═╝     ╚═╝  ╚═╝ ╚══╝╚══╝ ╚═╝  ╚═══╝     ╚═════╝ ╚═╝  ╚═╝╚═════╝ ╚══════╝╚═╝  ╚═╝╚═╝╚═╝  ╚═══╝ ╚═════╝ 
-
+███████ ██████   █████  ██     ██ ███    ██      ██████  ██████  ██████  ███████ ██████  ██ ███    ██  ██████  
+██      ██   ██ ██   ██ ██     ██ ████   ██     ██    ██ ██   ██ ██   ██ ██      ██   ██ ██ ████   ██ ██       
+███████ ██████  ███████ ██  █  ██ ██ ██  ██     ██    ██ ██████  ██   ██ █████   ██████  ██ ██ ██  ██ ██   ███ 
+     ██ ██      ██   ██ ██ ███ ██ ██  ██ ██     ██    ██ ██   ██ ██   ██ ██      ██   ██ ██ ██  ██ ██ ██    ██ 
+███████ ██      ██   ██  ███ ███  ██   ████      ██████  ██   ██ ██████  ███████ ██   ██ ██ ██   ████  ██████  
 */
 
 entity function FindSpawnPoint( entity player, bool isTitan, bool useStartSpawnpoint )
@@ -350,14 +343,11 @@ bool function IsSpawnpointValid( entity spawnpoint, int team )
 
 
 /*
-
-██████╗  ██████╗ ██╗███╗   ██╗████████╗    ██████╗  █████╗ ████████╗██╗███╗   ██╗ ██████╗ 
-██╔══██╗██╔═══██╗██║████╗  ██║╚══██╔══╝    ██╔══██╗██╔══██╗╚══██╔══╝██║████╗  ██║██╔════╝ 
-██████╔╝██║   ██║██║██╔██╗ ██║   ██║       ██████╔╝███████║   ██║   ██║██╔██╗ ██║██║  ███╗
-██╔═══╝ ██║   ██║██║██║╚██╗██║   ██║       ██╔══██╗██╔══██║   ██║   ██║██║╚██╗██║██║   ██║
-██║     ╚██████╔╝██║██║ ╚████║   ██║       ██║  ██║██║  ██║   ██║   ██║██║ ╚████║╚██████╔╝
-╚═╝      ╚═════╝ ╚═╝╚═╝  ╚═══╝   ╚═╝       ╚═╝  ╚═╝╚═╝  ╚═╝   ╚═╝   ╚═╝╚═╝  ╚═══╝ ╚═════╝ 
-
+██████   ██████  ██ ███    ██ ████████     ██████   █████  ████████ ██ ███    ██  ██████  
+██   ██ ██    ██ ██ ████   ██    ██        ██   ██ ██   ██    ██    ██ ████   ██ ██       
+██████  ██    ██ ██ ██ ██  ██    ██        ██████  ███████    ██    ██ ██ ██  ██ ██   ███ 
+██      ██    ██ ██ ██  ██ ██    ██        ██   ██ ██   ██    ██    ██ ██  ██ ██ ██    ██ 
+██       ██████  ██ ██   ████    ██        ██   ██ ██   ██    ██    ██ ██   ████  ██████  
 */
 
 void function RateSpawnpoints_Generic( int checkClass, array<entity> spawnpoints, int team, entity player )
@@ -410,14 +400,11 @@ void function RateSpawnpoints_Frontline( int checkClass, array<entity> spawnpoin
 
 
 /*
-
-███████╗██████╗  █████╗ ██╗    ██╗███╗   ██╗███████╗ ██████╗ ███╗   ██╗███████╗███████╗
-██╔════╝██╔══██╗██╔══██╗██║    ██║████╗  ██║╚══███╔╝██╔═══██╗████╗  ██║██╔════╝██╔════╝
-███████╗██████╔╝███████║██║ █╗ ██║██╔██╗ ██║  ███╔╝ ██║   ██║██╔██╗ ██║█████╗  ███████╗
-╚════██║██╔═══╝ ██╔══██║██║███╗██║██║╚██╗██║ ███╔╝  ██║   ██║██║╚██╗██║██╔══╝  ╚════██║
-███████║██║     ██║  ██║╚███╔███╔╝██║ ╚████║███████╗╚██████╔╝██║ ╚████║███████╗███████║
-╚══════╝╚═╝     ╚═╝  ╚═╝ ╚══╝╚══╝ ╚═╝  ╚═══╝╚══════╝ ╚═════╝ ╚═╝  ╚═══╝╚══════╝╚══════╝
-
+███████ ██████   █████  ██     ██ ███    ██ ███████  ██████  ███    ██ ███████ ███████ 
+██      ██   ██ ██   ██ ██     ██ ████   ██    ███  ██    ██ ████   ██ ██      ██      
+███████ ██████  ███████ ██  █  ██ ██ ██  ██   ███   ██    ██ ██ ██  ██ █████   ███████ 
+     ██ ██      ██   ██ ██ ███ ██ ██  ██ ██  ███    ██    ██ ██  ██ ██ ██           ██ 
+███████ ██      ██   ██  ███ ███  ██   ████ ███████  ██████  ██   ████ ███████ ███████ 
 */
 
 void function ResetSpawnzones()
@@ -436,11 +423,6 @@ void function AddSpawnZoneTrigger( entity trigger )
 {
 	spawnZoneProperties zoneProperties
 	mapSpawnZones[trigger] <- zoneProperties
-}
-
-void function SetSpawnZoneRatingFunc( entity functionref( array<entity>, int ) ratingFunc )
-{
-	file.spawnzoneRatingFunc = ratingFunc
 }
 
 bool function TeamHasDirtySpawnzone( int team )
@@ -487,9 +469,6 @@ void function CreateTeamSpawnZoneEntity( entity spawnzone, int team )
 
 void function RateSpawnpoints_SpawnZones( int checkClass, array<entity> spawnpoints, int team, entity player )
 {
-	if ( file.spawnzoneRatingFunc == null )
-		file.spawnzoneRatingFunc = DecideSpawnZone_Generic
-
 	if ( ShouldStartSpawn( player ) )
 	{
 		RateSpawnpoints_Generic( checkClass, spawnpoints, team, player )
@@ -500,7 +479,7 @@ void function RateSpawnpoints_SpawnZones( int checkClass, array<entity> spawnpoi
 	foreach ( zone, zoneProperties in mapSpawnZones )
 		zoneTriggers.append( zone )
 	
-	entity spawnzone = file.spawnzoneRatingFunc( zoneTriggers, player.GetTeam() )	
+	entity spawnzone = DecideSpawnZone_Generic( zoneTriggers, player.GetTeam() )	
 	if ( !IsValid( spawnzone ) )
 	{
 		RateSpawnpoints_Generic( checkClass, spawnpoints, team, player )
