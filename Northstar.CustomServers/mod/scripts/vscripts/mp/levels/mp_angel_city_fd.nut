@@ -61,7 +61,7 @@ void function initFrontierDefenseData()
 		WaveSpawn_InfantrySpawn( wave1, "MortarSpectre", < -4376, 1276, 168 >, 0.0, "", 0.6 )
 		WaveSpawn_InfantrySpawn( wave1, "MortarSpectre", < -4373, 2237, 40 >, 0.0, "", 0.6 )
 		WaveSpawn_InfantrySpawn( wave1, "MortarSpectre", < -4990, 345, 128 >, 0.0, "", 1.5 )
-		WaveSpawn_ReaperSpawn( wave1, "TickReaper", < -5093, 1171, 48 >, 90, "" )
+		WaveSpawn_ReaperSpawn( wave1, "TickReaper", < -4386, 4153, 51 >, -15, "" )
 	}
 	else
 	{
@@ -81,7 +81,7 @@ void function initFrontierDefenseData()
 		WaveSpawn_InfantrySpawn( wave1, "MortarSpectre", < -4376, 1276, 168 >, 0.0, "", 0.6 )
 		WaveSpawn_InfantrySpawn( wave1, "MortarSpectre", < -4373, 2237, 40 >, 0.0, "", 0.6 )
 		WaveSpawn_InfantrySpawn( wave1, "MortarSpectre", < -4990, 345, 128 >, 0.0, "", 1.5 )
-		WaveSpawn_ReaperSpawn( wave1, "TickReaper", < -5093, 1171, 48 >, 90, "" )
+		WaveSpawn_ReaperSpawn( wave1, "TickReaper", < -4386, 4153, 51 >, -15, "" )
 		WaveSpawn_WaitEnemyAliveAmount( wave1, 0 )
 		
 		WaveSpawn_InfantrySpawn( wave1, "PodGrunt", < 1329, 4456, 141 >, 0.0, "", 1.0 )
@@ -132,13 +132,13 @@ void function initFrontierDefenseData()
 	WaveSpawn_InfantrySpawn( wave2, "CloakDrone", < 1669, -1055, 2580 >, 0.0, "" )
 	WaveSpawn_WaitEnemyAliveAmount( wave2, 8 )
 	
-	WaveSpawn_ReaperSpawn( wave2, "TickReaper", < -1295, -289, 128 >, 90, "", 0.5 )
+	WaveSpawn_ReaperSpawn( wave2, "TickReaper", < 1311, -197, 128 >, 90, "", 0.5 )
 	WaveSpawn_TitanSpawn( wave2, "Monarch", < 2445, 2661, 56 >, 180, "", 2.5 )
-	WaveSpawn_ReaperSpawn( wave2, "TickReaper", < 3738, -1022, 213 >, 125, "", 0.5 )
+	WaveSpawn_ReaperSpawn( wave2, "TickReaper", < -3765, -676, 168 >, 90, "", 0.5 )
 	WaveSpawn_TitanSpawn( wave2, "Scorch", < -3985, -268, 168 >, 90, "", 2.5 )
-	WaveSpawn_ReaperSpawn( wave2, "TickReaper", < 905, -2813, 51 >, 131, "", 0.5 )
+	WaveSpawn_ReaperSpawn( wave2, "TickReaper", < -2092, 1463, 119 >, 90, "", 0.5 )
 	WaveSpawn_TitanSpawn( wave2, "Monarch", < -881, 692, 120 >, 90, "", 2.5 )
-	WaveSpawn_ReaperSpawn( wave2, "TickReaper", < -3765, -644, 168 >, 131, "", 0.3 )
+	WaveSpawn_ReaperSpawn( wave2, "TickReaper", < -428, 1298, 104 >, -45, "", 0.3 )
 	WaveSpawn_InfantrySpawn( wave2, "Stalker", < -1288, 217, 128 >, 0.0, "", 0.4 )
 	WaveSpawn_InfantrySpawn( wave2, "CloakDrone", < -1541, 794, 2580 >, 0.0, "", 0.5 )
 	WaveSpawn_InfantrySpawn( wave2, "CloakDrone", < 1669, -1055, 2580 >, 0.0, "", 0.5 )
@@ -157,10 +157,10 @@ void function initFrontierDefenseData()
 	WaveSpawn_InfantrySpawn( wave2, "CloakDrone", < 1490, 3130, 2580 >, 0.0, "" )
 	WaveSpawn_WaitEnemyAliveAmount( wave2, 8 )
 	
-	WaveSpawn_ReaperSpawn( wave2, "TickReaper", < -1295, -289, 128 >, 90, "", 1.2 )
+	WaveSpawn_ReaperSpawn( wave2, "TickReaper", < -1699, -390, 128 >, 90, "", 1.2 )
 	WaveSpawn_ReaperSpawn( wave2, "Reaper", < 3738, -1022, 213 >, 125, "", 0.8 )
-	WaveSpawn_ReaperSpawn( wave2, "TickReaper", < 905, -2813, 51 >, 131, "", 1.4 )
-	WaveSpawn_ReaperSpawn( wave2, "TickReaper", < -3765, -644, 168 >, 131, "", 2.5 )
+	WaveSpawn_ReaperSpawn( wave2, "TickReaper", < 495, 1588, 128 >, 45, "", 1.4 )
+	WaveSpawn_ReaperSpawn( wave2, "TickReaper", < 2206, 0, 120 >, 180, "", 2.5 )
 	WaveSpawn_InfantrySpawn( wave2, "PodGrunt", < 1490, 3130, 200 >, 0.0, "" )
 	
 	WaveSpawnEvents.append( wave2 )
@@ -241,13 +241,13 @@ void function initFrontierDefenseData()
 	WaveSpawn_TitanSpawn( wave4, "Mortar", < 1729, -2509, 128 >, 90, "", 1.0 )
 	WaveSpawn_TitanSpawn( wave4, "Mortar", < -3366, -652, 123 >, 90, "", 1.0 )
 	WaveSpawn_TitanSpawn( wave4, "Mortar", < 1714, 4170, 129 >, 180, "", 2.5 )
-	WaveSpawn_ReaperSpawn( wave4, "TickReaper", < -651, -2392, 76 >, 90, "", 0.5 )
+	WaveSpawn_ReaperSpawn( wave4, "TickReaper", < 308, 935, 103 >, 90, "", 0.5 )
 	WaveSpawn_ReaperSpawn( wave4, "Reaper", < 3941, -1996, 200 >, 180, "" )
 	WaveSpawn_WaitEnemyAliveAmount( wave4, 1 )
 	
-	WaveSpawn_ReaperSpawn( wave4, "TickReaper", < -1526, 6, 128 >, 90, "", 1.5 )
+	WaveSpawn_ReaperSpawn( wave4, "TickReaper", < -1263, -408, 130 >, 90, "", 1.5 )
 	WaveSpawn_TitanSpawn( wave4, "ArcTitan", < -881, 692, 120 >, 90, "", 1.5 )
-	WaveSpawn_ReaperSpawn( wave4, "TickReaper", < -3245, -1142, 103 >, 90, "", 1.5 )
+	WaveSpawn_ReaperSpawn( wave4, "TickReaper", < -2445, 2169, 128 >, 75, "", 1.5 )
 	WaveSpawn_TitanSpawn( wave4, "ArcTitan", < 1873, 3508, 141 >, 45, "", 2.5 )
 	WaveSpawn_TitanSpawn( wave4, "Mortar", < -3366, -652, 123 >, 90, "", 1.5 )
 	WaveSpawn_TitanSpawn( wave4, "Mortar", < 1714, 4170, 129 >, 180, "", 1.5 )
@@ -268,8 +268,8 @@ void function initFrontierDefenseData()
 	WaveSpawn_TitanSpawn( wave4, "Mortar", < 2578, 3266, 132 >, 180, "", 2.5 )
 	WaveSpawn_TitanSpawn( wave4, "Northstar", < -490, -719, 19 >, 180, "", 0.5, "", 0.0, eFDSD.ALL, eFDTT.TITAN_ELITE )
 	WaveSpawn_TitanSpawn( wave4, "Monarch", < 2143, -170, 120 >, 135, "", 1.5, "", 0.0, eFDSD.ALL, eFDTT.TITAN_ELITE )
-	WaveSpawn_ReaperSpawn( wave4, "Reaper", < -4968, 320, 128 >, 90, "", 0.2 )
-	WaveSpawn_ReaperSpawn( wave4, "Reaper", < -4641, 702, 149 >, 90, "" )
+	WaveSpawn_ReaperSpawn( wave4, "TickReaper", < -583, -332, 128 >, 90, "", 0.2 )
+	WaveSpawn_ReaperSpawn( wave4, "TickReaper", < 495, 1596, 127 >, 75, "" )
 	
 	WaveSpawnEvents.append( wave4 )
 	
@@ -356,6 +356,7 @@ void function initFrontierDefenseData()
 
 void function RegisterCustomFDContent()
 {
+	/*
 	array<entity> ai_positions = GetEntArrayByClass_Expensive( "info_target" )
 	foreach ( entity position in ai_positions )
 	{
@@ -368,9 +369,6 @@ void function RegisterCustomFDContent()
 				position.Destroy()
 		}
 	}
-		
-	AddFDCustomTitanStart( < -2221, 5230, 128 >, < 0, -105, 0 > )
-	AddFDCustomTitanStart( < -3058, 4741, 102 >, < 0, -15, 0 > )
 	
 	AddStationaryAIPosition( < 1435, -2271, 121 >, eStationaryAIPositionTypes.LAUNCHER_REAPER )
 	AddStationaryAIPosition( < 406, -2364, 14 >, eStationaryAIPositionTypes.LAUNCHER_REAPER )
@@ -400,6 +398,10 @@ void function RegisterCustomFDContent()
 	AddStationaryAIPosition( < 1096, -1102, 112 >, eStationaryAIPositionTypes.MORTAR_SPECTRE )
 	AddStationaryAIPosition( < 2088, 988, 127 >, eStationaryAIPositionTypes.MORTAR_SPECTRE )
 	AddStationaryAIPosition( < 3914, -2844, 200 >, eStationaryAIPositionTypes.MORTAR_SPECTRE )
+	*/
+	
+	AddFDCustomTitanStart( < -2221, 5230, 128 >, < 0, -105, 0 > )
+	AddFDCustomTitanStart( < -3058, 4741, 102 >, < 0, -15, 0 > )
 	
 	//Add those OOB because some "smart" fellas wont stop climbing these places to snipe with Charge Rifle/Archer and do nothing else
 	AddOutOfBoundsTriggerWithParams( < -75, 1146, 1360 >, 160, 320 ) //Center Radio Tower

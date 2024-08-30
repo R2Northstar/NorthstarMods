@@ -18,6 +18,7 @@ void function initFrontierDefenseData()
 	AddFDCustomTitanStart( < 1563, 1481, 256 >, < 0, 180, 0 > )
 	AddFDCustomTitanStart( < 258, 144, 404 >, < 0, 0, 0 > )
 	
+	/*
 	AddStationaryAIPosition( < 576, -3436, 141 >, eStationaryAIPositionTypes.LAUNCHER_REAPER )
 	AddStationaryAIPosition( < 3468, -3461, 0 >, eStationaryAIPositionTypes.LAUNCHER_REAPER )
 	AddStationaryAIPosition( < 3256, 3423, -47 >, eStationaryAIPositionTypes.LAUNCHER_REAPER )
@@ -25,7 +26,8 @@ void function initFrontierDefenseData()
 	AddStationaryAIPosition( < 1968, 1282, 256 >, eStationaryAIPositionTypes.LAUNCHER_REAPER )
 	AddStationaryAIPosition( < 455, -3620, 144 >, eStationaryAIPositionTypes.LAUNCHER_REAPER )
 	AddStationaryAIPosition( < 3484, 1129, -25 >, eStationaryAIPositionTypes.LAUNCHER_REAPER )
-
+	*/
+	
 	/*
 	 __      __                 _ 
 	 \ \    / /__ _ __ __ ___  / |

@@ -19,7 +19,8 @@ void function initFrontierDefenseData()
 	AddFDCustomTitanStart( < -1601, 3696, -255 >, < 0, -135, 0 > )
 	AddFDCustomTitanStart( < -947, 3696, -255 >, < 0, -45, 0 > )
 	
-	AI_CreateDangerousArea_Static( svGlobal.worldspawn, null, 160, TEAM_INVALID, true, true, < 2259, 2363, -127 > )
+	entity refDanger = CreateScriptRef( < 2259, 2363, -127 > )
+	AI_CreateDangerousArea_Static( refDanger, null, 160, TEAM_INVALID, true, true, < 2259, 2363, -127 > )
 
 	/*
 	 __      __                 _ 
@@ -97,9 +98,9 @@ void function initFrontierDefenseData()
 	WaveSpawn_WaitEnemyAliveAmount( wave2, 2 )
 	
 	WaveSpawn_TitanSpawn( wave2, "Sniper", < -594, -1096, -127 >, 90, "", 1.5 )
-	WaveSpawn_InfantrySpawn( wave2, "Ticks", < -4593, 1921, -112 >, 0.0, "", 1.5 )
+	WaveSpawn_InfantrySpawn( wave2, "Ticks", < -1167, -881, -127 >, 0.0, "", 1.5 )
 	WaveSpawn_ReaperSpawn( wave2, "TickReaper", < -664, -2363, -254 >, 90, "", 1.0 )
-	WaveSpawn_InfantrySpawn( wave2, "Ticks", < -4235, 1615, -128 >, 0.0, "", 1.5 )
+	WaveSpawn_InfantrySpawn( wave2, "Ticks", < -3675, -221, -135 >, 0.0, "", 1.5 )
 	WaveSpawn_ReaperSpawn( wave2, "TickReaper", < -2390, -3278, -127 >, 90, "", 1.5 )
 	WaveSpawn_InfantrySpawn( wave2, "MortarSpectre", < 2056, 1105, -131 >, 0.0, "", 2.5 )
 	WaveSpawn_TitanSpawn( wave2, "Mortar", < 3259, 507, -127 >, 90, "", 0.5, "fd_waveTypeTitanMortar" )
@@ -381,28 +382,10 @@ void function initFrontierDefenseData()
 
 void function RegisterCustomFDContentOGSetup()
 {
-	array<entity> aiPositions = GetEntArrayByClass_Expensive( "info_target" )
-	foreach ( entity position in aiPositions )
-	{
-		if( position.HasKey( "editorclass" ) && position.kv.editorclass == "info_fd_ai_position" )
-		{
-			if( expect string( position.kv.aiType ).tointeger() == eStationaryAIPositionTypes.LAUNCHER_REAPER || expect string( position.kv.aiType ).tointeger() == eStationaryAIPositionTypes.MORTAR_SPECTRE )
-				position.Destroy()
-		}
-	}
-			
-	AddStationaryAIPosition(< -2683, -3385, -127 >, eStationaryAIPositionTypes.LAUNCHER_REAPER)
-	AddStationaryAIPosition(< -467, -1348, 64 >, eStationaryAIPositionTypes.LAUNCHER_REAPER)
-	AddStationaryAIPosition(< 1578, 689, 143 >, eStationaryAIPositionTypes.LAUNCHER_REAPER)
-	AddStationaryAIPosition(< 820, -1217, 40 >, eStationaryAIPositionTypes.LAUNCHER_REAPER)
-	AddStationaryAIPosition(< 490, -3168, -128 >, eStationaryAIPositionTypes.LAUNCHER_REAPER)
-	AddStationaryAIPosition(< -959, 0, -143 >, eStationaryAIPositionTypes.LAUNCHER_REAPER)
-	AddStationaryAIPosition(< -4150, -396, -127 >, eStationaryAIPositionTypes.LAUNCHER_REAPER)
-	AddStationaryAIPosition(< 1758, 22, -257 >, eStationaryAIPositionTypes.LAUNCHER_REAPER)
+	AddStationaryAIPosition( < -894, -1664, 264 >, eStationaryAIPositionTypes.LAUNCHER_REAPER )
+	AddStationaryAIPosition( < -322, -187, 383 >, eStationaryAIPositionTypes.LAUNCHER_REAPER )
+	AddStationaryAIPosition( < 1275, -1444, 456 >, eStationaryAIPositionTypes.LAUNCHER_REAPER )
+	AddStationaryAIPosition( < -2215, -2096, 200 >, eStationaryAIPositionTypes.LAUNCHER_REAPER )
 	
-	AddStationaryAIPosition(< -2096, -185, -128 >, eStationaryAIPositionTypes.MORTAR_SPECTRE)
-	AddStationaryAIPosition(< 2291, 625, 64 >, eStationaryAIPositionTypes.MORTAR_SPECTRE)
-	AddStationaryAIPosition(< -1090, 1549, 112 >, eStationaryAIPositionTypes.MORTAR_SPECTRE)
-	AddStationaryAIPosition(< -3311, 145, 36 >, eStationaryAIPositionTypes.MORTAR_SPECTRE)
-	AddStationaryAIPosition(< -4576, 451, -143 >, eStationaryAIPositionTypes.MORTAR_SPECTRE)
+	AddStationaryAIPosition( < 2220, 710, 63 >, eStationaryAIPositionTypes.MORTAR_SPECTRE )
 }

@@ -15,11 +15,11 @@ void function initFrontierDefenseData()
 	AddWaveAnnouncement( "fd_waveTypeReapers" )
 	AddWaveAnnouncement( "fd_waveComboNukeTrain" )
 	
-	AddStationaryAIPosition(< 6328, -968, -155 >, eStationaryAIPositionTypes.LAUNCHER_REAPER)
-	AddStationaryAIPosition(< -2498, 1079, -160 >, eStationaryAIPositionTypes.LAUNCHER_REAPER)
+	//AddStationaryAIPosition(< 6328, -968, -155 >, eStationaryAIPositionTypes.LAUNCHER_REAPER)
+	//AddStationaryAIPosition(< -2498, 1079, -160 >, eStationaryAIPositionTypes.LAUNCHER_REAPER)
 
-	AddStationaryAIPosition(< -745, 2309, 82 >, eStationaryAIPositionTypes.MORTAR_SPECTRE)
-	AddStationaryAIPosition(< 4463, -221, 16 >, eStationaryAIPositionTypes.MORTAR_SPECTRE)
+	//AddStationaryAIPosition(< -745, 2309, 82 >, eStationaryAIPositionTypes.MORTAR_SPECTRE)
+	//AddStationaryAIPosition(< 4463, -221, 16 >, eStationaryAIPositionTypes.MORTAR_SPECTRE)
 	
 	AddFDCustomTitanStart( < -1466, -3750, -115 >, < 0, -45, 0 > )
 	AddFDCustomTitanStart( < -361, -4690, -58 >, < 0, 90, 0 > )

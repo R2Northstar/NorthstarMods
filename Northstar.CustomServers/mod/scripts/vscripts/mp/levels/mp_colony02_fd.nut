@@ -294,7 +294,7 @@ void function RegisterCustomFDContent()
 
 	array<entity> aiPositions = GetEntArrayByClass_Expensive( "info_target" )
 	foreach ( entity position in aiPositions )
-		if( position.HasKey( "editorclass" ) && position.kv.editorclass == "info_fd_ai_position" )
+		if( position.HasKey( "editorclass" ) && position.kv.editorclass == "info_fd_ai_position" && expect string( position.kv.aiType ).tointeger() != eStationaryAIPositionTypes.LAUNCHER_REAPER )
 			position.Destroy()
 	
 	AddFDCustomShipStart( < 1967, 1863, 660 >, < 0, -120, 0 >, TEAM_MILITIA )
@@ -385,7 +385,7 @@ void function RegisterCustomFDContent()
 	AddFDCustomProp( $"models/barriers/sandbags_large_01.mdl", < 147, 3023, 233 >, < 0, 160, 0 > )
 	
 	CreateZipline( < 2061, 3293, 640 >, < 177, 2433, 676 > )
-	CreateZipline( < 145, 2363, 585 >, < -1084, 772, 603 > )
+	CreateZipline( < 152, 2377, 804 >, < -1084, 772, 603 > )
 	CreateZipline( < -1510, 524, 674 >, < -1728, -1878, 460 > )
 	CreateZipline( < 1059, -1708, 860 >, < -1136, -2008, 502 > )
 	
@@ -413,13 +413,8 @@ void function RegisterCustomFDContent()
 	AddStationaryAIPosition(< 50, 5776, -65 >, eStationaryAIPositionTypes.SNIPER_TITAN)
 	AddStationaryAIPosition(< -4160, 1020, 219 >, eStationaryAIPositionTypes.SNIPER_TITAN)
 	
-	AddStationaryAIPosition(< -2594, 5548, 40 >, eStationaryAIPositionTypes.LAUNCHER_REAPER)
-	AddStationaryAIPosition(< -3375, 1044, 106 >, eStationaryAIPositionTypes.LAUNCHER_REAPER)
-	AddStationaryAIPosition(< -4090, -2204, 133 >, eStationaryAIPositionTypes.LAUNCHER_REAPER)
-	AddStationaryAIPosition(< -1597, -2536, 182 >, eStationaryAIPositionTypes.LAUNCHER_REAPER)
-	AddStationaryAIPosition(< 1396, -1943, 243 >, eStationaryAIPositionTypes.LAUNCHER_REAPER)
-	AddStationaryAIPosition(< -20, 2652, 11 >, eStationaryAIPositionTypes.LAUNCHER_REAPER)
-	AddStationaryAIPosition(< 2287, 4140, 19 >, eStationaryAIPositionTypes.LAUNCHER_REAPER)
+	AddStationaryAIPosition(< -3561, -1761, 287 >, eStationaryAIPositionTypes.LAUNCHER_REAPER)
+	AddStationaryAIPosition(< -1069, 5534, 270 >, eStationaryAIPositionTypes.LAUNCHER_REAPER)
 	
 	routes[ "outskirtCamp" ] <- []
 	routes[ "outskirtCamp" ].append( < -3065, -1856, 116 > )
