@@ -1064,44 +1064,6 @@ void function OnServerSelected_Threaded( var button )
 		}
 
 		// If we get here, means that mod version exists locally => we good
-		else
-		{
-			/*
-			// this uses semver https://semver.org
-			array<string> serverModVersion = split( mod.name, "." )
-			array<string> clientModVersion = split( NSGetModVersionByModName( mod.name ), "." )
-
-			bool semverFail = false
-			// if server has invalid semver don't bother checking
-			if ( serverModVersion.len() == 3 )
-			{
-				// bad client semver
-				if ( clientModVersion.len() != serverModVersion.len() )
-					semverFail = true
-				// major version, don't think we should need to check other versions
-				else if ( clientModVersion[ 0 ] != serverModVersion[ 0 ] )
-					semverFail = true
-			}
-
-			if ( semverFail )
-			{
-				DialogData dialogData
-				dialogData.header = "#ERROR"
-				dialogData.message = Localize( "#WRONG_MOD_VERSION", mod.name, mod.version, NSGetModVersionByModName( mod.name ) )
-				dialogData.image = $"ui/menu/common/dialog_error"
-
-				#if PC_PROG
-					AddDialogButton( dialogData, "#DISMISS" )
-
-					AddDialogFooter( dialogData, "#A_BUTTON_SELECT" )
-				#endif // PC_PROG
-				AddDialogFooter( dialogData, "#B_BUTTON_DISMISS_RUI" )
-
-				OpenDialog( dialogData )
-
-				return
-			}*/
-		}
 	}
 
 	if ( server.requiresPassword )
