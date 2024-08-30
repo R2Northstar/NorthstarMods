@@ -978,13 +978,18 @@ void function OnServerSelected_Threaded( var button )
 
 		if ( !modNames.contains( requiredModInfo.name ) )
 		{
-			print( format ( "\"%s\" was not found locally, triggering manifesto fetching.", requiredModInfo.name ) )
+			print( format ( "\"%s\" was not found locally" + ( autoDownloadAllowed ? ", triggering manifesto fetching." : "." ), requiredModInfo.name ) )
 			uninstalledModFound = true
 			break
 		} else {
 			array<string> modVersions = NSGetModVersions( requiredModInfo.name )
 			if ( !modVersions.contains( requiredModInfo.version ) ) {
-				print( format ( "\"%s\" was found locally but has versions \"%s\" while server requires \"%s\", triggering manifesto fetching.", requiredModInfo.name, modVersions.tostring(), requiredModInfo.version ) )
+				print( format ( "\"%s\" was found locally but has versions:", requiredModInfo.name ) )
+				foreach ( string version in modVersions )
+				{
+					print("    - " + version)
+				}
+				print( format ( "while server requires \"%s\"" + ( autoDownloadAllowed ? ", triggering manifesto fetching." : "." ), requiredModInfo.version ) )
 				uninstalledModFound = true
 				break
 			}
@@ -995,7 +1000,6 @@ void function OnServerSelected_Threaded( var button )
 	// mods can be installed through auto-download
 	if ( uninstalledModFound && autoDownloadAllowed )
 	{
-		print("Auto-download is allowed, checking if missing mods can be installed automatically.")
 		FetchVerifiedModsManifesto()
 	}
 
@@ -1157,7 +1161,7 @@ void function ThreadedAuthAndConnectToServer( string password = "", bool modsCha
 					if (mod.name == modName && ( IsCoreMod( modName ) || mod.version == modVersion ))
 					{
 						found = true
-						print(format("Found \"%s\" v%s", modName, modVersion))
+						print(format("\"%s\" (v%s) is required and already enabled.", modName, modVersion))
 						break
 					}
 				}
@@ -1166,7 +1170,7 @@ void function ThreadedAuthAndConnectToServer( string password = "", bool modsCha
 				{
 					modsChanged = true
 					NSSetModEnabled( modName, modVersion, false )
-					print(format("Disabled \"%s\" v%s", modName, modVersion))
+					print(format("Disabled \"%s\" (v%s) since it's not required on server.", modName, modVersion))
 				}
 			}
 		}
@@ -1183,14 +1187,14 @@ void function ThreadedAuthAndConnectToServer( string password = "", bool modsCha
 				string coreModVersion = NSGetModVersions( modName )[0]
 				modsChanged = true
 				NSSetModEnabled( modName, coreModVersion, true )
-				print(format("Enabled \"%s\" v%s", modName, coreModVersion))
+				print(format("Enabled \"%s\" (v%s) to join server.", modName, coreModVersion))
 			}
 
 			else if ( NSIsModRequiredOnClient( modName, modVersion ) && !NSIsModEnabled( modName, modVersion ) )
 			{
 				modsChanged = true
 				NSSetModEnabled( modName, modVersion, true )
-				print(format("Enabled \"%s\" v%s", modName, modVersion))
+				print(format("Enabled \"%s\" (v%s) to join server.", modName, modVersion))
 			}
 		}
 
