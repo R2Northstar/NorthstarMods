@@ -34,6 +34,7 @@ struct {
 
 void function BaseGametype_Init_MPSP()
 {
+	AddClientCommandCallback( "changeteam", ClientCommandCallbackChangeTeam )
 	AddSpawnCallback( "info_intermission", SetIntermissionCamera )
 	
 	AddPostDamageCallback( "player", AddToTitanDamageStat )
@@ -49,6 +50,12 @@ void function BaseGametype_Init_MPSP()
 void function SetIntermissionCamera( entity camera )
 {
 	file.intermissionCamera = camera
+}
+
+void function CheckServerIdlingState()
+{
+	if ( Time() >= 60 * GetConVarInt( "ns_server_idle_time_refresh_max_time" ) )
+		ServerCommand( "changelevel " + GetMapName() )
 }
 
 void function CodeCallback_OnClientConnectionStarted( entity player )
@@ -134,6 +141,8 @@ void function CodeCallback_OnClientConnectionStarted( entity player )
 	printl( "Player connect started: " + player + "---UID:" + player.GetUID() )
 	
 	InitPassives( player )
+
+	CheckServerIdlingState()
 }
 
 // playerconnected
@@ -403,7 +412,7 @@ void function PostDeathThread_MP( entity player, var damageInfo ) // based on ga
 	else
 		player.SetObserverTarget( null )
 
-	if ( ( GamePlayingOrSuddenDeath() || GetGameState() == eGameState.Epilogue ) && !file.playerDeathsHidden )
+	if ( ( GamePlayingOrSuddenDeath() || GetGameState() == eGameState.Epilogue || GetGameState() == eGameState.WinnerDetermined ) && !file.playerDeathsHidden )
 		player.AddToPlayerGameStat( PGS_DEATHS, 1 )
 
 	if ( !file.playerDeathsHidden )
@@ -752,6 +761,15 @@ void function CheckGameStateAfterSpawn( entity player )
 		}
 	}
 }
+
+bool function ClientCommandCallbackChangeTeam( entity player, array<string> args )
+{
+	if ( GetCurrentPlaylistVarInt( "max_teams", 0 ) > 1 && !IsFFAGame() && GamePlaying() )
+		SetTeam( player, GetOtherTeam( player.GetTeam() ) )
+	
+	return true
+}
+
 
 // stuff to change later
 

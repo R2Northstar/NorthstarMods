@@ -63,6 +63,10 @@
 			"DefaultValue": "1"
 		},
 		{
+			"Name": "ns_server_idle_time_refresh_max_time",
+			"DefaultValue": "240"
+		},
+		{
 			"Name": "ns_ronin_fair_phase",
 			"DefaultValue": "0"
 		},

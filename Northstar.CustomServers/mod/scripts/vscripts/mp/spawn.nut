@@ -41,7 +41,6 @@ struct {
 	array<NoSpawnArea> noSpawnAreas
 	string spawnpointGamemodeOverride
 	array< bool functionref( entity, int ) > customSpawnpointValidationRules
-	entity functionref( array<entity>, int ) spawnzoneRatingFunc
 	bool shouldCreateMinimapSpawnzones
 } file
 
@@ -56,14 +55,11 @@ struct {
 
 
 /*
-
-██████╗  █████╗ ███████╗███████╗    ███████╗██╗   ██╗███╗   ██╗ ██████╗████████╗██╗ ██████╗ ███╗   ██╗███████╗
-██╔══██╗██╔══██╗██╔════╝██╔════╝    ██╔════╝██║   ██║████╗  ██║██╔════╝╚══██╔══╝██║██╔═══██╗████╗  ██║██╔════╝
-██████╔╝███████║███████╗█████╗      █████╗  ██║   ██║██╔██╗ ██║██║        ██║   ██║██║   ██║██╔██╗ ██║███████╗
-██╔══██╗██╔══██║╚════██║██╔══╝      ██╔══╝  ██║   ██║██║╚██╗██║██║        ██║   ██║██║   ██║██║╚██╗██║╚════██║
-██████╔╝██║  ██║███████║███████╗    ██║     ╚██████╔╝██║ ╚████║╚██████╗   ██║   ██║╚██████╔╝██║ ╚████║███████║
-╚═════╝ ╚═╝  ╚═╝╚══════╝╚══════╝    ╚═╝      ╚═════╝ ╚═╝  ╚═══╝ ╚═════╝   ╚═╝   ╚═╝ ╚═════╝ ╚═╝  ╚═══╝╚══════╝
-
+██████   █████  ███████ ███████     ███████ ██    ██ ███    ██  ██████ ████████ ██  ██████  ███    ██ ███████ 
+██   ██ ██   ██ ██      ██          ██      ██    ██ ████   ██ ██         ██    ██ ██    ██ ████   ██ ██      
+██████  ███████ ███████ █████       █████   ██    ██ ██ ██  ██ ██         ██    ██ ██    ██ ██ ██  ██ ███████ 
+██   ██ ██   ██      ██ ██          ██      ██    ██ ██  ██ ██ ██         ██    ██ ██    ██ ██  ██ ██      ██ 
+██████  ██   ██ ███████ ███████     ██       ██████  ██   ████  ██████    ██    ██  ██████  ██   ████ ███████ 
 */
 
 void function Spawn_Init()
@@ -201,14 +197,11 @@ string function GetSpawnpointGamemodeOverride()
 
 
 /*
-
-███████╗██████╗  █████╗ ██╗    ██╗███╗   ██╗     ██████╗ ██████╗ ██████╗ ███████╗██████╗ ██╗███╗   ██╗ ██████╗ 
-██╔════╝██╔══██╗██╔══██╗██║    ██║████╗  ██║    ██╔═══██╗██╔══██╗██╔══██╗██╔════╝██╔══██╗██║████╗  ██║██╔════╝ 
-███████╗██████╔╝███████║██║ █╗ ██║██╔██╗ ██║    ██║   ██║██████╔╝██║  ██║█████╗  ██████╔╝██║██╔██╗ ██║██║  ███╗
-╚════██║██╔═══╝ ██╔══██║██║███╗██║██║╚██╗██║    ██║   ██║██╔══██╗██║  ██║██╔══╝  ██╔══██╗██║██║╚██╗██║██║   ██║
-███████║██║     ██║  ██║╚███╔███╔╝██║ ╚████║    ╚██████╔╝██║  ██║██████╔╝███████╗██║  ██║██║██║ ╚████║╚██████╔╝
-╚══════╝╚═╝     ╚═╝  ╚═╝ ╚══╝╚══╝ ╚═╝  ╚═══╝     ╚═════╝ ╚═╝  ╚═╝╚═════╝ ╚══════╝╚═╝  ╚═╝╚═╝╚═╝  ╚═══╝ ╚═════╝ 
-
+███████ ██████   █████  ██     ██ ███    ██      ██████  ██████  ██████  ███████ ██████  ██ ███    ██  ██████  
+██      ██   ██ ██   ██ ██     ██ ████   ██     ██    ██ ██   ██ ██   ██ ██      ██   ██ ██ ████   ██ ██       
+███████ ██████  ███████ ██  █  ██ ██ ██  ██     ██    ██ ██████  ██   ██ █████   ██████  ██ ██ ██  ██ ██   ███ 
+     ██ ██      ██   ██ ██ ███ ██ ██  ██ ██     ██    ██ ██   ██ ██   ██ ██      ██   ██ ██ ██  ██ ██ ██    ██ 
+███████ ██      ██   ██  ███ ███  ██   ████      ██████  ██   ██ ██████  ███████ ██   ██ ██ ██   ████  ██████  
 */
 
 entity function FindSpawnPoint( entity player, bool isTitan, bool useStartSpawnpoint )
@@ -264,15 +257,9 @@ entity function GetBestSpawnpoint( entity player, array<entity> spawnpoints, boo
 	{
 		spawnpoints.clear()
 		if ( isTitan )
-		{
 			spawnpoints = GetEntArrayByClass_Expensive( "info_spawnpoint_titan" )
-			spawnpoints.extend( GetEntArrayByClass_Expensive( "info_spawnpoint_titan_start" ) )
-		}
 		else
-		{
 			spawnpoints = GetEntArrayByClass_Expensive( "info_spawnpoint_human" )
-			spawnpoints.extend( GetEntArrayByClass_Expensive( "info_spawnpoint_human_start" ) )
-		}
 	}
 	
 	foreach ( entity spawnpoint in spawnpoints )
@@ -305,7 +292,7 @@ entity function GetBestSpawnpoint( entity player, array<entity> spawnpoints, boo
 	if ( IsFFAGame() )
 		return validSpawns.getrandom()
 	
-	return validSpawns[0]
+	return validSpawns[0] // Return first entry in the array because native have already sorted everything through the ratings, so first one is the best one
 }
 
 bool function IsSpawnpointValid( entity spawnpoint, int team )
@@ -356,14 +343,11 @@ bool function IsSpawnpointValid( entity spawnpoint, int team )
 
 
 /*
-
-██████╗  ██████╗ ██╗███╗   ██╗████████╗    ██████╗  █████╗ ████████╗██╗███╗   ██╗ ██████╗ 
-██╔══██╗██╔═══██╗██║████╗  ██║╚══██╔══╝    ██╔══██╗██╔══██╗╚══██╔══╝██║████╗  ██║██╔════╝ 
-██████╔╝██║   ██║██║██╔██╗ ██║   ██║       ██████╔╝███████║   ██║   ██║██╔██╗ ██║██║  ███╗
-██╔═══╝ ██║   ██║██║██║╚██╗██║   ██║       ██╔══██╗██╔══██║   ██║   ██║██║╚██╗██║██║   ██║
-██║     ╚██████╔╝██║██║ ╚████║   ██║       ██║  ██║██║  ██║   ██║   ██║██║ ╚████║╚██████╔╝
-╚═╝      ╚═════╝ ╚═╝╚═╝  ╚═══╝   ╚═╝       ╚═╝  ╚═╝╚═╝  ╚═╝   ╚═╝   ╚═╝╚═╝  ╚═══╝ ╚═════╝ 
-
+██████   ██████  ██ ███    ██ ████████     ██████   █████  ████████ ██ ███    ██  ██████  
+██   ██ ██    ██ ██ ████   ██    ██        ██   ██ ██   ██    ██    ██ ████   ██ ██       
+██████  ██    ██ ██ ██ ██  ██    ██        ██████  ███████    ██    ██ ██ ██  ██ ██   ███ 
+██      ██    ██ ██ ██  ██ ██    ██        ██   ██ ██   ██    ██    ██ ██  ██ ██ ██    ██ 
+██       ██████  ██ ██   ████    ██        ██   ██ ██   ██    ██    ██ ██   ████  ██████  
 */
 
 void function RateSpawnpoints_Generic( int checkClass, array<entity> spawnpoints, int team, entity player )
@@ -416,14 +400,11 @@ void function RateSpawnpoints_Frontline( int checkClass, array<entity> spawnpoin
 
 
 /*
-
-███████╗██████╗  █████╗ ██╗    ██╗███╗   ██╗███████╗ ██████╗ ███╗   ██╗███████╗███████╗
-██╔════╝██╔══██╗██╔══██╗██║    ██║████╗  ██║╚══███╔╝██╔═══██╗████╗  ██║██╔════╝██╔════╝
-███████╗██████╔╝███████║██║ █╗ ██║██╔██╗ ██║  ███╔╝ ██║   ██║██╔██╗ ██║█████╗  ███████╗
-╚════██║██╔═══╝ ██╔══██║██║███╗██║██║╚██╗██║ ███╔╝  ██║   ██║██║╚██╗██║██╔══╝  ╚════██║
-███████║██║     ██║  ██║╚███╔███╔╝██║ ╚████║███████╗╚██████╔╝██║ ╚████║███████╗███████║
-╚══════╝╚═╝     ╚═╝  ╚═╝ ╚══╝╚══╝ ╚═╝  ╚═══╝╚══════╝ ╚═════╝ ╚═╝  ╚═══╝╚══════╝╚══════╝
-
+███████ ██████   █████  ██     ██ ███    ██ ███████  ██████  ███    ██ ███████ ███████ 
+██      ██   ██ ██   ██ ██     ██ ████   ██    ███  ██    ██ ████   ██ ██      ██      
+███████ ██████  ███████ ██  █  ██ ██ ██  ██   ███   ██    ██ ██ ██  ██ █████   ███████ 
+     ██ ██      ██   ██ ██ ███ ██ ██  ██ ██  ███    ██    ██ ██  ██ ██ ██           ██ 
+███████ ██      ██   ██  ███ ███  ██   ████ ███████  ██████  ██   ████ ███████ ███████ 
 */
 
 void function ResetSpawnzones()
@@ -442,11 +423,6 @@ void function AddSpawnZoneTrigger( entity trigger )
 {
 	spawnZoneProperties zoneProperties
 	mapSpawnZones[trigger] <- zoneProperties
-}
-
-void function SetSpawnZoneRatingFunc( entity functionref( array<entity>, int ) ratingFunc )
-{
-	file.spawnzoneRatingFunc = ratingFunc
 }
 
 bool function TeamHasDirtySpawnzone( int team )
@@ -475,7 +451,7 @@ void function CreateTeamSpawnZoneEntity( entity spawnzone, int team )
 {
 	entity minimapObj = CreatePropScript( $"models/dev/empty_model.mdl", spawnzone.GetOrigin() )
 	SetTeam( minimapObj, team )	
-	minimapObj.Minimap_SetObjectScale( 100.0 / Distance2D( < 0, 0, 0 >, spawnzone.GetBoundingMaxs() ) )
+	minimapObj.Minimap_SetObjectScale( Distance2D( < 0, 0, 0 >, spawnzone.GetBoundingMaxs() ) / 16000 ) // 16000 cuz thats the total space Minimap uses
 	minimapObj.Minimap_SetAlignUpright( true )
 	minimapObj.Minimap_AlwaysShow( TEAM_IMC, null )
 	minimapObj.Minimap_AlwaysShow( TEAM_MILITIA, null )
@@ -493,9 +469,6 @@ void function CreateTeamSpawnZoneEntity( entity spawnzone, int team )
 
 void function RateSpawnpoints_SpawnZones( int checkClass, array<entity> spawnpoints, int team, entity player )
 {
-	if ( file.spawnzoneRatingFunc == null )
-		file.spawnzoneRatingFunc = DecideSpawnZone_Generic
-
 	if ( ShouldStartSpawn( player ) )
 	{
 		RateSpawnpoints_Generic( checkClass, spawnpoints, team, player )
@@ -506,7 +479,7 @@ void function RateSpawnpoints_SpawnZones( int checkClass, array<entity> spawnpoi
 	foreach ( zone, zoneProperties in mapSpawnZones )
 		zoneTriggers.append( zone )
 	
-	entity spawnzone = file.spawnzoneRatingFunc( zoneTriggers, player.GetTeam() )	
+	entity spawnzone = DecideSpawnZone_Generic( zoneTriggers, player.GetTeam() )	
 	if ( !IsValid( spawnzone ) )
 	{
 		RateSpawnpoints_Generic( checkClass, spawnpoints, team, player )

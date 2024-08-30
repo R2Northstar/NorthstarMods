@@ -57,6 +57,7 @@ void function SetupPrivateMatchUIVarsWhenReady()
 	
 	if ( GetConVarBool( "ns_private_match_auto_rotation_start" ) )
 	{
+		wait 1
 		file.startState = ePrivateMatchStartState.STARTING
 		thread StartMatch( true )
 	}
@@ -117,9 +118,6 @@ bool function ClientCommandCallback_PrivateMatchSetMode( entity player, array<st
 
 bool function ClientCommandCallback_SetCustomMap( entity player, array<string> args )
 {
-	if ( file.startState == ePrivateMatchStartState.STARTING )
-		return true
-		
 	if ( args.len() != 1 )
 		return true
 	
@@ -140,7 +138,7 @@ bool function ClientCommandCallback_SetCustomMap( entity player, array<string> a
 
 bool function ClientCommandCallback_PrivateMatchSwitchTeams( entity player, array<string> args )
 {
-	if ( file.startState == ePrivateMatchStartState.STARTING || GetGamemodeVarOrUseValue( file.mode, "max_teams", "2" ).tointeger() != 2 )
+	if ( GetGamemodeVarOrUseValue( file.mode, "max_teams", "2" ).tointeger() != 2 )
 		return true
 		
 	// currently only support 2 teams in private matches
@@ -150,7 +148,7 @@ bool function ClientCommandCallback_PrivateMatchSwitchTeams( entity player, arra
 
 bool function ClientCommandCallback_PrivateMatchToggleSpectate( entity player, array<string> args )
 {
-	if ( file.startState == ePrivateMatchStartState.STARTING || !GetConVarBool( "ns_allow_spectators" ) )
+	if ( !GetConVarBool( "ns_allow_spectators" ) )
 		return true
 	
 	player.SetPersistentVar( "privateMatchState", player.GetPersistentVarAsInt( "privateMatchState" ) == 0 ? 1 : 0 )
@@ -174,7 +172,7 @@ void function StartMatch( bool isAutostart = false )
 		// stop if the countdown's been cancelled
 		if ( file.startState != ePrivateMatchStartState.STARTING )
 			return
-	
+		
 		WaitFrame()
 	}
 		

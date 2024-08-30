@@ -749,15 +749,11 @@ bool function PlayerOrNPCKilled( entity ent, var damageInfo )
 		//Do callbacks. Main reason we call this here as opposed to CodeCallback_OnNPCKilled() is legacy script compatibility reasons.
 		//For example: In script immediately above this we change the attacker to get the player behind the kill, e.g. owner of a pet titan, etc. Bunch of registered callbacks depends on this.
 		foreach( callbackFunc in svGlobal.onNPCKilledCallbacks )
-		{
 			callbackFunc( ent, attacker, damageInfo )
-		}
 	}
 
 	if ( ent.IsTitan() )
-	{
 		thread TitanVO_DelayedTitanDown( ent )
-	}
 
 	if ( !attacker.IsPlayer() )
 	{
@@ -771,9 +767,7 @@ bool function PlayerOrNPCKilled( entity ent, var damageInfo )
 		// Hack - attacker history isn't on client to calculate if a player should get credit for a kill when AI steals the final killing shot while a player is damaging them.
 		array<entity> playerArray = GetPlayerArray()
 		foreach ( player in playerArray )
-		{
 			Remote_CallFunction_Replay( player, "ServerCallback_SetAssistInformation", attackerInfo.damageSourceId, attacker.GetEncodedEHandle(), ent.GetEncodedEHandle(), attackerInfo.assistTime )
-		}
 	}
 
 	// player attacker only from here down
@@ -787,6 +781,26 @@ bool function PlayerOrNPCKilled( entity ent, var damageInfo )
 			ScoreEvent_TitanKilled( ent, attacker, damageInfo )
 		else
 			ScoreEvent_NPCKilled( ent, attacker, damageInfo )
+		
+		entity victim = ent.IsTitan() ? ent.GetTitanSoul() : ent
+		if ( IsValid( victim ) )
+		{
+			table<int, bool> alreadyAssisted
+			
+			foreach( DamageHistoryStruct attackerInfo in victim.e.recentDamageHistory )
+			{
+				if ( !IsValid( attackerInfo.attacker ) || !attackerInfo.attacker.IsPlayer() || attackerInfo.attacker == victim )
+					continue
+				
+				bool exists = attackerInfo.attacker.GetEncodedEHandle() in alreadyAssisted ? true : false
+				if( attackerInfo.attacker != attacker && !exists )
+				{
+					alreadyAssisted[attackerInfo.attacker.GetEncodedEHandle()] <- true
+					foreach ( callback in svGlobal.onPlayerAssistCallbacks )
+						callback( attackerInfo.attacker, victim )
+				}
+			}
+		}
 	}
 	PostScoreEventUpdateStats( attacker, ent )
 

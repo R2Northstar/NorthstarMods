@@ -436,7 +436,10 @@ void function WaitForPlayers()
 	
 	wait 2
 	
-	SetGameState( eGameState.PickLoadout ) // Even if the game mode don't use it, vanilla still cast this game state to make the dropship jump sound when match starts
+	if( !GetClassicMPMode() && !ClassicMP_ShouldTryIntroAndEpilogueWithoutClassicMP() )
+		SetGameState( eGameState.Prematch )
+	else
+		SetGameState( eGameState.PickLoadout ) // Even if the game mode don't use it, vanilla still cast this game state to make the dropship jump sound when match starts
 }
 
 void function WaitingForPlayers_ClientConnected( entity player )
@@ -473,7 +476,7 @@ void function GameStateEnter_PickLoadout_Threaded()
 {
 	float pickloadoutLength = 30.0
 	if ( !file.usePickLoadoutScreen )
-		pickloadoutLength = 5.0 // 5 seconds because that's what vanilla uses to sync with the warping dropship sound before match actually starts
+		pickloadoutLength = PICK_LOADOUT_SOUND_TIME // 5 seconds because that's what vanilla uses to sync with the warping dropship sound before match actually starts
 	
 	SetServerVar( "minPickLoadOutTime", Time() + pickloadoutLength )
 	

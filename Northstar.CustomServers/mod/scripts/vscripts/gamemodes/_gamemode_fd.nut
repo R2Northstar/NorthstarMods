@@ -1186,19 +1186,19 @@ void function WaveBreak_AnnounceHarvesterDamaged()
 
 void function WaveBreak_GiveAndLockTitanSelection()
 {
-	if ( !file.isLiveFireMap )
+	if ( file.isLiveFireMap )
+		return
+	
+	PlayerEarnMeter_SetEnabled( true )
+	foreach ( entity player in GetPlayerArray() )
 	{
-		PlayerEarnMeter_SetEnabled( true )
-		foreach ( entity player in GetPlayerArray() )
-		{
-			GiveTitanToPlayer( player )
-			EmitSoundOnEntityOnlyToPlayer( player, player, "UI_InGame_FD_TitanSelected" )
-			EmitSoundOnEntityOnlyToPlayer( player, player, "UI_InGame_FD_TitanSelected" )
-		}
-				
-		DisableTitanSelection()
-		PlayFactionDialogueToTeam( "fd_titanReadyNag", TEAM_MILITIA )
+		GiveTitanToPlayer( player )
+		EmitSoundOnEntityOnlyToPlayer( player, player, "UI_InGame_FD_TitanSelected" )
+		EmitSoundOnEntityOnlyToPlayer( player, player, "UI_InGame_FD_TitanSelected" )
 	}
+		
+	DisableTitanSelection()
+	PlayFactionDialogueToTeam( "fd_titanReadyNag", TEAM_MILITIA )
 }
 
 void function WaveBreak_ShowPlayerBonus()
@@ -1432,7 +1432,7 @@ void function GamemodeFD_InitPlayer( entity player )
 void function OnPlayerDisconnectedOrDestroyed( entity player )
 {
 	if ( file.playersInDropship.contains( player ) )
-		file.playersInDropship.fastremovebyvalue( player )
+		file.playersInDropship.removebyvalue( player )
 	
 	if ( player in file.playerAwardStats ) //Clear out disconnecting players so the postcards don't show less than 4 when server has more than 4 slots
 		delete file.playerAwardStats[player]
@@ -1899,8 +1899,10 @@ void function FD_PlayerRespawnThreaded( entity player )
 	{
 		if ( GetCurrentPlaylistVarInt( "fd_at_unlimited_ammo", 1 ) && player.GetTeam() == TEAM_MILITIA && !file.isLiveFireMap )
 			FD_GivePlayerInfiniteAntiTitanAmmo( player )
+		
 		if ( GetGlobalNetInt( "FD_currentWave" ) == 0 || file.isLiveFireMap )
 			PlayerEarnMeter_SetMode( player, eEarnMeterMode.DISABLED )
+		
 		if ( player.GetTeam() == TEAM_IMC )
 		{
 			player.Minimap_AlwaysShow( TEAM_MILITIA, null )
@@ -2274,7 +2276,7 @@ void function OnHarvesterDamaged( entity harvester, var damageInfo )
 		DamageInfo_ScaleDamage( damageInfo, 0.0 )
 		return
 	}
-
+	
 	fd_harvester.lastDamage = Time()
 	
 	if ( difficultyLevel == eFDDifficultyLevel.EASY ) //Not sure if its a check vanilla does, but stuff does a bit less damage on Easy
@@ -2497,7 +2499,7 @@ void function HealthScaleByDifficulty( entity ent )
 		thread OnEnemyNPCPlayerTitanSpawnThreaded( ent )
 		return
 	}
-
+	
 	if ( ent.IsTitan() && ent.ai.bossTitanType == 0 )
 	{
 		ent.SetMaxHealth( ent.GetMaxHealth() + GetCurrentPlaylistVarInt( "fd_titan_health_adjust", 0 ) )
@@ -2570,7 +2572,7 @@ void function OnTickSpawn( entity tick )
 void function TickSpawnThreaded( entity tick )
 {
 	WaitFrame()
-	if ( !GamePlaying() || IsValid( tick.GetParent() ) ) //Parented Ticks are Drop Pod ones, and those are handled by the function there itself
+	if ( IsValid( tick.GetParent() ) ) //Parented Ticks are Drop Pod ones, and those are handled by the function there itself
 		return
 
 	else if ( GetGlobalNetInt( "FD_waveState" ) == WAVE_STATE_IN_PROGRESS && IsHarvesterAlive( fd_harvester.harvester ) )
@@ -3281,22 +3283,28 @@ void function FD_DropshipSpawnDropship()
 		file.dropshipState = eDropshipState.Idle
 	})
 	
-	array<string> anims = GetRandomDropshipDropoffAnims()
 	asset model = GetFlightPathModel( "fp_crow_model" )
+	
+	Point start = GetWarpinPosition( model, FD_DropshipGetAnimation(), file.dropshipSpawnPosition, file.dropshipSpawnAngles )
+	entity fx = PlayFX( FX_GUNSHIP_CRASH_EXPLOSION_ENTRANCE, start.origin, start.angles )
+	fx.FXEnableRenderAlways()
+	fx.DisableHibernation()
 	
 	file.playersInShip = 0
 	file.dropshipState = eDropshipState.InProgress
 	file.dropship = CreateDropship( TEAM_MILITIA, file.dropshipSpawnPosition, file.dropshipSpawnAngles )
 	file.dropship.SetValueForModelKey( $"models/vehicle/crow_dropship/crow_dropship_hero.mdl" )
 
+	file.dropship.Hide()
 	DispatchSpawn( file.dropship )
 	file.dropship.SetModel( $"models/vehicle/crow_dropship/crow_dropship_hero.mdl" )
 	file.dropship.SetInvulnerable()
 	file.dropship.NotSolid()
 	NPC_NoTarget( file.dropship )
 
-	//waitthread WarpinEffect( model, anims[0], file.dropshipSpawnPosition, file.dropshipSpawnAngles ) This doesnt work because it requires waitthread and if we do it, players doesnt respawn on dropship at all
 	thread PlayAnim( file.dropship, FD_DropshipGetAnimation() )
+	file.dropship.Show()
+	
 	file.dropship.Anim_ScriptedAddGestureSequence( "dropship_coop_respawn", true )
 	file.dropship.WaitSignal( "deploy" )
 	file.dropshipState = eDropshipState.Returning
@@ -3313,8 +3321,8 @@ void function FD_DropshipSpawnDropship()
 		{
 			if ( file.playersInDropship.contains( player ) )
 				continue
-			else
-				PlayFactionDialogueToPlayer( "fd_pilotRespawn", player )
+			
+			PlayFactionDialogueToPlayer( "fd_pilotRespawn", player )
 		}
 	}
 	
@@ -3328,7 +3336,9 @@ void function FD_DropshipDropPlayer( entity player, int playerDropshipIndex )
 	//check the player
 	if ( IsValid( player ) && !player.IsTitan() )
 	{
-		Loadouts_OnUsedLoadoutCrate( player )
+		if( player.s.loadoutDirty )
+			Loadouts_OnUsedLoadoutCrate( player )
+		
 		EnableOffhandWeapons( player )
 		
 		FirstPersonSequenceStruct jumpSequence
@@ -3338,7 +3348,7 @@ void function FD_DropshipDropPlayer( entity player, int playerDropshipIndex )
 		jumpSequence.blendTime = 0.0
 		jumpSequence.hideProxy = true
 		jumpSequence.viewConeFunction = ViewConeNarrow
-
+		
 		#if BATTLECHATTER_ENABLED
 		if ( playerDropshipIndex == 0 )
 			PlayBattleChatterLine( player, "bc_pIntroChat" )
