@@ -347,7 +347,7 @@ void function GiveFlag( entity player, entity flag )
 	flag.Signal( "ResetDropTimeout" )
 
 	flag.SetParent( player, "FLAG" )
-	if( GetCurrentPlaylistVarInt( "phase_shift_drop_flag", 0 ) == 1 )
+	if ( GetCurrentPlaylistVarInt( "phase_shift_drop_flag", 0 ) == 1 )
 		thread DropFlagIfPhased( player, flag )
 
 	// do notifications
