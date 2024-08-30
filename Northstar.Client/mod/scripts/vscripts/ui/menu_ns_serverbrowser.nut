@@ -1147,9 +1147,12 @@ void function ThreadedAuthAndConnectToServer( string password = "", bool modsCha
 			if ( IsCoreMod(modName) )
 			{
 				string coreModVersion = NSGetModVersions( modName )[0]
-				modsChanged = true
-				NSSetModEnabled( modName, coreModVersion, true )
-				print(format("Enabled \"%s\" (v%s) to join server.", modName, coreModVersion))
+				if ( !NSIsModEnabled( modName, coreModVersion ) )
+				{
+					modsChanged = true
+					NSSetModEnabled( modName, coreModVersion, true )
+					print(format("Enabled \"%s\" (v%s) to join server.", modName, coreModVersion))
+				}
 			}
 
 			else if ( NSIsModRequiredOnClient( modName, modVersion ) && !NSIsModEnabled( modName, modVersion ) )
