@@ -270,7 +270,7 @@ void function OnPlaying()
 
 void function CTFInitPlayer( entity player )
 {
-	if( !GamePlaying() )
+	if ( !GamePlaying() )
 		return
 	
 	if ( IsValid( file.imcFlagSpawn ) )
