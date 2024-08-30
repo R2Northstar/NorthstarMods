@@ -425,8 +425,8 @@ void function CaptureFlag( entity player, entity flag )
 	{
 		PlayFactionDialogueToTeam( "ctf_notifyWin1more", team )
 		PlayFactionDialogueToTeam( "ctf_notifyLose1more", GetOtherTeam( team ) )
-		foreach( entity otherplayer in GetPlayerArray() )
-			Remote_CallFunction_NonReplay( otherplayer, "ServerCallback_CTF_PlayMatchNearEndMusic" )
+		foreach( entity otherPlayer in GetPlayerArray() )
+			Remote_CallFunction_NonReplay( otherPlayer, "ServerCallback_CTF_PlayMatchNearEndMusic" )
 	}
 }
 
