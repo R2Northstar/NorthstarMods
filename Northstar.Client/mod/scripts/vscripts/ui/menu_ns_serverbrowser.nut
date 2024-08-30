@@ -1153,7 +1153,8 @@ void function ThreadedAuthAndConnectToServer( string password = "", bool modsCha
 				bool found = false
 				foreach ( RequiredModInfo mod in file.lastSelectedServer.requiredMods )
 				{
-					if (mod.name == modName && mod.version == modVersion)
+					// this tolerates a version difference for requiredOnClient core mods (only Northstar.Custom for now)
+					if (mod.name == modName && ( IsCoreMod( modName ) || mod.version == modVersion ))
 					{
 						found = true
 						print(format("Found \"%s\" v%s", modName, modVersion))
