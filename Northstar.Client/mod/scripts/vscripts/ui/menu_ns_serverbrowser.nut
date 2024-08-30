@@ -1177,7 +1177,16 @@ void function ThreadedAuthAndConnectToServer( string password = "", bool modsCha
 			string modName = mod.name
 			string modVersion = mod.version
 
-			if ( NSIsModRequiredOnClient( modName, modVersion ) && !NSIsModEnabled( modName, modVersion ) )
+			// Tolerate core mods (only Northstar.Custom for now) having a different version than server
+			if ( IsCoreMod(modName) )
+			{
+				string coreModVersion = NSGetModVersions( modName )[0]
+				modsChanged = true
+				NSSetModEnabled( modName, coreModVersion, true )
+				print(format("Enabled \"%s\" v%s", modName, coreModVersion))
+			}
+
+			else if ( NSIsModRequiredOnClient( modName, modVersion ) && !NSIsModEnabled( modName, modVersion ) )
 			{
 				modsChanged = true
 				NSSetModEnabled( modName, modVersion, true )
