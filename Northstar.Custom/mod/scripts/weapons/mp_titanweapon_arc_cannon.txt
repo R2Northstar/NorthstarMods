@@ -104,7 +104,7 @@ WeaponData
 	"charge_effect_3p"								"wpn_arc_cannon_charge"
 	"charge_effect_attachment"						"muzzle_flash"	
 
-
+	"charge_effect_show_during_drain"				"0"
 
 	// Spread
 	"spread_stand_hip"  							"10"
