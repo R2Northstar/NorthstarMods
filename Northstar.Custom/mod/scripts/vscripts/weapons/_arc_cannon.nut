@@ -87,6 +87,7 @@ global const ARC_CANNON_FX_TABLE = "exp_arc_cannon"
 global const ArcCannonTargetClassnames = {
 	[ "npc_drone" ] 			= true,
 	[ "npc_dropship" ] 			= true,
+	[ "npc_gunship" ] 			= true,
 	[ "npc_marvin" ] 			= true,
 	[ "npc_prowler" ]			= true,
 	[ "npc_soldier" ] 			= true,
