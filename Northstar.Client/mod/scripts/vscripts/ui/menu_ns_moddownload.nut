@@ -57,6 +57,11 @@ bool function DownloadMod( RequiredModInfo mod )
 	dialogData.message = Localize( "#DOWNLOADING_MOD_TEXT", mod.name, mod.version )
 	dialogData.showSpinner = true;
 
+	// Prevent download button
+	AddDialogButton( dialogData, "#CANCEL", void function() {
+		NSCancelModDownload()
+	})
+
 	// Prevent user from closing dialog
 	dialogData.forceChoice = true;
 	OpenDialog( dialogData )
