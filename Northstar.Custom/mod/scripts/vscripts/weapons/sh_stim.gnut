@@ -70,6 +70,7 @@ void function StimThink( entity player, float duration, int endlessStatusEffectH
 {
 	player.EndSignal( "OnDeath" )
 	player.EndSignal( "OnChangedPlayerClass" )
+	player.EndSignal( "player_embarks_titan" ) // Prevent transferring active Stim ability to Titan.
 
 	if ( endlessStatusEffectHandle_SpeedBoost != 0 || endlessStatusEffectHandle_StimVFX != 0 )
 	{
