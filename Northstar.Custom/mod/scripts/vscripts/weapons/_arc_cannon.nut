@@ -92,6 +92,7 @@ global const ArcCannonTargetClassnames = {
 	[ "npc_soldier" ] 			= true,
 	[ "npc_soldier_heavy" ] 	= true,
 	[ "npc_soldier_shield" ]	= true,
+	[ "npc_pilot_elite" ] 				= true,
 	[ "npc_spectre" ] 			= true,
 	[ "npc_stalker" ] 			= true,
 	[ "npc_super_spectre" ]		= true,
