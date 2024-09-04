@@ -127,6 +127,12 @@ void function DisplayModDownloadErrorDialog( string modName )
 {
 	ModInstallState state = NSGetModInstallState()
 
+	// If user cancelled download, no need to display an error message
+	if ( state.status == eModInstallStatus.ABORTED )
+	{
+		return
+	}
+
 	DialogData dialogData
 	dialogData.header = Localize( "#FAILED_DOWNLOADING", modName )
 	dialogData.image = $"ui/menu/common/dialog_error"
