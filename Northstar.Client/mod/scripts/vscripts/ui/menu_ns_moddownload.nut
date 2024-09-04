@@ -9,6 +9,7 @@ global enum eModInstallStatus
     CHECKSUMING,
     EXTRACTING,
     DONE,
+    ABORTED,
     FAILED,
     FAILED_READING_ARCHIVE,
     FAILED_WRITING_TO_DISK,
@@ -80,6 +81,13 @@ bool function DownloadMod( RequiredModInfo mod )
 		state = NSGetModInstallState()
 		UpdateModDownloadDialog( mod, state, menu, header, body )
 		WaitFrame()
+	}
+
+	// If download was aborted, don't close UI since it was closed by clicking cancel button
+	if ( state.status == eModInstallStatus.ABORTED )
+	{
+		print("Mod download was cancelled by the user.")
+		return false;
 	}
 
 	printt( "Mod status:", state.status )
