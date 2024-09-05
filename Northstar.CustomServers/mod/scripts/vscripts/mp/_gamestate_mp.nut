@@ -1063,7 +1063,7 @@ void function OnPlayerChangedTeam( entity player )
 		return
 	
 	// only TEAM_IMC and TEAM_MILITIA can use function GetOtherTeam(), doesnt need to notify them when player got a special team
-	if( [ TEAM_IMC, TEAM_MILITIA ].contains( player.GetTeam() ) )
+	if( IsIMCOrMilitiaTeam( player.GetTeam() ) )
 		NotifyClientsOfTeamChange( player, GetOtherTeam( player.GetTeam() ), player.GetTeam() )
 	
 	foreach( npc in GetNPCArray() )
