@@ -459,7 +459,7 @@ bool function TryFWTerritoryDialogue( entity territory, entity player )
 
 	// the territory trigger will only save players and titans
 	array<entity> allEntsInside = GetAllEntitiesInTrigger( territory )
-	allEntsInside.removebyvalue( null ) // since we're using a fake trigger, need to check this
+	ArrayRemoveInvalid( allEntsInside ) // since we're using a fake trigger, need to check this
 	array<entity> friendliesInside // this means territory's friendly team
 	array<entity> enemiesInside // this means territory's enemy team
 	array<entity> enemyTitansInside
@@ -1342,8 +1342,8 @@ void function FWAreaThreatLevelThink_Threaded()
 		// check threats
 		array<entity> imcEntArray = GetAllEntitiesInTrigger( imcTerritory )
 		array<entity> mltEntArray = GetAllEntitiesInTrigger( mltTerritory )
-		imcEntArray.removebyvalue( null ) // since we're using a fake trigger, need to check this
-		mltEntArray.removebyvalue( null )
+		ArrayRemoveInvalid( imcEntArray ) // since we're using a fake trigger, need to check this
+		ArrayRemoveInvalid( mltEntArray )
 		foreach( entity ent in imcEntArray )
 		{
 			//print( ent )
