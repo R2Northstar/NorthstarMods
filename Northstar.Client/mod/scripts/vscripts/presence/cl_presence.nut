@@ -42,7 +42,7 @@ GameStateStruct function DiscordRPC_GenerateGameState( GameStateStruct gs )
             gs.fd_waveNumber = -1 // Tells plugin it's on Wave Break
     }
 
-    gs.serverGameState = GetGameState()
+    gs.serverGameState = GetGameState() == -1 ? 0 : GetGameState()
     gs.otherHighestScore = gs.ownScore == highestScore ? secondHighest : highestScore
 
     gs.maxScore = IsRoundBased() ? GetCurrentPlaylistVarInt( "roundscorelimit", 0 ) : GetCurrentPlaylistVarInt( "scorelimit", 0 )
