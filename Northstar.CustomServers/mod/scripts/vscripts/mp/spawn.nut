@@ -602,9 +602,9 @@ int function SortPossibleZones( entity a, entity b )
 {
 	if ( mapSpawnZones[a].zoneRating > mapSpawnZones[b].zoneRating )
 		return -1
-			
+		
 	if ( mapSpawnZones[b].zoneRating > mapSpawnZones[a].zoneRating )
 		return 1
-			
+		
 	return 0
 }
