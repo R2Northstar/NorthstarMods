@@ -22,14 +22,14 @@ GameStateStruct function DiscordRPC_GenerateGameState( GameStateStruct gs )
     gs.mapDisplayname = Localize(GetMapDisplayName(GetMapName()))
 
     gs.playlist = GetCurrentPlaylistName()
-    gs.playlistDisplayname = Localize( GetCurrentPlaylistVarString( "name", GetCurrentPlaylistName() ) ) 
+    gs.playlistDisplayname = Localize(GetCurrentPlaylistVarString("name", GetCurrentPlaylistName()))
 
     gs.currentPlayers = GetPlayerArray().len()
     gs.maxPlayers = GetCurrentPlaylistVarInt( "maxPlayers", -1 )
 
     if ( IsValid( GetLocalClientPlayer() ) )
 		gs.ownScore = GameRules_GetTeamScore( GetLocalClientPlayer().GetTeam() )
-    
+
     if ( GameRules_GetGameMode() == FD )
     {
         gs.playlist = "fd" // So it returns only one thing to the plugin side instead of the 5 separate difficulties FD have
