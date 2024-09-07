@@ -125,7 +125,7 @@ void function GamemodeFW_Init()
 	RegisterSignal( "BatteryActivate" )
 
 	// mp_thaw's intro spawnpoint have some problem, player can be stucked on the sky, so override it
-	if( GetMapName() == "mp_thaw" )
+	if ( GetMapName() == "mp_thaw" )
 		SetSpawnpointGamemodeOverride( TEAM_DEATHMATCH )
 
 	AiGameModes_SetNPCWeapons( "npc_soldier", [ "mp_weapon_rspn101", "mp_weapon_dmr", "mp_weapon_r97", "mp_weapon_lmg" ] )
@@ -2322,7 +2322,7 @@ function FW_UseBattery( batteryPortvar, playervar ) //actually void function( en
     if( turretReplaced || teamChanged ) // replaced/hacked turret will spawn with 50% health
         newHealth = int ( turret.GetMaxHealth() * GetCurrentPlaylistVarFloat( "fw_turret_hacked_health", TURRET_HACKED_HEALTH_PERCENTAGE ) )
     // restore turret shield
-    int newShield = int ( min( turret.GetShieldHealthMax(), turret.GetShieldHealth() + ( turret.GetShieldHealthMax() * GetCurrentPlaylistVarFloat( "fw_turret_fixed_shield", TURRET_FIXED_SHIELD_PERCENTAGE ) ) ) )
+    int newShield = int( min( turret.GetShieldHealthMax(), turret.GetShieldHealth() + ( turret.GetShieldHealthMax() * GetCurrentPlaylistVarFloat( "fw_turret_fixed_shield", TURRET_FIXED_SHIELD_PERCENTAGE ) ) ) )
     if( turretReplaced || teamChanged ) // replaced/hacked turret will spawn with 50% shield
         newShield = int ( turret.GetShieldHealthMax() * GetCurrentPlaylistVarFloat( "fw_turret_hacked_shield", TURRET_HACKED_SHIELD_PERCENTAGE ) )
     // only do team score event if turret's shields down, encourage players to hack more turrets
