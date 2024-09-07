@@ -634,12 +634,6 @@ void function SetRecalculateRespawnAsTitanStartPointCallback( entity functionref
 
 bool function ClientCommandCallbackChangeTeam( entity player, array<string> args )
 {
-	if ( !GetConVarBool( "ns_allow_team_change" ) )
-	{
-		SendHudMessage( player, "Server does not allow team change", -1, 0.4, 255, 255, 255, 255, 0.15, 3.0, 0.5 )
-		return true
-	}
-
 	if ( !( player in file.playerChangeTeamTimeBuffer ) )
 		file.playerChangeTeamTimeBuffer[ player ] <- Time() + 5
 	else
