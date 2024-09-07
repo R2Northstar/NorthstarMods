@@ -758,6 +758,7 @@ void function FilterServerList()
 	{
 		totalPlayers += server.playerCount
 
+
 		// Filters
 		if ( filterArguments.hideEmpty && server.playerCount == 0 )
 			continue;
@@ -928,7 +929,27 @@ void function DisplayFocusedServerInfo( int scriptID )
 	// mode name/image
 	string mode = server.playlist
 	Hud_SetVisible( Hud_GetChild( menu, "NextModeIcon" ), true )
-	RuiSetImage( Hud_GetRui( Hud_GetChild( menu, "NextModeIcon" ) ), "basicImage", GetPlaylistThumbnailImage( mode ) )
+	
+	var nextModeIconAlt = Hud_GetChild( menu, "NextModeIconPatch" )
+	var nextModeIcon = Hud_GetChild( menu, "NextModeIcon" )
+	string iconName = GetPlaylistVarOrUseValue( mode, "iconOverride", "default" )
+	
+	if(iconName == "default")
+	{
+		RuiSetImage( Hud_GetRui( nextModeIcon ), "basicImage", GetPlaylistThumbnailImage( mode ) )
+		
+		Hud_Show( nextModeIcon )
+		Hud_Hide( nextModeIconAlt )
+	}	
+	else
+	{
+		RuiSetImage( Hud_GetRui( nextModeIconAlt ), "iconImage", StringToAsset(iconName) )
+		
+		Hud_Hide( nextModeIcon )
+		Hud_Show( nextModeIconAlt )
+	}
+
+
 	Hud_SetVisible( Hud_GetChild( menu, "NextGameModeName" ), true )
 
 	if ( mode.len() != 0 )
