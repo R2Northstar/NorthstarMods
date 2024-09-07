@@ -34,6 +34,7 @@ struct {
 
 void function BaseGametype_Init_MPSP()
 {
+	AddClientCommandCallback( "changeteam", ClientCommandCallbackChangeTeam )
 	AddSpawnCallback( "info_intermission", SetIntermissionCamera )
 	
 	AddPostDamageCallback( "player", AddToTitanDamageStat )
@@ -628,6 +629,22 @@ void function CheckForAutoTitanDeath( entity victim, entity attacker, var damage
 void function SetRecalculateRespawnAsTitanStartPointCallback( entity functionref( entity player, entity basePoint ) callbackFunc )
 {
 	file.recalculateRespawnAsTitanStartPointCallback = callbackFunc
+}
+
+bool function ClientCommandCallbackChangeTeam( entity player, array<string> args )
+{
+	if ( !GetConVarBool( "ns_allow_team_change" ) )
+	{
+		SendHudMessage( player, "Server does not allow team change", -1, 0.4, 255, 255, 255, 255, 0.15, 3.0, 0.5 )
+		return true
+	}
+	
+	if ( GetCurrentPlaylistVarInt( "max_teams", 0 ) > 1 && !IsFFAGame() && GamePlaying() )
+		SetTeam( player, GetOtherTeam( player.GetTeam() ) )
+	else
+		SendHudMessage( player, "Current gamemode doesn't support team change", -1, 0.4, 255, 255, 255, 255, 0.15, 3.0, 0.5 )
+	
+	return true
 }
 
 // stuff to change later
