@@ -109,7 +109,7 @@ void function InitSpawnpoint( entity spawnpoint )
 {
 	spawnpoint.s.lastUsedTime <- -999
 	spawnpoint.s.inUse <- false
-}
+} 
 
 string function CreateNoSpawnArea( int blockSpecificTeam, int blockEnemiesOfTeam, vector position, float lifetime, float radius )
 {
@@ -225,7 +225,7 @@ entity function FindSpawnPoint( entity player, bool isTitan, bool useStartSpawnp
 			SpawnPoints_SortTitanStart()
 		else
 			SpawnPoints_SortTitan()
-		
+			
 		spawnpoints = useStartSpawnpoint ? SpawnPoints_GetTitanStart( team ) : SpawnPoints_GetTitan()
 	}
 	else
@@ -234,17 +234,17 @@ entity function FindSpawnPoint( entity player, bool isTitan, bool useStartSpawnp
 			SpawnPoints_SortPilotStart()
 		else
 			SpawnPoints_SortPilot()
-		
+			
 		spawnpoints = useStartSpawnpoint ? SpawnPoints_GetPilotStart( team ) : SpawnPoints_GetPilot()
 	}
 	
 	entity spawnpoint = GetBestSpawnpoint( player, spawnpoints, isTitan )
-	
+		
 	spawnpoint.s.lastUsedTime = Time()
 	player.SetLastSpawnPoint( spawnpoint )
 	
 	//SpawnPoints_DiscardRatings()
-	
+		
 	return spawnpoint
 }
 
@@ -312,7 +312,7 @@ bool function IsSpawnpointValid( entity spawnpoint, int team )
 	foreach ( bool functionref( entity, int ) customValidationRule in file.customSpawnpointValidationRules )
 		if ( !customValidationRule( spawnpoint, team ) )
 			return false
-	
+		
 	if ( !IsSpawnpointValidDrop( spawnpoint, team ) || Time() - spawnpoint.s.lastUsedTime <= 10.0 )
 		return false
 	
@@ -351,7 +351,7 @@ bool function IsSpawnpointValid( entity spawnpoint, int team )
 */
 
 void function RateSpawnpoints_Generic( int checkClass, array<entity> spawnpoints, int team, entity player )
-{
+{	
 	foreach ( entity spawnpoint in spawnpoints )
 	{
 		float currentRating = 0.0
@@ -494,7 +494,7 @@ void function RateSpawnpoints_SpawnZones( int checkClass, array<entity> spawnpoi
 			rating = 10.0
 		else
 			rating = 2.0 * ( 1 - ( distance / 3000.0 ) )
-		
+			
 		spawn.CalculateRating( checkClass, team, rating, rating * 0.25 )
 	}
 }
@@ -513,17 +513,17 @@ entity function DecideSpawnZone_Generic( array<entity> spawnzones, int team )
 	vector averageFriendlySpawns
 	foreach ( entity spawn in startSpawns )
 		averageFriendlySpawns += spawn.GetOrigin()
-
+	
 	averageFriendlySpawns /= startSpawns.len()
-
+	
 	vector averageEnemySpawns
 	foreach ( entity spawn in enemyStartSpawns )
 		averageEnemySpawns += spawn.GetOrigin()
-
+	
 	averageEnemySpawns /= enemyStartSpawns.len()
-
+	
 	float baseDistance = Distance2D( averageFriendlySpawns, averageEnemySpawns )
-
+	
 	if ( TeamHasDirtySpawnzone( team ) )
 	{
 		array<entity> possibleZones
