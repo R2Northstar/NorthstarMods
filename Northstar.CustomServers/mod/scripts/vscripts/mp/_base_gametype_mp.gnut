@@ -650,7 +650,7 @@ bool function ClientCommandCallbackChangeTeam( entity player, array<string> args
 		}
 	}
 	
-	if( !GamePlaying() )
+	if ( !GamePlaying() )
 	{
 		SendHudMessage( player, "Team change not allowed outside playing phase", -1, 0.4, 255, 255, 255, 255, 0.15, 3.0, 0.5 )
 		return true
