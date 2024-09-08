@@ -706,7 +706,7 @@ void function SetTitanSelectButtonVisibleState( bool state )
 
 void function UpdateTeamSwitchButton( var button )
 {
-	while( true )
+	while ( true )
 	{
 		Hud_SetLocked( button, !GetConVarBool( "ns_allow_team_change" ) )
 		wait 0.5
@@ -715,7 +715,7 @@ void function UpdateTeamSwitchButton( var button )
 
 void function OnRequestTeamSwitch( var button )
 {
-	if( !Hud_IsLocked( button ) )
+	if ( !Hud_IsLocked( button ) )
 	{
 		ClientCommand( "changeteam" )
 		CloseAllMenus()
