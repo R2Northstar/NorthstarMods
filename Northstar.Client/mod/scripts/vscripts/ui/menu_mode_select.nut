@@ -554,9 +554,7 @@ void function ModeButton_GetFocus( var button )
 
 	string mapName = PrivateMatch_GetSelectedMap()
 	bool mapSupportsMode = PrivateMatch_IsValidMapModeCombo( mapName, modeName )
-	if ( !mapSupportsMode && !IsNorthstarServer() )
-		Hud_SetText( nextModeDesc, Localize( "#PRIVATE_MATCH_MODE_NO_MAP_SUPPORT", Localize( GetGameModeDisplayName( modeName ) ), Localize( GetMapDisplayName( mapName ) ) ) )
-	else if ( IsFDMode( modeName ) ) // HACK!
+	if ( IsFDMode( modeName ) ) // HACK!
 		Hud_SetText( nextModeDesc, Localize( "#FD_PLAYERS_DESC", Localize( GetGameModeDisplayHint( modeName ) ) ) )
 	else
 		Hud_SetText( nextModeDesc, GetGameModeDisplayHint( modeName ) )
@@ -577,9 +575,10 @@ void function ModeButton_Click( var button )
 
 	// on modded servers set us to the first map for that mode automatically
 	// need this for coliseum mainly which is literally impossible to select without this
-	if ( IsNorthstarServer() && !PrivateMatch_IsValidMapModeCombo( PrivateMatch_GetSelectedMap(), modeName ) )
+ 	if ( IsNorthstarServer() && !PrivateMatch_IsValidMapModeCombo( PrivateMatch_GetSelectedMap(), modeName ) )
+  {
 		ClientCommand( "SetCustomMap " + GetPrivateMatchMapsForMode( modeName )[ 0 ] )
-
+  }
 	// set it
 	ClientCommand( "PrivateMatchSetMode " + modeName )
 	CloseActiveMenu()

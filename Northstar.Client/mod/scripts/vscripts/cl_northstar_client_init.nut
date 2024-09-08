@@ -1,3 +1,11 @@
+global enum eDiscordGameState
+{
+    LOADING = 0
+    MAINMENU
+    LOBBY
+    INGAME
+}
+
 global struct GameStateStruct {
 
     string map
@@ -12,13 +20,13 @@ global struct GameStateStruct {
     int otherHighestScore
     int maxScore
     float timeEnd
+    int serverGameState
+    int fd_waveNumber
+    int fd_totalWaves
 }
 
 global struct UIPresenceStruct {
-	bool isLoading
-	bool isLobby
-	string loadingLevel
-	string loadedLevel
+    int gameState
 }
 
 global struct RequiredModInfo
@@ -47,4 +55,12 @@ global struct MasterServerAuthResult
     bool success
     string errorCode
     string errorMessage
+}
+
+global struct ModInstallState
+{
+    int status
+    int progress
+    int total
+    float ratio
 }

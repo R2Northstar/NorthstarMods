@@ -180,6 +180,12 @@ void function MarkPlayers( entity imcMark, entity militiaMark )
 	entity livingMark = GetMarked( GetOtherTeam( deadMark.GetTeam() ) )
 	livingMark.SetPlayerGameStat( PGS_DEFENSE_SCORE, livingMark.GetPlayerGameStat( PGS_DEFENSE_SCORE ) + 1 )
 	
+	if( !HasPlayerCompletedMeritScore( livingMark ) )
+	{
+		AddPlayerScore( livingMark, "ChallengeMFD" )
+		SetPlayerChallengeMeritScore( livingMark )
+	}
+	
 	// thread this so we don't kill our own thread
 	thread AddTeamScore( livingMark.GetTeam(), 1 )
 }
@@ -188,10 +194,22 @@ void function UpdateMarksForKill( entity victim, entity attacker, var damageInfo
 {
 	if ( victim == GetMarked( victim.GetTeam() ) )
 	{
-		MessageToAll( eEventNotifications.MarkedForDeathKill, null, victim, attacker.GetEncodedEHandle() )
+		// handle suicides. Not sure what the actual message is that vanilla shows for this
+		// but this will prevent crashing for now
+		bool isSuicide = IsSuicide( victim, attacker, DamageInfo_GetDamageSourceIdentifier( damageInfo ) )
+		entity actualAttacker = isSuicide ? victim : attacker
+
+		MessageToAll( eEventNotifications.MarkedForDeathKill, null, victim, actualAttacker.GetEncodedEHandle() )
 		svGlobal.levelEnt.Signal( "MarkKilled", { mark = victim } )
 		
-		if ( attacker.IsPlayer() )
+		if ( !isSuicide && attacker.IsPlayer() )
+		{
 			attacker.SetPlayerGameStat( PGS_ASSAULT_SCORE, attacker.GetPlayerGameStat( PGS_ASSAULT_SCORE ) + 1 )
+			if( !HasPlayerCompletedMeritScore( attacker ) )
+			{
+				AddPlayerScore( attacker, "ChallengeMFD" )
+				SetPlayerChallengeMeritScore( attacker )
+			}
+		}
 	}
 }
