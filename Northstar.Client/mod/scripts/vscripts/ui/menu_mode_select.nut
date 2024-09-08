@@ -524,7 +524,7 @@ void function UpdateVisibleModes()
 			if( blockedModes.contains( file.sortedModes[ modeIndex ] ) )
 				Hud_SetLocked( button, true )
 
-			if ( !PrivateMatch_IsValidMapModeCombo( PrivateMatch_GetSelectedMap(), mode ) && !IsNorthstarServer() )
+			if ( !PrivateMatch_IsValidMapModeCombo( PrivateMatch_GetSelectedMap(), mode ) )
 			{
 				Hud_SetLocked( button, true )
 				SetButtonRuiText( button, mode )
@@ -575,10 +575,10 @@ void function ModeButton_Click( var button )
 
 	// on modded servers set us to the first map for that mode automatically
 	// need this for coliseum mainly which is literally impossible to select without this
- 	if ( IsNorthstarServer() && !PrivateMatch_IsValidMapModeCombo( PrivateMatch_GetSelectedMap(), modeName ) )
-  {
+ 	if ( !PrivateMatch_IsValidMapModeCombo( PrivateMatch_GetSelectedMap(), modeName ) )
+	{
 		ClientCommand( "SetCustomMap " + GetPrivateMatchMapsForMode( modeName )[ 0 ] )
-  }
+	}
 	// set it
 	ClientCommand( "PrivateMatchSetMode " + modeName )
 	CloseActiveMenu()
