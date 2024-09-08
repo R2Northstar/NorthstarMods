@@ -85,12 +85,14 @@ void function InitInGameMPMenu()
 	var gameHeader = AddComboButtonHeader( comboStruct, headerIndex, "#MENU_HEADER_GAME" )
 	var leaveButton = AddComboButton( comboStruct, headerIndex, buttonIndex++, "#LEAVE_MATCH" )
 	Hud_AddEventHandler( leaveButton, UIE_CLICK, OnLeaveButton_Activate )
-	
-	if ( GetConVarBool( "ns_allow_team_change" ) )
-	{
-		var devButton = AddComboButton( comboStruct, headerIndex, buttonIndex++, "#SWITCH_TEAMS" )
-		Hud_AddEventHandler( devButton, UIE_CLICK, OnRequestTeamSwitch )
-	}
+	#if DEV
+		var devButton = AddComboButton( comboStruct, headerIndex, buttonIndex++, "Dev" )
+		Hud_AddEventHandler( devButton, UIE_CLICK, AdvanceMenuEventHandler( GetMenu( "DevMenu" ) ) )
+	#else
+		var teamChangeButton = AddComboButton( comboStruct, headerIndex, buttonIndex++, "#SWITCH_TEAMS" )
+		Hud_AddEventHandler( teamChangeButton, UIE_CLICK, OnRequestTeamSwitch )
+		thread UpdateTeamSwitchButton( teamChangeButton )
+	#endif
 
 	headerIndex++
 	buttonIndex = 0
@@ -703,8 +705,20 @@ void function SetTitanSelectButtonVisibleState( bool state )
 	}
 }
 
+void function UpdateTeamSwitchButton( var button )
+{
+	while( true )
+	{
+		Hud_SetLocked( button, !GetConVarBool( "ns_allow_team_change" ) )
+		wait 0.5
+	}
+}
+
 void function OnRequestTeamSwitch( var button )
 {
-	ClientCommand( "changeteam" )
-	CloseAllMenus()
+	if( !Hud_IsLocked( button ) )
+	{
+		ClientCommand( "changeteam" )
+		CloseAllMenus()
+	}
 }
