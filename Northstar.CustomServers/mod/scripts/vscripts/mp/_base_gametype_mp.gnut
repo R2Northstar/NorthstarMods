@@ -646,6 +646,7 @@ bool function ClientCommandCallbackChangeTeam( entity player, array<string> args
 		if ( file.playerChangeTeamTimeBuffer[ player ] > Time() )
 		{
 			SendHudMessage( player, "Team Switching is on Cooldown", -1, 0.4, 255, 255, 255, 255, 0.15, 3.0, 0.5 )
+			file.playerChangeTeamTimeBuffer[ player ] = Time() + 5
 			return true
 		}
 	}
