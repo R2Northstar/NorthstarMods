@@ -132,7 +132,8 @@ void function OnPlayerChangedTeam( entity player )
 	if ( !player.hasConnected ) // Prevents players who just joined to trigger below code, as server always pre setups their teams
 		return
 	
-	NotifyClientsOfTeamChange( player, GetOtherTeam( player.GetTeam() ), player.GetTeam() )
+	if( IsIMCOrMilitiaTeam( player.GetTeam() ) )
+		NotifyClientsOfTeamChange( player, GetOtherTeam( player.GetTeam() ), player.GetTeam() )
 	
 	foreach( npc in GetNPCArray() )
 	{
