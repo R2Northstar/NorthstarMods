@@ -218,6 +218,8 @@ void function OnPrematchStart()
 
 void function PlayerWatchesWargamesIntro( entity player )
 {
+	player.EndSignal( "OnDestroy" )
+	
 	if ( IsAlive( player ) )
 		player.Die()
 
@@ -240,8 +242,6 @@ void function PlayerWatchesWargamesIntro( entity player )
 	
 	// we need to wait a frame if we killed ourselves to spawn into this, so just easier to do it all the time to remove any weirdness
 	WaitFrame()
-	
-	player.EndSignal( "OnDestroy" )
 	player.EndSignal( "OnDeath" )
 	
 	int factionTeam = ConvertPlayerFactionToIMCOrMilitiaTeam( player )
