@@ -62,15 +62,15 @@ npc_titan_atlas_tracker_boss_fd_elite
 	NoticeDistFar_Alert		3000
 	NoticeDistFar_Combat	4000
 	NoticeDistFar_Idle		2000
-	NoticeTimeNear_Alert	0.1
-	NoticeTimeNear_Combat	0.1
-	NoticeTimeNear_Idle		0.1
-	NoticeTimeFar_Alert		0.3
-	NoticeTimeFar_Combat	0.3
-	NoticeTimeFar_Idle		0.3
-	NoticeTimePeripheral_Alert	0.3
-	NoticeTimePeripheral_Combat 0.3
-	NoticeTimePeripheral_Idle	0.3
+	NoticeTimeNear_Alert	1.0
+	NoticeTimeNear_Combat	1.0
+	NoticeTimeNear_Idle		1.0
+	NoticeTimeFar_Alert		1.0
+	NoticeTimeFar_Combat	1.0
+	NoticeTimeFar_Idle		1.0
+	NoticeTimePeripheral_Alert	1.0
+	NoticeTimePeripheral_Combat 1.0
+	NoticeTimePeripheral_Idle	1.0
 	
 	evasiveCombatShieldPct					0.0
 	
@@ -100,4 +100,6 @@ npc_titan_atlas_tracker_boss_fd_elite
 	titanCamoIndex 31
 	titanDecalIndex 0
 	titanSkinIndex 2
+	
+	can_traverse 			1
 }

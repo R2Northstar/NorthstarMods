@@ -9,7 +9,7 @@ npc_titan_ogre_minigun_boss_fd_elite
 	painOnSurpriseHit				0
 	painWhileRunning				0
 	
-	minConsecutiveDodgeTime			1
+	minConsecutiveDodgeTime			2
 	StrafeDodgeDamage				400
 	
 	PainOnHeavyDamageThreshold		0
@@ -66,23 +66,23 @@ npc_titan_ogre_minigun_boss_fd_elite
 	moveYawSpeed					90
 	allowTurn45Anims				0
 	
-	NoticeForgetPostTime	2.0
-	NoticeForgetPreTime		1.0
+	NoticeForgetPostTime	4.0
+	NoticeForgetPreTime		2.0
 	NoticeDistNear_Alert	600
 	NoticeDistNear_Combat	600
 	NoticeDistNear_Idle		150
 	NoticeDistFar_Alert		3000
 	NoticeDistFar_Combat	4000
 	NoticeDistFar_Idle		2000
-	NoticeTimeNear_Alert	0.1
-	NoticeTimeNear_Combat	0.1
-	NoticeTimeNear_Idle		0.1
-	NoticeTimeFar_Alert		0.3
-	NoticeTimeFar_Combat	0.3
-	NoticeTimeFar_Idle		0.3
-	NoticeTimePeripheral_Alert	0.3
-	NoticeTimePeripheral_Combat 0.3
-	NoticeTimePeripheral_Idle	0.3
+	NoticeTimeNear_Alert	1.0
+	NoticeTimeNear_Combat	1.0
+	NoticeTimeNear_Idle		1.0
+	NoticeTimeFar_Alert		1.0
+	NoticeTimeFar_Combat	1.0
+	NoticeTimeFar_Idle		1.0
+	NoticeTimePeripheral_Alert	1.0
+	NoticeTimePeripheral_Combat 1.0
+	NoticeTimePeripheral_Idle	1.0
 	
 	evasiveCombatShieldPct					0.0
 	
@@ -104,7 +104,7 @@ npc_titan_ogre_minigun_boss_fd_elite
 	blockPeriod					4
 	maxBlockPerPeriod			1
 	
-	dodgePeriod					2
+	dodgePeriod					3
 	maxDodgePerPeriod			1
 	circleStrafeDist			600
 	
@@ -115,4 +115,6 @@ npc_titan_ogre_minigun_boss_fd_elite
 	titanCamoIndex 31
 	titanDecalIndex 0
 	titanSkinIndex 2
+	
+	can_traverse 			1
 }

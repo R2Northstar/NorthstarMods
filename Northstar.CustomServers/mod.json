@@ -59,6 +59,11 @@
 			"Flags": "ARCHIVE_PLAYERPROFILE"
 		},
 		{
+			"Name": "ns_allow_team_change",
+			"DefaultValue": "1",
+			"Flags": "REPLICATED"
+		},
+		{
 			"Name": "ns_use_phase_fix",
 			"DefaultValue": "1"
 		},

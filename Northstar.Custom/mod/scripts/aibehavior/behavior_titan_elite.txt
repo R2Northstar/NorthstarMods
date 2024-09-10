@@ -32,7 +32,7 @@ Selector Combat
 	SelectSchedule_MeleeAttack
 	SelectSchedule_ChaseEnemy
 	SelectSchedule_AtEnemyLKP
-	SelectSchedule_StationaryLowAmmo
+	SelectSchedule_EvasiveLowAmmo
 	SelectSchedule_EngagementDistMin
 	SelectSchedule_RangeAttack
 	SelectSchedule_CombatFace
@@ -47,7 +47,7 @@ Selector CombatAggressive
 	SelectSchedule_ForwardDodge
 	SelectSchedule_ChaseEnemy
 	SelectSchedule_AtEnemyLKP
-	SelectSchedule_StationaryLowAmmo
+	SelectSchedule_EvasiveLowAmmo
 	SelectSchedule_EngagementDistMin
 	SelectSchedule_RangeAttack
 	SelectSchedule_CombatFace
