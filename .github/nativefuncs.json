@@ -19,6 +19,12 @@
 			"argTypes":"string modName, bool enabled"
 		},
 		{
+			"name":"NSIsModRemote",
+			"helpText":"",
+			"returnTypeString":"bool",
+			"argTypes":"string modName"
+		},
+		{
 			"name":"NSGetModDescriptionByModName",
 			"helpText":"",
 			"returnTypeString":"string",
@@ -267,6 +273,12 @@
 			"argTypes":"string modName, bool enabled"
 		},
 		{
+			"name":"NSIsModRemote",
+			"helpText":"",
+			"returnTypeString":"bool",
+			"argTypes":"string modName"
+		},
+		{
 			"name":"NSGetModDescriptionByModName",
 			"helpText":"",
 			"returnTypeString":"string",
@@ -467,6 +479,12 @@
 			"argTypes":"string modName, bool enabled"
 		},
 		{
+			"name":"NSIsModRemote",
+			"helpText":"",
+			"returnTypeString":"bool",
+			"argTypes":"string modName"
+		},
+		{
 			"name":"NSGetModDescriptionByModName",
 			"helpText":"",
 			"returnTypeString":"string",
@@ -501,6 +519,13 @@
 			"helpText":"",
 			"returnTypeString":"array<string>",
 			"argTypes":"string modName"
+		},
+		{
+			"name": "NSFetchVerifiedModsManifesto",
+			"helpText": "Retrieves the verified mods list from the central authority (GitHub).",
+			"returnTypeString": "void",
+			"argTypes": ""
+
 		},
 		{
 			"name": "NSIsModDownloadable",
