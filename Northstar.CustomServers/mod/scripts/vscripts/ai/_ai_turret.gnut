@@ -7,10 +7,18 @@ global function IsTurretActive
 global function TurretRefundThink
 global function RevivableTurret_DamageCallback
 global function RevivableTurret_Revive
+global function RepairTurret_WaveBreak
+global function AddTurretRepairCallback
+
+struct
+{
+	array<void functionref(entity,entity,entity)> turretRepairCallbacks
+} file
 
 void function AiTurret_Init()
 {
 	RegisterSignal( "TurretOffline" )
+	RegisterSignal( "TurretRevived" )
 }
 
 entity function GetMegaTurretLinkedToPanel( entity panel )
@@ -86,30 +94,36 @@ void function RevivableTurret_DamageCallback( entity turret, var damageInfo )
 		turret.SetUsable()
 		turret.SetUsableByGroup( "friendlies pilot" )
 		turret.SetUsePrompts( "#TURRET_WAKEUP_HOLD_USE", "#TURRET_WAKEUP_PRESS_USE" )
-		turret.useFunction = RevivableTurret_UseFunction
+		thread RevivableTurretThink( turret )
 		thread RevivableTurret_Kill( turret )
 		DamageInfo_SetDamage( damageInfo, 0.0 )
 	}
 }
 
-function RevivableTurret_UseFunction( player , turret )
+void function RevivableTurretThink( entity turret )
 {	
-	entity tur = expect entity( turret )
-	entity ent = expect entity( player )
-	entity owner = tur.GetBossPlayer()
-	if( ent != owner )
+	turret.EndSignal( "OnDestroy" )
+	turret.EndSignal( "OnDeath" )
+	turret.EndSignal( "TurretRevived" )
+
+	entity player = expect entity( turret.WaitSignal( "OnPlayerUse" ).player )
+	entity owner = turret.GetBossPlayer()
+	foreach ( callbackFunc in file.turretRepairCallbacks )
 	{
-		int ownerEHandle = owner.GetEncodedEHandle()
-		AddPlayerScore( ent, "FDRepairTurret" )
-		MessageToTeam( TEAM_MILITIA,eEventNotifications.FD_TurretRepair, null, ent, ownerEHandle )
+		callbackFunc( turret, player, owner )
 	}
-	thread RevivableTurret_Revive( tur )
-	return true
+	thread RevivableTurret_Revive( turret )
 }
 
 
 void function RevivableTurret_Revive( entity turret )
 {
+	if( !IsValid( turret ) )
+		return
+
+	turret.EndSignal( "OnDestroy" )
+
+	turret.Signal( "TurretRevived" )
 	turret.UnsetUsable()
 	turret.SetHealth( turret.GetMaxHealth() )
 	turret.ClearInvulnerable()
@@ -123,6 +137,11 @@ void function RevivableTurret_Revive( entity turret )
 
 void function RevivableTurret_Kill( entity turret )
 {
+	if( !IsValid( turret ) )
+		return
+
+	turret.EndSignal( "OnDestroy" )
+
 	turret.EnableNPCFlag( NPC_IGNORE_ALL )
 	turret.SetNoTarget( true )
 	turret.SetInvulnerable()
@@ -130,4 +149,28 @@ void function RevivableTurret_Kill( entity turret )
 	wait 1
 	turret.SetNoTarget( true )
 	turret.DisableTurret()
+}
+
+void function RepairTurret_WaveBreak( entity turret )
+{
+	if ( turret.GetHealth() == 1 )
+	{
+		turret.UnsetUsable()
+		turret.EnableTurret()
+		turret.Anim_Play("deploy")
+		turret.DisableNPCFlag( NPC_IGNORE_ALL )
+		turret.Highlight_SetParam( 1, 0, < 0, 0, 0 > )
+		turret.Highlight_SetParam( 3, 0, HIGHLIGHT_COLOR_INTERACT )
+		MakeTurretVulnerable( turret )
+		turret.SetNoTargetSmartAmmo( true )
+		thread TurretRefundThink( turret )
+	}
+	
+	turret.SetHealth( turret.GetMaxHealth() )
+}
+
+void function AddTurretRepairCallback( void functionref(entity,entity,entity) callbackFunc )
+{
+	Assert (!( file.turretRepairCallbacks.contains( callbackFunc ) ))
+	file.turretRepairCallbacks.append( callbackFunc )
 }
