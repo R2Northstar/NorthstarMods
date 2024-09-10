@@ -202,8 +202,9 @@ void function UpdateOpenInvite_Thread()
 
 void function UICodeCallback_OpenInviteUpdated()
 {
-	// don't support on northstar
-	return
+	// openinvites not supported on northstar
+	if( !NSIsVanilla() )
+		return
 
 	if ( file.openInviteVisible )
 		return

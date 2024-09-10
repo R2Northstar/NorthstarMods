@@ -2,6 +2,23 @@ global function InitModesMenu
 
 struct {
 	int currentModePage
+	array<string> modes = [ // default modes in vanilla
+		"aitdm",
+		"tdm",
+		"cp",
+		"at",
+		"ctf",
+		"lts",
+		"ps",
+		"speedball",
+		"mfd",
+		"ttdm",
+		"fd_easy",
+		"fd_normal",
+		"fd_hard",
+		"fd_master",
+		"fd_insane"
+	]
 } file
 
 const int MODES_PER_PAGE = 15
@@ -39,24 +56,30 @@ void function UpdateVisibleModes()
 		Hud_SetEnabled( button, false )
 		Hud_SetVisible( button, false )
 	}
-		
+	
 	array<string> modesArray = GetPrivateMatchModes()
+
 	for ( int i = 0; i < MODES_PER_PAGE; i++ )
 	{
 		if ( i + ( file.currentModePage * MODES_PER_PAGE ) >= modesArray.len() )
 			break
-		
+
 		int modeIndex = i + ( file.currentModePage * MODES_PER_PAGE )
 		SetButtonRuiText( buttons[ i ], GetGameModeDisplayName( modesArray[ modeIndex ] ) )
 		
 		Hud_SetEnabled( buttons[ i ], true )		
 		Hud_SetVisible( buttons[ i ], true )
-		
+
 		// This check is refactored in the new mode menu so we can just ignore this atrocity
 		if ( !ModeSettings_RequiresAI( modesArray[ modeIndex ] ) || modesArray[ modeIndex ] == "aitdm" || modesArray[ modeIndex ] == "at" )
 			Hud_SetLocked( buttons[ i ], false )
 		else
 			Hud_SetLocked( buttons[ i ], true )	
+
+		if ( !file.modes.contains( modesArray[ modeIndex ] ) && NSIsVanilla() )
+		{
+			Hud_SetLocked( buttons[ i ], true )
+		}
 	}
 }
 

@@ -71,11 +71,13 @@ struct
 
 	int inboxHeaderIndex
 	var inboxButton
+	var switchButton
 
 	int customizeHeaderIndex
 	var pilotButton
 	var titanButton
 	var boostsButton
+	var progressionButton
 	var storeButton
 	var storeNewReleasesButton
 	var storeBundlesButton
@@ -94,6 +96,7 @@ struct
 
 	array<var> lobbyButtons
 	var playHeader
+	var nsHeader
 	var customizeHeader
 	var callsignHeader
 
@@ -179,7 +182,6 @@ void function InitLobbyMenu()
 	AddMenuFooterOption( menu, BUTTON_BACK, "#BACK_BUTTON_POSTGAME_REPORT", "#POSTGAME_REPORT", OpenPostGameMenu, IsPostGameMenuValid )
 	AddMenuFooterOption( menu, BUTTON_TRIGGER_RIGHT, "#R_TRIGGER_CHAT", "", null, IsVoiceChatPushToTalk )
 	// Client side progression toggle
-	AddMenuFooterOption( menu, BUTTON_Y, "#Y_BUTTON_TOGGLE_PROGRESSION", "#TOGGLE_PROGRESSION", ShowToggleProgressionDialog )
 
 	InitChatroom( menu )
 
@@ -230,6 +232,9 @@ void function InitLobbyMenu()
 
 void function ShowToggleProgressionDialog( var button )
 {
+	if( Hud_IsLocked( button ) )
+		return;
+
 	bool enabled = Progression_GetPreference()
 
 	DialogData dialogData
@@ -288,21 +293,31 @@ void function SetupComboButtonTest( var menu )
 	int buttonIndex = 0
 	file.playHeader = AddComboButtonHeader( comboStruct, headerIndex, "#MENU_HEADER_PLAY" )
 	
-	// server browser
-	file.findGameButton = AddComboButton( comboStruct, headerIndex, buttonIndex++, "#MENU_TITLE_SERVER_BROWSER" )
-	file.lobbyButtons.append( file.findGameButton )
-	Hud_SetLocked( file.findGameButton, true )
-	Hud_AddEventHandler( file.findGameButton, UIE_CLICK, OpenServerBrowser )
+	// vanilla
 
-	// private match
-	file.inviteRoomButton = AddComboButton( comboStruct, headerIndex, buttonIndex++, "#PRIVATE_MATCH" )
-	Hud_AddEventHandler( file.inviteRoomButton, UIE_CLICK, StartPrivateMatch )
+	file.findGameButton = AddComboButton( comboStruct, headerIndex, buttonIndex++, "#MENU_TITLE_FIND_GAME" )
+	file.lobbyButtons.append( file.findGameButton )
+	Hud_AddEventHandler( file.findGameButton, UIE_CLICK, BigPlayButton1_Activate )
+
+	file.inviteRoomButton = AddComboButton( comboStruct, headerIndex, buttonIndex++, "#MENU_TITLE_INVITE_ROOM" )
+	Hud_AddEventHandler( file.inviteRoomButton, UIE_CLICK, DoRoomInviteIfAllowed )
 
 	file.inviteFriendsButton = AddComboButton( comboStruct, headerIndex, buttonIndex++, "#MENU_TITLE_INVITE_FRIENDS" )
 	Hud_AddEventHandler( file.inviteFriendsButton, UIE_CLICK, InviteFriendsIfAllowed )
 
-	Hud_SetEnabled( file.inviteFriendsButton, false )
-	Hud_SetVisible( file.inviteFriendsButton, false )
+	// server browser
+	// file.serverBrowserButton = AddComboButton( comboStruct, headerIndex, buttonIndex++, "#MENU_TITLE_SERVER_BROWSER" )
+	// file.lobbyButtons.append( file.serverBrowserButton )
+	// Hud_SetLocked( file.serverBrowserButton, true )
+	// Hud_AddEventHandler( file.serverBrowserButton, UIE_CLICK, OpenServerBrowser )
+
+	// private match
+	// file.privateMatchButton = AddComboButton( comboStruct, headerIndex, buttonIndex++, "#PRIVATE_MATCH" )
+	// Hud_AddEventHandler( file.privateMatchButton, UIE_CLICK, StartPrivateMatch )
+
+
+	// Hud_SetEnabled( file.inviteFriendsButton, false )
+	// Hud_SetVisible( file.inviteFriendsButton, false )
 
 	// file.toggleMenuModeButton = AddComboButton( comboStruct, headerIndex, buttonIndex++, "#MENU_LOBBY_SWITCH_FD" )
 	// Hud_AddEventHandler( file.toggleMenuModeButton, UIE_CLICK, ToggleLobbyMode )
@@ -320,6 +335,8 @@ void function SetupComboButtonTest( var menu )
 	Hud_AddEventHandler( titanButton, UIE_CLICK, AdvanceMenuEventHandler( GetMenu( "EditTitanLoadoutsMenu" ) ) )
 	file.boostsButton = AddComboButton( comboStruct, headerIndex, buttonIndex++, "#MENU_TITLE_BOOSTS" )
 	Hud_AddEventHandler( file.boostsButton, UIE_CLICK, AdvanceMenuEventHandler( GetMenu( "BurnCardMenu" ) ) )
+	// file.progressionButton = AddComboButton( comboStruct, headerIndex, buttonIndex++, "#TOGGLE_PROGRESSION" )
+	// Hud_AddEventHandler( file.progressionButton, UIE_CLICK, ShowToggleProgressionDialog )
 
 	headerIndex++
 	buttonIndex = 0
@@ -343,17 +360,18 @@ void function SetupComboButtonTest( var menu )
 	var networksInbox = AddComboButton( comboStruct, headerIndex, buttonIndex++, "#MENU_TITLE_INBOX" )
 	file.inboxButton = networksInbox
 	file.lobbyButtons.append( networksInbox )
-	Hud_AddEventHandler( networksInbox, UIE_CLICK, OnInboxButton_Activate )
+	Hud_AddEventHandler( networksInbox, UIE_CLICK, _OnInboxButton_Activate )
 	var switchButton = AddComboButton( comboStruct, headerIndex, buttonIndex++, "#COMMUNITY_SWITCHCOMMUNITY" )
-	Hud_AddEventHandler( switchButton, UIE_CLICK, OnSwitchButton_Activate )
+	file.switchButton = switchButton
+	Hud_AddEventHandler( switchButton, UIE_CLICK, _OnSwitchButton_Activate )
 	var browseButton = AddComboButton( comboStruct, headerIndex, buttonIndex++, "#COMMUNITY_BROWSE_NETWORKS" )
 	file.lobbyButtons.append( browseButton )
-	Hud_AddEventHandler( browseButton, UIE_CLICK, OnBrowseNetworksButton_Activate )
+	Hud_AddEventHandler( browseButton, UIE_CLICK, _OnBrowseNetworksButton_Activate )
 	file.browseNetworkButton = browseButton
 	#if NETWORK_INVITE
 		file.inviteFriendsToNetworkButton = AddComboButton( comboStruct, headerIndex, buttonIndex++, "#INVITE_FRIENDS" )
 		file.lobbyButtons.append( file.inviteFriendsToNetworkButton )
-		Hud_AddEventHandler( file.inviteFriendsToNetworkButton, UIE_CLICK, OnInviteFriendsToNetworkButton_Activate )
+		Hud_AddEventHandler( file.inviteFriendsToNetworkButton, UIE_CLICK, _OnInviteFriendsToNetworkButton_Activate )
 	#endif
 
 	headerIndex++
@@ -392,6 +410,38 @@ void function SetupComboButtonTest( var menu )
 	ComboButtons_Finalize( comboStruct )
 }
 
+void function _OnInviteFriendsToNetworkButton_Activate( var button )
+{
+	if ( Hud_IsLocked( button ) )
+		return
+
+	OnInviteFriendsToNetworkButton_Activate( button )
+}
+
+void function _OnInboxButton_Activate( var button )
+{
+	if ( Hud_IsLocked( button ) )
+		return
+
+	OnInboxButton_Activate( button)
+}
+
+void function _OnSwitchButton_Activate( var button )
+{
+	if ( Hud_IsLocked( button ) )
+		return
+
+	OnSwitchButton_Activate( button)
+}
+
+void function _OnBrowseNetworksButton_Activate( var button )
+{
+	if ( Hud_IsLocked( button ) )
+		return
+
+	OnBrowseNetworksButton_Activate( button)
+}
+
 bool function MatchResultsExist()
 {
 	return true // TODO
@@ -410,22 +460,27 @@ void function DoRoomInviteIfAllowed( var button )
 	if ( Hud_IsLocked( button ) )
 		return
 
-	if ( !DoesCurrentCommunitySupportInvites() )
+	if ( !NSIsVanilla() )
+		StartPrivateMatch( button )
+	else
 	{
-		OnBrowseNetworksButton_Activate( button )
-		return
+		if ( !DoesCurrentCommunitySupportInvites() )
+		{
+			OnBrowseNetworksButton_Activate( button )
+			return
+		}
+
+		entity player = GetUIPlayer()
+
+		if ( IsValid( player ) && Player_NextAvailableMatchmakingTime( player ) > 0 )
+		{
+			DisplayMatchmakingPenaltyDialog( player )
+			return
+		}
+
+		SendOpenInvite( true )
+		OpenSelectedPlaylistMenu()
 	}
-
-	entity player = GetUIPlayer()
-
-	if ( IsValid( player ) && Player_NextAvailableMatchmakingTime( player ) > 0 )
-	{
-		DisplayMatchmakingPenaltyDialog( player )
-		return
-	}
-
-	SendOpenInvite( true )
-	OpenSelectedPlaylistMenu()
 }
 
 void function DisplayMatchmakingPenaltyDialog( entity player )
@@ -491,6 +546,9 @@ void function InviteFriendsIfAllowed( var button )
 {
 	if ( Hud_IsLocked( button ) )
 		return
+
+	if ( !NSIsVanilla() )
+		ShowToggleProgressionDialog( button )
 
 	entity player = GetUIPlayer()
 	if ( IsValid( player ) && Player_NextAvailableMatchmakingTime( player ) > 0 )
@@ -577,6 +635,8 @@ void function OnLobbyMenu_Open()
 
 	// code will start loading DLC info from first party unless already done
 	InitDLCStore()
+
+	DoNSButtonState()
 
 	thread UpdateCachedNewItems()
 	if ( file.putPlayerInMatchmakingAfterDelay )
@@ -683,6 +743,43 @@ void function OnLobbyMenu_Open()
 	}
 }
 
+void function DoNSButtonState()
+{
+	if ( NSIsVanilla() )
+	{
+		ComboButton_SetText( file.findGameButton, "#MENU_TITLE_FIND_GAME" )
+		ComboButton_SetText( file.inviteRoomButton, "#MENU_TITLE_INVITE_ROOM" )
+		ComboButton_SetText( file.inviteFriendsButton, "#MENU_TITLE_INVITE_FRIENDS" )
+
+		Hud_SetLocked( file.inboxButton, false )
+		Hud_SetLocked( file.browseNetworkButton, false )
+		Hud_SetLocked( file.switchButton, false )
+		Hud_SetLocked( file.inviteFriendsToNetworkButton, false )
+
+		Hud_SetLocked( file.storeButton, false )
+		Hud_SetLocked( file.storeNewReleasesButton, false )
+		Hud_SetLocked( file.storeBundlesButton, false )
+
+	} 
+	else
+	{
+		ClientCommand( "loadPlaylists" ) // reload playlists only on northstar so server-browser works
+
+		ComboButton_SetText( file.findGameButton, "#MENU_TITLE_SERVER_BROWSER" )
+		ComboButton_SetText( file.inviteRoomButton, "#PRIVATE_MATCH" )
+		ComboButton_SetText( file.inviteFriendsButton, "#TOGGLE_PROGRESSION" )
+
+		Hud_SetLocked( file.inboxButton, true )
+		Hud_SetLocked( file.browseNetworkButton, true )
+		Hud_SetLocked( file.switchButton, true )
+		Hud_SetLocked( file.inviteFriendsToNetworkButton, true )
+
+		Hud_SetLocked( file.storeButton, true )
+		Hud_SetLocked( file.storeNewReleasesButton, true )
+		Hud_SetLocked( file.storeBundlesButton, true )
+	}
+}
+
 bool function DLCStoreShouldBeMarkedAsNew()
 {
 	if ( !IsFullyConnected() )
@@ -703,9 +800,12 @@ void function LobbyMenuUpdate( var menu )
 	while ( GetTopNonDialogMenu() == menu )
 	{
 		bool inPendingOpenInvite = InPendingOpenInvite()
-		Hud_SetLocked( file.findGameButton, !IsPartyLeader() || inPendingOpenInvite )
-		Hud_SetLocked( file.inviteRoomButton, IsOpenInviteVisible() || GetPartySize() > 1 || inPendingOpenInvite )
-		Hud_SetLocked( file.inviteFriendsButton, inPendingOpenInvite )
+		if( NSIsVanilla() )
+		{
+			Hud_SetLocked( file.findGameButton, !IsPartyLeader() || inPendingOpenInvite )
+			Hud_SetLocked( file.inviteRoomButton, IsOpenInviteVisible() || GetPartySize() > 1 || inPendingOpenInvite )
+			Hud_SetLocked( file.inviteFriendsButton, inPendingOpenInvite )
+		}
 
 		bool canGenUp = false
 		if ( GetUIPlayer() )
@@ -1230,8 +1330,13 @@ void function BigPlayButton1_Activate( var button )
 	if ( Hud_IsLocked( button ) )
 		return
 
-	SendOpenInvite( false )
-	OpenSelectedPlaylistMenu()
+	if ( !NSIsVanilla() )
+		OpenServerBrowser( button )
+	else
+	{
+		SendOpenInvite( false )
+		OpenSelectedPlaylistMenu()
+	}
 }
 
 function EnableButton( button )
@@ -1516,6 +1621,11 @@ void function MatchmakingSetCountdownTimer( float time, bool useServerTime = tru
 
 void function OnLobbyLevelInit()
 {
+	if( NSIsVanilla() && ( !GetConVarBool( "ns_communities_disabled_override" ) ) )
+		SetConVarBool( "communities_enabled", true)
+	else
+		SetConVarBool( "communities_enabled", false)
+
 	UpdateCallsignElement( file.callsignCard )
 	RefreshCreditsAvailable()
 }
@@ -1562,17 +1672,26 @@ void function SetPutPlayerInMatchmakingAfterDelay( bool value )
 
 void function OnStoreButton_Activate( var button )
 {
+	if( Hud_IsLocked( button ) )
+		return
+
 	LaunchGamePurchaseOrDLCStore()
 }
 
 void function OnStoreNewReleasesButton_Activate( var button )
 {
+	if( Hud_IsLocked( button ) )
+		return
+
 	//LaunchGamePurchaseOrDLCStore( [ "StoreMenu", "StoreMenu_NewReleases" ] )
 	LaunchGamePurchaseOrDLCStore( [ "StoreMenu", "StoreMenu_WeaponSkins" ] )
 }
 
 void function OnStoreBundlesButton_Activate( var button )
 {
+	if( Hud_IsLocked( button ) )
+		return
+
 	LaunchGamePurchaseOrDLCStore( [ "StoreMenu", "StoreMenu_Sales" ] )
 }
 
