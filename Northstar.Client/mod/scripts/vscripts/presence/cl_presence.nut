@@ -33,7 +33,8 @@ GameStateStruct function DiscordRPC_GenerateGameState( GameStateStruct gs )
     gs.currentPlayers = allKnownPlayersCount
     gs.maxPlayers = GetCurrentPlaylistVarInt( "max_players", 16 )
 
-    if ( IsValid( GetLocalClientPlayer() ) )gs.ownScore = GameRules_GetTeamScore( GetLocalClientPlayer().GetTeam() )
+    if ( IsValid( GetLocalClientPlayer() ) )
+		gs.ownScore = GameRules_GetTeamScore( GetLocalClientPlayer().GetTeam() )
 
     #if MP
     if ( GameRules_GetGameMode() == FD )
