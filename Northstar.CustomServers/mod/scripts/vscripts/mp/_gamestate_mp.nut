@@ -460,9 +460,8 @@ void function GameStateEnter_PickLoadout()
 
 void function GameStateEnter_PickLoadout_Threaded()
 {
-	float pickloadoutLength = 30.0
-	if ( !file.usePickLoadoutScreen )
-		pickloadoutLength = PICK_LOADOUT_SOUND_TIME // 5 seconds because that's what vanilla uses to sync with the warping dropship sound before match actually starts
+	float pickloadoutLength = GameMode_GetLoadoutSelectTime()
+	pickloadoutLength += GetCurrentPlaylistVarFloat( "pick_loadout_extension", 0 )
 	
 	SetServerVar( "minPickLoadOutTime", Time() + pickloadoutLength )
 	
@@ -542,6 +541,7 @@ void function StartGameWithoutClassicMP()
 
 void function GameStateEnter_Playing()
 {
+	GameRules_MarkGameStatePrematchEnding()
 	thread GameStateEnter_Playing_Threaded()
 }
 
@@ -595,7 +595,8 @@ void function GameStateEnter_Playing_Threaded()
 */
 
 void function GameStateEnter_WinnerDetermined()
-{	
+{
+	GameRules_MarkGameStateWinnerDetermined()
 	thread GameStateEnter_WinnerDetermined_Threaded()
 }
 

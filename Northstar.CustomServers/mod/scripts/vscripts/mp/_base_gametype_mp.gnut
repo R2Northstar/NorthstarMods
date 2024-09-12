@@ -840,17 +840,19 @@ bool function ClientCommandCallbackChangeTeam( entity player, array<string> args
 	
 	if ( !( player in file.playerChangeTeamTimeBuffer ) )
 	{
-		file.playerChangeTeamTimeBuffer[ player ] <- Time() + 5
+		file.playerChangeTeamTimeBuffer[ player ] <- Time() + 5.0
 	}
 	else
 	{
 		if ( file.playerChangeTeamTimeBuffer[ player ] > Time() )
 		{
 			SendHudMessage( player, "#TEAMSWITCH_BUFFER", -1, 0.4, 255, 255, 255, 255, 0.15, 3.0, 0.5 )
-			file.playerChangeTeamTimeBuffer[ player ] = Time() + 5
 			return true
 		}
 	}
+	
+	if ( player in file.playerChangeTeamTimeBuffer && file.playerChangeTeamTimeBuffer[ player ] < Time() )
+		file.playerChangeTeamTimeBuffer[ player ] = Time() + 5.0
 	
 	if ( !GamePlaying() )
 	{
