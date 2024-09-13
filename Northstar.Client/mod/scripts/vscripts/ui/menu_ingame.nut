@@ -87,7 +87,7 @@ void function InitInGameMPMenu()
 	Hud_AddEventHandler( leaveButton, UIE_CLICK, OnLeaveButton_Activate )
 	var teamChangeButton = AddComboButton( comboStruct, headerIndex, buttonIndex++, "#SWITCH_TEAMS" )
 	Hud_AddEventHandler( teamChangeButton, UIE_CLICK, OnRequestTeamSwitch )
-	thread UpdateTeamSwitchButton( teamChangeButton )
+	thread UpdateTeamSwitchButton_Threaded( teamChangeButton )
 	#if DEV
 		var devButton = AddComboButton( comboStruct, headerIndex, buttonIndex++, "Dev" )
 		Hud_AddEventHandler( devButton, UIE_CLICK, AdvanceMenuEventHandler( GetMenu( "DevMenu" ) ) )
@@ -704,7 +704,7 @@ void function SetTitanSelectButtonVisibleState( bool state )
 	}
 }
 
-void function UpdateTeamSwitchButton( var button )
+void function UpdateTeamSwitchButton_Threaded( var button )
 {
 	while ( true )
 	{
