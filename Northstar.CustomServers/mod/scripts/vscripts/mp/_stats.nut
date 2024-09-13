@@ -334,6 +334,10 @@ void function OnPlayerOrNPCKilled( entity victim, entity attacker, var damageInf
 		thread SetLastPosForDistanceStatValid_Threaded( victim, false )
 
 	HandleDeathStats( victim, attacker, damageInfo )
+	
+	if( victim == attacker ) //Suicides are registering stats, afaik vanilla ignores them
+		return
+	
 	HandleKillStats( victim, attacker, damageInfo )
 	HandleWeaponKillStats( victim, attacker, damageInfo )
 	HandleTitanStats( victim, attacker, damageInfo )
@@ -489,23 +493,32 @@ void function HandleKillStats( entity victim, entity attacker, var damageInfo )
 	// get the player and it's pet titan
 	entity player
 	entity playerPetTitan
-	if ( attacker.IsPlayer() )
+	entity inflictor = DamageInfo_GetInflictor( damageInfo )
+	
+	if ( IsValid( inflictor ) )
 	{
-		// the player is just the attacker
-		player = attacker
-		playerPetTitan = player.GetPetTitan()
+		if ( inflictor.IsProjectile() && IsValid( inflictor.GetOwner() ) ) // Attackers are always the final entity in the owning hierarchy, projectile owners though migh be a player's NPC minion (i.e Auto-Titans)
+			attacker = inflictor.GetOwner()
+		
+		else if ( inflictor.IsNPC() ) // NPCs are bypassed as Attackers if they are owned by players, instead they become just inflictors
+			attacker = inflictor
 	}
-	else if ( attacker.IsTitan() && IsPetTitan( attacker ) )
+	
+	if ( attacker.IsNPC() )
 	{
-		// the attacker is the player's auto titan
+		if ( !attacker.IsTitan() ) // Normal NPCs case
+			return
+		
+		if ( !IsPetTitan( attacker ) ) // NPC Titans case
+			return
+		
 		player = attacker.GetTitanSoul().GetBossPlayer()
 		playerPetTitan = attacker
 	}
+	else if ( attacker.IsPlayer() ) // Still checks this because worldspawn might be the attacker
+		player = attacker
 	else
-	{
-		// attacker could be something like an NPC, or worldspawn
 		return
-	}
 
 	// check things once, for performance
 	int damageSource = DamageInfo_GetDamageSourceIdentifier( damageInfo )
@@ -931,6 +944,9 @@ void function HandleDistanceAndTimeStats_Threaded()
 		// track distance stats
 		foreach ( entity player in GetPlayerArray() )
 		{
+			if ( !IsValid( player ) )
+				continue
+				
 			if ( player.p.lastPosForDistanceStatValid )
 			{
 				// not 100% sure on using Distance2D over Distance tbh
@@ -1035,7 +1051,10 @@ void function SaveStatsPeriodically_Threaded()
 	while( true )
 	{
 		foreach( entity player in GetPlayerArray() )
-			Stats_SaveAllStats( player )
+		{
+			if ( IsValid( player ) )
+				Stats_SaveAllStats( player )
+		}
 		wait 5
 	}
 }
