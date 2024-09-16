@@ -61,7 +61,6 @@ void function PopulatePostgameData()
 	// show the postgame scoreboard summary
 	SetUIVar( level, "showGameSummary", true )
 	
-	int teams = GetCurrentPlaylistVarInt( "max_teams", 2 )
 	int playerPerTeam = GetCurrentPlaylistVarInt( "max_players", 16 )
 	bool teamBased = !IsFFAGame()
 	bool isListenServer = !NSIsDedicated()
@@ -92,7 +91,7 @@ void function PopulatePostgameData()
 		
 		player.SetPersistentVar( "isFDPostGameScoreboardValid", GAMETYPE == FD )
 		
-		if ( teamBased && teams > 1 ) //FD is still triggering this somehow even though it sets max teams to 1
+		if ( teamBased && MAX_TEAMS > 1 )
 		{
 			if ( player.GetTeam() == TEAM_MILITIA )
 			{

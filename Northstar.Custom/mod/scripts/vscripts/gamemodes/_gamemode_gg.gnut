@@ -164,5 +164,5 @@ void function UpdateLoadout( entity player )
 void function OnWinnerDetermined()
 {
 	SetRespawnsEnabled( false )
-	SetKillcamsEnabled( false )
+	SetServerVar( "replayDisabled", true )
 }

@@ -123,7 +123,7 @@ void function bankrupt(entity player, entity attacker) {
 void function OnWinnerDetermined()
 {
 	SetRespawnsEnabled( false )
-	SetKillcamsEnabled( false )
+	SetServerVar( "replayDisabled", true )
 }
 
 void function OnPlayerRespawned( entity player )

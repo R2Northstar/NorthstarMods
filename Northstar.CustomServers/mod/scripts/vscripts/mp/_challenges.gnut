@@ -105,11 +105,11 @@ void function RegisterChallenges_OnMatchEnd()
 	if( RandomIntRange( 0, 100 ) <= 30 ) //30% Chance to trigger akin to vanilla, apply always since all players have paid cosmetics unlocked
 		eliteWarpaintRNG = true
 	
+	SetUIVar( level, "showGameSummary", true )
 	foreach( player in GetPlayerArray() )
 	{
 		player.SetPersistentVar( "isPostGameScoreboardValid", true )
 		player.SetPersistentVar( "isFDPostGameScoreboardValid", false ) //FD itself overrides this right after when match ends
-		SetUIVar( level, "showGameSummary", true )
 		
 		if( eliteWarpaintRNG )
 			SetPlayerChallengeSquadLeader( player )

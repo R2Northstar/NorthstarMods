@@ -88,6 +88,13 @@ function CommonNPCOnSpawned( entity npc )
 		{
 			CreateTitanSoul( npc )
 		}
+		
+		if ( GetTitanCharacterName( npc ) == "legion" )
+		{
+			npc.SetIdleAnim( "htGAT_Stand_Idle_MP" )
+			npc.SetMoveAnim( "htGAT_MP_Walk_forward" )
+			npc.EnableNPCFlag( NPCMF_DISABLE_MOVE_TRANSITIONS | NPCMF_DISABLE_ARRIVALS )
+		}
 	}
 
 	if ( npc.GetTeam() <= 0 )
@@ -221,6 +228,9 @@ function CommonNPCOnSpawned( entity npc )
 			AddAnimEvent( npc, "dropship_warpout", WarpoutEffect )
 
 			InitLeanDropship( npc )
+
+			if( GetCurrentPlaylistVarInt( "dropship_turrets_enabled", 0 ) == 1 )
+				thread SpawnDropshipTurrets( npc )
 			break
 
 

@@ -10,8 +10,6 @@ global function RespawnAsPilot
 global function RespawnAsTitan
 global function TryGameModeAnnouncement
 
-global function SetKillcamsEnabled
-global function KillcamsEnabled
 global function SetPlayerDeathsHidden
 global function TrackTitanDamageInPlayerGameStat
 
@@ -22,7 +20,6 @@ global function TitanPlayerHotDropsIntoLevel
 global function SetRecalculateRespawnAsTitanStartPointCallback
 
 struct {
-	bool killcamsEnabled = true
 	bool playerDeathsHidden = false
 	int titanDamageGameStat = -1
 	
@@ -350,7 +347,7 @@ void function CodeCallback_OnPlayerRespawned( entity player )
 		
 	Remote_CallFunction_NonReplay( player, "ServerCallback_YouRespawned" )
 	ClearLastAttacker( player ) // so dying to anything doesn't credit the same attacker after respawning
-	SetHideOnCloak( player, true )
+	//SetHideOnCloak( player, true )
 }
 
 
@@ -454,7 +451,7 @@ void function PostDeathThread_MP( entity player, var damageInfo ) // based on ga
 
 	// do some pre-replay stuff if we're gonna do a replay
 	float replayLength = CalculateLengthOfKillReplay( player, methodOfDeath )
-	bool shouldDoReplay = Replay_IsEnabled() && KillcamsEnabled() && IsValid( attacker ) && ShouldDoReplay( player, attacker, replayLength, methodOfDeath )
+	bool shouldDoReplay = Replay_IsEnabled() && IsValid( attacker ) && ShouldDoReplay( player, attacker, replayLength, methodOfDeath )
 	table replayTracker = { validTime = null }
 	if ( shouldDoReplay )
 		thread TrackDestroyTimeForReplay( attacker, replayTracker )
@@ -484,7 +481,7 @@ void function PostDeathThread_MP( entity player, var damageInfo ) // based on ga
 	}
 
 	// hack: double check if killcams are enabled and valid here in case gamestate has changed this
-	shouldDoReplay = shouldDoReplay && Replay_IsEnabled() && KillcamsEnabled() && IsValid( attacker )
+	shouldDoReplay = shouldDoReplay && Replay_IsEnabled() && IsValid( attacker )
 	// quick note: in cases where player.Die() is called: e.g. for round ends, player == attacker
 	if ( shouldDoReplay ) 
 	{	
@@ -633,6 +630,9 @@ void function RespawnAsTitan( entity player, bool normalTitanfall = false )
 	if( !PlayerCanSpawn( player ) )
 		return
 
+	if ( normalTitanfall && Flag( "LevelHasRoof" ) ) // Override if map needs to do forced warpfall such as Boomtown due the ceiling
+		normalTitanfall = false
+	
 	player.Signal( "PlayerRespawnStarted" )
 
 	player.isSpawning = true
@@ -653,8 +653,9 @@ void function RespawnAsTitan( entity player, bool normalTitanfall = false )
 	
 	entity titan = CreateAutoTitanForPlayer_FromTitanLoadout( player, titanLoadout, spawnpoint.GetOrigin(), spawnpoint.GetAngles() )
 	DispatchSpawn( titan )
-	titan.SetOwner( player )
+	//titan.SetOwner( player )
 	HideName( titan )
+	titan.SetValidHealthBarTarget( false )
 	titan.UnsetUsable() // prevent embark prompt from showing up
 	ClearTitanAvailable( player ) // titanfall succeed, clear titan availability
 	
@@ -762,16 +763,6 @@ void function TryGameModeAnnouncement( entity player ) // only putting this here
 	PlayFactionDialogueToPlayer( GameMode_GetGameModeAnnouncement( GAMETYPE ), player )
 }
 
-void function SetKillcamsEnabled( bool enabled )
-{
-	file.killcamsEnabled = enabled
-}
-
-bool function KillcamsEnabled()
-{
-	return file.killcamsEnabled
-}
-
 void function SetPlayerDeathsHidden( bool hidden )
 {
 	file.playerDeathsHidden = hidden
@@ -796,19 +787,19 @@ void function AddToTitanDamageStat( entity victim, var damageInfo )
 
 void function CheckForAutoTitanDeath( entity victim, entity attacker, var damageInfo )
 {
-	if( !IsValid(victim) || !victim.IsTitan() )
+	if( !IsValid( victim ) || !victim.IsTitan() )
 		return
 
 	if( !victim.IsPlayer() )
 	{
-		if (GetPetTitanOwner(victim) && GetPetTitanOwner(victim) != attacker)
-			foreach(player in GetPlayerArray())
+		if ( GetPetTitanOwner( victim ) && GetPetTitanOwner( victim ) != attacker )
+			foreach( player in GetPlayerArray() )
 				Remote_CallFunction_NonReplay( player, "ServerCallback_OnTitanKilled", attacker.GetEncodedEHandle(), victim.GetEncodedEHandle(), DamageInfo_GetCustomDamageType( damageInfo ), DamageInfo_GetDamageSourceIdentifier( damageInfo ) )
 	}
 	else
 	{
-		if (victim != attacker)
-			foreach(player in GetPlayerArray())
+		if ( victim != attacker )
+			foreach( player in GetPlayerArray() )
 				Remote_CallFunction_NonReplay( player, "ServerCallback_OnTitanKilled", attacker.GetEncodedEHandle(), victim.GetEncodedEHandle(), DamageInfo_GetCustomDamageType( damageInfo ), DamageInfo_GetDamageSourceIdentifier( damageInfo ) )
 	}
 }

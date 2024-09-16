@@ -169,7 +169,7 @@ void function GamemodeFD_Init()
 	SetSwitchSidesBased( false ) //Just to make sure in case of any future problem regarding teamside switch
 	SetTimerBased( false ) //Disable loss by timer because the wait feature will truly idle servers until people joins
 	SetShouldUseRoundWinningKillReplay( false )
-	SetKillcamsEnabled( false ) //Only disabling Killcams because it's PvE, also seems to reduce server network load a little bit
+	SetServerVar( "replayDisabled", true ) //Only disabling Killcams because it's PvE, also seems to reduce server network load a little bit
 	Riff_ForceBoostAvailability( eBoostAvailability.Disabled )
 	PlayerEarnMeter_SetEnabled( false )
 	SetAllowLoadoutChangeFunc( FD_ShouldAllowChangeLoadout )
@@ -429,7 +429,7 @@ void function AddFDCustomProp( asset modelasset, vector origin, vector angles )
 	prop.kv.renderamt = 255
 	prop.kv.rendercolor = "255 255 255"
 	prop.kv.solid = 6
-	ToggleNPCPathsForEntity( prop, false )
+	ToggleNPCPathsForEntity( prop, true )
 	prop.SetAIObstacle( true )
 	prop.SetTakeDamageType( DAMAGE_NO )
 	prop.SetScriptPropFlags( SPF_BLOCKS_AI_NAVIGATION | SPF_CUSTOM_SCRIPT_3 )
@@ -3504,6 +3504,9 @@ void function FD_BatteryHealTeammate_Threaded( entity rider, entity titan, int o
 	
 	entity soul = titan.GetTitanSoul()
 	
+	if ( !IsValid( soul ) )
+		return
+	
 	int healAmount = titan.GetHealth() - ogHealth
 	int shieldAmount = soul.GetShieldHealth() - ogShield
 	int totalHealing = healAmount + shieldAmount
@@ -3766,20 +3769,11 @@ void function FD_Epilogue_threaded()
 		player.SetPersistentVar( "postGameDataFD.myIndex", myIndex )
 		player.SetPersistentVar( "postGameDataFD.numPlayers", numPlayers )	
 
+		bool shouldSkipAward = false
 		foreach ( entity medalPlayer, string ref in awardResults )
 		{
 			if ( !IsValidPlayer( medalPlayer ) )
 				continue
-			
-			array< string > refRegistered
-			foreach ( otherplayer in GetPlayerArrayOfTeam( TEAM_MILITIA ) )
-			{
-				if ( file.playerAwardStats[otherplayer][ref] > file.playerAwardStats[medalPlayer][ref] && !refRegistered.contains( ref ) )
-				{
-					refRegistered.append( ref )
-					continue
-				}
-			}
 			
 			if ( i == 4 )
 				break
@@ -3837,10 +3831,10 @@ void function RegisterPostSummaryScreenForMatch( bool matchwon )
 		foreach ( entity player in GetPlayerArrayOfTeam( TEAM_MILITIA ) )
 		{
 			int suitIndex1 = GetPersistentSpawnLoadoutIndex( player, "titan" )
-			foreach ( entity otherplayer in GetPlayerArrayOfTeam( TEAM_MILITIA ) )
+			foreach ( entity otherPlayer in GetPlayerArrayOfTeam( TEAM_MILITIA ) )
 			{
-				int suitIndex2 = GetPersistentSpawnLoadoutIndex( otherplayer, "titan" )
-				if ( player == otherplayer )
+				int suitIndex2 = GetPersistentSpawnLoadoutIndex( otherPlayer, "titan" )
+				if ( player == otherPlayer )
 					continue
 				
 				if ( suitIndex2 == suitIndex1 )

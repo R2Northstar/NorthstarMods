@@ -128,10 +128,10 @@ void function OnPlayerChangedTeam( entity player )
 	if ( !player.hasConnected ) //Prevents players who just joined to trigger below code, as server always pre setups their teams
 		return
 	
-	if( IsIMCOrMilitiaTeam( player.GetTeam() ) )
+	if ( IsIMCOrMilitiaTeam( player.GetTeam() ) )
 		NotifyClientsOfTeamChange( player, GetOtherTeam( player.GetTeam() ), player.GetTeam() )
 	
-	foreach( npc in GetNPCArray() )
+	foreach ( npc in GetNPCArray() )
 	{
 		entity bossPlayer = npc.GetBossPlayer()
 		if ( IsValidPlayer( bossPlayer ) && bossPlayer == player && IsAlive( npc ) )
@@ -425,7 +425,7 @@ void function WaitForPlayers()
 	
 	wait 2
 	
-	if( !GetClassicMPMode() && !ClassicMP_ShouldTryIntroAndEpilogueWithoutClassicMP() )
+	if ( !GetClassicMPMode() && !ClassicMP_ShouldTryIntroAndEpilogueWithoutClassicMP() )
 		SetGameState( eGameState.Prematch )
 	else
 		SetGameState( eGameState.PickLoadout ) // Even if the game mode don't use it, vanilla still cast this game state to make the dropship jump sound when match starts
@@ -638,9 +638,9 @@ void function GameStateEnter_WinnerDetermined_Threaded()
  	
 	if ( doReplay )
 	{
-		bool killcamsWereEnabled = KillcamsEnabled()
-		if ( killcamsWereEnabled ) // Prevent killcams interrupting
-			SetKillcamsEnabled( false )
+		bool killreplayEnabled = !level.nv.replayDisabled
+		if ( killreplayEnabled ) // Prevent killcams interrupting
+			SetServerVar( "replayDisabled", true )
 	
 		float replayLength = ROUND_WINNING_KILL_REPLAY_TOTAL_LENGTH
 		if ( "respawnTime" in replayAttacker.s && Time() - replayAttacker.s.respawnTime < replayLength )
@@ -660,23 +660,19 @@ void function GameStateEnter_WinnerDetermined_Threaded()
 		
 		CleanUpEntitiesForRoundEnd()
 		
-		WaitFrame() // prevent a race condition with PlayerWatchesRoundWinningReplay
-		file.roundWinningKillReplayAttacker = null // clear this
-		file.roundWinningKillReplayInflictorEHandle = -1
-		
-		if ( killcamsWereEnabled )
-			SetKillcamsEnabled( true )
+		if ( killreplayEnabled )
+			SetServerVar( "replayDisabled", false )
 	}
 	else if ( IsRoundBased() || !ClassicMP_ShouldRunEpilogue() )
 	{
 		// Observation from vanilla hints that the gamemodes can choose how players will behave once match is over
-		foreach( entity player in GetPlayerArray() )
+		foreach ( entity player in GetPlayerArray() )
 		{
 			if ( level.endOfRoundPlayerState == ENDROUND_FREEZE )
 				player.FreezeControlsOnServer()
 			else if ( level.endOfRoundPlayerState == ENDROUND_MOVEONLY )
 			{
-				if( IsAlive( player.GetParent() ) && player.GetParent().IsTitan() ) // Ensure to make any player rodeoing to deatch from Titan and prevent them from using guns
+				if ( IsAlive( player.GetParent() ) && player.GetParent().IsTitan() ) // Ensure to make any player rodeoing to deatch from Titan and prevent them from using guns
 				{
 					entity titan = player.GetParent()
 					ThrowRiderOff( player, titan, < 0, 0, 100 > )
@@ -690,15 +686,18 @@ void function GameStateEnter_WinnerDetermined_Threaded()
 		
 		wait GAME_WINNER_DETERMINED_WAIT
 		
-		foreach( entity player in GetPlayerArray() )
+		foreach ( entity player in GetPlayerArray() )
 			ScreenFadeToBlackForever( player, ROUND_WINNING_KILL_REPLAY_SCREEN_FADE_TIME )
 		
 		wait ROUND_WINNING_KILL_REPLAY_SCREEN_FADE_TIME
-		CleanUpEntitiesForRoundEnd()
+		if ( IsRoundBased() ) // Repeat check here just for the case match is over and epilogue is disabled, so it doesn't kill players randomly
+			CleanUpEntitiesForRoundEnd()
 	}
 	
 	wait CLEAR_PLAYERS_BUFFER // Required to properly restart without players in Titans crashing it in FD
 	
+	file.roundWinningKillReplayAttacker = null // Clear Replays
+	file.roundWinningKillReplayInflictorEHandle = -1
 	if ( IsRoundBased() )
 	{
 		ClearDroppedWeapons()
@@ -781,9 +780,9 @@ void function GameStateEnter_SwitchingSides()
 
 void function GameStateEnter_SwitchingSides_Threaded()
 {
-	bool killcamsWereEnabled = KillcamsEnabled()
-	if ( killcamsWereEnabled ) // Prevent killcams interrupting
-		SetKillcamsEnabled( false )
+	bool killreplayEnabled = !level.nv.replayDisabled
+	if ( killreplayEnabled ) // Prevent killcams interrupting
+		SetServerVar( "replayDisabled", true )
 		
 	WaitFrame()
 	
@@ -822,8 +821,8 @@ void function GameStateEnter_SwitchingSides_Threaded()
 	wait CLEAR_PLAYERS_BUFFER
 	
 	ClearDroppedWeapons()
-	if ( killcamsWereEnabled )
-		SetKillcamsEnabled( true )
+	if ( killreplayEnabled )
+		SetServerVar( "replayDisabled", false )
 	
 	file.hasSwitchedSides = true
 	SetServerVar( "switchedSides", 1 )
@@ -897,7 +896,7 @@ void function GameStateEnter_SuddenDeath()
 
 void function GameStateEnter_Postmatch()
 {
-	SetKillcamsEnabled( false ) //Disable kill replays on this moment just to ensure no camera problems
+	SetServerVar( "replayDisabled", true ) //Disable kill replays on this moment just to ensure no camera problems
 	foreach ( entity player in GetPlayerArray() )
 	{
 		player.FreezeControlsOnServer()
@@ -1231,10 +1230,7 @@ bool function ShouldRunEvac()
 
 void function GiveTitanToPlayer( entity player )
 {
-	if ( !IsValid( player ) )
-		return
-	
-	if ( !player.IsPlayer() )
+	if ( !IsValidPlayer( player ) )
 		return
 	
 	PlayerEarnMeter_SetMode( player, eEarnMeterMode.DEFAULT )
