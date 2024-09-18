@@ -124,7 +124,9 @@ void function OnPrematchStart()
 
 void function EndIntroWhenFinished()
 {
-	wait DROPSHIP_INTRO_LENGTH
+	while ( Time() < expect float( level.nv.gameStartTime ) )
+		WaitFrame()
+	
 	ClassicMP_OnIntroFinished()
 }
 
@@ -214,7 +216,6 @@ void function SpawnPlayerIntoDropship( entity player, int playerDropshipIndex, e
 	idleSequence.teleport = true
 	idleSequence.viewConeFunction = ViewConeRampFree
 	idleSequence.hideProxy = true
-	idleSequence.setInitialTime = Time() - file.introStartTime
 	waitthread FirstPersonSequence( idleSequence, player, playerDropship )
 	// todo: possibly rework this to actually get the time the idle anim takes and start the starttime of the jump sequence for very late joiners using that
 	
@@ -224,8 +225,6 @@ void function SpawnPlayerIntoDropship( entity player, int playerDropshipIndex, e
 	jumpSequence.thirdPersonAnim = DROPSHIP_JUMP_ANIMS[ playerDropshipIndex ]
 	jumpSequence.attachment = "ORIGIN"
 	jumpSequence.viewConeFunction = ViewConeFree
-	jumpSequence.setInitialTime = max( 0.0, Time() - ( file.introStartTime + 11.0 ) )  // pretty sure you should do this with GetScriptedAnimEventCycleFrac?
-	// idk unsure how to use that, all i know is getsequenceduration > the length it actually should be
 	
 	#if BATTLECHATTER_ENABLED
 	if( playerDropshipIndex == 0 )
@@ -257,10 +256,7 @@ void function PlayerJumpsFromDropship( entity player )
 	
 	// wait for player to hit the ground
 	player.ClearParent()
-	WaitFrame()
-	player.SetVelocity( < 0, 0, -100 > ) // Toss players a bit down so it makes a smoother transition when jumping off the Dropship
 	player.ConsumeDoubleJump() // MovementDisable doesn't prevent double jumps
-	WaitFrame()
 	while ( !player.IsOnGround() && !player.IsWallRunning() && !player.IsWallHanging() ) // todo this needs tweaking
 		WaitFrame()
 	

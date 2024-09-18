@@ -142,7 +142,7 @@ void function CodeCallback_OnClientConnectionStarted( entity player )
 		callbackFunc( player )
 	}
 	
-	if ( !IsLobby() && GetGameState() <= eGameState.Epilogue )
+	if ( !IsLobby() && GetGameState() <= eGameState.Epilogue && GetConVarBool( "ns_autobalance_teams_on_player_join" ) )
 	{
 		if ( GetCurrentPlaylistVarInt( "max_teams", 0 ) > 1 && !IsFFAGame() )
 		{
@@ -152,7 +152,7 @@ void function CodeCallback_OnClientConnectionStarted( entity player )
 				SetTeam( player, TEAM_MILITIA )
 		}
 	}
-
+	
 	printl( "Player connect started: " + player + "---UID:" + player.GetUID() )
 	
 	InitPassives( player )
@@ -630,7 +630,7 @@ void function RespawnAsTitan( entity player, bool normalTitanfall = false )
 	if( !PlayerCanSpawn( player ) )
 		return
 
-	if ( normalTitanfall && Flag( "LevelHasRoof" ) ) // Override if map needs to do forced warpfall such as Boomtown due the ceiling
+	if ( normalTitanfall && Flag( "LevelHasRoof" ) || !GetConVarBool( "ns_cinematic_titanfall" ) ) // Override if map needs to do forced warpfall such as Boomtown due the ceiling
 		normalTitanfall = false
 	
 	player.Signal( "PlayerRespawnStarted" )
@@ -746,7 +746,7 @@ void function RespawnAsTitan( entity player, bool normalTitanfall = false )
 		waitthread PlayAnimGravity( titan, "at_hotdrop_quickstand" )
 	}
 	
-	player.RespawnPlayer( null ) // spawn player as pilot so they get their pilot loadout on embark
+	DoRespawnPlayer( player, spawnpoint ) // spawn player as pilot so they get their pilot loadout on embark
 	player.SetOrigin( titan.GetOrigin() )
 	
 	// don't make player titan when entity batteryContainer is not valid.

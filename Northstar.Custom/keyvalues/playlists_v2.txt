@@ -182,7 +182,7 @@ playlists
 				max_players 10
 				phase_shift_drop_flag 1
 				ctf_flag_return_time 1
-				pilot_health_multiplier 1.25
+				pilot_health_multiplier 1.2
 				boosts_enabled 1
 				earn_meter_pilot_overdrive 0
 				earn_meter_pilot_multiplier 0.5

@@ -497,9 +497,6 @@ void function GameStateEnter_Prematch()
 	SetGameEndTime( timeLimit + ClassicMP_GetIntroLength() )
 	SetRoundEndTime( ClassicMP_GetIntroLength() + GameMode_GetRoundTimeLimit( GAMETYPE ) * 60 )
 	
-	foreach ( entity player in GetPlayerArray() )
-		Rodeo_Allow( player ) // Enable rodeo ability again in case endOfRoundPlayerState was ENDROUND_MOVEONLY which disables rodeos
-	
 	if ( !GetClassicMPMode() && !ClassicMP_ShouldTryIntroAndEpilogueWithoutClassicMP() )
 		thread StartGameWithoutClassicMP()
 }
@@ -672,15 +669,8 @@ void function GameStateEnter_WinnerDetermined_Threaded()
 				player.FreezeControlsOnServer()
 			else if ( level.endOfRoundPlayerState == ENDROUND_MOVEONLY )
 			{
-				if ( IsAlive( player.GetParent() ) && player.GetParent().IsTitan() ) // Ensure to make any player rodeoing to deatch from Titan and prevent them from using guns
-				{
-					entity titan = player.GetParent()
-					ThrowRiderOff( player, titan, < 0, 0, 100 > )
-				}
-				
-				player.HolsterWeapon()
+				player.DisableWeapon()
 				player.Server_TurnOffhandWeaponsDisabledOn()
-				Rodeo_Disallow( player ) // Temporarily disable rodeo ability because rodeo code allows weapons usage again
 			}
 		}
 		
@@ -1230,7 +1220,7 @@ bool function ShouldRunEvac()
 
 void function GiveTitanToPlayer( entity player )
 {
-	if ( !IsValidPlayer( player ) )
+	if ( !IsValidPlayer( player ) || IsPrivateMatchSpectator( player ) )
 		return
 	
 	PlayerEarnMeter_SetMode( player, eEarnMeterMode.DEFAULT )

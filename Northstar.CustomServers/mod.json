@@ -64,6 +64,10 @@
 			"Flags": "REPLICATED"
 		},
 		{
+			"Name": "ns_autobalance_teams_on_player_join",
+			"DefaultValue": "0"
+		},
+		{
 			"Name": "ns_use_phase_fix",
 			"DefaultValue": "1"
 		},
@@ -73,6 +77,10 @@
 		},
 		{
 			"Name": "ns_ronin_fair_phase",
+			"DefaultValue": "0"
+		},
+		{
+			"Name": "ns_cinematic_titanfall",
 			"DefaultValue": "0"
 		},
 		{
