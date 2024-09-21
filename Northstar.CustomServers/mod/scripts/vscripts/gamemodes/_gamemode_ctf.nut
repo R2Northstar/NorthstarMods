@@ -540,7 +540,7 @@ void function FlagProximityTracker( entity flag )
 		{
 			if ( Distance( player.GetOrigin(), flag.GetOrigin() ) < CTF_GetFlagReturnRadius() )
 			{
-				if ( FlagIngoresPlayerTitans( player ) || player.GetTeam() != flag.GetTeam() || IsFlagHome( flag ) || flag.GetParent() != null )
+				if ( FlagIngoresPlayerTitans( player ) || player.GetTeam() != flag.GetTeam() || IsFlagHome( flag ) || flag.GetParent() != null || player.IsPhaseShifted() )
 					continue
 				
 				if( playerInsidePerimeter.contains( player ) )
