@@ -102,7 +102,7 @@ void function OnPrematchStart()
 		
 		teamDropships[ dropship ] <- [ null, null, null, null ]
 		
-		thread PlayAnim( dropship, "dropship_classic_mp_flyin" )
+		thread PlayAnim( dropship, GetDropshipIntroAnimation() )
 	}
 	
 	// Populate Dropships
@@ -193,12 +193,10 @@ void function SpawnPlayerIntoDropship( entity player, int playerDropshipIndex, e
 	HolsterAndDisableWeapons( player )
 	player.DisableWeaponViewModel()
 	player.MovementDisable() // Disable all movement but let them look around still
-	UnMuteAll( player )
-	StopSoundOnEntity( player, "Duck_For_FrontierDefenseTitanSelectScreen" )
-	
-	// hide hud and fade screen out from black
+	AddCinematicFlag( player, CE_FLAG_INTRO )
 	AddCinematicFlag( player, CE_FLAG_CLASSIC_MP_SPAWNING )
-	ScreenFadeFromBlack( player, 0.5, 0.5 )
+	thread DelayedFrameFadeout( player )
+
 	// faction leaders are done clientside, spawn them here
 	if( GameRules_GetGameMode() == FD )
 	{
@@ -252,6 +250,7 @@ void function PlayerJumpsFromDropship( entity player )
 			player.EnableWeaponViewModel()
 			DeployAndEnableWeapons( player )
 			RemoveCinematicFlag( player, CE_FLAG_CLASSIC_MP_SPAWNING )
+			RemoveCinematicFlag( player, CE_FLAG_INTRO )
 		}
 	})
 	
@@ -266,4 +265,27 @@ void function PlayerJumpsFromDropship( entity player )
 	
 	if ( GetRoundsPlayed() == 0 || HasSwitchedSides() == 1 ) //Intro is announced only for the first round in Vanilla as certain gamemodes have different announcements for rounds restarts
 		TryGameModeAnnouncement( player )
+}
+
+string function GetDropshipIntroAnimation()
+{
+	switch ( GetMapName() )
+	{
+		case "mp_grave":
+			return "dropship_classic_mp_flyin_grave"
+		
+		case "mp_complex3":
+			return "dropship_classic_mp_flyin_timeshift"
+	}
+	return "dropship_classic_mp_flyin"
+}
+
+void function DelayedFrameFadeout( entity player )
+{
+	player.EndSignal( "OnDestroy" )
+
+	WaitFrame()
+	ScreenFadeFromBlack( player, 1, 1 )
+	UnMuteAll( player )
+	StopSoundOnEntity( player, "Duck_For_FrontierDefenseTitanSelectScreen" )
 }

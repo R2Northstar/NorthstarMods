@@ -546,11 +546,20 @@ void function GameStateEnter_Playing_Threaded()
 				winningTeam = GetWinningTeamWithFFASupport()
 			
 			if ( file.switchSidesBased && !file.hasSwitchedSides && !IsRoundBased() )
+			{
+				foreach ( entity player in GetPlayerArray() )
+					PlayFactionDialogueToPlayer( "mp_halftime", player )
+				
 				SetGameState( eGameState.SwitchingSides )
+			}
 			else if ( file.suddenDeathBased && winningTeam == TEAM_UNASSIGNED )
+			{
 				SetGameState( eGameState.SuddenDeath )
+			}
 			else
+			{
 				SetWinner( winningTeam, "#GAMEMODE_TIME_LIMIT_REACHED", "#GAMEMODE_TIME_LIMIT_REACHED" )
+			}
 		}
 		
 		WaitFrame()

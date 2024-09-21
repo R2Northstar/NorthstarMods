@@ -91,7 +91,7 @@ bool function ClientCommandCallbackPingSpot( entity player, array<string> args )
 	if( spotToPing == < 0, 0, 0 > )
 		return true
 	
-	Minimap_PingForTeam( player.GetTeam(), spotToPing, 200.0, 3.0, TEAM_COLOR_FRIENDLY / 255.0, 8, true )
+	Minimap_PingForTeam( player.GetTeam(), spotToPing, 100.0, 3.0, TEAM_COLOR_FRIENDLY / 255.0, 8, true )
 	thread SpawnWorldPingMarkerInSpot( spotToPing, player.GetTeam() )
 	
 	foreach( entity player in GetPlayerArrayOfTeam( player.GetTeam() ) )
@@ -126,8 +126,9 @@ void function SpawnWorldPingMarkerInSpot( vector markedLocation, int team )
 	SetTeam( pingMarker, team )
 	EffectSetControlPointVector( pingMarker, 1, < 255, 64, 16 > )
 	pingMarker.kv.VisibilityFlags = ENTITY_VISIBLE_TO_FRIENDLY
+	pingMarker.DisableHibernation()
 	
-	wait 2
-	
+	wait 1
+
 	EffectStop( pingMarker )
 }

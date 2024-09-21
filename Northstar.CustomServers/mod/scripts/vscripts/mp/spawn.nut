@@ -207,6 +207,8 @@ string function GetSpawnpointGamemodeOverride()
 entity function FindSpawnPoint( entity player, bool isTitan, bool useStartSpawnpoint )
 {
 	int team = player.GetTeam()
+	if ( HasSwitchedSides() == 1 && useStartSpawnpoint ) // Start Points don't invert like Dropships do for rounds
+		team = GetOtherTeam( team )
 	
 	array<entity> spawnpoints
 	if ( useStartSpawnpoint )

@@ -32,6 +32,7 @@ void function ClassicMP_DefaultNoIntro_Start()
 		{
 			player.UnfreezeControlsOnServer()
 			RemoveCinematicFlag( player, CE_FLAG_CLASSIC_MP_SPAWNING )
+			RemoveCinematicFlag( player, CE_FLAG_INTRO )
 		}
 	}
 	
@@ -57,21 +58,26 @@ void function ClassicMP_DefaultNoIntro_PilotSpawnPlayer( entity player )
 		RespawnAsPilot( player )
 	
 	player.FreezeControlsOnServer()
+	HolsterAndDisableWeapons( player )
 	ResetPlayerCooldowns( player ) // Prevention of case they used abilities or grenades near round end
+	WaitFrame()
 	AddCinematicFlag( player, CE_FLAG_CLASSIC_MP_SPAWNING )
-	ScreenFadeFromBlack( player, 0.5, 0.5 )
+	AddCinematicFlag( player, CE_FLAG_INTRO )
+	ScreenFadeFromBlack( player, 1, 1 )
 
 	while ( Time() < expect float( level.nv.gameStartTime ) )
 		WaitFrame()
 	
 	TryGameModeAnnouncement( player )
+	DeployAndEnableWeapons( player )
 }
 
 // spawn as titan for intro
 void function ClassicMP_DefaultNoIntro_TitanSpawnPlayer( entity player )
 {
 	player.EndSignal( "OnDestroy" )
-	ScreenFadeFromBlack( player, 0.5, 0.5 )
+	WaitFrame()
+	ScreenFadeFromBlack( player, 1, 1 )
 
 	entity intermissionCam = GetEntArrayByClass_Expensive( "info_intermission" )[ 0 ]
 	player.SetObserverModeStaticPosition( intermissionCam.GetOrigin() )

@@ -40,6 +40,8 @@ void function BaseGametype_Init_MPSP()
 	
 	AddCallback_OnNPCKilled( CheckForAutoTitanDeath )
 	AddCallback_OnPlayerKilled( CheckForAutoTitanDeath )
+	AddCallback_OnTitanBecomesPilot( CheckGameStateForTitanEjection )
+
 	RegisterSignal( "PlayerRespawnStarted" )
 	RegisterSignal( "KillCamOver" )
 	FlagInit( "WeaponDropsAllowed", true )
@@ -527,7 +529,9 @@ void function PostDeathThread_MP( entity player, var damageInfo ) // based on ga
 		bool hasWarpfall = loadout.passive3 == "pas_warpfall"
 		bool spawnAsTitan = expect bool( player.GetPersistentVar( "spawnAsTitan" ) )
 
-		if ( ( spawnAsTitan && Riff_IsTitanAvailable( player ) ) || Riff_SpawnAsTitan() == eSpawnAsTitan.Always )
+		if ( IsPrivateMatchSpectator( player ) ) // Spectators can still die from kill triggers
+			InitialisePrivateMatchSpectatorPlayer( player )
+		else if ( ( spawnAsTitan && Riff_IsTitanAvailable( player ) ) || Riff_SpawnAsTitan() == eSpawnAsTitan.Always )
 			thread RespawnAsTitan( player, !hasWarpfall )
 		else
 			RespawnAsPilot( player )
@@ -537,7 +541,7 @@ void function PostDeathThread_MP( entity player, var damageInfo ) // based on ga
 		if ( shouldDoReplay && player.IsWatchingKillReplay() )
 			player.WaitSignal( "KillCamOver" )
 
-		thread PlayerBecomesSpectator( player )
+		InitialisePrivateMatchSpectatorPlayer( player )
 	}
 }
 
@@ -635,6 +639,7 @@ void function RespawnAsTitan( entity player, bool normalTitanfall = false )
 	player.Signal( "PlayerRespawnStarted" )
 
 	player.isSpawning = true
+	player.isSpawningHotDroppingAsTitan = true
 
 	entity spawnpoint = FindSpawnPoint( player, true, ( ShouldStartSpawn( player ) || Flag( "ForceStartSpawn" ) ) )
 
@@ -658,7 +663,7 @@ void function RespawnAsTitan( entity player, bool normalTitanfall = false )
 	titan.UnsetUsable() // prevent embark prompt from showing up
 	ClearTitanAvailable( player ) // titanfall succeed, clear titan availability
 	
-	AddCinematicFlag( player, CE_FLAG_CLASSIC_MP_SPAWNING ) // hide hud
+	AddCinematicFlag( player, CE_FLAG_TITAN_HOT_DROP ) // hide hud
 	
 	#if HAS_STATS
 	UpdatePlayerStat( player, "misc_stats", "titanFalls" )
@@ -716,8 +721,9 @@ void function RespawnAsTitan( entity player, bool normalTitanfall = false )
 	{
 		if ( IsValid( player ) )
 		{
-			RemoveCinematicFlag( player, CE_FLAG_CLASSIC_MP_SPAWNING ) // show hud
+			RemoveCinematicFlag( player, CE_FLAG_TITAN_HOT_DROP ) // show hud
 			player.isSpawning = false
+			player.isSpawningHotDroppingAsTitan = false
 		}
 
 		if ( IsValid( titan ) )
@@ -812,20 +818,24 @@ void function CheckGameStateAfterSpawn( entity player )
 {
 	if( GetGameState() > eGameState.Playing )
 	{
-		if( level.endOfRoundPlayerState == ENDROUND_FREEZE )
+		if ( level.endOfRoundPlayerState == ENDROUND_FREEZE )
 			player.FreezeControlsOnServer()
-		else if( level.endOfRoundPlayerState == ENDROUND_MOVEONLY )
+		else if ( level.endOfRoundPlayerState == ENDROUND_MOVEONLY )
 		{
-			player.HolsterWeapon()
+			player.DisableWeapon()
 			player.Server_TurnOffhandWeaponsDisabledOn()
-			Rodeo_Disallow( player ) // Temporarily disable rodeo ability because rodeo code allows weapons usage again
 		}
 	}
 }
 
+void function CheckGameStateForTitanEjection( entity pilot, entity titan )
+{
+	CheckGameStateAfterSpawn( pilot )
+}
+
 bool function ClientCommandCallbackChangeTeam( entity player, array<string> args )
 {
-	if ( !GetConVarBool( "ns_allow_team_change" ) )
+	if ( !GetConVarBool( "ns_allow_team_change" ) || IsPrivateMatchSpectator( player ) )
 		return true
 	
 	if ( !( player in file.playerChangeTeamTimeBuffer ) )

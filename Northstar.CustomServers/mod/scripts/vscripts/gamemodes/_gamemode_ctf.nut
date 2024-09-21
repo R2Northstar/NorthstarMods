@@ -5,7 +5,6 @@ global function RateSpawnpoints_CTF
 
 const array<string> SWAP_FLAG_MAPS = [
 	"mp_forwardbase_kodai",
-	"mp_wargames",
 	"mp_lf_meadow"
 ]
 

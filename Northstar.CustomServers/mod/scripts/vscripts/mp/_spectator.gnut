@@ -2,7 +2,6 @@ global function Spectator_Init
 
 // stuff called by _base_gametype_mp and such
 global function InitialisePrivateMatchSpectatorPlayer
-global function PlayerBecomesSpectator
 global function RespawnPrivateMatchSpectator
 
 // custom spectator state functions
@@ -98,6 +97,7 @@ void function PlayerBecomesSpectator( entity player )
 
 	if ( IsPrivateMatchSpectator( player ) )
 	{
+		entity intermissionCam = GetEntArrayByClass_Expensive( "info_intermission" )[ 0 ]
 		DoRespawnPlayer( player, null )
 		TakeAllPassives( player )
 		TakeAllWeapons( player )
@@ -106,12 +106,20 @@ void function PlayerBecomesSpectator( entity player )
 		player.SetPhysics( MOVETYPE_NOCLIP )
 		player.SetAimAssistAllowed( false )
 		player.MakeInvisible()
-		EnableDemigod( player )
 		NPC_NoTarget( player )
 		HideName( player )
 		PlayerEarnMeter_SetMode( player, eEarnMeterMode.DISABLED )
 		player.Minimap_Hide( TEAM_MILITIA, null )
 		player.Minimap_Hide( TEAM_IMC, null )
+		player.SetInvulnerable()
+		AddCinematicFlag( player, CE_FLAG_HIDE_MAIN_HUD  )
+
+		if( IsValid( intermissionCam ) )
+		{
+			player.SetOrigin( intermissionCam.GetOrigin() )
+			player.SetAngles( intermissionCam.GetAngles() )
+		}
+		
 		return
 	}
 	

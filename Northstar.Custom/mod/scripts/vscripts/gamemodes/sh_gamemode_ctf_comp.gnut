@@ -80,6 +80,9 @@ void function InitCTFCompSpecificSettings()
 		TrackTitanDamageInPlayerGameStat( PGS_DISTANCE_SCORE )
 		SetSpawnpointGamemodeOverride( CAPTURE_THE_FLAG )
 		TeamTitanSelectMenu_Init()
+		
+		if ( GetMapName() == "mp_glitch" )
+			level.customOOBTimer = 3.0
 	#elseif CLIENT
 		ClTeamTitanSelectMenu_Init()
 		

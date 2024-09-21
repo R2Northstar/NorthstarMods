@@ -31,7 +31,7 @@ void function CodeCallback_MapInit()
 	else
 	{
 		// currently disabled until finished: intro
-		if ( !IsFFAGame() )
+		if ( !IsFFAGame() && GetClassicMPMode() )
 			ClassicMP_SetLevelIntro( WargamesIntroSetup, 20.0 )
 	}
 }
@@ -107,7 +107,7 @@ void function WargamesIntro_AddPlayer( entity player )
 
 void function OnPrematchStart()
 {
-	array<entity> triggers = GetEntArrayByClass_Expensive( "trigger_hurt" )
+	array<entity> triggers = GetEntArrayByClass_Expensive( "trigger_hurt" ) // Disable temporarily for intro
 	foreach ( entity trigger in triggers )
 		trigger.kv.triggerFilterPlayer = "none"
 	
