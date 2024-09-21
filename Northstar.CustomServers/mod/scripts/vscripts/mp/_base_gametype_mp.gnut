@@ -138,9 +138,7 @@ void function CodeCallback_OnClientConnectionStarted( entity player )
 	
 	// Added via AddCallback_OnClientConnecting
 	foreach ( callbackFunc in svGlobal.onClientConnectingCallbacks )
-	{
 		callbackFunc( player )
-	}
 	
 	if ( !IsLobby() && GetGameState() <= eGameState.Epilogue && GetConVarBool( "ns_autobalance_teams_on_player_join" ) )
 	{
@@ -519,9 +517,10 @@ void function PostDeathThread_MP( entity player, var damageInfo ) // based on ga
 		// before respawning the player
 		if( forceRespawn >= 0 )
 			thread ForceRespawnMeSignalAfterDelay( player, forceRespawn )
-
-		player.WaitSignal( "RespawnMe" ) // set in base_gametype: ClientCommand_RespawnPlayer
-
+		
+		if( !player.s.respawnSelectionDone )
+			player.WaitSignal( "RespawnMe" )
+		
 		ClearRespawnAvailable( player ) // need so the respawn icon doesn't show for like a frame on next death
 
 		TitanLoadoutDef loadout = GetTitanLoadoutForPlayer( player )

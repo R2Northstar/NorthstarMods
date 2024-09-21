@@ -49,7 +49,7 @@ Press Yes if you agree to this. This choice can be changed in the mods menu at a
 		"MODE_SETTING_CATEGORY_RIFF" "Riffs"
 		"MODE_SETTING_CATEGORY_MATCH" "Match"
 
-		"classic_mp" "Classic MP"
+		"run_intro" "Dropship Intro"
 		"run_epilogue" "Run Epilogue"
 		"scorelimit" "Score Limit"
 		"roundscorelimit" "Score Limit (round-based)"
@@ -312,6 +312,11 @@ Press Yes if you agree to this. This choice can be changed in the mods menu at a
 		// In-game chat
 		"HUD_CHAT_WHISPER_PREFIX" "[WHISPER]"
 		"HUD_CHAT_SERVER_PREFIX" "[SERVER]"
+		
+		// Team Switching
+		"TEAMSWITCH_BUFFER"				"Team Switching is on Cooldown"
+		"TEAMSWITCH_GAMEPLAY"			"Team change not allowed outside playing phase"
+		"TEAMSWITCH_DISABLED"			"Current gamemode doesn't support team change"
 
 		"NO_GAMESERVER_RESPONSE" 		"Couldn't reach game server"
 		"BAD_GAMESERVER_RESPONSE" 		"Game server gave an invalid response"
@@ -323,7 +328,7 @@ Press Yes if you agree to this. This choice can be changed in the mods menu at a
 		"INVALID_MASTERSERVER_TOKEN" 	"Invalid or expired masterserver token, try restarting EA App."
 		"JSON_PARSE_ERROR" 				"Error parsing json response"
 		"UNSUPPORTED_VERSION" 			"The version you are using is no longer supported"
-
+		
 		// Mode menu
 		"MODE_MENU_PVPVE"		"PvPvE"
 		"MODE_MENU_PVE"			"PvE"

@@ -5,6 +5,7 @@ global function RateSpawnpoints_CTF
 
 const array<string> SWAP_FLAG_MAPS = [
 	"mp_forwardbase_kodai",
+	"mp_wargames",
 	"mp_lf_meadow"
 ]
 
@@ -62,6 +63,7 @@ void function CaptureTheFlag_Init()
 	
 	AddCallback_OnPlayerKilled( OnPlayerKilled )
 	AddCallback_OnPilotBecomesTitan( DropFlagForBecomingTitan )
+	AddCallback_OnTitanBecomesPilot( TransferFlagFromTitan )
 	
 	AddSpawnCallback( "npc_titan", PlayerTitanSpawning )
 	
@@ -359,7 +361,7 @@ void function OnPlayerKilled( entity victim, entity attacker, var damageInfo )
 
 bool function OnFlagCollected( entity player, entity flag )
 {
-	if ( !IsAlive( player ) || flag.GetParent() != null || player.IsTitan() || player.IsPhaseShifted() ) 
+	if ( !IsAlive( player ) || flag.GetParent() != null || FlagIngoresPlayerTitans( player ) || player.IsPhaseShifted() ) 
 		return false
 
 	if ( player.GetTeam() != flag.GetTeam() && flag.s.canTake )
@@ -398,7 +400,7 @@ void function GiveFlag( entity player, entity flag )
 void function CaptureFlag( entity player, entity flag )
 {
 	// can only capture flags during normal play or sudden death
-	if ( GetGameState() != eGameState.Playing && GetGameState() != eGameState.SuddenDeath )
+	if ( !GamePlaying() && GetGameState() != eGameState.SuddenDeath )
 	{
 		printt( player + " tried to capture the flag, but the game state was " + GetGameState() + " not " + eGameState.Playing + " or " + eGameState.SuddenDeath)
 		return
@@ -434,21 +436,25 @@ void function CaptureFlag( entity player, entity flag )
 			}
 		}
 	}
-		
-	assistList.clear()
-
-	// notifs
-	MessageToPlayer( player, eEventNotifications.YouCapturedTheEnemyFlag )
-	EmitSoundOnEntityOnlyToPlayer( player, player, "UI_CTF_1P_PlayerScore" )
 	
+	if ( player.GetTeam() == TEAM_IMC )
+		file.imcCaptureAssistList.clear()
+	else
+		file.militiaCaptureAssistList.clear()
+
 	if( !HasPlayerCompletedMeritScore( player ) )
 		SetPlayerChallengeMeritScore( player )
 	
-	MessageToTeam( team, eEventNotifications.PlayerCapturedEnemyFlag, player, player )
+	EmitSoundOnEntityOnlyToPlayer( player, player, "UI_CTF_1P_PlayerScore" )
 	EmitSoundOnEntityToTeamExceptPlayer( flag, "UI_CTF_3P_TeamScore", player.GetTeam(), player )
-	
-	MessageToTeam( GetOtherTeam( team ), eEventNotifications.PlayerCapturedFriendlyFlag, player, player )
 	EmitSoundOnEntityToTeam( flag, "UI_CTF_3P_EnemyScores", flag.GetTeam() )
+	
+	if ( GamePlaying() ) // Messages should appears only for non-final caps, otherwise it mess with gamestate hud messages
+	{
+		MessageToPlayer( player, eEventNotifications.YouCapturedTheEnemyFlag )
+		MessageToTeam( team, eEventNotifications.PlayerCapturedEnemyFlag, player, player )
+		MessageToTeam( GetOtherTeam( team ), eEventNotifications.PlayerCapturedFriendlyFlag, player, player )
+	}
 	
 	if ( GameRules_GetTeamScore( team ) == GetScoreLimit_FromPlaylist() - 1 )
 	{
@@ -469,11 +475,17 @@ void function DropFlag( entity player, bool realDrop = true )
 	print( player + " dropped the flag!" )
 	
 	flag.ClearParent()
+	flag.SetOrigin( player.GetOrigin() + < 0, 0, 8 > ) // Offset a bit from the ground so it doesn't clip below
 	flag.SetAngles( < 0, 0, 0 > )
 	flag.SetVelocity( < 0, 0, 0 > )
 	
 	if ( realDrop )
 	{
+		vector vec = RandomVec( 50 )
+		vec.z = 100
+
+		flag.SetVelocity( vec )
+
 		if ( player.GetTeam() == TEAM_IMC && !file.imcCaptureAssistList.contains( player ) )
 			file.imcCaptureAssistList.append( player )
 		
@@ -529,7 +541,7 @@ void function FlagProximityTracker( entity flag )
 		{
 			if ( Distance( player.GetOrigin(), flag.GetOrigin() ) < CTF_GetFlagReturnRadius() )
 			{
-				if ( player.IsTitan() || player.GetTeam() != flag.GetTeam() || IsFlagHome( flag ) || flag.GetParent() != null )
+				if ( FlagIngoresPlayerTitans( player ) || player.GetTeam() != flag.GetTeam() || IsFlagHome( flag ) || flag.GetParent() != null )
 					continue
 				
 				if( playerInsidePerimeter.contains( player ) )
@@ -630,7 +642,33 @@ void function DropFlagIfPhased( entity player, entity flag )
 
 void function DropFlagForBecomingTitan( entity pilot, entity titan )
 {
-	DropFlag( pilot, true )
+	if( GetCurrentPlaylistVarInt( "ctf_titan_flag_interaction", 0 ) == 1 )
+	{
+		entity flagCarried = GetFlagForTeam( GetOtherTeam( pilot.GetTeam() ) )
+		if ( !IsValid( flagCarried ) )
+			return
+		
+		if( flagCarried.GetParent() == pilot ) // Reattach so it goes to the proper position
+		{
+			flagCarried.ClearParent()
+			flagCarried.SetParent( pilot, "FLAG" )
+		}
+	}
+	else
+		DropFlag( pilot, true )
+}
+
+void function TransferFlagFromTitan( entity pilot, entity titan )
+{
+	entity flagCarried = GetFlagForTeam( GetOtherTeam( pilot.GetTeam() ) )
+	if ( !IsValid( flagCarried ) )
+		return
+	
+	if( flagCarried.GetParent() == titan )
+	{
+		flagCarried.ClearParent()
+		flagCarried.SetParent( pilot, "FLAG" )
+	}
 }
 
 void function TrackFlagDropTimeout( entity flag )
@@ -642,4 +680,9 @@ void function TrackFlagDropTimeout( entity flag )
 	wait CTF_GetDropTimeout()
 	
 	ResetFlag( flag )
+}
+
+bool function FlagIngoresPlayerTitans( entity player )
+{
+	return GetCurrentPlaylistVarInt( "ctf_titan_flag_interaction", 0 ) == 0 && player.IsTitan()
 }

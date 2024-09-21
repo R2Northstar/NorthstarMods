@@ -107,6 +107,10 @@ void function WargamesIntro_AddPlayer( entity player )
 
 void function OnPrematchStart()
 {
+	array<entity> triggers = GetEntArrayByClass_Expensive( "trigger_hurt" )
+	foreach ( entity trigger in triggers )
+		trigger.kv.triggerFilterPlayer = "none"
+	
 	ClassicMP_OnIntroStarted()
 	file.introStartTime = Time()
 	
@@ -214,14 +218,15 @@ void function OnPrematchStart()
 	imcGrunt2.Destroy()
 	imcGrunt3.Destroy()
 	imcGrunt4.Destroy()
+
+	foreach ( entity trigger in triggers )
+		trigger.kv.triggerFilterPlayer = "all"
 }
 
 void function PlayerWatchesWargamesIntro( entity player )
 {
 	player.EndSignal( "OnDestroy" )
-	
-	if ( IsAlive( player ) )
-		player.Die()
+	player.EndSignal( "OnDeath" )
 
 	OnThreadEnd( function() : ( player )
 	{
@@ -240,10 +245,6 @@ void function PlayerWatchesWargamesIntro( entity player )
 		}
 	})
 	
-	// we need to wait a frame if we killed ourselves to spawn into this, so just easier to do it all the time to remove any weirdness
-	WaitFrame()
-	player.EndSignal( "OnDeath" )
-	
 	int factionTeam = ConvertPlayerFactionToIMCOrMilitiaTeam( player )
 	entity playerPod
 	if ( factionTeam == TEAM_IMC )
@@ -252,10 +253,12 @@ void function PlayerWatchesWargamesIntro( entity player )
 		playerPod = file.militiaPod
 	
 	// setup player
+	if( PlayerCanSpawn( player ) )
+		DoRespawnPlayer( player, null )
+
 	int podAttachId = playerPod.LookupAttachment( "REF" )
 	player.SetOrigin( playerPod.GetAttachmentOrigin( podAttachId ) )
 	player.SetAngles( playerPod.GetAttachmentAngles( podAttachId ) )
-	player.RespawnPlayer( null )
 	player.SetParent( playerPod, "REF" )
 	player.ForceStand()
 	

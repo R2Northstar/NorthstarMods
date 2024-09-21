@@ -3,9 +3,7 @@ untyped
 global function ClassicMP_DefaultNoIntro_Setup
 global function ClassicMP_DefaultNoIntro_GetLength
 
-global const float NOINTRO_INTRO_PILOT_LENGTH = 10.0
-global const float TITAN_DROP_SPAWN_INTRO_LENGTH = 0.0 // this intro shouldn't have a countdown visually, so we have to set the length of this intro to 0
-global const float TITAN_DROP_SPAWN_INTRO_REAL_LENGTH = 2.0 // we wait roughly this long during the intro, even when it's technically over
+global const float NOINTRO_LENGTH = 5.0
 
 void function ClassicMP_DefaultNoIntro_Setup()
 {
@@ -15,12 +13,7 @@ void function ClassicMP_DefaultNoIntro_Setup()
 
 float function ClassicMP_DefaultNoIntro_GetLength()
 {
-	if ( ShouldIntroSpawnAsTitan() )
-		return TITAN_DROP_SPAWN_INTRO_LENGTH
-	else
-		return NOINTRO_INTRO_PILOT_LENGTH
-		
-	unreachable
+	return NOINTRO_LENGTH
 }
 
 void function ClassicMP_DefaultNoIntro_Start()
@@ -30,21 +23,15 @@ void function ClassicMP_DefaultNoIntro_Start()
 	foreach ( entity player in GetPlayerArray() )
 		ClassicMP_DefaultNoIntro_SpawnPlayer( player )
 		
-	if ( ShouldIntroSpawnAsTitan() )
-		wait TITAN_DROP_SPAWN_INTRO_REAL_LENGTH
-	else
-	{
-		wait NOINTRO_INTRO_PILOT_LENGTH
+	while ( Time() < expect float( level.nv.gameStartTime ) )
+		WaitFrame()
 		
-		foreach ( entity player in GetPlayerArray() )
+	foreach ( entity player in GetPlayerArray() )
+	{
+		if ( !IsPrivateMatchSpectator( player ) )
 		{
-			if ( !IsPrivateMatchSpectator( player ) )
-			{
-				player.UnfreezeControlsOnServer()
-				RemoveCinematicFlag( player, CE_FLAG_CLASSIC_MP_SPAWNING )
-			}
-			
-			TryGameModeAnnouncement( player )
+			player.UnfreezeControlsOnServer()
+			RemoveCinematicFlag( player, CE_FLAG_CLASSIC_MP_SPAWNING )
 		}
 	}
 	
@@ -55,16 +42,7 @@ void function ClassicMP_DefaultNoIntro_SpawnPlayer( entity player )
 {
 	if ( GetGameState() != eGameState.Prematch )
 		return
-	
-	if ( IsPrivateMatchSpectator( player ) ) // private match spectators use custom spawn logic
-	{
-		RespawnPrivateMatchSpectator( player )
-		return
-	}
-	
-	if ( IsAlive( player ) )
-		player.Die()
-	
+
 	if ( ShouldIntroSpawnAsTitan() )
 		thread ClassicMP_DefaultNoIntro_TitanSpawnPlayer( player )
 	else
@@ -75,16 +53,36 @@ void function ClassicMP_DefaultNoIntro_SpawnPlayer( entity player )
 // spawn as pilot for intro
 void function ClassicMP_DefaultNoIntro_PilotSpawnPlayer( entity player )
 {
-	RespawnAsPilot( player )
+	if( PlayerCanSpawn( player ) )
+		RespawnAsPilot( player )
+	
 	player.FreezeControlsOnServer()
+	ResetPlayerCooldowns( player ) // Prevention of case they used abilities or grenades near round end
 	AddCinematicFlag( player, CE_FLAG_CLASSIC_MP_SPAWNING )
 	ScreenFadeFromBlack( player, 0.5, 0.5 )
+
+	while ( Time() < expect float( level.nv.gameStartTime ) )
+		WaitFrame()
+	
+	TryGameModeAnnouncement( player )
 }
 
 // spawn as titan for intro
 void function ClassicMP_DefaultNoIntro_TitanSpawnPlayer( entity player )
 {
-	// blocking call
-	RespawnAsTitan( player, false )
+	player.EndSignal( "OnDestroy" )
+	ScreenFadeFromBlack( player, 0.5, 0.5 )
+
+	entity intermissionCam = GetEntArrayByClass_Expensive( "info_intermission" )[ 0 ]
+	player.SetObserverModeStaticPosition( intermissionCam.GetOrigin() )
+	player.SetObserverModeStaticAngles( intermissionCam.GetAngles() )
+	player.StartObserverMode( OBS_MODE_STATIC_LOCKED )
+
+	while ( Time() < expect float( level.nv.gameStartTime ) ) // Wait until match actually starts to spawn them
+		WaitFrame()
+	
+	if( PlayerCanSpawn( player ) )
+		RespawnAsTitan( player )
+	
 	TryGameModeAnnouncement( player )
 }

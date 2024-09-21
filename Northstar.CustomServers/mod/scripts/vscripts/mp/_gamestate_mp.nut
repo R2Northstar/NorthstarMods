@@ -79,7 +79,7 @@ void function PIN_GameStart()
 {
 	SetServerVar( "switchedSides", 0 )
 	SetServerVar( "winningTeam", -1 )
-		
+	
 	AddCallback_GameStateEnter( eGameState.WaitingForCustomStart, GameStateEnter_WaitingForCustomStart )
 	AddCallback_GameStateEnter( eGameState.WaitingForPlayers, GameStateEnter_WaitingForPlayers )
 	AddCallback_OnClientConnected( WaitingForPlayers_ClientConnected )
@@ -102,8 +102,7 @@ void function PIN_GameStart()
 
 void function GameState_EntitiesDidLoad()
 {
-	if ( GetClassicMPMode() || ClassicMP_ShouldTryIntroAndEpilogueWithoutClassicMP() )
-		ClassicMP_SetupIntro()
+	ClassicMP_SetupIntro()
 }
 
 void function WaittillGameStateOrHigher( int gameState )
@@ -425,10 +424,7 @@ void function WaitForPlayers()
 	
 	wait 2
 	
-	if ( !GetClassicMPMode() && !ClassicMP_ShouldTryIntroAndEpilogueWithoutClassicMP() )
-		SetGameState( eGameState.Prematch )
-	else
-		SetGameState( eGameState.PickLoadout ) // Even if the game mode don't use it, vanilla still cast this game state to make the dropship jump sound when match starts
+	SetGameState( eGameState.PickLoadout ) // Even if the game mode don't use it, vanilla still cast this game state to make the dropship jump sound when match starts
 }
 
 void function WaitingForPlayers_ClientConnected( entity player )
@@ -494,30 +490,16 @@ void function GameStateEnter_Prematch()
 	if ( file.switchSidesBased )
 		timeLimit /= 2 // endtime is half of total per side
 	
-	SetGameEndTime( timeLimit + ClassicMP_GetIntroLength() )
-	SetRoundEndTime( ClassicMP_GetIntroLength() + GameMode_GetRoundTimeLimit( GAMETYPE ) * 60 )
-	
 	if ( !GetClassicMPMode() && !ClassicMP_ShouldTryIntroAndEpilogueWithoutClassicMP() )
-		thread StartGameWithoutClassicMP()
-}
-
-void function StartGameWithoutClassicMP()
-{
-	WaitFrame() // wait for callbacks to finish
-	
-	// need these otherwise game will complain
-	SetGameEndTime( 0 )
-	SetRoundEndTime( 0 )
-	
-	foreach ( entity player in GetPlayerArray() )
 	{
-		if ( !IsPrivateMatchSpectator( player ) )
-			RespawnAsPilot( player )
-		
-		ScreenFadeFromBlack( player, 0.5, 0.5 )
+		SetGameEndTime( timeLimit + ClassicMP_DefaultNoIntro_GetLength() )
+		SetRoundEndTime( timeLimit + ClassicMP_DefaultNoIntro_GetLength() )
 	}
-	
-	SetGameState( eGameState.Playing )
+	else
+	{
+		SetGameEndTime( timeLimit + ClassicMP_GetIntroLength() )
+		SetRoundEndTime( timeLimit + ClassicMP_GetIntroLength() )
+	}
 }
 
 
@@ -654,8 +636,15 @@ void function GameStateEnter_WinnerDetermined_Threaded()
 			thread PlayerWatchesRoundWinningReplay( player, replayLength )
 	
 		wait replayLength
+		foreach ( entity player in GetPlayerArray() )
+		{
+			ClearPlayerFromReplay( player )
+			WaitFrame()
+			ScreenFadeToBlackForever( player, 0.0 )
+		}
 		
-		CleanUpEntitiesForRoundEnd()
+		if ( IsRoundBased() && HasSwitchedSides() == 0 )
+			CleanUpEntitiesForRoundEnd()
 		
 		if ( killreplayEnabled )
 			SetServerVar( "replayDisabled", false )
@@ -680,7 +669,7 @@ void function GameStateEnter_WinnerDetermined_Threaded()
 			ScreenFadeToBlackForever( player, ROUND_WINNING_KILL_REPLAY_SCREEN_FADE_TIME )
 		
 		wait ROUND_WINNING_KILL_REPLAY_SCREEN_FADE_TIME
-		if ( IsRoundBased() ) // Repeat check here just for the case match is over and epilogue is disabled, so it doesn't kill players randomly
+		if ( IsRoundBased() && HasSwitchedSides() == 0 ) // Repeat check here just for the case match is over and epilogue is disabled, so it doesn't kill players randomly
 			CleanUpEntitiesForRoundEnd()
 	}
 	
@@ -691,7 +680,7 @@ void function GameStateEnter_WinnerDetermined_Threaded()
 	if ( IsRoundBased() )
 	{
 		ClearDroppedWeapons()
-		int roundsPlayed = expect int ( GetServerVar( "roundsPlayed" ) )
+		int roundsPlayed = GetRoundsPlayed()
 		roundsPlayed++
 		SetServerVar( "roundsPlayed", roundsPlayed )
 		
@@ -732,19 +721,32 @@ void function GameStateEnter_WinnerDetermined_Threaded()
 
 void function PlayerWatchesRoundWinningReplay( entity player, float replayLength )
 {
-	player.EndSignal( "OnDestroy" )
-	player.SetPredictionEnabled( false ) // Disable prediction to prevent issues with replays, respawning code restores it automatically
-	
 	entity attacker = file.roundWinningKillReplayAttacker
+	if ( !IsValidPlayer( player ) || !IsValid( attacker ) )
+		return
 	
-	if ( IsValid( attacker ) )
-	{
-		player.SetKillReplayDelay( Time() - replayLength, THIRD_PERSON_KILL_REPLAY_ALWAYS )
-		player.SetKillReplayInflictorEHandle( file.roundWinningKillReplayInflictorEHandle )
-		player.SetKillReplayVictim( file.roundWinningKillReplayVictim )
-		player.SetViewIndex( attacker.GetIndexForEntity() )
-		player.SetIsReplayRoundWinning( true )
-	}
+	player.SetPredictionEnabled( false ) // Disable prediction to prevent issues with replays, respawning code restores it automatically
+	player.ClearReplayDelay()
+	player.ClearViewEntity()
+	
+	player.SetKillReplayDelay( Time() - replayLength, THIRD_PERSON_KILL_REPLAY_ALWAYS )
+	player.SetKillReplayInflictorEHandle( file.roundWinningKillReplayInflictorEHandle )
+	player.SetKillReplayVictim( file.roundWinningKillReplayVictim )
+	player.SetViewIndex( attacker.GetIndexForEntity() )
+	player.SetIsReplayRoundWinning( true )
+}
+
+void function ClearPlayerFromReplay( entity player )
+{
+	if ( !IsValidPlayer( player ) )
+		return
+	
+	if ( !player.IsWatchingKillReplay() || !player.IsWatchingSpecReplay() )
+		return
+	
+	player.SetIsReplayRoundWinning( false )
+	player.ClearReplayDelay()
+	player.ClearViewEntity()
 }
 
 
@@ -806,7 +808,12 @@ void function GameStateEnter_SwitchingSides_Threaded()
 	
 	thread DialogueAnnounceSwitchingSides()
 	wait replayLength
-	
+	foreach ( entity player in GetPlayerArray() )
+	{
+		ClearPlayerFromReplay( player )
+		WaitFrame()
+		ScreenFadeToBlackForever( player, 0.0 )
+	}
 	CleanUpEntitiesForRoundEnd()
 	wait CLEAR_PLAYERS_BUFFER
 	
@@ -822,7 +829,7 @@ void function GameStateEnter_SwitchingSides_Threaded()
 	if ( file.usePickLoadoutScreen && GetCurrentPlaylistVarInt( "pick_loadout_every_round", 1 ) ) //Playlist var needs to be enabled too
 		SetGameState( eGameState.PickLoadout )
 	else
-		SetGameState ( eGameState.Prematch )
+		SetGameState( eGameState.Prematch )
 }
 
 void function DialogueAnnounceSwitchingSides()
@@ -1103,6 +1110,9 @@ void function CleanUpEntitiesForRoundEnd()
 	svGlobal.levelEnt.Signal( "CleanUpEntitiesForRoundEnd" ) 
 	foreach ( entity player in GetPlayerArray() )
 	{
+		if ( IsPrivateMatchSpectator( player ) )
+			continue
+		
 		PlayerEarnMeter_Reset( player )
 		ClearTitanAvailable( player )
 		PROTO_CleanupTrackedProjectiles( player )

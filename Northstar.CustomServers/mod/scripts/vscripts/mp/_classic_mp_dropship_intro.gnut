@@ -114,6 +114,7 @@ void function OnPrematchStart()
 				DoRespawnPlayer( player, null )
 			
 			PutPlayerInDropship( player )
+			ResetPlayerCooldowns( player ) // Prevention of case they used abilities or grenades near round end
 		}
 		else
 			RespawnPrivateMatchSpectator( player )
@@ -232,7 +233,7 @@ void function SpawnPlayerIntoDropship( entity player, int playerDropshipIndex, e
 	#endif
 	
 	thread FirstPersonSequence( jumpSequence, player, playerDropship )
-	wait player.GetSequenceDuration( DROPSHIP_JUMP_ANIMS[ playerDropshipIndex ] ) - 0.2
+	wait player.GetSequenceDuration( DROPSHIP_JUMP_ANIMS[ playerDropshipIndex ] )
 	
 	thread PlayerJumpsFromDropship( player )
 }
@@ -255,8 +256,11 @@ void function PlayerJumpsFromDropship( entity player )
 	})
 	
 	// wait for player to hit the ground
+	ClearPlayerAnimViewEntity( player )
 	player.ClearParent()
 	player.ConsumeDoubleJump() // MovementDisable doesn't prevent double jumps
+	WaitFrame()
+	player.SetVelocity( < 0, 0, -100 > )
 	while ( !player.IsOnGround() && !player.IsWallRunning() && !player.IsWallHanging() ) // todo this needs tweaking
 		WaitFrame()
 	
