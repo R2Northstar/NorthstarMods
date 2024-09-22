@@ -32,7 +32,6 @@ void function ClassicMP_DefaultNoIntro_Start()
 		{
 			player.UnfreezeControlsOnServer()
 			RemoveCinematicFlag( player, CE_FLAG_CLASSIC_MP_SPAWNING )
-			RemoveCinematicFlag( player, CE_FLAG_INTRO )
 		}
 	}
 	
@@ -62,7 +61,6 @@ void function ClassicMP_DefaultNoIntro_PilotSpawnPlayer( entity player )
 	ResetPlayerCooldowns( player ) // Prevention of case they used abilities or grenades near round end
 	WaitFrame()
 	AddCinematicFlag( player, CE_FLAG_CLASSIC_MP_SPAWNING )
-	AddCinematicFlag( player, CE_FLAG_INTRO )
 	ScreenFadeFromBlack( player, 1, 1 )
 
 	while ( Time() < expect float( level.nv.gameStartTime ) )

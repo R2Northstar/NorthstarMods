@@ -590,7 +590,7 @@ void function TryReturnFlag( entity player, entity flag )
 	
 	MessageToTeam( flag.GetTeam(), eEventNotifications.PlayerReturnedFriendlyFlag, null, player )
 	EmitSoundOnEntityToTeam( flag, "UI_CTF_3P_TeamReturnsFlag", flag.GetTeam() )
-	PlayFactionDialogueToTeam( "ctf_flagReturnedFriendly", flag.GetTeam() )
+	PlayFactionDialogueToPlayer( "ctf_flagReturnedFriendly", player )
 	
 	MessageToPlayer( player, eEventNotifications.YouReturnedFriendlyFlag )
 	AddPlayerScore( player, "FlagReturn", player )

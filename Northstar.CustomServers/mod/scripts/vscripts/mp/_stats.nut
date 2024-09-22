@@ -265,10 +265,7 @@ void function Stats_IncrementStat( entity player, string statCategory, string st
 		// if we have an invalid mode or map for persistence, and it is used in the
 		// persistence string, we can't save the persistence so we have to just return
 		if ( str != saveVar )
-		{
-			printt( ex )
 			return
-		}
 	}
 	str = saveVar
 

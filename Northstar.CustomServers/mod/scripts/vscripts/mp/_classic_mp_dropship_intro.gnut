@@ -29,8 +29,6 @@ global const float DROPSHIP_INTRO_LENGTH = 15.0 // TODO tweak this
 struct {
 	table< entity, array<entity> > militiaDropships
 	table< entity, array<entity> > imcDropships
-	
-	float introStartTime
 } file
 
 
@@ -56,7 +54,6 @@ void function OnPrematchStart()
 	ClassicMP_OnIntroStarted()
 
 	print( "Starting Dropship Intro!" )
-	file.introStartTime = Time()
 	
 	// Clear Dropship arrays of Teams for Match Restarts (i.e Half-Times)
 	file.militiaDropships.clear()
@@ -96,6 +93,9 @@ void function OnPrematchStart()
 		
 		DispatchSpawn( dropship )
 		
+		dropship.ai.spawnTime = Time()
+		dropship.s.deployedPilots <- false
+		dropship.s.deployedTime <- 0.0
 		dropship.SetModel( $"models/vehicle/crow_dropship/crow_dropship_hero.mdl" )
 		if ( createTeam == TEAM_IMC )
 			dropship.SetModel( $"models/vehicle/goblin_dropship/goblin_dropship_hero.mdl" )
@@ -103,6 +103,7 @@ void function OnPrematchStart()
 		teamDropships[ dropship ] <- [ null, null, null, null ]
 		
 		thread PlayAnim( dropship, GetDropshipIntroAnimation() )
+		thread WaitForDropshipDeploy( dropship )
 	}
 	
 	// Populate Dropships
@@ -129,6 +130,17 @@ void function EndIntroWhenFinished()
 		WaitFrame()
 	
 	ClassicMP_OnIntroFinished()
+}
+
+void function WaitForDropshipDeploy( entity dropship )
+{
+	dropship.EndSignal( "OnDestroy" )
+	dropship.EndSignal( "OnDeath" )
+
+	dropship.WaitSignal( "deploy" )
+
+	dropship.s.deployedPilots = true
+	dropship.s.deployedTime = Time()
 }
 
 void function PutPlayerInDropship( entity player )
@@ -192,38 +204,39 @@ void function SpawnPlayerIntoDropship( entity player, int playerDropshipIndex, e
 	
 	HolsterAndDisableWeapons( player )
 	player.DisableWeaponViewModel()
-	player.MovementDisable() // Disable all movement but let them look around still
-	AddCinematicFlag( player, CE_FLAG_INTRO )
+	player.MovementDisable()
 	AddCinematicFlag( player, CE_FLAG_CLASSIC_MP_SPAWNING )
 	thread DelayedFrameFadeout( player )
 
-	// faction leaders are done clientside, spawn them here
 	if( GameRules_GetGameMode() == FD )
 	{
 		if( player.GetTeam() == TEAM_MILITIA ) //IMC Side will have empty Intro Dropship for FD in specific
-			Remote_CallFunction_NonReplay( player, "ServerCallback_SpawnFactionCommanderInDropship", playerDropship.GetEncodedEHandle(), file.introStartTime )
+			Remote_CallFunction_NonReplay( player, "ServerCallback_SpawnFactionCommanderInDropship", playerDropship.GetEncodedEHandle(), playerDropship.ai.spawnTime )
 	}
 	else
-		Remote_CallFunction_NonReplay( player, "ServerCallback_SpawnFactionCommanderInDropship", playerDropship.GetEncodedEHandle(), file.introStartTime )
+		Remote_CallFunction_NonReplay( player, "ServerCallback_SpawnFactionCommanderInDropship", playerDropship.GetEncodedEHandle(), playerDropship.ai.spawnTime )
 	
 	Remote_CallFunction_NonReplay( player, "ServerCallback_CreateDropShipIntLighting", playerDropship.GetEncodedEHandle(), playerDropship.GetTeam() )
-	// do firstperson sequence	
-	FirstPersonSequenceStruct idleSequence
-	idleSequence.firstPersonAnim = DROPSHIP_IDLE_ANIMS_POV[ playerDropshipIndex ]
-	idleSequence.thirdPersonAnim = DROPSHIP_IDLE_ANIMS[ playerDropshipIndex ]
-	idleSequence.attachment = "ORIGIN"
-	idleSequence.teleport = true
-	idleSequence.viewConeFunction = ViewConeRampFree
-	idleSequence.hideProxy = true
-	waitthread FirstPersonSequence( idleSequence, player, playerDropship )
-	// todo: possibly rework this to actually get the time the idle anim takes and start the starttime of the jump sequence for very late joiners using that
 	
-	// jump sequence
+	if( !playerDropship.s.deployedPilots )
+	{
+		FirstPersonSequenceStruct idleSequence
+		idleSequence.firstPersonAnim = DROPSHIP_IDLE_ANIMS_POV[ playerDropshipIndex ]
+		idleSequence.thirdPersonAnim = DROPSHIP_IDLE_ANIMS[ playerDropshipIndex ]
+		idleSequence.attachment = "ORIGIN"
+		idleSequence.teleport = true
+		idleSequence.viewConeFunction = ViewConeRampFree
+		idleSequence.hideProxy = true
+		thread FirstPersonSequence( idleSequence, player, playerDropship )
+		playerDropship.WaitSignal( "deploy" )
+	}
+
 	FirstPersonSequenceStruct jumpSequence
 	jumpSequence.firstPersonAnim = DROPSHIP_JUMP_ANIMS_POV[ playerDropshipIndex ]
 	jumpSequence.thirdPersonAnim = DROPSHIP_JUMP_ANIMS[ playerDropshipIndex ]
 	jumpSequence.attachment = "ORIGIN"
 	jumpSequence.viewConeFunction = ViewConeFree
+	jumpSequence.setInitialTime = max( 0.0, Time() - playerDropship.s.deployedTime )
 	
 	#if BATTLECHATTER_ENABLED
 	if( playerDropshipIndex == 0 )
@@ -250,7 +263,6 @@ void function PlayerJumpsFromDropship( entity player )
 			player.EnableWeaponViewModel()
 			DeployAndEnableWeapons( player )
 			RemoveCinematicFlag( player, CE_FLAG_CLASSIC_MP_SPAWNING )
-			RemoveCinematicFlag( player, CE_FLAG_INTRO )
 		}
 	})
 	

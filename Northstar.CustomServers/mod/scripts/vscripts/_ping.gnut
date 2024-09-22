@@ -1,5 +1,8 @@
 global function Spotting_Init 
 
+struct {
+	table<entity, float> playerPingTimeBuffer
+} file
 
 
 
@@ -30,6 +33,19 @@ bool function ClientCommandCallbackPingSpot( entity player, array<string> args )
 {
 	if( !IsAlive( player ) || !GamePlaying() || IsPrivateMatchSpectator( player ) )
 		return true
+	
+	if ( !( player in file.playerPingTimeBuffer ) )
+	{
+		file.playerPingTimeBuffer[ player ] <- Time() + 2.0
+	}
+	else
+	{
+		if ( file.playerPingTimeBuffer[ player ] > Time() )
+			return true
+	}
+
+	if ( player in file.playerPingTimeBuffer && file.playerPingTimeBuffer[ player ] < Time() )
+		file.playerPingTimeBuffer[ player ] = Time() + 2.0
 	
 	entity spottedEnemy
 	array<VisibleEntityInCone> results = FindVisibleEntitiesInCone( player.EyePosition(), player.GetViewVector(), 16384, 8, [player], TRACE_MASK_PLAYERSOLID | TRACE_MASK_BLOCKLOS, VIS_CONE_ENTS_TEST_HITBOXES, player )
@@ -91,7 +107,7 @@ bool function ClientCommandCallbackPingSpot( entity player, array<string> args )
 	if( spotToPing == < 0, 0, 0 > )
 		return true
 	
-	Minimap_PingForTeam( player.GetTeam(), spotToPing, 100.0, 3.0, TEAM_COLOR_FRIENDLY / 255.0, 8, true )
+	Minimap_PingForTeam( player.GetTeam(), spotToPing, 100.0, 2.0, TEAM_COLOR_FRIENDLY / 255.0, 8, true )
 	thread SpawnWorldPingMarkerInSpot( spotToPing, player.GetTeam() )
 	
 	foreach( entity player in GetPlayerArrayOfTeam( player.GetTeam() ) )

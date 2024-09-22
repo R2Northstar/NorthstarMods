@@ -107,6 +107,21 @@ bool function RespawnsEnabled()
 
 void function InitSpawnpoint( entity spawnpoint ) 
 {
+	if ( file.spawnpointGamemodeOverride != "" )
+	{
+		string gamemodeKey = "gamemode_" + file.spawnpointGamemodeOverride
+		if ( spawnpoint.HasKey( gamemodeKey ) && ( spawnpoint.kv[ gamemodeKey ] == "0" || spawnpoint.kv[ gamemodeKey ] == "" ) )
+		{
+			spawnpoint.Destroy()
+			return
+		}
+	}
+	else if ( GameModeRemove( spawnpoint ) )
+	{
+		spawnpoint.Destroy()
+		return
+	}
+	
 	spawnpoint.s.lastUsedTime <- -999
 	spawnpoint.s.inUse <- false
 }
@@ -299,18 +314,6 @@ entity function GetBestSpawnpoint( entity player, array<entity> spawnpoints, boo
 
 bool function IsSpawnpointValid( entity spawnpoint, int team )
 {
-	if ( !spawnpoint.HasKey( "ignoreGamemode" ) || spawnpoint.HasKey( "ignoreGamemode" ) && spawnpoint.kv.ignoreGamemode == "0" ) // used by script-spawned spawnpoints
-	{
-		if ( file.spawnpointGamemodeOverride != "" )
-		{
-			string gamemodeKey = "gamemode_" + file.spawnpointGamemodeOverride
-			if ( spawnpoint.HasKey( gamemodeKey ) && ( spawnpoint.kv[ gamemodeKey ] == "0" || spawnpoint.kv[ gamemodeKey ] == "" ) )
-				return false
-		}
-		else if ( GameModeRemove( spawnpoint ) )
-			return false
-	}
-	
 	foreach ( bool functionref( entity, int ) customValidationRule in file.customSpawnpointValidationRules )
 		if ( !customValidationRule( spawnpoint, team ) )
 			return false

@@ -108,7 +108,6 @@ bool function ClientCommand_ResetTitanAegis( entity player, array<string> args )
 	player.SetPersistentVar( "fdTitanXP[" + suitIndex + "]", 0 )
 	player.SetPersistentVar( "fdPreviousTitanXP[" + suitIndex + "]", 0 )
 	
-	// Refresh Highest Aegis Titan since we might get all of them back to 1 if players wants
 	RecalculateHighestTitanFDLevel( player )
 	
 	return true
@@ -169,8 +168,12 @@ void function UpdateCachedLoadouts_Threaded()
 	// below here is just making all the menu models update properly and such
 
 	#if UI
-	uiGlobal.pilotSpawnLoadoutIndex = GetPersistentSpawnLoadoutIndex( GetUIPlayer(), "pilot" )
-	uiGlobal.titanSpawnLoadoutIndex = GetPersistentSpawnLoadoutIndex( GetUIPlayer(), "titan" )
+	entity uiPlayer = GetUIPlayer()
+	if ( IsValid( uiPlayer ) )
+	{
+		uiGlobal.pilotSpawnLoadoutIndex = GetPersistentSpawnLoadoutIndex( uiPlayer, "pilot" )
+		uiGlobal.titanSpawnLoadoutIndex = GetPersistentSpawnLoadoutIndex( uiPlayer, "titan" )
+	}
 	#endif
 
 	#if CLIENT
@@ -224,12 +227,11 @@ void function ValidateEquippedItems( entity player )
 	}
 
 	// titan loadouts
-	int selectedTitanLoadoutIndex = player.GetPersistentVarAsInt( "titanSpawnLoadout.index" )
 	for ( int titanLoadoutIndex = 0; titanLoadoutIndex < NUM_PERSISTENT_TITAN_LOADOUTS; titanLoadoutIndex++ )
 	{
 		printt( "- VALIDATING TITAN LOADOUT: " + titanLoadoutIndex )
 
-		bool isSelected = titanLoadoutIndex == selectedTitanLoadoutIndex
+		bool isSelected = titanLoadoutIndex == player.GetPersistentVarAsInt( "titanSpawnLoadout.index" )
 		TitanLoadoutDef loadout = GetTitanLoadout( player, titanLoadoutIndex )
 		TitanLoadoutDef defaultLoadout = shGlobal.defaultTitanLoadouts[titanLoadoutIndex]
 
@@ -447,18 +449,11 @@ void function ValidateEquippedItems( entity player )
 		{
 			printt( "  - SELECTED TITAN CLASS IS LOCKED, RESETTING" )
 			player.SetPersistentVar( "titanSpawnLoadout.index", 0 )
-			selectedTitanLoadoutIndex = 0
+			Remote_CallFunction_NonReplay( player, "ServerCallback_UpdateTitanModel", 0 )
 		}
 	}
 
-	if ( selectedTitanLoadoutIndex < 0 || selectedTitanLoadoutIndex >= NUM_PERSISTENT_TITAN_LOADOUTS )
-	{
-		printt( "- SELECTED TITAN CLASS IS INVALID, RESETTING" )
-		player.SetPersistentVar( "titanSpawnLoadout.index", 0 )
-		selectedTitanLoadoutIndex = 0
-	}
-
-	Remote_CallFunction_NonReplay( player, "ServerCallback_UpdateTitanModel", selectedTitanLoadoutIndex )
+	Remote_CallFunction_NonReplay( player, "ServerCallback_UpdateTitanModel", player.GetPersistentVarAsInt( "titanSpawnLoadout.index" ) )
 
 	// pilot loadouts
 	for ( int pilotLoadoutIndex = 0; pilotLoadoutIndex < NUM_PERSISTENT_PILOT_LOADOUTS; pilotLoadoutIndex++ )

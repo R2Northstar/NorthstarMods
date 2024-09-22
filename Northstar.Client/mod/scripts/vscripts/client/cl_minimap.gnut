@@ -416,7 +416,7 @@ void function Minimap_PingCount( vector origin, float radius, float duration, ve
 	{
 		count--
 
-		Minimap_Ping( origin, radius, delay + (delay * 0.25), color, reverse )
+		thread Minimap_Ping( origin, radius, delay + (delay * 0.25), color, reverse )
 		wait delay
 	}
 }
@@ -449,6 +449,10 @@ void function Minimap_Ping( vector origin, float radius, float duration, vector 
 	RuiSetGameTime( rui, "endTime", Time() + duration )
 
 	RuiSetBool( rui, "reverse", reverse )
+	
+	wait duration
+	
+	RuiDestroy( rui )
 }
 
 

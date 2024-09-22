@@ -3255,8 +3255,7 @@ void function FD_SpawnPlayerDroppod( entity player )
 		podSequence.enablePlanting = true
 		podSequence.viewConeFunction = ViewConeRampFree
 		
-		thread FirstPersonSequence( podSequence, player, pod )
-		WaittillAnimDone( player )
+		waitthread FirstPersonSequence( podSequence, player, pod )
 	}
 	
 	if ( IsValidPlayer( player ) ) //Double check for crash sanity stuff after wait
@@ -3354,10 +3353,8 @@ void function FD_DropshipDropPlayer( entity player, int playerDropshipIndex )
 			PlayBattleChatterLine( player, "bc_pIntroChat" )
 		#endif
 		
-		thread FirstPersonSequence( jumpSequence, player, file.dropship )
-		WaittillAnimDone( player )
-		
-		if ( IsValid( player ) ) //Check again because the delay
+		waitthread FirstPersonSequence( jumpSequence, player, file.dropship )
+		if ( IsValidPlayer( player ) ) //Check again because the delay
 		{
 			player.ClearParent()
 			ClearPlayerAnimViewEntity( player )
@@ -3373,7 +3370,7 @@ void function FD_PlayerRespawnProtection( entity player )
 
 	OnThreadEnd( function() : ( player )
 	{
-		if ( IsValid( player ) )
+		if ( IsValidPlayer( player ) )
 		{
 			player.Highlight_SetParam( 1, 0, HIGHLIGHT_COLOR_FRIENDLY )
 			player.ClearInvulnerable()
