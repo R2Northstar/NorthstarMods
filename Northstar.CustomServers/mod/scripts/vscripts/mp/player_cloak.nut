@@ -142,17 +142,14 @@ void function HandleCloakEnd( entity player )
 			if ( !IsCloaked( player ) )
 				return
 
-			if ( !IsAlive( player ) || !player.IsHuman() )
-			{
-				DisableCloak( player )
-				return
-			}
-
+			entity playerTactical = player.GetOffhandWeapon( OFFHAND_SPECIAL )
+			string playerTacticalName
+			if ( IsValid( playerTactical ) )
+				playerTacticalName = playerTactical.GetWeaponClassName()
+			
 			float duration = player.GetCloakEndTime() - Time()
-			if ( duration <= 0 )
-			{
+			if ( !IsAlive( player ) || !player.IsHuman() || duration <= 0 || playerTacticalName != "mp_ability_cloak" )
 				DisableCloak( player )
-			}
 		}
 	)
 

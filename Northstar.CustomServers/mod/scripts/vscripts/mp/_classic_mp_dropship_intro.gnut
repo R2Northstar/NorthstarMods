@@ -186,22 +186,6 @@ void function SpawnPlayerIntoDropship( entity player, int playerDropshipIndex, e
 	player.EndSignal( "OnDestroy" )
 	player.EndSignal( "OnDeath" )
 	
-	OnThreadEnd( function() : ( player, playerDropshipIndex, playerDropship )
-	{	
-		if ( IsValid( player ) )
-		{
-			player.ClearParent()
-			ClearPlayerAnimViewEntity( player )
-		}
-		if( IsAlive( playerDropship ) )
-		{
-			if ( playerDropship.GetTeam() == TEAM_MILITIA )
-				file.militiaDropships[ playerDropship ][ playerDropshipIndex ] = null
-			else
-				file.imcDropships[ playerDropship ][ playerDropshipIndex ] = null
-		}
-	})
-	
 	HolsterAndDisableWeapons( player )
 	player.DisableWeaponViewModel()
 	player.MovementDisable()
@@ -244,7 +228,7 @@ void function SpawnPlayerIntoDropship( entity player, int playerDropshipIndex, e
 	#endif
 	
 	thread FirstPersonSequence( jumpSequence, player, playerDropship )
-	wait player.GetSequenceDuration( DROPSHIP_JUMP_ANIMS[ playerDropshipIndex ] )
+	WaittillAnimDone( player )
 	
 	thread PlayerJumpsFromDropship( player )
 }

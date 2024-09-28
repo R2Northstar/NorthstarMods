@@ -59,6 +59,13 @@ void function AddPlayerScore( entity targetPlayer, string scoreEventName, entity
 		earnValue = 0.0
 		ownValue = 0.0
 	}
+
+	// Both checks below are mostly a visual fix because the score medals would still show the adds into the total value
+	if( PlayerEarnMeter_GetPilotOverdriveEnum() == ePilotOverdrive.Disabled )
+		earnValue = 0.0
+	
+	if( PlayerEarnMeter_GetPilotOverdriveEnum() == ePilotOverdrive.Only )
+		ownValue = 0.0
 	
 	PlayerEarnMeter_AddEarnedAndOwned( targetPlayer, earnValue * scale, ownValue * scale )
 	SharedEarnMeter_AddEarnedAndOwned( targetPlayer, earnValue, ownValue )

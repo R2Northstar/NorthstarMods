@@ -128,12 +128,11 @@ const int FD_ELITE_TITAN_MAX_HEALTH_CAP = 15000
 
 
 /* Init
-██╗███╗   ██╗██╗████████╗██╗ █████╗ ██╗     ██╗███████╗ █████╗ ████████╗██╗ ██████╗ ███╗   ██╗
-██║████╗  ██║██║╚══██╔══╝██║██╔══██╗██║     ██║╚══███╔╝██╔══██╗╚══██╔══╝██║██╔═══██╗████╗  ██║
-██║██╔██╗ ██║██║   ██║   ██║███████║██║     ██║  ███╔╝ ███████║   ██║   ██║██║   ██║██╔██╗ ██║
-██║██║╚██╗██║██║   ██║   ██║██╔══██║██║     ██║ ███╔╝  ██╔══██║   ██║   ██║██║   ██║██║╚██╗██║
-██║██║ ╚████║██║   ██║   ██║██║  ██║███████╗██║███████╗██║  ██║   ██║   ██║╚██████╔╝██║ ╚████║
-╚═╝╚═╝  ╚═══╝╚═╝   ╚═╝   ╚═╝╚═╝  ╚═╝╚══════╝╚═╝╚══════╝╚═╝  ╚═╝   ╚═╝   ╚═╝ ╚═════╝ ╚═╝  ╚═══╝
+██ ███    ██ ██ ████████ ██  █████  ██      ██ ███████  █████  ████████ ██  ██████  ███    ██ 
+██ ████   ██ ██    ██    ██ ██   ██ ██      ██    ███  ██   ██    ██    ██ ██    ██ ████   ██ 
+██ ██ ██  ██ ██    ██    ██ ███████ ██      ██   ███   ███████    ██    ██ ██    ██ ██ ██  ██ 
+██ ██  ██ ██ ██    ██    ██ ██   ██ ██      ██  ███    ██   ██    ██    ██ ██    ██ ██  ██ ██ 
+██ ██   ████ ██    ██    ██ ██   ██ ███████ ██ ███████ ██   ██    ██    ██  ██████  ██   ████ 
 */
 
 void function SpawnWave_Init()
@@ -283,12 +282,11 @@ void function eventIterator_SubGroup( int waveIndex, string subGroupName )
 
 
 /* Wave Spawn Functions
-██╗    ██╗ █████╗ ██╗   ██╗███████╗    ███████╗██████╗  █████╗ ██╗    ██╗███╗   ██╗    ███████╗██╗   ██╗███╗   ██╗ ██████╗████████╗██╗ ██████╗ ███╗   ██╗███████╗
-██║    ██║██╔══██╗██║   ██║██╔════╝    ██╔════╝██╔══██╗██╔══██╗██║    ██║████╗  ██║    ██╔════╝██║   ██║████╗  ██║██╔════╝╚══██╔══╝██║██╔═══██╗████╗  ██║██╔════╝
-██║ █╗ ██║███████║██║   ██║█████╗      ███████╗██████╔╝███████║██║ █╗ ██║██╔██╗ ██║    █████╗  ██║   ██║██╔██╗ ██║██║        ██║   ██║██║   ██║██╔██╗ ██║███████╗
-██║███╗██║██╔══██║╚██╗ ██╔╝██╔══╝      ╚════██║██╔═══╝ ██╔══██║██║███╗██║██║╚██╗██║    ██╔══╝  ██║   ██║██║╚██╗██║██║        ██║   ██║██║   ██║██║╚██╗██║╚════██║
-╚███╔███╔╝██║  ██║ ╚████╔╝ ███████╗    ███████║██║     ██║  ██║╚███╔███╔╝██║ ╚████║    ██║     ╚██████╔╝██║ ╚████║╚██████╗   ██║   ██║╚██████╔╝██║ ╚████║███████║
- ╚══╝╚══╝ ╚═╝  ╚═╝  ╚═══╝  ╚══════╝    ╚══════╝╚═╝     ╚═╝  ╚═╝ ╚══╝╚══╝ ╚═╝  ╚═══╝    ╚═╝      ╚═════╝ ╚═╝  ╚═══╝ ╚═════╝   ╚═╝   ╚═╝ ╚═════╝ ╚═╝  ╚═══╝╚══════╝
+██     ██  █████  ██    ██ ███████     ███████ ██████   █████  ██     ██ ███    ██     ███████ ██    ██ ███    ██  ██████ ████████ ██  ██████  ███    ██ ███████ 
+██     ██ ██   ██ ██    ██ ██          ██      ██   ██ ██   ██ ██     ██ ████   ██     ██      ██    ██ ████   ██ ██         ██    ██ ██    ██ ████   ██ ██      
+██  █  ██ ███████ ██    ██ █████       ███████ ██████  ███████ ██  █  ██ ██ ██  ██     █████   ██    ██ ██ ██  ██ ██         ██    ██ ██    ██ ██ ██  ██ ███████ 
+██ ███ ██ ██   ██  ██  ██  ██               ██ ██      ██   ██ ██ ███ ██ ██  ██ ██     ██      ██    ██ ██  ██ ██ ██         ██    ██ ██    ██ ██  ██ ██      ██ 
+ ███ ███  ██   ██   ████   ███████     ███████ ██      ██   ██  ███ ███  ██   ████     ██       ██████  ██   ████  ██████    ██    ██  ██████  ██   ████ ███████ 
 */
 
 void function WaveSpawn_TitanSpawn( array<WaveSpawnEvent> waveName, string spawnType = "", vector origin = < 0, 0, 0 >, float angle = 0.0, string route = "", float waitTime = 0.5, string soundEventName = "", float spawnradius = 0.0, int spawnInDifficulty = eFDSD.ALL, int titanType = eFDTT.TITAN_COMMON, string subGroupName = "" )
@@ -789,12 +787,11 @@ void function WaveSpawn_NukeTitanMoveStance( array<WaveSpawnEvent> waveName, boo
 
 
 /* Titan Spawn Funcs
-████████╗██╗████████╗ █████╗ ███╗   ██╗    ███████╗██████╗  █████╗ ██╗    ██╗███╗   ██╗    ███████╗██╗   ██╗███╗   ██╗ ██████╗███████╗
-╚══██╔══╝██║╚══██╔══╝██╔══██╗████╗  ██║    ██╔════╝██╔══██╗██╔══██╗██║    ██║████╗  ██║    ██╔════╝██║   ██║████╗  ██║██╔════╝██╔════╝
-   ██║   ██║   ██║   ███████║██╔██╗ ██║    ███████╗██████╔╝███████║██║ █╗ ██║██╔██╗ ██║    █████╗  ██║   ██║██╔██╗ ██║██║     ███████╗
-   ██║   ██║   ██║   ██╔══██║██║╚██╗██║    ╚════██║██╔═══╝ ██╔══██║██║███╗██║██║╚██╗██║    ██╔══╝  ██║   ██║██║╚██╗██║██║     ╚════██║
-   ██║   ██║   ██║   ██║  ██║██║ ╚████║    ███████║██║     ██║  ██║╚███╔███╔╝██║ ╚████║    ██║     ╚██████╔╝██║ ╚████║╚██████╗███████║
-   ╚═╝   ╚═╝   ╚═╝   ╚═╝  ╚═╝╚═╝  ╚═══╝    ╚══════╝╚═╝     ╚═╝  ╚═╝ ╚══╝╚══╝ ╚═╝  ╚═══╝    ╚═╝      ╚═════╝ ╚═╝  ╚═══╝ ╚═════╝╚══════╝
+████████ ██ ████████  █████  ███    ██     ███████ ██████   █████  ██     ██ ███    ██     ███████ ██    ██ ███    ██  ██████ ███████ 
+   ██    ██    ██    ██   ██ ████   ██     ██      ██   ██ ██   ██ ██     ██ ████   ██     ██      ██    ██ ████   ██ ██      ██      
+   ██    ██    ██    ███████ ██ ██  ██     ███████ ██████  ███████ ██  █  ██ ██ ██  ██     █████   ██    ██ ██ ██  ██ ██      ███████ 
+   ██    ██    ██    ██   ██ ██  ██ ██          ██ ██      ██   ██ ██ ███ ██ ██  ██ ██     ██      ██    ██ ██  ██ ██ ██           ██ 
+   ██    ██    ██    ██   ██ ██   ████     ███████ ██      ██   ██  ███ ███  ██   ████     ██       ██████  ██   ████  ██████ ███████ 
 */
 
 void function SpawnArcTitan( WaveSpawnEvent ornull spawnEvent )
@@ -825,7 +822,6 @@ void function SpawnArcTitan( WaveSpawnEvent ornull spawnEvent )
 	SetTargetName( npc, GetTargetNameForID( spawnEvent.spawnType ) ) // required for client to create icons
 	SetSpawnOption_AISettings( npc, "npc_titan_stryder_leadwall_arc" )
 	SetSpawnOption_Alert( npc )
-	spawnedNPCs.append( npc )
 	DispatchSpawn( npc )
 	
 	npc.kv.reactChance = 50
@@ -840,6 +836,7 @@ void function SpawnArcTitan( WaveSpawnEvent ornull spawnEvent )
 	
 	npc.DisableNPCFlag( NPC_ALLOW_INVESTIGATE | NPC_USE_SHOOTING_COVER | NPC_ALLOW_PATROL )
 	npc.SetDangerousAreaReactionTime( FD_TITAN_AOE_REACTTIME )
+	spawnedNPCs.append( npc )
 	AddMinimapForTitans( npc )
 	npc.EndSignal( "OnDeath" )
 	npc.EndSignal( "OnDestroy" )
@@ -1596,12 +1593,11 @@ void function SpawnMonarchTitan( WaveSpawnEvent ornull spawnEvent )
 
 
 /* Reaper Spawn Funcs
-██████╗ ███████╗ █████╗ ██████╗ ███████╗██████╗     ███████╗██████╗  █████╗ ██╗    ██╗███╗   ██╗    ███████╗██╗   ██╗███╗   ██╗ ██████╗███████╗
-██╔══██╗██╔════╝██╔══██╗██╔══██╗██╔════╝██╔══██╗    ██╔════╝██╔══██╗██╔══██╗██║    ██║████╗  ██║    ██╔════╝██║   ██║████╗  ██║██╔════╝██╔════╝
-██████╔╝█████╗  ███████║██████╔╝█████╗  ██████╔╝    ███████╗██████╔╝███████║██║ █╗ ██║██╔██╗ ██║    █████╗  ██║   ██║██╔██╗ ██║██║     ███████╗
-██╔══██╗██╔══╝  ██╔══██║██╔═══╝ ██╔══╝  ██╔══██╗    ╚════██║██╔═══╝ ██╔══██║██║███╗██║██║╚██╗██║    ██╔══╝  ██║   ██║██║╚██╗██║██║     ╚════██║
-██║  ██║███████╗██║  ██║██║     ███████╗██║  ██║    ███████║██║     ██║  ██║╚███╔███╔╝██║ ╚████║    ██║     ╚██████╔╝██║ ╚████║╚██████╗███████║
-╚═╝  ╚═╝╚══════╝╚═╝  ╚═╝╚═╝     ╚══════╝╚═╝  ╚═╝    ╚══════╝╚═╝     ╚═╝  ╚═╝ ╚══╝╚══╝ ╚═╝  ╚═══╝    ╚═╝      ╚═════╝ ╚═╝  ╚═══╝ ╚═════╝╚══════╝
+██████  ███████  █████  ██████  ███████ ██████      ███████ ██████   █████  ██     ██ ███    ██     ███████ ██    ██ ███    ██  ██████ ███████ 
+██   ██ ██      ██   ██ ██   ██ ██      ██   ██     ██      ██   ██ ██   ██ ██     ██ ████   ██     ██      ██    ██ ████   ██ ██      ██      
+██████  █████   ███████ ██████  █████   ██████      ███████ ██████  ███████ ██  █  ██ ██ ██  ██     █████   ██    ██ ██ ██  ██ ██      ███████ 
+██   ██ ██      ██   ██ ██      ██      ██   ██          ██ ██      ██   ██ ██ ███ ██ ██  ██ ██     ██      ██    ██ ██  ██ ██ ██           ██ 
+██   ██ ███████ ██   ██ ██      ███████ ██   ██     ███████ ██      ██   ██  ███ ███  ██   ████     ██       ██████  ██   ████  ██████ ███████ 
 */
 
 void function SpawnSuperSpectre( WaveSpawnEvent ornull spawnEvent )
@@ -1665,12 +1661,11 @@ void function SpawnSuperSpectre( WaveSpawnEvent ornull spawnEvent )
 
 
 /* Infantry Spawn Funcs
-██╗███╗   ██╗███████╗ █████╗ ███╗   ██╗████████╗██████╗ ██╗   ██╗    ███████╗██████╗  █████╗ ██╗    ██╗███╗   ██╗    ███████╗██╗   ██╗███╗   ██╗ ██████╗███████╗
-██║████╗  ██║██╔════╝██╔══██╗████╗  ██║╚══██╔══╝██╔══██╗╚██╗ ██╔╝    ██╔════╝██╔══██╗██╔══██╗██║    ██║████╗  ██║    ██╔════╝██║   ██║████╗  ██║██╔════╝██╔════╝
-██║██╔██╗ ██║█████╗  ███████║██╔██╗ ██║   ██║   ██████╔╝ ╚████╔╝     ███████╗██████╔╝███████║██║ █╗ ██║██╔██╗ ██║    █████╗  ██║   ██║██╔██╗ ██║██║     ███████╗
-██║██║╚██╗██║██╔══╝  ██╔══██║██║╚██╗██║   ██║   ██╔══██╗  ╚██╔╝      ╚════██║██╔═══╝ ██╔══██║██║███╗██║██║╚██╗██║    ██╔══╝  ██║   ██║██║╚██╗██║██║     ╚════██║
-██║██║ ╚████║██║     ██║  ██║██║ ╚████║   ██║   ██║  ██║   ██║       ███████║██║     ██║  ██║╚███╔███╔╝██║ ╚████║    ██║     ╚██████╔╝██║ ╚████║╚██████╗███████║
-╚═╝╚═╝  ╚═══╝╚═╝     ╚═╝  ╚═╝╚═╝  ╚═══╝   ╚═╝   ╚═╝  ╚═╝   ╚═╝       ╚══════╝╚═╝     ╚═╝  ╚═╝ ╚══╝╚══╝ ╚═╝  ╚═══╝    ╚═╝      ╚═════╝ ╚═╝  ╚═══╝ ╚═════╝╚══════╝
+██ ███    ██ ███████  █████  ███    ██ ████████ ██████  ██    ██     ███████ ██████   █████  ██     ██ ███    ██     ███████ ██    ██ ███    ██  ██████ ███████ 
+██ ████   ██ ██      ██   ██ ████   ██    ██    ██   ██  ██  ██      ██      ██   ██ ██   ██ ██     ██ ████   ██     ██      ██    ██ ████   ██ ██      ██      
+██ ██ ██  ██ █████   ███████ ██ ██  ██    ██    ██████    ████       ███████ ██████  ███████ ██  █  ██ ██ ██  ██     █████   ██    ██ ██ ██  ██ ██      ███████ 
+██ ██  ██ ██ ██      ██   ██ ██  ██ ██    ██    ██   ██    ██             ██ ██      ██   ██ ██ ███ ██ ██  ██ ██     ██      ██    ██ ██  ██ ██ ██           ██ 
+██ ██   ████ ██      ██   ██ ██   ████    ██    ██   ██    ██        ███████ ██      ██   ██  ███ ███  ██   ████     ██       ██████  ██   ████  ██████ ███████ 
 */
 
 void function SpawnDroppodGrunts( WaveSpawnEvent ornull spawnEvent )
@@ -1711,6 +1706,9 @@ void function SpawnDroppodGrunts( WaveSpawnEvent ornull spawnEvent )
 		SetSquad( guy, squadName )
 		if ( GetMapName().find( "mp_lf_" ) != null )
 			guy.EnableNPCFlag( NPC_NO_WEAPON_DROP )
+		
+		if( guy.GetAISettingsName() == "npc_soldier_shield_captain" )
+			guy.SetModel( MODEL_IMC_SHIELD_CAPTAIN )
 		
 		foreach ( entity weapon in guy.GetMainWeapons() )
 		{
@@ -1852,6 +1850,9 @@ void function SpawnGruntDropship( WaveSpawnEvent ornull spawnEvent )
 		DispatchSpawn( guy )
 		SetupGruntBehaviorFlags( guy )
 		SetSquad( guy, squadName )
+		
+		if( guy.GetAISettingsName() == "npc_soldier_shield_captain" )
+			guy.SetModel( MODEL_IMC_SHIELD_CAPTAIN )
 		
 		foreach ( entity weapon in guy.GetMainWeapons() )
 		{
@@ -2109,7 +2110,8 @@ void function SpawnTick( WaveSpawnEvent ornull spawnEvent )
 		SetSpawnOption_AISettings( guy, "npc_frag_drone_fd" )
 		SetSpawnOption_Alert( guy )
 		DispatchSpawn( guy )
-		guy.EnableNPCFlag(  NPC_ALLOW_INVESTIGATE )
+		guy.EnableNPCFlag(  NPC_ALLOW_INVESTIGATE | NPC_IGNORE_FRIENDLY_SOUND | NPC_NEW_ENEMY_FROM_SOUND )
+		guy.EnableNPCMoveFlag( NPCMF_PREFER_SPRINT )
 		if ( file.shouldUseCampaignTicks )
 			guy.SetModel( $"models/robots/drone_frag/drone_frag.mdl" )
 		SetTargetName( guy, GetTargetNameForID( eFD_AITypeIDs.TICK ) )
@@ -2200,12 +2202,11 @@ void function SpawnDrones( WaveSpawnEvent ornull spawnEvent )
 
 
 /* Misc Spawn Funcs
-███╗   ███╗██╗███████╗ ██████╗    ███████╗██████╗  █████╗ ██╗    ██╗███╗   ██╗    ███████╗██╗   ██╗███╗   ██╗ ██████╗███████╗
-████╗ ████║██║██╔════╝██╔════╝    ██╔════╝██╔══██╗██╔══██╗██║    ██║████╗  ██║    ██╔════╝██║   ██║████╗  ██║██╔════╝██╔════╝
-██╔████╔██║██║███████╗██║         ███████╗██████╔╝███████║██║ █╗ ██║██╔██╗ ██║    █████╗  ██║   ██║██╔██╗ ██║██║     ███████╗
-██║╚██╔╝██║██║╚════██║██║         ╚════██║██╔═══╝ ██╔══██║██║███╗██║██║╚██╗██║    ██╔══╝  ██║   ██║██║╚██╗██║██║     ╚════██║
-██║ ╚═╝ ██║██║███████║╚██████╗    ███████║██║     ██║  ██║╚███╔███╔╝██║ ╚████║    ██║     ╚██████╔╝██║ ╚████║╚██████╗███████║
-╚═╝     ╚═╝╚═╝╚══════╝ ╚═════╝    ╚══════╝╚═╝     ╚═╝  ╚═╝ ╚══╝╚══╝ ╚═╝  ╚═══╝    ╚═╝      ╚═════╝ ╚═╝  ╚═══╝ ╚═════╝╚══════╝
+███    ███ ██ ███████  ██████     ███████ ██████   █████  ██     ██ ███    ██     ███████ ██    ██ ███    ██  ██████ ███████ 
+████  ████ ██ ██      ██          ██      ██   ██ ██   ██ ██     ██ ████   ██     ██      ██    ██ ████   ██ ██      ██      
+██ ████ ██ ██ ███████ ██          ███████ ██████  ███████ ██  █  ██ ██ ██  ██     █████   ██    ██ ██ ██  ██ ██      ███████ 
+██  ██  ██ ██      ██ ██               ██ ██      ██   ██ ██ ███ ██ ██  ██ ██     ██      ██    ██ ██  ██ ██ ██           ██ 
+██      ██ ██ ███████  ██████     ███████ ██      ██   ██  ███ ███  ██   ████     ██       ██████  ██   ████  ██████ ███████ 
 */
 
 void function SpawnSmoke( WaveSpawnEvent ornull spawnEvent )
@@ -2244,7 +2245,7 @@ void function SpawnSmoke( WaveSpawnEvent ornull spawnEvent )
 	
 	entity smokenade = CreateEntity( "prop_script" )
 	entity mover = CreateOwnedScriptMover( smokenade )
-	smokenade.SetValueForModelKey( $"models/weapons/bullets/projectile_rocket_large.mdl" )
+	smokenade.SetValueForModelKey( $"models/weapons/bullets/projectile_rocket_largest.mdl" )
 	smokenade.kv.spawnflags = 0
 	smokenade.kv.solid = 0
 	smokenade.kv.fadedist = 32768
@@ -2423,12 +2424,11 @@ void function waitWaveSubGroup( WaveSpawnEvent ornull spawnEvent )
 
 
 /* Tool Functions
-████████╗ ██████╗  ██████╗ ██╗         ███████╗██╗   ██╗███╗   ██╗ ██████╗████████╗██╗ ██████╗ ███╗   ██╗███████╗
-╚══██╔══╝██╔═══██╗██╔═══██╗██║         ██╔════╝██║   ██║████╗  ██║██╔════╝╚══██╔══╝██║██╔═══██╗████╗  ██║██╔════╝
-   ██║   ██║   ██║██║   ██║██║         █████╗  ██║   ██║██╔██╗ ██║██║        ██║   ██║██║   ██║██╔██╗ ██║███████╗
-   ██║   ██║   ██║██║   ██║██║         ██╔══╝  ██║   ██║██║╚██╗██║██║        ██║   ██║██║   ██║██║╚██╗██║╚════██║
-   ██║   ╚██████╔╝╚██████╔╝███████╗    ██║     ╚██████╔╝██║ ╚████║╚██████╗   ██║   ██║╚██████╔╝██║ ╚████║███████║
-   ╚═╝    ╚═════╝  ╚═════╝ ╚══════╝    ╚═╝      ╚═════╝ ╚═╝  ╚═══╝ ╚═════╝   ╚═╝   ╚═╝ ╚═════╝ ╚═╝  ╚═══╝╚══════╝
+████████  ██████   ██████  ██          ███████ ██    ██ ███    ██  ██████ ████████ ██  ██████  ███    ██ ███████ 
+   ██    ██    ██ ██    ██ ██          ██      ██    ██ ████   ██ ██         ██    ██ ██    ██ ████   ██ ██      
+   ██    ██    ██ ██    ██ ██          █████   ██    ██ ██ ██  ██ ██         ██    ██ ██    ██ ██ ██  ██ ███████ 
+   ██    ██    ██ ██    ██ ██          ██      ██    ██ ██  ██ ██ ██         ██    ██ ██    ██ ██  ██ ██      ██ 
+   ██     ██████   ██████  ███████     ██       ██████  ██   ████  ██████    ██    ██  ██████  ██   ████ ███████ 
 */
 
 void function Drop_Spawnpoint( vector origin, int team, float impactTime )
@@ -2605,7 +2605,7 @@ vector function GetSkyCeiling( vector point )
 
 	while ( true )
 	{
-		TraceResults traceResult = TraceLine( traceFromPos, skyOrigin, [], TRACE_MASK_SHOT, TRACE_COLLISION_GROUP_NONE )
+		TraceResults traceResult = TraceLineHighDetail( traceFromPos, skyOrigin, [], TRACE_MASK_SHOT, TRACE_COLLISION_GROUP_NONE )
 
 		if ( traceResult.hitSky )
 		{
@@ -2654,32 +2654,32 @@ void function SplitWaveSubgroups( int waveIndex )
 
 bool function ShouldSkipEventForDifficulty( WaveSpawnEvent event )
 {
-	bool allDifficulties = ( event.spawnInDifficulty & eFDSD.ALL ) ? true : false
-	bool easySpawn = ( event.spawnInDifficulty & eFDSD.EASY ) ? true : false
-	bool normalSpawn = ( event.spawnInDifficulty & eFDSD.NORMAL ) ? true : false
-	bool hardSpawn = ( event.spawnInDifficulty & eFDSD.HARD ) ? true : false
-	bool masterSpawn = ( event.spawnInDifficulty & eFDSD.MASTER ) ? true : false
-	bool insaneSpawn = ( event.spawnInDifficulty & eFDSD.INSANE ) ? true : false
-	bool invertedFilter = ( event.spawnInDifficulty & eFDSD.EXCLUSIVE ) ? true : false
+	bool allDifficulties = event.spawnInDifficulty & eFDSD.ALL ? true : false
+	bool easySpawn = event.spawnInDifficulty & eFDSD.EASY ? true : false
+	bool normalSpawn = event.spawnInDifficulty & eFDSD.NORMAL ? true : false
+	bool hardSpawn = event.spawnInDifficulty & eFDSD.HARD ? true : false
+	bool masterSpawn = event.spawnInDifficulty & eFDSD.MASTER ? true : false
+	bool insaneSpawn = event.spawnInDifficulty & eFDSD.INSANE ? true : false
+	bool invertedFilter = event.spawnInDifficulty & eFDSD.EXCLUSIVE ? true : false
 	
 	if ( !allDifficulties )
 	{
 		switch ( file.difficultyLevel )
 		{
 			case( eFDDifficultyLevel.EASY ):
-				return !invertedFilter && easySpawn
+				return invertedFilter ? !easySpawn : easySpawn
 			
 			case( eFDDifficultyLevel.NORMAL ):
-				return !invertedFilter && normalSpawn
+				return invertedFilter ? !normalSpawn : normalSpawn
 			
 			case( eFDDifficultyLevel.HARD ):
-				return !invertedFilter && hardSpawn
+				return invertedFilter ? !hardSpawn : hardSpawn
 			
 			case( eFDDifficultyLevel.MASTER ):
-				return !invertedFilter && masterSpawn
+				return invertedFilter ? !masterSpawn : masterSpawn
 			
 			case( eFDDifficultyLevel.INSANE ):
-				return !invertedFilter && insaneSpawn
+				return invertedFilter ? !insaneSpawn : insaneSpawn
 		}
 		
 		return true
@@ -2756,12 +2756,11 @@ void function SetupEliteTitansHealthCaps()
 
 
 /* FD Nav Funcs
-███████╗██████╗     ███╗   ██╗ █████╗ ██╗   ██╗    ███████╗██╗   ██╗███╗   ██╗ ██████╗███████╗
-██╔════╝██╔══██╗    ████╗  ██║██╔══██╗██║   ██║    ██╔════╝██║   ██║████╗  ██║██╔════╝██╔════╝
-█████╗  ██║  ██║    ██╔██╗ ██║███████║██║   ██║    █████╗  ██║   ██║██╔██╗ ██║██║     ███████╗
-██╔══╝  ██║  ██║    ██║╚██╗██║██╔══██║╚██╗ ██╔╝    ██╔══╝  ██║   ██║██║╚██╗██║██║     ╚════██║
-██║     ██████╔╝    ██║ ╚████║██║  ██║ ╚████╔╝     ██║     ╚██████╔╝██║ ╚████║╚██████╗███████║
-╚═╝     ╚═════╝     ╚═╝  ╚═══╝╚═╝  ╚═╝  ╚═══╝      ╚═╝      ╚═════╝ ╚═╝  ╚═══╝ ╚═════╝╚══════╝
+███████ ██████      ███    ██  █████  ██    ██     ███████ ██    ██ ███    ██  ██████ ███████ 
+██      ██   ██     ████   ██ ██   ██ ██    ██     ██      ██    ██ ████   ██ ██      ██      
+█████   ██   ██     ██ ██  ██ ███████ ██    ██     █████   ██    ██ ██ ██  ██ ██      ███████ 
+██      ██   ██     ██  ██ ██ ██   ██  ██  ██      ██      ██    ██ ██  ██ ██ ██           ██ 
+██      ██████      ██   ████ ██   ██   ████       ██       ██████  ██   ████  ██████ ███████ 
 */
 
 void function NPCNav_FD( entity npc, string routeName, int nodesToSkip = 1, float nextDistance = -1.0, bool shouldLoop = false )
@@ -2961,8 +2960,6 @@ void function NPCNav_FD( entity npc, string routeName, int nodesToSkip = 1, floa
 				break
 		}
 	}
-
-	npc.AssaultSetGoalHeight( 128 )
 	
 	if ( ( npc.GetClassName() == "npc_frag_drone" || npc.GetClassName() == "npc_stalker" ) && IsHarvesterAlive( fd_harvester.harvester ) )
 		npc.AssaultPointClamped( fd_harvester.harvester.GetOrigin() + < 0, 0, 16 > )
@@ -2997,7 +2994,7 @@ void function NPCDroneNav_FD( entity npc, string routeName, int nodesToSkip = 0,
 	if ( !npc.IsTitan() )
 		thread NPCStuckTracker( npc )
 	
-	npc.AssaultSetGoalHeight( 128 )
+	npc.AssaultSetGoalHeight( 64 )
 	npc.AssaultSetFightRadius( 0 )
 	
 	if ( !useCustomFDLoad )

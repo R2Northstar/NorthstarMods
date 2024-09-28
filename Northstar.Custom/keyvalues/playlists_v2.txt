@@ -179,7 +179,7 @@ playlists
 				scorelimit 6
 				suddendeath_timelimit 2
 				timelimit 14
-				max_players 10
+				max_players 12
 				phase_shift_drop_flag 1
 				ctf_flag_return_time 1
 				pilot_health_multiplier 1.2
@@ -187,10 +187,12 @@ playlists
 				earn_meter_pilot_overdrive 0
 				earn_meter_pilot_multiplier 0.5
 				earn_meter_titan_multiplier 0.5
-				pick_loadout_extension 30.0
+				pick_loadout_extension 20.0
                 pick_loadout_every_round 0
-				tts_menu_join_in_progress 1
+				tts_menu_join_in_progress 0
+				tts_menu_show_score 0
 				run_epilogue 0
+				run_intro 0
 				
 				color		"0 119 245 255"
 
@@ -570,6 +572,7 @@ playlists
 				skyshow_enabled 0
 				max_players 6
 				player_force_respawn 5
+				pick_loadout_extension 0 // No Titan Selection screen
 				aegis_upgrades 0 //Helper Titan doesn't have Aegis
 
 				fd_titan_health_adjust			0

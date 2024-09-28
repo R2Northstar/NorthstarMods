@@ -186,14 +186,8 @@ void function AddTeamScore( int team, int amount )
 		SetWinner( team, "#GAMEMODE_SCORE_LIMIT_REACHED", "#GAMEMODE_SCORE_LIMIT_REACHED" )
 	else if ( GetGameState() == eGameState.SuddenDeath )
 		SetWinner( team )
-	
 	else if ( ( file.switchSidesBased && !file.hasSwitchedSides ) && score >= ( scoreLimit.tofloat() / 2.0 ) )
-	{
-		foreach ( entity player in GetPlayerArray() )
-			PlayFactionDialogueToPlayer( "mp_halftime", player )
-		
 		SetGameState( eGameState.SwitchingSides )
-	}
 }
 
 void function SetWinner( int team, string winningReason = "", string losingReason = "" )
@@ -234,10 +228,7 @@ void function SetWinner( int team, string winningReason = "", string losingReaso
 	}
 	else if ( team != TEAM_UNASSIGNED )
 	{
-		if ( !file.timerBased )
-			DebounceScoreTie( team )
-		
-		else if ( Time() < endTime )
+		if ( !file.timerBased || Time() < endTime )
 			DebounceScoreTie( team )
 	}
 	
@@ -424,7 +415,10 @@ void function WaitForPlayers()
 	
 	wait 2
 	
-	SetGameState( eGameState.PickLoadout ) // Even if the game mode don't use it, vanilla still cast this game state to make the dropship jump sound when match starts
+	if( IsFFAGame() ) // FFA has no Dropships and logic crash clients if casted into PickLoadout
+		SetGameState( eGameState.Prematch )
+	else
+		SetGameState( eGameState.PickLoadout ) // Even if the game mode don't use it, vanilla still cast this game state to make the dropship jump sound when match starts
 }
 
 void function WaitingForPlayers_ClientConnected( entity player )
@@ -546,19 +540,13 @@ void function GameStateEnter_Playing_Threaded()
 				winningTeam = GetWinningTeamWithFFASupport()
 			
 			if ( file.switchSidesBased && !file.hasSwitchedSides && !IsRoundBased() )
-			{
-				foreach ( entity player in GetPlayerArray() )
-					PlayFactionDialogueToPlayer( "mp_halftime", player )
-				
 				SetGameState( eGameState.SwitchingSides )
-			}
 			else if ( file.suddenDeathBased && winningTeam == TEAM_UNASSIGNED )
-			{
 				SetGameState( eGameState.SuddenDeath )
-			}
 			else
 			{
 				SetWinner( winningTeam, "#GAMEMODE_TIME_LIMIT_REACHED", "#GAMEMODE_TIME_LIMIT_REACHED" )
+				SetServerVar( "replayDisabled", true )
 			}
 		}
 		
@@ -695,7 +683,7 @@ void function GameStateEnter_WinnerDetermined_Threaded()
 		
 		int winningTeam = GetWinningTeamWithFFASupport()
 		
-		int highestScore = GameRules_GetTeamScore( winningTeam )
+		int highestScore = GameRules_GetTeamScore2( winningTeam )
 		int roundScoreLimit = GameMode_GetRoundScoreLimit( GAMETYPE )
 		
 		if ( highestScore >= roundScoreLimit )
@@ -734,10 +722,12 @@ void function PlayerWatchesRoundWinningReplay( entity player, float replayLength
 	if ( !IsValidPlayer( player ) || !IsValid( attacker ) )
 		return
 	
+	player.Signal( "KillCamOver" )
 	player.SetPredictionEnabled( false ) // Disable prediction to prevent issues with replays, respawning code restores it automatically
 	player.ClearReplayDelay()
 	player.ClearViewEntity()
 	
+	player.watchingKillreplayEndTime = Time() + replayLength
 	player.SetKillReplayDelay( Time() - replayLength, THIRD_PERSON_KILL_REPLAY_ALWAYS )
 	player.SetKillReplayInflictorEHandle( file.roundWinningKillReplayInflictorEHandle )
 	player.SetKillReplayVictim( file.roundWinningKillReplayVictim )
@@ -750,10 +740,6 @@ void function ClearPlayerFromReplay( entity player )
 	if ( !IsValidPlayer( player ) )
 		return
 	
-	if ( !player.IsWatchingKillReplay() || !player.IsWatchingSpecReplay() )
-		return
-	
-	player.SetIsReplayRoundWinning( false )
 	player.ClearReplayDelay()
 	player.ClearViewEntity()
 }
@@ -776,6 +762,7 @@ void function ClearPlayerFromReplay( entity player )
 
 void function GameStateEnter_SwitchingSides()
 {
+	thread DialogueAnnounceSwitchingSides()
 	thread GameStateEnter_SwitchingSides_Threaded()
 }
 
@@ -815,7 +802,6 @@ void function GameStateEnter_SwitchingSides_Threaded()
 			thread PlayerWatchesRoundWinningReplay( player, replayLength )
 	}
 	
-	thread DialogueAnnounceSwitchingSides()
 	wait replayLength
 	foreach ( entity player in GetPlayerArray() )
 	{
@@ -843,7 +829,11 @@ void function GameStateEnter_SwitchingSides_Threaded()
 
 void function DialogueAnnounceSwitchingSides()
 {
+	foreach ( entity player in GetPlayerArray() )
+		PlayFactionDialogueToPlayer( "mp_halftime", player )
+
 	wait ROUND_WINNING_KILL_REPLAY_DELAY_BETWEEN_ANNOUNCEMENTS
+
 	foreach ( entity player in GetPlayerArray() )
 		PlayFactionDialogueToPlayer( "mp_sideSwitching", player )
 }
@@ -923,19 +913,6 @@ void function GameStateEnter_Postmatch_Threaded()
 	wait 2.0
 	
 	GameRules_EndMatch()
-}
-
-void function ForceFadeToBlack( entity player )
-{
-	// todo: check if this is still necessary
-	player.EndSignal( "OnDestroy" )
-
-	// hack until i figure out what deathcam stuff is causing fadetoblacks to be cleared
-	while ( true )
-	{
-		WaitFrame()
-		ScreenFadeToBlackForever( player, 0.0 )
-	}
 }
 
 
@@ -1113,6 +1090,16 @@ void function OnTitanKilled( entity victim, var damageInfo )
    ██     ██████   ██████  ███████     ██       ██████  ██   ████  ██████    ██    ██  ██████  ██   ████ ███████ 
 */
 
+void function ForceFadeToBlack( entity player )
+{
+	player.EndSignal( "OnDestroy" )
+	while ( true )
+	{
+		WaitFrame()
+		ScreenFadeToBlackForever( player, 0.0 )
+	}
+}
+
 void function CleanUpEntitiesForRoundEnd()
 {
 	SetPlayerDeathsHidden( true )
@@ -1195,6 +1182,9 @@ void function UpdateGameWonThisFrameNextFrame()
 
 int function GetWinningTeamWithFFASupport()
 {
+	if( GetGameState() == eGameState.SuddenDeath ) // Sudden Death have its own logic based on elimination, not scores
+		return expect int( level.nv.winningTeam )
+	
 	if ( !IsFFAGame() )
 		return GameScore_GetWinningTeam()
 	else

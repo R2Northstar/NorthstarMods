@@ -19,6 +19,8 @@ struct {
 	array<entity> militiaCaptureAssistList
 } file
 
+const float CTF_FLAG_MAX_SPAWN_DISTANCE = 2000.0
+
 
 
 
@@ -249,7 +251,16 @@ bool function VerifyCTFSpawnpoint( entity spawnpoint, int team )
 			enemyFlagSpot = spawn.GetOrigin()
 	}
 	
-	if( Distance2D( spawnpoint.GetOrigin(), allyFlagSpot ) > Distance2D( spawnpoint.GetOrigin(), enemyFlagSpot ) )
+	float allyFlagDistance = Distance2D( spawnpoint.GetOrigin(), allyFlagSpot )
+	float enemyFlagDistance = Distance2D( spawnpoint.GetOrigin(), enemyFlagSpot )
+
+	if( GetMapName() == "mp_drydock" || GetMapName() == "mp_thaw" ) // Restrict spawns for those two maps due to some spawns being very far away
+	{
+		if( allyFlagDistance > CTF_FLAG_MAX_SPAWN_DISTANCE )
+			return false
+	}
+	
+	if( allyFlagDistance > enemyFlagDistance )
 		return false
 	
 	return true
