@@ -416,7 +416,7 @@ void function Minimap_PingCount( vector origin, float radius, float duration, ve
 	{
 		count--
 
-		thread Minimap_Ping( origin, radius, delay + (delay * 0.25), color, reverse )
+		Minimap_Ping( origin, radius, delay + (delay * 0.25), color, reverse )
 		wait delay
 	}
 }
@@ -450,11 +450,14 @@ void function Minimap_Ping( vector origin, float radius, float duration, vector 
 
 	RuiSetBool( rui, "reverse", reverse )
 	
-	wait duration
-	
-	RuiDestroy( rui )
+	thread Minimap_DestroyPing_Threaded( duration, rui )
 }
 
+void function Minimap_DestroyPing_Threaded( float duration, var rui )
+{
+	wait duration
+	RuiDestroy( rui )
+}
 
 
 var function Minimap_AddLayer( asset layerImage, bool isFriendly )
