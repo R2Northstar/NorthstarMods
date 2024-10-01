@@ -92,7 +92,7 @@ void function EarnMeterMP_PlayerLifeThink( entity player )
 	float pilotRewardFrac = PlayerEarnMeter_GetRewardFrac( player )
 	int lastEarnMeterMode = PlayerEarnMeter_GetMode( player )
 	bool saidTitanSoon = false
-	bool titanReady = false
+	bool titanReadyMsg = false
 	float lastPassiveGainTime = Time()
 
 	OnThreadEnd(
@@ -164,7 +164,7 @@ void function EarnMeterMP_PlayerLifeThink( entity player )
 			if ( PlayerEarnMeter_GetOwnedFrac( player ) < 1.0 )
 			{
 				PlayerEarnMeter_DisableGoal( player )
-				titanReady = false
+				titanReadyMsg = false
 			}
 			else if ( player.GetPlayerNetInt( "goalState" ) != eRewardState.UNAVAILABLE )
 			{
@@ -173,10 +173,10 @@ void function EarnMeterMP_PlayerLifeThink( entity player )
 				// so unfortunately we have to do this manually
 				player.SetPlayerNetInt( "goalState", eRewardState.AVAILABLE )
 				PlayerEarnMeter_RefreshGoal( player )
-				if( !titanReady )
+				if( !titanReadyMsg )
 				{
 					Remote_CallFunction_NonReplay( player, "ServerCallback_TitanReadyMessage" )
-					titanReady = true
+					titanReadyMsg = true
 				}
 			}
 
