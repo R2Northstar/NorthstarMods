@@ -825,7 +825,7 @@ void function SetRecalculateRespawnAsTitanStartPointCallback( entity functionref
 
 void function CheckGameStateAfterSpawn( entity player )
 {
-	if( GetGameState() > eGameState.Playing )
+	if( GetGameState() == eGameState.WinnerDetermined || GetGameState() == eGameState.SwitchingSides || GetGameState() == eGameState.Postmatch )
 	{
 		if ( level.endOfRoundPlayerState == ENDROUND_FREEZE )
 			player.FreezeControlsOnServer()

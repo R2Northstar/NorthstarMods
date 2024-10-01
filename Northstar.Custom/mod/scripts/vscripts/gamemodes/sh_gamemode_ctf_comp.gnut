@@ -17,6 +17,7 @@ void function CreateGamemodeCTFComp()
 	GameMode_SetDesc( GAMEMODE_CTF_COMP, "#PL_capture_the_flag_hint" )
 	GameMode_SetIcon( GAMEMODE_CTF_COMP, $"ui/menu/playlist/ctf" )
 	GameMode_SetSuddenDeath( GAMEMODE_CTF_COMP, true )
+	GameMode_SetEvacEnabled( GAMEMODE_CTF_COMP, false )
 	GameMode_SetDefaultScoreLimits( GAMEMODE_CTF_COMP, 0, 5 )
 	GameMode_SetDefaultTimeLimits( GAMEMODE_CTF_COMP, 0, 3.0 )
 	GameMode_AddScoreboardColumnData( GAMEMODE_CTF_COMP, "#SCOREBOARD_CAPTURES", PGS_ASSAULT_SCORE, 2 )
@@ -75,12 +76,9 @@ void function CTFCompRegisterNetworkVars()
 
 void function InitCTFCompSpecificSettings()
 {
-	#if SERVER 
-		SetShouldUsePickLoadoutScreen( true )
+	#if SERVER
 		TrackTitanDamageInPlayerGameStat( PGS_DISTANCE_SCORE )
 		SetSpawnpointGamemodeOverride( CAPTURE_THE_FLAG )
-		TeamTitanSelectMenu_Init()
-		
 		if ( GetMapName() == "mp_glitch" )
 			level.customOOBTimer = 3.0
 		if ( GetMapName() == "mp_angel_city" )
@@ -90,8 +88,6 @@ void function InitCTFCompSpecificSettings()
 		if ( GetMapName() == "mp_black_water_canal" )
 			AddCallback_EntitiesDidLoad( AddBWCOOBs )
 	#elseif CLIENT
-		ClTeamTitanSelectMenu_Init()
-		
 		// gotta register the music here because this is done hardcoded to ctf in cl_music
 		RegisterLevelMusicForTeam( eMusicPieceID.LEVEL_INTRO, "music_mp_ctf_intro_flyin", TEAM_IMC )
 		RegisterLevelMusicForTeam( eMusicPieceID.LEVEL_INTRO, "music_mp_ctf_intro_flyin", TEAM_MILITIA )

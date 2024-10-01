@@ -19,7 +19,6 @@ global function ShouldTryUseProjectileReplay
 global function SetWinner
 global function SetTimeoutWinnerDecisionFunc
 global function AddTeamScore
-global function GetWinningTeamWithFFASupport
 
 global function GameState_GetTimeLimitOverride
 global function IsRoundBasedGameOver
@@ -78,7 +77,6 @@ struct {
 void function PIN_GameStart()
 {
 	SetServerVar( "switchedSides", 0 )
-	SetServerVar( "winningTeam", -1 )
 	
 	AddCallback_GameStateEnter( eGameState.WaitingForCustomStart, GameStateEnter_WaitingForCustomStart )
 	AddCallback_GameStateEnter( eGameState.WaitingForPlayers, GameStateEnter_WaitingForPlayers )
@@ -190,9 +188,10 @@ void function AddTeamScore( int team, int amount )
 		SetGameState( eGameState.SwitchingSides )
 }
 
-void function SetWinner( int team, string winningReason = "", string losingReason = "" )
-{	
-	SetServerVar( "winningTeam", team )
+void function SetWinner( int ornull team, string winningReason = "", string losingReason = "" )
+{
+	if( team != null )
+		SetServerVar( "winningTeam", team )
 	
 	file.gameWonThisFrame = true
 	thread UpdateGameWonThisFrameNextFrame()
@@ -226,10 +225,10 @@ void function SetWinner( int team, string winningReason = "", string losingReaso
 			GameRules_SetTeamScore( TEAM_MILITIA, 0 )
 		}
 	}
-	else if ( team != TEAM_UNASSIGNED )
+	else if ( team != null && team != TEAM_UNASSIGNED )
 	{
-		if ( !file.timerBased || Time() < endTime )
-			DebounceScoreTie( team )
+		if ( !file.timerBased || Time() < endTime && GetGameState() != eGameState.SuddenDeath )
+			DebounceScoreTie( expect int( team ) )
 	}
 	
 	if ( GamePlayingOrSuddenDeath() )
@@ -237,12 +236,14 @@ void function SetWinner( int team, string winningReason = "", string losingReaso
 		if ( IsRoundBased() )
 		{
 			SetGameState( eGameState.WinnerDetermined )
-			ScoreEvent_RoundComplete( team )
+			if ( team != null && team != TEAM_UNASSIGNED )
+				ScoreEvent_RoundComplete( expect int( team ) )
 		}
 		else
 		{
 			SetGameState( eGameState.WinnerDetermined )
-			ScoreEvent_MatchComplete( team )
+			if ( team != null && team != TEAM_UNASSIGNED )
+				ScoreEvent_MatchComplete( expect int( team ) )
 			
 			array<entity> players = GetPlayerArray()
 			int functionref( entity, entity ) compareFunc = GameMode_GetScoreCompareFunc( GAMETYPE )
@@ -537,7 +538,7 @@ void function GameStateEnter_Playing_Threaded()
 			if ( file.timeoutWinnerDecisionFunc != null )
 				winningTeam = file.timeoutWinnerDecisionFunc()
 			else
-				winningTeam = GetWinningTeamWithFFASupport()
+				winningTeam = GetWinningTeam()
 			
 			if ( file.switchSidesBased && !file.hasSwitchedSides && !IsRoundBased() )
 				SetGameState( eGameState.SwitchingSides )
@@ -578,7 +579,7 @@ void function GameStateEnter_WinnerDetermined()
 
 void function GameStateEnter_WinnerDetermined_Threaded()
 {
-	int winningTeam = GetWinningTeamWithFFASupport()
+	int winningTeam = GetWinningTeam()
 		
 	DialoguePlayWinnerDetermined()
 	
@@ -680,9 +681,7 @@ void function GameStateEnter_WinnerDetermined_Threaded()
 		int roundsPlayed = GetRoundsPlayed()
 		roundsPlayed++
 		SetServerVar( "roundsPlayed", roundsPlayed )
-		
-		int winningTeam = GetWinningTeamWithFFASupport()
-		
+
 		int highestScore = GameRules_GetTeamScore2( winningTeam )
 		int roundScoreLimit = GameMode_GetRoundScoreLimit( GAMETYPE )
 		
@@ -859,19 +858,39 @@ void function GameStateEnter_SuddenDeath()
 	// disable respawns, suddendeath calling is done on a kill callback
 	SetRespawnsEnabled( false )
 
-	// defensive fixes, so game won't stuck in SuddenDeath forever
-	bool mltElimited = false
-	bool imcElimited = false
-	if ( GetPlayerArrayOfTeam_Alive( TEAM_MILITIA ).len() < 1 )
-		mltElimited = true
-	if ( GetPlayerArrayOfTeam_Alive( TEAM_IMC ).len() < 1 )
-		imcElimited = true
-	if ( mltElimited && imcElimited )
-		SetWinner( TEAM_UNASSIGNED )
-	else if ( mltElimited )
-		SetWinner( TEAM_IMC, "#GAMEMODE_ENEMY_PILOTS_ELIMINATED", "#GAMEMODE_FRIENDLY_PILOTS_ELIMINATED" )
-	else if ( imcElimited )
-		SetWinner( TEAM_MILITIA, "#GAMEMODE_ENEMY_PILOTS_ELIMINATED", "#GAMEMODE_FRIENDLY_PILOTS_ELIMINATED" )
+	// restart the timer for timelimits to show Sudden Death extra time
+	float timeLimit = GetCurrentPlaylistVarFloat( "suddendeath_timelimit", 2.0 ) * 60
+	SetGameEndTime( timeLimit )
+	SetRoundEndTime( timeLimit )
+
+	thread GameStateEnter_SuddenDeath_Threaded()
+}
+
+void function GameStateEnter_SuddenDeath_Threaded()
+{
+	while ( GetGameState() == eGameState.SuddenDeath )
+	{
+		WaitFrame()
+
+		float endTime
+		if ( IsRoundBased() )
+			endTime = expect float( GetServerVar( "roundEndTime" ) )
+		else
+			endTime = expect float( GetServerVar( "gameEndTime" ) )
+		
+		bool mltElimited = GameTeams_GetNumLivingPlayers( TEAM_MILITIA ) == 0 ? true : false
+		bool imcElimited = GameTeams_GetNumLivingPlayers( TEAM_IMC ) == 0 ? true : false
+		
+		if ( mltElimited && imcElimited )
+			SetWinner( null, "#GENERIC_DRAW_ANNOUNCEMENT", "#GENERIC_DRAW_ANNOUNCEMENT" )
+		else if ( mltElimited )
+			SetWinner( TEAM_IMC, "#GAMEMODE_ENEMY_PILOTS_ELIMINATED", "#GAMEMODE_FRIENDLY_PILOTS_ELIMINATED" )
+		else if ( imcElimited )
+			SetWinner( TEAM_MILITIA, "#GAMEMODE_ENEMY_PILOTS_ELIMINATED", "#GAMEMODE_FRIENDLY_PILOTS_ELIMINATED" )
+	
+		if ( Time() >= endTime )
+			SetWinner( null, "#GENERIC_DRAW_ANNOUNCEMENT", "#GENERIC_DRAW_ANNOUNCEMENT" )
+	}
 }
 
 
@@ -974,7 +993,7 @@ void function OnPlayerKilled( entity victim, entity attacker, var damageInfo )
 		return
 
 	// note: pilotstitans is just win if enemy team runs out of either pilots or titans
-	if ( IsPilotEliminationBased() || GetGameState() == eGameState.SuddenDeath )
+	if ( IsPilotEliminationBased() )
 	{
 		if ( !GetPlayerArrayOfTeam_Alive( victim.GetTeam() ).len() )
 		{
@@ -1178,38 +1197,6 @@ void function UpdateGameWonThisFrameNextFrame()
 	WaitFrame()
 	file.gameWonThisFrame = false
 	file.hasKillForGameWonThisFrame = false
-}
-
-int function GetWinningTeamWithFFASupport()
-{
-	if( GetGameState() == eGameState.SuddenDeath ) // Sudden Death have its own logic based on elimination, not scores
-		return expect int( level.nv.winningTeam )
-	
-	if ( !IsFFAGame() )
-		return GameScore_GetWinningTeam()
-	else
-	{
-		// custom logic for calculating ffa winner as GameScore_GetWinningTeam doesn't handle this
-		int winningTeam = TEAM_UNASSIGNED
-		int winningScore = 0
-		
-		foreach ( entity player in GetPlayerArray() )
-		{
-			int currentScore = GameRules_GetTeamScore( player.GetTeam() )
-			
-			if ( currentScore == winningScore )
-				winningTeam = TEAM_UNASSIGNED // if 2 teams are equal, return TEAM_UNASSIGNED
-			else if ( currentScore > winningScore )
-			{
-				winningTeam = player.GetTeam()
-				winningScore = currentScore
-			}
-		}
-		
-		return winningTeam
-	}
-	
-	unreachable
 }
 
 float function GameState_GetTimeLimitOverride()

@@ -187,12 +187,8 @@ playlists
 				earn_meter_pilot_overdrive 0
 				earn_meter_pilot_multiplier 0.5
 				earn_meter_titan_multiplier 0.5
-				pick_loadout_extension 20.0
-                pick_loadout_every_round 0
-				tts_menu_join_in_progress 0
-				tts_menu_show_score 0
+				enable_sun_flare_mp_angel_city 0
 				run_epilogue 0
-				run_intro 0
 				
 				color		"0 119 245 255"
 

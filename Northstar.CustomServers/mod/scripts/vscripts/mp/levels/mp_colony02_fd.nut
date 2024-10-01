@@ -384,10 +384,13 @@ void function RegisterCustomFDContent()
 	AddFDCustomProp( $"models/barriers/sandbags_large_01.mdl", < 37, 3063, 233 >, < 0, 160, 0 > )
 	AddFDCustomProp( $"models/barriers/sandbags_large_01.mdl", < 147, 3023, 233 >, < 0, 160, 0 > )
 	
-	CreateZipline( < 2061, 3293, 640 >, < 177, 2433, 676 > )
-	CreateZipline( < 152, 2377, 804 >, < -1084, 772, 603 > )
-	CreateZipline( < -1510, 524, 674 >, < -1728, -1878, 460 > )
-	CreateZipline( < 1059, -1708, 860 >, < -1136, -2008, 502 > )
+	CreateColonyZipline( < 2061, 3294, 590 >, < 1716, 1508, 597 > )
+	CreateColonyZipline( < 2061, 3294, 590 >, < 177, 2433, 676 > )
+	CreateColonyZipline( < 152, 2377, 804 >, < -1510, 524, 650 > )
+	CreateColonyZipline( < -1510, 524, 650 >, < -1728, -1878, 460 > )
+	CreateColonyZipline( < 1059, -1708, 860 >, < -1136, -2008, 502 > )
+	CreateColonyZipline( < -2921, 5036, 105 >, < -1500, 2791, 542 > )
+	CreateColonyZipline( < -1510, 524, 650 >, < -4534, 1180, 563 > )
 	
 	AddStationaryAIPosition(< -2478, 6083, -92 >, eStationaryAIPositionTypes.MORTAR_TITAN)
 	AddStationaryAIPosition(< -2783, 5964, -55 >, eStationaryAIPositionTypes.MORTAR_TITAN)
@@ -511,4 +514,46 @@ void function RegisterCustomFDContent()
 	routes[ "droneFarmside" ].append( < -1148, 2202, 17 > )
 	routes[ "droneFarmside" ].append( < -308, 3759, 0 > )
 	routes[ "droneFarmside" ].append( < 883, 3721, 128 > )
+}
+
+void function CreateColonyZipline( vector startPos, vector endPos )
+{
+	string startpointName = UniqueString( "rope_startpoint" )
+	string endpointName = UniqueString( "rope_endpoint" )
+
+	entity rope_start = CreateEntity( "move_rope" )
+	SetTargetName( rope_start, startpointName )
+	rope_start.kv.NextKey = endpointName
+	rope_start.kv.MoveSpeed = 64
+	rope_start.kv.Slack = 0
+	rope_start.kv.Subdiv = "4"
+	rope_start.kv.Width = "2"
+	rope_start.kv.Type = "0"
+	rope_start.kv.TextureScale = "1"
+	rope_start.kv.RopeMaterial = "cable/zipline.vmt"
+	rope_start.kv.PositionInterpolator = 2
+	rope_start.kv.Zipline = "1"
+	rope_start.kv.ZiplineAutoDetachDistance = "150"
+	rope_start.kv.ZiplineSagEnable = "1"
+	rope_start.kv.ZiplineSagHeight = "120"
+	rope_start.SetOrigin( startPos )
+
+	entity rope_end = CreateEntity( "keyframe_rope" )
+	SetTargetName( rope_end, endpointName )
+	rope_end.kv.MoveSpeed = 64
+	rope_end.kv.Slack = 0
+	rope_end.kv.Subdiv = "4"
+	rope_end.kv.Width = "2"
+	rope_end.kv.Type = "0"
+	rope_end.kv.TextureScale = "1"
+	rope_end.kv.RopeMaterial = "cable/zipline.vmt"
+	rope_end.kv.PositionInterpolator = 2
+	rope_end.kv.Zipline = "1"
+	rope_end.kv.ZiplineAutoDetachDistance = "150"
+	rope_end.kv.ZiplineSagEnable = "1"
+	rope_end.kv.ZiplineSagHeight = "120"
+	rope_end.SetOrigin( endPos )
+
+	DispatchSpawn( rope_start )
+	DispatchSpawn( rope_end )
 }
