@@ -7,8 +7,6 @@ global function SetSpawnpointGamemodeOverride
 global function GetSpawnpointGamemodeOverride
 global function AddSpawnpointValidationRule
 
-global function SetRespawnsEnabled
-global function RespawnsEnabled
 global function CreateNoSpawnArea
 global function DeleteNoSpawnArea
 global function SpawnPointInNoSpawnArea
@@ -93,16 +91,6 @@ void function Spawn_Init()
 	SpawnPoints_SetRatingMultiplier_PetTitan( 2.0 )
 	
 	file.shouldCreateMinimapSpawnzones = GetCurrentPlaylistVarInt( "spawn_zone_enabled", 1 ) != 0
-}
-
-void function SetRespawnsEnabled( bool enabled )
-{
-	file.respawnsEnabled = enabled
-}
-
-bool function RespawnsEnabled()
-{
-	return file.respawnsEnabled
 }
 
 void function InitSpawnpoint( entity spawnpoint ) 

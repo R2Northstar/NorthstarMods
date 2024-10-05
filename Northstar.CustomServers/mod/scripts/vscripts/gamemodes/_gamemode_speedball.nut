@@ -13,7 +13,6 @@ void function GamemodeSpeedball_Init()
 
 	// gamemode settings
 	SetRoundBased( true )
-	SetRespawnsEnabled( false )
 	SetShouldUseRoundWinningKillReplay( true )
 	Riff_ForceTitanAvailability( eTitanAvailability.Never )
 	Riff_ForceSetEliminationMode( eEliminationMode.Pilots )

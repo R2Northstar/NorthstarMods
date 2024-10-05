@@ -228,6 +228,7 @@ void function CodeCallback_OnClientConnectionCompleted( entity player )
 	{
 		if ( IsPrivateMatchSpectator( player ) )
 		{
+			SetPlayerEliminated( player )
 			InitialisePrivateMatchSpectatorPlayer( player )
 			return
 		}
@@ -236,11 +237,11 @@ void function CodeCallback_OnClientConnectionCompleted( entity player )
 		player.SetPersistentVar( "privateMatchState", 0 )
 
 	// handle spawning late joiners
-	if ( GetGameState() == eGameState.Playing )
+	if ( GetGameState() >= eGameState.Playing )
 	{
 		if ( SpectatePlayerDuringPickLoadout() )
 			thread SpectateTTSMenuPlayer( player )
-		else if ( RespawnsEnabled() )
+		else if ( !IsEliminationBased() )
 		{
 			if ( Riff_IsTitanAvailable( player ) || ShouldIntroSpawnAsTitan() ) //Handles the conditions to spawn player as Titan right away or not
 				thread RespawnAsTitan( player )
@@ -248,7 +249,10 @@ void function CodeCallback_OnClientConnectionCompleted( entity player )
 				RespawnAsPilot( player )
 		}
 		else
+		{
+			SetPlayerEliminated( player )
 			InitialisePrivateMatchSpectatorPlayer( player )
+		}
 	}
 }
 
@@ -258,12 +262,20 @@ void function SpectateTTSMenuPlayer( entity player )
 	OnThreadEnd(
 		function() : ( player )
 		{
-			if ( IsValid( player ) && RespawnsEnabled() )
+			if ( IsValid( player ) )
 			{
-				if ( ShouldIntroSpawnAsTitan() && Riff_TitanAvailability() != eTitanAvailability.Never )
-					thread RespawnAsTitan( player )
+				if ( !IsEliminationBased() )
+				{
+					if ( ShouldIntroSpawnAsTitan() && Riff_TitanAvailability() != eTitanAvailability.Never )
+						thread RespawnAsTitan( player )
+					else
+						RespawnAsPilot( player )
+				}
 				else
-					RespawnAsPilot( player )
+				{
+					SetPlayerEliminated( player )
+					InitialisePrivateMatchSpectatorPlayer( player )
+				}
 			}
 		}
 	)
@@ -354,7 +366,7 @@ void function CodeCallback_OnPlayerRespawned( entity player )
 		
 	Remote_CallFunction_NonReplay( player, "ServerCallback_YouRespawned" )
 	ClearLastAttacker( player ) // so dying to anything doesn't credit the same attacker after respawning
-	//SetHideOnCloak( player, true )
+	ClearPlayerEliminated( player )
 }
 
 
@@ -412,7 +424,7 @@ void function PostDeathThread_MP( entity player, var damageInfo ) // based on ga
 		SoulDies( player.GetTitanSoul(), damageInfo ) // cleanup some titan stuff, no idea where else to put this
 
 	ClearRespawnAvailable( player )
-
+	
 	OnThreadEnd( function() : ( player )
 	{
 		if ( !IsValid( player ) )
@@ -478,6 +490,10 @@ void function PostDeathThread_MP( entity player, var damageInfo ) // based on ga
 	float deathcamLength = GetDeathCamLength( player )
 	wait deathcamLength
 
+	player.SetPlayerSettings( "spectator" ) // prevent a crash with going from titan => pilot on respawn
+	player.StopPhysics() // need to set this after SetPlayerSettings
+	player.SetPhysics( MOVETYPE_NONE ) // so they don't move around while dead, resets to default automatically on respawn
+	
 	// use info_intermission camera after deathcam, if it exists
 	entity mapCamera = GetRandomIntermissionCamera()
 	if ( mapCamera != null && !player.GetParent() )
@@ -505,11 +521,7 @@ void function PostDeathThread_MP( entity player, var damageInfo ) // based on ga
 		thread PlayerWatchesKillReplayWrapper( player, attacker, respawnTime, timeOfDeath, beforeTime, replayTracker )		
 	}
 
-	player.SetPlayerSettings( "spectator" ) // prevent a crash with going from titan => pilot on respawn
-	player.StopPhysics() // need to set this after SetPlayerSettings
-	player.SetPhysics( MOVETYPE_NONE ) // so they don't move around while dead, resets to default automatically on respawn
-
-	if ( RespawnsEnabled() )
+	if ( !IsEliminationBased() || IsEliminationBased() && !IsPlayerEliminated( player ) )
 	{
 		// is it a good idea to do respawn code in postdeaththread? fuck if i know lol
 		float respawnDelay = max( 0, GetCurrentPlaylistVarFloat( "respawn_delay", 0.0 ) - deathcamLength )

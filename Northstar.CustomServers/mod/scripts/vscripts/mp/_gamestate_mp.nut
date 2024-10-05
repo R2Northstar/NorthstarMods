@@ -44,8 +44,6 @@ struct {
 	bool roundWinningKillReplayTrackPilotKills = true 
 	bool roundWinningKillReplayTrackTitanKills = false
 	
-	bool gameWonThisFrame
-	bool hasKillForGameWonThisFrame
 	float roundWinningKillReplayTime
 	entity roundWinningKillReplayVictim
 	entity roundWinningKillReplayAttacker
@@ -170,31 +168,32 @@ void function AddTeamScore( int team, int amount )
 	GameRules_SetTeamScore( team, GameRules_GetTeamScore( team ) + amount )
 	GameRules_SetTeamScore2( team, GameRules_GetTeamScore2( team ) + amount )
 	
-	int scoreLimit
+	int scoreLimit = GameMode_GetScoreLimit( GAMETYPE )
 	int score = GameRules_GetTeamScore( team )
 	
 	if ( IsRoundBased() )
+	{
 		scoreLimit = GameMode_GetRoundScoreLimit( GAMETYPE )
-	else
-		scoreLimit = GameMode_GetScoreLimit( GAMETYPE )
+		score = GameRules_GetTeamScore2( team )
+	}
 	
 	if ( score >= scoreLimit && IsRoundBased() )
 		SetWinner( team, "#GAMEMODE_ROUND_LIMIT_REACHED", "#GAMEMODE_ROUND_LIMIT_REACHED" )
 	else if ( score >= scoreLimit )
 		SetWinner( team, "#GAMEMODE_SCORE_LIMIT_REACHED", "#GAMEMODE_SCORE_LIMIT_REACHED" )
 	else if ( GetGameState() == eGameState.SuddenDeath )
-		SetWinner( team )
+		SetWinner( team, "#SUDDEN_DEATH_WIN_ANNOUNCEMENT", "#SUDDEN_DEATH_LOSS_ANNOUNCEMENT" )
 	else if ( ( file.switchSidesBased && !file.hasSwitchedSides ) && score >= ( scoreLimit.tofloat() / 2.0 ) )
 		SetGameState( eGameState.SwitchingSides )
 }
 
 void function SetWinner( int ornull team, string winningReason = "", string losingReason = "" )
 {
-	if( team != null )
-		SetServerVar( "winningTeam", team )
+	if ( !GamePlayingOrSuddenDeath() ) // SetWinner should not be used outside the gamestates that can decide a winner
+		return
 	
-	file.gameWonThisFrame = true
-	thread UpdateGameWonThisFrameNextFrame()
+	if ( team != null ) // Sending null to this var makes clients show "DRAW" as reason to match end, TEAM_UNASSIGNED instead just prevents subtext to show up and show defeat to both teams
+		SetServerVar( "winningTeam", team )
 	
 	if ( winningReason == "" )
 		file.announceRoundWinnerWinningSubstr = 0
@@ -231,49 +230,44 @@ void function SetWinner( int ornull team, string winningReason = "", string losi
 			DebounceScoreTie( expect int( team ) )
 	}
 	
-	if ( GamePlayingOrSuddenDeath() )
+	SetGameState( eGameState.WinnerDetermined )
+	if ( IsRoundBased() )
 	{
-		if ( IsRoundBased() )
-		{
-			SetGameState( eGameState.WinnerDetermined )
-			if ( team != null && team != TEAM_UNASSIGNED )
-				ScoreEvent_RoundComplete( expect int( team ) )
-		}
-		else
-		{
-			SetGameState( eGameState.WinnerDetermined )
-			if ( team != null && team != TEAM_UNASSIGNED )
-				ScoreEvent_MatchComplete( expect int( team ) )
+		if ( team != null && team != TEAM_UNASSIGNED )
+			ScoreEvent_RoundComplete( expect int( team ) )
+	}
+	else
+	{
+		if ( team != null && team != TEAM_UNASSIGNED )
+			ScoreEvent_MatchComplete( expect int( team ) )
 			
-			array<entity> players = GetPlayerArray()
-			int functionref( entity, entity ) compareFunc = GameMode_GetScoreCompareFunc( GAMETYPE )
-			if ( compareFunc != null )
+		array<entity> players = GetPlayerArray()
+		int functionref( entity, entity ) compareFunc = GameMode_GetScoreCompareFunc( GAMETYPE )
+		if ( compareFunc != null )
+		{
+			players.sort( compareFunc )
+			int playerCount = players.len()
+			int currentPlace = 1
+			for ( int i = 0; i < 3; i++ )
 			{
-				players.sort( compareFunc )
-				int playerCount = players.len()
-				int currentPlace = 1
-				for ( int i = 0; i < 3; i++ )
+				if ( i >= playerCount )
+					continue
+				
+				if ( i > 0 && compareFunc( players[i - 1], players[i] ) != 0 )
+					currentPlace += 1
+				switch( currentPlace ) // Update player persistent stats in here
 				{
-					if ( i >= playerCount )
-						continue
-					
-					if ( i > 0 && compareFunc( players[i - 1], players[i] ) != 0 )
-						currentPlace += 1
-
-					switch( currentPlace ) // Update player persistent stats in here
-					{
-						case 1:
-							UpdatePlayerStat( players[i], "game_stats", "mvp" ) // MVP in the current map played
-							UpdatePlayerStat( players[i], "game_stats", "mvp_total" ) // MVP in the overall profile
-							UpdatePlayerStat( players[i], "game_stats", "top3OnTeam" )
-							break
-						case 2:
-							UpdatePlayerStat( players[i], "game_stats", "top3OnTeam" )
-							break
-						case 3:
-							UpdatePlayerStat( players[i], "game_stats", "top3OnTeam" )
-							break
-					}
+					case 1:
+						UpdatePlayerStat( players[i], "game_stats", "mvp" ) // MVP in the current map played
+						UpdatePlayerStat( players[i], "game_stats", "mvp_total" ) // MVP in the overall profile
+						UpdatePlayerStat( players[i], "game_stats", "top3OnTeam" )
+						break
+					case 2:
+						UpdatePlayerStat( players[i], "game_stats", "top3OnTeam" )
+						break
+					case 3:
+						UpdatePlayerStat( players[i], "game_stats", "top3OnTeam" )
+						break
 				}
 			}
 		}
@@ -416,7 +410,7 @@ void function WaitForPlayers()
 	
 	wait 2
 	
-	if( IsFFAGame() ) // FFA has no Dropships and logic crash clients if casted into PickLoadout
+	if ( IsFFAGame() ) // FFA has no Dropships and logic crash clients if casted into PickLoadout
 		SetGameState( eGameState.Prematch )
 	else
 		SetGameState( eGameState.PickLoadout ) // Even if the game mode don't use it, vanilla still cast this game state to make the dropship jump sound when match starts
@@ -856,7 +850,7 @@ void function DialogueAnnounceSwitchingSides()
 void function GameStateEnter_SuddenDeath()
 {
 	// disable respawns, suddendeath calling is done on a kill callback
-	SetRespawnsEnabled( false )
+	Riff_ForceSetEliminationMode( eEliminationMode.Pilots )
 
 	// restart the timer for timelimits to show Sudden Death extra time
 	float timeLimit = GetCurrentPlaylistVarFloat( "suddendeath_timelimit", 2.0 ) * 60
@@ -952,17 +946,30 @@ void function GameStateEnter_Postmatch_Threaded()
 
 void function OnPlayerKilled( entity victim, entity attacker, var damageInfo )
 {
-	if ( !GamePlayingOrSuddenDeath() )
+	if ( IsEliminationBased() )
+		SetPlayerEliminated( victim )
+	
+	// MVP kills in vanilla is just the top scoring player of a Team
+	array<entity> players = GetPlayerArrayOfTeam( victim.GetTeam() )
+	int functionref( entity, entity ) compareFunc = GameMode_GetScoreCompareFunc( GAMETYPE )
+	if ( compareFunc != null && players.len() )
 	{
-		if ( file.gameWonThisFrame )
-		{
-			if ( file.hasKillForGameWonThisFrame )
-				return
-		}
-		else
-			return
+		players.sort( compareFunc )
+		if ( victim == players[0] && attacker.IsPlayer() && attacker != victim )
+			AddPlayerScore( attacker, "KilledMVP" )
 	}
 	
+	if ( !GamePlayingOrSuddenDeath() )
+		return
+
+	if ( IsTitanEliminationBased() && victim.IsTitan() ) // need an extra check for this
+	{
+		OnTitanKilled( victim, damageInfo )
+		return
+	}
+
+	CheckEliminationRiffMode( victim )
+
 	entity inflictor = DamageInfo_GetInflictor( damageInfo )
 	bool shouldUseInflictor = IsValid( inflictor ) && ShouldTryUseProjectileReplay( victim, attacker, damageInfo, true )
 	if ( victim.IsPlayer() )
@@ -975,8 +982,6 @@ void function OnPlayerKilled( entity victim, entity attacker, var damageInfo )
 	// todo: make this not count environmental deaths like falls, unsure how to prevent this
 	if ( file.roundWinningKillReplayTrackPilotKills && victim != attacker && attacker != svGlobal.worldspawn && IsValid( attacker ) )
 	{
-		if ( file.gameWonThisFrame )
-			file.hasKillForGameWonThisFrame = true
 		file.roundWinningKillReplayTime = Time()
 		file.roundWinningKillReplayVictim = victim
 		file.roundWinningKillReplayAttacker = attacker
@@ -985,17 +990,39 @@ void function OnPlayerKilled( entity victim, entity attacker, var damageInfo )
 		file.roundWinningKillReplayTimeOfDeath = Time()
 		file.roundWinningKillReplayHealthFrac = GetHealthFrac( attacker )
 	}
+}
 
-	if ( ( Riff_EliminationMode() == eEliminationMode.Titans || Riff_EliminationMode() == eEliminationMode.PilotsTitans ) && victim.IsTitan() ) // need an extra check for this
-		OnTitanKilled( victim, damageInfo )	
-
+void function OnTitanKilled( entity victim, var damageInfo )
+{
 	if ( !GamePlayingOrSuddenDeath() )
 		return
 
+	CheckEliminationRiffMode( victim )
+
+	entity inflictor = DamageInfo_GetInflictor( damageInfo )
+	bool shouldUseInflictor = IsValid( inflictor ) && ShouldTryUseProjectileReplay( victim, DamageInfo_GetAttacker( damageInfo ), damageInfo, true )
+
+	// set round winning killreplay info here if we're tracking titan kills
+	// todo: make this not count environmental deaths like falls, unsure how to prevent this
+	entity attacker = DamageInfo_GetAttacker( damageInfo )
+	if ( file.roundWinningKillReplayTrackTitanKills && victim != attacker && attacker != svGlobal.worldspawn && IsValid( attacker ) )
+	{
+		file.roundWinningKillReplayTime = Time()
+		file.roundWinningKillReplayVictim = victim
+		file.roundWinningKillReplayAttacker = attacker
+		file.roundWinningKillReplayInflictorEHandle = ( shouldUseInflictor ? inflictor : attacker ).GetEncodedEHandle()
+		file.roundWinningKillReplayMethodOfDeath = DamageInfo_GetDamageSourceIdentifier( damageInfo )
+		file.roundWinningKillReplayTimeOfDeath = Time()
+		file.roundWinningKillReplayHealthFrac = GetHealthFrac( attacker )
+	}
+}
+
+void function CheckEliminationRiffMode( entity victim )
+{
 	// note: pilotstitans is just win if enemy team runs out of either pilots or titans
 	if ( IsPilotEliminationBased() )
 	{
-		if ( !GetPlayerArrayOfTeam_Alive( victim.GetTeam() ).len() )
+		if ( IsTeamEliminated( victim.GetTeam() ) )
 		{
 			// for ffa we need to manually get the last team alive 
 			if ( IsFFAGame() )
@@ -1010,66 +1037,16 @@ void function OnPlayerKilled( entity victim, entity attacker, var damageInfo )
 				if ( teamsWithLivingPlayers.len() == 1 )
 					SetWinner( teamsWithLivingPlayers[ 0 ], "#GAMEMODE_ENEMY_PILOTS_ELIMINATED", "#GAMEMODE_FRIENDLY_PILOTS_ELIMINATED" )
 				else if ( teamsWithLivingPlayers.len() == 0 ) // failsafe: only team was the dead one
-					SetWinner( TEAM_UNASSIGNED, "#GAMEMODE_ENEMY_PILOTS_ELIMINATED", "#GAMEMODE_FRIENDLY_PILOTS_ELIMINATED" ) // this is fine in ffa
+					SetWinner( null, "#GENERIC_DRAW_ANNOUNCEMENT", "#GENERIC_DRAW_ANNOUNCEMENT" ) // this is fine in ffa
 			}
 			else
 				SetWinner( GetOtherTeam( victim.GetTeam() ), "#GAMEMODE_ENEMY_PILOTS_ELIMINATED", "#GAMEMODE_FRIENDLY_PILOTS_ELIMINATED" )
 		}
 	}
-	
-	array<entity> players = GetPlayerArrayOfTeam( victim.GetTeam() )
-	int functionref( entity, entity ) compareFunc = GameMode_GetScoreCompareFunc( GAMETYPE )
-	if ( compareFunc != null && players.len() )
-	{
-		players.sort( compareFunc )
-		if ( victim == players[0] && attacker.IsPlayer() && attacker != victim )
-			AddPlayerScore( attacker, "KilledMVP" )
-	}
-}
 
-void function OnTitanKilled( entity victim, var damageInfo )
-{
-	if ( !GamePlayingOrSuddenDeath() )
-	{
-		if ( file.gameWonThisFrame )
-		{
-			if ( file.hasKillForGameWonThisFrame )
-				return
-		}
-		else
-			return
-	}
-
-	entity inflictor = DamageInfo_GetInflictor( damageInfo )
-	bool shouldUseInflictor = IsValid( inflictor ) && ShouldTryUseProjectileReplay( victim, DamageInfo_GetAttacker( damageInfo ), damageInfo, true )
-
-	// set round winning killreplay info here if we're tracking titan kills
-	// todo: make this not count environmental deaths like falls, unsure how to prevent this
-	entity attacker = DamageInfo_GetAttacker( damageInfo )
-	if ( file.roundWinningKillReplayTrackTitanKills && victim != attacker && attacker != svGlobal.worldspawn && IsValid( attacker ) )
-	{
-		if ( file.gameWonThisFrame )
-			file.hasKillForGameWonThisFrame = true
-		file.roundWinningKillReplayTime = Time()
-		file.roundWinningKillReplayVictim = victim
-		file.roundWinningKillReplayAttacker = attacker
-		file.roundWinningKillReplayInflictorEHandle = ( shouldUseInflictor ? inflictor : attacker ).GetEncodedEHandle()
-		file.roundWinningKillReplayMethodOfDeath = DamageInfo_GetDamageSourceIdentifier( damageInfo )
-		file.roundWinningKillReplayTimeOfDeath = Time()
-		file.roundWinningKillReplayHealthFrac = GetHealthFrac( attacker )
-	}
-	
-	if ( !GamePlayingOrSuddenDeath() )
-		return
-
-	// note: pilotstitans is just win if enemy team runs out of either pilots or titans
 	if ( IsTitanEliminationBased() )
 	{
-		int livingTitans
-		foreach ( entity titan in GetTitanArrayOfTeam( victim.GetTeam() ) )
-			livingTitans++
-	
-		if ( livingTitans == 0 )
+		if ( !GetTitanArrayOfTeam( victim.GetTeam() ).len() )
 		{
 			// for ffa we need to manually get the last team alive 
 			if ( IsFFAGame() )
@@ -1083,8 +1060,8 @@ void function OnTitanKilled( entity victim, var damageInfo )
 				
 				if ( teamsWithLivingTitans.len() == 1 )
 					SetWinner( teamsWithLivingTitans[ 0 ], "#GAMEMODE_ENEMY_TITANS_DESTROYED", "#GAMEMODE_FRIENDLY_TITANS_DESTROYED" )
-				else if ( teamsWithLivingTitans.len() == 0 ) // failsafe: only team was the dead one
-					SetWinner( TEAM_UNASSIGNED, "#GAMEMODE_ENEMY_TITANS_DESTROYED", "#GAMEMODE_FRIENDLY_TITANS_DESTROYED" ) // this is fine in ffa
+				else if ( teamsWithLivingTitans.len() == 0 )
+					SetWinner( null, "#GENERIC_DRAW_ANNOUNCEMENT", "#GENERIC_DRAW_ANNOUNCEMENT" )
 			}
 			else
 				SetWinner( GetOtherTeam( victim.GetTeam() ), "#GAMEMODE_ENEMY_TITANS_DESTROYED", "#GAMEMODE_FRIENDLY_TITANS_DESTROYED" )
@@ -1190,13 +1167,6 @@ void function DebounceScoreTie( int team )
 		if ( GameRules_GetTeamScore2( team ) < GameMode_GetScoreLimit( GAMETYPE ) )
 			GameRules_SetTeamScore2( team, GameMode_GetScoreLimit( GAMETYPE ) )
 	}
-}
-
-void function UpdateGameWonThisFrameNextFrame()
-{
-	WaitFrame()
-	file.gameWonThisFrame = false
-	file.hasKillForGameWonThisFrame = false
 }
 
 float function GameState_GetTimeLimitOverride()

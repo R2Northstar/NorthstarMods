@@ -220,6 +220,6 @@ bool function InfectionShouldPlayerStartBleedout( entity player, var damageInfo 
 
 void function OnWinnerDetermined()
 {
-	SetRespawnsEnabled( false )
+	Riff_ForceSetEliminationMode( eEliminationMode.PilotsTitans )
 	SetServerVar( "replayDisabled", true )
 }

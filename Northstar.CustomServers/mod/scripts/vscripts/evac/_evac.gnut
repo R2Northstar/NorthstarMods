@@ -156,7 +156,7 @@ void function EvacSpectatorFunc( entity player )
 void function SetRespawnAndWait( bool mode )
 {
 	wait GAME_EPILOGUE_PLAYER_RESPAWN_LEEWAY
-	SetRespawnsEnabled( mode )
+	Riff_ForceSetEliminationMode( eEliminationMode.Pilots )
 	
 	// clear any respawn availablity, or players are able to save there respawn for whenever they want
 	foreach ( entity player in GetPlayerArray() )

@@ -16,7 +16,6 @@ void function GameModeArena_Init()
 
 	SetShouldUseRoundWinningKillReplay( true )
 	SetRoundBased( true )
-	SetRespawnsEnabled( false )
 	SetLoadoutGracePeriodEnabled( false ) // prevent modifying loadouts with grace period
 	Riff_ForceTitanAvailability( eTitanAvailability.Never )
 	Riff_ForceBoostAvailability( eBoostAvailability.Disabled )

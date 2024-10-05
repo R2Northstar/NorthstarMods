@@ -122,7 +122,7 @@ void function bankrupt(entity player, entity attacker) {
 
 void function OnWinnerDetermined()
 {
-	SetRespawnsEnabled( false )
+	Riff_ForceSetEliminationMode( eEliminationMode.PilotsTitans )
 	SetServerVar( "replayDisabled", true )
 }
 
