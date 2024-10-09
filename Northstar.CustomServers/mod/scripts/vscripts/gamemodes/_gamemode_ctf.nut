@@ -74,7 +74,7 @@ void function CaptureTheFlag_Init()
 	level.teamFlags <- {}
 	
 	ScoreEvent_SetEarnMeterValues( "KillPilot", 0.05, 0.20 )
-	ScoreEvent_SetEarnMeterValues( "PilotAssist", 0.05, 0.20 )
+	ScoreEvent_SetEarnMeterValues( "PilotAssist", 0.05, 0.10 )
 	ScoreEvent_SetEarnMeterValues( "Headshot", 0.0, 0.02 )
 	ScoreEvent_SetEarnMeterValues( "FirstStrike", 0.0, 0.05 )
 	ScoreEvent_SetEarnMeterValues( "KillTitan", 0.0, 0.25 )
