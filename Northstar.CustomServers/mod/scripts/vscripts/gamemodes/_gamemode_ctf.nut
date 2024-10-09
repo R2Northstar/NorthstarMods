@@ -48,7 +48,6 @@ void function CaptureTheFlag_Init()
 	CaptureTheFlagShared_Init()
 	
 	SetSwitchSidesBased( true )
-	SetSuddenDeathBased( true )
 	
 	SetShouldUseRoundWinningKillReplay( true )
 	SetRoundWinningKillReplayKillClasses( false, false )
@@ -70,15 +69,17 @@ void function CaptureTheFlag_Init()
 	
 	AddSpawnpointValidationRule( VerifyCTFSpawnpoint )
 	
-	RegisterSignal( "ResetDropTimeout" )
+	RegisterSignal( "CTF_GrabbedFlag" )
 	
 	level.teamFlags <- {}
 	
 	ScoreEvent_SetEarnMeterValues( "KillPilot", 0.05, 0.20 )
+	ScoreEvent_SetEarnMeterValues( "PilotAssist", 0.05, 0.20 )
 	ScoreEvent_SetEarnMeterValues( "Headshot", 0.0, 0.02 )
 	ScoreEvent_SetEarnMeterValues( "FirstStrike", 0.0, 0.05 )
 	ScoreEvent_SetEarnMeterValues( "KillTitan", 0.0, 0.25 )
 	ScoreEvent_SetEarnMeterValues( "PilotBatteryStolen", 0.0, 0.35 )
+	ScoreEvent_SetEarnMeterValues( "PilotBatteryApplied", 0.0, 0.35 )
 	
 	ScoreEvent_SetEarnMeterValues( "FlagCarrierKill", 0.0, 0.20 )
 	ScoreEvent_SetEarnMeterValues( "FlagTaken", 0.0, 0.10 )
@@ -385,7 +386,7 @@ bool function OnFlagCollected( entity player, entity flag )
 void function GiveFlag( entity player, entity flag )
 {
 	print( player + " picked up the flag!" )
-	flag.Signal( "ResetDropTimeout" )
+	flag.Signal( "CTF_GrabbedFlag" )
 
 	flag.SetParent( player, "FLAG" )
 	if( GetCurrentPlaylistVarInt( "phase_shift_drop_flag", 0 ) == 1 )
@@ -534,7 +535,7 @@ void function ResetFlag( entity flag )
 	
 	SetFlagStateForTeam( flag.GetTeam(), eFlagState.None )
 	
-	flag.Signal( "ResetDropTimeout" )
+	flag.Signal( "CTF_ReturnedFlag" )
 }
 
 void function FlagProximityTracker( entity flag )
@@ -589,6 +590,7 @@ void function TryReturnFlag( entity player, entity flag )
 	})
 	
 	flag.EndSignal( "CTF_ReturnedFlag" )
+	flag.EndSignal( "CTF_GrabbedFlag" )
 	flag.EndSignal( "OnDestroy" )
 	
 	player.EndSignal( "CTF_LeftReturnTriggerArea" )
@@ -596,8 +598,6 @@ void function TryReturnFlag( entity player, entity flag )
 	player.EndSignal( "OnDestroy" )
 	
 	wait CTF_GetFlagReturnTime()
-	
-	ResetFlag( flag )
 	
 	MessageToTeam( flag.GetTeam(), eEventNotifications.PlayerReturnedFriendlyFlag, null, player )
 	EmitSoundOnEntityToTeam( flag, "UI_CTF_3P_TeamReturnsFlag", flag.GetTeam() )
@@ -618,6 +618,7 @@ void function TryReturnFlag( entity player, entity flag )
 	EmitSoundOnEntityOnlyToPlayer( player, player, "UI_CTF_1P_ReturnsFlag" )
 	PlayFactionDialogueToTeam( "ctf_flagReturnedEnemy", GetOtherTeam( flag.GetTeam() ) )
 	
+	ResetFlag( flag )
 	flag.Signal( "CTF_ReturnedFlag" )
 }
 
@@ -684,7 +685,7 @@ void function TransferFlagFromTitan( entity pilot, entity titan )
 void function TrackFlagDropTimeout( entity flag )
 {
 	flag.EndSignal( "CTF_ReturnedFlag" )
-	flag.EndSignal( "ResetDropTimeout" )
+	flag.EndSignal( "CTF_GrabbedFlag" )
 	flag.EndSignal( "OnDestroy" )
 	
 	wait CTF_GetDropTimeout()

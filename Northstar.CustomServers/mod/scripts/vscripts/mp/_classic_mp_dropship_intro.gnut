@@ -227,8 +227,8 @@ void function SpawnPlayerIntoDropship( entity player, int playerDropshipIndex, e
 		PlayBattleChatterLine( player, "bc_pIntroChat" )
 	#endif
 	
-	thread FirstPersonSequence( jumpSequence, player, playerDropship )
-	WaittillAnimDone( player )
+	waitthread FirstPersonSequence( jumpSequence, player, playerDropship )
+	wait 0.3 // Blendout time from the function
 	
 	thread PlayerJumpsFromDropship( player )
 }

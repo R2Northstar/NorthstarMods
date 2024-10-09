@@ -85,6 +85,7 @@ void function EarnMeterMP_ReplaceReward( entity player, EarnObject reward, float
 
 void function EarnMeterMP_PlayerLifeThink( entity player )
 {
+	svGlobal.levelEnt.EndSignal( "CleanUpEntitiesForRoundEnd" )
 	player.EndSignal( "OnDeath" )
 	player.EndSignal( "OnDestroy" )
 
@@ -115,7 +116,7 @@ void function EarnMeterMP_PlayerLifeThink( entity player )
 		if ( player.IsTitan() )
 		{
 			entity soul = player.GetTitanSoul()
-			if ( SoulTitanCore_GetExpireTime( soul ) > Time() )
+			if ( IsValid( soul ) && TitanCoreInUse( player ) )
 				desiredEarnMeterMode = eEarnMeterMode.CORE_ACTIVE
 			else
 				desiredEarnMeterMode = eEarnMeterMode.CORE
@@ -183,7 +184,7 @@ void function EarnMeterMP_PlayerLifeThink( entity player )
 			if ( Time() - lastPassiveGainTime > 4.0 && file.passiveMeterGainEnabled ) // this might be 5.0
 			{
 				lastPassiveGainTime = Time()
-				PlayerEarnMeter_AddOwnedFrac( player, 0.01 )
+				PlayerEarnMeter_SetOwnedFrac( player, clamp( PlayerEarnMeter_GetOwnedFrac( player ) + 0.01, 0.0, 1.0 ) ) // Vanilla gives 1% regardless of multiplier
 			}
 		}
 
@@ -214,7 +215,6 @@ void function EarnMeterMP_TitanEarned( entity player )
 	if ( EarnMeterMP_IsTitanEarnGametype() )
 	{
 		SetTitanAvailable( player )
-		//Remote_CallFunction_Replay( player, "ServerCallback_TitanReadyMessage" ) // broken for some reason
 	}
 	else
 	{
@@ -246,5 +246,7 @@ void function EarnMeterMP_SetBoostByRef( entity player, string boostRef )
 		PlayerEarnMeter_EnableGoal( player ) // prevents goalstate from being set incorrectly
 	}
 	else
+	{
 		PlayerEarnMeter_SetGoal( player, earnobject )
+	}
 }

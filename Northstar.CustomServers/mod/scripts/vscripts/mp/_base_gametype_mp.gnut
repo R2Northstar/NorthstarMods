@@ -12,6 +12,7 @@ global function TryGameModeAnnouncement
 
 global function SetPlayerDeathsHidden
 global function TrackTitanDamageInPlayerGameStat
+global function CheckGameStateForPlayerMovement
 
 global function ShouldEntTakeDamage_SPMP
 global function GetTitanBuildTime
@@ -40,6 +41,7 @@ void function BaseGametype_Init_MPSP()
 	AddCallback_OnNPCKilled( CheckForAutoTitanDeath )
 	AddCallback_OnPlayerKilled( CheckForAutoTitanDeath )
 	AddCallback_OnTitanBecomesPilot( CheckGameStateForTitanEjection )
+	AddCallback_OnPlayerGetsNewPilotLoadout( CheckPlayerGetsNewLoadoutPostPlay )
 
 	RegisterSignal( "PlayerRespawnStarted" )
 	RegisterSignal( "KillCamOver" )
@@ -640,7 +642,6 @@ void function RespawnAsPilot( entity player )
 	entity spawnpoint = FindSpawnPoint( player, false, ( ShouldStartSpawn( player ) || Flag( "ForceStartSpawn" ) ) )
 	DoRespawnPlayer( player, spawnpoint )
 	player.SetAngles( spawnpoint.GetAngles() )
-	CheckGameStateAfterSpawn( player )
 	
 	//Dying as Titan and respawning as Pilot keeps the Titan Icon over the player's name instead of reverting to the normal patch such player uses
 	CallsignIcon callsignIcon = PlayerCallsignIcon_GetActive( player )
@@ -754,8 +755,6 @@ void function RespawnAsTitan( entity player, bool normalTitanfall = false )
 
 		if( IsValid( camera ) )
 			camera.Destroy()
-		
-		CheckGameStateAfterSpawn( player )
 	})
 	
 	titan.SetOrigin( spawnpoint.GetOrigin() )
@@ -835,8 +834,11 @@ void function SetRecalculateRespawnAsTitanStartPointCallback( entity functionref
 	file.recalculateRespawnAsTitanStartPointCallback = callbackFunc
 }
 
-void function CheckGameStateAfterSpawn( entity player )
+void function CheckGameStateForPlayerMovement( entity player )
 {
+	if( !IsAlive( player ) )
+		return
+	
 	if( GetGameState() == eGameState.WinnerDetermined || GetGameState() == eGameState.SwitchingSides || GetGameState() == eGameState.Postmatch )
 	{
 		if ( level.endOfRoundPlayerState == ENDROUND_FREEZE )
@@ -849,9 +851,21 @@ void function CheckGameStateAfterSpawn( entity player )
 	}
 }
 
+void function CheckGameStateAfterSpawn_Threaded( entity player )
+{
+	player.EndSignal( "OnDestroy" )
+	WaitFrame()
+	CheckGameStateForPlayerMovement( player )
+}
+
 void function CheckGameStateForTitanEjection( entity pilot, entity titan )
 {
-	CheckGameStateAfterSpawn( pilot )
+	CheckGameStateForPlayerMovement( pilot )
+}
+
+void function CheckPlayerGetsNewLoadoutPostPlay( entity player, PilotLoadoutDef loadout )
+{
+	CheckGameStateForPlayerMovement( player )
 }
 
 bool function ClientCommandCallbackChangeTeam( entity player, array<string> args )
