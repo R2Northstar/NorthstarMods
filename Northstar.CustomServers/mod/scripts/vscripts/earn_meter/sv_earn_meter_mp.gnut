@@ -184,7 +184,7 @@ void function EarnMeterMP_PlayerLifeThink( entity player )
 			if ( Time() - lastPassiveGainTime > 4.0 && file.passiveMeterGainEnabled ) // this might be 5.0
 			{
 				lastPassiveGainTime = Time()
-				PlayerEarnMeter_SetOwnedFrac( player, clamp( PlayerEarnMeter_GetOwnedFrac( player ) + 0.01, 0.0, 1.0 ) ) // Vanilla gives 1% regardless of multiplier
+				PlayerEarnMeter_AddOwnedFrac( player, 0.01 )
 			}
 		}
 
