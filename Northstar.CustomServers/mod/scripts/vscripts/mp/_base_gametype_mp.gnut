@@ -347,9 +347,7 @@ void function CodeCallback_OnPlayerRespawned( entity player )
 		player.DissolveStop()
 	
 	player.Signal( "OnRespawned" ) // kill any postdeaththreads that could be running
-	
 	Loadouts_TryGivePilotLoadout( player )
-	//player.SetPredictionEnabled( true ) doesn't seem needed, as native code seems to set this
 	
 	foreach ( entity weapon in player.GetMainWeapons() )
 		weapon.SetProScreenOwner( player )
@@ -358,7 +356,7 @@ void function CodeCallback_OnPlayerRespawned( entity player )
 	if ( spawnAsTitan && PlayerCanSpawnIntoTitan( player ) )
 	{
 		entity titan = player.GetPetTitan()
-		player.SetOrigin( titan.GetOrigin() )
+		TeleportToEnt( player, titan )
 		PilotBecomesTitan( player, titan )
 		titan.Destroy()
 	}
@@ -860,12 +858,12 @@ void function CheckGameStateAfterSpawn_Threaded( entity player )
 
 void function CheckGameStateForTitanEjection( entity pilot, entity titan )
 {
-	CheckGameStateForPlayerMovement( pilot )
+	thread CheckGameStateAfterSpawn_Threaded( pilot )
 }
 
 void function CheckPlayerGetsNewLoadoutPostPlay( entity player, PilotLoadoutDef loadout )
 {
-	CheckGameStateForPlayerMovement( player )
+	thread CheckGameStateAfterSpawn_Threaded( player )
 }
 
 bool function ClientCommandCallbackChangeTeam( entity player, array<string> args )

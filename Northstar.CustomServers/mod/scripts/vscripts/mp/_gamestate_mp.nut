@@ -618,6 +618,7 @@ void function GameStateEnter_WinnerDetermined_Threaded()
 		
 		SetServerVar( "roundWinningKillReplayEntHealthFrac", file.roundWinningKillReplayHealthFrac )
 		
+		wait  1.5
 		foreach ( entity player in GetPlayerArray() )
 			ScreenFadeToBlackForever( player, 2.0 )
 		
@@ -778,6 +779,7 @@ void function GameStateEnter_SwitchingSides_Threaded()
 	
 	float replayLength = ROUND_WINNING_KILL_REPLAY_STARTUP_WAIT
 	
+	wait  1.5
 	foreach ( entity player in GetPlayerArray() )
 	{
 		CheckGameStateForPlayerMovement( player )
@@ -1199,7 +1201,7 @@ void function GiveTitanToPlayer( entity player )
 		return
 	
 	PlayerEarnMeter_SetMode( player, eEarnMeterMode.DEFAULT )
-	PlayerEarnMeter_SetOwnedFrac( player, 1.0 )
+	PlayerEarnMeter_AddEarnedAndOwned( player, 1.0, 1.0 )
 }
 
 float function GetTimeLimit_ForGameMode()

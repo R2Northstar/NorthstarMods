@@ -386,7 +386,7 @@ bool function OnFlagCollected( entity player, entity flag )
 void function GiveFlag( entity player, entity flag )
 {
 	print( player + " picked up the flag!" )
-	flag.Signal( "CTF_GrabbedFlag" )
+	thread FlagSignalGrab_Threaded( flag ) // Delay this signal so it prevents race conditions when flag drops and gets picked up in the same frame
 
 	flag.SetParent( player, "FLAG" )
 	if( GetCurrentPlaylistVarInt( "phase_shift_drop_flag", 0 ) == 1 )
@@ -406,6 +406,13 @@ void function GiveFlag( entity player, entity flag )
 	EmitSoundOnEntityToTeam( flag, "UI_CTF_3P_EnemyGrabFlag", flag.GetTeam() )
 	
 	SetFlagStateForTeam( flag.GetTeam(), eFlagState.Away ) // used for held
+}
+
+void function FlagSignalGrab_Threaded( entity flag )
+{
+	flag.EndSignal( "OnDestroy" )
+	WaitFrame()
+	flag.Signal( "CTF_GrabbedFlag" )
 }
 
 void function CaptureFlag( entity player, entity flag )
@@ -482,7 +489,7 @@ void function DropFlag( entity player, bool realDrop = true )
 	
 	if( !IsValid( flag ) || flag.GetParent() != player )
 		return
-		
+	
 	print( player + " dropped the flag!" )
 	
 	flag.ClearParent()
@@ -499,7 +506,6 @@ void function DropFlag( entity player, bool realDrop = true )
 
 		if ( player.GetTeam() == TEAM_IMC && !file.imcCaptureAssistList.contains( player ) )
 			file.imcCaptureAssistList.append( player )
-		
 		else if( !file.militiaCaptureAssistList.contains( player ) )
 			file.militiaCaptureAssistList.append( player )
 
@@ -542,7 +548,7 @@ void function FlagProximityTracker( entity flag )
 {
 	flag.EndSignal( "OnDestroy" )
 	
-	array < entity > playerInsidePerimeter
+	array< entity > playerInsidePerimeter
 	while( true )
 	{
 		if( !playerInsidePerimeter.len() )
@@ -552,7 +558,13 @@ void function FlagProximityTracker( entity flag )
 		{
 			if ( Distance( player.GetOrigin(), flag.GetOrigin() ) < CTF_GetFlagReturnRadius() )
 			{
-				if ( FlagIngoresPlayerTitans( player ) || player.GetTeam() != flag.GetTeam() || IsFlagHome( flag ) || flag.GetParent() != null || player.IsPhaseShifted() )
+				if ( FlagIngoresPlayerTitans( player ) || player.GetTeam() != flag.GetTeam() )
+					continue
+				
+				if ( IsFlagHome( flag ) || flag.GetParent() != null || player.IsPhaseShifted() )
+					continue
+				
+				if ( IsPlayerDisembarking( player ) || IsPlayerEmbarking( player ) )
 					continue
 				
 				if( playerInsidePerimeter.contains( player ) )
@@ -690,7 +702,8 @@ void function TrackFlagDropTimeout( entity flag )
 	
 	wait CTF_GetDropTimeout()
 	
-	ResetFlag( flag )
+	if( !IsValidPlayer( flag.GetParent() ) ) // The drop timeout sometimes triggers when players are holding it, this ensures it will stay with players if so
+		ResetFlag( flag )
 }
 
 bool function FlagIngoresPlayerTitans( entity player )

@@ -580,7 +580,8 @@ void function initNetVars()
 	}
 	
 	SetGlobalNetInt( "FD_currentWave", 0 )
-	
+	EarnMeterMP_SetPassiveMeterGainEnabled( false ) // Initially don't give passive earnmeter otherwise waiting players can get it
+
 	int maxRestarts = GetCurrentPlaylistVarInt( "roundscorelimit", 3 ) - 1 //Minus one because current round already counts
 	FD_SetMaxAllowedRestarts( maxRestarts )
 	FD_SetNumAllowedRestarts( maxRestarts )
