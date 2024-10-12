@@ -167,7 +167,7 @@ void function GamemodeFD_Init()
 
 	SetRoundBased( true )
 	SetSwitchSidesBased( false ) //Just to make sure in case of any future problem regarding teamside switch
-	SetTimerBased( false ) //Disable loss by timer because the wait feature will truly idle servers until people joins
+	FlagSet( "DisableTimeLimit" ) //Disable loss by timer because the wait feature will truly idle servers until people joins
 	SetShouldUseRoundWinningKillReplay( false )
 	SetServerVar( "replayDisabled", true ) //Only disabling Killcams because it's PvE, also seems to reduce server network load a little bit
 	Riff_ForceBoostAvailability( eBoostAvailability.Disabled )
@@ -984,6 +984,7 @@ bool function runWave( int waveIndex, bool shouldDoBuyTime )
 		else
 		{
 			SetRoundBased( false )
+			AddTeamRoundScoreNoStateChange( TEAM_IMC )
 			SetWinner( TEAM_IMC, "#FD_TOTAL_DEFEAT_HINT", "#FD_TOTAL_DEFEAT_HINT" )
 			print( "Finishing match, no more retries left" )
 			PlayFactionDialogueToTeam( "fd_matchDefeat", TEAM_MILITIA, true )
@@ -1029,10 +1030,10 @@ bool function runWave( int waveIndex, bool shouldDoBuyTime )
 			highestScore = 0
 			highestScore_player = GetPlayerArrayOfTeam( TEAM_MILITIA )[0]
 		}
-		
 		else
 		{
 			SetRoundBased( false )
+			AddTeamRoundScoreNoStateChange( TEAM_MILITIA )
 			SetWinner( TEAM_MILITIA, "#FD_TOTAL_VICTORY_HINT", "#FD_TOTAL_VICTORY_HINT" )
 			return true
 		}
@@ -1049,6 +1050,7 @@ bool function runWave( int waveIndex, bool shouldDoBuyTime )
 		}
 		
 		SetRoundBased( false )
+		AddTeamRoundScoreNoStateChange( TEAM_MILITIA )
 		SetWinner( TEAM_MILITIA, "#FD_TOTAL_VICTORY_HINT", "#FD_TOTAL_VICTORY_HINT" )
 		PlayFactionDialogueToTeam( "fd_matchVictory", TEAM_MILITIA, true )
 		

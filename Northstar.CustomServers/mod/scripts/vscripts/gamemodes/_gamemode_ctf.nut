@@ -147,6 +147,7 @@ void function CreateFlags()
 		flag.SetModel( CTF_FLAG_MODEL )
 		flag.SetOrigin( spawn.GetOrigin() + < 0, 0, base.GetBoundingMaxs().z * 2 > )
 		flag.SetVelocity( < 0, 0, 1 > )
+		flag.kv.gravity = 0.8
 		
 		flag.s.canTake <- true
 		
@@ -554,6 +555,17 @@ void function FlagProximityTracker( entity flag )
 		if( !playerInsidePerimeter.len() )
 			ArrayRemoveDead( playerInsidePerimeter )
 		
+		if ( GetCurrentPlaylistVarInt( "ctf_flag_instant_return_in_triggers", 0 ) == 1 )
+		{
+			array< entity > instantReturnTriggers = GetEntArrayByClass_Expensive( "trigger_out_of_bounds" )
+			instantReturnTriggers.extend( GetEntArrayByClass_Expensive( "trigger_hurt" ) )
+			foreach( trigger in instantReturnTriggers )
+			{
+				if( trigger.ContainsPoint( flag.GetOrigin() + < 0, 0, 8 > ) && !IsAlive( flag.GetParent() ) )
+					ResetFlag( flag )
+			}
+		}
+
 		foreach ( player in GetPlayerArrayOfTeam_Alive( flag.GetTeam() ) )
 		{
 			if ( Distance( player.GetOrigin(), flag.GetOrigin() ) < CTF_GetFlagReturnRadius() )
@@ -608,6 +620,7 @@ void function TryReturnFlag( entity player, entity flag )
 	player.EndSignal( "CTF_LeftReturnTriggerArea" )
 	player.EndSignal( "OnDeath" )
 	player.EndSignal( "OnDestroy" )
+	player.EndSignal( "StartPhaseShift" )
 	
 	wait CTF_GetFlagReturnTime()
 	
