@@ -56,7 +56,10 @@ function MpTitanWeaponParticleAccelerator_Init()
 
 void function OnWeaponStartZoomIn_titanweapon_particle_accelerator( entity weapon )
 {
-	array<string> mods = weapon.GetMods()
+	// modified variable for fix zoom problem
+	weapon.s.lastZoomState <- true
+
+		array<string> mods = weapon.GetMods()
 	if ( weapon.HasMod( "fd_split_shot_cost") )
 	{
 		if ( weapon.HasMod( "pas_ion_weapon_ads" ) )
@@ -86,6 +89,9 @@ void function OnWeaponStartZoomIn_titanweapon_particle_accelerator( entity weapo
 
 void function OnWeaponStartZoomOut_titanweapon_particle_accelerator( entity weapon )
 {
+	// modified variable for fix zoom problem
+	weapon.s.lastZoomState <- false
+
 	array<string> mods = weapon.GetMods()
 	mods.fastremovebyvalue( "proto_particle_accelerator" )
 	mods.fastremovebyvalue( "proto_particle_accelerator_pas" )
@@ -101,6 +107,20 @@ void function OnWeaponActivate_titanweapon_particle_accelerator( entity weapon )
 	{
 		weapon.s.initialized <- true
 	}
+
+	// modified variable for fix zoom problem
+	if ( !( "lastZoomState" in weapon.s ) )
+		weapon.s.lastZoomState <- false
+
+	// fix when player zoom OffhandWeapon and switch back to main weapon will not call the OnWeaponZoom callback
+	if( weapon.IsWeaponInAds() != weapon.s.lastZoomState )
+	{
+		if( weapon.IsWeaponInAds() )
+			OnWeaponStartZoomIn_titanweapon_particle_accelerator( weapon )
+		else
+			OnWeaponStartZoomOut_titanweapon_particle_accelerator( weapon )
+	}
+
 	#if SERVER
 	entity owner = weapon.GetWeaponOwner()
 	owner.SetSharedEnergyRegenDelay( 0.5 )
