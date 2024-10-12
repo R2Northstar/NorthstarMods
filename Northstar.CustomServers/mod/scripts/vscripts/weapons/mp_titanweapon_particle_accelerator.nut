@@ -59,7 +59,7 @@ void function OnWeaponStartZoomIn_titanweapon_particle_accelerator( entity weapo
 	// modified variable for fix zoom problem
 	weapon.s.lastZoomState <- true
 
-		array<string> mods = weapon.GetMods()
+	array<string> mods = weapon.GetMods()
 	if ( weapon.HasMod( "fd_split_shot_cost") )
 	{
 		if ( weapon.HasMod( "pas_ion_weapon_ads" ) )
