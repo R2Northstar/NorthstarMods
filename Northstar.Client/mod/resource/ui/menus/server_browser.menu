@@ -169,7 +169,7 @@ resource/ui/menus/mods_browse.menu
 			pin_to_sibling_corner BOTTOM_LEFT
 		}
 
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 		// PasswordProtected
 
@@ -1780,8 +1780,8 @@ resource/ui/menus/mods_browse.menu
 			pin_corner_to_sibling TOP_LEFT
 			pin_to_sibling_corner TOP_LEFT
 			navUp BtnServerDummmyTop
-			navRight BtnServerJoin
 			navDown BtnServer2
+			navRight BtnServerDescription
 		}
 		BtnServer2
 		{
@@ -1796,7 +1796,7 @@ resource/ui/menus/mods_browse.menu
 			pin_to_sibling_corner BOTTOM_LEFT
 			navUp BtnServer1
 			navDown BtnServer3
-			navRight BtnServerJoin
+			navRight BtnServerDescription
 		}
 		BtnServer3
 		{
@@ -1811,7 +1811,7 @@ resource/ui/menus/mods_browse.menu
 			pin_to_sibling_corner BOTTOM_LEFT
 			navUp BtnServer2
 			navDown BtnServer4
-			navRight BtnServerJoin
+			navRight BtnServerDescription
 		}
 		BtnServer4
 		{
@@ -1827,7 +1827,7 @@ resource/ui/menus/mods_browse.menu
 			//ypos 11
 			navUp BtnServer3
 			navDown BtnServer5
-			navRight BtnServerJoin
+			navRight BtnServerDescription
 		}
 		BtnServer5
 		{
@@ -1842,7 +1842,7 @@ resource/ui/menus/mods_browse.menu
 			pin_to_sibling_corner BOTTOM_LEFT
 			navUp BtnServer4
 			navDown BtnServer6
-			navRight BtnServerJoin
+			navRight BtnServerDescription
 		}
 		BtnServer6
 		{
@@ -1857,7 +1857,7 @@ resource/ui/menus/mods_browse.menu
 			pin_to_sibling_corner BOTTOM_LEFT
 			navUp BtnServer5
 			navDown BtnServer7
-			navRight BtnServerJoin
+			navRight BtnServerDescription
 		}
 		BtnServer7
 		{
@@ -1872,7 +1872,7 @@ resource/ui/menus/mods_browse.menu
 			pin_to_sibling_corner BOTTOM_LEFT
 			navUp BtnServer6
 			navDown BtnServer8
-			navRight BtnServerJoin
+			navRight BtnServerDescription
 		}
 		BtnServer8
 		{
@@ -1887,7 +1887,7 @@ resource/ui/menus/mods_browse.menu
 			pin_to_sibling_corner BOTTOM_LEFT
 			navUp BtnServer7
 			navDown BtnServer9
-			navRight BtnServerJoin
+			navRight BtnServerDescription
 		}
 		BtnServer9
 		{
@@ -1902,7 +1902,7 @@ resource/ui/menus/mods_browse.menu
 			pin_to_sibling_corner BOTTOM_LEFT
 			navUp BtnServer8
 			navDown BtnServer10
-			navRight BtnServerJoin
+			navRight BtnServerDescription
 		}
 		BtnServer10
 		{
@@ -1917,7 +1917,7 @@ resource/ui/menus/mods_browse.menu
 			pin_to_sibling_corner BOTTOM_LEFT
 			navUp BtnServer9
 			navDown BtnServer11
-			navRight BtnServerJoin
+			navRight BtnServerDescription
 		}
 		BtnServer11
 		{
@@ -1933,6 +1933,7 @@ resource/ui/menus/mods_browse.menu
 			navUp BtnServer10
 			navDown BtnServer12
 			navRight BtnServerJoin
+			navLeft BtnServerSearch
 		}
 		BtnServer12
 		{
@@ -1948,6 +1949,7 @@ resource/ui/menus/mods_browse.menu
 			navUp BtnServer11
 			navDown BtnServer13
 			navRight BtnServerJoin
+			navLeft BtnServerSearch
 		}
 		BtnServer13
 		{
@@ -1963,6 +1965,7 @@ resource/ui/menus/mods_browse.menu
 			navUp BtnServer12
 			navDown BtnServer14
 			navRight BtnServerJoin
+			navLeft BtnServerSearch
 		}
 		BtnServer14
 		{
@@ -1978,6 +1981,7 @@ resource/ui/menus/mods_browse.menu
 			navUp BtnServer13
 			navDown BtnServer15
 			navRight BtnServerJoin
+			navLeft BtnServerSearch
 		}
 		BtnServer15
 		{
@@ -1993,6 +1997,7 @@ resource/ui/menus/mods_browse.menu
 			navUp BtnServer14
 			navRight BtnServerJoin
 			navDown BtnServerDummmyBottom
+			navLeft BtnServerSearch
 		}
 		BtnServerDummmyBottom {
 			ControlName RuiButton
@@ -2042,7 +2047,6 @@ resource/ui/menus/mods_browse.menu
 	{
 		ControlName RuiButton
 		InheritProperties RuiSmallButton
-		//labelText "V"
 		wide 40
 		tall 40
 		xpos 2
@@ -2078,7 +2082,6 @@ resource/ui/menus/mods_browse.menu
 	{
 		ControlName RuiButton
 		InheritProperties RuiSmallButton
-		//labelText "V"
 		wide 40
 		tall 562
 		xpos 2
@@ -2128,23 +2131,13 @@ resource/ui/menus/mods_browse.menu
 			pin_to_sibling_corner TOP_LEFT
 	}
 
-	//MouseMovementCaptureaaaaaaa
-	//{
-	// ControlName CMouseMovementCapturePanel
-	// wide %100
-	// tall %100
-	// xpos 0
-	// ypos 0
-	// zpos 2
-	//}
-
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
+// Filter Stuff
 
 	FilterPanel
 	{
 		ControlName RuiPanel
-		wide 1200
+		wide 1700
 		tall 153
 		xpos -8
 		classname FilterPanelChild
@@ -2167,7 +2160,6 @@ resource/ui/menus/mods_browse.menu
 		textAlignment west
 		classname FilterPanelChild
 
-		wide 500
 		xpos -23
 		ypos -16
 
@@ -2175,12 +2167,14 @@ resource/ui/menus/mods_browse.menu
 		visible 1
 		zpos 0
 
+		auto_wide_tocontents 1
+
 		pin_to_sibling FilterButtonsRowAnchor
 		pin_corner_to_sibling TOP_LEFT
 		pin_to_sibling_corner TOP_LEFT
 
 		navUp BtnServer15
-		navDown SwtBtnSelectMap
+		navDown BtnSelectMap
 	}
 
 	BtnServerSearch
@@ -2188,8 +2182,8 @@ resource/ui/menus/mods_browse.menu
 		ControlName TextEntry
 		classname FilterPanelChild
 		zpos 100 // This works around input weirdness when the control is constructed by code instead of VGUI blackbox.
-		xpos -400
-		ypos -5
+		xpos -10
+		ypos -4
 		wide 390
 		tall 30
 		textHidden 0
@@ -2200,44 +2194,162 @@ resource/ui/menus/mods_browse.menu
 		unicode 1
 
 		pin_to_sibling BtnSearchLabel
-		pin_corner_to_sibling TOP_LEFT
+		pin_corner_to_sibling TOP_RIGHT
 		pin_to_sibling_corner TOP_RIGHT
 
 		navUp BtnServer15
-		navDown SwtBtnSelectMap
+		navDown BtnSelectMap
+		navRight SwtBtnSelectRegion
 	}
 
-	SwtBtnSelectMap
+	BtnSelectMap
 	{
 		ControlName RuiButton
-		InheritProperties SwitchButton
+		InheritProperties RuiSmallButton
 		labelText "#MAP_FILTER"
 		ConVar "filter_map"
 		classname FilterPanelChild
-		wide 500
+		wide 400
 
 		pin_to_sibling BtnSearchLabel
 		pin_corner_to_sibling TOP_LEFT
 		pin_to_sibling_corner BOTTOM_LEFT
 
 		navUp BtnServerSearch
-		navDown SwtBtnSelectGamemode
+		navDown BtnSelectGamemode
+		navRight BtnMapFiltersClear
 	}
 
-	SwtBtnSelectGamemode
+	BtnMapFiltersClear
 	{
 		ControlName RuiButton
-		InheritProperties SwitchButton
+		InheritProperties RuiSmallButton
+		labelText "#CLEAR_FILTERS"
+		classname FilterPanelChild
+		wide 100
+
+		scriptID 999
+
+		pin_to_sibling BtnSelectMap
+		pin_corner_to_sibling TOP_LEFT
+		pin_to_sibling_corner TOP_RIGHT
+
+		navUp BtnServerSearch
+		navDown BtnGamemodeFiltersClear
+		navLeft BtnSelectMap
+		navRight SwtBtnSelectMods
+	}
+
+	LabelMapSelected
+	{
+		ControlName Label
+		labelText ""
+		textAlignment east
+		wide 350
+		tall 40
+		xpos -5
+		classname FilterPanelChild
+		pin_to_sibling BtnSelectMap
+		pin_corner_to_sibling TOP_RIGHT
+		pin_to_sibling_corner TOP_RIGHT
+	}
+
+	BtnSelectGamemode
+	{
+		ControlName RuiButton
+		InheritProperties RuiSmallButton
 		labelText "#GAMEMODE_FILTER"
 		ConVar "filter_gamemode"
 		classname FilterPanelChild
-		wide 500
+		wide 400
 
-		pin_to_sibling SwtBtnSelectMap
+		pin_to_sibling BtnSelectMap
 		pin_corner_to_sibling TOP_LEFT
 		pin_to_sibling_corner BOTTOM_LEFT
 
-		navUp SwtBtnSelectMap
+		navUp BtnSelectMap
+		navDown SwtBtnSelectRegion
+		navRight BtnGamemodeFiltersClear
+	}
+
+	BtnGamemodeFiltersClear
+	{
+		ControlName RuiButton
+		InheritProperties RuiSmallButton
+		labelText "#CLEAR_FILTERS"
+		classname FilterPanelChild
+		wide 100
+
+		scriptID 999
+
+		pin_to_sibling BtnSelectGamemode
+		pin_corner_to_sibling TOP_LEFT
+		pin_to_sibling_corner TOP_RIGHT
+
+		navUp BtnMapFiltersClear
+		navDown SwtBtnSelectRegion
+		navLeft BtnSelectGamemode
+		navRight SwtBtnSelectMods
+	}
+
+	LabelGamemodeSelected
+	{
+		ControlName Label
+		labelText ""
+		textAlignment east
+		wide 250
+		tall 40
+		xpos -5
+		classname FilterPanelChild
+		pin_to_sibling BtnSelectGamemode
+		pin_corner_to_sibling TOP_RIGHT
+		pin_to_sibling_corner TOP_RIGHT
+	}
+
+	SwtBtnSelectRegion
+	{
+		ControlName RuiButton
+		InheritProperties SwitchButton
+		labelText "#REGION_FILTER"
+		ConVar "filter_region"
+		classname FilterPanelChild
+		wide 500
+
+		list
+		{
+			"#SWITCH_ANY" "SWITCH_ANY"
+		}
+
+		pin_to_sibling BtnSearchLabel
+		pin_corner_to_sibling TOP_LEFT
+		pin_to_sibling_corner TOP_RIGHT
+
+		navUp BtnSelectGamemode
+		navDown SwtBtnSelectMods
+	}
+
+	SwtBtnSelectMods
+	{
+		ControlName RuiButton
+		InheritProperties SwitchButton
+		labelText "#MODS_FILTER"
+		ConVar "filter_mods"
+		classname FilterPanelChild
+		wide 500
+
+		list
+		{
+			"#SWITCH_ANY" "SWITCH_ANY"
+			"#INSTALLED_MODS" "INSTALLED"
+			"#OUTDATED_MODS" "OUTDATED"
+			"#MISSING_MODS" "MISSING"
+		}
+
+		pin_to_sibling SwtBtnSelectRegion
+		pin_corner_to_sibling TOP_LEFT
+		pin_to_sibling_corner BOTTOM_LEFT
+
+		navUp SwtBtnSelectRegion
 		navDown SwtBtnHideFull
 	}
 
@@ -2253,15 +2365,15 @@ resource/ui/menus/mods_browse.menu
 
 		list
 		{
-			"#SWITCH_NO" 0
+			"#SWITCH_ANY" 0
 			"#SWITCH_YES" 1
 		}
 
-		pin_to_sibling BtnSearchLabel
+		pin_to_sibling SwtBtnSelectRegion
 		pin_corner_to_sibling TOP_LEFT
 		pin_to_sibling_corner TOP_RIGHT
 
-		navUp SwtBtnSelectGamemode
+		navUp SwtBtnSelectMods
 		navDown SwtBtnHideEmpty
 	}
 
@@ -2329,10 +2441,10 @@ resource/ui/menus/mods_browse.menu
 		pin_corner_to_sibling TOP_RIGHT
 		pin_to_sibling_corner BOTTOM_RIGHT
 
-		navUp SwtBtnHideProtected
+		navUp BtnServerJoin
 		navDown BtnDummyAfterFilterClear
 		navLeft SwtBtnHideProtected
-		navRight BtnServerJoin
+		navRight BtnServerSearch
 	}
 
 	BtnDummyAfterFilterClear {
@@ -2343,70 +2455,20 @@ resource/ui/menus/mods_browse.menu
 		visible 1
 	}
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
+// Server Details 
 		ServerDetailsPanel
 		{
 			ControlName RuiPanel
 			xpos 1300
 			ypos 160
-			tall 800
+			tall 645
 			wide 500
 			rui "ui/control_options_description.rpak"
 			wrap 1
 			visible 1
 			zpos -1
-		}
 
-		//TestPanel
-		//{
-		// ControlName RuiPanel
-		// tall 420
-		// wide 500
-		// ypos -330
-		// rui "ui/control_options_description.rpak"
-		// wrap 1
-		// visible 1
-		// zpos -1
-
-		// pin_to_sibling ServerDetailsPanel
-		// pin_corner_to_sibling TOP_LEFT
-		// pin_to_sibling_corner TOP_LEFT
-		//}
-
-		LabelDescription
-		{
-			ControlName Label
-			textAlignment north
-			tall 420
-			wide 460
-			ypos -300
-			xpos -20
-
-			wrap 1
-			visible 1
-			zpos -1
-
-			pin_to_sibling ServerDetailsPanel
-			pin_corner_to_sibling TOP_LEFT
-			pin_to_sibling_corner TOP_LEFT
-		}
-
-		LabelMods
-		{
-			ControlName Label
-			textAlignment north
-			tall 420
-			wide 460
-			ypos -330
-			xpos -20
-
-			wrap 1
-			visible 1
-			zpos -1
-
-			pin_to_sibling ServerDetailsPanel
-			pin_corner_to_sibling TOP_LEFT
-			pin_to_sibling_corner TOP_LEFT
+			classname ServerDetails
 		}
 
 		NextMapImage
@@ -2418,6 +2480,8 @@ resource/ui/menus/mods_browse.menu
 			scaleImage 1
 
 			rui "ui/basic_menu_image.rpak"
+
+			classname ServerDetails
 
 			pin_to_sibling ServerDetailsPanel
 			pin_corner_to_sibling TOP_RIGHT
@@ -2432,6 +2496,8 @@ resource/ui/menus/mods_browse.menu
 			rui "ui/control_options_description.rpak"
 			visible 0
 			zpos 1
+
+			classname ServerDetails
 
 			pin_to_sibling ServerDetailsPanel
 			pin_corner_to_sibling TOP_LEFT
@@ -2455,6 +2521,8 @@ resource/ui/menus/mods_browse.menu
 			font Default_43_DropShadow
 			allcaps 1
 			fgcolor_override "255 255 255 255"
+
+			classname ServerDetails
 		}
 		NextGameModeName
 		{
@@ -2474,6 +2542,8 @@ resource/ui/menus/mods_browse.menu
 			font Default_28_DropShadow
 			allcaps 1
 			fgcolor_override "255 255 255 255"
+
+			classname ServerDetails
 		}
 		NextModeIcon
 		{
@@ -2486,6 +2556,8 @@ resource/ui/menus/mods_browse.menu
 			zpos 1
 
 			rui "ui/basic_image_add.rpak"
+
+			classname ServerDetails
 
 			pin_to_sibling NextGameModeName
 			pin_corner_to_sibling BOTTOM_RIGHT
@@ -2510,6 +2582,8 @@ resource/ui/menus/mods_browse.menu
 			allcaps 1
 			fgcolor_override "255 255 255 255"
 
+			classname ServerDetails
+
 			pin_to_sibling ServerDetailsPanel
 			pin_corner_to_sibling TOP_LEFT
 			pin_to_sibling_corner TOP_LEFT
@@ -2519,30 +2593,61 @@ resource/ui/menus/mods_browse.menu
 		{
 			ControlName RuiButton
 			InheritProperties RuiSmallButton
-			labelText "#DESCRIPTION"
+			labelText "#SERVER_DESCRIPTION"
 
 			textAlignment center
 			wide 250
-			zpos 999
 			ypos -1
+
+			classname ServerDetails
 
 			pin_to_sibling NextMapImage
 			pin_corner_to_sibling TOP_LEFT
 			pin_to_sibling_corner BOTTOM_LEFT
+
+			// navUp 
+			navDown BtnServerJoin
+			navLeft BtnServer7
+			navRight BtnServerMods
 		}
+
 		BtnServerMods
 		{
 			ControlName RuiButton
 			InheritProperties RuiSmallButton
-			labelText "#MODS"
+			labelText "#SERVER_REQUIRED_MODS"
 
 			textAlignment center
 			wide 250
-			zpos 999
+			classname ServerDetails
 
 			pin_to_sibling BtnServerDescription
 			pin_corner_to_sibling TOP_LEFT
 			pin_to_sibling_corner TOP_RIGHT
+
+			// navUp 
+			navDown BtnServerJoin
+			navLeft BtnServerDescription
+			// navRight
+		}
+
+		LabelServerDetails
+		{
+			ControlName Label
+			textAlignment north
+			tall 260
+			wide 500
+			ypos -2
+			xpos -2
+			labelText ""
+
+			wrap 1
+			visible 1
+			classname ServerDetails
+
+			pin_to_sibling BtnServerDescription
+			pin_corner_to_sibling TOP_LEFT
+			pin_to_sibling_corner BOTTOM_LEFT
 		}
 
 		BtnServerJoin
@@ -2550,19 +2655,154 @@ resource/ui/menus/mods_browse.menu
 			ControlName RuiButton
 			InheritProperties RuiSmallButton
 			labelText "#JOIN_BUTTON"
-			wide 80
-			xpos -17
+			wide 466
+			xpos -6
 			ypos -57
 			zpos 90
 
 			scriptID 999
 
+			classname ServerDetails
+
 			pin_to_sibling ServerDetailsPanel
 			pin_corner_to_sibling TOP_RIGHT
 			pin_to_sibling_corner BOTTOM_RIGHT
 
-			navLeft BtnFiltersClear
-			navRight BtnServerSearch
+			navUp BtnServerDescription
+			navDown BtnFiltersClear
+			navLeft BtnServer15
+			navRight BtnServerMods
+		}
+
+		///////////////////////////////////// SLIDER BAR FOR BOTH LABEL ////////////////////////
+
+		BtnLabelListUpArrow
+		{
+			ControlName RuiButton
+			InheritProperties RuiSmallButton
+			wide 40
+			tall 40
+			// xpos -2
+	
+			image "vgui/hud/white"
+			drawColor "255 255 255 128"
+
+			classname ServerDetails
+	
+			pin_to_sibling BtnServerMods
+			pin_corner_to_sibling TOP_RIGHT
+			pin_to_sibling_corner BOTTOM_RIGHT
+		}
+	
+		BtnLabelListUpArrowPanel
+		{
+			ControlName RuiPanel
+			wide 40
+			tall 40
+			// xpos -2
+	
+			rui "ui/control_options_description.rpak"
+	
+			visible 1
+			zpos -1
+
+			classname ServerDetails
+	
+			pin_to_sibling BtnServerMods
+			pin_corner_to_sibling TOP_RIGHT
+			pin_to_sibling_corner BOTTOM_RIGHT
+		}
+
+		BtnLabelListSlider
+		{
+			ControlName RuiButton
+			InheritProperties RuiSmallButton
+			wide 40
+			tall 180
+			zpos 0
+	
+			image "vgui/hud/white"
+			drawColor "255 255 255 128"
+
+			classname ServerDetails
+	
+			pin_to_sibling BtnLabelListUpArrow
+			pin_corner_to_sibling TOP_RIGHT
+			pin_to_sibling_corner BOTTOM_RIGHT
+		}
+	
+		BtnLabelListSliderPanel
+		{
+			ControlName RuiPanel
+			wide 40
+			tall 180
+
+			rui "ui/control_options_description.rpak"
+	
+			visible 1
+			zpos -1
+
+			classname ServerDetails
+	
+			pin_to_sibling BtnLabelListUpArrow
+			pin_corner_to_sibling TOP_RIGHT
+			pin_to_sibling_corner BOTTOM_RIGHT
+		}
+	
+		BtnLabelListDownArrow
+		{
+			ControlName RuiButton
+			InheritProperties RuiSmallButton
+			wide 40
+			tall 40
+			// xpos -2
+			ypos 180
+	
+			image "vgui/hud/white"
+			drawColor "255 255 255 128"
+
+			classname ServerDetails
+	
+			pin_to_sibling BtnLabelListUpArrow
+			pin_corner_to_sibling TOP_RIGHT
+			pin_to_sibling_corner BOTTOM_RIGHT
+		}
+	
+		BtnLabelListDownArrowPanel
+		{
+			ControlName RuiPanel
+			wide 40
+			tall 40
+			// xpos -2
+			ypos 180
+	
+			rui "ui/control_options_description.rpak"
+	
+			visible 1
+			zpos -1
+
+			classname ServerDetails
+	
+			pin_to_sibling BtnLabelListUpArrow
+			pin_corner_to_sibling TOP_RIGHT
+			pin_to_sibling_corner BOTTOM_RIGHT
+		}
+	
+		// sh_menu_models.gnut has a global function which gets called when
+		// left mouse button gets called while hovering and has mouse
+		// deltaX; deltaY which we can yoink for ourselfes
+		MouseMovementCaptureLabel
+		{
+			ControlName CMouseMovementCapturePanel
+			wide 40
+			tall 180
+			zpos 1
+
+			classname ServerDetails
+
+			pin_to_sibling BtnLabelListUpArrow
+			pin_corner_to_sibling TOP_RIGHT
+			pin_to_sibling_corner BOTTOM_RIGHT
 		}
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
