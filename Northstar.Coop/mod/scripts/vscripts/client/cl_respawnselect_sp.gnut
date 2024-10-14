@@ -1,0 +1,79 @@
+global function ShowRespawnSelect_SP
+global function ClRespawnselect_SP_Init
+global function DisableDeathBlur
+global function DisplayRespawnPrompt
+global bool Coop_isButtonPressedCallbackRegistered = false
+struct
+{
+	bool deathBlur = true
+	var respawnHintRui
+} file
+
+
+void function ClRespawnselect_SP_Init()
+{
+	Assert( !IsMultiplayer() )
+
+	AddCallback_OnPlayerLifeStateChanged( Callback_PlayerLifestateChanged )
+	file.respawnHintRui = RuiCreate( $"ui/respawn_hint.rpak", clGlobal.topoFullScreen, RUI_DRAW_HUD, RUI_SORT_SCREENFADE + 100 )
+	RuiSetResolutionToScreenSize( file.respawnHintRui )
+}
+
+void function Callback_PlayerLifestateChanged( entity player, int oldLifeState, int newLifeState )
+{
+	if ( player.GetPlayerSettings() == "spectator" )
+	{
+		if ( !IsTestMap() )
+		{
+			ScreenFade( GetLocalViewPlayer(), 0, 0, 0, 255, 0.5, 1.0, FFADE_IN )
+			//printt( "cl SCREENFADE: " + 0.5 + " " + 1.0 )
+		}
+		return
+	}
+
+	if ( oldLifeState == newLifeState )
+		return
+
+	if ( player != GetLocalViewPlayer() )
+		return
+
+	if ( newLifeState == LIFE_DEAD )
+		thread ShowRespawnSelect_SP()
+}
+
+void function DisableDeathBlur()
+{
+	file.deathBlur = false
+}
+
+void function ShowRespawnSelect_SP()
+{
+	if ( IsAlive( GetLocalViewPlayer() ) )
+		return
+
+	//wait 1.5
+
+	//if ( file.deathBlur )
+		//SetScreenBlur( 1.0, 1.0, EASING_LINEAR)
+
+	//wait 0.25
+	//ScreenFade( GetLocalViewPlayer(), 0, 0, 0, 255, 0.8, 5, FFADE_OUT )
+}
+
+void function PlayerPressed_RespawnPilotSP( entity player )
+{
+	player.ClientCommand( "RespawnNowSP" )
+	RuiSetBool( file.respawnHintRui, "isVisible", false )
+}
+
+void function DisplayRespawnPrompt()
+{	
+	
+	if( !Coop_isButtonPressedCallbackRegistered )
+	{
+		RegisterButtonPressedCallback( KEY_SPACE,		PlayerPressed_RespawnPilotSP )
+		RegisterButtonPressedCallback( BUTTON_X,		PlayerPressed_RespawnPilotSP )
+		Coop_isButtonPressedCallbackRegistered = true
+	}
+	RuiSetBool( file.respawnHintRui, "isVisible", true )
+}
