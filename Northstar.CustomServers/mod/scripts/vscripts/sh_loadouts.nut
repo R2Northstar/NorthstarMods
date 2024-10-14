@@ -2812,6 +2812,9 @@ string function GetParentLoadoutProperty( string loadoutType, string propertyNam
 
 int function GetPersistentSpawnLoadoutIndex( entity player, string loadoutType )
 {
+	if (!IsValid ( player ) )
+		return -1
+
 	int loadoutIndex = player.GetPersistentVarAsInt( loadoutType + "SpawnLoadout.index" )
 	if ( loadoutType == "titan" && loadoutIndex >= NUM_PERSISTENT_TITAN_LOADOUTS )
 		loadoutIndex = 0
