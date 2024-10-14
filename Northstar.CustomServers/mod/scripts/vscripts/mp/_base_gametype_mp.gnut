@@ -250,6 +250,7 @@ void function CodeCallback_OnPlayerKilled( entity player, var damageInfo )
 {
 	PlayerOrNPCKilled( player, damageInfo )
 	HandleDeathPackage( player, damageInfo )
+	HandleAssists( player, damageInfo )
 	thread PostDeathThread_MP( player, damageInfo )
 }
 
