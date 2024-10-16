@@ -32,9 +32,11 @@ void function AiGameModes_SetNPCWeapons( string npcClass, array<string> weapons 
 
 //------------------------------------------------------
 
-void function AiGameModes_SpawnDropShip( vector pos, vector rot, int team, int count, void functionref( array<entity> guys ) squadHandler = null )
+void function AiGameModes_SpawnDropShip( entity node, int team, int count, void functionref( array<entity> guys ) squadHandler = null )
 {  
 	string squadName = MakeSquadName( team, UniqueString( "" ) )
+	vector pos = node.GetOrigin()
+	vector rot = node.GetAngles()
 
 	CallinData drop
 	drop.origin 		= pos
@@ -62,14 +64,17 @@ void function AiGameModes_SpawnDropShip( vector pos, vector rot, int team, int c
 		guy.AssaultSetFightRadius( 800 )
 		guy.EnableNPCFlag( NPC_ALLOW_PATROL | NPC_ALLOW_INVESTIGATE | NPC_ALLOW_HAND_SIGNALS | NPC_ALLOW_FLEE | NPC_NEW_ENEMY_FROM_SOUND | NPC_STAY_CLOSE_TO_SQUAD )
 	}
-	
+
 	if ( squadHandler != null )
 		thread squadHandler( guys )
 }
 
 
-void function AiGameModes_SpawnDropPod( vector pos, vector rot, int team, string content /*( ͡° ͜ʖ ͡°)*/, void functionref( array<entity> guys ) squadHandler = null, int flags = 0 )
+void function AiGameModes_SpawnDropPod( entity node, int team, string content /*( ͡° ͜ʖ ͡°)*/, void functionref( array<entity> guys ) squadHandler = null, int flags = 0 )
 {
+	vector pos = node.GetOrigin()
+	vector rot = node.GetAngles()
+
 	entity pod = CreateDropPod( pos, <0,0,0> )
 	
 	InitFireteamDropPod( pod, flags )
@@ -107,15 +112,17 @@ void function AiGameModes_SpawnDropPod( vector pos, vector rot, int team, string
 	waitthread LaunchAnimDropPod( pod, "pod_testpath", pos, rot )
 	
 	ActivateFireteamDropPod( pod, guys )
-
 	// start searching for enemies
 	if ( squadHandler != null )
 		thread squadHandler( guys )
 }
 
 const float REAPER_WARPFALL_DELAY = 4.7 // same as fd does
-void function AiGameModes_SpawnReaper( vector pos, vector rot, int team, string aiSettings = "", void functionref( entity reaper ) reaperHandler = null )
+void function AiGameModes_SpawnReaper( entity node, int team, string aiSettings = "", void functionref( entity reaper ) reaperHandler = null )
 {
+	vector pos = node.GetOrigin()
+	vector rot = node.GetAngles()
+
 	float reaperLandTime = REAPER_WARPFALL_DELAY + 1.2 // reaper takes ~1.2s to warpfall
 	thread HotDrop_Spawnpoint( pos, team, reaperLandTime, false, damagedef_reaper_fall )
 
@@ -193,8 +200,11 @@ void function HotDrop_Spawnpoint( vector origin, int team, float impactTime, boo
 
 // including aisettings stuff specifically for at bounty titans
 const float TITANFALL_WARNING_DURATION = 5.0
-void function AiGameModes_SpawnTitan( vector pos, vector rot, int team, string setFile, string aiSettings = "", void functionref( entity titan ) titanHandler = null )
+void function AiGameModes_SpawnTitan( entity node, int team, string setFile, string aiSettings = "", void functionref( entity titan ) titanHandler = null )
 {
+	vector pos = node.GetOrigin()
+	vector rot = node.GetAngles()
+
 	entity titan = CreateNPCTitan( setFile, TEAM_BOTH, pos, rot )
 	SetSpawnOption_Titanfall( titan )
 	SetSpawnOption_Warpfall( titan )
@@ -206,7 +216,7 @@ void function AiGameModes_SpawnTitan( vector pos, vector rot, int team, string s
 		SetSpawnOption_AISettings( titan, aiSettings )
 	
 	DispatchSpawn( titan )
-	
+	WaitTillHotDropComplete( titan )
 	if ( titanHandler != null )
 		thread titanHandler( titan )
 }
