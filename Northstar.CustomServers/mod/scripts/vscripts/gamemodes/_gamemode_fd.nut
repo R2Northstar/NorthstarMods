@@ -1351,6 +1351,7 @@ void function GamemodeFD_InitPlayer( entity player )
 	player.s.extracashnag <- Time()
 	player.s.didthepvpglitch <- false
 	player.s.isbeingmonitored <- false
+	player.s.scoredamage <- 0.0
 	thread SetTurretSettings_threaded( player )
 	
 	// only start the highlight when we start playing, not during dropship
@@ -1963,7 +1964,7 @@ void function FD_PlayerRespawnThreaded( entity player )
 		{
 			if ( file.dropshipSpawnPosition == < 0, 0, 0 > && file.DropPodSpawns.len() || GetConVarBool( "ns_fd_disable_respawn_dropship" ) && file.DropPodSpawns.len() )
 				thread FD_SpawnPlayerDroppod( player )
-			else if ( !file.DropPodSpawns.len() || GetGameState() != eGameState.Playing )
+			else if ( !file.DropPodSpawns.len() || !GamePlaying() )
 			{
 				player.SetOrigin( file.groundSpawnPosition )
 				player.SetAngles( file.groundSpawnAngles )
@@ -2024,7 +2025,12 @@ void function FD_DamageByPlayerCallback( entity victim, var damageInfo )
 	if ( player in file.playerAwardStats )
 		file.playerAwardStats[player]["damageDealt"] += damageDone
 	
-	file.players[player].assaultScoreThisRound += damageDone.tointeger() / 100
+	player.s.scoredamage += damageDone
+	while( player.s.scoredamage >= 100 )
+	{
+		player.s.scoredamage -= 100
+		file.players[player].assaultScoreThisRound++
+	}
 }
 
 void function FD_DamageToMoney( entity victim, var damageInfo )
@@ -2050,12 +2056,19 @@ void function FD_DamageToMoney( entity victim, var damageInfo )
 					AddMoneyToPlayer( attacker, 1 )
 				}
 			}
+
+			if ( soul.GetShieldHealth() <= 0 )
+			{
+				attacker.s.scoredamage += damage
+				while( attacker.s.scoredamage >= 100 )
+				{
+					attacker.s.scoredamage -= 100
+					file.players[attacker].assaultScoreThisRound++
+				}
+			}
 			
 			if ( attacker in file.playerAwardStats )
 				file.playerAwardStats[attacker]["damageDealt"] += damage
-			
-			if ( attacker in file.players )
-				file.players[attacker].assaultScoreThisRound += damage.tointeger() / 100
 		}
 	}
 }
@@ -2818,18 +2831,6 @@ void function FD_OnNPCDeath( entity victim, entity attacker, var damageInfo )
 			default:
 				money = 0
 		}
-		
-		if ( victim.IsTitan() )
-		{
-			foreach ( player in GetPlayerArray() )
-				Remote_CallFunction_NonReplay( player, "ServerCallback_OnTitanKilled", attacker.GetEncodedEHandle(), victim.GetEncodedEHandle(), scriptDamageType, damageSourceId )
-		}
-		else
-		{
-			foreach ( player in GetPlayerArray() )
-				Remote_CallFunction_NonReplay( player, "ServerCallback_OnEntityKilled", attacker.GetEncodedEHandle(), victim.GetEncodedEHandle(), scriptDamageType, damageSourceId )
-		}
-		
 		if ( damageSourceId == eDamageSourceId.rodeo_forced_titan_eject || damageSourceId == eDamageSourceId.core_overload )
 			UpdatePlayerStat( attacker, "fd_stats", "rodeoNukes" )
 	}
@@ -2845,9 +2846,6 @@ void function FD_OnNPCDeath( entity victim, entity attacker, var damageInfo )
 	{
 		if ( !inflictor.IsNPC() && attacker.IsPlayer() ) //Turret and Auto-Titan kills should not give xp awards
 		{
-			if ( DamageInfo_GetCustomDamageType( damageInfo ) & DF_HEADSHOT )
-				AddPlayerScore( attacker, "NPCHeadshot" )
-			
 			entity weapon = attacker.GetActiveWeapon()
 			bool canWeaponEarnXp = IsValid( weapon ) && ShouldTrackXPForWeapon( weapon.GetWeaponClassName() ) ? true : false
 			
@@ -2902,31 +2900,6 @@ void function FD_OnNPCDeath( entity victim, entity attacker, var damageInfo )
 					AddPlayerScore( attacker, "MegaKill" )
 				else if ( attacker.s.currentTimedKillstreak == 6 )
 					ShowLargePilotKillStreak( attacker )
-			}
-
-			switch ( GetTitanCharacterName( victim ) && GetGlobalNetInt( "FD_waveState" ) == WAVE_STATE_IN_PROGRESS )
-			{
-				case "ion":
-					PlayFactionDialogueToPlayer( "kc_pilotkillIon", attacker )
-					break
-				case "tone":
-					PlayFactionDialogueToPlayer( "kc_pilotkillTone", attacker )
-					break
-				case "legion":
-					PlayFactionDialogueToPlayer( "kc_pilotkillLegion", attacker )
-					break
-				case "scorch":
-					PlayFactionDialogueToPlayer( "kc_pilotkillScorch", attacker )
-					break
-				case "ronin":
-					PlayFactionDialogueToPlayer( "kc_pilotkillRonin", attacker )
-					break
-				case "northstar":
-					PlayFactionDialogueToPlayer( "kc_pilotkillNorthstar", attacker )
-					break
-				default:
-					PlayFactionDialogueToPlayer( "kc_pilotkilltitan", attacker )
-					break
 			}
 		}
 	}

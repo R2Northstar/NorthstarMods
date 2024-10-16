@@ -600,12 +600,9 @@ void function GameStateEnter_WinnerDetermined_Threaded()
 	bool doReplay = Replay_IsEnabled() && IsRoundWinningKillReplayEnabled() && IsValid( replayAttacker ) && !ClassicMP_ShouldRunEpilogue()
 				 && Time() - file.roundWinningKillReplayTime <= ROUND_WINNING_KILL_REPLAY_LENGTH_OF_REPLAY && winningTeam != TEAM_UNASSIGNED
  	
+	SetServerVar( "roundWinningKillReplayPlaying", doReplay )
 	if ( doReplay )
 	{
-		bool killreplayDisabled = expect bool( GetServerVar( "replayDisabled" ) )
-		if ( !killreplayDisabled ) // Prevent killcams interrupting
-			SetServerVar( "replayDisabled", true )
-	
 		float replayLength = ROUND_WINNING_KILL_REPLAY_TOTAL_LENGTH
 		if ( "respawnTime" in replayAttacker.s && Time() - replayAttacker.s.respawnTime < replayLength )
 			replayLength += Time() - expect float ( replayAttacker.s.respawnTime )
@@ -637,8 +634,7 @@ void function GameStateEnter_WinnerDetermined_Threaded()
 		if ( IsRoundBased() && !HasRoundScoreLimitBeenReached() && HasSwitchedSides() == 0 )
 			CleanUpEntitiesForRoundEnd()
 		
-		if ( !killreplayDisabled )
-			SetServerVar( "replayDisabled", false )
+		SetServerVar( "roundWinningKillReplayPlaying", false )
 	}
 	else if ( IsRoundBased() && !HasRoundScoreLimitBeenReached() || !ClassicMP_ShouldRunEpilogue() )
 	{
@@ -768,10 +764,6 @@ void function GameStateEnter_SwitchingSides()
 
 void function GameStateEnter_SwitchingSides_Threaded()
 {
-	bool killreplayDisabled = expect bool( GetServerVar( "replayDisabled" ) )
-	if ( !killreplayDisabled ) // Prevent killcams interrupting
-		SetServerVar( "replayDisabled", true )
-	
 	WaitFrame()
 	
 	svGlobal.levelEnt.Signal( "RoundEnd" )
@@ -781,7 +773,8 @@ void function GameStateEnter_SwitchingSides_Threaded()
 				 && Time() - file.roundWinningKillReplayTime <= ROUND_WINNING_KILL_REPLAY_LENGTH_OF_REPLAY
 	
 	float replayLength = ROUND_WINNING_KILL_REPLAY_STARTUP_WAIT
-	
+	SetServerVar( "roundWinningKillReplayPlaying", doReplay )
+
 	foreach ( entity player in GetPlayerArray() )
 	{
 		ClearPlayerFromReplay( player )
@@ -816,8 +809,7 @@ void function GameStateEnter_SwitchingSides_Threaded()
 	wait CLEAR_PLAYERS_BUFFER
 	
 	ClearDroppedWeapons()
-	if ( !killreplayDisabled )
-		SetServerVar( "replayDisabled", false )
+	SetServerVar( "roundWinningKillReplayPlaying", false )
 	
 	file.hasSwitchedSides = true
 	SetServerVar( "switchedSides", 1 )
@@ -974,8 +966,10 @@ void function OnPlayerKilled( entity victim, entity attacker, var damageInfo )
 		SetPlayerEliminated( victim )
 	
 	// MVP kills in vanilla is just the top scoring player of a Team
-	array<entity> players = GetPlayerArrayOfTeam( victim.GetTeam() )
-	players.sort( GetScoreboardCompareFunc() )
+	array<entity> players = GetSortedPlayers( GetScoreboardCompareFunc(), victim.GetTeam() )
+	if( IsFFAGame() || IsSingleTeamMode() )
+		players = GetSortedPlayers( GetScoreboardCompareFunc(), 0 )
+	
 	if ( victim == players[0] && attacker.IsPlayer() && attacker != victim )
 		AddPlayerScore( attacker, "KilledMVP" )
 	
@@ -988,7 +982,7 @@ void function OnPlayerKilled( entity victim, entity attacker, var damageInfo )
 		return
 	}
 
-	CheckEliminationRiffMode( victim )
+	CheckEliminationRiffMode( victim, attacker )
 
 	entity inflictor = DamageInfo_GetInflictor( damageInfo )
 	bool shouldUseInflictor = IsValid( inflictor ) && ShouldTryUseProjectileReplay( victim, attacker, damageInfo, true )
@@ -1017,14 +1011,14 @@ void function OnTitanKilled( entity victim, var damageInfo )
 	if ( !GamePlayingOrSuddenDeath() )
 		return
 
-	CheckEliminationRiffMode( victim )
+	entity attacker = DamageInfo_GetAttacker( damageInfo )
+	CheckEliminationRiffMode( victim, attacker )
 
 	entity inflictor = DamageInfo_GetInflictor( damageInfo )
 	bool shouldUseInflictor = IsValid( inflictor ) && ShouldTryUseProjectileReplay( victim, DamageInfo_GetAttacker( damageInfo ), damageInfo, true )
 
 	// set round winning killreplay info here if we're tracking titan kills
 	// todo: make this not count environmental deaths like falls, unsure how to prevent this
-	entity attacker = DamageInfo_GetAttacker( damageInfo )
 	if ( file.roundWinningKillReplayTrackTitanKills && victim != attacker && attacker != svGlobal.worldspawn && IsValid( attacker ) )
 	{
 		file.roundWinningKillReplayTime = Time()
@@ -1037,7 +1031,7 @@ void function OnTitanKilled( entity victim, var damageInfo )
 	}
 }
 
-void function CheckEliminationRiffMode( entity victim )
+void function CheckEliminationRiffMode( entity victim, entity attacker )
 {
 	// note: pilotstitans is just win if enemy team runs out of either pilots or titans
 	if ( IsPilotEliminationBased() )
@@ -1058,7 +1052,11 @@ void function CheckEliminationRiffMode( entity victim )
 				{
 					if( IsRoundBased() )
 						AddTeamRoundScoreNoStateChange( teamsWithLivingPlayers[0] )
+					
 					SetWinner( teamsWithLivingPlayers[0], "#GAMEMODE_ENEMY_PILOTS_ELIMINATED", "#GAMEMODE_FRIENDLY_PILOTS_ELIMINATED" )
+
+					if( IsValidPlayer( attacker ) )
+						AddPlayerScore( attacker, "VictoryKill", attacker )
 				}
 				else if ( teamsWithLivingPlayers.len() == 0 ) // failsafe: only team was the dead one
 					SetWinner( null, "#GENERIC_DRAW_ANNOUNCEMENT", "#GENERIC_DRAW_ANNOUNCEMENT" ) // this is fine in ffa
@@ -1067,14 +1065,18 @@ void function CheckEliminationRiffMode( entity victim )
 			{
 				if( IsRoundBased() )
 					AddTeamRoundScoreNoStateChange( GetOtherTeam( victim.GetTeam() ) )
+				
 				SetWinner( GetOtherTeam( victim.GetTeam() ), "#GAMEMODE_ENEMY_PILOTS_ELIMINATED", "#GAMEMODE_FRIENDLY_PILOTS_ELIMINATED" )
+
+				if( IsValidPlayer( attacker ) )
+					AddPlayerScore( attacker, "VictoryKill", attacker )
 			}
 		}
 	}
 
 	if ( IsTitanEliminationBased() )
 	{
-		if ( !GetTitanArrayOfTeam( victim.GetTeam() ).len() )
+		if ( !GetPlayerTitansOnTeam( victim.GetTeam() ).len() )
 		{
 			// for ffa we need to manually get the last team alive 
 			if ( IsFFAGame() )
@@ -1090,7 +1092,11 @@ void function CheckEliminationRiffMode( entity victim )
 				{
 					if( IsRoundBased() )
 						AddTeamRoundScoreNoStateChange( teamsWithLivingTitans[0] )
+					
 					SetWinner( teamsWithLivingTitans[0], "#GAMEMODE_ENEMY_TITANS_DESTROYED", "#GAMEMODE_FRIENDLY_TITANS_DESTROYED" )
+
+					if( IsValidPlayer( attacker ) )
+						AddPlayerScore( attacker, "VictoryKill", attacker )
 				}
 				else if ( teamsWithLivingTitans.len() == 0 )
 					SetWinner( null, "#GENERIC_DRAW_ANNOUNCEMENT", "#GENERIC_DRAW_ANNOUNCEMENT" )
@@ -1099,7 +1105,11 @@ void function CheckEliminationRiffMode( entity victim )
 			{
 				if( IsRoundBased() )
 					AddTeamRoundScoreNoStateChange( GetOtherTeam( victim.GetTeam() ) )
+				
 				SetWinner( GetOtherTeam( victim.GetTeam() ), "#GAMEMODE_ENEMY_TITANS_DESTROYED", "#GAMEMODE_FRIENDLY_TITANS_DESTROYED" )
+
+				if( IsValidPlayer( attacker ) )
+					AddPlayerScore( attacker, "VictoryKill", attacker )
 			}
 		}
 	}

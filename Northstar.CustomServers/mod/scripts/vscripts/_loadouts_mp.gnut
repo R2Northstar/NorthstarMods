@@ -288,19 +288,19 @@ void function TryGivePilotLoadoutForGracePeriod( entity player )
 	if ( !IsLobby() && IsAlive( player ) && player.s.loadoutDirty && !player.IsTitan() && !player.ContextAction_IsActive() )
 	{
 		player.s.loadoutDirty = false
-	
-		// for intros
-		float respawnTimeReal
-		if ( GetGameState() == eGameState.Playing && Time() - expect float( GetServerVar( "gameStateChangeTime" ) ) <= CLASS_CHANGE_GRACE_PERIOD )
-			respawnTimeReal = expect float( GetServerVar( "gameStateChangeTime" ) )
-		else
-			respawnTimeReal = expect float( player.s.respawnTime )
+		float gracePeriodDuration = GetCurrentPlaylistVarFloat( "loadout_grace_period", 20.0 )
+		if ( !file.loadoutGracePeriodEnabled )
+			gracePeriodDuration = 0.0
 		
-		if ( ( ( Time() - respawnTimeReal <= CLASS_CHANGE_GRACE_PERIOD || GetGameState() < eGameState.Playing ) && file.loadoutGracePeriodEnabled ) || player.p.usingLoadoutCrate || ( file.allowChangeLoadoutFunc != null && file.allowChangeLoadoutFunc( player ) ) )
+		// for intros
+		float respawnTime = expect float( player.s.respawnTime )
+		respawnTime += gracePeriodDuration
+		
+		if ( respawnTime >= Time() || GetGameState() < eGameState.Playing || player.p.usingLoadoutCrate || file.allowChangeLoadoutFunc != null && file.allowChangeLoadoutFunc( player ) )
 		{
-			if ( !Loadouts_CanGivePilotLoadout( player ) && player.GetParent() != null && ( HasCinematicFlag( player, CE_FLAG_INTRO ) || HasCinematicFlag( player, CE_FLAG_CLASSIC_MP_SPAWNING ) || HasCinematicFlag( player, CE_FLAG_WAVE_SPAWNING ) ) )
+			if ( !Loadouts_CanGivePilotLoadout( player ) && GetGameState() < eGameState.Playing )
 				thread GiveLoadoutWhenIntroOver( player )
-			else
+			else if ( Loadouts_CanGivePilotLoadout( player ) )
 				Loadouts_TryGivePilotLoadout( player )
 			
 			player.p.usingLoadoutCrate = false

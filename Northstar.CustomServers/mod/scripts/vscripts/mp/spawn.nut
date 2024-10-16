@@ -313,10 +313,9 @@ bool function IsSpawnpointValid( entity spawnpoint, int team )
 		return false
 
 	// Line of Sight Check, could use IsVisibleToEnemies but apparently that considers only players, not NPCs
-	array< entity > enemyTitans = GetTitanArrayOfEnemies( team )
 	if ( GetConVarBool( "spawnpoint_avoid_npc_titan_sight" ) )
 	{
-		foreach ( titan in enemyTitans )
+		foreach ( titan in GetTitanArrayOfEnemies( team ) )
 		{
 			if ( IsAlive( titan ) && titan.IsNPC() && titan.CanSee( spawnpoint ) )
 				return false

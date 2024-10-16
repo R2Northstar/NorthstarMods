@@ -347,10 +347,26 @@ void function OnPlayerKilled( entity victim, entity attacker, var damageInfo )
 	if ( PlayerHasEnemyFlag( victim ) )
 	{
 		if ( victim != attacker && attacker.IsPlayer() )
-			AddPlayerScore( attacker, "FlagCarrierKill", victim )
+			AddPlayerScore( attacker, "FlagCarrierKill" )
 		
 		DropFlag( victim )
+
+		AddPlayerToAssistList( attacker )
 	}
+
+	entity flagCarrier
+	foreach ( teamMate in GetPlayerArrayOfTeam( attacker.GetTeam() ) )
+	{
+		if( PlayerHasEnemyFlag( teamMate ) )
+		{
+			flagCarrier = teamMate
+			break
+		}
+	}
+
+	// Killing players that damaged the flag carrier counts an assist for protecting the carrier
+	if( IsValidPlayer( flagCarrier ) && WasRecentlyHitByEntity( flagCarrier, victim, 5.0 ) )
+		AddPlayerToAssistList( attacker )
 }
 
 
@@ -456,10 +472,7 @@ void function CaptureFlag( entity player, entity flag )
 		}
 	}
 	
-	if ( player.GetTeam() == TEAM_IMC )
-		file.imcCaptureAssistList.clear()
-	else
-		file.militiaCaptureAssistList.clear()
+	ClearAssistListOfOpposingTeam( TEAM_BOTH )
 
 	if( !HasPlayerCompletedMeritScore( player ) )
 		SetPlayerChallengeMeritScore( player )
@@ -505,10 +518,7 @@ void function DropFlag( entity player, bool realDrop = true )
 
 		flag.SetVelocity( vec )
 
-		if ( player.GetTeam() == TEAM_IMC && !file.imcCaptureAssistList.contains( player ) )
-			file.imcCaptureAssistList.append( player )
-		else if( !file.militiaCaptureAssistList.contains( player ) )
-			file.militiaCaptureAssistList.append( player )
+		AddPlayerToAssistList( player )
 
 		if( IsAlive( player ) )
 			MessageToPlayer( player, eEventNotifications.YouDroppedTheEnemyFlag )
@@ -541,6 +551,8 @@ void function ResetFlag( entity flag )
 	flag.s.canTake = true
 	
 	SetFlagStateForTeam( flag.GetTeam(), eFlagState.None )
+
+	ClearAssistListOfOpposingTeam( flag.GetTeam() )
 	
 	flag.Signal( "CTF_ReturnedFlag" )
 }
@@ -642,7 +654,8 @@ void function TryReturnFlag( entity player, entity flag )
 	EmitSoundOnEntityToTeam( flag, "UI_CTF_3P_EnemyReturnsFlag", GetOtherTeam( flag.GetTeam() ) )
 	EmitSoundOnEntityOnlyToPlayer( player, player, "UI_CTF_1P_ReturnsFlag" )
 	PlayFactionDialogueToTeam( "ctf_flagReturnedEnemy", GetOtherTeam( flag.GetTeam() ) )
-	
+	AddPlayerToAssistList( player )
+
 	ResetFlag( flag )
 	flag.Signal( "CTF_ReturnedFlag" )
 }
@@ -722,4 +735,48 @@ void function TrackFlagDropTimeout( entity flag )
 bool function FlagIngoresPlayerTitans( entity player )
 {
 	return GetCurrentPlaylistVarInt( "ctf_titan_flag_interaction", 0 ) == 0 && player.IsTitan()
+}
+
+
+
+
+
+
+
+
+
+
+/*
+ █████  ███████ ███████ ██ ███████ ████████ ███████     ██       ██████   ██████  ██  ██████ 
+██   ██ ██      ██      ██ ██         ██    ██          ██      ██    ██ ██       ██ ██      
+███████ ███████ ███████ ██ ███████    ██    ███████     ██      ██    ██ ██   ███ ██ ██      
+██   ██      ██      ██ ██      ██    ██         ██     ██      ██    ██ ██    ██ ██ ██      
+██   ██ ███████ ███████ ██ ███████    ██    ███████     ███████  ██████   ██████  ██  ██████ 
+*/
+
+void function AddPlayerToAssistList( entity player )
+{
+	if ( player.GetTeam() == TEAM_IMC && !file.imcCaptureAssistList.contains( player ) )
+		file.imcCaptureAssistList.append( player )
+	else if( !file.militiaCaptureAssistList.contains( player ) )
+		file.militiaCaptureAssistList.append( player )
+}
+
+void function ClearAssistListOfOpposingTeam( int team )
+{
+	switch ( team )
+	{
+		case TEAM_IMC:
+		file.militiaCaptureAssistList.clear()
+		break
+
+		case TEAM_MILITIA:
+		file.imcCaptureAssistList.clear()
+		break
+
+		case TEAM_BOTH:
+		file.militiaCaptureAssistList.clear()
+		file.imcCaptureAssistList.clear()
+		break
+	}
 }

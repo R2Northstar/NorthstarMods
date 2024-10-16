@@ -946,7 +946,7 @@ void function FW_SpawnDroppodSquad( CampSiteStruct campsite, string aiType )
 	// add variation to spawns
 	wait RandomFloat( 1.0 )
 
-	AiGameModes_SpawnDropPod( spawnpoint.GetOrigin(), spawnpoint.GetAngles(), FW_AI_TEAM, aiType, void function( array<entity> guys ) : ( campsite, aiType )
+	AiGameModes_SpawnDropPod( spawnpoint, FW_AI_TEAM, aiType, void function( array<entity> guys ) : ( campsite, aiType )
 	{
 		FW_HandleSquadSpawn( guys, campsite, aiType )
 	})
@@ -980,7 +980,7 @@ void function FW_SpawnReaper( CampSiteStruct campsite )
 	// add variation to spawns
 	wait RandomFloat( 1.0 )
 
-	AiGameModes_SpawnReaper( spawnpoint.GetOrigin(), spawnpoint.GetAngles(), FW_AI_TEAM, "npc_super_spectre_aitdm",void function( entity reaper ) : ( campsite )
+	AiGameModes_SpawnReaper( spawnpoint, FW_AI_TEAM, "npc_super_spectre_aitdm",void function( entity reaper ) : ( campsite )
 	{
 		reaper.SetScriptName( FW_NPC_SCRIPTNAME ) // no neet rn
 		// show on minimap to let players kill them

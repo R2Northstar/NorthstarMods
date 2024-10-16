@@ -249,7 +249,7 @@ void function SpawnIntroBatch_Threaded( int team )
 			index = RandomInt( podNodes.len() )
 			
 			node = podNodes[ index ]
-			thread AiGameModes_SpawnDropPod( node.GetOrigin(), node.GetAngles(), team, "npc_soldier", SquadHandler )
+			thread AiGameModes_SpawnDropPod( node, team, "npc_soldier", SquadHandler )
 			
 			pods--
 			wait 0.5
@@ -260,7 +260,7 @@ void function SpawnIntroBatch_Threaded( int team )
 			startIndex = i // save where we started
 			
 			node = shipNodes[ i - startIndex ]
-			thread AiGameModes_SpawnDropShip( node.GetOrigin(), node.GetAngles(), team, 4, SquadHandler )
+			thread AiGameModes_SpawnDropShip( node, team, 4, SquadHandler )
 			
 			ships--
 			wait 2.5
@@ -314,7 +314,7 @@ void function Spawner_Threaded( int team )
 			if ( reaperCount < file.reapersPerTeam )
 			{
 				entity node = points[ GetSpawnPointIndex( points, team ) ]
-				waitthread AiGameModes_SpawnReaper( node.GetOrigin(), node.GetAngles(), team, "npc_super_spectre_aitdm", ReaperHandler )
+				waitthread AiGameModes_SpawnReaper( node, team, "npc_super_spectre_aitdm", ReaperHandler )
 			}
 		}
 		
@@ -327,25 +327,19 @@ void function Spawner_Threaded( int team )
 			if ( ent == "npc_soldier" && points.len() && RandomInt( 100 ) >= 66 ) //Prefer using Dropship 1/3rd of the times
 			{
 				entity node = points[ GetSpawnPointIndex( points, team ) ]
-				thread Aitdm_SpawnDropShip( node, team )
+				thread AiGameModes_SpawnDropShip( node, team, 4, SquadHandler )
 				wait 3.0 //Wait 3 seconds because Dropships does not exist until they warp in, which takes about 3.7 seconds to happen because of the effect
 			}
 			else
 			{
 				points = SpawnPoints_GetDropPod()
 				entity node = points[ GetSpawnPointIndex( points, team ) ]
-				thread AiGameModes_SpawnDropPod( node.GetOrigin(), node.GetAngles(), team, ent, SquadHandler )
+				thread AiGameModes_SpawnDropPod( node, team, ent, SquadHandler )
 			}
 		}
 		
 		wait 1.0 //Not really needed to check this every frame, also stacks with Dropship wait to Warp In
 	}
-}
-
-void function Aitdm_SpawnDropShip( entity node, int team )
-{
-	thread AiGameModes_SpawnDropShip( node.GetOrigin(), node.GetAngles(), team, 4, SquadHandler )
-	wait 20
 }
 
 // Based on points tries to balance match

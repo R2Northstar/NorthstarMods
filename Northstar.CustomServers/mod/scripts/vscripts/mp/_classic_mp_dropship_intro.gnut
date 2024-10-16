@@ -146,7 +146,7 @@ void function WaitForDropshipDeploy( entity dropship )
 void function PutPlayerInDropship( entity player )
 {
 	//Find the player's dropship and seat
-	table< entity, array<entity> > teamDropships
+	table< entity, array< entity > > teamDropships
 	if ( player.GetTeam() == TEAM_MILITIA )
 		teamDropships = file.militiaDropships
 	else
