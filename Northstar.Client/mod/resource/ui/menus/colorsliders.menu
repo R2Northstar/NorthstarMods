@@ -91,7 +91,7 @@ resource/ui/menus/colorsliders.menu
 			wide					736
 			auto_tall_tocontents	1
 			visible					1
-			labelText				"Pink is my new favorite color."
+			labelText				""
 			font					Default_28
 			textAlignment			north-west
 			wrap					1
