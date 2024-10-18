@@ -8,6 +8,10 @@ global function ModSettings_AddModTitle
 global function ModSettings_AddModCategory
 global function PureModulo
 
+global function ModSettings_AddColorSetting
+global function ModSettings_AddAlphaSetting
+global function TryUpdateModSettingLists
+
 // Legacy functions for backwards compatability. These will be removed eventually
 global function AddConVarSetting
 global function AddConVarSettingEnum
@@ -153,6 +157,13 @@ void function InitModMenu()
 
 		Hud_AddEventHandler( child, UIE_CLICK, ResetConVar )
 		file.resetModButtons.append(child)
+
+		// color nav
+		child = Hud_GetChild( panel, "ColorPickerButton" )
+		Hud_AddEventHandler( child, UIE_CLICK, ColorButtonPressed )
+		child.SetNavUp( Hud_GetChild( file.modPanels[ int( PureModulo( i - 1, len ) ) ], "ColorPickerButton" ) )
+		child.SetNavDown( Hud_GetChild( file.modPanels[ int( PureModulo( i + 1, len ) ) ], "ColorPickerButton" ) )
+
 
 		// text field nav
 		child = Hud_GetChild( panel, "TextEntrySetting" )
@@ -520,9 +531,17 @@ void function SetModMenuNameText( var button )
 	var modTitle = Hud_GetChild( panel, "ModTitle" )
 	var customMenuButton = Hud_GetChild( panel, "OpenCustomMenu")
 	var slider = Hud_GetChild( panel, "Slider" )
+
+	var colorButton = Hud_GetChild( panel, "ColorPickerButton" )
+	var colorVGUI = Hud_GetChild( panel, "ColorPickerImage" )
+
+
 	Hud_SetVisible( slider, false )
 	Hud_SetEnabled( slider, true )
-
+	Hud_SetVisible( colorButton, false )
+	Hud_SetVisible( colorVGUI, false )
+	Hud_SetEnabled( colorButton, false )
+	Hud_SetEnabled( colorVGUI, false )
 
 	if ( conVar.isEmptySpace )
 	{
@@ -631,6 +650,54 @@ void function SetModMenuNameText( var button )
 		Hud_SetVisible( textField, true )
 		Hud_SetVisible( resetButton, true )
 		Hud_SetVisible( resetVGUI, true )
+		
+		// color
+		if (conVar.type == "color")
+		{
+			try {
+				table color = StringToColors( GetConVarString(conVar.conVar) )
+				Hud_SetVisible( colorButton, true )
+				Hud_SetVisible( colorVGUI, true )
+				Hud_SetEnabled( colorButton, true )
+				Hud_SetEnabled( colorVGUI, true )
+				Hud_SetSize( label, int(scaleX * (375 + 85)), int(scaleY * 40) )
+				Hud_SetSize( colorVGUI, int( scaleX * ( 50  ) ), int( scaleY * 20 ) )
+				Hud_SetSize( colorButton, int( scaleX * ( 300  ) ), int( scaleY * 35 ) )
+
+				Hud_SetColor(colorVGUI, color.r, color.g, color.b, color.a)
+				// Hud_ColorOverTime(colorVGUI, color.r, color.g, color.b, color.a, 1, 1)
+			}
+			catch ( ex )
+			{
+				printt(ex)
+				ThrowInvalidValue("This setting is a color, and only accepts a four of numbers - you put something we could not parse!\n\n( Use \".\" for the int like \"255 255 255 255\", not \",\". )")
+
+				Hud_SetSize( colorVGUI, 0, int( 45 * scaleY ) )
+				Hud_SetSize( colorButton, 0, int( 45 * scaleY ) )
+				Hud_SetEnabled( colorButton, false )
+				Hud_SetEnabled( colorVGUI, false )
+				Hud_SetColor(colorVGUI, 0, 0, 0, 0)
+			}
+		}
+		else if (conVar.type == "alpha") {
+			Hud_SetVisible( colorVGUI, true )
+			Hud_SetEnabled( colorVGUI, true )
+			Hud_SetSize( colorVGUI, int( scaleX * ( 20  ) ), int( scaleY * 20 ) )
+
+			float alpha = GetConVarFloat(conVar.conVar)
+			Hud_SetColor(colorVGUI, 124, 252, 0, 255)
+			Hud_SetAlpha(colorVGUI, int(alpha * 255))
+
+		}
+		else
+		{
+			Hud_SetSize( colorVGUI, 0, int( 45 * scaleY ) )
+			Hud_SetSize( colorButton, 0, int( 45 * scaleY ) )
+			Hud_SetEnabled( colorButton, false )
+			Hud_SetEnabled( colorVGUI, false )
+			Hud_SetColor(colorVGUI, 0, 0, 0, 0)
+
+		}
 	}
 }
 
@@ -848,6 +915,45 @@ void function AddConVarSetting( string conVar, string displayName, string type =
 	ModSettings_AddSetting( conVar, displayName, type, stackPos + 1 )
 }
 
+void function ModSettings_AddColorSetting(string conVar, string buttonLabel, void functionref() onPress = null, int stackPos = 2)
+{
+	if ( !( getstackinfos( stackPos )[ "func" ] in file.setFuncs ) || !file.setFuncs[ expect string( getstackinfos( stackPos )[ "func" ] ) ] )
+		throw getstackinfos( stackPos )[ "src" ] + " #" + getstackinfos( stackPos )[ "line" ] + "\nCannot add a button before a category and mod title!"
+
+	ConVarData data
+
+
+	data.conVar = conVar
+	data.type = "color"
+	data.displayName = buttonLabel
+	data.modName = file.currentMod
+	data.catName = file.currentCat
+	data.onPress = onPress
+
+	file.conVarList.append( data )
+}
+
+void function ModSettings_AddAlphaSetting(string conVar, string displayName, int stackPos = 2)
+{
+	if ( !( getstackinfos( stackPos )[ "func" ] in file.setFuncs ) || !file.setFuncs[ expect string( getstackinfos( stackPos )[ "func" ] ) ] )
+		throw getstackinfos( stackPos )[ "src" ] + " #" + getstackinfos( stackPos )[ "line" ] + "\nCannot add a button before a category and mod title!"
+
+	ConVarData data
+
+	data.catName = file.currentCat
+	data.conVar = conVar
+	data.modName = file.currentMod
+	data.displayName = displayName
+	data.type = "alpha"
+	data.sliderEnabled = true
+	data.forceClamp = false
+	data.min = 0
+	data.max = 1
+	data.stepSize = 0.05
+
+	file.conVarList.append( data )
+}
+
 void function ModSettings_AddSliderSetting( string conVar, string displayName, float min = 0.0, float max = 1.0, float stepSize = 0.1, bool forceClamp = false, int stackPos = 2 )
 {
 	if ( !( getstackinfos( stackPos )[ "func" ] in file.setFuncs ) || !file.setFuncs[ expect string( getstackinfos( stackPos )[ "func" ] ) ] )
@@ -926,11 +1032,22 @@ void function OnSliderChange( var button )
 	MS_Slider_SetValue( file.sliders[ int( Hud_GetScriptID( Hud_GetParent( textPanel ) ) ) ], val )
 
 	Hud_SetText( textPanel, string( GetConVarFloat( c.conVar ) ) )
+
+	if (c.type == "alpha") {
+		var colorVGUI = Hud_GetChild( Hud_GetParent( textPanel ), "ColorPickerImage" )
+
+		float alpha = GetConVarFloat(c.conVar)
+		Hud_SetAlpha(colorVGUI, int(alpha * 255))
+		// Hud_SetColor(colorVGUI, 255, 255, 255, 255)
+	}
 }
 
 void function SendTextPanelChanges( var textPanel )
 {
 	ConVarData c = file.filteredList[ int( Hud_GetScriptID( Hud_GetParent( textPanel ) ) ) + file.scrollOffset ]
+	var colorButton = Hud_GetChild( Hud_GetParent( textPanel ), "ColorPickerButton" )
+	var colorVGUI = Hud_GetChild( Hud_GetParent( textPanel ), "ColorPickerImage" )
+
 	if ( c.conVar == "" ) return
 	// enums don't need to do this
 	if ( !c.isEnumSetting )
@@ -1022,6 +1139,37 @@ void function SendTextPanelChanges( var textPanel )
 					Hud_SetText( textPanel, GetConVarString( c.conVar ) )
 				}
 				break
+			case "color":
+				try {
+						table color = StringToColors( GetConVarString(c.conVar) )
+						Hud_SetColor(colorVGUI, color.r, color.g, color.b, color.a)
+					}
+				catch ( ex )
+					{
+						printt(ex)
+						ThrowInvalidValue("This setting is a color, and only accepts a four of numbers - you put something we could not parse!\n\n( Use \".\" for the int like \"255 255 255 255\", not \",\". )")
+						Hud_SetColor(colorVGUI, 0, 0, 0, 0)
+					}
+				break
+			case "alpha":
+				try
+				{
+					SetConVarFloat( c.conVar, newSetting.tofloat() )
+				}
+				catch ( ex )
+				{
+					printt( ex )
+					ThrowInvalidValue( "This setting is a float, and only accepts a number - we could not parse this!\n\n( Use \".\" for the floating point, not \",\". )" )
+				}
+				if ( c.sliderEnabled )
+				{
+					var panel = Hud_GetParent( textPanel )
+					MS_Slider s = file.sliders[ int ( Hud_GetScriptID( panel ) ) ]
+
+					MS_Slider_SetValue( s, GetConVarFloat( c.conVar ) )
+				}
+				Hud_SetAlpha(colorVGUI, int(newSetting * 255))
+				break
 			default:
 				SetConVarString( c.conVar, newSetting )
 				break;
@@ -1103,4 +1251,30 @@ string function SanitizeDisplayName( string displayName )
 		else result += p.slice( i, p.len() )
 	}
 	return result
+}
+
+// nothing in the game uses the format "Table.r/g/b/a"... wtf is the point of this function
+table function StringToColors( string colorString, string delimiter = " " )
+{
+	PerfStart( PerfIndexShared.StringToColors + SharedPerfIndexStart )
+	array<string> tokens = split( colorString, delimiter )
+
+	Assert( tokens.len() >= 3 )
+
+	table Table = {}
+	Table.r <- int( tokens[0] )
+	Table.g <- int( tokens[1] )
+	Table.b <- int( tokens[2] )
+
+	if ( tokens.len() == 4 )
+		Table.a <- int( tokens[3] )
+	else
+		Table.a <- 255
+
+	PerfEnd( PerfIndexShared.StringToColors + SharedPerfIndexStart )
+	return Table
+}
+
+void function TryUpdateModSettingLists() {
+	UpdateList()
 }

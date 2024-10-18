@@ -50,6 +50,10 @@
 		{
 			"Name": "modemenu_mode_filter",
 			"DefaultValue": "-1"
+		},
+		{
+			"Name": "modemenu_current_color_convar",
+			"DefaultValue": ""
 		}
 	],
 	"Scripts": [
@@ -130,6 +134,13 @@
 			"Path": "ui/ns_slider.nut",
 			"RunOn": "UI"
 		},
+		{
+            "Path": "ui/menu_ns_color_picker.nut.nut",
+            "RunOn": "UI",
+            "UICallback": {
+                "After": "AddColorPickerMenu"
+            }
+        },
 		{
 			"Path": "ui/menu_mod_settings.nut",
 			"RunOn": "UI",
