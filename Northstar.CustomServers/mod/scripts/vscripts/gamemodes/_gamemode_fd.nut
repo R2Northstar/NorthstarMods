@@ -1509,8 +1509,7 @@ void function FD_OnPlayerGetsNewPilotLoadout( entity player, PilotLoadoutDef loa
 
 void function FD_GivePlayerInfiniteAntiTitanAmmo( entity player )
 {
-	array<entity> weapons = player.GetMainWeapons()
-	foreach ( entity weaponEnt in weapons )
+	foreach ( entity weaponEnt in player.GetMainWeapons() )
 	{
 		if ( weaponEnt.GetWeaponInfoFileKeyField( "menu_category" ) != "at" )
 			continue
@@ -1522,8 +1521,7 @@ void function FD_GivePlayerInfiniteAntiTitanAmmo( entity player )
 
 void function FD_GiveSmartPistol( entity player )
 {
-	array<entity> weapons = player.GetMainWeapons()
-	foreach ( entity weaponEnt in weapons )
+	foreach ( entity weaponEnt in player.GetMainWeapons() )
 	{
 		if ( weaponEnt.GetWeaponInfoFileKeyField( "menu_category" ) != "pistol" )
 			continue

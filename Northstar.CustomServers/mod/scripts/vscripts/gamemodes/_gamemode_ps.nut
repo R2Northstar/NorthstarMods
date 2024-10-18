@@ -14,7 +14,6 @@ struct {
 
 void function GamemodePs_Init()
 {
-	SetSpawnpointGamemodeOverride( TEAM_DEATHMATCH )
 	Riff_ForceTitanAvailability( eTitanAvailability.Never )
 	
 	AddCallback_OnPlayerKilled( GiveScoreForPlayerKill )

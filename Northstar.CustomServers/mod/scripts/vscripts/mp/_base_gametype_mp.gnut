@@ -41,7 +41,7 @@ void function BaseGametype_Init_MPSP()
 	AddCallback_OnNPCKilled( CheckForAutoTitanDeath )
 	AddCallback_OnPlayerKilled( CheckForAutoTitanDeath )
 	AddCallback_OnTitanBecomesPilot( CheckGameStateForTitanEjection )
-	AddCallback_OnPlayerGetsNewPilotLoadout( CheckPlayerGetsNewLoadoutPostPlay )
+	AddCallback_OnPlayerGetsNewPilotLoadout( CheckPlayerGetsNewLoadout )
 
 	RegisterSignal( "PlayerRespawnStarted" )
 	RegisterSignal( "KillCamOver" )
@@ -660,6 +660,7 @@ void function RespawnAsTitan( entity player, bool normalTitanfall = false )
 	player.isSpawningHotDroppingAsTitan = true
 
 	entity spawnpoint = FindSpawnPoint( player, true, ( ShouldStartSpawn( player ) || Flag( "ForceStartSpawn" ) ) )
+	ToggleSpawnNodeInUse( spawnpoint, true )
 
 	if ( file.recalculateRespawnAsTitanStartPointCallback != null )
 		spawnpoint = file.recalculateRespawnAsTitanStartPointCallback( player, spawnpoint )
@@ -736,7 +737,7 @@ void function RespawnAsTitan( entity player, bool normalTitanfall = false )
 
 	player.EndSignal( "OnDestroy" )
 	titan.EndSignal( "OnDestroy" )
-	OnThreadEnd( function() : ( player, titan, camera )
+	OnThreadEnd( function() : ( player, titan, camera, spawnpoint )
 	{
 		if ( IsValid( player ) )
 		{
@@ -752,6 +753,8 @@ void function RespawnAsTitan( entity player, bool normalTitanfall = false )
 
 		if ( IsValid( camera ) )
 			camera.Destroy()
+		
+		ToggleSpawnNodeInUse( spawnpoint, false )
 	})
 	
 	TeleportToEnt( titan, spawnpoint )
@@ -814,6 +817,16 @@ void function CheckForAutoTitanDeath( entity victim, entity attacker, var damage
 	if ( GetPetTitanOwner( victim ) == attacker )
 		return
 	
+	entity inflictor = DamageInfo_GetInflictor( damageInfo )
+	if ( IsValid( inflictor ) )
+	{
+		if ( inflictor.IsProjectile() && IsValid( inflictor.GetOwner() ) && inflictor.GetOwner().IsTitan() )
+			attacker = inflictor.GetOwner()
+		
+		else if ( inflictor.IsNPC() && inflictor.IsTitan() )
+			attacker = inflictor
+	}
+
 	foreach ( player in GetPlayerArray() )
 		Remote_CallFunction_NonReplay( player, "ServerCallback_OnTitanKilled", attacker.GetEncodedEHandle(), victim.GetEncodedEHandle(), DamageInfo_GetCustomDamageType( damageInfo ), DamageInfo_GetDamageSourceIdentifier( damageInfo ) )
 }
@@ -852,9 +865,17 @@ void function CheckGameStateForTitanEjection( entity pilot, entity titan )
 	thread CheckGameStateAfterSpawn_Threaded( pilot, 0.5 )
 }
 
-void function CheckPlayerGetsNewLoadoutPostPlay( entity player, PilotLoadoutDef loadout )
+void function CheckPlayerGetsNewLoadout( entity player, PilotLoadoutDef loadout )
 {
 	thread CheckGameStateAfterSpawn_Threaded( player )
+
+	foreach ( entity weapon in player.GetMainWeapons() )
+	{
+		if ( weapon.GetWeaponClassName() == "mp_weapon_rocket_launcher" && !weapon.HasMod( "fast_lock" ) && GetCurrentPlaylistVarInt( "archer_fast_lock", 0 ) == 1 )
+			weapon.AddMod( "fast_lock" )
+		if ( weapon.GetWeaponClassName() == "mp_weapon_epg" && !weapon.HasMod( "jump_kit" ) && GetCurrentPlaylistVarInt( "epg_splash_push", 0 ) == 1 )
+			weapon.AddMod( "jump_kit" )
+	}
 }
 
 bool function ClientCommandCallbackChangeTeam( entity player, array<string> args )
@@ -903,6 +924,14 @@ bool function ShouldEntTakeDamage_SPMP( entity ent, var damageInfo )
 	return true
 }
 
+float function GetTitanBuildTime( entity player )
+{
+	if ( player.titansBuilt == 0 )
+		return float( GetCurrentPlaylistVarInt( "titan_build_time", 180 ) )
+	
+	return float( GetCurrentPlaylistVarInt( "titan_rebuild_time", 180 ) )
+}
+
 
 
 
@@ -920,11 +949,6 @@ bool function ShouldEntTakeDamage_SPMP( entity ent, var damageInfo )
      ██    ██    ██    ██ ██   ██      ██ 
 ███████    ██     ██████  ██████  ███████ 
 */
-
-float function GetTitanBuildTime( entity player )
-{
-	return 100.0
-}
 
 void function TitanPlayerHotDropsIntoLevel( entity player )
 {

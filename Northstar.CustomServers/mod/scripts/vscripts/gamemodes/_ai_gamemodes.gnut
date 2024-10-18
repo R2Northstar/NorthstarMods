@@ -34,6 +34,7 @@ void function AiGameModes_SetNPCWeapons( string npcClass, array<string> weapons 
 
 void function AiGameModes_SpawnDropShip( entity node, int team, int count, void functionref( array<entity> guys ) squadHandler = null )
 {  
+	ToggleSpawnNodeInUse( node, true )
 	string squadName = MakeSquadName( team, UniqueString( "" ) )
 	vector pos = node.GetOrigin()
 	vector rot = node.GetAngles()
@@ -67,11 +68,14 @@ void function AiGameModes_SpawnDropShip( entity node, int team, int count, void 
 
 	if ( squadHandler != null )
 		thread squadHandler( guys )
+	
+	ToggleSpawnNodeInUse( node, false )
 }
 
 
 void function AiGameModes_SpawnDropPod( entity node, int team, string content /*( ͡° ͜ʖ ͡°)*/, void functionref( array<entity> guys ) squadHandler = null, int flags = 0 )
 {
+	ToggleSpawnNodeInUse( node, true )
 	vector pos = node.GetOrigin()
 	vector rot = node.GetAngles()
 
@@ -115,11 +119,14 @@ void function AiGameModes_SpawnDropPod( entity node, int team, string content /*
 	// start searching for enemies
 	if ( squadHandler != null )
 		thread squadHandler( guys )
+	
+	ToggleSpawnNodeInUse( node, false )
 }
 
 const float REAPER_WARPFALL_DELAY = 4.7 // same as fd does
 void function AiGameModes_SpawnReaper( entity node, int team, string aiSettings = "", void functionref( entity reaper ) reaperHandler = null )
 {
+	ToggleSpawnNodeInUse( node, true )
 	vector pos = node.GetOrigin()
 	vector rot = node.GetAngles()
 
@@ -150,6 +157,8 @@ void function AiGameModes_SpawnReaper( entity node, int team, string aiSettings 
 	
 	if ( reaperHandler != null )
 		thread reaperHandler( reaper )
+	
+	ToggleSpawnNodeInUse( node, false )
 }
 
 // copied from cl_replacement_titan_hud.gnut
@@ -202,6 +211,7 @@ void function HotDrop_Spawnpoint( vector origin, int team, float impactTime, boo
 const float TITANFALL_WARNING_DURATION = 5.0
 void function AiGameModes_SpawnTitan( entity node, int team, string setFile, string aiSettings = "", void functionref( entity titan ) titanHandler = null )
 {
+	ToggleSpawnNodeInUse( node, true )
 	vector pos = node.GetOrigin()
 	vector rot = node.GetAngles()
 
@@ -219,6 +229,8 @@ void function AiGameModes_SpawnTitan( entity node, int team, string setFile, str
 	WaitTillHotDropComplete( titan )
 	if ( titanHandler != null )
 		thread titanHandler( titan )
+	
+	ToggleSpawnNodeInUse( node, false )
 }
 
 entity function CreateDropshipSoldier( int team, vector origin, vector angles )

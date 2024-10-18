@@ -17,9 +17,6 @@ void function Sv_EarnMeterMP_Init()
 	AddCallback_OnClientConnected( SetupPlayerEarnMeter )
 	AddCallback_GameStateEnter( eGameState.Playing, OnPlaying ) // can't change boost after prematch
 	AddCallback_OnPlayerRespawned( OnPlayerRespawned )
-
-	if( !BurnMeterEnabled() && !EarnMeterMP_IsTitanEarnGametype() ) // If both are disabled there's no reason to show up the Earn Meter
-		PlayerEarnMeter_SetEnabled( false )
 }
 
 void function EarnMeterMP_SetTitanLoadout( entity player )
@@ -45,9 +42,6 @@ void function SetupPlayerEarnMeter( entity player )
 	// catchup bonus for late joiners
 	// todo: maths on this is fine but for some reason it won't set correctly, could be getting reset somewhere?
 	PlayerEarnMeter_AddOwnedFrac( player, ( ( Time() - file.playingStartTime ) / 4.0 ) * 0.01 )
-
-	if( !BurnMeterEnabled() && !EarnMeterMP_IsTitanEarnGametype() ) // If both are disabled there's no reason to show up the Earn Meter
-		PlayerEarnMeter_SetMode( player, eEarnMeterMode.DISABLED )
 }
 
 void function OnPlaying()
@@ -67,11 +61,17 @@ void function OnPlaying()
 	}
 
 	SetCallback_EarnMeterGoalEarned( EarnMeterMP_TitanEarned )
+
+	if( !BurnMeterEnabled() && !EarnMeterMP_IsTitanEarnGametype() )
+		PlayerEarnMeter_SetEnabled( false )
 }
 
 void function OnPlayerRespawned( entity player )
 {
-	thread EarnMeterMP_PlayerLifeThink( player )
+	if( !BurnMeterEnabled() && !EarnMeterMP_IsTitanEarnGametype() ) // If both are disabled there's no reason to show up the Earn Meter
+		PlayerEarnMeter_SetMode( player, eEarnMeterMode.DISABLED )
+	else
+		thread EarnMeterMP_PlayerLifeThink( player )
 
 	if ( PlayerEarnMeter_IsRewardAvailable( player ) )
 		EarnMeterMP_BoostEarned( player )
@@ -187,7 +187,7 @@ void function EarnMeterMP_PlayerLifeThink( entity player )
 				}
 			}
 
-			if ( Time() - lastPassiveGainTime > 4.0 && file.passiveMeterGainEnabled ) // this might be 5.0
+			if ( Time() - lastPassiveGainTime > 4.0 && file.passiveMeterGainEnabled )
 			{
 				lastPassiveGainTime = Time()
 				PlayerEarnMeter_AddOwnedFrac( player, 0.01 )

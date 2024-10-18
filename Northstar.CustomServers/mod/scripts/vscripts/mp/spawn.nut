@@ -2,6 +2,7 @@ untyped
 
 global function Spawn_Init
 global function FindSpawnPoint
+global function ToggleSpawnNodeInUse
 
 global function SetSpawnpointGamemodeOverride
 global function GetSpawnpointGamemodeOverride
@@ -112,6 +113,11 @@ void function InitSpawnpoint( entity spawnpoint )
 	
 	spawnpoint.s.lastUsedTime <- -999
 	spawnpoint.s.inUse <- false
+}
+
+void function ToggleSpawnNodeInUse( entity spawnpoint, bool isInUse )
+{
+	spawnpoint.s.inUse = isInUse
 }
 
 string function CreateNoSpawnArea( int blockSpecificTeam, int blockEnemiesOfTeam, vector position, float lifetime, float radius )

@@ -341,7 +341,7 @@ void function RodeoBatteryRemoval( entity pilot )
 	
 	if ( !playerHadBattery || GetCurrentPlaylistVarInt( "rodeo_titan_lobotomy", 0 ) == 1 )
 	{
-		AddPlayerScore( pilot, "PilotBatteryStolen" )
+		AddPlayerScore( pilot, "PilotBatteryStolen", pilot )
 		entity battery = Rodeo_CreateBatteryPack( titan )
 		
 		if( GetCurrentPlaylistVarInt( "rodeo_titan_lobotomy", 0 ) == 1 )
@@ -1994,7 +1994,7 @@ void function Rodeo_OnTouchBatteryPack_Internal( entity player, entity batteryPa
 			Battery_StopFX( batteryPack ) //Will be turned on again when player loses cloak
 
 		Rodeo_PilotPicksUpBattery( player, batteryPack )
-		AddPlayerScore( player, "PilotBatteryPickup" )
+		AddPlayerScore( player, "PilotBatteryPickup", player )
 //		MessageToPlayer( player, eEventNotifications.Rodeo_PilotPickedUpBattery )
 		return
 	}
@@ -2019,7 +2019,7 @@ void function Rodeo_PilotAddsBatteryToFriendlyTitan( entity rider, entity titan 
 
 	Rodeo_ApplyBatteryToTitan( battery, titan, GetPlayerBatteryCount( rider ) ) //This destroys the battery
 
-	AddPlayerScore( rider, "PilotBatteryApplied" )
+	AddPlayerScore( rider, "PilotBatteryApplied", rider )
 
 	EmitSoundOnEntityOnlyToPlayer( rider, rider, PILOT_APPLIES_BATTERY_TO_TITAN_HEALTH_RESTORED_SOUND )
 
