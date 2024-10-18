@@ -650,7 +650,7 @@ void function SetModMenuNameText( var button )
 		Hud_SetVisible( textField, true )
 		Hud_SetVisible( resetButton, true )
 		Hud_SetVisible( resetVGUI, true )
-		
+
 		// color
 		if (conVar.type == "color")
 		{
@@ -706,6 +706,19 @@ void function CustomButtonPressed( var button )
 	var panel = Hud_GetParent( button )
 	ConVarData c = file.filteredList[ int( Hud_GetScriptID( panel ) ) + file.scrollOffset ]
 	c.onPress()
+}
+
+void function ColorButtonPressed( var button )
+{
+	var panel = Hud_GetParent( button )
+	ConVarData c = file.filteredList[ int( Hud_GetScriptID( panel ) ) + file.scrollOffset ]
+	// c.onPress()
+	// printt(c.displayName, c.type, c.conVar)
+
+	SetConVarString("ModSettings.current_color_convar", c.conVar)
+	OpenSubmenu(GetMenu("ColorPicker"),  false)
+
+	// UpdateList()
 }
 
 void function OnScrollDown( var button )
@@ -849,7 +862,7 @@ void function ModSettings_AddModCategory( string catName, int stackPos = 2 )
 {
 	if ( !( getstackinfos( stackPos )[ "func" ] in file.setFuncs ) )
 		throw getstackinfos( stackPos )[ "src" ] + " #" + getstackinfos( stackPos )[ "line" ] + "\nCannot add a category before a mod title!"
-	
+
 	ConVarData space
 	space.isEmptySpace = true
 	space.modName = file.currentMod
