@@ -1181,7 +1181,8 @@ void function SendTextPanelChanges( var textPanel )
 
 					MS_Slider_SetValue( s, GetConVarFloat( c.conVar ) )
 				}
-				Hud_SetAlpha(colorVGUI, int(newSetting * 255))
+				float alpha = GetConVarFloat(c.conVar)
+				Hud_SetAlpha(colorVGUI, int(alpha * 255))
 				break
 			default:
 				SetConVarString( c.conVar, newSetting )
