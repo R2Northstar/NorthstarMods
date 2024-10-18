@@ -715,7 +715,7 @@ void function ColorButtonPressed( var button )
 	// c.onPress()
 	// printt(c.displayName, c.type, c.conVar)
 
-	SetConVarString("ModSettings.current_color_convar", c.conVar)
+	SetConVarString("modemenu_current_color_convar", c.conVar)
 	OpenSubmenu(GetMenu("ColorPicker"),  false)
 
 	// UpdateList()

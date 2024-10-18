@@ -89,7 +89,7 @@ void function OnColorPickerOpen() {
 		int alpha = c.len() == 4 ? c[3] : 255
 		Hud_SetColor(file.colorImage, c[0], c[1], c[2], alpha)
 		file.color = c
-		printt("ColorPicker Read ConVar", GetConVarString("ModSettings.current_color_convar"), "With Value:", GetConVarString(GetConVarString("ModSettings.current_color_convar")), ",Parsed To:",
+		printt("ColorPicker Read ConVar", GetConVarString("modemenu_current_color_convar"), "With Value:", GetConVarString(GetConVarString("modemenu_current_color_convar")), ",Parsed To:",
 		    c[0], c[1], c[2], alpha)
 
 	}
@@ -99,7 +99,7 @@ void function OnColorPickerClose() {
 	printt("Trying to close Color Picker")
 
 	ColorsToConvar()
-	// SetConVarString("ModSettings.current_color_convar", "")
+	// SetConVarString("modemenu_current_color_convar", "")
 	// printt(uiGlobal.activeMenu)
 	// PrintMenuStack()
 	// CloseColorPicker()
@@ -234,7 +234,7 @@ void function ResetColor(int index)
 
 array<int> function ColorsFromConvar()
 {
-	string convar = GetConVarString("ModSettings.current_color_convar")
+	string convar = GetConVarString("modemenu_current_color_convar")
 	array<int> c
 	if (convar != "") {
 		try {
@@ -264,7 +264,7 @@ array<int> function ColorsFromConvar()
 
 void function ColorsToConvar()
 {
-	string convar = GetConVarString("ModSettings.current_color_convar")
+	string convar = GetConVarString("modemenu_current_color_convar")
 	if (convar != "") {
 		try {
 			string str = ""
@@ -276,7 +276,7 @@ void function ColorsToConvar()
 			}
 
 			SetConVarString(convar, str)
-			printt("ColorPicker write ConVar", GetConVarString("ModSettings.current_color_convar"), "With " + str)
+			printt("ColorPicker write ConVar", GetConVarString("modemenu_current_color_convar"), "With " + str)
 
 		}
 		catch ( ex )
