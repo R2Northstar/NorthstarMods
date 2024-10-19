@@ -25,7 +25,6 @@ void function Score_Init()
 
 	ScoreEvent_SetDisplayType( GetScoreEvent( "KillingSpree" ), eEventDisplayType.GAMEMODE | eEventDisplayType.MEDAL | eEventDisplayType.CALLINGCARD )
 	ScoreEvent_SetDisplayType( GetScoreEvent( "Rampage" ), eEventDisplayType.GAMEMODE | eEventDisplayType.MEDAL | eEventDisplayType.CALLINGCARD )
-	ScoreEvent_SetDisplayType( GetScoreEvent( "Dominating" ), eEventDisplayType.GAMEMODE | eEventDisplayType.MEDAL | eEventDisplayType.CALLINGCARD )
 }
 
 void function InitPlayerForScoreEvents( entity player )
@@ -187,7 +186,7 @@ void function ScoreEvent_PlayerKilled( entity victim, entity attacker, var damag
 	
 	// dominating
 	if ( attacker.p.playerKillStreaks[ victim ] >= DOMINATING_KILL_REQUIREMENT )
-		AddPlayerScore( attacker, "Dominating", attacker )
+		AddPlayerScore( attacker, "Dominating" )
 	
 	if ( Time() - attacker.s.lastKillTime > CASCADINGKILL_REQUIREMENT_TIME )
 	{
