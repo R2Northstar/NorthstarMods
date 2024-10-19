@@ -80,12 +80,12 @@ void function OnColorPickerOpen() {
 	if (c.len() >= 3) {
 
 		for (int i = 0; i < c.len(); i++) {
-			_MS_Slider slider = file.sliders[i]
+			MS_Slider slider = file.sliders[i]
 			var textPanel = file.textFields[i]
 
 
 			int val = int(clamp(c[i], 0, 255))
-			_MS_Slider_SetValue(slider, val.tofloat())
+			MS_Slider_SetValue(slider, val.tofloat())
 			Hud_SetText( textPanel, string(val) )
 		}
 
@@ -115,8 +115,8 @@ void function SendTextPanelChanges( var textPanel )
 	{
 		newSetting = int(clamp(newSetting, 0, 255))
 
-		_MS_Slider slider = file.sliders[index]
-		_MS_Slider_SetValue(slider, newSetting.tofloat())
+		MS_Slider slider = file.sliders[index]
+		MS_Slider_SetValue(slider, newSetting.tofloat())
 
 		UpdateColor()
 	}
