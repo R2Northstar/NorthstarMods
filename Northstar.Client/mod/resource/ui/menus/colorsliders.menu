@@ -160,7 +160,7 @@ resource/ui/menus/colorsliders.menu
 			"xpos" 20
 			"ypos" "-5"
 			"zpos" "100"	// This works around input weirdness when the control is constructed by code instead of VGUI blackbox.
-			"wide" 30
+			"wide" 50
 			"tall" "30"
 			"scriptID" "0"
 			"textHidden" "0"
@@ -185,14 +185,16 @@ resource/ui/menus/colorsliders.menu
 			"InheritProperties" "RuiSmallButton"
 			"labelText" ""
 			"zpos" "0"
-			"xpos" "-100"
-			"wide" "45"
+			"xpos" "10"
+			"wide" "75"
 			"tall" "45"
 			"scriptID" "0"
 			"pin_to_sibling" TextEntrySettingR
-			"pin_corner_to_sibling" "RIGHT"
-			"pin_to_sibling_corner" "LEFT"
+			"pin_corner_to_sibling" "LEFT"
+			"pin_to_sibling_corner" "RIGHT"
 
+			"navLeft" "TextEntrySettingR"
+			"navRight" "SliderG"
 			"enabled"	"1"
 
 		}
@@ -287,7 +289,7 @@ resource/ui/menus/colorsliders.menu
 			"xpos" 20
 			"ypos" "-5"
 			"zpos" "100"	// This works around input weirdness when the control is constructed by code instead of VGUI blackbox.
-			"wide" 30
+			"wide" 50
 			"tall" "30"
 			"scriptID" "1"
 
@@ -314,14 +316,18 @@ resource/ui/menus/colorsliders.menu
 			"InheritProperties" "RuiSmallButton"
 			"labelText" ""
 			"zpos" "0"
-			"xpos" "-100"
-			"wide" "45"
+			"xpos" "10"
+			"wide" "75"
 			"tall" "45"
 			"scriptID" "1"
 
 			"pin_to_sibling" TextEntrySettingG
-			"pin_corner_to_sibling" "RIGHT"
-			"pin_to_sibling_corner" "LEFT"
+			"pin_corner_to_sibling" "LEFT"
+			"pin_to_sibling_corner" "RIGHT"
+
+			"navLeft" "TextEntrySettingG"
+			"navRight" "SliderB"
+			"enabled"	"1"
 		}
 		ResetModImageG
 		{
@@ -405,7 +411,7 @@ resource/ui/menus/colorsliders.menu
 			"xpos" 20
 			"ypos" "-5"
 			"zpos" "100"	// This works around input weirdness when the control is constructed by code instead of VGUI blackbox.
-			"wide" 30
+			"wide" 50
 			"tall" "30"
 			"scriptID" "2"
 
@@ -431,14 +437,18 @@ resource/ui/menus/colorsliders.menu
 			"InheritProperties" "RuiSmallButton"
 			"labelText" ""
 			"zpos" "0"
-			"xpos" "-100"
-			"wide" "45"
+			"xpos" "10"
+			"wide" "75"
 			"tall" "45"
 			"scriptID" "2"
 
 			"pin_to_sibling" TextEntrySettingB
-			"pin_corner_to_sibling" "RIGHT"
-			"pin_to_sibling_corner" "LEFT"
+			"pin_corner_to_sibling" "LEFT"
+			"pin_to_sibling_corner" "RIGHT"
+
+			"navLeft" "TextEntrySettingB"
+			"navRight" "SliderA"
+			"enabled"	"1"
 		}
 		ResetModImageB
 		{
@@ -519,7 +529,7 @@ resource/ui/menus/colorsliders.menu
 			"xpos" 20
 			"ypos" "-5"
 			"zpos" "100"	// This works around input weirdness when the control is constructed by code instead of VGUI blackbox.
-			"wide" 30
+			"wide" 50
 			"tall" "30"
 			"scriptID" "3"
 
@@ -545,14 +555,17 @@ resource/ui/menus/colorsliders.menu
 			"InheritProperties" "RuiSmallButton"
 			"labelText" ""
 			"zpos" "0"
-			"xpos" "-100"
-			"wide" "45"
+			"xpos" "10"
+			"wide" "75"
 			"tall" "45"
 			"scriptID" "3"
 
 			"pin_to_sibling" TextEntrySettingA
-			"pin_corner_to_sibling" "RIGHT"
-			"pin_to_sibling_corner" "LEFT"
+			"pin_corner_to_sibling" "LEFT"
+			"pin_to_sibling_corner" "RIGHT"
+
+			"navLeft" "TextEntrySettingA"
+			"enabled"	"1"
 		}
 		ResetModImageA
 		{

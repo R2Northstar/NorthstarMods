@@ -80,13 +80,16 @@ void function OnColorPickerOpen() {
 	if (c.len() >= 3) {
 
 		for (int i = 0; i < c.len(); i++) {
-			MS_Slider slider = file.sliders[i]
+			_MS_Slider slider = file.sliders[i]
 			var textPanel = file.textFields[i]
-			MS_Slider_SetValue(slider, c[i].tofloat())
-			Hud_SetText( textPanel, string(c[i]) )
+
+
+			int val = int(clamp(c[i], 0, 255))
+			_MS_Slider_SetValue(slider, val.tofloat())
+			Hud_SetText( textPanel, string(val) )
 		}
 
-		int alpha = c.len() == 4 ? c[3] : 255
+		int alpha = int(clamp(c.len() == 4 ? c[3] : 255, 0, 255))
 		Hud_SetColor(file.colorImage, c[0], c[1], c[2], alpha)
 		file.color = c
 		printt("ColorPicker Read ConVar", GetConVarString("modemenu_current_color_convar"), "With Value:", GetConVarString(GetConVarString("modemenu_current_color_convar")), ",Parsed To:",
@@ -99,92 +102,40 @@ void function OnColorPickerClose() {
 	printt("Trying to close Color Picker")
 
 	ColorsToConvar()
-	// SetConVarString("modemenu_current_color_convar", "")
-	// printt(uiGlobal.activeMenu)
-	// PrintMenuStack()
-	// CloseColorPicker()
+
 	file.color = []
 	TryUpdateModSettingLists()
-	// if (uiGlobal.menuStack[0] == GetActiveMenu() ||  file.colorPicker == GetActiveMenu()) {
-	// 	{
-	// 		CloseMenu( file.colorPicker )
-	// 		uiGlobal.menuStack.pop()
-	// 		printt(1)
-	// 		OpenMenuWrapper( GetMenu( "ModSettings" ), false )
-	// 		printt(2)
-
-	// 		// if ( uiGlobal.menuStack.len() )
-	// 		// 	uiGlobal.activeMenu = uiGlobal.menuStack.top()
-	// 		// else
-	// 		// 	uiGlobal.activeMenu = null
-
-	// 		// if (uiGlobal.activeMenu && uiGlobal.activeMenu == GetMenu( "ModSettings" ))
-	// 		// {
-	// 		// 	if ( uiGlobal.activeMenu.GetType() == "submenu" )
-	// 		// 	{
-	// 		// 		Hud_SetFocused( uiGlobal.menuData[ uiGlobal.activeMenu ].lastFocus )
-	// 		// 	}
-	// 		// 	else if ( openStackMenu )
-	// 		// 	{
-	// 		// 		OpenMenuWrapper( uiGlobal.activeMenu, false )
-
-	// 		// 		if ( updateBlur && !IsLobby() && !uiGlobal.mapSupportsMenuModels )
-	// 		// 			SetBlurEnabled( true )
-	// 		// 	}
-	// 		// }
-
-	// 		// Signal( uiGlobal.signalDummy, "ActiveMenuChanged" )
-
-
-	// 	}
-
-
-	// 	// CloseActiveMenu()
-	// }
 }
 
 void function SendTextPanelChanges( var textPanel )
 {
-	array < int > c = ColorsFromConvar()
+	int newSetting = int(Hud_GetUTF8Text( textPanel ))
+	int index = int(Hud_GetScriptID(textPanel))
+	try
+	{
+		newSetting = int(clamp(newSetting, 0, 255))
 
-	try {
-		int index = int(Hud_GetScriptID(textPanel))
-		MS_Slider slider = file.sliders[index]
-
-		int val = int(Hud_GetUTF8Text( textPanel ))
-		c[index] = val
-
-		MS_Slider_SetValue(slider, c[index].tofloat())
+		_MS_Slider slider = file.sliders[index]
+		_MS_Slider_SetValue(slider, newSetting.tofloat())
 
 		UpdateColor()
-	} catch (ex){
-		printt("Failed to SendTextPanelChanges", ex)
-		ThrowInvalidValue("This setting is a color, and only accepts a trio of numbers - you put something we could not parse!\n\n( Use \".\" for the int like \"255 255 255\", not \",\". )")
-
 	}
-
+	catch ( ex )
+	{
+		// ThrowInvalidValue( "This part of color is an integer, and only accepts whole numbers(0..1..255)." )
+		ResetColor(index)
+		
+	}
 }
 
 void function OnSliderChange( var button )
 {
 	int index = int(Hud_GetScriptID(button))
-	array < int > c = ColorsFromConvar()
+	int val = int(Hud_SliderControl_GetCurrentValue( button ))
 
-
-	try {
-		var textPanel = file.textFields[index]
-
-		int val = int(Hud_SliderControl_GetCurrentValue( button ))
-		c[index] = val
-
-		Hud_SetText( textPanel, string( val ) )
-		UpdateColor()
-	} catch (exception){
-		printt("Failed to OnSliderChange", exception, index, file.textFields.len(), c.len(), file.sliders.len(), button)
-		ThrowInvalidValue("This setting is a color, and only accepts a trio of numbers - you put something we could not parse!\n\n( Use \".\" for the int like \"255 255 255\", not \",\". )")
-
-		CloseActiveMenu()
-	}
+	var textPanel = file.textFields[index]
+	Hud_SetText( textPanel, string( val ) )
+	UpdateColor()
 }
 
 // write to convar
@@ -202,7 +153,7 @@ void function UpdateColor()
 	catch ( ex )
 	{
 		printt("Failed to UpdateColor", ex)
-		ThrowInvalidValue("This setting is a color, and only accepts a trio of numbers - you put something we could not parse!\n\n( Use \".\" for the int like \"255 255 255\", not \",\". )")
+		// ThrowInvalidValue("This setting is a color, and only accepts a trio of numbers - you put something we could not parse!\n\n( Use \".\" for the int like \"255 255 255\", not \",\". )")
 	}
 }
 void function ResetColors() {
@@ -243,19 +194,22 @@ array<int> function ColorsFromConvar()
 			// Assert(tokens.len() == 3)
 			if (tokens.len() < 3) {
 				throw "Convar " + convar + ": " + GetConVarString(convar) + "is not a trio/four of numbers"
-			printt("Failed to ColorsFromConvar. With Convar", convar, ":",GetConVarString(convar))
+			// printt("Failed to ColorsFromConvar. With Convar", convar, ":",GetConVarString(convar))
 
 			}
 
 			for (int i = 0; i < tokens.len(); i++) {
-				c.append(tokens[i].tointeger())
+				c.append(int(clamp(tokens[i].tointeger(), 0, 255)))
 			}
 
+			if (tokens.len() == 3) {
+				c.append(255)
+			}
 		}
 		catch ( ex )
 		{
 			printt("Failed to ColorsFromConvar. With Convar", convar, ":",GetConVarString(convar) , ex)
-			ThrowInvalidValue("This setting is a color, and only accepts a trio of numbers - you put something we could not parse!\n\n( Use \".\" for the int like \"255 255 255\", not \",\". )")
+			// ThrowInvalidValue("This setting is a color, and only accepts a trio of numbers - you put something we could not parse!\n\n( Use \".\" for the int like \"255 255 255\", not \",\". )")
 		}
 	}
 
@@ -276,13 +230,13 @@ void function ColorsToConvar()
 			}
 
 			SetConVarString(convar, str)
-			printt("ColorPicker write ConVar", GetConVarString("modemenu_current_color_convar"), "With " + str)
+			// printt("ColorPicker write ConVar", GetConVarString("modemenu_current_color_convar"), "With " + str)
 
 		}
 		catch ( ex )
 		{
 			printt("Failed to ColorsToConvar. With Convar", convar, ":",GetConVarString(convar) , ex)
-			ThrowInvalidValue("This setting is a color, and only accepts a four of numbers - you put something we could not parse!\n\n( Use \".\" for the int like \"255 255 255\", not \",\". )")
+			// ThrowInvalidValue("This setting is a color, and only accepts a four of numbers - you put something we could not parse!\n\n( Use \".\" for the int like \"255 255 255\", not \",\". )")
 		}
 	}
 }
@@ -299,9 +253,6 @@ void function ThrowInvalidValue( string desc )
 	OpenDialog( dialogData )
 }
 
-void function CloseColorPicker() {
-	CloseAllToTargetMenu(GetMenu("ModSettings"))
-}
 
 void function OnScreen_BGActivate( var button )
 {

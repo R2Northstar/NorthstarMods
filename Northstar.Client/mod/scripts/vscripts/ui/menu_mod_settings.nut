@@ -1154,26 +1154,64 @@ void function SendTextPanelChanges( var textPanel )
 				break
 			case "color":
 				try {
-						table color = StringToColors( GetConVarString(c.conVar) )
-						Hud_SetColor(colorVGUI, color.r, color.g, color.b, color.a)
-					}
-				catch ( ex )
+					array<string> split = split( newSetting, " " )
+					if ( split.len() < 3 || split.len() > 4)
 					{
-						printt(ex)
-						ThrowInvalidValue("This setting is a color, and only accepts a four of numbers - you put something we could not parse!\n\n( Use \".\" for the int like \"255 255 255 255\", not \",\". )")
-						Hud_SetColor(colorVGUI, 0, 0, 0, 0)
+						throw ""
 					}
+					
+					array<int> color
+					string clampedNewSetting = ""
+					foreach (string val in split) {
+						int c = int(clamp(val.tointeger(), 0 ,255))
+						color.append(c)
+
+						clampedNewSetting += c + " "
+					}
+					
+					if (split.len() == 3)
+					{
+						color.append(255)
+						clampedNewSetting += " 255"
+					}
+
+					Hud_SetColor(colorVGUI, color[0], color[1], color[2], color[3])
+					Hud_SetText( textPanel, clampedNewSetting )
+					SetConVarString( c.conVar, clampedNewSetting )
+
+					// table color = StringToColors( newSetting )
+					// Hud_SetColor(colorVGUI, color.r, color.g, color.b, color.a)
+					// Hud_SetText( textPanel, newSetting )
+					// SetConVarString( c.conVar, newSetting )
+				}
+				catch ( ex )
+				{
+					printt("Failed to send textField change, because:" + ex)
+					ThrowInvalidValue("This setting is a color, and only accepts a four of numbers - you put something we could not parse!\n\n( Use \".\" for the int like \"255 255 255 255\", not \",\". )")
+
+					table color = StringToColors( GetConVarString( c.conVar ) )
+					Hud_SetText( textPanel, GetConVarString( c.conVar ) )
+					Hud_SetColor(colorVGUI, color.r, color.g, color.b, color.a)							// Hud_SetColor(colorVGUI, 0, 0, 0, 0)
+				}
 				break
 			case "alpha":
 				try
 				{
-					SetConVarFloat( c.conVar, newSetting.tofloat() )
+					float alpha = clamp(newSetting.tofloat(), 0, 1.0)
+
+					// if ( alpha < 0 || alpha > 1) {
+					// 	Hud_SetText( textPanel, GetConVarString( c.conVar ) )
+					// 	throw "Alpha should be a float bewteen 0..1."
+					// }
+					Hud_SetAlpha(colorVGUI, int(alpha * 255))
+					SetConVarFloat( c.conVar, alpha )
 				}
 				catch ( ex )
 				{
 					printt( ex )
-					ThrowInvalidValue( "This setting is a float, and only accepts a number - we could not parse this!\n\n( Use \".\" for the floating point, not \",\". )" )
+					ThrowInvalidValue( "This setting is a alpha(float), and only accepts a number - we could not parse this!\n\n( Use \".\" for the floating point, not \",\". )" )
 				}
+
 				if ( c.sliderEnabled )
 				{
 					var panel = Hud_GetParent( textPanel )
@@ -1181,8 +1219,6 @@ void function SendTextPanelChanges( var textPanel )
 
 					MS_Slider_SetValue( s, GetConVarFloat( c.conVar ) )
 				}
-				float alpha = GetConVarFloat(c.conVar)
-				Hud_SetAlpha(colorVGUI, int(alpha * 255))
 				break
 			default:
 				SetConVarString( c.conVar, newSetting )
@@ -1270,22 +1306,23 @@ string function SanitizeDisplayName( string displayName )
 // nothing in the game uses the format "Table.r/g/b/a"... wtf is the point of this function
 table function StringToColors( string colorString, string delimiter = " " )
 {
-	PerfStart( PerfIndexShared.StringToColors + SharedPerfIndexStart )
-	array<string> tokens = split( colorString, delimiter )
-
-	Assert( tokens.len() >= 3 )
-
 	table Table = {}
-	Table.r <- int( tokens[0] )
-	Table.g <- int( tokens[1] )
-	Table.b <- int( tokens[2] )
-
+	array<string> tokens = split( colorString, " " )
+	if ( tokens.len() < 3 || tokens.len() > 4)
+	{
+		throw "The length of tokens should be 3 or 4, but it is " + tokens.len()
+	}
+	
+	Table.r <- int( clamp(int( tokens[0] ),0,255) )
+	Table.g <- int( clamp(int( tokens[1] ),0,255) )
+	Table.b <- int( clamp(int( tokens[2] ),0,255) )
+		
 	if ( tokens.len() == 4 )
-		Table.a <- int( tokens[3] )
+		Table.a <- int( clamp(int( tokens[3] ),0,255) )
 	else
 		Table.a <- 255
+	
 
-	PerfEnd( PerfIndexShared.StringToColors + SharedPerfIndexStart )
 	return Table
 }
 
