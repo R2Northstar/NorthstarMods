@@ -87,12 +87,14 @@ void function InitCTFCompSpecificSettings()
 			AddCallback_EntitiesDidLoad( AddColonyOOBs )
 		if ( GetMapName() == "mp_black_water_canal" )
 			AddCallback_EntitiesDidLoad( AddBWCOOBs )
+		/*
 		if ( GetMapName() == "mp_grave" )
 			AddCallback_EntitiesDidLoad( AddBoomtownZiplines )
 		if ( GetMapName() == "mp_drydock" )
 			AddCallback_EntitiesDidLoad( AddDrydockProps )
 		if ( GetMapName() == "mp_thaw" )
 			AddCallback_EntitiesDidLoad( RepositionExoplanetFlags )
+		*/
 		if ( GetMapName() == "mp_wargames" )
 			AddCallback_EntitiesDidLoad( RepositionWargamesFlags )
 	#elseif CLIENT
@@ -187,6 +189,11 @@ void function AngelCityReplaceFlags()
 
 void function AddColonyOOBs()
 {
+	AddOutOfBoundsTriggerWithParams( < 387, 61, 1182 >, 180, 300 )
+	AddOutOfBoundsTriggerWithParams( < 1480, 648, 760 >, 150, 150 )
+	AddOutOfBoundsTriggerWithParams( < 1480, 442, 760 >, 150, 150 )
+	
+	/*
 	foreach ( entity flagRef in GetEntArrayByClass_Expensive( "info_spawnpoint_flag" ) )
 		flagRef.Destroy()
 		
@@ -199,11 +206,7 @@ void function AddColonyOOBs()
 	imcFlagBase.kv.teamnumber = TEAM_IMC
 	imcFlagBase.kv.origin = < 2229, 3721, 26 >
 	DispatchSpawn( imcFlagBase )
-
-	AddOutOfBoundsTriggerWithParams( < 387, 61, 1182 >, 180, 300 )
-	AddOutOfBoundsTriggerWithParams( < 1480, 648, 760 >, 150, 150 )
-	AddOutOfBoundsTriggerWithParams( < 1480, 442, 760 >, 150, 150 )
-
+	
 	AddCCTFCustomProp( $"models/imc_base/cargo_container_imc_01_blue.mdl", < 1682, 2485, -8 >, < 0, 90, 0 > )
 	AddCCTFCustomProp( $"models/imc_base/cargo_container_imc_01_blue.mdl", < 1672, 2366, -4 >, < 0, 0, 0 > )
 	AddCCTFCustomProp( $"models/imc_base/cargo_container_imc_01_white.mdl", < 1809, 2412, -8 >, < 0, -45, 0 > )
@@ -262,6 +265,8 @@ void function AddColonyOOBs()
 
 	CreateCCTFZipline( < -1509, 524, 621 >, < -1721, -1880, 455 > )
 	CreateCCTFZipline( < 2746, 845, 580 >, < 2643, 3286, 291 > )
+	
+	*/
 }
 
 void function AddBoomtownZiplines()

@@ -183,7 +183,6 @@ playlists
 				phase_shift_drop_flag 1
 				ctf_flag_return_time 1
 				ctf_flag_instant_return_in_triggers 1
-				ctf_friendly_hightlights 1
 				pilot_health_multiplier 1.2
 				archer_fast_lock 1
 				boosts_enabled 1
