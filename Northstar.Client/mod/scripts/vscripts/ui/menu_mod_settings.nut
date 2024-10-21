@@ -83,6 +83,14 @@ struct {
 	int deltaY = 0
 } mouseDeltaBuffer
 
+struct Color
+{
+    int r
+    int g
+    int b
+    int a
+}
+
 void function AddModSettingsMenu()
 {
 	AddMenu( "ModSettings", $"resource/ui/menus/mod_settings.menu", InitModMenu )
@@ -655,7 +663,7 @@ void function SetModMenuNameText( var button )
 		if (conVar.type == "color")
 		{
 			try {
-				table color = StringToColors( GetConVarString(conVar.conVar) )
+				Color color = StringToColors( GetConVarString(conVar.conVar) )
 				Hud_SetVisible( colorButton, true )
 				Hud_SetVisible( colorVGUI, true )
 				Hud_SetEnabled( colorButton, true )
@@ -670,7 +678,7 @@ void function SetModMenuNameText( var button )
 			catch ( ex )
 			{
 				printt(ex)
-				ThrowInvalidValue("This setting is a color, and only accepts a four of numbers - you put something we could not parse!\n\n( Use \".\" for the int like \"255 255 255 255\", not \",\". )")
+				ThrowInvalidValue("This setting is a color, and only accepts a four of numbers(each number should be a integer between 0 and 255) - you put something we could not parse!\n\n( Input like \"255 255 255 255\", not \"" + conVar.conVar + "\". )\n Press reset button or change the default value in mod.json. Or inform the mod author.")
 
 				Hud_SetSize( colorVGUI, 0, int( 45 * scaleY ) )
 				Hud_SetSize( colorButton, 0, int( 45 * scaleY ) )
@@ -1179,19 +1187,19 @@ void function SendTextPanelChanges( var textPanel )
 					Hud_SetText( textPanel, clampedNewSetting )
 					SetConVarString( c.conVar, clampedNewSetting )
 
-					// table color = StringToColors( newSetting )
+					// Color color = StringToColors( newSetting )
 					// Hud_SetColor(colorVGUI, color.r, color.g, color.b, color.a)
 					// Hud_SetText( textPanel, newSetting )
 					// SetConVarString( c.conVar, newSetting )
 				}
 				catch ( ex )
 				{
-					printt("Failed to send textField change, because:" + ex)
-					ThrowInvalidValue("This setting is a color, and only accepts a four of numbers - you put something we could not parse!\n\n( Use \".\" for the int like \"255 255 255 255\", not \",\". )")
-
-					table color = StringToColors( GetConVarString( c.conVar ) )
+					Color color = StringToColors( GetConVarString( c.conVar ) )
 					Hud_SetText( textPanel, GetConVarString( c.conVar ) )
-					Hud_SetColor(colorVGUI, color.r, color.g, color.b, color.a)							// Hud_SetColor(colorVGUI, 0, 0, 0, 0)
+					Hud_SetColor(colorVGUI, color.r, color.g, color.b, color.a)
+
+					printt("Failed to send textField change, because:" + ex)
+					ThrowInvalidValue("This setting is a color, and only accepts a four of numbers(each number should be a integer between 0 and 255) - you put something we could not parse!\n\n( Input like \"255 255 255 255\", not \"" + newSetting + "\". )")
 				}
 				break
 			case "alpha":
@@ -1303,27 +1311,25 @@ string function SanitizeDisplayName( string displayName )
 	return result
 }
 
-// nothing in the game uses the format "Table.r/g/b/a"... wtf is the point of this function
-table function StringToColors( string colorString, string delimiter = " " )
+Color function StringToColors( string colorString, string delimiter = " " )
 {
-	table Table = {}
+	Color color
 	array<string> tokens = split( colorString, " " )
 	if ( tokens.len() < 3 || tokens.len() > 4)
 	{
 		throw "The length of tokens should be 3 or 4, but it is " + tokens.len()
 	}
 
-	Table.r <- int( clamp(int( tokens[0] ),0,255) )
-	Table.g <- int( clamp(int( tokens[1] ),0,255) )
-	Table.b <- int( clamp(int( tokens[2] ),0,255) )
+	color.r = int(clamp(int(tokens[0]), 0, 255))
+	color.g = int(clamp(int(tokens[1]), 0, 255))
+	color.b = int(clamp(int(tokens[2]), 0, 255))
 
 	if ( tokens.len() == 4 )
-		Table.a <- int( clamp(int( tokens[3] ),0,255) )
+		color.a = int(clamp(int(tokens[3]), 0, 255))
 	else
-		Table.a <- 255
+		color.a = 255
 
-
-	return Table
+	return color
 }
 
 void function TryUpdateModSettingLists() {
