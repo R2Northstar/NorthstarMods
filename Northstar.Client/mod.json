@@ -50,10 +50,6 @@
 		{
 			"Name": "modemenu_mode_filter",
 			"DefaultValue": "-1"
-		},
-		{
-			"Name": "modemenu_current_color_convar",
-			"DefaultValue": ""
 		}
 	],
 	"Scripts": [

@@ -715,8 +715,8 @@ void function ColorButtonPressed( var button )
 	// c.onPress()
 	// printt(c.displayName, c.type, c.conVar)
 
-	SetConVarString("modemenu_current_color_convar", c.conVar)
-	OpenSubmenu(GetMenu("ColorPicker"),  false)
+	thread OpenColorPickerMenu(c.conVar, c.displayName)
+
 
 	// UpdateList()
 }
@@ -1159,7 +1159,7 @@ void function SendTextPanelChanges( var textPanel )
 					{
 						throw ""
 					}
-					
+
 					array<int> color
 					string clampedNewSetting = ""
 					foreach (string val in split) {
@@ -1168,7 +1168,7 @@ void function SendTextPanelChanges( var textPanel )
 
 						clampedNewSetting += c + " "
 					}
-					
+
 					if (split.len() == 3)
 					{
 						color.append(255)
@@ -1312,16 +1312,16 @@ table function StringToColors( string colorString, string delimiter = " " )
 	{
 		throw "The length of tokens should be 3 or 4, but it is " + tokens.len()
 	}
-	
+
 	Table.r <- int( clamp(int( tokens[0] ),0,255) )
 	Table.g <- int( clamp(int( tokens[1] ),0,255) )
 	Table.b <- int( clamp(int( tokens[2] ),0,255) )
-		
+
 	if ( tokens.len() == 4 )
 		Table.a <- int( clamp(int( tokens[3] ),0,255) )
 	else
 		Table.a <- 255
-	
+
 
 	return Table
 }

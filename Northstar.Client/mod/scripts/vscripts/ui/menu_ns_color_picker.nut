@@ -1,10 +1,11 @@
 untyped
 global function AddColorPickerMenu
+global function OpenColorPickerMenu
 
 
 
 struct {
-	var menu
+	var subTitle
 
 
 	array<MS_Slider> sliders
@@ -16,6 +17,9 @@ struct {
 
 	var colorPicker
 	var colorImage
+
+	string conVar
+	string displayName
 } file
 
 void function AddColorPickerMenu()
@@ -25,6 +29,7 @@ void function AddColorPickerMenu()
 
 	file.colorPicker = GetMenu( "ColorPicker" )
 	file.colorImage = Hud_GetChild( file.colorPicker, "Color" )
+	file.subTitle = Hud_GetChild( file.colorPicker, "DialogMessage" )
 
 	var frameElem = Hud_GetChild( file.colorPicker, "DialogFrame" )
 	RuiSetImage( Hud_GetRui( frameElem ), "basicImage", $"rui/menu/common/dialog_gradient" )
@@ -32,11 +37,14 @@ void function AddColorPickerMenu()
 
 	// AddMenuFooterOption( file.colorPicker, BUTTON_B, "#B_BUTTON_BACK", "#BACK" )
 
+	// RuiButton here due to close action
 	var screen = Hud_GetChild( file.colorPicker, "DarkenBackground" )
-	Hud_AddEventHandler( screen, UIE_CLICK, OnScreen_BGActivate )
-	var rui = Hud_GetRui( screen )
-	RuiSetFloat( rui, "basicImageAlpha", 0.0 )
-
+	Hud_AddEventHandler( screen, UIE_CLICK, void function( var _button )
+	{
+		CloseSubmenu()
+		printt("Close ColorPicker By Clicking Outside The ColorPicker Menu")
+	} )
+	RuiSetFloat( Hud_GetRui( screen ), "basicImageAlpha", 0.0 )
 
 
 	AddMenuEventHandler( file.colorPicker, eUIEvent.MENU_OPEN, OnColorPickerOpen )
@@ -76,7 +84,17 @@ void function AddColorPickerMenu()
 
 
 void function OnColorPickerOpen() {
-	array < int > c = ColorsFromConvar()
+	string conVar = file.conVar
+	string displayName = file.displayName
+
+	if (conVar == "")
+	{
+		CloseSubmenu()
+		return
+	}
+
+	Hud_SetText(file.subTitle, displayName)
+	array < int > c = ColorsFromConvar(conVar)
 	if (c.len() >= 3) {
 
 		for (int i = 0; i < c.len(); i++) {
@@ -92,7 +110,8 @@ void function OnColorPickerOpen() {
 		int alpha = int(clamp(c.len() == 4 ? c[3] : 255, 0, 255))
 		Hud_SetColor(file.colorImage, c[0], c[1], c[2], alpha)
 		file.color = c
-		printt("ColorPicker Read ConVar", GetConVarString("modemenu_current_color_convar"), "With Value:", GetConVarString(GetConVarString("modemenu_current_color_convar")), ",Parsed To:",
+		printt("ColorPicker Read ConVar", conVar, "With Value:",
+		 GetConVarString(conVar), ",Parsed To:",
 		    c[0], c[1], c[2], alpha)
 
 	}
@@ -104,6 +123,10 @@ void function OnColorPickerClose() {
 	ColorsToConvar()
 
 	file.color = []
+	file.conVar = ""
+	file.displayName = ""
+
+	Hud_SetText(file.subTitle, "")
 	TryUpdateModSettingLists()
 }
 
@@ -124,7 +147,7 @@ void function SendTextPanelChanges( var textPanel )
 	{
 		// ThrowInvalidValue( "This part of color is an integer, and only accepts whole numbers(0..1..255)." )
 		ResetColor(index)
-		
+
 	}
 }
 
@@ -141,11 +164,15 @@ void function OnSliderChange( var button )
 // write to convar
 void function UpdateColor()
 {
+	string conVar = file.conVar
 
 	try {
-		ColorsToConvar()
+		if (conVar == "") {
+			throw "Oops We dont have ConVar for color"
+		}
+		ColorsToConvar(conVar)
 
-		array < int > c = ColorsFromConvar()
+		array < int > c = ColorsFromConvar(conVar)
 		int alpha = c.len() == 4 ? c[3] : 255
 
 		Hud_SetColor(file.colorImage, c[0], c[1], c[2], alpha)
@@ -183,64 +210,64 @@ void function ResetColor(int index)
 
 
 
-array<int> function ColorsFromConvar()
+array<int> function ColorsFromConvar(string conVar = "")
 {
-	string convar = GetConVarString("modemenu_current_color_convar")
 	array<int> c
-	if (convar != "") {
-		try {
-			array<string> tokens = split( GetConVarString(convar), " " )
-
-			// Assert(tokens.len() == 3)
-			if (tokens.len() < 3) {
-				throw "Convar " + convar + ": " + GetConVarString(convar) + "is not a trio/four of numbers"
-			// printt("Failed to ColorsFromConvar. With Convar", convar, ":",GetConVarString(convar))
-
-			}
-
-			for (int i = 0; i < tokens.len(); i++) {
-				c.append(int(clamp(tokens[i].tointeger(), 0, 255)))
-			}
-
-			if (tokens.len() == 3) {
-				c.append(255)
-			}
+	try {
+		if (conVar == "") {
+			throw "Oops. We dont have ConVar for color here"
 		}
-		catch ( ex )
-		{
-			printt("Failed to ColorsFromConvar. With Convar", convar, ":",GetConVarString(convar) , ex)
-			// ThrowInvalidValue("This setting is a color, and only accepts a trio of numbers - you put something we could not parse!\n\n( Use \".\" for the int like \"255 255 255\", not \",\". )")
+		array<string> tokens = split( GetConVarString(conVar), " " )
+
+		// Assert(tokens.len() == 3)
+		if (tokens.len() < 3) {
+			throw "Convar " + conVar + ": " + GetConVarString(conVar) + "is not a trio/four of numbers"
+		// printt("Failed to ColorsFromConvar. With Convar", conVar, ":",GetConVarString(conVar))
+
 		}
+
+		for (int i = 0; i < tokens.len(); i++) {
+			c.append(int(clamp(tokens[i].tointeger(), 0, 255)))
+		}
+
+		if (tokens.len() == 3) {
+			c.append(255)
+		}
+
+	}
+	catch ( ex )
+	{
+		printt("Failed to ColorsFromConvar. With Convar", conVar, ":",GetConVarString(conVar) , ex)
+		// ThrowInvalidValue("This setting is a color, and only accepts a trio of numbers - you put something we could not parse!\n\n( Use \".\" for the int like \"255 255 255\", not \",\". )")
 	}
 
 	return c
 }
 
-void function ColorsToConvar()
+void function ColorsToConvar(string conVar = "")
 {
-	string convar = GetConVarString("modemenu_current_color_convar")
-	if (convar != "") {
-		try {
-			string str = ""
-			for (int i = 0; i < 4; i++) {
-				str += "" + int(Hud_GetUTF8Text( file.textFields[i] ))
-				if (i != 3) {
-					str += " "
-				}
+	try {
+		if (conVar == "") {
+			throw "Oops. We dont have ConVar for color here"
+		}
+		string str = ""
+		for (int i = 0; i < 4; i++) {
+			str += "" + int(Hud_GetUTF8Text( file.textFields[i] ))
+			if (i != 3) {
+				str += " "
 			}
-
-			SetConVarString(convar, str)
-			// printt("ColorPicker write ConVar", GetConVarString("modemenu_current_color_convar"), "With " + str)
-
 		}
-		catch ( ex )
-		{
-			printt("Failed to ColorsToConvar. With Convar", convar, ":",GetConVarString(convar) , ex)
-			// ThrowInvalidValue("This setting is a color, and only accepts a four of numbers - you put something we could not parse!\n\n( Use \".\" for the int like \"255 255 255\", not \",\". )")
-		}
+
+		SetConVarString(conVar, str)
+		// printt("ColorPicker write ConVar", conVar , "With " + str)
+
+	}
+	catch ( ex )
+	{
+		printt("Failed to ColorsToConvar. With Convar", conVar, ":",GetConVarString(conVar) , ex)
+		// ThrowInvalidValue("This setting is a color, and only accepts a four of numbers - you put something we could not parse!\n\n( Use \".\" for the int like \"255 255 255\", not \",\". )")
 	}
 }
-
 
 
 void function ThrowInvalidValue( string desc )
@@ -253,9 +280,11 @@ void function ThrowInvalidValue( string desc )
 	OpenDialog( dialogData )
 }
 
-
-void function OnScreen_BGActivate( var button )
+void
+function OpenColorPickerMenu(string conVar, string displayName)
 {
-    CloseSubmenu()
-	printt("Close ColorPicker")
+	file.conVar = conVar
+	file.displayName = displayName
+
+	OpenSubmenu(GetMenu("ColorPicker"),  false)
 }
