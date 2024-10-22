@@ -96,6 +96,9 @@ void function Spawn_Init()
 
 void function InitSpawnpoint( entity spawnpoint ) 
 {
+	spawnpoint.s.lastUsedTime <- -999
+	spawnpoint.s.inUse <- false
+
 	if ( file.spawnpointGamemodeOverride != "" )
 	{
 		string gamemodeKey = "gamemode_" + file.spawnpointGamemodeOverride
@@ -106,18 +109,13 @@ void function InitSpawnpoint( entity spawnpoint )
 		}
 	}
 	else if ( GameModeRemove( spawnpoint ) )
-	{
 		spawnpoint.Destroy()
-		return
-	}
-	
-	spawnpoint.s.lastUsedTime <- -999
-	spawnpoint.s.inUse <- false
 }
 
 void function ToggleSpawnNodeInUse( entity spawnpoint, bool isInUse )
 {
-	spawnpoint.s.inUse = isInUse
+	if( "inUse" in spawnpoint.s ) // Apparently spawnpoints spawned from script don't have this even with the AddSpawnCallback supposely covering all proper cases
+		spawnpoint.s.inUse = isInUse
 }
 
 string function CreateNoSpawnArea( int blockSpecificTeam, int blockEnemiesOfTeam, vector position, float lifetime, float radius )

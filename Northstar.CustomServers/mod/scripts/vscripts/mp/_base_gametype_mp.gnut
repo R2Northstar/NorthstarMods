@@ -754,7 +754,8 @@ void function RespawnAsTitan( entity player, bool normalTitanfall = false )
 		if ( IsValid( camera ) )
 			camera.Destroy()
 		
-		ToggleSpawnNodeInUse( spawnpoint, false )
+		if ( IsValid( spawnpoint ) )
+			ToggleSpawnNodeInUse( spawnpoint, false )
 	})
 	
 	TeleportToEnt( titan, spawnpoint )
