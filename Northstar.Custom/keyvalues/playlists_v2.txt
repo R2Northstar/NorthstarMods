@@ -184,7 +184,6 @@ playlists
 				ctf_flag_return_time 1
 				ctf_flag_instant_return_in_triggers 1
 				pilot_health_multiplier 1.2
-				archer_fast_lock 1
 				boosts_enabled 1
 				earn_meter_pilot_overdrive 0
 				earn_meter_pilot_multiplier 0.5
