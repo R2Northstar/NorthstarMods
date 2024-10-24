@@ -855,12 +855,6 @@ void function CheckGameStateForPlayerMovement( entity player )
 			player.Server_TurnOffhandWeaponsDisabledOn()
 		}
 	}
-	else if ( GamePlayingOrSuddenDeath() || GetGameState() == eGameState.Epilogue )
-	{
-		player.UnfreezeControlsOnServer()
-		player.EnableWeapon()
-		player.Server_TurnOffhandWeaponsDisabledOff()
-	}
 }
 
 void function CheckGameStateAfterSpawn_Threaded( entity player, float waitTime = 0.1 )
