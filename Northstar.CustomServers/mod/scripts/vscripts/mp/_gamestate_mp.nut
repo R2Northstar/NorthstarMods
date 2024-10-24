@@ -668,7 +668,7 @@ void function GameStateEnter_WinnerDetermined_Threaded()
 		
 		if ( highestScore >= roundScoreLimit )
 		{
-			if ( ClassicMP_ShouldRunEpilogue() )
+			if ( ShouldRunEvac() )
 			{
 				ClassicMP_SetupEpilogue()
 				SetGameState( eGameState.Epilogue )
@@ -718,7 +718,6 @@ void function PlayerWatchesRoundWinningReplay( entity player, float replayLength
 	player.ClearReplayDelay()
 	player.ClearViewEntity()
 
-	AddCinematicFlag( player, CE_FLAG_HIDE_MAIN_HUD )
 	player.watchingKillreplayEndTime = Time() + replayLength
 	player.SetKillReplayDelay( Time() - replayLength, THIRD_PERSON_KILL_REPLAY_ALWAYS )
 	player.SetKillReplayInflictorEHandle( file.roundWinningKillReplayInflictorEHandle )
@@ -737,7 +736,6 @@ void function ClearPlayerFromReplay( entity player )
 	player.Signal( "KillCamOver" )
 	player.ClearReplayDelay()
 	player.ClearViewEntity()
-	RemoveCinematicFlag( player, CE_FLAG_HIDE_MAIN_HUD )
 }
 
 
@@ -1038,8 +1036,7 @@ void function CheckEliminationRiffMode( entity victim, entity attacker )
 	{
 		if ( IsTeamEliminated( victim.GetTeam() ) )
 		{
-			// for ffa we need to manually get the last team alive 
-			if ( IsFFAGame() )
+			if ( IsFFAGame() ) // for ffa we need to manually get the last team alive 
 			{
 				array<int> teamsWithLivingPlayers
 				foreach ( entity player in GetPlayerArray_Alive() )
@@ -1078,7 +1075,6 @@ void function CheckEliminationRiffMode( entity victim, entity attacker )
 	{
 		if ( !GetPlayerTitansOnTeam( victim.GetTeam() ).len() )
 		{
-			// for ffa we need to manually get the last team alive 
 			if ( IsFFAGame() )
 			{
 				array<int> teamsWithLivingTitans
@@ -1207,6 +1203,13 @@ bool function IsRoundBasedGameOver()
 
 bool function ShouldRunEvac()
 {
+	if( !IsFFAGame() )
+	{
+		int losingTeam = GetOtherTeam( GetWinningTeam() )
+		if( IsEliminationBased() && IsTeamEliminated( losingTeam ) )
+			return false
+	}
+	
 	return GameMode_GetEvacEnabled( GAMETYPE ) && ClassicMP_ShouldRunEpilogue()
 }
 

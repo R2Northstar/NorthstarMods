@@ -2278,11 +2278,7 @@ void function OnHarvesterDamaged( entity harvester, var damageInfo )
 	if ( IsValid( weapon ) && HeavyArmorCriticalHitRequired( damageInfo ) && IsValid( attacker ) && !attacker.IsTitan() ) //Small change since Grunts will do 0 damage with normal guns because Harvester uses heavy armor
 		damageAmount = float( weapon.GetWeaponSettingInt( eWeaponVar.damage_near_value ) )
 	
-	int PlayersInMatch = GetPlayerArrayOfTeam( TEAM_MILITIA ).len() + 1
-	
-	if ( PlayersInMatch > 4 ) //Additional players should not be considered
-		PlayersInMatch = 4
-	
+	int PlayersInMatch = minint( 4, GetPlayerArrayOfTeam( TEAM_MILITIA ).len() + 1 ) //Additional players should not be considered
 	float MultiplierPerPlayer = 0.25
 
 	if ( !damageSourceID || !damageAmount || !IsValid( attacker ) )
@@ -3714,9 +3710,7 @@ void function FD_Epilogue_threaded()
 	int gameMode = PersistenceGetEnumIndexForItemName( "gamemodes", GAMETYPE )
 	int map = PersistenceGetEnumIndexForItemName( "maps", GetMapName() )
 	int myIndex
-	int numPlayers = GetPlayerArray().len()
-	if ( numPlayers > 4 ) //Cap cuz it crashes summary menu
-		numPlayers = 4
+	int numPlayers = minint( 4, GetPlayerArray().len() ) //Cap cuz it crashes summary menu
 
 	foreach ( entity player in GetPlayerArrayOfTeam( TEAM_MILITIA ) )
 	{

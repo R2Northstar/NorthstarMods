@@ -191,8 +191,9 @@ void function UpdateCachedLoadouts_Threaded()
 #if SERVER
 void function ValidateEquippedItems( entity player )
 {
+	#if DEV
 	printt( "VALIDATING EQUIPPED ITEMS FOR PLAYER: " + player.GetPlayerName() )
-
+	#endif
 	// banner
 	CallingCard card = PlayerCallingCard_GetActive( player )
 	if ( IsItemLocked( player, card.ref ) )
@@ -229,13 +230,17 @@ void function ValidateEquippedItems( entity player )
 	// titan loadouts
 	for ( int titanLoadoutIndex = 0; titanLoadoutIndex < NUM_PERSISTENT_TITAN_LOADOUTS; titanLoadoutIndex++ )
 	{
+		#if DEV
 		printt( "- VALIDATING TITAN LOADOUT: " + titanLoadoutIndex )
+		#endif
 
 		bool isSelected = titanLoadoutIndex == player.GetPersistentVarAsInt( "titanSpawnLoadout.index" )
 		TitanLoadoutDef loadout = GetTitanLoadout( player, titanLoadoutIndex )
 		TitanLoadoutDef defaultLoadout = shGlobal.defaultTitanLoadouts[titanLoadoutIndex]
 
+		#if DEV
 		printt( "  - CHASSIS: " + loadout.titanClass )
+		#endif
 
 		// passive1 - "Titan Kit" (things like overcore)
 		if ( loadout.passive1 != defaultLoadout.passive1 && IsSubItemLocked( player, loadout.passive1, loadout.titanClass ) )
@@ -458,7 +463,9 @@ void function ValidateEquippedItems( entity player )
 	// pilot loadouts
 	for ( int pilotLoadoutIndex = 0; pilotLoadoutIndex < NUM_PERSISTENT_PILOT_LOADOUTS; pilotLoadoutIndex++ )
 	{
+		#if DEV
 		printt( "- VALIDATING PILOT LOADOUT: " + pilotLoadoutIndex )
+		#endif
 
 		bool isSelected = pilotLoadoutIndex == player.GetPersistentVarAsInt( "pilotSpawnLoadout.index" )
 		PilotLoadoutDef loadout = GetPilotLoadout( player, pilotLoadoutIndex )
@@ -1018,7 +1025,9 @@ void function ValidateEquippedItems( entity player )
 
 	Remote_CallFunction_NonReplay( player, "ServerCallback_UpdatePilotModel", player.GetPersistentVarAsInt( "pilotSpawnLoadout.index" ) )
 
+	#if DEV
 	printt( "ITEM VALIDATION COMPLETE FOR PLAYER: " + player.GetPlayerName() )
+	#endif
 }
 
 // basically just PopulateTitanLoadoutFromPersistentData but without validation, we are doing the validation in a better way

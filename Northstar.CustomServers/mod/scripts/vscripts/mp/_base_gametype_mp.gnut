@@ -514,7 +514,7 @@ void function PostDeathThread_MP( entity player, var damageInfo ) // based on ga
 
 		replayTracker.validTime <- null 
 
-		float respawnTime = Time() - 2 // seems to get the killreplay to end around the actual kill
+		float respawnTime = Time() // - deathcamLength seems to get the killreplay to end around the actual kill
 		if ( "respawnTime" in attacker.s )
 			respawnTime = Time() - expect float ( attacker.s.respawnTime )
 
@@ -574,11 +574,14 @@ void function ForceRespawnMeSignalAfterDelay( entity player, int delay = 5 )
 	if ( player.IsWatchingKillReplay() )
 		player.WaitSignal( "KillCamOver" )
 
-	wait delay
+	if ( GetGameState() != eGameState.SuddenDeath ) // Only wait outside Sudden Death since players gets inputs blocked to respawn if they die before Sudden Death starts
+		wait delay
 
 	if ( IsRespawnAvailable( player ) )
 	{
+		#if DEV
 		printt( format( "Forcing player respawn for player %s (took >%d seconds to respawn)", player.GetPlayerName(), delay ) )
+		#endif
 		player.Signal( "RespawnMe" )
 	}
 }
@@ -851,6 +854,12 @@ void function CheckGameStateForPlayerMovement( entity player )
 			player.DisableWeapon()
 			player.Server_TurnOffhandWeaponsDisabledOn()
 		}
+	}
+	else if ( GamePlayingOrSuddenDeath() || GetGameState() == eGameState.Epilogue )
+	{
+		player.UnfreezeControlsOnServer()
+		player.EnableWeapon()
+		player.Server_TurnOffhandWeaponsDisabledOff()
 	}
 }
 
