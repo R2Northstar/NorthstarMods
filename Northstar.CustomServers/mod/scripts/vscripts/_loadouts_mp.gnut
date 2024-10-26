@@ -14,8 +14,6 @@ struct {
 	bool loadoutGracePeriodEnabled = true
 	array< TryGetTitanLoadoutCallbackType > onTryGetTitanLoadoutCallbacks
 	
-	array<entity> dirtyLoadouts
-
 	bool functionref( entity ) allowChangeLoadoutFunc = null
 } file
 
@@ -42,7 +40,7 @@ void function SvLoadoutsMP_Init()
 		AddClientCommandCallback( "SetFactionChoicePersistenceSlot", ClientCommandCallback_SetFactionChoicePersistenceSlot )
 	}
 	else
-		AddClientCommandCallback( "LoadoutMenuClosed", ClientCommandCallback_LoadoutMenuClosed )
+		AddClientCommandCallback( "InGameMPMenuClosed", ClientCommandCallback_LoadoutMenuClosed )
 }
 
 void function SetLoadoutGracePeriodEnabled( bool enabled )
@@ -173,7 +171,6 @@ bool function ClientCommandCallback_SetPersistentLoadoutValue( entity player, ar
 	// VERY temp and insecure
 	SetPersistentLoadoutValue( player, args[0], args[1].tointeger(), args[2], val )
 	
-	print( args[ 0 ] )
 	if ( args[0] == "pilot" )
 		SetPlayerLoadoutDirty( player ) 
 	
@@ -277,7 +274,9 @@ bool function ClientCommandCallback_SetFactionChoicePersistenceSlot( entity play
 
 bool function ClientCommandCallback_LoadoutMenuClosed( entity player, array<string> args )
 {
-	TryGivePilotLoadoutForGracePeriod( player )
+	if ( args[0] == "1" || args[1] == "1" )
+		TryGivePilotLoadoutForGracePeriod( player )
+	
 	return true
 }
 
@@ -307,7 +306,7 @@ void function TryGivePilotLoadoutForGracePeriod( entity player )
 		float respawnTime = expect float( player.s.respawnTime )
 		respawnTime += gracePeriodDuration
 		
-		if ( respawnTime >= Time() || GetGameState() < eGameState.Playing || player.p.usingLoadoutCrate || file.allowChangeLoadoutFunc != null && file.allowChangeLoadoutFunc( player ) )
+		if ( respawnTime >= Time() || svGlobal.isInPilotGracePeriod || GetGameState() < eGameState.Playing || player.p.usingLoadoutCrate || file.allowChangeLoadoutFunc != null && file.allowChangeLoadoutFunc( player ) )
 		{
 			if ( player.IsTitan() )
 			{
@@ -347,7 +346,7 @@ void function GiveLoadoutWhenIntroOver( entity player, bool isTitanLoadout = fal
 	player.EndSignal( "OnDestroy" )
 	player.EndSignal( "OnDeath" )
 	
-	while ( player.GetParent() != null && ( HasCinematicFlag( player, CE_FLAG_INTRO ) || HasCinematicFlag( player, CE_FLAG_CLASSIC_MP_SPAWNING ) || HasCinematicFlag( player, CE_FLAG_WAVE_SPAWNING ) ) )
+	while ( IsAlive( player.GetParent() ) && ( HasCinematicFlag( player, CE_FLAG_INTRO ) || HasCinematicFlag( player, CE_FLAG_CLASSIC_MP_SPAWNING ) || HasCinematicFlag( player, CE_FLAG_WAVE_SPAWNING ) ) )
 		WaitFrame()
 	
 	if ( isTitanLoadout )

@@ -4060,7 +4060,7 @@ string function GetTitanCharacterName( entity titan )
 		string aiSettingsFile = titan.GetAISettingsName()
 		setFile = expect string( Dev_GetAISettingByKeyField_Global( aiSettingsFile, "npc_titan_player_settings" ) )
 	}
-
+	
 	return GetTitanCharacterNameFromSetFile( setFile )
 }
 

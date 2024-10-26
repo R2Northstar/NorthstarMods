@@ -512,9 +512,9 @@ void function PostDeathThread_MP( entity player, var damageInfo ) // based on ga
 		player.watchingKillreplayEndTime = Time() + replayLength
 		float beforeTime = GetKillReplayBeforeTime( player, methodOfDeath )
 
-		replayTracker.validTime <- null 
+		replayTracker.validTime <- null
 
-		float respawnTime = Time() // - deathcamLength seems to get the killreplay to end around the actual kill
+		float respawnTime = Time() - 2 // seems to get the killreplay to end around the actual kill
 		if ( "respawnTime" in attacker.s )
 			respawnTime = Time() - expect float ( attacker.s.respawnTime )
 
@@ -603,11 +603,9 @@ void function PlayerWatchesKillReplayWrapper( entity player, entity attacker, fl
 			player.Signal( "KillCamOver" )
 			player.ClearReplayDelay()
 			player.ClearViewEntity()
-			//player.SetPredictionEnabled( true ) doesn't seem needed, as native code seems to set this on respawn
 		}
 	})
 
-	player.SetPredictionEnabled( false )
 	PlayerWatchesKillReplay( player, attacker.GetEncodedEHandle(), attacker.GetIndexForEntity(), timeSinceAttackerSpawned, timeOfDeath, beforeTime, replayTracker )
 }
 
@@ -630,12 +628,11 @@ void function PlayerWatchesKillReplayWrapper( entity player, entity attacker, fl
 
 void function DecideRespawnPlayer( entity player )
 {
-	// this isn't even used atm, could likely be removed if some vanilla code didn't rely on it
+	// Unused, TF1 legacy code
 }
 
 void function RespawnAsPilot( entity player )
 {
-	// respawn crash exploit hotfix
 	if ( !PlayerCanSpawn( player ) )
 		return
 
@@ -650,7 +647,6 @@ void function RespawnAsPilot( entity player )
 
 void function RespawnAsTitan( entity player, bool normalTitanfall = false )
 {
-	// respawn crash exploit hotfix
 	if ( !PlayerCanSpawn( player ) )
 		return
 

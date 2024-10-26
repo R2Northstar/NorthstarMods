@@ -374,9 +374,9 @@ void function RateSpawnpoints_Frontline( int checkClass, array<entity> spawnpoin
 	Frontline currentFrontline = GetFrontline( team )
 	
 	vector inverseFrontlineDir = currentFrontline.combatDir * -1
-	vector adjustedPosition = currentFrontline.origin + currentFrontline.combatDir * 8000
+	vector adjustedPosition = currentFrontline.origin + currentFrontline.combatDir * 4000
 	
-	SpawnPoints_InitFrontlineData( adjustedPosition, currentFrontline.combatDir, currentFrontline.origin, currentFrontline.friendlyCenter, 4000 )
+	SpawnPoints_InitFrontlineData( adjustedPosition, currentFrontline.combatDir, currentFrontline.origin, currentFrontline.friendlyCenter, 2000 )
 	
 	foreach ( entity spawnpoint in spawnpoints )
 	{

@@ -185,6 +185,7 @@ playlists
 				ctf_flag_instant_return_in_triggers 1
 				pilot_health_multiplier 1.2
 				boosts_enabled 1
+				titan_spawn_deploy_enabled 0
 				earn_meter_pilot_overdrive 0
 				earn_meter_pilot_multiplier 0.5
 				earn_meter_titan_multiplier 0.5

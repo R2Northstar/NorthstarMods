@@ -35,7 +35,7 @@ struct {
 	int functionref() timeoutWinnerDecisionFunc
 	
 	bool hasSwitchedSides
-		
+	
 	bool roundWinningKillReplayTrackPilotKills = true 
 	bool roundWinningKillReplayTrackTitanKills = false
 	

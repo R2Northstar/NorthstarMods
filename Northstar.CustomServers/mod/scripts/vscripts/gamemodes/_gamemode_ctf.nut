@@ -230,7 +230,7 @@ void function RateSpawnpoints_CTF( int checkClass, array<entity> spawnpoints, in
 			rating += spawn.NearbyEnemyScore( team, "ai" )
 			rating += spawn.NearbyEnemyScore( team, "titan" )
 			rating += spawn.NearbyEnemyScore( team, "pilot" )
-		
+
 			rating = rating / allyFlagDistance
 		}
 
@@ -599,7 +599,7 @@ void function FlagProximityTracker( entity flag )
 			}
 			else
 			{
-				if( playerInsidePerimeter.contains( player ) )
+				if( playerInsidePerimeter.contains( player ) || playerInsidePerimeter.contains( player ) && player.IsPhaseShifted() )
 				{
 					player.Signal( "CTF_LeftReturnTriggerArea" ) // Cut the progress if outside range
 					playerInsidePerimeter.removebyvalue( player )
