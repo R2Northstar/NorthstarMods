@@ -214,28 +214,27 @@ void function RateSpawnpoints_CTF( int checkClass, array<entity> spawnpoints, in
 		else
 			enemyFlagSpot = spawn.GetOrigin()
 	}
-	
+
 	foreach ( entity spawn in spawnpoints )
 	{
-		float rating = 0.0
 		float allyFlagDistance = Distance2D( spawn.GetOrigin(), allyFlagSpot )
 		float enemyFlagDistance = Distance2D( spawn.GetOrigin(), enemyFlagSpot )
-		
-		if( enemyFlagDistance > allyFlagDistance )
-		{
-			rating += spawn.NearbyAllyScore( team, "ai" )
-			rating += spawn.NearbyAllyScore( team, "titan" )
-			rating += spawn.NearbyAllyScore( team, "pilot" )
-			
-			rating += spawn.NearbyEnemyScore( team, "ai" )
-			rating += spawn.NearbyEnemyScore( team, "titan" )
-			rating += spawn.NearbyEnemyScore( team, "pilot" )
 
-			rating = rating / allyFlagDistance
-		}
+		float rating = 4.0 * ( 1.0 - ( Distance2D( spawn.GetOrigin(), allyFlagSpot ) / CTF_FLAG_MAX_SPAWN_DISTANCE ) )
+
+		rating += spawn.NearbyAllyScore( team, "ai" )
+		rating += spawn.NearbyAllyScore( team, "titan" )
+		rating += spawn.NearbyAllyScore( team, "pilot" )
+		
+		rating += spawn.NearbyEnemyScore( team, "ai" )
+		rating += spawn.NearbyEnemyScore( team, "titan" )
+		rating += spawn.NearbyEnemyScore( team, "pilot" )
 
 		if ( spawn == player.p.lastSpawnPoint )
 			rating += GetConVarFloat( "spawnpoint_last_spawn_rating" )
+
+		if( allyFlagDistance > enemyFlagDistance )
+			rating = 0.0
 		
 		spawn.CalculateRating( checkClass, team, rating, rating * 0.25 )
 	}
