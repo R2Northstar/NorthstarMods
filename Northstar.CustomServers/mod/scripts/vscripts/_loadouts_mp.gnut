@@ -310,13 +310,9 @@ void function TryGivePilotLoadoutForGracePeriod( entity player )
 		{
 			if ( player.IsTitan() )
 			{
-				if ( !Loadouts_CanGiveTitanLoadout( player ) && GetGameState() < eGameState.Playing )
-					thread GiveLoadoutWhenIntroOver( player, true )
+				player.s.loadoutDirty = false
 				if ( Loadouts_CanGiveTitanLoadout( player ) )
-				{
 					Loadouts_TryGiveTitanLoadout( player )
-					player.s.loadoutDirty = false
-				}
 			}
 			else
 			{
@@ -341,17 +337,14 @@ void function TryGivePilotLoadoutForGracePeriod( entity player )
 	}
 }
 
-void function GiveLoadoutWhenIntroOver( entity player, bool isTitanLoadout = false )
+void function GiveLoadoutWhenIntroOver( entity player )
 {
 	player.EndSignal( "OnDestroy" )
 	player.EndSignal( "OnDeath" )
 	
-	while ( IsAlive( player.GetParent() ) && ( HasCinematicFlag( player, CE_FLAG_INTRO ) || HasCinematicFlag( player, CE_FLAG_CLASSIC_MP_SPAWNING ) || HasCinematicFlag( player, CE_FLAG_WAVE_SPAWNING ) ) )
+	while ( !Loadouts_CanGivePilotLoadout( player ) )
 		WaitFrame()
 	
-	if ( isTitanLoadout )
-		Loadouts_TryGiveTitanLoadout( player )
-	else
-		Loadouts_TryGivePilotLoadout( player )
+	Loadouts_TryGivePilotLoadout( player )
 	player.s.loadoutDirty = false
 }

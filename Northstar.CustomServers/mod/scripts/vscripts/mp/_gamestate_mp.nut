@@ -259,33 +259,7 @@ void function SetWinner( int ornull team, string winningReason = "", string losi
 		if ( team != null && team != TEAM_UNASSIGNED )
 			ScoreEvent_MatchComplete( expect int( team ) )
 		
-		array<entity> players = GetPlayerArray()
-		players.sort( GetScoreboardCompareFunc() )
-		int playerCount = players.len()
-		int currentPlace = 1
-		for ( int i = 0; i < 3; i++ )
-		{
-			if ( i >= playerCount )
-				continue
-			
-			int functionref( entity, entity ) compareFunc = GetScoreboardCompareFunc()
-			if ( i > 0 && compareFunc( players[i - 1], players[i] ) != 0 )
-				currentPlace += 1
-			switch( currentPlace ) // Update player persistent stats in here
-			{
-				case 1:
-					UpdatePlayerStat( players[i], "game_stats", "mvp" ) // MVP in the current map played
-					UpdatePlayerStat( players[i], "game_stats", "mvp_total" ) // MVP in the overall profile
-					UpdatePlayerStat( players[i], "game_stats", "top3OnTeam" )
-					break
-				case 2:
-					UpdatePlayerStat( players[i], "game_stats", "top3OnTeam" )
-					break
-				case 3:
-					UpdatePlayerStat( players[i], "game_stats", "top3OnTeam" )
-					break
-			}
-		}
+		RegisterMatchStats_OnMatchComplete()
 	}
 }
 

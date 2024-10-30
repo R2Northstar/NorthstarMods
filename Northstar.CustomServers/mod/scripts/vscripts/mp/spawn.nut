@@ -157,10 +157,13 @@ bool function SpawnPointInNoSpawnArea( vector vec, int team )
 	{
 		if ( Distance( noSpawnArea.position, vec ) < noSpawnArea.radius )
 		{
-			if ( noSpawnArea.blockedTeam != TEAM_INVALID && noSpawnArea.blockedTeam == team )
+			if ( noSpawnArea.blockedTeam == TEAM_ANY || noSpawnArea.blockOtherTeams == TEAM_ANY ) // ESmoke uses this
 				return true
 			
-			if ( noSpawnArea.blockOtherTeams != TEAM_INVALID && noSpawnArea.blockOtherTeams != team )
+			if ( noSpawnArea.blockedTeam == TEAM_INVALID && noSpawnArea.blockOtherTeams == TEAM_INVALID ) // Cluster missile does this instead of ESmoke method, not sure why
+				return true
+			
+			if ( noSpawnArea.blockedTeam == team || noSpawnArea.blockOtherTeams != team )
 				return true
 		}
 	}

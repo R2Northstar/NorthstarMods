@@ -542,6 +542,7 @@ void function ResetFlag( entity flag )
 		flagBase = file.militiaFlagSpawn
 		
 	flag.SetOrigin( flagBase.GetOrigin() + < 0, 0, flagBase.GetBoundingMaxs().z + 1 > )
+	flag.SetVelocity( < 0, 0, 0 > )
 	
 	flag.s.canTake = true
 	
