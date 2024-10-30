@@ -634,7 +634,7 @@ void function SetRecalculateRespawnAsTitanStartPointCallback( entity functionref
 
 bool function ClientCommandCallbackChangeTeam( entity player, array<string> args )
 {
-	if ( !GetConVarBool( "ns_allow_team_change" ) )
+	if ( !GetConVarBool( "ns_allow_team_change" ) || IsPrivateMatchSpectator( player ) )
 		return true
 	
 	if ( !( player in file.playerChangeTeamTimeBuffer ) )
