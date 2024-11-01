@@ -401,6 +401,12 @@
 			"argTypes":""
 		},
 		{
+			"name":"NSGetModVersions",
+			"helpText":"",
+			"returnTypeString":"array<string>",
+			"argTypes":"string modName"
+		},
+		{
 			"name":"NSIsModEnabled",
 			"helpText":"",
 			"returnTypeString":"bool",
