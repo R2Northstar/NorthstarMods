@@ -1,6 +1,5 @@
 resource/ui/menus/colorsliders.menu
 {
-
 	menu
 	{
 		ControlName				Frame
@@ -30,9 +29,7 @@ resource/ui/menus/colorsliders.menu
 			fgcolor_override		"0 0 0 255"
 			visible					1
 			scaleImage				1
-
 		}
-
 
 		DialogFrameButton
 		{
@@ -60,8 +57,6 @@ resource/ui/menus/colorsliders.menu
 			pin_to_sibling_corner	CENTER
 		}
 
-
-
 		DialogHeader
 		{
 			ControlName				Label
@@ -84,19 +79,19 @@ resource/ui/menus/colorsliders.menu
 
 		Color
 		{
-			"ControlName" "ImagePanel"
-			"image" "vgui/white"
-			"scaleImage" "1"
-			"drawColor" "180 180 180 255" // vanilla label color
-			"visible" "1"
-			"wide" "600"
-			"tall" "20"
-			"enabled"	"0"
+			ControlName ImagePanel
+			image "vgui/white"
+			scaleImage 1
+			drawColor "180 180 180 255" // vanilla label color
+			visible 1
+			wide "600"
+			tall "20"
+			enabled	0
 			
 
-			"pin_to_sibling" DialogFrame
-			"pin_corner_to_sibling" TOP
-			"pin_to_sibling_corner" TOP
+			pin_to_sibling DialogFrame
+			pin_corner_to_sibling TOP
+			pin_to_sibling_corner TOP
 		}
 
 		DialogMessage
@@ -117,500 +112,469 @@ resource/ui/menus/colorsliders.menu
 			pin_to_sibling_corner	BOTTOM_LEFT
 		}
 
-        LabelR // A label that is placed in the middle of the screen
-        {
+		LabelR
+		{
 			Classname LabelClass
 		
-            ControlName Label
+			ControlName Label
 			xpos -15
 			ypos 35
-            labelText "R"
-			"scriptID" "0"
+			labelText "R"
+			scriptID 0
 
-            auto_wide_tocontents 1 // Set width automatically relative to the label content
+			auto_wide_tocontents 1
 
 			pin_to_sibling			DialogMessage
 			pin_corner_to_sibling	TOP_LEFT
 			pin_to_sibling_corner	BOTTOM_LEFT
-        }
+		}
 
-        SliderR
-        {
+		SliderR
+		{
 			Classname SliderClass
 			xpos 15
-            "ControlName"			"SliderControl"
-			"scriptID" "0"
-
-            minValue				0
-            maxValue				255
-            stepSize				1
+			ControlName			SliderControl
+			scriptID 0
+			
+			minValue				0
+			maxValue				255
+			stepSize				1
 			drawColor		"255 0 0 255"
 
-            pin_to_sibling LabelR
-            pin_corner_to_sibling LEFT
-            pin_to_sibling_corner RIGHT
+			pin_to_sibling LabelR
+			pin_corner_to_sibling LEFT
+			pin_to_sibling_corner RIGHT
 
-                    //"navRight" "ResetModToDefault"
-                    //"navLeft" "TextEntrySetting"
-                    
-            BtnDropButton
-            {
-            	ControlName				RuiButton
+			BtnDropButton
+			{
+				ControlName				RuiButton
 
-                style					SliderButton
-                wide		"320"
-                tall		"45"
-                "labelText"		""
-                "auto_wide_tocontents"		"0"
-            }
+				style					SliderButton
+				wide					320
+				tall					45
+				labelText				""
+				auto_wide_tocontents	0
+			}
 
-            "wide"		"320"
-            "tall"		"45"
-        }
+			wide		320
+			tall		45
+		}
 
 		TextEntrySettingR
 		{
-			"ControlName" "TextEntry"
+			ControlName TextEntry
 			Classname TextEntrySettingClass
 
-			"xpos" 20
-			"ypos" "-5"
-			"zpos" "100"	// This works around input weirdness when the control is constructed by code instead of VGUI blackbox.
-			"wide" 50
-			"tall" "30"
-			"scriptID" "0"
-			"textHidden" "0"
-			"editable" "1"
+			xpos 20
+			ypos -5
+			zpos 100
+			wide 50
+			tall 30
+			scriptID 0
+			textHidden 0
+			editable 1
 			NumericInputOnly 1
-			"font" "Default_21"
-			"allowRightClickMenu" "0"
-			"allowSpecialCharacters" "1"
-			"unicode" "0"
-			"scriptID" "0"
+			font Default_21
+			allowRightClickMenu 0
+			allowSpecialCharacters 1
+			unicode 0
+			scriptID 0
 
 			pin_to_sibling SliderR
-            pin_corner_to_sibling LEFT
-            pin_to_sibling_corner RIGHT
+			pin_corner_to_sibling LEFT
+			pin_to_sibling_corner RIGHT
 		}		
 
 
 		ResetModToDefaultR
 		{
 			Classname ResetModToDefaultClass
-			"ControlName" "RuiButton"
-			"InheritProperties" "RuiSmallButton"
-			"labelText" ""
-			"zpos" "0"
-			"xpos" "10"
-			"wide" "75"
-			"tall" "45"
-			"scriptID" "0"
-			"pin_to_sibling" TextEntrySettingR
-			"pin_corner_to_sibling" "LEFT"
-			"pin_to_sibling_corner" "RIGHT"
+			ControlName RuiButton
+			InheritProperties RuiSmallButton
+			labelText ""
+			zpos 0
+			xpos 10
+			wide 75
+			tall 45
+			scriptID 0
+			pin_to_sibling TextEntrySettingR
+			pin_corner_to_sibling LEFT
+			pin_to_sibling_corner RIGHT
 
-			"navLeft" "TextEntrySettingR"
-			"navRight" "SliderG"
-			"enabled"	"1"
+			navLeft TextEntrySettingR
+			navRight SliderG
+			enabled	1
 
 		}
 		ResetModImageR
 		{
-			"ControlName" "ImagePanel"
-			"image" "vgui/reset"
-			"scaleImage" "1"
-			"drawColor" "180 180 180 255" // vanilla label color
-			"visible" "1"
-			"wide" "30"
-			"tall" "30"
-			"enabled"	"0"
+			ControlName ImagePanel
+			image "vgui/reset"
+			scaleImage 1
+			drawColor "180 180 180 255" // vanilla label color
+			visible 1
+			wide 30
+			tall 30
+			enabled	0
 			
-			"pin_to_sibling" ResetModToDefaultR
-			"pin_corner_to_sibling" "CENTER"
-			"pin_to_sibling_corner" "CENTER"
+			pin_to_sibling ResetModToDefaultR
+			pin_corner_to_sibling CENTER
+			pin_to_sibling_corner CENTER
 		}
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-        LabelG // A label that is placed in the middle of the screen
-        {
+		LabelG
+		{
 			Classname LabelClass
 		
-            ControlName Label
-			"scriptID" "1"
+			ControlName Label
+			scriptID 1
 
 			ypos 25
-            labelText "G"
+			labelText "G"
 
-            auto_wide_tocontents 1 // Set width automatically relative to the label content
+			auto_wide_tocontents 1
 
 			pin_to_sibling			LabelR
 			pin_corner_to_sibling	TOP_LEFT
 			pin_to_sibling_corner	BOTTOM_LEFT
-        }
+		}
 
-        SliderG
-        {
+		SliderG
+		{
 			Classname SliderClass
 
 			xpos 15
-            "ControlName"			"SliderControl"
-			"scriptID" "1"
+			ControlName			SliderControl
+			scriptID 1
 
-            minValue				0
-            maxValue				255
-            stepSize				1
+			minValue				0
+			maxValue				255
+			stepSize				1
 			drawColor		"255 0 0 255"
 
-            pin_to_sibling LabelG
-            pin_corner_to_sibling LEFT
-            pin_to_sibling_corner RIGHT
+			pin_to_sibling LabelG
+			pin_corner_to_sibling LEFT
+			pin_to_sibling_corner RIGHT
+			
+			BtnDropButton
+			{
+				ControlName				RuiButton
 
-                    //"navRight" "ResetModToDefault"
-                    //"navLeft" "TextEntrySetting"
-                    
-            BtnDropButton
-            {
-            	ControlName				RuiButton
+				style					SliderButton
+				wide					320
+				tall					45
+				labelText				""
+				auto_wide_tocontents	0
+			}
 
-                style					SliderButton
-                wide		"320"
-                tall		"45"
-                "labelText"		""
-                "auto_wide_tocontents"		"0"
-            }
-
-            "wide"		"320"
-            "tall"		"45"
-        }
-
+			wide		320
+			tall		45
+		}
 
 		TextEntrySettingG
 		{
-			"ControlName" "TextEntry"
+			ControlName TextEntry
 			Classname TextEntrySettingClass
 
-			"xpos" 20
-			"ypos" "-5"
-			"zpos" "100"	// This works around input weirdness when the control is constructed by code instead of VGUI blackbox.
-			"wide" 50
-			"tall" "30"
-			"scriptID" "1"
+			xpos 20
+			ypos -5
+			zpos 100
+			wide 50
+			tall 30
+			scriptID 1
 
-			"textHidden" "0"
-			"editable" "1"
+			textHidden 0
+			editable 1
 			NumericInputOnly 1
-			"font" "Default_21"
-			"allowRightClickMenu" "0"
-			"allowSpecialCharacters" "1"
-			"unicode" "0"
+			font Default_21
+			allowRightClickMenu 0
+			allowSpecialCharacters 1
+			unicode 0
 
 			pin_to_sibling SliderG
-            pin_corner_to_sibling LEFT
-            pin_to_sibling_corner RIGHT
+			pin_corner_to_sibling LEFT
+			pin_to_sibling_corner RIGHT
 		}		
 
 		ResetModToDefaultG
 		{
 			Classname ResetModToDefaultClass
 
-			"enabled"	"1"
+			enabled	1
 
-			"ControlName" "RuiButton"
-			"InheritProperties" "RuiSmallButton"
-			"labelText" ""
-			"zpos" "0"
-			"xpos" "10"
-			"wide" "75"
-			"tall" "45"
-			"scriptID" "1"
+			ControlName RuiButton
+			InheritProperties RuiSmallButton
+			labelText ""
+			zpos 0
+			xpos 10
+			wide 75
+			tall 45
+			scriptID 1
 
-			"pin_to_sibling" TextEntrySettingG
-			"pin_corner_to_sibling" "LEFT"
-			"pin_to_sibling_corner" "RIGHT"
+			pin_to_sibling TextEntrySettingG
+			pin_corner_to_sibling LEFT
+			pin_to_sibling_corner RIGHT
 
-			"navLeft" "TextEntrySettingG"
-			"navRight" "SliderB"
-			"enabled"	"1"
+			navLeft TextEntrySettingG
+			navRight SliderB
+			enabled	1
 		}
+
 		ResetModImageG
 		{
-			"ControlName" "ImagePanel"
-			"image" "vgui/reset"
-			"scaleImage" "1"
-			"drawColor" "180 180 180 255" // vanilla label color
-			"visible" "1"
-			"wide" "30"
-			"tall" "30"
-			"enabled"	"1"
+			ControlName ImagePanel
+			image "vgui/reset"
+			scaleImage 1
+			drawColor "180 180 180 255" // vanilla label color
+			visible 1
+			wide 30
+			tall 30
+			enabled	1
 			
-			"pin_to_sibling" ResetModToDefaultG
-			"pin_corner_to_sibling" "CENTER"
-			"pin_to_sibling_corner" "CENTER"
+			pin_to_sibling ResetModToDefaultG
+			pin_corner_to_sibling CENTER
+			pin_to_sibling_corner CENTER
 		}
 
-
-
-
-
-
-		LabelB // A label that is placed in the middle of the screen
-        {
+		LabelB
+		{
 			Classname LabelClass
 
 		
-            ControlName Label
-			"scriptID" "2"
+			ControlName Label
+			scriptID 2
 
 			ypos 25
-            labelText "B"
+			labelText "B"
 
-            auto_wide_tocontents 1 // Set width automatically relative to the label content
+			auto_wide_tocontents 1
 
 			pin_to_sibling			LabelG
 			pin_corner_to_sibling	TOP_LEFT
 			pin_to_sibling_corner	BOTTOM_LEFT
-        }
+		}
 
-        SliderB
-        {
+		SliderB
+		{
 			Classname SliderClass
 
 			xpos 15
-            "ControlName"			"SliderControl"
-			"scriptID" "2"
+			ControlName			SliderControl
+			scriptID 2
 
-            minValue				0
-            maxValue				255
-            stepSize				1
+			minValue				0
+			maxValue				255
+			stepSize				1
 			drawColor		"255 0 0 255"
 
-            pin_to_sibling LabelB
-            pin_corner_to_sibling LEFT
-            pin_to_sibling_corner RIGHT
+			pin_to_sibling LabelB
+			pin_corner_to_sibling LEFT
+			pin_to_sibling_corner RIGHT
 
-                    //"navRight" "ResetModToDefault"
-                    //"navLeft" "TextEntrySetting"
-                    
-            BtnDropButton
-            {
-            	ControlName				RuiButton
+			BtnDropButton
+			{
+				ControlName				RuiButton
 
-                style					SliderButton
-                wide		"320"
-                tall		"45"
-                "labelText"		""
-                "auto_wide_tocontents"		"0"
-            }
+				style					SliderButton
+				wide					320
+				tall					45
+				labelText				""
+				auto_wide_tocontents	0
+			}
 
-            "wide"		"320"
-            "tall"		"45"
-        }
+			wide		320
+			tall		45
+		}
 
 		TextEntrySettingB
 		{
 			Classname TextEntrySettingClass
 
-			"ControlName" "TextEntry"
-			"xpos" 20
-			"ypos" "-5"
-			"zpos" "100"	// This works around input weirdness when the control is constructed by code instead of VGUI blackbox.
-			"wide" 50
-			"tall" "30"
-			"scriptID" "2"
+			ControlName TextEntry
+			xpos 20
+			ypos -5
+			zpos 100
+			wide 50
+			tall 30
+			scriptID 2
 
-			"textHidden" "0"
-			"editable" "1"
+			textHidden 0
+			editable 1
 			NumericInputOnly 1
-			"font" "Default_21"
-			"allowRightClickMenu" "0"
-			"allowSpecialCharacters" "1"
-			"unicode" "0"
+			font Default_21
+			allowRightClickMenu 0
+			allowSpecialCharacters 1
+			unicode 0
 
 			pin_to_sibling SliderB
-            pin_corner_to_sibling LEFT
-            pin_to_sibling_corner RIGHT
-		}	
+			pin_corner_to_sibling LEFT
+			pin_to_sibling_corner RIGHT
+		}
+
 		ResetModToDefaultB
 		{
 			Classname ResetModToDefaultClass
 
-			"enabled"	"1"
+			enabled	1
 
-			"ControlName" "RuiButton"
-			"InheritProperties" "RuiSmallButton"
-			"labelText" ""
-			"zpos" "0"
-			"xpos" "10"
-			"wide" "75"
-			"tall" "45"
-			"scriptID" "2"
+			ControlName RuiButton
+			InheritProperties RuiSmallButton
+			labelText ""
+			zpos 0
+			xpos 10
+			wide 75
+			tall 45
+			scriptID 2
 
-			"pin_to_sibling" TextEntrySettingB
-			"pin_corner_to_sibling" "LEFT"
-			"pin_to_sibling_corner" "RIGHT"
+			pin_to_sibling TextEntrySettingB
+			pin_corner_to_sibling LEFT
+			pin_to_sibling_corner RIGHT
 
-			"navLeft" "TextEntrySettingB"
-			"navRight" "SliderA"
-			"enabled"	"1"
+			navLeft TextEntrySettingB
+			navRight SliderA
+			enabled	1
 		}
+
 		ResetModImageB
 		{
-			"ControlName" "ImagePanel"
-			"image" "vgui/reset"
-			"scaleImage" "1"
-			"drawColor" "180 180 180 255" // vanilla label color
-			"visible" "1"
-			"wide" "30"
-			"tall" "30"
-			"enabled"	"0"
+			ControlName ImagePanel
+			image "vgui/reset"
+			scaleImage 1
+			drawColor "180 180 180 255" // vanilla label color
+			visible 1
+			wide 30
+			tall 30
+			enabled	0
 			
-			"pin_to_sibling" ResetModToDefaultB
-			"pin_corner_to_sibling" "CENTER"
-			"pin_to_sibling_corner" "CENTER"
+			pin_to_sibling ResetModToDefaultB
+			pin_corner_to_sibling CENTER
+			pin_to_sibling_corner CENTER
 		}
 
-
-
-		LabelA // A label that is placed in the middle of the screen
-        {
+		LabelA
+		{
 			Classname LabelClass
 
 		
-            ControlName Label
-			"scriptID" "3"
+			ControlName Label
+			scriptID 3
 
 			ypos 25
-            labelText "A"
+			labelText "A"
 
-            auto_wide_tocontents 1 // Set width automatically relative to the label content
+			auto_wide_tocontents 1
 
 			pin_to_sibling			LabelB
 			pin_corner_to_sibling	TOP_LEFT
 			pin_to_sibling_corner	BOTTOM_LEFT
-        }
+		}
 
-        SliderA
-        {
+		SliderA
+		{
 			Classname SliderClass
 
 			xpos 15
-            "ControlName"			"SliderControl"
-			"scriptID" "3"
+			ControlName			SliderControl
+			scriptID 3
 
-            minValue				0
-            maxValue				255
-            stepSize				1
+			minValue				0
+			maxValue				255
+			stepSize				1
 			drawColor		"255 0 0 255"
+			
+			pin_to_sibling LabelA
+			pin_corner_to_sibling LEFT
+			pin_to_sibling_corner RIGHT
 
-            pin_to_sibling LabelA
-            pin_corner_to_sibling LEFT
-            pin_to_sibling_corner RIGHT
+			BtnDropButton
+			{
+				ControlName				RuiButton
 
-                    //"navRight" "ResetModToDefault"
-                    //"navLeft" "TextEntrySetting"
-                    
-            BtnDropButton
-            {
-            	ControlName				RuiButton
+				style					SliderButton
+				wide					320
+				tall					45
+				labelText				""
+				auto_wide_tocontents	0
+			}
 
-                style					SliderButton
-                wide		"320"
-                tall		"45"
-                "labelText"		""
-                "auto_wide_tocontents"		"0"
-            }
-
-            "wide"		"320"
-            "tall"		"45"
-        }
+			wide		320
+			tall		45
+		}
 
 		TextEntrySettingA
 		{
 			Classname TextEntrySettingClass
 
-			"ControlName" "TextEntry"
-			"xpos" 20
-			"ypos" "-5"
-			"zpos" "100"	// This works around input weirdness when the control is constructed by code instead of VGUI blackbox.
-			"wide" 50
-			"tall" "30"
-			"scriptID" "3"
+			ControlName TextEntry
+			xpos 20
+			ypos -5
+			zpos 100
+			wide 50
+			tall 30
+			scriptID 3
 
-			"textHidden" "0"
-			"editable" "1"
+			textHidden 0
+			editable 1
 			NumericInputOnly 1
-			"font" "Default_21"
-			"allowRightClickMenu" "0"
-			"allowSpecialCharacters" "1"
-			"unicode" "0"
+			font Default_21
+			allowRightClickMenu 0
+			allowSpecialCharacters 1
+			unicode 0
 
 			pin_to_sibling SliderA
-            pin_corner_to_sibling LEFT
-            pin_to_sibling_corner RIGHT
-		}	
+			pin_corner_to_sibling LEFT
+			pin_to_sibling_corner RIGHT
+		}
+
 		ResetModToDefaultA
 		{
 			Classname ResetModToDefaultClass
 
-			"enabled"	"1"
+			enabled	1
 
-			"ControlName" "RuiButton"
-			"InheritProperties" "RuiSmallButton"
-			"labelText" ""
-			"zpos" "0"
-			"xpos" "10"
-			"wide" "75"
-			"tall" "45"
-			"scriptID" "3"
+			ControlName RuiButton
+			InheritProperties RuiSmallButton
+			labelText ""
+			zpos 0
+			xpos 10
+			wide 75
+			tall 45
+			scriptID 3
 
-			"pin_to_sibling" TextEntrySettingA
-			"pin_corner_to_sibling" "LEFT"
-			"pin_to_sibling_corner" "RIGHT"
+			pin_to_sibling TextEntrySettingA
+			pin_corner_to_sibling LEFT
+			pin_to_sibling_corner RIGHT
 
-			"navLeft" "TextEntrySettingA"
-			"enabled"	"1"
+			navLeft TextEntrySettingA
+			enabled	1
 		}
+
 		ResetModImageA
 		{
-			"ControlName" "ImagePanel"
-			"image" "vgui/reset"
-			"scaleImage" "1"
-			"drawColor" "180 180 180 255" // vanilla label color
-			"visible" "1"
-			"wide" "30"
-			"tall" "30"
-			"enabled"	"0"
+			ControlName ImagePanel
+			image "vgui/reset"
+			scaleImage 1
+			drawColor "180 180 180 255" // vanilla label color
+			visible 1
+			wide 30
+			tall 30
+			enabled	0
 			
-			"pin_to_sibling" ResetModToDefaultA
-			"pin_corner_to_sibling" "CENTER"
-			"pin_to_sibling_corner" "CENTER"
+			pin_to_sibling ResetModToDefaultA
+			pin_corner_to_sibling CENTER
+			pin_to_sibling_corner CENTER
 		}
-
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-        <!-- DialogFooterButtons
-        {
+		<!-- DialogFooterButtons
+		{
 			ControlName				CNestedPanel
 			InheritProperties       DialogFooterButtons
 
 			pin_to_sibling			DialogFrame
 			pin_corner_to_sibling	BOTTOM_LEFT
 			pin_to_sibling_corner	BOTTOM
-        } -->
+		} -->
 	}
-
 }

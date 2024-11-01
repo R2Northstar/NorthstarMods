@@ -282,6 +282,25 @@ void functionref() function ResetConVarEventHandler( int modIndex )
 			Hud_SetText( Hud_GetChild( file.modPanels[ modIndex - file.scrollOffset ], "TextEntrySetting" ), c.isEnumSetting ? c.values[ GetConVarInt( c.conVar ) ] : GetConVarString( c.conVar ) )
 			if( c.sliderEnabled )
 				MS_Slider_SetValue( file.sliders[ modIndex - file.scrollOffset ], GetConVarFloat( c.conVar ) )
+			if ( c.type == "color" )
+			{
+				var colorVGUI = Hud_GetChild( file.modPanels[ modIndex - file.scrollOffset ], "ColorPickerImage" )
+				try
+				{
+					Color color = StringToColors( GetConVarString( c.conVar ) )
+					Hud_SetColor( colorVGUI, color.r, color.g, color.b, color.a )
+				}
+				catch ( ex )
+				{
+					ThrowInvalidValue( "This setting is a color, and only accepts a four of numbers(each number should be a integer between 0 and 255) - you put something we could not parse!\n\n( Input like \"255 255 255 255\", not \"" + c.conVar + "\". )\n Press reset button or change the default value in mod.json. Or inform the mod author." )
+					Hud_SetColor( colorVGUI, 0, 0, 0, 0 )
+				}
+			}
+			if ( c.type == "alpha" )
+			{
+				float alpha = GetConVarFloat( c.conVar )
+				Hud_SetAlpha( Hud_GetChild( file.modPanels[ modIndex - file.scrollOffset ], "ColorPickerImage" ), int( alpha * 255 ) )
+			}
 		}
 	}
 }
@@ -1054,12 +1073,12 @@ void function OnSliderChange( var button )
 
 	Hud_SetText( textPanel, string( GetConVarFloat( c.conVar ) ) )
 
-	if (c.type == "alpha") {
+	if (c.type == "alpha")
+	{
 		var colorVGUI = Hud_GetChild( Hud_GetParent( textPanel ), "ColorPickerImage" )
 
-		float alpha = GetConVarFloat(c.conVar)
-		Hud_SetAlpha(colorVGUI, int(alpha * 255))
-		// Hud_SetColor(colorVGUI, 255, 255, 255, 255)
+		float alpha = GetConVarFloat( c.conVar )
+		Hud_SetAlpha( colorVGUI, int( alpha * 255 ) )
 	}
 }
 
@@ -1171,47 +1190,38 @@ void function SendTextPanelChanges( var textPanel )
 					array<int> color
 					string clampedNewSetting = ""
 					foreach (string val in split) {
-						int c = int(clamp(val.tointeger(), 0 ,255))
-						color.append(c)
+						int c = int( clamp( val.tointeger(), 0 ,255 ) )
+						color.append( c )
 
 						clampedNewSetting += c + " "
 					}
 
 					if (split.len() == 3)
 					{
-						color.append(255)
+						color.append( 255 )
 						clampedNewSetting += " 255"
 					}
 
-					Hud_SetColor(colorVGUI, color[0], color[1], color[2], color[3])
+					Hud_SetColor( colorVGUI, color[0], color[1], color[2], color[3] )
 					Hud_SetText( textPanel, clampedNewSetting )
 					SetConVarString( c.conVar, clampedNewSetting )
-
-					// Color color = StringToColors( newSetting )
-					// Hud_SetColor(colorVGUI, color.r, color.g, color.b, color.a)
-					// Hud_SetText( textPanel, newSetting )
-					// SetConVarString( c.conVar, newSetting )
 				}
 				catch ( ex )
 				{
 					Color color = StringToColors( GetConVarString( c.conVar ) )
 					Hud_SetText( textPanel, GetConVarString( c.conVar ) )
-					Hud_SetColor(colorVGUI, color.r, color.g, color.b, color.a)
+					Hud_SetColor( colorVGUI, color.r, color.g, color.b, color.a )
 
-					printt("Failed to send textField change, because:" + ex)
-					ThrowInvalidValue("This setting is a color, and only accepts a four of numbers(each number should be a integer between 0 and 255) - you put something we could not parse!\n\n( Input like \"255 255 255 255\", not \"" + newSetting + "\". )")
+					printt( "Failed to send textField change, because:" + ex )
+					ThrowInvalidValue( "This setting is a color, and only accepts a four of numbers(each number should be a integer between 0 and 255) - you put something we could not parse!\n\n( Input like \"255 255 255 255\", not \"" + newSetting + "\". )" )
 				}
 				break
 			case "alpha":
 				try
 				{
-					float alpha = clamp(newSetting.tofloat(), 0, 1.0)
+					float alpha = clamp( newSetting.tofloat(), 0, 1.0 )
 
-					// if ( alpha < 0 || alpha > 1) {
-					// 	Hud_SetText( textPanel, GetConVarString( c.conVar ) )
-					// 	throw "Alpha should be a float bewteen 0..1."
-					// }
-					Hud_SetAlpha(colorVGUI, int(alpha * 255))
+					Hud_SetAlpha( colorVGUI, int( alpha * 255 ) )
 					SetConVarFloat( c.conVar, alpha )
 				}
 				catch ( ex )
