@@ -7,6 +7,12 @@
 			"argTypes":""
 		},
 		{
+			"name":"NSGetModsInformation",
+			"helpText":"",
+			"returnTypeString":"array<ModInfo>",
+			"argTypes":""
+		},
+		{
 			"name":"NSIsModEnabled",
 			"helpText":"",
 			"returnTypeString":"bool",
@@ -17,48 +23,6 @@
 			"helpText":"",
 			"returnTypeString":"void",
 			"argTypes":"string modName, bool enabled"
-		},
-		{
-			"name":"NSIsModRemote",
-			"helpText":"",
-			"returnTypeString":"bool",
-			"argTypes":"string modName"
-		},
-		{
-			"name":"NSGetModDescriptionByModName",
-			"helpText":"",
-			"returnTypeString":"string",
-			"argTypes":"string modName"
-		},
-		{
-			"name":"NSGetModVersionByModName",
-			"helpText":"",
-			"returnTypeString":"string",
-			"argTypes":"string modName"
-		},
-		{
-			"name":"NSGetModDownloadLinkByModName",
-			"helpText":"",
-			"returnTypeString":"string",
-			"argTypes":"string modName"
-		},
-		{
-			"name":"NSGetModLoadPriority",
-			"helpText":"",
-			"returnTypeString":"int",
-			"argTypes":"string modName"
-		},
-		{
-			"name":"NSIsModRequiredOnClient",
-			"helpText":"",
-			"returnTypeString":"bool",
-			"argTypes":"string modName"
-		},
-		{
-			"name":"NSGetModConvarsByModName",
-			"helpText":"",
-			"returnTypeString":"array<string>",
-			"argTypes":"string modName"
 		},
 		{
 			"name":"DecodeJSON",
@@ -273,48 +237,6 @@
 			"argTypes":"string modName, bool enabled"
 		},
 		{
-			"name":"NSIsModRemote",
-			"helpText":"",
-			"returnTypeString":"bool",
-			"argTypes":"string modName"
-		},
-		{
-			"name":"NSGetModDescriptionByModName",
-			"helpText":"",
-			"returnTypeString":"string",
-			"argTypes":"string modName"
-		},
-		{
-			"name":"NSGetModVersionByModName",
-			"helpText":"",
-			"returnTypeString":"string",
-			"argTypes":"string modName"
-		},
-		{
-			"name":"NSGetModDownloadLinkByModName",
-			"helpText":"",
-			"returnTypeString":"string",
-			"argTypes":"string modName"
-		},
-		{
-			"name":"NSGetModLoadPriority",
-			"helpText":"",
-			"returnTypeString":"int",
-			"argTypes":"string modName"
-		},
-		{
-			"name":"NSIsModRequiredOnClient",
-			"helpText":"",
-			"returnTypeString":"bool",
-			"argTypes":"string modName"
-		},
-		{
-			"name":"NSGetModConvarsByModName",
-			"helpText":"",
-			"returnTypeString":"array<string>",
-			"argTypes":"string modName"
-		},
-		{
 			"name":"DecodeJSON",
 			"helpText":"converts a json string to a squirrel table",
 			"returnTypeString":"table",
@@ -477,48 +399,6 @@
 			"helpText":"",
 			"returnTypeString":"void",
 			"argTypes":"string modName, bool enabled"
-		},
-		{
-			"name":"NSIsModRemote",
-			"helpText":"",
-			"returnTypeString":"bool",
-			"argTypes":"string modName"
-		},
-		{
-			"name":"NSGetModDescriptionByModName",
-			"helpText":"",
-			"returnTypeString":"string",
-			"argTypes":"string modName"
-		},
-		{
-			"name":"NSGetModVersionByModName",
-			"helpText":"",
-			"returnTypeString":"string",
-			"argTypes":"string modName"
-		},
-		{
-			"name":"NSGetModDownloadLinkByModName",
-			"helpText":"",
-			"returnTypeString":"string",
-			"argTypes":"string modName"
-		},
-		{
-			"name":"NSGetModLoadPriority",
-			"helpText":"",
-			"returnTypeString":"int",
-			"argTypes":"string modName"
-		},
-		{
-			"name":"NSIsModRequiredOnClient",
-			"helpText":"",
-			"returnTypeString":"bool",
-			"argTypes":"string modName"
-		},
-		{
-			"name":"NSGetModConvarsByModName",
-			"helpText":"",
-			"returnTypeString":"array<string>",
-			"argTypes":"string modName"
 		},
 		{
 			"name": "NSFetchVerifiedModsManifesto",
