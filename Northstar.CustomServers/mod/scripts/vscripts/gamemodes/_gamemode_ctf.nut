@@ -232,7 +232,7 @@ void function RateSpawnpoints_CTF( int checkClass, array<entity> spawnpoints, in
 		if( allyFlagDistance > enemyFlagDistance )
 			rating = 0.0
 		
-		spawn.CalculateRating( checkClass, team, rating, rating * 0.25 )
+		spawn.CalculateRating( checkClass, team, rating, rating )
 	}
 }
 
@@ -240,22 +240,16 @@ bool function VerifyCTFSpawnpoint( entity spawnpoint, int team )
 {
 	vector allyFlagSpot
 	vector enemyFlagSpot
-	foreach ( entity spawn in GetEntArrayByClass_Expensive( "info_spawnpoint_flag" ) )
+	foreach ( entity flagBase in GetEntArrayByClass_Expensive( "info_spawnpoint_flag" ) )
 	{
-		if( spawn.GetTeam() == team )
-			allyFlagSpot = spawn.GetOrigin()
+		if( flagBase.GetTeam() == team )
+			allyFlagSpot = flagBase.GetOrigin()
 		else
-			enemyFlagSpot = spawn.GetOrigin()
+			enemyFlagSpot = flagBase.GetOrigin()
 	}
 	
 	float allyFlagDistance = Distance2D( spawnpoint.GetOrigin(), allyFlagSpot )
 	float enemyFlagDistance = Distance2D( spawnpoint.GetOrigin(), enemyFlagSpot )
-
-	if( GetMapName() == "mp_drydock" || GetMapName() == "mp_thaw" ) // Restrict spawns for those two maps due to some spawns being very far away
-	{
-		if( allyFlagDistance > CTF_FLAG_MAX_SPAWN_DISTANCE )
-			return false
-	}
 	
 	if( allyFlagDistance > enemyFlagDistance )
 		return false

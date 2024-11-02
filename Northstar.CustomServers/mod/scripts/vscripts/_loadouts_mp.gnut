@@ -26,6 +26,7 @@ void function SvLoadoutsMP_Init()
 	RegisterSignal( "GracePeriodDone" ) // temp to get weapons\_weapon_utility.nut:2271 to behave
 	
 	AddCallback_OnClientConnected( LoadoutsMPInitPlayer )
+	AddCallback_OnPlayerGetsNewPilotLoadout( LoadoutSwitch_Player )
 	
 	AddClientCommandCallback( "RequestPilotLoadout", ClientCommandCallback_RequestPilotLoadout )
 	AddClientCommandCallback( "RequestTitanLoadout", ClientCommandCallback_RequestTitanLoadout )
@@ -107,10 +108,15 @@ TitanLoadoutDef function GetTitanLoadoutForPlayer( entity player )
 void function LoadoutsMPInitPlayer( entity player )
 {
 	player.s.loadoutDirty <- false
+	player.s.noFiredWeapon <- true
 
 	// these netints are required for callsigns and such to display correctly on other clients
 	player.SetPlayerNetInt( "activeCallingCardIndex", player.GetPersistentVarAsInt( "activeCallingCardIndex" ) )
 	player.SetPlayerNetInt( "activeCallsignIconIndex", player.GetPersistentVarAsInt( "activeCallsignIconIndex" ) )
+
+	AddButtonPressedPlayerInputCallback( player, IN_ATTACK, LoadoutSwitch_CancelGracePeriod )
+	AddButtonPressedPlayerInputCallback( player, IN_OFFHAND0, LoadoutSwitch_CancelGracePeriod )
+	AddButtonPressedPlayerInputCallback( player, IN_OFFHAND1, LoadoutSwitch_CancelGracePeriod )
 }
 
 // loadout clientcommands
@@ -306,7 +312,7 @@ void function TryGivePilotLoadoutForGracePeriod( entity player )
 		float respawnTime = expect float( player.s.respawnTime )
 		respawnTime += gracePeriodDuration
 		
-		if ( respawnTime >= Time() || svGlobal.isInPilotGracePeriod || GetGameState() < eGameState.Playing || player.p.usingLoadoutCrate || file.allowChangeLoadoutFunc != null && file.allowChangeLoadoutFunc( player ) )
+		if ( respawnTime >= Time() && player.s.noFiredWeapon || svGlobal.isInPilotGracePeriod || GetGameState() < eGameState.Playing || player.p.usingLoadoutCrate || file.allowChangeLoadoutFunc != null && file.allowChangeLoadoutFunc( player ) )
 		{
 			if ( player.IsTitan() )
 			{
@@ -347,4 +353,15 @@ void function GiveLoadoutWhenIntroOver( entity player )
 	
 	Loadouts_TryGivePilotLoadout( player )
 	player.s.loadoutDirty = false
+}
+
+void function LoadoutSwitch_Player( entity player, PilotLoadoutDef loadout )
+{
+	player.s.noFiredWeapon = true
+}
+
+void function LoadoutSwitch_CancelGracePeriod( entity player )
+{
+	if ( GamePlaying() )
+		player.s.noFiredWeapon = false
 }

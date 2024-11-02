@@ -900,16 +900,12 @@ void function RegisterMatchStats_OnMatchComplete()
 			currentPlace += 1
 		switch( currentPlace )
 		{
-			case 1:
-				UpdatePlayerStat( players[i], "game_stats", "mvp" ) // MVP in the current map played
-				UpdatePlayerStat( players[i], "game_stats", "mvp_total" ) // MVP in the overall profile
-				UpdatePlayerStat( players[i], "game_stats", "top3OnTeam" ) // Ingame this is the "Times Top 3" for the whole match, not per team
-				break
+			case 1: // MVP have two parallel stats which one registers MVP for the map played and the other goes to the player's stats menu as a total MVP times
+				UpdatePlayerStat( players[i], "game_stats", "mvp" )
+				UpdatePlayerStat( players[i], "game_stats", "mvp_total" )
 			case 2:
-				UpdatePlayerStat( players[i], "game_stats", "top3OnTeam" )
-				break
 			case 3:
-				UpdatePlayerStat( players[i], "game_stats", "top3OnTeam" )
+				UpdatePlayerStat( players[i], "game_stats", "top3OnTeam" ) // Ingame this is the "Times Top 3" for the whole match, not per team
 				break
 		}
 	}

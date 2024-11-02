@@ -210,7 +210,6 @@ void function SpawnPlayerIntoDropship( entity player, int playerDropshipIndex, e
 		idleSequence.attachment = "ORIGIN"
 		idleSequence.teleport = true
 		idleSequence.viewConeFunction = ViewConeRampFree
-		idleSequence.hideProxy = true
 		thread FirstPersonSequence( idleSequence, player, playerDropship )
 		playerDropship.WaitSignal( "deploy" )
 	}
