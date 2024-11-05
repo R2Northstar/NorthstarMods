@@ -86,7 +86,10 @@ void function ClassicMP_DefaultNoIntro_TitanSpawnPlayer( entity player )
 		WaitFrame()
 	
 	if( PlayerCanSpawn( player ) )
+	{
+		player.StopObserverMode()
 		RespawnAsTitan( player )
+	}
 	
 	TryGameModeAnnouncement( player )
 }

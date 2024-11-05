@@ -215,6 +215,11 @@ void function RateSpawnpoints_CTF( int checkClass, array<entity> spawnpoints, in
 			enemyFlagSpot = spawn.GetOrigin()
 	}
 
+	if ( checkClass == TD_TITAN )
+		spawnpoints.extend( SpawnPoints_GetTitanStart( team ) )
+	else if ( checkClass == TD_PILOT )
+		spawnpoints.extend( SpawnPoints_GetPilotStart( team ) )
+	
 	foreach ( entity spawn in spawnpoints )
 	{
 		float allyFlagDistance = Distance2D( spawn.GetOrigin(), allyFlagSpot )
@@ -232,7 +237,7 @@ void function RateSpawnpoints_CTF( int checkClass, array<entity> spawnpoints, in
 		if( allyFlagDistance > enemyFlagDistance )
 			rating = 0.0
 		
-		spawn.CalculateRating( checkClass, team, rating, rating )
+		spawn.CalculateRating( checkClass, team, rating, rating * 0.25 )
 	}
 }
 
@@ -518,7 +523,10 @@ void function DropFlag( entity player, bool realDrop = true )
 		MessageToTeam( GetOtherTeam( player.GetTeam() ), eEventNotifications.PlayerDroppedFriendlyFlag, player, player )
 	}
 	
-	thread TrackFlagDropTimeout( flag )
+	if ( IsFlagHome( flag ) )
+		ResetFlag( flag )
+	else
+		thread TrackFlagDropTimeout( flag )
 	SetFlagStateForTeam( flag.GetTeam(), eFlagState.Home )
 }
 
