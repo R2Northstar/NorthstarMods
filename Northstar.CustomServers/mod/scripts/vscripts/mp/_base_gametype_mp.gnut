@@ -728,9 +728,11 @@ void function RespawnAsTitan( entity player, bool normalTitanfall = false )
 		AddAnimEvent( player, "second_stage", OnReplacementTitanSecondStage, spawnpoint.GetOrigin() ) // Brought from PlayersTitanHotdrops function to properly work
 
 		EmitDifferentSoundsAtPositionForPlayerAndWorld( "titan_hot_drop_turbo_begin", "titan_hot_drop_turbo_begin_3P", spawnpoint.GetOrigin(), player, player.GetTeam() ) // Brought from PlayersTitanHotdrops function to play the Titanfall sound
+		EmitSoundOnEntityOnlyToPlayer( player, player, "titan_hot_drop_turbo_begin" ) // Play again only for player just to volume it up a bit since it's super quiet sound in 1st Person
 
 		float impactTime = GetHotDropImpactTime( player, "at_hotdrop_drop_2knee_turbo" ) // Gather impact moment
 		delaythread( impactTime ) CreateBubbleShieldWithSettings( player.GetTeam(), spawnpoint.GetOrigin(), spawnpoint.GetAngles(), player, player.GetSequenceDuration( "at_hotdrop_quickstand" ) + 3 ) // Created Domeshield for the entire deploying animation + 3 seconds of lenience
+		delaythread( impactTime - 0.5 ) EmitSoundOnEntityOnlyToPlayer( player, player, "TDay_Intro_TitanFall_Impact" ) // Landing sound in first person from TDay, half second early to sync properly with the actual Landing
 
 		// Actual Titanfall animation, sadly MP Titans don't have viewmodel animations for this like BT does
 		FirstPersonSequenceStruct titanDropSequence
@@ -791,7 +793,9 @@ void function RespawnAsTitan( entity player, bool normalTitanfall = false )
 void function OnReplacementTitanSecondStage( entity player )
 {
 	vector origin = expect vector( GetOptionalAnimEventVar( player, "second_stage" ) )
-	EmitDifferentSoundsAtPositionForPlayerAndWorld( "titan_drop_pod_turbo_landing", "titan_drop_pod_turbo_landing_3P", origin, player, player.GetTeam() )
+	EmitSoundOnEntityOnlyToPlayer( player, player, "titan_drop_pod_turbo_landing" )
+	EmitSoundOnEntityOnlyToPlayer( player, player, "titan_drop_pod_turbo_landing" ) // Double sound again just to volume it up because it's also quiet in 1st Person
+	EmitSoundAtPositionExceptToPlayer( player.GetTeam(), origin, player, "titan_drop_pod_turbo_landing_3P" )
 }
 
 void function GiveTitanfallScoreMedal( entity player )
