@@ -2522,6 +2522,8 @@ void function HealthScaleByDifficulty( entity ent )
 
 void function OnFriendlyNPCTitanSpawnThreaded( entity npc )
 {
+	npc.EndSignal( "OnDeath" )
+	npc.EndSignal( "OnDestroy" )
 	FD_UpdateTitanBehavior()
 	WaitFrame()
 	WaitTillHotDropComplete( npc )

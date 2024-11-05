@@ -703,6 +703,9 @@ void function RespawnAsTitan( entity player, bool normalTitanfall = false )
 		TeleportToEnt( titan, spawnpoint )
 
 		waitthread TitanHotDrop( titan, "at_hotdrop_01", spawnpoint.GetOrigin(), spawnpoint.GetAngles(), player, camera )
+		DoRespawnPlayer( player, spawnpoint ) // Spawn player as pilot so they get their pilot loadout on embark
+		TeleportToEnt( player, titan ) // Teleport to titan origin just as precaution
+		PilotBecomesTitan( player, titan ) // Make player the Titan
 	}
 	else
 	{
@@ -715,9 +718,10 @@ void function RespawnAsTitan( entity player, bool normalTitanfall = false )
 		player.ContextAction_SetBusy() // Set player context action as busy to prevent problems with many interactors
 		player.SetTouchTriggers( false ) // Prevents OOB triggers during animation
 		HolsterAndDisableWeapons( player ) // Prevents player shooting during the animation or seeing the main weapon
+		player.DisableWeaponViewModel() // Makes the weapon still show for the 3p model after holster
 		TeleportToEnt( player, spawnpoint ) // Resets angles and make sure origin meets
 		HideName( player ) // Hides overhead name during animation, OnTitanHotdropImpact restores this from the anim event
-
+		GiveTitanfallScoreMedal( player ) // Give Titanfall Score Medal right away in case of cinematic titanfall
 		ScreenFadeFromBlack( player, 0.5, 0.5 ) // Just a fancy cosmetic for the initial frames of spawning
 
 		AddAnimEvent( player, "titan_impact", OnTitanHotdropImpact ) // Brought from PlayersTitanHotdrops function to properly work
@@ -755,54 +759,26 @@ void function RespawnAsTitan( entity player, bool normalTitanfall = false )
 			{
 				DeleteAnimEvent( player, "titan_impact" )
 				DeleteAnimEvent( player, "second_stage" )
+				player.SetTouchTriggers( true )
+				player.EnableWeaponViewModel()
+				DeployAndEnableWeapons( player )
+				ClearPlayerAnimViewEntity( player )
 			}
 			else
-			{
-				if ( IsValid( titan ) )
-				{
-					DoRespawnPlayer( player, spawnpoint ) // Spawn player as pilot so they get their pilot loadout on embark
-					TeleportToEnt( player, titan ) // Teleport to titan origin just as precaution
-					PilotBecomesTitan( player, titan ) // Make player the Titan
-					titan.Destroy()
-				}
-				else
-					RespawnAsPilot( player ) // Respawn player anyways if Titan was killed during animation from normal Warpfall animation, won't affect Cinematic because player is already Respawned in there
-			}
+				GiveTitanfallScoreMedal( player ) // In case of classic Warpfall animation, give the Titanfall Score Medal at this moment, so player can actually see it
 
 			if ( player.ContextAction_IsBusy() ) // Clear busy context action from cinematic animation
 				player.ContextAction_ClearBusy()
 			
 			PutEntityInSafeSpot( player, null, null, spawnpoint.GetOrigin(), player.GetOrigin() ) // Just to Ensure player is not clipping in any geometry
-			DeployAndEnableWeapons( player )
-			player.SetTouchTriggers( true )
-			ClearPlayerAnimViewEntity( player )
 			if( normalTitanfall && playerCouldDisembark ) // LTS/Iron Rules check to avoid bypass confusion
 				Disembark_Allow( player )
-
-			#if HAS_STATS
-			UpdatePlayerStat( player, "misc_stats", "titanFalls" )
-			#endif
-
-			#if SERVER && MP
-			PIN_AddToPlayerCountStat( player, "titanfalls" )
-			int TitanFallXP = player.GetPersistentVarAsInt( "xp_match[" + XP_TYPE.TITAN_FALL + "]" )
-			player.SetPersistentVar( "xp_match[" + XP_TYPE.TITAN_FALL + "]", TitanFallXP + 1 )
-			#endif
-			
-			if ( !level.firstTitanfall )
-			{
-				AddPlayerScore( player, "FirstTitanfall", player )
-				#if HAS_STATS
-				UpdatePlayerStat( player, "misc_stats", "titanFallsFirst" )
-				#endif
-				level.firstTitanfall = true
-			}
-			else
-				AddPlayerScore( player, "Titanfall", player )
 		}
 
 		if ( IsValid( titan ) ) // Just a double check for any odd case
 			titan.Destroy()
+		else
+			RespawnAsPilot( player ) // Respawn player anyways if Titan was killed during animation from normal Warpfall animation, won't affect Cinematic because player is already Respawned in there
 
 		if ( IsValid( camera ) ) // Destroy camera from normal Warpfall animation
 			camera.Destroy()
@@ -816,6 +792,30 @@ void function OnReplacementTitanSecondStage( entity player )
 {
 	vector origin = expect vector( GetOptionalAnimEventVar( player, "second_stage" ) )
 	EmitDifferentSoundsAtPositionForPlayerAndWorld( "titan_drop_pod_turbo_landing", "titan_drop_pod_turbo_landing_3P", origin, player, player.GetTeam() )
+}
+
+void function GiveTitanfallScoreMedal( entity player )
+{
+	#if HAS_STATS
+	UpdatePlayerStat( player, "misc_stats", "titanFalls" )
+	#endif
+
+	#if SERVER && MP
+	PIN_AddToPlayerCountStat( player, "titanfalls" )
+	int TitanFallXP = player.GetPersistentVarAsInt( "xp_match[" + XP_TYPE.TITAN_FALL + "]" )
+	player.SetPersistentVar( "xp_match[" + XP_TYPE.TITAN_FALL + "]", TitanFallXP + 1 )
+	#endif
+	
+	if ( !level.firstTitanfall )
+	{
+		AddPlayerScore( player, "FirstTitanfall", player )
+		#if HAS_STATS
+		UpdatePlayerStat( player, "misc_stats", "titanFallsFirst" )
+		#endif
+		level.firstTitanfall = true
+	}
+	else
+		AddPlayerScore( player, "Titanfall", player )
 }
 
 void function TryGameModeAnnouncement( entity player ) // only putting this here because it's here in gametype_sp lol
