@@ -286,11 +286,6 @@ void function GamemodeFD_Init()
 		AISpawn_SetupNPCAntiTitanWeapons( "npc_soldier", FD_ATWeapons )
 		AISpawn_SetupNPCAntiTitanWeapons( "npc_spectre", FD_ATWeapons )
 	}
-	else
-	{
-		AISpawn_SetupNPCAntiTitanWeapons( "npc_soldier", ["mp_weapon_defender"] )
-		AISpawn_SetupNPCAntiTitanWeapons( "npc_spectre", ["mp_weapon_defender"] )
-	}
 	
 	level.endOfRoundPlayerState = ENDROUND_FREE
 	EliteTitans_Init()

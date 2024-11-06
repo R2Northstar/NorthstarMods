@@ -5,20 +5,73 @@ global function SPMP_UpdateNPCProficiency
 global function SPMP_Callback_ForceAIMissPlayer
 global function IsAutoPopulateEnabled
 
+global function AISpawn_SetupNPCWeapons
+global function AISpawn_SetupNPCAntiTitanWeapons
+global function AISpawn_GetRandomWeaponForClass
+global function AISpawn_GetRandomATWeaponForClass
+
+struct{
+	table< string, array<string> > defaultNPCWeapons
+	table< string, array<string> > defaultNPCATWeapons
+}file
+
 void function MpInitAILoadouts()
 {
 
 }
 
+void function AISpawn_SetupNPCWeapons( string npcClass, array<string> weapons )
+{
+	if ( !( npcClass in file.defaultNPCWeapons ) )
+		file.defaultNPCWeapons[ npcClass ] <- []
+
+	file.defaultNPCWeapons[ npcClass ] = weapons
+}
+
+void function AISpawn_SetupNPCAntiTitanWeapons( string npcClass, array<string> weapons )
+{
+	if ( !( npcClass in file.defaultNPCATWeapons ) )
+		file.defaultNPCATWeapons[ npcClass ] <- []
+
+	file.defaultNPCATWeapons[ npcClass ] = weapons
+}
+
+string function AISpawn_GetRandomWeaponForClass( entity npc )
+{
+	string className = npc.GetClassName()
+	if ( className in file.defaultNPCWeapons )
+	{
+		if ( file.defaultNPCWeapons[ className ].len() )
+			return file.defaultNPCWeapons[ className ].getrandom()
+	}
+
+	return ""
+}
+
+string function AISpawn_GetRandomATWeaponForClass( entity npc )
+{
+	string className = npc.GetClassName()
+	if ( className in file.defaultNPCATWeapons )
+	{
+		if ( file.defaultNPCATWeapons[ className ].len() )
+			return file.defaultNPCATWeapons[ className ].getrandom()
+	}
+
+	return "mp_weapon_defender" // Default Charge Rifle as fallback
+}
+
 void function SetProficiency( entity npc )
 {
-	// i think this is correct? iirc grunts and stuff in attrition are *really* bad so having poor as their proficiency makes sense
-	npc.kv.WeaponProficiency = GetDifficultyLevel()
+	npc.kv.WeaponProficiency = level.nv.aiLethality
 }
 
 void function SPMP_UpdateNPCProficiency( entity npc )
 {
-	SetProficiency( npc ) // this seems bad? dont see why they should be any different unless SP should use a different function
+	#if MP
+	UpdateNPCForAILethality( npc )
+	#else
+	SetProficiency( npc )
+	#endif
 }
 
 bool function IsAutoPopulateEnabled( var team = null )

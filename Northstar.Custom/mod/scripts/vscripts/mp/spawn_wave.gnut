@@ -2,9 +2,6 @@ global function SpawnWave_Init
 
 global function eventIterator_FrontierDefense
 
-global function AISpawn_SetupNPCWeapons
-global function AISpawn_SetupNPCAntiTitanWeapons
-
 global function WaveSpawn_TitanSpawn
 global function WaveSpawn_ReaperSpawn
 global function WaveSpawn_InfantrySpawn
@@ -87,11 +84,9 @@ global struct WaveSpawnEvent{
 
 struct{
 	int difficultyLevel = 0
-	table< string, array<string> > defaultNPCWeapons
-	table< string, array<string> > defaultNPCATWeapons
+	string gruntGrenadeClass = "mp_weapon_frag_grenade"
 	table< string, array<WaveSpawnEvent> > waveSubGroups
 	array<string> waveActiveSubGroups
-	string gruntGrenadeClass = "mp_weapon_frag_grenade"
 	int gruntAmountWithATWeapons = 0
 	int gruntAmountWithShields = 0
 	bool shouldUseCampaignShieldCaptains = false
@@ -114,7 +109,7 @@ struct{
 
 global array< array<WaveSpawnEvent> > WaveSpawnEvents
 
-const float FD_TITAN_AOE_REACTTIME = 3.0 //This is in seconds
+global const float FD_TITAN_AOE_REACTTIME = 3.0 //This is in seconds
 const int FD_ELITE_TITAN_MIN_HEALTH_CAP = 2500
 const int FD_ELITE_TITAN_MAX_HEALTH_CAP = 15000
 
@@ -154,22 +149,6 @@ void function SpawnWave_Init()
 	
 	if ( GetConVarString( "ns_fd_grunt_grenade" ) != "" )
 		file.gruntGrenadeClass = GetConVarString( "ns_fd_grunt_grenade" )
-}
-
-void function AISpawn_SetupNPCWeapons( string npcClass, array<string> weapons )
-{
-	if ( !( npcClass in file.defaultNPCWeapons ) )
-		file.defaultNPCWeapons[ npcClass ] <- []
-
-	file.defaultNPCWeapons[ npcClass ] = weapons
-}
-
-void function AISpawn_SetupNPCAntiTitanWeapons( string npcClass, array<string> weapons )
-{
-	if ( !( npcClass in file.defaultNPCATWeapons ) )
-		file.defaultNPCATWeapons[ npcClass ] <- []
-
-	file.defaultNPCATWeapons[ npcClass ] = weapons
 }
 
 void function eventIterator_FrontierDefense()
@@ -1718,7 +1697,7 @@ void function SpawnDroppodGrunts( WaveSpawnEvent ornull spawnEvent )
 		}
 		
 		if ( i < file.gruntAmountWithATWeapons )
-			guy.GiveWeapon( file.defaultNPCATWeapons[ guy.GetClassName() ].getrandom() )
+			guy.GiveWeapon( AISpawn_GetRandomATWeaponForClass( guy ) )
 
 		SetTargetName( guy, GetTargetNameForID( eFD_AITypeIDs.GRUNT ) )
 		guy.MakeInvisible()
@@ -1860,7 +1839,7 @@ void function SpawnGruntDropship( WaveSpawnEvent ornull spawnEvent )
 		}
 		
 		if ( i < file.gruntAmountWithATWeapons )
-			guy.GiveWeapon( file.defaultNPCATWeapons[ guy.GetClassName() ].getrandom() )
+			guy.GiveWeapon( AISpawn_GetRandomATWeaponForClass( guy ) )
 		
 		guy.kv.grenadeWeaponName = file.gruntGrenadeClass
 		if ( file.allowGruntGrenades ) //So they can use grenades and secondaries
@@ -1876,7 +1855,6 @@ void function SpawnGruntDropship( WaveSpawnEvent ornull spawnEvent )
 	}
 	
 	thread PlayAnimTeleport( dropship, DROPSHIP_DROP_ANIM, ref, 0 )
-	WaitFrame()
 	EmitSoundOnEntity( dropship, dropshipSound )
 	wait 12
 	ArrayRemoveDead( guys )
@@ -2494,24 +2472,12 @@ void function GiveMinionFDLoadout( entity npc )
 	Assert( IsValid( npc ) && IsMinion( npc ), "Entity is not a spectre or grunt: " + npc )
 	string className = npc.GetClassName()
 	
-	if ( className == "npc_soldier" )
-	{
-		if ( file.defaultNPCWeapons[ className ].len() )
-		{
-			string baseweapon = file.defaultNPCWeapons[ className ].getrandom()
-			SetSpawnOption_Weapon( npc, baseweapon )
-			npc.kv.grenadeWeaponName = file.gruntGrenadeClass
-		}
-	}
+	string weaponName = AISpawn_GetRandomWeaponForClass( npc )
+	if ( weaponName != "" )
+		SetSpawnOption_Weapon( npc, weaponName )
 	
-	else if( className == "npc_spectre" )
-	{
-		if ( file.defaultNPCWeapons[ className ].len() )
-		{
-			string baseweapon = file.defaultNPCWeapons[ className ].getrandom()
-			SetSpawnOption_Weapon( npc, baseweapon )
-		}
-	}
+	if ( className == "npc_soldier" )
+		npc.kv.grenadeWeaponName = file.gruntGrenadeClass
 }
 
 void function SlowEnemyMovementBasedOnDifficulty( entity npc )
