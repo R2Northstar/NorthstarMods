@@ -683,8 +683,8 @@ void function RespawnAsTitan( entity player, bool normalTitanfall = false )
 	
 	AddCinematicFlag( player, CE_FLAG_CLASSIC_MP_SPAWNING ) // Hide the bottom elements of the HUD
 	
-	player.EndSignal( "OnDestroy" )
 	player.EndSignal( "OnDeath" ) // In case of cinematic titanfall and Round End code is killing everything in cleanup function
+	player.EndSignal( "OnDestroy" )
 	bool playerCouldDisembark = CanDisembark( player ) // Check to save in case of cinematic titanfall further below
 
 	entity camera
@@ -699,6 +699,7 @@ void function RespawnAsTitan( entity player, bool normalTitanfall = false )
 		camera.SetLocalAngles( < camera.GetAngles().x, spawnpoint.GetAngles().y, camera.GetAngles().z > ) // this straight up just does not work lol
 		player.SetViewEntity( camera, true )
 		
+		titan.EndSignal( "OnDeath" )
 		titan.EndSignal( "OnDestroy" )
 		TeleportToEnt( titan, spawnpoint )
 
@@ -765,6 +766,7 @@ void function RespawnAsTitan( entity player, bool normalTitanfall = false )
 				player.EnableWeaponViewModel()
 				DeployAndEnableWeapons( player )
 				ClearPlayerAnimViewEntity( player )
+				Remote_CallFunction_Replay( player, "ServerCallback_UpdateTitanModeHUD" ) // For Tone because look like holstered offhands prevents her from getting the Lock-Ons hud elements
 			}
 			else
 				GiveTitanfallScoreMedal( player ) // In case of classic Warpfall animation, give the Titanfall Score Medal at this moment, so player can actually see it

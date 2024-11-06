@@ -19,8 +19,6 @@ struct {
 	array<entity> militiaCaptureAssistList
 } file
 
-const float CTF_FLAG_MAX_SPAWN_DISTANCE = 2000.0
-
 
 
 
@@ -219,17 +217,18 @@ void function RateSpawnpoints_CTF( int checkClass, array<entity> spawnpoints, in
 		spawnpoints.extend( SpawnPoints_GetTitanStart( team ) )
 	else if ( checkClass == TD_PILOT )
 		spawnpoints.extend( SpawnPoints_GetPilotStart( team ) )
-	
+
 	foreach ( entity spawn in spawnpoints )
 	{
 		float allyFlagDistance = Distance2D( spawn.GetOrigin(), allyFlagSpot )
 		float enemyFlagDistance = Distance2D( spawn.GetOrigin(), enemyFlagSpot )
 
-		float rating = 2.0 * ( 1.0 - ( Distance2D( spawn.GetOrigin(), allyFlagSpot ) / CTF_FLAG_MAX_SPAWN_DISTANCE ) )
+		float rating = 1.0 - ( Distance2D( spawn.GetOrigin(), allyFlagSpot ) / MAP_EXTENTS )
+		float friendliesScore = ( spawn.NearbyAllyScore( team, "ai" ) + spawn.NearbyAllyScore( team, "titan" )  + spawn.NearbyEnemyScore( team, "pilot" ) )
+		float enemiesScore = ( spawn.NearbyEnemyScore( team, "ai" ) + spawn.NearbyEnemyScore( team, "titan" )  + spawn.NearbyEnemyScore( team, "pilot" ) )
 
-		rating += spawn.NearbyEnemyScore( team, "ai" )
-		rating += spawn.NearbyEnemyScore( team, "titan" )
-		rating += spawn.NearbyEnemyScore( team, "pilot" )
+		rating += friendliesScore * 0.5
+		rating += enemiesScore
 
 		if ( spawn == player.p.lastSpawnPoint )
 			rating += GetConVarFloat( "spawnpoint_last_spawn_rating" )

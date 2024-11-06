@@ -176,7 +176,7 @@ bool function SpawnPointInNoSpawnArea( vector vec, int team )
 	return false
 }
 
-bool function IsSpawnpointValidDrop( entity spawnpoint, int team )
+bool function IsSpawnpointValidDrop( entity spawnpoint )
 {
 	if ( spawnpoint.IsOccupied() || spawnpoint.s.inUse )
 		return false
@@ -289,11 +289,14 @@ entity function GetBestSpawnpoint( entity player, array<entity> spawnpoints, boo
 			validSpawns.append( spawnpoint )
 	}
 	
-	if ( !validSpawns.len() ) // First validity check
+	if ( !validSpawns.len() ) // First validity check, retry without LOS
 	{
-		CodeWarning( "Map has no valid spawn points for " + GAMETYPE + " gamemode, attempting any other possible spawn point" )
+		CodeWarning( "No valid spawn points found, attempting spawn points without Line of Sight checks" )
 		foreach ( entity spawnpoint in spawnpoints )
-			validSpawns.append( spawnpoint )
+		{
+			if ( IsSpawnpointValid( spawnpoint, player.GetTeam(), true ) )
+				validSpawns.append( spawnpoint )
+		}
 	}
 	
 	if ( !validSpawns.len() ) // On all validity check, just gather the most basic spawn
@@ -316,7 +319,7 @@ entity function GetBestSpawnpoint( entity player, array<entity> spawnpoints, boo
 	return validSpawns[0] // Return first entry in the array because native have already sorted everything through the ratings, so first one is the best one
 }
 
-bool function IsSpawnpointValid( entity spawnpoint, int team )
+bool function IsSpawnpointValid( entity spawnpoint, int team, bool skipLineOfSightChecks = false )
 {
 	foreach ( bool functionref( entity, int ) customValidationRule in file.customSpawnpointValidationRules )
 	{
@@ -324,11 +327,14 @@ bool function IsSpawnpointValid( entity spawnpoint, int team )
 			return false
 	}
 	
-	if ( !IsSpawnpointValidDrop( spawnpoint, team ) || Time() - spawnpoint.s.lastUsedTime <= 10.0 )
+	if ( !IsSpawnpointValidDrop( spawnpoint ) || Time() - spawnpoint.s.lastUsedTime <= 20.0 )
 		return false
 	
 	if ( SpawnPointInNoSpawnArea( spawnpoint.GetOrigin(), team ) )
 		return false
+	
+	if ( skipLineOfSightChecks )
+		return true
 
 	// Line of Sight Check, could use IsVisibleToEnemies but apparently that considers only players, not NPCs
 	if ( GetConVarBool( "spawnpoint_avoid_npc_titan_sight" ) )
