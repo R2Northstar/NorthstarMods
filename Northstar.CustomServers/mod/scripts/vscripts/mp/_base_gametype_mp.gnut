@@ -670,7 +670,8 @@ void function RespawnAsTitan( entity player, bool normalTitanfall = false )
 	{
 		asset model = GetPlayerSettingsAssetForClassName( titanLoadout.setFile, "bodymodel" )
 		Attachment warpAttach = GetAttachmentAtTimeFromModel( model, "at_hotdrop_01", "offset", spawnpoint.GetOrigin(), spawnpoint.GetAngles(), 0 )
-		PlayFX( TURBO_WARP_FX, warpAttach.position, warpAttach.angle )
+		entity warpFX = PlayFX( TURBO_WARP_FX, warpAttach.position, warpAttach.angle )
+		warpFX.DisableHibernation()
 	}
 	
 	entity titan = CreateAutoTitanForPlayer_FromTitanLoadout( player, titanLoadout, spawnpoint.GetOrigin(), spawnpoint.GetAngles() )
@@ -718,6 +719,8 @@ void function RespawnAsTitan( entity player, bool normalTitanfall = false )
 		player.SetInvulnerable() // Set invulnerability like NPC Titans have when dropping
 		player.ContextAction_SetBusy() // Set player context action as busy to prevent problems with many interactors
 		player.SetTouchTriggers( false ) // Prevents OOB triggers during animation
+		player.SetNoTarget( true ) // Set NoTarget so AI wont try to shoot players while they are dropping
+		player.SetNoTargetSmartAmmo( true ) // Prevent Tone, Archer and Predator Cannon from locking while dropping
 		HolsterAndDisableWeapons( player ) // Prevents player shooting during the animation or seeing the main weapon
 		player.DisableWeaponViewModel() // Makes the weapon still show for the 3p model after holster
 		TeleportToEnt( player, spawnpoint ) // Resets angles and make sure origin meets
@@ -763,6 +766,8 @@ void function RespawnAsTitan( entity player, bool normalTitanfall = false )
 				DeleteAnimEvent( player, "titan_impact" )
 				DeleteAnimEvent( player, "second_stage" )
 				player.SetTouchTriggers( true )
+				player.SetNoTarget( false )
+				player.SetNoTargetSmartAmmo( false )
 				player.EnableWeaponViewModel()
 				DeployAndEnableWeapons( player )
 				ClearPlayerAnimViewEntity( player )

@@ -82,17 +82,19 @@ void function Spawn_Init()
 	AddCallback_GameStateEnter( eGameState.Prematch, ResetSpawnzones )
 	AddSpawnCallbackEditorClass( "trigger_multiple", "trigger_mp_spawn_zone", AddSpawnZoneTrigger )
 	
-	float friendlyAIValue = 1.75
+	float friendlyAIValue = 0.5
 	if ( GameModeHasCapturePoints() )
-		friendlyAIValue = 0.75
+		friendlyAIValue = 0.25
 	
-	SpawnPoints_SetRatingMultipliers_Enemy( TD_TITAN, -10.0, -6.0, -1.0 )
-	SpawnPoints_SetRatingMultipliers_Enemy( TD_PILOT, -10.0, -6.0, -1.0 )
-	SpawnPoints_SetRatingMultipliers_Enemy( TD_AI, -2.0, -0.25, 0.0 )
+	// For a class, set enemy rating multipliers for titan, pilot, ai
+	SpawnPoints_SetRatingMultipliers_Enemy( TD_TITAN, -4.0, -2.0, -0.75 )
+	SpawnPoints_SetRatingMultipliers_Enemy( TD_PILOT, -2.0, -1.5, -1.0 )
+	SpawnPoints_SetRatingMultipliers_Enemy( TD_AI, -1.0, -0.75, -0.5 )
 	
-	SpawnPoints_SetRatingMultipliers_Friendly( TD_TITAN, 0.25, 1.75, friendlyAIValue )
-	SpawnPoints_SetRatingMultipliers_Friendly( TD_PILOT, 0.25, 1.75, friendlyAIValue )
-	SpawnPoints_SetRatingMultipliers_Friendly( TD_AI, 0.5, 0.25, 0.0 )
+	// For a class, set friendly rating multipliers for titan, pilot, ai
+	SpawnPoints_SetRatingMultipliers_Friendly( TD_TITAN, 1.0, 1.5, friendlyAIValue )
+	SpawnPoints_SetRatingMultipliers_Friendly( TD_PILOT, 1.5, 1.0, friendlyAIValue )
+	SpawnPoints_SetRatingMultipliers_Friendly( TD_AI, 1.0, 0.5, 0.25 )
 	
 	SpawnPoints_SetRatingMultiplier_PetTitan( 2.0 )
 	

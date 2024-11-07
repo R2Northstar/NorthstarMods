@@ -1697,7 +1697,7 @@ void function SpawnDroppodGrunts( WaveSpawnEvent ornull spawnEvent )
 		}
 		
 		if ( i < file.gruntAmountWithATWeapons )
-			guy.GiveWeapon( AISpawn_GetRandomATWeaponForClass( guy ) )
+			guy.GiveWeapon( AILoadout_GetRandomATWeaponForClass( guy ) )
 
 		SetTargetName( guy, GetTargetNameForID( eFD_AITypeIDs.GRUNT ) )
 		guy.MakeInvisible()
@@ -1839,7 +1839,7 @@ void function SpawnGruntDropship( WaveSpawnEvent ornull spawnEvent )
 		}
 		
 		if ( i < file.gruntAmountWithATWeapons )
-			guy.GiveWeapon( AISpawn_GetRandomATWeaponForClass( guy ) )
+			guy.GiveWeapon( AILoadout_GetRandomATWeaponForClass( guy ) )
 		
 		guy.kv.grenadeWeaponName = file.gruntGrenadeClass
 		if ( file.allowGruntGrenades ) //So they can use grenades and secondaries
@@ -2472,7 +2472,7 @@ void function GiveMinionFDLoadout( entity npc )
 	Assert( IsValid( npc ) && IsMinion( npc ), "Entity is not a spectre or grunt: " + npc )
 	string className = npc.GetClassName()
 	
-	string weaponName = AISpawn_GetRandomWeaponForClass( npc )
+	string weaponName = AILoadout_GetRandomWeaponForClass( npc )
 	if ( weaponName != "" )
 		SetSpawnOption_Weapon( npc, weaponName )
 	

@@ -265,26 +265,31 @@ void function GamemodeFD_Init()
 	{
 		string Cvar_gruntweapons = GetConVarString( "ns_fd_grunt_primary_weapon" )
 		array<string> FD_GruntWeapons = split( Cvar_gruntweapons, "," )
-		AISpawn_SetupNPCWeapons( "npc_soldier", FD_GruntWeapons )
+		AILoadout_SetupNPCWeapons( "npc_soldier", FD_GruntWeapons )
 	}
 	else
-		AISpawn_SetupNPCWeapons( "npc_soldier", ["mp_weapon_rspn101","mp_weapon_car","mp_weapon_alternator_smg","mp_weapon_hemlok_smg","mp_weapon_r97"] )
+		AILoadout_SetupNPCWeapons( "npc_soldier", ["mp_weapon_rspn101","mp_weapon_car","mp_weapon_alternator_smg","mp_weapon_hemlok_smg","mp_weapon_r97"] )
 	
 	if ( GetConVarString( "ns_fd_spectre_primary_weapon" ) != "" )
 	{
 		string Cvar_spectreweapons = GetConVarString( "ns_fd_spectre_primary_weapon" )
 		array<string> FD_SpectreWeapons = split( Cvar_spectreweapons, "," )
-		AISpawn_SetupNPCWeapons( "npc_spectre", FD_SpectreWeapons )
+		AILoadout_SetupNPCWeapons( "npc_spectre", FD_SpectreWeapons )
 	}
 	else
-		AISpawn_SetupNPCWeapons( "npc_spectre", ["mp_weapon_hemlok","mp_weapon_vinson","mp_weapon_g2","mp_weapon_mastiff","mp_weapon_shotgun","mp_weapon_doubletake","mp_weapon_dmr"] )
+		AILoadout_SetupNPCWeapons( "npc_spectre", ["mp_weapon_hemlok","mp_weapon_vinson","mp_weapon_g2","mp_weapon_mastiff","mp_weapon_shotgun","mp_weapon_doubletake","mp_weapon_dmr"] )
 	
 	if ( GetConVarString( "ns_fd_infantry_at_weapons" ) != "" )
 	{
 		string Cvar_ATWeapons = GetConVarString( "ns_fd_infantry_at_weapons" )
 		array<string> FD_ATWeapons = split( Cvar_ATWeapons, "," )
-		AISpawn_SetupNPCAntiTitanWeapons( "npc_soldier", FD_ATWeapons )
-		AISpawn_SetupNPCAntiTitanWeapons( "npc_spectre", FD_ATWeapons )
+		AILoadout_SetupNPCAntiTitanWeapons( "npc_soldier", FD_ATWeapons )
+		AILoadout_SetupNPCAntiTitanWeapons( "npc_spectre", FD_ATWeapons )
+	}
+	else
+	{
+		AILoadout_SetupNPCAntiTitanWeapons( "npc_soldier", [ "mp_weapon_defender" ] )
+		AILoadout_SetupNPCAntiTitanWeapons( "npc_spectre", [ "mp_weapon_defender" ] )
 	}
 	
 	level.endOfRoundPlayerState = ENDROUND_FREE
