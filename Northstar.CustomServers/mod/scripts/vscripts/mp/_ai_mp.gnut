@@ -5,60 +5,109 @@ global function SPMP_UpdateNPCProficiency
 global function SPMP_Callback_ForceAIMissPlayer
 global function IsAutoPopulateEnabled
 
-global function AISpawn_SetupNPCWeapons
-global function AISpawn_SetupNPCAntiTitanWeapons
-global function AISpawn_GetRandomWeaponForClass
-global function AISpawn_GetRandomATWeaponForClass
+global function AILoadout_SetupNPCWeapons
+global function AILoadout_SetupNPCAntiTitanWeapons
+global function AILoadout_GetRandomWeaponForClass
+global function AILoadout_GetRandomATWeaponForClass
 
 struct{
+	table< string, array<string> > customNPCWeapons
+	table< string, array<string> > customNPCATWeapons
+
 	table< string, array<string> > defaultNPCWeapons
 	table< string, array<string> > defaultNPCATWeapons
 }file
 
+
+
+
+
+
+
+
+
+
+
+/*
+ █████  ██     ██       ██████   █████  ██████   ██████  ██    ██ ████████ ███████ 
+██   ██ ██     ██      ██    ██ ██   ██ ██   ██ ██    ██ ██    ██    ██    ██      
+███████ ██     ██      ██    ██ ███████ ██   ██ ██    ██ ██    ██    ██    ███████ 
+██   ██ ██     ██      ██    ██ ██   ██ ██   ██ ██    ██ ██    ██    ██         ██ 
+██   ██ ██     ███████  ██████  ██   ██ ██████   ██████   ██████     ██    ███████ 
+*/
+
 void function MpInitAILoadouts()
 {
+	file.defaultNPCWeapons["npc_soldier"] <- [ "mp_weapon_rspn101", "mp_weapon_dmr", "mp_weapon_r97", "mp_weapon_lmg" ]
+	file.defaultNPCWeapons["npc_spectre"] <- [ "mp_weapon_hemlok_smg", "mp_weapon_doubletake", "mp_weapon_mastiff" ]
+	file.defaultNPCWeapons["npc_stalker"] <- [ "mp_weapon_hemlok_smg", "mp_weapon_lstar", "mp_weapon_mastiff" ]
 
+	file.defaultNPCATWeapons["npc_soldier"] <- [ "mp_weapon_defender", "mp_weapon_rocket_launcher" ]
+	file.defaultNPCATWeapons["npc_spectre"] <- [ "mp_weapon_defender", "mp_weapon_rocket_launcher" ]
+	file.defaultNPCATWeapons["npc_stalker"] <- [ "mp_weapon_defender", "mp_weapon_rocket_launcher" ]
 }
 
-void function AISpawn_SetupNPCWeapons( string npcClass, array<string> weapons )
+void function AILoadout_SetupNPCWeapons( string npcClass, array<string> weapons )
 {
-	if ( !( npcClass in file.defaultNPCWeapons ) )
-		file.defaultNPCWeapons[ npcClass ] <- []
+	if ( !( npcClass in file.customNPCWeapons ) )
+		file.customNPCWeapons[ npcClass ] <- []
 
-	file.defaultNPCWeapons[ npcClass ] = weapons
+	file.customNPCWeapons[ npcClass ] = weapons
 }
 
-void function AISpawn_SetupNPCAntiTitanWeapons( string npcClass, array<string> weapons )
+void function AILoadout_SetupNPCAntiTitanWeapons( string npcClass, array<string> weapons )
 {
-	if ( !( npcClass in file.defaultNPCATWeapons ) )
-		file.defaultNPCATWeapons[ npcClass ] <- []
-
-	file.defaultNPCATWeapons[ npcClass ] = weapons
+	if ( !( npcClass in file.customNPCATWeapons ) )
+		file.customNPCATWeapons[ npcClass ] <- []
+	
+	file.customNPCATWeapons[ npcClass ] = weapons
 }
 
-string function AISpawn_GetRandomWeaponForClass( entity npc )
+string function AILoadout_GetRandomWeaponForClass( entity npc )
 {
 	string className = npc.GetClassName()
-	if ( className in file.defaultNPCWeapons )
+	if ( className in file.customNPCWeapons )
 	{
-		if ( file.defaultNPCWeapons[ className ].len() )
-			return file.defaultNPCWeapons[ className ].getrandom()
+		if ( file.customNPCWeapons[ className ].len() )
+			return file.customNPCWeapons[ className ].getrandom()
 	}
+	else if ( className in file.defaultNPCWeapons )
+		return file.defaultNPCWeapons[ className ].getrandom()
 
 	return ""
 }
 
-string function AISpawn_GetRandomATWeaponForClass( entity npc )
+string function AILoadout_GetRandomATWeaponForClass( entity npc )
 {
 	string className = npc.GetClassName()
-	if ( className in file.defaultNPCATWeapons )
+	if ( className in file.customNPCATWeapons )
 	{
-		if ( file.defaultNPCATWeapons[ className ].len() )
-			return file.defaultNPCATWeapons[ className ].getrandom()
+		if ( file.customNPCATWeapons[ className ].len() )
+			return file.customNPCATWeapons[ className ].getrandom()
 	}
+	else if ( className in file.defaultNPCATWeapons )
+		return file.defaultNPCATWeapons[ className ].getrandom()
 
-	return "mp_weapon_defender" // Default Charge Rifle as fallback
+	return ""
 }
+
+
+
+
+
+
+
+
+
+
+
+/*
+ █████  ██     ██████  ██████   ██████  ███████ ██  ██████ ███████ ███    ██  ██████ ██    ██ 
+██   ██ ██     ██   ██ ██   ██ ██    ██ ██      ██ ██      ██      ████   ██ ██       ██  ██  
+███████ ██     ██████  ██████  ██    ██ █████   ██ ██      █████   ██ ██  ██ ██        ████   
+██   ██ ██     ██      ██   ██ ██    ██ ██      ██ ██      ██      ██  ██ ██ ██         ██    
+██   ██ ██     ██      ██   ██  ██████  ██      ██  ██████ ███████ ██   ████  ██████    ██    
+*/
 
 void function SetProficiency( entity npc )
 {
