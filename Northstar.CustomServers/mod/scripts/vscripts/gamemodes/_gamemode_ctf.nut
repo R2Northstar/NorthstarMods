@@ -216,16 +216,16 @@ void function RateSpawnpoints_CTF( int checkClass, array<entity> spawnpoints, in
 	}
 
 	array<entity> aliveEnemyPlayers = GetPlayerArrayOfEnemies_Alive( team )
-	if ( aliveEnemyPlayers.len() )
-		enemiesMedianPosition = GetMedianOriginOfEntities( aliveEnemyPlayers )
-	else // Full wipe or no enemy team? Reset to their flag
+	if ( !aliveEnemyPlayers.len() ) // Full wipe or no enemy team? Reset to their flag
 		enemiesMedianPosition = enemyFlagSpot
+	else
+		enemiesMedianPosition = GetMedianOriginOfEntities( aliveEnemyPlayers )
 	
 	foreach ( entity spawn in spawnpoints )
 	{
 		float allyFlagDistance = Distance2D( spawn.GetOrigin(), allyFlagSpot )
 		float enemyFlagDistance = Distance2D( spawn.GetOrigin(), enemyFlagSpot )
-		float enemyTeamSidePoint = clamp( GetProgressAlongLineSegment( enemiesMedianPosition, allyFlagSpot, enemyFlagSpot ), 0.0, 1.0 )
+		float enemyTeamSidePoint = clamp( GetProgressAlongLineSegment( enemiesMedianPosition, enemyFlagSpot, allyFlagSpot ), 0.0, 1.0 )
 		float rating = 4.0
 
 		if ( enemyTeamSidePoint > 0.6 ) // Enemy is probably pushing base, start spawning at mid by using their flag for rating instead
