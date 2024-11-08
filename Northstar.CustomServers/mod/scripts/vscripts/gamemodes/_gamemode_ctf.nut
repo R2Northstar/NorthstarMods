@@ -205,7 +205,8 @@ void function RateSpawnpoints_CTF( int checkClass, array<entity> spawnpoints, in
 {
 	vector allyFlagSpot
 	vector enemyFlagSpot
-	vector flagsMiddlePoint
+	vector enemiesMedianPosition
+
 	foreach ( entity spawn in GetEntArrayByClass_Expensive( "info_spawnpoint_flag" ) )
 	{
 		if( spawn.GetTeam() == team )
@@ -214,17 +215,23 @@ void function RateSpawnpoints_CTF( int checkClass, array<entity> spawnpoints, in
 			enemyFlagSpot = spawn.GetOrigin()
 	}
 
-	if ( checkClass == TD_TITAN )
-		spawnpoints.extend( SpawnPoints_GetTitanStart( team ) )
-	else if ( checkClass == TD_PILOT )
-		spawnpoints.extend( SpawnPoints_GetPilotStart( team ) )
-
+	array<entity> aliveEnemyPlayers = GetPlayerArrayOfEnemies_Alive( team )
+	if ( aliveEnemyPlayers.len() )
+		enemiesMedianPosition = GetMedianOriginOfEntities( aliveEnemyPlayers )
+	else // Full wipe or no enemy team? Reset to their flag
+		enemiesMedianPosition = enemyFlagSpot
+	
 	foreach ( entity spawn in spawnpoints )
 	{
 		float allyFlagDistance = Distance2D( spawn.GetOrigin(), allyFlagSpot )
 		float enemyFlagDistance = Distance2D( spawn.GetOrigin(), enemyFlagSpot )
+		float enemyTeamSidePoint = clamp( GetProgressAlongLineSegment( enemiesMedianPosition, allyFlagSpot, enemyFlagSpot ), 0.0, 1.0 )
+		float rating = 4.0
 
-		float rating = 2.0 * ( 1.0 - ( Distance2D( spawn.GetOrigin(), allyFlagSpot ) / MAP_EXTENTS ) )
+		if ( enemyTeamSidePoint > 0.6 ) // Enemy is probably pushing base, start spawning at mid by using their flag for rating instead
+			rating *= 1.0 - ( Distance2D( spawn.GetOrigin(), enemyFlagDistance ) / MAP_EXTENTS )
+		else
+			rating *= 1.0 - ( Distance2D( spawn.GetOrigin(), allyFlagSpot ) / MAP_EXTENTS )
 
 		rating += spawn.NearbyAllyScore( team, "ai" )
 		rating += spawn.NearbyAllyScore( team, "titan" )
@@ -237,7 +244,7 @@ void function RateSpawnpoints_CTF( int checkClass, array<entity> spawnpoints, in
 		if ( spawn == player.p.lastSpawnPoint )
 			rating += GetConVarFloat( "spawnpoint_last_spawn_rating" )
 
-		if( allyFlagDistance > enemyFlagDistance )
+		if( allyFlagDistance > enemyFlagDistance ) // Prevent ratings from crossing past midpoint between flags
 			rating = 0.0
 		
 		spawn.CalculateRating( checkClass, team, rating, rating * 0.25 )

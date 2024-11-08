@@ -41,7 +41,6 @@ struct NoSpawnArea
 }
 
 struct {
-	bool respawnsEnabled = true
 	array<NoSpawnArea> noSpawnAreas
 	string spawnpointGamemodeOverride
 	array< bool functionref( entity, int ) > customSpawnpointValidationRules
