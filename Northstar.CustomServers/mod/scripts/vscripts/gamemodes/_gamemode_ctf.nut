@@ -228,7 +228,8 @@ void function RateSpawnpoints_CTF( int checkClass, array<entity> spawnpoints, in
 
 		float rating = 2.0
 
-		if ( IsFlagHome( GetFlagForTeam( team ) ) )
+		entity teamFlag = GetFlagForTeam( team )
+		if ( IsValid( teamFlag ) && IsFlagHome( teamFlag ) )
 			rating *= 1.0 - ( Distance2D( spawn.GetOrigin(), allyFlagSpot ) / MAP_EXTENTS )
 		else
 			rating *= 1.0 - ( Distance2D( spawn.GetOrigin(), flagsMiddlePoint ) / MAP_EXTENTS )
