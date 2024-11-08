@@ -228,7 +228,7 @@ void function RateSpawnpoints_CTF( int checkClass, array<entity> spawnpoints, in
 		float enemyTeamSidePoint = clamp( GetProgressAlongLineSegment( enemiesMedianPosition, enemyFlagSpot, allyFlagSpot ), 0.0, 1.0 )
 		float rating = 4.0
 
-		if ( enemyTeamSidePoint > 0.6 ) // Enemy is probably pushing base, start spawning at mid by using their flag for rating instead
+		if ( enemyTeamSidePoint > 0.7 ) // Enemy is probably pushing base, start spawning at mid by using their flag for rating instead
 			rating *= 1.0 - ( Distance2D( spawn.GetOrigin(), enemyFlagSpot ) / MAP_EXTENTS )
 		else
 			rating *= 1.0 - ( Distance2D( spawn.GetOrigin(), allyFlagSpot ) / MAP_EXTENTS )
