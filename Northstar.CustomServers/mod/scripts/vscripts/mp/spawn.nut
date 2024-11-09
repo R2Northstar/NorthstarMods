@@ -716,49 +716,5 @@ void function ShowCTFInfluenceSphere()
 		else
 			DebugDrawBox( sPoint.GetOrigin(), < -16, -16, 0 >, < 16, 16, 72 >, 0, 0, 255, 1, 600 )
 	}
-
-	spawnPoints = SpawnPoints_GetTitanStart( TEAM_MILITIA )
-	foreach ( sPoint in spawnPoints )
-	{
-		allyFlagDistance = Distance2D( sPoint.GetOrigin(), allyFlagSpot )
-		enemyFlagDistance = Distance2D( sPoint.GetOrigin(), enemyFlagSpot )
-		if( enemyFlagDistance > allyFlagDistance )
-			DebugDrawBox( sPoint.GetOrigin(), < -60, -60, 0 >, < 60, 60, 235 >, 255, 0, 0, 1, 600 )
-		else
-			DebugDrawBox( sPoint.GetOrigin(), < -60, -60, 0 >, < 60, 60, 235 >, 0, 0, 255, 1, 600 )
-	}
-
-	spawnPoints = SpawnPoints_GetPilotStart( TEAM_MILITIA )
-	foreach ( sPoint in spawnPoints )
-	{
-		allyFlagDistance = Distance2D( sPoint.GetOrigin(), allyFlagSpot )
-		enemyFlagDistance = Distance2D( sPoint.GetOrigin(), enemyFlagSpot )
-		if( enemyFlagDistance > allyFlagDistance )
-			DebugDrawBox( sPoint.GetOrigin(), < -16, -16, 0 >, < 16, 16, 72 >, 255, 0, 0, 1, 600 )
-		else
-			DebugDrawBox( sPoint.GetOrigin(), < -16, -16, 0 >, < 16, 16, 72 >, 0, 0, 255, 1, 600 )
-	}
-
-	spawnPoints = SpawnPoints_GetTitanStart( TEAM_IMC )
-	foreach ( sPoint in spawnPoints )
-	{
-		allyFlagDistance = Distance2D( sPoint.GetOrigin(), allyFlagSpot )
-		enemyFlagDistance = Distance2D( sPoint.GetOrigin(), enemyFlagSpot )
-		if( enemyFlagDistance > allyFlagDistance )
-			DebugDrawBox( sPoint.GetOrigin(), < -60, -60, 0 >, < 60, 60, 235 >, 255, 0, 0, 1, 600 )
-		else
-			DebugDrawBox( sPoint.GetOrigin(), < -60, -60, 0 >, < 60, 60, 235 >, 0, 0, 255, 1, 600 )
-	}
-
-	spawnPoints = SpawnPoints_GetPilotStart( TEAM_IMC )
-	foreach ( sPoint in spawnPoints )
-	{
-		allyFlagDistance = Distance2D( sPoint.GetOrigin(), allyFlagSpot )
-		enemyFlagDistance = Distance2D( sPoint.GetOrigin(), enemyFlagSpot )
-		if( enemyFlagDistance > allyFlagDistance )
-			DebugDrawBox( sPoint.GetOrigin(), < -16, -16, 0 >, < 16, 16, 72 >, 255, 0, 0, 1, 600 )
-		else
-			DebugDrawBox( sPoint.GetOrigin(), < -16, -16, 0 >, < 16, 16, 72 >, 0, 0, 255, 1, 600 )
-	}
 }
 #endif
