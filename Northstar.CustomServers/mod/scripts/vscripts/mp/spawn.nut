@@ -325,7 +325,7 @@ bool function IsSpawnpointValid( entity spawnpoint, int team, bool skipLineOfSig
 			return false
 	}
 	
-	if ( !IsSpawnpointValidDrop( spawnpoint ) || Time() - spawnpoint.s.lastUsedTime <= 20.0 )
+	if ( !IsSpawnpointValidDrop( spawnpoint ) || Time() - spawnpoint.s.lastUsedTime <= 10.0 )
 		return false
 	
 	if ( SpawnPointInNoSpawnArea( spawnpoint.GetOrigin(), team ) )

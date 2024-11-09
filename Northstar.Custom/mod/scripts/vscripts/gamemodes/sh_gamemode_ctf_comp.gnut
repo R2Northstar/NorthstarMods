@@ -87,14 +87,10 @@ void function InitCTFCompSpecificSettings()
 			AddCallback_EntitiesDidLoad( AddColonyOOBs )
 		if ( GetMapName() == "mp_black_water_canal" )
 			AddCallback_EntitiesDidLoad( AddBWCOOBs )
-		/*
-		if ( GetMapName() == "mp_grave" )
-			AddCallback_EntitiesDidLoad( AddBoomtownZiplines )
-		if ( GetMapName() == "mp_drydock" )
-			AddCallback_EntitiesDidLoad( AddDrydockProps )
-		if ( GetMapName() == "mp_thaw" )
-			AddCallback_EntitiesDidLoad( RepositionExoplanetFlags )
-		*/
+		//if ( GetMapName() == "mp_thaw" )
+		//	AddCallback_EntitiesDidLoad( RepositionExoplanetFlags )
+		if ( GetMapName() == "mp_forwardbase_kodai" )
+			AddCallback_EntitiesDidLoad( RepositionKodaiFlags )
 		if ( GetMapName() == "mp_wargames" )
 			AddCallback_EntitiesDidLoad( RepositionWargamesFlags )
 	#elseif CLIENT
@@ -128,7 +124,7 @@ void function InitCTFCompSpecificSettings()
 	#endif
 }
 
-#if SERVER 
+#if SERVER
 void function AngelCityReplaceFlags()
 {
 	foreach ( entity flagRef in GetEntArrayByClass_Expensive( "info_spawnpoint_flag" ) )
@@ -192,21 +188,7 @@ void function AddColonyOOBs()
 	AddOutOfBoundsTriggerWithParams( < 387, 61, 1182 >, 180, 300 )
 	AddOutOfBoundsTriggerWithParams( < 1480, 648, 760 >, 150, 150 )
 	AddOutOfBoundsTriggerWithParams( < 1480, 442, 760 >, 150, 150 )
-	
-	/*
-	foreach ( entity flagRef in GetEntArrayByClass_Expensive( "info_spawnpoint_flag" ) )
-		flagRef.Destroy()
-		
-	entity militiaFlagBase = CreateEntity( "info_spawnpoint_flag" )
-	militiaFlagBase.kv.teamnumber = TEAM_MILITIA
-	militiaFlagBase.kv.origin = < -1694, -2212, 319 >
-	DispatchSpawn( militiaFlagBase )
-	
-	entity imcFlagBase = CreateEntity( "info_spawnpoint_flag" )
-	imcFlagBase.kv.teamnumber = TEAM_IMC
-	imcFlagBase.kv.origin = < 2229, 3721, 26 >
-	DispatchSpawn( imcFlagBase )
-	
+
 	AddCCTFCustomProp( $"models/imc_base/cargo_container_imc_01_blue.mdl", < 1682, 2485, -8 >, < 0, 90, 0 > )
 	AddCCTFCustomProp( $"models/imc_base/cargo_container_imc_01_blue.mdl", < 1672, 2366, -4 >, < 0, 0, 0 > )
 	AddCCTFCustomProp( $"models/imc_base/cargo_container_imc_01_white.mdl", < 1809, 2412, -8 >, < 0, -45, 0 > )
@@ -265,22 +247,6 @@ void function AddColonyOOBs()
 
 	CreateCCTFZipline( < -1509, 524, 621 >, < -1721, -1880, 455 > )
 	CreateCCTFZipline( < 2746, 845, 580 >, < 2643, 3286, 291 > )
-	
-	*/
-}
-
-void function AddBoomtownZiplines()
-{
-	CreateCCTFZipline( < 5421, -4451, 2978 >, < 4945, -6391, 2436 > )
-	CreateCCTFZipline( < -94, -5710, 2461 >, < 1325, -5361, 2737 > )
-	CreateCCTFZipline( < 6740, -1697, 2549 >, < 5195, -1617, 2535 >, 1.25, 1 )
-}
-
-void function AddDrydockProps()
-{
-	CreateCCTFZipline( < -1209, -2135, 604 >, < -2171, -146, 542 > )
-	CreateCCTFZipline( < 1713, 3989, 578 >, < 1837, 2621, 417 > )
-	CreateCCTFZipline( < 3184, 575, 423 >, < 2774, 3073, 240 > )
 }
 
 void function RepositionExoplanetFlags()
@@ -299,6 +265,22 @@ void function RepositionExoplanetFlags()
 	DispatchSpawn( imcFlagBase )
 }
 
+void function RepositionKodaiFlags()
+{
+	foreach ( entity flagRef in GetEntArrayByClass_Expensive( "info_spawnpoint_flag" ) )
+		flagRef.Destroy()
+	
+	entity militiaFlagBase = CreateEntity( "info_spawnpoint_flag" )
+	militiaFlagBase.kv.teamnumber = TEAM_MILITIA
+	militiaFlagBase.kv.origin = < -331, 2994, 1096 >
+	DispatchSpawn( militiaFlagBase )
+	
+	entity imcFlagBase = CreateEntity( "info_spawnpoint_flag" )
+	imcFlagBase.kv.teamnumber = TEAM_IMC
+	imcFlagBase.kv.origin = < 1138, -167, 960 >
+	DispatchSpawn( imcFlagBase )
+}
+
 void function RepositionWargamesFlags()
 {
 	foreach ( entity flagRef in GetEntArrayByClass_Expensive( "info_spawnpoint_flag" ) )
@@ -306,12 +288,12 @@ void function RepositionWargamesFlags()
 		
 	entity militiaFlagBase = CreateEntity( "info_spawnpoint_flag" )
 	militiaFlagBase.kv.teamnumber = TEAM_MILITIA
-	militiaFlagBase.kv.origin = < -3073, -70, 35 >
+	militiaFlagBase.kv.origin = < -3164, 318, -128 >
 	DispatchSpawn( militiaFlagBase )
 	
 	entity imcFlagBase = CreateEntity( "info_spawnpoint_flag" )
 	imcFlagBase.kv.teamnumber = TEAM_IMC
-	imcFlagBase.kv.origin = < 1841, -5, 110 >
+	imcFlagBase.kv.origin = < 1281, -1343, 40 >
 	DispatchSpawn( imcFlagBase )
 }
 
