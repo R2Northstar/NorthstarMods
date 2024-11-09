@@ -205,7 +205,7 @@ void function RateSpawnpoints_CTF( int checkClass, array<entity> spawnpoints, in
 {
 	vector allyFlagSpot
 	vector enemyFlagSpot
-	vector enemiesMedianPosition
+	vector flagsMedianPosition
 
 	foreach ( entity spawn in GetEntArrayByClass_Expensive( "info_spawnpoint_flag" ) )
 	{
@@ -214,22 +214,19 @@ void function RateSpawnpoints_CTF( int checkClass, array<entity> spawnpoints, in
 		else
 			enemyFlagSpot = spawn.GetOrigin()
 	}
-
-	array<entity> aliveEnemyPlayers = GetPlayerArrayOfEnemies_Alive( team )
-	if ( !aliveEnemyPlayers.len() ) // Full wipe or no enemy team? Reset to their flag
-		enemiesMedianPosition = enemyFlagSpot
-	else
-		enemiesMedianPosition = GetMedianOriginOfEntities( aliveEnemyPlayers )
+	
+	flagsMedianPosition = ( allyFlagSpot + enemyFlagSpot ) * 0.5
 	
 	foreach ( entity spawn in spawnpoints )
 	{
+		entity teamFlag = GetFlagForTeam( team )
+
 		float allyFlagDistance = Distance2D( spawn.GetOrigin(), allyFlagSpot )
 		float enemyFlagDistance = Distance2D( spawn.GetOrigin(), enemyFlagSpot )
-		float enemyTeamSidePoint = clamp( GetProgressAlongLineSegment( enemiesMedianPosition, enemyFlagSpot, allyFlagSpot ), 0.0, 1.0 )
 		float rating = 4.0
 
-		if ( enemyTeamSidePoint > 0.7 ) // Enemy is probably pushing base, start spawning at mid by using their flag for rating instead
-			rating *= 1.0 - ( Distance2D( spawn.GetOrigin(), enemyFlagSpot ) / MAP_EXTENTS )
+		if ( IsValid( teamFlag ) && !IsFlagHome( teamFlag ) ) // Enemy is carrying flag, start doing midspawns to give a chance for recovery
+			rating *= 1.0 - ( Distance2D( spawn.GetOrigin(), flagsMedianPosition ) / MAP_EXTENTS )
 		else
 			rating *= 1.0 - ( Distance2D( spawn.GetOrigin(), allyFlagSpot ) / MAP_EXTENTS )
 
