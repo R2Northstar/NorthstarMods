@@ -223,16 +223,19 @@ void function RateSpawnpoints_CTF( int checkClass, array<entity> spawnpoints, in
 
 		float allyFlagDistance = Distance2D( spawn.GetOrigin(), allyFlagSpot )
 		float enemyFlagDistance = Distance2D( spawn.GetOrigin(), enemyFlagSpot )
-		float rating = 4.0
+		float enemiesRating = spawn.NearbyEnemyScore( team, "ai" ) + spawn.NearbyEnemyScore( team, "titan" ) + spawn.NearbyEnemyScore( team, "pilot" )
+		float rating = 1.0
 
 		if ( IsValid( teamFlag ) && !IsFlagHome( teamFlag ) ) // Enemy is carrying flag, start doing midspawns to give a chance for recovery
-			rating *= 1.0 - ( Distance2D( spawn.GetOrigin(), flagsMedianPosition ) / MAP_EXTENTS )
+		{
+			rating = 6.0 * ( 1.0 - ( Distance2D( spawn.GetOrigin(), flagsMedianPosition ) / MAP_EXTENTS ) )
+			rating += enemiesRating * 0.5
+		}
 		else
-			rating *= 1.0 - ( Distance2D( spawn.GetOrigin(), allyFlagSpot ) / MAP_EXTENTS )
-
-		rating += spawn.NearbyEnemyScore( team, "ai" )
-		rating += spawn.NearbyEnemyScore( team, "titan" )
-		rating += spawn.NearbyEnemyScore( team, "pilot" )
+		{
+			rating = 4.0 * ( 1.0 - ( Distance2D( spawn.GetOrigin(), allyFlagSpot ) / MAP_EXTENTS ) )
+			rating += enemiesRating
+		}
 
 		if ( spawn == player.p.lastSpawnPoint )
 			rating += GetConVarFloat( "spawnpoint_last_spawn_rating" )
