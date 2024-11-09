@@ -1,3 +1,4 @@
+untyped
 global function ShGamemodeCTFComp_Init
 
 global const string GAMEMODE_CTF_COMP = "ctf_comp"
@@ -87,8 +88,8 @@ void function InitCTFCompSpecificSettings()
 			AddCallback_EntitiesDidLoad( AddColonyOOBs )
 		if ( GetMapName() == "mp_black_water_canal" )
 			AddCallback_EntitiesDidLoad( AddBWCOOBs )
-		//if ( GetMapName() == "mp_thaw" )
-		//	AddCallback_EntitiesDidLoad( RepositionExoplanetFlags )
+		if ( GetMapName() == "mp_thaw" )
+			AddCallback_EntitiesDidLoad( RepositionExoplanetFlags )
 		if ( GetMapName() == "mp_forwardbase_kodai" )
 			AddCallback_EntitiesDidLoad( RepositionKodaiFlags )
 		if ( GetMapName() == "mp_wargames" )
@@ -251,6 +252,7 @@ void function AddColonyOOBs()
 
 void function RepositionExoplanetFlags()
 {
+	/*
 	foreach ( entity flagRef in GetEntArrayByClass_Expensive( "info_spawnpoint_flag" ) )
 		flagRef.Destroy()
 		
@@ -263,6 +265,16 @@ void function RepositionExoplanetFlags()
 	imcFlagBase.kv.teamnumber = TEAM_IMC
 	imcFlagBase.kv.origin = < 3030, 1473, -63 >
 	DispatchSpawn( imcFlagBase )
+	*/
+
+	AddCustomCTFPilotSpawn( < 1233, -2474, -255 >, < 0, 90, 0 > )
+	AddCustomCTFPilotSpawn( < 1522, -2234, -234 >, < 0, 135, 0 > )
+	AddCustomCTFPilotSpawn( < 782, -2029, -227 >, < 0, -45, 0 > )
+	AddCustomCTFPilotSpawn( < 650, -2386, -63 >, < 0, 180, 0 > )
+	AddCustomCTFPilotSpawn( < 2205, -2665, -256 >, < 0, 135, 0 > )
+	AddCustomCTFPilotSpawn( < 1800, -2267, -256 >, < 0, -45, 0 > )
+	AddCustomCTFPilotSpawn( < -702, -1384, -159 >, < 0, -45, 0 > )
+	AddCustomCTFPilotSpawn( < -589, -1111, -191 >, < 0, 45, 0 > )
 }
 
 void function RepositionKodaiFlags()
@@ -295,6 +307,31 @@ void function RepositionWargamesFlags()
 	imcFlagBase.kv.teamnumber = TEAM_IMC
 	imcFlagBase.kv.origin = < 1281, -1343, 40 >
 	DispatchSpawn( imcFlagBase )
+
+	AddCustomCTFPilotSpawn( < -2397, 404, -23 >, < 0, 45, 0 > )
+	AddCustomCTFPilotSpawn( < -2129, 709, -20 >, < 0, 0, 0 > )
+	AddCustomCTFPilotSpawn( < -712, 1263, 111 >, < 0, 0, 0 > )
+	AddCustomCTFPilotSpawn( < -1750, -42, -23 >, < 0, 0, 0 > )
+	AddCustomCTFPilotSpawn( < -1490, 462, -23 >, < 0, -90, 0 > )
+	AddCustomCTFPilotSpawn( < -1129, -368, -127 >, < 0, -135, 0 > )
+	AddCustomCTFPilotSpawn( < -1811, -1091, 64 >, < 0, 0, 0 > )
+	AddCustomCTFPilotSpawn( < -1359, -1475, -127 >, < 0, 0, 0 > )
+	AddCustomCTFPilotSpawn( < -1807, -1217, 64 >, < 0, 0, 0 > )
+	AddCustomCTFPilotSpawn( < -1413, -1569, 0 >, < 0, -45, 0 > )
+	AddCustomCTFPilotSpawn( < -1749, -191, -126 >, < 0, -45, 0 > )
+	AddCustomCTFPilotSpawn( < -1057, 1263, -127 >, < 0, 0, 0 > )
+	AddCustomCTFPilotSpawn( < -1057, 1263, -127 >, < 0, 0, 0 > )
+	AddCustomCTFPilotSpawn( < -1549, 1308, -127 >, < 0, -90, 0 > )
+
+	AddCustomCTFPilotSpawn( < -594, 259, -26 >, < 0, 225, 0 > )
+	AddCustomCTFPilotSpawn( < -384, -247, -23 >, < 0, 135, 0 > )
+	AddCustomCTFPilotSpawn( < -448, 264, 64 >, < 0, -45, 0 > )
+	AddCustomCTFPilotSpawn( < 1933, -278, -128 >, < 0, 180, 0 > )
+	AddCustomCTFPilotSpawn( < 1829, -1441, -63 >, < 0, 135, 0 > )
+	AddCustomCTFPilotSpawn( < 1386, -848, 40 >, < 0, -90, 0 > )
+	AddCustomCTFPilotSpawn( < -707, -1639, 127 >, < 0, 0, 0 > )
+	AddCustomCTFPilotSpawn( < -606, -355, 32 >, < 0, -45, 0 > )
+	AddCustomCTFPilotSpawn( < -547, 347, -31 >, < 0, 90, 0 > )
 }
 
 void function AddBWCOOBs()
@@ -432,5 +469,25 @@ void function AddCCTFCustomProp( asset modelasset, vector origin, vector angles 
 	prop.SetScriptPropFlags( SPF_BLOCKS_AI_NAVIGATION | SPF_CUSTOM_SCRIPT_3 )
 	prop.AllowMantle()
 	DispatchSpawn( prop )
+}
+
+void function AddCustomCTFTitanSpawn( vector origin, vector angles )
+{
+	entity titanSpawn = CreateEntity( "info_spawnpoint_titan" )
+	titanSpawn.SetOrigin( origin )
+	titanSpawn.SetAngles( angles )
+	DispatchSpawn( titanSpawn )
+	titanSpawn.s.lastUsedTime <- -999
+	titanSpawn.s.inUse <- false
+}
+
+void function AddCustomCTFPilotSpawn( vector origin, vector angles )
+{
+	entity pilotSpawn = CreateEntity( "info_spawnpoint_human" )
+	pilotSpawn.SetOrigin( origin )
+	pilotSpawn.SetAngles( angles )
+	DispatchSpawn( pilotSpawn )
+	pilotSpawn.s.lastUsedTime <- -999
+	pilotSpawn.s.inUse <- false
 }
 #endif
