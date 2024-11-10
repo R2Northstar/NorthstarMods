@@ -263,8 +263,8 @@ entity function FindSpawnPoint( entity player, bool isTitan, bool useStartSpawnp
 	/*
 	foreach( string k, float v in spawnpoint.GetRatingData() )
 		print( k + ": " + v )
+	print( "team: " + spawnpoint.GetTeam() )
 	*/
-	
 	return spawnpoint
 }
 
