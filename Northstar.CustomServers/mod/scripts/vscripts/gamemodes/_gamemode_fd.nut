@@ -293,7 +293,6 @@ void function GamemodeFD_Init()
 	}
 	
 	level.endOfRoundPlayerState = ENDROUND_FREE
-	EliteTitans_Init()
 	#endif
 	
 	for ( int i = 0; i < 20; i++ ) //Setup NPC array for Harvester Damage tracking

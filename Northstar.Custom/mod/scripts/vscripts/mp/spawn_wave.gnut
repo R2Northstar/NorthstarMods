@@ -145,7 +145,11 @@ void function SpawnWave_Init()
 	file.allowGruntGrenades = GetCurrentPlaylistVarInt( "fd_grunts_uses_grenades", 0 ) == 1
 	file.visibleDropPoints = GetCurrentPlaylistVarInt( "fd_visible_drop_points", 0 ) == 1
 	
-	SetupEliteTitansHealthCaps()
+	if ( file.allowEliteTitans )
+	{
+		EliteTitans_Init()
+		SetupEliteTitansHealthCaps()
+	}
 	
 	if ( GetConVarString( "ns_fd_grunt_grenade" ) != "" )
 		file.gruntGrenadeClass = GetConVarString( "ns_fd_grunt_grenade" )
