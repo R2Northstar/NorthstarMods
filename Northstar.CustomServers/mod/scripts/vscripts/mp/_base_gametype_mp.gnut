@@ -17,6 +17,7 @@ global function CheckGameStateForPlayerMovement
 global function ShouldEntTakeDamage_SPMP
 global function GetTitanBuildTime
 global function TitanPlayerHotDropsIntoLevel
+global function SetGamemodeAllowsTeamSwitch
 
 global function SetRecalculateRespawnAsTitanStartPointCallback
 
@@ -28,6 +29,7 @@ struct {
 	
 	entity functionref( entity player, entity basePoint ) recalculateRespawnAsTitanStartPointCallback
 	table<entity, float> playerChangeTeamTimeBuffer
+	bool gamemodeTeamSwitchEnabled = true
 } file
 
 void function BaseGametype_Init_MPSP()
@@ -829,7 +831,24 @@ void function GiveTitanfallScoreMedal( entity player )
 		AddPlayerScore( player, "Titanfall", player )
 }
 
-void function TryGameModeAnnouncement( entity player ) // only putting this here because it's here in gametype_sp lol
+
+
+
+
+
+
+
+
+
+/*
+██    ██ ████████ ██ ██      ██ ████████ ██    ██ 
+██    ██    ██    ██ ██      ██    ██     ██  ██  
+██    ██    ██    ██ ██      ██    ██      ████   
+██    ██    ██    ██ ██      ██    ██       ██    
+ ██████     ██    ██ ███████ ██    ██       ██    
+*/
+
+void function TryGameModeAnnouncement( entity player )
 {
 	Remote_CallFunction_NonReplay( player, "ServerCallback_GameModeAnnouncement" )
 	PlayFactionDialogueToPlayer( GameMode_GetGameModeAnnouncement( GAMETYPE ), player )
@@ -854,7 +873,7 @@ void function AddToTitanDamageStat( entity victim, var damageInfo )
 	float amount = DamageInfo_GetDamage( damageInfo )
 
 	if ( attacker.IsPlayer() && attacker != victim )
-		attacker.AddToPlayerGameStat( file.titanDamageGameStat, amount ) // titan damage on 
+		attacker.AddToPlayerGameStat( file.titanDamageGameStat, amount )
 }
 
 void function CheckForAutoTitanDeath( entity victim, entity attacker, var damageInfo )
@@ -926,10 +945,21 @@ void function CheckPlayerGetsNewLoadout( entity player, PilotLoadoutDef loadout 
 	}
 }
 
+void function SetGamemodeAllowsTeamSwitch( bool enabled )
+{
+	file.gamemodeTeamSwitchEnabled = enabled
+}
+
 bool function ClientCommandCallbackChangeTeam( entity player, array<string> args )
 {
 	if ( !GetConVarBool( "ns_allow_team_change" ) || IsPrivateMatchSpectator( player ) )
 		return true
+
+	if ( !file.gamemodeTeamSwitchEnabled )
+	{
+		SendHudMessage( player, "#TEAMSWITCH_GAMEMODE", -1, 0.4, 255, 255, 255, 255, 0.15, 3.0, 0.5 )
+		return true
+	}
 	
 	if ( !( player in file.playerChangeTeamTimeBuffer ) )
 	{
@@ -952,6 +982,7 @@ bool function ClientCommandCallbackChangeTeam( entity player, array<string> args
 		SendHudMessage( player, "#TEAMSWITCH_GAMEPLAY", -1, 0.4, 255, 255, 255, 255, 0.15, 3.0, 0.5 )
 		return true
 	}
+
 	if ( GetCurrentPlaylistVarInt( "max_teams", 0 ) > 1 && !IsFFAGame() )
 		SetTeam( player, GetOtherTeam( player.GetTeam() ) )
 	else
@@ -960,12 +991,8 @@ bool function ClientCommandCallbackChangeTeam( entity player, array<string> args
 	return true
 }
 
-
-// stuff to change later
-
 bool function ShouldEntTakeDamage_SPMP( entity ent, var damageInfo )
 {
-	// dropships are immune to being crushed
 	if ( ( IsDropship( ent ) || IsEvacDropship( ent ) ) && IsTitanCrushDamage( damageInfo ) )
 		return false
 	
