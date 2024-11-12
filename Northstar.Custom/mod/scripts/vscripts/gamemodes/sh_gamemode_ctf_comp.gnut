@@ -291,7 +291,7 @@ void function RepositionWargamesFlags()
 		
 	entity militiaFlagBase = CreateEntity( "info_spawnpoint_flag" )
 	militiaFlagBase.kv.teamnumber = TEAM_MILITIA
-	militiaFlagBase.kv.origin = < -3164, 318, -128 >
+	militiaFlagBase.kv.origin = < -2832, 1351, -128 >
 	DispatchSpawn( militiaFlagBase )
 	
 	entity imcFlagBase = CreateEntity( "info_spawnpoint_flag" )
