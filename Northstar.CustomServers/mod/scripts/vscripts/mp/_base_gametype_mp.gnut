@@ -343,8 +343,6 @@ void function CodeCallback_OnPlayerRespawned( entity player )
 	
 	player.s.respawnCount++
 	player.s.respawnTime = Time()
-	player.isSpawning = false
-	player.isSpawningHotDroppingAsTitan = false
 	ClearRecentDamageHistory( player )
 	
 	if ( player.IsDissolving() )
@@ -572,6 +570,7 @@ void function PostDeathThread_MP( entity player, var damageInfo ) // based on ga
 // idk if this is a good delay or if it matches vanilla
 void function ForceRespawnMeSignalAfterDelay( entity player, int delay = 5 )
 {
+	svGlobal.levelEnt.EndSignal( "GameStateChanged" )
 	player.EndSignal( "RespawnMe" )
 	player.EndSignal( "OnDestroy" )
 
@@ -641,8 +640,10 @@ void function RespawnAsPilot( entity player )
 
 	entity spawnpoint = FindSpawnPoint( player, false, ( ShouldStartSpawn( player ) || Flag( "ForceStartSpawn" ) ) )
 	DoRespawnPlayer( player, spawnpoint )
-	player.SetAngles( spawnpoint.GetAngles() )
 	
+	player.isSpawning = false
+	player.isSpawningHotDroppingAsTitan = false
+
 	// Dying as Titan and respawning as Pilot keeps the Titan Icon over the player's name instead of reverting to the normal patch such player uses
 	CallsignIcon callsignIcon = PlayerCallsignIcon_GetActive( player )
 	player.SetTargetInfoIcon( callsignIcon.smallImage )
@@ -737,19 +738,21 @@ void function RespawnAsTitan( entity player, bool normalTitanfall = false )
 		EmitSoundOnEntityOnlyToPlayer( player, player, "titan_hot_drop_turbo_begin" ) // Play again only for player just to volume it up a bit since it's super quiet sound in 1st Person
 
 		float impactTime = GetHotDropImpactTime( player, "at_hotdrop_drop_2knee_turbo" ) // Gather impact moment
-		delaythread( impactTime ) CreateBubbleShieldWithSettings( player.GetTeam(), spawnpoint.GetOrigin(), spawnpoint.GetAngles(), player, player.GetSequenceDuration( "at_hotdrop_quickstand" ) + 3 ) // Created Domeshield for the entire deploying animation + 3 seconds of lenience
+		delaythread( impactTime ) CreateParentedBubbleShield( player, spawnpoint.GetOrigin(), spawnpoint.GetAngles(), player.GetSequenceDuration( "at_hotdrop_quickstand" ) + 3 ) // Created Domeshield for the entire deploying animation + 3 seconds of lenience
 		delaythread( impactTime - 0.5 ) EmitSoundOnEntityOnlyToPlayer( player, player, "TDay_Intro_TitanFall_Impact" ) // Landing sound in first person from TDay, half second early to sync properly with the actual Landing
 
 		// Actual Titanfall animation, sadly MP Titans don't have viewmodel animations for this like BT does
 		FirstPersonSequenceStruct titanDropSequence
 		titanDropSequence.thirdPersonAnim = "at_hotdrop_drop_2knee_turbo"
 		titanDropSequence.teleport = true
+		titanDropSequence.snapPlayerFeetToEyes = false
 		titanDropSequence.viewConeFunction = ViewConeNarrow
 		waitthread FirstPersonSequence( titanDropSequence, player )
 		
 		// Getting up and armed animation
 		FirstPersonSequenceStruct titanStandSequence
 		titanStandSequence.thirdPersonAnim = "at_hotdrop_quickstand"
+		titanStandSequence.snapPlayerFeetToEyes = false
 		titanStandSequence.viewConeFunction = ViewConeNarrow
 		waitthread FirstPersonSequence( titanStandSequence, player )
 	}
@@ -758,6 +761,8 @@ void function RespawnAsTitan( entity player, bool normalTitanfall = false )
 	{
 		if ( IsValid( player ) )
 		{
+			player.isSpawning = false
+			player.isSpawningHotDroppingAsTitan = false
 			RemoveCinematicFlag( player, CE_FLAG_CLASSIC_MP_SPAWNING )
 
 			if ( player.IsInvulnerable() ) // Clear Invulnerability from the cinematic animation
@@ -774,6 +779,14 @@ void function RespawnAsTitan( entity player, bool normalTitanfall = false )
 				DeployAndEnableWeapons( player )
 				ClearPlayerAnimViewEntity( player )
 				Remote_CallFunction_Replay( player, "ServerCallback_UpdateTitanModeHUD" ) // For Tone because look like holstered offhands prevents her from getting the Lock-Ons hud elements
+
+				entity soul = player.GetTitanSoul()
+				if ( IsValid( soul ) )
+				{
+					entity domeShield = soul.soul.bubbleShield
+					if ( IsValid( domeShield ) )
+						domeShield.ClearParent() // Clear parenting when player gain control so the Bubble shield doesn't follow their movement
+				}
 			}
 			else
 				GiveTitanfallScoreMedal( player ) // In case of classic Warpfall animation, give the Titanfall Score Medal at this moment, so player can actually see it
