@@ -19,7 +19,6 @@ global function DecideSpawnZone_Generic
 
 #if DEV
 global function ShowSpawnPoints
-global function ShowCTFInfluenceSphere
 #endif
 
 global struct spawnZoneProperties{
@@ -100,9 +99,6 @@ void function Spawn_Init()
 
 void function InitSpawnpoint( entity spawnpoint ) 
 {
-	spawnpoint.s.lastUsedTime <- -999
-	spawnpoint.s.inUse <- false
-
 	if ( file.spawnpointGamemodeOverride != "" )
 	{
 		string gamemodeKey = "gamemode_" + file.spawnpointGamemodeOverride
@@ -118,8 +114,7 @@ void function InitSpawnpoint( entity spawnpoint )
 
 void function ToggleSpawnNodeInUse( entity spawnpoint, bool isInUse )
 {
-	if( "inUse" in spawnpoint.s ) // Apparently spawnpoints spawned from script don't have this even with the AddSpawnCallback supposely covering all proper cases
-		spawnpoint.s.inUse = isInUse
+	spawnpoint.e.spawnPointInUse = isInUse
 }
 
 string function CreateNoSpawnArea( int blockSpecificTeam, int blockEnemiesOfTeam, vector position, float lifetime, float radius )
@@ -177,7 +172,7 @@ bool function SpawnPointInNoSpawnArea( vector vec, int team )
 
 bool function IsSpawnpointValidDrop( entity spawnpoint )
 {
-	if ( spawnpoint.IsOccupied() || spawnpoint.s.inUse )
+	if ( spawnpoint.IsOccupied() || spawnpoint.e.spawnPointInUse )
 		return false
 
 	return true
@@ -256,15 +251,19 @@ entity function FindSpawnPoint( entity player, bool isTitan, bool useStartSpawnp
 	
 	entity spawnpoint = GetBestSpawnpoint( player, spawnpoints, isTitan )
 	
-	spawnpoint.s.lastUsedTime = Time()
+	spawnpoint.e.spawnTime = Time()
 	player.SetLastSpawnPoint( spawnpoint )
 	
 	//SpawnPoints_DiscardRatings()
-	/*
+	
+	#if DEV
 	foreach( string k, float v in spawnpoint.GetRatingData() )
 		print( k + ": " + v )
 	print( "team: " + spawnpoint.GetTeam() )
-	*/
+	print( "scriptname: " + spawnpoint.GetScriptName() )
+	print( "targetname: " + spawnpoint.GetTargetName() )
+	#endif
+
 	return spawnpoint
 }
 
@@ -303,10 +302,7 @@ entity function GetBestSpawnpoint( entity player, array<entity> spawnpoints, boo
 		entity start = GetEnt( "info_player_start" )
 		
 		if ( IsValid( start ) )
-		{
-			start.s.lastUsedTime <- -999
 			validSpawns.append( start )
-		}
 		else
 			throw( "Map has no player spawns at all" )
 	}
@@ -325,7 +321,7 @@ bool function IsSpawnpointValid( entity spawnpoint, int team, bool skipLineOfSig
 			return false
 	}
 	
-	if ( !IsSpawnpointValidDrop( spawnpoint ) || Time() - spawnpoint.s.lastUsedTime <= 10.0 )
+	if ( !IsSpawnpointValidDrop( spawnpoint ) || Time() - spawnpoint.e.spawnTime <= 10.0 )
 		return false
 	
 	if ( SpawnPointInNoSpawnArea( spawnpoint.GetOrigin(), team ) )
@@ -646,75 +642,38 @@ void function ShowSpawnPoints()
 {
 	array< entity > spawnPoints = SpawnPoints_GetTitan()
 	foreach ( sPoint in spawnPoints )
-		DebugDrawBox( sPoint.GetOrigin(), < -60, -60, 0 >, < 60, 60, 235 >, 255, 255, 0, 1, 600 )
+		DebugDrawSpawnpoint( sPoint, 255, 255, 0, false, 600 )
 
 	spawnPoints = SpawnPoints_GetPilot()
 	foreach ( sPoint in spawnPoints )
-		DebugDrawBox( sPoint.GetOrigin(), < -16, -16, 0 >, < 16, 16, 72 >, 255, 255, 0, 1, 600 )
+		DebugDrawSpawnpoint( sPoint, 255, 255, 0, false, 600 )
 
 	spawnPoints = SpawnPoints_GetDropPod()
 	foreach ( sPoint in spawnPoints )
-		DebugDrawSphere( sPoint.GetOrigin(), 32.0, 255, 255, 0, true, 600 )
+		DebugDrawSpawnpoint( sPoint, 255, 255, 0, false, 600 )
 
 	spawnPoints = SpawnPoints_GetTitanStart( TEAM_MILITIA )
 	foreach ( sPoint in spawnPoints )
-		DebugDrawBox( sPoint.GetOrigin(), < -60, -60, 0 >, < 60, 60, 235 >, 255, 0, 0, 1, 600 )
+		DebugDrawSpawnpoint( sPoint, 255, 0, 0, false, 600 )
 
 	spawnPoints = SpawnPoints_GetPilotStart( TEAM_MILITIA )
 	foreach ( sPoint in spawnPoints )
-		DebugDrawBox( sPoint.GetOrigin(), < -16, -16, 0 >, < 16, 16, 72 >, 255, 0, 0, 1, 600 )
+		DebugDrawSpawnpoint( sPoint, 255, 0, 0, false, 600 )
 
 	spawnPoints = SpawnPoints_GetDropPodStart( TEAM_MILITIA )
 	foreach ( sPoint in spawnPoints )
-		DebugDrawSphere( sPoint.GetOrigin(), 32.0, 255, 0, 0, true, 600 )
+		DebugDrawSpawnpoint( sPoint, 255, 0, 0, false, 600 )
 	
 	spawnPoints = SpawnPoints_GetTitanStart( TEAM_IMC )
 	foreach ( sPoint in spawnPoints )
-		DebugDrawBox( sPoint.GetOrigin(), < -60, -60, 0 >, < 60, 60, 235 >, 0, 0, 255, 1, 600 )
+		DebugDrawSpawnpoint( sPoint, 0, 0, 255, false, 600 )
 
 	spawnPoints = SpawnPoints_GetPilotStart( TEAM_IMC )
 	foreach ( sPoint in spawnPoints )
-		DebugDrawBox( sPoint.GetOrigin(), < -16, -16, 0 >, < 16, 16, 72 >, 0, 0, 255, 1, 600 )
+		DebugDrawSpawnpoint( sPoint, 0, 0, 255, false, 600 )
 
 	spawnPoints = SpawnPoints_GetDropPodStart( TEAM_IMC )
 	foreach ( sPoint in spawnPoints )
-		DebugDrawSphere( sPoint.GetOrigin(), 32.0, 0, 0, 255, true, 600 )
-}
-
-void function ShowCTFInfluenceSphere()
-{
-	vector allyFlagSpot
-	vector enemyFlagSpot
-	float allyFlagDistance
-	float enemyFlagDistance
-	foreach ( entity spawn in GetEntArrayByClass_Expensive( "info_spawnpoint_flag" ) )
-	{
-		if( spawn.GetTeam() == TEAM_MILITIA )
-			allyFlagSpot = spawn.GetOrigin()
-		else
-			enemyFlagSpot = spawn.GetOrigin()
-	}
-
-	array< entity > spawnPoints = SpawnPoints_GetTitan()
-	foreach ( sPoint in spawnPoints )
-	{
-		allyFlagDistance = Distance2D( sPoint.GetOrigin(), allyFlagSpot )
-		enemyFlagDistance = Distance2D( sPoint.GetOrigin(), enemyFlagSpot )
-		if( enemyFlagDistance > allyFlagDistance )
-			DebugDrawBox( sPoint.GetOrigin(), < -60, -60, 0 >, < 60, 60, 235 >, 255, 0, 0, 1, 600 )
-		else
-			DebugDrawBox( sPoint.GetOrigin(), < -60, -60, 0 >, < 60, 60, 235 >, 0, 0, 255, 1, 600 )
-	}
-
-	spawnPoints = SpawnPoints_GetPilot()
-	foreach ( sPoint in spawnPoints )
-	{
-		allyFlagDistance = Distance2D( sPoint.GetOrigin(), allyFlagSpot )
-		enemyFlagDistance = Distance2D( sPoint.GetOrigin(), enemyFlagSpot )
-		if( enemyFlagDistance > allyFlagDistance )
-			DebugDrawBox( sPoint.GetOrigin(), < -16, -16, 0 >, < 16, 16, 72 >, 255, 0, 0, 1, 600 )
-		else
-			DebugDrawBox( sPoint.GetOrigin(), < -16, -16, 0 >, < 16, 16, 72 >, 0, 0, 255, 1, 600 )
-	}
+		DebugDrawSpawnpoint( sPoint, 0, 0, 255, false, 600 )
 }
 #endif

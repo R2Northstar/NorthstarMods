@@ -3,6 +3,10 @@ untyped
 global function CaptureTheFlag_Init
 global function RateSpawnpoints_CTF
 
+#if DEV
+global function ShowCTFInfluenceSphere
+#endif
+
 const array<string> SWAP_FLAG_MAPS = [
 	"mp_forwardbase_kodai",
 	"mp_lf_meadow"
@@ -214,9 +218,9 @@ void function RateSpawnpoints_CTF( int checkClass, array<entity> spawnpoints, in
 		else
 			enemyFlagSpot = spawn.GetOrigin()
 	}
-	
+
 	flagsMedianPosition = ( allyFlagSpot + enemyFlagSpot ) * 0.5
-	
+
 	foreach ( entity spawn in spawnpoints )
 	{
 		entity teamFlag = GetFlagForTeam( team )
@@ -530,7 +534,10 @@ void function DropFlag( entity player, bool realDrop = true )
 	}
 	
 	if ( IsFlagHome( flag ) )
+	{
 		ResetFlag( flag )
+		return
+	}
 	else
 		thread TrackFlagDropTimeout( flag )
 	SetFlagStateForTeam( flag.GetTeam(), eFlagState.Home )
@@ -784,3 +791,60 @@ void function ClearAssistListOfOpposingTeam( int team )
 		break
 	}
 }
+
+
+
+
+
+
+
+
+
+
+
+/*
+██████  ███████ ██████  ██    ██  ██████   ██████  ██ ███    ██  ██████  
+██   ██ ██      ██   ██ ██    ██ ██       ██       ██ ████   ██ ██       
+██   ██ █████   ██████  ██    ██ ██   ███ ██   ███ ██ ██ ██  ██ ██   ███ 
+██   ██ ██      ██   ██ ██    ██ ██    ██ ██    ██ ██ ██  ██ ██ ██    ██ 
+██████  ███████ ██████   ██████   ██████   ██████  ██ ██   ████  ██████  
+*/
+
+#if DEV
+void function ShowCTFInfluenceSphere()
+{
+	vector allyFlagSpot
+	vector enemyFlagSpot
+	float allyFlagDistance
+	float enemyFlagDistance
+	foreach ( entity spawn in GetEntArrayByClass_Expensive( "info_spawnpoint_flag" ) )
+	{
+		if( spawn.GetTeam() == TEAM_MILITIA )
+			allyFlagSpot = spawn.GetOrigin()
+		else
+			enemyFlagSpot = spawn.GetOrigin()
+	}
+
+	array< entity > spawnPoints = SpawnPoints_GetTitan()
+	foreach ( sPoint in spawnPoints )
+	{
+		allyFlagDistance = Distance2D( sPoint.GetOrigin(), allyFlagSpot )
+		enemyFlagDistance = Distance2D( sPoint.GetOrigin(), enemyFlagSpot )
+		if( enemyFlagDistance > allyFlagDistance )
+			DebugDrawSpawnpoint( sPoint, 255, 0, 0, false, 600 )
+		else
+			DebugDrawSpawnpoint( sPoint, 0, 0, 255, false, 600 )
+	}
+
+	spawnPoints = SpawnPoints_GetPilot()
+	foreach ( sPoint in spawnPoints )
+	{
+		allyFlagDistance = Distance2D( sPoint.GetOrigin(), allyFlagSpot )
+		enemyFlagDistance = Distance2D( sPoint.GetOrigin(), enemyFlagSpot )
+		if( enemyFlagDistance > allyFlagDistance )
+			DebugDrawSpawnpoint( sPoint, 255, 0, 0, false, 600 )
+		else
+			DebugDrawSpawnpoint( sPoint, 0, 0, 255, false, 600 )
+	}
+}
+#endif
