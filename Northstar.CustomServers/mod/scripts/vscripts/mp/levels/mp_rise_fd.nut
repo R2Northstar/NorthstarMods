@@ -322,7 +322,6 @@ void function initFrontierDefenseData()
 	WaveSpawn_InfantrySpawn( wave5, "CloakDrone", < 3395, 301, 2560 >, 0.0, "" )
 	WaveSpawn_WaitEnemyAliveAmount( wave5, 8 )
 	
-	WaveSpawn_NukeTitanMoveStance( wave5, true, 0.0,  eFDSD.INSANE )
 	WaveSpawn_TitanSpawn( wave5, "ArcTitan", < 3009, 33, 172 >, 180, "right", 1.2, "", 0.0, eFDSD.MASTER | eFDSD.INSANE )
 	WaveSpawn_TitanSpawn( wave5, "ArcTitan", < 3101, 624, 144 >, 180, "mid", 1.0, "", 0.0, eFDSD.MASTER | eFDSD.INSANE )
 	WaveSpawn_TitanSpawn( wave5, "ArcTitan", < 2421, 1385, 55 >, 180, "", 0.8, "", 0.0, eFDSD.MASTER | eFDSD.INSANE )
