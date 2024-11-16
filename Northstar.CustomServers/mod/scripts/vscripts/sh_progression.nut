@@ -171,7 +171,7 @@ void function UpdateCachedLoadouts_Threaded()
 	#if UI
 	entity UIPlayer = GetUIPlayer()
 	
-	if (!IsValid ( UIPlayer ) )
+	if ( !IsValid ( UIPlayer ) )
 		return
 
 	uiGlobal.pilotSpawnLoadoutIndex = GetPersistentSpawnLoadoutIndex( UIPlayer, "pilot" )
