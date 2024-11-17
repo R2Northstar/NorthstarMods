@@ -693,6 +693,61 @@ void function RespawnAsTitan( entity player, bool normalTitanfall = false )
 	bool playerCouldDisembark = CanDisembark( player ) // Check to save in case of cinematic titanfall further below
 
 	entity camera
+
+	OnThreadEnd( function() : ( player, titan, camera, spawnpoint, normalTitanfall, playerCouldDisembark )
+	{
+		if ( IsValid( player ) )
+		{
+			player.isSpawning = false
+			player.isSpawningHotDroppingAsTitan = false
+			RemoveCinematicFlag( player, CE_FLAG_CLASSIC_MP_SPAWNING )
+
+			if ( player.IsInvulnerable() ) // Clear Invulnerability from the cinematic animation
+				player.ClearInvulnerable()
+			
+			if ( normalTitanfall ) // Cleanups if spawning from cinematic animation
+			{
+				DeleteAnimEvent( player, "titan_impact" )
+				DeleteAnimEvent( player, "second_stage" )
+				player.SetTouchTriggers( true )
+				player.SetNoTarget( false )
+				player.SetNoTargetSmartAmmo( false )
+				player.EnableWeaponViewModel()
+				DeployAndEnableWeapons( player )
+				ClearPlayerAnimViewEntity( player )
+				Remote_CallFunction_Replay( player, "ServerCallback_UpdateTitanModeHUD" ) // For Tone because look like holstered offhands prevents her from getting the Lock-Ons hud elements
+
+				entity soul = player.GetTitanSoul()
+				if ( IsValid( soul ) )
+				{
+					entity domeShield = soul.soul.bubbleShield
+					if ( IsValid( domeShield ) )
+						domeShield.ClearParent() // Clear parenting when player gain control so the Bubble shield doesn't follow their movement
+				}
+			}
+			else
+				GiveTitanfallScoreMedal( player ) // In case of classic Warpfall animation, give the Titanfall Score Medal at this moment, so player can actually see it
+
+			if ( player.ContextAction_IsBusy() )
+				player.ContextAction_ClearBusy()
+			
+			PutEntityInSafeSpot( player, null, null, spawnpoint.GetOrigin(), player.GetOrigin() ) // Just to Ensure player is not clipping in any geometry
+			if( normalTitanfall && playerCouldDisembark ) // LTS/Iron Rules check to avoid bypass confusion
+				Disembark_Allow( player )
+		}
+
+		if ( IsValid( titan ) )
+			titan.Destroy()
+		else if ( !IsAlive( player ) ) // Respawn player anyways if Titan was killed during animation from normal Warpfall animation, won't affect Cinematic because player is already Respawned in there
+			RespawnAsPilot( player )
+
+		if ( IsValid( camera ) )
+			camera.Destroy()
+		
+		if ( IsValid( spawnpoint ) )
+			ToggleSpawnNodeInUse( spawnpoint, false )
+	})
+
 	if ( !normalTitanfall ) // Classic Warpfall animation camera
 	{
 		camera = CreateTitanDropCamera( spawnpoint.GetAngles(), < 90, titan.GetAngles().y, 0 > )
@@ -757,60 +812,6 @@ void function RespawnAsTitan( entity player, bool normalTitanfall = false )
 		titanStandSequence.viewConeFunction = ViewConeNarrow
 		waitthread FirstPersonSequence( titanStandSequence, player )
 	}
-
-	OnThreadEnd( function() : ( player, titan, camera, spawnpoint, normalTitanfall, playerCouldDisembark )
-	{
-		if ( IsValid( player ) )
-		{
-			player.isSpawning = false
-			player.isSpawningHotDroppingAsTitan = false
-			RemoveCinematicFlag( player, CE_FLAG_CLASSIC_MP_SPAWNING )
-
-			if ( player.IsInvulnerable() ) // Clear Invulnerability from the cinematic animation
-				player.ClearInvulnerable()
-			
-			if ( normalTitanfall ) // Cleanups if spawning from cinematic animation
-			{
-				DeleteAnimEvent( player, "titan_impact" )
-				DeleteAnimEvent( player, "second_stage" )
-				player.SetTouchTriggers( true )
-				player.SetNoTarget( false )
-				player.SetNoTargetSmartAmmo( false )
-				player.EnableWeaponViewModel()
-				DeployAndEnableWeapons( player )
-				ClearPlayerAnimViewEntity( player )
-				Remote_CallFunction_Replay( player, "ServerCallback_UpdateTitanModeHUD" ) // For Tone because look like holstered offhands prevents her from getting the Lock-Ons hud elements
-
-				entity soul = player.GetTitanSoul()
-				if ( IsValid( soul ) )
-				{
-					entity domeShield = soul.soul.bubbleShield
-					if ( IsValid( domeShield ) )
-						domeShield.ClearParent() // Clear parenting when player gain control so the Bubble shield doesn't follow their movement
-				}
-			}
-			else
-				GiveTitanfallScoreMedal( player ) // In case of classic Warpfall animation, give the Titanfall Score Medal at this moment, so player can actually see it
-
-			if ( player.ContextAction_IsBusy() )
-				player.ContextAction_ClearBusy()
-			
-			PutEntityInSafeSpot( player, null, null, spawnpoint.GetOrigin(), player.GetOrigin() ) // Just to Ensure player is not clipping in any geometry
-			if( normalTitanfall && playerCouldDisembark ) // LTS/Iron Rules check to avoid bypass confusion
-				Disembark_Allow( player )
-		}
-
-		if ( IsValid( titan ) )
-			titan.Destroy()
-		else
-			RespawnAsPilot( player ) // Respawn player anyways if Titan was killed during animation from normal Warpfall animation, won't affect Cinematic because player is already Respawned in there
-
-		if ( IsValid( camera ) )
-			camera.Destroy()
-		
-		if ( IsValid( spawnpoint ) )
-			ToggleSpawnNodeInUse( spawnpoint, false )
-	})
 }
 
 void function OnReplacementTitanSecondStage( entity player )
