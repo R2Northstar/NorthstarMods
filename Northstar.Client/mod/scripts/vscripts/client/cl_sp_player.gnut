@@ -1279,8 +1279,6 @@ void function AddCallback_OnCrosshairCurrentTargetChanged( void functionref( ent
 
 void function ClientCodeCallback_OnCrosshairCurrentTargetChanged( entity player, entity newTarget )
 {
-	if ( IsLobby() )
-		return;
 	if ( !IsValid( player ) )
 		return
 
