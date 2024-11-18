@@ -276,7 +276,8 @@ void function PlayerPainSoundThread()
 				ourPlayer = localViewPlayer
 				soundLayer3Loop = GetPainSound( ourPlayer, "sound_pain_layer3_loop" )
 				soundLayer3End = GetPainSound( ourPlayer, "sound_pain_layer3_end" )
-				EmitSoundOnEntity( ourPlayer, soundLayer3Loop )
+				if ( soundLayer3Loop != "" )
+					EmitSoundOnEntity( ourPlayer, soundLayer3Loop )
 			}
 			else
 			{
