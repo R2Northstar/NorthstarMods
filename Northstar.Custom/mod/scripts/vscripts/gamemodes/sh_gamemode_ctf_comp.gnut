@@ -81,7 +81,11 @@ void function InitCTFCompSpecificSettings()
 		TrackTitanDamageInPlayerGameStat( PGS_DISTANCE_SCORE )
 		SetSpawnpointGamemodeOverride( CAPTURE_THE_FLAG )
 		if ( GetMapName() == "mp_glitch" )
+		{
 			level.customOOBTimer = 3.0
+			SetSpawnpointGamemodeOverride( GAMEMODE_CTF_COMP )
+			AddCallback_EntitiesDidLoad( AddGlitchOOBs )
+		}
 		if ( GetMapName() == "mp_angel_city" )
 			AddCallback_EntitiesDidLoad( AngelCityReplaceFlags )
 		if ( GetMapName() == "mp_colony02" )
@@ -185,6 +189,26 @@ void function AngelCityReplaceFlags()
 	AddCCTFCustomProp( $"models/colony/colony_wall_run_plate.mdl", < -1163, 1234, 644 >, < 0, 180, 90 > )
 	AddCCTFCustomProp( $"models/colony/colony_wall_run_plate.mdl", < -1163, 1346, 644 >, < 0, 180, 90 > )
 	AddCCTFCustomProp( $"models/colony/colony_wall_run_plate.mdl", < -1163, 1458, 644 >, < 0, 180, 90 > )
+}
+
+void function AddGlitchOOBs()
+{
+	AddOutOfBoundsTriggerWithParams( < 4303, 90, 320 >, 512, 512 )
+	AddOutOfBoundsTriggerWithParams( < 4303, 602, 320 >, 512, 512 )
+	AddOutOfBoundsTriggerWithParams( < 4303, 1114, 320 >, 512, 512 )
+	AddOutOfBoundsTriggerWithParams( < 4367, 1626, 320 >, 512, 512 )
+	AddOutOfBoundsTriggerWithParams( < 4383, 2138, 320 >, 512, 512 )
+
+	AddOutOfBoundsTriggerWithParams( < -4687, 165, 320 >, 512, 512 )
+	AddOutOfBoundsTriggerWithParams( < -4687, -346, 320 >, 512, 512 )
+	AddOutOfBoundsTriggerWithParams( < -4687, -858, 320 >, 512, 512 )
+	AddOutOfBoundsTriggerWithParams( < -4751, -1370, 320 >, 512, 512 )
+	AddOutOfBoundsTriggerWithParams( < -4767, -1882, 320 >, 512, 512 )
+
+	array<entity> zipLines = GetEntArrayByClass_Expensive( "move_rope" )
+	zipLines.extend( GetEntArrayByClass_Expensive( "keyframe_rope" ) )
+	foreach ( entity zipLine in zipLines )
+		zipLine.Destroy()
 }
 
 void function AddColonyOOBs()
