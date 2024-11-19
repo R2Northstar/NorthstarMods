@@ -75,6 +75,8 @@ void function OnPrematchStart()
 	if ( validDropshipSpawns.len() < 2 )
 		validDropshipSpawns = dropshipSpawns
 	
+	validDropshipSpawns.reverse() // Flip cuz idk why Dropships are in mirrored order in comparison to vanilla
+
 	// Spawn the Dropships
 	foreach ( entity dropshipSpawn in validDropshipSpawns )
 	{
@@ -147,10 +149,9 @@ void function PutPlayerInDropship( entity player )
 {
 	//Find the player's dropship and seat
 	table< entity, array< entity > > teamDropships
+	teamDropships = file.imcDropships
 	if ( player.GetTeam() == TEAM_MILITIA )
 		teamDropships = file.militiaDropships
-	else
-		teamDropships = file.imcDropships
 	
 	entity playerDropship
 	array< int > availableShipSlots
