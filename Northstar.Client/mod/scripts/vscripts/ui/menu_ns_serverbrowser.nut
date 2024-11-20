@@ -982,7 +982,8 @@ void function OnServerSelected_Threaded( var button )
 			uninstalledModFound = true
 			break
 		} else {
-			array<string> modVersions = NSGetModVersions( requiredModInfo.name )
+			array<string> modVersions = GetModVersions( requiredModInfo.name )
+
 			if ( !modVersions.contains( requiredModInfo.version ) ) {
 				print( format ( "\"%s\" was found locally but has versions:", requiredModInfo.name ) )
 				foreach ( string version in modVersions )
@@ -1009,7 +1010,9 @@ void function OnServerSelected_Threaded( var button )
 		if ( IsCoreMod( mod.name ) )
 			continue
 
-		if ( !NSGetModNames().contains( mod.name ) || !NSGetModVersions( mod.name ).contains( mod.version ) )
+		array<string> modVersions = GetModVersions( mod.name )
+
+		if ( !NSGetModNames().contains( mod.name ) || !modVersions.contains( mod.version ) )
 		{
 			// Auto-download mod
 			if ( autoDownloadAllowed )
@@ -1142,20 +1145,21 @@ void function ThreadedAuthAndConnectToServer( string password = "", bool modsCha
 		{
 			string modName = mod.name
 			string modVersion = mod.version
+			array<ModInfo> localModInfo = NSGetModInformation( modName )
+			ModInfo firstModInfo = localModInfo[0]
 
 			// Tolerate core mods (only Northstar.Custom for now) having a different version than server
 			if ( IsCoreMod(modName) )
 			{
-				string coreModVersion = NSGetModVersions( modName )[0]
-				if ( !NSIsModEnabled( modName ) )
+				if ( !firstModInfo.enabled )
 				{
 					modsChanged = true
 					NSSetModEnabled( modName, true )
-					print(format("Enabled \"%s\" (v%s) to join server.", modName, coreModVersion))
+					print(format("Enabled \"%s\" (v%s) to join server.", modName, firstModInfo.version))
 				}
 			}
 
-			else if ( NSIsModRequiredOnClient( mod.name ) && !NSIsModEnabled( mod.name ))
+			else if ( !firstModInfo.enabled ) //todo(in multiple versions PR): loop over `NSGetModInformation` members and check versions
 			{
 				modsChanged = true
 				NSSetModEnabled( mod.name, true )
@@ -1360,4 +1364,14 @@ const array<string> CORE_MODS = ["Northstar.Client", "Northstar.Coop", "Northsta
 bool function IsCoreMod( string modName )
 {
 	return CORE_MODS.find( modName ) != -1
+}
+
+array<string> function GetModVersions( string modName )
+{
+	array<string> versions = []
+	foreach ( ModInfo mod in NSGetModInformation( modName ) )
+	{
+		versions.append( mod.version )
+	}
+	return versions
 }
