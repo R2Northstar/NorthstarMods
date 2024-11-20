@@ -1010,9 +1010,7 @@ void function OnServerSelected_Threaded( var button )
 		if ( IsCoreMod( mod.name ) )
 			continue
 
-		array<string> modVersions = GetModVersions( mod.name )
-
-		if ( !NSGetModNames().contains( mod.name ) || !modVersions.contains( mod.version ) )
+		if ( !NSGetModNames().contains( mod.name ) || !GetModVersions( mod.name ).contains( mod.version ) )
 		{
 			// Auto-download mod
 			if ( autoDownloadAllowed )
@@ -1145,25 +1143,31 @@ void function ThreadedAuthAndConnectToServer( string password = "", bool modsCha
 		{
 			string modName = mod.name
 			string modVersion = mod.version
-			array<ModInfo> localModInfo = NSGetModInformation( modName )
-			ModInfo firstModInfo = localModInfo[0]
+			array<ModInfo> localModInfos = NSGetModInformation( modName )
 
 			// Tolerate core mods (only Northstar.Custom for now) having a different version than server
 			if ( IsCoreMod(modName) )
 			{
-				if ( !firstModInfo.enabled )
+				if ( !localModInfos[0].enabled )
 				{
 					modsChanged = true
 					NSSetModEnabled( modName, true )
-					print(format("Enabled \"%s\" (v%s) to join server.", modName, firstModInfo.version))
+					print(format("Enabled \"%s\" (v%s) to join server.", modName, localModInfos[0].version))
 				}
 			}
 
-			else if ( !firstModInfo.enabled ) //todo(in multiple versions PR): loop over `NSGetModInformation` members and check versions
+			else
 			{
-				modsChanged = true
-				NSSetModEnabled( mod.name, true )
-				print(format("Enabled \"%s\" (v%s) to join server.", modName, modVersion))
+				foreach( localMod in localModInfos )
+				{
+					if ( localMod.version == mod.version )
+					{
+						modsChanged = true
+						NSSetModEnabled( mod.name, true )
+						print(format("Enabled \"%s\" (v%s) to join server.", modName, modVersion))
+						break
+					}
+				}
 			}
 		}
 
