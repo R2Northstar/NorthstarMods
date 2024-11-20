@@ -13,12 +13,6 @@
 			"argTypes":""
 		},
 		{
-			"name":"NSIsModEnabled",
-			"helpText":"",
-			"returnTypeString":"bool",
-			"argTypes":"string modName"
-		},
-		{
 			"name":"NSSetModEnabled",
 			"helpText":"",
 			"returnTypeString":"void",
@@ -225,12 +219,6 @@
 			"argTypes":""
 		},
 		{
-			"name":"NSIsModEnabled",
-			"helpText":"",
-			"returnTypeString":"bool",
-			"argTypes":"string modName"
-		},
-		{
 			"name":"NSSetModEnabled",
 			"helpText":"",
 			"returnTypeString":"void",
@@ -398,12 +386,6 @@
 			"name":"NSGetModInformation",
 			"helpText":"",
 			"returnTypeString":"array<ModInfo>",
-			"argTypes":"string modName"
-		},
-		{
-			"name":"NSIsModEnabled",
-			"helpText":"",
-			"returnTypeString":"bool",
 			"argTypes":"string modName"
 		},
 		{
