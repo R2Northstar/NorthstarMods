@@ -108,6 +108,7 @@ bool function ClientCommand_ResetTitanAegis( entity player, array<string> args )
 	player.SetPersistentVar( "fdTitanXP[" + suitIndex + "]", 0 )
 	player.SetPersistentVar( "fdPreviousTitanXP[" + suitIndex + "]", 0 )
 	
+	// Refresh Highest Aegis Titan since we might get all of them back to 1 if players wants
 	RecalculateHighestTitanFDLevel( player )
 	
 	return true
@@ -168,12 +169,13 @@ void function UpdateCachedLoadouts_Threaded()
 	// below here is just making all the menu models update properly and such
 
 	#if UI
-	entity uiPlayer = GetUIPlayer()
-	if ( IsValid( uiPlayer ) )
-	{
-		uiGlobal.pilotSpawnLoadoutIndex = GetPersistentSpawnLoadoutIndex( uiPlayer, "pilot" )
-		uiGlobal.titanSpawnLoadoutIndex = GetPersistentSpawnLoadoutIndex( uiPlayer, "titan" )
-	}
+	entity UIPlayer = GetUIPlayer()
+	
+	if ( !IsValid( UIPlayer ) )
+		return
+
+	uiGlobal.pilotSpawnLoadoutIndex = GetPersistentSpawnLoadoutIndex( UIPlayer, "pilot" )
+	uiGlobal.titanSpawnLoadoutIndex = GetPersistentSpawnLoadoutIndex( UIPlayer, "titan" )
 	#endif
 
 	#if CLIENT
