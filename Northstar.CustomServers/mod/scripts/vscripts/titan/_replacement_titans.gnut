@@ -668,7 +668,13 @@ void function ForcePilotToBecomeTitan( entity player )
 	PlayFX( ENTITY_MARKER_TELEPORT_FX, playerCallinOrigin + < 0, 0, ( player.GetBoundingMaxs().z / 2 ) > )
 	PilotBecomesTitan( player, titan )
 	GiveTitanfallScoreMedal( player )
-	player.SetOrigin( < titan.GetOrigin().x, titan.GetOrigin().y, playerCallinOrigin.z > )
+
+	titanOrigin = titan.GetOrigin()
+	vector desiredLocation = titanOrigin
+	if( TraceLineSimple( titanOrigin, < titanOrigin.x, titanOrigin.y, playerCallinOrigin.z >, titan ) == 1.0 )
+		desiredLocation = < titanOrigin.x, titanOrigin.y, playerCallinOrigin.z >
+	
+	player.SetOrigin( desiredLocation )
 	PutTitanPlayerInSafeSpot( player )
 	player.SetVelocity( playerMomentum )
 	EmitSoundOnEntity( player, "Timeshift_Scr_InvoluntaryShift" )
