@@ -401,6 +401,12 @@
 			"argTypes":""
 		},
 		{
+			"name":"NSGetModInformation",
+			"helpText":"",
+			"returnTypeString":"array<ModInfo>",
+			"argTypes":"string modName"
+		},
+		{
 			"name":"NSGetModVersions",
 			"helpText":"",
 			"returnTypeString":"array<string>",
