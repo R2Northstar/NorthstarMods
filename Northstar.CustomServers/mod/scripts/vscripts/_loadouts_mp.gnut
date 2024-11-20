@@ -317,8 +317,21 @@ void function TryGivePilotLoadoutForGracePeriod( entity player )
 			if ( player.IsTitan() )
 			{
 				player.s.loadoutDirty = false
-				if ( Loadouts_CanGiveTitanLoadout( player ) )
-					Loadouts_TryGiveTitanLoadout( player )
+				if ( !GetDoomedState( player ) && Loadouts_CanGiveTitanLoadout( player ) )
+				{
+					entity soul = player.GetTitanSoul()
+					if ( IsValid( soul ) )
+					{
+						// Store current health and shield because loadout swapping resets both
+						int currentHealth = player.GetHealth()
+						int currentShield = soul.GetShieldHealth()
+
+						Loadouts_TryGiveTitanLoadout( player )
+
+						player.SetHealth( minint( currentHealth, player.GetMaxHealth() ) )
+						soul.SetShieldHealth( minint( currentShield, soul.GetShieldHealthMax() ) )
+					}
+				}
 			}
 			else
 			{

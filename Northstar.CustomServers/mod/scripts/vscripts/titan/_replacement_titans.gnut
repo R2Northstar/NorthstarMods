@@ -637,6 +637,9 @@ bool function ReplacementTitan( entity player )
 #if MP
 void function ForcePilotToBecomeTitan( entity player )
 {
+	if ( IsValid( player.GetParent() ) )
+		return
+	
 	TitanLoadoutDef titanLoadout = GetTitanLoadoutForPlayer( player )
 	entity titan = CreateAutoTitanForPlayer_FromTitanLoadout( player, titanLoadout, player.GetOrigin(), player.GetAngles() )
 	DispatchSpawn( titan )
