@@ -190,6 +190,7 @@ playlists
 				earn_meter_pilot_multiplier 0.5
 				earn_meter_titan_multiplier 0.5
 				enable_sun_flare_mp_angel_city 0
+				instant_respawn_as_titan 1
 				run_epilogue 0
 				
 				color		"0 119 245 255"

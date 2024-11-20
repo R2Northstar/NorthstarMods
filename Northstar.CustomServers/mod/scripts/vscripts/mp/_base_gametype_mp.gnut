@@ -247,7 +247,7 @@ void function CodeCallback_OnClientConnectionCompleted( entity player )
 			thread SpectateTTSMenuPlayer( player )
 		else if ( !IsEliminationBased() )
 		{
-			if ( Riff_IsTitanAvailable( player ) || ShouldIntroSpawnAsTitan() ) //Handles the conditions to spawn player as Titan right away or not
+			if ( Riff_IsTitanAvailable( player ) || ShouldIntroSpawnAsTitan() || svGlobal.forceSpawnAsTitan ) //Handles the conditions to spawn player as Titan right away or not
 				thread RespawnAsTitan( player )
 			else
 				RespawnAsPilot( player )
@@ -270,7 +270,7 @@ void function SpectateTTSMenuPlayer( entity player )
 			{
 				if ( !IsEliminationBased() )
 				{
-					if ( ShouldIntroSpawnAsTitan() && Riff_TitanAvailability() != eTitanAvailability.Never )
+					if ( ShouldIntroSpawnAsTitan() && Riff_TitanAvailability() != eTitanAvailability.Never || svGlobal.forceSpawnAsTitan )
 						thread RespawnAsTitan( player )
 					else
 						RespawnAsPilot( player )
@@ -355,7 +355,7 @@ void function CodeCallback_OnPlayerRespawned( entity player )
 		weapon.SetProScreenOwner( player )
 	
 	bool spawnAsTitan = expect bool( player.GetPersistentVar( "spawnAsTitan" ) )
-	if ( spawnAsTitan && PlayerCanSpawnIntoTitan( player ) )
+	if ( ( spawnAsTitan || svGlobal.forceSpawnIntoTitan ) && PlayerCanSpawnIntoTitan( player ) )
 	{
 		entity titan = player.GetPetTitan()
 		TeleportToEnt( player, titan )
@@ -429,10 +429,8 @@ void function PostDeathThread_MP( entity player, var damageInfo ) // based on ga
 	
 	OnThreadEnd( function() : ( player )
 	{
-		if ( !IsValid( player ) )
-			return
-	
-		player.s.inPostDeath = false
+		if ( IsValid( player ) )
+			player.s.inPostDeath = false
 	})
 
 	entity attacker = DamageInfo_GetAttacker( damageInfo )
@@ -553,7 +551,7 @@ void function PostDeathThread_MP( entity player, var damageInfo ) // based on ga
 
 		if ( IsPrivateMatchSpectator( player ) ) // Spectators can still die from kill triggers
 			InitialisePrivateMatchSpectatorPlayer( player )
-		else if ( spawnAsTitan && IsReplacementTitanAvailable( player ) || Riff_SpawnAsTitan() == eSpawnAsTitan.Always )
+		else if ( spawnAsTitan && IsReplacementTitanAvailable( player ) || Riff_SpawnAsTitan() == eSpawnAsTitan.Always || svGlobal.forceSpawnAsTitan )
 			thread RespawnAsTitan( player, !hasWarpfall )
 		else
 			RespawnAsPilot( player )
@@ -654,7 +652,9 @@ void function RespawnAsTitan( entity player, bool normalTitanfall = false )
 	if ( !PlayerCanSpawn( player ) )
 		return
 
-	if ( normalTitanfall && Flag( "LevelHasRoof" ) || !GetConVarBool( "ns_cinematic_titanfall" ) ) // Override if map needs to do forced warpfall such as Boomtown due the ceiling
+	bool instantRespawn = ( !ShouldDoTitanfall() || GetCurrentPlaylistVarInt( "instant_respawn_as_titan", 0 ) == 1 )
+	// Override if map needs to do forced warpfall such as Boomtown due the ceiling
+	if ( normalTitanfall && Flag( "LevelHasRoof" ) || instantRespawn || !GetConVarBool( "ns_cinematic_titanfall" ) )
 		normalTitanfall = false
 	
 	player.Signal( "PlayerRespawnStarted" )
@@ -669,7 +669,7 @@ void function RespawnAsTitan( entity player, bool normalTitanfall = false )
 	ToggleSpawnNodeInUse( spawnpoint, true )
  	TitanLoadoutDef titanLoadout = GetTitanLoadoutForPlayer( player )
 	
-	if ( !normalTitanfall )
+	if ( !normalTitanfall && !instantRespawn )
 	{
 		asset model = GetPlayerSettingsAssetForClassName( titanLoadout.setFile, "bodymodel" )
 		Attachment warpAttach = GetAttachmentAtTimeFromModel( model, "at_hotdrop_01", "offset", spawnpoint.GetOrigin(), spawnpoint.GetAngles(), 0 )
@@ -681,12 +681,12 @@ void function RespawnAsTitan( entity player, bool normalTitanfall = false )
 	entity titan = CreateAutoTitanForPlayer_FromTitanLoadout( player, titanLoadout, spawnpoint.GetOrigin(), spawnpoint.GetAngles() )
 	DispatchSpawn( titan )
 	titan.ContextAction_SetBusy() // This is prevent a race condition with the ability of players being able to spawn into their Titans
-	HideName( titan ) // Hide name while drop is happening
+	HideName( titan )
 	titan.SetValidHealthBarTarget( false ) // Hide HP bar overhead
 	titan.UnsetUsable() // Prevent embark prompt from showing up
 	ClearTitanAvailable( player ) // Clear titan availability, so faction leader won't advise "Titan Ready" during spawn
 	
-	AddCinematicFlag( player, CE_FLAG_CLASSIC_MP_SPAWNING ) // Hide the bottom elements of the HUD
+	AddCinematicFlag( player, CE_FLAG_CLASSIC_MP_SPAWNING )
 	
 	player.EndSignal( "OnDeath" ) // In case of cinematic titanfall and Round End code is killing everything in cleanup function
 	player.EndSignal( "OnDestroy" )
@@ -722,7 +722,10 @@ void function RespawnAsTitan( entity player, bool normalTitanfall = false )
 				{
 					entity domeShield = soul.soul.bubbleShield
 					if ( IsValid( domeShield ) )
+					{
 						domeShield.ClearParent() // Clear parenting when player gain control so the Bubble shield doesn't follow their movement
+						domeShield.SetOwner( player ) // Shoot through
+					}
 				}
 			}
 			else
@@ -748,27 +751,15 @@ void function RespawnAsTitan( entity player, bool normalTitanfall = false )
 			ToggleSpawnNodeInUse( spawnpoint, false )
 	})
 
-	if ( !normalTitanfall ) // Classic Warpfall animation camera
+	if ( instantRespawn ) // Respawn instantly
 	{
-		camera = CreateTitanDropCamera( spawnpoint.GetAngles(), < 90, titan.GetAngles().y, 0 > )
-		camera.SetParent( titan )
-		
-		vector xyOffset = RotateAroundOrigin2D( < 44, 0, 520 >, < 0, 0, 0 >, spawnpoint.GetAngles().y )
-		
-		camera.SetLocalOrigin( xyOffset )
-		camera.SetLocalAngles( < camera.GetAngles().x, spawnpoint.GetAngles().y, camera.GetAngles().z > ) // this straight up just does not work lol
-		player.SetViewEntity( camera, true )
-		
-		titan.EndSignal( "OnDeath" )
-		titan.EndSignal( "OnDestroy" )
-		TeleportToEnt( titan, spawnpoint )
-
-		waitthread TitanHotDrop( titan, "at_hotdrop_01", spawnpoint.GetOrigin(), spawnpoint.GetAngles(), player, camera )
 		DoRespawnPlayer( player, spawnpoint )
 		TeleportToEnt( player, titan )
 		PilotBecomesTitan( player, titan )
+		EmitSoundOnEntity( player, "Timeshift_Scr_InvoluntaryShift" )
+		PlayFXOnEntityForEveryoneExceptPlayer( $"P_phase_shift_main_XO", player, player )
 	}
-	else // First Person Cinematic Titanfall
+	else if ( normalTitanfall ) // First Person Cinematic Titanfall
 	{
 		DoRespawnPlayer( player, spawnpoint )
 		PilotBecomesTitan( player, titan )
@@ -812,6 +803,26 @@ void function RespawnAsTitan( entity player, bool normalTitanfall = false )
 		titanStandSequence.viewConeFunction = ViewConeNarrow
 		waitthread FirstPersonSequence( titanStandSequence, player )
 	}
+	else // Classic Warpfall animation camera
+	{
+		camera = CreateTitanDropCamera( spawnpoint.GetAngles(), < 90, titan.GetAngles().y, 0 > )
+		camera.SetParent( titan )
+		
+		vector xyOffset = RotateAroundOrigin2D( < 44, 0, 520 >, < 0, 0, 0 >, spawnpoint.GetAngles().y )
+		
+		camera.SetLocalOrigin( xyOffset )
+		camera.SetLocalAngles( < camera.GetAngles().x, spawnpoint.GetAngles().y, camera.GetAngles().z > ) // this straight up just does not work lol
+		player.SetViewEntity( camera, true )
+		
+		titan.EndSignal( "OnDeath" )
+		titan.EndSignal( "OnDestroy" )
+		TeleportToEnt( titan, spawnpoint )
+
+		waitthread TitanHotDrop( titan, "at_hotdrop_01", spawnpoint.GetOrigin(), spawnpoint.GetAngles(), player, camera )
+		DoRespawnPlayer( player, spawnpoint )
+		TeleportToEnt( player, titan )
+		PilotBecomesTitan( player, titan )
+	}
 }
 
 void function OnReplacementTitanSecondStage( entity player )
@@ -820,30 +831,6 @@ void function OnReplacementTitanSecondStage( entity player )
 	EmitSoundOnEntityOnlyToPlayer( player, player, "titan_drop_pod_turbo_landing" )
 	EmitSoundOnEntityOnlyToPlayer( player, player, "titan_drop_pod_turbo_landing" ) // Double sound just to volume it up because it's also quiet in 1st Person
 	EmitSoundAtPositionExceptToPlayer( player.GetTeam(), origin, player, "titan_drop_pod_turbo_landing_3P" )
-}
-
-void function GiveTitanfallScoreMedal( entity player )
-{
-	#if HAS_STATS
-	UpdatePlayerStat( player, "misc_stats", "titanFalls" )
-	#endif
-
-	#if SERVER && MP
-	PIN_AddToPlayerCountStat( player, "titanfalls" )
-	int TitanFallXP = player.GetPersistentVarAsInt( "xp_match[" + XP_TYPE.TITAN_FALL + "]" )
-	player.SetPersistentVar( "xp_match[" + XP_TYPE.TITAN_FALL + "]", TitanFallXP + 1 )
-	#endif
-	
-	if ( !level.firstTitanfall )
-	{
-		AddPlayerScore( player, "FirstTitanfall", player )
-		#if HAS_STATS
-		UpdatePlayerStat( player, "misc_stats", "titanFallsFirst" )
-		#endif
-		level.firstTitanfall = true
-	}
-	else
-		AddPlayerScore( player, "Titanfall", player )
 }
 
 
