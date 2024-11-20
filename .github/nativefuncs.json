@@ -401,12 +401,6 @@
 			"argTypes":"string modName"
 		},
 		{
-			"name":"NSIsModRequiredOnClient",
-			"helpText":"",
-			"returnTypeString":"bool",
-			"argTypes":"string modName"
-		},
-		{
 			"name":"NSIsModEnabled",
 			"helpText":"",
 			"returnTypeString":"bool",
