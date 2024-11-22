@@ -16,7 +16,6 @@ global function CheckGameStateForPlayerMovement
 
 global function ShouldEntTakeDamage_SPMP
 global function GetTitanBuildTime
-global function TitanPlayerHotDropsIntoLevel
 global function SetGamemodeAllowsTeamSwitch
 
 global function SetRecalculateRespawnAsTitanStartPointCallback
@@ -1007,27 +1006,4 @@ float function GetTitanBuildTime( entity player )
 		return GetCurrentPlaylistVarFloat( "titan_build_time", 180 )
 	
 	return GetCurrentPlaylistVarFloat( "titan_rebuild_time", 180 )
-}
-
-
-
-
-
-
-
-
-
-
-
-/*
-███████ ████████ ██    ██ ██████  ███████ 
-██         ██    ██    ██ ██   ██ ██      
-███████    ██    ██    ██ ██████  ███████ 
-     ██    ██    ██    ██ ██   ██      ██ 
-███████    ██     ██████  ██████  ███████ 
-*/
-
-void function TitanPlayerHotDropsIntoLevel( entity player )
-{
-
 }

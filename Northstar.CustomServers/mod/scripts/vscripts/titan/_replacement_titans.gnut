@@ -608,6 +608,9 @@ bool function ReplacementTitan( entity player )
 		}
 	}
 
+	if ( level.nv.titanDropEnabledForTeam != TEAM_BOTH && level.nv.titanDropEnabledForTeam != player.GetTeam() )
+		return false
+
 	Point spawnPoint = GetTitanReplacementPoint( player, false )
 	local origin = spawnPoint.origin
 	Assert( origin )
