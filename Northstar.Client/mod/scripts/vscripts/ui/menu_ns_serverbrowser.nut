@@ -1160,7 +1160,7 @@ void function ThreadedAuthAndConnectToServer( string password = "", bool modsCha
 			{
 				foreach( localMod in localModInfos )
 				{
-					if ( localMod.version == mod.version )
+					if ( localMod.version == mod.version && !localMod.enabled)
 					{
 						modsChanged = true
 						NSSetModEnabled( mod.name, mod.version, true )
