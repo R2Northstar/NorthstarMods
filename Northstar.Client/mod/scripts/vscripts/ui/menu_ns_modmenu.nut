@@ -149,7 +149,7 @@ void function OnModMenuClosed()
 
 		foreach ( ModInfo enMod in file.enabledMods )
 		{
-			if ( mod.name == enMod.name )
+			if ( mod.name == enMod.name && mod.version == enMod.version )
 			{
 				notFound = false
 				break
