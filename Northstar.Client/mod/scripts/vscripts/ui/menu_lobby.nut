@@ -42,6 +42,7 @@ global function OnStoreBundlesButton_Activate
 global function OnStoreNewReleasesButton_Activate
 
 global function StartNSMatchmaking
+global function IsCoreMod
 
 const string MATCHMAKING_AUDIO_CONNECTING = "menu_campaignsummary_titanunlocked"
 
@@ -1917,4 +1918,10 @@ string function FillInServerModsLabel( array<RequiredModInfo> mods )
 		ret += format( "  %s v%s\n", mod.name, mod.version )
 
 	return ret
+}
+
+const array<string> CORE_MODS = ["Northstar.Client", "Northstar.Coop", "Northstar.CustomServers", "Northstar.Custom"]
+bool function IsCoreMod( string modName )
+{
+	return CORE_MODS.find( modName ) != -1
 }
