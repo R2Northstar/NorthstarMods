@@ -1777,20 +1777,24 @@ void function MatchmakedAuthAndConnectToServer( ServerInfo matchmakedserver, str
 	{
 		bool modsChanged = false
 
-		foreach ( string modName in NSGetModNames() )
+		foreach ( ModInfo mod in NSGetModsInformation() )
 		{
-			if ( NSIsModRequiredOnClient( modName ) && NSIsModEnabled( modName ) )
+			string modName = mod.name
+			string modVersion = mod.version
+
+			if ( mod.requiredOnClient && mod.enabled )
 			{
 				bool found = false
 				foreach ( RequiredModInfo mod in matchmakedserver.requiredMods )
 				{
-					if (mod.name == modName)
+					if ( mod.name == modName && ( IsCoreMod( modName ) || mod.version == modVersion ) )
 					{
 						found = true
 						break
 					}
 				}
-				if (!found)
+				
+				if ( !found )
 				{
 					modsChanged = true
 					NSSetModEnabled( modName, false )
@@ -1800,10 +1804,30 @@ void function MatchmakedAuthAndConnectToServer( ServerInfo matchmakedserver, str
 
 		foreach ( RequiredModInfo mod in matchmakedserver.requiredMods )
 		{
-			if ( NSIsModRequiredOnClient( mod.name ) && !NSIsModEnabled( mod.name ))
+			string modName = mod.name
+			string modVersion = mod.version
+			array<ModInfo> localModInfos = NSGetModInformation( modName )
+			
+			if ( IsCoreMod(modName) )
 			{
-				modsChanged = true
-				NSSetModEnabled( mod.name, true )
+				if ( !localModInfos[0].enabled )
+				{
+					modsChanged = true
+					NSSetModEnabled( modName, true )
+				}
+			}
+
+			else
+			{
+				foreach( localMod in localModInfos )
+				{
+					if ( localMod.version == mod.version )
+					{
+						modsChanged = true
+						NSSetModEnabled( mod.name, true )
+						break
+					}
+				}
 			}
 		}
 		
