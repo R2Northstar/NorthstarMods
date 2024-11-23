@@ -3752,7 +3752,7 @@ ENTITIES01
 "gamemode_cp" "0"
 "gamemode_at" "0"
 "classname" "info_spawnpoint_titan"
-}//NS Additions below
+}
 {
 "model" "models/dev/mp_spawn.mdl"
 "scale" "1"
