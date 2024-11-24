@@ -166,6 +166,7 @@ void function GamemodeFD_Init()
 
 	//General Callbacks
 	AddCallback_EntitiesDidLoad( LoadEntities )
+	AddCallback_GameStateEnter( eGameState.PickLoadout, FD_PickLoadout )
 	AddCallback_GameStateEnter( eGameState.Prematch, FD_createHarvester )
 	AddCallback_GameStateEnter( eGameState.Playing, StartFDMatch )
 	AddCallback_OnRoundEndCleanup( FD_WaveCleanup )
@@ -511,6 +512,11 @@ void function LoadEntities()
 ██  ██  ██ ██   ██ ██ ██  ██ ██     ██    ██ ██   ██ ██  ██  ██ ██      ██  ██  ██ ██    ██ ██   ██ ██          ██      ██      ██    ██ ██ ███ ██ 
 ██      ██ ██   ██ ██ ██   ████      ██████  ██   ██ ██      ██ ███████ ██      ██  ██████  ██████  ███████     ██      ███████  ██████   ███ ███  
 */
+
+void function FD_PickLoadout()
+{
+	EnableTitanSelection()
+}
 
 void function FD_createHarvester()
 {
@@ -1571,16 +1577,11 @@ void function EnableTitanSelectionForPlayer( entity player )
 	for ( int i = 0; i < enumCount; i++ )
 	{
 		string enumName = PersistenceGetEnumItemNameForIndex( "titanClasses", i )
-		if ( enumName != "" )
+		if ( enumName != "" && ProgressionEnabledForPlayer( player ) )
 		{
 			int AegisLevel = FD_TitanGetLevelForXP( enumName, FD_TitanGetXP( player, enumName ) )
 			switch ( difficultyLevel )
 			{
-				case eFDDifficultyLevel.EASY:
-				case eFDDifficultyLevel.NORMAL:
-					player.SetPersistentVar( "titanClassLockState[" + enumName + "]", TITAN_CLASS_LOCK_STATE_AVAILABLE )
-					break
-				
 				case eFDDifficultyLevel.HARD:
 					if ( GetItemUnlockType( "fd_hard" ) == eUnlockType.STAT && AegisLevel <= int( GetStatUnlockStatVal( "fd_hard" ) ) )
 						player.SetPersistentVar( "titanClassLockState[" + enumName + "]", TITAN_CLASS_LOCK_STATE_LEVELRECOMMENDED )
@@ -1589,34 +1590,19 @@ void function EnableTitanSelectionForPlayer( entity player )
 					if ( GetItemUnlockType( "fd_master" ) == eUnlockType.STAT && AegisLevel <= int( GetStatUnlockStatVal( "fd_master" ) ) )
 						player.SetPersistentVar( "titanClassLockState[" + enumName + "]", TITAN_CLASS_LOCK_STATE_LEVELREQUIRED )
 					break
-				
 				case eFDDifficultyLevel.INSANE:
 					if ( GetItemUnlockType( "fd_insane" ) == eUnlockType.STAT && AegisLevel <= int( GetStatUnlockStatVal( "fd_insane" ) ) )
 						player.SetPersistentVar( "titanClassLockState[" + enumName + "]", TITAN_CLASS_LOCK_STATE_LEVELREQUIRED )
 					break
-				
 				default:
 					player.SetPersistentVar( "titanClassLockState[" + enumName + "]", TITAN_CLASS_LOCK_STATE_AVAILABLE )
-
 			}
-			
-			if ( !ProgressionEnabledForPlayer( player ) ) //Progression disabled, unlock everything regardless
-				player.SetPersistentVar( "titanClassLockState[" + enumName + "]", TITAN_CLASS_LOCK_STATE_AVAILABLE )
 		}
+		else //Progression disabled, unlock everything regardless
+			player.SetPersistentVar( "titanClassLockState[" + enumName + "]", TITAN_CLASS_LOCK_STATE_AVAILABLE )
 	}
 	
-	bool allTitansLocked = true
-	for ( int i = 0; i < enumCount; i++ )
-	{
-		string enumName = PersistenceGetEnumItemNameForIndex( "titanClasses", i )
-		if ( enumName != "" )
-		{
-			if ( player.GetPersistentVarAsInt( "titanClassLockState[" + enumName + "]" ) == TITAN_CLASS_LOCK_STATE_AVAILABLE || player.GetPersistentVarAsInt( "titanClassLockState[" + enumName + "]" ) == TITAN_CLASS_LOCK_STATE_LEVELRECOMMENDED )
-				allTitansLocked = false
-		}
-	}
-	
-	if ( allTitansLocked )
+	if ( !GetAvailableTitanRefs( player ).len() )
 	{
 		for ( int i = 0; i < enumCount; i++ )
 		{

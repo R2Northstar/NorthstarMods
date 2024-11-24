@@ -386,7 +386,8 @@ void function OnPlayerKilled( entity victim, entity attacker, var damageInfo )
 
 bool function OnFlagCollected( entity player, entity flag )
 {
-	if ( !IsAlive( player ) || flag.GetParent() != null || FlagIngoresPlayerTitans( player ) || player.IsPhaseShifted() ) 
+	if ( !IsAlive( player ) || flag.GetParent() != null || FlagIngoresPlayerTitans( player ) ||
+	player.IsPhaseShifted() || player.p.isEmbarking || player.p.isDisembarking || player.p.pilotEjecting )
 		return false
 
 	if ( player.GetTeam() != flag.GetTeam() && flag.s.canTake )
@@ -450,7 +451,7 @@ void function CaptureFlag( entity player, entity flag )
 	SetRoundWinningKillReplayAttacker( player ) // set attacker for last cap replay
 	
 	array<entity> assistList
-	if ( player.GetTeam() == TEAM_IMC )
+	if ( team == TEAM_IMC )
 		assistList = file.imcCaptureAssistList
 	else
 		assistList = file.militiaCaptureAssistList
@@ -489,8 +490,8 @@ void function CaptureFlag( entity player, entity flag )
 	{
 		PlayFactionDialogueToTeam( "ctf_notifyWin1more", team )
 		PlayFactionDialogueToTeam( "ctf_notifyLose1more", GetOtherTeam( team ) )
-		foreach( entity otherplayer in GetPlayerArray() )
-			Remote_CallFunction_NonReplay( otherplayer, "ServerCallback_CTF_PlayMatchNearEndMusic" )
+		foreach( entity otherPlayer in GetPlayerArray() )
+			Remote_CallFunction_NonReplay( otherPlayer, "ServerCallback_CTF_PlayMatchNearEndMusic" )
 	}
 }
 
@@ -592,7 +593,7 @@ void function FlagProximityTracker( entity flag )
 				if ( IsFlagHome( flag ) || flag.GetParent() != null || player.IsPhaseShifted() )
 					continue
 				
-				if ( IsPlayerDisembarking( player ) || IsPlayerEmbarking( player ) )
+				if ( player.p.isEmbarking || player.p.isDisembarking || player.p.pilotEjecting )
 					continue
 				
 				if( playerInsidePerimeter.contains( player ) )
@@ -684,7 +685,7 @@ void function DropFlagIfPhased( entity player, entity flag )
 	{
 		if ( IsValidPlayer( player ) )
 		{
-			if ( GetGameState() == eGameState.Playing || GetGameState() == eGameState.SuddenDeath )
+			if ( GamePlayingOrSuddenDeath() )
 				DropFlag( player, true )
 		}
 	})

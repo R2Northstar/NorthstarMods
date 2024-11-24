@@ -3342,7 +3342,7 @@ string function Loadouts_GetSetFileForRequestedClass( entity player )
 		#endif
 			loadout = GetTitanLoadoutFromPersistentData( player, loadoutIndex )
 
-		OverwriteLoadoutWithDefaultsForSetFile_ExceptSpecialAndAntiRodeo( loadout )
+		OverwriteLoadoutWithDefaultsForSetFile_ExceptSpecialAndAntiRodeo( loadout, player )
 
 		if ( player.IsBot() && !player.IsPlayback() )
 			OverrideBotTitanLoadout( loadout )

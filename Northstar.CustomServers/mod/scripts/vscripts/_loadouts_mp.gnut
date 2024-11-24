@@ -314,34 +314,28 @@ void function TryGivePilotLoadoutForGracePeriod( entity player )
 		
 		if ( respawnTime >= Time() && player.s.noFiredWeapon || svGlobal.isInPilotGracePeriod || GetGameState() < eGameState.Playing || player.p.usingLoadoutCrate || file.allowChangeLoadoutFunc != null && file.allowChangeLoadoutFunc( player ) )
 		{
-			if ( player.IsTitan() )
+			if ( player.IsTitan() && !GetDoomedState( player ) )
 			{
 				player.s.loadoutDirty = false
-				if ( !GetDoomedState( player ) && Loadouts_CanGiveTitanLoadout( player ) )
+				entity soul = player.GetTitanSoul()
+				if ( IsValid( soul ) )
 				{
-					entity soul = player.GetTitanSoul()
-					if ( IsValid( soul ) )
-					{
-						// Store current health and shield because loadout swapping resets both
-						int currentHealth = player.GetHealth()
-						int currentShield = soul.GetShieldHealth()
+					// Store current health and shield because loadout swapping resets both
+					int currentHealth = player.GetHealth()
+					int currentShield = soul.GetShieldHealth()
 
-						Loadouts_TryGiveTitanLoadout( player )
+					Loadouts_TryGiveTitanLoadout( player )
 
-						player.SetHealth( minint( currentHealth, player.GetMaxHealth() ) )
-						soul.SetShieldHealth( minint( currentShield, soul.GetShieldHealthMax() ) )
-					}
+					player.SetHealth( minint( currentHealth, player.GetMaxHealth() ) )
+					soul.SetShieldHealth( minint( currentShield, soul.GetShieldHealthMax() ) )
 				}
 			}
 			else
 			{
 				if ( !Loadouts_CanGivePilotLoadout( player ) && GetGameState() < eGameState.Playing )
 					thread GiveLoadoutWhenIntroOver( player )
-				else if ( Loadouts_CanGivePilotLoadout( player ) )
-				{
-					Loadouts_TryGivePilotLoadout( player )
+				else if ( Loadouts_TryGivePilotLoadout( player ) )
 					player.s.loadoutDirty = false
-				}
 			}
 			
 			player.p.usingLoadoutCrate = false
