@@ -786,6 +786,26 @@ bool function PlayerOrNPCKilled( entity ent, var damageInfo )
 			ScoreEvent_TitanKilled( ent, attacker, damageInfo )
 		else
 			ScoreEvent_NPCKilled( ent, attacker, damageInfo )
+		
+		entity victim = ent.IsTitan() ? ent.GetTitanSoul() : ent
+		if ( IsValid( victim ) )
+		{
+			table<int, bool> alreadyAssisted
+			
+			foreach( DamageHistoryStruct attackerInfo in victim.e.recentDamageHistory )
+			{
+				if ( !IsValidPlayer( attackerInfo.attacker ) || attackerInfo.attacker == victim )
+					continue
+				
+				bool exists = attackerInfo.attacker.GetEncodedEHandle() in alreadyAssisted ? true : false
+				if( attackerInfo.attacker != attacker && !exists )
+				{
+					alreadyAssisted[attackerInfo.attacker.GetEncodedEHandle()] <- true
+					foreach ( callback in svGlobal.onPlayerAssistCallbacks )
+						callback( attackerInfo.attacker, victim )
+				}
+			}
+		}
 	}
 	PostScoreEventUpdateStats( attacker, ent )
 
