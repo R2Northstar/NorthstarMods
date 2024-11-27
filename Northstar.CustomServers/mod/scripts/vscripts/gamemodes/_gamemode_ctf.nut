@@ -227,7 +227,7 @@ void function RateSpawnpoints_CTF( int checkClass, array<entity> spawnpoints, in
 
 		float allyFlagDistance = Distance2D( spawn.GetOrigin(), allyFlagSpot )
 		float enemyFlagDistance = Distance2D( spawn.GetOrigin(), enemyFlagSpot )
-		float friendliesScore = spawn.NearbyAllyScore( team, "ai" ) + spawn.NearbyAllyScore( team, "titan" )  + spawn.NearbyEnemyScore( team, "pilot" )
+		float friendliesScore = spawn.NearbyAllyScore( team, "ai" ) + spawn.NearbyAllyScore( team, "titan" ) + spawn.NearbyAllyScore( team, "pilot" )
 		float enemiesRating = spawn.NearbyEnemyScore( team, "ai" ) + spawn.NearbyEnemyScore( team, "titan" ) + spawn.NearbyEnemyScore( team, "pilot" )
 		float rating = 1.0 - ( Distance2D( spawn.GetOrigin(), allyFlagSpot ) / MAP_EXTENTS )
 		
