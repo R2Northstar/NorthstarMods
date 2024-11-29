@@ -21,7 +21,7 @@ void function Sv_EarnMeterMP_Init()
 
 void function EarnMeterMP_SetTitanLoadout( entity player )
 {
-	if ( EarnMeterMP_IsTitanEarnGametype() )
+	if ( EarnMeterMP_IsTitanEarnGametype() && level.nv.titanDropEnabledForTeam != TEAM_BOTH && level.nv.titanDropEnabledForTeam != player.GetTeam() )
 		PlayerEarnMeter_SetGoal( player, EarnObject_GetByRef( GetTitanLoadoutForPlayer( player ).titanClass ) )
 	else
 		PlayerEarnMeter_SetGoal( player, PlayerEarnMeter_GetReward( player ) )
@@ -79,9 +79,12 @@ void function OnPlayerRespawned( entity player )
 
 void function EarnMeterMP_ReplaceReward( entity player, EarnObject reward, float rewardFrac )
 {
-	PlayerEarnMeter_Reset( player )
+	if ( !IsTitanAvailable( player ) )
+		PlayerEarnMeter_Reset( player )
+
 	if ( reward.id < 0 )
 		return
+	
 	PlayerEarnMeter_SetReward( player, reward )
 	PlayerEarnMeter_SetRewardFrac( player, rewardFrac )
 
@@ -129,6 +132,12 @@ void function EarnMeterMP_PlayerLifeThink( entity player )
 		}
 		else if ( IsValid( player.GetPetTitan() ) )
 			desiredEarnMeterMode = eEarnMeterMode.PET
+		else if ( Riff_TitanQueueLimit() > 0 && GetTitanCountForTeam( player.GetTeam() ) >= Riff_TitanQueueLimit() ) // Hides Meter when max active Titan limit is reached
+		{
+			desiredEarnMeterMode = eEarnMeterMode.DISABLED
+			if( titanReadyMsg ) // Resets so next time people can drop titans because a slot opened, they will be greeted with the message right away
+				titanReadyMsg = false
+		}
 		else
 			desiredEarnMeterMode = eEarnMeterMode.DEFAULT
 
@@ -167,7 +176,7 @@ void function EarnMeterMP_PlayerLifeThink( entity player )
 				else if( PlayerEarnMeter_GetOwnedFrac( player ) < 0.75 )
 					saidTitanSoon = false
 			}
-			
+
 			if ( PlayerEarnMeter_GetOwnedFrac( player ) < 1.0 )
 			{
 				PlayerEarnMeter_DisableGoal( player )
@@ -187,9 +196,9 @@ void function EarnMeterMP_PlayerLifeThink( entity player )
 				}
 			}
 
-			if ( Time() - lastPassiveGainTime > 4.0 && file.passiveMeterGainEnabled )
+			if ( Time() >= lastPassiveGainTime && file.passiveMeterGainEnabled && GetGameState() != eGameState.Prematch )
 			{
-				lastPassiveGainTime = Time()
+				lastPassiveGainTime = Time() + 4.0
 				PlayerEarnMeter_AddOwnedFrac( player, 0.01 )
 			}
 		}

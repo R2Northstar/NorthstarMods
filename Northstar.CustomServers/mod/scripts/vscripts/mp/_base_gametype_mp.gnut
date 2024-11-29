@@ -156,7 +156,7 @@ void function CodeCallback_OnClientConnectionStarted( entity player )
 	{
 		if ( GetCurrentPlaylistVarInt( "max_teams", 0 ) > 1 && !IsFFAGame() )
 		{
-			if ( GetPlayerArrayOfTeam( TEAM_MILITIA ).len() > GetPlayerArrayOfTeam( TEAM_IMC ).len() )
+			if ( GetTeamPlayerCount( TEAM_MILITIA ) > GetTeamPlayerCount( TEAM_IMC ) )
 				SetTeam( player, TEAM_IMC )
 			else
 				SetTeam( player, TEAM_MILITIA )
