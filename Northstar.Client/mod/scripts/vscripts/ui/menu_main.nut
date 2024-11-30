@@ -53,7 +53,9 @@ void function InitMainMenu()
 		AddMenuFooterOption( menu, BUTTON_A, "#A_BUTTON_SELECT", "" )
 	#endif // PC_PROG
 
-	//AddMenuFooterOption( menu, BUTTON_X, "#X_BUTTON_INBOX_ACCEPT", "#INBOX_ACCEPT", OpenDataCenterDialog, IsDataCenterFooterValid, UpdateDataCenterFooter )
+	#if VANILLA
+	AddMenuFooterOption( menu, BUTTON_X, "#X_BUTTON_INBOX_ACCEPT", "#INBOX_ACCEPT", OpenDataCenterDialog, IsDataCenterFooterValid, UpdateDataCenterFooter )
+	#endif
 
 #if DEV
 	if ( DevStartPoints() )
