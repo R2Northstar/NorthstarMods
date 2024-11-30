@@ -18,7 +18,12 @@ void function ClSpectre_Init()
 void function CreateCallback_Spectre( entity spectre )
 {
 	AddAnimEvent( spectre, "create_dataknife", CreateThirdPersonDataKnife )
-	spectre.DoBodyGroupChangeScriptCallback( true, spectre.FindBodyGroup( "removableHead" ) )
+
+	int bodyGroupIndex = spectre.FindBodyGroup( "head" )
+	if ( bodyGroupIndex == -1 )
+		bodyGroupIndex = spectre.FindBodyGroup( "removableHead" )
+
+	spectre.DoBodyGroupChangeScriptCallback( true, bodyGroupIndex )
 
 	asset model = spectre.GetModelName()
 	if ( model in file.initialized )
