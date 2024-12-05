@@ -813,6 +813,10 @@ void function UpdateMenusOnConnect( string levelname )
 			}
 
 			thread UpdateAnnouncementDialog()
+			#if HAS_NORTHSTAR_CUSTOM
+			// relies on script HTTP which is in Northstar.Custom
+			thread GetAtlasAnnouncement_Threaded()
+			#endif // HAS_NORTHSTAR_CUSTOM
 		}
 		else
 		{
