@@ -1364,12 +1364,6 @@ void function TriggerConnectToServerCallbacks( ServerInfo ornull targetServer = 
 	}
 }
 
-const array<string> CORE_MODS = ["Northstar.Client", "Northstar.Coop", "Northstar.CustomServers", "Northstar.Custom"]
-bool function IsCoreMod( string modName )
-{
-	return CORE_MODS.find( modName ) != -1
-}
-
 array<string> function GetModVersions( string modName )
 {
 	array<string> versions = []
