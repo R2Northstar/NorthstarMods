@@ -130,30 +130,25 @@ void function CodeCallback_PredictWeaponMods( entity weapon )
 #endif
 
 #if SERVER
-// called every TICK (NOT script frame) for every player.
+// called for every player.
 // used for calculating a player's weaponvars for
-// their active and selected (weapon being switched to)
-// weapons.
-void function CodeCallback_DoWeaponModsForPlayer( entity player )
+// all of their weapons.
+void function CodeCallback_DoWeaponModsForPlayer( entity player, int offhandSlot )
 {
     if (!IsValid(player))
         return
-    if (!IsValid(player.GetActiveWeapon()))
+    // idk this might get called by npcs or some shit
+    // we dont want to calculate every tick for all npcs thats stupid
+    if (!player.IsPlayer())
         return
     
-    // recalculating mods is slightly expensive - enough
-    // that doing it for all weapons for all players
-    // is a bad idea. so offloading mod recalculation
-    // responsibility to the modder is better imo.
-    // we do it for the active weapon to not cause mispredictions. 
-    // However, client does it every frame for the all of their weapons.
-    // (done in native, we arent in control of it.)
-    ModWeaponVars_CalculateWeaponMods( player.GetActiveWeapon() )
-    
-    // the weapon the player is about to switch to
-    if (IsValid(player.GetSelectedWeapon()))
-    {
-        ModWeaponVars_CalculateWeaponMods( player.GetSelectedWeapon() )
-    }
+    // recalculating mods may be slightly expensive? i think?
+    // TODO: check performance at high player counts?
+    // 32 players * (max 6 offhand + 3 main weapons) = 288 calls per tick* <-- a lot!!!!!
+    // *may get called more than once, idk
+    foreach (entity w in player.GetMainWeapons())
+        ModWeaponVars_CalculateWeaponMods( w )
+    foreach (entity w in player.GetOffhandWeapons())
+        ModWeaponVars_CalculateWeaponMods( w )
 }
 #endif
