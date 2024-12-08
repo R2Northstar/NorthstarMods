@@ -34,19 +34,17 @@ void function MortarSpectreSquadThink( array< entity > spectres, entity harveste
 	if ( spectres.len() == 0)
 		return
 
-	// get the closest available stationary position for mortar spectres
-	StationaryAIPosition ornull mortarPosition = GetClosestAvailableStationaryPosition( /* spectres[0] isnt ideal but the spectres all spawn in the same position atm */ spectres[0].GetOrigin(), MORTAR_SPECTRE_POSITION_SEARCH_RANGE, eStationaryAIPositionTypes.MORTAR_SPECTRE )
-	while ( mortarPosition == null )
-	{
-		// in case all stationary spectre positions are in use wait for one to become available
+	// incase all stationary mortar positions are in use wait for one to become available
+	while ( !AnyStationaryPositionsAvailable( eStationaryAIPositionTypes.MORTAR_SPECTRE ) )
 		wait 5
-		// should change this to use an average position or the start position or something but for now this is fine
-		mortarPosition = GetClosestAvailableStationaryPosition( spectres[0].GetOrigin(), MORTAR_SPECTRE_POSITION_SEARCH_RANGE, eStationaryAIPositionTypes.MORTAR_SPECTRE )
-	}
+
+	// should change this to use an average position or the start position or something but for now this is fine
+	StationaryAIPosition mortarPosition = GetClosestAvailableStationaryPosition( spectres[0].GetOrigin(), MORTAR_SPECTRE_POSITION_SEARCH_RANGE, eStationaryAIPositionTypes.MORTAR_SPECTRE )
+
 	// create the entity responsible for managing this squad of spectres
 	// note: client shows the ui thing for this entity if the y angle is not 0
 	// it also shows the set up time thing based on the shield frac of the entity? weird
-	entity squadMarker = CreatePropScript( $"models/dev/empty_model.mdl", expect StationaryAIPosition( mortarPosition ).origin + < 0, 0, 150 >, < 0, 1, 0 > )
+	entity squadMarker = CreatePropScript( $"models/dev/empty_model.mdl", mortarPosition.origin + < 0, 0, 150 >, < 0, 1, 0 > )
 	SetTargetName( squadMarker, "mortarPosition" )
 	squadMarker.SetShieldHealthMax( MORTAR_SPECTRE_TRACKER_SHIELD_MAX )
 	squadMarker.Minimap_SetCustomState( eMinimapObject_prop_script.FD_MORTAR_POSITION )
@@ -57,7 +55,7 @@ void function MortarSpectreSquadThink( array< entity > spectres, entity harveste
 	int i = 0
 	foreach( entity spectre in spectres )
 	{
-		thread MortarSpectreMoveToMortarPosition( spectre, squadMarker, OriginToGround( expect StationaryAIPosition( mortarPosition ).origin + MORTAR_SPECTRE_POSITION_OFFSETS[i]  + < 0, 0, 100 > ) )
+		thread MortarSpectreMoveToMortarPosition( spectre, squadMarker, OriginToGround( mortarPosition.origin + MORTAR_SPECTRE_POSITION_OFFSETS[i]  + < 0, 0, 100 > ) )
 		
 		if ( i++ >= MORTAR_SPECTRE_POSITION_OFFSETS.len() )
 		{
