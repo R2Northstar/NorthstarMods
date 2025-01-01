@@ -1,8 +1,36 @@
 {
 	"Name": "Northstar.Coop",
 	"Description": "[WIP] Allows the singleplayer campaign to be played in multiplayer",
-	"Version": "0.0.0",
+	"Version": "0.0.1",
+	"RequiredOnClient": true,
 	"LoadPriority": 0,
+
+	"ConVars": [
+		{
+			"Name": "dof_enable",
+			"DefaultValue": ""
+		},
+		{
+			"Name": "m_invert_pitch",
+			"DefaultValue": ""
+		},
+		{
+			"Name": "joy_inverty",
+			"DefaultValue": ""
+		},
+		{
+			"Name": "autosprint_type",
+			"DefaultValue": "1"
+		},
+		{
+			"Name": "joy_movement_stick",
+			"DefaultValue": ""
+		},
+		{
+			"Name": "hud_setting_showTips",
+			"DefaultValue": ""
+		}
+	],
 	"Scripts": [
 		{
 			"Path": "sh_sp_coop.gnut",
@@ -14,9 +42,57 @@
 			"ClientCallback": {
 				"After": "SingleplayerCoopLobby_Init"
 			},
+
 			"ServerCallback": {
 				"After": "SingleplayerCoopLobby_Init"
 			}
+		},
+		{
+			"Path": "_triggers.nut",
+			"RunOn": "SERVER && SP",
+			"ServerCallback": {
+				"After": "Init_triggers"
+			}
+		},
+		{
+			"Path": "_respawns.nut",
+			"RunOn": "SERVER && SP",
+			"ServerCallback": {
+				"After": "AddMakeSpecifcRespawnsInit"
+			}
+		},
+		{
+			"Path": "_event.gnut",
+			"RunOn": "SERVER && SP"
+		},
+		{
+			"Path": "_state.gnut",
+			"RunOn": "SERVER && SP"
+		},
+		{
+			"Path": "_sp_coop.gnut",
+			"RunOn": "SERVER && SP"
+		},
+		{
+			"Path": "bt_genocide.nut",
+			"RunOn": "SERVER && SP",
+			"ServerCallback": {
+				"After": "init_genocide_thoughts"
+			}
+		},
+		{
+			"Path": "sh_coop_custom_precache.gnut",
+			"RunOn": "( CLIENT || SERVER ) && SP",
+			"ClientCallback": {
+				"After": "CoopCustomPrecache"
+			},
+			"ServerCallback": {
+				"After": "CoopCustomPrecache"
+			}
+		},
+		{
+			"Path": "sh_remote_functions_sp_custom.gnut",
+			"RunOn": "(CLIENT || SERVER) && SP"
 		}
 	]
 }
