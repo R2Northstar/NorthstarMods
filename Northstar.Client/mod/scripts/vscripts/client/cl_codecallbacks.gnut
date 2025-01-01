@@ -64,7 +64,7 @@ void function ClientCodeCallback_BodyGroupChanged( entity ent, int bodyGroupInde
 
 	if ( IsSpectre( ent ) || IsStalker( ent ) )
 	{
-		if ( bodyGroupIndex == ent.FindBodyGroup( "removableHead" ) )
+		if ( bodyGroupIndex == ent.FindBodyGroup( "head" ) || bodyGroupIndex == ent.FindBodyGroup( "removableHead" ) )
 		{
 			ModelFX_DisableGroup( ent, "foe_lights" )
 			ModelFX_DisableGroup( ent, "friend_lights" )
