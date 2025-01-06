@@ -41,6 +41,7 @@ void function BaseGametype_Init_MPSP()
 	
 	AddCallback_OnNPCKilled( CheckForAutoTitanDeath )
 	AddCallback_OnPlayerKilled( CheckForAutoTitanDeath )
+	AddCallback_OnPlayerAssist( PlayerAssistedKill )
 	AddCallback_OnTitanBecomesPilot( CheckGameStateForTitanEjection )
 	AddCallback_OnPlayerGetsNewPilotLoadout( CheckPlayerGetsNewLoadout )
 
@@ -387,6 +388,18 @@ void function CodeCallback_OnPlayerRespawned( entity player )
 ██      ███████ ██   ██    ██    ███████ ██   ██     ██   ██ ██ ███████ ███████ ███████ ██████  
 */
 
+void function PlayerAssistedKill( entity attacker, entity victim )
+{
+	if( victim.IsPlayer() )
+	{
+		AddPlayerScore( attacker, "PilotAssist" )
+		attacker.AddToPlayerGameStat( PGS_ASSISTS, 1 )
+
+		if ( attacker.IsPlayer() )	
+			Highlight_SetDeathRecapHighlight( attacker, "killer_outline" )
+	}
+}
+
 void function CodeCallback_OnPlayerKilled( entity player, var damageInfo )
 {
 	PlayerOrNPCKilled( player, damageInfo )
@@ -434,28 +447,6 @@ void function PostDeathThread_MP( entity player, var damageInfo ) // based on ga
 
 	entity attacker = DamageInfo_GetAttacker( damageInfo )
 	int methodOfDeath = DamageInfo_GetDamageSourceIdentifier( damageInfo )
-
-	table<int, bool> alreadyAssisted
-	if ( IsValid( attacker ) )
-	{
-		foreach ( DamageHistoryStruct attackerInfo in player.e.recentDamageHistory )
-		{
-			if ( !IsValid( attackerInfo.attacker ) || !attackerInfo.attacker.IsPlayer() || attackerInfo.attacker == player )
-				continue
-
-			bool exists = attackerInfo.attacker.GetEncodedEHandle() in alreadyAssisted ? true : false
-			if ( attackerInfo.attacker != attacker && !exists )
-			{
-				alreadyAssisted[attackerInfo.attacker.GetEncodedEHandle()] <- true
-				Remote_CallFunction_NonReplay( attackerInfo.attacker, "ServerCallback_SetAssistInformation", attackerInfo.damageSourceId, attacker.GetEncodedEHandle(), player.GetEncodedEHandle(), attackerInfo.time ) 
-				AddPlayerScore( attackerInfo.attacker, "PilotAssist" )
-				attackerInfo.attacker.AddToPlayerGameStat( PGS_ASSISTS, 1 )
-			}
-		}
-
-		if ( attacker.IsPlayer() )	
-			Highlight_SetDeathRecapHighlight( attacker, "killer_outline" )
-	}
 
 	player.p.rematchOrigin = player.p.deathOrigin
 	if ( IsValid( attacker ) && methodOfDeath == eDamageSourceId.titan_execution )

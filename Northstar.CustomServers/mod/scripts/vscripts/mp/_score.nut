@@ -23,6 +23,7 @@ void function Score_Init()
 	SvXP_Init()
 	AddCallback_OnClientConnected( InitPlayerForScoreEvents )
 
+	AddCallback_OnPlayerAssist( TitanAssistedKill )
 	ScoreEvent_SetDisplayType( GetScoreEvent( "KillingSpree" ), eEventDisplayType.GAMEMODE | eEventDisplayType.MEDAL | eEventDisplayType.CALLINGCARD )
 	ScoreEvent_SetDisplayType( GetScoreEvent( "Rampage" ), eEventDisplayType.GAMEMODE | eEventDisplayType.MEDAL | eEventDisplayType.CALLINGCARD )
 }
@@ -241,25 +242,14 @@ void function ScoreEvent_TitanKilled( entity victim, entity attacker, var damage
 		else
 			AddPlayerScore( attacker, "KillTitan" )
 	}
+}
 
-	entity soul = victim.GetTitanSoul()
-	if ( IsValid( soul ) )
+void function TitanAssistedKill( entity attacker, entity victim )
+{
+	if ( IsSoul( victim ) )
 	{
-		table<int, bool> alreadyAssisted
-		
-		foreach( DamageHistoryStruct attackerInfo in soul.e.recentDamageHistory )
-		{
-			if ( !IsValid( attackerInfo.attacker ) || !attackerInfo.attacker.IsPlayer() || attackerInfo.attacker == soul )
-				continue
-			
-			bool exists = attackerInfo.attacker.GetEncodedEHandle() in alreadyAssisted ? true : false
-			if ( attackerInfo.attacker != attacker && !exists )
-			{
-				alreadyAssisted[attackerInfo.attacker.GetEncodedEHandle()] <- true
-				AddPlayerScore( attackerInfo.attacker, "TitanAssist" )
-				Remote_CallFunction_NonReplay( attackerInfo.attacker, "ServerCallback_SetAssistInformation", attackerInfo.damageSourceId, attacker.GetEncodedEHandle(), soul.GetEncodedEHandle(), attackerInfo.time ) 
-			}
-		}
+		AddPlayerScore( attacker, "TitanAssist" )
+		attacker.AddToPlayerGameStat( PGS_ASSISTS, 1 )
 	}
 }
 

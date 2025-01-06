@@ -797,6 +797,9 @@ bool function PlayerOrNPCKilled( entity ent, var damageInfo )
 				if( attackerInfo.attacker != attacker && !exists )
 				{
 					alreadyAssisted[attackerInfo.attacker.GetEncodedEHandle()] <- true
+					foreach ( player in GetPlayerArray() )
+						Remote_CallFunction_Replay( player, "ServerCallback_SetAssistInformation", attackerInfo.damageSourceId, attacker.GetEncodedEHandle(), ent.GetEncodedEHandle(), attackerInfo.time )
+
 					foreach ( callback in svGlobal.onPlayerAssistCallbacks )
 						callback( attackerInfo.attacker, victim )
 				}
