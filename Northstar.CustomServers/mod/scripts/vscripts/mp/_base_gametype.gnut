@@ -795,13 +795,16 @@ bool function PlayerOrNPCKilled( entity ent, var damageInfo )
 			
 			foreach( DamageHistoryStruct attackerInfo in victim.e.recentDamageHistory )
 			{
-				if ( !IsValidPlayer( attackerInfo.attacker ) || attackerInfo.attacker == victim )
+				if ( !IsValid( attackerInfo.attacker ) || !attackerInfo.attacker.IsPlayer() || attackerInfo.attacker == victim )
 					continue
 				
 				bool exists = attackerInfo.attacker.GetEncodedEHandle() in alreadyAssisted ? true : false
 				if( attackerInfo.attacker != attacker && !exists )
 				{
 					alreadyAssisted[attackerInfo.attacker.GetEncodedEHandle()] <- true
+					foreach ( player in GetPlayerArray() )
+						Remote_CallFunction_Replay( player, "ServerCallback_SetAssistInformation", attackerInfo.damageSourceId, attacker.GetEncodedEHandle(), ent.GetEncodedEHandle(), attackerInfo.time )
+
 					foreach ( callback in svGlobal.onPlayerAssistCallbacks )
 						callback( attackerInfo.attacker, victim )
 				}
