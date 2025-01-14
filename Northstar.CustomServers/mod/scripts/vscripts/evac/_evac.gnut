@@ -490,6 +490,7 @@ void function AddPlayerToEvacDropship( entity dropship, entity player )
 
     // need to cancel if the dropship dies
     dropship.EndSignal( "OnDeath", "OnDestroy" )
+	player.EndSignal( "OnDestroy" )
 
 	player.SetInvulnerable()
 	player.UnforceCrouch()
@@ -514,9 +515,6 @@ void function AddPlayerToEvacDropship( entity dropship, entity player )
 	idleFp.teleport = true
 	idleFp.hideProxy = true
 	idleFp.viewConeFunction = ViewConeWide  
-		
-	player.EndSignal( "OnDestroy" )
-	
 	thread FirstPersonSequence( idleFp, player, dropship )
 	ViewConeWide( player ) // gotta do this after for some reason, adding it to idleFp does not work for some reason
 }
