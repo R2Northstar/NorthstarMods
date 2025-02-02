@@ -9,13 +9,6 @@ void function NorthstarCheatCommands_Init()
 	AddClientCommandCallback( "god", ClientCommandCallbackToggleDemigod )
 	AddClientCommandCallback( "kill", ClientCommandCallbackKill )
 	AddClientCommandCallback( "explode", ClientCommandCallbackExplode )
-
-	AddClientCommandCallback( "NOCLIP", ClientCommandCallbackToggleNoclip )
-	AddClientCommandCallback( "NOTARGET", ClientCommandCallbackToggleNotarget )
-	AddClientCommandCallback( "DEMIGOD", ClientCommandCallbackToggleDemigod )
-	AddClientCommandCallback( "GOD", ClientCommandCallbackToggleDemigod )
-	AddClientCommandCallback( "KILL", ClientCommandCallbackKill )
-	AddClientCommandCallback( "EXPLODE", ClientCommandCallbackExplode )
 }
 
 bool function ClientCommandCallbackToggleNoclip( entity player, array<string> args )
