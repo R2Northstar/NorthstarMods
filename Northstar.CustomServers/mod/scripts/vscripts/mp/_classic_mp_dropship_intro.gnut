@@ -31,6 +31,8 @@ struct {
 	table< entity, array<entity> > imcDropships
 	
 	float introStartTime
+
+	bool doneLoadingEnts = false
 } file
 
 
@@ -38,6 +40,13 @@ void function ClassicMP_DefaultDropshipIntro_Setup()
 {
 	AddCallback_OnClientConnected( DropshipIntro_OnClientConnected )	
 	AddCallback_GameStateEnter( eGameState.Prematch, OnPrematchStart )
+
+	AddCallback_EntitiesDidLoad( OnEntitiesDidLoad )
+}
+
+void function OnEntitiesDidLoad()
+{
+	file.doneLoadingEnts = true
 }
 
 void function DropshipIntro_OnClientConnected( entity player )
@@ -53,6 +62,17 @@ void function DropshipIntro_OnClientConnected( entity player )
 
 void function OnPrematchStart()
 {
+	thread OnPrematchStart_Delayed()
+}
+
+void function OnPrematchStart_Delayed()
+{
+	// we have to wait for entities to load in, because GetEntArrayByClass_Expensive
+	// is used later in the func, and it can run before dropship entities are loaded,
+	// causing no dropship spawn points to be found
+	while ( !file.doneLoadingEnts )
+		WaitFrame()
+
 	ClassicMP_OnIntroStarted()
 
 	print( "starting dropship intro!" )
@@ -85,7 +105,7 @@ void function OnPrematchStart()
 		table< entity, array<entity> > teamDropships = createTeam == TEAM_MILITIA ? file.militiaDropships : file.imcDropships
 		
 		if ( teamDropships.len() >= 2 )
-			break
+			continue
 
 		entity dropship = CreateDropship( createTeam, dropshipSpawn.GetOrigin(), dropshipSpawn.GetAngles() )
 		AddAnimEvent( dropship, "dropship_warpout", WarpoutEffect )
@@ -103,6 +123,9 @@ void function OnPrematchStart()
 		teamDropships[ dropship ] <- [ null, null, null, null ]
 		
 		thread PlayAnim( dropship, "dropship_classic_mp_flyin" )
+
+		if ( file.imcDropships.len() >= 2 && file.militiaDropships.len() >= 2 )
+			break
 	}
 	
 	// Populate Dropships
