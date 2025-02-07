@@ -319,7 +319,6 @@ void function PlayerWatchesWargamesIntro( entity player )
 	wait 3.5
 	
 	entity spawnpoint = FindSpawnPoint( player, false, true )
-	spawnpoint.s.lastUsedTime = Time()
 	player.SetOrigin( spawnpoint.GetOrigin() )
 	player.SetAngles( spawnpoint.GetAngles() )
 	
