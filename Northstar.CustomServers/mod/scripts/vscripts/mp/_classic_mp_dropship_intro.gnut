@@ -38,13 +38,6 @@ void function ClassicMP_DefaultDropshipIntro_Setup()
 {
 	AddCallback_OnClientConnected( DropshipIntro_OnClientConnected )	
 	AddCallback_GameStateEnter( eGameState.Prematch, OnPrematchStart )
-
-	AddCallback_EntitiesDidLoad( OnEntitiesDidLoad )
-}
-
-void function OnEntitiesDidLoad()
-{
-	file.doneLoadingEnts = true
 }
 
 void function DropshipIntro_OnClientConnected( entity player )
