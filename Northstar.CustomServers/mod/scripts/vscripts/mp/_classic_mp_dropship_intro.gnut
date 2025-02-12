@@ -31,8 +31,6 @@ struct {
 	table< entity, array<entity> > imcDropships
 	
 	float introStartTime
-
-	bool doneLoadingEnts = false
 } file
 
 
@@ -62,17 +60,12 @@ void function DropshipIntro_OnClientConnected( entity player )
 
 void function OnPrematchStart()
 {
-	thread OnPrematchStart_Delayed()
+	thread OnPrematchStart_Threaded()
 }
 
-void function OnPrematchStart_Delayed()
+void function OnPrematchStart_Threaded()
 {
-	// we have to wait for entities to load in, because GetEntArrayByClass_Expensive
-	// is used later in the func, and it can run before dropship entities are loaded,
-	// causing no dropship spawn points to be found
-	while ( !file.doneLoadingEnts )
-		WaitFrame()
-
+	FlagWait( "EntitiesDidLoad" )
 	ClassicMP_OnIntroStarted()
 
 	print( "starting dropship intro!" )
