@@ -392,7 +392,13 @@ void function WaitForPlayers()
 	if ( IsFFAGame() ) // FFA has no Dropships and logic crash clients if casted into PickLoadout
 		SetGameState( eGameState.Prematch )
 	else
+	{
+		float pickloadoutLength = GameMode_GetLoadoutSelectTime() // Default is 5 seconds from playlistvar, for the Dropship warp sound
+		pickloadoutLength += GetCurrentPlaylistVarFloat( "pick_loadout_extension", 0 ) // Actual addition of time for the Titan Selection Screen
+		SetServerVar( "minPickLoadOutTime", Time() + pickloadoutLength )
+		
 		SetGameState( eGameState.PickLoadout ) // Even if the game mode don't use it, vanilla still cast this game state to make the dropship jump sound when match starts
+	}
 }
 
 void function WaitingForPlayers_ClientConnected( entity player )
@@ -424,11 +430,6 @@ void function GameStateEnter_PickLoadout()
 
 void function GameStateEnter_PickLoadout_Threaded()
 {
-	float pickloadoutLength = GameMode_GetLoadoutSelectTime() // Default is 5 seconds from playlistvar, for the Dropship warp sound
-	pickloadoutLength += GetCurrentPlaylistVarFloat( "pick_loadout_extension", 0 ) // Actual addition of time for the Titan Selection Screen
-	
-	SetServerVar( "minPickLoadOutTime", Time() + pickloadoutLength )
-	
 	// The Titan Selection Screen can extend the minPickLoadOutTime, so wait for natural expire
 	while ( Time() < GetServerVar( "minPickLoadOutTime" ) )
 		WaitFrame()
