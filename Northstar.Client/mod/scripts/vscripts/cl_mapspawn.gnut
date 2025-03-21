@@ -16,6 +16,8 @@ global function ClientCodeCallback_OnDropShipCinematicEventStateChanged
 global function ClientCodeCallback_OnDetenteEnded
 global function PerfInitLabels
 
+global function PrecacheRes
+
 global var Hud = null
 
 global bool TITAN_CORE_ENABLED = true
@@ -365,3 +367,4 @@ function PerfInitLabels()
 function ClientCodeCallback_OnDropShipCinematicEventStateChanged()
 {
 }
+
