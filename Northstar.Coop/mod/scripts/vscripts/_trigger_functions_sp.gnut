@@ -1,0 +1,886 @@
+global function TriggerFunctionsSP_Init
+
+global function TriggerSpawnSpawner
+
+global function QuickDeathTrigger_SetIsPunitive
+global function ClearQuickDeath
+global function QuickDeathTrigger_SetRealDeathFadeToBlack
+global function TestDevSpawnPoint
+
+const DEBUG_DEADLY_FOG = false
+
+struct
+{
+	//bool checkpointReached
+	//vector checkpointOrigin
+	//vector checkpointAngles
+	table<string, array<void functionref( entity )> > triggerEditorClassFunctions
+
+	table<string, int> flagTriggerEntArrayIndex
+	entity lastQuickDeathTrigger
+	entity quickDeathCheckPointTrigger
+	bool quickDeathTrigger_isPunitive = true
+	int checkPointDisabledTouchingVolumesIdx = -1
+
+	table< string, array<vector> > spawnpointDevChecks
+	int spawnpointDevIndex
+} file
+
+void function TriggerFunctionsSP_Init()
+{
+	file.checkPointDisabledTouchingVolumesIdx = CreateScriptManagedEntArray()
+
+	#if DEV
+	file.spawnpointDevChecks[ "titan" ] <- []
+	file.spawnpointDevChecks[ "pilot" ] <- []
+	#endif
+
+	AddTriggerEditorClassFunc( "trigger_spawn", TriggerSpawnThink )
+	AddTriggerEditorClassFunc( "trigger_movetarget", TriggerMoveTargetThink )
+	AddTriggerEditorClassFunc( "trigger_checkpoint", TriggerCheckpoint )
+	AddTriggerEditorClassFunc( "trigger_checkpoint_silent", TriggerCheckpointSilent )
+	AddTriggerEditorClassFunc( "trigger_checkpoint_safe", TriggerCheckpointSafe_Deprecated )
+	AddTriggerEditorClassFunc( "trigger_checkpoint_forced", TriggerCheckpointForced )
+	AddTriggerEditorClassFunc( "trigger_checkpoint_to_safe_spots", TriggerCheckpoint_SaveLocationsOnly )
+	AddTriggerEditorClassFunc( "trigger_teleporter", TriggerTeleportThink )
+	AddTriggerEditorClassFunc( "trigger_quickdeath_checkpoint", TriggerQuickDeathCheckpointOnTrigger )
+	AddTriggerEditorClassFunc( "trigger_quickdeath", TriggerQuickDeathOnTrigger )
+	AddTriggerEditorClassFunc( "checkpoint_disabled_volume", CheckPointDisabledVolumeThink )
+
+	AddSpawnCallbackEditorClass( "trigger_multiple", "trigger_level_transition", LevelTransitionTrigger )
+	AddSpawnCallbackEditorClass( "trigger_hurt", "trigger_human_zapper", HumanZapperThink )
+	AddSpawnCallbackEditorClass( "trigger_multiple", "trigger_dev_print", DevPrintTriggerThink )
+
+	PrecacheParticleSystem( $"Swtch_Elec_hzd_rope_end" )
+
+	FlagInit( "CheckPointDisabled" )
+	FlagInit( "AutomaticCheckpointsEnabled", true )
+
+	RegisterSignal( "QuickDeath" )
+	RegisterSignal( "QuickDeathPlayerTeleported" )
+	RegisterSignal( "StartedQuickDeathTrigger" )
+
+}
+
+
+void function TriggerMoveTargetThink( entity trigger )
+{
+	trigger.EndSignal( "OnDestroy" )
+
+	Assert( trigger.GetLinkEntArray().len() > 0, "trigger_movetarget at " + trigger.GetOrigin() + " has no target" )
+
+	trigger.WaitSignal( "OnTrigger" )
+
+	foreach ( linkEnt in trigger.GetLinkEntArray() )
+	{
+		float moveTime = float( linkEnt.kv.move_time )
+		int movedir = int( linkEnt.kv.movedirection )
+
+		thread BrushMovesInDirection( linkEnt, movedir, moveTime )
+	}
+}
+
+void function TriggerSpawnThink( entity trigger )
+{
+	trigger.EndSignal( "OnDestroy" )
+	trigger.WaitSignal( "OnTrigger" )
+
+	array<entity> spawners
+
+	foreach ( entity ent in trigger.GetLinkEntArray() )
+	{
+		// dont spawn from these spawners again
+		foreach ( entity linkParent in ent.GetLinkParentArray() )
+		{
+			if ( GetEditorClass( linkParent ) == "trigger_spawn" )
+				linkParent.UnlinkFromEnt( ent )
+		}
+
+		// Trigger_Spawn can only link to spawners, spectre rack, or dropship spawner
+		if ( IsStalkerRack( ent ) || IsSpawner( ent ) )
+			spawners.append( ent )
+	}
+
+	foreach ( int index, entity ent in spawners )
+	{
+		thread TriggerSpawnSpawner( ent )
+	}
+}
+
+void function TriggerSpawnSpawner( entity spawner )
+{
+	EndSignal( spawner, "OnDestroy" )
+
+	if ( IsSpawner( spawner ) )
+	{
+		table spawnerKeyValues = spawner.GetSpawnEntityKeyValues()
+		if ( "script_delay" in spawnerKeyValues && float( spawnerKeyValues[ "script_delay" ] ) > 0 )
+			wait float( spawnerKeyValues[ "script_delay" ] )
+	}
+
+	if ( IsStalkerRack( spawner ) )
+	{
+		thread SpawnFromStalkerRack( spawner )
+		return
+	}
+
+	if ( IsDropshipSpawner( spawner ) )
+	{
+		thread SpawnFromDropship( spawner )
+		return
+	}
+
+	entity npc = spawner.SpawnEntity()
+	DispatchSpawn( npc )
+}
+
+void function TriggerTeleportThink( entity trigger )
+{
+	trigger.EndSignal( "OnDestroy" )
+
+	array<entity> moveTargets = trigger.GetLinkEntArray()
+	Assert( moveTargets.len() > 0, "trigger_teleporter at " + trigger.GetOrigin() + " doesn't link to at least one move target." )
+
+	bool useAngles = trigger.HasKey( "useAngles" ) && trigger.kv.useAngles == "1"
+
+	entity guy
+	while ( true )
+	{
+		table results = trigger.WaitSignal( "OnTrigger" )
+		guy = expect entity( results.activator )
+		if ( IsValid( guy ) )
+		{
+			entity moveTarget = moveTargets.getrandom()
+
+			vector origin = moveTarget.GetOrigin()
+			guy.SetOrigin( origin )
+
+			if ( useAngles )
+			{
+				vector angles = moveTarget.GetAngles()
+				guy.SetAngles( angles )
+			}
+		}
+	}
+}
+
+void function TriggerCheckpointForced( entity trigger )
+{
+	trigger.EndSignal( "OnDestroy" )
+
+	while ( true )
+	{
+		table results = trigger.WaitSignal( "OnTrigger" )
+		entity player = expect entity( results.activator )
+		if ( !IsValid( player ) )
+			continue
+		if ( player.IsPlayer() )
+			break
+	}
+
+	CheckPoint_Forced()
+}
+
+void function TriggerCheckpoint( entity trigger )
+{
+	TriggerCheckpointThink( trigger, CheckPointTrigger )
+}
+
+void function TriggerCheckpointSafe_Deprecated( entity trigger )
+{
+	//CodeWarning( "trigger_checkpoint_safe is deprecated, change to trigger_checkpoint. " + trigger.GetOrigin() ) // R5
+	TriggerCheckpointThink( trigger, CheckPointTrigger )
+}
+
+void function CheckPointTrigger( CheckPointData checkPointData )
+{
+	CheckPoint( checkPointData)
+}
+
+void function TriggerCheckpointSilent( entity trigger )
+{
+	TriggerCheckpointThink( trigger, CheckPointTriggerSilent )
+}
+
+void function CheckPointTriggerSilent( CheckPointData checkPointData )
+{
+	CheckPoint_Silent( checkPointData)
+}
+
+void function TriggerCheckpoint_SaveLocationsOnly( entity trigger )
+{
+	TriggerCheckpointThink( trigger, CheckPointTriggerSafeLocation )
+}
+
+void function CheckPointTriggerSafeLocation( CheckPointData checkPointData )
+{
+	Assert( checkPointData.safeLocations.len() > 0, "Trigger tried to use safe locations but had no targets." )
+
+	checkPointData.skipSaveToActualPlayerLocation = true
+	CheckPoint( checkPointData )
+}
+
+void function TriggerCheckpointThink( entity trigger, void functionref( CheckPointData ) checkPointFunc )
+{
+	trigger.EndSignal( "OnDestroy" )
+
+	array<entity> spawnPositions
+
+	foreach ( ent in trigger.GetLinkEntArray() )
+	{
+		if ( GetEditorClass( ent ) == "info_spawnpoint_checkpoint" )
+			spawnPositions.append( ent )
+	}
+
+
+	#if DEV
+
+	int solidMask = TRACE_MASK_PLAYERSOLID
+	int collisionGroup = TRACE_COLLISION_GROUP_PLAYER
+	string triggerFilter
+	if ( trigger.HasKey( "triggerFilterPlayer" ) )
+		triggerFilter = expect string( trigger.kv.triggerFilterPlayer )
+	else
+		triggerFilter = "all"
+
+
+	switch ( triggerFilter )
+	{
+		case "titan":
+		case "all":
+
+			vector mins = GetBoundsMin( HULL_TITAN )
+			vector maxs = GetBoundsMax( HULL_TITAN )
+
+			foreach ( spawner in spawnPositions )
+			{
+				vector origin = spawner.GetOrigin() + <0,0,SAVE_SPAWN_VOFFSET>
+
+				TraceResults result = TraceHull( origin + <0,0,1>, origin, mins, maxs, [], solidMask, collisionGroup )
+
+				if ( result.startSolid || result.fraction != 1.0 )
+					CodeWarning( "Checkpoint spawner at " + origin + " is stuck for Titans, but triggerFilterPlayer allows Titans." )
+
+				file.spawnpointDevChecks[ "titan" ].append( origin )
+			}
+			break
+	}
+
+	switch ( triggerFilter )
+	{
+		case "pilot":
+		case "all":
+
+			vector mins = GetBoundsMin( HULL_HUMAN )
+			vector maxs = GetBoundsMax( HULL_HUMAN )
+
+			foreach ( spawner in spawnPositions )
+			{
+				vector origin = spawner.GetOrigin() + <0,0,SAVE_SPAWN_VOFFSET>
+
+				TraceResults result = TraceHull( origin + <0,0,1>, origin, mins, maxs, [], solidMask, collisionGroup )
+
+				if ( result.startSolid || result.fraction != 1.0 )
+					CodeWarning( "Checkpoint spawner at " + origin + " is stuck for Pilots, but triggerFilterPlayer allows Pilots." )
+
+				file.spawnpointDevChecks[ "pilot" ].append( origin )
+			}
+			break
+	}
+
+	#endif
+
+	entity player
+	while ( true )
+	{
+		table results = trigger.WaitSignal( "OnTrigger" )
+		player = expect entity( results.activator )
+		if ( !IsValid( player ) )
+			continue
+		if ( !player.IsPlayer() )
+			continue
+		if ( Flag( "SaveRequires_PlayerIsTitan" ) )
+		{
+			if ( !player.IsTitan() )
+				continue
+		}
+
+		break
+	}
+
+	float ornull searchTime
+	if ( trigger.HasKey( "save_search_time" ) )
+	{
+		searchTime = float( expect string( trigger.kv.save_search_time ) )
+	}
+
+	bool ornull onground_required
+	if ( trigger.HasKey( "onground_required" ) )
+	{
+		onground_required = trigger.kv.onground_required == "1"
+	}
+
+	bool ornull skip_delayed_isalive_check
+	if ( trigger.HasKey( "skip_delayed_isalive_check" ) )
+	{
+		skip_delayed_isalive_check = trigger.kv.skip_delayed_isalive_check == "1"
+	}
+
+	CheckPointData data
+
+	if ( searchTime != null )
+		data.searchTime = expect float( searchTime )
+
+	if ( onground_required != null )
+		data.onGroundRequired = expect bool( onground_required )
+
+	if ( skip_delayed_isalive_check != null )
+		data.skipDelayedIsAliveCheck = expect bool( skip_delayed_isalive_check )
+
+	data.safeLocations = spawnPositions
+
+	checkPointFunc( data )
+}
+
+void function HumanZapperThink( entity trigger )
+{
+	thread HumanZapperThink_Thread( trigger )
+}
+
+void function HumanZapperThink_Thread( entity trigger )
+{
+	trigger.EndSignal( "OnDeath" )
+
+	vector mins = trigger.GetBoundingMins()
+	vector maxs = trigger.GetBoundingMaxs()
+	vector origin = trigger.GetOrigin()
+
+	for ( ;; )
+	{
+		Proto_BugZapperDraw( mins, maxs, origin )
+	}
+}
+
+void function Proto_BugZapperDraw( vector mins, vector maxs, vector origin )
+{
+	foreach ( player in GetPlayerArray() )
+	{
+		//Remote_CallFunction_Replay( player, "ServerCallback_PrototypeHumanZapperVisual", origin.x, origin.y, origin.z, mins.x, mins.y, mins.z, maxs.x, maxs.y, maxs.z )
+	}
+
+	wait 3.0
+}
+
+void function DeadlyFogTriggerInit( entity trigger )
+{
+	trigger.ConnectOutput( "OnStartTouch", DeadlyFogStartTouch )
+	trigger.ConnectOutput( "OnEndTouch", DeadlyFogEndTouch )
+
+	if ( trigger.HasKey( "electricEffect" ) && trigger.kv.electricEffect == "1" )
+		thread DeadlyFogVisuals( trigger )
+}
+
+void function DeadlyFogStartTouch( entity trigger, entity ent, entity caller, var value )
+{
+	thread DeadlyFogDamagedEntity( trigger, ent )
+}
+
+void function DeadlyFogDamagedEntity( entity trigger, entity ent )
+{
+	if ( !IsAlive( ent ) || !IsValid( trigger ) )
+		return
+
+	EndSignal( ent, "OutOfDeadlyFog" )
+	EndSignal( trigger, "OnDestroy" )
+	EndSignal( ent, "OnDeath" )
+
+	bool damagePilots = trigger.kv.damagePilots == "1"
+	bool damageTitans = trigger.kv.damageTitans == "1"
+	if ( !damagePilots && !damageTitans )
+		return
+
+	entity worldSpawn = GetEnt( "worldspawn" )
+	while ( true )
+	{
+		if ( !IsValid( ent ) )
+		{
+			wait 0.5
+			continue
+		}
+
+		if ( IsPilot( ent ) && !damagePilots )
+		{
+			wait 0.5
+			continue
+		}
+
+		if ( ent.IsTitan() && !damageTitans )
+		{
+			wait 0.5
+			continue
+		}
+
+		bool isTitan = ent.IsTitan()
+		vector damageOrigin = ent.GetOrigin() + ( isTitan ? Vector( 0.0, 0.0, 0.0 ) : Vector( 0.0 , 0.0, -200.0 ) )
+		damageOrigin += Vector( RandomFloatRange( -300.0, 300.0 ), RandomFloatRange( -300.0, 300.0 ), RandomFloatRange( -100.0, 100.0 ) )
+		int scriptTypeMask = damageTypes.dissolve | DF_STOPS_TITAN_REGEN
+
+		int damageAmount = isTitan ? 200 : 40
+
+		ent.TakeDamage( damageAmount, worldSpawn, worldSpawn, { origin = damageOrigin, scriptType = scriptTypeMask, damageSourceId = eDamageSourceId.deadly_fog } )
+
+		wait 0.5
+	}
+}
+
+void function DeadlyFogEndTouch( entity trigger, entity ent, entity caller, var value )
+{
+	if ( IsValid( ent ) )
+		Signal( ent, "OutOfDeadlyFog" )
+}
+
+void function DeadlyFogVisuals( entity trigger )
+{
+	wait 0.5
+
+	// Get the trigger bounds
+	vector triggerMins = trigger.GetBoundingMins()
+	vector triggerMaxs = trigger.GetBoundingMaxs()
+	vector triggerOrigin = trigger.GetOrigin()
+	if ( DEBUG_DEADLY_FOG )
+	{
+		DebugDrawBox( triggerOrigin, triggerMins, triggerMaxs, 255, 255, 0, 1, 60.0 )
+		DebugDrawSphere( triggerOrigin, 25.0, 255, 200, 0, true, 60.0 )
+	}
+
+	// Divide the trigger into smaller squares
+	vector triggerDimension = triggerMaxs - triggerMins
+
+	int segmentSizeX = int( max( triggerDimension.x / 2000, 1500 ) )
+	int segmentSizeY = int( max( triggerDimension.y / 2000, 1500 ) )
+	int segmentSizeZ = int( min( 300, triggerDimension.z ) )
+
+	vector segmentSize = Vector( segmentSizeX, segmentSizeY, segmentSizeZ )
+	vector segmentCount = Vector( triggerDimension.x / segmentSize.x, triggerDimension.y / segmentSize.y, triggerDimension.z / segmentSize.z )
+
+	segmentCount.x = floor( segmentCount.x )
+	segmentCount.y = floor( segmentCount.y )
+	segmentCount.z = floor( segmentCount.z )
+	segmentCount.x = segmentCount.x < 1.0 ? 1.0 : segmentCount.x
+	segmentCount.y = segmentCount.y < 1.0 ? 1.0 : segmentCount.y
+	segmentCount.z = segmentCount.z < 1.0 ? 1.0 : segmentCount.z
+
+	vector startPos = triggerOrigin + triggerMins + segmentSize * 0.5
+	startPos.x += (triggerDimension.x - (segmentCount.x * segmentSize.x)) * 0.5
+	startPos.y += (triggerDimension.y - (segmentCount.y * segmentSize.y)) * 0.5
+	startPos.z += (triggerDimension.z - (segmentCount.z * segmentSize.z)) * 0.5
+
+	vector segmentPos = startPos
+	for ( int z = 0 ; z < segmentCount.z ; z++ )
+	{
+		// Only do effects on the top layer of the trigger
+		if ( z < ( segmentCount.z - 1 ) )
+			continue
+
+		for ( int y = 0 ; y < floor(segmentCount.y) ; y++ )
+		{
+			for ( int x = 0 ; x < floor(segmentCount.x) ; x++ )
+			{
+				vector segmentPos = startPos + Vector( segmentSize.x * x, segmentSize.y * y, segmentSize.z * z )
+				thread DeadlyFogEffect( segmentPos, segmentSize )
+			}
+		}
+	}
+}
+
+void function DeadlyFogEffect( vector origin, vector segmentSize )
+{
+	entity effect = CreateEntity( "info_particle_system" )
+	effect.SetValueForEffectNameKey( $"Swtch_Elec_hzd_rope_end" )
+	effect.kv.start_active = 0
+	effect.kv.VisibilityFlags = ENTITY_VISIBLE_TO_EVERYONE
+	effect.SetOrigin( origin )
+	DispatchSpawn( effect )
+
+	vector mins = origin + (segmentSize * -0.5)
+	vector maxs = origin + (segmentSize * 0.5)
+	if ( DEBUG_DEADLY_FOG )
+	{
+		DebugDrawBox( origin, mins - origin, maxs - origin, 255, 255, 0, 1, 60.0 )
+		DebugDrawSphere( origin, 25.0, 255, 200, 0, true, 60.0 )
+	}
+
+	while ( true )
+	{
+		wait RandomFloatRange( 2.1, 2.6 )
+
+		vector org = Vector( RandomFloatRange( mins.x, maxs.x ), RandomFloatRange( mins.y, maxs.y ), RandomFloatRange( mins.z, maxs.z ) )
+
+		if ( DEBUG_DEADLY_FOG )
+			DebugDrawLine( origin, org, 255, 0, 0, true, 2.0 )
+
+		effect.SetOrigin( org )
+		EntityFire( effect, "Start" )
+		EntityFireDelayed( effect, "StopPlayEndCap", "", 2.0 )
+	}
+}
+
+void function DevPrintTriggerThink( entity trigger )
+{
+	EndSignal( trigger, "OnDestroy" )
+	entity player
+
+	while (true)
+	{
+		table results = WaitSignal( trigger, "OnTrigger" )
+		if ( !IsValid( results.activator ) )
+			continue
+
+		player = expect entity( results.activator )
+		if ( player.IsPlayer() )
+			break
+	}
+
+	string text = trigger.HasKey( "msg_text" ) ? string( trigger.kv.msg_text ) : ""
+	string subtext = trigger.HasKey( "msg_subtext" ) ? string( trigger.kv.msg_subtext ) : ""
+	float duration = trigger.HasKey( "msg_duration" ) ? float( trigger.kv.msg_duration ) : 5.0
+
+	Dev_PrintMessage( player, text, subtext, duration )
+}
+
+void function TriggerQuickDeathCheckpointOnTrigger( entity trigger )
+{
+	EndSignal( trigger, "OnDestroy" )
+	entity linkedEnt = trigger.GetLinkEnt()
+	Assert( IsValid( linkedEnt ), "trigger_quickdeath_checkpoint at " + trigger.GetOrigin() + " must link to an info_target for player teleport location" )
+	EndSignal( linkedEnt, "OnDestroy" )
+
+	while ( true )
+	{
+		table results = trigger.WaitSignal( "OnTrigger" )
+		entity player = expect entity( results.activator )
+		if ( !IsValid( player ) || !player.IsPlayer() )
+			continue
+		if ( file.lastQuickDeathTrigger == trigger )
+			continue
+
+		player.p.quickDeathOrigin = linkedEnt.GetOrigin()
+		player.p.quickDeathAngles = linkedEnt.GetAngles()
+		file.lastQuickDeathTrigger = trigger
+
+		printt( "Quickdeath respawn location set to", linkedEnt.GetOrigin(), "and", linkedEnt.GetAngles() )
+
+		if ( trigger.HasKey( "trigger_once" ) && trigger.kv.trigger_once == "1" )
+			return
+	}
+}
+
+void function QuickDeathTrigger_SetIsPunitive( bool isPunitive )
+{
+	file.quickDeathTrigger_isPunitive = isPunitive
+}
+
+void function QuickDeathTrigger_SetRealDeathFadeToBlack( entity player, bool fadeToBlack )
+{
+	player.p.quickDeathRealDeathFadesToBlack = fadeToBlack
+}
+
+void function ClearQuickDeath()
+{
+	array<entity> playerArray = GetPlayerArray()
+	if ( playerArray.len() <= 0 )
+		return
+
+	entity player = playerArray[0]
+	player.p.quickDeathOrigin = null
+	player.p.quickDeathAngles = null
+}
+
+void function TriggerQuickDeathOnTrigger( entity trigger )
+{
+	EndSignal( trigger, "OnDestroy" )
+
+	while ( true )
+	{
+		table results = trigger.WaitSignal( "OnTrigger" )
+		entity player = expect entity( results.activator )
+		if ( !IsAlive( player ) || !player.IsPlayer() )
+			continue
+
+		if ( QuickDeathKillPlayer( player ) )
+		{
+			if ( player.p.quickDeathRealDeathFadesToBlack )
+				ScreenFade( player, 0,0,0, 255, 0.1, 999, FFADE_OUT | FFADE_PURGE )
+			wait 0.1
+			if ( IsAlive( player ) )
+				KillPlayer( player, eDamageSourceId.fall )
+			return
+		}
+
+		QuickDeathRestorePlayer( player, trigger )
+	}
+}
+
+void function StartQuickDeathTrigger( entity player )
+{
+	player.Signal( "StartedQuickDeathTrigger" )
+	player.p.doingQuickDeath = true
+}
+
+
+void function QuickDeathRestorePlayer( entity player, entity trigger )
+{
+	if ( !IsValid( player ) )
+		return
+
+	const float FADE_TIME = 0.1
+	Assert( FADE_TIME >= 0.1, "FADE_TIME has to be at least a server frame (0.1sec) so threads can catch \"QuickDeath\" signal" )
+
+	float fadeColorR
+	float fadeColorG
+	float fadeColorB
+	float viewBlockedTime
+	string deathSound = ""
+
+	// default
+	if ( file.quickDeathTrigger_isPunitive )
+	{
+		// blackscreen
+		fadeColorR 			= 0
+		fadeColorG 			= 0
+		fadeColorB 			= 0
+		viewBlockedTime 	= 2.2
+		deathSound 			= "Player_Death_Begin"
+	}
+	else
+	{
+		// white screen
+		fadeColorR 			= 255
+		fadeColorG 			= 255
+		fadeColorB 			= 255
+		viewBlockedTime 	= 0.3
+	}
+
+	Assert( viewBlockedTime > FADE_TIME * 2 )
+	float totalWait = FADE_TIME + viewBlockedTime
+	float endWait = Time() + totalWait
+
+	Signal( player, "QuickDeath" )
+
+	// fullscreen fade to color, hold, then fade away
+	ScreenFade( player, fadeColorR, fadeColorG, fadeColorB, 255, FADE_TIME, viewBlockedTime, FFADE_IN | FFADE_PURGE )
+
+	EmitSoundOnEntity( player, "quickdeath_fadeout_to_fadein" )
+
+	player.FreezeControlsOnServer()
+	StartQuickDeathTrigger( player )
+
+	if ( deathSound != "" )
+	{
+		// Play death sounds
+		EmitSoundOnEntity( player, deathSound )
+	}
+
+	if ( trigger.HasKey( "script_custom_sound" ) && trigger.kv.script_custom_sound != "" )
+		EmitSoundOnEntity( player, string( trigger.kv.script_custom_sound ) )
+
+	if ( file.quickDeathTrigger_isPunitive && trigger.HasKey( "DoGamepadRumble" ) && trigger.kv.DoGamepadRumble == "1" )
+		Remote_CallFunction_NonReplay( player, "ServerCallback_QuickDeathRumble" )
+
+	wait FADE_TIME
+
+	// Move the player back to last checkpoint location while screen is black
+	player.DisableWeapon()
+	player.SetOrigin( expect vector( player.p.quickDeathOrigin ) )
+	player.SetAngles( expect vector( player.p.quickDeathAngles ) )
+	player.SetVelocity( <0,0,0> )
+
+	Signal( player, "QuickDeathPlayerTeleported" )
+	wait ( endWait - Time() )
+
+	if ( !IsValid( player ) )
+		return
+
+	StopSoundOnEntity( player, "quickdeath_fadeout_to_fadein" )
+
+	// Restore player and play respawn sounds
+	player.UnfreezeControlsOnServer()
+	player.p.doingQuickDeath = false
+	player.EnableWeapon()
+
+	TryQuickDeathCheckPoint( player )
+
+	ResetLBSlot( player )
+
+	EmitSoundOnEntity( player, "Player_Death_PrespawnTransition" )
+
+	if ( deathSound != "" )
+		FadeOutSoundOnEntity( player, deathSound, 1.0 )
+}
+
+
+bool function QuickDeathKillPlayer( entity player )
+{
+	if ( RecentlyAttackedOrHasEnemies( player ) )
+		return true
+
+	if ( player.p.quickDeathOrigin == null || player.p.quickDeathAngles == null )
+		return true
+
+	return !SafeToSpawnAtOrigin( player, expect vector( player.p.quickDeathOrigin ) )
+}
+
+void function TryQuickDeathCheckPoint( entity player )
+{
+	if ( !Flag( "AutomaticCheckpointsEnabled" ) )
+		return
+
+	if ( !IsValid( file.lastQuickDeathTrigger ) )
+		return
+
+	// already saved here?
+	if ( file.quickDeathCheckPointTrigger == file.lastQuickDeathTrigger )
+		return
+
+	if ( !SafeForCheckPoint( player ) )
+		return
+
+	if ( RecentlyAttackedOrHasEnemies( player ) )
+		return
+
+	// only need to save the first time we revive here
+	file.quickDeathCheckPointTrigger = file.lastQuickDeathTrigger
+
+	CheckPointData checkPointData
+	checkPointData.searchTime = 0
+	CheckPoint( checkPointData )
+}
+
+bool function RecentlyAttackedOrHasEnemies( entity ent )
+{
+	// hit lately?
+	float lastDamageTime = GetLastDamageTime( ent )
+	if ( lastDamageTime != -1 && lastDamageTime < 5.0 )
+		return true
+
+	// any npcs dislike playeR?
+	array<entity> enemies = GetNPCArrayEx( "any", TEAM_IMC, ent.GetTeam(), ent.GetOrigin(), 1600 )
+
+	foreach ( enemy in enemies )
+	{
+		if ( enemy.GetEnemy() == ent )
+			return true
+	}
+
+	return false
+}
+
+
+void function ResetLBSlot( entity player )
+{
+	if ( player.GetOffhandWeapon( OFFHAND_SPECIAL ) != null )
+	{
+		entity weapon = player.GetOffhandWeapon( OFFHAND_SPECIAL )
+		string weaponName = weapon.GetWeaponClassName()
+		array<string> mods = weapon.GetMods()
+		player.TakeWeaponNow( weaponName )
+		player.GiveOffhandWeapon( weaponName, OFFHAND_SPECIAL, mods )
+	}
+
+	if ( IsCloaked( player ) )
+		DisableCloak( player, 0 )
+}
+
+void function CheckPointDisabledVolumeThink( entity trigger )
+{
+	trigger.ConnectOutput( "OnStartTouch", CheckPointDisabledVolumeStartTouch )
+	trigger.ConnectOutput( "OnEndTouch", CheckPointDisabledVolumeEndTouch )
+
+	trigger.EndSignal( "OnDestroy" )
+
+	OnThreadEnd(
+	function() : ()
+		{
+			printt( "checkpoint disabled volume destroyed" )
+
+			if ( GetScriptManagedEntArrayLen( file.checkPointDisabledTouchingVolumesIdx ) == 0 )
+			{
+				printt( "checkpoint disabled flag cleared" )
+				FlagClear( "CheckPointDisabled" )
+			}
+		}
+	)
+
+	WaitForever()
+}
+
+void function CheckPointDisabledVolumeStartTouch( entity trigger, entity ent, entity caller, var value )
+{
+	printt( "touched checkpoint disabled volume" )
+
+	array<entity> triggers = GetScriptManagedEntArray( file.checkPointDisabledTouchingVolumesIdx )
+
+	if ( triggers.contains(trigger) )
+		return
+
+	if ( triggers.len() == 0 )
+	{
+		printt( "checkpoint disabled flag set" )
+		FlagSet( "CheckPointDisabled" )
+	}
+
+	AddToScriptManagedEntArray( file.checkPointDisabledTouchingVolumesIdx, trigger )
+}
+
+void function CheckPointDisabledVolumeEndTouch( entity trigger, entity ent, entity caller, var value )
+{
+	printt( "left checkpoint disabled volume" )
+
+	array<entity> triggers = GetScriptManagedEntArray( file.checkPointDisabledTouchingVolumesIdx )
+
+	if ( !triggers.contains(trigger) )
+		return
+
+	RemoveFromScriptManagedEntArray( file.checkPointDisabledTouchingVolumesIdx, trigger )
+
+	if ( GetScriptManagedEntArrayLen( file.checkPointDisabledTouchingVolumesIdx ) == 0 )
+	{
+		printt( "checkpoint disabled flag cleared" )
+		FlagClear( "CheckPointDisabled" )
+	}
+}
+
+void function LevelTransitionTrigger( entity trigger )
+{
+	Assert( trigger.HasKey( "next_level" ), "trigger_level_transition at " + trigger.GetOrigin() + " must have next_level specified" )
+	string level = trigger.GetValueForKey( "next_level" )
+	string startPoint = ""
+	if ( trigger.HasKey( "next_level_startpoint" ) )
+		startPoint = trigger.GetValueForKey( "next_level_startpoint" )
+
+	WaitSignal( trigger, "OnTrigger" )
+
+	Coop_LoadMapFromStartPoint( level, startPoint )
+}
+
+void function TestDevSpawnPoint()
+{
+	string playerClass
+	entity player = GetPlayerArray()[0]
+	if ( player.IsTitan() )
+		playerClass = "titan"
+	else
+		playerClass = "pilot"
+
+	if ( file.spawnpointDevChecks[ playerClass ].len() == 0 )
+	{
+		printt( "No spawn points for " + playerClass + " in this map." )
+		return
+	}
+
+	file.spawnpointDevIndex %= file.spawnpointDevChecks[ playerClass ].len()
+	printt( "Testing spawn point for " + playerClass + " number " + file.spawnpointDevIndex + " at " + file.spawnpointDevChecks[ playerClass ][ file.spawnpointDevIndex ] )
+	player.SetOrigin( file.spawnpointDevChecks[ playerClass ][ file.spawnpointDevIndex ] )
+
+	file.spawnpointDevIndex++
+}

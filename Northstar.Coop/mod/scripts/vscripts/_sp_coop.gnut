@@ -1,0 +1,35 @@
+untyped
+
+global function FullyHidePlayers
+global function FullyShowPlayers
+global function IsPlayingSolo
+global function IsPlayingCoop
+
+void function FullyHidePlayers()
+{
+    foreach( entity player in GetPlayerArray() )
+    {
+        player.MakeInvisible()
+    }
+}
+
+void function FullyShowPlayers()
+{
+    foreach( entity player in GetPlayerArray() )
+    {
+        player.MakeVisible()
+    }
+}
+
+bool function IsPlayingSolo()
+{
+    return GetPlayerArray().len() <= 1
+}
+
+bool function IsPlayingCoop()
+{
+    return GetPlayerArray().len() > 1
+}
+
+// funny cat video
+// https://www.youtube.com/watch?v=kiI0apojcCE
