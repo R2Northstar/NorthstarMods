@@ -6,7 +6,6 @@ global function OnServerSelected_Threaded
 
 global function AddConnectToServerCallback
 global function RemoveConnectToServerCallback
-global function TriggerConnectToServerCallbacks
 
 // Stop peeking
 
