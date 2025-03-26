@@ -995,6 +995,26 @@ void function OnServerSelected_Threaded( string password = "" )
 		return
 	}
 
+	if ( !NSWasAuthSuccessful() )
+	{
+		string reason = NSGetAuthFailReason()
+
+		DialogData dialogData
+		dialogData.header = "#ERROR"
+		dialogData.message = reason
+		dialogData.image = $"ui/menu/common/dialog_error"
+
+		#if PC_PROG
+			AddDialogButton( dialogData, "#DISMISS" )
+
+			AddDialogFooter( dialogData, "#A_BUTTON_SELECT" )
+		#endif // PC_PROG
+		AddDialogFooter( dialogData, "#B_BUTTON_DISMISS_RUI" )
+
+		OpenDialog( dialogData )
+		return
+	}
+
 	// Count mods that have been successfully downloaded
 	bool autoDownloadAllowed = GetConVarBool( "allow_mod_auto_download" )
 	int downloadedMods = 0;
@@ -1108,95 +1128,74 @@ void function ThreadedAuthAndConnectToServer( bool modsChanged = false )
 {
 	file.cancelConnection = false
 
-	if ( NSWasAuthSuccessful() )
+	// disable all RequiredOnClient mods that are not required by the server and are currently enabled
+	foreach ( ModInfo mod in NSGetModsInformation() )
 	{
-		// disable all RequiredOnClient mods that are not required by the server and are currently enabled
-		foreach ( ModInfo mod in NSGetModsInformation() )
-		{
-			string modName = mod.name
-			string modVersion = mod.version
+		string modName = mod.name
+		string modVersion = mod.version
 
-			if ( mod.requiredOnClient && mod.enabled )
+		if ( mod.requiredOnClient && mod.enabled )
+		{
+			// find the mod name in the list of server required mods
+			bool found = false
+			foreach ( RequiredModInfo mod in file.lastSelectedServer.requiredMods )
 			{
-				// find the mod name in the list of server required mods
-				bool found = false
-				foreach ( RequiredModInfo mod in file.lastSelectedServer.requiredMods )
+				// this tolerates a version difference for requiredOnClient core mods (only Northstar.Custom for now)
+				if (mod.name == modName && ( IsCoreMod( modName ) || mod.version == modVersion ))
 				{
-					// this tolerates a version difference for requiredOnClient core mods (only Northstar.Custom for now)
-					if (mod.name == modName && ( IsCoreMod( modName ) || mod.version == modVersion ))
-					{
-						found = true
-						print(format("\"%s\" (v%s) is required and already enabled.", modName, modVersion))
-						break
-					}
+					found = true
+					print(format("\"%s\" (v%s) is required and already enabled.", modName, modVersion))
+					break
 				}
-				// if we didn't find the mod name, disable the mod
-				if (!found)
-				{
-					modsChanged = true
-					NSSetModEnabled( modName, false )
-					print(format("Disabled \"%s\" (v%s) since it's not required on server.", modName, modVersion))
-				}
+			}
+			// if we didn't find the mod name, disable the mod
+			if (!found)
+			{
+				modsChanged = true
+				NSSetModEnabled( modName, false )
+				print(format("Disabled \"%s\" (v%s) since it's not required on server.", modName, modVersion))
+			}
+		}
+	}
+
+	// enable all RequiredOnClient mods that are required by the server and are currently disabled
+	foreach ( RequiredModInfo mod in file.lastSelectedServer.requiredMods )
+	{
+		string modName = mod.name
+		string modVersion = mod.version
+		array<ModInfo> localModInfos = NSGetModInformation( modName )
+
+		// Tolerate core mods (only Northstar.Custom for now) having a different version than server
+		if ( IsCoreMod(modName) )
+		{
+			if ( !localModInfos[0].enabled )
+			{
+				modsChanged = true
+				NSSetModEnabled( modName, true )
+				print(format("Enabled \"%s\" (v%s) to join server.", modName, localModInfos[0].version))
 			}
 		}
 
-		// enable all RequiredOnClient mods that are required by the server and are currently disabled
-		foreach ( RequiredModInfo mod in file.lastSelectedServer.requiredMods )
+		else
 		{
-			string modName = mod.name
-			string modVersion = mod.version
-			array<ModInfo> localModInfos = NSGetModInformation( modName )
-
-			// Tolerate core mods (only Northstar.Custom for now) having a different version than server
-			if ( IsCoreMod(modName) )
+			foreach( localMod in localModInfos )
 			{
-				if ( !localModInfos[0].enabled )
+				if ( localMod.version == mod.version )
 				{
 					modsChanged = true
-					NSSetModEnabled( modName, true )
-					print(format("Enabled \"%s\" (v%s) to join server.", modName, localModInfos[0].version))
-				}
-			}
-
-			else
-			{
-				foreach( localMod in localModInfos )
-				{
-					if ( localMod.version == mod.version )
-					{
-						modsChanged = true
-						NSSetModEnabled( mod.name, true )
-						print(format("Enabled \"%s\" (v%s) to join server.", modName, modVersion))
-						break
-					}
+					NSSetModEnabled( mod.name, true )
+					print(format("Enabled \"%s\" (v%s) to join server.", modName, modVersion))
+					break
 				}
 			}
 		}
-
-		// only actually reload if we need to since the uiscript reset on reload lags hard
-		if ( modsChanged )
-			ReloadMods()
-
-		NSConnectToAuthedServer()
 	}
-	else
-	{
-		string reason = NSGetAuthFailReason()
 
-		DialogData dialogData
-		dialogData.header = "#ERROR"
-		dialogData.message = reason
-		dialogData.image = $"ui/menu/common/dialog_error"
+	// only actually reload if we need to since the uiscript reset on reload lags hard
+	if ( modsChanged )
+		ReloadMods()
 
-		#if PC_PROG
-			AddDialogButton( dialogData, "#DISMISS" )
-
-			AddDialogFooter( dialogData, "#A_BUTTON_SELECT" )
-		#endif // PC_PROG
-		AddDialogFooter( dialogData, "#B_BUTTON_DISMISS_RUI" )
-
-		OpenDialog( dialogData )
-	}
+	NSConnectToAuthedServer()
 }
 
 //////////////////////////////////////
