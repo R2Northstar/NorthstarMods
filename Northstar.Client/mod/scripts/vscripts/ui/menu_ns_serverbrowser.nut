@@ -967,6 +967,7 @@ void function OnServerSelected_Threaded( string password = "" )
 	{
 		if ( password == "" )
 		{
+			OnCloseServerBrowserMenu()
 			AdvanceMenu( GetMenu( "ConnectWithPasswordMenu" ) )
 			return
 		}
