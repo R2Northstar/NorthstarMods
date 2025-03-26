@@ -976,7 +976,6 @@ void function OnServerSelected_Threaded( string password = "" )
 			return
 
 		NSTryAuthWithServer( file.lastSelectedServer.index, password )
-
 		ToggleConnectingHUD( true )
 	}
 
@@ -1120,14 +1119,12 @@ void function OnServerSelected_Threaded( string password = "" )
 	}
 
 	TriggerConnectToServerCallbacks()
-	thread ThreadedAuthAndConnectToServer( downloadedMods != 0 )
+	ConnectToServer( downloadedMods != 0 )
 }
 
 
-void function ThreadedAuthAndConnectToServer( bool modsChanged = false )
+void function ConnectToServer( bool modsChanged = false )
 {
-	file.cancelConnection = false
-
 	// disable all RequiredOnClient mods that are not required by the server and are currently enabled
 	foreach ( ModInfo mod in NSGetModsInformation() )
 	{
