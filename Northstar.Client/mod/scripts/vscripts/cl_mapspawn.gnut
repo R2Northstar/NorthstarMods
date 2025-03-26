@@ -367,4 +367,3 @@ function PerfInitLabels()
 function ClientCodeCallback_OnDropShipCinematicEventStateChanged()
 {
 }
-
