@@ -971,13 +971,12 @@ void function OnServerSelected_Threaded( string password = "" )
 			AdvanceMenu( GetMenu( "ConnectWithPasswordMenu" ) )
 			return
 		}
-
-		if ( NSIsAuthenticatingWithServer() )
-			return
-
-		NSTryAuthWithServer( file.lastSelectedServer.index, password )
-		ToggleConnectingHUD( true )
 	}
+
+	if ( NSIsAuthenticatingWithServer() )
+		return
+	NSTryAuthWithServer( file.lastSelectedServer.index, password )
+	ToggleConnectingHUD( true )
 
 	while ( NSIsAuthenticatingWithServer() && !file.cancelConnection )
 	{
