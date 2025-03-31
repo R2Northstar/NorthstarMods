@@ -62,12 +62,13 @@ void function AiGameModes_SpawnDropShip( entity node, int team, int count, void 
 				guy.TakeWeapon( weapon.GetWeaponClassName() )
 		}
 		guy.SetBehaviorSelector( "behavior_sp_soldier" )
+		//guy.GiveWeapon( "mp_weapon_defender", ["longNPCCharge"] )
 		guy.AssaultSetFightRadius( 800 )
 		guy.EnableNPCFlag( NPC_ALLOW_PATROL | NPC_ALLOW_INVESTIGATE | NPC_ALLOW_HAND_SIGNALS | NPC_ALLOW_FLEE | NPC_NEW_ENEMY_FROM_SOUND | NPC_STAY_CLOSE_TO_SQUAD )
 	}
 
-	if ( squadHandler != null )
-		thread squadHandler( guys )
+	//if ( squadHandler != null )
+	//	thread squadHandler( guys )
 	
 	ToggleSpawnNodeInUse( node, false )
 }
@@ -117,8 +118,8 @@ void function AiGameModes_SpawnDropPod( entity node, int team, string content /*
 	
 	ActivateFireteamDropPod( pod, guys )
 	// start searching for enemies
-	if ( squadHandler != null )
-		thread squadHandler( guys )
+	//if ( squadHandler != null )
+	//	thread squadHandler( guys )
 	
 	ToggleSpawnNodeInUse( node, false )
 }
@@ -155,8 +156,8 @@ void function AiGameModes_SpawnReaper( entity node, int team, string aiSettings 
 	ShowName( reaper ) // show name again after drop
 	reaper.EnableNPCFlag( NPC_ALLOW_PATROL | NPC_ALLOW_INVESTIGATE | NPC_NEW_ENEMY_FROM_SOUND | NPCMF_WALK_NONCOMBAT )
 	
-	if ( reaperHandler != null )
-		thread reaperHandler( reaper )
+	//if ( reaperHandler != null )
+	//	thread reaperHandler( reaper )
 	
 	ToggleSpawnNodeInUse( node, false )
 }
@@ -227,8 +228,8 @@ void function AiGameModes_SpawnTitan( entity node, int team, string setFile, str
 	
 	DispatchSpawn( titan )
 	WaitTillHotDropComplete( titan )
-	if ( titanHandler != null )
-		thread titanHandler( titan )
+	//if ( titanHandler != null )
+	//	thread titanHandler( titan )
 	
 	ToggleSpawnNodeInUse( node, false )
 }

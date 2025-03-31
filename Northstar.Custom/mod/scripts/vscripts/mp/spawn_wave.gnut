@@ -196,8 +196,19 @@ void function eventIterator_FrontierDefense()
 			if ( currentEvent.eventFunction != null )
 				thread currentEvent.eventFunction( currentEvent )
 			
-			if ( currentEvent.waitTime > 0 )
-				wait currentEvent.waitTime
+			if ( !GetConVarBool( "ns_fd_constant_ai_spawn" ) )
+			{
+				if ( currentEvent.waitTime > 0 )
+					wait currentEvent.waitTime
+			}
+			else
+			{
+				if ( currentEvent.waitTime > 0 )
+					wait 0.5
+
+				while ( spawnedNPCs.len() > AI_HARD_LIMIT ) // Modders, this already works on the maximum acceptable limit the engine handles before breaking up and crashing, do not change it!
+					WaitFrame()
+			}
 		}
 
 		else
@@ -242,8 +253,19 @@ void function eventIterator_SubGroup( int waveIndex, string subGroupName )
 			if ( currentEvent.eventFunction != null )
 				thread currentEvent.eventFunction( currentEvent )
 			
-			if ( currentEvent.waitTime > 0 )
-				wait currentEvent.waitTime
+			if ( !GetConVarBool( "ns_fd_constant_ai_spawn" ) )
+			{
+				if ( currentEvent.waitTime > 0 )
+					wait currentEvent.waitTime
+			}
+			else
+			{
+				if ( currentEvent.waitTime > 0 )
+					wait 0.5
+
+				while ( spawnedNPCs.len() > AI_HARD_LIMIT ) // Do not change, same reason as above function!
+					WaitFrame()
+			}
 		}
 
 		else
@@ -2310,11 +2332,11 @@ void function SetNukeTitanMoveStance( WaveSpawnEvent ornull spawnEvent )
 
 void function AnnounceEliteTitansToPlayers( entity player )
 {
+	player.EndSignal( "OnDestroy" )
 	#if SERVER
 	NSSendLargeMessageToPlayer( player, "Elite Titan", "Prime white chassis. Huge HP, huge shield, greater aiming, moves faster and can use Core. Drops battery on death.", 60, "rui/callsigns/callsign_17_col" )
 	wait 10
-	IsValidPlayer( player )
-		NSSendInfoMessageToPlayer( player, "WARNING: Elite Titans can execute players!" )
+	NSSendInfoMessageToPlayer( player, "WARNING: Elite Titans can execute players!" )
 	#endif
 }
 
@@ -2331,7 +2353,7 @@ void function AnnounceTitanfallBlock()
 
 void function waitUntilLessThanAmountAliveEvent( WaveSpawnEvent ornull spawnEvent )
 {
-	if ( !spawnEvent )
+	if ( !spawnEvent || GetConVarBool( "ns_fd_constant_ai_spawn" ) )
 		return
 
 	expect WaveSpawnEvent( spawnEvent )

@@ -41,7 +41,10 @@ void function SvLoadoutsMP_Init()
 		AddClientCommandCallback( "SetFactionChoicePersistenceSlot", ClientCommandCallback_SetFactionChoicePersistenceSlot )
 	}
 	else
+	{
 		AddClientCommandCallback( "InGameMPMenuClosed", ClientCommandCallback_LoadoutMenuClosed )
+		AddClientCommandCallback( "LoadoutMenuClosed", ClientCommandCallback_LoadoutMenuClosed )
+	}
 }
 
 void function SetLoadoutGracePeriodEnabled( bool enabled )
@@ -280,7 +283,7 @@ bool function ClientCommandCallback_SetFactionChoicePersistenceSlot( entity play
 
 bool function ClientCommandCallback_LoadoutMenuClosed( entity player, array<string> args )
 {
-	if ( args[0] == "1" || args[1] == "1" )
+	if ( !args.len() || args[0] == "1" || args[1] == "1" )
 		TryGivePilotLoadoutForGracePeriod( player )
 	
 	return true
@@ -312,7 +315,7 @@ void function TryGivePilotLoadoutForGracePeriod( entity player )
 		float respawnTime = expect float( player.s.respawnTime )
 		respawnTime += gracePeriodDuration
 		
-		if ( respawnTime >= Time() && player.s.noFiredWeapon || svGlobal.isInPilotGracePeriod || GetGameState() < eGameState.Playing || player.p.usingLoadoutCrate || file.allowChangeLoadoutFunc != null && file.allowChangeLoadoutFunc( player ) )
+		if ( respawnTime >= Time() && player.s.noFiredWeapon || svGlobal.isInPilotGracePeriod || GetGameState() < eGameState.Playing || player.s.usedLoadoutCrate || player.p.usingLoadoutCrate || file.allowChangeLoadoutFunc != null && file.allowChangeLoadoutFunc( player ) )
 		{
 			if ( player.IsTitan() && !GetDoomedState( player ) )
 			{
@@ -339,6 +342,7 @@ void function TryGivePilotLoadoutForGracePeriod( entity player )
 			}
 			
 			player.p.usingLoadoutCrate = false
+			player.s.usedLoadoutCrate = false
 		}
 		else
 		{

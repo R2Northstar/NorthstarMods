@@ -65,6 +65,10 @@
 			"DefaultValue": "0"
 		},
 		{
+			"Name": "ns_fd_constant_ai_spawn",
+			"DefaultValue": "0"
+		},
+		{
 			"Name": "embark_style",
 			"DefaultValue": "0",
 			"Flags": "ARCHIVE_PLAYERPROFILE|USERINFO"
