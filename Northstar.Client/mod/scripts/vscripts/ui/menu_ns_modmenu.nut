@@ -13,7 +13,7 @@ struct panelContent {
 enum filterShow {
 	ALL = 0,
 	ONLY_ENABLED = 1,
-	ONLY_DISABLED = 2
+	ONLY_DISABLED = 2,
 	ONLY_NOT_REQUIRED = 3,
 	ONLY_REQUIRED = 4
 }
