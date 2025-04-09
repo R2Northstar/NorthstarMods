@@ -248,7 +248,7 @@ bool function ClientCommand_PurchaseBoost( entity player, array<string> args )
 	if ( !BoostStoreOpen() )
 		return true
 
-	if ( player.IsPhaseShifted() || !IsAlive( player ) || player.IsTitan() )
+	if ( player.IsPhaseShifted() || !IsAlive( player ) || player.IsTitan() || !IsPlayerNearbyAnyBoostStore( player ) )
 		return true
 
 	array<BoostStoreData> availableBoosts = GetAvailableBoosts()
@@ -295,7 +295,7 @@ bool function ClientCommand_Deposit( entity player, array<string> args )
 	if ( !BoostStoreOpen() )
 		return true
 	
-	if ( player.IsPhaseShifted() || !IsAlive( player ) || player.IsTitan() )
+	if ( player.IsPhaseShifted() || !IsAlive( player ) || player.IsTitan() || !IsPlayerNearbyAnyBoostStore( player ) )
 		return true
 
 	int depositAmount = minint( file.playerBonusData[ player ], BOOST_STORE_DEFAULT_EXCHANGE )
@@ -317,7 +317,7 @@ bool function ClientCommand_Withdraw( entity player, array<string> args )
 	if ( !BoostStoreOpen() )
 		return true
 	
-	if ( player.IsPhaseShifted() || !IsAlive( player ) || player.IsTitan() )
+	if ( player.IsPhaseShifted() || !IsAlive( player ) || player.IsTitan() || !IsPlayerNearbyAnyBoostStore( player ) )
 		return true
 
 	if ( GetPlayerMoney( player ) >= MAX_MONEY )
@@ -544,14 +544,7 @@ void function OpenBoostStoreMenu( entity player )
 	if ( !BoostStoreEnabled() )
 		return
 	
-	bool playerNearStore = false
-	foreach ( entity crate in GetBoostStores() )
-	{
-		if ( Distance( player.GetOrigin(), crate.GetOrigin() ) < BOOST_STORE_TRIGGER_RADIUS )
-			playerNearStore = true
-	}
-	
-	if ( !playerNearStore )
+	if ( !IsPlayerNearbyAnyBoostStore( player ) )
 		return
 
 	CalculatePlayerTurretCount( player )
@@ -560,6 +553,18 @@ void function OpenBoostStoreMenu( entity player )
 	Remote_CallFunction_UI( player, "ServerCallback_UpdatePlayerHasBattery", PlayerHasBattery( player ) )
 	Remote_CallFunction_UI( player, "ServerCallback_UpdateAmpedWeaponState", PlayerHasAmpedWeapons( player ) )
 	Remote_CallFunction_UI( player, "ServerCallback_OpenBoostStore" )
+}
+
+bool function IsPlayerNearbyAnyBoostStore( entity player )
+{
+	bool playerNearStore = false
+	foreach ( entity crate in GetBoostStores() )
+	{
+		if ( Distance( player.GetOrigin(), crate.GetOrigin() ) < BOOST_STORE_TRIGGER_RADIUS )
+			playerNearStore = true
+	}
+
+	return playerNearStore
 }
 #endif
 
