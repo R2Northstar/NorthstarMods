@@ -56,6 +56,7 @@ Press Yes if you agree to this. This choice can be changed in the mods menu at a
 		"timelimit" "Time Limit"
 		"roundtimelimit" "Time Limit (round-based)"
 		"respawnprotection" "Respawn Protection Time"
+		"late_join_respawn" "Enable late join respawn"
 
 		"pilot_health_multiplier" "Health multiplier"
 		"respawn_delay" "Respawn Delay"
