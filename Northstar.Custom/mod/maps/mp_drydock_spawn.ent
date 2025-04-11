@@ -8295,7 +8295,7 @@ ENTITIES01
 "gamemode_at" "0"
 "gamemode_ctf_comp" "1"
 "angles" "0 -90 0"
-"origin" "-144 3911 232"
+"origin" "-144 3900 232"
 "classname" "info_spawnpoint_human"
 }
 {
@@ -8321,7 +8321,7 @@ ENTITIES01
 "gamemode_at" "0"
 "gamemode_ctf_comp" "1"
 "angles" "0 0 0"
-"origin" "643 -3141 158"
+"origin" "-495 -556 410"
 "classname" "info_spawnpoint_human"
 }
 {
@@ -8347,7 +8347,7 @@ ENTITIES01
 "gamemode_at" "0"
 "gamemode_ctf_comp" "1"
 "angles" "0 180 0"
-"origin" "496 -3141 175"
+"origin" "201 -1728 416"
 "classname" "info_spawnpoint_human"
 }
 {
@@ -9048,8 +9048,8 @@ ENTITIES01
 "gamemode_cp" "0"
 "gamemode_at" "0"
 "gamemode_ctf_comp" "1"
-"angles" "0 45 0"
-"origin" "62 -3828 143"
+"angles" "0 0 0"
+"origin" "-88 -1573 416"
 "classname" "info_spawnpoint_human"
 }
 {
@@ -9074,8 +9074,8 @@ ENTITIES01
 "gamemode_cp" "0"
 "gamemode_at" "0"
 "gamemode_ctf_comp" "1"
-"angles" "0 135 0"
-"origin" "-148 -3828 143"
+"angles" "0 0 0"
+"origin" "-947 -2370 209"
 "classname" "info_spawnpoint_human"
 }
 {
@@ -9126,8 +9126,8 @@ ENTITIES01
 "gamemode_cp" "0"
 "gamemode_at" "0"
 "gamemode_ctf_comp" "1"
-"angles" "0 134 0"
-"origin" "968 1173 328"
+"angles" "0 0 0"
+"origin" "1267 1028 256"
 "classname" "info_spawnpoint_human"
 }
 {
@@ -9439,7 +9439,7 @@ ENTITIES01
 "gamemode_at" "0"
 "gamemode_ctf_comp" "1"
 "angles" "0 -60 0"
-"origin" "-419 3807 232"
+"origin" "-408 3813 232"
 "classname" "info_spawnpoint_human"
 }
 {
@@ -9465,7 +9465,7 @@ ENTITIES01
 "gamemode_at" "0"
 "gamemode_ctf_comp" "1"
 "angles" "0 -90 0"
-"origin" "-210 3911 232"
+"origin" "-210 3900 232"
 "classname" "info_spawnpoint_human"
 }
 {

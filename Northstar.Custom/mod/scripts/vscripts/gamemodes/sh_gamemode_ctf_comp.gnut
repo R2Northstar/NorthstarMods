@@ -93,7 +93,10 @@ void function InitCTFCompSpecificSettings()
 		if ( GetMapName() == "mp_drydock" )
 			SetSpawnpointGamemodeOverride( GAMEMODE_CTF_COMP )
 		if ( GetMapName() == "mp_eden" )
+		{
+			AddCallback_EntitiesDidLoad( AddEdenWalls )
 			SetSpawnpointGamemodeOverride( GAMEMODE_CTF_COMP )
+		}
 		if ( GetMapName() == "mp_black_water_canal" )
 			AddCallback_EntitiesDidLoad( AddBWCOOBs )
 		if ( GetMapName() == "mp_thaw" )
@@ -241,16 +244,6 @@ void function AddColonyOOBs()
 	AddCCTFCustomProp( $"models/imc_base/cargo_container_imc_01_blue.mdl", < 1210, 3021, 92 >, < 0, 90, 0 > )
 	AddCCTFCustomProp( $"models/containers/cargo_container_white_separate.mdl", < 1311, 3072, 102 >, < 0, 0, 0 > )
 	
-	AddCCTFCustomProp( $"models/imc_base/cargo_container_imc_01_white_open.mdl", < -188, 4469, 6 >, < 0, 0, 0 > )
-	AddCCTFCustomProp( $"models/imc_base/cargo_container_imc_01_white_open.mdl", < -310, 4469, 6 >, < 0, 0, 0 > )
-	AddCCTFCustomProp( $"models/imc_base/cargo_container_imc_01_white_open.mdl", < -431, 4469, 6 >, < 0, 0, 0 > )
-	AddCCTFCustomProp( $"models/imc_base/cargo_container_imc_01_red.mdl", < -432, 4469, 104 >, < 0, 0, 0 > )
-	AddCCTFCustomProp( $"models/imc_base/cargo_container_imc_01_red.mdl", < -309, 4469, 104 >, < 0, 0, 0 > )
-	AddCCTFCustomProp( $"models/imc_base/cargo_container_imc_01_blue.mdl", < -188, 4469, 104 >, < 0, 0, 0 > )
-	AddCCTFCustomProp( $"models/imc_base/cargo_container_imc_01_blue.mdl", < -309, 4566, -5 >, < 0, 0, 0 > )
-	AddCCTFCustomProp( $"models/containers/cargo_container_white_separate.mdl", < -210, 4473, 203 >, < 0, 90, 0 > )
-	AddCCTFCustomProp( $"models/containers/cargo_container_white_separate.mdl", < -172, 4569, -5 >, < 0, 90, 0 > )
-	
 	AddCCTFCustomProp( $"models/imc_base/cargo_container_imc_01_blue.mdl", < -569, -1010, 159 >, < 0, 90, 0 > )
 	AddCCTFCustomProp( $"models/imc_base/cargo_container_imc_01_red.mdl", < -569, -1137, 159 >, < 0, 90, 0 > )
 	AddCCTFCustomProp( $"models/imc_base/cargo_container_imc_01_red.mdl", < -569, -1010, 257 >, < 0, 90, 0 > )
@@ -279,6 +272,18 @@ void function AddColonyOOBs()
 	CreateCCTFZipline( < -1509, 524, 621 >, < -1721, -1880, 455 > )
 	CreateCCTFZipline( < 2746, 845, 580 >, < 2643, 3286, 291 > )
 	*/
+}
+
+void function AddEdenWalls()
+{
+	AddCCTFCustomProp( $"models/kodai_live_fire/live_fire_wall_01.mdl", < 2016, 2112, 59 >, < 0, 0, 0 > )
+	AddCCTFCustomProp( $"models/kodai_live_fire/live_fire_wall_01.mdl", < 2557, 2359, 62 >, < 0, 0, 0 > )
+
+	AddCCTFCustomProp( $"models/kodai_live_fire/live_fire_wall_01.mdl", < 2199, 2942, 120 >, < 0, 0, 0 > )
+	AddCCTFCustomProp( $"models/kodai_live_fire/live_fire_wall_01.mdl", < 2199, 2766, 120 >, < 0, 0, 0 > )
+
+	AddCCTFCustomProp( $"models/kodai_live_fire/live_fire_wall_01.mdl", < 4267, 666, 62 >, < 0, -20, 0 > )
+	AddCCTFCustomProp( $"models/kodai_live_fire/live_fire_wall_01.mdl", < 4329, 835, 62 >, < 0, -20, 0 > )
 }
 
 void function RepositionExoplanetFlags()
