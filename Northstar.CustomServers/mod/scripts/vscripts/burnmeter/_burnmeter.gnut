@@ -311,10 +311,10 @@ void function PlayerUsesAmpedWeaponsBurncard( entity player )
 void function PlayerUsesAmpedWeaponsBurncardThreaded( entity player )
 {
 	player.Signal( "StopAmpedWeapons" ) 
-	player.EndSignal("StopAmpedWeapons")
+	player.EndSignal( "StopAmpedWeapons" )
 	
 	array<entity> weapons = player.GetMainWeapons()
-	weapons.extend( player.GetOffhandWeapons() ) //Yes grenades gets amped too because Satchels definetely chomps Titan HP with amped weapons active
+	weapons.extend( player.GetOffhandWeapons() )
 	foreach ( entity weapon in weapons )
 	{
 		if( weapon.GetWeaponPrimaryClipCountMax() > 0 )
@@ -364,15 +364,24 @@ void function RemoveAmpedWeaponsForTitanPilot( entity player, entity titan )
 
 void function PlayerUsesSmartPistolBurncard( entity player )
 {
-	// take secondary weapon
-	array<entity> sidearms = player.GetMainWeapons()
-	if ( sidearms.len() > 1 )
-		player.TakeWeaponNow( sidearms[ 1 ].GetWeaponClassName() ) // take secondary weapon
-
-	player.GiveWeapon( "mp_weapon_smart_pistol" )
+	array<entity> weapons = player.GetMainWeapons()
+	bool gaveSmartPistol = false
+	foreach ( entity weaponEnt in weapons )
+	{
+		if ( weaponEnt.GetWeaponInfoFileKeyField( "menu_category" ) != "pistol" )
+			continue
+		
+		player.TakeWeaponNow( weaponEnt.GetWeaponClassName() )
+		player.GiveWeapon( "mp_weapon_smart_pistol" )
+		gaveSmartPistol = true
+	}
+	if ( !gaveSmartPistol ) // Failsafe in case player previously replaced their sidearm with any primary or AT
+	{
+		if ( weapons.len() > 1 )
+			player.TakeWeaponNow( weapons[1].GetWeaponClassName() )
+		player.GiveWeapon( "mp_weapon_smart_pistol" )
+	}
 	player.SetActiveWeaponByName( "mp_weapon_smart_pistol" )
-
-	// do we need to track the player losing smart pistol, then give their old weapon back? idk not implementing for now, check later
 }
 
 void function PlayerUsesRadarJammerBurncard( entity player )
@@ -547,7 +556,6 @@ void function PutPhaseRewindedPlayerInSafeSpot( entity player, int severity )
 		return
 
 	return PutPhaseRewindedPlayerInSafeSpot( player, severity + 5 )
-
 }
 
 void function PlayerUsesNukeTitanBurncard( entity player )
@@ -590,7 +598,7 @@ void function PlayerUsesPermanentAmpedWeaponsBurncard( entity player )
 	player.s.hasPermenantAmpedWeapons = true
 
 	array<entity> weapons = player.GetMainWeapons()
-	weapons.extend( player.GetOffhandWeapons() ) // idk? unsure of vanilla behaviour here
+	weapons.extend( player.GetOffhandWeapons() )
 	foreach ( entity weapon in weapons )
 	{
 		weapon.RemoveMod( "silencer" ) // both this and the burnmod will override firing fx, if a second one overrides this we crash

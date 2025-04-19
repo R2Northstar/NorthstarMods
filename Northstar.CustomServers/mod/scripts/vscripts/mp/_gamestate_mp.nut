@@ -981,7 +981,7 @@ void function OnPlayerKilled( entity victim, entity attacker, var damageInfo )
 
 void function OnTitanKilled( entity victim, var damageInfo )
 {
-	if ( !GamePlayingOrSuddenDeath() )
+	if ( !GamePlayingOrSuddenDeath() || !IsValid( victim.GetBossPlayer() ) )
 		return
 
 	entity attacker = DamageInfo_GetAttacker( damageInfo )

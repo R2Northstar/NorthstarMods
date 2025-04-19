@@ -348,6 +348,7 @@ void function CodeCallback_OnPlayerRespawned( entity player )
 	if ( player.IsDissolving() )
 		player.DissolveStop()
 	
+	ClearPlayerAnimViewEntity( player )
 	player.Signal( "OnRespawned" ) // kill any postdeaththreads that could be running
 	Loadouts_TryGivePilotLoadout( player )
 	

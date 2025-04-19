@@ -129,7 +129,10 @@ void function PlayerBecomesSpectator( entity player )
 	OnThreadEnd( function() : ( player ) 
 	{
 		if ( IsValid( player ) )
+		{
 			player.StopObserverMode()
+			HACKCleanupStaticObserverStuff( player )
+		}
 	})
 	
 	// keeps track of the most recent func this player has completed
@@ -191,6 +194,7 @@ void function SpectatorFunc_Default( entity player )
 			
 			entity target = targets[ targetIndex ]
 			
+			player.ClearReplayDelay()
 			player.StopObserverMode()
 			if ( player.IsWatchingSpecReplay() )
 				player.SetSpecReplayDelay( 0.0 ) // clear spectator replay
@@ -201,9 +205,7 @@ void function SpectatorFunc_Default( entity player )
 				{
 					player.SetObserverTarget( target )
 					player.StartObserverMode( OBS_MODE_CHASE )
-					// the delay of 0.1 seems to fix the spec_mode command not working
-					// when using the keybind
-					player.SetSpecReplayDelay( 0.1 )
+					player.SetSpecReplayDelay( 0.1 ) // Spectators uses the Replay Buffer to watch others, so it can't be Realtime
 				}
 				catch ( ex ) { }
 			}
@@ -226,7 +228,7 @@ void function SpectatorFunc_Default( entity player )
 
 bool function ClientCommandCallback_spec_next( entity player, array<string> args )
 {
-	if ( player.GetObserverMode() == OBS_MODE_CHASE || player.GetObserverMode() == OBS_MODE_STATIC || player.GetObserverMode() == OBS_MODE_IN_EYE )
+	if ( player.GetObserverMode() == OBS_MODE_CHASE || player.GetObserverMode() == OBS_MODE_STATIC || player.GetObserverMode() == OBS_MODE_IN_EYE || player.GetObserverMode() == OBS_MODE_ROAMING )
 		player.Signal( "ObserverTargetChanged", { next = true } )
 		
 	return true
@@ -234,7 +236,7 @@ bool function ClientCommandCallback_spec_next( entity player, array<string> args
 
 bool function ClientCommandCallback_spec_prev( entity player, array<string> args )
 {
-	if ( player.GetObserverMode() == OBS_MODE_CHASE || player.GetObserverMode() == OBS_MODE_STATIC || player.GetObserverMode() == OBS_MODE_IN_EYE )
+	if ( player.GetObserverMode() == OBS_MODE_CHASE || player.GetObserverMode() == OBS_MODE_STATIC || player.GetObserverMode() == OBS_MODE_IN_EYE || player.GetObserverMode() == OBS_MODE_ROAMING )
 		player.Signal( "ObserverTargetChanged", { next = false } )
 		
 	return true
@@ -253,9 +255,6 @@ bool function ClientCommandCallback_spec_mode( entity player, array<string> args
 	else if ( player.GetObserverMode() == OBS_MODE_IN_EYE )
 	{	
 		// set to third person spectate
-
-		// the delay of 0.1 seems to fix the spec_mode command not working
-		// when using the keybind
 		player.SetSpecReplayDelay( 0.1 )
 		player.StartObserverMode( OBS_MODE_CHASE )
 	}
