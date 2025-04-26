@@ -713,6 +713,8 @@ void function ReloadMods()
 
 	foreach ( dir in materialPaths )
 	{
+		// Ex: "mat_reloadmaterial models/" will reload every vtf and vmt under the "models" path
+		// The reason this is done this way, is because Respawn removed "mat_reloadallmaterials" for some reason
 		ClientCommand( "mat_reloadmaterial " + dir + "/" )
 	}
 
