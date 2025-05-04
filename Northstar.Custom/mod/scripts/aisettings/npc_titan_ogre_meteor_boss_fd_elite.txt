@@ -1,13 +1,13 @@
 #base "npc_titan_ogre_meteor.txt"
 npc_titan_ogre_meteor_boss_fd_elite
 {
-	title 						"Elite Scorch"
-	showTitle					1
-	WeaponCapacity				"FromLoadout"
-	npc_titan_player_settings	"titan_ogre_scorch_prime"
-	BehaviorSelector			"behavior_titan_ogre_meteor_elite"
+	title 							"Elite Scorch"
+	showTitle						1
+	WeaponCapacity					"FromLoadout"
+	npc_titan_player_settings		"titan_ogre_scorch_prime"
+	BehaviorSelector				"behavior_titan_ogre_meteor_elite"
 	
-	footstep_type			"scorch"
+	footstep_type					"scorch"
 
 	painOnSurpriseHit				0
 	painWhileRunning				0
@@ -29,9 +29,9 @@ npc_titan_ogre_meteor_boss_fd_elite
 	
 	reactChanceDefault				100
 	reactBulletChanceDefault		100
-	reactionTime					2
-	reactInterval					2
-	suppressLSP_duration			5
+	reactionTime					3
+	reactInterval					3
+	suppressLSP_duration			10
 	
 	FOV_Vert_Offset					10
 
@@ -55,10 +55,9 @@ npc_titan_ogre_meteor_boss_fd_elite
 	faceEnemyWhileMovingDist 		3500
 	faceEnemyWhileMovingDuration	6
 	moveYawSpeed					90
-	allowTurn45Anims				0
 	
-	NoticeForgetPostTime	2.0
-	NoticeForgetPreTime		1.0
+	NoticeForgetPostTime	4.0
+	NoticeForgetPreTime		2.0
 	NoticeDistNear_Alert	600
 	NoticeDistNear_Combat	600
 	NoticeDistNear_Idle		150
@@ -90,10 +89,10 @@ npc_titan_ogre_meteor_boss_fd_elite
 	aiEnemy_usePriorityDist					4000
 	
 	waitBetweenWeaponBurst			0
-	resetBurstOnStopShootOverlay	1
+	resetBurstOnStopShootOverlay	0
 	
-	blockPeriod					2
-	maxBlockPerPeriod			2
+	blockPeriod					4
+	maxBlockPerPeriod			4
 	
 	dodgePeriod					3
 	maxDodgePerPeriod			1
