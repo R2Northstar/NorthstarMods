@@ -5,6 +5,7 @@ Selector Common
 	CNPC_Titan::SelectSchedule_PhysEntKnock
 	SelectSchedule_DisplaceFromDangerousArea
 	//SelectSchedule_DangerousClusterStandoff
+	SelectSchedule_ReactSurprised
 	SelectSchedule_ChangeToDesiredStance
 	SelectSchedule_LayeredBehavior
 Selector_End
