@@ -81,8 +81,9 @@ void function InitMainMenuPanel()
 	headerIndex++
 	buttonIndex = 0
 	var multiplayerHeader = AddComboButtonHeader( comboStruct, headerIndex, "#MULTIPLAYER_ALLCAPS" )
-	file.mpButton = AddComboButton( comboStruct, headerIndex, buttonIndex++, "#MULTIPLAYER_LAUNCH" )
-	Hud_AddEventHandler( file.mpButton, UIE_CLICK, OnPlayMPButton_Activate )
+	// "Launch Multiplayer" button removed because we don't support vanilla yet :clueless:
+	//file.mpButton = AddComboButton( comboStruct, headerIndex, buttonIndex++, "#MULTIPLAYER_LAUNCH" )
+	//Hud_AddEventHandler( file.mpButton, UIE_CLICK, OnPlayMPButton_Activate )
 	file.fdButton = AddComboButton( comboStruct, headerIndex, buttonIndex++, "#MENU_LAUNCH_NORTHSTAR" )
 	Hud_AddEventHandler( file.fdButton, UIE_CLICK, OnPlayFDButton_Activate )
 	Hud_SetLocked( file.fdButton, true )
@@ -169,7 +170,8 @@ void function OnShowMainMenuPanel()
 	#endif // PS4_PROG
 
 	UpdateSPButtons()
-	thread UpdatePlayButton( file.mpButton )
+	// dont try and update the launch multiplayer button, because it doesn't exist
+	//thread UpdatePlayButton( file.mpButton )
 	thread UpdatePlayButton( file.fdButton )
 	thread MonitorTrialVersionChange()
 
@@ -429,9 +431,9 @@ void function UpdatePlayButton( var button )
 			{
 				// restrict non-vanilla players from accessing official servers
 				bool hasNonVanillaMods = false
-				foreach ( string modName in NSGetModNames() )
+				foreach ( ModInfo mod in NSGetModsInformation() )
 				{
-					if ( NSIsModEnabled( modName ) && NSIsModRequiredOnClient( modName ) )
+					if ( mod.enabled && mod.requiredOnClient )
 					{
 						hasNonVanillaMods = true
 						break
@@ -459,7 +461,8 @@ void function UpdatePlayButton( var button )
 			message = ""
 		}
 
-		ComboButton_SetText( file.mpButton, buttonText )
+		// dont try and update the launch multiplayer button, because it doesn't exist
+		//ComboButton_SetText( file.mpButton, buttonText )
 
 		ComboButton_SetText( file.fdButton, "#MENU_LAUNCH_NORTHSTAR" )
 		//Hud_SetEnabled( file.fdButton, false )
@@ -531,7 +534,6 @@ void function OnPlayFDButton_Activate( var button ) // repurposed for launching 
 {
 	if ( !Hud_IsLocked( button ) )
 	{
-		SetConVarBool( "ns_is_modded_server", true )
 		SetConVarString( "communities_hostname", "" ) // disable communities due to crash exploits that are still possible through it
 		NSTryAuthWithLocalServer()
 		thread TryAuthWithLocalServer()
@@ -601,7 +603,6 @@ void function OnPlayMPButton_Activate( var button )
 	{
 		Lobby_SetAutoFDOpen( false )
 		// Lobby_SetFDMode( false )
-		SetConVarBool( "ns_is_modded_server", false )
 		thread file.mpButtonActivateFunc()
 	}
 }

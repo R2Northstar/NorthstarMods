@@ -18,6 +18,7 @@ global function TrackTitanDamageInPlayerGameStat
 global function ShouldEntTakeDamage_SPMP
 global function GetTitanBuildTime
 global function TitanPlayerHotDropsIntoLevel
+global function SetGamemodeAllowsTeamSwitch
 
 global function SetRecalculateRespawnAsTitanStartPointCallback
 
@@ -30,10 +31,13 @@ struct {
 	array<entity> specCams 
 	
 	entity functionref( entity player, entity basePoint ) recalculateRespawnAsTitanStartPointCallback
+	table<entity, float> playerChangeTeamTimeBuffer
+	bool gamemodeTeamSwitchEnabled = true
 } file
 
 void function BaseGametype_Init_MPSP()
 {
+	AddClientCommandCallback( "changeteam", ClientCommandCallbackChangeTeam )
 	AddSpawnCallback( "info_intermission", SetIntermissionCamera )
 	
 	AddPostDamageCallback( "player", AddToTitanDamageStat )
@@ -41,8 +45,11 @@ void function BaseGametype_Init_MPSP()
 	
 	AddCallback_OnNPCKilled( CheckForAutoTitanDeath )
 	AddCallback_OnPlayerKilled( CheckForAutoTitanDeath )
+	AddCallback_OnPlayerAssist( PlayerAssistedKill )
 	RegisterSignal( "PlayerRespawnStarted" )
 	RegisterSignal( "KillCamOver" )
+
+	FlagInit( "WeaponDropsAllowed", true )
 }
 
 void function SetIntermissionCamera( entity camera )
@@ -133,6 +140,15 @@ void function CodeCallback_OnClientConnectionCompleted( entity player )
 	{
 		Lobby_OnClientConnectionCompleted( player )
 		return
+	}
+	else if ( !IsFDMode( GAMETYPE ) )
+	{
+		// reset this for non-fd modes
+		// for some reason the postgame scoreboard uses this to
+		// determine if it should show the FD aegis rank one
+		// FD should either set this in their own mode, or add an else
+		// to this if statement when it releases
+		player.SetPersistentVar( "lastFDTitanRef", "" )
 	}
 
 	player.hasConnected = true
@@ -235,6 +251,18 @@ void function CodeCallback_OnPlayerRespawned( entity player )
 	ClearLastAttacker( player ) // so dying to anything doesn't credit the same attacker after respawning
 }
 
+void function PlayerAssistedKill( entity attacker, entity victim )
+{
+	if( victim.IsPlayer() )
+	{
+		AddPlayerScore( attacker, "PilotAssist" )
+		attacker.AddToPlayerGameStat( PGS_ASSISTS, 1 )
+
+		if ( attacker.IsPlayer() )	
+			Highlight_SetDeathRecapHighlight( attacker, "killer_outline" )
+	}
+}
+
 void function CodeCallback_OnPlayerKilled( entity player, var damageInfo )
 {
 	PlayerOrNPCKilled( player, damageInfo )
@@ -274,6 +302,9 @@ void function PostDeathThread_MP( entity player, var damageInfo ) // based on ga
 	
 	ClearRespawnAvailable( player )
 
+	// reset this so that we default to pilot spawn
+	player.SetPersistentVar( "spawnAsTitan", false )
+
 	OnThreadEnd( function() : ( player )
 	{
 		if ( !IsValid( player ) )
@@ -283,29 +314,11 @@ void function PostDeathThread_MP( entity player, var damageInfo ) // based on ga
 	})
 
 	entity attacker = DamageInfo_GetAttacker( damageInfo )
+	entity inflictor = DamageInfo_GetInflictor( damageInfo )
+	int eHandle = attacker.GetEncodedEHandle()
+	if ( inflictor && ShouldTryUseProjectileReplay( player, attacker, damageInfo, false ) )
+		eHandle = inflictor.GetEncodedEHandle()
 	int methodOfDeath = DamageInfo_GetDamageSourceIdentifier( damageInfo )
-
-	table<int, bool> alreadyAssisted
-	if ( IsValid( attacker ) )
-	{
-		foreach( DamageHistoryStruct attackerInfo in player.e.recentDamageHistory )
-		{
-			if ( !IsValid( attackerInfo.attacker ) || !attackerInfo.attacker.IsPlayer() || attackerInfo.attacker == player )
-				continue
-
-			bool exists = attackerInfo.attacker.GetEncodedEHandle() in alreadyAssisted ? true : false
-			if( attackerInfo.attacker != attacker && !exists )
-			{
-				alreadyAssisted[attackerInfo.attacker.GetEncodedEHandle()] <- true
-				Remote_CallFunction_NonReplay( attackerInfo.attacker, "ServerCallback_SetAssistInformation", attackerInfo.damageSourceId, attacker.GetEncodedEHandle(), player.GetEncodedEHandle(), attackerInfo.time ) 
-				AddPlayerScore( attackerInfo.attacker, "PilotAssist" )
-				attackerInfo.attacker.AddToPlayerGameStat( PGS_ASSISTS, 1 )
-			}
-		}
-
-		if( attacker.IsPlayer() )	
-			Highlight_SetDeathRecapHighlight( attacker, "killer_outline" )
-	}
 
 	player.p.rematchOrigin = player.p.deathOrigin
 	if ( IsValid( attacker ) && methodOfDeath == eDamageSourceId.titan_execution )
@@ -362,7 +375,7 @@ void function PostDeathThread_MP( entity player, var damageInfo ) // based on ga
 		if ( "respawnTime" in attacker.s )
 			respawnTime = Time() - expect float ( attacker.s.respawnTime )
 		
-		thread PlayerWatchesKillReplayWrapper( player, attacker, respawnTime, timeOfDeath, beforeTime, replayTracker )		
+		thread PlayerWatchesKillReplayWrapper( player, attacker, eHandle, respawnTime, timeOfDeath, beforeTime, replayTracker )		
 	}
 
 	player.SetPlayerSettings( "spectator" ) // prevent a crash with going from titan => pilot on respawn
@@ -379,6 +392,13 @@ void function PostDeathThread_MP( entity player, var damageInfo ) // based on ga
 		SetRespawnAvailable( player )
 		
 		wait respawnDelay
+
+		int forceRespawn = GetCurrentPlaylistVarInt( "player_force_respawn", -1 )
+
+		// -1 is disabled, anything over is the time we wait in seconds
+		// before respawning the player
+		if( forceRespawn >= 0 )
+			thread ForceRespawnMeSignalAfterDelay( player, forceRespawn )
 				
 		player.WaitSignal( "RespawnMe" ) // set in base_gametype: ClientCommand_RespawnPlayer
 		
@@ -398,7 +418,22 @@ void function PostDeathThread_MP( entity player, var damageInfo ) // based on ga
 	}
 }
 
-void function PlayerWatchesKillReplayWrapper( entity player, entity attacker, float timeSinceAttackerSpawned, float timeOfDeath, float beforeTime, table replayTracker )
+// idk if this is a good delay or if it matches vanilla
+void function ForceRespawnMeSignalAfterDelay( entity player, int delay = 5 )
+{
+	player.EndSignal( "RespawnMe" )
+	player.EndSignal( "OnDestroy" )
+
+	if( player.IsWatchingKillReplay() )
+		player.WaitSignal( "KillCamOver" )
+
+	wait delay
+
+	printt( format( "Forcing player respawn for player %s (took >%d seconds to respawn)", player.GetPlayerName(), delay ) )
+	player.Signal( "RespawnMe" )
+}
+
+void function PlayerWatchesKillReplayWrapper( entity player, entity attacker, int eHandle, float timeSinceAttackerSpawned, float timeOfDeath, float beforeTime, table replayTracker )
 {
 	player.EndSignal( "RespawnMe" )
 	player.EndSignal( "OnRespawned" )
@@ -421,7 +456,7 @@ void function PlayerWatchesKillReplayWrapper( entity player, entity attacker, fl
 	})
 	
 	player.SetPredictionEnabled( false )
-	PlayerWatchesKillReplay( player, attacker.GetEncodedEHandle(), attacker.GetIndexForEntity(), timeSinceAttackerSpawned, timeOfDeath, beforeTime, replayTracker )
+	PlayerWatchesKillReplay( player, eHandle, attacker.GetIndexForEntity(), timeSinceAttackerSpawned, timeOfDeath, beforeTime, replayTracker )
 }
 
 void function DecideRespawnPlayer( entity player )
@@ -590,10 +625,59 @@ void function SetRecalculateRespawnAsTitanStartPointCallback( entity functionref
 	file.recalculateRespawnAsTitanStartPointCallback = callbackFunc
 }
 
+void function SetGamemodeAllowsTeamSwitch( bool enabled )
+{
+	file.gamemodeTeamSwitchEnabled = enabled
+}
+
+bool function ClientCommandCallbackChangeTeam( entity player, array<string> args )
+{
+	if ( !GetConVarBool( "ns_allow_team_change" ) || IsPrivateMatchSpectator( player ) )
+		return true
+	
+	if ( !file.gamemodeTeamSwitchEnabled )
+	{
+		SendHudMessage( player, "#TEAMSWITCH_GAMEMODE", -1, 0.4, 255, 255, 255, 255, 0.15, 3.0, 0.5 )
+		return true
+	}
+	
+	if ( !( player in file.playerChangeTeamTimeBuffer ) )
+	{
+		file.playerChangeTeamTimeBuffer[ player ] <- Time() + 5.0
+	}
+	else
+	{
+		if ( file.playerChangeTeamTimeBuffer[ player ] > Time() )
+		{
+			SendHudMessage( player, "#TEAMSWITCH_BUFFER", -1, 0.4, 255, 255, 255, 255, 0.15, 3.0, 0.5 )
+			return true
+		}
+	}
+	
+	if ( player in file.playerChangeTeamTimeBuffer && file.playerChangeTeamTimeBuffer[ player ] < Time() )
+		file.playerChangeTeamTimeBuffer[ player ] = Time() + 5.0
+	
+	if ( !GamePlaying() )
+	{
+		SendHudMessage( player, "#TEAMSWITCH_GAMEPLAY", -1, 0.4, 255, 255, 255, 255, 0.15, 3.0, 0.5 )
+		return true
+	}
+	if ( GetCurrentPlaylistVarInt( "max_teams", 0 ) > 1 && !IsFFAGame() )
+		SetTeam( player, GetOtherTeam( player.GetTeam() ) )
+	else
+		SendHudMessage( player, "#TEAMSWITCH_DISABLED", -1, 0.4, 255, 255, 255, 255, 0.15, 3.0, 0.5 )
+	
+	return true
+}
+
 // stuff to change later
 
 bool function ShouldEntTakeDamage_SPMP( entity ent, var damageInfo )
 {
+	// dropships are immune to being crushed
+	if ( ( IsDropship( ent ) || IsEvacDropship( ent ) ) && IsTitanCrushDamage( damageInfo ) )
+		return false
+
 	return true
 }
 
