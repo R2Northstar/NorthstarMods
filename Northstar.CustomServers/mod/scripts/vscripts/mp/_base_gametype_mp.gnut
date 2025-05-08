@@ -228,6 +228,7 @@ void function CodeCallback_OnClientConnectionCompleted( entity player )
 
 	svGlobal.levelEnt.Signal( "PlayerDidSpawn", { player = player } )
 
+	player.SetPersistentVar( "spawnAsTitan", false ) // Reset this to avoid players spawning directly as titans on join
 	if ( GetConVarBool( "ns_allow_spectators" ) )
 	{
 		if ( IsPrivateMatchSpectator( player ) )
