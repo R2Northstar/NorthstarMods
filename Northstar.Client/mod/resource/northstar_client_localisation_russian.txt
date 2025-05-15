@@ -60,17 +60,17 @@
 
 		"riff_floorislava" "Пол это лава"
 		"featured_mode_all_holopilot" "Великий обманщик"
-		"featured_mode_all_grapple" "Зацепер"
+		"featured_mode_all_grapple" "Атака титанов"
 		"featured_mode_all_phase" "Мир иной"
-		"featured_mode_all_ticks" "Крутые перцы"
-		"featured_mode_tactikill" "Тактический удар"
+		"featured_mode_all_ticks" "Горчинка"
+		"featured_mode_tactikill" "Тактикилл"
 		"featured_mode_amped_tacticals" "Усиленные тактики"
 		"featured_mode_rocket_arena" "Ракетная Арена"
 		"featured_mode_shotguns_snipers" "Вооружён и опасен"
 		"iron_rules" "Правила Железного Титана"
 
 		"cp_amped_capture_points" "Усиленные опорные пункты"
-		"coliseum_loadouts_enabled" "Экипировка Колизея"
+		"coliseum_loadouts_enabled" "Набор гладиатора"
 
 		// northstar.custom localisation is just deciding not to work, so putting it here for now
 		"PL_sbox" "Песочница"
@@ -141,7 +141,7 @@
 		"PL_kr_abbr" "KR"
 		"SCOREBOARD_KR_RECORD" "Рекорд убийств"
 		"KR_NEW_RACER" "%s1 усиленный гонщик за убийства"
-		"KR_YOU_ARE_NEW_RACER" "Вы усиленный гонщик за убийства"
+		"KR_YOU_ARE_NEW_RACER" "Вы усиленный смертельный гонщик"
 		"KR_YOU_SET_NEW_RECORD" "Установите новый рекорд убийств!"
 		"KR_FLAG_INCOMING" "Флаг прибывает"
 		"KR_COLLECT_FLAG" "Возьмите его чтобы стать гонщиком за убийства!"
