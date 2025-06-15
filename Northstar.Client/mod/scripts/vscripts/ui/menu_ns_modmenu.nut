@@ -13,7 +13,7 @@ struct panelContent {
 enum filterShow {
 	ALL = 0,
 	ONLY_ENABLED = 1,
-	ONLY_DISABLED = 2
+	ONLY_DISABLED = 2,
 	ONLY_NOT_REQUIRED = 3,
 	ONLY_REQUIRED = 4
 }
@@ -149,7 +149,7 @@ void function OnModMenuClosed()
 
 		foreach ( ModInfo enMod in file.enabledMods )
 		{
-			if ( mod.name == enMod.name )
+			if ( mod.name == enMod.name && mod.version == enMod.version )
 			{
 				notFound = false
 				break
@@ -210,7 +210,7 @@ void function OnModButtonPressed( var button )
 		CoreModToggleDialog( modName )
 	else
 	{
-		NSSetModEnabled( modName, !mod.enabled )
+		NSSetModEnabled( modName, mod.version, !mod.enabled )
 
 		// retrieve state of the mod that just got toggled
 		array<ModInfo> infos = NSGetModInformation( mod.name )
@@ -304,7 +304,7 @@ void function DisableMod()
 {
 	ModInfo mod = file.mods[ int ( Hud_GetScriptID( Hud_GetParent( file.currentButton ) ) ) + file.scrollOffset - 1 ].mod
 	string modName = mod.name
-	NSSetModEnabled( modName, false )
+	NSSetModEnabled( modName, mod.version, false )
 
 	// retrieve state of the mod that just got toggled
 	array<ModInfo> infos = NSGetModInformation( mod.name )
@@ -712,3 +712,4 @@ void function ReloadMods()
 	// note: the logic for this seems really odd, unsure why it doesn't seem to update, since the same code seems to get run irregardless of whether we've read weapon data before
 	ClientCommand( "uiscript_reset" )
 }
+
