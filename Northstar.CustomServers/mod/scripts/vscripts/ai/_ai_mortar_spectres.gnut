@@ -147,6 +147,8 @@ void function MortarSpectreAttacksHarvester( entity spectre, entity harvester, e
 	wait RandomFloatRange( 0, 4 ) // this is a complete guess, idk how long it takes for them to shoot normally
 	while ( true )
 	{
+		if( !IsValid( weapon ) ) //Temporary fix
+			return
 		// if the spectre drops the weapon, or if something somehow steals it, we should stop firing missiles from it
 		if ( weapon.GetWeaponOwner() != spectre )
 			break
