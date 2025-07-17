@@ -1,4 +1,8 @@
 untyped
+
+global function GetConVarColor
+
+#if UI
 global function AddColorPickerMenu
 global function OpenColorPickerMenu
 
@@ -206,6 +210,43 @@ void function ResetColor( int index )
 	}
 }
 
+void function ColorsToConvar( string conVar = "" )
+{
+	try
+	{
+		if ( conVar == "" ) {
+			throw "Oops. We dont have ConVar for color here"
+		}
+		string str = ""
+		for ( int i = 0; i < 4; i++ )
+		{
+			str += "" + int( Hud_GetUTF8Text( file.textFields[i] ) )
+			if ( i != 3 )
+				str += " "
+		}
+
+		SetConVarString( conVar, str )
+		// printt("ColorPicker write ConVar", conVar , "With " + str)
+
+	}
+	catch ( ex )
+	{
+		printt( "Failed to Convert Ints in Textfields to ConVar String with ConVar", conVar, ":",GetConVarString( conVar ) , ex )
+	}
+}
+
+
+void function OpenColorPickerMenu( string conVar, string displayName )
+{
+	file.conVar = conVar
+	file.displayName = displayName
+
+	OpenSubmenu( GetMenu( "ColorPicker" ),  false )
+}
+
+#endif
+
+
 array<int> function ColorsFromConvar( string conVar = "" )
 {
 	array<int> c
@@ -243,36 +284,13 @@ array<int> function ColorsFromConvar( string conVar = "" )
 	return c
 }
 
-void function ColorsToConvar( string conVar = "" )
-{
-	try
-	{
-		if ( conVar == "" ) {
-			throw "Oops. We dont have ConVar for color here"
-		}
-		string str = ""
-		for ( int i = 0; i < 4; i++ )
-		{
-			str += "" + int( Hud_GetUTF8Text( file.textFields[i] ) )
-			if ( i != 3 )
-				str += " "
-		}
 
-		SetConVarString( conVar, str )
-		// printt("ColorPicker write ConVar", conVar , "With " + str)
 
+vector function GetConVarColor(string convar, bool useFloat = false){
+	array<int> value = ColorsFromConvar(convar)
+	vector color = <value[0].tofloat(), value[1].tofloat(), value[2].tofloat()>
+	if (useFloat){
+		color = <color.x / 255.0, color.y / 255.0, color.z / 255.0>
 	}
-	catch ( ex )
-	{
-		printt( "Failed to Convert Ints in Textfields to ConVar String with ConVar", conVar, ":",GetConVarString( conVar ) , ex )
-	}
-}
-
-
-void function OpenColorPickerMenu( string conVar, string displayName )
-{
-	file.conVar = conVar
-	file.displayName = displayName
-
-	OpenSubmenu( GetMenu( "ColorPicker" ),  false )
+	return color
 }

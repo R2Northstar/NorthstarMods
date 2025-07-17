@@ -132,7 +132,7 @@
 		},
 		{
 			"Path": "ui/menu_ns_color_picker.nut",
-			"RunOn": "UI",
+			"RunOn": "UI || CLIENT",
 			"UICallback": {
 				"After": "AddColorPickerMenu"
 			}
