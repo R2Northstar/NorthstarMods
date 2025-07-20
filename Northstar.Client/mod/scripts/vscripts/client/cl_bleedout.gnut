@@ -1,4 +1,5 @@
 
+untyped
 global function BleedoutClient_Init
 
 //SERVER CALLBACKS
@@ -97,6 +98,9 @@ void function Bleedout_StartDyingDOF( entity ent, int statusEffect, bool actuall
 	if ( ent != GetLocalClientPlayer() )
 		return
 
+	ent.hudElems.damageOverlayRedBloom.SetColor( 255, 0, 0, 100 )
+	ent.hudElems.damageOverlayRedBloom.Show()
+	ent.hudElems.damageOverlayRedBloom.ColorOverTime( 255, 0, 0, 255, Bleedout_GetBleedoutTime())
 	DoF_LerpFarDepth( 1, 20, Bleedout_GetBleedoutTime() * 10 )
 }
 
@@ -108,6 +112,7 @@ void function Bleedout_PlayerRevivedDOF( entity ent, int statusEffect, bool actu
 	if ( ent != GetLocalClientPlayer() )
 		return
 
+	ent.hudElems.damageOverlayRedBloom.Hide()
 	DoF_SetFarDepthToDefault()
 }
 
