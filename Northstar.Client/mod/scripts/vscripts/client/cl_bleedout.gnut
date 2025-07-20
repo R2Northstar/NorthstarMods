@@ -23,6 +23,28 @@ void function BleedoutClient_Init()
 	StatusEffect_RegisterDisabledCallback( eStatusEffect.bleedoutDOF, Bleedout_PlayerRevivedDOF )
 }
 
+void function Bleedout_StartBleedoutProgressBar()
+{
+	entity player = GetLocalClientPlayer()
+	player.EndSignal( "OnDeath" )
+
+	// var rui = RuiCreate( $"ui/bleedout_wounded_marker.rpak", clGlobal.topoCockpitHud, RUI_DRAW_HUD, 0 )
+	var rui = CreatePermanentCockpitRui( $"ui/bleedout_wounded_marker.rpak" )
+	RuiTrackFloat3( rui, "pos", player, RUI_TRACK_ABSORIGIN_FOLLOW ) // RUI_TRACK_OVERHEAD_FOLLOW
+	RuiSetGameTime( rui, "startTime", Time() )
+	RuiSetGameTime( rui, "endTime", Time() + Bleedout_GetBleedoutTime() )
+	//RuiSetString( rui, "title", "hello there" )
+	//RuiSetBool( rui, "showTimer", true )
+
+	OnThreadEnd(
+		function() : ( rui )
+		{
+			RuiDestroy( rui )
+		}
+	)
+	WaitForever()
+}
+
 void function ServerCallback_BLEEDOUT_StartFirstAidProgressBar( float endTime, int playerEHandle, int healerEHandle, int resAttemptID )
 {
 	entity playerToRes = GetEntityFromEncodedEHandle( playerEHandle )
@@ -97,6 +119,8 @@ void function Bleedout_StartDyingDOF( entity ent, int statusEffect, bool actuall
 
 	if ( ent != GetLocalClientPlayer() )
 		return
+
+	thread Bleedout_StartBleedoutProgressBar()
 
 	ent.hudElems.damageOverlayRedBloom.SetColor( 255, 0, 0, 100 )
 	ent.hudElems.damageOverlayRedBloom.Show()
