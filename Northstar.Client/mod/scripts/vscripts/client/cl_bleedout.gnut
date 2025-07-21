@@ -12,6 +12,7 @@ struct
 {
 	int currentResAttemptID = -1
 	bool isSelfBleeding = false
+	bool displayedTutorialMessage = false
 }
 file
 
@@ -129,6 +130,12 @@ void function Bleedout_StartDyingDOF( entity ent, int statusEffect, bool actuall
 	thread Bleedout_StartBleedoutProgressBar()
 	thread Bleedout_StartScreenEffects( ent )
 
+	if ( !file.displayedTutorialMessage && Bleedout_GetFirstAidTimeSelf() < 0 )
+	{
+		AddPlayerHint( Bleedout_GetBleedoutTime() - 0.25, 0.5, $"","#BLEEDOUT_CALL_HELP" )
+		file.displayedTutorialMessage = true
+	}
+
 	DoF_LerpFarDepth( 1, 20, Bleedout_GetBleedoutTime() * 10 )
 }
 
@@ -156,6 +163,7 @@ void function Bleedout_PlayerRevivedDOF( entity ent, int statusEffect, bool actu
 	file.isSelfBleeding = false
 	ent.hudElems.damageOverlayRedBloom.Hide()
 	ScreenFade( ent, 0, 0, 0, 200, 0.5, 0.0, FFADE_IN | FFADE_PURGE)
+	HidePlayerHint( "#BLEEDOUT_CALL_HELP" )
 	DoF_SetFarDepthToDefault()
 }
 
