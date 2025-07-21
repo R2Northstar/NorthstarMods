@@ -11,6 +11,7 @@ global function ServerCallback_BLEEDOUT_HideWoundedMarker
 struct
 {
 	int currentResAttemptID = -1
+	bool isSelfBleeding = false
 }
 file
 
@@ -42,7 +43,11 @@ void function Bleedout_StartBleedoutProgressBar()
 			RuiDestroy( rui )
 		}
 	)
-	WaitForever()
+
+	while ( file.isSelfBleeding )
+	{
+		WaitFrame()
+	}
 }
 
 void function ServerCallback_BLEEDOUT_StartFirstAidProgressBar( float endTime, int playerEHandle, int healerEHandle, int resAttemptID )
@@ -120,6 +125,7 @@ void function Bleedout_StartDyingDOF( entity ent, int statusEffect, bool actuall
 	if ( ent != GetLocalClientPlayer() )
 		return
 
+	file.isSelfBleeding = true
 	thread Bleedout_StartBleedoutProgressBar()
 	thread Bleedout_StartScreenEffects( ent )
 
@@ -147,6 +153,7 @@ void function Bleedout_PlayerRevivedDOF( entity ent, int statusEffect, bool actu
 	if ( ent != GetLocalClientPlayer() )
 		return
 
+	file.isSelfBleeding = false
 	ent.hudElems.damageOverlayRedBloom.Hide()
 	ScreenFade( ent, 0, 0, 0, 200, 0.5, 0.0, FFADE_IN | FFADE_PURGE)
 	DoF_SetFarDepthToDefault()
