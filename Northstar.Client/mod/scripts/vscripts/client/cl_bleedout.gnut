@@ -121,11 +121,22 @@ void function Bleedout_StartDyingDOF( entity ent, int statusEffect, bool actuall
 		return
 
 	thread Bleedout_StartBleedoutProgressBar()
+	thread Bleedout_StartScreenEffects( ent )
 
-	ent.hudElems.damageOverlayRedBloom.SetColor( 255, 0, 0, 100 )
-	ent.hudElems.damageOverlayRedBloom.Show()
-	ent.hudElems.damageOverlayRedBloom.ColorOverTime( 255, 0, 0, 255, Bleedout_GetBleedoutTime())
 	DoF_LerpFarDepth( 1, 20, Bleedout_GetBleedoutTime() * 10 )
+}
+
+void function Bleedout_StartScreenEffects( entity ent )
+{
+	ent.hudElems.damageOverlayRedBloom.SetColor( 255, 0, 0, 100 )
+	ent.hudElems.damageOverlayRedBloom.ColorOverTime( 255, 0, 0, 255, Bleedout_GetBleedoutTime())
+
+	float flashDuration = 0.5
+	ent.hudElems.damageOverlayRedBloom.Show()
+	ScreenFade( ent, 255, 0, 0, 150, 0.5, 0.0, FFADE_IN | FFADE_PURGE) // red flash
+	wait flashDuration
+
+	ScreenFade( ent, 0, 0, 0, 240, Bleedout_GetBleedoutTime() - flashDuration, 0.0, FFADE_OUT | FFADE_PURGE )
 }
 
 void function Bleedout_PlayerRevivedDOF( entity ent, int statusEffect, bool actuallyChanged )
@@ -137,6 +148,7 @@ void function Bleedout_PlayerRevivedDOF( entity ent, int statusEffect, bool actu
 		return
 
 	ent.hudElems.damageOverlayRedBloom.Hide()
+	ScreenFade( ent, 0, 0, 0, 200, 0.5, 0.0, FFADE_IN | FFADE_PURGE)
 	DoF_SetFarDepthToDefault()
 }
 
