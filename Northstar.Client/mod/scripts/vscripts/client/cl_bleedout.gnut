@@ -30,8 +30,7 @@ void function Bleedout_StartBleedoutProgressBar()
 	entity player = GetLocalClientPlayer()
 	player.EndSignal( "OnDeath" )
 
-	// var rui = RuiCreate( $"ui/bleedout_wounded_marker.rpak", clGlobal.topoCockpitHud, RUI_DRAW_HUD, 0 )
-	var rui = CreatePermanentCockpitRui( $"ui/bleedout_wounded_marker.rpak" )
+	var rui = CreateFullscreenRui( $"ui/bleedout_wounded_marker.rpak", 10000 )
 	RuiTrackFloat3( rui, "pos", player, RUI_TRACK_ABSORIGIN_FOLLOW ) // RUI_TRACK_OVERHEAD_FOLLOW
 	RuiSetGameTime( rui, "startTime", Time() )
 	RuiSetGameTime( rui, "endTime", Time() + Bleedout_GetBleedoutTime() )
