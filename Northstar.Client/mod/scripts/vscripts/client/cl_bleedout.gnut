@@ -146,7 +146,7 @@ void function Bleedout_StartScreenEffects( entity ent )
 
 	float flashDuration = 0.5
 	ent.hudElems.damageOverlayRedBloom.Show()
-	ScreenFade( ent, 255, 0, 0, 150, 0.5, 0.0, FFADE_IN | FFADE_PURGE) // red flash
+	ScreenFade( ent, 255, 0, 0, 175, 0.55, 0.0, FFADE_IN | FFADE_PURGE) // red flash
 	wait flashDuration
 
 	ScreenFade( ent, 0, 0, 0, 240, Bleedout_GetBleedoutTime() - flashDuration, 0.0, FFADE_OUT | FFADE_PURGE )
