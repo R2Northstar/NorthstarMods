@@ -41,6 +41,8 @@ void function Bleedout_StartBleedoutProgressBar()
 		function() : ( rui )
 		{
 			RuiDestroy( rui )
+			entity ent = GetLocalClientPlayer()
+			StopSoundOnEntity( ent, ent.IsMechanical() ? "Pilot_Critical_Breath_Loop_1P" : "GruntCooper_Wounded_Loop_1P" )
 		}
 	)
 
@@ -128,6 +130,7 @@ void function Bleedout_StartDyingDOF( entity ent, int statusEffect, bool actuall
 	file.isSelfBleeding = true
 	thread Bleedout_StartBleedoutProgressBar()
 	thread Bleedout_StartScreenEffects( ent )
+	EmitSoundOnEntity( ent, ent.IsMechanical() ? "Pilot_Critical_Breath_Loop_1P" : "GruntCooper_Wounded_Loop_1P" )
 
 	if ( !file.displayedTutorialMessage && Bleedout_GetFirstAidTimeSelf() < 0 )
 	{
