@@ -67,6 +67,8 @@ struct {
 	entity currentEvacNode
 	entity evacDropship
 	entity evacIcon
+
+	bool shouldholsterweapons = false
 } file
 
 struct EvacShipSetting
@@ -363,6 +365,7 @@ void function Evac( int evacTeam, float initialWait, float arrivalTime, float wa
 	EmitSoundOnEntity( dropship, evacShip.flyoutSound )
 	
 	// holster all weapons
+    file.shouldholsterweapons = true
 	foreach ( entity player in dropship.s.evacSlots )
 		if ( IsValid( player ) )
 			player.HolsterWeapon()
@@ -495,6 +498,9 @@ void function AddPlayerToEvacDropship( entity dropship, entity player )
 	player.SetInvulnerable()
 	player.UnforceCrouch()
 	player.ForceStand()
+	
+	if ( file.shouldholsterweapons ) // don't let people have their weapons in the dropship after it leaves
+        player.HolsterWeapon()
 
 	FirstPersonSequenceStruct fp
 	//fp.firstPersonAnim = EVAC_EMBARK_ANIMS_1P[ slot ]
