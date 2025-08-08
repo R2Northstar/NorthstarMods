@@ -151,90 +151,6 @@ void function GamemodeFW_Init()
 }
 
 
-
-//////////////////////////
-///// HACK FUNCTIONS /////
-//////////////////////////
-
-const array<string> HACK_CLEANUP_MAPS =
-[
-	"mp_grave",
-	"mp_homestead",
-	"mp_complex3"
-]
-
-//if npcs outside the map try to fire( like in death animation ), it will cause a engine error
-
-// in mp_grave, npcs will sometimes stuck underground
-const float GRAVE_CHECK_HEIGHT = 1700 // the map's lowest ground is 1950+, npcs will stuck under -4000 or -400
-// in mp_homestead, npcs will sometimes stuck in the sky
-const float HOMESTEAD_CHECK_HIEGHT = 8000 // the map's highest part is 7868+, npcs will stuck above 13800+
-// in mp_complex3, npcs will sometimes stuck in the sky
-const float COMPLEX_CHECK_HEIGHT = 7000 // the map's highest part is 6716+, npcs will stuck above 9700+
-
-// do a hack
-void function HACK_ForceDestroyNPCs()
-{
-	thread HACK_ForceDestroyNPCs_Threaded()
-}
-
-void function HACK_ForceDestroyNPCs_Threaded()
-{
-	string mapName = GetMapName()
-	if( !( HACK_CLEANUP_MAPS.contains( mapName ) ) )
-		return
-
-	while( true )
-	{
-		if( mapName == "mp_grave" )
-		{
-			foreach( entity npc in GetNPCArray() )
-			{
-				if( npc.GetOrigin().z <= GRAVE_CHECK_HEIGHT )
-				{
-					npc.ClearParent()
-					npc.Destroy()
-				}
-			}
-		}
-		if( mapName == "mp_homestead" )
-		{
-			foreach( entity npc in GetNPCArray() )
-			{
-				// neither spawning from droppod nor hotdropping
-				if( !IsValid( npc.GetParent() ) && !npc.e.isHotDropping )
-				{
-					if( npc.GetOrigin().z >= HOMESTEAD_CHECK_HIEGHT )
-					{
-						npc.Destroy()
-					}
-				}
-			}
-		}
-		if( mapName == "mp_complex3" )
-		{
-			foreach( entity npc in GetNPCArray() )
-			{
-				// neither spawning from droppod nor hotdropping
-				if( !IsValid( npc.GetParent() ) && !npc.e.isHotDropping )
-				{
-					if( npc.GetOrigin().z >= COMPLEX_CHECK_HEIGHT )
-					{
-						npc.Destroy()
-					}
-				}
-			}
-		}
-		WaitFrame()
-	}
-}
-
-//////////////////////////////
-///// HACK FUNCTIONS END /////
-//////////////////////////////
-
-
-
 ////////////////////////////////
 ///// SPAWNPOINT FUNCTIONS /////
 ////////////////////////////////
@@ -312,8 +228,6 @@ void function OnFWGamePlaying()
 	StartFWCampThink()
 	InitTurretSettings()
 	FWPlayerObjectiveState()
-
-	HACK_ForceDestroyNPCs()
 }
 
 void function OnFWPlayerConnected( entity player )
@@ -756,12 +670,13 @@ void function InitFWCampSites()
 	foreach( int index, CampSiteStruct campsite in file.fwCampSites )
 	{
 		entity campInfo = campsite.camp
-		float radius = float( campInfo.kv.radius )
+		float radius = 2048 //float( campInfo.kv.radius )
 
 		// get droppod spawns
-		foreach ( entity spawnpoint in SpawnPoints_GetDropPod() )
-			if ( Distance( campInfo.GetOrigin(), spawnpoint.GetOrigin() ) < radius )
-				campsite.validDropPodSpawns.append( spawnpoint )
+		// these spawn points suck because sometimes they are outside the map
+		//foreach ( entity spawnpoint in SpawnPoints_GetDropPod() )
+			//if ( Distance( campInfo.GetOrigin(), spawnpoint.GetOrigin() ) < radius )
+				//campsite.validDropPodSpawns.append( spawnpoint )
 
 		// get titan spawns
 		foreach ( entity spawnpoint in SpawnPoints_GetTitan() )
@@ -941,11 +856,11 @@ void function AddIgnoredCountToOtherCamps( CampSiteStruct senderCamp )
 // functions from at
 void function FW_SpawnDroppodSquad( CampSiteStruct campsite, string aiType )
 {
-	entity spawnpoint
-	if ( campsite.validDropPodSpawns.len() == 0 )
-		spawnpoint = campsite.tracker // no spawnPoints valid, use camp itself to spawn
-	else
-		spawnpoint = campsite.validDropPodSpawns.getrandom()
+	entity spawnpoint = campsite.tracker
+	array<entity> spawnpoints = campsite.validDropPodSpawns
+	spawnpoints.extend( campsite.validTitanSpawns )
+	if ( spawnpoints.len() > 0 )
+		spawnpoint = spawnpoints.getrandom()
 
 	// add variation to spawns
 	wait RandomFloat( 1.0 )
@@ -975,11 +890,11 @@ void function FW_HandleSquadSpawn( array<entity> guys, CampSiteStruct campsite, 
 
 void function FW_SpawnReaper( CampSiteStruct campsite )
 {
-	entity spawnpoint
-	if ( campsite.validDropPodSpawns.len() == 0 )
-		spawnpoint = campsite.tracker // no spawnPoints valid, use camp itself to spawn
-	else
-		spawnpoint = campsite.validDropPodSpawns.getrandom()
+	entity spawnpoint = campsite.tracker
+	array<entity> spawnpoints = campsite.validDropPodSpawns
+	spawnpoints.extend( campsite.validTitanSpawns )
+	if ( spawnpoints.len() > 0 )
+		spawnpoint = spawnpoints.getrandom()
 
 	// add variation to spawns
 	wait RandomFloat( 1.0 )
@@ -1402,6 +1317,18 @@ void function FWAreaThreatLevelThink_Threaded()
 
 void function OnFWTurretSpawned( entity turret )
 {
+	if ( !IsNewThread() )
+	{
+		thread OnFWTurretSpawned( turret )
+		return
+	}
+
+	if ( !IsValid( fw_harvesterImc.harvester ) || !IsValid( fw_harvesterMlt.harvester ) )
+		WaitFrame()
+
+	if ( turret == fw_harvesterImc.harvester || turret == fw_harvesterMlt.harvester )
+		return
+
 	turret.EnableTurret() // always enabled
 	SetDefaultMPEnemyHighlight( turret ) // for sonar highlights to work
 	AddEntityCallback_OnDamaged( turret, OnMegaTurretDamaged )
@@ -1748,8 +1675,7 @@ entity function FW_GetTeamHarvesterProp( int team )
 void function FW_createHarvester()
 {
 	// imc havester spawn
-	fw_harvesterImc = SpawnHarvester( file.harvesterImc_info.GetOrigin(), file.harvesterImc_info.GetAngles(), GetCurrentPlaylistVarInt( "fw_harvester_health", FW_DEFAULT_HARVESTER_HEALTH ), GetCurrentPlaylistVarInt( "fw_harvester_shield", FW_DEFAULT_HARVESTER_SHIELD ), TEAM_IMC )
-	fw_harvesterImc.harvester.SetArmorType( ARMOR_TYPE_HEAVY )
+	fw_harvesterImc = CustomSpawnHarvester( file.harvesterImc_info.GetOrigin(), file.harvesterImc_info.GetAngles(), GetCurrentPlaylistVarInt( "fw_harvester_health", FW_DEFAULT_HARVESTER_HEALTH ), GetCurrentPlaylistVarInt( "fw_harvester_shield", FW_DEFAULT_HARVESTER_SHIELD ), TEAM_IMC )
 	fw_harvesterImc.harvester.Minimap_SetAlignUpright( true )
 	fw_harvesterImc.harvester.Minimap_AlwaysShow( TEAM_IMC, null )
 	fw_harvesterImc.harvester.Minimap_AlwaysShow( TEAM_MILITIA, null )
@@ -1760,9 +1686,6 @@ void function FW_createHarvester()
 	AddEntityCallback_OnFinalDamaged( fw_harvesterImc.harvester, OnHarvesterDamaged )
 	AddEntityCallback_OnPostDamaged( fw_harvesterImc.harvester, OnHarvesterPostDamaged )
 	
-	// imc havester settings
-	// don't set this, or sonar pulse will try to find it and failed to set highlight
-	//fw_harvesterMlt.harvester.SetScriptName("fw_team_tower")
 	file.harvesters.append(fw_harvesterImc)
 	entity trackerImc = GetAvailableBaseLocationTracker()
 	trackerImc.SetOwner( fw_harvesterImc.harvester )
@@ -1775,8 +1698,7 @@ void function FW_createHarvester()
 
 
 	// mlt havester spawn
-	fw_harvesterMlt = SpawnHarvester( file.harvesterMlt_info.GetOrigin(), file.harvesterMlt_info.GetAngles(), GetCurrentPlaylistVarInt( "fw_harvester_health", FW_DEFAULT_HARVESTER_HEALTH ), GetCurrentPlaylistVarInt( "fw_harvester_shield", FW_DEFAULT_HARVESTER_SHIELD ), TEAM_MILITIA )
-	fw_harvesterMlt.harvester.SetArmorType( ARMOR_TYPE_HEAVY )
+	fw_harvesterMlt = CustomSpawnHarvester( file.harvesterMlt_info.GetOrigin(), file.harvesterMlt_info.GetAngles(), GetCurrentPlaylistVarInt( "fw_harvester_health", FW_DEFAULT_HARVESTER_HEALTH ), GetCurrentPlaylistVarInt( "fw_harvester_shield", FW_DEFAULT_HARVESTER_SHIELD ), TEAM_MILITIA )
 	fw_harvesterMlt.harvester.Minimap_SetAlignUpright( true )
 	fw_harvesterMlt.harvester.Minimap_AlwaysShow( TEAM_IMC, null )
 	fw_harvesterMlt.harvester.Minimap_AlwaysShow( TEAM_MILITIA, null )
@@ -1801,6 +1723,43 @@ void function FW_createHarvester()
 	GameRules_SetTeamScore2( TEAM_IMC , 100 )
 
 	InitHarvesterDamageMods()
+}
+
+HarvesterStruct function CustomSpawnHarvester( vector origin, vector angles, int health, int shieldHealth, int team )
+{
+    entity harvester = CreateEntity( "npc_turret_mega" )
+    harvester.SetOrigin( origin )
+    harvester.SetAngles( angles )
+    harvester.kv.solid = SOLID_VPHYSICS
+    
+    harvester.SetMaxHealth( health )
+    harvester.SetHealth( health )
+    harvester.SetShieldHealthMax( shieldHealth )
+    harvester.SetShieldHealth( shieldHealth )
+    SetTeam(harvester,team)
+
+	SetSpawnOption_AISettings( harvester, "npc_turret_mega_fortwar" ) // the custom thing
+
+    DispatchSpawn( harvester )
+    
+	TakeWeaponsForArray( harvester, harvester.GetMainWeapons() )
+	harvester.EnableNPCFlag( NPC_IGNORE_ALL )
+	harvester.SetModel( $"models/props/generator_coop/generator_coop.mdl" )
+	harvester.SetTitle( "#HARVESTER" )
+    
+    entity blackbox = CreatePropDynamic( MODEL_HARVESTER_TOWER_COLLISION, origin, angles, 0 )
+    blackbox.Hide()
+    blackbox.Solid()
+    
+    entity rings = CreatePropDynamic( MODEL_HARVESTER_TOWER_RINGS, origin, angles, 6 )
+    thread PlayAnim( rings, "generator_cycle_fast" )
+    
+    HarvesterStruct ret
+    ret.harvester = harvester
+    ret.lastDamage = Time()
+    ret.rings = rings
+    
+    return ret
 }
 
 void function FW_AddHarvesterDamageSourceModifier( int id, float mod )
@@ -2358,7 +2317,10 @@ function FW_UseBattery( batteryPortvar, playervar ) //actually void function( en
 // get nearest turret, consider it belongs to the port
 entity function GetNearestMegaTurret( entity ent )
 {
-    array<entity> allTurrets = GetNPCArrayByClass( "npc_turret_mega" )
+    array<entity> allTurrets 
+	foreach( entity turret in GetNPCArrayByClass( "npc_turret_mega" ) )
+		if ( turret != fw_harvesterImc.harvester && turret != fw_harvesterMlt.harvester )
+			allTurrets.append( turret )
     entity turret = GetClosest( allTurrets, ent.GetOrigin() )
     return turret
 }
@@ -2369,7 +2331,7 @@ string function GetTeamAliveTurretCount_ReturnString( int team )
     int turretCount
     foreach( entity turret in GetNPCArrayByClass( "npc_turret_mega" ) )
     {
-        if( turret.GetTeam() == team && IsAlive( turret ) )
+        if( turret.GetTeam() == team && IsAlive( turret ) && turret != fw_harvesterImc.harvester && turret != fw_harvesterMlt.harvester )
             turretCount += 1
     }
 
