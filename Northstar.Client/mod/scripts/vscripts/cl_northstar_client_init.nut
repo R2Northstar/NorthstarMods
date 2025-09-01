@@ -20,10 +20,26 @@ global struct GameStateStruct {
     int otherHighestScore
     int maxScore
     float timeEnd
+    int serverGameState
+    int fd_waveNumber
+    int fd_totalWaves
 }
 
 global struct UIPresenceStruct {
     int gameState
+}
+
+global struct ModInfo
+{
+    string name = ""
+    string description = ""
+    string version = ""
+    string downloadLink = ""
+    int loadPriority = 0
+    bool enabled = false
+    bool requiredOnClient = false
+    bool isRemote
+    array<string> conVars = []
 }
 
 global struct RequiredModInfo

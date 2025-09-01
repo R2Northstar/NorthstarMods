@@ -7,7 +7,7 @@
 	"ConVars": [
 		{
 			"Name": "allow_mod_auto_download",
-			"DefaultValue": "0"
+			"DefaultValue": "1"
 		},
 		{
 			"Name": "filter_hide_empty",
@@ -46,6 +46,10 @@
 			"Name": "modlist_reverse",
 			"DefaultValue": "0",
 			"Flags": "ARCHIVE_PLAYERPROFILE"
+		},
+		{
+			"Name": "modemenu_mode_filter",
+			"DefaultValue": "-1"
 		}
 	],
 	"Scripts": [
@@ -127,13 +131,20 @@
 			"RunOn": "UI"
 		},
 		{
+			"Path": "ui/menu_ns_color_picker.nut",
+			"RunOn": "UI || CLIENT",
+			"UICallback": {
+				"After": "AddColorPickerMenu"
+			}
+		},
+		{
 			"Path": "ui/menu_mod_settings.nut",
 			"RunOn": "UI",
 			"UICallback":{
 				"Before": "AddModSettingsMenu"
-      		}
-    	},
-    	{
+			}
+		},
+		{
 			"Path": "ui/ui_mouse_capture.nut",
 			"RunOn": "UI"
 		},
