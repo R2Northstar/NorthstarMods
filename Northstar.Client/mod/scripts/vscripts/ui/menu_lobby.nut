@@ -42,6 +42,7 @@ global function OnStoreBundlesButton_Activate
 global function OnStoreNewReleasesButton_Activate
 
 global function StartNSMatchmaking
+global function IsCoreMod
 
 const string MATCHMAKING_AUDIO_CONNECTING = "menu_campaignsummary_titanunlocked"
 
