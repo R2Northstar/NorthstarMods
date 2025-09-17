@@ -6,10 +6,6 @@ global function IsEvacDropship
 
 global function EvacEpilogueSetup
 global function Evac
-global function EvacEpiloguePlayerCanBoard
-global function EvacEpilogueShouldLeaveEarly
-global function EvacEpilogueCompleted
-global function SetRespawnAndWait
 
 const float EVAC_INITIAL_WAIT = 5.0
 const float EVAC_ARRIVAL_TIME = 40.0
@@ -71,6 +67,8 @@ struct {
 	entity currentEvacNode
 	entity evacDropship
 	entity evacIcon
+
+	table<entity, bool> shouldholsterweapons
 } file
 
 struct EvacShipSetting
@@ -150,16 +148,16 @@ void function EvacSpectatorFunc( entity player )
 	player.SetObserverModeStaticAngles( cam.GetAngles() )
 	player.StartObserverMode( OBS_MODE_STATIC )
 	
-	svGlobal.levelEnt.WaitSignal( "EvacOver" )
+	file.evacDropship.WaitSignal( "EvacOver" )
 }
 
 void function SetRespawnAndWait( bool mode )
 {
 	wait GAME_EPILOGUE_PLAYER_RESPAWN_LEEWAY
-	Riff_ForceSetEliminationMode( eEliminationMode.Pilots )
+	SetRespawnsEnabled( mode )
 	
 	// clear any respawn availablity, or players are able to save there respawn for whenever they want
-	foreach ( entity player in GetPlayerArray() )
+	foreach( entity player in GetPlayerArray() )
 		ClearRespawnAvailable( player )
 }
 
@@ -196,7 +194,7 @@ void function EvacEpilogueCompleted( entity dropship )
 		ScreenFadeToBlackForever( player, 2.0 )
 	
 	wait 2.0
-	if ( GetGameState() != eGameState.Postmatch )
+	if( GetGameState() != eGameState.Postmatch )
 		SetGameState( eGameState.Postmatch )
 }
 
@@ -250,7 +248,7 @@ void function Evac( int evacTeam, float initialWait, float arrivalTime, float wa
 	SetTeamActiveObjective( evacTeam, "EG_DropshipExtract", Time() + arrivalTime, file.evacIcon )
 	SetTeamActiveObjective( GetOtherTeam( evacTeam ), "EG_StopExtract", Time() + arrivalTime, file.evacIcon )
 	
-	foreach ( entity player in GetPlayerArrayOfTeam( evacTeam ) ) //Show the Evac Match Goal for players of the team that lost the match
+	foreach( entity player in GetPlayerArrayOfTeam( evacTeam ) ) //Show the Evac Match Goal for players of the team that lost the match
 		Remote_CallFunction_UI( player, "SCB_SetEvacMeritState", 0 )
 	
 	// would've liked to use cd_dropship_rescue_side_start length here, but can't since this is done before dropship spawn, can't
@@ -259,23 +257,21 @@ void function Evac( int evacTeam, float initialWait, float arrivalTime, float wa
 	entity dropship = CreateDropship( evacTeam, evacNode.GetOrigin(), evacNode.GetAngles() )
 
 	thread DropShipTempHide( dropship ) // prevent showing model and health bar on spawn
+	dropship.SetModel( evacShip.shipModel )
 	dropship.SetValueForModelKey( evacShip.shipModel )
 
 	dropship.SetMaxHealth( EVAC_SHIP_HEALTH )
 	dropship.SetHealth( EVAC_SHIP_HEALTH )
-	dropship.SetShieldHealthMax( EVAC_SHIP_SHIELDS )
 	dropship.SetShieldHealth( EVAC_SHIP_SHIELDS )
 	SetTargetName( dropship, "#NPC_EVAC_DROPSHIP" )
 	DispatchSpawn( dropship )
-	dropship.SetModel( evacShip.shipModel )
-	foreach ( entity player in GetPlayerArray() )
-		Remote_CallFunction_NonReplay( player, "ServerCallback_CreateDropShipIntLighting", dropship.GetEncodedEHandle(), dropship.GetTeam() )
 
 	// reduce nuclear core's damage
 	AddEntityCallback_OnDamaged( dropship, EvacDropshipDamaged )
 	
 	AddEntityCallback_OnKilled( dropship, EvacDropshipKilled )
-	
+
+	file.shouldholsterweapons[ dropship ] <- false
 	dropship.s.evacSlots <- [ null, null, null, null, null, null, null, null ]
 	file.evacDropship = dropship
 	
@@ -286,13 +282,21 @@ void function Evac( int evacTeam, float initialWait, float arrivalTime, float wa
 			dropship.s.evacTrigger.Destroy()
 		
 		// this should be for both teams
-		if ( !IsAlive( dropship ) )
+		if( !IsValid( dropship ) )
 		{
 			SetTeamActiveObjective( evacTeam, "EG_DropshipExtractDropshipDestroyed" )
-			SetTeamActiveObjective( GetOtherTeam( evacTeam ), "EG_StopExtractDropshipDestroyed" )
+			SetTeamActiveObjective( GetOtherTeam( evacTeam ), "EG_DropshipExtractDropshipDestroyed" )
 			
-			foreach ( entity player in GetPlayerArrayOfTeam( evacTeam ) )
+			foreach( entity player in GetPlayerArrayOfTeam( evacTeam ) )
 				SetPlayerChallengeEvacState( player, 0 )
+		}
+		
+		foreach ( entity player in dropship.s.evacSlots )
+		{
+			if ( !IsValid( player ) )
+				continue
+			
+			player.ClearInvulnerable()
 		}
 		
 		// this is called whether dropship is destroyed or evac finishes, callback can handle this itself
@@ -326,14 +330,14 @@ void function Evac( int evacTeam, float initialWait, float arrivalTime, float wa
 	PlayFactionDialogueToTeam( "mp_evacStop", GetOtherTeam( evacTeam ) )
 
 	// stop evac beam
-	if ( IsValid( effectFriendly ) )
+	if( IsValid( effectFriendly ) )
 		EffectStop( effectFriendly )
 
 	// setup evac trigger
 	entity trigger = CreateEntity( "trigger_cylinder" )
-	trigger.SetRadius( 200 )
-	trigger.SetAboveHeight( 200 )
-	trigger.SetBelowHeight( 200 )
+	trigger.SetRadius( 150 )
+	trigger.SetAboveHeight( 100 )
+	trigger.SetBelowHeight( 100 )
 	trigger.SetOrigin( dropship.GetOrigin() )
 	trigger.SetParent( dropship, "ORIGIN" )
 	DispatchSpawn( trigger )
@@ -362,6 +366,7 @@ void function Evac( int evacTeam, float initialWait, float arrivalTime, float wa
 	EmitSoundOnEntity( dropship, evacShip.flyoutSound )
 	
 	// holster all weapons
+	file.shouldholsterweapons[ dropship ] <- true
 	foreach ( entity player in dropship.s.evacSlots )
 		if ( IsValid( player ) )
 			player.HolsterWeapon()
@@ -385,7 +390,7 @@ void function Evac( int evacTeam, float initialWait, float arrivalTime, float wa
 
 	dropship.kv.VisibilityFlags = 0 // prevent jetpack trails being like "dive" into ground
 	WaitFrame() // better wait because we are server
-	if ( !IsValid( dropship ) )
+	if( !IsValid( dropship ) )
 		return
 	thread __WarpOutEffectShared( dropship )
 	
@@ -398,10 +403,10 @@ void function Evac( int evacTeam, float initialWait, float arrivalTime, float wa
 	dropship.SetOrigin( file.spaceNode.GetOrigin() )
 	dropship.SetAngles( file.spaceNode.GetAngles() )
 	dropship.SetInvulnerable()
-	svGlobal.levelEnt.Signal( "EvacOver" )
+	dropship.Signal( "EvacOver" )
 	thread PlayAnim( dropship, "ds_space_flyby_dropshipA", file.spaceNode )
 	
-	foreach ( entity player in GetPlayerArray() )
+	foreach( entity player in GetPlayerArray() )
 	{	
 		// evac-ed players only beyond this point
 		if ( !PlayerInDropship( player, dropship ) )
@@ -415,10 +420,7 @@ void function Evac( int evacTeam, float initialWait, float arrivalTime, float wa
 			continue
 		}
 		
-		if ( player.GetTeam() == evacTeam )
-			SetPlayerActiveObjective( player, "EG_DropshipExtractSuccessfulEscape" )
-		else
-			SetPlayerActiveObjective( player, "EG_StopExtractDropshipSuccessfulEscape" )
+		SetPlayerActiveObjective( player, "EG_DropshipExtractSuccessfulEscape" )
 
 		// let evacing team able to see the ship again
 		dropship.kv.VisibilityFlags = ENTITY_VISIBLE_TO_FRIENDLY
@@ -450,7 +452,7 @@ void function Evac( int evacTeam, float initialWait, float arrivalTime, float wa
 
 	bool allEvac = evacCount == evacingPlayers.len()
 
-	foreach (entity player in evacingPlayers)
+	foreach(entity player in evacingPlayers)
 	{
 		if ( !PlayerInDropship( player, dropship ) )
 			continue
@@ -497,7 +499,9 @@ void function AddPlayerToEvacDropship( entity dropship, entity player )
 	player.SetInvulnerable()
 	player.UnforceCrouch()
 	player.ForceStand()
-	Remote_CallFunction_NonReplay( player, "ServerCallback_CreateDropShipIntLighting", dropship.GetEncodedEHandle(), dropship.GetTeam() )
+	
+	if ( dropship in file.shouldholsterweapons && file.shouldholsterweapons[ dropship ] ) // don't let people have their weapons in the dropship after it leaves
+    	player.HolsterWeapon()
 
 	FirstPersonSequenceStruct fp
 	//fp.firstPersonAnim = EVAC_EMBARK_ANIMS_1P[ slot ]
@@ -537,7 +541,7 @@ void function EvacDropshipKilled( entity dropship, var damageInfo )
 {
 	foreach ( entity player in dropship.s.evacSlots )
 	{
-		if ( IsAlive( player ) )
+		if ( IsValid( player ) )
 		{
 			player.ClearParent()
 			player.Die( DamageInfo_GetAttacker( damageInfo ), DamageInfo_GetWeapon( damageInfo ), { damageSourceId = eDamageSourceId.evac_dropship_explosion, scriptType = DF_GIB } )
@@ -548,15 +552,12 @@ void function EvacDropshipKilled( entity dropship, var damageInfo )
 // if there's no player left in evacing team, we end this match
 void function CheckIfAnyPlayerLeft( int evacTeam )
 {
-	svGlobal.levelEnt.EndSignal( "EvacOver" )
 	wait GAME_EPILOGUE_PLAYER_RESPAWN_LEEWAY
-	
+	float startTime = Time()
+
 	OnThreadEnd(
 		function() : ( evacTeam )
 		{
-			if( IsAlive( file.evacDropship ) )
-				return
-			
 			SetTeamActiveObjective( evacTeam, "EG_DropshipExtractEvacPlayersKilled" )
 			SetTeamActiveObjective( GetOtherTeam( evacTeam ), "EG_StopExtractEvacPlayersKilled" )
 			thread EvacEpilogueCompleted( null )
@@ -567,16 +568,16 @@ void function CheckIfAnyPlayerLeft( int evacTeam )
 				if ( player.GetTeam() == evacTeam )
 					continue
 
-				AddPlayerScore( player, "TeamBonusKilledAll" )
+				AddPlayerScore( player, "TeamBonusKilledAll")
 			}
 		}
 	)
-	
-	while( GetPlayerArrayOfTeam_Alive( evacTeam ).len() )
+	while( true )
 	{
-		if ( GetGameState() == eGameState.Postmatch )
+		if( GetPlayerArrayOfTeam_Alive( evacTeam ).len() == 0 )
+			break
+		if( GetGameState() == eGameState.Postmatch )
 			return
-		
 		WaitFrame()
 	}	
 }
@@ -586,7 +587,7 @@ void function DropShipTempHide( entity dropship )
 	dropship.kv.VisibilityFlags = 0 // or it will still shows the jetpack fxs
 	HideName( dropship )
 	wait 0.46
-	if ( IsValid( dropship ) )
+	if( IsValid( dropship ) )
 	{
 		dropship.kv.VisibilityFlags = ENTITY_VISIBLE_TO_EVERYONE
 		ShowName( dropship )
@@ -601,7 +602,7 @@ EvacShipSetting function GetEvacShipSettingByTeam( int team )
 	tempSetting.hoverSound = "Goblin_IMC_Evac_Hover"
 	tempSetting.flyoutSound = "Goblin_IMC_Evac_FlyOut"
 
-	if ( team == TEAM_MILITIA )
+	if( team == TEAM_MILITIA )
 	{
 		tempSetting.shipModel = $"models/vehicle/crow_dropship/crow_dropship_hero.mdl"
 		tempSetting.flyinSound = "Crow_MCOR_Evac_Flyin"
@@ -614,7 +615,7 @@ EvacShipSetting function GetEvacShipSettingByTeam( int team )
 void function EvacDropshipDamaged( entity evacShip, var damageInfo )
 {
 	int damageSourceID = DamageInfo_GetDamageSourceIdentifier( damageInfo )
-	if ( damageSourceID == damagedef_nuclear_core )
+	if( damageSourceID == damagedef_nuclear_core )
 		DamageInfo_SetDamage( damageInfo, DamageInfo_GetDamage( damageInfo ) * EVAC_SHIP_DAMAGE_MULTIPLIER_AGAINST_NUCLEAR_CORE )
 }
 
