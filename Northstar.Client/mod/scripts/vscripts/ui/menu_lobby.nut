@@ -42,7 +42,6 @@ global function OnStoreBundlesButton_Activate
 global function OnStoreNewReleasesButton_Activate
 
 global function StartNSMatchmaking
-global function IsCoreMod
 
 const string MATCHMAKING_AUDIO_CONNECTING = "menu_campaignsummary_titanunlocked"
 
@@ -1798,7 +1797,7 @@ void function MatchmakedAuthAndConnectToServer( ServerInfo matchmakedserver, str
 				if ( !found )
 				{
 					modsChanged = true
-					NSSetModEnabled( modName, false )
+					NSSetModEnabled( modName, modVersion, false )
 				}
 			}
 		}
@@ -1814,7 +1813,7 @@ void function MatchmakedAuthAndConnectToServer( ServerInfo matchmakedserver, str
 				if ( !localModInfos[0].enabled )
 				{
 					modsChanged = true
-					NSSetModEnabled( modName, true )
+					NSSetModEnabled( modName, modVersion, true )
 				}
 			}
 
@@ -1825,7 +1824,7 @@ void function MatchmakedAuthAndConnectToServer( ServerInfo matchmakedserver, str
 					if ( localMod.version == mod.version )
 					{
 						modsChanged = true
-						NSSetModEnabled( mod.name, true )
+						NSSetModEnabled( mod.name, localMod.version, true )
 						break
 					}
 				}
