@@ -53,6 +53,7 @@ void function ClassicMP_DefaultNoIntro_SpawnPlayer( entity player )
 // spawn as pilot for intro
 void function ClassicMP_DefaultNoIntro_PilotSpawnPlayer( entity player )
 {
+	player.EndSignal( "OnDestroy" )
 	if( PlayerCanSpawn( player ) )
 		RespawnAsPilot( player )
 	
