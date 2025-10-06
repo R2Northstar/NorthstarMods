@@ -5,7 +5,7 @@ global function InitVoiceHUD
 global function UpdateVoiceHUD
 
 
-const VOICEHUD_MAX = 9
+const VOICEHUD_MAX = 10
 const VOICEHUD_COLOR_FRIENDLY = [FRIENDLY_R, FRIENDLY_G, FRIENDLY_B, 255]
 const VOICEHUD_COLOR_ENEMY = [ENEMY_R, ENEMY_G, ENEMY_B, 255]
 
