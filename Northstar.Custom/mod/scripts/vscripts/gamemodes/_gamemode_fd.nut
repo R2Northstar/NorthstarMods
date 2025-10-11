@@ -1573,6 +1573,9 @@ bool function FD_CheckPlayersReady()
 
 bool function ClientCommandCallbackToggleReady( entity player, array<string> args )
 {
+	if ( !args.len() )
+		return true
+	
 	if ( args[0] == "true" )
 	{
 		player.SetPlayerNetBool( "FD_readyForNextWave", true )
@@ -1586,6 +1589,9 @@ bool function ClientCommandCallbackToggleReady( entity player, array<string> arg
 
 bool function ClientCommand_FDSetTutorialBit( entity player, array<string> args )
 {
+	if ( !args.len() )
+		return true
+	
 	int fdbits = args[0].tointeger()
 	SetPersistenceBitfield( player, "fdTutorialBits", fdbits, -1 )
 	return true
@@ -2807,7 +2813,10 @@ void function FD_OnNPCDeath( entity victim, entity attacker, var damageInfo )
 				money = 0
 		}
 		if ( damageSourceId == eDamageSourceId.rodeo_forced_titan_eject || damageSourceId == eDamageSourceId.core_overload )
+		{
 			UpdatePlayerStat( attacker, "fd_stats", "rodeoNukes" )
+			PlayerEarnMeter_AddOwnedFrac( attacker, 0.3 )
+		}
 	}
 	
 	if ( money != 0 )
@@ -3183,7 +3192,8 @@ void function FD_SpawnPlayerDroppod( entity player )
 	player.SetAngles( < 0, PodAngle, 0 > )
 	player.SetParent( pod, "ATTACH", true )
 	HolsterAndDisableWeapons( player )
-	
+	AddCinematicFlag( player, CE_FLAG_CLASSIC_MP_SPAWNING )
+
 	FirstPersonSequenceStruct podSequence
 	podSequence.firstPersonAnim = DROPPOD_IDLE_ANIMS_POV[animIdx]
 	podSequence.thirdPersonAnim = DROPPOD_IDLE_ANIMS[animIdx]
@@ -3214,6 +3224,7 @@ void function FD_SpawnPlayerDroppod( entity player )
 		pod.NotSolid()
 		player.ClearParent()
 		player.EnableWeaponViewModel()
+		RemoveCinematicFlag( player, CE_FLAG_CLASSIC_MP_SPAWNING )
 		PutEntityInSafeSpot( player, null, null, pod.GetOrigin(), player.GetOrigin() )
 		ClearPlayerAnimViewEntity( player )
 		Loadouts_OnUsedLoadoutCrate( player )
@@ -3245,8 +3256,8 @@ void function FD_DropshipSpawnDropship()
 	file.dropship = CreateDropship( TEAM_MILITIA, file.dropshipSpawnPosition, file.dropshipSpawnAngles )
 	file.dropship.SetValueForModelKey( $"models/vehicle/crow_dropship/crow_dropship_hero.mdl" )
 
-	file.dropship.Hide()
 	DispatchSpawn( file.dropship )
+	file.dropship.Hide()
 	file.dropship.SetModel( $"models/vehicle/crow_dropship/crow_dropship_hero.mdl" )
 	file.dropship.SetInvulnerable()
 	file.dropship.NotSolid()
