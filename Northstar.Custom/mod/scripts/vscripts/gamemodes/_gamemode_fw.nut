@@ -880,6 +880,7 @@ void function FW_HandleSquadSpawn( array<entity> guys, CampSiteStruct campsite, 
 		// show on minimap to let players kill them
 		guy.Minimap_AlwaysShow( TEAM_MILITIA, null )
 		guy.Minimap_AlwaysShow( TEAM_IMC, null )
+		guy.SetEnemyChangeCallback( OnNPCEnemyChange )
 
 		// untrack them on death
 		thread FW_WaitToUntrackNPC( guy, campsite.campId, aiType )
@@ -941,6 +942,33 @@ void function FW_WaitToUntrackNPC( entity guy, string campId, string aiType )
 	guy.WaitSignal( "OnDeath", "OnDestroy" )
 	if( aiType in file.trackedCampNPCSpawns[ campId ] ) // maybe escalated?
 		file.trackedCampNPCSpawns[ campId ][ aiType ]--
+}
+
+void function OnNPCEnemyChange( entity guy )
+{
+	entity enemy = guy.GetEnemy()
+	if ( !IsAlive( guy ) || guy.IsFrozen() || !IsAlive( enemy ) || !IsValid( guy.GetActiveWeapon() ) )
+		return
+
+	string archer = "mp_weapon_rocket_launcher"
+	array<string> weapons = []
+	foreach ( entity weapon in guy.GetMainWeapons() )
+		weapons.append( weapon.GetWeaponClassName() )
+
+	if ( enemy == fw_harvesterImc.harvester || enemy == fw_harvesterMlt.harvester )
+	{
+		if ( !weapons.contains( archer ) )
+			guy.GiveWeapon( archer )
+		guy.SetActiveWeaponByName( archer )
+	}
+	else
+	{
+		foreach ( string weapon in weapons )
+			if ( weapon == archer )
+				guy.TakeWeaponNow( archer )
+		if ( weapons.len() - 1 != 0 )
+			guy.SetActiveWeaponByName( weapons.getrandom() )
+	}
 }
 
 /////////////////////////////////
@@ -1317,18 +1345,6 @@ void function FWAreaThreatLevelThink_Threaded()
 
 void function OnFWTurretSpawned( entity turret )
 {
-	if ( !IsNewThread() )
-	{
-		thread OnFWTurretSpawned( turret )
-		return
-	}
-
-	if ( !IsValid( fw_harvesterImc.harvester ) || !IsValid( fw_harvesterMlt.harvester ) )
-		WaitFrame()
-
-	if ( turret == fw_harvesterImc.harvester || turret == fw_harvesterMlt.harvester )
-		return
-
 	turret.EnableTurret() // always enabled
 	SetDefaultMPEnemyHighlight( turret ) // for sonar highlights to work
 	AddEntityCallback_OnDamaged( turret, OnMegaTurretDamaged )
@@ -1675,10 +1691,21 @@ entity function FW_GetTeamHarvesterProp( int team )
 void function FW_createHarvester()
 {
 	// imc havester spawn
-	fw_harvesterImc = CustomSpawnHarvester( file.harvesterImc_info.GetOrigin(), file.harvesterImc_info.GetAngles(), GetCurrentPlaylistVarInt( "fw_harvester_health", FW_DEFAULT_HARVESTER_HEALTH ), GetCurrentPlaylistVarInt( "fw_harvester_shield", FW_DEFAULT_HARVESTER_SHIELD ), TEAM_IMC )
+	fw_harvesterImc = SpawnHarvester( file.harvesterImc_info.GetOrigin(), file.harvesterImc_info.GetAngles(), GetCurrentPlaylistVarInt( "fw_harvester_health", FW_DEFAULT_HARVESTER_HEALTH ), GetCurrentPlaylistVarInt( "fw_harvester_shield", FW_DEFAULT_HARVESTER_SHIELD ), TEAM_IMC )
+	fw_harvesterImc.harvester.SetArmorType( ARMOR_TYPE_HEAVY )
+	fw_harvesterImc.harvester.Minimap_SetAlignUpright( true )
+	fw_harvesterImc.harvester.Minimap_AlwaysShow( TEAM_IMC, null )
+	fw_harvesterImc.harvester.Minimap_AlwaysShow( TEAM_MILITIA, null )
+	fw_harvesterImc.harvester.Minimap_SetHeightTracking( true )
+	fw_harvesterImc.harvester.Minimap_SetZOrder( MINIMAP_Z_OBJECT )
+	fw_harvesterImc.harvester.Minimap_SetCustomState( eMinimapObject_prop_script.FD_HARVESTER )
+	SetObjectCanBeMeleed( fw_harvesterImc.harvester, true )
 	AddEntityCallback_OnFinalDamaged( fw_harvesterImc.harvester, OnHarvesterDamaged )
 	AddEntityCallback_OnPostDamaged( fw_harvesterImc.harvester, OnHarvesterPostDamaged )
 	
+	// imc havester settings
+	// don't set this, or sonar pulse will try to find it and failed to set highlight
+	//fw_harvesterMlt.harvester.SetScriptName("fw_team_tower")
 	file.harvesters.append(fw_harvesterImc)
 	entity trackerImc = GetAvailableBaseLocationTracker()
 	trackerImc.SetOwner( fw_harvesterImc.harvester )
@@ -1691,10 +1718,21 @@ void function FW_createHarvester()
 
 
 	// mlt havester spawn
-	fw_harvesterMlt = CustomSpawnHarvester( file.harvesterMlt_info.GetOrigin(), file.harvesterMlt_info.GetAngles(), GetCurrentPlaylistVarInt( "fw_harvester_health", FW_DEFAULT_HARVESTER_HEALTH ), GetCurrentPlaylistVarInt( "fw_harvester_shield", FW_DEFAULT_HARVESTER_SHIELD ), TEAM_MILITIA )
+	fw_harvesterMlt = SpawnHarvester( file.harvesterMlt_info.GetOrigin(), file.harvesterMlt_info.GetAngles(), GetCurrentPlaylistVarInt( "fw_harvester_health", FW_DEFAULT_HARVESTER_HEALTH ), GetCurrentPlaylistVarInt( "fw_harvester_shield", FW_DEFAULT_HARVESTER_SHIELD ), TEAM_MILITIA )
+	fw_harvesterMlt.harvester.SetArmorType( ARMOR_TYPE_HEAVY )
+	fw_harvesterMlt.harvester.Minimap_SetAlignUpright( true )
+	fw_harvesterMlt.harvester.Minimap_AlwaysShow( TEAM_IMC, null )
+	fw_harvesterMlt.harvester.Minimap_AlwaysShow( TEAM_MILITIA, null )
+	fw_harvesterMlt.harvester.Minimap_SetHeightTracking( true )
+	fw_harvesterMlt.harvester.Minimap_SetZOrder( MINIMAP_Z_OBJECT )
+	fw_harvesterMlt.harvester.Minimap_SetCustomState( eMinimapObject_prop_script.FD_HARVESTER )
+	SetObjectCanBeMeleed( fw_harvesterMlt.harvester, true )
 	AddEntityCallback_OnFinalDamaged( fw_harvesterMlt.harvester, OnHarvesterDamaged )
 	AddEntityCallback_OnPostDamaged( fw_harvesterMlt.harvester, OnHarvesterPostDamaged )
 
+	// mlt havester settings
+	// don't set this, or sonar pulse will try to find it and failed to set highlight
+	//fw_harvesterImc.harvester.SetScriptName("fw_team_tower")
 	file.harvesters.append(fw_harvesterMlt)
 	entity trackerMlt = GetAvailableBaseLocationTracker()
 	trackerMlt.SetOwner( fw_harvesterMlt.harvester )
@@ -1706,58 +1744,6 @@ void function FW_createHarvester()
 	GameRules_SetTeamScore2( TEAM_IMC , 100 )
 
 	InitHarvesterDamageMods()
-}
-
-HarvesterStruct function CustomSpawnHarvester( vector origin, vector angles, int health, int shieldHealth, int team )
-{
-    entity harvester = CreateEntity( "npc_turret_mega" )
-    harvester.SetOrigin( origin )
-    harvester.SetAngles( angles )
-    harvester.kv.solid = SOLID_VPHYSICS
-    
-    harvester.SetMaxHealth( health )
-    harvester.SetHealth( health )
-    harvester.SetShieldHealthMax( shieldHealth )
-    harvester.SetShieldHealth( shieldHealth )
-    SetTeam(harvester,team)
-
-	SetSpawnOption_AISettings( harvester, "npc_turret_mega_fortwar" ) // the custom thing
-
-    DispatchSpawn( harvester )
-    
-	TakeWeaponsForArray( harvester, harvester.GetMainWeapons() )
-	harvester.EnableNPCFlag( NPC_IGNORE_ALL )
-	harvester.SetModel( $"models/props/generator_coop/generator_coop.mdl" )
-	harvester.SetTitle( "#HARVESTER" )
-	harvester.EnableTurret()
-    
-    entity blackbox = CreatePropDynamic( MODEL_HARVESTER_TOWER_COLLISION, origin, angles, 0 )
-    blackbox.Hide()
-    blackbox.Solid()
-    
-    entity rings = CreatePropDynamic( MODEL_HARVESTER_TOWER_RINGS, origin, angles, 6 )
-    thread PlayAnim( rings, "generator_cycle_fast" )
-
-	entity harvesterminimapentity = CreateEntity( "prop_script" )
-	harvesterminimapentity.SetOrigin( harvester.GetOrigin() )
-	harvesterminimapentity.SetAngles( harvester.GetAngles() )
-	harvesterminimapentity.SetValueForModelKey( harvester.GetModelName() )
-	DispatchSpawn( harvesterminimapentity )
-	harvesterminimapentity.SetInvulnerable()
-	harvesterminimapentity.SetParent( harvester, "ref" )
-	harvesterminimapentity.Minimap_SetAlignUpright( true )
-	harvesterminimapentity.Minimap_AlwaysShow( TEAM_IMC, null )
-	harvesterminimapentity.Minimap_AlwaysShow( TEAM_MILITIA, null )
-	harvesterminimapentity.Minimap_SetHeightTracking( true )
-	harvesterminimapentity.Minimap_SetZOrder( MINIMAP_Z_OBJECT )
-	harvesterminimapentity.Minimap_SetCustomState( eMinimapObject_prop_script.FD_HARVESTER )
-    
-    HarvesterStruct ret
-    ret.harvester = harvester
-    ret.lastDamage = Time()
-    ret.rings = rings
-    
-    return ret
 }
 
 void function FW_AddHarvesterDamageSourceModifier( int id, float mod )
@@ -1893,10 +1879,9 @@ void function OnHarvesterPostDamaged( entity harvester, var damageInfo )
 
 	damageAmount = DamageInfo_GetDamage( damageInfo ) // get damageAmount again after all damage adjustments
 
-	if ( !attacker.IsTitan() )
+	if ( !attacker.IsTitan() && attacker.IsPlayer() )
 	{
-		if( attacker.IsPlayer() )
-			Remote_CallFunction_NonReplay( attacker , "ServerCallback_FW_NotifyTitanRequired" )
+		Remote_CallFunction_NonReplay( attacker , "ServerCallback_FW_NotifyTitanRequired" )
 		DamageInfo_SetDamage( damageInfo, harvester.GetShieldHealth() )
 		damageAmount = 0 // never damage haveter's prop
 	}
@@ -2315,10 +2300,7 @@ function FW_UseBattery( batteryPortvar, playervar ) //actually void function( en
 // get nearest turret, consider it belongs to the port
 entity function GetNearestMegaTurret( entity ent )
 {
-    array<entity> allTurrets 
-	foreach( entity turret in GetNPCArrayByClass( "npc_turret_mega" ) )
-		if ( turret != fw_harvesterImc.harvester && turret != fw_harvesterMlt.harvester )
-			allTurrets.append( turret )
+    array<entity> allTurrets = GetNPCArrayByClass( "npc_turret_mega" )
     entity turret = GetClosest( allTurrets, ent.GetOrigin() )
     return turret
 }
@@ -2329,7 +2311,7 @@ string function GetTeamAliveTurretCount_ReturnString( int team )
     int turretCount
     foreach( entity turret in GetNPCArrayByClass( "npc_turret_mega" ) )
     {
-        if( turret.GetTeam() == team && IsAlive( turret ) && turret != fw_harvesterImc.harvester && turret != fw_harvesterMlt.harvester )
+        if( turret.GetTeam() == team && IsAlive( turret ) )
             turretCount += 1
     }
 
