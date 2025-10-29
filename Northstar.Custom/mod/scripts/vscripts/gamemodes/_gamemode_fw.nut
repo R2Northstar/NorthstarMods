@@ -1883,7 +1883,7 @@ void function OnHarvesterPostDamaged( entity harvester, var damageInfo )
 	{
 		Remote_CallFunction_NonReplay( attacker , "ServerCallback_FW_NotifyTitanRequired" )
 		DamageInfo_SetDamage( damageInfo, harvester.GetShieldHealth() )
-		damageAmount = 0 // never damage haveter's prop
+		damageAmount = 0 // never damage harvester's prop
 	}
 
 	if( !harvesterstruct.harvesterShieldDown )
