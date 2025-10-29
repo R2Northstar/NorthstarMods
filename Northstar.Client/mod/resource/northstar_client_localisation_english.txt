@@ -237,6 +237,7 @@ Press Yes if you agree to this. This choice can be changed in the mods menu at a
 		"player_bleedout_firstAidTimeSelf" "Self-res time"
 		"player_bleedout_firstAidHealPercent" "First aid health percentage"
 		"player_bleedout_aiBleedingPlayerMissChance" "Downed AI miss chance"
+		"BLEEDOUT_CALL_HELP" "You're bleeding out!"
 
 		// coop stuff
 		"PL_sp_coop" "(UNFINISHED) Singleplayer Coop"
@@ -312,6 +313,12 @@ Press Yes if you agree to this. This choice can be changed in the mods menu at a
 		// In-game chat
 		"HUD_CHAT_WHISPER_PREFIX" "[WHISPER]"
 		"HUD_CHAT_SERVER_PREFIX" "[SERVER]"
+		
+		// Team Switching
+		"TEAMSWITCH_GAMEMODE"			"Gamemode does not allow Team Switching"
+		"TEAMSWITCH_BUFFER"				"Team Switching is on Cooldown"
+		"TEAMSWITCH_GAMEPLAY"			"Team change not allowed outside playing phase"
+		"TEAMSWITCH_DISABLED"			"Current gamemode doesn't support team change"
 
 		"NO_GAMESERVER_RESPONSE" 		"Couldn't reach game server"
 		"BAD_GAMESERVER_RESPONSE" 		"Game server gave an invalid response"
@@ -323,6 +330,18 @@ Press Yes if you agree to this. This choice can be changed in the mods menu at a
 		"INVALID_MASTERSERVER_TOKEN" 	"Invalid or expired masterserver token, try restarting EA App."
 		"JSON_PARSE_ERROR" 				"Error parsing json response"
 		"UNSUPPORTED_VERSION" 			"The version you are using is no longer supported"
+
+		// Mode menu
+		"MODE_MENU_PVPVE"		"PvPvE"
+		"MODE_MENU_PVE"			"PvE"
+		"MODE_MENU_PVP"			"PvP"
+		"MODE_MENU_FFA"			"FFA"
+		"MODE_MENU_TITAN_ONLY"	"Titan Only"
+		"MODE_MENU_OTHER"		"Other"
+		"MODE_MENU_CUSTOM"		"Custom"
+		"MODE_MENU_ALL"			"All"
+		"MODE_MENU_UNKNOWN"		"Unknown"
+		"MODE_MENU_SWITCH"		"Filter"
 
 		"AUTHENTICATION_FAILED_HEADER"		"Authentication Failed"
 		"AUTHENTICATION_FAILED_BODY"		"Failed to authenticate with Atlas!"
@@ -379,8 +398,8 @@ Press Yes if you agree to this. This choice can be changed in the mods menu at a
 		"DOWNLOADING_MOD_TITLE_W_PROGRESS" 	"Downloading mod (%s1%)"
 		"DOWNLOADING_MOD_TEXT"				"Downloading %s1 v%s2..."
 		"DOWNLOADING_MOD_TEXT_W_PROGRESS"	"Downloading %s1 v%s2...\n(%s3/%s4 MB)"
-		"CHECKSUMING_TITLE"					"Checksuming mod"
-		"CHECKSUMING_TEXT"					"Verifying contents of %s1 v%s2..."
+		"CHECKSUMING_TITLE"					"Verifying mod integrity"
+		"CHECKSUMING_TEXT"					"Validating files of %s1 v%s2..."
 		"EXTRACTING_MOD_TITLE"				"Extracting mod (%s1%)"
 		"EXTRACTING_MOD_TEXT"				"Extracting %s1 v%s2...\n(%s3/%s4 MB)"
 		"FAILED_DOWNLOADING"				"Failed downloading mod"
