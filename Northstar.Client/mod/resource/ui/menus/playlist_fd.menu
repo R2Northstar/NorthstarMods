@@ -1,0 +1,518 @@
+#base "combo_buttons.res"
+resource/ui/menus/playlist_mixtape.menu
+{
+	menu
+	{
+		ControlName				Frame
+		xpos					0
+		ypos					0
+		zpos					3
+		wide					f0
+		tall					f0
+		autoResize				0
+		pinCorner				0
+		visible					1
+		enabled					1
+		PaintBackgroundType		0
+		infocus_bgcolor_override	"0 0 0 0"
+		outoffocus_bgcolor_override	"0 0 0 0"
+
+        Vignette
+        {
+            ControlName             ImagePanel
+            InheritProperties       MenuVignette
+        }
+
+		MenuTitle
+		{
+			ControlName				Label
+			InheritProperties		MenuTitle
+			labelText				"#FRONTIER_DEFENSE"
+		}
+
+		ImgTopBar
+		{
+			ControlName				ImagePanel
+			InheritProperties		MenuTopBar
+		}
+
+		CreditsAvailable
+	    {
+	        ControlName             RuiPanel
+	        InheritProperties       CreditsAvailableProperties
+	    }
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+	BackgroundLeft
+	{
+		ControlName				ImagePanel
+		InheritProperties		R2_ContentBackground
+		ypos					220
+		wide					%100
+		tall					580
+		visible					1
+		drawColor				"0 0 0 0"
+	}
+
+	PlayButton
+	{
+		ControlName			RuiButton
+		Classname			GridButtonClass
+		InheritProperties	Playlist_Button
+        xpos            -106
+        ypos            0
+        wide			486 // 474
+        tall			243
+		visible			1
+		scaleImage		1
+		tabPosition		1
+		drawColor		"255 255 255 255"
+
+		navDown					BtnPlaylistIcon00
+//		navRight				HostButton
+
+		rightClickEvents	1
+		zpos			1
+
+		pin_to_sibling			BackgroundLeft
+		pin_corner_to_sibling	TOP_LEFT
+		pin_to_sibling_corner	TOP_LEFT
+	}
+
+	PlayHintBackground
+	{
+		ControlName				RuiPanel
+		xpos					40
+		ypos 					-20
+		wide					400
+		tall					150
+		visible					0
+		rui 					"ui/basic_image.rpak"
+		drawColor				"0 0 0 120"
+		scaleImage				1
+		zpos					0
+
+		pin_to_sibling			PlayButton
+        pin_corner_to_sibling	TOP_LEFT
+        pin_to_sibling_corner	TOP_RIGHT
+	}
+
+	PlayHintIcon
+	{
+		ControlName 			RuiPanel
+		xpos					-4
+		wide					80
+		tall					80
+		pin_to_sibling				PlayHintBackground
+		pin_corner_to_sibling			LEFT
+		pin_to_sibling_corner			LEFT
+		visible					0
+		rui 					"ui/basic_image.rpak"
+		scaleImage				1
+		zpos					1
+	}
+
+	PlayLabelDetails
+	{
+		ControlName				RuiPanel
+		xpos 					10
+		pin_to_sibling				PlayHintIcon
+		pin_corner_to_sibling			LEFT
+		pin_to_sibling_corner			RIGHT
+		wide					290
+		tall					140
+		rui 					"ui/dialog_titan_properties.rpak"
+		wrap					1
+		visible					1
+		zpos					1
+	}
+
+	TitanLoadoutFD
+	{
+	    ControlName				CNestedPanel
+		xpos 					-125
+		ypos 					420
+	    zpos					10
+		wide					800
+		tall					480
+	    visible					1
+		controlSettingsFile		"resource/ui/menus/panels/titanproperties_fd.res"
+
+		pin_to_sibling			BackgroundLeft
+		pin_corner_to_sibling	BOTTOM_RIGHT
+        pin_to_sibling_corner	BOTTOM_RIGHT
+	}
+
+	ContentDescriptionTitle
+	{
+		ControlName				Label
+		InheritProperties		R2_ContentDescriptionTitle
+		font					DefaultBold_30
+		labelText				"#FD_DIFFICULTY"
+		ypos					0
+		xpos                    0
+		fgcolor_override		"255 184 0 255"
+		allcaps					0
+
+		pin_to_sibling			PlayButton
+		pin_corner_to_sibling	TOP_LEFT
+		pin_to_sibling_corner	BOTTOM_LEFT
+	}
+
+	BtnPlaylistIcon00
+	{
+		ControlName				RuiButton
+		InheritProperties		RuiMixtapeChecklistIconButton
+		navUp					PlayButton
+		navRight				BtnPlaylistIcon01
+		rightClickEvents		1
+		scriptID				0
+
+		pin_to_sibling			ContentDescriptionTitle
+		pin_corner_to_sibling	TOP_LEFT
+		pin_to_sibling_corner	BOTTOM_LEFT
+		//ypos					-60
+		xpos                    4
+
+		navDown					TitanButton0
+	}
+	BtnPlaylistIcon01
+	{
+		ControlName				RuiButton
+		InheritProperties		RuiMixtapeChecklistIconButton
+		navUp					PlayButton
+		navLeft					BtnPlaylistIcon00
+		navRight				BtnPlaylistIcon02
+		rightClickEvents		1
+		scriptID				1
+
+		pin_to_sibling			BtnPlaylistIcon00
+		pin_corner_to_sibling	TOP_LEFT
+		pin_to_sibling_corner	TOP_RIGHT
+		xpos                    36
+
+		navDown					TitanButton0
+	}
+	BtnPlaylistIcon02
+	{
+		ControlName				RuiButton
+		InheritProperties		RuiMixtapeChecklistIconButton
+		navUp					PlayButton
+		navLeft					BtnPlaylistIcon01
+		navRight				BtnPlaylistIcon03
+		rightClickEvents		1
+		scriptID				2
+
+		pin_to_sibling			BtnPlaylistIcon01
+		pin_corner_to_sibling	TOP_LEFT
+		pin_to_sibling_corner	TOP_RIGHT
+		xpos                    36
+
+		navDown					TitanButton0
+	}
+	BtnPlaylistIcon03
+	{
+		ControlName				RuiButton
+		InheritProperties		RuiMixtapeChecklistIconButton
+		navUp					PlayButton
+		navLeft					BtnPlaylistIcon02
+		navRight				BtnPlaylistIcon04
+		rightClickEvents		1
+		scriptID				3
+
+		pin_to_sibling			BtnPlaylistIcon02
+		pin_corner_to_sibling	TOP_LEFT
+		pin_to_sibling_corner	TOP_RIGHT
+		xpos                    36
+
+		navDown					TitanButton0
+	}
+	BtnPlaylistIcon04
+	{
+		ControlName				RuiButton
+		InheritProperties		RuiMixtapeChecklistIconButton
+		navUp					PlayButton
+		navLeft					BtnPlaylistIcon03
+		rightClickEvents		1
+		scriptID				4
+
+		pin_to_sibling			BtnPlaylistIcon03
+		pin_corner_to_sibling	TOP_LEFT
+		pin_to_sibling_corner	TOP_RIGHT
+		xpos                    36
+
+		navDown					TitanButton0
+	}
+
+	HintBackground
+	{
+		ControlName				RuiPanel
+		xpos					40
+		ypos 					-250
+		wide					400
+		tall					150
+		visible					0
+		rui 					"ui/basic_image.rpak"
+		drawColor				"0 0 0 120"
+		scaleImage				1
+		zpos					0
+
+		pin_to_sibling			BtnPlaylistIcon03
+        pin_corner_to_sibling	BOTTOM_LEFT
+        pin_to_sibling_corner	BOTTOM_RIGHT
+	}
+
+	HintIcon
+	{
+		ControlName 			RuiPanel
+		xpos					-4
+		wide					80
+		tall					80
+		pin_to_sibling				HintBackground
+		pin_corner_to_sibling			LEFT
+		pin_to_sibling_corner			LEFT
+		visible					0
+		rui 					"ui/basic_image.rpak"
+		scaleImage				1
+		zpos					1
+	}
+
+	LabelDetails
+	{
+		ControlName				RuiPanel
+		xpos 					10
+		pin_to_sibling				HintIcon
+		pin_corner_to_sibling			LEFT
+		pin_to_sibling_corner			RIGHT
+		wide					290
+		tall					140
+		rui 					"ui/dialog_titan_properties.rpak"
+		wrap					1
+		visible					1
+		zpos					1
+	}
+
+	TitanSelectTitle
+	{
+		ControlName				Label
+		InheritProperties		R2_ContentDescriptionTitle
+		font					DefaultBold_30
+		labelText				"#MENU_TITAN_SELECT"
+		ypos					35
+		xpos                    0
+		fgcolor_override		"255 184 0 255"
+		allcaps					0
+
+		pin_to_sibling			BtnPlaylistIcon00
+		pin_corner_to_sibling	TOP_LEFT
+		pin_to_sibling_corner	BOTTOM_LEFT
+	}
+
+	TitanButton0
+    {
+		ControlName				RuiButton
+		InheritProperties		LoadoutButtonSmall
+		rui						"ui/team_titan_select_button_small.rpak"
+        ypos					0
+        xpos 					0
+        zpos 					10
+        tall 					72
+		wide					72
+        scriptID				0
+        tabPosition				1
+
+        pin_to_sibling			TitanSelectTitle
+        pin_corner_to_sibling	TOP_LEFT
+        pin_to_sibling_corner	BOTTOM_LEFT
+
+        navUp					BtnPlaylistIcon00
+        navDown                 TutorialButton
+    }
+
+    TitanButton1
+    {
+		ControlName				RuiButton
+		InheritProperties		LoadoutButtonSmall
+		rui						"ui/team_titan_select_button_small.rpak"
+        ypos					0
+        xpos 					0
+        zpos 					10
+        tall 					72
+		wide					72
+        scriptID				1
+
+		pin_to_sibling			TitanButton0
+        pin_corner_to_sibling	TOP_LEFT
+        pin_to_sibling_corner	TOP_RIGHT
+
+        navUp					BtnPlaylistIcon00
+        navDown                 TutorialButton
+    }
+
+    TitanButton2
+    {
+		ControlName				RuiButton
+		InheritProperties		LoadoutButtonSmall
+		rui						"ui/team_titan_select_button_small.rpak"
+        ypos					0
+        xpos 					0
+        zpos 					10
+        tall 					72
+		wide					72
+        scriptID				2
+
+		pin_to_sibling			TitanButton1
+        pin_corner_to_sibling	TOP_LEFT
+        pin_to_sibling_corner	TOP_RIGHT
+
+        navUp					BtnPlaylistIcon00
+        navDown                 TutorialButton
+    }
+
+    TitanButton3
+    {
+		ControlName				RuiButton
+		InheritProperties		LoadoutButtonSmall
+		rui						"ui/team_titan_select_button_small.rpak"
+        ypos					0
+        xpos 					0
+        zpos 					10
+        tall 					72
+		wide					72
+        scriptID				3
+
+		pin_to_sibling			TitanButton2
+        pin_corner_to_sibling	TOP_LEFT
+        pin_to_sibling_corner	TOP_RIGHT
+
+        navUp					BtnPlaylistIcon00
+        navDown                 TutorialButton
+    }
+
+    TitanButton4
+    {
+		ControlName				RuiButton
+		InheritProperties		LoadoutButtonSmall
+		rui						"ui/team_titan_select_button_small.rpak"
+        ypos					0
+        xpos 					0
+        zpos 					10
+        tall 					72
+		wide					72
+        scriptID				4
+
+		pin_to_sibling			TitanButton3
+        pin_corner_to_sibling	TOP_LEFT
+        pin_to_sibling_corner	TOP_RIGHT
+
+        navUp					BtnPlaylistIcon00
+        navDown                 TutorialButton
+    }
+
+    TitanButton5
+    {
+		ControlName				RuiButton
+		InheritProperties		LoadoutButtonSmall
+		rui						"ui/team_titan_select_button_small.rpak"
+        ypos					0
+        xpos 					0
+        zpos 					10
+        tall 					72
+		wide					72
+        scriptID				5
+
+		pin_to_sibling			TitanButton4
+        pin_corner_to_sibling	TOP_LEFT
+        pin_to_sibling_corner	TOP_RIGHT
+
+        navUp					BtnPlaylistIcon00
+        navDown                 TutorialButton
+    }
+
+    TitanButton6
+    {
+		ControlName				RuiButton
+		InheritProperties		LoadoutButtonSmall
+		rui						"ui/team_titan_select_button_small.rpak"
+        ypos					0
+        xpos 					0
+        zpos 					10
+        tall 					72
+		wide					72
+        scriptID				6
+
+		pin_to_sibling			TitanButton5
+        pin_corner_to_sibling	TOP_LEFT
+        pin_to_sibling_corner	TOP_RIGHT
+
+        navUp					BtnPlaylistIcon00
+        navDown                 TutorialButton
+    }
+
+	TutorialButton
+	{
+		ControlName				RuiButton
+		InheritProperties		RuiStartMatchButton
+		wide                    504
+		visible					1
+		tabposition             1
+		ypos                    56
+
+		pin_to_sibling			TitanButton0
+		pin_corner_to_sibling	TOP_LEFT
+		pin_to_sibling_corner	BOTTOM_LEFT
+
+        navUp					TitanButton0
+	}
+
+
+
+    ModelRotateMouseCapture
+    {
+        ControlName				CMouseMovementCapturePanel
+        xpos                    896
+        zpos					12
+        wide                    1024
+        tall                    753
+    }
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	//	LabelDetails
+	//	{
+	//		ControlName				RuiPanel
+	//		xpos					925
+	//		ypos					160
+	//		wide 					850
+	//		tall					300
+	//		rui 					"ui/knowledgebase_panel_main.rpak"
+	//		wrap					1
+	//		visible					1
+	//		zpos					1
+	//	}
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+		ButtonRowAnchor
+		{
+			ControlName				Label
+			labelText				""
+
+			xpos                    96
+			ypos                    160
+		}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+		ButtonTooltip
+		{
+			ControlName				CNestedPanel
+			InheritProperties		ButtonTooltip
+		}
+
+		FooterButtons
+		{
+			ControlName				CNestedPanel
+			InheritProperties       FooterButtons
+		}
+	}
+}
