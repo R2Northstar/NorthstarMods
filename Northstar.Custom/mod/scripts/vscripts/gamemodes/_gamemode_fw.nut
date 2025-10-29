@@ -966,8 +966,11 @@ void function OnNPCEnemyChange( entity guy )
 		foreach ( string weapon in weapons )
 			if ( weapon == archer )
 				guy.TakeWeaponNow( archer )
-		if ( weapons.len() - 1 != 0 )
-			guy.SetActiveWeaponByName( weapons.getrandom() )
+		array<string> newweapons = []
+		foreach ( entity newweapon in guy.GetMainWeapons() )
+			newweapons.append( newweapon.GetWeaponClassName() )
+		if ( newweapons.len() )
+			guy.SetActiveWeaponByName( newweapons.getrandom() )
 	}
 }
 
