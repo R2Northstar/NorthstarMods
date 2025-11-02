@@ -79,7 +79,7 @@ void function RateSpawnpoints_CP( int checkClass, array<entity> spawnpoints, int
 	entity friendlyHardpoint // determine our furthest out hardpoint
 	foreach ( entity hardpoint in HARDPOINTS )
 	{
-		if ( hardpoint.GetTeam() == player.GetTeam() && GetGlobalNetFloat( "objective" + CapturePoint_GetHardpointGroup(hardpoint) + "Progress" ) >= 0.95 )
+		if ( hardpoint.GetTeam() == player.GetTeam() && GetGlobalNetFloat( "objective" + CapturePoint_GetGroup(hardpoint) + "Progress" ) >= 0.95 )
 		{
 			if ( IsValid( friendlyHardpoint ) )
 			{
@@ -113,7 +113,7 @@ void function EntitiesDidLoad_SpawnHardpoints()
 			continue
 
 		HardpointState hpState
-		hpState.group = CapturePoint_GetHardpointGroup( hp )
+		hpState.group = CapturePoint_GetGroup( hp )
 		hpState.ent = hp
 		hpState.prop = CreatePropDynamic( hp.GetModelName(), hp.GetOrigin(), hp.GetAngles(), SOLID_VPHYSICS )
 		hpState.trigger = GetEnt( expect string(hp.kv.triggerTarget) )
@@ -282,7 +282,7 @@ void function Hardpoint_ThinkTick( HardpointState hardpoint )
 		else if ( CapturePoint_GetCaptureProgress( hardpoint.ent ) == 1.0 )
 			CapturePoint_SetState( hardpoint.ent, CAPTURE_POINT_STATE_CAPTURED )
 		else if ( CapturePoint_GetCaptureProgress( hardpoint.ent ) >= 2.0 )
-			CapturePoint_GetCaptureProgress( hardpoint.ent, CAPTURE_POINT_STATE_AMPED )
+			CapturePoint_SetState( hardpoint.ent, CAPTURE_POINT_STATE_AMPED )
 		else if ( CapturePoint_GetCaptureProgress( hardpoint.ent ) > 1.0 )
 			CapturePoint_SetState( hardpoint.ent, CAPTURE_POINT_STATE_AMPING )
 	}
