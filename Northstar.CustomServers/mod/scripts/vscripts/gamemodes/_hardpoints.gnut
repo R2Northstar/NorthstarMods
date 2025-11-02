@@ -35,10 +35,10 @@ float function CapturePoint_GetGoalProgress( entity hardpoint )
 	return GetGlobalNetFloat( "objective" + GetHardpointGroup(hardpoint) + "Progress" )
 } 
 
-string function GetHardpointGroup(entity hardpoint) //Hardpoint Entity B on Homestead is missing the Hardpoint Group KeyValue
+string function GetHardpointGroup( entity hardpoint ) //Hardpoint Entity B on Homestead is missing the Hardpoint Group KeyValue
 {
-	if((GetMapName()=="mp_homestead")&&(!hardpoint.HasKey("hardpointGroup")))
+	if( ( GetMapName() == "mp_homestead") && ( !hardpoint.HasKey("hardpointGroup") ) )
 		return "B"
 
-	return string(hardpoint.kv.hardpointGroup)
+	return string( hardpoint.kv.hardpointGroup )
 }
