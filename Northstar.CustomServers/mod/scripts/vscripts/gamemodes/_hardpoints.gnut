@@ -47,7 +47,7 @@ void function CapturePoint_SetOwningTeam( entity hardpoint, int team )
 
 float function CapturePoint_GetGoalProgress( entity hardpoint )
 {	
-	return GetGlobalNetFloat( "objective" + CapturePoint_GetCaptureProgress( hardpoint ) + "Progress" )
+	return GetGlobalNetFloat( "objective" + CapturePoint_GetGroup( hardpoint ) + "Progress" )
 } 
 
 string function CapturePoint_GetGroup( entity hardpoint ) // hardpoint Entity B on Homestead is missing the hardpoint Group KeyValue

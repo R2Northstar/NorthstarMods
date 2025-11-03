@@ -21,6 +21,7 @@ struct HardpointState {
 	entity prop
 	int oldState = CAPTURE_POINT_STATE_UNASSIGNED
 	int oldTeam = TEAM_UNASSIGNED
+	float lastTime = 0
 	array<entity> capPlayers = []
 }
 
@@ -35,7 +36,10 @@ void function GamemodeCP_Init()
 {
 	state.ampingEnabled = GetCurrentPlaylistVarInt("cp_amped_capture_points", 1) == 1
 
-	RegisterSignal("HardpointCaptureStart")
+	RegisterSignal( "HardpointCaptureStart" )
+	RegisterSignal( "CapturePointStateChange" )
+	RegisterSignal( "CapturePointStateChangeSend" )
+
 	ScoreEvent_SetupEarnMeterValuesForMixedModes()
 
 	AddCallback_EntitiesDidLoad(EntitiesDidLoad_SpawnHardpoints)
@@ -178,6 +182,8 @@ void function OnHardpointEnter( entity trigger, entity player )
 	if ( hpState.capPlayers.find( player ) == -1 )
 		hpState.capPlayers.append( player )
 
+	player.SetPlayerNetInt( "playerHardpointID", hp.GetHardpointID() )
+
 	printt( "hp enter " + player.GetPlayerName() + " titans " + hp.GetHardpointPlayerTitanCount( player.GetTeam() ) + " players " + hp.GetHardpointPlayerCount( player.GetTeam() ) )
 }
 
@@ -195,11 +201,16 @@ void function OnHardpointLeave( entity trigger, entity player )
 	if ( index != -1 )
 		hpState.capPlayers.fastremove( index )
 
+	player.SetPlayerNetInt( "playerHardpointID", 1023 )
+
 	printt( "hp leave " + player.GetPlayerName() + " titans " + hp.GetHardpointPlayerTitanCount( player.GetTeam() ) + " players " + hp.GetHardpointPlayerCount( player.GetTeam() ) )
 }
 
 void function Hardpoint_Think( HardpointState hardpoint )
 {
+	thread GamemodeCP_VO_Think( hardpoint.ent )
+	// there is also a thing called GamemodeCP_VO_Approaching but respawn never used?
+
 	while ( GetGameState() <= eGameState.Playing )
 	{
 		// they will be recounted in the next "scope"
@@ -219,7 +230,7 @@ void function Hardpoint_Think( HardpointState hardpoint )
 
 		Hardpoint_ThinkTick( hardpoint )
 
-		SetTeam( hardpoint.prop, hardpoint.ent.GetTeam() ) // just in case idk
+		SetTeam( hardpoint.prop, hardpoint.ent.GetTeam() ) // hardpoint has to have the correct color
 
 		WaitFrame()
 	}
@@ -238,12 +249,12 @@ void function Hardpoint_Think( HardpointState hardpoint )
 // global const CAPTURE_POINT_STATE_CONTESTED	= 7					// In this state the bar is not moving and the icon is at full oppacity
 
 const HAS_IMC = 1
-const HAS_MILTIA = 1 << 1
+const HAS_MILITIA = 1 << 1
 const HAS_IMC_TITAN = 1 << 2
-const HAS_MILTIA_TITAN = 1 << 3
-const CONTESTED = HAS_IMC | HAS_MILTIA | HAS_IMC_TITAN | HAS_MILTIA_TITAN
+const HAS_MILITIA_TITAN = 1 << 3
+const CONTESTED = HAS_IMC | HAS_MILITIA | HAS_IMC_TITAN | HAS_MILITIA_TITAN
 const IMC_HOLD = HAS_IMC | HAS_IMC_TITAN
-const MILTIA_HOLD = HAS_MILTIA | HAS_MILTIA_TITAN
+const MILITIA_HOLD = HAS_MILITIA | HAS_MILITIA_TITAN
 void function Hardpoint_ThinkTick( HardpointState hardpoint )
 {
 	
@@ -251,6 +262,9 @@ void function Hardpoint_ThinkTick( HardpointState hardpoint )
 	int currentTeam = CapturePoint_GetOwningTeam( hardpoint.ent )
 	int oldState = hardpoint.oldState
 	int oldTeam = hardpoint.oldTeam
+	float deltaTime = Time() - hardpoint.lastTime
+	int imcCappers = hardpoint.ent.GetHardpointPlayerCount( TEAM_IMC ) + hardpoint.ent.GetHardpointPlayerTitanCount( TEAM_IMC );
+	int militiaCappers = hardpoint.ent.GetHardpointPlayerCount( TEAM_MILITIA ) + hardpoint.ent.GetHardpointPlayerTitanCount( TEAM_MILITIA );
 
 	int occupation = min( abs( hardpoint.ent.GetHardpointPlayerCount( TEAM_IMC ) ), 1 ).tointeger()
 		| min( abs( hardpoint.ent.GetHardpointPlayerCount( TEAM_MILITIA ) ), 1 ).tointeger() << 1
@@ -258,57 +272,20 @@ void function Hardpoint_ThinkTick( HardpointState hardpoint )
 		| min( abs( hardpoint.ent.GetHardpointPlayerTitanCount( TEAM_MILITIA ) ), 1 ).tointeger() << 3
 
 	// I am pretty sure it's just a check for if both teams are present not which one has more
-	if ( ( occupation & CONTESTED ) > 0 && !( ( occupation & IMC_HOLD ) == 0 || ( occupation & MILTIA_HOLD ) == 0 ) && ( ( occupation & HAS_IMC_TITAN ) == ( occupation & HAS_MILTIA_TITAN ) ) )
+	if ( ( occupation & CONTESTED ) > 0 && !( ( occupation & IMC_HOLD ) == 0 || ( occupation & MILITIA_HOLD ) == 0 ) && ( ( occupation & HAS_IMC_TITAN ) == ( occupation & HAS_MILITIA_TITAN ) ) )
 	{
-		CapturePoint_SetState( hardpoint.ent, CAPTURE_POINT_STATE_CONTESTED )
-	}
-	else if ( ( occupation & IMC_HOLD ) != 0 && currentTeam != TEAM_IMC )
-	{
-		CapturePoint_SetCappingTeam( hardpoint.ent, TEAM_IMC )
-		if ( CapturePoint_GetStartProgress( hardpoint.ent ) < 1.0 )
-			CapturePoint_SetState( hardpoint.ent, CAPTURE_POINT_STATE_CAPPING )
-		else if ( CapturePoint_GetStartProgress( hardpoint.ent ) == 1.0 )
-			CapturePoint_SetState( hardpoint.ent, CAPTURE_POINT_STATE_CAPTURED )
-		else if ( CapturePoint_GetStartProgress( hardpoint.ent ) >= 2.0 )
-			CapturePoint_SetState( hardpoint.ent, CAPTURE_POINT_STATE_AMPED )
-		else if ( CapturePoint_GetStartProgress( hardpoint.ent ) > 1.0 )
-			CapturePoint_SetState( hardpoint.ent, CAPTURE_POINT_STATE_AMPING )
-	}
-	else if ( ( occupation & MILTIA_HOLD ) != 0 && currentTeam != TEAM_MILITIA )
-	{
-		CapturePoint_SetCappingTeam( hardpoint.ent, TEAM_MILITIA )
-		if ( CapturePoint_GetCaptureProgress( hardpoint.ent ) < 1.0 )
-			CapturePoint_SetState( hardpoint.ent, CAPTURE_POINT_STATE_CAPPING )
-		else if ( CapturePoint_GetCaptureProgress( hardpoint.ent ) == 1.0 )
-			CapturePoint_SetState( hardpoint.ent, CAPTURE_POINT_STATE_CAPTURED )
-		else if ( CapturePoint_GetCaptureProgress( hardpoint.ent ) >= 2.0 )
-			CapturePoint_SetState( hardpoint.ent, CAPTURE_POINT_STATE_AMPED )
-		else if ( CapturePoint_GetCaptureProgress( hardpoint.ent ) > 1.0 )
-			CapturePoint_SetState( hardpoint.ent, CAPTURE_POINT_STATE_AMPING )
+
+		CapturePoint_SetState( hardpoint.ent, CAPTURE_POINT_STATE_HALTED )
+		if ( oldState != CAPTURE_POINT_STATE_HALTED )
+			SendVoSignal( hardpoint.ent, null )
 	}
 	else if ( ( occupation & IMC_HOLD ) != 0 )
 	{
-		CapturePoint_SetCappingTeam( hardpoint.ent, TEAM_IMC )
-		if ( CapturePoint_GetCaptureProgress( hardpoint.ent ) < 1.0 )
-			CapturePoint_SetState( hardpoint.ent, CAPTURE_POINT_STATE_CAPPING )
-		else if ( CapturePoint_GetCaptureProgress( hardpoint.ent ) == 1.0 )
-			CapturePoint_SetState( hardpoint.ent, CAPTURE_POINT_STATE_CAPTURED )
-		else if ( CapturePoint_GetCaptureProgress( hardpoint.ent ) >= 2.0 )
-			CapturePoint_SetState( hardpoint.ent, CAPTURE_POINT_STATE_AMPED )
-		else if ( CapturePoint_GetCaptureProgress( hardpoint.ent ) > 1.0 )
-			CapturePoint_SetState( hardpoint.ent, CAPTURE_POINT_STATE_AMPING )
+		CaptureHardPoint( hardpoint.ent, TEAM_IMC, deltaTime, imcCappers )
 	}
-	else if ( ( occupation & MILTIA_HOLD ) != 0 )
+	else if ( ( occupation & MILITIA_HOLD ) != 0 )
 	{
-		CapturePoint_SetCappingTeam( hardpoint.ent, TEAM_MILITIA )
-		if ( CapturePoint_GetCaptureProgress( hardpoint.ent ) < 1.0 )
-			CapturePoint_SetState( hardpoint.ent, CAPTURE_POINT_STATE_CAPPING )
-		else if ( CapturePoint_GetCaptureProgress( hardpoint.ent ) == 1.0 )
-			CapturePoint_SetState( hardpoint.ent, CAPTURE_POINT_STATE_CAPTURED )
-		else if ( CapturePoint_GetCaptureProgress( hardpoint.ent ) >= 2.0 )
-			CapturePoint_SetState( hardpoint.ent, CAPTURE_POINT_STATE_AMPED )
-		else if ( CapturePoint_GetStartProgress( hardpoint.ent ) > 1.0 )
-			CapturePoint_SetState( hardpoint.ent, CAPTURE_POINT_STATE_AMPING )
+		CaptureHardPoint( hardpoint.ent, TEAM_MILITIA, deltaTime, militiaCappers )
 	}
 	else if ( currentTeam == TEAM_UNASSIGNED )
 	{
@@ -319,108 +296,122 @@ void function Hardpoint_ThinkTick( HardpointState hardpoint )
 		else
 		{
 			CapturePoint_SetState( hardpoint.ent, CAPTURE_POINT_STATE_SELF_UNAMPING )
+			if ( oldState != CAPTURE_POINT_STATE_SELF_UNAMPING )
+				SendVoSignal( hardpoint.ent, null )
 		}
 	}
 	else
 	{
+		CapturePoint_SetCappingTeam( hardpoint.ent, TEAM_UNASSIGNED )
 		if( CapturePoint_GetCaptureProgress( hardpoint.ent ) <=1.001 ) // unamp
 		{
 			if ( currentState == CAPTURE_POINT_STATE_AMPED ) // only play 2inactive animation if we were amped
 				thread PlayAnim( hardpoint.prop, "mh_active_2_inactive" )
 			CapturePoint_SetState( hardpoint.ent, CAPTURE_POINT_STATE_CAPTURED )
+
+			if ( oldState != CAPTURE_POINT_STATE_CAPTURED )
+				SendVoSignal( hardpoint.ent, null )
 		}
-	}
-	
-	// debugging ?
-	int newState = hardpoint.ent.GetHardpointState()
-	int newTeam = CapturePoint_GetOwningTeam( hardpoint.ent )
-
-	if ( oldState == CAPTURE_POINT_STATE_UNASSIGNED && newState == CAPTURE_POINT_STATE_CAPPING )
-	{
-		// starting capture of uncaptured point
-		printt( "starting capture of uncaptured point" )
-	}
-	else if ( oldState == CAPTURE_POINT_STATE_CAPPING && newState == CAPTURE_POINT_STATE_CAPTURED )
-	{
-		printt( "Owned Point was being captured, but got interrupted" )
-	}
-	else if ( oldState == CAPTURE_POINT_STATE_CAPPING && newState == CAPTURE_POINT_STATE_HALTED )
-	{
-		printt( "Unowned Point was being captured, but got interrupted" )
-	}
-	else if ( oldState == CAPTURE_POINT_STATE_AMPING && newState == CAPTURE_POINT_STATE_CAPTURED )
-	{
-		// completed capturing hardpoint
-		printt( "Owned Point was being amped, but got interrupted" )
-	}
-	else if ( oldState == CAPTURE_POINT_STATE_CAPPING && newState == CAPTURE_POINT_STATE_AMPING && CapturePoint_GetStartProgress( hardpoint.ent ) == 1.0 )
-	{
-		// completed capturing hardpoint
-		printt( "completed capturing hardpoint, going to amping automatically" )
-	}
-	else if ( oldState == CAPTURE_POINT_STATE_AMPING && newState == CAPTURE_POINT_STATE_AMPED )
-	{
-		printt( "completed amping hardpoint" )
-	}
-	else if ( oldState == CAPTURE_POINT_STATE_AMPED && newState == CAPTURE_POINT_STATE_SELF_UNAMPING )
-	{
-		printt( "naturally unamping unoccupied hardpoint" )
-	}
-	else if ( oldState == CAPTURE_POINT_STATE_SELF_UNAMPING && newState == CAPTURE_POINT_STATE_CAPPING )
-	{
-		//Started capping a point that was naturally unamping
-		printt( "Started capping a point that was naturally unamping" )
-	}
-
-	else if ( oldState == CAPTURE_POINT_STATE_SELF_UNAMPING && newState == CAPTURE_POINT_STATE_CAPTURED )
-	{
-		//Started capping a point that was naturally unamping
-		printt( "Point unamped all the way to normal capped" )
-
-	}
-	else if ( oldState == CAPTURE_POINT_STATE_CAPPING && newState == CAPTURE_POINT_STATE_SELF_UNAMPING )
-	{
-		printt( "Started manually unamping a point but got interrupted" )
-
-	}
-	else if ( oldState == CAPTURE_POINT_STATE_CAPPING && newState == CAPTURE_POINT_STATE_CAPPING )
-	{
-		// changed from owned by a team to neutral during capping
-		printt( "changed from owned by a team to neutral during capping" )
-	}
-	else if ( oldState >= CAPTURE_POINT_STATE_CAPTURED && newState == CAPTURE_POINT_STATE_CAPPING )
-	{
-		// started capturing an unoccupied hardpoint
-		printt( "started capturing an unoccupied hardpoint" )
-	}
-	//CAPTURE_POINT_STATE_HALTED only used when point is not owned by anyone
-	/*else if ( oldState >= CAPTURE_POINT_STATE_CAPTURED && newState == CAPTURE_POINT_STATE_HALTED )
-	{
-		// started capturing an occupied hardpoint
-		printt( "started capturing an occupied hardpoint" )
-	}
-	else if ( oldState == CAPTURE_POINT_STATE_HALTED && newState == CAPTURE_POINT_STATE_CAPTURED )
-	{
-		// prevented neutralizing of a captured hardpoint
-		printt( "prevented neutralizing of a captured hardpoint" )
-	}*/
-	else if ( oldState == CAPTURE_POINT_STATE_HALTED && newState == CAPTURE_POINT_STATE_CAPPING )
-	{
-		// cleared hardpoint OR exited and re-entered hardpoint
-		printt( "cleared hardpoint OR exited and re-entered hardpoint. Hardpoint was previously unowned" )
-	}
-	else if ( oldState == newState )
-	{
-		// nothing happens
-	}
-	else
-	{
-		printt( "unhandled state change" )
 	}
 
 	// update old stuff
 	hardpoint.oldTeam = hardpoint.ent.GetTeam();
 	hardpoint.oldState = hardpoint.ent.GetHardpointState();
+	hardpoint.lastTime = Time()
+}
+
+void function CaptureHardPoint( entity hardpoint, int team, float deltaTime, int cappers )
+{
+	if ( CapturePoint_GetCappingTeam( hardpoint ) != team )
+		hardpoint.Signal( "HardpointCaptureStart", { oldTeam = CapturePoint_GetCappingTeam( hardpoint ) } )
+
+	if ( CapturePoint_GetOwningTeam( hardpoint ) != team && CapturePoint_GetOwningTeam( hardpoint ) != TEAM_UNASSIGNED )
+		CaptureHardPointEnemy( hardpoint, team, deltaTime, cappers )
+	else
+		CaptureHardPointAllied( hardpoint, team, deltaTime, cappers )		
+}
+
+void function CaptureHardPointAllied( entity hardpoint, int team, float deltaTime, int cappers )
+{
+	CapturePoint_SetCappingTeam( hardpoint, team )
+
+	if ( CapturePoint_GetStartProgress( hardpoint ) < 1.0 )
+	{
+		table oldStates = { oldTeam = CapturePoint_GetOwningTeam( hardpoint ), oldState = CapturePoint_GetState( hardpoint ) }
+
+		CapturePoint_SetState( hardpoint, CAPTURE_POINT_STATE_CAPPING )
+		SendVoSignal( hardpoint, oldStates )
+
+		CapturePoint_SetCaptureProgress( hardpoint, max( 0.0, min( 1.0, CapturePoint_GetCaptureProgress( hardpoint ) + ( deltaTime / CAPTURE_DURATION_CAPTURE * cappers) ) ) )
+	}
+	else if ( CapturePoint_GetStartProgress( hardpoint ) >= 1.0 && CapturePoint_GetState( hardpoint ) < CAPTURE_POINT_STATE_CAPTURED )
+	{
+		table oldStates = { oldTeam = CapturePoint_GetOwningTeam( hardpoint ), oldState = CapturePoint_GetState( hardpoint ) }
+
+		CapturePoint_SetState( hardpoint, CAPTURE_POINT_STATE_CAPTURED )
+		CapturePoint_SetOwningTeam( hardpoint, team )	
+
+		SendVoSignal( hardpoint, oldStates )
+	}
+	else if ( CapturePoint_GetStartProgress( hardpoint ) >= 2.0 && CapturePoint_GetState( hardpoint ) >= CAPTURE_POINT_STATE_CAPTURED && state.ampingEnabled )
+	{
+		table oldStates = { oldTeam = CapturePoint_GetOwningTeam( hardpoint ), oldState = CapturePoint_GetState( hardpoint ) }
+
+		CapturePoint_SetState( hardpoint, CAPTURE_POINT_STATE_AMPED )
+		CapturePoint_SetOwningTeam( hardpoint, team )
+
+		SendVoSignal( hardpoint, oldStates )
+	}
+	else if ( CapturePoint_GetStartProgress( hardpoint ) >= 1.0 && CapturePoint_GetState( hardpoint ) >= CAPTURE_POINT_STATE_CAPTURED && state.ampingEnabled )
+	{
+		table oldStates = { oldTeam = CapturePoint_GetOwningTeam( hardpoint ), oldState = CapturePoint_GetState( hardpoint ) }
+
+		CapturePoint_SetState( hardpoint, CAPTURE_POINT_STATE_AMPING )
+		CapturePoint_SetOwningTeam( hardpoint, team )
+
+		SendVoSignal( hardpoint, oldStates )
+
+		CapturePoint_SetCaptureProgress( hardpoint, max( 1.0, min( 2.0, CapturePoint_GetCaptureProgress( hardpoint ) + ( deltaTime / CAPTURE_DURATION_CAPTURE * cappers) ) ) )
+	}
+
+	printt( CapturePoint_GetStartProgress( hardpoint ) )
+	printt( CaptureStateToString( CapturePoint_GetState( hardpoint ) ) )
+}
+
+void function CaptureHardPointEnemy( entity hardpoint, int team, float deltaTime, int cappers )
+{
+	CapturePoint_SetCappingTeam( hardpoint, team )
+
+	if ( CapturePoint_GetStartProgress( hardpoint ) > 0.0 )
+	{
+		table oldStates = { oldTeam = CapturePoint_GetOwningTeam( hardpoint ), oldState = CapturePoint_GetState( hardpoint ) }
+
+		CapturePoint_SetCaptureProgress( hardpoint, max( 0.0, min( 2.0, CapturePoint_GetCaptureProgress( hardpoint ) - ( deltaTime / CAPTURE_DURATION_CAPTURE * cappers) ) ) )
+		CapturePoint_SetState( hardpoint, CAPTURE_POINT_STATE_CAPPING )
+
+		if ( CapturePoint_GetState( hardpoint ) != CAPTURE_POINT_STATE_CAPPING )
+			SendVoSignal( hardpoint, oldStates )
+	}
+	else if ( CapturePoint_GetStartProgress( hardpoint ) == 0.0 )
+	{
+		table oldStates = { oldTeam = CapturePoint_GetOwningTeam( hardpoint ), oldState = CapturePoint_GetState( hardpoint ) }
+
+		CapturePoint_SetState( hardpoint, CAPTURE_POINT_STATE_CAPTURED )
+		CapturePoint_SetOwningTeam( hardpoint, team )
+		CapturePoint_SetCaptureProgress( hardpoint, 1.0 )
+
+		SendVoSignal( hardpoint, oldStates )
+	}
+
+	printt( CapturePoint_GetStartProgress( hardpoint ) )
+	printt( CaptureStateToString( CapturePoint_GetState( hardpoint ) ) )
+}
+
+void function SendVoSignal( entity hardpoint, table ornull oldStates )
+{
+	table currentStates = { oldTeam = CapturePoint_GetOwningTeam( hardpoint ), oldState = CapturePoint_GetState( hardpoint ) }
+	table results = oldStates == null ? currentStates : expect table( oldStates )
+	hardpoint.Signal( "CapturePointStateChange", results )
 }
 
 HardpointState function GetHardPointState( entity hp )
@@ -432,3 +423,22 @@ HardpointState function GetHardPointState( entity hp )
 	}
 	unreachable
 } 
+
+string function CaptureStateToString( int state ) {
+	switch ( state ) {
+		case CAPTURE_POINT_STATE_UNASSIGNED:
+			return "UNASSIGNED"
+		case CAPTURE_POINT_STATE_HALTED:
+			return "HALTED"
+		case CAPTURE_POINT_STATE_CAPTURED:
+			return "CAPTURED"
+		case CAPTURE_POINT_STATE_AMPING:
+		case 8:
+			return "AMPING"
+		case CAPTURE_POINT_STATE_AMPED:
+			return "AMPED"
+		case CAPTURE_POINT_STATE_CAPPING:
+			return "CAPPING"
+	}
+	return "UNKNOWN"
+}
