@@ -139,6 +139,7 @@ void function EntitiesDidLoad_SpawnHardpoints()
 
 		SetTeam( hpState.ent, TEAM_UNASSIGNED )
 		SetGlobalNetEnt( "objective" + hpState.group + "Ent", hpState.ent )
+		
 
 		hpState.trigger.SetEnterCallback( OnHardpointEnter )
 		hpState.trigger.SetLeaveCallback( OnHardpointLeave )
@@ -148,6 +149,9 @@ void function EntitiesDidLoad_SpawnHardpoints()
 		hpState.ent.Minimap_AlwaysShow( TEAM_MILITIA, null )
 		hpState.ent.Minimap_AlwaysShow( TEAM_IMC, null )
 		hpState.ent.Minimap_SetAlignUpright( true )
+
+		hpState.ent.s.prop <- hpState.prop
+		hpState.ent.s.reachedAmeped <- false
 
 		HARDPOINTS.append( hpState.ent ) // for vo script
 		hpState.ent.s.trigger <- hpState.trigger // also for vo script
@@ -208,6 +212,10 @@ void function OnHardpointLeave( entity trigger, entity player )
 
 void function Hardpoint_Think( HardpointState hardpoint )
 {
+	// wait for game state playing otherwise vo might not correctly start
+	while ( GetGameState() != eGameState.Playing )
+		WaitFrame()
+
 	thread GamemodeCP_VO_Think( hardpoint.ent )
 	// there is also a thing called GamemodeCP_VO_Approaching but respawn never used?
 
@@ -274,7 +282,6 @@ void function Hardpoint_ThinkTick( HardpointState hardpoint )
 	// I am pretty sure it's just a check for if both teams are present not which one has more
 	if ( ( occupation & CONTESTED ) > 0 && !( ( occupation & IMC_HOLD ) == 0 || ( occupation & MILITIA_HOLD ) == 0 ) && ( ( occupation & HAS_IMC_TITAN ) == ( occupation & HAS_MILITIA_TITAN ) ) )
 	{
-
 		CapturePoint_SetState( hardpoint.ent, CAPTURE_POINT_STATE_HALTED )
 		if ( oldState != CAPTURE_POINT_STATE_HALTED )
 			SendVoSignal( hardpoint.ent, null )
@@ -287,32 +294,33 @@ void function Hardpoint_ThinkTick( HardpointState hardpoint )
 	{
 		CaptureHardPoint( hardpoint.ent, TEAM_MILITIA, deltaTime, militiaCappers )
 	}
-	else if ( currentTeam == TEAM_UNASSIGNED )
-	{
-		if( CapturePoint_GetCaptureProgress( hardpoint.ent ) <= 1.001 ) // unamp
-		{
-			CapturePoint_SetState( hardpoint.ent, CAPTURE_POINT_STATE_HALTED )
-		}
-		else
-		{
-			CapturePoint_SetState( hardpoint.ent, CAPTURE_POINT_STATE_SELF_UNAMPING )
-			if ( oldState != CAPTURE_POINT_STATE_SELF_UNAMPING )
-				SendVoSignal( hardpoint.ent, null )
-		}
-	}
 	else
 	{
-		CapturePoint_SetCappingTeam( hardpoint.ent, TEAM_UNASSIGNED )
 		if( CapturePoint_GetCaptureProgress( hardpoint.ent ) <=1.001 ) // unamp
 		{
-			if ( currentState == CAPTURE_POINT_STATE_AMPED ) // only play 2inactive animation if we were amped
+			if ( hardpoint.ent.s.reachedAmeped ) // only play 2inactive animation if we were amped
 				thread PlayAnim( hardpoint.prop, "mh_active_2_inactive" )
+
 			CapturePoint_SetState( hardpoint.ent, CAPTURE_POINT_STATE_CAPTURED )
+			hardpoint.ent.s.reachedAmeped = false
 
 			if ( oldState != CAPTURE_POINT_STATE_CAPTURED )
 				SendVoSignal( hardpoint.ent, null )
 		}
+		else
+		{
+			table oldStates = { oldTeam = CapturePoint_GetOwningTeam( hardpoint.ent ), oldState = CapturePoint_GetState( hardpoint.ent ) }
+
+			CapturePoint_SetCappingTeam( hardpoint.ent, TEAM_UNASSIGNED )
+			CapturePoint_SetCaptureProgress( hardpoint.ent, max( 1.0, min( 2.0, CapturePoint_GetCaptureProgress( hardpoint.ent ) - ( deltaTime / CAPTURE_DURATION_CAPTURE ) ) ) )
+			CapturePoint_SetState( hardpoint.ent, CAPTURE_POINT_STATE_SELF_UNAMPING )
+
+			SendVoSignal( hardpoint.ent, oldStates )
+		}
 	}
+
+	table oldStates = { oldTeam = oldTeam, oldState = oldState }
+	// SendVoSignal( hardpoint.ent, oldStates )
 
 	// update old stuff
 	hardpoint.oldTeam = hardpoint.ent.GetTeam();
@@ -339,23 +347,34 @@ void function CaptureHardPointAllied( entity hardpoint, int team, float deltaTim
 	{
 		table oldStates = { oldTeam = CapturePoint_GetOwningTeam( hardpoint ), oldState = CapturePoint_GetState( hardpoint ) }
 
-		CapturePoint_SetState( hardpoint, CAPTURE_POINT_STATE_CAPPING )
 		SendVoSignal( hardpoint, oldStates )
+		CapturePoint_SetState( hardpoint, CAPTURE_POINT_STATE_CAPPING )
 
 		CapturePoint_SetCaptureProgress( hardpoint, max( 0.0, min( 1.0, CapturePoint_GetCaptureProgress( hardpoint ) + ( deltaTime / CAPTURE_DURATION_CAPTURE * cappers) ) ) )
 	}
 	else if ( CapturePoint_GetStartProgress( hardpoint ) >= 1.0 && CapturePoint_GetState( hardpoint ) < CAPTURE_POINT_STATE_CAPTURED )
 	{
+		if ( CapturePoint_GetState( hardpoint ) != CAPTURE_POINT_STATE_SELF_UNAMPING )
+			GamemodeCP_VO_Captured( hardpoint ) // respawn probably exposed this function for a reason so we use it
+
 		table oldStates = { oldTeam = CapturePoint_GetOwningTeam( hardpoint ), oldState = CapturePoint_GetState( hardpoint ) }
 
+		// the vo code expects going straigth to amping
 		CapturePoint_SetState( hardpoint, CAPTURE_POINT_STATE_CAPTURED )
-		CapturePoint_SetOwningTeam( hardpoint, team )	
+
+		CapturePoint_SetOwningTeam( hardpoint, team )
+		hardpoint.s.reachedAmeped = false
 
 		SendVoSignal( hardpoint, oldStates )
 	}
 	else if ( CapturePoint_GetStartProgress( hardpoint ) >= 2.0 && CapturePoint_GetState( hardpoint ) >= CAPTURE_POINT_STATE_CAPTURED && state.ampingEnabled )
 	{
-		table oldStates = { oldTeam = CapturePoint_GetOwningTeam( hardpoint ), oldState = CapturePoint_GetState( hardpoint ) }
+		table oldStates = { oldTeam = CapturePoint_GetOwningTeam( hardpoint ), oldState = CapturePoint_GetState( hardpoint ) == CAPTURE_POINT_STATE_CAPTURED ? CAPTURE_POINT_STATE_AMPING : CapturePoint_GetState( hardpoint ) }
+
+		if ( !hardpoint.s.reachedAmeped )
+			thread PlayAnim( hardpoint.s.prop, "mh_inactive_2_active" )
+		hardpoint.s.reachedAmeped = true
+
 
 		CapturePoint_SetState( hardpoint, CAPTURE_POINT_STATE_AMPED )
 		CapturePoint_SetOwningTeam( hardpoint, team )
@@ -366,10 +385,17 @@ void function CaptureHardPointAllied( entity hardpoint, int team, float deltaTim
 	{
 		table oldStates = { oldTeam = CapturePoint_GetOwningTeam( hardpoint ), oldState = CapturePoint_GetState( hardpoint ) }
 
-		CapturePoint_SetState( hardpoint, CAPTURE_POINT_STATE_AMPING )
+		SendVoSignal( hardpoint, oldStates )
+		
+		if ( hardpoint.s.reachedAmeped )
+			CapturePoint_SetState( hardpoint, CAPTURE_POINT_STATE_CAPPING )
+		else
+			CapturePoint_SetState( hardpoint, CAPTURE_POINT_STATE_CAPTURED ) // fyi this is not correct in the sense that the const names do not make sense
+		// but resapwn's rui code expects this ^ since it sets contested text when the 1 bit is 1 therefore since CAPTURE_POINT_STATE_AMPING => 0b101 it gets treated as contested
+		// but CAPUTRE_POINT_STATE_AMPED and CAPUTRE_POINT_STATE_CAPTURED work fine (this is probably not a hack but just a thing respawn did)
+		// unfortunatly the vo code doesn't agree with this so I just wonder how broken is respawn sv code is?
 		CapturePoint_SetOwningTeam( hardpoint, team )
 
-		SendVoSignal( hardpoint, oldStates )
 
 		CapturePoint_SetCaptureProgress( hardpoint, max( 1.0, min( 2.0, CapturePoint_GetCaptureProgress( hardpoint ) + ( deltaTime / CAPTURE_DURATION_CAPTURE * cappers) ) ) )
 	}
@@ -389,18 +415,26 @@ void function CaptureHardPointEnemy( entity hardpoint, int team, float deltaTime
 		CapturePoint_SetCaptureProgress( hardpoint, max( 0.0, min( 2.0, CapturePoint_GetCaptureProgress( hardpoint ) - ( deltaTime / CAPTURE_DURATION_CAPTURE * cappers) ) ) )
 		CapturePoint_SetState( hardpoint, CAPTURE_POINT_STATE_CAPPING )
 
-		if ( CapturePoint_GetState( hardpoint ) != CAPTURE_POINT_STATE_CAPPING )
-			SendVoSignal( hardpoint, oldStates )
+		SendVoSignal( hardpoint, oldStates )
+
+		if ( hardpoint.s.reachedAmeped && CapturePoint_GetStartProgress( hardpoint ) <= 1.0 )
+		{
+			thread PlayAnim( hardpoint.s.prop, "mh_active_2_inactive" )
+			hardpoint.s.reachedAmeped = false
+		}
 	}
 	else if ( CapturePoint_GetStartProgress( hardpoint ) == 0.0 )
 	{
 		table oldStates = { oldTeam = CapturePoint_GetOwningTeam( hardpoint ), oldState = CapturePoint_GetState( hardpoint ) }
 
+		SendVoSignal( hardpoint, oldStates )
+
 		CapturePoint_SetState( hardpoint, CAPTURE_POINT_STATE_CAPTURED )
 		CapturePoint_SetOwningTeam( hardpoint, team )
 		CapturePoint_SetCaptureProgress( hardpoint, 1.0 )
+		hardpoint.s.reachedAmeped = false
 
-		SendVoSignal( hardpoint, oldStates )
+	
 	}
 
 	printt( CapturePoint_GetStartProgress( hardpoint ) )
