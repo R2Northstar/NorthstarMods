@@ -460,7 +460,7 @@ void function TrackChevronStates() {
 			foreach (team, chevronsCount in chevrons) {
 				if ( team == CapturePoint_GetOwningTeam( hardpoint.ent ) ) {
 					// 4 is the value for a amped chevron
-					chevrons[team] += hardpoint.ent.s.state == CAPTURE_POINT_STATE_AMPED ? 5 : 1
+					chevrons[team] += hardpoint.ent.s.reachedAmeped ? 5 : 1
 				}
 			}
 
