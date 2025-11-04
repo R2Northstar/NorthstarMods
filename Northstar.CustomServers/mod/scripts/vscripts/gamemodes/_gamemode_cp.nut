@@ -152,6 +152,8 @@ void function EntitiesDidLoad_SpawnHardpoints()
 
 		hpState.ent.s.prop <- hpState.prop
 		hpState.ent.s.reachedAmeped <- false
+		hpState.ent.s.state <- CAPTURE_POINT_STATE_UNASSIGNED
+
 
 		HARDPOINTS.append( hpState.ent ) // for vo script
 		hpState.ent.s.trigger <- hpState.trigger // also for vo script
@@ -160,6 +162,8 @@ void function EntitiesDidLoad_SpawnHardpoints()
 
 		thread Hardpoint_Think( hpState )
 	}
+
+	thread TrackChevronStates()
 }
 
 void function OnPlayerKilled_UpdateMedals( entity victim, entity attacker, var damageInfo )
@@ -187,8 +191,6 @@ void function OnHardpointEnter( entity trigger, entity player )
 		hpState.capPlayers.append( player )
 
 	player.SetPlayerNetInt( "playerHardpointID", hp.GetHardpointID() )
-
-	printt( "hp enter " + player.GetPlayerName() + " titans " + hp.GetHardpointPlayerTitanCount( player.GetTeam() ) + " players " + hp.GetHardpointPlayerCount( player.GetTeam() ) )
 }
 
 void function OnHardpointLeave( entity trigger, entity player )
@@ -206,8 +208,6 @@ void function OnHardpointLeave( entity trigger, entity player )
 		hpState.capPlayers.fastremove( index )
 
 	player.SetPlayerNetInt( "playerHardpointID", 1023 )
-
-	printt( "hp leave " + player.GetPlayerName() + " titans " + hp.GetHardpointPlayerTitanCount( player.GetTeam() ) + " players " + hp.GetHardpointPlayerCount( player.GetTeam() ) )
 }
 
 void function Hardpoint_Think( HardpointState hardpoint )
@@ -244,18 +244,6 @@ void function Hardpoint_Think( HardpointState hardpoint )
 	}
 }
 
-// global const CAPTURE_POINT_STATE_UNASSIGNED		= 0					// State at start of match
-// global const CAPTURE_POINT_STATE_HALTED			= 1					// In this state the bar is not moving and the icon is at full oppacity
-// global const CAPTURE_POINT_STATE_CAPPING		= 2				// In this state the bar is moving and the icon pulsate
-// global const CAPTURE_POINT_STATE_SELF_UNAMPING	= 3		// In this state the bar is moving and the icon pulsate
-
-// //Script assumes >= CAPTURE_POINT_STATE_CAPTURED is equivalent to captured. Keep these two last numerically.
-// global const CAPTURE_POINT_STATE_CAPTURED			= 4				// TBD what this looks like exatly.
-// global const CAPTURE_POINT_STATE_AMPING				= 5
-// global const CAPTURE_POINT_STATE_AMPED				= 6				// If held for > 1 minute.
-
-// global const CAPTURE_POINT_STATE_CONTESTED	= 7					// In this state the bar is not moving and the icon is at full oppacity
-
 const HAS_IMC = 1
 const HAS_MILITIA = 1 << 1
 const HAS_IMC_TITAN = 1 << 2
@@ -266,7 +254,7 @@ const MILITIA_HOLD = HAS_MILITIA | HAS_MILITIA_TITAN
 void function Hardpoint_ThinkTick( HardpointState hardpoint )
 {
 	
-	int currentState = hardpoint.ent.GetHardpointState()
+	int currentState = expect int( hardpoint.ent.s.state )
 	int currentTeam = CapturePoint_GetOwningTeam( hardpoint.ent )
 	int oldState = hardpoint.oldState
 	int oldTeam = hardpoint.oldTeam
@@ -282,41 +270,66 @@ void function Hardpoint_ThinkTick( HardpointState hardpoint )
 	// I am pretty sure it's just a check for if both teams are present not which one has more
 	if ( ( occupation & CONTESTED ) > 0 && !( ( occupation & IMC_HOLD ) == 0 || ( occupation & MILITIA_HOLD ) == 0 ) && ( ( occupation & HAS_IMC_TITAN ) == ( occupation & HAS_MILITIA_TITAN ) ) )
 	{
-		CapturePoint_SetState( hardpoint.ent, CAPTURE_POINT_STATE_HALTED )
-		if ( oldState != CAPTURE_POINT_STATE_HALTED )
-			SendVoSignal( hardpoint.ent, null )
+		CapturePoint_SetState( hardpoint.ent, CapturePoint_GetState( hardpoint.ent ) | CAPTURE_POINT_FLAGS_CONTESTED ) // add contested flag
+		hardpoint.ent.s.state = CAPTURE_POINT_STATE_HALTED
 	}
 	else if ( ( occupation & IMC_HOLD ) != 0 )
 	{
+		CapturePoint_SetState( hardpoint.ent, CapturePoint_GetState( hardpoint.ent ) & ~CAPTURE_POINT_FLAGS_CONTESTED ) // remove contested flag
 		CaptureHardPoint( hardpoint.ent, TEAM_IMC, deltaTime, imcCappers )
 	}
 	else if ( ( occupation & MILITIA_HOLD ) != 0 )
 	{
+		CapturePoint_SetState( hardpoint.ent, CapturePoint_GetState( hardpoint.ent ) & ~CAPTURE_POINT_FLAGS_CONTESTED ) // remove contested flag
 		CaptureHardPoint( hardpoint.ent, TEAM_MILITIA, deltaTime, militiaCappers )
 	}
 	else
 	{
+		CapturePoint_SetState( hardpoint.ent, CapturePoint_GetState( hardpoint.ent ) & ~CAPTURE_POINT_FLAGS_CONTESTED ) // remove contested flag
 		if( CapturePoint_GetCaptureProgress( hardpoint.ent ) <=1.001 ) // unamp
 		{
 			if ( hardpoint.ent.s.reachedAmeped ) // only play 2inactive animation if we were amped
 				thread PlayAnim( hardpoint.prop, "mh_active_2_inactive" )
 
-			CapturePoint_SetState( hardpoint.ent, CAPTURE_POINT_STATE_CAPTURED )
+			CapturePoint_SetState( hardpoint.ent, CapturePoint_GetState( hardpoint.ent ) & ~CAPTURE_POINT_FLAGS_AMPED ) // remove amped flag
 			hardpoint.ent.s.reachedAmeped = false
-
-			if ( oldState != CAPTURE_POINT_STATE_CAPTURED )
-				SendVoSignal( hardpoint.ent, null )
 		}
 		else
 		{
-			table oldStates = { oldTeam = CapturePoint_GetOwningTeam( hardpoint.ent ), oldState = CapturePoint_GetState( hardpoint.ent ) }
-
 			CapturePoint_SetCappingTeam( hardpoint.ent, TEAM_UNASSIGNED )
-			CapturePoint_SetCaptureProgress( hardpoint.ent, max( 1.0, min( 2.0, CapturePoint_GetCaptureProgress( hardpoint.ent ) - ( deltaTime / CAPTURE_DURATION_CAPTURE ) ) ) )
-			CapturePoint_SetState( hardpoint.ent, CAPTURE_POINT_STATE_SELF_UNAMPING )
+			CapturePoint_SetCaptureProgress( hardpoint.ent, max( 1.0, min( 2.0, CapturePoint_GetCaptureProgress( hardpoint.ent ) - ( deltaTime / HARDPOINT_AMPED_DELAY ) ) ) )
 
-			SendVoSignal( hardpoint.ent, oldStates )
+			if ( currentState == CAPTURE_POINT_STATE_AMPING || currentState != CAPTURE_POINT_STATE_SELF_UNAMPING ) // idk the old code does this
+				hardpoint.ent.s.state = CAPTURE_POINT_STATE_SELF_UNAMPING
 		}
+	}
+
+	// steal state code from respawn vo think since it won't work
+	// I assume this is what respawn did in their own sv code since the state net var is using flags not state
+	int newState = expect int( hardpoint.ent.s.state )
+	if ( oldState == CAPTURE_POINT_STATE_UNASSIGNED && newState == CAPTURE_POINT_STATE_CAPPING )
+	{
+		// starting capture of uncaptured point
+		printt( "starting capture of uncaptured point" )
+		GamemodeCP_VO_StartCapping( hardpoint.ent )
+	}
+	else if ( oldState == CAPTURE_POINT_STATE_SELF_UNAMPING && newState == CAPTURE_POINT_STATE_CAPPING )
+	{
+		//Started capping a point that was naturally unamping
+		printt( "Started capping a point that was naturally unamping" )
+		GamemodeCP_VO_StartCapping( hardpoint.ent )
+	}
+	else if ( oldState >= CAPTURE_POINT_STATE_CAPTURED && newState == CAPTURE_POINT_STATE_CAPPING )
+	{
+		// started capturing an unoccupied hardpoint
+		printt( "started capturing an unoccupied hardpoint" )
+		GamemodeCP_VO_StartCapping( hardpoint.ent )
+	}
+	else if ( oldState == CAPTURE_POINT_STATE_HALTED && newState == CAPTURE_POINT_STATE_CAPPING )
+	{
+		// cleared hardpoint OR exited and re-entered hardpoint
+		printt( "cleared hardpoint OR exited and re-entered hardpoint. Hardpoint was previously unowned" )
+		GamemodeCP_VO_StartCapping( hardpoint.ent )
 	}
 
 	table oldStates = { oldTeam = oldTeam, oldState = oldState }
@@ -324,15 +337,12 @@ void function Hardpoint_ThinkTick( HardpointState hardpoint )
 
 	// update old stuff
 	hardpoint.oldTeam = hardpoint.ent.GetTeam();
-	hardpoint.oldState = hardpoint.ent.GetHardpointState();
+	hardpoint.oldState = expect int( hardpoint.ent.s.state );
 	hardpoint.lastTime = Time()
 }
 
 void function CaptureHardPoint( entity hardpoint, int team, float deltaTime, int cappers )
 {
-	if ( CapturePoint_GetCappingTeam( hardpoint ) != team )
-		hardpoint.Signal( "HardpointCaptureStart", { oldTeam = CapturePoint_GetCappingTeam( hardpoint ) } )
-
 	if ( CapturePoint_GetOwningTeam( hardpoint ) != team && CapturePoint_GetOwningTeam( hardpoint ) != TEAM_UNASSIGNED )
 		CaptureHardPointEnemy( hardpoint, team, deltaTime, cappers )
 	else
@@ -345,59 +355,38 @@ void function CaptureHardPointAllied( entity hardpoint, int team, float deltaTim
 
 	if ( CapturePoint_GetStartProgress( hardpoint ) < 1.0 )
 	{
-		table oldStates = { oldTeam = CapturePoint_GetOwningTeam( hardpoint ), oldState = CapturePoint_GetState( hardpoint ) }
-
-		SendVoSignal( hardpoint, oldStates )
-		CapturePoint_SetState( hardpoint, CAPTURE_POINT_STATE_CAPPING )
+		hardpoint.s.state = CAPTURE_POINT_STATE_CAPPING
 
 		CapturePoint_SetCaptureProgress( hardpoint, max( 0.0, min( 1.0, CapturePoint_GetCaptureProgress( hardpoint ) + ( deltaTime / CAPTURE_DURATION_CAPTURE * cappers) ) ) )
 	}
-	else if ( CapturePoint_GetStartProgress( hardpoint ) >= 1.0 && CapturePoint_GetState( hardpoint ) < CAPTURE_POINT_STATE_CAPTURED )
+	else if ( CapturePoint_GetStartProgress( hardpoint ) >= 1.0 && expect int( hardpoint.s.state ) < CAPTURE_POINT_STATE_CAPTURED )
 	{
-		if ( CapturePoint_GetState( hardpoint ) != CAPTURE_POINT_STATE_SELF_UNAMPING )
-			GamemodeCP_VO_Captured( hardpoint ) // respawn probably exposed this function for a reason so we use it
+		if ( hardpoint.s.state < CAPTURE_POINT_STATE_SELF_UNAMPING )
+			SetCaptureHardpoint( hardpoint, team ) // respawn probably exposed this function for a reason so we use it
 
-		table oldStates = { oldTeam = CapturePoint_GetOwningTeam( hardpoint ), oldState = CapturePoint_GetState( hardpoint ) }
-
-		// the vo code expects going straigth to amping
-		CapturePoint_SetState( hardpoint, CAPTURE_POINT_STATE_CAPTURED )
+		hardpoint.s.state = CAPTURE_POINT_STATE_CAPTURED
 
 		CapturePoint_SetOwningTeam( hardpoint, team )
 		hardpoint.s.reachedAmeped = false
-
-		SendVoSignal( hardpoint, oldStates )
 	}
-	else if ( CapturePoint_GetStartProgress( hardpoint ) >= 2.0 && CapturePoint_GetState( hardpoint ) >= CAPTURE_POINT_STATE_CAPTURED && state.ampingEnabled )
+	else if ( CapturePoint_GetStartProgress( hardpoint ) >= 2.0 && expect int( hardpoint.s.state ) >= CAPTURE_POINT_STATE_CAPTURED && state.ampingEnabled )
 	{
-		table oldStates = { oldTeam = CapturePoint_GetOwningTeam( hardpoint ), oldState = CapturePoint_GetState( hardpoint ) == CAPTURE_POINT_STATE_CAPTURED ? CAPTURE_POINT_STATE_AMPING : CapturePoint_GetState( hardpoint ) }
-
 		if ( !hardpoint.s.reachedAmeped )
 			thread PlayAnim( hardpoint.s.prop, "mh_inactive_2_active" )
 		hardpoint.s.reachedAmeped = true
 
 
-		CapturePoint_SetState( hardpoint, CAPTURE_POINT_STATE_AMPED )
+		CapturePoint_SetState( hardpoint, CapturePoint_GetState( hardpoint ) | CAPTURE_POINT_FLAGS_AMPED ) // add apmed flag
+		hardpoint.s.state = CAPTURE_POINT_STATE_AMPED
 		CapturePoint_SetOwningTeam( hardpoint, team )
-
-		SendVoSignal( hardpoint, oldStates )
 	}
-	else if ( CapturePoint_GetStartProgress( hardpoint ) >= 1.0 && CapturePoint_GetState( hardpoint ) >= CAPTURE_POINT_STATE_CAPTURED && state.ampingEnabled )
+	else if ( CapturePoint_GetStartProgress( hardpoint ) >= 1.0 && expect int( hardpoint.s.state ) >= CAPTURE_POINT_STATE_CAPTURED && state.ampingEnabled )
 	{
-		table oldStates = { oldTeam = CapturePoint_GetOwningTeam( hardpoint ), oldState = CapturePoint_GetState( hardpoint ) }
-
-		SendVoSignal( hardpoint, oldStates )
-		
-		if ( hardpoint.s.reachedAmeped )
-			CapturePoint_SetState( hardpoint, CAPTURE_POINT_STATE_CAPPING )
-		else
-			CapturePoint_SetState( hardpoint, CAPTURE_POINT_STATE_CAPTURED ) // fyi this is not correct in the sense that the const names do not make sense
-		// but resapwn's rui code expects this ^ since it sets contested text when the 1 bit is 1 therefore since CAPTURE_POINT_STATE_AMPING => 0b101 it gets treated as contested
-		// but CAPUTRE_POINT_STATE_AMPED and CAPUTRE_POINT_STATE_CAPTURED work fine (this is probably not a hack but just a thing respawn did)
-		// unfortunatly the vo code doesn't agree with this so I just wonder how broken is respawn sv code is?
+		hardpoint.s.state = CAPTURE_POINT_STATE_CAPTURED
 		CapturePoint_SetOwningTeam( hardpoint, team )
 
 
-		CapturePoint_SetCaptureProgress( hardpoint, max( 1.0, min( 2.0, CapturePoint_GetCaptureProgress( hardpoint ) + ( deltaTime / CAPTURE_DURATION_CAPTURE * cappers) ) ) )
+		CapturePoint_SetCaptureProgress( hardpoint, max( 1.0, min( 2.0, CapturePoint_GetCaptureProgress( hardpoint ) + ( deltaTime / HARDPOINT_AMPED_DELAY * cappers) ) ) )
 	}
 
 	printt( CapturePoint_GetStartProgress( hardpoint ) )
@@ -410,42 +399,84 @@ void function CaptureHardPointEnemy( entity hardpoint, int team, float deltaTime
 
 	if ( CapturePoint_GetStartProgress( hardpoint ) > 0.0 )
 	{
-		table oldStates = { oldTeam = CapturePoint_GetOwningTeam( hardpoint ), oldState = CapturePoint_GetState( hardpoint ) }
-
 		CapturePoint_SetCaptureProgress( hardpoint, max( 0.0, min( 2.0, CapturePoint_GetCaptureProgress( hardpoint ) - ( deltaTime / CAPTURE_DURATION_CAPTURE * cappers) ) ) )
-		CapturePoint_SetState( hardpoint, CAPTURE_POINT_STATE_CAPPING )
 
-		SendVoSignal( hardpoint, oldStates )
+		hardpoint.s.state = CAPTURE_POINT_STATE_CAPPING
 
 		if ( hardpoint.s.reachedAmeped && CapturePoint_GetStartProgress( hardpoint ) <= 1.0 )
 		{
 			thread PlayAnim( hardpoint.s.prop, "mh_active_2_inactive" )
+			CapturePoint_SetState( hardpoint, CapturePoint_GetState( hardpoint ) & ~CAPTURE_POINT_FLAGS_AMPED ) // remove apmed flag
 			hardpoint.s.reachedAmeped = false
 		}
 	}
 	else if ( CapturePoint_GetStartProgress( hardpoint ) == 0.0 )
 	{
-		table oldStates = { oldTeam = CapturePoint_GetOwningTeam( hardpoint ), oldState = CapturePoint_GetState( hardpoint ) }
-
-		SendVoSignal( hardpoint, oldStates )
+		if ( expect int( hardpoint.s.state ) != CAPTURE_POINT_STATE_CAPTURED )
+			SetCaptureHardpoint( hardpoint, team ) // respawn probably exposed this function for a reason so we use it
 
 		CapturePoint_SetState( hardpoint, CAPTURE_POINT_STATE_CAPTURED )
 		CapturePoint_SetOwningTeam( hardpoint, team )
 		CapturePoint_SetCaptureProgress( hardpoint, 1.0 )
 		hardpoint.s.reachedAmeped = false
-
-	
+		CapturePoint_SetState( hardpoint, CapturePoint_GetState( hardpoint ) & ~CAPTURE_POINT_FLAGS_AMPED ) // remove apmed flag
 	}
 
 	printt( CapturePoint_GetStartProgress( hardpoint ) )
 	printt( CaptureStateToString( CapturePoint_GetState( hardpoint ) ) )
 }
 
-void function SendVoSignal( entity hardpoint, table ornull oldStates )
+void function SetCaptureHardpoint( entity hardpoint, int team )
 {
-	table currentStates = { oldTeam = CapturePoint_GetOwningTeam( hardpoint ), oldState = CapturePoint_GetState( hardpoint ) }
-	table results = oldStates == null ? currentStates : expect table( oldStates )
-	hardpoint.Signal( "CapturePointStateChange", results )
+	HardpointState hpState = GetHardPointState( hardpoint )
+
+	hardpoint.s.state = CAPTURE_POINT_STATE_CAPTURED
+	CapturePoint_SetOwningTeam( hardpoint, team )
+	
+	EmitSoundOnEntityToTeamExceptPlayer( hardpoint, "hardpoint_console_captured", team, null )
+	GamemodeCP_VO_Captured( hardpoint )
+
+	foreach( entity player in hpState.capPlayers )
+	{
+		// the team check is just for race conditions
+		if( player.IsPlayer() && player.GetTeam() == team )
+		{
+			AddPlayerScore( player,"ControlPointCapture" )
+			player.AddToPlayerGameStat( PGS_ASSAULT_SCORE, POINTVALUE_HARDPOINT_CAPTURE )
+			UpdatePlayerScoreForChallenge( player, POINTVALUE_HARDPOINT_CAPTURE, 0 )
+		}
+	}
+}
+
+void function TrackChevronStates() {
+	while ( GetGameState() <= eGameState.Playing )
+	{
+		table <int, int> chevrons = {
+			[TEAM_IMC] = 0,
+			[TEAM_MILITIA] = 0,
+		}
+
+		foreach (HardpointState hardpoint in state.hardpoints) {
+			foreach (team, chevronsCount in chevrons) {
+				if ( team == CapturePoint_GetOwningTeam( hardpoint.ent ) ) {
+					// 4 is the value for a amped chevron
+					chevrons[team] += hardpoint.ent.s.state == CAPTURE_POINT_STATE_AMPED ? 5 : 1
+				}
+			}
+
+			
+			if ( hardpoint.ent.s.state == CAPTURE_POINT_STATE_AMPED )
+				AddTeamScore( CapturePoint_GetOwningTeam( hardpoint.ent ), 2 )
+			else if( hardpoint.ent.s.state >= CAPTURE_POINT_STATE_CAPTURED)
+				AddTeamScore( CapturePoint_GetOwningTeam( hardpoint.ent ), 1 )
+		}
+
+		SetGlobalNetInt( "imcChevronState", chevrons[TEAM_IMC] )
+		SetGlobalNetInt( "milChevronState", chevrons[TEAM_MILITIA] )
+
+		// the cheverons get updated at the same rigth it seams
+		wait TEAM_OWNED_SCORE_FREQ
+	}
 }
 
 HardpointState function GetHardPointState( entity hp )
@@ -459,20 +490,41 @@ HardpointState function GetHardPointState( entity hp )
 } 
 
 string function CaptureStateToString( int state ) {
-	switch ( state ) {
-		case CAPTURE_POINT_STATE_UNASSIGNED:
-			return "UNASSIGNED"
-		case CAPTURE_POINT_STATE_HALTED:
-			return "HALTED"
-		case CAPTURE_POINT_STATE_CAPTURED:
-			return "CAPTURED"
-		case CAPTURE_POINT_STATE_AMPING:
-		case 8:
-			return "AMPING"
-		case CAPTURE_POINT_STATE_AMPED:
-			return "AMPED"
-		case CAPTURE_POINT_STATE_CAPPING:
-			return "CAPPING"
-	}
-	return "UNKNOWN"
+	if ( state == 0 )
+		return "NOTHING"
+
+	string val = ""
+	if ( state & CAPTURE_POINT_FLAGS_CONTESTED )
+		val += " CONTESTED"
+	if ( state & CAPTURE_POINT_FLAGS_AMPED )
+		val += " AMPED"
+
+	return val
+}
+
+// respawn can't even really use their vo think function since the state var uses flags instead of state therefore this is correct
+void function GamemodeCP_VO_Amped( entity hardpoint )
+{
+	#if FACTION_DIALOGUE_ENABLED
+		PlayFactionDialogueToTeam( "amphp_youAmped" + CapturePoint_GetGroup( hardpoint ), CapturePoint_GetCappingTeam( hardpoint ) )
+		PlayFactionDialogueToTeam( "amphp_enemyAmped" + CapturePoint_GetGroup( hardpoint ), GetOtherTeam( CapturePoint_GetCappingTeam( hardpoint ) ) )
+	#endif
+}
+
+void function UpdatePlayerScoreForChallenge( entity player, int assaultPoints = 0, int defensePoints = 0 ) {
+	// if (player in file.playerAssaultPoints) {
+	// 	file.playerAssaultPoints[player] += assaultpoints
+	// 	if (file.playerAssaultPoints[player] >= 1000 && !HasPlayerCompletedMeritScore(player)) {
+	// 		AddPlayerScore(player, "ChallengeCPAssault")
+	// 		SetPlayerChallengeMeritScore(player)
+	// 	}
+	// }
+	// if (player in file.playerDefensePoints) {
+	// 	file.playerDefensePoints[player] += defensepoints
+	// 	if (file.playerDefensePoints[player] >= 500 && !HasPlayerCompletedMeritScore(player)) {
+	// 		AddPlayerScore(player, "ChallengeCPDefense")
+	// 		SetPlayerChallengeMeritScore(player)
+	// 	}
+	// }
+	// TODO
 }
