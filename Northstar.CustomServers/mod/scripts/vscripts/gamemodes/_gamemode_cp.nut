@@ -401,25 +401,25 @@ void function CaptureHardPointAllied( entity hardpoint, int team, float deltaTim
 {
 	CapturePoint_SetCappingTeam( hardpoint, team )
 
-	if ( CapturePoint_GetStartProgress( hardpoint ) < 1.0 )
+	if ( CapturePoint_GetCaptureProgress( hardpoint ) < 1.0 )
 	{
 		hardpoint.s.state = CAPTURE_POINT_STATE_CAPPING
 
 		CapturePoint_SetCaptureProgress( hardpoint, max( 0.0, min( 1.0, CapturePoint_GetCaptureProgress( hardpoint ) + ( deltaTime / CAPTURE_DURATION_CAPTURE * cappers) ) ) )
 	}
-	else if ( CapturePoint_GetStartProgress( hardpoint ) >= 1.0 && expect int( hardpoint.s.state ) < CAPTURE_POINT_STATE_CAPTURED )
+	else if ( CapturePoint_GetCaptureProgress( hardpoint ) >= 1.0 && expect int( hardpoint.s.state ) < CAPTURE_POINT_STATE_CAPTURED )
 	{
 		if ( hardpoint.s.state < CAPTURE_POINT_STATE_SELF_UNAMPING )
 			SetCaptureHardpoint( hardpoint, team )
 		else
 			hardpoint.s.state = CAPTURE_POINT_STATE_CAPTURED
 	}
-	else if ( CapturePoint_GetStartProgress( hardpoint ) >= 2.0 && expect int( hardpoint.s.state ) >= CAPTURE_POINT_STATE_CAPTURED && state.ampingEnabled )
+	else if ( CapturePoint_GetCaptureProgress( hardpoint ) >= 2.0 && expect int( hardpoint.s.state ) >= CAPTURE_POINT_STATE_CAPTURED && state.ampingEnabled )
 	{
 		if ( !( CapturePoint_GetState( hardpoint ) & CAPTURE_POINT_FLAGS_AMPED ) )
 			SetAmpedHardpoint( hardpoint, team )
 	}
-	else if ( CapturePoint_GetStartProgress( hardpoint ) >= 1.0 && expect int( hardpoint.s.state ) >= CAPTURE_POINT_STATE_CAPTURED && state.ampingEnabled )
+	else if ( CapturePoint_GetCaptureProgress( hardpoint ) >= 1.0 && expect int( hardpoint.s.state ) >= CAPTURE_POINT_STATE_CAPTURED && state.ampingEnabled )
 	{
 		hardpoint.s.state = CAPTURE_POINT_STATE_AMPING
 		CapturePoint_SetOwningTeam( hardpoint, team )
@@ -432,19 +432,19 @@ void function CaptureHardPointEnemy( entity hardpoint, int team, float deltaTime
 {
 	CapturePoint_SetCappingTeam( hardpoint, team )
 
-	if ( CapturePoint_GetStartProgress( hardpoint ) > 0.0 )
+	if ( CapturePoint_GetCaptureProgress( hardpoint ) > 0.0 )
 	{
 		CapturePoint_SetCaptureProgress( hardpoint, max( 0.0, min( 2.0, CapturePoint_GetCaptureProgress( hardpoint ) - ( deltaTime / CAPTURE_DURATION_CAPTURE * cappers) ) ) )
 
 		hardpoint.s.state = CAPTURE_POINT_STATE_CAPPING
 
-		if ( ( CapturePoint_GetState( hardpoint ) & CAPTURE_POINT_FLAGS_AMPED ) && CapturePoint_GetStartProgress( hardpoint ) <= 1.0 )
+		if ( ( CapturePoint_GetState( hardpoint ) & CAPTURE_POINT_FLAGS_AMPED ) && CapturePoint_GetCaptureProgress( hardpoint ) <= 1.0 )
 		{
 			thread PlayAnim( hardpoint.s.prop, "mh_active_2_inactive" )
 			CapturePoint_SetState( hardpoint, CapturePoint_GetState( hardpoint ) & ~CAPTURE_POINT_FLAGS_AMPED ) // remove apmed flag
 		}
 	}
-	else if ( CapturePoint_GetStartProgress( hardpoint ) == 0.0 )
+	else if ( CapturePoint_GetCaptureProgress( hardpoint ) == 0.0 )
 	{
 		if ( expect int( hardpoint.s.state ) != CAPTURE_POINT_STATE_CAPTURED )
 			SetCaptureHardpoint( hardpoint, team ) // respawn probably exposed this function for a reason so we use it
