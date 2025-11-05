@@ -206,7 +206,7 @@ void function Hardpoint_ThinkTick( HardpointState hardpoint )
 		CapturePoint_SetState( hardpoint.ent, CapturePoint_GetState( hardpoint.ent ) | CAPTURE_POINT_FLAGS_CONTESTED ) // add contested flag
 		hardpoint.ent.s.state = CAPTURE_POINT_STATE_HALTED
 	}
-	else if ( ( occupation & IMC_HOLD ) != 0 )
+	else if ( ( occupation & IMC_HOLD ) && !( occupation & HAS_MILITIA_TITAN ) )
 	{
 		CapturePoint_SetState( hardpoint.ent, CapturePoint_GetState( hardpoint.ent ) & ~CAPTURE_POINT_FLAGS_CONTESTED ) // remove contested flag
 		CaptureHardPoint( hardpoint.ent, TEAM_IMC, deltaTime, imcCappers )
