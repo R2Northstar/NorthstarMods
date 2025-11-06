@@ -9,6 +9,7 @@ global function DecideRespawnPlayer
 global function RespawnAsPilot
 global function RespawnAsTitan
 global function TryGameModeAnnouncement
+global function SetLateJoinRespawnEnabled
 
 global function SetKillcamsEnabled
 global function KillcamsEnabled
@@ -25,6 +26,7 @@ global function SetRecalculateRespawnAsTitanStartPointCallback
 struct {
 	bool killcamsEnabled = true
 	bool playerDeathsHidden = false
+	bool shouldDoRespawnForLatePlayer = true
 	int titanDamageGameStat = -1
 	
 	entity intermissionCamera
@@ -49,6 +51,7 @@ void function BaseGametype_Init_MPSP()
 	RegisterSignal( "PlayerRespawnStarted" )
 	RegisterSignal( "KillCamOver" )
 
+	file.shouldDoRespawnForLatePlayer = GetCurrentPlaylistVarInt( "late_join_respawn", 1 ) == 1
 	FlagInit( "WeaponDropsAllowed", true )
 }
 
@@ -190,6 +193,12 @@ void function CodeCallback_OnClientConnectionCompleted( entity player )
 		player.SetPersistentVar( "privateMatchState", 0 )
 
 	// handle spawning late joiners
+	if( file.shouldDoRespawnForLatePlayer )
+		HandleRespawnForLateJoiner( player )
+}
+
+void function HandleRespawnForLateJoiner( entity player )
+{
 	if ( GetGameState() == eGameState.Playing )
 	{
 		if ( RespawnsEnabled() )
@@ -357,7 +366,8 @@ void function PostDeathThread_MP( entity player, var damageInfo ) // based on ga
 	{
 		player.SetObserverModeStaticPosition( file.intermissionCamera.GetOrigin() )
 		player.SetObserverModeStaticAngles( file.intermissionCamera.GetAngles() )
-		player.StartObserverMode( OBS_MODE_STATIC_LOCKED )
+		if( !IsValid( player.GetParent() ) )
+			player.StartObserverMode( OBS_MODE_STATIC_LOCKED )
 		player.SetObserverTarget( null )
 	}
 
@@ -567,6 +577,11 @@ void function TryGameModeAnnouncement( entity player ) // only putting this here
 {
 	Remote_CallFunction_NonReplay( player, "ServerCallback_GameModeAnnouncement" )
 	PlayFactionDialogueToPlayer( GameMode_GetGameModeAnnouncement( GAMETYPE ), player )
+}
+
+void function SetLateJoinRespawnEnabled( bool enabled )
+{
+	file.shouldDoRespawnForLatePlayer = enabled
 }
 
 void function SetKillcamsEnabled( bool enabled )
