@@ -221,7 +221,7 @@ void function Hardpoint_ThinkTick( HardpointState hardpoint )
 		CapturePoint_SetState( hardpoint.ent, CapturePoint_GetState( hardpoint.ent ) & ~CAPTURE_POINT_FLAGS_CONTESTED ) // remove contested flag
 		if( CapturePoint_GetCaptureProgress( hardpoint.ent ) <=1.001 ) // unamp
 		{
-			if ( CapturePoint_GetState( hardpoint.ent ) & CAPTURE_POINT_FLAGS_AMPED ) // only play 2inactive animation if we were amped
+			if ( CapturePoint_GetState( hardpoint.ent ) & CAPTURE_POINT_FLAGS_AMPED && !IsValid( hardpoint.prop.GetParent() ) ) // only play 2inactive animation if we were amped
 				thread PlayAnim( hardpoint.prop, "mh_active_2_inactive" )
 
 			CapturePoint_SetState( hardpoint.ent, CapturePoint_GetState( hardpoint.ent ) & ~CAPTURE_POINT_FLAGS_AMPED ) // remove amped flag
@@ -325,7 +325,8 @@ void function CaptureHardPointEnemy( entity hardpoint, int team, float deltaTime
 
 		if ( ( CapturePoint_GetState( hardpoint ) & CAPTURE_POINT_FLAGS_AMPED ) && CapturePoint_GetCaptureProgress( hardpoint ) <= 1.0 )
 		{
-			thread PlayAnim( hardpoint.s.prop, "mh_active_2_inactive" )
+			if ( !IsValid( hardpoint.prop.GetParent() ) )
+				thread PlayAnim( hardpoint.s.prop, "mh_active_2_inactive" )
 			CapturePoint_SetState( hardpoint, CapturePoint_GetState( hardpoint ) & ~CAPTURE_POINT_FLAGS_AMPED ) // remove apmed flag
 		}
 	}
@@ -373,7 +374,8 @@ void function SetAmpedHardpoint( entity hardpoint, int team )
 	HardpointState hpState = GetHardpointState( hardpoint )
 
 	GamemodeCP_VO_Amped( hardpoint )
-	thread PlayAnim( hardpoint.s.prop, "mh_inactive_2_active" )
+	if ( !IsValid( hardpoint.prop.GetParent() )
+		thread PlayAnim( hardpoint.s.prop, "mh_inactive_2_active" )
 	
 	CapturePoint_SetState( hardpoint, CapturePoint_GetState( hardpoint ) | CAPTURE_POINT_FLAGS_AMPED ) // add amped flag
 	hardpoint.s.state = CAPTURE_POINT_STATE_AMPED
