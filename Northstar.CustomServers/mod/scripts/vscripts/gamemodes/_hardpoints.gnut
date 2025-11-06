@@ -374,7 +374,7 @@ void function SetAmpedHardpoint( entity hardpoint, int team )
 	HardpointState hpState = GetHardpointState( hardpoint )
 
 	GamemodeCP_VO_Amped( hardpoint )
-	if ( !IsValid( hardpoint.prop.GetParent() )
+	if ( !IsValid( hardpoint.prop.GetParent() ) )
 		thread PlayAnim( hardpoint.s.prop, "mh_inactive_2_active" )
 	
 	CapturePoint_SetState( hardpoint, CapturePoint_GetState( hardpoint ) | CAPTURE_POINT_FLAGS_AMPED ) // add amped flag
