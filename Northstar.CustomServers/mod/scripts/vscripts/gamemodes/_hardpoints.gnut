@@ -325,7 +325,7 @@ void function CaptureHardPointEnemy( entity hardpoint, int team, float deltaTime
 
 		if ( ( CapturePoint_GetState( hardpoint ) & CAPTURE_POINT_FLAGS_AMPED ) && CapturePoint_GetCaptureProgress( hardpoint ) <= 1.0 )
 		{
-			if ( !IsValid( hardpoint.prop.GetParent() ) )
+			if ( !IsValid( hardpoint.s.prop.GetParent() ) )
 				thread PlayAnim( hardpoint.s.prop, "mh_active_2_inactive" )
 			CapturePoint_SetState( hardpoint, CapturePoint_GetState( hardpoint ) & ~CAPTURE_POINT_FLAGS_AMPED ) // remove apmed flag
 		}
@@ -374,7 +374,7 @@ void function SetAmpedHardpoint( entity hardpoint, int team )
 	HardpointState hpState = GetHardpointState( hardpoint )
 
 	GamemodeCP_VO_Amped( hardpoint )
-	if ( !IsValid( hardpoint.prop.GetParent() ) )
+	if ( !IsValid( hardpoint.s.prop.GetParent() ) )
 		thread PlayAnim( hardpoint.s.prop, "mh_inactive_2_active" )
 	
 	CapturePoint_SetState( hardpoint, CapturePoint_GetState( hardpoint ) | CAPTURE_POINT_FLAGS_AMPED ) // add amped flag
