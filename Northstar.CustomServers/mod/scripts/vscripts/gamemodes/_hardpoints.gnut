@@ -471,6 +471,10 @@ void function TrackChevronStates() {
 		// the cheverons get updated at the same rigth it seams
 		wait TEAM_OWNED_SCORE_FREQ
 	}
+
+	// reset chevrons after the match
+	SetGlobalNetInt( "imcChevronState", 0 )
+	SetGlobalNetInt( "milChevronState", 0 )
 }
 
 void function TrackPlayerScoreDefenseScore( entity player, entity hardpoint )
