@@ -117,6 +117,8 @@ void function EntitiesDidLoad_SpawnHardpoints()
 
 		hpState.ent.s.prop <- hpState.prop
 		hpState.ent.s.state <- CAPTURE_POINT_STATE_UNASSIGNED
+		hpState.ent.s.lastCappedBy <- TEAM_UNASSIGNED
+		hpState.ent.s.wasJustCapping <- false
 
 
 		HARDPOINTS.append( hpState.ent ) // for vo script
