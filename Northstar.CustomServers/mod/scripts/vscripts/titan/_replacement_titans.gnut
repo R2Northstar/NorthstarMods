@@ -1224,3 +1224,8 @@ bool function ShouldDoTitanfall()
 
 	return ( GetCurrentPlaylistVarInt( "enable_titanfalls", 1 ) == 1 )
 }
+
+bool function TitanDropDisabledForPlayerTeam( entity player )
+{
+	return ( level.nv.titanDropEnabledForTeam != TEAM_BOTH && level.nv.titanDropEnabledForTeam != player.GetTeam() )
+}
