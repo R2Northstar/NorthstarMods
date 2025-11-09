@@ -234,7 +234,7 @@ void function Hardpoint_ThinkTick( HardpointState hardpoint )
 			CapturePoint_SetCappingTeam( hardpoint.ent, TEAM_UNASSIGNED )
 			CapturePoint_SetCaptureProgress( hardpoint.ent, max( 1.0, min( 2.0, CapturePoint_GetCaptureProgress( hardpoint.ent ) - ( deltaTime / HARDPOINT_AMPED_DELAY ) ) ) )
 
-			if ( currentState == CAPTURE_POINT_STATE_AMPING || currentState != CAPTURE_POINT_STATE_SELF_UNAMPING ) // idk the old code does this
+			if ( currentState == CAPTURE_POINT_STATE_AMPING ) // idk the old code does this
 				hardpoint.ent.s.state = CAPTURE_POINT_STATE_SELF_UNAMPING
 		}
 	}
@@ -300,7 +300,13 @@ void function CaptureHardPointAllied( entity hardpoint, int team, float deltaTim
 	}
 	else if ( CapturePoint_GetCaptureProgress( hardpoint ) >= 1.0 && expect int( hardpoint.s.state ) < CAPTURE_POINT_STATE_CAPTURED )
 	{
-		SetCaptureHardpoint( hardpoint, team )
+		// eh
+		if ( hardpoint.s.state == CAPTURE_POINT_STATE_SELF_UNAMPING && CPstate.ampingEnabled )
+			hardpoint.s.state = CAPTURE_POINT_STATE_AMPING
+		else if ( hardpoint.s.state == CAPTURE_POINT_STATE_SELF_UNAMPING )
+			hardpoint.s.state = CAPTURE_POINT_STATE_CAPTURED
+		else
+			SetCaptureHardpoint( hardpoint, team )
 	}
 	else if ( CapturePoint_GetCaptureProgress( hardpoint ) >= 2.0 && expect int( hardpoint.s.state ) >= CAPTURE_POINT_STATE_CAPTURED && CPstate.ampingEnabled )
 	{
