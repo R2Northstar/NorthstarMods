@@ -321,7 +321,10 @@ bool function IsSpawnpointValid( entity spawnpoint, int team, bool skipLineOfSig
 			return false
 	}
 	
-	if ( !IsSpawnpointValidDrop( spawnpoint ) || Time() - spawnpoint.e.spawnTime <= 10.0 )
+	if ( !IsSpawnpointValidDrop( spawnpoint ) )
+		return false
+	
+	if ( Time() - spawnpoint.e.spawnTime <= 10.0 && GetGameState() > eGameState.Prematch ) 
 		return false
 	
 	if ( SpawnPointInNoSpawnArea( spawnpoint.GetOrigin(), team ) )
