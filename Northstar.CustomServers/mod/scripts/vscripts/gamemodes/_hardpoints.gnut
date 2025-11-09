@@ -122,6 +122,7 @@ void function OnHardpointEnter( entity trigger, entity player )
 
 	player.SetPlayerNetInt( "playerHardpointID", hp.GetHardpointID() )
 
+	player.Signal( "CapturePointPlayerLeft" ) // reset this in case the function is called multiple times
 	thread TrackPlayerScoreDefenseScore( player, hp )
 }
 
