@@ -57,6 +57,7 @@ Press Yes if you agree to this. This choice can be changed in the mods menu at a
 		"timelimit" "Time Limit"
 		"roundtimelimit" "Time Limit (round-based)"
 		"respawnprotection" "Respawn Protection Time"
+		"double_xp_enabled" "Enable Event Double XP"
 
 		"pilot_health_multiplier" "Health multiplier"
 		"respawn_delay" "Respawn Delay"
@@ -80,6 +81,7 @@ Press Yes if you agree to this. This choice can be changed in the mods menu at a
 		"featured_mode_shotguns_snipers" "Armed and Dangerous"
 		"iron_rules" "Iron Titan Rules"
 		"riff_titan_queue" "Max Active Titans per Team"
+		"enable_rocket_turrets" "Enable Rocket Turrets"
 
 		"cp_amped_capture_points" "Amped Hardpoints"
 		"coliseum_loadouts_enabled" "Coliseum Loadouts"
