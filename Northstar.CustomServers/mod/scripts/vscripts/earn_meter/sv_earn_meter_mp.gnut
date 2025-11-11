@@ -170,7 +170,7 @@ void function EarnMeterMP_PlayerLifeThink( entity player )
 
 		if ( lastEarnMeterMode == eEarnMeterMode.DEFAULT )
 		{
-			if ( Riff_TitanAvailability() != eTitanAvailability.Never )
+			if ( Riff_TitanAvailability() != eTitanAvailability.Never && IsTitanDropAvailableForPlayerTeam( player ) )
 			{
 				if ( PlayerEarnMeter_GetOwnedFrac( player ) >= 0.75 && PlayerEarnMeter_GetOwnedFrac( player ) < 0.95 && !saidTitanSoon )
 				{
