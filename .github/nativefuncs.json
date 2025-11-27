@@ -647,6 +647,42 @@
 			"helpText":"",
 			"returnTypeString":"MasterServerAuthResult",
 			"argTypes":""
+		},
+		{
+			"name":"ModWeaponVars_CalculateWeaponMods",
+			"helpText":"",
+			"returnTypeString":"void",
+			"argTypes":"entity weapon"
+		},
+		{
+			"name":"ModWeaponVars_SetInt",
+			"helpText":"",
+			"returnTypeString":"void",
+			"argTypes":"entity weapon, int weaponVarIndex, int value"
+		},
+		{
+			"name":"ModWeaponVars_SetFloat",
+			"helpText":"",
+			"returnTypeString":"void",
+			"argTypes":"entity weapon, int weaponVarIndex, float value"
+		},
+		{
+			"name":"ModWeaponVars_SetBool",
+			"helpText":"",
+			"returnTypeString":"void",
+			"argTypes":"entity weapon, int weaponVarIndex, bool value"
+		},
+		{
+			"name":"ModWeaponVars_SetString",
+			"helpText":"",
+			"returnTypeString":"void",
+			"argTypes":"entity weapon, int weaponVarIndex, string value"
+		},
+		{
+			"name":"ModWeaponVars_GetType",
+			"helpText":"",
+			"returnTypeString":"int",
+			"argTypes":"entity weapon, int weaponVarIndex"
 		}
 	]
 }
