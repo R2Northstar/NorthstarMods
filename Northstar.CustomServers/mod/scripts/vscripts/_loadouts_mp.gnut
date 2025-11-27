@@ -216,7 +216,7 @@ bool function ClientCommandCallback_SwapSecondaryAndWeapon3PersistentLoadoutData
 bool function ClientCommandCallback_SetBurnCardPersistenceSlot( entity player, array<string> args )
 {
 	if ( args.len() != 1 || GetGameState() >= eGameState.Playing )
-		return true
+		return false
 	
 	print( player + " SetBurnCardPersistenceSlot " + args[0] )
 	
@@ -244,7 +244,10 @@ bool function ClientCommandCallback_SetCallsignIcon( entity player, array<string
 			return false
 	}
 	else
+	{
 		print( player + " invalid ref " + args[0] )
+		return false
+	}
 	
 	return true
 }
@@ -264,7 +267,10 @@ bool function ClientCommandCallback_SetCallsignCard( entity player, array<string
 			return false
 	}
 	else
+	{
 		print( player + " invalid ref " + args[0] )
+		return false
+	}
 	
 	return true
 }
@@ -284,7 +290,10 @@ bool function ClientCommandCallback_SetFactionChoicePersistenceSlot( entity play
 			return false
 	}
 	else
+	{
 		print( player + " invalid ref " + args[0] )
+		return false
+	}
 	
 	return true
 }
