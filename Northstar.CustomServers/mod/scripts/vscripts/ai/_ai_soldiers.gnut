@@ -101,6 +101,9 @@ function AiSoldiers_Init()
 
 bool function ClientCommand_SpawnViewGrunt( entity player, array<string> args )
 {
+	if ( !args.len() )
+		return true
+
 	int team = args[0].tointeger()
 	if ( GetDeveloperLevel() < 1 )
 		return true
@@ -797,4 +800,3 @@ function SetGlobalNPCHealth( healthValue ) //Debug, for trailer team
 		npc.SetHealth( healthValue )
 	}
 }
-

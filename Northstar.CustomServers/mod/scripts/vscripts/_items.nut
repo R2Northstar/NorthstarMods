@@ -968,7 +968,7 @@ void function InitItems()
 		asset coreIcon		= GetDataTableAsset( titansMpDataTable, i, GetDataTableColumnByName( titansMpDataTable, "coreIcon" ) )
 
 		if ( IsDisabledRef( titanRef ) )
-		    continue
+			continue
 
 		CreateTitanData( i, titanRef, cost, image, coreIcon )
 
@@ -1083,7 +1083,7 @@ void function InitItems()
 		int cost = GetDataTableInt( dataTable, row, GetDataTableColumnByName( dataTable, "cost" ) )
 
 		if ( IsDisabledRef( titanRef ) )
-		    continue
+			continue
 
 		if ( !( titanRef in decalIndexTable ) )
 			decalIndexTable[titanRef] <- 0
@@ -1115,7 +1115,7 @@ void function InitItems()
 		int datatableIndex = row
 
 		if ( IsDisabledRef( titanRef ) || IsDisabledRef( ref ) )
-		    continue
+			continue
 
 		CreateSkinData( datatableIndex, eItemTypes.TITAN_WARPAINT, false, ref, name, image, skinIndex )
 		CreateGenericSubItemData( eItemTypes.TITAN_WARPAINT, titanRef, ref, cost, { skinIndex = skinIndex } )
@@ -1343,7 +1343,7 @@ void function InitUnlocks()
 				{
 					if ( unlock != "random" && !ItemDefined( unlock ) )
 					{
-                        #if DEV && DEVSCRIPTS
+						#if DEV && DEVSCRIPTS
 						CodeWarning( unlock + " does not appear to be a valid eItemType" )
 						#else
 						continue
@@ -1367,9 +1367,9 @@ void function InitUnlocks()
 
 		if ( IsDisabledRef( titanRef ) )
 		{
-		    column++
-		    continue
-        }
+			column++
+			continue
+		}
 
 		for ( int row = 1; row < numRows; row++ )
 		{
@@ -1425,7 +1425,7 @@ void function InitUnlocks()
 		string titanRef        = GetDataTableString( titansMpDataTable, i, GetDataTableColumnByName( titansMpDataTable, "titanRef" ) )
 
 		if ( IsDisabledRef( titanRef ) )
-		    continue
+			continue
 
 		int propertyRow = GetDataTableRowMatchingStringValue( titanPropertiesDataTable, GetDataTableColumnByName( titanPropertiesDataTable, "titanRef" ), titanRef )
 
@@ -1751,7 +1751,7 @@ void function InitUnlocks()
 		string titanClass = PersistenceGetEnumItemNameForIndex( "titanClasses", i )
 
 		if ( IsDisabledRef( titanClass ) )
-		    continue
+			continue
 
 		if ( titanClass != "" )
 		{
@@ -3475,7 +3475,7 @@ void function InitUnlocks()
 									 "mp_titanweapon_salvo_rockets",
 									 "mp_titancore_amp_core",
 									 "advocate_gift",
-			                         "random",
+									 "random",
 									 "default",
 									 "mp_titanability_rocketeer_ammo_swap",
 									 "titanos_scorch",
@@ -3706,7 +3706,7 @@ void function InitTitanWeaponDataMP()
 		bool hidden            = GetDataTableBool( dataTable, i, TITAN_PRIMARY_HIDDEN_COLUMN )
 
 		if ( IsDisabledRef( itemRef ) )
-		    continue
+			continue
 
 		CreateWeaponData( i, eItemTypes.TITAN_PRIMARY, hidden, itemRef, true, 0 )
 	}
@@ -3721,7 +3721,7 @@ void function InitTitanWeaponDataMP()
 		bool hidden            = GetDataTableBool( dataTable, i, TITAN_ABILITY_HIDDEN_COLUMN )
 
 		if ( IsDisabledRef( itemRef ) )
-		    continue
+			continue
 
 		CreateWeaponData( i, itemType, hidden, itemRef, isDamageSource, 0 )
 	}
@@ -3822,8 +3822,8 @@ void function InitUnlock( string ref, string parentRef, int unlockType, int unlo
 		return
 	}
 
-    if ( IsDisabledRef( ref ) || IsDisabledRef( parentRef ) )
-        return
+	if ( IsDisabledRef( ref ) || IsDisabledRef( parentRef ) )
+		return
 
 	ItemData itemData = GetItemData( ref )
 
@@ -3889,8 +3889,8 @@ void function InitUnlockForStatInt( string ref, string parentRef, int statValue,
 {
 	Assert ( GetStatVarType( statCategory, statAlias, statSubAlias ) == ePlayerStatType.INT )
 
-    if ( IsDisabledRef( ref ) || IsDisabledRef( parentRef ) )
-        return
+	if ( IsDisabledRef( ref ) || IsDisabledRef( parentRef ) )
+		return
 
 	if ( parentRef != "" )
 	{
@@ -3952,8 +3952,8 @@ void function InitUnlockForStatFloat( string ref, string parentRef, float statVa
 {
 	Assert ( GetStatVarType( statCategory, statAlias, statSubAlias ) == ePlayerStatType.FLOAT )
 
-    if ( IsDisabledRef( ref ) || IsDisabledRef( parentRef ) )
-        return
+	if ( IsDisabledRef( ref ) || IsDisabledRef( parentRef ) )
+		return
 
 	if ( parentRef != "" )
 	{
@@ -4914,8 +4914,10 @@ string function GetRefFromItem( item )
 
 function SubitemDefined( string parentRef, string childRef )
 {
-	Assert( parentRef in file.itemData )
-	return (childRef in file.itemData[parentRef].subitems)
+	if ( !( parentRef in file.itemData ) )
+		return false
+
+	return ( childRef in file.itemData[parentRef].subitems )
 }
 
 ItemDisplayData function GetSubitemDisplayData( string parentRef, string childRef )
@@ -7971,7 +7973,7 @@ bool function ClientCommand_BuyTicket( entity player, array<string> args )
 
 
 	int numTickets = 1
-	if ( args.len() > 0 )
+	if ( args.len() && int( args[0] ) > 0 )
 		numTickets = int( args[0] )
 
 	int cost = GetItemCost( ref ) * numTickets
@@ -10057,8 +10059,8 @@ bool function IsItemInEntitlementUnlock( string itemRef, string parentRef = "" )
 
 void function InitUnlockAsEntitlement( string itemRef, string parentRef, int entitlementId, string purchaseMenu = "" )
 {
-    if ( IsDisabledRef( itemRef ) || IsDisabledRef( parentRef ) )
-        return
+	if ( IsDisabledRef( itemRef ) || IsDisabledRef( parentRef ) )
+		return
 
 #if DEV
 	if ( parentRef == "" )
@@ -10354,11 +10356,11 @@ bool function IsDisabledRef( string ref )
 	if ( liveDisabledRefs.contains( ref ) )
 		return true
 
-    #if DEVSCRIPTS
-        return false
-    #endif
+	#if DEVSCRIPTS
+		return false
+	#endif
 
-    return ( disabledRefs.contains( ref ) )
+	return ( disabledRefs.contains( ref ) )
 }
 
 #if DEV

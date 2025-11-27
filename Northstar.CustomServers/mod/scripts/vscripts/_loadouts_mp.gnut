@@ -161,6 +161,10 @@ bool function ClientCommandCallback_SetPersistentLoadoutValue( entity player, ar
 	print( player + " SetPersistentLoadoutValue " + args[0] + " " + args[1] + " " + args[2] + " " + val )
 	
 	// VERY temp and insecure
+	// The person who didn't add checks to this is a GENIUS at respawn
+	if ( !IsRefValidAndOfType( val, args[1].tointeger() ) || IsItemLocked( player, val ) )
+		return false
+
 	SetPersistentLoadoutValue( player, args[0], args[1].tointeger(), args[2], val )
 	
 	print( args[ 0 ] )
@@ -227,10 +231,18 @@ bool function ClientCommandCallback_SetBurnCardPersistenceSlot( entity player, a
 // lobby clientcommands
 bool function ClientCommandCallback_SetCallsignIcon( entity player, array<string> args )
 {
+	if ( !args.len() )
+		args.append( "" )
+
 	print( player + " SetCallsignIcon " + args[0] )
 
 	if ( IsRefValidAndOfType( args[0], eItemTypes.CALLSIGN_ICON ) )
-		PlayerCallsignIcon_SetActiveByRef( player, args[0] )
+	{
+		if ( !IsItemLocked( player, args[0] ) )
+			PlayerCallsignIcon_SetActiveByRef( player, args[0] )
+		else
+			return false
+	}
 	else
 		print( player + " invalid ref " + args[0] )
 	
@@ -239,10 +251,18 @@ bool function ClientCommandCallback_SetCallsignIcon( entity player, array<string
 
 bool function ClientCommandCallback_SetCallsignCard( entity player, array<string> args )
 {
-	print( player + " SetCallsignIcon " + args[0] )
+	if ( !args.len() )
+		args.append( "" )
+
+	print( player + " SetCallsignCard " + args[0] )
 
 	if ( IsRefValidAndOfType( args[0], eItemTypes.CALLING_CARD ) )
-		PlayerCallingCard_SetActiveByRef( player, args[0] )
+	{
+		if ( !IsItemLocked( player, args[0] ) )
+			PlayerCallingCard_SetActiveByRef( player, args[0] )
+		else
+			return false
+	}
 	else
 		print( player + " invalid ref " + args[0] )
 	
@@ -251,10 +271,20 @@ bool function ClientCommandCallback_SetCallsignCard( entity player, array<string
 
 bool function ClientCommandCallback_SetFactionChoicePersistenceSlot( entity player, array<string> args )
 {
+	if ( !args.len() )
+		args.append( "" )
+
 	print( player + " SetFactionChoicePersistenceSlot " + args[0] )
 
 	if ( IsRefValidAndOfType( args[0], eItemTypes.FACTION ) )
-		player.SetPersistentVar( "factionChoice", args[0] ) // no function for this so gotta set directly lol
+	{
+		if ( !IsItemLocked( player, args[0] ) )
+			player.SetPersistentVar( "factionChoice", args[0] )
+		else
+			return false
+	}
+	else
+		print( player + " invalid ref " + args[0] )
 	
 	return true
 }
@@ -318,4 +348,4 @@ void function GiveLoadoutWhenIntroOver( entity player )
 		WaitFrame()
 	
 	Loadouts_TryGivePilotLoadout( player )
-}	
+}
