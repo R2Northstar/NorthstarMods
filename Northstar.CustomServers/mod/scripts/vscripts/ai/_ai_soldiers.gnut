@@ -800,3 +800,4 @@ function SetGlobalNPCHealth( healthValue ) //Debug, for trailer team
 		npc.SetHealth( healthValue )
 	}
 }
+
