@@ -49,13 +49,15 @@ Press Yes if you agree to this. This choice can be changed in the mods menu at a
 		"MODE_SETTING_CATEGORY_RIFF" "Riffs"
 		"MODE_SETTING_CATEGORY_MATCH" "Match"
 
-		"classic_mp" "Classic MP"
+		"max_players" "Max Playerslots"
+		"run_intro" "Dropship Intro"
 		"run_epilogue" "Run Epilogue"
 		"scorelimit" "Score Limit"
 		"roundscorelimit" "Score Limit (round-based)"
 		"timelimit" "Time Limit"
 		"roundtimelimit" "Time Limit (round-based)"
 		"respawnprotection" "Respawn Protection Time"
+		"double_xp_enabled" "Enable Event Double XP"
 
 		"pilot_health_multiplier" "Health multiplier"
 		"respawn_delay" "Respawn Delay"
@@ -78,6 +80,8 @@ Press Yes if you agree to this. This choice can be changed in the mods menu at a
 		"featured_mode_rocket_arena" "Rocket Arena"
 		"featured_mode_shotguns_snipers" "Armed and Dangerous"
 		"iron_rules" "Iron Titan Rules"
+		"riff_titan_queue" "Max Active Titans per Team"
+		"enable_rocket_turrets" "Enable Rocket Turrets"
 
 		"cp_amped_capture_points" "Amped Hardpoints"
 		"coliseum_loadouts_enabled" "Coliseum Loadouts"
@@ -330,7 +334,7 @@ Press Yes if you agree to this. This choice can be changed in the mods menu at a
 		"INVALID_MASTERSERVER_TOKEN" 	"Invalid or expired masterserver token, try restarting EA App."
 		"JSON_PARSE_ERROR" 				"Error parsing json response"
 		"UNSUPPORTED_VERSION" 			"The version you are using is no longer supported"
-
+		
 		// Mode menu
 		"MODE_MENU_PVPVE"		"PvPvE"
 		"MODE_MENU_PVE"			"PvE"

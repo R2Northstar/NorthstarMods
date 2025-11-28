@@ -1,0 +1,367 @@
+global function SpawnDrozFD
+global function SpawnDavisFD
+global function SpawnFDHeavyTurret
+global function SpawnLFMapTitan
+
+struct {
+	vector helperTitanSpawnPos
+	vector helperTitanAngles
+}file
+
+
+
+
+
+
+
+
+
+
+/*
+██████╗ ██████╗  ██████╗ ███████╗     █████╗ ███╗   ██╗██████╗     ██████╗  █████╗ ██╗   ██╗██╗███████╗    ███╗   ██╗██████╗  ██████╗███████╗
+██╔══██╗██╔══██╗██╔═══██╗╚══███╔╝    ██╔══██╗████╗  ██║██╔══██╗    ██╔══██╗██╔══██╗██║   ██║██║██╔════╝    ████╗  ██║██╔══██╗██╔════╝██╔════╝
+██║  ██║██████╔╝██║   ██║  ███╔╝     ███████║██╔██╗ ██║██║  ██║    ██║  ██║███████║██║   ██║██║███████╗    ██╔██╗ ██║██████╔╝██║     ███████╗
+██║  ██║██╔══██╗██║   ██║ ███╔╝      ██╔══██║██║╚██╗██║██║  ██║    ██║  ██║██╔══██║╚██╗ ██╔╝██║╚════██║    ██║╚██╗██║██╔═══╝ ██║     ╚════██║
+██████╔╝██║  ██║╚██████╔╝███████╗    ██║  ██║██║ ╚████║██████╔╝    ██████╔╝██║  ██║ ╚████╔╝ ██║███████║    ██║ ╚████║██║     ╚██████╗███████║
+╚═════╝ ╚═╝  ╚═╝ ╚═════╝ ╚══════╝    ╚═╝  ╚═╝╚═╝  ╚═══╝╚═════╝     ╚═════╝ ╚═╝  ╚═╝  ╚═══╝  ╚═╝╚══════╝    ╚═╝  ╚═══╝╚═╝      ╚═════╝╚══════╝
+*/
+
+void function SpawnDrozFD( vector spawnpos, vector angles )
+{
+	entity Droz = CreateEntity( "npc_pilot_elite" )
+	SetTargetName( Droz, "NPCPilotDroz" )
+	Droz.SetTitle( "#NPC_DROZ_NAME" )
+	Droz.SetOrigin( spawnpos )
+	Droz.SetAngles( angles )
+	SetSpawnOption_AISettings( Droz, "npc_pilot_elite" )
+	SetSpawnOption_NotAlert( Droz )
+	Droz.kv.grenadeWeaponName = "mp_weapon_grenade_emp"
+	Droz.kv.physdamagescale = 1.0
+	SetSpawnOption_SquadName( Droz, "TLRDD" )
+	SetSpawnOption_Special( Droz, "mp_ability_holopilot", ["pas_power_cell"] )
+	SetSpawnOption_Weapon( Droz, "mp_weapon_epg", ["extended_ammo"] )
+	SetSpawnOption_Sidearm( Droz, "mp_weapon_shotgun_pistol" )
+	SetTeam( Droz, TEAM_MILITIA )
+	DispatchSpawn( Droz )
+	AddMinimapForHumans( Droz )
+	NPC_NoTarget( Droz )
+	Droz.SetModel( FD_MODEL_DROZ )
+	Droz.SetSkin( 2 )
+	Droz.EnableNPCFlag( NPC_ALLOW_INVESTIGATE | NPC_ALLOW_HAND_SIGNALS | NPC_NO_PAIN | NPC_NO_GESTURE_PAIN | NPC_ALLOW_PATROL | NPC_IGNORE_FRIENDLY_SOUND | NPC_NEW_ENEMY_FROM_SOUND | NPC_TEAM_SPOTTED_ENEMY | NPC_AIM_DIRECT_AT_ENEMY )
+	Droz.DisableNPCFlag( NPC_ALLOW_FLEE )
+	Droz.EnableNPCMoveFlag( NPCMF_PREFER_SPRINT | NPCMF_WALK_NONCOMBAT )
+	Droz.ai.buddhaMode = true //Plot Armor going hard
+	Droz.kv.AccuracyMultiplier = 10.0
+	Droz.kv.reactChance = 100
+	Droz.kv.WeaponProficiency = eWeaponProficiency.PERFECT
+	//Droz.SetBehaviorSelector( "behavior_pilot_elite_assassin_cqb" )
+	Droz.SetBehaviorSelector( "behavior_sp_soldier" )
+	Droz.AssaultSetGoalRadius( 640 )
+	Droz.AssaultSetGoalHeight( 1024 )
+	Droz.AssaultSetFightRadius( 640 )
+	Droz.AssaultPointClamped( GetFDAIDefenseLocation() )
+}
+
+void function SpawnDavisFD( vector spawnpos, vector angles )
+{
+	entity Davis = CreateEntity( "npc_pilot_elite" )
+	SetTargetName( Davis, "NPCPilotDavis" )
+	Davis.SetTitle( "#NPC_DAVIS_NAME" )
+	Davis.SetOrigin( spawnpos )
+	Davis.SetAngles( angles )
+	SetSpawnOption_AISettings( Davis, "npc_pilot_elite" )
+	SetSpawnOption_NotAlert( Davis )
+	Davis.kv.grenadeWeaponName = "mp_weapon_grenade_emp"
+	Davis.kv.physdamagescale = 1.0
+	SetSpawnOption_SquadName( Davis, "TLRDD" )
+	SetSpawnOption_Special( Davis, "mp_ability_shifter_super", ["pas_power_cell"] )
+	SetSpawnOption_Weapon( Davis, "mp_weapon_epg", ["extended_ammo"] )
+	SetSpawnOption_Sidearm( Davis, "mp_weapon_shotgun_pistol" )
+	SetTeam( Davis, TEAM_MILITIA )
+	DispatchSpawn( Davis )
+	AddMinimapForHumans( Davis )
+	NPC_NoTarget( Davis )
+	Davis.SetModel( FD_MODEL_DAVIS )
+	Davis.EnableNPCFlag( NPC_ALLOW_INVESTIGATE | NPC_ALLOW_HAND_SIGNALS | NPC_NO_PAIN | NPC_NO_GESTURE_PAIN | NPC_ALLOW_PATROL | NPC_IGNORE_FRIENDLY_SOUND | NPC_NEW_ENEMY_FROM_SOUND | NPC_TEAM_SPOTTED_ENEMY | NPC_AIM_DIRECT_AT_ENEMY )
+	Davis.DisableNPCFlag( NPC_ALLOW_FLEE )
+	Davis.EnableNPCMoveFlag( NPCMF_PREFER_SPRINT | NPCMF_WALK_NONCOMBAT )
+	Davis.ai.buddhaMode = true //Plot Armor going hard
+	Davis.kv.AccuracyMultiplier = 10.0
+	Davis.kv.reactChance = 100
+	Davis.kv.WeaponProficiency = eWeaponProficiency.PERFECT
+	//Davis.SetBehaviorSelector( "behavior_pilot_elite_assassin_cqb" )
+	Davis.SetBehaviorSelector( "behavior_sp_soldier" )
+	Davis.AssaultSetGoalRadius( 640 )
+	Davis.AssaultSetGoalHeight( 1024 )
+	Davis.AssaultSetFightRadius( 640 )
+	Davis.AssaultPointClamped( GetFDAIDefenseLocation() )
+}
+
+
+
+
+
+
+
+
+
+
+/*
+███████╗███╗   ███╗ █████╗ ██╗     ██╗         ███████╗██████╗  █████╗ ███╗   ██╗██╗  ██╗██╗███████╗
+██╔════╝████╗ ████║██╔══██╗██║     ██║         ██╔════╝██╔══██╗██╔══██╗████╗  ██║██║ ██╔╝██║██╔════╝
+███████╗██╔████╔██║███████║██║     ██║         █████╗  ██████╔╝███████║██╔██╗ ██║█████╔╝ ██║█████╗  
+╚════██║██║╚██╔╝██║██╔══██║██║     ██║         ██╔══╝  ██╔══██╗██╔══██║██║╚██╗██║██╔═██╗ ██║██╔══╝  
+███████║██║ ╚═╝ ██║██║  ██║███████╗███████╗    ██║     ██║  ██║██║  ██║██║ ╚████║██║  ██╗██║███████╗
+╚══════╝╚═╝     ╚═╝╚═╝  ╚═╝╚══════╝╚══════╝    ╚═╝     ╚═╝  ╚═╝╚═╝  ╚═╝╚═╝  ╚═══╝╚═╝  ╚═╝╚═╝╚══════╝
+*/
+
+void function SpawnFDHeavyTurret( vector spawnpos, vector angles, vector ornull battportpos = null, vector ornull battportangles = null )
+{
+	entity HeavyTurret = CreateEntity( "npc_turret_mega" )
+	HeavyTurret.SetTitle( "Small Frankie" )
+	HeavyTurret.SetOrigin( spawnpos )
+	HeavyTurret.SetAngles( angles )
+	SetSpawnOption_AISettings( HeavyTurret, "npc_turret_mega_frontierdefense" )
+	SetSpawnOption_Alert( HeavyTurret )
+	SetTeam( HeavyTurret, TEAM_MILITIA )
+	DispatchSpawn( HeavyTurret )
+	HeavyTurret.ai.buddhaMode = true
+	HeavyTurret.SetMaxHealth( 10000 )
+	HeavyTurret.SetHealth( HeavyTurret.GetMaxHealth() )
+	HeavyTurret.SetShieldHealthMax( 2500 )
+	HeavyTurret.SetShieldHealth( HeavyTurret.GetShieldHealthMax() )
+	HeavyTurret.kv.AccuracyMultiplier = 100.0
+	HeavyTurret.kv.reactChance = 100
+	HeavyTurret.kv.WeaponProficiency = eWeaponProficiency.PERFECT
+	HeavyTurret.SetNoTarget( false )
+	HeavyTurret.SetLookDistOverride( 2600 )
+	HeavyTurret.EnableNPCFlag( NPC_NO_PAIN | NPC_NO_GESTURE_PAIN | NPC_IGNORE_FRIENDLY_SOUND | NPC_NEW_ENEMY_FROM_SOUND | NPC_TEAM_SPOTTED_ENEMY )
+	
+	TakeWeaponsForArray( HeavyTurret, HeavyTurret.GetMainWeapons() )
+	entity turretGun = HeavyTurret.GiveWeapon( "mp_weapon_arc_launcher", ["at_unlimited_ammo"] )
+	turretGun.kv.VisibilityFlags = ENTITY_VISIBLE_TO_NOBODY
+	thread HeavyTurretAmmoHack( HeavyTurret )
+	
+	if ( battportpos != null && battportangles != null )
+	{
+		entity TurretBatteryPort = CreatePropScript( $"models/props/battery_port/battery_port_animated.mdl", expect vector( battportpos ) + < 0, 0, 12 >, battportangles, 6 )
+		Highlight_SetFriendlyHighlight( TurretBatteryPort, "sp_friendly_hero" )
+		TurretBatteryPort.Highlight_SetParam( 1, 0, < 0.0, 0.0, 0.0 > )
+		entity TurretBatteryPortBase = CreatePropDynamicLightweight( $"models/props/turret_base/turret_base.mdl", battportpos, battportangles, 6 )
+		HT_BatteryPort( TurretBatteryPort, HeavyTurret )
+	}
+	
+	else
+	{
+		NPC_NoTarget( HeavyTurret )
+		HeavyTurret.SetInvulnerable()
+		HeavyTurret.SetValidHealthBarTarget( false )
+	}
+}
+
+void function HeavyTurretAmmoHack( entity turret )
+{
+	turret.EndSignal( "OnDestroy" )
+	
+	while( true )
+	{
+		if( turret.GetHealth() > 1 )
+		{
+			entity maingun = turret.GetMainWeapons()[0]
+			int weaponMax = maingun.GetWeaponPrimaryClipCountMax()
+			int ammo = maingun.GetWeaponPrimaryClipCount()
+			
+			if ( IsValid( maingun ) && ammo < weaponMax )
+				maingun.SetWeaponPrimaryClipCount( maingun.GetWeaponPrimaryClipCountMax() )
+		}
+		
+		wait 0.5
+	}
+}
+
+
+
+
+
+
+
+
+
+
+/*
+██╗  ██╗███████╗██╗     ██████╗ ███████╗██████╗     ████████╗██╗████████╗ █████╗ ███╗   ██╗
+██║  ██║██╔════╝██║     ██╔══██╗██╔════╝██╔══██╗    ╚══██╔══╝██║╚══██╔══╝██╔══██╗████╗  ██║
+███████║█████╗  ██║     ██████╔╝█████╗  ██████╔╝       ██║   ██║   ██║   ███████║██╔██╗ ██║
+██╔══██║██╔══╝  ██║     ██╔═══╝ ██╔══╝  ██╔══██╗       ██║   ██║   ██║   ██╔══██║██║╚██╗██║
+██║  ██║███████╗███████╗██║     ███████╗██║  ██║       ██║   ██║   ██║   ██║  ██║██║ ╚████║
+╚═╝  ╚═╝╚══════╝╚══════╝╚═╝     ╚══════╝╚═╝  ╚═╝       ╚═╝   ╚═╝   ╚═╝   ╚═╝  ╚═╝╚═╝  ╚═══╝
+*/
+
+void function SpawnLFMapTitan( vector spawnpos, vector angles )
+{
+	thread SpawnLFMapTitan_Threaded( spawnpos, angles )
+}
+
+void function SpawnLFMapTitan_Threaded( vector spawnpos, vector angles )
+{
+	file.helperTitanSpawnPos = spawnpos
+	file.helperTitanAngles = angles
+	entity npc = CreateNPCTitan( "titan_stryder_ronin_prime", TEAM_MILITIA, spawnpos, angles, ["pas_titan_hardcore_settings","sflag_bc_dash_capacity","pas_dash_recharge"] )
+	SetSpawnOption_AISettings( npc, "npc_titan_auto_stryder_ronin_prime" )
+	SetSpawnOption_Warpfall( npc )
+	DispatchSpawn( npc )
+	npc.SetSkin( 2 )
+	npc.SetCamo( 135 )
+	entity soul = npc.GetTitanSoul()
+	npc.ClearBossPlayer()
+	soul.ClearBossPlayer()
+	soul.capturable = true
+	if( IsValid( soul ) )
+		thread LFTitanShieldAndHealthRegenThink( soul )
+	npc.DisableNPCFlag( NPC_ALLOW_INVESTIGATE | NPC_ALLOW_PATROL )
+	npc.DisableBehavior( "Follow" )
+	DisableTitanRodeo( npc )
+	npc.GetTitanSoul().soul.titanLoadout.titanExecution = "execution_ronin"
+	TakeWeaponsForArray( npc, npc.GetMainWeapons() )
+	npc.TakeOffhandWeapon( OFFHAND_RIGHT )
+	npc.TakeOffhandWeapon( OFFHAND_LEFT )
+	npc.TakeOffhandWeapon( OFFHAND_ANTIRODEO )
+	npc.TakeOffhandWeapon( OFFHAND_EQUIPMENT )
+	
+	npc.GiveWeapon( "mp_titanweapon_rocketeer_rocketstream" )
+	npc.GiveOffhandWeapon( "mp_titanability_basic_block", OFFHAND_LEFT )
+	npc.GiveOffhandWeapon( "mp_titanweapon_salvo_rockets", OFFHAND_RIGHT )
+	npc.GiveOffhandWeapon( "mp_titanability_laser_trip", OFFHAND_ANTIRODEO, ["pas_ion_tripwire"] )
+	npc.GiveOffhandWeapon( "mp_titancore_shift_core", OFFHAND_EQUIPMENT )
+	npc.GiveOffhandWeapon( "melee_titan_sword", OFFHAND_MELEE )
+	
+	SetTitanWeaponSkin( npc )
+	
+	npc.WaitSignal( "TitanHotDropComplete" )
+	thread TitanKneel( npc )
+	thread MonitorPublicTitan( npc )
+}
+
+void function MonitorPublicTitan( entity monitoredtitan )
+{
+	entity soul = monitoredtitan.GetTitanSoul()
+	soul.EndSignal( "OnDestroy" )
+	soul.EndSignal( "OnDeath" )
+	
+	OnThreadEnd(
+		function () : ( soul )
+		{
+			thread SetRespawnOfHelperTitan()
+		}
+	)
+	
+	while( true )
+	{
+		entity titan = soul.GetTitan()
+		entity titanowner = GetPetTitanOwner( titan )
+		
+		foreach( entity player in GetPlayerArrayOfTeam( TEAM_MILITIA ) )
+		{
+			if( !titan.IsPlayer() )
+			{
+				if( !IsValid( titanowner ) && Distance( player.GetOrigin(), titan.GetOrigin() ) < 191 )
+				{
+					player.SetPetTitan( titan )
+					titan.SetBossPlayer( player )
+				}
+			}
+		}
+		
+		if( IsValid( titanowner ) && Distance( titanowner.GetOrigin(), titan.GetOrigin() ) > 192 )
+		{
+			titan.ClearBossPlayer()
+			soul.ClearBossPlayer()
+			titanowner.SetPetTitan( null )
+			thread LFTitanHideEarnMeterOnLeaveProximity( titanowner )
+		}
+		
+		wait 0.25
+	}
+}
+
+void function SetRespawnOfHelperTitan()
+{
+	svGlobal.levelEnt.EndSignal( "CleanUpEntitiesForRoundEnd" ) //Stop respawn because it gonna respawn through the wave restart code itself
+	
+	wait 120
+	if( GamePlaying() )
+		thread SpawnLFMapTitan( file.helperTitanSpawnPos, file.helperTitanAngles )
+}
+
+void function LFTitanHideEarnMeterOnLeaveProximity( entity player )
+{
+	WaitFrame()
+	if( IsValidPlayer( player ) )
+		PlayerEarnMeter_SetMode( player, eEarnMeterMode.DISABLED )
+}
+
+void function LFTitanShieldAndHealthRegenThink( entity soul )
+{
+	soul.EndSignal( "OnDestroy" )
+	soul.EndSignal( "OnDeath" )
+
+	soul.SetShieldHealthMax( 3750 )
+
+	int lastShieldHealth = soul.GetShieldHealth()
+	bool shieldHealthSound = false
+	bool fullhp = true
+	int maxShield = soul.GetShieldHealthMax()
+	soul.SetShieldHealth( maxShield )
+	float lastTime = Time()
+
+	while ( true )
+	{
+		entity titan = soul.GetTitan()
+		if ( !IsValid( titan ) )
+			return
+
+		int shieldHealth = soul.GetShieldHealth()
+		Assert( titan )
+
+		if ( lastShieldHealth <= 0 && shieldHealth && titan.IsPlayer() )
+		{
+		 	EmitSoundOnEntityOnlyToPlayer( titan, titan, "titan_energyshield_up_1P" )
+		 	shieldHealthSound = true
+		}
+		else if ( shieldHealthSound && shieldHealth == soul.GetShieldHealthMax() )
+			shieldHealthSound = false
+
+		else if ( lastShieldHealth > shieldHealth && shieldHealthSound )
+		{
+		 	StopSoundOnEntity( titan, "titan_energyshield_up_1P" )
+		 	shieldHealthSound = false
+		}
+
+		if ( Time() >= soul.nextRegenTime )
+		{
+			float shieldRegenRate = maxShield / ( GetShieldRegenTime( soul ) / SHIELD_REGEN_TICK_TIME )
+			float frameTime = max( 0.0, Time() - lastTime )
+			shieldRegenRate = shieldRegenRate * frameTime / SHIELD_REGEN_TICK_TIME
+			soul.SetShieldHealth( minint( soul.GetShieldHealthMax(), int( shieldHealth + shieldRegenRate ) ) )
+		}
+		
+		if( IsAlive( titan ) && titan.GetHealth() <= titan.GetMaxHealth() )
+		{
+			fullhp = false
+			titan.SetHealth( min( titan.GetMaxHealth(), titan.GetHealth() + 10 ) )
+		}
+		
+		if( IsAlive( titan ) && titan.GetHealth() >= ( titan.GetMaxHealth() - 10 ) && !soul.IsDoomed() && !fullhp )
+		{
+			fullhp = true
+			UndoomTitan_Body( titan )
+		}
+		
+		lastShieldHealth = shieldHealth
+		lastTime = Time()
+		titan.SetTitle( "Helper Titan" )
+		titan.SetHudInfoVisibilityTestAlwaysPasses( true )
+		ShowName( titan )
+		WaitFrame()
+	}
+}

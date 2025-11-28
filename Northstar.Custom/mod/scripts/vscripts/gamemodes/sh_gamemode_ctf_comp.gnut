@@ -1,3 +1,4 @@
+untyped
 global function ShGamemodeCTFComp_Init
 
 global const string GAMEMODE_CTF_COMP = "ctf_comp"
@@ -17,6 +18,7 @@ void function CreateGamemodeCTFComp()
 	GameMode_SetDesc( GAMEMODE_CTF_COMP, "#PL_capture_the_flag_hint" )
 	GameMode_SetIcon( GAMEMODE_CTF_COMP, $"ui/menu/playlist/ctf" )
 	GameMode_SetSuddenDeath( GAMEMODE_CTF_COMP, true )
+	GameMode_SetEvacEnabled( GAMEMODE_CTF_COMP, false )
 	GameMode_SetDefaultScoreLimits( GAMEMODE_CTF_COMP, 0, 5 )
 	GameMode_SetDefaultTimeLimits( GAMEMODE_CTF_COMP, 0, 3.0 )
 	GameMode_AddScoreboardColumnData( GAMEMODE_CTF_COMP, "#SCOREBOARD_CAPTURES", PGS_ASSAULT_SCORE, 2 )
@@ -75,14 +77,36 @@ void function CTFCompRegisterNetworkVars()
 
 void function InitCTFCompSpecificSettings()
 {
-	#if SERVER 
-		SetShouldUsePickLoadoutScreen( true )
+	#if SERVER
 		TrackTitanDamageInPlayerGameStat( PGS_DISTANCE_SCORE )
 		SetSpawnpointGamemodeOverride( CAPTURE_THE_FLAG )
-		TeamTitanSelectMenu_Init()
+		if ( GetMapName() == "mp_glitch" )
+		{
+			level.customOOBTimer = 3.0
+			SetSpawnpointGamemodeOverride( GAMEMODE_CTF_COMP )
+			AddCallback_EntitiesDidLoad( AddGlitchOOBs )
+		}
+		if ( GetMapName() == "mp_angel_city" )
+			AddCallback_EntitiesDidLoad( AngelCityReplaceFlags )
+		if ( GetMapName() == "mp_colony02" )
+			AddCallback_EntitiesDidLoad( AddColonyOOBs )
+		if ( GetMapName() == "mp_drydock" )
+			SetSpawnpointGamemodeOverride( GAMEMODE_CTF_COMP )
+		if ( GetMapName() == "mp_eden" )
+		{
+			AddCallback_EntitiesDidLoad( AddEdenWalls )
+			SetSpawnpointGamemodeOverride( GAMEMODE_CTF_COMP )
+		}
+		if ( GetMapName() == "mp_black_water_canal" )
+			AddCallback_EntitiesDidLoad( AddBWCOOBs )
+		if ( GetMapName() == "mp_thaw" )
+			SetSpawnpointGamemodeOverride( GAMEMODE_CTF_COMP )
+			//AddCallback_EntitiesDidLoad( RepositionExoplanetFlags )
+		if ( GetMapName() == "mp_forwardbase_kodai" )
+			AddCallback_EntitiesDidLoad( RepositionKodaiFlags )
+		if ( GetMapName() == "mp_wargames" )
+			AddCallback_EntitiesDidLoad( RepositionWargamesFlags )
 	#elseif CLIENT
-		ClTeamTitanSelectMenu_Init()
-		
 		// gotta register the music here because this is done hardcoded to ctf in cl_music
 		RegisterLevelMusicForTeam( eMusicPieceID.LEVEL_INTRO, "music_mp_ctf_intro_flyin", TEAM_IMC )
 		RegisterLevelMusicForTeam( eMusicPieceID.LEVEL_INTRO, "music_mp_ctf_intro_flyin", TEAM_MILITIA )
@@ -112,3 +136,337 @@ void function InitCTFCompSpecificSettings()
 		RegisterLevelMusicForTeam( eMusicPieceID.LEVEL_LAST_MINUTE, "music_mp_ctf_lastminute", TEAM_MILITIA )
 	#endif
 }
+
+#if SERVER
+void function AngelCityReplaceFlags()
+{
+	foreach ( entity flagRef in GetEntArrayByClass_Expensive( "info_spawnpoint_flag" ) )
+		flagRef.Destroy()
+		
+	entity militiaFlagBase = CreateEntity( "info_spawnpoint_flag" )
+	militiaFlagBase.kv.teamnumber = TEAM_MILITIA
+	militiaFlagBase.kv.origin = < -1673, 2485, 262 >
+	DispatchSpawn( militiaFlagBase )
+	
+	entity imcFlagBase = CreateEntity( "info_spawnpoint_flag" )
+	imcFlagBase.kv.teamnumber = TEAM_IMC
+	imcFlagBase.kv.origin = < 1319, -784, 400 >
+	DispatchSpawn( imcFlagBase )
+	
+	AddOutOfBoundsTriggerWithParams( < -75, 1146, 1360 >, 160, 320 )
+	AddOutOfBoundsTriggerWithParams( < -1624, 1317, 1194 >, 250, 320 )
+	AddOutOfBoundsTriggerWithParams( < 1670, -434, 1177 >, 100, 100 )
+	AddOutOfBoundsTriggerWithParams( < -928, 3407, 1035 >, 80, 100 )
+
+	AddCCTFCustomProp( $"models/imc_base/scaffold_tech_halfwalk.mdl", < 1006, 1155, 775 >, < 0, 0, -90 > )
+	AddCCTFCustomProp( $"models/imc_base/scaffold_tech_halfwalk.mdl", < 1134, 1155, 775 >, < 0, 0, -90 > )
+	AddCCTFCustomProp( $"models/imc_base/scaffold_tech_halfwalk.mdl", < 1262, 1155, 775 >, < 0, 0, -90 > )
+	AddCCTFCustomProp( $"models/imc_base/scaffold_tech_halfwalk.mdl", < 881, 1031, 775 >, < 0, 90, -90 > )
+	AddCCTFCustomProp( $"models/imc_base/scaffold_tech_halfwalk.mdl", < 881, 903, 775 >, < 0, 90, -90 > )
+	AddCCTFCustomProp( $"models/imc_base/scaffold_tech_halfwalk.mdl", < 881, 775, 775 >, < 0, 90, -90 > )
+
+	AddCCTFCustomProp( $"models/barriers/fence_chainlink_seg_01.mdl", < 131, 1463, 534 >, < 0, -90, 0 > )
+	AddCCTFCustomProp( $"models/barriers/fence_chainlink_seg_01.mdl", < 3, 1463, 534 >, < 0, -90, 0 > )
+	AddCCTFCustomProp( $"models/barriers/fence_chainlink_seg_01.mdl", < -124, 1463, 534 >, < 0, -90, 0 > )
+	AddCCTFCustomProp( $"models/barriers/fence_chainlink_seg_01.mdl", < -252, 1463, 534 >, < 0, -90, 0 > )
+	AddCCTFCustomProp( $"models/barriers/fence_chainlink_seg_01.mdl", < -380, 1463, 534 >, < 0, -90, 0 > )
+
+	AddCCTFCustomProp( $"models/barriers/fence_chainlink_seg_01.mdl", < 388, 2213, 534 >, < 0, 180, 0 > )
+	AddCCTFCustomProp( $"models/barriers/fence_chainlink_seg_01.mdl", < 388, 2085, 534 >, < 0, 180, 0 > )
+	AddCCTFCustomProp( $"models/barriers/fence_chainlink_seg_01.mdl", < 388, 1957, 534 >, < 0, 180, 0 > )
+	AddCCTFCustomProp( $"models/barriers/fence_chainlink_seg_01.mdl", < 388, 1829, 534 >, < 0, 180, 0 > )
+	AddCCTFCustomProp( $"models/barriers/fence_chainlink_seg_01.mdl", < 388, 1701, 534 >, < 0, 180, 0 > )
+	AddCCTFCustomProp( $"models/barriers/fence_chainlink_post_01.mdl", < 388, 1637, 534 >, < 0, 0, 0 > )
+
+	AddCCTFCustomProp( $"models/barriers/fence_chainlink_seg_01.mdl", < -366, 2400, 534 >, < 0, -90, 0 > )
+	AddCCTFCustomProp( $"models/barriers/fence_chainlink_seg_01.mdl", < -238, 2400, 534 >, < 0, -90, 0 > )
+	AddCCTFCustomProp( $"models/barriers/fence_chainlink_seg_01.mdl", < -110, 2400, 534 >, < 0, -90, 0 > )
+	AddCCTFCustomProp( $"models/barriers/fence_chainlink_seg_01.mdl", < 17, 2400, 534 >, < 0, -90, 0 > )
+	AddCCTFCustomProp( $"models/barriers/fence_chainlink_seg_01.mdl", < 145, 2400, 534 >, < 0, -90, 0 > )
+	AddCCTFCustomProp( $"models/barriers/fence_chainlink_post_01.mdl", < 209, 2400, 540 >, < 0, 0, 0 > )
+
+	AddCCTFCustomProp( $"models/colony/colony_wall_run_plate.mdl", < -1163, 562, 644 >, < 0, 180, 90 > )
+	AddCCTFCustomProp( $"models/colony/colony_wall_run_plate.mdl", < -1163, 674, 644 >, < 0, 180, 90 > )
+	AddCCTFCustomProp( $"models/colony/colony_wall_run_plate.mdl", < -1163, 786, 644 >, < 0, 180, 90 > )
+	AddCCTFCustomProp( $"models/colony/colony_wall_run_plate.mdl", < -1163, 898, 644 >, < 0, 180, 90 > )
+	AddCCTFCustomProp( $"models/colony/colony_wall_run_plate.mdl", < -1163, 1010, 644 >, < 0, 180, 90 > )
+	AddCCTFCustomProp( $"models/colony/colony_wall_run_plate.mdl", < -1163, 1122, 644 >, < 0, 180, 90 > )
+	AddCCTFCustomProp( $"models/colony/colony_wall_run_plate.mdl", < -1163, 1234, 644 >, < 0, 180, 90 > )
+	AddCCTFCustomProp( $"models/colony/colony_wall_run_plate.mdl", < -1163, 1346, 644 >, < 0, 180, 90 > )
+	AddCCTFCustomProp( $"models/colony/colony_wall_run_plate.mdl", < -1163, 1458, 644 >, < 0, 180, 90 > )
+}
+
+void function AddGlitchOOBs()
+{
+	AddOutOfBoundsTriggerWithParams( < 4303, 90, 320 >, 512, 512 )
+	AddOutOfBoundsTriggerWithParams( < 4303, 602, 320 >, 512, 512 )
+	AddOutOfBoundsTriggerWithParams( < 4303, 1114, 320 >, 512, 512 )
+	AddOutOfBoundsTriggerWithParams( < 4367, 1626, 320 >, 512, 512 )
+	AddOutOfBoundsTriggerWithParams( < 4383, 2138, 320 >, 512, 512 )
+
+	AddOutOfBoundsTriggerWithParams( < -4687, 165, 320 >, 512, 512 )
+	AddOutOfBoundsTriggerWithParams( < -4687, -346, 320 >, 512, 512 )
+	AddOutOfBoundsTriggerWithParams( < -4687, -858, 320 >, 512, 512 )
+	AddOutOfBoundsTriggerWithParams( < -4751, -1370, 320 >, 512, 512 )
+	AddOutOfBoundsTriggerWithParams( < -4767, -1882, 320 >, 512, 512 )
+
+	array<entity> zipLines = GetEntArrayByClass_Expensive( "move_rope" )
+	zipLines.extend( GetEntArrayByClass_Expensive( "keyframe_rope" ) )
+	foreach ( entity zipLine in zipLines )
+		zipLine.Destroy()
+}
+
+void function AddColonyOOBs()
+{
+	AddOutOfBoundsTriggerWithParams( < 387, 61, 1182 >, 180, 300 )
+	AddOutOfBoundsTriggerWithParams( < 1480, 648, 760 >, 150, 150 )
+	AddOutOfBoundsTriggerWithParams( < 1480, 442, 760 >, 150, 150 )
+
+	/*
+	AddCCTFCustomProp( $"models/imc_base/cargo_container_imc_01_blue.mdl", < 1682, 2485, -8 >, < 0, 90, 0 > )
+	AddCCTFCustomProp( $"models/imc_base/cargo_container_imc_01_blue.mdl", < 1672, 2366, -4 >, < 0, 0, 0 > )
+	AddCCTFCustomProp( $"models/imc_base/cargo_container_imc_01_white.mdl", < 1809, 2412, -8 >, < 0, -45, 0 > )
+	AddCCTFCustomProp( $"models/imc_base/cargo_container_imc_01_white.mdl", < 1663, 2368, 90 >, < 0, 90, 0 > )
+	AddCCTFCustomProp( $"models/imc_base/cargo_container_imc_01_white_open.mdl", < 1793, 2507, 90 >, < 0, 90, 0 > )
+	AddCCTFCustomProp( $"models/imc_base/cargo_container_imc_01_red.mdl", < 1804, 2535, -8 >, < 0, 0, 0 > )
+	AddCCTFCustomProp( $"models/imc_base/cargo_container_imc_01_red.mdl", < 1410, 2501, 182 >, < 0, 0, 0 > )
+	AddCCTFCustomProp( $"models/containers/cargo_container_white_separate.mdl", < 1635, 2390, 182 >, < 0, 90, 0 > )
+	
+	AddCCTFCustomProp( $"models/imc_base/cargo_container_imc_01_red.mdl", < 2444, 1930, 16 >, < 0, 0, 0 > )
+	AddCCTFCustomProp( $"models/imc_base/cargo_container_imc_01_white.mdl", < 2444, 2033, 16 >, < 0, 0, 0 > )
+	AddCCTFCustomProp( $"models/imc_base/cargo_container_imc_01_blue.mdl", < 2444, 1930, 114 >, < 0, 0, 0 > )
+	AddCCTFCustomProp( $"models/imc_base/cargo_container_imc_01_blue.mdl", < 2444, 2033, 114 >, < 0, 0, 0 > )
+	AddCCTFCustomProp( $"models/imc_base/cargo_container_imc_01_white_open.mdl", < 2444, 1983, 212 >, < 0, 45, 0 > )
+	AddCCTFCustomProp( $"models/containers/cargo_container_white_separate.mdl", < 2328, 2020, 4 >, < 0, 0, 0 > )
+	
+	AddCCTFCustomProp( $"models/imc_base/cargo_container_imc_01_white.mdl", < 1210, 3017, -5 >, < 0, -45, 0 > )
+	AddCCTFCustomProp( $"models/imc_base/cargo_container_imc_01_blue.mdl", < 1329, 3073, 5 >, < 0, 90, 0 > )
+	AddCCTFCustomProp( $"models/imc_base/cargo_container_imc_01_blue.mdl", < 1210, 3021, 92 >, < 0, 90, 0 > )
+	AddCCTFCustomProp( $"models/containers/cargo_container_white_separate.mdl", < 1311, 3072, 102 >, < 0, 0, 0 > )
+	
+	AddCCTFCustomProp( $"models/imc_base/cargo_container_imc_01_blue.mdl", < -569, -1010, 159 >, < 0, 90, 0 > )
+	AddCCTFCustomProp( $"models/imc_base/cargo_container_imc_01_red.mdl", < -569, -1137, 159 >, < 0, 90, 0 > )
+	AddCCTFCustomProp( $"models/imc_base/cargo_container_imc_01_red.mdl", < -569, -1010, 257 >, < 0, 90, 0 > )
+	AddCCTFCustomProp( $"models/imc_base/cargo_container_imc_01_white.mdl", < -569, -1137, 257 >, < 0, 90, 0 > )
+	AddCCTFCustomProp( $"models/imc_base/cargo_container_imc_01_white_open.mdl", < -573, -1072, 353 >, < 0, 90, 0 > )
+	
+	AddCCTFCustomProp( $"models/imc_base/cargo_container_imc_01_blue.mdl", < -1142, -1081, 159 >, < 0, 0, 0 > )
+	AddCCTFCustomProp( $"models/imc_base/cargo_container_imc_01_blue.mdl", < -1269, -1081, 159 >, < 0, 0, 0 > )
+	AddCCTFCustomProp( $"models/imc_base/cargo_container_imc_01_blue.mdl", < -1396, -1081, 159 >, < 0, 0, 0 > )
+	AddCCTFCustomProp( $"models/imc_base/cargo_container_imc_01_white_open.mdl", < -1142, -978, 142 >, < 0, 0, 0 > )
+	AddCCTFCustomProp( $"models/imc_base/cargo_container_imc_01_white_open.mdl", < -1269, -978, 142 >, < 0, 0, 0 > )
+	AddCCTFCustomProp( $"models/imc_base/cargo_container_imc_01_white_open.mdl", < -1395, -978, 142 >, < 0, 0, 0 > )
+	AddCCTFCustomProp( $"models/imc_base/cargo_container_imc_01_white_open.mdl", < -1142, -1081, 256 >, < 0, 0, 0 > )
+	AddCCTFCustomProp( $"models/imc_base/cargo_container_imc_01_white_open.mdl", < -1269, -1081, 256 >, < 0, 0, 0 > )
+	AddCCTFCustomProp( $"models/imc_base/cargo_container_imc_01_white_open.mdl", < -1395, -1081, 256 >, < 0, 0, 0 > )
+	AddCCTFCustomProp( $"models/imc_base/cargo_container_imc_01_red.mdl", < -1269, -978, 238 >, < 0, 0, 0 > )
+	AddCCTFCustomProp( $"models/imc_base/cargo_container_imc_01_red.mdl", < -1394, -978, 238 >, < 0, 0, 0 > )
+	AddCCTFCustomProp( $"models/imc_base/cargo_container_imc_01_red.mdl", < -1164, -1084, 352 >, < 0, 0, 0 > )
+	AddCCTFCustomProp( $"models/containers/cargo_container_white_separate.mdl", < -1029, -1091, 156 >, < 0, 0, 0 > )
+	AddCCTFCustomProp( $"models/containers/cargo_container_white_separate.mdl", < -1369, -1092, 352 >, < 0, 90, 0 > )
+	AddCCTFCustomProp( $"models/imc_base/cargo_container_imc_01_blue.mdl", < -1406, -868, 115 >, < 0, 90, 0 > )
+	AddCCTFCustomProp( $"models/imc_base/cargo_container_imc_01_blue.mdl", < -1406, -868, 213 >, < 0, 90, 0 > )
+	AddCCTFCustomProp( $"models/imc_base/cargo_container_imc_01_red.mdl", < -1132, -1201, 165 >, < 0, 90, 0 > )
+	AddCCTFCustomProp( $"models/imc_base/cargo_container_imc_01_red.mdl", < -1132, -1201, 264 >, < 0, 90, 0 > )
+
+	CreateCCTFZipline( < -1509, 524, 621 >, < -1721, -1880, 455 > )
+	CreateCCTFZipline( < 2746, 845, 580 >, < 2643, 3286, 291 > )
+	*/
+}
+
+void function AddEdenWalls()
+{
+	AddCCTFCustomProp( $"models/kodai_live_fire/live_fire_wall_01.mdl", < 2016, 2112, 59 >, < 0, 0, 0 > )
+	AddCCTFCustomProp( $"models/kodai_live_fire/live_fire_wall_01.mdl", < 2557, 2359, 62 >, < 0, 0, 0 > )
+
+	AddCCTFCustomProp( $"models/kodai_live_fire/live_fire_wall_01.mdl", < 2199, 2942, 120 >, < 0, 0, 0 > )
+	AddCCTFCustomProp( $"models/kodai_live_fire/live_fire_wall_01.mdl", < 2199, 2766, 120 >, < 0, 0, 0 > )
+
+	AddCCTFCustomProp( $"models/kodai_live_fire/live_fire_wall_01.mdl", < 4267, 666, 62 >, < 0, -20, 0 > )
+	AddCCTFCustomProp( $"models/kodai_live_fire/live_fire_wall_01.mdl", < 4329, 835, 62 >, < 0, -20, 0 > )
+}
+
+void function RepositionExoplanetFlags()
+{
+	foreach ( entity flagRef in GetEntArrayByClass_Expensive( "info_spawnpoint_flag" ) )
+		flagRef.Destroy()
+		
+	entity militiaFlagBase = CreateEntity( "info_spawnpoint_flag" )
+	militiaFlagBase.kv.teamnumber = TEAM_MILITIA
+	militiaFlagBase.kv.origin = < -352, -3051, -113 >
+	DispatchSpawn( militiaFlagBase )
+	
+	entity imcFlagBase = CreateEntity( "info_spawnpoint_flag" )
+	imcFlagBase.kv.teamnumber = TEAM_IMC
+	imcFlagBase.kv.origin = < 3030, 1473, -63 >
+	DispatchSpawn( imcFlagBase )
+}
+
+void function RepositionKodaiFlags()
+{
+	foreach ( entity flagRef in GetEntArrayByClass_Expensive( "info_spawnpoint_flag" ) )
+		flagRef.Destroy()
+	
+	entity militiaFlagBase = CreateEntity( "info_spawnpoint_flag" )
+	militiaFlagBase.kv.teamnumber = TEAM_MILITIA
+	militiaFlagBase.kv.origin = < -331, 2994, 1096 >
+	DispatchSpawn( militiaFlagBase )
+	
+	entity imcFlagBase = CreateEntity( "info_spawnpoint_flag" )
+	imcFlagBase.kv.teamnumber = TEAM_IMC
+	imcFlagBase.kv.origin = < 1138, -167, 960 >
+	DispatchSpawn( imcFlagBase )
+}
+
+void function RepositionWargamesFlags()
+{
+	foreach ( entity flagRef in GetEntArrayByClass_Expensive( "info_spawnpoint_flag" ) )
+		flagRef.Destroy()
+		
+	entity militiaFlagBase = CreateEntity( "info_spawnpoint_flag" )
+	militiaFlagBase.kv.teamnumber = TEAM_MILITIA
+	militiaFlagBase.kv.origin = < -2832, 1351, -128 >
+	DispatchSpawn( militiaFlagBase )
+	
+	entity imcFlagBase = CreateEntity( "info_spawnpoint_flag" )
+	imcFlagBase.kv.teamnumber = TEAM_IMC
+	imcFlagBase.kv.origin = < 1281, -1343, 40 >
+	DispatchSpawn( imcFlagBase )
+}
+
+void function AddBWCOOBs()
+{
+	foreach ( entity flagRef in GetEntArrayByClass_Expensive( "info_spawnpoint_flag" ) )
+		flagRef.Destroy()
+		
+	entity militiaFlagBase = CreateEntity( "info_spawnpoint_flag" )
+	militiaFlagBase.kv.teamnumber = TEAM_MILITIA
+	militiaFlagBase.kv.origin = < 2037, -2703, -168 >
+	DispatchSpawn( militiaFlagBase )
+	
+	entity imcFlagBase = CreateEntity( "info_spawnpoint_flag" )
+	imcFlagBase.kv.teamnumber = TEAM_IMC
+	imcFlagBase.kv.origin = < 454, 3592, -257 >
+	DispatchSpawn( imcFlagBase )
+
+	AddCCTFCustomProp( $"models/containers/container_medium_tanks_blue.mdl", < 184, 120, -8 >, < 0, 0, 0 > )
+	AddCCTFCustomProp( $"models/containers/container_medium_tanks_blue.mdl", < 553, -427, -8 >, < 0, 0, 0 > )
+
+	AddCCTFCustomProp( $"models/barriers/sandbags_large_01.mdl", < 1076, -665, 208 >, < 0, 180, 0 > )
+	AddCCTFCustomProp( $"models/barriers/sandbags_large_01.mdl", < 964, -665, 208 >, < 0, 180, 0 > )
+	AddCCTFCustomProp( $"models/barriers/sandbags_large_01.mdl", < 852, -665, 208 >, < 0, 180, 0 > )
+	AddCCTFCustomProp( $"models/barriers/sandbags_large_01.mdl", < 790, -725, 208 >, < 0, -90, 0 > )
+
+	AddCCTFCustomProp( $"models/barriers/sandbags_large_01.mdl", < 2017, -2234, 239 >, < 0, 180, 0 > )
+	AddCCTFCustomProp( $"models/barriers/sandbags_large_01.mdl", < 1905, -2234, 239 >, < 0, 180, 0 > )
+	AddCCTFCustomProp( $"models/barriers/sandbags_large_01.mdl", < 1793, -2234, 239 >, < 0, 180, 0 > )
+	AddCCTFCustomProp( $"models/barriers/sandbags_large_01.mdl", < 1681, -2234, 239 >, < 0, 180, 0 > )
+	AddCCTFCustomProp( $"models/barriers/sandbags_large_01.mdl", < 1551, -2364, 239 >, < 0, -90, 0 > )
+	AddCCTFCustomProp( $"models/barriers/sandbags_large_01.mdl", < 1551, -2482, 239 >, < 0, -90, 0 > )
+	AddCCTFCustomProp( $"models/barriers/sandbags_large_01.mdl", < 1551, -2597, 239 >, < 0, -90, 0 > )
+	AddCCTFCustomProp( $"models/barriers/sandbags_curved_01.mdl", < 1546, -2312, 239 >, < 0, -90, 0 > )
+
+	AddCCTFCustomProp( $"models/imc_base/cargo_container_imc_01_green.mdl", < 2826, -2341, 148 >, < 0, 90, 0 > )
+	AddCCTFCustomProp( $"models/imc_base/cargo_container_imc_01_white.mdl", < 2826, -2213, 148 >, < 0, 90, 0 > )
+
+	AddCCTFCustomProp( $"models/imc_base/cargo_container_imc_01_white.mdl", < -110, -733, 255 >, < 0, 0, 0 > )
+	AddCCTFCustomProp( $"models/imc_base/cargo_container_imc_01_green.mdl", < -231, -733, 255 >, < 0, 0, 0 > )
+
+	AddCCTFCustomProp( $"models/imc_base/cargo_container_imc_01_white.mdl", < 1496, 2214, -256 >, < 0, 90, 0 > )
+	AddCCTFCustomProp( $"models/imc_base/cargo_container_imc_01_white.mdl", < 1496, 2342, -256 >, < 0, 90, 0 > )
+	AddCCTFCustomProp( $"models/imc_base/cargo_container_imc_01_white.mdl", < 1496, 2470, -256 >, < 0, 90, 0 > )
+	AddCCTFCustomProp( $"models/imc_base/cargo_container_imc_01_white.mdl", < 1496, 2214, -160 >, < 0, 90, 0 > )
+	AddCCTFCustomProp( $"models/imc_base/cargo_container_imc_01_white.mdl", < 1496, 2342, -160 >, < 0, 90, 0 > )
+	AddCCTFCustomProp( $"models/imc_base/cargo_container_imc_01_white.mdl", < 1496, 2470, -160 >, < 0, 90, 0 > )
+
+	AddCCTFCustomProp( $"models/imc_base/cargo_container_imc_01_white.mdl", < 2366, 15, -236 >, < 0, 90, 0 > )
+	AddCCTFCustomProp( $"models/imc_base/cargo_container_imc_01_green.mdl", < 2366, -112, -236 >, < 0, 90, 0 > )
+
+	AddCCTFCustomProp( $"models/imc_base/cargo_container_imc_01_white.mdl", < 1292, 463, 297 >, < 0, 0, 0 > )
+	AddCCTFCustomProp( $"models/imc_base/cargo_container_imc_01_red.mdl", < 1611, 463, 297 >, < 0, 0, 0 > )
+
+	AddCCTFCustomProp( $"models/imc_base/chain_link_IMC_01.mdl", < 1755, -888, 416 >, < 0, -90, 0 > )
+	AddCCTFCustomProp( $"models/imc_base/chain_link_IMC_01.mdl", < 1627, -888, 416 >, < 0, -90, 0 > )
+	AddCCTFCustomProp( $"models/imc_base/chain_link_IMC_01.mdl", < 1499, -888, 416 >, < 0, -90, 0 > )
+	AddCCTFCustomProp( $"models/imc_base/chain_link_IMC_01.mdl", < 1371, -888, 416 >, < 0, -90, 0 > )
+	AddCCTFCustomProp( $"models/imc_base/chain_link_IMC_01.mdl", < 1243, -888, 416 >, < 0, -90, 0 > )
+
+	AddCCTFCustomProp( $"models/imc_base/chain_link_IMC_01.mdl", < -518, 154, 292 >, < 0, 90, 0 > )
+	AddCCTFCustomProp( $"models/imc_base/chain_link_IMC_01.mdl", < -390, 154, 292 >, < 0, 90, 0 > )
+	AddCCTFCustomProp( $"models/imc_base/chain_link_IMC_01.mdl", < -280, 196, 292 >, < 0, 135, 0 > )
+
+	AddCCTFCustomProp( $"models/imc_base/chain_link_IMC_01.mdl", < 2181, -2711, 13 >, < 0, 180, 0 > )
+
+	AddCCTFCustomProp( $"models/industrial/propane_tank_large.mdl", < -244, 413, 291 >, < 0, 0, 0 > )
+	AddCCTFCustomProp( $"models/industrial/propane_tank_large.mdl", < 1193, 1617, 195 >, < 0, 90, 0 > )
+
+	AddCCTFCustomProp( $"models/vehicle/vehicle_truck_modular/vehicle_truck_modular_closed_bed_runoff.mdl", < 2364, -70, -384 >, < 0, -90, 0 > )
+	AddCCTFCustomProp( $"models/vehicle/vehicle_truck_modular/vehicle_truck_modular_closed_bed_runoff.mdl", < 1478, 2712, -256 >, < 0, 90, 0 > )
+
+	CreateCCTFZipline( < 2503, 736, 313 >, < 2981, -1492, 147 > )
+
+	AddOutOfBoundsTriggerWithParams( < 1935, -752, 1382 >, 160, 512 )
+}
+
+void function CreateCCTFZipline( vector startPos, vector endPos, float speedMultiplier = 1.25, float sagHeight = 120 )
+{
+	string startpointName = UniqueString( "rope_startpoint" )
+	string endpointName = UniqueString( "rope_endpoint" )
+
+	entity rope_start = CreateEntity( "move_rope" )
+	SetTargetName( rope_start, startpointName )
+	rope_start.kv.NextKey = endpointName
+	rope_start.kv.MoveSpeed = 64
+	rope_start.kv.Slack = 0
+	rope_start.kv.Subdiv = "4"
+	rope_start.kv.Width = "2"
+	rope_start.kv.Type = "0"
+	rope_start.kv.TextureScale = "1"
+	rope_start.kv.RopeMaterial = "cable/zipline.vmt"
+	rope_start.kv.PositionInterpolator = 2
+	rope_start.kv.Zipline = "1"
+	rope_start.kv.ZiplineAutoDetachDistance = "150"
+	rope_start.kv.ZiplineSagEnable = "1"
+	rope_start.kv.ZiplineSagHeight = string( sagHeight )
+	rope_start.kv.ZiplineMoveSpeedScale = string( speedMultiplier )
+	rope_start.SetOrigin( startPos )
+
+	entity rope_end = CreateEntity( "keyframe_rope" )
+	SetTargetName( rope_end, endpointName )
+	rope_end.kv.MoveSpeed = 64
+	rope_end.kv.Slack = 0
+	rope_end.kv.Subdiv = "4"
+	rope_end.kv.Width = "2"
+	rope_end.kv.Type = "0"
+	rope_end.kv.TextureScale = "1"
+	rope_end.kv.RopeMaterial = "cable/zipline.vmt"
+	rope_end.kv.PositionInterpolator = 2
+	rope_end.kv.Zipline = "1"
+	rope_end.kv.ZiplineAutoDetachDistance = "150"
+	rope_end.kv.ZiplineSagEnable = "1"
+	rope_end.kv.ZiplineSagHeight = string( sagHeight )
+	rope_start.kv.ZiplineMoveSpeedScale = string( speedMultiplier )
+	rope_end.SetOrigin( endPos )
+
+	DispatchSpawn( rope_start )
+	DispatchSpawn( rope_end )
+}
+
+void function AddCCTFCustomProp( asset modelasset, vector origin, vector angles )
+{
+	entity prop = CreateEntity( "prop_script" )
+	prop.SetValueForModelKey( modelasset )
+	prop.SetOrigin( origin )
+	prop.SetAngles( angles )
+	prop.kv.fadedist = -1
+	prop.kv.renderamt = 255
+	prop.kv.rendercolor = "255 255 255"
+	prop.kv.solid = 6
+	ToggleNPCPathsForEntity( prop, true )
+	prop.SetAIObstacle( true )
+	prop.SetTakeDamageType( DAMAGE_NO )
+	prop.SetScriptPropFlags( SPF_BLOCKS_AI_NAVIGATION | SPF_CUSTOM_SCRIPT_3 )
+	prop.AllowMantle()
+	DispatchSpawn( prop )
+}
+#endif

@@ -156,8 +156,9 @@ void function ApplyBatteryToBatteryPort( entity player, entity batteryPort )
 	var useBatteryPort = batteryPort.s.useBattery
 	useBatteryPort( batteryPort, player )
 
-	// all things done, destroy this batt
-	battery.Destroy()
+	// all things done, destroy this batt if counter is on 0
+	if( player.GetPlayerNetInt( "batteryCount" ) == 0 )
+		battery.Destroy()
 }
 
 // for disabling cloak

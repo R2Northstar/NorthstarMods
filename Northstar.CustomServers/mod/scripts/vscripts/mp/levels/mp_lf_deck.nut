@@ -4,9 +4,13 @@ void function CodeCallback_MapInit()
 {
 	SetupLiveFireMaps()
 	
+	// Load Frontier Defense Data
+	if( GameRules_GetGameMode() == FD )
+		initFrontierDefenseData()
+	
 	// worker drone model
 	PrecacheModel( $"models/robots/aerial_unmanned_worker/aerial_unmanned_worker.mdl" )
-	
+		
 	// note: this map has no marvin spawns, have to spawn them using idle nodes
 	AddSpawnCallback_ScriptName( "worker_drone_spawn", DeckSpawnWorkerDrone )
 	AddSpawnCallback_ScriptName( "marvin_idle_node", DeckSpawnMarvinForIdleNode )

@@ -8286,8 +8286,8 @@ void function Player_GiveDoubleXP( entity player, int count )
 
 bool function ClientCommand_UseDoubleXP( entity player, array<string> args )
 {
-	if ( IsPrivateMatch() )
-		return true
+	//if ( IsPrivateMatch() ) Northstar servers are always considered private matches
+	//	return true
 
 	if ( GetGameState() > eGameState.Prematch )
 		return true

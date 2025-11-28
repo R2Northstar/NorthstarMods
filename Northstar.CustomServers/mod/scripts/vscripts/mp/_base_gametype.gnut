@@ -67,6 +67,7 @@ function BaseGametype_Init()
 	RegisterSignal( "SimulateGameScore" )
 	RegisterSignal( "ObserverThread" )
 	RegisterSignal( "CE_FLAGS_CHANGED" )
+	RegisterSignal( "player_exits_droppod" ) //Required for Drop Pod Animations from Titanfall 1, has no real use tho
 
 	RegisterSignal( "Stop_OnStartTouch_EntityOutOfBounds" )
 	RegisterSignal( "Stop_OnEndTouch_EntityBackInBounds" )
@@ -540,7 +541,7 @@ function HandleLocationBasedDamage( entity ent, var damageInfo )
 				break
 		}
 	}
-	else if ( isValidHeadShot )
+	else if ( isValidHeadShot && !GetConVarBool( "ns_disable_headshot_multiplier" ) )
 	{
 		damageMult_location = GetHeadshotDamageMultiplierFromDamageInfo( damageInfo )
 	}
@@ -749,15 +750,11 @@ bool function PlayerOrNPCKilled( entity ent, var damageInfo )
 		//Do callbacks. Main reason we call this here as opposed to CodeCallback_OnNPCKilled() is legacy script compatibility reasons.
 		//For example: In script immediately above this we change the attacker to get the player behind the kill, e.g. owner of a pet titan, etc. Bunch of registered callbacks depends on this.
 		foreach( callbackFunc in svGlobal.onNPCKilledCallbacks )
-		{
 			callbackFunc( ent, attacker, damageInfo )
-		}
 	}
 
 	if ( ent.IsTitan() )
-	{
 		thread TitanVO_DelayedTitanDown( ent )
-	}
 
 	if ( !attacker.IsPlayer() )
 	{
@@ -771,9 +768,7 @@ bool function PlayerOrNPCKilled( entity ent, var damageInfo )
 		// Hack - attacker history isn't on client to calculate if a player should get credit for a kill when AI steals the final killing shot while a player is damaging them.
 		array<entity> playerArray = GetPlayerArray()
 		foreach ( player in playerArray )
-		{
 			Remote_CallFunction_Replay( player, "ServerCallback_SetAssistInformation", attackerInfo.damageSourceId, attacker.GetEncodedEHandle(), ent.GetEncodedEHandle(), attackerInfo.assistTime )
-		}
 	}
 
 	// player attacker only from here down

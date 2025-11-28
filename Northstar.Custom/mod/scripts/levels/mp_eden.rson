@@ -1,0 +1,13 @@
+When: "SERVER"
+Scripts:
+[
+	mp/levels/mp_eden.nut
+	mp/levels/mp_eden_fd.nut
+]
+
+When: "CLIENT"
+Scripts:
+[
+	client/levels/cl_mp_skyshow_generic.nut
+	client/cl_carrier.gnut
+]

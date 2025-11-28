@@ -13,7 +13,7 @@ void function GamemodeSpeedball_Init()
 
 	// gamemode settings
 	SetRoundBased( true )
-	SetRespawnsEnabled( false )
+	SetSwitchSidesBased( true )
 	SetShouldUseRoundWinningKillReplay( true )
 	Riff_ForceTitanAvailability( eTitanAvailability.Never )
 	Riff_ForceSetEliminationMode( eEliminationMode.Pilots )
@@ -24,7 +24,6 @@ void function GamemodeSpeedball_Init()
 	
 	AddCallback_GameStateEnter( eGameState.Prematch, CreateFlagIfNoFlagSpawnpoint )
 	AddCallback_GameStateEnter( eGameState.Playing, ResetFlag )
-	AddCallback_GameStateEnter( eGameState.WinnerDetermined,GamemodeSpeedball_OnWinnerDetermined)
 	AddCallback_OnTouchHealthKit( "item_flag", OnFlagCollected )
 	AddCallback_OnPlayerKilled( OnPlayerKilled )
 	SetTimeoutWinnerDecisionFunc( TimeoutCheckFlagHolder )
@@ -32,6 +31,8 @@ void function GamemodeSpeedball_Init()
 
 	ClassicMP_SetCustomIntro( ClassicMP_DefaultNoIntro_Setup, ClassicMP_DefaultNoIntro_GetLength() )
 	ClassicMP_ForceDisableEpilogue( true )
+
+	level.endOfRoundPlayerState = ENDROUND_MOVEONLY
 }
 
 void function CreateFlag( entity flagSpawn )
@@ -67,11 +68,15 @@ void function OnPlayerKilled( entity victim, entity attacker, var damageInfo )
 {
 	if ( file.flagCarrier == victim )
 		DropFlag()
-		
+	
 	if ( victim.IsPlayer() && GetGameState() == eGameState.Playing )
+	{
 		if ( GetPlayerArrayOfTeam_Alive( victim.GetTeam() ).len() == 1 )
+		{
 			foreach ( entity player in GetPlayerArray() )
 				Remote_CallFunction_NonReplay( player, "ServerCallback_SPEEDBALL_LastPlayer", player.GetTeam() != victim.GetTeam() )
+		}
+	}
 }
 
 void function GiveFlag( entity player )
@@ -151,16 +156,14 @@ void function ResetFlag()
 
 int function TimeoutCheckFlagHolder()
 {
-	if ( file.flagCarrier == null )
-		return TEAM_UNASSIGNED
-		
-	return file.flagCarrier.GetTeam()
-}
-
-void function GamemodeSpeedball_OnWinnerDetermined()
-{
-	if(IsValid(file.flagCarrier))
+	if( IsValidPlayer( file.flagCarrier ) )
+	{
+		AddTeamRoundScoreNoStateChange( file.flagCarrier.GetTeam() )
 		file.flagCarrier.AddToPlayerGameStat( PGS_ASSAULT_SCORE, 1 )
+		return file.flagCarrier.GetTeam()
+	}
+	
+	return TEAM_UNASSIGNED
 }
 
 string function GetHardpointGroup(entity hardpoint) //Hardpoint Entity B on Homestead is missing the Hardpoint Group KeyValue
