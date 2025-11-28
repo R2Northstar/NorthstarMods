@@ -221,9 +221,17 @@ bool function ClientCommandCallback_SetBurnCardPersistenceSlot( entity player, a
 	print( player + " SetBurnCardPersistenceSlot " + args[0] )
 	
 	if ( IsRefValidAndOfType( args[0], eItemTypes.BURN_METER_REWARD ) )
-		player.SetPersistentVar( "burnmeterSlot", BurnReward_GetByRef( args[0] ).id )
+	{
+		if ( !IsItemLocked( player, args[0] ) )
+			player.SetPersistentVar( "burnmeterSlot", BurnReward_GetByRef( args[0] ).id )
+		else
+			return false
+	}
 	else
+	{
 		print( player + " invalid ref " + args[0] )
+		return false
+	}
 	
 	return true
 }
