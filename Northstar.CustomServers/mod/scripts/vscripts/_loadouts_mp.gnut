@@ -178,6 +178,10 @@ bool function ClientCommandCallback_SetPersistentLoadoutValue( entity player, ar
 	#endif
 
 	// VERY temp and insecure
+	// The person who didn't add checks to this is a GENIUS at respawn
+	if ( !IsRefValidAndOfType( val, args[1].tointeger() ) || IsItemLocked( player, val ) )
+		return false
+
 	SetPersistentLoadoutValue( player, args[0], args[1].tointeger(), args[2], val )
 	
 	if ( args[0] == "pilot" )
@@ -226,16 +230,24 @@ bool function ClientCommandCallback_SwapSecondaryAndWeapon3PersistentLoadoutData
 bool function ClientCommandCallback_SetBurnCardPersistenceSlot( entity player, array<string> args )
 {
 	if ( args.len() != 1 || GetGameState() >= eGameState.Playing )
-		return true
+		return false
 	
 	#if DEV
 	print( player + " SetBurnCardPersistenceSlot " + args[0] )
 	#endif
 
 	if ( IsRefValidAndOfType( args[0], eItemTypes.BURN_METER_REWARD ) )
-		player.SetPersistentVar( "burnmeterSlot", BurnReward_GetByRef( args[0] ).id )
+	{
+		if ( !IsItemLocked( player, args[0] ) )
+			player.SetPersistentVar( "burnmeterSlot", BurnReward_GetByRef( args[0] ).id )
+		else
+			return false
+	}
 	else
+	{
 		print( player + " invalid ref " + args[0] )
+		return false
+	}
 	
 	return true
 }
@@ -243,13 +255,25 @@ bool function ClientCommandCallback_SetBurnCardPersistenceSlot( entity player, a
 // lobby clientcommands
 bool function ClientCommandCallback_SetCallsignIcon( entity player, array<string> args )
 {
+	if ( !args.len() )
+		args.append( "" )
+
 	print( player + " SetCallsignIcon " + args[0] )
 
 	if ( IsRefValidAndOfType( args[0], eItemTypes.CALLSIGN_ICON ) )
-		PlayerCallsignIcon_SetActiveByRef( player, args[0] )
+	{
+		if ( !IsItemLocked( player, args[0] ) )
+			PlayerCallsignIcon_SetActiveByRef( player, args[0] )
+		else
+			return false
+	}
 	#if DEV
 	else
+	{
 		print( player + " invalid ref " + args[0] )
+		return false
+	}
+	
 	#endif
 
 	return true
@@ -257,13 +281,24 @@ bool function ClientCommandCallback_SetCallsignIcon( entity player, array<string
 
 bool function ClientCommandCallback_SetCallsignCard( entity player, array<string> args )
 {
-	print( player + " SetCallsignIcon " + args[0] )
+	if ( !args.len() )
+		args.append( "" )
+
+	print( player + " SetCallsignCard " + args[0] )
 
 	if ( IsRefValidAndOfType( args[0], eItemTypes.CALLING_CARD ) )
-		PlayerCallingCard_SetActiveByRef( player, args[0] )
+	{
+		if ( !IsItemLocked( player, args[0] ) )
+			PlayerCallingCard_SetActiveByRef( player, args[0] )
+		else
+			return false
+	}
 	#if DEV
 	else
+	{
 		print( player + " invalid ref " + args[0] )
+		return false
+	}
 	#endif
 	
 	return true
@@ -271,12 +306,25 @@ bool function ClientCommandCallback_SetCallsignCard( entity player, array<string
 
 bool function ClientCommandCallback_SetFactionChoicePersistenceSlot( entity player, array<string> args )
 {
+	if ( !args.len() )
+		args.append( "" )
+
 	#if DEV
 	print( player + " SetFactionChoicePersistenceSlot " + args[0] )
 	#endif
 
 	if ( IsRefValidAndOfType( args[0], eItemTypes.FACTION ) )
-		player.SetPersistentVar( "factionChoice", args[0] ) // no function for this so gotta set directly lol
+	{
+		if ( !IsItemLocked( player, args[0] ) )
+			player.SetPersistentVar( "factionChoice", args[0] )
+		else
+			return false
+	}
+	else
+	{
+		print( player + " invalid ref " + args[0] )
+		return false
+	}
 	
 	return true
 }
