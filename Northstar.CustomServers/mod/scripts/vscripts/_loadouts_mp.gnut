@@ -245,7 +245,9 @@ bool function ClientCommandCallback_SetBurnCardPersistenceSlot( entity player, a
 	}
 	else
 	{
+		#if DEV
 		print( player + " invalid ref " + args[0] )
+		#endif
 		return false
 	}
 	
@@ -258,7 +260,9 @@ bool function ClientCommandCallback_SetCallsignIcon( entity player, array<string
 	if ( !args.len() )
 		args.append( "" )
 
+	#if DEV
 	print( player + " SetCallsignIcon " + args[0] )
+	#endif
 
 	if ( IsRefValidAndOfType( args[0], eItemTypes.CALLSIGN_ICON ) )
 	{
@@ -267,14 +271,13 @@ bool function ClientCommandCallback_SetCallsignIcon( entity player, array<string
 		else
 			return false
 	}
-	#if DEV
 	else
 	{
+		#if DEV
 		print( player + " invalid ref " + args[0] )
+		#endif
 		return false
 	}
-	
-	#endif
 
 	return true
 }
@@ -284,7 +287,9 @@ bool function ClientCommandCallback_SetCallsignCard( entity player, array<string
 	if ( !args.len() )
 		args.append( "" )
 
+	#if DEV
 	print( player + " SetCallsignCard " + args[0] )
+	#endif
 
 	if ( IsRefValidAndOfType( args[0], eItemTypes.CALLING_CARD ) )
 	{
@@ -293,13 +298,13 @@ bool function ClientCommandCallback_SetCallsignCard( entity player, array<string
 		else
 			return false
 	}
-	#if DEV
 	else
 	{
+		#if DEV
 		print( player + " invalid ref " + args[0] )
+		#endif
 		return false
 	}
-	#endif
 	
 	return true
 }
@@ -322,7 +327,9 @@ bool function ClientCommandCallback_SetFactionChoicePersistenceSlot( entity play
 	}
 	else
 	{
+		#if DEV
 		print( player + " invalid ref " + args[0] )
+		#endif
 		return false
 	}
 	
@@ -331,7 +338,7 @@ bool function ClientCommandCallback_SetFactionChoicePersistenceSlot( entity play
 
 bool function ClientCommandCallback_LoadoutMenuClosed( entity player, array<string> args )
 {
-	if ( !args.len() || args[0] == "1" ||  args.len() > 1 && args[1] == "1" )
+	if ( !args.len() || args[0] == "1" || args.len() > 1 && args[1] == "1" )
 		TryGivePilotLoadoutForGracePeriod( player )
 	
 	return true
