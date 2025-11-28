@@ -378,7 +378,15 @@ void function ReaperMinionLauncherThink( entity reaper )
 	if ( GetBugReproNum() != 221936 )
 		reaper.kv.squadname = ""
 
-	StationaryAIPosition launchPos = GetClosestAvailableStationaryPosition( reaper.GetOrigin(), 8000, eStationaryAIPositionTypes.LAUNCHER_REAPER )
+	reaper.EndSignal( "OnDeath" )
+	StationaryAIPosition ornull launchPos = GetClosestAvailableStationaryPosition( reaper.GetOrigin(), 8000, eStationaryAIPositionTypes.LAUNCHER_REAPER )
+	while ( launchPos == null )
+	{
+		// incase all stationary reaper positions are in use wait for one to become available
+		wait 5
+		launchPos = GetClosestAvailableStationaryPosition( reaper.GetOrigin(), 8000, eStationaryAIPositionTypes.LAUNCHER_REAPER )
+	}
+	expect StationaryAIPosition( launchPos )
 	launchPos.inUse = true
 
 	OnThreadEnd(
@@ -387,8 +395,7 @@ void function ReaperMinionLauncherThink( entity reaper )
 			launchPos.inUse = false
 		}
 	)
-
-	reaper.EndSignal( "OnDeath" )
+	
 	reaper.AssaultSetFightRadius( 96 )
 	reaper.AssaultSetGoalRadius( reaper.GetMinGoalRadius() )
 
@@ -398,17 +405,17 @@ void function ReaperMinionLauncherThink( entity reaper )
 
 		if ( Distance( reaper.GetOrigin(), launchPos.origin ) > 96 )
 		{
-			printt( reaper," ASSAULT:", launchPos.origin, Distance( reaper.GetOrigin(), launchPos.origin ) )
-			reaper.AssaultPoint( launchPos.origin )
+			//printt( reaper," ASSAULT:", launchPos.origin, Distance( reaper.GetOrigin(), launchPos.origin ) )
+			reaper.AssaultPointClamped( launchPos.origin )
 			table signalData = WaitSignal( reaper, "OnFinishedAssault", "OnEnterGoalRadius", "OnFailedToPath" )
-			printt( reaper," END ASSAULT:", launchPos.origin, signalData.signal )
+			//printt( reaper," END ASSAULT:", launchPos.origin, signalData.signal )
 			if ( signalData.signal == "OnFailedToPath" )
 				continue
 		}
 
-		printt( reaper," LAUNCH:", launchPos.origin )
+		//printt( reaper," LAUNCH:", launchPos.origin )
 		waitthread Reaper_LaunchFragDrone_Think( reaper, "npc_frag_drone_fd" )
-		printt( reaper," END LAUNCH:", launchPos.origin )
+		//printt( reaper," END LAUNCH:", launchPos.origin )
 		while ( GetScriptManagedEntArrayLen( reaper.ai.activeMinionEntArrayID ) > 2 )
 			WaitFrame()
 	}
@@ -429,7 +436,7 @@ void function Reaper_LaunchFragDrone_Think( entity reaper, string fragDroneSetti
 	if ( minionsToSpawn <= 0 )
 		return
 
-	array<vector> targetOrigins = GetFragDroneTargetOrigins( reaper, reaper.GetOrigin(), 200, 2000, 64, MAX_TICKS )
+	array<vector> targetOrigins = GetFragDroneTargetOrigins( reaper, reaper.GetOrigin(), 64, 200, 6, MAX_TICKS )
 
 	if ( targetOrigins.len() < minionsToSpawn )
 		return
@@ -447,7 +454,7 @@ void function Reaper_LaunchFragDrone_Think( entity reaper, string fragDroneSetti
 		}
 	)
 
-	printt( reaper, "   BEGIN LAUNCHING: ", minionsToSpawn, reaper.GetCurScheduleName() )
+	//printt( reaper, "   BEGIN LAUNCHING: ", minionsToSpawn, reaper.GetCurScheduleName() )
 
 	reaper.EndSignal( "OnDeath" )
 
@@ -464,7 +471,7 @@ void function Reaper_LaunchFragDrone_Think( entity reaper, string fragDroneSetti
 			if ( minionsToSpawn <= 0 )
 				break
 
-			printt( reaper, "    LAUNCHING: ", minionsToSpawn )
+			//printt( reaper, "    LAUNCHING: ", minionsToSpawn )
 			thread LaunchSpawnerProjectile( reaper, targetOrigin, activeMinions_EntArrayID, fragDroneSettings )
 			minionsToSpawn--
 
@@ -513,7 +520,7 @@ array<vector> function GetFragDroneTargetOrigins( entity npc, vector origin, flo
 	if ( traceFrac < 1 )
 		return targetOrigins;
 
-	array< vector > randomSpots = NavMesh_RandomPositions_LargeArea( origin, HULL_HUMAN, randomCount, minRadius, maxRadius )
+	array< vector > randomSpots = NavMesh_RandomPositions( origin, HULL_HUMAN, randomCount, minRadius, maxRadius ) //_LargeArea
 
 	int numFragDrones = 0
 	foreach( spot in randomSpots )
@@ -678,6 +685,7 @@ function SuperSpectre_WarpFall( entity ai )
 
 	local e = {}
 	e.warpfx <- PlayFX( TURBO_WARP_FX, warpPos + < 0, 0, -104 >, mover.GetAngles() )
+	e.warpfx.DisableHibernation()
 	e.smokeFx <- null
 
 	OnThreadEnd(
@@ -706,6 +714,7 @@ function SuperSpectre_WarpFall( entity ai )
 	ai.Show()
 
 	e.smokeFx = PlayFXOnEntity( TURBO_WARP_COMPANY, ai, "", <0.0, 0.0, 152.0> )
+	e.smokeFx.DisableHibernation()
 
 	local time = 0.2
 	mover.MoveTo( origin, time, 0, 0 )
@@ -716,13 +725,12 @@ function SuperSpectre_WarpFall( entity ai )
 
 	e.smokeFx.Destroy()
 	PlayFX( $"droppod_impact", origin )
-
-	Explosion_DamageDefSimple(
-		damagedef_reaper_fall,
-		origin,
-		ai,								// attacker
-		ai,								// inflictor
-		origin )
+	
+	//Added option to control if Reapers should kill Titans on their warpfall, or just do considerable damage
+	if ( GetConVarBool( "ns_reaper_warpfall_kill" ) )
+		Explosion_DamageDefSimple( damagedef_reaper_fall, origin, ai, ai, origin )
+	else
+		RadiusDamage( origin, ai, ai, 85, 2500, 128, 256, SF_ENVEXPLOSION_NO_DAMAGEOWNER, 0, 100, DF_RAGDOLL | DF_EXPLOSION, eDamageSourceId.damagedef_reaper_fall )
 
 	wait 0.1
 }

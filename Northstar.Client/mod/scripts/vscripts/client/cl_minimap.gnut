@@ -449,8 +449,15 @@ void function Minimap_Ping( vector origin, float radius, float duration, vector 
 	RuiSetGameTime( rui, "endTime", Time() + duration )
 
 	RuiSetBool( rui, "reverse", reverse )
+	
+	thread Minimap_DestroyPing_Threaded( duration, rui )
 }
 
+void function Minimap_DestroyPing_Threaded( float duration, var rui )
+{
+	wait duration
+	RuiDestroy( rui )
+}
 
 
 var function Minimap_AddLayer( asset layerImage, bool isFriendly )

@@ -39,7 +39,7 @@ void function InitialiseArenaLoadouts()
 	file.tier0Weapons.append( respawnData )
 	
 	#if SERVER
-		SetBoostPurchaseCallback( GivePlayerArenaLoadoutItem )
+		//SetBoostPurchaseCallback( GivePlayerArenaLoadoutItem )
 	#endif
 }
 

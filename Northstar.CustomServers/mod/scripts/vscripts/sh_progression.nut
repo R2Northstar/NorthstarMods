@@ -89,7 +89,7 @@ bool function ClientCommand_SetProgression( entity player, array<string> args )
 /// Resets a specific Titan's Aegis rank back to `0`
 /// * `player` - The player entity to perform the action on
 /// * `args` - The arguments passed from the client command. `args[0]` should be a string corresponding to the chassis name of the Titan to reset.
-/// Valid chassis are: ion, tone, vanguard, northstar, ronin, legion, and scorch.
+/// Valid chassis are: ion, tone, vanguard, northstar, ronin, legion and scorch.
 ///
 /// Returns `true` on success and `false` on missing args.
 bool function ClientCommand_ResetTitanAegis( entity player, array<string> args )
@@ -193,8 +193,9 @@ void function UpdateCachedLoadouts_Threaded()
 #if SERVER
 void function ValidateEquippedItems( entity player )
 {
+	#if DEV
 	printt( "VALIDATING EQUIPPED ITEMS FOR PLAYER: " + player.GetPlayerName() )
-
+	#endif
 	// banner
 	CallingCard card = PlayerCallingCard_GetActive( player )
 	if ( IsItemLocked( player, card.ref ) )
@@ -229,16 +230,19 @@ void function ValidateEquippedItems( entity player )
 	}
 
 	// titan loadouts
-	int selectedTitanLoadoutIndex = player.GetPersistentVarAsInt( "titanSpawnLoadout.index" )
 	for ( int titanLoadoutIndex = 0; titanLoadoutIndex < NUM_PERSISTENT_TITAN_LOADOUTS; titanLoadoutIndex++ )
 	{
+		#if DEV
 		printt( "- VALIDATING TITAN LOADOUT: " + titanLoadoutIndex )
+		#endif
 
-		bool isSelected = titanLoadoutIndex == selectedTitanLoadoutIndex
+		bool isSelected = titanLoadoutIndex == player.GetPersistentVarAsInt( "titanSpawnLoadout.index" )
 		TitanLoadoutDef loadout = GetTitanLoadout( player, titanLoadoutIndex )
 		TitanLoadoutDef defaultLoadout = shGlobal.defaultTitanLoadouts[titanLoadoutIndex]
 
+		#if DEV
 		printt( "  - CHASSIS: " + loadout.titanClass )
+		#endif
 
 		// passive1 - "Titan Kit" (things like overcore)
 		if ( loadout.passive1 != defaultLoadout.passive1 && IsSubItemLocked( player, loadout.passive1, loadout.titanClass ) )
@@ -452,23 +456,18 @@ void function ValidateEquippedItems( entity player )
 		{
 			printt( "  - SELECTED TITAN CLASS IS LOCKED, RESETTING" )
 			player.SetPersistentVar( "titanSpawnLoadout.index", 0 )
-			selectedTitanLoadoutIndex = 0
+			Remote_CallFunction_NonReplay( player, "ServerCallback_UpdateTitanModel", 0 )
 		}
 	}
 
-	if ( selectedTitanLoadoutIndex < 0 || selectedTitanLoadoutIndex >= NUM_PERSISTENT_TITAN_LOADOUTS )
-	{
-		printt( "- SELECTED TITAN CLASS IS INVALID, RESETTING" )
-		player.SetPersistentVar( "titanSpawnLoadout.index", 0 )
-		selectedTitanLoadoutIndex = 0
-	}
-
-	Remote_CallFunction_NonReplay( player, "ServerCallback_UpdateTitanModel", selectedTitanLoadoutIndex )
+	Remote_CallFunction_NonReplay( player, "ServerCallback_UpdateTitanModel", player.GetPersistentVarAsInt( "titanSpawnLoadout.index" ) )
 
 	// pilot loadouts
 	for ( int pilotLoadoutIndex = 0; pilotLoadoutIndex < NUM_PERSISTENT_PILOT_LOADOUTS; pilotLoadoutIndex++ )
 	{
+		#if DEV
 		printt( "- VALIDATING PILOT LOADOUT: " + pilotLoadoutIndex )
+		#endif
 
 		bool isSelected = pilotLoadoutIndex == player.GetPersistentVarAsInt( "pilotSpawnLoadout.index" )
 		PilotLoadoutDef loadout = GetPilotLoadout( player, pilotLoadoutIndex )
@@ -1028,7 +1027,9 @@ void function ValidateEquippedItems( entity player )
 
 	Remote_CallFunction_NonReplay( player, "ServerCallback_UpdatePilotModel", player.GetPersistentVarAsInt( "pilotSpawnLoadout.index" ) )
 
+	#if DEV
 	printt( "ITEM VALIDATION COMPLETE FOR PLAYER: " + player.GetPlayerName() )
+	#endif
 }
 
 // basically just PopulateTitanLoadoutFromPersistentData but without validation, we are doing the validation in a better way

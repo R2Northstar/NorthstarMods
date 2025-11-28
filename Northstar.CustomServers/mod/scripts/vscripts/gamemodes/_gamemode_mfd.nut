@@ -18,7 +18,6 @@ void function GamemodeMfd_Init()
 	if ( GAMETYPE == MARKED_FOR_DEATH_PRO )
 	{
 		file.isMfdPro = true
-		SetRespawnsEnabled( true )
 		SetRoundBased( true )
 		SetShouldUseRoundWinningKillReplay( true )
 		Riff_ForceSetEliminationMode( eEliminationMode.Pilots )

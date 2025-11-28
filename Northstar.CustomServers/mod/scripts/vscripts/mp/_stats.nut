@@ -232,7 +232,9 @@ void function Stats_IncrementStat( entity player, string statCategory, string st
 {
 	if ( !IsValidStat( statCategory, statAlias, statSubAlias ) )
 	{
+		#if SERVER && DEV
 		printt( "invalid stat: " + statCategory + " : " + statAlias + " : " + statSubAlias )
+		#endif
 		return
 	}
 
@@ -263,10 +265,7 @@ void function Stats_IncrementStat( entity player, string statCategory, string st
 		// if we have an invalid mode or map for persistence, and it is used in the
 		// persistence string, we can't save the persistence so we have to just return
 		if ( str != saveVar )
-		{
-			//printt( ex, str, GetMapName(), mode ) // Commented out due to spamming logs on invalid modes (e.g. Gun Game, Infection, ...)
 			return
-		}
 	}
 	str = saveVar
 
@@ -582,10 +581,9 @@ void function HandleKillStats( entity victim, entity attacker, var damageInfo )
 
 	// totalAssists
 	// assistsTotal ( weapon_kill_stats )
-	// note: eww
 	table<int, bool> alreadyAssisted
 	// titans store their recentDamageHistory in the soul
-	entity assistVictim = ( victim.IsTitan() && IsValid( victim.GetTitanSoul() ) ) ? victim.GetTitanSoul() : victim 
+	entity assistVictim = ( victim.IsTitan() && IsValid( victim.GetTitanSoul() ) ) ? victim.GetTitanSoul() : victim
 	foreach( DamageHistoryStruct attackerInfo in assistVictim.e.recentDamageHistory )
 	{
 		if ( !IsValid( attackerInfo.attacker ) || !attackerInfo.attacker.IsPlayer() || attackerInfo.attacker == assistVictim )
@@ -944,7 +942,7 @@ void function HandleDistanceAndTimeStats_Threaded()
 		{
 			if ( !IsValid( player ) )
 				continue
-				
+			
 			if ( player.p.lastPosForDistanceStatValid )
 			{
 				// not 100% sure on using Distance2D over Distance tbh

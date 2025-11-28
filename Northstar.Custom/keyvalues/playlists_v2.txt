@@ -2,6 +2,13 @@ playlists
 {
 	Gamemodes
 	{
+		defaults
+		{
+			vars
+			{
+				player_force_respawn 15
+			}
+		}
 		sbox
 		{
 			inherit defaults
@@ -46,6 +53,7 @@ playlists
 				max_players 12
 				max_teams 12
 				classic_mp 1
+				scorelimit 21 // temp until we have a way of dynamically setting non-default scorelimit in code
 				
 				gamemode_score_hint #GAMEMODE_SCORE_HINT_FFA
 				gamemode_bullet_001	#GAMEMODE_BULLET_FFA_001
@@ -167,12 +175,51 @@ playlists
 				hint #PL_capture_the_flag_hint
 				abbreviation #PL_capture_the_flag_abbr
 				image ctf
-				respawn_delay 8
-				scorelimit 5
+				respawn_delay 7
+				scorelimit 6
 				suddendeath_timelimit 2
-				timelimit 12
-				max_players 10
+				timelimit 14
+				max_players 12
 				phase_shift_drop_flag 1
+				ctf_flag_return_time 1
+				ctf_flag_instant_return_in_triggers 1
+				pilot_health_multiplier 1.2
+				boosts_enabled 1
+				titan_spawn_deploy_enabled 0
+				earn_meter_pilot_overdrive 0
+				earn_meter_pilot_multiplier 0.5
+				earn_meter_titan_multiplier 0.5
+				enable_sun_flare_mp_angel_city 0
+				instant_respawn_as_titan 1
+				run_epilogue 0
+				
+				color		"0 119 245 255"
+
+				gamemode_score_hint #GAMEMODE_SCORE_HINT_CTF
+				gamemode_bullet_001	#GAMEMODE_BULLET_CTF_001
+				gamemode_bullet_002	#GAMEMODE_BULLET_CTF_002
+				gamemode_bullet_003	#GAMEMODE_BULLET_CTF_003
+				gamemode_bullet_004	#GAMEMODE_BULLET_CTF_004
+				gamemode_bullet_005	#GAMEMODE_BULLET_CTF_005
+			}
+		}
+		ctf
+		{
+			inherit defaults
+			vars
+			{
+				name #PL_capture_the_flag
+				lobbytitle #PL_capture_the_flag_lobby
+				description #PL_capture_the_flag_desc
+				hint #PL_capture_the_flag_hint
+				abbreviation #PL_capture_the_flag_abbr
+				image ctf
+				respawn_delay 7
+				scorelimit 6
+				suddendeath_timelimit 2
+				timelimit 20
+				max_players 12
+				phase_shift_drop_flag 0
 				ctf_flag_return_time 1
 				color		"0 119 245 255"
 
@@ -277,6 +324,290 @@ playlists
 				gamemode_score_hint #GAMEMODE_SCORE_HINT_FFA
 			}
 		}
+		fd
+        {
+ 			inherit defaults
+ 			vars
+ 			{
+ 			    hint #PL_fd_desc
+ 				ingame_menu_fd_mode 1
+ 				pick_loadout_extension 30.0
+ 				pick_loadout_every_round 0
+ 				pick_loadout_warp_sound 1
+ 				tts_menu_join_in_progress 1
+ 				tts_menu_show_score 0
+ 				roundscorelimit 3
+				roundtimelimit 60.0
+ 				em_player_fast_kills 12
+ 				em_player_kills 15
+ 				max_players 4
+ 				riff_allow_npcs 1
+ 				scorelimit 2500
+ 				suddendeath_timelimit 2
+ 				titan_build_time 240
+ 				titan_rebuild_time 240
+ 				spawn_zone_enabled 1
+                respawn_delay 4
+				player_force_respawn 15
+                timelimit 30
+                skyshow_enabled 1
+                max_teams 1
+                riff_wave_spawn 4
+                wave_spawn_interval 25
+                boost_store_mode fd
+                titan_loadout_experiment 0
+                use_new_tacticals 0
+                earn_meter_tick_frac 0
+				ai_attack_tethers 0
+				waiting_for_players_percentage_desired 100
+				fd_titan_health_adjust			0
+				fd_reaper_health_adjust 		0
+				fd_mortar_spectre_setup_time	5
+				fd_grunt_at_weapon_users		0
+				fd_grunt_shield_captains		0
+				fd_player_damage_scalar			1.0
+				fd_harvester_health 			25000
+				fd_harvester_shield 			6000
+				fd_harvester_regen_delay		10.0
+				fd_harvester_regen_time			10.0
+				fd_money_per_round				600
+				fd_wave_buy_time				60.0
+				fd_pro_titan_shields			0
+				fd_at_unlimited_ammo            1
+				fd_money_flyouts				0
+				enable_match_progress_update	0
+				color		"0 184 254 255"
+				aegis_upgrades 1
+
+                riff_team_share_earn_meter 2
+                riff_team_share_earn_meter_scale 0.25
+				earn_meter_titan_multiplier 0.5
+				earn_meter_pilot_multiplier	0.5
+
+				override_boost_cost_burnmeter_harvester_shield -1
+				override_boost_cost_burnmeter_arc_trap -1
+				override_boost_cost_burnmeter_ap_turret_weapon_infinite -1
+				override_boost_cost_burnmeter_rodeo_grenade -1
+				override_boost_cost_burnmeter_amped_weapons_permanent -1
+				override_boost_cost_burnmeter_instant_battery -1
+
+ 				gamemode_score_hint #GAMEMODE_SCORE_HINT_FD
+ 				gamemode_bullet_001	#GAMEMODE_BULLET_FD_001
+ 				gamemode_bullet_002	#GAMEMODE_BULLET_FD_002
+ 				gamemode_bullet_003	#GAMEMODE_BULLET_FD_003
+ 				gamemode_bullet_004	#GAMEMODE_BULLET_FD_004
+ 				gamemode_bullet_005	#GAMEMODE_BULLET_FD_005
+ 			}
+			maps
+			{
+				mp_angel_city 1
+				mp_black_water_canal 1
+				mp_grave 1
+				mp_colony02 1
+				mp_complex3 1
+				mp_crashsite3 1
+				mp_drydock 1
+				mp_eden 1
+				mp_thaw 1
+				mp_forwardbase_kodai 1
+				mp_glitch 1
+				mp_homestead 1
+				mp_relic02 1
+				mp_rise 1
+				mp_wargames 1
+			}
+ 		}
+		fd_easy
+		{
+			inherit fd
+			vars
+			{
+                name #PL_fd_easy
+                lobbytitle #PL_fd_easy_lobby
+                description #PL_fd_easy_desc
+ 				abbreviation #FD_DIFFICULTY_EASY
+
+                image fd_easy
+				fd_difficulty 0
+				boost_store_team_reserve 1
+				fd_titan_health_adjust			-5000
+				fd_reaper_health_adjust 		-2000
+				fd_mortar_spectre_setup_time	10
+				fd_grunt_at_weapon_users		0
+				fd_grunt_shield_captains		0
+				fd_player_damage_scalar			1.0
+				fd_money_per_round				700
+				fd_pro_titan_shields			0
+				fd_harvester_shield 			6000
+				fd_at_unlimited_ammo            1
+
+				earn_meter_pilot_multiplier		0.7
+			}
+		}
+		fd_normal
+		{
+			inherit fd
+			vars
+			{
+                name #PL_fd_normal
+                lobbytitle #PL_fd_normal_lobby
+                description #PL_fd_normal_desc
+ 				abbreviation #FD_DIFFICULTY_NORMAL
+                image fd_normal
+				fd_difficulty 1
+				boost_store_team_reserve 1
+				fd_titan_health_adjust			-2500
+				fd_reaper_health_adjust 		-1000
+				fd_mortar_spectre_setup_time	10
+				fd_grunt_at_weapon_users		0
+				fd_grunt_shield_captains		0
+				fd_player_damage_scalar			1.0
+				fd_money_per_round				700
+				fd_pro_titan_shields			0
+				fd_harvester_shield 			6000
+				fd_at_unlimited_ammo            1
+
+				earn_meter_pilot_multiplier		0.7
+			}
+		}
+		fd_hard
+		{
+			inherit fd
+			vars
+			{
+                name #PL_fd_hard
+                lobbytitle #PL_fd_hard_lobby
+                description #PL_fd_hard_desc
+ 				abbreviation #FD_DIFFICULTY_HARD
+                image fd_hard
+				fd_difficulty 2
+				boost_store_team_reserve 1
+				fd_titan_health_adjust			0
+				fd_reaper_health_adjust 		0
+				fd_mortar_spectre_setup_time	5
+				fd_grunt_at_weapon_users		2
+				fd_grunt_shield_captains		0
+				fd_player_damage_scalar			1.5
+				fd_money_per_round				600
+				fd_pro_titan_shields			0
+				fd_harvester_shield 			5000
+				fd_at_unlimited_ammo            1
+
+				earn_meter_pilot_multiplier	0.7
+			}
+		}
+		fd_master
+		{
+			inherit fd
+			vars
+			{
+                name #PL_fd_master
+                lobbytitle #PL_fd_master_lobby
+                description #PL_fd_master_desc
+ 				abbreviation #FD_DIFFICULTY_MASTER
+                image fd_master
+				fd_difficulty 3
+				boost_store_team_reserve 1
+
+				fd_titan_health_adjust			0
+				fd_reaper_health_adjust 		0
+				fd_mortar_spectre_setup_time	5
+				fd_grunt_at_weapon_users		4
+				fd_grunt_shield_captains		1
+				fd_player_damage_scalar			2.5
+				fd_money_per_round				600
+				fd_pro_titan_shields			1
+				fd_harvester_shield 			4000
+				fd_at_unlimited_ammo            0
+
+				earn_meter_pilot_multiplier	0.7
+			}
+		}
+		fd_insane
+		{
+			inherit fd
+			vars
+			{
+                name #PL_fd_insane
+                lobbytitle #PL_fd_insane_lobby
+                description #PL_fd_insane_desc
+ 				abbreviation #FD_DIFFICULTY_INSANE
+                image fd_insane
+                fd_difficulty 4
+				boost_store_team_reserve 1
+				riff_minimap_state 1
+                roundscorelimit 1
+
+				fd_titan_health_adjust			0
+				fd_reaper_health_adjust 		0
+				fd_mortar_spectre_setup_time	5
+				fd_grunt_at_weapon_users		4
+				fd_grunt_shield_captains		1
+				fd_player_damage_scalar			2.5
+				fd_money_per_round				600
+				fd_pro_titan_shields			1
+				fd_harvester_shield 			4000
+				fd_at_unlimited_ammo            0
+
+				earn_meter_pilot_multiplier	0.5
+			}
+		}
+		fd_livefire
+		{
+			inherit fd
+			vars
+			{
+                name #PL_fd_lf
+                lobbytitle #PL_fd_lf
+                description #PL_fd_lf_desc
+ 				abbreviation #PL_fd_lf_abbr
+                image aitdm
+                fd_difficulty 1
+				fd_money_flyouts 1
+				boost_store_team_reserve 1
+				riff_minimap_state 1
+				rodeo_battery_disembark_to_pickup 0
+                roundscorelimit 1
+				skyshow_enabled 0
+				max_players 6
+				player_force_respawn 5
+				pick_loadout_extension 0 // No Titan Selection screen
+				aegis_upgrades 0 //Helper Titan doesn't have Aegis
+
+				fd_titan_health_adjust			0
+				fd_reaper_health_adjust 		0
+				fd_grunt_at_weapon_users		4
+				fd_grunt_shield_captains		1
+				fd_money_per_round				1200
+				fd_at_unlimited_ammo            0
+				fd_harvester_health 			15000
+				fd_harvester_shield 			3000
+				fd_harvester_regen_delay		2.5
+				fd_harvester_regen_time			5.0
+				
+				override_boost_cost_burnmeter_harvester_shield 1000
+				override_boost_cost_burnmeter_arc_trap 900
+				override_boost_cost_burnmeter_ap_turret_weapon_infinite 1000
+				override_boost_cost_burnmeter_rodeo_grenade 1200
+				override_boost_cost_burnmeter_amped_weapons_permanent 250
+				override_boost_cost_burnmeter_instant_battery 1500
+				
+				gamemode_score_hint #GAMEMODE_SCORE_HINT_FD
+ 				gamemode_bullet_001	#GAMEMODE_BULLET_LFFD_001
+ 				gamemode_bullet_002	#GAMEMODE_BULLET_LFFD_002
+ 				gamemode_bullet_003	#GAMEMODE_BULLET_LFFD_003
+ 				gamemode_bullet_004	#GAMEMODE_BULLET_LFFD_004
+ 				gamemode_bullet_005	#GAMEMODE_BULLET_LFFD_005
+			}
+			maps
+			{
+				mp_lf_deck 1
+				mp_lf_township 1
+				mp_lf_traffic 1
+				mp_lf_uma 1
+				mp_lf_meadow 1
+			}
+		}
 	}
 	Playlists
 	{
@@ -289,10 +620,9 @@ playlists
 				lobbytitle #PL_gg_lobby
 				description #PL_gg_desc
 				abbreviation #PL_gg_abbr
-				image varietypack
-				//mixtape_slot 7
-				mixtape_timeout 120
-				visible 0
+				image tdm
+				mixtape_promo_slot 6
+				visible 1
 			}
 			gamemodes
 			{
@@ -336,7 +666,8 @@ playlists
 				hint #PL_tt_hint
 				image lts
 				abbreviation #PL_tt_abbr
-				visible 0
+				mixtape_promo_slot 4
+				visible 1
 			}
 			gamemodes
 			{
@@ -372,9 +703,10 @@ playlists
 				lobbytitle #PL_inf_lobby
 				description #PL_inf_desc
 				hint #PL_inf_hint
-				image ps
+				image fnf
 				abbreviation #PL_inf_abbr
-				visible 0
+				mixtape_promo_slot 7
+				visible 1
 			}
 			gamemodes
 			{
@@ -476,6 +808,8 @@ playlists
 				classic_mp 1
 				timelimit 7.5
 				scorelimit 99999 // arbitrarily high number
+				mixtape_slot 5
+				visible 1
 			}
 			gamemodes
 			{
@@ -525,6 +859,8 @@ playlists
 				scorelimit 5
 				roundtimelimit 2
 				roundscorelimit 5
+				mixtape_promo_slot 1
+				visible 1
 				
 				gamemode_score_hint #GAMEMODE_SCORE_HINT_TDM
 			}	
@@ -603,19 +939,6 @@ playlists
 				mixtape_slot 4
 				mixtape_timeout 120
 				visible 1
-				
-				// comp-exclusive settings
-				// note: these don't display right on the private match menu yet
-				pilot_health_multiplier 1.25
-				respawn_delay 7.0
-				
-				boosts_enabled 1 // this is actually disabled lol
-				earn_meter_pilot_overdrive 0
-				earn_meter_pilot_multiplier 0.5
-				earn_meter_titan_multiplier 0.5
-				
-				scorelimit 6
-				timelimit 14
 			}
 			gamemodes
 			{
@@ -623,27 +946,84 @@ playlists
 				{
 					maps
 					{
-						mp_forwardbase_kodai 1
-						mp_grave 1
-						mp_homestead 1
-						mp_thaw 1
-						mp_black_water_canal 1
-						mp_eden 1
-						mp_drydock 1
-						mp_crashsite3 1
 						mp_complex3 1
+						mp_drydock 1
+						mp_glitch 1
+						mp_homestead 2
+						mp_eden 1
+						mp_forwardbase_kodai 1
+						mp_black_water_canal 1
+						mp_glitch 1
 						mp_angel_city 1
 						mp_colony02 1
+						mp_relic02 1
+						mp_grave 1
+						mp_homestead 1
+						mp_drydock 1
 						mp_glitch 1
+						mp_thaw 1
+						mp_eden 2
+						mp_black_water_canal 1
+						mp_glitch 1
+						mp_relic02 1
+						mp_wargames 1
+						mp_rise 1
+						mp_crashsite3 1
 						mp_lf_stacks 1
 						mp_lf_deck 1
 						mp_lf_meadow 1
 						mp_lf_traffic 1
 						mp_lf_township 1
 						mp_lf_uma 1
-						mp_relic02 1
-						mp_wargames 1
-						mp_rise 1
+					}
+				}
+			}
+		}
+		ctf
+		{
+			inherit defaults
+			vars
+			{
+				name #PL_capture_the_flag
+				lobbytitle #PL_capture_the_flag_lobby
+				description #PL_capture_the_flag_desc
+				abbreviation #PL_capture_the_flag_abbr
+				image ctf
+				mixtape_slot 4
+				mixtape_timeout 120
+				visible 1
+			}
+			gamemodes
+			{
+				ctf
+				{
+					vars
+					{
+						scorelimit 6
+					}
+
+					maps
+					{
+						mp_complex3 1
+						mp_drydock 2
+						mp_glitch 1
+						mp_homestead 2
+						mp_eden 2
+						mp_forwardbase_kodai 1
+						mp_black_water_canal 2
+						mp_glitch 1
+						mp_angel_city 1
+						mp_colony02 1
+                        mp_relic02 1
+						mp_grave 2
+						mp_homestead 2
+						mp_drydock 2
+						mp_glitch 1
+						mp_thaw 1
+						mp_eden 2
+						mp_black_water_canal 2
+						mp_glitch 1
+                        mp_relic02 1
 					}
 				}
 			}
@@ -658,9 +1038,11 @@ playlists
 				description #PL_hs_desc
 				hint #PL_hs_hint
 				abbreviation #PL_hs_abbr
-				image tdm
+				image fnf
 				timelimit 10
 				max_players 16
+				mixtape_slot 8
+				visible 1
 				
 				gamemode_score_hint #GAMEMODE_SCORE_HINT_TDM
 			}
@@ -670,27 +1052,35 @@ playlists
 				{
 					maps 
 					{
-						mp_forwardbase_kodai 1
-						mp_grave 1
-						mp_homestead 1
-						mp_thaw 1
-						mp_black_water_canal 1
-						mp_eden 1
-						mp_drydock 1
-						mp_crashsite3 1
 						mp_complex3 1
+						mp_drydock 1
+						mp_glitch 1
+						mp_homestead 2
+						mp_eden 1
+						mp_forwardbase_kodai 1
+						mp_black_water_canal 1
+						mp_glitch 1
 						mp_angel_city 1
 						mp_colony02 1
+						mp_relic02 1
+						mp_grave 1
+						mp_homestead 1
+						mp_drydock 1
 						mp_glitch 1
+						mp_thaw 1
+						mp_eden 2
+						mp_black_water_canal 1
+						mp_glitch 1
+						mp_relic02 1
+						mp_wargames 1
+						mp_rise 1
+						mp_crashsite3 1
 						mp_lf_stacks 1
 						mp_lf_deck 1
 						mp_lf_meadow 1
 						mp_lf_traffic 1
 						mp_lf_township 1
 						mp_lf_uma 1
-						mp_relic02 1
-						mp_wargames 1
-						mp_rise 1
 					}
 				}
 			}
@@ -704,10 +1094,10 @@ playlists
 				lobbytitle #PL_chamber_lobby
 				description #PL_chamber_desc
 				abbreviation #PL_chamber_abbr
-				image ps
-				//mixtape_slot 7
+				image cp
+				mixtape_slot 10
 				mixtape_timeout 120
-				visible 0
+				visible 1
 			}
 			gamemodes
 			{
@@ -727,6 +1117,7 @@ playlists
 						mp_angel_city 1
 						mp_colony02 1
 						mp_glitch 1
+						mp_lf_stacks 1
 						mp_lf_stacks 1
 						mp_lf_deck 1
 						mp_lf_meadow 1
@@ -751,10 +1142,10 @@ playlists
 				lobbytitle #PL_hidden_lobby
 				description #PL_hidden_desc
 				abbreviation #PL_hidden_abbr
-				image ps
-				//mixtape_slot 7
+				image fw
+				mixtape_slot 9
 				mixtape_timeout 120
-				visible 0
+				visible 1
 			}
 			gamemodes
 			{
@@ -774,6 +1165,7 @@ playlists
 						mp_angel_city 1
 						mp_colony02 1
 						mp_glitch 1
+						mp_lf_stacks 1
 						mp_lf_stacks 1
 						mp_lf_deck 1
 						mp_lf_meadow 1
@@ -837,8 +1229,9 @@ playlists
 				description #PL_sns_desc
 				hint #PL_sns_desc
 				abbreviation #PL_sns_abbr
-				image ps
-				visible 0
+				image ffa
+				mixtape_slot 11
+				visible 1
 				
 				gamemode_score_hint #GAMEMODE_SCORE_HINT_FFA
 			}	
@@ -871,6 +1264,381 @@ playlists
 						mp_rise 1
 						mp_coliseum 1
 						mp_coliseum_column 1
+					}
+				}
+			}
+		}
+		rocket_lf
+		{
+			inherit defaults
+			vars
+			{
+				name #PL_rocket_arena
+				lobbytitle #PL_rocket_arena_lobby
+				description #PL_rocket_arena_desc
+				abbreviation #PL_rocket_arena_abbr
+				image lf
+				visible 0
+				scorelimit 50
+				roundtimelimit 2.0
+				featured_mode_rocket_arena 1
+				boosts_enabled 1
+			}
+			gamemodes
+			{
+				speedball
+				{
+					maps
+					{
+						mp_lf_stacks 1
+						mp_lf_township 1
+						mp_lf_uma 1
+						mp_lf_traffic 1
+						mp_lf_deck 1
+						mp_lf_meadow 1
+					}
+				}
+			}
+		}
+		phase_aitdm
+		{
+			inherit defaults
+			vars
+			{
+				name "#PL_all_phase"
+				lobbytitle #PL_all_phase_lobby
+				description #PL_all_phase_desc
+				abbreviation #PL_all_phase_abbr
+				image aitdm
+				visible 0
+				featured_mode_all_phase 1
+			}
+			gamemodes
+			{
+				aitdm
+				{
+				}
+			}
+		}
+		spicy_aitdm
+		{
+			inherit defaults
+			vars
+			{
+				name "#PL_all_spicy"
+				lobbytitle #PL_all_spicy_lobby
+				description #PL_all_spicy_desc
+				abbreviation #PL_all_spicy_abbr
+				image aitdm
+				visible 0
+				featured_mode_all_ticks 1
+			}
+			gamemodes
+			{
+				aitdm
+				{
+				}
+			}
+		}
+		turbo_ttdm
+		{
+			inherit defaults
+			vars
+			{
+				name #PL_titan_brawl_turbo
+				lobbytitle #PL_titan_brawl_turbo_lobby
+				description #PL_titan_brawl_turbo_desc
+				abbreviation #PL_titan_brawl_turbo_abbr
+				image ttdm
+				visible 0
+				max_players 10
+				scorelimit 30
+				//mixtape_slot 8
+				boosts_enabled 1
+				respawn_delay 10
+
+				featured_mode_turbo_titans 1
+				earn_meter_titan_multiplier 2.0
+			}
+			gamemodes
+			{
+				ttdm
+				{
+				    maps
+				    {
+				        mp_glitch 1
+				        mp_colony02 1
+				        mp_wargames 1
+				        mp_eden 1
+				        mp_drydock 1
+						mp_black_water_canal 1
+						mp_thaw 1
+						mp_homestead 1
+						mp_forwardbase_kodai 1
+						mp_angel_city 1
+						mp_grave 1
+						mp_rise 1
+				    }
+				}
+			}
+		}
+		coliseum
+		{
+			inherit defaults
+			vars
+			{
+				name #PL_coliseum
+				lobbytitle #PL_coliseum_lobby
+				description #PL_coliseum_desc
+				image coliseum
+				//mixtape_promo_slot 4
+				visible 0
+			}
+			gamemodes
+			{
+				coliseum {}
+			}
+		}
+		fd_insane
+		{
+			inherit fd
+			vars
+			{
+                name #PL_fd_insane
+                lobbytitle #PL_fd_insane_lobby
+                description #PL_fd_insane_desc
+                image fd_insane
+				visible 1
+			}
+			gamemodes
+			{
+				fd
+				{}
+			}
+			gamemodesWithAncestor
+			{
+				fd_insane
+				{
+					maps
+					{
+						mp_angel_city 1
+						mp_black_water_canal 1
+						mp_grave 1
+						mp_colony02 1
+						mp_complex3 1
+						mp_drydock 1
+						mp_eden 1
+						mp_thaw 1
+						mp_forwardbase_kodai 1
+						mp_glitch 1
+						mp_homestead 1
+						mp_rise 1
+						mp_relic02 1
+						mp_wargames 1
+					}
+				}
+			}
+		}
+		turbo_lts
+		{
+			inherit defaults
+			vars
+			{
+				name #PL_turbo_last_titan_standing
+				lobbytitle #PL_turbo_last_titan_standing_lobby
+				description #PL_turbo_last_titan_standing_desc
+				abbreviation #PL_turbo_last_titan_standing_abbr
+				image lts
+				visible 0
+				featured_mode_turbo_titans 1
+				earn_meter_titan_multiplier 2.0
+			}
+			gamemodes
+			{
+				lts
+				{
+				}
+			}
+		}
+		fd_livefire
+		{
+			inherit fd
+			vars
+			{
+                name #PL_fd_lf
+                lobbytitle #PL_fd_lf
+                description #PL_fd_lf_desc
+ 				abbreviation #PL_fd_lf_abbr
+                image aitdm
+				visible 1
+				mixtape_promo_slot 5
+				promo_note #PL_atcoop_hint
+			}
+			gamemodes
+			{
+				fd
+				{}
+			}
+			gamemodesWithAncestor
+			{
+				fd_livefire
+				{
+					maps
+					{
+						mp_lf_deck 1
+						mp_lf_township 1
+						mp_lf_traffic 1
+						mp_lf_uma 1
+						mp_lf_meadow 1
+					}
+				}
+			}
+		}
+		private_match
+		{
+			inherit defaults
+			vars
+			{
+				name #PL_privmatch
+				lobbytitle #PL_privmatch_lobby
+				description #PL_privmatch_desc
+				image private_match
+
+				max_players 16
+				lobby_countdown 5
+				ranking_supported 0
+				mixtape_promo_slot 0
+				double_xp_enabled 0
+				visible 1
+
+				// default custom settings
+				match_visibility 2
+				pilot_health_multiplier 1.0
+				earn_meter_pilot_multiplier 1.0
+				earn_meter_pilot_overdrive 1
+				earn_meter_titan_multiplier 1.0
+			}
+			gamemodes
+			{
+				fd_easy
+				{
+					maps
+					{
+						mp_angel_city 1
+						mp_black_water_canal 1
+						mp_grave 1
+						mp_colony02 1
+						mp_complex3 1
+						mp_crashsite3 1
+						mp_drydock 1
+						mp_eden 1
+						mp_thaw 1
+						mp_forwardbase_kodai 1
+						mp_glitch 1
+						mp_homestead 1
+						mp_relic02 1
+						mp_rise 1
+						mp_wargames 1
+					}
+				}
+				
+				fd_normal
+				{
+					maps
+					{
+						mp_angel_city 1
+						mp_black_water_canal 1
+						mp_grave 1
+						mp_colony02 1
+						mp_complex3 1
+						mp_crashsite3 1
+						mp_drydock 1
+						mp_eden 1
+						mp_thaw 1
+						mp_forwardbase_kodai 1
+						mp_glitch 1
+						mp_homestead 1
+						mp_relic02 1
+						mp_rise 1
+						mp_wargames 1
+					}
+				}
+
+				fd_hard
+				{
+					maps
+					{
+						mp_angel_city 1
+						mp_black_water_canal 1
+						mp_grave 1
+						mp_colony02 1
+						mp_complex3 1
+						mp_crashsite3 1
+						mp_drydock 1
+						mp_eden 1
+						mp_thaw 1
+						mp_forwardbase_kodai 1
+						mp_glitch 1
+						mp_homestead 1
+						mp_relic02 1
+						mp_rise 1
+						mp_wargames 1
+					}
+				}
+
+				fd_master
+				{
+					maps
+					{
+						mp_angel_city 1
+						mp_black_water_canal 1
+						mp_grave 1
+						mp_colony02 1
+						mp_complex3 1
+						mp_crashsite3 1
+						mp_drydock 1
+						mp_eden 1
+						mp_thaw 1
+						mp_forwardbase_kodai 1
+						mp_glitch 1
+						mp_homestead 1
+						mp_relic02 1
+						mp_rise 1
+						mp_wargames 1
+					}
+				}
+
+				fd_insane
+				{
+					maps
+					{
+						mp_angel_city 1
+						mp_black_water_canal 1
+						mp_grave 1
+						mp_colony02 1
+						mp_complex3 1
+						mp_crashsite3 1
+						mp_drydock 1
+						mp_eden 1
+						mp_thaw 1
+						mp_forwardbase_kodai 1
+						mp_glitch 1
+						mp_homestead 1
+						mp_relic02 1
+						mp_rise 1
+						mp_wargames 1
+					}
+				}
+				
+				fd_livefire
+				{
+					maps
+					{
+						mp_lf_deck 1
+						mp_lf_township 1
+						mp_lf_traffic 1
+						mp_lf_uma 1
+						mp_lf_meadow 1
 					}
 				}
 			}

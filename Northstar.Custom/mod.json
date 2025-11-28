@@ -1,7 +1,7 @@
 {
 	"Name": "Northstar.Custom",
 	"Description": "Custom content for Northstar: extra weapons, gamemodes, etc.",
-	"Version": "1.19.0",
+	"Version": "1.31.0",
 	"LoadPriority": 1,
 	"RequiredOnClient": true,
 	"ConVars": [
@@ -29,6 +29,49 @@
 			"Name": "ns_show_event_models",
 			"DefaultValue": "1",
 			"Flags": "ARCHIVE_PLAYERPROFILE"
+		},
+		{
+            "Name": "ns_fd_elite_minimap_icontype",
+            "DefaultValue": "0",
+			"Flags": "ARCHIVE_PLAYERPROFILE"
+        },
+        {
+            "Name": "ns_fd_elite_overhead_icontype",
+            "DefaultValue": "1",
+			"Flags": "ARCHIVE_PLAYERPROFILE"
+        },
+		{
+			"Name": "ns_fd_min_numplayers_to_start",
+			"DefaultValue": "1"
+		},
+		{
+			"Name": "ns_fd_infantry_at_weapons",
+			"DefaultValue": ""
+		},
+		{
+			"Name": "ns_fd_grunt_primary_weapon",
+			"DefaultValue": ""
+		},
+		{
+			"Name": "ns_fd_grunt_grenade",
+			"DefaultValue": ""
+		},
+		{
+			"Name": "ns_fd_spectre_primary_weapon",
+			"DefaultValue": ""
+		},
+		{
+			"Name": "ns_fd_disable_respawn_dropship",
+			"DefaultValue": "0"
+		},
+		{
+			"Name": "ns_fd_constant_ai_spawn",
+			"DefaultValue": "0"
+		},
+		{
+			"Name": "embark_style",
+			"DefaultValue": "0",
+			"Flags": "ARCHIVE_PLAYERPROFILE|USERINFO"
 		}
 	],
 	"Scripts": [
@@ -126,6 +169,13 @@
 		{
 			"Path": "gamemodes/cl_gamemode_fw.nut",
 			"RunOn": "CLIENT && MP"
+		},
+		{
+			"Path": "ui/ns_gamemode_fd.nut",
+            "RunOn": "UI",
+            "UICallback": {
+                "Before": "EliteIconSettings_Init"
+            }
 		},
 		{
 			"Path": "gamemodes/gg_earn_meter/sh_gg_earn_meter.gnut",
@@ -466,7 +516,11 @@
 			"UICallback":{
 				"Before": "NSCustomModSettings"
 			}
-		}
+		},
+		{
+			"Path": "ai/_ai_elite_titans.nut",
+			"RunOn": "SERVER && MP"
+		},
 	],
 
 	"Localisation": [

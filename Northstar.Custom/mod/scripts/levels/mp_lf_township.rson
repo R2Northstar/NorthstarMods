@@ -1,0 +1,6 @@
+When: "SERVER"
+Scripts:
+[
+	mp/levels/mp_lf_township.nut
+	mp/levels/mp_lf_township_fd.nut
+]

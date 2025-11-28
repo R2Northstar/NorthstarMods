@@ -34,7 +34,9 @@ global function SetRequestTitanGamemodeRules
 global function CreateTitanForPlayerAndHotdrop
 global function SetRequestTitanAllowedCallback
 
+global function ShouldDoTitanfall
 global function TitanDropDisabledForPlayerTeam
+global function GiveTitanfallScoreMedal
 
 struct {
 	array<int> ETATimeThresholds = [ 120, 60, 30, 15 ]
@@ -63,6 +65,7 @@ const nagInterval = 40
 
 global const float WARPFALL_SOUND_DELAY = 1.1
 global const float WARPFALL_FX_DELAY = 0.9
+global const asset ENTITY_MARKER_TELEPORT_FX = $"P_ts_entity"
 
 function ReplacementTitans_Init()
 {
@@ -75,6 +78,7 @@ function ReplacementTitans_Init()
 
 	PrecacheEffect( TURBO_WARP_FX )
 	PrecacheEffect( TURBO_WARP_COMPANY )
+	PrecacheEffect( ENTITY_MARKER_TELEPORT_FX )
 
 
 	AddCallback_OnClientConnecting( ReplacementTitan_InitPlayer )
@@ -649,61 +653,54 @@ bool function ReplacementTitan( entity player )
 }
 
 #if MP
-
 void function ForcePilotToBecomeTitan( entity player )
 {
-	float fadeTime = 0.5
-	float holdTime = 2.0
+	if ( IsValid( player.GetParent() ) )
+		return
+	
+	TitanLoadoutDef titanLoadout = GetTitanLoadoutForPlayer( player )
+	entity titan = CreateAutoTitanForPlayer_FromTitanLoadout( player, titanLoadout, player.GetOrigin(), player.GetAngles() )
+	DispatchSpawn( titan )
+	titan.ContextAction_SetBusy()
+	HideName( titan )
+	titan.SetValidHealthBarTarget( false )
+	titan.UnsetUsable()
+	ClearTitanAvailable( player )
 
-	player.EndSignal( "OnDeath" )
-	player.EndSignal( "OnDestroy" )
+	vector playerMomentum = player.GetVelocity()
+	vector playerCallinOrigin = player.GetOrigin()
+	vector titanOrigin = titan.GetOrigin()
 
-	if ( GAMETYPE != SST )
+	vector ornull clampedPos = NavMesh_ClampPointForAIWithExtents( titanOrigin, titan, < 1400, 1400, 1400 > )
+	if ( clampedPos != null )
 	{
-		#if FACTION_DIALOGUE_ENABLED
-			PlayFactionDialogueToPlayer( "mp_titanInbound" , player )
-		#else
-			if ( player.titansBuilt )
-				PlayConversationToPlayer( "TitanReplacement", player )
-			else
-				PlayConversationToPlayer( "FirstTitanInbound", player )
-		#endif
+		expect vector( clampedPos )
+		TraceResults result = TraceHull( titanOrigin, titanOrigin, titan.GetBoundingMins(), titan.GetBoundingMaxs(), [titan], TRACE_MASK_TITANSOLID, TRACE_COLLISION_GROUP_NONE )
+		if ( result.startSolid ||
+			 TraceLineSimple( titanOrigin + < 0, 0, 128 >, clampedPos, titan ) == 1.0 ||
+		     TraceLineSimple( titanOrigin + < 0, 0, 200 >, clampedPos, titan ) == 1.0 ||
+		     TraceLineSimple( titanOrigin + < 0, 0, 200 >, clampedPos + < 0, 0, 128 >, titan ) == 1.0 )
+		{
+			titan.SetOrigin( clampedPos )
+			titan.ForceCheckGroundEntity()
+		}
 	}
 
-	player.Signal( "RodeoOver" )
-	player.Signal( "ScriptAnimStop" )
+	PlayFX( ENTITY_MARKER_TELEPORT_FX, playerCallinOrigin + < 0, 0, ( player.GetBoundingMaxs().z / 2 ) > )
+	PilotBecomesTitan( player, titan )
+	GiveTitanfallScoreMedal( player )
 
-	table<string,bool> e = {}
-	e.settingsRestored <- false
-
-	OnThreadEnd(
-	function() : ( player, e )
-		{
-			if ( IsValid( player ) && !e.settingsRestored )
-			{
-				Rodeo_Allow( player )
-				player.Show()
-				player.MakeVisible()
-			}
-		}
-	)
-	Rodeo_Disallow( player )
-
-	ScreenFadeToBlack( player, fadeTime, holdTime )
-	player.DissolveNonLethal( ENTITY_DISSOLVE_CORE, Vector( 0, 0, 0 ), 500 )
-
-	wait fadeTime
-	player.SetInvulnerable()
-	player.Hide()
-
-	wait holdTime
-	ScreenFadeFromBlack( player, 1.0, 0.5 )
-	waitthread TitanPlayerHotDropsIntoLevel( player )
-	e.settingsRestored = true
-	Rodeo_Allow( player )
-	player.Show()
-	player.MakeVisible()
-	player.ClearInvulnerable()
+	titanOrigin = titan.GetOrigin()
+	vector desiredLocation = titanOrigin
+	if( TraceLineSimple( titanOrigin, < titanOrigin.x, titanOrigin.y, playerCallinOrigin.z >, titan ) == 1.0 )
+		desiredLocation = < titanOrigin.x, titanOrigin.y, playerCallinOrigin.z >
+	
+	player.SetOrigin( desiredLocation )
+	PutTitanPlayerInSafeSpot( player )
+	player.SetVelocity( playerMomentum )
+	EmitSoundOnEntity( player, "Timeshift_Scr_InvoluntaryShift" )
+	PlayFXOnEntityForEveryoneExceptPlayer( $"P_phase_shift_main_XO", player, player )
+	titan.Destroy()
 }
 #endif
 
@@ -769,28 +766,7 @@ void function CreateTitanForPlayerAndHotdrop( entity player, Point spawnPoint, T
 
 	printt( "Dropping replacement titan at " + origin + " with angles " + angles )
 
-	#if HAS_STATS
-	UpdatePlayerStat( player, "misc_stats", "titanFalls" )
-	#endif
-	#if SERVER && MP
-		PIN_AddToPlayerCountStat( player, "titanfalls" )
-	#endif
-
-	if ( !level.firstTitanfall )
-	{
-		AddPlayerScore( player, "FirstTitanfall", player )
-
-		#if HAS_STATS
-		UpdatePlayerStat( player, "misc_stats", "titanFallsFirst" )
-		#endif
-
-		level.firstTitanfall = true
-	}
-	else
-	{
-		AddPlayerScore( player, "Titanfall", player )
-	}
-
+	GiveTitanfallScoreMedal( player )
 
 	player.Signal( "CalledInReplacementTitan" )
 
@@ -1229,3 +1205,55 @@ bool function TitanDropDisabledForPlayerTeam( entity player )
 {
 	return ( level.nv.titanDropEnabledForTeam != TEAM_BOTH && level.nv.titanDropEnabledForTeam != player.GetTeam() )
 }
+
+void function GiveTitanfallScoreMedal( entity player )
+{
+	#if HAS_STATS
+	UpdatePlayerStat( player, "misc_stats", "titanFalls" )
+	#endif
+
+	#if SERVER && MP
+	PIN_AddToPlayerCountStat( player, "titanfalls" )
+	int TitanFallXP = player.GetPersistentVarAsInt( "xp_match[" + XP_TYPE.TITAN_FALL + "]" )
+	player.SetPersistentVar( "xp_match[" + XP_TYPE.TITAN_FALL + "]", TitanFallXP + 1 )
+	#endif
+	
+	if ( !level.firstTitanfall )
+	{
+		AddPlayerScore( player, "FirstTitanfall", player )
+		#if HAS_STATS
+		UpdatePlayerStat( player, "misc_stats", "titanFallsFirst" )
+		#endif
+		level.firstTitanfall = true
+	}
+	else
+		AddPlayerScore( player, "Titanfall", player )
+}
+
+#if MP
+void function PutTitanPlayerInSafeSpot( entity player )
+{
+	int severity = 128
+	vector baseOrigin = player.GetOrigin()
+
+	if ( PutEntityInSafeSpot( player, player, null, < baseOrigin.x, baseOrigin.y + severity, baseOrigin.z >, baseOrigin ) )
+		return
+
+	if ( PutEntityInSafeSpot( player, player, null, < baseOrigin.x, baseOrigin.y - severity, baseOrigin.z >, baseOrigin ) )
+		return
+
+	if ( PutEntityInSafeSpot( player, player, null, < baseOrigin.x + severity, baseOrigin.y, baseOrigin.z >, baseOrigin ) )
+		return
+
+	if ( PutEntityInSafeSpot( player, player, null, < baseOrigin.x - severity, baseOrigin.y, baseOrigin.z >, baseOrigin ) )
+        return
+
+	if ( PutEntityInSafeSpot( player, player, null, < baseOrigin.x, baseOrigin.y, baseOrigin.z + severity >, baseOrigin ) )
+		return
+
+	if ( PutEntityInSafeSpot( player, player, null, < baseOrigin.x, baseOrigin.y, baseOrigin.z - severity >, baseOrigin ) )
+		return
+
+	return PutTitanPlayerInSafeSpot( player )
+}
+#endif
