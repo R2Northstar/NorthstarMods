@@ -283,7 +283,7 @@ bool function ClientCommandCallback_SetFactionChoicePersistenceSlot( entity play
 
 bool function ClientCommandCallback_LoadoutMenuClosed( entity player, array<string> args )
 {
-	if ( !args.len() || args[0] == "1" || args[1] == "1" )
+	if ( !args.len() || args[0] == "1" ||  args.len() > 1 && args[1] == "1" )
 		TryGivePilotLoadoutForGracePeriod( player )
 	
 	return true
