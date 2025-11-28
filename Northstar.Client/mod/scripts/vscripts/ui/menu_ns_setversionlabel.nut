@@ -13,7 +13,7 @@ void function NS_SetVersionLabel()
 		nativeVersionString += "." + NS_VERSION_DEV + "+dev"
 	
 	if ( nativeVersionString != modsVersionString )
-		Hud_SetText( versionLabel, "Mod: " + modsVersionString + "\nDLL: " + nativeVersionString )
+		Hud_SetText( versionLabel, "Core: " + modsVersionString + "\nLauncher: " + nativeVersionString )
 	else
 		Hud_SetText( versionLabel, modsVersionString )
 
