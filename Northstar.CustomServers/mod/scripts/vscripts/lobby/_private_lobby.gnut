@@ -228,6 +228,9 @@ void function RefreshPlayerTeams()
 
 bool function ClientCommandCallback_PrivateMatchSetPlaylistVarOverride( entity player, array<string> args )
 {
+	if ( file.startState == ePrivateMatchStartState.STARTING )
+		return true
+
 	if ( args.len() < 2 )
 		return true
 		
@@ -258,6 +261,9 @@ bool function ClientCommandCallback_PrivateMatchSetPlaylistVarOverride( entity p
 
 bool function ClientCommandCallback_ResetMatchSettingsToDefault( entity player, array<string> args )
 {
+	if ( file.startState == ePrivateMatchStartState.STARTING )
+		return true
+
 	if ( GetConVarInt( "ns_private_match_only_host_can_change_settings" ) >= 1 )
 		if ( !NSIsPlayerLocalPlayer( player ) )
 			return true
