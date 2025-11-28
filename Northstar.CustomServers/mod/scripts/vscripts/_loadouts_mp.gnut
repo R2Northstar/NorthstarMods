@@ -357,4 +357,4 @@ void function GiveLoadoutWhenIntroOver( entity player )
 		WaitFrame()
 	
 	Loadouts_TryGivePilotLoadout( player )
-}	 
+}	
