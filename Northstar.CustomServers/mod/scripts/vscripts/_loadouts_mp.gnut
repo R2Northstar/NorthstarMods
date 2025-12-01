@@ -161,10 +161,6 @@ bool function ClientCommandCallback_SetPersistentLoadoutValue( entity player, ar
 	print( player + " SetPersistentLoadoutValue " + args[0] + " " + args[1] + " " + args[2] + " " + val )
 	
 	// VERY temp and insecure
-	// The person who didn't add checks to this is a GENIUS at respawn
-	if ( IsItemLocked( player, val ) )
-		return false
-
 	SetPersistentLoadoutValue( player, args[0], args[1].tointeger(), args[2], val )
 	
 	print( args[ 0 ] )
