@@ -178,10 +178,6 @@ bool function ClientCommandCallback_SetPersistentLoadoutValue( entity player, ar
 	#endif
 
 	// VERY temp and insecure
-	// The person who didn't add checks to this is a GENIUS at respawn
-	if ( !IsRefValidAndOfType( val, args[1].tointeger() ) || IsItemLocked( player, val ) )
-		return false
-
 	SetPersistentLoadoutValue( player, args[0], args[1].tointeger(), args[2], val )
 	
 	if ( args[0] == "pilot" )
