@@ -410,7 +410,7 @@ void function PostDeathThread_MP( entity player, var damageInfo, bool gamePlayin
 		else // spawn as pilot
 			RespawnAsPilot( player )
 	}
-	else if ( gamePlayingOrSuddenDeath )
+	else if ( gamePlayingOrSuddenDeath || GetGameState() == eGameState.Epilogue )
 	{
 		if ( shouldDoReplay && player.IsWatchingKillReplay() )
 			player.WaitSignal( "KillCamOver" )
