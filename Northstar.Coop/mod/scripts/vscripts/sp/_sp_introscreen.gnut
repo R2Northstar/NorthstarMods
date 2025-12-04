@@ -1,0 +1,31 @@
+global function SP_IntroScreen_Init
+global function ShowIntroScreen
+
+void function SP_IntroScreen_Init()
+{
+	FlagInit( "IntroScreenFading" )
+	FlagInit( "IntroScreenBGFading" )
+}
+
+void function ShowIntroScreen( entity player )
+{
+	thread ShowIntroScreen_Thread( player )
+}
+
+void function ShowIntroScreen_Thread( entity player )
+{
+	player.EndSignal( "OnDeath" )
+	player.FreezeControlsOnServer()
+	player.SetTouchTriggers( false )
+
+	FlagSet( "IntroScreenFading" )
+
+	string levelName = GetMapName()
+	var dataTable = GetDataTable( $"datatable/sp_introscreen.rpak" )
+	int row = GetDataTableRowMatchingStringValue( dataTable, GetDataTableColumnByName( dataTable, "level" ), levelName )
+	wait GetDataTableFloat( dataTable, row, GetDataTableColumnByName( dataTable, "bgFadeDelay" ) )
+	FlagSet( "IntroScreenBGFading" )
+	player.UnfreezeControlsOnServer()
+	player.SetTouchTriggers( true )
+	wait GetDataTableFloat( dataTable, row, GetDataTableColumnByName( dataTable, "bgFadeTime" ) )
+}

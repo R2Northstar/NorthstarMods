@@ -1,0 +1,171 @@
+globalize_all_functions
+
+global struct Event
+{
+    string Name
+    void functionref() StartFunc
+    void functionref( entity ) MiddleFunc
+    void functionref() EndFunc
+}
+
+struct
+{
+    Event& event
+} file
+
+
+void function _EmptyFunction()
+{
+}
+
+void function _EmptyEntityFunction( entity Entity )
+{
+}
+
+void function CodeCallback_CreateDefaultEvent()
+{
+    Event event
+    event.Name = "None"
+    event.StartFunc = _EmptyFunction
+    event.MiddleFunc = _EmptyEntityFunction
+    event.EndFunc = _EmptyFunction
+    file.event = event
+}
+
+void function SetEvent( Event event )
+{
+    file.event.EndFunc()
+    file.event = event
+    thread file.event.StartFunc()
+}
+
+void function RunMiddleFunc( entity player )
+{
+    file.event.MiddleFunc( player )
+}
+
+void function EndEvent()
+{
+    Event event
+    event.Name = "None"
+    event.StartFunc = _EmptyFunction
+    event.MiddleFunc = _EmptyEntityFunction
+    event.EndFunc = _EmptyFunction
+    
+    file.event.EndFunc()
+    file.event = event
+}
+
+void function SetDefaultEvent()
+{
+    EndEvent()
+}
+
+void function SetCutSceneEvent( void functionref() StartFunc, void functionref( entity ) MiddleFunc, void functionref() EndFunc ) 
+{
+    Event event
+    event.Name = "cutscene"
+    event.StartFunc = StartFunc
+    event.MiddleFunc = MiddleFunc
+    event.EndFunc = EndFunc
+
+    SetEvent( event )
+}
+
+string function GetEventName()
+{
+    return file.event.Name
+}
+
+void functionref() function GetEventStartFunc()
+{
+    return file.event.StartFunc
+}
+
+void functionref( entity ) function GetEventMiddleFunc()
+{
+    return file.event.MiddleFunc
+}
+
+void functionref() function GetEventEndFunc()
+{
+    return file.event.EndFunc
+}
+
+void function EndEventOnSignal( entity player, string signal )
+{
+    // player.EndSignal( "OnDestroy" )
+    player.WaitSignal( signal )
+    EndEvent()
+}
+
+void function EndEventOnFlag( string flag )
+{
+    // player.EndSignal( "OnDestroy" )
+    FlagWait( flag )
+    EndEvent()
+}
+
+// stuff ( I am really tired, idk how to name stuff anymore, stuff xD )
+
+void function StartLevelStartText()
+{
+    SetCutSceneEvent( LevelStartTextStartFunc, LevelStartTextMiddleFunc, LevelStartTextEndFunc )
+}
+
+void function LevelStartTextStartFunc()
+{
+    foreach( entity player in GetPlayerArray() )
+        LevelStartTextMiddleFunc( player )
+}
+
+void function LevelStartTextMiddleFunc( entity player )
+{
+    AddCinematicFlag( player, CE_FLAG_HIDE_MAIN_HUD  )
+    // we need variants for each map why respawn :(
+    string funcstring = ""
+    switch( GetMapName() )
+    {
+        case "sp_jake_test":
+		case "sp_hub_timeshift":
+		case "sp_timeshift_spoke02":
+            funcstring = "ServerCallback_LevelInfoText"
+            break
+        case "sp_s2s":
+        case "sp_sewers1":
+        case "sp_crashsite":
+        case "sp_beacon":
+        case "sp_tday":
+        case "sp_boomtown_start":
+            funcstring = "ServerCallback_LevelIntroText"
+            break
+        case "sp_skyway_v1":
+        case "sp_training":
+            funcstring = "ScriptCallback_LevelIntroText"
+            break
+    }
+
+    if ( funcstring == "" )
+        print( "you forgot" )
+	Remote_CallFunction_Replay( player, funcstring )
+
+    delaythread ( 13 ) HACKEnableUI( player ) // It doesn't work D:
+}
+
+void function HACKEnableUI( entity player )
+{
+    if ( !NSIsDedicated() )
+        return
+
+    AddCinematicFlag( player, CE_FLAG_HIDE_MAIN_HUD )
+    wait 1
+    RemoveCinematicFlag( player, CE_FLAG_HIDE_MAIN_HUD )
+}
+
+void function LevelStartTextEndFunc()
+{
+    foreach( entity player in GetPlayerArray() )
+    {
+        thread HACKEnableUI( player )
+    }
+}

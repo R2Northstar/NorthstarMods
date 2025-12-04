@@ -1,0 +1,812 @@
+untyped
+
+
+global function RemoteFunctions_Init
+
+function RemoteFunctions_Init()
+{
+	Remote_BeginRegisteringFunctions()
+	_RegisteringFunctions = true
+
+	switch ( GetMapName() )
+	{
+		case "sp_grunt_arena":
+			RegisterServerVar( "proto_WaveMessage", 0 )
+			break
+
+		case "sp_boomtown":
+			Remote_RegisterFunction( "ServerCallback_ReaperTownTeleport" )
+			Remote_RegisterFunction( "ServerCallback_BoomtownScreenShake" )
+			Remote_RegisterFunction( "ServerCallback_BoomtownSetCSMStartDistance" )
+			Remote_RegisterFunction( "ServerCallback_BoomtownSetCSMTexelScale" )
+			break
+
+		case "sp_boomtown_end":
+			Remote_RegisterFunction( "ServerCallback_BoomtownScreenShake" )
+			break
+
+		case "sp_crashsite":
+			Remote_RegisterFunction( "ServerCallback_ShellShock" )
+			Remote_RegisterFunction( "ServerCallback_ShellShockStop" )
+			Remote_RegisterFunction( "ServerCallback_TrackBatteryLocations" )
+			Remote_RegisterFunction( "ServerCallback_ClearBatteryLocations" )
+			Remote_RegisterFunction( "ServerCallback_WakingUpInEscapePod" )
+			Remote_RegisterFunction( "ServerCallback_StartTitleSequence" )
+			Remote_RegisterFunction( "ServerCallback_MorningLight" )
+			Remote_RegisterFunction( "ServerCallback_DayLight" )
+			Remote_RegisterFunction( "ServerCallback_HelmetBootUpSequence" )
+			Remote_RegisterFunction( "ServerCallback_BuddyTitanFlyout" )
+			Remote_RegisterFunction( "ServerCallback_ShipMacAllanInfo" )
+			Remote_RegisterFunction( "ServerCallback_NeuralLink" )
+			Remote_RegisterFunction( "ServerCallback_ActivateCockpitScreens" )
+			Remote_RegisterFunction( "ServerCallback_PilotLinkHud" )
+			Remote_RegisterFunction( "ServerCallback_StartCockpitLook" )
+			Remote_RegisterFunction( "ServerCallback_StopCockpitLook" )
+			Remote_RegisterFunction( "ServerCallback_GraveShadowsAndDOF" )
+			Remote_RegisterFunction( "ServerCallback_FieldPromotionShadows" )
+			Remote_RegisterFunction( "ServerCallback_LevelIntroText" )
+			Remote_RegisterFunction( "ServerCallback_RumblePlay" )
+
+			RegisterNetworkedVariable( "DestroyHintOnMenuOpen", SNDC_GLOBAL, SNVT_BOOL, false )
+
+			Remote_RegisterFunction( "ServerCallback_NighttimeAmbient" )
+			RegisterNetworkedVariable( "nighttimeAmbient", SNDC_GLOBAL, SNVT_INT, -1 )
+
+			Remote_RegisterFunction( "ServerCallback_HideHudIcons" )
+			RegisterNetworkedVariable( "hideHudIcons", SNDC_PLAYER_EXCLUSIVE, SNVT_BOOL, false )
+			Remote_RegisterFunction( "ServerCallback_ShowHudIcon" )
+
+			RegisterNetworkedVariable( "showBatteryIcon", SNDC_PLAYER_EXCLUSIVE, SNVT_BOOL, false )
+			Remote_RegisterFunction( "ServerCallback_ShowBatteryIcon" )
+
+			// need to change these to be networked variables
+			Remote_RegisterFunction( "ServerCallback_JumpKitCalibrationStart" )
+			Remote_RegisterFunction( "ServerCallback_JumpKitCalibrationStep" )
+			RegisterNetworkedVariable( "jumpKitCalibrationStep", SNDC_PLAYER_EXCLUSIVE, SNVT_INT, -1 )
+
+			RegisterNetworkedVariable( "doubleJumpDisabled", SNDC_GLOBAL, SNVT_BOOL, false )
+			RegisterNetworkedVariable( "lastJumpTime", SNDC_GLOBAL, SNVT_TIME, 0.0 )
+
+			RegisterNetworkedVariable( "enteredTitanCockpit", SNDC_GLOBAL, SNVT_BOOL, false )
+			break
+
+		case "sp_training":
+			Remote_RegisterFunction( "ScriptCallback_SetupLookTargets" )
+			Remote_RegisterFunction( "ScriptCallback_LookTargets_WaitForLookat" )
+			Remote_RegisterFunction( "ScriptCallback_LookTargets_KillLights" )
+			Remote_RegisterFunction( "ScriptCallback_ShowInvertCrosshair" )
+			Remote_RegisterFunction( "ScriptCallback_SetWeaponHUDEnabled" )
+			Remote_RegisterFunction( "ScriptCallback_TrainingGauntlet_ResultsDisplay_SetTip" )
+			Remote_RegisterFunction( "ScriptCallback_SimPodShutdownScreen" )
+			Remote_RegisterFunction( "ScriptCallback_LevelIntroText" )
+			Remote_RegisterFunction( "ScriptCallback_SimpleScreenShake" )
+			Remote_RegisterFunction( "ScriptCallback_PodTransition_PlayerScreenFX" )
+			Remote_RegisterFunction( "ScriptCallback_PodGlitch_PlayerScreenFX" )
+			Remote_RegisterFunction( "ClientCommand_Training_RequestTitan" )
+			Remote_RegisterFunction( "ScriptCallback_TitanfallGlitch_ExtraFlicker" )
+			Remote_RegisterFunction( "ScriptCallback_ShowInstallProgress" )
+			Remote_RegisterFunction( "ScriptCallback_Training_SelectSPDifficulty" )
+			Remote_RegisterFunction( "ScriptCallback_Training_FreeTrialMessage" )
+
+			Remote_RegisterFunction( "ScriptCallback_OpenInvertLookDialog" )
+			Remote_RegisterFunction( "ScriptCallback_OpenAutosprintDialogForGauntlet" )
+
+			Remote_RegisterFunction( "ScriptCallback_DoF_SetNearDepth" )
+			Remote_RegisterFunction( "ScriptCallback_DoF_SetFarDepth" )
+			Remote_RegisterFunction( "ScriptCallback_DoF_SetNearDepthToDefault" )
+			Remote_RegisterFunction( "ScriptCallback_DoF_SetFarDepthToDefault" )
+
+			RegisterNetworkedVariable( "trainingTitanfallEnabled", SNDC_GLOBAL, SNVT_BOOL, false )
+			RegisterNetworkedVariable( "titanGlitch_extraFlicker", SNDC_GLOBAL, SNVT_BOOL, false )
+			RegisterNetworkedVariable( "titanfallGlitchAnimIdx", SNDC_GLOBAL, SNVT_INT, 0 )
+			break
+
+		case "sp_beacon":
+			Remote_RegisterFunction( "ServerCallback_CallInTheFleet" )
+			Remote_RegisterFunction( "ServerCallback_LevelIntroText" )
+
+			Remote_RegisterFunction( "ServerCallback_ControlRoomBattleAmbient" )
+			RegisterNetworkedVariable( "controlRoomBattleAmbient", SNDC_GLOBAL, SNVT_BOOL, true )
+			break
+	}
+
+	RegisterBossTitanRemoteFunctions()
+
+	Remote_RegisterFunction( "ServerCallback_FPS_Test" )// This is for local FPS tests using myscripts for standardized optimization
+	Remote_RegisterFunction( "ServerCallback_FPS_Avg" )// general callback for more people to use - soupy
+	Remote_RegisterFunction( "DebugSetFrontline" )
+	Remote_RegisterFunction( "ServerCallback_StartCinematicNodeEditor" )
+	Remote_RegisterFunction( "ServerCallback_AISkitDebugMessage" )	//chad - temp to do debug lines on my client only during real MP matches
+	Remote_RegisterFunction( "ServerCallback_UpdateClientChallengeProgress" )
+	Remote_RegisterFunction( "ServerCallback_EventNotification" )
+
+	Remote_RegisterFunction( "SCB_RefreshBurnCardSelector" )
+	Remote_RegisterFunction( "ServerCallback_EjectConfirmed" )
+
+	Remote_RegisterFunction( "SCB_AddGrenadeIndicatorForEntity" )
+
+	Remote_RegisterFunction( "DisablePrecacheErrors" )
+	Remote_RegisterFunction( "RestorePrecacheErrors" )
+
+	Remote_RegisterFunction( "SCB_SetUserPerformance" )
+	Remote_RegisterFunction( "SCB_UpdateSponsorables" )
+	Remote_RegisterFunction( "SCB_ClientDebug" )
+	Remote_RegisterFunction( "SCB_CheckPoint" )
+
+	Remote_RegisterFunction( "ScriptCallback_UnlockAchievement" )
+	Remote_RegisterFunction( "ServerCallback_UpdateHeroStats" )
+
+	// REMOTE TURRET
+	// Remote_RegisterFunction( "ServerCallback_StartUsingTurret" )
+	// Remote_RegisterFunction( "ServerCallback_StopUsingTurret" )
+	// Remote_RegisterFunction( "ServerCallback_TurretDamaged" )
+
+	RegisterNetworkedVariable( "sentryTurretCount", SNDC_PLAYER_EXCLUSIVE, SNVT_INT, 0 )
+	// Remote_RegisterFunction( "ServerCallback_GiveSentryTurret" )
+	// Remote_RegisterFunction( "ServerCallback_TurretReport" )
+	// Remote_RegisterFunction( "ServerCallback_TurretWorldIconShow" )
+	// Remote_RegisterFunction( "ServerCallback_TurretWorldIconHide" )
+
+	Remote_RegisterFunction( "ServerCallback_RefreshWeaponHighlights" )
+
+	// death hints
+	Remote_RegisterFunction( "ServerCallback_ShowDeathHint" )
+
+	// SIDE NOTIFICATION
+	Remote_RegisterFunction( "ServerCallback_LoadoutNotification" )
+	Remote_RegisterFunction( "ServerCallback_ItemNotification" )
+
+	Remote_RegisterFunction( "ServerCallback_SonarPulseFromPosition" )
+
+	// Survival Start
+	//Remote_RegisterFunction( "ServerCallback_OpenShopMenu" )
+	//Remote_RegisterFunction( "ServerCallback_CloseShopMenu" )
+	//RegisterServerVar( "survivorEventActive", false )
+	//RegisterServerVar( "survivorEventEndTime", 0.0 )
+	//RegisterServerVar( "survivorEventMilitiaScrap", 0 )
+	//RegisterServerVar( "survivorEventIMCScrap", 0 )
+	// Survival End
+
+	// Shield core
+	Remote_RegisterFunction( "ServerCallback_StartShieldPlayer" )
+	Remote_RegisterFunction( "ServerCallback_StopShieldPlayer" )
+	Remote_RegisterFunction( "ServerCallback_AddShieldedPlayer" )
+	Remote_RegisterFunction( "ServerCallback_RemoveShieldedPlayer" )
+
+	// SP start
+	Remote_RegisterFunction( "ServerCallback_WhereIsTitan" )
+	Remote_RegisterFunction( "ServerCallback_TitanDied" )
+	Remote_RegisterFunction( "ServerCallback_NewTitanLoadout" )
+	Remote_RegisterFunction( "ServerCallback_FriendlyFire_MissionFailure" )
+	Remote_RegisterFunction( "ServerCallback_CollectibleFoundMessage" )
+
+	// SP Titan weapon loadout pickups
+	RegisterNetworkedVariable( "SP_titanLoadoutPickupSpot", SNDC_GLOBAL, SNVT_ENTITY )
+	RegisterServerVar( "SP_titanLoadoutPickupSpotVisible", false )
+
+	RegisterNetworkedVariable( "dialogueEnt", SNDC_TITAN_SOUL, SNVT_ENTITY )
+	// SP end
+
+	// COOP || SP start
+	Remote_RegisterFunction( "ServerCallback_ForcePlayMusic" )
+	// COOP || SP end
+
+	//HACK: these nv's should eventually be code driven concepts
+	RegisterEntityVar_AllSynced( "player", "empEndTime", 0 )
+	RegisterEntityVar_AllSynced( "titan_soul", "PROTO_stickyExplosiveCount", 0 )
+	RegisterEntityVar_AllSynced( "titan_soul", "PROTO_trackerCount", 0 )
+
+ 	RegisterNetworkedVariable( "playerAllowedToMelee", SNDC_PLAYER_EXCLUSIVE, SNVT_BOOL, true )
+ 	RegisterNetworkedVariable( "playerAllowedToLeech", SNDC_PLAYER_EXCLUSIVE, SNVT_BOOL, true )
+	RegisterNetworkedVariable( "playerAllowedToSyncedMelee", SNDC_PLAYER_EXCLUSIVE, SNVT_BOOL, true )
+	RegisterNetworkedVariable( "rodeoBatteryCount", SNDC_TITAN_SOUL, SNVT_INT, 3 )
+	RegisterNetworkedVariable( "batteryCount", SNDC_PLAYER_GLOBAL, SNVT_UNSIGNED_INT, 0 )
+
+	Remote_RegisterFunction( "SCB_SmartAmmoForceLockedOntoHudDraw" )
+
+	// we want to keep these as nv's because we want them to ignore kill replay
+	// -------------
+	RegisterEntityVar( "player", "nextRespawnTime", 0.0 )
+	// -------------
+	// end
+
+	RegisterEntityVar( "player", "titanQueueNum", NOT_IN_TITAN_QUEUE )
+
+	RegisterEntityVar_AllSynced( "player", "titanRequestNum", null )
+	RegisterEntityVar_AllSynced( "player", "titanRequestSkipped", 0 )
+	RegisterServerVar( "titanNextRequestEventTime", 0 )
+	RegisterServerVar( "titanNextRequestEventType", TITAN_REQUEST_WAITING_FOR_WAVE )
+
+	Remote_RegisterFunction( "ServerCallback_UpdateMarker" )
+
+	RegisterEntityVar_AllSynced( "player", "inSmoke", false )
+
+	Remote_RegisterFunction( "SCB_PlayTitanCockpitSounds" )
+	Remote_RegisterFunction( "SCB_StopTitanCockpitSounds" )
+
+	// SHOULD PROBABLY BE CODE
+	RegisterServerVar( "gameStateChangeTime", null )
+	RegisterServerVar( "gameState", -1 )
+	RegisterServerVar( "gameStartTime", null )
+	RegisterServerVar( "coopStartTime", null )
+	RegisterServerVar( "gameEndTime", 0.0 )
+	RegisterServerVar( "switchedSides", null )
+	RegisterServerVar( "replayDisabled", false )
+
+	//Round Winning Kill replay related
+	RegisterServerVar( "roundWinningKillReplayEnabled", false )
+	RegisterServerVar( "roundScoreLimitComplete", false )
+
+	RegisterServerVar( "badRepPresent", false )
+
+	RegisterServerVar( "roundBased", false )
+	// RegisterServerVar( "roundStartTime", null )
+	// RegisterServerVar( "roundEndTime", 0.0 )
+	// RegisterServerVar( "roundsPlayed", 0 )
+
+	RegisterServerVar( "minPickLoadOutTime", null )
+	RegisterServerVar( "connectionTimeout", 0 )
+	RegisterServerVar( "winningTeam", null )
+	RegisterServerVar( "titanDropEnabledForTeam", TEAM_BOTH )
+	RegisterServerVar( "matchProgress", 0 )
+
+	// Uplink
+	RegisterServerVar( "activeUplinkID", null )
+	RegisterServerVar( "activeUplinkTime", null )
+
+	// Seconds
+	// RegisterServerVar( "secondsTitanCheckTime", null )
+
+	// Attack/Defend based game modes
+	RegisterServerVar( "attackingTeam", null )
+
+	// Riffs
+	RegisterServerVar( "spawnAsTitan", null )
+	RegisterServerVar( "titanAvailability", null )
+	RegisterServerVar( "titanExitEnabled", null )
+	RegisterServerVar( "allowNPCs", null )
+	RegisterServerVar( "aiLethality", null )
+	RegisterServerVar( "minimapState", null )
+	RegisterServerVar( "ospState", null )
+	RegisterServerVar( "ammoLimit", null )
+	RegisterServerVar( "eliminationMode", null )
+	RegisterServerVar( "floorIsLava", null )
+	RegisterServerVar( "playerBleedout", null )
+	RegisterServerVar( "titanQueueLimit", 0 )
+	RegisterServerVar( "boostAvailability", 0 )
+	RegisterServerVar( "teamShareCoreMeter", 0 )
+	RegisterNetworkedVariable( "titanEjectEnabled", SNDC_GLOBAL, SNVT_BOOL, true )
+
+	Remote_RegisterFunction( "ServerCallback_UpdateDifficulty" )
+
+	// MFD
+	RegisterServerVar( "mfdOverheadPingDelay", 0 )
+
+	// NEW INTRO SYSTEM ( _cl_spawnslot_system.nut )
+	Remote_RegisterFunction( "ServerCallback_ResetEntSkyScale" )
+	Remote_RegisterFunction( "ServerCallback_SetEntSkyScale" )
+	Remote_RegisterFunction( "ServerCallback_ResetMapSettings" )
+	Remote_RegisterFunction( "ServerCallback_SetMapSettings" )
+	Remote_RegisterFunction( "ServerCallback_ToneMapping" )
+	Remote_RegisterFunction( "ServerCallback_LaptopFX" )
+
+	Remote_RegisterFunction( "ServerCallback_ShowNextSpawnMessage" )
+	Remote_RegisterFunction( "ServerCallback_HideNextSpawnMessage" )
+
+	Remote_RegisterFunction( "ServerCallback_AnnounceWinner" )
+	Remote_RegisterFunction( "ServerCallback_AnnounceRoundWinner" )
+
+	Remote_RegisterFunction( "ServerCallback_GuidedMissileDestroyed" )
+	Remote_RegisterFunction( "ServerCallback_DoClientSideCinematicMPMoment" ) // hard to say if this is safe as fire and forget
+	Remote_RegisterFunction( "ServerCallback_SetAssistInformation" )
+	Remote_RegisterFunction( "ServerCallback_TitanEMP" )
+	Remote_RegisterFunction( "ServerCallback_AirburstIconUpdate" )
+	Remote_RegisterFunction( "ServerCallback_TitanCockpitBoot" ) // all this does is reset the tone mapping
+	Remote_RegisterFunction( "ServerCallback_DataKnifeStartLeech" )
+	Remote_RegisterFunction( "ServerCallback_DataKnifeCancelLeech" )
+	Remote_RegisterFunction( "ServerCallback_ControlPanelRefresh" )
+	Remote_RegisterFunction( "ServerCallback_TurretRefresh" )
+	Remote_RegisterFunction( "ServerCallback_CreateEvacShipIcon" )
+	Remote_RegisterFunction( "ServerCallback_DestroyEvacShipIcon" )
+	Remote_RegisterFunction( "ServerCallback_AddCapturePoint" )
+	Remote_RegisterFunction( "ServerCallback_TitanDisembark" ) // plays a line of dialog and calls "cockpit.StartDisembark()", and does tonemapping update, hides crosshair and names
+	Remote_RegisterFunction( "ServerCallback_OnEntityKilled" ) // handles obit and death recap
+	Remote_RegisterFunction( "ServerCallback_OnTitanKilled" ) // handles obit for titans
+	Remote_RegisterFunction( "ServerCallback_PlayerConnectedOrDisconnected" )
+	Remote_RegisterFunction( "SCBUI_PlayerConnectedOrDisconnected" )
+	Remote_RegisterFunction( "ServerCallback_PlayerChangedTeams" )
+	Remote_RegisterFunction( "ServerCallback_AnnounceTitanReservation" )
+
+	// IMPORTANT BUT MAYBE FINE AS A REMOTE CALL
+	Remote_RegisterFunction( "ServerCallback_ShowDisembarkHint" )
+	Remote_RegisterFunction( "ServerCallback_ReplacementTitanSpawnpoint" )
+	Remote_RegisterFunction( "ServerCallback_TitanTookDamage" ) // should be converted into a code callback... similar to NotifyDidDamage
+	Remote_RegisterFunction( "ServerCallback_PilotTookDamage" ) // should be converted into a code callback... similar to NotifyDidDamage
+	Remote_RegisterFunction( "ServerCallback_PlayerUsesBurnCard" ) // tell a player that somebody used a burn card he should know about
+	Remote_RegisterFunction( "ServerCallback_ScreenShake" )
+	Remote_RegisterFunction( "ServerCallback_MinimapPulse" ) // if burn card moves to weapon then we dont need this
+	Remote_RegisterFunction( "ServerCallback_UpdateOverheadIconForNPC" )
+	Remote_RegisterFunction( "ServerCallback_SetFlagHomeOrigin" )
+	Remote_RegisterFunction( "ServerCallback_OpenBurnCardMenu" )
+	Remote_RegisterFunction( "ServerCallback_OpenDifficultyMenu" )
+	Remote_RegisterFunction( "ServerCallback_ExitBurnCardMenu" )
+	Remote_RegisterFunction( "ServerCallback_GetNewLoadout" )
+	Remote_RegisterFunction( "ServerCallback_UI_HideTitanLoadout" )
+	Remote_RegisterFunction( "ServerCallback_UI_ShowTitanLoadout" )
+	Remote_RegisterFunction( "ServerCallback_UI_ShowTitanLoadoutTutorial" )
+	Remote_RegisterFunction( "ServerCallback_UI_ObjectiveUpdated" )
+	Remote_RegisterFunction( "ServerCallback_UI_UpdateMissionLog" )
+	Remote_RegisterFunction( "ServerCallback_ShowOffhandWeaponHint" )
+
+	Remote_RegisterFunction( "ServerCallback_ActiveSPTitanLoadout" )
+	Remote_RegisterFunction( "ServerCallback_UnlockedNewSPTitanLoadout" )
+	Remote_RegisterFunction( "ServerCallback_ClearFirstTitanLoadoutNagOnOpen" )
+
+
+	// TITAN SHIELD BATTERY
+	Remote_RegisterFunction( "ServerCallback_StartBatteryTimer" )
+	Remote_RegisterFunction( "ServerCallback_TitanBatteryDown" )
+
+	// Ping
+	Remote_RegisterFunction( "ServerCallback_SpottingHighlight" )
+	Remote_RegisterFunction( "ServerCallback_SpottingDeny" )
+
+	// Rodeo Battery
+	RegisterNetworkedVariable( "batteryOnBack", SNDC_PLAYER_EXCLUSIVE, SNVT_ENTITY )
+	RegisterEntityVar( "player", "permanentEventNotification", -1 )
+	Remote_RegisterFunction( "ServerCallback_UpdateRodeoRiderHud" ) //Technically speaking probably not required for SP since we don't have AI pilots that embark/disembark from their titan
+
+	// // Bomb Mode
+	// Remote_RegisterFunction( "ServerCallback_AnnounceBombPickup" )
+	// Remote_RegisterFunction( "ServerCallback_AnnounceBombDropped" )
+	// Remote_RegisterFunction( "ServerCallback_AnnounceBombArmed" )
+	// Remote_RegisterFunction( "ServerCallback_AnnounceBombDisarmed" )
+	// Remote_RegisterFunction( "ServerCallback_AnnounceBombRespawned" )
+	// Remote_RegisterFunction( "ServerCallback_AnnounceBombExploded" )
+	// Remote_RegisterFunction( "ServerCallback_IncomingBombSpawnpoint" )
+
+	//Air Drops
+	Remote_RegisterFunction( "ServerCallback_IncomingAirdrop" )
+
+	// DEV ONLY
+	Remote_RegisterFunction( "ServerCallback_TitanLostHealthSegment" )
+
+	// LESS ESSENTIAL, CAN SHIP AS REMOTE FUNCTIONS
+	Remote_RegisterFunction( "ServerCallback_PlayScreenFXWarpJump" )
+	Remote_RegisterFunction( "ServerCallback_Phantom_Scan" )
+	Remote_RegisterFunction( "ServerCallback_RodeoScreenShake" )
+	Remote_RegisterFunction( "ServerCallback_RodeoerEjectWarning" ) // play pre-eject fx on titan
+	Remote_RegisterFunction( "ServerCallback_TitanEmbark" ) // used purely to play a single line of dialog
+	Remote_RegisterFunction( "ServerCallback_DogFight" )
+	Remote_RegisterFunction( "ServerCallback_Announcement" )
+	Remote_RegisterFunction( "ServerCallback_GameModeAnnouncement" )
+
+	Remote_RegisterFunction( "ServerCallback_ScoreEvent" )
+
+	Remote_RegisterFunction( "ServerCallback_PlayConversation" )
+	Remote_RegisterFunction( "ServerCallback_PlayTitanConversation" )
+	Remote_RegisterFunction( "ServerCallback_PlaySquadConversation" )
+	Remote_RegisterFunction( "ServerCallback_CreateDropShipIntLighting" )
+	Remote_RegisterFunction( "ServerCallback_EvacObit" )
+	Remote_RegisterFunction( "ServerCallback_ShowTurretHint" )
+	Remote_RegisterFunction( "ServerCallback_HideTurretHint" )
+	Remote_RegisterFunction( "ServerCallback_ShowTurretInUseHint" )
+	Remote_RegisterFunction( "ServerCallback_UpdateBurnCardTitle" )
+	Remote_RegisterFunction( "ServerCallback_UpdateTitanModeHUD" )
+	Remote_RegisterFunction( "ServerCallback_GiveMatchLossProtection" )
+
+	Remote_RegisterFunction( "ServerCallback_TitanFallWarning" )
+	Remote_RegisterFunction( "SCB_TitanDialogue" )
+
+	Remote_RegisterFunction( "ServerCallback_PlayLobbyScene" )
+
+	Remote_RegisterFunction( "ServerCallback_PilotCreatedGunShield" )
+
+	Remote_RegisterFunction( "ServerCallback_BeginSmokeSight" )
+	Remote_RegisterFunction( "ServerCallback_EndSmokeSight" )
+
+	Remote_RegisterFunction( "UpdateCachedPilotLoadout" )
+	Remote_RegisterFunction( "UpdateCachedTitanLoadout" )
+	Remote_RegisterFunction( "UpdateAllCachedPilotLoadouts" )
+	Remote_RegisterFunction( "UpdateAllCachedTitanLoadouts" )
+	Remote_RegisterFunction( "ServerCallback_UpdatePilotModel" )
+	Remote_RegisterFunction( "ServerCallback_UpdateTitanModel" )
+
+	// DEV ONLY
+	Remote_RegisterFunction( "ServerCallback_MVUpdateModelBounds" )
+	Remote_RegisterFunction( "ServerCallback_MVEnable" )
+	Remote_RegisterFunction( "ServerCallback_MVDisable" )
+	Remote_RegisterFunction( "ServerCallback_ModelViewerDisableConflicts" )
+
+	Remote_RegisterFunction( "ServerCallback_Test" )
+
+	// SHOULD BE REMOVED
+	Remote_RegisterFunction( "ServerCallback_SetClassicSkyScale" )
+	Remote_RegisterFunction( "ServerCallback_ResetClassicSkyScale" )
+
+	RegisterEntityVar( "player", "drawFastballHud", false )
+	RegisterEntityVar( "player", "reviveBleedingOut", 0.0, true )
+	RegisterEntityVar( "player", "reviveHealedTime", 0.0, true )
+
+	// SP Objectives
+	RegisterNetworkedVariable( "objectiveStringIndex", SNDC_GLOBAL, SNVT_UNSIGNED_INT, 0 )
+	RegisterNetworkedVariable( "objectiveMarkerEntity", SNDC_GLOBAL, SNVT_ENTITY )
+	RegisterNetworkedVariable( "objectiveMarkerIsWayPoint", SNDC_GLOBAL, SNVT_BOOL, false )
+	RegisterNetworkedVariable( "hilightingObjective", SNDC_GLOBAL, SNVT_BOOL, false )
+	RegisterNetworkedVariable( "showObjective", SNDC_PLAYER_EXCLUSIVE, SNVT_BOOL, false )
+	RegisterNetworkedVariable( "showObjectiveLine", SNDC_GLOBAL, SNVT_BOOL, false )
+	RegisterNetworkedVariable( "additionalKilometers", SNDC_GLOBAL, SNVT_FLOAT_RANGE, 0.0, 0.0, 128.0 )
+	#if CLIENT
+		RegisterNetworkedVariableChangeCallback_bool( "showObjectiveLine", ShowObjectiveLineChanged )
+		RegisterNetworkedVariableChangeCallback_bool( "showObjective", ShowObjectiveChanged )
+		RegisterNetworkedVariableChangeCallback_int( "objectiveStringIndex", ObjectiveStringChanged )
+	#endif
+	//RegisterServerVar( "objectiveActive", false )
+	//RegisterServerVar( "objectiveStringIndex", -1 )
+	//RegisterServerVar( "objectivePosX", 0 )
+	//RegisterServerVar( "objectivePosY", 0 )
+	//RegisterServerVar( "objectivePosZ", 0 )
+	//RegisterServerVar( "objectiveShow", false )
+	//RegisterServerEntityVar( "objectivePosEntity" )
+
+	RegisterEntityVar( "player", "mobilityGhostAnalyzed", false )
+	RegisterEntityVar( "player", "displayMobilityGhostHint", 0.0 )
+	RegisterEntityVar( "player", "displayMobilityGhostAnim", false )
+
+	// onscreen hints
+	Remote_RegisterFunction( "ScriptCallback_DisplayOnscreenHint" )
+	Remote_RegisterFunction( "ScriptCallback_ClearOnscreenHint" )
+
+	// Gauntlet
+	Remote_RegisterFunction( "ScriptCallback_EnableGauntlet" )
+	Remote_RegisterFunction( "ScriptCallback_DisableGauntlet" )
+	Remote_RegisterFunction( "ScriptCallback_Gauntlet_StartRun" )
+	Remote_RegisterFunction( "ScriptCallback_Gauntlet_AbortRun" )
+	Remote_RegisterFunction( "ScriptCallback_Gauntlet_FinishRun" )
+	Remote_RegisterFunction( "ScriptCallback_Gauntlet_SetEnemyInfo" )
+	Remote_RegisterFunction( "ScriptCallback_Gauntlet_SetGhostDuration" )
+	Remote_RegisterFunction( "ScriptCallback_Gauntlet_SetActiveGhostID" )
+	Remote_RegisterFunction( "ScriptCallback_GauntletResultsDisplay_SetRandomTip" )
+	Remote_RegisterFunction( "ScriptCallback_HideLeaderboard" )
+	Remote_RegisterFunction( "ScriptCallback_ShowLeaderboard" )
+	Remote_RegisterFunction( "ScriptCallback_RefreshLeaderboard" )
+
+	// SHOULD PROBABLY BE CODE
+	Remote_RegisterFunction( "ServerCallback_ClientInitComplete" )
+	RegisterServerVar( "forcedDialogueOnly", false )
+	RegisterNetworkedVariable( "squadConversationEnabled", SNDC_GLOBAL, SNVT_BOOL, true ) //TEMP, remove when we do Miles meta data conversation controls
+	RegisterNetworkedVariable( "titanOSDialogueEnabled", SNDC_GLOBAL, SNVT_BOOL, true ) //TEMP, remove when we do Miles meta data conversation controls
+	Remote_RegisterFunction( "SCB_LockCapturePointForTeam" )
+	Remote_RegisterFunction( "SCB_UnlockCapturePointForTeam" )
+
+	// SHOULD GO AWAY
+	Remote_RegisterFunction( "ServerCallback_SetEntityVar" )
+	Remote_RegisterFunction( "ServerCallback_SetServerVar" )
+
+
+	// POSSIBLY CAN STAY AS REMOTE FUNCTIONS
+	Remote_RegisterFunction( "ServerCallback_PlayTeamMusicEvent" )
+	Remote_RegisterFunction( "ServerCallback_PlayMusicToCompletion" )
+	Remote_RegisterFunction( "ServerCallback_PlayMusic" )
+	Remote_RegisterFunction( "ServerCallback_TitanCockpitEMP" )
+	Remote_RegisterFunction( "ServerCallback_PlayerEarnedBurnCard" )
+	Remote_RegisterFunction( "ServerCallback_PlayerStoppedBurnCard" )
+
+	// UI FUNCTIONS
+	Remote_RegisterFunction( "ServerCallback_SetUIVar" )
+	Remote_RegisterFunction( "ServerCallback_ShopPurchaseStatus" )
+	Remote_RegisterFunction( "ServerCallback_OpenPilotLoadoutMenu" )
+
+	// Dev Only
+	Remote_RegisterFunction( "Dev_PrintClientMessage" )
+	Remote_RegisterFunction( "Dev_BuildClientMessage" )
+
+	// Class Functions
+	Remote_RegisterFunction( "ServerCallback_DeploymentDeath" )
+	Remote_RegisterFunction( "ServerCallback_AddArcConnectorToy" )
+	Remote_RegisterFunction( "ServerCallback_PlayDialogueOnEntity" )
+	Remote_RegisterFunction( "ServerCallback_PlayDialogueAtPosition" )
+	Remote_RegisterFunction( "ServerCallback_PlayerConversation" )
+	Remote_RegisterFunction( "ServerCallback_StopConversation" )
+	Remote_RegisterFunction( "ServerCallback_AbortCurrentDialogue" )
+
+	Remote_RegisterFunction( "ServerCallback_QuickDeathRumble" )
+
+	//Weapon Flyout
+	RegisterNetworkedVariable( "shouldShowWeaponFlyout", SNDC_PLAYER_EXCLUSIVE, SNVT_BOOL, true )
+
+	RegisterString( "#GAMEMODE_NO_TITANS_REMAINING" )
+	RegisterString( "#GAMEMODE_ENEMY_TITANS_DESTROYED" )
+	RegisterString( "#GAMEMODE_FRIENDLY_TITANS_DESTROYED" )
+	RegisterString( "#GAMEMODE_ENEMY_PILOTS_ELIMINATED" )
+	RegisterString( "#GAMEMODE_FRIENDLY_PILOTS_ELIMINATED" )
+	RegisterString( "#GAMEMODE_TIME_LIMIT_REACHED" )
+	RegisterString( "#GAMEMODE_SCORE_LIMIT_REACHED" )
+	RegisterString( "#GAMEMODE_ROUND_LIMIT_REACHED" )
+	RegisterString( "#GAMEMODE_ROUND_LIMIT_REACHED_WON_MORE_ROUNDS" )
+	RegisterString( "#GAMEMODE_ROUND_LIMIT_REACHED_LOSS_MORE_ROUNDS" )
+	RegisterString( "#GAMEMODE_ROUND_LIMIT_REACHED_ROUND_SCORE_DRAW" )
+	RegisterString( "#GAMEMODE_PREPARE_FOR_EVAC" )
+	RegisterString( "#GAMEMODE_AWAIT_INSTRUCTIONS" )
+	RegisterString( "#GAMEMODE_TITAN_TIME_ADVANTAGE" )
+	RegisterString( "#GAMEMODE_TITAN_TIME_DISADVANTAGE" )
+	RegisterString( "#GAMEMODE_TITAN_DAMAGE_ADVANTAGE" )
+	RegisterString( "#GAMEMODE_TITAN_DAMAGE_DISADVANTAGE" )
+	RegisterString( "#GAMEMODE_TITAN_TITAN_ADVANTAGE" )
+	RegisterString( "#GAMEMODE_TITAN_TITAN_DISADVANTAGE" )
+	RegisterString( "#GAMEMODE_DEFENDERS_WIN" )
+	RegisterString( "#GAMEMODE_ATTACKERS_WIN" )
+	RegisterString( "#GAMEMODE_LTS_TIME_LIMIT_REACHED_WIN" )
+	RegisterString( "#GAMEMODE_LTS_TIME_LIMIT_REACHED_LOSS" )
+	RegisterString( "#GAMEMODE_LTS_BOMB_DEFUSED_WIN" )
+	RegisterString( "#GAMEMODE_LTS_BOMB_DEFUSED_LOSS" )
+	RegisterString( "#GAMEMODE_LTS_BOMB_DETONATED_WIN" )
+	RegisterString( "#GAMEMODE_LTS_BOMB_DETONATED_LOSS" )
+	RegisterString( "#GAMEMODE_MARKED_FOR_DEATH_PRO_WIN_ANNOUNCEMENT" )
+	RegisterString( "#GAMEMODE_MARKED_FOR_DEATH_PRO_LOSS_ANNOUNCEMENT" )
+	RegisterString( "#GAMEMODE_MARKED_FOR_DEATH_PRO_DISCONNECT_WIN_ANNOUNCEMENT" )
+	RegisterString( "#GAMEMODE_MARKED_FOR_DEATH_PRO_DISCONNECT_LOSS_ANNOUNCEMENT" )
+	RegisterString( "#GAMEMODE_LH_WIN_ANNOUNCEMENT" )
+	RegisterString( "#GAMEMODE_LH_LOSS_ANNOUNCEMENT" )
+	RegisterString( "#GAMEMODE_LH_TIME_OVER_WIN_ANNOUNCEMENT" )
+	RegisterString( "#GAMEMODE_LH_TIME_OVER_LOSS_ANNOUNCEMENT" )
+	RegisterString( "#GAMEMODE_LH_TIME_OVER_DRAW_ANNOUNCEMENT" )
+
+	RegisterString( "#DEV_COMMAND_FORCED_WIN_ANNOUNCEMENT" )
+	RegisterString( "#DEV_COMMAND_FORCED_LOSS_ANNOUNCEMENT" )
+	RegisterString( "#GAMEMODE_COOP_WIN_ANNOUNCEMENT" )
+	RegisterString( "#GAMEMODE_COOP_LOSS_ANNOUNCEMENT" )
+	RegisterString( "#GAMEMODE_SUR_WIN_ANNOUNCEMENT" )
+	RegisterString( "#GAMEMODE_SUR_LOSS_ANNOUNCEMENT" )
+	RegisterString( "#ENEMY_TEAM_DISCONNECTED_WIN_ANNOUNCEMENT" )
+	RegisterString( "#ENEMY_TEAM_DISCONNECTED_LOSS_ANNOUNCEMENT" )
+	RegisterString( "#SUDDEN_DEATH_WIN_ANNOUNCEMENT" )
+	RegisterString( "#SUDDEN_DEATH_LOSS_ANNOUNCEMENT" )
+	RegisterString( "#SUDDEN_DEATH_KILLED_NEXT_PLAYER_WIN_ANNOUNCEMENT" )
+	RegisterString( "#SUDDEN_DEATH_KILLED_NEXT_PLAYER_LOSS_ANNOUNCEMENT" )
+
+	RegisterString( "#CAPTURE_THE_FLAG_FLAG_ESCAPED" )
+	RegisterString( "#CAPTURE_THE_FLAG_FLAG_CAPTURE_STOPPED" )
+
+	RegisterString( "#GAMESTATE_SWITCHING_SIDES" )
+	RegisterString( "#GAMEMODE_HOST_ENDED_MATCH" )
+
+	RegisterString( "#GENERIC_DRAW_ANNOUNCEMENT" )
+
+	RegisterString( "#GAMEMODE_FRONTIER_WIN_ALL_CAPTURED" )
+	RegisterString( "#GAMEMODE_FRONTIER_LOSS_ALL_CAPTURED" )
+
+	switch ( GetMapName() )
+	{
+		case "sp_beacon":
+			break
+		case "sp_beacon_spoke0":
+			Remote_RegisterFunction( "ServerCallback_AddVisorEffectLine" )
+			RegisterServerVar( "heatSinkStartTime", 0.0 )
+			RegisterServerVar( "heatSinksCooling", false )
+			RegisterNetworkedVariable( "FanRumbleStrength", SNDC_PLAYER_EXCLUSIVE, SNVT_FLOAT_RANGE_OVER_TIME, 0.0, 0.0, 1.0 )
+			break
+		case "sp_beacon_spoke2":
+			//RegisterString( "#BEACON_OBJECTIVE_FOLLOW_TRANSPONDER" )
+			//RegisterString( "#BEACON_OBJECTIVE_RETURN_TO_BEACON_CONTROL" )
+			break
+
+		case "sp_tday":
+			Remote_RegisterFunction( "ServerCallback_IntroScreenShakes" )
+			Remote_RegisterFunction( "ServerCallback_DropLaunchScreenShake" )
+			Remote_RegisterFunction( "ServerCallback_LandingImpactScreenShake" )
+			Remote_RegisterFunction( "ServerCallback_LevelIntroText" )
+			Remote_RegisterFunction( "ServerCallback_ElevatorRumble" )
+			Remote_RegisterFunction( "ServerCallback_BlastedBackRumble" )
+			RegisterServerVar( "netvar_draconis_flying_status", 0 )
+			break
+
+		case "sp_jake_test":
+		case "sp_hub_timeshift":
+		case "sp_timeshift_spoke02":
+			Remote_RegisterFunction( "ServerCallback_PlayGloveGlow" )
+			Remote_RegisterFunction( "ServerCallback_StopGloveGlow" )
+			Remote_RegisterFunction( "ServerCallback_LabRatLasers" )
+			Remote_RegisterFunction( "ServerCallback_TimeFlipped" )
+			Remote_RegisterFunction( "ServerCallback_FlippingToFrozen" )
+			Remote_RegisterFunction( "ServerCallback_PlayerIndoorsChanged" )
+			Remote_RegisterFunction( "ServerCallback_Temp_PlayDialogue" )
+			Remote_RegisterFunction( "ServerCallback_PlayTimeShiftDialogue" )
+			Remote_RegisterFunction( "ServerCallback_TimeDeviceAcquired" )
+			Remote_RegisterFunction( "ServerCallback_FrozenLightStart" )
+			Remote_RegisterFunction( "ServerCallback_ScriptedTimeshiftStart" )
+			Remote_RegisterFunction( "ServerCallback_ShowHoloDecoding" )
+			Remote_RegisterFunction( "ServerCallback_ShowCoreDecoding" )
+			Remote_RegisterFunction( "ServerCallback_ShowTitanTimeshiftHint" )
+			Remote_RegisterFunction( "ServerCallback_ClearScanningHudElem" )
+			Remote_RegisterFunction( "ServerCallback_FanDropBlur" )
+			Remote_RegisterFunction( "ServerCallback_LevelInfoText" )
+			Remote_RegisterFunction( "ServerCallback_WakingUpLevelEnd" )
+			Remote_RegisterFunction( "ServerCallback_DisableAllLasers" )
+			Remote_RegisterFunction( "ServerCallback_StopRingSounds" )
+			Remote_RegisterFunction( "ServerCallback_ShowHologramTitles" )
+			RegisterNetworkedVariable( "music14LoopPausable", SNDC_GLOBAL, SNVT_BOOL, false )
+			RegisterNetworkedVariable( "PlayerInOvergrownTimeline", SNDC_GLOBAL, SNVT_BOOL, false )
+			RegisterNetworkedVariable( "DestroyHintOnMenuOpen", SNDC_GLOBAL, SNVT_BOOL, false )
+			break
+		case "sp_david_test":
+			Remote_RegisterFunction( "ServerCallback_UndoomTitan" )
+			break
+
+		case "sp_chadbox":
+			break
+
+		case "sp_trainer":
+			RegisterServerVar( "currentDifficulty", 0 )
+			RegisterServerVar( "highestDifficultyReached", 0 )
+			RegisterServerVar( "score", 0 )
+			RegisterServerVar( "highScore", 0 )
+			RegisterServerVar( "cubeCount", 0 )
+			RegisterServerVar( "cubeQueueCount", 0 )
+			Remote_RegisterFunction( "ServerCallback_AddMobilityHint" )
+			break
+
+		case "sp_ola_canyon_test":
+			RegisterString( "#CANYON_BOSS_FIGHT_LINE0" )
+			RegisterString( "#CANYON_BOSS_FIGHT_LINE1" )
+			RegisterString( "#CANYON_BOSS_FIGHT_LINE2" )
+			break
+
+		case "sp_ab_canyon_prowler":
+			RegisterString( "#AB_CANYON_PROWLER_OBJ_CROSS_CANYON" )
+			break
+
+		case "sp_boomtown_start":
+			Remote_RegisterFunction( "ServerCallback_LevelIntroText" )
+			break
+
+		case "sp_boomtown":
+			break
+
+		case "sp_boomtown_end":
+			Remote_RegisterFunction( "ServerCallback_StartProwlerSFX" )
+			break
+
+		case "sp_s2s":
+			Remote_RegisterFunction( "ServerCallback_SetupJumpJetAnimEvents" )
+			Remote_RegisterFunction( "ServerCallback_SignalAnimDone" )
+			Remote_RegisterFunction( "ServerCallback_DisableDropshipLights" )
+			Remote_RegisterFunction( "ServerCallback_DisableDropshipDamage" )
+			Remote_RegisterFunction( "ServerCallBack_Afterburners_On" )
+			Remote_RegisterFunction( "ServerCallBack_Afterburners_Off" )
+			Remote_RegisterFunction( "ServerCallback_s2sBossFightBlur" )
+			Remote_RegisterFunction( "ServerCallback_s2sCrash" )
+			Remote_RegisterFunction( "ServerCallback_ShipStreamingSetup" )
+			Remote_RegisterFunction( "ServerCallback_LevelIntroText" )
+
+			RegisterServerVar( "ShipTitles", 0 )
+			RegisterServerVar( "ShipStreaming", 0 )
+			break
+
+		case "sp_sewers1":
+			Remote_RegisterFunction( "ServerCallback_SewersHideDoomFX" )
+			Remote_RegisterFunction( "ServerCallback_SewersRadioInterfaceSeq" )
+			Remote_RegisterFunction( "ServerCallback_SewersToxicSludgeAlarmSeq" )
+			Remote_RegisterFunction( "ServerCallback_LevelIntroText" )
+			break
+
+		case "sp_ab_titan_arena":
+			RegisterString( "#BOSS_TITAN_A_LINE0" )
+			RegisterString( "#BOSS_TITAN_A_LINE1" )
+			RegisterString( "#BOSS_TITAN_A_LINE2" )
+			RegisterString( "#BOSS_TITAN_B_LINE0" )
+			RegisterString( "#BOSS_TITAN_B_LINE1" )
+			RegisterString( "#BOSS_TITAN_B_LINE2" )
+			break
+
+		case "sp_crashsite":
+			break
+
+		case "sp_skyway_v1":
+			Remote_RegisterFunction( "ScriptCallback_LevelIntroText" )
+			Remote_RegisterFunction( "ServerCallback_ShowStickHint" )
+			Remote_RegisterFunction( "ServerCallback_ShowCrouchHint" )
+			Remote_RegisterFunction( "ServerCallback_ShowTitanfallHint" )
+			Remote_RegisterFunction( "ServerCallback_BlurCamera" )
+			Remote_RegisterFunction( "ServerCallback_SetNearDOF" )
+			Remote_RegisterFunction( "ServerCallback_SetDOF" )
+			Remote_RegisterFunction( "ServerCallback_ResetDOF" )
+			Remote_RegisterFunction( "ServerCallback_SetBurnColorCorrectionWeight" )
+			Remote_RegisterFunction( "ServerCallback_SetTyphonColorCorrectionWeight" )
+			Remote_RegisterFunction( "ServerCallback_StartCockpitLook" )
+			Remote_RegisterFunction( "ServerCallback_StopCockpitLook" )
+			Remote_RegisterFunction( "ServerCallback_StartPilotCockpitRebootSeq" )
+			Remote_RegisterFunction( "ServerCallback_StopPilotCockpitRebootSeq" )
+			Remote_RegisterFunction( "ServerCallback_SetRoomTemp" )
+			Remote_RegisterFunction( "ServerCallback_ClearRoomTemp" )
+			Remote_RegisterFunction( "ServerCallback_InjectorNextPhase" )
+			Remote_RegisterFunction( "ServerCallback_GlowOn" )
+			Remote_RegisterFunction( "ServerCallback_GlowOff" )
+			Remote_RegisterFunction( "ServerCallback_GlowFlash" )
+			Remote_RegisterFunction( "ServerCallback_BTSacrifice_Cockpit" )
+			Remote_RegisterFunction( "ServerCallback_ShowMashHint" )
+			Remote_RegisterFunction( "ServerCallback_HideMashHint" )
+			Remote_RegisterFunction( "ServerCallback_FlickerCockpitOff" )
+			Remote_RegisterFunction( "ServerCallback_CreateEvacIcon" )
+			Remote_RegisterFunction( "ServerCallback_HideEvacIcon" )
+			Remote_RegisterFunction( "ServerCallback_ScreenFlickerToBlack" )
+			Remote_RegisterFunction( "ServerCallback_CockpitThump" )
+			Remote_RegisterFunction( "ServerCallback_BeginHelmetBlink" )
+			Remote_RegisterFunction( "ServerCallback_CreateHelmet" )
+			Remote_RegisterFunction( "ServerCallback_InjectorFired" )
+			Remote_RegisterFunction( "ServerCallback_Torture_BT_Transmission" )
+			Remote_RegisterFunction( "ServerCallback_DoRumble" )
+			Remote_RegisterFunction( "ServerCallback_InjectorFireScreenFX" )
+
+			RegisterServerVar( "fireStage", 0 )
+			RegisterServerVar( "coreSoundActive", 0 )
+
+			RegisterNetworkedVariable( "evacPoint", SNDC_GLOBAL, SNVT_ENTITY )
+			RegisterNetworkedVariable( "roomTempManageBlur", SNDC_GLOBAL, SNVT_BOOL, false )
+			RegisterNetworkedVariable( "skywayBurningRoom", SNDC_GLOBAL, SNVT_BOOL, false )
+			RegisterNetworkedVariable( "injectorRoomPhase", SNDC_GLOBAL, SNVT_INT, 0 )
+			RegisterNetworkedVariable( "titanRebootPhase", SNDC_GLOBAL, SNVT_INT, 0 )
+
+			Remote_RegisterFunction( "ServerCallback_AddCredits" )
+			Remote_RegisterFunction( "ServerCallback_DoF_SetNearDepth" )
+			Remote_RegisterFunction( "ServerCallback_DoF_SetFarDepth" )
+			Remote_RegisterFunction( "ServerCallback_DoF_SetNearDepthToDefault" )
+			Remote_RegisterFunction( "ServerCallback_DoF_SetFarDepthToDefault" )
+			Remote_RegisterFunction( "ServerCallback_EnableFog" )
+			Remote_RegisterFunction( "ServerCallback_DisableFog" )
+			Remote_RegisterFunction( "ServerCallback_CsmTexelScale" )
+			Remote_RegisterFunction( "ServerCallback_FOVLock" )
+
+			RegisterNetworkedVariable( "uiAnchor_Ash", SNDC_GLOBAL, SNVT_ENTITY )
+			RegisterNetworkedVariable( "uiAnchor_Kane", SNDC_GLOBAL, SNVT_ENTITY )
+			RegisterNetworkedVariable( "uiAnchor_Richter", SNDC_GLOBAL, SNVT_ENTITY )
+			RegisterNetworkedVariable( "uiAnchor_Viper", SNDC_GLOBAL, SNVT_ENTITY )
+			RegisterNetworkedVariable( "uiAnchor_Slone", SNDC_GLOBAL, SNVT_ENTITY )
+			break
+	}
+
+	Remote_RegisterFunction( "ServerCallback_GetObjectiveReminderOnLoad" )
+	Remote_RegisterFunction( "ServerCallback_ClearObjectiveReminderOnLoad" )
+	Remote_RegisterFunction( "ScriptCallback_Beacon_FreeTrialOverMessage" )
+
+	RegisterNetworkedVariable( "rewardState", SNDC_PLAYER_GLOBAL, SNVT_INT, 0 )
+	RegisterNetworkedVariable( "goalState", SNDC_PLAYER_GLOBAL, SNVT_INT, 0 )
+	RegisterNetworkedVariable( EARNMETER_OWNEDFRAC, SNDC_PLAYER_EXCLUSIVE, SNVT_FLOAT_RANGE, 0.0, 0.0, 1.0 )
+	RegisterNetworkedVariable( EARNMETER_EARNEDFRAC, SNDC_PLAYER_EXCLUSIVE, SNVT_FLOAT_RANGE, 0.0, 0.0, 1.0 )
+	RegisterNetworkedVariable( EARNMETER_REWARDFRAC, SNDC_PLAYER_EXCLUSIVE, SNVT_FLOAT_RANGE, 0.0, 0.0, 1.0 )
+
+	RegisterNetworkedVariable( EARNMETER_GOALID, SNDC_PLAYER_EXCLUSIVE, SNVT_UNSIGNED_INT )
+	RegisterNetworkedVariable( EARNMETER_REWARDID, SNDC_PLAYER_EXCLUSIVE, SNVT_UNSIGNED_INT )
+	RegisterNetworkedVariable( EARNMETER_MODE, SNDC_PLAYER_EXCLUSIVE, SNVT_INT )
+
+	RegisterNetworkedVariable( "coreAvailableFrac", SNDC_TITAN_SOUL, SNVT_FLOAT_RANGE, 0.0, 0.0, 1.0 )
+	RegisterNetworkedVariable( "coreExpireFrac", SNDC_TITAN_SOUL, SNVT_FLOAT_RANGE_OVER_TIME, 0.0, 0.0, 1.0 )
+	RegisterNetworkedVariable( "upgradeCount", SNDC_TITAN_SOUL, SNVT_INT, 0 )
+
+	RegisterServerVar( "startPointIndex", 0 )
+
+	#if CLIENT
+			Cl_EarnMeter_RegisterNetworkFunctions()
+			ClRodeoTitan_RegisterNetworkFunctions()
+			ClSentryTurret_RegisterNetworkFunctions()
+	#endif
+
+	thread Delayed_Remote_EndRegisteringFunctions()
+}
+
+void function Delayed_Remote_EndRegisteringFunctions()
+{
+	WaitFrame()
+
+	InitCustomNetworkVars()
+
+	Remote_EndRegisteringFunctions()
+	_RegisteringFunctions = false
+}
+
+void function Changed( entity ent, float old, float new, bool actuallyChanged )
+{
+	printt( "Changed (" + ent + "): " + old + " -> " + new )
+}
+
+// script GetPlayerArray()[0].SetPlayerNetInt( "i", 0 )
