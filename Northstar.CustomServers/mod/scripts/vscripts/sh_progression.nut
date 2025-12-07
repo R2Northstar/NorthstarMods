@@ -132,10 +132,12 @@ void function Progression_SetPreference( bool enabled )
 {
 	SetConVarBool( "ns_progression_enabled", enabled )
 
-	#if CLIENT
-	GetLocalClientPlayer().ClientCommand( "ns_progression " + enabled.tointeger() )
-	#else // UI
-	ClientCommand( "ns_progression " + enabled.tointeger() )
+	#if !VANILLA
+		#if CLIENT
+		GetLocalClientPlayer().ClientCommand( "ns_progression " + enabled.tointeger() )
+		#else // UI
+		ClientCommand( "ns_progression " + enabled.tointeger() )
+		#endif
 	#endif
 }
 
