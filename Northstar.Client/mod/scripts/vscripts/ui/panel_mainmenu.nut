@@ -248,7 +248,7 @@ void function UpdatePlayButton( var button )
 	{
 		if ( !Hud_IsFocused( button ) )
 		{
-			//RuiSetBool( file.serviceStatus, "isVisible", false )
+			RuiSetBool( file.serviceStatus, "isVisible", false )
 			WaitFrame()
 			continue
 		}
