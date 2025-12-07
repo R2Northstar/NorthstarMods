@@ -412,59 +412,59 @@ void function UpdatePlayButton( var button )
 			message = ""
 
 			#if VANILLA
-			if ( !isOriginConnected )
-			{
-				message = "#ORIGIN_IS_OFFLINE"
-				file.mpButtonActivateFunc = null
-			}
-			else if ( !isStryderAuthenticated )
-			{
-				message = "#CONTACTING_RESPAWN_SERVERS"
-				file.mpButtonActivateFunc = null
-			}
-			else if ( !isMPAllowed )
-			{
-				message = "#MULTIPLAYER_NOT_AVAILABLE"
-				file.mpButtonActivateFunc = null
-			}
-			else if ( !hasLatestPatch )
-			{
-				message = "#ORIGIN_UPDATE_AVAILABLE"
-				file.mpButtonActivateFunc = null
-			}
-			else
-			{
-				// restrict non-vanilla players from accessing official servers
-				bool hasNonVanillaMods = false
-				foreach ( ModInfo mod in NSGetModsInformation() )
+				if ( !isOriginConnected )
 				{
-					if ( mod.enabled && mod.requiredOnClient )
+					message = "#ORIGIN_IS_OFFLINE"
+					file.mpButtonActivateFunc = null
+				}
+				else if ( !isStryderAuthenticated )
+				{
+					message = "#CONTACTING_RESPAWN_SERVERS"
+					file.mpButtonActivateFunc = null
+				}
+				else if ( !isMPAllowed )
+				{
+					message = "#MULTIPLAYER_NOT_AVAILABLE"
+					file.mpButtonActivateFunc = null
+				}
+				else if ( !hasLatestPatch )
+				{
+					message = "#ORIGIN_UPDATE_AVAILABLE"
+					file.mpButtonActivateFunc = null
+				}
+				else
+				{
+					// restrict non-vanilla players from accessing official servers
+					bool hasNonVanillaMods = false
+					foreach ( ModInfo mod in NSGetModsInformation() )
 					{
-						hasNonVanillaMods = true
-						break
+						if ( mod.enabled && mod.requiredOnClient )
+						{
+							hasNonVanillaMods = true
+							break
+						}
+					}
+
+					if ( hasNonVanillaMods )
+					{
+						message = "#HAS_NON_VANILLA_MODS"
+						file.mpButtonActivateFunc = null
+					}
+					else
+					{
+						file.mpButtonActivateFunc = LaunchMP
 					}
 				}
-
-				if ( hasNonVanillaMods )
+			#else
+				if ( GetConVarInt( "ns_has_agreed_to_send_token" ) != NS_AGREED_TO_SEND_TOKEN )
 				{
-					message = "#HAS_NON_VANILLA_MODS"
+					message = "#AUTHENTICATIONAGREEMENT_NO"
 					file.mpButtonActivateFunc = null
 				}
 				else
 				{
 					file.mpButtonActivateFunc = LaunchMP
 				}
-			}
-			#else
-			if ( GetConVarInt( "ns_has_agreed_to_send_token" ) != NS_AGREED_TO_SEND_TOKEN )
-			{
-				message = "#AUTHENTICATIONAGREEMENT_NO"
-				file.mpButtonActivateFunc = null
-			}
-			else
-			{
-				file.mpButtonActivateFunc = LaunchMP
-			}
 			#endif
 
 			isLocked = file.mpButtonActivateFunc == null ? true : false
@@ -584,7 +584,9 @@ void function OnPlayNSButton_Activate( var button )
 {
 	if ( !Hud_IsLocked( button ) )
 	{
-		SetConVarString( "communities_hostname", "" ) // disable communities due to crash exploits that are still possible through it
+		#if !VANILLA
+			SetConVarString( "communities_hostname", "" ) // disable communities due to crash exploits that are still possible through it
+		#endif
 		NSTryAuthWithLocalServer()
 		thread TryAuthWithLocalServer()
 	}
