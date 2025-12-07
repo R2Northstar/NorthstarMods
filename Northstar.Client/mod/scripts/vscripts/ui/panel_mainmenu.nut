@@ -177,7 +177,11 @@ void function OnShowMainMenuPanel()
 	#endif // PS4_PROG
 
 	UpdateSPButtons()
+	#if VANILLA
 	thread UpdatePlayButton( file.mpButton )
+	#else
+	thread UpdatePlayButton( file.fdButton )
+	#endif
 	thread MonitorTrialVersionChange()
 
 	#if DURANGO_PROG
@@ -407,6 +411,7 @@ void function UpdatePlayButton( var button )
 			buttonText = "#MULTIPLAYER_LAUNCH"
 			message = ""
 
+			#if VANILLA
 			if ( !isOriginConnected )
 			{
 				message = "#ORIGIN_IS_OFFLINE"
@@ -425,11 +430,6 @@ void function UpdatePlayButton( var button )
 			else if ( !hasLatestPatch )
 			{
 				message = "#ORIGIN_UPDATE_AVAILABLE"
-				file.mpButtonActivateFunc = null
-			}
-			else if ( GetConVarInt( "ns_has_agreed_to_send_token" ) != NS_AGREED_TO_SEND_TOKEN )
-			{
-				message = "#AUTHENTICATIONAGREEMENT_NO"
 				file.mpButtonActivateFunc = null
 			}
 			else
@@ -455,6 +455,17 @@ void function UpdatePlayButton( var button )
 					file.mpButtonActivateFunc = LaunchMP
 				}
 			}
+			#else
+			if ( GetConVarInt( "ns_has_agreed_to_send_token" ) != NS_AGREED_TO_SEND_TOKEN )
+			{
+				message = "#AUTHENTICATIONAGREEMENT_NO"
+				file.mpButtonActivateFunc = null
+			}
+			else
+			{
+				file.mpButtonActivateFunc = LaunchMP
+			}
+			#endif
 
 			isLocked = file.mpButtonActivateFunc == null ? true : false
 			#if !VANILLA
