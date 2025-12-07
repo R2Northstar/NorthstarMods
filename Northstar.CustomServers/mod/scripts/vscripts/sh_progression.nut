@@ -60,7 +60,9 @@ bool function ProgressionEnabledForPlayer( entity player )
 #if SERVER
 void function OnPlaying()
 {
-	SetUIVar( level, "penalizeDisconnect", false ) // dont show the "you will lose merits thing"
+	#if !VANILLA
+		SetUIVar( level, "penalizeDisconnect", false ) // dont show the "you will lose merits thing"
+	#endif
 }
 
 void function OnClientDisconnected( entity player )
