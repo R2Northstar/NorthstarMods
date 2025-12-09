@@ -146,13 +146,4 @@ classes
 	import npc_titan_ogre_scorch_prime_bounty.txt
 	import npc_titan_ogre_minigun_bounty.txt
 	import npc_titan_ogre_legion_prime_bounty.txt
-	
-	import npc_titan_atlas_stickybomb_boss_fd_elite.txt
-	import npc_titan_atlas_tracker_fd_sniper_elite.txt
-	import npc_titan_atlas_tracker_boss_fd_elite.txt
-	import npc_titan_atlas_vanguard_boss_fd_elite.txt
-	import npc_titan_ogre_meteor_boss_fd_elite.txt
-	import npc_titan_ogre_minigun_boss_fd_elite.txt
-	import npc_titan_stryder_leadwall_boss_fd_elite.txt
-	import npc_titan_stryder_sniper_boss_fd_elite.txt
 }
