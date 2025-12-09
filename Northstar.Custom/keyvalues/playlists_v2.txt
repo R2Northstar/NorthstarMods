@@ -53,7 +53,6 @@ playlists
 				max_players 12
 				max_teams 12
 				classic_mp 1
-				scorelimit 21 // temp until we have a way of dynamically setting non-default scorelimit in code
 				
 				gamemode_score_hint #GAMEMODE_SCORE_HINT_FFA
 				gamemode_bullet_001	#GAMEMODE_BULLET_FFA_001
