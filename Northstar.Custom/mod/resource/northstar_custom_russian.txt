@@ -2,7 +2,7 @@
 {
 	"Language" "russian"
 	"Tokens"
-	{	
+	{
 		"PL_sbox" "Песочница"
 		"PL_sbox_lobby" "Лобби: Песочница"
 		"PL_sbox_desc" "Как gmod, но хуже..."
