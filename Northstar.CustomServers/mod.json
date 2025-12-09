@@ -54,6 +54,10 @@
 			"Name": "ns_allow_team_change",
 			"DefaultValue": "1",
 			"Flags": "REPLICATED"
+		},
+		{
+			"Name": "ns_pingspot_enabled",
+			"DefaultValue": "0"
 		}
 	],
 	"Scripts": [
