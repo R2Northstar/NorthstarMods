@@ -235,7 +235,6 @@ void function GamemodeFD_Init()
 	AddClientCommandCallback( "FD_ToggleReady", ClientCommandCallbackToggleReady )
 	AddClientCommandCallback( "FD_UseHarvesterShieldBoost", ClientCommandCallbackUseShieldBoost )
 	AddClientCommandCallback( "FD_SetTutorialBit", ClientCommand_FDSetTutorialBit )
-	AddClientCommandCallback( "dropbattery", ClientCommandCallbackFDDropBattery )
 
 	//Shop Callback
 	SetBoostPurchaseCallback( FD_BoostPurchaseCallback )
@@ -1594,14 +1593,6 @@ bool function ClientCommand_FDSetTutorialBit( entity player, array<string> args 
 	
 	int fdbits = args[0].tointeger()
 	SetPersistenceBitfield( player, "fdTutorialBits", fdbits, -1 )
-	return true
-}
-
-bool function ClientCommandCallbackFDDropBattery( entity player, array<string> args )
-{
-	if ( !player.IsTitan() && PlayerHasBattery( player ) )
-		Rodeo_PilotThrowsBattery( player )
-
 	return true
 }
 
