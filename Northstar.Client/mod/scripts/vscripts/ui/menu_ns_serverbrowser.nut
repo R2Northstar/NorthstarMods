@@ -7,6 +7,8 @@ global function OnServerSelected_Threaded
 global function AddConnectToServerCallback
 global function RemoveConnectToServerCallback
 
+global function IsCoreMod
+
 // Stop peeking
 
 const int BUTTONS_PER_PAGE = 15 // Number of servers we show
@@ -1362,6 +1364,12 @@ void function TriggerConnectToServerCallbacks( ServerInfo ornull targetServer = 
 	{
 		callback( expect ServerInfo( targetServer ) )
 	}
+}
+
+const array<string> CORE_MODS = ["Northstar.Client", "Northstar.Coop", "Northstar.CustomServers", "Northstar.Custom"]
+bool function IsCoreMod( string modName )
+{
+	return CORE_MODS.find( modName ) != -1
 }
 
 array<string> function GetModVersions( string modName )

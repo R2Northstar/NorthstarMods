@@ -41,8 +41,6 @@ global function OnStoreButton_Activate
 global function OnStoreBundlesButton_Activate
 global function OnStoreNewReleasesButton_Activate
 
-global function IsCoreMod
-
 const string MATCHMAKING_AUDIO_CONNECTING = "menu_campaignsummary_titanunlocked"
 
 struct
@@ -1658,10 +1656,4 @@ void function Lobby_SetFDModeBasedOnSearching( string playlistToSearch )
 	}
 
 	Lobby_SetFDMode( isFDMode )
-}
-
-const array<string> CORE_MODS = ["Northstar.Client", "Northstar.Coop", "Northstar.CustomServers", "Northstar.Custom"]
-bool function IsCoreMod( string modName )
-{
-	return CORE_MODS.find( modName ) != -1
 }
