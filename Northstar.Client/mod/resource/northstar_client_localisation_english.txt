@@ -422,5 +422,8 @@ Press Yes if you agree to this. This choice can be changed in the mods menu at a
 		"fd_killcredit_spectre"				"Spectre Kill Credit"
 		"fd_killcredit_stalker"				"Stalker Kill Credit"
 		"fd_killcredit_reaper"				"Reaper Kill Credit"
+
+		// Drop battery playlistvar
+		"drop_battery_command"				"Drop Battery Command"
 	}
 }

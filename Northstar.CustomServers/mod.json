@@ -210,6 +210,16 @@
 			"ServerCallback": {
 				"After": "GamemodeFDPlaylistvars_Init"
 			}
+		},
+		{
+			"Path": "drop_battery_command.nut",
+			"RunOn": "( CLIENT || SERVER ) && MP",
+			"ClientCallback": {
+				"After": "DropBatteryCommand_Init"
+			},
+			"ServerCallback": {
+				"After": "DropBatteryCommand_Init"
+			}
 		}
 	]
 }
