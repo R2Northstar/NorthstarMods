@@ -429,7 +429,6 @@ void function initFrontierDefenseData()
 	WaveSpawn_ReaperSpawn( wave5, "TickReaper", < -969, 1243, -167 >, -122, "" )
 	WaveSpawn_WaitEnemyAliveAmount( wave5, 2 )
 	
-	WaveSpawn_NukeTitanMoveStance( wave5, true, 0.0, eFDSD.EXCLUSIVE | eFDSD.INSANE )
 	WaveSpawn_SmokeWall( wave5, < 2805, 2415, -81 >, 0.3, eFDSD.EXCLUSIVE | eFDSD.INSANE )
 	WaveSpawn_SmokeWall( wave5, < 3335, 2719, 9 >, 0.3, eFDSD.EXCLUSIVE | eFDSD.INSANE )
 	WaveSpawn_SmokeWall( wave5, < 4059, 2313, -50 >, 0.3, eFDSD.EXCLUSIVE | eFDSD.INSANE )
