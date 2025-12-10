@@ -413,5 +413,14 @@ Press Yes if you agree to this. This choice can be changed in the mods menu at a
 		"MOD_CORRUPTED"						"Downloaded archive checksum does not match verified signature."
 		"NO_DISK_SPACE_AVAILABLE"			"There is not enough space on your disk."
 		"MOD_FETCHING_FAILED_GENERAL"		"Mod extraction failed. Check logs for more details."
+
+		// Frontier defense playlistvars
+		"fd_money_per_round"				"Money Per Round"
+		"fd_money_flyouts"					"Money Flyouts"
+		"fd_killcredit_grunt"				"Grunt Kill Credit"
+		"fd_killcredit_drone"				"Drone Kill Credit"
+		"fd_killcredit_spectre"				"Spectre Kill Credit"
+		"fd_killcredit_stalker"				"Stalker Kill Credit"
+		"fd_killcredit_reaper"				"Reaper Kill Credit"
 	}
 }
