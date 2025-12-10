@@ -116,7 +116,6 @@ void function PrivateMatchModesInit()
 	AddPrivateMatchMode( "turbo_lts" )
 	AddPrivateMatchMode( "rocket_lf" )
 	AddPrivateMatchMode( "holopilot_lf" )
-	AddPrivateMatchMode( "fd_livefire" )
 	
 	// maps
 	AddPrivateMatchMap( "mp_coliseum" )
