@@ -171,13 +171,6 @@
 			"RunOn": "CLIENT && MP"
 		},
 		{
-			"Path": "ui/ns_gamemode_fd.nut",
-            "RunOn": "UI",
-            "UICallback": {
-                "Before": "EliteIconSettings_Init"
-            }
-		},
-		{
 			"Path": "gamemodes/gg_earn_meter/sh_gg_earn_meter.gnut",
 			"RunOn": "( CLIENT || SERVER ) && MP"
 		},
@@ -516,10 +509,6 @@
 			"UICallback":{
 				"Before": "NSCustomModSettings"
 			}
-		},
-		{
-			"Path": "ai/_ai_elite_titans.nut",
-			"RunOn": "SERVER && MP"
 		},
 	],
 
