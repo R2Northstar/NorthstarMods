@@ -4,10 +4,6 @@ global function SwitchComplexRingsSpeed
 void function CodeCallback_MapInit()
 {
 	AddCallback_EntitiesDidLoad( InitComplex )
-	
-	//Load Frontier Defense Data
-	if( GameRules_GetGameMode() == FD )
-		initFrontierDefenseData()
 }
 
 void function InitComplex()

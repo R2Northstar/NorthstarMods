@@ -4,10 +4,6 @@ void function CodeCallback_MapInit()
 {
 	SetupLiveFireMaps()
 	
-	// Load Frontier Defense Data
-	if( GameRules_GetGameMode() == FD )
-		initFrontierDefenseData()
-	
 	// worker drone model
 	PrecacheModel( $"models/robots/aerial_unmanned_worker/aerial_unmanned_worker.mdl" )
 		

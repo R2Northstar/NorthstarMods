@@ -557,10 +557,6 @@ void function FD_createHarvester()
 		case "mp_forwardbase_kodai":
 		case "mp_black_water_canal":
 			thread StratonHornetDogfights()
-			break
-		case "mp_eden":
-		case "mp_complex3":
-			thread StratonHornetDogfightsIntense()
 	}
 	
 	UpdateTeamReserve( file.moneyInBank )
@@ -3076,7 +3072,6 @@ string function FD_DropshipGetAnimation()
 		case "mp_relic02": //Also works for Relic so it goes above IMS Odyssey if rotated
 			return "dropship_coop_respawn_lagoon"
 		
-		case "mp_complex3": //Complex also have some clipping paths with other flight path anims
 		case "mp_grave": //Boomtown has low ceiling and this one matches perfectly for it (default clips alot into ceiling geo)
 			return "dropship_coop_respawn_outpost"
 		
