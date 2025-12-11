@@ -299,7 +299,7 @@ bool function ShouldRunFirstPersonSequence( entity player, bool isEmbark, bool i
 	if ( !player.IsPlayer() || player.IsBot() )
 		return false
 
-	if ( ( isEmbark && GetUserInfoKVInt_Internal( player, "embark_style", 0 ) ) || ( isExecution && GetUserInfoKVInt_Internal( player, "execution_style", 0 ) ) )
+	if ( ( isEmbark && GetUserInfoKVBool_Internal( player, "embark_style", false ) ) || ( isExecution && GetUserInfoKVBool_Internal( player, "execution_style", false ) ) )
 		return true
 	
 	return false
