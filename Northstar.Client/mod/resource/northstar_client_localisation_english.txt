@@ -51,7 +51,6 @@ Press Yes if you agree to this. This choice can be changed in the mods menu at a
 
 		"max_players" "Max Playerslots"
 		"classic_mp" "Classic MP"
-		"run_intro" "Dropship Intro"
 		"run_epilogue" "Run Epilogue"
 		"scorelimit" "Score Limit"
 		"roundscorelimit" "Score Limit (round-based)"

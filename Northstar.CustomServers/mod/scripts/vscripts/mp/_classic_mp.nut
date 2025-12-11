@@ -127,7 +127,7 @@ void function ClassicMP_SetupEpilogue()
 
 bool function GetClassicMPMode()
 {
-	return GetCurrentPlaylistVarInt( "run_intro", 1 ) == 1
+	return GetCurrentPlaylistVarInt( "classic_mp", 1 ) == 1
 }
 
 bool function ClassicMP_ShouldRunEpilogue()
