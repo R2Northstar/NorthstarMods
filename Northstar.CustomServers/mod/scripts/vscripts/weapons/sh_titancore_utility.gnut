@@ -109,7 +109,10 @@ bool function OnAbilityCharge_TitanCore( entity weapon )
 	if ( !CheckCoreAvailable( weapon ) )
 		return false
 
-	entity player = weapon.GetWeaponOwner()
+	entity titan = weapon.GetWeaponOwner()
+
+	if ( !IsValid( titan ) || !titan.IsTitan() )
+		return false
 
 	#if CLIENT
 	if ( IsFirstTimePredicted() )
@@ -117,14 +120,14 @@ bool function OnAbilityCharge_TitanCore( entity weapon )
 	#endif
 		// printt( "chargebegin" )
 	#if SERVER
-		CoreActivate( player )
+		CoreActivate( titan )
 	#endif
-		CoreChargeBegin( player, player, weapon )
+		CoreChargeBegin( titan, titan, weapon )
 	#if CLIENT
 	}
 	#endif
 
-	player.Signal( "CoreActivated" )
+	titan.Signal( "CoreActivated" )
 
 	return true
 }
@@ -133,10 +136,14 @@ bool function OnAbilityStart_TitanCore( entity weapon )
 {
 	entity titan = weapon.GetWeaponOwner()
 	// printt( "abilitybegin" )
+
+	if ( !IsValid( titan ) || !titan.IsTitan() )
+		return false
+
 	titan.Signal( "CoreBegin" )
 
 	#if SERVER
-	CoreBegin( titan, titan, weapon )
+		CoreBegin( titan, titan, weapon )
 	#endif
 
 	if ( titan.IsPlayer() )
@@ -156,7 +163,7 @@ void function OnAbilityChargeEnd_TitanCore( entity weapon )
 	// printt( "chargeend" )
 	entity titan = weapon.GetWeaponOwner()
 
-	if ( titan == null )
+	if ( !IsValid( titan ) || !titan.IsTitan() )
 		return
 
 	CoreChargeEnd( titan, weapon )
@@ -167,7 +174,7 @@ void function OnAbilityEnd_TitanCore( entity weapon )
 	// printt( "abilityend" )
 	entity titan = weapon.GetWeaponOwner()
 
-	if ( titan == null )
+	if ( !IsValid( titan ) || !titan.IsTitan() )
 		return
 
 	CoreDeactivate( titan, weapon )
@@ -180,6 +187,9 @@ bool function CheckCoreAvailable( entity weapon )
 	// printt( "IsCoreAvailable?" )
 	entity titan = weapon.GetWeaponOwner()
 
+	if ( !IsValid( titan ) )
+		return false
+
 	if ( !titan.IsTitan() )
 		return false
 
@@ -189,12 +199,12 @@ bool function CheckCoreAvailable( entity weapon )
 	if ( titan.IsPlayer() && IsInExecutionMeleeState( titan ) )
 		return false
 
-	if ( titan.GetParent() != null )
+	if ( titan.GetParent() )
 		return false
 
 	entity soul = titan.GetTitanSoul()
 
-	if ( soul == null )
+	if ( !IsValid( soul ) )
 		return false
 
 	if ( soul.IsEjecting() )
@@ -226,8 +236,7 @@ void function CoreActivate( entity player )
 void function CoreDeactivate( entity player, entity weapon )
 {
 	// printt( "deactivate" )
-	Assert( player.IsTitan() )
-	entity soul = player.GetTitanSoul();
+	entity soul = player.GetTitanSoul()
 
 	if ( IsValid( soul ) && !player.ContextAction_IsMeleeExecution() )
 	{
@@ -253,9 +262,6 @@ bool function CoreBegin( entity player, entity titan, entity weapon )
 	bool marathon = false
 
 	if ( !IsAlive( titan ) )
-		return false
-
-	if ( !titan.IsTitan() )
 		return false
 
 	if ( player.IsPlayer() )
@@ -332,7 +338,7 @@ void function CoreEnd( entity player, entity titan, entity weapon )
 {
 	entity soul = titan.GetTitanSoul()
 
-	if ( soul != null )
+	if ( IsValid( soul ) )
 	{
 		var passive = GetPassiveFromWeapon( weapon )
 
@@ -390,18 +396,15 @@ bool function CoreChargeBegin( entity player, entity titan, entity weapon )
 #if SERVER
 void function CoreChargeEnd( entity titan, entity weapon )
 {
-	if ( IsValid( titan ) )
-	{
-		entity soul = titan.GetTitanSoul()
-		if ( soul != null )
-			CleanupCoreEffect( soul )
-	}
+	entity soul = titan.GetTitanSoul()
+	if ( IsValid( soul ) )
+		CleanupCoreEffect( soul )
 }
 #endif // #if SERVER
 
 bool function IsCoreChargeAvailable( entity player, entity soul )
 {
-	if ( soul == null )
+	if ( !IsValid( soul ) )
 		return false
 
 	if ( TitanDamageRewardsTitanCoreTime() )
