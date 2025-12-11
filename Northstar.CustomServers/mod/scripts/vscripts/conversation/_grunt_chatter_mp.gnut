@@ -41,10 +41,10 @@ void function PlayGruntChatterMPLine( entity grunt, string conversationType )
 
 void function GruntChatter_OnPlayerOrNPCKilled( entity deadGuy, entity attacker, var damageInfo )
 {
-	if ( !IsValid( deadGuy ) || !IsValid( attacker ) )
+	if ( !IsValid( deadGuy ) || !IsValid( attacker ) || !IsGrunt( attacker ) )
 		return
 	
-	if( IsGrunt( attacker ) && IsPilot( deadGuy ) )
+	if ( IsPilot( deadGuy ) )
 		PlayGruntChatterMPLine( attacker, "bc_killenemypilot" )
 	else
 		GruntChatter_TryEnemyTitanDown( deadGuy )
