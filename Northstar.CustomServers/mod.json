@@ -202,16 +202,6 @@
 			}
 		},
 		{
-			"Path": "gamemodes/sh_gamemode_fd_playlistvars.nut",
-			"RunOn": "( CLIENT || SERVER ) && MP",
-			"ClientCallback": {
-				"After": "GamemodeFDPlaylistvars_Init"
-			},
-			"ServerCallback": {
-				"After": "GamemodeFDPlaylistvars_Init"
-			}
-		},
-		{
 			"Path": "drop_battery_command.nut",
 			"RunOn": "( CLIENT || SERVER ) && MP",
 			"ClientCallback": {
