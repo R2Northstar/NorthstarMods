@@ -440,6 +440,10 @@
 			"Path": "sh_northstar_safe_io.gnut",
 			"RunOn": "CLIENT || SERVER || UI"
 		},
+    	{
+			"Path": "_atlas_announcements.nut",
+			"RunOn": "UI"
+    },
 		{
 			"Path": "_testing.nut",
 			"RunOn": "CLIENT || SERVER || UI",
