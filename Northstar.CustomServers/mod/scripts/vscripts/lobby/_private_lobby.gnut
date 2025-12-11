@@ -118,6 +118,16 @@ bool function ClientCommandCallback_PrivateMatchSetMode( entity player, array<st
 	}
 
 	file.mode = args[0]
+
+	if ( !PrivateMatch_IsValidMapModeCombo( file.map, file.mode ) )
+	{
+		string map = GetPrivateMatchMapsForMode( file.mode )[0]
+
+		file.map = map
+
+		SetUIVar( level, "privatematch_map", GetPrivateMatchMapIndex( map ) )
+	}
+
 	//GameRules_SetGameMode( args[0] ) // can't do this here due to out of sync errors with new clients
 	
 	RefreshPlayerTeams()
