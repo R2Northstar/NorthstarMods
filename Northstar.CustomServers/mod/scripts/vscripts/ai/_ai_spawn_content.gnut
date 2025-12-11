@@ -88,13 +88,6 @@ function CommonNPCOnSpawned( entity npc )
 		{
 			CreateTitanSoul( npc )
 		}
-		
-		if ( GetTitanCharacterName( npc ) == "legion" )
-		{
-			npc.SetIdleAnim( "htGAT_Stand_Idle_MP" )
-			npc.SetMoveAnim( "htGAT_MP_Walk_forward" )
-			npc.EnableNPCFlag( NPCMF_DISABLE_MOVE_TRANSITIONS | NPCMF_DISABLE_ARRIVALS )
-		}
 	}
 
 	if ( npc.GetTeam() <= 0 )
