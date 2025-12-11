@@ -41,7 +41,7 @@ void function PrivateMatchModesInit()
 	
 	AddPrivateMatchModeSettingEnum( "#GAMEMODE_coliseum", "coliseum_loadouts_#SETTING_ENABLED", [ "#SETTING_DISABLED", "#SETTING_ENABLED" ], "1" )
 	
-	AddPrivateMatchModeSettingEnum( "#PL_aitdm", "aitdm_archer_grunts", [ "Disabled", "Enabled" ], "0"  )
+	AddPrivateMatchModeSettingEnum( "#PL_aitdm", "aitdm_archer_grunts", [ "#SETTING_DISABLED", "#SETTING_ENABLED" ], "0"  )
 
 	foreach ( string difficulty in [ "#PL_fd_easy", "#PL_fd_normal", "#PL_fd_hard", "#PL_fd_master", "#PL_fd_insane" ] )
 	{
