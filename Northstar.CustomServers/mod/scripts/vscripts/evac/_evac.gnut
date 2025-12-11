@@ -365,9 +365,10 @@ void function Evac( int evacTeam, float initialWait, float arrivalTime, float wa
 	
 	// holster all weapons
 	file.shouldholsterweapons[ dropship ] <- true
+
 	foreach ( entity player in dropship.s.evacSlots )
 		if ( IsValid( player ) )
-			player.HolsterWeapon()
+			HolsterViewModelAndDisableWeapons( player )
 	
 	// fly away
 	dropship.Signal( "EvacShipLeaves" )
@@ -512,6 +513,10 @@ void function AddPlayerToEvacDropship( entity dropship, entity player )
 	EmitSoundOnEntityOnlyToPlayer( player, player, SHIFTER_START_SOUND_3P )
 	// should play SHIFTER_START_SOUND_1P when they actually arrive in the ship i think, unsure how this is supposed to be done
 	PlayPhaseShiftDisappearFX( player )
+
+	if ( dropship in file.shouldholsterweapons && file.shouldholsterweapons[ dropship ] ) // don't let people have their weapons in the dropship after it leaves
+		HolsterViewModelAndDisableWeapons( player )
+
 	FirstPersonSequence( fp, player, dropship )
 	
 	FirstPersonSequenceStruct idleFp
@@ -520,10 +525,7 @@ void function AddPlayerToEvacDropship( entity dropship, entity player )
 	idleFp.attachment = "RESCUE"
 	idleFp.teleport = true
 	idleFp.hideProxy = true
-	idleFp.viewConeFunction = ViewConeWide  
-
-	if ( dropship in file.shouldholsterweapons && file.shouldholsterweapons[ dropship ] ) // don't let people have their weapons in the dropship after it leaves
-		player.HolsterWeapon()
+	idleFp.viewConeFunction = ViewConeWide
 
 	thread FirstPersonSequence( idleFp, player, dropship )
 	ViewConeWide( player ) // gotta do this after for some reason, adding it to idleFp does not work for some reason
