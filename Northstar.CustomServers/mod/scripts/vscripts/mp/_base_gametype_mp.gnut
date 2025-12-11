@@ -394,7 +394,7 @@ void function PostDeathThread_MP( entity player, var damageInfo ) // based on ga
 	else
 		player.SetObserverTarget( null )
 	
-	if ( ( GamePlayingOrSuddenDeath() || GetGameState() == eGameState.Epilogue ) && !file.playerDeathsHidden )
+	if ( ( GamePlayingOrSuddenDeath() || GetGameState() == eGameState.Epilogue || GetGameState() == eGameState.WinnerDetermined ) && !file.playerDeathsHidden )
 		player.AddToPlayerGameStat( PGS_DEATHS, 1 )
 	
 	if ( !file.playerDeathsHidden )
