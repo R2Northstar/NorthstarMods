@@ -83,6 +83,8 @@ Forced1PSequenceData function FirstPersonSequenceForce1P( FirstPersonSequenceStr
 		ownerProxy.SetValueForModelKey( player.GetModelName() )
 	}
 
+	ownerProxy.EnableNPCFlag( NPC_IGNORE_ALL )
+
 	NPC_NoTarget( ownerProxy )
 	SetTeam( ownerProxy, player.GetTeam() )
 	TakeWeaponsForArray( ownerProxy, ownerProxy.GetMainWeapons() )
@@ -146,6 +148,8 @@ Forced1PSequenceData function FirstPersonSequenceForce1P( FirstPersonSequenceStr
 		thirdPersonProxy.SetModel( player.GetModelName() )
 		thirdPersonProxy.SetValueForModelKey( player.GetModelName() )
 	}
+
+	thirdPersonProxy.EnableNPCFlag( NPC_IGNORE_ALL )
 
 	NPC_NoTarget( thirdPersonProxy )
 	SetTeam( thirdPersonProxy, player.GetTeam() )
