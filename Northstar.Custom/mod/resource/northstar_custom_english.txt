@@ -4,6 +4,9 @@
 	"Tokens"
 	{	
 		"WPN_PEACEKRABER" "Peacekraber"
+		"WPN_PEACEKRABER_SHORT" "Peacekraber" 
+		"WPN_PEACEKRABER_DESC"  "Bolt action shotgun with variable spread."
+		"WPN_PEACEKRABER_LONGDESC" "Kraber modified to shoot shotgun rounds"
 		"MELEE_KUNAI" "Kunai"
 		
 		"PL_sbox" "Sandbox"
