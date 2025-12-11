@@ -529,13 +529,6 @@ void function WaveSpawn_Announce( array<WaveSpawnEvent> waveName, string soundAl
 		event.soundEventName = "fd_waveTypeFlyers"
 		break
 		
-		case "elitetitan":
-		case "elitetitans":
-		case "elites":
-		case "elite":
-		event.soundEventName = "fd_waveTypeEliteTitan"
-		break
-		
 		case "infantry":
 		event.soundEventName = "fd_waveTypeInfantry"
 		break
