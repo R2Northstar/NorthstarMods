@@ -263,6 +263,9 @@ array<string> function GetPrivateMatchMapsForMode( string modeName )
 	//return mapsArray
 	
 	array<string> maps
+
+	if ( IsFDMode( modeName ) ) // got to figure out why unsupported maps show up
+		maps.extend( [ "mp_relic02", "mp_glitch", "mp_colony02" ] )
 	
 	// use the private match playlist for this if the gamemode is in it already
 	int privatePlaylistModeIndex = GetPrivateMatchModeIndex( modeName )
