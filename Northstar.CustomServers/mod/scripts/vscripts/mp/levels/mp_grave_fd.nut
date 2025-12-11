@@ -460,9 +460,7 @@ void function initFrontierDefenseData()
 	WaveSpawn_InfantrySpawn( wave5, "CloakDrone", < 9336, -2261, 4000 >, 180, "", 2.0 )
 	WaveSpawn_InfantrySpawn( wave5, "CloakDrone", < 9245, -6489, 4000 >, 180, "", 5.0 )
 	WaveSpawn_WaitEnemyAliveAmount( wave5, 0 )
-	
-	WaveSpawn_Announce( wave5, "TitanfallBlock", 0.0 )
-	WaveSpawn_TitanfallBlock( wave5, true, 5.0 )
+
 	WaveSpawn_TitanSpawn( wave5, "Ronin", < 9816, -6601, 2002 >, 180, "northForestLongUnderpass", 0.5 )
 	WaveSpawn_TitanSpawn( wave5, "Ronin", < 11318, -5970, 1957 >, 180, "northForestLongUnderpass", 0.5, "", 0.0, eFDSD.ALL, eFDTT.TITAN_ELITE )
 	WaveSpawn_TitanSpawn( wave5, "Ronin", < 9784, -4432, 2007 >, 180, "northForestLongUnderpass", 2.5 )
