@@ -324,8 +324,6 @@ void function EnableHudOnViewRestored( int ruiDrawIsEnabled = 1 )
 }
 #endif
 
-// Anim events down here
-
 #if SERVER
 void function ModdedPhaseEmbarkPhaseStart( entity player )
 {
