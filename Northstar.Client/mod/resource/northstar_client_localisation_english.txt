@@ -50,7 +50,7 @@ Press Yes if you agree to this. This choice can be changed in the mods menu at a
 		"MODE_SETTING_CATEGORY_MATCH" "Match"
 
 		"max_players" "Max Playerslots"
-		"classic_mp" "Classic MP"
+		"run_intro" "Run Intro"
 		"run_epilogue" "Run Epilogue"
 		"scorelimit" "Score Limit"
 		"roundscorelimit" "Score Limit (round-based)"
