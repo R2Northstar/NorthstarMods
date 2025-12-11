@@ -2294,8 +2294,8 @@ void function NPCNav_FD( entity npc, string routeName, int nodesToSkip = 1, floa
 			routetaken = routeName
 	}
 
-	//Ticks, Arc Titans, Combat Reapers and Elite Titans have their own Fight Radii defined in spawn code
-	if ( npc.GetClassName() != "npc_frag_drone" && npcName != "empTitan" && !IsSuperSpectre( npc ) && npc.ai.bossTitanType != TITAN_MERC )
+	//Ticks, Arc Titans and Combat Reapers have their own Fight Radii defined in spawn code
+	if ( npc.GetClassName() != "npc_frag_drone" && npcName != "empTitan" && !IsSuperSpectre( npc ) )
 		npc.AssaultSetFightRadius( 0 )
 	
 	if ( !useCustomFDLoad )

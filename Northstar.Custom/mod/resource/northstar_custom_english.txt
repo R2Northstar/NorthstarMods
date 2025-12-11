@@ -39,14 +39,8 @@
 		"GAMEMODE_BULLET_FD_001"					"`1%$rui/hud/gametype_icons/fd/coop_harvester%`0 Defend the Harvester from incoming enemies."
 		"GAMEMODE_BULLET_FD_002"					"`1%$rui/hud/gametype_icons/bounty_hunt/bh_bonus_icon%`0 Purchase defenses at the Armory in between waves."
 		"GAMEMODE_BULLET_FD_003"					"`1%$rui/hud/gametype_icons/bounty_hunt/bh_green_check%`0 Bonus credits given for no Harvester damage, wave MVP, and no deaths."
-		"GAMEMODE_BULLET_FD_004"					"`1%$rui/menu/common/prime_toggle_on%`0 Do not engage Elite Titans alone, they will kill you effortlessly."
+		"GAMEMODE_BULLET_FD_004"					" "
 		"GAMEMODE_BULLET_FD_005"					"`1%$rui/menu/common/hint_icon%`0 Titan selection locked in after Wave 1 - Choose wisely!"
-		
-		"GAMEMODE_BULLET_LFFD_001"					"`1%$rui/hud/gametype_icons/fd/coop_harvester%`0 Defend the Harvester from incoming enemies.\n`1%$rui/hud/gametype_icons/bounty_hunt/bh_bonus_icon%`0 Purchase defenses at the Armory in between waves.\n`1%$rui/hud/gametype_icons/bounty_hunt/bh_green_check%`0 Bonus credits given for no Harvester damage, wave MVP, and no deaths."
-		"GAMEMODE_BULLET_LFFD_002"					"`1%$rui/menu/common/hint_icon%`0 Droz and Davis will help protecting the Harvester.\n`1%$rui/menu/common/hint_icon%`0 The Helper Titan respawns after 2 minutes if destroyed.\n`1%$rui/menu/common/hint_icon%`0 Loadouts can be changed at any time at the Loadout Crate."
-		"GAMEMODE_BULLET_LFFD_003"					" "
-		"GAMEMODE_BULLET_LFFD_004"					" "
-		"GAMEMODE_BULLET_LFFD_005"					" "
 		
 		"INFECTION_YOU_ARE_INFECTED" "You've been Infected!"
 		"INFECTION_KILL_SURVIVORS" "Infect All Remaining Survivors."
