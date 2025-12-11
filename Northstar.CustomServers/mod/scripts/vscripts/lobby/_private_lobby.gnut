@@ -135,7 +135,7 @@ bool function ClientCommandCallback_SetCustomMap( entity player, array<string> a
 		if ( !NSIsPlayerLocalPlayer( player ) )
 			return true
 
-	if ( GetPrivateMatchMapsForMode( file.mode ).contains( args[0] ) )
+	if ( PrivateMatch_IsValidMapModeCombo( args[0], file.mode ) )
 	{
 		LogPrivateMatchChange( player , " changed the map to " , args )
 	}

@@ -114,58 +114,6 @@
 		"WPN_SHOTGUN_DBLBARREL_DESC" "Short-barreled Shotgun"
 		"WPN_SHOTGUN_DBLBARREL_LONGDESC" "Short Double Barreled Shotgun"
 		
-		//Add missing wave names for maps that currently don't have them
-		"MP_GRAVE_FD_WAVE_1"				"Not an Usual Neighborhood"
-		"MP_GRAVE_FD_WAVE_2"				"At the End of the Street"
-		"MP_GRAVE_FD_WAVE_3"				"Wild Wild Blast"
-		"MP_GRAVE_FD_WAVE_4"				"They Hit Without Warning"
-		"MP_GRAVE_FD_WAVE_5"				"Town Goes Boom!"
-		
-		"MP_RELIC02_FD_WAVE_1"				"Destroyed but Undefeated"
-		"MP_RELIC02_FD_WAVE_2"				"Wisdom From Ancient Times"
-		"MP_RELIC02_FD_WAVE_3"				"Tales of the Sages"
-		"MP_RELIC02_FD_WAVE_4"				"Power Gathering"
-		"MP_RELIC02_FD_WAVE_5"				"Ravaging Entire Worlds"
-		
-		"MP_CRASHSITE3_FD_WAVE_1"			"Area Recognition"
-		"MP_CRASHSITE3_FD_WAVE_2"			"Debris and Metals"
-		"MP_CRASHSITE3_FD_WAVE_3"			"Salvage What's Left of It"
-		"MP_CRASHSITE3_FD_WAVE_4"			"Not a Distress Beacon"
-		"MP_CRASHSITE3_FD_WAVE_5"			"Demolished in Brute Force"
-		
-		//Eden Wave Names left by Respawn are temporary and are quite too simplistic
-		"MP_EDEN_FD_WAVE_1"					"The Garden that was Promised"
-		"MP_EDEN_FD_WAVE_2"					"Temptation and Seduction"
-		"MP_EDEN_FD_WAVE_3"					"Fall from Grace"
-		"MP_EDEN_FD_WAVE_4"					"Behind the Veil of Lies"
-		"MP_EDEN_FD_WAVE_5"					"Everything Everywhere All at Once"
-		
-		"MP_COMPLEX3_FD_WAVE_1"				"The Unknown Device"
-		"MP_COMPLEX3_FD_WAVE_2"				"Furious Machinery"
-		"MP_COMPLEX3_FD_WAVE_3"				"Four Dimensions"
-		"MP_COMPLEX3_FD_WAVE_4"				"Space Bent, Time Spent"
-		"MP_COMPLEX3_FD_WAVE_5"				"Perpertually Relentless"
-		
-		"MP_LF_DECK_FD_WAVE_1"				"Frantic Strenght"
-		"MP_LF_DECK_FD_WAVE_2"				"No Decking Anywhere"
-		"MP_LF_DECK_FD_WAVE_3"				"It's Tickin' Time!"
-		
-		"MP_LF_TOWNSHIP_FD_WAVE_1"			"This Town ain't Big Enough for the Two of Us"
-		"MP_LF_TOWNSHIP_FD_WAVE_2"			"Throw Everything You Got!"
-		"MP_LF_TOWNSHIP_FD_WAVE_3"			"Savage Nuclear Protocol"
-		
-		"MP_LF_UMA_FD_WAVE_1"				"Tunnel Heavy Shootout"
-		"MP_LF_UMA_FD_WAVE_2"				"Rain of Lead"
-		"MP_LF_UMA_FD_WAVE_3"				"All Aboard the Reaper Train"
-		
-		"MP_LF_MEADOW_FD_WAVE_1"			"Not Touching Grass Today"
-		"MP_LF_MEADOW_FD_WAVE_2"			"Going to Play Outside"
-		"MP_LF_MEADOW_FD_WAVE_3"			"Get Off My Lawn"
-		
-		"MP_LF_TRAFFIC_FD_WAVE_1"			"Ramming Enemies"
-		"MP_LF_TRAFFIC_FD_WAVE_2"			"Delivery of Violence"
-		"MP_LF_TRAFFIC_FD_WAVE_3"			"Chasing Destruction"
-		
 		"fd_harvester_health" "Harvester HP"
 		"fd_harvester_shield" "Harvester Shield"
 		"fd_wave_buy_time" "Wave Break Time"

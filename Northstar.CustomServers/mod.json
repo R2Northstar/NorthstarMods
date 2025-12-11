@@ -27,7 +27,7 @@
 		},
 		{
 			"Name": "ns_private_match_map_rotation",
-			"DefaultValue": "mp_angel_city,mp_black_water_canal,mp_grave,mp_colony02,mp_complex3,mp_drydock,mp_eden,mp_thaw,mp_forwardbase_kodai,mp_glitch,mp_homestead,mp_rise,mp_wargames"
+			"DefaultValue": "mp_angel_city,mp_black_water_canal,mp_grave,mp_colony02,mp_drydock,mp_thaw,mp_forwardbase_kodai,mp_glitch,mp_homestead,mp_rise,mp_wargames"
 		},
 		{
 			"Name": "ns_private_match_only_host_can_change_settings",
