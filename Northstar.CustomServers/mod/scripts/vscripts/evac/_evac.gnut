@@ -501,8 +501,6 @@ void function AddPlayerToEvacDropship( entity dropship, entity player )
 	player.UnforceCrouch()
 	player.ForceStand()
 	Remote_CallFunction_NonReplay( player, "ServerCallback_CreateDropShipIntLighting", dropship.GetEncodedEHandle(), dropship.GetTeam() )
-	if ( dropship in file.shouldholsterweapons && file.shouldholsterweapons[ dropship ] ) // don't let people have their weapons in the dropship after it leaves
-    	player.HolsterWeapon()
 
 	FirstPersonSequenceStruct fp
 	//fp.firstPersonAnim = EVAC_EMBARK_ANIMS_1P[ slot ]
@@ -523,7 +521,10 @@ void function AddPlayerToEvacDropship( entity dropship, entity player )
 	idleFp.teleport = true
 	idleFp.hideProxy = true
 	idleFp.viewConeFunction = ViewConeWide  
-		
+
+	if ( dropship in file.shouldholsterweapons && file.shouldholsterweapons[ dropship ] ) // don't let people have their weapons in the dropship after it leaves
+		player.HolsterWeapon()
+
 	thread FirstPersonSequence( idleFp, player, dropship )
 	ViewConeWide( player ) // gotta do this after for some reason, adding it to idleFp does not work for some reason
 }
