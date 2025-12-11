@@ -75,5 +75,55 @@
 		"WPN_SHOTGUN_DBLBARREL_SHORT" "TWIN-B"
 		"WPN_SHOTGUN_DBLBARREL_DESC" "Escopeta de cano curto"
 		"WPN_SHOTGUN_DBLBARREL_LONGDESC" "Escopeta dupla de cano curto"
+		
+		"MP_GRAVE_FD_WAVE_1"				"Não é uma Vizinhança Comum"
+		"MP_GRAVE_FD_WAVE_2"				"No Fim da Rua"
+		"MP_GRAVE_FD_WAVE_3"				"Tiro, Porrada e Bomba"
+		"MP_GRAVE_FD_WAVE_4"				"Eles Acertam Sem Avisar"
+		"MP_GRAVE_FD_WAVE_5"				"Explodindo a Cidade!"
+		
+		"MP_RELIC02_FD_WAVE_1"				"Destruído mas Não Derrotado"
+		"MP_RELIC02_FD_WAVE_2"				"Conhecimento de Tempos Antigos"
+		"MP_RELIC02_FD_WAVE_3"				"Contos dos Sábios"
+		"MP_RELIC02_FD_WAVE_4"				"Ganhando Poder"
+		"MP_RELIC02_FD_WAVE_5"				"Devastando Mundos Inteiros"
+		
+		"MP_CRASHSITE3_FD_WAVE_1"			"Reconhecimento da Área"
+		"MP_CRASHSITE3_FD_WAVE_2"			"Escombros e Metais"
+		"MP_CRASHSITE3_FD_WAVE_3"			"Salve o que sobrou"
+		"MP_CRASHSITE3_FD_WAVE_4"			"Não é um Sinal de Socorro"
+		"MP_CRASHSITE3_FD_WAVE_5"			"Demolido em Força Bruta"
+		
+		"MP_EDEN_FD_WAVE_1"					"O Jardim que foi Prometido"
+		"MP_EDEN_FD_WAVE_2"					"Tentação e Sedução"
+		"MP_EDEN_FD_WAVE_3"					"Caindo da Graça"
+		"MP_EDEN_FD_WAVE_4"					"Por Trás do Véu de Mentiras"
+		"MP_EDEN_FD_WAVE_5"					"Tudo em Todo Lugar ao Mesmo Tempo"
+		
+		"MP_COMPLEX3_FD_WAVE_1"				"O Dispositivo Desconhecido"
+		"MP_COMPLEX3_FD_WAVE_2"				"Maquinário Furioso"
+		"MP_COMPLEX3_FD_WAVE_3"				"Quatro Dimensões"
+		"MP_COMPLEX3_FD_WAVE_4"				"Espaço Dobrado, Tempo Gasto"
+		"MP_COMPLEX3_FD_WAVE_5"				"Perpétuamente Implacável"
+		
+		"MP_LF_DECK_FD_WAVE_1"				"Força Frenética"
+		"MP_LF_DECK_FD_WAVE_2"				"Sem Armazenagem"
+		"MP_LF_DECK_FD_WAVE_3"				"Hora dos Pulgões!"
+		
+		"MP_LF_TOWNSHIP_FD_WAVE_1"			"Essa Cidade é Pequena Demais para Nós Dois"
+		"MP_LF_TOWNSHIP_FD_WAVE_2"			"Mande Tudo o que Você Tem!"
+		"MP_LF_TOWNSHIP_FD_WAVE_3"			"Protocolo Nuclear Selvagem"
+		
+		"MP_LF_UMA_FD_WAVE_1"				"Tiroteio no Túnel"
+		"MP_LF_UMA_FD_WAVE_2"				"Chuva de Chumbo"
+		"MP_LF_UMA_FD_WAVE_3"				"Todos à Bordo ao Trem dos Reapers"
+		
+		"MP_LF_MEADOW_FD_WAVE_1"			"Sem Tocar a Grama Hoje"
+		"MP_LF_MEADOW_FD_WAVE_2"			"Indo Brincar lá Fora"
+		"MP_LF_MEADOW_FD_WAVE_3"			"Saia do Meu Gramado"
+		
+		"MP_LF_TRAFFIC_FD_WAVE_1"			"Atropleando Inimigos"
+		"MP_LF_TRAFFIC_FD_WAVE_2"			"Entrega de Violência"
+		"MP_LF_TRAFFIC_FD_WAVE_3"			"Perseguindo Destruição"
 	}
 }
