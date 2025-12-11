@@ -72,6 +72,11 @@
 			"Name": "embark_style",
 			"DefaultValue": "0",
 			"Flags": "ARCHIVE_PLAYERPROFILE|USERINFO"
+		},
+		{
+			"Name": "execution_style",
+			"DefaultValue": "0",
+			"Flags": "ARCHIVE_PLAYERPROFILE|USERINFO"
 		}
 	],
 	"Scripts": [
@@ -364,12 +369,10 @@
 			"Path": "sh_3psequence_to_1p_hacks.gnut",
 			"RunOn": "( CLIENT || SERVER ) && MP",
 			"ClientCallback": {
-				"Before": "FirstPersonSequenceForce1P_Init",
-				"After": "FirstPersonSequenceForce1P_InitPlaylistVars"
+				"Before": "FirstPersonSequenceForce1P_Init"
 			},
 			"ServerCallback": {
-				"Before": "FirstPersonSequenceForce1P_Init",
-				"After": "FirstPersonSequenceForce1P_InitPlaylistVars"
+				"Before": "FirstPersonSequenceForce1P_Init"
 			}
 		},
 		{
