@@ -585,10 +585,14 @@ function UpdatePrivateMatchButtons()
 		#endif
 
 		string modeName = PrivateMatch_GetSelectedMode()
-		//bool settingsLocked = IsFDMode( modeName )
+		bool settingsLocked = false
+		
+		#if VANILLA
+			settingsLocked = IsFDMode( modeName )
+		#endif
 
-		//if ( settingsLocked && uiGlobal.activeMenu == GetMenu( "MatchSettingsMenu" ) )
-		//	CloseActiveMenu()
+		if ( settingsLocked && uiGlobal.activeMenu == GetMenu( "MatchSettingsMenu" ) )
+			CloseActiveMenu()
 
 		Hud_SetLocked( file.matchSettingsButton, false )
 	}

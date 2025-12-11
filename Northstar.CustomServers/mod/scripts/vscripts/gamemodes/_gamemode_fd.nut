@@ -205,12 +205,11 @@ void function GamemodeFD_Init()
 	/* This is split from the AddCallback_OnNPCKilled function because that callback only runs if the attacker is valid, which disconnected players
 	does not count towards, and causes softlocks due to that */
 	AddDeathCallback( "npc_frag_drone", OnTickDeath )
-	AddDeathCallback( "npc_soldier", FD_GenericNPCDeath )
-	AddDeathCallback( "npc_spectre", FD_GenericNPCDeath )
-	AddDeathCallback( "npc_stalker", FD_GenericNPCDeath )
-	AddDeathCallback( "npc_super_spectre", FD_GenericNPCDeath )
-	AddDeathCallback( "npc_drone", FD_GenericNPCDeath )
-	AddDeathCallback( "npc_titan", FD_GenericNPCDeath )
+
+	foreach ( string npcClass in [ "npc_frag_drone", "npc_soldier", "npc_spectre", "npc_stalker", "npc_super_spectre", "npc_drone", "npc_titan" ] )
+	{
+		AddSpawnCallback( npcClass, FD_GenericNPCDeathChecker )
+	}
 
 	//Command Callbacks
 	AddClientCommandCallback( "FD_ToggleReady", ClientCommandCallbackToggleReady )
@@ -558,10 +557,6 @@ void function FD_createHarvester()
 		case "mp_forwardbase_kodai":
 		case "mp_black_water_canal":
 			thread StratonHornetDogfights()
-			break
-		case "mp_eden":
-		case "mp_complex3":
-			thread StratonHornetDogfightsIntense()
 	}
 	
 	UpdateTeamReserve( file.moneyInBank )
@@ -904,7 +899,7 @@ bool function runWave( int waveIndex, bool shouldDoBuyTime )
 	foreach ( entity player in GetPlayerArrayOfTeam( TEAM_MILITIA ) )
 		file.players[player].wavesCompleted++
 		
-	if ( isFinalWave() && IsHarvesterAlive( fd_harvester.harvester ) )
+	if ( isFinalWave() )
 	{
 		//Game won code
 		print( "No more pending Waves, match won" )
@@ -1094,7 +1089,7 @@ void function WaveBreak_ShowPlayerBonus()
 	wait 3
 	
 	print( "Showing Player Stats: Wave Complete" )
-	SetJoinInProgressBonus( GetCurrentPlaylistVarInt( "fd_money_per_round", 600 ) )
+	SetJoinInProgressBonus( GetCurrentPlaylistVarInt( "fd_money_per_round", FD_MONEY_PER_ROUND ) )
 	foreach ( entity player in GetPlayerArrayOfTeam( TEAM_MILITIA ) )
 	{
 		if ( isSecondWave() )
@@ -1103,7 +1098,7 @@ void function WaveBreak_ShowPlayerBonus()
 			PlayFactionDialogueToPlayer( "fd_wavePayoutAddtnl", player, true )
 
 		AddPlayerScore( player, "FDTeamWave" )
-		AddMoneyToPlayer( player, GetCurrentPlaylistVarInt( "fd_money_per_round", 600 ) )
+		AddMoneyToPlayer( player, GetCurrentPlaylistVarInt( "fd_money_per_round", FD_MONEY_PER_ROUND ) )
 		UpdatePlayerScoreboard( player )
 		FD_EmitSoundOnEntityOnlyToPlayer( player, player, "HUD_MP_BountyHunt_BankBonusPts_Deposit_Start_1P" )
 		FD_EmitSoundOnEntityOnlyToPlayer( player, player, "HUD_MP_BountyHunt_BankBonusPts_Ticker_Loop_1P" )
@@ -1422,12 +1417,15 @@ bool function FD_CheckPlayersReady()
 
 bool function ClientCommandCallbackToggleReady( entity player, array<string> args )
 {
-	if ( args[0] == "true" )
+	if ( !args.len() || GetGlobalNetInt( "FD_waveState" ) != WAVE_STATE_BREAK || player.GetTeam() == TEAM_IMC )
+		return true
+
+	if ( args[0] == "true" && !player.GetPlayerNetBool( "FD_readyForNextWave" ) )
 	{
 		player.SetPlayerNetBool( "FD_readyForNextWave", true )
 		MessageToTeam( TEAM_MILITIA, eEventNotifications.FD_PlayerReady, null, player )
 	}
-	if ( args[0] == "false" )
+	else if ( args[0] == "false" && player.GetPlayerNetBool( "FD_readyForNextWave" ) )
 		player.SetPlayerNetBool( "FD_readyForNextWave", false )
 
 	return true
@@ -1435,6 +1433,9 @@ bool function ClientCommandCallbackToggleReady( entity player, array<string> arg
 
 bool function ClientCommand_FDSetTutorialBit( entity player, array<string> args )
 {
+	if ( !args.len() )
+		return true
+
 	int fdbits = args[0].tointeger()
 	SetPersistenceBitfield( player, "fdTutorialBits", fdbits, -1 )
 	return true
@@ -2600,9 +2601,6 @@ void function OnTickDeath( entity victim, var damageInfo )
 	int findIndex = spawnedNPCs.find( victim )
 	if ( findIndex != -1 )
 	{
-		spawnedNPCs.remove( findIndex )
-		SetGlobalNetInt( "FD_AICount_Ticks", GetGlobalNetInt( "FD_AICount_Ticks" ) - 1 )
-		SetGlobalNetInt( "FD_AICount_Current", GetGlobalNetInt( "FD_AICount_Current" ) - 1 )
 		victim.Minimap_Hide( TEAM_IMC, null )
 		victim.Minimap_Hide( TEAM_MILITIA, null )
 		
@@ -2616,21 +2614,44 @@ void function OnTickDeath( entity victim, var damageInfo )
 	}
 }
 
-void function FD_GenericNPCDeath( entity victim, var damageInfo )
+void function FD_GenericNPCDeathChecker( entity npc )
 {
-	int findIndex = spawnedNPCs.find( victim )
-	if ( findIndex != -1 )
+	if ( !IsNewThread() )
 	{
-		spawnedNPCs.remove( findIndex )
-		string netIndex = GetAiNetIdFromTargetName( victim.GetTargetName() )
-		if ( netIndex != "" )
-			SetGlobalNetInt( netIndex, GetGlobalNetInt( netIndex ) - 1 )
-		
-		if ( IsAirDrone( victim ) && GetDroneType( victim ) == "drone_type_cloaked" )
-			return
-		
-		SetGlobalNetInt( "FD_AICount_Current", GetGlobalNetInt( "FD_AICount_Current" ) - 1 )
+		thread FD_GenericNPCDeathChecker( npc )
+		return
 	}
+
+	npc.EndSignal( "OnDestroy" )
+	npc.EndSignal( "OnDeath" )
+
+	OnThreadEnd
+	(
+		function() : ( npc )
+		{
+			if ( IsValid( svGlobal.levelEnt ) )
+			{
+				int findIndex = spawnedNPCs.find( npc )
+				if ( findIndex != -1 )
+				{
+					spawnedNPCs.remove( findIndex )
+					string netIndex = GetAiNetIdFromTargetName( npc.GetTargetName() )
+					if ( netIndex != "" )
+						SetGlobalNetInt( netIndex, GetGlobalNetInt( netIndex ) - 1 )
+					
+					if ( IsAirDrone( npc ) && GetDroneType( npc ) == "drone_type_cloaked" )
+						return
+					
+					SetGlobalNetInt( "FD_AICount_Current", GetGlobalNetInt( "FD_AICount_Current" ) - 1 )
+
+					if ( IsTick( npc ) )
+						SetGlobalNetInt( "FD_AICount_Ticks", GetGlobalNetInt( "FD_AICount_Ticks" ) - 1 )
+				}
+			}
+		}
+	)
+
+	WaitForever()
 }
 
 void function ClearInvalidFDEntities()
@@ -3051,7 +3072,6 @@ string function FD_DropshipGetAnimation()
 		case "mp_relic02": //Also works for Relic so it goes above IMS Odyssey if rotated
 			return "dropship_coop_respawn_lagoon"
 		
-		case "mp_complex3": //Complex also have some clipping paths with other flight path anims
 		case "mp_grave": //Boomtown has low ceiling and this one matches perfectly for it (default clips alot into ceiling geo)
 			return "dropship_coop_respawn_outpost"
 		
