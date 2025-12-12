@@ -569,8 +569,6 @@ void function RegisterCustomFDContent()
 	AddFDCustomShipStart( < 8487, -5720, 2625 >, < 0, 180, 0 >, TEAM_IMC )
 	AddFDCustomShipStart( < 9482, -3540, 2625 >, < 0, 180, 0 >, TEAM_IMC )
 	
-	SpawnFDHeavyTurret( < 2628, -5387, 2226 >, < 0, 45, 0 >, < 2540, -5300, 2226 >, < 0, -90, 0 > )
-	
 	AddStationaryAIPosition( < 1808, -1942, 2167 >, eStationaryAIPositionTypes.SNIPER_TITAN )
 	AddStationaryAIPosition( < 4503, -6460, 2242 >, eStationaryAIPositionTypes.SNIPER_TITAN )
 	AddStationaryAIPosition( < 5025, -3465, 2253 >, eStationaryAIPositionTypes.SNIPER_TITAN )
