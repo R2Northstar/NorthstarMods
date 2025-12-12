@@ -100,18 +100,6 @@
 		"WPN_SHOTGUN_DBLBARREL_SHORT" "TWIN-B"
 		"WPN_SHOTGUN_DBLBARREL_DESC" "Short-barreled Shotgun"
 		"WPN_SHOTGUN_DBLBARREL_LONGDESC" "Short Double Barreled Shotgun"
-		
-		"fd_harvester_health" "Harvester HP"
-		"fd_harvester_shield" "Harvester Shield"
-		"fd_wave_buy_time" "Wave Break Time"
-		"fd_titan_health_adjust" "Enemy Titans HP Adjust"
-		"fd_reaper_health_adjust" "Enemy Reapers HP Adjust"
-		"fd_mortar_spectre_setup_time" "Mortar Spectre Build Siege Time"
-		"fd_grunt_at_weapon_users" "Amount of Grunts with AT Weapons"
-		"fd_player_damage_scalar" "Player Damage Multiplier"
-		"fd_at_unlimited_ammo" "Unlimited Anti-Titan Ammo"
-		"fd_pro_titan_shields" "Enemies Spawns with Shields"
-		"riff_minimap_state" "Hide Minimap"
 
 		"rodeo_titan_lobotomy" "Titan Rodeo Lobotomy"
 		"pilot_battery_inventory_size" "Pilot Battery Inventory Size"
