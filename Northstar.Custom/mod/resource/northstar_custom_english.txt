@@ -38,7 +38,7 @@
 		"GAMEMODE_BULLET_FD_001"					"`1%$rui/hud/gametype_icons/fd/coop_harvester%`0 Defend the Harvester from incoming enemies."
 		"GAMEMODE_BULLET_FD_002"					"`1%$rui/hud/gametype_icons/bounty_hunt/bh_bonus_icon%`0 Purchase defenses at the Armory in between waves."
 		"GAMEMODE_BULLET_FD_003"					"`1%$rui/hud/gametype_icons/bounty_hunt/bh_green_check%`0 Bonus credits given for no Harvester damage, wave MVP, and no deaths."
-		"GAMEMODE_BULLET_FD_004"					""
+		"GAMEMODE_BULLET_FD_004"					" "
 		"GAMEMODE_BULLET_FD_005"					"`1%$rui/menu/common/hint_icon%`0 Titan selection locked in after Wave 1 - Choose wisely!"
 		
 		"INFECTION_YOU_ARE_INFECTED" "You've been Infected!"
