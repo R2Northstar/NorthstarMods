@@ -190,7 +190,7 @@ Forced1PSequenceData function FirstPersonSequenceForce1P( FirstPersonSequenceStr
 	}
 
 	thread SetBodyGroups( player, thirdPersonProxy )
-	FirstPersonPlayAnim( sequence, thirdPersonProxy, other )
+	FirstPersonPlayAnim( sequence, thirdPersonProxy, player, other )
 
 	entity camera = CreateEntity( "point_viewcontrol" )
 	camera.SetParent( ownerProxy, attachment )
