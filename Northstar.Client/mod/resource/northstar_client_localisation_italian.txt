@@ -47,7 +47,6 @@ Premi Sì se sei d'accordo. Questa scelta può essere modificata in qualsiasi mo
 		"MODE_SETTING_CATEGORY_RIFF" "Extra"
 		"MODE_SETTING_CATEGORY_MATCH" "Partita"
 
-		"classic_mp" "Multiplayer classico"
 		"run_epilogue" "Epilogo fine partita"
 		"scorelimit" "Limite Punteggio"
 		"roundscorelimit" "Limite Punteggio (per round)"
@@ -222,7 +221,6 @@ Premi Sì se sei d'accordo. Questa scelta può essere modificata in qualsiasi mo
 		"custom_air_accel_pilot" "Accelerazione Aerea"
 		"no_pilot_collision" "Collisione tra Piloti"
 		"promode_enable" "Armi Modalità Competitiva"
-		"fp_embark_enabled" "Imbarchi/esecuzioni in 1º persona"
 		"classic_rodeo" "Rodeo classico"
 		"oob_timer_enabled" "Timer Fuori dai Limiti"
 		"riff_instagib" "Modalità Instagib"
