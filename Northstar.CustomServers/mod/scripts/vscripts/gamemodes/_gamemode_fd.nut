@@ -1697,12 +1697,12 @@ void function FD_PlayerRespawnCallback( entity player )
 
 bool function FD_ShouldUseRespawnDropship()
 {
-	return ( file.dropshipState != eDropshipState.Returning
+	return file.dropshipState != eDropshipState.Returning
 		&& file.playersInShip < 4
 		&& GetGameState() == eGameState.Playing
 		&& GetGlobalNetBool( "FD_waveActive" )
-		&& GetCurrentPlaylistVarInt( "fd_respawn_dropship", 1 ) == 1
-		&& file.dropshipSpawnPosition != < 0, 0, 0 > )
+		&& GetCurrentPlaylistVarInt( "fd_respawn_dropship", 1 ) != 0
+		&& file.dropshipSpawnPosition != < 0, 0, 0 >
 }
 
 void function FD_PlayerRespawnThreaded( entity player )
