@@ -111,7 +111,9 @@ void function ShInitBoostStore()
 	}
 
 	foreach ( turretType in GetAllBoostTurretTypes() )
+	{
 		file.boostPurchaseExtraChecks[ turretType ] <- CheckTooManyTurrets
+	}
 
 	file.boostPurchaseExtraChecks[ "burnmeter_instant_battery" ] <- CheckHasNoBattery
 	file.boostPurchaseExtraChecks[ "burnmeter_amped_weapons_permanent" ] <- CheckHasNoAmpedWeapons
@@ -181,10 +183,12 @@ void function ShInitBoostStoreForMode()
 	{
 		array<string> tokens = split( data.modesAllowed, " " )
 		if ( tokens.contains( boostStoreMode ) )
+		{
 			file.availableBoosts.append( data )
+		}
 	}
-	
 	file.availableBoosts.sort( SortCompareBoostCost )
+	//printt( file.availableBoosts.len() )
 }
 
 int function SortCompareBoostCost( BoostStoreData a, BoostStoreData b )
@@ -236,7 +240,9 @@ bool function CanPurchaseBoost( entity player, BoostStoreData data, bool checkMo
 		canBuy = canBuy && CanAffordBoost( player, data )
 
 	if ( data.itemRef in file.boostPurchaseExtraChecks )
+	{
 		canBuy = canBuy && file.boostPurchaseExtraChecks[ data.itemRef ]( player )
+	}
 
 	return canBuy
 }
@@ -248,7 +254,13 @@ bool function ClientCommand_PurchaseBoost( entity player, array<string> args )
 	if ( !BoostStoreOpen() )
 		return true
 
-	if ( player.IsPhaseShifted() || !IsAlive( player ) || player.IsTitan() || !IsPlayerNearbyAnyBoostStore( player ) )
+	if ( !IsAlive( player ) )
+		return true
+
+	if ( player.IsTitan() )
+		return true
+
+	if ( !IsPlayerNearbyAnyBoostStore( player ) )
 		return true
 
 	array<BoostStoreData> availableBoosts = GetAvailableBoosts()
@@ -294,8 +306,14 @@ bool function ClientCommand_Deposit( entity player, array<string> args )
 {
 	if ( !BoostStoreOpen() )
 		return true
-	
-	if ( player.IsPhaseShifted() || !IsAlive( player ) || player.IsTitan() || !IsPlayerNearbyAnyBoostStore( player ) )
+
+	if ( !IsAlive( player ) )
+		return true
+
+	if ( player.IsTitan() )
+		return true
+
+	if ( !IsPlayerNearbyAnyBoostStore( player ) )
 		return true
 
 	int depositAmount = minint( file.playerBonusData[ player ], BOOST_STORE_DEFAULT_EXCHANGE )
@@ -306,7 +324,9 @@ bool function ClientCommand_Deposit( entity player, array<string> args )
 		file.teamReserveDepositOrWithdrawCallback( player, "deposit", depositAmount )
 
 	foreach ( player in GetPlayerArray() )
+	{
 		Remote_CallFunction_UI( player, "ServerCallback_UpdateTeamReserve", file.teamReserveAmount )
+	}
 
 	return true
 }
@@ -317,7 +337,16 @@ bool function ClientCommand_Withdraw( entity player, array<string> args )
 	if ( !BoostStoreOpen() )
 		return true
 	
-	if ( player.IsPhaseShifted() || !IsAlive( player ) || player.IsTitan() || !IsPlayerNearbyAnyBoostStore( player ) )
+	if ( !BoostStoreOpen() )
+		return true
+
+	if ( !IsAlive( player ) )
+		return true
+
+	if ( player.IsTitan() )
+		return true
+
+	if ( !IsPlayerNearbyAnyBoostStore( player ) )
 		return true
 
 	if ( GetPlayerMoney( player ) >= MAX_MONEY )
@@ -331,7 +360,9 @@ bool function ClientCommand_Withdraw( entity player, array<string> args )
 		file.teamReserveDepositOrWithdrawCallback( player, "withdraw", withdrawAmount )
 
 	foreach ( player in GetPlayerArray() )
+	{
 		Remote_CallFunction_UI( player, "ServerCallback_UpdateTeamReserve", file.teamReserveAmount )
+	}
 
 	return true
 }
