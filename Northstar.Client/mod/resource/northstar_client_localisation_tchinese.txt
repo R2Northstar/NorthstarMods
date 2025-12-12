@@ -49,7 +49,6 @@
 		"MODE_SETTING_CATEGORY_RIFF" "規則"
 		"MODE_SETTING_CATEGORY_MATCH" "比賽"
 
-		"classic_mp" "經典多人"
 		"run_epilogue" "最終作戰"
 		"scorelimit" "分數限制"
 		"roundscorelimit" "分數限制（回合制）"
@@ -223,7 +222,6 @@
 		"custom_air_accel_pilot" "空中加速"
 		"no_pilot_collision" "取消鐵馭間碰撞"
 		"promode_enable" "進階平衡武器"
-		"fp_embark_enabled" "第一人稱登機/處決"
 		"classic_rodeo" "經典馴牛術"
 		"oob_timer_enabled" "超出戰場計時"
 		"riff_instagib" "瞬殺模式"
