@@ -208,6 +208,7 @@ int function SortCompareBoostCost( BoostStoreData a, BoostStoreData b )
 array<BoostStoreData> function GetAvailableBoosts()
 {
 	// custom stuff for arena
+	// TODO: make an API for doing this and remove this file from Northstar.Custom
 	string boostStoreMode = GetCurrentPlaylistVarString( "boost_store_mode", "off" )
 	if ( boostStoreMode == "arena" )
 	{
