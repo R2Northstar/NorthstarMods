@@ -1701,7 +1701,7 @@ bool function FD_ShouldUseRespawnDropship()
 		&& file.playersInShip < 4
 		&& GetGameState() == eGameState.Playing
 		&& GetGlobalNetBool( "FD_waveActive" )
-		&& GetCurrentPlaylistVarInt( "fd_respawn_dropship", 1 )
+		&& GetCurrentPlaylistVarInt( "fd_respawn_dropship", 1 ) != 0
 		&& file.dropshipSpawnPosition != < 0, 0, 0 >
 }
 
