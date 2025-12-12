@@ -36,7 +36,6 @@ global function TryFriendlyPassingNearby
 
 global function OnSpectreSeeEnemy
 
-
 global function onlyimc		// debug
 global function onlymilitia    // debug
 
