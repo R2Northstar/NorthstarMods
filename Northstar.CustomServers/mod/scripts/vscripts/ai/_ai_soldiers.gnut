@@ -37,6 +37,12 @@ global function TryFriendlyPassingNearby
 global function OnSpectreSeeEnemy
 
 
+global function onlyimc		// debug
+global function onlymilitia    // debug
+
+global function SetGlobalNPCHealth //debug
+
+
 //=========================================================
 // MP ai soldier
 //
@@ -113,6 +119,20 @@ bool function ClientCommand_SpawnViewGrunt( entity player, array<string> args )
 	entity guy = CreateSoldier( team, result.endPos, angles )
 	DispatchSpawn( guy )
 	return true
+}
+
+// debug commands
+function onlyimc()
+{
+	level.onlySpawn = TEAM_IMC
+	printt( "Only spawning IMC AI" )
+}
+
+// debug commands
+function onlymilitia()
+{
+	level.onlySpawn = TEAM_MILITIA
+	printt( "Only spawning Militia AI" )
 }
 
 //////////////////////////////////////////////////////////
@@ -768,4 +788,15 @@ void function SendAIToAssaultPoint( entity guy, vector origin, vector angles, fl
 	guy.AssaultSetGoalRadius( radius )
 	guy.WaitSignal( "OnFinishedAssault" )
 
+}
+
+function SetGlobalNPCHealth( healthValue ) //Debug, for trailer team
+{
+	array<entity> npcArray = GetNPCArray()
+
+	foreach ( npc in npcArray )
+	{
+		npc.SetMaxHealth( healthValue )
+		npc.SetHealth( healthValue )
+	}
 }
