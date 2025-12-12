@@ -31,44 +31,6 @@
 			"Flags": "ARCHIVE_PLAYERPROFILE"
 		},
 		{
-            "Name": "ns_fd_elite_minimap_icontype",
-            "DefaultValue": "0",
-			"Flags": "ARCHIVE_PLAYERPROFILE"
-        },
-        {
-            "Name": "ns_fd_elite_overhead_icontype",
-            "DefaultValue": "1",
-			"Flags": "ARCHIVE_PLAYERPROFILE"
-        },
-		{
-			"Name": "ns_fd_min_numplayers_to_start",
-			"DefaultValue": "1"
-		},
-		{
-			"Name": "ns_fd_infantry_at_weapons",
-			"DefaultValue": ""
-		},
-		{
-			"Name": "ns_fd_grunt_primary_weapon",
-			"DefaultValue": ""
-		},
-		{
-			"Name": "ns_fd_grunt_grenade",
-			"DefaultValue": ""
-		},
-		{
-			"Name": "ns_fd_spectre_primary_weapon",
-			"DefaultValue": ""
-		},
-		{
-			"Name": "ns_fd_disable_respawn_dropship",
-			"DefaultValue": "0"
-		},
-		{
-			"Name": "ns_fd_constant_ai_spawn",
-			"DefaultValue": "0"
-		},
-		{
 			"Name": "embark_style",
 			"DefaultValue": "0",
 			"Flags": "ARCHIVE_PLAYERPROFILE|USERINFO"

@@ -1756,7 +1756,7 @@ void function FD_PlayerRespawnThreaded( entity player )
 		return
 	}
 	
-	if ( file.dropshipState == eDropshipState.Returning || file.playersInShip >= 4 || GetGameState() != eGameState.Playing || !GetGlobalNetBool( "FD_waveActive" ) || GetConVarBool( "ns_fd_disable_respawn_dropship" ) || file.dropshipSpawnPosition == < 0, 0, 0 > )
+	if ( file.dropshipState == eDropshipState.Returning || file.playersInShip >= 4 || GetGameState() != eGameState.Playing || !GetGlobalNetBool( "FD_waveActive" ) || GetCurrentPlaylistVarInt( "fd_respawn_dropship", 1 ) == 0 || file.dropshipSpawnPosition == < 0, 0, 0 > )
 	{
 		//Teleport player to a more reliable location if they spawn on ground, some maps picks too far away spawns from the Harvester and Shop (i.e Colony, Homestead, Drydock)
 		if ( IsValidPlayer( player ) && !player.IsTitan() )
