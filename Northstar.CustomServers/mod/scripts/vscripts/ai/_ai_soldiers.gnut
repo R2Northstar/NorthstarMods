@@ -36,11 +36,6 @@ global function TryFriendlyPassingNearby
 
 global function OnSpectreSeeEnemy
 
-global function onlyimc		// debug
-global function onlymilitia    // debug
-
-global function SetGlobalNPCHealth //debug
-
 
 //=========================================================
 // MP ai soldier
@@ -118,20 +113,6 @@ bool function ClientCommand_SpawnViewGrunt( entity player, array<string> args )
 	entity guy = CreateSoldier( team, result.endPos, angles )
 	DispatchSpawn( guy )
 	return true
-}
-
-// debug commands
-function onlyimc()
-{
-	level.onlySpawn = TEAM_IMC
-	printt( "Only spawning IMC AI" )
-}
-
-// debug commands
-function onlymilitia()
-{
-	level.onlySpawn = TEAM_MILITIA
-	printt( "Only spawning Militia AI" )
 }
 
 //////////////////////////////////////////////////////////
@@ -398,7 +379,7 @@ void function TrySpottedCallout( entity guy, entity enemy )
 
 	if ( enemy.IsTitan() )
 	{
-		if ( IsSpectre( guy ) ) //Spectre callouts
+		if ( IsSpectre( guy ) ) // Spectre callouts
 		{
 			#if SPECTRE_CHATTER_MP_ENABLED
 				PlaySpectreChatterMPLine( guy, "diag_imc_spectre_gs_spotclosetitancall_01" )
@@ -410,7 +391,7 @@ void function TrySpottedCallout( entity guy, entity enemy )
 			#endif
 
 		}
-		else //Grunt callouts
+		else if ( IsGrunt( guy ) ) // Grunt callouts
 		{
 			#if GRUNT_CHATTER_MP_ENABLED
 				PlayGruntChatterMPLine( guy, "bc_enemytitanspotcall" )
@@ -419,7 +400,7 @@ void function TrySpottedCallout( entity guy, entity enemy )
 	}
 	else if ( enemy.IsPlayer() )
 	{
-		if ( IsSpectre( guy ) ) //Spectre callouts
+		if ( IsSpectre( guy ) ) // Spectre callouts
 		{
 			#if SPECTRE_CHATTER_MP_ENABLED
 				PlaySpectreChatterMPLine( guy, "diag_imc_spectre_gs_engagepilotenemy_01_1" )
@@ -430,7 +411,7 @@ void function TrySpottedCallout( entity guy, entity enemy )
 					PlaySpectreChatterToAll( "spectre_gs_spotenemypilot_01_1", guy )
 			#endif
 		}
-		else //Grunt callouts
+		else if ( IsGrunt( guy ) ) // Grunt callouts
 		{
 			#if GRUNT_CHATTER_MP_ENABLED
 				if ( isClose )
@@ -442,7 +423,7 @@ void function TrySpottedCallout( entity guy, entity enemy )
 	}
 	else if ( IsSuperSpectre( enemy ) )
 	{
-		if ( !IsSpectre( guy ) ) //Spectre callouts
+		if ( IsGrunt( guy ) ) // Grunt callouts
 		{
 			#if GRUNT_CHATTER_MP_ENABLED
 				PlayGruntChatterMPLine( guy, "bc_reactEnemyReaper" )
@@ -451,7 +432,7 @@ void function TrySpottedCallout( entity guy, entity enemy )
 	}
 	else
 	{
-		if ( !IsSpectre( guy ) ) //Spectre callouts
+		if ( IsGrunt( guy ) )
 		{
 			#if GRUNT_CHATTER_MP_ENABLED
 				PlayGruntChatterMPLine( guy, "bc_reactEnemySpotted" )
@@ -788,15 +769,3 @@ void function SendAIToAssaultPoint( entity guy, vector origin, vector angles, fl
 	guy.WaitSignal( "OnFinishedAssault" )
 
 }
-
-function SetGlobalNPCHealth( healthValue ) //Debug, for trailer team
-{
-	array<entity> npcArray = GetNPCArray()
-
-	foreach ( npc in npcArray )
-	{
-		npc.SetMaxHealth( healthValue )
-		npc.SetHealth( healthValue )
-	}
-}
-

@@ -21,7 +21,6 @@ void function AiTurret_Init()
 	PrecacheModel( $"models/robots/turret_rocket/turret_rocket.mdl" )
 	
 	AddSpawnCallback( "npc_turret_sentry", OnTurretSpawn )
-	AddDeathCallback( "npc_turret_sentry", OnTurretDeath )
 }
 
 entity function GetMegaTurretLinkedToPanel( entity panel )
@@ -55,20 +54,6 @@ void function OnTurretSpawn( entity turret )
 			turret.SetTitle( "Rocket Turret" )
 		}
 	}
-}
-
-void function OnTurretDeath( entity turret, var damageInfo )
-{
-	entity turretOwner = turret.GetBossPlayer()
-	
-	if( !IsValid( turretOwner ) )
-		return
-	
-	float turretLifeTime = Time() - turret.e.spawnTime
-	int turretKills = int( turret.kv.killCount )
-	int turretScore = expect int( turret.s.totalScore )
-	
-	Remote_CallFunction_NonReplay( turretOwner, "ServerCallback_TurretReport", turretLifeTime, turretKills, turretScore )
 }
 
 bool function IsTurretActive( entity turret )

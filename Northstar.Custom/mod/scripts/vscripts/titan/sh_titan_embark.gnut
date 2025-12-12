@@ -57,12 +57,6 @@ struct
 	vector largeDisembarkFailSafeTeleportVector = < 600, 600, 600 >
 } file
 
-enum eTitanEmbarkType
-{
-	DEFAULT,
-	FIRST_PERSON
-}
-
 function TitanEmbark_Init()
 {
 	if ( reloadingScripts )

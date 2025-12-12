@@ -33,7 +33,6 @@ global function CreateSuperSpectre
 global function CreateWorkerDrone
 global function CreateZombieStalker
 global function CreateZombieStalkerMossy
-global function SpawnDropshipTurrets
 global function StopAssaultMoveTarget
 
 global const HACK_CAP_BACK1 = $"models/sandtrap/sandtrap_wall_bracket.mdl"
@@ -694,48 +693,4 @@ void function AutosquadnameAssignment_Thread( int scriptManagedArrayIndex, entit
 		SetSquad( npc, squadName )
 	}
 	Assert( GetScriptManagedEntArrayLen( scriptManagedArrayIndex ) == 0 )
-}
-
-entity function SpawnDropshipTurrets( entity npc )
-{
-	npc.EndSignal( "OnDestroy" )
-
-	if ( GetGameState() <= eGameState.Prematch || GetGameState() == eGameState.Postmatch )
-		return
-	
-	WaitFrame()
-
-	if ( npc.GetModelName() != $"models/vehicle/crow_dropship/crow_dropship.mdl" && npc.GetModelName() != $"models/vehicle/crow_dropship/crow_dropship_hero.mdl" )
-	{
-		CreateDropshipTurret( npc, "L_Turret" )
-		CreateDropshipTurret( npc, "R_Turret" )
-	}
-	CreateDropshipTurret( npc, "FRONT_TURRET" )
-}
-
-entity function CreateDropshipTurret( entity npc, string attachment )
-{
-	entity newTurret = CreateEntity( "npc_turret_sentry" )
-	SetSpawnOption_AISettings( newTurret, "npc_turret_sentry_burn_card_at_fd" )
-	SetSpawnOption_OwnerPlayer( newTurret, npc )
-	SetTeam( newTurret, npc.GetTeam() )
-	SetSpawnOption_Weapon( newTurret, "mp_weapon_turretplasma" )
-	newTurret.SetOrigin( npc.GetOrigin() )
-	DispatchSpawn( newTurret )
-	
-	newTurret.NotSolid()
-	newTurret.SetParent( npc, attachment, false )
-	newTurret.SetAimAssistAllowed( false )
-	newTurret.EnableNPCFlag( NPC_IGNORE_FRIENDLY_SOUND | NPC_NEW_ENEMY_FROM_SOUND | NPC_AIM_DIRECT_AT_ENEMY )
-	newTurret.ai.buddhaMode = true
-	newTurret.SetTitle( "#WPN_LIGHT_TURRET_BULLET" )
-	newTurret.MakeInvisible() // Hiding them because it's actually weird that the attachments aren't perfect and their legs just floats around
-	newTurret.kv.WeaponProficiency = eWeaponProficiency.PERFECT
-	newTurret.kv.AccuracyMultiplier = 5.0
-	
-	HideName( newTurret )
-	newTurret.EnableTurret()
-	MakeTurretInvulnerable( newTurret )
-	
-	return newTurret
 }
