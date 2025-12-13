@@ -646,7 +646,7 @@ void function RespawnAsTitan( entity player, bool normalTitanfall = false )
 
 	bool instantRespawn = ( !ShouldDoTitanfall() || GetCurrentPlaylistVarInt( "instant_respawn_as_titan", 0 ) == 1 )
 	// Override if map needs to do forced warpfall such as Boomtown due the ceiling
-	if ( normalTitanfall && Flag( "LevelHasRoof" ) || instantRespawn || !GetConVarBool( "ns_cinematic_titanfall" ) )
+	if ( normalTitanfall && Flag( "LevelHasRoof" ) || instantRespawn )
 		normalTitanfall = false
 	
 	player.Signal( "PlayerRespawnStarted" )

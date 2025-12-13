@@ -726,11 +726,7 @@ function SuperSpectre_WarpFall( entity ai )
 	e.smokeFx.Destroy()
 	PlayFX( $"droppod_impact", origin )
 	
-	//Added option to control if Reapers should kill Titans on their warpfall, or just do considerable damage
-	if ( GetConVarBool( "ns_reaper_warpfall_kill" ) )
-		Explosion_DamageDefSimple( damagedef_reaper_fall, origin, ai, ai, origin )
-	else
-		RadiusDamage( origin, ai, ai, 85, 2500, 128, 256, SF_ENVEXPLOSION_NO_DAMAGEOWNER, 0, 100, DF_RAGDOLL | DF_EXPLOSION, eDamageSourceId.damagedef_reaper_fall )
+	Explosion_DamageDefSimple( damagedef_reaper_fall, origin, ai, ai, origin )
 
 	wait 0.1
 }

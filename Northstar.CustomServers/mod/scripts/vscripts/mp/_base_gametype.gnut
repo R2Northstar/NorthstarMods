@@ -541,7 +541,7 @@ function HandleLocationBasedDamage( entity ent, var damageInfo )
 				break
 		}
 	}
-	else if ( isValidHeadShot && !GetConVarBool( "ns_disable_headshot_multiplier" ) )
+	else if ( isValidHeadShot )
 	{
 		damageMult_location = GetHeadshotDamageMultiplierFromDamageInfo( damageInfo )
 	}

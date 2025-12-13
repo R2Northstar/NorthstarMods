@@ -64,10 +64,6 @@
 			"Flags": "REPLICATED"
 		},
 		{
-			"Name": "ns_disable_headshot_multiplier",
-			"DefaultValue": "0"
-		},
-		{
 			"Name": "ns_autobalance_teams_on_player_join",
 			"DefaultValue": "0"
 		},
@@ -78,18 +74,6 @@
 		{
 			"Name": "ns_server_idle_time_refresh_max_time",
 			"DefaultValue": "240"
-		},
-		{
-			"Name": "ns_ronin_fair_phase",
-			"DefaultValue": "0"
-		},
-		{
-			"Name": "ns_cinematic_titanfall",
-			"DefaultValue": "0"
-		},
-		{
-			"Name": "ns_reaper_warpfall_kill",
-			"DefaultValue": "1"
 		}
 	],
 	"Scripts": [
