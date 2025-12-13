@@ -421,7 +421,7 @@ void function CodeCallback_OnMeleePressed( entity player )
 		return
 	}
 
-#if SERVER && DEV
+#if SERVER
 	if ( svGlobal.cloakBreaksOnMelee && IsCloaked( player ) )
 		player.SetCloakFlicker( 1.0, 2.0 )
 #endif // #if SERVER
