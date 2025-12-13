@@ -262,12 +262,7 @@ void function ServerPhaseShiftPlayerThread( entity ent, float warmupTime, float 
 				entity teleFragTarget = ent.GetEntityAtPhaseShiftExitPosition();
 				if ( IsValid( teleFragTarget ) )
 				{
-					if ( GetConVarBool( "ns_ronin_fair_phase" ) && ent.IsTitan() && !IsHumanSized( teleFragTarget ) ) //Ronin will not suicide and neither telefrag other healthy Titans, just will apply damage instead
-					{
-						teleFragTarget.TakeDamage( TELEFRAG_DAMAGE, ent, ent, { damageSourceId = eDamageSourceId.phase_shift, scriptType = DF_GIB } );
-						PushPlayersApart( teleFragTarget, ent, 800.0 )
-					}
-					else if ( !IsHumanSized( teleFragTarget ) )
+					if ( !IsHumanSized( teleFragTarget ) )
 					{
 						if ( ShouldEntitySelfKill( ent, teleFragTarget ) )
 						{
