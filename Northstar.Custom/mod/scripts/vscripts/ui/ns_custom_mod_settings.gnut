@@ -2,7 +2,10 @@ global function NSCustomModSettings
 
 void function NSCustomModSettings()
 {
-	ModSettings_AddModTitle( "Northstar Custom" , 2 )
+	ModSettings_AddModTitle( "Northstar Custom", 2 )
 	ModSettings_AddModCategory( "Event Models" )
 	ModSettings_AddEnumSetting( "ns_show_event_models", "Show Event Models", [ "#SETTING_OFF", "#SETTING_ON" ], 2 )
+	ModSettings_AddModCategory( "First Person Anims" )
+	ModSettings_AddEnumSetting( "embark_style", "First Person Embarks", [ "#SETTING_DISABLED", "#SETTING_ENABLED" ], 2 )
+	ModSettings_AddEnumSetting( "execution_style", "First Person Executions", [ "#SETTING_DISABLED", "#SETTING_ENABLED" ], 2 )
 }

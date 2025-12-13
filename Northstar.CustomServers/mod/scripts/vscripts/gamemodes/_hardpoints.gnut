@@ -117,6 +117,7 @@ void function OnHardpointEnter( entity trigger, entity player )
 
 	// it's just too hard to handle emarking and disemarking with the count stuff
 	HardpointState hpState = GetHardpointState( hp )
+	ArrayRemoveInvalid( hpState.capPlayers )
 	if ( hpState.capPlayers.find( player ) == -1 )
 		hpState.capPlayers.append( player )
 
@@ -136,6 +137,7 @@ void function OnHardpointLeave( entity trigger, entity player )
 
 	// it's just too hard to handle emarking and disemarking with the count stuff
 	HardpointState hpState = GetHardpointState( hp )
+	ArrayRemoveInvalid( hpState.capPlayers )
 	int index = hpState.capPlayers.find( player );
 	if ( index != -1 )
 		hpState.capPlayers.fastremove( index )
@@ -162,6 +164,7 @@ void function Hardpoint_Think( HardpointState hardpoint )
 		hardpoint.ent.SetHardpointPlayerTitanCount( TEAM_MILITIA, 0 )
 
 		// update counts based on capPlayers
+		ArrayRemoveInvalid( hardpoint.capPlayers )
 		foreach( entity player in hardpoint.capPlayers )
 		{
 			if ( player.IsTitan() )
@@ -403,6 +406,7 @@ void function SetCaptureHardpoint( entity hardpoint, int team )
 	if ( !hardpoint.s.wasJustCapping )
 		return
 
+	ArrayRemoveInvalid( hpState.capPlayers )
 	foreach( entity player in hpState.capPlayers )
 	{	
 
@@ -435,6 +439,7 @@ void function SetAmpedHardpoint( entity hardpoint, int team )
 	if ( CapturePoint_GetState( hardpoint ) & CAPTURE_POINT_FLAGS_AMPED )
 		return
 
+	ArrayRemoveInvalid( hpState.capPlayers )
 	foreach( entity player in hpState.capPlayers )
 	{
 		// the team check is just for race conditions

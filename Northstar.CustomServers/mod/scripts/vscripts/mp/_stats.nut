@@ -582,10 +582,9 @@ void function HandleKillStats( entity victim, entity attacker, var damageInfo )
 
 	// totalAssists
 	// assistsTotal ( weapon_kill_stats )
-	// note: eww
 	table<int, bool> alreadyAssisted
 	// titans store their recentDamageHistory in the soul
-	entity assistVictim = ( victim.IsTitan() && IsValid( victim.GetTitanSoul() ) ) ? victim.GetTitanSoul() : victim 
+	entity assistVictim = ( victim.IsTitan() && IsValid( victim.GetTitanSoul() ) ) ? victim.GetTitanSoul() : victim
 	foreach( DamageHistoryStruct attackerInfo in assistVictim.e.recentDamageHistory )
 	{
 		if ( !IsValid( attackerInfo.attacker ) || !attackerInfo.attacker.IsPlayer() || attackerInfo.attacker == assistVictim )
@@ -944,7 +943,7 @@ void function HandleDistanceAndTimeStats_Threaded()
 		{
 			if ( !IsValid( player ) )
 				continue
-				
+			
 			if ( player.p.lastPosForDistanceStatValid )
 			{
 				// not 100% sure on using Distance2D over Distance tbh

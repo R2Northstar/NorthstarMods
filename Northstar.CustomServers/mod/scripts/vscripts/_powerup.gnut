@@ -75,6 +75,11 @@ void function PowerupSpawnerThink( entity spawnpoint, PowerUp powerupDef )
 
 bool function OnPowerupCollected( entity player, entity healthpack )
 {
+	string powerUpRef = expect string( healthpack.s.powerupRef )
+	
+	if ( powerUpRef == "" )
+		return false
+	
 	PowerUp powerup = GetPowerUpFromItemRef( expect string( healthpack.s.powerupRef ) )
 	
 	if ( powerup.titanPickup == player.IsTitan() )

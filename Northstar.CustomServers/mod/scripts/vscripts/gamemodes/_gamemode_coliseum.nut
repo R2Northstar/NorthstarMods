@@ -25,7 +25,6 @@ void function GamemodeColiseum_Init()
 {
 	// gamemode settings
 	SetRoundBased( true )
-	SetRespawnsEnabled( false )
 	SetShouldUseRoundWinningKillReplay( true )
 	Riff_ForceTitanAvailability( eTitanAvailability.Never )
 	Riff_ForceBoostAvailability( eBoostAvailability.Disabled )

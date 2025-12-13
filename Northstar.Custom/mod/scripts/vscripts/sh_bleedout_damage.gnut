@@ -121,6 +121,9 @@ void function OnPlayerBleedoutBegin( entity player )
 {
 	file.bleedingPlayers.append( player )
 	EmitSoundOnEntityOnlyToPlayer( player, player, "Player_Death_Begin" )
+	NSCreateStatusMessageOnPlayer( player, "Incapacitated!", "", "incapmsg" )
+	player.Signal( "RodeoOver" )
+	player.ClearParent()
 	
 	thread PlayerBleedoutGracePeriod( player )
 
@@ -140,6 +143,7 @@ void function PlayerBleedoutGracePeriod( entity player )
 	})
 	
 	player.SetInvulnerable()
+	player.SetHealth( player.GetMaxHealth() )
 	wait 0.25
 }
 
@@ -148,13 +152,32 @@ void function TrackPlayerBleedout( entity player )
 	player.EndSignal( "OnDeath" )
 	player.EndSignal( "OnDestroy" )
 	
-	OnThreadEnd( function() : ( player )
+	bool playerCouldEmbark = CanEmbark( player )
+	
+	OnThreadEnd( function() : ( player, playerCouldEmbark )
 	{
 		file.bleedingPlayers.remove( file.bleedingPlayers.find( player ) )
+		
+		if( IsValidPlayer( player ) )
+		{
+			if ( playerCouldEmbark )
+				Embark_Allow( player )
+			
+			Rodeo_Allow( player )
+			SyncedMelee_Enable( player )
+			Leech_Allow( player )
+			NSDeleteStatusMessageOnPlayer( player, "incapmsg" )
+		}
 	})
 	
 	WaitFrame() // wait a frame, since this gets called before this status effect is added
 	
+	if( playerCouldEmbark )
+		Embark_Disallow( player )
+	
+	Rodeo_Disallow( player )
+	SyncedMelee_Disable( player )
+	Leech_Disallow( player )
 	while ( StatusEffect_Get( player, eStatusEffect.bleedoutDOF ) != 0 )
 		WaitFrame() 
 }

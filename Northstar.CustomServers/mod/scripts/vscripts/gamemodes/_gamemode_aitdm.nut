@@ -34,7 +34,7 @@ struct
 
 void function GamemodeAITdm_Init()
 {
-	SetSpawnpointGamemodeOverride( ATTRITION ) // use bounty hunt spawns as vanilla game has no spawns explicitly defined for aitdm
+	SetSpawnpointGamemodeOverride( TEAM_DEATHMATCH )
 
 	AddCallback_GameStateEnter( eGameState.Prematch, OnPrematchStart )
 	AddCallback_GameStateEnter( eGameState.Playing, OnPlaying )
@@ -48,9 +48,9 @@ void function GamemodeAITdm_Init()
 	
 	if ( GetCurrentPlaylistVarInt( "aitdm_archer_grunts", 0 ) == 0 )
 	{
-		AiGameModes_SetNPCWeapons( "npc_soldier", [ "mp_weapon_rspn101", "mp_weapon_dmr", "mp_weapon_r97", "mp_weapon_lmg" ] )
-		AiGameModes_SetNPCWeapons( "npc_spectre", [ "mp_weapon_hemlok_smg", "mp_weapon_doubletake", "mp_weapon_mastiff" ] )
-		AiGameModes_SetNPCWeapons( "npc_stalker", [ "mp_weapon_hemlok_smg", "mp_weapon_lstar", "mp_weapon_mastiff" ] )
+		AiGameModes_SetNPCWeapons( "npc_soldier", [ "mp_weapon_rspn101", "mp_weapon_dmr", "mp_weapon_vinson", "mp_weapon_hemlok_smg", "mp_weapon_mastiff", "mp_weapon_shotgun_pistol" ] )
+		AiGameModes_SetNPCWeapons( "npc_spectre", [ "mp_weapon_g2", "mp_weapon_doubletake", "mp_weapon_hemlok", "mp_weapon_rspn101_og", "mp_weapon_r97", "mp_weapon_shotgun_doublebarrel" ] )
+		AiGameModes_SetNPCWeapons( "npc_stalker", [ "mp_weapon_esaw", "mp_weapon_lstar", "mp_weapon_shotgun", "mp_weapon_lmg", "mp_weapon_smr", "mp_weapon_epg" ] )
 	}
 	else
 	{
@@ -61,6 +61,9 @@ void function GamemodeAITdm_Init()
 	
 	ScoreEvent_SetupEarnMeterValuesForMixedModes()
 	SetupGenericTDMChallenge()
+	SetAILethality( eAILethality.High )
+	
+	level.endOfRoundPlayerState = ENDROUND_FREE
 }
 
 // add settings
@@ -110,6 +113,7 @@ void function OnPlaying()
 void function OnPlayerConnected( entity player )
 {
 	Remote_CallFunction_NonReplay( player, "ServerCallback_AITDM_OnPlayerConnected" )
+	Remote_CallFunction_UI( player, "SCB_SetEvacMeritState", 0 )
 }
 
 // Used to handle both player and ai events
@@ -165,13 +169,13 @@ void function HandleScoreEvent( entity victim, entity attacker, var damageInfo )
 	teamScore = playerScore
 	
 	// Check score so we dont go over max
-	if ( GameRules_GetTeamScore(attacker.GetTeam()) + teamScore > GetScoreLimit_FromPlaylist() )
-		teamScore = GetScoreLimit_FromPlaylist() - GameRules_GetTeamScore(attacker.GetTeam())
+	if ( GameRules_GetTeamScore( attacker.GetTeam()) + teamScore > GetScoreLimit_FromPlaylist() )
+		teamScore = GetScoreLimit_FromPlaylist() - GameRules_GetTeamScore( attacker.GetTeam() )
 	
 	// Add score + update network int to trigger the "Score +n" popup
 	AddTeamScore( attacker.GetTeam(), teamScore )
 	attacker.AddToPlayerGameStat( PGS_ASSAULT_SCORE, playerScore )
-	attacker.SetPlayerNetInt("AT_bonusPoints", attacker.GetPlayerGameStat( PGS_ASSAULT_SCORE ) )
+	attacker.SetPlayerNetInt( "AT_bonusPoints", attacker.GetPlayerGameStat( PGS_ASSAULT_SCORE ) )
 }
 
 // When attrition starts both teams spawn ai on preset nodes, after that
@@ -245,9 +249,10 @@ void function SpawnIntroBatch_Threaded( int team )
 			index = RandomInt( podNodes.len() )
 			
 			node = podNodes[ index ]
-			thread AiGameModes_SpawnDropPod( node.GetOrigin(), node.GetAngles(), team, "npc_soldier", SquadHandler )
+			thread AiGameModes_SpawnDropPod( node, team, "npc_soldier", SquadHandler )
 			
 			pods--
+			wait 0.5
 		}
 		else
 		{
@@ -255,9 +260,10 @@ void function SpawnIntroBatch_Threaded( int team )
 			startIndex = i // save where we started
 			
 			node = shipNodes[ i - startIndex ]
-			thread AiGameModes_SpawnDropShip( node.GetOrigin(), node.GetAngles(), team, 4, SquadHandler )
+			thread AiGameModes_SpawnDropShip( node, team, 4, SquadHandler )
 			
 			ships--
+			wait 2.5
 		}
 		
 		// Vanilla has a delay after first spawn
@@ -288,6 +294,16 @@ void function Spawner_Threaded( int team )
 		
 		// TODO: this should possibly not count scripted npc spawns, probably only the ones spawned by this script
 		array<entity> npcs = GetNPCArrayOfTeam( team )
+		
+		ArrayRemoveDead( npcs )
+		foreach ( entity npc in npcs )
+		{
+			if( IsMinion( npc ) || IsStalker( npc ) )
+				continue
+			
+			npcs.removebyvalue( npc ) //Remove Titans, Dropships, Turrets and Ticks from the equation, Reapers are picked separately
+		}
+		
 		int count = npcs.len()
 		int reaperCount = GetNPCArrayEx( "npc_super_spectre", team, -1, <0,0,0>, -1 ).len()
 		
@@ -298,40 +314,32 @@ void function Spawner_Threaded( int team )
 			if ( reaperCount < file.reapersPerTeam )
 			{
 				entity node = points[ GetSpawnPointIndex( points, team ) ]
-				waitthread AiGameModes_SpawnReaper( node.GetOrigin(), node.GetAngles(), team, "npc_super_spectre_aitdm", ReaperHandler )
+				waitthread AiGameModes_SpawnReaper( node, team, "npc_super_spectre_aitdm", ReaperHandler )
 			}
 		}
 		
 		// NORMAL SPAWNS
-		if ( count < file.squadsPerTeam * 4 - 2 )
+		if ( count <= file.squadsPerTeam * 3 ) // x3 so means if theres one squad missing, try to spawn it back to keep 16 AI active per team
 		{
-			string ent = file.podEntities[ index ][ RandomInt( file.podEntities[ index ].len() ) ]
+			string ent = file.podEntities[ index ].getrandom()
 			
 			array< entity > points = GetZiplineDropshipSpawns()
-			// Prefer dropship when spawning grunts
-			if ( ent == "npc_soldier" && points.len() != 0 )
+			if ( ent == "npc_soldier" && points.len() && RandomInt( 100 ) >= 66 ) //Prefer using Dropship 1/3rd of the times
 			{
-				if ( RandomInt( points.len() ) )
-				{
-					entity node = points[ GetSpawnPointIndex( points, team ) ]
-					waitthread Aitdm_SpawnDropShip( node, team )
-					continue
-				}
+				entity node = points[ GetSpawnPointIndex( points, team ) ]
+				thread AiGameModes_SpawnDropShip( node, team, 4, SquadHandler )
+				wait 3.0 //Wait 3 seconds because Dropships does not exist until they warp in, which takes about 3.7 seconds to happen because of the effect
 			}
-			
-			points = SpawnPoints_GetDropPod()
-			entity node = points[ GetSpawnPointIndex( points, team ) ]
-			waitthread AiGameModes_SpawnDropPod( node.GetOrigin(), node.GetAngles(), team, ent, SquadHandler )
+			else
+			{
+				points = SpawnPoints_GetDropPod()
+				entity node = points[ GetSpawnPointIndex( points, team ) ]
+				thread AiGameModes_SpawnDropPod( node, team, ent, SquadHandler )
+			}
 		}
 		
-		WaitFrame()
+		wait 1.0 //Not really needed to check this every frame, also stacks with Dropship wait to Warp In
 	}
-}
-
-void function Aitdm_SpawnDropShip( entity node, int team )
-{
-	thread AiGameModes_SpawnDropShip( node.GetOrigin(), node.GetAngles(), team, 4, SquadHandler )
-	wait 20
 }
 
 // Based on points tries to balance match
@@ -412,7 +420,7 @@ void function SquadHandler( array<entity> guys )
 
 	// Not all maps have assaultpoints / have weird assault points ( looking at you ac )
 	// So we use enemies with a large radius
-	while ( GetNPCArrayOfEnemies( team ).len() == 0 ) // if we can't find any enemy npcs, keep waiting
+	while ( !GetNPCArrayOfEnemies( team ).len() ) // if we can't find any enemy npcs, keep waiting
 		WaitFrame()
 
 	// our waiting is end, check if any soldiers left
@@ -429,18 +437,14 @@ void function SquadHandler( array<entity> guys )
 
 	array<entity> points = GetNPCArrayOfEnemies( team )
 	
-	vector point
-	point = points[ RandomInt( points.len() ) ].GetOrigin()
+	vector point = points.getrandom().GetOrigin()
 	
 	// Setup AI, first assault point
 	foreach ( guy in guys )
 	{
-		if ( IsAlive( guy ) )
-		{
-			guy.EnableNPCFlag( NPC_ALLOW_PATROL | NPC_ALLOW_INVESTIGATE | NPC_ALLOW_HAND_SIGNALS | NPC_ALLOW_FLEE )
-			guy.AssaultPoint( point )
-			guy.AssaultSetGoalRadius( 1600 ) // 1600 is minimum for npc_stalker, works fine for others
-		}
+		guy.EnableNPCFlag( NPC_ALLOW_PATROL | NPC_ALLOW_INVESTIGATE | NPC_ALLOW_HAND_SIGNALS | NPC_ALLOW_FLEE )
+		guy.AssaultPoint( point )
+		guy.AssaultSetGoalRadius( 1600 ) // 1600 is minimum for npc_stalker, works fine for others
 
 		//thread AITdm_CleanupBoredNPCThread( guy )
 	}
@@ -448,36 +452,19 @@ void function SquadHandler( array<entity> guys )
 	// Every 5 - 15 secs change AssaultPoint
 	while ( true )
 	{	
-		foreach ( guy in guys )
-		{
-			// Check if alive
-			if ( !IsAlive( guy ) )
-			{
-				guys.removebyvalue( guy )
-				continue
-			}
-			// Stop func if our squad has been killed off
-			if ( guys.len() == 0 )
-				return
-		}
+		ArrayRemoveDead( guys )
+		if ( !guys.len() )
+			return
 
 		// Get point and send our whole squad to it
 		points = GetNPCArrayOfEnemies( team )
-		if ( points.len() == 0 ) // can't find any points here
+		while ( !points.len() )
 		{
-			// Have to wait some amount of time before continuing
-			// because if we don't the server will continue checking this
-			// forever, aren't loops fun?
-			// This definitely didn't waste ~8 hours of my time reverting various
-			// launcher PRs before finding this mods PR that caused servers to
-			// freeze forever before having their process killed by the dedi watchdog
-			// without any logging. If anyone reads this, PLEASE add logging to your scripts
-			// for when weird edge cases happen, it can literally only help debugging. -Spoon
 			WaitFrame()
-			continue
+			points = GetNPCArrayOfEnemies( team )
 		}
-			
-		point = points[ RandomInt( points.len() ) ].GetOrigin()
+		
+		point = points.getrandom().GetOrigin()
 		
 		foreach ( guy in guys )
 		{
@@ -485,7 +472,7 @@ void function SquadHandler( array<entity> guys )
 				guy.AssaultPoint( point )
 		}
 
-		wait RandomFloatRange(5.0,15.0)
+		wait RandomFloatRange( 5.0, 15.0 )
 	}
 }
 
@@ -507,7 +494,7 @@ void function ReaperHandler( entity reaper )
 	foreach ( player in players )
 		reaper.Minimap_AlwaysShow( 0, player )
 	
-	reaper.AssaultSetGoalRadius( 500 )
+	reaper.AssaultSetGoalRadius( 1200 )
 	
 	// Every 10 - 20 secs get a player and go to him
 	// Definetly not annoying or anything :)

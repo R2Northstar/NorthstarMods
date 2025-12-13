@@ -76,4 +76,4 @@
 		"WPN_SHOTGUN_DBLBARREL_DESC" "Escopeta de cano curto"
 		"WPN_SHOTGUN_DBLBARREL_LONGDESC" "Escopeta dupla de cano curto"
 	}
-}
+} 

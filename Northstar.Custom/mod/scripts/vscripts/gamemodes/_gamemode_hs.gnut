@@ -15,7 +15,6 @@ void function GamemodeHideAndSeek_Init()
 	SetSpawnpointGamemodeOverride( FFA )
 	Riff_ForceTitanAvailability( eTitanAvailability.Never )
 	Riff_ForceBoostAvailability( eBoostAvailability.Disabled )
-	SetRespawnsEnabled( false )
 	Riff_ForceSetEliminationMode( eEliminationMode.Pilots )
 	SetLoadoutGracePeriodEnabled( false )
 	

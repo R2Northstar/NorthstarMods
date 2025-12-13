@@ -1463,9 +1463,8 @@ void function AT_SpawnDroppodSquad( AT_WaveOrigin campData, int spawnId, string 
 	// add variation to spawns
 	wait RandomFloat( 1.0 )
 	
-	AiGameModes_SpawnDropPod( 
-		spawnpoint.GetOrigin(), 
-		spawnpoint.GetAngles(), 
+	AiGameModes_SpawnDropPod(
+		spawnpoint, 
 		AT_AI_TEAM, 
 		aiType, 
 		// squad handler
@@ -1565,8 +1564,7 @@ void function AT_SpawnReaper( AT_WaveOrigin campData, int spawnId, int scriptMan
 	wait RandomFloat( 1.0 )
 	
 	AiGameModes_SpawnReaper( 
-		spawnpoint.GetOrigin(), 
-		spawnpoint.GetAngles(), 
+		spawnpoint, 
 		AT_AI_TEAM, 
 		"npc_super_spectre_aitdm", 
 		// reaper handler
@@ -1638,8 +1636,7 @@ void function AT_SpawnBountyTitan( AT_WaveOrigin campData, int spawnId, int scri
 	string titanClass = expect string( Dev_GetAISettingByKeyField_Global( aisettings, "npc_titan_player_settings" ) )
 	
 	AiGameModes_SpawnTitan( 
-		spawnpoint.GetOrigin(), 
-		spawnpoint.GetAngles(), 
+		spawnpoint, 
 		AT_AI_TEAM, 
 		titanClass, 
 		aisettings,

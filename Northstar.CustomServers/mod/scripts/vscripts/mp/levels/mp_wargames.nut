@@ -22,14 +22,20 @@ void function CodeCallback_MapInit()
 	AddDeathCallback( "npc_spectre", WargamesDissolveDeadEntity )
 	AddDeathCallback( "npc_pilot_elite", WargamesDissolveDeadEntity )
 	AddDeathCallback( "npc_marvin", WargamesDissolveDeadEntity )
-	
 	AddSpawnCallback( "info_spawnpoint_marvin", AddMarvinSpawner )
 	AddCallback_GameStateEnter( eGameState.Prematch, SpawnMarvinsForRound )
 	
-	// currently disabled until finished: intro
-	if ( !IsFFAGame() )
-		ClassicMP_SetLevelIntro( WargamesIntroSetup, 20.0 )
+	// Load Frontier Defense Data
+	if( GameRules_GetGameMode() == FD )
+		initFrontierDefenseData()
+	else
+	{
+		// currently disabled until finished: intro
+		if ( !IsFFAGame() && GetClassicMPMode() )
+			ClassicMP_SetLevelIntro( WargamesIntroSetup, 20.0 )
+	}
 }
+
 
 void function AddEvacNodes()
 {
@@ -44,31 +50,12 @@ void function AddEvacNodes()
 // dissolve effects
 void function WargamesDissolveDeadEntity( entity deadEnt, var damageInfo )
 {
-	if ( deadEnt.IsPlayer() || GamePlayingOrSuddenDeath() || GetGameState() == eGameState.Epilogue )
-	{
-		deadEnt.Dissolve( ENTITY_DISSOLVE_CHAR, < 0, 0, 0 >, 0 )
-		EmitSoundAtPosition( TEAM_UNASSIGNED, deadEnt.GetOrigin(), "Object_Dissolve" )
-		
-		if ( deadEnt.IsPlayer() )
-			thread EnsureWargamesDeathEffectIsClearedForPlayer( deadEnt )
-	}
-}
-
-void function EnsureWargamesDeathEffectIsClearedForPlayer( entity player )
-{
-	// this is slightly shit but whatever lol
-	player.EndSignal( "OnDestroy" )
+	EmitSoundAtPosition( TEAM_UNASSIGNED, deadEnt.GetOrigin(), "Object_Dissolve" )
 	
-	float startTime = Time()
-	while ( player.kv.VisibilityFlags != "0" )
-	{
-		if ( Time() > startTime + 4.0 ) // if we wait too long, just ignore
-			return
-	
-		WaitFrame() 
-	}
-	
-	player.kv.VisibilityFlags = ENTITY_VISIBLE_TO_EVERYONE
+	if ( deadEnt.IsPlayer() )
+		deadEnt.DissolveNonLethal( ENTITY_DISSOLVE_CHAR, < 0, 0, 0 >, 500 )
+	else
+		deadEnt.Dissolve( ENTITY_DISSOLVE_CHAR, < 0, 0, 0 >, 500 )
 }
 
 void function AddMarvinSpawner( entity spawn )
@@ -120,6 +107,10 @@ void function WargamesIntro_AddPlayer( entity player )
 
 void function OnPrematchStart()
 {
+	array<entity> triggers = GetEntArrayByClass_Expensive( "trigger_hurt" ) // Disable temporarily for intro
+	foreach ( entity trigger in triggers )
+		trigger.kv.triggerFilterPlayer = "none"
+	
 	ClassicMP_OnIntroStarted()
 	file.introStartTime = Time()
 	
@@ -227,14 +218,15 @@ void function OnPrematchStart()
 	imcGrunt2.Destroy()
 	imcGrunt3.Destroy()
 	imcGrunt4.Destroy()
+
+	foreach ( entity trigger in triggers )
+		trigger.kv.triggerFilterPlayer = "all"
 }
 
 void function PlayerWatchesWargamesIntro( entity player )
 {
 	player.EndSignal( "OnDestroy" )
-	
-	if ( IsAlive( player ) )
-		player.Die()
+	player.EndSignal( "OnDeath" )
 
 	OnThreadEnd( function() : ( player )
 	{
@@ -253,10 +245,6 @@ void function PlayerWatchesWargamesIntro( entity player )
 		}
 	})
 	
-	// we need to wait a frame if we killed ourselves to spawn into this, so just easier to do it all the time to remove any weirdness
-	WaitFrame()
-	player.EndSignal( "OnDeath" )
-	
 	int factionTeam = ConvertPlayerFactionToIMCOrMilitiaTeam( player )
 	entity playerPod
 	if ( factionTeam == TEAM_IMC )
@@ -265,10 +253,12 @@ void function PlayerWatchesWargamesIntro( entity player )
 		playerPod = file.militiaPod
 	
 	// setup player
+	if( PlayerCanSpawn( player ) )
+		DoRespawnPlayer( player, null )
+
 	int podAttachId = playerPod.LookupAttachment( "REF" )
 	player.SetOrigin( playerPod.GetAttachmentOrigin( podAttachId ) )
 	player.SetAngles( playerPod.GetAttachmentAngles( podAttachId ) )
-	player.RespawnPlayer( null )
 	player.SetParent( playerPod, "REF" )
 	player.ForceStand()
 	
@@ -329,7 +319,6 @@ void function PlayerWatchesWargamesIntro( entity player )
 	wait 3.5
 	
 	entity spawnpoint = FindSpawnPoint( player, false, true )
-	spawnpoint.s.lastUsedTime = Time()
 	player.SetOrigin( spawnpoint.GetOrigin() )
 	player.SetAngles( spawnpoint.GetAngles() )
 	

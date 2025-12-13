@@ -11,6 +11,8 @@ const asset RODEO_WEAKPOINT_HITBOX_MODEL = $"models/Weapons/ammoboxes/backpack_s
 void function ClassicRodeo_InitPlaylistVars()
 {
 	AddPrivateMatchModeSettingEnum( "#MODE_SETTING_CATEGORY_TITAN", "classic_rodeo", [ "#SETTING_DISABLED", "#SETTING_ENABLED" ], "0" )
+	AddPrivateMatchModeSettingEnum( "#MODE_SETTING_CATEGORY_TITAN", "rodeo_titan_lobotomy", [ "#SETTING_DISABLED", "#SETTING_ENABLED" ], "0" )
+	AddPrivateMatchModeSettingArbitrary( "#MODE_SETTING_CATEGORY_TITAN", "pilot_battery_inventory_size", "1" )
 }
 
 #if SERVER
@@ -20,6 +22,7 @@ entity function CreateClassicRodeoWeakpoint( entity player, entity titan )
 	weakpoint.SetParent( titan, "RODEO_BATTERY" )
 	weakpoint.SetLocalAngles( < 90, -90, 0 > )
 	weakpoint.SetTakeDamageType( DAMAGE_YES )
+	weakpoint.SetDamageNotifications( true )
 	SetTeam( weakpoint, TEAM_UNASSIGNED )
 	SetObjectCanBeMeleed( weakpoint, false )
 	weakpoint.kv.solid = 6
@@ -34,6 +37,8 @@ entity function CreateClassicRodeoWeakpoint( entity player, entity titan )
 	weakpoint.s.titan <- titan
 	
 	AddEntityCallback_OnDamaged( weakpoint, OnRodeoWeakpointDamaged )
+	
+	return weakpoint
 }
 
 void function OnRodeoWeakpointDamaged( entity weakpoint, var damageInfo )
@@ -47,7 +52,10 @@ void function OnRodeoWeakpointDamaged( entity weakpoint, var damageInfo )
 		return
 	
 	// hitmarker
-	attacker.NotifyDidDamage( weakpoint, DamageInfo_GetHitBox( damageInfo ), DamageInfo_GetDamagePosition( damageInfo ), DamageInfo_GetCustomDamageType( damageInfo ) | DF_CRITICAL, damageAmount, DamageInfo_GetDamageFlags( damageInfo ), DamageInfo_GetHitGroup( damageInfo ), DamageInfo_GetWeapon( damageInfo ), DamageInfo_GetDistFromAttackOrigin( damageInfo ) )
+	int customDamageType = DamageInfo_GetCustomDamageType( damageInfo )
+	customDamageType = customDamageType | DF_CRITICAL
+	
+	attacker.NotifyDidDamage( weakpoint, DamageInfo_GetHitBox( damageInfo ), DamageInfo_GetDamagePosition( damageInfo ), customDamageType, damageAmount, DamageInfo_GetDamageFlags( damageInfo ), DamageInfo_GetHitGroup( damageInfo ), DamageInfo_GetWeapon( damageInfo ), DamageInfo_GetDistFromAttackOrigin( damageInfo ) )
 	
 	// figure out damage to deal to titan
 	entity attackerWeapon = DamageInfo_GetWeapon( damageInfo )
@@ -59,6 +67,7 @@ void function OnRodeoWeakpointDamaged( entity weakpoint, var damageInfo )
 		rodeoDamage = int( attackerWeapon.GetWeaponSettingInt( eWeaponVar.damage_near_value_titanarmor ) * ( attackerWeapon.GetWeaponSettingFloat( eWeaponVar.damage_headshot_scale ) * 1.5 ) )
 		
 	// damage titan, make sure DF_BYPASS_SHIELD	is a thing for proper behaviour
-	titan.TakeDamage( rodeoDamage, attacker, attackerWeapon, { damageSourceId = eDamageSourceId.rodeo, scriptType = DamageInfo_GetCustomDamageType( damageInfo ) | DF_BYPASS_SHIELD } )
+	customDamageType = customDamageType | DF_BYPASS_SHIELD
+	titan.TakeDamage( rodeoDamage, attacker, attackerWeapon, { damageSourceId = eDamageSourceId.rodeo, scriptType = customDamageType } )
 }
 #endif

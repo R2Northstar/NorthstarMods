@@ -22,7 +22,10 @@ void function Score_Init()
 {
 	SvXP_Init()
 	AddCallback_OnClientConnected( InitPlayerForScoreEvents )
+
 	AddCallback_OnPlayerAssist( TitanAssistedKill )
+	ScoreEvent_SetDisplayType( GetScoreEvent( "KillingSpree" ), eEventDisplayType.GAMEMODE | eEventDisplayType.MEDAL | eEventDisplayType.CALLINGCARD )
+	ScoreEvent_SetDisplayType( GetScoreEvent( "Rampage" ), eEventDisplayType.GAMEMODE | eEventDisplayType.MEDAL | eEventDisplayType.CALLINGCARD )
 }
 
 void function InitPlayerForScoreEvents( entity player )
@@ -40,13 +43,13 @@ void function AddPlayerScore( entity targetPlayer, string scoreEventName, entity
 {
 	ScoreEvent event = GetScoreEvent( scoreEventName )
 	
-	if ( !event.enabled || !IsValid( targetPlayer ) || !targetPlayer.IsPlayer() )
+	if ( !event.enabled || !IsValidPlayer( targetPlayer ) )
 		return
 
 	var associatedHandle = 0
 	if ( associatedEnt != null )
 		associatedHandle = associatedEnt.GetEncodedEHandle()
-		
+	
 	if ( pointValueOverride != -1 )
 		event.pointValue = pointValueOverride 
 	
@@ -55,7 +58,21 @@ void function AddPlayerScore( entity targetPlayer, string scoreEventName, entity
 	float earnValue = event.earnMeterEarnValue * scale
 	float ownValue = event.earnMeterOwnValue * scale
 	
+	if ( !PlayerEarnMeter_Enabled() && !targetPlayer.IsTitan() ) // Don't show earning points if earn meter is not enabled and player is not a special case of being a titan
+	{
+		earnValue = 0.0
+		ownValue = 0.0
+	}
+
+	// Both checks below are mostly a visual fix because the score medals would still show the adds into the total value
+	if ( PlayerEarnMeter_GetPilotOverdriveEnum() == ePilotOverdrive.Disabled )
+		earnValue = 0.0
+	
+	if ( PlayerEarnMeter_GetPilotOverdriveEnum() == ePilotOverdrive.Only )
+		ownValue = 0.0
+	
 	PlayerEarnMeter_AddEarnedAndOwned( targetPlayer, earnValue * scale, ownValue * scale )
+	SharedEarnMeter_AddEarnedAndOwned( targetPlayer, earnValue, ownValue )
 	
 	// PlayerEarnMeter_AddEarnedAndOwned handles this scaling by itself, we just need to do this for the visual stuff
 	float pilotScaleVar = ( expect string ( GetCurrentPlaylistVarOrUseValue( "earn_meter_pilot_multiplier", "1" ) ) ).tofloat()
@@ -63,8 +80,16 @@ void function AddPlayerScore( entity targetPlayer, string scoreEventName, entity
 	
 	if ( targetPlayer.IsTitan() )
 	{
-		earnValue *= titanScaleVar
-		ownValue *= titanScaleVar
+		if ( targetPlayer.GetPlayerNetInt( EARNMETER_MODE ) == eEarnMeterMode.CORE_ACTIVE ) // While core is active, Titans can't gain meter
+		{
+			earnValue = 0.0
+			ownValue = 0.0
+		}
+		else
+		{
+			earnValue *= titanScaleVar
+			ownValue *= titanScaleVar
+		}
 	}
 	else
 	{
@@ -72,7 +97,7 @@ void function AddPlayerScore( entity targetPlayer, string scoreEventName, entity
 		ownValue *= pilotScaleVar
 	}
 	
-	Remote_CallFunction_NonReplay( targetPlayer, "ServerCallback_ScoreEvent", event.eventId, event.pointValue, event.displayType, associatedHandle, ownValue, earnValue )
+	Remote_CallFunction_NonReplay( targetPlayer, "ServerCallback_ScoreEvent", event.eventId, event.pointValue, event.displayType, associatedHandle, earnValue, ownValue )
 	
 	if ( event.displayType & eEventDisplayType.CALLINGCARD ) // callingcardevents are shown to all players
 	{
@@ -150,9 +175,9 @@ void function ScoreEvent_PlayerKilled( entity victim, entity attacker, var damag
 	// untimed killstreaks
 	attacker.s.currentKillstreak++
 	if ( attacker.s.currentKillstreak == KILLINGSPREE_KILL_REQUIREMENT )
-		AddPlayerScore( attacker, "KillingSpree" )
+		AddPlayerScore( attacker, "KillingSpree", attacker )
 	else if ( attacker.s.currentKillstreak == RAMPAGE_KILL_REQUIREMENT )
-		AddPlayerScore( attacker, "Rampage" )
+		AddPlayerScore( attacker, "Rampage", attacker )
 	
 	// increment untimed killstreaks against specific players
 	if ( !( victim in attacker.p.playerKillStreaks ) )
@@ -204,21 +229,19 @@ void function ScoreEvent_TitanKilled( entity victim, entity attacker, var damage
 
 	if ( attacker.IsTitan() )
 	{
-		if( victim.GetBossPlayer() || victim.IsPlayer() ) // to confirm this is a pet titan or player titan
+		if ( victim.GetBossPlayer() || victim.IsPlayer() ) // to confirm this is a pet titan or player titan
 			AddPlayerScore( attacker, "TitanKillTitan", attacker ) // this will show the "Titan Kill" callsign event
 		else
 			AddPlayerScore( attacker, "TitanKillTitan" )
 	}
 	else
 	{
-		if( victim.GetBossPlayer() || victim.IsPlayer() )
+		KilledPlayerTitanDialogue( attacker, victim )
+		if ( victim.GetBossPlayer() || victim.IsPlayer() )
 			AddPlayerScore( attacker, "KillTitan", attacker )
 		else
 			AddPlayerScore( attacker, "KillTitan" )
 	}
-
-	if( !victim.IsNPC() ) // don't let killing a npc titan plays dialogue
-		KilledPlayerTitanDialogue( attacker, victim )
 }
 
 void function TitanAssistedKill( entity attacker, entity victim )
@@ -232,16 +255,19 @@ void function TitanAssistedKill( entity attacker, entity victim )
 
 void function ScoreEvent_NPCKilled( entity victim, entity attacker, var damageInfo )
 {
+	if ( !attacker.IsPlayer() )
+		return
+	
+	if ( DamageInfo_GetCustomDamageType( damageInfo ) & DF_HEADSHOT )
+		AddPlayerScore( attacker, "NPCHeadshot" )
+	
 	try
 	{		
 		// have to trycatch this because marvins will crash on kill if we dont
 		AddPlayerScore( attacker, ScoreEventForNPCKilled( victim, damageInfo ), victim )
 	}
 	catch ( ex ) {}
-
-	if ( !attacker.IsPlayer() )
-		return
-
+	
 	// mayhem/onslaught (timed killstreaks vs AI)
 	
 	// reset before checking
@@ -311,7 +337,7 @@ void function ScoreEvent_SetupEarnMeterValuesForMixedModes() // mixed modes in t
 {
 	// todo needs earn/overdrive values
 	// player-controlled stuff
-	ScoreEvent_SetEarnMeterValues( "KillPilot", 0.07, 0.15, 0.33 ) // 5% for titan cores
+	ScoreEvent_SetEarnMeterValues( "KillPilot", 0.07, 0.15, 0.33 )
 	ScoreEvent_SetEarnMeterValues( "KillTitan", 0.0, 0.15 )
 	ScoreEvent_SetEarnMeterValues( "TitanKillTitan", 0.0, 0.0 ) // unsure
 	ScoreEvent_SetEarnMeterValues( "PilotBatteryStolen", 0.0, 0.35 ) // this actually just doesn't have overdrive in vanilla even
@@ -335,17 +361,13 @@ void function ScoreEvent_SetupEarnMeterValuesForTitanModes()
 // faction dialogue
 void function KilledPlayerTitanDialogue( entity attacker, entity victim )
 {
-	if( !attacker.IsPlayer() )
+	if ( !IsValidPlayer( attacker ) )
 		return
-	entity titan
-	if ( victim.IsTitan() )
-		titan = victim
-
-	if( !IsValid( titan ) )
+	
+	if ( !IsValid( victim ) || !victim.IsTitan() )
 		return
-	string titanCharacterName = GetTitanCharacterName( titan )
-
-	switch( titanCharacterName )
+	
+	switch( GetTitanCharacterName( victim ) )
 	{
 		case "ion":
 			PlayFactionDialogueToPlayer( "kc_pilotkillIon", attacker )

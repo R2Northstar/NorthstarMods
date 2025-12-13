@@ -207,23 +207,6 @@ int function SortCompareBoostCost( BoostStoreData a, BoostStoreData b )
 
 array<BoostStoreData> function GetAvailableBoosts()
 {
-	// custom stuff for arena
-	// TODO: make an API for doing this and remove this file from Northstar.Custom
-	string boostStoreMode = GetCurrentPlaylistVarString( "boost_store_mode", "off" )
-	if ( boostStoreMode == "arena" )
-	{
-		array<BoostStoreData> arenaLoadouts = PopulateArenaLoadouts()
-		
-		#if SERVER
-			// bit of a hack, but assign weapon checks to weapon refs
-			foreach ( BoostStoreData data in arenaLoadouts )
-				if ( data.itemRef in eDamageSourceId )
-					file.boostPurchaseExtraChecks[ data.itemRef ] <- bool function( entity player ) { return player.GetMainWeapons().len() != 3 } 
-		#endif
-		
-		return arenaLoadouts
-	}
-
 	return file.availableBoosts
 }
 

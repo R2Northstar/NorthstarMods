@@ -1,4 +1,4 @@
-﻿"lang"
+"lang" 
 {
 	"Language" "english"
 	"Tokens"
@@ -32,6 +32,7 @@
 		"PL_inf_desc" "Survivors are infected when killed."
 		"PL_inf_abbr" "INF"
 		"GAMEMODE_INF" "Infection"
+		
 		"INFECTION_YOU_ARE_INFECTED" "You've been Infected!"
 		"INFECTION_KILL_SURVIVORS" "Infect All Remaining Survivors."
 		"INFECTION_FIRST_INFECTED" "%s1 is the First Infected."
@@ -93,5 +94,8 @@
 		"WPN_SHOTGUN_DBLBARREL_SHORT" "TWIN-B"
 		"WPN_SHOTGUN_DBLBARREL_DESC" "Short-barreled Shotgun"
 		"WPN_SHOTGUN_DBLBARREL_LONGDESC" "Short Double Barreled Shotgun"
+
+		"rodeo_titan_lobotomy" "Titan Rodeo Lobotomy"
+		"pilot_battery_inventory_size" "Pilot Battery Inventory Size"
 	}
 }
