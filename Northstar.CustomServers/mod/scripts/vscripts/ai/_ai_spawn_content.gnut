@@ -221,9 +221,6 @@ function CommonNPCOnSpawned( entity npc )
 			AddAnimEvent( npc, "dropship_warpout", WarpoutEffect )
 
 			InitLeanDropship( npc )
-
-			if( GetCurrentPlaylistVarInt( "dropship_turrets_enabled", 0 ) == 1 )
-				thread SpawnDropshipTurrets( npc )
 			break
 
 

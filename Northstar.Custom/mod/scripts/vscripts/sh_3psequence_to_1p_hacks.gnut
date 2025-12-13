@@ -84,6 +84,7 @@ Forced1PSequenceData function FirstPersonSequenceForce1P( FirstPersonSequenceStr
 	}
 
 	ownerProxy.EnableNPCFlag( NPC_IGNORE_ALL )
+	ownerProxy.SetBossPlayer( player )
 
 	NPC_NoTarget( ownerProxy )
 	SetTeam( ownerProxy, player.GetTeam() )
@@ -150,6 +151,7 @@ Forced1PSequenceData function FirstPersonSequenceForce1P( FirstPersonSequenceStr
 	}
 
 	thirdPersonProxy.EnableNPCFlag( NPC_IGNORE_ALL )
+	thirdPersonProxy.SetBossPlayer( player )
 
 	NPC_NoTarget( thirdPersonProxy )
 	SetTeam( thirdPersonProxy, player.GetTeam() )

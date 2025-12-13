@@ -398,7 +398,7 @@ void function TrySpottedCallout( entity guy, entity enemy )
 
 	if ( enemy.IsTitan() )
 	{
-		if ( IsSpectre( guy ) ) //Spectre callouts
+		if ( IsSpectre( guy ) ) // Spectre callouts
 		{
 			#if SPECTRE_CHATTER_MP_ENABLED
 				PlaySpectreChatterMPLine( guy, "diag_imc_spectre_gs_spotclosetitancall_01" )
@@ -410,7 +410,7 @@ void function TrySpottedCallout( entity guy, entity enemy )
 			#endif
 
 		}
-		else //Grunt callouts
+		else if ( IsGrunt( guy ) ) // Grunt callouts
 		{
 			#if GRUNT_CHATTER_MP_ENABLED
 				PlayGruntChatterMPLine( guy, "bc_enemytitanspotcall" )
@@ -419,7 +419,7 @@ void function TrySpottedCallout( entity guy, entity enemy )
 	}
 	else if ( enemy.IsPlayer() )
 	{
-		if ( IsSpectre( guy ) ) //Spectre callouts
+		if ( IsSpectre( guy ) ) // Spectre callouts
 		{
 			#if SPECTRE_CHATTER_MP_ENABLED
 				PlaySpectreChatterMPLine( guy, "diag_imc_spectre_gs_engagepilotenemy_01_1" )
@@ -430,7 +430,7 @@ void function TrySpottedCallout( entity guy, entity enemy )
 					PlaySpectreChatterToAll( "spectre_gs_spotenemypilot_01_1", guy )
 			#endif
 		}
-		else //Grunt callouts
+		else if ( IsGrunt( guy ) ) // Grunt callouts
 		{
 			#if GRUNT_CHATTER_MP_ENABLED
 				if ( isClose )
@@ -442,7 +442,7 @@ void function TrySpottedCallout( entity guy, entity enemy )
 	}
 	else if ( IsSuperSpectre( enemy ) )
 	{
-		if ( !IsSpectre( guy ) ) //Spectre callouts
+		if ( IsGrunt( guy ) ) // Grunt callouts
 		{
 			#if GRUNT_CHATTER_MP_ENABLED
 				PlayGruntChatterMPLine( guy, "bc_reactEnemyReaper" )
@@ -451,7 +451,7 @@ void function TrySpottedCallout( entity guy, entity enemy )
 	}
 	else
 	{
-		if ( !IsSpectre( guy ) ) //Spectre callouts
+		if ( IsGrunt( guy ) )
 		{
 			#if GRUNT_CHATTER_MP_ENABLED
 				PlayGruntChatterMPLine( guy, "bc_reactEnemySpotted" )
@@ -799,4 +799,3 @@ function SetGlobalNPCHealth( healthValue ) //Debug, for trailer team
 		npc.SetHealth( healthValue )
 	}
 }
-
