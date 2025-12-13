@@ -295,6 +295,16 @@ entity function GetBestSpawnpoint( entity player, array<entity> spawnpoints, boo
 				validSpawns.append( spawnpoint )
 		}
 	}
+
+	if ( !validSpawns.len() ) // Second validity check, retry without LOS and ignoring time since last spawn
+	{
+		CodeWarning( "No valid spawn points found, attempting spawn points without Line of Sight checks and ignoring time since last spawn" )
+		foreach ( entity spawnpoint in spawnpoints )
+		{
+			if ( IsSpawnpointValid( spawnpoint, player.GetTeam(), true, true ) )
+				validSpawns.append( spawnpoint )
+		}
+	}
 	
 	if ( !validSpawns.len() ) // On all validity check, just gather the most basic spawn
 	{
@@ -313,7 +323,7 @@ entity function GetBestSpawnpoint( entity player, array<entity> spawnpoints, boo
 	return validSpawns[0] // Return first entry in the array because native have already sorted everything through the ratings, so first one is the best one
 }
 
-bool function IsSpawnpointValid( entity spawnpoint, int team, bool skipLineOfSightChecks = false )
+bool function IsSpawnpointValid( entity spawnpoint, int team, bool skipLineOfSightChecks = false, bool skipTimeCheck = false )
 {
 	foreach ( bool functionref( entity, int ) customValidationRule in file.customSpawnpointValidationRules )
 	{
@@ -324,7 +334,7 @@ bool function IsSpawnpointValid( entity spawnpoint, int team, bool skipLineOfSig
 	if ( !IsSpawnpointValidDrop( spawnpoint ) )
 		return false
 	
-	if ( Time() - spawnpoint.e.spawnTime <= 10.0 && GetGameState() > eGameState.Prematch ) 
+	if ( !skipTimeCheck && spawnpoint.e.spawnTime != 0 && Time() - spawnpoint.e.spawnTime <= 10.0 ) 
 		return false
 	
 	if ( SpawnPointInNoSpawnArea( spawnpoint.GetOrigin(), team ) )
