@@ -232,9 +232,7 @@ void function Stats_IncrementStat( entity player, string statCategory, string st
 {
 	if ( !IsValidStat( statCategory, statAlias, statSubAlias ) )
 	{
-		#if SERVER && DEV
 		printt( "invalid stat: " + statCategory + " : " + statAlias + " : " + statSubAlias )
-		#endif
 		return
 	}
 
@@ -265,7 +263,10 @@ void function Stats_IncrementStat( entity player, string statCategory, string st
 		// if we have an invalid mode or map for persistence, and it is used in the
 		// persistence string, we can't save the persistence so we have to just return
 		if ( str != saveVar )
+		{
+			//printt( ex, str, GetMapName(), mode ) // Commented out due to spamming logs on invalid modes (e.g. Gun Game, Infection, ...)
 			return
+		}
 	}
 	str = saveVar
 
