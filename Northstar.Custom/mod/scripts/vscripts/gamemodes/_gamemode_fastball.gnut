@@ -19,7 +19,6 @@ void function GamemodeFastball_Init()
 	SetShouldUseRoundWinningKillReplay( true )
 	SetRoundBased( true )
 	SetSwitchSidesBased( true )
-	SetRespawnsEnabled( false )
 	Riff_ForceTitanAvailability( eTitanAvailability.Never )
 	Riff_ForceSetEliminationMode( eEliminationMode.Pilots )
 	ScoreEvent_SetupEarnMeterValuesForMixedModes()
@@ -283,7 +282,7 @@ function FastballOnPanelHacked( panel, player )
 	// respawn dead players
 	foreach ( entity deadPlayer in GetPlayerArrayOfTeam( player.GetTeam() ) )
 	{
-		if ( !IsAlive( deadPlayer ) && !IsPrivateMatchSpectator( deadPlayer ) )
+		if ( PlayerCanSpawn( player ) && !IsPrivateMatchSpectator( deadPlayer ) )
 		{
 			deadPlayer.SetOrigin( panel.s.startOrigin )
 			deadPlayer.RespawnPlayer( null )

@@ -46,7 +46,6 @@ void function CaptureTheFlag_Init()
 	CaptureTheFlagShared_Init()
 	
 	SetSwitchSidesBased( true )
-	SetSuddenDeathBased( true )
 	
 	SetShouldUseRoundWinningKillReplay( true )
 	SetRoundWinningKillReplayKillClasses( false, false )
