@@ -1,4 +1,3 @@
-untyped
 global function AiTurret_Init
 global function GetMegaTurretLinkedToPanel
 global function MegaTurretUsabilityFunc
@@ -41,19 +40,6 @@ void function SetUsePromptForPanel( var panel, var turret )
 void function OnTurretSpawn( entity turret )
 {
 	turret.e.spawnTime = Time()
-	if( !( "totalScore" in turret.s ) )
-		turret.s.totalScore <- 0
-	
-	if( turret.GetAISettingsName() == "npc_turret_sentry_burn_card_at" || turret.GetAISettingsName() == "npc_turret_sentry_burn_card_at_fd" || turret.GetAISettingsName() == "npc_turret_sentry_burn_card_ap_fd" )
-	{
-		if( GetCurrentPlaylistVarInt( "enable_rocket_turrets", 0 ) == 1 )
-		{
-			turret.SetModel( $"models/robots/turret_rocket/turret_rocket.mdl" )
-			TakeWeaponsForArray( turret, turret.GetMainWeapons() )
-			turret.GiveWeapon( "mp_weapon_gunship_missile" )
-			turret.SetTitle( "Rocket Turret" )
-		}
-	}
 }
 
 bool function IsTurretActive( entity turret )

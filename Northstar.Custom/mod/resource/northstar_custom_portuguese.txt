@@ -2,7 +2,7 @@
 {
 	"Language" "portuguese"
 	"Tokens"
-	{	
+	{
 		"PL_sbox" "Sandbox"
 		"PL_sbox_lobby" "Saguão de Sandbox"
 		"PL_sbox_desc" "gmod só que pior"
@@ -76,4 +76,4 @@
 		"WPN_SHOTGUN_DBLBARREL_DESC" "Escopeta de cano curto"
 		"WPN_SHOTGUN_DBLBARREL_LONGDESC" "Escopeta dupla de cano curto"
 	}
-}
+} 

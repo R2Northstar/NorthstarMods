@@ -1,4 +1,3 @@
-
 global function AddAnimEvent
 global function DeleteAnimEvent
 global function GetOptionalAnimEventVar
@@ -71,8 +70,8 @@ void function RunAnimEventCallbacks( entity ent, string eventName )
 // call the function registered to the given name
 void function AddGlobalAnimEvent( string name, void functionref(entity) func )
 {
-	Assert( !( name in svGlobal.globalAnimEventCallbacks ), "Already created global anim event " + name )
-	svGlobal.globalAnimEventCallbacks[ name ] <- func
+	if ( !( name in svGlobal.globalAnimEventCallbacks ) )
+		svGlobal.globalAnimEventCallbacks[ name ] <- func
 }
 
 void function GlobalAnimEventWithStringParameter_Signal( entity guy, string msg )

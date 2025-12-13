@@ -1,4 +1,4 @@
-"lang"
+"lang" 
 {
 	"Language" "english"
 	"Tokens"
@@ -32,8 +32,6 @@
 		"PL_inf_desc" "Survivors are infected when killed."
 		"PL_inf_abbr" "INF"
 		"GAMEMODE_INF" "Infection"
-
-		"MENU_FD_DIFFICULTY_SEARCH_5"		"Search for all Frontier Defense games"
 		
 		"INFECTION_YOU_ARE_INFECTED" "You've been Infected!"
 		"INFECTION_KILL_SURVIVORS" "Infect All Remaining Survivors."
@@ -86,10 +84,6 @@
 		"SCOREBOARD_FASTBALL_HACKS" "Panels Captured"
 		
 		"GAMEMODE_ctf_comp" "Competitive CTF"
-		
-		"PL_privmatch" "Host Server"
-		"PL_privmatch_lobby" "Server Lobby"
-		"PL_privmatch_desc" "Host a listen server, in a map and mode of your choice. Up to 16 Players."
 		
 		"WPN_TITAN_ARC_CANNON" "Arc Cannon"
 		"WPN_TITAN_ARC_CANNON_SHORT" "Arc Cannon"
