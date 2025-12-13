@@ -195,29 +195,8 @@ bool function CodeCallback_IsValidMeleeExecutionTarget( entity attacker, entity 
 	if ( attacker == target )
 		return false
 	
-	//if ( !attacker.IsOnGround() || !target.IsOnGround() )
-	//	return false
-		
-	if ( attacker.GetParent() || target.GetParent() )
+	if ( !ShouldPlayerExecuteTarget( attacker, target ) )
 		return false
-
-	// npc execution case
-	if ( attacker.IsPlayer() )
-	{
-		if ( !ShouldPlayerExecuteTarget( attacker, target ) )
-			return false
-	}
-
-	if( attacker.IsPlayer() )
-	{
-		if( attacker.IsZiplining() )
-			return false
-	}
-	if( target.IsPlayer() )
-	{
-		if( target.IsZiplining() )
-			return false
-	}
 
 	if ( !attacker.IsOnGround() && attacker.IsHuman() )
 		return false
@@ -349,7 +328,6 @@ bool function CodeCallback_IsValidMeleeExecutionTarget( entity attacker, entity 
 			return false
 		}
 	}
-	//
 
 	return true
 }
