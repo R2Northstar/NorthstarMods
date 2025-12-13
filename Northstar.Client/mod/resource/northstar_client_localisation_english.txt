@@ -50,7 +50,6 @@ Press Yes if you agree to this. This choice can be changed in the mods menu at a
 		"MODE_SETTING_CATEGORY_RIFF" "Riffs"
 		"MODE_SETTING_CATEGORY_MATCH" "Match"
 
-		"max_players" "Max Playerslots"
 		"run_intro" "Dropship Intro"
 		"run_epilogue" "Run Epilogue"
 		"scorelimit" "Score Limit"
@@ -58,7 +57,6 @@ Press Yes if you agree to this. This choice can be changed in the mods menu at a
 		"timelimit" "Time Limit"
 		"roundtimelimit" "Time Limit (round-based)"
 		"respawnprotection" "Respawn Protection Time"
-		"double_xp_enabled" "Enable Event Double XP"
 
 		"pilot_health_multiplier" "Health multiplier"
 		"respawn_delay" "Respawn Delay"
