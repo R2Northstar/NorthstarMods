@@ -176,16 +176,6 @@ void function CodeCallback_OnClientConnectionCompleted( entity player )
 {
 	InitPersistentData( player )
 	
-	foreach ( otherPlayer in GetPlayerArray() )
-	{
-		if ( otherPlayer != player )
-		{
-			EmitSoundOnEntityOnlyToPlayer( otherPlayer, otherPlayer, "ui_spawn_friendlypilot" )
-			EmitSoundOnEntityOnlyToPlayer( otherPlayer, otherPlayer, "ui_spawn_friendlypilot" )
-			EmitSoundOnEntityOnlyToPlayer( otherPlayer, otherPlayer, "ui_spawn_friendlypilot" )
-		}
-	}
-	
 	if ( IsLobby() )
 	{
 		Lobby_OnClientConnectionCompleted( player )
@@ -290,16 +280,6 @@ void function SpectateTTSMenuPlayer( entity player )
 
 void function CodeCallback_OnClientDisconnected( entity player, string reason )
 {
-	foreach ( otherPlayer in GetPlayerArray() )
-	{
-		if ( otherPlayer != player )
-		{
-			EmitSoundOnEntityOnlyToPlayer( otherPlayer, otherPlayer, "ui_ingame_league_belowgoal" )
-			EmitSoundOnEntityOnlyToPlayer( otherPlayer, otherPlayer, "ui_ingame_league_belowgoal" )
-			EmitSoundOnEntityOnlyToPlayer( otherPlayer, otherPlayer, "ui_ingame_league_belowgoal" )
-		}
-	}
-
 	if ( IsLobby() )
 	{
 		player.Signal( "_disconnectedInternal" )
