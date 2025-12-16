@@ -108,6 +108,10 @@ void function OnPrematchStart_Thread()
 		if ( createTeam == TEAM_IMC )
 			dropship.SetModel( $"models/vehicle/goblin_dropship/goblin_dropship_hero.mdl" )
 		
+		dropship.SetInvulnerable()
+
+		NPC_NoTarget( dropship )
+		
 		teamDropships[ dropship ] <- [ null, null, null, null ]
 		
 		thread PlayAnim( dropship, GetDropshipIntroAnimation() )
