@@ -1394,7 +1394,7 @@ void function TitanVsTitan_3p( SyncedMelee action, entity attacker, entity targe
 
 			Remote_CallFunction_NonReplay( attacker, "ServerCallback_HideHudForFPHackAnim" )
 			ScreenFadeFromBlack( attacker, 1.0, 0.5 )
-			thread Forced1PAttackerViewBodySequence( attackerBodySequence, attackerViewBodyProxy, attacker, camera )
+			thread Forced1PAttackerViewBodySequence( attackerBodySequence, attackerViewBodyProxy, attacker )
 		}
 		#endif
 
@@ -1436,18 +1436,20 @@ void function TitanVsTitan_3p( SyncedMelee action, entity attacker, entity targe
 	}
 }
 
-void function Forced1PAttackerViewBodySequence( FirstPersonSequenceStruct attackerBodySequence, entity attackerViewBody, entity attacker, entity camera )
+void function Forced1PAttackerViewBodySequence( FirstPersonSequenceStruct attackerBodySequence, entity attackerViewBody, entity attacker )
 {
 	attacker.EndSignal( "OnDestroy" )
 	attacker.EndSignal( "OnDeath" )
 	attacker.EndSignal( "OnAnimationDone" )
-	
-	OnThreadEnd( function() : ( attackerViewBody, attacker, camera )
-	{
-		attacker.ClearViewEntity()
-		camera.Destroy()
-		attackerViewBody.Destroy()
-	})
+
+	OnThreadEnd
+	(
+		function() : ( attackerViewBody, attacker )
+		{
+			if ( IsValid( attackerViewBody ) )
+				attackerViewBody.Destroy()
+		}
+	)
 
 	FirstPersonSequence( attackerBodySequence, attackerViewBody, attacker )
 }
