@@ -594,7 +594,7 @@ function UpdatePrivateMatchButtons()
 		if ( settingsLocked && uiGlobal.activeMenu == GetMenu( "MatchSettingsMenu" ) )
 			CloseActiveMenu()
 
-		Hud_SetLocked( file.matchSettingsButton, false )
+		Hud_SetLocked( file.matchSettingsButton, settingsLocked )
 	}
 }
 
