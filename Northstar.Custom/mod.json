@@ -329,7 +329,7 @@
 		},
 		{
 			"Path": "sh_3psequence_to_1p_hacks.gnut",
-			"RunOn": " SERVER && MP"
+			"RunOn": "SERVER && MP"
 		},
 		{
 			"Path": "gamemodes/sh_riff_instagib.gnut",
