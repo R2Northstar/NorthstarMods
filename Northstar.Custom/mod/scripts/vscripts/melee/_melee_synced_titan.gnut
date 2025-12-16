@@ -1390,14 +1390,10 @@ void function TitanVsTitan_3p( SyncedMelee action, entity attacker, entity targe
 			attackerViewBodyProxy.SetBodygroup( attackerViewBodyProxy.FindBodyGroup( "head" ), 1 )
 			attackerViewBodyProxy.SetOwner( attacker )
 			attackerViewBodyProxy.kv.VisibilityFlags = ENTITY_VISIBLE_TO_OWNER
-			
-			// create the viewpoint entity
-			entity camera = CreateEntity( "point_viewcontrol" )
-			camera.SetParent( attackerViewBodyProxy, FORCE1P_PILOT_1P_ATTACHMENT )
-			camera.kv.spawnflags = 56
-			DispatchSpawn( camera )
-			attacker.SetViewEntity( camera, false )
-			
+
+			attackerSequence.thirdPersonCameraEntity = attackerViewBodyProxy
+			attackerSequence.thirdPersonCameraAttachments = [ FORCE1P_PILOT_1P_ATTACHMENT ]
+
 			Remote_CallFunction_NonReplay( attacker, "ServerCallback_HideHudForFPHackAnim" )
 			ScreenFadeFromBlack( attacker, 1.0, 0.5 )
 			thread Forced1PAttackerViewBodySequence( attackerBodySequence, attackerViewBodyProxy, attacker, camera )
