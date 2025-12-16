@@ -1372,17 +1372,15 @@ void function TitanVsTitan_3p( SyncedMelee action, entity attacker, entity targe
 	if ( attackerViewBody != null )
 	{
 		attackerDoing1PViewbodyAnim = true
-	
+
 		attackerBodySequence.useAnimatedRefAttachment = true
-		
+
 		#if MP
-		// could use FirstPersonSequenceForce1P here, but since this uses a propdynamic rather than a player, easier to do it manually
 		if ( ShouldRunFirstPersonSequence( attacker, false, true ) )
 		{
-			// hide from everyone else
 			attackerViewBody.kv.VisibilityFlags = ENTITY_VISIBLE_TO_EVERYONE & ~ENTITY_VISIBLE_TO_OWNER
 			attackerViewBody.SetOwner( attacker )
-		
+
 			entity attackerViewBodyProxy = Wallrun_CreateCopyOfPilotModel( attacker )
 			attackerViewBodyProxy.SetOrigin( attacker.GetOrigin() )
 			attackerViewBodyProxy.SetRagdollImpactFX( RAGDOLL_IMPACT_TABLE_IDX )
@@ -1399,7 +1397,7 @@ void function TitanVsTitan_3p( SyncedMelee action, entity attacker, entity targe
 			thread Forced1PAttackerViewBodySequence( attackerBodySequence, attackerViewBodyProxy, attacker, camera )
 		}
 		#endif
-		
+
 		thread FirstPersonSequence( attackerBodySequence, attackerViewBody, attacker )
 	}
 
