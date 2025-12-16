@@ -286,17 +286,26 @@ void function Evac( int evacTeam, float initialWait, float arrivalTime, float wa
 	{
 		if ( "evacTrigger" in dropship.s )
 			dropship.s.evacTrigger.Destroy()
-		
+
 		// this should be for both teams
 		if ( !IsAlive( dropship ) )
 		{
 			SetTeamActiveObjective( evacTeam, "EG_DropshipExtractDropshipDestroyed" )
 			SetTeamActiveObjective( GetOtherTeam( evacTeam ), "EG_StopExtractDropshipDestroyed" )
-			
+
 			foreach ( entity player in GetPlayerArrayOfTeam( evacTeam ) )
 				SetPlayerChallengeEvacState( player, 0 )
+
+			foreach ( entity player in dropship.s.evacSlots )
+			{
+				if ( IsValid( player ) && IsAlive( player ) )
+				{
+					player.ClearParent()
+					player.Die( null, null, { damageSourceId = eDamageSourceId.evac_dropship_explosion, scriptType = DF_GIB } )
+				}
+			}
 		}
-		
+
 		// this is called whether dropship is destroyed or evac finishes, callback can handle this itself
 		thread completionCallback( dropship )
 	})
