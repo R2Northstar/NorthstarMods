@@ -511,7 +511,7 @@ void function GameStateEnter_Playing_Threaded()
 		else
 			endTime = expect float( GetServerVar( "gameEndTime" ) )
 		
-		if ( !GetPlayerArray().len() )
+		if ( !GetConnectingAndConnectedPlayerArray().len() )
 			GameRules_EndMatch()
 	
 		if ( Time() >= endTime && !Flag( "DisableTimeLimit" ) )
