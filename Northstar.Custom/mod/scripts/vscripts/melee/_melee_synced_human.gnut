@@ -62,7 +62,7 @@ bool function MeleeThread_PilotVsEnemyInternal( SyncedMelee action, entity attac
 				target.ClearParent()
 
 
-			if ( IsValid( attacker ) )
+			if ( IsValid( attacker ) && attacker.IsPlayer() )
 			{
 				attacker.PlayerMelee_SetState( PLAYER_MELEE_STATE_NONE )
 			}
