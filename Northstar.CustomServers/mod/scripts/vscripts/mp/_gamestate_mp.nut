@@ -1019,7 +1019,15 @@ void function CheckEliminationRiffMode( entity victim, entity attacker )
 	// note: pilotstitans is just win if enemy team runs out of either pilots or titans
 	if ( IsPilotEliminationBased() )
 	{
-		if ( ( IsTeamEliminated( victim.GetTeam() ) - ( victim.GetPlayerGameStat( PGS_ELIMINATED ) <= 0 ? 1 : 0 ) ) )
+		int AliveTeamPlayers = 0
+
+		foreach ( player in GetPlayerArrayOfTeam( victim.GetTeam() ) )
+		{
+			if ( player.GetPlayerGameStat( PGS_ELIMINATED ) <= 0 )
+				AliveTeamPlayers++
+		}
+
+		if ( !( AliveTeamPlayers - ( victim.GetPlayerGameStat( PGS_ELIMINATED ) <= 0 ? 1 : 0 ) ) )
 		{
 			if ( IsFFAGame() ) // for ffa we need to manually get the last team alive 
 			{
