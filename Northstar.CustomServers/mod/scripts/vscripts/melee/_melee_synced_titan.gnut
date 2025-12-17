@@ -1084,6 +1084,8 @@ void function TitanVsTitan_3p( SyncedMelee action, entity attacker, entity targe
 	//	attacker.SetInvulnerable()
 	target.SetInvulnerable()
 
+	NPC_NoTarget( target )
+
 	entity targetViewBody
 	FirstPersonSequenceStruct targetBodySequence
 	entity attackerViewBody
