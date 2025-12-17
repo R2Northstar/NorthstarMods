@@ -627,14 +627,14 @@ function MeleeThread_TitanRipsPilot( table e, SyncedMelee action, entity attacke
 	waitthread TitanSyncedMeleeAnimationsPlay( attackerBodySequence, attackerViewBody, ref, targetBodySequence, target, attackerSequence, attacker, targetSequence, targetTitan, e )
 }
 
-entity function CreateNpcTitanPilotModel( entity titan, bool CreateEntity = false )
+entity function CreateNpcTitanPilotModel( entity titan, bool createEntity = false )
 {
 	asset modelName = GetNpcTitanPilotModel( titan )
 
 	if ( modelName == $"" )
 		modelName = TEAM_IMC_GRUNT_MODEL
 
-	if ( CreateEntity )
+	if ( createEntity )
 	{
 		entity pilot = CreateElitePilot( titan.GetTeam(), titan.GetOrigin(), titan.GetAngles() )
 
