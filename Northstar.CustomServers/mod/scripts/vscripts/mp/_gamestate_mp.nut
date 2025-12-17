@@ -85,6 +85,7 @@ void function PIN_GameStart()
 	
 	AddCallback_OnPlayerKilled( OnPlayerKilled )
 	AddDeathCallback( "npc_titan", OnTitanKilled )
+	AddCallback_OnClientDisconnected( OnClientDisconnected )
 	AddCallback_EntityChangedTeam( "player", OnPlayerChangedTeam )
 	PilotBattery_SetMaxCount( GetCurrentPlaylistVarInt( "pilot_battery_inventory_size", 1 ) ) // Game unironically supports players carrying more than one battery
 	
@@ -1004,12 +1005,21 @@ void function OnTitanKilled( entity victim, var damageInfo )
 	}
 }
 
+void function OnClientDisconnected( entity player )
+{
+	if ( IsEliminationBased() )
+		SetPlayerEliminated( player )
+
+	if ( GamePlayingOrSuddenDeath() )
+		CheckEliminationRiffMode( player, null )
+}
+
 void function CheckEliminationRiffMode( entity victim, entity attacker )
 {
 	// note: pilotstitans is just win if enemy team runs out of either pilots or titans
 	if ( IsPilotEliminationBased() )
 	{
-		if ( IsTeamEliminated( victim.GetTeam() ) )
+		if ( ( IsTeamEliminated( victim.GetTeam() ) - ( victim.GetPlayerGameStat( PGS_ELIMINATED ) <= 0 ? 1 : 0 ) ) )
 		{
 			if ( IsFFAGame() ) // for ffa we need to manually get the last team alive 
 			{
@@ -1048,7 +1058,7 @@ void function CheckEliminationRiffMode( entity victim, entity attacker )
 
 	if ( IsTitanEliminationBased() )
 	{
-		if ( !GetPlayerTitansOnTeam( victim.GetTeam() ).len() )
+		if ( !( GetPlayerTitansOnTeam( victim.GetTeam() ).len() - ( IsAlive( victim ) && victim.IsTitan() ? 1 : 0 ) ) )
 		{
 			if ( IsFFAGame() )
 			{
