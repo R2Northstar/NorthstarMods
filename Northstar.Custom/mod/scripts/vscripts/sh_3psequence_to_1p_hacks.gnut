@@ -218,13 +218,17 @@ void function CleanupForced1PSequence( Forced1PSequenceData cleanupData )
 	if ( IsValid( cleanupData.ownerProxy ) )
 	{
 		cleanupData.ownerProxy.kv.VisibilityFlags = ~ENTITY_VISIBLE_TO_EVERYONE
-		cleanupData.ownerProxy.Die( null, null, { forceKill = true, scriptType = DF_EXPLOSION, damageType = DMG_REMOVENORAGDOLL } )
+
+		if ( IsAlive( cleanupData.ownerProxy ) )
+			cleanupData.ownerProxy.Die( null, null, { forceKill = true, scriptType = DF_EXPLOSION, damageType = DMG_REMOVENORAGDOLL } )
 	}
 
 	if ( IsValid( cleanupData.thirdPersonProxy ) )
 	{
 		cleanupData.thirdPersonProxy.kv.VisibilityFlags = ~ENTITY_VISIBLE_TO_EVERYONE
-		cleanupData.thirdPersonProxy.Die( null, null, { forceKill = true, scriptType = DF_EXPLOSION, damageType = DMG_REMOVENORAGDOLL } )
+
+		if ( IsAlive( cleanupData.thirdPersonProxy ) )
+			cleanupData.thirdPersonProxy.Die( null, null, { forceKill = true, scriptType = DF_EXPLOSION, damageType = DMG_REMOVENORAGDOLL } )
 	}
 }
 
