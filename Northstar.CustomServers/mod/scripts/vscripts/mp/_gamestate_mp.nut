@@ -502,8 +502,6 @@ void function GameStateEnter_Playing_Threaded()
 	if( Flag( "AnnounceProgressEnabled" ) )
 		thread DialoguePlayNormal()
 
-	float timeSinceLastConnectedPlayer = Time()
-
 	while ( GetGameState() == eGameState.Playing )
 	{
 		float endTime
@@ -511,11 +509,8 @@ void function GameStateEnter_Playing_Threaded()
 			endTime = expect float( GetServerVar( "roundEndTime" ) )
 		else
 			endTime = expect float( GetServerVar( "gameEndTime" ) )
-		
-		if ( GetPlayerArray().len() )
-			timeSinceLastConnectedPlayer = Time()
 	
-		if ( ( Time() >= endTime && !Flag( "DisableTimeLimit" ) ) || timeSinceLastConnectedPlayer + 30.0 < Time() )
+		if ( Time() >= endTime && !Flag( "DisableTimeLimit" ) )
 		{
 			int winningTeam
 			if ( file.timeoutWinnerDecisionFunc != null )
