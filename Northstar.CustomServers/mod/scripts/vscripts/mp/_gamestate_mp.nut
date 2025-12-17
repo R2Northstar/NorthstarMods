@@ -201,7 +201,7 @@ void function AddTeamRoundScoreNoStateChange( int team, int amount = 1 )
 	GameRules_SetTeamScore2( team, newScore )
 }
 
-void function SetWinner( int ornull team, string winningReason = "", string losingReason = "", bool addedTeamScore = true )
+void function SetWinner( int ornull team, string winningReason = "", string losingReason = "" )
 {
 	if ( !GamePlayingOrSuddenDeath() ) // SetWinner should not be used outside the gamestates that can decide a winner
 		return
