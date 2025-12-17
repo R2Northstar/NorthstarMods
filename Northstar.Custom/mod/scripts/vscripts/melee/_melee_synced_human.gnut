@@ -23,6 +23,18 @@ bool function MeleeThread_PilotVsEnemyInternal( SyncedMelee action, entity attac
 
 	bool isAttackerRef = IsAttackerRef( action, target )
 
+	if ( GetCurrentPlaylistVarInt( "classic_executions", 0 ) )
+	{
+		action.attackerAnimation1p = ""
+		action.attackerAnimation3p = "pt_rspn101_melee_necksnap_rear"
+		action.targetAnimation1p = ""
+		action.targetAnimation3p = "pt_melee_necksnap_rear_attacked"
+		action.isAttackerRef = false
+		action.minDot = 0.2
+
+		isAttackerRef = false
+	}
+
 	vector attackerOrigin = attacker.GetOrigin()
 	vector targetOrigin = target.GetOrigin()
 
@@ -259,7 +271,7 @@ void function MeleeThread_PilotVsEnemy_Attacker( SyncedMelee action, entity atta
 	if ( isAttackerRef )
 	{
 		#if MP
-		if ( ShouldRunFirstPersonSequence( attacker, false, true ) )
+		if ( !GetCurrentPlaylistVarInt( "classic_executions", 0 ) && ShouldRunFirstPersonSequence( attacker, false, true ) )
 			FirstPersonSequenceForce1P( attackerSequence, attacker )
 		#endif
 			
@@ -268,7 +280,7 @@ void function MeleeThread_PilotVsEnemy_Attacker( SyncedMelee action, entity atta
 	else
 	{
 		#if MP
-		if ( ShouldRunFirstPersonSequence( attacker, false, true ) )
+		if ( !GetCurrentPlaylistVarInt( "classic_executions", 0 ) && ShouldRunFirstPersonSequence( attacker, false, true ) )
 			FirstPersonSequenceForce1P( attackerSequence, attacker, target )
 		#endif
 
@@ -412,7 +424,7 @@ void function MeleeThread_PilotVsEnemy_Target( SyncedMelee action, entity attack
 	if ( isAttackerRef )
 	{
 		#if MP
-		if ( ShouldRunFirstPersonSequence( target, false, true ) )
+		if ( !GetCurrentPlaylistVarInt( "classic_executions", 0 ) && ShouldRunFirstPersonSequence( target, false, true ) )
 			FirstPersonSequenceForce1P( targetSequence, target, attacker )
 		#endif
 		
@@ -421,7 +433,7 @@ void function MeleeThread_PilotVsEnemy_Target( SyncedMelee action, entity attack
 	else
 	{
 		#if MP
-		if ( ShouldRunFirstPersonSequence( target, false, true ) )
+		if ( !GetCurrentPlaylistVarInt( "classic_executions", 0 ) && ShouldRunFirstPersonSequence( target, false, true ) )
 			FirstPersonSequenceForce1P( targetSequence, target )
 		#endif
 		

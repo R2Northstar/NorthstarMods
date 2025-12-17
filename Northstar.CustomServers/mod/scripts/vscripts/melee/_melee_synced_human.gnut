@@ -23,6 +23,18 @@ bool function MeleeThread_PilotVsEnemyInternal( SyncedMelee action, entity attac
 
 	bool isAttackerRef = IsAttackerRef( action, target )
 
+	if ( GetCurrentPlaylistVarInt( "classic_executions", 0 ) )
+	{
+		action.attackerAnimation1p = ""
+		action.attackerAnimation3p = "pt_rspn101_melee_necksnap_rear"
+		action.targetAnimation1p = ""
+		action.targetAnimation3p = "pt_melee_necksnap_rear_attacked"
+		action.isAttackerRef = false
+		action.minDot = 0.2
+
+		isAttackerRef = false
+	}
+
 	vector attackerOrigin = attacker.GetOrigin()
 	vector targetOrigin = target.GetOrigin()
 
