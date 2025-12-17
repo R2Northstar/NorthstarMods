@@ -318,7 +318,9 @@ void function MeleeThread_AtlasVsTitanShort( SyncedMelee action, entity attacker
 	attackerSequence.thirdPersonAnim = attackerAnimation3p
 	// attackerSequence.thirdPersonAnimIdle = "at_melee_sync_frontkill_end_idle"
 
-	attackerSequence.firstPersonAnim = attackerAnimation1p
+	if ( attacker.IsPlayer() )
+		attackerSequence.firstPersonAnim = attackerAnimation1p
+
 	targetSequence.thirdPersonAnim = targetAnimation3p
 	targetSequence.blendTime = 0.25
 
