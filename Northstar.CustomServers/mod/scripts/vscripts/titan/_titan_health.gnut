@@ -504,9 +504,6 @@ bool function HandleKillshot( entity ent, var damageInfo, TitanDamage titanDamag
 
 bool function PlayerHasAutoEject( entity player )
 {
-	if ( player.IsBot() )
-		return false
-
 	if ( !PlayerHasPassive( player, ePassives.PAS_AUTO_EJECT ) )
 		return false
 

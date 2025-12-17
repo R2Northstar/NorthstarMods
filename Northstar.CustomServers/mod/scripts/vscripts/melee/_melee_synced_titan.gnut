@@ -255,14 +255,17 @@ void functionref( SyncedMelee action, entity attacker, entity target ) function 
 	if ( SoulHasPassive( soul, ePassives.PAS_VANGUARD_COREMETER ) )
 		executionRef = "execution_vanguard_kit"
 
-	if ( executionRef in file.executionData_3p )
+	if ( executionRef in file.executionData_3p && !GetCurrentPlaylistVarInt( "classic_executions", 0 ) )
 		return TitanVsTitan_3p
 
 	if ( target.IsNPC() )
 	{
-		entity bossPlayer = target.GetBossPlayer()
-		if ( IsValid( bossPlayer ) || !IsVDUTitan( target ) )
+		#if HAS_BOSS_AI
+			if ( !IsBossTitan( target ) )
+				return MeleeThread_AtlasVsTitanShort
+		#else
 			return MeleeThread_AtlasVsTitanShort
+		#endif
 	}
 
 	string attackerType = GetSoulTitanSubClass( soul )
@@ -270,7 +273,7 @@ void functionref( SyncedMelee action, entity attacker, entity target ) function 
 	switch ( attackerType )
 	{
 		case "stryder":
-			return MeleeThread_StyderVsTitan
+			return MeleeThread_StryderVsTitan
 
 		case "ogre":
 			return MeleeThread_OgreVsTitan
@@ -411,7 +414,7 @@ void function MeleeThread_AtlasVsTitanShort( SyncedMelee action, entity attacker
 }
 
 
-void function MeleeThread_StyderVsTitan( SyncedMelee action, entity attacker, entity target )
+void function MeleeThread_StryderVsTitan( SyncedMelee action, entity attacker, entity target )
 {
 	table e
 	e.gib <- true
@@ -460,7 +463,9 @@ function MeleeThread_TitanRipsPilot( table e, SyncedMelee action, entity attacke
 	attackerSequence.thirdPersonAnim = expect string ( e.attackerAnimation3p )
 	// attackerSequence.thirdPersonAnimIdle = "at_melee_sync_frontkill_end_idle"
 
-	attackerSequence.firstPersonAnim = expect string( e.attackerAnimation1p )
+	if ( attacker.IsPlayer() )
+		attackerSequence.firstPersonAnim = expect string( e.attackerAnimation1p )
+
 	targetSequence.thirdPersonAnim = expect string ( e.targetAnimation3p )
 	targetSequence.blendTime = 0.25
 
@@ -468,11 +473,11 @@ function MeleeThread_TitanRipsPilot( table e, SyncedMelee action, entity attacke
 
 	//	attacker.SetInvulnerable()
 	target.SetInvulnerable()    //HACK: Have to SetInvulnerable first before attacker holsters weapon, because if the attacker is vortexing, holster will release bullets caught and kill off the victim if low enough health
-	if ( ShouldHolsterWeaponForSyncedMelee( attacker ) )
-		HolsterAndDisableWeapons( attacker )
+	if ( attacker.IsPlayer() && ShouldHolsterWeaponForSyncedMelee( attacker ) )
+		HolsterViewModelAndDisableWeapons( attacker )
 
 	if ( !target.IsNPC() )
-		HolsterAndDisableWeapons( target )
+		HolsterViewModelAndDisableWeapons( target )
 
 	EmitDifferentSoundsOnEntityForPlayerAndWorld( expect string ( e.TitanSpecific1pSyncMeleeSound ), expect string ( e.TitanSpecific3pSyncMeleeSound ), attacker, attacker )
 
@@ -504,7 +509,9 @@ function MeleeThread_TitanRipsPilot( table e, SyncedMelee action, entity attacke
 	targetBodySequence.attachment = "ref"
 	targetBodySequence.blendTime = 0.25
 	targetBodySequence.thirdPersonAnim = expect string ( e.targetPilotAnimationForObserver )
-	targetBodySequence.firstPersonAnim = expect string ( e.targetPilotAnimationForObserver1st )
+
+	if ( targetIsPlayer )
+		targetBodySequence.firstPersonAnim = expect string ( e.targetPilotAnimationForObserver1st )
 
 
 	entity targetSoul = target.GetTitanSoul()
@@ -577,16 +584,19 @@ function MeleeThread_TitanRipsPilot( table e, SyncedMelee action, entity attacke
 
 			if ( IsValid( attacker ) )
 			{
-				attacker.UnforceStand()
 				attacker.ClearParent()
-				ClearPlayerAnimViewEntity( attacker )
-				DeployAndEnableWeapons( attacker )
-				attacker.PlayerMelee_ExecutionEndAttacker()
+				if( attacker.IsPlayer() )
+				{
+					attacker.UnforceStand()
+					ClearPlayerAnimViewEntity( attacker )
+					attacker.PlayerMelee_ExecutionEndAttacker()
+					DeployViewModelAndEnableWeapons( attacker )
+				}
 
 				if ( IsAlive( attacker ) )
 				{
-					// if we got into solid, teleport back to safe place
 					PutEntityInSafeSpot( attacker, null, null, expect vector( e.attackerStartOrg ), attacker.GetOrigin() )
+					attacker.SetActiveWeaponBySlot( 0 )
 				}
 			}
 
@@ -596,7 +606,7 @@ function MeleeThread_TitanRipsPilot( table e, SyncedMelee action, entity attacke
 				{
 					target.PlayerMelee_ExecutionEndTarget()
 					ClearPlayerAnimViewEntity( target )
-					DeployAndEnableWeapons( target )
+					DeployViewModelAndEnableWeapons( target )
 				}
 
 				if ( HasAnimEvent( target, "pink_mist" ) )
@@ -895,7 +905,9 @@ void function MeleeThread_OgreVsTitan( SyncedMelee action, entity attacker, enti
 	FirstPersonSequenceStruct targetSequence = clone attackerSequence
 
 	attackerSequence.thirdPersonAnim = attackerAnimation3p
-	attackerSequence.firstPersonAnim = attackerAnimation1p
+
+	if ( attacker.IsPlayer() )
+		attackerSequence.firstPersonAnim = attackerAnimation1p
 
 	if ( target.IsPlayer() )
 		targetSequence.firstPersonAnim = targetAnimation1p
@@ -904,8 +916,12 @@ void function MeleeThread_OgreVsTitan( SyncedMelee action, entity attacker, enti
 	targetSequence.blendTime = 0.25
 
 	target.e.syncedMeleeAttacker = attacker
-	DisableWeapons( attacker, [] )
-	DisableWeapons( target, [] )
+
+	if ( attacker.IsPlayer() )
+		HolsterViewModelAndDisableWeapons( attacker )
+
+	if ( target.IsPlayer() )
+		HolsterViewModelAndDisableWeapons( target )
 
 	//	attacker.SetInvulnerable()
 	target.SetInvulnerable()
@@ -930,11 +946,21 @@ void function MeleeThread_OgreVsTitan( SyncedMelee action, entity attacker, enti
 
 			if ( IsValid( attacker ) )
 			{
-				attacker.UnforceStand()
+				if ( attacker.IsPlayer() )
+					attacker.UnforceStand()
+
 				attacker.ClearParent()
-				ClearPlayerAnimViewEntity( attacker )
-				EnableWeapons( attacker, [] )
-				attacker.PlayerMelee_ExecutionEndAttacker()
+
+				if ( attacker.IsPlayer() )
+				{
+					ClearPlayerAnimViewEntity( attacker )
+					DeployViewModelAndEnableWeapons( attacker )
+				}
+
+				attacker.SetActiveWeaponBySlot( 0 )
+
+				if ( attacker.IsPlayer() )
+					attacker.PlayerMelee_ExecutionEndAttacker()
 
 				if ( IsAlive( attacker ) )
 				{
@@ -956,7 +982,8 @@ void function MeleeThread_OgreVsTitan( SyncedMelee action, entity attacker, enti
 					ClearPlayerAnimViewEntity( target )
 				}
 
-				EnableWeapons( target, [] )
+				if ( target.IsPlayer() )
+					DeployViewModelAndEnableWeapons( target )
 
 				if ( !target.IsNPC() )
 					target.PlayerMelee_ExecutionEndTarget()
@@ -1084,6 +1111,8 @@ void function TitanVsTitan_3p( SyncedMelee action, entity attacker, entity targe
 	//	attacker.SetInvulnerable()
 	target.SetInvulnerable()
 
+	NPC_NoTarget( target )
+
 	entity targetViewBody
 	FirstPersonSequenceStruct targetBodySequence
 	entity attackerViewBody
@@ -1197,6 +1226,12 @@ void function TitanVsTitan_3p( SyncedMelee action, entity attacker, entity targe
                     {
 						attacker.Anim_Stop() // if you are fighting an NPC, then they can get destroyed early the moment they explode.  But sometimes, your animation isn't done playing yet so you can't move
                     }
+
+					vector noRollAngle = attacker.GetAngles()
+
+					noRollAngle.x = 0
+
+					attacker.SetAngles( noRollAngle )
 				}
 
 			}
@@ -1311,14 +1346,10 @@ void function TitanVsTitan_3p( SyncedMelee action, entity attacker, entity targe
 		refAngles = <0,refAngles.y,0>
 	}
 
-	vector fwd = AnglesToForward( refAngles )
-	fwd *= -1
+	vector fwd = AnglesToForward( refAngles ) * -1
 	vector targetAngles = VectorToAngles( fwd )
-	if ( !target.IsNPC() )
-	{
-		targetAngles.x = 0
-		target.SetAngles( targetAngles )
-	}
+
+	targetAngles.x = 0
 
 	target.SetAngles( targetAngles )
 

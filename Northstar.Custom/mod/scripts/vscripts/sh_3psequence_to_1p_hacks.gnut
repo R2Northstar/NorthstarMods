@@ -1,13 +1,5 @@
-global function FirstPersonSequenceForce1P_Init
-
-#if SERVER
-	global function FirstPersonSequenceForce1P
-	global function ShouldRunFirstPersonSequence
-#endif
-
-#if CLIENT
-	global function ServerCallback_HideHudForFPHackAnim
-#endif
+global function FirstPersonSequenceForce1P
+global function ShouldRunFirstPersonSequence
 
 global const string FORCE1P_PILOT_1P_ATTACHMENT = "HEADFOCUS"
 global const string FORCE1P_TITAN_1P_ATTACHMENT = "HATCH_HEAD"
@@ -26,17 +18,6 @@ global struct Forced1PSequenceData
 	entity thirdPersonProxy
 }
 
-void function FirstPersonSequenceForce1P_Init()
-{
-	AddCallback_OnRegisteringCustomNetworkVars( FirstPersonSequenceForce1P_RegisterCustomNetworkFunctions )
-}
-
-void function FirstPersonSequenceForce1P_RegisterCustomNetworkFunctions()
-{
-	Remote_RegisterFunction( "ServerCallback_HideHudForFPHackAnim" )
-}
-
-#if SERVER
 Forced1PSequenceData function FirstPersonSequenceForce1P( FirstPersonSequenceStruct sequence, entity player, entity other = null )
 {
 	string attachment = FORCE1P_PILOT_1P_ATTACHMENT
@@ -194,14 +175,9 @@ Forced1PSequenceData function FirstPersonSequenceForce1P( FirstPersonSequenceStr
 	thread SetBodyGroups( player, thirdPersonProxy )
 	FirstPersonPlayAnim( sequence, thirdPersonProxy, player, other )
 
-	entity camera = CreateEntity( "point_viewcontrol" )
-	camera.SetParent( ownerProxy, attachment )
-	camera.kv.spawnflags = 56
-	DispatchSpawn( camera )
-	player.SetViewEntity( camera, true )
-	cleanupData.camera = camera
+	sequence.thirdPersonCameraEntity = ownerProxy
+	sequence.thirdPersonCameraAttachments = [ attachment ]
 
-	Remote_CallFunction_NonReplay( player, "ServerCallback_HideHudForFPHackAnim" )
 	thread CleanupForced1PSequenceAfterAnimDone( sequence, ownerProxy, other, cleanupData )
 
 	return cleanupData
@@ -237,24 +213,22 @@ void function CleanupForced1PSequenceAfterAnimDone( FirstPersonSequenceStruct se
 void function CleanupForced1PSequence( Forced1PSequenceData cleanupData )
 {
 	if ( IsValid( cleanupData.player ) )
-	{
 		cleanupData.player.Show()
-		cleanupData.player.ClearViewEntity()
-	}
-
-	if ( IsValid( cleanupData.camera ) )
-		cleanupData.camera.Destroy()
 
 	if ( IsValid( cleanupData.ownerProxy ) )
 	{
 		cleanupData.ownerProxy.kv.VisibilityFlags = ~ENTITY_VISIBLE_TO_EVERYONE
-		cleanupData.ownerProxy.Die( null, null, { forceKill = true, scriptType = DF_EXPLOSION, damageType = DMG_REMOVENORAGDOLL } )
+
+		if ( IsAlive( cleanupData.ownerProxy ) )
+			cleanupData.ownerProxy.Die( null, null, { forceKill = true, scriptType = DF_EXPLOSION, damageType = DMG_REMOVENORAGDOLL } )
 	}
 
 	if ( IsValid( cleanupData.thirdPersonProxy ) )
 	{
 		cleanupData.thirdPersonProxy.kv.VisibilityFlags = ~ENTITY_VISIBLE_TO_EVERYONE
-		cleanupData.thirdPersonProxy.Die( null, null, { forceKill = true, scriptType = DF_EXPLOSION, damageType = DMG_REMOVENORAGDOLL } )
+
+		if ( IsAlive( cleanupData.thirdPersonProxy ) )
+			cleanupData.thirdPersonProxy.Die( null, null, { forceKill = true, scriptType = DF_EXPLOSION, damageType = DMG_REMOVENORAGDOLL } )
 	}
 }
 
@@ -306,31 +280,7 @@ bool function ShouldRunFirstPersonSequence( entity player, bool isEmbark, bool i
 	
 	return false
 }
-#endif
 
-#if CLIENT
-void function ServerCallback_HideHudForFPHackAnim()
-{
-	int ruiDrawIsEnabled = GetConVarInt( "rui_drawEnable" )
-
-	if ( !ruiDrawIsEnabled )
-		return
-
-	SetConVarInt( "rui_drawEnable", 0 )
-
-	thread EnableHudOnViewRestored( ruiDrawIsEnabled )
-}
-
-void function EnableHudOnViewRestored( int ruiDrawIsEnabled = 1 )
-{
-	while ( GetViewEntity() != GetLocalClientPlayer() )
-		WaitFrame()
-
-	SetConVarInt( "rui_drawEnable", ruiDrawIsEnabled )
-}
-#endif
-
-#if SERVER
 void function ModdedPhaseEmbarkPhaseStart( entity player )
 {
 	PlayPhaseShiftDisappearFX( player )
@@ -426,4 +376,3 @@ void function ModdedAnimEvent_Cloak_Off( entity player )
 
 	player.SetCloakDuration( 0, 0, 0.35 )
 }
-#endif

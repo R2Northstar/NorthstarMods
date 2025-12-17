@@ -329,13 +329,7 @@
 		},
 		{
 			"Path": "sh_3psequence_to_1p_hacks.gnut",
-			"RunOn": "( CLIENT || SERVER ) && MP",
-			"ClientCallback": {
-				"Before": "FirstPersonSequenceForce1P_Init"
-			},
-			"ServerCallback": {
-				"Before": "FirstPersonSequenceForce1P_Init"
-			}
+			"RunOn": "SERVER && MP"
 		},
 		{
 			"Path": "gamemodes/sh_riff_instagib.gnut",
@@ -439,14 +433,6 @@
 			"ServerCallback": {
 				"Before": "MessageUtils_ServerInit"
 			}
-		},
-		{
-			"Path":  "sh_northstar_http_requests.gnut",
-			"RunOn": "CLIENT || SERVER || UI"
-		},
-		{
-			"Path": "sh_northstar_safe_io.gnut",
-			"RunOn": "CLIENT || SERVER || UI"
 		},
 		{
 			"Path": "_testing.nut",
