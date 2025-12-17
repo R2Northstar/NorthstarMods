@@ -393,6 +393,8 @@ void function MeleeThread_PilotVsEnemy_Target( SyncedMelee action, entity attack
 		}
 	}
 
+	NPC_NoTarget( target )
+
 	if ( isAttackerRef )
 		waitthread FirstPersonSequence( targetSequence, target, attacker )
 	else
