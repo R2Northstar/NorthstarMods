@@ -594,11 +594,6 @@ function MeleeThread_TitanRipsPilot( table e, SyncedMelee action, entity attacke
 					attacker.PlayerMelee_ExecutionEndAttacker()
 					DeployViewModelAndEnableWeapons( attacker )
 				}
-				else
-				{
-					Highlight_ClearEnemyHighlight( attacker )
-					EnableWeapons( attacker, [] )
-				}
 
 				if ( IsAlive( attacker ) )
 				{
@@ -613,7 +608,7 @@ function MeleeThread_TitanRipsPilot( table e, SyncedMelee action, entity attacke
 				{
 					target.PlayerMelee_ExecutionEndTarget()
 					ClearPlayerAnimViewEntity( target )
-					DeployAndEnableWeapons( target )
+					DeployViewModelAndEnableWeapons( target )
 				}
 
 				if ( HasAnimEvent( target, "pink_mist" ) )
