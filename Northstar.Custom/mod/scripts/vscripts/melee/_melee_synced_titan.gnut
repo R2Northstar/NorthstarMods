@@ -538,9 +538,7 @@ function MeleeThread_TitanRipsPilot( table e, SyncedMelee action, entity attacke
 	{
 		targetTitan = target
 
-		// target is now a random dude
-		target = CreateSoldier( target.GetTeam(), Vector(0,0,0), Vector(0,0,0) )
-		DispatchSpawn( target )
+		target = CreateNpcTitanPilotModel( target, true )
     	e.target <- target
 	}
 
@@ -562,25 +560,8 @@ function MeleeThread_TitanRipsPilot( table e, SyncedMelee action, entity attacke
 		{
 			if ( IsValid( ref ) )
 			{
-				if ( IsValid( attacker ) )
-				{
-					attacker.ClearParent()
-				}
-				else
-				{
-					TryClearParent( attacker )
-				}
+				ClearChildren( ref )
 
-				if ( IsValid( target ) )
-				{
-					target.ClearParent()
-				}
-				else
-				{
-					TryClearParent( target )
-				}
-
-				AssertNoPlayerChildren( ref )
 				ref.Kill_Deprecated_UseDestroyInstead()
 			}
 
@@ -644,10 +625,29 @@ function MeleeThread_TitanRipsPilot( table e, SyncedMelee action, entity attacke
 	waitthread TitanSyncedMeleeAnimationsPlay( attackerBodySequence, attackerViewBody, ref, targetBodySequence, target, attackerSequence, attacker, targetSequence, targetTitan, e )
 }
 
-entity function CreateNpcTitanPilotModel( entity titan )
+entity function CreateNpcTitanPilotModel( entity titan, bool CreateEntity = false )
 {
 	asset modelName = GetNpcTitanPilotModel( titan )
-	return CreatePropDynamic( modelName )
+
+	if ( modelName == $"" )
+		modelName = TEAM_IMC_GRUNT_MODEL
+
+	if ( CreateEntity )
+	{
+		entity pilot = CreateElitePilot( titan.GetTeam(), titan.GetOrigin(), titan.GetAngles() )
+
+		DispatchSpawn( pilot )
+
+		pilot.SetModel( modelName )
+
+		return pilot
+	}
+
+	entity model = CreatePropDynamic( modelName )
+
+	SetTeam( model, titan.GetTeam() )
+
+	return model
 }
 
 
@@ -936,13 +936,8 @@ void function MeleeThread_OgreVsTitan( SyncedMelee action, entity attacker, enti
 		{
 			if ( IsValid( ref ) )
 			{
-				if ( IsValid( attacker ) )
-					attacker.ClearParent()
+				ClearChildren( ref )
 
-				if ( IsValid( target ) )
-					target.ClearParent()
-
-				AssertNoPlayerChildren( ref )
 				ref.Kill_Deprecated_UseDestroyInstead()
 			}
 
@@ -1608,7 +1603,10 @@ void function MeleeKilledRagdoll( entity titan )
 
 	if ( !IsValid( attacker ) )
 		return
-	titan.Die( attacker, attacker, { scriptType = DF_MELEE, damageSourceId = eDamageSourceId.titan_execution } )
+	
+	if ( IsAlive( titan ) )
+		titan.Die( attacker, attacker, { scriptType = DF_MELEE, damageSourceId = eDamageSourceId.titan_execution } )
+
 	titan.SetContinueAnimatingAfterRagdoll( true )
 	titan.BecomeRagdoll( < 0, 0, 0 >, false )
 }
