@@ -654,6 +654,18 @@ function MeleeThread_TitanRipsPilot( table e, SyncedMelee action, entity attacke
 	if ( targetIsPlayer )
 		target.EndSignal( "OnDestroy" )
 
+	vector refAngles = GetRefAnglesBetweenEnts( attacker, target )
+
+	if ( !attacker.IsOnGround() )
+		refAngles = < 0, refAngles.y, 0 >
+
+	vector fwd = AnglesToForward( refAngles ) * -1
+	vector targetAngles = VectorToAngles( fwd )
+
+	targetAngles.x = 0
+
+	target.SetAngles( targetAngles )
+
 	waitthread TitanSyncedMeleeAnimationsPlay( attackerBodySequence, attackerViewBody, ref, targetBodySequence, target, attackerSequence, attacker, targetSequence, targetTitan, e )
 }
 
@@ -1042,6 +1054,18 @@ void function MeleeThread_OgreVsTitan( SyncedMelee action, entity attacker, enti
 
 	AddAnimEvent( target, "lost_arm", TitanLostArm, e )
 
+	vector refAngles = GetRefAnglesBetweenEnts( attacker, target )
+
+	if ( !attacker.IsOnGround() )
+		refAngles = < 0, refAngles.y, 0 >
+
+	vector fwd = AnglesToForward( refAngles ) * -1
+	vector targetAngles = VectorToAngles( fwd )
+
+	targetAngles.x = 0
+
+	target.SetAngles( targetAngles )
+
 	thread FirstPersonSequence( targetSequence, target, ref )
 	waitthread FirstPersonSequence( attackerSequence, attacker, ref )
 }
@@ -1378,9 +1402,7 @@ void function TitanVsTitan_3p( SyncedMelee action, entity attacker, entity targe
 	vector refAngles = GetRefAnglesBetweenEnts( attacker, target )
 
 	if ( !attacker.IsOnGround() )
-	{
-		refAngles = <0,refAngles.y,0>
-	}
+		refAngles = < 0, refAngles.y, 0 >
 
 	vector fwd = AnglesToForward( refAngles ) * -1
 	vector targetAngles = VectorToAngles( fwd )
