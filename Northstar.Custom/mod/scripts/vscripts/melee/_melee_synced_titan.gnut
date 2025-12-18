@@ -541,6 +541,18 @@ function MeleeThread_TitanRipsPilot( table e, SyncedMelee action, entity attacke
 	entity targetSoul = target.GetTitanSoul()
 	targetSoul.SetInvalidHealthBarEnt( true )
 
+	vector refAngles = GetRefAnglesBetweenEnts( attacker, target )
+
+	if ( !attacker.IsOnGround() )
+		refAngles = < 0, refAngles.y, 0 >
+
+	vector fwd = AnglesToForward( refAngles ) * -1
+	vector targetAngles = VectorToAngles( fwd )
+
+	targetAngles.x = 0
+
+	target.SetAngles( targetAngles )
+
 	entity targetTitan
 	if ( targetIsPlayer )
 	{
@@ -569,6 +581,7 @@ function MeleeThread_TitanRipsPilot( table e, SyncedMelee action, entity attacke
 	AddAnimEvent( targetTitan, "melee_killed_ragdoll", MeleeKilledRagdoll, attacker )
 
 	targetTitan.SetInvulnerable() //Setting target of execution as invulnerable to prevent them dying mid-way
+	target.SetInvulnerable()
 
 	target.SetOwner( attacker )
 	target.kv.VisibilityFlags = (ENTITY_VISIBLE_TO_FRIENDLY | ENTITY_VISIBLE_TO_ENEMY) //owner cant see
@@ -656,18 +669,6 @@ function MeleeThread_TitanRipsPilot( table e, SyncedMelee action, entity attacke
 	if ( targetIsPlayer )
 		target.EndSignal( "OnDestroy" )
 
-	vector refAngles = GetRefAnglesBetweenEnts( attacker, target )
-
-	if ( !attacker.IsOnGround() )
-		refAngles = < 0, refAngles.y, 0 >
-
-	vector fwd = AnglesToForward( refAngles ) * -1
-	vector targetAngles = VectorToAngles( fwd )
-
-	targetAngles.x = 0
-
-	target.SetAngles( targetAngles )
-
 	waitthread TitanSyncedMeleeAnimationsPlay( attackerBodySequence, attackerViewBody, ref, targetBodySequence, target, attackerSequence, attacker, targetSequence, targetTitan, e )
 }
 
@@ -726,7 +727,7 @@ function TitanSyncedMeleeAnimationsPlay( FirstPersonSequenceStruct attackerBodyS
 			{
 				attacker.Anim_Stop()
 
-				if ( !e.thrown && IsAlive( target ) )
+				if ( !e.thrown && IsAlive( target ) && target.IsPlayer() )
 				{
 					target.Anim_Stop()
 					target.SetOwner( null )
@@ -739,6 +740,8 @@ function TitanSyncedMeleeAnimationsPlay( FirstPersonSequenceStruct attackerBodyS
 					}
 
 				}
+				else if ( IsAlive( target ) )
+					target.Die( attacker, attacker, { scriptType = DF_MELEE, damageSourceId = eDamageSourceId.titan_execution } )
 			}
 		}
 	)
