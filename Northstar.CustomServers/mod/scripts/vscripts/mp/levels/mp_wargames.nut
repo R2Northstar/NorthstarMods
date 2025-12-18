@@ -99,7 +99,7 @@ void function WargamesIntroSetup()
 
 void function WargamesIntro_AddPlayer( entity player )
 {
-	if ( !IsValid( player ) || GetGameState() != eGameState.Prematch )
+	if ( GetGameState() != eGameState.Prematch )
 		return
 	
 	thread PlayerWatchesWargamesIntro( player )
@@ -206,23 +206,6 @@ void function OnPrematchStart()
 	thread FirstPersonSequence( podCloseSequence, file.militiaPod )
 	
 	wait 7.0
-
-	// cleanup intro objects
-
-	foreach ( entity ent in teamEntities )
-		ent.Destroy()
-
-	militiaOgre.Destroy()
-	militiaOgreMarvin1.Destroy()
-	militiaOgreMarvin2.Destroy()
-	militiaOgreMarvin3.Destroy()
-	militiaMarvinChillin.Destroy()
-
-	imcGrunt1.Destroy()
-	imcGrunt2.Destroy()
-	imcGrunt3.Destroy()
-	imcGrunt4.Destroy()
-
 	thread PodBootFXThread( file.imcPod )
 	thread PodBootFXThread( file.militiaPod )
 	
@@ -235,6 +218,20 @@ void function OnPrematchStart()
 	
 	//PodFXCleanup( file.imcPod )
 	//PodFXCleanup( file.militiaPod )
+	
+	// cleanup intro objects
+	militiaOgre.Destroy()
+	militiaIon.Destroy()
+	militiaPilot.Destroy()
+	militiaOgreMarvin1.Destroy()
+	militiaOgreMarvin2.Destroy()
+	militiaOgreMarvin3.Destroy()
+	militiaMarvinChillin.Destroy()
+	
+	imcGrunt1.Destroy()
+	imcGrunt2.Destroy()
+	imcGrunt3.Destroy()
+	imcGrunt4.Destroy()
 
 	foreach ( entity trigger in triggers )
 		trigger.kv.triggerFilterPlayer = "all"
