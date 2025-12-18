@@ -729,6 +729,7 @@ function TitanSyncedMeleeAnimationsPlay( FirstPersonSequenceStruct attackerBodyS
 
 				if ( !e.thrown && IsAlive( target ) && target.IsPlayer() )
 				{
+					target.ClearInvulnerable()
 					target.Anim_Stop()
 					target.SetOwner( null )
 					target.kv.VisibilityFlags = ENTITY_VISIBLE_TO_EVERYONE
