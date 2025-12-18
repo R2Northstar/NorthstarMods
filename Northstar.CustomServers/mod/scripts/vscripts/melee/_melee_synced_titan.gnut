@@ -242,7 +242,7 @@ bool function MeleeThread_TitanVsTitan_Internal( SyncedMelee action, entity atta
 
 void functionref( SyncedMelee action, entity attacker, entity target ) function GetTitanSyncedMeleeFunc( entity attacker, entity target )
 {
-	if ( GetCurrentPlaylistVarInt( "titan_executions_always_short", 0 ) != 0 )
+	if ( GetCurrentPlaylistVarInt( "titan_executions_always_short", 0 ) )
 		return MeleeThread_AtlasVsTitanShort
 
 	entity soul = attacker.GetTitanSoul()
@@ -331,7 +331,7 @@ void function MeleeThread_AtlasVsTitanShort( SyncedMelee action, entity attacker
 	if ( target.IsPlayer() )
 		HolsterAndDisableWeapons( target )
 
-	if ( ShouldHolsterWeaponForSyncedMelee( attacker ) )
+	if ( attacker.IsPlayer() && ShouldHolsterWeaponForSyncedMelee( attacker ) )
 		HolsterAndDisableWeapons( attacker )
 
 	local attackerViewBody
@@ -364,22 +364,34 @@ void function MeleeThread_AtlasVsTitanShort( SyncedMelee action, entity attacker
 			if ( IsValid( attacker ) )
 			{
 				//attacker.ClearInvulnerable()
-				attacker.UnforceStand()
+				if ( attacker.IsPlayer() )
+					attacker.UnforceStand()
+
 				attacker.ClearParent()
-				ClearPlayerAnimViewEntity( attacker )
-				DeployAndEnableWeapons( attacker )
-				attacker.PlayerMelee_ExecutionEndAttacker()
+
+				if ( attacker.IsPlayer() )
+				{
+					ClearPlayerAnimViewEntity( attacker )
+					DeployAndEnableWeapons( attacker )
+					attacker.PlayerMelee_ExecutionEndAttacker()
+				}
 
 				if ( IsAlive( attacker ) )
 				{
 					// if we got into solid, teleport back to safe place
 					if ( !PutEntityInSafeSpot( attacker, null, null, expect vector( e.attackerStartOrg ), attacker.GetOrigin() ) )
-                    {
+					{
 						printt( "PutEntityInSafeSpot failed, putting him back at the start origin" )
 						attacker.SetOrigin( expect vector( e.attackerStartOrg ) )
-                    }
+					}
 
 				}
+
+				vector noRollAngle = attacker.GetAngles()
+
+				noRollAngle.x = 0
+
+				attacker.SetAngles( noRollAngle )
 			}
 
 			if ( IsValid( target ) )
@@ -408,6 +420,14 @@ void function MeleeThread_AtlasVsTitanShort( SyncedMelee action, entity attacker
 			}
 		}
 	)
+
+	attacker.EndSignal( "OnDeath" )
+	attacker.EndSignal( "OnDestroy" )
+
+	target.EndSignal( "OnRespawnPlayer" )
+
+	if ( target.IsPlayer() )
+		target.EndSignal( "OnDestroy" )
 
 	thread FirstPersonSequence( targetSequence, target, ref )
 	waitthread FirstPersonSequence( attackerSequence, attacker, ref )
@@ -581,6 +601,12 @@ function MeleeThread_TitanRipsPilot( table e, SyncedMelee action, entity attacke
 					PutEntityInSafeSpot( attacker, null, null, expect vector( e.attackerStartOrg ), attacker.GetOrigin() )
 					attacker.SetActiveWeaponBySlot( 0 )
 				}
+
+				vector noRollAngle = attacker.GetAngles()
+
+				noRollAngle.x = 0
+
+				attacker.SetAngles( noRollAngle )
 			}
 
 			if ( IsValid( target ) )
@@ -620,7 +646,13 @@ function MeleeThread_TitanRipsPilot( table e, SyncedMelee action, entity attacke
 		}
 	)
 
+	attacker.EndSignal( "OnDeath" )
+	attacker.EndSignal( "OnDestroy" )
+
 	target.EndSignal( "OnRespawnPlayer" )
+
+	if ( targetIsPlayer )
+		target.EndSignal( "OnDestroy" )
 
 	waitthread TitanSyncedMeleeAnimationsPlay( attackerBodySequence, attackerViewBody, ref, targetBodySequence, target, attackerSequence, attacker, targetSequence, targetTitan, e )
 }
@@ -999,11 +1031,16 @@ void function MeleeThread_OgreVsTitan( SyncedMelee action, entity attacker, enti
 	)
 
 	attacker.EndSignal( "OnDeath" )
+	attacker.EndSignal( "OnDestroy" )
+
+	target.EndSignal( "OnRespawnPlayer" )
+
+	if ( target.IsPlayer() )
+		target.EndSignal( "OnDestroy" )
 
 	EmitDifferentSoundsOnEntityForPlayerAndWorld( "Ogre_1p_Sync_Melee", "Ogre_3p_Sync_Melee", attacker, attacker )
 
 	AddAnimEvent( target, "lost_arm", TitanLostArm, e )
-
 
 	thread FirstPersonSequence( targetSequence, target, ref )
 	waitthread FirstPersonSequence( attackerSequence, attacker, ref )
@@ -1294,7 +1331,9 @@ void function TitanVsTitan_3p( SyncedMelee action, entity attacker, entity targe
 	entity bossPlayer = target.GetBossPlayer()
 	if ( IsValid( bossPlayer ) ) //Executing an auto-Titan, when the pilot disconnects it destroys the auto-titan creating weird circumstances.
 		bossPlayer.EndSignal( "OnDestroy" )
-	target.EndSignal( "OnDestroy" )
+
+	if ( target.IsPlayer() )
+		target.EndSignal( "OnDestroy" )
 
 	if ( isAttackerRef )
 	{

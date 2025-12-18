@@ -141,17 +141,31 @@ void function OnPrematchStart()
 	entity militiaOgreMarvin3 = CreateMarvin( TEAM_UNASSIGNED, < -2116, 2868, -1458 >, < 0, 127, 0 > )
 	DispatchSpawn( militiaOgreMarvin3 )
 	thread PlayAnim( militiaOgreMarvin3, "mv_turret_repair_A_idle" )
-	
-	entity militiaIon = CreatePropDynamic( $"models/titans/medium/titan_medium_ajax.mdl", < -1809.98, 2790.39, -1409 >, < 0, 80, 0 > )
-	thread PlayAnim( militiaIon, "at_titan_activation_wargames_intro" )
-	militiaIon.Anim_SetInitialTime( 4.5 )
 
-	entity militiaPilot = CreateElitePilot( TEAM_UNASSIGNED, < 0, 0, 0 >, < 0, 0, 0 > )
-	DispatchSpawn( militiaPilot )
-	militiaPilot.SetParent( militiaIon, "HIJACK" )
-	militiaPilot.MarkAsNonMovingAttachment()
-	militiaPilot.Anim_ScriptedPlay( "pt_titan_activation_pilot" )
-	militiaPilot.Anim_EnableUseAnimatedRefAttachmentInsteadOfRootMotion()
+	array<entity> teamEntities
+
+	foreach ( int team in [ TEAM_IMC, TEAM_MILITIA ] )
+	{
+		entity militiaIon = CreatePropDynamic( $"models/titans/medium/titan_medium_ajax.mdl", < -1809.98, 2790.39, -1409 >, < 0, 80, 0 > )
+		militiaIon.kv.VisibilityFlags = ENTITY_VISIBLE_TO_FRIENDLY
+
+		thread PlayAnim( militiaIon, "at_titan_activation_wargames_intro" )
+
+		militiaIon.Anim_SetInitialTime( 4.5 )
+
+		SetTeam( militiaIon, team )
+
+		entity militiaGrunt = CreatePropDynamic( $"models/humans/grunts/mlt_grunt_smg.mdl", < 0, 0, 0 >, < 0, 0, 0 > )
+		militiaGrunt.SetParent( militiaIon, "HIJACK" )
+		militiaGrunt.MarkAsNonMovingAttachment()
+		militiaGrunt.Anim_Play( "pt_titan_activation_pilot" )
+		militiaGrunt.Anim_EnableUseAnimatedRefAttachmentInsteadOfRootMotion()
+		militiaGrunt.kv.VisibilityFlags = ENTITY_VISIBLE_TO_FRIENDLY
+
+		SetTeam( militiaGrunt, team )
+
+		teamEntities.extend( [ militiaIon, militiaGrunt ] )
+	}
 	
 	entity militiaMarvinChillin = CreateMarvin( TEAM_UNASSIGNED, < -1786, 3060, -1412 >, < 0, -120, 0 > )
 	DispatchSpawn( militiaMarvinChillin )
@@ -192,6 +206,23 @@ void function OnPrematchStart()
 	thread FirstPersonSequence( podCloseSequence, file.militiaPod )
 	
 	wait 7.0
+
+	// cleanup intro objects
+
+	foreach ( entity ent in teamEntities )
+		ent.Destroy()
+
+	militiaOgre.Destroy()
+	militiaOgreMarvin1.Destroy()
+	militiaOgreMarvin2.Destroy()
+	militiaOgreMarvin3.Destroy()
+	militiaMarvinChillin.Destroy()
+
+	imcGrunt1.Destroy()
+	imcGrunt2.Destroy()
+	imcGrunt3.Destroy()
+	imcGrunt4.Destroy()
+
 	thread PodBootFXThread( file.imcPod )
 	thread PodBootFXThread( file.militiaPod )
 	
@@ -204,20 +235,6 @@ void function OnPrematchStart()
 	
 	//PodFXCleanup( file.imcPod )
 	//PodFXCleanup( file.militiaPod )
-	
-	// cleanup intro objects
-	militiaOgre.Destroy()
-	militiaIon.Destroy()
-	militiaPilot.Destroy()
-	militiaOgreMarvin1.Destroy()
-	militiaOgreMarvin2.Destroy()
-	militiaOgreMarvin3.Destroy()
-	militiaMarvinChillin.Destroy()
-	
-	imcGrunt1.Destroy()
-	imcGrunt2.Destroy()
-	imcGrunt3.Destroy()
-	imcGrunt4.Destroy()
 
 	foreach ( entity trigger in triggers )
 		trigger.kv.triggerFilterPlayer = "all"
