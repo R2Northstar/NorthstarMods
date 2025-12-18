@@ -40,7 +40,7 @@ void function ClassicMP_DefaultDropshipIntro_Setup()
 
 void function DropshipIntro_OnClientConnected( entity player )
 {
-	if ( GetGameState() == eGameState.Prematch )
+	if ( IsValid( player ) && GetGameState() == eGameState.Prematch )
 	{
 		if( PlayerCanSpawn( player ) )
 			DoRespawnPlayer( player, null )
