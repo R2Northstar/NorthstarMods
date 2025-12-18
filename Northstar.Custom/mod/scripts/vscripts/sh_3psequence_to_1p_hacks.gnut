@@ -85,12 +85,18 @@ Forced1PSequenceData function FirstPersonSequenceForce1P( FirstPersonSequenceStr
 		entity ownerProxysoul = ownerProxy.GetTitanSoul()
 
 		if ( IsValid( ownerProxysoul ) )
+		{
 			ownerProxysoul.SetShieldHealth( ownerProxysoul.GetShieldHealthMax() )
+
+			if ( IsValid( ownerProxysoul.soul.batteryContainer ) )
+				ownerProxysoul.soul.batteryContainer.Anim_Play( GetAnimFromAlias( GetSoulTitanSubClass( ownerProxysoul ), "hatch_rodeo_down_idle" ) )
+		}
 	}
 	else
 	{
 		AddAnimEvent( ownerProxy, "phase_shift_start", ModdedPhaseEmbarkPhaseStart )
 		AddAnimEvent( ownerProxy, "phase_shift_stop", ModdedPhaseEmbarkPhaseStop )
+
 		if ( !IsPlayerEmbarking( player ) )
 		{
 			AddAnimEvent( ownerProxy, "phase_shift_explode", ModdedPhaseShiftExplodeSound )
@@ -156,7 +162,12 @@ Forced1PSequenceData function FirstPersonSequenceForce1P( FirstPersonSequenceStr
 			entity thirdPersonProxySoul = thirdPersonProxy.GetTitanSoul()
 
 			if ( IsValid( thirdPersonProxySoul ) )
+			{
 				thirdPersonProxySoul.SetShieldHealth( thirdPersonProxySoul.GetShieldHealthMax() )
+
+				if ( IsValid( thirdPersonProxySoul.soul.batteryContainer ) )
+					thirdPersonProxySoul.soul.batteryContainer.Anim_Play( GetAnimFromAlias( GetSoulTitanSubClass( thirdPersonProxySoul ), "hatch_rodeo_down_idle" ) )
+			}
 		}
 	}
 	else
@@ -164,6 +175,7 @@ Forced1PSequenceData function FirstPersonSequenceForce1P( FirstPersonSequenceStr
 		Highlight_SetEnemyHighlight( thirdPersonProxy, "enemy_player" )
 		AddAnimEvent( thirdPersonProxy, "phase_shift_start", ModdedPhaseEmbarkPhaseStart )
 		AddAnimEvent( thirdPersonProxy, "phase_shift_stop", ModdedPhaseEmbarkPhaseStop )
+
 		if ( !IsPlayerEmbarking( player ) )
 		{
 			AddAnimEvent( thirdPersonProxy, "phase_shift_explode", ModdedPhaseShiftExplodeSound )
