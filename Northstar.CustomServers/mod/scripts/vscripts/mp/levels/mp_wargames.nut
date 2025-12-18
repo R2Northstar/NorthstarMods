@@ -247,9 +247,6 @@ void function OnPrematchStart()
 		if ( IsValid(ent) )
 			ent.Destroy()
 	}
-
-	foreach ( entity trigger in triggers )
-		trigger.kv.triggerFilterPlayer = "all"
 }
 
 void function PlayerWatchesWargamesIntro( entity player )
