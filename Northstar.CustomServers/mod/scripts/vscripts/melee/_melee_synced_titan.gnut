@@ -736,7 +736,6 @@ function TitanSyncedMeleeAnimationsPlay( FirstPersonSequenceStruct attackerBodyS
 						target.GetFirstPersonProxy().Anim_Stop()
 						target.SetPlayerSettings( e.oldPlayerSettings )
 					}
-
 				}
 				else if ( IsAlive( target ) )
 					target.Die( attacker, attacker, { scriptType = DF_MELEE, damageSourceId = eDamageSourceId.titan_execution } )
