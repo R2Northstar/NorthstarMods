@@ -1210,7 +1210,7 @@ void function SpawnMonarchTitan( WaveSpawnEvent ornull spawnEvent )
 ██   ██ ███████ ██   ██ ██      ███████ ██   ██     ███████ ██      ██   ██  ███ ███  ██   ████     ██       ██████  ██   ████  ██████ ███████ 
 */
 
-void function SpawnSuperSpectre( WaveSpawnEvent spawnEvent )
+entity function SpawnSuperSpectre( WaveSpawnEvent spawnEvent )
 {
 	vector spawnorigin = spawnEvent.origin
 	if ( spawnEvent.spawnradius > 0 )
@@ -1242,6 +1242,8 @@ void function SpawnSuperSpectre( WaveSpawnEvent spawnEvent )
 	//npc.SetCapabilityFlag( bits_CAP_MOVE_TRAVERSE, true )
 	
 	npc.GetMainWeapons()[0].AddMod( "aggressive_ai_fd" )
+
+	return npc
 }
 
 void function SpawnSuperSpectre_Normal( WaveSpawnEvent ornull spawnEvent )
@@ -1251,8 +1253,7 @@ void function SpawnSuperSpectre_Normal( WaveSpawnEvent ornull spawnEvent )
 	
 	expect WaveSpawnEvent( spawnEvent )
 
-	SpawnSuperSpectre( spawnEvent )
-	thread NPCNav_FD( npc, spawnEvent.route )
+	thread NPCNav_FD( SpawnSuperSpectre( spawnEvent ), spawnEvent.route )
 
 	npc.AssaultSetFightRadius( 2000 )
 }
@@ -1264,8 +1265,7 @@ void function SpawnSuperSpectre_Launcher( WaveSpawnEvent ornull spawnEvent )
 	
 	expect WaveSpawnEvent( spawnEvent )
 
-	SpawnSuperSpectre( spawnEvent )
-	thread ReaperMinionLauncherThink( npc )
+	thread ReaperMinionLauncherThink( SpawnSuperSpectre( spawnEvent ) )
 }
 
 
