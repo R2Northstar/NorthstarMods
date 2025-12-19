@@ -338,7 +338,27 @@ void function WaveSpawn_ReaperSpawn( array<WaveSpawnEvent> waveName, string spaw
 {
 	WaveSpawnEvent event
 	
-	event.eventFunction = SpawnSuperSpectre
+	event.eventFunction = SpawnSuperSpectre_Normal
+
+	switch ( spawnType.tolower() )
+	{
+		case "tick reaper":
+		case "ticks reaper":
+		case "tick_reaper":
+		case "ticks_reaper":
+		case "tickreaper":
+		case "reaper tick":
+		case "reaper ticks":
+		case "reaper_tick":
+		case "reaper_ticks":
+		case "reapertick":
+		case "reaperticks":
+		case "tick":
+		case "ticks":
+			event.eventFunction = SpawnSuperSpectre_Launcher
+			break
+	}
+
 	event.spawnType = eFD_AITypeIDs.REAPER
 	event.origin = origin
 	event.angles = < 0, angle, 0 >
@@ -1192,11 +1212,6 @@ void function SpawnMonarchTitan( WaveSpawnEvent ornull spawnEvent )
 
 void function SpawnSuperSpectre( WaveSpawnEvent ornull spawnEvent )
 {
-	if ( !spawnEvent )
-		return
-
-	expect WaveSpawnEvent( spawnEvent )
-	
 	vector spawnorigin = spawnEvent.origin
 	if ( spawnEvent.spawnradius > 0 )
 	{
@@ -1227,30 +1242,30 @@ void function SpawnSuperSpectre( WaveSpawnEvent ornull spawnEvent )
 	//npc.SetCapabilityFlag( bits_CAP_MOVE_TRAVERSE, true )
 	
 	npc.GetMainWeapons()[0].AddMod( "aggressive_ai_fd" )
+}
 
-	switch ( spawnEvent.spawnType.tolower() )
-	{
-		case "tick reaper":
-		case "ticks reaper":
-		case "tick_reaper":
-		case "ticks_reaper":
-		case "tickreaper":
-		case "reaper tick":
-		case "reaper ticks":
-		case "reaper_tick":
-		case "reaper_ticks":
-		case "reapertick":
-		case "reaperticks":
-		case "tick":
-		case "ticks":
-			thread ReaperMinionLauncherThink( npc )
-			break
-		
-		default:
-			thread NPCNav_FD( npc, spawnEvent.route )
-			npc.AssaultSetFightRadius( 2000 )
-			break
-	}
+void function SpawnSuperSpectre_Normal( WaveSpawnEvent ornull spawnEvent )
+{
+	if ( !spawnEvent )
+		return
+	
+	expect WaveSpawnEvent( spawnEvent )
+
+	SpawnSuperSpectre( spawnEvent )
+	thread NPCNav_FD( npc, spawnEvent.route )
+
+	npc.AssaultSetFightRadius( 2000 )
+}
+
+void function SpawnSuperSpectre_Launcher( WaveSpawnEvent ornull spawnEvent )
+{
+	if ( !spawnEvent )
+		return
+	
+	expect WaveSpawnEvent( spawnEvent )
+
+	SpawnSuperSpectre( spawnEvent )
+	thread ReaperMinionLauncherThink( npc )
 }
 
 
