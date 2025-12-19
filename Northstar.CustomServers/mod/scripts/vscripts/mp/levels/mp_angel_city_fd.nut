@@ -210,9 +210,9 @@ void function initFrontierDefenseData()
 	WaveSpawn_TitanSpawn( wave3, "Mortar", < 2578, 3266, 132 >, 180, "", 2.5, "", 0.0, eFDSD.MASTER | eFDSD.INSANE )
 	WaveSpawn_WaitEnemyAliveAmount( wave3, 0 )
 
-	WaveSpawn_TitanSpawn( wave3, "Scorch", < -2892, -1269, 107 >, 90, "", 0.6, "", 0.0, eFDSD.EASY | eFDSD.NORMAL | eFDSD.HARD, eFDTT.TITAN_ELITE )
-	WaveSpawn_TitanSpawn( wave3, "Ion", < -2621, -1261, 107 >, 90, "", 0.5, "", 0.0, eFDSD.EASY | eFDSD.NORMAL | eFDSD.HARD, eFDTT.TITAN_ELITE )
-	WaveSpawn_TitanSpawn( wave3, "Ion", < -3184, -1291, 115 >, 90, "", 1.0, "", 0.0, eFDSD.EASY | eFDSD.NORMAL | eFDSD.HARD, eFDTT.TITAN_ELITE )
+	WaveSpawn_TitanSpawn( wave3, "Scorch", < -2892, -1269, 107 >, 90, "", 0.6, "", 0.0, eFDSD.EASY | eFDSD.NORMAL | eFDSD.HARD )
+	WaveSpawn_TitanSpawn( wave3, "Ion", < -2621, -1261, 107 >, 90, "", 0.5, "", 0.0, eFDSD.EASY | eFDSD.NORMAL | eFDSD.HARD )
+	WaveSpawn_TitanSpawn( wave3, "Ion", < -3184, -1291, 115 >, 90, "", 1.0, "", 0.0, eFDSD.EASY | eFDSD.NORMAL | eFDSD.HARD )
 	WaveSpawn_WaitEnemyAliveAmount( wave3, 0 )
 	
 	WaveSpawn_TitanSpawn( wave3, "ArcTitan", < 3566, -2058, 200 >, 90, "", 1.0 )
