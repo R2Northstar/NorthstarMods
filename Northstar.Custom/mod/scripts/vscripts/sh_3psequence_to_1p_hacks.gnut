@@ -13,7 +13,6 @@ global const string FORCE1P_TITAN_ENTITYCLASS = "npc_titan"
 global struct Forced1PSequenceData
 {
 	entity player
-	entity camera
 	entity ownerProxy
 	entity thirdPersonProxy
 }
@@ -190,17 +189,17 @@ Forced1PSequenceData function FirstPersonSequenceForce1P( FirstPersonSequenceStr
 	sequence.thirdPersonCameraEntity = ownerProxy
 	sequence.thirdPersonCameraAttachments = [ attachment ]
 
-	thread CleanupForced1PSequenceAfterAnimDone( sequence, ownerProxy, other, cleanupData )
+	thread CleanupForced1PSequenceAfterAnimDone( sequence, other, cleanupData )
 
 	return cleanupData
 }
 
-void function CleanupForced1PSequenceAfterAnimDone( FirstPersonSequenceStruct sequence, entity player, entity other, Forced1PSequenceData cleanupData )
+void function CleanupForced1PSequenceAfterAnimDone( FirstPersonSequenceStruct sequence, entity other, Forced1PSequenceData cleanupData )
 {
-	player.EndSignal( "OnDeath" )
-	player.EndSignal( "OnDestroy" )
-	player.EndSignal( "OnAnimationInterrupted" )
-	player.EndSignal( "OnAnimationDone" )
+	cleanupData.ownerProxy.EndSignal( "OnDeath" )
+	cleanupData.ownerProxy.EndSignal( "OnDestroy" )
+	cleanupData.ownerProxy.EndSignal( "OnAnimationInterrupted" )
+	cleanupData.ownerProxy.EndSignal( "OnAnimationDone" )
 
 	cleanupData.player.EndSignal( "OnDeath" )
 	cleanupData.player.EndSignal( "OnDestroy" )
@@ -214,11 +213,11 @@ void function CleanupForced1PSequenceAfterAnimDone( FirstPersonSequenceStruct se
 		}
 	)
 
-	FirstPersonPlayAnim( sequence, player, cleanupData.player, other )
+	FirstPersonPlayAnim( sequence, cleanupData.ownerProxy, cleanupData.player, other )
 
 	WaitFrame()
 
-	while ( player.Anim_IsActive() )
+	while ( cleanupData.player.Anim_IsActive() )
 		WaitFrame()
 }
 
@@ -289,23 +288,25 @@ bool function ShouldRunFirstPersonSequence( entity player, bool isEmbark, bool i
 
 	if ( ( isEmbark && GetUserInfoKVBool_Internal( player, "ns_embark_style", false ) ) || ( isExecution && GetUserInfoKVBool_Internal( player, "ns_execution_style", false ) ) )
 		return true
-	
+
 	return false
 }
 
 void function ModdedPhaseEmbarkPhaseStart( entity player )
 {
 	PlayPhaseShiftDisappearFX( player )
-	EmitSoundOnEntity( player, "pilot_phaseembark_activate_3p" )	
+	EmitSoundOnEntity( player, "pilot_phaseembark_activate_3p" )
+
 	player.PhaseShiftBegin( 0.0, 0.2 )
 
 	if ( !IsPlayerEmbarking( player.GetOwner() ) )
 	{
 		player.GetOwner().PhaseShiftBegin( 0.0, 1.5 )
+
 		AddAnimEvent( player.GetOwner(), "phase_shift_stop", ModdedPhaseEmbarkPhaseStop )
 		thread ModdedPhaseExecutionPhaseCleanup( player.GetOwner() )
 	}
-	
+
 	thread ModdedPhaseEmbarkPhaseCleanup( player )
 }
 
@@ -316,8 +317,8 @@ void function ModdedPhaseEmbarkPhaseCleanup( entity player )
 	OnThreadEnd(
 	function() : ( player )
 		{
-			if ( IsValid( player ) && player.GetModelName() != $"models/robots/spectre/imc_spectre.mdl" && player.GetModelName() != $"models/titans/buddy/titan_buddy.mdl" )
-	   			player.SetBodygroup( player.FindBodyGroup( "head" ), 1 )
+			if ( IsValid( player ) && player.FindBodyGroup( "head" ) != -1 )
+				player.SetBodygroup( player.FindBodyGroup( "head" ), 1 )
 		}
 	)
 
@@ -332,7 +333,7 @@ void function ModdedPhaseExecutionPhaseCleanup( entity player )
 	function() : ( player )
 		{
 			if ( IsValid( player ) )
-	   			player.Hide()
+				player.Hide()
 		}
 	)
 
@@ -344,19 +345,16 @@ void function ModdedPhaseEmbarkPhaseStop( entity player )
 	Signal( player, "PhaseEmbarkPhaseStop" )
 	PlayPhaseShiftDisappearFX( player )
 	EmitSoundOnEntity( player, "pilot_phaseembark_end_3p" )
+
 	player.PhaseShiftCancel()
 }
 
 void function ModdedPhaseShiftExplodeSound( entity ent )
 {
 	if ( ent.IsMechanical() )
-	{
 		EmitSoundOnEntity( ent, "Pilot_Mvmt_Execution_Phaseshift_Pt4_Explo_Robo_3P" )
-	}
 	else
-	{
 		EmitSoundOnEntity( ent, "Pilot_Mvmt_Execution_Phaseshift_Pt4_Explo_3P" )
-	}
 }
 
 void function ModdedAnimEvent_Cloak_On( entity player )
@@ -365,7 +363,7 @@ void function ModdedAnimEvent_Cloak_On( entity player )
 	EmitSoundOnEntity( player, "cloak_sustain_loop_3P" )
 
 	float cloakDuration = 1.5 - 0.35
-	
+
 	player.SetCanCloak( true )
 
 	player.SetCloakDuration( 0.35, cloakDuration, 1.0 )
@@ -381,7 +379,6 @@ void function ModdedAnimEvent_Cloak_Off( entity player )
 	if ( wasCloaked )
 	{
 		EmitSoundOnEntity( player, "cloak_interruptend_3P" )
-
 		StopSoundOnEntity( player, "cloak_warningtoend_1P" )
 		StopSoundOnEntity( player, "cloak_warningtoend_3P" )
 	}
