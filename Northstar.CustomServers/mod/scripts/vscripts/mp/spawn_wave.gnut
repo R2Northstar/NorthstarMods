@@ -1253,7 +1253,9 @@ void function SpawnSuperSpectre_Normal( WaveSpawnEvent ornull spawnEvent )
 	
 	expect WaveSpawnEvent( spawnEvent )
 
-	thread NPCNav_FD( SpawnSuperSpectre( spawnEvent ), spawnEvent.route )
+	entity npc = SpawnSuperSpectre( spawnEvent )
+
+	thread NPCNav_FD( npc, spawnEvent.route )
 
 	npc.AssaultSetFightRadius( 2000 )
 }
@@ -1265,7 +1267,9 @@ void function SpawnSuperSpectre_Launcher( WaveSpawnEvent ornull spawnEvent )
 	
 	expect WaveSpawnEvent( spawnEvent )
 
-	thread ReaperMinionLauncherThink( SpawnSuperSpectre( spawnEvent ) )
+	entity npc = SpawnSuperSpectre( spawnEvent )
+
+	thread ReaperMinionLauncherThink( npc )
 }
 
 
