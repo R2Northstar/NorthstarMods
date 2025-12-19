@@ -578,8 +578,8 @@ function MeleeThread_TitanRipsPilot( table e, SyncedMelee action, entity attacke
 	AddAnimEvent( targetTitan, "rider_rodeo_over", ForceTitanRodeoToEnd  )
 	AddAnimEvent( targetTitan, "melee_killed_ragdoll", MeleeKilledRagdoll, attacker )
 
-	targetTitan.SetInvulnerable() //Setting target of execution as invulnerable to prevent them dying mid-way
-	target.SetInvulnerable()
+	MakeTurretInvulnerable( targetTitan )
+	MakeTurretInvulnerable( target )
 
 	target.SetOwner( attacker )
 	target.kv.VisibilityFlags = (ENTITY_VISIBLE_TO_FRIENDLY | ENTITY_VISIBLE_TO_ENEMY) //owner cant see
@@ -718,8 +718,8 @@ function TitanSyncedMeleeAnimationsPlay( FirstPersonSequenceStruct attackerBodyS
 		function () : ( targetTitan, target, attacker, e )
 		{
 			// insure visibility
-			if ( IsValid( targetTitan ) )
-				targetTitan.kv.VisibilityFlags = ENTITY_VISIBLE_TO_EVERYONE
+			if ( IsValid( targetTitan ) && IsAlive( targetTitan ) )
+				targetTitan.Die( attacker, attacker, { scriptType = DF_MELEE, damageSourceId = eDamageSourceId.titan_execution } )
 
 			if ( !IsAlive( attacker ) )
 			{
@@ -727,7 +727,7 @@ function TitanSyncedMeleeAnimationsPlay( FirstPersonSequenceStruct attackerBodyS
 
 				if ( !e.thrown && IsAlive( target ) && target.IsPlayer() )
 				{
-					target.ClearInvulnerable()
+					MakeTurretVulnerable( target )
 					target.Anim_Stop()
 					target.SetOwner( null )
 					target.kv.VisibilityFlags = ENTITY_VISIBLE_TO_EVERYONE
@@ -973,7 +973,7 @@ void function MeleeThread_OgreVsTitan( SyncedMelee action, entity attacker, enti
 		HolsterViewModelAndDisableWeapons( target )
 
 	//	attacker.SetInvulnerable()
-	target.SetInvulnerable()
+	MakeTurretInvulnerable( target )
 
 	entity soul = target.GetTitanSoul()
 	soul.SetInvalidHealthBarEnt( true )
@@ -1020,7 +1020,7 @@ void function MeleeThread_OgreVsTitan( SyncedMelee action, entity attacker, enti
 				target.e.syncedMeleeAttacker = null
 
 				target.ClearParent()
-				target.ClearInvulnerable()
+				MakeTurretVulnerable( target )
 				if ( target.IsPlayer() )
 				{
 					ClearPlayerAnimViewEntity( target )
