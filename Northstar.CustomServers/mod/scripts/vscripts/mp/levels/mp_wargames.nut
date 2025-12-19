@@ -99,7 +99,7 @@ void function WargamesIntroSetup()
 
 void function WargamesIntro_AddPlayer( entity player )
 {
-	if ( !IsValid( player ) || GetGameState() != eGameState.Prematch )
+	if ( GetGameState() != eGameState.Prematch )
 		return
 	
 	thread PlayerWatchesWargamesIntro( player )
