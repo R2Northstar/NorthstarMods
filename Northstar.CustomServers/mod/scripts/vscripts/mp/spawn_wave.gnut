@@ -1210,7 +1210,7 @@ void function SpawnMonarchTitan( WaveSpawnEvent ornull spawnEvent )
 ██   ██ ███████ ██   ██ ██      ███████ ██   ██     ███████ ██      ██   ██  ███ ███  ██   ████     ██       ██████  ██   ████  ██████ ███████ 
 */
 
-void function SpawnSuperSpectre( WaveSpawnEvent ornull spawnEvent )
+void function SpawnSuperSpectre( WaveSpawnEvent spawnEvent )
 {
 	vector spawnorigin = spawnEvent.origin
 	if ( spawnEvent.spawnradius > 0 )
