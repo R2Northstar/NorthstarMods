@@ -1237,7 +1237,10 @@ void function PlayerAppliesBatteryPack( entity rodeoPilot, entity rodeoTitan, en
 
 	#if MP
 		if ( nukeVersion )
+		{
 			tempBattery1p.SetSkin( 1 )
+			tempBattery3p.SetSkin( 1 )
+		}
 	#endif
 	if ( IsAmpedBattery( battery ) )
 	{
