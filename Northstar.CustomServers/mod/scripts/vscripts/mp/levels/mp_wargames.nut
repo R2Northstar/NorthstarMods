@@ -143,7 +143,7 @@ void function OnPrematchStart()
 		SetTeam( militiaIon, team )
 		trackedEntities.append( militiaIon )
 
-		entity militiaGrunt = CreatePropDynamic( $"models/humans/grunts/mlt_grunt_rifle.mdl", < 0, 0, 0 >, < 0, 0, 0 > )
+		entity militiaGrunt = CreatePropDynamic( $"models/humans/grunts/mlt_grunt_smg.mdl", < 0, 0, 0 >, < 0, 0, 0 > )
 		militiaGrunt.SetParent( militiaIon, "HIJACK" )
 		militiaGrunt.MarkAsNonMovingAttachment()
 		militiaGrunt.Anim_Play( "pt_titan_activation_pilot" )
