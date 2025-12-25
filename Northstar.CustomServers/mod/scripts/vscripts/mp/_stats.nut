@@ -943,7 +943,7 @@ void function HandleDistanceAndTimeStats_Threaded()
 		{
 			if ( !IsValid( player ) )
 				continue
-			
+				
 			if ( player.p.lastPosForDistanceStatValid )
 			{
 				// not 100% sure on using Distance2D over Distance tbh

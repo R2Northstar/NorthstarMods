@@ -111,7 +111,7 @@ void function OnPrematchStart_Thread()
 		dropship.SetInvulnerable()
 
 		NPC_NoTarget( dropship )
-		
+
 		teamDropships[ dropship ] <- [ null, null, null, null ]
 		
 		thread PlayAnim( dropship, GetDropshipIntroAnimation() )
@@ -210,9 +210,9 @@ void function SpawnPlayerIntoDropship( entity player, int playerDropshipIndex, e
 	}
 	else
 		Remote_CallFunction_NonReplay( player, "ServerCallback_SpawnFactionCommanderInDropship", playerDropship.GetEncodedEHandle(), playerDropship.ai.spawnTime )
-	
+
 	Remote_CallFunction_NonReplay( player, "ServerCallback_CreateDropShipIntLighting", playerDropship.GetEncodedEHandle(), playerDropship.GetTeam() )
-	
+
 	if( !playerDropship.s.deployedPilots )
 	{
 		FirstPersonSequenceStruct idleSequence
@@ -280,7 +280,7 @@ string function GetDropshipIntroAnimation()
 	{
 		case "mp_grave":
 			return "dropship_classic_mp_flyin_grave"
-		
+
 		case "mp_complex3":
 			return "dropship_classic_mp_flyin_timeshift"
 	}
