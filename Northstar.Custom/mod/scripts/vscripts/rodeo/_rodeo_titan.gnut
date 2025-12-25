@@ -564,7 +564,7 @@ function PlayerBeginsTitanRodeo( entity player, RodeoPackageStruct rodeoPackage,
 	player.Signal( "RodeoStarted" )
 
 	bool playerHadBatteryAtStartOfRodeo = PlayerHasBattery( player )
-	
+
 	OnThreadEnd(
 		function () : ( player, soul, sameTeam, rodeoTitan, playerHadBatteryAtStartOfRodeo )
 		{
