@@ -222,6 +222,12 @@ void function OnPrematchStart()
 	thread PodBootFXThread( file.imcPod )
 	thread PodBootFXThread( file.militiaPod )
 	
+	// cleanup intro objects
+
+	foreach ( entity ent in trackedEntities )
+		if ( IsValid( ent ) )
+			ent.Destroy()
+
 	wait 6.0
 	ClassicMP_OnIntroFinished()
 	
@@ -232,15 +238,8 @@ void function OnPrematchStart()
 	//PodFXCleanup( file.imcPod )
 	//PodFXCleanup( file.militiaPod )
 	
-	// cleanup intro objects
 	foreach ( entity trigger in triggers )
 		trigger.kv.triggerFilterPlayer = "all"
-
-	foreach ( entity ent in trackedEntities )
-	{
-		if ( IsValid(ent) )
-			ent.Destroy()
-	}
 }
 
 void function PlayerWatchesWargamesIntro( entity player )
