@@ -14,6 +14,7 @@ global function SetKillcamsEnabled
 global function KillcamsEnabled
 global function SetPlayerDeathsHidden
 global function TrackTitanDamageInPlayerGameStat
+global function CheckGameStateForPlayerMovement
 
 global function ShouldEntTakeDamage_SPMP
 global function GetTitanBuildTime
@@ -46,6 +47,8 @@ void function BaseGametype_Init_MPSP()
 	AddCallback_OnNPCKilled( CheckForAutoTitanDeath )
 	AddCallback_OnPlayerKilled( CheckForAutoTitanDeath )
 	AddCallback_OnPlayerAssist( PlayerAssistedKill )
+	AddCallback_OnTitanBecomesPilot( CheckGameStateForTitanEjection )
+	AddCallback_OnPlayerGetsNewPilotLoadout( CheckPlayerGetsNewLoadout )
 	RegisterSignal( "PlayerRespawnStarted" )
 	RegisterSignal( "KillCamOver" )
 
@@ -707,6 +710,40 @@ void function CheckForAutoTitanDeath( entity victim, entity attacker, var damage
 void function SetRecalculateRespawnAsTitanStartPointCallback( entity functionref( entity player, entity basePoint ) callbackFunc )
 {
 	file.recalculateRespawnAsTitanStartPointCallback = callbackFunc
+}
+
+void function CheckGameStateForPlayerMovement( entity player )
+{
+	if ( !IsAlive( player ) )
+		return
+	
+	if ( GetGameState() == eGameState.WinnerDetermined || GetGameState() == eGameState.SwitchingSides || GetGameState() == eGameState.Postmatch )
+	{
+		if ( level.endOfRoundPlayerState == ENDROUND_FREEZE )
+			player.FreezeControlsOnServer()
+		else if ( level.endOfRoundPlayerState == ENDROUND_MOVEONLY )
+		{
+			player.DisableWeapon()
+			player.Server_TurnOffhandWeaponsDisabledOn()
+		}
+	}
+}
+
+void function CheckGameStateAfterSpawn_Threaded( entity player, float waitTime = 0.1 )
+{
+	player.EndSignal( "OnDestroy" )
+	wait waitTime
+	CheckGameStateForPlayerMovement( player )
+}
+
+void function CheckGameStateForTitanEjection( entity pilot, entity titan )
+{
+	thread CheckGameStateAfterSpawn_Threaded( pilot, 0.5 )
+}
+
+void function CheckPlayerGetsNewLoadout( entity player, PilotLoadoutDef loadout )
+{
+	thread CheckGameStateAfterSpawn_Threaded( player )
 }
 
 void function SetGamemodeAllowsTeamSwitch( bool enabled )

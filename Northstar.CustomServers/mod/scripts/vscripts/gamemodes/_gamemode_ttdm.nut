@@ -88,7 +88,7 @@ void function PlayerWatchesTTDMIntroIntermissionCam( entity player )
 
 	wait TTDMIntroLength
 
-	RespawnAsTitan( player, false )
+	RespawnAsTitan( player )
 	TryGameModeAnnouncement( player )
 }
 

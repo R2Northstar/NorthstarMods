@@ -163,6 +163,6 @@ void function UpdateLoadout( entity player )
 
 void function OnWinnerDetermined()
 {
-	SetRespawnsEnabled( false )
-	SetKillcamsEnabled( false )
+	Riff_ForceSetEliminationMode( eEliminationMode.PilotsTitans )
+	SetServerVar( "replayDisabled", true )
 }
