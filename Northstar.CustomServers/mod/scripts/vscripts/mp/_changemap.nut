@@ -60,12 +60,15 @@ void function PopulatePostgameData()
 {
 	// show the postgame scoreboard summary
 	SetUIVar( level, "showGameSummary", true )
-
+	
+	int playerPerTeam = GetCurrentPlaylistVarInt( "max_players", 16 )
+	bool teamBased = !IsFFAGame()
+	bool isListenServer = !NSIsDedicated()
+	array<int> scoreTypes = GameMode_GetScoreboardColumnScoreTypes( GAMETYPE )
+	int persistenceArrayCount = PersistenceGetArrayCount( "postGameData.players" )
+	
 	foreach ( entity player in GetPlayerArray() )
 	{
-		int teams = GetCurrentPlaylistVarInt( "max_teams", 2 )
-		bool standardTeams = teams != 2
-		
 		int enumModeIndex = 0
 		int enumMapIndex = 0
 		
@@ -80,15 +83,15 @@ void function PopulatePostgameData()
 		player.SetPersistentVar( "postGameData.myXuid", player.GetUID() )
 		player.SetPersistentVar( "postGameData.gameMode", enumModeIndex )
 		player.SetPersistentVar( "postGameData.map", enumMapIndex )
-		player.SetPersistentVar( "postGameData.teams", standardTeams )
-		player.SetPersistentVar( "postGameData.maxTeamSize", teams )
-		player.SetPersistentVar( "postGameData.privateMatch", true )
+		player.SetPersistentVar( "postGameData.teams", teamBased )
+		player.SetPersistentVar( "postGameData.maxTeamSize", playerPerTeam )
+		player.SetPersistentVar( "postGameData.privateMatch", isListenServer )
 		player.SetPersistentVar( "postGameData.ranked", true )
 		player.SetPersistentVar( "postGameData.hadMatchLossProtection", false )
 		
 		player.SetPersistentVar( "isFDPostGameScoreboardValid", GAMETYPE == FD )
 		
-		if ( standardTeams )
+		if ( teamBased && MAX_TEAMS > 1 )
 		{
 			if ( player.GetTeam() == TEAM_MILITIA )
 			{
@@ -108,16 +111,33 @@ void function PopulatePostgameData()
 		{
 			player.SetPersistentVar( "postGameData.factionMCOR", GetFactionChoice( player ) )
 			player.SetPersistentVar( "postGameData.scoreMCOR", GameRules_GetTeamScore( player.GetTeam() ) )
+			player.SetPersistentVar( "postGameData.factionIMC", GetEnemyFaction( player ) )
+			player.SetPersistentVar( "postGameData.scoreIMC", 0 )
+		}
+		
+		//Clear scoreboard first in case current match finished with less players than previous
+		//The reason for this is that the post-scoreboard would mix playersets from both matches resulting in a confusing scoreboard
+		for( int i = 0; i < persistenceArrayCount; i++ )
+		{
+			player.SetPersistentVar( "postGameData.players[" + i + "].team", TEAM_UNASSIGNED )
+			player.SetPersistentVar( "postGameData.players[" + i + "].name", "" )
+			player.SetPersistentVar( "postGameData.players[" + i + "].xuid", "" )
+			player.SetPersistentVar( "postGameData.players[" + i + "].level", -1 )
+			player.SetPersistentVar( "postGameData.players[" + i + "].gen", -1 )
+			player.SetPersistentVar( "postGameData.players[" + i + "].callsignIconIndex", -1 )
+			
+			for ( int j = 0; j < scoreTypes.len(); j++ )
+				player.SetPersistentVar( "postGameData.players[" + i + "].scores[" + j + "]", -1 )
 		}
 		
 		array<entity> otherPlayers = GetPlayerArray()
-		array<int> scoreTypes = GameMode_GetScoreboardColumnScoreTypes( GAMETYPE )
-		int persistenceArrayCount = PersistenceGetArrayCount( "postGameData.players" )
 		for ( int i = 0; i < min( otherPlayers.len(), persistenceArrayCount ); i++ )
 		{
 			player.SetPersistentVar( "postGameData.players[" + i + "].team", otherPlayers[ i ].GetTeam() )
 			player.SetPersistentVar( "postGameData.players[" + i + "].name", otherPlayers[ i ].GetPlayerName() )
 			player.SetPersistentVar( "postGameData.players[" + i + "].xuid", otherPlayers[ i ].GetUID() )
+			player.SetPersistentVar( "postGameData.players[" + i + "].level", otherPlayers[ i ].GetLevel() )
+			player.SetPersistentVar( "postGameData.players[" + i + "].gen", otherPlayers[ i ].GetGen() )
 			player.SetPersistentVar( "postGameData.players[" + i + "].callsignIconIndex", otherPlayers[ i ].GetPersistentVarAsInt( "activeCallsignIconIndex" ) )
 			
 			for ( int j = 0; j < scoreTypes.len(); j++ )

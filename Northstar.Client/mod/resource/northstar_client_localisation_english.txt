@@ -50,7 +50,7 @@ Press Yes if you agree to this. This choice can be changed in the mods menu at a
 		"MODE_SETTING_CATEGORY_RIFF" "Riffs"
 		"MODE_SETTING_CATEGORY_MATCH" "Match"
 
-		"classic_mp" "Classic MP"
+		"run_intro" "Dropship Intro"
 		"run_epilogue" "Run Epilogue"
 		"scorelimit" "Score Limit"
 		"roundscorelimit" "Score Limit (round-based)"
@@ -79,6 +79,9 @@ Press Yes if you agree to this. This choice can be changed in the mods menu at a
 		"featured_mode_rocket_arena" "Rocket Arena"
 		"featured_mode_shotguns_snipers" "Armed and Dangerous"
 		"iron_rules" "Iron Titan Rules"
+		"riff_titan_queue" "Max Active Titans per Team"
+		"classic_executions" "Classic Executions"
+		"drop_battery_command"				"Drop Battery Command"
 
 		"cp_amped_capture_points" "Amped Hardpoints"
 		"coliseum_loadouts_enabled" "Coliseum Loadouts"
@@ -224,7 +227,6 @@ Press Yes if you agree to this. This choice can be changed in the mods menu at a
 		"custom_air_accel_pilot" "Air Acceleration"
 		"no_pilot_collision" "Inter-Pilot Collision"
 		"promode_enable" "Promode Weapons"
-		"fp_embark_enabled" "Firstperson embarks/executions"
 		"classic_rodeo" "Classic Rodeo"
 		"oob_timer_enabled" "Out of Bounds Timer"
 		"riff_instagib" "Instagib Mode"
@@ -331,7 +333,7 @@ Press Yes if you agree to this. This choice can be changed in the mods menu at a
 		"INVALID_MASTERSERVER_TOKEN" 	"Invalid or expired masterserver token, try restarting EA App."
 		"JSON_PARSE_ERROR" 				"Error parsing json response"
 		"UNSUPPORTED_VERSION" 			"The version you are using is no longer supported"
-
+		
 		// Mode menu
 		"MODE_MENU_PVPVE"		"PvPvE"
 		"MODE_MENU_PVE"			"PvE"
@@ -412,5 +414,26 @@ Press Yes if you agree to this. This choice can be changed in the mods menu at a
 		"MOD_CORRUPTED"						"Downloaded archive checksum does not match verified signature."
 		"NO_DISK_SPACE_AVAILABLE"			"There is not enough space on your disk."
 		"MOD_FETCHING_FAILED_GENERAL"		"Mod extraction failed. Check logs for more details."
+
+		// Frontier defense playlistvars
+		"fd_harvester_health" "Harvester HP"
+		"fd_harvester_shield" "Harvester Shield"
+		"fd_wave_buy_time" "Wave Break Time"
+		"fd_titan_health_adjust" "Enemy Titans HP Adjust"
+		"fd_reaper_health_adjust" "Enemy Reapers HP Adjust"
+		"fd_mortar_spectre_setup_time" "Mortar Spectre Build Siege Time"
+		"fd_grunt_at_weapon_users" "Amount of Grunts with AT Weapons"
+		"fd_player_damage_scalar" "Player Damage Multiplier"
+		"fd_at_unlimited_ammo" "Unlimited Anti-Titan Ammo"
+		"fd_pro_titan_shields" "Enemies Spawns with Shields"
+		"fd_respawn_dropship" "Respawn In Dropship"
+		"fd_money_per_round"				"Money Per Round"
+		"fd_money_flyouts"					"Money Flyouts"
+		"riff_minimap_state" "Hide Minimap"
+		"fd_killcredit_grunt"				"Grunt Kill Credit"
+		"fd_killcredit_drone"				"Drone Kill Credit"
+		"fd_killcredit_spectre"				"Spectre Kill Credit"
+		"fd_killcredit_stalker"				"Stalker Kill Credit"
+		"fd_killcredit_reaper"				"Reaper Kill Credit"
 	}
 }

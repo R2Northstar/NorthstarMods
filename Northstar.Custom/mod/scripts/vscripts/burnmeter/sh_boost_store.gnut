@@ -188,7 +188,7 @@ void function ShInitBoostStoreForMode()
 		}
 	}
 	file.availableBoosts.sort( SortCompareBoostCost )
-	printt( file.availableBoosts.len() )
+	//printt( file.availableBoosts.len() )
 }
 
 int function SortCompareBoostCost( BoostStoreData a, BoostStoreData b )
@@ -208,6 +208,7 @@ int function SortCompareBoostCost( BoostStoreData a, BoostStoreData b )
 array<BoostStoreData> function GetAvailableBoosts()
 {
 	// custom stuff for arena
+	// TODO: make an API for doing this and remove this file from Northstar.Custom
 	string boostStoreMode = GetCurrentPlaylistVarString( "boost_store_mode", "off" )
 	if ( boostStoreMode == "arena" )
 	{
@@ -254,19 +255,19 @@ bool function ClientCommand_PurchaseBoost( entity player, array<string> args )
 	if ( !BoostStoreOpen() )
 		return true
 
-	if ( player.IsPhaseShifted() )
-		return false
-
 	if ( !IsAlive( player ) )
-		return false
+		return true
 
 	if ( player.IsTitan() )
-		return false
+		return true
+
+	if ( !IsPlayerNearbyAnyBoostStore( player ) )
+		return true
 
 	array<BoostStoreData> availableBoosts = GetAvailableBoosts()
 
 	if ( args.len() == 0 )
-		return false
+		return true
 
 	foreach ( data in availableBoosts )
 	{
@@ -304,8 +305,17 @@ bool function ClientCommand_PurchaseBoost( entity player, array<string> args )
 
 bool function ClientCommand_Deposit( entity player, array<string> args )
 {
-	// if ( !BoostStoreOpen() )
-	// 	return true
+	if ( !BoostStoreOpen() )
+		return true
+
+	if ( !IsAlive( player ) )
+		return true
+
+	if ( player.IsTitan() )
+		return true
+
+	if ( !IsPlayerNearbyAnyBoostStore( player ) )
+		return true
 
 	int depositAmount = minint( file.playerBonusData[ player ], BOOST_STORE_DEFAULT_EXCHANGE )
 	file.teamReserveAmount += depositAmount
@@ -325,8 +335,20 @@ bool function ClientCommand_Deposit( entity player, array<string> args )
 
 bool function ClientCommand_Withdraw( entity player, array<string> args )
 {
-	// if ( !BoostStoreOpen() )
-	// 	return true
+	if ( !BoostStoreOpen() )
+		return true
+	
+	if ( !BoostStoreOpen() )
+		return true
+
+	if ( !IsAlive( player ) )
+		return true
+
+	if ( player.IsTitan() )
+		return true
+
+	if ( !IsPlayerNearbyAnyBoostStore( player ) )
+		return true
 
 	if ( GetPlayerMoney( player ) >= MAX_MONEY )
 		return true
@@ -445,7 +467,7 @@ void function CreateBoostStoreHintTrigger( entity crate )
 	entity trig = CreateEntity( "trigger_cylinder" )
 	trig.SetRadius( BOOST_STORE_TRIGGER_RADIUS )
 	trig.SetAboveHeight( 200 )
-	trig.SetBelowHeight( 0)
+	trig.SetBelowHeight( 0 )
 	trig.SetOrigin( crate.GetOrigin() )
 	trig.kv.triggerFilterNpc = "none"
 	trig.kv.triggerFilterPlayer = "all"
@@ -483,14 +505,14 @@ void function CloseBoostStores()
 {
 	foreach ( crate in file.storeLocations )
 		thread DisableBoostStoreCrate( crate )
-	SetGlobalNetBool("boostStoreOpen", false)
+	SetGlobalNetBool( "boostStoreOpen", false )
 }
 
 void function OpenBoostStores()
 {
 	foreach ( crate in file.storeLocations )
 		thread EnableBoostStoreCrate( crate )
-	SetGlobalNetBool("boostStoreOpen", true)
+	SetGlobalNetBool( "boostStoreOpen", true )
 }
 
 array<entity> function GetBoostStores()
@@ -544,7 +566,7 @@ void function BoostStoreThink( entity crate )
 	while( IsValid( crate ) )
 	{
 		entity player = expect entity( crate.WaitSignal( "OnPlayerUse" ).player )
-		if ( IsValid( player ) )
+		if ( IsValid( player ) && Distance( player.GetOrigin(), crate.GetOrigin() ) < BOOST_STORE_TRIGGER_RADIUS )
 			OpenBoostStoreMenu( player )
 	}
 }
@@ -553,6 +575,9 @@ void function OpenBoostStoreMenu( entity player )
 {
 	if ( !BoostStoreEnabled() )
 		return
+	
+	if ( !IsPlayerNearbyAnyBoostStore( player ) )
+		return
 
 	CalculatePlayerTurretCount( player )
 	Remote_CallFunction_UI( player, "ServerCallback_UpdateMoney", file.playerBonusData[ player ] )
@@ -560,6 +585,18 @@ void function OpenBoostStoreMenu( entity player )
 	Remote_CallFunction_UI( player, "ServerCallback_UpdatePlayerHasBattery", PlayerHasBattery( player ) )
 	Remote_CallFunction_UI( player, "ServerCallback_UpdateAmpedWeaponState", PlayerHasAmpedWeapons( player ) )
 	Remote_CallFunction_UI( player, "ServerCallback_OpenBoostStore" )
+}
+
+bool function IsPlayerNearbyAnyBoostStore( entity player )
+{
+	bool playerNearStore = false
+	foreach ( entity crate in GetBoostStores() )
+	{
+		if ( Distance( player.GetOrigin(), crate.GetOrigin() ) < BOOST_STORE_TRIGGER_RADIUS )
+			playerNearStore = true
+	}
+
+	return playerNearStore
 }
 #endif
 

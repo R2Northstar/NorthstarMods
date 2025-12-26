@@ -50,7 +50,7 @@ void function LaserCore_OnPlayedOrNPCKilled( entity victim, entity attacker, var
 		return
 
 	entity soul = attacker.GetTitanSoul()
-	if ( !IsValid( soul ) )
+	if ( !IsValid( soul ) || attacker.GetPlayerNetInt( EARNMETER_MODE ) != eEarnMeterMode.CORE_ACTIVE )
 		return
 
 	entity weapon = attacker.GetOffhandWeapon( OFFHAND_EQUIPMENT )
@@ -74,12 +74,31 @@ void function LaserCore_OnPlayedOrNPCKilled( entity victim, entity attacker, var
 		duration = 3.0
 	float coreFrac = min( 1.0, remainingTime / duration )
 	//Defensive fix for this sometimes resulting in a negative value.
-	if ( coreFrac > 0.0 )
+	if ( coreFrac > 0.01 )
 	{
 		soul.SetTitanSoulNetFloat( "coreExpireFrac", coreFrac )
 		soul.SetTitanSoulNetFloatOverTime( "coreExpireFrac", 0.0, remainingTime )
 		soul.SetCoreChargeExpireTime( remainingTime + curTime )
+	}
+}
+
+void function LaserCannonPassiveDuration( entity soul, entity weapon )
+{
+	entity titan = soul.GetTitan()
+	
+	soul.EndSignal( "OnDestroy" )
+	weapon.EndSignal( "OnDestroy" )
+	soul.EndSignal( "OnDeath" )
+	titan.EndSignal( "CoreEnd" )
+	
+	wait 1.0
+	
+	float coreFrac = soul.GetTitanSoulNetFloat( "coreExpireFrac" )
+	while( IsValid( weapon ) && coreFrac > 0.01 )
+	{
+		coreFrac = soul.GetTitanSoulNetFloat( "coreExpireFrac" )
 		weapon.SetSustainedDischargeFractionForced( coreFrac )
+		WaitFrame()
 	}
 }
 #endif
@@ -202,6 +221,7 @@ bool function OnAbilityStart_LaserCannon( entity weapon )
 		EmitSoundOnEntityOnlyToPlayer( player, player, LASER_FIRE_SOUND_1P )
 		EmitSoundOnEntityExceptToPlayer( player, player, "Titan_Core_Laser_FireStart_3P" )
 		EmitSoundOnEntityExceptToPlayer( player, player, "Titan_Core_Laser_FireBeam_3P" )
+		thread LaserCannonPassiveDuration( soul, weapon )
 	}
 	else
 	{

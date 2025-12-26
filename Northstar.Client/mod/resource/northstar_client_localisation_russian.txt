@@ -40,7 +40,6 @@
 		"MODE_SETTING_CATEGORY_RIFF" "Рифф"
 		"MODE_SETTING_CATEGORY_MATCH" "Матч"
 
-		"classic_mp" "Классический мультиплеер"
 		"run_epilogue" "Запустить эпилог"
 		"scorelimit" "Лимит очков"
 		"roundscorelimit" "Лимит очков (по раундам)"
@@ -166,7 +165,6 @@
 
 		"custom_air_accel_pilot" "Ускорение в воздухе"
 		"promode_enable" "Оружие из режима про"
-		"fp_embark_enabled" "Казни/посадки в титана от первого лица"
 		"classic_rodeo" "Классическое родео"
 		"oob_timer_enabled" "Таймер уничтожения за пределами карты"
 		"riff_instagib" "Моментальная смерть при попадании"

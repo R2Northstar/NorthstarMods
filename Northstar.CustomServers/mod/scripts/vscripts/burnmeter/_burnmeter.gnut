@@ -67,6 +67,7 @@ void function BurnMeter_Init()
 	AddCallback_OnClientConnected( InitBurncardsForLateJoiner )
 
 	AddCallback_OnPlayerRespawned( StartPhaseRewindLifetime )
+	AddCallback_OnPlayerRespawned( InitialisePermenantAmpedWeaponsForPlayer )
 	AddCallback_OnTitanBecomesPilot( RemoveAmpedWeaponsForTitanPilot )
 
 	// necessary signals
@@ -163,10 +164,14 @@ string function GetSelectedBurncardRefFromWeaponOrPlayer( entity weapon, entity 
 
 				case "mp_ability_turretweapon":
 					// turret has 2 burncards, antititan and antipilot
-					if( weapon.HasMod( "burnmeter_at_turret_weapon" ) || weapon.HasMod( "burnmeter_at_turret_weapon_inf" ) )
+					if( weapon.HasMod( "burnmeter_at_turret_weapon" ) )
 						return "burnmeter_at_turret_weapon"
-					else
+					else if( weapon.HasMod( "burnmeter_at_turret_weapon_inf" ) )
+						return "burnmeter_at_turret_weapon_infinite"
+					else if( weapon.HasMod( "burnmeter_ap_turret_weapon" ) )
 						return "burnmeter_ap_turret_weapon"
+					else if( weapon.HasMod( "burnmeter_ap_turret_weapon_inf" ) )
+						return "burnmeter_ap_turret_weapon_infinite"
 
 				// note: cloak and stim both have burn_card_weapon_mod mods, but they aren't used and don't call burncard code at all, likely for tf1 infinite stim/cloak burncards?
 
@@ -248,6 +253,10 @@ void function RunBurnCardUseFunc( entity player, string itemRef )
 	print( itemRef )
 
 	void functionref( entity ) ornull func = BurnReward_GetByRef( itemRef ).rewardAvailableCallback
+	#if BATTLECHATTER_ENABLED
+	if( itemRef == "burnmeter_amped_weapons_permanent" || itemRef == "burnmeter_amped_weapons" )
+		PlayBattleChatterLine( player, "bc_pAmp" )
+	#endif
 	if ( func != null )
 		( expect void functionref( entity ) ( func ) )( player )
 	else
@@ -302,10 +311,10 @@ void function PlayerUsesAmpedWeaponsBurncard( entity player )
 void function PlayerUsesAmpedWeaponsBurncardThreaded( entity player )
 {
 	player.Signal( "StopAmpedWeapons" ) 
-	player.EndSignal("StopAmpedWeapons")
+	player.EndSignal( "StopAmpedWeapons" )
 	
 	array<entity> weapons = player.GetMainWeapons()
-	//weapons.extend( player.GetOffhandWeapons() ) // idk? unsure of vanilla behaviour here
+	weapons.extend( player.GetOffhandWeapons() )
 	foreach ( entity weapon in weapons )
 	{
 		if( weapon.GetWeaponPrimaryClipCountMax() > 0 )
@@ -347,22 +356,32 @@ void function PlayerUsesAmpedWeaponsBurncardThreaded( entity player )
 
 void function RemoveAmpedWeaponsForTitanPilot( entity player, entity titan )
 {
-	foreach ( entity weapon in player.GetMainWeapons() )
-		foreach ( string mod in GetWeaponBurnMods( weapon.GetWeaponClassName() ) )
-			weapon.RemoveMod( mod )
+	if ( !( "hasPermenantAmpedWeapons" in player.s ) || !player.s.hasPermenantAmpedWeapons )
+		foreach ( entity weapon in player.GetMainWeapons() )
+			foreach ( string mod in GetWeaponBurnMods( weapon.GetWeaponClassName() ) )
+				weapon.RemoveMod( mod )
 }
 
 void function PlayerUsesSmartPistolBurncard( entity player )
 {
-	// take secondary weapon
-	array<entity> sidearms = player.GetMainWeapons()
-	if ( sidearms.len() > 1 )
-		player.TakeWeaponNow( sidearms[ 1 ].GetWeaponClassName() ) // take secondary weapon
-
-	player.GiveWeapon( "mp_weapon_smart_pistol" )
+	array<entity> weapons = player.GetMainWeapons()
+	bool gaveSmartPistol = false
+	foreach ( entity weaponEnt in weapons )
+	{
+		if ( weaponEnt.GetWeaponInfoFileKeyField( "menu_category" ) != "pistol" )
+			continue
+		
+		player.TakeWeaponNow( weaponEnt.GetWeaponClassName() )
+		player.GiveWeapon( "mp_weapon_smart_pistol" )
+		gaveSmartPistol = true
+	}
+	if ( !gaveSmartPistol ) // Failsafe in case player previously replaced their sidearm with any primary or AT
+	{
+		if ( weapons.len() > 1 )
+			player.TakeWeaponNow( weapons[1].GetWeaponClassName() )
+		player.GiveWeapon( "mp_weapon_smart_pistol" )
+	}
 	player.SetActiveWeaponByName( "mp_weapon_smart_pistol" )
-
-	// do we need to track the player losing smart pistol, then give their old weapon back? idk not implementing for now, check later
 }
 
 void function PlayerUsesRadarJammerBurncard( entity player )
@@ -537,7 +556,6 @@ void function PutPhaseRewindedPlayerInSafeSpot( entity player, int severity )
 		return
 
 	return PutPhaseRewindedPlayerInSafeSpot( player, severity + 5 )
-
 }
 
 void function PlayerUsesNukeTitanBurncard( entity player )
@@ -570,10 +588,17 @@ void function PlayerUsesNukeBurncardThreaded( entity player )
 	thread TitanEjectPlayer( titan, true )
 }
 
+void function InitialisePermenantAmpedWeaponsForPlayer( entity player )
+{
+	player.s.hasPermenantAmpedWeapons <- false
+}
+
 void function PlayerUsesPermanentAmpedWeaponsBurncard( entity player )
 {
+	player.s.hasPermenantAmpedWeapons = true
+
 	array<entity> weapons = player.GetMainWeapons()
-	//weapons.extend( player.GetOffhandWeapons() ) // idk? unsure of vanilla behaviour here
+	weapons.extend( player.GetOffhandWeapons() )
 	foreach ( entity weapon in weapons )
 	{
 		weapon.RemoveMod( "silencer" ) // both this and the burnmod will override firing fx, if a second one overrides this we crash

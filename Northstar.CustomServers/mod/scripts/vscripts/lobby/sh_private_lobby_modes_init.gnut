@@ -4,7 +4,7 @@ void function PrivateMatchModesInit()
 {
 	// match settings
 	// super temp: do localisation strings later
-	AddPrivateMatchModeSettingEnum( "#MODE_SETTING_CATEGORY_MATCH", "classic_mp", [ "#SETTING_DISABLED", "#SETTING_ENABLED" ], "1" )
+	AddPrivateMatchModeSettingEnum( "#MODE_SETTING_CATEGORY_MATCH", "run_intro", [ "#SETTING_DISABLED", "#SETTING_ENABLED" ], "1" )
 	AddPrivateMatchModeSettingEnum( "#MODE_SETTING_CATEGORY_MATCH", "run_epilogue", [ "#SETTING_DISABLED", "#SETTING_ENABLED" ], "1" )
 	AddPrivateMatchModeSettingArbitrary( "#MODE_SETTING_CATEGORY_MATCH", "scorelimit", "5" ) //, "Score Limit" )
 	AddPrivateMatchModeSettingArbitrary( "#MODE_SETTING_CATEGORY_MATCH", "roundscorelimit", "0" ) //, "Score Limit (round-based modes)" )
@@ -34,13 +34,38 @@ void function PrivateMatchModesInit()
 	AddPrivateMatchModeSettingEnum( "#MODE_SETTING_CATEGORY_RIFF", "featured_mode_rocket_arena", [ "#SETTING_DISABLED", "#SETTING_ENABLED" ], "0" )
 	AddPrivateMatchModeSettingEnum( "#MODE_SETTING_CATEGORY_RIFF", "featured_mode_shotguns_snipers", [ "#SETTING_DISABLED", "#SETTING_ENABLED" ], "0" )
 	AddPrivateMatchModeSettingEnum( "#MODE_SETTING_CATEGORY_RIFF", "iron_rules", [ "#SETTING_DISABLED", "#SETTING_ENABLED" ], "0" )
-	
+	AddPrivateMatchModeSettingArbitrary( "#MODE_SETTING_CATEGORY_RIFF", "riff_titan_queue", "0" )
+	AddPrivateMatchModeSettingEnum( "#MODE_SETTING_CATEGORY_RIFF", "classic_executions", [ "#SETTING_DISABLED", "#SETTING_ENABLED" ], "0" )
+
 	// gamemode settings
 	AddPrivateMatchModeSettingEnum( "#GAMEMODE_cp", "cp_amped_capture_points", [ "#SETTING_DISABLED", "#SETTING_ENABLED" ], "1" ) // would've been nice to use amped_capture_points, but this var is already used ingame and its value is default 0
 	
 	AddPrivateMatchModeSettingEnum( "#GAMEMODE_coliseum", "coliseum_loadouts_#SETTING_ENABLED", [ "#SETTING_DISABLED", "#SETTING_ENABLED" ], "1" )
 	
-	AddPrivateMatchModeSettingEnum( "#PL_aitdm", "aitdm_archer_grunts", [ "Disabled", "Enabled" ], "0"  )
+	AddPrivateMatchModeSettingEnum( "#PL_aitdm", "aitdm_archer_grunts", [ "#SETTING_DISABLED", "#SETTING_ENABLED" ], "0"  )
+
+	foreach ( string difficulty in [ "#PL_fd_easy", "#PL_fd_normal", "#PL_fd_hard", "#PL_fd_master", "#PL_fd_insane" ] )
+	{
+		AddPrivateMatchModeSettingArbitrary( difficulty, "fd_harvester_health", "25000" )
+		AddPrivateMatchModeSettingArbitrary( difficulty, "fd_harvester_shield", "6000" )
+		AddPrivateMatchModeSettingArbitrary( difficulty, "fd_wave_buy_time", "60.0" )
+		AddPrivateMatchModeSettingArbitrary( difficulty, "fd_titan_health_adjust", "-2500" )
+		AddPrivateMatchModeSettingArbitrary( difficulty, "fd_reaper_health_adjust", "-1000" )
+		AddPrivateMatchModeSettingArbitrary( difficulty, "fd_mortar_spectre_setup_time", "10" )
+		AddPrivateMatchModeSettingArbitrary( difficulty, "fd_grunt_at_weapon_users", "0" )
+		AddPrivateMatchModeSettingArbitrary( difficulty, "fd_player_damage_scalar", "1" )
+		AddPrivateMatchModeSettingEnum( difficulty, "fd_at_unlimited_ammo", [ "#SETTING_OFF", "#SETTING_ON" ], "1"  )
+		AddPrivateMatchModeSettingEnum( difficulty, "fd_pro_titan_shields", [ "#SETTING_OFF", "#SETTING_ON" ], "0"  )
+		AddPrivateMatchModeSettingEnum( difficulty, "fd_respawn_dropship", [ "#SETTING_OFF", "#SETTING_ON" ], "0"  )
+		AddPrivateMatchModeSettingArbitrary( difficulty, "fd_money_per_round", FD_MONEY_PER_ROUND.tostring() )
+		AddPrivateMatchModeSettingEnum( difficulty, "fd_money_flyouts", [ "#SETTING_DISABLED", "#SETTING_ENABLED" ], "#SETTING_DISABLED" )
+		AddPrivateMatchModeSettingEnum( difficulty, "riff_minimap_state", [ "#SETTING_OFF", "#SETTING_ON" ], "0"  )
+		AddPrivateMatchModeSettingArbitrary( difficulty, "fd_killcredit_grunt", "5" )
+		AddPrivateMatchModeSettingArbitrary( difficulty, "fd_killcredit_drone", "10" )
+		AddPrivateMatchModeSettingArbitrary( difficulty, "fd_killcredit_spectre", "10" )
+		AddPrivateMatchModeSettingArbitrary( difficulty, "fd_killcredit_stalker", "15" )
+		AddPrivateMatchModeSettingArbitrary( difficulty, "fd_killcredit_reaper", "20" )
+	}
 
 	// modes
 	AddPrivateMatchMode( "ffa" )

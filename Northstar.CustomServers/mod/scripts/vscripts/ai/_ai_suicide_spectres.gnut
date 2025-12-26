@@ -64,6 +64,7 @@ void function SuicideSpectres_Init()
  ######  ########    ##     #######  ##
 
 \************************************************************************************************/
+
 void function MakeSuicideSpectre( entity spectre )
 {
 	spectre.SetAimAssistAllowed( true )
@@ -120,8 +121,9 @@ void function FragDroneDeath_Think( entity spectre, var damageInfo )
 	int team = GetExplosionTeamBasedOnGamemode( spectre )
 
 	int damageDef = GetDamageDefForFragDrone( spectre )
-
+	
 	RadiusDamage_DamageDefSimple( damageDef, pos, attackerEnt, spectre, 0 )
+	
 	EmitSoundAtPosition( spectre.GetTeam(), pos, expSFX )
 	CreateShake( pos, 10, 105, 1.25, 768 )
 	StartParticleEffectInWorld( expFX, fxOrg, Vector( 0, 0, 0 ) )
@@ -462,7 +464,10 @@ void function SpectreOverloads( entity spectre )
 	}
 	else
 	{
+		spectre.SetNPCMoveSpeedScale( 0.01 )
+		spectre.Anim_Stop()
 		string anim = "sp_suicide_spectre_explode_stand"
+
 		var overrideAnim = spectre.Dev_GetAISettingByKeyField( "OverrideOverloadAnim" )
 
 		if ( overrideAnim != null )

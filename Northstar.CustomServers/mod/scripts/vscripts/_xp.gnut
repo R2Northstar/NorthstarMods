@@ -39,7 +39,15 @@ void function HandleXPGainForScoreEvent( entity player, ScoreEvent event )
 	int titanXp = ScoreEvent_GetXPValueTitan( event )
 	int factionXp = ScoreEvent_GetXPValueFaction( event )
 	
-	if ( player.GetPlayerNetInt( "xpMultiplier" ) > 0 || GetCurrentPlaylistVarInt( "double_xp_enabled", 0 ) == 1 )
+	if ( GetCurrentPlaylistVarInt( "double_xp_enabled", 0 ) == 1 )
+	{
+		xpValue *= 2
+		weaponXp *= 2
+		titanXp *= 2
+		factionXp *= 2
+	}
+	
+	if ( player.GetPlayerNetInt( "xpMultiplier" ) > 0 )
 	{
 		xpValue *= 2
 		weaponXp *= 2

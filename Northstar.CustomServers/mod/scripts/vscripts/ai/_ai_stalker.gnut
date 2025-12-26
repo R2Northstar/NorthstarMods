@@ -1,7 +1,9 @@
+untyped
 global function AiStalker_Init
 global function GetDeathForce
 global function StalkerGearOverloads
 global function StalkerMeltingDown
+global function FDStalkerThink
 
 global function IsStalkerLimbBlownOff
 
@@ -157,6 +159,84 @@ void function StalkerOnDamaged_Internal( entity npc, var damageInfo )
 			npc.SetActivityModifier( ACT_MODIFIER_STAGGER, true )
 		}
 	}
+	if( GameRules_GetGameMode() == FD )
+		thread StalkerSprint( npc, damageInfo )
+}
+
+void function StalkerSprint( entity npc, var damageInfo )
+{
+	npc.EndSignal("OnDeath")
+	npc.EndSignal("OnDestroy")
+	float damage = DamageInfo_GetDamage( damageInfo )
+
+	if (!IsCrawling(npc)&&( npc.GetHealth() - damage < 50 || npc.GetHealth() <= 80))
+	{
+		StalkerSetSprintStance( npc )
+	}
+}
+
+void function FDStalkerThink( entity npc, entity generator )
+{
+	npc.EndSignal( "OnDeath" )
+	npc.EndSignal( "OnDestroy" )
+	generator.EndSignal( "OnDeath" )
+	generator.EndSignal( "OnDestroy" )
+	npc.s.isSprinting <- false
+	thread FDStalkerGetsStunned( npc )
+	
+	if( GetMapName().find( "mp_lf_" ) != null ) //Stalkers already sprints directly on Live Fire maps to up the challenge a bit
+	{
+		if( !IsCrawling( npc ) && !npc.s.isSprinting )
+			StalkerSetSprintStance( npc )
+	}
+	
+	while ( IsAlive( npc ) )
+	{
+		WaitFrame()
+
+		// cant sprint with 1 leg
+		if ( Distance2D( npc.GetOrigin(), generator.GetOrigin() ) < 1024 )
+		{
+			if( !IsCrawling( npc ) && !npc.s.isSprinting )
+				StalkerSetSprintStance( npc )
+			
+			npc.AssaultPointClamped( generator.GetOrigin() )
+		}
+
+		// upped from 230 to more accurately mimic vanilla i think?
+		if ( Distance2D( npc.GetOrigin(), generator.GetOrigin() ) > 275 )
+			continue
+
+		break
+	}
+
+	thread StalkerGearOverloads( npc )
+}
+
+void function FDStalkerGetsStunned( entity npc )
+{
+	npc.EndSignal( "OnDeath" )
+	npc.EndSignal( "OnDestroy" )
+	npc.WaitSignal( "ArcStunned" )
+
+	if( IsCrawling(npc) )
+		return
+
+	StalkerSetSprintStance( npc )
+}
+
+void function StalkerSetSprintStance( entity npc )
+{
+	entity weapon = npc.GetActiveWeapon()
+	if ( IsValid( weapon ) )
+		npc.TakeActiveWeapon() // when stalkers fall over on harvester they will randomly shoot their guns, we don't want that.
+	
+	npc.EnableNPCMoveFlag( NPCMF_PREFER_SPRINT )
+	npc.SetCapabilityFlag( bits_CAP_MOVE_SHOOT | bits_CAP_WEAPON_RANGE_ATTACK1 | bits_CAP_AIM_GUN, false )
+	npc.EnableNPCFlag( NPC_DISABLE_SENSING | NPC_IGNORE_ALL )
+	npc.ClearMoveAnim()
+	npc.SetMoveAnim( "sp_spectre_sprint_F" )
+	npc.s.isSprinting = true
 }
 
 bool function TryDismemberStalker( entity npc, var damageInfo, entity attacker, int hitGroup )
@@ -261,10 +341,13 @@ bool function StalkerMeltingDown( entity npc )
 void function StalkerGearOverloads( entity npc, entity attacker = null )
 {
 	Assert( !StalkerMeltingDown( npc ) )
-
+	
+	if ( npc.Anim_IsActive() )
+		npc.Anim_Stop()
+	
 	if ( !IsCrawling( npc ) && StalkerCanCrawl( npc ) )
 		thread FallAndBecomeCrawlingStalker( npc )
-
+	
 	int bodyGroup = npc.FindBodyGroup( "gear" )
 
 	// hide gear

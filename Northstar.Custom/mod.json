@@ -29,6 +29,16 @@
 			"Name": "ns_show_event_models",
 			"DefaultValue": "1",
 			"Flags": "ARCHIVE_PLAYERPROFILE"
+		},
+		{
+			"Name": "embark_style",
+			"DefaultValue": "0",
+			"Flags": "ARCHIVE_PLAYERPROFILE|USERINFO"
+		},
+		{
+			"Name": "execution_style",
+			"DefaultValue": "0",
+			"Flags": "ARCHIVE_PLAYERPROFILE|USERINFO"
 		}
 	],
 	"Scripts": [
@@ -318,16 +328,8 @@
 			"RunOn": "CLIENT && MP"
 		},
 		{
-			"Path": "sh_3psequence_to_1p_hacks.gnut",
-			"RunOn": "( CLIENT || SERVER ) && MP",
-			"ClientCallback": {
-				"Before": "FirstPersonSequenceForce1P_Init",
-				"After": "FirstPersonSequenceForce1P_InitPlaylistVars"
-			},
-			"ServerCallback": {
-				"Before": "FirstPersonSequenceForce1P_Init",
-				"After": "FirstPersonSequenceForce1P_InitPlaylistVars"
-			}
+			"Path": "_3psequence_to_1p_hacks.gnut",
+			"RunOn": "SERVER && MP"
 		},
 		{
 			"Path": "gamemodes/sh_riff_instagib.gnut",
@@ -431,14 +433,6 @@
 			"ServerCallback": {
 				"Before": "MessageUtils_ServerInit"
 			}
-		},
-		{
-			"Path":  "sh_northstar_http_requests.gnut",
-			"RunOn": "CLIENT || SERVER || UI"
-		},
-		{
-			"Path": "sh_northstar_safe_io.gnut",
-			"RunOn": "CLIENT || SERVER || UI"
 		},
 		{
 			"Path": "_testing.nut",

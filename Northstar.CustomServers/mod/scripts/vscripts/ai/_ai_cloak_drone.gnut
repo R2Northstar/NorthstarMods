@@ -146,7 +146,7 @@ function CloakedDroneCloakThink( cloakedDrone )
 function CloakDroneShouldCloakGuy( cloakedDrone, guy )
 {
 	expect entity( guy )
-	if ( !( guy.IsTitan() || IsSpectre( guy ) || IsGrunt( guy ) || IsSuperSpectre( guy ) ) )
+	if ( !( IsNPCTitan( guy ) || IsMinion( guy ) || IsStalker( guy ) || IsSuperSpectre( guy ) ) )
 		return false
 
 	if ( guy.GetTargetName() == "empTitan" )
@@ -215,7 +215,7 @@ void function CloakedDronePathThink( entity cloakedDrone )
 					continue
 
 				//Only cloak titans, spectres, grunts,
-				if ( !( guy.IsTitan() || IsSpectre( guy ) || IsGrunt( guy ) || IsSuperSpectre( guy ) ) )
+				if ( !( IsNPCTitan( guy ) || IsMinion( guy ) || IsStalker( guy ) || IsSuperSpectre( guy ) ) )
 					continue
 
 				//Don't cloak arc titans

@@ -207,6 +207,9 @@ void function CodeDialogue_GrenadeOut( entity guy )
 void function CodeDialogue_DangerousAreaDisplace( entity guy )
 {
 	#if GRUNT_CHATTER_MP_ENABLED
+		if( !IsGrunt( guy ) ) //Titans were playing this dialogue when it doesnt make sense
+			return
+		
 		//MP ONly
 		string dangerousAreaWeaponName = guy.GetDangerousAreaWeapon()
 		//printt( "CodeDialogue_DangerousAreaDisplace, Dangerous weapon name: " + dangerousAreaWeaponName )

@@ -237,12 +237,11 @@ void function ValidateEquippedItems( entity player )
 	}
 
 	// titan loadouts
-	int selectedTitanLoadoutIndex = player.GetPersistentVarAsInt( "titanSpawnLoadout.index" )
 	for ( int titanLoadoutIndex = 0; titanLoadoutIndex < NUM_PERSISTENT_TITAN_LOADOUTS; titanLoadoutIndex++ )
 	{
 		printt( "- VALIDATING TITAN LOADOUT: " + titanLoadoutIndex )
 
-		bool isSelected = titanLoadoutIndex == selectedTitanLoadoutIndex
+		bool isSelected = titanLoadoutIndex == player.GetPersistentVarAsInt( "titanSpawnLoadout.index" )
 		TitanLoadoutDef loadout = GetTitanLoadout( player, titanLoadoutIndex )
 		TitanLoadoutDef defaultLoadout = shGlobal.defaultTitanLoadouts[titanLoadoutIndex]
 
@@ -460,18 +459,11 @@ void function ValidateEquippedItems( entity player )
 		{
 			printt( "  - SELECTED TITAN CLASS IS LOCKED, RESETTING" )
 			player.SetPersistentVar( "titanSpawnLoadout.index", 0 )
-			selectedTitanLoadoutIndex = 0
+			Remote_CallFunction_NonReplay( player, "ServerCallback_UpdateTitanModel", 0 )
 		}
 	}
 
-	if ( selectedTitanLoadoutIndex < 0 || selectedTitanLoadoutIndex >= NUM_PERSISTENT_TITAN_LOADOUTS )
-	{
-		printt( "- SELECTED TITAN CLASS IS INVALID, RESETTING" )
-		player.SetPersistentVar( "titanSpawnLoadout.index", 0 )
-		selectedTitanLoadoutIndex = 0
-	}
-
-	Remote_CallFunction_NonReplay( player, "ServerCallback_UpdateTitanModel", selectedTitanLoadoutIndex )
+	Remote_CallFunction_NonReplay( player, "ServerCallback_UpdateTitanModel", player.GetPersistentVarAsInt( "titanSpawnLoadout.index" ) )
 
 	// pilot loadouts
 	for ( int pilotLoadoutIndex = 0; pilotLoadoutIndex < NUM_PERSISTENT_PILOT_LOADOUTS; pilotLoadoutIndex++ )
@@ -649,7 +641,7 @@ void function ValidateEquippedItems( entity player )
 			{
 				// do nothing
 			}
-			else if ( loadout.primaryMod3 == "pro_screen" )
+			else if ( loadout.primaryMod3 != "pro_screen" )
 			{
 				// fuck you and your three mod slot stuff
 				printt( "  - PRIMARY WEAPON PRO SCREEN IS INVALID, RESETTING" )
@@ -786,7 +778,7 @@ void function ValidateEquippedItems( entity player )
 			{
 				// do nothing
 			}
-			else if ( loadout.secondaryMod3 == "pro_screen" )
+			else if ( loadout.secondaryMod3 != "pro_screen" )
 			{
 				// fuck you and your three mod slot stuff
 				printt( "  - SECONDARY WEAPON PRO SCREEN IS INVALID, RESETTING" )

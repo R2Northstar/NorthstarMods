@@ -10,25 +10,21 @@ global function RespawnAsPilot
 global function RespawnAsTitan
 global function TryGameModeAnnouncement
 
-global function SetKillcamsEnabled
-global function KillcamsEnabled
 global function SetPlayerDeathsHidden
 global function TrackTitanDamageInPlayerGameStat
+global function CheckGameStateForPlayerMovement
 
 global function ShouldEntTakeDamage_SPMP
 global function GetTitanBuildTime
-global function TitanPlayerHotDropsIntoLevel
 global function SetGamemodeAllowsTeamSwitch
 
 global function SetRecalculateRespawnAsTitanStartPointCallback
 
 struct {
-	bool killcamsEnabled = true
 	bool playerDeathsHidden = false
 	int titanDamageGameStat = -1
 	
-	entity intermissionCamera
-	array<entity> specCams 
+	array<entity> intermissionCameras
 	
 	entity functionref( entity player, entity basePoint ) recalculateRespawnAsTitanStartPointCallback
 	table<entity, float> playerChangeTeamTimeBuffer
@@ -38,7 +34,7 @@ struct {
 void function BaseGametype_Init_MPSP()
 {
 	AddClientCommandCallback( "changeteam", ClientCommandCallbackChangeTeam )
-	AddSpawnCallback( "info_intermission", SetIntermissionCamera )
+	AddSpawnCallback( "info_intermission", AddIntermissionCamera )
 	
 	AddPostDamageCallback( "player", AddToTitanDamageStat )
 	AddPostDamageCallback( "npc_titan", AddToTitanDamageStat )
@@ -46,15 +42,31 @@ void function BaseGametype_Init_MPSP()
 	AddCallback_OnNPCKilled( CheckForAutoTitanDeath )
 	AddCallback_OnPlayerKilled( CheckForAutoTitanDeath )
 	AddCallback_OnPlayerAssist( PlayerAssistedKill )
+	AddCallback_OnTitanBecomesPilot( CheckGameStateForTitanEjection )
+	AddCallback_OnPlayerGetsNewPilotLoadout( CheckPlayerGetsNewLoadout )
+
 	RegisterSignal( "PlayerRespawnStarted" )
 	RegisterSignal( "KillCamOver" )
-
 	FlagInit( "WeaponDropsAllowed", true )
 }
 
-void function SetIntermissionCamera( entity camera )
+void function AddIntermissionCamera( entity camera )
 {
-	file.intermissionCamera = camera
+	file.intermissionCameras.append( camera )
+}
+
+entity function GetRandomIntermissionCamera()
+{
+	if ( !file.intermissionCameras.len() )
+		return null
+	
+	return file.intermissionCameras.getrandom()
+}
+
+void function CheckServerIdlingState()
+{
+	if ( Time() >= 60 * GetConVarInt( "ns_server_idle_time_refresh_max_time" ) )
+		ServerCommand( "changelevel " + GetMapName() )
 }
 
 
@@ -136,23 +148,34 @@ void function CodeCallback_OnClientConnectionStarted( entity player )
 
 	Assert( !player._entityVars )
 	InitEntityVars( player )
-
+	
 	// Added via AddCallback_OnClientConnecting
 	foreach ( callbackFunc in svGlobal.onClientConnectingCallbacks )
-	{
 		callbackFunc( player )
+	
+	if ( !IsLobby() && GetGameState() <= eGameState.Epilogue && GetConVarBool( "ns_autobalance_teams_on_player_join" ) )
+	{
+		if ( GetCurrentPlaylistVarInt( "max_teams", 0 ) > 1 && !IsFFAGame() )
+		{
+			if ( GetTeamPlayerCount( TEAM_MILITIA ) > GetTeamPlayerCount( TEAM_IMC ) )
+				SetTeam( player, TEAM_IMC )
+			else
+				SetTeam( player, TEAM_MILITIA )
+		}
 	}
-
+	
 	printl( "Player connect started: " + player + "---UID:" + player.GetUID() )
 	
 	InitPassives( player )
+
+	CheckServerIdlingState()
 }
 
 // playerconnected
 void function CodeCallback_OnClientConnectionCompleted( entity player )
 {
 	InitPersistentData( player )
-
+	
 	if ( IsLobby() )
 	{
 		Lobby_OnClientConnectionCompleted( player )
@@ -195,10 +218,12 @@ void function CodeCallback_OnClientConnectionCompleted( entity player )
 
 	svGlobal.levelEnt.Signal( "PlayerDidSpawn", { player = player } )
 
+	player.SetPersistentVar( "spawnAsTitan", false ) // Reset this to avoid players spawning directly as titans on join
 	if ( GetConVarBool( "ns_allow_spectators" ) )
 	{
 		if ( IsPrivateMatchSpectator( player ) )
 		{
+			SetPlayerEliminated( player )
 			InitialisePrivateMatchSpectatorPlayer( player )
 			return
 		}
@@ -207,19 +232,50 @@ void function CodeCallback_OnClientConnectionCompleted( entity player )
 		player.SetPersistentVar( "privateMatchState", 0 )
 
 	// handle spawning late joiners
-	if ( GetGameState() == eGameState.Playing )
+	if ( GetGameState() >= eGameState.Playing )
 	{
-		if ( RespawnsEnabled() )
+		if ( SpectatePlayerDuringPickLoadout() )
+			thread SpectateTTSMenuPlayer( player )
+		else if ( !IsEliminationBased() )
 		{
-			// likely temp, deffo needs some work
-			if ( Riff_SpawnAsTitan() == 1 )	// spawn as titan
+			if ( Riff_IsTitanAvailable( player ) || ShouldIntroSpawnAsTitan() || svGlobal.forceSpawnAsTitan ) //Handles the conditions to spawn player as Titan right away or not
 				thread RespawnAsTitan( player )
-			else // spawn as pilot
+			else
 				RespawnAsPilot( player )
 		}
 		else
-			thread PlayerBecomesSpectator( player )
+		{
+			SetPlayerEliminated( player )
+			InitialisePrivateMatchSpectatorPlayer( player )
+		}
 	}
+}
+
+void function SpectateTTSMenuPlayer( entity player )
+{
+	player.EndSignal( "OnDestroy" )
+	OnThreadEnd(
+		function() : ( player )
+		{
+			if ( IsValid( player ) )
+			{
+				if ( !IsEliminationBased() )
+				{
+					if ( ShouldIntroSpawnAsTitan() && Riff_TitanAvailability() != eTitanAvailability.Never || svGlobal.forceSpawnAsTitan )
+						thread RespawnAsTitan( player )
+					else
+						RespawnAsPilot( player )
+				}
+				else
+				{
+					SetPlayerEliminated( player )
+					InitialisePrivateMatchSpectatorPlayer( player )
+				}
+			}
+		}
+	)
+
+	player.WaitSignal( "StopSendingTTSMenuCommand" )
 }
 
 void function CodeCallback_OnClientDisconnected( entity player, string reason )
@@ -270,19 +326,31 @@ void function CodeCallback_OnPlayerRespawned( entity player )
 	player.s.respawnTime = Time()
 	ClearRecentDamageHistory( player )
 	
-	player.Signal( "OnRespawned" ) // kill any postdeaththreads that could be running
+	if ( player.IsDissolving() )
+		player.DissolveStop()
 	
+	ClearPlayerAnimViewEntity( player )
+	player.Signal( "OnRespawned" ) // kill any postdeaththreads that could be running
 	Loadouts_TryGivePilotLoadout( player )
-	//player.SetPredictionEnabled( true ) doesn't seem needed, as native code seems to set this
 	
 	foreach ( entity weapon in player.GetMainWeapons() )
 		weapon.SetProScreenOwner( player )
-		
+	
+	bool spawnAsTitan = expect bool( player.GetPersistentVar( "spawnAsTitan" ) )
+	if ( ( spawnAsTitan || svGlobal.forceSpawnIntoTitan ) && PlayerCanSpawnIntoTitan( player ) )
+	{
+		entity titan = player.GetPetTitan()
+		TeleportToEnt( player, titan )
+		PilotBecomesTitan( player, titan )
+		titan.Destroy()
+	}
+	
 	foreach ( void functionref( entity ) callback in svGlobal.onPlayerRespawnedCallbacks )
 		callback( player )
 		
 	Remote_CallFunction_NonReplay( player, "ServerCallback_YouRespawned" )
 	ClearLastAttacker( player ) // so dying to anything doesn't credit the same attacker after respawning
+	ClearPlayerEliminated( player )
 }
 
 
@@ -328,7 +396,7 @@ void function PostDeathThread_MP( entity player, var damageInfo, bool gamePlayin
 		return
 
 	float timeOfDeath = Time()
-	player.p.postDeathThreadStartTime = Time()
+	player.p.postDeathThreadStartTime = timeOfDeath
 
 	Assert( IsValid( player ), "Not a valid player" )
 	player.EndSignal( "OnDestroy" )
@@ -345,31 +413,22 @@ void function PostDeathThread_MP( entity player, var damageInfo, bool gamePlayin
 	player.SetNoTarget( false )
 	player.SetNoTargetSmartAmmo( false )
 	player.ClearExtraWeaponMods()
-	
+
 	// disable prediction to prevent it messing with ragdoll in some places, as well as killreplay and such
 	player.SetPredictionEnabled( false )
-	
+
 	if ( player.IsTitan() )
 		SoulDies( player.GetTitanSoul(), damageInfo ) // cleanup some titan stuff, no idea where else to put this
-	
+
 	ClearRespawnAvailable( player )
-
-	// reset this so that we default to pilot spawn
-	player.SetPersistentVar( "spawnAsTitan", false )
-
+	
 	OnThreadEnd( function() : ( player )
 	{
-		if ( !IsValid( player ) )
-			return
-	
-		player.s.inPostDeath = false
+		if ( IsValid( player ) )
+			player.s.inPostDeath = false
 	})
 
 	entity attacker = DamageInfo_GetAttacker( damageInfo )
-	entity inflictor = DamageInfo_GetInflictor( damageInfo )
-	int eHandle = attacker.GetEncodedEHandle()
-	if ( inflictor && ShouldTryUseProjectileReplay( player, attacker, damageInfo, false ) )
-		eHandle = inflictor.GetEncodedEHandle()
 	int methodOfDeath = DamageInfo_GetDamageSourceIdentifier( damageInfo )
 
 	player.p.rematchOrigin = player.p.deathOrigin
@@ -381,14 +440,14 @@ void function PostDeathThread_MP( entity player, var damageInfo, bool gamePlayin
 
 	player.Signal( "RodeoOver" )
 	player.ClearParent()
-	
+
 	// do some pre-replay stuff if we're gonna do a replay
 	float replayLength = CalculateLengthOfKillReplay( player, methodOfDeath )
-	bool shouldDoReplay = Replay_IsEnabled() && KillcamsEnabled() && IsValid( attacker ) && ShouldDoReplay( player, attacker, replayLength, methodOfDeath )
+	bool shouldDoReplay = Replay_IsEnabled() && IsValid( attacker ) && ShouldDoReplay( player, attacker, replayLength, methodOfDeath )
 	table replayTracker = { validTime = null }
 	if ( shouldDoReplay )
 		thread TrackDestroyTimeForReplay( attacker, replayTracker )
-	
+
 	player.StartObserverMode( OBS_MODE_DEATHCAM )
 	if ( ShouldSetObserverTarget( attacker ) )
 		player.SetObserverTarget( attacker )
@@ -397,118 +456,129 @@ void function PostDeathThread_MP( entity player, var damageInfo, bool gamePlayin
 	
 	if ( gamePlayingOrSuddenDeath && !file.playerDeathsHidden )
 		player.AddToPlayerGameStat( PGS_DEATHS, 1 )
-	
+
 	if ( !file.playerDeathsHidden )
 		Remote_CallFunction_NonReplay( player, "ServerCallback_YouDied", attacker.GetEncodedEHandle(), GetHealthFrac( attacker ), methodOfDeath )
 
 	float deathcamLength = GetDeathCamLength( player )
 	wait deathcamLength
+
+	player.SetPlayerSettings( "spectator" ) // prevent a crash with going from titan => pilot on respawn
+	player.StopPhysics() // need to set this after SetPlayerSettings
+	player.SetPhysics( MOVETYPE_NONE ) // so they don't move around while dead, resets to default automatically on respawn
 	
 	// use info_intermission camera after deathcam, if it exists
-	if ( file.intermissionCamera != null )
+	entity mapCamera = GetRandomIntermissionCamera()
+	if ( mapCamera != null && !player.GetParent() )
 	{
-		player.SetObserverModeStaticPosition( file.intermissionCamera.GetOrigin() )
-		player.SetObserverModeStaticAngles( file.intermissionCamera.GetAngles() )
+		player.SetObserverModeStaticPosition( mapCamera.GetOrigin() )
+		player.SetObserverModeStaticAngles( mapCamera.GetAngles() )
 		player.StartObserverMode( OBS_MODE_STATIC_LOCKED )
 		player.SetObserverTarget( null )
 	}
 
 	// hack: double check if killcams are enabled and valid here in case gamestate has changed this
-	shouldDoReplay = shouldDoReplay && Replay_IsEnabled() && KillcamsEnabled() && IsValid( attacker )
+	shouldDoReplay = shouldDoReplay && Replay_IsEnabled() && IsValid( attacker ) && !IsRoundWinningKillReplayPlaying()
 	// quick note: in cases where player.Die() is called: e.g. for round ends, player == attacker
-	if ( shouldDoReplay ) 
+	if ( shouldDoReplay )
 	{	
-		player.watchingKillreplayEndTime = Time() + replayLength		
+		player.watchingKillreplayEndTime = Time() + replayLength
 		float beforeTime = GetKillReplayBeforeTime( player, methodOfDeath )
-		
-		replayTracker.validTime <- null 
-		
+
+		replayTracker.validTime <- null
+
 		float respawnTime = Time() - 2 // seems to get the killreplay to end around the actual kill
 		if ( "respawnTime" in attacker.s )
 			respawnTime = Time() - expect float ( attacker.s.respawnTime )
-		
-		thread PlayerWatchesKillReplayWrapper( player, attacker, eHandle, respawnTime, timeOfDeath, beforeTime, replayTracker )		
+
+		thread PlayerWatchesKillReplayWrapper( player, attacker, respawnTime, timeOfDeath, beforeTime, replayTracker )		
 	}
 
-	player.SetPlayerSettings( "spectator" ) // prevent a crash with going from titan => pilot on respawn
-	player.StopPhysics() // need to set this after SetPlayerSettings
-
-	if ( RespawnsEnabled() )
+	if ( !IsEliminationBased() || IsEliminationBased() && !IsPlayerEliminated( player ) )
 	{
 		// is it a good idea to do respawn code in postdeaththread? fuck if i know lol
 		float respawnDelay = max( 0, GetCurrentPlaylistVarFloat( "respawn_delay", 0.0 ) - deathcamLength )
 	
 		print( "respawn delay " + respawnDelay )
-		
+
 		UpdateNextRespawnTime( player, Time() + respawnDelay )
 		SetRespawnAvailable( player )
-		
+
 		wait respawnDelay
 
 		int forceRespawn = GetCurrentPlaylistVarInt( "player_force_respawn", -1 )
 
 		// -1 is disabled, anything over is the time we wait in seconds
 		// before respawning the player
-		if( forceRespawn >= 0 )
+		if ( forceRespawn >= 0 )
 			thread ForceRespawnMeSignalAfterDelay( player, forceRespawn )
-				
-		player.WaitSignal( "RespawnMe" ) // set in base_gametype: ClientCommand_RespawnPlayer
+		
+		if ( !player.s.respawnSelectionDone && GetGameState() != eGameState.SuddenDeath ) // Only wait outside Sudden Death since players gets inputs blocked to respawn if they die before Sudden Death starts
+			player.WaitSignal( "RespawnMe" )
 		
 		ClearRespawnAvailable( player ) // need so the respawn icon doesn't show for like a frame on next death
-			
-		if ( ( expect bool( player.GetPersistentVar( "spawnAsTitan" ) ) && IsTitanAvailable( player ) ) || ( Riff_SpawnAsTitan() > 0 && Riff_ShouldSpawnAsTitan( player ) ) )	// spawn as titan
+
+		TitanLoadoutDef loadout = GetTitanLoadoutForPlayer( player )
+		bool spawnAsTitan = expect bool( player.GetPersistentVar( "spawnAsTitan" ) )
+
+		if ( IsPrivateMatchSpectator( player ) ) // Spectators can still die from kill triggers
+			InitialisePrivateMatchSpectatorPlayer( player )
+		else if ( spawnAsTitan && IsReplacementTitanAvailable( player ) || Riff_SpawnAsTitan() == eSpawnAsTitan.Always || svGlobal.forceSpawnAsTitan )
 			thread RespawnAsTitan( player )
-		else // spawn as pilot
+		else
 			RespawnAsPilot( player )
 	}
 	else if ( gamePlayingOrSuddenDeath || GetGameState() == eGameState.Epilogue )
 	{
 		if ( shouldDoReplay && player.IsWatchingKillReplay() )
 			player.WaitSignal( "KillCamOver" )
-		
-		thread PlayerBecomesSpectator( player )
+
+		InitialisePrivateMatchSpectatorPlayer( player )
 	}
 }
 
 // idk if this is a good delay or if it matches vanilla
 void function ForceRespawnMeSignalAfterDelay( entity player, int delay = 5 )
 {
+	svGlobal.levelEnt.EndSignal( "GameStateChanged" )
 	player.EndSignal( "RespawnMe" )
 	player.EndSignal( "OnDestroy" )
 
-	if( player.IsWatchingKillReplay() )
+	if ( player.IsWatchingKillReplay() )
 		player.WaitSignal( "KillCamOver" )
 
 	wait delay
 
-	printt( format( "Forcing player respawn for player %s (took >%d seconds to respawn)", player.GetPlayerName(), delay ) )
-	player.Signal( "RespawnMe" )
+	if ( IsRespawnAvailable( player ) )
+	{
+		#if DEV
+		printt( format( "Forcing player respawn for player %s (took >%d seconds to respawn)", player.GetPlayerName(), delay ) )
+		#endif
+		player.Signal( "RespawnMe" )
+	}
 }
 
-void function PlayerWatchesKillReplayWrapper( entity player, entity attacker, int eHandle, float timeSinceAttackerSpawned, float timeOfDeath, float beforeTime, table replayTracker )
+void function PlayerWatchesKillReplayWrapper( entity player, entity attacker, float timeSinceAttackerSpawned, float timeOfDeath, float beforeTime, table replayTracker )
 {
 	player.EndSignal( "RespawnMe" )
 	player.EndSignal( "OnRespawned" )
-	
+
 	player.EndSignal( "OnDestroy" )
 	attacker.EndSignal( "OnDestroy" )
-	
+
 	svGlobal.levelEnt.EndSignal( "GameStateChanged" )
-	
+
 	OnThreadEnd( function() : ( player ) 
-	{	
-		// don't clear if we're in a roundwinningkillreplay
-		if ( IsValid( player ) && !( ( GetGameState() == eGameState.SwitchingSides || GetGameState() == eGameState.WinnerDetermined ) && IsRoundWinningKillReplayEnabled() ) )
+	{
+		if ( IsValid( player ) )
 		{
 			player.Signal( "KillCamOver" )
 			player.ClearReplayDelay()
 			player.ClearViewEntity()
-			//player.SetPredictionEnabled( true ) doesn't seem needed, as native code seems to set this on respawn
 		}
 	})
-	
-	player.SetPredictionEnabled( false )
-	PlayerWatchesKillReplay( player, eHandle, attacker.GetIndexForEntity(), timeSinceAttackerSpawned, timeOfDeath, beforeTime, replayTracker )
+
+	PlayerWatchesKillReplay( player, attacker.GetEncodedEHandle(), attacker.GetIndexForEntity(), timeSinceAttackerSpawned, timeOfDeath, beforeTime, replayTracker )
 }
 
 
@@ -530,104 +600,111 @@ void function PlayerWatchesKillReplayWrapper( entity player, entity attacker, in
 
 void function DecideRespawnPlayer( entity player )
 {
-	// this isn't even used atm, could likely be removed if some vanilla code didn't rely on it
+	// Unused, TF1 legacy code
 }
 
 void function RespawnAsPilot( entity player )
 {
-	// respawn crash exploit hotfix
-	if(IsAlive( player )) return
+	if ( !PlayerCanSpawn( player ) )
+		return
 
-	player.RespawnPlayer( FindSpawnPoint( player, false, ( ShouldStartSpawn( player ) || Flag( "ForceStartSpawn" ) ) && !IsFFAGame() ) )
+	entity spawnpoint = FindSpawnPoint( player, false, ( ShouldStartSpawn( player ) || Flag( "ForceStartSpawn" ) ) )
+	DoRespawnPlayer( player, spawnpoint )
+	
+	player.isSpawning = false
+	player.isSpawningHotDroppingAsTitan = false
+
+	// Dying as Titan and respawning as Pilot keeps the Titan Icon over the player's name instead of reverting to the normal patch such player uses
+	CallsignIcon callsignIcon = PlayerCallsignIcon_GetActive( player )
+	player.SetTargetInfoIcon( callsignIcon.smallImage )
 }
 
-void function RespawnAsTitan( entity player, bool manualPosition = false )
+void function RespawnAsTitan( entity player)
 {
-	// respawn crash exploit hotfix
-	if(IsAlive( player )) return
-
+	if ( !PlayerCanSpawn( player ) )
+		return
+	
 	player.Signal( "PlayerRespawnStarted" )
 
 	player.isSpawning = true
-	entity spawnpoint = FindSpawnPoint( player, true, ( ShouldStartSpawn( player ) || Flag( "ForceStartSpawn" ) ) && !IsFFAGame() )
+	player.isSpawningHotDroppingAsTitan = true
 
+	entity spawnpoint = FindSpawnPoint( player, true, ( ShouldStartSpawn( player ) || Flag( "ForceStartSpawn" ) ) )
 	if ( file.recalculateRespawnAsTitanStartPointCallback != null )
 		spawnpoint = file.recalculateRespawnAsTitanStartPointCallback( player, spawnpoint )
 
+	ToggleSpawnNodeInUse( spawnpoint, true )
  	TitanLoadoutDef titanLoadout = GetTitanLoadoutForPlayer( player )
 	
 	asset model = GetPlayerSettingsAssetForClassName( titanLoadout.setFile, "bodymodel" )
 	Attachment warpAttach = GetAttachmentAtTimeFromModel( model, "at_hotdrop_01", "offset", spawnpoint.GetOrigin(), spawnpoint.GetAngles(), 0 )
-	PlayFX( TURBO_WARP_FX, warpAttach.position, warpAttach.angle )
-		
+	entity warpFX = PlayFX( TURBO_WARP_FX, warpAttach.position, warpAttach.angle )
+	warpFX.FXEnableRenderAlways()
+	warpFX.DisableHibernation()
+	
 	entity titan = CreateAutoTitanForPlayer_FromTitanLoadout( player, titanLoadout, spawnpoint.GetOrigin(), spawnpoint.GetAngles() )
 	DispatchSpawn( titan )
-	player.SetPetTitan( null ) // prevent embark prompt from showing up
+	titan.ContextAction_SetBusy() // This is prevent a race condition with the ability of players being able to spawn into their Titans
+	HideName( titan )
+	titan.SetValidHealthBarTarget( false ) // Hide HP bar overhead
+	titan.UnsetUsable() // Prevent embark prompt from showing up
+	ClearTitanAvailable( player ) // Clear titan availability, so faction leader won't advise "Titan Ready" during spawn
 	
 	AddCinematicFlag( player, CE_FLAG_CLASSIC_MP_SPAWNING ) // hide hud
 	
-	// do titanfall scoreevent
-	if ( !level.firstTitanfall )
-	{
-		AddPlayerScore( player, "FirstTitanfall", player )
+	player.EndSignal( "OnDeath" ) // In case of cinematic titanfall and Round End code is killing everything in cleanup function
+	player.EndSignal( "OnDestroy" )
 
-		#if HAS_STATS
-		UpdatePlayerStat( player, "misc_stats", "titanFallsFirst" )
-		#endif
-
-		level.firstTitanfall = true
-	}
-	else
-	{
-		AddPlayerScore( player, "Titanfall", player )
-	}
-	
 	entity camera = CreateTitanDropCamera( spawnpoint.GetAngles(), < 90, titan.GetAngles().y, 0 > )
 	camera.SetParent( titan )
-	
-	// calc offset for spawnpoint angle
-	// todo this seems bad but too lazy to figure it out rn
-	//vector xyOffset = RotateAroundOrigin2D( < 44, 0, 0 >, < 0, 0, 0>, spawnpoint.GetAngles().y )
-	//xyOffset.z = 520 // < 44, 0, 520 > at 0,0,0, seems to be the offset used in tf2
-	//print( xyOffset )
 	
 	vector xyOffset = RotateAroundOrigin2D( < 44, 0, 520 >, < 0, 0, 0 >, spawnpoint.GetAngles().y )
 	
 	camera.SetLocalOrigin( xyOffset )
 	camera.SetLocalAngles( < camera.GetAngles().x, spawnpoint.GetAngles().y, camera.GetAngles().z > ) // this straight up just does not work lol
-	camera.Fire( "Enable", "!activator", 0, player )
+	player.SetViewEntity( camera, true )
 	
-	player.EndSignal( "OnDestroy" )
+	titan.EndSignal( "OnDeath" )
 	titan.EndSignal( "OnDestroy" )
-	OnThreadEnd( function() : ( player, titan, camera )
+	TeleportToEnt( titan, spawnpoint )
+
+	OnThreadEnd( function() : ( player, titan, camera, spawnpoint )
 	{
 		if ( IsValid( player ) )
 		{
 			RemoveCinematicFlag( player, CE_FLAG_CLASSIC_MP_SPAWNING ) // show hud
 			player.isSpawning = false
+			player.isSpawningHotDroppingAsTitan = false
+			
+			GiveTitanfallScoreMedal( player ) // In case of classic Warpfall animation, give the Titanfall Score Medal at this moment, so player can actually see it
+			
+			PutEntityInSafeSpot( player, null, null, spawnpoint.GetOrigin(), player.GetOrigin() ) // Just to Ensure player is not clipping in any geometry
 		}
-	
+
 		if ( IsValid( titan ) )
-			titan.Destroy() // pilotbecomestitan leaves an npc titan that we need to delete
-		else
+			titan.Destroy()
+		else if ( !IsAlive( player ) )
 			RespawnAsPilot( player ) // this is 100% an edgecase, just avoid softlocking if we ever hit it in playable gamestates
+
+		if ( IsValid( camera ) )
+			camera.Destroy()
 		
-		camera.Fire( "Disable", "!activator", 0, player )
-		camera.Destroy()
+		if ( IsValid( spawnpoint ) )
+			ToggleSpawnNodeInUse( spawnpoint, false )
 	})
-	
+
 	waitthread TitanHotDrop( titan, "at_hotdrop_01", spawnpoint.GetOrigin(), spawnpoint.GetAngles(), player, camera ) // do hotdrop anim
-		
-	player.RespawnPlayer( null ) // spawn player as pilot so they get their pilot loadout on embark
-	player.SetOrigin( titan.GetOrigin() )
-	ClearTitanAvailable( player ) // titanfall succeed, clear titan availability
-	
-	// don't make player titan when entity batteryContainer is not valid.
-	// This will prevent a servercrash that sometimes occur when evac is disabled and somebody is calling a titan in the defeat screen.
-	if( IsValid( titan.GetTitanSoul().soul.batteryContainer ) )
-		PilotBecomesTitan( player, titan ) // make player titan
-	else
-		print( "batteryContainer is not a valid entity in RespawnAsTitan(). Skipping PilotBecomesTitan()." )
+	DoRespawnPlayer( player, spawnpoint )
+	TeleportToEnt( player, titan )
+	PilotBecomesTitan( player, titan )
+}
+
+void function OnReplacementTitanSecondStage( entity player )
+{
+	vector origin = expect vector( GetOptionalAnimEventVar( player, "second_stage" ) )
+	EmitSoundOnEntityOnlyToPlayer( player, player, "titan_drop_pod_turbo_landing" )
+	EmitSoundOnEntityOnlyToPlayer( player, player, "titan_drop_pod_turbo_landing" ) // Double sound just to volume it up because it's also quiet in 1st Person
+	EmitSoundAtPositionExceptToPlayer( player.GetTeam(), origin, player, "titan_drop_pod_turbo_landing_3P" )
 }
 
 
@@ -647,20 +724,10 @@ void function RespawnAsTitan( entity player, bool manualPosition = false )
  ██████     ██    ██ ███████ ██    ██       ██    
 */
 
-void function TryGameModeAnnouncement( entity player ) // only putting this here because it's here in gametype_sp lol
+void function TryGameModeAnnouncement( entity player )
 {
 	Remote_CallFunction_NonReplay( player, "ServerCallback_GameModeAnnouncement" )
 	PlayFactionDialogueToPlayer( GameMode_GetGameModeAnnouncement( GAMETYPE ), player )
-}
-
-void function SetKillcamsEnabled( bool enabled )
-{
-	file.killcamsEnabled = enabled
-}
-
-bool function KillcamsEnabled()
-{
-	return file.killcamsEnabled
 }
 
 void function SetPlayerDeathsHidden( bool hidden )
@@ -682,31 +749,76 @@ void function AddToTitanDamageStat( entity victim, var damageInfo )
 	float amount = DamageInfo_GetDamage( damageInfo )
 
 	if ( attacker.IsPlayer() && attacker != victim )
-		attacker.AddToPlayerGameStat( file.titanDamageGameStat, amount ) // titan damage on 
+		attacker.AddToPlayerGameStat( file.titanDamageGameStat, amount )
 }
 
 void function CheckForAutoTitanDeath( entity victim, entity attacker, var damageInfo )
 {
-	if( !IsValid(victim) || !victim.IsTitan() )
+	if ( !IsValid( victim ) || !victim.IsTitan() || victim == attacker )
 		return
 
-	if( !victim.IsPlayer() )
+	if ( GetPetTitanOwner( victim ) == attacker )
+		return
+	
+	entity inflictor = DamageInfo_GetInflictor( damageInfo )
+	if ( IsValid( inflictor ) )
 	{
-		if (GetPetTitanOwner(victim) && GetPetTitanOwner(victim) != attacker)
-			foreach(player in GetPlayerArray())
-				Remote_CallFunction_NonReplay( player, "ServerCallback_OnTitanKilled", attacker.GetEncodedEHandle(), victim.GetEncodedEHandle(), DamageInfo_GetCustomDamageType( damageInfo ), DamageInfo_GetDamageSourceIdentifier( damageInfo ) )
+		if ( inflictor.IsProjectile() && IsValid( inflictor.GetOwner() ) && inflictor.GetOwner().IsTitan() )
+			attacker = inflictor.GetOwner()
+		
+		else if ( IsNPCTitan( inflictor ) )
+			attacker = inflictor
 	}
-	else
-	{
-		if (victim != attacker)
-			foreach(player in GetPlayerArray())
-				Remote_CallFunction_NonReplay( player, "ServerCallback_OnTitanKilled", attacker.GetEncodedEHandle(), victim.GetEncodedEHandle(), DamageInfo_GetCustomDamageType( damageInfo ), DamageInfo_GetDamageSourceIdentifier( damageInfo ) )
-	}
+
+	foreach ( player in GetPlayerArray() )
+		Remote_CallFunction_NonReplay( player, "ServerCallback_OnTitanKilled", attacker.GetEncodedEHandle(), victim.GetEncodedEHandle(), DamageInfo_GetCustomDamageType( damageInfo ), DamageInfo_GetDamageSourceIdentifier( damageInfo ) )
 }
 
 void function SetRecalculateRespawnAsTitanStartPointCallback( entity functionref( entity player, entity basePoint ) callbackFunc )
 {
 	file.recalculateRespawnAsTitanStartPointCallback = callbackFunc
+}
+
+void function CheckGameStateForPlayerMovement( entity player )
+{
+	if ( !IsAlive( player ) )
+		return
+	
+	if ( GetGameState() == eGameState.WinnerDetermined || GetGameState() == eGameState.SwitchingSides || GetGameState() == eGameState.Postmatch )
+	{
+		if ( level.endOfRoundPlayerState == ENDROUND_FREEZE )
+			player.FreezeControlsOnServer()
+		else if ( level.endOfRoundPlayerState == ENDROUND_MOVEONLY )
+		{
+			player.DisableWeapon()
+			player.Server_TurnOffhandWeaponsDisabledOn()
+		}
+	}
+}
+
+void function CheckGameStateAfterSpawn_Threaded( entity player, float waitTime = 0.1 )
+{
+	player.EndSignal( "OnDestroy" )
+	wait waitTime
+	CheckGameStateForPlayerMovement( player )
+}
+
+void function CheckGameStateForTitanEjection( entity pilot, entity titan )
+{
+	thread CheckGameStateAfterSpawn_Threaded( pilot, 0.5 )
+}
+
+void function CheckPlayerGetsNewLoadout( entity player, PilotLoadoutDef loadout )
+{
+	thread CheckGameStateAfterSpawn_Threaded( player )
+
+	foreach ( entity weapon in player.GetMainWeapons() )
+	{
+		if ( weapon.GetWeaponClassName() == "mp_weapon_rocket_launcher" && !weapon.HasMod( "fast_lock" ) && GetCurrentPlaylistVarInt( "archer_fast_lock", 0 ) == 1 )
+			weapon.AddMod( "fast_lock" )
+		if ( weapon.GetWeaponClassName() == "mp_weapon_epg" && !weapon.HasMod( "jump_kit" ) && GetCurrentPlaylistVarInt( "epg_splash_push", 0 ) == 1 )
+			weapon.AddMod( "jump_kit" )
+	}
 }
 
 void function SetGamemodeAllowsTeamSwitch( bool enabled )
@@ -718,7 +830,7 @@ bool function ClientCommandCallbackChangeTeam( entity player, array<string> args
 {
 	if ( !GetConVarBool( "ns_allow_team_change" ) || IsPrivateMatchSpectator( player ) )
 		return true
-	
+
 	if ( !file.gamemodeTeamSwitchEnabled )
 	{
 		SendHudMessage( player, "#TEAMSWITCH_GAMEMODE", -1, 0.4, 255, 255, 255, 255, 0.15, 3.0, 0.5 )
@@ -746,6 +858,7 @@ bool function ClientCommandCallbackChangeTeam( entity player, array<string> args
 		SendHudMessage( player, "#TEAMSWITCH_GAMEPLAY", -1, 0.4, 255, 255, 255, 255, 0.15, 3.0, 0.5 )
 		return true
 	}
+
 	if ( GetCurrentPlaylistVarInt( "max_teams", 0 ) > 1 && !IsFFAGame() )
 		SetTeam( player, GetOtherTeam( player.GetTeam() ) )
 	else
@@ -754,23 +867,18 @@ bool function ClientCommandCallbackChangeTeam( entity player, array<string> args
 	return true
 }
 
-// stuff to change later
-
 bool function ShouldEntTakeDamage_SPMP( entity ent, var damageInfo )
 {
-	// dropships are immune to being crushed
 	if ( ( IsDropship( ent ) || IsEvacDropship( ent ) ) && IsTitanCrushDamage( damageInfo ) )
 		return false
-
+	
 	return true
 }
 
-float function GetTitanBuildTime(entity player)
+float function GetTitanBuildTime( entity player )
 {
-	return 100.0
-}
-
-void function TitanPlayerHotDropsIntoLevel( entity player )
-{
-
+	if ( player.titansBuilt == 0 )
+		return GetCurrentPlaylistVarFloat( "titan_build_time", 180 )
+	
+	return GetCurrentPlaylistVarFloat( "titan_rebuild_time", 180 )
 }

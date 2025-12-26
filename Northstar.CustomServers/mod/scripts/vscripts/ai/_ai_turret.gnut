@@ -2,10 +2,24 @@ global function AiTurret_Init
 global function GetMegaTurretLinkedToPanel
 global function MegaTurretUsabilityFunc
 global function SetUsePromptForPanel
+global function IsTurretActive
+global function TurretRefundThink
+global function RevivableTurret_DamageCallback
+global function HeavyTurret_DamageCallback
+global function RepairTurret_WaveBreak
+global function AddTurretRepairCallback
+
+struct
+{
+	array<void functionref(entity,entity,entity)> turretRepairCallbacks
+} file
 
 void function AiTurret_Init()
 {
-
+	RegisterSignal( "TurretOffline" )
+	PrecacheModel( $"models/robots/turret_rocket/turret_rocket.mdl" )
+	
+	AddSpawnCallback( "npc_turret_sentry", OnTurretSpawn )
 }
 
 entity function GetMegaTurretLinkedToPanel( entity panel )
@@ -21,4 +35,171 @@ string function MegaTurretUsabilityFunc( var turret, var panel )
 void function SetUsePromptForPanel( var panel, var turret )
 {
 
+}
+
+void function OnTurretSpawn( entity turret )
+{
+	turret.e.spawnTime = Time()
+}
+
+bool function IsTurretActive( entity turret )
+{
+	// ----- Turret State ----- //
+	// TURRET_SEARCHING , TURRET_INACTIVE , TURRET_ACTIVE , TURRET_DEPLOYING , TURRET_RETIRING , TURRET_DEAD //
+
+	switch( turret.GetTurretState() )
+	{
+		case TURRET_DEPLOYING:
+		case TURRET_SEARCHING:
+		case TURRET_ACTIVE:
+			return true
+	}
+	return false
+}
+
+void function TurretRefundThink( entity turret )
+{
+	turret.EndSignal( "OnDestroy" )
+	turret.EndSignal( "OnDeath" )
+	turret.EndSignal( "CancelRefund" )
+	turret.EndSignal( "TurretOffline" )
+
+	while( turret.e.burnReward == "" || !IsTurretActive( turret ) )
+		WaitFrame()
+	
+	turret.SetUsable()
+	turret.SetUsableByGroup( "owner pilot" )
+	turret.SetUsePrompts( "#REFUND_HOLD_USE", "#REFUND_PRESS_USE" )
+
+	entity player = expect entity( turret.WaitSignal( "OnPlayerUse" ).player )
+
+	if ( turret.e.burnReward == "" )
+		return
+
+	BurnMeter_GiveRewardDirect( player, turret.e.burnReward )
+	entity weapon = player.GetOffhandWeapon( OFFHAND_INVENTORY )
+
+	// Defensive: meaning the boost didn't make it to the inventory for some reason
+	if ( weapon == null )
+		return
+
+	weapon.w.savedKillCount = int( turret.kv.killCount )
+	turret.DisableTurret()
+	turret.Signal( "StopTurretLaser" )
+	weapon.e.fd_roundDeployed = turret.e.fd_roundDeployed
+
+	EmitSoundAtPosition( TEAM_UNASSIGNED, turret.GetOrigin(), "Emplacement_Move_Dissolve" )
+	turret.Signal( "BoostRefunded" )
+	turret.UnsetUsable()
+	turret.SetInvulnerable()
+	turret.Dissolve( ENTITY_DISSOLVE_CORE, Vector( 0, 0, 0 ), 100 )
+}
+
+void function RevivableTurret_DamageCallback( entity turret, var damageInfo )
+{
+	if( turret.GetHealth() <= DamageInfo_GetDamage( damageInfo ) )
+	{
+		turret.Signal( "TurretOffline" )
+		turret.SetHealth( 1 )
+		turret.SetUsable()
+		
+		if ( GetCurrentPlaylistVarInt( "fd_titans_can_repair_turrets", 0 ) == 1 )
+			turret.SetUsableByGroup( "friendlies" )
+		else
+			turret.SetUsableByGroup( "friendlies pilot" )
+		
+		turret.SetUsePrompts( "#TURRET_WAKEUP_HOLD_USE", "#TURRET_WAKEUP_PRESS_USE" )
+		thread RevivableTurret_Kill( turret )
+		thread RevivableTurretThink( turret )
+		DamageInfo_SetDamage( damageInfo, 0.0 )
+	}
+}
+
+void function HeavyTurret_DamageCallback( entity turret, var damageInfo )
+{
+	if( turret.GetHealth() <= DamageInfo_GetDamage( damageInfo ) )
+	{
+		turret.Signal( "TurretOffline" )
+		turret.SetHealth( 1 )
+		DamageInfo_SetDamage( damageInfo, 0.0 )
+		turret.DisableTurret()
+		turret.EnableNPCFlag( NPC_IGNORE_ALL )
+		MakeTurretInvulnerable( turret )
+	}
+}
+
+void function RevivableTurretThink( entity turret )
+{	
+	entity player = expect entity( turret.WaitSignal( "OnPlayerUse" ).player )
+	entity owner = turret.GetBossPlayer()
+	if ( !IsTurretActive( turret ) )
+	{
+		thread RevivableTurret_Revive( turret )
+		foreach ( callbackFunc in file.turretRepairCallbacks )
+		{
+			callbackFunc( turret, player, owner )
+		}
+	}
+}
+
+void function RevivableTurret_Revive( entity turret )
+{
+	turret.EndSignal( "OnDestroy" )
+
+	turret.UnsetUsable()
+	turret.SetHealth( turret.GetMaxHealth() )
+	Highlight_ClearFriendlyHighlight( turret )
+	Highlight_SetOwnedHighlight( turret, "sp_friendly_hero" )
+	turret.Highlight_SetParam( 3, 0, HIGHLIGHT_COLOR_INTERACT )
+	turret.EnableTurret()
+	turret.Anim_Play( "deploy" )
+	turret.DisableNPCFlag( NPC_IGNORE_ALL )
+	MakeTurretVulnerable( turret )
+	turret.SetNoTargetSmartAmmo( true )
+	
+	wait 0.3
+	
+	thread TurretRefundThink( turret )
+}
+
+void function RevivableTurret_Kill( entity turret )
+{
+	turret.EndSignal( "OnDestroy" )
+
+	entity turretOwner = turret.GetBossPlayer()
+	if( IsValidPlayer( turretOwner ) )
+		PlayFactionDialogueToPlayer( "fd_turretOffline", turretOwner )
+	
+	turret.EnableNPCFlag( NPC_IGNORE_ALL )
+	MakeTurretInvulnerable( turret )
+	Highlight_SetFriendlyHighlight( turret, "sp_objective_entity" )
+	Highlight_SetOwnedHighlight( turret, "sp_objective_entity" )
+	turret.Highlight_SetParam( 1, 0, HIGHLIGHT_COLOR_OBJECTIVE )
+	turret.Highlight_SetParam( 3, 0, HIGHLIGHT_COLOR_OBJECTIVE )
+	turret.DisableTurret()
+}
+
+void function RepairTurret_WaveBreak( entity turret )
+{
+	if ( turret.GetHealth() == 1 )
+	{
+		turret.UnsetUsable()
+		turret.EnableTurret()
+		turret.Anim_Play("deploy")
+		turret.DisableNPCFlag( NPC_IGNORE_ALL )
+		Highlight_ClearFriendlyHighlight( turret )
+		Highlight_SetOwnedHighlight( turret, "sp_friendly_hero" )
+		turret.Highlight_SetParam( 3, 0, HIGHLIGHT_COLOR_INTERACT )
+		MakeTurretVulnerable( turret )
+		turret.SetNoTargetSmartAmmo( true )
+		thread TurretRefundThink( turret )
+	}
+	
+	turret.SetHealth( turret.GetMaxHealth() )
+}
+
+void function AddTurretRepairCallback( void functionref(entity,entity,entity) callbackFunc )
+{
+	Assert (!( file.turretRepairCallbacks.contains( callbackFunc ) ))
+	file.turretRepairCallbacks.append( callbackFunc )
 }
