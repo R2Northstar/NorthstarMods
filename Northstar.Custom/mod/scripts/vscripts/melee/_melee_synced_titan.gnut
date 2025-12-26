@@ -255,7 +255,12 @@ void functionref( SyncedMelee action, entity attacker, entity target ) function 
 	if ( SoulHasPassive( soul, ePassives.PAS_VANGUARD_COREMETER ) )
 		executionRef = "execution_vanguard_kit"
 
-	if ( executionRef in file.executionData_3p )
+	bool fpEmbarkShouldNotForceClassic = true
+	#if MP
+	fpEmbarkShouldNotForceClassic = GetCurrentPlaylistVarInt( "fp_embark_enabled", eFirstPersonSequenceForce1PSetting.DISABLED ) < eFirstPersonSequenceForce1PSetting.CLASSIC_EXECUTION || executionRef == "execution_vanguard_kit"
+	#endif
+
+	if ( executionRef in file.executionData_3p && fpEmbarkShouldNotForceClassic )
 		return TitanVsTitan_3p
 
 	if ( target.IsNPC() )
@@ -319,15 +324,15 @@ void function MeleeThread_AtlasVsTitanShort( SyncedMelee action, entity attacker
 
 	target.e.syncedMeleeAttacker = attacker
 
-	//	attacker.SetInvulnerable()
+	attacker.SetInvulnerable()
 	target.SetInvulnerable()    //HACK: Have to SetInvulnerable first before attacker holsters weapon, because if the attacker is vortexing, holster will release bullets caught and kill off the victim if low enough health
 
 	//HACK! This function was originally for NPCs only, but now that it is being used for players, we need to holster their weapon
 	if ( target.IsPlayer() )
 		HolsterAndDisableWeapons( target )
 
-	if ( ShouldHolsterWeaponForSyncedMelee( attacker ) )
-		HolsterAndDisableWeapons( attacker )
+	//if ( ShouldHolsterWeaponForSyncedMelee( attacker ) )
+	HolsterAndDisableWeapons( attacker )
 
 	local attackerViewBody
 
@@ -358,7 +363,7 @@ void function MeleeThread_AtlasVsTitanShort( SyncedMelee action, entity attacker
 
 			if ( IsValid( attacker ) )
 			{
-				//attacker.ClearInvulnerable()
+				attacker.ClearInvulnerable()
 				attacker.UnforceStand()
 				attacker.ClearParent()
 				ClearPlayerAnimViewEntity( attacker )
@@ -904,10 +909,10 @@ void function MeleeThread_OgreVsTitan( SyncedMelee action, entity attacker, enti
 	targetSequence.blendTime = 0.25
 
 	target.e.syncedMeleeAttacker = attacker
-	DisableWeapons( attacker, [] )
-	DisableWeapons( target, [] )
+	HolsterViewModelAndDisableWeapons( attacker )
+	HolsterViewModelAndDisableWeapons( target )
 
-	//	attacker.SetInvulnerable()
+	attacker.SetInvulnerable()
 	target.SetInvulnerable()
 
 	entity soul = target.GetTitanSoul()
@@ -930,10 +935,11 @@ void function MeleeThread_OgreVsTitan( SyncedMelee action, entity attacker, enti
 
 			if ( IsValid( attacker ) )
 			{
+				attacker.ClearInvulnerable()
 				attacker.UnforceStand()
 				attacker.ClearParent()
 				ClearPlayerAnimViewEntity( attacker )
-				EnableWeapons( attacker, [] )
+				DeployViewModelAndEnableWeapons( attacker )
 				attacker.PlayerMelee_ExecutionEndAttacker()
 
 				if ( IsAlive( attacker ) )
@@ -1331,8 +1337,9 @@ void function TitanVsTitan_3p( SyncedMelee action, entity attacker, entity targe
 		attackerBodySequence.useAnimatedRefAttachment = true
 		
 		#if MP
+		// used for monarch's energy thief execution
 		// could use FirstPersonSequenceForce1P here, but since this uses a propdynamic rather than a player, easier to do it manually
-		if ( GetCurrentPlaylistVarInt( "fp_embark_enabled", 0 ) == 1 )
+		if ( GetCurrentPlaylistVarInt( "fp_embark_enabled", eFirstPersonSequenceForce1PSetting.DISABLED ) != eFirstPersonSequenceForce1PSetting.DISABLED )
 		{
 			// hide from everyone else
 			attackerViewBody.kv.VisibilityFlags = ENTITY_VISIBLE_TO_EVERYONE & ~ENTITY_VISIBLE_TO_OWNER
@@ -1372,7 +1379,7 @@ void function TitanVsTitan_3p( SyncedMelee action, entity attacker, entity targe
 	if ( isAttackerRef )
 	{
 		#if MP
-		if ( GetCurrentPlaylistVarInt( "fp_embark_enabled", 0 ) == 1 )
+		if ( ShouldForce1PFirstPersonSequence() )
 		{
 			if ( attacker.IsPlayer() && !attackerDoing1PViewbodyAnim )
 				FirstPersonSequenceForce1P( attackerSequence, attacker )
@@ -1388,7 +1395,7 @@ void function TitanVsTitan_3p( SyncedMelee action, entity attacker, entity targe
 	else
 	{
 		#if MP
-		if ( GetCurrentPlaylistVarInt( "fp_embark_enabled", 0 ) == 1 )
+		if ( ShouldForce1PFirstPersonSequence() )
 		{
 			if ( target.IsPlayer() )
 				FirstPersonSequenceForce1P( targetSequence, target )
