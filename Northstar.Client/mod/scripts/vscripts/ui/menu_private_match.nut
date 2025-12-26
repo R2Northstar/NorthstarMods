@@ -205,6 +205,7 @@ void function InitPrivateMatchMenu()
 	AddMenuFooterOption( menu, BUTTON_A, "#A_BUTTON_SELECT", "" )
 	AddMenuFooterOption( menu, BUTTON_B, "#B_BUTTON_BACK", "#BACK" )
 
+	AddMenuFooterOption( menu, BUTTON_BACK, "#BACK_BUTTON_POSTGAME_REPORT", "#POSTGAME_REPORT", OpenPostGameMenu, IsPostGameMenuValid )
 	AddMenuFooterOption( menu, BUTTON_Y, "#Y_BUTTON_SWITCH_TEAMS", "#SWITCH_TEAMS", PCSwitchTeamsButton_Activate, CanSwitchTeams )
 	AddMenuFooterOption( menu, BUTTON_X, "#X_BUTTON_MUTE", "#MOUSE2_MUTE", null, CanMute )
 	AddMenuFooterOption( menu, BUTTON_SHOULDER_RIGHT, "#RB_TRIGGER_TOGGLE_SPECTATE", "#SPECTATE_TEAM", PCToggleSpectateButton_Activate, CanSwitchTeams )
@@ -353,7 +354,7 @@ bool function MatchResultsExist()
 
 bool function CanSwitchTeams()
 {
-	return ( GetMenuVarBool( "isPrivateMatch" ) && ( level.ui.privatematch_starting != ePrivateMatchStartState.STARTING ) )
+	return ( GetMenuVarBool( "isPrivateMatch" ) && ( level.ui.privatematch_starting != ePrivateMatchStartState.STARTING ) && !Lobby_IsFDMode() )
 }
 
 bool function CanMute()
@@ -441,6 +442,11 @@ void function LobbyMenuUpdate( var menu )
 
 	while ( GetTopNonDialogMenu() == menu )
 	{
+		if( Lobby_IsFDMode() )
+			Hud_Hide( file.enemyPlayersPanel )
+		else
+			Hud_Show( file.enemyPlayersPanel )
+		
 		WaitFrame()
 	}
 }
@@ -521,6 +527,21 @@ void function SetModeInfo( string modeName )
 	Hud_Show( nextModeIcon )
 
 	Hud_SetText( file.nextGameModeLabel, GetGameModeDisplayName( modeName ) )
+	
+	switch ( modeName ) //Small hack to show Aegis Ranks of Titans in lobby menu
+	{
+		case "fd":
+		case "fd_easy":
+		case "fd_normal":
+		case "fd_hard":
+		case "fd_master":
+		case "fd_insane":
+		case "lffd":
+			Lobby_SetFDMode( true )
+			break
+		default:
+			Lobby_SetFDMode( false )
+	}
 }
 
 function Privatematch_map_Changed()
@@ -585,12 +606,12 @@ function UpdatePrivateMatchButtons()
 		#endif
 
 		string modeName = PrivateMatch_GetSelectedMode()
-		bool settingsLocked = IsFDMode( modeName )
+		//bool settingsLocked = IsFDMode( modeName )
 
-		if ( settingsLocked && uiGlobal.activeMenu == GetMenu( "MatchSettingsMenu" ) )
-			CloseActiveMenu()
+		//if ( settingsLocked && uiGlobal.activeMenu == GetMenu( "MatchSettingsMenu" ) )
+		//	CloseActiveMenu()
 
-		Hud_SetLocked( file.matchSettingsButton, settingsLocked )
+		Hud_SetLocked( file.matchSettingsButton, false )
 	}
 }
 
@@ -827,6 +848,5 @@ function UpdatePlayerInfo()
 
 void function OnPrivateMatchMenu_Open()
 {
-	Lobby_SetFDMode( false )
 	OnLobbyMenu_Open()
 }
