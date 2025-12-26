@@ -219,7 +219,7 @@ void function CloakedDronePathThink( entity cloakedDrone )
 					continue
 
 				//Don't cloak arc titans
-				if ( guy.GetTargetName() == "empTitan" )
+				if ( IsEMPTitan( guy ) )
 					continue
 
 				if ( IsSniperSpectre( guy ) )

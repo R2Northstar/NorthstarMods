@@ -97,6 +97,8 @@ function CloakerThink( entity cloaker, float radius, array<string> ents = [ "any
 
 void function CloakerCloaksGuy( guy )
 {
+	if( guy.IsNPC() )
+		guy.SetCanCloak(true) // if you don't want to cloak specific targets, it should be handled by shouldCloakGuyFunc in CloakerThink
 	guy.SetCloakDuration( 2.0, -1, 0 )
 	EmitSoundOnEntity( guy, CLOAKED_DRONE_CLOAK_START_SFX )
 	EmitSoundOnEntity( guy, CLOAKED_DRONE_CLOAK_LOOP_SFX )
@@ -110,6 +112,8 @@ void function CloakerDeCloaksGuy( guy )
 	StopSoundOnEntity( guy, CLOAKED_DRONE_CLOAK_LOOP_SFX )
 	guy.Minimap_AlwaysShow( TEAM_IMC, null )
 	guy.Minimap_AlwaysShow( TEAM_MILITIA, null )
+	if( guy.IsNPC() )
+		guy.SetCanCloak(false)
 }
 
 bool function CloakerShouldCloakGuy( entity cloaker, entity guy )

@@ -1,11 +1,16 @@
+untyped
 global function AiTurret_Init
 global function GetMegaTurretLinkedToPanel
 global function MegaTurretUsabilityFunc
 global function SetUsePromptForPanel
+global function IsTurretActive
+global function TurretRefundThink
+global function RevivableTurret_DamageCallback
+global function RevivableTurret_Revive
 
 void function AiTurret_Init()
 {
-
+	RegisterSignal( "TurretOffline" )
 }
 
 entity function GetMegaTurretLinkedToPanel( entity panel )
@@ -21,4 +26,108 @@ string function MegaTurretUsabilityFunc( var turret, var panel )
 void function SetUsePromptForPanel( var panel, var turret )
 {
 
+}
+
+bool function IsTurretActive( entity turret )
+{
+	// ----- Turret State ----- //
+	// TURRET_SEARCHING , TURRET_INACTIVE , TURRET_ACTIVE , TURRET_DEPLOYING , TURRET_RETIRING , TURRET_DEAD //
+
+	bool turretsActive = turret.GetTurretState() == TURRET_DEPLOYING
+	turretsActive = turretsActive || turret.GetTurretState() == TURRET_SEARCHING
+	turretsActive = turretsActive || turret.GetTurretState() == TURRET_ACTIVE
+	return turretsActive
+}
+
+void function TurretRefundThink( entity turret )
+{
+	turret.EndSignal( "OnDestroy" )
+	turret.EndSignal( "OnDeath" )
+	turret.EndSignal( "CancelRefund" )
+	turret.EndSignal( "TurretOffline" )
+
+	while( turret.e.burnReward == "" || !IsTurretActive( turret ) ){
+		WaitFrame()
+	}
+	turret.SetUsable()
+	turret.SetUsableByGroup( "owner pilot" )
+	turret.SetUsePrompts( "#REFUND_HOLD_USE", "#REFUND_PRESS_USE" )
+
+	entity player = expect entity( turret.WaitSignal( "OnPlayerUse" ).player )
+
+	if ( turret.e.burnReward == "" )
+		return
+
+	BurnMeter_GiveRewardDirect( player, turret.e.burnReward )
+	entity weapon = player.GetOffhandWeapon( OFFHAND_INVENTORY )
+
+	// Defensive: meaning the boost didn't make it to the inventory for some reason
+	if ( weapon == null )
+		return
+
+	weapon.w.savedKillCount = int( turret.kv.killCount )
+	turret.DisableTurret()
+	turret.Signal( "StopTurretLaser" )
+	weapon.e.fd_roundDeployed = turret.e.fd_roundDeployed
+
+	EmitSoundAtPosition( TEAM_UNASSIGNED, turret.GetOrigin(), "Emplacement_Move_Dissolve" )
+	turret.Signal( "BoostRefunded" )
+	turret.UnsetUsable()
+	turret.SetInvulnerable()
+	turret.Dissolve( ENTITY_DISSOLVE_CORE, Vector( 0, 0, 0 ), 100 )
+}
+
+void function RevivableTurret_DamageCallback( entity turret, var damageInfo )
+{
+	if( turret.GetHealth() <= DamageInfo_GetDamage( damageInfo ) )
+	{
+		turret.Signal( "TurretOffline" )
+		turret.SetHealth( 1 )
+		turret.SetUsable()
+		turret.SetUsableByGroup( "friendlies pilot" )
+		turret.SetUsePrompts( "#TURRET_WAKEUP_HOLD_USE", "#TURRET_WAKEUP_PRESS_USE" )
+		turret.useFunction = RevivableTurret_UseFunction
+		thread RevivableTurret_Kill( turret )
+		DamageInfo_SetDamage( damageInfo, 0.0 )
+	}
+}
+
+function RevivableTurret_UseFunction( player , turret )
+{	
+	entity tur = expect entity( turret )
+	entity ent = expect entity( player )
+	entity owner = tur.GetBossPlayer()
+	if( ent != owner )
+	{
+		int ownerEHandle = owner.GetEncodedEHandle()
+		AddPlayerScore( ent, "FDRepairTurret" )
+		MessageToTeam( TEAM_MILITIA,eEventNotifications.FD_TurretRepair, null, ent, ownerEHandle )
+	}
+	thread RevivableTurret_Revive( tur )
+	return true
+}
+
+
+void function RevivableTurret_Revive( entity turret )
+{
+	turret.UnsetUsable()
+	turret.SetHealth( turret.GetMaxHealth() )
+	turret.ClearInvulnerable()
+	turret.Anim_ScriptedPlay( "deploy" )
+	wait 1.0
+	turret.EnableTurret()
+	turret.DisableNPCFlag( NPC_IGNORE_ALL )
+	turret.SetNoTarget( false )
+	thread TurretRefundThink( turret )
+}
+
+void function RevivableTurret_Kill( entity turret )
+{
+	turret.EnableNPCFlag( NPC_IGNORE_ALL )
+	turret.SetNoTarget( true )
+	turret.SetInvulnerable()
+	turret.Anim_ScriptedPlay( "undeploy" )
+	wait 1
+	turret.SetNoTarget( true )
+	turret.DisableTurret()
 }
