@@ -190,6 +190,8 @@ void function AddTeamScore( int team, int amount = 1 )
 	}
 	else if ( GetGameState() == eGameState.SuddenDeath )
 		SetWinner( team, "#SUDDEN_DEATH_WIN_ANNOUNCEMENT", "#SUDDEN_DEATH_LOSS_ANNOUNCEMENT" )
+	else if ( ( file.switchSidesBased && !file.hasSwitchedSides ) && score >= ( scoreLimit.tofloat() / 2.0 ) )
+		SetGameState( eGameState.SwitchingSides )
 }
 
 void function AddTeamRoundScoreNoStateChange( int team, int amount = 1 )
@@ -670,8 +672,6 @@ void function GameStateEnter_WinnerDetermined_Threaded()
 				SetGameState( eGameState.Postmatch )
 			}
 		}
-		if ( ( file.switchSidesBased && !file.hasSwitchedSides ) && highestScore >= ( roundScoreLimit.tofloat() / 2.0 ) )
-			SetGameState( eGameState.SwitchingSides )
 		else if ( file.usePickLoadoutScreen && GetCurrentPlaylistVarInt( "pick_loadout_every_round", 1 ) ) //Playlist var needs to be enabled as well
 			SetGameState( eGameState.PickLoadout )
 		else
@@ -746,6 +746,7 @@ void function ClearPlayerFromReplay( entity player )
 
 void function GameStateEnter_SwitchingSides()
 {
+	thread DialogueAnnounceSwitchingSides()
 	thread GameStateEnter_SwitchingSides_Threaded()
 }
 
@@ -753,9 +754,64 @@ void function GameStateEnter_SwitchingSides_Threaded()
 {
 	WaitFrame()
 	
+	svGlobal.levelEnt.Signal( "RoundEnd" )
+
+	entity replayAttacker = file.roundWinningKillReplayAttacker
+	bool doReplay = Replay_IsEnabled() && IsRoundWinningKillReplayEnabled() && IsValid( replayAttacker ) && !IsRoundBased() // for roundbased modes, we've already done the replay
+				 && Time() - file.roundWinningKillReplayTime <= ROUND_WINNING_KILL_REPLAY_LENGTH_OF_REPLAY
+	
+	float replayLength = ROUND_WINNING_KILL_REPLAY_STARTUP_WAIT
+	SetServerVar( "roundWinningKillReplayPlaying", doReplay )
+
+	foreach ( entity player in GetPlayerArray() )
+	{
+		ClearPlayerFromReplay( player )
+		CheckGameStateForPlayerMovement( player )
+	}
+	wait  1.5
+	foreach ( entity player in GetPlayerArray() )
+		ScreenFadeToBlackForever( player, 2.0 )
+	
+	if ( doReplay )
+	{
+		replayLength = ROUND_WINNING_KILL_REPLAY_TOTAL_LENGTH
+		if ( "respawnTime" in replayAttacker.s && Time() - replayAttacker.s.respawnTime < replayLength )
+			replayLength += Time() - expect float ( replayAttacker.s.respawnTime )
+			
+		SetServerVar( "roundWinningKillReplayEntHealthFrac", file.roundWinningKillReplayHealthFrac )
+		
+		wait 2
+		
+		foreach ( entity player in GetPlayerArray() )
+			thread PlayerWatchesRoundWinningReplay( player, replayLength )
+	}
+	
+	wait replayLength
+	foreach ( entity player in GetPlayerArray() )
+	{
+		ClearPlayerFromReplay( player )
+		WaitFrame()
+		ScreenFadeToBlackForever( player, 0.0 )
+	}
+	CleanUpEntitiesForRoundEnd()
+	wait CLEAR_PLAYERS_BUFFER
+	
+	ClearDroppedWeapons()
+	SetServerVar( "roundWinningKillReplayPlaying", false )
+	
 	file.hasSwitchedSides = true
 	SetServerVar( "switchedSides", 1 )
+	file.roundWinningKillReplayAttacker = null // reset this after replay
+	file.roundWinningKillReplayInflictorEHandle = -1
 	
+	if ( file.usePickLoadoutScreen && GetCurrentPlaylistVarInt( "pick_loadout_every_round", 1 ) ) //Playlist var needs to be enabled too
+		SetGameState( eGameState.PickLoadout )
+	else
+		SetGameState( eGameState.Prematch )
+}
+
+void function DialogueAnnounceSwitchingSides()
+{
 	foreach ( entity player in GetPlayerArray() )
 		PlayFactionDialogueToPlayer( "mp_halftime", player )
 
@@ -763,13 +819,6 @@ void function GameStateEnter_SwitchingSides_Threaded()
 
 	foreach ( entity player in GetPlayerArray() )
 		PlayFactionDialogueToPlayer( "mp_sideSwitching", player )
-	
-	wait SWITCHING_SIDES_DELAY
-
-	if ( file.usePickLoadoutScreen && GetCurrentPlaylistVarInt( "pick_loadout_every_round", 1 ) ) //Playlist var needs to be enabled too
-		SetGameState( eGameState.PickLoadout )
-	else
-		SetGameState( eGameState.Prematch )
 }
 
 
