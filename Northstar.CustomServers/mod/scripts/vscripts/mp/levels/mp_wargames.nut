@@ -315,7 +315,9 @@ void function PlayerWatchesWargamesIntro( entity player )
 		file.militiaPodFXEyePos = player.EyePosition()
 	
 	// 7 seconds of nothing before we start the pod sequence
-	while ( Time() < file.introStartTime + 7.0 )
+	wait ( file.introStartTime + 7.0 ) - Time()
+
+	while ( Time() < file.introStartTime + 7.0 ) // note: remove this when wait stops waiting less than the input time
 		WaitFrame()
 	
 	FirstPersonSequenceStruct podCloseSequence
