@@ -157,7 +157,7 @@ void function SetGameState( int newState )
 		callbackFunc()
 }
 
-void function AddTeamScore( int team, int amount )
+void function AddTeamScore( int team, int amount = 1 )
 {
 	AddTeamRoundScoreNoStateChange( team, amount )
 	
@@ -171,9 +171,23 @@ void function AddTeamScore( int team, int amount )
 	}
 
 	if ( score >= scoreLimit && ( IsRoundBased() && !HasRoundScoreLimitBeenReached() ) )
-		SetWinner( team, "#GAMEMODE_ROUND_LIMIT_REACHED", "#GAMEMODE_ROUND_LIMIT_REACHED" )
+	{
+		if ( IsPilotEliminationBased() )
+			SetWinner( team, "#GAMEMODE_ENEMY_PILOTS_ELIMINATED", "#GAMEMODE_FRIENDLY_PILOTS_ELIMINATED" )
+		else if ( IsTitanEliminationBased() )
+			SetWinner( team, "#GAMEMODE_ENEMY_TITANS_DESTROYED", "#GAMEMODE_FRIENDLY_TITANS_DESTROYED" )
+		else
+			SetWinner( team, "#GAMEMODE_ROUND_LIMIT_REACHED", "#GAMEMODE_ROUND_LIMIT_REACHED" )
+	}
 	else if ( score >= scoreLimit )
-		SetWinner( team, "#GAMEMODE_SCORE_LIMIT_REACHED", "#GAMEMODE_SCORE_LIMIT_REACHED" )
+	{
+		if ( IsPilotEliminationBased() )
+			SetWinner( team, "#GAMEMODE_ENEMY_PILOTS_ELIMINATED", "#GAMEMODE_FRIENDLY_PILOTS_ELIMINATED" )
+		else if ( IsTitanEliminationBased() )
+			SetWinner( team, "#GAMEMODE_ENEMY_TITANS_DESTROYED", "#GAMEMODE_FRIENDLY_TITANS_DESTROYED" )
+		else
+			SetWinner( team, "#GAMEMODE_SCORE_LIMIT_REACHED", "#GAMEMODE_SCORE_LIMIT_REACHED" )
+	}
 	else if ( GetGameState() == eGameState.SuddenDeath )
 		SetWinner( team, "#SUDDEN_DEATH_WIN_ANNOUNCEMENT", "#SUDDEN_DEATH_LOSS_ANNOUNCEMENT" )
 	else if ( ( file.switchSidesBased && !file.hasSwitchedSides ) && score >= ( scoreLimit.tofloat() / 2.0 ) )
@@ -523,8 +537,10 @@ void function GameStateEnter_Playing_Threaded()
 				SetGameState( eGameState.SuddenDeath )
 			else
 			{
+				if ( !ShouldRunEvac() )
+					SetServerVar( "replayDisabled", true )
+				
 				SetWinner( winningTeam, "#GAMEMODE_TIME_LIMIT_REACHED", "#GAMEMODE_TIME_LIMIT_REACHED" )
-				SetServerVar( "replayDisabled", true )
 			}
 		}
 		
@@ -1022,9 +1038,7 @@ void function CheckEliminationRiffMode( entity victim, entity attacker )
 				if ( teamsWithLivingPlayers.len() == 1 )
 				{
 					if( IsRoundBased() )
-						AddTeamRoundScoreNoStateChange( teamsWithLivingPlayers[0] )
-					
-					SetWinner( teamsWithLivingPlayers[0], "#GAMEMODE_ENEMY_PILOTS_ELIMINATED", "#GAMEMODE_FRIENDLY_PILOTS_ELIMINATED" )
+						AddTeamScore( teamsWithLivingPlayers[0] )
 
 					if( IsValidPlayer( attacker ) )
 						AddPlayerScore( attacker, "VictoryKill", attacker )
@@ -1034,13 +1048,10 @@ void function CheckEliminationRiffMode( entity victim, entity attacker )
 			}
 			else
 			{
-				if( IsRoundBased() )
-					AddTeamRoundScoreNoStateChange( GetOtherTeam( victim.GetTeam() ) )
-				
-				SetWinner( GetOtherTeam( victim.GetTeam() ), "#GAMEMODE_ENEMY_PILOTS_ELIMINATED", "#GAMEMODE_FRIENDLY_PILOTS_ELIMINATED" )
-
 				if( IsValidPlayer( attacker ) )
 					AddPlayerScore( attacker, "VictoryKill", attacker )
+				if( IsRoundBased() )
+					AddTeamScore( GetOtherTeam( victim.GetTeam() ) )
 			}
 		}
 	}
@@ -1060,26 +1071,20 @@ void function CheckEliminationRiffMode( entity victim, entity attacker )
 				
 				if ( teamsWithLivingTitans.len() == 1 )
 				{
-					if( IsRoundBased() )
-						AddTeamRoundScoreNoStateChange( teamsWithLivingTitans[0] )
-					
-					SetWinner( teamsWithLivingTitans[0], "#GAMEMODE_ENEMY_TITANS_DESTROYED", "#GAMEMODE_FRIENDLY_TITANS_DESTROYED" )
-
 					if( IsValidPlayer( attacker ) )
 						AddPlayerScore( attacker, "VictoryKill", attacker )
+					if( IsRoundBased() )
+						AddTeamScore( teamsWithLivingTitans[0] )
 				}
 				else if ( teamsWithLivingTitans.len() == 0 )
 					SetWinner( null, "#GENERIC_DRAW_ANNOUNCEMENT", "#GENERIC_DRAW_ANNOUNCEMENT" )
 			}
 			else
 			{
-				if( IsRoundBased() )
-					AddTeamRoundScoreNoStateChange( GetOtherTeam( victim.GetTeam() ) )
-				
-				SetWinner( GetOtherTeam( victim.GetTeam() ), "#GAMEMODE_ENEMY_TITANS_DESTROYED", "#GAMEMODE_FRIENDLY_TITANS_DESTROYED" )
-
 				if( IsValidPlayer( attacker ) )
 					AddPlayerScore( attacker, "VictoryKill", attacker )
+				if( IsRoundBased() )
+					AddTeamScore( GetOtherTeam( victim.GetTeam() ) )
 			}
 		}
 	}
