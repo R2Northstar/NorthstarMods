@@ -329,10 +329,10 @@ void function MeleeThread_AtlasVsTitanShort( SyncedMelee action, entity attacker
 
 	//HACK! This function was originally for NPCs only, but now that it is being used for players, we need to holster their weapon
 	if ( target.IsPlayer() )
-		HolsterAndDisableWeapons( target )
+		HolsterViewModelAndDisableWeapons( target )
 
 	if ( attacker.IsPlayer() )
-		HolsterAndDisableWeapons( attacker )
+		HolsterViewModelAndDisableWeapons( attacker )
 
 	local attackerViewBody
 
