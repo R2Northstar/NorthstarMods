@@ -579,6 +579,7 @@ function MeleeThread_TitanRipsPilot( table e, SyncedMelee action, entity attacke
 	AddAnimEvent( targetTitan, "melee_killed_ragdoll", MeleeKilledRagdoll, attacker )
 
 	targetTitan.SetInvulnerable()
+	target.SetInvulnerable()
 
 	target.SetOwner( attacker )
 	target.kv.VisibilityFlags = (ENTITY_VISIBLE_TO_FRIENDLY | ENTITY_VISIBLE_TO_ENEMY) //owner cant see
