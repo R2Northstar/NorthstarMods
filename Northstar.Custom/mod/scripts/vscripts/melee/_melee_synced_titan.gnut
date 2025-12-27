@@ -346,8 +346,6 @@ void function MeleeThread_AtlasVsTitanShort( SyncedMelee action, entity attacker
 
 	AddAnimEvent( target, "rider_rodeo_over", ForceTitanRodeoToEnd  )
 
-	target.SetInvulnerable() //Setting target of execution as invulnerable to prevent them dying mid-way
-
 	OnThreadEnd(
 		function() : ( ref, attacker, target, e  )
 		{
@@ -398,6 +396,8 @@ void function MeleeThread_AtlasVsTitanShort( SyncedMelee action, entity attacker
 
 			if ( IsValid( target ) )
 			{
+				target.ClearInvulnerable()
+
 				if ( !target.IsNPC() )
 				{
 					target.PlayerMelee_ExecutionEndTarget()
@@ -495,8 +495,8 @@ function MeleeThread_TitanRipsPilot( table e, SyncedMelee action, entity attacke
 
 	target.e.syncedMeleeAttacker = attacker
 
-	attacker.SetInvulnerable()
-	MakeTurretInvulnerable( target )    //HACK: Have to SetInvulnerable first before attacker holsters weapon, because if the attacker is vortexing, holster will release bullets caught and kill off the victim if low enough health
+	//	attacker.SetInvulnerable()
+	target.SetInvulnerable()    //HACK: Have to SetInvulnerable first before attacker holsters weapon, because if the attacker is vortexing, holster will release bullets caught and kill off the victim if low enough health
 	if ( attacker.IsPlayer() )
 		HolsterViewModelAndDisableWeapons( attacker )
 
@@ -580,7 +580,7 @@ function MeleeThread_TitanRipsPilot( table e, SyncedMelee action, entity attacke
 	AddAnimEvent( targetTitan, "rider_rodeo_over", ForceTitanRodeoToEnd  )
 	AddAnimEvent( targetTitan, "melee_killed_ragdoll", MeleeKilledRagdoll, attacker )
 
-	MakeTurretInvulnerable( targetTitan )
+	targetTitan.SetInvulnerable()
 
 	target.SetOwner( attacker )
 	target.kv.VisibilityFlags = (ENTITY_VISIBLE_TO_FRIENDLY | ENTITY_VISIBLE_TO_ENEMY) //owner cant see
@@ -720,8 +720,13 @@ function TitanSyncedMeleeAnimationsPlay( FirstPersonSequenceStruct attackerBodyS
 		function () : ( targetTitan, target, attacker, e )
 		{
 			// insure visibility
-			if ( IsValid( targetTitan ) && IsAlive( targetTitan ) )
-				targetTitan.Die( attacker, attacker, { scriptType = DF_MELEE, damageSourceId = eDamageSourceId.titan_execution } )
+			if ( IsValid( targetTitan ) )
+			{
+				targetTitan.ClearInvulnerable()
+
+				if ( IsAlive( targetTitan ) )
+					targetTitan.Die( attacker, attacker, { scriptType = DF_MELEE, damageSourceId = eDamageSourceId.titan_execution } )
+			}
 
 			if ( !IsAlive( attacker ) )
 			{
@@ -729,7 +734,7 @@ function TitanSyncedMeleeAnimationsPlay( FirstPersonSequenceStruct attackerBodyS
 
 				if ( !e.thrown && IsAlive( target ) && target.IsPlayer() )
 				{
-					MakeTurretVulnerable( target )
+					target.ClearInvulnerable()
 					target.Anim_Stop()
 					target.SetOwner( null )
 					target.kv.VisibilityFlags = ENTITY_VISIBLE_TO_EVERYONE
@@ -974,8 +979,8 @@ void function MeleeThread_OgreVsTitan( SyncedMelee action, entity attacker, enti
 	if ( target.IsPlayer() )
 		HolsterViewModelAndDisableWeapons( target )
 
-	attacker.SetInvulnerable()
-	MakeTurretInvulnerable( target )
+	//	attacker.SetInvulnerable()
+	target.SetInvulnerable()
 
 	entity soul = target.GetTitanSoul()
 	soul.SetInvalidHealthBarEnt( true )
@@ -1023,7 +1028,7 @@ void function MeleeThread_OgreVsTitan( SyncedMelee action, entity attacker, enti
 				target.e.syncedMeleeAttacker = null
 
 				target.ClearParent()
-				MakeTurretVulnerable( target )
+				target.ClearInvulnerable()
 				if ( target.IsPlayer() )
 				{
 					ClearPlayerAnimViewEntity( target )
@@ -1190,8 +1195,6 @@ void function TitanVsTitan_3p( SyncedMelee action, entity attacker, entity targe
 
 	//	attacker.SetInvulnerable()
 	target.SetInvulnerable()
-
-	NPC_NoTarget( target )
 
 	entity targetViewBody
 	FirstPersonSequenceStruct targetBodySequence
