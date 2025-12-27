@@ -333,7 +333,7 @@ void function MeleeThread_AtlasVsTitanShort( SyncedMelee action, entity attacker
 	if ( target.IsPlayer() )
 		HolsterAndDisableWeapons( target )
 
-	if ( attacker.IsPlayer() && ShouldHolsterWeaponForSyncedMelee( attacker ) )
+	if ( attacker.IsPlayer() )
 		HolsterAndDisableWeapons( attacker )
 
 	local attackerViewBody
@@ -497,7 +497,7 @@ function MeleeThread_TitanRipsPilot( table e, SyncedMelee action, entity attacke
 
 	attacker.SetInvulnerable()
 	MakeTurretInvulnerable( target )    //HACK: Have to SetInvulnerable first before attacker holsters weapon, because if the attacker is vortexing, holster will release bullets caught and kill off the victim if low enough health
-	if ( attacker.IsPlayer() && ShouldHolsterWeaponForSyncedMelee( attacker ) )
+	if ( attacker.IsPlayer() )
 		HolsterViewModelAndDisableWeapons( attacker )
 
 	if ( !target.IsNPC() )
