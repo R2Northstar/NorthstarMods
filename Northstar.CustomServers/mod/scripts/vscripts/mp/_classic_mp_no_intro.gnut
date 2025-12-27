@@ -56,7 +56,7 @@ void function ClassicMP_DefaultNoIntro_PilotSpawnPlayer( entity player )
 	player.EndSignal( "OnDestroy" )
 	if( PlayerCanSpawn( player ) )
 		RespawnAsPilot( player )
-	
+
 	player.FreezeControlsOnServer()
 	HolsterAndDisableWeapons( player )
 	ResetPlayerCooldowns( player ) // Prevention of case they used abilities or grenades near round end
@@ -66,7 +66,7 @@ void function ClassicMP_DefaultNoIntro_PilotSpawnPlayer( entity player )
 
 	while ( Time() < expect float( level.nv.gameStartTime ) )
 		WaitFrame()
-	
+
 	TryGameModeAnnouncement( player )
 	DeployAndEnableWeapons( player )
 }
@@ -85,12 +85,12 @@ void function ClassicMP_DefaultNoIntro_TitanSpawnPlayer( entity player )
 
 	while ( Time() < expect float( level.nv.gameStartTime ) ) // Wait until match actually starts to spawn them
 		WaitFrame()
-	
+
 	if( PlayerCanSpawn( player ) )
 	{
 		player.StopObserverMode()
 		RespawnAsTitan( player )
 	}
-	
+
 	TryGameModeAnnouncement( player )
 }

@@ -505,7 +505,7 @@ void function AddPlayerToEvacDropship( entity dropship, entity player )
 
     // need to cancel if the dropship dies
     dropship.EndSignal( "OnDeath", "OnDestroy" )
-    player.EndSignal( "OnDestroy" )
+	player.EndSignal( "OnDestroy" )
 
 	player.SetInvulnerable()
 	player.UnforceCrouch()
@@ -567,31 +567,31 @@ void function CheckIfAnyPlayerLeft( int evacTeam )
 {
 	svGlobal.levelEnt.EndSignal( "EvacOver" )
 	wait GAME_EPILOGUE_PLAYER_RESPAWN_LEEWAY
-	
+
 	OnThreadEnd(
 		function() : ( evacTeam )
 		{
 			if( IsAlive( file.evacDropship ) )
 				return
-			
+
 			SetTeamActiveObjective( evacTeam, "EG_DropshipExtractEvacPlayersKilled" )
 			SetTeamActiveObjective( GetOtherTeam( evacTeam ), "EG_StopExtractEvacPlayersKilled" )
 			thread EvacEpilogueCompleted( null )
 
 			if ( !GetPlayerArrayOfTeam( evacTeam ).len() )
 				return
-			
+
 			// score for killing the entire evacing team
 			foreach ( entity player in GetPlayerArrayOfTeam( GetOtherTeam( evacTeam ) ) )
 				AddPlayerScore( player, "TeamBonusKilledAll" )
 		}
 	)
-	
+
 	while( GetPlayerArrayOfTeam_Alive( evacTeam ).len() )
 	{
 		if ( GetGameState() == eGameState.Postmatch )
 			return
-		
+
 		WaitFrame()
 	}	
 }

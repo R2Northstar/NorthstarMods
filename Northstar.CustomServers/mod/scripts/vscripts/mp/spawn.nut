@@ -305,6 +305,12 @@ entity function GetBestSpawnpoint( entity player, array<entity> spawnpoints, boo
 				validSpawns.append( spawnpoint )
 		}
 	}
+
+	if ( !validSpawns.len() )
+	{
+		printt( "Warning: No valid spawn points found for player: " + player + " trying to use all spawn points" )
+		validSpawns.extend( spawnpoints )
+	}
 	
 	if ( !validSpawns.len() ) // On all validity check, just gather the most basic spawn
 	{

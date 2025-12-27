@@ -57,6 +57,7 @@ Press Yes if you agree to this. This choice can be changed in the mods menu at a
 		"timelimit" "Time Limit"
 		"roundtimelimit" "Time Limit (round-based)"
 		"respawnprotection" "Respawn Protection Time"
+		"pick_loadout_every_round" "Pick Loadout Every Round"
 
 		"pilot_health_multiplier" "Health multiplier"
 		"respawn_delay" "Respawn Delay"
@@ -333,7 +334,7 @@ Press Yes if you agree to this. This choice can be changed in the mods menu at a
 		"INVALID_MASTERSERVER_TOKEN" 	"Invalid or expired masterserver token, try restarting EA App."
 		"JSON_PARSE_ERROR" 				"Error parsing json response"
 		"UNSUPPORTED_VERSION" 			"The version you are using is no longer supported"
-		
+
 		// Mode menu
 		"MODE_MENU_PVPVE"		"PvPvE"
 		"MODE_MENU_PVE"			"PvE"

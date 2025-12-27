@@ -520,7 +520,7 @@ array<vector> function GetFragDroneTargetOrigins( entity npc, vector origin, flo
 	if ( traceFrac < 1 )
 		return targetOrigins;
 
-	array< vector > randomSpots = NavMesh_RandomPositions( origin, HULL_HUMAN, randomCount, minRadius, maxRadius ) //_LargeArea
+	array< vector > randomSpots = NavMesh_RandomPositions( origin, HULL_HUMAN, randomCount, minRadius, maxRadius )
 
 	int numFragDrones = 0
 	foreach( spot in randomSpots )
@@ -725,7 +725,7 @@ function SuperSpectre_WarpFall( entity ai )
 
 	e.smokeFx.Destroy()
 	PlayFX( $"droppod_impact", origin )
-	
+
 	Explosion_DamageDefSimple( damagedef_reaper_fall, origin, ai, ai, origin )
 
 	wait 0.1

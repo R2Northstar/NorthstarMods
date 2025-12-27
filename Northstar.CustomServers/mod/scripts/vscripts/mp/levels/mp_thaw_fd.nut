@@ -153,7 +153,7 @@ void function initFrontierDefenseData()
 	WaveSpawn_TitanSpawn( wave3, "Legion", < 3752, -1068, -417 >, 164, "", 1.5 )
 	WaveSpawn_ReaperSpawn( wave3, "Reaper", < 449, -4423, -197 >, 149, "", 0.5 )
 	WaveSpawn_InfantrySpawn( wave3, "Stalker", < 2164, -735, 16 >, 0.0, "", 1.5 )
-	WaveSpawn_TitanSpawn( wave3, "Northstar", < 586, 135, -192 >, 180, "", 0.5, "", 0.0, eFDSD.MASTER | eFDSD.INSANE, eFDTT.TITAN_ELITE )
+	WaveSpawn_TitanSpawn( wave3, "Northstar", < 586, 135, -192 >, 180, "", 0.5, "", 0.0, eFDSD.MASTER | eFDSD.INSANE )
 	WaveSpawn_WaitEnemyAliveAmount( wave3, 2 )
 	
 	WaveSpawn_TitanSpawn( wave3, "Scorch", < -2416, 2457, -439 >, -50, "", 1.5 )

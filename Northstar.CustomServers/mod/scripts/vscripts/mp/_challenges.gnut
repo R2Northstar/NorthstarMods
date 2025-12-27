@@ -7,6 +7,7 @@ global function IncrementPlayerChallengeTitanLeveledUp			//Hooked in titan_xp.gn
 global function IncrementPlayerChallengeWeaponLeveledUp			//Hooked in weapon_xp.gnut
 global function IncrementPlayerChallengeFactionLeveledUp		//Hooked in faction_xp.gnut (invisible but necessary for post-summary menu)
 global function RegisterChallenges_OnMatchEnd					//Hooked in _gamestate_mp.gnut
+global function PlayerInChallengesPool							//Check for gamemodes to see if player is registered in challenge pool
 
 global function HasPlayerCompletedMeritScore					//Check from gamemodes to not reapply SetPlayerChallengeMeritScore
 global function SetupGenericTDMChallenge						//Used by gamemodes which simply adopts the: "Kill 3 Pilots without dying." Challenge
@@ -120,6 +121,11 @@ void function RegisterChallenges_OnMatchEnd()
 			player.SetPersistentVar( "xp_match[" + XP_TYPE.HAPPY_HOUR + "]", 5 ) //The XP Given from Happy Hour Score is 5 merits
 		}
 	}
+}
+
+bool function PlayerInChallengesPool( entity player )
+{
+	return ( player in file.playerChallenge && player in file.playerTotalMeritCount && player in file.pilotstreak )
 }
 
 void function TDMChallenges_OnPlayerKilled( entity victim, entity attacker, var damageInfo )
