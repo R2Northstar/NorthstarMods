@@ -493,8 +493,8 @@ function MeleeThread_TitanRipsPilot( table e, SyncedMelee action, entity attacke
 
 	target.e.syncedMeleeAttacker = attacker
 
-	//	attacker.SetInvulnerable()
-	target.SetInvulnerable()    //HACK: Have to SetInvulnerable first before attacker holsters weapon, because if the attacker is vortexing, holster will release bullets caught and kill off the victim if low enough health
+	attacker.SetInvulnerable()
+	MakeTurretInvulnerable( target )    //HACK: Have to SetInvulnerable first before attacker holsters weapon, because if the attacker is vortexing, holster will release bullets caught and kill off the victim if low enough health
 	if ( attacker.IsPlayer() && ShouldHolsterWeaponForSyncedMelee( attacker ) )
 		HolsterViewModelAndDisableWeapons( attacker )
 
@@ -579,7 +579,6 @@ function MeleeThread_TitanRipsPilot( table e, SyncedMelee action, entity attacke
 	AddAnimEvent( targetTitan, "melee_killed_ragdoll", MeleeKilledRagdoll, attacker )
 
 	MakeTurretInvulnerable( targetTitan )
-	MakeTurretInvulnerable( target )
 
 	target.SetOwner( attacker )
 	target.kv.VisibilityFlags = (ENTITY_VISIBLE_TO_FRIENDLY | ENTITY_VISIBLE_TO_ENEMY) //owner cant see
@@ -600,6 +599,7 @@ function MeleeThread_TitanRipsPilot( table e, SyncedMelee action, entity attacke
 
 			if ( IsValid( attacker ) )
 			{
+				attacker.ClearInvulnerable()
 				attacker.ClearParent()
 				if( attacker.IsPlayer() )
 				{
@@ -972,7 +972,8 @@ void function MeleeThread_OgreVsTitan( SyncedMelee action, entity attacker, enti
 	if ( target.IsPlayer() )
 		HolsterViewModelAndDisableWeapons( target )
 
-	//	attacker.SetInvulnerable()
+	attacker.SetInvulnerable()
+
 	MakeTurretInvulnerable( target )
 
 	entity soul = target.GetTitanSoul()
@@ -993,6 +994,7 @@ void function MeleeThread_OgreVsTitan( SyncedMelee action, entity attacker, enti
 				if ( attacker.IsPlayer() )
 					attacker.UnforceStand()
 
+				attacker.ClearInvulnerable()
 				attacker.ClearParent()
 
 				if ( attacker.IsPlayer() )
