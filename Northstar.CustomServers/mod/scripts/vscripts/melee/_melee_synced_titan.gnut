@@ -370,7 +370,7 @@ void function MeleeThread_AtlasVsTitanShort( SyncedMelee action, entity attacker
 				if ( attacker.IsPlayer() )
 				{
 					ClearPlayerAnimViewEntity( attacker )
-					DeployAndEnableWeapons( attacker )
+					DeployViewModelAndEnableWeapons( attacker )
 					attacker.PlayerMelee_ExecutionEndAttacker()
 				}
 
@@ -400,7 +400,7 @@ void function MeleeThread_AtlasVsTitanShort( SyncedMelee action, entity attacker
 				{
 					target.PlayerMelee_ExecutionEndTarget()
 					ClearPlayerAnimViewEntity( target )
-					DeployAndEnableWeapons( target )
+					DeployViewModelAndEnableWeapons( target )
 				}
 
 
