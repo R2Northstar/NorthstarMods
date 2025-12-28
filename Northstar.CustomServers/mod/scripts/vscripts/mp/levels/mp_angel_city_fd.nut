@@ -6,10 +6,6 @@ void function initFrontierDefenseData()
 	SetFDDropshipSpawn( < -331, 3791, 141 >, < 0, -180, 0 > )
 	SetFDGroundSpawn( < -644, 4469, 318 >, < 0, -145, 0 > )
 	
-	AddFDDropPodSpawn( < -136, 3758, 200 > )
-	AddFDDropPodSpawn( < -2374, 4565, 120 > )
-	AddFDDropPodSpawn( < -1459, 2416, 399 > )
-	
 	AddWaveAnnouncement( "fd_introEasy" )
 	AddWaveAnnouncement( "fd_waveTypeCloakDrone" )
 	AddWaveAnnouncement( "fd_soonNukeTitans" )
