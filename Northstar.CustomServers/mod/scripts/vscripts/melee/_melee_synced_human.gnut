@@ -62,7 +62,7 @@ bool function MeleeThread_PilotVsEnemyInternal( SyncedMelee action, entity attac
 				target.ClearParent()
 
 
-			if ( IsValid( attacker ) )
+			if ( IsValid( attacker ) && attacker.IsPlayer() )
 			{
 				attacker.PlayerMelee_SetState( PLAYER_MELEE_STATE_NONE )
 			}
@@ -404,8 +404,6 @@ void function MeleeThread_PilotVsEnemy_Target( SyncedMelee action, entity attack
 			thread AttachPlayerModelForDuration( attacker, action.attachModel1p, action.attachTag1p, 2.2 )
 		}
 	}
-
-	NPC_NoTarget( target )
 
 	if ( isAttackerRef )
 		waitthread FirstPersonSequence( targetSequence, target, attacker )

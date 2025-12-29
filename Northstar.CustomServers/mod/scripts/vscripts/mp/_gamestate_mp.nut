@@ -661,8 +661,6 @@ void function GameStateEnter_WinnerDetermined_Threaded()
 				SetGameState( eGameState.Postmatch )
 			}
 		}
-		else if ( file.switchSidesBased && !file.hasSwitchedSides && GameRules_GetTeamScore2( winningTeam ) >= ( GameMode_GetRoundScoreLimit( GAMETYPE ).tofloat() / 2.0 ) )
-			SetGameState( eGameState.SwitchingSides )
 		else if ( file.usePickLoadoutScreen && GetCurrentPlaylistVarInt( "pick_loadout_every_round", 1 ) ) //Playlist var needs to be enabled as well
 			SetGameState( eGameState.PickLoadout )
 		else

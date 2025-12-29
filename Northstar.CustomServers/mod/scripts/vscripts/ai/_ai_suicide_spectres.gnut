@@ -121,9 +121,9 @@ void function FragDroneDeath_Think( entity spectre, var damageInfo )
 	int team = GetExplosionTeamBasedOnGamemode( spectre )
 
 	int damageDef = GetDamageDefForFragDrone( spectre )
-	
+
 	RadiusDamage_DamageDefSimple( damageDef, pos, attackerEnt, spectre, 0 )
-	
+
 	EmitSoundAtPosition( spectre.GetTeam(), pos, expSFX )
 	CreateShake( pos, 10, 105, 1.25, 768 )
 	StartParticleEffectInWorld( expFX, fxOrg, Vector( 0, 0, 0 ) )

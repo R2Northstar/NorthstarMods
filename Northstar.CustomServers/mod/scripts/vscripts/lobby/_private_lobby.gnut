@@ -6,7 +6,7 @@ struct {
 	int startState
 	string map = "mp_forwardbase_kodai"
 	array<string> maplist
-	string mode = "aitdm"
+	string mode = "tdm"
 } file 
 
 void function PrivateLobby_Init()

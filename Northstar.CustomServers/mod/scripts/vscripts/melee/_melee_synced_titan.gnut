@@ -242,7 +242,7 @@ bool function MeleeThread_TitanVsTitan_Internal( SyncedMelee action, entity atta
 
 void functionref( SyncedMelee action, entity attacker, entity target ) function GetTitanSyncedMeleeFunc( entity attacker, entity target )
 {
-	if ( GetCurrentPlaylistVarInt( "titan_executions_always_short", 0 ) != 0 )
+	if ( GetCurrentPlaylistVarInt( "titan_executions_always_short", 0 ) )
 		return MeleeThread_AtlasVsTitanShort
 
 	entity soul = attacker.GetTitanSoul()
@@ -316,7 +316,9 @@ void function MeleeThread_AtlasVsTitanShort( SyncedMelee action, entity attacker
 	attackerSequence.thirdPersonAnim = attackerAnimation3p
 	// attackerSequence.thirdPersonAnimIdle = "at_melee_sync_frontkill_end_idle"
 
-	attackerSequence.firstPersonAnim = attackerAnimation1p
+	if ( attacker.IsPlayer() )
+		attackerSequence.firstPersonAnim = attackerAnimation1p
+
 	targetSequence.thirdPersonAnim = targetAnimation3p
 	targetSequence.blendTime = 0.25
 
@@ -327,10 +329,10 @@ void function MeleeThread_AtlasVsTitanShort( SyncedMelee action, entity attacker
 
 	//HACK! This function was originally for NPCs only, but now that it is being used for players, we need to holster their weapon
 	if ( target.IsPlayer() )
-		HolsterAndDisableWeapons( target )
+		HolsterViewModelAndDisableWeapons( target )
 
-	if ( ShouldHolsterWeaponForSyncedMelee( attacker ) )
-		HolsterAndDisableWeapons( attacker )
+	if ( attacker.IsPlayer() )
+		HolsterViewModelAndDisableWeapons( attacker )
 
 	local attackerViewBody
 
@@ -341,8 +343,6 @@ void function MeleeThread_AtlasVsTitanShort( SyncedMelee action, entity attacker
 	soul.SetInvalidHealthBarEnt( true )
 
 	AddAnimEvent( target, "rider_rodeo_over", ForceTitanRodeoToEnd  )
-
-	target.SetInvulnerable() //Setting target of execution as invulnerable to prevent them dying mid-way
 
 	OnThreadEnd(
 		function() : ( ref, attacker, target, e  )
@@ -362,31 +362,45 @@ void function MeleeThread_AtlasVsTitanShort( SyncedMelee action, entity attacker
 			if ( IsValid( attacker ) )
 			{
 				//attacker.ClearInvulnerable()
-				attacker.UnforceStand()
+				if ( attacker.IsPlayer() )
+					attacker.UnforceStand()
+
 				attacker.ClearParent()
-				ClearPlayerAnimViewEntity( attacker )
-				DeployAndEnableWeapons( attacker )
-				attacker.PlayerMelee_ExecutionEndAttacker()
+
+				if ( attacker.IsPlayer() )
+				{
+					ClearPlayerAnimViewEntity( attacker )
+					DeployViewModelAndEnableWeapons( attacker )
+					attacker.PlayerMelee_ExecutionEndAttacker()
+				}
 
 				if ( IsAlive( attacker ) )
 				{
 					// if we got into solid, teleport back to safe place
 					if ( !PutEntityInSafeSpot( attacker, null, null, expect vector( e.attackerStartOrg ), attacker.GetOrigin() ) )
-                    {
+					{
 						printt( "PutEntityInSafeSpot failed, putting him back at the start origin" )
 						attacker.SetOrigin( expect vector( e.attackerStartOrg ) )
-                    }
+					}
 
 				}
+
+				vector noRollAngle = attacker.GetAngles()
+
+				noRollAngle.x = 0
+
+				attacker.SetAngles( noRollAngle )
 			}
 
 			if ( IsValid( target ) )
 			{
+				target.ClearInvulnerable()
+
 				if ( !target.IsNPC() )
 				{
 					target.PlayerMelee_ExecutionEndTarget()
 					ClearPlayerAnimViewEntity( target )
-					DeployAndEnableWeapons( target )
+					DeployViewModelAndEnableWeapons( target )
 				}
 
 
@@ -406,6 +420,12 @@ void function MeleeThread_AtlasVsTitanShort( SyncedMelee action, entity attacker
 			}
 		}
 	)
+
+	attacker.EndSignal( "OnDeath" )
+	attacker.EndSignal( "OnDestroy" )
+
+	target.EndSignal( "OnRespawnPlayer" )
+	target.EndSignal( "OnDestroy" )
 
 	thread FirstPersonSequence( targetSequence, target, ref )
 	waitthread FirstPersonSequence( attackerSequence, attacker, ref )
@@ -473,7 +493,7 @@ function MeleeThread_TitanRipsPilot( table e, SyncedMelee action, entity attacke
 
 	//	attacker.SetInvulnerable()
 	target.SetInvulnerable()    //HACK: Have to SetInvulnerable first before attacker holsters weapon, because if the attacker is vortexing, holster will release bullets caught and kill off the victim if low enough health
-	if ( attacker.IsPlayer() && ShouldHolsterWeaponForSyncedMelee( attacker ) )
+	if ( attacker.IsPlayer() )
 		HolsterViewModelAndDisableWeapons( attacker )
 
 	if ( !target.IsNPC() )
@@ -517,6 +537,18 @@ function MeleeThread_TitanRipsPilot( table e, SyncedMelee action, entity attacke
 	entity targetSoul = target.GetTitanSoul()
 	targetSoul.SetInvalidHealthBarEnt( true )
 
+	vector refAngles = GetRefAnglesBetweenEnts( attacker, target )
+
+	if ( !attacker.IsOnGround() )
+		refAngles = < 0, refAngles.y, 0 >
+
+	vector fwd = AnglesToForward( refAngles ) * -1
+	vector targetAngles = VectorToAngles( fwd )
+
+	targetAngles.x = 0
+
+	target.SetAngles( targetAngles )
+
 	entity targetTitan
 	if ( targetIsPlayer )
 	{
@@ -536,9 +568,7 @@ function MeleeThread_TitanRipsPilot( table e, SyncedMelee action, entity attacke
 	{
 		targetTitan = target
 
-		// target is now a random dude
-		target = CreateSoldier( target.GetTeam(), Vector(0,0,0), Vector(0,0,0) )
-		DispatchSpawn( target )
+		target = CreateNpcTitanPilotModel( target, true )
     	e.target <- target
 	}
 
@@ -546,7 +576,8 @@ function MeleeThread_TitanRipsPilot( table e, SyncedMelee action, entity attacke
 	AddAnimEvent( targetTitan, "rider_rodeo_over", ForceTitanRodeoToEnd  )
 	AddAnimEvent( targetTitan, "melee_killed_ragdoll", MeleeKilledRagdoll, attacker )
 
-	targetTitan.SetInvulnerable() //Setting target of execution as invulnerable to prevent them dying mid-way
+	targetTitan.SetInvulnerable()
+	target.SetInvulnerable()
 
 	target.SetOwner( attacker )
 	target.kv.VisibilityFlags = (ENTITY_VISIBLE_TO_FRIENDLY | ENTITY_VISIBLE_TO_ENEMY) //owner cant see
@@ -560,30 +591,14 @@ function MeleeThread_TitanRipsPilot( table e, SyncedMelee action, entity attacke
 		{
 			if ( IsValid( ref ) )
 			{
-				if ( IsValid( attacker ) )
-				{
-					attacker.ClearParent()
-				}
-				else
-				{
-					TryClearParent( attacker )
-				}
+				ClearChildren( ref )
 
-				if ( IsValid( target ) )
-				{
-					target.ClearParent()
-				}
-				else
-				{
-					TryClearParent( target )
-				}
-
-				AssertNoPlayerChildren( ref )
 				ref.Kill_Deprecated_UseDestroyInstead()
 			}
 
 			if ( IsValid( attacker ) )
 			{
+				attacker.ClearInvulnerable()
 				attacker.ClearParent()
 				if( attacker.IsPlayer() )
 				{
@@ -598,6 +613,12 @@ function MeleeThread_TitanRipsPilot( table e, SyncedMelee action, entity attacke
 					PutEntityInSafeSpot( attacker, null, null, expect vector( e.attackerStartOrg ), attacker.GetOrigin() )
 					attacker.SetActiveWeaponBySlot( 0 )
 				}
+
+				vector noRollAngle = attacker.GetAngles()
+
+				noRollAngle.x = 0
+
+				attacker.SetAngles( noRollAngle )
 			}
 
 			if ( IsValid( target ) )
@@ -637,15 +658,38 @@ function MeleeThread_TitanRipsPilot( table e, SyncedMelee action, entity attacke
 		}
 	)
 
+	attacker.EndSignal( "OnDeath" )
+	attacker.EndSignal( "OnDestroy" )
+
 	target.EndSignal( "OnRespawnPlayer" )
+	target.EndSignal( "OnDestroy" )
 
 	waitthread TitanSyncedMeleeAnimationsPlay( attackerBodySequence, attackerViewBody, ref, targetBodySequence, target, attackerSequence, attacker, targetSequence, targetTitan, e )
 }
 
-entity function CreateNpcTitanPilotModel( entity titan )
+entity function CreateNpcTitanPilotModel( entity titan, bool createEntity = false )
 {
 	asset modelName = GetNpcTitanPilotModel( titan )
-	return CreatePropDynamic( modelName )
+
+	if ( modelName == $"" )
+		modelName = TEAM_IMC_GRUNT_MODEL
+
+	if ( createEntity )
+	{
+		entity pilot = CreateElitePilot( titan.GetTeam(), titan.GetOrigin(), titan.GetAngles() )
+
+		DispatchSpawn( pilot )
+
+		pilot.SetModel( modelName )
+
+		return pilot
+	}
+
+	entity model = CreatePropDynamic( modelName )
+
+	SetTeam( model, titan.GetTeam() )
+
+	return model
 }
 
 
@@ -672,14 +716,20 @@ function TitanSyncedMeleeAnimationsPlay( FirstPersonSequenceStruct attackerBodyS
 		{
 			// insure visibility
 			if ( IsValid( targetTitan ) )
-				targetTitan.kv.VisibilityFlags = ENTITY_VISIBLE_TO_EVERYONE
+			{
+				targetTitan.ClearInvulnerable()
+
+				if ( IsAlive( targetTitan ) )
+					targetTitan.Die( attacker, attacker, { scriptType = DF_MELEE, damageSourceId = eDamageSourceId.titan_execution } )
+			}
 
 			if ( !IsAlive( attacker ) )
 			{
 				attacker.Anim_Stop()
 
-				if ( !e.thrown && IsAlive( target ) )
+				if ( !e.thrown && IsAlive( target ) && target.IsPlayer() )
 				{
+					target.ClearInvulnerable()
 					target.Anim_Stop()
 					target.SetOwner( null )
 					target.kv.VisibilityFlags = ENTITY_VISIBLE_TO_EVERYONE
@@ -689,8 +739,9 @@ function TitanSyncedMeleeAnimationsPlay( FirstPersonSequenceStruct attackerBodyS
 						target.GetFirstPersonProxy().Anim_Stop()
 						target.SetPlayerSettings( e.oldPlayerSettings )
 					}
-
 				}
+				else if ( IsAlive( target ) )
+					target.Die( attacker, attacker, { scriptType = DF_MELEE, damageSourceId = eDamageSourceId.titan_execution } )
 			}
 		}
 	)
@@ -934,13 +985,8 @@ void function MeleeThread_OgreVsTitan( SyncedMelee action, entity attacker, enti
 		{
 			if ( IsValid( ref ) )
 			{
-				if ( IsValid( attacker ) )
-					attacker.ClearParent()
+				ClearChildren( ref )
 
-				if ( IsValid( target ) )
-					target.ClearParent()
-
-				AssertNoPlayerChildren( ref )
 				ref.Kill_Deprecated_UseDestroyInstead()
 			}
 
@@ -949,6 +995,7 @@ void function MeleeThread_OgreVsTitan( SyncedMelee action, entity attacker, enti
 				if ( attacker.IsPlayer() )
 					attacker.UnforceStand()
 
+				attacker.ClearInvulnerable()
 				attacker.ClearParent()
 
 				if ( attacker.IsPlayer() )
@@ -1002,11 +1049,26 @@ void function MeleeThread_OgreVsTitan( SyncedMelee action, entity attacker, enti
 	)
 
 	attacker.EndSignal( "OnDeath" )
+	attacker.EndSignal( "OnDestroy" )
+
+	target.EndSignal( "OnRespawnPlayer" )
+	target.EndSignal( "OnDestroy" )
 
 	EmitDifferentSoundsOnEntityForPlayerAndWorld( "Ogre_1p_Sync_Melee", "Ogre_3p_Sync_Melee", attacker, attacker )
 
 	AddAnimEvent( target, "lost_arm", TitanLostArm, e )
 
+	vector refAngles = GetRefAnglesBetweenEnts( attacker, target )
+
+	if ( !attacker.IsOnGround() )
+		refAngles = < 0, refAngles.y, 0 >
+
+	vector fwd = AnglesToForward( refAngles ) * -1
+	vector targetAngles = VectorToAngles( fwd )
+
+	targetAngles.x = 0
+
+	target.SetAngles( targetAngles )
 
 	thread FirstPersonSequence( targetSequence, target, ref )
 	waitthread FirstPersonSequence( attackerSequence, attacker, ref )
@@ -1110,8 +1172,6 @@ void function TitanVsTitan_3p( SyncedMelee action, entity attacker, entity targe
 
 	//	attacker.SetInvulnerable()
 	target.SetInvulnerable()
-
-	NPC_NoTarget( target )
 
 	entity targetViewBody
 	FirstPersonSequenceStruct targetBodySequence
@@ -1342,9 +1402,7 @@ void function TitanVsTitan_3p( SyncedMelee action, entity attacker, entity targe
 	vector refAngles = GetRefAnglesBetweenEnts( attacker, target )
 
 	if ( !attacker.IsOnGround() )
-	{
-		refAngles = <0,refAngles.y,0>
-	}
+		refAngles = < 0, refAngles.y, 0 >
 
 	vector fwd = AnglesToForward( refAngles ) * -1
 	vector targetAngles = VectorToAngles( fwd )
@@ -1510,7 +1568,10 @@ void function MeleeKilledRagdoll( entity titan )
 
 	if ( !IsValid( attacker ) )
 		return
-	titan.Die( attacker, attacker, { scriptType = DF_MELEE, damageSourceId = eDamageSourceId.titan_execution } )
+	
+	if ( IsAlive( titan ) )
+		titan.Die( attacker, attacker, { scriptType = DF_MELEE, damageSourceId = eDamageSourceId.titan_execution } )
+
 	titan.SetContinueAnimatingAfterRagdoll( true )
 	titan.BecomeRagdoll( < 0, 0, 0 >, false )
 }

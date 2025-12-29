@@ -143,7 +143,7 @@ void function OnPrematchStart()
 		SetTeam( militiaIon, team )
 		trackedEntities.append( militiaIon )
 
-		entity militiaGrunt = CreatePropDynamic( $"models/humans/grunts/mlt_grunt_rifle.mdl", < 0, 0, 0 >, < 0, 0, 0 > )
+		entity militiaGrunt = CreatePropDynamic( $"models/humans/grunts/mlt_grunt_smg.mdl", < 0, 0, 0 >, < 0, 0, 0 > )
 		militiaGrunt.SetParent( militiaIon, "HIJACK" )
 		militiaGrunt.MarkAsNonMovingAttachment()
 		militiaGrunt.Anim_Play( "pt_titan_activation_pilot" )
@@ -222,6 +222,12 @@ void function OnPrematchStart()
 	thread PodBootFXThread( file.imcPod )
 	thread PodBootFXThread( file.militiaPod )
 	
+	// cleanup intro objects
+
+	foreach ( entity ent in trackedEntities )
+		if ( IsValid( ent ) )
+			ent.Destroy()
+
 	wait 6.0
 	ClassicMP_OnIntroFinished()
 	
@@ -232,15 +238,8 @@ void function OnPrematchStart()
 	//PodFXCleanup( file.imcPod )
 	//PodFXCleanup( file.militiaPod )
 	
-	// cleanup intro objects
 	foreach ( entity trigger in triggers )
 		trigger.kv.triggerFilterPlayer = "all"
-
-	foreach ( entity ent in trackedEntities )
-	{
-		if ( IsValid(ent) )
-			ent.Destroy()
-	}
 }
 
 void function PlayerWatchesWargamesIntro( entity player )
@@ -317,6 +316,9 @@ void function PlayerWatchesWargamesIntro( entity player )
 	
 	// 7 seconds of nothing before we start the pod sequence
 	wait ( file.introStartTime + 7.0 ) - Time()
+
+	while ( Time() < file.introStartTime + 7.0 ) // note: remove this when wait stops waiting less than the input time
+		WaitFrame()
 	
 	FirstPersonSequenceStruct podCloseSequence
 	podCloseSequence.firstPersonAnim = "ptpov_trainingpod_doors_close"

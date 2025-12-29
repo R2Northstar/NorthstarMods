@@ -931,8 +931,6 @@ function TitanEmbark_PlayerEmbarks( entity player, entity titan, table e )
 
 	//thread DelayedDisableEmbarkPlayerHud( player, sequence )
 
-	AddAnimEvent( player, "phase_shift_start", PhaseEmbarkPhaseStart )
-	AddAnimEvent( player, "phase_shift_stop", PhaseEmbarkPhaseStop )
 	AddAnimEvent( titan, "cockpit_light_start", CockpitLightStart )
 	AddAnimEvent( titan, "cockpit_light_stop", CockpitLightStop )
 
@@ -952,17 +950,16 @@ function TitanEmbark_PlayerEmbarks( entity player, entity titan, table e )
 	)
 	
 	#if MP
-	if ( !doFirstPersonAnim && ShouldRunFirstPersonSequence( player, true, false ) )
-	{
-		FirstPersonSequenceForce1P( sequence, player, titan )
-		AddAnimEvent( player, "phase_shift_start", PhaseEmbarkPhaseStart_FP )
-		AddAnimEvent( player, "phase_shift_stop", PhaseEmbarkPhaseStop_FP )
-	}
-	else
-		AddAnimEvent( player, "phase_shift_start", PhaseEmbarkPhaseStart )
-	#else
-	AddAnimEvent( player, "phase_shift_start", PhaseEmbarkPhaseStart )
+		if ( !doFirstPersonAnim && ShouldRunFirstPersonSequence( player, true, false ) )
+		{
+			FirstPersonSequenceForce1P( sequence, player, titan )
+			AddAnimEvent( player, "phase_shift_start", PhaseEmbarkPhaseStart_FP )
+			AddAnimEvent( player, "phase_shift_stop", PhaseEmbarkPhaseStop_FP )
+		}
 	#endif
+
+	AddAnimEvent( player, "phase_shift_start", PhaseEmbarkPhaseStart )
+	AddAnimEvent( player, "phase_shift_stop", PhaseEmbarkPhaseStop )
 
 	thread FirstPersonSequence( sequence, player, titan )
 	// EmitDifferentSoundsOnEntityForPlayerAndWorld( firstPersonAudio, thirdPersonAudio, titan, player )

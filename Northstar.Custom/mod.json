@@ -31,12 +31,12 @@
 			"Flags": "ARCHIVE_PLAYERPROFILE"
 		},
 		{
-			"Name": "embark_style",
+			"Name": "ns_embark_style",
 			"DefaultValue": "0",
 			"Flags": "ARCHIVE_PLAYERPROFILE|USERINFO"
 		},
 		{
-			"Name": "execution_style",
+			"Name": "ns_execution_style",
 			"DefaultValue": "0",
 			"Flags": "ARCHIVE_PLAYERPROFILE|USERINFO"
 		}

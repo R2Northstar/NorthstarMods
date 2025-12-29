@@ -10,7 +10,6 @@ global function AddCallback_RegisterCustomFDContent
 global function AddFDCustomProp
 global function AddFDCustomShipStart
 global function AddFDCustomTitanStart
-global function AddFDDropPodSpawn
 global function SetFDGroundSpawn
 global function SetFDDropshipSpawn
 global function PlaceFDShop
@@ -58,12 +57,13 @@ struct {
 	bool harvesterHalfHealth
 	float harvesterDamageTaken
 	float lastHarvesterLowHPAnnouncedTime
-	array<vector> DropPodSpawns = []
 	array<string> waveAnnouncement = []
 	vector shopPosition
 	vector shopAngles = < 0, 0, 0 >
 	vector dropshipSpawnPosition  = < 0, 0, 0 >
 	vector dropshipSpawnAngles = < 0, 0, 0 >
+	vector groundSpawnPosition
+	vector groundSpawnAngles = < 0, 0, 0 >
 	vector harvesterLocation = < 0, 0, 0 >
 	vector harvesterLocationOverride = < 0, 0, 0 >
 	vector harvesterAngles = < 0, 0, 0 >
@@ -114,34 +114,6 @@ const array<string> DROPSHIP_EXIT_ANIMS = [
 	"pt_ds_coop_side_intro_gen_exit_A",
 	"pt_ds_coop_side_intro_gen_exit_C",
 	"pt_ds_coop_side_intro_gen_exit_D"
-]
-
-const array<string> DROPPOD_IDLE_ANIMS = [
-	"dp_idle_A",
-	"dp_idle_C",
-	"dp_idle_D",
-	"dp_idle_B"
-]
-
-const array<string> DROPPOD_IDLE_ANIMS_POV = [
-	"ptpov_droppod_drop_front_L",
-	"ptpov_droppod_drop_front_R",
-	"ptpov_droppod_drop_back_R",
-	"ptpov_droppod_drop_back_L"
-]
-
-const array<string> DROPPOD_EXIT_ANIMS = [
-	"dp_exit_A",
-	"dp_exit_C",
-	"dp_exit_D",
-	"dp_exit_B"
-]
-
-const array<string> DROPPOD_EXIT_ANIMS_POV = [
-	"ptpov_droppod_exit_front_L",
-	"ptpov_droppod_exit_front_R",
-	"ptpov_droppod_exit_back_R",
-	"ptpov_droppod_exit_back_L"
 ]
 
 void function GamemodeFD_Init()
@@ -397,12 +369,10 @@ void function AddFDCustomTitanStart( vector origin, vector angles )
 	file.titanSpawnPoints.append( titanSpawn )
 }
 
-void function AddFDDropPodSpawn( vector origin )
-{
-}
-
 void function SetFDGroundSpawn( vector origin, vector angles = < 0, 0, 0 > )
 {
+	file.groundSpawnPosition = origin
+	file.groundSpawnAngles = angles
 }
 
 void function SetFDDropshipSpawn( vector origin, vector angles = < 0, 0, 0 > )
@@ -1309,7 +1279,10 @@ void function GamemodeFD_InitPlayer( entity player )
 void function OnPlayerDisconnectedOrDestroyed( entity player )
 {
 	if ( file.playersInDropship.contains( player ) )
+	{
 		file.playersInDropship.removebyvalue( player )
+		file.playersInShip--
+	}
 	
 	if ( player in file.playerAwardStats ) //Clear out disconnecting players so the postcards don't show less than 4 when server has more than 4 slots
 		delete file.playerAwardStats[player]
@@ -1692,7 +1665,24 @@ void function RateSpawnpoints_FD( int checkClass, array<entity> spawnpoints, int
 
 void function FD_PlayerRespawnCallback( entity player )
 {
-	thread FD_PlayerRespawnThreaded( player )
+	if ( IsValidPlayer( player ) && player.IsTitan() )
+	{
+		if ( player.s.didthepvpglitch )
+			SetTeam( player, TEAM_IMC )
+
+		player.Minimap_AlwaysShow( TEAM_MILITIA, null )
+
+		if ( IsHarvesterAlive( fd_harvester.harvester ) && player.GetTeam() != TEAM_IMC && GetGameState() != eGameState.Prematch )
+		{
+			player.Highlight_SetParam( 1, 0, < 0, 0, 0 > )
+			player.SetInvulnerable()
+			player.SetNoTarget( true )
+
+			thread FD_PlayerRespawnProtection( player )
+		}
+	}
+	else
+		thread FD_PlayerRespawnThreaded( player )
 }
 
 bool function FD_ShouldUseRespawnDropship()
@@ -1747,6 +1737,16 @@ void function FD_PlayerRespawnThreaded( entity player )
 	//If the wave is on break joiners can buy stuff with the time remaining
 	//Also more than 4 players, additionals will spawn directly on ground
 	//Respawning as Titan just will apply the Protection time
+
+	if ( 
+		!FD_ShouldUseRespawnDropship() && IsValidPlayer( player ) && !player.IsTitan() && !GamePlaying() &&
+		player.GetTeam() != TEAM_IMC && !player.s.didthepvpglitch
+	)
+	{
+		//Teleport player to a more reliable location if they spawn on ground, some maps picks too far away spawns from the Harvester and Shop (i.e Colony, Homestead, Drydock)
+		player.SetOrigin( file.groundSpawnPosition )
+		player.SetAngles( file.groundSpawnAngles )
+	}
 	
 	if ( !IsHarvesterAlive( fd_harvester.harvester ) || player.GetTeam() == TEAM_IMC || GetGameState() == eGameState.Prematch )
 		return
@@ -1768,7 +1768,6 @@ void function FD_PlayerRespawnThreaded( entity player )
 	
 	if ( !FD_ShouldUseRespawnDropship() )
 	{
-		//Teleport player to a more reliable location if they spawn on ground, some maps picks too far away spawns from the Harvester and Shop (i.e Colony, Homestead, Drydock)
 		if ( IsValidPlayer( player ) && !player.IsTitan() )
 			thread FD_PlayerRespawnProtection( player )
 		return
@@ -2368,6 +2367,12 @@ void function AddTurretSentry( entity turret )
 
 void function GamemodeFD_OnPlayerKilled( entity victim, entity attacker, var damageInfo )
 {
+	if ( file.playersInDropship.contains( victim ) )
+	{
+		file.playersInDropship.removebyvalue( victim )
+		file.playersInShip--
+	}
+
 	if ( !IsHarvesterAlive( fd_harvester.harvester ) || GetGameState() != eGameState.Playing )
 		return
 	
@@ -2887,58 +2892,6 @@ bool function FD_PlayerInDropship( entity player )
 			return true
 
 	return false
-}
-
-void function FD_SpawnPlayerDroppod( entity player )
-{
-	vector PodOrigin = file.DropPodSpawns.getrandom()
-	int PodAngle = RandomIntRange( 0, 359 )
-	int animIdx = RandomIntRange( 0, 3 )
-	
-	entity pod = CreateDropPod( PodOrigin, < 0, 0, 0 > )
-	SetTeam( pod, TEAM_MILITIA )
-	InitFireteamDropPod( pod )
-	player.SetOrigin( PodOrigin )
-	player.SetAngles( < 0, PodAngle, 0 > )
-	player.SetParent( pod, "ATTACH", true )
-	HolsterAndDisableWeapons( player )
-	
-	FirstPersonSequenceStruct podSequence
-	podSequence.firstPersonAnim = DROPPOD_IDLE_ANIMS_POV[animIdx]
-	podSequence.thirdPersonAnim = DROPPOD_IDLE_ANIMS[animIdx]
-	podSequence.attachment = "ATTACH"
-	podSequence.blendTime = 0.0
-	podSequence.hideProxy = false
-	podSequence.viewConeFunction = ViewConeRampFree
-	
-	thread FirstPersonSequence( podSequence, player, pod )
-	waitthread LaunchAnimDropPod( pod, "pod_testpath", PodOrigin, < 0, PodAngle, 0 > )
-	thread DropPodActiveThink( pod )
-	
-	if ( IsValidPlayer( player ) )
-	{
-		podSequence.firstPersonAnim = DROPPOD_EXIT_ANIMS_POV[animIdx]
-		podSequence.thirdPersonAnim = DROPPOD_EXIT_ANIMS[animIdx]
-		podSequence.attachment = "ATTACH"
-		podSequence.blendTime = 0.0
-		podSequence.hideProxy = false
-		podSequence.enablePlanting = true
-		podSequence.viewConeFunction = ViewConeRampFree
-		
-		waitthread FirstPersonSequence( podSequence, player, pod )
-	}
-	
-	if ( IsValidPlayer( player ) ) //Double check for crash sanity stuff after wait
-	{
-		pod.NotSolid()
-		player.ClearParent()
-		player.EnableWeaponViewModel()
-		PutEntityInSafeSpot( player, null, null, pod.GetOrigin(), player.GetOrigin() )
-		ClearPlayerAnimViewEntity( player )
-		Loadouts_OnUsedLoadoutCrate( player )
-		EnableOffhandWeapons( player )
-		thread FD_PlayerRespawnProtection( player )
-	}
 }
 
 void function FD_DropshipSpawnDropship()

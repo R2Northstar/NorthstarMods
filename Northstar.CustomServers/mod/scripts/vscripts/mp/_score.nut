@@ -304,13 +304,18 @@ void function ScoreEvent_MatchComplete( int winningTeam )
 	foreach( entity player in GetPlayerArray() )
 	{
 		AddPlayerScore( player, "MatchComplete" )
-		SetPlayerChallengeMatchComplete( player )
+
+		if ( PlayerInChallengesPool( player ) )
+			SetPlayerChallengeMatchComplete( player )
+
 		if ( player.GetTeam() == winningTeam )
 		{
 			AddPlayerScore( player, "MatchVictory" )
-			SetPlayerChallengeMatchWon( player, true )
+
+			if ( PlayerInChallengesPool( player ) )
+				SetPlayerChallengeMatchWon( player, true )
 		}
-		else
+		else if ( PlayerInChallengesPool( player ) )
 			SetPlayerChallengeMatchWon( player, false )
 	}
 }
