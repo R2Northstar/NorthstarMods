@@ -269,7 +269,7 @@ void function SetWinner( int ornull team, string winningReason = "", string losi
 		if ( team != null && team != TEAM_UNASSIGNED )
 			ScoreEvent_MatchComplete( expect int( team ) )
 		
-		foreach ( entity player in GetPlayerArrayOfTeam( GetWinningTeam() )
+		foreach ( entity player in GetPlayerArrayOfTeam( GetWinningTeam() ) )
 			UnlockAchievement( player, achievements.MP_WIN )
 		
 		RegisterMatchStats_OnMatchComplete()
