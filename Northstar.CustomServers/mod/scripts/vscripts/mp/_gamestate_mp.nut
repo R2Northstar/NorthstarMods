@@ -253,9 +253,6 @@ void function SetWinner( int ornull team, string winningReason = "", string losi
 			else
 				Remote_CallFunction_NonReplay( player, "ServerCallback_AnnounceWinner", 0, announcementSubstr, ROUND_WINNING_KILL_REPLAY_SCREEN_FADE_TIME )
 		}
-
-		if( team != null && player.GetTeam() == team )
-			UnlockAchievement( player, achievements.MP_WIN )
 	}
 
 	if ( !team ) // This is to make GetWinningTeam return TEAM_UNASSIGNED for clients so they don't crash due to music logic upon entering WinnerDetermined state
@@ -271,6 +268,9 @@ void function SetWinner( int ornull team, string winningReason = "", string losi
 	{
 		if ( team != null && team != TEAM_UNASSIGNED )
 			ScoreEvent_MatchComplete( expect int( team ) )
+		
+		foreach ( entity player in GetPlayerArrayOfTeam( GetWinningTeam() )
+			UnlockAchievement( player, achievements.MP_WIN )
 		
 		RegisterMatchStats_OnMatchComplete()
 	}
@@ -615,11 +615,12 @@ void function GameStateEnter_WinnerDetermined_Threaded()
 
 		wait replayLength
 		foreach ( entity player in GetPlayerArray() )
-		{
 			ClearPlayerFromReplay( player )
-			WaitFrame()
+		
+		WaitFrame()
+		
+		foreach ( entity player in GetPlayerArray() )
 			ScreenFadeToBlackForever( player, 0.0 )
-		}
 		
 		if ( IsRoundBased() && !HasRoundScoreLimitBeenReached() && HasSwitchedSides() == 0 )
 			CleanUpEntitiesForRoundEnd()
