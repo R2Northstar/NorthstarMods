@@ -215,6 +215,7 @@ void function OnPrematchStart()
 	FirstPersonSequenceStruct podCloseSequence
 	podCloseSequence.thirdPersonAnim = "trainingpod_doors_close"
 	podCloseSequence.thirdPersonAnimIdle = "trainingpod_doors_close_idle"
+	podCloseSequence.setInitialTime = Time() - ( file.introStartTime + 7.0 )
 	thread FirstPersonSequence( podCloseSequence, file.imcPod )
 	thread FirstPersonSequence( podCloseSequence, file.militiaPod )
 	
