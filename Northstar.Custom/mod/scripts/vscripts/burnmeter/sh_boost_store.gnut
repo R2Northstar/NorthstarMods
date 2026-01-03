@@ -337,9 +337,6 @@ bool function ClientCommand_Withdraw( entity player, array<string> args )
 {
 	if ( !BoostStoreOpen() )
 		return true
-	
-	if ( !BoostStoreOpen() )
-		return true
 
 	if ( !IsAlive( player ) )
 		return true
