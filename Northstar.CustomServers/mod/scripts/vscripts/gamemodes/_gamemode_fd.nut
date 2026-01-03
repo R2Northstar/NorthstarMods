@@ -1673,13 +1673,7 @@ void function FD_PlayerRespawnCallback( entity player )
 		player.Minimap_AlwaysShow( TEAM_MILITIA, null )
 
 		if ( IsHarvesterAlive( fd_harvester.harvester ) && player.GetTeam() != TEAM_IMC && GetGameState() != eGameState.Prematch )
-		{
-			player.Highlight_SetParam( 1, 0, < 0, 0, 0 > )
-			player.SetInvulnerable()
-			player.SetNoTarget( true )
-
-			thread FD_PlayerRespawnProtection( player )
-		}
+			player.Highlight_SetParam( 1, 0, HIGHLIGHT_COLOR_FRIENDLY )
 	}
 	else
 		thread FD_PlayerRespawnThreaded( player )
