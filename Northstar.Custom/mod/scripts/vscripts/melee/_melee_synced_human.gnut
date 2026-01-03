@@ -11,7 +11,7 @@ void function MeleeSyncedServer_Init()
 bool function MeleeThread_PilotVsEnemy( SyncedMelee action, entity attacker, entity target )
 {
 	// function off for reload scripts
-	return MeleeThread_PilotVsEnemyInternal( action, attacker, target )
+	return MeleeThread_PilotVsEnemyInternal( clone action, attacker, target )
 }
 
 bool function MeleeThread_PilotVsEnemyInternal( SyncedMelee action, entity attacker, entity target )
