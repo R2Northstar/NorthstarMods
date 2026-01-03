@@ -1665,18 +1665,103 @@ void function RateSpawnpoints_FD( int checkClass, array<entity> spawnpoints, int
 
 void function FD_PlayerRespawnCallback( entity player )
 {
-	if ( IsValidPlayer( player ) && player.IsTitan() )
+	if ( IsValidPlayer( player ) )
 	{
-		if ( player.s.didthepvpglitch )
+		if ( !GetGlobalNetInt( "FD_currentWave" ) )
+			PlayerEarnMeter_SetMode( player, eEarnMeterMode.DISABLED )
+
+		if ( player.GetTeam() == TEAM_IMC )
+		{
+			player.Minimap_AlwaysShow( TEAM_MILITIA, null )
+
+			array<entity> spawnpoints = SpawnPoints_GetPilotStart( TEAM_IMC )
+
+			if ( spawnpoints.len() && !player.IsTitan() )
+			{
+				entity imcspawn = spawnpoints.getrandom()
+
+				player.SetOrigin( imcspawn.GetOrigin() )
+				player.SetAngles( imcspawn.GetAngles() )
+			}
+		}
+		else if ( player.GetTeam() == TEAM_MILITIA && player.s.didthepvpglitch )
+		{
 			SetTeam( player, TEAM_IMC )
 
-		player.Minimap_AlwaysShow( TEAM_MILITIA, null )
+			player.Minimap_AlwaysShow( TEAM_MILITIA, null )
 
-		if ( IsHarvesterAlive( fd_harvester.harvester ) && player.GetTeam() != TEAM_IMC && GetGameState() != eGameState.Prematch )
-			player.Highlight_SetParam( 1, 0, HIGHLIGHT_COLOR_FRIENDLY )
+			array<entity> spawnpoints = SpawnPoints_GetPilotStart( TEAM_IMC )
+
+			if ( spawnpoints.len() && !player.IsTitan() )
+			{
+				entity imcspawn = spawnpoints.getrandom()
+
+				player.SetOrigin( imcspawn.GetOrigin() )
+				player.SetAngles( imcspawn.GetAngles() )
+			}
+		}
 	}
 	else
-		thread FD_PlayerRespawnThreaded( player )
+		return
+
+	//Players spawn directly on ground if Dropship already passed the point where players drops from it
+	//If the wave is on break joiners can buy stuff with the time remaining
+	//Also more than 4 players, additionals will spawn directly on ground
+	//Respawning as Titan just will apply the Protection time
+
+	if ( 
+		!FD_ShouldUseRespawnDropship() && !player.IsTitan() && !GamePlaying() &&
+		player.GetTeam() != TEAM_IMC && !player.s.didthepvpglitch
+	)
+	{
+		//Teleport player to a more reliable location if they spawn on ground, some maps picks too far away spawns from the Harvester and Shop (i.e Colony, Homestead, Drydock)
+		player.SetOrigin( file.groundSpawnPosition )
+		player.SetAngles( file.groundSpawnAngles )
+	}
+
+	if ( !IsHarvesterAlive( fd_harvester.harvester ) || player.GetTeam() == TEAM_IMC || GetGameState() == eGameState.Prematch )
+		return
+
+	if ( !player.IsTitan() )
+	{
+		player.Highlight_SetParam( 1, 0, < 0, 0, 0 > )
+		player.SetInvulnerable()
+		player.SetNoTarget( true )
+
+		ScreenFadeFromBlack( player, 1.5, 0.5 )
+	}
+	else
+	{
+		player.Highlight_SetParam( 1, 0, HIGHLIGHT_COLOR_FRIENDLY )
+		return
+	}
+
+	if ( !FD_ShouldUseRespawnDropship() )
+	{
+		if ( !player.IsTitan() )
+			thread FD_PlayerRespawnProtection( player )
+		return
+	}
+
+	if ( file.dropshipState == eDropshipState.Idle )
+		thread FD_DropshipSpawnDropship()
+
+	if ( IsValid( file.dropship ) )
+	{
+		//Attach player
+		FirstPersonSequenceStruct idleSequence
+		idleSequence.firstPersonAnim = DROPSHIP_IDLE_ANIMS_POV[ file.playersInShip ]
+		idleSequence.thirdPersonAnim = DROPSHIP_IDLE_ANIMS[ file.playersInShip ]
+		idleSequence.attachment = "ORIGIN"
+		idleSequence.teleport = true
+		idleSequence.viewConeFunction = ViewConeNarrow
+		idleSequence.hideProxy = true
+
+		thread FirstPersonSequence( idleSequence, player, file.dropship )
+
+		file.playersInDropship.append( player )
+		file.playersInShip++
+	}
 }
 
 bool function FD_ShouldUseRespawnDropship()
@@ -1687,103 +1772,6 @@ bool function FD_ShouldUseRespawnDropship()
 		&& GetGlobalNetBool( "FD_waveActive" )
 		&& GetCurrentPlaylistVarInt( "fd_respawn_dropship", 1 ) != 0
 		&& file.dropshipSpawnPosition != < 0, 0, 0 >
-}
-
-void function FD_PlayerRespawnThreaded( entity player )
-{
-	player.EndSignal( "OnDestroy" )
-	
-	WaitFrame()
-	
-	if ( IsValidPlayer( player ) )
-	{
-		if ( GetGlobalNetInt( "FD_currentWave" ) == 0 )
-			PlayerEarnMeter_SetMode( player, eEarnMeterMode.DISABLED )
-		
-		if ( player.GetTeam() == TEAM_IMC )
-		{
-			player.Minimap_AlwaysShow( TEAM_MILITIA, null )
-			array<entity> spawnpoints = SpawnPoints_GetPilotStart( TEAM_IMC )
-			if ( spawnpoints.len() && !player.IsTitan() )
-			{
-				entity imcspawn = spawnpoints.getrandom()
-				player.SetOrigin( imcspawn.GetOrigin() )
-				player.SetAngles( imcspawn.GetAngles() )
-			}
-		}
-		else if ( player.GetTeam() == TEAM_MILITIA && player.s.didthepvpglitch )
-		{
-			SetTeam( player, TEAM_IMC )
-			player.Minimap_AlwaysShow( TEAM_MILITIA, null )
-			array<entity> spawnpoints = SpawnPoints_GetPilotStart( TEAM_IMC )
-			if ( spawnpoints.len() && !player.IsTitan() )
-			{
-				entity imcspawn = spawnpoints.getrandom()
-				player.SetOrigin( imcspawn.GetOrigin() )
-				player.SetAngles( imcspawn.GetAngles() )
-			}
-		}
-	}
-	else
-		return
-	
-	//Players spawn directly on ground if Dropship already passed the point where players drops from it
-	//If the wave is on break joiners can buy stuff with the time remaining
-	//Also more than 4 players, additionals will spawn directly on ground
-	//Respawning as Titan just will apply the Protection time
-
-	if ( 
-		!FD_ShouldUseRespawnDropship() && IsValidPlayer( player ) && !player.IsTitan() && !GamePlaying() &&
-		player.GetTeam() != TEAM_IMC && !player.s.didthepvpglitch
-	)
-	{
-		//Teleport player to a more reliable location if they spawn on ground, some maps picks too far away spawns from the Harvester and Shop (i.e Colony, Homestead, Drydock)
-		player.SetOrigin( file.groundSpawnPosition )
-		player.SetAngles( file.groundSpawnAngles )
-	}
-	
-	if ( !IsHarvesterAlive( fd_harvester.harvester ) || player.GetTeam() == TEAM_IMC || GetGameState() == eGameState.Prematch )
-		return
-	
-	if ( IsValidPlayer( player ) )
-	{
-		player.Highlight_SetParam( 1, 0, < 0, 0, 0 > )
-		player.SetInvulnerable()
-		player.SetNoTarget( true )
-		if ( !player.IsTitan() ) //Players spawning as Titans don't need this, Hotdrop code already has its own fades
-			ScreenFadeFromBlack( player, 1.5, 0.5 )
-	}
-	
-	if ( player.IsTitan() )
-	{
-		thread FD_PlayerRespawnProtection( player )
-		return
-	}
-	
-	if ( !FD_ShouldUseRespawnDropship() )
-	{
-		if ( IsValidPlayer( player ) && !player.IsTitan() )
-			thread FD_PlayerRespawnProtection( player )
-		return
-	}
-	
-	if ( file.dropshipState == eDropshipState.Idle )
-		thread FD_DropshipSpawnDropship()
-
-	if ( IsValidPlayer( player ) && IsValid( file.dropship ) )
-	{
-		//Attach player
-		FirstPersonSequenceStruct idleSequence
-		idleSequence.firstPersonAnim = DROPSHIP_IDLE_ANIMS_POV[ file.playersInShip ]
-		idleSequence.thirdPersonAnim = DROPSHIP_IDLE_ANIMS[ file.playersInShip ]
-		idleSequence.attachment = "ORIGIN"
-		idleSequence.teleport = true
-		idleSequence.viewConeFunction = ViewConeNarrow
-		idleSequence.hideProxy = true
-		thread FirstPersonSequence( idleSequence, player, file.dropship )
-		file.playersInDropship.append( player )
-		file.playersInShip++
-	}
 }
 
 
