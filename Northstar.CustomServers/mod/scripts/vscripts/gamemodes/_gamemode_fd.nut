@@ -341,12 +341,12 @@ void function AddFDCustomProp( asset modelasset, vector origin, vector angles )
 	prop.kv.renderamt = 255
 	prop.kv.rendercolor = "255 255 255"
 	prop.kv.solid = 6
-	ToggleNPCPathsForEntity( prop, true )
 	prop.SetAIObstacle( true )
 	prop.SetTakeDamageType( DAMAGE_NO )
-	prop.SetScriptPropFlags( SPF_BLOCKS_AI_NAVIGATION | SPF_CUSTOM_SCRIPT_3 )
+	prop.SetScriptPropFlags( SPF_CUSTOM_SCRIPT_3 )
 	prop.AllowMantle()
 	DispatchSpawn( prop )
+	ToggleNPCPathsForEntity( prop, false )
 }
 
 void function AddFDCustomShipStart( vector origin, vector angles, int team )
