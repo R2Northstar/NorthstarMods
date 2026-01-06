@@ -139,7 +139,7 @@ void function OnPrematchStart()
 		
 		entity militiaIon = CreatePropDynamic( $"models/titans/medium/titan_medium_ajax.mdl", < -1809.98, 2790.39, -1409 >, < 0, 80, 0 > )
 		thread PlayAnim( militiaIon, "at_titan_activation_wargames_intro" )
-		militiaIon.Anim_SetInitialTime( 4.5 )
+		militiaIon.Anim_SetInitialTime( 4.1 )
 		SetTeam( militiaIon, team )
 		trackedEntities.append( militiaIon )
 
@@ -188,12 +188,24 @@ void function OnPrematchStart()
 		imcGrunt3.Anim_SetInitialTime( 4.0 )
 		SetTeam( imcGrunt3, team )
 		trackedEntities.append( imcGrunt3 )
-		
-		entity imcGrunt4 = CreatePropDynamic( $"models/humans/grunts/imc_grunt_rifle.mdl", < -3281, 2941, -1790 >, < 0, 138, 0 > )
+
+		entity imcGrunt4 = CreatePropDynamic( $"models/humans/grunts/imc_grunt_rifle.mdl", < -3200, 3017, -1794 >, < 0, 117, 0 > )
 		thread PlayAnim( imcGrunt4, "pt_console_idle" )
 		imcGrunt4.Anim_SetInitialTime( 6.0 )
 		SetTeam( imcGrunt4, team )
 		trackedEntities.append( imcGrunt4 )
+
+		entity imcGrunt5 = CreatePropDynamic( $"models/humans/grunts/imc_grunt_rifle.mdl", < -3281, 2941, -1790 >, < 0, 138, 0 > )
+		thread PlayAnim( imcGrunt5, "pt_console_idle" )
+		imcGrunt5.Anim_SetInitialTime( 8.0 )
+		SetTeam( imcGrunt5, team )
+		trackedEntities.append( imcGrunt5 )
+
+		// entity imcGrunt6 = CreatePropDynamic( $"models/humans/grunts/imc_grunt_rifle.mdl", < -3293, 2909, -1788 >, < 0, -64, 0 > )
+		// thread PlayAnim( imcGrunt6, "pt_console_idle" ) // there is a grunt behind imcGrunt5 in vanilla but i don't know its animation - ASillyNeko
+		// imcGrunt6.Anim_SetInitialTime( 8.0 )
+		// SetTeam( imcGrunt6, team )
+		// trackedEntities.append( imcGrunt6 )
 	}
 
 	// so I don't have to duplicate this on all entities
@@ -218,6 +230,9 @@ void function OnPrematchStart()
 	podCloseSequence.setInitialTime = Time() - ( file.introStartTime + 7.0 )
 	thread FirstPersonSequence( podCloseSequence, file.imcPod )
 	thread FirstPersonSequence( podCloseSequence, file.militiaPod )
+
+	thread PodFXCleanupNormalLight( file.imcPod )
+	thread PodFXCleanupNormalLight( file.militiaPod )
 	
 	wait 7.0
 	thread PodBootFXThread( file.imcPod )
@@ -235,9 +250,6 @@ void function OnPrematchStart()
 	// make sure we stop using viewmodels for these otherwise everyone can see them in the floor 24/7
 	file.imcPod.RenderWithViewModels( false )
 	file.militiaPod.RenderWithViewModels( false )
-	
-	//PodFXCleanup( file.imcPod )
-	//PodFXCleanup( file.militiaPod )
 	
 	foreach ( entity trigger in triggers )
 		trigger.kv.triggerFilterPlayer = "all"
@@ -415,29 +427,50 @@ void function PodFXLasers( entity pod )
 
 void function PodFXLaserSweep( entity emitter, entity pod, vector eyePos, string attachment )
 {
-	// setup emitter attachments
-	emitter.SetOrigin( < 5, 5, 5 > )
+	emitter.SetOrigin( Vector( 5, 5,5 ) )
 	emitter.SetParent( pod, attachment )
 
-	float sweepTime = RandomFloatRange( 2.9, 3.15 )
-	
-	vector centerAng = VectorToAngles( ( eyePos + < 0, 0, 7 > ) - emitter.GetOrigin() )
-	vector topAng = centerAng + < -270, 0, 0 >
-	vector bottomAng = centerAng + < -90, 0, 0 >
-	
-	emitter.s.fxHandle <- PlayLoopFXOnEntity( $"P_pod_scan_laser_FP", emitter )
-	
-	float finalCenterTime = sweepTime * 0.15
-	float bigSweepTime = ( sweepTime - finalCenterTime ) / 2
-	
+	var vecToPlayerEye = ( eyePos + Vector( 0, 0, 7 ) ) - emitter.GetOrigin()
+	vector centerAng = VectorToAngles( vecToPlayerEye )
+	vector topAng = centerAng + Vector( -270, 0, 0 )
+	vector bottomAng = centerAng + Vector( -90, 0, 0 )
+	vector lastBigSweepAng
+
 	emitter.SetAbsAngles( topAng )
-	emitter.NonPhysicsRotateTo( topAng, bigSweepTime, 0.0, bigSweepTime * 0.2 )
-	wait bigSweepTime - 0.1
-	
-	emitter.NonPhysicsRotateTo( bottomAng, bigSweepTime, 0.0, bigSweepTime * 0.2 )
-	wait bigSweepTime
-	
-	emitter.NonPhysicsRotateTo( centerAng, finalCenterTime, 0.0, finalCenterTime * 0.2 )
+
+	lastBigSweepAng = topAng
+
+	emitter.s.fxHandle <- PlayLoopFXOnEntity( $"P_pod_scan_laser_FP", emitter )
+
+	float finalCenterTime = 2.5 * 0.15
+	float bigSweepTime = ( 2.5 - finalCenterTime ) / 2
+	float bigSweep_DecelTime = bigSweepTime * 0.2
+	vector nextBigSweepAng
+
+	for ( int i = 0; i < 2; i++ )
+	{
+		nextBigSweepAng = topAng
+
+		if ( lastBigSweepAng == topAng )
+			nextBigSweepAng = bottomAng
+
+		emitter.NonPhysicsRotateTo( nextBigSweepAng, bigSweepTime, 0, bigSweep_DecelTime )
+
+		float waitTime = bigSweepTime
+
+		if ( i < 1 )
+			waitTime = bigSweepTime - 0.1
+
+		wait waitTime
+
+		lastBigSweepAng = nextBigSweepAng
+	}
+
+	float finalCenter_DecelTime = finalCenterTime * 0.2
+
+	emitter.NonPhysicsRotateTo( centerAng, finalCenterTime, 0, finalCenter_DecelTime )
+
+	wait finalCenterTime
 }
 
 void function PodFXGlowLights( entity pod )
@@ -477,8 +510,10 @@ void function PodBootFXThread( entity pod )
 	PodFXLasers( pod )
 }
 
-void function PodFXCleanup( entity pod )
+void function PodFXCleanupNormalLight( entity pod )
 {
+	wait 2.65
+	
 	foreach ( entity handle in pod.s.podLightFXHandles )
 	{
 		if ( IsValid_ThisFrame( handle ) )
@@ -490,26 +525,4 @@ void function PodFXCleanup( entity pod )
 	}
 	
 	pod.s.podLightFXHandles = []
-	
-	foreach ( entity handle in pod.s.podGlowLightFXHandles )
-	{
-		if ( IsValid_ThisFrame( handle ) )
-		{
-			handle.SetStopType( "DestroyImmediately" )
-			handle.ClearParent()
-			handle.Destroy()
-		}
-	}
-	
-	pod.s.podGlowLightFXHandles = []
-	
-	pod.s.leftLaserEmitter.s.fxHandle.SetStopType( "DestroyImmediately" )
-	pod.s.leftLaserEmitter.s.fxHandle.ClearParent()
-	pod.s.leftLaserEmitter.s.fxHandle.Destroy()
-	pod.s.leftLaserEmitter.Destroy()
-	
-	pod.s.rightLaserEmitter.s.fxHandle.SetStopType( "DestroyImmediately" )
-	pod.s.rightLaserEmitter.s.fxHandle.ClearParent()
-	pod.s.rightLaserEmitter.s.fxHandle.Destroy()
-	pod.s.rightLaserEmitter.Destroy()
 }

@@ -2534,7 +2534,26 @@ void function RodeoForceNuke( entity pilot )
 	// THROW RODEO RIDER OFF
 	entity soul = titan.GetTitanSoul()
 	soul.soul.nukeAttacker = pilot
-	NPC_SetNuclearPayload( titan )
+
+	if ( titan.IsNPC() )
+	{
+		NPC_SetNuclearPayload( titan )
+	}
+	else
+	{
+		GivePassive( titan, ePassives.PAS_NUCLEAR_CORE )
+
+		if ( PlayerHasPassive( titan, ePassives.PAS_AUTO_EJECT ) )
+			TakePassive( titan, ePassives.PAS_AUTO_EJECT )
+
+		titan.TakeDamage( 1, pilot, pilot, damageTable )
+
+		if ( HasSoul( titan ) && !titan.GetTitanSoul().IsDoomed() )
+		{
+			titan.GetTitanSoul().EnableDoomed()	
+			titan.SetDoomed()
+		}
+	}
 
 	vector ejectAngles = titan.GetAngles()
 	ejectAngles.x = 270
@@ -2578,13 +2597,15 @@ void function OpenRodeoNukeWindow( entity player, entity titan )
 
 	player.WaitSignal( "TryNukeGrenade" )
 
-	if ( !HasSuperRodeoGrenade( player ) )
+	entity newtitan = GetTitanBeingRodeoed( player )
+
+	if ( !HasSuperRodeoGrenade( player ) || !IsValid( newtitan ) || !newtitan.IsTitan() || !HasSoul( newtitan ) )
 		return
 
 	file.playersThatWantToUseRodeoGrenade[ player ] <- true
 
 	MessageToPlayer( player, eEventNotifications.FD_SuperRodeoUsed )
-	Rodeo_MoveBatteryDown( titan.GetTitanSoul() )
+	Rodeo_MoveBatteryDown( newtitan.GetTitanSoul() )
 }
 
 bool function ClientCommand_TryNukeGrenade( entity player, array<string> args )
