@@ -427,7 +427,7 @@ void function PodFXLasers( entity pod )
 
 void function PodFXLaserSweep( entity emitter, entity pod, vector eyePos, string attachment )
 {
-	emitter.SetOrigin( Vector( 5, 5,5 ) )
+	emitter.SetOrigin( Vector( 5, 5, 5 ) )
 	emitter.SetParent( pod, attachment )
 
 	var vecToPlayerEye = ( eyePos + Vector( 0, 0, 7 ) ) - emitter.GetOrigin()
