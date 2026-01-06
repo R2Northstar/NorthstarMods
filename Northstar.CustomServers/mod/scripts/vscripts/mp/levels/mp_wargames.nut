@@ -32,7 +32,7 @@ void function CodeCallback_MapInit()
 	{
 		// currently disabled until finished: intro
 		if ( !IsFFAGame() && GetClassicMPMode() )
-			ClassicMP_SetLevelIntro( WargamesIntroSetup, 20.0 )
+			ClassicMP_SetLevelIntro( WargamesIntroSetup, 21.6 )
 	}
 }
 
@@ -221,20 +221,20 @@ void function OnPrematchStart()
 			RespawnPrivateMatchSpectator( player )
 	}
 	
-	// 7 seconds of nothing until we start the pod sequence
-	wait 7.0
+	// 7.9 seconds of nothing until we start the pod sequence
+	wait 7.9
 	
 	FirstPersonSequenceStruct podCloseSequence
 	podCloseSequence.thirdPersonAnim = "trainingpod_doors_close"
 	podCloseSequence.thirdPersonAnimIdle = "trainingpod_doors_close_idle"
-	podCloseSequence.setInitialTime = Time() - ( file.introStartTime + 7.0 )
+	podCloseSequence.setInitialTime = Time() - ( file.introStartTime + 7.9 )
 	thread FirstPersonSequence( podCloseSequence, file.imcPod )
 	thread FirstPersonSequence( podCloseSequence, file.militiaPod )
 
 	thread PodFXCleanupNormalLight_Delayed( file.imcPod )
 	thread PodFXCleanupNormalLight_Delayed( file.militiaPod )
 	
-	wait 7.0
+	wait 6.5
 	thread PodBootFXThread( file.imcPod )
 	thread PodBootFXThread( file.militiaPod )
 	
@@ -244,7 +244,7 @@ void function OnPrematchStart()
 		if ( IsValid( ent ) )
 			ent.Destroy()
 
-	wait 6.0
+	wait 7.0
 	ClassicMP_OnIntroFinished()
 	
 	// make sure we stop using viewmodels for these otherwise everyone can see them in the floor 24/7
@@ -327,10 +327,10 @@ void function PlayerWatchesWargamesIntro( entity player )
 	else if ( file.militiaPodFXEyePos == < 0, 0, 0 > && factionTeam == TEAM_MILITIA )
 		file.militiaPodFXEyePos = player.EyePosition()
 	
-	// 7 seconds of nothing before we start the pod sequence
-	wait ( file.introStartTime + 7.0 ) - Time()
+	// 7.9 seconds of nothing before we start the pod sequence
+	wait ( file.introStartTime + 7.9 ) - Time()
 
-	while ( Time() < file.introStartTime + 7.0 ) // note: remove this when wait stops waiting less than the input time
+	while ( Time() < file.introStartTime + 7.9 ) // note: remove this when wait stops waiting less than the input time
 		WaitFrame()
 	
 	FirstPersonSequenceStruct podCloseSequence
@@ -338,20 +338,21 @@ void function PlayerWatchesWargamesIntro( entity player )
 	podCloseSequence.renderWithViewModels = true
 	podCloseSequence.attachment = "REF"
 	podCloseSequence.viewConeFunction = TrainingPod_ViewConeLock_SemiStrict
-	podCloseSequence.setInitialTime = Time() - ( file.introStartTime + 7.0 )
+	podCloseSequence.setInitialTime = Time() - ( file.introStartTime + 7.9 )
 	waitthread FirstPersonSequence( podCloseSequence, player, playerPod )
 				
-	// boot sequence
+	// wait 0.6 seconds then start boot sequence
+	wait ( file.introStartTime + 14.1 ) - Time()
 	EmitSoundOnEntityOnlyToPlayer( player, player, "NPE_Scr_SimPod_PowerUp" )
 	TrainingPod_ViewConeLock_PodClosed( player )
 	
 	// 10 seconds of starting pod before we run effects and spawn players
 	// note, this is cool because it waits for a specific time, so we can have a blocking call directly before it just fine
-	wait ( file.introStartTime + 15.5 ) - Time()
+	wait ( file.introStartTime + 16.7 ) - Time()
 	Remote_CallFunction_NonReplay( player, "ServerCallback_PlayPodTransitionScreenFX" )
 	
 	// need to wait no matter what the delay is here so fx will sync up
-	wait 3.5
+	wait 4.6
 	
 	entity spawnpoint = FindSpawnPoint( player, false, true )
 	player.SetOrigin( spawnpoint.GetOrigin() )
@@ -442,8 +443,8 @@ void function PodFXLaserSweep( entity emitter, entity pod, vector eyePos, string
 
 	emitter.s.fxHandle <- PlayLoopFXOnEntity( $"P_pod_scan_laser_FP", emitter )
 
-	float finalCenterTime = 2.5 * 0.15
-	float bigSweepTime = ( 2.5 - finalCenterTime ) / 2
+	float finalCenterTime = 3.1 * 0.15
+	float bigSweepTime = ( 3.1 - finalCenterTime ) / 2
 	float bigSweep_DecelTime = bigSweepTime * 0.2
 	vector nextBigSweepAng
 
