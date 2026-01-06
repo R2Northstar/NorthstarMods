@@ -231,8 +231,8 @@ void function OnPrematchStart()
 	thread FirstPersonSequence( podCloseSequence, file.imcPod )
 	thread FirstPersonSequence( podCloseSequence, file.militiaPod )
 
-	thread PodFXCleanupNormalLight( file.imcPod )
-	thread PodFXCleanupNormalLight( file.militiaPod )
+	thread PodFXCleanupNormalLight_Delayed( file.imcPod )
+	thread PodFXCleanupNormalLight_Delayed( file.militiaPod )
 	
 	wait 7.0
 	thread PodBootFXThread( file.imcPod )
@@ -510,7 +510,7 @@ void function PodBootFXThread( entity pod )
 	PodFXLasers( pod )
 }
 
-void function PodFXCleanupNormalLight( entity pod )
+void function PodFXCleanupNormalLight_Delayed( entity pod )
 {
 	wait 2.65
 	
