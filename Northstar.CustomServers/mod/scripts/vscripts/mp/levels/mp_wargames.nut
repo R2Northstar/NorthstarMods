@@ -443,8 +443,9 @@ void function PodFXLaserSweep( entity emitter, entity pod, vector eyePos, string
 
 	emitter.s.fxHandle <- PlayLoopFXOnEntity( $"P_pod_scan_laser_FP", emitter )
 
-	float finalCenterTime = 3.1 * 0.15
-	float bigSweepTime = ( 3.1 - finalCenterTime ) / 2
+	float sweepTime = RandomFloatRange( 2.9, 3.15 )
+	float finalCenterTime = sweepTime * 0.15
+	float bigSweepTime = ( sweepTime - finalCenterTime ) / 2
 	float bigSweep_DecelTime = bigSweepTime * 0.2
 	vector nextBigSweepAng
 
