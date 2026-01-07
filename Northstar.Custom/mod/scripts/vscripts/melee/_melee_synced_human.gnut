@@ -11,7 +11,7 @@ void function MeleeSyncedServer_Init()
 bool function MeleeThread_PilotVsEnemy( SyncedMelee action, entity attacker, entity target )
 {
 	// function off for reload scripts
-	return MeleeThread_PilotVsEnemyInternal( clone action, attacker, target )
+	return MeleeThread_PilotVsEnemyInternal( action, attacker, target )
 }
 
 bool function MeleeThread_PilotVsEnemyInternal( SyncedMelee action, entity attacker, entity target )
@@ -25,6 +25,7 @@ bool function MeleeThread_PilotVsEnemyInternal( SyncedMelee action, entity attac
 
 	if ( GetCurrentPlaylistVarInt( "classic_executions", 0 ) )
 	{
+		action = clone action
 		action.attackerAnimation1p = ""
 		action.attackerAnimation3p = "pt_rspn101_melee_necksnap_rear"
 		action.targetAnimation1p = ""
