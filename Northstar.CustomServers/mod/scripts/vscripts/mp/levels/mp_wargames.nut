@@ -143,13 +143,26 @@ void function OnPrematchStart()
 		SetTeam( militiaIon, team )
 		trackedEntities.append( militiaIon )
 
-		entity militiaGrunt = CreatePropDynamic( $"models/humans/grunts/mlt_grunt_smg.mdl", < 0, 0, 0 >, < 0, 0, 0 > )
-		militiaGrunt.SetParent( militiaIon, "HIJACK" )
-		militiaGrunt.MarkAsNonMovingAttachment()
-		militiaGrunt.Anim_Play( "pt_titan_activation_pilot" )
-		militiaGrunt.Anim_EnableUseAnimatedRefAttachmentInsteadOfRootMotion()
-		SetTeam( militiaGrunt, team )
-		trackedEntities.append( militiaGrunt )
+		entity militiaIonGrunt = CreatePropDynamic( $"models/humans/grunts/mlt_grunt_smg.mdl", < 0, 0, 0 >, < 0, 0, 0 > )
+		militiaIonGrunt.SetParent( militiaIon, "HIJACK" )
+		militiaIonGrunt.MarkAsNonMovingAttachment()
+		militiaIonGrunt.Anim_Play( "pt_titan_activation_pilot" )
+		militiaIonGrunt.Anim_EnableUseAnimatedRefAttachmentInsteadOfRootMotion()
+		SetTeam( militiaIonGrunt, team )
+		trackedEntities.append( militiaIonGrunt )
+
+		// There is 2 grunts on the right of militiaMarvinChillin on the screen in vanilla but I don't know their animations - ASillyNeko
+
+		// entity militiaGrunt1 = CreatePropDynamic( $"models/humans/grunts/mlt_grunt_rifle.mdl", < -2160, 3052, -1411 >, < 0, -132, 0 > )
+		// thread PlayAnim( militiaGrunt1, "pt_console_idle" )
+		// SetTeam( militiaGrunt1, team )
+		// trackedEntities.append( militiaGrunt1 )
+
+		// entity militiaGrunt2 = CreatePropDynamic( $"models/humans/grunts/mlt_grunt_rifle.mdl", < -2125, 3070, -1411 >, < 0, -121, 0 > )
+		// thread PlayAnim( militiaGrunt2, "pt_console_idle" )
+		// militiaGrunt2.Anim_SetInitialTime( 3.0 )
+		// SetTeam( militiaGrunt2, team )
+		// trackedEntities.append( militiaGrunt2 )
 
 		entity militiaOgreMarvin1 = CreatePropDynamic( $"models/robots/marvin/marvin.mdl", < -2113, 2911, -1412 >, < 0, 20, 0 > )
 		thread PlayAnim( militiaOgreMarvin1, "mv_idle_weld" )
@@ -265,15 +278,23 @@ void function PlayerWatchesWargamesIntro( entity player )
 		if ( IsValid( player ) )
 		{
 			RemoveCinematicFlag( player, CE_FLAG_CLASSIC_MP_SPAWNING )
+
 			player.kv.VisibilityFlags = ENTITY_VISIBLE_TO_EVERYONE
+
 			ClearPlayerAnimViewEntity( player )
-			player.EnableWeaponViewModel()
-			DeployAndEnableWeapons(player)
+			DeployViewModelAndEnableWeapons( player )
+
 			player.ClearParent()
 			player.UnforceStand()
 			player.MovementEnable()
 			player.ClearInvulnerable()
+
 			Remote_CallFunction_NonReplay( player, "ServerCallback_ClearFactionLeaderIntro" )
+
+			entity spawnpoint = FindSpawnPoint( player, false, true )
+
+			player.SetOrigin( spawnpoint.GetOrigin() )
+			player.SetAngles( spawnpoint.GetAngles() )
 		}
 	})
 	
@@ -300,8 +321,7 @@ void function PlayerWatchesWargamesIntro( entity player )
 	AddCinematicFlag( player, CE_FLAG_CLASSIC_MP_SPAWNING )
 	player.kv.VisibilityFlags = ENTITY_VISIBLE_TO_OWNER
 	TrainingPod_ViewConeLock_PodClosed( player )
-	player.DisableWeaponViewModel()
-	HolsterAndDisableWeapons(player)
+	HolsterViewModelAndDisableWeapons( player )
 	player.MovementDisable()
 	player.SetInvulnerable()
 	
@@ -354,17 +374,17 @@ void function PlayerWatchesWargamesIntro( entity player )
 	// need to wait no matter what the delay is here so fx will sync up
 	wait 4.6
 	
-	entity spawnpoint = FindSpawnPoint( player, false, true )
-	player.SetOrigin( spawnpoint.GetOrigin() )
-	player.SetAngles( spawnpoint.GetAngles() )
-	
 	thread DelayedGamemodeAnnouncement( player )
 }
 
 void function DelayedGamemodeAnnouncement( entity player )
 {
-	wait 1.0
-	if ( IsValid( player ) && IsAlive( player ) )
+	player.EndSignal( "OnDestroy" )
+
+	while ( Time() < expect float( level.nv.gameStartTime ) )
+		WaitFrame()
+
+	if ( IsAlive( player ) )
 		TryGameModeAnnouncement( player )
 }
 
