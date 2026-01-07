@@ -89,7 +89,6 @@ playlists
 			{
 				mp_angel_city 1
 				mp_black_water_canal 1
-				mp_grave 1
 				mp_colony02 1
 				mp_drydock 1
 				mp_thaw 1
