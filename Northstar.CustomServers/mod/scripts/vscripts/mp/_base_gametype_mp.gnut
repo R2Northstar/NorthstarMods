@@ -29,6 +29,8 @@ struct {
 	entity functionref( entity player, entity basePoint ) recalculateRespawnAsTitanStartPointCallback
 	table<entity, float> playerChangeTeamTimeBuffer
 	bool gamemodeTeamSwitchEnabled = true
+
+	table<entity, bool> playerRespawnPlayerIntoTitan
 } file
 
 void function BaseGametype_Init_MPSP()
@@ -337,11 +339,16 @@ void function CodeCallback_OnPlayerRespawned( entity player )
 		weapon.SetProScreenOwner( player )
 	
 	bool spawnAsTitan = expect bool( player.GetPersistentVar( "spawnAsTitan" ) )
-	if ( ( spawnAsTitan || svGlobal.forceSpawnIntoTitan ) && PlayerCanSpawnIntoTitan( player ) )
+	if ( ( player in file.playerRespawnPlayerIntoTitan && file.playerRespawnPlayerIntoTitan[ player ] ) || ( ( spawnAsTitan || svGlobal.forceSpawnIntoTitan ) && PlayerCanSpawnIntoTitan( player ) ) )
 	{
+		if ( player in file.playerRespawnPlayerIntoTitan && file.playerRespawnPlayerIntoTitan[ player ] )
+			file.playerRespawnPlayerIntoTitan[ player ] = false
+
 		entity titan = player.GetPetTitan()
+
 		TeleportToEnt( player, titan )
 		PilotBecomesTitan( player, titan )
+
 		titan.Destroy()
 	}
 	
@@ -619,7 +626,7 @@ void function RespawnAsPilot( entity player )
 	player.SetTargetInfoIcon( callsignIcon.smallImage )
 }
 
-void function RespawnAsTitan( entity player)
+void function RespawnAsTitan( entity player )
 {
 	if ( !PlayerCanSpawn( player ) )
 		return
@@ -694,9 +701,10 @@ void function RespawnAsTitan( entity player)
 	})
 
 	waitthread TitanHotDrop( titan, "at_hotdrop_01", spawnpoint.GetOrigin(), spawnpoint.GetAngles(), player, camera ) // do hotdrop anim
+
+	file.playerRespawnPlayerIntoTitan[ player ] <- true
+
 	DoRespawnPlayer( player, spawnpoint )
-	TeleportToEnt( player, titan )
-	PilotBecomesTitan( player, titan )
 }
 
 void function OnReplacementTitanSecondStage( entity player )
