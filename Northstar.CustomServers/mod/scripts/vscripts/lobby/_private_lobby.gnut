@@ -17,7 +17,11 @@ void function PrivateLobby_Init()
 	file.mode = GetConVarString( "ns_private_match_last_mode" )
 	
 	string cvar_maprotation = GetConVarString( "ns_private_match_map_rotation" )
-	file.maplist = split( cvar_maprotation, "," )
+
+	if ( !cvar_maprotation.len() )
+		file.maplist = GetPrivateMatchMapsForMode( file.mode )
+	else
+		file.maplist = split( cvar_maprotation, "," )
 	
 	thread SetupPrivateMatchUIVarsWhenReady()
 	
