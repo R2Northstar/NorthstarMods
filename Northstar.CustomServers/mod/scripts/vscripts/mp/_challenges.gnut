@@ -7,7 +7,6 @@ global function IncrementPlayerChallengeTitanLeveledUp			//Hooked in titan_xp.gn
 global function IncrementPlayerChallengeWeaponLeveledUp			//Hooked in weapon_xp.gnut
 global function IncrementPlayerChallengeFactionLeveledUp		//Hooked in faction_xp.gnut (invisible but necessary for post-summary menu)
 global function RegisterChallenges_OnMatchEnd					//Hooked in _gamestate_mp.gnut
-global function PlayerInChallengesPool							//Check for gamemodes to see if player is registered in challenge pool
 
 global function HasPlayerCompletedMeritScore					//Check from gamemodes to not reapply SetPlayerChallengeMeritScore
 global function SetupGenericTDMChallenge						//Used by gamemodes which simply adopts the: "Kill 3 Pilots without dying." Challenge
@@ -123,11 +122,6 @@ void function RegisterChallenges_OnMatchEnd()
 	}
 }
 
-bool function PlayerInChallengesPool( entity player )
-{
-	return ( player in file.playerChallenge && player in file.playerTotalMeritCount && player in file.pilotstreak )
-}
-
 void function TDMChallenges_OnPlayerKilled( entity victim, entity attacker, var damageInfo )
 {
 	if ( victim == attacker || !attacker.IsPlayer() || GetGameState() != eGameState.Playing )
@@ -167,8 +161,10 @@ void function FFAChallenges_OnPlayerKilled( entity victim, entity attacker, var 
 
 bool function HasPlayerCompletedMeritScore( entity player )
 {
-	Assert( player in file.playerChallenge, player + " is not registered in the challenge pool hooks." )
-	return file.playerChallenge[ player ]
+	if ( player in file.playerChallenge )
+		return file.playerChallenge[ player ]
+	
+	return false
 }
 
 
@@ -193,10 +189,17 @@ void function SetPlayerChallengeEvacState( entity player, int successEvac = 0 )
 	
 	else if( successEvac == 1 ) //Player itself managed to evac
 	{
-		file.playerTotalMeritCount[ player ]++
+		int meritCount = 0
+
+		if ( player in file.playerTotalMeritCount )
+		{
+			file.playerTotalMeritCount[ player ]++
+			meritCount = file.playerTotalMeritCount[ player ]
+		}
+
 		Remote_CallFunction_UI( player, "SCB_SetEvacMeritState", 1 )
 		player.SetPersistentVar( "xp_match[" + XP_TYPE.EVAC + "]", 1 )
-		Remote_CallFunction_UI( player, "SCB_SetMeritCount", file.playerTotalMeritCount[ player ] )
+		Remote_CallFunction_UI( player, "SCB_SetMeritCount", meritCount )
 	}
 	
 	else if( successEvac == 2 ) //Team managed to evac
@@ -207,11 +210,18 @@ void function SetPlayerChallengeMatchWon( entity player, bool playerWon )
 {
 	if( playerWon )
 	{
-		file.playerTotalMeritCount[ player ]++
+		int meritCount = 0
+
+		if ( player in file.playerTotalMeritCount )
+		{
+			file.playerTotalMeritCount[ player ]++
+			meritCount = file.playerTotalMeritCount[ player ]
+		}
+
 		Remote_CallFunction_UI( player, "SCB_SetWinMeritState", 1 )
 		player.SetPersistentVar( "xp_match[" + XP_TYPE.MATCH_VICTORY + "]", 1 )
 		player.SetPersistentVar( "matchWin", true )
-		Remote_CallFunction_UI( player, "SCB_SetMeritCount", file.playerTotalMeritCount[ player ] )
+		Remote_CallFunction_UI( player, "SCB_SetMeritCount", meritCount )
 	}
 	else
 		Remote_CallFunction_UI( player, "SCB_SetWinMeritState", -1 )
@@ -219,11 +229,18 @@ void function SetPlayerChallengeMatchWon( entity player, bool playerWon )
 
 void function SetPlayerChallengeMatchComplete( entity player )
 {
-	file.playerTotalMeritCount[ player ]++
+	int meritCount = 0
+
+	if ( player in file.playerTotalMeritCount )
+	{
+		file.playerTotalMeritCount[ player ]++
+		meritCount = file.playerTotalMeritCount[ player ]
+	}
+
 	Remote_CallFunction_UI( player, "SCB_SetCompleteMeritState", 1 )
 	player.SetPersistentVar( "xp_match[" + XP_TYPE.MATCH_COMPLETED + "]", 1 )
 	player.SetPersistentVar( "matchComplete", true )
-	Remote_CallFunction_UI( player, "SCB_SetMeritCount", file.playerTotalMeritCount[ player ] )
+	Remote_CallFunction_UI( player, "SCB_SetMeritCount", meritCount )
 }
 
 void function SetPlayerChallengeSquadLeader( entity player )
@@ -248,8 +265,17 @@ void function SetPlayerChallengeMeritScore( entity player )
 {
 	if( !HasPlayerCompletedMeritScore( player ) )
 	{
-		file.playerChallenge[ player ] = true
-		file.playerTotalMeritCount[ player ]++
+		if ( player in file.playerChallenge )
+			file.playerChallenge[ player ] = true
+		
+		int meritCount = 0
+
+		if ( player in file.playerTotalMeritCount )
+		{
+			file.playerTotalMeritCount[ player ]++
+			meritCount = file.playerTotalMeritCount[ player ]
+		}
+
 		Remote_CallFunction_UI( player, "SCB_SetScoreMeritState", 1 )
 		player.SetPersistentVar( "xp_match[" + XP_TYPE.SCORE_MILESTONE + "]", 1 )
 		player.SetPersistentVar( "matchScoreEvent", true )
@@ -260,23 +286,44 @@ void function SetPlayerChallengeMeritScore( entity player )
 void function IncrementPlayerChallengeTitanLeveledUp( entity player )
 {
 	player.p.meritData.titanMerits++
-	file.playerTotalMeritCount[ player ]++
+
+	int meritCount = 0
+
+	if ( player in file.playerTotalMeritCount )
+	{
+		file.playerTotalMeritCount[ player ]++
+		meritCount = file.playerTotalMeritCount[ player ]
+	}
 	
 	Remote_CallFunction_UI( player, "SCB_SetTitanMeritCount", player.p.meritData.titanMerits++ )
-	Remote_CallFunction_UI( player, "SCB_SetMeritCount", file.playerTotalMeritCount[ player ] )
+	Remote_CallFunction_UI( player, "SCB_SetMeritCount", meritCount )
 }
 
 void function IncrementPlayerChallengeWeaponLeveledUp( entity player )
 {
 	player.p.meritData.weaponMerits++
-	file.playerTotalMeritCount[ player ]++
+
+	int meritCount = 0
+
+	if ( player in file.playerTotalMeritCount )
+	{
+		file.playerTotalMeritCount[ player ]++
+		meritCount = file.playerTotalMeritCount[ player ]
+	}
 		
 	Remote_CallFunction_UI( player, "SCB_SetWeaponMeritCount", player.p.meritData.weaponMerits )
-	Remote_CallFunction_UI( player, "SCB_SetMeritCount", file.playerTotalMeritCount[ player ] )
+	Remote_CallFunction_UI( player, "SCB_SetMeritCount", meritCount )
 }
 
 void function IncrementPlayerChallengeFactionLeveledUp( entity player )
 {
-	file.playerTotalMeritCount[ player ]++
-	Remote_CallFunction_UI( player, "SCB_SetMeritCount", file.playerTotalMeritCount[ player ] )
+	int meritCount = 0
+
+	if ( player in file.playerTotalMeritCount )
+	{
+		file.playerTotalMeritCount[ player ]++
+		meritCount = file.playerTotalMeritCount[ player ]
+	}
+
+	Remote_CallFunction_UI( player, "SCB_SetMeritCount", meritCount )
 }
