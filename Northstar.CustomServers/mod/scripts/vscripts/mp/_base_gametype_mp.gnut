@@ -702,10 +702,7 @@ void function RespawnAsTitan( entity player )
 
 	waitthread TitanHotDrop( titan, "at_hotdrop_01", spawnpoint.GetOrigin(), spawnpoint.GetAngles(), player, camera ) // do hotdrop anim
 
-	if ( player in file.playerRespawnPlayerIntoTitan )
-		file.playerRespawnPlayerIntoTitan[ player ] = true
-	else
-		file.playerRespawnPlayerIntoTitan[ player ] <- true
+	file.playerRespawnPlayerIntoTitan[ player ] <- true
 
 	DoRespawnPlayer( player, spawnpoint )
 }
