@@ -32,7 +32,7 @@ void function CodeCallback_MapInit()
 	{
 		// currently disabled until finished: intro
 		if ( !IsFFAGame() && GetClassicMPMode() )
-			ClassicMP_SetLevelIntro( WargamesIntroSetup, 20.0 )
+			ClassicMP_SetLevelIntro( WargamesIntroSetup, 21.6 )
 	}
 }
 
@@ -139,17 +139,30 @@ void function OnPrematchStart()
 		
 		entity militiaIon = CreatePropDynamic( $"models/titans/medium/titan_medium_ajax.mdl", < -1809.98, 2790.39, -1409 >, < 0, 80, 0 > )
 		thread PlayAnim( militiaIon, "at_titan_activation_wargames_intro" )
-		militiaIon.Anim_SetInitialTime( 4.5 )
+		militiaIon.Anim_SetInitialTime( 4.1 )
 		SetTeam( militiaIon, team )
 		trackedEntities.append( militiaIon )
 
-		entity militiaGrunt = CreatePropDynamic( $"models/humans/grunts/mlt_grunt_smg.mdl", < 0, 0, 0 >, < 0, 0, 0 > )
-		militiaGrunt.SetParent( militiaIon, "HIJACK" )
-		militiaGrunt.MarkAsNonMovingAttachment()
-		militiaGrunt.Anim_Play( "pt_titan_activation_pilot" )
-		militiaGrunt.Anim_EnableUseAnimatedRefAttachmentInsteadOfRootMotion()
-		SetTeam( militiaGrunt, team )
-		trackedEntities.append( militiaGrunt )
+		entity militiaIonGrunt = CreatePropDynamic( $"models/humans/grunts/mlt_grunt_smg.mdl", < 0, 0, 0 >, < 0, 0, 0 > )
+		militiaIonGrunt.SetParent( militiaIon, "HIJACK" )
+		militiaIonGrunt.MarkAsNonMovingAttachment()
+		militiaIonGrunt.Anim_Play( "pt_titan_activation_pilot" )
+		militiaIonGrunt.Anim_EnableUseAnimatedRefAttachmentInsteadOfRootMotion()
+		SetTeam( militiaIonGrunt, team )
+		trackedEntities.append( militiaIonGrunt )
+
+		// There is 2 grunts on the right of militiaMarvinChillin on the screen in vanilla but I don't know their animations - ASillyNeko
+
+		// entity militiaGrunt1 = CreatePropDynamic( $"models/humans/grunts/mlt_grunt_rifle.mdl", < -2160, 3052, -1411 >, < 0, -132, 0 > )
+		// thread PlayAnim( militiaGrunt1, "pt_console_idle" )
+		// SetTeam( militiaGrunt1, team )
+		// trackedEntities.append( militiaGrunt1 )
+
+		// entity militiaGrunt2 = CreatePropDynamic( $"models/humans/grunts/mlt_grunt_rifle.mdl", < -2125, 3070, -1411 >, < 0, -121, 0 > )
+		// thread PlayAnim( militiaGrunt2, "pt_console_idle" )
+		// militiaGrunt2.Anim_SetInitialTime( 3.0 )
+		// SetTeam( militiaGrunt2, team )
+		// trackedEntities.append( militiaGrunt2 )
 
 		entity militiaOgreMarvin1 = CreatePropDynamic( $"models/robots/marvin/marvin.mdl", < -2113, 2911, -1412 >, < 0, 20, 0 > )
 		thread PlayAnim( militiaOgreMarvin1, "mv_idle_weld" )
@@ -188,12 +201,24 @@ void function OnPrematchStart()
 		imcGrunt3.Anim_SetInitialTime( 4.0 )
 		SetTeam( imcGrunt3, team )
 		trackedEntities.append( imcGrunt3 )
-		
-		entity imcGrunt4 = CreatePropDynamic( $"models/humans/grunts/imc_grunt_rifle.mdl", < -3281, 2941, -1790 >, < 0, 138, 0 > )
+
+		entity imcGrunt4 = CreatePropDynamic( $"models/humans/grunts/imc_grunt_rifle.mdl", < -3200, 3017, -1794 >, < 0, 117, 0 > )
 		thread PlayAnim( imcGrunt4, "pt_console_idle" )
 		imcGrunt4.Anim_SetInitialTime( 6.0 )
 		SetTeam( imcGrunt4, team )
 		trackedEntities.append( imcGrunt4 )
+
+		entity imcGrunt5 = CreatePropDynamic( $"models/humans/grunts/imc_grunt_rifle.mdl", < -3281, 2941, -1790 >, < 0, 138, 0 > )
+		thread PlayAnim( imcGrunt5, "pt_console_idle" )
+		imcGrunt5.Anim_SetInitialTime( 8.0 )
+		SetTeam( imcGrunt5, team )
+		trackedEntities.append( imcGrunt5 )
+
+		// entity imcGrunt6 = CreatePropDynamic( $"models/humans/grunts/imc_grunt_rifle.mdl", < -3293, 2909, -1788 >, < 0, -64, 0 > )
+		// thread PlayAnim( imcGrunt6, "pt_console_idle" ) // there is a grunt behind imcGrunt5 in vanilla but i don't know its animation - ASillyNeko
+		// imcGrunt6.Anim_SetInitialTime( 8.0 )
+		// SetTeam( imcGrunt6, team )
+		// trackedEntities.append( imcGrunt6 )
 	}
 
 	// so I don't have to duplicate this on all entities
@@ -209,16 +234,20 @@ void function OnPrematchStart()
 			RespawnPrivateMatchSpectator( player )
 	}
 	
-	// 7 seconds of nothing until we start the pod sequence
-	wait 7.0
+	// 7.9 seconds of nothing until we start the pod sequence
+	wait 7.9
 	
 	FirstPersonSequenceStruct podCloseSequence
 	podCloseSequence.thirdPersonAnim = "trainingpod_doors_close"
 	podCloseSequence.thirdPersonAnimIdle = "trainingpod_doors_close_idle"
+	podCloseSequence.setInitialTime = Time() - ( file.introStartTime + 7.9 )
 	thread FirstPersonSequence( podCloseSequence, file.imcPod )
 	thread FirstPersonSequence( podCloseSequence, file.militiaPod )
+
+	thread PodFXCleanupNormalLight_Delayed( file.imcPod )
+	thread PodFXCleanupNormalLight_Delayed( file.militiaPod )
 	
-	wait 7.0
+	wait 6.5
 	thread PodBootFXThread( file.imcPod )
 	thread PodBootFXThread( file.militiaPod )
 	
@@ -228,15 +257,12 @@ void function OnPrematchStart()
 		if ( IsValid( ent ) )
 			ent.Destroy()
 
-	wait 6.0
+	wait 7.0
 	ClassicMP_OnIntroFinished()
 	
 	// make sure we stop using viewmodels for these otherwise everyone can see them in the floor 24/7
 	file.imcPod.RenderWithViewModels( false )
 	file.militiaPod.RenderWithViewModels( false )
-	
-	//PodFXCleanup( file.imcPod )
-	//PodFXCleanup( file.militiaPod )
 	
 	foreach ( entity trigger in triggers )
 		trigger.kv.triggerFilterPlayer = "all"
@@ -252,15 +278,23 @@ void function PlayerWatchesWargamesIntro( entity player )
 		if ( IsValid( player ) )
 		{
 			RemoveCinematicFlag( player, CE_FLAG_CLASSIC_MP_SPAWNING )
+
 			player.kv.VisibilityFlags = ENTITY_VISIBLE_TO_EVERYONE
+
 			ClearPlayerAnimViewEntity( player )
-			player.EnableWeaponViewModel()
-			DeployAndEnableWeapons(player)
+			DeployViewModelAndEnableWeapons( player )
+
 			player.ClearParent()
 			player.UnforceStand()
 			player.MovementEnable()
 			player.ClearInvulnerable()
+
 			Remote_CallFunction_NonReplay( player, "ServerCallback_ClearFactionLeaderIntro" )
+
+			entity spawnpoint = FindSpawnPoint( player, false, true )
+
+			player.SetOrigin( spawnpoint.GetOrigin() )
+			player.SetAngles( spawnpoint.GetAngles() )
 		}
 	})
 	
@@ -287,8 +321,7 @@ void function PlayerWatchesWargamesIntro( entity player )
 	AddCinematicFlag( player, CE_FLAG_CLASSIC_MP_SPAWNING )
 	player.kv.VisibilityFlags = ENTITY_VISIBLE_TO_OWNER
 	TrainingPod_ViewConeLock_PodClosed( player )
-	player.DisableWeaponViewModel()
-	HolsterAndDisableWeapons(player)
+	HolsterViewModelAndDisableWeapons( player )
 	player.MovementDisable()
 	player.SetInvulnerable()
 	
@@ -314,10 +347,10 @@ void function PlayerWatchesWargamesIntro( entity player )
 	else if ( file.militiaPodFXEyePos == < 0, 0, 0 > && factionTeam == TEAM_MILITIA )
 		file.militiaPodFXEyePos = player.EyePosition()
 	
-	// 7 seconds of nothing before we start the pod sequence
-	wait ( file.introStartTime + 7.0 ) - Time()
+	// 7.9 seconds of nothing before we start the pod sequence
+	wait ( file.introStartTime + 7.9 ) - Time()
 
-	while ( Time() < file.introStartTime + 7.0 ) // note: remove this when wait stops waiting less than the input time
+	while ( Time() < file.introStartTime + 7.9 ) // note: remove this when wait stops waiting less than the input time
 		WaitFrame()
 	
 	FirstPersonSequenceStruct podCloseSequence
@@ -325,32 +358,33 @@ void function PlayerWatchesWargamesIntro( entity player )
 	podCloseSequence.renderWithViewModels = true
 	podCloseSequence.attachment = "REF"
 	podCloseSequence.viewConeFunction = TrainingPod_ViewConeLock_SemiStrict
-	podCloseSequence.setInitialTime = Time() - ( file.introStartTime + 7.0 )
+	podCloseSequence.setInitialTime = Time() - ( file.introStartTime + 7.9 )
 	waitthread FirstPersonSequence( podCloseSequence, player, playerPod )
 				
-	// boot sequence
+	// wait 0.6 seconds then start boot sequence
+	wait ( file.introStartTime + 14.1 ) - Time()
 	EmitSoundOnEntityOnlyToPlayer( player, player, "NPE_Scr_SimPod_PowerUp" )
 	TrainingPod_ViewConeLock_PodClosed( player )
 	
 	// 10 seconds of starting pod before we run effects and spawn players
 	// note, this is cool because it waits for a specific time, so we can have a blocking call directly before it just fine
-	wait ( file.introStartTime + 15.5 ) - Time()
+	wait ( file.introStartTime + 16.7 ) - Time()
 	Remote_CallFunction_NonReplay( player, "ServerCallback_PlayPodTransitionScreenFX" )
 	
 	// need to wait no matter what the delay is here so fx will sync up
-	wait 3.5
-	
-	entity spawnpoint = FindSpawnPoint( player, false, true )
-	player.SetOrigin( spawnpoint.GetOrigin() )
-	player.SetAngles( spawnpoint.GetAngles() )
+	wait 4.6
 	
 	thread DelayedGamemodeAnnouncement( player )
 }
 
 void function DelayedGamemodeAnnouncement( entity player )
 {
-	wait 1.0
-	if ( IsValid( player ) && IsAlive( player ) )
+	player.EndSignal( "OnDestroy" )
+
+	while ( Time() < expect float( level.nv.gameStartTime ) )
+		WaitFrame()
+
+	if ( IsAlive( player ) )
 		TryGameModeAnnouncement( player )
 }
 
@@ -414,29 +448,51 @@ void function PodFXLasers( entity pod )
 
 void function PodFXLaserSweep( entity emitter, entity pod, vector eyePos, string attachment )
 {
-	// setup emitter attachments
-	emitter.SetOrigin( < 5, 5, 5 > )
+	emitter.SetOrigin( Vector( 5, 5, 5 ) )
 	emitter.SetParent( pod, attachment )
 
-	float sweepTime = RandomFloatRange( 2.9, 3.15 )
-	
-	vector centerAng = VectorToAngles( ( eyePos + < 0, 0, 7 > ) - emitter.GetOrigin() )
-	vector topAng = centerAng + < -270, 0, 0 >
-	vector bottomAng = centerAng + < -90, 0, 0 >
-	
+	var vecToPlayerEye = ( eyePos + Vector( 0, 0, 7 ) ) - emitter.GetOrigin()
+	vector centerAng = VectorToAngles( vecToPlayerEye )
+	vector topAng = centerAng + Vector( -270, 0, 0 )
+	vector bottomAng = centerAng + Vector( -90, 0, 0 )
+	vector lastBigSweepAng
+
+	emitter.SetAbsAngles( topAng )
+
+	lastBigSweepAng = topAng
+
 	emitter.s.fxHandle <- PlayLoopFXOnEntity( $"P_pod_scan_laser_FP", emitter )
-	
+
+	float sweepTime = RandomFloatRange( 2.9, 3.15 )
 	float finalCenterTime = sweepTime * 0.15
 	float bigSweepTime = ( sweepTime - finalCenterTime ) / 2
-	
-	emitter.SetAbsAngles( topAng )
-	emitter.NonPhysicsRotateTo( topAng, bigSweepTime, 0.0, bigSweepTime * 0.2 )
-	wait bigSweepTime - 0.1
-	
-	emitter.NonPhysicsRotateTo( bottomAng, bigSweepTime, 0.0, bigSweepTime * 0.2 )
-	wait bigSweepTime
-	
-	emitter.NonPhysicsRotateTo( centerAng, finalCenterTime, 0.0, finalCenterTime * 0.2 )
+	float bigSweep_DecelTime = bigSweepTime * 0.2
+	vector nextBigSweepAng
+
+	for ( int i = 0; i < 2; i++ )
+	{
+		nextBigSweepAng = topAng
+
+		if ( lastBigSweepAng == topAng )
+			nextBigSweepAng = bottomAng
+
+		emitter.NonPhysicsRotateTo( nextBigSweepAng, bigSweepTime, 0, bigSweep_DecelTime )
+
+		float waitTime = bigSweepTime
+
+		if ( i < 1 )
+			waitTime = bigSweepTime - 0.1
+
+		wait waitTime
+
+		lastBigSweepAng = nextBigSweepAng
+	}
+
+	float finalCenter_DecelTime = finalCenterTime * 0.2
+
+	emitter.NonPhysicsRotateTo( centerAng, finalCenterTime, 0, finalCenter_DecelTime )
+
+	wait finalCenterTime
 }
 
 void function PodFXGlowLights( entity pod )
@@ -476,8 +532,10 @@ void function PodBootFXThread( entity pod )
 	PodFXLasers( pod )
 }
 
-void function PodFXCleanup( entity pod )
+void function PodFXCleanupNormalLight_Delayed( entity pod )
 {
+	wait 2.65
+	
 	foreach ( entity handle in pod.s.podLightFXHandles )
 	{
 		if ( IsValid_ThisFrame( handle ) )
@@ -489,26 +547,4 @@ void function PodFXCleanup( entity pod )
 	}
 	
 	pod.s.podLightFXHandles = []
-	
-	foreach ( entity handle in pod.s.podGlowLightFXHandles )
-	{
-		if ( IsValid_ThisFrame( handle ) )
-		{
-			handle.SetStopType( "DestroyImmediately" )
-			handle.ClearParent()
-			handle.Destroy()
-		}
-	}
-	
-	pod.s.podGlowLightFXHandles = []
-	
-	pod.s.leftLaserEmitter.s.fxHandle.SetStopType( "DestroyImmediately" )
-	pod.s.leftLaserEmitter.s.fxHandle.ClearParent()
-	pod.s.leftLaserEmitter.s.fxHandle.Destroy()
-	pod.s.leftLaserEmitter.Destroy()
-	
-	pod.s.rightLaserEmitter.s.fxHandle.SetStopType( "DestroyImmediately" )
-	pod.s.rightLaserEmitter.s.fxHandle.ClearParent()
-	pod.s.rightLaserEmitter.s.fxHandle.Destroy()
-	pod.s.rightLaserEmitter.Destroy()
 }

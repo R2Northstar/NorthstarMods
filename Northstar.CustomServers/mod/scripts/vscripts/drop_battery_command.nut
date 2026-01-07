@@ -2,7 +2,7 @@ global function DropBatteryCommand_Init
 
 void function DropBatteryCommand_Init()
 {
-	AddPrivateMatchModeSettingEnum( "#MODE_SETTING_CATEGORY_RIFF", "drop_battery_command", [ "#SETTING_DISABLED", "#SETTING_ENABLED" ], "#SETTING_DISABLED" )
+	AddPrivateMatchModeSettingEnum( "#MODE_SETTING_CATEGORY_RIFF", "drop_battery_command", [ "#SETTING_DISABLED", "#SETTING_ENABLED" ], "0" )
 
 	#if SERVER
 		AddClientCommandCallback( "dropbattery", ClientCommandCallbackDropBattery )

@@ -85,7 +85,6 @@ void function PIN_GameStart()
 	
 	AddCallback_OnPlayerKilled( OnPlayerKilled )
 	AddDeathCallback( "npc_titan", OnTitanKilled )
-	AddCallback_OnClientDisconnected( OnClientDisconnected )
 	AddCallback_EntityChangedTeam( "player", OnPlayerChangedTeam )
 	PilotBattery_SetMaxCount( GetCurrentPlaylistVarInt( "pilot_battery_inventory_size", 1 ) ) // Game unironically supports players carrying more than one battery
 	
@@ -503,6 +502,8 @@ void function GameStateEnter_Playing_Threaded()
 	if( Flag( "AnnounceProgressEnabled" ) )
 		thread DialoguePlayNormal()
 
+	float timeWithPlayers = Time()
+
 	while ( GetGameState() == eGameState.Playing )
 	{
 		float endTime
@@ -511,7 +512,9 @@ void function GameStateEnter_Playing_Threaded()
 		else
 			endTime = expect float( GetServerVar( "gameEndTime" ) )
 		
-		if ( !GetConnectingAndConnectedPlayerArray().len() )
+		if ( GetPlayerArray().len() )
+			timeWithPlayers = Time()
+		else if ( timeWithPlayers + 10.0 < Time() )
 			GameRules_EndMatch()
 	
 		if ( Time() >= endTime && !Flag( "DisableTimeLimit" ) )
@@ -563,14 +566,14 @@ void function GameStateEnter_WinnerDetermined_Threaded()
 {
 	int winningTeam = GetWinningTeam()
 	DialoguePlayWinnerDetermined()
-
+	
 	if ( IsRoundBased() && !HasRoundScoreLimitBeenReached() )
 		svGlobal.levelEnt.Signal( "RoundEnd" )
 	else
 		svGlobal.levelEnt.Signal( "GameEnd" )
-
+	
 	WaitFrame() // wait a frame so other scripts can setup killreplay stuff
-
+	
 	// Finish timers to make HUD not display more
 	SetServerVar( "gameEndTime", Time() )
 	SetServerVar( "roundEndTime", Time() )
@@ -578,7 +581,7 @@ void function GameStateEnter_WinnerDetermined_Threaded()
 	entity replayAttacker = file.roundWinningKillReplayAttacker
 	bool doReplay = Replay_IsEnabled() && IsRoundWinningKillReplayEnabled() && IsValid( replayAttacker ) && !ClassicMP_ShouldRunEpilogue()
 				 && Time() - file.roundWinningKillReplayTime <= ROUND_WINNING_KILL_REPLAY_LENGTH_OF_REPLAY && winningTeam != TEAM_UNASSIGNED
-
+ 	
 	SetServerVar( "roundWinningKillReplayPlaying", doReplay )
 	if ( doReplay )
 	{
@@ -630,7 +633,7 @@ void function GameStateEnter_WinnerDetermined_Threaded()
 		if ( IsRoundBased() && !HasRoundScoreLimitBeenReached() && HasSwitchedSides() == 0 ) // Repeat check here just for the case match is over and epilogue is disabled, so it doesn't kill players randomly
 			CleanUpEntitiesForRoundEnd()
 	}
-
+	
 	wait CLEAR_PLAYERS_BUFFER // Required to properly restart without players in Titans crashing it in FD
 
 	file.roundWinningKillReplayAttacker = null // Clear Replays
@@ -682,7 +685,7 @@ void function GameStateEnter_WinnerDetermined_Threaded()
 			SetGameState( eGameState.Postmatch )
 		}
 	}
-
+	
 	AllPlayersUnMuteAll()
 }
 
@@ -985,7 +988,7 @@ void function OnPlayerKilled( entity victim, entity attacker, var damageInfo )
 
 void function OnTitanKilled( entity victim, var damageInfo )
 {
-	if ( !GamePlayingOrSuddenDeath() || ( victim.IsNPC() && !IsValid( victim.GetBossPlayer() ) ) )
+	if ( !GamePlayingOrSuddenDeath() || victim.IsNPC() && !IsValid( victim.GetBossPlayer() ) )
 		return
 
 	entity attacker = DamageInfo_GetAttacker( damageInfo )
@@ -1008,29 +1011,12 @@ void function OnTitanKilled( entity victim, var damageInfo )
 	}
 }
 
-void function OnClientDisconnected( entity player )
-{
-	if ( IsEliminationBased() )
-		SetPlayerEliminated( player )
-
-	if ( GamePlayingOrSuddenDeath() )
-		CheckEliminationRiffMode( player, null )
-}
-
 void function CheckEliminationRiffMode( entity victim, entity attacker )
 {
 	// note: pilotstitans is just win if enemy team runs out of either pilots or titans
 	if ( IsPilotEliminationBased() )
 	{
-		int AliveTeamPlayers = 0
-
-		foreach ( player in GetPlayerArrayOfTeam( victim.GetTeam() ) )
-		{
-			if ( player.GetPlayerGameStat( PGS_ELIMINATED ) <= 0 )
-				AliveTeamPlayers++
-		}
-
-		if ( !( AliveTeamPlayers - ( victim.GetPlayerGameStat( PGS_ELIMINATED ) <= 0 ? 1 : 0 ) ) )
+		if ( IsTeamEliminated( victim.GetTeam() ) )
 		{
 			if ( IsFFAGame() ) // for ffa we need to manually get the last team alive 
 			{
@@ -1069,25 +1055,25 @@ void function CheckEliminationRiffMode( entity victim, entity attacker )
 
 	if ( IsTitanEliminationBased() )
 	{
-		if ( !( GetPlayerTitansOnTeam( victim.GetTeam() ).len() - ( IsAlive( victim ) && victim.IsTitan() ? 1 : 0 ) ) )
+		if ( !GetPlayerTitansOnTeam( victim.GetTeam() ).len() )
 		{
 			if ( IsFFAGame() )
 			{
 				array<int> teamsWithLivingTitans
 				foreach ( entity titan in GetTitanArray() )
 				{
-					if ( !teamsWithLivingTitans.contains( titan.GetTeam() ) && titan != victim && titan != victim.GetPetTitan() )
+					if ( !teamsWithLivingTitans.contains( titan.GetTeam() ) )
 						teamsWithLivingTitans.append( titan.GetTeam() )
 				}
 				
 				if ( teamsWithLivingTitans.len() == 1 )
 				{
-					if ( IsRoundBased() )
+					if( IsRoundBased() )
 						AddTeamRoundScoreNoStateChange( teamsWithLivingTitans[0] )
-
+					
 					SetWinner( teamsWithLivingTitans[0], "#GAMEMODE_ENEMY_TITANS_DESTROYED", "#GAMEMODE_FRIENDLY_TITANS_DESTROYED" )
 
-					if ( IsValidPlayer( attacker ) )
+					if( IsValidPlayer( attacker ) )
 						AddPlayerScore( attacker, "VictoryKill", attacker )
 				}
 				else if ( teamsWithLivingTitans.len() == 0 )
@@ -1095,12 +1081,12 @@ void function CheckEliminationRiffMode( entity victim, entity attacker )
 			}
 			else
 			{
-				if ( IsRoundBased() )
+				if( IsRoundBased() )
 					AddTeamRoundScoreNoStateChange( GetOtherTeam( victim.GetTeam() ) )
-
+				
 				SetWinner( GetOtherTeam( victim.GetTeam() ), "#GAMEMODE_ENEMY_TITANS_DESTROYED", "#GAMEMODE_FRIENDLY_TITANS_DESTROYED" )
 
-				if ( IsValidPlayer( attacker ) )
+				if( IsValidPlayer( attacker ) )
 					AddPlayerScore( attacker, "VictoryKill", attacker )
 			}
 		}
