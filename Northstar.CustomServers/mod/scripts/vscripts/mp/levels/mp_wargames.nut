@@ -259,6 +259,7 @@ entity function SpawnSkitGuy( string entityclass, vector origin, vector angles, 
 
 	guy.SetInvulnerable()
 	guy.SetEfficientMode( true )
+	guy.SetTitle( "" )
 
 	if ( animation.len() )
 		thread PlayAnim( guy, animation, null, null, DEFAULT_SCRIPTED_ANIMATION_BLEND_TIME, animationtime )
