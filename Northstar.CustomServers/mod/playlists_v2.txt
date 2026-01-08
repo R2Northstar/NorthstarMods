@@ -1,8 +1,7 @@
 playlists
 {
 	version stable
-	// Add correct versionNum (3325) when we put playlists_v2 on atlas otherwise clients won't be able to connect unless they have the same versionNum
-	versionNum 3246 // Never forget to bump this for every playlist update.
+	versionNum 3325 // Never forget to bump this for every playlist update.
 	Gamemodes
 	{
 		defaults
