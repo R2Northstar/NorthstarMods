@@ -127,7 +127,7 @@ void function GivePlayerColiseumLoadout( entity player )
 
 string function GetColiseumItem( string name )
 {
-	return expect string ( GetCurrentPlaylistVar( "coliseum_" + name ) )
+	return expect string ( GetCurrentPlaylistVar( "pilot_loadout_" + name ) )
 }
 
 void function SetupColiseumEpilogue()
