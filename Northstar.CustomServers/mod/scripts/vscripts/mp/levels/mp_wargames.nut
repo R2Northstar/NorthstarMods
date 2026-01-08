@@ -128,97 +128,49 @@ void function OnPrematchStart()
 	thread FirstPersonSequence( openPodSequence, file.militiaPod )
 
 	array<entity> trackedEntities
-	
+
+	entity militiaOgre = CreatePropDynamic( $"models/titans/ogre/ogreposeopen.mdl", < -2060, 2856, -1412.5 >, < 0, 0, 0 > )
+
 	// create copies for each team, so that the lights and stuff work, because player faction choices may not match with their actual team
 	foreach ( int team in [ TEAM_IMC, TEAM_MILITIA ] )
 	{
-		// militia titans/marvins
-		entity militiaOgre = CreatePropDynamic( $"models/titans/ogre/ogreposeopen.mdl", < -2060, 2856, -1412.5 >, < 0, 0, 0 > )
-		SetTeam( militiaOgre, team )
-		trackedEntities.append( militiaOgre )
-		
-		entity militiaIon = CreatePropDynamic( $"models/titans/medium/titan_medium_ajax.mdl", < -1809.98, 2790.39, -1409 >, < 0, 80, 0 > )
-		thread PlayAnim( militiaIon, "at_titan_activation_wargames_intro" )
-		militiaIon.Anim_SetInitialTime( 4.1 )
-		SetTeam( militiaIon, team )
+		// militia titan, marvins, and grunts
+		entity militiaIon = SpawnSkitGuy( "titan_atlas_stickybomb", < -1809.98, 2790.39, -1409 >, < 0, 80, 0 >, "at_titan_activation_wargames_intro", 4.0, team )
+
 		trackedEntities.append( militiaIon )
 
-		entity militiaIonGrunt = CreatePropDynamic( $"models/humans/grunts/mlt_grunt_smg.mdl", < 0, 0, 0 >, < 0, 0, 0 > )
+		entity militiaIonGrunt = SpawnSkitGuy( "npc_soldier", < 0, 0, 0 >, < 0, 0, 0 >, "", -1.0, team, $"models/humans/grunts/mlt_grunt_smg.mdl" )
+
 		militiaIonGrunt.SetParent( militiaIon, "HIJACK" )
 		militiaIonGrunt.MarkAsNonMovingAttachment()
-		militiaIonGrunt.Anim_Play( "pt_titan_activation_pilot" )
+		militiaIonGrunt.Anim_ScriptedPlay( "pt_titan_activation_pilot" )
 		militiaIonGrunt.Anim_EnableUseAnimatedRefAttachmentInsteadOfRootMotion()
-		SetTeam( militiaIonGrunt, team )
 		trackedEntities.append( militiaIonGrunt )
 
-		// There is 2 grunts on the right of militiaMarvinChillin on the screen in vanilla but I don't know their animations - ASillyNeko
+		trackedEntities.append( SpawnSkitGuy( "npc_soldier", < -2125, 3070, -1411 >, < 0, -121, 0 >, "pt_bored_interface_leanin", -1.0, team, $"models/humans/grunts/mlt_grunt_rifle.mdl" ) )
 
-		// entity militiaGrunt1 = CreatePropDynamic( $"models/humans/grunts/mlt_grunt_rifle.mdl", < -2160, 3052, -1411 >, < 0, -132, 0 > )
-		// thread PlayAnim( militiaGrunt1, "pt_console_idle" )
-		// SetTeam( militiaGrunt1, team )
-		// trackedEntities.append( militiaGrunt1 )
+		trackedEntities.append( SpawnSkitGuy( "npc_soldier", < -2160, 3052, -1411 >, < 0, -132, 0 >, "pt_bored_interface_leanback", -1.0, team, $"models/humans/grunts/mlt_grunt_shotgun.mdl", "mp_weapon_shotgun" ) )
 
-		// entity militiaGrunt2 = CreatePropDynamic( $"models/humans/grunts/mlt_grunt_rifle.mdl", < -2125, 3070, -1411 >, < 0, -121, 0 > )
-		// thread PlayAnim( militiaGrunt2, "pt_console_idle" )
-		// militiaGrunt2.Anim_SetInitialTime( 3.0 )
-		// SetTeam( militiaGrunt2, team )
-		// trackedEntities.append( militiaGrunt2 )
+		trackedEntities.append( SpawnSkitGuy( "npc_marvin", < 2040, 2788, -1412 >, < 0, 20, 0 >, "mv_idle_weld", -1.0, team ) )
 
-		entity militiaOgreMarvin1 = CreatePropDynamic( $"models/robots/marvin/marvin.mdl", < -2113, 2911, -1412 >, < 0, 20, 0 > )
-		thread PlayAnim( militiaOgreMarvin1, "mv_idle_weld" )
-		SetTeam( militiaOgreMarvin1, team )
-		trackedEntities.append( militiaOgreMarvin1 )
-		
-		entity militiaOgreMarvin2 = CreatePropDynamic( $"models/robots/marvin/marvin.mdl", < -2040, 2788, -1412 >, < 0, 140, 0 > )
-		thread PlayAnim( militiaOgreMarvin2, "mv_idle_weld" )
-		SetTeam( militiaOgreMarvin2, team )
-		trackedEntities.append( militiaOgreMarvin2 )
-		
-		entity militiaOgreMarvin3 = CreatePropDynamic( $"models/robots/marvin/marvin.mdl", < -2116, 2868, -1458 >, < 0, 127, 0 > )
-		thread PlayAnim( militiaOgreMarvin3, "mv_turret_repair_A_idle" )
-		SetTeam( militiaOgreMarvin3, team )
-		trackedEntities.append( militiaOgreMarvin3 )
-		
-		entity militiaMarvinChillin = CreatePropDynamic( $"models/robots/marvin/marvin.mdl", < -1786, 3060, -1412 >, < 0, -120, 0 > )
-		thread PlayAnim( militiaMarvinChillin, "mv_idle_unarmed" )
-		SetTeam( militiaMarvinChillin, team )
-		trackedEntities.append( militiaMarvinChillin )
+		trackedEntities.append( SpawnSkitGuy( "npc_marvin", < -2113, 2911, -1412 >, < 0, 140, 0 >, "mv_idle_weld", 3.0, team ) )
+
+		trackedEntities.append( SpawnSkitGuy( "npc_marvin", < -2116, 2868, -1458 >, < 0, 127, 0 >, "mv_turret_repair_A_idle", -1.0, team ) )
+
+		trackedEntities.append( SpawnSkitGuy( "npc_marvin", < -1786, 3060, -1412 >, < 0, -120, 0 >, "mv_idle_unarmed", -1.0, team ) )
 
 		// imc grunts
-		entity imcGrunt1 = CreatePropDynamic( $"models/humans/grunts/imc_grunt_rifle.mdl", < -2915, 2867, -1788 >, < 0, -137, 0 > )
-		thread PlayAnim( imcGrunt1, "pt_console_idle" )
-		SetTeam( imcGrunt1, team )
-		trackedEntities.append( imcGrunt1 )
-		
-		entity imcGrunt2 = CreatePropDynamic( $"models/humans/grunts/imc_grunt_rifle.mdl", < -2870, 2746, -1786 >, < 0, -167, 0 > )
-		thread PlayAnim( imcGrunt2, "pt_console_idle" )
-		imcGrunt2.Anim_SetInitialTime( 2.0 )
-		SetTeam( imcGrunt2, team )
-		trackedEntities.append( imcGrunt2 )
-		
-		entity imcGrunt3 = CreatePropDynamic( $"models/humans/grunts/imc_grunt_rifle.mdl", < -3037, 2909, -1786 >, < 0, -60, 0 > )
-		thread PlayAnim( imcGrunt3, "pt_console_idle" )
-		imcGrunt3.Anim_SetInitialTime( 4.0 )
-		SetTeam( imcGrunt3, team )
-		trackedEntities.append( imcGrunt3 )
+		trackedEntities.append( SpawnSkitGuy( "npc_soldier", < -2915, 2867, -1788 >, < 0, -137, 0 >, "pt_console_idle", -1.0, team, $"models/humans/grunts/imc_grunt_rifle.mdl" ) )
 
-		entity imcGrunt4 = CreatePropDynamic( $"models/humans/grunts/imc_grunt_rifle.mdl", < -3200, 3017, -1794 >, < 0, 117, 0 > )
-		thread PlayAnim( imcGrunt4, "pt_console_idle" )
-		imcGrunt4.Anim_SetInitialTime( 6.0 )
-		SetTeam( imcGrunt4, team )
-		trackedEntities.append( imcGrunt4 )
+		trackedEntities.append( SpawnSkitGuy( "npc_soldier", < -2870, 2746, -1786 >, < 0, -167, 0 >, "pt_console_idle", 2.0, team, $"models/humans/grunts/imc_grunt_rifle.mdl" ) )
 
-		entity imcGrunt5 = CreatePropDynamic( $"models/humans/grunts/imc_grunt_rifle.mdl", < -3281, 2941, -1790 >, < 0, 138, 0 > )
-		thread PlayAnim( imcGrunt5, "pt_console_idle" )
-		imcGrunt5.Anim_SetInitialTime( 8.0 )
-		SetTeam( imcGrunt5, team )
-		trackedEntities.append( imcGrunt5 )
+		trackedEntities.append( SpawnSkitGuy( "npc_soldier", < -3037, 2909, -1786 >, < 0, -60, 0 >, "pt_console_idle", 4.0, team, $"models/humans/grunts/imc_grunt_rifle.mdl" ) )
 
-		// entity imcGrunt6 = CreatePropDynamic( $"models/humans/grunts/imc_grunt_rifle.mdl", < -3293, 2909, -1788 >, < 0, -64, 0 > )
-		// thread PlayAnim( imcGrunt6, "pt_console_idle" ) // there is a grunt behind imcGrunt5 in vanilla but i don't know its animation - ASillyNeko
-		// imcGrunt6.Anim_SetInitialTime( 8.0 )
-		// SetTeam( imcGrunt6, team )
-		// trackedEntities.append( imcGrunt6 )
+		trackedEntities.append( SpawnSkitGuy( "npc_soldier", < -3200, 3017, -1794 >, < 0, 118, 0 >, "pt_console_idle", 4.5, team, $"models/humans/grunts/imc_grunt_rifle.mdl" ) )
+
+		trackedEntities.append( SpawnSkitGuy( "npc_soldier", < -3281, 2941, -1790 >, < 0, 138, 0 >, "pt_console_idle", 6.0, team, $"models/humans/grunts/imc_grunt_rifle.mdl" ) )
+
+		trackedEntities.append( SpawnSkitGuy( "npc_soldier", < -3293, 2909, -1788 >, < 0, -64, 0 >, "pt_bored_interface_leanin", -1.0, team, $"models/humans/grunts/imc_grunt_rifle.mdl", "mp_weapon_car" ) )
 	}
 
 	// so I don't have to duplicate this on all entities
@@ -234,13 +186,13 @@ void function OnPrematchStart()
 			RespawnPrivateMatchSpectator( player )
 	}
 	
-	// 7.9 seconds of nothing until we start the pod sequence
-	wait 7.9
+	// 8 seconds of nothing until we start the pod sequence
+	wait 8.0
 	
 	FirstPersonSequenceStruct podCloseSequence
 	podCloseSequence.thirdPersonAnim = "trainingpod_doors_close"
 	podCloseSequence.thirdPersonAnimIdle = "trainingpod_doors_close_idle"
-	podCloseSequence.setInitialTime = Time() - ( file.introStartTime + 7.9 )
+	podCloseSequence.setInitialTime = Time() - ( file.introStartTime + 8.0 )
 	thread FirstPersonSequence( podCloseSequence, file.imcPod )
 	thread FirstPersonSequence( podCloseSequence, file.militiaPod )
 
@@ -252,6 +204,9 @@ void function OnPrematchStart()
 	thread PodBootFXThread( file.militiaPod )
 	
 	// cleanup intro objects
+
+	if ( IsValid( militiaOgre ) )
+		militiaOgre.Destroy()
 
 	foreach ( entity ent in trackedEntities )
 		if ( IsValid( ent ) )
@@ -266,6 +221,50 @@ void function OnPrematchStart()
 	
 	foreach ( entity trigger in triggers )
 		trigger.kv.triggerFilterPlayer = "all"
+}
+
+entity function SpawnSkitGuy( string entityclass, vector origin, vector angles, string animation = "", float animationtime = -1.0, int team = TEAM_UNASSIGNED, asset model = $"", string weapon = "" )
+{
+	entity guy = null
+
+	if ( entityclass == "npc_marvin" )
+	{
+		guy = CreateMarvin( team, origin, angles )
+
+		DispatchSpawn( guy )
+
+		guy.Signal( "StopDoingJobs" )
+	}
+	else if ( entityclass == "npc_soldier" )
+	{
+		guy = CreateElitePilot( team, origin, angles )
+
+		DispatchSpawn( guy )
+
+		guy.SetValueForModelKey( model )
+		guy.SetModel( model )
+
+		TakeWeaponsForArray( guy, guy.GetMainWeapons() )
+
+		if ( weapon.len() )
+			guy.GiveWeapon( weapon )
+	}
+	else
+	{
+		guy = CreateNPCTitan( entityclass, team, origin, angles )
+
+		DispatchSpawn( guy )
+		TakeWeaponsForArray( guy, guy.GetMainWeapons() )
+	}
+
+	guy.SetInvulnerable()
+	guy.SetEfficientMode( true )
+	guy.SetTitle( "" )
+
+	if ( animation.len() )
+		thread PlayAnim( guy, animation, null, null, DEFAULT_SCRIPTED_ANIMATION_BLEND_TIME, animationtime )
+
+	return guy
 }
 
 void function PlayerWatchesWargamesIntro( entity player )
@@ -347,10 +346,10 @@ void function PlayerWatchesWargamesIntro( entity player )
 	else if ( file.militiaPodFXEyePos == < 0, 0, 0 > && factionTeam == TEAM_MILITIA )
 		file.militiaPodFXEyePos = player.EyePosition()
 	
-	// 7.9 seconds of nothing before we start the pod sequence
-	wait ( file.introStartTime + 7.9 ) - Time()
+	// 8.0 seconds of nothing before we start the pod sequence
+	wait ( file.introStartTime + 8.0 ) - Time()
 
-	while ( Time() < file.introStartTime + 7.9 ) // note: remove this when wait stops waiting less than the input time
+	while ( Time() < file.introStartTime + 8.0 ) // note: remove this when wait stops waiting less than the input time
 		WaitFrame()
 	
 	FirstPersonSequenceStruct podCloseSequence
@@ -358,17 +357,17 @@ void function PlayerWatchesWargamesIntro( entity player )
 	podCloseSequence.renderWithViewModels = true
 	podCloseSequence.attachment = "REF"
 	podCloseSequence.viewConeFunction = TrainingPod_ViewConeLock_SemiStrict
-	podCloseSequence.setInitialTime = Time() - ( file.introStartTime + 7.9 )
+	podCloseSequence.setInitialTime = Time() - ( file.introStartTime + 8.0 )
 	waitthread FirstPersonSequence( podCloseSequence, player, playerPod )
 				
 	// wait 0.6 seconds then start boot sequence
-	wait ( file.introStartTime + 14.1 ) - Time()
+	wait ( file.introStartTime + 14.2 ) - Time()
 	EmitSoundOnEntityOnlyToPlayer( player, player, "NPE_Scr_SimPod_PowerUp" )
 	TrainingPod_ViewConeLock_PodClosed( player )
 	
 	// 10 seconds of starting pod before we run effects and spawn players
 	// note, this is cool because it waits for a specific time, so we can have a blocking call directly before it just fine
-	wait ( file.introStartTime + 16.7 ) - Time()
+	wait ( file.introStartTime + 16.8 ) - Time()
 	Remote_CallFunction_NonReplay( player, "ServerCallback_PlayPodTransitionScreenFX" )
 	
 	// need to wait no matter what the delay is here so fx will sync up
@@ -535,7 +534,7 @@ void function PodBootFXThread( entity pod )
 void function PodFXCleanupNormalLight_Delayed( entity pod )
 {
 	wait 2.65
-	
+
 	foreach ( entity handle in pod.s.podLightFXHandles )
 	{
 		if ( IsValid_ThisFrame( handle ) )
@@ -545,6 +544,6 @@ void function PodFXCleanupNormalLight_Delayed( entity pod )
 			handle.Destroy()
 		}
 	}
-	
+
 	pod.s.podLightFXHandles = []
 }

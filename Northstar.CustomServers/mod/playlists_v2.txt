@@ -718,7 +718,7 @@ playlists
 				mp_drydock 1
 				mp_angel_city 1
 				mp_colony02 1
-				//mp_relic02 1 // Fix failed, still hard crashes sadly.
+				mp_relic02 1
  			}
  		}
 		fd_easy
