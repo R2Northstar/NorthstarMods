@@ -97,7 +97,6 @@
 		"iron_rules" "アイロンルール"
 
 		"cp_amped_capture_points" "拠点増幅"
-		"coliseum_loadouts_enabled" "コロシアムロードアウト"
 
 		// そのまま「グラント」よりも、Respawn翻訳で使われている
 		//「ミニオン」のほうが伝わりやすいかもしれないのでこっちにする

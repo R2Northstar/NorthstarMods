@@ -79,7 +79,6 @@ Choisissez Oui si vous êtes d'accord. Ce choix peut être modifié à tout inst
 		"iron_rules" "Titans de fer"
 
 		"cp_amped_capture_points" "Points de capture améliorés"
-		"coliseum_loadouts_enabled" "Equipements du Colisée"
 
 		"aitdm_archer_grunts" "Soldats (Archer)"
 

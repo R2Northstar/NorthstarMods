@@ -74,10 +74,15 @@ void function CreateCustomSpawns_Threaded()
 		//vector castEnd = < hardpoint.x + r * cos( a ), hardpoint.y + r * sin( a ), GetLethalFogBottom() >
 		
 		TraceResults trace = TraceLine( raycastPos, < raycastPos.x, raycastPos.y, GetLethalFogBottom() >, [], TRACE_MASK_SOLID, TRACE_COLLISION_GROUP_NONE ) // should only hit world
-		print( "raycast: " + trace.endPos )
+
+		if ( GetConVarBool( "spewlog_enable" ) )
+			print( "raycast: " + trace.endPos )
+
 		if ( trace.endPos.z >= GetLethalFogTop() )
 		{
-			print( "creating floor is lava spawn at " + trace.endPos )
+			if ( GetConVarBool( "spewlog_enable" ) )
+				print( "creating floor is lava spawn at " + trace.endPos )
+
 			validSpawnsCreated++
 		
 			// valid spot, create a spawn

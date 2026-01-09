@@ -78,7 +78,6 @@ Drücke Ja, um zuzustimmen. Du kannst diese Entscheidung jederzeit im Modmenü �
 		"iron_rules" "Iron Titan Regeln"
 
 		"cp_amped_capture_points" "Verstärkte Hardpoints"
-		"coliseum_loadouts_enabled" "Coliseum Loadouts"
 
 		"aitdm_archer_grunts" "Archer Frontsoldaten"
 

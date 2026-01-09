@@ -133,5 +133,5 @@ bool function GetClassicMPMode()
 bool function ClassicMP_ShouldRunEpilogue()
 {
 	// note: there is a run_evac playlist var, but it's unused, and default 0, so use a new one
-	return !file.epilogueForceDisabled && GetClassicMPMode() && GetCurrentPlaylistVarInt( "run_epilogue", 1 ) == 1
+	return !file.epilogueForceDisabled && GetCurrentPlaylistVarInt( "classic_mp", 1 ) == 1 && GetCurrentPlaylistVarInt( "run_epilogue", 1 ) == 1
 }

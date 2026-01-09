@@ -3302,6 +3302,30 @@ string function Loadouts_GetSetFileForRequestedClass( entity player )
 		if ( player.IsBot() && !player.IsPlayback() )
 			OverrideBotPilotLoadout( loadout )
 
+		if ( GetCurrentPlaylistVarInt( "custom_pilot_loadout", 0 ) )
+		{
+			loadout = clone loadout
+
+			loadout.primary = GetCurrentPlaylistVarString( "pilot_loadout_primary", "" )
+			loadout.primaryMods = [ GetCurrentPlaylistVarString( "pilot_loadout_primary_attachment", "" ), GetCurrentPlaylistVarString( "pilot_loadout_primary_mod1", "" ), GetCurrentPlaylistVarString( "pilot_loadout_primary_mod2", "" ), GetCurrentPlaylistVarString( "pilot_loadout_primary_mod3", "" ) ]
+			loadout.primaryAttachments = []
+
+			loadout.secondary = GetCurrentPlaylistVarString( "pilot_loadout_secondary", "" )               
+			loadout.secondaryMods = [ GetCurrentPlaylistVarString( "pilot_loadout_secondary_mod1", "" ), GetCurrentPlaylistVarString( "pilot_loadout_secondary_mod2", "" ), GetCurrentPlaylistVarString( "pilot_loadout_secondary_mod3", "" ) ]
+
+			loadout.weapon3 = GetCurrentPlaylistVarString( "pilot_loadout_weapon3", "" )
+			loadout.weapon3Mods = [ GetCurrentPlaylistVarString( "pilot_loadout_weapon3_mod1", "" ), GetCurrentPlaylistVarString( "pilot_loadout_weapon3_mod2", "" ), GetCurrentPlaylistVarString( "pilot_loadout_weapon3_mod3", "" ) ]
+
+			loadout.melee = GetCurrentPlaylistVarString( "pilot_loadout_melee", "" )
+			loadout.special = GetCurrentPlaylistVarString( "pilot_loadout_special", "" )
+			loadout.ordnance = GetCurrentPlaylistVarString( "pilot_loadout_ordnance", "" )
+			loadout.passive1 = GetCurrentPlaylistVarString( "pilot_loadout_passive1", "" )
+			loadout.passive2 = GetCurrentPlaylistVarString( "pilot_loadout_passive2", "" )
+
+			if ( GetConVarString( "mp_gamemode" ) == "coliseum" )
+				loadout.setFile = GetSuitAndGenderBasedSetFile( "coliseum", loadout.race == RACE_HUMAN_FEMALE ? "female" : "male" )
+		}
+
 		GivePilotLoadout( player, loadout )
 		SetActivePilotLoadout( player )
 		SetActivePilotLoadoutIndex( player, loadoutIndex )

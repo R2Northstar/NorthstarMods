@@ -79,7 +79,6 @@
 		"iron_rules" "鐵血泰坦"
 
 		"cp_amped_capture_points" "強化據點"
-		"coliseum_loadouts_enabled" "競技場裝備"
 
 		"aitdm_archer_grunts" "射手飛彈步兵"
 

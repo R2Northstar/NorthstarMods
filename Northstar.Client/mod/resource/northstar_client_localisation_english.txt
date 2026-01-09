@@ -64,6 +64,7 @@ Press Yes if you agree to this. This choice can be changed in the mods menu at a
 		"boosts_enabled" "Boosts"
 		"earn_meter_pilot_overdrive" "Boost meter overdrive"
 		"earn_meter_pilot_multiplier" "Pilot boost meter multiplier"
+		"custom_pilot_loadout" "Custom pilot loadout"
 
 		"earn_meter_titan_multiplier" "Titan boost meter multiplier"
 		"aegis_upgrades" "Aegis Upgrades"
@@ -85,7 +86,6 @@ Press Yes if you agree to this. This choice can be changed in the mods menu at a
 		"drop_battery_command"				"Drop Battery Command"
 
 		"cp_amped_capture_points" "Amped Hardpoints"
-		"coliseum_loadouts_enabled" "Coliseum Loadouts"
     
 		"aitdm_archer_grunts" "Archer Grunts"
     

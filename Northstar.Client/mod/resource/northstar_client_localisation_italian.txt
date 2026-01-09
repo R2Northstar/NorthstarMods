@@ -77,7 +77,6 @@ Premi Sì se sei d'accordo. Questa scelta può essere modificata in qualsiasi mo
 		"iron_rules" "Titani di Ferro"
 
 		"cp_amped_capture_points" "Hardpoints Amplificati"
-		"coliseum_loadouts_enabled" "Equipaggiamento Colosseo"
 
 		"aitdm_archer_grunts", "Scagnozzi Archer"
 

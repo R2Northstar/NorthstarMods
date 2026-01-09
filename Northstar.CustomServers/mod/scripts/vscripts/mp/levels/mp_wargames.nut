@@ -147,7 +147,7 @@ void function OnPrematchStart()
 		militiaIonGrunt.Anim_EnableUseAnimatedRefAttachmentInsteadOfRootMotion()
 		trackedEntities.append( militiaIonGrunt )
 
-		trackedEntities.append( SpawnSkitGuy( "npc_soldier", < -2125, 3070, -1411 >, < 0, -121, 0 >, "pt_bored_interface_leanin", -1.0, team, $"models/humans/grunts/mlt_grunt_rifle.mdl" ) )
+		trackedEntities.append( SpawnSkitGuy( "npc_soldier", < -2125, 3070, -1411 >, < 0, -121, 0 >, "pt_bored_interface_leanin", -1.0, team, $"models/humans/grunts/mlt_grunt_smg.mdl" ) )
 
 		trackedEntities.append( SpawnSkitGuy( "npc_soldier", < -2160, 3052, -1411 >, < 0, -132, 0 >, "pt_bored_interface_leanback", -1.0, team, $"models/humans/grunts/mlt_grunt_shotgun.mdl", "mp_weapon_shotgun" ) )
 

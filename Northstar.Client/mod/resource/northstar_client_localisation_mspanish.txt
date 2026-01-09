@@ -79,7 +79,6 @@ Si estas de acuerdo con esto, presiona SI. Esta decision puede ser cambiada en e
 		"iron_rules" "Iron Titan Rules"
 
 		"cp_amped_capture_points" "Fortalezas amplificadas"
-		"coliseum_loadouts_enabled" "Equipamientos de coliseo"
 
 		"aitdm_archer_grunts" "Soldado Archer"
 

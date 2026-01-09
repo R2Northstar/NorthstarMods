@@ -79,7 +79,6 @@ Naciśnij Tak jeżeli wyrażasz zgodę. Wybór może zostać zmieniony w menu Mo
 		"iron_rules" "Iron Titan Rules"
 
 		"cp_amped_capture_points" "Obrona umocnień"
-		"coliseum_loadouts_enabled" "Uzbrojenie Koloseum"
     
 		"aitdm_archer_grunts" "Piechurzy z łucznikami"
     

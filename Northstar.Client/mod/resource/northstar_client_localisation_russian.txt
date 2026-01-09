@@ -69,7 +69,6 @@
 		"iron_rules" "Титан-клетка"
 
 		"cp_amped_capture_points" "Усиленные опорные пункты"
-		"coliseum_loadouts_enabled" "Набор гладиатора"
 
 		// northstar.custom localisation is just deciding not to work, so putting it here for now
 		"PL_sbox" "Песочница"
