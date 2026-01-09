@@ -10,7 +10,7 @@ const int FrontlineSpawnpoint_MinCombat = 2048
 
 vector function GetMapCenter()
 {
-	array<vector> navmeshPositions = GetAllNavMeshPositions( HULL_HUMAN )
+	array<vector> navmeshPositions = NavMesh_GetAllPositions( HULL_HUMAN )
 
 	vector centerPos = Vector( 0, 0, 0 )
 
@@ -19,14 +19,14 @@ vector function GetMapCenter()
 
 	centerPos *= ( 1.0 / navmeshPositions.len() )
 
-	return ArrayClosestVector( GetAllNavMeshPositions( HULL_HUMAN ), centerPos )[0]
+	return ArrayClosestVector( NavMesh_GetAllPositions( HULL_HUMAN ), centerPos )[0]
 }
 
 vector function GetFrontlinePath( int team, int hull )
 {
 	Frontline fl = GetFrontline( team )
 
-	return ArrayClosestVector( GetAllNavMeshPositions( hull ), fl.origin )[0]
+	return ArrayClosestVector( NavMesh_GetAllPositions( hull ), fl.origin )[0]
 }
 
 entity function GetFrontlineSpawnpoint( int team, array<entity> candidatePoints )
