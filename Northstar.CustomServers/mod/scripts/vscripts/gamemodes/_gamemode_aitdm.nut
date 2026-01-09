@@ -476,7 +476,7 @@ void function ReaperHandler( entity reaper )
 	foreach ( player in players )
 		reaper.Minimap_AlwaysShow( 0, player )
 
-	vector point = GetFrontlinePath( reaper.GetTeam(), HULL_HUMAN )
+	vector point = GetFrontlinePath( reaper.GetTeam(), HULL_MEDIUM )
 
 	reaper.AssaultPointClamped( point )
 	reaper.AssaultSetFightRadius( FrontlineRadius_Reaper )
@@ -485,7 +485,7 @@ void function ReaperHandler( entity reaper )
 	// Every 2.5 - 5 secs change AssaultPoint
 	while ( IsAlive( reaper ) )
 	{
-		point = GetFrontlinePath( reaper.GetTeam(), HULL_HUMAN )
+		point = GetFrontlinePath( reaper.GetTeam(), HULL_MEDIUM )
 
 		reaper.AssaultPoint( point )
 		reaper.AssaultPointClamped( point )
