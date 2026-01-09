@@ -1,1 +1,81 @@
-//fuck
+global function GetMapCenter
+global function GetFrontlinePath
+global function GetFrontlineSpawnpoint
+
+global const int FrontlineRadius_Minion = 2048
+global const int FrontlineRadius_Reaper = 4096
+global const int FrontlineRadius_Titan = 8192
+
+const int FrontlineSpawnpoint_MinCombat = 1024 // NPCs will spawn on enemies if they're too close to the spawnpoint lol
+
+vector function GetMapCenter()
+{
+	array<vector> navmeshPositions = GetAllNavMeshPositions( HULL_HUMAN )
+
+	vector centerPos = Vector( 0, 0, 0 )
+
+	foreach ( navmeshPosition in navmeshPositions )
+		centerPos += navmeshPosition
+
+	centerPos *= ( 1.0 / navmeshPositions.len() )
+
+	return ArrayClosestVector( GetAllNavMeshPositions( HULL_HUMAN ), centerPos )[0]
+}
+
+vector function GetFrontlinePath( int team, int hull )
+{
+	Frontline fl = GetFrontline( team )
+
+	return ArrayClosestVector( GetAllNavMeshPositions( hull ), fl.origin )[0]
+}
+
+entity function GetFrontlineSpawnpoint( int team, array<entity> candidatePoints )
+{
+	vector frontlinePath = GetFrontlinePath( team, HULL_HUMAN )
+
+	array<entity> closestPoints = ArrayClosest( candidatePoints, frontlinePath )
+
+	foreach ( point in closestPoints )
+		if ( IsSpawnpointValid( point, team, frontlinePath ) )
+			return point
+	
+	return closestPoints.getrandom()
+}
+
+bool function IsSpawnpointValid( entity spawnpoint, int team, vector frontlinePath, bool skipLineOfSightChecks = false, bool skipTimeCheck = false )
+{
+	array<entity> enemies = GetPlayerArrayOfEnemies_Alive( team )
+	enemies.extend( GetNPCArrayOfEnemies( team ) )
+
+	if ( enemies.len() && Distance( spawnpoint.GetOrigin(), ArrayClosest( enemies, spawnpoint.GetOrigin() )[0].GetOrigin() ) < FrontlineSpawnpoint_MinCombat )
+		return false
+
+	if ( spawnpoint.IsOccupied() || spawnpoint.e.spawnPointInUse )
+		return false
+
+	if ( !skipTimeCheck && spawnpoint.e.spawnTime != 0 && Time() - spawnpoint.e.spawnTime <= 10.0 ) 
+		return false
+
+	if ( SpawnPointInNoSpawnArea( spawnpoint.GetOrigin(), team ) )
+		return false
+
+	if ( skipLineOfSightChecks )
+		return true
+
+	if ( GetConVarBool( "spawnpoint_avoid_npc_titan_sight" ) )
+		foreach ( titan in GetTitanArrayOfEnemies( team ) )
+			if ( IsAlive( titan ) && titan.IsNPC() && titan.CanSee( spawnpoint ) )
+				return false
+
+	return !spawnpoint.IsVisibleToEnemies( team )
+}
+
+array<vector> function GetAllNavMeshPositions( int hull )
+{
+	array<vector> nodes = []
+
+	for ( int nodeIdx = 0; nodeIdx < GetNodeCount(); nodeIdx++ )
+		nodes.append( GetNodePos( nodeIdx ) )
+
+	return nodes
+}

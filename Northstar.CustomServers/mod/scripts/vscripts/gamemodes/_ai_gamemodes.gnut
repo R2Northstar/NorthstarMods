@@ -19,6 +19,7 @@ struct
 
 void function AiGameModes_Init()
 {
+	Frontline_Init()
 }
 
 //------------------------------------------------------

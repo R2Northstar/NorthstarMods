@@ -105,7 +105,7 @@ void function OnPlaying()
 	if ( GetAINScriptVersion() == AIN_REV && GetNodeCount() != 0 )
 	{
 		thread SpawnIntroBatch_Threaded( TEAM_MILITIA )
-		thread SpawnIntroBatch_Threaded( TEAM_IMC )
+		delaythread ( 0.0001 ) SpawnIntroBatch_Threaded( TEAM_IMC )
 	}
 }
 
@@ -231,8 +231,8 @@ void function SpawnIntroBatch_Threaded( int team )
 
 
 	// Spawn logic
+	int podIndex = 0
 	int startIndex = 0
-	bool first = true
 	entity node
 	
 	int pods = RandomInt( podNodes.len() + 1 )
@@ -243,12 +243,10 @@ void function SpawnIntroBatch_Threaded( int team )
 	{
 		if ( pods != 0 || ships == 0 )
 		{
-			int index = i
+			if ( !podIndex )
+				podIndex = i
 			
-			if ( index > podNodes.len() - 1 )
-			index = RandomInt( podNodes.len() )
-			
-			node = podNodes[ index ]
+			node = podNodes[ i - podIndex ]
 			thread AiGameModes_SpawnDropPod( node, team, "npc_soldier", SquadHandler )
 			
 			pods--
@@ -256,8 +254,8 @@ void function SpawnIntroBatch_Threaded( int team )
 		}
 		else
 		{
-			if ( startIndex == 0 ) 
-			startIndex = i // save where we started
+			if ( !startIndex ) 
+				startIndex = i // save where we started
 			
 			node = shipNodes[ i - startIndex ]
 			thread AiGameModes_SpawnDropShip( node, team, 4, SquadHandler )
@@ -267,10 +265,8 @@ void function SpawnIntroBatch_Threaded( int team )
 		}
 		
 		// Vanilla has a delay after first spawn
-		if ( first )
+		if ( !i )
 			wait 2
-		
-		first = false
 	}
 	
 	wait 15
@@ -384,18 +380,12 @@ void function Escalate( int team )
 // These zones should swap based on which team is dominating where
 int function GetSpawnPointIndex( array< entity > points, int team )
 {
-	entity zone = DecideSpawnZone_Generic( points, team )
+	entity point = GetFrontlineSpawnpoint( team, points )
 	
-	if ( IsValid( zone ) )
+	for ( int i = 0; i < points.len(); i++ )
 	{
-		// 20 Tries to get a random point close to the zone
-		for ( int i = 0; i < 20; i++ )
-		{
-			int index = RandomInt( points.len() )
-		
-			if ( Distance2D( points[ index ].GetOrigin(), zone.GetOrigin() ) < 6000 )
-				return index
-		}
+		if ( points[i] == point )
+			return i
 	}
 	
 	return RandomInt( points.len() )
@@ -409,6 +399,7 @@ void function SquadHandler( array<entity> guys )
 	int team = guys[0].GetTeam()
 	// show the squad enemy radar
 	array<entity> players = GetPlayerArrayOfEnemies( team )
+
 	foreach ( entity guy in guys )
 	{
 		if ( IsAlive( guy ) )
@@ -420,11 +411,10 @@ void function SquadHandler( array<entity> guys )
 
 	// Not all maps have assaultpoints / have weird assault points ( looking at you ac )
 	// So we use enemies with a large radius
-	while ( !GetNPCArrayOfEnemies( team ).len() ) // if we can't find any enemy npcs, keep waiting
-		WaitFrame()
 
 	// our waiting is end, check if any soldiers left
 	bool squadAlive = false
+
 	foreach ( entity guy in guys )
 	{
 		if ( IsAlive( guy ) )
@@ -432,47 +422,42 @@ void function SquadHandler( array<entity> guys )
 		else
 			guys.removebyvalue( guy )
 	}
+
 	if ( !squadAlive )
 		return
 
-	array<entity> points = GetNPCArrayOfEnemies( team )
-	
-	vector point = points.getrandom().GetOrigin()
-	
+	vector point = GetFrontlinePath( team, HULL_HUMAN )
+
 	// Setup AI, first assault point
 	foreach ( guy in guys )
 	{
 		guy.EnableNPCFlag( NPC_ALLOW_PATROL | NPC_ALLOW_INVESTIGATE | NPC_ALLOW_HAND_SIGNALS | NPC_ALLOW_FLEE )
 		guy.AssaultPoint( point )
+		guy.AssaultPointClamped( point )
+		guy.AssaultSetFightRadius( FrontlineRadius_Minion )
 		guy.AssaultSetGoalRadius( 1600 ) // 1600 is minimum for npc_stalker, works fine for others
-
-		//thread AITdm_CleanupBoredNPCThread( guy )
 	}
 	
-	// Every 5 - 15 secs change AssaultPoint
+	// Every 2.5 - 5 secs change AssaultPoint
 	while ( true )
 	{	
 		ArrayRemoveDead( guys )
+
 		if ( !guys.len() )
 			return
 
-		// Get point and send our whole squad to it
-		points = GetNPCArrayOfEnemies( team )
-		while ( !points.len() )
-		{
-			WaitFrame()
-			points = GetNPCArrayOfEnemies( team )
-		}
-		
-		point = points.getrandom().GetOrigin()
-		
+		point = GetFrontlinePath( team, HULL_HUMAN )
+
 		foreach ( guy in guys )
 		{
 			if ( IsAlive( guy ) )
+			{
 				guy.AssaultPoint( point )
+				guy.AssaultPointClamped( point )
+			}
 		}
 
-		wait RandomFloatRange( 5.0, 15.0 )
+		wait RandomFloatRange( 2.5, 5.0 )
 	}
 }
 
@@ -491,90 +476,24 @@ void function OnSpectreLeeched( entity spectre, entity player )
 void function ReaperHandler( entity reaper )
 {
 	array<entity> players = GetPlayerArrayOfEnemies( reaper.GetTeam() )
+
 	foreach ( player in players )
 		reaper.Minimap_AlwaysShow( 0, player )
-	
+
+	vector point = GetFrontlinePath( reaper.GetTeam(), HULL_HUMAN )
+
+	reaper.AssaultPointClamped( point )
+	reaper.AssaultSetFightRadius( FrontlineRadius_Reaper )
 	reaper.AssaultSetGoalRadius( 1200 )
-	
-	// Every 10 - 20 secs get a player and go to him
-	// Definetly not annoying or anything :)
-	while( IsAlive( reaper ) )
-	{
-		players = GetPlayerArrayOfEnemies( reaper.GetTeam() )
-		if ( players.len() != 0 )
-		{
-			entity player = GetClosest2D( players, reaper.GetOrigin() )
-			reaper.AssaultPoint( player.GetOrigin() )
-		}
-		wait RandomFloatRange(10.0,20.0)
-	}
-	// thread AITdm_CleanupBoredNPCThread( reaper )
-}
 
-// Currently unused as this is handled by SquadHandler
-// May need to use this if my implementation falls apart
-void function AITdm_CleanupBoredNPCThread( entity guy )
-{
-	// track all ai that we spawn, ensure that they're never "bored" (i.e. stuck by themselves doing fuckall with nobody to see them) for too long
-	// if they are, kill them so we can free up slots for more ai to spawn
-	// we shouldn't ever kill ai if players would notice them die
-	
-	// NOTE: this partially covers up for the fact that we script ai alot less than vanilla probably does
-	// vanilla probably messes more with making ai assaultpoint to fights when inactive and stuff like that, we don't do this so much
-
-	guy.EndSignal( "OnDestroy" )
-	wait 15.0 // cover spawning time from dropship/pod + before we start cleaning up
-	
-	int cleanupFailures = 0 // when this hits 2, cleanup the npc
-	while ( cleanupFailures < 2 )
+	// Every 2.5 - 5 secs change AssaultPoint
+	while ( IsAlive( reaper ) )
 	{
-		wait 10.0
-	
-		if ( guy.GetParent() != null )
-			continue // never cleanup while spawning
-	
-		array<entity> otherGuys = GetPlayerArray()
-		otherGuys.extend( GetNPCArrayOfTeam( GetOtherTeam( guy.GetTeam() ) ) )
-		
-		bool failedChecks = false
-		
-		foreach ( entity otherGuy in otherGuys )
-		{	
-			// skip dead people
-			if ( !IsAlive( otherGuy ) )
-				continue
-		
-			failedChecks = false
-		
-			// don't kill if too close to anything
-			if ( Distance( otherGuy.GetOrigin(), guy.GetOrigin() ) < 2000.0 )
-				break
-			
-			// don't kill if ai or players can see them
-			if ( otherGuy.IsPlayer() )
-			{
-				if ( PlayerCanSee( otherGuy, guy, true, 135 ) )
-					break
-			}
-			else
-			{
-				if ( otherGuy.CanSee( guy ) )
-					break
-			}
-			
-			// don't kill if they can see any ai
-			if ( guy.CanSee( otherGuy ) )
-				break
-				
-			failedChecks = true
-		}
-		
-		if ( failedChecks )
-			cleanupFailures++
-		else
-			cleanupFailures--
+		point = GetFrontlinePath( reaper.GetTeam(), HULL_HUMAN )
+
+		reaper.AssaultPoint( point )
+		reaper.AssaultPointClamped( point )
+
+		wait RandomFloatRange( 2.5,5.0 )
 	}
-	
-	print( "cleaning up bored npc: " + guy + " from team " + guy.GetTeam() )
-	guy.Destroy()
 }

@@ -1,11 +1,8 @@
-untyped
-
-
+global function Frontline_Init
+global function FrontlineEnabled
 global function GetFrontline
 global function SetFrontline
 global function AddCalculateFrontlineCallback
-
-const DEBUG_FRONTLINE = false
 
 global struct Frontline
 {
@@ -21,13 +18,49 @@ struct
 {
 	Frontline frontline
 	array<void functionref()> calculateFrontlineCallbacks
+	bool disablefrontline = true
 } file
 
-Frontline function GetFrontline( team )
+void function Frontline_Init()
 {
-	if ( file.frontline.lastCalcTime < Time() )
+	delaythread ( 0.0001 ) Frontline_Init_Threaded()
+}
+
+void function Frontline_Init_Threaded()
+{
+	#if SERVER
+		try
+		{
+			file.frontline.origin = GetMapCenter()
+			file.frontline.lastCalcTime = Time()
+			file.disablefrontline = false
+		}
+		catch ( error )
+		{
+			file.disablefrontline = true
+
+			Warning( "[frontline] Frontline_Init failed: " + error )
+		}
+	#endif
+}
+
+bool function FrontlineEnabled()
+{
+	return !file.disablefrontline
+}
+
+Frontline function GetFrontline( int team )
+{
+	if ( file.disablefrontline )
+	{
+		Frontline frontline
+		return frontline
+	}
+
+	if ( file.frontline.lastCalcTime + 2.5 < Time() )
 	{
 		CalculateFrontline()
+
 		file.frontline.lastCalcTime = Time()
 	}
 
@@ -37,7 +70,9 @@ Frontline function GetFrontline( team )
 	if ( team == TEAM_MILITIA )
 	{
 		fl.combatDir *= -1.0
+
 		vector temp = fl.friendlyCenter
+
 		fl.friendlyCenter = fl.enemyCenter
 		fl.enemyCenter = temp
 	}
@@ -48,33 +83,27 @@ Frontline function GetFrontline( team )
 void function AddCalculateFrontlineCallback( void functionref() callbackFunc )
 {
 	// Check if this function has already been added
-	#if DEV
-		foreach ( func in file.calculateFrontlineCallbacks )
-		{
-			Assert( func != callbackFunc )
-		}
-	#endif
+	foreach ( func in file.calculateFrontlineCallbacks )
+		if ( func == callbackFunc )
+			return
 
 	file.calculateFrontlineCallbacks.append( callbackFunc )
 }
 
 void function CalculateFrontline()
 {
-	#if DEV
-		float debugTime = 0.2
-	#endif
-
 	if ( file.calculateFrontlineCallbacks.len() > 0 )
 	{
 		foreach ( callbackFunc in file.calculateFrontlineCallbacks )
-		{
 			callbackFunc()
-		}
 	}
 	else
 	{
 		vector militiaCenter = CalculateWeightedTeamCenter( TEAM_MILITIA )
 		vector imcCenter = CalculateWeightedTeamCenter( TEAM_IMC )
+
+		if ( ( militiaCenter + imcCenter ) * 0.5 == Vector( 0.0, 0.0, 0.0 ) )
+			return
 
 		file.frontline.friendlyCenter = imcCenter // friendlyCenter is for TEAM_IMC by default
 		file.frontline.enemyCenter = militiaCenter
@@ -82,28 +111,14 @@ void function CalculateFrontline()
 		file.frontline.origin = ( militiaCenter + imcCenter ) * 0.5
 		file.frontline.combatDir = Normalize( militiaCenter - imcCenter ) // combatDir is for TEAM_IMC by default
 		file.frontline.line = CrossProduct( file.frontline.combatDir, Vector( 0.0, 0.0, 1.0 ) )
-
-		#if DEV
-			if ( DEBUG_FRONTLINE )
-			{
-				DrawBox( militiaCenter, Vector( -8.0, -8.0, -8.0 ), Vector( 8.0, 8.0, 8.0 ), 255, 102, 0, true, debugTime )
-				DrawBox( imcCenter, Vector( -8.0, -8.0, -8.0 ), Vector( 8.0, 8.0, 8.0 ), 0, 0, 255, true, debugTime )
-				DebugDrawLine( militiaCenter, imcCenter, 0, 255, 0, true, debugTime )
-			}
-		#endif
 	}
-
-	#if DEV
-		if ( DEBUG_FRONTLINE )
-		{
-			DrawBox( file.frontline.origin, Vector( -32.0, -32.0, -32.0 ), Vector( 32.0, 32.0, 32.0 ), 255, 0, 0, true, debugTime )
-			DebugDrawLine( file.frontline.origin - file.frontline.line * 500.0, file.frontline.origin + file.frontline.line * 500.0, 255, 0, 0, true, debugTime )
-		}
-	#endif
 }
 
 void function SetFrontline( vector origin, vector combatDir )
 {
+	if ( file.disablefrontline )
+		return
+
 	file.frontline.origin = origin
 	file.frontline.combatDir = combatDir
 	file.frontline.line = CrossProduct( file.frontline.combatDir, Vector( 0.0, 0.0, 1.0 ) )
@@ -112,6 +127,9 @@ void function SetFrontline( vector origin, vector combatDir )
 vector function CalculateWeightedTeamCenter( int team )
 {
 	array<entity> teamPlayers = GetPlayerArrayOfTeam_Alive( team )
+
+	teamPlayers.extend( GetNPCArrayOfTeam( team ) )
+
 	int teamPlayersCount = teamPlayers.len()
 
 	if ( teamPlayersCount == 0 )
@@ -149,6 +167,7 @@ vector function CalculateWeightedTeamCenter( int team )
 	foreach ( index, player in teamPlayers )
 	{
 		float radians = halfPi * ( minTeammateDistances[ index ] / maxPossibleDistance ) // radians will be a value between 0 - halfPi
+
 		weight = pow( ( 1.0 - sin( radians ) ), magicNumber ) // pow squashes the result so the curve has the falloff that's desired
 
 		weightedOrgSum += player.GetOrigin() * weight
