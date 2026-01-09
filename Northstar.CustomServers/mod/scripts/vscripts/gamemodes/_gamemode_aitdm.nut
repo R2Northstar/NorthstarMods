@@ -243,24 +243,20 @@ void function SpawnIntroBatch_Threaded( int team )
 	{
 		if ( pods != 0 || ships == 0 )
 		{
-			if ( !podIndex )
-				podIndex = i
-			
-			node = podNodes[ i - podIndex ]
+			node = podNodes[ podIndex ]
 			thread AiGameModes_SpawnDropPod( node, team, "npc_soldier", SquadHandler )
 			
 			pods--
+			podIndex++
 			wait 0.5
 		}
 		else
 		{
-			if ( !startIndex ) 
-				startIndex = i // save where we started
-			
-			node = shipNodes[ i - startIndex ]
+			node = shipNodes[ startIndex ]
 			thread AiGameModes_SpawnDropShip( node, team, 4, SquadHandler )
 			
 			ships--
+			startIndex++
 			wait 2.5
 		}
 		

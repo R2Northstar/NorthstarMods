@@ -6,7 +6,7 @@ global const int FrontlineRadius_Minion = 2048
 global const int FrontlineRadius_Reaper = 4096
 global const int FrontlineRadius_Titan = 8192
 
-const int FrontlineSpawnpoint_MinCombat = 1024 // NPCs will spawn on enemies if they're too close to the spawnpoint lol
+const int FrontlineSpawnpoint_MinCombat = 1024
 
 vector function GetMapCenter()
 {
