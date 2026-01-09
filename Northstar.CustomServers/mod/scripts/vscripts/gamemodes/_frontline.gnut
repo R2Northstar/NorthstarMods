@@ -1,4 +1,7 @@
-global function Frontline_Init
+#if SERVER
+	global function Frontline_Init
+#endif
+
 global function FrontlineEnabled
 global function GetFrontline
 global function SetFrontline
@@ -21,14 +24,14 @@ struct
 	bool disablefrontline = true
 } file
 
-void function Frontline_Init()
-{
-	delaythread ( 0.0001 ) Frontline_Init_Threaded()
-}
+#if SERVER
+	void function Frontline_Init()
+	{
+		delaythread ( 0.0001 ) Frontline_Init_Threaded()
+	}
 
-void function Frontline_Init_Threaded()
-{
-	#if SERVER
+	void function Frontline_Init_Threaded()
+	{
 		try
 		{
 			file.frontline.origin = GetMapCenter()
@@ -41,17 +44,21 @@ void function Frontline_Init_Threaded()
 
 			Warning( "[frontline] Frontline_Init failed: " + error )
 		}
-	#endif
-}
-
-bool function FrontlineEnabled()
-{
-	return !file.disablefrontline
-}
+	}
+	bool function FrontlineEnabled()
+	{
+		return !file.disablefrontline
+	}
+#else
+	bool function FrontlineEnabled()
+	{
+		return true
+	}
+#endif
 
 Frontline function GetFrontline( int team )
 {
-	if ( file.disablefrontline )
+	if ( !FrontlineEnabled() )
 	{
 		Frontline frontline
 		return frontline
@@ -116,7 +123,7 @@ void function CalculateFrontline()
 
 void function SetFrontline( vector origin, vector combatDir )
 {
-	if ( file.disablefrontline )
+	if ( !FrontlineEnabled() )
 		return
 
 	file.frontline.origin = origin
