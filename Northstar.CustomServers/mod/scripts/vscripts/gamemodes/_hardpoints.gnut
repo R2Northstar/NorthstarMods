@@ -142,6 +142,13 @@ void function OnHardpointLeave( entity trigger, entity player )
 	if ( index != -1 )
 		hpState.capPlayers.fastremove( index )
 
+	if ( "isplayingcapturingsound" in player.s && player.s.isplayingcapturingsound )
+	{
+		EmitSoundOnEntityOnlyToPlayer( hp, player, "Hardpoint_StopProgressBar_Event" )
+
+		player.s.isplayingcapturingsound = false
+	}
+
 	player.SetPlayerNetInt( "playerHardpointID", INVALID_HARDPOINT_ID )
 	player.Signal( "CapturePointPlayerLeft" )
 }
@@ -294,9 +301,11 @@ void function CaptureHardPointAllied( entity hardpoint, int team, float deltaTim
 {
 	CapturePoint_SetCappingTeam( hardpoint, team )
 	hardpoint.s.lastCappedBy = team
+	bool playCapturingSound = false
 
 	if ( CapturePoint_GetCaptureProgress( hardpoint ) < 1.0 )
 	{
+		playCapturingSound = true
 		hardpoint.s.state = CAPTURE_POINT_STATE_CAPPING
 		hardpoint.s.wasJustCapping = true
 
@@ -304,6 +313,7 @@ void function CaptureHardPointAllied( entity hardpoint, int team, float deltaTim
 	}
 	else if ( CapturePoint_GetCaptureProgress( hardpoint ) >= 1.0 && expect int( hardpoint.s.state ) < CAPTURE_POINT_STATE_CAPTURED )
 	{
+		playCapturingSound = true
 		// eh
 		if ( hardpoint.s.state == CAPTURE_POINT_STATE_SELF_UNAMPING && CPstate.ampingEnabled )
 			hardpoint.s.state = CAPTURE_POINT_STATE_AMPING
@@ -319,11 +329,57 @@ void function CaptureHardPointAllied( entity hardpoint, int team, float deltaTim
 	}
 	else if ( CapturePoint_GetCaptureProgress( hardpoint ) >= 1.0 && expect int( hardpoint.s.state ) >= CAPTURE_POINT_STATE_CAPTURED && CPstate.ampingEnabled )
 	{
+		playCapturingSound = true
 		hardpoint.s.wasJustCapping = false
 		hardpoint.s.state = CAPTURE_POINT_STATE_AMPING
 		CapturePoint_SetOwningTeam( hardpoint, team )
 
 		CapturePoint_SetCaptureProgress( hardpoint, max( 1.0, min( 2.0, CapturePoint_GetCaptureProgress( hardpoint ) + ( deltaTime / HARDPOINT_AMPED_DELAY * cappers) ) ) )
+	}
+
+	if ( playCapturingSound )
+	{
+		HardpointState hpState = GetHardpointState( hardpoint )
+
+		ArrayRemoveInvalid( hpState.capPlayers )
+
+		foreach ( entity player in hpState.capPlayers )
+		{
+			if ( player.GetTeam() != team )
+				continue
+
+			if ( !( "isplayingcapturingsound" in player.s ) )
+			{
+				EmitSoundOnEntityOnlyToPlayer( hardpoint, player, "Hardpoint_ProgressBar" )
+
+				player.s.isplayingcapturingsound <- true
+			}
+			else if ( !player.s.isplayingcapturingsound )
+			{
+				EmitSoundOnEntityOnlyToPlayer( hardpoint, player, "Hardpoint_ProgressBar" )
+
+				player.s.isplayingcapturingsound = true
+			}
+		}
+	}
+	else
+	{
+		HardpointState hpState = GetHardpointState( hardpoint )
+
+		ArrayRemoveInvalid( hpState.capPlayers )
+
+		foreach ( entity player in hpState.capPlayers )
+		{
+			if ( player.GetTeam() != team )
+				continue
+
+			if ( "isplayingcapturingsound" in player.s && player.s.isplayingcapturingsound )
+			{
+				EmitSoundOnEntityOnlyToPlayer( hardpoint, player, "Hardpoint_StopProgressBar_Event" )
+
+				player.s.isplayingcapturingsound = false
+			}
+		}
 	}
 }
 
@@ -355,6 +411,29 @@ void function CaptureHardPointEnemy( entity hardpoint, int team, float deltaTime
 		CapturePoint_SetOwningTeam( hardpoint, team )
 		CapturePoint_SetCaptureProgress( hardpoint, 1.0 )
 		CapturePoint_SetState( hardpoint, CapturePoint_GetState( hardpoint ) & ~CAPTURE_POINT_FLAGS_AMPED ) // remove amped flag
+	}
+
+	HardpointState hpState = GetHardpointState( hardpoint )
+
+	ArrayRemoveInvalid( hpState.capPlayers )
+
+	foreach ( entity player in hpState.capPlayers )
+	{
+		if ( player.GetTeam() != team )
+			continue
+
+		if ( !( "isplayingcapturingsound" in player.s ) )
+		{
+			EmitSoundOnEntityOnlyToPlayer( hardpoint, player, "Hardpoint_ProgressBar" )
+
+			player.s.isplayingcapturingsound <- true
+		}
+		else if ( !player.s.isplayingcapturingsound )
+		{
+			EmitSoundOnEntityOnlyToPlayer( hardpoint, player, "Hardpoint_ProgressBar" )
+
+			player.s.isplayingcapturingsound = true
+		}
 	}
 }
 
