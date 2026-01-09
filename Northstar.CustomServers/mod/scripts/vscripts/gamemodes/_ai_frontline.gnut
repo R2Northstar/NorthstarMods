@@ -69,13 +69,3 @@ bool function IsSpawnpointValid( entity spawnpoint, int team, vector frontlinePa
 
 	return !spawnpoint.IsVisibleToEnemies( team )
 }
-
-array<vector> function GetAllNavMeshPositions( int hull )
-{
-	array<vector> nodes = []
-
-	for ( int nodeIdx = 0; nodeIdx < GetNodeCount(); nodeIdx++ )
-		nodes.append( GetNodePos( nodeIdx ) )
-
-	return nodes
-}
