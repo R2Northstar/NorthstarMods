@@ -75,13 +75,15 @@ void function CreateCustomSpawns_Threaded()
 		
 		TraceResults trace = TraceLine( raycastPos, < raycastPos.x, raycastPos.y, GetLethalFogBottom() >, [], TRACE_MASK_SOLID, TRACE_COLLISION_GROUP_NONE ) // should only hit world
 
-		if ( GetConVarBool( "spewlog_enable" ) )
+		#if DEV
 			print( "raycast: " + trace.endPos )
+		#endif
 
 		if ( trace.endPos.z >= GetLethalFogTop() )
 		{
-			if ( GetConVarBool( "spewlog_enable" ) )
+			#if DEV
 				print( "creating floor is lava spawn at " + trace.endPos )
+			#endif
 
 			validSpawnsCreated++
 		
