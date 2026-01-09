@@ -490,6 +490,6 @@ void function ReaperHandler( entity reaper )
 		reaper.AssaultPoint( point )
 		reaper.AssaultPointClamped( point )
 
-		wait RandomFloatRange( 2.5,5.0 )
+		wait RandomFloatRange( 2.5, 5.0 )
 	}
 }
