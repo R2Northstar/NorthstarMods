@@ -6,7 +6,7 @@ global const int FrontlineRadius_Minion = 2048
 global const int FrontlineRadius_Reaper = 4096
 global const int FrontlineRadius_Titan = 8192
 
-const int FrontlineSpawnpoint_MinCombat = 1024
+const int FrontlineSpawnpoint_MinCombat = 2048
 
 vector function GetMapCenter()
 {
@@ -47,7 +47,7 @@ bool function IsSpawnpointValid( entity spawnpoint, int team, vector frontlinePa
 	array<entity> enemies = GetPlayerArrayOfEnemies_Alive( team )
 	enemies.extend( GetNPCArrayOfEnemies( team ) )
 
-	if ( enemies.len() && Distance( spawnpoint.GetOrigin(), ArrayClosest( enemies, spawnpoint.GetOrigin() )[0].GetOrigin() ) < FrontlineSpawnpoint_MinCombat )
+	if ( enemies.len() && Distance2D( spawnpoint.GetOrigin(), ArrayClosest( enemies, spawnpoint.GetOrigin() )[0].GetOrigin() ) < FrontlineSpawnpoint_MinCombat )
 		return false
 
 	if ( spawnpoint.IsOccupied() || spawnpoint.e.spawnPointInUse )
