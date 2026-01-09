@@ -77,7 +77,7 @@ Dr체cke Ja, um zuzustimmen. Du kannst diese Entscheidung jederzeit im Modmen체 �
 		"featured_mode_shotguns_snipers" "Bewaffnet und gef채hrlich"
 		"iron_rules" "Iron Titan Regeln"
 
-		"cp_amped_capture_points" "Verst채rkte Hardpoints"
+		"capture_point_amping" "Verst채rkte Hardpoints"
 
 		"aitdm_archer_grunts" "Archer Frontsoldaten"
 

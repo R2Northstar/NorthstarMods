@@ -68,7 +68,7 @@
 		"featured_mode_shotguns_snipers" "Вооружён и опасен"
 		"iron_rules" "Титан-клетка"
 
-		"cp_amped_capture_points" "Усиленные опорные пункты"
+		"capture_point_amping" "Усиленные опорные пункты"
 
 		// northstar.custom localisation is just deciding not to work, so putting it here for now
 		"PL_sbox" "Песочница"

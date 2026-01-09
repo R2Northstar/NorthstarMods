@@ -78,7 +78,7 @@ Presiona Sí al estar de acuerdo. Esta opcion se puede cambiar en el menú de mo
 		"featured_mode_shotguns_snipers" "Armado y peligroso"
 		"iron_rules" "Reglas de último titan en pie"
 
-		"cp_amped_capture_points" "Fortines cargados"
+		"capture_point_amping" "Fortines cargados"
 
 		"aitdm_archer_grunts" "Soldado Archer"
 

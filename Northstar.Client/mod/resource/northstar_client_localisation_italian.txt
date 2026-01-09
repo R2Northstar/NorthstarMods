@@ -76,7 +76,7 @@ Premi Sì se sei d'accordo. Questa scelta può essere modificata in qualsiasi mo
 		"featured_mode_shotguns_snipers" "Armato e Pericoloso"
 		"iron_rules" "Titani di Ferro"
 
-		"cp_amped_capture_points" "Hardpoints Amplificati"
+		"capture_point_amping" "Hardpoints Amplificati"
 
 		"aitdm_archer_grunts", "Scagnozzi Archer"
 

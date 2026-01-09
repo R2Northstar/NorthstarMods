@@ -85,7 +85,7 @@ Press Yes if you agree to this. This choice can be changed in the mods menu at a
 		"classic_executions" "Classic Executions"
 		"drop_battery_command"				"Drop Battery Command"
 
-		"cp_amped_capture_points" "Amped Hardpoints"
+		"capture_point_amping" "Amped Hardpoints"
     
 		"aitdm_archer_grunts" "Archer Grunts"
     

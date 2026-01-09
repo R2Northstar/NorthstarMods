@@ -78,7 +78,7 @@ Si estas de acuerdo con esto, presiona SI. Esta decision puede ser cambiada en e
 		"featured_mode_shotguns_snipers" "Armado y peligroso"
 		"iron_rules" "Iron Titan Rules"
 
-		"cp_amped_capture_points" "Fortalezas amplificadas"
+		"capture_point_amping" "Fortalezas amplificadas"
 
 		"aitdm_archer_grunts" "Soldado Archer"
 

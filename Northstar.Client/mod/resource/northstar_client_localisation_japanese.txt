@@ -96,7 +96,7 @@
 		"featured_mode_shotguns_snipers" "危険武装"
 		"iron_rules" "アイロンルール"
 
-		"cp_amped_capture_points" "拠点増幅"
+		"capture_point_amping" "拠点増幅"
 
 		// そのまま「グラント」よりも、Respawn翻訳で使われている
 		//「ミニオン」のほうが伝わりやすいかもしれないのでこっちにする

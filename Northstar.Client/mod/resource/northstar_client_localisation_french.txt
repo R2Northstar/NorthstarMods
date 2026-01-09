@@ -78,7 +78,7 @@ Choisissez Oui si vous êtes d'accord. Ce choix peut être modifié à tout inst
 		"featured_mode_shotguns_snipers" "Armé et dangereux"
 		"iron_rules" "Titans de fer"
 
-		"cp_amped_capture_points" "Points de capture améliorés"
+		"capture_point_amping" "Points de capture améliorés"
 
 		"aitdm_archer_grunts" "Soldats (Archer)"
 

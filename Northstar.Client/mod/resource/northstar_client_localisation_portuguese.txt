@@ -78,7 +78,7 @@ Clique em Sim se você concorda. Esta escolha pode ser alterada a qualquer momen
 		"featured_mode_shotguns_snipers" "Armado e perigoso"
 		"iron_rules" "Titã de ferro"
 
-		"cp_amped_capture_points" "Pontos de captura melhorados"
+		"capture_point_amping" "Pontos de captura melhorados"
 
 		// northstar.custom localisation is just deciding not to work, so putting it here for now
 		"PL_sbox" "Sandbox"

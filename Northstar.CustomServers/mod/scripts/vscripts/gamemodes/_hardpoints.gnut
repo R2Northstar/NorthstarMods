@@ -38,7 +38,7 @@ void function Hardpoints_Init()
 	RegisterSignal( "CapturePointStateChangeSend" )
 	RegisterSignal( "CapturePointPlayerLeft" )
 	
-	CPstate.ampingEnabled = GetCurrentPlaylistVarInt("cp_amped_capture_points", 1) == 1
+	CPstate.ampingEnabled = GetCurrentPlaylistVarInt("capture_point_amping", 1) == 1
 }
 
 void function Hardpoints_OnPlayerKilled_UpdateMedals( entity victim, entity attacker, var damageInfo )

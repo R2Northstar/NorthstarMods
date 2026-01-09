@@ -78,7 +78,7 @@ Naciśnij Tak jeżeli wyrażasz zgodę. Wybór może zostać zmieniony w menu Mo
 		"featured_mode_shotguns_snipers" "Armed and Dangerous"
 		"iron_rules" "Iron Titan Rules"
 
-		"cp_amped_capture_points" "Obrona umocnień"
+		"capture_point_amping" "Obrona umocnień"
     
 		"aitdm_archer_grunts" "Piechurzy z łucznikami"
     
