@@ -557,6 +557,9 @@ void function GameStateEnter_Playing_Threaded()
 				SetGameState( eGameState.SuddenDeath )
 			else
 			{
+				if ( IsRoundBased() && winningTeam )
+					AddTeamRoundScoreNoStateChange( winningTeam )
+
 				SetWinner( winningTeam, "#GAMEMODE_TIME_LIMIT_REACHED", "#GAMEMODE_TIME_LIMIT_REACHED" )
 				SetServerVar( "replayDisabled", true )
 			}
