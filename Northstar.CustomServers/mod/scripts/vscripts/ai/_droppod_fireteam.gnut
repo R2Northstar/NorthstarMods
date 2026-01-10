@@ -215,6 +215,11 @@ void function GuyHangsInPod( entity guy, entity pod )
 
 	if ( !droppodData.openDoor )
 	{
+		bool disable_traverse = !guy.GetCapabilityFlag( bits_CAP_MOVE_TRAVERSE )
+
+		if ( disable_traverse )
+			guy.SetCapabilityFlag( bits_CAP_MOVE_TRAVERSE, false )
+
 		guy.SetEfficientMode( true )
 
 		guy.SetParent( pod, "ATTACH", false )
@@ -227,6 +232,9 @@ void function GuyHangsInPod( entity guy, entity pod )
 
 		//wait POST_TURRET_DELAY
 
+		if ( disable_traverse )
+			guy.SetCapabilityFlag( bits_CAP_MOVE_TRAVERSE, true )
+
 		guy.SetEfficientMode( false )
 	}
 
@@ -235,12 +243,12 @@ void function GuyHangsInPod( entity guy, entity pod )
 
 	exitAnim =  expect string ( GetAnim( guy, "drop_pod_exit_anim" ) )
 	bool exitAnimExists = guy.LookupSequence( exitAnim ) != -1
-	if ( exitAnimExists && !guy.ContextAction_IsActive() && guy.IsInterruptable() )
+	if ( exitAnimExists )
 		guy.Anim_ScriptedPlay( exitAnim )
 
 	guy.ClearParent()
 
-	if ( exitAnimExists && !guy.ContextAction_IsActive() && guy.IsInterruptable() )
+	if ( exitAnimExists )
 		WaittillAnimDone( guy )
 	guy.Signal( "npc_deployed" )
 }
