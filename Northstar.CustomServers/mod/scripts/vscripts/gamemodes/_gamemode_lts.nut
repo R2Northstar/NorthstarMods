@@ -1,4 +1,3 @@
-untyped
 global function GamemodeLts_Init
 
 struct {

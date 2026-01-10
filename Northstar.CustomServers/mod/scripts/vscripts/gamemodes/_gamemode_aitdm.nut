@@ -1,4 +1,3 @@
-untyped
 global function GamemodeAITdm_Init
 
 // these are now default settings
