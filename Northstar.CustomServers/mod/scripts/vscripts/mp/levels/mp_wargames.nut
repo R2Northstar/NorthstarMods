@@ -74,8 +74,6 @@ void function SpawnMarvinsForRound()
 		marvin.kv.contents = ( int( marvin.kv.contents ) | CONTENTS_NOGRAPPLE )
 		DispatchSpawn( marvin )
 		HideName( marvin )
-
-		thread MarvinJobThink( marvin )
 	}
 }
 
