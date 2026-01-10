@@ -183,3 +183,19 @@ vector function CalculateWeightedTeamCenter( int team )
 
 	return weightedOrgSum / weightSum
 }
+
+#if SERVER
+	vector function GetMapCenter()
+	{
+		array<vector> navmeshPositions = NavMesh_GetAllPositions( HULL_HUMAN )
+
+		vector centerPos = Vector( 0, 0, 0 )
+
+		foreach ( navmeshPosition in navmeshPositions )
+			centerPos += navmeshPosition
+
+		centerPos *= ( 1.0 / navmeshPositions.len() )
+
+		return ArrayClosestVector( NavMesh_GetAllPositions( HULL_HUMAN ), centerPos )[0]
+	}
+#endif

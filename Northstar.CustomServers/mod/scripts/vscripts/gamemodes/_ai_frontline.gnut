@@ -1,4 +1,3 @@
-global function GetMapCenter
 global function GetFrontlinePath
 global function GetFrontlineSpawnpoint
 
@@ -7,20 +6,6 @@ global const int FrontlineRadius_Reaper = 4096
 global const int FrontlineRadius_Titan = 8192
 
 const int FrontlineSpawnpoint_MinCombat = 2048
-
-vector function GetMapCenter()
-{
-	array<vector> navmeshPositions = NavMesh_GetAllPositions( HULL_HUMAN )
-
-	vector centerPos = Vector( 0, 0, 0 )
-
-	foreach ( navmeshPosition in navmeshPositions )
-		centerPos += navmeshPosition
-
-	centerPos *= ( 1.0 / navmeshPositions.len() )
-
-	return ArrayClosestVector( NavMesh_GetAllPositions( HULL_HUMAN ), centerPos )[0]
-}
 
 vector function GetFrontlinePath( int team, int hull )
 {
