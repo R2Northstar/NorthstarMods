@@ -33,7 +33,7 @@ struct {
 	bool usePickLoadoutScreen
 	bool spectateInPickLoadoutScreen = false // This is so joining players stay absent from distracting others with invulnerability given by the Titan Selection Screen
 	bool switchSidesBased
-	bool endOnPlayerTitansDead = false
+	bool endOnPlayerTitansDead = true
 	int functionref() timeoutWinnerDecisionFunc
 	
 	bool hasSwitchedSides
