@@ -5,7 +5,7 @@ global const int FrontlineRadius_Minion = 2048
 global const int FrontlineRadius_Reaper = 4096
 global const int FrontlineRadius_Titan = 8192
 
-const int FrontlineSpawnpoint_MinCombat = 2048
+const int FrontlineSpawnpoint_MediumCombat = 2048
 
 vector function GetFrontlinePath( int team, int hull )
 {
@@ -16,41 +16,63 @@ vector function GetFrontlinePath( int team, int hull )
 
 entity function GetFrontlineSpawnpoint( int team, array<entity> candidatePoints )
 {
+	if ( !candidatePoints.len() )
+		return null
+
 	vector frontlinePath = GetFrontlinePath( team, HULL_HUMAN )
 
 	array<entity> closestPoints = ArrayClosest( candidatePoints, frontlinePath )
 
 	foreach ( point in closestPoints )
-		if ( IsSpawnpointValid( point, team, frontlinePath ) )
+		if ( IsSpawnpointValid( point, team, frontlinePath, FrontlineSpawnpoint_MediumCombat ) )
 			return point
+
+	entity FarthestPoint = null
+
+	foreach ( point in closestPoints )
+		if ( IsSpawnpointValid( point, team, frontlinePath, 0, true, FarthestPoint ) )
+			FarthestPoint = point
 	
+	if ( IsValid( FarthestPoint ) )
+		return FarthestPoint
+
 	return closestPoints.getrandom()
 }
 
-bool function IsSpawnpointValid( entity spawnpoint, int team, vector frontlinePath, bool skipLineOfSightChecks = false, bool skipTimeCheck = false )
+bool function IsSpawnpointValid( entity spawnpoint, int team, vector frontlinePath, int enemyRadius, bool getFarthestSpawnpointFromEnemies = false, entity FarthestPoint = null )
 {
 	array<entity> enemies = GetPlayerArrayOfEnemies_Alive( team )
 	enemies.extend( GetNPCArrayOfEnemies( team ) )
 
-	if ( enemies.len() && Distance2D( spawnpoint.GetOrigin(), GetClosest2D( enemies, spawnpoint.GetOrigin() ).GetOrigin() ) < FrontlineSpawnpoint_MinCombat )
+	if ( !getFarthestSpawnpointFromEnemies && enemies.len() && Distance2D( spawnpoint.GetOrigin(), GetClosest2D( enemies, spawnpoint.GetOrigin() ).GetOrigin() ) < enemyRadius )
 		return false
 
 	if ( spawnpoint.IsOccupied() || spawnpoint.e.spawnPointInUse )
 		return false
 
-	if ( !skipTimeCheck && spawnpoint.e.spawnTime != 0 && Time() - spawnpoint.e.spawnTime <= 10.0 ) 
+	if ( spawnpoint.e.spawnTime != 0 && Time() - spawnpoint.e.spawnTime <= 10.0 ) 
 		return false
 
 	if ( SpawnPointInNoSpawnArea( spawnpoint.GetOrigin(), team ) )
 		return false
-
-	if ( skipLineOfSightChecks )
-		return true
 
 	if ( GetConVarBool( "spawnpoint_avoid_npc_titan_sight" ) )
 		foreach ( titan in GetTitanArrayOfEnemies( team ) )
 			if ( IsAlive( titan ) && titan.IsNPC() && titan.CanSee( spawnpoint ) )
 				return false
 
-	return !spawnpoint.IsVisibleToEnemies( team )
+	if ( spawnpoint.IsVisibleToEnemies( team ) )
+		return false
+
+	if ( getFarthestSpawnpointFromEnemies && enemies.len() )
+	{
+		entity closestEnemy = GetClosest2D( enemies, spawnpoint.GetOrigin() )
+
+		if ( !IsValid( FarthestPoint ) || Distance2D( spawnpoint.GetOrigin(), closestEnemy.GetOrigin() ) > Distance2D( FarthestPoint.GetOrigin(), closestEnemy.GetOrigin() ) )
+			FarthestPoint = spawnpoint
+
+		return FarthestPoint == spawnpoint
+	}
+
+	return true
 }
