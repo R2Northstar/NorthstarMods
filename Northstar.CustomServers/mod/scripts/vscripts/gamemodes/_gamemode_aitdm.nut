@@ -51,7 +51,7 @@ void function GamemodeAITdm_Init()
 	if ( GetCurrentPlaylistVarInt( "aitdm_archer_grunts", 0 ) == 0 )
 	{
 		AiGameModes_SetNPCWeapons( "npc_soldier", [ "mp_weapon_rspn101", "mp_weapon_dmr", "mp_weapon_vinson", "mp_weapon_hemlok_smg", "mp_weapon_mastiff", "mp_weapon_shotgun_pistol" ] )
-		AiGameModes_SetNPCWeapons( "npc_spectre", [ "mp_weapon_g2", "mp_weapon_doubletake", "mp_weapon_hemlok", "mp_weapon_rspn101_og", "mp_weapon_r97", "mp_weapon_shotgun_doublebarrel" ] )
+		AiGameModes_SetNPCWeapons( "npc_spectre", [ "mp_weapon_g2", "mp_weapon_doubletake", "mp_weapon_hemlok", "mp_weapon_rspn101_og", "mp_weapon_r97" ] )
 		AiGameModes_SetNPCWeapons( "npc_stalker", [ "mp_weapon_esaw", "mp_weapon_lstar", "mp_weapon_shotgun", "mp_weapon_lmg", "mp_weapon_smr", "mp_weapon_epg" ] )
 	}
 	else
@@ -453,8 +453,15 @@ void function SquadHandler( array<entity> guys )
 		{
 			if ( IsAlive( guy ) )
 			{
-				guy.AssaultPoint( point )
-				guy.AssaultPointClamped( point )
+				if ( guy.GetClassName() == "npc_spectre" && IsValid( guy.GetOwner() ) && IsValid( guy.GetBossPlayer() ) )
+				{
+					guys.removebyvalue( guy )
+				}
+				else
+				{
+					guy.AssaultPoint( point )
+					guy.AssaultPointClamped( point )
+				}
 			}
 		}
 
