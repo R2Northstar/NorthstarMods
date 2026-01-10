@@ -47,7 +47,7 @@ bool function IsSpawnpointValid( entity spawnpoint, int team, vector frontlinePa
 	array<entity> enemies = GetPlayerArrayOfEnemies_Alive( team )
 	enemies.extend( GetNPCArrayOfEnemies( team ) )
 
-	if ( enemies.len() && Distance2D( spawnpoint.GetOrigin(), ArrayClosest( enemies, spawnpoint.GetOrigin() )[0].GetOrigin() ) < FrontlineSpawnpoint_MinCombat )
+	if ( enemies.len() && Distance2D( spawnpoint.GetOrigin(), GetClosest2D( enemies, spawnpoint.GetOrigin() ).GetOrigin() ) < FrontlineSpawnpoint_MinCombat )
 		return false
 
 	if ( spawnpoint.IsOccupied() || spawnpoint.e.spawnPointInUse )
