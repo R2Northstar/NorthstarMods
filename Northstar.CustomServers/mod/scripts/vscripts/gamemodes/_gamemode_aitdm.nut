@@ -2,7 +2,7 @@ untyped
 global function GamemodeAITdm_Init
 
 // these are now default settings
-const int SQUADS_PER_TEAM = 4
+const int SQUADS_PER_TEAM = 5
 
 const int REAPERS_PER_TEAM = 2
 
@@ -30,6 +30,9 @@ struct
 	int levelSpectres = LEVEL_SPECTRES
 	int levelStalkers = LEVEL_STALKERS
 	int levelReapers = LEVEL_REAPERS
+
+	table< int, array<entity> > spawnedMinions
+	table< int, array<entity> > spawnedReapers
 } file
 
 void function GamemodeAITdm_Init()
@@ -275,21 +278,18 @@ void function Spawner_Threaded( int team )
 	while( true )
 	{
 		Escalate( team )
+
+		if ( !( team in file.spawnedMinions ) )
+			file.spawnedMinions[ team ] <- []
+
+		if ( !( team in file.spawnedReapers ) )
+			file.spawnedReapers[ team ] <- []
+
+		ArrayRemoveDead( file.spawnedMinions[ team ] )
+		ArrayRemoveDead( file.spawnedReapers[ team ] )
 		
-		// TODO: this should possibly not count scripted npc spawns, probably only the ones spawned by this script
-		array<entity> npcs = GetNPCArrayOfTeam( team )
-		
-		ArrayRemoveDead( npcs )
-		foreach ( entity npc in npcs )
-		{
-			if( IsMinion( npc ) || IsStalker( npc ) )
-				continue
-			
-			npcs.removebyvalue( npc ) //Remove Titans, Dropships, Turrets and Ticks from the equation, Reapers are picked separately
-		}
-		
-		int count = npcs.len()
-		int reaperCount = GetNPCArrayEx( "npc_super_spectre", team, -1, <0,0,0>, -1 ).len()
+		int count = file.spawnedMinions[ team ].len()
+		int reaperCount = file.spawnedReapers[ team ].len()
 		
 		// REAPERS
 		if ( file.reapers[ index ] )
@@ -303,7 +303,7 @@ void function Spawner_Threaded( int team )
 		}
 		
 		// NORMAL SPAWNS
-		if ( count <= file.squadsPerTeam * 3 ) // x3 so means if theres one squad missing, try to spawn it back to keep 16 AI active per team
+		if ( count < ( ( file.squadsPerTeam - 1 ) * 4 ) )
 		{
 			string ent = file.podEntities[ index ].getrandom()
 			
@@ -318,7 +318,7 @@ void function Spawner_Threaded( int team )
 			{
 				points = SpawnPoints_GetDropPod()
 				entity node = points[ GetSpawnPointIndex( points, team ) ]
-				thread AiGameModes_SpawnDropPod( node, team, ent, SquadHandler )
+				waitthread AiGameModes_SpawnDropPod( node, team, ent, SquadHandler )
 			}
 		}
 		
@@ -339,21 +339,21 @@ void function Escalate( int team )
 		return
 	
 	// Based on score escalate a team
-	switch ( file.levels[ index ] )
+	switch ( GetGlobalNetInt( defcon ) )
 	{
-		case file.levelSpectres:
+		case 0:
 			file.levels[ index ] = file.levelStalkers
 			file.podEntities[ index ].append( "npc_spectre" )
 			SetGlobalNetInt( defcon, 2 )
 			return
 		
-		case file.levelStalkers:
+		case 2:
 			file.levels[ index ] = file.levelReapers
 			file.podEntities[ index ].append( "npc_stalker" )
 			SetGlobalNetInt( defcon, 3 )
 			return
 		
-		case file.levelReapers:
+		case 3:
 			file.reapers[ index ] = true
 			SetGlobalNetInt( defcon, 4 )
 			return
@@ -384,6 +384,20 @@ int function GetSpawnPointIndex( array< entity > points, int team )
 // AI can also flee deeper into their zone suggesting someone spent way too much time on this
 void function SquadHandler( array<entity> guys )
 {
+	foreach ( guy in guys )
+	{
+		if ( IsValid( guy ) )
+		{
+			if ( !( guy.GetTeam() in file.spawnedMinions ) )
+				file.spawnedMinions[ guy.GetTeam() ] <- []
+
+			file.spawnedMinions[ guy.GetTeam() ].append( guy )
+
+			if ( guy.GetClassName() == "npc_spectre" )
+				thread SpectreSpawnedHandler( guy )
+		}
+	}
+
 	int team = guys[0].GetTeam()
 	// show the squad enemy radar
 	array<entity> players = GetPlayerArrayOfEnemies( team )
@@ -449,9 +463,30 @@ void function SquadHandler( array<entity> guys )
 	}
 }
 
+void function SpectreSpawnedHandler( entity spectre )
+{
+	spectre.EndSignal( "OnDestroy" )
+	spectre.EndSignal( "OnDeath" )
+
+	while ( true )
+	{
+		spectre.WaitSignal( "OnLeeched" )
+
+		if ( !( spectre.GetTeam() in file.spawnedMinions ) )
+			file.spawnedMinions[ spectre.GetTeam() ] <- []
+
+		file.spawnedMinions[ spectre.GetTeam() ].removebyvalue( spectre )
+	}
+}
+
 // Award for hacking
 void function OnSpectreLeeched( entity spectre, entity player )
 {
+	if ( !( spectre.GetTeam() in file.spawnedMinions ) )
+		file.spawnedMinions[ spectre.GetTeam() ] <- []
+
+	file.spawnedMinions[ spectre.GetTeam() ].append( spectre )
+
 	// Set Owner so we can filter in HandleScore
 	spectre.SetOwner( player )
 	// Add score + update network int to trigger the "Score +n" popup
@@ -463,6 +498,11 @@ void function OnSpectreLeeched( entity spectre, entity player )
 // Same as SquadHandler, just for reapers
 void function ReaperHandler( entity reaper )
 {
+	if ( !( reaper.GetTeam() in file.spawnedReapers ) )
+		file.spawnedReapers[ reaper.GetTeam() ] <- []
+
+	file.spawnedReapers[ reaper.GetTeam() ].append( reaper )
+
 	array<entity> players = GetPlayerArrayOfEnemies( reaper.GetTeam() )
 
 	foreach ( player in players )

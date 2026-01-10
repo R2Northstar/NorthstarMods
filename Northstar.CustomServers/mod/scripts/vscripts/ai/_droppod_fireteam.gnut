@@ -235,12 +235,12 @@ void function GuyHangsInPod( entity guy, entity pod )
 
 	exitAnim =  expect string ( GetAnim( guy, "drop_pod_exit_anim" ) )
 	bool exitAnimExists = guy.LookupSequence( exitAnim ) != -1
-	if ( exitAnimExists )
+	if ( exitAnimExists && !guy.ContextAction_IsActive() && guy.IsInterruptable() )
 		guy.Anim_ScriptedPlay( exitAnim )
 
 	guy.ClearParent()
 
-	if ( exitAnimExists )
+	if ( exitAnimExists && !guy.ContextAction_IsActive() && guy.IsInterruptable() )
 		WaittillAnimDone( guy )
 	guy.Signal( "npc_deployed" )
 }
