@@ -1055,7 +1055,7 @@ void function CheckEliminationRiffMode( entity victim, entity attacker )
 		int titansOnTeam = 0
 
 		foreach ( entity titan in GetPlayerTitansOnTeam( victim.GetTeam() ) )
-			if ( titan != victim && ( !file.endOnPlayerTitansDead || titan.IsPlayer() ) )
+			if ( titan != victim && ( !file.endOnPlayerTitansDead || titan.IsPlayer() || ( IsValid( titan.GetBossPlayer() ) && IsAlive( titan.GetBossPlayer() && titan.GetBossPlayer().GetPetTitan() == titan ) ) ) )
 				titansOnTeam += 1
 
 		if ( !titansOnTeam )
