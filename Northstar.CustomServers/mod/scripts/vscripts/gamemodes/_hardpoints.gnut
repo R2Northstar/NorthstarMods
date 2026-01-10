@@ -348,17 +348,11 @@ void function CaptureHardPointAllied( entity hardpoint, int team, float deltaTim
 			if ( player.GetTeam() != team )
 				continue
 
-			if ( !( "isplayingcapturingsound" in player.s ) )
+			if ( !( "isplayingcapturingsound" in player.s ) || !player.s.isplayingcapturingsound )
 			{
 				EmitSoundOnEntityOnlyToPlayer( hardpoint, player, "Hardpoint_ProgressBar" )
 
 				player.s.isplayingcapturingsound <- true
-			}
-			else if ( !player.s.isplayingcapturingsound )
-			{
-				EmitSoundOnEntityOnlyToPlayer( hardpoint, player, "Hardpoint_ProgressBar" )
-
-				player.s.isplayingcapturingsound = true
 			}
 		}
 	}
@@ -422,17 +416,11 @@ void function CaptureHardPointEnemy( entity hardpoint, int team, float deltaTime
 		if ( player.GetTeam() != team )
 			continue
 
-		if ( !( "isplayingcapturingsound" in player.s ) )
+		if ( !( "isplayingcapturingsound" in player.s ) || !player.s.isplayingcapturingsound )
 		{
 			EmitSoundOnEntityOnlyToPlayer( hardpoint, player, "Hardpoint_ProgressBar" )
 
 			player.s.isplayingcapturingsound <- true
-		}
-		else if ( !player.s.isplayingcapturingsound )
-		{
-			EmitSoundOnEntityOnlyToPlayer( hardpoint, player, "Hardpoint_ProgressBar" )
-
-			player.s.isplayingcapturingsound = true
 		}
 	}
 }
