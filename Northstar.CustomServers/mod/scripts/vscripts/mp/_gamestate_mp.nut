@@ -9,6 +9,7 @@ global function AddCallback_OnRoundEndCleanup
 global function SetShouldUsePickLoadoutScreen
 global function SetShouldSpectateInPickLoadoutScreen
 global function SetSwitchSidesBased
+global function SetEndOnPlayerTitansDead
 global function SetShouldUseRoundWinningKillReplay
 global function SetRoundWinningKillReplayKillClasses
 global function SetRoundWinningKillReplayAttacker
@@ -32,6 +33,7 @@ struct {
 	bool usePickLoadoutScreen
 	bool spectateInPickLoadoutScreen = false // This is so joining players stay absent from distracting others with invulnerability given by the Titan Selection Screen
 	bool switchSidesBased
+	bool endOnPlayerTitansDead = false
 	int functionref() timeoutWinnerDecisionFunc
 	
 	bool hasSwitchedSides
@@ -85,6 +87,7 @@ void function PIN_GameStart()
 	
 	AddCallback_OnPlayerKilled( OnPlayerKilled )
 	AddDeathCallback( "npc_titan", OnTitanKilled )
+	AddCallback_OnClientDisconnected( OnClientDisconnected )
 	AddCallback_EntityChangedTeam( "player", OnPlayerChangedTeam )
 	PilotBattery_SetMaxCount( GetCurrentPlaylistVarInt( "pilot_battery_inventory_size", 1 ) ) // Game unironically supports players carrying more than one battery
 	
@@ -298,6 +301,11 @@ void function SetSwitchSidesBased( bool switchSides )
 	file.switchSidesBased = switchSides
 }
 
+void function SetEndOnPlayerTitansDead( bool endOnTitansDead )
+{
+	file.endOnPlayerTitansDead = endOnTitansDead
+}
+
 void function SetShouldUseRoundWinningKillReplay( bool shouldUse )
 {
 	SetServerVar( "roundWinningKillReplayEnabled", shouldUse )
@@ -429,10 +437,28 @@ void function GameStateEnter_PickLoadout()
 }
 
 void function GameStateEnter_PickLoadout_Threaded()
-{
+{	
+	float pickloadoutLength = 20.0 // may need tweaking
+	float pickloadoutLengthMax = 40.0 // very annoying to have to wait a while because of people (re)joining
+	float startTime = Time()
+	SetServerVar( "minPickLoadOutTime", Time() + pickloadoutLength )
+	
 	// The Titan Selection Screen can extend the minPickLoadOutTime, so wait for natural expire
 	while ( Time() < GetServerVar( "minPickLoadOutTime" ) )
-		WaitFrame()
+	{
+		if ( GetServerVar( "minPickLoadOutTime" ) > startTime + pickloadoutLengthMax )
+		{
+			float newTime = startTime + pickloadoutLengthMax
+
+			SetServerVar( "minPickLoadOutTime", newTime )
+
+			foreach ( entity player in GetPlayerArray() )
+				Remote_CallFunction_Replay( player, "ServerCallback_UpdateTeamTitanMenuTime", newTime )
+		}
+
+		if ( Time() < GetServerVar( "minPickLoadOutTime" ) )
+			WaitFrame()
+	}
 	
 	SetGameState( eGameState.Prematch )
 }
@@ -607,13 +633,14 @@ void function GameStateEnter_WinnerDetermined_Threaded()
 
 		wait replayLength
 		foreach ( entity player in GetPlayerArray() )
-		{
 			ClearPlayerFromReplay( player )
-			WaitFrame()
+
+		WaitFrame()
+
+		foreach ( entity player in GetPlayerArray() )
 			ScreenFadeToBlackForever( player, 0.0 )
-		}
 		
-		if ( IsRoundBased() && !HasRoundScoreLimitBeenReached() && HasSwitchedSides() == 0 )
+		if ( IsRoundBased() && !HasRoundScoreLimitBeenReached() )
 			CleanUpEntitiesForRoundEnd()
 		
 		SetServerVar( "roundWinningKillReplayPlaying", false )
@@ -630,7 +657,7 @@ void function GameStateEnter_WinnerDetermined_Threaded()
 			ScreenFadeToBlackForever( player, ROUND_WINNING_KILL_REPLAY_SCREEN_FADE_TIME )
 		
 		wait ROUND_WINNING_KILL_REPLAY_SCREEN_FADE_TIME
-		if ( IsRoundBased() && !HasRoundScoreLimitBeenReached() && HasSwitchedSides() == 0 ) // Repeat check here just for the case match is over and epilogue is disabled, so it doesn't kill players randomly
+		if ( IsRoundBased() && !HasRoundScoreLimitBeenReached() ) // Repeat check here just for the case match is over and epilogue is disabled, so it doesn't kill players randomly
 			CleanUpEntitiesForRoundEnd()
 	}
 	
@@ -664,6 +691,8 @@ void function GameStateEnter_WinnerDetermined_Threaded()
 				SetGameState( eGameState.Postmatch )
 			}
 		}
+		else if ( file.switchSidesBased && !file.hasSwitchedSides && GameRules_GetTeamScore2( winningTeam ) >= ( GameMode_GetRoundScoreLimit( GAMETYPE ).tofloat() / 2.0 ) )
+			SetGameState( eGameState.SwitchingSides )
 		else if ( file.usePickLoadoutScreen && GetCurrentPlaylistVarInt( "pick_loadout_every_round", 1 ) ) //Playlist var needs to be enabled as well
 			SetGameState( eGameState.PickLoadout )
 		else
@@ -745,57 +774,14 @@ void function GameStateEnter_SwitchingSides()
 void function GameStateEnter_SwitchingSides_Threaded()
 {
 	WaitFrame()
-	
+
 	svGlobal.levelEnt.Signal( "RoundEnd" )
 
-	entity replayAttacker = file.roundWinningKillReplayAttacker
-	bool doReplay = Replay_IsEnabled() && IsRoundWinningKillReplayEnabled() && IsValid( replayAttacker ) && !IsRoundBased() // for roundbased modes, we've already done the replay
-				 && Time() - file.roundWinningKillReplayTime <= ROUND_WINNING_KILL_REPLAY_LENGTH_OF_REPLAY
-	
-	float replayLength = ROUND_WINNING_KILL_REPLAY_STARTUP_WAIT
-	SetServerVar( "roundWinningKillReplayPlaying", doReplay )
-
-	foreach ( entity player in GetPlayerArray() )
-	{
-		ClearPlayerFromReplay( player )
-		CheckGameStateForPlayerMovement( player )
-	}
-	wait  1.5
-	foreach ( entity player in GetPlayerArray() )
-		ScreenFadeToBlackForever( player, 2.0 )
-	
-	if ( doReplay )
-	{
-		replayLength = ROUND_WINNING_KILL_REPLAY_TOTAL_LENGTH
-		if ( "respawnTime" in replayAttacker.s && Time() - replayAttacker.s.respawnTime < replayLength )
-			replayLength += Time() - expect float ( replayAttacker.s.respawnTime )
-			
-		SetServerVar( "roundWinningKillReplayEntHealthFrac", file.roundWinningKillReplayHealthFrac )
-		
-		wait 2
-		
-		foreach ( entity player in GetPlayerArray() )
-			thread PlayerWatchesRoundWinningReplay( player, replayLength )
-	}
-	
-	wait replayLength
-	foreach ( entity player in GetPlayerArray() )
-	{
-		ClearPlayerFromReplay( player )
-		WaitFrame()
-		ScreenFadeToBlackForever( player, 0.0 )
-	}
-	CleanUpEntitiesForRoundEnd()
-	wait CLEAR_PLAYERS_BUFFER
-	
-	ClearDroppedWeapons()
-	SetServerVar( "roundWinningKillReplayPlaying", false )
-	
 	file.hasSwitchedSides = true
 	SetServerVar( "switchedSides", 1 )
-	file.roundWinningKillReplayAttacker = null // reset this after replay
-	file.roundWinningKillReplayInflictorEHandle = -1
-	
+
+	wait SWITCHING_SIDES_DELAY
+
 	if ( file.usePickLoadoutScreen && GetCurrentPlaylistVarInt( "pick_loadout_every_round", 1 ) ) //Playlist var needs to be enabled too
 		SetGameState( eGameState.PickLoadout )
 	else
@@ -988,7 +974,7 @@ void function OnPlayerKilled( entity victim, entity attacker, var damageInfo )
 
 void function OnTitanKilled( entity victim, var damageInfo )
 {
-	if ( !GamePlayingOrSuddenDeath() || victim.IsNPC() && !IsValid( victim.GetBossPlayer() ) )
+	if ( !GamePlayingOrSuddenDeath() || ( victim.IsNPC() && !IsValid( victim.GetBossPlayer() ) ) )
 		return
 
 	entity attacker = DamageInfo_GetAttacker( damageInfo )
@@ -1011,6 +997,15 @@ void function OnTitanKilled( entity victim, var damageInfo )
 	}
 }
 
+void function OnClientDisconnected( entity player )
+{
+	if ( IsEliminationBased() )
+		SetPlayerEliminated( player )
+
+	if ( GamePlayingOrSuddenDeath() )
+		CheckEliminationRiffMode( player, null )
+}
+
 void function CheckEliminationRiffMode( entity victim, entity attacker )
 {
 	// note: pilotstitans is just win if enemy team runs out of either pilots or titans
@@ -1029,12 +1024,12 @@ void function CheckEliminationRiffMode( entity victim, entity attacker )
 				
 				if ( teamsWithLivingPlayers.len() == 1 )
 				{
-					if( IsRoundBased() )
+					if ( IsRoundBased() )
 						AddTeamRoundScoreNoStateChange( teamsWithLivingPlayers[0] )
 					
 					SetWinner( teamsWithLivingPlayers[0], "#GAMEMODE_ENEMY_PILOTS_ELIMINATED", "#GAMEMODE_FRIENDLY_PILOTS_ELIMINATED" )
 
-					if( IsValidPlayer( attacker ) )
+					if ( IsValidPlayer( attacker ) )
 						AddPlayerScore( attacker, "VictoryKill", attacker )
 				}
 				else if ( teamsWithLivingPlayers.len() == 0 ) // failsafe: only team was the dead one
@@ -1042,38 +1037,46 @@ void function CheckEliminationRiffMode( entity victim, entity attacker )
 			}
 			else
 			{
-				if( IsRoundBased() )
+				if ( IsRoundBased() )
 					AddTeamRoundScoreNoStateChange( GetOtherTeam( victim.GetTeam() ) )
 				
 				SetWinner( GetOtherTeam( victim.GetTeam() ), "#GAMEMODE_ENEMY_PILOTS_ELIMINATED", "#GAMEMODE_FRIENDLY_PILOTS_ELIMINATED" )
 
-				if( IsValidPlayer( attacker ) )
+				if ( IsValidPlayer( attacker ) )
 					AddPlayerScore( attacker, "VictoryKill", attacker )
 			}
+
+			return
 		}
 	}
 
 	if ( IsTitanEliminationBased() )
 	{
-		if ( !GetPlayerTitansOnTeam( victim.GetTeam() ).len() )
+		int titansOnTeam = 0
+
+		foreach ( entity titan in GetPlayerTitansOnTeam( victim.GetTeam() ) )
+			if ( titan != victim && ( !file.endOnPlayerTitansDead || titan.IsPlayer() ) )
+				titansOnTeam += 1
+
+		if ( !titansOnTeam )
 		{
 			if ( IsFFAGame() )
 			{
 				array<int> teamsWithLivingTitans
 				foreach ( entity titan in GetTitanArray() )
 				{
-					if ( !teamsWithLivingTitans.contains( titan.GetTeam() ) )
+					if ( !teamsWithLivingTitans.contains( titan.GetTeam() ) && titan != victim && titan != victim.GetPetTitan() )
 						teamsWithLivingTitans.append( titan.GetTeam() )
 				}
 				
 				if ( teamsWithLivingTitans.len() == 1 )
 				{
-					if( IsRoundBased() )
+					if ( IsRoundBased() )
 						AddTeamRoundScoreNoStateChange( teamsWithLivingTitans[0] )
 					
 					SetWinner( teamsWithLivingTitans[0], "#GAMEMODE_ENEMY_TITANS_DESTROYED", "#GAMEMODE_FRIENDLY_TITANS_DESTROYED" )
 
-					if( IsValidPlayer( attacker ) )
+					if ( IsValidPlayer( attacker ) )
 						AddPlayerScore( attacker, "VictoryKill", attacker )
 				}
 				else if ( teamsWithLivingTitans.len() == 0 )
@@ -1081,14 +1084,16 @@ void function CheckEliminationRiffMode( entity victim, entity attacker )
 			}
 			else
 			{
-				if( IsRoundBased() )
+				if ( IsRoundBased() )
 					AddTeamRoundScoreNoStateChange( GetOtherTeam( victim.GetTeam() ) )
 				
 				SetWinner( GetOtherTeam( victim.GetTeam() ), "#GAMEMODE_ENEMY_TITANS_DESTROYED", "#GAMEMODE_FRIENDLY_TITANS_DESTROYED" )
 
-				if( IsValidPlayer( attacker ) )
+				if ( IsValidPlayer( attacker ) )
 					AddPlayerScore( attacker, "VictoryKill", attacker )
 			}
+
+			return
 		}
 	}
 }
