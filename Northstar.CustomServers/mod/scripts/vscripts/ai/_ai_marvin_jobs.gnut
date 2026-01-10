@@ -124,8 +124,6 @@ void function MarvinJobsEntitiesDidLoad()
 
 void function MarvinJobThink( entity marvin )
 {
-	marvin.Signal( "StopDoingJobs" ) // stop any existing job think threads
-
 	EndSignal( marvin, "OnDeath" )
 	EndSignal( marvin, "OnDestroy" )
 	EndSignal( marvin, "StopDoingJobs" )
