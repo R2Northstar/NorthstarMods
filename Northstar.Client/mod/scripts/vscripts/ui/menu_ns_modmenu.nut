@@ -707,7 +707,7 @@ void function ReloadMods()
 	int svCheatsOriginal = GetConVarInt( "sv_cheats" )
 
 	if ( IsConnected() )
-		ClientCommand( "script_ui SetConVarInt( \"sv_cheats\", 1 ); weapon_reparse; playerSettings_reparse; aisettings_reparse_client; script_ui SetConVarInt( \"sv_cheats\", " + svCheatsOriginal + " ) " ) // weapon_reparse only works if sv_cheats is set to 1
+		ClientCommand( "script_ui SetConVarInt( \"sv_cheats\", 1 ); weapon_reparse; playerSettings_reparse; aisettings_reparse_client; script_ui SetConVarInt( \"sv_cheats\", " + svCheatsOriginal + " ) " ) // some reparse commands only works if sv_cheats is set to 1
 
 	// note: the logic for this seems really odd, unsure why it doesn't seem to update, since the same code seems to get run irregardless of whether we've read weapon data before
 	ClientCommand( "uiscript_reset" )
