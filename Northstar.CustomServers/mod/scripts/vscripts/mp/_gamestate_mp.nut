@@ -439,7 +439,7 @@ void function GameStateEnter_PickLoadout()
 void function GameStateEnter_PickLoadout_Threaded()
 {	
 	float pickloadoutLength = 20.0 // may need tweaking
-	float pickloadoutLengthMax = 40.0 // very annoying to have to wait a while because of people (re)joining
+	float pickloadoutLengthMax = 40.0 // players can extend this indefinitely by repeatedly (re)joining so the timer needs a cap
 	float startTime = Time()
 	SetServerVar( "minPickLoadOutTime", Time() + pickloadoutLength )
 	
