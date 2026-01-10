@@ -35,6 +35,10 @@ struct
 		try
 		{
 			file.frontline.origin = GetMapCenter()
+			file.frontline.friendlyCenter = GetMapCenter( TEAM_IMC )
+			file.frontline.enemyCenter = GetMapCenter( TEAM_MILITIA )
+			file.frontline.combatDir = Normalize( file.frontline.enemyCenter - file.frontline.friendlyCenter )
+			file.frontline.line = CrossProduct( file.frontline.combatDir, Vector( 0.0, 0.0, 1.0 ) )
 			file.frontline.lastCalcTime = Time()
 			file.disablefrontline = false
 		}
@@ -185,16 +189,29 @@ vector function CalculateWeightedTeamCenter( int team )
 }
 
 #if SERVER
-	vector function GetMapCenter()
+	vector function GetMapCenter( int team = -1 )
 	{
-		array<vector> navmeshPositions = NavMesh_GetAllPositions( HULL_HUMAN )
+		array<vector> Positions = NavMesh_GetAllPositions( HULL_HUMAN )
+
+		if ( team != -1 )
+		{
+			array<entity> spawnpoints = SpawnPoints_GetDropPodStart( team )
+
+			spawnpoints.extend( SpawnPoints_GetTitanStart( team ) )
+			spawnpoints.extend( SpawnPoints_GetPilotStart( team ) )
+
+			Positions = []
+
+			foreach ( entity spawnpoint in spawnpoints )
+				Positions.append( spawnpoint.GetOrigin() )
+		}
 
 		vector centerPos = Vector( 0, 0, 0 )
 
-		foreach ( navmeshPosition in navmeshPositions )
-			centerPos += navmeshPosition
+		foreach ( Position in Positions )
+			centerPos += Position
 
-		centerPos *= ( 1.0 / navmeshPositions.len() )
+		centerPos *= ( 1.0 / Positions.len() )
 
 		return ArrayClosestVector( NavMesh_GetAllPositions( HULL_HUMAN ), centerPos )[0]
 	}

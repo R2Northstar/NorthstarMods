@@ -19,18 +19,18 @@ entity function GetFrontlineSpawnpoint( int team, array<entity> candidatePoints 
 	if ( !candidatePoints.len() )
 		return null
 
-	vector frontlinePath = GetFrontlinePath( team, HULL_HUMAN )
+	vector frontline = GetFrontline( team ).friendlyCenter
 
-	array<entity> closestPoints = ArrayClosest( candidatePoints, frontlinePath )
+	array<entity> closestPoints = ArrayClosest( candidatePoints, frontline )
 
 	foreach ( point in closestPoints )
-		if ( IsSpawnpointValid( point, team, frontlinePath, FrontlineSpawnpoint_MediumCombat ) )
+		if ( IsSpawnpointValid( point, team, frontline, FrontlineSpawnpoint_MediumCombat ) )
 			return point
 
 	entity FarthestPoint = null
 
 	foreach ( point in closestPoints )
-		if ( IsSpawnpointValid( point, team, frontlinePath, 0, true, FarthestPoint ) )
+		if ( IsSpawnpointValid( point, team, frontline, 0, true, FarthestPoint ) )
 			FarthestPoint = point
 	
 	if ( IsValid( FarthestPoint ) )
