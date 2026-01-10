@@ -232,16 +232,15 @@ void function SpawnIntroBatch_Threaded( int team )
 
 	// Spawn logic
 	int podIndex = 0
-	int startIndex = 0
+	int shipIndex = 0
 	entity node
 	
-	int pods = RandomInt( podNodes.len() + 1 )
-	
+	int pods = podNodes.len()
 	int ships = shipNodes.len()
 	
 	for ( int i = 0; i < file.squadsPerTeam; i++ )
 	{
-		if ( pods != 0 || ships == 0 )
+		if ( podIndex < pods )
 		{
 			node = podNodes[ podIndex ]
 			thread AiGameModes_SpawnDropPod( node, team, "npc_soldier", SquadHandler )
@@ -250,13 +249,13 @@ void function SpawnIntroBatch_Threaded( int team )
 			podIndex++
 			wait 0.5
 		}
-		else
+		else if ( shipIndex < ships )
 		{
-			node = shipNodes[ startIndex ]
+			node = shipNodes[ shipIndex ]
 			thread AiGameModes_SpawnDropShip( node, team, 4, SquadHandler )
 			
 			ships--
-			startIndex++
+			shipIndex++
 			wait 2.5
 		}
 		
