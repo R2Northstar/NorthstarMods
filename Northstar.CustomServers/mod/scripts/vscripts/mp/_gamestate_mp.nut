@@ -671,9 +671,6 @@ void function GameStateEnter_WinnerDetermined_Threaded()
 			CleanUpEntitiesForRoundEnd()
 	}
 
-	foreach ( entity player in GetPlayerArray() )
-		ScreenFadeToBlackForever( player, 0.0 )
-
 	wait CLEAR_PLAYERS_BUFFER // Required to properly restart without players in Titans crashing it in FD
 
 	foreach ( entity player in GetPlayerArray() )

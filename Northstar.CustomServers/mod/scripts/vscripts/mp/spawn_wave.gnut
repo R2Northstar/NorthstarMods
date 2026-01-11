@@ -1373,7 +1373,6 @@ void function SpawnGruntDropship( WaveSpawnEvent ornull spawnEvent )
 	origin.z 		   += 640 //Expected to people make coordinates in the ground so we add this up for the hover height
 	float yaw 			= spawnEvent.angles.y
 	int health 			= 10000
-	int shield 			= 5000
 	
 	CallinData drop
 	InitCallinData( drop )
@@ -1402,8 +1401,6 @@ void function SpawnGruntDropship( WaveSpawnEvent ornull spawnEvent )
 	DispatchSpawn( dropship )
 	dropship.SetMaxHealth( health )
 	dropship.SetHealth( dropship.GetMaxHealth() )
-	dropship.SetShieldHealthMax( shield )
-	dropship.SetShieldHealth( dropship.GetShieldHealthMax() )
 	dropship.SetHealthPerSegment( 2500 )
 	dropship.EndSignal( "OnDeath" )
 	dropship.Signal( "WarpedIn" )

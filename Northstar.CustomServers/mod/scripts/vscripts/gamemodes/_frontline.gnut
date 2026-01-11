@@ -208,7 +208,7 @@ vector function CalculateWeightedTeamCenter( int team )
 
 		vector centerPos = Vector( 0, 0, 0 )
 
-		foreach ( Position in Positions )
+		foreach ( vector Position in Positions )
 			centerPos += Position
 
 		centerPos *= ( 1.0 / Positions.len() )

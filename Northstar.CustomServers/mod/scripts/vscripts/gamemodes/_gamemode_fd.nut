@@ -205,13 +205,11 @@ void function GamemodeFD_Init()
 	
 	difficultyLevel = FD_GetDifficultyLevel() //Refresh this only on map load, to avoid midgame commands messing up with difficulties (i.e setting mp_gamemode fd_hard midgame in a regular match through console on local host would immediately make Stalkers spawns with EPG)
 	
-	#if SERVER
 	AILoadout_SetupNPCWeapons( "npc_soldier", ["mp_weapon_rspn101","mp_weapon_car","mp_weapon_alternator_smg","mp_weapon_hemlok_smg","mp_weapon_r97"] )
 	AILoadout_SetupNPCWeapons( "npc_spectre", ["mp_weapon_hemlok","mp_weapon_vinson","mp_weapon_g2","mp_weapon_mastiff","mp_weapon_shotgun","mp_weapon_doubletake","mp_weapon_dmr"] )
 	AILoadout_SetupNPCAntiTitanWeapons( "npc_soldier", [ "mp_weapon_defender" ] )
 	AILoadout_SetupNPCAntiTitanWeapons( "npc_spectre", [ "mp_weapon_defender" ] )
 	level.endOfRoundPlayerState = ENDROUND_FREE
-	#endif
 	
 	for ( int i = 0; i < 20; i++ ) //Setup NPC array for Harvester Damage tracking
 		file.harvesterDamageSource.append( 0.0 )
@@ -232,6 +230,9 @@ void function GamemodeFD_Init()
 			SetAILethality( eAILethality.High )
 			break
 	}
+
+	// Boosts
+	BurnReward_GetByRef( "burnmeter_amped_weapons_permanent" ).rewardAvailableCallback = PlayerUsesPermanentAmpedWeaponsBurncard
 }
 
 void function ScoreEvent_SetupScoreValuesForFrontierDefense()
@@ -1321,6 +1322,12 @@ void function FD_OnPlayerGetsNewPilotLoadout( entity player, PilotLoadoutDef loa
 	//If player has bought the Amped Weapons before, keep it for the new weapons
 	if ( "hasPermenantAmpedWeapons" in player.s && player.s.hasPermenantAmpedWeapons )
 	{
+		if ( "permenantAmpedWeaponsWave" in player.s && expect int ( player.s.permenantAmpedWeaponsWave ) >= GetGlobalNetInt( "FD_currentWave" ) )
+		{
+			player.s.hasPermenantAmpedWeapons = false
+			return
+		}
+
 		array<entity> weapons = player.GetMainWeapons()
 		weapons.extend( player.GetOffhandWeapons() )
 		foreach ( entity weapon in weapons )
@@ -1341,7 +1348,7 @@ void function FD_OnPlayerGetsNewPilotLoadout( entity player, PilotLoadoutDef loa
 		}
 	}
 
-	if ( !file.playersInDropship.contains( player ) )
+	if ( !IsAlive( player ) || !file.playersInDropship.contains( player ) )
 		return
 
 	int dropshipSlot = 0
@@ -3957,6 +3964,32 @@ function FD_UpdateTitanBehavior()
 	}
 }
 
+void function PlayerUsesPermanentAmpedWeaponsBurncard( entity player )
+{
+	player.s.hasPermenantAmpedWeapons <- true
+	player.s.permenantAmpedWeaponsWave <- GetGlobalNetInt( "FD_currentWave" )
+
+	array<entity> weapons = player.GetMainWeapons()
+	weapons.extend( player.GetOffhandWeapons() )
+	foreach ( entity weapon in weapons )
+	{
+		weapon.RemoveMod( "silencer" ) // both this and the burnmod will override firing fx, if a second one overrides this we crash
+		foreach ( string mod in GetWeaponBurnMods( weapon.GetWeaponClassName() ) )
+		{
+			// catch incompatibilities just in case
+			try
+			{
+				weapon.AddMod( mod )
+			}
+			catch( ex )
+			{
+				weapons.removebyvalue( weapon )
+			}
+		}
+
+		weapon.SetScriptFlags0( weapon.GetScriptFlags0() | WEAPONFLAG_AMPED )
+	}
+}
 
 
 
