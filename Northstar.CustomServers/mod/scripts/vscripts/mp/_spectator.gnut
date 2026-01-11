@@ -202,6 +202,9 @@ void function SpectatorFunc_Default( entity player )
 
 bool function ClientCommandCallback_spec_next( entity player, array<string> args )
 {
+	if ( !CanRunSpectatorCommand( player ) )
+		return true
+
 	if ( player.GetObserverMode() == OBS_MODE_CHASE || player.GetObserverMode() == OBS_MODE_STATIC || player.GetObserverMode() == OBS_MODE_IN_EYE || player.GetObserverMode() == OBS_MODE_ROAMING )
 		player.Signal( "ObserverTargetChanged", { next = true } )
 
@@ -210,6 +213,9 @@ bool function ClientCommandCallback_spec_next( entity player, array<string> args
 
 bool function ClientCommandCallback_spec_prev( entity player, array<string> args )
 {
+	if ( !CanRunSpectatorCommand( player ) )
+		return true
+
 	if ( player.GetObserverMode() == OBS_MODE_CHASE || player.GetObserverMode() == OBS_MODE_STATIC || player.GetObserverMode() == OBS_MODE_IN_EYE || player.GetObserverMode() == OBS_MODE_ROAMING )
 		player.Signal( "ObserverTargetChanged", { next = false } )
 
@@ -218,6 +224,9 @@ bool function ClientCommandCallback_spec_prev( entity player, array<string> args
 
 bool function ClientCommandCallback_spec_mode( entity player, array<string> args )
 {
+	if ( !CanRunSpectatorCommand( player ) )
+		return true
+
 	// currently unsure how this actually gets called on client, works through console and has references in client.dll tho
 	if ( player.GetObserverMode() == OBS_MODE_CHASE )
 	{
@@ -231,6 +240,14 @@ bool function ClientCommandCallback_spec_mode( entity player, array<string> args
 		player.SetSpecReplayDelay( 0.1 )
 		player.StartObserverMode( OBS_MODE_CHASE )
 	}
+
+	return true
+}
+
+bool function CanRunSpectatorCommand( entity player )
+{
+	if ( GetGameState() <= eGameState.Prematch || ( GetGameState() >= eGameState.SwitchingSides && GetGameState() != eGameState.Epilogue ) )
+		return false
 
 	return true
 }

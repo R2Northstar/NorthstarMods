@@ -18,7 +18,8 @@ void function ReloadMods()
 	#endif
 
 	#if SERVER
-		ServerCommand( "reload_localization" )
+		// note: enable this when server can localize stuff
+		// ServerCommand( "reload_localization" )
 		ServerCommand( "loadPlaylists" )
 	#elseif CLIENT
 		client.ClientCommand( "reload_localization" )
