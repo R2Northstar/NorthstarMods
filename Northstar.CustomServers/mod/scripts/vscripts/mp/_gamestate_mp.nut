@@ -437,14 +437,14 @@ void function GameStateEnter_PickLoadout()
 }
 
 void function GameStateEnter_PickLoadout_Threaded()
-{	
+{
 	float pickloadoutLength = 20.0 // may need tweaking
 	float pickloadoutLengthMax = 40.0 // players can extend this indefinitely by repeatedly (re)joining so the timer needs a cap
 	float startTime = Time()
 
 	if ( Time() >= GetServerVar( "minPickLoadOutTime" ) )
 		SetServerVar( "minPickLoadOutTime", Time() + pickloadoutLength )
-	
+
 	// The Titan Selection Screen can extend the minPickLoadOutTime, so wait for natural expire
 	while ( Time() < GetServerVar( "minPickLoadOutTime" ) )
 	{
@@ -461,7 +461,7 @@ void function GameStateEnter_PickLoadout_Threaded()
 		if ( Time() < GetServerVar( "minPickLoadOutTime" ) )
 			WaitFrame()
 	}
-	
+
 	SetGameState( eGameState.Prematch )
 }
 
@@ -647,6 +647,9 @@ void function GameStateEnter_WinnerDetermined_Threaded()
 		
 		if ( IsRoundBased() && !HasRoundScoreLimitBeenReached() )
 			CleanUpEntitiesForRoundEnd()
+
+		foreach ( entity player in GetPlayerArray() )
+			ClearRespawnAvailable( player )
 		
 		SetServerVar( "roundWinningKillReplayPlaying", false )
 	}
@@ -664,6 +667,9 @@ void function GameStateEnter_WinnerDetermined_Threaded()
 		wait ROUND_WINNING_KILL_REPLAY_SCREEN_FADE_TIME
 		if ( IsRoundBased() && !HasRoundScoreLimitBeenReached() ) // Repeat check here just for the case match is over and epilogue is disabled, so it doesn't kill players randomly
 			CleanUpEntitiesForRoundEnd()
+
+		foreach ( entity player in GetPlayerArray() )
+			ClearRespawnAvailable( player )
 	}
 	
 	wait CLEAR_PLAYERS_BUFFER // Required to properly restart without players in Titans crashing it in FD
