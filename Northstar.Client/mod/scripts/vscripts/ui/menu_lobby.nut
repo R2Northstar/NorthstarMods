@@ -178,8 +178,11 @@ void function InitLobbyMenu()
 	AddMenuFooterOption( menu, BUTTON_B, "#B_BUTTON_BACK", "#BACK" )
 	AddMenuFooterOption( menu, BUTTON_BACK, "#BACK_BUTTON_POSTGAME_REPORT", "#POSTGAME_REPORT", OpenPostGameMenu, IsPostGameMenuValid )
 	AddMenuFooterOption( menu, BUTTON_TRIGGER_RIGHT, "#R_TRIGGER_CHAT", "", null, IsVoiceChatPushToTalk )
+
 	// Client side progression toggle
-	AddMenuFooterOption( menu, BUTTON_Y, "#Y_BUTTON_TOGGLE_PROGRESSION", "#TOGGLE_PROGRESSION", ShowToggleProgressionDialog )
+	#if !VANILLA
+		AddMenuFooterOption( menu, BUTTON_Y, "#Y_BUTTON_TOGGLE_PROGRESSION", "#TOGGLE_PROGRESSION", ShowToggleProgressionDialog )
+	#endif
 
 	InitChatroom( menu )
 
@@ -230,24 +233,16 @@ void function InitLobbyMenu()
 
 void function ShowToggleProgressionDialog( var button )
 {
-	#if VANILLA
-		DialogData dialogData
-		dialogData.menu = GetMenu( "AnnouncementDialog" )
-		dialogData.header = "#PROGRESSION_TOGGLE_ENABLED_HEADER"
-		dialogData.message = "#PROGRESSION_TOGGLE_VANILLA"
-		dialogData.image = $"ui/menu/common/dialog_announcement_1"
-	#else
-		bool enabled = Progression_GetPreference()
+	bool enabled = Progression_GetPreference()
 
-		DialogData dialogData
-		dialogData.menu = GetMenu( "AnnouncementDialog" )
-		dialogData.header = enabled ? "#PROGRESSION_TOGGLE_ENABLED_HEADER" : "#PROGRESSION_TOGGLE_DISABLED_HEADER"
-		dialogData.message = enabled ? "#PROGRESSION_TOGGLE_ENABLED_BODY" : "#PROGRESSION_TOGGLE_DISABLED_BODY"
-		dialogData.image = $"ui/menu/common/dialog_announcement_1"
+	DialogData dialogData
+	dialogData.menu = GetMenu( "AnnouncementDialog" )
+	dialogData.header = enabled ? "#PROGRESSION_TOGGLE_ENABLED_HEADER" : "#PROGRESSION_TOGGLE_DISABLED_HEADER"
+	dialogData.message = enabled ? "#PROGRESSION_TOGGLE_ENABLED_BODY" : "#PROGRESSION_TOGGLE_DISABLED_BODY"
+	dialogData.image = $"ui/menu/common/dialog_announcement_1"
 
-		AddDialogButton( dialogData, "#NO" )
-		AddDialogButton( dialogData, "#YES", enabled ? DisableProgression : EnableProgression )
-	#endif
+	AddDialogButton( dialogData, "#NO" )
+	AddDialogButton( dialogData, "#YES", enabled ? DisableProgression : EnableProgression )
 
 	OpenDialog( dialogData )
 }
