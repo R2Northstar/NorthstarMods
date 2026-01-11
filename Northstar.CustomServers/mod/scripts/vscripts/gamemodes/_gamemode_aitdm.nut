@@ -235,24 +235,34 @@ void function SpawnIntroBatch_Threaded( int team )
 	// Spawn logic
 	int podIndex = 0
 	int shipIndex = 0
+	int podspawnsUsed = podNodes.len()
+	int shipspawnsUsed = shipNodes.len()
 	entity node
 	
 	for ( int i = 0; i < file.squadsPerTeam; i++ )
 	{
-		if ( CoinFlip() )
+		if ( podspawnsUsed && ( !shipspawnsUsed || CoinFlip() ) )
 		{
 			node = podNodes[ GetSpawnPointIndex( podNodes, team ) ]
+
 			thread AiGameModes_SpawnDropPod( node, team, "npc_soldier", SquadHandler )
+
+			podspawnsUsed--
 
 			wait 0.5
 		}
-		else
+		else if ( shipspawnsUsed )
 		{
 			node = shipNodes[ GetSpawnPointIndex( shipNodes, team ) ]
+
 			thread AiGameModes_SpawnDropShip( node, team, 4, SquadHandler )
+
+			shipspawnsUsed--
 
 			wait 2.5
 		}
+		else
+			break
 		
 		// Vanilla has a delay after first spawn
 		if ( !i )
