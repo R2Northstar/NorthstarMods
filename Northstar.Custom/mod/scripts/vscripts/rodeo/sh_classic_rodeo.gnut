@@ -11,7 +11,6 @@ const asset RODEO_WEAKPOINT_HITBOX_MODEL = $"models/Weapons/ammoboxes/backpack_s
 void function ClassicRodeo_InitPlaylistVars()
 {
 	AddPrivateMatchModeSettingEnum( "#MODE_SETTING_CATEGORY_TITAN", "classic_rodeo", [ "#SETTING_DISABLED", "#SETTING_ENABLED" ], "0" )
-	AddPrivateMatchModeSettingEnum( "#MODE_SETTING_CATEGORY_TITAN", "rodeo_titan_lobotomy", [ "#SETTING_DISABLED", "#SETTING_ENABLED" ], "0" )
 	AddPrivateMatchModeSettingArbitrary( "#MODE_SETTING_CATEGORY_TITAN", "pilot_battery_inventory_size", "1" )
 }
 

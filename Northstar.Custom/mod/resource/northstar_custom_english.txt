@@ -94,7 +94,6 @@
 		"WPN_SHOTGUN_DBLBARREL_DESC" "Short-barreled Shotgun"
 		"WPN_SHOTGUN_DBLBARREL_LONGDESC" "Short Double Barreled Shotgun"
 
-		"rodeo_titan_lobotomy" "Titan Rodeo Lobotomy"
 		"pilot_battery_inventory_size" "Pilot Battery Inventory Size"
 	}
 }
