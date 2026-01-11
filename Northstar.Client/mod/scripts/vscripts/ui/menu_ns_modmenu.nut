@@ -34,7 +34,7 @@ struct {
 } file
 
 const int PANELS_LEN = 15
-const string[3] CORE_MODS = ["Northstar.Client", "Northstar.Coop", "Northstar.CustomServers"] // Shows a warning if you try to disable these
+const array<string> CORE_MODS = ["Northstar.Client", "Northstar.CustomServers"] // Shows a warning if you try to disable these
 
 void function AddNorthstarModMenu()
 {
@@ -688,12 +688,8 @@ void function ValidateScrollOffset()
 	UpdateListSliderPosition()
 }
 
-// Static arrays don't have the .find method for some reason
 bool function StaticFind( string mod )
 {
-	foreach( string smod in CORE_MODS )
-		if ( mod == smod )
-			return true
-	return false
+	return CORE_MODS.find( mod ) != -1
 }
 
