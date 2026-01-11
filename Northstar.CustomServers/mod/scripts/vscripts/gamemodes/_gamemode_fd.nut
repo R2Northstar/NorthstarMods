@@ -179,9 +179,7 @@ void function GamemodeFD_Init()
 	AddDeathCallback( "npc_frag_drone", OnTickDeath )
 
 	foreach ( string npcClass in [ "npc_frag_drone", "npc_soldier", "npc_spectre", "npc_stalker", "npc_super_spectre", "npc_drone", "npc_titan" ] )
-	{
 		AddSpawnCallback( npcClass, FD_GenericNPCDeathChecker )
-	}
 
 	//Command Callbacks
 	AddClientCommandCallback( "FD_ToggleReady", ClientCommandCallbackToggleReady )
@@ -1342,6 +1340,50 @@ void function FD_OnPlayerGetsNewPilotLoadout( entity player, PilotLoadoutDef loa
 			weapon.SetScriptFlags0( weapon.GetScriptFlags0() | WEAPONFLAG_AMPED )
 		}
 	}
+
+	if ( !file.playersInDropship.contains( player ) )
+		return
+
+	int dropshipSlot = 0
+
+	foreach ( entity dropshipplayer in file.playersInDropship )
+		if ( dropshipplayer != player )
+			dropshipSlot++
+		else
+			break
+
+	if ( file.dropshipState == eDropshipState.Returning )
+	{
+		FirstPersonSequenceStruct jumpSequence
+
+		jumpSequence.firstPersonAnim = DROPSHIP_EXIT_ANIMS_POV[ dropshipSlot ]
+		jumpSequence.thirdPersonAnim = DROPSHIP_EXIT_ANIMS[ dropshipSlot ]
+		jumpSequence.attachment = "ORIGIN"
+		jumpSequence.blendTime = 0.0
+		jumpSequence.hideProxy = true
+		jumpSequence.viewConeFunction = ViewConeNarrow
+
+		if ( "fd_dropshipanimtime" in player.s )
+			jumpSequence.setInitialTime = Time() - expect float ( player.s.fd_dropshipanimtime )
+
+		thread FirstPersonSequence( jumpSequence, player, file.dropship )
+	}
+	else if ( file.dropshipState == eDropshipState.InProgress )
+	{
+		FirstPersonSequenceStruct idleSequence
+
+		idleSequence.firstPersonAnim = DROPSHIP_IDLE_ANIMS_POV[ dropshipSlot ]
+		idleSequence.thirdPersonAnim = DROPSHIP_IDLE_ANIMS[ dropshipSlot ]
+		idleSequence.attachment = "ORIGIN"
+		idleSequence.blendTime = 0.0
+		idleSequence.hideProxy = true
+		idleSequence.viewConeFunction = ViewConeNarrow
+
+		if ( "fd_dropshipanimtime" in player.s )
+			idleSequence.setInitialTime = Time() - expect float ( player.s.fd_dropshipanimtime )
+
+		thread FirstPersonSequence( idleSequence, player, file.dropship )
+	}
 }
 
 void function FD_GivePlayerInfiniteAntiTitanAmmo( entity player )
@@ -1756,6 +1798,8 @@ void function FD_PlayerRespawnCallback( entity player )
 		idleSequence.teleport = true
 		idleSequence.viewConeFunction = ViewConeNarrow
 		idleSequence.hideProxy = true
+
+		player.s.fd_dropshipanimtime <- Time()
 
 		thread FirstPersonSequence( idleSequence, player, file.dropship )
 
@@ -2942,9 +2986,9 @@ void function FD_DropshipDropPlayer( entity player, int playerDropshipIndex )
 	{
 		if( player.s.loadoutDirty )
 			Loadouts_OnUsedLoadoutCrate( player )
-		
+
 		EnableOffhandWeapons( player )
-		
+
 		FirstPersonSequenceStruct jumpSequence
 		jumpSequence.firstPersonAnim = DROPSHIP_EXIT_ANIMS_POV[ playerDropshipIndex ]
 		jumpSequence.thirdPersonAnim = DROPSHIP_EXIT_ANIMS[ playerDropshipIndex ]
@@ -2952,16 +2996,23 @@ void function FD_DropshipDropPlayer( entity player, int playerDropshipIndex )
 		jumpSequence.blendTime = 0.0
 		jumpSequence.hideProxy = true
 		jumpSequence.viewConeFunction = ViewConeNarrow
-		
+
+		player.s.fd_dropshipanimtime <- Time()
+
 		#if BATTLECHATTER_ENABLED
 		if ( playerDropshipIndex == 0 )
 			PlayBattleChatterLine( player, "bc_pIntroChat" )
 		#endif
-		
+
 		waitthread FirstPersonSequence( jumpSequence, player, file.dropship )
+
+		while ( player.Anim_IsActive() )
+			WaitFrame()
+
 		if ( IsValidPlayer( player ) ) //Check again because the delay
 		{
 			player.ClearParent()
+
 			ClearPlayerAnimViewEntity( player )
 			thread FD_PlayerRespawnProtection( player )
 		}
