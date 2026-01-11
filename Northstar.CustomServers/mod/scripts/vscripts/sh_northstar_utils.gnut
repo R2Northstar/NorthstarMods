@@ -5,3 +5,41 @@ bool function ShouldReturnToLobby()
 {	
 	return GetConVarBool( "ns_should_return_to_lobby" )
 }
+
+void function ReloadMods()
+{
+	NSReloadMods()
+
+	#if CLIENT
+		entity client = GetLocalClientPlayer()
+
+		if ( !IsValid( client ) )
+			return
+	#endif
+
+	#if SERVER
+		ServerCommand( "reload_localization" )
+		ServerCommand( "loadPlaylists" )
+	#elseif CLIENT
+		client.ClientCommand( "reload_localization" )
+		client.ClientCommand( "loadPlaylists" )
+	#elseif UI
+		ClientCommand( "reload_localization" )
+		ClientCommand( "loadPlaylists" )
+	#endif
+
+	#if SERVER
+		ServerCommand( "weapon_reparse; _playerSettings_reparse_Server; aisettings_reparse" )
+	#elseif CLIENT
+		client.ClientCommand( "weapon_reparse; playerSettings_reparse; aisettings_reparse_client" )
+	#elseif UI
+		if ( IsConnected() )
+			ClientCommand( "weapon_reparse; playerSettings_reparse; aisettings_reparse_client" )
+	#endif
+
+	// note: the logic for this seems really odd, unsure why it doesn't seem to update, since the same code seems to get run irregardless of whether we've read weapon data before
+
+	#if UI
+		ClientCommand( "uiscript_reset" )
+	#endif
+}

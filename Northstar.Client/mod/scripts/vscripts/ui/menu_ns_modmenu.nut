@@ -2,7 +2,6 @@ untyped
 
 global function AddNorthstarModMenu
 global function AddNorthstarModMenu_MainMenuFooter
-global function ReloadMods
 
 
 struct panelContent {
@@ -696,20 +695,5 @@ bool function StaticFind( string mod )
 		if ( mod == smod )
 			return true
 	return false
-}
-
-void function ReloadMods()
-{
-	NSReloadMods()
-	ClientCommand( "reload_localization" )
-	ClientCommand( "loadPlaylists" )
-
-	int svCheatsOriginal = GetConVarInt( "sv_cheats" )
-
-	if ( IsConnected() )
-		ClientCommand( "script_ui SetConVarInt( \"sv_cheats\", 1 ); weapon_reparse; playerSettings_reparse; aisettings_reparse_client; script_ui SetConVarInt( \"sv_cheats\", " + svCheatsOriginal + " )" ) // some reparse commands only works if sv_cheats is set to 1
-
-	// note: the logic for this seems really odd, unsure why it doesn't seem to update, since the same code seems to get run irregardless of whether we've read weapon data before
-	ClientCommand( "uiscript_reset" )
 }
 
