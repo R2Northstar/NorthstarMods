@@ -45,6 +45,8 @@ void function ReloadMods()
 		// note: enable this when retry works on servers
 		// client.ClientCommand( "retry" )
 	#elseif UI
+		// note: enable this when retry works on servers
+		// ClientCommand( "retry" )
 		ClientCommand( "uiscript_reset" )
 	#endif
 }
