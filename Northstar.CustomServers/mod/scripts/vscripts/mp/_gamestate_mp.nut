@@ -527,7 +527,8 @@ void function GameStateEnter_Playing()
 void function GameStateEnter_Playing_Threaded()
 {
 	WaitFrame()
-	if( Flag( "AnnounceProgressEnabled" ) )
+
+	if ( Flag( "AnnounceProgressEnabled" ) )
 		thread DialoguePlayNormal()
 
 	float timeWithPlayers = Time()
@@ -535,16 +536,20 @@ void function GameStateEnter_Playing_Threaded()
 	while ( GetGameState() == eGameState.Playing )
 	{
 		float endTime
+
 		if ( IsRoundBased() )
 			endTime = expect float( GetServerVar( "roundEndTime" ) )
 		else
 			endTime = expect float( GetServerVar( "gameEndTime" ) )
-		
-		if ( GetPlayerArray().len() )
-			timeWithPlayers = Time()
-		else if ( timeWithPlayers + 10.0 < Time() )
-			GameRules_EndMatch()
-	
+
+		if ( GetConVarBool( "ns_match_end_if_no_players" ) )
+		{
+			if ( GetPlayerArray().len() )
+				timeWithPlayers = Time()
+			else if ( timeWithPlayers + 10.0 < Time() )
+				GameRules_EndMatch()
+		}
+
 		if ( Time() >= endTime && !Flag( "DisableTimeLimit" ) )
 		{
 			int winningTeam
@@ -552,7 +557,7 @@ void function GameStateEnter_Playing_Threaded()
 				winningTeam = file.timeoutWinnerDecisionFunc()
 			else
 				winningTeam = GetWinningTeam()
-			
+
 			if ( file.switchSidesBased && !file.hasSwitchedSides && !IsRoundBased() )
 				SetGameState( eGameState.SwitchingSides )
 			else if ( IsSuddenDeathGameMode() && winningTeam == TEAM_UNASSIGNED )
@@ -566,7 +571,7 @@ void function GameStateEnter_Playing_Threaded()
 				SetServerVar( "replayDisabled", true )
 			}
 		}
-		
+
 		WaitFrame()
 	}
 }
@@ -604,6 +609,9 @@ void function GameStateEnter_WinnerDetermined_Threaded()
 		svGlobal.levelEnt.Signal( "GameEnd" )
 	
 	WaitFrame() // wait a frame so other scripts can setup killreplay stuff
+
+	foreach ( entity player in GetPlayerArray() )
+		ClearRespawnAvailable( player )
 	
 	// Finish timers to make HUD not display more
 	SetServerVar( "gameEndTime", Time() )
@@ -647,9 +655,6 @@ void function GameStateEnter_WinnerDetermined_Threaded()
 		
 		if ( IsRoundBased() && !HasRoundScoreLimitBeenReached() )
 			CleanUpEntitiesForRoundEnd()
-
-		foreach ( entity player in GetPlayerArray() )
-			ClearRespawnAvailable( player )
 		
 		SetServerVar( "roundWinningKillReplayPlaying", false )
 	}
@@ -667,12 +672,15 @@ void function GameStateEnter_WinnerDetermined_Threaded()
 		wait ROUND_WINNING_KILL_REPLAY_SCREEN_FADE_TIME
 		if ( IsRoundBased() && !HasRoundScoreLimitBeenReached() ) // Repeat check here just for the case match is over and epilogue is disabled, so it doesn't kill players randomly
 			CleanUpEntitiesForRoundEnd()
-
-		foreach ( entity player in GetPlayerArray() )
-			ClearRespawnAvailable( player )
 	}
-	
+
+	foreach ( entity player in GetPlayerArray() )
+		ScreenFadeToBlackForever( player, 0.0 )
+
 	wait CLEAR_PLAYERS_BUFFER // Required to properly restart without players in Titans crashing it in FD
+
+	foreach ( entity player in GetPlayerArray() )
+		ClearRespawnAvailable( player )
 
 	file.roundWinningKillReplayAttacker = null // Clear Replays
 	file.roundWinningKillReplayInflictorEHandle = -1

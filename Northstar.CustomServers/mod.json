@@ -74,6 +74,10 @@
 		{
 			"Name": "ns_server_idle_time_refresh_max_time",
 			"DefaultValue": "240"
+		},
+		{
+			"Name": "ns_match_end_if_no_players",
+			"DefaultValue": "1"
 		}
 	],
 	"Scripts": [

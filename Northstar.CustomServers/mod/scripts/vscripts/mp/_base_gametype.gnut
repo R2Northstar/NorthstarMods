@@ -2005,6 +2005,9 @@ bool function PlayerCanSpawn( entity player )
 	if ( player.isSpawning )
 		return false
 
+	if ( IsPrivateMatchSpectator( player ) )
+		return false
+
 	return true
 }
 
