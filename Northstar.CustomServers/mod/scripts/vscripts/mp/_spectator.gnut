@@ -157,13 +157,13 @@ void function SpectatorFunc_Default( entity player )
 		else
 			targets.extend( GetPlayerArrayOfTeam_Alive( player.GetTeam() ) )
 
-		if ( targets.len() > 0 )
+		if ( targets.len() )
 		{
 			if ( result.next )
 				targetIndex = ( targetIndex + 1 ) % targets.len()
 			else
 			{
-				if ( targetIndex == 0 )
+				if ( !targetIndex )
 					targetIndex = ( targets.len() - 1 )
 				else
 					targetIndex--
@@ -183,7 +183,7 @@ void function SpectatorFunc_Default( entity player )
 			if ( target.IsPlayer() )
 			{		
 				player.SetObserverTarget( target )
-				player.SetSpecReplayDelay( 0.1 ) // Spectators uses the Replay Buffer to watch others, so it can't be Realtime
+				player.SetSpecReplayDelay( FIRST_PERSON_SPECTATOR_DELAY ) // Spectators uses the Replay Buffer to watch others, so it can't be Realtime
 				player.StartObserverMode( OBS_MODE_IN_EYE )
 			}
 			else
@@ -221,14 +221,18 @@ bool function ClientCommandCallback_spec_mode( entity player, array<string> args
 	// currently unsure how this actually gets called on client, works through console and has references in client.dll tho
 	if ( player.GetObserverMode() == OBS_MODE_CHASE )
 	{
-		// set to first person spectate		
+		// set to first person spectate
 		player.SetSpecReplayDelay( FIRST_PERSON_SPECTATOR_DELAY )
-		player.SetViewEntity( player.GetObserverTarget(), true )
+
+		SetPlayerAnimViewEntity( player, player.GetObserverTarget() )
+
 		player.StartObserverMode( OBS_MODE_IN_EYE )
 	}
 	else if ( player.GetObserverMode() == OBS_MODE_IN_EYE )
-	{	
+	{
 		// set to third person spectate
+		ClearPlayerAnimViewEntity( player )
+
 		player.SetSpecReplayDelay( 0.1 )
 		player.StartObserverMode( OBS_MODE_CHASE )
 	}

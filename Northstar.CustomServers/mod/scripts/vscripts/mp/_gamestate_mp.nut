@@ -482,14 +482,15 @@ void function GameStateEnter_PickLoadout_Threaded()
 */
 
 void function GameStateEnter_Prematch()
-{	
+{
 	int timeLimit = GameMode_GetTimeLimit( GAMETYPE ) * 60
+
 	if ( file.switchSidesBased )
 		timeLimit /= 2 // endtime is half of total per side
-	
+
 	if ( IsRoundBased() ) // Override with roundtimelimits even if it have switching sides enabled
 		timeLimit = int( GameMode_GetRoundTimeLimit( GAMETYPE ) * 60 )
-	
+
 	if ( !GetClassicMPMode() && !ClassicMP_ShouldTryIntroAndEpilogueWithoutClassicMP() )
 	{
 		SetGameEndTime( timeLimit + ClassicMP_DefaultNoIntro_GetLength() )
@@ -500,6 +501,17 @@ void function GameStateEnter_Prematch()
 		SetGameEndTime( timeLimit + ClassicMP_GetIntroLength() )
 		SetRoundEndTime( timeLimit + ClassicMP_GetIntroLength() )
 	}
+
+	thread GameStateEnter_Prematch_Threaded()
+}
+
+void function GameStateEnter_Prematch_Threaded()
+{
+	WaitFrame()
+
+	foreach ( entity player in GetPlayerArray() )
+		if ( IsPrivateMatchSpectator( player ) )
+			InitialisePrivateMatchSpectatorPlayer( player )
 }
 
 

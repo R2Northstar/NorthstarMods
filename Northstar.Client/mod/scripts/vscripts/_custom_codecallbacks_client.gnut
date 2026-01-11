@@ -22,11 +22,7 @@ struct {
 } NsCustomCallbacksClient
 
 void function OnReceivedMessage(ClClient_MessageStruct localMessage) {
-
-    if ( IsWatchingReplay() && localMessage.player == null )
-        return
-
-    if (localMessage.player != null)
+	if (localMessage.player != null)
     {
         foreach (callbackFunc in NsCustomCallbacksClient.OnReceivedSayTextMessageCallbacks)
         {
