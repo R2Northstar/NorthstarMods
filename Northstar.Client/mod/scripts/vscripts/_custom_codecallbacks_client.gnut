@@ -111,8 +111,6 @@ void function CHudChat_OnReceivedSayTextMessageCallback( int fromPlayerIndex, st
 
 	// Null player + isTeam == true: Server with no tag.
 
-	printt( "CHudChat_OnReceivedSayTextMessageCallback: messageType=" + messageType + " from player index " + fromPlayerIndex + ": " + message )
-
 	if ( messageType == 0 || messageType == 1 )
 	{
 		ClClient_MessageStruct localMessage
@@ -146,8 +144,6 @@ void function CHudChat_OnReceivedSayTextMessageCallback( int fromPlayerIndex, st
 		OnReceivedMessage( localMessage )
 		return
 	}
-
-	printt( "Unknown message type received in CHudChat_OnReceivedSayTextMessageCallback: " + messageType + " from player index " + fromPlayerIndex + ": " + message )
 }
 
 void function AddCallback_OnReceivedSayTextMessage( ClClient_MessageStruct functionref ( ClClient_MessageStruct ) callbackFunc )

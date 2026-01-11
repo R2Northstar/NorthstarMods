@@ -1,4 +1,5 @@
 global function GetFrontlinePath
+global function GetFrontlineFriendlyCenter
 global function GetFrontlineSpawnpoint
 
 global const int FrontlineRadius_Minion = 2048
@@ -14,12 +15,19 @@ vector function GetFrontlinePath( int team, int hull )
 	return ArrayClosestVector( NavMesh_GetAllPositions( hull ), fl.origin )[0]
 }
 
+vector function GetFrontlineFriendlyCenter( int team, int hull )
+{
+	Frontline fl = GetFrontline( team )
+
+	return ArrayClosestVector( NavMesh_GetAllPositions( hull ), fl.friendlyCenter )[0]
+}
+
 entity function GetFrontlineSpawnpoint( int team, array<entity> candidatePoints )
 {
 	if ( !candidatePoints.len() )
 		return null
 
-	vector frontline = GetFrontline( team ).friendlyCenter
+	vector frontline = GetFrontlineFriendlyCenter( team, HULL_HUMAN )
 
 	array<entity> closestPoints = ArrayClosest( candidatePoints, frontline )
 
