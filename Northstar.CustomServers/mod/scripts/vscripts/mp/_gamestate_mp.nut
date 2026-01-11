@@ -439,28 +439,13 @@ void function GameStateEnter_PickLoadout()
 void function GameStateEnter_PickLoadout_Threaded()
 {
 	float pickloadoutLength = 20.0 // may need tweaking
-	float pickloadoutLengthMax = 40.0 // players can extend this indefinitely by repeatedly (re)joining so the timer needs a cap
-	float startTime = Time()
 
 	if ( Time() >= GetServerVar( "minPickLoadOutTime" ) )
 		SetServerVar( "minPickLoadOutTime", Time() + pickloadoutLength )
 
 	// The Titan Selection Screen can extend the minPickLoadOutTime, so wait for natural expire
 	while ( Time() < GetServerVar( "minPickLoadOutTime" ) )
-	{
-		if ( GetServerVar( "minPickLoadOutTime" ) > startTime + pickloadoutLengthMax )
-		{
-			float newTime = startTime + pickloadoutLengthMax
-
-			SetServerVar( "minPickLoadOutTime", newTime )
-
-			foreach ( entity player in GetPlayerArray() )
-				Remote_CallFunction_Replay( player, "ServerCallback_UpdateTeamTitanMenuTime", newTime )
-		}
-
-		if ( Time() < GetServerVar( "minPickLoadOutTime" ) )
-			WaitFrame()
-	}
+		WaitFrame()
 
 	SetGameState( eGameState.Prematch )
 }
