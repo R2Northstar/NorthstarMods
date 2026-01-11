@@ -223,16 +223,11 @@ bool function ClientCommandCallback_spec_mode( entity player, array<string> args
 	{
 		// set to first person spectate
 		player.SetSpecReplayDelay( FIRST_PERSON_SPECTATOR_DELAY )
-
-		SetPlayerAnimViewEntity( player, player.GetObserverTarget() )
-
 		player.StartObserverMode( OBS_MODE_IN_EYE )
 	}
 	else if ( player.GetObserverMode() == OBS_MODE_IN_EYE )
 	{
 		// set to third person spectate
-		ClearPlayerAnimViewEntity( player )
-
 		player.SetSpecReplayDelay( 0.1 )
 		player.StartObserverMode( OBS_MODE_CHASE )
 	}
