@@ -46,7 +46,11 @@ void function ReloadMods()
 		// client.ClientCommand( "retry" )
 	#elseif UI
 		// note: enable this when retry works on servers
-		// ClientCommand( "retry" )
+		/*
+		if ( IsConnected() )
+			ClientCommand( "retry" )
+		*/
+
 		ClientCommand( "uiscript_reset" )
 	#endif
 }
