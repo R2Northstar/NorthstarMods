@@ -191,7 +191,7 @@ vector function CalculateWeightedTeamCenter( int team )
 #if SERVER
 	vector function GetMapCenter( int team = -1 )
 	{
-		array<vector> Positions = NavMesh_GetAllPositions( HULL_HUMAN )
+		array<vector> Positions = []
 
 		if ( team != -1 )
 		{
@@ -205,13 +205,15 @@ vector function CalculateWeightedTeamCenter( int team )
 			foreach ( entity spawnpoint in spawnpoints )
 				Positions.append( spawnpoint.GetOrigin() )
 		}
+		else
+			Positions = NavMesh_GetAllPositions( HULL_HUMAN )
 
 		vector centerPos = Vector( 0, 0, 0 )
 
 		foreach ( vector Position in Positions )
 			centerPos += Position
 
-		centerPos *= ( 1.0 / Positions.len() )
+		centerPos /= Positions.len()
 
 		return ArrayClosestVector( NavMesh_GetAllPositions( HULL_HUMAN ), centerPos )[0]
 	}
