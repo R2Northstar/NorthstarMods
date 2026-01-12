@@ -10,7 +10,7 @@
 		},
 		{
 			"Name": "ns_allow_spectators",
-			"DefaultValue": "0",
+			"DefaultValue": "1",
 			"Flags": "REPLICATED"
 		},
 		{
