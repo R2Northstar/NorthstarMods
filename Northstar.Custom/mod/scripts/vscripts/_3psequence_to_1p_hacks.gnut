@@ -230,7 +230,7 @@ void function CleanupForced1PSequence( Forced1PSequenceData cleanupData )
 	{
 		cleanupData.ownerProxy.kv.VisibilityFlags = ~ENTITY_VISIBLE_TO_EVERYONE
 		cleanupData.ownerProxy.ClearParent()
-		cleanupData.ownerProxy.SetOrigin( < 100000, 100000, 100000 > )
+		cleanupData.ownerProxy.SetOrigin( < 10000, 10000, 10000 > )
 
 		if ( IsAlive( cleanupData.ownerProxy ) )
 			cleanupData.ownerProxy.Die( null, null, { forceKill = true, scriptType = DF_EXPLOSION, damageType = DMG_REMOVENORAGDOLL } )
@@ -240,7 +240,7 @@ void function CleanupForced1PSequence( Forced1PSequenceData cleanupData )
 	{
 		cleanupData.thirdPersonProxy.kv.VisibilityFlags = ~ENTITY_VISIBLE_TO_EVERYONE
 		cleanupData.thirdPersonProxy.ClearParent()
-		cleanupData.thirdPersonProxy.SetOrigin( < 100000, 100000, 100000 > )
+		cleanupData.thirdPersonProxy.SetOrigin( < 10000, 10000, 10000 > )
 
 		if ( IsAlive( cleanupData.thirdPersonProxy ) )
 			cleanupData.thirdPersonProxy.Die( null, null, { forceKill = true, scriptType = DF_EXPLOSION, damageType = DMG_REMOVENORAGDOLL } )
