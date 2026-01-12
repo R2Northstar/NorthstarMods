@@ -947,11 +947,13 @@ void function FW_WaitToUntrackNPC( entity guy, string campId, string aiType )
 void function OnNPCEnemyChange( entity guy )
 {
 	entity enemy = guy.GetEnemy()
+
 	if ( !IsAlive( guy ) || guy.IsFrozen() || !IsAlive( enemy ) || !IsValid( guy.GetActiveWeapon() ) )
 		return
 
 	string archer = "mp_weapon_rocket_launcher"
 	array<string> weapons = []
+
 	foreach ( entity weapon in guy.GetMainWeapons() )
 		weapons.append( weapon.GetWeaponClassName() )
 
@@ -959,6 +961,7 @@ void function OnNPCEnemyChange( entity guy )
 	{
 		if ( !weapons.contains( archer ) )
 			guy.GiveWeapon( archer )
+
 		guy.SetActiveWeaponByName( archer )
 	}
 	else
@@ -966,9 +969,12 @@ void function OnNPCEnemyChange( entity guy )
 		foreach ( string weapon in weapons )
 			if ( weapon == archer )
 				guy.TakeWeaponNow( archer )
+
 		array<string> newweapons = []
+
 		foreach ( entity newweapon in guy.GetMainWeapons() )
 			newweapons.append( newweapon.GetWeaponClassName() )
+
 		if ( newweapons.len() )
 			guy.SetActiveWeaponByName( newweapons.getrandom() )
 	}

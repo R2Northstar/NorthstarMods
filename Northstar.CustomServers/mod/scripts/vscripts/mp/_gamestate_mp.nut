@@ -606,9 +606,6 @@ void function GameStateEnter_WinnerDetermined_Threaded()
 		svGlobal.levelEnt.Signal( "GameEnd" )
 	
 	WaitFrame() // wait a frame so other scripts can setup killreplay stuff
-
-	foreach ( entity player in GetPlayerArray() )
-		ClearRespawnAvailable( player )
 	
 	// Finish timers to make HUD not display more
 	SetServerVar( "gameEndTime", Time() )
@@ -649,11 +646,14 @@ void function GameStateEnter_WinnerDetermined_Threaded()
 
 		foreach ( entity player in GetPlayerArray() )
 			ScreenFadeToBlackForever( player, 0.0 )
-		
+
+		wait 0.5
+
 		if ( IsRoundBased() && !HasRoundScoreLimitBeenReached() )
 			CleanUpEntitiesForRoundEnd()
-		
+
 		SetServerVar( "roundWinningKillReplayPlaying", false )
+		wait ROUND_WINNING_KILL_REPLAY_SCREEN_FADE_TIME
 	}
 	else if ( IsRoundBased() && !HasRoundScoreLimitBeenReached() || !ClassicMP_ShouldRunEpilogue() )
 	{
@@ -671,17 +671,11 @@ void function GameStateEnter_WinnerDetermined_Threaded()
 			CleanUpEntitiesForRoundEnd()
 	}
 
-	bool switchsides = ( file.switchSidesBased && !file.hasSwitchedSides && IsRoundBased() && GameRules_GetTeamScore2( winningTeam ) >= ( GameMode_GetRoundScoreLimit( GAMETYPE ).tofloat() / 2.0 ) )
-	&& GameRules_GetTeamScore2( winningTeam ) < GameMode_GetRoundScoreLimit( GAMETYPE )
-
-	if ( switchsides )
+	if ( IsRoundBased() && !HasRoundScoreLimitBeenReached() && GameRules_GetTeamScore2( winningTeam ) >= GameMode_GetRoundScoreLimit( GAMETYPE ) )
 		foreach ( entity player in GetPlayerArray() )
 			ScreenFadeToBlackForever( player, 0.0 )
 
 	wait CLEAR_PLAYERS_BUFFER // Required to properly restart without players in Titans crashing it in FD
-
-	foreach ( entity player in GetPlayerArray() )
-		ClearRespawnAvailable( player )
 
 	file.roundWinningKillReplayAttacker = null // Clear Replays
 	file.roundWinningKillReplayInflictorEHandle = -1
@@ -694,7 +688,7 @@ void function GameStateEnter_WinnerDetermined_Threaded()
 
 		int highestScore = GameRules_GetTeamScore2( winningTeam )
 		int roundScoreLimit = GameMode_GetRoundScoreLimit( GAMETYPE )
-		
+
 		if ( highestScore >= roundScoreLimit )
 		{
 			if ( ShouldRunEvac() )
@@ -711,7 +705,7 @@ void function GameStateEnter_WinnerDetermined_Threaded()
 				SetGameState( eGameState.Postmatch )
 			}
 		}
-		else if ( switchsides )
+		else if ( file.switchSidesBased && !file.hasSwitchedSides && IsRoundBased() && GameRules_GetTeamScore2( winningTeam ) >= ( GameMode_GetRoundScoreLimit( GAMETYPE ).tofloat() / 2.0 ) )
 			SetGameState( eGameState.SwitchingSides )
 		else if ( file.usePickLoadoutScreen && GetCurrentPlaylistVarInt( "pick_loadout_every_round", 1 ) ) //Playlist var needs to be enabled as well
 			SetGameState( eGameState.PickLoadout )
@@ -800,7 +794,7 @@ void function GameStateEnter_SwitchingSides_Threaded()
 	file.hasSwitchedSides = true
 	SetServerVar( "switchedSides", 1 )
 
-	wait SWITCHING_SIDES_DELAY
+	wait SWITCHING_SIDES_DELAY - CLEAR_PLAYERS_BUFFER
 
 	if ( file.usePickLoadoutScreen && GetCurrentPlaylistVarInt( "pick_loadout_every_round", 1 ) ) //Playlist var needs to be enabled too
 		SetGameState( eGameState.PickLoadout )
