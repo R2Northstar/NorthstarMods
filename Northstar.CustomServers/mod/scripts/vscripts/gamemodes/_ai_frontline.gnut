@@ -1,5 +1,6 @@
 global function GetFrontlinePath
 global function GetFrontlineFriendlyCenter
+global function GetFrontlineEnemyCenter
 global function GetFrontlineSpawnpoint
 
 global const int FrontlineRadius_Minion = 2048
@@ -20,6 +21,13 @@ vector function GetFrontlineFriendlyCenter( int team, int hull )
 	Frontline fl = GetFrontline( team )
 
 	return ArrayClosestVector( NavMesh_GetAllPositions( hull ), fl.friendlyCenter )[0]
+}
+
+vector function GetFrontlineEnemyCenter( int team, int hull )
+{
+	Frontline fl = GetFrontline( team )
+
+	return ArrayClosestVector( NavMesh_GetAllPositions( hull ), fl.enemyCenter )[0]
 }
 
 entity function GetFrontlineSpawnpoint( int team, array<entity> candidatePoints )
@@ -50,6 +58,7 @@ entity function GetFrontlineSpawnpoint( int team, array<entity> candidatePoints 
 bool function IsSpawnpointValid( entity spawnpoint, int team, vector frontlinePath, int enemyRadius, bool getFarthestSpawnpointFromEnemies = false, entity FarthestPoint = null )
 {
 	array<entity> enemies = GetPlayerArrayOfEnemies_Alive( team )
+
 	enemies.extend( GetNPCArrayOfEnemies( team ) )
 
 	if ( !getFarthestSpawnpointFromEnemies && enemies.len() && Distance2D( spawnpoint.GetOrigin(), GetClosest2D( enemies, spawnpoint.GetOrigin() ).GetOrigin() ) < enemyRadius )
