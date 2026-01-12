@@ -438,14 +438,13 @@ void function SquadHandler( array<entity> guys )
 		return
 
 	vector point = GetFrontlinePath( team, HULL_HUMAN )
-	vector friendlyCenter = GetFrontlineFriendlyCenter( team, HULL_HUMAN )
 
 	// Setup AI, first assault point
 	foreach ( guy in guys )
 	{
 		guy.EnableNPCFlag( NPC_ALLOW_PATROL | NPC_ALLOW_INVESTIGATE | NPC_ALLOW_HAND_SIGNALS | NPC_ALLOW_FLEE )
 		guy.AssaultPoint( point )
-		guy.AssaultPointClamped( friendlyCenter )
+		guy.AssaultPointClamped( point )
 		guy.AssaultSetFightRadius( FrontlineRadius_Minion )
 		guy.AssaultSetGoalRadius( 1600 ) // 1600 is minimum for npc_stalker, works fine for others
 	}
@@ -459,7 +458,6 @@ void function SquadHandler( array<entity> guys )
 			return
 
 		point = GetFrontlinePath( team, HULL_HUMAN )
-		friendlyCenter = GetFrontlineFriendlyCenter( team, HULL_HUMAN )
 
 		foreach ( guy in guys )
 		{
@@ -472,7 +470,7 @@ void function SquadHandler( array<entity> guys )
 				else
 				{
 					guy.AssaultPoint( point )
-					guy.AssaultPointClamped( friendlyCenter )
+					guy.AssaultPointClamped( point )
 				}
 			}
 		}
@@ -527,10 +525,9 @@ void function ReaperHandler( entity reaper )
 		reaper.Minimap_AlwaysShow( 0, player )
 
 	vector point = GetFrontlinePath( reaper.GetTeam(), HULL_MEDIUM )
-	vector friendlyCenter = GetFrontlineFriendlyCenter( reaper.GetTeam(), HULL_MEDIUM )
 
 	reaper.AssaultPoint( point )
-	reaper.AssaultPointClamped( friendlyCenter )
+	reaper.AssaultPointClamped( point )
 	reaper.AssaultSetFightRadius( FrontlineRadius_Reaper )
 	reaper.AssaultSetGoalRadius( 1200 )
 
@@ -538,10 +535,9 @@ void function ReaperHandler( entity reaper )
 	while ( IsAlive( reaper ) )
 	{
 		point = GetFrontlinePath( reaper.GetTeam(), HULL_MEDIUM )
-		friendlyCenter = GetFrontlineFriendlyCenter( reaper.GetTeam(), HULL_MEDIUM )
 
 		reaper.AssaultPoint( point )
-		reaper.AssaultPointClamped( friendlyCenter )
+		reaper.AssaultPointClamped( point )
 
 		wait RandomFloatRange( 2.5, 5.0 )
 	}
