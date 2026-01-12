@@ -671,7 +671,7 @@ void function GameStateEnter_WinnerDetermined_Threaded()
 			CleanUpEntitiesForRoundEnd()
 	}
 
-	if ( IsRoundBased() && !HasRoundScoreLimitBeenReached() && GameRules_GetTeamScore2( winningTeam ) >= GameMode_GetRoundScoreLimit( GAMETYPE ) )
+	if ( IsRoundBased() && !HasRoundScoreLimitBeenReached() && !( GameRules_GetTeamScore2( winningTeam ) >= GameMode_GetRoundScoreLimit( GAMETYPE ) ) )
 		foreach ( entity player in GetPlayerArray() )
 			ScreenFadeToBlackForever( player, 0.0 )
 
@@ -700,7 +700,7 @@ void function GameStateEnter_WinnerDetermined_Threaded()
 			{
 				foreach ( entity player in GetPlayerArray() )
 					CheckGameStateForPlayerMovement( player )
-				
+
 				RegisterChallenges_OnMatchEnd()
 				SetGameState( eGameState.Postmatch )
 			}
