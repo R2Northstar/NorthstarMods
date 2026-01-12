@@ -531,7 +531,7 @@ void function PodBootFXThread( entity pod )
 
 void function PodFXCleanupNormalLight_Delayed( entity pod )
 {
-	wait 2.65
+	wait ( file.introStartTime + 10.65 ) - Time()
 
 	foreach ( entity handle in pod.s.podLightFXHandles )
 	{
