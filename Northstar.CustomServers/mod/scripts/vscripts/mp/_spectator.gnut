@@ -181,10 +181,19 @@ void function SpectatorFunc_Default( entity player )
 				player.SetSpecReplayDelay( 0.0 ) // clear spectator replay
 
 			if ( target.IsPlayer() )
-			{		
+			{
 				player.SetObserverTarget( target )
-				player.SetSpecReplayDelay( FIRST_PERSON_SPECTATOR_DELAY ) // Spectators uses the Replay Buffer to watch others, so it can't be Realtime
-				player.StartObserverMode( OBS_MODE_IN_EYE )
+
+				if ( GetCurrentPlaylistVarInt( "firstpersonspectate_enabled", 1 ) )
+				{
+					player.SetSpecReplayDelay( FIRST_PERSON_SPECTATOR_DELAY ) // Spectators uses the Replay Buffer to watch others, so it can't be Realtime
+					player.StartObserverMode( OBS_MODE_IN_EYE )
+				}
+				else
+				{
+					player.SetSpecReplayDelay( 0.1 )
+					player.StartObserverMode( OBS_MODE_CHASE )
+				}
 			}
 			else
 			{
@@ -228,7 +237,7 @@ bool function ClientCommandCallback_spec_mode( entity player, array<string> args
 		return true
 
 	// currently unsure how this actually gets called on client, works through console and has references in client.dll tho
-	if ( player.GetObserverMode() == OBS_MODE_CHASE )
+	if ( GetCurrentPlaylistVarInt( "firstpersonspectate_enabled", 1 ) && player.GetObserverMode() == OBS_MODE_CHASE )
 	{
 		// set to first person spectate
 		player.SetSpecReplayDelay( FIRST_PERSON_SPECTATOR_DELAY )
