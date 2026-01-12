@@ -32,8 +32,8 @@ struct
 
 	void function Frontline_Init_Threaded()
 	{
-		file.frontline.friendlyCenter = GetMapCenterForTeam( TEAM_IMC )
-		file.frontline.enemyCenter = GetMapCenterForTeam( TEAM_MILITIA )
+		file.frontline.friendlyCenter = GetFriendlyCenterForTeam( TEAM_IMC )
+		file.frontline.enemyCenter = GetFriendlyCenterForTeam( TEAM_MILITIA )
 		file.frontline.origin = ( file.frontline.friendlyCenter + file.frontline.enemyCenter ) * 0.5
 		file.frontline.combatDir = Normalize( file.frontline.enemyCenter - file.frontline.friendlyCenter )
 		file.frontline.line = CrossProduct( file.frontline.combatDir, Vector( 0.0, 0.0, 1.0 ) )
