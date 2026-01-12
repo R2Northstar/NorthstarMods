@@ -229,6 +229,8 @@ void function CleanupForced1PSequence( Forced1PSequenceData cleanupData )
 	if ( IsValid( cleanupData.ownerProxy ) )
 	{
 		cleanupData.ownerProxy.kv.VisibilityFlags = ~ENTITY_VISIBLE_TO_EVERYONE
+		cleanupData.ownerProxy.ClearParent()
+		cleanupData.ownerProxy.SetOrigin( < 100000, 100000, 100000 > )
 
 		if ( IsAlive( cleanupData.ownerProxy ) )
 			cleanupData.ownerProxy.Die( null, null, { forceKill = true, scriptType = DF_EXPLOSION, damageType = DMG_REMOVENORAGDOLL } )
@@ -237,6 +239,8 @@ void function CleanupForced1PSequence( Forced1PSequenceData cleanupData )
 	if ( IsValid( cleanupData.thirdPersonProxy ) )
 	{
 		cleanupData.thirdPersonProxy.kv.VisibilityFlags = ~ENTITY_VISIBLE_TO_EVERYONE
+		cleanupData.thirdPersonProxy.ClearParent()
+		cleanupData.thirdPersonProxy.SetOrigin( < 100000, 100000, 100000 > )
 
 		if ( IsAlive( cleanupData.thirdPersonProxy ) )
 			cleanupData.thirdPersonProxy.Die( null, null, { forceKill = true, scriptType = DF_EXPLOSION, damageType = DMG_REMOVENORAGDOLL } )
@@ -261,12 +265,10 @@ void function SetBodyGroups( entity player, entity proxy )
 
 void function FirstPersonPlayAnim( FirstPersonSequenceStruct sequence, entity proxy, entity player, entity other )
 {
-	bool savednoparent = sequence.noParent
-	string savedattachment = sequence.attachment
-	bool saveduseanimatedrefattachment = sequence.useAnimatedRefAttachment
-
 	if ( !IsPlayerEmbarking( player ) )
 	{
+		sequence = clone sequence
+
 		sequence.noParent = false
 		sequence.attachment = "REF"
 		sequence.useAnimatedRefAttachment = true
@@ -275,10 +277,6 @@ void function FirstPersonPlayAnim( FirstPersonSequenceStruct sequence, entity pr
 	}
 	else
 		thread FirstPersonSequence( sequence, proxy, other )
-
-	sequence.noParent = savednoparent
-	sequence.attachment = savedattachment
-	sequence.useAnimatedRefAttachment = saveduseanimatedrefattachment
 }
 
 bool function ShouldRunFirstPersonSequence( entity player, bool isEmbark, bool isExecution )
