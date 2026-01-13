@@ -30,7 +30,7 @@ void function ReloadMods()
 	#endif
 
 	#if SERVER
-		ServerCommand( "weapon_reparse; _playerSettings_reparse_Server; aisettings_reparse" )
+		ServerCommand( "weapon_reparse_server; _playerSettings_reparse_Server; aisettings_reparse" )
 	#elseif CLIENT
 		client.ClientCommand( "weapon_reparse; playerSettings_reparse; aisettings_reparse_client" )
 	#elseif UI
