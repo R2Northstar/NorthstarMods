@@ -212,15 +212,13 @@ void function GuyHangsInPod( entity guy, entity pod )
 
 	string idleAnim
 	string exitAnim
-	bool disable_traverse = false
+	bool disable_traverse = !guy.GetCapabilityFlag( bits_CAP_MOVE_TRAVERSE )
+
+	if ( disable_traverse )
+		guy.SetCapabilityFlag( bits_CAP_MOVE_TRAVERSE, false )
 
 	if ( !droppodData.openDoor )
 	{
-		disable_traverse = !guy.GetCapabilityFlag( bits_CAP_MOVE_TRAVERSE )
-
-		if ( disable_traverse )
-			guy.SetCapabilityFlag( bits_CAP_MOVE_TRAVERSE, false )
-
 		guy.SetEfficientMode( true )
 
 		guy.SetParent( pod, "ATTACH", false )
