@@ -93,6 +93,8 @@ void function PlayerBecomesSpectator( entity player )
 {
 	player.EndSignal( "OnDestroy" )
 
+	Remote_CallFunction_Replay( player, "ServerCallback_PlayerChangedTeams", player.GetEncodedEHandle(), player.GetTeam(), player.GetTeam() )
+
 	WaittillGameStateOrHigher( eGameState.Prematch )
 
 	player.EndSignal( "OnRespawned" )
