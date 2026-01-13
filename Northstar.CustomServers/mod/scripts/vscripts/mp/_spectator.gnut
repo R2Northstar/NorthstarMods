@@ -93,7 +93,7 @@ void function PlayerBecomesSpectator( entity player )
 {
 	player.EndSignal( "OnDestroy" )
 
-	Remote_CallFunction_Replay( player, "ServerCallback_PlayerChangedTeams", player.GetEncodedEHandle(), player.GetTeam(), player.GetTeam() )
+	SetTeam( player, player.GetTeam() )
 
 	WaittillGameStateOrHigher( eGameState.Prematch )
 
@@ -185,17 +185,8 @@ void function SpectatorFunc_Default( entity player )
 			if ( target.IsPlayer() )
 			{
 				player.SetObserverTarget( target )
-
-				if ( GetCurrentPlaylistVarInt( "firstpersonspectate_enabled", 1 ) )
-				{
-					player.SetSpecReplayDelay( FIRST_PERSON_SPECTATOR_DELAY ) // Spectators uses the Replay Buffer to watch others, so it can't be Realtime
-					player.StartObserverMode( OBS_MODE_IN_EYE )
-				}
-				else
-				{
-					player.SetSpecReplayDelay( 0.1 )
-					player.StartObserverMode( OBS_MODE_CHASE )
-				}
+				player.SetSpecReplayDelay( 0.1 )
+				player.StartObserverMode( OBS_MODE_CHASE )
 			}
 			else
 			{

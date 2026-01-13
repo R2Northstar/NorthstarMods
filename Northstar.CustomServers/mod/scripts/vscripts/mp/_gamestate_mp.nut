@@ -672,7 +672,7 @@ void function GameStateEnter_WinnerDetermined_Threaded()
 			CleanUpEntitiesForRoundEnd()
 	}
 
-	if ( IsRoundBased() && !HasRoundScoreLimitBeenReached() && !( GameRules_GetTeamScore2( winningTeam ) >= GameMode_GetRoundScoreLimit( GAMETYPE ) ) )
+	if ( IsRoundBased() && !HasRoundScoreLimitBeenReached() && !( GameRules_GetTeamScore2( winningTeam ) >= GameMode_GetRoundScoreLimit( GAMETYPE ) && ShouldRunEvac() ) )
 		foreach ( entity player in GetPlayerArray() )
 			thread ForceFadeToBlack( player, fadeTime )
 
