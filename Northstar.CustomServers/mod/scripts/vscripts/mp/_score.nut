@@ -143,7 +143,10 @@ void function ScoreEvent_PlayerKilled( entity victim, entity attacker, var damag
 
 	attacker.p.numberOfDeathsSinceLastKill = 0 // since they got a kill, remove the comeback trigger
 	// pilot kill
-	AddPlayerScore( attacker, "KillPilot", victim )
+	if ( IsEliminationBased() )
+		AddPlayerScore( attacker, "EliminatePilot", victim )
+	else
+		AddPlayerScore( attacker, "KillPilot", victim )
 	
 	// headshot
 	if ( DamageInfo_GetCustomDamageType( damageInfo ) & DF_HEADSHOT )
@@ -227,20 +230,34 @@ void function ScoreEvent_TitanKilled( entity victim, entity attacker, var damage
 	if ( !attacker.IsPlayer() )
 		return
 
-	if ( attacker.IsTitan() )
+	if ( IsEliminationBased() )
 	{
-		if ( victim.GetBossPlayer() || victim.IsPlayer() ) // to confirm this is a pet titan or player titan
-			AddPlayerScore( attacker, "TitanKillTitan", attacker ) // this will show the "Titan Kill" callsign event
+		if ( victim.IsPlayer() )
+			AddPlayerScore( attacker, "EliminateTitan", attacker )
+		else if ( IsValid( victim.GetBossPlayer() ) && victim.GetBossPlayer().GetPetTitan() == victim )
+			AddPlayerScore( attacker, "EliminateAutoTitan", attacker )
 		else
-			AddPlayerScore( attacker, "TitanKillTitan" )
+			AddPlayerScore( attacker, "EliminateAutoTitan" )
+	}
+	else if ( attacker.IsTitan() )
+	{
+		if ( victim.IsPlayer() )
+			AddPlayerScore( attacker, "TitanKillTitan", attacker )
+		else if ( IsValid( victim.GetBossPlayer() ) && victim.GetBossPlayer().GetPetTitan() == victim )
+			AddPlayerScore( attacker, "KillAutoTitan", attacker )
+		else
+			AddPlayerScore( attacker, "KillAutoTitan" )
 	}
 	else
 	{
 		KilledPlayerTitanDialogue( attacker, victim )
-		if ( victim.GetBossPlayer() || victim.IsPlayer() )
+
+		if ( victim.IsPlayer() )
 			AddPlayerScore( attacker, "KillTitan", attacker )
+		else if ( IsValid( victim.GetBossPlayer() ) && victim.GetBossPlayer().GetPetTitan() == victim )
+			AddPlayerScore( attacker, "KillAutoTitan", attacker )
 		else
-			AddPlayerScore( attacker, "KillTitan" )
+			AddPlayerScore( attacker, "KillAutoTitan" )
 	}
 }
 

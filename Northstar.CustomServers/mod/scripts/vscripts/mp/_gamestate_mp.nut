@@ -673,7 +673,7 @@ void function GameStateEnter_WinnerDetermined_Threaded()
 
 	if ( IsRoundBased() && !HasRoundScoreLimitBeenReached() && !( GameRules_GetTeamScore2( winningTeam ) >= GameMode_GetRoundScoreLimit( GAMETYPE ) ) )
 		foreach ( entity player in GetPlayerArray() )
-			ScreenFadeToBlackForever( player, 0.0 )
+			thread ForceFadeToBlack( player, CLEAR_PLAYERS_BUFFER )
 
 	wait CLEAR_PLAYERS_BUFFER // Required to properly restart without players in Titans crashing it in FD
 
@@ -1129,10 +1129,13 @@ void function CheckEliminationRiffMode( entity victim, entity attacker )
    ██     ██████   ██████  ███████     ██       ██████  ██   ████  ██████    ██    ██  ██████  ██   ████ ███████ 
 */
 
-void function ForceFadeToBlack( entity player )
+void function ForceFadeToBlack( entity player, float endTime = 0.0 )
 {
 	player.EndSignal( "OnDestroy" )
-	while ( true )
+
+	float startTime = Time()
+
+	while ( startTime > Time() - endTime || endTime <= 0.0 )
 	{
 		WaitFrame()
 		ScreenFadeToBlackForever( player, 0.0 )
