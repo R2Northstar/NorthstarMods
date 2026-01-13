@@ -611,6 +611,7 @@ void function GameStateEnter_WinnerDetermined_Threaded()
 	SetServerVar( "gameEndTime", Time() )
 	SetServerVar( "roundEndTime", Time() )
 
+	float fadeTime = CLEAR_PLAYERS_BUFFER
 	entity replayAttacker = file.roundWinningKillReplayAttacker
 	bool doReplay = Replay_IsEnabled() && IsRoundWinningKillReplayEnabled() && IsValid( replayAttacker ) && !ClassicMP_ShouldRunEpilogue()
 				 && Time() - file.roundWinningKillReplayTime <= ROUND_WINNING_KILL_REPLAY_LENGTH_OF_REPLAY && winningTeam != TEAM_UNASSIGNED
@@ -653,7 +654,7 @@ void function GameStateEnter_WinnerDetermined_Threaded()
 			CleanUpEntitiesForRoundEnd()
 
 		SetServerVar( "roundWinningKillReplayPlaying", false )
-		wait ROUND_WINNING_KILL_REPLAY_SCREEN_FADE_TIME
+		fadeTime += ROUND_WINNING_KILL_REPLAY_SCREEN_FADE_TIME
 	}
 	else if ( IsRoundBased() && !HasRoundScoreLimitBeenReached() || !ClassicMP_ShouldRunEpilogue() )
 	{
@@ -673,9 +674,9 @@ void function GameStateEnter_WinnerDetermined_Threaded()
 
 	if ( IsRoundBased() && !HasRoundScoreLimitBeenReached() && !( GameRules_GetTeamScore2( winningTeam ) >= GameMode_GetRoundScoreLimit( GAMETYPE ) ) )
 		foreach ( entity player in GetPlayerArray() )
-			thread ForceFadeToBlack( player, CLEAR_PLAYERS_BUFFER )
+			thread ForceFadeToBlack( player, fadeTime )
 
-	wait CLEAR_PLAYERS_BUFFER // Required to properly restart without players in Titans crashing it in FD
+	wait fadeTime // Required to properly restart without players in Titans crashing it in FD
 
 	file.roundWinningKillReplayAttacker = null // Clear Replays
 	file.roundWinningKillReplayInflictorEHandle = -1
