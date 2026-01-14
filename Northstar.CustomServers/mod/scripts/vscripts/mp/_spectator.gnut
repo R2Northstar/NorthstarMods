@@ -192,9 +192,19 @@ void function SpectatorFunc_Default( entity player )
 				{
 					try
 					{
-						player.SetObserverTarget( target )
-						player.SetSpecReplayDelay( FIRST_PERSON_SPECTATOR_DELAY )
-						player.StartObserverMode( OBS_MODE_IN_EYE )
+						if ( GetCurrentPlaylistVarInt( "firstpersonspectate_enabled", 1 ) )
+						{
+							player.SetObserverTarget( target )
+							player.SetSpecReplayDelay( FIRST_PERSON_SPECTATOR_DELAY )
+							player.StartObserverMode( OBS_MODE_IN_EYE )
+						}
+						else
+						{
+							player.SetObserverModeStaticPosition( target.GetOrigin() )
+							player.SetObserverModeStaticAngles( target.GetAngles() )
+							player.SetObserverTarget( null )
+							player.StartObserverMode( OBS_MODE_STATIC )
+						}
 					}
 					catch ( error )
 					{
