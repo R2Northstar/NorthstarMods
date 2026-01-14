@@ -153,11 +153,14 @@ void function SpectatorFunc_Default( entity player )
 		array<entity> targets = file.staticSpecCams
 
 		targets.extend( GetPlayerArrayOfTeam_Alive( player.GetTeam() ) )
+		targets.removebyvalue( player )
 
 		if ( targets.len() )
 		{
 			if ( result.next )
+			{
 				targetIndex = ( targetIndex + 1 ) % targets.len()
+			}
 			else
 			{
 				if ( !targetIndex )
@@ -224,7 +227,6 @@ bool function ClientCommandCallback_spec_mode( entity player, array<string> args
 	if ( !CanRunSpectatorCommand( player ) )
 		return true
 
-	// currently unsure how this actually gets called on client, works through console and has references in client.dll tho
 	if ( GetCurrentPlaylistVarInt( "firstpersonspectate_enabled", 1 ) && player.GetObserverMode() == OBS_MODE_CHASE )
 	{
 		// set to first person spectate
