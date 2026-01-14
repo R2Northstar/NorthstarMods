@@ -253,7 +253,7 @@ bool function ClientCommandCallback_spec_prev( entity player, array<string> args
 
 bool function ClientCommandCallback_spec_mode( entity player, array<string> args )
 {
-	if ( !CanRunSpectatorCommand( player ) || !IsValid( player.GetObserverTarget() ) )
+	if ( !CanRunSpectatorCommand( player ) || !IsValid( player.GetObserverTarget() ) || !player.GetObserverTarget().IsPlayer() )
 		return true
 
 	if ( GetCurrentPlaylistVarInt( "firstpersonspectate_enabled", 1 ) && ( player.GetObserverMode() == OBS_MODE_CHASE || player.GetObserverMode() == OBS_MODE_STATIC ) )
