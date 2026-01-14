@@ -148,15 +148,12 @@ void function SpectatorFunc_Default( entity player )
 
 	table result = { next = false }
 
-	while ( true )
+	while ( !player.IsBot() )
 	{
 		array<entity> targets = file.staticSpecCams
 
-		if ( !player.IsBot() )
-		{
-			targets.extend( GetPlayerArrayOfTeam_Alive( player.GetTeam() ) )
-			targets.removebyvalue( player )
-		}
+		targets.extend( GetPlayerArrayOfTeam_Alive( player.GetTeam() ) )
+		targets.removebyvalue( player )
 
 		if ( targets.len() )
 		{
