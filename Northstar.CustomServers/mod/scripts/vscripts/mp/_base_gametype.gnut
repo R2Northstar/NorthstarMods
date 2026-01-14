@@ -1024,12 +1024,6 @@ bool function ClientCommand_RespawnPlayer( entity player, array<string>args )
 
 	if ( IsAlive( player ) )
 		return true
-	
-	if ( IsEliminationBased() )
-	{
-		SendHudMessage( player, "#GAMEMODE_RESPAWN_NEXT_ROUND", -1, 0.4, 255, 255, 255, 255, 0.15, 3.0, 0.5 )
-		return true
-	}
 
 	if ( args.len() != 1 )
 		return true
@@ -1057,6 +1051,12 @@ bool function ClientCommand_RespawnPlayer( entity player, array<string>args )
 	{
 		player.s.respawnSelectionDone = true
 		player.Signal( "RespawnMe" )
+	}
+
+	if ( IsEliminationBased() )
+	{
+		SendHudMessage( player, "#GAMEMODE_RESPAWN_NEXT_ROUND", -1, 0.4, 255, 255, 255, 255, 0.15, 3.0, 0.5 )
+		return true
 	}
 
 	return true
