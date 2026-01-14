@@ -25,7 +25,7 @@ void function GamemodeFastball_Init()
 	ScoreEvent_SetupEarnMeterValuesForMixedModes()
 
 	// implementing intro in a different file because it'll likely be big 
-	ClassicMP_SetCustomIntro( GamemodeFastballIntroSetup, 17.1 ) // bit of a guess number
+	ClassicMP_SetCustomIntro( GamemodeFastballIntroSetup, 17.1 )
 	ClassicMP_ForceDisableEpilogue( true )
 	AddCallback_EntitiesDidLoad( SpawnPanelsForLevel )
 	AddCallback_GameStateEnter( eGameState.Prematch, ResetPanels )

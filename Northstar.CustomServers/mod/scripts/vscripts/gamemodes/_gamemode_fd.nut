@@ -262,6 +262,7 @@ void function ScoreEvent_SetupScoreValuesForFrontierDefense()
 	ScoreEvent_Disable( GetScoreEvent( "KillTitan" ) )
 	ScoreEvent_Disable( GetScoreEvent( "KillPilot" ) )
 	ScoreEvent_Disable( GetScoreEvent( "TitanKillTitan" ) )
+	ScoreEvent_Disable( GetScoreEvent( "KillAutoTitan" ) )
 }
 
 void function UpdateEarnMeter_ByPlayersInMatch()

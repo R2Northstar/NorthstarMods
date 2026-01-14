@@ -113,7 +113,7 @@ void function AutoTitan_NuclearPayload_PostDamageCallback( entity titan, var dam
 	}
 
 	#if SERVER && DEV
-	printt( "NUKE TITAN DOOMED TRIGGER HEALTH REACHED, NUKING! Health:", titan.s.doomedStateNukeTriggerHealth )
+		printt( "NUKE TITAN DOOMED TRIGGER HEALTH REACHED, NUKING! Health:", titan.s.doomedStateNukeTriggerHealth )
 	#endif
 	
 	thread AutoTitan_SelfDestruct( titan )
