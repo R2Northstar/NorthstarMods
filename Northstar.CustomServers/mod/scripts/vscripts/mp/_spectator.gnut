@@ -253,20 +253,40 @@ bool function ClientCommandCallback_spec_prev( entity player, array<string> args
 
 bool function ClientCommandCallback_spec_mode( entity player, array<string> args )
 {
-	if ( !CanRunSpectatorCommand( player ) )
+	if ( !CanRunSpectatorCommand( player ) || !IsValid( player.GetObserverTarget() ) )
 		return true
 
-	if ( GetCurrentPlaylistVarInt( "firstpersonspectate_enabled", 1 ) && player.GetObserverMode() == OBS_MODE_CHASE )
+	if ( GetCurrentPlaylistVarInt( "firstpersonspectate_enabled", 1 ) && ( player.GetObserverMode() == OBS_MODE_CHASE || player.GetObserverMode() == OBS_MODE_STATIC ) )
 	{
-		// set to first person spectate
-		player.SetSpecReplayDelay( FIRST_PERSON_SPECTATOR_DELAY )
-		player.StartObserverMode( OBS_MODE_IN_EYE )
+		try
+		{
+			// set to first person spectate
+			player.SetSpecReplayDelay( FIRST_PERSON_SPECTATOR_DELAY )
+			player.StartObserverMode( OBS_MODE_IN_EYE )
+		}
+		catch ( error )
+		{
+			player.SetObserverModeStaticPosition( player.GetObserverTarget().GetOrigin() )
+			player.SetObserverModeStaticAngles( player.GetObserverTarget().GetAngles() )
+			player.SetObserverTarget( null )
+			player.StartObserverMode( OBS_MODE_STATIC )
+		}
 	}
-	else if ( player.GetObserverMode() == OBS_MODE_IN_EYE )
+	else if ( player.GetObserverMode() == OBS_MODE_IN_EYE || player.GetObserverMode() == OBS_MODE_STATIC )
 	{
-		// set to third person spectate
-		player.SetSpecReplayDelay( 0.1 )
-		player.StartObserverMode( OBS_MODE_CHASE )
+		try
+		{
+			// set to third person spectate
+			player.SetSpecReplayDelay( 0.1 )
+			player.StartObserverMode( OBS_MODE_CHASE )
+		}
+		catch ( error )
+		{
+			player.SetObserverModeStaticPosition( player.GetObserverTarget().GetOrigin() )
+			player.SetObserverModeStaticAngles( player.GetObserverTarget().GetAngles() )
+			player.SetObserverTarget( null )
+			player.StartObserverMode( OBS_MODE_STATIC )
+		}
 	}
 
 	return true
