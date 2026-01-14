@@ -795,7 +795,7 @@ void function GameStateEnter_SwitchingSides_Threaded()
 	file.hasSwitchedSides = true
 	SetServerVar( "switchedSides", 1 )
 
-	wait SWITCHING_SIDES_DELAY - CLEAR_PLAYERS_BUFFER
+	wait SWITCHING_SIDES_DELAY
 
 	if ( file.usePickLoadoutScreen && GetCurrentPlaylistVarInt( "pick_loadout_every_round", 1 ) ) //Playlist var needs to be enabled too
 		SetGameState( eGameState.PickLoadout )
