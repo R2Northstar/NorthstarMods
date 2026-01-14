@@ -148,7 +148,7 @@ void function SpectatorFunc_Default( entity player )
 
 	table result = { next = false }
 
-	while ( !player.IsBot() )
+	while ( true )
 	{
 		array<entity> targets = file.staticSpecCams
 
@@ -182,9 +182,28 @@ void function SpectatorFunc_Default( entity player )
 
 			if ( target.IsPlayer() )
 			{
-				player.SetObserverTarget( target )
-				player.SetSpecReplayDelay( 0.1 )
-				player.StartObserverMode( OBS_MODE_CHASE )
+				try
+				{
+					player.SetObserverTarget( target )
+					player.SetSpecReplayDelay( 0.1 )
+					player.StartObserverMode( OBS_MODE_CHASE )
+				}
+				catch ( error )
+				{
+					try
+					{
+						player.SetObserverTarget( target )
+						player.SetSpecReplayDelay( FIRST_PERSON_SPECTATOR_DELAY )
+						player.StartObserverMode( OBS_MODE_IN_EYE )
+					}
+					catch ( error )
+					{
+						player.SetObserverModeStaticPosition( target.GetOrigin() )
+						player.SetObserverModeStaticAngles( target.GetAngles() )
+						player.SetObserverTarget( null )
+						player.StartObserverMode( OBS_MODE_STATIC )
+					}
+				}
 			}
 			else
 			{
