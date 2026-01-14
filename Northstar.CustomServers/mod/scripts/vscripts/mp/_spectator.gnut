@@ -205,7 +205,7 @@ bool function ClientCommandCallback_spec_next( entity player, array<string> args
 	if ( !CanRunSpectatorCommand( player ) )
 		return true
 
-	if ( player.GetObserverMode() == OBS_MODE_CHASE || player.GetObserverMode() == OBS_MODE_STATIC || player.GetObserverMode() == OBS_MODE_IN_EYE || player.GetObserverMode() == OBS_MODE_ROAMING )
+	if ( player.GetObserverMode() == OBS_MODE_CHASE || player.GetObserverMode() == OBS_MODE_STATIC || player.GetObserverMode() == OBS_MODE_IN_EYE )
 		player.Signal( "ObserverTargetChanged", { next = true } )
 
 	return true
@@ -216,7 +216,7 @@ bool function ClientCommandCallback_spec_prev( entity player, array<string> args
 	if ( !CanRunSpectatorCommand( player ) )
 		return true
 
-	if ( player.GetObserverMode() == OBS_MODE_CHASE || player.GetObserverMode() == OBS_MODE_STATIC || player.GetObserverMode() == OBS_MODE_IN_EYE || player.GetObserverMode() == OBS_MODE_ROAMING )
+	if ( player.GetObserverMode() == OBS_MODE_CHASE || player.GetObserverMode() == OBS_MODE_STATIC || player.GetObserverMode() == OBS_MODE_IN_EYE )
 		player.Signal( "ObserverTargetChanged", { next = false } )
 
 	return true
