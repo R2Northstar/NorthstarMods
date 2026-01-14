@@ -96,6 +96,11 @@ void function CodeCallback_OnClientConnectionStarted( entity player )
 		return
 	#endif
 
+	ValidateLoadout_OnClientConnecting( player )
+
+	if ( !IsValid( player ) )
+		return
+
 	if ( IsLobby() )
 	{
 		Lobby_OnClientConnectionStarted( player )

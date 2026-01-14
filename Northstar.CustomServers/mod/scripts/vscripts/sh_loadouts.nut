@@ -12,6 +12,34 @@ void function InitDefaultLoadouts()
 	PopulateDefaultTitanLoadouts( shGlobal.defaultTitanLoadouts )
 }
 
+#if SERVER
+	void function ValidateLoadout_OnClientConnecting( entity player )
+	{
+		GetPilotLoadoutFromPersistentData( player, GetPersistentSpawnLoadoutIndex( player, "pilot" ) )
+		GetTitanLoadoutFromPersistentData( player, GetPersistentSpawnLoadoutIndex( player, "titan" ) )
+
+		if ( !IsValid( player ) )
+			return
+
+		int burnCardID = int( player.GetPersistentVar( "burnmeterSlot" ).tostring() )
+
+		string ref = ""
+
+		try
+		{
+			ref = BurnReward_GetById( burnCardID ).ref
+		}
+		catch ( error ) {}
+
+		if ( !ItemDefined( ref ) || IsItemLocked( player, ref ) || GetItemDisplayData( ref ).hidden )
+		{
+			player.SetPersistentVar( "burnmeterSlot", 1 )
+
+			NSDisconnectPlayer( player, "#RESETTING_LOADOUT" )
+		}
+	}
+#endif
+
 PilotLoadoutDef function GetDefaultPilotLoadout( int index )
 {
 	return shGlobal.defaultPilotLoadouts[ index ]
@@ -154,7 +182,7 @@ void function ValidateWeaponSubitem( string weaponRef, string itemRef, int itemT
 PilotLoadoutDef function GetPilotLoadoutFromPersistentData( entity player, int loadoutIndex )
 {
 	PilotLoadoutDef loadout
-	PopulatePilotLoadoutFromPersistentData( player, loadout, loadoutIndex )
+	thread PopulatePilotLoadoutFromPersistentData( player, loadout, loadoutIndex )
 
 	return loadout
 }
@@ -162,13 +190,15 @@ PilotLoadoutDef function GetPilotLoadoutFromPersistentData( entity player, int l
 TitanLoadoutDef function GetTitanLoadoutFromPersistentData( entity player, int loadoutIndex )
 {
 	TitanLoadoutDef loadout
-	PopulateTitanLoadoutFromPersistentData( player, loadout, loadoutIndex )
+	thread PopulateTitanLoadoutFromPersistentData( player, loadout, loadoutIndex )
 
 	return loadout
 }
 
 void function PopulatePilotLoadoutFromPersistentData( entity player, PilotLoadoutDef loadout, int loadoutIndex )
 {
+	EndSignal( player, "OnDestroy" )
+
 	loadout.name 				= GetValidatedPersistentLoadoutValue( player, "pilot", loadoutIndex, "name" )
 	loadout.suit 				= GetValidatedPersistentLoadoutValue( player, "pilot", loadoutIndex, "suit" )
 	loadout.race 				= GetValidatedPersistentLoadoutValue( player, "pilot", loadoutIndex, "race" )
@@ -203,6 +233,8 @@ void function PopulatePilotLoadoutFromPersistentData( entity player, PilotLoadou
 
 void function PopulateTitanLoadoutFromPersistentData( entity player, TitanLoadoutDef loadout, int loadoutIndex )
 {
+	EndSignal( player, "OnDestroy" )
+
 	loadout.name 				= GetValidatedPersistentLoadoutValue( player, "titan", loadoutIndex, "name" )
 	loadout.titanClass			= GetValidatedPersistentLoadoutValue( player, "titan", loadoutIndex, "titanClass" )
 	loadout.primaryMod			= GetValidatedPersistentLoadoutValue( player, "titan", loadoutIndex, "primaryMod" )
@@ -1510,6 +1542,7 @@ string function GetValidatedPersistentLoadoutValue( entity player, string loadou
 				printt( "Invalid Loadout Property: ", loadoutType, loadoutIndex, loadoutProperty, value )
 				value = ResetLoadoutPropertyToDefault( player, loadoutType, loadoutIndex, loadoutProperty ) //TODO: This will call player.SetPersistentVar() directly. Awkward to do this in a getter function
 				NSDisconnectPlayer( player, "#RESETTING_LOADOUT" ) //Kick player out with a "Resetting Invalid Loadout" message. Mainly necessary so UI/Client script don't crash out later with known, bad data from persistence
+				return ""
 			}
 		}
 
@@ -1520,6 +1553,7 @@ string function GetValidatedPersistentLoadoutValue( entity player, string loadou
 				printt( "Invalid Loadout Property: ", loadoutType, loadoutIndex, loadoutProperty, value )
 				value = ResetLoadoutPropertyToDefault( player, loadoutType, loadoutIndex, loadoutProperty ) //TODO: This will call player.SetPersistentVar() directly. Awkward to do this in a getter function
 				NSDisconnectPlayer( player, "#RESETTING_LOADOUT" ) //Kick player out with a "Resetting Invalid Loadout" message. Mainly necessary so UI/Client script don't crash out later with known, bad data from persistence
+				return ""
 			}
 
 			ValidateSkinAndCamoIndexesAsAPair( player, loadoutType, loadoutIndex, loadoutProperty, value ) //TODO: This is awkward, has the potential to call a SetPersistentLoadoutValue() if skinIndex and camoIndex are not correct as a pair
@@ -3035,7 +3069,7 @@ void function SetPersistentSpawnLoadoutIndex( entity player, string loadoutType,
 		if ( player == null )
 			return
 
-		PopulatePilotLoadoutFromPersistentData( player, shGlobal.cachedPilotLoadouts[ loadoutIndex ], loadoutIndex )
+		thread PopulatePilotLoadoutFromPersistentData( player, shGlobal.cachedPilotLoadouts[ loadoutIndex ], loadoutIndex )
 	}
 
 	void function UpdateCachedTitanLoadout( int loadoutIndex )
@@ -3050,7 +3084,7 @@ void function SetPersistentSpawnLoadoutIndex( entity player, string loadoutType,
 		if ( player == null )
 			return
 
-		PopulateTitanLoadoutFromPersistentData( player, shGlobal.cachedTitanLoadouts[ loadoutIndex ], loadoutIndex )
+		thread PopulateTitanLoadoutFromPersistentData( player, shGlobal.cachedTitanLoadouts[ loadoutIndex ], loadoutIndex )
 	}
 
 	PilotLoadoutDef function GetCachedPilotLoadout( int loadoutIndex )
@@ -3297,6 +3331,9 @@ string function Loadouts_GetSetFileForRequestedClass( entity player )
 		#endif
 			loadout = GetPilotLoadoutFromPersistentData( player, loadoutIndex )
 
+		if ( !IsValid( player ) )
+			return false
+
 		UpdateDerivedPilotLoadoutData( loadout )
 
 		if ( player.IsBot() && !player.IsPlayback() )
@@ -3365,6 +3402,9 @@ string function Loadouts_GetSetFileForRequestedClass( entity player )
 			else
 		#endif
 			loadout = GetTitanLoadoutFromPersistentData( player, loadoutIndex )
+
+		if ( !IsValid( player ) )
+			return false
 
 		OverwriteLoadoutWithDefaultsForSetFile_ExceptSpecialAndAntiRodeo( loadout, player )
 

@@ -177,7 +177,9 @@ bool function ClientCommandCallback_SetPersistentLoadoutValue( entity player, ar
 	print( player + " SetPersistentLoadoutValue " + args[0] + " " + args[1] + " " + args[2] + " " + val )
 	#endif
 
-	// VERY temp and insecure
+	if ( FailsLoadoutValidationCheck( player, args[0], args[1].tointeger(), args[2], val ) )
+		return false
+
 	SetPersistentLoadoutValue( player, args[0], args[1].tointeger(), args[2], val )
 	
 	if ( args[0] == "pilot" )
