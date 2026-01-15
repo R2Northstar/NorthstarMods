@@ -150,10 +150,15 @@ void function SpectatorFunc_Default( entity player )
 
 	while ( true )
 	{
-		array<entity> targets = file.staticSpecCams
+		array<entity> targets
 
-		targets.extend( GetPlayerArrayOfTeam_Alive( player.GetTeam() ) )
-		targets.removebyvalue( player )
+		targets.extend( file.staticSpecCams )
+
+		if ( GetGameState() != eGameState.Prematch )
+		{
+			targets.extend( GetPlayerArrayOfTeam_Alive( player.GetTeam() ) )
+			targets.removebyvalue( player )
+		}
 
 		if ( targets.len() )
 		{
@@ -294,7 +299,7 @@ bool function ClientCommandCallback_spec_mode( entity player, array<string> args
 
 bool function CanRunSpectatorCommand( entity player )
 {
-	if ( GetGameState() <= eGameState.Prematch || ( GetGameState() >= eGameState.SwitchingSides && GetGameState() != eGameState.Epilogue ) )
+	if ( GetGameState() <= eGameState.PickLoadout || ( GetGameState() >= eGameState.SwitchingSides && GetGameState() != eGameState.Epilogue ) )
 		return false
 
 	return true
