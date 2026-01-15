@@ -182,7 +182,7 @@ void function ValidateWeaponSubitem( string weaponRef, string itemRef, int itemT
 PilotLoadoutDef function GetPilotLoadoutFromPersistentData( entity player, int loadoutIndex )
 {
 	PilotLoadoutDef loadout
-	thread PopulatePilotLoadoutFromPersistentData( player, loadout, loadoutIndex )
+	PopulatePilotLoadoutFromPersistentData( player, loadout, loadoutIndex )
 
 	return loadout
 }
@@ -190,13 +190,19 @@ PilotLoadoutDef function GetPilotLoadoutFromPersistentData( entity player, int l
 TitanLoadoutDef function GetTitanLoadoutFromPersistentData( entity player, int loadoutIndex )
 {
 	TitanLoadoutDef loadout
-	thread PopulateTitanLoadoutFromPersistentData( player, loadout, loadoutIndex )
+	PopulateTitanLoadoutFromPersistentData( player, loadout, loadoutIndex )
 
 	return loadout
 }
 
 void function PopulatePilotLoadoutFromPersistentData( entity player, PilotLoadoutDef loadout, int loadoutIndex )
 {
+	if ( !IsNewThread() )
+	{
+		thread PopulatePilotLoadoutFromPersistentData( player, loadout, loadoutIndex )
+		return
+	}
+
 	EndSignal( player, "OnDestroy" )
 
 	loadout.name 				= GetValidatedPersistentLoadoutValue( player, "pilot", loadoutIndex, "name" )
@@ -233,6 +239,12 @@ void function PopulatePilotLoadoutFromPersistentData( entity player, PilotLoadou
 
 void function PopulateTitanLoadoutFromPersistentData( entity player, TitanLoadoutDef loadout, int loadoutIndex )
 {
+	if ( !IsNewThread() )
+	{
+		thread PopulateTitanLoadoutFromPersistentData( player, loadout, loadoutIndex )
+		return
+	}
+
 	EndSignal( player, "OnDestroy" )
 
 	loadout.name 				= GetValidatedPersistentLoadoutValue( player, "titan", loadoutIndex, "name" )
@@ -3069,7 +3081,7 @@ void function SetPersistentSpawnLoadoutIndex( entity player, string loadoutType,
 		if ( player == null )
 			return
 
-		thread PopulatePilotLoadoutFromPersistentData( player, shGlobal.cachedPilotLoadouts[ loadoutIndex ], loadoutIndex )
+		PopulatePilotLoadoutFromPersistentData( player, shGlobal.cachedPilotLoadouts[ loadoutIndex ], loadoutIndex )
 	}
 
 	void function UpdateCachedTitanLoadout( int loadoutIndex )
@@ -3084,7 +3096,7 @@ void function SetPersistentSpawnLoadoutIndex( entity player, string loadoutType,
 		if ( player == null )
 			return
 
-		thread PopulateTitanLoadoutFromPersistentData( player, shGlobal.cachedTitanLoadouts[ loadoutIndex ], loadoutIndex )
+		PopulateTitanLoadoutFromPersistentData( player, shGlobal.cachedTitanLoadouts[ loadoutIndex ], loadoutIndex )
 	}
 
 	PilotLoadoutDef function GetCachedPilotLoadout( int loadoutIndex )
