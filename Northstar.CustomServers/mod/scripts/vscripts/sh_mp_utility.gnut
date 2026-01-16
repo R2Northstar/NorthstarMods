@@ -134,8 +134,8 @@ bool function IsPrivateMatchSpectator( entity player )
 {
 	// JFS
 	#if SERVER
-	if ( !player.p.clientScriptInitialized )
-		return false
+		if ( !player.p.clientScriptInitialized || !PrivateMatchSpectatorEnabled() )
+			return false
 	#endif
 
 	if ( !IsFFAGame() && GetConVarBool( "ns_allow_spectators" ) && player.GetPersistentVarAsInt( "privateMatchState" ) == 1 )

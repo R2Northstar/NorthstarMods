@@ -12,6 +12,10 @@ global function Spectator_ClearCustomSpectatorFunc
 
 // helper funcs
 global function HACKCleanupStaticObserverStuff
+global function SetSpectatorEnabled
+global function SetPrivateMatchSpectatorEnabled
+global function SpectatorEnabled
+global function PrivateMatchSpectatorEnabled
 
 global typedef SpectatorFunc void functionref( entity player )
 
@@ -21,6 +25,9 @@ struct {
 	SpectatorFunc nextSpectatorFunc = null
 
 	int newestFuncIndex = 0 // used to track which players have finished the most recent spectator func
+
+	bool spectatorenabled = true
+	bool privatematchspectatorenabled = true
 } file
 
 void function Spectator_Init()
@@ -78,9 +85,30 @@ void function HACKCleanupStaticObserverStuff( entity player )
 	player.SetObserverModeStaticAngles( < 3.402823466e38, 3.402823466e38, 3.402823466e38 > )
 }
 
+void function SetSpectatorEnabled( bool enabled )
+{
+	file.spectatorenabled = enabled
+}
+
+void function SetPrivateMatchSpectatorEnabled( bool enabled )
+{
+	file.privatematchspectatorenabled = enabled
+}
+
+bool function SpectatorEnabled()
+{
+	return file.spectatorenabled
+}
+
+bool function PrivateMatchSpectatorEnabled()
+{
+	return file.privatematchspectatorenabled
+}
+
 void function InitialisePrivateMatchSpectatorPlayer( entity player )
 {
-	thread PlayerBecomesSpectator( player )
+	if ( SpectatorEnabled() || ( IsPrivateMatchSpectator( player ) && PrivateMatchSpectatorEnabled() ) )
+		thread PlayerBecomesSpectator( player )
 }
 
 // this should be called when intros respawn players normally to handle fades and stuff
@@ -116,7 +144,7 @@ void function PlayerBecomesSpectator( entity player )
 
 	WaitFrame()
 
-	while ( true )
+	while ( SpectatorEnabled() || ( IsPrivateMatchSpectator( player ) && PrivateMatchSpectatorEnabled() ) )
 	{
 		SpectatorFunc nextSpectatorFunc = file.defaultSpectatorFunc
 
