@@ -190,7 +190,7 @@
 			}
 		},
 		{
-			"Path": "drop_battery_command.nut",
+			"Path": "sh_drop_battery_command.nut",
 			"RunOn": "( CLIENT || SERVER ) && MP",
 			"ClientCallback": {
 				"After": "DropBatteryCommand_Init"
