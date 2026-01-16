@@ -125,16 +125,26 @@ void function LoadoutsMPInitPlayer( entity player )
 // loadout clientcommands
 bool function ClientCommandCallback_RequestPilotLoadout( entity player, array<string> args )
 {
-	if ( args.len() != 1 )
+	if ( !args.len() )
+	{
+		#if DEV
+			print( player + " RequestPilotLoadout " )
+		#endif
+
 		return true
-	
+	}
+
 	#if DEV
-	print( player + " RequestPilotLoadout " + args[0] )
+		print( player + " RequestPilotLoadout " + args[0] )
 	#endif
 
-	// insecure, could be used to set invalid spawnloadout index potentially
-	SetPersistentSpawnLoadoutIndex( player, "pilot", args[0].tointeger() )
-	
+	int index = args[0].tointeger()
+
+	if ( index >= PersistenceGetArrayCount( "pilotLoadouts" ) )
+		return false
+
+	SetPersistentSpawnLoadoutIndex( player, "pilot", index )
+
 	SetPlayerLoadoutDirty( player )
 	
 	return true
@@ -142,16 +152,20 @@ bool function ClientCommandCallback_RequestPilotLoadout( entity player, array<st
 
 bool function ClientCommandCallback_RequestTitanLoadout( entity player, array<string> args )
 {
-	if ( args.len() != 1 )
-		return true
+	if ( !args.len() )
+		args.append( "" )
 
 	#if DEV
-	print( player + " RequestTitanLoadoutLoadout " + args[0] )
+		print( player + " RequestTitanLoadout " + args[0] )
 	#endif
 
-	// insecure, could be used to set invalid spawnloadout index potentially
-	SetPersistentSpawnLoadoutIndex( player, "titan", args[0].tointeger() )
-	
+	int index = args[0].tointeger()
+
+	if ( index >= PersistenceGetArrayCount( "titanLoadouts" ) )
+		return false
+
+	SetPersistentSpawnLoadoutIndex( player, "titan", index )
+
 	if ( !IsLobby() )
 		EarnMeterMP_SetTitanLoadout( player )
 	
@@ -163,10 +177,13 @@ bool function ClientCommandCallback_SetPersistentLoadoutValue( entity player, ar
 	//if ( args.len() != 4 )
 	//	return true
 
-	if ( args.len() < 4 )
-		return true 
-		
-	string val = args[ 3 ]
+	string args0 = args.len() >= 1 ? args[0] : ""
+	string args1 = args.len() >= 2 ? args[1] : ""
+	string args2 = args.len() >= 3 ? args[2] : ""
+	string args3 = args.len() >= 4 ? args[3] : ""
+
+	string val = args3
+
 	if ( args.len() > 4 ) // concat args after 3 into last arg so we can do strings with spaces and such
 		for ( int i = 4; i < args.len(); i++ )
 			val += " " + args[ i ]
@@ -174,13 +191,13 @@ bool function ClientCommandCallback_SetPersistentLoadoutValue( entity player, ar
 	val = strip( val ) // remove any tailing whitespace
 
 	#if DEV
-	print( player + " SetPersistentLoadoutValue " + args[0] + " " + args[1] + " " + args[2] + " " + val )
+		print( player + " SetPersistentLoadoutValue " + args0 + " " + args1 + " " + args2 + " " + val )
 	#endif
 
-	if ( FailsLoadoutValidationCheck( player, args[0], args[1].tointeger(), args[2], val ) )
+	if ( args.len() < 4 || FailsLoadoutValidationCheck( player, args0, args1.tointeger(), args2, val ) )
 		return false
 
-	SetPersistentLoadoutValue( player, args[0], args[1].tointeger(), args[2], val )
+	SetPersistentLoadoutValue( player, args[0], args1.tointeger(), args2, val )
 	
 	if ( args[0] == "pilot" )
 		SetPlayerLoadoutDirty( player ) 
@@ -192,15 +209,19 @@ bool function ClientCommandCallback_SetPersistentLoadoutValue( entity player, ar
 
 bool function ClientCommandCallback_SwapSecondaryAndWeapon3PersistentLoadoutData( entity player, array<string> args )
 {
-	if ( args.len() != 1 )
-		return true
+	if ( !args.len() )
+		args.append( "" )
 	
 	#if DEV
-	print( "SwapSecondaryAndWeapon3PersistentLoadoutData " + args[0] )
+		print( player + " SwapSecondaryAndWeapon3PersistentLoadoutData " + args[0] )
 	#endif
 
 	// get loadout
 	int index = args[0].tointeger()
+
+	if ( index >= PersistenceGetArrayCount( "pilotLoadouts" ) )
+		return false
+
 	PilotLoadoutDef loadout = GetPilotLoadoutFromPersistentData( player, index )
 
 	// swap loadouts
@@ -227,16 +248,16 @@ bool function ClientCommandCallback_SwapSecondaryAndWeapon3PersistentLoadoutData
 
 bool function ClientCommandCallback_SetBurnCardPersistenceSlot( entity player, array<string> args )
 {
-	if ( args.len() != 1 || GetGameState() >= eGameState.Playing )
-		return false
+	if ( !args.len() )
+		args.append( "" )
 	
 	#if DEV
-	print( player + " SetBurnCardPersistenceSlot " + args[0] )
+		print( player + " SetBurnCardPersistenceSlot " + args[0] )
 	#endif
 
 	if ( IsRefValidAndOfType( args[0], eItemTypes.BURN_METER_REWARD ) )
 	{
-		if ( !IsItemLocked( player, args[0] ) )
+		if ( !IsItemLocked( player, args[0] ) && GetGameState() < eGameState.Playing )
 			player.SetPersistentVar( "burnmeterSlot", BurnReward_GetByRef( args[0] ).id )
 		else
 			return false
@@ -244,8 +265,9 @@ bool function ClientCommandCallback_SetBurnCardPersistenceSlot( entity player, a
 	else
 	{
 		#if DEV
-		print( player + " invalid ref " + args[0] )
+			print( player + " invalid ref " + args[0] )
 		#endif
+
 		return false
 	}
 	
@@ -259,7 +281,7 @@ bool function ClientCommandCallback_SetCallsignIcon( entity player, array<string
 		args.append( "" )
 
 	#if DEV
-	print( player + " SetCallsignIcon " + args[0] )
+		print( player + " SetCallsignIcon " + args[0] )
 	#endif
 
 	if ( IsRefValidAndOfType( args[0], eItemTypes.CALLSIGN_ICON ) )
@@ -272,8 +294,9 @@ bool function ClientCommandCallback_SetCallsignIcon( entity player, array<string
 	else
 	{
 		#if DEV
-		print( player + " invalid ref " + args[0] )
+			print( player + " invalid ref " + args[0] )
 		#endif
+
 		return false
 	}
 
@@ -286,7 +309,7 @@ bool function ClientCommandCallback_SetCallsignCard( entity player, array<string
 		args.append( "" )
 
 	#if DEV
-	print( player + " SetCallsignCard " + args[0] )
+		print( player + " SetCallsignCard " + args[0] )
 	#endif
 
 	if ( IsRefValidAndOfType( args[0], eItemTypes.CALLING_CARD ) )
@@ -299,8 +322,9 @@ bool function ClientCommandCallback_SetCallsignCard( entity player, array<string
 	else
 	{
 		#if DEV
-		print( player + " invalid ref " + args[0] )
+			print( player + " invalid ref " + args[0] )
 		#endif
+
 		return false
 	}
 	
@@ -313,7 +337,7 @@ bool function ClientCommandCallback_SetFactionChoicePersistenceSlot( entity play
 		args.append( "" )
 
 	#if DEV
-	print( player + " SetFactionChoicePersistenceSlot " + args[0] )
+		print( player + " SetFactionChoicePersistenceSlot " + args[0] )
 	#endif
 
 	if ( IsRefValidAndOfType( args[0], eItemTypes.FACTION ) )
@@ -326,8 +350,9 @@ bool function ClientCommandCallback_SetFactionChoicePersistenceSlot( entity play
 	else
 	{
 		#if DEV
-		print( player + " invalid ref " + args[0] )
+			print( player + " invalid ref " + args[0] )
 		#endif
+
 		return false
 	}
 	
@@ -336,7 +361,7 @@ bool function ClientCommandCallback_SetFactionChoicePersistenceSlot( entity play
 
 bool function ClientCommandCallback_LoadoutMenuClosed( entity player, array<string> args )
 {
-	if ( !args.len() || args[0] == "1" || args.len() > 1 && args[1] == "1" )
+	if ( !args.len() || args[0] == "1" || ( args.len() > 1 && args[1] == "1" ) )
 		TryGivePilotLoadoutForGracePeriod( player )
 	
 	return true

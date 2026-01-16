@@ -15,7 +15,29 @@ void function InitDefaultLoadouts()
 #if SERVER
 	void function ValidateLoadout_OnClientConnecting( entity player )
 	{
+		if ( GetPersistentSpawnLoadoutIndex( player, "pilot" ) >= PersistenceGetArrayCount( "pilotLoadouts" ) )
+		{
+			SetPersistentSpawnLoadoutIndex( player, "pilot", 0 )
+			NSDisconnectPlayer( player, "#RESETTING_LOADOUT" )
+		}
+
+		if ( !IsValid( player ) )
+			return
+
+		if ( GetPersistentSpawnLoadoutIndex( player, "titan" ) >= PersistenceGetArrayCount( "titanLoadouts" ) )
+		{
+			SetPersistentSpawnLoadoutIndex( player, "titan", 0 )
+			NSDisconnectPlayer( player, "#RESETTING_LOADOUT" )
+		}
+
+		if ( !IsValid( player ) )
+			return
+
 		GetPilotLoadoutFromPersistentData( player, GetPersistentSpawnLoadoutIndex( player, "pilot" ) )
+
+		if ( !IsValid( player ) )
+			return
+
 		GetTitanLoadoutFromPersistentData( player, GetPersistentSpawnLoadoutIndex( player, "titan" ) )
 
 		if ( !IsValid( player ) )
@@ -716,7 +738,10 @@ bool function FailsLoadoutValidationCheck( entity player, string loadoutType, in
 	string ref = GetRefFromLoadoutTypeIndexPropertyAndValue( player, loadoutType, loadoutIndex, loadoutProperty, value )
 	if ( !IsRefValid( ref ) )
 	{
-		printt( "!IsRefValid( " + ref + " ), generated from loadoutType: " + loadoutType + ", loadoutIndex: " + loadoutIndex + ". loadoutProperty: " + loadoutProperty + ", value: " + value )
+		#if DEV
+			printt( "!IsRefValid( " + ref + " ), generated from loadoutType: " + loadoutType + ", loadoutIndex: " + loadoutIndex + ". loadoutProperty: " + loadoutProperty + ", value: " + value )
+		#endif
+
 		return true
 	}
 
@@ -728,7 +753,10 @@ bool function FailsLoadoutValidationCheck( entity player, string loadoutType, in
 
 	if ( FailsItemLockedValidationCheck( player, loadoutType, loadoutIndex, loadoutProperty, ref ) )
 	{
-		printt( "FailsItemLockedValidationCheck, player: " + player + ", ref: " + ref )
+		#if DEV
+			printt( "FailsItemLockedValidationCheck, player: " + player + ", ref: " + ref )
+		#endif
+
 		return true
 	}
 
