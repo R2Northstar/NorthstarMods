@@ -191,9 +191,6 @@ void function RunColiseumOutroThreaded( entity winningPlayer, entity losingPlaye
 	int numLost = min( 2, GameRules_GetTeamScore( GetOtherTeam( GetWinningTeam() ) ) ).tointeger()
 	int animIndex = RandomInt( OUTROANIMS_WINNER[ numLost ].len() )
 
-	if ( !( animIndex in OUTROANIMS_LOSER[ numLost ] ) )
-		return
-
 	string winnerAnim = OUTROANIMS_WINNER[ numLost ][ animIndex ]
 	string loserAnim = OUTROANIMS_LOSER[ numLost ][ animIndex ]
 
