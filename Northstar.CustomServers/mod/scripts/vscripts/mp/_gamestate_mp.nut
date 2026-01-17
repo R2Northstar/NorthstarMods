@@ -9,6 +9,7 @@ global function AddCallback_OnRoundEndCleanup
 global function SetShouldUsePickLoadoutScreen
 global function SetShouldSpectateInPickLoadoutScreen
 global function SetSwitchSidesBased
+global function SetClearPlayersBuffer
 global function SetEndOnPlayerTitansDead
 global function SetShouldUseRoundWinningKillReplay
 global function SetRoundWinningKillReplayKillClasses
@@ -33,6 +34,7 @@ struct {
 	bool usePickLoadoutScreen
 	bool spectateInPickLoadoutScreen = false // This is so joining players stay absent from distracting others with invulnerability given by the Titan Selection Screen
 	bool switchSidesBased
+	bool clearPlayersBuffer = false
 	bool endOnPlayerTitansDead = true
 	int functionref() timeoutWinnerDecisionFunc
 	
@@ -299,6 +301,11 @@ bool function SpectatePlayerDuringPickLoadout()
 void function SetSwitchSidesBased( bool switchSides )
 {
 	file.switchSidesBased = switchSides
+}
+
+void function SetClearPlayersBuffer( bool clearPlayersBuffer )
+{
+	file.clearPlayersBuffer = clearPlayersBuffer
 }
 
 void function SetEndOnPlayerTitansDead( bool endOnTitansDead )
@@ -611,7 +618,7 @@ void function GameStateEnter_WinnerDetermined_Threaded()
 	SetServerVar( "gameEndTime", Time() )
 	SetServerVar( "roundEndTime", Time() )
 
-	float fadeTime = CLEAR_PLAYERS_BUFFER
+	float fadeTime = file.clearPlayersBuffer ? CLEAR_PLAYERS_BUFFER : 0.0
 	entity replayAttacker = file.roundWinningKillReplayAttacker
 	bool doReplay = Replay_IsEnabled() && IsRoundWinningKillReplayEnabled() && IsValid( replayAttacker ) && !ShouldRunEvac()
 				 && Time() - file.roundWinningKillReplayTime <= ROUND_WINNING_KILL_REPLAY_LENGTH_OF_REPLAY && winningTeam != TEAM_UNASSIGNED
@@ -672,7 +679,7 @@ void function GameStateEnter_WinnerDetermined_Threaded()
 			CleanUpEntitiesForRoundEnd()
 	}
 
-	if ( IsRoundBased() && !HasRoundScoreLimitBeenReached() && !( GameRules_GetTeamScore2( winningTeam ) >= GameMode_GetRoundScoreLimit( GAMETYPE ) && ShouldRunEvac() ) )
+	if ( fadeTime && IsRoundBased() && !HasRoundScoreLimitBeenReached() && !( GameRules_GetTeamScore2( winningTeam ) >= GameMode_GetRoundScoreLimit( GAMETYPE ) && ShouldRunEvac() ) )
 		foreach ( entity player in GetPlayerArray() )
 			thread ForceFadeToBlack( player, fadeTime )
 

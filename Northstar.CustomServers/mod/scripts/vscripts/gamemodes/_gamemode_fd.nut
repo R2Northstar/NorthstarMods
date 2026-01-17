@@ -134,6 +134,7 @@ void function GamemodeFD_Init()
 	SetGetDifficultyFunc( FD_GetDifficultyLevel )
 	SetShouldUsePickLoadoutScreen( true )
 	SetShouldSpectateInPickLoadoutScreen( true )
+	SetClearPlayersBuffer( true )
 	TeamTitanSelectMenu_Init()
 
 	//General Callbacks
