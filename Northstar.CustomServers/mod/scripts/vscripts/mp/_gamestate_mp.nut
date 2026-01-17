@@ -613,7 +613,7 @@ void function GameStateEnter_WinnerDetermined_Threaded()
 
 	float fadeTime = CLEAR_PLAYERS_BUFFER
 	entity replayAttacker = file.roundWinningKillReplayAttacker
-	bool doReplay = Replay_IsEnabled() && IsRoundWinningKillReplayEnabled() && IsValid( replayAttacker ) && !ClassicMP_ShouldRunEpilogue()
+	bool doReplay = Replay_IsEnabled() && IsRoundWinningKillReplayEnabled() && IsValid( replayAttacker ) && !ShouldRunEvac()
 				 && Time() - file.roundWinningKillReplayTime <= ROUND_WINNING_KILL_REPLAY_LENGTH_OF_REPLAY && winningTeam != TEAM_UNASSIGNED
  	
 	SetServerVar( "roundWinningKillReplayPlaying", doReplay )
@@ -656,7 +656,7 @@ void function GameStateEnter_WinnerDetermined_Threaded()
 		SetServerVar( "roundWinningKillReplayPlaying", false )
 		fadeTime += ROUND_WINNING_KILL_REPLAY_SCREEN_FADE_TIME
 	}
-	else if ( IsRoundBased() && !HasRoundScoreLimitBeenReached() || !ClassicMP_ShouldRunEpilogue() )
+	else if ( IsRoundBased() && !HasRoundScoreLimitBeenReached() || !ShouldRunEvac() )
 	{
 		// Observation from vanilla hints that the gamemodes can choose how players will behave once match is over
 		foreach ( entity player in GetPlayerArray() )

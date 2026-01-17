@@ -31,8 +31,9 @@ void function GamemodeColiseum_Init()
 	Riff_ForceBoostAvailability( eBoostAvailability.Disabled )
 	Riff_ForceSetEliminationMode( eEliminationMode.Pilots )
 	SetLoadoutGracePeriodEnabled( false ) // prevent modifying loadouts with grace period
-	SetSpectatorEnabled( false ) // stops players from spectating on death
-	SetServerVar( "replayDisabled", true ) // temp fix
+	SetSpectatorEnabled( false ) // stops players from spectating on death and in outro
+	SetPrivateMatchSpectatorEnabled( false ) // private match spectator doesn't work well
+	FlagClear( "WeaponDropsAllowed" ) // removes all dropped weapons
 
 	ClassicMP_SetCustomIntro( ClassicMP_DefaultNoIntro_Setup, 8.5 )
 	AddCallback_GameStateEnter( eGameState.Prematch, ShowColiseumIntroScreen )
@@ -61,13 +62,17 @@ void function ShowColiseumIntroScreenThreaded()
 	{
 		array<entity> otherTeam = GetPlayerArrayOfTeam( GetOtherTeam( player.GetTeam() ) )
 
+		foreach ( entity player in otherTeam )
+			if ( IsPrivateMatchSpectator( player ) )
+				otherTeam.removebyvalue( player )
+
 		int winstreak = 0
 		int wins = 0 
 		int losses = 0
 
-		if ( otherTeam.len() != 0 )
+		if ( otherTeam.len() )
 		{
-			entity enemy = otherTeam[0]
+			entity enemy = otherTeam.getrandom()
 
 			winstreak = enemy.GetPersistentVarAsInt( "coliseumWinStreak" )
 			wins = enemy.GetPersistentVarAsInt( "coliseumTotalWins" )
@@ -85,6 +90,14 @@ void function SetupColiseumEpilogue()
 
 void function RunColiseumOutro()
 {
+	entity outroAnimPoint = GetEnt( "intermission" )
+
+	if ( !GetPlayerArray().len() || !IsValid( outroAnimPoint ) || !IsIMCOrMilitiaTeam( GetWinningTeam() ) )
+	{
+		SetGameState( eGameState.Postmatch )
+		return
+	}
+
 	// also since this runs on game end, do winstreak stuff
 	foreach ( entity player in GetPlayerArray() )
 	{
@@ -95,99 +108,139 @@ void function RunColiseumOutro()
 		}
 		else
 		{
-			player.SetPersistentVar( "coliseumTotalWins", maxint( player.GetPersistentVarAsInt( "coliseumTotalWins" ) - 1, 0 ) )
+			player.SetPersistentVar( "coliseumTotalLosses", player.GetPersistentVarAsInt( "coliseumTotalLosses" ) + 1 )
 			player.SetPersistentVar( "coliseumWinStreak", 0 )
 		}
 	}
 
-	entity outroAnimPoint = GetEnt( "intermission" )
-	array<entity> winningPlayers = GetPlayerArrayOfTeam( GetWinningTeam() )
+	WaitFrame()
 
-	if ( GetPlayerArray().len() > 0 && IsValid( outroAnimPoint ) && GetWinningTeam() != -1 && winningPlayers.len() != 0 ) // this will fail if we don't have players or a spot to do it
-		thread RunColiseumOutroThreaded( outroAnimPoint.GetOrigin(), winningPlayers[ 0 ] )
+	array<entity> winningPlayers = GetPlayerArrayOfTeam( GetWinningTeam() )
+	array<entity> losingPlayers = GetPlayerArrayOfTeam( GetOtherTeam( GetWinningTeam() ) )
+
+	foreach ( entity player in GetPlayerArray() )
+	{
+		if ( !IsPrivateMatchSpectator( player ) )
+			continue
+
+		if ( winningPlayers.contains( player ) )
+			winningPlayers.removebyvalue( player )
+
+		if ( losingPlayers.contains( player ) )
+			losingPlayers.removebyvalue( player )
+	}
+
+	entity winningPlayer = null
+	entity losingPlayer = null
+
+	if ( winningPlayers.len() )
+		winningPlayer = winningPlayers.getrandom()
+
+	if ( losingPlayers.len() )
+		losingPlayer = losingPlayers.getrandom()
+
+	if ( IsValid( winningPlayer ) && IsValid( losingPlayer ) ) // this will fail if we don't have players
+	{
+		foreach ( entity player in GetPlayerArray() )
+		{
+			if ( IsPrivateMatchSpectator( player ) )
+				continue
+
+			if ( !IsAlive( player ) )
+			{
+				DoRespawnPlayer( player, null )
+				delaythread ( 0.0001 ) EnableDemigod( player )
+			}
+			else
+				EnableDemigod( player )
+
+			HolsterViewModelAndDisableWeapons( player )
+
+			player.SetOrigin( OriginToGround( outroAnimPoint.GetOrigin() ) )
+			player.SetNameVisibleToEnemy( false )
+			player.SetNameVisibleToFriendly( false )
+
+			if ( player != winningPlayer && player != losingPlayer )
+				player.kv.VisibilityFlags = ~ENTITY_VISIBLE_TO_EVERYONE
+		}
+
+		thread RunColiseumOutroThreaded( winningPlayer, losingPlayer )
+	}
 	else
 		SetGameState( eGameState.Postmatch )
 }
 
-void function RunColiseumOutroThreaded( vector point, entity winningPlayer )
+void function RunColiseumOutroThreaded( entity winningPlayer, entity losingPlayer )
 {
 	OnThreadEnd
 	(
-		function() : ()
+		function() : ( losingPlayer )
 		{
+			if ( IsValid( losingPlayer ) )
+				losingPlayer.ClearParent()
+
 			SetGameState( eGameState.Postmatch )
 		}
 	)
-	
+
 	winningPlayer.EndSignal( "OnDestroy" )
 
-	WaitFrame()
+	losingPlayer.EndSignal( "OnDestroy" )
 
 	// pick winner and loser anims
-	int numLost = GameRules_GetTeamScore( GetOtherTeam( GetWinningTeam() ) )
+	int numLost = min( 2, GameRules_GetTeamScore( GetOtherTeam( GetWinningTeam() ) ) ).tointeger()
 	int animIndex = RandomInt( OUTROANIMS_WINNER[ numLost ].len() )
+
+	if ( !( animIndex in OUTROANIMS_LOSER[ numLost ] ) )
+		return
+
 	string winnerAnim = OUTROANIMS_WINNER[ numLost ][ animIndex ]
 	string loserAnim = OUTROANIMS_LOSER[ numLost ][ animIndex ]
-	
+
+	FirstPersonSequenceStruct winnerSequence
+
+	winnerSequence.thirdPersonAnim = winnerAnim
+
+	entity winningPlayerWeapon = winningPlayer.GetActiveWeapon()
+
+	if ( IsValid( winningPlayerWeapon ) )
+		winningPlayerWeapon.Destroy()
+
+	thread FirstPersonSequence( winnerSequence, winningPlayer )
+
+	FirstPersonSequenceStruct loserSequence
+
+	loserSequence.thirdPersonAnim = loserAnim
+	loserSequence.attachment = "REF"
+	loserSequence.useAnimatedRefAttachment = true
+
+	entity losingPlayerWeapon = losingPlayer.GetActiveWeapon()
+
+	if ( IsValid( losingPlayerWeapon ) && loserAnim != "pt_coliseum_loser_gunkick" )
+		losingPlayerWeapon.Destroy()
+
+	thread FirstPersonSequence( loserSequence, losingPlayer, winningPlayer )
+
 	foreach ( entity player in GetPlayerArray() )
 	{
-		if ( !IsAlive( player ) )
-			player.RespawnPlayer( null )
-		
 		AddCinematicFlag( player, CE_FLAG_HIDE_MAIN_HUD )
 		ScreenFadeFromBlack( player, 0.5 )
-
-		player.SetOrigin( point )
-		player.SetNameVisibleToEnemy( false )
-		player.SetNameVisibleToFriendly( false )
 
 		// for some reason this just doesn't use the mp music system, so have to manually play this
 		// odd game
 
 		EmitSoundOnEntityOnlyToPlayer( player, player, "music_mp_speedball_game_win" )
 
-		FirstPersonSequenceStruct outroSequence
+		SetPlayerAnimViewEntity( player, winningPlayer )
 
-		outroSequence.thirdPersonCameraAttachments = [ "VDU" ]
-		outroSequence.thirdPersonCameraEntity = winningPlayer
-		outroSequence.blendTime = 0.25
-		outroSequence.attachment = "ref"
-		outroSequence.enablePlanting = true
-		outroSequence.playerPushable = false
-		
-		// for when we kill any active weapons if not needed for anim
-		entity playerWeapon = player.GetActiveWeapon()
-		
-		if ( player.GetTeam() == GetWinningTeam() )
-		{
-			if ( IsValid( playerWeapon ) )
-				playerWeapon.Destroy()
-		
-			outroSequence.thirdPersonAnim = winnerAnim
-			outroSequence.noParent = true
-
-			player.SetOrigin( OriginToGround( player.GetOrigin() ) )
-
-			thread FirstPersonSequence( outroSequence, player )
-		}
-		else
-		{
-			// need weapon for this anim in particular
-			if ( IsValid( playerWeapon ) && loserAnim != "pt_coliseum_loser_gunkick" )
-				playerWeapon.Destroy()
-
-			outroSequence.thirdPersonAnim = loserAnim
-			outroSequence.useAnimatedRefAttachment = true
-
-			thread FirstPersonSequence( outroSequence, player, winningPlayer )
-		}
+		player.AnimViewEntity_SetThirdPersonCameraAttachments( [ "VDU" ] )
 	}
 
 	// all outro anims should be the same length ideally
 	wait winningPlayer.GetSequenceDuration( winnerAnim ) - 0.75
 
 	foreach ( entity player in GetPlayerArray() )
-		ScreenFadeToBlackForever( player, 0.5 )
+		ScreenFadeToBlackForever( player, 0.3 )
 
 	wait 0.5
 }
