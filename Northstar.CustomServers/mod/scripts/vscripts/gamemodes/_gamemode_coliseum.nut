@@ -17,9 +17,13 @@ const array< array<string> > OUTROANIMS_LOSER = [
 	[ "pt_coliseum_loser_punch", "pt_coliseum_loser_kick", "pt_coliseum_loser_stomp" ], // winner lost 2 rounds
 ]
 
+// players have to play atleast this many rounds otherwise they lose their streak and gain a loss
+const int minColiseumRounds = 5
+
 struct
 {
 	bool hasShownIntroScreen
+	table< entity, int > roundsPlayed
 } file
 
 void function GamemodeColiseum_Init()
@@ -39,6 +43,11 @@ void function GamemodeColiseum_Init()
 	AddCallback_GameStateEnter( eGameState.Prematch, ShowColiseumIntroScreen )
 
 	ClassicMP_SetEpilogue( SetupColiseumEpilogue )
+
+	AddCallback_GameStateEnter( eGameState.Playing, IncreaseColiseumRoundsPlayed )
+	AddCallback_OnClientDisconnected( Coliseum_OnClientDisconnected )
+
+	SetTimeoutWinnerDecisionFunc( TimeoutCheckPlayers )
 }
 
 // stub function referenced in sh_gamemodes_mp
@@ -101,6 +110,9 @@ void function RunColiseumOutro()
 	// also since this runs on game end, do winstreak stuff
 	foreach ( entity player in GetPlayerArray() )
 	{
+		if ( !IsPrivateMatchSpectator( player ) )
+			continue
+
 		if ( GetWinningTeam() == player.GetTeam() )
 		{
 			player.SetPersistentVar( "coliseumTotalWins", player.GetPersistentVarAsInt( "coliseumTotalWins" ) + 1 )
@@ -240,4 +252,53 @@ void function RunColiseumOutroThreaded( entity winningPlayer, entity losingPlaye
 		ScreenFadeToBlackForever( player, 0.3 )
 
 	wait 0.5
+}
+
+void function IncreaseColiseumRoundsPlayed()
+{
+	foreach ( entity player in GetPlayerArray() )
+		if ( !IsPrivateMatchSpectator( player ) )
+			file.roundsPlayed[ player ] <- ( player in file.roundsPlayed ? file.roundsPlayed[ player ] + 1 : 1 )
+}
+
+void function Coliseum_OnClientDisconnected( entity player )
+{
+	if ( player in file.roundsPlayed && file.roundsPlayed[ player ] && GetGameState() < eGameState.Epilogue && file.roundsPlayed[ player ] <= minColiseumRounds )
+	{
+		if ( GetGameState() == eGameState.WinnerDetermined && GetWinningTeam() == player.GetTeam() && GameRules_GetTeamScore( player.GetTeam() ) >= GameMode_GetScoreLimit( GAMETYPE ) )
+		{
+			player.SetPersistentVar( "coliseumTotalWins", player.GetPersistentVarAsInt( "coliseumTotalWins" ) + 1 )
+			player.SetPersistentVar( "coliseumWinStreak", player.GetPersistentVarAsInt( "coliseumWinStreak" ) + 1 )
+		}
+		else
+		{
+			player.SetPersistentVar( "coliseumTotalLosses", player.GetPersistentVarAsInt( "coliseumTotalLosses" ) + 1 )
+			player.SetPersistentVar( "coliseumWinStreak", 0 )
+		}
+	}
+}
+
+int function TimeoutCheckPlayers()
+{
+	array<entity> imcPlayers = GetPlayerArrayOfTeam_Alive( TEAM_IMC )
+	array<entity> militiaPlayers = GetPlayerArrayOfTeam_Alive( TEAM_MILITIA )
+
+	foreach ( entity player in GetPlayerArray_Alive() )
+	{
+		if ( !IsPrivateMatchSpectator( player ) )
+			continue
+
+		if ( imcPlayers.contains( player ) )
+			imcPlayers.removebyvalue( player )
+
+		if ( militiaPlayers.contains( player ) )
+			militiaPlayers.removebyvalue( player )
+	}
+
+	if ( imcPlayers.len() > militiaPlayers.len() )
+		return TEAM_IMC
+	else if ( imcPlayers.len() < militiaPlayers.len() )
+		return TEAM_MILITIA
+
+	return TEAM_UNASSIGNED
 }
