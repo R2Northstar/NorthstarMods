@@ -621,7 +621,7 @@ void function GameStateEnter_WinnerDetermined_Threaded()
 	float fadeTime = file.clearPlayersBuffer ? CLEAR_PLAYERS_BUFFER : 0.0
 	entity replayAttacker = file.roundWinningKillReplayAttacker
 	bool doReplay = Replay_IsEnabled() && IsRoundWinningKillReplayEnabled() && IsValid( replayAttacker ) && !ShouldRunEvac()
-				 && Time() - file.roundWinningKillReplayTime <= ROUND_WINNING_KILL_REPLAY_LENGTH_OF_REPLAY && winningTeam != TEAM_UNASSIGNED
+	&& Time() - file.roundWinningKillReplayTime <= ROUND_WINNING_KILL_REPLAY_LENGTH_OF_REPLAY && winningTeam != TEAM_UNASSIGNED
  	
 	SetServerVar( "roundWinningKillReplayPlaying", doReplay )
 	if ( doReplay )
@@ -799,10 +799,61 @@ void function GameStateEnter_SwitchingSides_Threaded()
 
 	svGlobal.levelEnt.Signal( "RoundEnd" )
 
-	file.hasSwitchedSides = true
-	SetServerVar( "switchedSides", 1 )
+	entity replayAttacker = file.roundWinningKillReplayAttacker
+	bool doReplay = Replay_IsEnabled() && IsRoundWinningKillReplayEnabled() && IsValid( replayAttacker ) && !IsRoundBased() // for roundbased modes, we've already done the replay
+	&& Time() - file.roundWinningKillReplayTime <= ROUND_WINNING_KILL_REPLAY_LENGTH_OF_REPLAY
 
-	wait SWITCHING_SIDES_DELAY
+	float replayLength = ROUND_WINNING_KILL_REPLAY_STARTUP_WAIT
+
+	SetServerVar( "roundWinningKillReplayPlaying", doReplay )
+
+	foreach ( entity player in GetPlayerArray() )
+	{
+		ClearPlayerFromReplay( player )
+		CheckGameStateForPlayerMovement( player )
+	}
+
+	wait 1.5
+
+	foreach ( entity player in GetPlayerArray() )
+		ScreenFadeToBlackForever( player, 2.0 )
+
+	if ( doReplay )
+	{
+		replayLength = ROUND_WINNING_KILL_REPLAY_TOTAL_LENGTH
+
+		if ( "respawnTime" in replayAttacker.s && Time() - replayAttacker.s.respawnTime < replayLength )
+			replayLength += Time() - expect float ( replayAttacker.s.respawnTime )
+
+		SetServerVar( "roundWinningKillReplayEntHealthFrac", file.roundWinningKillReplayHealthFrac )
+
+		wait 2
+
+		foreach ( entity player in GetPlayerArray() )
+			thread PlayerWatchesRoundWinningReplay( player, replayLength )
+	}
+
+	wait replayLength
+
+	foreach ( entity player in GetPlayerArray() )
+		ClearPlayerFromReplay( player )
+
+	WaitFrame()
+
+	foreach ( entity player in GetPlayerArray() )
+		ScreenFadeToBlackForever( player, 0.0 )
+
+	CleanUpEntitiesForRoundEnd()
+
+	if ( file.clearPlayersBuffer )
+		wait CLEAR_PLAYERS_BUFFER
+
+	ClearDroppedWeapons()
+	SetServerVar( "roundWinningKillReplayPlaying", false )
+
+	file.hasSwitchedSides = true
+
+	SetServerVar( "switchedSides", 1 )
 
 	if ( file.usePickLoadoutScreen && GetCurrentPlaylistVarInt( "pick_loadout_every_round", 1 ) ) //Playlist var needs to be enabled too
 		SetGameState( eGameState.PickLoadout )

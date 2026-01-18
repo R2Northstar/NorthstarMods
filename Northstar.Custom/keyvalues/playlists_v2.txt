@@ -10,20 +10,6 @@ playlists
 				pingspot_enabled 0
 			}
 		}
-		sbox
-		{
-			inherit defaults
-			vars
-			{
-				name #PL_sbox
-				lobbytitle #PL_sbox_lobby
-				description #PL_sbox_desc
-				abbreviation #PL_sbox_abbr
-				
-				max_teams 1
-				classic_mp 0
-			}
-		}
 		fw
 		{
 			inherit defaults
@@ -33,7 +19,7 @@ playlists
 				lobbytitle #PL_fw_lobby
 				description #PL_fw_desc
 				abbreviation #PL_fw_abbr
-					
+
 				max_players 16
 				max_teams 2
 				classic_mp 1
@@ -54,7 +40,7 @@ playlists
 				max_players 12
 				max_teams 12
 				classic_mp 1
-				
+
 				gamemode_score_hint #GAMEMODE_SCORE_HINT_FFA
 				gamemode_bullet_001	#GAMEMODE_BULLET_FFA_001
 				gamemode_bullet_002	#GAMEMODE_BULLET_FFA_002
@@ -76,9 +62,9 @@ playlists
 				max_players 12
 				max_teams 2
 				classic_mp 1
-				
+
 				scorelimit 20
-				
+
 				gamemode_score_hint #GAMEMODE_SCORE_HINT_TDM
 			}
 		}
@@ -95,7 +81,7 @@ playlists
 				max_players 12
 				max_teams 2
 				classic_mp 1
-				
+
 				gamemode_score_hint #GAMEMODE_SCORE_HINT_TDM
 			}
 		}
@@ -118,7 +104,7 @@ playlists
 				timelimit 2
 				roundtimelimit 2
 				roundscorelimit 5
-				
+
 				gamemode_score_hint #GAMEMODE_SCORE_HINT_TDM
 			}
 		}
@@ -132,13 +118,13 @@ playlists
 				description #PL_kr_desc
 				hint #PL_kr_hint
 				abbreviation #PL_kr_abbr
-				
+
 				max_players 16
 				max_teams 16
 				classic_mp 1
 				timelimit 7.5
 				scorelimit 99999 // arbitrarily high number
-				
+
 				gamemode_score_hint #GAMEMODE_SCORE_HINT_TDM
 			}
 		}
@@ -152,7 +138,7 @@ playlists
 				description #PL_fastball_desc
 				hint #PL_fastball_hint
 				abbreviation #PL_fastball_abbr
-				
+
 				max_players 16
 				max_teams 2
 				classic_mp 1
@@ -160,7 +146,7 @@ playlists
 				timelimit 2
 				roundtimelimit 2
 				roundscorelimit 5
-				
+
 				gamemode_score_hint #GAMEMODE_SCORE_HINT_TDM
 			}
 		}
@@ -206,7 +192,7 @@ playlists
 				image tdm
 				timelimit 10
 				max_players 16
-				
+
 				gamemode_score_hint #GAMEMODE_SCORE_HINT_TDM
 			}
 		}
@@ -258,7 +244,7 @@ playlists
 				lobbytitle #PL_tffa_lobby
 				description #PL_tffa_desc
 				abbreviation #PL_sbox_abbr
-				
+
 				scorelimit 20
 				max_players 10
 				max_teams 10
@@ -436,7 +422,7 @@ playlists
 				timelimit 2
 				roundtimelimit 2
 				roundscorelimit 5
-				
+
 				gamemode_score_hint #GAMEMODE_SCORE_HINT_TDM
 			}
 			gamemodes
@@ -539,9 +525,9 @@ playlists
 				roundscorelimit 5
 				mixtape_promo_slot 1
 				visible 1
-				
+
 				gamemode_score_hint #GAMEMODE_SCORE_HINT_TDM
-			}	
+			}
 			gamemodes
 			{
 				fastball
@@ -578,15 +564,15 @@ playlists
 				hint #PL_fw_hint
 				abbreviation #PL_fw_abbr
 				image fw
-				
+
 				max_players 16
 				max_teams 2
 				classic_mp 1
 				scorelimit 100
 				timelimit 15
-				
+
 				gamemode_score_hint #GAMEMODE_SCORE_HINT_TDM
-			}	
+			}
 			gamemodes
 			{
 				fw
@@ -657,55 +643,6 @@ playlists
 				}
 			}
 		}
-		ctf
-		{
-			inherit defaults
-			vars
-			{
-				name #PL_capture_the_flag
-				lobbytitle #PL_capture_the_flag_lobby
-				description #PL_capture_the_flag_desc
-				abbreviation #PL_capture_the_flag_abbr
-				image ctf
-				mixtape_slot 4
-				mixtape_timeout 120
-				visible 1
-			}
-			gamemodes
-			{
-				ctf
-				{
-					vars
-					{
-						scorelimit 6
-					}
-
-					maps
-					{
-						mp_complex3 1
-						mp_drydock 2
-						mp_glitch 1
-						mp_homestead 2
-						mp_eden 2
-						mp_forwardbase_kodai 1
-						mp_black_water_canal 2
-						mp_glitch 1
-						mp_angel_city 1
-						mp_colony02 1
-                        mp_relic02 1
-						mp_grave 2
-						mp_homestead 2
-						mp_drydock 2
-						mp_glitch 1
-						mp_thaw 1
-						mp_eden 2
-						mp_black_water_canal 2
-						mp_glitch 1
-                        mp_relic02 1
-					}
-				}
-			}
-		}
 		hs
 		{
 			inherit defaults
@@ -721,14 +658,14 @@ playlists
 				max_players 16
 				mixtape_slot 8
 				visible 1
-				
+
 				gamemode_score_hint #GAMEMODE_SCORE_HINT_TDM
 			}
 			gamemodes
 			{
 				hs
 				{
-					maps 
+					maps
 					{
 						mp_complex3 1
 						mp_drydock 1
@@ -910,9 +847,9 @@ playlists
 				image ffa
 				mixtape_slot 11
 				visible 1
-				
+
 				gamemode_score_hint #GAMEMODE_SCORE_HINT_FFA
-			}	
+			}
 			gamemodes
 			{
 				sns
@@ -943,158 +880,6 @@ playlists
 						mp_coliseum 1
 						mp_coliseum_column 1
 					}
-				}
-			}
-		}
-		rocket_lf
-		{
-			inherit defaults
-			vars
-			{
-				name #PL_rocket_arena
-				lobbytitle #PL_rocket_arena_lobby
-				description #PL_rocket_arena_desc
-				abbreviation #PL_rocket_arena_abbr
-				image lf
-				visible 0
-				scorelimit 50
-				roundtimelimit 2.0
-				featured_mode_rocket_arena 1
-				boosts_enabled 1
-			}
-			gamemodes
-			{
-				speedball
-				{
-					maps
-					{
-						mp_lf_stacks 1
-						mp_lf_township 1
-						mp_lf_uma 1
-						mp_lf_traffic 1
-						mp_lf_deck 1
-						mp_lf_meadow 1
-					}
-				}
-			}
-		}
-		phase_aitdm
-		{
-			inherit defaults
-			vars
-			{
-				name "#PL_all_phase"
-				lobbytitle #PL_all_phase_lobby
-				description #PL_all_phase_desc
-				abbreviation #PL_all_phase_abbr
-				image aitdm
-				visible 0
-				featured_mode_all_phase 1
-			}
-			gamemodes
-			{
-				aitdm
-				{
-				}
-			}
-		}
-		spicy_aitdm
-		{
-			inherit defaults
-			vars
-			{
-				name "#PL_all_spicy"
-				lobbytitle #PL_all_spicy_lobby
-				description #PL_all_spicy_desc
-				abbreviation #PL_all_spicy_abbr
-				image aitdm
-				visible 0
-				featured_mode_all_ticks 1
-			}
-			gamemodes
-			{
-				aitdm
-				{
-				}
-			}
-		}
-		turbo_ttdm
-		{
-			inherit defaults
-			vars
-			{
-				name #PL_titan_brawl_turbo
-				lobbytitle #PL_titan_brawl_turbo_lobby
-				description #PL_titan_brawl_turbo_desc
-				abbreviation #PL_titan_brawl_turbo_abbr
-				image ttdm
-				visible 0
-				max_players 10
-				scorelimit 30
-				//mixtape_slot 8
-				boosts_enabled 1
-				respawn_delay 10
-
-				featured_mode_turbo_titans 1
-				earn_meter_titan_multiplier 2.0
-			}
-			gamemodes
-			{
-				ttdm
-				{
-				    maps
-				    {
-				        mp_glitch 1
-				        mp_colony02 1
-				        mp_wargames 1
-				        mp_eden 1
-				        mp_drydock 1
-						mp_black_water_canal 1
-						mp_thaw 1
-						mp_homestead 1
-						mp_forwardbase_kodai 1
-						mp_angel_city 1
-						mp_grave 1
-						mp_rise 1
-				    }
-				}
-			}
-		}
-		coliseum
-		{
-			inherit defaults
-			vars
-			{
-				name #PL_coliseum
-				lobbytitle #PL_coliseum_lobby
-				description #PL_coliseum_desc
-				image coliseum
-				//mixtape_promo_slot 4
-				visible 0
-			}
-			gamemodes
-			{
-				coliseum {}
-			}
-		}
-		turbo_lts
-		{
-			inherit defaults
-			vars
-			{
-				name #PL_turbo_last_titan_standing
-				lobbytitle #PL_turbo_last_titan_standing_lobby
-				description #PL_turbo_last_titan_standing_desc
-				abbreviation #PL_turbo_last_titan_standing_abbr
-				image lts
-				visible 0
-				featured_mode_turbo_titans 1
-				earn_meter_titan_multiplier 2.0
-			}
-			gamemodes
-			{
-				lts
-				{
 				}
 			}
 		}

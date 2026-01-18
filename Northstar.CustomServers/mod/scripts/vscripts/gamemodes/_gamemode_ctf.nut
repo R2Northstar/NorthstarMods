@@ -400,12 +400,17 @@ bool function OnFlagCollected( entity player, entity flag )
 
 void function GiveFlag( entity player, entity flag )
 {
-	print( player + " picked up the flag!" )
+	#if DEV
+		print( player + " picked up the flag!" )
+	#endif
+
 	thread FlagSignalGrab_Threaded( flag ) // Delay this signal so it prevents race conditions when flag drops and gets picked up in the same frame
 
 	flag.SetParent( player, "FLAG" )
 	if( GetCurrentPlaylistVarInt( "phase_shift_drop_flag", 0 ) == 1 )
 		thread DropFlagIfPhased( player, flag )
+
+	thread TrackPlayerOOBAndNoclip( player, flag )
 
 	// do notifications
 	MessageToPlayer( player, eEventNotifications.YouHaveTheEnemyFlag )
@@ -430,19 +435,37 @@ void function FlagSignalGrab_Threaded( entity flag )
 	flag.Signal( "CTF_GrabbedFlag" )
 }
 
+void function TrackPlayerOOBAndNoclip( entity player, entity flag )
+{
+	player.EndSignal( "OnDestroy" )
+	player.EndSignal( "OnDeath" )
+
+	flag.EndSignal( "OnDestroy" )
+
+	while ( true )
+	{
+		if ( player.IsOnGround() && !player.IsWallRunning() && !player.IsNoclipping() && !EntityIsOutOfBounds( player ) )
+			flag.s.safeSpot <- player.GetOrigin()
+
+		WaitFrame()
+	}
+}
+
 void function CaptureFlag( entity player, entity flag )
 {
 	// can only capture flags during normal play or sudden death
 	if ( !GamePlaying() && GetGameState() != eGameState.SuddenDeath )
 	{
-		printt( player + " tried to capture the flag, but the game state was " + GetGameState() + " not " + eGameState.Playing + " or " + eGameState.SuddenDeath)
+		CodeWarning( player + " tried to capture the flag, but the game state was " + GetGameState() + " not " + eGameState.Playing + " or " + eGameState.SuddenDeath)
 		return
 	}
 	// reset flag
 	ResetFlag( flag )
-	
-	print( player + " captured the flag!" )
-	
+
+	#if DEV
+		print( player + " captured the flag!" )
+	#endif
+
 	// score
 	int team = player.GetTeam() 
 	AddTeamScore( team, 1 )
@@ -501,11 +524,13 @@ void function DropFlag( entity player, bool realDrop = true )
 	
 	if( !IsValid( flag ) || flag.GetParent() != player )
 		return
-	
-	print( player + " dropped the flag!" )
-	
+
+	#if DEV
+		print( player + " dropped the flag!" )
+	#endif
+
 	flag.ClearParent()
-	flag.SetOrigin( player.GetOrigin() + < 0, 0, 8 > ) // Offset a bit from the ground so it doesn't clip below
+	flag.SetOrigin( ( "safeSpot" in flag.s && flag.s.safeSpot != null ? flag.s.safeSpot : player.GetOrigin() ) + < 0, 0, 8 > ) // Offset a bit from the ground so it doesn't clip below
 	flag.SetAngles( < 0, 0, 0 > )
 	flag.SetVelocity( < 0, 0, 0 > )
 	
@@ -527,13 +552,16 @@ void function DropFlag( entity player, bool realDrop = true )
 		MessageToTeam( GetOtherTeam( player.GetTeam() ), eEventNotifications.PlayerDroppedFriendlyFlag, player, player )
 	}
 	
-	if ( IsFlagHome( flag ) )
+	if ( IsFlagHome( flag ) || !( "safeSpot" in flag.s && flag.s.safeSpot != null ) )
 	{
 		ResetFlag( flag )
 		return
 	}
 	else
 		thread TrackFlagDropTimeout( flag )
+
+	flag.s.safeSpot <- null
+
 	SetFlagStateForTeam( flag.GetTeam(), eFlagState.Home )
 }
 
