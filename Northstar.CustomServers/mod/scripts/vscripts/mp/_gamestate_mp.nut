@@ -646,7 +646,13 @@ void function GameStateEnter_WinnerDetermined_Threaded()
 		foreach ( entity player in GetPlayerArray() )
 			thread PlayerWatchesRoundWinningReplay( player, replayLength )
 
-		wait replayLength
+		wait replayLength - 2
+
+		foreach ( entity player in GetPlayerArray() )
+			ScreenFadeToBlackForever( player, 1.0 )
+
+		wait 2
+
 		foreach ( entity player in GetPlayerArray() )
 			ClearPlayerFromReplay( player )
 
