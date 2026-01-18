@@ -831,9 +831,14 @@ void function GameStateEnter_SwitchingSides_Threaded()
 
 		foreach ( entity player in GetPlayerArray() )
 			thread PlayerWatchesRoundWinningReplay( player, replayLength )
-	}
 
-	wait replayLength
+		wait replayLength - 2
+
+		foreach ( entity player in GetPlayerArray() )
+			ScreenFadeToBlackForever( player, 1.0 )
+
+		wait 2
+	}
 
 	foreach ( entity player in GetPlayerArray() )
 		ClearPlayerFromReplay( player )
@@ -850,6 +855,9 @@ void function GameStateEnter_SwitchingSides_Threaded()
 
 	ClearDroppedWeapons()
 	SetServerVar( "roundWinningKillReplayPlaying", false )
+
+	if ( !doReplay )
+		wait SWITCHING_SIDES_DELAY
 
 	file.hasSwitchedSides = true
 

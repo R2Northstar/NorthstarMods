@@ -50,6 +50,7 @@ void function CaptureTheFlag_Init()
 	CaptureTheFlagShared_Init()
 	
 	SetSwitchSidesBased( true )
+	SetClearPlayersBuffer( true )
 	
 	SetShouldUseRoundWinningKillReplay( true )
 	SetRoundWinningKillReplayKillClasses( false, false )
@@ -530,7 +531,7 @@ void function DropFlag( entity player, bool realDrop = true )
 	#endif
 
 	flag.ClearParent()
-	flag.SetOrigin( ( "safeSpot" in flag.s && flag.s.safeSpot != null ? flag.s.safeSpot : player.GetOrigin() ) + < 0, 0, 8 > ) // Offset a bit from the ground so it doesn't clip below
+	flag.SetOrigin( ( "safeSpot" in flag.s ? flag.s.safeSpot : player.GetOrigin() ) + < 0, 0, 8 > ) // Offset a bit from the ground so it doesn't clip below
 	flag.SetAngles( < 0, 0, 0 > )
 	flag.SetVelocity( < 0, 0, 0 > )
 	
@@ -552,7 +553,7 @@ void function DropFlag( entity player, bool realDrop = true )
 		MessageToTeam( GetOtherTeam( player.GetTeam() ), eEventNotifications.PlayerDroppedFriendlyFlag, player, player )
 	}
 	
-	if ( IsFlagHome( flag ) || !( "safeSpot" in flag.s && flag.s.safeSpot != null ) )
+	if ( IsFlagHome( flag ) || !( "safeSpot" in flag.s ) )
 	{
 		ResetFlag( flag )
 		return
@@ -560,7 +561,7 @@ void function DropFlag( entity player, bool realDrop = true )
 	else
 		thread TrackFlagDropTimeout( flag )
 
-	flag.s.safeSpot <- null
+	delete flag.s.safeSpot
 
 	SetFlagStateForTeam( flag.GetTeam(), eFlagState.Home )
 }
