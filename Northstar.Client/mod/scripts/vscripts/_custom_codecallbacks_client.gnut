@@ -23,20 +23,17 @@ struct
 
 void function OnReceivedMessage( ClClient_MessageStruct localMessage )
 {
-	if ( !IsValid( localMessage.player ) )
+	foreach ( callbackFunc in NsCustomCallbacksClient.OnReceivedSayTextMessageCallbacks )
 	{
-		foreach ( callbackFunc in NsCustomCallbacksClient.OnReceivedSayTextMessageCallbacks )
-		{
-			ClClient_MessageStruct returnStruct = callbackFunc( localMessage )
+		ClClient_MessageStruct returnStruct = callbackFunc( localMessage )
 
-			localMessage.message = returnStruct.message
-			localMessage.playerName = returnStruct.playerName
-			localMessage.isTeam = returnStruct.isTeam
-			localMessage.isDead = returnStruct.isDead
-			localMessage.isWhisper = returnStruct.isWhisper
-			localMessage.shouldBlock = localMessage.shouldBlock || returnStruct.shouldBlock
-			localMessage.noServerTag = returnStruct.noServerTag
-		}
+		localMessage.message = returnStruct.message
+		localMessage.playerName = returnStruct.playerName
+		localMessage.isTeam = returnStruct.isTeam
+		localMessage.isDead = returnStruct.isDead
+		localMessage.isWhisper = returnStruct.isWhisper
+		localMessage.shouldBlock = localMessage.shouldBlock || returnStruct.shouldBlock
+		localMessage.noServerTag = returnStruct.noServerTag
 	}
 
 	if ( localMessage.shouldBlock )
@@ -47,9 +44,7 @@ void function OnReceivedMessage( ClClient_MessageStruct localMessage )
 	if ( !IsValid( localMessage.player ) )
 	{
 		if ( !localMessage.noServerTag || localMessage.isWhisper )
-		{
 			NSChatWrite( 1, "\x1b[95m" )
-		}
 	}
 	else
 	{
@@ -73,11 +68,9 @@ void function OnReceivedMessage( ClClient_MessageStruct localMessage )
 	if ( !IsValid( localMessage.player ) )
 	{
 		if ( !localMessage.noServerTag )
-		{
 			NSChatWriteRaw( 1, Localize( "#HUD_CHAT_SERVER_PREFIX" ) + " " )
-		}
 	}
-	else 
+	else
 	{
 		NSChatWriteRaw( 1, localMessage.playerName )
 		NSChatWriteRaw( 1, ": " )
