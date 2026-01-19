@@ -121,7 +121,7 @@ void function OnHardpointEnter( entity trigger, entity player )
 	if ( hpState.capPlayers.find( player ) == -1 )
 		hpState.capPlayers.append( player )
 
-	if ( !player.IsBot() && "isplayingcapturingsound" in hpState.ent.s && hpState.ent.s.isplayingcapturingsound && ( !( "isplayingcapturingsound" in player.s ) || !player.s.isplayingcapturingsound ) )
+	if ( "isplayingcapturingsound" in hpState.ent.s && hpState.ent.s.isplayingcapturingsound && ( !( "isplayingcapturingsound" in player.s ) || !player.s.isplayingcapturingsound ) )
 	{
 		EmitSoundOnEntityOnlyToPlayer( hp, player, "Hardpoint_ProgressBar" )
 
@@ -149,7 +149,7 @@ void function OnHardpointLeave( entity trigger, entity player )
 	if ( index != -1 )
 		hpState.capPlayers.fastremove( index )
 
-	if ( !player.IsBot() && "isplayingcapturingsound" in player.s && player.s.isplayingcapturingsound )
+	if ( "isplayingcapturingsound" in player.s && player.s.isplayingcapturingsound )
 	{
 		EmitSoundOnEntityOnlyToPlayer( hp, player, "Hardpoint_StopProgressBar_Event" )
 
@@ -196,7 +196,7 @@ void function Hardpoint_Think( HardpointState hardpoint )
 
 	foreach ( entity player in hardpoint.capPlayers )
 	{
-		if ( !player.IsBot() && "isplayingcapturingsound" in player.s && player.s.isplayingcapturingsound )
+		if ( "isplayingcapturingsound" in player.s && player.s.isplayingcapturingsound )
 		{
 			EmitSoundOnEntityOnlyToPlayer( hardpoint.ent, player, "Hardpoint_StopProgressBar_Event" )
 
@@ -241,7 +241,7 @@ void function Hardpoint_ThinkTick( HardpointState hardpoint )
 		{
 			foreach ( entity player in hardpoint.capPlayers )
 			{
-				if ( !player.IsBot() && "isplayingcapturingsound" in player.s && player.s.isplayingcapturingsound )
+				if ( "isplayingcapturingsound" in player.s && player.s.isplayingcapturingsound )
 				{
 					EmitSoundOnEntityOnlyToPlayer( hardpoint.ent, player, "Hardpoint_StopProgressBar_Event" )
 
@@ -389,7 +389,7 @@ void function CaptureHardPointAllied( entity hardpoint, int team, float deltaTim
 
 		foreach ( entity player in hpState.capPlayers )
 		{
-			if ( !player.IsBot() && ( !( "isplayingcapturingsound" in player.s ) || !player.s.isplayingcapturingsound ) )
+			if ( !( "isplayingcapturingsound" in player.s ) || !player.s.isplayingcapturingsound )
 			{
 				EmitSoundOnEntityOnlyToPlayer( hardpoint, player, "Hardpoint_ProgressBar" )
 
@@ -407,7 +407,7 @@ void function CaptureHardPointAllied( entity hardpoint, int team, float deltaTim
 
 		foreach ( entity player in hpState.capPlayers )
 		{
-			if ( !player.IsBot() && "isplayingcapturingsound" in player.s && player.s.isplayingcapturingsound )
+			if ( "isplayingcapturingsound" in player.s && player.s.isplayingcapturingsound )
 			{
 				EmitSoundOnEntityOnlyToPlayer( hardpoint, player, "Hardpoint_StopProgressBar_Event" )
 
@@ -461,7 +461,7 @@ void function CaptureHardPointEnemy( entity hardpoint, int team, float deltaTime
 
 		foreach ( entity player in hpState.capPlayers )
 		{
-			if ( !player.IsBot() && ( !( "isplayingcapturingsound" in player.s ) || !player.s.isplayingcapturingsound ) )
+			if ( !( "isplayingcapturingsound" in player.s ) || !player.s.isplayingcapturingsound )
 			{
 				EmitSoundOnEntityOnlyToPlayer( hardpoint, player, "Hardpoint_ProgressBar" )
 
