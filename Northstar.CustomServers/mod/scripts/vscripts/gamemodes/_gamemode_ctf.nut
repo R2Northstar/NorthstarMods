@@ -411,8 +411,6 @@ void function GiveFlag( entity player, entity flag )
 	if( GetCurrentPlaylistVarInt( "phase_shift_drop_flag", 0 ) == 1 )
 		thread DropFlagIfPhased( player, flag )
 
-	thread TrackPlayerOOBAndNoclip( player, flag )
-
 	// do notifications
 	MessageToPlayer( player, eEventNotifications.YouHaveTheEnemyFlag )
 	EmitSoundOnEntityOnlyToPlayer( player, player, "UI_CTF_1P_GrabFlag" )
@@ -434,22 +432,6 @@ void function FlagSignalGrab_Threaded( entity flag )
 	flag.EndSignal( "OnDestroy" )
 	WaitFrame()
 	flag.Signal( "CTF_GrabbedFlag" )
-}
-
-void function TrackPlayerOOBAndNoclip( entity player, entity flag )
-{
-	player.EndSignal( "OnDestroy" )
-	player.EndSignal( "OnDeath" )
-
-	flag.EndSignal( "OnDestroy" )
-
-	while ( true )
-	{
-		if ( player.IsOnGround() && !player.IsWallRunning() && !player.IsNoclipping() && !EntityIsOutOfBounds( player ) )
-			flag.s.safeSpot <- player.GetOrigin()
-
-		WaitFrame()
-	}
 }
 
 void function CaptureFlag( entity player, entity flag )
@@ -531,7 +513,7 @@ void function DropFlag( entity player, bool realDrop = true )
 	#endif
 
 	flag.ClearParent()
-	flag.SetOrigin( ( "safeSpot" in flag.s ? flag.s.safeSpot : player.GetOrigin() ) + < 0, 0, 8 > ) // Offset a bit from the ground so it doesn't clip below
+	flag.SetOrigin( player.GetOrigin() + < 0, 0, 8 > ) // Offset a bit from the ground so it doesn't clip below
 	flag.SetAngles( < 0, 0, 0 > )
 	flag.SetVelocity( < 0, 0, 0 > )
 	
@@ -553,15 +535,13 @@ void function DropFlag( entity player, bool realDrop = true )
 		MessageToTeam( GetOtherTeam( player.GetTeam() ), eEventNotifications.PlayerDroppedFriendlyFlag, player, player )
 	}
 	
-	if ( IsFlagHome( flag ) || !( "safeSpot" in flag.s ) )
+	if ( IsFlagHome( flag ) || EntityIsOutOfBounds( player ) )
 	{
 		ResetFlag( flag )
 		return
 	}
 	else
 		thread TrackFlagDropTimeout( flag )
-
-	delete flag.s.safeSpot
 
 	SetFlagStateForTeam( flag.GetTeam(), eFlagState.Home )
 }
