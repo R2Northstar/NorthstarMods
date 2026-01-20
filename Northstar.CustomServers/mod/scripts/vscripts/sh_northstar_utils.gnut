@@ -6,7 +6,7 @@ bool function ShouldReturnToLobby()
 	return GetConVarBool( "ns_should_return_to_lobby" )
 }
 
-void function ReloadMods()
+void function ReloadMods( bool reloadorretry = false )
 {
 	NSReloadMods()
 
@@ -38,19 +38,15 @@ void function ReloadMods()
 			ClientCommand( "weapon_reparse; playerSettings_reparse; aisettings_reparse_client" )
 	#endif
 
-	// note: the logic for this seems really odd, unsure why it doesn't seem to update, since the same code seems to get run irregardless of whether we've read weapon data before
-
 	#if SERVER
-		ServerCommand( "map " + GetMapName(), 0.5 )
+		if ( reloadorretry )
+			ServerCommand( "map " + GetMapName(), 0.5 )
 	#elseif CLIENT
-		// note: enable this when retry works on servers
-		// client.ClientCommand( "retry" )
+		if ( reloadorretry )
+			client.ClientCommand( "retry" )
 	#elseif UI
-		// note: enable this when retry works on servers
-		/*
-		if ( IsConnected() )
+		if ( reloadorretry && IsConnected() )
 			ClientCommand( "retry" )
-		*/
 
 		ClientCommand( "uiscript_reset" )
 	#endif

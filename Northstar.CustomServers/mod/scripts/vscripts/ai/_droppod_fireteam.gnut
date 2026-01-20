@@ -212,7 +212,7 @@ void function GuyHangsInPod( entity guy, entity pod )
 
 	string idleAnim
 	string exitAnim
-	bool disable_traverse = !guy.GetCapabilityFlag( bits_CAP_MOVE_TRAVERSE )
+	bool disable_traverse = guy.GetCapabilityFlag( bits_CAP_MOVE_TRAVERSE )
 
 	if ( disable_traverse )
 		guy.SetCapabilityFlag( bits_CAP_MOVE_TRAVERSE, false )
