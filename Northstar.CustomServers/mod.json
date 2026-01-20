@@ -1,7 +1,7 @@
 {
 	"Name": "Northstar.CustomServers",
 	"Description": "Attempts to recreate the behaviour of vanilla Titanfall 2 servers, as well as changing some scripts to allow better support for mods",
-	"Version": "1.19.0",
+	"Version": "0.0.0.1+dev",
 	"LoadPriority": 0,
 	"ConVars": [
 		{
@@ -164,6 +164,14 @@
 			"UICallback": {
 				"Before": "Progression_Init"
 			}
+		},
+		{
+			"Path":  "sh_northstar_http_requests.gnut",
+			"RunOn": "CLIENT || SERVER || UI"
+		},
+		{
+			"Path": "sh_northstar_safe_io.gnut",
+			"RunOn": "CLIENT || SERVER || UI"
 		}
 	]
 }
