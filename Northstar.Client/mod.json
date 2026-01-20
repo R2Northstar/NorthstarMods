@@ -154,11 +154,12 @@
 			"UICallback": {
 				"After": "AtlasAuthDialog"
 			}
+		},
+		{
+			"Path": "ui/_atlas_announcements.nut",
+			"RunOn": "UI"
 		}
 	],
-	"Dependencies": {
-		"HAS_NORTHSTAR_CUSTOM": "Northstar.Custom"
-	},
 	"Localisation": [
 		"resource/northstar_client_localisation_%language%.txt"
 	]

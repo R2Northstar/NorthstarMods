@@ -6,11 +6,16 @@ const string ATLAS_ANNOUNCEMENT_SUFFIX = "/client/announcement"
 
 void function GetAtlasAnnouncement_Threaded()
 {
-	string url = format( "%s%s", GetConVarString( "ns_masterserver_hostname" ), ATLAS_ANNOUNCEMENT_SUFFIX )
-	printt( format( "Getting announcement data from %s", url ) )
+	while (true)
+	{
+		string url = format( "%s%s", GetConVarString( "ns_masterserver_hostname" ), ATLAS_ANNOUNCEMENT_SUFFIX )
+		printt( format( "Getting announcement data from %s", url ) )
 
-	if ( !NSHttpGet( url, {}, OnRequestSuccess, OnRequestFailure ) )
-		printt( "Failed to get announcement data! (request failed to start)" )
+		if ( !NSHttpGet( url, {}, OnRequestSuccess, OnRequestFailure ) )
+			printt( "Failed to get announcement data! (request failed to start)" )
+
+		wait 30 // check for a new announcement every 30 seconds
+	}
 }
 
 void function OnRequestSuccess( HttpRequestResponse response )
@@ -43,6 +48,13 @@ void function OnRequestSuccess( HttpRequestResponse response )
 	else
 	{
 		printt( "Failed to parse announcement data! Couldnt parse \"announcementVersion\" field,\n", response.body )
+		return
+	}
+
+	// empty announcement
+	if ( announcement == "" || announcementVersion == "" )
+	{
+		printt( "Found empty announcement data." )
 		return
 	}
 
