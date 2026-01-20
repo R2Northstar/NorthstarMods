@@ -128,10 +128,10 @@ void function AnimateBuddy( entity buddy )
 
 	wait diagDuration
 
-	buddy.WaitSignal( "fastball_release" )
-
 	if ( GetGameState() != eGameState.Playing )
 		ClassicMP_OnIntroFinished()
+
+	buddy.WaitSignal( "fastball_release" )
 
 	wait 5.0
 
@@ -161,6 +161,9 @@ void function FastballPlayer( entity player )
 
 	WaitFrame()
 
+	player.SetNameVisibleToEnemy( false )
+	player.SetNameVisibleToFriendly( false )
+
 	player.EndSignal( "OnDeath" )
 
 	OnThreadEnd( function() : ( player )
@@ -177,6 +180,8 @@ void function FastballPlayer( entity player )
 			player.PlayerCone_Disable()
 			player.ClearInvulnerable()
 			player.kv.VisibilityFlags = ENTITY_VISIBLE_TO_EVERYONE // restore visibility
+			player.SetNameVisibleToEnemy( true )
+			player.SetNameVisibleToFriendly( true )
 		}
 	})
 
