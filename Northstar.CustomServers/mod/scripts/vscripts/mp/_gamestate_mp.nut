@@ -1280,10 +1280,14 @@ bool function IsRoundBasedGameOver()
 
 bool function ShouldRunEvac()
 {
-	if( !IsFFAGame() )
+	if ( !IsFFAGame() )
 	{
+		if ( !IsIMCOrMilitiaTeam( GetWinningTeam() ) )
+			return false
+
 		int losingTeam = GetOtherTeam( GetWinningTeam() )
-		if( IsEliminationBased() && IsTeamEliminated( losingTeam ) )
+
+		if ( IsEliminationBased() && IsTeamEliminated( losingTeam ) )
 			return false
 	}
 	
