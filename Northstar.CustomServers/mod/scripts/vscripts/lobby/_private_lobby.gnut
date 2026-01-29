@@ -39,23 +39,27 @@ void function SetupPrivateMatchUIVarsWhenReady()
 {
 	// have to wait until end of first frame for SetUIVar to work
 	WaitEndFrame()
-	if ( GetConVarBool( "ns_private_match_auto_rotation_start" ) )
+
+	if ( GetConVarBool( "ns_private_match_auto_rotation_start" ) && file.maplist.len() )
 	{
 		int i = 0
+
 		foreach ( map in file.maplist )
 		{
 			if ( map == file.map )
 				break
+
 			i++
 		}
-		
+
 		i += 1
-		
-		if( i >= file.maplist.len() )
+
+		if ( i >= file.maplist.len() )
 			file.map = file.maplist[0]
 		else
 			file.map = file.maplist[i]
 	}
+
 	SetUIVar( level, "privatematch_map", GetPrivateMatchMapIndex( file.map ) )
 	SetUIVar( level, "privatematch_mode", GetPrivateMatchModeIndex( file.mode ) )
 
