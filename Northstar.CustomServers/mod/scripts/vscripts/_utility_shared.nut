@@ -3275,7 +3275,7 @@ bool function PlayerCanSpawnIntoTitan( entity player )
 	if ( titan.ContextAction_IsBusy() || titan.ContextAction_IsMeleeExecution() )
 		return false
 
-	return GetCurrentPlaylistVarInt( "titan_spawn_deploy_enabled", 0 ) == 1
+	return GetCurrentPlaylistVarInt( "titan_spawn_deploy_enabled", 0 ) != 0
 }
 
 array< vector > function EntitiesToOrigins( array< entity > ents )
