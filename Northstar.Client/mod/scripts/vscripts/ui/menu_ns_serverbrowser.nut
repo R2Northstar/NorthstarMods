@@ -1385,7 +1385,7 @@ array<string> function GetModVersions( string modName )
 string function EscapeLocalisation( string input )
 {
 	// only escape if it actually localizes
-	// localizations like eula, can script error with how long it is
+	// localisations like eula, can script error with how long it is
 	try
 	{
 		if ( Localize( input ) != input )
