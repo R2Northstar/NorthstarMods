@@ -784,7 +784,7 @@ void function FilterServerList()
 			sName.append( server.map.tolower() )
 			sName.append( server.playlist.tolower() )
 			sName.append( Localize( server.playlist ).tolower() )
-			sName.append( server.description.tolower() )
+			sName.append( RemoveNewlines( server.description.tolower() ) )
 			sName.append( server.region.tolower() )
 
 			string sTerm = filterArguments.searchTerm.tolower()
@@ -916,7 +916,7 @@ void function DisplayFocusedServerInfo( int scriptID )
 	// text panels
 	Hud_SetVisible( Hud_GetChild( menu, "LabelDescription" ), true )
 	Hud_SetVisible( Hud_GetChild( menu, "LabelMods" ), false )
-	Hud_SetText( Hud_GetChild( menu, "LabelDescription" ), EscapeLocalisation( server.description ) + " ^FFFFFF00" + "\n\nRequired Mods:\n" + FillInServerModsLabel( server.requiredMods ) )
+	Hud_SetText( Hud_GetChild( menu, "LabelDescription" ), EscapeLocalisation( RemoveNewlines( server.description ) ) + " ^FFFFFF00" + "\n\nRequired Mods:\n" + FillInServerModsLabel( server.requiredMods ) )
 
 	// map name/image/server name
 	string map = server.map
