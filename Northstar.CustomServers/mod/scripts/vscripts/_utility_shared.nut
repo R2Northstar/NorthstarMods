@@ -3275,6 +3275,10 @@ bool function PlayerCanSpawnIntoTitan( entity player )
 	if ( titan.ContextAction_IsBusy() || titan.ContextAction_IsMeleeExecution() )
 		return false
 
+	#if VANILLA
+		return false // disabled in vanilla
+	#endif
+
 	return GetCurrentPlaylistVarInt( "titan_spawn_deploy_enabled", 0 ) != 0
 }
 
