@@ -15,7 +15,9 @@ void function InitDefaultLoadouts()
 #if SERVER
 	void function ValidateLoadout_OnClientConnecting( entity player )
 	{
-		if ( GetPersistentSpawnLoadoutIndex( player, "pilot" ) >= PersistenceGetArrayCount( "pilotLoadouts" ) )
+		int pilotLoadoutIndex = GetPersistentSpawnLoadoutIndex( player, "pilot" )
+
+		if ( pilotLoadoutIndex < 0 || pilotLoadoutIndex >= PersistenceGetArrayCount( "pilotLoadouts" ) )
 		{
 			SetPersistentSpawnLoadoutIndex( player, "pilot", 0 )
 			NSDisconnectPlayer( player, "#RESETTING_LOADOUT" )
@@ -24,7 +26,9 @@ void function InitDefaultLoadouts()
 		if ( !IsValid( player ) )
 			return
 
-		if ( GetPersistentSpawnLoadoutIndex( player, "titan" ) >= PersistenceGetArrayCount( "titanLoadouts" ) )
+		int titanLoadoutIndex = GetPersistentSpawnLoadoutIndex( player, "titan" )
+
+		if ( titanLoadoutIndex < 0 || titanLoadoutIndex >= PersistenceGetArrayCount( "titanLoadouts" ) )
 		{
 			SetPersistentSpawnLoadoutIndex( player, "titan", 0 )
 			NSDisconnectPlayer( player, "#RESETTING_LOADOUT" )

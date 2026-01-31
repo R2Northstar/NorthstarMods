@@ -140,7 +140,7 @@ bool function ClientCommandCallback_RequestPilotLoadout( entity player, array<st
 
 	int index = args[0].tointeger()
 
-	if ( index >= PersistenceGetArrayCount( "pilotLoadouts" ) )
+	if ( index < 0 || index >= PersistenceGetArrayCount( "pilotLoadouts" ) )
 		return false
 
 	SetPersistentSpawnLoadoutIndex( player, "pilot", index )
@@ -161,7 +161,7 @@ bool function ClientCommandCallback_RequestTitanLoadout( entity player, array<st
 
 	int index = args[0].tointeger()
 
-	if ( index >= PersistenceGetArrayCount( "titanLoadouts" ) )
+	if ( index < 0 || index >= PersistenceGetArrayCount( "titanLoadouts" ) )
 		return false
 
 	SetPersistentSpawnLoadoutIndex( player, "titan", index )
@@ -194,7 +194,16 @@ bool function ClientCommandCallback_SetPersistentLoadoutValue( entity player, ar
 		print( player + " SetPersistentLoadoutValue " + args0 + " " + args1 + " " + args2 + " " + val )
 	#endif
 
-	if ( args.len() < 4 || FailsLoadoutValidationCheck( player, args0, args1.tointeger(), args2, val ) )
+	if ( args.len() < 4 )
+		return false
+
+	// names need custom validation
+	if ( args2 == "name" )
+	{
+		if ( args[0] == "titan" || ( args1.tointeger() < 0 || args1.tointeger() >= PersistenceGetArrayCount( "pilotLoadouts" ) ) )
+			return false
+	}
+	else if ( FailsLoadoutValidationCheck( player, args0, args1.tointeger(), args2, val ) )
 		return false
 
 	SetPersistentLoadoutValue( player, args[0], args1.tointeger(), args2, val )
@@ -219,7 +228,7 @@ bool function ClientCommandCallback_SwapSecondaryAndWeapon3PersistentLoadoutData
 	// get loadout
 	int index = args[0].tointeger()
 
-	if ( index >= PersistenceGetArrayCount( "pilotLoadouts" ) )
+	if ( index < 0 || index >= PersistenceGetArrayCount( "pilotLoadouts" ) )
 		return false
 
 	PilotLoadoutDef loadout = GetPilotLoadoutFromPersistentData( player, index )
