@@ -247,7 +247,11 @@ void function OnSelectMatchSettings_Activate( var button )
 	if ( Hud_IsLocked( button ) )
 		return
 
-	AdvanceMenu( GetMenu( "CustomMatchSettingsCategoryMenu" ) )
+	#if VANILLA
+		AdvanceMenu( GetMenu( "MatchSettingsMenu" ) )
+	#else
+		AdvanceMenu( GetMenu( "CustomMatchSettingsCategoryMenu" ) )
+	#endif
 }
 
 void function SetupComboButtons( var menu, var navUpButton, var navDownButton  )
