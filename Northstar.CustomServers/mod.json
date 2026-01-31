@@ -15,7 +15,7 @@
 		},
 		{
 			"Name": "ns_private_match_last_mode",
-			"DefaultValue": "tdm"
+			"DefaultValue": "aitdm"
 		},
 		{
 			"Name": "ns_private_match_last_map",
