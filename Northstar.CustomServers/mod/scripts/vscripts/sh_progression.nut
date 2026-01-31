@@ -176,23 +176,27 @@ void function UpdateCachedLoadouts_Threaded()
 
 	// below here is just making all the menu models update properly and such
 
-	#if UI
-	entity UIPlayer = GetUIPlayer()
-	
-	if ( !IsValid( UIPlayer ) )
-		return
+	try
+	{
+		#if UI
+		entity UIPlayer = GetUIPlayer()
 
-	uiGlobal.pilotSpawnLoadoutIndex = GetPersistentSpawnLoadoutIndex( UIPlayer, "pilot" )
-	uiGlobal.titanSpawnLoadoutIndex = GetPersistentSpawnLoadoutIndex( UIPlayer, "titan" )
-	#endif
+		if ( !IsValid( UIPlayer ) )
+			return
 
-	#if CLIENT
-	entity player = GetLocalClientPlayer()
-	ClearAllTitanPreview( player )
-	ClearAllPilotPreview( player )
-	UpdateTitanModel( player, GetPersistentSpawnLoadoutIndex( player, "titan" ) )
-	UpdatePilotModel( player, GetPersistentSpawnLoadoutIndex( player, "pilot" ) )
-	#endif
+		uiGlobal.pilotSpawnLoadoutIndex = GetPersistentSpawnLoadoutIndex( UIPlayer, "pilot" )
+		uiGlobal.titanSpawnLoadoutIndex = GetPersistentSpawnLoadoutIndex( UIPlayer, "titan" )
+		#endif
+
+		#if CLIENT
+		entity player = GetLocalClientPlayer()
+		ClearAllTitanPreview( player )
+		ClearAllPilotPreview( player )
+		UpdateTitanModel( player, GetPersistentSpawnLoadoutIndex( player, "titan" ) )
+		UpdatePilotModel( player, GetPersistentSpawnLoadoutIndex( player, "pilot" ) )
+		#endif
+	}
+	catch ( error ) {}
 
 	file.isUpdatingCachedLoadouts = false
 }
@@ -201,13 +205,13 @@ void function UpdateCachedLoadouts_Threaded()
 #if SERVER
 void function ValidateEquippedItems( entity player )
 {
-	printt( "VALIDATING EQUIPPED ITEMS FOR PLAYER: " + player.GetPlayerName() )
+	ProgressionPrint( "VALIDATING EQUIPPED ITEMS FOR PLAYER: " + player.GetPlayerName() )
 
 	// banner
 	CallingCard card = PlayerCallingCard_GetActive( player )
 	if ( IsItemLocked( player, card.ref ) )
 	{
-		printt( "- BANNER CARD IS LOCKED, RESETTING" )
+		ProgressionPrint( "- BANNER CARD IS LOCKED, RESETTING" )
 		PlayerCallingCard_SetActiveByRef( player, "callsign_16_col" ) // copied from _persistentdata.gnut
 	}
 
@@ -215,7 +219,7 @@ void function ValidateEquippedItems( entity player )
 	CallsignIcon icon = PlayerCallsignIcon_GetActive( player )
 	if ( IsItemLocked( player, icon.ref ) )
 	{
-		printt( "- BANNER PATCH IS LOCKED, RESETTING" )
+		ProgressionPrint( "- BANNER PATCH IS LOCKED, RESETTING" )
 		PlayerCallsignIcon_SetActiveByRef( player, "gc_icon_titanfall" ) // copied from _persistentdata.gnut
 	}
 
@@ -224,7 +228,7 @@ void function ValidateEquippedItems( entity player )
 	string factionRef = PersistenceGetEnumItemNameForIndex( "faction", factionIndex )
 	if ( IsItemLocked( player, factionRef ) )
 	{
-		printt( "- FACTION IS LOCKED, RESETTING" )
+		ProgressionPrint( "- FACTION IS LOCKED, RESETTING" )
 		player.SetPersistentVar( "factionChoice", "faction_marauder" ) // im so sorry that i am setting you to use sarah, you don't deserve this
 	}
 	
@@ -232,77 +236,77 @@ void function ValidateEquippedItems( entity player )
 	BurnReward reward = BurnReward_GetById( player.GetPersistentVarAsInt( "burnmeterSlot" ) )
 	if ( IsItemLocked( player, reward.ref ) )
 	{
-		printt( "- BOOST IS LOCKED, RESETTING" )
+		ProgressionPrint( "- BOOST IS LOCKED, RESETTING" )
 		player.SetPersistentVar( "burnmeterSlot", BurnReward_GetByRef( "burnmeter_amped_weapons" ).id )
 	}
 
 	// titan loadouts
 	for ( int titanLoadoutIndex = 0; titanLoadoutIndex < NUM_PERSISTENT_TITAN_LOADOUTS; titanLoadoutIndex++ )
 	{
-		printt( "- VALIDATING TITAN LOADOUT: " + titanLoadoutIndex )
+		ProgressionPrint( "- VALIDATING TITAN LOADOUT: " + titanLoadoutIndex )
 
 		bool isSelected = titanLoadoutIndex == player.GetPersistentVarAsInt( "titanSpawnLoadout.index" )
 		TitanLoadoutDef loadout = GetTitanLoadout( player, titanLoadoutIndex )
 		TitanLoadoutDef defaultLoadout = shGlobal.defaultTitanLoadouts[titanLoadoutIndex]
 
-		printt( "  - CHASSIS: " + loadout.titanClass )
+		ProgressionPrint( "  - CHASSIS: " + loadout.titanClass )
 
 		// passive1 - "Titan Kit" (things like overcore)
 		if ( loadout.passive1 != defaultLoadout.passive1 && IsSubItemLocked( player, loadout.passive1, loadout.titanClass ) )
 		{
-			printt( "  - TITAN KIT EQUIPPED WHEN LOCKED, RESETTING" )
+			ProgressionPrint( "  - TITAN KIT EQUIPPED WHEN LOCKED, RESETTING" )
 			player.SetPersistentVar( "titanLoadouts[" + titanLoadoutIndex + "].passive1", defaultLoadout.passive1 )
 		}
 
 		// passive2 - "<chassis> Kit" (things like zero point tripwire)
 		if ( loadout.passive2 != defaultLoadout.passive2 && IsSubItemLocked( player, loadout.passive2, loadout.titanClass ) )
 		{
-			printt( "  - CHASSIS KIT EQUIPPED WHEN LOCKED, RESETTING" )
+			ProgressionPrint( "  - CHASSIS KIT EQUIPPED WHEN LOCKED, RESETTING" )
 			player.SetPersistentVar( "titanLoadouts[" + titanLoadoutIndex + "].passive2", defaultLoadout.passive2 )
 		}
 
 		// passive3 - "Titanfall Kit" (warpfall/dome shield)
 		if ( loadout.passive3 != defaultLoadout.passive3 && IsSubItemLocked( player, loadout.passive3, loadout.titanClass ) )
 		{
-			printt( "  - TITANFALL KIT EQUIPPED WHEN LOCKED, RESETTING" )
+			ProgressionPrint( "  - TITANFALL KIT EQUIPPED WHEN LOCKED, RESETTING" )
 			player.SetPersistentVar( "titanLoadouts[" + titanLoadoutIndex + "].passive3", defaultLoadout.passive3 )
 		}
 
 		// passive4 - monarch core 1
 		if ( loadout.passive4 != defaultLoadout.passive4 && IsSubItemLocked( player, loadout.passive4, loadout.titanClass ) )
 		{
-			printt( "  - MONARCH CORE 1 KIT EQUIPPED WHEN LOCKED, RESETTING" )
+			ProgressionPrint( "  - MONARCH CORE 1 KIT EQUIPPED WHEN LOCKED, RESETTING" )
 			player.SetPersistentVar( "titanLoadouts[" + titanLoadoutIndex + "].passive4", defaultLoadout.passive4 )
 		}
 
 		// passive5 - monarch core 2
 		if ( loadout.passive5 != defaultLoadout.passive5 && IsSubItemLocked( player, loadout.passive5, loadout.titanClass ) )
 		{
-			printt( "  - MONARCH CORE 2 KIT EQUIPPED WHEN LOCKED, RESETTING" )
+			ProgressionPrint( "  - MONARCH CORE 2 KIT EQUIPPED WHEN LOCKED, RESETTING" )
 			player.SetPersistentVar( "titanLoadouts[" + titanLoadoutIndex + "].passive5", defaultLoadout.passive5 )
 		}
 
 		// passive6 - monarch core 3
 		if ( loadout.passive6 != defaultLoadout.passive6 && IsSubItemLocked( player, loadout.passive6, loadout.titanClass ) )
 		{
-			printt( "  - MONARCH CORE 3 KIT EQUIPPED WHEN LOCKED, RESETTING" )
+			ProgressionPrint( "  - MONARCH CORE 3 KIT EQUIPPED WHEN LOCKED, RESETTING" )
 			player.SetPersistentVar( "titanLoadouts[" + titanLoadoutIndex + "].passive6", defaultLoadout.passive6 )
 		}
 
 		// titanExecution
 		if ( !IsRefValid( loadout.titanExecution ) || !IsValidTitanExecution( titanLoadoutIndex, "titanExecution", "", loadout.titanExecution ) )
 		{
-			printt( "  - TITAN EXECUTION IS INVALID FOR CHASSIS, RESETTING" )
+			ProgressionPrint( "  - TITAN EXECUTION IS INVALID FOR CHASSIS, RESETTING" )
 			player.SetPersistentVar( "titanLoadouts[" + titanLoadoutIndex + "].titanExecution", defaultLoadout.titanExecution )
 		}
 		else if ( IsItemLocked( player, loadout.titanExecution ) )
 		{
-			printt( "  - TITAN EXECUTION EQUIPPED WHEN LOCKED, RESETTING" )
+			ProgressionPrint( "  - TITAN EXECUTION EQUIPPED WHEN LOCKED, RESETTING" )
 			player.SetPersistentVar( "titanLoadouts[" + titanLoadoutIndex + "].titanExecution", defaultLoadout.titanExecution )
 		}
 		else if ( GetItemData( loadout.titanExecution ).reqPrime && IsItemLocked( player, loadout.primeTitanRef ) )
 		{
-			printt( "  - PRIME TITAN EXECUTION EQUIPPED WHEN PRIME TITAN IS LOCKED, RESETTING" )
+			ProgressionPrint( "  - PRIME TITAN EXECUTION EQUIPPED WHEN PRIME TITAN IS LOCKED, RESETTING" )
 			player.SetPersistentVar( "titanLoadouts[" + titanLoadoutIndex + "].titanExecution", defaultLoadout.titanExecution )
 		}
 
@@ -313,7 +317,7 @@ void function ValidateEquippedItems( entity player )
 			array<ItemData> camoSkins = GetAllItemsOfType( eItemTypes.CAMO_SKIN_TITAN )
 			if ( loadout.camoIndex >= camoSkins.len() || loadout.camoIndex < 0 )
 			{
-				printt( "  - INVALID TITAN CAMO/SKIN, RESETTING" )
+				ProgressionPrint( "  - INVALID TITAN CAMO/SKIN, RESETTING" )
 				player.SetPersistentVar( "titanLoadouts[" + titanLoadoutIndex + "].skinIndex", defaultLoadout.skinIndex )
 				player.SetPersistentVar( "titanLoadouts[" + titanLoadoutIndex + "].camoIndex", defaultLoadout.camoIndex )
 			}
@@ -322,7 +326,7 @@ void function ValidateEquippedItems( entity player )
 				ItemData camoSkin = camoSkins[loadout.camoIndex]
 				if ( IsSubItemLocked( player, camoSkin.ref, loadout.titanClass ) )
 				{
-					printt( "  - TITAN CAMO/SKIN EQUIPPED WHEN LOCKED, RESETTING" )
+					ProgressionPrint( "  - TITAN CAMO/SKIN EQUIPPED WHEN LOCKED, RESETTING" )
 					player.SetPersistentVar( "titanLoadouts[" + titanLoadoutIndex + "].skinIndex", defaultLoadout.skinIndex )
 					player.SetPersistentVar( "titanLoadouts[" + titanLoadoutIndex + "].camoIndex", defaultLoadout.camoIndex )
 				}
@@ -332,7 +336,7 @@ void function ValidateEquippedItems( entity player )
 		{
 			if ( loadout.camoIndex != 0 )
 			{
-				printt( "  - INVALID TITAN CAMO/SKIN, RESETTING" )
+				ProgressionPrint( "  - INVALID TITAN CAMO/SKIN, RESETTING" )
 				player.SetPersistentVar( "titanLoadouts[" + titanLoadoutIndex + "].skinIndex", defaultLoadout.skinIndex )
 				player.SetPersistentVar( "titanLoadouts[" + titanLoadoutIndex + "].camoIndex", defaultLoadout.camoIndex )
 			}
@@ -342,13 +346,13 @@ void function ValidateEquippedItems( entity player )
 			string ref = GetSkinRefFromTitanClassAndPersistenceValue( loadout.titanClass, loadout.skinIndex )
 			if ( ref == INVALID_REF )
 			{
-				printt( "  - INVALID TITAN WARPAINT, RESETTING" )
+				ProgressionPrint( "  - INVALID TITAN WARPAINT, RESETTING" )
 				player.SetPersistentVar( "titanLoadouts[" + titanLoadoutIndex + "].skinIndex", defaultLoadout.skinIndex )
 				player.SetPersistentVar( "titanLoadouts[" + titanLoadoutIndex + "].camoIndex", defaultLoadout.camoIndex )
 			}
 			else if ( IsSubItemLocked( player, ref, loadout.titanClass ) )
 			{
-				printt( "  - TITAN WARPAINT EQUIPPED WHEN LOCKED, RESETTING" )
+				ProgressionPrint( "  - TITAN WARPAINT EQUIPPED WHEN LOCKED, RESETTING" )
 				player.SetPersistentVar( "titanLoadouts[" + titanLoadoutIndex + "].skinIndex", defaultLoadout.skinIndex )
 				player.SetPersistentVar( "titanLoadouts[" + titanLoadoutIndex + "].camoIndex", defaultLoadout.camoIndex )
 			}
@@ -358,7 +362,7 @@ void function ValidateEquippedItems( entity player )
 		string noseArtRef = GetNoseArtRefFromTitanClassAndPersistenceValue( loadout.titanClass, loadout.decalIndex )
 		if ( loadout.decalIndex != defaultLoadout.decalIndex && IsSubItemLocked( player, noseArtRef, loadout.titanClass ) )
 		{
-			printt( "  - NOSE ART EQUIPPED WHEN LOCKED, RESETTING" )
+			ProgressionPrint( "  - NOSE ART EQUIPPED WHEN LOCKED, RESETTING" )
 			player.SetPersistentVar( "titanLoadouts[" + titanLoadoutIndex + "].decalIndex", defaultLoadout.decalIndex )
 		}
 
@@ -369,7 +373,7 @@ void function ValidateEquippedItems( entity player )
 			array<ItemData> camoSkins = GetAllItemsOfType( eItemTypes.CAMO_SKIN )
 			if ( loadout.primaryCamoIndex >= camoSkins.len() || loadout.primaryCamoIndex < 0 )
 			{
-				printt( "  - INVALID WEAPON CAMO/SKIN, RESETTING" )
+				ProgressionPrint( "  - INVALID WEAPON CAMO/SKIN, RESETTING" )
 				player.SetPersistentVar( "titanLoadouts[" + titanLoadoutIndex + "].primarySkinIndex", defaultLoadout.primarySkinIndex )
 				player.SetPersistentVar( "titanLoadouts[" + titanLoadoutIndex + "].primaryCamoIndex", defaultLoadout.primaryCamoIndex )
 			}
@@ -378,7 +382,7 @@ void function ValidateEquippedItems( entity player )
 				ItemData camoSkin = camoSkins[loadout.primaryCamoIndex]
 				if ( IsSubItemLocked( player, camoSkin.ref, loadout.titanClass ) )
 				{
-					printt( "  - WEAPON CAMO/SKIN EQUIPPED WHEN LOCKED, RESETTING" )
+					ProgressionPrint( "  - WEAPON CAMO/SKIN EQUIPPED WHEN LOCKED, RESETTING" )
 					player.SetPersistentVar( "titanLoadouts[" + titanLoadoutIndex + "].primarySkinIndex", defaultLoadout.primarySkinIndex )
 					player.SetPersistentVar( "titanLoadouts[" + titanLoadoutIndex + "].primaryCamoIndex", defaultLoadout.primaryCamoIndex )
 				}
@@ -388,7 +392,7 @@ void function ValidateEquippedItems( entity player )
 		{
 			// titan weapons do not have skins, if we ever do add them lots of stuff will 
 			//need a refactor outside of here so with that being said, i cannot be bothered
-			printt( "  - INVALID WEAPON CAMO/SKIN, RESETTING" )
+			ProgressionPrint( "  - INVALID WEAPON CAMO/SKIN, RESETTING" )
 			player.SetPersistentVar( "titanLoadouts[" + titanLoadoutIndex + "].primarySkinIndex", defaultLoadout.primarySkinIndex )
 			player.SetPersistentVar( "titanLoadouts[" + titanLoadoutIndex + "].primaryCamoIndex", defaultLoadout.primaryCamoIndex )
 		}
@@ -397,7 +401,7 @@ void function ValidateEquippedItems( entity player )
 		// isPrime
 		if ( loadout.isPrime == "titan_is_prime" && IsItemLocked( player, loadout.primeTitanRef ) )
 		{
-			printt( "  - PRIME TITAN EQUIPPED WHEN LOCKED, RESETTING" )
+			ProgressionPrint( "  - PRIME TITAN EQUIPPED WHEN LOCKED, RESETTING" )
 			player.SetPersistentVar( "titanLoadouts[" + titanLoadoutIndex + "].isPrime", defaultLoadout.isPrime )
 		}
 
@@ -408,7 +412,7 @@ void function ValidateEquippedItems( entity player )
 			array<ItemData> camoSkins = GetAllItemsOfType( eItemTypes.CAMO_SKIN_TITAN )
 			if ( loadout.primeCamoIndex >= camoSkins.len() || loadout.primeCamoIndex < 0 )
 			{
-				printt( "  - INVALID TITAN CAMO/SKIN, RESETTING" )
+				ProgressionPrint( "  - INVALID TITAN CAMO/SKIN, RESETTING" )
 				player.SetPersistentVar( "titanLoadouts[" + titanLoadoutIndex + "].primeSkinIndex", defaultLoadout.primeSkinIndex )
 				player.SetPersistentVar( "titanLoadouts[" + titanLoadoutIndex + "].primeCamoIndex", defaultLoadout.primeCamoIndex )
 			}
@@ -417,7 +421,7 @@ void function ValidateEquippedItems( entity player )
 				ItemData camoSkin = camoSkins[loadout.primeCamoIndex]
 				if ( IsSubItemLocked( player, camoSkin.ref, loadout.titanClass ) )
 				{
-					printt( "  - TITAN CAMO/SKIN EQUIPPED WHEN LOCKED, RESETTING" )
+					ProgressionPrint( "  - TITAN CAMO/SKIN EQUIPPED WHEN LOCKED, RESETTING" )
 					player.SetPersistentVar( "titanLoadouts[" + titanLoadoutIndex + "].primeSkinIndex", defaultLoadout.primeSkinIndex )
 					player.SetPersistentVar( "titanLoadouts[" + titanLoadoutIndex + "].primeCamoIndex", defaultLoadout.primeCamoIndex )
 				}
@@ -427,14 +431,14 @@ void function ValidateEquippedItems( entity player )
 		{
 			if ( loadout.primeCamoIndex != 0 )
 			{
-				printt( "  - INVALID TITAN CAMO/SKIN, RESETTING" )
+				ProgressionPrint( "  - INVALID TITAN CAMO/SKIN, RESETTING" )
 				player.SetPersistentVar( "titanLoadouts[" + titanLoadoutIndex + "].primeSkinIndex", defaultLoadout.primeSkinIndex )
 				player.SetPersistentVar( "titanLoadouts[" + titanLoadoutIndex + "].primeCamoIndex", defaultLoadout.primeCamoIndex )
 			}
 		}
 		else
 		{
-			printt( "  - INVALID PRIME TITAN SKIN, RESETTING" )
+			ProgressionPrint( "  - INVALID PRIME TITAN SKIN, RESETTING" )
 			player.SetPersistentVar( "titanLoadouts[" + titanLoadoutIndex + "].primeSkinIndex", defaultLoadout.primeSkinIndex )
 			player.SetPersistentVar( "titanLoadouts[" + titanLoadoutIndex + "].primeCamoIndex", defaultLoadout.primeCamoIndex )
 		}
@@ -443,21 +447,21 @@ void function ValidateEquippedItems( entity player )
 		string primeNoseArtRef = GetNoseArtRefFromTitanClassAndPersistenceValue( loadout.titanClass, loadout.primeDecalIndex )
 		if ( loadout.primeDecalIndex != defaultLoadout.primeDecalIndex && IsSubItemLocked( player, primeNoseArtRef, loadout.titanClass ) )
 		{
-			printt( "  - PRIME NOSE ART EQUIPPED WHEN LOCKED, RESETTING" )
+			ProgressionPrint( "  - PRIME NOSE ART EQUIPPED WHEN LOCKED, RESETTING" )
 			player.SetPersistentVar( "titanLoadouts[" + titanLoadoutIndex + "].primeDecalIndex", defaultLoadout.primeDecalIndex )
 		}
 
 		// showArmBadge - equipped and shouldnt be able to
 		if ( loadout.showArmBadge && !CanEquipArmBadge( player, loadout.titanClass ) )
 		{
-			printt( "  - ARM BADGE EQUIPPED WHEN LOCKED, RESETTING" )
+			ProgressionPrint( "  - ARM BADGE EQUIPPED WHEN LOCKED, RESETTING" )
 			player.SetPersistentVar( "titanLoadouts[" + titanLoadoutIndex + "].showArmBadge", defaultLoadout.showArmBadge )
 		}
 
 		// equipped titan loadout - equipped titan class is locked
 		if ( isSelected && IsItemLocked( player, loadout.titanClass ) )
 		{
-			printt( "  - SELECTED TITAN CLASS IS LOCKED, RESETTING" )
+			ProgressionPrint( "  - SELECTED TITAN CLASS IS LOCKED, RESETTING" )
 			player.SetPersistentVar( "titanSpawnLoadout.index", 0 )
 			Remote_CallFunction_NonReplay( player, "ServerCallback_UpdateTitanModel", 0 )
 		}
@@ -468,7 +472,7 @@ void function ValidateEquippedItems( entity player )
 	// pilot loadouts
 	for ( int pilotLoadoutIndex = 0; pilotLoadoutIndex < NUM_PERSISTENT_PILOT_LOADOUTS; pilotLoadoutIndex++ )
 	{
-		printt( "- VALIDATING PILOT LOADOUT: " + pilotLoadoutIndex )
+		ProgressionPrint( "- VALIDATING PILOT LOADOUT: " + pilotLoadoutIndex )
 
 		bool isSelected = pilotLoadoutIndex == player.GetPersistentVarAsInt( "pilotSpawnLoadout.index" )
 		PilotLoadoutDef loadout = GetPilotLoadout( player, pilotLoadoutIndex )
@@ -481,12 +485,12 @@ void function ValidateEquippedItems( entity player )
 		{
 			if ( !IsRefValid( loadout.suit ) )
 			{
-				printt( "  - TACTICAL IS INVALID, RESETTING" )
+				ProgressionPrint( "  - TACTICAL IS INVALID, RESETTING" )
 				player.SetPersistentVar( "pilotLoadouts[" + pilotLoadoutIndex + "].suit", defaultLoadout.suit )
 			}
 			else if ( IsItemLocked( player, loadout.suit ) )
 			{
-				printt( "  - TACTICAL IS LOCKED, RESETTING" )
+				ProgressionPrint( "  - TACTICAL IS LOCKED, RESETTING" )
 				player.SetPersistentVar( "pilotLoadouts[" + pilotLoadoutIndex + "].suit", defaultLoadout.suit )
 			}
 		}
@@ -495,12 +499,12 @@ void function ValidateEquippedItems( entity player )
 		{
 			if ( !IsRefValid( loadout.ordnance ) )
 			{
-				printt( "  - ORDNANCE IS INVALID, RESETTING" )
+				ProgressionPrint( "  - ORDNANCE IS INVALID, RESETTING" )
 				player.SetPersistentVar( "pilotLoadouts[" + pilotLoadoutIndex + "].ordnance", defaultLoadout.ordnance )
 			}
 			else if ( IsItemLocked( player, loadout.ordnance ) )
 			{
-				printt( "  - ORDNANCE IS LOCKED, RESETTING" )
+				ProgressionPrint( "  - ORDNANCE IS LOCKED, RESETTING" )
 				player.SetPersistentVar( "pilotLoadouts[" + pilotLoadoutIndex + "].ordnance", defaultLoadout.ordnance )
 			}
 		}
@@ -509,12 +513,12 @@ void function ValidateEquippedItems( entity player )
 		{
 			if ( !IsRefValid( loadout.race ) )
 			{
-				printt( "  - GENDER IS INVALID, RESETTING" )
+				ProgressionPrint( "  - GENDER IS INVALID, RESETTING" )
 				player.SetPersistentVar( "pilotLoadouts[" + pilotLoadoutIndex + "].race", defaultLoadout.race )
 			}
 			else if ( IsItemLocked( player, loadout.race ) )
 			{
-				printt( "  - GENDER IS LOCKED, RESETTING" )
+				ProgressionPrint( "  - GENDER IS LOCKED, RESETTING" )
 				player.SetPersistentVar( "pilotLoadouts[" + pilotLoadoutIndex + "].race", defaultLoadout.race )
 			}
 		}
@@ -527,7 +531,7 @@ void function ValidateEquippedItems( entity player )
 				array<ItemData> camoSkins = GetAllItemsOfType( eItemTypes.CAMO_SKIN_PILOT )
 				if ( loadout.camoIndex >= camoSkins.len() || loadout.camoIndex < 0 )
 				{
-					printt( "  - INVALID PILOT CAMO/SKIN, RESETTING" )
+					ProgressionPrint( "  - INVALID PILOT CAMO/SKIN, RESETTING" )
 					player.SetPersistentVar( "pilotLoadouts[" + pilotLoadoutIndex + "].skinIndex", defaultLoadout.skinIndex )
 					player.SetPersistentVar( "pilotLoadouts[" + pilotLoadoutIndex + "].camoIndex", defaultLoadout.camoIndex )
 				}
@@ -536,7 +540,7 @@ void function ValidateEquippedItems( entity player )
 					ItemData camoSkin = camoSkins[loadout.camoIndex]
 					if ( IsItemLocked( player, camoSkin.ref ) )
 					{
-						printt( "  - PILOT CAMO/SKIN EQUIPPED WHEN LOCKED, RESETTING" )
+						ProgressionPrint( "  - PILOT CAMO/SKIN EQUIPPED WHEN LOCKED, RESETTING" )
 						player.SetPersistentVar( "pilotLoadouts[" + pilotLoadoutIndex + "].skinIndex", defaultLoadout.skinIndex )
 						player.SetPersistentVar( "pilotLoadouts[" + pilotLoadoutIndex + "].camoIndex", defaultLoadout.camoIndex )
 					}
@@ -546,7 +550,7 @@ void function ValidateEquippedItems( entity player )
 			{
 				if ( loadout.camoIndex != 0 )
 				{
-					printt( "  - INVALID PILOT CAMO/SKIN, RESETTING" )
+					ProgressionPrint( "  - INVALID PILOT CAMO/SKIN, RESETTING" )
 					player.SetPersistentVar( "pilotLoadouts[" + pilotLoadoutIndex + "].skinIndex", defaultLoadout.skinIndex )
 					player.SetPersistentVar( "pilotLoadouts[" + pilotLoadoutIndex + "].camoIndex", defaultLoadout.camoIndex )
 				}
@@ -554,7 +558,7 @@ void function ValidateEquippedItems( entity player )
 			else
 			{
 				// pilots can't have skins other than 0 and 1 right?
-				printt( "  - INVALID PILOT SKIN, RESETTING" )
+				ProgressionPrint( "  - INVALID PILOT SKIN, RESETTING" )
 				player.SetPersistentVar( "pilotLoadouts[" + pilotLoadoutIndex + "].skinIndex", defaultLoadout.skinIndex )
 				player.SetPersistentVar( "pilotLoadouts[" + pilotLoadoutIndex + "].camoIndex", defaultLoadout.camoIndex )
 			}
@@ -564,12 +568,12 @@ void function ValidateEquippedItems( entity player )
 		{
 			if ( !IsRefValid( loadout.primary ) || GetItemType( loadout.primary ) != eItemTypes.PILOT_PRIMARY )
 			{
-				printt( "  - PRIMARY WEAPON IS LOCKED, RESETTING" )
+				ProgressionPrint( "  - PRIMARY WEAPON IS LOCKED, RESETTING" )
 				player.SetPersistentVar( "pilotLoadouts[" + pilotLoadoutIndex + "].primary", defaultLoadout.primary )
 			}
 			else if ( IsItemLocked( player, loadout.primary ) )
 			{
-				printt( "  - PRIMARY WEAPON IS LOCKED, RESETTING" )
+				ProgressionPrint( "  - PRIMARY WEAPON IS LOCKED, RESETTING" )
 				player.SetPersistentVar( "pilotLoadouts[" + pilotLoadoutIndex + "].primary", defaultLoadout.primary )
 			}
 		}
@@ -583,12 +587,12 @@ void function ValidateEquippedItems( entity player )
 			}
 			else if ( !HasSubitem( loadout.primary, loadout.primaryMod1 ) )
 			{
-				printt( "  - PRIMARY WEAPON MOD 1 IS INVALID, RESETTING" )
+				ProgressionPrint( "  - PRIMARY WEAPON MOD 1 IS INVALID, RESETTING" )
 				player.SetPersistentVar( "pilotLoadouts[" + pilotLoadoutIndex + "].primaryMod1", defaultLoadout.primaryMod1 )
 			}
 			else if ( IsSubItemLocked( player, loadout.primaryMod1, loadout.primary ) )
 			{
-				printt( "  - PRIMARY WEAPON MOD 1 IS LOCKED, RESETTING" )
+				ProgressionPrint( "  - PRIMARY WEAPON MOD 1 IS LOCKED, RESETTING" )
 				player.SetPersistentVar( "pilotLoadouts[" + pilotLoadoutIndex + "].primaryMod1", defaultLoadout.primaryMod1 )
 			}
 			// mod2
@@ -598,27 +602,27 @@ void function ValidateEquippedItems( entity player )
 			}
 			else if ( IsSubItemLocked( player, "primarymod2", loadout.primary ) )
 			{
-				printt( "  - PRIMARY WEAPON MOD 2 SLOT IS LOCKED, RESETTING" )
+				ProgressionPrint( "  - PRIMARY WEAPON MOD 2 SLOT IS LOCKED, RESETTING" )
 				player.SetPersistentVar( "pilotLoadouts[" + pilotLoadoutIndex + "].primaryMod2", defaultLoadout.primaryMod2 )
 			}
 			else if ( !HasSubitem( loadout.primary, loadout.primaryMod2 ) )
 			{
-				printt( "  - PRIMARY WEAPON MOD 2 IS INVALID, RESETTING" )
+				ProgressionPrint( "  - PRIMARY WEAPON MOD 2 IS INVALID, RESETTING" )
 				player.SetPersistentVar( "pilotLoadouts[" + pilotLoadoutIndex + "].primaryMod2", defaultLoadout.primaryMod2 )
 			}
 			else if ( IsSubItemLocked( player, loadout.primaryMod2, loadout.primary ) )
 			{
-				printt( "  - PRIMARY WEAPON MOD 2 IS LOCKED, RESETTING" )
+				ProgressionPrint( "  - PRIMARY WEAPON MOD 2 IS LOCKED, RESETTING" )
 				player.SetPersistentVar( "pilotLoadouts[" + pilotLoadoutIndex + "].primaryMod2", defaultLoadout.primaryMod2 )
 			}
 			else if ( loadout.primaryMod2 == loadout.primaryMod1 && loadout.primaryMod2 != "" )
 			{
-				printt( "  - PRIMARY WEAPON MOD 2 IS DUPLICATE, RESETTING" )
+				ProgressionPrint( "  - PRIMARY WEAPON MOD 2 IS DUPLICATE, RESETTING" )
 				player.SetPersistentVar( "pilotLoadouts[" + pilotLoadoutIndex + "].primaryMod2", defaultLoadout.primaryMod2 )
 			}
 			else if ( loadout.primaryAttachment == "threat_scope" )
 			{
-				printt( "  - PRIMARY WEAPON MOD 2 IS SET WITH THREAT SCOPE, RESETTING" )
+				ProgressionPrint( "  - PRIMARY WEAPON MOD 2 IS SET WITH THREAT SCOPE, RESETTING" )
 				player.SetPersistentVar( "pilotLoadouts[" + pilotLoadoutIndex + "].primaryMod2", defaultLoadout.primaryMod2 )
 			}
 			// attachment
@@ -628,12 +632,12 @@ void function ValidateEquippedItems( entity player )
 			}
 			else if ( !HasSubitem( loadout.primary, loadout.primaryAttachment ) )
 			{
-				printt( "  - PRIMARY WEAPON ATTACHMENT IS INVALID, RESETTING" )
+				ProgressionPrint( "  - PRIMARY WEAPON ATTACHMENT IS INVALID, RESETTING" )
 				player.SetPersistentVar( "pilotLoadouts[" + pilotLoadoutIndex + "].primaryAttachment", defaultLoadout.primaryAttachment )
 			}
 			else if ( IsSubItemLocked( player, loadout.primaryAttachment, loadout.primary ) )
 			{
-				printt( "  - PRIMARY WEAPON ATTACHMENT IS LOCKED, RESETTING" )
+				ProgressionPrint( "  - PRIMARY WEAPON ATTACHMENT IS LOCKED, RESETTING" )
 				player.SetPersistentVar( "pilotLoadouts[" + pilotLoadoutIndex + "].primaryAttachment", defaultLoadout.primaryAttachment )
 			}
 			// mod3 (pro screen)
@@ -644,12 +648,12 @@ void function ValidateEquippedItems( entity player )
 			else if ( loadout.primaryMod3 != "pro_screen" )
 			{
 				// fuck you and your three mod slot stuff
-				printt( "  - PRIMARY WEAPON PRO SCREEN IS INVALID, RESETTING" )
+				ProgressionPrint( "  - PRIMARY WEAPON PRO SCREEN IS INVALID, RESETTING" )
 				player.SetPersistentVar( "pilotLoadouts[" + pilotLoadoutIndex + "].primaryMod3", defaultLoadout.primaryMod3 )
 			}
 			else if ( IsSubItemLocked( player, loadout.primaryMod3, loadout.primary ) )
 			{
-				printt( "  - PRIMARY WEAPON PRO SCREEN IS LOCKED, RESETTING" )
+				ProgressionPrint( "  - PRIMARY WEAPON PRO SCREEN IS LOCKED, RESETTING" )
 				player.SetPersistentVar( "pilotLoadouts[" + pilotLoadoutIndex + "].primaryMod3", defaultLoadout.primaryMod3 )
 			}
 		}
@@ -662,7 +666,7 @@ void function ValidateEquippedItems( entity player )
 				array<ItemData> camoSkins = GetAllItemsOfType( eItemTypes.CAMO_SKIN )
 				if ( loadout.primaryCamoIndex >= camoSkins.len() || loadout.primaryCamoIndex < 0 )
 				{
-					printt( "  - INVALID PRIMARY WEAPON CAMO/SKIN, RESETTING" )
+					ProgressionPrint( "  - INVALID PRIMARY WEAPON CAMO/SKIN, RESETTING" )
 					player.SetPersistentVar( "pilotLoadouts[" + pilotLoadoutIndex + "].primarySkinIndex", defaultLoadout.primarySkinIndex )
 					player.SetPersistentVar( "pilotLoadouts[" + pilotLoadoutIndex + "].primaryCamoIndex", defaultLoadout.primaryCamoIndex )
 				}
@@ -671,7 +675,7 @@ void function ValidateEquippedItems( entity player )
 					ItemData camoSkin = camoSkins[loadout.primaryCamoIndex]
 					if ( IsSubItemLocked( player, camoSkin.ref, loadout.primary ) )
 					{
-						printt( "  - PRIMARY WEAPON CAMO/SKIN EQUIPPED WHEN LOCKED, RESETTING" )
+						ProgressionPrint( "  - PRIMARY WEAPON CAMO/SKIN EQUIPPED WHEN LOCKED, RESETTING" )
 						player.SetPersistentVar( "pilotLoadouts[" + pilotLoadoutIndex + "].primarySkinIndex", defaultLoadout.primarySkinIndex )
 						player.SetPersistentVar( "pilotLoadouts[" + pilotLoadoutIndex + "].primaryCamoIndex", defaultLoadout.primaryCamoIndex )
 					}
@@ -681,7 +685,7 @@ void function ValidateEquippedItems( entity player )
 			{
 				if ( loadout.primaryCamoIndex != 0 )
 				{
-					printt( "  - INVALID PRIMARY WEAPON CAMO/SKIN, RESETTING" )
+					ProgressionPrint( "  - INVALID PRIMARY WEAPON CAMO/SKIN, RESETTING" )
 					player.SetPersistentVar( "pilotLoadouts[" + pilotLoadoutIndex + "].primarySkinIndex", defaultLoadout.primarySkinIndex )
 					player.SetPersistentVar( "pilotLoadouts[" + pilotLoadoutIndex + "].primaryCamoIndex", defaultLoadout.primaryCamoIndex )
 				}
@@ -691,7 +695,7 @@ void function ValidateEquippedItems( entity player )
 				string warpaintRef = GetWeaponWarpaintRefByIndex( loadout.primarySkinIndex, loadout.primary )
 				if ( warpaintRef == INVALID_REF || IsSubItemLocked( player, warpaintRef, loadout.primary ) )
 				{
-					printt( "  - PRIMARY WEAPON SKIN LOCKED/INVALID, RESETTING" )
+					ProgressionPrint( "  - PRIMARY WEAPON SKIN LOCKED/INVALID, RESETTING" )
 					player.SetPersistentVar( "pilotLoadouts[" + pilotLoadoutIndex + "].primarySkinIndex", defaultLoadout.primarySkinIndex )
 					player.SetPersistentVar( "pilotLoadouts[" + pilotLoadoutIndex + "].primaryCamoIndex", defaultLoadout.primaryCamoIndex )
 				}
@@ -702,7 +706,7 @@ void function ValidateEquippedItems( entity player )
 		{
 			if ( !IsRefValid( loadout.secondary ) || GetItemType( loadout.secondary ) != eItemTypes.PILOT_SECONDARY )
 			{
-				printt( "  - SECONDARY WEAPON IS LOCKED, RESETTING" )
+				ProgressionPrint( "  - SECONDARY WEAPON IS LOCKED, RESETTING" )
 				string ref = defaultLoadout.secondary
 				if ( loadout.secondary == ref ) // item dupes swap
 				{
@@ -716,7 +720,7 @@ void function ValidateEquippedItems( entity player )
 			}
 			else if ( IsItemLocked( player, loadout.secondary ) )
 			{
-				printt( "  - SECONDARY WEAPON IS LOCKED, RESETTING" )
+				ProgressionPrint( "  - SECONDARY WEAPON IS LOCKED, RESETTING" )
 				string ref = defaultLoadout.secondary
 				if ( loadout.weapon3 == ref ) // item dupes swap
 				{
@@ -740,12 +744,12 @@ void function ValidateEquippedItems( entity player )
 			}
 			else if ( !HasSubitem( loadout.secondary, loadout.secondaryMod1 ) )
 			{
-				printt( "  - SECONDARY WEAPON MOD 1 IS INVALID, RESETTING" )
+				ProgressionPrint( "  - SECONDARY WEAPON MOD 1 IS INVALID, RESETTING" )
 				player.SetPersistentVar( "pilotLoadouts[" + pilotLoadoutIndex + "].secondaryMod1", defaultLoadout.secondaryMod1 )
 			}
 			else if ( IsSubItemLocked( player, loadout.secondaryMod1, loadout.secondary ) )
 			{
-				printt( "  - SECONDARY WEAPON MOD 1 IS LOCKED, RESETTING" )
+				ProgressionPrint( "  - SECONDARY WEAPON MOD 1 IS LOCKED, RESETTING" )
 				player.SetPersistentVar( "pilotLoadouts[" + pilotLoadoutIndex + "].secondaryMod1", defaultLoadout.secondaryMod1 )
 			}
 			// mod2
@@ -755,22 +759,22 @@ void function ValidateEquippedItems( entity player )
 			}
 			else if ( IsSubItemLocked( player, "secondarymod2", loadout.secondary ) )
 			{
-				printt( "  - SECONDARY WEAPON MOD 2 SLOT IS LOCKED, RESETTING" )
+				ProgressionPrint( "  - SECONDARY WEAPON MOD 2 SLOT IS LOCKED, RESETTING" )
 				player.SetPersistentVar( "pilotLoadouts[" + pilotLoadoutIndex + "].secondaryMod2", defaultLoadout.secondaryMod2 )
 			}
 			else if ( !HasSubitem( loadout.secondary, loadout.secondaryMod2 ) )
 			{
-				printt( "  - SECONDARY WEAPON MOD 2 IS INVALID, RESETTING" )
+				ProgressionPrint( "  - SECONDARY WEAPON MOD 2 IS INVALID, RESETTING" )
 				player.SetPersistentVar( "pilotLoadouts[" + pilotLoadoutIndex + "].secondaryMod2", defaultLoadout.secondaryMod2 )
 			}
 			else if ( IsSubItemLocked( player, loadout.secondaryMod2, loadout.secondary ) )
 			{
-				printt( "  - SECONDARY WEAPON MOD 2 IS LOCKED, RESETTING" )
+				ProgressionPrint( "  - SECONDARY WEAPON MOD 2 IS LOCKED, RESETTING" )
 				player.SetPersistentVar( "pilotLoadouts[" + pilotLoadoutIndex + "].secondaryMod2", defaultLoadout.secondaryMod2 )
 			}
 			else if ( loadout.secondaryMod2 == loadout.secondaryMod1 && loadout.secondaryMod2 != "" )
 			{
-				printt( "  - SECONDARY WEAPON MOD 2 IS DUPLICATE, RESETTING" )
+				ProgressionPrint( "  - SECONDARY WEAPON MOD 2 IS DUPLICATE, RESETTING" )
 				player.SetPersistentVar( "pilotLoadouts[" + pilotLoadoutIndex + "].secondaryMod2", defaultLoadout.secondaryMod2 )
 			}
 			// mod3 (pro screen)
@@ -781,12 +785,12 @@ void function ValidateEquippedItems( entity player )
 			else if ( loadout.secondaryMod3 != "pro_screen" )
 			{
 				// fuck you and your three mod slot stuff
-				printt( "  - SECONDARY WEAPON PRO SCREEN IS INVALID, RESETTING" )
+				ProgressionPrint( "  - SECONDARY WEAPON PRO SCREEN IS INVALID, RESETTING" )
 				player.SetPersistentVar( "pilotLoadouts[" + pilotLoadoutIndex + "].secondaryMod3", defaultLoadout.secondaryMod3 )
 			}
 			else if ( IsSubItemLocked( player, "secondarymod3", loadout.secondary ) )
 			{
-				printt( "  - SECONDARY WEAPON PRO SCREEN IS LOCKED, RESETTING" )
+				ProgressionPrint( "  - SECONDARY WEAPON PRO SCREEN IS LOCKED, RESETTING" )
 				player.SetPersistentVar( "pilotLoadouts[" + pilotLoadoutIndex + "].secondaryMod3", defaultLoadout.secondaryMod3 )
 			}
 		}
@@ -799,7 +803,7 @@ void function ValidateEquippedItems( entity player )
 				array<ItemData> camoSkins = GetAllItemsOfType( eItemTypes.CAMO_SKIN )
 				if ( loadout.secondaryCamoIndex >= camoSkins.len() || loadout.secondaryCamoIndex < 0 )
 				{
-					printt( "  - INVALID SECONDARY WEAPON CAMO/SKIN, RESETTING" )
+					ProgressionPrint( "  - INVALID SECONDARY WEAPON CAMO/SKIN, RESETTING" )
 					player.SetPersistentVar( "pilotLoadouts[" + pilotLoadoutIndex + "].secondarySkinIndex", defaultLoadout.secondarySkinIndex )
 					player.SetPersistentVar( "pilotLoadouts[" + pilotLoadoutIndex + "].secondaryCamoIndex", defaultLoadout.secondaryCamoIndex )
 				}
@@ -808,7 +812,7 @@ void function ValidateEquippedItems( entity player )
 					ItemData camoSkin = camoSkins[loadout.secondaryCamoIndex]
 					if ( IsSubItemLocked( player, camoSkin.ref, loadout.secondary ) )
 					{
-						printt( "  - SECONDARY WEAPON CAMO/SKIN EQUIPPED WHEN LOCKED, RESETTING" )
+						ProgressionPrint( "  - SECONDARY WEAPON CAMO/SKIN EQUIPPED WHEN LOCKED, RESETTING" )
 						player.SetPersistentVar( "pilotLoadouts[" + pilotLoadoutIndex + "].secondarySkinIndex", defaultLoadout.secondarySkinIndex )
 						player.SetPersistentVar( "pilotLoadouts[" + pilotLoadoutIndex + "].secondaryCamoIndex", defaultLoadout.secondaryCamoIndex )
 					}
@@ -818,7 +822,7 @@ void function ValidateEquippedItems( entity player )
 			{
 				if ( loadout.secondaryCamoIndex != 0 )
 				{
-					printt( "  - INVALID SECONDARY WEAPON CAMO/SKIN, RESETTING" )
+					ProgressionPrint( "  - INVALID SECONDARY WEAPON CAMO/SKIN, RESETTING" )
 					player.SetPersistentVar( "pilotLoadouts[" + pilotLoadoutIndex + "].secondarySkinIndex", defaultLoadout.secondarySkinIndex )
 					player.SetPersistentVar( "pilotLoadouts[" + pilotLoadoutIndex + "].secondaryCamoIndex", defaultLoadout.secondaryCamoIndex )
 				}
@@ -828,7 +832,7 @@ void function ValidateEquippedItems( entity player )
 				string warpaintRef = GetWeaponWarpaintRefByIndex( loadout.secondarySkinIndex, loadout.secondary )
 				if ( warpaintRef == INVALID_REF || IsSubItemLocked( player, warpaintRef, loadout.secondary ) )
 				{
-					printt( "  - SECONDARY WEAPON SKIN LOCKED/INVALID, RESETTING" )
+					ProgressionPrint( "  - SECONDARY WEAPON SKIN LOCKED/INVALID, RESETTING" )
 					player.SetPersistentVar( "pilotLoadouts[" + pilotLoadoutIndex + "].secondarySkinIndex", defaultLoadout.secondarySkinIndex )
 					player.SetPersistentVar( "pilotLoadouts[" + pilotLoadoutIndex + "].secondaryCamoIndex", defaultLoadout.secondaryCamoIndex )
 				}
@@ -840,7 +844,7 @@ void function ValidateEquippedItems( entity player )
 		{
 			if ( !IsRefValid( loadout.weapon3 ) || GetItemType( loadout.weapon3 ) != eItemTypes.PILOT_SECONDARY )
 			{
-				printt( "  - WEAPON3 WEAPON IS LOCKED, RESETTING" )
+				ProgressionPrint( "  - WEAPON3 WEAPON IS LOCKED, RESETTING" )
 				string ref = defaultLoadout.weapon3
 				if ( loadout.weapon3 == ref ) // item dupes swap
 				{
@@ -854,7 +858,7 @@ void function ValidateEquippedItems( entity player )
 			}
 			else if ( IsItemLocked( player, loadout.weapon3 ) )
 			{
-				printt( "  - TERTIARY WEAPON IS LOCKED, RESETTING" )
+				ProgressionPrint( "  - TERTIARY WEAPON IS LOCKED, RESETTING" )
 				string ref = defaultLoadout.weapon3
 				if ( loadout.secondary == ref ) // item dupes swap
 				{
@@ -877,12 +881,12 @@ void function ValidateEquippedItems( entity player )
 			}
 			else if ( !HasSubitem( loadout.weapon3, loadout.weapon3Mod1 ) )
 			{
-				printt( "  - WEAPON3 MOD 1 IS INVALID, RESETTING" )
+				ProgressionPrint( "  - WEAPON3 MOD 1 IS INVALID, RESETTING" )
 				player.SetPersistentVar( "pilotLoadouts[" + pilotLoadoutIndex + "].weapon3Mod1", defaultLoadout.weapon3Mod1 )
 			}
 			else if ( IsSubItemLocked( player, loadout.weapon3Mod1, loadout.weapon3 ) )
 			{
-				printt( "  - WEAPON3 MOD 1 IS LOCKED, RESETTING" )
+				ProgressionPrint( "  - WEAPON3 MOD 1 IS LOCKED, RESETTING" )
 				player.SetPersistentVar( "pilotLoadouts[" + pilotLoadoutIndex + "].weapon3Mod1", defaultLoadout.weapon3Mod1 )
 			}
 			// mod2
@@ -892,22 +896,22 @@ void function ValidateEquippedItems( entity player )
 			}
 			else if ( IsSubItemLocked( player, "secondarymod2", loadout.weapon3 ) )
 			{
-				printt( "  - WEAPON3 MOD 2 SLOT IS LOCKED, RESETTING" )
+				ProgressionPrint( "  - WEAPON3 MOD 2 SLOT IS LOCKED, RESETTING" )
 				player.SetPersistentVar( "pilotLoadouts[" + pilotLoadoutIndex + "].weapon3Mod2", defaultLoadout.weapon3Mod2 )
 			}
 			else if ( !HasSubitem( loadout.weapon3, loadout.weapon3Mod2 ) )
 			{
-				printt( "  - WEAPON3 MOD 2 IS INVALID, RESETTING" )
+				ProgressionPrint( "  - WEAPON3 MOD 2 IS INVALID, RESETTING" )
 				player.SetPersistentVar( "pilotLoadouts[" + pilotLoadoutIndex + "].weapon3Mod2", defaultLoadout.weapon3Mod2 )
 			}
 			else if ( IsSubItemLocked( player, loadout.weapon3Mod2, loadout.weapon3 ) )
 			{
-				printt( "  - WEAPON3 MOD 2 IS LOCKED, RESETTING" )
+				ProgressionPrint( "  - WEAPON3 MOD 2 IS LOCKED, RESETTING" )
 				player.SetPersistentVar( "pilotLoadouts[" + pilotLoadoutIndex + "].weapon3Mod2", defaultLoadout.weapon3Mod2 )
 			}
 			else if ( loadout.weapon3Mod2 == loadout.weapon3Mod1 && loadout.weapon3Mod2 != "" )
 			{
-				printt( "  - WEAPON3 MOD 2 IS DUPLICATE, RESETTING" )
+				ProgressionPrint( "  - WEAPON3 MOD 2 IS DUPLICATE, RESETTING" )
 				player.SetPersistentVar( "pilotLoadouts[" + pilotLoadoutIndex + "].weapon3Mod2", defaultLoadout.weapon3Mod2 )
 			}
 			// mod3 (pro screen)
@@ -918,12 +922,12 @@ void function ValidateEquippedItems( entity player )
 			else if ( loadout.weapon3Mod3 != "pro_screen" )
 			{
 				// fuck you and your three mod slot stuff
-				printt( "  - WEAPON3 PRO SCREEN IS INVALID, RESETTING" )
+				ProgressionPrint( "  - WEAPON3 PRO SCREEN IS INVALID, RESETTING" )
 				player.SetPersistentVar( "pilotLoadouts[" + pilotLoadoutIndex + "].weapon3Mod3", defaultLoadout.weapon3Mod3 )
 			}
 			else if ( IsSubItemLocked( player, "secondarymod3", loadout.weapon3 ) )
 			{
-				printt( "  - WEAPON3 PRO SCREEN IS LOCKED, RESETTING" )
+				ProgressionPrint( "  - WEAPON3 PRO SCREEN IS LOCKED, RESETTING" )
 				player.SetPersistentVar( "pilotLoadouts[" + pilotLoadoutIndex + "].weapon3Mod3", defaultLoadout.weapon3Mod3 )
 			}
 		}
@@ -936,7 +940,7 @@ void function ValidateEquippedItems( entity player )
 				array<ItemData> camoSkins = GetAllItemsOfType( eItemTypes.CAMO_SKIN )
 				if ( loadout.weapon3CamoIndex >= camoSkins.len() || loadout.weapon3CamoIndex < 0 )
 				{
-					printt( "  - INVALID TERTIARY WEAPON CAMO/SKIN, RESETTING" )
+					ProgressionPrint( "  - INVALID TERTIARY WEAPON CAMO/SKIN, RESETTING" )
 					player.SetPersistentVar( "pilotLoadouts[" + pilotLoadoutIndex + "].weapon3SkinIndex", defaultLoadout.weapon3SkinIndex )
 					player.SetPersistentVar( "pilotLoadouts[" + pilotLoadoutIndex + "].weapon3CamoIndex", defaultLoadout.weapon3CamoIndex )
 				}
@@ -945,7 +949,7 @@ void function ValidateEquippedItems( entity player )
 					ItemData camoSkin = camoSkins[loadout.weapon3CamoIndex]
 					if ( IsSubItemLocked( player, camoSkin.ref, loadout.weapon3 ) )
 					{
-						printt( "  - TERTIARY WEAPON CAMO/SKIN EQUIPPED WHEN LOCKED, RESETTING" )
+						ProgressionPrint( "  - TERTIARY WEAPON CAMO/SKIN EQUIPPED WHEN LOCKED, RESETTING" )
 						player.SetPersistentVar( "pilotLoadouts[" + pilotLoadoutIndex + "].weapon3SkinIndex", defaultLoadout.weapon3SkinIndex )
 						player.SetPersistentVar( "pilotLoadouts[" + pilotLoadoutIndex + "].weapon3CamoIndex", defaultLoadout.weapon3CamoIndex )
 					}
@@ -955,7 +959,7 @@ void function ValidateEquippedItems( entity player )
 			{
 				if ( loadout.weapon3CamoIndex != 0 )
 				{
-					printt( "  - INVALID TERTIARY WEAPON CAMO/SKIN, RESETTING" )
+					ProgressionPrint( "  - INVALID TERTIARY WEAPON CAMO/SKIN, RESETTING" )
 					player.SetPersistentVar( "pilotLoadouts[" + pilotLoadoutIndex + "].weapon3SkinIndex", defaultLoadout.weapon3SkinIndex )
 					player.SetPersistentVar( "pilotLoadouts[" + pilotLoadoutIndex + "].weapon3CamoIndex", defaultLoadout.weapon3CamoIndex )
 				}
@@ -965,7 +969,7 @@ void function ValidateEquippedItems( entity player )
 				string warpaintRef = GetWeaponWarpaintRefByIndex( loadout.weapon3SkinIndex, loadout.weapon3 )
 				if ( warpaintRef == INVALID_REF || IsSubItemLocked( player, warpaintRef, loadout.weapon3 ) )
 				{
-					printt( "  - TERTIARY WEAPON SKIN LOCKED/INVALID, RESETTING" )
+					ProgressionPrint( "  - TERTIARY WEAPON SKIN LOCKED/INVALID, RESETTING" )
 					player.SetPersistentVar( "pilotLoadouts[" + pilotLoadoutIndex + "].weapon3SkinIndex", defaultLoadout.weapon3SkinIndex )
 					player.SetPersistentVar( "pilotLoadouts[" + pilotLoadoutIndex + "].weapon3CamoIndex", defaultLoadout.weapon3CamoIndex )
 				}
@@ -976,12 +980,12 @@ void function ValidateEquippedItems( entity player )
 		{
 			if ( !IsRefValid( loadout.passive1 ) || GetItemType( loadout.passive1 ) != eItemTypes.PILOT_PASSIVE1 )
 			{
-				printt( "  - KIT 1 IS INVALID, RESETTING" )
+				ProgressionPrint( "  - KIT 1 IS INVALID, RESETTING" )
 				player.SetPersistentVar( "pilotLoadouts[" + pilotLoadoutIndex + "].passive1", defaultLoadout.passive1 )
 			}
 			else if ( IsItemLocked( player, loadout.passive1 ) )
 			{
-				printt( "  - KIT 1 IS LOCKED, RESETTING" )
+				ProgressionPrint( "  - KIT 1 IS LOCKED, RESETTING" )
 				player.SetPersistentVar( "pilotLoadouts[" + pilotLoadoutIndex + "].passive1", defaultLoadout.passive1 )
 			}
 		}
@@ -990,12 +994,12 @@ void function ValidateEquippedItems( entity player )
 		{
 			if ( !IsRefValid( loadout.passive2 ) || GetItemType( loadout.passive2 ) != eItemTypes.PILOT_PASSIVE2 )
 			{
-				printt( "  - KIT 2 IS INVALID, RESETTING" )
+				ProgressionPrint( "  - KIT 2 IS INVALID, RESETTING" )
 				player.SetPersistentVar( "pilotLoadouts[" + pilotLoadoutIndex + "].passive2", defaultLoadout.passive2 )
 			}
 			else if ( IsItemLocked( player, loadout.passive2 ) )
 			{
-				printt( "  - KIT 2 IS LOCKED, RESETTING" )
+				ProgressionPrint( "  - KIT 2 IS LOCKED, RESETTING" )
 				player.SetPersistentVar( "pilotLoadouts[" + pilotLoadoutIndex + "].passive2", defaultLoadout.passive2 )
 			}
 		}
@@ -1005,12 +1009,12 @@ void function ValidateEquippedItems( entity player )
 		{
 			if ( !IsRefValid( loadout.execution ) || GetItemType( loadout.execution ) != eItemTypes.PILOT_EXECUTION )
 			{
-				printt( "  - EXECUTION IS INVALID, RESETTING" )
+				ProgressionPrint( "  - EXECUTION IS INVALID, RESETTING" )
 				player.SetPersistentVar( "pilotLoadouts[" + pilotLoadoutIndex + "].execution", "execution_neck_snap" )
 			}
 			else if ( IsItemLocked( player, loadout.execution ) )
 			{
-				printt( "  - EXECUTION IS LOCKED, RESETTING" )
+				ProgressionPrint( "  - EXECUTION IS LOCKED, RESETTING" )
 				player.SetPersistentVar( "pilotLoadouts[" + pilotLoadoutIndex + "].execution", "execution_neck_snap" )
 			}
 		}
@@ -1019,7 +1023,7 @@ void function ValidateEquippedItems( entity player )
 		{
 			if ( isSelected && IsItemLocked( player, "pilot_loadout_" + ( pilotLoadoutIndex + 1 ) ) )
 			{
-				printt( "  - SELECTED PILOT LOADOUT IS LOCKED, RESETTING" )
+				ProgressionPrint( "  - SELECTED PILOT LOADOUT IS LOCKED, RESETTING" )
 				player.SetPersistentVar( "pilotSpawnLoadout.index", 0 )
 				Remote_CallFunction_NonReplay( player, "ServerCallback_UpdatePilotModel", 0 )
 			}
@@ -1028,7 +1032,14 @@ void function ValidateEquippedItems( entity player )
 
 	Remote_CallFunction_NonReplay( player, "ServerCallback_UpdatePilotModel", player.GetPersistentVarAsInt( "pilotSpawnLoadout.index" ) )
 
-	printt( "ITEM VALIDATION COMPLETE FOR PLAYER: " + player.GetPlayerName() )
+	ProgressionPrint( "ITEM VALIDATION COMPLETE FOR PLAYER: " + player.GetPlayerName() )
+}
+
+void function ProgressionPrint( string message )
+{
+	#if DEV
+		printt( message )
+	#endif
 }
 
 // basically just PopulateTitanLoadoutFromPersistentData but without validation, we are doing the validation in a better way
