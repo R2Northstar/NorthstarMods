@@ -95,7 +95,9 @@ void function InitModMenu()
 	AddButtonEventHandler( Hud_GetChild( file.menu, "HideCVButton"), UIE_CHANGE, OnHideConVarsChange )
 
 	// Footers
+	AddMenuFooterOption( file.menu, BUTTON_A, "#A_BUTTON_SELECT" )
 	AddMenuFooterOption( file.menu, BUTTON_B, "#B_BUTTON_BACK", "#BACK" )
+
 	AddMenuFooterOption(
 		file.menu,
 		BUTTON_X,
@@ -103,12 +105,21 @@ void function InitModMenu()
 		"#RELOAD_MODS",
 		OnReloadModsButtonPressed
 	)
+
 	AddMenuFooterOption(
 		file.menu,
-		BUTTON_BACK,
+		BUTTON_Y,
 		PrependControllerPrompts( BUTTON_Y, "#AUTHENTICATION_AGREEMENT" ),
 		"#AUTHENTICATION_AGREEMENT",
 		OnAuthenticationAgreementButtonPressed
+	)
+
+	AddMenuFooterOption(
+		file.menu,
+		BUTTON_BACK,
+		"%[BACK|]%" + " " + Localize( "#MOD_SETTINGS" ),
+		"#MOD_SETTINGS",
+		OnModSettingsButtonPressed
 	)
 
 	// Nuke weird rui on filter switch
@@ -127,16 +138,23 @@ void function OnModMenuOpened()
 	UpdateListSliderHeight()
 	UpdateListSliderPosition()
 
-	RegisterButtonPressedCallback(MOUSE_WHEEL_UP , OnScrollUp)
-	RegisterButtonPressedCallback(MOUSE_WHEEL_DOWN , OnScrollDown)
+	try
+	{
+		DeregisterButtonPressedCallback( MOUSE_WHEEL_UP, OnScrollUp )
+		DeregisterButtonPressedCallback( MOUSE_WHEEL_DOWN, OnScrollDown )
+	}
+	catch ( ex ) {}
+
+	RegisterButtonPressedCallback( MOUSE_WHEEL_UP, OnScrollUp )
+	RegisterButtonPressedCallback( MOUSE_WHEEL_DOWN, OnScrollDown )
 }
 
 void function OnModMenuClosed()
 {
 	try
 	{
-		DeregisterButtonPressedCallback(MOUSE_WHEEL_UP , OnScrollUp)
-		DeregisterButtonPressedCallback(MOUSE_WHEEL_DOWN , OnScrollDown)
+		DeregisterButtonPressedCallback( MOUSE_WHEEL_UP, OnScrollUp )
+		DeregisterButtonPressedCallback( MOUSE_WHEEL_DOWN, OnScrollDown )
 	}
 	catch ( ex ) {}
 
@@ -243,6 +261,11 @@ void function OnReloadModsButtonPressed( var button )
 void function OnAuthenticationAgreementButtonPressed( var button )
 {
 	NorthstarMasterServerAuthDialog()
+}
+
+void function OnModSettingsButtonPressed( var button )
+{
+	AdvanceMenu( GetMenu( "ModSettings" ) )
 }
 
 void function OnModLinkButtonPressed( var button )
