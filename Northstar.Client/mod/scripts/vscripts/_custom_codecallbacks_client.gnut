@@ -104,7 +104,7 @@ void function CHudChat_OnReceivedSayTextMessageCallback( int fromPlayerIndex, st
 
 	// Null player + isTeam == true: Server with no tag.
 
-	if ( messageType == 0 || messageType == 1 )
+	if ( messageType >= 0 && messageType <= 2 )
 	{
 		ClClient_MessageStruct localMessage
 
@@ -113,29 +113,11 @@ void function CHudChat_OnReceivedSayTextMessageCallback( int fromPlayerIndex, st
 		localMessage.playerName = fromPlayerName
 		localMessage.isTeam = IsValid( fromPlayer ) && isTeam
 		localMessage.isDead = isDead
-		localMessage.isWhisper = false
+		localMessage.isWhisper = messageType == 2 ? true : false
 		localMessage.shouldBlock = false
 		localMessage.noServerTag = !IsValid( fromPlayer ) && isTeam
 
 		OnReceivedMessage( localMessage )
-		return
-	}
-
-	if ( messageType == 2 )
-	{
-		ClClient_MessageStruct localMessage
-
-		localMessage.message = message
-		localMessage.player = fromPlayer
-		localMessage.playerName = fromPlayerName
-		localMessage.isTeam = IsValid( fromPlayer ) && isTeam
-		localMessage.isDead = isDead
-		localMessage.isWhisper = true
-		localMessage.shouldBlock = false
-		localMessage.noServerTag = !IsValid( fromPlayer ) && isTeam
-
-		OnReceivedMessage( localMessage )
-		return
 	}
 }
 
