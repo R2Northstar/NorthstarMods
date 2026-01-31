@@ -5903,6 +5903,10 @@ bool function IsItemLocked( entity player, string ref )
 
 bool function IsItemLockedForEntitlement( entity player, string ref, string parentRef = "" )
 {
+	#if !VANILLA
+		return false
+	#endif
+
 	string fullRef = GetFullRef( ref, parentRef )
 
 	foreach ( int entitlementId in file.entitlementUnlocks[fullRef].entitlementIds )
@@ -10100,11 +10104,7 @@ void function InitUnlockAsEntitlement( string itemRef, string parentRef, int ent
 		unlock = file.entitlementUnlocks[fullRef]
 	}
 
-#if VANILLA
 	unlock.entitlementIds.append( entitlementId )
-#else
-	unlock.entitlementIds.append( 1 ) // Using `1` here instead of the huge DLC check I did previously. Having the `1` seems to keep all paid cosmetics unlocked with progression enabled.
-#endif
 }
 
 array<int> function GetEntitlementIds( string itemRef, string parentRef = "" )
