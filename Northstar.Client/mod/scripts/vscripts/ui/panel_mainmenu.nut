@@ -993,6 +993,24 @@ void function SpotlightButton_Activate( var button )
 
 	if ( link.find( "menu:" ) == 0 )
 	{
+		#if VANILLA
+			foreach ( ModInfo mod in NSGetModsInformation() )
+			{
+				if ( mod.enabled && mod.requiredOnClient )
+				{
+					DialogData dialogData
+
+					dialogData.header = "#COOP_CUSTOM_LOWPOP_WARNING_TITLE" // WARNING
+					dialogData.message = "#HAS_NON_VANILLA_MODS"
+					dialogData.image = $"ui/menu/common/dialog_error"
+
+					AddDialogButton( dialogData, "#OK" )
+					OpenDialog( dialogData )
+					return
+				}
+			}
+		#endif
+
 		var menu
 
 		switch ( link )
