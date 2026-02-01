@@ -813,7 +813,11 @@ void function UpdateMenusOnConnect( string levelname )
 			}
 
 			thread UpdateAnnouncementDialog()
+			#if !VANILLA
+			// this ends up messing with announcementVersionSeen in persistence,
+			// so we should avoid doing that in vanilla
 			thread GetAtlasAnnouncement_Threaded()
+			#endif
 		}
 		else
 		{
