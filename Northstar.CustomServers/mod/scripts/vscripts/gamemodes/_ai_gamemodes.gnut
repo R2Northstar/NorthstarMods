@@ -19,7 +19,7 @@ struct
 
 void function AiGameModes_Init()
 {
-	Frontline_Init()
+	AddCallback_EntitiesDidLoad( Frontline_Init )
 }
 
 //------------------------------------------------------

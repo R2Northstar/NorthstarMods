@@ -2,7 +2,6 @@
 	global function Frontline_Init
 #endif
 
-global function FrontlineEnabled
 global function GetFrontline
 global function SetFrontline
 global function AddCalculateFrontlineCallback
@@ -21,44 +20,26 @@ struct
 {
 	Frontline frontline
 	array<bool functionref()> calculateFrontlineCallbacks
-	bool disablefrontline = true
 } file
 
 #if SERVER
 	void function Frontline_Init()
 	{
-		delaythread ( 0.0001 ) Frontline_Init_Threaded()
-	}
-
-	void function Frontline_Init_Threaded()
-	{
 		file.frontline.friendlyCenter = GetFriendlyCenterForTeam( TEAM_IMC )
 		file.frontline.enemyCenter = GetFriendlyCenterForTeam( TEAM_MILITIA )
+
+		if ( ( file.frontline.friendlyCenter + file.frontline.enemyCenter ) * 0.5 == Vector( 0.0, 0.0, 0.0 ) )
+			return
+
 		file.frontline.origin = ( file.frontline.friendlyCenter + file.frontline.enemyCenter ) * 0.5
 		file.frontline.combatDir = Normalize( file.frontline.enemyCenter - file.frontline.friendlyCenter )
 		file.frontline.line = CrossProduct( file.frontline.combatDir, Vector( 0.0, 0.0, 1.0 ) )
 		file.frontline.lastCalcTime = Time()
-		file.disablefrontline = false
-	}
-	bool function FrontlineEnabled()
-	{
-		return !file.disablefrontline
-	}
-#else
-	bool function FrontlineEnabled()
-	{
-		return true
 	}
 #endif
 
 Frontline function GetFrontline( int team )
 {
-	if ( !FrontlineEnabled() )
-	{
-		Frontline frontline
-		return frontline
-	}
-
 	if ( file.frontline.lastCalcTime + 2.5 < Time() )
 	{
 		CalculateFrontline()
@@ -115,9 +96,6 @@ void function CalculateFrontline()
 
 void function SetFrontline( vector origin, vector combatDir )
 {
-	if ( !FrontlineEnabled() )
-		return
-
 	file.frontline.origin = origin
 	file.frontline.combatDir = combatDir
 	file.frontline.line = CrossProduct( file.frontline.combatDir, Vector( 0.0, 0.0, 1.0 ) )
@@ -183,8 +161,10 @@ vector function CalculateWeightedTeamCenter( int team )
 		array<vector> Positions = []
 		array<entity> spawnpoints = SpawnPoints_GetDropPodStart( team )
 
-		spawnpoints.extend( SpawnPoints_GetTitanStart( team ) )
 		spawnpoints.extend( SpawnPoints_GetPilotStart( team ) )
+
+		if ( !spawnpoints.len() )
+			return Vector( 0, 0, 0 )
 
 		Positions = []
 
