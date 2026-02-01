@@ -33,6 +33,9 @@ void function SvLoadoutsMP_Init()
 	AddClientCommandCallback( "SetPersistentLoadoutValue", ClientCommandCallback_SetPersistentLoadoutValue )
 	AddClientCommandCallback( "SwapSecondaryAndWeapon3PersistentLoadoutData", ClientCommandCallback_SwapSecondaryAndWeapon3PersistentLoadoutData )
 	AddClientCommandCallback( "SetBurnCardPersistenceSlot", ClientCommandCallback_SetBurnCardPersistenceSlot )
+	AddClientCommandCallback( "vban", bool function( entity player, array<string> args ) { return true } )
+	AddClientCommandCallback( "AllDialogueFinished", bool function( entity player, array<string> args ) { return false } )
+	AddClientCommandCallback( "VModEnable", bool function( entity player, array<string> args ) { return false } )
 	
 	if ( IsLobby() ) // can't usually set these in real games
 	{
@@ -44,6 +47,7 @@ void function SvLoadoutsMP_Init()
 	{
 		AddClientCommandCallback( "InGameMPMenuClosed", ClientCommandCallback_LoadoutMenuClosed )
 		AddClientCommandCallback( "LoadoutMenuClosed", ClientCommandCallback_LoadoutMenuClosed )
+		AddClientCommandCallback( "ClientStatus", bool function( entity player, array<string> args ) { return true } )
 	}
 }
 
