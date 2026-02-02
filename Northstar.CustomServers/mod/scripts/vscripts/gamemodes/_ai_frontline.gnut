@@ -9,25 +9,25 @@ global const int FrontlineRadius_Titan = 8192
 
 const int FrontlineSpawnpoint_MediumCombat = 2048
 
-vector function GetFrontlinePath( int team, int hull )
+vector function GetFrontlinePath( int team )
 {
 	Frontline fl = GetFrontline( team )
 
-	return ArrayClosestVector( NavMesh_GetAllPositions( hull ), fl.origin )[0]
+	return ArrayClosestVector( NavMesh_GetAllNodes(), fl.origin )[0]
 }
 
-vector function GetFrontlineFriendlyCenter( int team, int hull )
+vector function GetFrontlineFriendlyCenter( int team )
 {
 	Frontline fl = GetFrontline( team )
 
-	return ArrayClosestVector( NavMesh_GetAllPositions( hull ), fl.friendlyCenter )[0]
+	return ArrayClosestVector( NavMesh_GetAllNodes(), fl.friendlyCenter )[0]
 }
 
-vector function GetFrontlineEnemyCenter( int team, int hull )
+vector function GetFrontlineEnemyCenter( int team )
 {
 	Frontline fl = GetFrontline( team )
 
-	return ArrayClosestVector( NavMesh_GetAllPositions( hull ), fl.enemyCenter )[0]
+	return ArrayClosestVector( NavMesh_GetAllNodes(), fl.enemyCenter )[0]
 }
 
 entity function GetFrontlineSpawnpoint( int team, array<entity> candidatePoints )
@@ -35,7 +35,7 @@ entity function GetFrontlineSpawnpoint( int team, array<entity> candidatePoints 
 	if ( !candidatePoints.len() )
 		return null
 
-	vector frontline = GetFrontlineFriendlyCenter( team, HULL_HUMAN )
+	vector frontline = GetFrontlineFriendlyCenter( team )
 
 	array<entity> closestPoints = ArrayClosest( candidatePoints, frontline )
 

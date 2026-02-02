@@ -450,7 +450,7 @@ void function SquadHandler( array<entity> guys )
 	if ( !squadAlive )
 		return
 
-	vector point = GetFrontlinePath( team, HULL_HUMAN )
+	vector point = GetFrontlinePath( team )
 
 	// Setup AI, first assault point
 	foreach ( guy in guys )
@@ -470,7 +470,7 @@ void function SquadHandler( array<entity> guys )
 		if ( !guys.len() )
 			return
 
-		point = GetFrontlinePath( team, HULL_HUMAN )
+		point = GetFrontlinePath( team )
 
 		foreach ( guy in guys )
 		{
@@ -547,7 +547,7 @@ void function ReaperHandler( entity reaper )
 	foreach ( player in players )
 		reaper.Minimap_AlwaysShow( 0, player )
 
-	vector point = GetFrontlinePath( reaper.GetTeam(), HULL_MEDIUM )
+	vector point = GetFrontlinePath( reaper.GetTeam() )
 
 	reaper.AssaultPoint( point )
 	reaper.AssaultPointClamped( point )
@@ -557,7 +557,7 @@ void function ReaperHandler( entity reaper )
 	// Every 2.5 - 5 secs change AssaultPoint
 	while ( IsAlive( reaper ) )
 	{
-		point = GetFrontlinePath( reaper.GetTeam(), HULL_MEDIUM )
+		point = GetFrontlinePath( reaper.GetTeam() )
 
 		reaper.AssaultPoint( point )
 		reaper.AssaultPointClamped( point )

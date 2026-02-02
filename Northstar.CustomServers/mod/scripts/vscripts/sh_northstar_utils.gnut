@@ -1,11 +1,23 @@
 globalize_all_functions
 
+void function Before_NorthstarUtils_Init()
+{
+	#if SERVER && MP
+		AddCallback_EntitiesDidLoad( ValidateTitanDropNodes )
+	#endif
+}
+
+void function After_NorthstarUtils_Init()
+{
+}
+
 // whether the game should return to the lobby on GameRules_EndMatch()
 bool function ShouldReturnToLobby()
 {	
 	return GetConVarBool( "ns_should_return_to_lobby" )
 }
 
+// reload mods and optionally reloads the current map or rejoins the server
 void function ReloadMods( bool reloadorretry = false )
 {
 	NSReloadMods()
@@ -51,3 +63,99 @@ void function ReloadMods( bool reloadorretry = false )
 		ClientCommand( "uiscript_reset" )
 	#endif
 }
+
+#if SERVER && MP
+	// for ValidateTitanDropNodes()
+	bool function TitanValidateDropNode( FlightPath flightpath, entity titan, vector origin )
+	{
+		if ( NearTitanfallBlocker( origin ) )
+			return false
+
+		string animation = HOTDROP_TURBO_ANIM
+	
+		titan.SetAngles( Vector( 0, 0, 0 ) )
+		titan.SetOrigin( origin )
+
+		float impactTime = GetHotDropImpactTime( titan, animation )
+		Attachment result = titan.Anim_GetAttachmentAtTime( animation, "OFFSET", impactTime )
+		vector mins = titan.GetBoundingMins()
+		vector maxs = titan.GetBoundingMaxs()
+		int mask = titan.GetPhysicsSolidMask()
+		origin = ModifyOriginForDrop( origin, mins, maxs, result.position, mask )
+
+		titan.SetOrigin( origin )
+
+		if ( !TitanTestDropPoint( origin, flightpath ) )
+			return false
+
+		if ( !TitanCanStand( titan ) )
+			return false
+
+		if ( TitanHulldropSpawnpoint( flightpath, origin, 0 ) == null )
+			return false
+
+		if ( !EdgeTraceDropPoint( origin ) )
+			return false
+
+		return true
+	}
+
+	// makes sure titans use valid drop nodes with custom props
+	void function ValidateTitanDropNodes()
+	{
+		if ( !IsNewThread() )
+		{
+			thread ValidateTitanDropNodes()
+			return
+		}
+		else
+			WaitEndFrame()
+
+		if ( !GetNodeCount() )
+			return
+
+		entity titan = CreateNPCTitanFromSettings( GetAllowedPlayerTitanSettings()[0], TEAM_UNASSIGNED, Vector( 0, 0, 0 ), Vector( 0, 0, 0 ) )
+		titan.SetModel( GetFlightPathModel( "fp_titan_model" ) )
+		titan.SetInvulnerable()
+		titan.kv.VisibilityFlags = ~ENTITY_VISIBLE_TO_EVERYONE
+
+		titan.EndSignal( "OnDestroy" )
+
+		array<vector> positions = NavMesh_GetAllNodes()
+
+		FlightPath flightpath = GetAnalysisForModel( titan.GetModelName(), HOTDROP_TURBO_ANIM )
+
+		int dataindex = GetAnalysisDataIndex( flightpath )
+
+		for ( int i = 0; i < positions.len(); i++ )
+		{
+			vector origin = positions[i]
+			bool failed = false
+
+			for ( int j = 0; j < ANALYSIS_STEPS; j++ )
+			{
+				if ( !TitanValidateDropNode( flightpath, titan, origin ) )
+				{
+					failed = true
+					break
+				}
+			}
+
+			if ( !failed )
+				continue
+
+			for ( int j = 0; j < ANALYSIS_STEPS; j++ )
+			{
+				if ( failed )
+					SetNodeScriptData_Boolean( i, dataindex + j, false )
+				else
+					DebugDrawLine( origin, origin + AnglesToForward( Vector( 0, j * ANALYSIS_YAW_STEP, 0 ) ) * 80, 255, 100, 0, true, 10000.0 ) // looks like claude lol
+			}
+		}
+
+		titan.SetOrigin( < 10000, 10000, 10000 > )
+
+		if ( IsAlive( titan ) )
+			titan.Die( null, null, { forceKill = true, scriptType = DF_EXPLOSION, damageType = DMG_REMOVENORAGDOLL } )
+	}
+#endif

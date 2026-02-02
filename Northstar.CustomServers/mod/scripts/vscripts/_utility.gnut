@@ -4406,7 +4406,7 @@ bool function PlayerHasTitan( entity player )
 	return false
 }
 
-array<vector> function NavMesh_GetAllPositions( int hull )
+array<vector> function NavMesh_GetAllNodes()
 {
 	array<vector> nodes = []
 
