@@ -67,7 +67,7 @@ bool function IsSpawnpointValid( entity spawnpoint, int team, vector frontlinePa
 	if ( spawnpoint.IsOccupied() || spawnpoint.e.spawnPointInUse )
 		return false
 
-	if ( spawnpoint.e.spawnTime != 0 && Time() - spawnpoint.e.spawnTime <= 10.0 ) 
+	if ( spawnpoint.e.spawnTime != 0 && Time() - spawnpoint.e.spawnTime <= SPAWNPOINT_USE_TIME )
 		return false
 
 	if ( SpawnPointInNoSpawnArea( spawnpoint.GetOrigin(), team ) )

@@ -377,8 +377,4 @@ void function RegisterCustomFDContent()
 {
 	AddFDCustomTitanStart( < -2221, 5230, 128 >, < 0, -105, 0 > )
 	AddFDCustomTitanStart( < -3058, 4741, 102 >, < 0, -15, 0 > )
-	
-	//Add those OOB because some "smart" fellas wont stop climbing these places to snipe with Charge Rifle/Archer and do nothing else
-	AddOutOfBoundsTriggerWithParams( < -75, 1146, 1360 >, 160, 320 ) //Center Radio Tower
-	AddOutOfBoundsTriggerWithParams( < -1720, 1243, 1360 >, 80, 256 ) //Sea Food building Antenna
 }
