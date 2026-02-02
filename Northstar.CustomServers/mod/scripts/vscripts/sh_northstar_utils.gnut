@@ -127,31 +127,32 @@ void function ReloadMods( bool reloadorretry = false )
 
 		int dataindex = GetAnalysisDataIndex( flightpath )
 
+		#if DEV
+			int startTime = Daily_GetCurrentTime()
+		#endif
+
 		for ( int i = 0; i < positions.len(); i++ )
 		{
 			vector origin = positions[i]
-			bool failed = false
 
-			for ( int j = 0; j < ANALYSIS_STEPS; j++ )
+			if ( !TitanValidateDropNode( flightpath, titan, origin ) )
 			{
-				if ( !TitanValidateDropNode( flightpath, titan, origin ) )
-				{
-					failed = true
-					break
-				}
+				SetNodeScriptData_Boolean( i, dataindex, false )
 			}
-
-			if ( !failed )
-				continue
-
-			for ( int j = 0; j < ANALYSIS_STEPS; j++ )
+			/*
+			else
 			{
-				if ( failed )
-					SetNodeScriptData_Boolean( i, dataindex + j, false )
-				else
+				for ( int j = 0; j < ANALYSIS_STEPS; j++ )
 					DebugDrawLine( origin, origin + AnglesToForward( Vector( 0, j * ANALYSIS_YAW_STEP, 0 ) ) * 80, 255, 100, 0, true, 10000.0 ) // looks like claude lol
 			}
+			*/
 		}
+
+		#if DEV
+			DisplayTime endTime = SecondsToDHMS( Daily_GetCurrentTime() - startTime )
+
+			printt( "Toke " + endTime.s + " Second(s) " + endTime.m + " Minute(s) " + endTime.h + " Hour(s) " + endTime.d + " Day(s) to validate titan drop nodes" )
+		#endif
 
 		titan.SetOrigin( < 10000, 10000, 10000 > )
 
