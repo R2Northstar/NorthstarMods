@@ -163,7 +163,7 @@ void function RateSpawnpointsPilot_FW( int checkClass, array<entity> spawnpoints
 
 void function RateSpawnpointsTitan_FW( int checkClass, array<entity> spawnpoints, int team, entity player )
 {
-	array<entity> startSpawns = SpawnPoints_GetTitanStart( team )
+	array<entity> startSpawns = NSSpawnPoints_GetTitanStart( team )
 	RateSpawnpoints_FW( startSpawns, checkClass, spawnpoints, team, player )
 }
 
@@ -1210,7 +1210,7 @@ entity function FW_ForcedTitanStartPoint( entity player, entity basePoint )
 	int team = player.GetTeam()
 	if ( TITAN_POINT_REVERSED_MAPS.contains( GetMapName() ) )
 		team = GetOtherTeam( player.GetTeam() )
-	array<entity> startPoints = SpawnPoints_GetTitanStart( team )
+	array<entity> startPoints = NSSpawnPoints_GetTitanStart( team )
 	entity validPoint = startPoints[ RandomInt( startPoints.len() ) ] // choose a random( maybe not safe ) start point
 	return validPoint
 }

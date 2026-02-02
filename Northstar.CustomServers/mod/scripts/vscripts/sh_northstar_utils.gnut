@@ -159,4 +159,16 @@ void function ReloadMods( bool reloadorretry = false )
 		if ( IsAlive( titan ) )
 			titan.Die( null, null, { forceKill = true, scriptType = DF_EXPLOSION, damageType = DMG_REMOVENORAGDOLL } )
 	}
+
+	// does the samething as SpawnPoints_GetTitanStart but doesn't have a chance to crash the server
+	array<entity> function NSSpawnPoints_GetTitanStart( int team )
+	{
+		array<entity> spawnpoints = []
+
+		foreach ( entity spawnpoint in GetEntArrayByClass_Expensive( "info_spawnpoint_titan_start" ) )
+			if ( spawnpoint.GetTeam() == team )
+				spawnpoints.append( spawnpoint )
+
+		return spawnpoints
+	}
 #endif

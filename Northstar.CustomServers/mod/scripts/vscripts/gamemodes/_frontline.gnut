@@ -158,24 +158,19 @@ vector function CalculateWeightedTeamCenter( int team )
 #if SERVER
 	vector function GetFriendlyCenterForTeam( int team )
 	{
-		array<vector> Positions = []
 		array<entity> spawnpoints = SpawnPoints_GetDropPodStart( team )
 
+		spawnpoints.extend( NSSpawnPoints_GetTitanStart( team ) )
 		spawnpoints.extend( SpawnPoints_GetPilotStart( team ) )
 
 		if ( !spawnpoints.len() )
 			return Vector( 0, 0, 0 )
 
-		Positions = []
-
-		foreach ( entity spawnpoint in spawnpoints )
-			Positions.append( spawnpoint.GetOrigin() )
-
 		vector centerPos = Vector( 0, 0, 0 )
 
-		foreach ( vector Position in Positions )
-			centerPos += Position
+		foreach ( entity spawnpoint in spawnpoints )
+			centerPos += spawnpoint.GetOrigin()
 
-		return centerPos / Positions.len()
+		return centerPos / spawnpoints.len()
 	}
 #endif
