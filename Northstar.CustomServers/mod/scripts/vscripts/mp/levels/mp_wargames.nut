@@ -67,6 +67,9 @@ void function SpawnMarvinsForRound()
 {
 	foreach ( entity spawner in file.marvinSpawners )
 	{
+		if ( !IsValid( spawner ) )
+			continue
+
 		entity marvin = CreateMarvin( TEAM_UNASSIGNED, spawner.GetOrigin(), spawner.GetAngles() )
 		marvin.kv.health = 1
 		marvin.kv.max_health = 1

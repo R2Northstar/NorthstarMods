@@ -39,8 +39,6 @@ struct
 
 void function GamemodeAITdm_Init()
 {
-	SetSpawnpointGamemodeOverride( TEAM_DEATHMATCH )
-
 	AddCallback_GameStateEnter( eGameState.Prematch, OnPrematchStart )
 	AddCallback_GameStateEnter( eGameState.Playing, OnPlaying )
 

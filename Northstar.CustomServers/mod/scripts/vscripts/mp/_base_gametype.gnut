@@ -2120,17 +2120,6 @@ bool function GameModeRemove( entity ent )
 	string gameMode = GameRules_GetGameMode()
 	switch ( gameMode )
 	{
-		// These game modes have checkboxes in leveled
-		case LAST_TITAN_STANDING:
-		case TEAM_DEATHMATCH:
-		case ATTRITION:
-		case CAPTURE_POINT:
-		case CAPTURE_THE_FLAG:
-		case FORT_WAR:
-		case FFA:
-		case FD:
-			break
-
 		// These game modes use tdm spawns
 		case PILOT_SKIRMISH:
 		case WINGMAN_PILOT_SKIRMISH:
@@ -2165,8 +2154,7 @@ bool function GameModeRemove( entity ent )
 			break
 
 		default:
-			// If a game mode is not handled in here, spawnpoints won't have checkboxes that correspond to it, so all spawnpoints will be used in that mode, which is probably bad.
-			Assert( false, "Game mode " + gameMode + " not handled in GameModeRemove()" )
+			gameMode = GetSpawnpointGamemodeOverride()
 	}
 
 	AT_CollisionCleanup( ent )
