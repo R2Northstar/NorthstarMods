@@ -191,25 +191,10 @@ void function HandleScoreEvent( entity victim, entity attacker, var damageInfo )
 	attacker.AddToPlayerGameStat( PGS_ASSAULT_SCORE, playerScore )
 
 	int assaultscore = attacker.GetPlayerGameStat( PGS_ASSAULT_SCORE )
+	int assaultscore256 = assaultscore / 256
 
-	if ( assaultscore >= 256 )
-	{
-		int assaultscore256 = 0
-
-		while ( assaultscore >= 256 )
-		{
-			assaultscore -= 256
-			assaultscore256 += 1
-		}
-
-		attacker.SetPlayerNetInt( "AT_bonusPoints", assaultscore )
-		attacker.SetPlayerNetInt( "AT_bonusPoints256", assaultscore256 )
-	}
-	else
-	{
-		attacker.SetPlayerNetInt( "AT_bonusPoints", assaultscore )
-		attacker.SetPlayerNetInt( "AT_bonusPoints256", 0 )
-	}
+	attacker.SetPlayerNetInt( "AT_bonusPoints", assaultscore - assaultscore256 * 256 )
+	attacker.SetPlayerNetInt( "AT_bonusPoints256", assaultscore256 )
 }
 
 // When attrition starts both teams spawn ai on preset nodes, after that
@@ -551,7 +536,12 @@ void function OnSpectreLeeched( entity spectre, entity player )
 	AddTeamScore( player.GetTeam(), 1 )
 
 	player.AddToPlayerGameStat( PGS_ASSAULT_SCORE, 1 )
-	player.SetPlayerNetInt("AT_bonusPoints", player.GetPlayerGameStat( PGS_ASSAULT_SCORE ) )
+
+	int assaultscore = player.GetPlayerGameStat( PGS_ASSAULT_SCORE )
+	int assaultscore256 = assaultscore / 256
+
+	player.SetPlayerNetInt( "AT_bonusPoints", assaultscore - assaultscore256 * 256 )
+	player.SetPlayerNetInt( "AT_bonusPoints256", assaultscore256 )
 }
 
 // Same as SquadHandler, just for reapers
