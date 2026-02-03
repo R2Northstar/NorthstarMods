@@ -1,1 +1,171 @@
-//fuck
+untyped
+
+global function LaserMesh_Init
+
+const SOUND_LASER_DAMAGE = "Timeshift_LaserMesh_Damage"
+const asset DAMAGE_AREA_MODEL = $"mdl/weapons/grenades/arc_grenade_projectile.rmdl"
+
+void function LaserMesh_Init()
+{
+	RegisterSignal( "PauseLasermesh" )
+	AddSpawnCallback( "trigger_multiple", OnSpawnedTrigger )
+	PrecacheModel( DAMAGE_AREA_MODEL )
+}
+
+void function OnSpawnedTrigger( entity trigger )
+{
+	string scriptName = trigger.GetScriptName()
+
+	//laser mesh
+	if ( scriptName == "laser_mesh" )
+		thread TriggerPushbackDamageThink( trigger )
+}
+
+void function TriggerPushbackDamageThink( entity trigger )
+{
+	trigger.EndSignal( "OnDestroy" )
+	trigger.EndSignal( "PauseLasermesh" )
+
+	string scriptName = trigger.GetScriptName()
+
+	vector triggerOrigin = trigger.GetOrigin()
+	vector soundOrigin = triggerOrigin
+
+	string soundLoop
+	string soundDeactivate
+	string soundDamage = SOUND_LASER_DAMAGE
+	int damageID = eDamageSourceId.lasergrid
+	int statusEffectHandle
+
+	entity maxsCornerEnt = trigger.GetLinkEnt()
+	entity minsCornerEnt = maxsCornerEnt.GetLinkEnt()
+	entity maxsConnectEnt = minsCornerEnt.GetLinkEnt()
+
+	maxsCornerEnt.kv.spawnflags = SF_INFOTARGET_ALWAYS_TRANSMIT_TO_CLIENT
+	maxsConnectEnt.kv.spawnflags = SF_INFOTARGET_ALWAYS_TRANSMIT_TO_CLIENT
+	minsCornerEnt.kv.spawnflags = SF_INFOTARGET_ALWAYS_TRANSMIT_TO_CLIENT
+
+	statusEffectHandle = StatusEffect_AddEndless( maxsCornerEnt, eStatusEffect.laser_mesh, 1.0 )
+
+	var scriptTypeMask = damageTypes.dissolve// | DF_STOPS_TITAN_REGEN
+	entity player
+	var result
+
+	//Hacky damage solution. If playtests go well, we should request from code a way for triggers to detect grenades entering ( to cause it to explode ) and for triggers to take damage.
+	entity damageArea = CreatePropScript( DAMAGE_AREA_MODEL, trigger.GetWorldSpaceCenter(), <0,0,0>, 0 )
+	damageArea.SetMaxHealth( 100 )
+	damageArea.SetHealth( 100 )
+	damageArea.SetTakeDamageType( DAMAGE_YES )
+	damageArea.SetDamageNotifications( false )
+	damageArea.SetDeathNotifications( false )
+	damageArea.SetArmorType( ARMOR_TYPE_HEAVY )
+	damageArea.Hide()
+	damageArea.SetOwner( trigger )
+	SetTeam( damageArea, TEAM_UNASSIGNED )
+	damageArea.SetCanBeMeleed( false )
+	SetVisibleEntitiesInConeQueriableEnabled( damageArea, false )
+	AddEntityCallback_OnDamaged( damageArea, OnLaserMeshDamaged )
+
+	//---------------------------
+	// Cleanup when destroyed
+	//---------------------------
+	OnThreadEnd(
+	function() : ( trigger, maxsCornerEnt, soundOrigin, soundLoop, soundDeactivate, statusEffectHandle, damageArea )
+		{
+			if ( IsValid( maxsCornerEnt ) )
+				StatusEffect_Stop( maxsCornerEnt, statusEffectHandle )
+
+			//--------------------------------------------------------------------------------
+			// Stop and destroy all sounds and particles regardless of pausing or destroying
+			//--------------------------------------------------------------------------------
+			if ( soundLoop != "" )
+				StopSoundAtPosition( soundOrigin, soundLoop )
+
+			if ( soundDeactivate != "" )
+				EmitSoundAtPosition( TEAM_UNASSIGNED, soundOrigin, soundDeactivate )
+
+			if ( IsAlive( damageArea ) )
+				damageArea.Destroy()
+		}
+	)
+
+	//---------------------------
+	// Wait to do damage
+	//---------------------------
+	while ( IsValid( trigger ) )
+	{
+		player = null
+		result = trigger.WaitSignal( "OnStartTouch" )
+
+		if ( !IsValid( result.activator ) )
+			continue
+
+		if ( result.activator.IsNPC() )
+		{
+			thread LaserMeshDamageNPC( expect entity( result.activator ) )
+			continue
+		}
+		if ( !result.activator.IsPlayer() )
+			continue
+
+		//Damage and pushback player
+		player = expect entity( result.activator )
+
+		float damage = 5
+		player.TakeDamage( damage, svGlobal.worldspawn, svGlobal.worldspawn, { origin = player.GetOrigin(), scriptType = scriptTypeMask, damageSourceId = damageID } )
+		//CreateShakeRumbleOnly( player.GetOrigin(), 10, 105, 1 )
+
+		//playerOriginXYonly = player.GetOrigin()
+		//playerOriginXYonly = < playerOriginXYonly.x, playerOriginXYonly.y, 0 >
+		//vector laserGridOrigin = trigger.GetWorldSpaceCenter()
+		//vector triggerOriginXYonly = <laserGridOrigin.x, laserGridOrigin.y, 0>
+		//vecToEnt = ( playerOriginXYonly - triggerOriginXYonly )
+		//vecToEnt = Normalize( vecToEnt )
+		//SurfaceNormal pushback
+		vector velocity = Normalize( player.GetVelocity() ) * -500
+		player.SetVelocity( velocity )
+
+		EmitSoundOnEntity( player, soundDamage )
+	}
+}
+
+void function LaserMeshDamageNPC( entity npc )
+{
+	if ( !IsAlive( npc ) )
+		return
+
+	if ( npc.GetClassName() == "npc_marvin" )
+		return
+
+	if ( npc.GetClassName() == "npc_stalker" )
+		return
+
+	npc.Gib( <0,0,100> )
+}
+
+//Hacky damage solution. If playtests go well, we should request from code a way for triggers to detect grenades entering ( to cause it to explode ) and for triggers to take damage.
+void function OnLaserMeshDamaged( entity damageArea, var damageInfo )
+{
+	bool shouldDestroy = false
+	int damageSourceID = DamageInfo_GetDamageSourceIdentifier( damageInfo )
+	switch ( damageSourceID )
+	{
+		//case eDamageSourceId.mp_titanweapon_meteor: Secondary explosions to hit it, not the flying projectile.
+		case eDamageSourceId.mp_weapon_grenade_emp:
+			shouldDestroy = true
+			break
+	}
+	if ( shouldDestroy )
+	{
+		DamageInfo_SetDamage( damageInfo, 101 )
+		entity trigger = damageArea.GetOwner()
+		if ( IsValid( trigger ) )
+		{
+			trigger.Destroy()
+		}
+	}
+	else
+	{
+		DamageInfo_SetDamage( damageInfo, 0 )
+	}
+}
