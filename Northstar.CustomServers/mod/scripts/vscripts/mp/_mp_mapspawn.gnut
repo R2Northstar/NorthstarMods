@@ -3,6 +3,9 @@ global function SPMP_MapSpawn_Init
 global struct SvSpawnGlobals
 {
 	array<entity> allNormalSpawnpoints
+
+	float frontlineDistanceFalloffStart = 3072.0
+	float frontlineDistanceFalloffEnd = 4096.0
 }
 
 global SvSpawnGlobals svSpawnGlobals
