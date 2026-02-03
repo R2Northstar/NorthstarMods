@@ -1326,7 +1326,7 @@ void function FD_OnPlayerGetsNewPilotLoadout( entity player, PilotLoadoutDef loa
 	{
 		if ( "permenantAmpedWeaponsWave" in player.s && expect int ( player.s.permenantAmpedWeaponsWave ) >= GetGlobalNetInt( "FD_currentWave" ) )
 		{
-			player.s.hasPermenantAmpedWeapons = false
+			player.s.hasPermanantAmpedWeapons = false
 			return
 		}
 
@@ -3968,7 +3968,7 @@ function FD_UpdateTitanBehavior()
 
 void function PlayerUsesPermanentAmpedWeaponsBurncard( entity player )
 {
-	player.s.hasPermenantAmpedWeapons <- true
+	player.s.hasPermanantAmpedWeapons <- true
 	player.s.permenantAmpedWeaponsWave <- GetGlobalNetInt( "FD_currentWave" )
 
 	array<entity> weapons = player.GetMainWeapons()
