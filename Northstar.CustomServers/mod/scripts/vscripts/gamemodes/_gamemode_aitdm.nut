@@ -206,7 +206,10 @@ void function HandleScoreEvent( entity victim, entity attacker, var damageInfo )
 		attacker.SetPlayerNetInt( "AT_bonusPoints256", assaultscore256 )
 	}
 	else
+	{
 		attacker.SetPlayerNetInt( "AT_bonusPoints", assaultscore )
+		attacker.SetPlayerNetInt( "AT_bonusPoints256", 0 )
+	}
 }
 
 // When attrition starts both teams spawn ai on preset nodes, after that
