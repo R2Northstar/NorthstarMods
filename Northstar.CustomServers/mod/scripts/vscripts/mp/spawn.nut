@@ -13,6 +13,7 @@ global function DeleteNoSpawnArea
 global function SpawnPointInNoSpawnArea
 
 global function RateSpawnpoints_Generic
+global function RateSpawnpoints_Directional
 global function RateSpawnpoints_Frontline
 global function RateSpawnpoints_SpawnZones
 global function DecideSpawnZone_Generic
@@ -378,6 +379,32 @@ bool function IsSpawnpointValid( entity spawnpoint, int team, bool skipLineOfSig
 ██      ██    ██ ██ ██  ██ ██    ██        ██   ██ ██   ██    ██    ██ ██  ██ ██ ██    ██ 
 ██       ██████  ██ ██   ████    ██        ██   ██ ██   ██    ██    ██ ██   ████  ██████  
 */
+
+void function RateSpawnpoints_Directional( int checkClass, array<entity> spawnPoints, int teamId, entity player )
+{
+	array<entity> friendlyPlayers = GetPlayerArrayOfTeam_Alive( teamId )
+	array<entity> enemyPlayers = GetPlayerArrayOfTeam_Alive( GetOtherTeam( teamId ) )
+
+	if ( !enemyPlayers.len() || !friendlyPlayers.len() )
+	{
+		RateSpawnpoints_Generic( checkClass, spawnPoints, teamId, player )
+		return
+	}
+
+	vector friendlyOrigin = GetMedianOriginOfEntities( friendlyPlayers )
+	vector enemyOrigin = GetMedianOriginOfEntities( enemyPlayers )
+	float distToEnemies = Distance( enemyOrigin, friendlyOrigin )
+
+	foreach ( spawnPoint in spawnPoints )
+	{
+		float dist = Distance( spawnPoint.GetOrigin(), friendlyOrigin )
+		float distMultiplier = GraphCapped( dist, 0, distToEnemies, 1.0, 0.0 )
+		float additionalRating = 0.0
+		vector vecToEnemies = Normalize( enemyOrigin - spawnPoint.GetOrigin() )
+		additionalRating = vecToEnemies.Dot( spawnPoint.GetForwardVector() ) * distMultiplier
+		float rating = spawnPoint.CalculateRating( checkClass, teamId, additionalRating, 0.0 )
+	}
+}
 
 void function RateSpawnpoints_Generic( int checkClass, array<entity> spawnpoints, int team, entity player )
 {
