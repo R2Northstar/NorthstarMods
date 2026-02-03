@@ -67,7 +67,7 @@ void function BurnMeter_Init()
 	AddCallback_OnClientConnected( InitBurncardsForLateJoiner )
 
 	AddCallback_OnPlayerRespawned( StartPhaseRewindLifetime )
-	AddCallback_OnPlayerRespawned( InitialisePermenantAmpedWeaponsForPlayer )
+	AddCallback_OnPlayerRespawned( InitialisePermanantAmpedWeaponsForPlayer )
 	AddCallback_OnTitanBecomesPilot( RemoveAmpedWeaponsForTitanPilot )
 
 	// necessary signals
@@ -356,7 +356,7 @@ void function PlayerUsesAmpedWeaponsBurncardThreaded( entity player )
 
 void function RemoveAmpedWeaponsForTitanPilot( entity player, entity titan )
 {
-	if ( !( "hasPermenantAmpedWeapons" in player.s ) || !player.s.hasPermenantAmpedWeapons )
+	if ( !( "hasPermanantAmpedWeapons" in player.s ) || !player.s.hasPermanantAmpedWeapons )
 		foreach ( entity weapon in player.GetMainWeapons() )
 			foreach ( string mod in GetWeaponBurnMods( weapon.GetWeaponClassName() ) )
 				weapon.RemoveMod( mod )
@@ -588,14 +588,14 @@ void function PlayerUsesNukeBurncardThreaded( entity player )
 	thread TitanEjectPlayer( titan, true )
 }
 
-void function InitialisePermenantAmpedWeaponsForPlayer( entity player )
+void function InitialisePermanantAmpedWeaponsForPlayer( entity player )
 {
-	player.s.hasPermenantAmpedWeapons <- false
+	player.s.hasPermanantAmpedWeapons <- false
 }
 
 void function PlayerUsesPermanentAmpedWeaponsBurncard( entity player )
 {
-	player.s.hasPermenantAmpedWeapons = true
+	player.s.hasPermanantAmpedWeapons = true
 
 	array<entity> weapons = player.GetMainWeapons()
 	weapons.extend( player.GetOffhandWeapons() )

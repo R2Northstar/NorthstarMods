@@ -1322,7 +1322,7 @@ void function FD_OnPlayerGetsNewPilotLoadout( entity player, PilotLoadoutDef loa
 		FD_GivePlayerInfiniteAntiTitanAmmo( player )
 	
 	//If player has bought the Amped Weapons before, keep it for the new weapons
-	if ( "hasPermenantAmpedWeapons" in player.s && player.s.hasPermenantAmpedWeapons )
+	if ( "hasPermanantAmpedWeapons" in player.s && player.s.hasPermanantAmpedWeapons )
 	{
 		if ( "permenantAmpedWeaponsWave" in player.s && expect int ( player.s.permenantAmpedWeaponsWave ) >= GetGlobalNetInt( "FD_currentWave" ) )
 		{
@@ -2414,7 +2414,7 @@ void function GamemodeFD_OnPlayerKilled( entity victim, entity attacker, var dam
 	victim.s.currentKillstreak = 0
 	victim.s.lastKillTime = 0.0
 	victim.s.currentTimedKillstreak = 0
-	victim.s.hasPermenantAmpedWeapons = false
+	victim.s.hasPermanantAmpedWeapons = false
 	
 	if ( victim.GetTeam() == TEAM_IMC && attacker.IsPlayer() && attacker.GetTeam() == TEAM_MILITIA && GetGlobalNetBool( "FD_waveActive" ) ) //Give money to Militia players killing IMC players
 	{
