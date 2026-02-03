@@ -1,7 +1,7 @@
 playlists
 {
 	version stable
-	versionNum 3246 // Never forget to bump this for every playlist update.
+	versionNum 3325 // Never forget to bump this for every playlist update.
 	Gamemodes
 	{
 		defaults
