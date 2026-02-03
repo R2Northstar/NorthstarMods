@@ -1727,6 +1727,8 @@ playlists
 						mp_thaw 1
 						mp_drydock 1
 						mp_angel_city 1
+						//mp_relic02 1
+						mp_colony02 1
 			        }
 			    }
 
@@ -1742,6 +1744,8 @@ playlists
 						mp_thaw 1
 						mp_drydock 1
 						mp_angel_city 1
+						//mp_relic02 1
+						mp_colony02 1
 			        }
 			    }
 
@@ -1757,6 +1761,8 @@ playlists
 						mp_thaw 1
 						mp_drydock 1
 						mp_angel_city 1
+						//mp_relic02 1
+						mp_colony02 1
 			        }
 			    }
 
@@ -1772,6 +1778,8 @@ playlists
 						mp_thaw 1
 						mp_drydock 1
 						mp_angel_city 1
+						//mp_relic02 1
+						mp_colony02 1
 			        }
 			    }
 
@@ -1787,6 +1795,8 @@ playlists
 						mp_thaw 1
 						mp_drydock 1
 						mp_angel_city 1
+						//mp_relic02 1
+						mp_colony02 1
 			        }
 			    }
 			}
