@@ -281,10 +281,21 @@ function InitFrontLine()
 	if ( !file.frontlineGroupTable.len() )
 		return false
 
+	AddDeathCallback( "npc_soldier", FrontlineDeathNPC )
+	AddDeathCallback( "npc_spectre", FrontlineDeathNPC )
+	AddDeathCallback( "npc_stalker", FrontlineDeathNPC )
+	AddDeathCallback( "npc_super_spectre", FrontlineDeathNPC )
+	AddDeathCallback( "player", FrontlineDeath )
+	AddDeathCallback( "npc_titan", FrontlineDeath )
+
 	// select current frontline group
 	// this will most likely be the one closest to the center of the map
-	local spawnpoints = SpawnPoints_GetDropPodStart( TEAM_ANY )
-	local mapCenter = GetMapCenter( spawnpoints )
+	array<entity> spawnpoints = SpawnPoints_GetDropPodStart( TEAM_ANY )
+
+	spawnpoints.extend( NSSpawnPoints_GetTitanStart( TEAM_ANY ) )
+	spawnpoints.extend( SpawnPoints_GetPilotStart( TEAM_ANY ) )
+
+	vector mapCenter = GetMapCenter( spawnpoints )
 
 	// get center most frontline to start with
 	local oldDist = 100000 * 100000
@@ -716,15 +727,18 @@ function CreateTempFrontline()
 	printt( "Map doesn't have info_frontline ents" )
 	printt( "************************************" )
 
-	local spawnpoints = SpawnPoints_GetPilotStart( TEAM_ANY )
-	if ( GameRules_GetGameMode() == LAST_TITAN_STANDING || GameRules_GetGameMode() == WINGMAN_LAST_TITAN_STANDING )
-		spawnpoints = SpawnPoints_GetTitanStart( TEAM_ANY )
-
-	if ( spawnpoints.len() == 0 )
-		return []
-
 	local originArray = []
-	local mapCenter = GetMapCenter( spawnpoints )
+
+	array<entity> spawnpoints = SpawnPoints_GetDropPodStart( TEAM_ANY )
+
+	spawnpoints.extend( NSSpawnPoints_GetTitanStart( TEAM_ANY ) )
+	spawnpoints.extend( SpawnPoints_GetPilotStart( TEAM_ANY ) )
+
+	vector mapCenter = GetMapCenter( spawnpoints )
+
+	if ( mapCenter == Vector( 0, 0, 0 ) )
+		return
+
 	local mapDir = GetMapDirection( mapCenter, spawnpoints )	//	vector points away from the IMC side
 	local leftDir = Vector( -mapDir.y, mapDir.x, 0 )
 
@@ -760,18 +774,21 @@ function CreateTempFrontline()
 }
 
 //////////////////////////////////////////////////////////
-function GetMapCenter( spawnpoints )
+vector function GetMapCenter( array<entity> spawnpoints )
 {
-	local centerPos = Vector( 0, 0, 0 )
-	foreach ( spawnpoint in spawnpoints )
-		centerPos += spawnpoint.GetOrigin()
-	centerPos *= ( 1.0 / spawnpoints.len() )
+	if ( !spawnpoints.len() )
+		return Vector( 0, 0, 0 )
 
-	return centerPos
+	vector centerPos = Vector( 0, 0, 0 )
+
+	foreach ( entity spawnpoint in spawnpoints )
+		centerPos += spawnpoint.GetOrigin()
+
+	return centerPos / spawnpoints.len()
 }
 
 //////////////////////////////////////////////////////////
-function GetMapDirection( centerPos, startSpawnPoints )
+function GetMapDirection( vector centerPos, array<entity> startSpawnPoints )
 {
 	if ( startSpawnPoints.len() == 0 )
 		return Vector( 1, 0, 0 )
@@ -815,6 +832,36 @@ function GetMapDirection( centerPos, startSpawnPoints )
 	return mapDir	//	vector points away from the IMC side
 }
 
+//////////////////////////////////////////////////////////
+void function FrontlineDeathNPC( entity ent, var damageInfo )
+{
+	FrontlineDeath( ent, damageInfo )
+}
+
+//////////////////////////////////////////////////////////
+void function FrontlineDeath( entity ent, var damageInfo )
+{
+	if ( ent.IsTitan() && !ent.GetTitanSoul().GetBossPlayer() )
+		return	// don't care about npc_titans that wasn't controlled by a player
+
+	int team = ent.GetTeam()
+
+	if ( !IsIMCOrMilitiaTeam( ent.GetTeam() ) )
+		return
+
+	if ( ent.IsNPC() && !ent.IsTitan() )
+	{
+		// don't check if we recently moved the frontline
+		float time = Time()
+
+		if ( file.nextOverrunCheck > time )
+			return
+
+		file.nextOverrunCheck = Time() + 1
+	}
+
+	CheckFrontlineOverrun( team )
+}
 
 //////////////////////////////////////////////////////////
 function SetFrontlineSides( frontline, winningTeam )
