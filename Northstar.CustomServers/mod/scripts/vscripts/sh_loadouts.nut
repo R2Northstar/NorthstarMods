@@ -21,9 +21,8 @@ void function InitDefaultLoadouts()
 	void function ValidateLoadout_OnClientConnecting( entity player )
 	{
 		int pilotLoadoutIndex = GetPersistentSpawnLoadoutIndex( player, "pilot" )
-		int pilotLoadoutsSize = NUM_PERSISTENT_PILOT_LOADOUTS
 
-		if ( pilotLoadoutIndex < 0 || pilotLoadoutIndex >= pilotLoadoutsSize )
+		if ( pilotLoadoutIndex < 0 || pilotLoadoutIndex >= NUM_PERSISTENT_PILOT_LOADOUTS )
 		{
 			SetPersistentSpawnLoadoutIndex( player, "pilot", 0 )
 
@@ -31,19 +30,18 @@ void function InitDefaultLoadouts()
 		}
 
 		int titanLoadoutIndex = GetPersistentSpawnLoadoutIndex( player, "titan" )
-		int titanLoadoutsSize = NUM_PERSISTENT_TITAN_LOADOUTS
 
-		if ( titanLoadoutIndex < 0 || titanLoadoutIndex >= titanLoadoutsSize )
+		if ( titanLoadoutIndex < 0 || titanLoadoutIndex >= NUM_PERSISTENT_TITAN_LOADOUTS )
 		{
 			SetPersistentSpawnLoadoutIndex( player, "titan", 0 )
 
 			file.playerhasinvalidloadout[ player ] <- true
 		}
 
-		for ( int i = 0; i < pilotLoadoutsSize; i++ )
+		for ( int i = 0; i < NUM_PERSISTENT_PILOT_LOADOUTS; i++ )
 			GetPilotLoadoutFromPersistentData( player, i )
 
-		for ( int i = 0; i < titanLoadoutsSize; i++ )
+		for ( int i = 0; i < NUM_PERSISTENT_TITAN_LOADOUTS; i++ )
 			GetTitanLoadoutFromPersistentData( player, i )
 
 		int burnCardID = int( player.GetPersistentVar( "burnmeterSlot" ).tostring() )

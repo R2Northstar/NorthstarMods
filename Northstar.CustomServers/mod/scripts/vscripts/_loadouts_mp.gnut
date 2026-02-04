@@ -144,7 +144,7 @@ bool function ClientCommandCallback_RequestPilotLoadout( entity player, array<st
 
 	int index = args[0].tointeger()
 
-	if ( index < 0 || index >= PersistenceGetArrayCount( "pilotLoadouts" ) )
+	if ( index < 0 || index >= NUM_PERSISTENT_PILOT_LOADOUTS )
 		return false
 
 	SetPersistentSpawnLoadoutIndex( player, "pilot", index )
@@ -165,7 +165,7 @@ bool function ClientCommandCallback_RequestTitanLoadout( entity player, array<st
 
 	int index = args[0].tointeger()
 
-	if ( index < 0 || index >= PersistenceGetArrayCount( "titanLoadouts" ) )
+	if ( index < 0 || index >= NUM_PERSISTENT_TITAN_LOADOUTS )
 		return false
 
 	SetPersistentSpawnLoadoutIndex( player, "titan", index )
