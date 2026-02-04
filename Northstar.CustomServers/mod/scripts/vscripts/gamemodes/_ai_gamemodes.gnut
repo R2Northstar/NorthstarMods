@@ -19,7 +19,7 @@ struct
 
 void function AiGameModes_Init()
 {
-	AddCallback_EntitiesDidLoad( Frontline_Init )
+	AddCallback_EntitiesDidLoad( AiFrontline_Init )
 }
 
 //------------------------------------------------------
@@ -49,9 +49,7 @@ void function AiGameModes_SpawnDropShip( entity node, int team, int count, void 
 	SetDropTableSpawnFuncs( drop, CreateDropshipSoldier, count )
 	SetCallinStyle( drop, eDropStyle.ZIPLINE_NPC )
   
-	thread RunDropshipDropoff( drop )
-	
-	WaitSignal( drop, "OnDropoff" )
+	waitthread RunDropshipDropoff( drop )
 	
 	array< entity > guys = GetNPCArrayBySquad( squadName )
 	

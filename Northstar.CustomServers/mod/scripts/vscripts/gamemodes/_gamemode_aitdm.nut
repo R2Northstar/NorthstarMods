@@ -394,7 +394,7 @@ void function Escalate( int team )
 // These zones should swap based on which team is dominating where
 int function GetSpawnPointIndex( array< entity > points, int team )
 {
-	entity point = GetFrontlineSpawnpoint( team, points )
+	entity point = GetAiFrontlineSpawnpoint( team, points )
 
 	for ( int i = 0; i < points.len(); i++ )
 		if ( points[i] == point )
@@ -453,45 +453,37 @@ void function SquadHandler( array<entity> guys )
 	if ( !squadAlive )
 		return
 
-	vector point = GetFrontlinePath( team )
-
 	// Setup AI, first assault point
 	foreach ( guy in guys )
 	{
 		guy.EnableNPCFlag( NPC_ALLOW_PATROL | NPC_ALLOW_INVESTIGATE | NPC_ALLOW_HAND_SIGNALS | NPC_ALLOW_FLEE )
-		guy.AssaultPoint( point )
-		guy.AssaultPointClamped( point )
 		guy.AssaultSetFightRadius( FrontlineRadius_Minion )
 		guy.AssaultSetGoalRadius( 1600 ) // 1600 is minimum for npc_stalker, works fine for others
 	}
-	
-	// Every 2.5 - 5 secs change AssaultPoint
+
+	SquadAssaultFrontline( guys, GetAiFrontlinePath( team ) )
+
+	// Every time frontline moves change AssaultPoint
 	while ( true )
 	{
+		WaitTillFrontlineMoved()
+
 		ArrayRemoveDead( guys )
 
 		if ( !guys.len() )
 			return
 
-		point = GetFrontlinePath( team )
-
 		foreach ( guy in guys )
 		{
-			if ( IsAlive( guy ) )
+			if ( guy.GetClassName() == "npc_spectre" && IsValid( guy.GetOwner() ) && IsValid( guy.GetBossPlayer() ) )
 			{
-				if ( guy.GetClassName() == "npc_spectre" && IsValid( guy.GetOwner() ) && IsValid( guy.GetBossPlayer() ) )
-				{
-					guys.removebyvalue( guy )
-				}
-				else
-				{
-					guy.AssaultPoint( point )
-					guy.AssaultPointClamped( point )
-				}
+				guys.removebyvalue( guy )
+			}
+			else
+			{
+				SquadAssaultFrontline( guys, GetAiFrontlinePath( team ) )
 			}
 		}
-
-		wait RandomFloatRange( 2.5, 5.0 )
 	}
 }
 
@@ -545,6 +537,7 @@ void function OnSpectreLeeched( entity spectre, entity player )
 // Same as SquadHandler, just for reapers
 void function ReaperHandler( entity reaper )
 {
+/*
 	if ( !( reaper.GetTeam() in file.spawnedReapers ) )
 		file.spawnedReapers[ reaper.GetTeam() ] <- []
 
@@ -555,7 +548,7 @@ void function ReaperHandler( entity reaper )
 	foreach ( player in players )
 		reaper.Minimap_AlwaysShow( 0, player )
 
-	vector point = GetFrontlinePath( reaper.GetTeam() )
+	vector point = GetAiFrontlinePath( 1, reaper.GetTeam(), false )
 
 	reaper.AssaultPoint( point )
 	reaper.AssaultPointClamped( point )
@@ -565,11 +558,12 @@ void function ReaperHandler( entity reaper )
 	// Every 2.5 - 5 secs change AssaultPoint
 	while ( IsAlive( reaper ) )
 	{
-		point = GetFrontlinePath( reaper.GetTeam() )
+		point = GetAiFrontlinePath( 1, reaper.GetTeam(), false )
 
 		reaper.AssaultPoint( point )
 		reaper.AssaultPointClamped( point )
 
 		wait RandomFloatRange( 2.5, 5.0 )
 	}
+*/
 }

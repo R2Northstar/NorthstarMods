@@ -1,10 +1,11 @@
-#if SERVER
-	global function Frontline_Init
-#endif
+untyped
+
 
 global function GetFrontline
 global function SetFrontline
 global function AddCalculateFrontlineCallback
+
+const DEBUG_FRONTLINE = false
 
 global struct Frontline
 {
@@ -19,31 +20,14 @@ global struct Frontline
 struct
 {
 	Frontline frontline
-	array<bool functionref()> calculateFrontlineCallbacks
+	array<void functionref()> calculateFrontlineCallbacks
 } file
 
-#if SERVER
-	void function Frontline_Init()
-	{
-		file.frontline.friendlyCenter = GetFriendlyCenterForTeam( TEAM_IMC )
-		file.frontline.enemyCenter = GetFriendlyCenterForTeam( TEAM_MILITIA )
-
-		if ( ( file.frontline.friendlyCenter + file.frontline.enemyCenter ) * 0.5 == Vector( 0.0, 0.0, 0.0 ) )
-			return
-
-		file.frontline.origin = ( file.frontline.friendlyCenter + file.frontline.enemyCenter ) * 0.5
-		file.frontline.combatDir = Normalize( file.frontline.enemyCenter - file.frontline.friendlyCenter )
-		file.frontline.line = CrossProduct( file.frontline.combatDir, Vector( 0.0, 0.0, 1.0 ) )
-		file.frontline.lastCalcTime = Time()
-	}
-#endif
-
-Frontline function GetFrontline( int team )
+Frontline function GetFrontline( team )
 {
-	if ( file.frontline.lastCalcTime + 2.5 < Time() )
+	if ( file.frontline.lastCalcTime < Time() )
 	{
 		CalculateFrontline()
-
 		file.frontline.lastCalcTime = Time()
 	}
 
@@ -53,9 +37,7 @@ Frontline function GetFrontline( int team )
 	if ( team == TEAM_MILITIA )
 	{
 		fl.combatDir *= -1.0
-
 		vector temp = fl.friendlyCenter
-
 		fl.friendlyCenter = fl.enemyCenter
 		fl.enemyCenter = temp
 	}
@@ -63,35 +45,61 @@ Frontline function GetFrontline( int team )
 	return fl
 }
 
-void function AddCalculateFrontlineCallback( bool functionref() callbackFunc )
+void function AddCalculateFrontlineCallback( void functionref() callbackFunc )
 {
 	// Check if this function has already been added
-	foreach ( func in file.calculateFrontlineCallbacks )
-		if ( func == callbackFunc )
-			return
+	#if DEV
+		foreach ( func in file.calculateFrontlineCallbacks )
+		{
+			Assert( func != callbackFunc )
+		}
+	#endif
 
 	file.calculateFrontlineCallbacks.append( callbackFunc )
 }
 
 void function CalculateFrontline()
 {
-	foreach ( callbackFunc in file.calculateFrontlineCallbacks )
-		if ( !callbackFunc() )
-			return
+	#if DEV
+		float debugTime = 0.2
+	#endif
 
-	vector militiaCenter = CalculateWeightedTeamCenter( TEAM_MILITIA )
-	vector imcCenter = CalculateWeightedTeamCenter( TEAM_IMC )
+	if ( file.calculateFrontlineCallbacks.len() > 0 )
+	{
+		foreach ( callbackFunc in file.calculateFrontlineCallbacks )
+		{
+			callbackFunc()
+		}
+	}
+	else
+	{
+		vector militiaCenter = CalculateWeightedTeamCenter( TEAM_MILITIA )
+		vector imcCenter = CalculateWeightedTeamCenter( TEAM_IMC )
 
-	if ( ( militiaCenter + imcCenter ) * 0.5 == Vector( 0.0, 0.0, 0.0 ) )
-		return
+		file.frontline.friendlyCenter = imcCenter // friendlyCenter is for TEAM_IMC by default
+		file.frontline.enemyCenter = militiaCenter
 
-	file.frontline.friendlyCenter = imcCenter // friendlyCenter is for TEAM_IMC by default
-	file.frontline.enemyCenter = militiaCenter
+		file.frontline.origin = ( militiaCenter + imcCenter ) * 0.5
+		file.frontline.combatDir = Normalize( militiaCenter - imcCenter ) // combatDir is for TEAM_IMC by default
+		file.frontline.line = CrossProduct( file.frontline.combatDir, Vector( 0.0, 0.0, 1.0 ) )
 
-	file.frontline.origin = ( militiaCenter + imcCenter ) * 0.5
+		#if DEV
+			if ( DEBUG_FRONTLINE )
+			{
+				DrawBox( militiaCenter, Vector( -8.0, -8.0, -8.0 ), Vector( 8.0, 8.0, 8.0 ), 255, 102, 0, true, debugTime )
+				DrawBox( imcCenter, Vector( -8.0, -8.0, -8.0 ), Vector( 8.0, 8.0, 8.0 ), 0, 0, 255, true, debugTime )
+				DebugDrawLine( militiaCenter, imcCenter, 0, 255, 0, true, debugTime )
+			}
+		#endif
+	}
 
-	file.frontline.combatDir = Normalize( militiaCenter - imcCenter ) // combatDir is for TEAM_IMC by default
-	file.frontline.line = CrossProduct( file.frontline.combatDir, Vector( 0.0, 0.0, 1.0 ) )
+	#if DEV
+		if ( DEBUG_FRONTLINE )
+		{
+			DrawBox( file.frontline.origin, Vector( -32.0, -32.0, -32.0 ), Vector( 32.0, 32.0, 32.0 ), 255, 0, 0, true, debugTime )
+			DebugDrawLine( file.frontline.origin - file.frontline.line * 500.0, file.frontline.origin + file.frontline.line * 500.0, 255, 0, 0, true, debugTime )
+		}
+	#endif
 }
 
 void function SetFrontline( vector origin, vector combatDir )
@@ -104,17 +112,13 @@ void function SetFrontline( vector origin, vector combatDir )
 vector function CalculateWeightedTeamCenter( int team )
 {
 	array<entity> teamPlayers = GetPlayerArrayOfTeam_Alive( team )
-
-	teamPlayers.extend( GetNPCArrayOfTeam( team ) )
-
 	int teamPlayersCount = teamPlayers.len()
 
-	if ( !teamPlayersCount )
+	if ( teamPlayersCount == 0 )
 		return Vector( 0.0, 0.0, 0.0 )
 
 	// find minimum distances between teammates
 	array<float> minTeammateDistances// = arrayofsize( teamPlayersCount, 99999.0 )
-
 	minTeammateDistances.resize( teamPlayersCount, 99999.0 )
 
 	for ( int i = 0; i < teamPlayersCount; i++ )
@@ -145,7 +149,6 @@ vector function CalculateWeightedTeamCenter( int team )
 	foreach ( index, player in teamPlayers )
 	{
 		float radians = halfPi * ( minTeammateDistances[ index ] / maxPossibleDistance ) // radians will be a value between 0 - halfPi
-
 		weight = pow( ( 1.0 - sin( radians ) ), magicNumber ) // pow squashes the result so the curve has the falloff that's desired
 
 		weightedOrgSum += player.GetOrigin() * weight
@@ -154,23 +157,3 @@ vector function CalculateWeightedTeamCenter( int team )
 
 	return weightedOrgSum / weightSum
 }
-
-#if SERVER
-	vector function GetFriendlyCenterForTeam( int team )
-	{
-		array<entity> spawnpoints = SpawnPoints_GetDropPodStart( team )
-
-		spawnpoints.extend( NSSpawnPoints_GetTitanStart( team ) )
-		spawnpoints.extend( SpawnPoints_GetPilotStart( team ) )
-
-		if ( !spawnpoints.len() )
-			return Vector( 0, 0, 0 )
-
-		vector centerPos = Vector( 0, 0, 0 )
-
-		foreach ( entity spawnpoint in spawnpoints )
-			centerPos += spawnpoint.GetOrigin()
-
-		return centerPos / spawnpoints.len()
-	}
-#endif
