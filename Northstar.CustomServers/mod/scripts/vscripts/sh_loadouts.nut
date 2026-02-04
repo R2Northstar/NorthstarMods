@@ -15,37 +15,37 @@ void function InitDefaultLoadouts()
 #if SERVER
 	void function ValidateLoadout_OnClientConnecting( entity player )
 	{
-		int pilotLoadoutIndex = GetPersistentSpawnLoadoutIndex( player, "pilot" )
+		if ( !IsNewThread() )
+		{
+			thread ValidateLoadout_OnClientConnecting( player )
+			return
+		}
 
-		if ( pilotLoadoutIndex < 0 || pilotLoadoutIndex >= PersistenceGetArrayCount( "pilotLoadouts" ) )
+		player.EndSignal( "OnDestroy" )
+
+		int pilotLoadoutIndex = GetPersistentSpawnLoadoutIndex( player, "pilot" )
+		int pilotLoadoutsSize = NUM_PERSISTENT_PILOT_LOADOUTS
+
+		if ( pilotLoadoutIndex < 0 || pilotLoadoutIndex >= pilotLoadoutsSize )
 		{
 			SetPersistentSpawnLoadoutIndex( player, "pilot", 0 )
 			NSDisconnectPlayer( player, "#RESETTING_LOADOUT" )
 		}
 
-		if ( !IsValid( player ) )
-			return
-
 		int titanLoadoutIndex = GetPersistentSpawnLoadoutIndex( player, "titan" )
+		int titanLoadoutsSize = NUM_PERSISTENT_TITAN_LOADOUTS
 
-		if ( titanLoadoutIndex < 0 || titanLoadoutIndex >= PersistenceGetArrayCount( "titanLoadouts" ) )
+		if ( titanLoadoutIndex < 0 || titanLoadoutIndex >= titanLoadoutsSize )
 		{
 			SetPersistentSpawnLoadoutIndex( player, "titan", 0 )
 			NSDisconnectPlayer( player, "#RESETTING_LOADOUT" )
 		}
 
-		if ( !IsValid( player ) )
-			return
+		for ( int i = 0; i < pilotLoadoutsSize; i++ )
+			GetPilotLoadoutFromPersistentData( player, i )
 
-		GetPilotLoadoutFromPersistentData( player, GetPersistentSpawnLoadoutIndex( player, "pilot" ) )
-
-		if ( !IsValid( player ) )
-			return
-
-		GetTitanLoadoutFromPersistentData( player, GetPersistentSpawnLoadoutIndex( player, "titan" ) )
-
-		if ( !IsValid( player ) )
-			return
+		for ( int i = 0; i < titanLoadoutsSize; i++ )
+			GetTitanLoadoutFromPersistentData( player, i )
 
 		int burnCardID = int( player.GetPersistentVar( "burnmeterSlot" ).tostring() )
 
@@ -223,13 +223,15 @@ TitanLoadoutDef function GetTitanLoadoutFromPersistentData( entity player, int l
 
 void function PopulatePilotLoadoutFromPersistentData( entity player, PilotLoadoutDef loadout, int loadoutIndex )
 {
-	if ( !IsNewThread() )
-	{
-		thread PopulatePilotLoadoutFromPersistentData( player, loadout, loadoutIndex )
-		return
-	}
-
-	EndSignal( player, "OnDestroy" )
+	#if SERVER
+		if ( !IsNewThread() )
+		{
+			thread PopulatePilotLoadoutFromPersistentData( player, loadout, loadoutIndex )
+			return
+		}
+	
+		player.EndSignal( "OnDestroy" )
+	#endif
 
 	loadout.name 				= GetValidatedPersistentLoadoutValue( player, "pilot", loadoutIndex, "name" )
 	loadout.suit 				= GetValidatedPersistentLoadoutValue( player, "pilot", loadoutIndex, "suit" )
