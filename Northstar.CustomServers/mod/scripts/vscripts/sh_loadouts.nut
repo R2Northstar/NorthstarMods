@@ -6,6 +6,11 @@ globalize_all_functions
 
 global string INVALID_REF = "INVALID_REF"
 
+struct
+{
+	table< entity, bool > playerhasinvalidloadout
+} file
+
 void function InitDefaultLoadouts()
 {
 	PopulateDefaultPilotLoadouts( shGlobal.defaultPilotLoadouts )
@@ -15,21 +20,14 @@ void function InitDefaultLoadouts()
 #if SERVER
 	void function ValidateLoadout_OnClientConnecting( entity player )
 	{
-		if ( !IsNewThread() )
-		{
-			thread ValidateLoadout_OnClientConnecting( player )
-			return
-		}
-
-		player.EndSignal( "OnDestroy" )
-
 		int pilotLoadoutIndex = GetPersistentSpawnLoadoutIndex( player, "pilot" )
 		int pilotLoadoutsSize = NUM_PERSISTENT_PILOT_LOADOUTS
 
 		if ( pilotLoadoutIndex < 0 || pilotLoadoutIndex >= pilotLoadoutsSize )
 		{
 			SetPersistentSpawnLoadoutIndex( player, "pilot", 0 )
-			NSDisconnectPlayer( player, "#RESETTING_LOADOUT" )
+
+			file.playerhasinvalidloadout[ player ] <- true
 		}
 
 		int titanLoadoutIndex = GetPersistentSpawnLoadoutIndex( player, "titan" )
@@ -38,7 +36,8 @@ void function InitDefaultLoadouts()
 		if ( titanLoadoutIndex < 0 || titanLoadoutIndex >= titanLoadoutsSize )
 		{
 			SetPersistentSpawnLoadoutIndex( player, "titan", 0 )
-			NSDisconnectPlayer( player, "#RESETTING_LOADOUT" )
+
+			file.playerhasinvalidloadout[ player ] <- true
 		}
 
 		for ( int i = 0; i < pilotLoadoutsSize; i++ )
@@ -60,6 +59,13 @@ void function InitDefaultLoadouts()
 		if ( !ItemDefined( ref ) || IsItemLocked( player, ref ) || GetItemDisplayData( ref ).hidden )
 		{
 			player.SetPersistentVar( "burnmeterSlot", 1 )
+
+			file.playerhasinvalidloadout[ player ] <- true
+		}
+
+		if ( player in file.playerhasinvalidloadout && file.playerhasinvalidloadout[ player ] )
+		{
+			delete file.playerhasinvalidloadout[ player ]
 
 			NSDisconnectPlayer( player, "#RESETTING_LOADOUT" )
 		}
@@ -223,16 +229,6 @@ TitanLoadoutDef function GetTitanLoadoutFromPersistentData( entity player, int l
 
 void function PopulatePilotLoadoutFromPersistentData( entity player, PilotLoadoutDef loadout, int loadoutIndex )
 {
-	#if SERVER
-		if ( !IsNewThread() )
-		{
-			thread PopulatePilotLoadoutFromPersistentData( player, loadout, loadoutIndex )
-			return
-		}
-	
-		player.EndSignal( "OnDestroy" )
-	#endif
-
 	loadout.name 				= GetValidatedPersistentLoadoutValue( player, "pilot", loadoutIndex, "name" )
 	loadout.suit 				= GetValidatedPersistentLoadoutValue( player, "pilot", loadoutIndex, "suit" )
 	loadout.race 				= GetValidatedPersistentLoadoutValue( player, "pilot", loadoutIndex, "race" )
@@ -267,14 +263,6 @@ void function PopulatePilotLoadoutFromPersistentData( entity player, PilotLoadou
 
 void function PopulateTitanLoadoutFromPersistentData( entity player, TitanLoadoutDef loadout, int loadoutIndex )
 {
-	if ( !IsNewThread() )
-	{
-		thread PopulateTitanLoadoutFromPersistentData( player, loadout, loadoutIndex )
-		return
-	}
-
-	EndSignal( player, "OnDestroy" )
-
 	loadout.name 				= GetValidatedPersistentLoadoutValue( player, "titan", loadoutIndex, "name" )
 	loadout.titanClass			= GetValidatedPersistentLoadoutValue( player, "titan", loadoutIndex, "titanClass" )
 	loadout.primaryMod			= GetValidatedPersistentLoadoutValue( player, "titan", loadoutIndex, "primaryMod" )
@@ -1587,7 +1575,7 @@ string function GetValidatedPersistentLoadoutValue( entity player, string loadou
 			{
 				printt( "Invalid Loadout Property: ", loadoutType, loadoutIndex, loadoutProperty, value )
 				value = ResetLoadoutPropertyToDefault( player, loadoutType, loadoutIndex, loadoutProperty ) //TODO: This will call player.SetPersistentVar() directly. Awkward to do this in a getter function
-				NSDisconnectPlayer( player, "#RESETTING_LOADOUT" ) //Kick player out with a "Resetting Invalid Loadout" message. Mainly necessary so UI/Client script don't crash out later with known, bad data from persistence
+				file.playerhasinvalidloadout[ player ] <- true
 				return ""
 			}
 		}
@@ -1598,7 +1586,7 @@ string function GetValidatedPersistentLoadoutValue( entity player, string loadou
 			{
 				printt( "Invalid Loadout Property: ", loadoutType, loadoutIndex, loadoutProperty, value )
 				value = ResetLoadoutPropertyToDefault( player, loadoutType, loadoutIndex, loadoutProperty ) //TODO: This will call player.SetPersistentVar() directly. Awkward to do this in a getter function
-				NSDisconnectPlayer( player, "#RESETTING_LOADOUT" ) //Kick player out with a "Resetting Invalid Loadout" message. Mainly necessary so UI/Client script don't crash out later with known, bad data from persistence
+				file.playerhasinvalidloadout[ player ] <- true
 				return ""
 			}
 
