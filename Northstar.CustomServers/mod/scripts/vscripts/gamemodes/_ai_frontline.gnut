@@ -145,6 +145,9 @@ entity function GetFrontlineSpawnPoint( array<entity> spawnPointArray, int team,
 
 	foreach ( entity spawnpoint in spawnPointArray )
 	{
+		if ( spawnpoint.s.frontlineRating == -100 )
+			continue
+
 		if ( ratedspawnpoints.len() )
 		{
 			for ( int i = 0; i < ratedspawnpoints.len(); i++ )
@@ -156,7 +159,7 @@ entity function GetFrontlineSpawnPoint( array<entity> spawnPointArray, int team,
 				}
 			}
 		}
-		else if ( spawnpoint.s.frontlineRating != -100 )
+		else
 			ratedspawnpoints.append( spawnpoint )
 	}
 
@@ -713,15 +716,13 @@ entity function GetFrontlineGoal( int index, int team, bool spectre = false )
 
 void function SquadAssaultFrontline( array<entity> squad, int squadIndex )
 {
-	if ( !FrontlineInitiated() || !squad.len() )
+	if ( !FrontlineInitiated() )
 		return
 
 	// Guys in squad can die at any time - it seems bad that this can be the case, squad should be clean earlier if at all
-	ArrayRemoveInvalid( squad )
+	ArrayRemoveDead( squad )
 
-	int squadSize = squad.len()
-
-	if ( !squadSize )
+	if ( !squad.len() )
 		return
 
 	bool isSpectre = IsSpectre( squad[0] )
