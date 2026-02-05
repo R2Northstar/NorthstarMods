@@ -628,8 +628,8 @@ void function FrontlineDeath( entity ent, var damageInfo )
 	if ( !FrontlineInitiated() )
 		return
 
-	if ( ent.IsTitan() && !ent.GetTitanSoul().GetBossPlayer() )
-		return	// don't care about npc_titans that wasn't controlled by a player
+	if ( ent.IsTitan() && !IsValid( ent.GetBossPlayer() ) )
+		return // don't care about npc_titans that wasn't controlled by a player
 
 	int team = ent.GetTeam()
 
