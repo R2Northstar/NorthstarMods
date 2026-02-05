@@ -133,7 +133,8 @@ void function AiGameModes_SpawnDropPod( entity node, int team, string content /*
 	waitthread LaunchAnimDropPod( pod, "pod_testpath", pos, rot )
 
 	foreach ( entity guy in guys )
-		guy.ClearParent()
+		if ( IsValid( guy ) )
+			guy.ClearParent()
 
 	ActivateFireteamDropPod( pod, guys )
 
