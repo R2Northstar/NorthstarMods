@@ -39,6 +39,8 @@ struct
 
 void function GamemodeAITdm_Init()
 {
+	InitializeFrontline()
+
 	AddCallback_GameStateEnter( eGameState.Prematch, OnPrematchStart )
 	AddCallback_GameStateEnter( eGameState.Playing, OnPlaying )
 
@@ -390,31 +392,7 @@ void function Escalate( int team )
 // These zones should swap based on which team is dominating where
 int function GetSpawnPointIndex( array<entity> points, int team )
 {
-	array<entity> spawns = clone points
-
-	foreach ( entity spawnpoint in spawns )
-		if ( !IsSpawnpointValid( spawnpoint, team ) )
-			spawns.removebyvalue( spawnpoint )
-
-	if ( !spawns.len() )
-	{
-		spawns = clone points
-
-		foreach ( entity spawnpoint in spawns )
-			if ( !IsSpawnpointValid( spawnpoint, team, true ) )
-				spawns.removebyvalue( spawnpoint )
-	}
-
-	if ( !spawns.len() )
-	{
-		spawns = clone points
-
-		foreach ( entity spawnpoint in spawns )
-			if ( !IsSpawnpointValid( spawnpoint, team, true, true ) )
-				spawns.removebyvalue( spawnpoint )
-	}
-
-	entity point = spawns.len() ? spawns.getrandom() : points.getrandom()
+	entity point = GetFrontlineSpawnPoint( points, team, 0 )
 
 	for ( int i = 0; i < points.len(); i++ )
 		if ( points[i] == point )
@@ -465,25 +443,18 @@ void function SquadHandler( array<entity> guys )
 	// So we use enemies with a large radius
 
 	// our waiting is end, check if any soldiers left
-	bool squadAlive = false
+	ArrayRemoveDead( guys )
 
-	foreach ( entity guy in guys )
-		if ( IsAlive( guy ) )
-			squadAlive = true
-		else
-			guys.removebyvalue( guy )
-
-	if ( !squadAlive )
+	if ( !guys.len() )
 		return
 
 	// Setup AI, first assault point
 	foreach ( guy in guys )
-	{
 		guy.EnableNPCFlag( NPC_ALLOW_PATROL | NPC_ALLOW_INVESTIGATE | NPC_ALLOW_HAND_SIGNALS | NPC_ALLOW_FLEE )
-		guy.AssaultSetGoalRadius( 1600 ) // 1600 is minimum for npc_stalker, works fine for others
-	}
 
-	SquadAssaultFrontline( guys, GetAiFrontlinePath( team ) )
+	int path = GetAiFrontlinePath( team )
+
+	SquadAssaultFrontline( guys, path )
 
 	// Every time frontline moves change AssaultPoint
 	while ( true )
@@ -495,11 +466,13 @@ void function SquadHandler( array<entity> guys )
 		if ( !guys.len() )
 			return
 
+		path = GetAiFrontlinePath( team )
+
 		foreach ( guy in guys )
 			if ( IsSpectre( guy ) && IsValid( guy.GetOwner() ) && IsValid( guy.GetBossPlayer() ) )
 				guys.removebyvalue( guy )
 			else
-				SquadAssaultFrontline( guys, GetAiFrontlinePath( team ) )
+				SquadAssaultFrontline( guys, path )
 	}
 }
 
