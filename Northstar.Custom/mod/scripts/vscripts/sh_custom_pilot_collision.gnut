@@ -2,7 +2,7 @@ global function CustomPilotCollision_InitPlaylistVars
 
 void function CustomPilotCollision_InitPlaylistVars()
 {
-	AddPrivateMatchModeSettingEnum( "#MODE_SETTING_CATEGORY_PILOT", "no_pilot_collision", [ "#SETTING_DISABLED", "#SETTING_ENABLED" ], "0" )
+	AddPrivateMatchModeSettingEnum( "#MODE_SETTING_CATEGORY_PILOT", "pilot_collision", [ "#SETTING_DISABLED", "#SETTING_ENABLED" ], "1" )
 
 #if SERVER
 	AddCallback_OnPlayerRespawned( SetPilotCollisionFlagsForRespawn )
@@ -14,19 +14,19 @@ void function CustomPilotCollision_InitPlaylistVars()
 #if SERVER
 void function SetPilotCollisionFlagsForRespawn( entity player )
 {
-	if ( GetCurrentPlaylistVarInt( "no_pilot_collision", 0 ) == 1 )
+	if ( !GetCurrentPlaylistVarInt( "pilot_collision", 0 ) )
 		player.kv.CollisionGroup = TRACE_COLLISION_GROUP_BLOCK_WEAPONS
 }
 
 void function PilotCollisionOnPilotBecomesTitan( entity player, entity titan )
 {
-	if ( GetCurrentPlaylistVarInt( "no_pilot_collision", 0 ) == 1 )
+	if ( !GetCurrentPlaylistVarInt( "pilot_collision", 0 ) )
 		player.kv.CollisionGroup = TRACE_COLLISION_GROUP_PLAYER
 }
 
 void function PilotCollisionOnTitanBecomesPilot( entity player, entity titan )
 {
-	if ( GetCurrentPlaylistVarInt( "no_pilot_collision", 0 ) == 1 )
+	if ( !GetCurrentPlaylistVarInt( "pilot_collision", 0 ) )
 		player.kv.CollisionGroup = TRACE_COLLISION_GROUP_BLOCK_WEAPONS
 }
 #endif

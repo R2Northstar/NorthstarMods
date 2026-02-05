@@ -219,7 +219,7 @@ Si estas de acuerdo con esto, presiona SI. Esta decision puede ser cambiada en e
 		"MODE_SETTING_CATEGORY_BLEEDOUT" "Desangrado de piloto"
 
 		"custom_air_accel_pilot" "Aceleración aerea"
-		"no_pilot_collision" "Colisión de piloto"
+		"pilot_collision" "Colisión de piloto"
 		"promode_enable" "Armas de modo pro"
 		"classic_rodeo" "Rodeo Clásico"
 		"oob_timer_enabled" "Temporizador de limite de mapa"

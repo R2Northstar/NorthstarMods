@@ -219,7 +219,7 @@ Naciśnij Tak jeżeli wyrażasz zgodę. Wybór może zostać zmieniony w menu Mo
 		"MODE_SETTING_CATEGORY_BLEEDOUT" "Krwawienie Pilotów"
 
 		"custom_air_accel_pilot" "Air Acceleration"
-		"no_pilot_collision" "Kolidowanie Pilotów"
+		"pilot_collision" "Kolidowanie Pilotów"
 		"promode_enable" "Bronie trybu pro"
 		"classic_rodeo" "Klasyczne Rodeo"
 		"oob_timer_enabled" "Licznik czasu poza granicami mapy"

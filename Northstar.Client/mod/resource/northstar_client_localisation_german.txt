@@ -210,7 +210,7 @@ Drücke Ja, um zuzustimmen. Du kannst diese Entscheidung jederzeit im Modmenü �
 		"MODE_SETTING_CATEGORY_BLEEDOUT" "Pilot Bleedout"
 
 		"custom_air_accel_pilot" "Luftbeschleunigung"
-		"no_pilot_collision" "Inter-Pilot Kollision"
+		"pilot_collision" "Inter-Pilot Kollision"
 		"promode_enable" "Pro-mode Waffen"
 		"classic_rodeo" "Klassisches Rodeo"
 		"oob_timer_enabled" "Out of Bounds Timer"

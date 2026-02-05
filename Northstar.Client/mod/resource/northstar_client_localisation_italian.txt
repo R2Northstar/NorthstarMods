@@ -218,7 +218,7 @@ Premi Sì se sei d'accordo. Questa scelta può essere modificata in qualsiasi mo
 		"MODE_SETTING_CATEGORY_BLEEDOUT" "Sanguinamento pilota"
 
 		"custom_air_accel_pilot" "Accelerazione Aerea"
-		"no_pilot_collision" "Collisione tra Piloti"
+		"pilot_collision" "Collisione tra Piloti"
 		"promode_enable" "Armi Modalità Competitiva"
 		"classic_rodeo" "Rodeo classico"
 		"oob_timer_enabled" "Timer Fuori dai Limiti"

@@ -309,7 +309,7 @@
 		"sns_reset_kill_value"                    "Очков за убийство пульс./казнь"
 		"sns_melee_kill_value"                    "Очков за убийство врукопашную"
 		"sns_softball_enabled"                    "Включить Софтбол"
-		"no_pilot_collision"                    "Столкновения между пилотами"
+		"pilot_collision"                    "Столкновения между пилотами"
 		"SHOW"                    "Показать"
 		"SHOW_ALL"                    "Все"
 		"SHOW_ONLY_ENABLED"                    "Только включенные"

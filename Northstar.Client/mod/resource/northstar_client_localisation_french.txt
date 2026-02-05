@@ -219,7 +219,7 @@ Choisissez Oui si vous êtes d'accord. Ce choix peut être modifié à tout inst
 		"MODE_SETTING_CATEGORY_BLEEDOUT" "Pilote à terre quand abattu"
 
 		"custom_air_accel_pilot" "Accélération aérienne"
-		"no_pilot_collision" "Collisions entre pilotes"
+		"pilot_collision" "Collisions entre pilotes"
 		"promode_enable" "Armes du mode pro"
 		"classic_rodeo" "Rodéo classique"
 		"oob_timer_enabled" "Timer hors-limites"

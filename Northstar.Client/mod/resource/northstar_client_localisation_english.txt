@@ -226,7 +226,7 @@ Press Yes if you agree to this. This choice can be changed in the mods menu at a
 		"MODE_SETTING_CATEGORY_BLEEDOUT" "Pilot Bleedout"
 
 		"custom_air_accel_pilot" "Air Acceleration"
-		"no_pilot_collision" "Inter-Pilot Collision"
+		"pilot_collision" "Inter-Pilot Collision"
 		"promode_enable" "Promode Weapons"
 		"classic_rodeo" "Classic Rodeo"
 		"oob_timer_enabled" "Out of Bounds Timer"

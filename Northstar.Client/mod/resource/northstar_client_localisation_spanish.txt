@@ -219,7 +219,7 @@ Presiona Sí al estar de acuerdo. Esta opcion se puede cambiar en el menú de mo
 		"MODE_SETTING_CATEGORY_BLEEDOUT" "Desangre de piloto"
 
 		"custom_air_accel_pilot" "Aceleración aerea"
-		"no_pilot_collision" "Colisión de piloto"
+		"pilot_collision" "Colisión de piloto"
 		"promode_enable" "Armas del Modo Pro"
 		"classic_rodeo" "Abordaje Clasico"
 		"oob_timer_enabled" "Temporizador del limite de mapa"
