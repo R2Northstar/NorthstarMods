@@ -13,7 +13,6 @@ global function SquadAssaultFrontline
 global function MoveFrontline
 global function GetCurrentFrontline
 global function GetTeamCombatDir
-global function FrontlineDeath
 global function SetFrontlineSides
 
 const int FRONTLINE_MIN_DIST_SQR = 262144 // 512
