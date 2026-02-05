@@ -411,8 +411,6 @@ float function GetFrontlineWidth( table frontlineTable )
 		}
 	}
 
-	printt( frontlineTable.name, frontlineTable, highDist )
-
 	float width = ( highDist * 0.5 ) + 512
 
 	return width // half the width since all calculations are based on the center of the frontline
