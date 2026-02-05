@@ -212,10 +212,6 @@ void function GuyHangsInPod( entity guy, entity pod )
 
 	string idleAnim
 	string exitAnim
-	bool disable_traverse = guy.GetCapabilityFlag( bits_CAP_MOVE_TRAVERSE )
-
-	if ( disable_traverse )
-		guy.SetCapabilityFlag( bits_CAP_MOVE_TRAVERSE, false )
 
 	if ( !droppodData.openDoor )
 	{
@@ -246,9 +242,5 @@ void function GuyHangsInPod( entity guy, entity pod )
 
 	if ( exitAnimExists )
 		WaittillAnimDone( guy )
-
-	if ( disable_traverse )
-		guy.SetCapabilityFlag( bits_CAP_MOVE_TRAVERSE, true )
-
 	guy.Signal( "npc_deployed" )
 }

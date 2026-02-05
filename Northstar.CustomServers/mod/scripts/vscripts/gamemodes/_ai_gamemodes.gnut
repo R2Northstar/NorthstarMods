@@ -93,6 +93,7 @@ void function AiGameModes_SpawnDropPod( entity node, int team, string content /*
 	InitFireteamDropPod( pod, flags )
 	
 	string squadName = MakeSquadName( team, UniqueString( "" ) )
+	array<bool> disable_traverse
 	array<entity> guys
 	for ( int i = 0; i < 4 ;i++ )
 	{
@@ -120,6 +121,13 @@ void function AiGameModes_SpawnDropPod( entity node, int team, string content /*
 		npc.AssaultSetFightRadius( 800 )
 		npc.EnableNPCFlag( NPC_ALLOW_PATROL | NPC_ALLOW_INVESTIGATE | NPC_ALLOW_HAND_SIGNALS | NPC_ALLOW_FLEE | NPC_NEW_ENEMY_FROM_SOUND | NPC_STAY_CLOSE_TO_SQUAD )
 		guys.append( npc )
+
+		bool disabletraverse = npc.GetCapabilityFlag( bits_CAP_MOVE_TRAVERSE )
+
+		disable_traverse.append( disabletraverse )
+
+		if ( disabletraverse )
+			npc.SetCapabilityFlag( bits_CAP_MOVE_TRAVERSE, false )
 	}
 	
 	waitthread LaunchAnimDropPod( pod, "pod_testpath", pos, rot )
@@ -128,11 +136,18 @@ void function AiGameModes_SpawnDropPod( entity node, int team, string content /*
 		guy.ClearParent()
 
 	ActivateFireteamDropPod( pod, guys )
+
 	// start searching for enemies
 	if ( squadHandler != null )
 		thread squadHandler( guys )
 	
 	ToggleSpawnNodeInUse( node, false )
+
+	WaitEndFrame()
+
+	for ( int i = 0; i < guys.len(); i++ )
+		if ( IsValid( guys[i] ) && disable_traverse[i] )
+			guys[i].SetCapabilityFlag( bits_CAP_MOVE_TRAVERSE, true )
 }
 
 const float REAPER_WARPFALL_DELAY = 4.7 // same as fd does
