@@ -60,7 +60,7 @@ WeaponData
 	"damage_type" 									"bullet"
 	"damage_near_distance"							"300"
 	"damage_far_distance" 							"700"
-	"damage_near_value"   							"220"
+	"damage_near_value"   							"110"
 	"damage_far_value"								"25"
 	"damage_near_value_titanarmor"					"130"
 	"damage_far_value_titanarmor" 					"10"

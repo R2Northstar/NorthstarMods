@@ -11,6 +11,7 @@ global function AddSpawnpointValidationRule
 global function CreateNoSpawnArea
 global function DeleteNoSpawnArea
 global function SpawnPointInNoSpawnArea
+global function IsSpawnpointValid
 
 global function RateSpawnpoints_Generic
 global function RateSpawnpoints_Directional

@@ -1,7 +1,7 @@
 global function GamemodeAITdm_Init
 
 // these are now default settings
-const int SQUADS_PER_TEAM = 5
+const int SQUADS_PER_TEAM = 4
 const int SPECTRES_PER_TEAM = 12
 const int REAPERS_PER_TEAM = 2
 
@@ -200,14 +200,14 @@ void function HandleScoreEvent( entity victim, entity attacker, var damageInfo )
 void function SpawnIntroBatch_Threaded( int team )
 {
 	array<entity> dropPodNodes = GetEntArrayByClass_Expensive( "info_spawnpoint_droppod_start" )
-	array<entity> dropShipNodes = GetValidIntroDropShipSpawn( dropPodNodes )  
+	array<entity> dropShipNodes = GetValidIntroDropShipSpawn( dropPodNodes )
 
 	array<entity> podNodes
 	array<entity> shipNodes
 
 	// mp_rise has weird droppod_start nodes, this gets around it
 	// To be more specific the teams aren't setup and some nodes are scattered in narnia
-	if( GetMapName() == "mp_rise" )
+	if ( GetMapName() == "mp_rise" )
 	{
 		entity spawnPoint
 
@@ -227,10 +227,8 @@ void function SpawnIntroBatch_Threaded( int team )
 
 		// Get nodes close enough to team spawnpoint
 		foreach ( node in dropPodNodes )
-		{
-			if ( node.HasKey("teamnum") && Distance2D( node.GetOrigin(), spawnPoint.GetOrigin()) < 2000 )
+			if ( node.HasKey( "teamnum" ) && Distance2D( node.GetOrigin(), spawnPoint.GetOrigin() ) < 2000 )
 				podNodes.append( node )
-		}
 	}
 	else
 		foreach ( node in dropPodNodes )
@@ -334,9 +332,7 @@ void function Spawner_Threaded( int team )
 			{
 				entity node = points[ GetSpawnPointIndex( points, team ) ]
 
-				thread AiGameModes_SpawnDropShip( node, team, 4, SquadHandler )
-
-				wait 3.0 //Wait 3 seconds because Dropships does not exist until they warp in, which takes about 3.7 seconds to happen because of the effect
+				waitthread AiGameModes_SpawnDropShip( node, team, 4, SquadHandler )
 			}
 			else
 			{
@@ -392,9 +388,33 @@ void function Escalate( int team )
 // Decides where to spawn ai
 // Each team has their "zone" where they and their ai spawns
 // These zones should swap based on which team is dominating where
-int function GetSpawnPointIndex( array< entity > points, int team )
+int function GetSpawnPointIndex( array<entity> points, int team )
 {
-	entity point = GetAiFrontlineSpawnpoint( team, points )
+	array<entity> spawns = clone points
+
+	foreach ( entity spawnpoint in spawns )
+		if ( !IsSpawnpointValid( spawnpoint, team ) )
+			spawns.removebyvalue( spawnpoint )
+
+	if ( !spawns.len() )
+	{
+		spawns = clone points
+
+		foreach ( entity spawnpoint in spawns )
+			if ( !IsSpawnpointValid( spawnpoint, team, true ) )
+				spawns.removebyvalue( spawnpoint )
+	}
+
+	if ( !spawns.len() )
+	{
+		spawns = clone points
+
+		foreach ( entity spawnpoint in spawns )
+			if ( !IsSpawnpointValid( spawnpoint, team, true, true ) )
+				spawns.removebyvalue( spawnpoint )
+	}
+
+	entity point = spawns.len() ? spawns.getrandom() : points.getrandom()
 
 	for ( int i = 0; i < points.len(); i++ )
 		if ( points[i] == point )
@@ -417,7 +437,7 @@ void function SquadHandler( array<entity> guys )
 
 			file.spawnedMinions[ guy.GetTeam() ].append( guy )
 
-			if ( guy.GetClassName() == "npc_spectre" )
+			if ( IsSpectre( guy ) )
 			{
 				if ( !( guy.GetTeam() in file.spawnedSpectres ) )
 					file.spawnedSpectres[ guy.GetTeam() ] <- []
@@ -428,6 +448,9 @@ void function SquadHandler( array<entity> guys )
 			}
 		}
 	}
+
+	if ( !IsGrunt( guys[0] ) && !IsSpectre( guys[0] ) )
+		return
 
 	int team = guys[0].GetTeam()
 	// show the squad enemy radar
@@ -457,7 +480,6 @@ void function SquadHandler( array<entity> guys )
 	foreach ( guy in guys )
 	{
 		guy.EnableNPCFlag( NPC_ALLOW_PATROL | NPC_ALLOW_INVESTIGATE | NPC_ALLOW_HAND_SIGNALS | NPC_ALLOW_FLEE )
-		guy.AssaultSetFightRadius( FrontlineRadius_Minion )
 		guy.AssaultSetGoalRadius( 1600 ) // 1600 is minimum for npc_stalker, works fine for others
 	}
 
@@ -474,16 +496,10 @@ void function SquadHandler( array<entity> guys )
 			return
 
 		foreach ( guy in guys )
-		{
-			if ( guy.GetClassName() == "npc_spectre" && IsValid( guy.GetOwner() ) && IsValid( guy.GetBossPlayer() ) )
-			{
+			if ( IsSpectre( guy ) && IsValid( guy.GetOwner() ) && IsValid( guy.GetBossPlayer() ) )
 				guys.removebyvalue( guy )
-			}
 			else
-			{
 				SquadAssaultFrontline( guys, GetAiFrontlinePath( team ) )
-			}
-		}
 	}
 }
 
@@ -537,7 +553,6 @@ void function OnSpectreLeeched( entity spectre, entity player )
 // Same as SquadHandler, just for reapers
 void function ReaperHandler( entity reaper )
 {
-/*
 	if ( !( reaper.GetTeam() in file.spawnedReapers ) )
 		file.spawnedReapers[ reaper.GetTeam() ] <- []
 
@@ -547,23 +562,4 @@ void function ReaperHandler( entity reaper )
 
 	foreach ( player in players )
 		reaper.Minimap_AlwaysShow( 0, player )
-
-	vector point = GetAiFrontlinePath( 1, reaper.GetTeam(), false )
-
-	reaper.AssaultPoint( point )
-	reaper.AssaultPointClamped( point )
-	reaper.AssaultSetFightRadius( FrontlineRadius_Reaper )
-	reaper.AssaultSetGoalRadius( 1200 )
-
-	// Every 2.5 - 5 secs change AssaultPoint
-	while ( IsAlive( reaper ) )
-	{
-		point = GetAiFrontlinePath( 1, reaper.GetTeam(), false )
-
-		reaper.AssaultPoint( point )
-		reaper.AssaultPointClamped( point )
-
-		wait RandomFloatRange( 2.5, 5.0 )
-	}
-*/
 }

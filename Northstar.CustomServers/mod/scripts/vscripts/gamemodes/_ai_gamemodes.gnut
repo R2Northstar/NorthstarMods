@@ -34,8 +34,17 @@ void function AiGameModes_SetNPCWeapons( string npcClass, array<string> weapons 
 //------------------------------------------------------
 
 void function AiGameModes_SpawnDropShip( entity node, int team, int count, void functionref( array<entity> guys ) squadHandler = null )
-{  
+{
 	ToggleSpawnNodeInUse( node, true )
+
+	OnThreadEnd
+	(
+		function () : ( node )
+		{
+			ToggleSpawnNodeInUse( node, false )
+		}
+	)
+
 	string squadName = MakeSquadName( team, UniqueString( "" ) )
 	vector pos = node.GetOrigin()
 	vector rot = node.GetAngles()
@@ -48,16 +57,19 @@ void function AiGameModes_SpawnDropShip( entity node, int team, int count, void 
 	drop.squadname 	= squadName
 	SetDropTableSpawnFuncs( drop, CreateDropshipSoldier, count )
 	SetCallinStyle( drop, eDropStyle.ZIPLINE_NPC )
-  
+
 	waitthread RunDropshipDropoff( drop )
-	
+
+	if ( !GetNPCSquadSize( squadName ) )
+		return
+
 	array< entity > guys = GetNPCArrayBySquad( squadName )
 	
 	foreach ( guy in guys )
 	{
 		foreach ( entity weapon in guy.GetMainWeapons() )
 		{
-			if ( weapon.GetWeaponClassName() == "mp_weapon_rocket_launcher" && GetCurrentPlaylistVarInt( "aitdm_archer_grunts", 0 ) == 0 )
+			if ( weapon.GetWeaponClassName() == "mp_weapon_rocket_launcher" && !GetCurrentPlaylistVarInt( "aitdm_archer_grunts", 0 ) )
 				guy.TakeWeapon( weapon.GetWeaponClassName() )
 		}
 		guy.SetBehaviorSelector( "behavior_sp_soldier" )
@@ -68,8 +80,6 @@ void function AiGameModes_SpawnDropShip( entity node, int team, int count, void 
 
 	if ( squadHandler != null )
 		thread squadHandler( guys )
-	
-	ToggleSpawnNodeInUse( node, false )
 }
 
 
@@ -103,7 +113,7 @@ void function AiGameModes_SpawnDropPod( entity node, int team, string content /*
 		
 		foreach ( entity weapon in npc.GetMainWeapons() )
 		{
-			if ( weapon.GetWeaponClassName() == "mp_weapon_rocket_launcher" && GetCurrentPlaylistVarInt( "aitdm_archer_grunts", 0 ) == 0 )
+			if ( weapon.GetWeaponClassName() == "mp_weapon_rocket_launcher" && !GetCurrentPlaylistVarInt( "aitdm_archer_grunts", 0 ) )
 				npc.TakeWeapon( weapon.GetWeaponClassName() )
 		}
 		
@@ -114,7 +124,10 @@ void function AiGameModes_SpawnDropPod( entity node, int team, string content /*
 	}
 	
 	waitthread LaunchAnimDropPod( pod, "pod_testpath", pos, rot )
-	
+
+	foreach ( entity guy in guys )
+		guy.ClearParent()
+
 	ActivateFireteamDropPod( pod, guys )
 	// start searching for enemies
 	if ( squadHandler != null )
