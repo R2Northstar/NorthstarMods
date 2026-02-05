@@ -372,7 +372,7 @@ table function GetBestFrontline( int winningTeam )
 	{
 		table ornull frontline = FindFrontlineInDirection( thevector )
 
-		if ( !IsValid( frontline ) )
+		if ( IsValid( frontline ) )
 			return expect table ( frontline )
 	}
 
