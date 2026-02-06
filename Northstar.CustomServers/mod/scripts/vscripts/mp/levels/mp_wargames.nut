@@ -347,7 +347,7 @@ void function PlayerWatchesWargamesIntro( entity player )
 	else if ( file.militiaPodFXEyePos == < 0, 0, 0 > && factionTeam == TEAM_MILITIA )
 		file.militiaPodFXEyePos = player.EyePosition()
 	
-	// 8.0 seconds of nothing before we start the pod sequence
+	// 8 seconds of nothing before we start the pod sequence
 	wait ( file.introStartTime + 8.0 ) - Time()
 
 	while ( Time() < file.introStartTime + 8.0 ) // note: remove this when wait stops waiting less than the input time
