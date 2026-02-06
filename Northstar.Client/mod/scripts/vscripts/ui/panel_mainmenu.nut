@@ -431,26 +431,7 @@ void function UpdatePlayButton( var button )
 				}
 				else
 				{
-					// restrict non-vanilla players from accessing official servers
-					bool hasNonVanillaMods = false
-					foreach ( ModInfo mod in NSGetModsInformation() )
-					{
-						if ( mod.enabled && mod.requiredOnClient )
-						{
-							hasNonVanillaMods = true
-							break
-						}
-					}
-
-					if ( hasNonVanillaMods )
-					{
-						message = "#HAS_NON_VANILLA_MODS"
-						file.mpButtonActivateFunc = null
-					}
-					else
-					{
-						file.mpButtonActivateFunc = LaunchMP
-					}
+					file.mpButtonActivateFunc = LaunchMP
 				}
 			#else
 				if ( GetConVarInt( "ns_has_agreed_to_send_token" ) != NS_AGREED_TO_SEND_TOKEN )
@@ -993,24 +974,6 @@ void function SpotlightButton_Activate( var button )
 
 	if ( link.find( "menu:" ) == 0 )
 	{
-		#if VANILLA
-			foreach ( ModInfo mod in NSGetModsInformation() )
-			{
-				if ( mod.enabled && mod.requiredOnClient )
-				{
-					DialogData dialogData
-
-					dialogData.header = "#COOP_CUSTOM_LOWPOP_WARNING_TITLE" // WARNING
-					dialogData.message = "#HAS_NON_VANILLA_MODS"
-					dialogData.image = $"ui/menu/common/dialog_error"
-
-					AddDialogButton( dialogData, "#OK" )
-					OpenDialog( dialogData )
-					return
-				}
-			}
-		#endif
-
 		var menu
 
 		switch ( link )
