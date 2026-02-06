@@ -1,13 +1,13 @@
 globalize_all_functions
 
-void function Before_NorthstarUtils_Init()
+void function NorthstarUtils_Before_Init()
 {
 	#if SERVER && MP
 		AddCallback_EntitiesDidLoad( ValidateTitanDropNodes )
 	#endif
 }
 
-void function After_NorthstarUtils_Init()
+void function NorthstarUtils_After_Init()
 {
 }
 

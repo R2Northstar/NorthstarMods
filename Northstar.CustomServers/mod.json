@@ -112,16 +112,16 @@
 			"Path": "sh_northstar_utils.gnut",
 			"RunOn": "CLIENT || SERVER || UI",
 			"ClientCallback": {
-				"Before": "Before_NorthstarUtils_Init",
-				"After": "After_NorthstarUtils_Init"
+				"Before": "NorthstarUtils_Before_Init",
+				"After": "NorthstarUtils_After_Init"
 			},
 			"ServerCallback": {
-				"Before": "Before_NorthstarUtils_Init",
-				"After": "After_NorthstarUtils_Init"
+				"Before": "NorthstarUtils_Before_Init",
+				"After": "NorthstarUtils_After_Init"
 			},
 			"UICallback": {
-				"Before": "Before_NorthstarUtils_Init",
-				"After": "After_NorthstarUtils_Init"
+				"Before": "NorthstarUtils_Before_Init",
+				"After": "NorthstarUtils_After_Init"
 			}
 		},
 		{
