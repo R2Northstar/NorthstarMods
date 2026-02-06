@@ -8,12 +8,14 @@ struct {
 
 void function InitCustomNetworkVars()
 {
-	#if !VANILLA
-		printt( "InitCustomNetworkVars" )
-
-		foreach ( void functionref() callback in file.onRegisteringCustomNetworkVarsCallbacks )
-			callback()
+	#if VANILLA
+		return
 	#endif
+
+	printt( "InitCustomNetworkVars" )
+
+	foreach ( void functionref() callback in file.onRegisteringCustomNetworkVarsCallbacks )
+		callback()
 }
 
 void function AddCallback_OnRegisteringCustomNetworkVars( void functionref() callback )
