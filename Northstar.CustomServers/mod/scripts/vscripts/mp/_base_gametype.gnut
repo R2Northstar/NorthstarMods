@@ -2154,7 +2154,9 @@ bool function GameModeRemove( entity ent )
 			break
 
 		default:
-			gameMode = GetSpawnpointGamemodeOverride()
+			#if MP
+				gameMode = GetSpawnpointGamemodeOverride()
+			#endif
 	}
 
 	AT_CollisionCleanup( ent )
