@@ -67,7 +67,7 @@ entity function GetRandomIntermissionCamera()
 
 void function CheckServerIdlingState()
 {
-	if ( GetPlayerArray().len() <= 1 && Time() >= 60 * GetConVarInt( "ns_server_idle_time_refresh_max_time" ) )
+	if ( !GetPlayerArray().len() && Time() >= 60 * GetConVarInt( "ns_server_idle_time_refresh_max_time" ) )
 		ServerCommand( "map " + GetMapName() )
 }
 
