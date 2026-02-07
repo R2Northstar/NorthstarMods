@@ -131,7 +131,7 @@ void function OnPrematchStart()
 	array<entity> trackedEntitiesEarlyRemove
 	array<entity> trackedEntities
 
-	entity militiaOgre = CreatePropDynamic( $"models/titans/ogre/ogreposeopen.mdl", Vector( -2060, 2856, -1412.5 ), Vector( 0, 0, 0 ) )
+	entity militiaOgre = CreatePropDynamic( $"models/titans/ogre/ogreposeopen.mdl", Vector( -2060, 2856, -1412.5 ), Vector( 0, 0, 0 ), 0 )
 
 	// create copies for each team, so that the lights and stuff work, because player faction choices may not match with their actual team
 	foreach ( int team in [ TEAM_IMC, TEAM_MILITIA ] )
@@ -280,6 +280,7 @@ entity function SpawnSkitGuy( string entityclass, vector origin, vector angles, 
 
 		DispatchSpawn( guy )
 		TakeWeaponsForArray( guy, guy.GetMainWeapons() )
+		PlayFXOnEntity( $"xo_cockpit_dlight", guy, "HIJACK" )
 	}
 
 	guy.SetInvulnerable()
@@ -405,7 +406,7 @@ void function PlayerWatchesWargamesIntro( entity player )
 	while ( Time() < currentTime + 0.4 )
 		WaitFrame()
 
-	EmitSoundOnEntityOnlyToPlayer( player, player, "wargames_materialize" )
+	EmitSoundOnEntityOnlyToPlayer( player, player, "Wargames_Materialize" )
 
 	while ( Time() < file.introStartTime + 21.4 )
 		WaitFrame()
