@@ -582,12 +582,13 @@ void function TryAuthWithLocalServer()
 
 	while ( NSIsAuthenticatingWithServer() )
 	{
-		if( file.stopNSLocalAuth )
+		WaitFrame()
+
+		if ( file.stopNSLocalAuth )
 		{
 			file.stopNSLocalAuth = false
 			return
 		}
-		WaitFrame()
 	}
 
 	if ( NSWasAuthSuccessful() )
