@@ -84,7 +84,7 @@ void function InitializeFrontline()
 
 		oldDist = dist
 
-		file.currentFrontline = groupTable	// set to closest group
+		file.currentFrontline = groupTable // set to closest group
 	}
 
 	SetFrontlineSides( file.currentFrontline, TEAM_MILITIA )
@@ -264,7 +264,7 @@ table function CreateFrontlineTable()
 {
 	table frontlineTable = {}
 
-	frontlineTable.sideNodeArray	<- [ [], [] ]	// two arrays for side 0 and side 1
+	frontlineTable.sideNodeArray	<- [ [], [] ] // two arrays for side 0 and side 1
 	frontlineTable.frontlineCenter	<- Vector( 0, 0, 0 )
 	frontlineTable.frontlineVector	<- Vector( 0, 0, 0 )
 	frontlineTable.combatDir		<- Vector( 0, 0, 0 )
@@ -348,7 +348,7 @@ vector function GetTeamCombatDir( table frontline, int team )
 	vector combatDir = expect vector ( frontline.combatDir )
 
 	if ( file.frontlineTeamSide[ team ] )
-		combatDir *= -1	// make sure combatDir is heading away from the team side, combatDir points towards side 1 by default.
+		combatDir *= -1 // make sure combatDir is heading away from the team side, combatDir points towards side 1 by default.
 
 	return combatDir
 }
@@ -384,7 +384,7 @@ table ornull function FindFrontlineInDirection( vector forwardVector )
 	vector currentCenter = expect vector ( file.currentFrontline.frontlineCenter )
 	int maxDist = 5000
 	int graceRange = 768
-	float minDot = 0.38		// about 67.5 degrees.
+	float minDot = 0.38 // about 67.5 degrees.
 	table ornull forwardFrontline = null
 	int leastUsed
 	float closestDistFrac = 1
@@ -525,7 +525,7 @@ array function CreateTempFrontline()
 	if ( mapCenter == Vector( 0, 0, 0 ) )
 		return []
 
-	vector mapDir = GetMapDirection( mapCenter, spawnpoints )	//	vector points away from the IMC side
+	vector mapDir = GetMapDirection( mapCenter, spawnpoints ) // vector points away from the IMC side
 	vector leftDir = Vector( -mapDir.y, mapDir.x, 0 )
 	int flankDist = 1024
 
@@ -541,7 +541,7 @@ array function CreateTempFrontline()
 	{
 		entity info_frontline = CreateEntity( "info_frontline" )
 
-		info_frontline.kv.group = "tempgroups"	// doesn't work
+		info_frontline.kv.group = "tempgroups" // doesn't work
 		info_frontline.kv.TeamNum = 0
 		info_frontline.SetOrigin( origin + ( mapDir * 512 ) )
 
@@ -554,7 +554,7 @@ array function CreateTempFrontline()
 	{
 		entity info_frontline = CreateEntity( "info_frontline" )
 
-		info_frontline.kv.group = "temp_group"	// doesn't work
+		info_frontline.kv.group = "temp_group" // doesn't work
 		info_frontline.kv.TeamNum = 1
 		info_frontline.SetOrigin( origin + ( mapDir * -512 ) )
 
@@ -615,7 +615,7 @@ vector function GetMapDirection( vector centerPos, array<entity> startSpawnPoint
 	if ( militiaCount )
 	{
 		militiaCenter *= 1.0 / militiaCount.tofloat()
-		dirFromMilitia = centerPos - militiaCenter	// reverse of dirToIMC
+		dirFromMilitia = centerPos - militiaCenter // reverse of dirToIMC
 		dirFromMilitia.Normalize()
 	}
 
