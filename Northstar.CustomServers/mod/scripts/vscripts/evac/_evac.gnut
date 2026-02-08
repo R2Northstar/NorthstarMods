@@ -507,9 +507,11 @@ void function AddPlayerToEvacDropship( entity dropship, entity player )
     dropship.EndSignal( "OnDeath", "OnDestroy" )
 	player.EndSignal( "OnDestroy" )
 
-	player.SetInvulnerable()
+	player.ClearInvulnerable() // being invulnerable will make EvacPlayerDamaged not get called
 	player.UnforceCrouch()
 	player.ForceStand()
+
+	AddEntityCallback_OnDamaged( player, EvacPlayerDamaged ) // prevents all damage while attached to dropship
 	Remote_CallFunction_NonReplay( player, "ServerCallback_CreateDropShipIntLighting", dropship.GetEncodedEHandle(), dropship.GetTeam() )
 
 	if ( dropship in file.shouldholsterweapons && file.shouldholsterweapons[ dropship ] ) // don't let people have their weapons in the dropship after it leaves
@@ -632,6 +634,17 @@ void function EvacDropshipDamaged( entity evacShip, var damageInfo )
 		DamageInfo_SetDamage( damageInfo, 0 )
 	else if ( DamageInfo_GetDamageSourceIdentifier( damageInfo ) == damagedef_nuclear_core )
 		DamageInfo_SetDamage( damageInfo, DamageInfo_GetDamage( damageInfo ) * EVAC_SHIP_DAMAGE_MULTIPLIER_AGAINST_NUCLEAR_CORE )
+}
+
+void function EvacPlayerDamaged( entity player, var damageInfo )
+{
+	if ( !IsValid( player.GetParent() ) || !IsAlive( player.GetParent() ) || !( "evacSlots" in player.GetParent().s ) || !PlayerInDropship( player, player.GetParent() ) )
+	{
+		RemoveEntityCallback_OnDamaged( player, EvacDropshipDamaged )
+		return
+	}
+
+	DamageInfo_SetDamage( damageInfo, 0 )
 }
 
 void function WarpInEffectEvacShip( entity dropship )
