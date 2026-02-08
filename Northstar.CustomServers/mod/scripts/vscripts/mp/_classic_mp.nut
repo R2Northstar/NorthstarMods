@@ -86,7 +86,7 @@ void function ClassicMP_SetupIntro()
 
 void function ClassicMP_OnIntroStarted()
 {
-	print( "started intro!" )
+	printt( "started intro!" )
 	
 	float introLength = ClassicMP_GetIntroLength()
 	SetServerVar( "gameStartTime", Time() + introLength )
@@ -95,7 +95,7 @@ void function ClassicMP_OnIntroStarted()
 
 void function ClassicMP_OnIntroFinished()
 {
-	print( "intro finished!" )
+	printt( "intro finished!" )
 	SetGameState( eGameState.Playing )
 }
 
