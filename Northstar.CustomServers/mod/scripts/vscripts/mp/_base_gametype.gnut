@@ -1053,7 +1053,7 @@ bool function ClientCommand_RespawnPlayer( entity player, array<string>args )
 		player.Signal( "RespawnMe" )
 	}
 
-	if ( IsEliminationBased() )
+	if ( IsRoundBased() && IsEliminationBased() )
 	{
 		SendHudMessage( player, "#GAMEMODE_RESPAWN_NEXT_ROUND", -1, 0.4, 255, 255, 255, 255, 0.15, 3.0, 0.5 )
 		return true
