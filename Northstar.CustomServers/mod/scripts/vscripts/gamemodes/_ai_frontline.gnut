@@ -734,7 +734,7 @@ void function SquadAssaultFrontline( array<entity> squad, int squadIndex )
 	{
 		npc.AssaultPoint( goal.GetOrigin() )
 		npc.AssaultSetGoalRadius( 256 )
-		npc.AssaultSetGoalHeight( 32 )
+		npc.AssaultSetGoalHeight( 64 )
 		npc.AssaultSetFightRadius( 256 )
 	}
 }
