@@ -207,41 +207,15 @@ void function SpawnIntroBatch_Threaded( int team )
 	array<entity> podNodes
 	array<entity> shipNodes
 
-	// mp_rise has weird droppod_start nodes, this gets around it
-	// To be more specific the teams aren't setup and some nodes are scattered in narnia
-	if ( GetMapName() == "mp_rise" )
-	{
-		entity spawnPoint
+	foreach ( entity node in dropPodNodes )
+		if ( node.GetTeam() == team )
+			podNodes.append( node )
 
-		// Get a spawnpoint for team
-		foreach ( point in GetEntArrayByClass_Expensive( "info_spawnpoint_dropship_start" ) )
-		{
-			if ( point.HasKey( "gamemode_tdm" ) )
-				if ( point.kv[ "gamemode_tdm" ] == "0" )
-					continue
-			
-			if ( point.GetTeam() == team )
-			{
-				spawnPoint = point
-				break
-			}
-		}
-
-		// Get nodes close enough to team spawnpoint
-		foreach ( node in dropPodNodes )
-			if ( node.HasKey( "teamnum" ) && Distance2D( node.GetOrigin(), spawnPoint.GetOrigin() ) < 2000 )
-				podNodes.append( node )
-	}
-	else
-		foreach ( node in dropPodNodes )
-			if ( node.GetTeam() == team )
-				podNodes.append( node )
-
-	shipNodes = GetValidIntroDropShipSpawn( podNodes )
+	foreach ( entity node in dropShipNodes )
+		if ( node.GetTeam() == team )
+			shipNodes.append( node )
 
 	// Spawn logic
-	int podIndex = 0
-	int shipIndex = 0
 	int podspawnsUsed = podNodes.len()
 	int shipspawnsUsed = shipNodes.len()
 	entity node
@@ -250,7 +224,7 @@ void function SpawnIntroBatch_Threaded( int team )
 	{
 		if ( podspawnsUsed && ( !shipspawnsUsed || CoinFlip() ) )
 		{
-			node = podNodes[ GetSpawnPointIndex( podNodes, team ) ]
+			node = GetSpawnPoint( podNodes, team )
 
 			thread AiGameModes_SpawnDropPod( node, team, "npc_soldier", SquadHandler )
 
@@ -260,7 +234,7 @@ void function SpawnIntroBatch_Threaded( int team )
 		}
 		else if ( shipspawnsUsed )
 		{
-			node = shipNodes[ GetSpawnPointIndex( shipNodes, team ) ]
+			node = GetSpawnPoint( shipNodes, team )
 
 			thread AiGameModes_SpawnDropShip( node, team, 4, SquadHandler )
 
@@ -312,7 +286,7 @@ void function Spawner_Threaded( int team )
 
 			if ( reaperCount < file.reapersPerTeam )
 			{
-				entity node = points[ GetSpawnPointIndex( points, team ) ]
+				entity node = GetSpawnPoint( points, team )
 
 				waitthread AiGameModes_SpawnReaper( node, team, "npc_super_spectre_aitdm", ReaperHandler )
 			}
@@ -332,7 +306,7 @@ void function Spawner_Threaded( int team )
 
 			if ( ent == "npc_soldier" && points.len() && RandomInt( 100 ) >= 66 ) //Prefer using Dropship 1/3rd of the times
 			{
-				entity node = points[ GetSpawnPointIndex( points, team ) ]
+				entity node = GetSpawnPoint( points, team )
 
 				waitthread AiGameModes_SpawnDropShip( node, team, 4, SquadHandler )
 			}
@@ -340,7 +314,7 @@ void function Spawner_Threaded( int team )
 			{
 				points = SpawnPoints_GetDropPod()
 
-				entity node = points[ GetSpawnPointIndex( points, team ) ]
+				entity node = GetSpawnPoint( points, team )
 
 				waitthread AiGameModes_SpawnDropPod( node, team, ent, SquadHandler )
 			}
@@ -390,15 +364,14 @@ void function Escalate( int team )
 // Decides where to spawn ai
 // Each team has their "zone" where they and their ai spawns
 // These zones should swap based on which team is dominating where
-int function GetSpawnPointIndex( array<entity> points, int team )
+entity function GetSpawnPoint( array<entity> points, int team )
 {
 	entity point = GetFrontlineSpawnPoint( points, team, 0 )
 
-	for ( int i = 0; i < points.len(); i++ )
-		if ( points[i] == point )
-			return i
+	if ( IsValid( point ) )
+		return point
 
-	return RandomInt( points.len() )
+	return points.getrandom()
 }
 
 // tells infantry where to go
