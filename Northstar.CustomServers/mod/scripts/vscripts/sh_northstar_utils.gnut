@@ -126,6 +126,7 @@ void function ReloadMods( bool reloadorretry = false )
 		FlightPath flightpath = GetAnalysisForModel( titan.GetModelName(), HOTDROP_TURBO_ANIM )
 
 		int dataindex = GetAnalysisDataIndex( flightpath )
+		bool debugdraw = false // debugdraws all the nodes, green = valid, red = invalid
 
 		#if DEV
 			int startTime = Daily_GetCurrentTime()
@@ -138,14 +139,14 @@ void function ReloadMods( bool reloadorretry = false )
 			if ( !TitanValidateDropNode( flightpath, titan, origin ) )
 			{
 				SetNodeScriptData_Boolean( i, dataindex, false )
+
+				if ( debugdraw )
+					for ( int j = 0; j < ANALYSIS_STEPS; j++ )
+						DebugDrawLine( origin, origin + AnglesToForward( Vector( 0, j * ANALYSIS_YAW_STEP, 0 ) ) * 20, 255, 0, 0, false, 10000.0 )
 			}
-			/*
-			else
-			{
+			else if ( debugdraw )
 				for ( int j = 0; j < ANALYSIS_STEPS; j++ )
-					DebugDrawLine( origin, origin + AnglesToForward( Vector( 0, j * ANALYSIS_YAW_STEP, 0 ) ) * 80, 255, 100, 0, true, 10000.0 ) // looks like claude lol
-			}
-			*/
+					DebugDrawLine( origin, origin + AnglesToForward( Vector( 0, j * ANALYSIS_YAW_STEP, 0 ) ) * 20, 0, 255, 0, false, 10000.0 )
 		}
 
 		#if DEV
