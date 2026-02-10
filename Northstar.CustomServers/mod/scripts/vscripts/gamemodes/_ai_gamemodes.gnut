@@ -57,28 +57,8 @@ void function AiGameModes_SpawnDropShip( entity node, int team, int count, void 
 	SetDropTableSpawnFuncs( drop, CreateDropshipSoldier, count )
 	SetCallinStyle( drop, eDropStyle.ZIPLINE_NPC )
 
+	thread DropshipActivateSquadHandler( drop, squadName, squadHandler )
 	waitthread RunDropshipDropoff( drop )
-
-	if ( !GetNPCSquadSize( squadName ) )
-		return
-
-	array< entity > guys = GetNPCArrayBySquad( squadName )
-	
-	foreach ( guy in guys )
-	{
-		foreach ( entity weapon in guy.GetMainWeapons() )
-		{
-			if ( weapon.GetWeaponClassName() == "mp_weapon_rocket_launcher" && !GetCurrentPlaylistVarInt( "aitdm_archer_grunts", 0 ) )
-				guy.TakeWeapon( weapon.GetWeaponClassName() )
-		}
-		guy.SetBehaviorSelector( "behavior_sp_soldier" )
-		//guy.GiveWeapon( "mp_weapon_defender", ["longNPCCharge"] )
-		guy.AssaultSetFightRadius( 800 )
-		guy.EnableNPCFlag( NPC_ALLOW_PATROL | NPC_ALLOW_INVESTIGATE | NPC_ALLOW_HAND_SIGNALS | NPC_ALLOW_FLEE | NPC_NEW_ENEMY_FROM_SOUND | NPC_STAY_CLOSE_TO_SQUAD )
-	}
-
-	if ( squadHandler != null )
-		thread squadHandler( guys )
 }
 
 
@@ -118,7 +98,6 @@ void function AiGameModes_SpawnDropPod( entity node, int team, string content /*
 		}
 		
 		npc.MakeInvisible()
-		npc.AssaultSetFightRadius( 800 )
 		npc.EnableNPCFlag( NPC_ALLOW_PATROL | NPC_ALLOW_INVESTIGATE | NPC_ALLOW_HAND_SIGNALS | NPC_ALLOW_FLEE | NPC_NEW_ENEMY_FROM_SOUND | NPC_STAY_CLOSE_TO_SQUAD )
 		guys.append( npc )
 
@@ -129,7 +108,10 @@ void function AiGameModes_SpawnDropPod( entity node, int team, string content /*
 		if ( disabletraverse )
 			npc.SetCapabilityFlag( bits_CAP_MOVE_TRAVERSE, false )
 	}
-	
+
+	if ( squadHandler != null )
+		thread squadHandler( guys )
+
 	waitthread LaunchAnimDropPod( pod, "pod_testpath", pos, rot )
 
 	foreach ( entity guy in guys )
@@ -137,11 +119,6 @@ void function AiGameModes_SpawnDropPod( entity node, int team, string content /*
 			guy.ClearParent()
 
 	ActivateFireteamDropPod( pod, guys )
-
-	// start searching for enemies
-	if ( squadHandler != null )
-		thread squadHandler( guys )
-	
 	ToggleSpawnNodeInUse( node, false )
 
 	WaitEndFrame()
@@ -304,4 +281,27 @@ array<entity> function GetValidIntroDropShipSpawn( array<entity> introNodes )
 	}
 	
 	return introShipSpawns
+}
+
+void function DropshipActivateSquadHandler( CallinData dropship, string squadName, void functionref( array<entity> guys ) squadHandler )
+{
+	WaitSignal( dropship, "OnDropoff" )
+
+	if ( !GetNPCSquadSize( squadName ) )
+		return
+
+	array<entity> guys = GetNPCArrayBySquad( squadName )
+
+	foreach ( guy in guys )
+	{
+		foreach ( entity weapon in guy.GetMainWeapons() )
+			if ( weapon.GetWeaponClassName() == "mp_weapon_rocket_launcher" && !GetCurrentPlaylistVarInt( "aitdm_archer_grunts", 0 ) )
+				guy.TakeWeapon( weapon.GetWeaponClassName() )
+
+		guy.SetBehaviorSelector( "behavior_sp_soldier" )
+		guy.EnableNPCFlag( NPC_ALLOW_PATROL | NPC_ALLOW_INVESTIGATE | NPC_ALLOW_HAND_SIGNALS | NPC_ALLOW_FLEE | NPC_NEW_ENEMY_FROM_SOUND | NPC_STAY_CLOSE_TO_SQUAD )
+	}
+
+	if ( squadHandler != null )
+		thread squadHandler( guys )
 }

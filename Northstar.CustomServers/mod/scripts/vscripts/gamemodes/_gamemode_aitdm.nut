@@ -295,32 +295,38 @@ void function Spawner_Threaded( int team )
 		// NORMAL SPAWNS
 		if ( count < ( ( file.squadsPerTeam - 1 ) * 4 ) )
 		{
-			array<string> ents = file.podEntities[ index ]
+			array<string> ents
+
+			ents.extend( file.podEntities[ index ] )
 
 			if ( team in file.spawnedSpectres && file.spawnedSpectres[ team ].len() > file.spectresPerTeam - 4 )
 				ents.removebyvalue( "npc_spectre" )
 
 			string ent = ents.getrandom()
 
-			array< entity > points = GetZiplineDropshipSpawns()
+			array<entity> points = GetZiplineDropshipSpawns()
 
-			if ( ent == "npc_soldier" && points.len() && RandomInt( 100 ) >= 66 ) //Prefer using Dropship 1/3rd of the times
-			{
-				entity node = GetSpawnPoint( points, team )
-
-				waitthread AiGameModes_SpawnDropShip( node, team, 4, SquadHandler )
-			}
-			else
+			if ( ent != "npc_soldier" || !points.len() || ( CoinFlip() && CoinFlip() ) )
 			{
 				points = SpawnPoints_GetDropPod()
 
 				entity node = GetSpawnPoint( points, team )
 
-				waitthread AiGameModes_SpawnDropPod( node, team, ent, SquadHandler )
+				thread AiGameModes_SpawnDropPod( node, team, ent, SquadHandler )
+
+				wait 1.0
+			}
+			else
+			{
+				entity node = GetSpawnPoint( points, team )
+
+				thread AiGameModes_SpawnDropShip( node, team, 4, SquadHandler )
+
+				wait 4.0
 			}
 		}
 
-		wait 1.0 //Not really needed to check this every frame, also stacks with Dropship wait to Warp In
+		WaitFrame()
 	}
 }
 
