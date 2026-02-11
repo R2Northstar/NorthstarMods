@@ -10,7 +10,7 @@ global function GetFrontlineSpawnPoint
 global function SquadAssaultFrontline
 
 global function MoveFrontline
-global function GetCurrentFrontline
+global function GetFrontlineGoal
 global function GetTeamCombatDir
 global function SetFrontlineSides
 
@@ -28,7 +28,6 @@ struct
 
 	bool allowfrontlinemove = true
 	bool frontlineinitiated = false
-	int nextassaultpoint = 0
 	table< int, table< int, array<entity> > > frontlineAssaultPoint
 } file
 
@@ -114,6 +113,10 @@ entity function GetFrontlineSpawnPoint( array<entity> spawnPointArray, int team 
 		return spawnPointArray.getrandom()
 
 	entity frontlinePoint = GetFrontlineGoal( 1, team, false )
+
+	if ( !IsValid( frontlinePoint ) )
+		return spawnPointArray.getrandom()
+
 	vector combatDir = GetTeamCombatDir( file.currentFrontline, team )
 	vector edgeOrigin = frontlinePoint.GetOrigin() - combatDir
 
@@ -308,14 +311,6 @@ void function MoveFrontline( int winningTeam )
 
 	// tell all squads and to assault the new fronline
 	file.timesfrontlinemoved++
-}
-
-table ornull function GetCurrentFrontline()
-{
-	if ( !FrontlineInitiated() )
-		return null
-
-	return clone file.currentFrontline
 }
 
 vector function GetTeamCombatDir( table frontline, int team )
@@ -679,6 +674,9 @@ void function SetFrontlineSides( table frontline, int winningTeam )
 
 entity function GetFrontlineGoal( int index, int team, bool spectre = false )
 {
+	if ( !IsIMCOrMilitiaTeam( team ) )
+		return null
+
 	int side = file.frontlineTeamSide[ team ]
 	array nodeArray = expect array ( expect array ( file.currentFrontline[ "sideNodeArray" ] )[ side ] )
 
@@ -749,8 +747,6 @@ void function SquadAssaultFrontline( array<entity> squad )
 	if ( !IsValid( goal ) )
 		return
 
-	table frontline = file.currentFrontline
-	vector combatDir = GetTeamCombatDir( frontline, team )
 	vector assaultOrigin = OriginToGround( goal.GetOrigin() )
 
 	foreach ( entity npc in squad )
