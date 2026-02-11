@@ -5,7 +5,6 @@ global function InitializeFrontline
 global function AllowFrontlineMove
 global function FrontlineInitiated
 
-global function GetAiFrontlinePath
 global function WaitTillFrontlineMoved
 global function GetFrontlineSpawnPoint
 global function SquadAssaultFrontline
@@ -30,6 +29,7 @@ struct
 	bool allowfrontlinemove = true
 	bool frontlineinitiated = false
 	int nextassaultpoint = 0
+	table< int, table< int, array<entity> > > frontlineAssaultPoint
 } file
 
 void function InitializeFrontline()
@@ -97,22 +97,6 @@ bool function FrontlineInitiated()
 	return file.frontlineinitiated
 }
 
-int function GetAiFrontlinePath( int team )
-{
-	if ( !FrontlineInitiated() )
-		return 0
-
-	int side = file.frontlineTeamSide[ team ]
-	array nodeArray = expect array ( expect array( file.currentFrontline[ "sideNodeArray" ] )[ side ] )
-
-	if ( file.nextassaultpoint == nodeArray.len() )
-		file.nextassaultpoint = 0
-	else
-		file.nextassaultpoint++
-
-	return file.nextassaultpoint
-}
-
 void function WaitTillFrontlineMoved()
 {
 	while ( !FrontlineInitiated() )
@@ -124,12 +108,12 @@ void function WaitTillFrontlineMoved()
 		WaitFrame()
 }
 
-entity function GetFrontlineSpawnPoint( array<entity> spawnPointArray, int team, int squadIndex )
+entity function GetFrontlineSpawnPoint( array<entity> spawnPointArray, int team )
 {
 	if ( !FrontlineInitiated() )
 		return spawnPointArray.getrandom()
 
-	entity frontlinePoint = GetFrontlineGoal( squadIndex, team, false )
+	entity frontlinePoint = GetFrontlineGoal( 1, team, false )
 	vector combatDir = GetTeamCombatDir( file.currentFrontline, team )
 	vector edgeOrigin = frontlinePoint.GetOrigin() - combatDir
 
@@ -709,7 +693,7 @@ entity function GetFrontlineGoal( int index, int team, bool spectre = false )
 	return node
 }
 
-void function SquadAssaultFrontline( array<entity> squad, int squadIndex )
+void function SquadAssaultFrontline( array<entity> squad )
 {
 	if ( !FrontlineInitiated() )
 		return
@@ -720,9 +704,47 @@ void function SquadAssaultFrontline( array<entity> squad, int squadIndex )
 	if ( !squad.len() )
 		return
 
-	bool isSpectre = IsSpectre( squad[0] )
 	int team = squad[0].GetTeam()
-	entity goal = GetFrontlineGoal( squadIndex, team, isSpectre )
+
+	if ( !IsIMCOrMilitiaTeam( team ) )
+		return
+
+	int goalNum = -1
+
+	for ( int i = 0; i < 3; i++ )
+	{
+		if ( team in file.frontlineAssaultPoint && i in file.frontlineAssaultPoint[ team ] )
+		{
+			ArrayRemoveDead( file.frontlineAssaultPoint[ team ][i] )
+
+			foreach ( entity guy in squad )
+			{
+				if ( file.frontlineAssaultPoint[ team ][i].contains( guy ) )
+				{
+					goalNum = i
+					break
+				}
+			}
+
+			if ( goalNum != -1 )
+				break
+		}
+	}
+
+	if ( goalNum == -1 )
+		for ( int i = 0; i < 3; i++ )
+			if ( goalNum == -1 || !( team in file.frontlineAssaultPoint ) || !( i in file.frontlineAssaultPoint[ team ] ) || ( goalNum in file.frontlineAssaultPoint[ team ] && file.frontlineAssaultPoint[ team ][i].len() < file.frontlineAssaultPoint[ team ][ goalNum ].len() ) )
+				goalNum = i
+
+	if ( !( team in file.frontlineAssaultPoint ) )
+		file.frontlineAssaultPoint[ team ] <- {}
+
+	if ( !( goalNum in file.frontlineAssaultPoint[ team ] ) )
+		file.frontlineAssaultPoint[ team ][ goalNum ] <- []
+
+	file.frontlineAssaultPoint[ team ][ goalNum ].extend( squad )
+
+	entity goal = GetFrontlineGoal( goalNum, team, IsSpectre( squad[0] ) )
 
 	if ( !IsValid( goal ) )
 		return
@@ -733,9 +755,10 @@ void function SquadAssaultFrontline( array<entity> squad, int squadIndex )
 	foreach ( entity npc in squad )
 	{
 		npc.AssaultPoint( goal.GetOrigin() )
+		npc.AssaultPointClamped( goal.GetOrigin() )
 		npc.AssaultSetGoalRadius( 256 )
 		npc.AssaultSetGoalHeight( 64 )
-		npc.AssaultSetFightRadius( 256 )
+		npc.AssaultSetFightRadius( 512 )
 	}
 }
 

@@ -83,7 +83,7 @@ void function AiGameModes_SpawnDropPod( entity node, int team, string content /*
 		DispatchSpawn( npc )
 		SetSquad( npc, squadName )
 		
-		npc.SetParent( pod, "ATTACH", true )
+		npc.SetParent( pod, "ATTACH", false )
 		
 		if( content == "npc_soldier" || content == "npc_spectre" )
 		{
@@ -113,10 +113,6 @@ void function AiGameModes_SpawnDropPod( entity node, int team, string content /*
 		thread squadHandler( guys )
 
 	waitthread LaunchAnimDropPod( pod, "pod_testpath", pos, rot )
-
-	foreach ( entity guy in guys )
-		if ( IsValid( guy ) )
-			guy.ClearParent()
 
 	ActivateFireteamDropPod( pod, guys )
 	ToggleSpawnNodeInUse( node, false )

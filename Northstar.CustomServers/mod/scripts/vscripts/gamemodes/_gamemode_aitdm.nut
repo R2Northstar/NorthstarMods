@@ -372,7 +372,7 @@ void function Escalate( int team )
 // These zones should swap based on which team is dominating where
 entity function GetSpawnPoint( array<entity> points, int team )
 {
-	entity point = GetFrontlineSpawnPoint( points, team, 0 )
+	entity point = GetFrontlineSpawnPoint( points, team )
 
 	if ( IsValid( point ) )
 		return point
@@ -431,9 +431,7 @@ void function SquadHandler( array<entity> guys )
 	foreach ( guy in guys )
 		guy.EnableNPCFlag( NPC_ALLOW_PATROL | NPC_ALLOW_INVESTIGATE | NPC_ALLOW_HAND_SIGNALS | NPC_ALLOW_FLEE )
 
-	int path = GetAiFrontlinePath( team )
-
-	SquadAssaultFrontline( guys, path )
+	SquadAssaultFrontline( guys )
 
 	// Every time frontline moves change AssaultPoint
 	while ( true )
@@ -445,13 +443,11 @@ void function SquadHandler( array<entity> guys )
 		if ( !guys.len() )
 			return
 
-		path = GetAiFrontlinePath( team )
-
 		foreach ( guy in guys )
 			if ( IsSpectre( guy ) && IsValid( guy.GetOwner() ) && IsValid( guy.GetBossPlayer() ) )
 				guys.removebyvalue( guy )
 			else
-				SquadAssaultFrontline( guys, path )
+				SquadAssaultFrontline( guys )
 	}
 }
 
