@@ -751,14 +751,15 @@ void function SquadAssaultFrontline( array<entity> squad )
 
 	table frontline = file.currentFrontline
 	vector combatDir = GetTeamCombatDir( frontline, team )
+	vector assaultOrigin = OriginToGround( goal.GetOrigin() )
 
 	foreach ( entity npc in squad )
 	{
-		npc.AssaultPoint( goal.GetOrigin() )
-		npc.AssaultPointClamped( goal.GetOrigin() )
+		npc.AssaultPoint( assaultOrigin )
+		npc.AssaultPointClamped( assaultOrigin )
 		npc.AssaultSetGoalRadius( 256 )
 		npc.AssaultSetGoalHeight( 64 )
-		npc.AssaultSetFightRadius( 512 )
+		npc.AssaultSetFightRadius( 0 )
 	}
 }
 
