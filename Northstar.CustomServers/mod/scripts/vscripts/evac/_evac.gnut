@@ -644,6 +644,9 @@ void function EvacPlayerDamaged( entity player, var damageInfo )
 		return
 	}
 
+	if ( !IsDamageFromDamageTrigger( damageInfo ) && ( DamageInfo_GetForceKill( damageInfo ) || IsInstantDeath( damageInfo ) ) )
+		return
+
 	DamageInfo_SetDamage( damageInfo, 0 )
 }
 
