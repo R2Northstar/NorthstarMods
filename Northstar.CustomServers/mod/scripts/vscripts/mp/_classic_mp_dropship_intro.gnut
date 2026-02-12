@@ -226,6 +226,12 @@ void function SpawnPlayerIntoDropship( entity player, int playerDropshipIndex, e
 		idleSequence.viewConeFunction = ViewConeRampFree
 		idleSequence.setInitialTime = Time() - file.introStartTime
 		thread FirstPersonSequence( idleSequence, player, playerDropship )
+
+		entity firstPersonProxy = player.GetFirstPersonProxy()
+
+		if ( IsValid( firstPersonProxy ) )
+			firstPersonProxy.HideFirstPersonProxy()
+
 		playerDropship.WaitSignal( "deploy" )
 	}
 
