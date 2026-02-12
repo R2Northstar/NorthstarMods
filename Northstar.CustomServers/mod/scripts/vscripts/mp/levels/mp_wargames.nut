@@ -108,10 +108,6 @@ void function WargamesIntro_AddPlayer( entity player )
 
 void function OnPrematchStart()
 {
-	array<entity> triggers = GetEntArrayByClass_Expensive( "trigger_hurt" ) // Disable temporarily for intro
-	foreach ( entity trigger in triggers )
-		trigger.kv.triggerFilterPlayer = "none"
-	
 	ClassicMP_OnIntroStarted()
 	file.introStartTime = Time()
 	
@@ -243,9 +239,6 @@ void function OnPrematchStart()
 	// make sure we stop using viewmodels for these otherwise everyone can see them in the floor 24/7
 	file.imcPod.RenderWithViewModels( false )
 	file.militiaPod.RenderWithViewModels( false )
-	
-	foreach ( entity trigger in triggers )
-		trigger.kv.triggerFilterPlayer = "all"
 }
 
 entity function SpawnSkitGuy( string entityclass, vector origin, vector angles, string animation = "", float animationtime = -1.0, int team = TEAM_UNASSIGNED, asset model = $"", string weapon = "" )
@@ -283,7 +276,7 @@ entity function SpawnSkitGuy( string entityclass, vector origin, vector angles, 
 		PlayFXOnEntity( $"xo_cockpit_dlight", guy, "HIJACK" )
 	}
 
-	guy.SetInvulnerable()
+	AddEntityCallback_OnDamaged( guy, WargamesEntityDamaged )
 	guy.SetEfficientMode( true )
 	guy.SetTitle( "" )
 
@@ -310,7 +303,7 @@ void function PlayerWatchesWargamesIntro( entity player )
 
 			player.UnforceStand()
 			player.MovementEnable()
-			player.ClearInvulnerable()
+			RemoveEntityCallback_OnDamaged( player, WargamesEntityDamaged )
 
 			Remote_CallFunction_NonReplay( player, "ServerCallback_ClearFactionLeaderIntro" )
 		}
@@ -327,7 +320,10 @@ void function PlayerWatchesWargamesIntro( entity player )
 	if ( PlayerCanSpawn( player ) )
 		DoRespawnPlayer( player, null )
 
+	AddEntityCallback_OnDamaged( player, WargamesEntityDamaged )
+
 	int podAttachId = playerPod.LookupAttachment( "REF" )
+
 	player.SetOrigin( playerPod.GetAttachmentOrigin( podAttachId ) )
 	player.SetAngles( playerPod.GetAttachmentAngles( podAttachId ) )
 	player.SetParent( playerPod, "REF" )
@@ -341,7 +337,6 @@ void function PlayerWatchesWargamesIntro( entity player )
 	TrainingPod_ViewConeLock_PodClosed( player )
 	HolsterViewModelAndDisableWeapons( player )
 	player.MovementDisable()
-	player.SetInvulnerable()
 	
 	if ( factionTeam == TEAM_MILITIA && GetFactionChoice( player ) == "faction_marvin" )
 		Remote_CallFunction_NonReplay( player, "ServerCallback_SpawnMilitiaFactionLeaderForIntro", file.introStartTime, playerPod.GetEncodedEHandle() )
@@ -584,4 +579,12 @@ void function PodFXCleanupNormalLight_Delayed( entity pod )
 	}
 
 	pod.s.podLightFXHandles = []
+}
+
+void function WargamesEntityDamaged( entity guy, var damageInfo )
+{
+	if ( !IsDamageFromDamageTrigger( damageInfo ) && ( DamageInfo_GetForceKill( damageInfo ) || IsInstantDeath( damageInfo ) ) )
+		return
+
+	DamageInfo_SetDamage( damageInfo, 0 )
 }
