@@ -28,12 +28,8 @@ void function CodeCallback_MapInit()
 	// Load Frontier Defense Data
 	if( GameRules_GetGameMode() == FD )
 		initFrontierDefenseData()
-	else
-	{
-		// currently disabled until finished: intro
-		if ( !IsFFAGame() && GetClassicMPMode() )
-			ClassicMP_SetLevelIntro( WargamesIntroSetup, 21.6 )
-	}
+	else if ( !IsFFAGame() && GetClassicMPMode() )
+		ClassicMP_SetLevelIntro( WargamesIntroSetup, 21.6 )
 }
 
 
@@ -115,10 +111,14 @@ void function OnPrematchStart()
 	// this breaks glowlights, not sure why
 	//file.imcPod.RenderWithViewModels( true )
 	//file.militiaPod.RenderWithViewModels( true )
-	
+
+	EmitSoundOnEntity( file.imcPod, "Wargames_Emit_IMC_Intro_HighPass" )
+	EmitSoundOnEntity( file.imcPod, "Wargames_Emit_IMC_Intro_LowPass" )
+	EmitSoundOnEntity( file.militiaPod, "Wargames_Emit_MCOR_Intro_HighPass" )
+	EmitSoundOnEntity( file.militiaPod, "Wargames_Emit_MCOR_Intro_LowPass" )
 	PodFXLights( file.imcPod )
 	PodFXLights( file.militiaPod )
-	
+
 	FirstPersonSequenceStruct openPodSequence
 	openPodSequence.thirdPersonAnimIdle = "trainingpod_doors_open_idle"
 	thread FirstPersonSequence( openPodSequence, file.imcPod )
@@ -143,6 +143,7 @@ void function OnPrematchStart()
 		militiaIonGrunt.MarkAsNonMovingAttachment()
 		militiaIonGrunt.Anim_ScriptedPlay( "pt_titan_activation_pilot" )
 		militiaIonGrunt.Anim_EnableUseAnimatedRefAttachmentInsteadOfRootMotion()
+
 		trackedEntitiesEarlyRemove.append( militiaIonGrunt )
 
 		trackedEntities.append( SpawnSkitGuy( "npc_soldier", Vector( -2125, 3070, -1411 ), Vector( 0, -121, 0 ), "pt_bored_interface_leanin", -1.0, team, $"models/humans/grunts/mlt_grunt_smg.mdl" ) )
@@ -172,7 +173,6 @@ void function OnPrematchStart()
 	}
 
 	// so I don't have to duplicate this on all entities
-
 	foreach ( entity ent in trackedEntitiesEarlyRemove )
 		ent.kv.VisibilityFlags = ENTITY_VISIBLE_TO_FRIENDLY
 

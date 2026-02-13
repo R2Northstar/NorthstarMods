@@ -205,18 +205,10 @@ void function SpawnPlayerIntoDropship( entity player, int playerDropshipIndex, e
 	player.MovementDisable()
 	AddCinematicFlag( player, CE_FLAG_CLASSIC_MP_SPAWNING )
 	thread DelayedFrameFadeout( player )
-
-	if( GameRules_GetGameMode() == FD )
-	{
-		if( player.GetTeam() == TEAM_MILITIA ) //IMC Side will have empty Intro Dropship for FD in specific
-			Remote_CallFunction_NonReplay( player, "ServerCallback_SpawnFactionCommanderInDropship", playerDropship.GetEncodedEHandle(), playerDropship.ai.spawnTime )
-	}
-	else
-		Remote_CallFunction_NonReplay( player, "ServerCallback_SpawnFactionCommanderInDropship", playerDropship.GetEncodedEHandle(), playerDropship.ai.spawnTime )
-
+	Remote_CallFunction_NonReplay( player, "ServerCallback_SpawnFactionCommanderInDropship", playerDropship.GetEncodedEHandle(), playerDropship.ai.spawnTime )
 	Remote_CallFunction_NonReplay( player, "ServerCallback_CreateDropShipIntLighting", playerDropship.GetEncodedEHandle(), playerDropship.GetTeam() )
 
-	if( !playerDropship.s.deployedPilots )
+	if ( !playerDropship.s.deployedPilots )
 	{
 		FirstPersonSequenceStruct idleSequence
 		idleSequence.firstPersonAnim = DROPSHIP_IDLE_ANIMS_POV[ playerDropshipIndex ]
@@ -243,13 +235,14 @@ void function SpawnPlayerIntoDropship( entity player, int playerDropshipIndex, e
 	jumpSequence.setInitialTime = max( 0.0, Time() - playerDropship.s.deployedTime )
 	
 	#if BATTLECHATTER_ENABLED
-	if( playerDropshipIndex == 0 )
+	if ( !playerDropshipIndex )
 		PlayBattleChatterLine( player, "bc_pIntroChat" )
 	#endif
 	
 	waitthread FirstPersonSequence( jumpSequence, player, playerDropship )
+
 	wait 0.3 // Blendout time from the function
-	
+
 	thread PlayerJumpsFromDropship( player )
 }
 
@@ -280,7 +273,7 @@ void function PlayerJumpsFromDropship( entity player )
 	while ( !player.IsOnGround() && !player.IsWallRunning() && !player.IsWallHanging() ) // todo this needs tweaking
 		WaitFrame()
 	
-	if ( GetRoundsPlayed() == 0 || HasSwitchedSides() == 1 ) //Intro is announced only for the first round in Vanilla as certain gamemodes have different announcements for rounds restarts
+	if ( !GetRoundsPlayed() || HasSwitchedSides() ) //Intro is announced only for the first round in Vanilla as certain gamemodes have different announcements for rounds restarts
 		TryGameModeAnnouncement( player )
 }
 
