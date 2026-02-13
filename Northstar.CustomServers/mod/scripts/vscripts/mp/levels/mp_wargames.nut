@@ -200,6 +200,7 @@ void function OnPrematchStart()
 	thread PodFXCleanupNormalLight_Delayed( file.militiaPod )
 	
 	wait 6.5
+
 	thread PodBootFXThread( file.imcPod )
 	thread PodBootFXThread( file.militiaPod )
 	
@@ -239,6 +240,9 @@ void function OnPrematchStart()
 	// make sure we stop using viewmodels for these otherwise everyone can see them in the floor 24/7
 	file.imcPod.RenderWithViewModels( false )
 	file.militiaPod.RenderWithViewModels( false )
+
+	PodFXCleanup( file.imcPod )
+	PodFXCleanup( file.militiaPod )
 }
 
 entity function SpawnSkitGuy( string entityclass, vector origin, vector angles, string animation = "", float animationtime = -1.0, int team = TEAM_UNASSIGNED, asset model = $"", string weapon = "" )
@@ -311,6 +315,7 @@ void function PlayerWatchesWargamesIntro( entity player )
 	
 	int factionTeam = ConvertPlayerFactionToIMCOrMilitiaTeam( player )
 	entity playerPod
+
 	if ( factionTeam == TEAM_IMC )
 		playerPod = file.imcPod
 	else
@@ -470,10 +475,11 @@ void function PodFXLights( entity pod )
 void function PodFXLasers( entity pod )
 {
 	entity leftEmitter = CreateScriptMover( pod.GetOrigin() )
-	pod.s.leftLaserEmitter <- leftEmitter
 	entity rightEmitter = CreateScriptMover( pod.GetOrigin() )
+
+	pod.s.leftLaserEmitter <- leftEmitter
 	pod.s.rightLaserEmitter <- rightEmitter
-	
+
 	thread PodFXLaserSweep( leftEmitter, pod, pod == file.imcPod ? file.imcPodFXEyePos : file.militiaPodFXEyePos, "fx_laser_L" )
 	thread PodFXLaserSweep( rightEmitter, pod, pod == file.imcPod ? file.imcPodFXEyePos : file.militiaPodFXEyePos, "fx_laser_R" )
 }
@@ -579,6 +585,52 @@ void function PodFXCleanupNormalLight_Delayed( entity pod )
 	}
 
 	pod.s.podLightFXHandles = []
+}
+
+void function PodFXCleanup( entity pod )
+{
+	foreach ( entity handle in pod.s.podGlowLightFXHandles )
+	{
+		if ( IsValid_ThisFrame( handle ) )
+		{
+			handle.SetStopType( "DestroyImmediately" )
+			handle.ClearParent()
+			handle.Destroy()
+		}
+	}
+
+	pod.s.podGlowLightFXHandles = []
+
+	entity leftEmitter = expect entity ( pod.s.leftLaserEmitter )
+	entity rightEmitter = expect entity ( pod.s.rightLaserEmitter )
+
+	if ( IsValid( leftEmitter ) )
+	{
+		entity fxHandle = "fxHandle" in leftEmitter.s ? expect entity ( leftEmitter.s.fxHandle ) : null
+
+		if ( IsValid_ThisFrame( fxHandle ) )
+		{
+			fxHandle.SetStopType( "DestroyImmediately" )
+			fxHandle.ClearParent()
+			fxHandle.Destroy()
+		}
+
+		leftEmitter.Destroy()
+	}
+
+	if ( IsValid( rightEmitter ) )
+	{
+		entity fxHandle = "fxHandle" in rightEmitter.s ? expect entity ( rightEmitter.s.fxHandle ) : null
+
+		if ( IsValid_ThisFrame( fxHandle ) )
+		{
+			fxHandle.SetStopType( "DestroyImmediately" )
+			fxHandle.ClearParent()
+			fxHandle.Destroy()
+		}
+
+		rightEmitter.Destroy()
+	}
 }
 
 void function WargamesEntityDamaged( entity guy, var damageInfo )
