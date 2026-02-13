@@ -714,6 +714,7 @@ void function SquadAssaultFrontline( array<entity> squad )
 		if ( team in file.frontlineAssaultPoint && i in file.frontlineAssaultPoint[ team ] )
 		{
 			ArrayRemoveDead( file.frontlineAssaultPoint[ team ][i] )
+			ArrayRemoveDifferentTeam( file.frontlineAssaultPoint[ team ][i], team )
 
 			foreach ( entity guy in squad )
 			{
@@ -783,4 +784,11 @@ table function CalcClosestPointOnLine( vector P, vector A, vector B, bool clamp 
 	thetable.point <- closest
 
 	return thetable
+}
+
+void function ArrayRemoveDifferentTeam( array<entity> ents, int team )
+{
+	for ( int i = ents.len() - 1; i >= 0; i-- )
+		if ( ents[i].GetTeam() != team )
+			ents.remove( i )
 }
