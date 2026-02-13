@@ -199,14 +199,16 @@ void function SpawnPlayerIntoDropship( entity player, int playerDropshipIndex, e
 {
 	player.EndSignal( "OnDestroy" )
 	player.EndSignal( "OnDeath" )
-	
-	HolsterAndDisableWeapons( player )
-	player.DisableWeaponViewModel()
+
 	player.MovementDisable()
+
+	HolsterViewModelAndDisableWeapons( player )
 	AddCinematicFlag( player, CE_FLAG_CLASSIC_MP_SPAWNING )
 	thread DelayedFrameFadeout( player )
 	Remote_CallFunction_NonReplay( player, "ServerCallback_SpawnFactionCommanderInDropship", playerDropship.GetEncodedEHandle(), playerDropship.ai.spawnTime )
 	Remote_CallFunction_NonReplay( player, "ServerCallback_CreateDropShipIntLighting", playerDropship.GetEncodedEHandle(), playerDropship.GetTeam() )
+
+	entity firstPersonProxy = player.GetFirstPersonProxy()
 
 	if ( !playerDropship.s.deployedPilots )
 	{
@@ -218,8 +220,6 @@ void function SpawnPlayerIntoDropship( entity player, int playerDropshipIndex, e
 		idleSequence.viewConeFunction = ViewConeRampFree
 		idleSequence.setInitialTime = Time() - file.introStartTime
 		thread FirstPersonSequence( idleSequence, player, playerDropship )
-
-		entity firstPersonProxy = player.GetFirstPersonProxy()
 
 		if ( IsValid( firstPersonProxy ) )
 			firstPersonProxy.HideFirstPersonProxy()
@@ -233,15 +233,28 @@ void function SpawnPlayerIntoDropship( entity player, int playerDropshipIndex, e
 	jumpSequence.attachment = "ORIGIN"
 	jumpSequence.viewConeFunction = ViewConeFree
 	jumpSequence.setInitialTime = max( 0.0, Time() - playerDropship.s.deployedTime )
-	
+
 	#if BATTLECHATTER_ENABLED
 	if ( !playerDropshipIndex )
 		PlayBattleChatterLine( player, "bc_pIntroChat" )
 	#endif
-	
-	waitthread FirstPersonSequence( jumpSequence, player, playerDropship )
 
-	wait 0.3 // Blendout time from the function
+	thread FirstPersonSequence( jumpSequence, player, playerDropship )
+
+	if ( IsValid( firstPersonProxy ) )
+		firstPersonProxy.HideFirstPersonProxy()
+
+	wait 1.0
+
+	if ( IsValid( firstPersonProxy ) )
+		firstPersonProxy.ShowFirstPersonProxy()
+
+	if ( player.Anim_IsActive() )
+	{
+		WaittillAnimDone( player )
+
+		wait 0.3 // Blendout time from the function
+	}
 
 	thread PlayerJumpsFromDropship( player )
 }
@@ -257,19 +270,22 @@ void function PlayerJumpsFromDropship( entity player )
 		{
 			// show weapon viewmodel and hud and let them move again
 			player.MovementEnable()
-			player.EnableWeaponViewModel()
 			player.UnfreezeControlsOnServer()
-			DeployAndEnableWeapons( player )
+
+			DeployViewModelAndEnableWeapons( player )
 			RemoveCinematicFlag( player, CE_FLAG_CLASSIC_MP_SPAWNING )
 		}
 	})
 	
 	// wait for player to hit the ground
 	ClearPlayerAnimViewEntity( player )
+
 	player.ClearParent()
 	player.ConsumeDoubleJump() // MovementDisable doesn't prevent double jumps
+
 	WaitFrame()
 	player.SetVelocity( < 0, 0, -100 > )
+
 	while ( !player.IsOnGround() && !player.IsWallRunning() && !player.IsWallHanging() ) // todo this needs tweaking
 		WaitFrame()
 	
