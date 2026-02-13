@@ -126,11 +126,8 @@ void function ReloadMods( bool reloadorretry = false )
 		FlightPath flightpath = GetAnalysisForModel( titan.GetModelName(), HOTDROP_TURBO_ANIM )
 
 		int dataindex = GetAnalysisDataIndex( flightpath )
-		bool debugdraw = false // debugdraws all the nodes, green = valid, red = invalid
-
-		#if DEV
-			int startTime = Daily_GetCurrentTime()
-		#endif
+		bool debug = false
+		int startTime = Daily_GetCurrentTime()
 
 		for ( int i = 0; i < positions.len(); i++ )
 		{
@@ -140,20 +137,21 @@ void function ReloadMods( bool reloadorretry = false )
 			{
 				SetNodeScriptData_Boolean( i, dataindex, false )
 
-				if ( debugdraw )
+				if ( debug )
 					for ( int j = 0; j < ANALYSIS_STEPS; j++ )
 						DebugDrawLine( origin, origin + AnglesToForward( Vector( 0, j * ANALYSIS_YAW_STEP, 0 ) ) * 20, 255, 0, 0, false, 10000.0 )
 			}
-			else if ( debugdraw )
+			else if ( debug )
 				for ( int j = 0; j < ANALYSIS_STEPS; j++ )
 					DebugDrawLine( origin, origin + AnglesToForward( Vector( 0, j * ANALYSIS_YAW_STEP, 0 ) ) * 20, 0, 255, 0, false, 10000.0 )
 		}
 
-		#if DEV
+		if ( debug )
+		{
 			DisplayTime endTime = SecondsToDHMS( Daily_GetCurrentTime() - startTime )
 
 			printt( "Toke " + endTime.s + " Second(s) " + endTime.m + " Minute(s) " + endTime.h + " Hour(s) " + endTime.d + " Day(s) to validate titan drop nodes" )
-		#endif
+		}
 
 		titan.SetOrigin( < 10000, 10000, 10000 > )
 
