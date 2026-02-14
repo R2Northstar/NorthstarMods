@@ -241,13 +241,18 @@ void function SpawnPlayerIntoDropship( entity player, int playerDropshipIndex, e
 
 	thread FirstPersonSequence( jumpSequence, player, playerDropship )
 
-	if ( IsValid( firstPersonProxy ) )
-		firstPersonProxy.HideFirstPersonProxy()
+	float waitTime = ( expect float ( playerDropship.s.deployedTime ) + 1.0 ) - Time()
 
-	wait 1.0
+	if ( waitTime > 0.0 )
+	{
+		if ( IsValid( firstPersonProxy ) )
+			firstPersonProxy.HideFirstPersonProxy()
 
-	if ( IsValid( firstPersonProxy ) )
-		firstPersonProxy.ShowFirstPersonProxy()
+		wait waitTime
+
+		if ( IsValid( firstPersonProxy ) )
+			firstPersonProxy.ShowFirstPersonProxy()
+	}
 
 	if ( player.Anim_IsActive() )
 	{
