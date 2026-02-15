@@ -639,10 +639,7 @@ void function EvacDropshipDamaged( entity evacShip, var damageInfo )
 void function EvacPlayerDamaged( entity player, var damageInfo )
 {
 	if ( !IsValid( player.GetParent() ) || !IsAlive( player.GetParent() ) || !( "evacSlots" in player.GetParent().s ) || !PlayerInDropship( player, player.GetParent() ) )
-	{
-		RemoveEntityCallback_OnDamaged( player, EvacDropshipDamaged )
 		return
-	}
 
 	if ( !IsDamageFromDamageTrigger( damageInfo ) && ( DamageInfo_GetForceKill( damageInfo ) || IsInstantDeath( damageInfo ) ) )
 		return
