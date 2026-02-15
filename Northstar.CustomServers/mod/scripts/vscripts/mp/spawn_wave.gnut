@@ -2302,11 +2302,15 @@ void function NPCNav_FD( entity npc, string routeName, int nodesToSkip = 1, floa
 		{
 			if ( !IsHarvesterAlive( fd_harvester.harvester ) )
 				return
+
 			npc.AssaultPointClamped( targetNode.GetOrigin() )
 			npc.AssaultSetGoalRadius( nextDistance )
 			
 			table result = npc.WaitSignal( "OnFinishedAssault", "OnEnterGoalRadius", "OnFailedToPath" )
-			
+
+			if ( !IsHarvesterAlive( fd_harvester.harvester ) )
+				return
+
 			/*
 			if ( result.signal == "OnFailedToPath" && !npc.IsTitan() && !IsSuperSpectre( npc ) )
 			{
@@ -2323,7 +2327,6 @@ void function NPCNav_FD( entity npc, string routeName, int nodesToSkip = 1, floa
 			targetNode = targetNode.GetLinkEnt()
 		}
 	}
-	
 	else
 	{
 		int routeindex = nodesToSkip
@@ -2332,10 +2335,15 @@ void function NPCNav_FD( entity npc, string routeName, int nodesToSkip = 1, floa
 		{
 			if ( !IsHarvesterAlive( fd_harvester.harvester ) )
 				return
+
 			npc.AssaultPointClamped( routepoint )
 			npc.AssaultSetGoalRadius( nextDistance )
-			
+
 			table result = npc.WaitSignal( "OnFinishedAssault", "OnEnterGoalRadius", "OnFailedToPath" )
+
+			if ( !IsHarvesterAlive( fd_harvester.harvester ) )
+				return
+
 			/*
 			if ( result.signal == "OnFailedToPath" && !npc.IsTitan() && !IsSuperSpectre( npc ) )
 			{
@@ -2354,7 +2362,9 @@ void function NPCNav_FD( entity npc, string routeName, int nodesToSkip = 1, floa
 				}
 			}
 			*/
+
 			routeindex++
+
 			if ( routeindex < routes[routetaken].len() )
 				routepoint = routes[routetaken][routeindex]
 			else

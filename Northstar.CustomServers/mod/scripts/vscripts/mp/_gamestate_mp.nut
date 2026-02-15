@@ -669,7 +669,7 @@ void function GameStateEnter_WinnerDetermined_Threaded()
 		SetServerVar( "roundWinningKillReplayPlaying", false )
 		fadeTime += ROUND_WINNING_KILL_REPLAY_SCREEN_FADE_TIME
 	}
-	else if ( IsRoundBased() && !HasRoundScoreLimitBeenReached() || !ShouldRunEvac() )
+	else if ( !ShouldRunEvac() || ( IsRoundBased() && !HasRoundScoreLimitBeenReached() ) )
 	{
 		// Observation from vanilla hints that the gamemodes can choose how players will behave once match is over
 		foreach ( entity player in GetPlayerArray() )
@@ -685,7 +685,7 @@ void function GameStateEnter_WinnerDetermined_Threaded()
 			CleanUpEntitiesForRoundEnd()
 	}
 
-	if ( fadeTime && IsRoundBased() && !HasRoundScoreLimitBeenReached() && !( GameRules_GetTeamScore2( winningTeam ) >= GameMode_GetRoundScoreLimit( GAMETYPE ) && ShouldRunEvac() ) )
+	if ( fadeTime && IsRoundBased() && !HasRoundScoreLimitBeenReached() && !ShouldRunEvac() )
 		foreach ( entity player in GetPlayerArray() )
 			thread ForceFadeToBlack( player, fadeTime )
 
@@ -1218,7 +1218,7 @@ void function ForceFadeToBlack( entity player, float endTime = 0.0 )
 void function CleanUpEntitiesForRoundEnd()
 {
 	SetPlayerDeathsHidden( true )
-	svGlobal.levelEnt.Signal( "CleanUpEntitiesForRoundEnd" ) 
+	svGlobal.levelEnt.Signal( "CleanUpEntitiesForRoundEnd" )
 	foreach ( entity player in GetPlayerArray() )
 	{
 		if ( IsPrivateMatchSpectator( player ) )
@@ -1227,7 +1227,7 @@ void function CleanUpEntitiesForRoundEnd()
 		PlayerEarnMeter_Reset( player )
 		ClearTitanAvailable( player )
 		PROTO_CleanupTrackedProjectiles( player )
-		player.SetPlayerNetInt( "batteryCount", 0 ) 
+		player.SetPlayerNetInt( "batteryCount", 0 )
 		player.ClearInvulnerable()
 		player.SetNoTarget( false )
 		player.ClearParent() //Dropship parenting causes observer mode crash

@@ -231,9 +231,6 @@ void function GamemodeFD_Init()
 			SetAILethality( eAILethality.High )
 			break
 	}
-
-	// Boosts
-	BurnReward_GetByRef( "burnmeter_amped_weapons_permanent" ).rewardAvailableCallback = PlayerUsesPermanentAmpedWeaponsBurncard
 }
 
 void function ScoreEvent_SetupScoreValuesForFrontierDefense()
@@ -1324,14 +1321,10 @@ void function FD_OnPlayerGetsNewPilotLoadout( entity player, PilotLoadoutDef loa
 	//If player has bought the Amped Weapons before, keep it for the new weapons
 	if ( "hasPermanantAmpedWeapons" in player.s && player.s.hasPermanantAmpedWeapons )
 	{
-		if ( "permenantAmpedWeaponsWave" in player.s && expect int ( player.s.permenantAmpedWeaponsWave ) >= GetGlobalNetInt( "FD_currentWave" ) )
-		{
-			player.s.hasPermanantAmpedWeapons = false
-			return
-		}
-
 		array<entity> weapons = player.GetMainWeapons()
+
 		weapons.extend( player.GetOffhandWeapons() )
+
 		foreach ( entity weapon in weapons )
 		{
 			weapon.RemoveMod( "silencer" )
@@ -1346,6 +1339,7 @@ void function FD_OnPlayerGetsNewPilotLoadout( entity player, PilotLoadoutDef loa
 					weapons.removebyvalue( weapon )
 				}
 			}
+
 			weapon.SetScriptFlags0( weapon.GetScriptFlags0() | WEAPONFLAG_AMPED )
 		}
 	}
@@ -2410,12 +2404,11 @@ void function GamemodeFD_OnPlayerKilled( entity victim, entity attacker, var dam
 
 	if ( !IsHarvesterAlive( fd_harvester.harvester ) || GetGameState() != eGameState.Playing )
 		return
-	
+
 	victim.s.currentKillstreak = 0
 	victim.s.lastKillTime = 0.0
 	victim.s.currentTimedKillstreak = 0
-	victim.s.hasPermanantAmpedWeapons = false
-	
+
 	if ( victim.GetTeam() == TEAM_IMC && attacker.IsPlayer() && attacker.GetTeam() == TEAM_MILITIA && GetGlobalNetBool( "FD_waveActive" ) ) //Give money to Militia players killing IMC players
 	{
 		PlayerEarnMeter_AddEarnedFrac( attacker, 0.15 )
@@ -2425,13 +2418,14 @@ void function GamemodeFD_OnPlayerKilled( entity victim, entity attacker, var dam
 			thread PvPGlitchMonitor( victim )
 		return
 	}
-	
+
 	if ( FD_PlayerInDropship( victim ) )
 	{
 		victim.ClearParent()
 		ClearPlayerAnimViewEntity( victim )
 		victim.ClearInvulnerable()
 	}
+
 	//set longest Time alive for end awards
 	if ( victim in file.players && victim in file.playerAwardStats )
 	{
@@ -2440,15 +2434,16 @@ void function GamemodeFD_OnPlayerKilled( entity victim, entity attacker, var dam
 		
 		file.playerAwardStats[victim]["longestLife"] = 0.0 //Reset to count again
 	}
-	
+
 	file.players[victim].pilotPerfectWin = false //Remove perfect win for this player
-	
+
 	if ( GetGlobalNetInt( "FD_waveState") != WAVE_STATE_BREAK )
 		file.players[victim].diedThisRound = true
 
 	//play voicelines for amount of players alive
 	array<entity> militiaplayers = GetPlayerArrayOfTeam( TEAM_MILITIA )
 	int deaths = 0
+
 	foreach ( entity player in militiaplayers )
 		if ( !IsAlive( player ) || IsAlive( player.GetParent() ) && player.GetParent().GetClassName() == "npc_dropship" )
 			deaths++
@@ -3963,33 +3958,6 @@ function FD_UpdateTitanBehavior()
 			if ( titan.GetTeam() == TEAM_MILITIA )
 				titan.DisableNPCMoveFlag( NPCMF_WALK_NONCOMBAT | NPCMF_IGNORE_CLUSTER_DANGER_TIME | NPCMF_DISABLE_DANGEROUS_AREA_DISPLACEMENT )
 		}
-	}
-}
-
-void function PlayerUsesPermanentAmpedWeaponsBurncard( entity player )
-{
-	player.s.hasPermanantAmpedWeapons <- true
-	player.s.permenantAmpedWeaponsWave <- GetGlobalNetInt( "FD_currentWave" )
-
-	array<entity> weapons = player.GetMainWeapons()
-	weapons.extend( player.GetOffhandWeapons() )
-	foreach ( entity weapon in weapons )
-	{
-		weapon.RemoveMod( "silencer" ) // both this and the burnmod will override firing fx, if a second one overrides this we crash
-		foreach ( string mod in GetWeaponBurnMods( weapon.GetWeaponClassName() ) )
-		{
-			// catch incompatibilities just in case
-			try
-			{
-				weapon.AddMod( mod )
-			}
-			catch( ex )
-			{
-				weapons.removebyvalue( weapon )
-			}
-		}
-
-		weapon.SetScriptFlags0( weapon.GetScriptFlags0() | WEAPONFLAG_AMPED )
 	}
 }
 

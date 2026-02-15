@@ -124,11 +124,14 @@ void function OnPrematchStart_Thread()
 	// Populate Dropships
 	foreach ( entity player in GetPlayerArray() )
 	{
-		if( !IsPrivateMatchSpectator( player ) )
+		if ( !IsPrivateMatchSpectator( player ) )
 		{
-			if( PlayerCanSpawn( player ) )
+			if ( PlayerCanSpawn( player ) )
 				DoRespawnPlayer( player, null )
-			
+
+			player.s.hasPermanantAmpedWeapons <- false
+
+			Loadouts_TryGivePilotLoadout( player )
 			PutPlayerInDropship( player )
 			ResetPlayerCooldowns( player ) // Prevention of case they used abilities or grenades near round end
 		}
