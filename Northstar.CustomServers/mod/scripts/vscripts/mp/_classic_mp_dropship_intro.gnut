@@ -211,31 +211,31 @@ void function SpawnPlayerIntoDropship( entity player, int playerDropshipIndex, e
 	Remote_CallFunction_NonReplay( player, "ServerCallback_SpawnFactionCommanderInDropship", playerDropship.GetEncodedEHandle(), playerDropship.ai.spawnTime )
 	Remote_CallFunction_NonReplay( player, "ServerCallback_CreateDropShipIntLighting", playerDropship.GetEncodedEHandle(), playerDropship.GetTeam() )
 
-	entity firstPersonProxy = player.GetFirstPersonProxy()
-
 	if ( !playerDropship.s.deployedPilots )
 	{
 		FirstPersonSequenceStruct idleSequence
+
 		idleSequence.firstPersonAnim = DROPSHIP_IDLE_ANIMS_POV[ playerDropshipIndex ]
 		idleSequence.thirdPersonAnim = DROPSHIP_IDLE_ANIMS[ playerDropshipIndex ]
 		idleSequence.attachment = "ORIGIN"
 		idleSequence.teleport = true
 		idleSequence.viewConeFunction = ViewConeRampFree
 		idleSequence.setInitialTime = Time() - file.introStartTime
-		thread FirstPersonSequence( idleSequence, player, playerDropship )
+		idleSequence.hideProxy = true
 
-		if ( IsValid( firstPersonProxy ) )
-			firstPersonProxy.HideFirstPersonProxy()
+		thread FirstPersonSequence( idleSequence, player, playerDropship )
 
 		playerDropship.WaitSignal( "deploy" )
 	}
 
 	FirstPersonSequenceStruct jumpSequence
+
 	jumpSequence.firstPersonAnim = DROPSHIP_JUMP_ANIMS_POV[ playerDropshipIndex ]
 	jumpSequence.thirdPersonAnim = DROPSHIP_JUMP_ANIMS[ playerDropshipIndex ]
 	jumpSequence.attachment = "ORIGIN"
 	jumpSequence.viewConeFunction = ViewConeFree
 	jumpSequence.setInitialTime = max( 0.0, Time() - playerDropship.s.deployedTime )
+	jumpSequence.hideProxy = true
 
 	#if BATTLECHATTER_ENABLED
 	if ( !playerDropshipIndex )
@@ -244,25 +244,9 @@ void function SpawnPlayerIntoDropship( entity player, int playerDropshipIndex, e
 
 	thread FirstPersonSequence( jumpSequence, player, playerDropship )
 
-	float waitTime = ( expect float ( playerDropship.s.deployedTime ) + 1.0 ) - Time()
+	WaittillAnimDone( player )
 
-	if ( waitTime > 0.0 )
-	{
-		if ( IsValid( firstPersonProxy ) )
-			firstPersonProxy.HideFirstPersonProxy()
-
-		wait waitTime
-
-		if ( IsValid( firstPersonProxy ) )
-			firstPersonProxy.ShowFirstPersonProxy()
-	}
-
-	if ( player.Anim_IsActive() )
-	{
-		WaittillAnimDone( player )
-
-		wait 0.3 // Blendout time from the function
-	}
+	wait 0.3 // Blendout time from the function
 
 	thread PlayerJumpsFromDropship( player )
 }
@@ -319,7 +303,7 @@ void function DelayedFrameFadeout( entity player )
 	player.EndSignal( "OnDestroy" )
 
 	WaitFrame()
-	ScreenFadeFromBlack( player, 1, 1 )
+	ScreenFadeFromBlack( player, 0.75, 1.0 )
 	UnMuteAll( player )
 	StopSoundOnEntity( player, "Duck_For_FrontierDefenseTitanSelectScreen" )
 }
