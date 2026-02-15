@@ -287,6 +287,7 @@ void function Spawner_Threaded( int team )
 				entity node = GetSpawnPoint( points, team )
 
 				waitthread AiGameModes_SpawnReaper( node, team, "npc_super_spectre_aitdm", ReaperHandler )
+				continue
 			}
 		}
 
@@ -432,7 +433,7 @@ void function SquadHandler( array<entity> guys )
 	SquadAssaultFrontline( guys )
 
 	// Every time frontline moves change AssaultPoint
-	while ( true )
+	while ( GamePlaying() )
 	{
 		WaitTillFrontlineMoved()
 
