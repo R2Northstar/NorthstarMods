@@ -3010,9 +3010,6 @@ void function FD_DropshipDropPlayer( entity player, int playerDropshipIndex )
 
 		waitthread FirstPersonSequence( jumpSequence, player, file.dropship )
 
-		while ( player.Anim_IsActive() )
-			WaitFrame()
-
 		if ( IsValidPlayer( player ) ) //Check again because the delay
 		{
 			player.ClearParent()
