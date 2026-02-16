@@ -57,6 +57,11 @@ void function SPMP_MapSpawn_Init()
 
 	AddSpawnCallback( "player", MP_PlayerPostInit )
 
+	if ( GetCurrentPlaylistVarInt( "script_leak", 0 ) )
+	{
+		thread ScriptLeakDetector()
+	}
+
 	// unsure if this should be done here, but it's required for mp to load
 	PrecacheModel( $"models/menu/default_environment.mdl" )
 
