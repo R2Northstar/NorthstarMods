@@ -384,8 +384,6 @@ entity function GetSpawnPoint( array<entity> points, int team )
 // AI can also flee deeper into their zone suggesting someone spent way too much time on this
 void function SquadHandler( array<entity> guys )
 {
-	svGlobal.levelEnt.EndSignal( "GameStateChanged" )
-
 	foreach ( guy in guys )
 	{
 		if ( IsValid( guy ) )
