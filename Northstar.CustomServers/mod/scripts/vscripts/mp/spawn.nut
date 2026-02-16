@@ -29,6 +29,15 @@ global struct spawnZoneProperties{
 	float zoneRating = 0.0
 }
 
+global struct SvSpawnGlobals
+{
+	array<entity> allNormalSpawnpoints
+
+	float frontlineDistanceFalloffStart = 3072.0
+	float frontlineDistanceFalloffEnd = 4096.0
+}
+
+global SvSpawnGlobals svSpawnGlobals
 global table< entity, spawnZoneProperties > mapSpawnZones // Global so other scripts can access this for custom ratings if needed
 global const float FRONTLINE_DISTANCE_MULTIPLIER = -2.0
 
