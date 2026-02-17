@@ -108,6 +108,9 @@ void function InitMainMenuPanel()
 		Hud_AddEventHandler( audioButton, UIE_CLICK, AdvanceMenuEventHandler( GetMenu( "AudioMenu" ) ) )
 		var videoButton = AddComboButton( comboStruct, headerIndex, buttonIndex++, "#VIDEO" )
 		Hud_AddEventHandler( videoButton, UIE_CLICK, AdvanceMenuEventHandler( GetMenu( "VideoMenu" ) ) )
+		// MODS
+		var modsButton = AddComboButton( comboStruct, headerIndex, buttonIndex++, "#MENU_TITLE_MODS" )
+		Hud_AddEventHandler( modsButton, UIE_CLICK, AdvanceMenuEventHandler( GetMenu( "ModListMenu" ) ) )
 	#endif
 
 

@@ -1,7 +1,6 @@
 untyped
 
 global function AddNorthstarModMenu
-global function AddNorthstarModMenu_MainMenuFooter
 
 
 struct panelContent {
@@ -39,17 +38,6 @@ const array<string> CORE_MODS = ["Northstar.Client", "Northstar.CustomServers"] 
 void function AddNorthstarModMenu()
 {
 	AddMenu( "ModListMenu", $"resource/ui/menus/modlist.menu", InitModMenu )
-}
-
-void function AddNorthstarModMenu_MainMenuFooter()
-{
-	string controllerStr = PrependControllerPrompts( BUTTON_Y, "#MENU_TITLE_MODS" )
-	AddMenuFooterOption( GetMenu( "MainMenu" ), BUTTON_Y, controllerStr, "#MENU_TITLE_MODS", AdvanceToModListMenu )
-}
-
-void function AdvanceToModListMenu( var button )
-{
-	AdvanceMenu( GetMenu( "ModListMenu" ) )
 }
 
 void function InitModMenu()
@@ -151,12 +139,8 @@ void function OnModMenuOpened()
 
 void function OnModMenuClosed()
 {
-	try
-	{
-		DeregisterButtonPressedCallback( MOUSE_WHEEL_UP, OnScrollUp )
-		DeregisterButtonPressedCallback( MOUSE_WHEEL_DOWN, OnScrollDown )
-	}
-	catch ( ex ) {}
+	DeregisterButtonPressedCallback( MOUSE_WHEEL_UP, OnScrollUp )
+	DeregisterButtonPressedCallback( MOUSE_WHEEL_DOWN, OnScrollDown )
 
 	array<ModInfo> current = GetEnabledModsArray()
 	bool reload
@@ -180,7 +164,7 @@ void function OnModMenuClosed()
 		}
 	}
 	if ( current.len() != file.enabledMods.len() || reload ) // Only reload if we have to
-		ReloadMods()
+		ReloadMods( VANILLA != 0 )
 }
 
 void function OnModButtonFocused( var button )
@@ -255,7 +239,7 @@ void function OnModButtonPressed( var button )
 
 void function OnReloadModsButtonPressed( var button )
 {
-	ReloadMods()
+	ReloadMods( VANILLA != 0 )
 }
 
 void function OnAuthenticationAgreementButtonPressed( var button )
