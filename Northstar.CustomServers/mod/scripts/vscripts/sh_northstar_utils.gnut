@@ -58,9 +58,12 @@ void function ReloadMods( bool reloadorretry = false )
 			client.ClientCommand( "retry" )
 	#elseif UI
 		if ( reloadorretry && IsConnected() )
+		{
 			ClientCommand( "retry" )
-
-		ClientCommand( "uiscript_reset" )
+			ClientCommand( "uiscript_reset" )
+		}
+		else if ( !IsConnected() )
+			ClientCommand( "uiscript_reset" )
 	#endif
 }
 
