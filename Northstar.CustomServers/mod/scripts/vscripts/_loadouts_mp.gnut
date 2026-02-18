@@ -178,9 +178,6 @@ bool function ClientCommandCallback_RequestTitanLoadout( entity player, array<st
 
 bool function ClientCommandCallback_SetPersistentLoadoutValue( entity player, array<string> args )
 {
-	//if ( args.len() != 4 )
-	//	return true
-
 	string args0 = args.len() >= 1 ? args[0] : ""
 	string args1 = args.len() >= 2 ? args[1] : ""
 	string args2 = args.len() >= 3 ? args[2] : ""
@@ -202,7 +199,7 @@ bool function ClientCommandCallback_SetPersistentLoadoutValue( entity player, ar
 		return false
 
 	// names need custom validation
-	if ( args2 == "name" )
+	if ( args2 == "name" || ( args2 == "primaryAttachment" && val == "none" ) )
 	{
 		if ( args[0] == "titan" || ( args1.tointeger() < 0 || args1.tointeger() >= PersistenceGetArrayCount( "pilotLoadouts" ) ) )
 			return false
