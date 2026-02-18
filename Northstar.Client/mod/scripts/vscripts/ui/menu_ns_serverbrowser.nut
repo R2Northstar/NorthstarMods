@@ -1216,15 +1216,11 @@ int function ServerSortLogic ( ServerInfo a, ServerInfo b )
 			aTemp = a.playerCount
 			bTemp = b.playerCount
 
-			// `1000` is assumed to always be higher than `serverPlayersMax`
-			if (aTemp + 1 < a.maxPlayerCount)
-				aTemp = aTemp+2000
-			if (bTemp + 1 < b.maxPlayerCount)
-				bTemp = bTemp+2000
-			if (aTemp + 1 == a.maxPlayerCount)
-				aTemp = aTemp+1000
-			if (bTemp + 1 == b.maxPlayerCount)
-				bTemp = bTemp+1000
+			if ( aTemp <= a.maxPlayerCount )
+				aTemp = aTemp + 2000
+
+			if ( bTemp <= b.maxPlayerCount )
+				bTemp = bTemp + 2000
 
 			direction = filterDirection.serverName
 			break;
