@@ -53,8 +53,7 @@ const array<string> AT_BOUNTY_TITANS_AI_SETTINGS =
 	"npc_titan_atlas_tracker_bounty",
 	"npc_titan_ogre_minigun_bounty",
 	"npc_titan_ogre_meteor_bounty",
-	"npc_titan_stryder_leadwall_bounty",
-	"npc_titan_stryder_sniper_bounty"
+	"npc_titan_stryder_leadwall_bounty"
 ]
 
 // Extra
@@ -1228,20 +1227,13 @@ function OnPlayerUseBank( bank, player )
 	// Player has no bonus, try to send a tip using SendHUDMessage
 	if ( AT_GetPlayerBonusPoints( player ) == 0 )
 	{
-		ATSendDepositTipToPlayer( player, "#AT_USE_BANK_NO_BONUS_HINT" )
+		SendHudMessage( player, "#AT_USE_BANK_NO_BONUS_HINT", -1, 0.4, 255, 255, 255, 255, 0.15, 1.0, 0.5 )
 		return
 	}
 
 	// Prevent more than one instance of this thread running
 	if ( !file.playerBankUploading[ player ] )
 		thread PlayerUploadingBonus_Threaded( bank, player )
-}
-
-bool function ATSendDepositTipToPlayer( entity player, string message )
-{
-	SendHudMessage( player, "#GAMEMODE_RESPAWN_NEXT_ROUND", -1, 0.4, 255, 255, 255, 255, 0.15, 1.0, 0.5 )
-
-	return true
 }
 
 struct AT_playerUploadStruct
