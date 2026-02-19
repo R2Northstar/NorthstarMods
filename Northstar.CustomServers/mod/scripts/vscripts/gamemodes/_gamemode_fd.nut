@@ -135,6 +135,7 @@ void function GamemodeFD_Init()
 	SetShouldUsePickLoadoutScreen( true )
 	SetShouldSpectateInPickLoadoutScreen( true )
 	SetClearPlayersBuffer( true )
+	LaserMesh_Init()
 	TeamTitanSelectMenu_Init()
 
 	//General Callbacks
