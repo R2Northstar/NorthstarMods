@@ -261,7 +261,7 @@ void function Spawner_Threaded( int team )
 	// used to index into escalation arrays
 	int index = team == TEAM_MILITIA ? 0 : 1
 
-	while ( GamePlaying() || GetWinningTeam() == team )
+	while ( IsAutoPopulateEnabled( team ) )
 	{
 		Escalate( team )
 

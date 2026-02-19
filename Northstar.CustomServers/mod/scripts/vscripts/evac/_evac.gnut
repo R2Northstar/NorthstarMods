@@ -139,22 +139,6 @@ void function EvacEpilogue()
 	}
 }
 
-void function EvacSpectatorFunc( entity player )
-{
-	svGlobal.levelEnt.EndSignal( "GameStateChanged" )
-	file.evacDropship.EndSignal( "OnDestroy" )
-	
-	entity cam = GetEnt( expect string( file.currentEvacNode.kv.target ) )
-	if ( !IsValid( cam ) )
-		return
-	
-	player.SetObserverModeStaticPosition( cam.GetOrigin() )
-	player.SetObserverModeStaticAngles( cam.GetAngles() )
-	player.StartObserverMode( OBS_MODE_STATIC )
-	
-	svGlobal.levelEnt.WaitSignal( "EvacOver" )
-}
-
 void function SetRespawnAndWait( bool mode )
 {
 	wait GAME_EPILOGUE_PLAYER_RESPAWN_LEEWAY
@@ -208,7 +192,7 @@ void function Evac( int evacTeam, float initialWait, float arrivalTime, float wa
 	// get evac ship sound and model for specific team
 	EvacShipSetting evacShip = GetEvacShipSettingByTeam( evacTeam )
 
-	wait initialWait 
+	wait initialWait
 
 	// setup evac nodes if not manually registered
 	if ( file.evacNodes.len() == 0 && !IsValid( customEvacNode ) )
@@ -251,7 +235,13 @@ void function Evac( int evacTeam, float initialWait, float arrivalTime, float wa
 	// eta until arrive
 	SetTeamActiveObjective( evacTeam, "EG_DropshipExtract", Time() + arrivalTime, file.evacIcon )
 	SetTeamActiveObjective( GetOtherTeam( evacTeam ), "EG_StopExtract", Time() + arrivalTime, file.evacIcon )
-	
+
+	// Disable NPC spawning once we are in evac
+	if ( level.evacTeam == TEAM_IMC )
+		FlagSet( "Disable_IMC" ) // no random ai spawning
+	else if ( level.evacTeam == TEAM_MILITIA )
+		FlagSet( "Disable_MILITIA" ) // no random ai spawning
+
 	foreach ( entity player in GetPlayerArrayOfTeam( evacTeam ) ) //Show the Evac Match Goal for players of the team that lost the match
 		Remote_CallFunction_UI( player, "SCB_SetEvacMeritState", 0 )
 	
@@ -311,7 +301,6 @@ void function Evac( int evacTeam, float initialWait, float arrivalTime, float wa
 	})
 	
 	// flyin
-	Spectator_SetCustomSpectatorFunc( EvacSpectatorFunc )
 	thread PlayAnim( dropship, "cd_dropship_rescue_side_start", evacNode )
 
 	// fly in sound and effect
@@ -349,8 +338,8 @@ void function Evac( int evacTeam, float initialWait, float arrivalTime, float wa
 	trigger.SetParent( dropship, "ORIGIN" )
 	DispatchSpawn( trigger )
 	// have to do this inline since we capture the completionCallback
-	trigger.SetEnterCallback( void function( entity trigger, entity player ) : ( canBoardCallback, dropship ) 
-	{ 	
+	trigger.SetEnterCallback( void function( entity trigger, entity player ) : ( canBoardCallback, dropship )
+	{
 		if ( !player.IsPlayer() || !IsAlive( player ) || player.IsTitan() || player.ContextAction_IsBusy() || !canBoardCallback( dropship, player ) || PlayerInDropship( player, dropship ) )
 			return
 		
