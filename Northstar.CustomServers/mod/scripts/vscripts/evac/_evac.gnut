@@ -237,9 +237,9 @@ void function Evac( int evacTeam, float initialWait, float arrivalTime, float wa
 	SetTeamActiveObjective( GetOtherTeam( evacTeam ), "EG_StopExtract", Time() + arrivalTime, file.evacIcon )
 
 	// Disable NPC spawning once we are in evac
-	if ( level.evacTeam == TEAM_IMC )
+	if ( evacTeam == TEAM_IMC )
 		FlagSet( "Disable_IMC" ) // no random ai spawning
-	else if ( level.evacTeam == TEAM_MILITIA )
+	else if ( evacTeam == TEAM_MILITIA )
 		FlagSet( "Disable_MILITIA" ) // no random ai spawning
 
 	foreach ( entity player in GetPlayerArrayOfTeam( evacTeam ) ) //Show the Evac Match Goal for players of the team that lost the match
