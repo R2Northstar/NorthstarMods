@@ -54,8 +54,7 @@ const array<string> AT_BOUNTY_TITANS_AI_SETTINGS =
 	"npc_titan_ogre_minigun_bounty",
 	"npc_titan_ogre_meteor_bounty",
 	"npc_titan_stryder_leadwall_bounty",
-	"npc_titan_stryder_sniper_bounty",
-	"npc_titan_atlas_vanguard_bounty"
+	"npc_titan_stryder_sniper_bounty"
 ]
 
 // Extra
@@ -94,7 +93,6 @@ struct
 	table< entity, int > npcStolenBonus
 	table< entity, bool > playerBankUploading
 	table< entity, table<entity, int> > playerSavedBountyDamage
-	table< entity, float > playerHudMessageAllowedTime
 } file
 
 void function GamemodeAt_Init()
@@ -163,7 +161,6 @@ void function InitialiseATPlayer( entity player )
 	player.SetPlayerNetInt( "AT_bonusPointMult", 1 )
 	file.playerBankUploading[ player ] <- false
 	file.playerSavedBountyDamage[ player ] <- {}
-	file.playerHudMessageAllowedTime[ player ] <- 0.0
 	thread AT_PlayerTitleThink( player )
 	thread AT_PlayerObjectiveThink( player )
 }
@@ -1242,11 +1239,7 @@ function OnPlayerUseBank( bank, player )
 
 bool function ATSendDepositTipToPlayer( entity player, string message )
 {
-	if ( Time() < file.playerHudMessageAllowedTime[ player ] )
-		return false
-	
-	SendHudMessage( player, message, -1, 0.4, 255, 255, 255, 255, 0.5, 1.0, 0.5 )
-	file.playerHudMessageAllowedTime[ player ] = Time() + AT_PLAYER_HUD_MESSAGE_COOLDOWN
+	SendHudMessage( player, "#GAMEMODE_RESPAWN_NEXT_ROUND", -1, 0.4, 255, 255, 255, 255, 0.15, 1.0, 0.5 )
 
 	return true
 }

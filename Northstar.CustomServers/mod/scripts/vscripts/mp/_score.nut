@@ -143,7 +143,7 @@ void function ScoreEvent_PlayerKilled( entity victim, entity attacker, var damag
 
 	attacker.p.numberOfDeathsSinceLastKill = 0 // since they got a kill, remove the comeback trigger
 	// pilot kill
-	if ( IsEliminationBased() )
+	if ( IsRoundBased() && IsEliminationBased() )
 		AddPlayerScore( attacker, "EliminatePilot", victim )
 	else
 		AddPlayerScore( attacker, "KillPilot", victim )

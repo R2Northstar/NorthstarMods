@@ -634,6 +634,8 @@ void function EvacDropshipDamaged( entity evacShip, var damageInfo )
 		DamageInfo_SetDamage( damageInfo, 0 )
 	else if ( DamageInfo_GetDamageSourceIdentifier( damageInfo ) == damagedef_nuclear_core )
 		DamageInfo_SetDamage( damageInfo, DamageInfo_GetDamage( damageInfo ) * EVAC_SHIP_DAMAGE_MULTIPLIER_AGAINST_NUCLEAR_CORE )
+	else if ( DamageInfo_GetDamageSourceIdentifier( damageInfo ) == eDamageSourceId.mp_titanweapon_dumbfire_rockets )
+		DamageInfo_SetDamage( damageInfo, DamageInfo_GetDamage( damageInfo ) * 0.6 )
 }
 
 void function EvacPlayerDamaged( entity player, var damageInfo )

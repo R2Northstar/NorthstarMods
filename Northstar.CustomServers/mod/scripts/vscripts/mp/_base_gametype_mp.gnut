@@ -503,7 +503,7 @@ void function PostDeathThread_MP( entity player, var damageInfo, bool gamePlayin
 		thread PlayerWatchesKillReplayWrapper( player, attacker, respawnTime, timeOfDeath, beforeTime, replayTracker )		
 	}
 
-	if ( !IsEliminationBased() || ( IsEliminationBased() && !IsPlayerEliminated( player ) && GetGameState() > eGameState.Prematch && GetGameState() <= eGameState.SuddenDeath ) )
+	if ( !IsEliminationBased() || ( !IsPlayerEliminated( player ) && GetGameState() > eGameState.Prematch && GetGameState() <= eGameState.SuddenDeath ) )
 	{
 		// is it a good idea to do respawn code in postdeaththread? fuck if i know lol
 		float respawnDelay = max( 0, GetCurrentPlaylistVarFloat( "respawn_delay", 0.0 ) - deathcamLength )
