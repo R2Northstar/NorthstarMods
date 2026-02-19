@@ -3,7 +3,7 @@ untyped
 global function LaserMesh_Init
 
 const SOUND_LASER_DAMAGE = "Timeshift_LaserMesh_Damage"
-const asset DAMAGE_AREA_MODEL = $"mdl/weapons/grenades/arc_grenade_projectile.rmdl"
+const asset DAMAGE_AREA_MODEL = $"models/weapons/grenades/arc_grenade_projectile.mdl"
 
 void function LaserMesh_Init()
 {
