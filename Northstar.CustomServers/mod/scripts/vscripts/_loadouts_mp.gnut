@@ -142,7 +142,7 @@ bool function ClientCommandCallback_RequestPilotLoadout( entity player, array<st
 		print( player + " RequestPilotLoadout " + args[0] )
 	#endif
 
-	if ( !GetCurrentPlaylistVarInt( "loadout_selection_enabled" ) )
+	if ( !GetCurrentPlaylistVarInt( "loadout_selection_enabled", 1 ) )
 		return false
 
 	int index = args[0].tointeger()
@@ -166,7 +166,7 @@ bool function ClientCommandCallback_RequestTitanLoadout( entity player, array<st
 		print( player + " RequestTitanLoadout " + args[0] )
 	#endif
 
-	if ( !GetCurrentPlaylistVarInt( "loadout_selection_enabled" ) )
+	if ( !GetCurrentPlaylistVarInt( "loadout_selection_enabled", 1 ) )
 		return false
 
 	int index = args[0].tointeger()
@@ -204,7 +204,7 @@ bool function ClientCommandCallback_SetPersistentLoadoutValue( entity player, ar
 	if ( args.len() < 4 )
 		return false
 
-	if ( !GetCurrentPlaylistVarInt( "loadout_selection_enabled" ) )
+	if ( !GetCurrentPlaylistVarInt( "loadout_selection_enabled", 1 ) )
 		return false
 
 	// names need custom validation
@@ -235,7 +235,7 @@ bool function ClientCommandCallback_SwapSecondaryAndWeapon3PersistentLoadoutData
 		print( player + " SwapSecondaryAndWeapon3PersistentLoadoutData " + args[0] )
 	#endif
 
-	if ( !GetCurrentPlaylistVarInt( "loadout_selection_enabled" ) )
+	if ( !GetCurrentPlaylistVarInt( "loadout_selection_enabled", 1 ) )
 		return false
 
 	// get loadout
@@ -277,7 +277,7 @@ bool function ClientCommandCallback_SetBurnCardPersistenceSlot( entity player, a
 		print( player + " SetBurnCardPersistenceSlot " + args[0] )
 	#endif
 
-	if ( !GetCurrentPlaylistVarInt( "loadout_selection_enabled" ) )
+	if ( !GetCurrentPlaylistVarInt( "loadout_selection_enabled", 1 ) )
 		return false
 
 	if ( IsRefValidAndOfType( args[0], eItemTypes.BURN_METER_REWARD ) )
