@@ -210,21 +210,21 @@ bool function ClientCommandCallback_SetPersistentLoadoutValue( entity player, ar
 	if ( !GetCurrentPlaylistVarInt( "loadout_selection_enabled", 1 ) )
 		return false
 
-	args1 = args1.tointeger()
+	int args1int = args1.tointeger()
 
 	// names need custom validation
 	if ( args2 == "name" || ( args2 == "primaryAttachment" && val == "none" ) )
 	{
-		if ( args0 == "titan" || ( args1 < 0 || args1 >= PersistenceGetArrayCount( "pilotLoadouts" ) ) )
+		if ( args0 == "titan" || ( args1int < 0 || args1int >= PersistenceGetArrayCount( "pilotLoadouts" ) ) )
 			return false
 	}
-	else if ( FailsLoadoutValidationCheck( player, args0, args1, args2, val ) )
+	else if ( FailsLoadoutValidationCheck( player, args0, args1int, args2, val ) )
 		return false
 
-	if ( args0 == "titan" && !IsTitanLoadoutAvailable( player, PersistenceGetEnumItemNameForIndex( "titanClasses", args1 ) ) )
+	if ( args0 == "titan" && !IsTitanLoadoutAvailable( player, PersistenceGetEnumItemNameForIndex( "titanClasses", args1int ) ) )
 		return false
 
-	SetPersistentLoadoutValue( player, args[0], args1, args2, val )
+	SetPersistentLoadoutValue( player, args0, args1int, args2, val )
 	
 	if ( args[0] == "pilot" )
 		SetPlayerLoadoutDirty( player ) 
