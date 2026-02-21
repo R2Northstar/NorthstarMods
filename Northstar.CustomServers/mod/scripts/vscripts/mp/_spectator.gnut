@@ -327,7 +327,7 @@ bool function ClientCommandCallback_spec_mode( entity player, array<string> args
 
 bool function CanRunSpectatorCommand( entity player )
 {
-	if ( GetGameState() <= eGameState.PickLoadout || ( GetGameState() >= eGameState.SwitchingSides && GetGameState() != eGameState.Epilogue ) )
+	if ( GetGameState() <= eGameState.PickLoadout || GetGameState() >= eGameState.Postmatch )
 		return false
 
 	return true
