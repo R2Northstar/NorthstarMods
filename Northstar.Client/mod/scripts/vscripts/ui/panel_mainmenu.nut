@@ -587,7 +587,7 @@ void function TryAuthWithLocalServer()
 	{
 		WaitFrame()
 
-		if ( file.stopNSLocalAuth )
+		if ( file.stopNSLocalAuth || !IsDialogActive( dialogData ) )
 		{
 			file.stopNSLocalAuth = false
 			return
