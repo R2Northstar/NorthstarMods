@@ -760,20 +760,20 @@ void function FilterServerList()
 		totalPlayers += server.playerCount
 
 		// Filters
-		if ( filterArguments.hideEmpty && server.playerCount == 0 )
-			continue;
+		if ( filterArguments.hideEmpty && server.playerCount <= 0 )
+			continue
 		
-		if ( filterArguments.hideFull && server.playerCount == server.maxPlayerCount )
-			continue;
+		if ( filterArguments.hideFull && server.playerCount >= server.maxPlayerCount )
+			continue
 		
 		if ( filterArguments.hideProtected && server.requiresPassword )
-			continue;
+			continue
 		
 		if ( filterArguments.filterMap != "SWITCH_ANY" && filterArguments.filterMap != server.map )
-			continue;
+			continue
 		
 		if ( filterArguments.filterGamemode != "SWITCH_ANY" && filterArguments.filterGamemode != GetGameModeDisplayName(server.playlist) )
-			continue;
+			continue
 	
 		// Search
 		if ( filterArguments.useSearch )
@@ -1215,13 +1215,6 @@ int function ServerSortLogic ( ServerInfo a, ServerInfo b )
 		case sortingBy.DEFAULT:
 			aTemp = a.playerCount
 			bTemp = b.playerCount
-
-			if ( aTemp <= a.maxPlayerCount )
-				aTemp = aTemp + 2000
-
-			if ( bTemp <= b.maxPlayerCount )
-				bTemp = bTemp + 2000
-
 			direction = filterDirection.serverName
 			break;
 		case sortingBy.NAME:
