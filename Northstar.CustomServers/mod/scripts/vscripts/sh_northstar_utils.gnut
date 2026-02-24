@@ -22,45 +22,32 @@ void function ReloadMods( bool reloadorretry = false )
 {
 	NSReloadMods()
 
-	#if CLIENT
+	#if SERVER
+		ServerCommand( "loadPlaylists; weapon_reparse_server; _playerSettings_reparse_Server; aisettings_reparse" )
+
+		if ( reloadorretry )
+			ServerCommand( "map " + GetMapName(), 0.5 )
+	#elseif CLIENT
 		entity client = GetLocalClientPlayer()
 
 		if ( !IsValid( client ) )
 			return
-	#endif
 
-	#if SERVER
-		// note: enable this when server can localize stuff
-		// ServerCommand( "reload_localization" )
-		ServerCommand( "loadPlaylists" )
-	#elseif CLIENT
-		client.ClientCommand( "reload_localization" )
-		client.ClientCommand( "loadPlaylists" )
-	#elseif UI
-		ClientCommand( "reload_localization" )
-		ClientCommand( "loadPlaylists" )
-	#endif
+		client.ClientCommand( "reload_localization; loadPlaylists; weapon_reparse; playerSettings_reparse; aisettings_reparse_client" )
 
-	#if SERVER
-		ServerCommand( "weapon_reparse_server; _playerSettings_reparse_Server; aisettings_reparse" )
-	#elseif CLIENT
-		client.ClientCommand( "weapon_reparse; playerSettings_reparse; aisettings_reparse_client" )
-	#elseif UI
-		if ( IsConnected() )
-			ClientCommand( "weapon_reparse; playerSettings_reparse; aisettings_reparse_client" )
-	#endif
-
-	#if SERVER
-		if ( reloadorretry )
-			ServerCommand( "map " + GetMapName(), 0.5 )
-	#elseif CLIENT
 		if ( reloadorretry )
 			client.ClientCommand( "retry" )
-	#elseif UI
+	#else
+		ClientCommand( "reload_localization" )
+		ClientCommand( "loadPlaylists" )
+
+		if ( IsConnected() )
+			ClientCommand( "weapon_reparse; playerSettings_reparse; aisettings_reparse_client" )
+
 		if ( reloadorretry || !IsConnected() )
 		{
 			if ( IsConnected() )
-				ClientCommand( "retry" )
+				ClientCommand( "script_client delaythread ( 0.0001 ) void function() { if ( IsValid( GetLocalClientPlayer() ) ) GetLocalClientPlayer().ClientCommand( \"retry\" ) }()" )
 
 			ClientCommand( "uiscript_reset" )
 		}
