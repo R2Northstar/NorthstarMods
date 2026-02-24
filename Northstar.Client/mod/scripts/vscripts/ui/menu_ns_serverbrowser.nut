@@ -1389,11 +1389,11 @@ string function EscapeLocalisation( string input )
 	try
 	{
 		if ( Localize( input ) != input )
-			return StringReplace( input, "#", "#^FFFFFF00" )
+			return StringReplace( input, "#", "#^FFFFFF" )
 	}
 	catch ( error )
 	{
-		return StringReplace( input, "#", "#^FFFFFF00" )
+		return StringReplace( input, "#", "#^FFFFFF" )
 	}
 
 	return input
