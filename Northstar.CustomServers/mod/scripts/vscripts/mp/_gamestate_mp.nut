@@ -29,6 +29,7 @@ global function SpectatePlayerDuringPickLoadout
 global function ShouldRunEvac
 global function GiveTitanToPlayer
 global function GetTimeLimit_ForGameMode
+global function CodeCallback_GamerulesThink
 
 struct {
 	bool usePickLoadoutScreen
@@ -40,9 +41,11 @@ struct {
 	
 	bool hasSwitchedSides
 	
-	bool roundWinningKillReplayTrackPilotKills = true 
+	bool roundWinningKillReplayTrackPilotKills = true
 	bool roundWinningKillReplayTrackTitanKills = false
-	
+
+	int gameState = -1
+
 	float roundWinningKillReplayTime
 	entity roundWinningKillReplayVictim
 	entity roundWinningKillReplayAttacker
@@ -1411,4 +1414,154 @@ void function DialoguePlayWinnerDetermined()
 		PlayFactionDialogueToTeam( "scoring_won", winningTeam )
 		PlayFactionDialogueToTeam( "scoring_lost", losingTeam )
 	}
+}
+
+void function CodeCallback_GamerulesThink()
+{
+	int gameState = GetGameState()
+	if ( gameState != file.gameState )
+	{
+		string oldPrintVal = file.gameState == -1 ? "-1" : DEV_GetEnumStringFromIndex( "eGameState", file.gameState )
+		string newPrintVal = gameState == -1 ? "-1" : DEV_GetEnumStringFromIndex( "eGameState", gameState )
+		printt( "GameState changed from", oldPrintVal, "to", newPrintVal )
+
+		file.gameState = gameState
+	}
+
+	// Northstar doesn't have these
+	/*
+	switch ( gameState )
+	{
+		case eGameState.WaitingForCustomStart:
+//			printt( "STATE: waiting for custom start" )
+			GameRulesThink_WaitingForCustomStart()
+			break
+
+		case eGameState.WaitingForPlayers:
+//			printt( "STATE: waiting for players" )
+			GameRulesThink_WaitingForPlayers()
+			break
+
+		case eGameState.PickLoadout:
+//			printt( "STATE: Pick Loadout" )
+			GameRulesThink_PickLoadout()
+			break
+
+		case eGameState.Prematch:
+//			printt( "STATE: prematch" )
+			GameRulesThink_Prematch()
+			break
+
+		case eGameState.Playing:
+//			printt( "STATE: playing" )
+			GameRulesThink_Playing()
+			break
+
+		case eGameState.SuddenDeath:
+//			printt( "STATE: SuddenDeath" )
+			GameRulesThink_SuddenDeath()
+			break
+
+		case eGameState.WinnerDetermined:
+//			printt( "STATE: WinnerDetermined" )
+			GameRulesThink_WinnerDetermined()
+			break
+
+		case eGameState.SwitchingSides:
+//			printt( "STATE: SwitchingSides" )
+			GameRulesThink_SwitchingSides()
+			break
+
+		case eGameState.Epilogue:
+			//printt( "STATE: Epilogue" )
+			//if ( EvacEnabled() && level.dropship )
+				//EvacShipTriggerCheck( level.dropship )
+			GameRulesThink_Epilogue()
+			break
+
+		case eGameState.Resolution:
+//			printt( "STATE: Resolution" )
+			GameRulesThink_Resolution()
+			break
+
+		case eGameState.Postmatch:
+//			printt( "STATE: post" )
+			GameRulesThink_Postmatch()
+			break
+	}
+	*/
+
+	UpdateMatchStateToCode()
+}
+
+int function GetCodeMatchPhaseForGameState()
+{
+	int gameState = GetGameState()
+	switch ( gameState )
+	{
+		case eGameState.WaitingForPlayers:
+		case eGameState.PickLoadout:
+		case eGameState.Prematch:
+			return MATCHPHASE_PREMATCH
+
+		case eGameState.Playing:
+		case eGameState.SwitchingSides:
+			return MATCHPHASE_MATCH
+
+		case eGameState.SuddenDeath:
+		case eGameState.WinnerDetermined:
+		case eGameState.Epilogue:
+		case eGameState.Resolution:
+		case eGameState.Postmatch:
+			return MATCHPHASE_EPILOGUE
+
+		default:
+			printt( " ** Warning: GetCodeMatchPhaseForGameState() - Unhandeled eGameState", gameState )
+	}
+	return MATCHPHASE_UNSPECIFIED
+}
+
+void function UpdateMatchStateToCode()
+{
+	int maxRounds
+	int roundsIMC
+	int roundsMilitia
+	int scoreLimit
+	int scoreIMC
+	int scoreMilitia
+	if ( IsRoundBased() )
+	{
+		maxRounds = GetRoundScoreLimit_FromPlaylist()
+		roundsIMC = GameRules_GetTeamScore2( TEAM_IMC )
+		roundsMilitia = GameRules_GetTeamScore2( TEAM_MILITIA )
+		scoreLimit = GetRoundScoreLimit_FromPlaylist()
+		scoreIMC = GameRules_GetTeamScore2( TEAM_IMC )
+		scoreMilitia = GameRules_GetTeamScore2( TEAM_MILITIA )
+	}
+	else
+	{
+		maxRounds = 1
+		roundsIMC = 0
+		roundsMilitia = 0
+		scoreLimit = GetScoreLimit_FromPlaylist()
+		scoreIMC = GameRules_GetTeamScore( TEAM_IMC )
+		scoreMilitia = GameRules_GetTeamScore( TEAM_MILITIA )
+	}
+
+	int timeLimit
+	int timePassed
+	if ( GameRules_TimeLimitEnabled() )
+	{
+		timeLimit = int( GetTimeLimit_ForGameMode() * 60.0 )
+		timePassed = int( GameTime_PlayingTime() )
+	}
+	else
+	{
+		timeLimit = 0
+		timePassed = int( GameTime_PlayingTime() )
+	}
+
+	int phase = GetCodeMatchPhaseForGameState()
+	//printt( "NoteMatchState:", phase, maxRounds, roundsIMC, roundsMilitia, timeLimit, timePassed, scoreLimit, scoreIMC, scoreMilitia )
+	NoteMatchState( phase, maxRounds, roundsIMC, roundsMilitia, timeLimit, timePassed, scoreLimit, scoreIMC, scoreMilitia )
 }
