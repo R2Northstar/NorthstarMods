@@ -1479,11 +1479,6 @@ void function CodeCallback_GamerulesThink()
 			GameRulesThink_Epilogue()
 			break
 
-		case eGameState.Resolution:
-//			printt( "STATE: Resolution" )
-			GameRulesThink_Resolution()
-			break
-
 		case eGameState.Postmatch:
 //			printt( "STATE: post" )
 			GameRulesThink_Postmatch()
@@ -1511,7 +1506,6 @@ int function GetCodeMatchPhaseForGameState()
 		case eGameState.SuddenDeath:
 		case eGameState.WinnerDetermined:
 		case eGameState.Epilogue:
-		case eGameState.Resolution:
 		case eGameState.Postmatch:
 			return MATCHPHASE_EPILOGUE
 
