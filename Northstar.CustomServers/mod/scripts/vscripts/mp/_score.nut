@@ -230,7 +230,7 @@ void function ScoreEvent_TitanKilled( entity victim, entity attacker, var damage
 	if ( !attacker.IsPlayer() )
 		return
 
-	if ( IsEliminationBased() )
+	if ( IsRoundBased() && IsEliminationBased() )
 	{
 		if ( victim.IsPlayer() )
 			AddPlayerScore( attacker, "EliminateTitan", attacker )
