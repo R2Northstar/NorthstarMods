@@ -47,14 +47,24 @@ const float AT_BOUNTY_TITAN_CHECK_DELAY = 10.0    // wait for bounty titans land
 const float AT_BOUNTY_TITAN_HEALTH_MULTIPLIER = 3 // TODO: Verify this
 
 // Titan boss settings, check sh_gamemode_at.nut for more info
-const array<string> AT_BOUNTY_TITANS_AI_SETTINGS =
+const array<string> AT_BOUNTY_TITANS_AI_SETTINGS_BOSS_WAVE_1 =
+[
+	"npc_titan_stryder_leadwall_bounty"
+]
+
+const array<string> AT_BOUNTY_TITANS_AI_SETTINGS_BOSS_WAVE_2 =
 [
 	"npc_titan_atlas_stickybomb_bounty",
 	"npc_titan_atlas_tracker_bounty",
+]
+
+const array<string> AT_BOUNTY_TITANS_AI_SETTINGS_BOSS_WAVE_3 =
+[
 	"npc_titan_ogre_minigun_bounty",
 	"npc_titan_ogre_meteor_bounty",
-	"npc_titan_stryder_leadwall_bounty"
 ]
+
+table< string, bool > AT_BOUNTY_TITANS_AI_SETTINGS_BOSS_WAVE_USED_STATE
 
 // Extra
 // Respawn didn't use the "totalAllowedOnField" for npc spawning, they only allow 1 squad to be on field for each type of npc. enabling this might cause too much npcs spawning and crash the game
@@ -770,7 +780,8 @@ void function AT_GameLoop_Threaded()
 		}
 
 		lastWaveId = waveId
-			
+
+		AT_BOUNTY_TITANS_AI_SETTINGS_BOSS_WAVE_USED_STATE = {}
 		SetGlobalNetInt( "AT_currentWave", waveId )
 		bool isBossWave = waveCount % 2 == 0 // even number waveCount means boss wave
 		
@@ -1610,13 +1621,73 @@ void function AT_SpawnBountyTitan( AT_WaveOrigin campData, int spawnId, int scri
 	wait RandomFloat( 1.0 )
 	
 	// look up titan to use
+	array<string> bountyAiSettings = []
+	string bountyAiSettingsString = ""
 	int bountyID = 0
-	try 
+	int currentWave = GetGlobalNetInt( "AT_currentWave" )
+
+	if ( currentWave == 0 )
 	{
-		bountyID = ReserveBossID( AT_BOUNTY_TITANS_AI_SETTINGS.getrandom() )
+		bountyAiSettings = clone AT_BOUNTY_TITANS_AI_SETTINGS_BOSS_WAVE_1
+
+		while ( bountyAiSettings.len() )
+		{
+			int bountyStringID = RandomInt( bountyAiSettings.len() )
+			string bountyString = bountyAiSettings[ bountyStringID ]
+
+			if ( bountyString in AT_BOUNTY_TITANS_AI_SETTINGS_BOSS_WAVE_USED_STATE && AT_BOUNTY_TITANS_AI_SETTINGS_BOSS_WAVE_USED_STATE[ bountyString ] )
+			{
+				bountyAiSettings.remove( bountyStringID )
+				continue
+			}
+
+			bountyAiSettingsString = bountyString
+			break
+		}
 	}
-	catch ( ex ) {} // if we go above the expected wave count that vanilla supports, there's basically no way to ensure that this func won't error, so default 0 after that point
-	
+	else if ( currentWave == 1 )
+	{
+		bountyAiSettings = clone AT_BOUNTY_TITANS_AI_SETTINGS_BOSS_WAVE_2
+
+		while ( bountyAiSettings.len() )
+		{
+			int bountyStringID = RandomInt( bountyAiSettings.len() )
+			string bountyString = bountyAiSettings[ bountyStringID ]
+
+			if ( bountyString in AT_BOUNTY_TITANS_AI_SETTINGS_BOSS_WAVE_USED_STATE && AT_BOUNTY_TITANS_AI_SETTINGS_BOSS_WAVE_USED_STATE[ bountyString ] )
+			{
+				bountyAiSettings.remove( bountyStringID )
+				continue
+			}
+
+			bountyAiSettingsString = bountyString
+			break
+		}
+	}
+	else if ( currentWave == 2 )
+	{
+		bountyAiSettings = clone AT_BOUNTY_TITANS_AI_SETTINGS_BOSS_WAVE_3
+
+		while ( bountyAiSettings.len() )
+		{
+			int bountyStringID = RandomInt( bountyAiSettings.len() )
+			string bountyString = bountyAiSettings[ bountyStringID ]
+
+			if ( bountyString in AT_BOUNTY_TITANS_AI_SETTINGS_BOSS_WAVE_USED_STATE && AT_BOUNTY_TITANS_AI_SETTINGS_BOSS_WAVE_USED_STATE[ bountyString ] )
+			{
+				bountyAiSettings.remove( bountyStringID )
+				continue
+			}
+
+			bountyAiSettingsString = bountyString
+			break
+		}
+	}
+
+	bountyID = ReserveBossID( bountyAiSettingsString )
+
+	AT_BOUNTY_TITANS_AI_SETTINGS_BOSS_WAVE_USED_STATE[ bountyAiSettingsString ] <- true
+
 	string aisettings = GetTypeFromBossID( bountyID )
 	string titanClass = expect string( Dev_GetAISettingByKeyField_Global( aisettings, "npc_titan_player_settings" ) )
 	

@@ -152,13 +152,13 @@ void function AiGameModes_SpawnReaper( entity node, int team, string aiSettings 
 	HideName( reaper ) // prevent flash a name onto it
 	DispatchSpawn( reaper )
 
+	if ( reaperHandler != null )
+		thread reaperHandler( reaper )
+
 	reaper.WaitSignal( "WarpfallComplete" )
 	ShowName( reaper ) // show name again after drop
 	reaper.EnableNPCFlag( NPC_ALLOW_PATROL | NPC_ALLOW_INVESTIGATE | NPC_NEW_ENEMY_FROM_SOUND | NPCMF_WALK_NONCOMBAT )
-	
-	if ( reaperHandler != null )
-		thread reaperHandler( reaper )
-	
+
 	ToggleSpawnNodeInUse( node, false )
 }
 
@@ -227,10 +227,12 @@ void function AiGameModes_SpawnTitan( entity node, int team, string setFile, str
 		SetSpawnOption_AISettings( titan, aiSettings )
 	
 	DispatchSpawn( titan )
-	WaitTillHotDropComplete( titan )
+
 	if ( titanHandler != null )
 		thread titanHandler( titan )
-	
+
+	WaitTillHotDropComplete( titan )
+
 	ToggleSpawnNodeInUse( node, false )
 }
 
