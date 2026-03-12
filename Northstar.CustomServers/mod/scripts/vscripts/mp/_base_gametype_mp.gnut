@@ -19,6 +19,7 @@ global function GetTitanBuildTime
 global function SetGamemodeAllowsTeamSwitch
 
 global function SetRecalculateRespawnAsTitanStartPointCallback
+global function CheckForEmptyTeamVictory
 
 struct {
 	bool playerDeathsHidden = false
@@ -891,4 +892,38 @@ float function GetTitanBuildTime( entity player )
 		return GetCurrentPlaylistVarFloat( "titan_build_time", 180 )
 	
 	return GetCurrentPlaylistVarFloat( "titan_rebuild_time", 180 )
+}
+
+bool function CheckForEmptyTeamVictory()
+{
+	if ( GetCurrentPlaylistVarInt( "riff_allow_npcs", 2 ) == 1 )
+		return false
+
+	if ( !GetConVarInt( "mp_enablematchending" ) )
+		return false
+
+	if ( GetDeveloperLevel() )
+		return false
+
+	if ( GetCurrentPlaylistVarInt( "max_teams", 2 ) != 2 )
+		return false
+
+	if ( GameTime_PlayingTime() < START_SPAWN_GRACE_PERIOD )
+		return false
+
+	int defaultWinner = TEAM_UNASSIGNED
+
+	if ( !GetTeamPlayerCount( TEAM_MILITIA ) )
+		defaultWinner = TEAM_IMC
+	else if ( !GetTeamPlayerCount( TEAM_IMC ) )
+		defaultWinner = TEAM_MILITIA
+
+	if ( defaultWinner != TEAM_UNASSIGNED )
+	{
+		AddTeamRoundScoreNoStateChange( defaultWinner )
+		SetWinner( defaultWinner )
+		return true
+	}
+
+	return false
 }

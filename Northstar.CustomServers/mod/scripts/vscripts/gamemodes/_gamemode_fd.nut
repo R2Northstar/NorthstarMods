@@ -132,7 +132,6 @@ void function GamemodeFD_Init()
 	SetGetDifficultyFunc( FD_GetDifficultyLevel )
 	SetShouldUsePickLoadoutScreen( true )
 	SetShouldSpectateInPickLoadoutScreen( true )
-	SetClearPlayersBuffer( true )
 	LaserMesh_Init()
 	TeamTitanSelectMenu_Init()
 

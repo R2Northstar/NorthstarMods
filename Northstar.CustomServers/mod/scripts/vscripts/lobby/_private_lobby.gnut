@@ -203,12 +203,28 @@ void function StartMatch( bool isAutostart = false )
 	
 	SetUIVar( level, "gameStartTime", countdownEndTime ) 
 	// can't use start here because we need to check stuff
+	int lastCountdownSeconds = -1
+
 	while ( Time() < countdownEndTime )
 	{
 		// stop if the countdown's been cancelled
 		if ( file.startState != ePrivateMatchStartState.STARTING )
+		{
+			AllPlayersUnMuteAll()
 			return
-		
+		}
+
+		if ( int ( countdownEndTime - Time() ) < 10 && int ( countdownEndTime - Time() ) != lastCountdownSeconds )
+		{
+			if ( int ( countdownEndTime - Time() ) == 1 )
+				AllPlayersMuteAll()
+
+			foreach ( player in GetPlayerArray() )
+				EmitSoundAtPositionOnlyToPlayer( TEAM_UNASSIGNED, Vector( 0, 0, 0 ), player, PREMATCH_COUNTDOWN_SOUND )
+
+			lastCountdownSeconds = int ( countdownEndTime - Time() )
+		}
+
 		WaitFrame()
 	}
 	
