@@ -897,7 +897,7 @@ void function GameStateEnter_SwitchingSides_Threaded()
 	svGlobal.levelEnt.Signal( "RoundEnd" )
 
 	entity replayAttacker = file.roundWinningKillReplayAttacker
-	bool doReplay = WillShowRoundWinningKillReplay() && !IsRoundBased()
+	bool doReplay = !IsRoundBased() && WillShowRoundWinningKillReplay()
 
 	float replayLength = ROUND_WINNING_KILL_REPLAY_STARTUP_WAIT
 
