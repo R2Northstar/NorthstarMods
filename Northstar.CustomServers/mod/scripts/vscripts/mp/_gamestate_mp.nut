@@ -539,6 +539,8 @@ void function GameStateEnter_Playing_Threaded()
 		thread DialoguePlayNormal()
 
 	float timeWithPlayers = Time()
+	bool playingthreeminutemusic = false
+	bool playinglastminutemusic = false
 
 	while ( GetGameState() == eGameState.Playing )
 	{
@@ -557,25 +559,58 @@ void function GameStateEnter_Playing_Threaded()
 				GameRules_EndMatch()
 		}
 
-		if ( Time() >= endTime && !Flag( "DisableTimeLimit" ) )
+		if ( !Flag( "DisableTimeLimit" ) )
 		{
-			int winningTeam
-			if ( file.timeoutWinnerDecisionFunc != null )
-				winningTeam = file.timeoutWinnerDecisionFunc()
-			else
-				winningTeam = GetWinningTeam()
+			if ( Time() >= endTime - 60.0 )
+			{
+				if ( !playinglastminutemusic )
+				{
+					playinglastminutemusic = true
 
-			if ( file.switchSidesBased && !file.hasSwitchedSides && !IsRoundBased() )
-				SetGameState( eGameState.SwitchingSides )
-			else if ( IsSuddenDeathGameMode() && winningTeam == TEAM_UNASSIGNED )
-				SetGameState( eGameState.SuddenDeath )
+					PlayMusicToAll( eMusicPieceID.LEVEL_LAST_MINUTE )
+				}
+			}
+			else if ( !IsRoundBased() && Time() >= endTime - 180.0 )
+			{
+				if ( !playingthreeminutemusic )
+				{
+					playingthreeminutemusic = true
+
+					PlayMusicToAll( eMusicPieceID.LEVEL_THREE_MINUTE )
+				}
+			}
 			else
 			{
-				if ( IsRoundBased() && winningTeam )
-					AddTeamRoundScoreNoStateChange( winningTeam )
+				if ( playingthreeminutemusic || playinglastminutemusic )
+				{
+					playingthreeminutemusic = false
+					playinglastminutemusic = false
 
-				SetWinner( winningTeam, "#GAMEMODE_TIME_LIMIT_REACHED", "#GAMEMODE_TIME_LIMIT_REACHED" )
-				SetServerVar( "replayDisabled", true )
+					StopPlayingLastMinuteMusicToAll()
+				}
+			}
+	
+			if ( Time() >= endTime )
+			{
+				int winningTeam
+
+				if ( file.timeoutWinnerDecisionFunc != null )
+					winningTeam = file.timeoutWinnerDecisionFunc()
+				else
+					winningTeam = GetWinningTeam()
+
+				if ( file.switchSidesBased && !file.hasSwitchedSides && !IsRoundBased() )
+					SetGameState( eGameState.SwitchingSides )
+				else if ( IsSuddenDeathGameMode() && winningTeam == TEAM_UNASSIGNED )
+					SetGameState( eGameState.SuddenDeath )
+				else
+				{
+					if ( IsRoundBased() && winningTeam )
+						AddTeamRoundScoreNoStateChange( winningTeam )
+
+					SetWinner( winningTeam, "#GAMEMODE_TIME_LIMIT_REACHED", "#GAMEMODE_TIME_LIMIT_REACHED" )
+					SetServerVar( "replayDisabled", true )
+				}
 			}
 		}
 

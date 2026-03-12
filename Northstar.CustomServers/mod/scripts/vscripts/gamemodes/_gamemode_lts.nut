@@ -78,10 +78,9 @@ void function WaitForThirtySecondsLeftThreaded()
 	
 	float endTime = expect float ( GetServerVar( "roundEndTime" ) )
 	
-	// wait until 30sec left 
+	// wait until 30sec left
 	wait ( endTime - 30 ) - Time()
-	PlayMusicToAll( eMusicPieceID.LEVEL_LAST_MINUTE )
-	
+
 	foreach ( entity player in GetPlayerArray() )
 	{	
 		// warn there's 30 seconds left

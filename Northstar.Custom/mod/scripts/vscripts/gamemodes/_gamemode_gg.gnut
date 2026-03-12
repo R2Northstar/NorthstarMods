@@ -135,9 +135,6 @@ void function UpdateLoadout( entity player )
 	if ( currentWeaponIndex >= weapons.len() )
 		currentWeaponIndex = weapons.len() - 1
 
-	if ( currentWeaponIndex > weapons.len() - 3 ) // play end of game music for special or last few weapons
-		PlayMusicToAll( eMusicPieceID.LEVEL_LAST_MINUTE ) // this *shouldn't* overlap if done multiple times
-
 	GunGameWeapon weapon = weapons[ currentWeaponIndex ]
 
 	foreach ( entity weapon in player.GetMainWeapons() )
