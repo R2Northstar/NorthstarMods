@@ -591,6 +591,9 @@ void function GameStateEnter_Playing_Threaded()
 					playingthreeminutemusic = false
 					playinglastminutemusic = false
 
+					foreach ( int team in [ TEAM_IMC, TEAM_MILITIA ] )
+						CreateTeamMusicEvent( team, -1, Time() )
+
 					StopPlayingLastMinuteMusicToAll()
 				}
 			}
@@ -744,10 +747,12 @@ void function GameStateEnter_WinnerDetermined_Threaded()
 	}
 
 	if ( IsRoundBased() && !HasRoundScoreLimitBeenReached() && !ShouldRunEvac() )
+	{
 		foreach ( entity player in GetPlayerArray() )
 			thread ForceFadeToBlack( player, fadeTime )
 
-	wait fadeTime
+		wait fadeTime
+	}
 
 	file.roundWinningKillReplayAttacker = null // Clear Replays
 	file.roundWinningKillReplayInflictorEHandle = -1
