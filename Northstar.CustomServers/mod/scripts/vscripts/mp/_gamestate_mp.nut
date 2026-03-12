@@ -552,7 +552,7 @@ void function GameStateEnter_Playing_Threaded()
 		{
 			if ( GetPlayerArray().len() )
 				timeWithPlayers = Time()
-			else if ( timeWithPlayers + 30.0 < Time() )
+			else if ( timeWithPlayers + 15.0 < Time() )
 				GameRules_EndMatch()
 		}
 
