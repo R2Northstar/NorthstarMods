@@ -118,7 +118,6 @@ void function TryOpenTTSMenu( entity player, float overrideEndTime = -1 )
 {
 	player.EndSignal( "OnDestroy" )
 	ScreenFadeToBlackForever( player, 0.0 )
-	EmitSoundOnEntityOnlyToPlayer( player, player, "Duck_For_FrontierDefenseTitanSelectScreen" )
 
 	while ( level.nv.minPickLoadOutTime == null )
 		WaitFrame()
