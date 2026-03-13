@@ -156,13 +156,13 @@ void function PlayerBecomesSpectator( entity player )
 		funcIndex = file.newestFuncIndex // assuming this will be set before file.newestFuncIndex increments when the spectator func is ended by SpectatorFuncChanged
 		// surely this will not end up being false in practice :clueless:
 
-		// cleanup
-		player.StopObserverMode()
-
-		HACKCleanupStaticObserverStuff( player ) // un-initialise static observer positions/angles
-
 		WaitFrame() // always wait at least a frame in case an observer func exits immediately to prevent stuff locking up
 	}
+
+	// cleanup
+	player.StopObserverMode()
+
+	HACKCleanupStaticObserverStuff( player ) // un-initialise static observer positions/angles
 }
 
 void function SpectatorFunc_Default( entity player )
@@ -173,7 +173,6 @@ void function SpectatorFunc_Default( entity player )
 	svGlobal.levelEnt.EndSignal( "SpectatorFuncChanged" )
 
 	int targetIndex
-
 	table result = { next = false }
 
 	while ( true )
@@ -258,6 +257,7 @@ void function SpectatorFunc_Default( entity player )
 		}
 
 		player.StopPhysics()
+
 		result = player.WaitSignal( "ObserverTargetChanged" )
 	}
 }

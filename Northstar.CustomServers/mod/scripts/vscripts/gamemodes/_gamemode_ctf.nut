@@ -390,7 +390,7 @@ bool function OnFlagCollected( entity player, entity flag )
 	player.IsPhaseShifted() || player.p.isEmbarking || player.p.isDisembarking || player.p.pilotEjecting )
 		return false
 
-	if ( player.GetTeam() != flag.GetTeam() && flag.s.canTake )
+	if ( player.GetTeam() != flag.GetTeam() && "canTake" in flag.s && flag.s.canTake )
 		GiveFlag( player, flag )
 	else if ( player.GetTeam() == flag.GetTeam() && IsFlagHome( flag ) && PlayerHasEnemyFlag( player ) )
 		CaptureFlag( player, GetFlagForTeam( GetOtherTeam( flag.GetTeam() ) ) )

@@ -899,9 +899,6 @@ bool function CheckForEmptyTeamVictory()
 	if ( GetCurrentPlaylistVarInt( "riff_allow_npcs", 2 ) == 1 )
 		return false
 
-	if ( !GetConVarInt( "mp_enablematchending" ) )
-		return false
-
 	if ( GetDeveloperLevel() )
 		return false
 

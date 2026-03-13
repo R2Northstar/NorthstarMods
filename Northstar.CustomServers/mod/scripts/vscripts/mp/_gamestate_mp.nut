@@ -135,6 +135,150 @@ void function OnPlayerChangedTeam( entity player )
 	}
 }
 
+void function CodeCallback_GamerulesThink()
+{
+	int gameState = GetGameState()
+	if ( gameState != file.gameState )
+	{
+		string oldPrintVal = file.gameState == -1 ? "-1" : DEV_GetEnumStringFromIndex( "eGameState", file.gameState )
+		string newPrintVal = gameState == -1 ? "-1" : DEV_GetEnumStringFromIndex( "eGameState", gameState )
+		printt( "GameState changed from", oldPrintVal, "to", newPrintVal )
+
+		file.gameState = gameState
+	}
+
+	// Northstar doesn't have these
+	/*
+	switch ( gameState )
+	{
+		case eGameState.WaitingForCustomStart:
+//			printt( "STATE: waiting for custom start" )
+			GameRulesThink_WaitingForCustomStart()
+			break
+
+		case eGameState.WaitingForPlayers:
+//			printt( "STATE: waiting for players" )
+			GameRulesThink_WaitingForPlayers()
+			break
+
+		case eGameState.PickLoadout:
+//			printt( "STATE: Pick Loadout" )
+			GameRulesThink_PickLoadout()
+			break
+
+		case eGameState.Prematch:
+//			printt( "STATE: prematch" )
+			GameRulesThink_Prematch()
+			break
+
+		case eGameState.Playing:
+//			printt( "STATE: playing" )
+			GameRulesThink_Playing()
+			break
+
+		case eGameState.SuddenDeath:
+//			printt( "STATE: SuddenDeath" )
+			GameRulesThink_SuddenDeath()
+			break
+
+		case eGameState.WinnerDetermined:
+//			printt( "STATE: WinnerDetermined" )
+			GameRulesThink_WinnerDetermined()
+			break
+
+		case eGameState.SwitchingSides:
+//			printt( "STATE: SwitchingSides" )
+			GameRulesThink_SwitchingSides()
+			break
+
+		case eGameState.Epilogue:
+			//printt( "STATE: Epilogue" )
+			//if ( EvacEnabled() && level.dropship )
+				//EvacShipTriggerCheck( level.dropship )
+			GameRulesThink_Epilogue()
+			break
+
+		case eGameState.Postmatch:
+//			printt( "STATE: post" )
+			GameRulesThink_Postmatch()
+			break
+	}
+	*/
+
+	UpdateMatchStateToCode()
+}
+
+int function GetCodeMatchPhaseForGameState()
+{
+	int gameState = GetGameState()
+	switch ( gameState )
+	{
+		case eGameState.WaitingForPlayers:
+		case eGameState.PickLoadout:
+		case eGameState.Prematch:
+			return MATCHPHASE_PREMATCH
+
+		case eGameState.Playing:
+		case eGameState.SwitchingSides:
+			return MATCHPHASE_MATCH
+
+		case eGameState.SuddenDeath:
+		case eGameState.WinnerDetermined:
+		case eGameState.Epilogue:
+		case eGameState.Postmatch:
+			return MATCHPHASE_EPILOGUE
+
+		default:
+			printt( " ** Warning: GetCodeMatchPhaseForGameState() - Unhandeled eGameState", gameState )
+	}
+	return MATCHPHASE_UNSPECIFIED
+}
+
+void function UpdateMatchStateToCode()
+{
+	int maxRounds
+	int roundsIMC
+	int roundsMilitia
+	int scoreLimit
+	int scoreIMC
+	int scoreMilitia
+	if ( IsRoundBased() )
+	{
+		maxRounds = GetRoundScoreLimit_FromPlaylist()
+		roundsIMC = GameRules_GetTeamScore2( TEAM_IMC )
+		roundsMilitia = GameRules_GetTeamScore2( TEAM_MILITIA )
+		scoreLimit = GetRoundScoreLimit_FromPlaylist()
+		scoreIMC = GameRules_GetTeamScore2( TEAM_IMC )
+		scoreMilitia = GameRules_GetTeamScore2( TEAM_MILITIA )
+	}
+	else
+	{
+		maxRounds = 1
+		roundsIMC = 0
+		roundsMilitia = 0
+		scoreLimit = GetScoreLimit_FromPlaylist()
+		scoreIMC = GameRules_GetTeamScore( TEAM_IMC )
+		scoreMilitia = GameRules_GetTeamScore( TEAM_MILITIA )
+	}
+
+	int timeLimit
+	int timePassed
+	if ( GameRules_TimeLimitEnabled() )
+	{
+		timeLimit = int( GetTimeLimit_ForGameMode() * 60.0 )
+		timePassed = int( GameTime_PlayingTime() )
+	}
+	else
+	{
+		timeLimit = 0
+		timePassed = int( GameTime_PlayingTime() )
+	}
+
+	int phase = GetCodeMatchPhaseForGameState()
+	//printt( "NoteMatchState:", phase, maxRounds, roundsIMC, roundsMilitia, timeLimit, timePassed, scoreLimit, scoreIMC, scoreMilitia )
+	NoteMatchState( phase, maxRounds, roundsIMC, roundsMilitia, timeLimit, timePassed, scoreLimit, scoreIMC, scoreMilitia )
+}
+
 
 
 
@@ -541,6 +685,14 @@ void function GameStateEnter_Playing_Threaded()
 				return
 		}
 
+		if ( GetConVarBool( "ns_match_end_if_no_players" ) )
+		{
+			if ( GetPlayerArray().len() )
+				timeWithPlayers = Time()
+			else if ( timeWithPlayers + 15.0 < Time() )
+				GameRules_EndMatch()
+		}
+
 		float endTime
 
 		if ( IsRoundBased() )
@@ -548,12 +700,17 @@ void function GameStateEnter_Playing_Threaded()
 		else
 			endTime = expect float( GetServerVar( "gameEndTime" ) )
 
-		if ( GetConVarBool( "ns_match_end_if_no_players" ) )
+		if ( int ( endTime - Time() ) < 15 && int ( endTime - Time() ) != lastTimeLeftSeconds )
 		{
-			if ( GetPlayerArray().len() )
-				timeWithPlayers = Time()
-			else if ( timeWithPlayers + 15.0 < Time() )
-				GameRules_EndMatch()
+			foreach ( player in GetPlayerArray() )
+			{
+				EmitSoundOnEntity( player, "Menu_Match_Countdown" )
+
+				if ( int ( endTime - Time() ) < 5 && int ( endTime - Time() ) >= 0 )
+					EmitSoundOnEntityAfterDelay( player, "Menu_Match_Countdown", 0.5 )
+			}
+
+			lastTimeLeftSeconds = int ( endTime - Time() )
 		}
 
 		if ( !Flag( "DisableTimeLimit" ) )
@@ -596,19 +753,6 @@ void function GameStateEnter_Playing_Threaded()
 
 					StopPlayingLastMinuteMusicToAll()
 				}
-			}
-
-			if ( int ( endTime - Time() ) < 15 && int ( endTime - Time() ) != lastTimeLeftSeconds )
-			{
-				foreach ( player in GetPlayerArray() )
-				{
-					EmitSoundOnEntity( player, "Menu_Match_Countdown" )
-
-					if ( int ( endTime - Time() ) < 5 && int ( endTime - Time() ) >= 0 )
-						EmitSoundOnEntityAfterDelay( player, "Menu_Match_Countdown", 0.5 )
-				}
-
-				lastTimeLeftSeconds = int ( endTime - Time() )
 			}
 
 			if ( Time() >= endTime )
@@ -664,6 +808,7 @@ void function GameStateEnter_WinnerDetermined()
 void function GameStateEnter_WinnerDetermined_Threaded()
 {
 	int winningTeam = GetWinningTeam()
+
 	DialoguePlayWinnerDetermined()
 	
 	if ( IsRoundBased() && !HasRoundScoreLimitBeenReached() )
@@ -680,27 +825,31 @@ void function GameStateEnter_WinnerDetermined_Threaded()
 	float fadeTime = GetWinnerDeterminedWait() + CLEAR_PLAYERS_BUFFER
 	entity replayAttacker = file.roundWinningKillReplayAttacker
 	bool doReplay = WillShowRoundWinningKillReplay()
- 	
+
 	SetServerVar( "roundWinningKillReplayPlaying", doReplay )
+
 	if ( doReplay )
 	{
 		float replayLength = ROUND_WINNING_KILL_REPLAY_TOTAL_LENGTH
+
 		if ( "respawnTime" in replayAttacker.s && Time() - replayAttacker.s.respawnTime < replayLength )
 			replayLength += Time() - expect float ( replayAttacker.s.respawnTime )
-		
+
 		SetServerVar( "roundWinningKillReplayEntHealthFrac", file.roundWinningKillReplayHealthFrac )
-		
+
 		foreach ( entity player in GetPlayerArray() )
 		{
 			ClearPlayerFromReplay( player ) // If there's a replay already happening, cut it
 			CheckGameStateForPlayerMovement( player )
 		}
+
 		wait 1.5
+
 		foreach ( entity player in GetPlayerArray() )
 			ScreenFadeToBlackForever( player, 2.0 )
-		
+
 		wait 2
-		
+
 		foreach ( entity player in GetPlayerArray() )
 			thread PlayerWatchesRoundWinningReplay( player, replayLength )
 
@@ -733,13 +882,14 @@ void function GameStateEnter_WinnerDetermined_Threaded()
 		// Observation from vanilla hints that the gamemodes can choose how players will behave once match is over
 		foreach ( entity player in GetPlayerArray() )
 			CheckGameStateForPlayerMovement( player )
-		
+
 		wait GAME_WINNER_DETERMINED_WAIT
-		
+
 		foreach ( entity player in GetPlayerArray() )
 			ScreenFadeToBlackForever( player, ROUND_WINNING_KILL_REPLAY_SCREEN_FADE_TIME )
-		
+
 		wait ROUND_WINNING_KILL_REPLAY_SCREEN_FADE_TIME
+
 		if ( IsRoundBased() && !HasRoundScoreLimitBeenReached() ) // Repeat check here just for the case match is over and epilogue is disabled, so it doesn't kill players randomly
 			CleanUpEntitiesForRoundEnd()
 
@@ -756,6 +906,7 @@ void function GameStateEnter_WinnerDetermined_Threaded()
 
 	file.roundWinningKillReplayAttacker = null // Clear Replays
 	file.roundWinningKillReplayInflictorEHandle = -1
+
 	if ( IsRoundBased() && !HasRoundScoreLimitBeenReached() )
 	{
 		ClearDroppedWeapons()
@@ -775,9 +926,6 @@ void function GameStateEnter_WinnerDetermined_Threaded()
 			}
 			else
 			{
-				foreach ( entity player in GetPlayerArray() )
-					CheckGameStateForPlayerMovement( player )
-
 				RegisterChallenges_OnMatchEnd()
 				SetGameState( eGameState.Postmatch )
 			}
@@ -792,20 +940,16 @@ void function GameStateEnter_WinnerDetermined_Threaded()
 	else
 	{
 		RegisterChallenges_OnMatchEnd()
-		if ( ClassicMP_ShouldRunEpilogue() )
+
+		if ( ShouldRunEvac() )
 		{
 			ClassicMP_SetupEpilogue()
 			SetGameState( eGameState.Epilogue )
 		}
 		else
-		{
-			foreach ( entity player in GetPlayerArray() )
-				CheckGameStateForPlayerMovement( player )
-			
 			SetGameState( eGameState.Postmatch )
-		}
 	}
-	
+
 	AllPlayersUnMuteAll()
 }
 
@@ -866,8 +1010,24 @@ float function GetWinnerDeterminedWait()
 
 bool function WillShowRoundWinningKillReplay()
 {
-	return Replay_IsEnabled() && IsRoundWinningKillReplayEnabled() && IsValid( file.roundWinningKillReplayAttacker ) && !ShouldRunEvac()
-	&& Time() - file.roundWinningKillReplayTime <= ROUND_WINNING_KILL_REPLAY_LENGTH_OF_REPLAY && GetWinningTeam() != TEAM_UNASSIGNED
+	if ( !IsRoundWinningKillReplayEnabled() )
+		return false
+
+	int currentGameState = GetGameState()
+
+	if ( ( currentGameState != eGameState.WinnerDetermined ) && ( currentGameState != eGameState.SwitchingSides ) )
+		return false
+
+	if ( file.roundWinningKillReplayAttacker == null ) //Check for null specifically instead of IsValid because players can disconnect and become invalid, and we only want this to be false because we set it to null explicitly. ( Want to tell people that round winning kill replay was cancelled if a player disconnected)
+		return false
+
+	if ( IsRoundBased() ) //Note the order of the checks: RoundBasedModes that are also SwitchSidesBased will show in WinnerDetermined.
+		return ( currentGameState == eGameState.WinnerDetermined )
+
+	if ( IsSwitchSidesBased() )
+		return ( currentGameState == eGameState.SwitchingSides )
+
+	return true
 }
 
 
@@ -896,12 +1056,9 @@ void function GameStateEnter_SwitchingSides_Threaded()
 
 	svGlobal.levelEnt.Signal( "RoundEnd" )
 
+	float fadeTime = GetWinnerDeterminedWait() + CLEAR_PLAYERS_BUFFER
 	entity replayAttacker = file.roundWinningKillReplayAttacker
-	bool doReplay = !IsRoundBased() && WillShowRoundWinningKillReplay()
-
-	float replayLength = ROUND_WINNING_KILL_REPLAY_STARTUP_WAIT
-
-	SetServerVar( "roundWinningKillReplayPlaying", doReplay )
+	bool doReplay = WillShowRoundWinningKillReplay()
 
 	foreach ( entity player in GetPlayerArray() )
 	{
@@ -909,19 +1066,19 @@ void function GameStateEnter_SwitchingSides_Threaded()
 		CheckGameStateForPlayerMovement( player )
 	}
 
-	wait 1.5
-
-	foreach ( entity player in GetPlayerArray() )
-		ScreenFadeToBlackForever( player, 2.0 )
-
 	if ( doReplay )
 	{
-		replayLength = ROUND_WINNING_KILL_REPLAY_TOTAL_LENGTH
+		float replayLength = ROUND_WINNING_KILL_REPLAY_TOTAL_LENGTH
 
 		if ( "respawnTime" in replayAttacker.s && Time() - replayAttacker.s.respawnTime < replayLength )
 			replayLength += Time() - expect float ( replayAttacker.s.respawnTime )
 
 		SetServerVar( "roundWinningKillReplayEntHealthFrac", file.roundWinningKillReplayHealthFrac )
+
+		wait 1.5
+
+		foreach ( entity player in GetPlayerArray() )
+			ScreenFadeToBlackForever( player, 2.0 )
 
 		wait 2
 
@@ -934,20 +1091,48 @@ void function GameStateEnter_SwitchingSides_Threaded()
 			ScreenFadeToBlackForever( player, 1.0 )
 
 		wait 2
+
+		foreach ( entity player in GetPlayerArray() )
+			ClearPlayerFromReplay( player )
+
+		WaitFrame()
+
+		foreach ( entity player in GetPlayerArray() )
+			ScreenFadeToBlackForever( player, 0.0 )
+
+		wait 0.5
+
+		fadeTime -= 2 + replayLength
+
+		if ( IsRoundBased() && !HasRoundScoreLimitBeenReached() )
+			CleanUpEntitiesForRoundEnd()
+
+		SetServerVar( "roundWinningKillReplayPlaying", false )
+	}
+	else
+	{
+		wait GAME_WINNER_DETERMINED_WAIT
+
+		foreach ( entity player in GetPlayerArray() )
+			ScreenFadeToBlackForever( player, ROUND_WINNING_KILL_REPLAY_SCREEN_FADE_TIME )
+
+		wait ROUND_WINNING_KILL_REPLAY_SCREEN_FADE_TIME
+
+		CleanUpEntitiesForRoundEnd()
+
+		fadeTime -= 5.0
 	}
 
-	foreach ( entity player in GetPlayerArray() )
-		ClearPlayerFromReplay( player )
-
-	WaitFrame()
-
-	foreach ( entity player in GetPlayerArray() )
-		ScreenFadeToBlackForever( player, 0.0 )
-
-	CleanUpEntitiesForRoundEnd()
+	file.roundWinningKillReplayAttacker = null // Clear Replays
+	file.roundWinningKillReplayInflictorEHandle = -1
 
 	if ( !IsRoundBased() )
-		wait CLEAR_PLAYERS_BUFFER
+	{
+		foreach ( entity player in GetPlayerArray() )
+			thread ForceFadeToBlack( player, fadeTime )
+
+		wait fadeTime
+	}
 
 	ClearDroppedWeapons()
 	SetServerVar( "roundWinningKillReplayPlaying", false )
@@ -963,6 +1148,8 @@ void function GameStateEnter_SwitchingSides_Threaded()
 		SetGameState( eGameState.PickLoadout )
 	else
 		SetGameState( eGameState.Prematch )
+
+	AllPlayersUnMuteAll()
 }
 
 void function DialogueAnnounceSwitchingSides()
@@ -998,51 +1185,68 @@ void function GameStateEnter_SuddenDeath()
 
 	// Restart the timer for Timelimits to show Sudden Death extra time (Because it does have it)
 	float timeLimit = GetCurrentPlaylistVarFloat( "suddendeath_timelimit", 2.0 )
-	bool useSDTimelimit = false
-	if( timeLimit > 0 )
+
+	if ( timeLimit > 0 )
 	{
 		timeLimit *= 60 // Minutes conversion
+
 		SetGameEndTime( timeLimit )
 		SetRoundEndTime( timeLimit )
-		useSDTimelimit = true
 	}
-	else if( timeLimit == 0 ) // Allows 0 to make SD fallback into Draw directly (used by Live-Fire)
+	else if ( timeLimit == 0 ) // Allows 0 to make SD fallback into Draw directly (used by Live-Fire)
 	{
 		SetWinner( null, "#GENERIC_DRAW_ANNOUNCEMENT", "#GENERIC_DRAW_ANNOUNCEMENT" )
 		return
 	}
-	
-	// If SD timer playlistvar was set to a negative value, then SD will stay on forever until the tiebreaker is score or elimination
-	thread GameStateEnter_SuddenDeath_Threaded( useSDTimelimit )
+
+	thread GameStateEnter_SuddenDeath_Threaded()
 }
 
-void function GameStateEnter_SuddenDeath_Threaded( bool useTimelimit )
+void function GameStateEnter_SuddenDeath_Threaded()
 {
+	WaitFrame()
+
+	int lastTimeLeftSeconds = -1
+
 	while ( GetGameState() == eGameState.SuddenDeath )
 	{
-		WaitFrame()
-
 		float endTime
+
 		if ( IsRoundBased() )
 			endTime = expect float( GetServerVar( "roundEndTime" ) )
 		else
 			endTime = expect float( GetServerVar( "gameEndTime" ) )
-		
-		if( !IsFFAGame() ) // Death callbacks have dedicated logic to handle FFA modes
+
+		if ( int ( endTime - Time() ) < 15 && int ( endTime - Time() ) != lastTimeLeftSeconds )
 		{
-			bool mltElimited = IsTeamEliminated( TEAM_MILITIA )
-			bool imcElimited = IsTeamEliminated( TEAM_IMC )
-			
-			if ( mltElimited && imcElimited )
-				SetWinner( null, "#GENERIC_DRAW_ANNOUNCEMENT", "#GENERIC_DRAW_ANNOUNCEMENT" )
-			else if ( mltElimited )
-				SetWinner( TEAM_IMC, "#GAMEMODE_ENEMY_PILOTS_ELIMINATED", "#GAMEMODE_FRIENDLY_PILOTS_ELIMINATED" )
-			else if ( imcElimited )
-				SetWinner( TEAM_MILITIA, "#GAMEMODE_ENEMY_PILOTS_ELIMINATED", "#GAMEMODE_FRIENDLY_PILOTS_ELIMINATED" )
+			foreach ( player in GetPlayerArray() )
+			{
+				EmitSoundOnEntity( player, "Menu_Match_Countdown" )
+
+				if ( int ( endTime - Time() ) < 5 && int ( endTime - Time() ) >= 0 )
+					EmitSoundOnEntityAfterDelay( player, "Menu_Match_Countdown", 0.5 )
+			}
+
+			lastTimeLeftSeconds = int ( endTime - Time() )
 		}
 
-		if ( Time() >= endTime && useTimelimit )
-			SetWinner( null, "#GENERIC_DRAW_ANNOUNCEMENT", "#GENERIC_DRAW_ANNOUNCEMENT" )
+		if ( !IsRoundBased() && !IsFFAGame() ) // Death callbacks have dedicated logic to handle FFA modes
+		{
+			int militiaScore = GameRules_GetTeamScore( TEAM_MILITIA )
+			int imcScore = GameRules_GetTeamScore( TEAM_IMC )
+
+			if ( militiaScore != imcScore )
+			{
+				int winningTeam = ( militiaScore > imcScore? TEAM_MILITIA : TEAM_IMC )
+
+				SetWinner( winningTeam, "#SUDDEN_DEATH_WIN_ANNOUNCEMENT","#SUDDEN_DEATH_LOSS_ANNOUNCEMENT" )
+			}
+		}
+
+		if ( Time() >= endTime && !Flag( "DisableTimeLimit" ) )
+			SetWinner( null, "#GAMEMODE_TIME_LIMIT_REACHED", "#GAMEMODE_TIME_LIMIT_REACHED" )
+
+		WaitFrame()
 	}
 }
 
@@ -1501,148 +1705,4 @@ void function DialoguePlayWinnerDetermined()
 		PlayFactionDialogueToTeam( "scoring_won", winningTeam )
 		PlayFactionDialogueToTeam( "scoring_lost", losingTeam )
 	}
-}
-
-void function CodeCallback_GamerulesThink()
-{
-	int gameState = GetGameState()
-	if ( gameState != file.gameState )
-	{
-		string oldPrintVal = file.gameState == -1 ? "-1" : DEV_GetEnumStringFromIndex( "eGameState", file.gameState )
-		string newPrintVal = gameState == -1 ? "-1" : DEV_GetEnumStringFromIndex( "eGameState", gameState )
-		printt( "GameState changed from", oldPrintVal, "to", newPrintVal )
-
-		file.gameState = gameState
-	}
-
-	// Northstar doesn't have these
-	/*
-	switch ( gameState )
-	{
-		case eGameState.WaitingForCustomStart:
-//			printt( "STATE: waiting for custom start" )
-			GameRulesThink_WaitingForCustomStart()
-			break
-
-		case eGameState.WaitingForPlayers:
-//			printt( "STATE: waiting for players" )
-			GameRulesThink_WaitingForPlayers()
-			break
-
-		case eGameState.PickLoadout:
-//			printt( "STATE: Pick Loadout" )
-			GameRulesThink_PickLoadout()
-			break
-
-		case eGameState.Prematch:
-//			printt( "STATE: prematch" )
-			GameRulesThink_Prematch()
-			break
-
-		case eGameState.Playing:
-//			printt( "STATE: playing" )
-			GameRulesThink_Playing()
-			break
-
-		case eGameState.SuddenDeath:
-//			printt( "STATE: SuddenDeath" )
-			GameRulesThink_SuddenDeath()
-			break
-
-		case eGameState.WinnerDetermined:
-//			printt( "STATE: WinnerDetermined" )
-			GameRulesThink_WinnerDetermined()
-			break
-
-		case eGameState.SwitchingSides:
-//			printt( "STATE: SwitchingSides" )
-			GameRulesThink_SwitchingSides()
-			break
-
-		case eGameState.Epilogue:
-			//printt( "STATE: Epilogue" )
-			//if ( EvacEnabled() && level.dropship )
-				//EvacShipTriggerCheck( level.dropship )
-			GameRulesThink_Epilogue()
-			break
-
-		case eGameState.Postmatch:
-//			printt( "STATE: post" )
-			GameRulesThink_Postmatch()
-			break
-	}
-	*/
-
-	UpdateMatchStateToCode()
-}
-
-int function GetCodeMatchPhaseForGameState()
-{
-	int gameState = GetGameState()
-	switch ( gameState )
-	{
-		case eGameState.WaitingForPlayers:
-		case eGameState.PickLoadout:
-		case eGameState.Prematch:
-			return MATCHPHASE_PREMATCH
-
-		case eGameState.Playing:
-		case eGameState.SwitchingSides:
-			return MATCHPHASE_MATCH
-
-		case eGameState.SuddenDeath:
-		case eGameState.WinnerDetermined:
-		case eGameState.Epilogue:
-		case eGameState.Postmatch:
-			return MATCHPHASE_EPILOGUE
-
-		default:
-			printt( " ** Warning: GetCodeMatchPhaseForGameState() - Unhandeled eGameState", gameState )
-	}
-	return MATCHPHASE_UNSPECIFIED
-}
-
-void function UpdateMatchStateToCode()
-{
-	int maxRounds
-	int roundsIMC
-	int roundsMilitia
-	int scoreLimit
-	int scoreIMC
-	int scoreMilitia
-	if ( IsRoundBased() )
-	{
-		maxRounds = GetRoundScoreLimit_FromPlaylist()
-		roundsIMC = GameRules_GetTeamScore2( TEAM_IMC )
-		roundsMilitia = GameRules_GetTeamScore2( TEAM_MILITIA )
-		scoreLimit = GetRoundScoreLimit_FromPlaylist()
-		scoreIMC = GameRules_GetTeamScore2( TEAM_IMC )
-		scoreMilitia = GameRules_GetTeamScore2( TEAM_MILITIA )
-	}
-	else
-	{
-		maxRounds = 1
-		roundsIMC = 0
-		roundsMilitia = 0
-		scoreLimit = GetScoreLimit_FromPlaylist()
-		scoreIMC = GameRules_GetTeamScore( TEAM_IMC )
-		scoreMilitia = GameRules_GetTeamScore( TEAM_MILITIA )
-	}
-
-	int timeLimit
-	int timePassed
-	if ( GameRules_TimeLimitEnabled() )
-	{
-		timeLimit = int( GetTimeLimit_ForGameMode() * 60.0 )
-		timePassed = int( GameTime_PlayingTime() )
-	}
-	else
-	{
-		timeLimit = 0
-		timePassed = int( GameTime_PlayingTime() )
-	}
-
-	int phase = GetCodeMatchPhaseForGameState()
-	//printt( "NoteMatchState:", phase, maxRounds, roundsIMC, roundsMilitia, timeLimit, timePassed, scoreLimit, scoreIMC, scoreMilitia )
-	NoteMatchState( phase, maxRounds, roundsIMC, roundsMilitia, timeLimit, timePassed, scoreLimit, scoreIMC, scoreMilitia )
 }
