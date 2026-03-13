@@ -952,9 +952,14 @@ void function GameStateEnter_WinnerDetermined_Threaded()
 void function PlayerWatchesRoundWinningReplay( entity player, float replayLength )
 {
 	entity attacker = file.roundWinningKillReplayAttacker
+
 	if ( !IsValidPlayer( player ) || !IsValid( attacker ) )
 		return
-	
+
+	player.StopObserverMode()
+
+	HACKCleanupStaticObserverStuff( player )
+
 	player.Signal( "KillCamOver" )
 	player.SetPredictionEnabled( false ) // Disable prediction to prevent issues with replays, respawning code restores it automatically
 	player.ClearReplayDelay()
@@ -966,7 +971,7 @@ void function PlayerWatchesRoundWinningReplay( entity player, float replayLength
 	player.SetKillReplayVictim( file.roundWinningKillReplayVictim )
 	player.SetViewIndex( attacker.GetIndexForEntity() )
 
-	if( !HasRoundScoreLimitBeenReached() )
+	if ( !HasRoundScoreLimitBeenReached() )
 		player.SetIsReplayRoundWinning( true )
 }
 
