@@ -10,19 +10,28 @@ struct {
 void function GamemodeMfd_Init()
 {
 	GamemodeMfdShared_Init()
-		
+
 	RegisterSignal( "MarkKilled" )
 	ScoreEvent_SetupEarnMeterValuesForMixedModes()
-	
+
 	// todo
 	if ( GAMETYPE == MARKED_FOR_DEATH_PRO )
 	{
 		file.isMfdPro = true
+
 		SetRoundBased( true )
 		SetShouldUseRoundWinningKillReplay( true )
 		Riff_ForceSetEliminationMode( eEliminationMode.Pilots )
 	}
-	
+
+	if ( IsTitanMarkedForDeathMode() )
+	{
+		Riff_ForceSetSpawnAsTitan( eSpawnAsTitan.Always )
+		Riff_ForceTitanExitEnabled( eTitanExitEnabled.Never )
+		ClassicMP_SetCustomIntro( ClassicMP_DefaultNoIntro_Setup, ClassicMP_DefaultNoIntro_GetLength() )
+		ClassicMP_ForceDisableEpilogue( true )
+	}
+
 	AddCallback_OnClientConnected( SetupMFDPlayer )
 	AddCallback_OnPlayerKilled( UpdateMarksForKill )
 	AddCallback_GameStateEnter( eGameState.Playing, CreateInitialMarks )
