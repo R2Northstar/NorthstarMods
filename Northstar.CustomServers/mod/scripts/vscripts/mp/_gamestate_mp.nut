@@ -1109,7 +1109,7 @@ void function GameStateEnter_SwitchingSides_Threaded()
 
 		SetServerVar( "roundWinningKillReplayPlaying", false )
 	}
-	else
+	else if ( !IsRoundBased() )
 	{
 		wait GAME_WINNER_DETERMINED_WAIT
 
