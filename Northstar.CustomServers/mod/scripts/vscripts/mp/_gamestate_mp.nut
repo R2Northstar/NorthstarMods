@@ -897,21 +897,17 @@ void function GameStateEnter_WinnerDetermined_Threaded()
 	}
 
 	if ( IsRoundBased() && !HasRoundScoreLimitBeenReached() && !ShouldRunEvac() )
-	{
-		foreach ( entity player in GetPlayerArray() )
-			thread ForceFadeToBlack( player, fadeTime )
-
 		wait fadeTime
-	}
 
 	file.roundWinningKillReplayAttacker = null // Clear Replays
 	file.roundWinningKillReplayInflictorEHandle = -1
 
 	if ( IsRoundBased() && !HasRoundScoreLimitBeenReached() )
 	{
-		ClearDroppedWeapons()
 		int roundsPlayed = GetRoundsPlayed()
+
 		roundsPlayed++
+
 		SetServerVar( "roundsPlayed", roundsPlayed )
 
 		int highestScore = GameRules_GetTeamScore2( winningTeam )
@@ -1104,9 +1100,7 @@ void function GameStateEnter_SwitchingSides_Threaded()
 
 		fadeTime -= 2 + replayLength
 
-		if ( IsRoundBased() && !HasRoundScoreLimitBeenReached() )
-			CleanUpEntitiesForRoundEnd()
-
+		CleanUpEntitiesForRoundEnd()
 		SetServerVar( "roundWinningKillReplayPlaying", false )
 	}
 	else if ( !IsRoundBased() )
@@ -1127,14 +1121,8 @@ void function GameStateEnter_SwitchingSides_Threaded()
 	file.roundWinningKillReplayInflictorEHandle = -1
 
 	if ( !IsRoundBased() )
-	{
-		foreach ( entity player in GetPlayerArray() )
-			thread ForceFadeToBlack( player, fadeTime )
-
 		wait fadeTime
-	}
 
-	ClearDroppedWeapons()
 	SetServerVar( "roundWinningKillReplayPlaying", false )
 
 	if ( !doReplay )
@@ -1496,13 +1484,10 @@ void function CheckEliminationRiffMode( entity victim, entity attacker )
    ██     ██████   ██████  ███████     ██       ██████  ██   ████  ██████    ██    ██  ██████  ██   ████ ███████ 
 */
 
-void function ForceFadeToBlack( entity player, float endTime = 0.0 )
+void function ForceFadeToBlack( entity player )
 {
 	player.EndSignal( "OnDestroy" )
-
-	float startTime = Time()
-
-	while ( startTime > Time() - endTime || endTime <= 0.0 )
+	while ( true )
 	{
 		WaitFrame()
 		ScreenFadeToBlackForever( player, 0.0 )

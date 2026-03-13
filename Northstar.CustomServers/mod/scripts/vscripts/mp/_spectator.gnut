@@ -128,7 +128,7 @@ void function PlayerBecomesSpectator( entity player )
 	player.EndSignal( "OnRespawned" )
 	player.EndSignal( "PlayerRespawnStarted" )
 
-	OnThreadEnd( function() : ( player ) 
+	OnThreadEnd( function() : ( player )
 	{
 		if ( IsValid( player ) )
 		{
@@ -158,11 +158,6 @@ void function PlayerBecomesSpectator( entity player )
 
 		WaitFrame() // always wait at least a frame in case an observer func exits immediately to prevent stuff locking up
 	}
-
-	// cleanup
-	player.StopObserverMode()
-
-	HACKCleanupStaticObserverStuff( player ) // un-initialise static observer positions/angles
 }
 
 void function SpectatorFunc_Default( entity player )
