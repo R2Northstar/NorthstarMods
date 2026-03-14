@@ -728,7 +728,7 @@ void function GameStateEnter_Playing_Threaded()
 						PlayCurrentTeamMusicEventsOnPlayer( player )
 				}
 			}
-			else if ( !IsRoundBased() && Time() >= endTime - 120.0 )
+			else if ( !IsRoundBased() && endTime - Time() <= endTime / 2.65 )
 			{
 				if ( !playingthreeminutemusic )
 				{
