@@ -232,8 +232,6 @@ void function SpawnPlayerIntoDropship( entity player, int playerDropshipIndex, e
 
 	waitthread FirstPersonSequence( jumpSequence, player, playerDropship )
 
-	wait 0.4 // Blendout time from the function
-
 	thread PlayerJumpsFromDropship( player )
 }
 
@@ -260,6 +258,8 @@ void function PlayerJumpsFromDropship( entity player )
 
 	player.ClearParent()
 	player.ConsumeDoubleJump() // MovementDisable doesn't prevent double jumps
+
+	WaitFrame()
 
 	while ( !player.IsOnGround() && !player.IsWallRunning() && !player.IsWallHanging() )
 		wait 0
