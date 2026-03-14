@@ -677,6 +677,7 @@ void function GameStateEnter_Playing_Threaded()
 
 	while ( GetGameState() == eGameState.Playing )
 	{
+		/*
 		if ( ( Time() - level.lastPlayingEmptyTeamCheck ) > 1.0 )
 		{
 			level.lastPlayingEmptyTeamCheck = Time()
@@ -684,6 +685,7 @@ void function GameStateEnter_Playing_Threaded()
 			if ( CheckForEmptyTeamVictory() )
 				return
 		}
+		*/
 
 		if ( GetConVarBool( "ns_match_end_if_no_players" ) )
 		{
