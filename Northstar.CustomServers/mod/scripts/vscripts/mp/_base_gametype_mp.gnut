@@ -619,13 +619,15 @@ void function RespawnAsPilot( entity player )
 		return
 
 	entity spawnpoint = FindSpawnPoint( player, false, ( ShouldStartSpawn( player ) || Flag( "ForceStartSpawn" ) ) )
+
 	DoRespawnPlayer( player, spawnpoint )
-	
+
 	player.isSpawning = false
 	player.isSpawningHotDroppingAsTitan = false
 
 	// Dying as Titan and respawning as Pilot keeps the Titan Icon over the player's name instead of reverting to the normal patch such player uses
 	CallsignIcon callsignIcon = PlayerCallsignIcon_GetActive( player )
+
 	player.SetTargetInfoIcon( callsignIcon.smallImage )
 }
 
@@ -633,49 +635,65 @@ void function RespawnAsTitan( entity player )
 {
 	if ( !PlayerCanSpawn( player ) )
 		return
-	
+
 	player.Signal( "PlayerRespawnStarted" )
 
 	player.isSpawning = true
 	player.isSpawningHotDroppingAsTitan = true
 
 	entity spawnpoint = FindSpawnPoint( player, true, ( ShouldStartSpawn( player ) || Flag( "ForceStartSpawn" ) ) )
+
 	if ( file.recalculateRespawnAsTitanStartPointCallback != null )
 		spawnpoint = file.recalculateRespawnAsTitanStartPointCallback( player, spawnpoint )
 
 	ToggleSpawnNodeInUse( spawnpoint, true )
- 	TitanLoadoutDef titanLoadout = GetTitanLoadoutForPlayer( player )
-	
+
+	TitanLoadoutDef titanLoadout = GetTitanLoadoutForPlayer( player )
+
 	asset model = GetPlayerSettingsAssetForClassName( titanLoadout.setFile, "bodymodel" )
 	Attachment warpAttach = GetAttachmentAtTimeFromModel( model, "at_hotdrop_01", "offset", spawnpoint.GetOrigin(), spawnpoint.GetAngles(), 0 )
 	entity warpFX = PlayFX( TURBO_WARP_FX, warpAttach.position, warpAttach.angle )
+
 	warpFX.FXEnableRenderAlways()
 	warpFX.DisableHibernation()
-	
-	entity titan = CreateAutoTitanForPlayer_FromTitanLoadout( player, titanLoadout, spawnpoint.GetOrigin(), spawnpoint.GetAngles() )
-	DispatchSpawn( titan )
-	titan.ContextAction_SetBusy() // This is prevent a race condition with the ability of players being able to spawn into their Titans
-	HideName( titan )
-	titan.SetValidHealthBarTarget( false ) // Hide HP bar overhead
-	titan.UnsetUsable() // Prevent embark prompt from showing up
-	ClearTitanAvailable( player ) // Clear titan availability, so faction leader won't advise "Titan Ready" during spawn
-	
+
 	AddCinematicFlag( player, CE_FLAG_CLASSIC_MP_SPAWNING ) // hide hud
-	
+
 	player.EndSignal( "OnDeath" ) // In case of cinematic titanfall and Round End code is killing everything in cleanup function
 	player.EndSignal( "OnDestroy" )
 
-	entity camera = CreateTitanDropCamera( spawnpoint.GetAngles(), < 90, titan.GetAngles().y, 0 > )
-	camera.SetParent( titan )
-	
-	vector xyOffset = RotateAroundOrigin2D( < 44, 0, 520 >, < 0, 0, 0 >, spawnpoint.GetAngles().y )
-	
-	camera.SetLocalOrigin( xyOffset )
-	camera.SetLocalAngles( < camera.GetAngles().x, spawnpoint.GetAngles().y, camera.GetAngles().z > ) // this straight up just does not work lol
-	player.SetViewEntity( camera, true )
-	
+	vector camOffset = Vector( 44, -64, 520 )
+
+	entity camera = CreateTitanDropCamera( warpAttach.position + camOffset, Vector( 90, spawnpoint.GetAngles().y, 0 ) )
+
+	camera.Fire( "Enable", "!activator", 0, player )
+
+	player.SetViewEntity( camera, false )
+
+	wait 0.1
+
+	entity titan = CreateAutoTitanForPlayer_FromTitanLoadout( player, titanLoadout, spawnpoint.GetOrigin(), spawnpoint.GetAngles() )
+
+	DispatchSpawn( titan )
+
+	titan.ContextAction_SetBusy() // This is prevent a race condition with the ability of players being able to spawn into their Titans
+
+	HideName( titan )
+
+	titan.SetValidHealthBarTarget( false ) // Hide HP bar overhead
+	titan.UnsetUsable() // Prevent embark prompt from showing up
+
+	ClearTitanAvailable( player ) // Clear titan availability, so faction leader won't advise "Titan Ready" during spawn
+
+	if ( IsValid( camera ) )
+	{
+		camera.SetOrigin( titan.GetOrigin() + camOffset )
+		camera.SetParent( titan )
+	}
+
 	titan.EndSignal( "OnDeath" )
 	titan.EndSignal( "OnDestroy" )
+
 	TeleportToEnt( titan, spawnpoint )
 
 	OnThreadEnd( function() : ( player, titan, camera, spawnpoint )
@@ -683,9 +701,10 @@ void function RespawnAsTitan( entity player )
 		if ( IsValid( player ) )
 		{
 			RemoveCinematicFlag( player, CE_FLAG_CLASSIC_MP_SPAWNING ) // show hud
+
 			player.isSpawning = false
 			player.isSpawningHotDroppingAsTitan = false
-			
+
 			GiveTitanfallScoreMedal( player ) // In case of classic Warpfall animation, give the Titanfall Score Medal at this moment, so player can actually see it
 			
 			PutEntityInSafeSpot( player, null, null, spawnpoint.GetOrigin(), player.GetOrigin() ) // Just to Ensure player is not clipping in any geometry
@@ -698,7 +717,7 @@ void function RespawnAsTitan( entity player )
 
 		if ( IsValid( camera ) )
 			camera.Destroy()
-		
+
 		if ( IsValid( spawnpoint ) )
 			ToggleSpawnNodeInUse( spawnpoint, false )
 	})
