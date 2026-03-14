@@ -70,20 +70,8 @@ void function OnPrematchStart_Thread()
 	file.imcDropships.clear()
 	
 	// Try to gather all possible Dropship spawn points for Team
-	array<entity> validDropshipSpawns
-	array<entity> dropshipSpawns = GetEntArrayByClass_Expensive( "info_spawnpoint_dropship_start" )
-	foreach ( entity dropshipSpawn in dropshipSpawns )
-	{
-		if ( GameModeRemove( dropshipSpawn ) )
-			continue
-		
-		validDropshipSpawns.append( dropshipSpawn )
-	}
-	
-	// Use any spawn point if not enough valid for this Gamemode exists
-	if ( validDropshipSpawns.len() < 2 )
-		validDropshipSpawns = dropshipSpawns
-	
+	array<entity> validDropshipSpawns = GetEntArrayByClass_Expensive( "info_spawnpoint_dropship_start" )
+
 	validDropshipSpawns.reverse() // Flip cuz idk why Dropships are in mirrored order in comparison to vanilla
 
 	// Spawn the Dropships
@@ -244,7 +232,7 @@ void function SpawnPlayerIntoDropship( entity player, int playerDropshipIndex, e
 
 	waitthread FirstPersonSequence( jumpSequence, player, playerDropship )
 
-	wait 0.3 // Blendout time from the function
+	wait 0.4 // Blendout time from the function
 
 	thread PlayerJumpsFromDropship( player )
 }
@@ -260,10 +248,10 @@ void function PlayerJumpsFromDropship( entity player )
 		{
 			// show weapon viewmodel and hud and let them move again
 			player.MovementEnable()
-			player.UnfreezeControlsOnServer()
 
 			DeployViewModelAndEnableWeapons( player )
 			RemoveCinematicFlag( player, CE_FLAG_CLASSIC_MP_SPAWNING )
+			Loadouts_TryGivePilotLoadout( player )
 		}
 	})
 	
@@ -273,12 +261,9 @@ void function PlayerJumpsFromDropship( entity player )
 	player.ClearParent()
 	player.ConsumeDoubleJump() // MovementDisable doesn't prevent double jumps
 
-	WaitFrame()
-	player.SetVelocity( < 0, 0, -100 > )
+	while ( !player.IsOnGround() && !player.IsWallRunning() && !player.IsWallHanging() )
+		wait 0
 
-	while ( !player.IsOnGround() && !player.IsWallRunning() && !player.IsWallHanging() ) // todo this needs tweaking
-		WaitFrame()
-	
 	if ( !GetRoundsPlayed() || HasSwitchedSides() ) //Intro is announced only for the first round in Vanilla as certain gamemodes have different announcements for rounds restarts
 		TryGameModeAnnouncement( player )
 }
