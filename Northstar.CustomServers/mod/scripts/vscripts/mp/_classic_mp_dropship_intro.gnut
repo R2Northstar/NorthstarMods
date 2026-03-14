@@ -259,7 +259,7 @@ void function PlayerJumpsFromDropship( entity player )
 	player.ClearParent()
 	player.ConsumeDoubleJump() // MovementDisable doesn't prevent double jumps
 
-	WaitFrame()
+	wait 0.1
 
 	while ( !player.IsOnGround() && !player.IsWallRunning() && !player.IsWallHanging() )
 		wait 0
