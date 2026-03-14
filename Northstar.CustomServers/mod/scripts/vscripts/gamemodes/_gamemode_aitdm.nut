@@ -208,11 +208,11 @@ void function SpawnIntroBatch_Threaded( int team )
 	array<entity> shipNodes
 
 	foreach ( entity node in dropPodNodes )
-		if ( node.GetTeam() == team )
+		if ( node.GetTeam() == team || ( GetMapName() == "mp_rise" && node.GetTeam() == TEAM_UNASSIGNED ) )
 			podNodes.append( node )
 
 	foreach ( entity node in dropShipNodes )
-		if ( node.GetTeam() == team )
+		if ( node.GetTeam() == team || ( GetMapName() == "mp_rise" && node.GetTeam() == TEAM_UNASSIGNED ) )
 			shipNodes.append( node )
 
 	// Spawn logic
