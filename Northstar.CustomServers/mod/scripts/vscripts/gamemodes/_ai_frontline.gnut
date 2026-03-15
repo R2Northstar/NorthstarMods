@@ -109,10 +109,26 @@ void function WaitTillFrontlineMoved()
 
 entity function GetFrontlineSpawnPoint( array<entity> spawnPointArray, int team )
 {
-	if ( !FrontlineInitiated() )
+	if ( !FrontlineInitiated() || !IsIMCOrMilitiaTeam( team ) )
 		return spawnPointArray.getrandom()
 
-	entity frontlinePoint = GetFrontlineGoal( 1, team, false )
+	int goalNum = -1
+
+	for ( int i = 0; i < 3; i++ )
+	{
+		if ( team in file.frontlineAssaultPoint && i in file.frontlineAssaultPoint[ team ] )
+		{
+			ArrayRemoveDead( file.frontlineAssaultPoint[ team ][i] )
+			ArrayRemoveDifferentTeam( file.frontlineAssaultPoint[ team ][i], team )
+		}
+	}
+
+	if ( goalNum == -1 )
+		for ( int i = 0; i < 3; i++ )
+			if ( goalNum == -1 || !( team in file.frontlineAssaultPoint ) || !( i in file.frontlineAssaultPoint[ team ] ) || ( goalNum in file.frontlineAssaultPoint[ team ] && file.frontlineAssaultPoint[ team ][i].len() < file.frontlineAssaultPoint[ team ][ goalNum ].len() ) )
+				goalNum = i
+
+	entity frontlinePoint = GetFrontlineGoal( goalNum, team, false )
 
 	if ( !IsValid( frontlinePoint ) )
 		return spawnPointArray.getrandom()
@@ -752,12 +768,13 @@ void function SquadAssaultFrontline( array<entity> squad )
 
 	foreach ( entity npc in squad )
 	{
-		npc.AssaultPoint( assaultOrigin )
 		npc.AssaultPointClamped( assaultOrigin )
-		npc.AssaultSetGoalRadius( 600 )
-		npc.AssaultSetGoalHeight( 64 )
-		npc.AssaultSetFightRadius( 0 )
-		npc.AssaultSetArrivalTolerance( 600 )
+
+		if ( goal.HasKey( "script_goal_radius" ) )
+			npc.AssaultSetGoalRadius( float ( goal.kv.script_goal_radius ) )
+
+		if ( goal.HasKey( "script_goal_height" ) )
+			npc.AssaultSetGoalHeight( float ( goal.kv.script_goal_height ) )
 	}
 }
 
