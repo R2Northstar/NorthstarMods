@@ -1691,16 +1691,16 @@ void function AT_SpawnBountyTitan( AT_WaveOrigin campData, int spawnId, int scri
 	string aisettings = GetTypeFromBossID( bountyID )
 	string titanClass = expect string( Dev_GetAISettingByKeyField_Global( aisettings, "npc_titan_player_settings" ) )
 	
-	AiGameModes_SpawnTitan( 
-		spawnpoint, 
-		AT_AI_TEAM, 
-		titanClass, 
+	AiGameModes_SpawnTitan(
+		spawnpoint,
+		AT_AI_TEAM,
+		titanClass,
 		aisettings,
-		// titan handler 
-		void function( entity titan ) : ( campData, spawnId, bountyID, scriptManagerId ) 
+		// titan handler
+		void function( entity titan ) : ( campData, spawnId, bountyID, scriptManagerId )
 		{
 			AT_HandleBossTitanSpawn( titan, campData, spawnId, bountyID, scriptManagerId )
-		} 
+		}
 	)
 }
 
@@ -1729,6 +1729,9 @@ void function AT_HandleBossTitanSpawn( entity titan, AT_WaveOrigin campData, int
 	// tracking lifetime
 	AddToScriptManagedEntArray( scriptManagerId, titan )
 	thread AT_TrackNPCLifeTime( titan, spawnId, "npc_titan" )
+
+	if ( titan.GetAISettingsName() == "npc_titan_stryder_leadwall_bounty" )
+		titan.TakeOffhandWeapon( OFFHAND_EQUIPMENT )
 }
 
 void function BountyBossHighlightThink( entity titan )
