@@ -54,6 +54,7 @@ struct {
 	
 	array<void functionref()> roundEndCleanupCallbacks
 	bool functionref( entity victim, entity attacker, var damageInfo, bool isRoundEnd ) shouldTryUseProjectileReplayCallback
+	float gameEndTimeChangedTime
 } file
 
 
@@ -75,7 +76,8 @@ struct {
 void function PIN_GameStart()
 {
 	SetServerVar( "switchedSides", 0 )
-	
+	RegisterServerVarChangeCallback( "gameEndTime", GameEndTimeVarChanged )
+
 	AddCallback_GameStateEnter( eGameState.WaitingForCustomStart, GameStateEnter_WaitingForCustomStart )
 	AddCallback_GameStateEnter( eGameState.WaitingForPlayers, GameStateEnter_WaitingForPlayers )
 	AddCallback_OnClientConnected( WaitingForPlayers_ClientConnected )
@@ -95,6 +97,11 @@ void function PIN_GameStart()
 	PilotBattery_SetMaxCount( GetCurrentPlaylistVarInt( "pilot_battery_inventory_size", 1 ) ) // Game unironically supports players carrying more than one battery
 	
 	RegisterSignal( "CleanUpEntitiesForRoundEnd" )
+}
+
+void function GameEndTimeVarChanged()
+{
+	file.gameEndTimeChangedTime = Time()
 }
 
 void function GameState_EntitiesDidLoad()
@@ -675,6 +682,8 @@ void function GameStateEnter_Playing_Threaded()
 	bool playinglastminutemusic = false
 	int lastTimeLeftSeconds = -1
 
+	file.gameEndTimeChangedTime = Time()
+
 	while ( GetGameState() == eGameState.Playing )
 	{
 		/*
@@ -698,9 +707,9 @@ void function GameStateEnter_Playing_Threaded()
 		float endTime
 
 		if ( IsRoundBased() )
-			endTime = expect float( GetServerVar( "roundEndTime" ) )
+			endTime = expect float ( GetServerVar( "roundEndTime" ) )
 		else
-			endTime = expect float( GetServerVar( "gameEndTime" ) )
+			endTime = expect float ( GetServerVar( "gameEndTime" ) )
 
 		if ( int ( endTime - Time() ) < 15 && int ( endTime - Time() ) != lastTimeLeftSeconds )
 		{
@@ -730,7 +739,7 @@ void function GameStateEnter_Playing_Threaded()
 						PlayCurrentTeamMusicEventsOnPlayer( player )
 				}
 			}
-			else if ( !IsRoundBased() && endTime - Time() <= ( endTime - expect float( GetServerVar( "gameStartTime" ) ) ) / 2.65 )
+			else if ( !IsRoundBased() && endTime - Time() <= ( endTime - file.gameEndTimeChangedTime ) / 2.65 )
 			{
 				if ( !playingthreeminutemusic )
 				{
