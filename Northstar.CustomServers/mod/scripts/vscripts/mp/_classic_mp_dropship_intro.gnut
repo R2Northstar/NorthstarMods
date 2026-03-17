@@ -211,9 +211,7 @@ void function SpawnPlayerIntoDropship( entity player, int playerDropshipIndex, e
 		idleSequence.setInitialTime = Time() - file.introStartTime
 		idleSequence.hideProxy = true
 
-		thread FirstPersonSequence( idleSequence, player, playerDropship )
-
-		playerDropship.WaitSignal( "deploy" )
+		waitthread FirstPersonSequence( idleSequence, player, playerDropship )
 	}
 
 	FirstPersonSequenceStruct jumpSequence
