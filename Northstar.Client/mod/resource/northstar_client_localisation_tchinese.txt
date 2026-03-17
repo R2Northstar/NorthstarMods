@@ -382,5 +382,7 @@
 		"MOD_FETCHING_FAILED_GENERAL"             "Mod解壓失敗。在日志中查看更多詳情。"
 		"MANIFESTO_FETCHING_TITLE"             "設置Mod下載"
 		"MANIFESTO_FETCHING_TEXT"             "獲取已驗證Mod列表……"
+
+		"MENU_TITLE_SET_CLANTAG"             "設置戰隊標籤"
 	}
 }

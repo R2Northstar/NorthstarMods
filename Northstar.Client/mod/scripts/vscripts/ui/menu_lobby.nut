@@ -318,7 +318,8 @@ void function SetupComboButtonTest( var menu )
 		file.inviteRoomButton = AddComboButton( comboStruct, headerIndex, buttonIndex++, "#PRIVATE_MATCH" )
 		Hud_AddEventHandler( file.inviteRoomButton, UIE_CLICK, StartPrivateMatch )
 
-		file.setClanTagButton = AddComboButton( comboStruct, headerIndex, buttonIndex++, "SetClanTag" )
+		// set clan tag
+		file.setClanTagButton = AddComboButton( comboStruct, headerIndex, buttonIndex++, "#MENU_TITLE_SET_CLANTAG" )
 		Hud_AddEventHandler( file.setClanTagButton, UIE_CLICK, OnSetClantagButton_Activate )
 	#endif
 
