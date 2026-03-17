@@ -677,7 +677,7 @@ void function GameStateEnter_Playing_Threaded()
 	if ( Flag( "AnnounceProgressEnabled" ) )
 		thread DialoguePlayNormal()
 
-	float timeWithPlayers = Time()
+	float timeWithPlayers = -1
 	bool playingthreeminutemusic = false
 	bool playinglastminutemusic = false
 	int lastTimeLeftSeconds = -1
@@ -700,7 +700,7 @@ void function GameStateEnter_Playing_Threaded()
 		{
 			if ( GetPlayerArray().len() )
 				timeWithPlayers = Time()
-			else if ( timeWithPlayers + 15.0 < Time() )
+			else if ( timeWithPlayers == -1 || timeWithPlayers + 15.0 < Time() )
 				GameRules_EndMatch()
 		}
 
