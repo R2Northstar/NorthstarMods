@@ -363,24 +363,26 @@ void function Evac( int evacTeam, float initialWait, float arrivalTime, float wa
 	// fly out sound
 	StopSoundOnEntity( dropship, evacShip.hoverSound )
 	EmitSoundOnEntity( dropship, evacShip.flyoutSound )
-	
+
+	// fly away
+	dropship.Signal( "EvacShipLeaves" )
+	thread PlayAnim( dropship, "cd_dropship_rescue_side_end", evacNode )
+
+	SetTeamActiveObjective( evacTeam, "EG_DropshipExtractDropshipFlyingAway" )
+	SetTeamActiveObjective( GetOtherTeam( evacTeam ), "EG_StopExtractDropshipFlyingAway" )
+
+	wait 1.0
+
 	// holster all weapons
 	file.shouldholsterweapons[ dropship ] <- true
 
 	foreach ( entity player in dropship.s.evacSlots )
 		if ( IsValid( player ) )
 			HolsterViewModelAndDisableWeapons( player )
-	
-	// fly away
-	dropship.Signal( "EvacShipLeaves" )
-	thread PlayAnim( dropship, "cd_dropship_rescue_side_end", evacNode )
-	
-	SetTeamActiveObjective( evacTeam, "EG_DropshipExtractDropshipFlyingAway" )
-	SetTeamActiveObjective( GetOtherTeam( evacTeam ), "EG_StopExtractDropshipFlyingAway" )
-	
+
 	// todo: play the warpout effect somewhere here
 	
-	wait dropship.GetSequenceDuration( "cd_dropship_rescue_side_end" ) - WARPINFXTIME
+	wait dropship.GetSequenceDuration( "cd_dropship_rescue_side_end" ) - WARPINFXTIME - 1.0
 	
 	foreach ( entity player in dropship.s.evacSlots )
 		if ( IsValid( player ) )
@@ -516,11 +518,13 @@ void function AddPlayerToEvacDropship( entity dropship, entity player )
 	fp.attachment = "RESCUE"
 	fp.teleport = true
 	fp.thirdPersonCameraAttachments = [ "VDU" ] // this seems wrong, firstperson anim has better angles, but no head
-	
+
+	AddCinematicFlag( player, CE_FLAG_HIDE_MAIN_HUD )
 	EmitSoundOnEntityOnlyToPlayer( player, player, SHIFTER_START_SOUND_3P )
 	// should play SHIFTER_START_SOUND_1P when they actually arrive in the ship i think, unsure how this is supposed to be done
 	PlayPhaseShiftDisappearFX( player )
 	FirstPersonSequence( fp, player, dropship )
+	RemoveCinematicFlag( player, CE_FLAG_HIDE_MAIN_HUD )
 
 	FirstPersonSequenceStruct idleFp
 
