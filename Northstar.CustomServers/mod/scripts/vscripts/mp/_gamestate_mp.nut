@@ -760,9 +760,12 @@ void function GameStateEnter_Playing_Threaded()
 					playinglastminutemusic = false
 
 					foreach ( int team in [ TEAM_IMC, TEAM_MILITIA ] )
-						CreateTeamMusicEvent( team, -1, Time() )
+						CreateTeamMusicEvent( team, eMusicPieceID.LEVEL_INTRO, -99999999 )
 
 					StopPlayingLastMinuteMusicToAll()
+
+					foreach ( entity player in GetPlayerArray() )
+						PlayCurrentTeamMusicEventsOnPlayer( player )
 				}
 			}
 
