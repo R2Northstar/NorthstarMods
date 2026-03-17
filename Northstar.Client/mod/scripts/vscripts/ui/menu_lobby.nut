@@ -83,7 +83,6 @@ struct
 	var bannerButton
 	var patchButton
 	var statsButton
-	var setClanTagButton
 	var networksHeader
 	var settingsHeader
 	var storeHeader
@@ -317,10 +316,6 @@ void function SetupComboButtonTest( var menu )
 		// private match
 		file.inviteRoomButton = AddComboButton( comboStruct, headerIndex, buttonIndex++, "#PRIVATE_MATCH" )
 		Hud_AddEventHandler( file.inviteRoomButton, UIE_CLICK, StartPrivateMatch )
-
-		// set clan tag
-		file.setClanTagButton = AddComboButton( comboStruct, headerIndex, buttonIndex++, "#MENU_TITLE_SET_CLANTAG" )
-		Hud_AddEventHandler( file.setClanTagButton, UIE_CLICK, OnSetClantagButton_Activate )
 	#endif
 
 	file.inviteFriendsButton = AddComboButton( comboStruct, headerIndex, buttonIndex++, "#MENU_TITLE_INVITE_FRIENDS" )
@@ -371,16 +366,21 @@ void function SetupComboButtonTest( var menu )
 	file.inboxButton = networksInbox
 	file.lobbyButtons.append( networksInbox )
 	Hud_AddEventHandler( networksInbox, UIE_CLICK, OnInboxButton_Activate )
-	var switchButton = AddComboButton( comboStruct, headerIndex, buttonIndex++, "#COMMUNITY_SWITCHCOMMUNITY" )
-	Hud_AddEventHandler( switchButton, UIE_CLICK, OnSwitchButton_Activate )
-	var browseButton = AddComboButton( comboStruct, headerIndex, buttonIndex++, "#COMMUNITY_BROWSE_NETWORKS" )
-	file.lobbyButtons.append( browseButton )
-	Hud_AddEventHandler( browseButton, UIE_CLICK, OnBrowseNetworksButton_Activate )
-	file.browseNetworkButton = browseButton
+	#if VANILLA
+		var switchButton = AddComboButton( comboStruct, headerIndex, buttonIndex++, "#COMMUNITY_SWITCHCOMMUNITY" )
+		Hud_AddEventHandler( switchButton, UIE_CLICK, OnSwitchButton_Activate )
+		var browseButton = AddComboButton( comboStruct, headerIndex, buttonIndex++, "#COMMUNITY_BROWSE_NETWORKS" )
+		file.lobbyButtons.append( browseButton )
+		Hud_AddEventHandler( browseButton, UIE_CLICK, OnBrowseNetworksButton_Activate )
+		file.browseNetworkButton = browseButton
 	#if NETWORK_INVITE
 		file.inviteFriendsToNetworkButton = AddComboButton( comboStruct, headerIndex, buttonIndex++, "#INVITE_FRIENDS" )
 		file.lobbyButtons.append( file.inviteFriendsToNetworkButton )
 		Hud_AddEventHandler( file.inviteFriendsToNetworkButton, UIE_CLICK, OnInviteFriendsToNetworkButton_Activate )
+	#endif
+	#else
+		var setClanTagButton = AddComboButton( comboStruct, headerIndex, buttonIndex++, "#MENU_TITLE_SET_CLANTAG" )
+		Hud_AddEventHandler( setClanTagButton, UIE_CLICK, OnSetClantagButton_Activate )
 	#endif
 
 	headerIndex++
@@ -1297,8 +1297,8 @@ function UpdateLobbyUI()
 	thread UpdateChatroomThread()
 	#if VANILLA
 		thread UpdateInviteJoinButton()
+		thread UpdateInviteFriendsToNetworkButton()
 	#endif
-	thread UpdateInviteFriendsToNetworkButton()
 	thread UpdatePlayerInfo()
 
 	if ( uiGlobal.menuToOpenFromPromoButton != null )
