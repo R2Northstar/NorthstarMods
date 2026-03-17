@@ -1,0 +1,269 @@
+#base "combo_buttons.res"
+resource/ui/menus/lobby.menu
+{
+	menu
+	{
+		ControlName				Frame
+		xpos					0
+		ypos					0
+		zpos					3
+		wide					f0
+		tall					f0
+		autoResize				0
+		pinCorner				0
+		visible					1
+		enabled					1
+		PaintBackgroundType		0
+		infocus_bgcolor_override	"0 0 0 0"
+		outoffocus_bgcolor_override	"0 0 0 0"
+
+        	Vignette
+        	{
+            		ControlName             ImagePanel
+            		InheritProperties       MenuVignette
+	}
+
+	    VideoFrame // Example only
+	    {
+		    ControlName		Label
+		    xpos			50
+		    ypos			80
+		    wide			640 //f0
+		    tall			360 //f0
+		    visible			0
+	    }
+
+		MenuTitle
+		{
+			ControlName				Label
+			InheritProperties		MenuTitle
+			labelText				"#MULTIPLAYER"
+		}
+
+		ImgTopBar
+		{
+			ControlName				ImagePanel
+			InheritProperties		MenuTopBar
+		}
+
+		MatchmakingStatus
+		{
+			ControlName				CNestedPanel
+			wide					f0
+			tall					f0
+			visible					1
+			controlSettingsFile		"resource/ui/menus/panels/matchmaking_status.res"
+		}
+
+	    CreditsAvailable
+	    {
+	        ControlName             RuiPanel
+	        InheritProperties       CreditsAvailableProperties
+	    }
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+        Screen
+        {
+            ControlName		ImagePanel
+			wide					f0
+			tall					f0
+            visible			1
+            scaleImage		1
+            fillColor		"0 0 0 0"
+            drawColor		"0 0 0 0"
+        }
+
+		CallsignCard
+		{
+			ControlName				RuiPanel
+			rui                     "ui/callsign_basic.rpak"
+			pin_to_sibling          Screen
+            pin_corner_to_sibling	TOP_RIGHT
+            pin_to_sibling_corner	TOP_RIGHT
+            xpos					-96
+            ypos					-166
+			wide                    320
+			tall                    172
+			visible					1
+			scaleImage				1
+			image					vgui/white
+            fillColor               "255 255 255 255"
+			zpos -1
+		}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+		ButtonRowAnchor
+		{
+			ControlName				Label
+			labelText				""
+
+			xpos                    96
+			ypos                    160
+		}
+
+		BlackBackground
+		{
+			ControlName				ImagePanel
+			xpos					c-344
+			ypos					c-177
+			wide					700
+			tall					250
+			visible					0
+			scaleImage				1
+			image					"vgui/HUD/white"
+			drawColor				"0 0 0 235"
+		}
+
+		SettingLabel
+		{
+			ControlName				Label
+			labelText					"#COMMUNITY_CLANTAG_LABEL"
+			visible					0
+			auto_wide_tocontents			1
+			auto_tall_tocontents 			1
+			allcaps					1
+			font					DefaultBold_44
+			zpos					1
+			xpos                    				c-77
+			ypos                    				c-147
+		}
+	
+		CustomClantagBox
+		{
+			ControlName				TextEntry
+			wide					300
+			tall					53
+			xpos 					74
+			ypos 					34
+			zpos					1
+			visible					0
+			enabled					1
+			textHidden				0
+			editable					1
+			maxchars					4
+			NumericInputOnly				0
+			textAlignment				"center"
+			font					DefaultBold_53
+			keyboardTitle				"#COMMUNITY_CLANTAG_LABEL"
+			keyboardDescription			"#COMMUNITY_EDITCOMMUNITY"
+			allowRightClickMenu			1
+			allowSpecialCharacters			0
+			unicode					1
+			paintborder				0
+
+			pin_to_sibling				SettingLabel
+			pin_corner_to_sibling			TOP_LEFT
+			pin_to_sibling_corner			BOTTOM_LEFT
+		}
+
+		CheckButton
+		{
+			ControlName				RuiButton
+			InheritProperties				RuiSmallButton
+			wide					200
+			xpos 					-74
+			ypos 					14
+			classname				ModButton
+			scriptID					0
+			textAlignment				center
+
+			visible					0
+			pin_to_sibling				CustomClantagBox
+			pin_corner_to_sibling			TOP_LEFT
+			pin_to_sibling_corner			BOTTOM_LEFT
+		}
+
+		GenUpButton
+		{
+			ControlName				RuiButton
+			InheritProperties		GenUpButton
+			visible					1
+			ypos                    -453
+
+			navUp					SettingsButton
+			navDown                 ChatRoom
+
+			pin_to_sibling			ButtonRowAnchor
+			pin_corner_to_sibling	TOP_LEFT
+			pin_to_sibling_corner	TOP_LEFT
+		}
+
+		BtnAboveChatroom
+		{
+			ControlName				BaseModHybridButton
+			visible					0
+            navUp                   GenUpButton
+		}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+		MatchDetails
+		{
+			ControlName				CNestedPanel
+			xpos					650
+			ypos					180
+			wide					780
+			tall					470
+			visible					0
+			controlSettingsFile			"resource/ui/menus/panels/match_info.res"
+		}
+
+		ChatroomPanel
+		{
+			ControlName				CNestedPanel
+			ypos					-98
+			wide					%100
+			tall					308
+			visible					1
+			controlSettingsFile			"resource/ui/menus/panels/chatroom.res"
+			pin_to_sibling          Screen
+		    pin_corner_to_sibling	BOTTOM_RIGHT
+		    pin_to_sibling_corner	BOTTOM_RIGHT
+		}
+		
+		UserInfo
+		{
+			ControlName				CNestedPanel
+
+			xpos                    %-5
+			ypos                    -98
+            tall					500
+
+			zpos					5
+			wide					%28
+			visible					1
+			controlSettingsFile			"resource/ui/menus/panels/user_info.res"
+			pin_to_sibling          Screen
+		    pin_corner_to_sibling	BOTTOM_RIGHT
+		    pin_to_sibling_corner	BOTTOM_RIGHT
+		}
+
+		OpenInvitePanel
+		{
+			ControlName				CNestedPanel
+			xpos					c-300
+			ypos					r670
+			zpos					10
+			wide					552
+			tall					440
+			visible					0
+			controlSettingsFile			"resource/ui/menus/panels/community_openinvites.res"
+		}
+
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+		ButtonTooltip
+		{
+			ControlName				CNestedPanel
+			InheritProperties		ButtonTooltip
+		}
+
+		FooterButtons
+		{
+			ControlName				CNestedPanel
+			InheritProperties       FooterButtons
+		}
+	}
+}

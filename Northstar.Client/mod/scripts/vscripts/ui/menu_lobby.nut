@@ -83,6 +83,7 @@ struct
 	var bannerButton
 	var patchButton
 	var statsButton
+	var setClanTagButton
 	var networksHeader
 	var settingsHeader
 	var storeHeader
@@ -173,6 +174,7 @@ void function InitLobbyMenu()
 	var menu = GetMenu( "LobbyMenu" )
 
 	InitOpenInvitesMenu()
+	InitSetClanTagMenu()
 
 	AddMenuFooterOption( menu, BUTTON_A, "#A_BUTTON_SELECT", "", null, ChatroomIsVisibleAndNotFocused )
 	AddMenuFooterOption( menu, BUTTON_B, "#B_BUTTON_BACK", "#BACK" )
@@ -315,6 +317,9 @@ void function SetupComboButtonTest( var menu )
 		// private match
 		file.inviteRoomButton = AddComboButton( comboStruct, headerIndex, buttonIndex++, "#PRIVATE_MATCH" )
 		Hud_AddEventHandler( file.inviteRoomButton, UIE_CLICK, StartPrivateMatch )
+
+		file.setClanTagButton = AddComboButton( comboStruct, headerIndex, buttonIndex++, "SetClanTag" )
+		Hud_AddEventHandler( file.setClanTagButton, UIE_CLICK, OnSetClantagButton_Activate )
 	#endif
 
 	file.inviteFriendsButton = AddComboButton( comboStruct, headerIndex, buttonIndex++, "#MENU_TITLE_INVITE_FRIENDS" )
