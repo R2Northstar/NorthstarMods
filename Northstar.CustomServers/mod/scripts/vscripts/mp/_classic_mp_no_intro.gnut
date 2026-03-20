@@ -3,7 +3,7 @@ untyped
 global function ClassicMP_DefaultNoIntro_Setup
 global function ClassicMP_DefaultNoIntro_GetLength
 
-global const float NOINTRO_LENGTH = 5.0
+global const float NOINTRO_LENGTH = 15.0
 
 void function ClassicMP_DefaultNoIntro_Setup()
 {
@@ -74,7 +74,6 @@ void function ClassicMP_DefaultNoIntro_PilotSpawnPlayer( entity player )
 	player.FreezeControlsOnServer()
 
 	Loadouts_TryGivePilotLoadout( player )
-	HolsterViewModelAndDisableWeapons( player )
 	ResetPlayerCooldowns( player ) // Prevention of case they used abilities or grenades near round end
 
 	WaitFrame()
@@ -86,7 +85,6 @@ void function ClassicMP_DefaultNoIntro_PilotSpawnPlayer( entity player )
 		WaitFrame()
 
 	TryGameModeAnnouncement( player )
-	DeployViewModelAndEnableWeapons( player )
 }
 
 // spawn as titan for intro
@@ -110,6 +108,7 @@ void function ClassicMP_DefaultNoIntro_TitanSpawnPlayer( entity player )
 	if ( PlayerCanSpawn( player ) )
 	{
 		player.StopObserverMode()
+
 		RespawnAsTitan( player )
 	}
 
