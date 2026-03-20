@@ -73,7 +73,8 @@ void function ScriptDialog_PilotCloaked( entity guy, entity enemy )
 	else
 	{
 		#if GRUNT_CHATTER_MP_ENABLED
-			PlayGruntChatterMPLine( guy, "bc_engageenemycloakedpilot" )
+			if ( IsGrunt( guy ) )
+				PlayGruntChatterMPLine( guy, "bc_engageenemycloakedpilot" )
 		#endif
 	}
 }
@@ -94,6 +95,9 @@ void function CodeDialogue_RunFromEnemy( entity guy )
 	//MP and SP use different systems.
 	#if GRUNT_CHATTER_MP_ENABLED
 		//MP, use PlayOneLinerConversationOnEntWithPriority() as base function
+		if ( !IsGrunt( guy ) )
+			return
+
 		entity enemy = guy.GetEnemy()
 		if ( !IsAlive( enemy ) )
 			return
@@ -207,7 +211,7 @@ void function CodeDialogue_GrenadeOut( entity guy )
 void function CodeDialogue_DangerousAreaDisplace( entity guy )
 {
 	#if GRUNT_CHATTER_MP_ENABLED
-		if( !IsGrunt( guy ) ) //Titans were playing this dialogue when it doesnt make sense
+		if ( !IsGrunt( guy ) ) //Titans were playing this dialogue when it doesnt make sense
 			return
 		
 		//MP ONly
