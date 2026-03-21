@@ -1381,7 +1381,7 @@ array<string> function GetModVersions( string modName )
 	return versions
 }
 
-// escapes localisation by replacing # with # + ^FFFFFF00
+// escapes localisation by replacing # with # + ^FFFFFF
 string function EscapeLocalisation( string input )
 {
 	// only escape if it actually localizes
