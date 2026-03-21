@@ -371,7 +371,7 @@
 			"argTypes":"string path"
 		},
 		{
-			"naem":"NSSetLocalPlayerClanTag",
+			"name":"NSSetLocalPlayerClanTag",
 			"helpText":"",
 			"returnTypeString":"bool",
 			"argTypes":"string clanTag"
@@ -681,7 +681,7 @@
 			"argTypes":""
 		},
 		{
-			"naem":"NSSetLocalPlayerClanTag",
+			"name":"NSSetLocalPlayerClanTag",
 			"helpText":"",
 			"returnTypeString":"bool",
 			"argTypes":"string clanTag"
