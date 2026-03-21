@@ -352,6 +352,7 @@ void function OnEntitiesDidLoad()
 					// Set the bank usable
 					AddCallback_OnUseEntity( bank, OnPlayerUseBank )
 					bank.SetUsable()
+					bank.SetUsableByGroup( "pilot" )
 					bank.SetUsePrompts( "#AT_USE_BANK_CLOSED", "#AT_USE_BANK_CLOSED" )
 					
 					file.banks.append( bank )
@@ -1204,7 +1205,6 @@ void function AT_BankActiveThink( entity bank )
 	)
 
 	// Update use prompt to usable
-	bank.SetUsable()
 	bank.SetUsePrompts( "#AT_USE_BANK", "#AT_USE_BANK_PC" )
 
 	thread PlayAnim( bank, "mh_inactive_2_active" )
@@ -1229,11 +1229,6 @@ function OnPlayerUseBank( bank, player )
 
 	expect entity( bank )
 	expect entity( player )
-
-	// bank.SetUsableByGroup( "pilot" ) didn't seem to work so we just
-	// exit here if player is in a titan
-	if( player.IsTitan() )
-		return
 
 	// Player has no bonus, try to send a tip using SendHUDMessage
 	if ( AT_GetPlayerBonusPoints( player ) == 0 )
