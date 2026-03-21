@@ -46,7 +46,6 @@ struct
 
 	table<entity, AccumulatedDamageData> playerAccumulatedDamageData
 	array< void functionref( entity ) > weaponDroppedCallbacks
-	array< void functionref( entity, entity, string, int ) > weaponAttackCallbacks
 } file
 
 void function CodeCallback_Init()
