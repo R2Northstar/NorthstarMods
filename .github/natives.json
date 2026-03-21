@@ -369,7 +369,13 @@
 			"helpText":"Returns whether or not a given path leads to a folder.",
 			"returnTypeString":"bool",
 			"argTypes":"string path"
-    }
+		},
+		{
+			"naem":"NSSetLocalPlayerClanTag",
+			"helpText":"",
+			"returnTypeString":"bool",
+			"argTypes":"string clanTag"
+		}
 	],
 	"UI":[
 		{
@@ -667,12 +673,18 @@
 			"helpText":"Returns whether or not a given path leads to a folder.",
 			"returnTypeString":"bool",
 			"argTypes":"string path"
-    },
+		},
 		{
 			"name":"NSGetMasterServerAuthResult",
 			"helpText":"",
 			"returnTypeString":"MasterServerAuthResult",
 			"argTypes":""
+		},
+		{
+			"naem":"NSSetLocalPlayerClanTag",
+			"helpText":"",
+			"returnTypeString":"bool",
+			"argTypes":"string clanTag"
 		}
 	]
 }
