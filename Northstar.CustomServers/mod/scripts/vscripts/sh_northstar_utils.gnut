@@ -76,6 +76,7 @@ void function ReloadMods( bool reloadorretry = false )
 			vector mins = titan.GetBoundingMins()
 			vector maxs = titan.GetBoundingMaxs()
 			int mask = titan.GetPhysicsSolidMask()
+
 			origin = ModifyOriginForDrop( origin, mins, maxs, result.position, mask )
 
 			titan.SetOrigin( origin )
@@ -110,18 +111,22 @@ void function ReloadMods( bool reloadorretry = false )
 				return
 
 			entity titan = CreateNPCTitanFromSettings( GetAllowedPlayerTitanSettings()[0], TEAM_UNASSIGNED, Vector( 0, 0, 0 ), Vector( 0, 0, 0 ) )
+
 			titan.SetModel( GetFlightPathModel( "fp_titan_model" ) )
 			titan.SetInvulnerable()
 			titan.kv.VisibilityFlags = ~ENTITY_VISIBLE_TO_EVERYONE
 
 			titan.EndSignal( "OnDestroy" )
 
-			array<vector> positions = NavMesh_GetAllNodes()
+			array<vector> positions = []
+
+			for ( int nodeIdx = 0; nodeIdx < GetNodeCount(); nodeIdx++ )
+				positions.append( GetNodePos( nodeIdx ) )
 
 			FlightPath flightpath = GetAnalysisForModel( titan.GetModelName(), HOTDROP_TURBO_ANIM )
 
 			int dataindex = GetAnalysisDataIndex( flightpath )
-			bool debug = false
+			bool debug = false // green = valid, red = not valid
 			int startTime = Daily_GetCurrentTime()
 
 			for ( int i = 0; i < positions.len(); i++ )
@@ -129,16 +134,19 @@ void function ReloadMods( bool reloadorretry = false )
 				vector origin = positions[i]
 
 				if ( !TitanValidateDropNode( flightpath, titan, origin ) )
-				{
-					SetNodeScriptData_Boolean( i, dataindex, false )
+					for ( int j = dataindex; j < dataindex + ANALYSIS_STEPS; j++ )
+						SetNodeScriptData_Boolean( i, j, false )
 
-					if ( debug )
-						for ( int j = 0; j < ANALYSIS_STEPS; j++ )
+				if ( debug )
+				{
+					for ( int j = dataindex; j < dataindex + ANALYSIS_STEPS; j++ )
+					{
+						if ( GetNodeScriptData_Boolean( i, j ) )
+							DebugDrawLine( origin, origin + AnglesToForward( Vector( 0, j * ANALYSIS_YAW_STEP, 0 ) ) * 20, 0, 255, 0, false, 10000.0 )
+						else
 							DebugDrawLine( origin, origin + AnglesToForward( Vector( 0, j * ANALYSIS_YAW_STEP, 0 ) ) * 20, 255, 0, 0, false, 10000.0 )
+					}
 				}
-				else if ( debug )
-					for ( int j = 0; j < ANALYSIS_STEPS; j++ )
-						DebugDrawLine( origin, origin + AnglesToForward( Vector( 0, j * ANALYSIS_YAW_STEP, 0 ) ) * 20, 0, 255, 0, false, 10000.0 )
 			}
 
 			if ( debug )

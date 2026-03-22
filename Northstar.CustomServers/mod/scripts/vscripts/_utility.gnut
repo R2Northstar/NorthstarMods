@@ -4405,13 +4405,3 @@ bool function PlayerHasTitan( entity player )
 
 	return false
 }
-
-array<vector> function NavMesh_GetAllNodes()
-{
-	array<vector> nodes = []
-
-	for ( int nodeIdx = 0; nodeIdx < GetNodeCount(); nodeIdx++ )
-		nodes.append( GetNodePos( nodeIdx ) )
-
-	return nodes
-}
