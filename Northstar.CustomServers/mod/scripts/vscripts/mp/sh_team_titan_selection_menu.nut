@@ -33,6 +33,8 @@ void function TeamTitanSelectMenu_Init()
 
 void function TeamTitan_OnPickLoadout()
 {
+	svGlobal.levelEnt.Signal( "SpectatorFuncChanged" )
+
 	StartUpdatingTeamTitanSelection()
 	foreach ( player in GetPlayerArray() )
 	{

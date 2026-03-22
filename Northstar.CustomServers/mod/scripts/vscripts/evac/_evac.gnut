@@ -10,6 +10,7 @@ global function EvacEpiloguePlayerCanBoard
 global function EvacEpilogueShouldLeaveEarly
 global function EvacEpilogueCompleted
 global function SetRespawnAndWait
+global function GetEvacNodeNumber
 
 const float EVAC_INITIAL_WAIT = 5.0
 const float EVAC_ARRIVAL_TIME = 40.0
@@ -68,7 +69,7 @@ struct {
 	entity spaceNode
 	
 	// this only supports 1 evac at once atm, is this ideal?
-	entity currentEvacNode
+	int currentEvacNode = -1
 	entity evacDropship
 	entity evacIcon
 
@@ -212,10 +213,16 @@ void function Evac( int evacTeam, float initialWait, float arrivalTime, float wa
 		file.spaceNode = GetEnt( "spaceNode" )
 
 	entity evacNode = customEvacNode
+
+	int evacNodeNumber = RandomInt( file.evacNodes.len() )
+
 	if ( !IsValid( customEvacNode ) )
-		evacNode = file.evacNodes.getrandom()
-		
-	file.currentEvacNode = evacNode
+	{
+		evacNode = file.evacNodes[ evacNodeNumber ]
+		file.currentEvacNode = evacNodeNumber
+	}
+
+	svGlobal.levelEnt.Signal( "SpectatorFuncChanged" )
 
 	// setup client evac position
 	file.evacIcon = CreateEntity( "info_target" )
@@ -353,7 +360,9 @@ void function Evac( int evacTeam, float initialWait, float arrivalTime, float wa
 	{
 		if ( shouldLeaveEarlyCallback( dropship ) && Time() - waitStartTime < waitTime - 1.0 )
 		{
-			wait 1.0
+			if ( GetPlayerArrayOfTeam_Alive( dropship.GetTeam() ).len() )
+				wait 1.0
+
 			break
 		}
 
@@ -585,13 +594,13 @@ void function CheckIfAnyPlayerLeft( int evacTeam )
 		}
 	)
 
-	while( GetPlayerArrayOfTeam_Alive( evacTeam ).len() )
+	while ( GetPlayerArrayOfTeam_Alive( evacTeam ).len() )
 	{
 		if ( GetGameState() == eGameState.Postmatch )
 			return
 
 		WaitFrame()
-	}	
+	}
 }
 
 void function DropShipTempHide( entity dropship )
@@ -626,7 +635,9 @@ EvacShipSetting function GetEvacShipSettingByTeam( int team )
 
 void function EvacDropshipDamaged( entity evacShip, var damageInfo )
 {
-	if ( IsDamageFromDamageTrigger( damageInfo ) )
+	if ( !GetPlayerArrayOfTeam_Alive( evacShip.GetTeam() ).len() )
+		DamageInfo_SetDamage( damageInfo, 0 )
+	else if ( IsDamageFromDamageTrigger( damageInfo ) )
 		DamageInfo_SetDamage( damageInfo, 0 )
 	else if ( DamageInfo_GetDamageSourceIdentifier( damageInfo ) == damagedef_nuclear_core )
 		DamageInfo_SetDamage( damageInfo, DamageInfo_GetDamage( damageInfo ) * EVAC_SHIP_DAMAGE_MULTIPLIER_AGAINST_NUCLEAR_CORE )
@@ -683,4 +694,9 @@ void function TriggerEnterCallback( entity trigger, bool functionref( entity, en
 			thread AddPlayerToEvacDropship( dropship, player )
 		}
 	)
+}
+
+int function GetEvacNodeNumber()
+{
+	return file.currentEvacNode
 }

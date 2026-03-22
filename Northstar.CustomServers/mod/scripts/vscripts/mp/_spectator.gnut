@@ -144,7 +144,7 @@ void function PlayerBecomesSpectator( entity player )
 
 	WaitFrame()
 
-	while ( SpectatorEnabled() || ( IsPrivateMatchSpectator( player ) && PrivateMatchSpectatorEnabled() ) )
+	while ( CanRunSpectatorCommand( player ) )
 	{
 		SpectatorFunc nextSpectatorFunc = file.defaultSpectatorFunc
 
@@ -152,6 +152,9 @@ void function PlayerBecomesSpectator( entity player )
 			nextSpectatorFunc = file.nextSpectatorFunc
 
 		waitthread nextSpectatorFunc( player )
+
+		if ( !CanRunSpectatorCommand( player ) )
+			return
 
 		funcIndex = file.newestFuncIndex // assuming this will be set before file.newestFuncIndex increments when the spectator func is ended by SpectatorFuncChanged
 		// surely this will not end up being false in practice :clueless:
@@ -174,7 +177,10 @@ void function SpectatorFunc_Default( entity player )
 	{
 		array<entity> targets
 
-		targets.extend( file.staticSpecCams )
+		if ( GetGameState() != eGameState.Epilogue || GetEvacNodeNumber() == -1 )
+			targets.extend( file.staticSpecCams )
+		else
+			targets.append( file.staticSpecCams[ GetEvacNodeNumber() ] )
 
 		if ( GetGameState() != eGameState.Prematch )
 		{
@@ -322,7 +328,10 @@ bool function ClientCommandCallback_spec_mode( entity player, array<string> args
 
 bool function CanRunSpectatorCommand( entity player )
 {
-	if ( GetGameState() <= eGameState.PickLoadout || GetGameState() >= eGameState.Postmatch )
+	if ( GetGameState() <= eGameState.Prematch || GetGameState() >= eGameState.Postmatch )
+		return false
+
+	if ( !( SpectatorEnabled() || ( IsPrivateMatchSpectator( player ) && PrivateMatchSpectatorEnabled() ) ) )
 		return false
 
 	return true

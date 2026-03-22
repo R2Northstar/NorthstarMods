@@ -1075,6 +1075,8 @@ void function GameStateEnter_SwitchingSides_Threaded()
 	entity replayAttacker = file.roundWinningKillReplayAttacker
 	bool doReplay = WillShowRoundWinningKillReplay()
 
+	SetServerVar( "roundWinningKillReplayPlaying", doReplay )
+
 	foreach ( entity player in GetPlayerArray() )
 	{
 		ClearPlayerFromReplay( player )
@@ -1141,8 +1143,6 @@ void function GameStateEnter_SwitchingSides_Threaded()
 
 	if ( !IsRoundBased() )
 		wait fadeTime
-
-	SetServerVar( "roundWinningKillReplayPlaying", false )
 
 	if ( !doReplay )
 		wait SWITCHING_SIDES_DELAY
@@ -1529,6 +1529,7 @@ void function CleanUpEntitiesForRoundEnd()
 		player.ClearInvulnerable()
 		player.SetNoTarget( false )
 		player.ClearParent() //Dropship parenting causes observer mode crash
+
 		if ( IsAlive( player ) )
 			KillPlayer( player, eDamageSourceId.round_end )
 	}

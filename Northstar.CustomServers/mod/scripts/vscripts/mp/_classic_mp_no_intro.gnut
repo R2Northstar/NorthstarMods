@@ -3,7 +3,7 @@ untyped
 global function ClassicMP_DefaultNoIntro_Setup
 global function ClassicMP_DefaultNoIntro_GetLength
 
-global const float NOINTRO_LENGTH = 15.0
+global const float NOINTRO_LENGTH = 5.0
 
 void function ClassicMP_DefaultNoIntro_Setup()
 {
