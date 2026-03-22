@@ -460,6 +460,16 @@
 			"UICallback":{
 				"Before": "NSCustomModSettings"
 			}
+		},
+		{
+			"Path": "sh_drop_battery_command.nut",
+			"RunOn": "( CLIENT || SERVER ) && MP",
+			"ClientCallback": {
+				"After": "DropBatteryCommand_Init"
+			},
+			"ServerCallback": {
+				"After": "DropBatteryCommand_Init"
+			}
 		}
 	],
 
