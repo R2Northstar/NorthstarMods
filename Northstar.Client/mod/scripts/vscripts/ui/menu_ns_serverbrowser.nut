@@ -761,10 +761,10 @@ void function FilterServerList()
 		serverCount++
 
 		// Filters
-		if ( filterArguments.hideEmpty && server.playerCount <= 0 )
+		if ( filterArguments.hideEmpty && server.playerCount == 0 )
 			continue;
 		
-		if ( filterArguments.hideFull && server.playerCount >= server.maxPlayerCount )
+		if ( filterArguments.hideFull && server.playerCount == server.maxPlayerCount )
 			continue;
 		
 		if ( filterArguments.hideProtected && server.requiresPassword )
