@@ -459,13 +459,9 @@
 				"Before": "NSCustomModSettings"
 			}
 		},
-    {
-      "Path":  "sh_northstar_http_requests.gnut",
-			"RunOn": "CLIENT || SERVER || UI"
-    },
 		{
 		  "Path" : "sh_custom_scoreboard_columns.gnut",
-		  "RunOn": "( CLIENT || SERVER ) && MP && !VANNILA",
+		  "RunOn": "( CLIENT || SERVER ) && MP",
 		  "ClientCallback":{
 				"Before": "Client_CustomScoreboardColumns_Init"
 		  },
