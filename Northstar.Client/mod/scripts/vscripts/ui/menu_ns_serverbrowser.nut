@@ -804,10 +804,10 @@ void function FilterServerList()
 	}
 	
 	// Update player and server count
-	string totalPlayersStr = string( totalPlayers ) + ( totalPlayers == 1 ? " " : ""  ) + ( totalPlayers < 10 ? " " : ""  )
 	string serverCountStr = string( serverCount ) + ( serverCount == 1 ? " " : "" ) + ( serverCount < 10 ? " " : ""  )
-	Hud_SetText( Hud_GetChild( file.menu, "InGamePlayerLabel" ), Localize( "#INGAME_PLAYERS", totalPlayersStr ) )
+	string totalPlayersStr = string( totalPlayers ) + ( totalPlayers == 1 ? " " : ""  ) + ( totalPlayers < 10 ? " " : ""  )
 	Hud_SetText( Hud_GetChild( file.menu, "TotalServerLabel" ),  Localize( "#TOTAL_SERVERS", serverCountStr ) )
+	Hud_SetText( Hud_GetChild( file.menu, "InGamePlayerLabel" ), Localize( "#INGAME_PLAYERS", totalPlayersStr ) )
 }
 
 
