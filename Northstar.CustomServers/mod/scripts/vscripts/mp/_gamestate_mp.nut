@@ -914,7 +914,7 @@ void function GameStateEnter_WinnerDetermined_Threaded()
 		fadeTime -= 5.0
 	}
 
-	if ( IsRoundBased() && !HasRoundScoreLimitBeenReached() && !ShouldRunEvac() )
+	if ( IsRoundBased() && !HasRoundScoreLimitBeenReached() )
 		wait fadeTime
 
 	file.roundWinningKillReplayAttacker = null // Clear Replays

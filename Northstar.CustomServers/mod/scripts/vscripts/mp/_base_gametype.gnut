@@ -2016,10 +2016,10 @@ bool function PlayerCanSpawn( entity player )
 		return false
 
 	#if MP
-		if ( IsPrivateMatchSpectator( player ) )
+		if ( !GetRespawnEnabled() )
 			return false
 
-		if ( !GetRespawnEnabled() )
+		if ( IsPrivateMatchSpectator( player ) )
 			return false
 	#endif
 
