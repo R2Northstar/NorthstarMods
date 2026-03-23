@@ -914,11 +914,13 @@ void function GameStateEnter_WinnerDetermined_Threaded()
 		fadeTime -= 5.0
 	}
 
+	file.roundWinningKillReplayAttacker = null // Clear Replays
+	file.roundWinningKillReplayInflictorEHandle = -1
+
 	if ( IsRoundBased() && !HasRoundScoreLimitBeenReached() )
 		wait fadeTime
 
-	file.roundWinningKillReplayAttacker = null // Clear Replays
-	file.roundWinningKillReplayInflictorEHandle = -1
+	SetRespawnEnabled( true )
 
 	if ( IsRoundBased() && !HasRoundScoreLimitBeenReached() )
 	{
@@ -964,7 +966,6 @@ void function GameStateEnter_WinnerDetermined_Threaded()
 			SetGameState( eGameState.Postmatch )
 	}
 
-	SetRespawnEnabled( true )
 	AllPlayersUnMuteAll()
 }
 
@@ -1159,13 +1160,13 @@ void function GameStateEnter_SwitchingSides_Threaded()
 	file.hasSwitchedSides = true
 
 	SetServerVar( "switchedSides", 1 )
+	SetRespawnEnabled( true )
 
 	if ( file.usePickLoadoutScreen && GetCurrentPlaylistVarInt( "pick_loadout_every_round", 1 ) ) //Playlist var needs to be enabled too
 		SetGameState( eGameState.PickLoadout )
 	else
 		SetGameState( eGameState.Prematch )
 
-	SetRespawnEnabled( true )
 	AllPlayersUnMuteAll()
 }
 
