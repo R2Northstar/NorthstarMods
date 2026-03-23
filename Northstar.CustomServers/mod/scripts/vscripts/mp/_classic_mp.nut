@@ -133,7 +133,7 @@ bool function GetClassicMPMode()
 bool function ClassicMP_ShouldRunEpilogue()
 {
 	// there needs to be atleast 1 player on each team before running epilogue
-	if ( !IsFFAGame() && IsIMCOrMilitiaTeam( GetWinningTeam() ) )
+	if ( GetCurrentPlaylistVarInt( "max_teams", 2 ) == 2 && IsIMCOrMilitiaTeam( GetWinningTeam() ) )
 	{
 		int winningPlayers = 0
 		int losingPlayers = 0
