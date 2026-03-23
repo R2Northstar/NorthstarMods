@@ -35,7 +35,10 @@ void function TeamTitan_OnPickLoadout()
 {
 	svGlobal.levelEnt.Signal( "SpectatorFuncChanged" )
 
+	WaitEndFrame()
+
 	StartUpdatingTeamTitanSelection()
+
 	foreach ( player in GetPlayerArray() )
 	{
 		thread TryOpenTTSMenu( player )
