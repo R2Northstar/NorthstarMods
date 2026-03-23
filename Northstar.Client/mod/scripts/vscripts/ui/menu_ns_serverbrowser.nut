@@ -749,21 +749,22 @@ void function WaitForServerListRequest()
 void function FilterServerList()
 {
 	file.filteredServers.clear()
-	int serverCount = 0
+
 	int totalPlayers = 0
+	int serverCount = 0
 
 	array<ServerInfo> servers = NSGetGameServers()
 
 	foreach ( ServerInfo server in servers )
 	{
-		serverCount++
 		totalPlayers += server.playerCount
+		serverCount++
 
 		// Filters
-		if ( filterArguments.hideEmpty && server.playerCount == 0 )
+		if ( filterArguments.hideEmpty && server.playerCount <= 0 )
 			continue;
 		
-		if ( filterArguments.hideFull && server.playerCount == server.maxPlayerCount )
+		if ( filterArguments.hideFull && server.playerCount >= server.maxPlayerCount )
 			continue;
 		
 		if ( filterArguments.hideProtected && server.requiresPassword )
@@ -804,10 +805,10 @@ void function FilterServerList()
 	}
 	
 	// Update player and server count
-	string serverCountStr = string( serverCount ) + ( serverCount == 1 ? " " : "" ) + ( serverCount < 10 ? " " : ""  )
 	string totalPlayersStr = string( totalPlayers ) + ( totalPlayers == 1 ? " " : ""  ) + ( totalPlayers < 10 ? " " : ""  )
-	Hud_SetText( Hud_GetChild( file.menu, "TotalServerLabel" ),  Localize( "#TOTAL_SERVERS", serverCountStr ) )
+	string serverCountStr = string( serverCount ) + ( serverCount == 1 ? " " : "" ) + ( serverCount < 10 ? " " : ""  )
 	Hud_SetText( Hud_GetChild( file.menu, "InGamePlayerLabel" ), Localize( "#INGAME_PLAYERS", totalPlayersStr ) )
+	Hud_SetText( Hud_GetChild( file.menu, "TotalServerLabel" ),  Localize( "#TOTAL_SERVERS", serverCountStr ) )
 }
 
 
