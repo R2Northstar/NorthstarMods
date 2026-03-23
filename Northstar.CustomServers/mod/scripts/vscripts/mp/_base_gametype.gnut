@@ -2019,9 +2019,6 @@ bool function PlayerCanSpawn( entity player )
 		if ( !GetRespawnEnabled() )
 			return false
 
-		if ( !IsRespawnAvailable( player ) )
-			return false
-
 		if ( IsPrivateMatchSpectator( player ) )
 			return false
 	#endif
