@@ -21,6 +21,7 @@ struct
 	array<entity> hurtTriggers = []
 	bool functionref( entity, entity, var ) isProtectedFromFriendlyFire
 	table< entity, OutOfBoundsDataStruct > outOfBoundsTable
+	bool respawnEnabled = true
 } file
 
 function BaseGametype_Init()
@@ -1025,6 +1026,15 @@ bool function ClientCommand_RespawnPlayer( entity player, array<string>args )
 	if ( IsAlive( player ) )
 		return true
 
+	if ( IsRoundBased() && IsEliminationBased() )
+	{
+		SendHudMessage( player, "#GAMEMODE_RESPAWN_NEXT_ROUND", -1, 0.4, 255, 255, 255, 255, 0.15, 3.0, 0.5 )
+		return true
+	}
+
+	if ( !GetRespawnEnabled() )
+		return true
+
 	if ( args.len() != 1 )
 		return true
 
@@ -1051,12 +1061,6 @@ bool function ClientCommand_RespawnPlayer( entity player, array<string>args )
 	{
 		player.s.respawnSelectionDone = true
 		player.Signal( "RespawnMe" )
-	}
-
-	if ( IsRoundBased() && IsEliminationBased() )
-	{
-		SendHudMessage( player, "#GAMEMODE_RESPAWN_NEXT_ROUND", -1, 0.4, 255, 255, 255, 255, 0.15, 3.0, 0.5 )
-		return true
 	}
 
 	return true
@@ -2218,5 +2222,15 @@ void function OnOOBTriggerEnter( entity trigger, entity ent )
 void function OnOOBTriggerLeave( entity trigger, entity ent )
 {
 	EntityLeaveOutOfBoundsTrig( trigger, ent, null, 0 )
+}
+
+void function SetRespawnEnabled( bool enabled )
+{
+	file.respawnEnabled = enabled
+}
+
+bool function GetRespawnEnabled()
+{
+	return file.respawnEnabled
 }
 #endif

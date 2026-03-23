@@ -844,6 +844,8 @@ void function GameStateEnter_WinnerDetermined_Threaded()
 
 	if ( doReplay )
 	{
+		SetRespawnEnabled( false )
+
 		float replayLength = ROUND_WINNING_KILL_REPLAY_TOTAL_LENGTH
 
 		if ( "respawnTime" in replayAttacker.s && Time() - replayAttacker.s.respawnTime < replayLength )
@@ -893,6 +895,8 @@ void function GameStateEnter_WinnerDetermined_Threaded()
 	}
 	else if ( !ShouldRunEvac() || ( IsRoundBased() && !HasRoundScoreLimitBeenReached() ) )
 	{
+		SetRespawnEnabled( false )
+
 		// Observation from vanilla hints that the gamemodes can choose how players will behave once match is over
 		foreach ( entity player in GetPlayerArray() )
 			CheckGameStateForPlayerMovement( player )
@@ -960,6 +964,7 @@ void function GameStateEnter_WinnerDetermined_Threaded()
 			SetGameState( eGameState.Postmatch )
 	}
 
+	SetRespawnEnabled( true )
 	AllPlayersUnMuteAll()
 }
 
@@ -1085,6 +1090,8 @@ void function GameStateEnter_SwitchingSides_Threaded()
 
 	if ( doReplay )
 	{
+		SetRespawnEnabled( false )
+
 		float replayLength = ROUND_WINNING_KILL_REPLAY_TOTAL_LENGTH
 
 		if ( "respawnTime" in replayAttacker.s && Time() - replayAttacker.s.respawnTime < replayLength )
@@ -1126,6 +1133,8 @@ void function GameStateEnter_SwitchingSides_Threaded()
 	}
 	else if ( !IsRoundBased() )
 	{
+		SetRespawnEnabled( false )
+
 		wait GAME_WINNER_DETERMINED_WAIT
 
 		foreach ( entity player in GetPlayerArray() )
@@ -1156,6 +1165,7 @@ void function GameStateEnter_SwitchingSides_Threaded()
 	else
 		SetGameState( eGameState.Prematch )
 
+	SetRespawnEnabled( true )
 	AllPlayersUnMuteAll()
 }
 
