@@ -175,12 +175,15 @@ void function SpectatorFunc_Default( entity player )
 
 	while ( true )
 	{
-		array<entity> targets
+		array<entity> targets = file.staticSpecCams
 
+		// need correct spec cams for this
+		/*
 		if ( GetGameState() != eGameState.Epilogue || GetEvacNodeNumber() == -1 )
 			targets.extend( file.staticSpecCams )
 		else
 			targets.append( file.staticSpecCams[ GetEvacNodeNumber() ] )
+		*/
 
 		if ( GetGameState() != eGameState.Prematch )
 		{
