@@ -1382,7 +1382,7 @@ array<string> function GetModVersions( string modName )
 	return versions
 }
 
-// escapes localisation by replacing # with # + ^FFFFFFFF
+// escapes localisation by replacing # with ^FFFFFFFF#
 string function EscapeLocalisation( string input )
 {
 	// only escape if it actually localizes
@@ -1390,11 +1390,11 @@ string function EscapeLocalisation( string input )
 	try
 	{
 		if ( Localize( input ) != input )
-			return StringReplace( input, "#", "#^FFFFFFFF" )
+			return StringReplace( input, "#", "^FFFFFFFF#" )
 	}
 	catch ( error )
 	{
-		return StringReplace( input, "#", "#^FFFFFFFF" )
+		return StringReplace( input, "#", "^FFFFFFFF#" )
 	}
 
 	return input
