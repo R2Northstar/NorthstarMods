@@ -917,7 +917,7 @@ void function DisplayFocusedServerInfo( int scriptID )
 	// text panels
 	Hud_SetVisible( Hud_GetChild( menu, "LabelDescription" ), true )
 	Hud_SetVisible( Hud_GetChild( menu, "LabelMods" ), false )
-	Hud_SetText( Hud_GetChild( menu, "LabelDescription" ), EscapeLocalisationAndRemoveNewlines( server.description ) + " ^FFFFFF" + "\n\nRequired Mods:\n" + FillInServerModsLabel( server.requiredMods ) )
+	Hud_SetText( Hud_GetChild( menu, "LabelDescription" ), EscapeLocalisationAndRemoveNewlines( server.description ) + " ^FFFFFFFF" + "\n\nRequired Mods:\n" + FillInServerModsLabel( server.requiredMods ) )
 
 	// map name/image/server name
 	string map = server.map
@@ -1382,7 +1382,7 @@ array<string> function GetModVersions( string modName )
 	return versions
 }
 
-// escapes localisation by replacing # with # + ^FFFFFF
+// escapes localisation by replacing # with # + ^FFFFFFFF
 string function EscapeLocalisation( string input )
 {
 	// only escape if it actually localizes
@@ -1390,11 +1390,11 @@ string function EscapeLocalisation( string input )
 	try
 	{
 		if ( Localize( input ) != input )
-			return StringReplace( input, "#", "#^FFFFFF" )
+			return StringReplace( input, "#", "#^FFFFFFFF" )
 	}
 	catch ( error )
 	{
-		return StringReplace( input, "#", "#^FFFFFF" )
+		return StringReplace( input, "#", "#^FFFFFFFF" )
 	}
 
 	return input
