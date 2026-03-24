@@ -750,20 +750,52 @@ bool function IsHexDigitChar( int c )
     return ( c >= '0' && c <= '9' ) || ( c >= 'A' && c <= 'F' ) || ( c >= 'a' && c <= 'f' )
 }
 
-bool function IsNameColorCodeAt( string s, int i )
+int function GetNameColorCodeLengthAt( string s, int i )
 {
-    if ( i + 9 > s.len() ) // '^' + 8 hex chars
-        return false
-    if ( s[i] != '^' )
-        return false
+    if ( i >= s.len() || s[i] != '^' )
+        return 0
 
-    for ( int j = 1; j <= 8; j++ )
+    int remaining = s.len() - ( i + 1 )
+    if ( remaining <= 0 )
+        return 0
+
+    int c = expect int( s[i + 1].tointeger() )
+    if ( c >= '0' && c <= '9' )
+        return 2
+
+    if ( remaining >= 8 )
     {
-        int c = expect int( s[i + j].tointeger() )
-        if ( !IsHexDigitChar( c ) )
-            return false
+        bool ok = true
+        for ( int j = 1; j <= 8; j++ )
+        {
+            int c = expect int( s[i + j].tointeger() )
+            if ( !IsHexDigitChar( c ) )
+            {
+                ok = false
+                break
+            }
+        }
+        if ( ok )
+            return 9
     }
-    return true
+
+    if ( remaining >= 6 )
+    {
+        bool ok = true
+        for ( int j = 1; j <= 6; j++ )
+        {
+            int c = expect int( s[i + j].tointeger() )
+            if ( !IsHexDigitChar( c ) )
+            {
+                ok = false
+                break
+            }
+        }
+        if ( ok )
+            return 7
+    }
+
+    return 0
 }
 
 string function StripColorCodes( string s )
@@ -771,9 +803,10 @@ string function StripColorCodes( string s )
     string clean = ""
     for ( int i = 0; i < s.len(); )
     {
-        if ( IsNameColorCodeAt( s, i ) )
+        int codeLen = GetNameColorCodeLengthAt( s, i )
+        if ( codeLen > 0 )
         {
-            i += 9
+            i += codeLen
             continue
         }
 
