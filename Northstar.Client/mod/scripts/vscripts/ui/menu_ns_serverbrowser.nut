@@ -759,10 +759,6 @@ int function GetNameColorCodeLengthAt( string s, int i )
     if ( remaining <= 0 )
         return 0
 
-    int c = expect int( s[i + 1].tointeger() )
-    if ( c >= '0' && c <= '9' )
-        return 2
-
     if ( remaining >= 8 )
     {
         bool ok = true
@@ -794,6 +790,10 @@ int function GetNameColorCodeLengthAt( string s, int i )
         if ( ok )
             return 7
     }
+
+    int c1 = expect int( s[i + 1].tointeger() )
+    if ( c1 >= '0' && c1 <= '9' )
+        return 2
 
     return 0
 }
