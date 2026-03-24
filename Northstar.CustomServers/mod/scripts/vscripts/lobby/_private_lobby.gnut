@@ -216,7 +216,7 @@ void function StartMatch( bool isAutostart = false )
 
 		if ( int ( countdownEndTime - Time() ) < 10 && int ( countdownEndTime - Time() ) != lastCountdownSeconds )
 		{
-			if ( int ( countdownEndTime - Time() ) == 1 )
+			if ( int ( countdownEndTime - Time() ) == 2 )
 				AllPlayersMuteAll()
 
 			foreach ( player in GetPlayerArray() )
