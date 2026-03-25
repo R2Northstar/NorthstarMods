@@ -144,10 +144,8 @@ asset function GetMapImageForMapName( string mapName )
 {
 	if ( mapName in mapImages )
 		return mapImages[mapName]
-		
-	// no way to convert string => asset for dynamic stuff so
-	// pain
-	return expect asset ( compilestring( "return $\"loadscreens/" + mapName + "_lobby\"" )() )
+
+	return StringToAsset( "loadscreens/" + mapName + "_lobby" )
 }
 
 
