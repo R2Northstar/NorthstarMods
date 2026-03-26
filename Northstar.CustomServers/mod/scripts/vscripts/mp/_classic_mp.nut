@@ -41,7 +41,7 @@ struct {
 void function ClassicMp_Init()
 {
 	// default level intros
-	if ( IsFFAGame() )
+	if ( IsFFAGame() || !GetClassicMPMode() )
 		ClassicMP_SetLevelIntro( ClassicMP_DefaultNoIntro_Setup, ClassicMP_DefaultNoIntro_GetLength() )
 	else
 		ClassicMP_SetLevelIntro( ClassicMP_DefaultDropshipIntro_Setup, DROPSHIP_INTRO_LENGTH )
@@ -99,7 +99,7 @@ void function ClassicMP_OnIntroFinished()
 	SetGameState( eGameState.Playing )
 }
 
-float function ClassicMP_GetIntroLength() 
+float function ClassicMP_GetIntroLength()
 {
 	if ( file.customIntroSetupFunc != null )
 		return file.customIntroLength
@@ -127,7 +127,7 @@ void function ClassicMP_SetupEpilogue()
 
 bool function GetClassicMPMode()
 {
-	return GetCurrentPlaylistVarInt( "classic_mp", 1 ) == 1
+	return GetCurrentPlaylistVarInt( "run_intro", 1 ) == 1
 }
 
 bool function ClassicMP_ShouldRunEpilogue()

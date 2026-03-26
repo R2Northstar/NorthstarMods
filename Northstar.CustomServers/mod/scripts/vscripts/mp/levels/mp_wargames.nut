@@ -22,14 +22,20 @@ void function CodeCallback_MapInit()
 	AddDeathCallback( "npc_spectre", WargamesDissolveDeadEntity )
 	AddDeathCallback( "npc_pilot_elite", WargamesDissolveDeadEntity )
 	AddDeathCallback( "npc_marvin", WargamesDissolveDeadEntity )
-	
 	AddSpawnCallback( "info_spawnpoint_marvin", AddMarvinSpawner )
 	AddCallback_GameStateEnter( eGameState.Prematch, SpawnMarvinsForRound )
 	
-	// currently disabled until finished: intro
-	if ( !IsFFAGame() )
-		ClassicMP_SetLevelIntro( WargamesIntroSetup, 20.0 )
+	// Load Frontier Defense Data
+	if( GameRules_GetGameMode() == FD )
+		initFrontierDefenseData()
+	else
+	{
+		// currently disabled until finished: intro
+		if ( !IsFFAGame() && GetClassicMPMode() )
+			ClassicMP_SetLevelIntro( WargamesIntroSetup, 21.6 )
+	}
 }
+
 
 void function AddEvacNodes()
 {
@@ -44,31 +50,12 @@ void function AddEvacNodes()
 // dissolve effects
 void function WargamesDissolveDeadEntity( entity deadEnt, var damageInfo )
 {
-	if ( deadEnt.IsPlayer() || GamePlayingOrSuddenDeath() || GetGameState() == eGameState.Epilogue )
-	{
-		deadEnt.Dissolve( ENTITY_DISSOLVE_CHAR, < 0, 0, 0 >, 0 )
-		EmitSoundAtPosition( TEAM_UNASSIGNED, deadEnt.GetOrigin(), "Object_Dissolve" )
-		
-		if ( deadEnt.IsPlayer() )
-			thread EnsureWargamesDeathEffectIsClearedForPlayer( deadEnt )
-	}
-}
-
-void function EnsureWargamesDeathEffectIsClearedForPlayer( entity player )
-{
-	// this is slightly shit but whatever lol
-	player.EndSignal( "OnDestroy" )
+	EmitSoundAtPosition( TEAM_UNASSIGNED, deadEnt.GetOrigin(), "Object_Dissolve" )
 	
-	float startTime = Time()
-	while ( player.kv.VisibilityFlags != "0" )
-	{
-		if ( Time() > startTime + 4.0 ) // if we wait too long, just ignore
-			return
-	
-		WaitFrame() 
-	}
-	
-	player.kv.VisibilityFlags = ENTITY_VISIBLE_TO_EVERYONE
+	if ( deadEnt.IsPlayer() )
+		deadEnt.DissolveNonLethal( ENTITY_DISSOLVE_CHAR, < 0, 0, 0 >, 500 )
+	else
+		deadEnt.Dissolve( ENTITY_DISSOLVE_CHAR, < 0, 0, 0 >, 500 )
 }
 
 void function AddMarvinSpawner( entity spawn )
@@ -120,6 +107,10 @@ void function WargamesIntro_AddPlayer( entity player )
 
 void function OnPrematchStart()
 {
+	array<entity> triggers = GetEntArrayByClass_Expensive( "trigger_hurt" ) // Disable temporarily for intro
+	foreach ( entity trigger in triggers )
+		trigger.kv.triggerFilterPlayer = "none"
+	
 	ClassicMP_OnIntroStarted()
 	file.introStartTime = Time()
 	
@@ -137,72 +128,49 @@ void function OnPrematchStart()
 	thread FirstPersonSequence( openPodSequence, file.militiaPod )
 
 	array<entity> trackedEntities
-	
+
+	entity militiaOgre = CreatePropDynamic( $"models/titans/ogre/ogreposeopen.mdl", < -2060, 2856, -1412.5 >, < 0, 0, 0 > )
+
 	// create copies for each team, so that the lights and stuff work, because player faction choices may not match with their actual team
 	foreach ( int team in [ TEAM_IMC, TEAM_MILITIA ] )
 	{
-		// militia titans/marvins
-		entity militiaOgre = CreatePropDynamic( $"models/titans/ogre/ogreposeopen.mdl", < -2060, 2856, -1412.5 >, < 0, 0, 0 > )
-		SetTeam( militiaOgre, team )
-		trackedEntities.append( militiaOgre )
-		
-		entity militiaIon = CreatePropDynamic( $"models/titans/medium/titan_medium_ajax.mdl", < -1809.98, 2790.39, -1409 >, < 0, 80, 0 > )
-		thread PlayAnim( militiaIon, "at_titan_activation_wargames_intro" )
-		militiaIon.Anim_SetInitialTime( 4.5 )
-		SetTeam( militiaIon, team )
+		// militia titan, marvins, and grunts
+		entity militiaIon = SpawnSkitGuy( "titan_atlas_stickybomb", < -1809.98, 2790.39, -1409 >, < 0, 80, 0 >, "at_titan_activation_wargames_intro", 4.0, team )
+
 		trackedEntities.append( militiaIon )
 
-		entity militiaGrunt = CreatePropDynamic( $"models/humans/grunts/mlt_grunt_rifle.mdl", < 0, 0, 0 >, < 0, 0, 0 > )
-		militiaGrunt.SetParent( militiaIon, "HIJACK" )
-		militiaGrunt.MarkAsNonMovingAttachment()
-		militiaGrunt.Anim_Play( "pt_titan_activation_pilot" )
-		militiaGrunt.Anim_EnableUseAnimatedRefAttachmentInsteadOfRootMotion()
-		SetTeam( militiaGrunt, team )
-		trackedEntities.append( militiaGrunt )
+		entity militiaIonGrunt = SpawnSkitGuy( "npc_soldier", < 0, 0, 0 >, < 0, 0, 0 >, "", -1.0, team, $"models/humans/grunts/mlt_grunt_smg.mdl" )
 
-		entity militiaOgreMarvin1 = CreatePropDynamic( $"models/robots/marvin/marvin.mdl", < -2113, 2911, -1412 >, < 0, 20, 0 > )
-		thread PlayAnim( militiaOgreMarvin1, "mv_idle_weld" )
-		SetTeam( militiaOgreMarvin1, team )
-		trackedEntities.append( militiaOgreMarvin1 )
-		
-		entity militiaOgreMarvin2 = CreatePropDynamic( $"models/robots/marvin/marvin.mdl", < -2040, 2788, -1412 >, < 0, 140, 0 > )
-		thread PlayAnim( militiaOgreMarvin2, "mv_idle_weld" )
-		SetTeam( militiaOgreMarvin2, team )
-		trackedEntities.append( militiaOgreMarvin2 )
-		
-		entity militiaOgreMarvin3 = CreatePropDynamic( $"models/robots/marvin/marvin.mdl", < -2116, 2868, -1458 >, < 0, 127, 0 > )
-		thread PlayAnim( militiaOgreMarvin3, "mv_turret_repair_A_idle" )
-		SetTeam( militiaOgreMarvin3, team )
-		trackedEntities.append( militiaOgreMarvin3 )
-		
-		entity militiaMarvinChillin = CreatePropDynamic( $"models/robots/marvin/marvin.mdl", < -1786, 3060, -1412 >, < 0, -120, 0 > )
-		thread PlayAnim( militiaMarvinChillin, "mv_idle_unarmed" )
-		SetTeam( militiaMarvinChillin, team )
-		trackedEntities.append( militiaMarvinChillin )
+		militiaIonGrunt.SetParent( militiaIon, "HIJACK" )
+		militiaIonGrunt.MarkAsNonMovingAttachment()
+		militiaIonGrunt.Anim_ScriptedPlay( "pt_titan_activation_pilot" )
+		militiaIonGrunt.Anim_EnableUseAnimatedRefAttachmentInsteadOfRootMotion()
+		trackedEntities.append( militiaIonGrunt )
+
+		trackedEntities.append( SpawnSkitGuy( "npc_soldier", < -2125, 3070, -1411 >, < 0, -121, 0 >, "pt_bored_interface_leanin", -1.0, team, $"models/humans/grunts/mlt_grunt_rifle.mdl" ) )
+
+		trackedEntities.append( SpawnSkitGuy( "npc_soldier", < -2160, 3052, -1411 >, < 0, -132, 0 >, "pt_bored_interface_leanback", -1.0, team, $"models/humans/grunts/mlt_grunt_shotgun.mdl", "mp_weapon_shotgun" ) )
+
+		trackedEntities.append( SpawnSkitGuy( "npc_marvin", < 2040, 2788, -1412 >, < 0, 20, 0 >, "mv_idle_weld", -1.0, team ) )
+
+		trackedEntities.append( SpawnSkitGuy( "npc_marvin", < -2113, 2911, -1412 >, < 0, 140, 0 >, "mv_idle_weld", 3.0, team ) )
+
+		trackedEntities.append( SpawnSkitGuy( "npc_marvin", < -2116, 2868, -1458 >, < 0, 127, 0 >, "mv_turret_repair_A_idle", -1.0, team ) )
+
+		trackedEntities.append( SpawnSkitGuy( "npc_marvin", < -1786, 3060, -1412 >, < 0, -120, 0 >, "mv_idle_unarmed", -1.0, team ) )
 
 		// imc grunts
-		entity imcGrunt1 = CreatePropDynamic( $"models/humans/grunts/imc_grunt_rifle.mdl", < -2915, 2867, -1788 >, < 0, -137, 0 > )
-		thread PlayAnim( imcGrunt1, "pt_console_idle" )
-		SetTeam( imcGrunt1, team )
-		trackedEntities.append( imcGrunt1 )
-		
-		entity imcGrunt2 = CreatePropDynamic( $"models/humans/grunts/imc_grunt_rifle.mdl", < -2870, 2746, -1786 >, < 0, -167, 0 > )
-		thread PlayAnim( imcGrunt2, "pt_console_idle" )
-		imcGrunt2.Anim_SetInitialTime( 2.0 )
-		SetTeam( imcGrunt2, team )
-		trackedEntities.append( imcGrunt2 )
-		
-		entity imcGrunt3 = CreatePropDynamic( $"models/humans/grunts/imc_grunt_rifle.mdl", < -3037, 2909, -1786 >, < 0, -60, 0 > )
-		thread PlayAnim( imcGrunt3, "pt_console_idle" )
-		imcGrunt3.Anim_SetInitialTime( 4.0 )
-		SetTeam( imcGrunt3, team )
-		trackedEntities.append( imcGrunt3 )
-		
-		entity imcGrunt4 = CreatePropDynamic( $"models/humans/grunts/imc_grunt_rifle.mdl", < -3281, 2941, -1790 >, < 0, 138, 0 > )
-		thread PlayAnim( imcGrunt4, "pt_console_idle" )
-		imcGrunt4.Anim_SetInitialTime( 6.0 )
-		SetTeam( imcGrunt4, team )
-		trackedEntities.append( imcGrunt4 )
+		trackedEntities.append( SpawnSkitGuy( "npc_soldier", < -2915, 2867, -1788 >, < 0, -137, 0 >, "pt_console_idle", -1.0, team, $"models/humans/grunts/imc_grunt_rifle.mdl" ) )
+
+		trackedEntities.append( SpawnSkitGuy( "npc_soldier", < -2870, 2746, -1786 >, < 0, -167, 0 >, "pt_console_idle", 2.0, team, $"models/humans/grunts/imc_grunt_rifle.mdl" ) )
+
+		trackedEntities.append( SpawnSkitGuy( "npc_soldier", < -3037, 2909, -1786 >, < 0, -60, 0 >, "pt_console_idle", 4.0, team, $"models/humans/grunts/imc_grunt_rifle.mdl" ) )
+
+		trackedEntities.append( SpawnSkitGuy( "npc_soldier", < -3200, 3017, -1794 >, < 0, 118, 0 >, "pt_console_idle", 4.5, team, $"models/humans/grunts/imc_grunt_rifle.mdl" ) )
+
+		trackedEntities.append( SpawnSkitGuy( "npc_soldier", < -3281, 2941, -1790 >, < 0, 138, 0 >, "pt_console_idle", 6.0, team, $"models/humans/grunts/imc_grunt_rifle.mdl" ) )
+
+		trackedEntities.append( SpawnSkitGuy( "npc_soldier", < -3293, 2909, -1788 >, < 0, -64, 0 >, "pt_bored_interface_leanin", -1.0, team, $"models/humans/grunts/imc_grunt_rifle.mdl", "mp_weapon_car" ) )
 	}
 
 	// so I don't have to duplicate this on all entities
@@ -218,64 +186,116 @@ void function OnPrematchStart()
 			RespawnPrivateMatchSpectator( player )
 	}
 	
-	// 7 seconds of nothing until we start the pod sequence
-	wait 7.0
+	// 8 seconds of nothing until we start the pod sequence
+	wait 8.0
 	
 	FirstPersonSequenceStruct podCloseSequence
 	podCloseSequence.thirdPersonAnim = "trainingpod_doors_close"
 	podCloseSequence.thirdPersonAnimIdle = "trainingpod_doors_close_idle"
+	podCloseSequence.setInitialTime = Time() - ( file.introStartTime + 8.0 )
 	thread FirstPersonSequence( podCloseSequence, file.imcPod )
 	thread FirstPersonSequence( podCloseSequence, file.militiaPod )
+
+	thread PodFXCleanupNormalLight_Delayed( file.imcPod )
+	thread PodFXCleanupNormalLight_Delayed( file.militiaPod )
 	
-	wait 7.0
+	wait 6.5
 	thread PodBootFXThread( file.imcPod )
 	thread PodBootFXThread( file.militiaPod )
 	
-	wait 6.0
+	// cleanup intro objects
+
+	if ( IsValid( militiaOgre ) )
+		militiaOgre.Destroy()
+
+	foreach ( entity ent in trackedEntities )
+		if ( IsValid( ent ) )
+			ent.Destroy()
+
+	wait 7.0
 	ClassicMP_OnIntroFinished()
 	
 	// make sure we stop using viewmodels for these otherwise everyone can see them in the floor 24/7
 	file.imcPod.RenderWithViewModels( false )
 	file.militiaPod.RenderWithViewModels( false )
 	
-	//PodFXCleanup( file.imcPod )
-	//PodFXCleanup( file.militiaPod )
-	
-	// cleanup intro objects
-	foreach ( entity ent in trackedEntities )
+	foreach ( entity trigger in triggers )
+		trigger.kv.triggerFilterPlayer = "all"
+}
+
+entity function SpawnSkitGuy( string entityclass, vector origin, vector angles, string animation = "", float animationtime = -1.0, int team = TEAM_UNASSIGNED, asset model = $"", string weapon = "" )
+{
+	entity guy = null
+
+	if ( entityclass == "npc_marvin" )
 	{
-		if ( IsValid(ent) )
-			ent.Destroy()
+		guy = CreateMarvin( team, origin, angles )
+
+		DispatchSpawn( guy )
+
+		guy.Signal( "StopDoingJobs" )
 	}
+	else if ( entityclass == "npc_soldier" )
+	{
+		guy = CreateElitePilot( team, origin, angles )
+
+		DispatchSpawn( guy )
+
+		guy.SetValueForModelKey( model )
+		guy.SetModel( model )
+
+		TakeWeaponsForArray( guy, guy.GetMainWeapons() )
+
+		if ( weapon.len() )
+			guy.GiveWeapon( weapon )
+	}
+	else
+	{
+		guy = CreateNPCTitan( entityclass, team, origin, angles )
+
+		DispatchSpawn( guy )
+		TakeWeaponsForArray( guy, guy.GetMainWeapons() )
+	}
+
+	guy.SetInvulnerable()
+	guy.SetEfficientMode( true )
+	guy.SetTitle( "" )
+
+	if ( animation.len() )
+		thread PlayAnim( guy, animation, null, null, DEFAULT_SCRIPTED_ANIMATION_BLEND_TIME, animationtime )
+
+	return guy
 }
 
 void function PlayerWatchesWargamesIntro( entity player )
 {
 	player.EndSignal( "OnDestroy" )
-	
-	if ( IsAlive( player ) )
-		player.Die()
+	player.EndSignal( "OnDeath" )
 
 	OnThreadEnd( function() : ( player )
 	{
 		if ( IsValid( player ) )
 		{
 			RemoveCinematicFlag( player, CE_FLAG_CLASSIC_MP_SPAWNING )
+
 			player.kv.VisibilityFlags = ENTITY_VISIBLE_TO_EVERYONE
+
 			ClearPlayerAnimViewEntity( player )
-			player.EnableWeaponViewModel()
-			DeployAndEnableWeapons(player)
+			DeployViewModelAndEnableWeapons( player )
+
 			player.ClearParent()
 			player.UnforceStand()
 			player.MovementEnable()
 			player.ClearInvulnerable()
+
 			Remote_CallFunction_NonReplay( player, "ServerCallback_ClearFactionLeaderIntro" )
+
+			entity spawnpoint = FindSpawnPoint( player, false, true )
+
+			player.SetOrigin( spawnpoint.GetOrigin() )
+			player.SetAngles( spawnpoint.GetAngles() )
 		}
 	})
-	
-	// we need to wait a frame if we killed ourselves to spawn into this, so just easier to do it all the time to remove any weirdness
-	WaitFrame()
-	player.EndSignal( "OnDeath" )
 	
 	int factionTeam = ConvertPlayerFactionToIMCOrMilitiaTeam( player )
 	entity playerPod
@@ -285,10 +305,12 @@ void function PlayerWatchesWargamesIntro( entity player )
 		playerPod = file.militiaPod
 	
 	// setup player
+	if( PlayerCanSpawn( player ) )
+		DoRespawnPlayer( player, null )
+
 	int podAttachId = playerPod.LookupAttachment( "REF" )
 	player.SetOrigin( playerPod.GetAttachmentOrigin( podAttachId ) )
 	player.SetAngles( playerPod.GetAttachmentAngles( podAttachId ) )
-	player.RespawnPlayer( null )
 	player.SetParent( playerPod, "REF" )
 	player.ForceStand()
 	
@@ -298,8 +320,7 @@ void function PlayerWatchesWargamesIntro( entity player )
 	AddCinematicFlag( player, CE_FLAG_CLASSIC_MP_SPAWNING )
 	player.kv.VisibilityFlags = ENTITY_VISIBLE_TO_OWNER
 	TrainingPod_ViewConeLock_PodClosed( player )
-	player.DisableWeaponViewModel()
-	HolsterAndDisableWeapons(player)
+	HolsterViewModelAndDisableWeapons( player )
 	player.MovementDisable()
 	player.SetInvulnerable()
 	
@@ -325,41 +346,44 @@ void function PlayerWatchesWargamesIntro( entity player )
 	else if ( file.militiaPodFXEyePos == < 0, 0, 0 > && factionTeam == TEAM_MILITIA )
 		file.militiaPodFXEyePos = player.EyePosition()
 	
-	// 7 seconds of nothing before we start the pod sequence
-	wait ( file.introStartTime + 7.0 ) - Time()
+	// 8.0 seconds of nothing before we start the pod sequence
+	wait ( file.introStartTime + 8.0 ) - Time()
+
+	while ( Time() < file.introStartTime + 8.0 ) // note: remove this when wait stops waiting less than the input time
+		WaitFrame()
 	
 	FirstPersonSequenceStruct podCloseSequence
 	podCloseSequence.firstPersonAnim = "ptpov_trainingpod_doors_close"
 	podCloseSequence.renderWithViewModels = true
 	podCloseSequence.attachment = "REF"
 	podCloseSequence.viewConeFunction = TrainingPod_ViewConeLock_SemiStrict
-	podCloseSequence.setInitialTime = Time() - ( file.introStartTime + 7.0 )
+	podCloseSequence.setInitialTime = Time() - ( file.introStartTime + 8.0 )
 	waitthread FirstPersonSequence( podCloseSequence, player, playerPod )
 				
-	// boot sequence
+	// wait 0.6 seconds then start boot sequence
+	wait ( file.introStartTime + 14.2 ) - Time()
 	EmitSoundOnEntityOnlyToPlayer( player, player, "NPE_Scr_SimPod_PowerUp" )
 	TrainingPod_ViewConeLock_PodClosed( player )
 	
 	// 10 seconds of starting pod before we run effects and spawn players
 	// note, this is cool because it waits for a specific time, so we can have a blocking call directly before it just fine
-	wait ( file.introStartTime + 15.5 ) - Time()
+	wait ( file.introStartTime + 16.8 ) - Time()
 	Remote_CallFunction_NonReplay( player, "ServerCallback_PlayPodTransitionScreenFX" )
 	
 	// need to wait no matter what the delay is here so fx will sync up
-	wait 3.5
-	
-	entity spawnpoint = FindSpawnPoint( player, false, true )
-	spawnpoint.s.lastUsedTime = Time()
-	player.SetOrigin( spawnpoint.GetOrigin() )
-	player.SetAngles( spawnpoint.GetAngles() )
+	wait 4.6
 	
 	thread DelayedGamemodeAnnouncement( player )
 }
 
 void function DelayedGamemodeAnnouncement( entity player )
 {
-	wait 1.0
-	if ( IsValid( player ) && IsAlive( player ) )
+	player.EndSignal( "OnDestroy" )
+
+	while ( Time() < expect float( level.nv.gameStartTime ) )
+		WaitFrame()
+
+	if ( IsAlive( player ) )
 		TryGameModeAnnouncement( player )
 }
 
@@ -423,29 +447,51 @@ void function PodFXLasers( entity pod )
 
 void function PodFXLaserSweep( entity emitter, entity pod, vector eyePos, string attachment )
 {
-	// setup emitter attachments
-	emitter.SetOrigin( < 5, 5, 5 > )
+	emitter.SetOrigin( Vector( 5, 5, 5 ) )
 	emitter.SetParent( pod, attachment )
 
-	float sweepTime = RandomFloatRange( 2.9, 3.15 )
-	
-	vector centerAng = VectorToAngles( ( eyePos + < 0, 0, 7 > ) - emitter.GetOrigin() )
-	vector topAng = centerAng + < -270, 0, 0 >
-	vector bottomAng = centerAng + < -90, 0, 0 >
-	
+	var vecToPlayerEye = ( eyePos + Vector( 0, 0, 7 ) ) - emitter.GetOrigin()
+	vector centerAng = VectorToAngles( vecToPlayerEye )
+	vector topAng = centerAng + Vector( -270, 0, 0 )
+	vector bottomAng = centerAng + Vector( -90, 0, 0 )
+	vector lastBigSweepAng
+
+	emitter.SetAbsAngles( topAng )
+
+	lastBigSweepAng = topAng
+
 	emitter.s.fxHandle <- PlayLoopFXOnEntity( $"P_pod_scan_laser_FP", emitter )
-	
+
+	float sweepTime = RandomFloatRange( 2.9, 3.15 )
 	float finalCenterTime = sweepTime * 0.15
 	float bigSweepTime = ( sweepTime - finalCenterTime ) / 2
-	
-	emitter.SetAbsAngles( topAng )
-	emitter.NonPhysicsRotateTo( topAng, bigSweepTime, 0.0, bigSweepTime * 0.2 )
-	wait bigSweepTime - 0.1
-	
-	emitter.NonPhysicsRotateTo( bottomAng, bigSweepTime, 0.0, bigSweepTime * 0.2 )
-	wait bigSweepTime
-	
-	emitter.NonPhysicsRotateTo( centerAng, finalCenterTime, 0.0, finalCenterTime * 0.2 )
+	float bigSweep_DecelTime = bigSweepTime * 0.2
+	vector nextBigSweepAng
+
+	for ( int i = 0; i < 2; i++ )
+	{
+		nextBigSweepAng = topAng
+
+		if ( lastBigSweepAng == topAng )
+			nextBigSweepAng = bottomAng
+
+		emitter.NonPhysicsRotateTo( nextBigSweepAng, bigSweepTime, 0, bigSweep_DecelTime )
+
+		float waitTime = bigSweepTime
+
+		if ( i < 1 )
+			waitTime = bigSweepTime - 0.1
+
+		wait waitTime
+
+		lastBigSweepAng = nextBigSweepAng
+	}
+
+	float finalCenter_DecelTime = finalCenterTime * 0.2
+
+	emitter.NonPhysicsRotateTo( centerAng, finalCenterTime, 0, finalCenter_DecelTime )
+
+	wait finalCenterTime
 }
 
 void function PodFXGlowLights( entity pod )
@@ -485,8 +531,10 @@ void function PodBootFXThread( entity pod )
 	PodFXLasers( pod )
 }
 
-void function PodFXCleanup( entity pod )
+void function PodFXCleanupNormalLight_Delayed( entity pod )
 {
+	wait 2.65
+
 	foreach ( entity handle in pod.s.podLightFXHandles )
 	{
 		if ( IsValid_ThisFrame( handle ) )
@@ -496,28 +544,6 @@ void function PodFXCleanup( entity pod )
 			handle.Destroy()
 		}
 	}
-	
+
 	pod.s.podLightFXHandles = []
-	
-	foreach ( entity handle in pod.s.podGlowLightFXHandles )
-	{
-		if ( IsValid_ThisFrame( handle ) )
-		{
-			handle.SetStopType( "DestroyImmediately" )
-			handle.ClearParent()
-			handle.Destroy()
-		}
-	}
-	
-	pod.s.podGlowLightFXHandles = []
-	
-	pod.s.leftLaserEmitter.s.fxHandle.SetStopType( "DestroyImmediately" )
-	pod.s.leftLaserEmitter.s.fxHandle.ClearParent()
-	pod.s.leftLaserEmitter.s.fxHandle.Destroy()
-	pod.s.leftLaserEmitter.Destroy()
-	
-	pod.s.rightLaserEmitter.s.fxHandle.SetStopType( "DestroyImmediately" )
-	pod.s.rightLaserEmitter.s.fxHandle.ClearParent()
-	pod.s.rightLaserEmitter.s.fxHandle.Destroy()
-	pod.s.rightLaserEmitter.Destroy()
 }

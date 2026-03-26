@@ -17,6 +17,9 @@ void function AddFactionXP( entity player, int amount )
 		player.SetPersistentVar( "xp_match[" + XP_TYPE.FACTION_LEVELED + "]", FactionXPMatch + 1 )
 		
 		if( ProgressionEnabledForPlayer( player ) )
+		{
+			PlayFactionDialogueToPlayer( "scoring_gotMailAlert", player )
 			AwardRandomItemsForFactionLevels( player, faction, oldLevel, FactionGetLevel( player, faction ) )
+		}
 	}
 }

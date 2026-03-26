@@ -44,7 +44,7 @@ void function GruntChatter_OnPlayerOrNPCKilled( entity deadGuy, entity attacker,
 	if ( !IsValid( deadGuy ) || !IsValid( attacker ) )
 		return
 	
-	if( IsGrunt( attacker ) && IsPilot( deadGuy ) )
+	if ( IsGrunt( attacker ) && IsPilot( deadGuy ) )
 		PlayGruntChatterMPLine( attacker, "bc_killenemypilot" )
 	else
 		GruntChatter_TryEnemyTitanDown( deadGuy )

@@ -63,7 +63,6 @@
 		//要議論: "コンソールの表示/非表示"のままか、"コンソール表示のトグル"、それ以外への差し替え
 		"TOGGLE_CONSOLE" "コンソールの表示/非表示"
 
-		"classic_mp" "クラシックマルチ"
 		"run_epilogue" "エピローグの有効化"
 		"scorelimit" "スコア上限"
 		"roundscorelimit" "スコア上限 (ラウンドベース)"
@@ -249,7 +248,6 @@
 		"custom_air_accel_pilot" "空中加速度"
 		"no_pilot_collision" "パイロット同士の当たり判定"
 		"promode_enable" "Proモードの武器"
-		"fp_embark_enabled" "搭乗と処刑の一人称視点"
 		"classic_rodeo" "クラシックロデオ"
 		"oob_timer_enabled" "アウトオブバウンドタイマー"
 		"riff_instagib" "インスタギブモード"

@@ -15,7 +15,7 @@ struct {
 void function GamemodePs_Init()
 {
 	Riff_ForceTitanAvailability( eTitanAvailability.Never )
-
+	
 	AddCallback_OnPlayerKilled( GiveScoreForPlayerKill )
 	ScoreEvent_SetupEarnMeterValuesForMixedModes()
 	SetTimeoutWinnerDecisionFunc( CheckScoreForDraw )

@@ -23,6 +23,19 @@ bool function MeleeThread_PilotVsEnemyInternal( SyncedMelee action, entity attac
 
 	bool isAttackerRef = IsAttackerRef( action, target )
 
+	if ( GetCurrentPlaylistVarInt( "classic_executions", 0 ) )
+	{
+		action = clone action
+		action.attackerAnimation1p = ""
+		action.attackerAnimation3p = "pt_rspn101_melee_necksnap_rear"
+		action.targetAnimation1p = ""
+		action.targetAnimation3p = "pt_melee_necksnap_rear_attacked"
+		action.isAttackerRef = false
+		action.minDot = 0.2
+
+		isAttackerRef = false
+	}
+
 	vector attackerOrigin = attacker.GetOrigin()
 	vector targetOrigin = target.GetOrigin()
 
@@ -50,7 +63,7 @@ bool function MeleeThread_PilotVsEnemyInternal( SyncedMelee action, entity attac
 				target.ClearParent()
 
 
-			if ( IsValid( attacker ) )
+			if ( IsValid( attacker ) && attacker.IsPlayer() )
 			{
 				attacker.PlayerMelee_SetState( PLAYER_MELEE_STATE_NONE )
 			}
@@ -259,7 +272,7 @@ void function MeleeThread_PilotVsEnemy_Attacker( SyncedMelee action, entity atta
 	if ( isAttackerRef )
 	{
 		#if MP
-		if ( GetCurrentPlaylistVarInt( "fp_embark_enabled", 0 ) == 1 )
+		if ( !GetCurrentPlaylistVarInt( "classic_executions", 0 ) && ShouldRunFirstPersonSequence( attacker, false, true ) )
 			FirstPersonSequenceForce1P( attackerSequence, attacker )
 		#endif
 			
@@ -268,7 +281,7 @@ void function MeleeThread_PilotVsEnemy_Attacker( SyncedMelee action, entity atta
 	else
 	{
 		#if MP
-		if ( GetCurrentPlaylistVarInt( "fp_embark_enabled", 0 ) == 1 )
+		if ( !GetCurrentPlaylistVarInt( "classic_executions", 0 ) && ShouldRunFirstPersonSequence( attacker, false, true ) )
 			FirstPersonSequenceForce1P( attackerSequence, attacker, target )
 		#endif
 
@@ -410,7 +423,7 @@ void function MeleeThread_PilotVsEnemy_Target( SyncedMelee action, entity attack
 	if ( isAttackerRef )
 	{
 		#if MP
-		if ( GetCurrentPlaylistVarInt( "fp_embark_enabled", 0 ) == 1 )
+		if ( !GetCurrentPlaylistVarInt( "classic_executions", 0 ) && ShouldRunFirstPersonSequence( target, false, true ) )
 			FirstPersonSequenceForce1P( targetSequence, target, attacker )
 		#endif
 		
@@ -419,7 +432,7 @@ void function MeleeThread_PilotVsEnemy_Target( SyncedMelee action, entity attack
 	else
 	{
 		#if MP
-		if ( GetCurrentPlaylistVarInt( "fp_embark_enabled", 0 ) == 1 )
+		if ( !GetCurrentPlaylistVarInt( "classic_executions", 0 ) && ShouldRunFirstPersonSequence( target, false, true ) )
 			FirstPersonSequenceForce1P( targetSequence, target )
 		#endif
 		
