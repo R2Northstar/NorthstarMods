@@ -1473,7 +1473,7 @@ string function EscapeLocalisation( string input )
 // removes all newlines
 string function RemoveNewlines( string input )
 {
-	return StringReplace( input, "\n", "" )
+	return StringReplace( input, "\n", " " )
 }
 
 // EscapeLocalisation and RemoveNewlines combined
