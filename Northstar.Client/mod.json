@@ -154,6 +154,10 @@
 			"UICallback": {
 				"After": "AtlasAuthDialog"
 			}
+		},
+		{
+			"Path": "ui/_atlas_announcements.nut",
+			"RunOn": "UI"
 		}
 	],
 	"Localisation": [
