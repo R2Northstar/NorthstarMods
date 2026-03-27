@@ -175,7 +175,9 @@ void function SpectatorFunc_Default( entity player )
 
 	while ( true )
 	{
-		array<entity> targets = file.staticSpecCams
+		array<entity> targets
+
+		targets.extend( file.staticSpecCams )
 
 		// need correct spec cams for this
 		/*
