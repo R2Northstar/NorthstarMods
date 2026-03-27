@@ -405,48 +405,31 @@ void function SquadHandler( array<entity> guys )
 		}
 	}
 
+	// show the squad enemy radar
+	foreach ( entity guy in guys )
+	{
+		guy.Minimap_AlwaysShow( TEAM_IMC, null )
+		guy.Minimap_AlwaysShow( TEAM_MILITIA, null )
+	}
+
 	if ( !IsGrunt( guys[0] ) && !IsSpectre( guys[0] ) )
 		return
-
-	int team = guys[0].GetTeam()
-	// show the squad enemy radar
-	array<entity> players = GetPlayerArrayOfEnemies( team )
-
-	foreach ( entity guy in guys )
-		if ( IsAlive( guy ) )
-			foreach ( player in players )
-				guy.Minimap_AlwaysShow( 0, player )
-
-	// Not all maps have assaultpoints / have weird assault points ( looking at you ac )
-	// So we use enemies with a large radius
-
-	// our waiting is end, check if any soldiers left
-	ArrayRemoveDead( guys )
-
-	if ( !guys.len() )
-		return
-
-	// Setup AI, first assault point
-	foreach ( guy in guys )
-		guy.EnableNPCFlag( NPC_ALLOW_PATROL | NPC_ALLOW_INVESTIGATE | NPC_ALLOW_HAND_SIGNALS | NPC_ALLOW_FLEE )
-
-	SquadAssaultFrontline( guys )
 
 	// Every time frontline moves change AssaultPoint
 	while ( true )
 	{
-		WaitTillFrontlineMoved()
-
 		ArrayRemoveDead( guys )
 
 		if ( !guys.len() )
 			return
 
-		foreach ( guy in guys )
+		foreach ( entity guy in guys )
 			if ( IsSpectre( guy ) && IsValid( guy.GetOwner() ) && IsValid( guy.GetBossPlayer() ) )
 				guys.removebyvalue( guy )
-			else
-				SquadAssaultFrontline( guys )
+
+		SquadAssaultFrontline( guys )
+
+		WaitTillFrontlineMoved()
 	}
 }
 
@@ -505,8 +488,6 @@ void function ReaperHandler( entity reaper )
 
 	file.spawnedReapers[ reaper.GetTeam() ].append( reaper )
 
-	array<entity> players = GetPlayerArrayOfEnemies( reaper.GetTeam() )
-
-	foreach ( player in players )
-		reaper.Minimap_AlwaysShow( 0, player )
+	reaper.Minimap_AlwaysShow( TEAM_IMC, null )
+	reaper.Minimap_AlwaysShow( TEAM_MILITIA, null )
 }
