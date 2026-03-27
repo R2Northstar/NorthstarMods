@@ -970,7 +970,7 @@ function PlayerWatchesKillReplay( entity player, int inflictorEHandle, int attac
 	float replayDelay = timeBeforeKill + ( Time() - timeOfDeath )
 	if ( replayDelay < 0 )
 	{
-		print( "PlayerWatchesKillReplay(): replayDelay is < 0 (" + replayDelay + "). Aborting kill replay.\n" )
+		printt( "PlayerWatchesKillReplay(): replayDelay is < 0 (" + replayDelay + "). Aborting kill replay.\n" )
 		return
 	}
 
