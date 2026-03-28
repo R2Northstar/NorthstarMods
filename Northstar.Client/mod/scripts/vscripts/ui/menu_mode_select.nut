@@ -90,7 +90,7 @@ void function InitModesMenu()
 
 void function NSSetModeCategory( string mode, int category )
 {
-	if( mode in file.categoryOverrides )
+	if ( mode in file.categoryOverrides )
 	{
 		file.categoryOverrides[mode] = category
 		printt( "Overwriting category for mode:", mode )
@@ -194,18 +194,25 @@ void function BuildModesArray()
 {
 	file.modes.clear()
 
-	foreach( string mode in GetPrivateMatchModes() )
+	foreach ( string mode in GetPrivateMatchModes() )
 	{
 		ListEntry_t entry
+
 		entry.mode = mode
 		entry.category = eModeMenuModeCategory.UNKNOWN
 
-		switch( mode )
+		switch ( mode )
 		{
 			case "aitdm":
 			case "at":
+			case "amped_tacticals_aitdm":
+			case "tactikill_aitdm":
+			case "grapple_aitdm":
+			case "phase_aitdm":
+			case "spicy_aitdm":
 				entry.category = eModeMenuModeCategory.PVPVE
 				break
+
 			case "fd_easy":
 			case "fd_normal":
 			case "fd_hard":
@@ -213,6 +220,7 @@ void function BuildModesArray()
 			case "fd_insane":
 				entry.category = eModeMenuModeCategory.PVE
 				break
+
 			case "tdm":
 			case "ctf":
 			case "mfd":
@@ -221,41 +229,41 @@ void function BuildModesArray()
 			case "speedball":
 			case "rocket_lf":
 			case "holopilot_lf":
+			case "tdm_arena_hardcore":
+			case "tdm_arena_smr":
+			case "hardpoint_twist":
+			case "nitro_ffa":
+			case "ctf_lf":
 				entry.category = eModeMenuModeCategory.PVP
 				break
+
 			case "ffa":
 			case "fra":
+			case "ffa_arena_energy":
 				entry.category = eModeMenuModeCategory.FFA
 				break
+
 			case "lts":
 			case "ttdm":
 			case "attdm":
 			case "turbo_ttdm":
 			case "alts":
 			case "turbo_lts":
+			case "titan_mfd":
 				entry.category = eModeMenuModeCategory.TITAN
 				break
+
 			case "coliseum":
-			case "sp_coop":
+			case "angelcity_247":
+			case "nitro_mixtape":
+			case "anniversary_7th":
+			case "fnf":
+			case "variety_pack":
 				entry.category = eModeMenuModeCategory.OTHER
-				break
-			case "chamber":
-			case "hidden":
-			case "sns":
-			case "fw":
-			case "gg":
-			case "tt":
-			case "inf":
-			case "kr":
-			case "fastball":
-			case "hs":
-			case "ctf_comp":
-			case "tffa":
-				entry.category = eModeMenuModeCategory.CUSTOM
 				break
 		}
 
-		file.modes.append(entry)
+		file.modes.append( entry )
 	}
 }
 
