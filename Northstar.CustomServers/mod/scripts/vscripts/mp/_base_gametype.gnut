@@ -1032,8 +1032,10 @@ bool function ClientCommand_RespawnPlayer( entity player, array<string>args )
 		return true
 	}
 
-	if ( !GetRespawnEnabled() )
-		return true
+	#if MP
+		if ( !GetRespawnEnabled() )
+			return true
+	#endif
 
 	if ( args.len() != 1 )
 		return true
