@@ -110,11 +110,20 @@ bool function FloatsEqual( float arg1, float arg2, float epsilon )
 ////////////////////////////
 // Custom map handling
 ////////////////////////////
+
+/**
+ * A map name is deemed raw if it is not localized (happens if the map
+ * is not an original Titanfall2 map, or is not localized by its mod).
+ */
 bool function IsMapNameRaw( string mapname )
 {
 	return mapname == Localize( mapname )
 }
 
+/**
+ * Formats a map name in a human readable way.
+ * (e.g. inputting "#mp_chroma_null_surf" returns "Chroma Null Surf" )
+ */
 string function GetCustomMapDisplayName( string mapname )
 {
 	// Remove "#mp_" prefix
@@ -146,6 +155,11 @@ string function GetCustomMapDisplayName( string mapname )
 	return res
 }
 
+/**
+ * Supersedes the default {GetMapDisplayName} function, to the addition of returning a
+ * nicely formatted map name if it couldn't be properly localized by the game (happens
+ * with maps that are not original sp or mp maps).
+ */
 string function GetMapBrowserName( string mapname )
 {
 	string localized = GetMapDisplayName( mapname )
