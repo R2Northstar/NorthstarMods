@@ -227,12 +227,12 @@ void function BuildModesArray()
 			case "ps":
 			case "cp":
 			case "speedball":
+			case "coliseum":
 			case "rocket_lf":
 			case "holopilot_lf":
 			case "tdm_arena_hardcore":
 			case "tdm_arena_smr":
 			case "hardpoint_twist":
-			case "nitro_ffa":
 			case "ctf_lf":
 				entry.category = eModeMenuModeCategory.PVP
 				break
@@ -240,6 +240,7 @@ void function BuildModesArray()
 			case "ffa":
 			case "fra":
 			case "ffa_arena_energy":
+			case "nitro_ffa":
 				entry.category = eModeMenuModeCategory.FFA
 				break
 
@@ -253,7 +254,6 @@ void function BuildModesArray()
 				entry.category = eModeMenuModeCategory.TITAN
 				break
 
-			case "coliseum":
 			case "angelcity_247":
 			case "nitro_mixtape":
 			case "anniversary_7th":
