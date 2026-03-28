@@ -21,7 +21,6 @@ struct
 	bool devUnlockedSPMissions
 } file
 
-
 void function ShUtilityAll_Init()
 {
 	#document( "DistanceAlongVector", "" )
