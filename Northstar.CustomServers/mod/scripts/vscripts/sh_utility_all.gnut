@@ -396,7 +396,7 @@ string function GetMapDisplayNameAllCaps( string mapname )
 string function GetMapDisplayName( string mapname )
 {
 	if ( IsMapCustom(mapname) ) {
-		return "todo"
+		return GetCustomMapDisplayName(mapname)
 	}
 
 	return "#" + mapname
@@ -410,6 +410,37 @@ string function GetCampaignMapDisplayName( string mapname )
 string function GetMapDisplayDesc( string mapname )
 {
 	return "#" + mapname + "_CLASSIC_DESC"
+}
+
+string function GetCustomMapDisplayName( string mapname )
+{
+	// Remove "mp_" prefix
+	string res = mapname.slice(3)
+
+	// Remove underscores
+	res = StringReplace( res, "_", " ", true )
+
+	// Uppercase first letter
+	res = res.slice(0, 1).toupper() + res.slice(1)
+
+	// Uppercase each word
+	/// Early exit
+	if ( ! res.find(" ") )
+	{
+		return res
+	}
+
+	/// Uppercasing
+	for ( int i = 0; i < res.len(); i++ )
+	{
+		string c = res.slice(i, i+1 )
+		if ( c != " " )
+			continue
+
+		res = res.slice(0, i + 1) + res.slice(i + 1, i + 2).toupper() + res.slice(i + 2)
+	}
+
+	return res
 }
 
 /// Sends a string message to player
