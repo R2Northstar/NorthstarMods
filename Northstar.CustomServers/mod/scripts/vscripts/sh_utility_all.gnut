@@ -21,6 +21,56 @@ struct
 	bool devUnlockedSPMissions
 } file
 
+const array<string> officialMaps = [
+	"mp_lobby",
+
+	"mp_forwardbase_kodai",
+	"mp_grave",
+	"mp_homestead",
+	"mp_thaw",
+	"mp_black_water_canal",
+	"mp_eden",
+	"mp_drydock",
+	"mp_crashsite3",
+	"mp_complex3",
+	"mp_angel_city",
+	"mp_colony02",
+	"mp_glitch",
+	"mp_lf_stacks",
+	"mp_lf_meadow",
+	"mp_lf_deck",
+	"mp_lf_traffic",
+	"mp_coliseum",
+	"mp_coliseum_column",
+	"mp_relic02",
+	"mp_wargames",
+	"mp_rise",
+	"mp_lf_township",
+	"mp_lf_uma",
+
+	// sp maps
+	"sp_training",
+	"sp_crashsite",
+	"sp_sewers1",
+	"sp_boomtown_start",
+	"sp_hub_timeshift",
+	"sp_beacon",
+	"sp_tday",
+	"sp_s2s",
+	"sp_skyway_v1",
+
+	// mp converted variants
+	"mp_training",
+	"mp_crashsite",
+	"mp_sewers1",
+	"mp_boomtown_start",
+	"mp_hub_timeshift",
+	"mp_beacon",
+	"mp_tday",
+	"mp_s2s",
+	"mp_skyway_v1"
+]
+
 void function ShUtilityAll_Init()
 {
 	#document( "DistanceAlongVector", "" )
@@ -333,6 +383,11 @@ string function GetTeamShortName( int team )
 	return ""
 }
 
+bool function IsMapCustom( string mapname )
+{
+	return !officialMaps.contains( mapname )
+}
+
 string function GetMapDisplayNameAllCaps( string mapname )
 {
 	return "#" + mapname + "_ALLCAPS"
@@ -340,6 +395,10 @@ string function GetMapDisplayNameAllCaps( string mapname )
 
 string function GetMapDisplayName( string mapname )
 {
+	if ( IsMapCustom(mapname) ) {
+		return "todo"
+	}
+
 	return "#" + mapname
 }
 
