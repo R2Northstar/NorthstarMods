@@ -4,7 +4,6 @@ global function GamemodeMfd_Init
 struct {
 	entity imcLastMark
 	entity militiaLastMark
-	bool isMfdPro
 } file
 
 void function GamemodeMfd_Init()
@@ -13,16 +12,6 @@ void function GamemodeMfd_Init()
 
 	RegisterSignal( "MarkKilled" )
 	ScoreEvent_SetupEarnMeterValuesForMixedModes()
-
-	// todo
-	if ( GAMETYPE == MARKED_FOR_DEATH_PRO )
-	{
-		file.isMfdPro = true
-
-		SetRoundBased( true )
-		SetShouldUseRoundWinningKillReplay( true )
-		Riff_ForceSetEliminationMode( eEliminationMode.Pilots )
-	}
 
 	if ( IsTitanMarkedForDeathMode() )
 	{
