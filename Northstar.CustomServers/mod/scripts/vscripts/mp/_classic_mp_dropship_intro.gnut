@@ -38,7 +38,10 @@ void function ClassicMP_DefaultDropshipIntro_Setup()
 {
 	// fallback to no intro if there isn't enough dropship spawnpoints
 	if ( GetEntArrayByClass_Expensive( "info_spawnpoint_dropship_start" ).len() < 4 )
+	{
 		ClassicMP_DefaultNoIntro_Setup()
+		return
+	}
 
 	AddCallback_OnClientConnected( DropshipIntro_OnClientConnected )
 	AddCallback_GameStateEnter( eGameState.Prematch, OnPrematchStart )
