@@ -2,7 +2,7 @@ global function CodeCallback_MapInit
 
 void function CodeCallback_MapInit()
 {
-	AddDeathCallback( "player", GlitchDissolveDeadEntity )	
+	AddDeathCallback( "player", GlitchDissolveDeadEntity )
 	AddDeathCallback( "npc_soldier", GlitchDissolveDeadEntity )
 	AddDeathCallback( "npc_pilot_elite", GlitchDissolveDeadEntity )
 	

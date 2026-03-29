@@ -6,11 +6,11 @@ void function PrivateMatchModesInit()
 	// super temp: do localisation strings later
 	AddPrivateMatchModeSettingEnum( "#MODE_SETTING_CATEGORY_MATCH", "run_intro", [ "#SETTING_DISABLED", "#SETTING_ENABLED" ], "1" )
 	AddPrivateMatchModeSettingEnum( "#MODE_SETTING_CATEGORY_MATCH", "run_epilogue", [ "#SETTING_DISABLED", "#SETTING_ENABLED" ], "1" )
-	AddPrivateMatchModeSettingArbitrary( "#MODE_SETTING_CATEGORY_MATCH", "scorelimit", "5" ) //, "Score Limit" )
-	AddPrivateMatchModeSettingArbitrary( "#MODE_SETTING_CATEGORY_MATCH", "roundscorelimit", "0" ) //, "Score Limit (round-based modes)" )
-	AddPrivateMatchModeSettingArbitrary( "#MODE_SETTING_CATEGORY_MATCH", "timelimit", "12" ) //, "Time Limit" )
-	AddPrivateMatchModeSettingArbitrary( "#MODE_SETTING_CATEGORY_MATCH", "roundtimelimit", "0" ) //, "Time Limit (round-based modes)" )
-	AddPrivateMatchModeSettingArbitrary( "#MODE_SETTING_CATEGORY_MATCH", "respawnprotection", "0.0" ) //, "Player Respawn Protection Time" )
+	AddPrivateMatchModeSettingArbitrary( "#MODE_SETTING_CATEGORY_MATCH", "scorelimit", "5" )
+	AddPrivateMatchModeSettingArbitrary( "#MODE_SETTING_CATEGORY_MATCH", "roundscorelimit", "0" )
+	AddPrivateMatchModeSettingArbitrary( "#MODE_SETTING_CATEGORY_MATCH", "timelimit", "12" )
+	AddPrivateMatchModeSettingArbitrary( "#MODE_SETTING_CATEGORY_MATCH", "roundtimelimit", "0" )
+	AddPrivateMatchModeSettingArbitrary( "#MODE_SETTING_CATEGORY_MATCH", "respawnprotection", "0.0" )
 	AddPrivateMatchModeSettingEnum( "#MODE_SETTING_CATEGORY_MATCH", "pick_loadout_every_round", [ "#SETTING_DISABLED", "#SETTING_ENABLED" ], "1" )
 	
 	AddPrivateMatchModeSettingArbitrary( "#MODE_SETTING_CATEGORY_PILOT", "pilot_health_multiplier", "1.0" )
@@ -19,6 +19,7 @@ void function PrivateMatchModesInit()
 	AddPrivateMatchModeSettingEnum( "#MODE_SETTING_CATEGORY_PILOT", "earn_meter_pilot_overdrive", [ "#PILOT_OVERDRIVE_OFF", "#PILOT_OVERDRIVE_ON", "#PILOT_OVERDRIVE_ONLY" ], "1" )
 	AddPrivateMatchModeSettingArbitrary( "#MODE_SETTING_CATEGORY_PILOT", "earn_meter_pilot_multiplier", "1.0" )
 	AddPrivateMatchModeSettingArbitrary( "#MODE_SETTING_CATEGORY_PILOT", "player_force_respawn", "5" )
+	AddPrivateMatchModeSettingEnum( "#MODE_SETTING_CATEGORY_PILOT", "custom_pilot_loadout", [ "#SETTING_DISABLED", "#SETTING_ENABLED" ], "0" )
 	
 	AddPrivateMatchModeSettingArbitrary( "#MODE_SETTING_CATEGORY_TITAN", "earn_meter_titan_multiplier", "1.0" )
 	AddPrivateMatchModeSettingEnum( "#MODE_SETTING_CATEGORY_TITAN", "aegis_upgrades", [ "#SETTING_DISABLED", "#SETTING_ENABLED" ], "0" )
@@ -39,9 +40,7 @@ void function PrivateMatchModesInit()
 	AddPrivateMatchModeSettingEnum( "#MODE_SETTING_CATEGORY_RIFF", "classic_executions", [ "#SETTING_DISABLED", "#SETTING_ENABLED" ], "0" )
 
 	// gamemode settings
-	AddPrivateMatchModeSettingEnum( "#GAMEMODE_cp", "cp_amped_capture_points", [ "#SETTING_DISABLED", "#SETTING_ENABLED" ], "1" ) // would've been nice to use amped_capture_points, but this var is already used ingame and its value is default 0
-	
-	AddPrivateMatchModeSettingEnum( "#GAMEMODE_coliseum", "coliseum_loadouts_enabled", [ "#SETTING_DISABLED", "#SETTING_ENABLED" ], "1" )
+	AddPrivateMatchModeSettingEnum( "#GAMEMODE_cp", "capture_point_amping", [ "#SETTING_DISABLED", "#SETTING_ENABLED" ], "1" )
 	
 	AddPrivateMatchModeSettingEnum( "#PL_aitdm", "aitdm_archer_grunts", [ "#SETTING_DISABLED", "#SETTING_ENABLED" ], "0"  )
 
@@ -72,15 +71,37 @@ void function PrivateMatchModesInit()
 	AddPrivateMatchMode( "ffa" )
 	AddPrivateMatchMode( "fra" )
 	AddPrivateMatchMode( "coliseum" )
-	
+
 	// playlists
-	AddPrivateMatchMode( "attdm" )
-	AddPrivateMatchMode( "turbo_ttdm" )
-	AddPrivateMatchMode( "alts" )
-	AddPrivateMatchMode( "turbo_lts" )
-	AddPrivateMatchMode( "rocket_lf" )
-	AddPrivateMatchMode( "holopilot_lf" )
-	
+	array<string> playlists = [
+		"angelcity_247",
+		"amped_tacticals_aitdm",
+		"tactikill_aitdm",
+		"grapple_aitdm",
+		"phase_aitdm",
+		"spicy_aitdm",
+		"alts",
+		"turbo_lts",
+		"turbo_ttdm",
+		"attdm",
+		"tdm_arena_hardcore",
+		"tdm_arena_smr",
+		"ffa_arena_energy",
+		"hardpoint_twist",
+		"nitro_mixtape",
+		"nitro_ffa",
+		"ctf_lf",
+		"rocket_lf",
+		"holopilot_lf",
+		"titan_mfd",
+		"anniversary_7th",
+		"fnf",
+		//"variety_pack" always aitdm
+	]
+
+	foreach ( string playlist in playlists )
+		AddPrivateMatchMode( playlist )
+
 	// maps
 	AddPrivateMatchMap( "mp_coliseum" )
 	AddPrivateMatchMap( "mp_coliseum_column" )

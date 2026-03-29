@@ -20,7 +20,7 @@ void function Lobby_Init()
 
 void function Lobby_OnClientConnectionStarted( entity player )
 {
-	if ( !( IsPrivateMatch() || GetCurrentPlaylistName() == "private_match" ) || !GetConVarBool( "ns_allow_spectators" ) )
+	if ( !( IsPrivateMatch() || GetCurrentPlaylistName() == "private_match" ) || GetGamemodeVarOrUseValue( PrivateMatch_GetSelectedMode(), "max_teams", "2" ).tointeger() != 2 || !GetConVarBool( "ns_allow_spectators" ) )
 		player.SetPersistentVar( "privateMatchState", 0 ) // disable spectator
 }
 

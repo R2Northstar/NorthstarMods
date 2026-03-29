@@ -66,6 +66,9 @@ void function InitModesMenu()
 
 	AddButtonEventHandler( Hud_GetChild( file.menu, "BtnModeFiltersClear"), UIE_CLICK, OnBtnFiltersClear_Activate )
 
+	AddButtonEventHandler( Hud_GetChild( file.menu, "DummyTop" ), UIE_GET_FOCUS, OnHitDummyTop )
+	AddButtonEventHandler( Hud_GetChild( file.menu, "DummyBottom" ), UIE_GET_FOCUS, OnHitDummyBottom )
+
 	array<var> buttons = GetElementsByClassname( file.menu, "ModeSelectorPanel" )
 	foreach ( var panel in buttons )
 	{
@@ -87,7 +90,7 @@ void function InitModesMenu()
 
 void function NSSetModeCategory( string mode, int category )
 {
-	if( mode in file.categoryOverrides )
+	if ( mode in file.categoryOverrides )
 	{
 		file.categoryOverrides[mode] = category
 		printt( "Overwriting category for mode:", mode )
@@ -144,18 +147,20 @@ void function OnOpenModesMenu()
 	UpdateListSliderPosition(file.sortedModes.len())
 	UpdateVisibleModes()
 
-	// Set to the first mode if there's no mode focused
-	if ( level.ui.privatematch_mode == 0 )
+	array<var> panels = GetElementsByClassname( file.menu, "ModeSelectorPanel" )
+
+	foreach ( var panel in panels )
 	{
-		array<var> panels = GetElementsByClassname( file.menu, "ModeSelectorPanel" )
-		foreach( var panel in panels )
-		{
-			if( Hud_IsEnabled( Hud_GetChild( panel, "BtnMode") ) )
-			{
-				Hud_SetFocused( Hud_GetChild( panel, "BtnMode") )
-				break
-			}
-		}
+		if ( !Hud_IsVisible( panel ) || !Hud_IsEnabled( panel ) )
+			continue
+
+		var button = Hud_GetChild( panel, "BtnMode" )
+
+		if ( !Hud_IsEnabled( button ) )
+			continue
+
+		Hud_SetFocused( button )
+		break
 	}
 }
 
@@ -189,18 +194,25 @@ void function BuildModesArray()
 {
 	file.modes.clear()
 
-	foreach( string mode in GetPrivateMatchModes() )
+	foreach ( string mode in GetPrivateMatchModes() )
 	{
 		ListEntry_t entry
+
 		entry.mode = mode
 		entry.category = eModeMenuModeCategory.UNKNOWN
 
-		switch( mode )
+		switch ( mode )
 		{
 			case "aitdm":
 			case "at":
+			case "amped_tacticals_aitdm":
+			case "tactikill_aitdm":
+			case "grapple_aitdm":
+			case "phase_aitdm":
+			case "spicy_aitdm":
 				entry.category = eModeMenuModeCategory.PVPVE
 				break
+
 			case "fd_easy":
 			case "fd_normal":
 			case "fd_hard":
@@ -208,49 +220,50 @@ void function BuildModesArray()
 			case "fd_insane":
 				entry.category = eModeMenuModeCategory.PVE
 				break
+
 			case "tdm":
 			case "ctf":
 			case "mfd":
 			case "ps":
 			case "cp":
 			case "speedball":
+			case "coliseum":
 			case "rocket_lf":
 			case "holopilot_lf":
+			case "tdm_arena_hardcore":
+			case "tdm_arena_smr":
+			case "hardpoint_twist":
+			case "ctf_lf":
 				entry.category = eModeMenuModeCategory.PVP
 				break
+
 			case "ffa":
 			case "fra":
+			case "ffa_arena_energy":
+			case "nitro_ffa":
 				entry.category = eModeMenuModeCategory.FFA
 				break
+
 			case "lts":
 			case "ttdm":
 			case "attdm":
 			case "turbo_ttdm":
 			case "alts":
 			case "turbo_lts":
+			case "titan_mfd":
 				entry.category = eModeMenuModeCategory.TITAN
 				break
-			case "coliseum":
-			case "sp_coop":
+
+			case "angelcity_247":
+			case "nitro_mixtape":
+			case "anniversary_7th":
+			case "fnf":
+			case "variety_pack":
 				entry.category = eModeMenuModeCategory.OTHER
-				break
-			case "chamber":
-			case "hidden":
-			case "sns":
-			case "fw":
-			case "gg":
-			case "tt":
-			case "inf":
-			case "kr":
-			case "fastball":
-			case "hs":
-			case "ctf_comp":
-			case "tffa":
-				entry.category = eModeMenuModeCategory.CUSTOM
 				break
 		}
 
-		file.modes.append(entry)
+		file.modes.append( entry )
 	}
 }
 
@@ -435,6 +448,153 @@ void function OnScrollUp( var button )
 	UpdateListSliderPosition( file.sortedModes.len() )
 }
 
+void function OnHitDummyTop( var button )
+{
+	file.scrollOffset--
+
+	if ( file.scrollOffset < 0 )
+		file.scrollOffset = 0
+
+	UpdateVisibleModes()
+	UpdateListSliderPosition( file.sortedModes.len() )
+
+	array<var> panels = GetElementsByClassname( file.menu, "ModeSelectorPanel" )
+
+	for ( int i = 0; i < panels.len(); i++ )
+	{
+		var panel = panels[i]
+
+		if ( !Hud_IsVisible( panel ) || !Hud_IsEnabled( panel ) )
+			continue
+
+		var button = Hud_GetChild( panel, "BtnMode" )
+
+		if ( !Hud_IsEnabled( button ) )
+			continue
+
+		if ( Hud_IsFocused( button ) )
+		{
+			foreach ( string mode in file.sortedModes )
+			{
+				if ( !IsStringCategory( mode ) )
+				{
+					if ( file.sortedModes[ int( Hud_GetScriptID( Hud_GetParent( button ) ) ) + file.scrollOffset - 1 ] == mode )
+					{
+						break
+					}
+					else
+					{
+						Hud_SetFocused( button )
+						return
+					}
+				}
+			}
+
+			file.scrollOffset = file.sortedModes.len() - MODES_PER_PAGE
+
+			UpdateVisibleModes()
+			UpdateListSliderPosition( file.sortedModes.len() )
+
+			var lastButton
+
+			foreach ( var panel in panels )
+			{
+				if ( !Hud_IsVisible( panel ) || !Hud_IsEnabled( panel ) )
+					continue
+
+				var button = Hud_GetChild( panel, "BtnMode" )
+
+				if ( !Hud_IsEnabled( button ) )
+					continue
+
+				lastButton = button
+			}
+
+			if ( IsValid( lastButton ) )
+				Hud_SetFocused( lastButton )
+		}
+		else
+			Hud_SetFocused( button )
+
+		break
+	}
+}
+
+void function OnHitDummyBottom( var button )
+{
+	if ( file.sortedModes.len() <= MODES_PER_PAGE )
+		return
+
+	file.scrollOffset++
+
+	if ( file.scrollOffset + MODES_PER_PAGE > file.sortedModes.len() )
+		file.scrollOffset = file.sortedModes.len() - MODES_PER_PAGE
+
+	UpdateVisibleModes()
+	UpdateListSliderPosition( file.sortedModes.len() )
+
+	array<var> panels = GetElementsByClassname( file.menu, "ModeSelectorPanel" )
+	var lastButton
+
+	foreach ( var panel in panels )
+	{
+		if ( !Hud_IsVisible( panel ) || !Hud_IsEnabled( panel ) )
+			continue
+
+		var button = Hud_GetChild( panel, "BtnMode" )
+
+		if ( !Hud_IsEnabled( button ) )
+			continue
+
+		lastButton = button
+	}
+
+	if ( IsValid( lastButton ) )
+	{
+		if ( file.scrollOffset == file.sortedModes.len() - MODES_PER_PAGE && Hud_IsFocused( lastButton ) )
+		{
+			bool foundmode = false
+
+			foreach ( string mode in file.sortedModes )
+			{
+				if ( !IsStringCategory( mode ) )
+				{
+					if ( !foundmode && file.sortedModes[ int( Hud_GetScriptID( Hud_GetParent( lastButton ) ) ) + file.scrollOffset - 1 ] == mode )
+					{
+						foundmode = true
+					}
+					else if ( foundmode )
+					{
+						Hud_SetFocused( lastButton )
+						return
+					}
+				}
+			}
+
+			file.scrollOffset = 0
+
+			UpdateVisibleModes()
+			UpdateListSliderPosition( file.sortedModes.len() )
+
+			foreach ( var panel in panels )
+			{
+				if ( !Hud_IsVisible( panel ) || !Hud_IsEnabled( panel ) )
+					continue
+
+				var button = Hud_GetChild( panel, "BtnMode" )
+
+				if ( !Hud_IsEnabled( button ) )
+					continue
+
+				Hud_SetFocused( button )
+				break
+			}
+		}
+		else
+			Hud_SetFocused( lastButton )
+	}
+}
+
 void function OnDownArrowSelected( var button )
 {
 	if ( file.sortedModes.len() <= MODES_PER_PAGE ) return
@@ -483,6 +643,8 @@ void function UpdateVisibleModes()
 		SetButtonRuiText( Hud_GetChild( panel, "BtnMode" ), "" )
 	}
 
+	array<var> Buttons
+
 	for ( int i = 0; i < MODES_PER_PAGE; i++ )
 	{
 		if ( i + file.scrollOffset >= file.sortedModes.len() )
@@ -504,7 +666,7 @@ void function UpdateVisibleModes()
 		Hud_SetVisible( panel, true )
 		Hud_SetLocked( button, false )
 
-		if( bIsCategory )
+		if ( bIsCategory )
 		{
 			Hud_SetText( header, mode )
 			Hud_SetEnabled( button, false )
@@ -514,15 +676,26 @@ void function UpdateVisibleModes()
 			Hud_SetEnabled( button, true )
 			SetButtonRuiText( button, mode )
 
-			if( blockedModes.contains( file.sortedModes[ modeIndex ] ) )
+			if ( blockedModes.contains( file.sortedModes[ modeIndex ] ) )
 				Hud_SetLocked( button, true )
 
-			if ( PrivateMatch_IsValidMapModeCombo( PrivateMatch_GetSelectedMap(), mode ) )
-			{
-				Hud_SetLocked( button, true )
-				SetButtonRuiText( button, mode )
-			}
+			Buttons.append( button )
 		}
+	}
+
+	for ( int i = 0; i < Buttons.len(); i++ )
+	{
+		var button = Buttons[i]
+
+		if ( !i )
+			button.SetNavUp( Hud_GetChild( file.menu, "DummyTop" ) )
+		else
+			button.SetNavUp( Buttons[ i - 1 ] )
+
+		if ( i == Buttons.len() - 1 )
+			button.SetNavDown( Hud_GetChild( file.menu, "DummyBottom" ) )
+		else
+			button.SetNavDown( Buttons[ i + 1 ] )
 	}
 }
 

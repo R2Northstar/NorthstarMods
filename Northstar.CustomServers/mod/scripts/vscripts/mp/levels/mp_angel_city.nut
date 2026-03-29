@@ -22,8 +22,6 @@ void function CodeCallback_MapInit()
 	// Battery spawns (in LTS/Free Agents) are in old locations, so we move them to the proper locations
 	AddSpawnCallbackEditorClass( "script_ref", "script_power_up_other", FixBatterySpawns )
 
-	// there are some really busted titan startspawns that are on the fucking other side of the map from where they should be, so we remove them
-	AddSpawnCallback( "info_spawnpoint_titan_start", TrimBadTitanStartSpawns )
 	AddSpawnCallback( "sky_camera", FixSkycamFog )
 
 
@@ -41,17 +39,6 @@ void function FixBatterySpawns( entity spawn )
 	PowerUp powerupDef = GetPowerUpFromItemRef( expect string( spawn.kv.powerUpType ) )
 	if ( powerupDef.spawnFunc() )
 		spawn.SetOrigin( BATTERY_SPAWNS[file.batteryIndex++] )
-}
-
-void function TrimBadTitanStartSpawns( entity spawn )
-{
-	if ( spawn.GetTeam() == TEAM_MILITIA )
-		return // mil spawns are fine on this map
-
-	vector comparisonOrigin = < 2281.39, -3333.06, 200.031 >
-
-	if ( Distance2D( spawn.GetOrigin(), comparisonOrigin ) >= 2000.0 )
-		spawn.Destroy()
 }
 
 void function FixSkycamFog( entity skycam )

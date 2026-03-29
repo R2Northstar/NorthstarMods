@@ -68,8 +68,7 @@
 		"featured_mode_shotguns_snipers" "Вооружён и опасен"
 		"iron_rules" "Титан-клетка"
 
-		"cp_amped_capture_points" "Усиленные опорные пункты"
-		"coliseum_loadouts_enabled" "Набор гладиатора"
+		"capture_point_amping" "Усиленные опорные пункты"
 
 		// northstar.custom localisation is just deciding not to work, so putting it here for now
 		"PL_sbox" "Песочница"
@@ -310,7 +309,7 @@
 		"sns_reset_kill_value"                    "Очков за убийство пульс./казнь"
 		"sns_melee_kill_value"                    "Очков за убийство врукопашную"
 		"sns_softball_enabled"                    "Включить Софтбол"
-		"no_pilot_collision"                    "Столкновения между пилотами"
+		"pilot_collision"                    "Столкновения между пилотами"
 		"SHOW"                    "Показать"
 		"SHOW_ALL"                    "Все"
 		"SHOW_ONLY_ENABLED"                    "Только включенные"
@@ -380,7 +379,5 @@
 		"MODE_MENU_PVPVE"                    "Против людей и окружения"
 		"MODE_MENU_PVE"                    "Против окружения"
 		"BLEEDOUT_CALL_HELP"                    "Кровотечение!"
-		"HAS_NON_VANILLA_MODS"                    "Некоторые из включённых модов (отмечены восклицательным знаком) не позволяют подключаться к официальным серверам. Вы можете отключить эти моды в меню модов."
-		"PROGRESSION_TOGGLE_VANILLA"                    "Прогресс нельзя отключить на официальных серверах."
 	}
 }

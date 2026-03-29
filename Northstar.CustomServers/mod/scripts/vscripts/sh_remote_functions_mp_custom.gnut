@@ -8,7 +8,11 @@ struct {
 
 void function InitCustomNetworkVars()
 {
-	print( "InitCustomNetworkVars" )
+	#if VANILLA
+		return
+	#endif
+
+	printt( "InitCustomNetworkVars" )
 
 	foreach ( void functionref() callback in file.onRegisteringCustomNetworkVarsCallbacks )
 		callback()

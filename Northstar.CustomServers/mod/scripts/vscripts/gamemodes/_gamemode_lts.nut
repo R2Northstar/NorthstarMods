@@ -1,4 +1,3 @@
-untyped
 global function GamemodeLts_Init
 
 struct {
@@ -18,7 +17,7 @@ void function GamemodeLts_Init()
 	SetShouldUsePickLoadoutScreen( true )
 	SetSwitchSidesBased( true )
 	SetRoundBased( true )
-	Riff_ForceSetEliminationMode( eEliminationMode.PilotsTitans )
+	Riff_ForceSetEliminationMode( eEliminationMode.Titans )
 	Riff_ForceSetSpawnAsTitan( eSpawnAsTitan.Always )
 	SetShouldUseRoundWinningKillReplay( true )
 	SetRoundWinningKillReplayKillClasses( true, true ) // both titan and pilot kills are tracked
@@ -79,10 +78,9 @@ void function WaitForThirtySecondsLeftThreaded()
 	
 	float endTime = expect float ( GetServerVar( "roundEndTime" ) )
 	
-	// wait until 30sec left 
+	// wait until 30sec left
 	wait ( endTime - 30 ) - Time()
-	PlayMusicToAll( eMusicPieceID.LEVEL_LAST_MINUTE )
-	
+
 	foreach ( entity player in GetPlayerArray() )
 	{	
 		// warn there's 30 seconds left

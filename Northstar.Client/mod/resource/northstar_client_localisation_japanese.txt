@@ -96,8 +96,7 @@
 		"featured_mode_shotguns_snipers" "危険武装"
 		"iron_rules" "アイロンルール"
 
-		"cp_amped_capture_points" "拠点増幅"
-		"coliseum_loadouts_enabled" "コロシアムロードアウト"
+		"capture_point_amping" "拠点増幅"
 
 		// そのまま「グラント」よりも、Respawn翻訳で使われている
 		//「ミニオン」のほうが伝わりやすいかもしれないのでこっちにする
@@ -246,7 +245,7 @@
 		"MODE_SETTING_CATEGORY_BLEEDOUT" "パイロットのダウン"
 
 		"custom_air_accel_pilot" "空中加速度"
-		"no_pilot_collision" "パイロット同士の当たり判定"
+		"pilot_collision" "パイロット同士の当たり判定"
 		"promode_enable" "Proモードの武器"
 		"classic_rodeo" "クラシックロデオ"
 		"oob_timer_enabled" "アウトオブバウンドタイマー"

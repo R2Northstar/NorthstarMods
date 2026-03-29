@@ -183,13 +183,7 @@ void function FDStalkerThink( entity npc, entity generator )
 	generator.EndSignal( "OnDestroy" )
 	npc.s.isSprinting <- false
 	thread FDStalkerGetsStunned( npc )
-	
-	if( GetMapName().find( "mp_lf_" ) != null ) //Stalkers already sprints directly on Live Fire maps to up the challenge a bit
-	{
-		if( !IsCrawling( npc ) && !npc.s.isSprinting )
-			StalkerSetSprintStance( npc )
-	}
-	
+
 	while ( IsAlive( npc ) )
 	{
 		WaitFrame()

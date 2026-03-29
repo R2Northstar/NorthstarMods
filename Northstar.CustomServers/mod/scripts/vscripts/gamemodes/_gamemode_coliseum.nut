@@ -13,12 +13,17 @@ const array< array<string> > OUTROANIMS_WINNER = [
 
 const array< array<string> > OUTROANIMS_LOSER = [
 	[ "pt_coliseum_loser_gunkick", "pt_coliseum_loser_compassion", "pt_coliseum_loser_drinking" ], // winner lost 0 rounds
-    [ "pt_coliseum_loser_respect", "pt_coliseum_loser_headlock", "pt_coliseum_loser_authority" ], // winner lost 1 round
-    [ "pt_coliseum_loser_punch", "pt_coliseum_loser_kick", "pt_coliseum_loser_stomp" ], // winner lost 2 rounds
+	[ "pt_coliseum_loser_respect", "pt_coliseum_loser_headlock", "pt_coliseum_loser_authority" ], // winner lost 1 round
+	[ "pt_coliseum_loser_punch", "pt_coliseum_loser_kick", "pt_coliseum_loser_stomp" ], // winner lost 2 rounds
 ]
 
-struct {
+// players have to play atleast this many rounds otherwise they lose their streak and gain a loss
+const int minColiseumRounds = 5
+
+struct
+{
 	bool hasShownIntroScreen
+	table< entity, int > roundsPlayed
 } file
 
 void function GamemodeColiseum_Init()
@@ -30,12 +35,19 @@ void function GamemodeColiseum_Init()
 	Riff_ForceBoostAvailability( eBoostAvailability.Disabled )
 	Riff_ForceSetEliminationMode( eEliminationMode.Pilots )
 	SetLoadoutGracePeriodEnabled( false ) // prevent modifying loadouts with grace period
-	
-	ClassicMP_SetCustomIntro( ClassicMP_DefaultNoIntro_Setup, ClassicMP_DefaultNoIntro_GetLength() )
+	SetSpectatorEnabled( false ) // stops players from spectating on death and in outro
+	SetPrivateMatchSpectatorEnabled( false ) // private match spectator doesn't work well
+	FlagClear( "WeaponDropsAllowed" ) // removes all dropped weapons
+
+	ClassicMP_SetCustomIntro( ClassicMP_DefaultNoIntro_Setup, 8.5 )
 	AddCallback_GameStateEnter( eGameState.Prematch, ShowColiseumIntroScreen )
-	AddCallback_OnPlayerRespawned( GivePlayerColiseumLoadout )
-	
+
 	ClassicMP_SetEpilogue( SetupColiseumEpilogue )
+
+	AddCallback_GameStateEnter( eGameState.Playing, IncreaseColiseumRoundsPlayed )
+	AddCallback_OnClientDisconnected( Coliseum_OnClientDisconnected )
+
+	SetTimeoutWinnerDecisionFunc( TimeoutCheckPlayers )
 }
 
 // stub function referenced in sh_gamemodes_mp
@@ -47,87 +59,37 @@ void function ShowColiseumIntroScreen()
 {
 	if ( !file.hasShownIntroScreen )
 		thread ShowColiseumIntroScreenThreaded()
-	
+
 	file.hasShownIntroScreen = true
 }
 
 void function ShowColiseumIntroScreenThreaded()
 {
-	wait 5
+	wait 2.5
 
 	foreach ( entity player in GetPlayerArray() )
 	{
 		array<entity> otherTeam = GetPlayerArrayOfTeam( GetOtherTeam( player.GetTeam() ) )
-		
+
+		foreach ( entity player in otherTeam )
+			if ( IsPrivateMatchSpectator( player ) )
+				otherTeam.removebyvalue( player )
+
 		int winstreak = 0
 		int wins = 0 
 		int losses = 0
-		
-		if ( otherTeam.len() != 0 )
+
+		if ( otherTeam.len() )
 		{
-			entity enemy = otherTeam[ 0 ]
-		
+			entity enemy = otherTeam.getrandom()
+
 			winstreak = enemy.GetPersistentVarAsInt( "coliseumWinStreak" )
 			wins = enemy.GetPersistentVarAsInt( "coliseumTotalWins" )
 			losses = enemy.GetPersistentVarAsInt( "coliseumTotalLosses" )
 		}
-	
+
 		Remote_CallFunction_NonReplay( player, "ServerCallback_ColiseumIntro", winstreak, wins, losses ) // stub numbers atm because lazy
 	}
-}
-
-void function GivePlayerColiseumLoadout( entity player )
-{
-	if ( GetCurrentPlaylistVarInt( "coliseum_loadouts_enabled", 1 ) == 0 )
-		return
-
-	// create loadout struct
-	PilotLoadoutDef coliseumLoadout = clone GetActivePilotLoadout( player )
-	
-	/* from playlists.txt
-	coliseum_primary 						"mp_weapon_lstar"
-    coliseum_primary_attachment				""
-    coliseum_primary_mod1					""
-    coliseum_primary_mod2					""
-    coliseum_primary_mod3					""
-    coliseum_secondary 						"mp_weapon_softball"
-    coliseum_secondary_mod1					""
-    coliseum_secondary_mod2					""
-    coliseum_secondary_mod3					""
-    coliseum_weapon3 						""
-    coliseum_weapon3_mod1					""
-    coliseum_weapon3_mod2					""
-    coliseum_weapon3_mod3					""
-    coliseum_melee							"melee_pilot_emptyhanded"
-    coliseum_special						"mp_ability_heal"
-    coliseum_ordnance						"mp_weapon_frag_drone"
-    coliseum_passive1						"pas_fast_health_regen"
-    coliseum_passive2						"pas_wallhang"*/
-		
-	coliseumLoadout.primary = GetColiseumItem( "primary" )
-	coliseumLoadout.primaryMods = [ GetColiseumItem( "primary_attachment" ), GetColiseumItem( "primary_mod1" ), GetColiseumItem( "primary_mod2" ), GetColiseumItem( "primary_mod3" ) ]
-	coliseumLoadout.primaryAttachments = [] // will likely crash if we dont do this
-	                                                                         
-	coliseumLoadout.secondary = GetColiseumItem( "secondary" )               
-	coliseumLoadout.secondaryMods = [ GetColiseumItem( "secondary_mod1" ), GetColiseumItem( "secondary_mod2" ), GetColiseumItem( "secondary_mod3" ) ]
-	
-	coliseumLoadout.weapon3 = GetColiseumItem( "weapon3" )
-	coliseumLoadout.weapon3Mods = [ GetColiseumItem( "weapon3_mod1" ), GetColiseumItem( "weapon3_mod2" ), GetColiseumItem( "weapon3_mod3" ) ]
-	
-	coliseumLoadout.melee = GetColiseumItem( "melee" )
-	coliseumLoadout.special = GetColiseumItem( "special" )
-	coliseumLoadout.ordnance = GetColiseumItem( "ordnance" )
-	coliseumLoadout.passive1 = GetColiseumItem( "passive1" )
-	coliseumLoadout.passive2 = GetColiseumItem( "passive2" )
-	
-	coliseumLoadout.setFile = GetSuitAndGenderBasedSetFile( "coliseum", coliseumLoadout.race == RACE_HUMAN_FEMALE ? "female" : "male" )
-	
-	GivePilotLoadout( player, coliseumLoadout )
-}
-
-string function GetColiseumItem( string name )
-{
-	return expect string ( GetCurrentPlaylistVar( "pilot_loadout_" + name ) )
 }
 
 void function SetupColiseumEpilogue()
@@ -137,9 +99,20 @@ void function SetupColiseumEpilogue()
 
 void function RunColiseumOutro()
 {
+	entity outroAnimPoint = GetEnt( "intermission" )
+
+	if ( !GetPlayerArray().len() || !IsValid( outroAnimPoint ) || !IsIMCOrMilitiaTeam( GetWinningTeam() ) )
+	{
+		SetGameState( eGameState.Postmatch )
+		return
+	}
+
 	// also since this runs on game end, do winstreak stuff
 	foreach ( entity player in GetPlayerArray() )
 	{
+		if ( !IsPrivateMatchSpectator( player ) )
+			continue
+
 		if ( GetWinningTeam() == player.GetTeam() )
 		{
 			player.SetPersistentVar( "coliseumTotalWins", player.GetPersistentVarAsInt( "coliseumTotalWins" ) + 1 )
@@ -147,86 +120,185 @@ void function RunColiseumOutro()
 		}
 		else
 		{
-			player.SetPersistentVar( "coliseumTotalWins", maxint( player.GetPersistentVarAsInt( "coliseumTotalWins" ) - 1, 0 ) )
+			player.SetPersistentVar( "coliseumTotalLosses", player.GetPersistentVarAsInt( "coliseumTotalLosses" ) + 1 )
 			player.SetPersistentVar( "coliseumWinStreak", 0 )
 		}
 	}
 
-	entity outroAnimPoint = GetEnt( "intermission" )
+	WaitFrame()
+
 	array<entity> winningPlayers = GetPlayerArrayOfTeam( GetWinningTeam() )
-	
-	if ( GetPlayerArray().len() > 0 && IsValid( outroAnimPoint ) && GetWinningTeam() != -1 && winningPlayers.len() != 0 ) // this will fail if we don't have players or a spot to do it
-		thread RunColiseumOutroThreaded( outroAnimPoint.GetOrigin(), winningPlayers[ 0 ] )
+	array<entity> losingPlayers = GetPlayerArrayOfTeam( GetOtherTeam( GetWinningTeam() ) )
+
+	foreach ( entity player in GetPlayerArray() )
+	{
+		if ( !IsPrivateMatchSpectator( player ) )
+			continue
+
+		if ( winningPlayers.contains( player ) )
+			winningPlayers.removebyvalue( player )
+
+		if ( losingPlayers.contains( player ) )
+			losingPlayers.removebyvalue( player )
+	}
+
+	entity winningPlayer = null
+	entity losingPlayer = null
+
+	if ( winningPlayers.len() )
+		winningPlayer = winningPlayers.getrandom()
+
+	if ( losingPlayers.len() )
+		losingPlayer = losingPlayers.getrandom()
+
+	if ( IsValid( winningPlayer ) && IsValid( losingPlayer ) ) // this will fail if we don't have players
+	{
+		foreach ( entity player in GetPlayerArray() )
+		{
+			if ( IsPrivateMatchSpectator( player ) )
+				continue
+
+			if ( !IsAlive( player ) )
+			{
+				DoRespawnPlayer( player, null )
+				delaythread ( 0.0001 ) EnableDemigod( player )
+			}
+			else
+				EnableDemigod( player )
+
+			HolsterViewModelAndDisableWeapons( player )
+
+			player.SetOrigin( OriginToGround( outroAnimPoint.GetOrigin() ) )
+			player.SetNameVisibleToEnemy( false )
+			player.SetNameVisibleToFriendly( false )
+
+			if ( player != winningPlayer && player != losingPlayer )
+				player.kv.VisibilityFlags = ~ENTITY_VISIBLE_TO_EVERYONE
+		}
+
+		thread RunColiseumOutroThreaded( winningPlayer, losingPlayer )
+	}
 	else
 		SetGameState( eGameState.Postmatch )
 }
 
-void function RunColiseumOutroThreaded( vector point, entity winningPlayer )
+void function RunColiseumOutroThreaded( entity winningPlayer, entity losingPlayer )
 {
-	OnThreadEnd( function() : ()
-	{
-		SetGameState( eGameState.Postmatch )
-	})
-	
+	OnThreadEnd
+	(
+		function() : ( losingPlayer )
+		{
+			if ( IsValid( losingPlayer ) )
+				losingPlayer.ClearParent()
+
+			SetGameState( eGameState.Postmatch )
+		}
+	)
+
 	winningPlayer.EndSignal( "OnDestroy" )
 
+	losingPlayer.EndSignal( "OnDestroy" )
+
 	// pick winner and loser anims
-	int numLost = GameRules_GetTeamScore( GetOtherTeam( GetWinningTeam() ) )
+	int numLost = min( 2, GameRules_GetTeamScore( GetOtherTeam( GetWinningTeam() ) ) ).tointeger()
 	int animIndex = RandomInt( OUTROANIMS_WINNER[ numLost ].len() )
+
 	string winnerAnim = OUTROANIMS_WINNER[ numLost ][ animIndex ]
 	string loserAnim = OUTROANIMS_LOSER[ numLost ][ animIndex ]
-	
+
+	FirstPersonSequenceStruct winnerSequence
+
+	winnerSequence.thirdPersonAnim = winnerAnim
+
+	entity winningPlayerWeapon = winningPlayer.GetActiveWeapon()
+
+	if ( IsValid( winningPlayerWeapon ) )
+		winningPlayerWeapon.Destroy()
+
+	thread FirstPersonSequence( winnerSequence, winningPlayer )
+
+	FirstPersonSequenceStruct loserSequence
+
+	loserSequence.thirdPersonAnim = loserAnim
+	loserSequence.attachment = "REF"
+	loserSequence.useAnimatedRefAttachment = true
+
+	entity losingPlayerWeapon = losingPlayer.GetActiveWeapon()
+
+	if ( IsValid( losingPlayerWeapon ) && loserAnim != "pt_coliseum_loser_gunkick" )
+		losingPlayerWeapon.Destroy()
+
+	thread FirstPersonSequence( loserSequence, losingPlayer, winningPlayer )
+
 	foreach ( entity player in GetPlayerArray() )
 	{
-		if ( !IsAlive( player ) )
-			player.RespawnPlayer( null )
-		
 		AddCinematicFlag( player, CE_FLAG_HIDE_MAIN_HUD )
 		ScreenFadeFromBlack( player, 0.5 )
-		player.SetOrigin( point )
-		player.SetNameVisibleToEnemy( false )
-		player.SetNameVisibleToFriendly( false )
+
 		// for some reason this just doesn't use the mp music system, so have to manually play this
 		// odd game
+
 		EmitSoundOnEntityOnlyToPlayer( player, player, "music_mp_speedball_game_win" )
-				
-		FirstPersonSequenceStruct outroSequence
-		outroSequence.thirdPersonCameraAttachments = [ "VDU" ]
-		outroSequence.blendTime = 0.25
-		outroSequence.attachment = "ref"
-		outroSequence.enablePlanting = true
-		outroSequence.playerPushable = false
-		
-		// for when we kill any active weapons if not needed for anim
-		entity playerWeapon = player.GetActiveWeapon()
-		
-		if ( player.GetTeam() == GetWinningTeam() )
-		{
-			if ( IsValid( playerWeapon ) )
-				playerWeapon.Destroy()
-		
-			outroSequence.thirdPersonAnim = winnerAnim
-			outroSequence.noParent = true
-			outroSequence.gravity = true
-			thread FirstPersonSequence( outroSequence, player )
-		}
-		else
-		{
-			// need weapon for this anim in particular
-			if ( IsValid( playerWeapon ) && loserAnim != "pt_coliseum_loser_gunkick" )
-				playerWeapon.Destroy()
-		
-			outroSequence.thirdPersonAnim = loserAnim
-			outroSequence.useAnimatedRefAttachment = true
-			thread FirstPersonSequence( outroSequence, player, winningPlayer )
-		}
+
+		SetPlayerAnimViewEntity( player, winningPlayer )
+
+		player.AnimViewEntity_SetThirdPersonCameraAttachments( [ "VDU" ] )
 	}
 
 	// all outro anims should be the same length ideally
 	wait winningPlayer.GetSequenceDuration( winnerAnim ) - 0.75
-	
+
 	foreach ( entity player in GetPlayerArray() )
-		ScreenFadeToBlackForever( player, 0.75 )
-	
-	wait 0.75
+		ScreenFadeToBlackForever( player, 0.3 )
+
+	wait 0.5
+}
+
+void function IncreaseColiseumRoundsPlayed()
+{
+	foreach ( entity player in GetPlayerArray() )
+		if ( !IsPrivateMatchSpectator( player ) )
+			file.roundsPlayed[ player ] <- ( player in file.roundsPlayed ? file.roundsPlayed[ player ] + 1 : 1 )
+}
+
+void function Coliseum_OnClientDisconnected( entity player )
+{
+	if ( player in file.roundsPlayed && file.roundsPlayed[ player ] && GetGameState() < eGameState.Epilogue && file.roundsPlayed[ player ] <= minColiseumRounds )
+	{
+		if ( GetGameState() == eGameState.WinnerDetermined && GetWinningTeam() == player.GetTeam() && GameRules_GetTeamScore( player.GetTeam() ) >= GameMode_GetScoreLimit( GAMETYPE ) )
+		{
+			player.SetPersistentVar( "coliseumTotalWins", player.GetPersistentVarAsInt( "coliseumTotalWins" ) + 1 )
+			player.SetPersistentVar( "coliseumWinStreak", player.GetPersistentVarAsInt( "coliseumWinStreak" ) + 1 )
+		}
+		else
+		{
+			player.SetPersistentVar( "coliseumTotalLosses", player.GetPersistentVarAsInt( "coliseumTotalLosses" ) + 1 )
+			player.SetPersistentVar( "coliseumWinStreak", 0 )
+		}
+	}
+}
+
+int function TimeoutCheckPlayers()
+{
+	array<entity> imcPlayers = GetPlayerArrayOfTeam_Alive( TEAM_IMC )
+	array<entity> militiaPlayers = GetPlayerArrayOfTeam_Alive( TEAM_MILITIA )
+
+	foreach ( entity player in GetPlayerArray_Alive() )
+	{
+		if ( !IsPrivateMatchSpectator( player ) )
+			continue
+
+		if ( imcPlayers.contains( player ) )
+			imcPlayers.removebyvalue( player )
+
+		if ( militiaPlayers.contains( player ) )
+			militiaPlayers.removebyvalue( player )
+	}
+
+	if ( imcPlayers.len() > militiaPlayers.len() )
+		return TEAM_IMC
+	else if ( imcPlayers.len() < militiaPlayers.len() )
+		return TEAM_MILITIA
+
+	return TEAM_UNASSIGNED
 }

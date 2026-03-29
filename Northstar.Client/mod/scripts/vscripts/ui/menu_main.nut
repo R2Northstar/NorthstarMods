@@ -98,9 +98,11 @@ void function OnMainMenu_Open()
 		Dev_CommandLineRemoveParm( "+map" )
 	}
 
-	// do agree to ns remote auth dialog
-	if ( !GetConVarBool( "ns_has_agreed_to_send_token" ) )
-		NorthstarMasterServerAuthDialog()
+	#if !VANILLA
+		// do agree to ns remote auth dialog
+		if ( !GetConVarBool( "ns_has_agreed_to_send_token" ) )
+			NorthstarMasterServerAuthDialog()
+	#endif
 
 #if PC_PROG
 	ActivatePanel( GetPanel( "MainMenuPanel" ) )

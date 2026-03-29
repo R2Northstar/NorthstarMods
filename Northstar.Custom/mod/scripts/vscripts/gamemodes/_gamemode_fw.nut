@@ -163,7 +163,7 @@ void function RateSpawnpointsPilot_FW( int checkClass, array<entity> spawnpoints
 
 void function RateSpawnpointsTitan_FW( int checkClass, array<entity> spawnpoints, int team, entity player )
 {
-	array<entity> startSpawns = SpawnPoints_GetTitanStart( team )
+	array<entity> startSpawns = NSSpawnPoints_GetTitanStart( team )
 	RateSpawnpoints_FW( startSpawns, checkClass, spawnpoints, team, player )
 }
 
@@ -947,11 +947,13 @@ void function FW_WaitToUntrackNPC( entity guy, string campId, string aiType )
 void function OnNPCEnemyChange( entity guy )
 {
 	entity enemy = guy.GetEnemy()
+
 	if ( !IsAlive( guy ) || guy.IsFrozen() || !IsAlive( enemy ) || !IsValid( guy.GetActiveWeapon() ) )
 		return
 
 	string archer = "mp_weapon_rocket_launcher"
 	array<string> weapons = []
+
 	foreach ( entity weapon in guy.GetMainWeapons() )
 		weapons.append( weapon.GetWeaponClassName() )
 
@@ -959,6 +961,7 @@ void function OnNPCEnemyChange( entity guy )
 	{
 		if ( !weapons.contains( archer ) )
 			guy.GiveWeapon( archer )
+
 		guy.SetActiveWeaponByName( archer )
 	}
 	else
@@ -966,9 +969,12 @@ void function OnNPCEnemyChange( entity guy )
 		foreach ( string weapon in weapons )
 			if ( weapon == archer )
 				guy.TakeWeaponNow( archer )
+
 		array<string> newweapons = []
+
 		foreach ( entity newweapon in guy.GetMainWeapons() )
 			newweapons.append( newweapon.GetWeaponClassName() )
+
 		if ( newweapons.len() )
 			guy.SetActiveWeaponByName( newweapons.getrandom() )
 	}
@@ -1204,7 +1210,7 @@ entity function FW_ForcedTitanStartPoint( entity player, entity basePoint )
 	int team = player.GetTeam()
 	if ( TITAN_POINT_REVERSED_MAPS.contains( GetMapName() ) )
 		team = GetOtherTeam( player.GetTeam() )
-	array<entity> startPoints = SpawnPoints_GetTitanStart( team )
+	array<entity> startPoints = NSSpawnPoints_GetTitanStart( team )
 	entity validPoint = startPoints[ RandomInt( startPoints.len() ) ] // choose a random( maybe not safe ) start point
 	return validPoint
 }

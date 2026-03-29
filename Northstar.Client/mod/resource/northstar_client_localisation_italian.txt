@@ -76,8 +76,7 @@ Premi Sì se sei d'accordo. Questa scelta può essere modificata in qualsiasi mo
 		"featured_mode_shotguns_snipers" "Armato e Pericoloso"
 		"iron_rules" "Titani di Ferro"
 
-		"cp_amped_capture_points" "Hardpoints Amplificati"
-		"coliseum_loadouts_enabled" "Equipaggiamento Colosseo"
+		"capture_point_amping" "Hardpoints Amplificati"
 
 		"aitdm_archer_grunts", "Scagnozzi Archer"
 
@@ -219,7 +218,7 @@ Premi Sì se sei d'accordo. Questa scelta può essere modificata in qualsiasi mo
 		"MODE_SETTING_CATEGORY_BLEEDOUT" "Sanguinamento pilota"
 
 		"custom_air_accel_pilot" "Accelerazione Aerea"
-		"no_pilot_collision" "Collisione tra Piloti"
+		"pilot_collision" "Collisione tra Piloti"
 		"promode_enable" "Armi Modalità Competitiva"
 		"classic_rodeo" "Rodeo classico"
 		"oob_timer_enabled" "Timer Fuori dai Limiti"

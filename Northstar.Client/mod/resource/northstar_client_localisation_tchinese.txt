@@ -78,8 +78,7 @@
 		"featured_mode_shotguns_snipers" "危險武裝"
 		"iron_rules" "鐵血泰坦"
 
-		"cp_amped_capture_points" "強化據點"
-		"coliseum_loadouts_enabled" "競技場裝備"
+		"capture_point_amping" "強化據點"
 
 		"aitdm_archer_grunts" "射手飛彈步兵"
 
@@ -220,7 +219,7 @@
 		"MODE_SETTING_CATEGORY_BLEEDOUT" "鐵馭倒地"
 
 		"custom_air_accel_pilot" "空中加速"
-		"no_pilot_collision" "取消鐵馭間碰撞"
+		"pilot_collision" "取消鐵馭間碰撞"
 		"promode_enable" "進階平衡武器"
 		"classic_rodeo" "經典馴牛術"
 		"oob_timer_enabled" "超出戰場計時"

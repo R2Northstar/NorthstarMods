@@ -10,14 +10,14 @@ struct {
 void function RiffInstagib_Init()
 {
 	AddPrivateMatchModeSettingEnum( "#MODE_SETTING_CATEGORY_RIFF", "riff_instagib", [ "#SETTING_DISABLED", "#SETTING_ENABLED" ], "0" )
-	
+
 	#if SERVER
-	if ( GetCurrentPlaylistVarInt( "riff_instagib", 0 ) == 0 )
+	if ( !GetCurrentPlaylistVarInt( "riff_instagib", 0 ) )
 		return
 
 	SetLoadoutGracePeriodEnabled( false )
 	SetWeaponDropsEnabled( false )
-	
+
 	file.instagibWeapons = [
 		"mp_weapon_sniper",
 		"mp_weapon_wingman",
@@ -27,7 +27,7 @@ void function RiffInstagib_Init()
 		"mp_weapon_doubletake",
 	]
 	file.instagibWeapons.randomize()
-	
+
 	AddCallback_OnPlayerRespawned( InstagibSetWeapons )
 	AddCallback_OnPlayerKilled( InstagibCycleWeaponsForKill )
 	AddCallback_OnClientDisconnected( InstagibCleanupClient )
@@ -46,13 +46,14 @@ void function InstagibSetWeapons( entity player )
 
 void function InstagibUpdateWeapons( entity player )
 {
-	foreach( entity weapon in player.GetMainWeapons() )
-		player.TakeWeaponNow( weapon.GetWeaponClassName() )
-	
-	player.TakeWeaponNow( player.GetOffhandWeapon( OFFHAND_RIGHT ).GetWeaponClassName() )
+	TakeWeaponsForArray( player, player.GetMainWeapons() )
+
+	if ( IsValid( player.GetOffhandWeapon( OFFHAND_RIGHT ) ) )
+		player.TakeWeaponNow( player.GetOffhandWeapon( OFFHAND_RIGHT ).GetWeaponClassName() )
+
 	if ( !HasOffhandWeapon( player, "mp_weapon_grenade_sonar" ) )
 		player.GiveOffhandWeapon( "mp_weapon_grenade_sonar", OFFHAND_RIGHT )
-		
+
 	player.GiveWeapon( file.instagibWeapons[ file.playerWeapons[ player ] ] )
 }
 
@@ -60,7 +61,7 @@ void function InstagibCycleWeaponsForKill( entity victim, entity attacker, var d
 {
 	if ( !victim.IsPlayer() || !attacker.IsPlayer() || victim == attacker )
 		return
-	
+
 	file.playerWeapons[ attacker ] = ( file.playerWeapons[ attacker ] + 1 ) % file.instagibWeapons.len()
 	InstagibUpdateWeapons( attacker )
 }

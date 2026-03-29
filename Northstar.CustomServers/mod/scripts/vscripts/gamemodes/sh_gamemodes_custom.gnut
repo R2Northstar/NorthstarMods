@@ -1,4 +1,3 @@
-untyped
 global function InitCustomGamemodes
 global function AddCallback_OnCustomGamemodesInit
 
@@ -8,7 +7,11 @@ struct {
 
 void function InitCustomGamemodes()
 {
-	print( "InitCustomGamemodes" )
+	#if VANILLA
+		return
+	#endif
+
+	printt( "InitCustomGamemodes" )
 
 	foreach ( void functionref() callback in file.onCustomGamemodesInitCallbacks )
 		callback()

@@ -117,9 +117,9 @@ void function InitInGameMPMenu()
 		Hud_AddEventHandler( soundButton, UIE_CLICK, AdvanceMenuEventHandler( GetMenu( "VideoMenu" ) ) )
 	#endif
 
-	// MOD SETTINGS
-	var modSettingsButton = AddComboButton( comboStruct, headerIndex, buttonIndex++, "#MOD_SETTINGS" )
-	Hud_AddEventHandler( modSettingsButton, UIE_CLICK, AdvanceMenuEventHandler( GetMenu( "ModSettings" ) ) )
+	// MODS
+	var modsButton = AddComboButton( comboStruct, headerIndex, buttonIndex++, "#MENU_TITLE_MODS" )
+	Hud_AddEventHandler( modsButton, UIE_CLICK, AdvanceMenuEventHandler( GetMenu( "ModListMenu" ) ) )
 
 	// Nobody reads the FAQ so we replace it with ModSettings because of the limited combobutton space available
 	//file.faqButton = AddComboButton( comboStruct, headerIndex, buttonIndex++, "#KNB_MENU_HEADER" )
@@ -266,9 +266,9 @@ void function InitInGameSPMenu()
 		Hud_AddEventHandler( videoButton, UIE_CLICK, AdvanceMenuEventHandler( GetMenu( "VideoMenu" ) ) )
 	#endif
 	
-	// MOD SETTINGS
-	var modSettingsButton = AddComboButton( comboStruct, headerIndex, buttonIndex++, "#MOD_SETTINGS" )
-	Hud_AddEventHandler( modSettingsButton, UIE_CLICK, AdvanceMenuEventHandler( GetMenu( "ModSettings" ) ) )
+	// MODS
+	var modsButton = AddComboButton( comboStruct, headerIndex, buttonIndex++, "#MENU_TITLE_MODS" )
+	Hud_AddEventHandler( modsButton, UIE_CLICK, AdvanceMenuEventHandler( GetMenu( "ModListMenu" ) ) )
 
 	array<var> orderedButtons
 

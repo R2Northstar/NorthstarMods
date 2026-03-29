@@ -47,16 +47,24 @@ const float AT_BOUNTY_TITAN_CHECK_DELAY = 10.0    // wait for bounty titans land
 const float AT_BOUNTY_TITAN_HEALTH_MULTIPLIER = 3 // TODO: Verify this
 
 // Titan boss settings, check sh_gamemode_at.nut for more info
-const array<string> AT_BOUNTY_TITANS_AI_SETTINGS =
+const array<string> AT_BOUNTY_TITANS_AI_SETTINGS_BOSS_WAVE_1 =
+[
+	"npc_titan_stryder_leadwall_bounty"
+]
+
+const array<string> AT_BOUNTY_TITANS_AI_SETTINGS_BOSS_WAVE_2 =
 [
 	"npc_titan_atlas_stickybomb_bounty",
 	"npc_titan_atlas_tracker_bounty",
+]
+
+const array<string> AT_BOUNTY_TITANS_AI_SETTINGS_BOSS_WAVE_3 =
+[
 	"npc_titan_ogre_minigun_bounty",
 	"npc_titan_ogre_meteor_bounty",
-	"npc_titan_stryder_leadwall_bounty",
-	"npc_titan_stryder_sniper_bounty",
-	"npc_titan_atlas_vanguard_bounty"
 ]
+
+table< string, bool > AT_BOUNTY_TITANS_AI_SETTINGS_BOSS_WAVE_USED_STATE
 
 // Extra
 // Respawn didn't use the "totalAllowedOnField" for npc spawning, they only allow 1 squad to be on field for each type of npc. enabling this might cause too much npcs spawning and crash the game
@@ -94,7 +102,6 @@ struct
 	table< entity, int > npcStolenBonus
 	table< entity, bool > playerBankUploading
 	table< entity, table<entity, int> > playerSavedBountyDamage
-	table< entity, float > playerHudMessageAllowedTime
 } file
 
 void function GamemodeAt_Init()
@@ -163,7 +170,6 @@ void function InitialiseATPlayer( entity player )
 	player.SetPlayerNetInt( "AT_bonusPointMult", 1 )
 	file.playerBankUploading[ player ] <- false
 	file.playerSavedBountyDamage[ player ] <- {}
-	file.playerHudMessageAllowedTime[ player ] <- 0.0
 	thread AT_PlayerTitleThink( player )
 	thread AT_PlayerObjectiveThink( player )
 }
@@ -346,6 +352,7 @@ void function OnEntitiesDidLoad()
 					// Set the bank usable
 					AddCallback_OnUseEntity( bank, OnPlayerUseBank )
 					bank.SetUsable()
+					bank.SetUsableByGroup( "pilot" )
 					bank.SetUsePrompts( "#AT_USE_BANK_CLOSED", "#AT_USE_BANK_CLOSED" )
 					
 					file.banks.append( bank )
@@ -774,7 +781,8 @@ void function AT_GameLoop_Threaded()
 		}
 
 		lastWaveId = waveId
-			
+
+		AT_BOUNTY_TITANS_AI_SETTINGS_BOSS_WAVE_USED_STATE = {}
 		SetGlobalNetInt( "AT_currentWave", waveId )
 		bool isBossWave = waveCount % 2 == 0 // even number waveCount means boss wave
 		
@@ -1197,7 +1205,6 @@ void function AT_BankActiveThink( entity bank )
 	)
 
 	// Update use prompt to usable
-	bank.SetUsable()
 	bank.SetUsePrompts( "#AT_USE_BANK", "#AT_USE_BANK_PC" )
 
 	thread PlayAnim( bank, "mh_inactive_2_active" )
@@ -1223,32 +1230,16 @@ function OnPlayerUseBank( bank, player )
 	expect entity( bank )
 	expect entity( player )
 
-	// bank.SetUsableByGroup( "pilot" ) didn't seem to work so we just
-	// exit here if player is in a titan
-	if( player.IsTitan() )
-		return
-
 	// Player has no bonus, try to send a tip using SendHUDMessage
 	if ( AT_GetPlayerBonusPoints( player ) == 0 )
 	{
-		ATSendDepositTipToPlayer( player, "#AT_USE_BANK_NO_BONUS_HINT" )
+		SendHudMessage( player, "#AT_USE_BANK_NO_BONUS_HINT", -1, 0.4, 255, 255, 255, 255, 0.15, 1.0, 0.5 )
 		return
 	}
 
 	// Prevent more than one instance of this thread running
 	if ( !file.playerBankUploading[ player ] )
 		thread PlayerUploadingBonus_Threaded( bank, player )
-}
-
-bool function ATSendDepositTipToPlayer( entity player, string message )
-{
-	if ( Time() < file.playerHudMessageAllowedTime[ player ] )
-		return false
-	
-	SendHudMessage( player, message, -1, 0.4, 255, 255, 255, 255, 0.5, 1.0, 0.5 )
-	file.playerHudMessageAllowedTime[ player ] = Time() + AT_PLAYER_HUD_MESSAGE_COOLDOWN
-
-	return true
 }
 
 struct AT_playerUploadStruct
@@ -1625,26 +1616,86 @@ void function AT_SpawnBountyTitan( AT_WaveOrigin campData, int spawnId, int scri
 	wait RandomFloat( 1.0 )
 	
 	// look up titan to use
+	array<string> bountyAiSettings = []
+	string bountyAiSettingsString = ""
 	int bountyID = 0
-	try 
+	int currentWave = GetGlobalNetInt( "AT_currentWave" )
+
+	if ( currentWave == 0 )
 	{
-		bountyID = ReserveBossID( AT_BOUNTY_TITANS_AI_SETTINGS.getrandom() )
+		bountyAiSettings = clone AT_BOUNTY_TITANS_AI_SETTINGS_BOSS_WAVE_1
+
+		while ( bountyAiSettings.len() )
+		{
+			int bountyStringID = RandomInt( bountyAiSettings.len() )
+			string bountyString = bountyAiSettings[ bountyStringID ]
+
+			if ( bountyString in AT_BOUNTY_TITANS_AI_SETTINGS_BOSS_WAVE_USED_STATE && AT_BOUNTY_TITANS_AI_SETTINGS_BOSS_WAVE_USED_STATE[ bountyString ] )
+			{
+				bountyAiSettings.remove( bountyStringID )
+				continue
+			}
+
+			bountyAiSettingsString = bountyString
+			break
+		}
 	}
-	catch ( ex ) {} // if we go above the expected wave count that vanilla supports, there's basically no way to ensure that this func won't error, so default 0 after that point
-	
+	else if ( currentWave == 1 )
+	{
+		bountyAiSettings = clone AT_BOUNTY_TITANS_AI_SETTINGS_BOSS_WAVE_2
+
+		while ( bountyAiSettings.len() )
+		{
+			int bountyStringID = RandomInt( bountyAiSettings.len() )
+			string bountyString = bountyAiSettings[ bountyStringID ]
+
+			if ( bountyString in AT_BOUNTY_TITANS_AI_SETTINGS_BOSS_WAVE_USED_STATE && AT_BOUNTY_TITANS_AI_SETTINGS_BOSS_WAVE_USED_STATE[ bountyString ] )
+			{
+				bountyAiSettings.remove( bountyStringID )
+				continue
+			}
+
+			bountyAiSettingsString = bountyString
+			break
+		}
+	}
+	else if ( currentWave == 2 )
+	{
+		bountyAiSettings = clone AT_BOUNTY_TITANS_AI_SETTINGS_BOSS_WAVE_3
+
+		while ( bountyAiSettings.len() )
+		{
+			int bountyStringID = RandomInt( bountyAiSettings.len() )
+			string bountyString = bountyAiSettings[ bountyStringID ]
+
+			if ( bountyString in AT_BOUNTY_TITANS_AI_SETTINGS_BOSS_WAVE_USED_STATE && AT_BOUNTY_TITANS_AI_SETTINGS_BOSS_WAVE_USED_STATE[ bountyString ] )
+			{
+				bountyAiSettings.remove( bountyStringID )
+				continue
+			}
+
+			bountyAiSettingsString = bountyString
+			break
+		}
+	}
+
+	bountyID = ReserveBossID( bountyAiSettingsString )
+
+	AT_BOUNTY_TITANS_AI_SETTINGS_BOSS_WAVE_USED_STATE[ bountyAiSettingsString ] <- true
+
 	string aisettings = GetTypeFromBossID( bountyID )
 	string titanClass = expect string( Dev_GetAISettingByKeyField_Global( aisettings, "npc_titan_player_settings" ) )
 	
-	AiGameModes_SpawnTitan( 
-		spawnpoint, 
-		AT_AI_TEAM, 
-		titanClass, 
+	AiGameModes_SpawnTitan(
+		spawnpoint,
+		AT_AI_TEAM,
+		titanClass,
 		aisettings,
-		// titan handler 
-		void function( entity titan ) : ( campData, spawnId, bountyID, scriptManagerId ) 
+		// titan handler
+		void function( entity titan ) : ( campData, spawnId, bountyID, scriptManagerId )
 		{
 			AT_HandleBossTitanSpawn( titan, campData, spawnId, bountyID, scriptManagerId )
-		} 
+		}
 	)
 }
 
@@ -1673,6 +1724,9 @@ void function AT_HandleBossTitanSpawn( entity titan, AT_WaveOrigin campData, int
 	// tracking lifetime
 	AddToScriptManagedEntArray( scriptManagerId, titan )
 	thread AT_TrackNPCLifeTime( titan, spawnId, "npc_titan" )
+
+	if ( titan.GetAISettingsName() == "npc_titan_stryder_leadwall_bounty" )
+		titan.TakeOffhandWeapon( OFFHAND_EQUIPMENT )
 }
 
 void function BountyBossHighlightThink( entity titan )

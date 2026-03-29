@@ -65,8 +65,7 @@
 			"Path": "ui/menu_ns_modmenu.nut",
 			"RunOn": "UI",
 			"UICallback": {
-				"Before": "AddNorthstarModMenu",
-				"After": "AddNorthstarModMenu_MainMenuFooter"
+				"Before": "AddNorthstarModMenu"
 			}
 		},
 		{

@@ -1,8 +1,6 @@
 untyped
 
 global function AddNorthstarModMenu
-global function AddNorthstarModMenu_MainMenuFooter
-global function ReloadMods
 
 
 struct panelContent {
@@ -35,22 +33,11 @@ struct {
 } file
 
 const int PANELS_LEN = 15
-const string[3] CORE_MODS = ["Northstar.Client", "Northstar.Coop", "Northstar.CustomServers"] // Shows a warning if you try to disable these
+const array<string> CORE_MODS = ["Northstar.Client", "Northstar.CustomServers"] // Shows a warning if you try to disable these
 
 void function AddNorthstarModMenu()
 {
 	AddMenu( "ModListMenu", $"resource/ui/menus/modlist.menu", InitModMenu )
-}
-
-void function AddNorthstarModMenu_MainMenuFooter()
-{
-	string controllerStr = PrependControllerPrompts( BUTTON_Y, "#MENU_TITLE_MODS" )
-	AddMenuFooterOption( GetMenu( "MainMenu" ), BUTTON_Y, controllerStr, "#MENU_TITLE_MODS", AdvanceToModListMenu )
-}
-
-void function AdvanceToModListMenu( var button )
-{
-	AdvanceMenu( GetMenu( "ModListMenu" ) )
 }
 
 void function InitModMenu()
@@ -96,7 +83,9 @@ void function InitModMenu()
 	AddButtonEventHandler( Hud_GetChild( file.menu, "HideCVButton"), UIE_CHANGE, OnHideConVarsChange )
 
 	// Footers
+	AddMenuFooterOption( file.menu, BUTTON_A, "#A_BUTTON_SELECT" )
 	AddMenuFooterOption( file.menu, BUTTON_B, "#B_BUTTON_BACK", "#BACK" )
+
 	AddMenuFooterOption(
 		file.menu,
 		BUTTON_X,
@@ -104,12 +93,21 @@ void function InitModMenu()
 		"#RELOAD_MODS",
 		OnReloadModsButtonPressed
 	)
+
 	AddMenuFooterOption(
 		file.menu,
-		BUTTON_BACK,
+		BUTTON_Y,
 		PrependControllerPrompts( BUTTON_Y, "#AUTHENTICATION_AGREEMENT" ),
 		"#AUTHENTICATION_AGREEMENT",
 		OnAuthenticationAgreementButtonPressed
+	)
+
+	AddMenuFooterOption(
+		file.menu,
+		BUTTON_BACK,
+		"%[BACK|]%" + " " + Localize( "#MOD_SETTINGS" ),
+		"#MOD_SETTINGS",
+		OnModSettingsButtonPressed
 	)
 
 	// Nuke weird rui on filter switch
@@ -128,18 +126,21 @@ void function OnModMenuOpened()
 	UpdateListSliderHeight()
 	UpdateListSliderPosition()
 
-	RegisterButtonPressedCallback(MOUSE_WHEEL_UP , OnScrollUp)
-	RegisterButtonPressedCallback(MOUSE_WHEEL_DOWN , OnScrollDown)
+	try
+	{
+		DeregisterButtonPressedCallback( MOUSE_WHEEL_UP, OnScrollUp )
+		DeregisterButtonPressedCallback( MOUSE_WHEEL_DOWN, OnScrollDown )
+	}
+	catch ( ex ) {}
+
+	RegisterButtonPressedCallback( MOUSE_WHEEL_UP, OnScrollUp )
+	RegisterButtonPressedCallback( MOUSE_WHEEL_DOWN, OnScrollDown )
 }
 
 void function OnModMenuClosed()
 {
-	try
-	{
-		DeregisterButtonPressedCallback(MOUSE_WHEEL_UP , OnScrollUp)
-		DeregisterButtonPressedCallback(MOUSE_WHEEL_DOWN , OnScrollDown)
-	}
-	catch ( ex ) {}
+	DeregisterButtonPressedCallback( MOUSE_WHEEL_UP, OnScrollUp )
+	DeregisterButtonPressedCallback( MOUSE_WHEEL_DOWN, OnScrollDown )
 
 	array<ModInfo> current = GetEnabledModsArray()
 	bool reload
@@ -163,7 +164,7 @@ void function OnModMenuClosed()
 		}
 	}
 	if ( current.len() != file.enabledMods.len() || reload ) // Only reload if we have to
-		ReloadMods()
+		ReloadMods( VANILLA != 0 )
 }
 
 void function OnModButtonFocused( var button )
@@ -238,12 +239,17 @@ void function OnModButtonPressed( var button )
 
 void function OnReloadModsButtonPressed( var button )
 {
-	ReloadMods()
+	ReloadMods( VANILLA != 0 )
 }
 
 void function OnAuthenticationAgreementButtonPressed( var button )
 {
 	NorthstarMasterServerAuthDialog()
+}
+
+void function OnModSettingsButtonPressed( var button )
+{
+	AdvanceMenu( GetMenu( "ModSettings" ) )
 }
 
 void function OnModLinkButtonPressed( var button )
@@ -689,25 +695,8 @@ void function ValidateScrollOffset()
 	UpdateListSliderPosition()
 }
 
-// Static arrays don't have the .find method for some reason
 bool function StaticFind( string mod )
 {
-	foreach( string smod in CORE_MODS )
-		if ( mod == smod )
-			return true
-	return false
-}
-
-void function ReloadMods()
-{
-	NSReloadMods()
-	ClientCommand( "reload_localization" )
-	ClientCommand( "loadPlaylists" )
-
-	int svCheatsOriginal = GetConVarInt( "sv_cheats" )
-	ClientCommand( "sv_cheats 1;weapon_reparse;sv_cheats " + svCheatsOriginal ) // weapon_reparse only works if a server is running and sv_cheats is 1, gotta figure this out eventually
-
-	// note: the logic for this seems really odd, unsure why it doesn't seem to update, since the same code seems to get run irregardless of whether we've read weapon data before
-	ClientCommand( "uiscript_reset" )
+	return CORE_MODS.find( mod ) != -1
 }
 

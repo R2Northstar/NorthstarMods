@@ -390,7 +390,7 @@ bool function OnFlagCollected( entity player, entity flag )
 	player.IsPhaseShifted() || player.p.isEmbarking || player.p.isDisembarking || player.p.pilotEjecting )
 		return false
 
-	if ( player.GetTeam() != flag.GetTeam() && flag.s.canTake )
+	if ( player.GetTeam() != flag.GetTeam() && "canTake" in flag.s && flag.s.canTake )
 		GiveFlag( player, flag )
 	else if ( player.GetTeam() == flag.GetTeam() && IsFlagHome( flag ) && PlayerHasEnemyFlag( player ) )
 		CaptureFlag( player, GetFlagForTeam( GetOtherTeam( flag.GetTeam() ) ) )
@@ -400,7 +400,10 @@ bool function OnFlagCollected( entity player, entity flag )
 
 void function GiveFlag( entity player, entity flag )
 {
-	print( player + " picked up the flag!" )
+	#if DEV
+		print( player + " picked up the flag!" )
+	#endif
+
 	thread FlagSignalGrab_Threaded( flag ) // Delay this signal so it prevents race conditions when flag drops and gets picked up in the same frame
 
 	flag.SetParent( player, "FLAG" )
@@ -435,14 +438,16 @@ void function CaptureFlag( entity player, entity flag )
 	// can only capture flags during normal play or sudden death
 	if ( !GamePlaying() && GetGameState() != eGameState.SuddenDeath )
 	{
-		printt( player + " tried to capture the flag, but the game state was " + GetGameState() + " not " + eGameState.Playing + " or " + eGameState.SuddenDeath)
+		CodeWarning( player + " tried to capture the flag, but the game state was " + GetGameState() + " not " + eGameState.Playing + " or " + eGameState.SuddenDeath)
 		return
 	}
 	// reset flag
 	ResetFlag( flag )
-	
-	print( player + " captured the flag!" )
-	
+
+	#if DEV
+		print( player + " captured the flag!" )
+	#endif
+
 	// score
 	int team = player.GetTeam() 
 	AddTeamScore( team, 1 )
@@ -501,9 +506,11 @@ void function DropFlag( entity player, bool realDrop = true )
 	
 	if( !IsValid( flag ) || flag.GetParent() != player )
 		return
-	
-	print( player + " dropped the flag!" )
-	
+
+	#if DEV
+		print( player + " dropped the flag!" )
+	#endif
+
 	flag.ClearParent()
 	flag.SetOrigin( player.GetOrigin() + < 0, 0, 8 > ) // Offset a bit from the ground so it doesn't clip below
 	flag.SetAngles( < 0, 0, 0 > )
@@ -527,13 +534,14 @@ void function DropFlag( entity player, bool realDrop = true )
 		MessageToTeam( GetOtherTeam( player.GetTeam() ), eEventNotifications.PlayerDroppedFriendlyFlag, player, player )
 	}
 	
-	if ( IsFlagHome( flag ) )
+	if ( IsFlagHome( flag ) || EntityIsOutOfBounds( player ) )
 	{
 		ResetFlag( flag )
 		return
 	}
 	else
 		thread TrackFlagDropTimeout( flag )
+
 	SetFlagStateForTeam( flag.GetTeam(), eFlagState.Home )
 }
 

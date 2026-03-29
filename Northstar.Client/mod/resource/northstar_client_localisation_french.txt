@@ -78,8 +78,7 @@ Choisissez Oui si vous êtes d'accord. Ce choix peut être modifié à tout inst
 		"featured_mode_shotguns_snipers" "Armé et dangereux"
 		"iron_rules" "Titans de fer"
 
-		"cp_amped_capture_points" "Points de capture améliorés"
-		"coliseum_loadouts_enabled" "Equipements du Colisée"
+		"capture_point_amping" "Points de capture améliorés"
 
 		"aitdm_archer_grunts" "Soldats (Archer)"
 
@@ -220,7 +219,7 @@ Choisissez Oui si vous êtes d'accord. Ce choix peut être modifié à tout inst
 		"MODE_SETTING_CATEGORY_BLEEDOUT" "Pilote à terre quand abattu"
 
 		"custom_air_accel_pilot" "Accélération aérienne"
-		"no_pilot_collision" "Collisions entre pilotes"
+		"pilot_collision" "Collisions entre pilotes"
 		"promode_enable" "Armes du mode pro"
 		"classic_rodeo" "Rodéo classique"
 		"oob_timer_enabled" "Timer hors-limites"

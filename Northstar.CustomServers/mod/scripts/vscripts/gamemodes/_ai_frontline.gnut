@@ -1,1 +1,812 @@
-//fuck
+untyped
+
+global function InitializeFrontline
+
+global function AllowFrontlineMove
+global function FrontlineInitiated
+
+global function WaitTillFrontlineMoved
+global function GetFrontlineSpawnPoint
+global function SquadAssaultFrontline
+
+global function MoveFrontline
+global function GetFrontlineGoal
+global function GetTeamCombatDir
+global function SetFrontlineSides
+
+const int FRONTLINE_MIN_DIST_SQR = 262144 // 512
+const int FRONTLINE_MAX_DIST_SQR = 16777216 // 4096
+const float FRONTLINE_MIN_TIME = 30.0
+
+struct
+{
+	float nextOverrunCheck = 0.0
+	table< table > frontlineGroupTable
+	table currentFrontline
+	table< int, int > frontlineTeamSide = { [TEAM_IMC] = 0, [TEAM_MILITIA] = 1 }
+	int timesfrontlinemoved = 0
+
+	bool allowfrontlinemove = true
+	bool frontlineinitiated = false
+	table< int, table< int, array<entity> > > frontlineAssaultPoint
+} file
+
+void function InitializeFrontline()
+{
+	if ( Flag( "EntitiesDidLoad" ) )
+		throw "InitializeFrontline() was called after EntitiesDidLoad"
+
+	if ( !IsNewThread() )
+	{
+		thread InitializeFrontline()
+		return
+	}
+
+	FlagWait( "EntitiesDidLoad" )
+
+	file.frontlineinitiated = true
+
+	InitFrontlineGroups()
+
+	if ( !file.frontlineGroupTable.len() )
+		return
+
+	AddDeathCallback( "npc_soldier", FrontlineDeath )
+	AddDeathCallback( "npc_spectre", FrontlineDeath )
+	AddDeathCallback( "npc_stalker", FrontlineDeath )
+	AddDeathCallback( "npc_super_spectre", FrontlineDeath )
+	AddDeathCallback( "player", FrontlineDeath )
+	AddDeathCallback( "npc_titan", FrontlineDeath )
+
+	// select current frontline group
+	// this will most likely be the one closest to the center of the map
+	array<entity> spawnpoints = SpawnPoints_GetDropPodStart( TEAM_ANY )
+
+	spawnpoints.extend( NSSpawnPoints_GetTitanStart( TEAM_ANY ) )
+	spawnpoints.extend( SpawnPoints_GetPilotStart( TEAM_ANY ) )
+
+	vector mapCenter = GetMapCenter( spawnpoints )
+
+	// get center most frontline to start with
+	float oldDist = 100000 * 100000
+
+	foreach ( group, groupTable in file.frontlineGroupTable )
+	{
+		float dist = Distance2DSqr( mapCenter, expect vector ( groupTable.frontlineCenter ) )
+
+		if ( dist > oldDist )
+			continue
+
+		oldDist = dist
+
+		file.currentFrontline = groupTable // set to closest group
+	}
+
+	SetFrontlineSides( file.currentFrontline, TEAM_MILITIA )
+}
+
+void function AllowFrontlineMove( bool enable )
+{
+	if ( !FrontlineInitiated() )
+		file.allowfrontlinemove = enable
+}
+
+bool function FrontlineInitiated()
+{
+	return file.frontlineinitiated
+}
+
+void function WaitTillFrontlineMoved()
+{
+	while ( !FrontlineInitiated() )
+		WaitFrame()
+
+	int moved = file.timesfrontlinemoved
+
+	while ( moved == file.timesfrontlinemoved )
+		WaitFrame()
+}
+
+entity function GetFrontlineSpawnPoint( array<entity> spawnPointArray, int team )
+{
+	if ( !FrontlineInitiated() || !IsIMCOrMilitiaTeam( team ) )
+		return spawnPointArray.getrandom()
+
+	int goalNum = -1
+
+	for ( int i = 0; i < 3; i++ )
+	{
+		if ( team in file.frontlineAssaultPoint && i in file.frontlineAssaultPoint[ team ] )
+		{
+			ArrayRemoveDead( file.frontlineAssaultPoint[ team ][i] )
+			ArrayRemoveDifferentTeam( file.frontlineAssaultPoint[ team ][i], team )
+		}
+	}
+
+	if ( goalNum == -1 )
+		for ( int i = 0; i < 3; i++ )
+			if ( goalNum == -1 || !( team in file.frontlineAssaultPoint ) || !( i in file.frontlineAssaultPoint[ team ] ) || ( goalNum in file.frontlineAssaultPoint[ team ] && file.frontlineAssaultPoint[ team ][i].len() < file.frontlineAssaultPoint[ team ][ goalNum ].len() ) )
+				goalNum = i
+
+	entity frontlinePoint = GetFrontlineGoal( goalNum, team, false )
+
+	if ( !IsValid( frontlinePoint ) )
+		return spawnPointArray.getrandom()
+
+	vector combatDir = GetTeamCombatDir( file.currentFrontline, team )
+	vector edgeOrigin = frontlinePoint.GetOrigin() - combatDir
+
+	foreach ( entity spawnpoint in spawnPointArray )
+		RateFrontLineNPCSpawnpoint( spawnpoint, team, edgeOrigin, combatDir )
+
+	array<entity> ratedspawnpoints
+
+	foreach ( entity spawnpoint in spawnPointArray )
+	{
+		if ( spawnpoint.s.frontlineRating == -100 )
+			continue
+
+		if ( ratedspawnpoints.len() )
+		{
+			for ( int i = 0; i < ratedspawnpoints.len(); i++ )
+			{
+				if ( spawnpoint.s.frontlineRating >= ratedspawnpoints[i].s.frontlineRating )
+				{
+					ratedspawnpoints.insert( i, spawnpoint )
+					break
+				}
+			}
+		}
+		else
+			ratedspawnpoints.append( spawnpoint )
+	}
+
+	foreach ( spawnpoint in spawnPointArray )
+		if ( IsSpawnpointValid( spawnpoint, team ) )
+			return spawnpoint
+
+	// we will always return a spawnpoint even if it's a bad one.
+	return spawnPointArray.getrandom()
+}
+
+void function RateFrontLineNPCSpawnpoint( entity spawnpoint, int team, vector edgeOrigin, vector combatDir )
+{
+	float frontlineRating = 0
+	vector testPoint = spawnpoint.GetOrigin()
+	bool infront = IsPointInFrontofLine( testPoint, edgeOrigin, combatDir )
+
+	if ( !infront )
+	{
+		float distSqr = Distance2DSqr( testPoint, edgeOrigin )
+		frontlineRating = GraphCapped( distSqr, FRONTLINE_MIN_DIST_SQR, FRONTLINE_MAX_DIST_SQR, 1.0, 0.0 )
+	}
+	else
+		frontlineRating = -100 // these are on the wrong side of the frontline so make them real bad to use
+
+	frontlineRating *= 2.0
+
+	spawnpoint.s.frontlineRating <- frontlineRating
+}
+
+void function InitFrontlineGroups()
+{
+	// find all info_frontline ents
+	array<entity> entArray = GetEntArrayByClass_Expensive( "info_frontline" )
+
+	if ( !entArray.len() )
+		foreach ( info_frontline in CreateTempFrontline() )
+			entArray.append( expect entity ( info_frontline ) )
+
+	array<entity> spectreNodeArray = []
+
+	foreach ( entity info_frontline in entArray )
+	{
+		if ( info_frontline.HasKey( "spectrepoint" ) && info_frontline.kv.spectrepoint == "1" )
+		{
+			spectreNodeArray.append( info_frontline )
+			continue
+		}
+
+		// group them based on group name
+		string group = "temp_group"
+
+		if ( info_frontline.HasKey( "group" ) )
+			group = expect string ( info_frontline.kv.group )
+
+		int side = info_frontline.GetTeam()
+
+		if ( !( group in file.frontlineGroupTable ) )
+			file.frontlineGroupTable[ group ] <- CreateFrontlineTable()
+
+		file.frontlineGroupTable[ group ].name = group
+		file.frontlineGroupTable[ group ][ "sideNodeArray" ][ side ].append( info_frontline )
+	}
+
+	// calculate frontline center and direction
+	foreach ( group, frontlineTable in file.frontlineGroupTable )
+	{
+		frontlineTable.frontlineCenter = GetFrontlineCenter( frontlineTable )
+		frontlineTable.frontlineVector = GetFrontlineVector( frontlineTable )
+		frontlineTable.width = GetFrontlineWidth( frontlineTable )
+		frontlineTable.combatDir = Vector( frontlineTable.frontlineVector.y, -frontlineTable.frontlineVector.x, 0 )
+	}
+
+	// pair up spectre frontline nodes with it's closest regular frontline node
+	foreach ( entity spectreNode in spectreNodeArray )
+	{
+		string group = expect string ( spectreNode.kv.group )
+		int side = spectreNode.GetTeam()
+		float nearestDist = -1.0
+		entity nearestNode = null
+
+		foreach ( frontlineNode in file.frontlineGroupTable[ group ][ "sideNodeArray" ][ side ] )
+		{
+			expect entity ( frontlineNode )
+
+			float dist = Distance( spectreNode.GetOrigin(), frontlineNode.GetOrigin() )
+
+			if ( nearestDist == -1.0 || dist < nearestDist )
+			{
+				if ( "spectreNode" in frontlineNode.s )
+					continue
+
+				nearestDist = dist
+				nearestNode = frontlineNode
+			}
+		}
+
+		nearestNode.s.spectreNode <- spectreNode
+	}
+}
+
+table function CreateFrontlineTable()
+{
+	table frontlineTable = {}
+
+	frontlineTable.sideNodeArray	<- [ [], [] ] // two arrays for side 0 and side 1
+	frontlineTable.frontlineCenter	<- Vector( 0, 0, 0 )
+	frontlineTable.frontlineVector	<- Vector( 0, 0, 0 )
+	frontlineTable.combatDir		<- Vector( 0, 0, 0 )
+	frontlineTable.width			<- 0.0
+	frontlineTable.lineDistFrac		<- 0
+	frontlineTable.useCount			<- 0
+	frontlineTable.name				<- ""
+
+	return frontlineTable
+}
+
+void function CheckFrontlineOverrun( int losingTeam )
+{
+	// the frontline is overrun when there are more enemies then friendlies on the dead players side of the line.
+	// losingTeam is the team of the player that died.
+
+	// don't move frontline after the match is won.
+	if ( GetGameState() >= eGameState.WinnerDetermined )
+		return
+
+	int otherTeam = GetOtherTeam( losingTeam )
+	array< float > teamScore = [ 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0 ]
+	table frontline = file.currentFrontline
+	vector center = expect vector ( frontline.frontlineCenter )
+	vector combatDir = GetTeamCombatDir( frontline, otherTeam )
+	array<entity> playerArray = GetPlayerArray_Alive()
+	int rest = 0
+
+	foreach ( player in playerArray )
+	{
+		int team = player.GetTeam()
+		vector offsetCenter = team == losingTeam ? ( center - combatDir * 512 ) : center
+
+		if ( IsPointInFrontofLine( player.GetOrigin(), offsetCenter, combatDir ) )
+			teamScore[ team ] += 1.0
+		else
+			rest++ // player on the other side of the line
+	}
+
+	if ( rest > ( playerArray.len() / 2.0 ) )
+		return // more players on the other side of the line.
+
+	if ( teamScore[ losingTeam ] < teamScore[ otherTeam ] )
+		MoveFrontline( otherTeam )
+}
+
+void function MoveFrontline( int winningTeam )
+{
+	if ( !FrontlineInitiated() || !file.allowfrontlinemove )
+		return
+
+	string prevFrontlineName = expect string ( file.currentFrontline.name )
+
+	// switch to different frontline
+	file.currentFrontline = GetBestFrontline( winningTeam )
+	file.currentFrontline[ "useCount" ] = expect int ( file.currentFrontline[ "useCount" ] ) + 1
+	file.nextOverrunCheck = Time() + FRONTLINE_MIN_TIME
+
+	// determine what sides of the new fronline belong to what team
+	SetFrontlineSides( file.currentFrontline, winningTeam )
+
+	// tell all squads and to assault the new fronline
+	file.timesfrontlinemoved++
+}
+
+vector function GetTeamCombatDir( table frontline, int team )
+{
+	if ( !FrontlineInitiated() )
+		return Vector( 0, 0, 0 )
+
+	// combatDir points towards side 1 by default
+	// if the team belongs to side 1 we need to reverse the direction
+	vector combatDir = expect vector ( frontline.combatDir )
+
+	if ( file.frontlineTeamSide[ team ] )
+		combatDir *= -1 // make sure combatDir is heading away from the team side, combatDir points towards side 1 by default.
+
+	return combatDir
+}
+
+table function GetBestFrontline( int winningTeam )
+{
+	/*
+		will look for frontlines in the winning teams combat direction.
+		if none is found it will look 45 degrees to the right then 45 degrees to the left and finally opposite to the combat direction.
+		with a fov (minDot) of 67.5 degree every direction will be covered, so it should always return a frontline.
+	*/
+
+	vector combatDir = GetTeamCombatDir( file.currentFrontline, winningTeam )
+	vector right = CalcRelativeVector( Vector( 0, 45, 0 ), combatDir )
+	vector left = CalcRelativeVector( Vector( 0, -45, 0 ), combatDir )
+	vector rear = combatDir * -1
+	array<vector> vectorArray = [ combatDir, right, left, rear ]
+
+	foreach ( index, thevector in vectorArray )
+	{
+		table ornull frontline = FindFrontlineInDirection( thevector )
+
+		if ( IsValid( frontline ) )
+			return expect table ( frontline )
+	}
+
+	// fallback in case no new frontline was found. Happens in map that only have one.
+	return file.currentFrontline
+}
+
+table ornull function FindFrontlineInDirection( vector forwardVector )
+{
+	vector currentCenter = expect vector ( file.currentFrontline.frontlineCenter )
+	int maxDist = 5000
+	int graceRange = 768
+	float minDot = 0.38 // about 67.5 degrees.
+	table ornull forwardFrontline = null
+	int leastUsed
+	float closestDistFrac = 1
+	array<table> frontlineSelection = []
+
+	foreach( groupName, frontline in file.frontlineGroupTable )
+	{
+		frontline.lineDistFrac = 0
+
+		if ( frontline == file.currentFrontline )
+			continue
+
+		vector thevector = expect vector ( frontline.frontlineCenter ) - currentCenter
+		float dist = expect float ( thevector.Norm() )
+		float dot = forwardVector.Dot( thevector ) // positive is infront of the line
+
+		if ( dot > minDot && dist < maxDist )
+		{
+			table lineTable = CalcClosestPointOnLine( expect vector ( frontline.frontlineCenter ), currentCenter, currentCenter + forwardVector * maxDist )
+
+			frontline.lineDistFrac = lineTable.t
+			frontlineSelection.append( frontline )
+
+			if ( lineTable.t < closestDistFrac )
+			{
+				closestDistFrac = expect float ( lineTable.t )
+				leastUsed = expect int ( frontline.useCount )
+				forwardFrontline = frontline
+			}
+		}
+	}
+
+	if ( !IsValid( forwardFrontline ) )
+		return null
+
+	// find any frontlines withing graceRange of the closest frontline and select the least used.
+	foreach ( frontline in frontlineSelection )
+	{
+		if ( frontline == file.currentFrontline )
+			continue
+
+		float distDif = ( expect float ( frontline.lineDistFrac ) - closestDistFrac ) * maxDist
+
+		if ( abs( distDif.tointeger() ) > graceRange )
+			continue
+
+		if ( frontline.useCount < leastUsed )
+		{
+			forwardFrontline = frontline
+			leastUsed = expect int ( frontline.useCount )
+		}
+	}
+
+	return forwardFrontline
+}
+
+vector function GetFrontlineCenter( table frontlineTable )
+{
+	array entArray = expect array ( expect array ( frontlineTable[ "sideNodeArray" ] )[0] )
+
+	entArray.extend( expect array ( expect array ( frontlineTable[ "sideNodeArray" ] )[1] ) )
+
+	if ( !entArray.len() )
+		return Vector( 0, 0, 0 )
+
+	vector centerPos = Vector( 0, 0, 0 )
+
+	foreach ( ent in entArray )
+		centerPos += expect entity ( ent ).GetOrigin()
+
+	centerPos /= entArray.len()
+
+	return centerPos
+}
+
+vector function GetFrontlineVector( table frontlineTable )
+{
+	vector centerPos0 = Vector( 0, 0, 0 )
+
+	foreach( ent in expect array ( expect array ( frontlineTable[ "sideNodeArray" ] )[0] ) )
+		centerPos0 += expect entity ( ent ).GetOrigin()
+
+	vector centerPos1 = Vector( 0, 0, 0 )
+
+	foreach( ent in expect array ( expect array ( frontlineTable[ "sideNodeArray" ] )[1] ) )
+		centerPos1 += expect entity ( ent ).GetOrigin()
+
+	centerPos0 *= ( 1.0 / expect array ( expect array ( frontlineTable[ "sideNodeArray" ] )[0] ).len() )
+	centerPos1 *= ( 1.0 / expect array ( expect array ( frontlineTable[ "sideNodeArray" ] )[1] ).len() )
+
+	vector thevector = centerPos1 - centerPos0
+
+	thevector.Norm()
+
+	// return the left vector
+	return Vector( -thevector.y, thevector.x, 0 )
+}
+
+float function GetFrontlineWidth( table frontlineTable )
+{
+	float highDist = 0
+
+	for ( int side = 0; side < 2; side++ )
+	{
+		array nodeArray = expect array ( expect array ( frontlineTable[ "sideNodeArray" ] )[ side ] )
+
+		foreach ( baseNode in nodeArray )
+		{
+			foreach ( node in nodeArray )
+			{
+				float dist = Distance( expect entity ( baseNode ).GetOrigin(), expect entity ( node ).GetOrigin() )
+
+				if ( dist > highDist )
+					highDist = dist
+			}
+		}
+	}
+
+	float width = ( highDist * 0.5 ) + 512
+
+	return width // half the width since all calculations are based on the center of the frontline
+}
+
+// Temporary - backup stuff incase a map doesn't have info_frontline ents
+array function CreateTempFrontline()
+{
+	Warning( "Map doesn't have info_frontline ents" )
+
+	array<vector> originArray = []
+
+	array<entity> spawnpoints = SpawnPoints_GetDropPodStart( TEAM_ANY )
+
+	spawnpoints.extend( NSSpawnPoints_GetTitanStart( TEAM_ANY ) )
+	spawnpoints.extend( SpawnPoints_GetPilotStart( TEAM_ANY ) )
+
+	vector mapCenter = GetMapCenter( spawnpoints )
+
+	if ( mapCenter == Vector( 0, 0, 0 ) )
+		return []
+
+	vector mapDir = GetMapDirection( mapCenter, spawnpoints ) // vector points away from the IMC side
+	vector leftDir = Vector( -mapDir.y, mapDir.x, 0 )
+	int flankDist = 1024
+
+	leftDir *= flankDist
+
+	originArray.append( mapCenter )
+	originArray.append( mapCenter + leftDir )
+	originArray.append( mapCenter - leftDir )
+
+	array entArray = []
+
+	foreach ( origin in originArray )
+	{
+		entity info_frontline = CreateEntity( "info_frontline" )
+
+		info_frontline.kv.group = "tempgroups" // doesn't work
+		info_frontline.kv.TeamNum = 0
+		info_frontline.SetOrigin( origin + ( mapDir * 512 ) )
+
+		DispatchSpawn( info_frontline )
+
+		entArray.append( info_frontline )
+	}
+
+	foreach ( origin in originArray )
+	{
+		entity info_frontline = CreateEntity( "info_frontline" )
+
+		info_frontline.kv.group = "temp_group" // doesn't work
+		info_frontline.kv.TeamNum = 1
+		info_frontline.SetOrigin( origin + ( mapDir * -512 ) )
+
+		DispatchSpawn( info_frontline )
+
+		entArray.append( info_frontline )
+	}
+
+	return entArray
+}
+
+vector function GetMapCenter( array<entity> spawnpoints )
+{
+	if ( !spawnpoints.len() )
+		return Vector( 0, 0, 0 )
+
+	vector centerPos = Vector( 0, 0, 0 )
+
+	foreach ( entity spawnpoint in spawnpoints )
+		centerPos += spawnpoint.GetOrigin()
+
+	return centerPos / spawnpoints.len()
+}
+
+vector function GetMapDirection( vector centerPos, array<entity> startSpawnPoints )
+{
+	if ( !startSpawnPoints.len() )
+		return Vector( 1, 0, 0 )
+
+	int imcCount = 0
+	int militiaCount = 0
+	vector imcCenter = Vector( 0, 0, 0 )
+	vector militiaCenter = Vector( 0, 0, 0 )
+	vector dirToIMC = Vector( 1, 0, 0 )
+	vector dirFromMilitia = Vector( 1, 0, 0 )
+
+	foreach ( startSpawn in startSpawnPoints )
+	{
+		if ( startSpawn.GetTeam() == TEAM_IMC )
+		{
+			imcCenter += startSpawn.GetOrigin()
+			imcCount++
+		}
+		else if ( startSpawn.GetTeam() == TEAM_MILITIA )
+		{
+			militiaCenter += startSpawn.GetOrigin()
+			militiaCount++
+		}
+	}
+
+	if ( imcCount )
+	{
+		imcCenter *= 1.0 / imcCount.tofloat()
+		dirToIMC = imcCenter - centerPos
+		dirToIMC.Normalize()
+	}
+
+	if ( militiaCount )
+	{
+		militiaCenter *= 1.0 / militiaCount.tofloat()
+		dirFromMilitia = centerPos - militiaCenter // reverse of dirToIMC
+		dirFromMilitia.Normalize()
+	}
+
+	vector mapDir = ( dirFromMilitia + dirToIMC ) * 0.5
+	return mapDir // vector points away from the IMC side
+}
+
+void function FrontlineDeath( entity ent, var damageInfo )
+{
+	if ( !FrontlineInitiated() )
+		return
+
+	if ( ent.IsTitan() && !IsValid( ent.GetBossPlayer() ) )
+		return // don't care about npc_titans that wasn't controlled by a player
+
+	int team = ent.GetTeam()
+
+	if ( !IsIMCOrMilitiaTeam( ent.GetTeam() ) )
+		return
+
+	if ( ent.IsNPC() && !ent.IsTitan() )
+	{
+		// don't check if we recently moved the frontline
+		float time = Time()
+
+		if ( file.nextOverrunCheck > time )
+			return
+
+		file.nextOverrunCheck = Time() + 1
+	}
+
+	CheckFrontlineOverrun( team )
+}
+
+void function SetFrontlineSides( table frontline, int winningTeam )
+{
+	if ( !FrontlineInitiated() || !IsIMCOrMilitiaTeam( winningTeam ) )
+		return
+
+	int otherTeam = GetOtherTeam( winningTeam )
+	vector center = expect vector ( frontline.frontlineCenter )
+
+	// combatDir is towards side 1, away from side 0
+	vector combatDir = expect vector ( file.currentFrontline.combatDir )
+	array<entity> playerArray = GetPlayerArray_Alive()
+
+	// for the start of the map when no players are avaliable
+	if ( GetGameState() <= eGameState.Prematch || GetGameState() == eGameState.SwitchingSides || playerArray.len() == 0 )
+		playerArray = GetEntArrayByClass_Expensive( "info_spawnpoint_human_start" )
+
+	array<int> teamCount = [ 0, 0 ]
+
+	foreach ( entity player in playerArray )
+	{
+		if ( HasSoul( player ) && player.GetTitanSoul().IsDoomed() )
+			continue
+
+		if ( IsPointInFrontofLine( player.GetOrigin(), center, combatDir ) )
+		{
+			if ( player.GetTeam() == winningTeam )
+				teamCount[ 1 ]++
+		}
+		else
+		{
+			if ( player.GetTeam() == winningTeam )
+				teamCount[ 0 ]++
+		}
+	}
+
+	if ( teamCount[ 1 ] > teamCount[ 0 ] )
+	{
+		file.frontlineTeamSide[ winningTeam ]	= 1
+		file.frontlineTeamSide[ otherTeam ]		= 0
+	}
+	else
+	{
+		file.frontlineTeamSide[ otherTeam ]		= 1
+		file.frontlineTeamSide[ winningTeam ]	= 0
+	}
+}
+
+entity function GetFrontlineGoal( int index, int team, bool spectre = false )
+{
+	if ( !IsIMCOrMilitiaTeam( team ) )
+		return null
+
+	int side = file.frontlineTeamSide[ team ]
+	array nodeArray = expect array ( expect array ( file.currentFrontline[ "sideNodeArray" ] )[ side ] )
+
+	if ( nodeArray.len() < 3 )
+		return null
+
+	entity node = expect entity ( nodeArray[ index % 3 ] )
+
+	if ( spectre && "spectreNode" in node.s )
+		node = expect entity ( node.s.spectreNode )
+
+	return node
+}
+
+void function SquadAssaultFrontline( array<entity> squad )
+{
+	if ( !FrontlineInitiated() )
+		return
+
+	// Guys in squad can die at any time - it seems bad that this can be the case, squad should be clean earlier if at all
+	ArrayRemoveDead( squad )
+
+	if ( !squad.len() )
+		return
+
+	int team = squad[0].GetTeam()
+
+	if ( !IsIMCOrMilitiaTeam( team ) )
+		return
+
+	int goalNum = -1
+
+	for ( int i = 0; i < 3; i++ )
+	{
+		if ( team in file.frontlineAssaultPoint && i in file.frontlineAssaultPoint[ team ] )
+		{
+			ArrayRemoveDead( file.frontlineAssaultPoint[ team ][i] )
+			ArrayRemoveDifferentTeam( file.frontlineAssaultPoint[ team ][i], team )
+
+			foreach ( entity guy in squad )
+			{
+				if ( file.frontlineAssaultPoint[ team ][i].contains( guy ) )
+				{
+					goalNum = i
+					break
+				}
+			}
+
+			if ( goalNum != -1 )
+				break
+		}
+	}
+
+	if ( goalNum == -1 )
+		for ( int i = 0; i < 3; i++ )
+			if ( goalNum == -1 || !( team in file.frontlineAssaultPoint ) || !( i in file.frontlineAssaultPoint[ team ] ) || ( goalNum in file.frontlineAssaultPoint[ team ] && file.frontlineAssaultPoint[ team ][i].len() < file.frontlineAssaultPoint[ team ][ goalNum ].len() ) )
+				goalNum = i
+
+	if ( !( team in file.frontlineAssaultPoint ) )
+		file.frontlineAssaultPoint[ team ] <- {}
+
+	if ( !( goalNum in file.frontlineAssaultPoint[ team ] ) )
+		file.frontlineAssaultPoint[ team ][ goalNum ] <- []
+
+	file.frontlineAssaultPoint[ team ][ goalNum ].extend( squad )
+
+	entity goal = GetFrontlineGoal( goalNum, team, IsSpectre( squad[0] ) )
+
+	if ( !IsValid( goal ) )
+		return
+
+	vector assaultOrigin = OriginToGround( goal.GetOrigin() )
+
+	foreach ( entity npc in squad )
+	{
+		npc.AssaultPointClamped( assaultOrigin )
+
+		if ( goal.HasKey( "script_goal_radius" ) )
+			npc.AssaultSetGoalRadius( float ( goal.kv.script_goal_radius ) )
+
+		if ( goal.HasKey( "script_goal_height" ) )
+			npc.AssaultSetGoalHeight( float ( goal.kv.script_goal_height ) )
+	}
+}
+
+table function CalcClosestPointOnLine( vector P, vector A, vector B, bool clamp = false )
+{
+	table thetable = {}
+	vector AP = P - A
+	vector AB = B - A
+	float ab2 = AB.Dot( AB )
+	float ap_ab = AP.Dot( AB )
+	float t = ap_ab / ab2
+
+	if ( clamp )
+	{
+		if ( t < 0.0 )
+			t = 0.0
+		else if ( t > 1.0 )
+			t = 1.0
+	}
+
+	thetable.t <- t
+
+	vector closest = A + AB * t
+
+	thetable.point <- closest
+
+	return thetable
+}
+
+void function ArrayRemoveDifferentTeam( array<entity> ents, int team )
+{
+	for ( int i = ents.len() - 1; i >= 0; i-- )
+		if ( ents[i].GetTeam() != team )
+			ents.remove( i )
+}

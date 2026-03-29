@@ -86,7 +86,7 @@ void function ClassicMP_SetupIntro()
 
 void function ClassicMP_OnIntroStarted()
 {
-	print( "started intro!" )
+	printt( "started intro!" )
 	
 	float introLength = ClassicMP_GetIntroLength()
 	SetServerVar( "gameStartTime", Time() + introLength )
@@ -95,7 +95,7 @@ void function ClassicMP_OnIntroStarted()
 
 void function ClassicMP_OnIntroFinished()
 {
-	print( "intro finished!" )
+	printt( "intro finished!" )
 	SetGameState( eGameState.Playing )
 }
 
@@ -127,11 +127,28 @@ void function ClassicMP_SetupEpilogue()
 
 bool function GetClassicMPMode()
 {
-	return GetCurrentPlaylistVarInt( "run_intro", 1 ) == 1
+	return GetCurrentPlaylistVarInt( "run_intro", 1 ) != 0
 }
 
 bool function ClassicMP_ShouldRunEpilogue()
 {
+	// there needs to be atleast 1 player on each team before running epilogue
+	if ( GetCurrentPlaylistVarInt( "max_teams", 2 ) == 2 && IsIMCOrMilitiaTeam( GetWinningTeam() ) )
+	{
+		int winningPlayers = 0
+		int losingPlayers = 0
+
+		foreach ( entity player in GetPlayerArray() )
+			if ( !IsPrivateMatchSpectator( player ) )
+				if ( player.GetTeam() == GetWinningTeam() )
+					winningPlayers++
+				else
+					losingPlayers++
+
+		if ( !winningPlayers || !losingPlayers )
+			return false
+	}
+
 	// note: there is a run_evac playlist var, but it's unused, and default 0, so use a new one
-	return !file.epilogueForceDisabled && GetClassicMPMode() && GetCurrentPlaylistVarInt( "run_epilogue", 1 ) == 1
+	return !file.epilogueForceDisabled && GetCurrentPlaylistVarInt( "classic_mp", 1 ) != 0 && GetCurrentPlaylistVarInt( "run_epilogue", 1 ) != 0
 }

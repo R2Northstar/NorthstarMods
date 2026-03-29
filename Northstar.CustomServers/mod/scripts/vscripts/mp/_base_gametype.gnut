@@ -21,6 +21,7 @@ struct
 	array<entity> hurtTriggers = []
 	bool functionref( entity, entity, var ) isProtectedFromFriendlyFire
 	table< entity, OutOfBoundsDataStruct > outOfBoundsTable
+	bool respawnEnabled = true
 } file
 
 function BaseGametype_Init()
@@ -790,7 +791,7 @@ bool function PlayerOrNPCKilled( entity ent, var damageInfo )
 			
 			foreach( DamageHistoryStruct attackerInfo in victim.e.recentDamageHistory )
 			{
-				if ( !IsValid( attackerInfo.attacker ) || !attackerInfo.attacker.IsPlayer() || attackerInfo.attacker == victim )
+				if ( !IsValid( attackerInfo.attacker ) || !attackerInfo.attacker.IsPlayer() || attackerInfo.attacker == victim || attackerInfo.attacker.GetTeam() == victim.GetTeam() )
 					continue
 				
 				bool exists = attackerInfo.attacker.GetEncodedEHandle() in alreadyAssisted ? true : false
@@ -969,7 +970,7 @@ function PlayerWatchesKillReplay( entity player, int inflictorEHandle, int attac
 	float replayDelay = timeBeforeKill + ( Time() - timeOfDeath )
 	if ( replayDelay < 0 )
 	{
-		print( "PlayerWatchesKillReplay(): replayDelay is < 0 (" + replayDelay + "). Aborting kill replay.\n" )
+		printt( "PlayerWatchesKillReplay(): replayDelay is < 0 (" + replayDelay + "). Aborting kill replay.\n" )
 		return
 	}
 
@@ -1024,6 +1025,17 @@ bool function ClientCommand_RespawnPlayer( entity player, array<string>args )
 
 	if ( IsAlive( player ) )
 		return true
+
+	if ( IsRoundBased() && IsEliminationBased() )
+	{
+		SendHudMessage( player, "#GAMEMODE_RESPAWN_NEXT_ROUND", -1, 0.4, 255, 255, 255, 255, 0.15, 3.0, 0.5 )
+		return true
+	}
+
+	#if MP
+		if ( !GetRespawnEnabled() )
+			return true
+	#endif
 
 	if ( args.len() != 1 )
 		return true
@@ -2005,6 +2017,14 @@ bool function PlayerCanSpawn( entity player )
 	if ( player.isSpawning )
 		return false
 
+	#if MP
+		if ( !GetRespawnEnabled() )
+			return false
+
+		if ( IsPrivateMatchSpectator( player ) )
+			return false
+	#endif
+
 	return true
 }
 
@@ -2109,17 +2129,6 @@ bool function GameModeRemove( entity ent )
 	string gameMode = GameRules_GetGameMode()
 	switch ( gameMode )
 	{
-		// These game modes have checkboxes in leveled
-		case LAST_TITAN_STANDING:
-		case TEAM_DEATHMATCH:
-		case ATTRITION:
-		case CAPTURE_POINT:
-		case CAPTURE_THE_FLAG:
-		case FORT_WAR:
-		case FFA:
-		case FD:
-			break
-
 		// These game modes use tdm spawns
 		case PILOT_SKIRMISH:
 		case WINGMAN_PILOT_SKIRMISH:
@@ -2154,8 +2163,9 @@ bool function GameModeRemove( entity ent )
 			break
 
 		default:
-			// If a game mode is not handled in here, spawnpoints won't have checkboxes that correspond to it, so all spawnpoints will be used in that mode, which is probably bad.
-			Assert( false, "Game mode " + gameMode + " not handled in GameModeRemove()" )
+			#if MP
+				gameMode = GetSpawnpointGamemodeOverride()
+			#endif
 	}
 
 	AT_CollisionCleanup( ent )
@@ -2217,5 +2227,15 @@ void function OnOOBTriggerEnter( entity trigger, entity ent )
 void function OnOOBTriggerLeave( entity trigger, entity ent )
 {
 	EntityLeaveOutOfBoundsTrig( trigger, ent, null, 0 )
+}
+
+void function SetRespawnEnabled( bool enabled )
+{
+	file.respawnEnabled = enabled
+}
+
+bool function GetRespawnEnabled()
+{
+	return file.respawnEnabled
 }
 #endif

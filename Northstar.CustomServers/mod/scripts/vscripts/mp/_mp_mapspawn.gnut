@@ -1,11 +1,6 @@
-//todo change this to be map-based
-global function SPMP_MapSpawn_Init
-global struct SvSpawnGlobals
-{
-	array<entity> allNormalSpawnpoints
-}
+untyped
 
-global SvSpawnGlobals svSpawnGlobals
+global function SPMP_MapSpawn_Init
 
 void function SPMP_MapSpawn_Init()
 {
@@ -16,7 +11,7 @@ void function SPMP_MapSpawn_Init()
 
 	level.spawnActions <- {} // these run after all initial spawn functions have run
 	svGlobal.levelEnt = CreateEntity( "info_landmark" )
-	SetTargetName( svGlobal.levelEnt, "Level Ent"  )
+	SetTargetName( svGlobal.levelEnt, "Level Ent" )
 	DispatchSpawn( svGlobal.levelEnt )
 	level.isTestmap <- false
 
@@ -49,17 +44,32 @@ void function SPMP_MapSpawn_Init()
 	AddSpawnCallback( "trigger_hurt", InitDamageTriggers )
 
 	AddSpawnCallbackEditorClass( "func_brush", "func_brush_navmesh_separator", NavmeshSeparatorThink )
-	
-	//AddCallback_EntitiesDidLoad( ActivateSkyBox )
+
+	#if DEV
+		ModelViewer_Init()
+		thread AINFileIsUpToDateCheck()
+		thread NavmeshUpToDateCheck()
+		AddSpawnCallbackEditorClass( "info_target", "info_debug_text", DevDebugText )
+	#endif
+
+	AddCallback_EntitiesDidLoad( ActivateSkyBox )
 
 	AddSpawnCallback( "player", MP_PlayerPostInit )
+
+	if ( GetCurrentPlaylistVarInt( "script_leak", 0 ) )
+	{
+		thread ScriptLeakDetector()
+	}
 
 	// unsure if this should be done here, but it's required for mp to load
 	PrecacheModel( $"models/menu/default_environment.mdl" )
 
-	//if ( IsMultiplayer() && GetClassicMPMode() && !IsLobby() )
-	//	ClassicMP_TryDefaultIntroSetup()
-
-	//InitDefaultLoadouts()
 	SPMP_Shared_Init()
+}
+
+void function ActivateSkyBox()
+{
+	entity skycam = GetEnt( SKYBOXLEVEL )
+	if ( skycam )
+		skycam.Fire( "ActivateSkybox" )
 }

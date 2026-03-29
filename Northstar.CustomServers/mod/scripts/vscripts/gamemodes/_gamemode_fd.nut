@@ -126,14 +126,13 @@ void function GamemodeFD_Init()
 	SetRoundBased( true )
 	SetSwitchSidesBased( false ) //Just to make sure in case of any future problem regarding teamside switch
 	FlagSet( "DisableTimeLimit" ) //Disable loss by timer because the wait feature will truly idle servers until people joins
-	SetShouldUseRoundWinningKillReplay( false )
-	SetServerVar( "replayDisabled", true ) //Only disabling Killcams because it's PvE, also seems to reduce server network load a little bit
 	Riff_ForceBoostAvailability( eBoostAvailability.Disabled )
 	PlayerEarnMeter_SetEnabled( false )
 	SetAllowLoadoutChangeFunc( FD_ShouldAllowChangeLoadout )
 	SetGetDifficultyFunc( FD_GetDifficultyLevel )
 	SetShouldUsePickLoadoutScreen( true )
 	SetShouldSpectateInPickLoadoutScreen( true )
+	LaserMesh_Init()
 	TeamTitanSelectMenu_Init()
 
 	//General Callbacks
@@ -179,9 +178,7 @@ void function GamemodeFD_Init()
 	AddDeathCallback( "npc_frag_drone", OnTickDeath )
 
 	foreach ( string npcClass in [ "npc_frag_drone", "npc_soldier", "npc_spectre", "npc_stalker", "npc_super_spectre", "npc_drone", "npc_titan" ] )
-	{
 		AddSpawnCallback( npcClass, FD_GenericNPCDeathChecker )
-	}
 
 	//Command Callbacks
 	AddClientCommandCallback( "FD_ToggleReady", ClientCommandCallbackToggleReady )
@@ -207,13 +204,11 @@ void function GamemodeFD_Init()
 	
 	difficultyLevel = FD_GetDifficultyLevel() //Refresh this only on map load, to avoid midgame commands messing up with difficulties (i.e setting mp_gamemode fd_hard midgame in a regular match through console on local host would immediately make Stalkers spawns with EPG)
 	
-	#if SERVER
-	AILoadout_SetupNPCWeapons( "npc_soldier", ["mp_weapon_rspn101","mp_weapon_car","mp_weapon_alternator_smg","mp_weapon_hemlok_smg","mp_weapon_r97"] )
-	AILoadout_SetupNPCWeapons( "npc_spectre", ["mp_weapon_hemlok","mp_weapon_vinson","mp_weapon_g2","mp_weapon_mastiff","mp_weapon_shotgun","mp_weapon_doubletake","mp_weapon_dmr"] )
+	AILoadout_SetupNPCWeapons( "npc_soldier", [ "mp_weapon_rspn101","mp_weapon_car","mp_weapon_alternator_smg","mp_weapon_hemlok_smg","mp_weapon_r97" ] )
+	AILoadout_SetupNPCWeapons( "npc_spectre", [ "mp_weapon_hemlok","mp_weapon_vinson","mp_weapon_g2","mp_weapon_mastiff","mp_weapon_shotgun","mp_weapon_doubletake","mp_weapon_dmr" ] )
 	AILoadout_SetupNPCAntiTitanWeapons( "npc_soldier", [ "mp_weapon_defender" ] )
 	AILoadout_SetupNPCAntiTitanWeapons( "npc_spectre", [ "mp_weapon_defender" ] )
 	level.endOfRoundPlayerState = ENDROUND_FREE
-	#endif
 	
 	for ( int i = 0; i < 20; i++ ) //Setup NPC array for Harvester Damage tracking
 		file.harvesterDamageSource.append( 0.0 )
@@ -263,6 +258,7 @@ void function ScoreEvent_SetupScoreValuesForFrontierDefense()
 	ScoreEvent_Disable( GetScoreEvent( "KillTitan" ) )
 	ScoreEvent_Disable( GetScoreEvent( "KillPilot" ) )
 	ScoreEvent_Disable( GetScoreEvent( "TitanKillTitan" ) )
+	ScoreEvent_Disable( GetScoreEvent( "KillAutoTitan" ) )
 }
 
 void function UpdateEarnMeter_ByPlayersInMatch()
@@ -1324,7 +1320,9 @@ void function FD_OnPlayerGetsNewPilotLoadout( entity player, PilotLoadoutDef loa
 	if ( "hasPermanantAmpedWeapons" in player.s && player.s.hasPermanantAmpedWeapons )
 	{
 		array<entity> weapons = player.GetMainWeapons()
+
 		weapons.extend( player.GetOffhandWeapons() )
+
 		foreach ( entity weapon in weapons )
 		{
 			weapon.RemoveMod( "silencer" )
@@ -1339,8 +1337,53 @@ void function FD_OnPlayerGetsNewPilotLoadout( entity player, PilotLoadoutDef loa
 					weapons.removebyvalue( weapon )
 				}
 			}
+
 			weapon.SetScriptFlags0( weapon.GetScriptFlags0() | WEAPONFLAG_AMPED )
 		}
+	}
+
+	if ( !IsAlive( player ) || !file.playersInDropship.contains( player ) )
+		return
+
+	int dropshipSlot = 0
+
+	foreach ( entity dropshipplayer in file.playersInDropship )
+		if ( dropshipplayer != player )
+			dropshipSlot++
+		else
+			break
+
+	if ( file.dropshipState == eDropshipState.Returning )
+	{
+		FirstPersonSequenceStruct jumpSequence
+
+		jumpSequence.firstPersonAnim = DROPSHIP_EXIT_ANIMS_POV[ dropshipSlot ]
+		jumpSequence.thirdPersonAnim = DROPSHIP_EXIT_ANIMS[ dropshipSlot ]
+		jumpSequence.attachment = "ORIGIN"
+		jumpSequence.blendTime = 0.0
+		jumpSequence.hideProxy = true
+		jumpSequence.viewConeFunction = ViewConeNarrow
+
+		if ( "fd_dropshipanimtime" in player.s )
+			jumpSequence.setInitialTime = Time() - expect float ( player.s.fd_dropshipanimtime )
+
+		thread FirstPersonSequence( jumpSequence, player, file.dropship )
+	}
+	else if ( file.dropshipState == eDropshipState.InProgress )
+	{
+		FirstPersonSequenceStruct idleSequence
+
+		idleSequence.firstPersonAnim = DROPSHIP_IDLE_ANIMS_POV[ dropshipSlot ]
+		idleSequence.thirdPersonAnim = DROPSHIP_IDLE_ANIMS[ dropshipSlot ]
+		idleSequence.attachment = "ORIGIN"
+		idleSequence.blendTime = 0.0
+		idleSequence.hideProxy = true
+		idleSequence.viewConeFunction = ViewConeNarrow
+
+		if ( "fd_dropshipanimtime" in player.s )
+			idleSequence.setInitialTime = Time() - expect float ( player.s.fd_dropshipanimtime )
+
+		thread FirstPersonSequence( idleSequence, player, file.dropship )
 	}
 }
 
@@ -1756,6 +1799,8 @@ void function FD_PlayerRespawnCallback( entity player )
 		idleSequence.teleport = true
 		idleSequence.viewConeFunction = ViewConeNarrow
 		idleSequence.hideProxy = true
+
+		player.s.fd_dropshipanimtime <- Time()
 
 		thread FirstPersonSequence( idleSequence, player, file.dropship )
 
@@ -2357,12 +2402,12 @@ void function GamemodeFD_OnPlayerKilled( entity victim, entity attacker, var dam
 
 	if ( !IsHarvesterAlive( fd_harvester.harvester ) || GetGameState() != eGameState.Playing )
 		return
-	
+
 	victim.s.currentKillstreak = 0
 	victim.s.lastKillTime = 0.0
 	victim.s.currentTimedKillstreak = 0
 	victim.s.hasPermanantAmpedWeapons = false
-	
+
 	if ( victim.GetTeam() == TEAM_IMC && attacker.IsPlayer() && attacker.GetTeam() == TEAM_MILITIA && GetGlobalNetBool( "FD_waveActive" ) ) //Give money to Militia players killing IMC players
 	{
 		PlayerEarnMeter_AddEarnedFrac( attacker, 0.15 )
@@ -2372,13 +2417,14 @@ void function GamemodeFD_OnPlayerKilled( entity victim, entity attacker, var dam
 			thread PvPGlitchMonitor( victim )
 		return
 	}
-	
+
 	if ( FD_PlayerInDropship( victim ) )
 	{
 		victim.ClearParent()
 		ClearPlayerAnimViewEntity( victim )
 		victim.ClearInvulnerable()
 	}
+
 	//set longest Time alive for end awards
 	if ( victim in file.players && victim in file.playerAwardStats )
 	{
@@ -2387,15 +2433,16 @@ void function GamemodeFD_OnPlayerKilled( entity victim, entity attacker, var dam
 		
 		file.playerAwardStats[victim]["longestLife"] = 0.0 //Reset to count again
 	}
-	
+
 	file.players[victim].pilotPerfectWin = false //Remove perfect win for this player
-	
+
 	if ( GetGlobalNetInt( "FD_waveState") != WAVE_STATE_BREAK )
 		file.players[victim].diedThisRound = true
 
 	//play voicelines for amount of players alive
 	array<entity> militiaplayers = GetPlayerArrayOfTeam( TEAM_MILITIA )
 	int deaths = 0
+
 	foreach ( entity player in militiaplayers )
 		if ( !IsAlive( player ) || IsAlive( player.GetParent() ) && player.GetParent().GetClassName() == "npc_dropship" )
 			deaths++
@@ -2942,9 +2989,9 @@ void function FD_DropshipDropPlayer( entity player, int playerDropshipIndex )
 	{
 		if( player.s.loadoutDirty )
 			Loadouts_OnUsedLoadoutCrate( player )
-		
+
 		EnableOffhandWeapons( player )
-		
+
 		FirstPersonSequenceStruct jumpSequence
 		jumpSequence.firstPersonAnim = DROPSHIP_EXIT_ANIMS_POV[ playerDropshipIndex ]
 		jumpSequence.thirdPersonAnim = DROPSHIP_EXIT_ANIMS[ playerDropshipIndex ]
@@ -2952,16 +2999,20 @@ void function FD_DropshipDropPlayer( entity player, int playerDropshipIndex )
 		jumpSequence.blendTime = 0.0
 		jumpSequence.hideProxy = true
 		jumpSequence.viewConeFunction = ViewConeNarrow
-		
+
+		player.s.fd_dropshipanimtime <- Time()
+
 		#if BATTLECHATTER_ENABLED
 		if ( playerDropshipIndex == 0 )
 			PlayBattleChatterLine( player, "bc_pIntroChat" )
 		#endif
-		
+
 		waitthread FirstPersonSequence( jumpSequence, player, file.dropship )
+
 		if ( IsValidPlayer( player ) ) //Check again because the delay
 		{
 			player.ClearParent()
+
 			ClearPlayerAnimViewEntity( player )
 			thread FD_PlayerRespawnProtection( player )
 		}
@@ -3905,7 +3956,6 @@ function FD_UpdateTitanBehavior()
 		}
 	}
 }
-
 
 
 

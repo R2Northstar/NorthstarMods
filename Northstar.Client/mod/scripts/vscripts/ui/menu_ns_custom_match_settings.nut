@@ -1,12 +1,7 @@
 global function AddNorthstarCustomMatchSettingsMenu
 global function SetNextMatchSettingsCategory
 
-#if VANILLA
-const string OVERRIDE_COMMAND = "setplaylistvaroverrides"
-#else
 const string OVERRIDE_COMMAND = "PrivateMatchSetPlaylistVarOverride"
-#endif
-
 const string SETTING_ITEM_TEXT = "                           " // this is long enough to be the same size as the textentry field
 
 struct {

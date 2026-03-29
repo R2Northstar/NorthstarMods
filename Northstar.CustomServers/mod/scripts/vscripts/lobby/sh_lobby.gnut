@@ -16,8 +16,8 @@ global struct CustomMatchSettingContainer
 
 struct {
 	array<string> modes = [ // default modes in vanilla
-		"tdm",
 		"aitdm",
+		"tdm",
 		"cp",
 		"at",
 		"ctf",
@@ -63,6 +63,10 @@ struct {
 
 void function AddPrivateMatchMode( string mode )
 {
+	#if VANILLA
+		return
+	#endif
+
 	if ( !file.modes.contains( mode ) )
 		file.modes.append( mode )
 	
@@ -74,6 +78,10 @@ void function AddPrivateMatchMode( string mode )
 
 void function AddPrivateMatchMap( string map )
 {
+	#if VANILLA
+		return
+	#endif
+
 	if ( !file.maps.contains( map ) )
 		file.maps.append( map )
 	

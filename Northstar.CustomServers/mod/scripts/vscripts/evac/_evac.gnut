@@ -10,6 +10,7 @@ global function EvacEpiloguePlayerCanBoard
 global function EvacEpilogueShouldLeaveEarly
 global function EvacEpilogueCompleted
 global function SetRespawnAndWait
+global function GetEvacNodeNumber
 
 const float EVAC_INITIAL_WAIT = 5.0
 const float EVAC_ARRIVAL_TIME = 40.0
@@ -68,7 +69,7 @@ struct {
 	entity spaceNode
 	
 	// this only supports 1 evac at once atm, is this ideal?
-	entity currentEvacNode
+	int currentEvacNode = -1
 	entity evacDropship
 	entity evacIcon
 
@@ -139,22 +140,6 @@ void function EvacEpilogue()
 	}
 }
 
-void function EvacSpectatorFunc( entity player )
-{
-	svGlobal.levelEnt.EndSignal( "GameStateChanged" )
-	file.evacDropship.EndSignal( "OnDestroy" )
-	
-	entity cam = GetEnt( expect string( file.currentEvacNode.kv.target ) )
-	if ( !IsValid( cam ) )
-		return
-	
-	player.SetObserverModeStaticPosition( cam.GetOrigin() )
-	player.SetObserverModeStaticAngles( cam.GetAngles() )
-	player.StartObserverMode( OBS_MODE_STATIC )
-	
-	svGlobal.levelEnt.WaitSignal( "EvacOver" )
-}
-
 void function SetRespawnAndWait( bool mode )
 {
 	wait GAME_EPILOGUE_PLAYER_RESPAWN_LEEWAY
@@ -208,7 +193,7 @@ void function Evac( int evacTeam, float initialWait, float arrivalTime, float wa
 	// get evac ship sound and model for specific team
 	EvacShipSetting evacShip = GetEvacShipSettingByTeam( evacTeam )
 
-	wait initialWait 
+	wait initialWait
 
 	// setup evac nodes if not manually registered
 	if ( file.evacNodes.len() == 0 && !IsValid( customEvacNode ) )
@@ -228,10 +213,16 @@ void function Evac( int evacTeam, float initialWait, float arrivalTime, float wa
 		file.spaceNode = GetEnt( "spaceNode" )
 
 	entity evacNode = customEvacNode
+
+	int evacNodeNumber = RandomInt( file.evacNodes.len() )
+
 	if ( !IsValid( customEvacNode ) )
-		evacNode = file.evacNodes.getrandom()
-		
-	file.currentEvacNode = evacNode
+	{
+		evacNode = file.evacNodes[ evacNodeNumber ]
+		file.currentEvacNode = evacNodeNumber
+	}
+
+	svGlobal.levelEnt.Signal( "SpectatorFuncChanged" )
 
 	// setup client evac position
 	file.evacIcon = CreateEntity( "info_target" )
@@ -251,7 +242,14 @@ void function Evac( int evacTeam, float initialWait, float arrivalTime, float wa
 	// eta until arrive
 	SetTeamActiveObjective( evacTeam, "EG_DropshipExtract", Time() + arrivalTime, file.evacIcon )
 	SetTeamActiveObjective( GetOtherTeam( evacTeam ), "EG_StopExtract", Time() + arrivalTime, file.evacIcon )
-	
+	DisableTitanfallForLifetimeOfEntityNearOrigin( evacNode, evacNode.GetOrigin(), 600 )
+
+	// Disable NPC spawning once we are in evac
+	if ( evacTeam == TEAM_IMC )
+		FlagSet( "Disable_IMC" ) // no random ai spawning
+	else if ( evacTeam == TEAM_MILITIA )
+		FlagSet( "Disable_MILITIA" ) // no random ai spawning
+
 	foreach ( entity player in GetPlayerArrayOfTeam( evacTeam ) ) //Show the Evac Match Goal for players of the team that lost the match
 		Remote_CallFunction_UI( player, "SCB_SetEvacMeritState", 0 )
 	
@@ -267,22 +265,25 @@ void function Evac( int evacTeam, float initialWait, float arrivalTime, float wa
 	dropship.SetHealth( EVAC_SHIP_HEALTH )
 	dropship.SetShieldHealthMax( EVAC_SHIP_SHIELDS )
 	dropship.SetShieldHealth( EVAC_SHIP_SHIELDS )
+
 	SetTargetName( dropship, "#NPC_EVAC_DROPSHIP" )
 	DispatchSpawn( dropship )
+
 	dropship.SetModel( evacShip.shipModel )
+
 	foreach ( entity player in GetPlayerArray() )
 		Remote_CallFunction_NonReplay( player, "ServerCallback_CreateDropShipIntLighting", dropship.GetEncodedEHandle(), dropship.GetTeam() )
 
-	// reduce nuclear core's damage
+	// reduce nuclear core's damage and remove trigger damage
 	AddEntityCallback_OnDamaged( dropship, EvacDropshipDamaged )
-	
+
 	AddEntityCallback_OnKilled( dropship, EvacDropshipKilled )
-	
+
 	dropship.s.evacSlots <- [ null, null, null, null, null, null, null, null ]
 	file.evacDropship = dropship
-	
+
 	dropship.EndSignal( "OnDestroy" )
-	OnThreadEnd( function() : ( evacTeam, completionCallback, dropship ) 
+	OnThreadEnd( function() : ( evacTeam, completionCallback, dropship )
 	{
 		if ( "evacTrigger" in dropship.s )
 			dropship.s.evacTrigger.Destroy()
@@ -311,13 +312,26 @@ void function Evac( int evacTeam, float initialWait, float arrivalTime, float wa
 	})
 	
 	// flyin
-	Spectator_SetCustomSpectatorFunc( EvacSpectatorFunc )
 	thread PlayAnim( dropship, "cd_dropship_rescue_side_start", evacNode )
 
 	// fly in sound and effect
 	EmitSoundOnEntity( dropship, evacShip.flyinSound )
 	thread WarpInEffectEvacShip( dropship )
-	
+
+	// setup evac trigger
+	entity trigger = CreateEntity( "trigger_cylinder" )
+
+	trigger.SetRadius( 200 )
+	trigger.SetAboveHeight( 200 )
+	trigger.SetBelowHeight( 200 )
+	trigger.SetOrigin( dropship.GetOrigin() )
+	trigger.SetParent( dropship, "ORIGIN" )
+
+	DispatchSpawn( trigger )
+	TriggerEnterCallback( trigger, canBoardCallback, dropship )
+
+	dropship.s.evacTrigger <- trigger
+
 	// calculate time until idle start
 	float sequenceDuration = dropship.GetSequenceDuration( "cd_dropship_rescue_side_start" )
 	float cycleFrac = dropship.GetScriptedAnimEventCycleFrac( "cd_dropship_rescue_side_start", "ReadyToLoad" )
@@ -340,55 +354,44 @@ void function Evac( int evacTeam, float initialWait, float arrivalTime, float wa
 	if ( IsValid( effectFriendly ) )
 		EffectStop( effectFriendly )
 
-	// setup evac trigger
-	entity trigger = CreateEntity( "trigger_cylinder" )
-	trigger.SetRadius( 200 )
-	trigger.SetAboveHeight( 200 )
-	trigger.SetBelowHeight( 200 )
-	trigger.SetOrigin( dropship.GetOrigin() )
-	trigger.SetParent( dropship, "ORIGIN" )
-	DispatchSpawn( trigger )
-	// have to do this inline since we capture the completionCallback
-	trigger.SetEnterCallback( void function( entity trigger, entity player ) : ( canBoardCallback, dropship ) 
-	{ 	
-		if ( !player.IsPlayer() || !IsAlive( player ) || player.IsTitan() || player.ContextAction_IsBusy() || !canBoardCallback( dropship, player ) || PlayerInDropship( player, dropship ) )
-			return
-		
-		thread AddPlayerToEvacDropship( dropship, player )
-	})
-	
-	dropship.s.evacTrigger <- trigger
-		
 	float waitStartTime = Time()
+
 	while ( Time() - waitStartTime < waitTime )
 	{
-		if ( shouldLeaveEarlyCallback( dropship ) )
+		if ( shouldLeaveEarlyCallback( dropship ) && Time() - waitStartTime < waitTime - 1.0 )
+		{
+			if ( GetPlayerArrayOfTeam_Alive( dropship.GetTeam() ).len() )
+				wait 1.0
+
 			break
-			
+		}
+
 		WaitFrame()
 	}
 
 	// fly out sound
 	StopSoundOnEntity( dropship, evacShip.hoverSound )
 	EmitSoundOnEntity( dropship, evacShip.flyoutSound )
-	
+
+	// fly away
+	dropship.Signal( "EvacShipLeaves" )
+	thread PlayAnim( dropship, "cd_dropship_rescue_side_end", evacNode )
+
+	SetTeamActiveObjective( evacTeam, "EG_DropshipExtractDropshipFlyingAway" )
+	SetTeamActiveObjective( GetOtherTeam( evacTeam ), "EG_StopExtractDropshipFlyingAway" )
+
+	wait 1.0
+
 	// holster all weapons
 	file.shouldholsterweapons[ dropship ] <- true
 
 	foreach ( entity player in dropship.s.evacSlots )
 		if ( IsValid( player ) )
 			HolsterViewModelAndDisableWeapons( player )
-	
-	// fly away
-	dropship.Signal( "EvacShipLeaves" )
-	thread PlayAnim( dropship, "cd_dropship_rescue_side_end", evacNode )
-	
-	SetTeamActiveObjective( evacTeam, "EG_DropshipExtractDropshipFlyingAway" )
-	SetTeamActiveObjective( GetOtherTeam( evacTeam ), "EG_StopExtractDropshipFlyingAway" )
-	
+
 	// todo: play the warpout effect somewhere here
 	
-	wait dropship.GetSequenceDuration( "cd_dropship_rescue_side_end" ) - WARPINFXTIME
+	wait dropship.GetSequenceDuration( "cd_dropship_rescue_side_end" ) - WARPINFXTIME - 1.0
 	
 	foreach ( entity player in dropship.s.evacSlots )
 		if ( IsValid( player ) )
@@ -402,7 +405,7 @@ void function Evac( int evacTeam, float initialWait, float arrivalTime, float wa
 		return
 	thread __WarpOutEffectShared( dropship )
 	
-	// go to space 
+	// go to space
 	
 	// hardcoded angles here are a hack, spacenode position doesn't face the planet in the skybox, for some reason
 	// nvm removing for now
@@ -424,7 +427,7 @@ void function Evac( int evacTeam, float initialWait, float arrivalTime, float wa
 				SetPlayerActiveObjective( player, "EG_DropshipExtractFailedEscape" )
 				SetPlayerChallengeEvacState( player, 2 )
 			}
-				
+
 			continue
 		}
 		
@@ -463,7 +466,7 @@ void function Evac( int evacTeam, float initialWait, float arrivalTime, float wa
 
 	bool allEvac = evacCount == evacingPlayers.len()
 
-	foreach (entity player in evacingPlayers)
+	foreach ( entity player in evacingPlayers )
 	{
 		if ( !PlayerInDropship( player, dropship ) )
 			continue
@@ -483,7 +486,7 @@ void function Evac( int evacTeam, float initialWait, float arrivalTime, float wa
 	}
 }
 
-void function AddPlayerToEvacDropship( entity dropship, entity player ) 
+void function AddPlayerToEvacDropship( entity dropship, entity player )
 {
 	int slot = RandomInt( dropship.s.evacSlots.len() )
 	for ( int i = 0; i < dropship.s.evacSlots.len(); i++ )
@@ -503,41 +506,45 @@ void function AddPlayerToEvacDropship( entity dropship, entity player )
 
 	UpdatePlayerStat( player, "misc_stats", "evacsAttempted" )
 
-    // need to cancel if the dropship dies
-    dropship.EndSignal( "OnDeath", "OnDestroy" )
+	// need to cancel if the dropship dies
+	dropship.EndSignal( "OnDeath", "OnDestroy" )
 	player.EndSignal( "OnDestroy" )
 
-	player.SetInvulnerable()
+	player.ClearInvulnerable() // being invulnerable will make EvacPlayerDamaged not get called
 	player.UnforceCrouch()
 	player.ForceStand()
+
+	AddEntityCallback_OnDamaged( player, EvacPlayerDamaged ) // prevents all damage while attached to dropship
 	Remote_CallFunction_NonReplay( player, "ServerCallback_CreateDropShipIntLighting", dropship.GetEncodedEHandle(), dropship.GetTeam() )
 
 	if ( dropship in file.shouldholsterweapons && file.shouldholsterweapons[ dropship ] ) // don't let people have their weapons in the dropship after it leaves
 		HolsterViewModelAndDisableWeapons( player )
 
 	FirstPersonSequenceStruct fp
+
 	//fp.firstPersonAnim = EVAC_EMBARK_ANIMS_1P[ slot ]
 	fp.thirdPersonAnim = EVAC_EMBARK_ANIMS_3P[ slot ]
 	fp.attachment = "RESCUE"
 	fp.teleport = true
 	fp.thirdPersonCameraAttachments = [ "VDU" ] // this seems wrong, firstperson anim has better angles, but no head
-	
+
+	AddCinematicFlag( player, CE_FLAG_HIDE_MAIN_HUD )
 	EmitSoundOnEntityOnlyToPlayer( player, player, SHIFTER_START_SOUND_3P )
 	// should play SHIFTER_START_SOUND_1P when they actually arrive in the ship i think, unsure how this is supposed to be done
 	PlayPhaseShiftDisappearFX( player )
-
 	FirstPersonSequence( fp, player, dropship )
-	
+	RemoveCinematicFlag( player, CE_FLAG_HIDE_MAIN_HUD )
+
 	FirstPersonSequenceStruct idleFp
-	idleFp.firstPersonAnimIdle = EVAC_IDLE_ANIMS_1P[ slot ]
-	idleFp.thirdPersonAnimIdle = EVAC_IDLE_ANIMS_3P[ slot ]
+
+	idleFp.firstPersonAnim = EVAC_IDLE_ANIMS_1P[ slot ]
+	idleFp.thirdPersonAnim = EVAC_IDLE_ANIMS_3P[ slot ]
 	idleFp.attachment = "RESCUE"
 	idleFp.teleport = true
 	idleFp.hideProxy = true
-	idleFp.viewConeFunction = ViewConeWide
+	idleFp.viewConeFunction = ViewConeFree
 
 	thread FirstPersonSequence( idleFp, player, dropship )
-	ViewConeWide( player ) // gotta do this after for some reason, adding it to idleFp does not work for some reason
 }
 
 bool function PlayerInDropship( entity player, entity dropship )
@@ -587,13 +594,13 @@ void function CheckIfAnyPlayerLeft( int evacTeam )
 		}
 	)
 
-	while( GetPlayerArrayOfTeam_Alive( evacTeam ).len() )
+	while ( GetPlayerArrayOfTeam_Alive( evacTeam ).len() )
 	{
 		if ( GetGameState() == eGameState.Postmatch )
 			return
 
 		WaitFrame()
-	}	
+	}
 }
 
 void function DropShipTempHide( entity dropship )
@@ -628,9 +635,25 @@ EvacShipSetting function GetEvacShipSettingByTeam( int team )
 
 void function EvacDropshipDamaged( entity evacShip, var damageInfo )
 {
-	int damageSourceID = DamageInfo_GetDamageSourceIdentifier( damageInfo )
-	if ( damageSourceID == damagedef_nuclear_core )
+	if ( !GetPlayerArrayOfTeam_Alive( evacShip.GetTeam() ).len() )
+		DamageInfo_SetDamage( damageInfo, 0 )
+	else if ( IsDamageFromDamageTrigger( damageInfo ) )
+		DamageInfo_SetDamage( damageInfo, 0 )
+	else if ( DamageInfo_GetDamageSourceIdentifier( damageInfo ) == damagedef_nuclear_core )
 		DamageInfo_SetDamage( damageInfo, DamageInfo_GetDamage( damageInfo ) * EVAC_SHIP_DAMAGE_MULTIPLIER_AGAINST_NUCLEAR_CORE )
+	else if ( DamageInfo_GetDamageSourceIdentifier( damageInfo ) == eDamageSourceId.mp_titanweapon_dumbfire_rockets )
+		DamageInfo_SetDamage( damageInfo, DamageInfo_GetDamage( damageInfo ) * 0.6 )
+}
+
+void function EvacPlayerDamaged( entity player, var damageInfo )
+{
+	if ( !IsValid( player.GetParent() ) || !IsAlive( player.GetParent() ) || !( "evacSlots" in player.GetParent().s ) || !PlayerInDropship( player, player.GetParent() ) )
+		return
+
+	if ( !IsDamageFromDamageTrigger( damageInfo ) && ( DamageInfo_GetForceKill( damageInfo ) || IsInstantDeath( damageInfo ) ) )
+		return
+
+	DamageInfo_SetDamage( damageInfo, 0 )
 }
 
 void function WarpInEffectEvacShip( entity dropship )
@@ -655,4 +678,25 @@ void function WarpInEffectEvacShip( entity dropship )
 	EmitSoundAtPosition( TEAM_UNASSIGNED, origin, sfx )
 
 	wait totalTime - sfxWait
+}
+
+void function TriggerEnterCallback( entity trigger, bool functionref( entity, entity ) canBoardCallback, entity dropship )
+{
+	wait 0.16
+
+	trigger.SetEnterCallback
+	(
+		void function( entity trigger, entity player ) : ( canBoardCallback, dropship )
+		{
+			if ( !player.IsPlayer() || !IsAlive( player ) || player.IsTitan() || player.ContextAction_IsBusy() || !canBoardCallback( dropship, player ) || PlayerInDropship( player, dropship ) )
+				return
+
+			thread AddPlayerToEvacDropship( dropship, player )
+		}
+	)
+}
+
+int function GetEvacNodeNumber()
+{
+	return file.currentEvacNode
 }

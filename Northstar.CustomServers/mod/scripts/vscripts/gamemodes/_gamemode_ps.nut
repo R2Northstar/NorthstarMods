@@ -1,6 +1,4 @@
-untyped
 global function GamemodePs_Init
-//global function RateSpawnpoints_SpawnZones
 
 struct {
 	array<entity> spawnzones

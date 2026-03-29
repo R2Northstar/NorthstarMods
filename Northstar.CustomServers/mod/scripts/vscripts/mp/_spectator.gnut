@@ -12,6 +12,10 @@ global function Spectator_ClearCustomSpectatorFunc
 
 // helper funcs
 global function HACKCleanupStaticObserverStuff
+global function SetSpectatorEnabled
+global function SetPrivateMatchSpectatorEnabled
+global function SpectatorEnabled
+global function PrivateMatchSpectatorEnabled
 
 global typedef SpectatorFunc void functionref( entity player )
 
@@ -19,8 +23,11 @@ struct {
 	array<entity> staticSpecCams 
 	SpectatorFunc defaultSpectatorFunc
 	SpectatorFunc nextSpectatorFunc = null
-	
+
 	int newestFuncIndex = 0 // used to track which players have finished the most recent spectator func
+
+	bool spectatorenabled = true
+	bool privatematchspectatorenabled = true
 } file
 
 void function Spectator_Init()
@@ -78,9 +85,30 @@ void function HACKCleanupStaticObserverStuff( entity player )
 	player.SetObserverModeStaticAngles( < 3.402823466e38, 3.402823466e38, 3.402823466e38 > )
 }
 
+void function SetSpectatorEnabled( bool enabled )
+{
+	file.spectatorenabled = enabled
+}
+
+void function SetPrivateMatchSpectatorEnabled( bool enabled )
+{
+	file.privatematchspectatorenabled = enabled
+}
+
+bool function SpectatorEnabled()
+{
+	return file.spectatorenabled
+}
+
+bool function PrivateMatchSpectatorEnabled()
+{
+	return file.privatematchspectatorenabled
+}
+
 void function InitialisePrivateMatchSpectatorPlayer( entity player )
 {
-	thread PlayerBecomesSpectator( player )
+	if ( SpectatorEnabled() || ( IsPrivateMatchSpectator( player ) && PrivateMatchSpectatorEnabled() ) )
+		thread PlayerBecomesSpectator( player )
 }
 
 // this should be called when intros respawn players normally to handle fades and stuff
@@ -92,67 +120,45 @@ void function RespawnPrivateMatchSpectator( entity player )
 void function PlayerBecomesSpectator( entity player )
 {
 	player.EndSignal( "OnDestroy" )
-	
+
+	SetTeam( player, player.GetTeam() )
+
 	WaittillGameStateOrHigher( eGameState.Prematch )
 
-	if ( IsPrivateMatchSpectator( player ) )
-	{
-		entity intermissionCam = GetEntArrayByClass_Expensive( "info_intermission" )[ 0 ]
-		DoRespawnPlayer( player, null )
-		TakeAllPassives( player )
-		TakeAllWeapons( player )
-		player.SetPlayerSettingsWithMods( "spectator", [] )
-		player.StopPhysics()
-		player.SetPhysics( MOVETYPE_NOCLIP )
-		player.SetAimAssistAllowed( false )
-		player.MakeInvisible()
-		NPC_NoTarget( player )
-		HideName( player )
-		PlayerEarnMeter_SetMode( player, eEarnMeterMode.DISABLED )
-		player.Minimap_Hide( TEAM_MILITIA, null )
-		player.Minimap_Hide( TEAM_IMC, null )
-		player.SetInvulnerable()
-		AddCinematicFlag( player, CE_FLAG_HIDE_MAIN_HUD  )
-
-		if( IsValid( intermissionCam ) )
-		{
-			player.SetOrigin( intermissionCam.GetOrigin() )
-			player.SetAngles( intermissionCam.GetAngles() )
-		}
-		
-		return
-	}
-	
 	player.EndSignal( "OnRespawned" )
 	player.EndSignal( "PlayerRespawnStarted" )
-	
-	OnThreadEnd( function() : ( player ) 
+
+	OnThreadEnd( function() : ( player )
 	{
 		if ( IsValid( player ) )
 		{
 			player.StopObserverMode()
+
 			HACKCleanupStaticObserverStuff( player )
 		}
 	})
-	
+
 	// keeps track of the most recent func this player has completed
 	// this is to ensure that custom spectator funcs are only run once per player even before being cleared
 	int funcIndex = 0
+
 	WaitFrame()
-	while ( true )
+
+	while ( CanRunSpectatorCommand( player ) )
 	{
 		SpectatorFunc nextSpectatorFunc = file.defaultSpectatorFunc
+
 		if ( file.nextSpectatorFunc != null && funcIndex != file.newestFuncIndex )
 			nextSpectatorFunc = file.nextSpectatorFunc
 
 		waitthread nextSpectatorFunc( player )
+
+		if ( !CanRunSpectatorCommand( player ) )
+			return
+
 		funcIndex = file.newestFuncIndex // assuming this will be set before file.newestFuncIndex increments when the spectator func is ended by SpectatorFuncChanged
 		// surely this will not end up being false in practice :clueless:
-		
-		// cleanup
-		player.StopObserverMode()
-		HACKCleanupStaticObserverStuff( player ) // un-initialise static observer positions/angles
-		
+
 		WaitFrame() // always wait at least a frame in case an observer func exits immediately to prevent stuff locking up
 	}
 }
@@ -161,103 +167,177 @@ void function SpectatorFunc_Default( entity player )
 {
 	player.EndSignal( "OnRespawned" )
 	player.EndSignal( "OnDestroy" )
-	
+
 	svGlobal.levelEnt.EndSignal( "SpectatorFuncChanged" )
+
 	int targetIndex
-	
 	table result = { next = false }
-		
+
 	while ( true )
 	{
 		array<entity> targets
+
 		targets.extend( file.staticSpecCams )
-			
-		if ( IsFFAGame() || IsPrivateMatchSpectator( player ) )
-			targets.extend( GetPlayerArray_Alive() )
+
+		// need correct spec cams for this
+		/*
+		if ( GetGameState() != eGameState.Epilogue || GetEvacNodeNumber() == -1 )
+			targets.extend( file.staticSpecCams )
 		else
+			targets.append( file.staticSpecCams[ GetEvacNodeNumber() ] )
+		*/
+
+		if ( GetGameState() != eGameState.Prematch )
+		{
 			targets.extend( GetPlayerArrayOfTeam_Alive( player.GetTeam() ) )
-		
-		if ( targets.len() > 0 )
+			targets.removebyvalue( player )
+		}
+
+		if ( targets.len() )
 		{
 			if ( result.next )
+			{
 				targetIndex = ( targetIndex + 1 ) % targets.len()
+			}
 			else
 			{
-				if ( targetIndex == 0 )
+				if ( !targetIndex )
 					targetIndex = ( targets.len() - 1 )
 				else
 					targetIndex--
 			}
-			
+
 			if ( targetIndex >= targets.len() )
 				targetIndex = 0
-			
+
 			entity target = targets[ targetIndex ]
-			
+
 			player.ClearReplayDelay()
 			player.StopObserverMode()
+
 			if ( player.IsWatchingSpecReplay() )
 				player.SetSpecReplayDelay( 0.0 ) // clear spectator replay
-			
+
 			if ( target.IsPlayer() )
-			{		
+			{
 				try
 				{
 					player.SetObserverTarget( target )
+					player.SetSpecReplayDelay( 0.1 )
 					player.StartObserverMode( OBS_MODE_CHASE )
-					player.SetSpecReplayDelay( 0.1 ) // Spectators uses the Replay Buffer to watch others, so it can't be Realtime
 				}
-				catch ( ex ) { }
+				catch ( error )
+				{
+					if ( GetCurrentPlaylistVarInt( "firstpersonspectate_enabled", 1 ) )
+					{
+						try
+						{
+							player.SetObserverTarget( target )
+							player.SetSpecReplayDelay( FIRST_PERSON_SPECTATOR_DELAY )
+							player.StartObserverMode( OBS_MODE_IN_EYE )
+						}
+						catch ( error )
+						{
+							player.SetObserverModeStaticPosition( target.GetOrigin() )
+							player.SetObserverModeStaticAngles( target.GetAngles() )
+							player.SetObserverTarget( null )
+							player.StartObserverMode( OBS_MODE_STATIC )
+						}
+					}
+					else
+					{
+						player.SetObserverModeStaticPosition( target.GetOrigin() )
+						player.SetObserverModeStaticAngles( target.GetAngles() )
+						player.SetObserverTarget( null )
+						player.StartObserverMode( OBS_MODE_STATIC )
+					}
+				}
 			}
 			else
 			{
 				player.SetObserverModeStaticPosition( target.GetOrigin() )
 				player.SetObserverModeStaticAngles( target.GetAngles() )
-				
-				if ( IsPrivateMatchSpectator( player ) )
-					player.StartObserverMode( OBS_MODE_ROAMING )
-				else
-					player.StartObserverMode( OBS_MODE_STATIC )
+				player.SetObserverTarget( null )
+				player.StartObserverMode( OBS_MODE_STATIC )
 			}
 		}
-		
+
 		player.StopPhysics()
+
 		result = player.WaitSignal( "ObserverTargetChanged" )
 	}
 }
 
 bool function ClientCommandCallback_spec_next( entity player, array<string> args )
 {
-	if ( player.GetObserverMode() == OBS_MODE_CHASE || player.GetObserverMode() == OBS_MODE_STATIC || player.GetObserverMode() == OBS_MODE_IN_EYE || player.GetObserverMode() == OBS_MODE_ROAMING )
+	if ( !CanRunSpectatorCommand( player ) )
+		return true
+
+	if ( player.GetObserverMode() == OBS_MODE_CHASE || player.GetObserverMode() == OBS_MODE_STATIC || player.GetObserverMode() == OBS_MODE_IN_EYE )
 		player.Signal( "ObserverTargetChanged", { next = true } )
-		
+
 	return true
 }
 
 bool function ClientCommandCallback_spec_prev( entity player, array<string> args )
 {
-	if ( player.GetObserverMode() == OBS_MODE_CHASE || player.GetObserverMode() == OBS_MODE_STATIC || player.GetObserverMode() == OBS_MODE_IN_EYE || player.GetObserverMode() == OBS_MODE_ROAMING )
+	if ( !CanRunSpectatorCommand( player ) )
+		return true
+
+	if ( player.GetObserverMode() == OBS_MODE_CHASE || player.GetObserverMode() == OBS_MODE_STATIC || player.GetObserverMode() == OBS_MODE_IN_EYE )
 		player.Signal( "ObserverTargetChanged", { next = false } )
-		
+
 	return true
 }
 
 bool function ClientCommandCallback_spec_mode( entity player, array<string> args )
 {
-	// currently unsure how this actually gets called on client, works through console and has references in client.dll tho
-	if ( player.GetObserverMode() == OBS_MODE_CHASE )
+	if ( !CanRunSpectatorCommand( player ) || !IsValid( player.GetObserverTarget() ) || !player.GetObserverTarget().IsPlayer() )
+		return true
+
+	if ( GetCurrentPlaylistVarInt( "firstpersonspectate_enabled", 1 ) && ( player.GetObserverMode() == OBS_MODE_CHASE || player.GetObserverMode() == OBS_MODE_STATIC ) )
 	{
-		// set to first person spectate		
-		player.SetSpecReplayDelay( FIRST_PERSON_SPECTATOR_DELAY )
-		player.SetViewEntity( player.GetObserverTarget(), true )
-		player.StartObserverMode( OBS_MODE_IN_EYE )
+		try
+		{
+			// set to first person spectate
+			player.SetSpecReplayDelay( FIRST_PERSON_SPECTATOR_DELAY )
+			player.StartObserverMode( OBS_MODE_IN_EYE )
+		}
+		catch ( error )
+		{
+			player.SetObserverModeStaticPosition( player.GetObserverTarget().GetOrigin() )
+			player.SetObserverModeStaticAngles( player.GetObserverTarget().GetAngles() )
+			player.SetObserverTarget( null )
+			player.StartObserverMode( OBS_MODE_STATIC )
+		}
 	}
-	else if ( player.GetObserverMode() == OBS_MODE_IN_EYE )
-	{	
-		// set to third person spectate
-		player.SetSpecReplayDelay( 0.1 )
-		player.StartObserverMode( OBS_MODE_CHASE )
+	else if ( player.GetObserverMode() == OBS_MODE_IN_EYE || player.GetObserverMode() == OBS_MODE_STATIC )
+	{
+		try
+		{
+			// set to third person spectate
+			player.SetSpecReplayDelay( 0.1 )
+			player.StartObserverMode( OBS_MODE_CHASE )
+		}
+		catch ( error )
+		{
+			player.SetObserverModeStaticPosition( player.GetObserverTarget().GetOrigin() )
+			player.SetObserverModeStaticAngles( player.GetObserverTarget().GetAngles() )
+			player.SetObserverTarget( null )
+			player.StartObserverMode( OBS_MODE_STATIC )
+		}
 	}
-	
+
+	return true
+}
+
+bool function CanRunSpectatorCommand( entity player )
+{
+	if ( GetGameState() <= eGameState.Prematch || GetGameState() >= eGameState.Postmatch )
+		return false
+
+	if ( !( SpectatorEnabled() || ( IsPrivateMatchSpectator( player ) && PrivateMatchSpectatorEnabled() ) ) )
+		return false
+
 	return true
 }
