@@ -5,10 +5,10 @@ on: [push, pull_request]
 
 jobs:
   compile:
-    runs-on: windows-latest
+    runs-on: windows-2025
     steps:
       - name: Checkout Repo
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           path: "mods"
       
