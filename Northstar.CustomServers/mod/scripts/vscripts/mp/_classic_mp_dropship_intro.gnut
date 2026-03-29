@@ -36,6 +36,10 @@ struct {
 
 void function ClassicMP_DefaultDropshipIntro_Setup()
 {
+	// fallback to no intro if there isn't enough dropship spawnpoints
+	if ( GetEntArrayByClass_Expensive( "info_spawnpoint_dropship_start" ).len() < 4 )
+		ClassicMP_DefaultNoIntro_Setup()
+
 	AddCallback_OnClientConnected( DropshipIntro_OnClientConnected )
 	AddCallback_GameStateEnter( eGameState.Prematch, OnPrematchStart )
 }
@@ -44,9 +48,9 @@ void function DropshipIntro_OnClientConnected( entity player )
 {
 	if ( GetGameState() == eGameState.Prematch )
 	{
-		if( PlayerCanSpawn( player ) )
+		if ( PlayerCanSpawn( player ) )
 			DoRespawnPlayer( player, null )
-		
+
 		PutPlayerInDropship( player )
 	}
 }
@@ -64,11 +68,11 @@ void function OnPrematchStart_Thread()
 	file.introStartTime = Time()
 
 	printt( "Starting Dropship Intro!" )
-	
+
 	// Clear Dropship arrays of Teams for Match Restarts (i.e Half-Times)
 	file.militiaDropships.clear()
 	file.imcDropships.clear()
-	
+
 	// Try to gather all possible Dropship spawn points for Team
 	array<entity> validDropshipSpawns = GetEntArrayByClass_Expensive( "info_spawnpoint_dropship_start" )
 
@@ -77,28 +81,30 @@ void function OnPrematchStart_Thread()
 	// Spawn the Dropships
 	foreach ( entity dropshipSpawn in validDropshipSpawns )
 	{
-		int createTeam = HasSwitchedSides() ? GetOtherTeam( dropshipSpawn.GetTeam() ) : dropshipSpawn.GetTeam() 
+		int createTeam = HasSwitchedSides() ? GetOtherTeam( dropshipSpawn.GetTeam() ) : dropshipSpawn.GetTeam()
 		table< entity, array<entity> > teamDropships = createTeam == TEAM_MILITIA ? file.militiaDropships : file.imcDropships
-		
+
 		if ( teamDropships.len() >= 2 )
 			continue
 
 		entity dropship = CreateDropship( createTeam, dropshipSpawn.GetOrigin(), dropshipSpawn.GetAngles() )
 		AddAnimEvent( dropship, "dropship_warpout", WarpoutEffect )
-		
+
 		dropship.SetValueForModelKey( $"models/vehicle/crow_dropship/crow_dropship_hero.mdl" )
+
 		if ( createTeam == TEAM_IMC )
 			dropship.SetValueForModelKey( $"models/vehicle/goblin_dropship/goblin_dropship_hero.mdl" )
-		
+
 		DispatchSpawn( dropship )
-		
+
 		dropship.ai.spawnTime = Time()
 		dropship.s.deployedPilots <- false
 		dropship.s.deployedTime <- 0.0
 		dropship.SetModel( $"models/vehicle/crow_dropship/crow_dropship_hero.mdl" )
+
 		if ( createTeam == TEAM_IMC )
 			dropship.SetModel( $"models/vehicle/goblin_dropship/goblin_dropship_hero.mdl" )
-		
+
 		dropship.SetInvulnerable()
 
 		NPC_NoTarget( dropship )
@@ -108,7 +114,7 @@ void function OnPrematchStart_Thread()
 		thread PlayAnim( dropship, GetDropshipIntroAnimation() )
 		thread WaitForDropshipDeploy( dropship )
 	}
-	
+
 	// Populate Dropships
 	foreach ( entity player in GetPlayerArray() )
 	{
@@ -126,7 +132,7 @@ void function OnPrematchStart_Thread()
 		else
 			RespawnPrivateMatchSpectator( player )
 	}
-	
+
 	thread EndIntroWhenFinished()
 }
 
