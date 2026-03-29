@@ -130,11 +130,11 @@
 		},
 		{
 			"Path": "gamemodes/sh_gamemodes_custom.gnut",
-			"RunOn": "(CLIENT || SERVER) && MP"
+			"RunOn": "MP"
 		},
 		{
 			"Path": "sh_remote_functions_mp_custom.gnut",
-			"RunOn": "(CLIENT || SERVER) && MP"
+			"RunOn": "MP"
 		},
 		{
 			"Path": "sh_server_to_client_stringcommands.gnut",
@@ -171,9 +171,8 @@
 		},
 		{
 			"Path": "lobby/sh_private_lobby_modes_init.gnut",
-			"RunOn": "( SERVER || CLIENT ) && MP"
+			"RunOn": "MP"
 		},
-
 		{
 			"Path": "_respawn_protection.gnut",
 			"RunOn": "SERVER && MP",

@@ -51,11 +51,11 @@
 		},
 		{
 			"Path": "weapons/mp_weapon_peacekraber.nut",
-			"RunOn": "( CLIENT || SERVER ) && MP"
+			"RunOn": "MP"
 		},
 		{
 			"Path": "weapons/mp_titanweapon_arc_cannon.nut",
-			"RunOn": "( CLIENT || SERVER ) && MP"
+			"RunOn": "MP"
 		},
 		{
 			"Path": "gamemodes/sh_gamemode_chamber.nut",
@@ -139,7 +139,7 @@
 		},
 		{
 			"Path": "gamemodes/sh_gamemode_fw.nut",
-			"RunOn": "( CLIENT || SERVER ) && MP"
+			"RunOn": "MP"
 		},
 		{
 			"Path": "gamemodes/cl_gamemode_fw_custom.nut",
@@ -151,7 +151,7 @@
 		},
 		{
 			"Path": "gamemodes/gg_earn_meter/sh_gg_earn_meter.gnut",
-			"RunOn": "( CLIENT || SERVER ) && MP"
+			"RunOn": "MP"
 		},
 		{
 			"Path": "gamemodes/gg_earn_meter/_gg_earn_meter.gnut",
@@ -338,7 +338,7 @@
 		},
 		{
 			"Path": "gamemodes/sh_riff_instagib.gnut",
-			"RunOn": "( CLIENT || SERVER ) && MP",
+			"RunOn": "MP",
 			"ClientCallback": {
 				"After": "RiffInstagib_Init"
 			},
@@ -368,7 +368,7 @@
 		},
 		{
 			"Path": "sh_bleedout_damage.gnut",
-			"RunOn": "( CLIENT || SERVER ) && MP",
+			"RunOn": "MP",
 			"ClientCallback": {
 				"Before": "BleedoutDamage_PreInit",
 				"After": "BleedoutDamage_Init"
@@ -380,7 +380,7 @@
 		},
 		{
 			"Path": "sh_custom_oob_timer.gnut",
-			"RunOn": "( CLIENT || SERVER ) && MP",
+			"RunOn": "MP",
 			"ClientCallback": {
 				"After": "CustomOOBTimer_Init"
 			},
@@ -390,7 +390,7 @@
 		},
 		{
 			"Path": "rodeo/sh_classic_rodeo.gnut",
-			"RunOn": "( CLIENT || SERVER ) && MP",
+			"RunOn": "MP",
 			"ClientCallback": {
 				"After": "ClassicRodeo_InitPlaylistVars"
 			},
@@ -421,7 +421,7 @@
 		},
 		{
 			"Path": "sh_custom_pilot_collision.gnut",
-			"RunOn": "( CLIENT || SERVER ) && MP",
+			"RunOn": "MP",
 			"ClientCallback": {
 				"After": "CustomPilotCollision_InitPlaylistVars"
 			},
@@ -431,7 +431,7 @@
 		},
 		{
 			"Path": "sh_message_utils.gnut",
-			"RunOn": "( CLIENT || SERVER ) && MP",
+			"RunOn": "MP",
 			"ClientCallback": {
 				"Before": "MessageUtils_ClientInit"
 			},
@@ -468,7 +468,7 @@
 		},
 		{
 			"Path": "sh_drop_battery_command.nut",
-			"RunOn": "( CLIENT || SERVER ) && MP",
+			"RunOn": "MP",
 			"ClientCallback": {
 				"After": "DropBatteryCommand_Init"
 			},
