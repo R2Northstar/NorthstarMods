@@ -475,14 +475,16 @@
 			"ServerCallback": {
 				"After": "DropBatteryCommand_Init"
 			}
-		  "Path" : "sh_custom_scoreboard_columns.gnut",
-		  "RunOn": "( CLIENT || SERVER ) && MP",
-		  "ClientCallback":{
+		},
+		{
+			"Path": "sh_custom_scoreboard_columns.gnut",
+			"RunOn": "MP",
+			"ClientCallback": {
 				"Before": "Client_CustomScoreboardColumns_Init"
-		  },
-		  "ServerCallback": {
+			},
+			"ServerCallback": {
 				"Before": "Server_CustomScoreboardColumns_Init"
-		  }
+			}
 		}
 	],
 
