@@ -380,7 +380,7 @@ entity function GetSpawnPoint( array<entity> points, int team )
 }
 
 // tells infantry where to go
-// In vanilla there seem to be preset paths ai follow to get to the other teams vone and capture it
+// In vanilla there seem to be preset paths ai follow to get to the other teams zone and capture it
 // AI can also flee deeper into their zone suggesting someone spent way too much time on this
 void function SquadHandler( array<entity> guys )
 {
