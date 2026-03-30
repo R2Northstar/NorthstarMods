@@ -139,7 +139,7 @@
 		{
 			"Path": "ui/menu_mod_settings.nut",
 			"RunOn": "UI",
-			"UICallback":{
+			"UICallback": {
 				"Before": "AddModSettingsMenu"
 			}
 		},

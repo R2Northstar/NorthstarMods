@@ -462,7 +462,7 @@
 		{
 			"Path": "ui/ns_custom_mod_settings.gnut",
 			"RunOn": "UI",
-			"UICallback":{
+			"UICallback": {
 				"Before": "NSCustomModSettings"
 			}
 		},
