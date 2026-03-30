@@ -752,21 +752,18 @@ void function GameStateEnter_Playing_Threaded()
 						PlayCurrentTeamMusicEventsOnPlayer( player )
 				}
 			}
-			else
+			else if ( playingthreeminutemusic || playinglastminutemusic )
 			{
-				if ( playingthreeminutemusic || playinglastminutemusic )
-				{
-					playingthreeminutemusic = false
-					playinglastminutemusic = false
+				playingthreeminutemusic = false
+				playinglastminutemusic = false
 
-					foreach ( int team in [ TEAM_IMC, TEAM_MILITIA ] )
-						CreateTeamMusicEvent( team, eMusicPieceID.LEVEL_INTRO, -99999999 )
+				foreach ( int team in [ TEAM_IMC, TEAM_MILITIA ] )
+					CreateTeamMusicEvent( team, eMusicPieceID.LEVEL_INTRO, -99999999 )
 
-					StopPlayingLastMinuteMusicToAll()
+				StopPlayingLastMinuteMusicToAll()
 
-					foreach ( entity player in GetPlayerArray() )
-						PlayCurrentTeamMusicEventsOnPlayer( player )
-				}
+				foreach ( entity player in GetPlayerArray() )
+					PlayCurrentTeamMusicEventsOnPlayer( player )
 			}
 
 			if ( Time() >= endTime )
