@@ -747,17 +747,90 @@ void function WaitForServerListRequest()
 }
 
 
+bool function IsHexDigitChar( int c )
+{
+    return ( c >= '0' && c <= '9' ) || ( c >= 'A' && c <= 'F' ) || ( c >= 'a' && c <= 'f' )
+}
+
+int function GetNameColorCodeLengthAt( string s, int i )
+{
+    if ( i >= s.len() || s[i] != '^' )
+        return 0
+
+    int remaining = s.len() - ( i + 1 )
+    if ( remaining <= 0 )
+        return 0
+
+    if ( remaining >= 8 )
+    {
+        bool ok = true
+        for ( int j = 1; j <= 8; j++ )
+        {
+            int c = expect int( s[i + j].tointeger() )
+            if ( !IsHexDigitChar( c ) )
+            {
+                ok = false
+                break
+            }
+        }
+        if ( ok )
+            return 9
+    }
+
+    if ( remaining >= 6 )
+    {
+        bool ok = true
+        for ( int j = 1; j <= 6; j++ )
+        {
+            int c = expect int( s[i + j].tointeger() )
+            if ( !IsHexDigitChar( c ) )
+            {
+                ok = false
+                break
+            }
+        }
+        if ( ok )
+            return 7
+    }
+
+    int c1 = expect int( s[i + 1].tointeger() )
+    if ( c1 >= '0' && c1 <= '9' )
+        return 2
+
+    return 0
+}
+
+string function StripColorCodes( string s )
+{
+    string clean = ""
+    for ( int i = 0; i < s.len(); )
+    {
+        int codeLen = GetNameColorCodeLengthAt( s, i )
+        if ( codeLen > 0 )
+        {
+            i += codeLen
+            continue
+        }
+
+        clean += format( "%c", expect int( s[i].tointeger() ) )
+        i++
+    }
+    return clean
+}
 
 void function FilterServerList()
 {
 	file.filteredServers.clear()
+
 	int totalPlayers = 0
+	int serverCount = 0
 
 	array<ServerInfo> servers = NSGetGameServers()
 
 	foreach ( ServerInfo server in servers )
 	{
 		totalPlayers += server.playerCount
+		serverCount++
 
 		// Filters
 		if ( filterArguments.hideEmpty && server.playerCount == 0 )
@@ -779,12 +852,12 @@ void function FilterServerList()
 		if ( filterArguments.useSearch )
 		{	
 			array<string> sName
-			sName.append( server.name.tolower() )
+			sName.append( StripColorCodes( RemoveNewlines( server.name.tolower() ) ) )
 			sName.append( Localize( GetMapDisplayName( server.map ) ).tolower() )
 			sName.append( server.map.tolower() )
 			sName.append( server.playlist.tolower() )
 			sName.append( Localize( server.playlist ).tolower() )
-			sName.append( server.description.tolower() )
+			sName.append( StripColorCodes( RemoveNewlines( server.description.tolower() ) ) )
 			sName.append( server.region.tolower() )
 
 			string sTerm = filterArguments.searchTerm.tolower()
@@ -804,9 +877,8 @@ void function FilterServerList()
 	}
 	
 	// Update player and server count
-	int ServerCount = NSGetServerCount()
 	string totalPlayersStr = string( totalPlayers ) + ( totalPlayers == 1 ? " " : ""  ) + ( totalPlayers < 10 ? " " : ""  )
-	string serverCountStr = string( ServerCount ) + ( ServerCount == 1 ? " " : "" ) + ( ServerCount < 10 ? " " : ""  )
+	string serverCountStr = string( serverCount ) + ( serverCount == 1 ? " " : "" ) + ( serverCount < 10 ? " " : ""  )
 	Hud_SetText( Hud_GetChild( file.menu, "InGamePlayerLabel" ), Localize( "#INGAME_PLAYERS", totalPlayersStr ) )
 	Hud_SetText( Hud_GetChild( file.menu, "TotalServerLabel" ),  Localize( "#TOTAL_SERVERS", serverCountStr ) )
 }
@@ -837,7 +909,7 @@ void function UpdateShownPage()
 		Hud_SetVisible( file.serverButtons[ i ], true )
 
 		Hud_SetVisible( file.serversProtected[ i ], server.requiresPassword )
-		Hud_SetText( file.serversName[ i ], server.name )
+		Hud_SetText( file.serversName[ i ], EscapeLocalisationAndRemoveNewlines( server.name ) )
 		Hud_SetText( file.playerCountLabels[ i ], format( "%i/%i", server.playerCount, server.maxPlayerCount ) )
 		Hud_SetText( file.serversMap[ i ], GetMapDisplayName( server.map ) )
 		Hud_SetText( file.serversGamemode[ i ], GetGameModeDisplayName( server.playlist ) )
@@ -917,7 +989,7 @@ void function DisplayFocusedServerInfo( int scriptID )
 	// text panels
 	Hud_SetVisible( Hud_GetChild( menu, "LabelDescription" ), true )
 	Hud_SetVisible( Hud_GetChild( menu, "LabelMods" ), false )
-	Hud_SetText( Hud_GetChild( menu, "LabelDescription" ), server.description + "\n\nRequired Mods:\n" + FillInServerModsLabel( server.requiredMods ) )
+	Hud_SetText( Hud_GetChild( menu, "LabelDescription" ), RemoveNewlines( server.description ) + " ^FFFFFFFF" + "\n\nRequired Mods:\n" + FillInServerModsLabel( server.requiredMods ) )
 
 	// map name/image/server name
 	string map = server.map
@@ -927,7 +999,7 @@ void function DisplayFocusedServerInfo( int scriptID )
 	Hud_SetVisible( Hud_GetChild( menu, "NextMapName" ), true )
 	Hud_SetText( Hud_GetChild( menu, "NextMapName" ), GetMapDisplayName( map ) )
 	Hud_SetVisible( Hud_GetChild( menu, "ServerName" ), true )
-	Hud_SetText( Hud_GetChild( menu, "ServerName" ), server.name )
+	Hud_SetText( Hud_GetChild( menu, "ServerName" ), EscapeLocalisationAndRemoveNewlines( server.name ) )
 
 	// mode name/image
 	string mode = server.playlist
@@ -1380,4 +1452,34 @@ array<string> function GetModVersions( string modName )
 		versions.append( mod.version )
 	}
 	return versions
+}
+
+// escapes localisation by replacing # with ^FFFFFFFF#
+string function EscapeLocalisation( string input )
+{
+	// only escape if it actually localizes
+	// localisations like eula, can script error with how long it is
+	try
+	{
+		if ( Localize( input ) != input )
+			return StringReplace( input, "#", "^FFFFFFFF#" )
+	}
+	catch ( error )
+	{
+		return StringReplace( input, "#", "^FFFFFFFF#" )
+	}
+
+	return input
+}
+
+// removes all newlines
+string function RemoveNewlines( string input )
+{
+	return StringReplace( input, "\n", " " )
+}
+
+// EscapeLocalisation and RemoveNewlines combined
+string function EscapeLocalisationAndRemoveNewlines( string input )
+{
+	return EscapeLocalisation( RemoveNewlines( input ) )
 }
