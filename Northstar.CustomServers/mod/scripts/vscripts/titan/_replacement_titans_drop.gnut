@@ -428,10 +428,6 @@ bool function TitanFindDropNodes( FlightPath flightPath, vector baseOrigin, floa
 	origin = ModifyOriginForDrop( origin, mins, maxs, result.position, mask )
 	titan.SetOrigin( origin )
 
-	// Don't use nodes on top of the roof in kodai
-	if ( GetMapName() == "mp_forwardbase_kodai" && origin.z > 1200 )
-		return false
-
 	if ( !TitanTestDropPoint( origin, flightPath ) )
 		return false
 
@@ -442,6 +438,12 @@ bool function TitanFindDropNodes( FlightPath flightPath, vector baseOrigin, floa
 		return false
 
 	if ( !EdgeTraceDropPoint( origin ) )
+		return false
+
+	if ( EntityInSolid( titan ) )
+		return false
+
+	if ( !NavMesh_IsPosReachableForAI( titan, origin ) )
 		return false
 
 	return true

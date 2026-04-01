@@ -92,6 +92,12 @@ void function ReloadMods( bool reloadorretry = false )
 			if ( !EdgeTraceDropPoint( origin ) )
 				return false
 
+			if ( EntityInSolid( titan ) )
+				return false
+
+			if ( !NavMesh_IsPosReachableForAI( titan, origin ) )
+				return false
+
 			return true
 		}
 	
@@ -135,6 +141,9 @@ void function ReloadMods( bool reloadorretry = false )
 				if ( !TitanValidateDropNode( flightpath, titan, origin ) )
 					for ( int j = dataindex; j < dataindex + ANALYSIS_STEPS; j++ )
 						SetNodeScriptData_Boolean( i, j, false )
+				else
+					for ( int j = dataindex; j < dataindex + ANALYSIS_STEPS; j++ )
+						SetNodeScriptData_Boolean( i, j, true )
 
 				if ( debug )
 				{
