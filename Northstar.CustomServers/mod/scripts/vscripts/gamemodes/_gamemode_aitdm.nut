@@ -113,8 +113,8 @@ void function OnPlaying()
 {
 	file.levels = [ file.levelSpectres, file.levelSpectres ]
 
-	// don't run spawning code if ains and nms aren't up to date
-	if ( GetAINScriptVersion() == AIN_REV && GetNodeCount() )
+	// don't run spawning code if nms and ains aren't up to date
+	if ( NavMesh_IsUpToDate() && GetAINScriptVersion() == AIN_REV && GetNodeCount() )
 	{
 		thread SpawnIntroBatch_Threaded( TEAM_MILITIA )
 		delaythread ( 0.0001 ) SpawnIntroBatch_Threaded( TEAM_IMC )
