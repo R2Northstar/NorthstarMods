@@ -1783,6 +1783,7 @@ void function FD_PlayerRespawnCallback( entity player )
 	{
 		if ( !player.IsTitan() )
 			thread FD_PlayerRespawnProtection( player )
+
 		return
 	}
 
@@ -1793,6 +1794,7 @@ void function FD_PlayerRespawnCallback( entity player )
 	{
 		//Attach player
 		FirstPersonSequenceStruct idleSequence
+
 		idleSequence.firstPersonAnim = DROPSHIP_IDLE_ANIMS_POV[ file.playersInShip ]
 		idleSequence.thirdPersonAnim = DROPSHIP_IDLE_ANIMS[ file.playersInShip ]
 		idleSequence.attachment = "ORIGIN"
