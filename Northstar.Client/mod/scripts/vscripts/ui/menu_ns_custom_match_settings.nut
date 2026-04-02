@@ -73,9 +73,14 @@ void function OnNorthstarCustomMatchSettingsMenuOpened()
 		
 		// manually resolve default gamemode/playlist vars since game won't do it for us if we aren't using GetCurrentPlaylistVar
 		string gamemode = PrivateMatch_GetSelectedMode()
-		if ( gamemode != "speedball" ) // hack since lf is weird
-			gamemode = GetPlaylistGamemodeByIndex( gamemode, 0 )
-		
+
+		try
+		{
+			if ( gamemode != "speedball" ) // hack since lf is weird
+				gamemode = GetPlaylistGamemodeByIndex( gamemode, 0 )
+		}
+		catch ( error ) {}
+
 		string gamemodeVar = GetGamemodeVarOrUseValue( PrivateMatch_GetSelectedMode(), setting.playlistVar, setting.defaultValue )
 		string playlistVar = GetPlaylistVarOrUseValue( PrivateMatch_GetSelectedMode(), setting.playlistVar, setting.defaultValue )
 		

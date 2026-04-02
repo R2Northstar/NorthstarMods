@@ -82,11 +82,12 @@ Press Yes if you agree to this. This choice can be changed in the mods menu at a
 		"iron_rules" "Iron Titan Rules"
 		"riff_titan_queue" "Max Active Titans per Team"
 		"classic_executions" "Classic Executions"
+		"pingspot_enabled" "Ping Spot Command"
 
 		"capture_point_amping" "Amped Hardpoints"
-    
+
 		"aitdm_archer_grunts" "Archer Grunts"
-    
+
 		// northstar.custom localisation is just deciding not to work, so putting it here for now
 		"PL_sbox" "Sandbox"
 		"PL_sbox_lobby" "Sandbox Lobby"
