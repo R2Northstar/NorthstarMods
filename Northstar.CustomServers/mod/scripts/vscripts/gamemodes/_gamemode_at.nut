@@ -272,7 +272,7 @@ void function AT_PlayerObjectiveThink( entity player )
 					}
 				}
 
-				switch( dropZoneActiveCount )
+				switch ( dropZoneActiveCount )
 				{
 					case 1:
 						nextObjective = AT_OBJECTIVE_KILL_DZ
@@ -293,7 +293,7 @@ void function AT_PlayerObjectiveThink( entity player )
 				}
 
 				// We couldn't get an objective, set it to empty
-				if ( dropZoneActiveCount == 0 && bossAliveCount == 0 )
+				if ( !dropZoneActiveCount && !bossAliveCount )
 					nextObjective = AT_OBJECTIVE_EMPTY
 			}
 		}
@@ -509,7 +509,7 @@ bool function AT_NPCTryStealBonusPoints( entity attacker, entity victim )
 	
 	int victimBonus = AT_GetPlayerBonusPoints( victim )
 	int bonusToSteal = victimBonus / 2 // npc always steal half the bonus from player, no extra bonus for killing the player
-	if ( bonusToSteal == 0 ) // player has no bonus!
+	if ( bonusToSteal <= 0 ) // player has no bonus!
 		return false
 
 	if ( !( attacker in file.npcStolenBonus ) ) // init
@@ -1231,7 +1231,7 @@ function OnPlayerUseBank( bank, player )
 	expect entity( player )
 
 	// Player has no bonus, try to send a tip using SendHUDMessage
-	if ( AT_GetPlayerBonusPoints( player ) == 0 )
+	if ( AT_GetPlayerBonusPoints( player ) <= 0 )
 	{
 		SendHudMessage( player, "#AT_USE_BANK_NO_BONUS_HINT", -1, 0.4, 255, 255, 255, 255, 0.15, 1.0, 0.5 )
 		return
@@ -1334,7 +1334,7 @@ void function PlayerUploadingBonus_Threaded( entity bank, entity player )
 
 		int bonusToUpload = int( min( AT_BANK_DEPOSIT_RATE, AT_GetPlayerBonusPoints( player ) ) )
 		// No more bonus to upload, return
-		if ( bonusToUpload == 0 )
+		if ( bonusToUpload <= 0 )
 		{
 			uploadInfo.uploadSuccess = true
 			return
@@ -1396,7 +1396,7 @@ void function AT_DroppodSquadEvent( AT_WaveOrigin campData, int spawnId, array<A
 			if ( GetScriptManagedNPCArrayLength_Alive( eventManager ) >= totalAllowedOnField ) // we have enough npcs on field?
 				break // stop following spawning functions
 		}
-		if ( minionDatas.len() == 0 ) // all spawn data has finished spawn
+		if ( !minionDatas.len() ) // all spawn data has finished spawn
 			return
 
 		int npcOnFieldCount = GetScriptManagedNPCArrayLength_Alive( eventManager )
@@ -1443,7 +1443,7 @@ void function AT_DroppodSquadEvent_Single( AT_WaveOrigin campData, int spawnId, 
 void function AT_SpawnDroppodSquad( AT_WaveOrigin campData, int spawnId, string aiType, int scriptManagerId )
 {
 	entity spawnpoint
-	if ( campData.dropPodSpawnPoints.len() == 0 )
+	if ( !campData.dropPodSpawnPoints.len() )
 		spawnpoint = campData.ent
 	else
 		spawnpoint = campData.dropPodSpawnPoints.getrandom()
@@ -1543,7 +1543,7 @@ void function AT_ReaperEvent( AT_WaveOrigin campData, int spawnId, AT_SpawnData 
 void function AT_SpawnReaper( AT_WaveOrigin campData, int spawnId, int scriptManagerId )
 {
 	entity spawnpoint
-	if ( campData.dropPodSpawnPoints.len() == 0 )
+	if ( !campData.dropPodSpawnPoints.len() )
 		spawnpoint = campData.ent
 	else
 		spawnpoint = campData.dropPodSpawnPoints.getrandom()
@@ -1604,7 +1604,7 @@ void function AT_BountyTitanEvent( AT_WaveOrigin campData, int spawnId, AT_Spawn
 void function AT_SpawnBountyTitan( AT_WaveOrigin campData, int spawnId, int scriptManagerId )
 {
 	entity spawnpoint
-	if ( campData.titanSpawnPoints.len() == 0 )
+	if ( !campData.titanSpawnPoints.len() )
 		spawnpoint = campData.ent
 	else
 		spawnpoint = campData.titanSpawnPoints.getrandom()
@@ -1621,7 +1621,7 @@ void function AT_SpawnBountyTitan( AT_WaveOrigin campData, int spawnId, int scri
 	int bountyID = 0
 	int currentWave = GetGlobalNetInt( "AT_currentWave" )
 
-	if ( currentWave == 0 )
+	if ( !currentWave )
 	{
 		bountyAiSettings = clone AT_BOUNTY_TITANS_AI_SETTINGS_BOSS_WAVE_1
 
