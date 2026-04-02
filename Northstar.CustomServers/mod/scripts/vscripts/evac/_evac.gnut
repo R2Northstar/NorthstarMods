@@ -149,7 +149,9 @@ void function WaitAndDisableRespawn()
 	foreach ( entity player in GetPlayerArray() )
 	{
 		ClearRespawnAvailable( player )
-		InitialisePrivateMatchSpectatorPlayer( player )
+
+		if ( !IsAlive( player ) )
+			InitialisePrivateMatchSpectatorPlayer( player )
 	}
 }
 
