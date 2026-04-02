@@ -9,7 +9,7 @@ global function Evac
 global function EvacEpiloguePlayerCanBoard
 global function EvacEpilogueShouldLeaveEarly
 global function EvacEpilogueCompleted
-global function SetRespawnAndWait
+global function WaitAndDisableRespawn
 global function GetEvacNodeNumber
 
 const float EVAC_INITIAL_WAIT = 5.0
@@ -126,7 +126,7 @@ void function EvacEpilogue()
 	
 	if ( canRunEvac )
 	{
-		thread SetRespawnAndWait( false )
+		thread WaitAndDisableRespawn()
 
 		// no players can evac? end match
 		thread CheckIfAnyPlayerLeft( GetOtherTeam( winner ) )
@@ -135,19 +135,22 @@ void function EvacEpilogue()
 	}
 	else
 	{
-		thread SetRespawnAndWait( false ) //prevent respawns during the fade to black, should only be an issue if the match is a draw
+		thread WaitAndDisableRespawn() //prevent respawns during the fade to black, should only be an issue if the match is a draw
 		thread EvacEpilogueCompleted( null ) //this is hacky but like, this also shouldn't really be hit in normal gameplay
 	}
 }
 
-void function SetRespawnAndWait( bool mode )
+void function WaitAndDisableRespawn()
 {
 	wait GAME_EPILOGUE_PLAYER_RESPAWN_LEEWAY
 	Riff_ForceSetEliminationMode( eEliminationMode.Pilots )
 	
 	// clear any respawn availablity, or players are able to save there respawn for whenever they want
 	foreach ( entity player in GetPlayerArray() )
+	{
 		ClearRespawnAvailable( player )
+		InitialisePrivateMatchSpectatorPlayer( player )
+	}
 }
 
 bool function EvacEpiloguePlayerCanBoard( entity dropship, entity player )
@@ -196,11 +199,12 @@ void function Evac( int evacTeam, float initialWait, float arrivalTime, float wa
 	wait initialWait
 
 	// setup evac nodes if not manually registered
-	if ( file.evacNodes.len() == 0 && !IsValid( customEvacNode ) )
+	if ( !file.evacNodes.len() && !IsValid( customEvacNode ) )
 	{
 		for ( int i = 1; ; i++ )
 		{
 			entity newNode = GetEnt( "escape_node" + i )
+
 			if ( !IsValid( newNode ) )
 				break
 			
@@ -213,13 +217,12 @@ void function Evac( int evacTeam, float initialWait, float arrivalTime, float wa
 		file.spaceNode = GetEnt( "spaceNode" )
 
 	entity evacNode = customEvacNode
-
 	int evacNodeNumber = RandomInt( file.evacNodes.len() )
 
-	if ( !IsValid( customEvacNode ) )
+	if ( !IsValid( evacNode ) )
 	{
 		evacNode = file.evacNodes[ evacNodeNumber ]
-		file.currentEvacNode = evacNodeNumber
+		file.currentEvacNode = evacNodeNumber + 1
 	}
 
 	svGlobal.levelEnt.Signal( "SpectatorFuncChanged" )
@@ -401,8 +404,7 @@ void function Evac( int evacTeam, float initialWait, float arrivalTime, float wa
 
 	dropship.kv.VisibilityFlags = 0 // prevent jetpack trails being like "dive" into ground
 	WaitFrame() // better wait because we are server
-	if ( !IsValid( dropship ) )
-		return
+
 	thread __WarpOutEffectShared( dropship )
 	
 	// go to space
@@ -418,7 +420,7 @@ void function Evac( int evacTeam, float initialWait, float arrivalTime, float wa
 	thread PlayAnim( dropship, "ds_space_flyby_dropshipA", file.spaceNode )
 	
 	foreach ( entity player in GetPlayerArray() )
-	{	
+	{
 		// evac-ed players only beyond this point
 		if ( !PlayerInDropship( player, dropship ) )
 		{

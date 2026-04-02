@@ -41,7 +41,7 @@ void function AddEvacNodes()
 	AddEvacNode( GetEnt( "evac_location4" ) )
 	
 	SetEvacSpaceNode( GetEnt( "end_spacenode" ) )
-}	
+}
 
 // dissolve effects
 void function WargamesDissolveDeadEntity( entity deadEnt, var damageInfo )

@@ -13,6 +13,8 @@ void function GamemodeMfd_Init()
 	RegisterSignal( "MarkKilled" )
 	ScoreEvent_SetupEarnMeterValuesForMixedModes()
 
+	SetGamemodeAllowsTeamSwitch( false )
+
 	if ( IsTitanMarkedForDeathMode() )
 	{
 		Riff_ForceSetSpawnAsTitan( eSpawnAsTitan.Always )

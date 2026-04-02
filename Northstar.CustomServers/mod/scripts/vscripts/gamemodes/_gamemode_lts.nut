@@ -16,6 +16,7 @@ void function GamemodeLts_Init()
 	// gamemode settings
 	SetShouldUsePickLoadoutScreen( true )
 	SetSwitchSidesBased( true )
+	SetGamemodeAllowsTeamSwitch( false )
 	SetRoundBased( true )
 	Riff_ForceSetEliminationMode( eEliminationMode.Titans )
 	Riff_ForceSetSpawnAsTitan( eSpawnAsTitan.Always )
