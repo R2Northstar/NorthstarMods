@@ -18,7 +18,10 @@ global function ClassicMP_GetIntroLength
 global function ClassicMP_ForceDisableEpilogue
 global function ClassicMP_SetEpilogue
 global function ClassicMP_SetupEpilogue
+
+// epilogue checks
 global function ClassicMP_ShouldRunEpilogue
+global function ClassicMP_RunEpilogueWithDeadPlayers
 
 global function GetClassicMPMode
 
@@ -36,6 +39,9 @@ struct {
 	bool epilogueForceDisabled = false
 	bool shouldRunEpilogueInRoundBasedMode = false
 	void functionref() epilogueSetupFunc
+
+	// epilogue checks
+	bool runEpilogueWithDeadPlayers = false
 } file
 
 void function ClassicMp_Init()
@@ -132,23 +138,34 @@ bool function GetClassicMPMode()
 
 bool function ClassicMP_ShouldRunEpilogue()
 {
+	if ( GetCurrentPlaylistVarInt( "max_teams", 2 ) != 2 )
+		return false
+
+	if ( !IsIMCOrMilitiaTeam( GetWinningTeam() ) )
+		return false
+
+	if ( !file.runEpilogueWithDeadPlayers && IsEliminationBased() && IsTeamEliminated( GetOtherTeam( GetWinningTeam() ) ) )
+		return false
+
 	// there needs to be atleast 1 player on each team before running epilogue
-	if ( GetCurrentPlaylistVarInt( "max_teams", 2 ) == 2 && IsIMCOrMilitiaTeam( GetWinningTeam() ) )
-	{
-		int winningPlayers = 0
-		int losingPlayers = 0
+	int winningPlayers = 0
+	int losingPlayers = 0
 
-		foreach ( entity player in GetPlayerArray() )
-			if ( !IsPrivateMatchSpectator( player ) )
-				if ( player.GetTeam() == GetWinningTeam() )
-					winningPlayers++
-				else
-					losingPlayers++
+	foreach ( entity player in GetPlayerArray() )
+		if ( !IsPrivateMatchSpectator( player ) )
+			if ( player.GetTeam() == GetWinningTeam() )
+				winningPlayers++
+			else
+				losingPlayers++
 
-		if ( !winningPlayers || !losingPlayers )
-			return false
-	}
+	if ( !winningPlayers || !losingPlayers )
+		return false
 
 	// note: there is a run_evac playlist var, but it's unused, and default 0, so use a new one
 	return !file.epilogueForceDisabled && GetCurrentPlaylistVarInt( "classic_mp", 1 ) != 0 && GetCurrentPlaylistVarInt( "run_epilogue", 1 ) != 0
+}
+
+void function ClassicMP_RunEpilogueWithDeadPlayers( bool enabled )
+{
+	file.runEpilogueWithDeadPlayers = enabled
 }

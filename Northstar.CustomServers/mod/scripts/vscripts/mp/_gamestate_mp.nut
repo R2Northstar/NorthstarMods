@@ -1582,22 +1582,22 @@ float function GameState_GetTimeLimitOverride()
 
 bool function IsRoundBasedGameOver()
 {
+	// maybe no players left on enemy team
+	int defaultWinner = TEAM_UNASSIGNED
+
+	if ( !GetTeamPlayerCount( TEAM_MILITIA ) )
+		defaultWinner = TEAM_IMC
+	else if ( !GetTeamPlayerCount( TEAM_IMC ) )
+		defaultWinner = TEAM_MILITIA
+
+	if ( HasRoundScoreLimitBeenReached() || ( defaultWinner != TEAM_UNASSIGNED && GetRoundsPlayed() > 1 ) )
+		return true
+
 	return false
 }
 
 bool function ShouldRunEvac()
 {
-	if ( !IsFFAGame() )
-	{
-		if ( !IsIMCOrMilitiaTeam( GetWinningTeam() ) )
-			return false
-
-		int losingTeam = GetOtherTeam( GetWinningTeam() )
-
-		if ( IsEliminationBased() && IsTeamEliminated( losingTeam ) )
-			return false
-	}
-	
 	return GameMode_GetEvacEnabled( GAMETYPE ) && ClassicMP_ShouldRunEpilogue()
 }
 

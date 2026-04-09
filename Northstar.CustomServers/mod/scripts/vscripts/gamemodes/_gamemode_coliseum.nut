@@ -35,7 +35,6 @@ void function GamemodeColiseum_Init()
 	Riff_ForceBoostAvailability( eBoostAvailability.Disabled )
 	Riff_ForceSetEliminationMode( eEliminationMode.Pilots )
 	SetLoadoutGracePeriodEnabled( false ) // prevent modifying loadouts with grace period
-	SetSpectatorEnabled( false ) // stops players from spectating on death and in outro
 	SetPrivateMatchSpectatorEnabled( false ) // private match spectator doesn't work well
 	FlagClear( "WeaponDropsAllowed" ) // removes all dropped weapons
 
@@ -43,6 +42,7 @@ void function GamemodeColiseum_Init()
 	AddCallback_GameStateEnter( eGameState.Prematch, ShowColiseumIntroScreen )
 
 	ClassicMP_SetEpilogue( SetupColiseumEpilogue )
+	ClassicMP_RunEpilogueWithDeadPlayers( true )
 
 	AddCallback_GameStateEnter( eGameState.Playing, IncreaseColiseumRoundsPlayed )
 	AddCallback_OnClientDisconnected( Coliseum_OnClientDisconnected )
