@@ -310,9 +310,9 @@ void function SetupComboButtons( var menu, var navUpButton, var navDownButton  )
 		var soundButton = AddComboButton( comboStruct, headerIndex, buttonIndex++, "#VIDEO" )
 		Hud_AddEventHandler( soundButton, UIE_CLICK, AdvanceMenuEventHandler( GetMenu( "VideoMenu" ) ) )
 	#endif
-	// MODS
-	var modsButton = AddComboButton( comboStruct, headerIndex, buttonIndex++, "#MENU_TITLE_MODS" )
-	Hud_AddEventHandler( modsButton, UIE_CLICK, AdvanceMenuEventHandler( GetMenu( "ModListMenu" ) ) )
+	// MOD SETTINGS
+	var modSettingsButton = AddComboButton( comboStruct, headerIndex, buttonIndex++, "#MOD_SETTINGS" )
+	Hud_AddEventHandler( modSettingsButton, UIE_CLICK, AdvanceMenuEventHandler( GetMenu( "ModSettings" ) ) )
 
 	ComboButtons_Finalize( comboStruct )
 }
