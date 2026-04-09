@@ -141,10 +141,12 @@ bool function ClassicMP_ShouldRunEpilogue()
 	if ( GetCurrentPlaylistVarInt( "max_teams", 2 ) != 2 )
 		return false
 
-	if ( !IsIMCOrMilitiaTeam( GetWinningTeam() ) )
+	int winningTeam = GetWinningTeam()
+
+	if ( !IsIMCOrMilitiaTeam( winningTeam ) )
 		return false
 
-	if ( !file.runEpilogueWithDeadPlayers && IsEliminationBased() && IsTeamEliminated( GetOtherTeam( GetWinningTeam() ) ) )
+	if ( !file.runEpilogueWithDeadPlayers && IsEliminationBased() && IsTeamEliminated( GetOtherTeam( winningTeam ) ) )
 		return false
 
 	// there needs to be atleast 1 player on each team before running epilogue
@@ -152,11 +154,15 @@ bool function ClassicMP_ShouldRunEpilogue()
 	int losingPlayers = 0
 
 	foreach ( entity player in GetPlayerArray() )
+	{
 		if ( !IsPrivateMatchSpectator( player ) )
-			if ( player.GetTeam() == GetWinningTeam() )
+		{
+			if ( player.GetTeam() == winningTeam )
 				winningPlayers++
 			else
 				losingPlayers++
+		}
+	}
 
 	if ( !winningPlayers || !losingPlayers )
 		return false
