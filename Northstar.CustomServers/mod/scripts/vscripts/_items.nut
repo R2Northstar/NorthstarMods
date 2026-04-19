@@ -4914,8 +4914,10 @@ string function GetRefFromItem( item )
 
 function SubitemDefined( string parentRef, string childRef )
 {
-	Assert( parentRef in file.itemData )
-	return (childRef in file.itemData[parentRef].subitems)
+	if ( !( parentRef in file.itemData ) )
+		return false
+
+	return ( childRef in file.itemData[parentRef].subitems )
 }
 
 ItemDisplayData function GetSubitemDisplayData( string parentRef, string childRef )
@@ -5701,11 +5703,13 @@ bool function IsSubItemLocked( entity player, string ref, string parentRef )
 	if ( DevEverythingUnlocked( player ) )
 		return false
 	
+	#if !VANILLA
 	if ( IsItemPurchasableEntitlement( ref, parentRef ) )
 		return false
 	
 	if ( GetItemType( ref ) == eItemTypes.PRIME_TITAN || GetSubitemType( parentRef, ref ) == eItemTypes.PRIME_TITAN )
 		return false
+	#endif
 
 	if ( IsItemInEntitlementUnlock( ref, parentRef ) )
 	{
@@ -5826,11 +5830,13 @@ bool function IsItemLocked( entity player, string ref )
 	if ( DevEverythingUnlocked( player ) )
 		return false
 	
+	#if !VANILLA
 	if ( IsItemPurchasableEntitlement( ref ) )
 		return false
 	
 	if ( GetItemType( ref ) == eItemTypes.PRIME_TITAN )
 		return false
+	#endif
 
 	if ( IsItemInEntitlementUnlock( ref ) )
 	{
@@ -7971,7 +7977,7 @@ bool function ClientCommand_BuyTicket( entity player, array<string> args )
 
 
 	int numTickets = 1
-	if ( args.len() > 0 )
+	if ( args.len() && int( args[0] ) > 0 )
 		numTickets = int( args[0] )
 
 	int cost = GetItemCost( ref ) * numTickets
@@ -10094,7 +10100,11 @@ void function InitUnlockAsEntitlement( string itemRef, string parentRef, int ent
 		unlock = file.entitlementUnlocks[fullRef]
 	}
 
+#if VANILLA
+	unlock.entitlementIds.append( entitlementId )
+#else
 	unlock.entitlementIds.append( 1 ) // Using `1` here instead of the huge DLC check I did previously. Having the `1` seems to keep all paid cosmetics unlocked with progression enabled.
+#endif
 }
 
 array<int> function GetEntitlementIds( string itemRef, string parentRef = "" )
