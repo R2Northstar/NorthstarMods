@@ -154,6 +154,10 @@
 			"UICallback": {
 				"After": "AtlasAuthDialog"
 			}
+		},
+		{
+			"Path": "ui/menu_set_clantag.nut",
+			"RunOn": "UI"
 		}
 	],
 	"Localisation": [
