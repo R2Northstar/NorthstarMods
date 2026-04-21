@@ -60,12 +60,6 @@ void function DropshipIntro_OnClientConnected( entity player )
 
 void function OnPrematchStart()
 {
-	thread OnPrematchStart_Thread()
-}
-
-void function OnPrematchStart_Thread()
-{
-	FlagWait( "EntitiesDidLoad" )
 	ClassicMP_OnIntroStarted()
 
 	file.introStartTime = Time()
