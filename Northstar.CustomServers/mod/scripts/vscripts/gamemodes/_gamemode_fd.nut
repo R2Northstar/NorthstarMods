@@ -765,7 +765,9 @@ bool function runWave( int waveIndex, bool shouldDoBuyTime )
 		foreach ( entity player in GetPlayerArray() )
 			Remote_CallFunction_NonReplay( player, "ServerCallback_FD_ClearPreParty" )
 	}
-	
+
+	DisableTitanSelection()
+
 	SetGlobalNetInt( "FD_waveState", WAVE_STATE_IN_PROGRESS )
 	executeWave()
 	
@@ -972,7 +974,7 @@ bool function runWave( int waveIndex, bool shouldDoBuyTime )
 	if ( waveIndex == 0 )
 	{
 		wait 5
-		WaveBreak_GiveAndLockTitanSelection()
+		WaveBreak_GiveTitan()
 		wait 5
 	}
 	
@@ -1032,7 +1034,7 @@ void function WaveBreak_AnnounceHarvesterDamaged()
 	}
 }
 
-void function WaveBreak_GiveAndLockTitanSelection()
+void function WaveBreak_GiveTitan()
 {
 	PlayerEarnMeter_SetEnabled( true )
 	foreach ( entity player in GetPlayerArray() )
@@ -1042,7 +1044,6 @@ void function WaveBreak_GiveAndLockTitanSelection()
 		EmitSoundOnEntityOnlyToPlayer( player, player, "UI_InGame_FD_TitanSelected" )
 	}
 		
-	DisableTitanSelection()
 	PlayFactionDialogueToTeam( "fd_titanReadyNag", TEAM_MILITIA )
 }
 
