@@ -138,7 +138,7 @@ bool function GetClassicMPMode()
 
 bool function ClassicMP_ShouldRunEpilogue()
 {
-	if ( GetCurrentPlaylistVarInt( "max_teams", 2 ) != 2 )
+	if ( IsFFAGame() )
 		return false
 
 	int winningTeam = GetWinningTeam()
@@ -150,22 +150,25 @@ bool function ClassicMP_ShouldRunEpilogue()
 		return false
 
 	// there needs to be atleast 1 player on each team before running epilogue
-	int winningPlayers = 0
-	int losingPlayers = 0
-
-	foreach ( entity player in GetPlayerArray() )
+	if ( GetCurrentPlaylistVarInt( "max_teams", 2 ) != 1 )
 	{
-		if ( !IsPrivateMatchSpectator( player ) )
-		{
-			if ( player.GetTeam() == winningTeam )
-				winningPlayers++
-			else
-				losingPlayers++
-		}
-	}
+		int winningPlayers = 0
+		int losingPlayers = 0
 
-	if ( !winningPlayers || !losingPlayers )
-		return false
+		foreach ( entity player in GetPlayerArray() )
+		{
+			if ( !IsPrivateMatchSpectator( player ) )
+			{
+				if ( player.GetTeam() == winningTeam )
+					winningPlayers++
+				else
+					losingPlayers++
+			}
+		}
+
+		if ( !winningPlayers || !losingPlayers )
+			return false
+	}
 
 	// note: there is a run_evac playlist var, but it's unused, and default 0, so use a new one
 	return !file.epilogueForceDisabled && GetCurrentPlaylistVarInt( "classic_mp", 1 ) != 0 && GetCurrentPlaylistVarInt( "run_epilogue", 1 ) != 0
