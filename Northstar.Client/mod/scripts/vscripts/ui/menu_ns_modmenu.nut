@@ -164,7 +164,7 @@ void function OnModMenuClosed()
 		}
 	}
 	if ( current.len() != file.enabledMods.len() || reload ) // Only reload if we have to
-		ReloadMods( VANILLA != 0 )
+		ReloadMods()
 }
 
 void function OnModButtonFocused( var button )
@@ -239,7 +239,7 @@ void function OnModButtonPressed( var button )
 
 void function OnReloadModsButtonPressed( var button )
 {
-	ReloadMods( VANILLA != 0 )
+	ReloadMods()
 }
 
 void function OnAuthenticationAgreementButtonPressed( var button )
