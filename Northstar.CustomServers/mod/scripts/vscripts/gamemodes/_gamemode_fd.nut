@@ -86,6 +86,7 @@ struct {
 	array<entity> playersInDropship
 	
 	array<void functionref()> CustomFDContent
+	bool disableTitanSelectionForNewJoiners = false
 }file
 
 const array<string> DROPSHIP_IDLE_ANIMS_POV = [
@@ -766,6 +767,7 @@ bool function runWave( int waveIndex, bool shouldDoBuyTime )
 			Remote_CallFunction_NonReplay( player, "ServerCallback_FD_ClearPreParty" )
 	}
 
+	file.disableTitanSelectionForNewJoiners = true
 	DisableTitanSelection()
 
 	SetGlobalNetInt( "FD_waveState", WAVE_STATE_IN_PROGRESS )
@@ -1542,7 +1544,7 @@ void function TryDisableTitanSelectionForPlayerAfterDelay( entity player )
 						player.SetInvulnerable()
 				}
 				
-				if ( PlayerEarnMeter_Enabled() )
+				if ( file.disableTitanSelectionForNewJoiners )
 				{
 					DisableTitanSelectionForPlayer( player )
 					if ( GetGlobalNetInt( "FD_waveState" ) == WAVE_STATE_BREAK ) //On wave break, let joiners have their Titan instantly
