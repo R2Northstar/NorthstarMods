@@ -110,7 +110,7 @@ void function RunColiseumOutro()
 	// also since this runs on game end, do winstreak stuff
 	foreach ( entity player in GetPlayerArray() )
 	{
-		if ( !IsPrivateMatchSpectator( player ) )
+		if ( IsPrivateMatchSpectator( player ) )
 			continue
 
 		if ( GetWinningTeam() == player.GetTeam() )
@@ -132,7 +132,7 @@ void function RunColiseumOutro()
 
 	foreach ( entity player in GetPlayerArray() )
 	{
-		if ( !IsPrivateMatchSpectator( player ) )
+		if ( IsPrivateMatchSpectator( player ) )
 			continue
 
 		if ( winningPlayers.contains( player ) )
@@ -257,7 +257,7 @@ void function RunColiseumOutroThreaded( entity winningPlayer, entity losingPlaye
 void function IncreaseColiseumRoundsPlayed()
 {
 	foreach ( entity player in GetPlayerArray() )
-		if ( !IsPrivateMatchSpectator( player ) )
+		if ( IsPrivateMatchSpectator( player ) )
 			file.roundsPlayed[ player ] <- ( player in file.roundsPlayed ? file.roundsPlayed[ player ] + 1 : 1 )
 }
 
@@ -285,7 +285,7 @@ int function TimeoutCheckPlayers()
 
 	foreach ( entity player in GetPlayerArray_Alive() )
 	{
-		if ( !IsPrivateMatchSpectator( player ) )
+		if ( IsPrivateMatchSpectator( player ) )
 			continue
 
 		if ( imcPlayers.contains( player ) )
