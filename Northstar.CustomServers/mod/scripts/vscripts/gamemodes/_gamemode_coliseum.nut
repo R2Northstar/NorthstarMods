@@ -132,7 +132,7 @@ void function RunColiseumOutro()
 
 	foreach ( entity player in GetPlayerArray() )
 	{
-		if ( IsPrivateMatchSpectator( player ) )
+		if ( !IsPrivateMatchSpectator( player ) )
 			continue
 
 		if ( winningPlayers.contains( player ) )
@@ -285,7 +285,7 @@ int function TimeoutCheckPlayers()
 
 	foreach ( entity player in GetPlayerArray_Alive() )
 	{
-		if ( IsPrivateMatchSpectator( player ) )
+		if ( !IsPrivateMatchSpectator( player ) )
 			continue
 
 		if ( imcPlayers.contains( player ) )
