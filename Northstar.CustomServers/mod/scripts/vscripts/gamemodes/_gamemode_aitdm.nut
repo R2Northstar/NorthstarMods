@@ -386,22 +386,19 @@ void function SquadHandler( array<entity> guys )
 {
 	foreach ( guy in guys )
 	{
-		if ( IsValid( guy ) )
+		if ( !( guy.GetTeam() in file.spawnedMinions ) )
+			file.spawnedMinions[ guy.GetTeam() ] <- []
+
+		file.spawnedMinions[ guy.GetTeam() ].append( guy )
+
+		if ( IsSpectre( guy ) )
 		{
-			if ( !( guy.GetTeam() in file.spawnedMinions ) )
-				file.spawnedMinions[ guy.GetTeam() ] <- []
+			if ( !( guy.GetTeam() in file.spawnedSpectres ) )
+				file.spawnedSpectres[ guy.GetTeam() ] <- []
 
-			file.spawnedMinions[ guy.GetTeam() ].append( guy )
+			file.spawnedSpectres[ guy.GetTeam() ].append( guy )
 
-			if ( IsSpectre( guy ) )
-			{
-				if ( !( guy.GetTeam() in file.spawnedSpectres ) )
-					file.spawnedSpectres[ guy.GetTeam() ] <- []
-
-				file.spawnedSpectres[ guy.GetTeam() ].append( guy )
-
-				thread SpectreSpawnedHandler( guy )
-			}
+			thread SpectreSpawnedHandler( guy )
 		}
 	}
 
