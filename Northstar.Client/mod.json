@@ -50,6 +50,11 @@
 		{
 			"Name": "modemenu_mode_filter",
 			"DefaultValue": "-1"
+		},
+		{
+			"Name": "serverlist_remove_colors",
+			"DefaultValue": "0",
+			"Flags": "ARCHIVE_PLAYERPROFILE"
 		}
 	],
 	"Scripts": [
