@@ -952,7 +952,7 @@ function TitanEmbark_PlayerEmbarks( entity player, entity titan, table e )
 	)
 	
 	#if MP
-	if ( GetCurrentPlaylistVarInt( "fp_embark_enabled", 0 ) == 1 && !doFirstPersonAnim )
+	if ( ShouldForce1PFirstPersonSequence() && !doFirstPersonAnim )
 		FirstPersonSequenceForce1P( sequence, player, titan  )
 	#endif
 
@@ -1015,16 +1015,18 @@ void function Embark_DelayedFadeOut( entity player, entity titan, float delay )
 		
 	wait delay - EMBARK_FADE_TIME
 
-	if ( GetCurrentPlaylistVarInt( "fp_embark_enabled", 0 ) == 0 )
-	{
-		ScreenFadeToBlack( player, EMBARK_FADE_TIME, EMBARK_FADE_TIME + 0.2 ) // a little extra so we stay black
-		wait EMBARK_FADE_TIME
-	}
-	else
+	#if MP
+	if ( ShouldForce1PFirstPersonSequence() )
 	{
 		wait EMBARK_FADE_TIME - 0.2
 		ScreenFadeToBlack( player, 0.2, 0.4 )
 		wait 0.2
+	}
+	else
+	#endif
+	{
+		ScreenFadeToBlack( player, EMBARK_FADE_TIME, EMBARK_FADE_TIME + 0.2 ) // a little extra so we stay black
+		wait EMBARK_FADE_TIME
 	}
 	
 	ScreenFadeFromBlack( player, EMBARK_FADE_TIME, EMBARK_FADE_TIME )
@@ -1088,8 +1090,10 @@ void function PhaseEmbarkPhaseStart( entity player )
 	PlayPhaseShiftDisappearFX( player )
 	EmitSoundOnEntity( player, "pilot_phaseembark_activate_3p" )
 	
-	if ( GetCurrentPlaylistVarInt( "fp_embark_enabled", 0 ) == 1 )
+	#if MP
+	if ( ShouldForce1PFirstPersonSequence() )
 		player.PhaseShiftBegin( 0.0, 0.2 )
+	#endif
 	
 	thread PhaseEmbarkPhaseCleanup( player )
 }
@@ -1117,8 +1121,10 @@ void function PhaseEmbarkPhaseStop( entity player )
 	PlayPhaseShiftDisappearFX( player )
 	EmitSoundOnEntity( player, "pilot_phaseembark_end_3p" )
 	
-	if ( GetCurrentPlaylistVarInt( "fp_embark_enabled", 0 ) == 1 )
+	#if MP
+	if ( ShouldForce1PFirstPersonSequence() )
 		player.PhaseShiftCancel()
+	#endif
 }
 
 function ShouldSkipAheadIntoEmbark( standing, player, titan, e )
