@@ -80,6 +80,9 @@ void function ReloadMods( bool reloadorretry = false )
 
 			titan.SetOrigin( origin )
 
+			if ( GetMapName() == "mp_forwardbase_kodai" && origin.z > 1200 )
+				return false
+
 			if ( !TitanTestDropPoint( origin, flightpath ) )
 				return false
 
