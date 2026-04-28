@@ -696,6 +696,9 @@ void function GameStateEnter_Playing_Threaded()
 		}
 		*/
 
+		if ( CheckForEmptyTeamVictory() )
+			return
+
 		if ( GetConVarBool( "ns_match_end_if_no_players" ) )
 		{
 			if ( GetPlayerArray().len() )

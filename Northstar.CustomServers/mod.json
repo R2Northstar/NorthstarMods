@@ -78,6 +78,10 @@
 		{
 			"Name": "ns_match_end_if_no_players",
 			"DefaultValue": "1"
+		},
+		{
+			"Name": "ns_skip_empty_team_victory_check",
+			"DefaultValue": "0"
 		}
 	],
 	"Scripts": [

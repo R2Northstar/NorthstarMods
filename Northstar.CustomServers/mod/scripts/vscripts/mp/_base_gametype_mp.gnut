@@ -908,10 +908,13 @@ float function GetTitanBuildTime( entity player )
 
 bool function CheckForEmptyTeamVictory()
 {
-	if ( GetCurrentPlaylistVarInt( "riff_allow_npcs", 2 ) == 1 )
+	if ( GetCurrentPlaylistVarInt( "ns_skip_empty_team_victory_check", 0 ) )
 		return false
 
 	if ( GetDeveloperLevel() )
+		return false
+
+	if ( GetCurrentPlaylistVarInt( "riff_allow_npcs", 2 ) == 1 )
 		return false
 
 	if ( GetCurrentPlaylistVarInt( "max_teams", 2 ) != 2 )
