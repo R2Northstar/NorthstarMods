@@ -2,7 +2,7 @@ global function FirstPersonSequenceForce1P
 global function ShouldRunFirstPersonSequence
 
 global const string FORCE1P_PILOT_1P_ATTACHMENT = "HEADFOCUS"
-global const string FORCE1P_TITAN_1P_ATTACHMENT = "HATCH_HEAD"
+global const string FORCE1P_TITAN_1P_ATTACHMENT = "HEADFOCUS"
 
 global const string FORCE1P_PILOT_1P_HIDDEN_BODYGROUP = "head"
 global const string FORCE1P_TITAN_1P_HIDDEN_BODYGROUP = "torso"
@@ -26,7 +26,7 @@ Forced1PSequenceData function FirstPersonSequenceForce1P( FirstPersonSequenceStr
 	if ( player.IsTitan() )
 	{
 		attachment = FORCE1P_TITAN_1P_ATTACHMENT
-		hiddenBodygroup = FORCE1P_TITAN_1P_HIDDEN_BODYGROUP	
+		hiddenBodygroup = FORCE1P_TITAN_1P_HIDDEN_BODYGROUP
 		entityclass	= FORCE1P_TITAN_ENTITYCLASS
 	}
 
