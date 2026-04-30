@@ -249,7 +249,7 @@ void functionref( SyncedMelee action, entity attacker, entity target ) function 
 	#if SP
 	TitanLoadoutDef loadout = GetTitanLoadoutForCurrentMap()
 	#else
-	TitanLoadoutDef loadout = attacker.IsPlayer() ? GetActiveTitanLoadout( attacker ) : soul.soul.titanLoadout
+	TitanLoadoutDef loadout = soul.soul.titanLoadout // GetActiveTitanLoadout( attacker )
 	#endif
 	string executionRef = loadout.titanExecution
 	if ( SoulHasPassive( soul, ePassives.PAS_VANGUARD_COREMETER ) )
@@ -1089,7 +1089,7 @@ void function TitanVsTitan_3p( SyncedMelee action, entity attacker, entity targe
 	string executionRef = loadout.titanExecution
 	TitanExcutionData data = file.executionData_3p[ executionRef ]
 	#else
-	TitanLoadoutDef loadout = attacker.IsPlayer() ? GetActiveTitanLoadout( attacker ) : attackerSoul.soul.titanLoadout
+	TitanLoadoutDef loadout = attackerSoul.soul.titanLoadout // GetActiveTitanLoadout( attacker )
 	string executionRef = loadout.titanExecution
 	TitanExcutionData data = file.executionData_3p[ executionRef ]
 	if ( data.linkedExecutions.len() > 0 )
