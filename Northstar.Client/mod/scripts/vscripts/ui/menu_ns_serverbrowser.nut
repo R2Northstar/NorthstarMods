@@ -732,7 +732,12 @@ void function WaitForServerListRequest()
 
 	// wait for request to complete
 	while ( NSIsRequestingServerList() )
+	{
 		WaitFrame()
+
+		if ( !IsConnected() )
+			return
+	}
 
 	file.serverListRequestFailed = !NSMasterServerConnectionSuccessful()
 	if ( file.serverListRequestFailed )
