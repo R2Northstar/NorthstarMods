@@ -513,7 +513,7 @@ void function PostDeathThread_MP( entity player, var damageInfo, bool gamePlayin
 
 		wait respawnDelay
 
-		int forceRespawn = GetCurrentPlaylistVarInt( "player_force_respawn", -1 )
+		int forceRespawn = GetCurrentPlaylistVarInt( "player_force_respawn", 5 )
 
 		// -1 is disabled, anything over is the time we wait in seconds
 		// before respawning the player
