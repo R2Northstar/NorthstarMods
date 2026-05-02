@@ -908,7 +908,7 @@ float function GetTitanBuildTime( entity player )
 
 bool function CheckForEmptyTeamVictory()
 {
-	if ( GetCurrentPlaylistVarInt( "ns_skip_empty_team_victory_check", 0 ) )
+	if ( GetConVarBool( "ns_skip_empty_team_victory_check" ) )
 		return false
 
 	if ( GetDeveloperLevel() )
