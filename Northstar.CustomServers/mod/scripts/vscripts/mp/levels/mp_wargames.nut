@@ -198,8 +198,18 @@ void function OnPrematchStart()
 
 	thread PodFXCleanupNormalLight_Delayed( file.imcPod )
 	thread PodFXCleanupNormalLight_Delayed( file.militiaPod )
-	
-	wait 6.5
+
+	thread FirstPersonSequence( podCloseSequence, file.imcPod )
+	thread FirstPersonSequence( podCloseSequence, file.militiaPod )
+
+	float delay = file.imcPod.GetSequenceDuration( "trainingpod_doors_close" )
+
+	wait delay
+
+	FadeOutSoundOnEntity( file.imcPod, "Wargames_Emit_IMC_Intro_HighPass", 0.1 )
+	FadeOutSoundOnEntity( file.militiaPod, "Wargames_Emit_MCOR_Intro_HighPass", 0.1 )
+
+	wait 6.5 - delay
 
 	thread PodBootFXThread( file.imcPod )
 	thread PodBootFXThread( file.militiaPod )
