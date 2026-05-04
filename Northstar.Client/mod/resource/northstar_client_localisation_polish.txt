@@ -401,8 +401,6 @@ Naciśnij Tak jeżeli wyrażasz zgodę. Wybór może zostać zmieniony w menu Mo
 		"TEAMSWITCH_GAMEMODE"		"Obecny tryb gry nie zezwala na Zmienianie Drużyn"
 		"TEAMSWITCH_BUFFER"		"Odczekaj chwilę zanim znowu Zmienisz Drużynę"
 		"MODE_MENU_SWITCH"		"Filtruj"
-		"HAS_NON_VANILLA_MODS"		"Są obecnie włączone mody (oznaczone znakiem \"!\"), które nie są kompatybilne z vanillą. Możesz wyłączyć je w menu modów."
 		"BLEEDOUT_CALL_HELP"		"Krwawisz!"
-		"PROGRESSION_TOGGLE_VANILLA"		"Progresja nie może być wyłączona na standardowych serwerach."
 	}
 }
