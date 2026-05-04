@@ -249,8 +249,6 @@ void function RunColiseumOutroThreaded( entity winningPlayer, entity losingPlaye
 
 	foreach ( entity player in GetPlayerArray() )
 		ScreenFadeToBlackForever( player, 0.3 )
-
-	wait 0.5
 }
 
 void function IncreaseColiseumRoundsPlayed()
