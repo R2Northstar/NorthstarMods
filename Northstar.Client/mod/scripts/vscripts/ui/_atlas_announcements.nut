@@ -1,6 +1,6 @@
 untyped
 
-global function GetAtlasAnnouncement_Threaded 
+global function GetAtlasAnnouncement_Threaded
 
 const string ATLAS_ANNOUNCEMENT_SUFFIX = "/client/announcements"
 
@@ -10,10 +10,10 @@ void function GetAtlasAnnouncement_Threaded()
 	// before sh_northstar_http_requests so the types used as function parameters cause compile errors.
 	// A weird quirk of the squirrel compiler seems to be that it gathers global defs first, and compiles them after? So by the time it's compiling the innards of
 	// GetAtlasAnnouncement_Threaded it knows about the types from sh_northstar_http_requests.
-	// Anyway a solution to this would be to have sh_northstar_http_requests belong to some sort of Northstar.Core or Northstar.Shared. (Same with other APIs such as file IO)
+	// Anyway a solution to this would be to have sh_northstar_http_requests belong to some
+	// sort of Northstar.Core or Northstar.Shared. (Same with other APIs such as file IO)
 	void functionref( HttpRequestResponse ) onRequestSuccess = void function( HttpRequestResponse response )
 	{
-
 		if ( response.statusCode != 200 )
 		{
 			printt( format( "Failed to get announcement data! (Code: %i)\nReceived response: %s", response.statusCode, response.body ) )
@@ -22,10 +22,10 @@ void function GetAtlasAnnouncement_Threaded()
 
 		string announcement
 		string announcementVersion
-		
+
 		table responseBody = DecodeJSON( response.body )
 
-		if ( "announcement" in responseBody && typeof( responseBody[ "announcement" ] ) == "string" )
+		if ( "announcement" in responseBody && typeof ( responseBody[ "announcement" ] ) == "string" )
 		{
 			announcement = expect string( responseBody[ "announcement" ] )
 		}
@@ -35,7 +35,7 @@ void function GetAtlasAnnouncement_Threaded()
 			return
 		}
 
-		if ( "announcementVersion" in responseBody && typeof( responseBody[ "announcementVersion" ] ) == "string" )
+		if ( "announcementVersion" in responseBody && typeof ( responseBody[ "announcementVersion" ] ) == "string" )
 		{
 			announcementVersion = expect string( responseBody[ "announcementVersion" ] )
 		}
@@ -62,10 +62,10 @@ void function GetAtlasAnnouncement_Threaded()
 		printt( format( "Failed to get announcement data! (Code: %i)\nReceived response: %s", response.errorCode, response.errorMessage ) )
 	}
 
-	while (true)
+	while ( true )
 	{
 		string url = format( "%s%s", GetConVarString( "ns_masterserver_hostname" ), ATLAS_ANNOUNCEMENT_SUFFIX )
-		//printt( format( "Getting announcement data from %s", url ) )
+		// printt( format( "Getting announcement data from %s", url ) )
 
 		if ( !NSHttpGet( url, {}, onRequestSuccess, onRequestFailure ) )
 			printt( "Failed to get announcement data! (request failed to start)" )
