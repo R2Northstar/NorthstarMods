@@ -13,6 +13,7 @@ struct
 
 void function GamemodeHideAndSeek_Init()
 {
+	SetGamemodeAllowsTeamSwitch( false )
 	SetSpawnpointGamemodeOverride( FFA )
 	Riff_ForceTitanAvailability( eTitanAvailability.Never )
 	Riff_ForceBoostAvailability( eBoostAvailability.Disabled )
