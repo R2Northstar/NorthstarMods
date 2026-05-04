@@ -4,9 +4,9 @@ void function CodeCallback_MapInit()
 {
 	// there are some really busted titan startspawns that are on the fucking other side of the map from where they should be, so we remove them
 	// AddSpawnCallback( "info_spawnpoint_titan_start", TrimBadTitanStartSpawns )
-	
+
 	// Load Frontier Defense Data
-	if( GameRules_GetGameMode() == FD )
+	if ( GameRules_GetGameMode() == FD )
 		initFrontierDefenseData()
 
 	FlagSet( "LevelHasRoof" ) // So it forces Warpfall on all Titans like vanilla

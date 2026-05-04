@@ -5,8 +5,6 @@ global function SniperTitanThink
 
 const float SNIPER_TITAN_POSITION_SEARCH_RANGE = 8192
 
-
-
 void function MoveToSniperPosition( entity titan, vector origin, entity target )
 {
 	titan.EndSignal( "OnSyncedMeleeVictim" )
@@ -32,7 +30,7 @@ void function MoveToSniperPosition( entity titan, vector origin, entity target )
 	)
 
 	local tries = 0
-	while( true )
+	while ( true )
 	{
 		local dist = Distance( titan.GetOrigin(), origin )
 		if ( dist <= goalRadius * 2 )
@@ -43,11 +41,11 @@ void function MoveToSniperPosition( entity titan, vector origin, entity target )
 		titan.AssaultSetGoalRadius( goalRadius )
 		titan.AssaultSetFightRadius( 0 )
 		local result = WaitSignal( titan, "OnFinishedAssault", "OnEnterGoalRadius" )
-		printt( "Sniper titan done moving into position")
+		printt( "Sniper titan done moving into position" )
 	}
 }
 
-void function SniperTitanThink( entity titan, entity generator)
+void function SniperTitanThink( entity titan, entity generator )
 {
 	titan.EndSignal( "OnSyncedMeleeVictim" )
 	titan.EndSignal( "OnDeath" )
@@ -63,7 +61,11 @@ void function SniperTitanThink( entity titan, entity generator)
 	WaitTillHotDropComplete( titan )
 
 	float minEngagementDuration = 5
-	StationaryAIPosition ornull sniperPosition = GetClosestAvailableStationaryPosition( titan.GetOrigin(), SNIPER_TITAN_POSITION_SEARCH_RANGE, eStationaryAIPositionTypes.SNIPER_TITAN )
+	StationaryAIPosition ornull sniperPosition = GetClosestAvailableStationaryPosition(
+		titan.GetOrigin(),
+		SNIPER_TITAN_POSITION_SEARCH_RANGE,
+		eStationaryAIPositionTypes.SNIPER_TITAN
+	)
 	while ( sniperPosition == null )
 	{
 		// incase all stationary titan positions are in use wait for one to become available
@@ -82,10 +84,10 @@ void function SniperTitanThink( entity titan, entity generator)
 			ReleaseStationaryAIPosition( sniperPosition )
 		}
 	)
-	
+
 	titan.SetEnemyChangeCallback( EnemyChanged )
 
-	while( true )
+	while ( true )
 	{
 		WaitFrame()
 		vector origin = sniperPosition.origin
@@ -117,12 +119,12 @@ function SniperTitanAttack( entity titan, entity target )
 				return
 		}
 	)
-	
-	if( IsValid( target ) )
+
+	if ( IsValid( target ) )
 		titan.SetEnemy( target )
 }
 
-void function WaitForInterruption( entity titan ,entity generator)
+void function WaitForInterruption( entity titan, entity generator )
 {
 	Assert( IsNewThread(), "Must be threaded off" )
 
@@ -138,7 +140,7 @@ void function WaitForInterruption( entity titan ,entity generator)
 	float playerProximityDistSqr = pow( 256, 2 )
 	float healthBreakOff = ( titan.GetHealth() + soul.GetShieldHealth() ) * 0.9
 
-	while( true )
+	while ( true )
 	{
 		if ( IsEnemyWithinDist( titan, playerProximityDistSqr ) )
 			break
@@ -155,7 +157,7 @@ bool function IsEnemyWithinDist( entity titan, float dist )
 	vector origin = titan.GetOrigin()
 	array<entity> players = GetPlayerArrayOfEnemies_Alive( titan.GetTeam() )
 
-	foreach( player in players )
+	foreach ( player in players )
 	{
 		if ( DistanceSqr( player.GetOrigin(), origin ) < dist )
 			return true

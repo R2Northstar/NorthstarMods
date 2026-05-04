@@ -14,7 +14,8 @@ global function ScoreEvent_SetEarnMeterValues
 global function ScoreEvent_SetupEarnMeterValuesForMixedModes
 global function ScoreEvent_SetupEarnMeterValuesForTitanModes
 
-struct {
+struct
+{
 	bool firstStrikeDone = false
 } file
 
@@ -29,35 +30,35 @@ void function Score_Init()
 }
 
 void function InitPlayerForScoreEvents( entity player )
-{	
+{
 	player.s.currentKillstreak <- 0
 	player.s.lastKillTime <- 0.0
 	player.s.currentTimedKillstreak <- 0
 	player.s.lastKillTime_Mayhem <- 0.0
-	player.s.currentTimedKillstreak_Mayhem <- 0 
+	player.s.currentTimedKillstreak_Mayhem <- 0
 	player.s.lastKillTime_Onslaught <- 0.0
-	player.s.currentTimedKillstreak_Onslaught <- 0 
+	player.s.currentTimedKillstreak_Onslaught <- 0
 }
 
 void function AddPlayerScore( entity targetPlayer, string scoreEventName, entity associatedEnt = null, string noideawhatthisis = "", int pointValueOverride = -1 )
 {
 	ScoreEvent event = GetScoreEvent( scoreEventName )
-	
+
 	if ( !event.enabled || !IsValidPlayer( targetPlayer ) )
 		return
 
 	var associatedHandle = 0
 	if ( associatedEnt != null )
 		associatedHandle = associatedEnt.GetEncodedEHandle()
-	
+
 	if ( pointValueOverride != -1 )
-		event.pointValue = pointValueOverride 
-	
+		event.pointValue = pointValueOverride
+
 	float scale = targetPlayer.IsTitan() ? event.coreMeterScalar : 1.0
-	
+
 	float earnValue = event.earnMeterEarnValue * scale
 	float ownValue = event.earnMeterOwnValue * scale
-	
+
 	if ( !PlayerEarnMeter_Enabled() && !targetPlayer.IsTitan() ) // Don't show earning points if earn meter is not enabled and player is not a special case of being a titan
 	{
 		earnValue = 0.0
@@ -67,17 +68,17 @@ void function AddPlayerScore( entity targetPlayer, string scoreEventName, entity
 	// Both checks below are mostly a visual fix because the score medals would still show the adds into the total value
 	if ( PlayerEarnMeter_GetPilotOverdriveEnum() == ePilotOverdrive.Disabled )
 		earnValue = 0.0
-	
+
 	if ( PlayerEarnMeter_GetPilotOverdriveEnum() == ePilotOverdrive.Only )
 		ownValue = 0.0
-	
+
 	PlayerEarnMeter_AddEarnedAndOwned( targetPlayer, earnValue * scale, ownValue * scale )
 	SharedEarnMeter_AddEarnedAndOwned( targetPlayer, earnValue, ownValue )
-	
+
 	// PlayerEarnMeter_AddEarnedAndOwned handles this scaling by itself, we just need to do this for the visual stuff
-	float pilotScaleVar = ( expect string ( GetCurrentPlaylistVarOrUseValue( "earn_meter_pilot_multiplier", "1" ) ) ).tofloat()
-	float titanScaleVar = ( expect string ( GetCurrentPlaylistVarOrUseValue( "earn_meter_titan_multiplier", "1" ) ) ).tofloat()
-	
+	float pilotScaleVar = ( expect string( GetCurrentPlaylistVarOrUseValue( "earn_meter_pilot_multiplier", "1" ) ) ).tofloat()
+	float titanScaleVar = ( expect string( GetCurrentPlaylistVarOrUseValue( "earn_meter_titan_multiplier", "1" ) ) ).tofloat()
+
 	if ( targetPlayer.IsTitan() )
 	{
 		if ( targetPlayer.GetPlayerNetInt( EARNMETER_MODE ) == eEarnMeterMode.CORE_ACTIVE ) // While core is active, Titans can't gain meter
@@ -96,41 +97,50 @@ void function AddPlayerScore( entity targetPlayer, string scoreEventName, entity
 		earnValue *= pilotScaleVar
 		ownValue *= pilotScaleVar
 	}
-	
-	Remote_CallFunction_NonReplay( targetPlayer, "ServerCallback_ScoreEvent", event.eventId, event.pointValue, event.displayType, associatedHandle, earnValue, ownValue )
-	
+
+	Remote_CallFunction_NonReplay(
+		targetPlayer,
+		"ServerCallback_ScoreEvent",
+		event.eventId,
+		event.pointValue,
+		event.displayType,
+		associatedHandle,
+		earnValue,
+		ownValue
+	)
+
 	if ( event.displayType & eEventDisplayType.CALLINGCARD ) // callingcardevents are shown to all players
 	{
 		foreach ( entity player in GetPlayerArray() )
 		{
 			if ( player == targetPlayer ) // targetplayer already gets this in the scorevent callback
 				continue
-				
+
 			Remote_CallFunction_NonReplay( player, "ServerCallback_CallingCardEvent", event.eventId, associatedHandle )
 		}
 	}
-	
+
 	if ( ScoreEvent_HasConversation( event ) )
 		PlayFactionDialogueToPlayer( event.conversation, targetPlayer )
-		
+
 	HandleXPGainForScoreEvent( targetPlayer, event )
 }
 
 void function ScoreEvent_PlayerKilled( entity victim, entity attacker, var damageInfo )
 {
-	// reset killstreaks and stuff		
+	// reset killstreaks and stuff
 	victim.s.currentKillstreak = 0
 	victim.s.lastKillTime = 0.0
 	victim.s.currentTimedKillstreak = 0
-	
+
 	victim.p.numberOfDeathsSinceLastKill++ // this is reset on kill
 	victim.p.lastKiller = attacker
-	
+
 	// have to do this early before we reset victim's player killstreaks
 	// nemesis when you kill a player that is dominating you
 	if ( attacker.IsPlayer() && attacker in victim.p.playerKillStreaks && victim.p.playerKillStreaks[ attacker ] >= NEMESIS_KILL_REQUIREMENT )
 		AddPlayerScore( attacker, "Nemesis" )
-	
+
 	// reset killstreaks on specific players
 	foreach ( entity killstreakPlayer, int numKills in victim.p.playerKillStreaks )
 		delete victim.p.playerKillStreaks[ killstreakPlayer ]
@@ -144,25 +154,25 @@ void function ScoreEvent_PlayerKilled( entity victim, entity attacker, var damag
 	attacker.p.numberOfDeathsSinceLastKill = 0 // since they got a kill, remove the comeback trigger
 	// pilot kill
 	AddPlayerScore( attacker, "KillPilot", victim )
-	
+
 	// headshot
 	if ( DamageInfo_GetCustomDamageType( damageInfo ) & DF_HEADSHOT )
 		AddPlayerScore( attacker, "Headshot", victim )
-	
+
 	// first strike
 	if ( !file.firstStrikeDone )
 	{
 		file.firstStrikeDone = true
 		AddPlayerScore( attacker, "FirstStrike", attacker )
 	}
-	
+
 	// comeback
 	if ( attacker.p.numberOfDeathsSinceLastKill >= COMEBACK_DEATHS_REQUIREMENT )
 	{
 		AddPlayerScore( attacker, "Comeback" )
 		attacker.p.numberOfDeathsSinceLastKill = 0
 	}
-	
+
 	// revenge + quick revenge
 	if ( attacker.p.lastKiller == victim )
 	{
@@ -171,35 +181,35 @@ void function ScoreEvent_PlayerKilled( entity victim, entity attacker, var damag
 		else
 			AddPlayerScore( attacker, "Revenge" )
 	}
-	
+
 	// untimed killstreaks
 	attacker.s.currentKillstreak++
 	if ( attacker.s.currentKillstreak == KILLINGSPREE_KILL_REQUIREMENT )
 		AddPlayerScore( attacker, "KillingSpree", attacker )
 	else if ( attacker.s.currentKillstreak == RAMPAGE_KILL_REQUIREMENT )
 		AddPlayerScore( attacker, "Rampage", attacker )
-	
+
 	// increment untimed killstreaks against specific players
 	if ( !( victim in attacker.p.playerKillStreaks ) )
 		attacker.p.playerKillStreaks[ victim ] <- 1
 	else
 		attacker.p.playerKillStreaks[ victim ]++
-	
+
 	// dominating
 	if ( attacker.p.playerKillStreaks[ victim ] >= DOMINATING_KILL_REQUIREMENT )
 		AddPlayerScore( attacker, "Dominating" )
-	
+
 	if ( Time() - attacker.s.lastKillTime > CASCADINGKILL_REQUIREMENT_TIME )
 	{
 		attacker.s.currentTimedKillstreak = 0 // reset first before kill
 		attacker.s.lastKillTime = Time()
 	}
-	
+
 	// timed killstreaks
 	if ( Time() - attacker.s.lastKillTime <= CASCADINGKILL_REQUIREMENT_TIME )
 	{
 		attacker.s.currentTimedKillstreak++
-		
+
 		if ( attacker.s.currentTimedKillstreak == DOUBLEKILL_REQUIREMENT_KILLS )
 			AddPlayerScore( attacker, "DoubleKill" )
 		else if ( attacker.s.currentTimedKillstreak == TRIPLEKILL_REQUIREMENT_KILLS )
@@ -207,14 +217,14 @@ void function ScoreEvent_PlayerKilled( entity victim, entity attacker, var damag
 		else if ( attacker.s.currentTimedKillstreak >= MEGAKILL_REQUIREMENT_KILLS )
 			AddPlayerScore( attacker, "MegaKill", attacker )
 	}
-	
+
 	attacker.s.lastKillTime = Time()
 }
 
 void function ScoreEvent_TitanDoomed( entity titan, entity attacker, var damageInfo )
 {
 	// will this handle npc titans with no owners well? i have literally no idea
-	
+
 	if ( titan.IsNPC() )
 		AddPlayerScore( attacker, "DoomAutoTitan", titan )
 	else
@@ -257,19 +267,21 @@ void function ScoreEvent_NPCKilled( entity victim, entity attacker, var damageIn
 {
 	if ( !attacker.IsPlayer() )
 		return
-	
+
 	if ( DamageInfo_GetCustomDamageType( damageInfo ) & DF_HEADSHOT )
 		AddPlayerScore( attacker, "NPCHeadshot" )
-	
+
 	try
-	{		
+	{
 		// have to trycatch this because marvins will crash on kill if we dont
 		AddPlayerScore( attacker, ScoreEventForNPCKilled( victim, damageInfo ), victim )
 	}
-	catch ( ex ) {}
-	
+	catch ( ex )
+	{
+	}
+
 	// mayhem/onslaught (timed killstreaks vs AI)
-	
+
 	// reset before checking
 	if ( Time() - attacker.s.lastKillTime_Mayhem > MAYHEM_REQUIREMENT_TIME )
 	{
@@ -279,7 +291,7 @@ void function ScoreEvent_NPCKilled( entity victim, entity attacker, var damageIn
 	if ( Time() - attacker.s.lastKillTime_Mayhem <= MAYHEM_REQUIREMENT_TIME )
 	{
 		attacker.s.currentTimedKillstreak_Mayhem++
-		
+
 		if ( attacker.s.currentTimedKillstreak_Mayhem == MAYHEM_REQUIREMENT_KILLS )
 			AddPlayerScore( attacker, "Mayhem" )
 	}
@@ -293,7 +305,7 @@ void function ScoreEvent_NPCKilled( entity victim, entity attacker, var damageIn
 	if ( Time() - attacker.s.lastKillTime_Onslaught <= ONSLAUGHT_REQUIREMENT_TIME )
 	{
 		attacker.s.currentTimedKillstreak_Onslaught++
-		
+
 		if ( attacker.s.currentTimedKillstreak_Onslaught == ONSLAUGHT_REQUIREMENT_KILLS )
 			AddPlayerScore( attacker, "Onslaught" )
 	}
@@ -301,7 +313,7 @@ void function ScoreEvent_NPCKilled( entity victim, entity attacker, var damageIn
 
 void function ScoreEvent_MatchComplete( int winningTeam )
 {
-	foreach( entity player in GetPlayerArray() )
+	foreach ( entity player in GetPlayerArray() )
 	{
 		AddPlayerScore( player, "MatchComplete" )
 		SetPlayerChallengeMatchComplete( player )
@@ -318,7 +330,7 @@ void function ScoreEvent_MatchComplete( int winningTeam )
 
 void function ScoreEvent_RoundComplete( int winningTeam )
 {
-	foreach( entity player in GetPlayerArray() )
+	foreach ( entity player in GetPlayerArray() )
 	{
 		AddPlayerScore( player, "RoundComplete" )
 		if ( player.GetTeam() == winningTeam )
@@ -345,7 +357,7 @@ void function ScoreEvent_SetupEarnMeterValuesForMixedModes() // mixed modes in t
 	ScoreEvent_SetEarnMeterValues( "Headshot", 0.0, 0.02 )
 	ScoreEvent_SetEarnMeterValues( "FirstStrike", 0.0, 0.05 )
 	ScoreEvent_SetEarnMeterValues( "PilotBatteryApplied", 0.0, 0.35 )
-	
+
 	// ai
 	ScoreEvent_SetEarnMeterValues( "KillGrunt", 0.02, 0.02, 0.5 )
 	ScoreEvent_SetEarnMeterValues( "KillSpectre", 0.02, 0.02, 0.5 )
@@ -364,30 +376,36 @@ void function KilledPlayerTitanDialogue( entity attacker, entity victim )
 {
 	if ( !IsValidPlayer( attacker ) )
 		return
-	
+
 	if ( !IsValid( victim ) || !victim.IsTitan() )
 		return
-	
-	switch( GetTitanCharacterName( victim ) )
+
+	switch ( GetTitanCharacterName( victim ) )
 	{
 		case "ion":
 			PlayFactionDialogueToPlayer( "kc_pilotkillIon", attacker )
 			return
+
 		case "tone":
 			PlayFactionDialogueToPlayer( "kc_pilotkillTone", attacker )
 			return
+
 		case "legion":
 			PlayFactionDialogueToPlayer( "kc_pilotkillLegion", attacker )
 			return
+
 		case "scorch":
 			PlayFactionDialogueToPlayer( "kc_pilotkillScorch", attacker )
 			return
+
 		case "ronin":
 			PlayFactionDialogueToPlayer( "kc_pilotkillRonin", attacker )
 			return
+
 		case "northstar":
 			PlayFactionDialogueToPlayer( "kc_pilotkillNorthstar", attacker )
 			return
+
 		default:
 			PlayFactionDialogueToPlayer( "kc_pilotkilltitan", attacker )
 			return

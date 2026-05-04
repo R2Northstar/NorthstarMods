@@ -26,8 +26,8 @@ Forced1PSequenceData function FirstPersonSequenceForce1P( FirstPersonSequenceStr
 	if ( player.IsTitan() )
 	{
 		attachment = FORCE1P_TITAN_1P_ATTACHMENT
-		hiddenBodygroup = FORCE1P_TITAN_1P_HIDDEN_BODYGROUP	
-		entityclass	= FORCE1P_TITAN_ENTITYCLASS
+		hiddenBodygroup = FORCE1P_TITAN_1P_HIDDEN_BODYGROUP
+		entityclass = FORCE1P_TITAN_ENTITYCLASS
 	}
 
 	player.Hide()
@@ -42,7 +42,7 @@ Forced1PSequenceData function FirstPersonSequenceForce1P( FirstPersonSequenceStr
 	entity ownerProxy
 
 	if ( entityclass == FORCE1P_TITAN_ENTITYCLASS )
-		ownerProxy = CreateNPCTitan( player.GetPlayerSettings(), player.GetTeam(), <0, 0, 0>, <0, 0, 0> )
+		ownerProxy = CreateNPCTitan( player.GetPlayerSettings(), player.GetTeam(), < 0, 0, 0 >, < 0, 0, 0 > )
 	else
 		ownerProxy = CreateEntity( entityclass )
 
@@ -115,7 +115,7 @@ Forced1PSequenceData function FirstPersonSequenceForce1P( FirstPersonSequenceStr
 	entity thirdPersonProxy
 
 	if ( entityclass == FORCE1P_TITAN_ENTITYCLASS )
-		thirdPersonProxy = CreateNPCTitan( player.GetPlayerSettings(), player.GetTeam(), <0, 0, 0>, <0, 0, 0> )
+		thirdPersonProxy = CreateNPCTitan( player.GetPlayerSettings(), player.GetTeam(), < 0, 0, 0 >, < 0, 0, 0 > )
 	else
 		thirdPersonProxy = CreateEntity( entityclass )
 
@@ -128,7 +128,7 @@ Forced1PSequenceData function FirstPersonSequenceForce1P( FirstPersonSequenceStr
 	thirdPersonProxy.kv.solid = 0
 	thirdPersonProxy.SetOwner( player )
 
-	DispatchSpawn( thirdPersonProxy	)
+	DispatchSpawn( thirdPersonProxy )
 
 	if ( thirdPersonProxy.GetModelName() != player.GetModelName() )
 	{
@@ -205,8 +205,7 @@ void function CleanupForced1PSequenceAfterAnimDone( FirstPersonSequenceStruct se
 	cleanupData.player.EndSignal( "OnDestroy" )
 	cleanupData.player.EndSignal( "OnAnimationInterrupted" )
 
-	OnThreadEnd
-	(
+	OnThreadEnd(
 		function() : ( cleanupData )
 		{
 			thread CleanupForced1PSequence( cleanupData )
@@ -286,7 +285,10 @@ bool function ShouldRunFirstPersonSequence( entity player, bool isEmbark, bool i
 	if ( !player.IsPlayer() || player.IsBot() )
 		return false
 
-	if ( ( isEmbark && GetUserInfoKVBool_Internal( player, "ns_embark_style", false ) ) || ( isExecution && GetUserInfoKVBool_Internal( player, "ns_execution_style", false ) ) )
+	if (
+		( isEmbark && GetUserInfoKVBool_Internal( player, "ns_embark_style", false ) ) ||
+		( isExecution && GetUserInfoKVBool_Internal( player, "ns_execution_style", false ) )
+	)
 		return true
 
 	return false
@@ -315,7 +317,7 @@ void function ModdedPhaseEmbarkPhaseCleanup( entity player )
 	EndSignal( player, "OnDeath" )
 
 	OnThreadEnd(
-	function() : ( player )
+		function() : ( player )
 		{
 			if ( IsValid( player ) && player.FindBodyGroup( "head" ) != -1 )
 				player.SetBodygroup( player.FindBodyGroup( "head" ), 1 )
@@ -330,7 +332,7 @@ void function ModdedPhaseExecutionPhaseCleanup( entity player )
 	EndSignal( player, "OnDeath" )
 
 	OnThreadEnd(
-	function() : ( player )
+		function() : ( player )
 		{
 			if ( IsValid( player ) )
 				player.Hide()

@@ -1,28 +1,28 @@
 global function initFrontierDefenseData
 void function initFrontierDefenseData()
 {
-	useCustomFDLoad = true //Respawn Routes for this map are quite bad ngl
+	useCustomFDLoad = true // Respawn Routes for this map are quite bad ngl
 	AddCallback_RegisterCustomFDContent( RegisterCustomFDContent )
-    PlaceFDShop( < 1767, -4959, 2244> )
+	PlaceFDShop( < 1767, -4959, 2244 > )
 	SetFDDropshipSpawn( < 3820, -4181, 2242 > )
 	SetFDGroundSpawn( < 3184, -3844, 2377 >, < 0, -45, 0 > )
-	
+
 	AddWaveAnnouncement( "fd_introEasy" )
 	AddWaveAnnouncement( "fd_waveTypeTitanReg" )
 	AddWaveAnnouncement( "fd_waveComboNukeCloak" )
 	AddWaveAnnouncement( "fd_waveTypeReapers" )
 	AddWaveAnnouncement( "fd_finalWaveStartGeneric" )
-	
+
 	int reaperrain = 0
-	
+
 	/*
-	 __      __                 _ 
+	 __      __                 _
 	 \ \    / /__ _ __ __ ___  / |
 	  \ \/\/ // _` |\ V // -_) | |
 	   \_/\_/ \__,_| \_/ \___| |_|
-	
-	*/
-    array<WaveSpawnEvent> wave1
+
+*/
+	array<WaveSpawnEvent> wave1
 	WaveSpawn_SmokeWall( wave1, < 5583, -2836, 2236 >, 0.6 )
 	WaveSpawn_SmokeWall( wave1, < 5794, -4925, 2237 >, 0.6 )
 	WaveSpawn_SmokeWall( wave1, < 3864, -6135, 2237 >, 0.6 )
@@ -34,47 +34,47 @@ void function initFrontierDefenseData()
 	WaveSpawn_InfantrySpawn( wave1, "PodGrunt", < 6169, -4616, 2236 >, 0.0, "", 0.5 )
 	WaveSpawn_InfantrySpawn( wave1, "PodGrunt", < 7252, -4815, 2242 >, 0.0, "", 5.0 )
 	WaveSpawn_WaitEnemyAliveAmount( wave1, 6 )
-	
+
 	WaveSpawn_InfantrySpawn( wave1, "PodGrunt", < 6997, -6491, 2242 >, 0.0, "", 0.5 )
 	WaveSpawn_InfantrySpawn( wave1, "PodGrunt", < 6247, -3950, 2245 >, 0.0, "", 0.4 )
 	WaveSpawn_InfantrySpawn( wave1, "PodGrunt", < 6348, -1941, 2242 >, 0.0, "", 0.3 )
 	WaveSpawn_InfantrySpawn( wave1, "PodGrunt", < 5933, -1584, 2242 >, 0.0, "", 0.2 )
 	WaveSpawn_InfantrySpawn( wave1, "PodGrunt", < 7342, -1539, 2408 >, 0.0, "", 5.0 )
 	WaveSpawn_WaitEnemyAliveAmount( wave1, 6 )
-	
+
 	WaveSpawn_InfantrySpawn( wave1, "Stalker", < 8577, -2695, 2245 >, 0.0, "", 0.2, "fd_waveTypeStalkers" )
 	WaveSpawn_InfantrySpawn( wave1, "PodGrunt", < 8173, -3006, 2245 >, 0.0, "", 0.3 )
 	WaveSpawn_InfantrySpawn( wave1, "Stalker", < 8056, -4362, 2135 >, 0.0, "", 0.4 )
 	WaveSpawn_InfantrySpawn( wave1, "PodGrunt", < 7511, -4658, 2222 >, 0.0, "", 0.5 )
 	WaveSpawn_InfantrySpawn( wave1, "Stalker", < 9726, -5123, 2021 >, 0.0, "", 5.0 )
 	WaveSpawn_WaitEnemyAliveAmount( wave1, 6 )
-	
+
 	WaveSpawn_InfantrySpawn( wave1, "PodGrunt", < 9108, -5068, 2085 >, 0.0, "", 0.3 )
 	WaveSpawn_InfantrySpawn( wave1, "Stalker", < 5183, -5068, 2085 >, 0.0, "", 0.5 )
 	WaveSpawn_InfantrySpawn( wave1, "PodGrunt", < 4701, -4435, 2013 >, 0.0, "", 0.5 )
 	WaveSpawn_InfantrySpawn( wave1, "PodGrunt", < 4541, -2687, 2086 >, 0.0, "", 0.3 )
 	WaveSpawn_InfantrySpawn( wave1, "PodGrunt", < 5462, -1485, 2236 >, 0.0, "", 5.0 )
 	WaveSpawn_WaitEnemyAliveAmount( wave1, 6 )
-	
+
 	WaveSpawn_InfantrySpawn( wave1, "PodGrunt", < 6042, -3143, 2243 >, 0.0, "", 0.5 )
 	WaveSpawn_InfantrySpawn( wave1, "Stalker", < 3903, -1883, 2304 >, 0.0, "", 0.3 )
 	WaveSpawn_InfantrySpawn( wave1, "Stalker", < 6777, -5414, 2242 >, 0.0, "", 0.5 )
 	WaveSpawn_InfantrySpawn( wave1, "Stalker", < 5751, -5479, 2234 >, 0.0, "", 0.3 )
 	WaveSpawn_InfantrySpawn( wave1, "Stalker", < 5788, -6606, 2242 >, 0.0, "", 5.0 )
 	WaveSpawn_WaitEnemyAliveAmount( wave1, 6 )
-	
+
 	WaveSpawn_InfantrySpawn( wave1, "PodGrunt", < 7568, -4097, 2172 >, 0.0, "", 0.2 )
 	WaveSpawn_InfantrySpawn( wave1, "Stalker", < 4642, -5330, 2242 >, 0.0, "", 0.3 )
 	WaveSpawn_InfantrySpawn( wave1, "PodGrunt", < 4411, -4855, 2242 >, 0.0, "" )
-    WaveSpawnEvents.append( wave1 )
-	
+	WaveSpawnEvents.append( wave1 )
+
 	/*
-	 __      __                 ___ 
+	 __      __                 ___
 	 \ \    / /__ _ __ __ ___  |_  )
-	  \ \/\/ // _` |\ V // -_)  / / 
+	  \ \/\/ // _` |\ V // -_)  / /
 	   \_/\_/ \__,_| \_/ \___| /___|
-	
-	*/
+
+*/
 	array<WaveSpawnEvent> wave2
 	WaveSpawn_InfantrySpawn( wave2, "PodGrunt", < 4642, -5330, 2242 >, 0.0, "", 0.5 )
 	WaveSpawn_InfantrySpawn( wave2, "Stalker", < 6042, -3143, 2243 >, 0.0, "", 0.6 )
@@ -85,7 +85,7 @@ void function initFrontierDefenseData()
 	WaveSpawn_TitanSpawn( wave2, "Monarch", < 8495, -4790, 2100 >, 180, "", 0.5 )
 	WaveSpawn_TitanSpawn( wave2, "Monarch", < 9321, -4211, 2045 >, 180, "", 5.0 )
 	WaveSpawn_WaitEnemyAliveAmount( wave2, 6 )
-	
+
 	WaveSpawn_InfantrySpawn( wave2, "PodGrunt", < 6954, -3714, 2236 >, 0.0, "", 0.5 )
 	WaveSpawn_InfantrySpawn( wave2, "Stalker", < 6497, -3399, 2242 >, 0.0, "", 0.6 )
 	WaveSpawn_InfantrySpawn( wave2, "PodGrunt", < 8056, -4362, 2135 >, 0.0, "", 0.7 )
@@ -95,7 +95,7 @@ void function initFrontierDefenseData()
 	WaveSpawn_TitanSpawn( wave2, "Legion", < 9321, -4211, 2045 >, 180, "", 0.5 )
 	WaveSpawn_TitanSpawn( wave2, "Legion", < 10154, -3282, 2027 >, 180, "", 5.0 )
 	WaveSpawn_WaitEnemyAliveAmount( wave2, 6 )
-	
+
 	WaveSpawn_InfantrySpawn( wave2, "PodGrunt", < 4701, -4435, 2013 >, 0.0, "", 0.5 )
 	WaveSpawn_InfantrySpawn( wave2, "Stalker", < 6997, -6491, 2242 >, 0.0, "", 0.6 )
 	WaveSpawn_InfantrySpawn( wave2, "PodGrunt", < 9108, -5068, 2085 >, 0.0, "", 0.7 )
@@ -105,7 +105,7 @@ void function initFrontierDefenseData()
 	WaveSpawn_TitanSpawn( wave2, "Ion", < 11097, -4024, 1934 >, 180, "", 0.5 )
 	WaveSpawn_TitanSpawn( wave2, "Ion", < 11204, -4969, 1884 >, 180, "", 5.0 )
 	WaveSpawn_WaitEnemyAliveAmount( wave2, 6 )
-	
+
 	WaveSpawn_InfantrySpawn( wave2, "PodGrunt", < 7511, -4658, 2222 >, 0.0, "", 0.5 )
 	WaveSpawn_InfantrySpawn( wave2, "Stalker", < 6169, -4616, 2236 >, 0.0, "", 0.6 )
 	WaveSpawn_InfantrySpawn( wave2, "PodGrunt", < 5933, -1584, 2242 >, 0.0, "", 0.7 )
@@ -115,7 +115,7 @@ void function initFrontierDefenseData()
 	WaveSpawn_TitanSpawn( wave2, "Ronin", < 10254, -6570, 1976 >, 180, "", 0.5 )
 	WaveSpawn_TitanSpawn( wave2, "Ronin", < 10338, -6098, 1956 >, 180, "" )
 	WaveSpawn_WaitEnemyAliveAmount( wave2, 6 )
-	
+
 	WaveSpawn_InfantrySpawn( wave2, "Stalker", < 5462, -1485, 2236 >, 0.0, "", 0.5 )
 	WaveSpawn_InfantrySpawn( wave2, "Stalker", < 5183, -5068, 2085 >, 0.0, "", 0.6 )
 	WaveSpawn_InfantrySpawn( wave2, "Stalker", < 6247, -3950, 2245 >, 0.0, "", 0.7 )
@@ -128,15 +128,15 @@ void function initFrontierDefenseData()
 	WaveSpawn_ReaperSpawn( wave2, "Reaper", < -1136, -6756, 2057 >, 0, "", 0.8 )
 	WaveSpawn_ReaperSpawn( wave2, "Reaper", < -1425, -1635, 2002 >, 0, "", 0.8 )
 	WaveSpawn_ReaperSpawn( wave2, "Reaper", < -624, -6285, 2080 >, 0, "" )
-    WaveSpawnEvents.append( wave2 )
-	
+	WaveSpawnEvents.append( wave2 )
+
 	/*
 	 __      __                 ____
 	 \ \    / /__ _ __ __ ___  |__ /
 	  \ \/\/ // _` |\ V // -_)  |_ \
 	   \_/\_/ \__,_| \_/ \___| |___/
-	
-	*/
+
+*/
 	array<WaveSpawnEvent> wave3
 	WaveSpawn_TitanSpawn( wave3, "Tone", < 8495, -4790, 2100 >, 180, "", 1.0 )
 	WaveSpawn_TitanSpawn( wave3, "Monarch", < 10254, -6570, 1976 >, 180, "", 1.0 )
@@ -155,7 +155,7 @@ void function initFrontierDefenseData()
 	WaveSpawn_InfantrySpawn( wave3, "PodGrunt", < 8294, -2214, 2242 >, 0.0, "", 0.5 )
 	WaveSpawn_InfantrySpawn( wave3, "PodGrunt", < 7748, -1536, 2238 >, 0.0, "" )
 	WaveSpawn_WaitEnemyAliveAmount( wave3, 8 )
-	
+
 	WaveSpawn_Announce( wave3, "PreNukeTitan", 0.0 )
 	WaveSpawn_ReaperSpawn( wave3, "Reaper", < -1605, -6286, 2034 >, 0, "", 0.5 )
 	WaveSpawn_ReaperSpawn( wave3, "Reaper", < -1425, -1635, 2002 >, 0, "", 0.6 )
@@ -172,8 +172,8 @@ void function initFrontierDefenseData()
 	WaveSpawn_TitanSpawn( wave3, "Legion", < 11097, -4024, 1934 >, 180, "", 0.5 )
 	WaveSpawn_TitanSpawn( wave3, "Legion", < 11204, -4969, 1884 >, 180, "", 5.0 )
 	WaveSpawn_WaitEnemyAliveAmount( wave3, 8 )
-	
-	WaveSpawn_SmokeWall( wave3, < 8113, -3451, 2233 >,	0.5, 180 )
+
+	WaveSpawn_SmokeWall( wave3, < 8113, -3451, 2233 >, 0.5, 180 )
 	WaveSpawn_SmokeWall( wave3, < 5752, -2898, 2236 >, 0.5, 180 )
 	WaveSpawn_SmokeWall( wave3, < 5800, -4864, 2236 >, 0.5, 180 )
 	WaveSpawn_SmokeWall( wave3, < 9134, -3256, 2176 >, 0.5, 180 )
@@ -222,7 +222,7 @@ void function initFrontierDefenseData()
 	WaveSpawn_InfantrySpawn( wave3, "PodGrunt", < 8271, -1544, 2242 >, 0.0, "", 0.5 )
 	WaveSpawn_InfantrySpawn( wave3, "Stalker", < 8606, -2966, 2242 >, 0.0, "", 5.0 )
 	WaveSpawn_WaitEnemyAliveAmount( wave3, 8 )
-	
+
 	WaveSpawn_TitanSpawn( wave3, "Nuke", < 9245, -6489, 2060 >, 180, "northForestThroughTown", 0.5 )
 	WaveSpawn_TitanSpawn( wave3, "Nuke", < 9336, -2261, 2106 >, 180, "northForestThroughDebris", 0.5 )
 	WaveSpawn_TitanSpawn( wave3, "Nuke", < 9905, -6100, 1981 >, 180, "northForestThroughTown", 0.5 )
@@ -245,15 +245,15 @@ void function initFrontierDefenseData()
 	WaveSpawn_InfantrySpawn( wave3, "Stalker", < 8294, -2214, 2242 >, 0.0, "", 5.0 )
 	WaveSpawn_TitanSpawn( wave3, "Sniper", < -412, -6711, 2084 >, 0.0, "", 0.5 )
 	WaveSpawn_TitanSpawn( wave3, "Sniper", < -480, -1603, 2088 >, 0, "" )
-    WaveSpawnEvents.append( wave3 )
-	
+	WaveSpawnEvents.append( wave3 )
+
 	/*
-	 __      __                 _ _  
-	 \ \    / /__ _ __ __ ___  | | | 
+	 __      __                 _ _
+	 \ \    / /__ _ __ __ ___  | | |
 	  \ \/\/ // _` |\ V // -_) |_  _|
-	   \_/\_/ \__,_| \_/ \___|   |_| 
-	
-	*/
+	   \_/\_/ \__,_| \_/ \___|   |_|
+
+*/
 	array<WaveSpawnEvent> wave4
 	WaveSpawn_TitanSpawn( wave4, "Legion", < -2020, -6257, 2011 >, 0, "", 0.5 )
 	WaveSpawn_TitanSpawn( wave4, "Legion", < -1652, -5669, 2021 >, 0, "", 2.5 )
@@ -268,7 +268,7 @@ void function initFrontierDefenseData()
 	WaveSpawn_InfantrySpawn( wave4, "Stalker", < 233, -4389, 2304 >, 0.0, "", 0.3 )
 	WaveSpawn_InfantrySpawn( wave4, "Stalker", < 183, -5512, 2304 >, 0.0, "", 5.0 )
 	WaveSpawn_WaitEnemyAliveAmount( wave4, 8 )
-	
+
 	WaveSpawn_TitanSpawn( wave4, "Tone", < 8084, -4370, 2132 >, 180, "", 0.5 )
 	WaveSpawn_TitanSpawn( wave4, "Tone", < 8007, -5207, 2190 >, 180, "", 2.5 )
 	WaveSpawn_ReaperSpawn( wave4, "TickReaper", < 6775, -5415, 2242 >, -135, "", 0.5, "fd_waveTypeReaperTicks" )
@@ -284,7 +284,7 @@ void function initFrontierDefenseData()
 	WaveSpawn_InfantrySpawn( wave4, "Stalker", < 233, -4389, 2304 >, 0.0, "", 0.3 )
 	WaveSpawn_InfantrySpawn( wave4, "Stalker", < 183, -5512, 2304 >, 0.0, "", 5.0 )
 	WaveSpawn_WaitEnemyAliveAmount( wave4, 8 )
-	
+
 	WaveSpawn_InfantrySpawn( wave4, "Spectre", < 8661, -1957, 2242 >, 0.0, "", 0.5 )
 	WaveSpawn_InfantrySpawn( wave4, "PodGrunt", < 8294, -2214, 2242 >, 0.0, "", 0.5 )
 	WaveSpawn_InfantrySpawn( wave4, "Spectre", < 8606, -2966, 2242 >, 0.0, "", 0.5 )
@@ -300,7 +300,7 @@ void function initFrontierDefenseData()
 	WaveSpawn_InfantrySpawn( wave4, "Stalker", < 233, -4389, 2304 >, 0.0, "", 0.3 )
 	WaveSpawn_InfantrySpawn( wave4, "Stalker", < 183, -5512, 2304 >, 0.0, "", 5.0 )
 	WaveSpawn_WaitEnemyAliveAmount( wave4, 0 )
-	
+
 	WaveSpawn_TitanSpawn( wave4, "Legion", < -1355, -2128, 2005 >, 0, "", 5.0 )
 	WaveSpawn_TitanSpawn( wave4, "Ronin", < -1580, -2545, 1994 >, 0, "", 5.0 )
 	WaveSpawn_ReaperSpawn( wave4, "Reaper", < -1412, -2284, 1993 >, 0, "", 2.0, "", 600.0 )
@@ -311,21 +311,21 @@ void function initFrontierDefenseData()
 	WaveSpawn_ReaperSpawn( wave4, "Reaper", < -1412, -2284, 1993 >, 0, "", 1.0, "", 600.0 )
 	WaveSpawn_ReaperSpawn( wave4, "Reaper", < -1412, -2284, 1993 >, 0, "", 0.8, "", 600.0 )
 	WaveSpawn_ReaperSpawn( wave4, "Reaper", < -1412, -2284, 1993 >, 0, "", 0.6, "", 600.0 )
-	for( reaperrain = 0; reaperrain < 16; reaperrain++ )
+	for ( reaperrain = 0; reaperrain < 16; reaperrain++ )
 	{
 		WaveSpawn_ReaperSpawn( wave4, "Reaper", < -1412, -2284, 1993 >, 0, "", RandomFloatRange( 0.1, 0.5 ), "", 600.0 )
 		WaveSpawn_WaitEnemyAliveAmount( wave4, 24 )
 	}
 	WaveSpawn_TitanSpawn( wave4, "Ronin", < -1580, -2545, 1995 >, 0, "", 0.3 )
 	WaveSpawn_TitanSpawn( wave4, "Ronin", < -1580, -2097, 1995 >, 0, "", 0.3 )
-	for( reaperrain = 0; reaperrain < 16; reaperrain++ )
+	for ( reaperrain = 0; reaperrain < 16; reaperrain++ )
 	{
 		WaveSpawn_ReaperSpawn( wave4, "Reaper", < -1412, -2284, 1993 >, 0, "", RandomFloatRange( 0.1, 0.5 ), "", 600.0 )
 		WaveSpawn_WaitEnemyAliveAmount( wave4, 24 )
 	}
 	WaveSpawn_TitanSpawn( wave4, "Ion", < -1580, -2545, 1995 >, 0, "", 0.3 )
 	WaveSpawn_TitanSpawn( wave4, "Ion", < -1580, -2097, 1995 >, 0, "", 0.3 )
-	for( reaperrain = 0; reaperrain < 16; reaperrain++ )
+	for ( reaperrain = 0; reaperrain < 16; reaperrain++ )
 	{
 		WaveSpawn_ReaperSpawn( wave4, "Reaper", < -1412, -2284, 1993 >, 0, "", RandomFloatRange( 0.1, 0.5 ), "", 600.0 )
 		WaveSpawn_WaitEnemyAliveAmount( wave4, 24 )
@@ -341,7 +341,7 @@ void function initFrontierDefenseData()
 	WaveSpawn_ReaperSpawn( wave4, "Reaper", < -1412, -2284, 1993 >, 0, "", 2.0, "", 600.0 )
 	WaveSpawn_ReaperSpawn( wave4, "Reaper", < -1412, -2284, 1993 >, 0, "", 0.5, "", 600.0 )
 	WaveSpawn_WaitEnemyAliveAmount( wave4, 4 )
-	
+
 	WaveSpawn_InfantrySpawn( wave4, "Spectre", < 7252, -4815, 2242 >, 0.0, "", 0.5 )
 	WaveSpawn_InfantrySpawn( wave4, "PodGrunt", < 6497, -3399, 2242 >, 0.0, "", 0.5 )
 	WaveSpawn_InfantrySpawn( wave4, "Spectre", < 6779, -2872, 2236 >, 0.0, "", 0.5 )
@@ -354,16 +354,16 @@ void function initFrontierDefenseData()
 	WaveSpawn_InfantrySpawn( wave4, "Stalker", < 183, -5512, 2304 >, 0.0, "", 2.5 )
 	WaveSpawn_TitanSpawn( wave4, "Northstar", < -412, -6711, 2084 >, 0.0, "", 0.5 )
 	WaveSpawn_TitanSpawn( wave4, "Northstar", < -480, -1603, 2088 >, 0, "" )
-	
-    WaveSpawnEvents.append( wave4 )
-	
+
+	WaveSpawnEvents.append( wave4 )
+
 	/*
-	 __      __                 ___ 
+	 __      __                 ___
 	 \ \    / /__ _ __ __ ___  | __|
 	  \ \/\/ // _` |\ V // -_) |__ \
 	   \_/\_/ \__,_| \_/ \___| |___/
-	
-	*/
+
+*/
 	array<WaveSpawnEvent> wave5
 	WaveSpawn_Announce( wave5, "MediumWave", 0.0 )
 	WaveSpawn_TitanSpawn( wave5, "Ronin", < 9245, -6489, 2060 >, 180, "northForestThroughTown", 0.2 )
@@ -382,7 +382,7 @@ void function initFrontierDefenseData()
 	WaveSpawn_InfantrySpawn( wave5, "Stalker", < 4765, -4527, 2010 >, 0.0, "", 1.5 )
 	WaveSpawn_ReaperSpawn( wave5, "TickReaper", < 6035, -3184, 2243 >, 35, "" )
 	WaveSpawn_WaitEnemyAliveAmount( wave5, 6 )
-	
+
 	WaveSpawn_Announce( wave5, "PreArcTitan", 0.0 )
 	WaveSpawn_TitanSpawn( wave5, "Tone", < 9245, -6489, 2060 >, 180, "northForestThroughTown", 0.6 )
 	WaveSpawn_TitanSpawn( wave5, "Ion", < 9336, -2261, 2106 >, 180, "northForestThroughTown", 1.0 )
@@ -400,7 +400,7 @@ void function initFrontierDefenseData()
 	WaveSpawn_InfantrySpawn( wave5, "Stalker", < 5437, -1868, 2236 >, 0.0, "", 0.5 )
 	WaveSpawn_ReaperSpawn( wave5, "TickReaper", < 6833, -2650, 2242 >, 180, "" )
 	WaveSpawn_WaitEnemyAliveAmount( wave5, 6 )
-	
+
 	WaveSpawn_TitanSpawn( wave5, "Legion", < 9245, -6489, 2060 >, 180, "northForestLongUnderpass", 1.5 )
 	WaveSpawn_TitanSpawn( wave5, "Scorch", < 9336, -2261, 2106 >, 180, "northForestThroughTown", 1.0 )
 	WaveSpawn_TitanSpawn( wave5, "Legion", < 9905, -6100, 1981 >, 180, "northForestLongUnderpass", 0.8 )
@@ -417,7 +417,7 @@ void function initFrontierDefenseData()
 	WaveSpawn_InfantrySpawn( wave5, "Stalker", < 2928, -1864, 2304 >, 0.0, "", 0.5 )
 	WaveSpawn_ReaperSpawn( wave5, "TickReaper", < 5130, -4887, 1986 >, 135, "", 5.0 )
 	WaveSpawn_WaitEnemyAliveAmount( wave5, 6 )
-	
+
 	WaveSpawn_TitanSpawn( wave5, "ArcTitan", < 9245, -6489, 2060 >, 180, "northForestThroughTown", 0.5, "fd_waveTypeTitanArc" )
 	WaveSpawn_TitanSpawn( wave5, "Nuke", < 9336, -2261, 2106 >, 180, "trenchDebrisMain", 0.5 )
 	WaveSpawn_TitanSpawn( wave5, "ArcTitan", < 9905, -6100, 1981 >, 180, "northForestThroughTown", 0.5 )
@@ -436,7 +436,7 @@ void function initFrontierDefenseData()
 	WaveSpawn_InfantrySpawn( wave5, "CloakDrone", < 9934, -3615, 4000 >, 180, "", 1.5, "fd_incCloakDroneClump" )
 	WaveSpawn_InfantrySpawn( wave5, "CloakDrone", < 9784, -4432, 4000 >, 180, "", 5.0 )
 	WaveSpawn_WaitEnemyAliveAmount( wave5, 6 )
-	
+
 	WaveSpawn_TitanSpawn( wave5, "Nuke", < 10833, -5919, 1925 >, 180, "", 0.6 )
 	WaveSpawn_TitanSpawn( wave5, "Nuke", < 10818, -6493, 1916 >, 180, "", 0.8 )
 	WaveSpawn_TitanSpawn( wave5, "Nuke", < 9816, -6601, 2002 >, 180, "", 0.4 )
@@ -464,7 +464,7 @@ void function initFrontierDefenseData()
 	WaveSpawn_TitanSpawn( wave5, "Ronin", < 11318, -5970, 1957 >, 180, "northForestLongUnderpass", 0.5 )
 	WaveSpawn_TitanSpawn( wave5, "Ronin", < 9784, -4432, 2007 >, 180, "northForestLongUnderpass", 2.5 )
 	WaveSpawn_TitanSpawn( wave5, "Monarch", < 11282, -5322, 1909 >, 180, "northForestLongUnderpass", 0.5 )
-	WaveSpawn_TitanSpawn( wave5, "Monarch", < 9934, -3615, 2022 >, 180, "northForestLongUnderpass",	0.5 )
+	WaveSpawn_TitanSpawn( wave5, "Monarch", < 9934, -3615, 2022 >, 180, "northForestLongUnderpass", 0.5 )
 	WaveSpawn_TitanSpawn( wave5, "Monarch", < 10818, -6493, 1916 >, 180, "northForestLongUnderpass", 2.5 )
 	WaveSpawn_TitanSpawn( wave5, "Tone", < 9816, -6601, 2002 >, 180, "northForestLongUnderpass", 0.5 )
 	WaveSpawn_TitanSpawn( wave5, "Tone", < 9245, -6489, 2060 >, 180, "northForestLongUnderpass", 0.5 )
@@ -489,7 +489,7 @@ void function initFrontierDefenseData()
 	WaveSpawn_InfantrySpawn( wave5, "CloakDrone", < 9336, -2261, 4000 >, 180, "", 2.0 )
 	WaveSpawn_InfantrySpawn( wave5, "CloakDrone", < 9245, -6489, 4000 >, 180, "", 5.0 )
 	WaveSpawn_WaitEnemyAliveAmount( wave5, 0, eFDHT.TITAN )
-	
+
 	WaveSpawn_Announce( wave5, "NoMoreEnemyTitans", 5.0 )
 	WaveSpawn_ReaperSpawn( wave5, "Reaper", < -1412, -2284, 1993 >, 0, "", 2.0, "", 600.0 )
 	WaveSpawn_ReaperSpawn( wave5, "Reaper", < -1412, -2284, 1993 >, 0, "", 1.8, "", 600.0 )
@@ -499,41 +499,41 @@ void function initFrontierDefenseData()
 	WaveSpawn_ReaperSpawn( wave5, "Reaper", < -1412, -2284, 1993 >, 0, "", 1.0, "", 600.0 )
 	WaveSpawn_ReaperSpawn( wave5, "Reaper", < -1412, -2284, 1993 >, 0, "", 0.8, "", 600.0 )
 	WaveSpawn_ReaperSpawn( wave5, "Reaper", < -1412, -2284, 1993 >, 0, "", 0.6, "", 600.0 )
-	for( reaperrain = 0; reaperrain < 8; reaperrain++ )
+	for ( reaperrain = 0; reaperrain < 8; reaperrain++ )
 	{
 		WaveSpawn_ReaperSpawn( wave5, "Reaper", < -1412, -2284, 1993 >, 0, "", RandomFloatRange( 0.1, 0.5 ), "", 600.0 )
 	}
 	WaveSpawn_InfantrySpawn( wave5, "Ticks", < -1412, -2284, 1993 >, 0.0, "", RandomFloatRange( 0.1, 0.5 ), "", 600.0 )
 	WaveSpawn_InfantrySpawn( wave5, "Ticks", < -1412, -2284, 1993 >, 0.0, "", RandomFloatRange( 0.1, 0.5 ), "", 600.0 )
-	for( reaperrain = 0; reaperrain < 8; reaperrain++ )
-	{
-		WaveSpawn_ReaperSpawn( wave5, "Reaper", < -1412, -2284, 1993 >, 0, "", RandomFloatRange( 0.1, 0.5 ), "", 600.0 )
-		WaveSpawn_WaitEnemyAliveAmount( wave5, 24 )
-	}
-	WaveSpawn_InfantrySpawn( wave5, "Ticks", < -1412, -2284, 1993 >, 0.0, "", RandomFloatRange( 0.1, 0.5 ), "", 600.0 )
-	WaveSpawn_InfantrySpawn( wave5, "Ticks", < -1412, -2284, 1993 >, 0.0, "", RandomFloatRange( 0.1, 0.5 ), "", 600.0 )
-	for( reaperrain = 0; reaperrain < 8; reaperrain++ )
+	for ( reaperrain = 0; reaperrain < 8; reaperrain++ )
 	{
 		WaveSpawn_ReaperSpawn( wave5, "Reaper", < -1412, -2284, 1993 >, 0, "", RandomFloatRange( 0.1, 0.5 ), "", 600.0 )
 		WaveSpawn_WaitEnemyAliveAmount( wave5, 24 )
 	}
 	WaveSpawn_InfantrySpawn( wave5, "Ticks", < -1412, -2284, 1993 >, 0.0, "", RandomFloatRange( 0.1, 0.5 ), "", 600.0 )
 	WaveSpawn_InfantrySpawn( wave5, "Ticks", < -1412, -2284, 1993 >, 0.0, "", RandomFloatRange( 0.1, 0.5 ), "", 600.0 )
-	for( reaperrain = 0; reaperrain < 8; reaperrain++ )
+	for ( reaperrain = 0; reaperrain < 8; reaperrain++ )
 	{
 		WaveSpawn_ReaperSpawn( wave5, "Reaper", < -1412, -2284, 1993 >, 0, "", RandomFloatRange( 0.1, 0.5 ), "", 600.0 )
 		WaveSpawn_WaitEnemyAliveAmount( wave5, 24 )
 	}
 	WaveSpawn_InfantrySpawn( wave5, "Ticks", < -1412, -2284, 1993 >, 0.0, "", RandomFloatRange( 0.1, 0.5 ), "", 600.0 )
 	WaveSpawn_InfantrySpawn( wave5, "Ticks", < -1412, -2284, 1993 >, 0.0, "", RandomFloatRange( 0.1, 0.5 ), "", 600.0 )
-	for( reaperrain = 0; reaperrain < 8; reaperrain++ )
+	for ( reaperrain = 0; reaperrain < 8; reaperrain++ )
 	{
 		WaveSpawn_ReaperSpawn( wave5, "Reaper", < -1412, -2284, 1993 >, 0, "", RandomFloatRange( 0.1, 0.5 ), "", 600.0 )
 		WaveSpawn_WaitEnemyAliveAmount( wave5, 24 )
 	}
 	WaveSpawn_InfantrySpawn( wave5, "Ticks", < -1412, -2284, 1993 >, 0.0, "", RandomFloatRange( 0.1, 0.5 ), "", 600.0 )
 	WaveSpawn_InfantrySpawn( wave5, "Ticks", < -1412, -2284, 1993 >, 0.0, "", RandomFloatRange( 0.1, 0.5 ), "", 600.0 )
-	for( reaperrain = 0; reaperrain < 8; reaperrain++ )
+	for ( reaperrain = 0; reaperrain < 8; reaperrain++ )
+	{
+		WaveSpawn_ReaperSpawn( wave5, "Reaper", < -1412, -2284, 1993 >, 0, "", RandomFloatRange( 0.1, 0.5 ), "", 600.0 )
+		WaveSpawn_WaitEnemyAliveAmount( wave5, 24 )
+	}
+	WaveSpawn_InfantrySpawn( wave5, "Ticks", < -1412, -2284, 1993 >, 0.0, "", RandomFloatRange( 0.1, 0.5 ), "", 600.0 )
+	WaveSpawn_InfantrySpawn( wave5, "Ticks", < -1412, -2284, 1993 >, 0.0, "", RandomFloatRange( 0.1, 0.5 ), "", 600.0 )
+	for ( reaperrain = 0; reaperrain < 8; reaperrain++ )
 	{
 		WaveSpawn_ReaperSpawn( wave5, "Reaper", < -1412, -2284, 1993 >, 0, "", RandomFloatRange( 0.1, 0.5 ), "", 600.0 )
 		WaveSpawn_WaitEnemyAliveAmount( wave5, 24 )
@@ -554,8 +554,8 @@ void function initFrontierDefenseData()
 	WaveSpawn_InfantrySpawn( wave5, "Ticks", < -1412, -2284, 1993 >, 0.0, "", RandomFloatRange( 0.1, 0.5 ), "", 600.0 )
 	WaveSpawn_InfantrySpawn( wave5, "Ticks", < -1412, -2284, 1993 >, 0.0, "", RandomFloatRange( 0.1, 0.5 ), "", 600.0 )
 	WaveSpawn_InfantrySpawn( wave5, "Ticks", < -1412, -2284, 1993 >, 0.0, "", RandomFloatRange( 0.1, 0.5 ), "", 600.0 )
-	
-    WaveSpawnEvents.append( wave5 )
+
+	WaveSpawnEvents.append( wave5 )
 }
 
 void function RegisterCustomFDContent()
@@ -563,12 +563,12 @@ void function RegisterCustomFDContent()
 	array<entity> dropshipSpawns = GetEntArrayByClass_Expensive( "info_spawnpoint_dropship_start" )
 	foreach ( entity dropshipSpawn in dropshipSpawns )
 		dropshipSpawn.Destroy()
-	
+
 	AddFDCustomShipStart( < 2171, -3772, 2625 >, < 0, -45, 0 >, TEAM_MILITIA )
 	AddFDCustomShipStart( < 3037, -5548, 2625 >, < 0, 45, 0 >, TEAM_MILITIA )
 	AddFDCustomShipStart( < 8487, -5720, 2625 >, < 0, 180, 0 >, TEAM_IMC )
 	AddFDCustomShipStart( < 9482, -3540, 2625 >, < 0, 180, 0 >, TEAM_IMC )
-	
+
 	AddStationaryAIPosition( < 1808, -1942, 2167 >, eStationaryAIPositionTypes.SNIPER_TITAN )
 	AddStationaryAIPosition( < 4503, -6460, 2242 >, eStationaryAIPositionTypes.SNIPER_TITAN )
 	AddStationaryAIPosition( < 5025, -3465, 2253 >, eStationaryAIPositionTypes.SNIPER_TITAN )
@@ -576,7 +576,7 @@ void function RegisterCustomFDContent()
 	AddStationaryAIPosition( < 3619, -2267, 2230 >, eStationaryAIPositionTypes.SNIPER_TITAN )
 	AddStationaryAIPosition( < 9411, -6612, 2054 >, eStationaryAIPositionTypes.SNIPER_TITAN )
 	AddStationaryAIPosition( < 7512, -4631, 2220 >, eStationaryAIPositionTypes.SNIPER_TITAN )
-	
+
 	AddStationaryAIPosition( < 5024, -2475, 2450 >, eStationaryAIPositionTypes.LAUNCHER_REAPER )
 	AddStationaryAIPosition( < 5533, -3809, 2628 >, eStationaryAIPositionTypes.LAUNCHER_REAPER )
 	AddStationaryAIPosition( < 7105, -2347, 2593 >, eStationaryAIPositionTypes.LAUNCHER_REAPER )
@@ -586,36 +586,36 @@ void function RegisterCustomFDContent()
 	AddStationaryAIPosition( < 4114, -1651, 2468 >, eStationaryAIPositionTypes.LAUNCHER_REAPER )
 	AddStationaryAIPosition( < 6800, -4578, 2505 >, eStationaryAIPositionTypes.LAUNCHER_REAPER )
 	AddStationaryAIPosition( < 5925, -4451, 2623 >, eStationaryAIPositionTypes.LAUNCHER_REAPER )
-	
+
 	AddOutOfBoundsTriggerWithParams( < 5584, -4354, 3053 >, 200, 256 )
-	
+
 	routes[ "townInfantryCrossroad" ] <- []
 	routes[ "townInfantryCrossroad" ].append( < 6756, -3414, 2236 > )
 	routes[ "townInfantryCrossroad" ].append( < 4888, -3853, 2264 > )
 	routes[ "townInfantryCrossroad" ].append( < 2896, -4846, 2242 > )
-	
+
 	routes[ "trenchCloseInfantry" ] <- []
 	routes[ "trenchCloseInfantry" ].append( < 4644, -5091, 2242 > )
 	routes[ "trenchCloseInfantry" ].append( < 3815, -4471, 2376 > )
 	routes[ "trenchCloseInfantry" ].append( < 3453, -5208, 2376 > )
 	routes[ "trenchCloseInfantry" ].append( < 2846, -5137, 2236 > )
-	
+
 	routes[ "trenchDebrisMain" ] <- []
 	routes[ "trenchDebrisMain" ].append( < 5751, -6467, 2242 > )
 	routes[ "trenchDebrisMain" ].append( < 3922, -6140, 2246 > )
 	routes[ "trenchDebrisMain" ].append( < 2895, -5200, 2236 > )
-	
+
 	routes[ "trenchRampsMain" ] <- []
 	routes[ "trenchRampsMain" ].append( < 4635, -2001, 2125 > )
 	routes[ "trenchRampsMain" ].append( < 2765, -2884, 2195 > )
 	routes[ "trenchRampsMain" ].append( < 2254, -4602, 2226 > )
-	
+
 	routes[ "dropPodsInfantry" ] <- []
 	routes[ "dropPodsInfantry" ].append( < 6228, -1779, 2242 > )
 	routes[ "dropPodsInfantry" ].append( < 4635, -2001, 2125 > )
 	routes[ "dropPodsInfantry" ].append( < 2765, -2884, 2195 > )
 	routes[ "dropPodsInfantry" ].append( < 2254, -4602, 2226 > )
-	
+
 	routes[ "parkingLotInfantry" ] <- []
 	routes[ "parkingLotInfantry" ].append( < 7974, -2288, 2232 > )
 	routes[ "parkingLotInfantry" ].append( < 7165, -2677, 2416 > )
@@ -626,42 +626,42 @@ void function RegisterCustomFDContent()
 	routes[ "parkingLotInfantry" ].append( < 3815, -4471, 2376 > )
 	routes[ "parkingLotInfantry" ].append( < 3453, -5208, 2376 > )
 	routes[ "parkingLotInfantry" ].append( < 2846, -5137, 2236 > )
-	
+
 	routes[ "debrisFieldHouse" ] <- []
 	routes[ "debrisFieldHouse" ].append( < 7466, -5550, 2242 > )
 	routes[ "debrisFieldHouse" ].append( < 5751, -6467, 2242 > )
 	routes[ "debrisFieldHouse" ].append( < 3922, -6140, 2246 > )
 	routes[ "debrisFieldHouse" ].append( < 2895, -5200, 2236 > )
-	
+
 	routes[ "northForestThroughDebris" ] <- []
 	routes[ "northForestThroughDebris" ].append( < 9222, -6150, 2059 > )
 	routes[ "northForestThroughDebris" ].append( < 7466, -5550, 2242 > )
 	routes[ "northForestThroughDebris" ].append( < 5751, -6467, 2242 > )
 	routes[ "northForestThroughDebris" ].append( < 3922, -6140, 2246 > )
 	routes[ "northForestThroughDebris" ].append( < 2895, -5200, 2236 > )
-	
+
 	routes[ "northForestThroughTown" ] <- []
 	routes[ "northForestThroughTown" ].append( < 9068, -3852, 2114 > )
 	routes[ "northForestThroughTown" ].append( < 7009, -3527, 2242 > )
 	routes[ "northForestThroughTown" ].append( < 4907, -3848, 2264 > )
 	routes[ "northForestThroughTown" ].append( < 2897, -4723, 2236 > )
-	
+
 	routes[ "westBackyardMain" ] <- []
 	routes[ "westBackyardMain" ].append( < -1220, -2642, 2008 > )
 	routes[ "westBackyardMain" ].append( < 1061, -2242, 2132 > )
 	routes[ "westBackyardMain" ].append( < 2203, -2846, 2092 > )
 	routes[ "westBackyardMain" ].append( < 2201, -4551, 2226 > )
-	
+
 	routes[ "eastBackyardMain" ] <- []
 	routes[ "eastBackyardMain" ].append( < -1571, -5894, 2038 > )
 	routes[ "eastBackyardMain" ].append( < 1192, -6540, 2238 > )
 	routes[ "eastBackyardMain" ].append( < 2914, -5157, 2236 > )
-	
+
 	routes[ "backyardInfantry" ] <- []
 	routes[ "backyardInfantry" ].append( < 153, -5021, 2304 > )
 	routes[ "backyardInfantry" ].append( < 623, -4959, 2304 > )
 	routes[ "backyardInfantry" ].append( < 2192, -5150, 2226 > )
-	
+
 	routes[ "northForestLongUnderpass" ] <- []
 	routes[ "northForestLongUnderpass" ].append( < 11603, -2329, 1886 > )
 	routes[ "northForestLongUnderpass" ].append( < 5320, -5811, 2264 > )

@@ -1,35 +1,35 @@
 global function initFrontierDefenseData
 void function initFrontierDefenseData()
 {
-    PlaceFDShop( < -5028, -618, 382 > )
+	PlaceFDShop( < -5028, -618, 382 > )
 	SetFDDropshipSpawn( < -5076, -1381, 1600 >, < 0, 35, 0 > )
 	SetFDGroundSpawn( < -5301, -1111, 385 >, < 0, 45, 0 > )
-	
+
 	AddWaveAnnouncement( "fd_introEasy" )
 	AddWaveAnnouncement( "fd_waveTypeReapers" )
 	AddWaveAnnouncement( "fd_waveComboArcNuke" )
 	AddWaveAnnouncement( "fd_waveTypeFlyers" )
 	AddWaveAnnouncement( "fd_waveComboNukeCloak" )
-	
+
 	AddFDCustomTitanStart( < -5678, -1146, 384 >, < 0, 0, 0 > )
 	AddFDCustomTitanStart( < -5537, 275, 300 >, < 0, 0, 0 > )
-	
+
 	AddStationaryAIPosition( < 2259, 1701, 393 >, eStationaryAIPositionTypes.LAUNCHER_REAPER )
 	AddStationaryAIPosition( < 2373, 2591, 276 >, eStationaryAIPositionTypes.LAUNCHER_REAPER )
 	AddStationaryAIPosition( < 1051, 1893, 512 >, eStationaryAIPositionTypes.LAUNCHER_REAPER )
 
-    /*
-	 __      __                 _ 
+	/*
+	 __      __                 _
 	 \ \    / /__ _ __ __ ___  / |
 	  \ \/\/ // _` |\ V // -_) | |
 	   \_/\_/ \__,_| \_/ \___| |_|
-	
-	*/
-    array<WaveSpawnEvent> wave1
+
+*/
+	array<WaveSpawnEvent> wave1
 	WaveSpawn_TitanSpawn( wave1, "Nuke", < 2479, 1394, 61 >, 180, "rightSwitch", 1.0, "", 0.0, eFDSD.MASTER | eFDSD.INSANE )
 	WaveSpawn_TitanSpawn( wave1, "Nuke", < 3465, 573, 144 >, 180, "mid" )
 	WaveSpawn_WaitEnemyAliveAmount( wave1, 0 )
-	
+
 	WaveSpawn_InfantrySpawn( wave1, "PodGrunt", < -3123, 1509, 320 >, 0.0, "", 0.5, "fd_waveTypeInfantry" )
 	WaveSpawn_InfantrySpawn( wave1, "PodGrunt", < -3386, 1388, 320 >, 0.0, "", 0.7 )
 	WaveSpawn_InfantrySpawn( wave1, "PodGrunt", < -2366, -233, 384 >, 0.0, "", 1.0 )
@@ -37,7 +37,7 @@ void function initFrontierDefenseData()
 	WaveSpawn_InfantrySpawn( wave1, "PodGrunt", < -3332, -1759, 384 >, 0.0, "", 1.3 )
 	WaveSpawn_InfantrySpawn( wave1, "PodGrunt", < 3541, 204, 144 >, 0.0, "right_infantry" )
 	WaveSpawn_WaitEnemyAliveAmount( wave1, 2 )
-	
+
 	WaveSpawn_InfantrySpawn( wave1, "PodGrunt", < -3105, 1240, 320 >, 0.0, "", 0.8 )
 	WaveSpawn_InfantrySpawn( wave1, "PodGrunt", < -2570, -303, 384 >, 0.0, "", 1.0 )
 	WaveSpawn_InfantrySpawn( wave1, "PodGrunt", < -551, -1102, 247 >, 0.0, "", 0.9 )
@@ -47,7 +47,7 @@ void function initFrontierDefenseData()
 	WaveSpawn_InfantrySpawn( wave1, "Stalker", < -1007, 410, 246 >, 0.0, "", 0.6 )
 	WaveSpawn_TitanSpawn( wave1, "Nuke", < 3571, 165, 144 >, 180, "right", 0.5, "", 0.0, eFDSD.MASTER | eFDSD.INSANE )
 	WaveSpawn_WaitEnemyAliveAmount( wave1, 4 )
-	
+
 	WaveSpawn_InfantrySpawn( wave1, "PodGrunt", < -978, -1501, 248 >, 0.0, "", 1.0 )
 	WaveSpawn_InfantrySpawn( wave1, "PodGrunt", < -2470, -486, 384 >, 0.0, "", 0.8 )
 	WaveSpawn_InfantrySpawn( wave1, "PodGrunt", < -2819, -1764, 384 >, 0.0, "", 1.1 )
@@ -58,7 +58,7 @@ void function initFrontierDefenseData()
 	WaveSpawn_ReaperSpawn( wave1, "Reaper", < 831, 1624, 142 >, 180, "", 0.5 )
 	WaveSpawn_TitanSpawn( wave1, "Nuke", < 3465, 573, 144 >, 180, "midalt", 0.5, "", 0.0, eFDSD.MASTER | eFDSD.INSANE )
 	WaveSpawn_WaitEnemyAliveAmount( wave1, 6 )
-	
+
 	WaveSpawn_InfantrySpawn( wave1, "PodGrunt", < -3442, 1479, 320 >, 0.0, "", 0.8 )
 	WaveSpawn_InfantrySpawn( wave1, "PodGrunt", < -511, -1058, 247 >, 0.0, "", 0.7 )
 	WaveSpawn_InfantrySpawn( wave1, "PodGrunt", < 3013, 22, 173 >, 0.0, "infantyPerch_right", 1.0 )
@@ -68,7 +68,7 @@ void function initFrontierDefenseData()
 	WaveSpawn_InfantrySpawn( wave1, "Stalker", < -3008, 1468, 320 >, 0.0, "", 0.6 )
 	WaveSpawn_InfantrySpawn( wave1, "Stalker", < 3541, 204, 144 >, 0.0, "right_infantry" )
 	WaveSpawn_WaitEnemyAliveAmount( wave1, 8 )
-	
+
 	WaveSpawn_ReaperSpawn( wave1, "Reaper", < 2892, 124, 163 >, 180, "midalt", 1.0 )
 	WaveSpawn_InfantrySpawn( wave1, "Stalker", < -2771, -1751, 384 >, 0.0, "", 0.7 )
 	WaveSpawn_InfantrySpawn( wave1, "Stalker", < -2463, -476, 384 >, 0.0, "", 1.0 )
@@ -78,24 +78,24 @@ void function initFrontierDefenseData()
 	WaveSpawn_InfantrySpawn( wave1, "PodGrunt", < -928, 1514, 264 >, 0.0, "", 0.4 )
 	WaveSpawn_InfantrySpawn( wave1, "PodGrunt", < -554, -1088, 247 >, 0.0, "", 1.0 )
 	WaveSpawn_TitanSpawn( wave1, "Nuke", < 3539, 167, 144 >, 180, "right" )
-    
-    WaveSpawnEvents.append( wave1 )
-	
-    /*
-	 __      __                 ___ 
+
+	WaveSpawnEvents.append( wave1 )
+
+	/*
+	 __      __                 ___
 	 \ \    / /__ _ __ __ ___  |_  )
-	  \ \/\/ // _` |\ V // -_)  / / 
+	  \ \/\/ // _` |\ V // -_)  / /
 	   \_/\_/ \__,_| \_/ \___| /___|
-	
-	*/
-    array<WaveSpawnEvent> wave2
-    WaveSpawn_InfantrySpawn( wave2, "Stalker", < -3084, 1475, 320 >, 0.0, "", 0.6 )
-    WaveSpawn_InfantrySpawn( wave2, "PodGrunt", < -3382, 1438, 320 >, 0.0, "", 0.4 )
+
+*/
+	array<WaveSpawnEvent> wave2
+	WaveSpawn_InfantrySpawn( wave2, "Stalker", < -3084, 1475, 320 >, 0.0, "", 0.6 )
+	WaveSpawn_InfantrySpawn( wave2, "PodGrunt", < -3382, 1438, 320 >, 0.0, "", 0.4 )
 	WaveSpawn_InfantrySpawn( wave2, "Stalker", < -3145, -1765, 384 >, 0.0, "", 0.8 )
-    WaveSpawn_InfantrySpawn( wave2, "PodGrunt", < -2443, -546, 384 >, 0.0, "", 1.0 )
-    WaveSpawn_InfantrySpawn( wave2, "PodGrunt", < -1436, 1468, 264 >, 0.0, "" )
+	WaveSpawn_InfantrySpawn( wave2, "PodGrunt", < -2443, -546, 384 >, 0.0, "", 1.0 )
+	WaveSpawn_InfantrySpawn( wave2, "PodGrunt", < -1436, 1468, 264 >, 0.0, "" )
 	WaveSpawn_WaitEnemyAliveAmount( wave2, 4 )
-	
+
 	WaveSpawn_TitanSpawn( wave2, "Scorch", < 3460, 586, 144 >, 180, "mid", 1.0 )
 	WaveSpawn_ReaperSpawn( wave2, "Reaper", < 3380, 2657, 88 >, 180, "", 0.6, "fd_incReaperClump" )
 	WaveSpawn_ReaperSpawn( wave2, "Reaper", < 1921, 3511, 12 >, -90, "", 0.7 )
@@ -111,7 +111,7 @@ void function initFrontierDefenseData()
 	WaveSpawn_ReaperSpawn( wave2, "Reaper", < 3675, 650, 144 >, -90, "right", 0.4 )
 	WaveSpawn_ReaperSpawn( wave2, "Reaper", < 3624, -33, 216 >, -90, "right" )
 	WaveSpawn_WaitEnemyAliveAmount( wave2, 4 )
-	
+
 	WaveSpawn_TitanSpawn( wave2, "Scorch", < 3460, 586, 144 >, 180, "right", 0.4 )
 	WaveSpawn_ReaperSpawn( wave2, "Reaper", < 1453, 3347, 22 >, -90, "", 0.6 )
 	WaveSpawn_ReaperSpawn( wave2, "Reaper", < 3458, 3032, 93 >, -90, "", 0.8 )
@@ -140,17 +140,17 @@ void function initFrontierDefenseData()
 	WaveSpawn_ReaperSpawn( wave2, "TickReaper", < -2147, -477, 318 >, 180, "", 0.8, "", 0.0, eFDSD.MASTER | eFDSD.INSANE )
 	WaveSpawn_ReaperSpawn( wave2, "TickReaper", < -1562, 1587, 265 >, -90, "", 0.4, "", 0.0, eFDSD.MASTER | eFDSD.INSANE )
 	WaveSpawn_ReaperSpawn( wave2, "TickReaper", < -1105, -1679, 248 >, 135, "", 1.2, "", 0.0, eFDSD.MASTER | eFDSD.INSANE )
-	
-    WaveSpawnEvents.append( wave2 )
-	
-    /*
+
+	WaveSpawnEvents.append( wave2 )
+
+	/*
 	 __      __                 ____
 	 \ \    / /__ _ __ __ ___  |__ /
 	  \ \/\/ // _` |\ V // -_)  |_ \
 	   \_/\_/ \__,_| \_/ \___| |___/
-	
-	*/
-    array<WaveSpawnEvent> wave3
+
+*/
+	array<WaveSpawnEvent> wave3
 	WaveSpawn_TitanSpawn( wave3, "ArcTitan", < 1511, 3356, 15 >, -90, "", 1.0, "fd_waveTypeTitanArc" )
 	WaveSpawn_TitanSpawn( wave3, "ArcTitan", < 3573, 184, 144 >, 180, "mid", 1.2 )
 	WaveSpawn_TitanSpawn( wave3, "Tone", < 3419, 551, 145 >, 180, "mid", 0.8 )
@@ -164,7 +164,7 @@ void function initFrontierDefenseData()
 	WaveSpawn_InfantrySpawn( wave3, "Stalker", < -3060, 1477, 320 >, 0.0, "", 0.8 )
 	WaveSpawn_InfantrySpawn( wave3, "Stalker", < 1750, 1591, 12 >, 0.0, "left_infantry" )
 	WaveSpawn_WaitEnemyAliveAmount( wave3, 6 )
-	
+
 	WaveSpawn_TitanSpawn( wave3, "ArcTitan", < 1511, 3356, 15 >, -90, "", 1.2 )
 	WaveSpawn_TitanSpawn( wave3, "ArcTitan", < 3573, 184, 144 >, 180, "mid", 1.0 )
 	WaveSpawn_TitanSpawn( wave3, "ArcTitan", < 2507, 1438, 58 >, 180, "", 2.5 )
@@ -182,7 +182,7 @@ void function initFrontierDefenseData()
 	WaveSpawn_TitanSpawn( wave3, "ArcTitan", < 1372, 3163, 10 >, -90, "", 1.0, "", 0.0, eFDSD.MASTER | eFDSD.INSANE )
 	WaveSpawn_TitanSpawn( wave3, "ArcTitan", < 2379, 3533, 16 >, -90, "", 1.0, "", 0.0, eFDSD.MASTER | eFDSD.INSANE )
 	WaveSpawn_WaitEnemyAliveAmount( wave3, 8 )
-	
+
 	WaveSpawn_ReaperSpawn( wave3, "Reaper", < 2925, 54, 160 >, 180, "right", 1.5 )
 	WaveSpawn_ReaperSpawn( wave3, "TickReaper", < -1100, -1687, 248 >, 135, "", 1.5 )
 	WaveSpawn_InfantrySpawn( wave3, "Stalker", < 2916, 8, 158 >, 0.0, "right_infantry", 0.5 )
@@ -200,24 +200,24 @@ void function initFrontierDefenseData()
 	WaveSpawn_TitanSpawn( wave3, "ArcTitan", < 3532, 395, 144 >, 180, "right", 0.6, "", 0.0, eFDSD.MASTER | eFDSD.INSANE )
 	WaveSpawn_TitanSpawn( wave3, "ArcTitan", < 3390, 142, 153 >, 180, "right", 1.2, "", 0.0, eFDSD.MASTER | eFDSD.INSANE )
 	WaveSpawn_TitanSpawn( wave3, "ArcTitan", < 3119, 584, 146 >, 180, "right", 0.5, "", 0.0, eFDSD.MASTER | eFDSD.INSANE )
-	
-    WaveSpawnEvents.append( wave3 )
-    
+
+	WaveSpawnEvents.append( wave3 )
+
 	/*
-	 __      __                 _ _  
-	 \ \    / /__ _ __ __ ___  | | | 
+	 __      __                 _ _
+	 \ \    / /__ _ __ __ ___  | | |
 	  \ \/\/ // _` |\ V // -_) |_  _|
-	   \_/\_/ \__,_| \_/ \___|   |_| 
-	
-	*/
-    array<WaveSpawnEvent> wave4
+	   \_/\_/ \__,_| \_/ \___|   |_|
+
+*/
+	array<WaveSpawnEvent> wave4
 	WaveSpawn_InfantrySpawn( wave4, "Drones", < -498, 3119, 2560 >, 0.0, "closeDrone3", 1.0 )
 	WaveSpawn_InfantrySpawn( wave4, "Drones", < -498, 3119, 2560 >, 0.0, "closeDrone3", 1.0 )
 	WaveSpawn_InfantrySpawn( wave4, "Drones", < 128, -2075, 2560 >, 0.0, "closeDrone1", 1.0 )
 	WaveSpawn_InfantrySpawn( wave4, "Drones", < -22, -2102, 2560 >, 0.0, "closeDrone2", 1.0 )
 	WaveSpawn_InfantrySpawn( wave4, "Drones", < -22, -2102, 2560 >, 0.0, "closeDrone2", 1.0 )
 	WaveSpawn_WaitEnemyAliveAmount( wave4, 6 )
-	
+
 	WaveSpawn_InfantrySpawn( wave4, "Drones", < -498, 3119, 2560 >, 0.0, "closeDrone3", 1.0 )
 	WaveSpawn_InfantrySpawn( wave4, "Drones", < 128, -2075, 2560 >, 0.0, "closeDrone1", 1.0 )
 	WaveSpawn_InfantrySpawn( wave4, "Drones", < 128, -2075, 2560 >, 0.0, "closeDrone1", 1.0 )
@@ -232,7 +232,7 @@ void function initFrontierDefenseData()
 	WaveSpawn_InfantrySpawn( wave4, "CloakDrone", < 1926, 2160, 2560 >, 0.0, "", 1.0 )
 	WaveSpawn_ReaperSpawn( wave4, "TickReaper", < -2098, -589, 303 >, 180, "" )
 	WaveSpawn_WaitEnemyAliveAmount( wave4, 8 )
-	
+
 	WaveSpawn_InfantrySpawn( wave4, "Drones", < -498, 3119, 2560 >, 0.0, "leftDrone", 1.0 )
 	WaveSpawn_InfantrySpawn( wave4, "Drones", < 128, -2075, 2560 >, 0.0, "closeDrone1", 1.0 )
 	WaveSpawn_TitanSpawn( wave4, "ArcTitan", < 3128, 44, 169 >, 180, "mid", 0.6 )
@@ -247,7 +247,7 @@ void function initFrontierDefenseData()
 	WaveSpawn_InfantrySpawn( wave4, "Stalker", < -1207, 1492, 264 >, 0.0, "", 0.4 )
 	WaveSpawn_InfantrySpawn( wave4, "Stalker", < -1065, 416, 245 >, 0.0, "" )
 	WaveSpawn_WaitEnemyAliveAmount( wave4, 8 )
-	
+
 	WaveSpawn_TitanSpawn( wave4, "ArcTitan", < 3247, 590, 157 >, 180, "right", 0.6, "", 0.0, eFDSD.MASTER | eFDSD.INSANE )
 	WaveSpawn_TitanSpawn( wave4, "ArcTitan", < 1901, 3538, 11 >, -90, "", 0.5, "", 0.0, eFDSD.MASTER | eFDSD.INSANE )
 	WaveSpawn_TitanSpawn( wave4, "ArcTitan", < 1481, 3328, 17 >, -90, "", 0.8, "", 0.0, eFDSD.MASTER | eFDSD.INSANE )
@@ -262,7 +262,7 @@ void function initFrontierDefenseData()
 	WaveSpawn_ReaperSpawn( wave4, "Reaper", < 2806, 190, 171 >, 180, "mid", 1.2 )
 	WaveSpawn_ReaperSpawn( wave4, "Reaper", < 3591, 155, 144 >, 180, "midalt", 1.0 )
 	WaveSpawn_ReaperSpawn( wave4, "Reaper", < 3133, 69, 168 >, 180, "right", 1.4 )
-	WaveSpawn_TitanSpawn( wave4, "ArcTitan", < 3611, 133, 146 >, 180, "right", 1.4, "", 0.0,eFDSD.MASTER | eFDSD.INSANE )
+	WaveSpawn_TitanSpawn( wave4, "ArcTitan", < 3611, 133, 146 >, 180, "right", 1.4, "", 0.0, eFDSD.MASTER | eFDSD.INSANE )
 	WaveSpawn_TitanSpawn( wave4, "ArcTitan", < 3226, 62, 159 >, 180, "mid", 0.8, "", 0.0, eFDSD.MASTER | eFDSD.INSANE )
 	WaveSpawn_TitanSpawn( wave4, "ArcTitan", < 3653, 611, 144 >, 180, "mid", 1.2, "", 0.0, eFDSD.MASTER | eFDSD.INSANE )
 	WaveSpawn_TitanSpawn( wave4, "ArcTitan", < 1066, 3110, 40 >, -90, "", 1.6, "", 0.0, eFDSD.MASTER | eFDSD.INSANE )
@@ -271,17 +271,17 @@ void function initFrontierDefenseData()
 	WaveSpawn_InfantrySpawn( wave4, "Stalker", < -3100, 1254, 320 >, 0.0, "", 2.5, "", 0.0, eFDSD.EASY | eFDSD.NORMAL | eFDSD.HARD )
 	WaveSpawn_TitanSpawn( wave4, "Scorch", < 314, 2055, 168 >, -90, "leftDangerClose", 1.2 )
 	WaveSpawn_TitanSpawn( wave4, "Scorch", < 2500, 1433, 58 >, 180, "" )
-	
-    WaveSpawnEvents.append( wave4 )
-    
+
+	WaveSpawnEvents.append( wave4 )
+
 	/*
-	 __      __                 ___ 
+	 __      __                 ___
 	 \ \    / /__ _ __ __ ___  | __|
 	  \ \/\/ // _` |\ V // -_) |__ \
 	   \_/\_/ \__,_| \_/ \___| |___/
-	
-	*/
-    array<WaveSpawnEvent> wave5
+
+*/
+	array<WaveSpawnEvent> wave5
 	WaveSpawn_InfantrySpawn( wave5, "Drones", < -254, 3054, 2560 >, 0.0, "leftDrone", 1.0, "", 0.0, eFDSD.EASY | eFDSD.NORMAL | eFDSD.HARD )
 	WaveSpawn_InfantrySpawn( wave5, "Drones", < 265, -2077, 2560 >, 0.0, "midDrone", 1.0, "", 0.0, eFDSD.EASY | eFDSD.NORMAL | eFDSD.HARD )
 	WaveSpawn_InfantrySpawn( wave5, "Drones", < -498, 3119, 2560 >, 0.0, "closeDrone3", 1.0, "", 0.0, eFDSD.EASY | eFDSD.NORMAL | eFDSD.HARD )
@@ -299,7 +299,7 @@ void function initFrontierDefenseData()
 	WaveSpawn_TitanSpawn( wave5, "Nuke", < 2878, 2536, 8 >, 180, "", 2.5 )
 	WaveSpawn_InfantrySpawn( wave5, "CloakDrone", < 1926, 2160, 2560 >, 0.0, "" )
 	WaveSpawn_WaitEnemyAliveAmount( wave5, 8 )
-	
+
 	WaveSpawn_InfantrySpawn( wave5, "Drones", < -22, -2102, 2560 >, 0.0, "closeDrone2", 1.0, "", 0.0, eFDSD.EASY | eFDSD.NORMAL | eFDSD.HARD )
 	WaveSpawn_InfantrySpawn( wave5, "Drones", < -22, -2102, 2560 >, 0.0, "closeDrone2", 1.0, "", 0.0, eFDSD.EASY | eFDSD.NORMAL | eFDSD.HARD )
 	WaveSpawn_InfantrySpawn( wave5, "Drones", < 128, -2075, 2560 >, 0.0, "closeDrone1", 1.0, "", 0.0, eFDSD.EASY | eFDSD.NORMAL | eFDSD.HARD )
@@ -317,7 +317,7 @@ void function initFrontierDefenseData()
 	WaveSpawn_TitanSpawn( wave5, "Nuke", < 3618, 252, 144 >, 180, "right", 2.5 )
 	WaveSpawn_InfantrySpawn( wave5, "CloakDrone", < 3395, 301, 2560 >, 0.0, "" )
 	WaveSpawn_WaitEnemyAliveAmount( wave5, 8 )
-	
+
 	WaveSpawn_TitanSpawn( wave5, "ArcTitan", < 3009, 33, 172 >, 180, "right", 1.2, "", 0.0, eFDSD.MASTER | eFDSD.INSANE )
 	WaveSpawn_TitanSpawn( wave5, "ArcTitan", < 3101, 624, 144 >, 180, "mid", 1.0, "", 0.0, eFDSD.MASTER | eFDSD.INSANE )
 	WaveSpawn_TitanSpawn( wave5, "ArcTitan", < 2421, 1385, 55 >, 180, "", 0.8, "", 0.0, eFDSD.MASTER | eFDSD.INSANE )
@@ -337,7 +337,7 @@ void function initFrontierDefenseData()
 	WaveSpawn_InfantrySpawn( wave5, "Drones", < -498, 3119, 2560 >, 0.0, "closeDrone3", 1.0, "", 0.0, eFDSD.EASY | eFDSD.NORMAL | eFDSD.HARD )
 	WaveSpawn_InfantrySpawn( wave5, "Drones", < -498, 3119, 2560 >, 0.0, "closeDrone3", 1.0, "", 0.0, eFDSD.EASY | eFDSD.NORMAL | eFDSD.HARD )
 	WaveSpawn_WaitEnemyAliveAmount( wave5, 8 )
-	
+
 	WaveSpawn_TitanSpawn( wave5, "Nuke", < 3247, 590, 157 >, 180, "midalt", 1.0 )
 	WaveSpawn_TitanSpawn( wave5, "Nuke", < 1901, 3538, 11 >, -90, "", 1.0 )
 	WaveSpawn_TitanSpawn( wave5, "Nuke", < 2215, 3491, 11 >, -90, "", 1.0 )
@@ -350,7 +350,7 @@ void function initFrontierDefenseData()
 	WaveSpawn_TitanSpawn( wave5, "Scorch", < 2817, 88, 160 >, 180, "mid", 0.8 )
 	WaveSpawn_InfantrySpawn( wave5, "CloakDrone", < 3395, 301, 2560 >, 0.0, "" )
 	WaveSpawn_WaitEnemyAliveAmount( wave5, 8 )
-	
+
 	WaveSpawn_TitanSpawn( wave5, "Nuke", < 987, 2893, 39 >, -90, "", 0.5 )
 	WaveSpawn_TitanSpawn( wave5, "Nuke", < 1347, 3187, 13 >, -90, "", 0.6 )
 	WaveSpawn_TitanSpawn( wave5, "Nuke", < 1581, 3389, 14 >, -90, "", 1.5 )
@@ -369,6 +369,6 @@ void function initFrontierDefenseData()
 	WaveSpawn_TitanSpawn( wave5, "Nuke", < 3640, 640, 144 >, 180, "right", 0.5 )
 	WaveSpawn_TitanSpawn( wave5, "Nuke", < 3507, 426, 148 >, 180, "right", 0.5 )
 	WaveSpawn_TitanSpawn( wave5, "Nuke", < 3542, 126, 145 >, 180, "right" )
-	
-    WaveSpawnEvents.append( wave5 )
+
+	WaveSpawnEvents.append( wave5 )
 }

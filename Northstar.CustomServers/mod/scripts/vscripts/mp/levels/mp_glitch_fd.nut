@@ -3,10 +3,10 @@ void function initFrontierDefenseData()
 {
 	useCustomFDLoad = true
 	AddCallback_RegisterCustomFDContent( RegisterCustomFDContent )
-    PlaceFDShop( < -2811, -1176, 128 > )
+	PlaceFDShop( < -2811, -1176, 128 > )
 	SetFDDropshipSpawn( < -2616, -496, 48 > )
 	SetFDGroundSpawn( < -3126, -1181, 129 > )
-	
+
 	AddWaveAnnouncement( "fd_introMedium" )
 	AddWaveAnnouncement( "fd_waveTypeReaperTicks" )
 	AddWaveAnnouncement( "fd_waveTypeCloakDrone" )
@@ -26,7 +26,7 @@ void function initFrontierDefenseData()
 	infantrySpawns.append( < 1312, 665, 267 > )
 	infantrySpawns.append( < 1432, 1419, 271 > )
 	infantrySpawns.append( < 289, 676, 0 > )
-	
+
 	array<vector> reaperSpawns = []
 	reaperSpawns.append( < 1666, 1392, 272 > )
 	reaperSpawns.append( < 2429, 1435, 127 > )
@@ -38,7 +38,7 @@ void function initFrontierDefenseData()
 	reaperSpawns.append( < 565, -1294, 5 > )
 	reaperSpawns.append( < 3211, 2594, 19 > )
 	reaperSpawns.append( < -571, -178, 0 > )
-	
+
 	array<vector> titanSpawns = []
 	titanSpawns.append( < 3543, 2036, 14 > )
 	titanSpawns.append( < 3638, 1175, -10 > )
@@ -51,7 +51,7 @@ void function initFrontierDefenseData()
 	titanSpawns.append( < 2356, 2545, 30 > )
 	titanSpawns.append( < 3670, 883, 5 > )
 	titanSpawns.append( < 3217, 1705, 19 > )
-	
+
 	array<vector> specialTitanSpawns = []
 	specialTitanSpawns.append( < 1972, 993, 17 > )
 	specialTitanSpawns.append( < 2663, -1, 33 > )
@@ -59,15 +59,15 @@ void function initFrontierDefenseData()
 	specialTitanSpawns.append( < 1889, 2242, 102 > )
 	specialTitanSpawns.append( < 3277, 2127, 17 > )
 	specialTitanSpawns.append( < 478, 2205, 3 > )
-	
+
 	/*
-	 __      __                 _ 
+	 __      __                 _
 	 \ \    / /__ _ __ __ ___  / |
 	  \ \/\/ // _` |\ V // -_) | |
 	   \_/\_/ \__,_| \_/ \___| |_|
-	
-	*/
-    array<WaveSpawnEvent> wave1
+
+*/
+	array<WaveSpawnEvent> wave1
 	WaveSpawn_SmokeWall( wave1, < -177, 1610, 2 >, 1.0 )
 	WaveSpawn_SmokeWall( wave1, < -2243, 931, 34 >, 0.8 )
 	WaveSpawn_SmokeWall( wave1, < -2287, -667, 18 >, 0.6 )
@@ -79,13 +79,13 @@ void function initFrontierDefenseData()
 	WaveSpawn_InfantrySpawn( wave1, "PodGrunt", infantrySpawns.getrandom(), 0.0, "", RandomFloatRange( 0.2, 0.8 ) )
 	WaveSpawn_InfantrySpawn( wave1, "PodGrunt", infantrySpawns.getrandom(), 0.0, "", RandomFloatRange( 0.2, 0.8 ) )
 	WaveSpawn_WaitEnemyAliveAmount( wave1, 6 )
-	
+
 	WaveSpawn_InfantrySpawn( wave1, "PodGrunt", infantrySpawns.getrandom(), 0.0, "", RandomFloatRange( 0.2, 0.8 ) )
 	WaveSpawn_InfantrySpawn( wave1, "PodGrunt", infantrySpawns.getrandom(), 0.0, "", RandomFloatRange( 0.2, 0.8 ) )
 	WaveSpawn_InfantrySpawn( wave1, "PodGrunt", infantrySpawns.getrandom(), 0.0, "", RandomFloatRange( 0.2, 0.8 ) )
 	WaveSpawn_InfantrySpawn( wave1, "PodGrunt", infantrySpawns.getrandom(), 0.0, "", RandomFloatRange( 0.2, 0.8 ) )
 	WaveSpawn_WaitEnemyAliveAmount( wave1, 6 )
-	
+
 	WaveSpawn_InfantrySpawn( wave1, "PodGrunt", infantrySpawns.getrandom(), 0.0, "", RandomFloatRange( 0.2, 0.8 ), "fd_waveTypeStalkers" )
 	WaveSpawn_InfantrySpawn( wave1, "Stalker", infantrySpawns.getrandom(), 0.0, "", RandomFloatRange( 0.3, 0.9 ) )
 	WaveSpawn_InfantrySpawn( wave1, "PodGrunt", infantrySpawns.getrandom(), 0.0, "", RandomFloatRange( 0.2, 0.8 ) )
@@ -93,7 +93,7 @@ void function initFrontierDefenseData()
 	WaveSpawn_InfantrySpawn( wave1, "PodGrunt", infantrySpawns.getrandom(), 0.0, "", RandomFloatRange( 0.2, 0.8 ) )
 	WaveSpawn_InfantrySpawn( wave1, "Stalker", infantrySpawns.getrandom(), 0.0, "", RandomFloatRange( 0.3, 0.9 ) )
 	WaveSpawn_WaitEnemyAliveAmount( wave1, 6 )
-	
+
 	WaveSpawn_InfantrySpawn( wave1, "MortarSpectre", infantrySpawns.getrandom(), 0.0, "", RandomFloatRange( 0.2, 0.6 ), "fd_waveTypeMortarSpectre" )
 	WaveSpawn_InfantrySpawn( wave1, "Stalker", infantrySpawns.getrandom(), 0.0, "", RandomFloatRange( 0.3, 0.9 ) )
 	WaveSpawn_InfantrySpawn( wave1, "MortarSpectre", infantrySpawns.getrandom(), 0.0, "", RandomFloatRange( 0.2, 0.6 ) )
@@ -101,7 +101,7 @@ void function initFrontierDefenseData()
 	WaveSpawn_InfantrySpawn( wave1, "MortarSpectre", infantrySpawns.getrandom(), 0.0, "", RandomFloatRange( 0.2, 0.6 ) )
 	WaveSpawn_InfantrySpawn( wave1, "Stalker", infantrySpawns.getrandom(), 0.0, "", RandomFloatRange( 0.3, 0.9 ) )
 	WaveSpawn_WaitEnemyAliveAmount( wave1, 8 )
-	
+
 	WaveSpawn_InfantrySpawn( wave1, "MortarSpectre", infantrySpawns.getrandom(), 0.0, "", RandomFloatRange( 0.2, 0.6 ) )
 	WaveSpawn_InfantrySpawn( wave1, "PodGrunt", infantrySpawns.getrandom(), 0.0, "", RandomFloatRange( 0.2, 0.8 ) )
 	WaveSpawn_InfantrySpawn( wave1, "MortarSpectre", infantrySpawns.getrandom(), 0.0, "", RandomFloatRange( 0.2, 0.6 ) )
@@ -109,21 +109,21 @@ void function initFrontierDefenseData()
 	WaveSpawn_InfantrySpawn( wave1, "MortarSpectre", infantrySpawns.getrandom(), 0.0, "", RandomFloatRange( 0.2, 0.6 ) )
 	WaveSpawn_InfantrySpawn( wave1, "PodGrunt", infantrySpawns.getrandom(), 0.0, "", RandomFloatRange( 0.2, 0.8 ) )
 	WaveSpawn_WaitEnemyAliveAmount( wave1, 8 )
-	
+
 	WaveSpawn_InfantrySpawn( wave1, "Stalker", infantrySpawns.getrandom(), 0.0, "", RandomFloatRange( 0.3, 0.9 ) )
 	WaveSpawn_InfantrySpawn( wave1, "Stalker", infantrySpawns.getrandom(), 0.0, "", RandomFloatRange( 0.3, 0.9 ) )
 	WaveSpawn_InfantrySpawn( wave1, "Stalker", infantrySpawns.getrandom(), 0.0, "", RandomFloatRange( 0.3, 0.9 ) )
 	WaveSpawn_InfantrySpawn( wave1, "Stalker", infantrySpawns.getrandom(), 0.0, "" )
-	
-    WaveSpawnEvents.append( wave1 )
-	
+
+	WaveSpawnEvents.append( wave1 )
+
 	/*
-	 __      __                 ___ 
+	 __      __                 ___
 	 \ \    / /__ _ __ __ ___  |_  )
-	  \ \/\/ // _` |\ V // -_)  / / 
+	  \ \/\/ // _` |\ V // -_)  / /
 	   \_/\_/ \__,_| \_/ \___| /___|
-	
-	*/
+
+*/
 	array<WaveSpawnEvent> wave2
 	WaveSpawn_TitanSpawn( wave2, "Monarch", titanSpawns.getrandom(), 180, "", RandomFloatRange( 0.3, 2.5 ), "fd_waveTypeTitanReg" )
 	WaveSpawn_TitanSpawn( wave2, "Monarch", titanSpawns.getrandom(), 180, "", RandomFloatRange( 0.3, 2.5 ) )
@@ -133,7 +133,7 @@ void function initFrontierDefenseData()
 	WaveSpawn_InfantrySpawn( wave2, "Stalker", infantrySpawns.getrandom(), 0.0, "", RandomFloatRange( 0.3, 0.9 ) )
 	WaveSpawn_InfantrySpawn( wave2, "PodGrunt", infantrySpawns.getrandom(), 0.0, "", RandomFloatRange( 0.2, 0.8 ) )
 	WaveSpawn_WaitEnemyAliveAmount( wave2, 4 )
-	
+
 	WaveSpawn_TitanSpawn( wave2, "Tone", titanSpawns.getrandom(), 180, "", RandomFloatRange( 0.3, 2.5 ) )
 	WaveSpawn_TitanSpawn( wave2, "Ion", titanSpawns.getrandom(), 180, "", RandomFloatRange( 0.3, 2.5 ) )
 	WaveSpawn_TitanSpawn( wave2, "Ion", titanSpawns.getrandom(), 180, "", RandomFloatRange( 0.3, 2.5 ) )
@@ -142,7 +142,7 @@ void function initFrontierDefenseData()
 	WaveSpawn_InfantrySpawn( wave2, "Stalker", infantrySpawns.getrandom(), 0.0, "", RandomFloatRange( 0.3, 0.9 ) )
 	WaveSpawn_InfantrySpawn( wave2, "MortarSpectre", infantrySpawns.getrandom(), 0.0, "", RandomFloatRange( 0.2, 0.6 ) )
 	WaveSpawn_WaitEnemyAliveAmount( wave2, 4 )
-	
+
 	WaveSpawn_TitanSpawn( wave2, "Legion", titanSpawns.getrandom(), 180, "", RandomFloatRange( 0.3, 2.5 ) )
 	WaveSpawn_TitanSpawn( wave2, "Ronin", titanSpawns.getrandom(), 180, "", RandomFloatRange( 0.3, 2.5 ) )
 	WaveSpawn_TitanSpawn( wave2, "Ronin", titanSpawns.getrandom(), 180, "", RandomFloatRange( 0.3, 2.5 ) )
@@ -151,7 +151,7 @@ void function initFrontierDefenseData()
 	WaveSpawn_InfantrySpawn( wave2, "MortarSpectre", infantrySpawns.getrandom(), 0.0, "", RandomFloatRange( 0.2, 0.6 ) )
 	WaveSpawn_InfantrySpawn( wave2, "MortarSpectre", infantrySpawns.getrandom(), 0.0, "" )
 	WaveSpawn_WaitEnemyAliveAmount( wave2, 4 )
-	
+
 	WaveSpawn_ReaperSpawn( wave2, "Reaper", reaperSpawns.getrandom(), 180, "", RandomFloatRange( 0.4, 1.6 ), "fd_waveTypeReapers" )
 	WaveSpawn_ReaperSpawn( wave2, "Reaper", reaperSpawns.getrandom(), 180, "", RandomFloatRange( 0.4, 1.6 ) )
 	WaveSpawn_ReaperSpawn( wave2, "Reaper", reaperSpawns.getrandom(), 180, "", RandomFloatRange( 0.4, 1.6 ) )
@@ -169,7 +169,7 @@ void function initFrontierDefenseData()
 	WaveSpawn_ReaperSpawn( wave2, "Reaper", reaperSpawns.getrandom(), 180, "", RandomFloatRange( 0.4, 1.6 ) )
 	WaveSpawn_ReaperSpawn( wave2, "Reaper", reaperSpawns.getrandom(), 0, "" )
 	WaveSpawn_WaitEnemyAliveAmount( wave2, 4 )
-	
+
 	WaveSpawn_ReaperSpawn( wave2, "Reaper", reaperSpawns.getrandom(), 180, "", RandomFloatRange( 0.4, 1.6 ) )
 	WaveSpawn_InfantrySpawn( wave2, "MortarSpectre", infantrySpawns.getrandom(), 0.0, "", RandomFloatRange( 0.2, 0.6 ) )
 	WaveSpawn_ReaperSpawn( wave2, "Reaper", reaperSpawns.getrandom(), 180, "", RandomFloatRange( 0.4, 1.6 ) )
@@ -186,7 +186,7 @@ void function initFrontierDefenseData()
 	WaveSpawn_InfantrySpawn( wave2, "Stalker", infantrySpawns.getrandom(), 0.0, "", RandomFloatRange( 0.3, 0.9 ) )
 	WaveSpawn_InfantrySpawn( wave2, "Stalker", infantrySpawns.getrandom(), 0.0, "" )
 	WaveSpawn_WaitEnemyAliveAmount( wave2, 2 )
-	
+
 	WaveSpawn_TitanSpawn( wave2, "Ion", titanSpawns.getrandom(), 180, "", RandomFloatRange( 0.3, 2.5 ) )
 	WaveSpawn_ReaperSpawn( wave2, "Reaper", reaperSpawns.getrandom(), 180, "", RandomFloatRange( 0.4, 1.6 ) )
 	WaveSpawn_TitanSpawn( wave2, "Legion", titanSpawns.getrandom(), 180, "", RandomFloatRange( 0.3, 2.5 ) )
@@ -212,16 +212,16 @@ void function initFrontierDefenseData()
 	WaveSpawn_InfantrySpawn( wave2, "PodGrunt", infantrySpawns.getrandom(), 0.0, "", RandomFloatRange( 0.2, 0.8 ) )
 	WaveSpawn_InfantrySpawn( wave2, "Stalker", infantrySpawns.getrandom(), 0.0, "", RandomFloatRange( 0.3, 0.9 ) )
 	WaveSpawn_InfantrySpawn( wave2, "PodGrunt", infantrySpawns.getrandom(), 0.0, "" )
-	
-    WaveSpawnEvents.append( wave2 )
-	
+
+	WaveSpawnEvents.append( wave2 )
+
 	/*
 	 __      __                 ____
 	 \ \    / /__ _ __ __ ___  |__ /
 	  \ \/\/ // _` |\ V // -_)  |_ \
 	   \_/\_/ \__,_| \_/ \___| |___/
-	
-	*/
+
+*/
 	array<WaveSpawnEvent> wave3
 	WaveSpawn_SmokeWall( wave3, < 3719, 1924, 144 >, 0.2, 300 )
 	WaveSpawn_SmokeWall( wave3, < -258, 1569, 144 >, 0.2, 300 )
@@ -267,7 +267,7 @@ void function initFrontierDefenseData()
 	WaveSpawn_InfantrySpawn( wave3, "CloakDrone", titanSpawns.getrandom() + < 0, 0, 2500 >, 0.0, "", 1.0, "fd_incCloakDroneClump" )
 	WaveSpawn_InfantrySpawn( wave3, "CloakDrone", titanSpawns.getrandom() + < 0, 0, 2500 >, 0.0, "" )
 	WaveSpawn_WaitEnemyAliveAmount( wave3, 6 )
-	
+
 	WaveSpawn_ReaperSpawn( wave3, "Reaper", reaperSpawns.getrandom(), 180, "", RandomFloatRange( 0.4, 1.6 ) )
 	WaveSpawn_ReaperSpawn( wave3, "Reaper", reaperSpawns.getrandom(), 180, "", RandomFloatRange( 0.4, 1.6 ) )
 	WaveSpawn_ReaperSpawn( wave3, "Reaper", reaperSpawns.getrandom(), 180, "", RandomFloatRange( 0.4, 1.6 ) )
@@ -285,7 +285,7 @@ void function initFrontierDefenseData()
 	WaveSpawn_InfantrySpawn( wave3, "CloakDrone", titanSpawns.getrandom() + < 0, 0, 2500 >, 0.0, "", 1.0 )
 	WaveSpawn_InfantrySpawn( wave3, "CloakDrone", titanSpawns.getrandom() + < 0, 0, 2500 >, 0.0, "", 1.0 )
 	WaveSpawn_WaitEnemyAliveAmount( wave3, 6 )
-	
+
 	WaveSpawn_TitanSpawn( wave3, "Mortar", specialTitanSpawns.getrandom(), 180, "", RandomFloatRange( 0.5, 2.0 ), "fd_waveTypeTitanMortar" )
 	WaveSpawn_InfantrySpawn( wave3, "MortarSpectre", infantrySpawns.getrandom(), 0.0, "", RandomFloatRange( 0.2, 0.6 ) )
 	WaveSpawn_TitanSpawn( wave3, "Mortar", specialTitanSpawns.getrandom(), 180, "", RandomFloatRange( 0.5, 2.0 ) )
@@ -303,7 +303,7 @@ void function initFrontierDefenseData()
 	WaveSpawn_ReaperSpawn( wave3, "Reaper", reaperSpawns.getrandom(), 180, "", RandomFloatRange( 0.4, 1.6 ) )
 	WaveSpawn_ReaperSpawn( wave3, "Reaper", reaperSpawns.getrandom(), 180, "", RandomFloatRange( 0.4, 1.6 ) )
 	WaveSpawn_WaitEnemyAliveAmount( wave3, 2 )
-	
+
 	WaveSpawn_TitanSpawn( wave3, "Mortar", specialTitanSpawns.getrandom(), 180, "", RandomFloatRange( 0.5, 2.0 ) )
 	WaveSpawn_InfantrySpawn( wave3, "MortarSpectre", infantrySpawns.getrandom(), 0.0, "", RandomFloatRange( 0.2, 0.6 ) )
 	WaveSpawn_TitanSpawn( wave3, "Mortar", specialTitanSpawns.getrandom(), 180, "", RandomFloatRange( 0.5, 2.0 ) )
@@ -321,7 +321,7 @@ void function initFrontierDefenseData()
 	WaveSpawn_ReaperSpawn( wave3, "Reaper", reaperSpawns.getrandom(), 180, "", RandomFloatRange( 0.4, 1.6 ) )
 	WaveSpawn_ReaperSpawn( wave3, "Reaper", reaperSpawns.getrandom(), 0, "" )
 	WaveSpawn_WaitEnemyAliveAmount( wave3, 2 )
-	
+
 	WaveSpawn_TitanSpawn( wave3, "ArcTitan", titanSpawns.getrandom(), 180, "", RandomFloatRange( 0.3, 2.5 ), "fd_waveComboArcMortar" )
 	WaveSpawn_TitanSpawn( wave3, "ArcTitan", titanSpawns.getrandom(), 180, "", RandomFloatRange( 0.3, 2.5 ) )
 	WaveSpawn_TitanSpawn( wave3, "ArcTitan", titanSpawns.getrandom(), 180, "", RandomFloatRange( 0.3, 2.5 ) )
@@ -337,7 +337,7 @@ void function initFrontierDefenseData()
 	WaveSpawn_ReaperSpawn( wave3, "TickReaper", < 2516, 368, 255 >, 0, "", RandomFloatRange( 0.4, 1.6 ) )
 	WaveSpawn_InfantrySpawn( wave3, "MortarSpectre", < 2147, 139, 176 >, 0.0, "" )
 	WaveSpawn_WaitEnemyAliveAmount( wave3, 2 )
-	
+
 	WaveSpawn_TitanSpawn( wave3, "ArcTitan", titanSpawns.getrandom(), 180, "", RandomFloatRange( 0.3, 2.5 ) )
 	WaveSpawn_TitanSpawn( wave3, "ArcTitan", titanSpawns.getrandom(), 180, "", RandomFloatRange( 0.3, 2.5 ) )
 	WaveSpawn_TitanSpawn( wave3, "ArcTitan", titanSpawns.getrandom(), 180, "", RandomFloatRange( 0.3, 2.5 ) )
@@ -353,16 +353,16 @@ void function initFrontierDefenseData()
 	WaveSpawn_TitanSpawn( wave3, "ArcTitan", titanSpawns.getrandom(), 180, "", RandomFloatRange( 0.3, 2.5 ) )
 	WaveSpawn_TitanSpawn( wave3, "ArcTitan", titanSpawns.getrandom(), 180, "", RandomFloatRange( 0.3, 2.5 ) )
 	WaveSpawn_TitanSpawn( wave3, "ArcTitan", titanSpawns.getrandom(), 180, "" )
-	
-    WaveSpawnEvents.append( wave3 )
-	
+
+	WaveSpawnEvents.append( wave3 )
+
 	/*
-	 __      __                 _ _  
-	 \ \    / /__ _ __ __ ___  | | | 
+	 __      __                 _ _
+	 \ \    / /__ _ __ __ ___  | | |
 	  \ \/\/ // _` |\ V // -_) |_  _|
-	   \_/\_/ \__,_| \_/ \___|   |_| 
-	
-	*/
+	   \_/\_/ \__,_| \_/ \___|   |_|
+
+*/
 	array<WaveSpawnEvent> wave4
 	WaveSpawn_TitanSpawn( wave4, "Scorch", titanSpawns.getrandom(), 180, "", RandomFloatRange( 0.3, 2.5 ) )
 	WaveSpawn_TitanSpawn( wave4, "ArcTitan", titanSpawns.getrandom(), 180, "", RandomFloatRange( 0.3, 2.5 ) )
@@ -374,7 +374,7 @@ void function initFrontierDefenseData()
 	WaveSpawn_InfantrySpawn( wave4, "Stalker", infantrySpawns.getrandom(), 0.0, "", RandomFloatRange( 0.3, 0.9 ) )
 	WaveSpawn_Announce( wave4, "PreNukeTitan", 0.0 )
 	WaveSpawn_WaitEnemyAliveAmount( wave4, 2 )
-	
+
 	WaveSpawn_TitanSpawn( wave4, "Tone", titanSpawns.getrandom(), 180, "", RandomFloatRange( 0.3, 2.5 ) )
 	WaveSpawn_TitanSpawn( wave4, "ArcTitan", titanSpawns.getrandom(), 180, "", RandomFloatRange( 0.3, 2.5 ) )
 	WaveSpawn_TitanSpawn( wave4, "Tone", titanSpawns.getrandom(), 180, "", RandomFloatRange( 0.3, 2.5 ) )
@@ -384,7 +384,7 @@ void function initFrontierDefenseData()
 	WaveSpawn_InfantrySpawn( wave4, "Stalker", infantrySpawns.getrandom(), 0.0, "", RandomFloatRange( 0.3, 0.9 ) )
 	WaveSpawn_InfantrySpawn( wave4, "Stalker", infantrySpawns.getrandom(), 0.0, "" )
 	WaveSpawn_WaitEnemyAliveAmount( wave4, 4 )
-	
+
 	WaveSpawn_TitanSpawn( wave4, "Ion", titanSpawns.getrandom(), 180, "", RandomFloatRange( 0.3, 2.5 ) )
 	WaveSpawn_TitanSpawn( wave4, "Tone", titanSpawns.getrandom(), 180, "", RandomFloatRange( 0.3, 2.5 ) )
 	WaveSpawn_TitanSpawn( wave4, "Monarch", titanSpawns.getrandom(), 180, "", RandomFloatRange( 0.3, 2.5 ) )
@@ -408,7 +408,7 @@ void function initFrontierDefenseData()
 	WaveSpawn_ReaperSpawn( wave4, "TickReaper", < 2516, 368, 255 >, 0, "", RandomFloatRange( 0.4, 1.6 ) )
 	WaveSpawn_InfantrySpawn( wave4, "MortarSpectre", < 2147, 139, 176 >, 0.0, "" )
 	WaveSpawn_WaitEnemyAliveAmount( wave4, 4 )
-	
+
 	WaveSpawn_TitanSpawn( wave4, "Nuke", titanSpawns.getrandom(), 180, "", RandomFloatRange( 0.3, 2.5 ) )
 	WaveSpawn_TitanSpawn( wave4, "Nuke", titanSpawns.getrandom(), 180, "", RandomFloatRange( 0.3, 2.5 ) )
 	WaveSpawn_TitanSpawn( wave4, "Nuke", titanSpawns.getrandom(), 180, "", RandomFloatRange( 0.3, 2.5 ) )
@@ -437,7 +437,7 @@ void function initFrontierDefenseData()
 	WaveSpawn_ReaperSpawn( wave4, "Reaper", reaperSpawns.getrandom(), 180, "", RandomFloatRange( 0.4, 1.6 ) )
 	WaveSpawn_ReaperSpawn( wave4, "Reaper", reaperSpawns.getrandom(), 0, "" )
 	WaveSpawn_WaitEnemyAliveAmount( wave4, 4 )
-	
+
 	WaveSpawn_TitanSpawn( wave4, "Ronin", titanSpawns.getrandom(), 0, "", RandomFloatRange( 0.8, 2.4 ) )
 	WaveSpawn_TitanSpawn( wave4, "ArcTitan", titanSpawns.getrandom(), 180, "", RandomFloatRange( 0.3, 2.5 ) )
 	WaveSpawn_TitanSpawn( wave4, "Ronin", titanSpawns.getrandom(), 0, "", RandomFloatRange( 0.8, 2.4 ) )
@@ -455,16 +455,16 @@ void function initFrontierDefenseData()
 	WaveSpawn_TitanSpawn( wave4, "Northstar", specialTitanSpawns.getrandom(), 0, "", RandomFloatRange( 0.8, 2.4 ) )
 	WaveSpawn_TitanSpawn( wave4, "Northstar", specialTitanSpawns.getrandom(), 0, "", RandomFloatRange( 0.8, 2.4 ) )
 	WaveSpawn_TitanSpawn( wave4, "Northstar", specialTitanSpawns.getrandom(), 0, "", 0.5 )
-	
-    WaveSpawnEvents.append( wave4 )
-	
+
+	WaveSpawnEvents.append( wave4 )
+
 	/*
-	 __      __                 ___ 
+	 __      __                 ___
 	 \ \    / /__ _ __ __ ___  | __|
 	  \ \/\/ // _` |\ V // -_) |__ \
 	   \_/\_/ \__,_| \_/ \___| |___/
-	
-	*/
+
+*/
 	array<WaveSpawnEvent> wave5
 	WaveSpawn_Announce( wave5, "Everything", 0.0 )
 	WaveSpawn_TitanSpawn( wave5, "Ion", titanSpawns.getrandom(), 0, "", RandomFloatRange( 0.8, 2.4 ) )
@@ -493,7 +493,7 @@ void function initFrontierDefenseData()
 	WaveSpawn_InfantrySpawn( wave5, "Stalker", infantrySpawns.getrandom(), 0.0, "", RandomFloatRange( 0.3, 0.9 ) )
 	WaveSpawn_InfantrySpawn( wave5, "PodGrunt", infantrySpawns.getrandom(), 0.0, "" )
 	WaveSpawn_WaitEnemyAliveAmount( wave5, 6 )
-	
+
 	WaveSpawn_TitanSpawn( wave5, "ArcTitan", titanSpawns.getrandom(), 180, "", RandomFloatRange( 0.3, 2.5 ), "fd_waveComboArcNuke" )
 	WaveSpawn_TitanSpawn( wave5, "ArcTitan", titanSpawns.getrandom(), 180, "", RandomFloatRange( 0.3, 2.5 ) )
 	WaveSpawn_TitanSpawn( wave5, "ArcTitan", titanSpawns.getrandom(), 180, "", RandomFloatRange( 0.3, 2.5 ) )
@@ -509,7 +509,7 @@ void function initFrontierDefenseData()
 	WaveSpawn_InfantrySpawn( wave5, "Stalker", infantrySpawns.getrandom(), 0.0, "", RandomFloatRange( 0.3, 0.9 ) )
 	WaveSpawn_InfantrySpawn( wave5, "Stalker", infantrySpawns.getrandom(), 0.0, "" )
 	WaveSpawn_WaitEnemyAliveAmount( wave5, 6 )
-	
+
 	WaveSpawn_TitanSpawn( wave5, "Northstar", specialTitanSpawns.getrandom(), 0, "", RandomFloatRange( 0.8, 2.4 ) )
 	WaveSpawn_TitanSpawn( wave5, "Northstar", specialTitanSpawns.getrandom(), 0, "", RandomFloatRange( 0.8, 2.4 ) )
 	WaveSpawn_TitanSpawn( wave5, "Northstar", specialTitanSpawns.getrandom(), 0, "", RandomFloatRange( 0.8, 2.4 ) )
@@ -528,7 +528,7 @@ void function initFrontierDefenseData()
 	WaveSpawn_InfantrySpawn( wave5, "CloakDrone", titanSpawns.getrandom() + < 0, 0, 2500 >, 0.0, "", 1.0 )
 	WaveSpawn_InfantrySpawn( wave5, "CloakDrone", titanSpawns.getrandom() + < 0, 0, 2500 >, 0.0, "" )
 	WaveSpawn_WaitEnemyAliveAmount( wave5, 6 )
-	
+
 	WaveSpawn_TitanSpawn( wave5, "Nuke", titanSpawns.getrandom(), 180, "", RandomFloatRange( 0.3, 2.5 ) )
 	WaveSpawn_TitanSpawn( wave5, "ArcTitan", titanSpawns.getrandom(), 180, "", RandomFloatRange( 0.3, 2.5 ) )
 	WaveSpawn_TitanSpawn( wave5, "Nuke", titanSpawns.getrandom(), 180, "", RandomFloatRange( 0.3, 2.5 ) )
@@ -548,7 +548,7 @@ void function initFrontierDefenseData()
 	WaveSpawn_InfantrySpawn( wave5, "CloakDrone", titanSpawns.getrandom() + < 0, 0, 2500 >, 0.0, "", 1.0 )
 	WaveSpawn_InfantrySpawn( wave5, "CloakDrone", titanSpawns.getrandom() + < 0, 0, 2500 >, 0.0, "" )
 	WaveSpawn_WaitEnemyAliveAmount( wave5, 6 )
-	
+
 	WaveSpawn_InfantrySpawn( wave5, "Stalker", infantrySpawns.getrandom(), 0.0, "", RandomFloatRange( 0.3, 0.9 ) )
 	WaveSpawn_InfantrySpawn( wave5, "PodGrunt", infantrySpawns.getrandom(), 0.0, "", RandomFloatRange( 0.2, 0.8 ) )
 	WaveSpawn_InfantrySpawn( wave5, "Stalker", infantrySpawns.getrandom(), 0.0, "", RandomFloatRange( 0.3, 0.9 ) )
@@ -649,7 +649,7 @@ void function initFrontierDefenseData()
 	WaveSpawn_InfantrySpawn( wave5, "CloakDrone", titanSpawns.getrandom() + < 0, 0, 2500 >, 0.0, "", 1.0 )
 	WaveSpawn_InfantrySpawn( wave5, "CloakDrone", titanSpawns.getrandom() + < 0, 0, 2500 >, 0.0, "" )
 	WaveSpawn_WaitEnemyAliveAmount( wave5, 8 )
-	
+
 	WaveSpawn_TitanSpawn( wave5, "Nuke", titanSpawns.getrandom(), 180, "", RandomFloatRange( 0.3, 2.5 ) )
 	WaveSpawn_TitanSpawn( wave5, "Nuke", titanSpawns.getrandom(), 180, "", RandomFloatRange( 0.3, 2.5 ) )
 	WaveSpawn_TitanSpawn( wave5, "Nuke", titanSpawns.getrandom(), 180, "", RandomFloatRange( 0.3, 2.5 ) )
@@ -661,7 +661,7 @@ void function initFrontierDefenseData()
 	WaveSpawn_InfantrySpawn( wave5, "CloakDrone", titanSpawns.getrandom() + < 0, 0, 2500 >, 0.0, "", 1.0 )
 	WaveSpawn_InfantrySpawn( wave5, "CloakDrone", titanSpawns.getrandom() + < 0, 0, 2500 >, 0.0, "" )
 	WaveSpawn_WaitEnemyAliveAmount( wave5, 6 )
-	
+
 	WaveSpawn_TitanSpawn( wave5, "Nuke", titanSpawns.getrandom(), 180, "", RandomFloatRange( 0.3, 2.5 ) )
 	WaveSpawn_TitanSpawn( wave5, "Nuke", titanSpawns.getrandom(), 180, "", RandomFloatRange( 0.3, 2.5 ) )
 	WaveSpawn_TitanSpawn( wave5, "Nuke", titanSpawns.getrandom(), 180, "", RandomFloatRange( 0.3, 2.5 ) )
@@ -684,20 +684,20 @@ void function initFrontierDefenseData()
 	WaveSpawn_TitanSpawn( wave5, "Nuke", titanSpawns.getrandom(), 180, "", RandomFloatRange( 0.3, 2.5 ) )
 	WaveSpawn_TitanSpawn( wave5, "Nuke", titanSpawns.getrandom(), 180, "", RandomFloatRange( 0.3, 2.5 ) )
 	WaveSpawn_TitanSpawn( wave5, "Nuke", titanSpawns.getrandom(), 180, "" )
-	
-    WaveSpawnEvents.append( wave5 )
+
+	WaveSpawnEvents.append( wave5 )
 }
 
 void function RegisterCustomFDContent()
 {
 	array<entity> aiPositions = GetEntArrayByClass_Expensive( "info_target" )
 	foreach ( entity position in aiPositions )
-		if( position.HasKey( "editorclass" ) && position.kv.editorclass == "info_fd_ai_position" )
+		if ( position.HasKey( "editorclass" ) && position.kv.editorclass == "info_fd_ai_position" )
 			position.Destroy()
-		
+
 	AddFDCustomTitanStart( < -3998, 374, 22 >, < 0, -45, 0 > )
 	AddFDCustomTitanStart( < -4068, -1818, 31 >, < 0, 45, 0 > )
-	
+
 	AddStationaryAIPosition( < 1724, 1079, 3 >, eStationaryAIPositionTypes.MORTAR_TITAN )
 	AddStationaryAIPosition( < 1991, -210, -12 >, eStationaryAIPositionTypes.MORTAR_TITAN )
 	AddStationaryAIPosition( < 2917, 2182, 4 >, eStationaryAIPositionTypes.MORTAR_TITAN )
@@ -706,14 +706,14 @@ void function RegisterCustomFDContent()
 	AddStationaryAIPosition( < 897, 1408, 33 >, eStationaryAIPositionTypes.MORTAR_TITAN )
 	AddStationaryAIPosition( < 3119, 186, 19 >, eStationaryAIPositionTypes.MORTAR_TITAN )
 	AddStationaryAIPosition( < 3688, 1347, 0 >, eStationaryAIPositionTypes.MORTAR_TITAN )
-	
+
 	AddStationaryAIPosition( < 2598, 543, 264 >, eStationaryAIPositionTypes.MORTAR_SPECTRE )
 	AddStationaryAIPosition( < 1274, 1444, 272 >, eStationaryAIPositionTypes.MORTAR_SPECTRE )
 	AddStationaryAIPosition( < 1548, 533, 272 >, eStationaryAIPositionTypes.MORTAR_SPECTRE )
 	AddStationaryAIPosition( < -1564, -155, 272 >, eStationaryAIPositionTypes.MORTAR_SPECTRE )
 	AddStationaryAIPosition( < -1529, -1201, 272 >, eStationaryAIPositionTypes.MORTAR_SPECTRE )
 	AddStationaryAIPosition( < 1205, 390, 272 >, eStationaryAIPositionTypes.MORTAR_SPECTRE )
-	
+
 	AddStationaryAIPosition( < 2053, -767, 45 >, eStationaryAIPositionTypes.SNIPER_TITAN )
 	AddStationaryAIPosition( < 3649, 1832, 10 >, eStationaryAIPositionTypes.SNIPER_TITAN )
 	AddStationaryAIPosition( < 3417, 902, 8 >, eStationaryAIPositionTypes.SNIPER_TITAN )
@@ -721,7 +721,7 @@ void function RegisterCustomFDContent()
 	AddStationaryAIPosition( < -1248, -800, -7 >, eStationaryAIPositionTypes.SNIPER_TITAN )
 	AddStationaryAIPosition( < -2357, 938, 32 >, eStationaryAIPositionTypes.SNIPER_TITAN )
 	AddStationaryAIPosition( < -968, -2288, 24 >, eStationaryAIPositionTypes.SNIPER_TITAN )
-	
+
 	AddStationaryAIPosition( < 1205, 1063, 301 >, eStationaryAIPositionTypes.LAUNCHER_REAPER )
 	AddStationaryAIPosition( < 2088, 480, 327 >, eStationaryAIPositionTypes.LAUNCHER_REAPER )
 	AddStationaryAIPosition( < 527, 762, 272 >, eStationaryAIPositionTypes.LAUNCHER_REAPER )
@@ -731,7 +731,7 @@ void function RegisterCustomFDContent()
 	AddStationaryAIPosition( < 3544, -50, 18 >, eStationaryAIPositionTypes.LAUNCHER_REAPER )
 	AddStationaryAIPosition( < 3371, 2251, 35 >, eStationaryAIPositionTypes.LAUNCHER_REAPER )
 	AddStationaryAIPosition( < 2215, -455, 23 >, eStationaryAIPositionTypes.LAUNCHER_REAPER )
-	
+
 	routes[ "longStraightL" ] <- []
 	routes[ "longStraightL" ].append( < 3360, 1881, 11 > )
 	routes[ "longStraightL" ].append( < 705, 1840, 4 > )
@@ -739,7 +739,7 @@ void function RegisterCustomFDContent()
 	routes[ "longStraightL" ].append( < -2423, 571, -16 > )
 	routes[ "longStraightL" ].append( < -2252, -681, 18 > )
 	routes[ "longStraightL" ].append( < -3650, -657, 25 > )
-	
+
 	routes[ "longStraightC" ] <- []
 	routes[ "longStraightC" ].append( < 3300, 903, 26 > )
 	routes[ "longStraightC" ].append( < 392, 1100, 4 > )
@@ -747,39 +747,39 @@ void function RegisterCustomFDContent()
 	routes[ "longStraightC" ].append( < -581, -655, 1 > )
 	routes[ "longStraightC" ].append( < -2252, -681, 18 > )
 	routes[ "longStraightC" ].append( < -3650, -657, 25 > )
-	
+
 	routes[ "longStraightR" ] <- []
 	routes[ "longStraightR" ].append( < 3292, -7, 32 > )
 	routes[ "longStraightR" ].append( < 1153, -797, 3 > )
 	routes[ "longStraightR" ].append( < -1082, -1625, 1 > )
 	routes[ "longStraightR" ].append( < -3595, -1632, 32 > )
 	routes[ "longStraightR" ].append( < -3959, -1138, 1 > )
-	
+
 	routes[ "longFullCorner" ] <- []
 	routes[ "longFullCorner" ].append( < 1685, 2472, 42 > )
 	routes[ "longFullCorner" ].append( < 465, 1698, -9 > )
 	routes[ "longFullCorner" ].append( < -967, 1131, 40 > )
 	routes[ "longFullCorner" ].append( < -2626, 482, 1 > )
 	routes[ "longFullCorner" ].append( < -3826, -267, 13 > )
-	
+
 	routes[ "infantryUpperClose" ] <- []
 	routes[ "infantryUpperClose" ].append( < -1340, -289, 271 > )
 	routes[ "infantryUpperClose" ].append( < -1840, -810, -27 > )
 	routes[ "infantryUpperClose" ].append( < -3604, -526, 31 > )
-	
+
 	routes[ "infantryUpperFar" ] <- []
 	routes[ "infantryUpperFar" ].append( < 1079, 513, 271 > )
 	routes[ "infantryUpperFar" ].append( < 729, 1296, -1 > )
 	routes[ "infantryUpperFar" ].append( < -921, 1394, 0 > )
 	routes[ "infantryUpperFar" ].append( < -2679, 532, 0 > )
 	routes[ "infantryUpperFar" ].append( < -3961, -174, 15 > )
-	
+
 	routes[ "lowerClose" ] <- []
 	routes[ "lowerClose" ].append( < -528, -1029, 21 > )
 	routes[ "lowerClose" ].append( < -1478, -1617, 12 > )
 	routes[ "lowerClose" ].append( < -3715, -1575, 14 > )
 	routes[ "lowerClose" ].append( < -4046, -1146, 2 > )
-	
+
 	routes[ "lowerFar" ] <- []
 	routes[ "lowerFar" ].append( < 114, 1273, 20 > )
 	routes[ "lowerFar" ].append( < -1018, 1142, 31 > )

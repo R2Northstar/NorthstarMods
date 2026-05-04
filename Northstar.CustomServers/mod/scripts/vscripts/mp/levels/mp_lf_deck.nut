@@ -3,7 +3,7 @@ global function CodeCallback_MapInit
 void function CodeCallback_MapInit()
 {
 	SetupLiveFireMaps()
-	
+
 	// worker drone model
 	PrecacheModel( $"models/robots/aerial_unmanned_worker/aerial_unmanned_worker.mdl" )
 
@@ -16,7 +16,7 @@ void function DeckSpawnWorkerDrone( entity spawnpoint )
 {
 	entity drone = CreateWorkerDrone( TEAM_UNASSIGNED, spawnpoint.GetOrigin() - < 0, 0, 150 >, spawnpoint.GetAngles() )
 	DispatchSpawn( drone )
-	
+
 	// this seems weird for drones
 	thread AssaultMoveTarget( drone, spawnpoint )
 }
@@ -25,6 +25,6 @@ void function DeckSpawnMarvinForIdleNode( entity node )
 {
 	entity marvin = CreateMarvin( TEAM_UNASSIGNED, node.GetOrigin(), node.GetAngles() )
 	DispatchSpawn( marvin )
-	
+
 	thread AssaultMoveTarget( marvin, node )
 }
