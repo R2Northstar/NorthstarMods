@@ -5,8 +5,8 @@ global function FastballAddBuddySpawnForLevel
 struct
 {
 	float introStartTime
-	
-	table< int, Point > buddySpawns
+
+	table<int, Point> buddySpawns
 	entity militiaBuddy
 	entity imcBuddy
 } file
@@ -15,7 +15,7 @@ void function GamemodeFastballIntroSetup()
 {
 	RegisterSignal( "fastball_start_throw" )
 	RegisterSignal( "fastball_release" )
-	
+
 	AddCallback_GameStateEnter( eGameState.Prematch, OnPrematchStart )
 	AddCallback_OnClientConnected( AddPlayerToFastballIntro )
 }
@@ -24,11 +24,11 @@ void function FastballAddBuddySpawnForLevel( string level, int team, vector orig
 {
 	if ( GetMapName() != level )
 		return
-		
+
 	Point spawnPoint
 	spawnPoint.origin = origin
 	spawnPoint.angles = angles
-	
+
 	file.buddySpawns[ team ] <- spawnPoint
 }
 
@@ -56,7 +56,7 @@ void function OnPrematchStart()
 			// cases where it's over 0 but less than 1 are usually caused by terrain
 			if ( result > 0 )
 			{
-				if ( spawnpoint.GetTeam() == TEAM_MILITIA ) 
+				if ( spawnpoint.GetTeam() == TEAM_MILITIA )
 					militiaSpawns.append( spawnpoint )
 				else
 					imcSpawns.append( spawnpoint )
@@ -74,7 +74,7 @@ void function OnPrematchStart()
 	else
 	{
 		militiaBuddySpawn = file.buddySpawns[ TEAM_MILITIA ]
-		imcBuddySpawn = file.buddySpawns[ TEAM_IMC ] 
+		imcBuddySpawn = file.buddySpawns[ TEAM_IMC ]
 	}
 
 	file.militiaBuddy = CreatePropDynamic( $"models/titans/buddy/titan_buddy.mdl" )
@@ -142,7 +142,7 @@ void function AnimateBuddy( entity buddy )
 }
 
 void function AddPlayerToFastballIntro( entity player )
-{	
+{
 	if ( GetGameState() == eGameState.Prematch )
 	{
 		if ( !IsPrivateMatchSpectator( player ) )
@@ -241,6 +241,6 @@ void function FastballPlayer( entity player )
 	// have to correct this manually here since due to no 3p animation our position isn't set right during this sequence
 	player.SetOrigin( buddy.GetAttachmentOrigin( buddy.LookupAttachment( "FASTBALL_R" ) ) )
 	player.SetVelocity( throwVel )
-	
+
 	TryGameModeAnnouncement( player )
 }

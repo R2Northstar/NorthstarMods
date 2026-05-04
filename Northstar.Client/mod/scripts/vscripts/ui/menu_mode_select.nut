@@ -5,13 +5,13 @@ global function NSSetModeCategory
 global enum eModeMenuModeCategory
 {
 	UNKNOWN = 0,
-	PVPVE   = 1,
-	PVE     = 2,
-	PVP     = 3,
-	FFA     = 4,
-	TITAN   = 5,
-	OTHER   = 6,
-	CUSTOM  = 7
+	PVPVE = 1,
+	PVE = 2,
+	PVP = 3,
+	FFA = 4,
+	TITAN = 5,
+	OTHER = 6,
+	CUSTOM = 7
 
 	SIZE
 }
@@ -19,18 +19,21 @@ global enum eModeMenuModeCategory
 // List of blocked modes due to them being unfinished
 const array<string> blockedModes = []
 
-struct ListEntry_t {
+struct ListEntry_t
+{
 	string mode
 	int category
 }
 
 // Slider mouse delta buffer
-struct {
+struct
+{
 	int deltaX = 0
 	int deltaY = 0
 } mouseDeltaBuffer
 
-struct {
+struct
+{
 	int scrollOffset
 	var menu
 
@@ -38,7 +41,7 @@ struct {
 	int searchEnum
 
 	// Table of category overrides
-	table<string,int> categoryOverrides
+	table<string, int> categoryOverrides
 
 	// List of all modes we know
 	array<ListEntry_t> modes
@@ -53,18 +56,18 @@ void function InitModesMenu()
 {
 	file.menu = GetMenu( "ModesMenu" )
 
-	AddMouseMovementCaptureHandler( Hud_GetChild( file.menu, "MouseMovementCapture"), UpdateMouseDeltaBuffer )
+	AddMouseMovementCaptureHandler( Hud_GetChild( file.menu, "MouseMovementCapture" ), UpdateMouseDeltaBuffer )
 
 	AddMenuEventHandler( file.menu, eUIEvent.MENU_CLOSE, OnCloseModesMenu )
 	AddMenuEventHandler( file.menu, eUIEvent.MENU_OPEN, OnOpenModesMenu )
-	AddButtonEventHandler( Hud_GetChild( file.menu, "BtnModeListUpArrow"), UIE_CLICK, OnUpArrowSelected )
-	AddButtonEventHandler( Hud_GetChild( file.menu, "BtnModeListDownArrow"), UIE_CLICK, OnDownArrowSelected )
+	AddButtonEventHandler( Hud_GetChild( file.menu, "BtnModeListUpArrow" ), UIE_CLICK, OnUpArrowSelected )
+	AddButtonEventHandler( Hud_GetChild( file.menu, "BtnModeListDownArrow" ), UIE_CLICK, OnDownArrowSelected )
 
-	AddButtonEventHandler( Hud_GetChild( file.menu, "BtnModeLabel"), UIE_CHANGE, FilterAndUpdateList )
-	AddButtonEventHandler( Hud_GetChild( file.menu, "BtnModeSearch"), UIE_CHANGE, FilterAndUpdateList )
-	AddButtonEventHandler( Hud_GetChild( file.menu, "SwtModeLabel"), UIE_CHANGE, FilterAndUpdateList )
+	AddButtonEventHandler( Hud_GetChild( file.menu, "BtnModeLabel" ), UIE_CHANGE, FilterAndUpdateList )
+	AddButtonEventHandler( Hud_GetChild( file.menu, "BtnModeSearch" ), UIE_CHANGE, FilterAndUpdateList )
+	AddButtonEventHandler( Hud_GetChild( file.menu, "SwtModeLabel" ), UIE_CHANGE, FilterAndUpdateList )
 
-	AddButtonEventHandler( Hud_GetChild( file.menu, "BtnModeFiltersClear"), UIE_CLICK, OnBtnFiltersClear_Activate )
+	AddButtonEventHandler( Hud_GetChild( file.menu, "BtnModeFiltersClear" ), UIE_CLICK, OnBtnFiltersClear_Activate )
 
 	AddButtonEventHandler( Hud_GetChild( file.menu, "DummyTop" ), UIE_GET_FOCUS, OnHitDummyTop )
 	AddButtonEventHandler( Hud_GetChild( file.menu, "DummyBottom" ), UIE_GET_FOCUS, OnHitDummyBottom )
@@ -78,10 +81,10 @@ void function InitModesMenu()
 
 	Hud_SetText( Hud_GetChild( file.menu, "SwtModeLabel" ), "#MODE_MENU_SWITCH" )
 	SetButtonRuiText( Hud_GetChild( file.menu, "SwtModeLabel" ), "" )
-	Hud_DialogList_AddListItem( Hud_GetChild( file.menu, "SwtModeLabel" ) , "#MODE_MENU_ALL", "-1" )
-	for( int i = 0; i < eModeMenuModeCategory.SIZE; i++ )
+	Hud_DialogList_AddListItem( Hud_GetChild( file.menu, "SwtModeLabel" ), "#MODE_MENU_ALL", "-1" )
+	for ( int i = 0; i < eModeMenuModeCategory.SIZE; i++ )
 	{
-		Hud_DialogList_AddListItem( Hud_GetChild( file.menu, "SwtModeLabel" ) , GetCategoryStringFromEnum(i), string(i) )
+		Hud_DialogList_AddListItem( Hud_GetChild( file.menu, "SwtModeLabel" ), GetCategoryStringFromEnum( i ), string( i ) )
 	}
 
 	AddMenuFooterOption( file.menu, BUTTON_A, "#A_BUTTON_SELECT" )
@@ -92,12 +95,12 @@ void function NSSetModeCategory( string mode, int category )
 {
 	if ( mode in file.categoryOverrides )
 	{
-		file.categoryOverrides[mode] = category
+		file.categoryOverrides[ mode ] = category
 		printt( "Overwriting category for mode:", mode )
 		return
 	}
 
-	file.categoryOverrides[mode] <- category
+	file.categoryOverrides[ mode ] <- category
 }
 
 void function OnBtnFiltersClear_Activate( var b )
@@ -106,13 +109,13 @@ void function OnBtnFiltersClear_Activate( var b )
 	file.searchEnum = -1
 
 	SetConVarInt( "modemenu_mode_filter", -1 )
-	Hud_SetText( Hud_GetChild( file.menu, "BtnModeSearch"), "" )
+	Hud_SetText( Hud_GetChild( file.menu, "BtnModeSearch" ), "" )
 
 	file.scrollOffset = 0
 
 	BuildSortedModesArray()
-	UpdateListSliderHeight(float(file.sortedModes.len()))
-	UpdateListSliderPosition(file.sortedModes.len())
+	UpdateListSliderHeight( float( file.sortedModes.len() ) )
+	UpdateListSliderPosition( file.sortedModes.len() )
 	UpdateVisibleModes()
 }
 
@@ -124,15 +127,15 @@ void function FilterAndUpdateList( var n )
 	file.scrollOffset = 0
 
 	BuildSortedModesArray()
-	UpdateListSliderHeight(float(file.sortedModes.len()))
-	UpdateListSliderPosition(file.sortedModes.len())
+	UpdateListSliderHeight( float( file.sortedModes.len() ) )
+	UpdateListSliderPosition( file.sortedModes.len() )
 	UpdateVisibleModes()
 }
 
 void function OnOpenModesMenu()
 {
-	RegisterButtonPressedCallback( MOUSE_WHEEL_UP , OnScrollUp )
-	RegisterButtonPressedCallback( MOUSE_WHEEL_DOWN , OnScrollDown )
+	RegisterButtonPressedCallback( MOUSE_WHEEL_UP, OnScrollUp )
+	RegisterButtonPressedCallback( MOUSE_WHEEL_DOWN, OnScrollDown )
 
 	// Reset filters
 	file.searchString = ""
@@ -143,8 +146,8 @@ void function OnOpenModesMenu()
 	BuildModesArray()
 	BuildSortedModesArray()
 
-	UpdateListSliderHeight(float(file.sortedModes.len()))
-	UpdateListSliderPosition(file.sortedModes.len())
+	UpdateListSliderHeight( float( file.sortedModes.len() ) )
+	UpdateListSliderPosition( file.sortedModes.len() )
 	UpdateVisibleModes()
 
 	array<var> panels = GetElementsByClassname( file.menu, "ModeSelectorPanel" )
@@ -168,23 +171,38 @@ void function OnCloseModesMenu()
 {
 	try
 	{
-		DeregisterButtonPressedCallback( MOUSE_WHEEL_UP , OnScrollUp )
-		DeregisterButtonPressedCallback( MOUSE_WHEEL_DOWN , OnScrollDown )
+		DeregisterButtonPressedCallback( MOUSE_WHEEL_UP, OnScrollUp )
+		DeregisterButtonPressedCallback( MOUSE_WHEEL_DOWN, OnScrollDown )
 	}
-	catch ( ex ) {}
+	catch ( ex )
+	{
+	}
 }
 
 string function GetCategoryStringFromEnum( int category )
 {
-	switch( category )
+	switch ( category )
 	{
-		case eModeMenuModeCategory.PVPVE: return "#MODE_MENU_PVPVE"
-		case eModeMenuModeCategory.PVE: return "#MODE_MENU_PVE"
-		case eModeMenuModeCategory.PVP: return "#MODE_MENU_PVP"
-		case eModeMenuModeCategory.FFA: return "#MODE_MENU_FFA"
-		case eModeMenuModeCategory.TITAN: return "#MODE_MENU_TITAN_ONLY"
-		case eModeMenuModeCategory.OTHER: return "#MODE_MENU_OTHER"
-		case eModeMenuModeCategory.CUSTOM: return "#MODE_MENU_CUSTOM"
+		case eModeMenuModeCategory.PVPVE:
+			return "#MODE_MENU_PVPVE"
+
+		case eModeMenuModeCategory.PVE:
+			return "#MODE_MENU_PVE"
+
+		case eModeMenuModeCategory.PVP:
+			return "#MODE_MENU_PVP"
+
+		case eModeMenuModeCategory.FFA:
+			return "#MODE_MENU_FFA"
+
+		case eModeMenuModeCategory.TITAN:
+			return "#MODE_MENU_TITAN_ONLY"
+
+		case eModeMenuModeCategory.OTHER:
+			return "#MODE_MENU_OTHER"
+
+		case eModeMenuModeCategory.CUSTOM:
+			return "#MODE_MENU_CUSTOM"
 	}
 
 	return "#MODE_MENU_UNKNOWN"
@@ -287,9 +305,9 @@ void function BuildSortedModesArray()
 
 	// Build sorted list of categories
 	array<string> categories
-	for( int i = 0; i < eModeMenuModeCategory.SIZE; i++ )
+	for ( int i = 0; i < eModeMenuModeCategory.SIZE; i++ )
 	{
-		if( file.searchEnum != -1 && file.searchEnum != i )
+		if ( file.searchEnum != -1 && file.searchEnum != i )
 			continue
 
 		categories.append( GetCategoryStringFromEnum( i ) )
@@ -298,43 +316,43 @@ void function BuildSortedModesArray()
 	categories.sort( SortStringAlphabetize )
 
 	// Build final list of mixed modes and categories
-	foreach( string category in categories )
+	foreach ( string category in categories )
 	{
 		// Build sorted list of modes in category
 		array<string> modes
-		foreach( ListEntry_t entry in file.modes )
+		foreach ( ListEntry_t entry in file.modes )
 		{
 			int iCategory = entry.category
-			if( entry.mode in file.categoryOverrides )
-				iCategory = file.categoryOverrides[entry.mode]
-			
-			if( GetCategoryStringFromEnum( iCategory ) != category )
+			if ( entry.mode in file.categoryOverrides )
+				iCategory = file.categoryOverrides[ entry.mode ]
+
+			if ( GetCategoryStringFromEnum( iCategory ) != category )
 				continue
 
 			string mode = entry.mode
 
-			if( file.searchString != "" && Localize(GetGameModeDisplayName(mode)).tolower().find(file.searchString.tolower()) == null )
+			if ( file.searchString != "" && Localize( GetGameModeDisplayName( mode ) ).tolower().find( file.searchString.tolower() ) == null )
 				continue
 
-			if( !modes.contains(mode) )
+			if ( !modes.contains( mode ) )
 				modes.append( mode )
 		}
 
 		modes.sort( SortModesAlphabetize )
 
-		if( modes.len() == 0 )
+		if ( modes.len() == 0 )
 			continue
 
 		// Add to final list we then display
 		file.sortedModes.append( category )
-		foreach( string mode in modes )
+		foreach ( string mode in modes )
 			file.sortedModes.append( mode )
 	}
 }
 
-////////////////////////////
+// //////////////////////////
 // Slider
-////////////////////////////
+// //////////////////////////
 void function UpdateMouseDeltaBuffer( int x, int y )
 {
 	mouseDeltaBuffer.deltaX += x
@@ -349,37 +367,38 @@ void function FlushMouseDeltaBuffer()
 	mouseDeltaBuffer.deltaY = 0
 }
 
-
 void function SliderBarUpdate()
 {
-	if( file.sortedModes.len() < MODES_PER_PAGE )
+	if ( file.sortedModes.len() < MODES_PER_PAGE )
 		return
 
-	var sliderButton = Hud_GetChild( file.menu , "BtnModeListSlider" )
-	var sliderPanel = Hud_GetChild( file.menu , "BtnModeListSliderPanel" )
-	var movementCapture = Hud_GetChild( file.menu , "MouseMovementCapture" )
+	var sliderButton = Hud_GetChild( file.menu, "BtnModeListSlider" )
+	var sliderPanel = Hud_GetChild( file.menu, "BtnModeListSliderPanel" )
+	var movementCapture = Hud_GetChild( file.menu, "MouseMovementCapture" )
 
 	Hud_SetFocused( sliderButton )
 
-	int[2] screenSize = GetScreenSize()
-	float minYPos = -40.0 * ( screenSize[1] / 1080.0 )
-	float maxHeight = 596.0  * ( screenSize[1] / 1080.0 )
+	int[ 2 ] screenSize = GetScreenSize()
+	float minYPos = -40.0 * ( screenSize[ 1 ] / 1080.0 )
+	float maxHeight = 596.0 * ( screenSize[ 1 ] / 1080.0 )
 	float maxYPos = minYPos - ( maxHeight - Hud_GetHeight( sliderPanel ) )
 	float useableSpace = maxHeight - Hud_GetHeight( sliderPanel )
 
 	float jump = minYPos - ( useableSpace / ( float( file.sortedModes.len() ) ) )
 
 	// got local from official respaw scripts, without untyped throws an error
-	local pos =	Hud_GetPos( sliderButton )[1]
+	local pos = Hud_GetPos( sliderButton )[ 1 ]
 	local newPos = pos - mouseDeltaBuffer.deltaY
 	FlushMouseDeltaBuffer()
 
-	if ( newPos < maxYPos ) newPos = maxYPos
-	if ( newPos > minYPos ) newPos = minYPos
+	if ( newPos < maxYPos )
+		newPos = maxYPos
+	if ( newPos > minYPos )
+		newPos = minYPos
 
-	Hud_SetPos( sliderButton , 2, newPos )
-	Hud_SetPos( sliderPanel , 2, newPos )
-	Hud_SetPos( movementCapture , 2, newPos )
+	Hud_SetPos( sliderButton, 2, newPos )
+	Hud_SetPos( sliderPanel, 2, newPos )
+	Hud_SetPos( movementCapture, 2, newPos )
 
 	file.scrollOffset = -int( ( ( newPos - minYPos ) / useableSpace ) * ( file.sortedModes.len() - MODES_PER_PAGE ) )
 	UpdateVisibleModes()
@@ -387,40 +406,42 @@ void function SliderBarUpdate()
 
 void function UpdateListSliderHeight( float modes )
 {
-	var sliderButton = Hud_GetChild( file.menu , "BtnModeListSlider" )
-	var sliderPanel = Hud_GetChild( file.menu , "BtnModeListSliderPanel" )
-	var movementCapture = Hud_GetChild( file.menu , "MouseMovementCapture" )
+	var sliderButton = Hud_GetChild( file.menu, "BtnModeListSlider" )
+	var sliderPanel = Hud_GetChild( file.menu, "BtnModeListSliderPanel" )
+	var movementCapture = Hud_GetChild( file.menu, "MouseMovementCapture" )
 
-	int[2] screenSize = GetScreenSize()
-	float maxHeight = 596.0 * ( screenSize[1] / 1080.0 )
-	float minHeight = 80.0 * ( screenSize[1] / 1080.0 )
+	int[ 2 ] screenSize = GetScreenSize()
+	float maxHeight = 596.0 * ( screenSize[ 1 ] / 1080.0 )
+	float minHeight = 80.0 * ( screenSize[ 1 ] / 1080.0 )
 
 	float height = maxHeight * ( MODES_PER_PAGE / modes )
 
-	if ( height > maxHeight ) height = maxHeight
-	if ( height < minHeight ) height = minHeight
+	if ( height > maxHeight )
+		height = maxHeight
+	if ( height < minHeight )
+		height = minHeight
 
 	Hud_SetHeight( sliderButton, height )
 	Hud_SetHeight( sliderPanel, height )
 	Hud_SetHeight( movementCapture, height )
 }
 
-
 void function UpdateListSliderPosition( int modes )
 {
-	if( modes < MODES_PER_PAGE )
+	if ( modes < MODES_PER_PAGE )
 		return
 
 	var sliderButton = Hud_GetChild( file.menu, "BtnModeListSlider" )
 	var sliderPanel = Hud_GetChild( file.menu, "BtnModeListSliderPanel" )
 	var movementCapture = Hud_GetChild( file.menu, "MouseMovementCapture" )
 
-	float minYPos = -40.0 * ( GetScreenSize()[1] / 1080.0 )
-	float useableSpace = (596.0 * ( GetScreenSize()[1] / 1080.0 ) - Hud_GetHeight( sliderPanel ) )
+	float minYPos = -40.0 * ( GetScreenSize()[ 1 ] / 1080.0 )
+	float useableSpace = ( 596.0 * ( GetScreenSize()[ 1 ] / 1080.0 ) - Hud_GetHeight( sliderPanel ) )
 
 	float jump = minYPos - ( useableSpace / ( float( modes ) - MODES_PER_PAGE ) * file.scrollOffset )
 
-	if ( jump > minYPos ) jump = minYPos
+	if ( jump > minYPos )
+		jump = minYPos
 
 	Hud_SetPos( sliderButton, 2, jump )
 	Hud_SetPos( sliderPanel, 2, jump )
@@ -429,9 +450,11 @@ void function UpdateListSliderPosition( int modes )
 
 void function OnScrollDown( var button )
 {
-	if (file.sortedModes.len() <= MODES_PER_PAGE) return
+	if ( file.sortedModes.len() <= MODES_PER_PAGE )
+		return
 	file.scrollOffset += 5
-	if (file.scrollOffset + MODES_PER_PAGE > file.sortedModes.len()) {
+	if ( file.scrollOffset + MODES_PER_PAGE > file.sortedModes.len() )
+	{
 		file.scrollOffset = file.sortedModes.len() - MODES_PER_PAGE
 	}
 	UpdateVisibleModes()
@@ -441,7 +464,8 @@ void function OnScrollDown( var button )
 void function OnScrollUp( var button )
 {
 	file.scrollOffset -= 5
-	if ( file.scrollOffset < 0 ) {
+	if ( file.scrollOffset < 0 )
+	{
 		file.scrollOffset = 0
 	}
 	UpdateVisibleModes()
@@ -597,7 +621,8 @@ void function OnHitDummyBottom( var button )
 
 void function OnDownArrowSelected( var button )
 {
-	if ( file.sortedModes.len() <= MODES_PER_PAGE ) return
+	if ( file.sortedModes.len() <= MODES_PER_PAGE )
+		return
 	file.scrollOffset += 1
 	if ( file.scrollOffset + MODES_PER_PAGE > file.sortedModes.len() )
 	{
@@ -607,7 +632,6 @@ void function OnDownArrowSelected( var button )
 	UpdateVisibleModes()
 	UpdateListSliderPosition( file.sortedModes.len() )
 }
-
 
 void function OnUpArrowSelected( var button )
 {
@@ -626,9 +650,9 @@ bool function IsStringCategory( string str )
 	return GetGameModeDisplayName( str ) == ""
 }
 
-/////////////////////////////
+// ///////////////////////////
 // LIST
-/////////////////////////////
+// ///////////////////////////
 
 void function UpdateVisibleModes()
 {
@@ -651,7 +675,7 @@ void function UpdateVisibleModes()
 			break
 
 		// Setup locals
-		var panel = buttons[i]
+		var panel = buttons[ i ]
 		var button = Hud_GetChild( panel, "BtnMode" )
 		var header = Hud_GetChild( panel, "Header" )
 
@@ -711,7 +735,7 @@ void function ModeButton_GetFocus( var button )
 	if ( modeId > file.sortedModes.len() )
 		return
 
-	string modeName = file.sortedModes[modeId]
+	string modeName = file.sortedModes[ modeId ]
 
 	asset playlistImage = GetPlaylistImage( modeName )
 	RuiSetImage( Hud_GetRui( nextModeImage ), "basicImage", playlistImage )
@@ -741,7 +765,7 @@ void function ModeButton_Click( var button )
 
 	// on modded servers set us to the first map for that mode automatically
 	// need this for coliseum mainly which is literally impossible to select without this
- 	if ( !PrivateMatch_IsValidMapModeCombo( PrivateMatch_GetSelectedMap(), modeName ) )
+	if ( !PrivateMatch_IsValidMapModeCombo( PrivateMatch_GetSelectedMap(), modeName ) )
 	{
 		ClientCommand( "SetCustomMap " + GetPrivateMatchMapsForMode( modeName )[ 0 ] )
 	}

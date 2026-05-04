@@ -19,8 +19,9 @@ global function PrivateMatchSpectatorEnabled
 
 global typedef SpectatorFunc void functionref( entity player )
 
-struct {
-	array<entity> staticSpecCams 
+struct
+{
+	array<entity> staticSpecCams
 	SpectatorFunc defaultSpectatorFunc
 	SpectatorFunc nextSpectatorFunc = null
 
@@ -46,14 +47,16 @@ void function Spectator_Init()
 void function SetStaticSpecCams()
 {
 	// spec cams are called spec_cam1,2,3 etc by default, so this is the easiest way to get them imo
-	int camNum = 1 
+	int camNum = 1
 	entity lastCam = null
-	do {
+	do
+	{
 		lastCam = GetEnt( "spec_cam" + camNum++ )
-		
+
 		if ( IsValid( lastCam ) )
 			file.staticSpecCams.append( lastCam )
-	} while ( IsValid( lastCam ) )
+	}
+	while ( IsValid( lastCam ) )
 }
 
 void function Spectator_SetDefaultSpectatorFunc( SpectatorFunc func )
@@ -77,7 +80,8 @@ void function Spectator_ClearCustomSpectatorFunc()
 void function HACKCleanupStaticObserverStuff( entity player )
 {
 	// this may look like horrible awful pointless code at first glance, and while it is horrible and awful, it's not pointless
-	// 3.402823466E38 is 0xFFFF7F7F in memory, which is the value the game uses to determine whether the current static observer pos/angles are valid ( i.e. 0xFFFF7F7F = invalid/not initialised )
+	// 3.402823466E38 is 0xFFFF7F7F in memory, which is the value the game uses to determine whether
+	// the current static observer pos/angles are valid ( i.e. 0xFFFF7F7F = invalid/not initialised )
 	// in my experience, not cleaning this up after setting static angles will break OBS_MODE_CHASE-ing non-player entities which is bad for custom spectator funcs
 	// this is 100% way lower level than what script stuff should usually be doing, but it's needed here
 	// i sure do hope this won't break in normal use :clueless:

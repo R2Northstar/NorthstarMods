@@ -1,6 +1,6 @@
 globalize_all_functions
 
-global array<var> consoleVars;
+global array<var> consoleVars
 global const string GAMEMODE_SNS = "sns"
 
 void function SNSMode_Init()

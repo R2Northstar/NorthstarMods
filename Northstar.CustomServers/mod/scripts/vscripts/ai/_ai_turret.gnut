@@ -11,14 +11,14 @@ global function AddTurretRepairCallback
 
 struct
 {
-	array<void functionref(entity,entity,entity)> turretRepairCallbacks
+	array<void functionref( entity, entity, entity )> turretRepairCallbacks
 } file
 
 void function AiTurret_Init()
 {
 	RegisterSignal( "TurretOffline" )
 	PrecacheModel( $"models/robots/turret_rocket/turret_rocket.mdl" )
-	
+
 	AddSpawnCallback( "npc_turret_sentry", OnTurretSpawn )
 }
 
@@ -34,7 +34,6 @@ string function MegaTurretUsabilityFunc( var turret, var panel )
 
 void function SetUsePromptForPanel( var panel, var turret )
 {
-
 }
 
 void function OnTurretSpawn( entity turret )
@@ -47,7 +46,7 @@ bool function IsTurretActive( entity turret )
 	// ----- Turret State ----- //
 	// TURRET_SEARCHING , TURRET_INACTIVE , TURRET_ACTIVE , TURRET_DEPLOYING , TURRET_RETIRING , TURRET_DEAD //
 
-	switch( turret.GetTurretState() )
+	switch ( turret.GetTurretState() )
 	{
 		case TURRET_DEPLOYING:
 		case TURRET_SEARCHING:
@@ -64,9 +63,9 @@ void function TurretRefundThink( entity turret )
 	turret.EndSignal( "CancelRefund" )
 	turret.EndSignal( "TurretOffline" )
 
-	while( turret.e.burnReward == "" || !IsTurretActive( turret ) )
+	while ( turret.e.burnReward == "" || !IsTurretActive( turret ) )
 		WaitFrame()
-	
+
 	turret.SetUsable()
 	turret.SetUsableByGroup( "owner pilot" )
 	turret.SetUsePrompts( "#REFUND_HOLD_USE", "#REFUND_PRESS_USE" )
@@ -97,17 +96,17 @@ void function TurretRefundThink( entity turret )
 
 void function RevivableTurret_DamageCallback( entity turret, var damageInfo )
 {
-	if( turret.GetHealth() <= DamageInfo_GetDamage( damageInfo ) )
+	if ( turret.GetHealth() <= DamageInfo_GetDamage( damageInfo ) )
 	{
 		turret.Signal( "TurretOffline" )
 		turret.SetHealth( 1 )
 		turret.SetUsable()
-		
+
 		if ( GetCurrentPlaylistVarInt( "fd_titans_can_repair_turrets", 0 ) == 1 )
 			turret.SetUsableByGroup( "friendlies" )
 		else
 			turret.SetUsableByGroup( "friendlies pilot" )
-		
+
 		turret.SetUsePrompts( "#TURRET_WAKEUP_HOLD_USE", "#TURRET_WAKEUP_PRESS_USE" )
 		thread RevivableTurret_Kill( turret )
 		thread RevivableTurretThink( turret )
@@ -117,7 +116,7 @@ void function RevivableTurret_DamageCallback( entity turret, var damageInfo )
 
 void function HeavyTurret_DamageCallback( entity turret, var damageInfo )
 {
-	if( turret.GetHealth() <= DamageInfo_GetDamage( damageInfo ) )
+	if ( turret.GetHealth() <= DamageInfo_GetDamage( damageInfo ) )
 	{
 		turret.Signal( "TurretOffline" )
 		turret.SetHealth( 1 )
@@ -129,7 +128,7 @@ void function HeavyTurret_DamageCallback( entity turret, var damageInfo )
 }
 
 void function RevivableTurretThink( entity turret )
-{	
+{
 	entity player = expect entity( turret.WaitSignal( "OnPlayerUse" ).player )
 	entity owner = turret.GetBossPlayer()
 	if ( !IsTurretActive( turret ) )
@@ -156,9 +155,9 @@ void function RevivableTurret_Revive( entity turret )
 	turret.DisableNPCFlag( NPC_IGNORE_ALL )
 	MakeTurretVulnerable( turret )
 	turret.SetNoTargetSmartAmmo( true )
-	
+
 	wait 0.3
-	
+
 	thread TurretRefundThink( turret )
 }
 
@@ -167,9 +166,9 @@ void function RevivableTurret_Kill( entity turret )
 	turret.EndSignal( "OnDestroy" )
 
 	entity turretOwner = turret.GetBossPlayer()
-	if( IsValidPlayer( turretOwner ) )
+	if ( IsValidPlayer( turretOwner ) )
 		PlayFactionDialogueToPlayer( "fd_turretOffline", turretOwner )
-	
+
 	turret.EnableNPCFlag( NPC_IGNORE_ALL )
 	MakeTurretInvulnerable( turret )
 	Highlight_SetFriendlyHighlight( turret, "sp_objective_entity" )
@@ -185,7 +184,7 @@ void function RepairTurret_WaveBreak( entity turret )
 	{
 		turret.UnsetUsable()
 		turret.EnableTurret()
-		turret.Anim_Play("deploy")
+		turret.Anim_Play( "deploy" )
 		turret.DisableNPCFlag( NPC_IGNORE_ALL )
 		Highlight_ClearFriendlyHighlight( turret )
 		Highlight_SetOwnedHighlight( turret, "sp_friendly_hero" )
@@ -194,12 +193,12 @@ void function RepairTurret_WaveBreak( entity turret )
 		turret.SetNoTargetSmartAmmo( true )
 		thread TurretRefundThink( turret )
 	}
-	
+
 	turret.SetHealth( turret.GetMaxHealth() )
 }
 
-void function AddTurretRepairCallback( void functionref(entity,entity,entity) callbackFunc )
+void function AddTurretRepairCallback( void functionref( entity, entity, entity ) callbackFunc )
 {
-	Assert (!( file.turretRepairCallbacks.contains( callbackFunc ) ))
+	Assert( !( file.turretRepairCallbacks.contains( callbackFunc ) ) )
 	file.turretRepairCallbacks.append( callbackFunc )
 }

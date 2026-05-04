@@ -1,180 +1,105 @@
 global function Progression_Init
 global function ProgressionEnabledForPlayer
 #if CLIENT || UI
-global function Progression_SetPreference
-global function Progression_GetPreference
-global function UpdateCachedLoadouts_Delayed
+	global function Progression_SetPreference
+	global function Progression_GetPreference
+	global function UpdateCachedLoadouts_Delayed
 #endif
 
 #if SP // literally just stub the global functions and call it a day
 
-void function Progression_Init() {}
-bool function ProgressionEnabledForPlayer( entity player ) { return false }
-#if CLIENT || UI
-void function Progression_SetPreference( bool enabled ) {}
-bool function Progression_GetPreference() { return false }
-void function UpdateCachedLoadouts_Delayed() {}
-#endif // CLIENT || UI
+	void function Progression_Init()
+	{
+	}
+	bool function ProgressionEnabledForPlayer( entity player )
+	{
+		return false
+	}
+	#if CLIENT || UI
+		void function Progression_SetPreference( bool enabled )
+		{
+		}
+		bool function Progression_GetPreference()
+		{
+			return false
+		}
+		void function UpdateCachedLoadouts_Delayed()
+		{
+		}
+	#endif // CLIENT || UI
 
 #else // MP || UI basically
 
-// SO FOR SOME GOD DAMN REASON, PUTTING THESE INTO ONE STRUCT
-// AND PUTTING THE #if STUFF AROUND THE VARS CAUSES A COMPILE
-// ERROR, SO I HAVE TO DO THIS AWFULNESS
+	// SO FOR SOME GOD DAMN REASON, PUTTING THESE INTO ONE STRUCT
+	// AND PUTTING THE #if STUFF AROUND THE VARS CAUSES A COMPILE
+	// ERROR, SO I HAVE TO DO THIS AWFULNESS
 
-#if SERVER
-struct {
-	table<entity, bool> progressionEnabled
-} file
-#else // UI || CLIENT
-struct {
-	bool isUpdatingCachedLoadouts = false
-} file
-#endif
-
-
-void function Progression_Init()
-{
 	#if SERVER
-	AddCallback_OnClientDisconnected( OnClientDisconnected )
-	AddClientCommandCallback( "ns_progression", ClientCommand_SetProgression )
-	AddClientCommandCallback( "ns_resettitanaegis", ClientCommand_ResetTitanAegis )
-	AddCallback_GameStateEnter( eGameState.Playing, OnPlaying )
-	#elseif CLIENT
-	AddCallback_OnClientScriptInit( OnClientScriptInit )
+		struct
+		{
+			table<entity, bool> progressionEnabled
+		} file
+	#else // UI || CLIENT
+		struct
+		{
+			bool isUpdatingCachedLoadouts = false
+		} file
 	#endif
-}
 
-bool function ProgressionEnabledForPlayer( entity player )
-{
-	#if SERVER
-	if ( player in file.progressionEnabled )
-		return file.progressionEnabled[player]
-	
-	return false
-	#else // CLIENT || UI
-	return GetConVarBool( "ns_progression_enabled" )
-	#endif
-}
-
-#if SERVER
-void function OnPlaying()
-{
-	#if !VANILLA
-		SetUIVar( level, "penalizeDisconnect", false ) // dont show the "you will lose merits thing"
-	#endif
-}
-
-void function OnClientDisconnected( entity player )
-{
-	// cleanup table when player leaves
-	if ( player in file.progressionEnabled )
-		delete file.progressionEnabled[player]
-}
-
-bool function ClientCommand_SetProgression( entity player, array<string> args )
-{
-	if ( args.len() != 1 )
-		return false
-	if ( args[0] != "0" && args[0] != "1" )
-		return false
-	
-	file.progressionEnabled[player] <- args[0] == "1"
-
-	// loadout validation when progression is turned on
-	if ( file.progressionEnabled[player] )
-		ValidateEquippedItems( player )
-
-	return true
-}
-
-/// Resets a specific Titan's Aegis rank back to `0`
-/// * `player` - The player entity to perform the action on
-/// * `args` - The arguments passed from the client command. `args[0]` should be a string corresponding to the chassis name of the Titan to reset.
-/// Valid chassis are: ion, tone, vanguard, northstar, ronin, legion, and scorch.
-///
-/// Returns `true` on success and `false` on missing args.
-bool function ClientCommand_ResetTitanAegis( entity player, array<string> args )
-{
-	if ( !args.len() )
-		return false
-	
-	string titanRef = args[0].tolower()
-	if( !PersistenceEnumValueIsValid( "titanClasses", titanRef ) )
-		return false
-	
-	int suitIndex = PersistenceGetEnumIndexForItemName( "titanClasses", titanRef )
-	
-	player.SetPersistentVar( "titanFDUnlockPoints[" + suitIndex + "]", 0 )
-	player.SetPersistentVar( "previousFDUnlockPoints[" + suitIndex + "]", 0 )
-	player.SetPersistentVar( "fdTitanXP[" + suitIndex + "]", 0 )
-	player.SetPersistentVar( "fdPreviousTitanXP[" + suitIndex + "]", 0 )
-	
-	// Refresh Highest Aegis Titan since we might get all of them back to 1 if players wants
-	RecalculateHighestTitanFDLevel( player )
-	
-	return true
-}
-#endif
-
-#if CLIENT
-void function OnClientScriptInit( entity player )
-{
-	// unsure if this is needed, just being safe
-	if ( player != GetLocalClientPlayer() )
-		return
-
-	Progression_SetPreference( GetConVarBool( "ns_progression_enabled" ) )
-	UpdateCachedLoadouts_Delayed()
-}
-#endif
-
-#if CLIENT || UI
-void function Progression_SetPreference( bool enabled )
-{
-	SetConVarBool( "ns_progression_enabled", enabled )
-
-	#if !VANILLA
-		#if CLIENT
-		GetLocalClientPlayer().ClientCommand( "ns_progression " + enabled.tointeger() )
-		#else // UI
-		ClientCommand( "ns_progression " + enabled.tointeger() )
+	void function Progression_Init()
+	{
+		#if SERVER
+			AddCallback_OnClientDisconnected( OnClientDisconnected )
+			AddClientCommandCallback( "ns_progression", ClientCommand_SetProgression )
+			AddClientCommandCallback( "ns_resettitanaegis", ClientCommand_ResetTitanAegis )
+			AddCallback_GameStateEnter( eGameState.Playing, OnPlaying )
+		#elseif CLIENT
+			AddCallback_OnClientScriptInit( OnClientScriptInit )
 		#endif
-	#endif
-}
+	}
 
-bool function Progression_GetPreference()
-{
-	#if VANILLA
-	return true
-	#else
-	return GetConVarBool( "ns_progression_enabled" )
-	#endif
-}
+	bool function ProgressionEnabledForPlayer( entity player )
+	{
+		#if SERVER
+			if ( player in file.progressionEnabled )
+				return file.progressionEnabled[ player ]
 
-void function UpdateCachedLoadouts_Delayed()
-{
-	if ( file.isUpdatingCachedLoadouts )
-		return
+			return false
+		#else // CLIENT || UI
+			return GetConVarBool( "ns_progression_enabled" )
+		#endif
+	}
 
-	file.isUpdatingCachedLoadouts = true
+	#if SERVER
+		void function OnPlaying()
+		{
+			#if !VANILLA
+				SetUIVar( level, "penalizeDisconnect", false ) // dont show the "you will lose merits thing"
+			#endif
+		}
 
-	#if UI
-	RunClientScript( "UpdateCachedLoadouts_Delayed" ) // keep client and UI synced
-	#else // CLIENT
-	RunUIScript( "UpdateCachedLoadouts_Delayed" ) // keep client and UI synced
-	#endif
+		void function OnClientDisconnected( entity player )
+		{
+			// cleanup table when player leaves
+			if ( player in file.progressionEnabled )
+				delete file.progressionEnabled[ player ]
+		}
 
-	thread UpdateCachedLoadouts_Threaded()
-}
+		bool function ClientCommand_SetProgression( entity player, array<string> args )
+		{
+			if ( args.len() != 1 )
+				return false
+			if ( args[ 0 ] != "0" && args[ 0 ] != "1" )
+				return false
 
-void function UpdateCachedLoadouts_Threaded()
-{
-	wait 1.0 // give the server time to network our new persistence
+			file.progressionEnabled[ player ] <- args[ 0 ] == "1"
 
-	UpdateCachedLoadouts()
+			// loadout validation when progression is turned on
+			if ( file.progressionEnabled[ player ] )
+				ValidateEquippedItems( player )
 
-	// below here is just making all the menu models update properly and such
+			return true
+		}
 
 	try
 	{
@@ -258,22 +183,19 @@ void function ValidateEquippedItems( entity player )
 			player.SetPersistentVar( "titanLoadouts[" + titanLoadoutIndex + "].passive1", defaultLoadout.passive1 )
 		}
 
-		// passive2 - "<chassis> Kit" (things like zero point tripwire)
-		if ( loadout.passive2 != defaultLoadout.passive2 && IsSubItemLocked( player, loadout.passive2, loadout.titanClass ) )
+		bool function Progression_GetPreference()
 		{
 			ProgressionPrint( "  - CHASSIS KIT EQUIPPED WHEN LOCKED, RESETTING" )
 			player.SetPersistentVar( "titanLoadouts[" + titanLoadoutIndex + "].passive2", defaultLoadout.passive2 )
 		}
 
-		// passive3 - "Titanfall Kit" (warpfall/dome shield)
-		if ( loadout.passive3 != defaultLoadout.passive3 && IsSubItemLocked( player, loadout.passive3, loadout.titanClass ) )
+		void function UpdateCachedLoadouts_Delayed()
 		{
 			ProgressionPrint( "  - TITANFALL KIT EQUIPPED WHEN LOCKED, RESETTING" )
 			player.SetPersistentVar( "titanLoadouts[" + titanLoadoutIndex + "].passive3", defaultLoadout.passive3 )
 		}
 
-		// passive4 - monarch core 1
-		if ( loadout.passive4 != defaultLoadout.passive4 && IsSubItemLocked( player, loadout.passive4, loadout.titanClass ) )
+		void function UpdateCachedLoadouts_Threaded()
 		{
 			ProgressionPrint( "  - MONARCH CORE 1 KIT EQUIPPED WHEN LOCKED, RESETTING" )
 			player.SetPersistentVar( "titanLoadouts[" + titanLoadoutIndex + "].passive4", defaultLoadout.passive4 )
@@ -310,21 +232,77 @@ void function ValidateEquippedItems( entity player )
 			player.SetPersistentVar( "titanLoadouts[" + titanLoadoutIndex + "].titanExecution", defaultLoadout.titanExecution )
 		}
 
-		// skinIndex
-		// camoIndex
-		if ( loadout.skinIndex == TITAN_SKIN_INDEX_CAMO )
+				if ( !IsValid( UIPlayer ) )
+					return
+
+				uiGlobal.pilotSpawnLoadoutIndex = GetPersistentSpawnLoadoutIndex( UIPlayer, "pilot" )
+				uiGlobal.titanSpawnLoadoutIndex = GetPersistentSpawnLoadoutIndex( UIPlayer, "titan" )
+			#endif
+
+			#if CLIENT
+				entity player = GetLocalClientPlayer()
+				ClearAllTitanPreview( player )
+				ClearAllPilotPreview( player )
+				UpdateTitanModel( player, GetPersistentSpawnLoadoutIndex( player, "titan" ) )
+				UpdatePilotModel( player, GetPersistentSpawnLoadoutIndex( player, "pilot" ) )
+			#endif
+
+			file.isUpdatingCachedLoadouts = false
+		}
+	#endif
+
+	#if SERVER
+		void function ValidateEquippedItems( entity player )
 		{
-			array<ItemData> camoSkins = GetAllItemsOfType( eItemTypes.CAMO_SKIN_TITAN )
-			if ( loadout.camoIndex >= camoSkins.len() || loadout.camoIndex < 0 )
+			printt( "VALIDATING EQUIPPED ITEMS FOR PLAYER: " + player.GetPlayerName() )
+
+			// banner
+			CallingCard card = PlayerCallingCard_GetActive( player )
+			if ( IsItemLocked( player, card.ref ) )
 			{
 				ProgressionPrint( "  - INVALID TITAN CAMO/SKIN, RESETTING" )
 				player.SetPersistentVar( "titanLoadouts[" + titanLoadoutIndex + "].skinIndex", defaultLoadout.skinIndex )
 				player.SetPersistentVar( "titanLoadouts[" + titanLoadoutIndex + "].camoIndex", defaultLoadout.camoIndex )
 			}
-			else
+
+			// patch
+			CallsignIcon icon = PlayerCallsignIcon_GetActive( player )
+			if ( IsItemLocked( player, icon.ref ) )
 			{
-				ItemData camoSkin = camoSkins[loadout.camoIndex]
-				if ( IsSubItemLocked( player, camoSkin.ref, loadout.titanClass ) )
+				printt( "- BANNER PATCH IS LOCKED, RESETTING" )
+				PlayerCallsignIcon_SetActiveByRef( player, "gc_icon_titanfall" ) // copied from _persistentdata.gnut
+			}
+
+			// faction
+			int factionIndex = player.GetPersistentVarAsInt( "factionChoice" )
+			string factionRef = PersistenceGetEnumItemNameForIndex( "faction", factionIndex )
+			if ( IsItemLocked( player, factionRef ) )
+			{
+				printt( "- FACTION IS LOCKED, RESETTING" )
+				player.SetPersistentVar( "factionChoice", "faction_marauder" ) // im so sorry that i am setting you to use sarah, you don't deserve this
+			}
+
+			// boost
+			BurnReward reward = BurnReward_GetById( player.GetPersistentVarAsInt( "burnmeterSlot" ) )
+			if ( IsItemLocked( player, reward.ref ) )
+			{
+				printt( "- BOOST IS LOCKED, RESETTING" )
+				player.SetPersistentVar( "burnmeterSlot", BurnReward_GetByRef( "burnmeter_amped_weapons" ).id )
+			}
+
+			// titan loadouts
+			for ( int titanLoadoutIndex = 0; titanLoadoutIndex < NUM_PERSISTENT_TITAN_LOADOUTS; titanLoadoutIndex++ )
+			{
+				printt( "- VALIDATING TITAN LOADOUT: " + titanLoadoutIndex )
+
+				bool isSelected = titanLoadoutIndex == player.GetPersistentVarAsInt( "titanSpawnLoadout.index" )
+				TitanLoadoutDef loadout = GetTitanLoadout( player, titanLoadoutIndex )
+				TitanLoadoutDef defaultLoadout = shGlobal.defaultTitanLoadouts[ titanLoadoutIndex ]
+
+				printt( "  - CHASSIS: " + loadout.titanClass )
+
+				// passive1 - "Titan Kit" (things like overcore)
+				if ( loadout.passive1 != defaultLoadout.passive1 && IsSubItemLocked( player, loadout.passive1, loadout.titanClass ) )
 				{
 					ProgressionPrint( "  - TITAN CAMO/SKIN EQUIPPED WHEN LOCKED, RESETTING" )
 					player.SetPersistentVar( "titanLoadouts[" + titanLoadoutIndex + "].skinIndex", defaultLoadout.skinIndex )
@@ -537,8 +515,8 @@ void function ValidateEquippedItems( entity player )
 				}
 				else
 				{
-					ItemData camoSkin = camoSkins[loadout.camoIndex]
-					if ( IsItemLocked( player, camoSkin.ref ) )
+					string ref = GetSkinRefFromTitanClassAndPersistenceValue( loadout.titanClass, loadout.skinIndex )
+					if ( ref == INVALID_REF )
 					{
 						ProgressionPrint( "  - PILOT CAMO/SKIN EQUIPPED WHEN LOCKED, RESETTING" )
 						player.SetPersistentVar( "pilotLoadouts[" + pilotLoadoutIndex + "].skinIndex", defaultLoadout.skinIndex )
@@ -702,7 +680,9 @@ void function ValidateEquippedItems( entity player )
 			}
 		}
 
-		// secondary weapon
+		// basically just PopulateTitanLoadoutFromPersistentData but without validation, we are doing the validation in a better way
+		// that doesnt just kick the player and reset the entire loadout, since we want to only reset parts of the loadout that we need
+		TitanLoadoutDef function GetTitanLoadout( entity player, int loadoutIndex )
 		{
 			if ( !IsRefValid( loadout.secondary ) || GetItemType( loadout.secondary ) != eItemTypes.PILOT_SECONDARY )
 			{
@@ -731,11 +711,40 @@ void function ValidateEquippedItems( entity player )
 					ref = defaultLoadout.weapon3
 				}
 
-				player.SetPersistentVar( "pilotLoadouts[" + pilotLoadoutIndex + "].secondary", ref )
-			}
+			loadout.name = GetPersistentLoadoutValue( player, "titan", loadoutIndex, "name" )
+			loadout.titanClass = GetPersistentLoadoutValue( player, "titan", loadoutIndex, "titanClass" )
+			loadout.primaryMod = GetPersistentLoadoutValue( player, "titan", loadoutIndex, "primaryMod" )
+			loadout.special = GetPersistentLoadoutValue( player, "titan", loadoutIndex, "special" )
+			loadout.antirodeo = GetPersistentLoadoutValue( player, "titan", loadoutIndex, "antirodeo" )
+			loadout.passive1 = GetPersistentLoadoutValue( player, "titan", loadoutIndex, "passive1" )
+			loadout.passive2 = GetPersistentLoadoutValue( player, "titan", loadoutIndex, "passive2" )
+			loadout.passive3 = GetPersistentLoadoutValue( player, "titan", loadoutIndex, "passive3" )
+			loadout.passive4 = GetPersistentLoadoutValue( player, "titan", loadoutIndex, "passive4" )
+			loadout.passive5 = GetPersistentLoadoutValue( player, "titan", loadoutIndex, "passive5" )
+			loadout.passive6 = GetPersistentLoadoutValue( player, "titan", loadoutIndex, "passive6" )
+			loadout.camoIndex = GetPersistentLoadoutValueInt( player, "titan", loadoutIndex, "camoIndex" )
+			loadout.skinIndex = GetPersistentLoadoutValueInt( player, "titan", loadoutIndex, "skinIndex" ) // Important: Skin index needs to be gotten after camoIndex for loadout validation purposes
+			loadout.decalIndex = GetPersistentLoadoutValueInt( player, "titan", loadoutIndex, "decalIndex" )
+			loadout.primaryCamoIndex = GetPersistentLoadoutValueInt( player, "titan", loadoutIndex, "primaryCamoIndex" )
+			loadout.primarySkinIndex = GetPersistentLoadoutValueInt( player, "titan", loadoutIndex, "primarySkinIndex" ) // Important: Skin index needs to be gotten after camoIndex for loadout validation purposes
+			loadout.titanExecution = GetPersistentLoadoutValue( player, "titan", loadoutIndex, "titanExecution" )
+			loadout.showArmBadge = GetPersistentLoadoutValueInt( player, "titan", loadoutIndex, "showArmBadge" )
+
+			// Prime Titan related vars
+			loadout.isPrime = GetPersistentLoadoutValue( player, "titan", loadoutIndex, "isPrime" )
+			loadout.primeCamoIndex = GetPersistentLoadoutValueInt( player, "titan", loadoutIndex, "primeCamoIndex" )
+			loadout.primeSkinIndex = GetPersistentLoadoutValueInt( player, "titan", loadoutIndex, "primeSkinIndex" ) // Important: Skin index needs to be gotten after camoIndex for loadout validation purposes
+			loadout.primeDecalIndex = GetPersistentLoadoutValueInt( player, "titan", loadoutIndex, "primeDecalIndex" )
+
+			UpdateDerivedTitanLoadoutData( loadout )
+			OverwriteLoadoutWithDefaultsForSetFile( loadout )
+
+			return loadout
 		}
 
-		// secondary weapon mods
+		// basically just PopulatePilotLoadoutFromPersistentData but without validation, we are doing the validation in a better way
+		// that doesnt just kick the player and reset the entire loadout, since we want to only reset parts of the loadout that we need
+		PilotLoadoutDef function GetPilotLoadout( entity player, int loadoutIndex )
 		{
 			// mod1
 			if ( loadout.secondaryMod1 == "" )
@@ -795,10 +804,10 @@ void function ValidateEquippedItems( entity player )
 			}
 		}
 
-		// secondary weapon camoIndex
-		// secondary weapon skinIndex
+		bool function CanEquipArmBadge( entity player, string titanClass )
 		{
-			if ( loadout.secondarySkinIndex == WEAPON_SKIN_INDEX_CAMO )
+			string skinRef
+			switch ( titanClass )
 			{
 				array<ItemData> camoSkins = GetAllItemsOfType( eItemTypes.CAMO_SKIN )
 				if ( loadout.secondaryCamoIndex >= camoSkins.len() || loadout.secondaryCamoIndex < 0 )
@@ -837,12 +846,14 @@ void function ValidateEquippedItems( entity player )
 					player.SetPersistentVar( "pilotLoadouts[" + pilotLoadoutIndex + "].secondaryCamoIndex", defaultLoadout.secondaryCamoIndex )
 				}
 			}
+
+			return !IsSubItemLocked( player, skinRef, titanClass )
 		}
 
-		// weapon3
-		// note: these are always eItemTypes.PILOT_SECONDARY
+		string function GetWeaponWarpaintRefByIndex( int skinIndex, string parentRef )
 		{
-			if ( !IsRefValid( loadout.weapon3 ) || GetItemType( loadout.weapon3 ) != eItemTypes.PILOT_SECONDARY )
+			ItemData parentItem = GetItemData( parentRef )
+			foreach ( subItem in parentItem.subitems )
 			{
 				ProgressionPrint( "  - WEAPON3 WEAPON IS LOCKED, RESETTING" )
 				string ref = defaultLoadout.weapon3
@@ -870,6 +881,8 @@ void function ValidateEquippedItems( entity player )
 				}
 				player.SetPersistentVar( "pilotLoadouts[" + pilotLoadoutIndex + "].weapon3", ref )
 			}
+
+			return INVALID_REF
 		}
 
 		// weapon3 mods

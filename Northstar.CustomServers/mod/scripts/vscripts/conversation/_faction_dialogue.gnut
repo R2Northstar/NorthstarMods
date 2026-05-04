@@ -19,12 +19,12 @@ void function PlayFactionDialogueToPlayer( string conversationType, entity playe
 	#if !FACTION_DIALOGUE_ENABLED
 		return
 	#endif
-	
+
 	if ( !ShouldPlayFactionDialogue( conversationType, player ) )
 		return
-	
+
 	int conversationIndex = GetConversationIndex( conversationType )
-	if( forced )
+	if ( forced )
 		Remote_CallFunction_NonReplay( player, "ServerCallback_ForcePlayFactionDialogue", conversationIndex )
 	else
 		Remote_CallFunction_NonReplay( player, "ServerCallback_PlayFactionDialogue", conversationIndex )
@@ -32,15 +32,15 @@ void function PlayFactionDialogueToPlayer( string conversationType, entity playe
 
 void function PlayFactionDialogueToTeam( string conversationType, int team, bool forced = false )
 {
-	foreach ( entity player in GetPlayerArrayOfTeam( team ) ) 
+	foreach ( entity player in GetPlayerArrayOfTeam( team ) )
 		PlayFactionDialogueToPlayer( conversationType, player, forced )
 }
 
 void function PlayFactionDialogueToTeamExceptPlayer( string conversationType, int team, entity except, bool forced = false )
 {
-	foreach ( entity player in GetPlayerArrayOfTeam( team ) ) 
+	foreach ( entity player in GetPlayerArrayOfTeam( team ) )
 		if ( player != except )
-			PlayFactionDialogueToPlayer( conversationType, player, forced ) 
+			PlayFactionDialogueToPlayer( conversationType, player, forced )
 }
 
 void function AssignEnemyFactionToPlayer( entity player )

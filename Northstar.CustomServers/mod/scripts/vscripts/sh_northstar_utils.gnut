@@ -17,7 +17,7 @@ void function NorthstarUtils_After_Init()
 
 // whether the game should return to the lobby on GameRules_EndMatch()
 bool function ShouldReturnToLobby()
-{	
+{
 	return GetConVarBool( "ns_should_return_to_lobby" )
 }
 

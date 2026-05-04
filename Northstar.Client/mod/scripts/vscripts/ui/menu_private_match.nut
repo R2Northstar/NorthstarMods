@@ -63,11 +63,10 @@ struct
 
 	var matchSettingsPanel
 
-	ComboStruct &lobbyComboStruct
+	ComboStruct& lobbyComboStruct
 } file
 
-const table<asset> mapImages =
-{
+const table<asset> mapImages = {
 	mp_forwardbase_kodai = $"loadscreens/mp_forwardbase_kodai_lobby",
 	mp_grave = $"loadscreens/mp_grave_lobby",
 	mp_homestead = $"loadscreens/mp_homestead_lobby",
@@ -125,7 +124,6 @@ asset function GetMapImageForMapName( string mapName )
 	return StringToAsset( "loadscreens/" + mapName + "_lobby" )
 }
 
-
 void function InitPrivateMatchMenu()
 {
 	var menu = GetMenu( "PrivateLobbyMenu" )
@@ -155,10 +153,10 @@ void function InitPrivateMatchMenu()
 	file.friendlyTeamBackgroundPanel = Hud_GetChild( file.friendlyPlayersPanel, "LobbyFriendlyTeamBackground" )
 	file.enemyTeamBackgroundPanel = Hud_GetChild( file.enemyPlayersPanel, "LobbyEnemyTeamBackground" )
 
-#if PC_PROG
-	var panelSize = Hud_GetSize( file.enemyPlayersPanel )
-	Hud_SetSize( Hud_GetChild( menu, "LobbyChatBox" ), panelSize[0], panelSize[1] )
-#endif // #if PC_PROG
+	#if PC_PROG
+		var panelSize = Hud_GetSize( file.enemyPlayersPanel )
+		Hud_SetSize( Hud_GetChild( menu, "LobbyChatBox" ), panelSize[ 0 ], panelSize[ 1 ] )
+	#endif // #if PC_PROG
 
 	file.friendlyTeamBackground = Hud_GetChild( file.friendlyTeamBackgroundPanel, "TeamBackground" )
 	file.enemyTeamBackground = Hud_GetChild( file.enemyTeamBackgroundPanel, "TeamBackground" )
@@ -200,7 +198,6 @@ void function InitPrivateMatchMenu()
 	#endif
 }
 
-
 void function OnSelectMapButton_Activate( var button )
 {
 	if ( Hud_IsLocked( button ) )
@@ -229,7 +226,7 @@ void function OnSelectMatchSettings_Activate( var button )
 	#endif
 }
 
-void function SetupComboButtons( var menu, var navUpButton, var navDownButton  )
+void function SetupComboButtons( var menu, var navUpButton, var navDownButton )
 {
 	ComboStruct comboStruct = ComboButtons_Create( menu )
 	file.lobbyComboStruct = comboStruct
@@ -317,13 +314,12 @@ void function SetupComboButtons( var menu, var navUpButton, var navDownButton  )
 	ComboButtons_Finalize( comboStruct )
 }
 
-
 bool function IsPlayerListFocused()
 {
 	var focusedItem = GetFocus()
 
 	// The check for GetScriptID existing isn't ideal, but if the text chat text output element has focus it will script error otherwise
-	return ( (focusedItem != null) && ("GetScriptID" in focusedItem) && (Hud_GetScriptID( focusedItem ) == "PlayerListButton") )
+	return ( ( focusedItem != null ) && ( "GetScriptID" in focusedItem ) && ( Hud_GetScriptID( focusedItem ) == "PlayerListButton" ) )
 }
 
 bool function MatchResultsExist()
@@ -374,7 +370,7 @@ void function OnLobbyMenu_Open()
 			bool anyNewTitanItems = HasAnyNewTitanItems( player )
 			bool anyNewBoosts = HasAnyNewBoosts( player )
 			bool anyNewCommsIcons = false // emotesAreEnabled ? HasAnyNewDpadCommsIcons( player ) : false
-			bool anyNewCustomizeHeader = (anyNewPilotItems || anyNewTitanItems || anyNewBoosts || anyNewCommsIcons)
+			bool anyNewCustomizeHeader = ( anyNewPilotItems || anyNewTitanItems || anyNewBoosts || anyNewCommsIcons )
 
 			RuiSetBool( Hud_GetRui( file.customizeHeader ), "isNew", anyNewCustomizeHeader )
 			ComboButton_SetNew( file.pilotButton, anyNewPilotItems )
@@ -405,7 +401,7 @@ void function OnLobbyMenu_Open()
 			bool anyNewBanners = HasAnyNewCallsignBanners( player )
 			bool anyNewPatches = HasAnyNewCallsignPatches( player )
 			bool anyNewFactions = HasAnyNewFactions( player )
-			bool anyNewCallsignHeader = (anyNewBanners || anyNewPatches || anyNewFactions)
+			bool anyNewCallsignHeader = ( anyNewBanners || anyNewPatches || anyNewFactions )
 
 			RuiSetBool( Hud_GetRui( file.callsignHeader ), "isNew", anyNewCallsignHeader )
 			ComboButton_SetNew( file.bannerButton, anyNewBanners )
@@ -424,8 +420,6 @@ void function LobbyMenuUpdate( var menu )
 		WaitFrame()
 	}
 }
-
-
 
 void function OnLobbyMenu_Close()
 {
@@ -528,7 +522,6 @@ function Privatematch_mode_Changed()
 	UpdateMatchSettingsForGamemode()
 }
 
-
 function Privatematch_starting_Changed()
 {
 	if ( !IsPrivateMatch() )
@@ -539,7 +532,6 @@ function Privatematch_starting_Changed()
 	UpdatePrivateMatchButtons()
 	UpdateFooterOptions()
 }
-
 
 function UpdatePrivateMatchButtons()
 {
@@ -566,7 +558,7 @@ function UpdatePrivateMatchButtons()
 
 		string modeName = PrivateMatch_GetSelectedMode()
 		bool settingsLocked = false
-		
+
 		#if VANILLA
 			settingsLocked = IsFDMode( modeName )
 		#endif
@@ -621,25 +613,25 @@ function UpdateLobby()
 		int numPlaylistOverrides = GetPlaylistVarOverridesCount()
 		string playlistOverridesDesc = ""
 		for ( int varIdx = 0; varIdx < numPlaylistOverrides; ++varIdx )
-		{	
+		{
 			// temp fix for playlistoverrides that aren't handled by private match
 			string varName = GetPlaylistVarOverrideNameByIndex( varIdx )
-			
+
 			if ( varName in MatchSettings_PlaylistVarLabels )
 			{
 				float varOrigVal = float( GetCurrentPlaylistGamemodeByIndexVar( gamemodeIdx, varName, false ) )
 				float varOverrideVal = float( GetCurrentPlaylistGamemodeByIndexVar( gamemodeIdx, varName, true ) )
 				if ( varOrigVal == varOverrideVal ) // stuff seems to break outside of northstar servers since we dont always use private_match playlist
 					continue
-	
-				string label = Localize( MatchSettings_PlaylistVarLabels[varName] ) + ": "
+
+				string label = Localize( MatchSettings_PlaylistVarLabels[ varName ] ) + ": "
 				string value = MatchSettings_FormatPlaylistVarValue( varName, varOverrideVal )
 				playlistOverridesDesc = playlistOverridesDesc + label + "`2" + value + " `0\n"
 			}
 			else
 			{
 				bool shouldBreak = false
-				
+
 				foreach ( string category in GetPrivateMatchSettingCategories( true ) )
 				{
 					foreach ( CustomMatchSettingContainer setting in GetPrivateMatchCustomSettingsForCategory( category ) )
@@ -655,7 +647,7 @@ function UpdateLobby()
 							break
 						}
 					}
-					
+
 					if ( shouldBreak )
 						break
 				}
@@ -689,7 +681,6 @@ void function OnSettingsButton_Activate( var button )
 	AdvanceMenu( GetMenu( "MatchSettingsMenu" ) )
 }
 
-
 void function OnPrivateMatchButton_Activate( var button )
 {
 	ShowPrivateMatchConnectDialog()
@@ -711,27 +702,27 @@ function HandleLockedCustomMenuItem( menu, button, tipInfo, hideTip = false )
 
 	if ( Hud_IsLocked( button ) && !hideTip )
 	{
-		foreach( elem in elements )
+		foreach ( elem in elements )
 			Hud_Hide( elem )
 
 		local tipArray = clone tipInfo
 		tipInfo.resize( 6, null )
 
-		Hud_SetText( toolTipLabel, tipInfo[0], tipInfo[1], tipInfo[2], tipInfo[3], tipInfo[4], tipInfo[5] )
+		Hud_SetText( toolTipLabel, tipInfo[ 0 ], tipInfo[ 1 ], tipInfo[ 2 ], tipInfo[ 3 ], tipInfo[ 4 ], tipInfo[ 5 ] )
 
 		local buttonPos = button.GetAbsPos()
 		local buttonHeight = button.GetHeight()
 		local tooltipHeight = buttonTooltip.GetHeight()
 		local yOffset = ( tooltipHeight - buttonHeight ) / 2.0
 
-		buttonTooltip.SetPos( buttonPos[0] + button.GetWidth() * 0.9, buttonPos[1] - yOffset )
+		buttonTooltip.SetPos( buttonPos[ 0 ] + button.GetWidth() * 0.9, buttonPos[ 1 ] - yOffset )
 		Hud_Show( buttonTooltip )
 
 		return true
 	}
 	else
 	{
-		foreach( elem in elements )
+		foreach ( elem in elements )
 			Hud_Show( elem )
 		Hud_Hide( buttonTooltip )
 	}
@@ -776,7 +767,6 @@ void function MatchmakingSetSearchText( string searchText, var param1 = "", var 
 	}
 }
 
-
 void function MatchmakingSetCountdownTimer( float time )
 {
 	foreach ( element in file.matchStatusRuis )
@@ -786,13 +776,11 @@ void function MatchmakingSetCountdownTimer( float time )
 	}
 }
 
-
 void function OnPrivateLobbyLevelInit()
 {
 	UpdateCallsignElement( file.callsignCard )
 	RefreshCreditsAvailable()
 }
-
 
 function UpdatePlayerInfo()
 {

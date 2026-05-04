@@ -5,13 +5,13 @@ global function GamemodeColiseum_CustomIntro
 
 // outro anims
 // winner anims are for the winner, loser anims are for the loser
-const array< array<string> > OUTROANIMS_WINNER = [
+const array<array<string> > OUTROANIMS_WINNER = [
 	[ "pt_coliseum_winner_gunkick", "pt_coliseum_winner_compassion", "pt_coliseum_winner_drinking" ], // winner lost 0 rounds
 	[ "pt_coliseum_winner_respect", "pt_coliseum_winner_headlock", "pt_coliseum_winner_authority" ], // winner lost 1 round
 	[ "pt_coliseum_winner_punch", "pt_coliseum_winner_kick", "pt_coliseum_winner_stomp" ] // winner lost 2 rounds
 ]
 
-const array< array<string> > OUTROANIMS_LOSER = [
+const array<array<string> > OUTROANIMS_LOSER = [
 	[ "pt_coliseum_loser_gunkick", "pt_coliseum_loser_compassion", "pt_coliseum_loser_drinking" ], // winner lost 0 rounds
 	[ "pt_coliseum_loser_respect", "pt_coliseum_loser_headlock", "pt_coliseum_loser_authority" ], // winner lost 1 round
 	[ "pt_coliseum_loser_punch", "pt_coliseum_loser_kick", "pt_coliseum_loser_stomp" ], // winner lost 2 rounds
@@ -76,7 +76,7 @@ void function ShowColiseumIntroScreenThreaded()
 				otherTeam.removebyvalue( player )
 
 		int winstreak = 0
-		int wins = 0 
+		int wins = 0
 		int losses = 0
 
 		if ( otherTeam.len() )

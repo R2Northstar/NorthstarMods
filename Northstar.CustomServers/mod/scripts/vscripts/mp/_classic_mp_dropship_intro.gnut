@@ -1,10 +1,12 @@
 untyped
 global function ClassicMP_DefaultDropshipIntro_Setup
 
-const array<string> DROPSHIP_IDLE_ANIMS = [ "Classic_MP_flyin_exit_playerA_idle",
-											"Classic_MP_flyin_exit_playerB_idle",
-											"Classic_MP_flyin_exit_playerC_idle",
-											"Classic_MP_flyin_exit_playerD_idle" ]
+const array<string> DROPSHIP_IDLE_ANIMS = [
+	"Classic_MP_flyin_exit_playerA_idle",
+	"Classic_MP_flyin_exit_playerB_idle",
+	"Classic_MP_flyin_exit_playerC_idle",
+	"Classic_MP_flyin_exit_playerD_idle"
+]
 
 const array<string> DROPSHIP_IDLE_ANIMS_POV = [ "Classic_MP_flyin_exit_povA_idle",
 												"Classic_MP_flyin_exit_povB_idle",
@@ -23,7 +25,6 @@ const array<string> DROPSHIP_JUMP_ANIMS_POV = [ "Classic_MP_flyin_exit_povA_jump
 
 const int MAX_DROPSHIP_PLAYERS = 4
 
-
 global const float DROPSHIP_INTRO_LENGTH = 15.0 // TODO tweak this
 
 struct {
@@ -32,7 +33,6 @@ struct {
 
 	float introStartTime
 } file
-
 
 void function ClassicMP_DefaultDropshipIntro_Setup()
 {
@@ -107,7 +107,7 @@ void function OnPrematchStart()
 		NPC_NoTarget( dropship )
 
 		teamDropships[ dropship ] <- [ null, null, null, null ]
-		
+
 		thread PlayAnim( dropship, GetDropshipIntroAnimation() )
 		thread WaitForDropshipDeploy( dropship )
 	}
@@ -137,7 +137,7 @@ void function EndIntroWhenFinished()
 {
 	while ( Time() < expect float( level.nv.gameStartTime ) )
 		WaitFrame()
-	
+
 	ClassicMP_OnIntroFinished()
 }
 
@@ -154,38 +154,38 @@ void function WaitForDropshipDeploy( entity dropship )
 
 void function PutPlayerInDropship( entity player )
 {
-	//Find the player's dropship and seat
-	table< entity, array< entity > > teamDropships
+	// Find the player's dropship and seat
+	table<entity, array<entity> > teamDropships
 	teamDropships = file.imcDropships
 	if ( player.GetTeam() == TEAM_MILITIA )
 		teamDropships = file.militiaDropships
-	
+
 	entity playerDropship
-	array< int > availableShipSlots
-	array< entity > introDropships
+	array<int> availableShipSlots
+	array<entity> introDropships
 	int playerDropshipIndex = RandomInt( MAX_DROPSHIP_PLAYERS )
-	foreach( dropship, playerslot in teamDropships )
+	foreach ( dropship, playerslot in teamDropships )
 	{
 		introDropships.append( dropship )
 		for ( int i = 0; i < MAX_DROPSHIP_PLAYERS; i++ )
 		{
-			if ( !IsValidPlayer( playerslot[i] ) )
+			if ( !IsValidPlayer( playerslot[ i ] ) )
 				availableShipSlots.append( i )
 		}
-		
-		if( !availableShipSlots.len() )
+
+		if ( !availableShipSlots.len() )
 			continue
-		
+
 		int slotPick = availableShipSlots.getrandom()
-		playerslot[slotPick] = player
+		playerslot[ slotPick ] = player
 		playerDropship = dropship
 		playerDropshipIndex = slotPick
 		break
 	}
-	
-	if( !IsAlive( playerDropship ) ) //If we're at this point, we have more players than we do dropships, so just pick a random one
+
+	if ( !IsAlive( playerDropship ) ) // If we're at this point, we have more players than we do dropships, so just pick a random one
 		playerDropship = introDropships.getrandom()
-	
+
 	thread SpawnPlayerIntoDropship( player, playerDropshipIndex, playerDropship )
 }
 
@@ -241,9 +241,8 @@ void function PlayerJumpsFromDropship( entity player )
 	player.EndSignal( "OnDeath" )
 	player.EndSignal( "OnDestroy" )
 
-	OnThreadEnd( function() : ( player )
-	{
-		if ( IsValid( player ) )
+	OnThreadEnd(
+		function() : ( player )
 		{
 			// show weapon viewmodel and hud and let them move again
 			player.MovementEnable()
@@ -252,8 +251,8 @@ void function PlayerJumpsFromDropship( entity player )
 			RemoveCinematicFlag( player, CE_FLAG_CLASSIC_MP_SPAWNING )
 			Loadouts_TryGivePilotLoadout( player )
 		}
-	})
-	
+	)
+
 	// wait for player to hit the ground
 	ClearPlayerAnimViewEntity( player )
 

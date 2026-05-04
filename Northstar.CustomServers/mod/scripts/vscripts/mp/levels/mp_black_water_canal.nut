@@ -4,11 +4,11 @@ void function CodeCallback_MapInit()
 {
 	// there are some really busted titan startspawns that are on the fucking other side of the map from where they should be, so we remove them
 	AddSpawnCallback( "info_spawnpoint_titan_start", TrimBadTitanStartSpawns )
-	
+
 	AddSpawnCallback( "sky_camera", FixSkycamFog )
 
 	// Load Frontier Defense Data
-	if( GameRules_GetGameMode() == FD )
+	if ( GameRules_GetGameMode() == FD )
 		initFrontierDefenseData()
 }
 
@@ -20,7 +20,7 @@ void function TrimBadTitanStartSpawns( entity spawn )
 	else
 		comparisonOrigin = < 1087.13, -4914.88, -199.969 >
 
-	if ( Distance2D( spawn.GetOrigin(), comparisonOrigin ) >= 1000.0)
+	if ( Distance2D( spawn.GetOrigin(), comparisonOrigin ) >= 1000.0 )
 		spawn.Destroy()
 }
 

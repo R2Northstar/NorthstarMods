@@ -20,9 +20,9 @@ global function AITdm_SetLevelReapers
 struct
 {
 	// Due to team based escalation everything is an array
-	array< int > levels = [] // Initilazed in `Spawner_Threaded`
-	array< array< string > > podEntities = [ [ "npc_soldier" ], [ "npc_soldier" ] ]
-	array< bool > reapers = [ false, false ]
+	array<int> levels = [] // Initilazed in `Spawner_Threaded`
+	array<array<string> > podEntities = [ [ "npc_soldier" ], [ "npc_soldier" ] ]
+	array<bool> reapers = [ false, false ]
 
 	// default settings
 	int squadsPerTeam = SQUADS_PER_TEAM
@@ -159,16 +159,18 @@ void function HandleScoreEvent( entity victim, entity attacker, var damageInfo )
 			case "npc_stalker":
 				playerScore = 1
 				break
+
 			case "npc_super_spectre":
 				playerScore = 3
 				break
+
 			default:
 				playerScore = 0
 				break
 		}
 
 		// Titan kills get handled bellow this
-		if ( eventName != "KillNPCTitan"  && eventName != "" )
+		if ( eventName != "KillNPCTitan" && eventName != "" )
 			playerScore = ScoreEvent_GetPointValue( GetScoreEvent( eventName ) )
 	}
 
@@ -182,7 +184,7 @@ void function HandleScoreEvent( entity victim, entity attacker, var damageInfo )
 	teamScore = playerScore
 
 	// Check score so we dont go over max
-	if ( GameRules_GetTeamScore( attacker.GetTeam()) + teamScore > GetScoreLimit_FromPlaylist() )
+	if ( GameRules_GetTeamScore( attacker.GetTeam() ) + teamScore > GetScoreLimit_FromPlaylist() )
 		teamScore = GetScoreLimit_FromPlaylist() - GameRules_GetTeamScore( attacker.GetTeam() )
 
 	// Add score + update network int to trigger the "Score +n" popup
@@ -364,7 +366,6 @@ void function Escalate( int team )
 
 	unreachable // hopefully
 }
-
 
 // Decides where to spawn ai
 // Each team has their "zone" where they and their ai spawns

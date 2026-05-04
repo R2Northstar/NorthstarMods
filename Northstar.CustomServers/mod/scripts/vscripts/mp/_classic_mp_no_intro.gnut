@@ -62,7 +62,6 @@ void function ClassicMP_DefaultNoIntro_SpawnPlayer( entity player )
 		thread ClassicMP_DefaultNoIntro_PilotSpawnPlayer( player )
 }
 
-
 // spawn as pilot for intro
 void function ClassicMP_DefaultNoIntro_PilotSpawnPlayer( entity player )
 {

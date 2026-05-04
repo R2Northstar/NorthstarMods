@@ -40,7 +40,7 @@ void function SPMP_MapSpawn_Init()
 	RegisterSignal( "forever" )
 	RegisterSignal( "waitOver" )
 	RegisterSignal( "HitSky" )
-	
+
 	AddSpawnCallback( "trigger_hurt", InitDamageTriggers )
 
 	AddSpawnCallbackEditorClass( "func_brush", "func_brush_navmesh_separator", NavmeshSeparatorThink )

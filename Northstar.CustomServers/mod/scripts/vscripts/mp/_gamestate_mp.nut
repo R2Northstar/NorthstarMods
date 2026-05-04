@@ -31,12 +31,13 @@ global function CodeCallback_GamerulesThink
 global function GetWinnerDeterminedWait
 global function WillShowRoundWinningKillReplay
 
-struct {
+struct
+{
 	bool usePickLoadoutScreen
 	bool spectateInPickLoadoutScreen = false // This is so joining players stay absent from distracting others with invulnerability given by the Titan Selection Screen
 	bool switchSidesBased
 	int functionref() timeoutWinnerDecisionFunc
-	
+
 	bool hasSwitchedSides
 	
 	bool roundWinningKillReplayTrackPilotKills = true
@@ -51,26 +52,18 @@ struct {
 	int roundWinningKillReplayMethodOfDeath
 	float roundWinningKillReplayTimeOfDeath
 	float roundWinningKillReplayHealthFrac
-	
+
 	array<void functionref()> roundEndCleanupCallbacks
 	bool functionref( entity victim, entity attacker, var damageInfo, bool isRoundEnd ) shouldTryUseProjectileReplayCallback
 	float gameEndTimeChangedTime
 } file
 
-
-
-
-
-
-
-
-
 /*
- ██████   █████  ███    ███ ███████ ███████ ████████  █████  ████████ ███████ ███████ 
-██       ██   ██ ████  ████ ██      ██         ██    ██   ██    ██    ██      ██      
-██   ███ ███████ ██ ████ ██ █████   ███████    ██    ███████    ██    █████   ███████ 
-██    ██ ██   ██ ██  ██  ██ ██           ██    ██    ██   ██    ██    ██           ██ 
- ██████  ██   ██ ██      ██ ███████ ███████    ██    ██   ██    ██    ███████ ███████ 
+ ██████   █████  ███    ███ ███████ ███████ ████████  █████  ████████ ███████ ███████
+██       ██   ██ ████  ████ ██      ██         ██    ██   ██    ██    ██      ██
+██   ███ ███████ ██ ████ ██ █████   ███████    ██    ███████    ██    █████   ███████
+██    ██ ██   ██ ██  ██  ██ ██           ██    ██    ██   ██    ██    ██           ██
+ ██████  ██   ██ ██      ██ ███████ ███████    ██    ██   ██    ██    ███████ ███████
 */
 
 void function PIN_GameStart()
@@ -81,7 +74,7 @@ void function PIN_GameStart()
 	AddCallback_GameStateEnter( eGameState.WaitingForCustomStart, GameStateEnter_WaitingForCustomStart )
 	AddCallback_GameStateEnter( eGameState.WaitingForPlayers, GameStateEnter_WaitingForPlayers )
 	AddCallback_OnClientConnected( WaitingForPlayers_ClientConnected )
-	
+
 	AddCallback_GameStateEnter( eGameState.PickLoadout, GameStateEnter_PickLoadout )
 	AddCallback_GameStateEnter( eGameState.Prematch, GameStateEnter_Prematch )
 	AddCallback_GameStateEnter( eGameState.Playing, GameStateEnter_Playing )
@@ -89,13 +82,13 @@ void function PIN_GameStart()
 	AddCallback_GameStateEnter( eGameState.SwitchingSides, GameStateEnter_SwitchingSides )
 	AddCallback_GameStateEnter( eGameState.SuddenDeath, GameStateEnter_SuddenDeath )
 	AddCallback_GameStateEnter( eGameState.Postmatch, GameStateEnter_Postmatch )
-	
+
 	AddCallback_OnPlayerKilled( OnPlayerKilled )
 	AddDeathCallback( "npc_titan", OnTitanKilled )
 	AddCallback_OnClientDisconnected( OnClientDisconnected )
 	AddCallback_EntityChangedTeam( "player", OnPlayerChangedTeam )
 	PilotBattery_SetMaxCount( GetCurrentPlaylistVarInt( "pilot_battery_inventory_size", 1 ) ) // Game unironically supports players carrying more than one battery
-	
+
 	RegisterSignal( "CleanUpEntitiesForRoundEnd" )
 }
 
@@ -123,17 +116,17 @@ bool function ShouldTryUseProjectileReplay( entity victim, entity attacker, var 
 	return true
 }
 
-/// This is to move all NPCs that a player owns from one team to the other during a match
-/// Auto-Titans, Turrets, Ticks and Hacked Spectres will all move along together with the player to the new Team
-/// Also possibly prevents mods that spawns other types of NPCs that players can own from breaking when switching (i.e Drones, Hacked Reapers)
+// / This is to move all NPCs that a player owns from one team to the other during a match
+// / Auto-Titans, Turrets, Ticks and Hacked Spectres will all move along together with the player to the new Team
+// / Also possibly prevents mods that spawns other types of NPCs that players can own from breaking when switching (i.e Drones, Hacked Reapers)
 void function OnPlayerChangedTeam( entity player )
 {
-	if ( !player.hasConnected ) //Prevents players who just joined to trigger below code, as server always pre setups their teams
+	if ( !player.hasConnected ) // Prevents players who just joined to trigger below code, as server always pre setups their teams
 		return
-	
+
 	if ( IsIMCOrMilitiaTeam( player.GetTeam() ) )
 		NotifyClientsOfTeamChange( player, GetOtherTeam( player.GetTeam() ), player.GetTeam() )
-	
+
 	foreach ( npc in GetNPCArray() )
 	{
 		entity bossPlayer = npc.GetBossPlayer()
@@ -295,11 +288,11 @@ void function UpdateMatchStateToCode()
 
 
 /*
- ██████   █████  ███    ███ ███████     ███████ ███████ ████████ ██    ██ ██████  
-██       ██   ██ ████  ████ ██          ██      ██         ██    ██    ██ ██   ██ 
-██   ███ ███████ ██ ████ ██ █████       ███████ █████      ██    ██    ██ ██████  
-██    ██ ██   ██ ██  ██  ██ ██               ██ ██         ██    ██    ██ ██      
- ██████  ██   ██ ██      ██ ███████     ███████ ███████    ██     ██████  ██      
+ ██████   █████  ███    ███ ███████     ███████ ███████ ████████ ██    ██ ██████
+██       ██   ██ ████  ████ ██          ██      ██         ██    ██    ██ ██   ██
+██   ███ ███████ ██ ████ ██ █████       ███████ █████      ██    ██    ██ ██████
+██    ██ ██   ██ ██  ██  ██ ██               ██ ██         ██    ██    ██ ██
+ ██████  ██   ██ ██      ██ ███████     ███████ ███████    ██     ██████  ██
 */
 
 void function SetGameState( int newState )
@@ -318,10 +311,10 @@ void function SetGameState( int newState )
 void function AddTeamScore( int team, int amount )
 {
 	AddTeamRoundScoreNoStateChange( team, amount )
-	
+
 	int scoreLimit = GameMode_GetScoreLimit( GAMETYPE )
 	int score = GameRules_GetTeamScore( team )
-	
+
 	if ( IsRoundBased() )
 	{
 		scoreLimit = GameMode_GetRoundScoreLimit( GAMETYPE )
@@ -342,7 +335,7 @@ void function AddTeamRoundScoreNoStateChange( int team, int amount = 1 )
 {
 	int scoreLimit = GameMode_GetScoreLimit( GAMETYPE )
 	int score = GameRules_GetTeamScore( team )
-	
+
 	if ( IsRoundBased() )
 	{
 		scoreLimit = GameMode_GetRoundScoreLimit( GAMETYPE )
@@ -350,7 +343,7 @@ void function AddTeamRoundScoreNoStateChange( int team, int amount = 1 )
 	}
 
 	int newScore = score + amount
-	if( newScore > scoreLimit && !GameScore_AllowPointsOverLimit() ) // Don't allow over the limit if not enabled
+	if ( newScore > scoreLimit && !GameScore_AllowPointsOverLimit() ) // Don't allow over the limit if not enabled
 		newScore = scoreLimit
 
 	GameRules_SetTeamScore( team, newScore )
@@ -361,50 +354,58 @@ void function SetWinner( int ornull team, string winningReason = "", string losi
 {
 	if ( !GamePlayingOrSuddenDeath() ) // SetWinner should not be used outside the gamestates that can decide a winner
 		return
-	
+
 	if ( team != null ) // Team being null means to ServerCallback_AnnounceRoundWinner and ServerCallback_AnnounceWinner to display "DRAW"
 		SetServerVar( "winningTeam", team )
-	
+
 	int announceRoundWinnerWinningSubstr
 	int announceRoundWinnerLosingSubstr
 	if ( winningReason == "" )
 		announceRoundWinnerWinningSubstr = 0
 	else
 		announceRoundWinnerWinningSubstr = GetStringID( winningReason )
-	
+
 	if ( losingReason == "" )
 		announceRoundWinnerLosingSubstr = 0
 	else
 		announceRoundWinnerLosingSubstr = GetStringID( losingReason )
-	
+
 	float endTime
 	if ( IsRoundBased() )
 		endTime = expect float( GetServerVar( "roundEndTime" ) )
 	else
 		endTime = expect float( GetServerVar( "gameEndTime" ) )
-	
+
 	foreach ( entity player in GetPlayerArray() )
 	{
 		int announcementSubstr = announceRoundWinnerLosingSubstr
 
-		if( team != null && player.GetTeam() == team )
+		if ( team != null && player.GetTeam() == team )
 			announcementSubstr = announceRoundWinnerWinningSubstr
-	
-		if( Flag( "AnnounceWinnerEnabled" ) )
+
+		if ( Flag( "AnnounceWinnerEnabled" ) )
 		{
 			if ( IsRoundBased() && !HasRoundScoreLimitBeenReached() )
-				Remote_CallFunction_NonReplay( player, "ServerCallback_AnnounceRoundWinner", 0, announcementSubstr, ROUND_WINNING_KILL_REPLAY_SCREEN_FADE_TIME, GameRules_GetTeamScore2( TEAM_MILITIA ), GameRules_GetTeamScore2( TEAM_IMC ) )
+				Remote_CallFunction_NonReplay(
+					player,
+					"ServerCallback_AnnounceRoundWinner",
+					0,
+					announcementSubstr,
+					ROUND_WINNING_KILL_REPLAY_SCREEN_FADE_TIME,
+					GameRules_GetTeamScore2( TEAM_MILITIA ),
+					GameRules_GetTeamScore2( TEAM_IMC )
+				)
 			else
 				Remote_CallFunction_NonReplay( player, "ServerCallback_AnnounceWinner", 0, announcementSubstr, ROUND_WINNING_KILL_REPLAY_SCREEN_FADE_TIME )
 		}
 
-		if( team != null && player.GetTeam() == team )
+		if ( team != null && player.GetTeam() == team )
 			UnlockAchievement( player, achievements.MP_WIN )
 	}
 
 	if ( !team ) // This is to make GetWinningTeam return TEAM_UNASSIGNED for clients so they don't crash due to music logic upon entering WinnerDetermined state
 		SetServerVar( "winningTeam", GetWinningTeam() )
-	
+
 	SetGameState( eGameState.WinnerDetermined )
 	if ( IsRoundBased() && !HasRoundScoreLimitBeenReached() )
 	{
@@ -415,7 +416,7 @@ void function SetWinner( int ornull team, string winningReason = "", string losi
 	{
 		if ( team != null && team != TEAM_UNASSIGNED )
 			ScoreEvent_MatchComplete( expect int( team ) )
-		
+
 		RegisterMatchStats_OnMatchComplete()
 	}
 }
@@ -475,19 +476,12 @@ void function SetRoundWinningKillReplayAttacker( entity attacker, int inflictorE
 	file.roundWinningKillReplayTimeOfDeath = Time()
 }
 
-
-
-
-
-
-
-
 /*
- ██████ ██    ██ ███████ ████████  ██████  ███    ███     ███████ ████████  █████  ██████  ████████ 
-██      ██    ██ ██         ██    ██    ██ ████  ████     ██         ██    ██   ██ ██   ██    ██    
-██      ██    ██ ███████    ██    ██    ██ ██ ████ ██     ███████    ██    ███████ ██████     ██    
-██      ██    ██      ██    ██    ██    ██ ██  ██  ██          ██    ██    ██   ██ ██   ██    ██    
- ██████  ██████  ███████    ██     ██████  ██      ██     ███████    ██    ██   ██ ██   ██    ██    
+ ██████ ██    ██ ███████ ████████  ██████  ███    ███     ███████ ████████  █████  ██████  ████████
+██      ██    ██ ██         ██    ██    ██ ████  ████     ██         ██    ██   ██ ██   ██    ██
+██      ██    ██ ███████    ██    ██    ██ ██ ████ ██     ███████    ██    ███████ ██████     ██
+██      ██    ██      ██    ██    ██    ██ ██  ██  ██          ██    ██    ██   ██ ██   ██    ██
+ ██████  ██████  ███████    ██     ██████  ██      ██     ███████    ██    ██   ██ ██   ██    ██
 */
 
 void function GameStateEnter_WaitingForCustomStart()
@@ -496,20 +490,12 @@ void function GameStateEnter_WaitingForCustomStart()
 	// perhaps games in this demo were manually started by an employee? no clue really
 }
 
-
-
-
-
-
-
-
-
 /*
-██     ██  █████  ██ ████████ ██ ███    ██  ██████      ███████  ██████  ██████      ██████  ██       █████  ██    ██ ███████ ██████  ███████ 
-██     ██ ██   ██ ██    ██    ██ ████   ██ ██           ██      ██    ██ ██   ██     ██   ██ ██      ██   ██  ██  ██  ██      ██   ██ ██      
-██  █  ██ ███████ ██    ██    ██ ██ ██  ██ ██   ███     █████   ██    ██ ██████      ██████  ██      ███████   ████   █████   ██████  ███████ 
-██ ███ ██ ██   ██ ██    ██    ██ ██  ██ ██ ██    ██     ██      ██    ██ ██   ██     ██      ██      ██   ██    ██    ██      ██   ██      ██ 
- ███ ███  ██   ██ ██    ██    ██ ██   ████  ██████      ██       ██████  ██   ██     ██      ███████ ██   ██    ██    ███████ ██   ██ ███████ 
+██     ██  █████  ██ ████████ ██ ███    ██  ██████      ███████  ██████  ██████      ██████  ██       █████  ██    ██ ███████ ██████  ███████
+██     ██ ██   ██ ██    ██    ██ ████   ██ ██           ██      ██    ██ ██   ██     ██   ██ ██      ██   ██  ██  ██  ██      ██   ██ ██
+██  █  ██ ███████ ██    ██    ██ ██ ██  ██ ██   ███     █████   ██    ██ ██████      ██████  ██      ███████   ████   █████   ██████  ███████
+██ ███ ██ ██   ██ ██    ██    ██ ██  ██ ██ ██    ██     ██      ██    ██ ██   ██     ██      ██      ██   ██    ██    ██      ██   ██      ██
+ ███ ███  ██   ██ ██    ██    ██ ██   ████  ██████      ██       ██████  ██   ██     ██      ███████ ██   ██    ██    ███████ ██   ██ ███████
 */
 
 void function GameStateEnter_WaitingForPlayers()
@@ -520,32 +506,32 @@ void function GameStateEnter_WaitingForPlayers()
 void function WaitForPlayers()
 {
 	float endTime = Time() + 30.0
-	
+
 	SetServerVar( "connectionTimeout", endTime ) // This makes a clock ticking sound and is used to tell server when to force start the match
 	while ( GetPendingClientsCount() != 0 && endTime > Time() || !GetPlayerArray().len() )
 		WaitFrame()
-	
+
 	// The wait from above works just fine alone, but this one makes fancier in terms of making server truly wait for everyone being fully loaded and ready
 	bool allClientsConnected = false
 	while ( !allClientsConnected && endTime > Time() )
 	{
-		array< entity > pendingLoadingClients
+		array<entity> pendingLoadingClients
 		foreach ( player in GetPlayerArray() )
 		{
 			if ( !player.hasConnected )
 				pendingLoadingClients.append( player )
 		}
-		
+
 		if ( !pendingLoadingClients.len() )
 			allClientsConnected = true
-		
+
 		WaitFrame()
 	}
-	
+
 	print( "Finished waiting for players, starting match." )
-	
+
 	wait 2
-	
+
 	if ( IsFFAGame() ) // FFA has no Dropships and logic crash clients if casted into PickLoadout
 		SetGameState( eGameState.Prematch )
 	else
@@ -553,7 +539,7 @@ void function WaitForPlayers()
 		float pickloadoutLength = GameMode_GetLoadoutSelectTime() // Default is 5 seconds from playlistvar, for the Dropship warp sound
 		pickloadoutLength += GetCurrentPlaylistVarFloat( "pick_loadout_extension", 0 ) // Actual addition of time for the Titan Selection Screen
 		SetServerVar( "minPickLoadOutTime", Time() + pickloadoutLength )
-		
+
 		SetGameState( eGameState.PickLoadout ) // Even if the game mode don't use it, vanilla still cast this game state to make the dropship jump sound when match starts
 	}
 }
@@ -564,20 +550,12 @@ void function WaitingForPlayers_ClientConnected( entity player )
 		ScreenFadeToBlackForever( player, 0.0 )
 }
 
-
-
-
-
-
-
-
-
 /*
-██████  ██  ██████ ██   ██     ██       ██████   █████  ██████   ██████  ██    ██ ████████ 
-██   ██ ██ ██      ██  ██      ██      ██    ██ ██   ██ ██   ██ ██    ██ ██    ██    ██    
-██████  ██ ██      █████       ██      ██    ██ ███████ ██   ██ ██    ██ ██    ██    ██    
-██      ██ ██      ██  ██      ██      ██    ██ ██   ██ ██   ██ ██    ██ ██    ██    ██    
-██      ██  ██████ ██   ██     ███████  ██████  ██   ██ ██████   ██████   ██████     ██    
+██████  ██  ██████ ██   ██     ██       ██████   █████  ██████   ██████  ██    ██ ████████
+██   ██ ██ ██      ██  ██      ██      ██    ██ ██   ██ ██   ██ ██    ██ ██    ██    ██
+██████  ██ ██      █████       ██      ██    ██ ███████ ██   ██ ██    ██ ██    ██    ██
+██      ██ ██      ██  ██      ██      ██    ██ ██   ██ ██   ██ ██    ██ ██    ██    ██
+██      ██  ██████ ██   ██     ███████  ██████  ██   ██ ██████   ██████   ██████     ██
 */
 
 void function GameStateEnter_PickLoadout()
@@ -599,20 +577,12 @@ void function GameStateEnter_PickLoadout_Threaded()
 	SetGameState( eGameState.Prematch )
 }
 
-
-
-
-
-
-
-
-
 /*
-██████  ██████  ███████ ███    ███  █████  ████████  ██████ ██   ██ 
-██   ██ ██   ██ ██      ████  ████ ██   ██    ██    ██      ██   ██ 
-██████  ██████  █████   ██ ████ ██ ███████    ██    ██      ███████ 
-██      ██   ██ ██      ██  ██  ██ ██   ██    ██    ██      ██   ██ 
-██      ██   ██ ███████ ██      ██ ██   ██    ██     ██████ ██   ██ 
+██████  ██████  ███████ ███    ███  █████  ████████  ██████ ██   ██
+██   ██ ██   ██ ██      ████  ████ ██   ██    ██    ██      ██   ██
+██████  ██████  █████   ██ ████ ██ ███████    ██    ██      ███████
+██      ██   ██ ██      ██  ██  ██ ██   ██    ██    ██      ██   ██
+██      ██   ██ ███████ ██      ██ ██   ██    ██     ██████ ██   ██
 */
 
 void function GameStateEnter_Prematch()
@@ -648,20 +618,12 @@ void function GameStateEnter_Prematch_Threaded()
 			InitialisePrivateMatchSpectatorPlayer( player )
 }
 
-
-
-
-
-
-
-
-
 /*
-██████  ██       █████  ██    ██ ██ ███    ██  ██████  
-██   ██ ██      ██   ██  ██  ██  ██ ████   ██ ██       
-██████  ██      ███████   ████   ██ ██ ██  ██ ██   ███ 
-██      ██      ██   ██    ██    ██ ██  ██ ██ ██    ██ 
-██      ███████ ██   ██    ██    ██ ██   ████  ██████  
+██████  ██       █████  ██    ██ ██ ███    ██  ██████
+██   ██ ██      ██   ██  ██  ██  ██ ████   ██ ██
+██████  ██      ███████   ████   ██ ██ ██  ██ ██   ███
+██      ██      ██   ██    ██    ██ ██  ██ ██ ██    ██
+██      ███████ ██   ██    ██    ██ ██   ████  ██████
 */
 
 void function GameStateEnter_Playing()
@@ -797,20 +759,12 @@ void function GameStateEnter_Playing_Threaded()
 	}
 }
 
-
-
-
-
-
-
-
-
 /*
-██     ██ ██ ███    ██ ███    ██ ███████ ██████      ██████  ███████ ████████ ███████ ██████  ███    ███ ██ ███    ██ ███████ ██████  
-██     ██ ██ ████   ██ ████   ██ ██      ██   ██     ██   ██ ██         ██    ██      ██   ██ ████  ████ ██ ████   ██ ██      ██   ██ 
-██  █  ██ ██ ██ ██  ██ ██ ██  ██ █████   ██████      ██   ██ █████      ██    █████   ██████  ██ ████ ██ ██ ██ ██  ██ █████   ██   ██ 
-██ ███ ██ ██ ██  ██ ██ ██  ██ ██ ██      ██   ██     ██   ██ ██         ██    ██      ██   ██ ██  ██  ██ ██ ██  ██ ██ ██      ██   ██ 
- ███ ███  ██ ██   ████ ██   ████ ███████ ██   ██     ██████  ███████    ██    ███████ ██   ██ ██      ██ ██ ██   ████ ███████ ██████  
+██     ██ ██ ███    ██ ███    ██ ███████ ██████      ██████  ███████ ████████ ███████ ██████  ███    ███ ██ ███    ██ ███████ ██████
+██     ██ ██ ████   ██ ████   ██ ██      ██   ██     ██   ██ ██         ██    ██      ██   ██ ████  ████ ██ ████   ██ ██      ██   ██
+██  █  ██ ██ ██ ██  ██ ██ ██  ██ █████   ██████      ██   ██ █████      ██    █████   ██████  ██ ████ ██ ██ ██ ██  ██ █████   ██   ██
+██ ███ ██ ██ ██  ██ ██ ██  ██ ██ ██      ██   ██     ██   ██ ██         ██    ██      ██   ██ ██  ██  ██ ██ ██  ██ ██ ██      ██   ██
+ ███ ███  ██ ██   ████ ██   ████ ███████ ██   ██     ██████  ███████    ██    ███████ ██   ██ ██      ██ ██ ██   ████ ███████ ██████
 */
 
 void function GameStateEnter_WinnerDetermined()
@@ -824,14 +778,14 @@ void function GameStateEnter_WinnerDetermined_Threaded()
 	int winningTeam = GetWinningTeam()
 
 	DialoguePlayWinnerDetermined()
-	
+
 	if ( IsRoundBased() && !HasRoundScoreLimitBeenReached() )
 		svGlobal.levelEnt.Signal( "RoundEnd" )
 	else
 		svGlobal.levelEnt.Signal( "GameEnd" )
-	
+
 	WaitFrame() // wait a frame so other scripts can setup killreplay stuff
-	
+
 	// Finish timers to make HUD not display more
 	SetServerVar( "gameEndTime", Time() )
 	SetServerVar( "roundEndTime", Time() )
@@ -999,7 +953,7 @@ void function ClearPlayerFromReplay( entity player )
 {
 	if ( !IsValidPlayer( player ) )
 		return
-	
+
 	player.Signal( "KillCamOver" )
 	player.ClearReplayDelay()
 	player.ClearViewEntity()
@@ -1058,11 +1012,11 @@ bool function WillShowRoundWinningKillReplay()
 
 
 /*
-███████ ██     ██ ██ ████████  ██████ ██   ██ ██ ███    ██  ██████      ███████ ██ ██████  ███████ ███████ 
-██      ██     ██ ██    ██    ██      ██   ██ ██ ████   ██ ██           ██      ██ ██   ██ ██      ██      
-███████ ██  █  ██ ██    ██    ██      ███████ ██ ██ ██  ██ ██   ███     ███████ ██ ██   ██ █████   ███████ 
-     ██ ██ ███ ██ ██    ██    ██      ██   ██ ██ ██  ██ ██ ██    ██          ██ ██ ██   ██ ██           ██ 
-███████  ███ ███  ██    ██     ██████ ██   ██ ██ ██   ████  ██████      ███████ ██ ██████  ███████ ███████ 
+███████ ██     ██ ██ ████████  ██████ ██   ██ ██ ███    ██  ██████      ███████ ██ ██████  ███████ ███████
+██      ██     ██ ██    ██    ██      ██   ██ ██ ████   ██ ██           ██      ██ ██   ██ ██      ██
+███████ ██  █  ██ ██    ██    ██      ███████ ██ ██ ██  ██ ██   ███     ███████ ██ ██   ██ █████   ███████
+     ██ ██ ███ ██ ██    ██    ██      ██   ██ ██ ██  ██ ██ ██    ██          ██ ██ ██   ██ ██           ██
+███████  ███ ███  ██    ██     ██████ ██   ██ ██ ██   ████  ██████      ███████ ██ ██████  ███████ ███████
 */
 
 void function GameStateEnter_SwitchingSides()
@@ -1181,20 +1135,12 @@ void function DialogueAnnounceSwitchingSides()
 		PlayFactionDialogueToPlayer( "mp_sideSwitching", player )
 }
 
-
-
-
-
-
-
-
-
 /*
-███████ ██    ██ ██████  ██████  ███████ ███    ██     ██████  ███████  █████  ████████ ██   ██ 
-██      ██    ██ ██   ██ ██   ██ ██      ████   ██     ██   ██ ██      ██   ██    ██    ██   ██ 
-███████ ██    ██ ██   ██ ██   ██ █████   ██ ██  ██     ██   ██ █████   ███████    ██    ███████ 
-     ██ ██    ██ ██   ██ ██   ██ ██      ██  ██ ██     ██   ██ ██      ██   ██    ██    ██   ██ 
-███████  ██████  ██████  ██████  ███████ ██   ████     ██████  ███████ ██   ██    ██    ██   ██ 
+███████ ██    ██ ██████  ██████  ███████ ███    ██     ██████  ███████  █████  ████████ ██   ██
+██      ██    ██ ██   ██ ██   ██ ██      ████   ██     ██   ██ ██      ██   ██    ██    ██   ██
+███████ ██    ██ ██   ██ ██   ██ █████   ██ ██  ██     ██   ██ █████   ███████    ██    ███████
+     ██ ██    ██ ██   ██ ██   ██ ██      ██  ██ ██     ██   ██ ██      ██   ██    ██    ██   ██
+███████  ██████  ██████  ██████  ███████ ██   ████     ██████  ███████ ██   ██    ██    ██   ██
 */
 
 void function GameStateEnter_SuddenDeath()
@@ -1268,76 +1214,60 @@ void function GameStateEnter_SuddenDeath_Threaded()
 	}
 }
 
-
-
-
-
-
-
-
-
 /*
-██████   ██████  ███████ ████████ ███    ███  █████  ████████  ██████ ██   ██ 
-██   ██ ██    ██ ██         ██    ████  ████ ██   ██    ██    ██      ██   ██ 
-██████  ██    ██ ███████    ██    ██ ████ ██ ███████    ██    ██      ███████ 
-██      ██    ██      ██    ██    ██  ██  ██ ██   ██    ██    ██      ██   ██ 
-██       ██████  ███████    ██    ██      ██ ██   ██    ██     ██████ ██   ██ 
+██████   ██████  ███████ ████████ ███    ███  █████  ████████  ██████ ██   ██
+██   ██ ██    ██ ██         ██    ████  ████ ██   ██    ██    ██      ██   ██
+██████  ██    ██ ███████    ██    ██ ████ ██ ███████    ██    ██      ███████
+██      ██    ██      ██    ██    ██  ██  ██ ██   ██    ██    ██      ██   ██
+██       ██████  ███████    ██    ██      ██ ██   ██    ██     ██████ ██   ██
 */
 
 void function GameStateEnter_Postmatch()
 {
-	SetServerVar( "replayDisabled", true ) //Disable kill replays on this moment just to ensure no camera problems
+	SetServerVar( "replayDisabled", true ) // Disable kill replays on this moment just to ensure no camera problems
 	foreach ( entity player in GetPlayerArray() )
 	{
 		player.FreezeControlsOnServer()
-		player.SetNoTarget( true ) //Stop AI from targeting this player at this state of the match
-		player.SetInvulnerable() //Players could still die to some post-damaging stuff they might release (i.e: Electric Smokes, AI)
+		player.SetNoTarget( true ) // Stop AI from targeting this player at this state of the match
+		player.SetInvulnerable() // Players could still die to some post-damaging stuff they might release (i.e: Electric Smokes, AI)
 		thread ForceFadeToBlack( player )
 	}
-	
+
 	thread GameStateEnter_Postmatch_Threaded()
 }
 
 void function GameStateEnter_Postmatch_Threaded()
 {
 	wait GAME_POSTMATCH_LENGTH
-	
-	AllPlayersMuteAll( 2 ) //Vanilla has a fadeout in sound right before it really finishes the match
-	
+
+	AllPlayersMuteAll( 2 ) // Vanilla has a fadeout in sound right before it really finishes the match
+
 	wait 2.0
-	
+
 	GameRules_EndMatch()
 }
 
-
-
-
-
-
-
-
-
 /*
-██   ██ ██ ██      ██           ██████  █████  ██      ██      ██████   █████   ██████ ██   ██ ███████ 
-██  ██  ██ ██      ██          ██      ██   ██ ██      ██      ██   ██ ██   ██ ██      ██  ██  ██      
-█████   ██ ██      ██          ██      ███████ ██      ██      ██████  ███████ ██      █████   ███████ 
-██  ██  ██ ██      ██          ██      ██   ██ ██      ██      ██   ██ ██   ██ ██      ██  ██       ██ 
-██   ██ ██ ███████ ███████      ██████ ██   ██ ███████ ███████ ██████  ██   ██  ██████ ██   ██ ███████ 
+██   ██ ██ ██      ██           ██████  █████  ██      ██      ██████   █████   ██████ ██   ██ ███████
+██  ██  ██ ██      ██          ██      ██   ██ ██      ██      ██   ██ ██   ██ ██      ██  ██  ██
+█████   ██ ██      ██          ██      ███████ ██      ██      ██████  ███████ ██      █████   ███████
+██  ██  ██ ██      ██          ██      ██   ██ ██      ██      ██   ██ ██   ██ ██      ██  ██       ██
+██   ██ ██ ███████ ███████      ██████ ██   ██ ███████ ███████ ██████  ██   ██  ██████ ██   ██ ███████
 */
 
 void function OnPlayerKilled( entity victim, entity attacker, var damageInfo )
 {
 	if ( IsEliminationBased() )
 		SetPlayerEliminated( victim )
-	
+
 	// MVP kills in vanilla is just the top scoring player of a Team
 	array<entity> players = GetSortedPlayers( GetScoreboardCompareFunc(), victim.GetTeam() )
-	if( IsFFAGame() || IsSingleTeamMode() )
+	if ( IsFFAGame() || IsSingleTeamMode() )
 		players = GetSortedPlayers( GetScoreboardCompareFunc(), 0 )
-	
-	if ( victim == players[0] && attacker.IsPlayer() && attacker != victim )
+
+	if ( victim == players[ 0 ] && attacker.IsPlayer() && attacker != victim )
 		AddPlayerScore( attacker, "KilledMVP" )
-	
+
 	if ( !GamePlayingOrSuddenDeath() )
 		return
 
@@ -1412,7 +1342,7 @@ void function CheckEliminationRiffMode( entity victim, entity attacker )
 	{
 		if ( IsTeamEliminated( victim.GetTeam() ) )
 		{
-			if ( IsFFAGame() ) // for ffa we need to manually get the last team alive 
+			if ( IsFFAGame() ) // for ffa we need to manually get the last team alive
 			{
 				array<int> teamsWithLivingPlayers
 				foreach ( entity player in GetPlayerArray_Alive() )
@@ -1420,7 +1350,7 @@ void function CheckEliminationRiffMode( entity victim, entity attacker )
 					if ( !teamsWithLivingPlayers.contains( player.GetTeam() ) )
 						teamsWithLivingPlayers.append( player.GetTeam() )
 				}
-				
+
 				if ( teamsWithLivingPlayers.len() == 1 )
 				{
 					if ( IsRoundBased() )
@@ -1438,7 +1368,7 @@ void function CheckEliminationRiffMode( entity victim, entity attacker )
 			{
 				if ( IsRoundBased() )
 					AddTeamRoundScoreNoStateChange( GetOtherTeam( victim.GetTeam() ) )
-				
+
 				SetWinner( GetOtherTeam( victim.GetTeam() ), "#GAMEMODE_ENEMY_PILOTS_ELIMINATED", "#GAMEMODE_FRIENDLY_PILOTS_ELIMINATED" )
 
 				if ( IsValidPlayer( attacker ) )
@@ -1467,7 +1397,7 @@ void function CheckEliminationRiffMode( entity victim, entity attacker )
 					if ( !teamsWithLivingTitans.contains( titan.GetTeam() ) && titan != victim && titan != victim.GetPetTitan() )
 						teamsWithLivingTitans.append( titan.GetTeam() )
 				}
-				
+
 				if ( teamsWithLivingTitans.len() == 1 )
 				{
 					if ( IsRoundBased() )
@@ -1485,7 +1415,7 @@ void function CheckEliminationRiffMode( entity victim, entity attacker )
 			{
 				if ( IsRoundBased() )
 					AddTeamRoundScoreNoStateChange( GetOtherTeam( victim.GetTeam() ) )
-				
+
 				SetWinner( GetOtherTeam( victim.GetTeam() ), "#GAMEMODE_ENEMY_TITANS_DESTROYED", "#GAMEMODE_FRIENDLY_TITANS_DESTROYED" )
 
 				if ( IsValidPlayer( attacker ) )
@@ -1497,21 +1427,12 @@ void function CheckEliminationRiffMode( entity victim, entity attacker )
 	}
 }
 
-
-
-
-
-
-
-
-
-
 /*
-████████  ██████   ██████  ██          ███████ ██    ██ ███    ██  ██████ ████████ ██  ██████  ███    ██ ███████ 
-   ██    ██    ██ ██    ██ ██          ██      ██    ██ ████   ██ ██         ██    ██ ██    ██ ████   ██ ██      
-   ██    ██    ██ ██    ██ ██          █████   ██    ██ ██ ██  ██ ██         ██    ██ ██    ██ ██ ██  ██ ███████ 
-   ██    ██    ██ ██    ██ ██          ██      ██    ██ ██  ██ ██ ██         ██    ██ ██    ██ ██  ██ ██      ██ 
-   ██     ██████   ██████  ███████     ██       ██████  ██   ████  ██████    ██    ██  ██████  ██   ████ ███████ 
+████████  ██████   ██████  ██          ███████ ██    ██ ███    ██  ██████ ████████ ██  ██████  ███    ██ ███████
+   ██    ██    ██ ██    ██ ██          ██      ██    ██ ████   ██ ██         ██    ██ ██    ██ ████   ██ ██
+   ██    ██    ██ ██    ██ ██          █████   ██    ██ ██ ██  ██ ██         ██    ██ ██    ██ ██ ██  ██ ███████
+   ██    ██    ██ ██    ██ ██          ██      ██    ██ ██  ██ ██ ██         ██    ██ ██    ██ ██  ██ ██      ██
+   ██     ██████   ██████  ███████     ██       ██████  ██   ████  ██████    ██    ██  ██████  ██   ████ ███████
 */
 
 void function ForceFadeToBlack( entity player )
@@ -1532,7 +1453,7 @@ void function CleanUpEntitiesForRoundEnd()
 	{
 		if ( IsPrivateMatchSpectator( player ) )
 			continue
-		
+
 		PlayerEarnMeter_Reset( player )
 		ClearTitanAvailable( player )
 		PROTO_CleanupTrackedProjectiles( player )
@@ -1544,15 +1465,15 @@ void function CleanUpEntitiesForRoundEnd()
 		if ( IsAlive( player ) )
 			KillPlayer( player, eDamageSourceId.round_end )
 	}
-	
+
 	foreach ( entity npc in GetNPCArray() )
 	{
 		if ( !IsAlive( npc ) )
 			continue
-		
+
 		if ( npc.e.fd_roundDeployed != -1 || npc.ai.buddhaMode ) // FD uses this var to cleanup stuff placed in current wave restart, buddha is for offline Turrets
 			continue
-		
+
 		if ( npc.IsTitan() )
 		{
 			npc.e.forceRagdollDeath = true
@@ -1561,19 +1482,23 @@ void function CleanUpEntitiesForRoundEnd()
 		}
 		else
 			npc.EnableNPCFlag( NPC_NO_WEAPON_DROP )
-		
+
 		// Kill rather than destroy, as destroying will cause issues with children which is an issue especially for dropships and titans
-		npc.Die( svGlobal.worldspawn, svGlobal.worldspawn, { scriptType = DF_SKIP_DAMAGE_PROT | DF_SKIPS_DOOMED_STATE | DF_GIB, damageSourceId = eDamageSourceId.round_end } )
+		npc.Die(
+			svGlobal.worldspawn,
+			svGlobal.worldspawn,
+			{ scriptType = DF_SKIP_DAMAGE_PROT | DF_SKIPS_DOOMED_STATE | DF_GIB, damageSourceId = eDamageSourceId.round_end }
+		)
 	}
-	
+
 	foreach ( entity battery in GetEntArrayByClass_Expensive( "item_titan_battery" ) )
 		battery.Destroy()
-	
+
 	foreach ( void functionref() callback in file.roundEndCleanupCallbacks )
 		callback()
-	
+
 	WaitFrame()
-	
+
 	ClearDroppedWeapons()
 	SetPlayerDeathsHidden( false )
 }
@@ -1608,7 +1533,7 @@ void function GiveTitanToPlayer( entity player )
 {
 	if ( !IsValidPlayer( player ) || IsPrivateMatchSpectator( player ) )
 		return
-	
+
 	PlayerEarnMeter_SetMode( player, eEarnMeterMode.DEFAULT )
 	PlayerEarnMeter_AddEarnedAndOwned( player, 1.0, 1.0 )
 }
@@ -1617,7 +1542,7 @@ float function GetTimeLimit_ForGameMode()
 {
 	string mode = GameRules_GetGameMode()
 	string playlistString = "timelimit"
-	
+
 	if ( IsRoundBased() )
 		playlistString = "roundtimelimit"
 
@@ -1627,45 +1552,40 @@ float function GetTimeLimit_ForGameMode()
 void function DialoguePlayNormal()
 {
 	svGlobal.levelEnt.EndSignal( "GameStateChanged" )
-	
+
 	int totalScore = GameMode_GetScoreLimit( GameRules_GetGameMode() )
 	int winningTeam
 	int losingTeam
 	float diagInterval = 91
 
-	while( GamePlaying() )
+	while ( GamePlaying() )
 	{
 		wait diagInterval
-		
+
 		if ( GameRules_GetTeamScore( TEAM_MILITIA ) < GameRules_GetTeamScore( TEAM_IMC ) )
 		{
 			winningTeam = TEAM_IMC
 			losingTeam = TEAM_MILITIA
 		}
-		
 		if ( GameRules_GetTeamScore( TEAM_MILITIA ) > GameRules_GetTeamScore( TEAM_IMC ) )
 		{
 			winningTeam = TEAM_MILITIA
 			losingTeam = TEAM_IMC
 		}
-		
 		if ( GameRules_GetTeamScore( winningTeam ) - GameRules_GetTeamScore( losingTeam ) >= totalScore * 0.4 )
 		{
 			PlayFactionDialogueToTeam( "scoring_winningLarge", winningTeam )
 			PlayFactionDialogueToTeam( "scoring_losingLarge", losingTeam )
 		}
-		
 		else if ( GameRules_GetTeamScore( winningTeam ) - GameRules_GetTeamScore( losingTeam ) <= totalScore * 0.2 )
 		{
 			PlayFactionDialogueToTeam( "scoring_winningClose", winningTeam )
 			PlayFactionDialogueToTeam( "scoring_losingClose", losingTeam )
 		}
-		
 		else if ( GameRules_GetTeamScore( winningTeam ) == GameRules_GetTeamScore( losingTeam ) )
 		{
 			continue
 		}
-		
 		else
 		{
 			PlayFactionDialogueToTeam( "scoring_winning", winningTeam )
@@ -1685,37 +1605,33 @@ void function DialoguePlayWinnerDetermined()
 		winningTeam = TEAM_IMC
 		losingTeam = TEAM_MILITIA
 	}
-	
 	if ( GameRules_GetTeamScore( TEAM_MILITIA ) > GameRules_GetTeamScore( TEAM_IMC ) )
 	{
 		winningTeam = TEAM_MILITIA
 		losingTeam = TEAM_IMC
 	}
-	
+
 	if ( IsRoundBased() )
 	{
 		if ( GameRules_GetTeamScore( winningTeam ) != GameMode_GetRoundScoreLimit( GAMETYPE ) )
 			return
 	}
-	
+
 	if ( GameRules_GetTeamScore( winningTeam ) - GameRules_GetTeamScore( losingTeam ) >= totalScore * 0.4 )
 	{
 		PlayFactionDialogueToTeam( "scoring_wonMercy", winningTeam )
 		PlayFactionDialogueToTeam( "scoring_lostMercy", losingTeam )
 	}
-	
 	else if ( GameRules_GetTeamScore( winningTeam ) - GameRules_GetTeamScore( losingTeam ) <= totalScore * 0.2 )
 	{
 		PlayFactionDialogueToTeam( "scoring_wonClose", winningTeam )
 		PlayFactionDialogueToTeam( "scoring_lostClose", losingTeam )
 	}
-	
 	else if ( GameRules_GetTeamScore( winningTeam ) == GameRules_GetTeamScore( losingTeam ) )
 	{
 		PlayFactionDialogueToTeam( "scoring_tied", winningTeam )
 		PlayFactionDialogueToTeam( "scoring_tied", losingTeam )
 	}
-	
 	else
 	{
 		PlayFactionDialogueToTeam( "scoring_won", winningTeam )

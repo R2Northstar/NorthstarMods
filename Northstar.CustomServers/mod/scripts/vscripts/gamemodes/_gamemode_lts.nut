@@ -1,14 +1,15 @@
 global function GamemodeLts_Init
 
-struct {
+struct
+{
 	entity lastDamageInfoVictim
 	entity lastDamageInfoAttacker
 	int lastDamageInfoMethodOfDeath
 	float lastDamageInfoTime
-	
+
 	bool shouldDoHighlights
-	
-	table< entity, int > pilotstreak
+
+	table<entity, int> pilotstreak
 } file
 
 void function GamemodeLts_Init()
@@ -28,16 +29,16 @@ void function GamemodeLts_Init()
 
 	AddCallback_OnPilotBecomesTitan( RefreshThirtySecondWallhackHighlight )
 	AddCallback_OnTitanBecomesPilot( RefreshThirtySecondWallhackHighlight )
-	
+
 	SetTimeoutWinnerDecisionFunc( CheckTitanHealthForDraw )
 	TrackTitanDamageInPlayerGameStat( PGS_ASSAULT_SCORE )
-	
+
 	ClassicMP_SetCustomIntro( ClassicMP_DefaultNoIntro_Setup, ClassicMP_DefaultNoIntro_GetLength() )
 	ClassicMP_ForceDisableEpilogue( true )
 	AddCallback_GameStateEnter( eGameState.Playing, WaitForThirtySecondsLeft )
-	
-	AddCallback_OnClientConnected( SetupPlayerLTSChallenges ) //Just to make up the Match Goals tracking
-	AddCallback_OnClientDisconnected( RemovePlayerLTSChallenges ) //Safety removal of data to prevent crashes
+
+	AddCallback_OnClientConnected( SetupPlayerLTSChallenges ) // Just to make up the Match Goals tracking
+	AddCallback_OnClientDisconnected( RemovePlayerLTSChallenges ) // Safety removal of data to prevent crashes
 	AddCallback_OnPlayerKilled( LTSChallengeForPlayerKilled )
 }
 
@@ -48,7 +49,7 @@ void function SetupPlayerLTSChallenges( entity player )
 
 void function RemovePlayerLTSChallenges( entity player )
 {
-	if( player in file.pilotstreak )
+	if ( player in file.pilotstreak )
 		delete file.pilotstreak[ player ]
 }
 
@@ -56,11 +57,11 @@ void function LTSChallengeForPlayerKilled( entity victim, entity attacker, var d
 {
 	if ( victim == attacker || !attacker.IsPlayer() || GetGameState() != eGameState.Playing )
 		return
-	
+
 	if ( victim.IsPlayer() && attacker in file.pilotstreak )
 	{
-		file.pilotstreak[attacker]++
-		if( file.pilotstreak[attacker] >= 2 && !HasPlayerCompletedMeritScore( attacker ) )
+		file.pilotstreak[ attacker ]++
+		if ( file.pilotstreak[ attacker ] >= 2 && !HasPlayerCompletedMeritScore( attacker ) )
 		{
 			AddPlayerScore( attacker, "ChallengeLTS" )
 			SetPlayerChallengeMeritScore( attacker )
@@ -83,10 +84,10 @@ void function WaitForThirtySecondsLeftThreaded()
 	wait ( endTime - 30 ) - Time()
 
 	foreach ( entity player in GetPlayerArray() )
-	{	
+	{
 		// warn there's 30 seconds left
 		Remote_CallFunction_NonReplay( player, "ServerCallback_LTSThirtySecondWarning" )
-		
+
 		// do initial highlight
 		RefreshThirtySecondWallhackHighlight( player, null )
 	}
@@ -94,11 +95,11 @@ void function WaitForThirtySecondsLeftThreaded()
 
 void function RefreshThirtySecondWallhackHighlight( entity player, entity titan )
 {
-	if ( TimeSpentInCurrentState() < expect float ( GetServerVar( "roundEndTime" ) ) - 30.0 )
+	if ( TimeSpentInCurrentState() < expect float( GetServerVar( "roundEndTime" ) ) - 30.0 )
 		return
-		
+
 	Highlight_SetEnemyHighlight( player, "enemy_sonar" ) // i think this needs a different effect, this works for now tho
-		
+
 	if ( player.GetPetTitan() != null )
 		Highlight_SetEnemyHighlight( player.GetPetTitan(), "enemy_sonar" )
 }
@@ -107,10 +108,10 @@ int function CheckTitanHealthForDraw()
 {
 	int militiaTitans
 	int imcTitans
-	
+
 	float militiaHealth
 	float imcHealth
-	
+
 	foreach ( entity titan in GetTitanArray() )
 	{
 		if ( titan.GetTeam() == TEAM_MILITIA )
@@ -126,14 +127,14 @@ int function CheckTitanHealthForDraw()
 			imcTitans++
 		}
 	}
-	
+
 	// note: due to how stuff is set up rn, there's actually no way to do win/loss reasons outside of a SetWinner call, i.e. not in timeout winner decision
 	// as soon as there is, strings in question are "#GAMEMODE_TITAN_TITAN_ADVANTAGE" and "#GAMEMODE_TITAN_TITAN_DISADVANTAGE"
-	
+
 	if ( militiaTitans != imcTitans )
 		return militiaTitans > imcTitans ? TEAM_MILITIA : TEAM_IMC
 	else if ( militiaHealth != imcHealth )
 		return militiaHealth > imcHealth ? TEAM_MILITIA : TEAM_IMC
-		
+
 	return TEAM_UNASSIGNED
 }

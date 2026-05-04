@@ -1,6 +1,7 @@
 global function GamemodeSpeedball_Init
 
-struct {
+struct
+{
 	entity flagBase
 	entity flag
 	entity flagCarrier
@@ -20,15 +21,15 @@ void function GamemodeSpeedball_Init()
 	Riff_ForceSetEliminationMode( eEliminationMode.Pilots )
 	ScoreEvent_SetupEarnMeterValuesForMixedModes()
 	SetupGenericFFAChallenge()
-	
+
 	AddSpawnCallbackEditorClass( "script_ref", "info_speedball_flag", CreateFlag )
-	
+
 	AddCallback_GameStateEnter( eGameState.Prematch, CreateFlagIfNoFlagSpawnpoint )
 	AddCallback_GameStateEnter( eGameState.Playing, ResetFlag )
 	AddCallback_OnTouchHealthKit( "item_flag", OnFlagCollected )
 	AddCallback_OnPlayerKilled( OnPlayerKilled )
 	SetTimeoutWinnerDecisionFunc( TimeoutCheckFlagHolder )
-	AddCallback_OnRoundEndCleanup ( ResetFlag )
+	AddCallback_OnRoundEndCleanup( ResetFlag )
 
 	ClassicMP_SetCustomIntro( ClassicMP_DefaultNoIntro_Setup, ClassicMP_DefaultNoIntro_GetLength() )
 	ClassicMP_ForceDisableEpilogue( true )
@@ -37,9 +38,9 @@ void function GamemodeSpeedball_Init()
 }
 
 void function CreateFlag( entity flagSpawn )
-{ 
+{
 	entity flagBase = CreatePropDynamic( CTF_FLAG_BASE_MODEL, flagSpawn.GetOrigin(), flagSpawn.GetAngles() )
-	
+
 	entity flag = CreateEntity( "item_flag" )
 	flag.SetValueForModelKey( CTF_FLAG_MODEL )
 	flag.MarkAsNonMovingAttachment()
@@ -54,13 +55,13 @@ void function CreateFlag( entity flagSpawn )
 
 	file.flag = flag
 	file.flagBase = flagBase
-}	
+}
 
 bool function OnFlagCollected( entity player, entity flag )
 {
-	if ( !IsAlive( player ) || flag.GetParent() != null || player.IsTitan() || player.IsPhaseShifted() ) 
+	if ( !IsAlive( player ) || flag.GetParent() != null || player.IsTitan() || player.IsPhaseShifted() )
 		return false
-		
+
 	GiveFlag( player )
 	return false // so flag ent doesn't despawn
 }
@@ -69,7 +70,7 @@ void function OnPlayerKilled( entity victim, entity attacker, var damageInfo )
 {
 	if ( file.flagCarrier == victim )
 		DropFlag()
-	
+
 	if ( victim.IsPlayer() && GetGameState() == eGameState.Playing )
 	{
 		if ( GetPlayerArrayOfTeam_Alive( victim.GetTeam() ).len() == 1 )
@@ -87,12 +88,12 @@ void function GiveFlag( entity player )
 	SetTeam( file.flag, player.GetTeam() )
 	SetGlobalNetEnt( "flagCarrier", player )
 	thread DropFlagIfPhased( player )
-	
+
 	EmitSoundOnEntityOnlyToPlayer( player, player, "UI_CTF_1P_GrabFlag" )
 	foreach ( entity otherPlayer in GetPlayerArray() )
 	{
 		MessageToPlayer( otherPlayer, eEventNotifications.SPEEDBALL_FlagPickedUp, player )
-		
+
 		if ( otherPlayer.GetTeam() == player.GetTeam() )
 			EmitSoundOnEntityToTeamExceptPlayer( file.flag, "UI_CTF_3P_TeamGrabFlag", player.GetTeam(), player )
 	}
@@ -102,14 +103,16 @@ void function DropFlagIfPhased( entity player )
 {
 	player.EndSignal( "StartPhaseShift" )
 	player.EndSignal( "OnDestroy" )
-	
-	OnThreadEnd( function() : ( player ) 
-	{
-		if ( file.flag.GetParent() == player )
-			DropFlag()
-	})
-	
-	while( file.flag.GetParent() == player )
+
+	OnThreadEnd(
+		function() : ( player )
+		{
+			if ( file.flag.GetParent() == player )
+				DropFlag()
+		}
+	)
+
+	while ( file.flag.GetParent() == player )
 		WaitFrame()
 }
 
@@ -119,13 +122,13 @@ void function DropFlag()
 	file.flag.SetAngles( < 0, 0, 0 > )
 	SetTeam( file.flag, TEAM_UNASSIGNED )
 	SetGlobalNetEnt( "flagCarrier", file.flag )
-	
+
 	if ( IsValid( file.flagCarrier ) )
 		EmitSoundOnEntityOnlyToPlayer( file.flagCarrier, file.flagCarrier, "UI_CTF_1P_FlagDrop" )
-	
+
 	foreach ( entity player in GetPlayerArray() )
 		MessageToPlayer( player, eEventNotifications.SPEEDBALL_FlagDropped, file.flagCarrier )
-	
+
 	file.flagCarrier = null
 }
 
@@ -133,10 +136,10 @@ void function CreateFlagIfNoFlagSpawnpoint()
 {
 	if ( IsValid( file.flag ) )
 		return
-	
+
 	foreach ( entity hardpoint in GetEntArrayByClass_Expensive( "info_hardpoint" ) )
 	{
-		if ( GetHardpointGroup(hardpoint) == "B" )
+		if ( GetHardpointGroup( hardpoint ) == "B" )
 		{
 			CreateFlag( hardpoint )
 			return
@@ -157,20 +160,20 @@ void function ResetFlag()
 
 int function TimeoutCheckFlagHolder()
 {
-	if( IsValidPlayer( file.flagCarrier ) )
+	if ( IsValidPlayer( file.flagCarrier ) )
 	{
 		AddTeamRoundScoreNoStateChange( file.flagCarrier.GetTeam() )
 		file.flagCarrier.AddToPlayerGameStat( PGS_ASSAULT_SCORE, 1 )
 		return file.flagCarrier.GetTeam()
 	}
-	
+
 	return TEAM_UNASSIGNED
 }
 
-string function GetHardpointGroup(entity hardpoint) //Hardpoint Entity B on Homestead is missing the Hardpoint Group KeyValue
+string function GetHardpointGroup( entity hardpoint ) // Hardpoint Entity B on Homestead is missing the Hardpoint Group KeyValue
 {
-	if((GetMapName()=="mp_homestead")&&(!hardpoint.HasKey("hardpointGroup")))
+	if ( ( GetMapName() == "mp_homestead" ) && ( !hardpoint.HasKey( "hardpointGroup" ) ) )
 		return "B"
 
-	return string(hardpoint.kv.hardpointGroup)
+	return string( hardpoint.kv.hardpointGroup )
 }

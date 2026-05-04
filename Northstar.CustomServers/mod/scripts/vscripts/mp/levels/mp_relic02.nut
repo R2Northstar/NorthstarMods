@@ -5,7 +5,7 @@ void function CodeCallback_MapInit()
 	AddSpawnCallback( "info_spawnpoint_titan_start", InvertTitanStartSpawnsTeams )
 
 	// Load Frontier Defense Data
-	if( GameRules_GetGameMode() == FD )
+	if ( GameRules_GetGameMode() == FD )
 		initFrontierDefenseData()
 }
 

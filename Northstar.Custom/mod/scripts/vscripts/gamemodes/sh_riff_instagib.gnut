@@ -1,10 +1,11 @@
 global function RiffInstagib_Init
 
 #if SERVER
-struct {
-	table<entity, int> playerWeapons
-	array<string> instagibWeapons
-} file
+	struct
+	{
+		table<entity, int> playerWeapons
+		array<string> instagibWeapons
+	} file
 #endif
 
 void function RiffInstagib_Init()
@@ -35,14 +36,14 @@ void function RiffInstagib_Init()
 }
 
 #if SERVER
-void function InstagibSetWeapons( entity player )
-{
-	if ( !( player in file.playerWeapons ) )
-		file.playerWeapons[ player ] <- 0
+	void function InstagibSetWeapons( entity player )
+	{
+		if ( !( player in file.playerWeapons ) )
+			file.playerWeapons[ player ] <- 0
 
-	player.SetMaxHealth( 1 )
-	InstagibUpdateWeapons( player )
-}
+		player.SetMaxHealth( 1 )
+		InstagibUpdateWeapons( player )
+	}
 
 void function InstagibUpdateWeapons( entity player )
 {
@@ -66,9 +67,21 @@ void function InstagibCycleWeaponsForKill( entity victim, entity attacker, var d
 	InstagibUpdateWeapons( attacker )
 }
 
-void function InstagibCleanupClient( entity player )
-{
-	if ( player in file.playerWeapons )
-		delete file.playerWeapons[ player ]
-}
+		player.GiveWeapon( file.instagibWeapons[ file.playerWeapons[ player ] ] )
+	}
+
+	void function InstagibCycleWeaponsForKill( entity victim, entity attacker, var damageInfo )
+	{
+		if ( !victim.IsPlayer() || !attacker.IsPlayer() || victim == attacker )
+			return
+
+		file.playerWeapons[ attacker ] = ( file.playerWeapons[ attacker ] + 1 ) % file.instagibWeapons.len()
+		InstagibUpdateWeapons( attacker )
+	}
+
+	void function InstagibCleanupClient( entity player )
+	{
+		if ( player in file.playerWeapons )
+			delete file.playerWeapons[ player ]
+	}
 #endif
