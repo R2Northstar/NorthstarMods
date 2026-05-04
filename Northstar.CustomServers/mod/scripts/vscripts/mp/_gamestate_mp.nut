@@ -1142,13 +1142,11 @@ void function DialoguePlayNormal()
 			winningTeam = TEAM_IMC
 			losingTeam = TEAM_MILITIA
 		}
-
 		if ( GameRules_GetTeamScore( TEAM_MILITIA ) > GameRules_GetTeamScore( TEAM_IMC ) )
 		{
 			winningTeam = TEAM_MILITIA
 			losingTeam = TEAM_IMC
 		}
-
 		if ( GameRules_GetTeamScore( winningTeam ) - GameRules_GetTeamScore( losingTeam ) >= totalScore * 0.4 )
 		{
 			PlayFactionDialogueToTeam( "scoring_winningLarge", winningTeam )
@@ -1182,7 +1180,6 @@ void function DialoguePlayWinnerDetermined()
 		winningTeam = TEAM_IMC
 		losingTeam = TEAM_MILITIA
 	}
-
 	if ( GameRules_GetTeamScore( TEAM_MILITIA ) > GameRules_GetTeamScore( TEAM_IMC ) )
 	{
 		winningTeam = TEAM_MILITIA

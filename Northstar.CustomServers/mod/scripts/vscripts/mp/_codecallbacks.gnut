@@ -22,11 +22,11 @@ global function SetTitanMeterGainScale
 	global function CodeCallback_WeaponDropped
 	global function AddCallback_OnWeaponDropped
 	global function CodeCallback_OnServerAnimEvent
-#endif
 
-global function CodeCallback_OnWeaponAttack
-global function AddCallback_OnWeaponAttack
-global function RemoveCallback_OnWeaponAttack
+	global function CodeCallback_OnWeaponAttack
+	global function AddCallback_OnWeaponAttack
+	global function RemoveCallback_OnWeaponAttack
+#endif
 
 struct AccumulatedDamageData
 {
@@ -1093,7 +1093,6 @@ int function NPCShieldHealthUpdate( entity npc, damageInfo, bool critHit )
 		foreach ( callback in file.weaponDroppedCallbacks )
 			callback( weapon )
 	}
-#endif // #if MP
 
 void function AddCallback_OnWeaponAttack( void functionref( entity player, entity weapon, string weaponName, int attackIndex ) callbackFunc )
 {
@@ -1114,6 +1113,10 @@ void function CodeCallback_OnWeaponAttack( entity player, entity weapon, string 
 {
 	foreach ( callbackFunc in file.weaponAttackCallbacks )
 	{
-		callbackFunc( player, weapon, weaponName, shotsFired )
+		foreach ( callbackFunc in file.weaponAttackCallbacks )
+		{
+			callbackFunc( player, weapon, weaponName, shotsFired )
+		}
 	}
 }
+#endif // #if MP

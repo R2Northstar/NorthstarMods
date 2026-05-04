@@ -112,6 +112,68 @@ bool function FloatsEqual( float arg1, float arg2, float epsilon )
 }
 
 // //////////////////////////
+// Custom map handling
+// //////////////////////////
+
+/**
+ * A map name is deemed raw if it is not localized (happens if the map
+ * is not an original Titanfall2 map, or is not localized by its mod).
+*/
+bool function IsMapNameRaw( string mapname )
+{
+	return mapname == Localize( mapname )
+}
+
+/**
+ * Formats a map name in a human readable way.
+ * (e.g. inputting "#mp_chroma_null_surf" returns "Chroma Null Surf" )
+*/
+string function GetCustomMapDisplayName( string mapname )
+{
+	// Remove "#mp_" prefix
+	string res = mapname.slice( 4 )
+
+	// Remove underscores
+	res = StringReplace( res, "_", " ", true )
+
+	// Uppercase first letter
+	res = res.slice( 0, 1 ).toupper() + res.slice( 1 )
+
+	// Uppercase each word
+	// / Early exit
+	if ( !res.find( " " ) )
+	{
+		return res
+	}
+
+	// / Uppercasing
+	for ( int i = 0; i < res.len(); i++ )
+	{
+		string c = res.slice( i, i + 1 )
+		if ( c != " " )
+			continue
+
+		res = res.slice( 0, i + 1 ) + res.slice( i + 1, i + 2 ).toupper() + res.slice( i + 2 )
+	}
+
+	return res
+}
+
+/**
+ * Supersedes the default {GetMapDisplayName} function, to the addition of returning a
+ * nicely formatted map name if it couldn't be properly localized by the game (happens
+ * with maps that are not original sp or mp maps).
+*/
+string function GetMapBrowserName( string mapname )
+{
+	string localized = GetMapDisplayName( mapname )
+
+	if ( IsMapNameRaw( localized ) )
+		return GetCustomMapDisplayName( localized )
+	return localized
+}
+
+// //////////////////////////
 // Init
 // //////////////////////////
 void function AddNorthstarServerBrowserMenu()
@@ -131,7 +193,7 @@ void function UpdatePrivateMatchModesAndMaps()
 
 		filterArguments.filterMaps.append( map )
 
-		string localized = GetMapDisplayName( map )
+		string localized = GetMapBrowserName( map )
 		Hud_DialogList_AddListItem( Hud_GetChild( file.menu, "SwtBtnSelectMap" ), localized, string( enum_ + 1 ) )
 	}
 
@@ -861,7 +923,7 @@ void function FilterServerList()
 		{
 			array<string> sName
 			sName.append( StripColorCodes( RemoveNewlines( server.name.tolower() ) ) )
-			sName.append( Localize( GetMapDisplayName( server.map ) ).tolower() )
+			sName.append( Localize( GetMapBrowserName( server.map ) ).tolower() )
 			sName.append( server.map.tolower() )
 			sName.append( server.playlist.tolower() )
 			sName.append( Localize( server.playlist ).tolower() )
@@ -914,10 +976,14 @@ void function UpdateShownPage()
 		Hud_SetEnabled( file.serverButtons[ i ], true )
 		Hud_SetVisible( file.serverButtons[ i ], true )
 
+		bool stripColor = GetConVarBool( "serverlist_remove_colors" )
 		Hud_SetVisible( file.serversProtected[ i ], server.requiresPassword )
-		Hud_SetText( file.serversName[ i ], EscapeLocalisationAndRemoveNewlines( server.name ) )
+		Hud_SetText(
+			file.serversName[ i ],
+			stripColor ? StripColorCodes( EscapeLocalisationAndRemoveNewlines( server.name ) ) : EscapeLocalisationAndRemoveNewlines( server.name )
+		)
 		Hud_SetText( file.playerCountLabels[ i ], format( "%i/%i", server.playerCount, server.maxPlayerCount ) )
-		Hud_SetText( file.serversMap[ i ], GetMapDisplayName( server.map ) )
+		Hud_SetText( file.serversMap[ i ], GetMapBrowserName( server.map ) )
 		Hud_SetText( file.serversGamemode[ i ], GetGameModeDisplayName( server.playlist ) )
 		Hud_SetText( file.serversRegion[ i ], server.region )
 	}
@@ -990,26 +1056,27 @@ void function DisplayFocusedServerInfo( int scriptID )
 
 	ServerInfo server = file.filteredServers[ serverIndex ]
 
+	bool stripColor = GetConVarBool( "serverlist_remove_colors" )
+
+	string description = stripColor ? StripColorCodes( RemoveNewlines( server.description ) ) : RemoveNewlines( server.description )
 	Hud_SetVisible( Hud_GetChild( menu, "BtnServerDescription" ), true )
 	Hud_SetVisible( Hud_GetChild( menu, "BtnServerMods" ), true )
 	Hud_SetVisible( Hud_GetChild( menu, "BtnServerJoin" ), true )
 	// text panels
 	Hud_SetVisible( Hud_GetChild( menu, "LabelDescription" ), true )
 	Hud_SetVisible( Hud_GetChild( menu, "LabelMods" ), false )
-	Hud_SetText(
-		Hud_GetChild( menu, "LabelDescription" ),
-		RemoveNewlines( server.description ) + " ^FFFFFFFF" + "\n\nRequired Mods:\n" + FillInServerModsLabel( server.requiredMods )
-	)
+	Hud_SetText( Hud_GetChild( menu, "LabelDescription" ), description + " ^FFFFFFFF" + "\n\nRequired Mods:\n" + FillInServerModsLabel( server.requiredMods ) )
 
 	// map name/image/server name
 	string map = server.map
+	string serverName = stripColor ? StripColorCodes( EscapeLocalisationAndRemoveNewlines( server.name ) ) : EscapeLocalisationAndRemoveNewlines( server.name )
 	Hud_SetVisible( Hud_GetChild( menu, "NextMapImage" ), true )
 	Hud_SetVisible( Hud_GetChild( menu, "NextMapBack" ), true )
 	RuiSetImage( Hud_GetRui( Hud_GetChild( menu, "NextMapImage" ) ), "basicImage", GetMapImageForMapName( map ) )
 	Hud_SetVisible( Hud_GetChild( menu, "NextMapName" ), true )
-	Hud_SetText( Hud_GetChild( menu, "NextMapName" ), GetMapDisplayName( map ) )
+	Hud_SetText( Hud_GetChild( menu, "NextMapName" ), GetMapBrowserName( map ) )
 	Hud_SetVisible( Hud_GetChild( menu, "ServerName" ), true )
-	Hud_SetText( Hud_GetChild( menu, "ServerName" ), EscapeLocalisationAndRemoveNewlines( server.name ) )
+	Hud_SetText( Hud_GetChild( menu, "ServerName" ), serverName )
 
 	// mode name/image
 	string mode = server.playlist
