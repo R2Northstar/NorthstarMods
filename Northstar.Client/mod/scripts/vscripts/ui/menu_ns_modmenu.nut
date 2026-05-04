@@ -1,6 +1,7 @@
 untyped
 
 global function AddNorthstarModMenu
+global function IsImportantCoreMod
 
 struct panelContent
 {
@@ -36,7 +37,7 @@ struct
 } file
 
 const int PANELS_LEN = 15
-const array<string> CORE_MODS = [ "Northstar.Client", "Northstar.CustomServers" ] // Shows a warning if you try to disable these
+const array<string> IMPORTANT_CORE_MODS = [ "Northstar.Client", "Northstar.CustomServers" ] // Shows a warning if you try to disable these
 
 void function AddNorthstarModMenu()
 {
@@ -200,8 +201,10 @@ void function OnModButtonPressed( var button )
 {
 	ModInfo mod = file.mods[ int( Hud_GetScriptID( Hud_GetParent( button ) ) ) + file.scrollOffset - 1 ].mod
 	string modName = mod.name
-	if ( StaticFind( modName ) && mod.enabled )
+	if ( IsImportantCoreMod( modName ) && mod.enabled )
+	{
 		CoreModToggleDialog( modName )
+	}
 	else
 	{
 		NSSetModEnabled( modName, mod.version, !mod.enabled )
@@ -696,8 +699,8 @@ void function ValidateScrollOffset()
 	UpdateListSliderPosition()
 }
 
-bool function StaticFind( string mod )
+bool function IsImportantCoreMod( string mod )
 {
-	return CORE_MODS.find( mod ) != -1
+	return IMPORTANT_CORE_MODS.find( mod ) != -1
 }
 
