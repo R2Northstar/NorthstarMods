@@ -50,6 +50,11 @@
 		{
 			"Name": "modemenu_mode_filter",
 			"DefaultValue": "-1"
+		},
+		{
+			"Name": "serverlist_remove_colors",
+			"DefaultValue": "0",
+			"Flags": "ARCHIVE_PLAYERPROFILE"
 		}
 	],
 	"Scripts": [
@@ -158,6 +163,13 @@
 		{
 			"Path": "ui/_atlas_announcements.nut",
 			"RunOn": "UI"
+    },
+    {
+			"Path": "ui/ns_client_mod_settings.gnut",
+			"RunOn": "UI",
+			"UICallback":{
+				"Before": "NSClientModSettings"
+			}
 		}
 	],
 	"Localisation": [
