@@ -281,10 +281,10 @@ void function OnPlaying()
 
 void function CTFInitPlayer( entity player )
 {
-	if ( GetGameState() >= eGameState.Playing && GetCurrentPlaylistVarInt( "ctf_friendly_hightlights", 0 ) != 0 )
+	if ( ( GetGameState() >= eGameState.Playing || GetGameState() == eGameState.SuddenDeath ) && GetCurrentPlaylistVarInt( "ctf_friendly_hightlights", 0 ) )
 		Highlight_SetFriendlyHighlight( player, "sp_friendly_hero" )
 
-	if ( !GamePlaying() )
+	if ( !GamePlayingOrSuddenDeath() )
 		return
 
 	if ( IsValid( file.imcFlagSpawn ) )
@@ -303,7 +303,7 @@ void function CTFInitPlayer( entity player )
 void function CTFPlayerDisconnected( entity player )
 {
 	// This has no validity checks on the player because the disconnection callback happens in the exact last frame the player entity still exists
-	if ( !GamePlaying() )
+	if ( !GamePlayingOrSuddenDeath() )
 		return
 
 	if ( PlayerHasEnemyFlag( player ) )
@@ -402,7 +402,7 @@ void function FlagSignalGrab_Threaded( entity flag )
 void function CaptureFlag( entity player, entity flag )
 {
 	// can only capture flags during normal play or sudden death
-	if ( !GamePlaying() && GetGameState() != eGameState.SuddenDeath )
+	if ( !GamePlayingOrSuddenDeath() )
 	{
 		CodeWarning(
 			player + " tried to capture the flag, but the game state was " + GetGameState() + " not " + eGameState.Playing + " or " + eGameState.SuddenDeath
