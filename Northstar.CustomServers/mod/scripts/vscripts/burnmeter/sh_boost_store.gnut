@@ -297,10 +297,8 @@ bool function CanPurchaseBoost( entity player, BoostStoreData data, bool checkMo
 		if ( player.IsTitan() )
 			return true
 
-bool function ClientCommand_Withdraw( entity player, array<string> args )
-{
-	if ( !BoostStoreOpen() )
-		return true
+		if ( !IsPlayerNearbyAnyBoostStore( player ) )
+			return true
 
 		int depositAmount = minint( file.playerBonusData[ player ], BOOST_STORE_DEFAULT_EXCHANGE )
 		file.teamReserveAmount += depositAmount
@@ -319,9 +317,6 @@ bool function ClientCommand_Withdraw( entity player, array<string> args )
 
 	bool function ClientCommand_Withdraw( entity player, array<string> args )
 	{
-		if ( !BoostStoreOpen() )
-			return true
-
 		if ( !BoostStoreOpen() )
 			return true
 

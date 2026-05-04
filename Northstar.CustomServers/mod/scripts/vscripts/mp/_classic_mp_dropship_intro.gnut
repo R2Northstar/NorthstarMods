@@ -251,12 +251,15 @@ void function PlayerJumpsFromDropship( entity player )
 	OnThreadEnd(
 		function() : ( player )
 		{
-			// show weapon viewmodel and hud and let them move again
-			player.MovementEnable()
+			if ( IsValid( player ) )
+			{
+				// show weapon viewmodel and hud and let them move again
+				player.MovementEnable()
 
-			DeployViewModelAndEnableWeapons( player )
-			RemoveCinematicFlag( player, CE_FLAG_CLASSIC_MP_SPAWNING )
-			Loadouts_TryGivePilotLoadout( player )
+				DeployViewModelAndEnableWeapons( player )
+				RemoveCinematicFlag( player, CE_FLAG_CLASSIC_MP_SPAWNING )
+				Loadouts_TryGivePilotLoadout( player )
+			}
 		}
 	)
 

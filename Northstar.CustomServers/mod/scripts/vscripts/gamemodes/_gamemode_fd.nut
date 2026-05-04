@@ -91,7 +91,7 @@ struct
 
 	array<void functionref()> CustomFDContent
 	bool disableTitanSelectionForNewJoiners = false
-}file
+} file
 
 const array<string> DROPSHIP_IDLE_ANIMS_POV = [
 	"ptpov_ds_coop_side_intro_gen_idle_B",
@@ -129,8 +129,8 @@ void function GamemodeFD_Init()
 	RegisterSignal( "FD_ReachedHarvester" )
 
 	SetRoundBased( true )
-	SetSwitchSidesBased( false ) //Just to make sure in case of any future problem regarding teamside switch
-	FlagSet( "DisableTimeLimit" ) //Disable loss by timer because the wait feature will truly idle servers until people joins
+	SetSwitchSidesBased( false ) // Just to make sure in case of any future problem regarding teamside switch
+	FlagSet( "DisableTimeLimit" ) // Disable loss by timer because the wait feature will truly idle servers until people joins
 	Riff_ForceBoostAvailability( eBoostAvailability.Disabled )
 	PlayerEarnMeter_SetEnabled( false )
 	SetAllowLoadoutChangeFunc( FD_ShouldAllowChangeLoadout )
@@ -206,16 +206,19 @@ void function GamemodeFD_Init()
 	AddOnTetherCallback( FD_OnTetherTrapTriggered )
 	AddSonarStartCallback( FD_OnSonarStart )
 	ScoreEvent_SetupScoreValuesForFrontierDefense()
-	
-	difficultyLevel = FD_GetDifficultyLevel() //Refresh this only on map load, to avoid midgame commands messing up with difficulties (i.e setting mp_gamemode fd_hard midgame in a regular match through console on local host would immediately make Stalkers spawns with EPG)
-	
-	AILoadout_SetupNPCWeapons( "npc_soldier", [ "mp_weapon_rspn101","mp_weapon_car","mp_weapon_alternator_smg","mp_weapon_hemlok_smg","mp_weapon_r97" ] )
-	AILoadout_SetupNPCWeapons( "npc_spectre", [ "mp_weapon_hemlok","mp_weapon_vinson","mp_weapon_g2","mp_weapon_mastiff","mp_weapon_shotgun","mp_weapon_doubletake","mp_weapon_dmr" ] )
+
+	difficultyLevel = FD_GetDifficultyLevel() // Refresh this only on map load, to avoid midgame commands messing up with difficulties (i.e setting mp_gamemode fd_hard midgame in a regular match through console on local host would immediately make Stalkers spawns with EPG)
+
+	AILoadout_SetupNPCWeapons( "npc_soldier", [ "mp_weapon_rspn101", "mp_weapon_car", "mp_weapon_alternator_smg", "mp_weapon_hemlok_smg", "mp_weapon_r97" ] )
+	AILoadout_SetupNPCWeapons(
+		"npc_spectre",
+		[ "mp_weapon_hemlok", "mp_weapon_vinson", "mp_weapon_g2", "mp_weapon_mastiff", "mp_weapon_shotgun", "mp_weapon_doubletake", "mp_weapon_dmr" ]
+	)
 	AILoadout_SetupNPCAntiTitanWeapons( "npc_soldier", [ "mp_weapon_defender" ] )
 	AILoadout_SetupNPCAntiTitanWeapons( "npc_spectre", [ "mp_weapon_defender" ] )
 	level.endOfRoundPlayerState = ENDROUND_FREE
-	
-	for ( int i = 0; i < 20; i++ ) //Setup NPC array for Harvester Damage tracking
+
+	for ( int i = 0; i < 20; i++ ) // Setup NPC array for Harvester Damage tracking
 		file.harvesterDamageSource.append( 0.0 )
 
 	switch ( difficultyLevel )
@@ -1090,7 +1093,7 @@ void function WaveBreak_GiveTitan()
 		EmitSoundOnEntityOnlyToPlayer( player, player, "UI_InGame_FD_TitanSelected" )
 		EmitSoundOnEntityOnlyToPlayer( player, player, "UI_InGame_FD_TitanSelected" )
 	}
-		
+
 	PlayFactionDialogueToTeam( "fd_titanReadyNag", TEAM_MILITIA )
 }
 
@@ -1406,7 +1409,7 @@ void function FD_OnPlayerGetsNewPilotLoadout( entity player, PilotLoadoutDef loa
 		jumpSequence.viewConeFunction = ViewConeNarrow
 
 		if ( "fd_dropshipanimtime" in player.s )
-			jumpSequence.setInitialTime = Time() - expect float ( player.s.fd_dropshipanimtime )
+			jumpSequence.setInitialTime = Time() - expect float( player.s.fd_dropshipanimtime )
 
 		thread FirstPersonSequence( jumpSequence, player, file.dropship )
 	}
@@ -1422,7 +1425,7 @@ void function FD_OnPlayerGetsNewPilotLoadout( entity player, PilotLoadoutDef loa
 		idleSequence.viewConeFunction = ViewConeNarrow
 
 		if ( "fd_dropshipanimtime" in player.s )
-			idleSequence.setInitialTime = Time() - expect float ( player.s.fd_dropshipanimtime )
+			idleSequence.setInitialTime = Time() - expect float( player.s.fd_dropshipanimtime )
 
 		thread FirstPersonSequence( idleSequence, player, file.dropship )
 	}
@@ -1597,7 +1600,7 @@ void function TryDisableTitanSelectionForPlayerAfterDelay( entity player )
 					if ( player.GetParent() ) // Dropship check, because TTS Menu applies and removes player Invulnerability in its own way
 						player.SetInvulnerable()
 				}
-				
+
 				if ( file.disableTitanSelectionForNewJoiners )
 				{
 					DisableTitanSelectionForPlayer( player )
@@ -2429,7 +2432,7 @@ void function GamemodeFD_OnPlayerKilled( entity victim, entity attacker, var dam
 	victim.s.currentTimedKillstreak = 0
 	victim.s.hasPermanantAmpedWeapons = false
 
-	if ( victim.GetTeam() == TEAM_IMC && attacker.IsPlayer() && attacker.GetTeam() == TEAM_MILITIA && GetGlobalNetBool( "FD_waveActive" ) ) //Give money to Militia players killing IMC players
+	if ( victim.GetTeam() == TEAM_IMC && attacker.IsPlayer() && attacker.GetTeam() == TEAM_MILITIA && GetGlobalNetBool( "FD_waveActive" ) ) // Give money to Militia players killing IMC players
 	{
 		PlayerEarnMeter_AddEarnedFrac( attacker, 0.15 )
 		AddMoneyToPlayer( attacker, 25 )
@@ -2446,19 +2449,11 @@ void function GamemodeFD_OnPlayerKilled( entity victim, entity attacker, var dam
 		victim.ClearInvulnerable()
 	}
 
-	//set longest Time alive for end awards
+	// set longest Time alive for end awards
 	if ( victim in file.players && victim in file.playerAwardStats )
 	{
-		if ( file.players[victim].lastRespawnLifespan < file.playerAwardStats[victim]["longestLife"] )
-			file.players[victim].lastRespawnLifespan = file.playerAwardStats[victim]["longestLife"]
-		
-		file.playerAwardStats[victim]["longestLife"] = 0.0 //Reset to count again
-	}
-
-	file.players[victim].pilotPerfectWin = false //Remove perfect win for this player
-
-	if ( GetGlobalNetInt( "FD_waveState") != WAVE_STATE_BREAK )
-		file.players[victim].diedThisRound = true
+		if ( file.players[ victim ].lastRespawnLifespan < file.playerAwardStats[ victim ][ "longestLife" ] )
+			file.players[ victim ].lastRespawnLifespan = file.playerAwardStats[ victim ][ "longestLife" ]
 
 		file.playerAwardStats[ victim ][ "longestLife" ] = 0.0 // Reset to count again
 	}
@@ -3023,7 +3018,7 @@ void function FD_DropshipDropPlayer( entity player, int playerDropshipIndex )
 
 		waitthread FirstPersonSequence( jumpSequence, player, file.dropship )
 
-		if ( IsValidPlayer( player ) ) //Check again because the delay
+		if ( IsValidPlayer( player ) ) // Check again because the delay
 		{
 			player.ClearParent()
 
@@ -3996,15 +3991,6 @@ function FD_UpdateTitanBehavior()
 		}
 	}
 }
-
-
-
-
-
-
-
-
-
 
 /* NS Extra Content
 ███    ██ ███████     ███████ ██   ██ ████████ ██████   █████       ██████  ██████  ███    ██ ████████ ███████ ███    ██ ████████

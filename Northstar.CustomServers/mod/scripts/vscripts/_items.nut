@@ -8253,6 +8253,23 @@ void function Player_SetColiseumTicketCount( entity player, int newCount )
 		if ( IsLobby() )
 			return true
 
+		if ( GetGameState() > eGameState.Prematch )
+			return true
+
+		if ( Player_GetDoubleXPCount( player ) < 1 )
+			return true
+
+		if ( player.GetPlayerNetInt( "xpMultiplier" ) )
+			return true
+
+		int currentDoubleXP = Player_GetDoubleXPCount( player )
+		Player_SetDoubleXPCount( player, currentDoubleXP - 1 )
+		Player_ActivateDoubleXP( player )
+
+		PIN_ConsumeItem( player, "double_xp" )
+
+		// ?
+
 		return true
 	}
 

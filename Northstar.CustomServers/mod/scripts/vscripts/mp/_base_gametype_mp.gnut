@@ -514,7 +514,12 @@ void function PostDeathThread_MP( entity player, var damageInfo, bool gamePlayin
 		else
 			RespawnAsPilot( player )
 	}
-	else if ( !( !IsRespawnAvailable( player ) && GetGameState() != eGameState.Playing && GetGameState() != eGameState.Epilogue && GetGameState() != eGameState.WinnerDetermined ) )
+	else if (
+		!(
+		!IsRespawnAvailable( player ) && GetGameState() != eGameState.Playing && GetGameState() != eGameState.Epilogue &&
+			GetGameState() != eGameState.WinnerDetermined
+		)
+	)
 	{
 		if ( shouldDoReplay && player.IsWatchingKillReplay() )
 			player.WaitSignal( "KillCamOver" )
@@ -667,27 +672,30 @@ void function RespawnAsTitan( entity player )
 	OnThreadEnd(
 		function() : ( player, titan, camera, spawnpoint )
 		{
-			RemoveCinematicFlag( player, CE_FLAG_CLASSIC_MP_SPAWNING ) // show hud
+			if ( IsValid( player ) )
+			{
+				RemoveCinematicFlag( player, CE_FLAG_CLASSIC_MP_SPAWNING ) // show hud
 
-			player.isSpawning = false
-			player.isSpawningHotDroppingAsTitan = false
+				player.isSpawning = false
+				player.isSpawningHotDroppingAsTitan = false
 
-			GiveTitanfallScoreMedal( player ) // In case of classic Warpfall animation, give the Titanfall Score Medal at this moment, so player can actually see it
-			
-			PutEntityInSafeSpot( player, null, null, spawnpoint.GetOrigin(), player.GetOrigin() ) // Just to Ensure player is not clipping in any geometry
+				GiveTitanfallScoreMedal( player ) // In case of classic Warpfall animation, give the Titanfall Score Medal at this moment, so player can actually see it
+
+				PutEntityInSafeSpot( player, null, null, spawnpoint.GetOrigin(), player.GetOrigin() ) // Just to Ensure player is not clipping in any geometry
+			}
+
+			if ( IsValid( titan ) )
+				titan.Destroy()
+			else if ( !IsAlive( player ) )
+				RespawnAsPilot( player ) // this is 100% an edgecase, just avoid softlocking if we ever hit it in playable gamestates
+
+			if ( IsValid( camera ) )
+				camera.Destroy()
+
+			if ( IsValid( spawnpoint ) )
+				ToggleSpawnNodeInUse( spawnpoint, false )
 		}
-
-		if ( IsValid( titan ) )
-			titan.Destroy()
-		else if ( !IsAlive( player ) )
-			RespawnAsPilot( player ) // this is 100% an edgecase, just avoid softlocking if we ever hit it in playable gamestates
-
-		if ( IsValid( camera ) )
-			camera.Destroy()
-
-		if ( IsValid( spawnpoint ) )
-			ToggleSpawnNodeInUse( spawnpoint, false )
-	})
+	)
 
 	waitthread TitanHotDrop( titan, "at_hotdrop_01", spawnpoint.GetOrigin(), spawnpoint.GetAngles(), player, camera ) // do hotdrop anim
 

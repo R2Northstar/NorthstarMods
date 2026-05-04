@@ -1136,57 +1136,7 @@ function EjectFlightTracker( entity player )
 }
 
 #if SERVER
-function TempAirControl( entity player )
-{
-	player.EndSignal( "TempAirControl" )
-	player.EndSignal( "OnDeath" )
-
-	player.kv.airSpeed = 200
-	player.kv.airAcceleration = 800
-
-	wait 1.5
-
-	player.kv.airSpeed = 100
-
-	wait 3.5
-
-	player.kv.airSpeed = player.GetPlayerSettingsField( "airSpeed" )
-	player.kv.airAcceleration = GetCurrentPlaylistVarInt( "custom_air_accel_pilot", int( player.GetPlayerSettingsField( "airAcceleration" ) ) )
-}
-
-
-function TempLossOfAirControl( entity player, float time )
-{
-	player.EndSignal( "OnDeath" )
-
-	player.kv.airSpeed = 0
-	player.kv.airAcceleration = 0 // 500
-
-	wait time
-
-	player.kv.airSpeed = player.GetPlayerSettingsField( "airSpeed" )
-	player.kv.airAcceleration = GetCurrentPlaylistVarInt( "custom_air_accel_pilot", int ( player.GetPlayerSettingsField( "airAcceleration" ) ) )
-}
-
-
-bool function TitanStagger( entity titan, damageInfo )
-{
-	if ( !IsAlive( titan ) )
-		return false
-
-	if ( !titan.IsPlayer() )
-		return false
-
-	if ( Time() - titan.s.lastStaggerTime < 1.0 )
-		return false
-
-	if ( titan.GetTitanSoul().GetShieldHealth() )
-		return false
-
-	if ( DamageInfo_GetDamage( damageInfo ) < 1000 )
-		return false
-
-	switch ( DamageInfo_GetDamageSourceIdentifier( damageInfo ) )
+	function TempAirControl( entity player )
 	{
 		player.EndSignal( "TempAirControl" )
 		player.EndSignal( "OnDeath" )
@@ -1214,7 +1164,7 @@ bool function TitanStagger( entity titan, damageInfo )
 		wait time
 
 		player.kv.airSpeed = player.GetPlayerSettingsField( "airSpeed" )
-		player.kv.airAcceleration = player.GetPlayerSettingsField( "airAcceleration" )
+		player.kv.airAcceleration = GetCurrentPlaylistVarInt( "custom_air_accel_pilot", int( player.GetPlayerSettingsField( "airAcceleration" ) ) )
 	}
 
 	bool function TitanStagger( entity titan, damageInfo )

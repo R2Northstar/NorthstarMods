@@ -701,10 +701,6 @@ int function SortPossibleZones( entity a, entity b )
 		foreach ( sPoint in spawnPoints )
 			DebugDrawSpawnpoint( sPoint, 0, 0, 255, false, 600 )
 
-		spawnPoints = SpawnPoints_GetTitanStart( TEAM_IMC )
-		foreach ( sPoint in spawnPoints )
-			DebugDrawSpawnpoint( sPoint, 0, 0, 255, false, 600 )
-
 		spawnPoints = SpawnPoints_GetPilotStart( TEAM_IMC )
 		foreach ( sPoint in spawnPoints )
 			DebugDrawSpawnpoint( sPoint, 0, 0, 255, false, 600 )

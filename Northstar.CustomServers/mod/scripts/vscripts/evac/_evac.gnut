@@ -143,8 +143,8 @@ void function EvacEpilogue()
 	}
 	else
 	{
-		thread WaitAndDisableRespawn() //prevent respawns during the fade to black, should only be an issue if the match is a draw
-		thread EvacEpilogueCompleted( null ) //this is hacky but like, this also shouldn't really be hit in normal gameplay
+		thread WaitAndDisableRespawn() // prevent respawns during the fade to black, should only be an issue if the match is a draw
+		thread EvacEpilogueCompleted( null ) // this is hacky but like, this also shouldn't really be hit in normal gameplay
 	}
 }
 
@@ -263,7 +263,7 @@ void function Evac( int evacTeam, float initialWait, float arrivalTime, float wa
 	else if ( evacTeam == TEAM_MILITIA )
 		FlagSet( "Disable_MILITIA" ) // no random ai spawning
 
-	foreach ( entity player in GetPlayerArrayOfTeam( evacTeam ) ) //Show the Evac Match Goal for players of the team that lost the match
+	foreach ( entity player in GetPlayerArrayOfTeam( evacTeam ) ) // Show the Evac Match Goal for players of the team that lost the match
 		Remote_CallFunction_UI( player, "SCB_SetEvacMeritState", 0 )
 
 	// would've liked to use cd_dropship_rescue_side_start length here, but can't since this is done before dropship spawn, can't
@@ -296,13 +296,8 @@ void function Evac( int evacTeam, float initialWait, float arrivalTime, float wa
 	file.evacDropship = dropship
 
 	dropship.EndSignal( "OnDestroy" )
-	OnThreadEnd( function() : ( evacTeam, completionCallback, dropship )
-	{
-		if ( "evacTrigger" in dropship.s )
-			dropship.s.evacTrigger.Destroy()
-
-		// this should be for both teams
-		if ( !IsAlive( dropship ) )
+	OnThreadEnd(
+		function() : ( evacTeam, completionCallback, dropship )
 		{
 			if ( "evacTrigger" in dropship.s )
 				dropship.s.evacTrigger.Destroy()
@@ -410,9 +405,9 @@ void function Evac( int evacTeam, float initialWait, float arrivalTime, float wa
 			HolsterViewModelAndDisableWeapons( player )
 
 	// todo: play the warpout effect somewhere here
-	
+
 	wait dropship.GetSequenceDuration( "cd_dropship_rescue_side_end" ) - WARPINFXTIME - 1.0
-	
+
 	foreach ( entity player in dropship.s.evacSlots )
 		if ( IsValid( player ) )
 			Remote_CallFunction_NonReplay( player, "ServerCallback_PlayScreenFXWarpJump" )
@@ -423,9 +418,9 @@ void function Evac( int evacTeam, float initialWait, float arrivalTime, float wa
 	WaitFrame() // better wait because we are server
 
 	thread __WarpOutEffectShared( dropship )
-	
+
 	// go to space
-	
+
 	// hardcoded angles here are a hack, spacenode position doesn't face the planet in the skybox, for some reason
 	// nvm removing for now
 	// file.spaceNode.SetAngles( < 30, -75, 20 > )
@@ -541,7 +536,7 @@ void function AddPlayerToEvacDropship( entity dropship, entity player )
 
 	FirstPersonSequenceStruct fp
 
-	//fp.firstPersonAnim = EVAC_EMBARK_ANIMS_1P[ slot ]
+	// fp.firstPersonAnim = EVAC_EMBARK_ANIMS_1P[ slot ]
 	fp.thirdPersonAnim = EVAC_EMBARK_ANIMS_3P[ slot ]
 	fp.attachment = "RESCUE"
 	fp.teleport = true
@@ -670,7 +665,10 @@ void function EvacDropshipDamaged( entity evacShip, var damageInfo )
 
 void function EvacPlayerDamaged( entity player, var damageInfo )
 {
-	if ( !IsValid( player.GetParent() ) || !IsAlive( player.GetParent() ) || !( "evacSlots" in player.GetParent().s ) || !PlayerInDropship( player, player.GetParent() ) )
+	if (
+		!IsValid( player.GetParent() ) || !IsAlive( player.GetParent() ) || !( "evacSlots" in player.GetParent().s ) ||
+		!PlayerInDropship( player, player.GetParent() )
+	)
 		return
 
 	if ( !IsDamageFromDamageTrigger( damageInfo ) && ( DamageInfo_GetForceKill( damageInfo ) || IsInstantDeath( damageInfo ) ) )
@@ -707,11 +705,13 @@ void function TriggerEnterCallback( entity trigger, bool functionref( entity, en
 {
 	wait 0.16
 
-	trigger.SetEnterCallback
-	(
+	trigger.SetEnterCallback(
 		void function( entity trigger, entity player ) : ( canBoardCallback, dropship )
 		{
-			if ( !player.IsPlayer() || !IsAlive( player ) || player.IsTitan() || player.ContextAction_IsBusy() || !canBoardCallback( dropship, player ) || PlayerInDropship( player, dropship ) )
+			if (
+				!player.IsPlayer() || !IsAlive( player ) || player.IsTitan() || player.ContextAction_IsBusy() || !canBoardCallback( dropship, player ) ||
+				PlayerInDropship( player, dropship )
+			)
 				return
 
 			thread AddPlayerToEvacDropship( dropship, player )
