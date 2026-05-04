@@ -23,6 +23,7 @@ void function CodeCallback_MapInit()
 	AddDeathCallback( "npc_spectre", WargamesDissolveDeadEntity )
 	AddDeathCallback( "npc_pilot_elite", WargamesDissolveDeadEntity )
 	AddDeathCallback( "npc_marvin", WargamesDissolveDeadEntity )
+	AddSpawnCallback( "script_marvin_job", FixMarvinJob )
 	AddSpawnCallback( "info_spawnpoint_marvin", AddMarvinSpawner )
 	AddCallback_GameStateEnter( eGameState.Prematch, SpawnMarvinsForRound )
 
@@ -52,6 +53,23 @@ void function WargamesDissolveDeadEntity( entity deadEnt, var damageInfo )
 		deadEnt.DissolveNonLethal( ENTITY_DISSOLVE_CHAR, < 0, 0, 0 >, 500 )
 	else
 		deadEnt.Dissolve( ENTITY_DISSOLVE_CHAR, < 0, 0, 0 >, 500 )
+}
+
+void function FixMarvinJob( entity spawn )
+{
+	entity job_5 = GetEnt( "script_marvin_job_5" )
+	entity job_6 = GetEnt( "script_marvin_job_6" )
+
+	if ( spawn != job_5 && spawn != job_6 )
+		return
+
+	if ( spawn == job_5 )
+		spawn.SetOrigin( < 1144, -92, 65 > )
+	else if ( spawn == job_6 )
+		spawn.SetOrigin( < 1192, -92, 65 > )
+
+	if ( GetEditorClass( spawn ) != "" && ( !spawn.HasKey( "hover" ) || spawn.kv.hover != "1" ) )
+		DropToGround( spawn )
 }
 
 void function AddMarvinSpawner( entity spawn )
