@@ -95,7 +95,7 @@ void function ClassicMP_DefaultNoIntro_TitanSpawnPlayer( entity player )
 
 	ScreenFadeFromBlack( player, 1, 1 )
 
-	entity intermissionCam = GetEntArrayByClass_Expensive( "info_intermission" )[0]
+	entity intermissionCam = GetEntArrayByClass_Expensive( "info_intermission" )[ 0 ]
 
 	player.SetObserverModeStaticPosition( intermissionCam.GetOrigin() )
 	player.SetObserverModeStaticAngles( intermissionCam.GetAngles() )

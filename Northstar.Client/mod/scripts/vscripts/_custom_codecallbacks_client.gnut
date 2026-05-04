@@ -18,7 +18,7 @@ global struct ClClient_MessageStruct
 
 struct
 {
-	array< ClClient_MessageStruct functionref( ClClient_MessageStruct ) > OnReceivedSayTextMessageCallbacks
+	array<ClClient_MessageStruct functionref( ClClient_MessageStruct )> OnReceivedSayTextMessageCallbacks
 } NsCustomCallbacksClient
 
 void function OnReceivedMessage( ClClient_MessageStruct localMessage )
@@ -124,7 +124,7 @@ void function CHudChat_OnReceivedSayTextMessageCallback( int fromPlayerIndex, st
 	}
 }
 
-void function AddCallback_OnReceivedSayTextMessage( ClClient_MessageStruct functionref ( ClClient_MessageStruct ) callbackFunc )
+void function AddCallback_OnReceivedSayTextMessage( ClClient_MessageStruct functionref( ClClient_MessageStruct ) callbackFunc )
 {
 	NsCustomCallbacksClient.OnReceivedSayTextMessageCallbacks.append( callbackFunc )
 }

@@ -3,7 +3,8 @@ global function Search_UpdateInboxButtons
 global function IsWaitingBeforeMatchMaking
 global function LocalPlayerIsMixtapeSearching
 
-struct {
+struct
+{
 	var chatroomMenu
 	var chatroomMenu_chatroomWidget
 
@@ -36,9 +37,8 @@ struct {
 	var callsignCard
 	bool chatroomWidgetState
 
-	ComboStruct &lobbyComboStruct
+	ComboStruct& lobbyComboStruct
 } file
-
 
 void function InitSearchMenu()
 {
@@ -62,7 +62,6 @@ void function InitSearchMenu()
 	AddMenuEventHandler( menu, eUIEvent.MENU_OPEN, OnSearchMenu_Open )
 	AddMenuEventHandler( menu, eUIEvent.MENU_CLOSE, OnSearchMenu_Close )
 	AddMenuEventHandler( menu, eUIEvent.MENU_NAVIGATE_BACK, OnSearchMenu_NavigateBack )
-
 }
 
 void function Mixtape_SearchSkip( var button )
@@ -148,7 +147,7 @@ void function OnSearchMenu_Open()
 			bool anyNewTitanItems = HasAnyNewTitanItems( player )
 			bool anyNewBoosts = HasAnyNewBoosts( player )
 			bool anyNewCommsIcons = false // emotesAreEnabled ? HasAnyNewDpadCommsIcons( player ) : false
-			bool anyNewCustomizeHeader = (anyNewPilotItems || anyNewTitanItems || anyNewBoosts || anyNewCommsIcons)
+			bool anyNewCustomizeHeader = ( anyNewPilotItems || anyNewTitanItems || anyNewBoosts || anyNewCommsIcons )
 
 			RuiSetBool( Hud_GetRui( file.customizeHeader ), "isNew", anyNewCustomizeHeader )
 			ComboButton_SetNew( file.pilotButton, anyNewPilotItems )
@@ -181,7 +180,7 @@ void function OnSearchMenu_Open()
 			bool anyNewBanners = HasAnyNewCallsignBanners( player )
 			bool anyNewPatches = HasAnyNewCallsignPatches( player )
 			bool anyNewFactions = HasAnyNewFactions( player )
-			bool anyNewCallsignHeader = (anyNewBanners || anyNewPatches || anyNewFactions)
+			bool anyNewCallsignHeader = ( anyNewBanners || anyNewPatches || anyNewFactions )
 
 			RuiSetBool( Hud_GetRui( file.callsignHeader ), "isNew", anyNewCallsignHeader )
 			ComboButton_SetNew( file.bannerButton, anyNewBanners )
@@ -217,7 +216,7 @@ void function Search_UpdateInboxButtons()
 	if ( GetUIPlayer() == null )
 		return
 
-	bool hasNewMail = (Inbox_HasUnreadMessages() && Inbox_GetTotalMessageCount() > 0) || PlayerRandomUnlock_GetTotal( GetUIPlayer() ) > 0
+	bool hasNewMail = ( Inbox_HasUnreadMessages() && Inbox_GetTotalMessageCount() > 0 ) || PlayerRandomUnlock_GetTotal( GetUIPlayer() ) > 0
 	if ( hasNewMail )
 	{
 		int messageCount = Inbox_GetTotalMessageCount()
@@ -230,12 +229,12 @@ void function Search_UpdateInboxButtons()
 		else
 			countString = string( totalCount )
 
-		SetComboButtonHeaderTitle( menu, file.inboxHeaderIndex, Localize( "#MENU_HEADER_NETWORKS_NEW_MSGS", countString )  )
+		SetComboButtonHeaderTitle( menu, file.inboxHeaderIndex, Localize( "#MENU_HEADER_NETWORKS_NEW_MSGS", countString ) )
 		ComboButton_SetText( file.inboxButton, Localize( "#MENU_TITLE_INBOX_NEW_MSGS", countString ) )
 	}
 	else
 	{
-		SetComboButtonHeaderTitle( menu, file.inboxHeaderIndex, Localize( "#MENU_HEADER_NETWORKS" )  )
+		SetComboButtonHeaderTitle( menu, file.inboxHeaderIndex, Localize( "#MENU_HEADER_NETWORKS" ) )
 		ComboButton_SetText( file.inboxButton, Localize( "#MENU_TITLE_READ" ) )
 	}
 
@@ -262,12 +261,11 @@ void function CreateButtons( var menu )
 	Hud_AddEventHandler( file.boostsButton, UIE_CLICK, AdvanceMenuEventHandler( GetMenu( "BurnCardMenu" ) ) )
 	file.dpadCommsButton = AddComboButton( comboStruct, headerIndex, buttonIndex++, "#MENU_TITLE_COMMS" )
 	Hud_AddEventHandler( file.dpadCommsButton, UIE_CLICK, OnDpadCommsButton_Activate )
-//	file.storeButton = AddComboButton( comboStruct, headerIndex, buttonIndex++, "#MENU_TITLE_STORE" )
-//	Hud_AddEventHandler( file.storeButton, UIE_CLICK, OnStoreButton_Activate )
-//	var armoryButton = AddComboButton( comboStruct, headerIndex, buttonIndex++, "#MENU_TITLE_ARMORY" )
-//	file.armoryButton = armoryButton
-//	Hud_AddEventHandler( armoryButton, UIE_CLICK, AdvanceMenuEventHandler( GetMenu( "ArmoryMenu" ) ) )
-
+	// 	file.storeButton = AddComboButton( comboStruct, headerIndex, buttonIndex++, "#MENU_TITLE_STORE" )
+	// 	Hud_AddEventHandler( file.storeButton, UIE_CLICK, OnStoreButton_Activate )
+	// 	var armoryButton = AddComboButton( comboStruct, headerIndex, buttonIndex++, "#MENU_TITLE_ARMORY" )
+	// 	file.armoryButton = armoryButton
+	// 	Hud_AddEventHandler( armoryButton, UIE_CLICK, AdvanceMenuEventHandler( GetMenu( "ArmoryMenu" ) ) )
 
 	// var networksMoreButton = AddComboButton( comboStruct, headerIndex, buttonIndex++, "#COMMUNITY_MORE" )
 	// Hud_AddEventHandler( networksMoreButton, UIE_CLICK, OnCommunityButton_Activate )
@@ -297,7 +295,7 @@ void function CreateButtons( var menu )
 	var switchButton = AddComboButton( comboStruct, headerIndex, buttonIndex++, "#COMMUNITY_SWITCHCOMMUNITY" )
 	Hud_AddEventHandler( switchButton, UIE_CLICK, OnSwitchButton_Activate )
 	var browseButton = AddComboButton( comboStruct, headerIndex, buttonIndex++, "#COMMUNITY_BROWSE_NETWORKS" )
-//	file.lobbyButtons.append( browseButton )
+	// 	file.lobbyButtons.append( browseButton )
 	Hud_AddEventHandler( browseButton, UIE_CLICK, OnBrowseNetworksButton_Activate )
 	file.browseNetworkButton = browseButton
 
@@ -330,8 +328,8 @@ void function CreateButtons( var menu )
 	var modSettingsButton = AddComboButton( comboStruct, headerIndex, buttonIndex++, "#MOD_SETTINGS" )
 	Hud_AddEventHandler( modSettingsButton, UIE_CLICK, AdvanceMenuEventHandler( GetMenu( "ModSettings" ) ) )
 
-	//var dataCenterButton = AddComboButton( comboStruct, headerIndex, buttonIndex++, "#DATA_CENTER" )
-	//Hud_AddEventHandler( dataCenterButton, UIE_CLICK, OpenDataCenterDialog )
+	// var dataCenterButton = AddComboButton( comboStruct, headerIndex, buttonIndex++, "#DATA_CENTER" )
+	// Hud_AddEventHandler( dataCenterButton, UIE_CLICK, OpenDataCenterDialog )
 
 	comboStruct.navUpButtonDisabled = true
 	comboStruct.navDownButton = file.chatroomMenu_chatroomWidget

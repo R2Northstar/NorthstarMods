@@ -16,7 +16,7 @@ global struct ClServer_MessageStruct
 
 struct
 {
-	array< ClServer_MessageStruct functionref( ClServer_MessageStruct ) > OnReceivedSayTextMessageCallbacks
+	array<ClServer_MessageStruct functionref( ClServer_MessageStruct )> OnReceivedSayTextMessageCallbacks
 } NsCustomCallbacks
 
 void function CServerGameDLL_ProcessMessageStartThread( int playerIndex, string message, bool isTeam )
@@ -58,7 +58,7 @@ void function CServerGameDLL_OnReceivedSayTextMessageCallback( int playerIndex, 
 	NSSendMessage( player.GetPlayerIndex(), localMessage.message, localMessage.isTeam )
 }
 
-void function AddCallback_OnReceivedSayTextMessage( ClServer_MessageStruct functionref ( ClServer_MessageStruct ) callbackFunc )
+void function AddCallback_OnReceivedSayTextMessage( ClServer_MessageStruct functionref( ClServer_MessageStruct ) callbackFunc )
 {
 	NsCustomCallbacks.OnReceivedSayTextMessageCallbacks.append( callbackFunc )
 }

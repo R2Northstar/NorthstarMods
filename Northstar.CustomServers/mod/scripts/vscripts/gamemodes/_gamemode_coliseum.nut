@@ -14,7 +14,7 @@ const array<array<string> > OUTROANIMS_WINNER = [
 const array<array<string> > OUTROANIMS_LOSER = [
 	[ "pt_coliseum_loser_gunkick", "pt_coliseum_loser_compassion", "pt_coliseum_loser_drinking" ], // winner lost 0 rounds
 	[ "pt_coliseum_loser_respect", "pt_coliseum_loser_headlock", "pt_coliseum_loser_authority" ], // winner lost 1 round
-	[ "pt_coliseum_loser_punch", "pt_coliseum_loser_kick", "pt_coliseum_loser_stomp" ], // winner lost 2 rounds
+	[ "pt_coliseum_loser_punch", "pt_coliseum_loser_kick", "pt_coliseum_loser_stomp" ] // winner lost 2 rounds
 ]
 
 // players have to play atleast this many rounds otherwise they lose their streak and gain a loss
@@ -23,7 +23,7 @@ const int minColiseumRounds = 5
 struct
 {
 	bool hasShownIntroScreen
-	table< entity, int > roundsPlayed
+	table<entity, int> roundsPlayed
 } file
 
 void function GamemodeColiseum_Init()
@@ -161,7 +161,7 @@ void function RunColiseumOutro()
 			if ( !IsAlive( player ) )
 			{
 				DoRespawnPlayer( player, null )
-				delaythread ( 0.0001 ) EnableDemigod( player )
+				delaythread( 0.0001 ) EnableDemigod( player )
 			}
 			else
 				EnableDemigod( player )
@@ -184,8 +184,7 @@ void function RunColiseumOutro()
 
 void function RunColiseumOutroThreaded( entity winningPlayer, entity losingPlayer )
 {
-	OnThreadEnd
-	(
+	OnThreadEnd(
 		function() : ( losingPlayer )
 		{
 			if ( IsValid( losingPlayer ) )
@@ -265,7 +264,10 @@ void function Coliseum_OnClientDisconnected( entity player )
 {
 	if ( player in file.roundsPlayed && file.roundsPlayed[ player ] && GetGameState() < eGameState.Epilogue && file.roundsPlayed[ player ] <= minColiseumRounds )
 	{
-		if ( GetGameState() == eGameState.WinnerDetermined && GetWinningTeam() == player.GetTeam() && GameRules_GetTeamScore( player.GetTeam() ) >= GameMode_GetScoreLimit( GAMETYPE ) )
+		if (
+			GetGameState() == eGameState.WinnerDetermined && GetWinningTeam() == player.GetTeam() &&
+			GameRules_GetTeamScore( player.GetTeam() ) >= GameMode_GetScoreLimit( GAMETYPE )
+		)
 		{
 			player.SetPersistentVar( "coliseumTotalWins", player.GetPersistentVarAsInt( "coliseumTotalWins" ) + 1 )
 			player.SetPersistentVar( "coliseumWinStreak", player.GetPersistentVarAsInt( "coliseumWinStreak" ) + 1 )

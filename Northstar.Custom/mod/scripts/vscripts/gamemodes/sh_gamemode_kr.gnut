@@ -23,7 +23,7 @@ void function Sh_GamemodeKR_Init()
 		GameMode_SetDefaultTimeLimits( GAMEMODE_KR, 10, 0.0 )
 		GameMode_AddScoreboardColumnData( GAMEMODE_KR, "#SCOREBOARD_KR_RECORD", PGS_ASSAULT_SCORE, 2 )
 		GameMode_AddScoreboardColumnData( GAMEMODE_KR, "#SCOREBOARD_PILOT_KILLS", PGS_PILOT_KILLS, 2 )
-		GameMode_SetColor( GAMEMODE_KR, [147, 204, 57, 255] )
+		GameMode_SetColor( GAMEMODE_KR, [ 147, 204, 57, 255 ] )
 
 		AddPrivateMatchMode( GAMEMODE_KR ) // add to private lobby modes
 
@@ -50,7 +50,7 @@ void function Sh_GamemodeKR_Init()
 		Remote_RegisterFunction( "ServerCallback_FlagSpawnIncoming" )
 		Remote_RegisterFunction( "ServerCallback_NewKillRacer" )
 		Remote_RegisterFunction( "ServerCallback_EndKillrace" )
-		
+
 		RegisterNetworkedVariable( "killRaceTime", SNDC_PLAYER_EXCLUSIVE, SNVT_TIME, 0.0 )
 
 		#if CLIENT

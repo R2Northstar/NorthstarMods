@@ -32,9 +32,9 @@ struct
 	int levelStalkers = LEVEL_STALKERS
 	int levelReapers = LEVEL_REAPERS
 
-	table< int, array<entity> > spawnedMinions
-	table< int, array<entity> > spawnedSpectres
-	table< int, array<entity> > spawnedReapers
+	table<int, array<entity> > spawnedMinions
+	table<int, array<entity> > spawnedSpectres
+	table<int, array<entity> > spawnedReapers
 } file
 
 void function GamemodeAITdm_Init()
@@ -53,7 +53,10 @@ void function GamemodeAITdm_Init()
 
 	if ( !GetCurrentPlaylistVarInt( "aitdm_archer_grunts", 0 ) )
 	{
-		AiGameModes_SetNPCWeapons( "npc_soldier", [ "mp_weapon_rspn101", "mp_weapon_dmr", "mp_weapon_vinson", "mp_weapon_hemlok_smg", "mp_weapon_mastiff", "mp_weapon_shotgun_pistol" ] )
+		AiGameModes_SetNPCWeapons(
+			"npc_soldier",
+			[ "mp_weapon_rspn101", "mp_weapon_dmr", "mp_weapon_vinson", "mp_weapon_hemlok_smg", "mp_weapon_mastiff", "mp_weapon_shotgun_pistol" ]
+		)
 		AiGameModes_SetNPCWeapons( "npc_spectre", [ "mp_weapon_g2", "mp_weapon_doubletake", "mp_weapon_hemlok", "mp_weapon_rspn101_og", "mp_weapon_r97" ] )
 		AiGameModes_SetNPCWeapons( "npc_stalker", [ "mp_weapon_esaw", "mp_weapon_lstar", "mp_weapon_shotgun", "mp_weapon_lmg", "mp_weapon_smr", "mp_weapon_epg" ] )
 	}
@@ -117,7 +120,7 @@ void function OnPlaying()
 	if ( NavMesh_IsUpToDate() && GetAINScriptVersion() == AIN_REV && GetNodeCount() )
 	{
 		thread SpawnIntroBatch_Threaded( TEAM_MILITIA )
-		delaythread ( 0.0001 ) SpawnIntroBatch_Threaded( TEAM_IMC )
+		delaythread( 0.0001 ) SpawnIntroBatch_Threaded( TEAM_IMC )
 	}
 }
 
@@ -282,7 +285,7 @@ void function Spawner_Threaded( int team )
 		// REAPERS
 		if ( file.reapers[ index ] )
 		{
-			array< entity > points = SpawnPoints_GetDropPod()
+			array<entity> points = SpawnPoints_GetDropPod()
 
 			if ( reaperCount < file.reapersPerTeam )
 			{
@@ -351,13 +354,13 @@ void function Escalate( int team )
 			file.podEntities[ index ].append( "npc_spectre" )
 			SetGlobalNetInt( defcon, 2 )
 			return
-		
+
 		case 2:
 			file.levels[ index ] = file.levelReapers
 			file.podEntities[ index ].append( "npc_stalker" )
 			SetGlobalNetInt( defcon, 3 )
 			return
-		
+
 		case 3:
 			file.reapers[ index ] = true
 			SetGlobalNetInt( defcon, 4 )
@@ -410,7 +413,7 @@ void function SquadHandler( array<entity> guys )
 		guy.Minimap_AlwaysShow( TEAM_MILITIA, null )
 	}
 
-	if ( !IsGrunt( guys[0] ) && !IsSpectre( guys[0] ) )
+	if ( !IsGrunt( guys[ 0 ] ) && !IsSpectre( guys[ 0 ] ) )
 		return
 
 	// Every time frontline moves change AssaultPoint
@@ -438,8 +441,7 @@ void function SpectreSpawnedHandler( entity spectre )
 
 	int team = spectre.GetTeam()
 
-	OnThreadEnd
-	(
+	OnThreadEnd(
 		function() : ( spectre, team )
 		{
 			if ( !( team in file.spawnedSpectres ) )

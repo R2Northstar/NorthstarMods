@@ -48,7 +48,7 @@ void function PrivateMatchModesInit()
 	// gamemode settings
 	AddPrivateMatchModeSettingEnum( "#GAMEMODE_cp", "capture_point_amping", [ "#SETTING_DISABLED", "#SETTING_ENABLED" ], "1" )
 
-	AddPrivateMatchModeSettingEnum( "#PL_aitdm", "aitdm_archer_grunts", [ "#SETTING_DISABLED", "#SETTING_ENABLED" ], "0"  )
+	AddPrivateMatchModeSettingEnum( "#PL_aitdm", "aitdm_archer_grunts", [ "#SETTING_DISABLED", "#SETTING_ENABLED" ], "0" )
 
 	foreach ( string difficulty in [ "#PL_fd_easy", "#PL_fd_normal", "#PL_fd_hard", "#PL_fd_master", "#PL_fd_insane" ] )
 	{
@@ -100,9 +100,9 @@ void function PrivateMatchModesInit()
 		"rocket_lf",
 		"holopilot_lf",
 		"titan_mfd",
-		//"anniversary_7th", gamemode vars aren't set
-		"fnf",
-		//"variety_pack" always aitdm
+		// "anniversary_7th", gamemode vars aren't set
+		"fnf"
+	// "variety_pack" always aitdm
 	]
 
 	foreach ( string playlist in playlists )

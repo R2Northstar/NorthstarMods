@@ -35,9 +35,8 @@ void function AiGameModes_SpawnDropShip( entity node, int team, int count, void 
 {
 	ToggleSpawnNodeInUse( node, true )
 
-	OnThreadEnd
-	(
-		function () : ( node )
+	OnThreadEnd(
+		function() : ( node )
 		{
 			ToggleSpawnNodeInUse( node, false )
 		}
@@ -80,10 +79,10 @@ void function AiGameModes_SpawnDropPod( entity node, int team, string content /*
 		SetUpNPCWeapons( npc )
 		DispatchSpawn( npc )
 		SetSquad( npc, squadName )
-		
+
 		npc.SetParent( pod, "ATTACH", false )
-		
-		if( content == "npc_soldier" || content == "npc_spectre" )
+
+		if ( content == "npc_soldier" || content == "npc_spectre" )
 		{
 			npc.SetBehaviorSelector( "behavior_sp_soldier" )
 			// npc.GiveWeapon( "mp_weapon_defender", ["longNPCCharge"] )
@@ -118,8 +117,8 @@ void function AiGameModes_SpawnDropPod( entity node, int team, string content /*
 	WaitEndFrame()
 
 	for ( int i = 0; i < guys.len(); i++ )
-		if ( IsValid( guys[i] ) && disable_traverse[i] )
-			guys[i].SetCapabilityFlag( bits_CAP_MOVE_TRAVERSE, true )
+		if ( IsValid( guys[ i ] ) && disable_traverse[ i ] )
+			guys[ i ].SetCapabilityFlag( bits_CAP_MOVE_TRAVERSE, true )
 }
 
 const float REAPER_WARPFALL_DELAY = 4.7 // same as fd does

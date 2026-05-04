@@ -486,7 +486,7 @@ void function OnHitDummyTop( var button )
 
 	for ( int i = 0; i < panels.len(); i++ )
 	{
-		var panel = panels[i]
+		var panel = panels[ i ]
 
 		if ( !Hud_IsVisible( panel ) || !Hud_IsEnabled( panel ) )
 			continue
@@ -709,7 +709,7 @@ void function UpdateVisibleModes()
 
 	for ( int i = 0; i < Buttons.len(); i++ )
 	{
-		var button = Buttons[i]
+		var button = Buttons[ i ]
 
 		if ( !i )
 			button.SetNavUp( Hud_GetChild( file.menu, "DummyTop" ) )

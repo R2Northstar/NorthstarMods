@@ -46,24 +46,13 @@ const float AT_BOUNTY_TITAN_CHECK_DELAY = 10.0 // wait for bounty titans landing
 const float AT_BOUNTY_TITAN_HEALTH_MULTIPLIER = 3 // TODO: Verify this
 
 // Titan boss settings, check sh_gamemode_at.nut for more info
-const array<string> AT_BOUNTY_TITANS_AI_SETTINGS_BOSS_WAVE_1 =
-[
-	"npc_titan_stryder_leadwall_bounty"
-]
+const array<string> AT_BOUNTY_TITANS_AI_SETTINGS_BOSS_WAVE_1 = [ "npc_titan_stryder_leadwall_bounty" ]
 
-const array<string> AT_BOUNTY_TITANS_AI_SETTINGS_BOSS_WAVE_2 =
-[
-	"npc_titan_atlas_stickybomb_bounty",
-	"npc_titan_atlas_tracker_bounty",
-]
+const array<string> AT_BOUNTY_TITANS_AI_SETTINGS_BOSS_WAVE_2 = [ "npc_titan_atlas_stickybomb_bounty", "npc_titan_atlas_tracker_bounty" ]
 
-const array<string> AT_BOUNTY_TITANS_AI_SETTINGS_BOSS_WAVE_3 =
-[
-	"npc_titan_ogre_minigun_bounty",
-	"npc_titan_ogre_meteor_bounty",
-]
+const array<string> AT_BOUNTY_TITANS_AI_SETTINGS_BOSS_WAVE_3 = [ "npc_titan_ogre_minigun_bounty", "npc_titan_ogre_meteor_bounty" ]
 
-table< string, bool > AT_BOUNTY_TITANS_AI_SETTINGS_BOSS_WAVE_USED_STATE
+table<string, bool> AT_BOUNTY_TITANS_AI_SETTINGS_BOSS_WAVE_USED_STATE
 
 // Extra
 // Respawn didn't use the "totalAllowedOnField" for npc spawning, they only allow 1 squad to be on
@@ -95,13 +84,13 @@ struct
 	array<AT_WaveOrigin> camps
 
 	// Used to track ScriptmanagedEntArrays of ai squads
-	table< int, array<int> > campScriptEntArrays
-	
-	table< entity, bool > titanIsBountyBoss
-	table< entity, int > bountyTitanRewards
-	table< entity, int > npcStolenBonus
-	table< entity, bool > playerBankUploading
-	table< entity, table<entity, int> > playerSavedBountyDamage
+	table<int, array<int> > campScriptEntArrays
+
+	table<entity, bool> titanIsBountyBoss
+	table<entity, int> bountyTitanRewards
+	table<entity, int> npcStolenBonus
+	table<entity, bool> playerBankUploading
+	table<entity, table<entity, int> > playerSavedBountyDamage
 } file
 
 void function GamemodeAt_Init()
@@ -1665,7 +1654,7 @@ void function AT_SpawnBountyTitan( AT_WaveOrigin campData, int spawnId, int scri
 
 	string aisettings = GetTypeFromBossID( bountyID )
 	string titanClass = expect string( Dev_GetAISettingByKeyField_Global( aisettings, "npc_titan_player_settings" ) )
-	
+
 	AiGameModes_SpawnTitan(
 		spawnpoint,
 		AT_AI_TEAM,

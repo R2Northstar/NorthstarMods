@@ -21,14 +21,14 @@ const float FRONTLINE_MIN_TIME = 30.0
 struct
 {
 	float nextOverrunCheck = 0.0
-	table< table > frontlineGroupTable
+	table<table> frontlineGroupTable
 	table currentFrontline
-	table< int, int > frontlineTeamSide = { [TEAM_IMC] = 0, [TEAM_MILITIA] = 1 }
+	table<int, int> frontlineTeamSide = { [TEAM_IMC] = 0, [TEAM_MILITIA] = 1 }
 	int timesfrontlinemoved = 0
 
 	bool allowfrontlinemove = true
 	bool frontlineinitiated = false
-	table< int, table< int, array<entity> > > frontlineAssaultPoint
+	table<int, table<int, array<entity> > > frontlineAssaultPoint
 } file
 
 void function InitializeFrontline()
@@ -72,7 +72,7 @@ void function InitializeFrontline()
 
 	foreach ( group, groupTable in file.frontlineGroupTable )
 	{
-		float dist = Distance2DSqr( mapCenter, expect vector ( groupTable.frontlineCenter ) )
+		float dist = Distance2DSqr( mapCenter, expect vector( groupTable.frontlineCenter ) )
 
 		if ( dist > oldDist )
 			continue
@@ -118,14 +118,17 @@ entity function GetFrontlineSpawnPoint( array<entity> spawnPointArray, int team 
 	{
 		if ( team in file.frontlineAssaultPoint && i in file.frontlineAssaultPoint[ team ] )
 		{
-			ArrayRemoveDead( file.frontlineAssaultPoint[ team ][i] )
-			ArrayRemoveDifferentTeam( file.frontlineAssaultPoint[ team ][i], team )
+			ArrayRemoveDead( file.frontlineAssaultPoint[ team ][ i ] )
+			ArrayRemoveDifferentTeam( file.frontlineAssaultPoint[ team ][ i ], team )
 		}
 	}
 
 	if ( goalNum == -1 )
 		for ( int i = 0; i < 3; i++ )
-			if ( goalNum == -1 || !( team in file.frontlineAssaultPoint ) || !( i in file.frontlineAssaultPoint[ team ] ) || ( goalNum in file.frontlineAssaultPoint[ team ] && file.frontlineAssaultPoint[ team ][i].len() < file.frontlineAssaultPoint[ team ][ goalNum ].len() ) )
+			if (
+				goalNum == -1 || !( team in file.frontlineAssaultPoint ) || !( i in file.frontlineAssaultPoint[ team ] ) ||
+				( goalNum in file.frontlineAssaultPoint[ team ] && file.frontlineAssaultPoint[ team ][ i ].len() < file.frontlineAssaultPoint[ team ][ goalNum ].len() )
+			)
 				goalNum = i
 
 	entity frontlinePoint = GetFrontlineGoal( goalNum, team, false )
@@ -150,7 +153,7 @@ entity function GetFrontlineSpawnPoint( array<entity> spawnPointArray, int team 
 		{
 			for ( int i = 0; i < ratedspawnpoints.len(); i++ )
 			{
-				if ( spawnpoint.s.frontlineRating >= ratedspawnpoints[i].s.frontlineRating )
+				if ( spawnpoint.s.frontlineRating >= ratedspawnpoints[ i ].s.frontlineRating )
 				{
 					ratedspawnpoints.insert( i, spawnpoint )
 					break
@@ -195,7 +198,7 @@ void function InitFrontlineGroups()
 
 	if ( !entArray.len() )
 		foreach ( info_frontline in CreateTempFrontline() )
-			entArray.append( expect entity ( info_frontline ) )
+			entArray.append( expect entity( info_frontline ) )
 
 	array<entity> spectreNodeArray = []
 
@@ -211,7 +214,7 @@ void function InitFrontlineGroups()
 		string group = "temp_group"
 
 		if ( info_frontline.HasKey( "group" ) )
-			group = expect string ( info_frontline.kv.group )
+			group = expect string( info_frontline.kv.group )
 
 		int side = info_frontline.GetTeam()
 
@@ -234,14 +237,14 @@ void function InitFrontlineGroups()
 	// pair up spectre frontline nodes with it's closest regular frontline node
 	foreach ( entity spectreNode in spectreNodeArray )
 	{
-		string group = expect string ( spectreNode.kv.group )
+		string group = expect string( spectreNode.kv.group )
 		int side = spectreNode.GetTeam()
 		float nearestDist = -1.0
 		entity nearestNode = null
 
 		foreach ( frontlineNode in file.frontlineGroupTable[ group ][ "sideNodeArray" ][ side ] )
 		{
-			expect entity ( frontlineNode )
+			expect entity( frontlineNode )
 
 			float dist = Distance( spectreNode.GetOrigin(), frontlineNode.GetOrigin() )
 
@@ -263,14 +266,14 @@ table function CreateFrontlineTable()
 {
 	table frontlineTable = {}
 
-	frontlineTable.sideNodeArray	<- [ [], [] ] // two arrays for side 0 and side 1
-	frontlineTable.frontlineCenter	<- Vector( 0, 0, 0 )
-	frontlineTable.frontlineVector	<- Vector( 0, 0, 0 )
-	frontlineTable.combatDir		<- Vector( 0, 0, 0 )
-	frontlineTable.width			<- 0.0
-	frontlineTable.lineDistFrac		<- 0
-	frontlineTable.useCount			<- 0
-	frontlineTable.name				<- ""
+	frontlineTable.sideNodeArray <- [ [], [] ] // two arrays for side 0 and side 1
+	frontlineTable.frontlineCenter <- Vector( 0, 0, 0 )
+	frontlineTable.frontlineVector <- Vector( 0, 0, 0 )
+	frontlineTable.combatDir <- Vector( 0, 0, 0 )
+	frontlineTable.width <- 0.0
+	frontlineTable.lineDistFrac <- 0
+	frontlineTable.useCount <- 0
+	frontlineTable.name <- ""
 
 	return frontlineTable
 }
@@ -285,9 +288,9 @@ void function CheckFrontlineOverrun( int losingTeam )
 		return
 
 	int otherTeam = GetOtherTeam( losingTeam )
-	array< float > teamScore = [ 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0 ]
+	array<float> teamScore = [ 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0 ]
 	table frontline = file.currentFrontline
-	vector center = expect vector ( frontline.frontlineCenter )
+	vector center = expect vector( frontline.frontlineCenter )
 	vector combatDir = GetTeamCombatDir( frontline, otherTeam )
 	array<entity> playerArray = GetPlayerArray_Alive()
 	int rest = 0
@@ -315,11 +318,11 @@ void function MoveFrontline( int winningTeam )
 	if ( !FrontlineInitiated() || !file.allowfrontlinemove )
 		return
 
-	string prevFrontlineName = expect string ( file.currentFrontline.name )
+	string prevFrontlineName = expect string( file.currentFrontline.name )
 
 	// switch to different frontline
 	file.currentFrontline = GetBestFrontline( winningTeam )
-	file.currentFrontline[ "useCount" ] = expect int ( file.currentFrontline[ "useCount" ] ) + 1
+	file.currentFrontline[ "useCount" ] = expect int( file.currentFrontline[ "useCount" ] ) + 1
 	file.nextOverrunCheck = Time() + FRONTLINE_MIN_TIME
 
 	// determine what sides of the new fronline belong to what team
@@ -336,7 +339,7 @@ vector function GetTeamCombatDir( table frontline, int team )
 
 	// combatDir points towards side 1 by default
 	// if the team belongs to side 1 we need to reverse the direction
-	vector combatDir = expect vector ( frontline.combatDir )
+	vector combatDir = expect vector( frontline.combatDir )
 
 	if ( file.frontlineTeamSide[ team ] )
 		combatDir *= -1 // make sure combatDir is heading away from the team side, combatDir points towards side 1 by default.
@@ -350,7 +353,7 @@ table function GetBestFrontline( int winningTeam )
 		will look for frontlines in the winning teams combat direction.
 		if none is found it will look 45 degrees to the right then 45 degrees to the left and finally opposite to the combat direction.
 		with a fov (minDot) of 67.5 degree every direction will be covered, so it should always return a frontline.
-	*/
+*/
 
 	vector combatDir = GetTeamCombatDir( file.currentFrontline, winningTeam )
 	vector right = CalcRelativeVector( Vector( 0, 45, 0 ), combatDir )
@@ -363,7 +366,7 @@ table function GetBestFrontline( int winningTeam )
 		table ornull frontline = FindFrontlineInDirection( thevector )
 
 		if ( IsValid( frontline ) )
-			return expect table ( frontline )
+			return expect table( frontline )
 	}
 
 	// fallback in case no new frontline was found. Happens in map that only have one.
@@ -372,7 +375,7 @@ table function GetBestFrontline( int winningTeam )
 
 table ornull function FindFrontlineInDirection( vector forwardVector )
 {
-	vector currentCenter = expect vector ( file.currentFrontline.frontlineCenter )
+	vector currentCenter = expect vector( file.currentFrontline.frontlineCenter )
 	int maxDist = 5000
 	int graceRange = 768
 	float minDot = 0.38 // about 67.5 degrees.
@@ -381,28 +384,28 @@ table ornull function FindFrontlineInDirection( vector forwardVector )
 	float closestDistFrac = 1
 	array<table> frontlineSelection = []
 
-	foreach( groupName, frontline in file.frontlineGroupTable )
+	foreach ( groupName, frontline in file.frontlineGroupTable )
 	{
 		frontline.lineDistFrac = 0
 
 		if ( frontline == file.currentFrontline )
 			continue
 
-		vector thevector = expect vector ( frontline.frontlineCenter ) - currentCenter
-		float dist = expect float ( thevector.Norm() )
+		vector thevector = expect vector( frontline.frontlineCenter ) - currentCenter
+		float dist = expect float( thevector.Norm() )
 		float dot = forwardVector.Dot( thevector ) // positive is infront of the line
 
 		if ( dot > minDot && dist < maxDist )
 		{
-			table lineTable = CalcClosestPointOnLine( expect vector ( frontline.frontlineCenter ), currentCenter, currentCenter + forwardVector * maxDist )
+			table lineTable = CalcClosestPointOnLine( expect vector( frontline.frontlineCenter ), currentCenter, currentCenter + forwardVector * maxDist )
 
 			frontline.lineDistFrac = lineTable.t
 			frontlineSelection.append( frontline )
 
 			if ( lineTable.t < closestDistFrac )
 			{
-				closestDistFrac = expect float ( lineTable.t )
-				leastUsed = expect int ( frontline.useCount )
+				closestDistFrac = expect float( lineTable.t )
+				leastUsed = expect int( frontline.useCount )
 				forwardFrontline = frontline
 			}
 		}
@@ -417,7 +420,7 @@ table ornull function FindFrontlineInDirection( vector forwardVector )
 		if ( frontline == file.currentFrontline )
 			continue
 
-		float distDif = ( expect float ( frontline.lineDistFrac ) - closestDistFrac ) * maxDist
+		float distDif = ( expect float( frontline.lineDistFrac ) - closestDistFrac ) * maxDist
 
 		if ( abs( distDif.tointeger() ) > graceRange )
 			continue
@@ -425,7 +428,7 @@ table ornull function FindFrontlineInDirection( vector forwardVector )
 		if ( frontline.useCount < leastUsed )
 		{
 			forwardFrontline = frontline
-			leastUsed = expect int ( frontline.useCount )
+			leastUsed = expect int( frontline.useCount )
 		}
 	}
 
@@ -434,9 +437,9 @@ table ornull function FindFrontlineInDirection( vector forwardVector )
 
 vector function GetFrontlineCenter( table frontlineTable )
 {
-	array entArray = expect array ( expect array ( frontlineTable[ "sideNodeArray" ] )[0] )
+	array entArray = expect array( expect array( frontlineTable[ "sideNodeArray" ] )[ 0 ] )
 
-	entArray.extend( expect array ( expect array ( frontlineTable[ "sideNodeArray" ] )[1] ) )
+	entArray.extend( expect array( expect array( frontlineTable[ "sideNodeArray" ] )[ 1 ] ) )
 
 	if ( !entArray.len() )
 		return Vector( 0, 0, 0 )
@@ -444,7 +447,7 @@ vector function GetFrontlineCenter( table frontlineTable )
 	vector centerPos = Vector( 0, 0, 0 )
 
 	foreach ( ent in entArray )
-		centerPos += expect entity ( ent ).GetOrigin()
+		centerPos += expect entity( ent ).GetOrigin()
 
 	centerPos /= entArray.len()
 
@@ -455,16 +458,16 @@ vector function GetFrontlineVector( table frontlineTable )
 {
 	vector centerPos0 = Vector( 0, 0, 0 )
 
-	foreach( ent in expect array ( expect array ( frontlineTable[ "sideNodeArray" ] )[0] ) )
-		centerPos0 += expect entity ( ent ).GetOrigin()
+	foreach ( ent in expect array( expect array( frontlineTable[ "sideNodeArray" ] )[ 0 ] ) )
+		centerPos0 += expect entity( ent ).GetOrigin()
 
 	vector centerPos1 = Vector( 0, 0, 0 )
 
-	foreach( ent in expect array ( expect array ( frontlineTable[ "sideNodeArray" ] )[1] ) )
-		centerPos1 += expect entity ( ent ).GetOrigin()
+	foreach ( ent in expect array( expect array( frontlineTable[ "sideNodeArray" ] )[ 1 ] ) )
+		centerPos1 += expect entity( ent ).GetOrigin()
 
-	centerPos0 *= ( 1.0 / expect array ( expect array ( frontlineTable[ "sideNodeArray" ] )[0] ).len() )
-	centerPos1 *= ( 1.0 / expect array ( expect array ( frontlineTable[ "sideNodeArray" ] )[1] ).len() )
+	centerPos0 *= ( 1.0 / expect array( expect array( frontlineTable[ "sideNodeArray" ] )[ 0 ] ).len() )
+	centerPos1 *= ( 1.0 / expect array( expect array( frontlineTable[ "sideNodeArray" ] )[ 1 ] ).len() )
 
 	vector thevector = centerPos1 - centerPos0
 
@@ -480,13 +483,13 @@ float function GetFrontlineWidth( table frontlineTable )
 
 	for ( int side = 0; side < 2; side++ )
 	{
-		array nodeArray = expect array ( expect array ( frontlineTable[ "sideNodeArray" ] )[ side ] )
+		array nodeArray = expect array( expect array( frontlineTable[ "sideNodeArray" ] )[ side ] )
 
 		foreach ( baseNode in nodeArray )
 		{
 			foreach ( node in nodeArray )
 			{
-				float dist = Distance( expect entity ( baseNode ).GetOrigin(), expect entity ( node ).GetOrigin() )
+				float dist = Distance( expect entity( baseNode ).GetOrigin(), expect entity( node ).GetOrigin() )
 
 				if ( dist > highDist )
 					highDist = dist
@@ -647,10 +650,10 @@ void function SetFrontlineSides( table frontline, int winningTeam )
 		return
 
 	int otherTeam = GetOtherTeam( winningTeam )
-	vector center = expect vector ( frontline.frontlineCenter )
+	vector center = expect vector( frontline.frontlineCenter )
 
 	// combatDir is towards side 1, away from side 0
-	vector combatDir = expect vector ( file.currentFrontline.combatDir )
+	vector combatDir = expect vector( file.currentFrontline.combatDir )
 	array<entity> playerArray = GetPlayerArray_Alive()
 
 	// for the start of the map when no players are avaliable
@@ -678,13 +681,13 @@ void function SetFrontlineSides( table frontline, int winningTeam )
 
 	if ( teamCount[ 1 ] > teamCount[ 0 ] )
 	{
-		file.frontlineTeamSide[ winningTeam ]	= 1
-		file.frontlineTeamSide[ otherTeam ]		= 0
+		file.frontlineTeamSide[ winningTeam ] = 1
+		file.frontlineTeamSide[ otherTeam ] = 0
 	}
 	else
 	{
-		file.frontlineTeamSide[ otherTeam ]		= 1
-		file.frontlineTeamSide[ winningTeam ]	= 0
+		file.frontlineTeamSide[ otherTeam ] = 1
+		file.frontlineTeamSide[ winningTeam ] = 0
 	}
 }
 
@@ -694,15 +697,15 @@ entity function GetFrontlineGoal( int index, int team, bool spectre = false )
 		return null
 
 	int side = file.frontlineTeamSide[ team ]
-	array nodeArray = expect array ( expect array ( file.currentFrontline[ "sideNodeArray" ] )[ side ] )
+	array nodeArray = expect array( expect array( file.currentFrontline[ "sideNodeArray" ] )[ side ] )
 
 	if ( nodeArray.len() < 3 )
 		return null
 
-	entity node = expect entity ( nodeArray[ index % 3 ] )
+	entity node = expect entity( nodeArray[ index % 3 ] )
 
 	if ( spectre && "spectreNode" in node.s )
-		node = expect entity ( node.s.spectreNode )
+		node = expect entity( node.s.spectreNode )
 
 	return node
 }
@@ -718,7 +721,7 @@ void function SquadAssaultFrontline( array<entity> squad )
 	if ( !squad.len() )
 		return
 
-	int team = squad[0].GetTeam()
+	int team = squad[ 0 ].GetTeam()
 
 	if ( !IsIMCOrMilitiaTeam( team ) )
 		return
@@ -729,12 +732,12 @@ void function SquadAssaultFrontline( array<entity> squad )
 	{
 		if ( team in file.frontlineAssaultPoint && i in file.frontlineAssaultPoint[ team ] )
 		{
-			ArrayRemoveDead( file.frontlineAssaultPoint[ team ][i] )
-			ArrayRemoveDifferentTeam( file.frontlineAssaultPoint[ team ][i], team )
+			ArrayRemoveDead( file.frontlineAssaultPoint[ team ][ i ] )
+			ArrayRemoveDifferentTeam( file.frontlineAssaultPoint[ team ][ i ], team )
 
 			foreach ( entity guy in squad )
 			{
-				if ( file.frontlineAssaultPoint[ team ][i].contains( guy ) )
+				if ( file.frontlineAssaultPoint[ team ][ i ].contains( guy ) )
 				{
 					goalNum = i
 					break
@@ -748,7 +751,10 @@ void function SquadAssaultFrontline( array<entity> squad )
 
 	if ( goalNum == -1 )
 		for ( int i = 0; i < 3; i++ )
-			if ( goalNum == -1 || !( team in file.frontlineAssaultPoint ) || !( i in file.frontlineAssaultPoint[ team ] ) || ( goalNum in file.frontlineAssaultPoint[ team ] && file.frontlineAssaultPoint[ team ][i].len() < file.frontlineAssaultPoint[ team ][ goalNum ].len() ) )
+			if (
+				goalNum == -1 || !( team in file.frontlineAssaultPoint ) || !( i in file.frontlineAssaultPoint[ team ] ) ||
+				( goalNum in file.frontlineAssaultPoint[ team ] && file.frontlineAssaultPoint[ team ][ i ].len() < file.frontlineAssaultPoint[ team ][ goalNum ].len() )
+			)
 				goalNum = i
 
 	if ( !( team in file.frontlineAssaultPoint ) )
@@ -759,7 +765,7 @@ void function SquadAssaultFrontline( array<entity> squad )
 
 	file.frontlineAssaultPoint[ team ][ goalNum ].extend( squad )
 
-	entity goal = GetFrontlineGoal( goalNum, team, IsSpectre( squad[0] ) )
+	entity goal = GetFrontlineGoal( goalNum, team, IsSpectre( squad[ 0 ] ) )
 
 	if ( !IsValid( goal ) )
 		return
@@ -771,10 +777,10 @@ void function SquadAssaultFrontline( array<entity> squad )
 		npc.AssaultPointClamped( assaultOrigin )
 
 		if ( goal.HasKey( "script_goal_radius" ) )
-			npc.AssaultSetGoalRadius( float ( goal.kv.script_goal_radius ) )
+			npc.AssaultSetGoalRadius( float( goal.kv.script_goal_radius ) )
 
 		if ( goal.HasKey( "script_goal_height" ) )
-			npc.AssaultSetGoalHeight( float ( goal.kv.script_goal_height ) )
+			npc.AssaultSetGoalHeight( float( goal.kv.script_goal_height ) )
 	}
 }
 
@@ -807,6 +813,6 @@ table function CalcClosestPointOnLine( vector P, vector A, vector B, bool clamp 
 void function ArrayRemoveDifferentTeam( array<entity> ents, int team )
 {
 	for ( int i = ents.len() - 1; i >= 0; i-- )
-		if ( ents[i].GetTeam() != team )
+		if ( ents[ i ].GetTeam() != team )
 			ents.remove( i )
 }

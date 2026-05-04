@@ -166,24 +166,26 @@ void function FastballPlayer( entity player )
 
 	player.EndSignal( "OnDeath" )
 
-	OnThreadEnd( function() : ( player )
-	{
-		if ( IsValid( player ) )
+	OnThreadEnd(
+		function() : ( player )
 		{
-			RemoveCinematicFlag( player, CE_FLAG_CLASSIC_MP_SPAWNING )
+			if ( IsValid( player ) )
+			{
+				RemoveCinematicFlag( player, CE_FLAG_CLASSIC_MP_SPAWNING )
 
-			player.ClearParent()
+				player.ClearParent()
 
-			ClearPlayerAnimViewEntity( player )
+				ClearPlayerAnimViewEntity( player )
 
-			player.DeployWeapon()
-			player.PlayerCone_Disable()
-			player.ClearInvulnerable()
-			player.kv.VisibilityFlags = ENTITY_VISIBLE_TO_EVERYONE // restore visibility
-			player.SetNameVisibleToEnemy( true )
-			player.SetNameVisibleToFriendly( true )
+				player.DeployWeapon()
+				player.PlayerCone_Disable()
+				player.ClearInvulnerable()
+				player.kv.VisibilityFlags = ENTITY_VISIBLE_TO_EVERYONE // restore visibility
+				player.SetNameVisibleToEnemy( true )
+				player.SetNameVisibleToFriendly( true )
+			}
 		}
-	})
+	)
 
 	FirstPersonSequenceStruct throwSequence
 

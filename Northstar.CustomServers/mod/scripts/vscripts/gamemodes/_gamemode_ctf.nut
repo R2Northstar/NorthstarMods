@@ -404,7 +404,9 @@ void function CaptureFlag( entity player, entity flag )
 	// can only capture flags during normal play or sudden death
 	if ( !GamePlaying() && GetGameState() != eGameState.SuddenDeath )
 	{
-		CodeWarning( player + " tried to capture the flag, but the game state was " + GetGameState() + " not " + eGameState.Playing + " or " + eGameState.SuddenDeath)
+		CodeWarning(
+			player + " tried to capture the flag, but the game state was " + GetGameState() + " not " + eGameState.Playing + " or " + eGameState.SuddenDeath
+		)
 		return
 	}
 	// reset flag
@@ -499,7 +501,7 @@ void function DropFlag( entity player, bool realDrop = true )
 		MessageToTeam( player.GetTeam(), eEventNotifications.PlayerDroppedEnemyFlag, player, player )
 		MessageToTeam( GetOtherTeam( player.GetTeam() ), eEventNotifications.PlayerDroppedFriendlyFlag, player, player )
 	}
-	
+
 	if ( IsFlagHome( flag ) || EntityIsOutOfBounds( player ) )
 	{
 		ResetFlag( flag )

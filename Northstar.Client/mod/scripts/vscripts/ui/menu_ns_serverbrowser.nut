@@ -910,19 +910,19 @@ void function FilterServerList()
 		// Filters
 		if ( filterArguments.hideEmpty && server.playerCount <= 0 )
 			continue
-		
+
 		if ( filterArguments.hideFull && server.playerCount >= server.maxPlayerCount )
 			continue
-		
+
 		if ( filterArguments.hideProtected && server.requiresPassword )
 			continue
-		
+
 		if ( filterArguments.filterMap != "SWITCH_ANY" && filterArguments.filterMap != server.map )
 			continue
-		
-		if ( filterArguments.filterGamemode != "SWITCH_ANY" && filterArguments.filterGamemode != GetGameModeDisplayName(server.playlist) )
+
+		if ( filterArguments.filterGamemode != "SWITCH_ANY" && filterArguments.filterGamemode != GetGameModeDisplayName( server.playlist ) )
 			continue
-	
+
 		// Search
 		if ( filterArguments.useSearch )
 		{
@@ -1511,7 +1511,7 @@ void function TriggerConnectToServerCallbacks( ServerInfo ornull targetServer = 
 	}
 }
 
-const array<string> CORE_MODS = ["Northstar.Client", "Northstar.CustomServers", "Northstar.Custom"]
+const array<string> CORE_MODS = [ "Northstar.Client", "Northstar.CustomServers", "Northstar.Custom" ]
 bool function IsCoreMod( string modName )
 {
 	return CORE_MODS.find( modName ) != -1

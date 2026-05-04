@@ -80,7 +80,9 @@ void function OnNorthstarCustomMatchSettingsMenuOpened()
 			if ( gamemode != "speedball" ) // hack since lf is weird
 				gamemode = GetPlaylistGamemodeByIndex( gamemode, 0 )
 		}
-		catch ( error ) {}
+		catch ( error )
+		{
+		}
 
 		string gamemodeVar = GetGamemodeVarOrUseValue( PrivateMatch_GetSelectedMode(), setting.playlistVar, setting.defaultValue )
 		string playlistVar = GetPlaylistVarOrUseValue( PrivateMatch_GetSelectedMode(), setting.playlistVar, setting.defaultValue )

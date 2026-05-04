@@ -51,7 +51,9 @@ void function ReloadMods( bool reloadorretry = false )
 		if ( reloadorretry || !IsConnected() )
 		{
 			if ( IsConnected() )
-				ClientCommand( "script_client delaythread ( 0.0001 ) void function() { if ( IsValid( GetLocalClientPlayer() ) ) GetLocalClientPlayer().ClientCommand( \"retry\" ) }()" )
+				ClientCommand(
+					"script_client delaythread ( 0.0001 ) void function() { if ( IsValid( GetLocalClientPlayer() ) ) GetLocalClientPlayer().ClientCommand( \"retry\" ) }()"
+				)
 
 			ClientCommand( "uiscript_reset" )
 		}
@@ -103,7 +105,7 @@ void function ReloadMods( bool reloadorretry = false )
 
 			return true
 		}
-	
+
 		// makes sure titans use valid drop nodes with custom props
 		void function ValidateTitanDropNodes()
 		{
@@ -118,7 +120,7 @@ void function ReloadMods( bool reloadorretry = false )
 			if ( !GetNodeCount() )
 				return
 
-			entity titan = CreateNPCTitanFromSettings( GetAllowedPlayerTitanSettings()[0], TEAM_UNASSIGNED, Vector( 0, 0, 0 ), Vector( 0, 0, 0 ) )
+			entity titan = CreateNPCTitanFromSettings( GetAllowedPlayerTitanSettings()[ 0 ], TEAM_UNASSIGNED, Vector( 0, 0, 0 ), Vector( 0, 0, 0 ) )
 
 			titan.SetModel( GetFlightPathModel( "fp_titan_model" ) )
 			titan.SetInvulnerable()
@@ -139,7 +141,7 @@ void function ReloadMods( bool reloadorretry = false )
 
 			for ( int i = 0; i < positions.len(); i++ )
 			{
-				vector origin = positions[i]
+				vector origin = positions[ i ]
 
 				if ( !TitanValidateDropNode( flightpath, titan, origin ) )
 					for ( int j = dataindex; j < dataindex + ANALYSIS_STEPS; j++ )
@@ -163,7 +165,7 @@ void function ReloadMods( bool reloadorretry = false )
 			if ( debug )
 			{
 				DisplayTime endTime = SecondsToDHMS( Daily_GetCurrentTime() - startTime )
-	
+
 				printt( "Toke " + endTime.s + " Second(s) " + endTime.m + " Minute(s) " + endTime.h + " Hour(s) " + endTime.d + " Day(s) to validate titan drop nodes" )
 			}
 

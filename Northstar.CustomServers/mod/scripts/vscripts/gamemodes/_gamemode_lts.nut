@@ -77,9 +77,9 @@ void function WaitForThirtySecondsLeft()
 void function WaitForThirtySecondsLeftThreaded()
 {
 	svGlobal.levelEnt.EndSignal( "RoundEnd" ) // end this on round end
-	
-	float endTime = expect float ( GetServerVar( "roundEndTime" ) )
-	
+
+	float endTime = expect float( GetServerVar( "roundEndTime" ) )
+
 	// wait until 30sec left
 	wait ( endTime - 30 ) - Time()
 

@@ -8,28 +8,35 @@ const array<string> DROPSHIP_IDLE_ANIMS = [
 	"Classic_MP_flyin_exit_playerD_idle"
 ]
 
-const array<string> DROPSHIP_IDLE_ANIMS_POV = [ "Classic_MP_flyin_exit_povA_idle",
-												"Classic_MP_flyin_exit_povB_idle",
-												"Classic_MP_flyin_exit_povC_idle",
-												"Classic_MP_flyin_exit_povD_idle" ]
+const array<string> DROPSHIP_IDLE_ANIMS_POV = [
+	"Classic_MP_flyin_exit_povA_idle",
+	"Classic_MP_flyin_exit_povB_idle",
+	"Classic_MP_flyin_exit_povC_idle",
+	"Classic_MP_flyin_exit_povD_idle"
+]
 
-const array<string> DROPSHIP_JUMP_ANIMS = [ "Classic_MP_flyin_exit_playerA_jump",
-											"Classic_MP_flyin_exit_playerB_jump",
-											"Classic_MP_flyin_exit_playerC_jump",
-											"Classic_MP_flyin_exit_playerD_jump" ]
+const array<string> DROPSHIP_JUMP_ANIMS = [
+	"Classic_MP_flyin_exit_playerA_jump",
+	"Classic_MP_flyin_exit_playerB_jump",
+	"Classic_MP_flyin_exit_playerC_jump",
+	"Classic_MP_flyin_exit_playerD_jump"
+]
 
-const array<string> DROPSHIP_JUMP_ANIMS_POV = [ "Classic_MP_flyin_exit_povA_jump",
-												"Classic_MP_flyin_exit_povB_jump",
-												"Classic_MP_flyin_exit_povC_jump",
-												"Classic_MP_flyin_exit_povD_jump" ]
+const array<string> DROPSHIP_JUMP_ANIMS_POV = [
+	"Classic_MP_flyin_exit_povA_jump",
+	"Classic_MP_flyin_exit_povB_jump",
+	"Classic_MP_flyin_exit_povC_jump",
+	"Classic_MP_flyin_exit_povD_jump"
+]
 
 const int MAX_DROPSHIP_PLAYERS = 4
 
 global const float DROPSHIP_INTRO_LENGTH = 15.0 // TODO tweak this
 
-struct {
-	table< entity, array<entity> > militiaDropships
-	table< entity, array<entity> > imcDropships
+struct
+{
+	table<entity, array<entity> > militiaDropships
+	table<entity, array<entity> > imcDropships
 
 	float introStartTime
 } file
@@ -79,7 +86,7 @@ void function OnPrematchStart()
 	foreach ( entity dropshipSpawn in validDropshipSpawns )
 	{
 		int createTeam = HasSwitchedSides() ? GetOtherTeam( dropshipSpawn.GetTeam() ) : dropshipSpawn.GetTeam()
-		table< entity, array<entity> > teamDropships = createTeam == TEAM_MILITIA ? file.militiaDropships : file.imcDropships
+		table<entity, array<entity> > teamDropships = createTeam == TEAM_MILITIA ? file.militiaDropships : file.imcDropships
 
 		if ( teamDropships.len() >= 2 )
 			continue
@@ -227,8 +234,8 @@ void function SpawnPlayerIntoDropship( entity player, int playerDropshipIndex, e
 	jumpSequence.hideProxy = true
 
 	#if BATTLECHATTER_ENABLED
-	if ( !playerDropshipIndex )
-		PlayBattleChatterLine( player, "bc_pIntroChat" )
+		if ( !playerDropshipIndex )
+			PlayBattleChatterLine( player, "bc_pIntroChat" )
 	#endif
 
 	waitthread FirstPersonSequence( jumpSequence, player, playerDropship )
@@ -264,7 +271,7 @@ void function PlayerJumpsFromDropship( entity player )
 	while ( !player.IsOnGround() && !player.IsWallRunning() && !player.IsWallHanging() )
 		wait 0
 
-	if ( !GetRoundsPlayed() || HasSwitchedSides() ) //Intro is announced only for the first round in Vanilla as certain gamemodes have different announcements for rounds restarts
+	if ( !GetRoundsPlayed() || HasSwitchedSides() ) // Intro is announced only for the first round in Vanilla as certain gamemodes have different announcements for rounds restarts
 		TryGameModeAnnouncement( player )
 }
 

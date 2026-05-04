@@ -60,7 +60,7 @@ void function SHCreateGamemodeFW_Init()
 
 		// fw lines are unfortunately not registered to faction dialogue, maybe do it in gamemode script manually, current using it's modeName
 		GameMode_SetGameModeAnnouncement( FORT_WAR, "fortwar_modeName" )
-		
+
 		// waiting to be synced with client
 		GameMode_AddScoreboardColumnData( FORT_WAR, "#SCOREBOARD_KILLS", PGS_KILLS, 2 )
 		GameMode_AddScoreboardColumnData( FORT_WAR, "#SCOREBOARD_SUPPORT_SCORE", PGS_DEFENSE_SCORE, 4 )
@@ -115,7 +115,7 @@ void function SHCreateGamemodeFW_Init()
 		RegisterNetworkedVariable( "fwCampStressB", SNDC_GLOBAL, SNVT_FLOAT_RANGE, 0.0, 0.0, 1.0 )
 		RegisterNetworkedVariable( "fwCampAlertC", SNDC_GLOBAL, SNVT_INT )
 		RegisterNetworkedVariable( "fwCampStressC", SNDC_GLOBAL, SNVT_FLOAT_RANGE, 0.0, 0.0, 1.0 )
-		
+
 		#if CLIENT
 			CLFortWar_RegisterNetworkFunctions()
 		#endif

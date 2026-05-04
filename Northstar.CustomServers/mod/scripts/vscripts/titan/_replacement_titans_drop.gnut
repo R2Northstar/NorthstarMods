@@ -417,10 +417,10 @@ entity function FindSpawnpoint_ForReplacementTitan( vector origin )
 
 bool function TitanFindDropNodes( FlightPath flightPath, vector baseOrigin, float yaw )
 {
-//	return TitanFindDropNodesReloadable( flightPath, baseOrigin, yaw )
-//}
-//function TitanFindDropNodesReloadable( flightPath, baseOrigin, yaw )
-//{
+	// 	return TitanFindDropNodesReloadable( flightPath, baseOrigin, yaw )
+	// }
+	// function TitanFindDropNodesReloadable( flightPath, baseOrigin, yaw )
+	// {
 	return true // ValidateTitanDropNodes overwrites this
 
 	if ( NearTitanfallBlocker( baseOrigin ) )

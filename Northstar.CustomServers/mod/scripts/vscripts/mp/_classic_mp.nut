@@ -94,7 +94,7 @@ void function ClassicMP_SetupIntro()
 void function ClassicMP_OnIntroStarted()
 {
 	printt( "started intro!" )
-	
+
 	float introLength = ClassicMP_GetIntroLength()
 	SetServerVar( "gameStartTime", Time() + introLength )
 	SetServerVar( "roundStartTime", Time() + introLength )

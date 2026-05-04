@@ -4,7 +4,7 @@ void function CodeCallback_MapInit()
 {
 	// the spawnpoints are on the wrong side of the map or team for some reason
 	AddSpawnCallback( "info_spawnpoint_titan_start", InvertTitanStartSpawnsTeams )
-	
+
 	// Load Frontier Defense Data
 	if ( GameRules_GetGameMode() == FD )
 		initFrontierDefenseData()

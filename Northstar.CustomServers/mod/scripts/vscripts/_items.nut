@@ -8248,10 +8248,10 @@ void function Player_SetColiseumTicketCount( entity player, int newCount )
 		Player_SetDoubleXPCount( player, currentDoubleXP + count )
 	}
 
-bool function ClientCommand_UseDoubleXP( entity player, array<string> args )
-{
-	if ( IsLobby() )
-		return true
+	bool function ClientCommand_UseDoubleXP( entity player, array<string> args )
+	{
+		if ( IsLobby() )
+			return true
 
 		return true
 	}

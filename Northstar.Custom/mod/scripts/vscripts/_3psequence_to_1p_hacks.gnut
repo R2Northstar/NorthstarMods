@@ -27,7 +27,7 @@ Forced1PSequenceData function FirstPersonSequenceForce1P( FirstPersonSequenceStr
 	{
 		attachment = FORCE1P_TITAN_1P_ATTACHMENT
 		hiddenBodygroup = FORCE1P_TITAN_1P_HIDDEN_BODYGROUP
-		entityclass	= FORCE1P_TITAN_ENTITYCLASS
+		entityclass = FORCE1P_TITAN_ENTITYCLASS
 	}
 
 	player.Hide()

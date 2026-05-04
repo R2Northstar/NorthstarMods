@@ -36,7 +36,7 @@ struct
 } file
 
 const int PANELS_LEN = 15
-const array<string> CORE_MODS = ["Northstar.Client", "Northstar.CustomServers"] // Shows a warning if you try to disable these
+const array<string> CORE_MODS = [ "Northstar.Client", "Northstar.CustomServers" ] // Shows a warning if you try to disable these
 
 void function AddNorthstarModMenu()
 {
@@ -89,13 +89,7 @@ void function InitModMenu()
 	AddMenuFooterOption( file.menu, BUTTON_A, "#A_BUTTON_SELECT" )
 	AddMenuFooterOption( file.menu, BUTTON_B, "#B_BUTTON_BACK", "#BACK" )
 
-	AddMenuFooterOption(
-		file.menu,
-		BUTTON_X,
-		PrependControllerPrompts( BUTTON_X, "#RELOAD_MODS" ),
-		"#RELOAD_MODS",
-		OnReloadModsButtonPressed
-	)
+	AddMenuFooterOption( file.menu, BUTTON_X, PrependControllerPrompts( BUTTON_X, "#RELOAD_MODS" ), "#RELOAD_MODS", OnReloadModsButtonPressed )
 
 	AddMenuFooterOption(
 		file.menu,
@@ -105,13 +99,7 @@ void function InitModMenu()
 		OnAuthenticationAgreementButtonPressed
 	)
 
-	AddMenuFooterOption(
-		file.menu,
-		BUTTON_BACK,
-		"%[BACK|]%" + " " + Localize( "#MOD_SETTINGS" ),
-		"#MOD_SETTINGS",
-		OnModSettingsButtonPressed
-	)
+	AddMenuFooterOption( file.menu, BUTTON_BACK, "%[BACK|]%" + " " + Localize( "#MOD_SETTINGS" ), "#MOD_SETTINGS", OnModSettingsButtonPressed )
 
 	// Nuke weird rui on filter switch
 	RuiSetString( Hud_GetRui( Hud_GetChild( file.menu, "SwtBtnShowFilter" ) ), "buttonText", "" )
@@ -134,7 +122,9 @@ void function OnModMenuOpened()
 		DeregisterButtonPressedCallback( MOUSE_WHEEL_UP, OnScrollUp )
 		DeregisterButtonPressedCallback( MOUSE_WHEEL_DOWN, OnScrollDown )
 	}
-	catch ( ex ) {}
+	catch ( ex )
+	{
+	}
 
 	RegisterButtonPressedCallback( MOUSE_WHEEL_UP, OnScrollUp )
 	RegisterButtonPressedCallback( MOUSE_WHEEL_DOWN, OnScrollDown )

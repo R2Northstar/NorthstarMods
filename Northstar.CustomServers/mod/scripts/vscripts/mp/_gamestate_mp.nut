@@ -39,7 +39,7 @@ struct
 	int functionref() timeoutWinnerDecisionFunc
 
 	bool hasSwitchedSides
-	
+
 	bool roundWinningKillReplayTrackPilotKills = true
 	bool roundWinningKillReplayTrackTitanKills = false
 
@@ -203,7 +203,7 @@ void function CodeCallback_GamerulesThink()
 			GameRulesThink_Postmatch()
 			break
 	}
-	*/
+*/
 
 	UpdateMatchStateToCode()
 }
@@ -275,17 +275,9 @@ void function UpdateMatchStateToCode()
 	}
 
 	int phase = GetCodeMatchPhaseForGameState()
-	//printt( "NoteMatchState:", phase, maxRounds, roundsIMC, roundsMilitia, timeLimit, timePassed, scoreLimit, scoreIMC, scoreMilitia )
+	// printt( "NoteMatchState:", phase, maxRounds, roundsIMC, roundsMilitia, timeLimit, timePassed, scoreLimit, scoreIMC, scoreMilitia )
 	NoteMatchState( phase, maxRounds, roundsIMC, roundsMilitia, timeLimit, timePassed, scoreLimit, scoreIMC, scoreMilitia )
 }
-
-
-
-
-
-
-
-
 
 /*
  ██████   █████  ███    ███ ███████     ███████ ███████ ████████ ██    ██ ██████
@@ -656,7 +648,7 @@ void function GameStateEnter_Playing_Threaded()
 			if ( CheckForEmptyTeamVictory() )
 				return
 		}
-		*/
+*/
 
 		if ( CheckForEmptyTeamVictory() )
 			return
@@ -672,21 +664,21 @@ void function GameStateEnter_Playing_Threaded()
 		float endTime
 
 		if ( IsRoundBased() )
-			endTime = expect float ( GetServerVar( "roundEndTime" ) )
+			endTime = expect float( GetServerVar( "roundEndTime" ) )
 		else
-			endTime = expect float ( GetServerVar( "gameEndTime" ) )
+			endTime = expect float( GetServerVar( "gameEndTime" ) )
 
-		if ( int ( endTime - Time() ) < 15 && int ( endTime - Time() ) != lastTimeLeftSeconds )
+		if ( int( endTime - Time() ) < 15 && int( endTime - Time() ) != lastTimeLeftSeconds )
 		{
 			foreach ( player in GetPlayerArray() )
 			{
 				EmitSoundOnEntity( player, "Menu_Match_Countdown" )
 
-				if ( int ( endTime - Time() ) < 5 && int ( endTime - Time() ) >= 0 )
+				if ( int( endTime - Time() ) < 5 && int( endTime - Time() ) >= 0 )
 					EmitSoundOnEntityAfterDelay( player, "Menu_Match_Countdown", 0.5 )
 			}
 
-			lastTimeLeftSeconds = int ( endTime - Time() )
+			lastTimeLeftSeconds = int( endTime - Time() )
 		}
 
 		if ( !Flag( "DisableTimeLimit" ) )
@@ -803,7 +795,7 @@ void function GameStateEnter_WinnerDetermined_Threaded()
 		float replayLength = ROUND_WINNING_KILL_REPLAY_TOTAL_LENGTH
 
 		if ( "respawnTime" in replayAttacker.s && Time() - replayAttacker.s.respawnTime < replayLength )
-			replayLength += Time() - expect float ( replayAttacker.s.respawnTime )
+			replayLength += Time() - expect float( replayAttacker.s.respawnTime )
 
 		SetServerVar( "roundWinningKillReplayEntHealthFrac", file.roundWinningKillReplayHealthFrac )
 
@@ -900,9 +892,12 @@ void function GameStateEnter_WinnerDetermined_Threaded()
 				SetGameState( eGameState.Postmatch )
 			}
 		}
-		else if ( file.switchSidesBased && !file.hasSwitchedSides && IsRoundBased() && GameRules_GetTeamScore2( winningTeam ) >= ( GameMode_GetRoundScoreLimit( GAMETYPE ).tofloat() / 2.0 ) )
+		else if (
+			file.switchSidesBased && !file.hasSwitchedSides && IsRoundBased() &&
+			GameRules_GetTeamScore2( winningTeam ) >= ( GameMode_GetRoundScoreLimit( GAMETYPE ).tofloat() / 2.0 )
+		)
 			SetGameState( eGameState.SwitchingSides )
-		else if ( file.usePickLoadoutScreen && GetCurrentPlaylistVarInt( "pick_loadout_every_round", 1 ) ) //Playlist var needs to be enabled as well
+		else if ( file.usePickLoadoutScreen && GetCurrentPlaylistVarInt( "pick_loadout_every_round", 1 ) ) // Playlist var needs to be enabled as well
 			SetGameState( eGameState.PickLoadout )
 		else
 			SetGameState( eGameState.Prematch )
@@ -993,10 +988,10 @@ bool function WillShowRoundWinningKillReplay()
 	if ( ( currentGameState != eGameState.WinnerDetermined ) && ( currentGameState != eGameState.SwitchingSides ) )
 		return false
 
-	if ( file.roundWinningKillReplayAttacker == null ) //Check for null specifically instead of IsValid because players can disconnect and become invalid, and we only want this to be false because we set it to null explicitly. ( Want to tell people that round winning kill replay was cancelled if a player disconnected)
+	if ( file.roundWinningKillReplayAttacker == null ) // Check for null specifically instead of IsValid because players can disconnect and become invalid, and we only want this to be false because we set it to null explicitly. ( Want to tell people that round winning kill replay was cancelled if a player disconnected)
 		return false
 
-	if ( IsRoundBased() ) //Note the order of the checks: RoundBasedModes that are also SwitchSidesBased will show in WinnerDetermined.
+	if ( IsRoundBased() ) // Note the order of the checks: RoundBasedModes that are also SwitchSidesBased will show in WinnerDetermined.
 		return ( currentGameState == eGameState.WinnerDetermined )
 
 	if ( IsSwitchSidesBased() )
@@ -1004,12 +999,6 @@ bool function WillShowRoundWinningKillReplay()
 
 	return true
 }
-
-
-
-
-
-
 
 /*
 ███████ ██     ██ ██ ████████  ██████ ██   ██ ██ ███    ██  ██████      ███████ ██ ██████  ███████ ███████
@@ -1050,7 +1039,7 @@ void function GameStateEnter_SwitchingSides_Threaded()
 		float replayLength = ROUND_WINNING_KILL_REPLAY_TOTAL_LENGTH
 
 		if ( "respawnTime" in replayAttacker.s && Time() - replayAttacker.s.respawnTime < replayLength )
-			replayLength += Time() - expect float ( replayAttacker.s.respawnTime )
+			replayLength += Time() - expect float( replayAttacker.s.respawnTime )
 
 		SetServerVar( "roundWinningKillReplayEntHealthFrac", file.roundWinningKillReplayHealthFrac )
 
@@ -1116,7 +1105,7 @@ void function GameStateEnter_SwitchingSides_Threaded()
 	SetServerVar( "switchedSides", 1 )
 	SetRespawnEnabled( true )
 
-	if ( file.usePickLoadoutScreen && GetCurrentPlaylistVarInt( "pick_loadout_every_round", 1 ) ) //Playlist var needs to be enabled too
+	if ( file.usePickLoadoutScreen && GetCurrentPlaylistVarInt( "pick_loadout_every_round", 1 ) ) // Playlist var needs to be enabled too
 		SetGameState( eGameState.PickLoadout )
 	else
 		SetGameState( eGameState.Prematch )
@@ -1181,17 +1170,17 @@ void function GameStateEnter_SuddenDeath_Threaded()
 		else
 			endTime = expect float( GetServerVar( "gameEndTime" ) )
 
-		if ( int ( endTime - Time() ) < 15 && int ( endTime - Time() ) != lastTimeLeftSeconds )
+		if ( int( endTime - Time() ) < 15 && int( endTime - Time() ) != lastTimeLeftSeconds )
 		{
 			foreach ( player in GetPlayerArray() )
 			{
 				EmitSoundOnEntity( player, "Menu_Match_Countdown" )
 
-				if ( int ( endTime - Time() ) < 5 && int ( endTime - Time() ) >= 0 )
+				if ( int( endTime - Time() ) < 5 && int( endTime - Time() ) >= 0 )
 					EmitSoundOnEntityAfterDelay( player, "Menu_Match_Countdown", 0.5 )
 			}
 
-			lastTimeLeftSeconds = int ( endTime - Time() )
+			lastTimeLeftSeconds = int( endTime - Time() )
 		}
 
 		if ( !IsRoundBased() && !IsFFAGame() ) // Death callbacks have dedicated logic to handle FFA modes
@@ -1201,9 +1190,9 @@ void function GameStateEnter_SuddenDeath_Threaded()
 
 			if ( militiaScore != imcScore )
 			{
-				int winningTeam = ( militiaScore > imcScore? TEAM_MILITIA : TEAM_IMC )
+				int winningTeam = ( militiaScore > imcScore ? TEAM_MILITIA : TEAM_IMC )
 
-				SetWinner( winningTeam, "#SUDDEN_DEATH_WIN_ANNOUNCEMENT","#SUDDEN_DEATH_LOSS_ANNOUNCEMENT" )
+				SetWinner( winningTeam, "#SUDDEN_DEATH_WIN_ANNOUNCEMENT", "#SUDDEN_DEATH_LOSS_ANNOUNCEMENT" )
 			}
 		}
 
@@ -1354,9 +1343,9 @@ void function CheckEliminationRiffMode( entity victim, entity attacker )
 				if ( teamsWithLivingPlayers.len() == 1 )
 				{
 					if ( IsRoundBased() )
-						AddTeamRoundScoreNoStateChange( teamsWithLivingPlayers[0] )
-					
-					SetWinner( teamsWithLivingPlayers[0], "#GAMEMODE_ENEMY_PILOTS_ELIMINATED", "#GAMEMODE_FRIENDLY_PILOTS_ELIMINATED" )
+						AddTeamRoundScoreNoStateChange( teamsWithLivingPlayers[ 0 ] )
+
+					SetWinner( teamsWithLivingPlayers[ 0 ], "#GAMEMODE_ENEMY_PILOTS_ELIMINATED", "#GAMEMODE_FRIENDLY_PILOTS_ELIMINATED" )
 
 					if ( IsValidPlayer( attacker ) )
 						AddPlayerScore( attacker, "VictoryKill", attacker )
@@ -1384,7 +1373,10 @@ void function CheckEliminationRiffMode( entity victim, entity attacker )
 		int titansOnTeam = 0
 
 		foreach ( entity titan in GetPlayerTitansOnTeam( victim.GetTeam() ) )
-			if ( titan != victim && ( titan.IsPlayer() || ( IsValid( titan.GetBossPlayer() ) && IsAlive( titan.GetBossPlayer() ) && titan.GetBossPlayer().GetPetTitan() == titan ) ) )
+			if (
+				titan != victim &&
+				( titan.IsPlayer() || ( IsValid( titan.GetBossPlayer() ) && IsAlive( titan.GetBossPlayer() ) && titan.GetBossPlayer().GetPetTitan() == titan ) )
+			)
 				titansOnTeam += 1
 
 		if ( !titansOnTeam )
@@ -1401,9 +1393,9 @@ void function CheckEliminationRiffMode( entity victim, entity attacker )
 				if ( teamsWithLivingTitans.len() == 1 )
 				{
 					if ( IsRoundBased() )
-						AddTeamRoundScoreNoStateChange( teamsWithLivingTitans[0] )
-					
-					SetWinner( teamsWithLivingTitans[0], "#GAMEMODE_ENEMY_TITANS_DESTROYED", "#GAMEMODE_FRIENDLY_TITANS_DESTROYED" )
+						AddTeamRoundScoreNoStateChange( teamsWithLivingTitans[ 0 ] )
+
+					SetWinner( teamsWithLivingTitans[ 0 ], "#GAMEMODE_ENEMY_TITANS_DESTROYED", "#GAMEMODE_FRIENDLY_TITANS_DESTROYED" )
 
 					if ( IsValidPlayer( attacker ) )
 						AddPlayerScore( attacker, "VictoryKill", attacker )
@@ -1460,7 +1452,7 @@ void function CleanUpEntitiesForRoundEnd()
 		player.SetPlayerNetInt( "batteryCount", 0 )
 		player.ClearInvulnerable()
 		player.SetNoTarget( false )
-		player.ClearParent() //Dropship parenting causes observer mode crash
+		player.ClearParent() // Dropship parenting causes observer mode crash
 
 		if ( IsAlive( player ) )
 			KillPlayer( player, eDamageSourceId.round_end )

@@ -1,11 +1,12 @@
 global function GamemodePs_Init
 
-struct {
+struct
+{
 	array<entity> spawnzones
-	
+
 	entity militiaActiveSpawnZone
 	entity imcActiveSpawnZone
-	
+
 	array<entity> militiaPreviousSpawnZones
 	array<entity> imcPreviousSpawnZones
 } file
@@ -13,12 +14,12 @@ struct {
 void function GamemodePs_Init()
 {
 	Riff_ForceTitanAvailability( eTitanAvailability.Never )
-	
+
 	AddCallback_OnPlayerKilled( GiveScoreForPlayerKill )
 	ScoreEvent_SetupEarnMeterValuesForMixedModes()
 	SetTimeoutWinnerDecisionFunc( CheckScoreForDraw )
 	SetupGenericFFAChallenge()
-	
+
 	file.militiaPreviousSpawnZones = [ null, null, null ]
 	file.imcPreviousSpawnZones = [ null, null, null ]
 }

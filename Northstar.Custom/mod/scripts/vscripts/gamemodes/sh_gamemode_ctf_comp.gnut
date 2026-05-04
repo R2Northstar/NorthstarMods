@@ -86,32 +86,32 @@ void function ShGamemodeCTFComp_Init()
 			TeamTitanSelectMenu_Init()
 		#elseif CLIENT
 			ClTeamTitanSelectMenu_Init()
-			
+
 			// gotta register the music here because this is done hardcoded to ctf in cl_music
 			RegisterLevelMusicForTeam( eMusicPieceID.LEVEL_INTRO, "music_mp_ctf_intro_flyin", TEAM_IMC )
 			RegisterLevelMusicForTeam( eMusicPieceID.LEVEL_INTRO, "music_mp_ctf_intro_flyin", TEAM_MILITIA )
-	
+
 			RegisterLevelMusicForTeam( eMusicPieceID.LEVEL_WIN, "music_mp_ctf_epilogue_win", TEAM_IMC )
 			RegisterLevelMusicForTeam( eMusicPieceID.LEVEL_WIN, "music_mp_ctf_epilogue_win", TEAM_MILITIA )
-	
+
 			RegisterLevelMusicForTeam( eMusicPieceID.LEVEL_DRAW, "music_mp_ctf_halftime_losing", TEAM_IMC )
 			RegisterLevelMusicForTeam( eMusicPieceID.LEVEL_DRAW, "music_mp_ctf_halftime_losing", TEAM_MILITIA )
-	
+
 			RegisterLevelMusicForTeam( eMusicPieceID.LEVEL_SUDDEN_DEATH, "music_mp_ctf_draw", TEAM_IMC )
 			RegisterLevelMusicForTeam( eMusicPieceID.LEVEL_SUDDEN_DEATH, "music_mp_ctf_draw", TEAM_MILITIA )
-	
+
 			RegisterLevelMusicForTeam( eMusicPieceID.LEVEL_LOSS, "music_mp_ctf_epilogue_lose", TEAM_IMC )
 			RegisterLevelMusicForTeam( eMusicPieceID.LEVEL_LOSS, "music_mp_ctf_epilogue_lose", TEAM_MILITIA )
-	
+
 			RegisterLevelMusicForTeam( eMusicPieceID.ROUND_BASED_GAME_WON, "music_mp_ctf_halftime_winning", TEAM_IMC )
 			RegisterLevelMusicForTeam( eMusicPieceID.ROUND_BASED_GAME_WON, "music_mp_ctf_halftime_winning", TEAM_MILITIA )
-	
+
 			RegisterLevelMusicForTeam( eMusicPieceID.ROUND_BASED_GAME_LOST, "music_mp_ctf_halftime_losing", TEAM_IMC )
 			RegisterLevelMusicForTeam( eMusicPieceID.ROUND_BASED_GAME_LOST, "music_mp_ctf_halftime_losing", TEAM_MILITIA )
-	
+
 			RegisterLevelMusicForTeam( eMusicPieceID.GAMEMODE_1, "music_mp_ctf_flag_4", TEAM_IMC )
 			RegisterLevelMusicForTeam( eMusicPieceID.GAMEMODE_1, "music_mp_ctf_flag_4", TEAM_MILITIA )
-	
+
 			RegisterLevelMusicForTeam( eMusicPieceID.LEVEL_LAST_MINUTE, "music_mp_ctf_lastminute", TEAM_IMC )
 			RegisterLevelMusicForTeam( eMusicPieceID.LEVEL_LAST_MINUTE, "music_mp_ctf_lastminute", TEAM_MILITIA )
 		#endif

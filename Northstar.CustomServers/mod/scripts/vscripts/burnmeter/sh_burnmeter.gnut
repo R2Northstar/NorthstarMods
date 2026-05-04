@@ -168,7 +168,7 @@ BurnReward function BurnReward_GetById( int id )
 BurnReward function BurnReward_GetByRef( string ref )
 {
 	Assert( ref in burn.burnRewards )
-	return burn.burnRewards[ref]
+	return burn.burnRewards[ ref ]
 }
 
 int function GetBoostSkin( string ref )

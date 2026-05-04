@@ -1328,12 +1328,12 @@ void function SpawnGruntDropship( WaveSpawnEvent ornull spawnEvent )
 		printt( "Spawning Grunt Dropship at: " + spawnEvent.origin )
 	#endif
 	string squadName = MakeSquadName( TEAM_IMC, UniqueString() )
-	
-	vector origin 		= spawnEvent.origin
-	origin.z 		   += 640 //Expected to people make coordinates in the ground so we add this up for the hover height
-	float yaw 			= spawnEvent.angles.y
-	int health 			= 10000
-	
+
+	vector origin = spawnEvent.origin
+	origin.z += 640 // Expected to people make coordinates in the ground so we add this up for the hover height
+	float yaw = spawnEvent.angles.y
+	int health = 10000
+
 	CallinData drop
 	InitCallinData( drop )
 	SetCallinStyle( drop, eDropStyle.ZIPLINE_NPC )
@@ -2298,12 +2298,12 @@ void function NPCNav_FD( entity npc, string routeName, int nodesToSkip = 1, floa
 						npc.SetOrigin( expect vector( clampedPos ) )
 				}
 			}
-			*/
+*/
 
 			routeindex++
 
-			if ( routeindex < routes[routetaken].len() )
-				routepoint = routes[routetaken][routeindex]
+			if ( routeindex < routes[ routetaken ].len() )
+				routepoint = routes[ routetaken ][ routeindex ]
 			else
 				break
 		}

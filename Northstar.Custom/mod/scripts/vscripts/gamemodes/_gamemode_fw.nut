@@ -1197,7 +1197,9 @@ entity function FW_ForcedTitanStartPoint( entity player, entity basePoint )
 	if ( TITAN_POINT_REVERSED_MAPS.contains( GetMapName() ) )
 		team = GetOtherTeam( player.GetTeam() )
 	array<entity> startPoints = NSSpawnPoints_GetTitanStart( team )
-	entity validPoint = startPoints[ RandomInt( startPoints.len() ) ] // choose a random( maybe not safe ) start point
+	entity validPoint = startPoints[
+		RandomInt( startPoints.len() )
+	] // choose a random( maybe not safe ) start point
 	return validPoint
 }
 

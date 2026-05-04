@@ -39,7 +39,7 @@ global struct SvSpawnGlobals
 }
 
 global SvSpawnGlobals svSpawnGlobals
-global table< entity, spawnZoneProperties > mapSpawnZones // Global so other scripts can access this for custom ratings if needed
+global table<entity, spawnZoneProperties> mapSpawnZones // Global so other scripts can access this for custom ratings if needed
 global const float FRONTLINE_DISTANCE_MULTIPLIER = -2.0
 
 struct NoSpawnArea
@@ -82,7 +82,7 @@ void function Spawn_Init()
 	AddSpawnCallback( "info_replacement_titan_spawn", InitSpawnpoints )
 	AddSpawnCallback( "info_spawnpoint_marvin", InitSpawnpoints )
 	AddSpawnCallback( "info_spawnpoint_flag", InitSpawnpoints )
-	
+
 	// callbacks for spawnzone spawns
 	AddCallback_GameStateEnter( eGameState.Prematch, ResetSpawnzones )
 	AddSpawnCallbackEditorClass( "trigger_multiple", "trigger_mp_spawn_zone", AddSpawnZoneTrigger )
@@ -234,15 +234,17 @@ entity function FindSpawnPoint( entity player, bool isTitan, bool useStartSpawnp
 	{
 		SpawnPoints_InitRatings( player, team )
 
-		void functionref( int, array<entity>, int, entity ) ratingFunc = isTitan ? GameMode_GetTitanSpawnpointsRatingFunc( GAMETYPE ) : GameMode_GetPilotSpawnpointsRatingFunc( GAMETYPE )
+		void functionref( int, array<entity>, int, entity ) ratingFunc = isTitan
+			? GameMode_GetTitanSpawnpointsRatingFunc( GAMETYPE )
+			: GameMode_GetPilotSpawnpointsRatingFunc( GAMETYPE )
 		ratingFunc( isTitan ? TD_TITAN : TD_PILOT, spawnpoints, team, player )
 	}
-	
+
 	if ( isTitan )
 	{
 		if ( !useStartSpawnpoint )
 			SpawnPoints_SortTitan()
-		
+
 		spawnpoints = useStartSpawnpoint ? NSSpawnPoints_GetTitanStart( team ) : SpawnPoints_GetTitan()
 	}
 	else
@@ -345,7 +347,7 @@ bool function IsSpawnpointValid( entity spawnpoint, int team, bool skipLineOfSig
 
 	if ( !IsSpawnpointValidDrop( spawnpoint ) )
 		return false
-	
+
 	if ( !skipTimeCheck && Time() - spawnpoint.e.spawnTime <= SPAWNPOINT_USE_TIME )
 		return false
 
@@ -386,7 +388,6 @@ void function RateSpawnpoints_Directional( int checkClass, array<entity> spawnPo
 	friendlyPlayers = GetPlayerArrayOfTeam_Alive( teamId )
 	enemyPlayers = GetPlayerArrayOfTeam_Alive( otherTeamId )
 
-
 	if ( enemyPlayers.len() == 0 || friendlyPlayers.len() == 0 )
 	{
 		RateSpawnpoints_Generic( checkClass, spawnPoints, teamId, player )
@@ -406,7 +407,7 @@ void function RateSpawnpoints_Directional( int checkClass, array<entity> spawnPo
 		float additionalRating = 0.0
 		vector vecToEnemies = Normalize( enemyOrigin - spawnPoint.GetOrigin() )
 		additionalRating = vecToEnemies.Dot( spawnPoint.GetForwardVector() ) * distMultiplier
-		//printt( additionalRating )
+		// printt( additionalRating )
 
 		float rating = spawnPoint.CalculateRating( checkClass, teamId, additionalRating, 0.0 )
 	}
@@ -417,9 +418,8 @@ void function RateSpawnpoints_Generic( int checkclass, array<entity> spawnpoints
 	foreach ( spawnpoint in spawnpoints )
 	{
 		float rating = spawnpoint.CalculateRating( checkclass, team, 0.0, 0.0 )
-
-		//if ( IsHighPerfDevServer() )
-		//	AddSpawnPointDebugRatingData( spawnpoint, team, rating )
+		// if ( IsHighPerfDevServer() )
+		// 	AddSpawnPointDebugRatingData( spawnpoint, team, rating )
 	}
 }
 
@@ -441,14 +441,14 @@ void function RateSpawnpoints_Frontline( int checkclass, array<entity> spawnpoin
 		float distanceFromFrontline = Distance( spawnpointOrg, frontline.origin )
 
 		if ( distanceFromFrontline > svSpawnGlobals.frontlineDistanceFalloffStart )
-			frontlineRating += Graph( distanceFromFrontline, svSpawnGlobals.frontlineDistanceFalloffStart, svSpawnGlobals.frontlineDistanceFalloffEnd, 0.0, FRONTLINE_DISTANCE_MULTIPLIER )
+			frontlineRating +=
+				Graph( distanceFromFrontline, svSpawnGlobals.frontlineDistanceFalloffStart, svSpawnGlobals.frontlineDistanceFalloffEnd, 0.0, FRONTLINE_DISTANCE_MULTIPLIER )
 
 		float facing = DotProduct( spawnpoint.GetForwardVector(), spawnpointToFrontline )
 
 		float rating = spawnpoint.CalculateRating( checkclass, team, frontlineRating + facing, 0.0 )
-
-		//if ( IsHighPerfDevServer() )
-		//	AddSpawnPointDebugRatingData( spawnpoint, team, rating )
+		// if ( IsHighPerfDevServer() )
+		// 	AddSpawnPointDebugRatingData( spawnpoint, team, rating )
 	}
 }
 
@@ -685,21 +685,21 @@ int function SortPossibleZones( entity a, entity b )
 		foreach ( sPoint in spawnPoints )
 			DebugDrawSpawnpoint( sPoint, 255, 255, 0, false, 600 )
 
-	spawnPoints = NSSpawnPoints_GetTitanStart( TEAM_MILITIA )
-	foreach ( sPoint in spawnPoints )
-		DebugDrawSpawnpoint( sPoint, 255, 0, 0, false, 600 )
+		spawnPoints = NSSpawnPoints_GetTitanStart( TEAM_MILITIA )
+		foreach ( sPoint in spawnPoints )
+			DebugDrawSpawnpoint( sPoint, 255, 0, 0, false, 600 )
 
 		spawnPoints = SpawnPoints_GetPilotStart( TEAM_MILITIA )
 		foreach ( sPoint in spawnPoints )
 			DebugDrawSpawnpoint( sPoint, 255, 0, 0, false, 600 )
 
-	spawnPoints = SpawnPoints_GetDropPodStart( TEAM_MILITIA )
-	foreach ( sPoint in spawnPoints )
-		DebugDrawSpawnpoint( sPoint, 255, 0, 0, false, 600 )
-	
-	spawnPoints = NSSpawnPoints_GetTitanStart( TEAM_IMC )
-	foreach ( sPoint in spawnPoints )
-		DebugDrawSpawnpoint( sPoint, 0, 0, 255, false, 600 )
+		spawnPoints = SpawnPoints_GetDropPodStart( TEAM_MILITIA )
+		foreach ( sPoint in spawnPoints )
+			DebugDrawSpawnpoint( sPoint, 255, 0, 0, false, 600 )
+
+		spawnPoints = NSSpawnPoints_GetTitanStart( TEAM_IMC )
+		foreach ( sPoint in spawnPoints )
+			DebugDrawSpawnpoint( sPoint, 0, 0, 255, false, 600 )
 
 		spawnPoints = SpawnPoints_GetTitanStart( TEAM_IMC )
 		foreach ( sPoint in spawnPoints )

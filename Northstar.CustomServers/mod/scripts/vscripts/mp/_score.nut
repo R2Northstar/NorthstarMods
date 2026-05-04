@@ -157,7 +157,7 @@ void function ScoreEvent_PlayerKilled( entity victim, entity attacker, var damag
 		AddPlayerScore( attacker, "EliminatePilot", victim )
 	else
 		AddPlayerScore( attacker, "KillPilot", victim )
-	
+
 	// headshot
 	if ( DamageInfo_GetCustomDamageType( damageInfo ) & DF_HEADSHOT )
 		AddPlayerScore( attacker, "Headshot", victim )

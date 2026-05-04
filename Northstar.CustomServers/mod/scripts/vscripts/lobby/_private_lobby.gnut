@@ -8,7 +8,7 @@ struct
 	string map = "mp_forwardbase_kodai"
 	array<string> maplist
 	string mode = "aitdm"
-} file 
+} file
 
 void function PrivateLobby_Init()
 {
@@ -56,7 +56,7 @@ void function SetupPrivateMatchUIVarsWhenReady()
 		i += 1
 
 		if ( i >= file.maplist.len() )
-			file.map = file.maplist[0]
+			file.map = file.maplist[ 0 ]
 		else
 			file.map = file.maplist[ i ]
 	}
@@ -215,15 +215,15 @@ void function StartMatch( bool isAutostart = false )
 			return
 		}
 
-		if ( int ( countdownEndTime - Time() ) < 10 && int ( countdownEndTime - Time() ) != lastCountdownSeconds )
+		if ( int( countdownEndTime - Time() ) < 10 && int( countdownEndTime - Time() ) != lastCountdownSeconds )
 		{
-			if ( int ( countdownEndTime - Time() ) == 2 )
+			if ( int( countdownEndTime - Time() ) == 2 )
 				AllPlayersMuteAll()
 
 			foreach ( player in GetPlayerArray() )
 				EmitSoundAtPositionOnlyToPlayer( TEAM_UNASSIGNED, Vector( 0, 0, 0 ), player, PREMATCH_COUNTDOWN_SOUND )
 
-			lastCountdownSeconds = int ( countdownEndTime - Time() )
+			lastCountdownSeconds = int( countdownEndTime - Time() )
 		}
 
 		WaitFrame()
