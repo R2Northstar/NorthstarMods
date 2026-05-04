@@ -1094,29 +1094,29 @@ int function NPCShieldHealthUpdate( entity npc, damageInfo, bool critHit )
 			callback( weapon )
 	}
 
-void function AddCallback_OnWeaponAttack( void functionref( entity player, entity weapon, string weaponName, int attackIndex ) callbackFunc )
-{
-	Assert( !file.weaponAttackCallbacks.contains( callbackFunc ), "Already added " + string( callbackFunc ) + " with AddCallback_OnWeaponAttackCallback" )
-	file.weaponAttackCallbacks.append( callbackFunc )
-}
+	void function AddCallback_OnWeaponAttack( void functionref( entity player, entity weapon, string weaponName, int attackIndex ) callbackFunc )
+	{
+		Assert( !file.weaponAttackCallbacks.contains( callbackFunc ), "Already added " + string( callbackFunc ) + " with AddCallback_OnWeaponAttackCallback" )
+		file.weaponAttackCallbacks.append( callbackFunc )
+	}
 
-void function RemoveCallback_OnWeaponAttack( void functionref( entity player, entity weapon, string weaponName, int attackIndex ) callbackFunc )
-{
-	Assert(
-		file.weaponAttackCallbacks.contains( callbackFunc ),
-		"Tried to remove " + string( callbackFunc ) + " with RemoveCallback_OnWeaponAttackCallback but it was not found"
-	)
-	file.weaponAttackCallbacks.fastremovebyvalue( callbackFunc )
-}
+	void function RemoveCallback_OnWeaponAttack( void functionref( entity player, entity weapon, string weaponName, int attackIndex ) callbackFunc )
+	{
+		Assert(
+			file.weaponAttackCallbacks.contains( callbackFunc ),
+			"Tried to remove " + string( callbackFunc ) + " with RemoveCallback_OnWeaponAttackCallback but it was not found"
+		)
+		file.weaponAttackCallbacks.fastremovebyvalue( callbackFunc )
+	}
 
-void function CodeCallback_OnWeaponAttack( entity player, entity weapon, string weaponName, int shotsFired )
-{
-	foreach ( callbackFunc in file.weaponAttackCallbacks )
+	void function CodeCallback_OnWeaponAttack( entity player, entity weapon, string weaponName, int shotsFired )
 	{
 		foreach ( callbackFunc in file.weaponAttackCallbacks )
 		{
-			callbackFunc( player, weapon, weaponName, shotsFired )
+			foreach ( callbackFunc in file.weaponAttackCallbacks )
+			{
+				callbackFunc( player, weapon, weaponName, shotsFired )
+			}
 		}
 	}
-}
 #endif // #if MP
