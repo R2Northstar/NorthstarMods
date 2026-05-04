@@ -158,7 +158,7 @@ void function OnModMenuClosed()
 		}
 	}
 	if ( current.len() != file.enabledMods.len() || reload ) // Only reload if we have to
-		ReloadMods()
+		ReloadMods( true )
 }
 
 void function OnModButtonFocused( var button )
@@ -235,7 +235,7 @@ void function OnModButtonPressed( var button )
 
 void function OnReloadModsButtonPressed( var button )
 {
-	ReloadMods()
+	ReloadMods( true )
 }
 
 void function OnAuthenticationAgreementButtonPressed( var button )
@@ -703,4 +703,3 @@ bool function IsImportantCoreMod( string mod )
 {
 	return IMPORTANT_CORE_MODS.find( mod ) != -1
 }
-

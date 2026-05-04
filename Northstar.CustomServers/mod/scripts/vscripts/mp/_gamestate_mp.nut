@@ -966,13 +966,9 @@ float function GetWinnerDeterminedWait()
 				return GAME_WINNER_DETERMINED_ROUND_WAIT_WITH_ROUND_WINNING_KILL_REPLAY_WAIT
 		}
 		else if ( GameRules_GetTeamScore2( GetWinningTeam() ) == GameMode_GetRoundScoreLimit( GAMETYPE ) )
-		{
 			return GAME_WINNER_DETERMINED_FINAL_ROUND_WAIT
-		}
 		else
-		{
 			return GAME_WINNER_DETERMINED_ROUND_WAIT
-		}
 	}
 
 	return GAME_WINNER_DETERMINED_WAIT

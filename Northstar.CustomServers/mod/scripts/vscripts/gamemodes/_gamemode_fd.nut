@@ -806,6 +806,7 @@ bool function runWave( int waveIndex, bool shouldDoBuyTime )
 	}
 
 	file.disableTitanSelectionForNewJoiners = true
+
 	DisableTitanSelection()
 
 	SetGlobalNetInt( "FD_waveState", WAVE_STATE_IN_PROGRESS )

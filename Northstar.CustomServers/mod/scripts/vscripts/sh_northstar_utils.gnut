@@ -48,7 +48,7 @@ void function ReloadMods( bool reloadorretry = false )
 		if ( IsConnected() )
 			ClientCommand( "weapon_reparse; playerSettings_reparse; aisettings_reparse_client" )
 
-		if ( reloadorretry || !IsConnected() )
+		if ( reloadorretry )
 		{
 			if ( IsConnected() )
 				ClientCommand(
