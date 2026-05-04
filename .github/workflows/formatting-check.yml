@@ -4,9 +4,9 @@ on: [push, pull_request]
 
 jobs:
   format:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - name: Download sqformat
         run: |
           curl -sSL https://github.com/Bobbyperson/sqformat/releases/download/v1.2.0/sqformat-linux-x86_64 -o sqformat
