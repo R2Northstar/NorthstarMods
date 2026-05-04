@@ -792,7 +792,7 @@ void function GameStateEnter_WinnerDetermined_Threaded()
 	{
 		SetRespawnEnabled( false )
 
-		float replayLength = ROUND_WINNING_KILL_REPLAY_TOTAL_LENGTH
+		float replayLength = ROUND_WINNING_KILL_REPLAY_LENGTH_OF_REPLAY
 
 		if ( "respawnTime" in replayAttacker.s && Time() - replayAttacker.s.respawnTime < replayLength )
 			replayLength += Time() - expect float( replayAttacker.s.respawnTime )
@@ -815,7 +815,7 @@ void function GameStateEnter_WinnerDetermined_Threaded()
 		foreach ( entity player in GetPlayerArray() )
 			thread PlayerWatchesRoundWinningReplay( player, replayLength )
 
-		wait replayLength - 2
+		wait replayLength
 
 		foreach ( entity player in GetPlayerArray() )
 			ScreenFadeToBlackForever( player, 1.0 )
@@ -832,7 +832,7 @@ void function GameStateEnter_WinnerDetermined_Threaded()
 
 		wait 0.5
 
-		fadeTime -= 2 + replayLength
+		fadeTime -= 5.5 + replayLength
 
 		if ( IsRoundBased() && !HasRoundScoreLimitBeenReached() )
 			CleanUpEntitiesForRoundEnd()
@@ -1032,7 +1032,7 @@ void function GameStateEnter_SwitchingSides_Threaded()
 	{
 		SetRespawnEnabled( false )
 
-		float replayLength = ROUND_WINNING_KILL_REPLAY_TOTAL_LENGTH
+		float replayLength = ROUND_WINNING_KILL_REPLAY_LENGTH_OF_REPLAY
 
 		if ( "respawnTime" in replayAttacker.s && Time() - replayAttacker.s.respawnTime < replayLength )
 			replayLength += Time() - expect float( replayAttacker.s.respawnTime )
@@ -1049,7 +1049,7 @@ void function GameStateEnter_SwitchingSides_Threaded()
 		foreach ( entity player in GetPlayerArray() )
 			thread PlayerWatchesRoundWinningReplay( player, replayLength )
 
-		wait replayLength - 2
+		wait replayLength
 
 		foreach ( entity player in GetPlayerArray() )
 			ScreenFadeToBlackForever( player, 1.0 )
@@ -1066,7 +1066,7 @@ void function GameStateEnter_SwitchingSides_Threaded()
 
 		wait 0.5
 
-		fadeTime -= 2 + replayLength
+		fadeTime -= 5.5 + replayLength
 
 		CleanUpEntitiesForRoundEnd()
 		SetServerVar( "roundWinningKillReplayPlaying", false )
