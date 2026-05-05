@@ -240,6 +240,9 @@ void function OnPrematchStart()
 	}
 
 	// so I don't have to duplicate this on all entities
+	foreach ( entity ent in trackedEntitiesEarlyRemove )
+		ent.kv.VisibilityFlags = ENTITY_VISIBLE_TO_FRIENDLY
+
 	foreach ( entity ent in trackedEntities )
 		ent.kv.VisibilityFlags = ENTITY_VISIBLE_TO_FRIENDLY
 

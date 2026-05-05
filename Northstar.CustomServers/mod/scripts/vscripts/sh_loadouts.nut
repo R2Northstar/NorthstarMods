@@ -18,7 +18,7 @@ void function InitDefaultLoadouts()
 }
 
 #if SERVER
-	void function ValidateLoadout_OnClientConnecting( entity player )
+	void function ValidateLoadout_OnClientConnecting( entity player, bool disconnect = true )
 	{
 		int pilotLoadoutIndex = GetPersistentSpawnLoadoutIndex( player, "pilot" )
 
@@ -67,7 +67,8 @@ void function InitDefaultLoadouts()
 		{
 			delete file.playerhasinvalidloadout[ player ]
 
-			NSDisconnectPlayer( player, "#RESETTING_LOADOUT" )
+			if ( disconnect )
+				NSDisconnectPlayer( player, "#RESETTING_LOADOUT" )
 		}
 	}
 #endif
