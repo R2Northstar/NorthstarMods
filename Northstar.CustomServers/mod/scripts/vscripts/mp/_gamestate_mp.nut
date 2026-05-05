@@ -800,14 +800,10 @@ void function GameStateEnter_WinnerDetermined_Threaded()
 		{
 			ClearPlayerFromReplay( player ) // If there's a replay already happening, cut it
 			CheckGameStateForPlayerMovement( player )
+			ScreenFade( player, 0, 0, 1, 255, ROUND_WINNING_KILL_REPLAY_STARTUP_WAIT - 1.5, 0.0, 0x2 | 0x8 )
 		}
 
-		wait 1.5
-
-		foreach ( entity player in GetPlayerArray() )
-			ScreenFadeToBlackForever( player, 2.0 )
-
-		wait 2
+		wait ROUND_WINNING_KILL_REPLAY_STARTUP_WAIT
 
 		if ( IsValid( file.roundWinningKillReplayAttacker ) && IsValid( file.roundWinningKillReplayVictim ) )
 		{
@@ -1038,12 +1034,14 @@ void function GameStateEnter_SwitchingSides_Threaded()
 
 		SetServerVar( "roundWinningKillReplayEntHealthFrac", file.roundWinningKillReplayHealthFrac )
 
-		wait 1.5
-
 		foreach ( entity player in GetPlayerArray() )
-			ScreenFadeToBlackForever( player, 2.0 )
+		{
+			ClearPlayerFromReplay( player ) // If there's a replay already happening, cut it
+			CheckGameStateForPlayerMovement( player )
+			ScreenFade( player, 0, 0, 1, 255, ROUND_WINNING_KILL_REPLAY_STARTUP_WAIT - 1.5, 0.0, 0x2 | 0x8 )
+		}
 
-		wait 2
+		wait ROUND_WINNING_KILL_REPLAY_STARTUP_WAIT
 
 		if ( IsValid( file.roundWinningKillReplayAttacker ) && IsValid( file.roundWinningKillReplayVictim ) )
 		{
