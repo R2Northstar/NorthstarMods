@@ -782,7 +782,7 @@ void function GameStateEnter_WinnerDetermined_Threaded()
 	SetServerVar( "gameEndTime", Time() )
 	SetServerVar( "roundEndTime", Time() )
 
-	float fadeTime = GetWinnerDeterminedWait() + CLEAR_PLAYERS_BUFFER
+	float fadeTime = GetWinnerDeterminedWait() + Time()
 	entity replayAttacker = file.roundWinningKillReplayAttacker
 	bool doReplay = WillShowRoundWinningKillReplay()
 
@@ -793,9 +793,6 @@ void function GameStateEnter_WinnerDetermined_Threaded()
 		SetRespawnEnabled( false )
 
 		float replayLength = ROUND_WINNING_KILL_REPLAY_LENGTH_OF_REPLAY
-
-		if ( "respawnTime" in replayAttacker.s && Time() - replayAttacker.s.respawnTime < replayLength )
-			replayLength += Time() - expect float( replayAttacker.s.respawnTime )
 
 		SetServerVar( "roundWinningKillReplayEntHealthFrac", file.roundWinningKillReplayHealthFrac )
 
@@ -812,8 +809,13 @@ void function GameStateEnter_WinnerDetermined_Threaded()
 
 		wait 2
 
-		foreach ( entity player in GetPlayerArray() )
-			thread PlayerWatchesRoundWinningReplay( player, replayLength )
+		if ( IsValid( file.roundWinningKillReplayAttacker ) && IsValid( file.roundWinningKillReplayVictim ) )
+		{
+			foreach ( entity player in GetPlayerArray() )
+				thread PlayerWatchesRoundWinningReplay( player, replayLength )
+		}
+		else
+			MessageToAll( eEventNotifications.RoundWinningKillReplayCancelled )
 
 		wait replayLength
 
@@ -832,10 +834,10 @@ void function GameStateEnter_WinnerDetermined_Threaded()
 
 		wait 0.5
 
-		fadeTime -= 5.5 + replayLength
-
 		if ( IsRoundBased() && !HasRoundScoreLimitBeenReached() )
 			CleanUpEntitiesForRoundEnd()
+
+		wait CLEAR_PLAYERS_BUFFER
 
 		SetServerVar( "roundWinningKillReplayPlaying", false )
 	}
@@ -857,14 +859,14 @@ void function GameStateEnter_WinnerDetermined_Threaded()
 		if ( IsRoundBased() && !HasRoundScoreLimitBeenReached() ) // Repeat check here just for the case match is over and epilogue is disabled, so it doesn't kill players randomly
 			CleanUpEntitiesForRoundEnd()
 
-		fadeTime -= 5.0
+		wait CLEAR_PLAYERS_BUFFER
 	}
 
 	file.roundWinningKillReplayAttacker = null // Clear Replays
 	file.roundWinningKillReplayInflictorEHandle = -1
 
 	if ( IsRoundBased() && !HasRoundScoreLimitBeenReached() )
-		wait fadeTime
+		wait fadeTime - Time()
 
 	SetRespawnEnabled( true )
 
@@ -922,7 +924,7 @@ void function PlayerWatchesRoundWinningReplay( entity player, float replayLength
 {
 	entity attacker = file.roundWinningKillReplayAttacker
 
-	if ( !IsValidPlayer( player ) || !IsValid( attacker ) )
+	if ( !IsValidPlayer( player ) )
 		return
 
 	player.StopObserverMode()
@@ -1016,7 +1018,7 @@ void function GameStateEnter_SwitchingSides_Threaded()
 
 	svGlobal.levelEnt.Signal( "RoundEnd" )
 
-	float fadeTime = GetWinnerDeterminedWait() + CLEAR_PLAYERS_BUFFER
+	float fadeTime = GetWinnerDeterminedWait() + Time()
 	entity replayAttacker = file.roundWinningKillReplayAttacker
 	bool doReplay = WillShowRoundWinningKillReplay()
 
@@ -1034,9 +1036,6 @@ void function GameStateEnter_SwitchingSides_Threaded()
 
 		float replayLength = ROUND_WINNING_KILL_REPLAY_LENGTH_OF_REPLAY
 
-		if ( "respawnTime" in replayAttacker.s && Time() - replayAttacker.s.respawnTime < replayLength )
-			replayLength += Time() - expect float( replayAttacker.s.respawnTime )
-
 		SetServerVar( "roundWinningKillReplayEntHealthFrac", file.roundWinningKillReplayHealthFrac )
 
 		wait 1.5
@@ -1046,8 +1045,13 @@ void function GameStateEnter_SwitchingSides_Threaded()
 
 		wait 2
 
-		foreach ( entity player in GetPlayerArray() )
-			thread PlayerWatchesRoundWinningReplay( player, replayLength )
+		if ( IsValid( file.roundWinningKillReplayAttacker ) && IsValid( file.roundWinningKillReplayVictim ) )
+		{
+			foreach ( entity player in GetPlayerArray() )
+				thread PlayerWatchesRoundWinningReplay( player, replayLength )
+		}
+		else
+			MessageToAll( eEventNotifications.RoundWinningKillReplayCancelled )
 
 		wait replayLength
 
@@ -1066,9 +1070,10 @@ void function GameStateEnter_SwitchingSides_Threaded()
 
 		wait 0.5
 
-		fadeTime -= 5.5 + replayLength
-
 		CleanUpEntitiesForRoundEnd()
+
+		wait CLEAR_PLAYERS_BUFFER
+
 		SetServerVar( "roundWinningKillReplayPlaying", false )
 	}
 	else if ( !IsRoundBased() )
@@ -1084,14 +1089,14 @@ void function GameStateEnter_SwitchingSides_Threaded()
 
 		CleanUpEntitiesForRoundEnd()
 
-		fadeTime -= 5.0
+		wait CLEAR_PLAYERS_BUFFER
 	}
 
 	file.roundWinningKillReplayAttacker = null // Clear Replays
 	file.roundWinningKillReplayInflictorEHandle = -1
 
 	if ( !IsRoundBased() )
-		wait fadeTime
+		wait fadeTime - Time()
 
 	if ( !doReplay )
 		wait SWITCHING_SIDES_DELAY
@@ -1215,6 +1220,7 @@ void function GameStateEnter_Postmatch()
 		player.FreezeControlsOnServer()
 		player.SetNoTarget( true ) // Stop AI from targeting this player at this state of the match
 		player.SetInvulnerable() // Players could still die to some post-damaging stuff they might release (i.e: Electric Smokes, AI)
+		thread DelayedTakeAllWeapons( player )
 		thread ForceFadeToBlack( player )
 	}
 
@@ -1230,6 +1236,17 @@ void function GameStateEnter_Postmatch_Threaded()
 	wait 2.0
 
 	GameRules_EndMatch()
+}
+
+void function DelayedTakeAllWeapons( entity player )
+{
+	player.EndSignal( "Disconnected" )
+	player.EndSignal( "OnDeath" )
+
+	wait 1.25
+
+	if ( IsValid( player ) )
+		TakeAllWeapons( player )
 }
 
 /*
@@ -1445,6 +1462,8 @@ void function CleanUpEntitiesForRoundEnd()
 		PlayerEarnMeter_Reset( player )
 		ClearTitanAvailable( player )
 		PROTO_CleanupTrackedProjectiles( player )
+		SetPlayerEliminated( player )
+
 		player.SetPlayerNetInt( "batteryCount", 0 )
 		player.ClearInvulnerable()
 		player.SetNoTarget( false )
