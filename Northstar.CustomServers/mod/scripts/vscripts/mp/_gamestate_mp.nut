@@ -808,7 +808,7 @@ void function GameStateEnter_WinnerDetermined_Threaded()
 
 		wait ROUND_WINNING_KILL_REPLAY_SCREEN_FADE_TIME
 
-		if ( IsValid( file.roundWinningKillReplayAttacker ) && IsValid( file.roundWinningKillReplayVictim ) )
+		if ( IsValid( file.roundWinningKillReplayAttacker ) )
 		{
 			foreach ( entity player in GetPlayerArray() )
 				thread PlayerWatchesRoundWinningReplay( player, ROUND_WINNING_KILL_REPLAY_LENGTH_OF_REPLAY )
@@ -1038,7 +1038,7 @@ void function GameStateEnter_SwitchingSides_Threaded()
 
 		wait ROUND_WINNING_KILL_REPLAY_SCREEN_FADE_TIME
 
-		if ( IsValid( file.roundWinningKillReplayAttacker ) && IsValid( file.roundWinningKillReplayVictim ) )
+		if ( IsValid( file.roundWinningKillReplayAttacker ) )
 		{
 			foreach ( entity player in GetPlayerArray() )
 				thread PlayerWatchesRoundWinningReplay( player, ROUND_WINNING_KILL_REPLAY_LENGTH_OF_REPLAY )
