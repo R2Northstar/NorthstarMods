@@ -126,8 +126,6 @@ void function RunColiseumOutro()
 		}
 	}
 
-	WaitFrame()
-
 	array<entity> winningPlayers = GetPlayerArrayOfTeam( GetWinningTeam() )
 	array<entity> losingPlayers = GetPlayerArrayOfTeam( GetOtherTeam( GetWinningTeam() ) )
 
@@ -177,7 +175,7 @@ void function RunColiseumOutro()
 				player.kv.VisibilityFlags = ~ENTITY_VISIBLE_TO_EVERYONE
 		}
 
-		thread RunColiseumOutroThreaded( winningPlayer, losingPlayer )
+		delaythread( 0.0001 ) RunColiseumOutroThreaded( winningPlayer, losingPlayer )
 	}
 	else
 		SetGameState( eGameState.Postmatch )
