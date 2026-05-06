@@ -383,12 +383,12 @@ void function SetWinner( int ornull team, string winningReason = "", string losi
 					"ServerCallback_AnnounceRoundWinner",
 					0,
 					announcementSubstr,
-					ROUND_WINNING_KILL_REPLAY_SCREEN_FADE_TIME,
+					GetWinnerDeterminedWait(),
 					GameRules_GetTeamScore2( TEAM_MILITIA ),
 					GameRules_GetTeamScore2( TEAM_IMC )
 				)
 			else
-				Remote_CallFunction_NonReplay( player, "ServerCallback_AnnounceWinner", 0, announcementSubstr, ROUND_WINNING_KILL_REPLAY_SCREEN_FADE_TIME )
+				Remote_CallFunction_NonReplay( player, "ServerCallback_AnnounceWinner", 0, announcementSubstr, GetWinnerDeterminedWait() )
 		}
 
 		if ( team != null && player.GetTeam() == team )
@@ -557,6 +557,9 @@ void function GameStateEnter_PickLoadout()
 
 void function GameStateEnter_PickLoadout_Threaded()
 {
+	foreach ( entity weapon in GetWeaponArray( true ) )
+		weapon.Destroy()
+
 	float pickloadoutLength = 20.0 // may need tweaking
 
 	if ( Time() >= GetServerVar( "minPickLoadOutTime" ) )
@@ -579,6 +582,9 @@ void function GameStateEnter_PickLoadout_Threaded()
 
 void function GameStateEnter_Prematch()
 {
+	foreach ( entity weapon in GetWeaponArray( true ) )
+		weapon.Destroy()
+
 	int timeLimit = GameMode_GetTimeLimit( GAMETYPE ) * 60
 
 	if ( file.switchSidesBased )
@@ -791,29 +797,26 @@ void function GameStateEnter_WinnerDetermined_Threaded()
 	if ( doReplay )
 	{
 		SetRespawnEnabled( false )
-
-		float replayLength = ROUND_WINNING_KILL_REPLAY_LENGTH_OF_REPLAY
-
 		SetServerVar( "roundWinningKillReplayEntHealthFrac", file.roundWinningKillReplayHealthFrac )
 
 		foreach ( entity player in GetPlayerArray() )
 		{
 			ClearPlayerFromReplay( player ) // If there's a replay already happening, cut it
 			CheckGameStateForPlayerMovement( player )
-			ScreenFade( player, 0, 0, 1, 255, ROUND_WINNING_KILL_REPLAY_STARTUP_WAIT - 1.5, 0.0, 0x2 | 0x8 )
+			ScreenFade( player, 0, 0, 1, 255, ROUND_WINNING_KILL_REPLAY_SCREEN_FADE_TIME - 1.5, 0.0, 0x2 | 0x8 )
 		}
 
-		wait ROUND_WINNING_KILL_REPLAY_STARTUP_WAIT
+		wait ROUND_WINNING_KILL_REPLAY_SCREEN_FADE_TIME
 
 		if ( IsValid( file.roundWinningKillReplayAttacker ) && IsValid( file.roundWinningKillReplayVictim ) )
 		{
 			foreach ( entity player in GetPlayerArray() )
-				thread PlayerWatchesRoundWinningReplay( player, replayLength )
+				thread PlayerWatchesRoundWinningReplay( player, ROUND_WINNING_KILL_REPLAY_LENGTH_OF_REPLAY )
 		}
 		else
 			MessageToAll( eEventNotifications.RoundWinningKillReplayCancelled )
 
-		wait replayLength
+		wait ROUND_WINNING_KILL_REPLAY_LENGTH_OF_REPLAY
 
 		foreach ( entity player in GetPlayerArray() )
 			ScreenFadeToBlackForever( player, 1.0 )
@@ -837,7 +840,7 @@ void function GameStateEnter_WinnerDetermined_Threaded()
 
 		SetServerVar( "roundWinningKillReplayPlaying", false )
 	}
-	else if ( !ShouldRunEvac() || ( IsRoundBased() && !HasRoundScoreLimitBeenReached() ) )
+	else if ( !ShouldRunEvac() )
 	{
 		SetRespawnEnabled( false )
 
@@ -861,8 +864,7 @@ void function GameStateEnter_WinnerDetermined_Threaded()
 	file.roundWinningKillReplayAttacker = null // Clear Replays
 	file.roundWinningKillReplayInflictorEHandle = -1
 
-	if ( IsRoundBased() && !HasRoundScoreLimitBeenReached() )
-		wait fadeTime - Time()
+	wait fadeTime - Time()
 
 	SetRespawnEnabled( true )
 
@@ -1010,11 +1012,11 @@ void function GameStateEnter_SwitchingSides()
 
 void function GameStateEnter_SwitchingSides_Threaded()
 {
-	WaitFrame()
+	WaitFrame() // wait a frame so other scripts can setup killreplay stuff
 
 	svGlobal.levelEnt.Signal( "RoundEnd" )
 
-	float fadeTime = GetWinnerDeterminedWait() + Time()
+	float fadeTime = SWITCHING_SIDES_DELAY + ROUND_WINNING_KILL_REPLAY_TOTAL_LENGTH + SWITCHING_SIDES_DELAY_REPLAY + Time()
 	entity replayAttacker = file.roundWinningKillReplayAttacker
 	bool doReplay = WillShowRoundWinningKillReplay()
 
@@ -1022,36 +1024,29 @@ void function GameStateEnter_SwitchingSides_Threaded()
 
 	foreach ( entity player in GetPlayerArray() )
 	{
-		ClearPlayerFromReplay( player )
+		ClearPlayerFromReplay( player ) // If there's a replay already happening, cut it
 		CheckGameStateForPlayerMovement( player )
 	}
 
 	if ( doReplay )
 	{
 		SetRespawnEnabled( false )
-
-		float replayLength = ROUND_WINNING_KILL_REPLAY_LENGTH_OF_REPLAY
-
 		SetServerVar( "roundWinningKillReplayEntHealthFrac", file.roundWinningKillReplayHealthFrac )
 
 		foreach ( entity player in GetPlayerArray() )
-		{
-			ClearPlayerFromReplay( player ) // If there's a replay already happening, cut it
-			CheckGameStateForPlayerMovement( player )
-			ScreenFade( player, 0, 0, 1, 255, ROUND_WINNING_KILL_REPLAY_STARTUP_WAIT - 1.5, 0.0, 0x2 | 0x8 )
-		}
+			ScreenFade( player, 0, 0, 1, 255, ROUND_WINNING_KILL_REPLAY_SCREEN_FADE_TIME - 1.5, 0.0, 0x2 | 0x8 )
 
-		wait ROUND_WINNING_KILL_REPLAY_STARTUP_WAIT
+		wait ROUND_WINNING_KILL_REPLAY_SCREEN_FADE_TIME
 
 		if ( IsValid( file.roundWinningKillReplayAttacker ) && IsValid( file.roundWinningKillReplayVictim ) )
 		{
 			foreach ( entity player in GetPlayerArray() )
-				thread PlayerWatchesRoundWinningReplay( player, replayLength )
+				thread PlayerWatchesRoundWinningReplay( player, ROUND_WINNING_KILL_REPLAY_LENGTH_OF_REPLAY )
 		}
 		else
 			MessageToAll( eEventNotifications.RoundWinningKillReplayCancelled )
 
-		wait replayLength
+		wait ROUND_WINNING_KILL_REPLAY_LENGTH_OF_REPLAY
 
 		foreach ( entity player in GetPlayerArray() )
 			ScreenFadeToBlackForever( player, 1.0 )
@@ -1095,8 +1090,7 @@ void function GameStateEnter_SwitchingSides_Threaded()
 
 	if ( !IsRoundBased() )
 		wait fadeTime - Time()
-
-	if ( !doReplay )
+	else
 		wait SWITCHING_SIDES_DELAY
 
 	file.hasSwitchedSides = true
@@ -1504,7 +1498,6 @@ void function CleanUpEntitiesForRoundEnd()
 
 	WaitFrame()
 
-	ClearDroppedWeapons()
 	SetPlayerDeathsHidden( false )
 }
 
