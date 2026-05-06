@@ -862,7 +862,8 @@ void function GameStateEnter_WinnerDetermined_Threaded()
 	file.roundWinningKillReplayAttacker = null // Clear Replays
 	file.roundWinningKillReplayInflictorEHandle = -1
 
-	wait fadeTime - Time()
+	if ( IsRoundBased() && !HasRoundScoreLimitBeenReached() )
+		wait fadeTime - Time()
 
 	SetRespawnEnabled( true )
 
