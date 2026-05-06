@@ -840,7 +840,7 @@ void function GameStateEnter_WinnerDetermined_Threaded()
 
 		SetServerVar( "roundWinningKillReplayPlaying", false )
 	}
-	else if ( !ShouldRunEvac() )
+	else if ( !ShouldRunEvac() || ( IsRoundBased() && !HasRoundScoreLimitBeenReached() ) )
 	{
 		SetRespawnEnabled( false )
 
