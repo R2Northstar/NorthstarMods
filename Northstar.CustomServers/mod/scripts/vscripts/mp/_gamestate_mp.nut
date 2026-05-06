@@ -803,7 +803,7 @@ void function GameStateEnter_WinnerDetermined_Threaded()
 		{
 			ClearPlayerFromReplay( player ) // If there's a replay already happening, cut it
 			CheckGameStateForPlayerMovement( player )
-			ScreenFade( player, 0, 0, 1, 255, ROUND_WINNING_KILL_REPLAY_SCREEN_FADE_TIME - 1.5, 0.0, 0x2 | 0x8 )
+			ScreenFade( player, 0, 0, 1, 255, ROUND_WINNING_KILL_REPLAY_SCREEN_FADE_TIME - 1.5, 0.0, FFADE_OUT | FFADE_STAYOUT )
 		}
 
 		wait ROUND_WINNING_KILL_REPLAY_SCREEN_FADE_TIME
@@ -824,12 +824,10 @@ void function GameStateEnter_WinnerDetermined_Threaded()
 		wait 2
 
 		foreach ( entity player in GetPlayerArray() )
+		{
 			ClearPlayerFromReplay( player )
-
-		WaitFrame()
-
-		foreach ( entity player in GetPlayerArray() )
-			ScreenFadeToBlackForever( player, 0.0 )
+			ScreenFade( player, 0, 0, 1, 255, 1.5, 1.5, FFADE_STAYOUT | FFADE_PURGE | FFADE_NOT_IN_REPLAY )
+		}
 
 		wait 0.5
 
@@ -1034,7 +1032,7 @@ void function GameStateEnter_SwitchingSides_Threaded()
 		SetServerVar( "roundWinningKillReplayEntHealthFrac", file.roundWinningKillReplayHealthFrac )
 
 		foreach ( entity player in GetPlayerArray() )
-			ScreenFade( player, 0, 0, 1, 255, ROUND_WINNING_KILL_REPLAY_SCREEN_FADE_TIME - 1.5, 0.0, 0x2 | 0x8 )
+			ScreenFade( player, 0, 0, 1, 255, ROUND_WINNING_KILL_REPLAY_SCREEN_FADE_TIME - 1.5, 0.0, FFADE_OUT | FFADE_STAYOUT )
 
 		wait ROUND_WINNING_KILL_REPLAY_SCREEN_FADE_TIME
 
@@ -1054,12 +1052,10 @@ void function GameStateEnter_SwitchingSides_Threaded()
 		wait 2
 
 		foreach ( entity player in GetPlayerArray() )
+		{
 			ClearPlayerFromReplay( player )
-
-		WaitFrame()
-
-		foreach ( entity player in GetPlayerArray() )
-			ScreenFadeToBlackForever( player, 0.0 )
+			ScreenFade( player, 0, 0, 1, 255, 1.5, 1.5, FFADE_STAYOUT | FFADE_PURGE | FFADE_NOT_IN_REPLAY )
+		}
 
 		wait 0.5
 
