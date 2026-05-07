@@ -77,6 +77,7 @@ struct
 	table<string, array<void functionref( entity, var )> > classDamageFinalCallbacks
 	table<string, array<void functionref( entity, var )> > classPostDamageCallbacks
 	array<void functionref( entity )> playerInventoryChangedCallbacks
+	array<void functionref( entity, entity, string, int )> weaponAttackCallbacks
 } file
 
 #if MP
