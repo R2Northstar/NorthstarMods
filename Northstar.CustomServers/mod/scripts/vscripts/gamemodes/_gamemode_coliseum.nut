@@ -120,16 +120,6 @@ void function RunColiseumOutro()
 
 	array<entity> winningPlayers = GetPlayerArrayOfTeam( GetWinningTeam() )
 	array<entity> losingPlayers = GetPlayerArrayOfTeam( GetOtherTeam( GetWinningTeam() ) )
-
-	foreach ( entity player in GetPlayerArray() )
-	{
-		if ( winningPlayers.contains( player ) )
-			winningPlayers.removebyvalue( player )
-
-		if ( losingPlayers.contains( player ) )
-			losingPlayers.removebyvalue( player )
-	}
-
 	entity winningPlayer = null
 	entity losingPlayer = null
 
@@ -268,15 +258,6 @@ int function TimeoutCheckPlayers()
 {
 	array<entity> imcPlayers = GetPlayerArrayOfTeam_Alive( TEAM_IMC )
 	array<entity> militiaPlayers = GetPlayerArrayOfTeam_Alive( TEAM_MILITIA )
-
-	foreach ( entity player in GetPlayerArray_Alive() )
-	{
-		if ( imcPlayers.contains( player ) )
-			imcPlayers.removebyvalue( player )
-
-		if ( militiaPlayers.contains( player ) )
-			militiaPlayers.removebyvalue( player )
-	}
 
 	if ( imcPlayers.len() > militiaPlayers.len() )
 		return TEAM_IMC
