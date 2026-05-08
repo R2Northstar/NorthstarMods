@@ -71,18 +71,13 @@ void function ShowColiseumIntroScreenThreaded()
 	foreach ( entity player in GetPlayerArray() )
 	{
 		array<entity> otherTeam = GetPlayerArrayOfTeam( GetOtherTeam( player.GetTeam() ) )
-
-		foreach ( entity player in otherTeam )
-			if ( IsPrivateMatchSpectator( player ) )
-				otherTeam.removebyvalue( player )
-
 		int winstreak = 0
 		int wins = 0
 		int losses = 0
 
 		if ( otherTeam.len() )
 		{
-			entity enemy = otherTeam.getrandom()
+			entity enemy = otherTeam[ 0 ]
 
 			winstreak = enemy.GetPersistentVarAsInt( "coliseumWinStreak" )
 			wins = enemy.GetPersistentVarAsInt( "coliseumTotalWins" )
@@ -111,9 +106,6 @@ void function RunColiseumOutro()
 	// also since this runs on game end, do winstreak stuff
 	foreach ( entity player in GetPlayerArray() )
 	{
-		if ( IsPrivateMatchSpectator( player ) )
-			continue
-
 		if ( GetWinningTeam() == player.GetTeam() )
 		{
 			player.SetPersistentVar( "coliseumTotalWins", player.GetPersistentVarAsInt( "coliseumTotalWins" ) + 1 )
@@ -131,9 +123,6 @@ void function RunColiseumOutro()
 
 	foreach ( entity player in GetPlayerArray() )
 	{
-		if ( !IsPrivateMatchSpectator( player ) )
-			continue
-
 		if ( winningPlayers.contains( player ) )
 			winningPlayers.removebyvalue( player )
 
@@ -154,9 +143,6 @@ void function RunColiseumOutro()
 	{
 		foreach ( entity player in GetPlayerArray() )
 		{
-			if ( IsPrivateMatchSpectator( player ) )
-				continue
-
 			if ( !IsAlive( player ) )
 			{
 				DoRespawnPlayer( player, null )
@@ -255,8 +241,7 @@ void function RunColiseumOutroThreaded( entity winningPlayer, entity losingPlaye
 void function IncreaseColiseumRoundsPlayed()
 {
 	foreach ( entity player in GetPlayerArray() )
-		if ( IsPrivateMatchSpectator( player ) )
-			file.roundsPlayed[ player ] <- ( player in file.roundsPlayed ? file.roundsPlayed[ player ] + 1 : 1 )
+		file.roundsPlayed[ player ] <- ( player in file.roundsPlayed ? file.roundsPlayed[ player ] + 1 : 1 )
 }
 
 void function Coliseum_OnClientDisconnected( entity player )
@@ -286,9 +271,6 @@ int function TimeoutCheckPlayers()
 
 	foreach ( entity player in GetPlayerArray_Alive() )
 	{
-		if ( !IsPrivateMatchSpectator( player ) )
-			continue
-
 		if ( imcPlayers.contains( player ) )
 			imcPlayers.removebyvalue( player )
 
