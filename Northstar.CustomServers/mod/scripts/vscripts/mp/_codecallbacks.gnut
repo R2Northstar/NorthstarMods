@@ -19,9 +19,9 @@ global function CodeCallback_CheckPassThroughAddsMods
 global function SetTitanMeterGainScale
 
 #if MP
-	global function CodeCallback_OnServerAnimEvent
 	global function CodeCallback_WeaponDropped
 	global function AddCallback_OnWeaponDropped
+	global function CodeCallback_OnServerAnimEvent
 
 	global function CodeCallback_OnWeaponAttack
 	global function AddCallback_OnWeaponAttack
@@ -1113,7 +1113,10 @@ int function NPCShieldHealthUpdate( entity npc, damageInfo, bool critHit )
 	{
 		foreach ( callbackFunc in file.weaponAttackCallbacks )
 		{
-			callbackFunc( player, weapon, weaponName, shotsFired )
+			foreach ( callbackFunc in file.weaponAttackCallbacks )
+			{
+				callbackFunc( player, weapon, weaponName, shotsFired )
+			}
 		}
 	}
 #endif // #if MP

@@ -2888,21 +2888,18 @@ bool function EntHasModelSet( entity ent )
 
 string function GenerateTitanOSAlias( entity player, string aliasSuffix )
 {
-	// HACK: Temp fix for blocker bug. Fixing correctly next.
-	if ( IsSingleplayer() )
-	{
+	entity titan
+	if ( player.IsTitan() )
+		titan = player
+	else
+		titan = player.GetPetTitan()
+	Assert( IsValid( titan ) )
+	string titanCharacterName = GetTitanCharacterName( titan )
+
+	if ( titanCharacterName == "bt" ) // BT have a special case since hes not a multiplayer Titan
 		return "diag_gs_titanBt_" + aliasSuffix
-	}
 	else
 	{
-		entity titan
-		if ( player.IsTitan() )
-			titan = player
-		else
-			titan = player.GetPetTitan()
-
-		Assert( IsValid( titan ) )
-		string titanCharacterName = GetTitanCharacterName( titan )
 		string primeTitanString = ""
 
 		if ( IsTitanPrimeTitan( titan ) )
@@ -3269,30 +3266,17 @@ float function LimitAxisToMapExtents( float axisVal )
 	return axisVal
 }
 
-bool function PilotSpawnOntoTitanIsEnabledInPlaylist( entity player )
-{
-	if ( GetCurrentPlaylistVarInt( "titan_spawn_deploy_enabled", 0 ) != 0 )
-		return true
-	return false
-}
-
 bool function PlayerCanSpawnIntoTitan( entity player )
 {
-	if ( !PilotSpawnOntoTitanIsEnabledInPlaylist( player ) )
-		return false
-
 	entity titan = player.GetPetTitan()
 
-	if ( !IsAlive( titan ) )
+	if ( !IsAlive( titan ) || GetDoomedState( titan ) )
 		return false
 
-	if ( GetDoomedState( titan ) )
+	if ( titan.ContextAction_IsBusy() || titan.ContextAction_IsMeleeExecution() )
 		return false
 
-	if ( titan.ContextAction_IsActive() )
-		return false
-
-	return false // turned off until todd figures out how to enable
+	return GetCurrentPlaylistVarInt( "titan_spawn_deploy_enabled", 0 ) == 1
 }
 
 array<vector> function EntitiesToOrigins( array<entity> ents )

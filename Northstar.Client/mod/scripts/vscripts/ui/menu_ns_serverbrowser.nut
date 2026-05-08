@@ -7,6 +7,8 @@ global function OnServerSelected_Threaded
 global function AddConnectToServerCallback
 global function RemoveConnectToServerCallback
 
+global function IsCoreMod
+
 // Stop peeking
 
 const int BUTTONS_PER_PAGE = 15 // Number of servers we show

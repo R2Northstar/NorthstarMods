@@ -188,7 +188,7 @@ void function ShInitBoostStoreForMode()
 		}
 	}
 	file.availableBoosts.sort( SortCompareBoostCost )
-	printt( file.availableBoosts.len() )
+	// printt( file.availableBoosts.len() )
 }
 
 int function SortCompareBoostCost( BoostStoreData a, BoostStoreData b )
@@ -208,6 +208,7 @@ int function SortCompareBoostCost( BoostStoreData a, BoostStoreData b )
 array<BoostStoreData> function GetAvailableBoosts()
 {
 	// custom stuff for arena
+	// TODO: make an API for doing this and remove this file from Northstar.Custom
 	string boostStoreMode = GetCurrentPlaylistVarString( "boost_store_mode", "off" )
 	if ( boostStoreMode == "arena" )
 	{
@@ -258,19 +259,19 @@ bool function CanPurchaseBoost( entity player, BoostStoreData data, bool checkMo
 		if ( !BoostStoreOpen() )
 			return true
 
-		if ( player.IsPhaseShifted() )
-			return false
-
 		if ( !IsAlive( player ) )
-			return false
+			return true
 
 		if ( player.IsTitan() )
-			return false
+			return true
+
+		if ( !IsPlayerNearbyAnyBoostStore( player ) )
+			return true
 
 		array<BoostStoreData> availableBoosts = GetAvailableBoosts()
 
 		if ( args.len() == 0 )
-			return false
+			return true
 
 		foreach ( data in availableBoosts )
 		{
@@ -308,8 +309,17 @@ bool function CanPurchaseBoost( entity player, BoostStoreData data, bool checkMo
 
 	bool function ClientCommand_Deposit( entity player, array<string> args )
 	{
-		// if ( !BoostStoreOpen() )
-		// 	return true
+		if ( !BoostStoreOpen() )
+			return true
+
+		if ( !IsAlive( player ) )
+			return true
+
+		if ( player.IsTitan() )
+			return true
+
+		if ( !IsPlayerNearbyAnyBoostStore( player ) )
+			return true
 
 		int depositAmount = minint( file.playerBonusData[ player ], BOOST_STORE_DEFAULT_EXCHANGE )
 		file.teamReserveAmount += depositAmount
@@ -328,8 +338,17 @@ bool function CanPurchaseBoost( entity player, BoostStoreData data, bool checkMo
 
 	bool function ClientCommand_Withdraw( entity player, array<string> args )
 	{
-		// if ( !BoostStoreOpen() )
-		// 	return true
+		if ( !BoostStoreOpen() )
+			return true
+
+		if ( !IsAlive( player ) )
+			return true
+
+		if ( player.IsTitan() )
+			return true
+
+		if ( !IsPlayerNearbyAnyBoostStore( player ) )
+			return true
 
 		if ( GetPlayerMoney( player ) >= MAX_MONEY )
 			return true
@@ -547,7 +566,7 @@ bool function CanPurchaseBoost( entity player, BoostStoreData data, bool checkMo
 		while ( IsValid( crate ) )
 		{
 			entity player = expect entity( crate.WaitSignal( "OnPlayerUse" ).player )
-			if ( IsValid( player ) )
+			if ( IsValid( player ) && Distance( player.GetOrigin(), crate.GetOrigin() ) < BOOST_STORE_TRIGGER_RADIUS )
 				OpenBoostStoreMenu( player )
 		}
 	}
@@ -557,12 +576,27 @@ bool function CanPurchaseBoost( entity player, BoostStoreData data, bool checkMo
 		if ( !BoostStoreEnabled() )
 			return
 
+		if ( !IsPlayerNearbyAnyBoostStore( player ) )
+			return
+
 		CalculatePlayerTurretCount( player )
 		Remote_CallFunction_UI( player, "ServerCallback_UpdateMoney", file.playerBonusData[ player ] )
 		Remote_CallFunction_UI( player, "ServerCallback_UpdateTeamReserve", file.teamReserveAmount )
 		Remote_CallFunction_UI( player, "ServerCallback_UpdatePlayerHasBattery", PlayerHasBattery( player ) )
 		Remote_CallFunction_UI( player, "ServerCallback_UpdateAmpedWeaponState", PlayerHasAmpedWeapons( player ) )
 		Remote_CallFunction_UI( player, "ServerCallback_OpenBoostStore" )
+	}
+
+	bool function IsPlayerNearbyAnyBoostStore( entity player )
+	{
+		bool playerNearStore = false
+		foreach ( entity crate in GetBoostStores() )
+		{
+			if ( Distance( player.GetOrigin(), crate.GetOrigin() ) < BOOST_STORE_TRIGGER_RADIUS )
+				playerNearStore = true
+		}
+
+		return playerNearStore
 	}
 #endif
 

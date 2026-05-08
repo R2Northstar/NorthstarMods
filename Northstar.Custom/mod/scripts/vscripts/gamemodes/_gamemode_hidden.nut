@@ -11,7 +11,6 @@ void function GamemodeHidden_Init()
 	SetShouldUseRoundWinningKillReplay( true )
 	SetLoadoutGracePeriodEnabled( false ) // prevent modifying loadouts with grace period
 	SetWeaponDropsEnabled( false )
-	SetRespawnsEnabled( false )
 	SetGamemodeAllowsTeamSwitch( false )
 	Riff_ForceTitanAvailability( eTitanAvailability.Never )
 	Riff_ForceBoostAvailability( eBoostAvailability.Disabled )

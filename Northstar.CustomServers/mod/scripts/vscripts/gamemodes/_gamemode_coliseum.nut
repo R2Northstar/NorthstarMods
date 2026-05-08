@@ -26,7 +26,6 @@ void function GamemodeColiseum_Init()
 {
 	// gamemode settings
 	SetRoundBased( true )
-	SetRespawnsEnabled( false )
 	SetShouldUseRoundWinningKillReplay( true )
 	Riff_ForceTitanAvailability( eTitanAvailability.Never )
 	Riff_ForceBoostAvailability( eBoostAvailability.Disabled )
@@ -130,7 +129,7 @@ void function GivePlayerColiseumLoadout( entity player )
 
 string function GetColiseumItem( string name )
 {
-	return expect string( GetCurrentPlaylistVar( "coliseum_" + name ) )
+	return expect string( GetCurrentPlaylistVar( "pilot_loadout_" + name ) )
 }
 
 void function SetupColiseumEpilogue()

@@ -161,9 +161,17 @@ function CodeCallback_PlayerInTitanCockpit( titan, player )
 		var model = Dev_GetPlayerSettingAssetByKeyField_Global( settings, "hatchmodel" )
 		if ( model == $"" )
 			return
+
 		expect asset( model )
 
 		entity rodeoPanel = CreatePropDynamic( model )
+
+		bool classicRodeo = MP && GetCurrentPlaylistVarInt( "classic_rodeo", 0 ) == 1
+		if ( classicRodeo )
+		{
+			Highlight_SetEnemyHighlight( rodeoPanel, "titan_weakpoint" )
+			Highlight_ClearEnemyHighlight( rodeoPanel )
+		}
 
 		string titanType = GetSoulTitanSubClass( soul )
 
@@ -192,9 +200,12 @@ function CodeCallback_PlayerInTitanCockpit( titan, player )
 		var model = Dev_GetPlayerSettingAssetByKeyField_Global( settings, "hatchmodel" )
 		if ( model == $"" )
 			return
+
 		expect asset( model )
 
 		entity batteryContainer = soul.soul.batteryContainer
+		if ( !IsValid( batteryContainer ) )
+			return
 
 		if ( soul.soul.batteryContainerBeingUsed )
 			return

@@ -335,7 +335,7 @@ bool function AssignNPCAppropriateWeaponFromWeapons( entity npc, array<entity> w
 	// first try to find an appropriate weapon
 	foreach ( weapon in weapons )
 	{
-		bool isAntiTitan = weapon.GetWeaponType() == WT_ANTITITAN
+		bool isAntiTitan = weapon.GetWeaponInfoFileKeyField( "holster_type" ) == "anti_titan"
 		if ( isAntiTitan == isRocketTarget )
 		{
 			// found a weapon to use
@@ -372,7 +372,7 @@ void function OnEnemyChanged_TryHeavyArmorWeapon( entity npc )
 		return
 	}
 
-	bool isActiveWeapon_AntiTitan = activeWeapon.GetWeaponType() == WT_ANTITITAN
+	bool isActiveWeapon_AntiTitan = activeWeapon.GetWeaponInfoFileKeyField( "holster_type" ) == "anti_titan"
 
 	// already using an appropriate weapon?
 	if ( isActiveWeapon_AntiTitan == isRocketTarget )
@@ -408,7 +408,7 @@ void function TrySpottedCallout( entity guy, entity enemy )
 					PlaySpectreChatterToAll( "spectre_gs_spotfartitan_1_1", guy )
 			#endif
 		}
-		else // Grunt callouts
+		else if ( IsGrunt( guy ) ) // Grunt callouts
 		{
 			#if GRUNT_CHATTER_MP_ENABLED
 				PlayGruntChatterMPLine( guy, "bc_enemytitanspotcall" )
@@ -428,7 +428,7 @@ void function TrySpottedCallout( entity guy, entity enemy )
 					PlaySpectreChatterToAll( "spectre_gs_spotenemypilot_01_1", guy )
 			#endif
 		}
-		else // Grunt callouts
+		else if ( IsGrunt( guy ) ) // Grunt callouts
 		{
 			#if GRUNT_CHATTER_MP_ENABLED
 				if ( isClose )
@@ -440,7 +440,7 @@ void function TrySpottedCallout( entity guy, entity enemy )
 	}
 	else if ( IsSuperSpectre( enemy ) )
 	{
-		if ( !IsSpectre( guy ) ) // Spectre callouts
+		if ( IsGrunt( guy ) ) // Grunt callouts
 		{
 			#if GRUNT_CHATTER_MP_ENABLED
 				PlayGruntChatterMPLine( guy, "bc_reactEnemyReaper" )
@@ -449,7 +449,7 @@ void function TrySpottedCallout( entity guy, entity enemy )
 	}
 	else
 	{
-		if ( !IsSpectre( guy ) ) // Spectre callouts
+		if ( IsGrunt( guy ) )
 		{
 			#if GRUNT_CHATTER_MP_ENABLED
 				PlayGruntChatterMPLine( guy, "bc_reactEnemySpotted" )
@@ -793,4 +793,3 @@ function SetGlobalNPCHealth( healthValue ) // Debug, for trailer team
 		npc.SetHealth( healthValue )
 	}
 }
-
