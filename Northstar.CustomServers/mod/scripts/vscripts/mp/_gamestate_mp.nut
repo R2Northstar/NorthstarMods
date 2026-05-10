@@ -674,7 +674,7 @@ void function GameStateEnter_Playing_Threaded()
 		else
 			endTime = expect float( GetServerVar( "gameEndTime" ) )
 
-		if ( int( endTime - Time() ) < 15 && int( endTime - Time() ) != lastTimeLeftSeconds )
+		if ( endTime - Time() >= 0 && int( endTime - Time() ) < 15 && int( endTime - Time() ) != lastTimeLeftSeconds )
 		{
 			foreach ( player in GetPlayerArray() )
 			{
@@ -751,6 +751,19 @@ void function GameStateEnter_Playing_Threaded()
 					SetServerVar( "replayDisabled", true )
 				}
 			}
+		}
+		else if ( playingthreeminutemusic || playinglastminutemusic )
+		{
+			playingthreeminutemusic = false
+			playinglastminutemusic = false
+
+			foreach ( int team in [ TEAM_IMC, TEAM_MILITIA ] )
+				CreateTeamMusicEvent( team, eMusicPieceID.LEVEL_INTRO, -99999999 )
+
+			StopPlayingLastMinuteMusicToAll()
+
+			foreach ( entity player in GetPlayerArray() )
+				PlayCurrentTeamMusicEventsOnPlayer( player )
 		}
 
 		WaitFrame()
