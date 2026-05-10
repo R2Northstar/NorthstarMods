@@ -674,21 +674,21 @@ void function GameStateEnter_Playing_Threaded()
 		else
 			endTime = expect float( GetServerVar( "gameEndTime" ) )
 
-		if ( endTime - Time() >= 0 && int( endTime - Time() ) < 15 && int( endTime - Time() ) != lastTimeLeftSeconds )
-		{
-			foreach ( player in GetPlayerArray() )
-			{
-				EmitSoundOnEntity( player, "Menu_Match_Countdown" )
-
-				if ( int( endTime - Time() ) < 5 && int( endTime - Time() ) >= 0 )
-					EmitSoundOnEntityAfterDelay( player, "Menu_Match_Countdown", 0.5 )
-			}
-
-			lastTimeLeftSeconds = int( endTime - Time() )
-		}
-
 		if ( !Flag( "DisableTimeLimit" ) )
 		{
+			if ( int( endTime - Time() ) < 15 && int( endTime - Time() ) != lastTimeLeftSeconds )
+			{
+				foreach ( player in GetPlayerArray() )
+				{
+					EmitSoundOnEntity( player, "Menu_Match_Countdown" )
+
+					if ( int( endTime - Time() ) < 5 && int( endTime - Time() ) >= 0 )
+						EmitSoundOnEntityAfterDelay( player, "Menu_Match_Countdown", 0.5 )
+				}
+
+				lastTimeLeftSeconds = int( endTime - Time() )
+			}
+
 			if ( Time() >= endTime - 60.0 )
 			{
 				if ( !playinglastminutemusic )
