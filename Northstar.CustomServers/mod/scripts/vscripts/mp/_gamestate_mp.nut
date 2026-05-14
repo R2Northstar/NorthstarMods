@@ -1173,19 +1173,6 @@ void function GameStateEnter_SuddenDeath_Threaded()
 		else
 			endTime = expect float( GetServerVar( "gameEndTime" ) )
 
-		if ( int( endTime - Time() ) < 15 && int( endTime - Time() ) != lastTimeLeftSeconds )
-		{
-			foreach ( player in GetPlayerArray() )
-			{
-				EmitSoundOnEntity( player, "Menu_Match_Countdown" )
-
-				if ( int( endTime - Time() ) < 5 && int( endTime - Time() ) >= 0 )
-					EmitSoundOnEntityAfterDelay( player, "Menu_Match_Countdown", 0.5 )
-			}
-
-			lastTimeLeftSeconds = int( endTime - Time() )
-		}
-
 		if ( !IsRoundBased() && !IsFFAGame() ) // Death callbacks have dedicated logic to handle FFA modes
 		{
 			int militiaScore = GameRules_GetTeamScore( TEAM_MILITIA )
@@ -1199,8 +1186,24 @@ void function GameStateEnter_SuddenDeath_Threaded()
 			}
 		}
 
-		if ( Time() >= endTime && !Flag( "DisableTimeLimit" ) )
-			SetWinner( null, "#GAMEMODE_TIME_LIMIT_REACHED", "#GAMEMODE_TIME_LIMIT_REACHED" )
+		if ( !Flag( "DisableTimeLimit" ) )
+		{
+			if ( int( endTime - Time() ) < 15 && int( endTime - Time() ) != lastTimeLeftSeconds )
+			{
+				foreach ( player in GetPlayerArray() )
+				{
+					EmitSoundOnEntity( player, "Menu_Match_Countdown" )
+
+					if ( int( endTime - Time() ) < 5 && int( endTime - Time() ) >= 0 )
+						EmitSoundOnEntityAfterDelay( player, "Menu_Match_Countdown", 0.5 )
+				}
+
+				lastTimeLeftSeconds = int( endTime - Time() )
+			}
+
+			if ( Time() >= endTime )
+				SetWinner( null, "#GAMEMODE_TIME_LIMIT_REACHED", "#GAMEMODE_TIME_LIMIT_REACHED" )
+		}
 
 		WaitFrame()
 	}
