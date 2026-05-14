@@ -1346,7 +1346,10 @@ void function ConnectToServer( bool modsChanged = false )
 
 	// only actually reload if we need to since the uiscript reset on reload lags hard
 	if ( modsChanged )
+	{
 		ReloadMods()
+		ClientCommand( "uiscript_reset" )
+	}
 
 	NSConnectToAuthedServer()
 }
