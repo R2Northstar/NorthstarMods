@@ -1,6 +1,7 @@
 untyped
 
 global function AddCallback_OnReceivedSayTextMessage
+global function AddCallback_OnPreSendMessage
 
 // this is global due to squirrel bridge v3 making native not be able to find non-global funcs properly
 // temp fix (surely it will get replaced), do not use this function please (although there isnt rly a downside to it?)
