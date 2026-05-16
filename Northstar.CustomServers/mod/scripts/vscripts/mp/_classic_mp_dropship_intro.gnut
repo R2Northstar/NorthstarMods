@@ -213,11 +213,22 @@ void function SpawnPlayerIntoDropship( entity player, int playerDropshipIndex, e
 	{
 		FirstPersonSequenceStruct idleSequence
 
+		void functionref( entity ) viewfunc = ViewConeRampFree
+
+		if ( DROPSHIP_IDLE_ANIMS[ playerDropshipIndex ] == "Classic_MP_flyin_exit_povD_idle" )
+			viewfunc = ViewConeRampFrontRight
+		else if ( DROPSHIP_IDLE_ANIMS[ playerDropshipIndex ] == "Classic_MP_flyin_exit_povA_idle" )
+			viewfunc = ViewConeRampBackRight
+		else if ( DROPSHIP_IDLE_ANIMS[ playerDropshipIndex ] == "Classic_MP_flyin_exit_povC_idle" )
+			viewfunc = ViewConeRampBackLeft
+		else if ( DROPSHIP_IDLE_ANIMS[ playerDropshipIndex ] == "Classic_MP_flyin_exit_povB_idle" )
+			viewfunc = ViewConeRampFrontLeft
+
 		idleSequence.firstPersonAnim = DROPSHIP_IDLE_ANIMS_POV[ playerDropshipIndex ]
 		idleSequence.thirdPersonAnim = DROPSHIP_IDLE_ANIMS[ playerDropshipIndex ]
 		idleSequence.attachment = "ORIGIN"
 		idleSequence.teleport = true
-		idleSequence.viewConeFunction = ViewConeRampFree
+		idleSequence.viewConeFunction = viewfunc
 		idleSequence.setInitialTime = Time() - file.introStartTime
 		idleSequence.hideProxy = true
 
@@ -229,7 +240,7 @@ void function SpawnPlayerIntoDropship( entity player, int playerDropshipIndex, e
 	jumpSequence.firstPersonAnim = DROPSHIP_JUMP_ANIMS_POV[ playerDropshipIndex ]
 	jumpSequence.thirdPersonAnim = DROPSHIP_JUMP_ANIMS[ playerDropshipIndex ]
 	jumpSequence.attachment = "ORIGIN"
-	jumpSequence.viewConeFunction = ViewConeFree
+	jumpSequence.viewConeFunction = ViewConeRampFree
 	jumpSequence.setInitialTime = max( 0.0, Time() - playerDropship.s.deployedTime )
 	jumpSequence.hideProxy = true
 
