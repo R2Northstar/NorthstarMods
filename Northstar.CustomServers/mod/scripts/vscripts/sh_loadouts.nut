@@ -3399,9 +3399,6 @@ string function Loadouts_GetSetFileForRequestedClass( entity player )
 			#endif
 			loadout = GetPilotLoadoutFromPersistentData( player, loadoutIndex )
 
-		if ( !IsValid( player ) )
-			return false
-
 		UpdateDerivedPilotLoadoutData( loadout )
 
 		if ( player.IsBot() && !player.IsPlayback() )
@@ -3486,9 +3483,6 @@ string function Loadouts_GetSetFileForRequestedClass( entity player )
 			else
 			#endif
 			loadout = GetTitanLoadoutFromPersistentData( player, loadoutIndex )
-
-		if ( !IsValid( player ) )
-			return false
 
 		OverwriteLoadoutWithDefaultsForSetFile_ExceptSpecialAndAntiRodeo( loadout, player )
 
