@@ -270,12 +270,6 @@ array<string> function GetPrivateMatchMapsForMode( string modeName )
 
 	array<string> maps
 
-	#if !VANILLA
-		// playlists file that we are working with is old, and doens't have these maps added to FD private match
-		if ( IsFDMode( modeName ) )
-			maps.extend( [ "mp_relic02", "mp_glitch", "mp_colony02" ] )
-	#endif
-
 	// use the private match playlist for this if the gamemode is in it already
 	int privatePlaylistModeIndex = GetPrivateMatchModeIndex( modeName )
 	if ( privatePlaylistModeIndex < GetPlaylistGamemodesCount( PRIVATE_MATCH_PLAYLIST ) )
