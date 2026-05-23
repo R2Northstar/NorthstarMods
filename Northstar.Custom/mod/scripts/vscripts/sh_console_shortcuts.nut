@@ -21,18 +21,18 @@
 #if !SERVER
 	entity function glc()
 	{
-	    #if UI
+		#if UI
 			return GetUIPlayer()
-	    #else
+		#else
 			return GetLocalClientPlayer()
 		#endif
 	}
 
 	entity function glv()
 	{
-	    #if UI
+		#if UI
 			return GetUIPlayer()
-	    #else
+		#else
 			return GetLocalViewPlayer()
 		#endif
 	}
