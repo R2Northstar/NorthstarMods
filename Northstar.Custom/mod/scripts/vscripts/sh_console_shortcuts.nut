@@ -1,4 +1,3 @@
-
 #if !UI
 	global function gwep // GetActiveWeapon
 #endif
