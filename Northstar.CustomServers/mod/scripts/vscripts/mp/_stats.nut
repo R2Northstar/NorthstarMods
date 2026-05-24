@@ -68,7 +68,7 @@ void function Stats_SaveStatDelayed( entity player, string statCategory, string 
 	// idk how long the delay is meant to be but whatever
 	wait delay
 
-	if ( !IsValid( player ) )
+	if ( !IsPersistenceAvailable() || !IsValid( player ) )
 		return
 
 	Stats_SaveStat( player, statCategory, statAlias, statSubAlias )
