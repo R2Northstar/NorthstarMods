@@ -107,6 +107,9 @@ void function DropFlagIfPhased( entity player )
 	OnThreadEnd(
 		function() : ( player )
 		{
+			if ( !IsValidPlayer( player ) )
+				return
+
 			if ( file.flag.GetParent() == player )
 				DropFlag()
 		}
