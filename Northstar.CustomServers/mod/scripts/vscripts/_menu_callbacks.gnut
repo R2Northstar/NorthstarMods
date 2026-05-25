@@ -46,11 +46,22 @@ void function WritePersistenceAndLeave( entity player )
 	// write player persistence before we leave, since leaving player might load local lobby before server writes persistence, so they won't get newest
 	// not super essential, but a nice qol thing
 	NSEarlyWritePlayerPersistenceForLeave( player )
+
 	while ( NSIsWritingPlayerPersistence() )
 		WaitFrame()
 
+	// fixes players not being able to disconnect because they're in a replay
+	player.ClearReplayDelay()
+	player.ClearViewEntity()
+
+	WaitEndFrame()
+
 	// this is a custom concommand which can be called on clients, it causes them to leave and doesn't have issues if they're host
 	ClientCommand( player, "ns_start_reauth_and_leave_to_lobby" )
+
+	wait 5
+
+	NSDisconnectPlayer( player, "Took too long to reauth and leave." )
 }
 
 bool function ClientCommandCallback_GenUp( entity player, array<string> args )
