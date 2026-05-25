@@ -68,7 +68,7 @@ void function Stats_SaveStatDelayed( entity player, string statCategory, string 
 	// idk how long the delay is meant to be but whatever
 	WaitEndFrame()
 
-	if ( GetGameState() == eGameState.Postmatch && !IsValidPlayer( player ) )
+	if ( GetGameState() == eGameState.Postmatch || !IsValidPlayer( player ) )
 		return
 
 	Stats_SaveStat( player, statCategory, statAlias, statSubAlias )
