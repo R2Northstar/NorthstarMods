@@ -63,12 +63,12 @@ void function AddStatCallback( string statCategory, string statAlias, string sta
 }
 
 // a lot of this file seems to be doing caching of stats in some way
-void function Stats_SaveStatDelayed( entity player, string statCategory, string statAlias, string statSubAlias, float delay = 0.1 )
+void function Stats_SaveStatDelayed( entity player, string statCategory, string statAlias, string statSubAlias )
 {
 	// idk how long the delay is meant to be but whatever
-	wait delay
+	WaitEndFrame()
 
-	if ( !IsValidPlayer( player ) )
+	if ( GetGameState() != eGameState.Postmatch && !IsValidPlayer( player ) )
 		return
 
 	Stats_SaveStat( player, statCategory, statAlias, statSubAlias )
