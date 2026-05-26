@@ -332,6 +332,9 @@ void function ScoreEvent_MatchComplete( int winningTeam )
 {
 	foreach ( entity player in GetPlayerArray() )
 	{
+		if ( !IsValidPlayer( player ) )
+			return
+
 		AddPlayerScore( player, "MatchComplete" )
 		SetPlayerChallengeMatchComplete( player )
 
