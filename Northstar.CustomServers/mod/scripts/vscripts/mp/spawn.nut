@@ -278,7 +278,7 @@ entity function GetBestSpawnpoint( entity player, array<entity> spawnpoints, boo
 	array<entity> validSpawns
 
 	// I know this looks hacky but the native funcs to get the spawns is returning null arrays for FFA idk why.
-	if ( IsFFAGame() )
+	if ( GetSpawnpointGamemodeOverride() == FFA )
 	{
 		spawnpoints.clear()
 		if ( isTitan )
@@ -326,7 +326,7 @@ entity function GetBestSpawnpoint( entity player, array<entity> spawnpoints, boo
 		if ( IsValid( start ) )
 			validSpawns.append( start )
 		else
-			throw ( "Map has no player spawns at all" )
+			throw "Map has no player spawns at all"
 	}
 
 	if ( IsFFAGame() )
