@@ -207,6 +207,38 @@ string function GetSpawnpointGamemodeOverride()
 	if ( file.spawnpointGamemodeOverride != "" )
 		return file.spawnpointGamemodeOverride
 
+	switch ( GameRules_GetGameMode() )
+	{
+		// These game modes use tdm spawns
+		case PILOT_SKIRMISH:
+		case WINGMAN_PILOT_SKIRMISH:
+		case MARKED_FOR_DEATH_PRO:
+		case MARKED_FOR_DEATH:
+		case T_DAY:
+		case AI_TDM:
+		case BOMB:
+		case HARDCORE_TDM:
+		case COLISEUM:
+		case HUNTED:
+		case DON:
+		case TITAN_BRAWL:
+		case SPEEDBALL:
+			return TEAM_DEATHMATCH
+
+		case RAID:
+		case ATCOOP:
+		case CONQUEST:
+		case PVE_SANDBOX:
+			return ATTRITION
+
+		case LTS_BOMB:
+		case WINGMAN_LAST_TITAN_STANDING:
+			return LAST_TITAN_STANDING
+
+		case FREE_AGENCY:
+			return FFA
+	}
+
 	return GAMETYPE
 }
 
