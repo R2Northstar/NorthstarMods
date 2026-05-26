@@ -281,11 +281,13 @@ entity function GetBestSpawnpoint( entity player, array<entity> spawnpoints, boo
 	if ( GetSpawnpointGamemodeOverride() == FFA )
 	{
 		spawnpoints.clear()
+
 		if ( isTitan )
-			spawnpoints = GetEntArrayByClass_Expensive( "info_spawnpoint_titan" )
+			spawnpoints = SpawnPoints_GetTitan()
 		else
-			spawnpoints = GetEntArrayByClass_Expensive( "info_spawnpoint_human" )
+			spawnpoints = SpawnPoints_GetPilot()
 	}
+
 	foreach ( entity spawnpoint in spawnpoints )
 	{
 		if ( IsSpawnpointValid( spawnpoint, player.GetTeam() ) )
