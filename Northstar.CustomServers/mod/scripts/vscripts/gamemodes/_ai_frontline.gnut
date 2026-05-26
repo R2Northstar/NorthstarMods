@@ -657,7 +657,7 @@ void function SetFrontlineSides( table frontline, int winningTeam )
 	array<entity> playerArray = GetPlayerArray_Alive()
 
 	// for the start of the map when no players are avaliable
-	if ( GetGameState() <= eGameState.Prematch || GetGameState() == eGameState.SwitchingSides || playerArray.len() == 0 )
+	if ( GetGameState() <= eGameState.Prematch || GetGameState() == eGameState.SwitchingSides || !playerArray.len() )
 		playerArray = GetEntArrayByClass_Expensive( "info_spawnpoint_human_start" )
 
 	array<int> teamCount = [ 0, 0 ]
