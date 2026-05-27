@@ -4,6 +4,13 @@ void function MenuCallbacks_Init()
 {
 	AddClientCommandCallback( "LeaveMatch", ClientCommandCallback_LeaveMatch )
 	AddClientCommandCallback( "GenUp", ClientCommandCallback_GenUp )
+	AddClientCommandCallback(
+		"PrivateMatchEndMatch",
+		bool function( entity player, array<string> args )
+		{
+			return true
+		}
+	)
 }
 
 bool function ClientCommandCallback_LeaveMatch( entity player, array<string> args )
