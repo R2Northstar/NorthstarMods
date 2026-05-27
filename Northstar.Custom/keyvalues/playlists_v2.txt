@@ -2,6 +2,13 @@ playlists
 {
 	Gamemodes
 	{
+		defaults
+		{
+			vars
+			{
+				classic_mp 1
+			}
+		}
 		fw
 		{
 			inherit defaults
@@ -14,7 +21,6 @@ playlists
 
 				max_players 16
 				max_teams 2
-				classic_mp 1
 				scorelimit 100 // score is a percentage so ofc need max to be 100%
 				timelimit 15
 			}
@@ -31,7 +37,6 @@ playlists
 				abbreviation #PL_gg_abbr
 				max_players 12
 				max_teams 12
-				classic_mp 1
 
 				gamemode_score_hint #GAMEMODE_SCORE_HINT_FFA
 				gamemode_bullet_001	#GAMEMODE_BULLET_FFA_001
@@ -53,7 +58,6 @@ playlists
 				abbreviation #PL_tt_abbr
 				max_players 12
 				max_teams 2
-				classic_mp 1
 
 				scorelimit 20
 
@@ -72,7 +76,6 @@ playlists
 				abbreviation #PL_inf_abbr
 				max_players 12
 				max_teams 2
-				classic_mp 1
 
 				gamemode_score_hint #GAMEMODE_SCORE_HINT_TDM
 			}
@@ -90,7 +93,6 @@ playlists
 
 				max_players 16
 				max_teams 16
-				classic_mp 1
 				timelimit 7.5
 				scorelimit 99999 // arbitrarily high number
 
@@ -110,7 +112,6 @@ playlists
 
 				max_players 16
 				max_teams 2
-				classic_mp 1
 				scorelimit 5
 				timelimit 2
 				roundtimelimit 2
@@ -177,7 +178,6 @@ playlists
 				abbreviation #PL_chamber_abbr
 				max_players 12
 				max_teams 12
-				classic_mp 1
 
 				gamemode_score_hint #GAMEMODE_SCORE_HINT_FFA
 				gamemode_bullet_001	#GAMEMODE_BULLET_FFA_001
@@ -199,7 +199,6 @@ playlists
 				abbreviation #PL_hidden_abbr
 				max_players 16
 				max_teams 2
-				classic_mp 1
 
 				gamemode_score_hint #GAMEMODE_SCORE_HINT_TDM
 			}
@@ -217,7 +216,6 @@ playlists
 				scorelimit 20
 				max_players 10
 				max_teams 10
-				classic_mp 1
 				gamemode_score_hint #GAMEMODE_SCORE_HINT_TDM
 			}
 		}
@@ -236,7 +234,6 @@ playlists
 				max_players 16
 				max_teams 16
 				scorelimit 300
-				classic_mp 1
 
 				gamemode_score_hint #GAMEMODE_SCORE_HINT_FFA
 			}
@@ -385,7 +382,6 @@ playlists
 				image ctf
 				max_players 16
 				max_teams 16
-				classic_mp 1
 				timelimit 7.5
 				scorelimit 99999 // arbitrarily high number
 				mixtape_slot 5
@@ -435,7 +431,6 @@ playlists
 				image ffa
 				max_players 16
 				max_teams 2
-				classic_mp 1
 				scorelimit 5
 				roundtimelimit 2
 				roundscorelimit 5
@@ -483,7 +478,6 @@ playlists
 
 				max_players 16
 				max_teams 2
-				classic_mp 1
 				scorelimit 100
 				timelimit 15
 

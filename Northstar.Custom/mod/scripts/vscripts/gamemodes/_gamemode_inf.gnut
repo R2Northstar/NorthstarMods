@@ -17,6 +17,7 @@ void function GamemodeInfection_Init()
 	Riff_ForceTitanAvailability( eTitanAvailability.Never )
 	Riff_ForceBoostAvailability( eBoostAvailability.Disabled )
 	ClassicMP_ForceDisableEpilogue( true )
+	ClassicMP_SetCustomIntro( ClassicMP_DefaultNoIntro_Setup, ClassicMP_DefaultNoIntro_GetLength() )
 
 	SetShouldPlayerStartBleedoutFunc( InfectionShouldPlayerStartBleedout )
 	AddCallback_OnClientConnected( InfectionInitPlayer )
@@ -56,10 +57,15 @@ void function SelectFirstInfectedDelayed()
 		return
 	}
 
+	if ( file.hasHadFirstInfection )
+		return
+
 	entity infected = players.getrandom()
 
 	InfectPlayer( infected )
-	RespawnInfected( infected )
+
+	if ( IsAlive( infected ) )
+		RespawnInfected( infected )
 }
 
 void function InfectionOnPlayerKilled( entity victim, entity attacker, var damageInfo )
