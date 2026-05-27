@@ -207,7 +207,9 @@ string function GetSpawnpointGamemodeOverride()
 	if ( file.spawnpointGamemodeOverride != "" )
 		return file.spawnpointGamemodeOverride
 
-	switch ( GameRules_GetGameMode() )
+	string gameMode = GameRules_GetGameMode()
+
+	switch ( gameMode )
 	{
 		// These game modes use tdm spawns
 		case PILOT_SKIRMISH:
@@ -239,7 +241,7 @@ string function GetSpawnpointGamemodeOverride()
 			return FFA
 	}
 
-	return GAMETYPE
+	return gameMode
 }
 
 /*

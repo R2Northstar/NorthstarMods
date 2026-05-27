@@ -2140,60 +2140,84 @@ bool function ShouldShowLossProtectionOnEOG( entity player )
 
 bool function GameModeRemove( entity ent )
 {
-	string gameMode = GameRules_GetGameMode()
-	switch ( gameMode )
-	{
-		// These game modes use tdm spawns
-		case PILOT_SKIRMISH:
-		case WINGMAN_PILOT_SKIRMISH:
-		case MARKED_FOR_DEATH_PRO:
-		case MARKED_FOR_DEATH:
-		case T_DAY:
-		case AI_TDM:
-		case BOMB:
-		case HARDCORE_TDM:
-		case COLISEUM:
-		case HUNTED:
-		case DON:
-		case TITAN_BRAWL:
-		case SPEEDBALL:
-			gameMode = TEAM_DEATHMATCH
-			break
+	#if MP
+		string gameMode = GetSpawnpointGamemodeOverride()
 
-		case RAID:
-		case ATCOOP:
-		case CONQUEST:
-		case PVE_SANDBOX:
-			gameMode = ATTRITION
-			break
+		AT_CollisionCleanup( ent )
 
-		case LTS_BOMB:
-		case WINGMAN_LAST_TITAN_STANDING:
-			gameMode = LAST_TITAN_STANDING
-			break
+		string gamemodeKey = "gamemode_" + gameMode
 
-		case FREE_AGENCY:
-			gameMode = FFA
-			break
+		if ( ent.HasKey( gamemodeKey ) && ( ent.kv[ gamemodeKey ] == "0" || ent.kv[ gamemodeKey ] == "" ) )
+		{
+			ent.Destroy()
+			return true
+		}
 
-		default:
-			#if MP
-				gameMode = GetSpawnpointGamemodeOverride()
-			#endif
-	}
+		return false
+	#else
+		string gameMode = GameRules_GetGameMode()
 
-	AT_CollisionCleanup( ent )
+		switch ( gameMode )
+		{
+			// These game modes have checkboxes in leveled
+			case LAST_TITAN_STANDING:
+			case TEAM_DEATHMATCH:
+			case ATTRITION:
+			case CAPTURE_POINT:
+			case CAPTURE_THE_FLAG:
+			case FORT_WAR:
+			case FFA:
+			case FD:
+				break
+				// These game modes use tdm spawns
 
-	string gamemodeKey = "gamemode_" + gameMode
-	if ( ent.HasKey( gamemodeKey ) && ( ent.kv[ gamemodeKey ] == "0" || ent.kv[ gamemodeKey ] == "" ) )
-	{
-		// printt( "Removing ent " + ent.GetClassName() + " with " + gamemodeKey + " = \"" + ent.kv[gamemodeKey] + "\" at " + ent.GetOrigin() )
-		ent.Destroy()
-		return true
-	}
-	// printt( "keeping ent", ent.GetClassName() )
+			case PILOT_SKIRMISH:
+			case WINGMAN_PILOT_SKIRMISH:
+			case MARKED_FOR_DEATH_PRO:
+			case MARKED_FOR_DEATH:
+			case T_DAY:
+			case AI_TDM:
+			case BOMB:
+			case HARDCORE_TDM:
+			case COLISEUM:
+			case HUNTED:
+			case DON:
+			case TITAN_BRAWL:
+			case SPEEDBALL:
+				gameMode = TEAM_DEATHMATCH
+				break
 
-	return false
+			case RAID:
+			case ATCOOP:
+			case CONQUEST:
+			case PVE_SANDBOX:
+				gameMode = ATTRITION
+				break
+
+			case LTS_BOMB:
+			case WINGMAN_LAST_TITAN_STANDING:
+				gameMode = LAST_TITAN_STANDING
+				break
+
+			case FREE_AGENCY:
+				gameMode = FFA
+				break
+		}
+
+		AT_CollisionCleanup( ent )
+
+		string gamemodeKey = "gamemode_" + gameMode
+
+		if ( ent.HasKey( gamemodeKey ) && ( ent.kv[ gamemodeKey ] == "0" || ent.kv[ gamemodeKey ] == "" ) )
+		{
+			// printt( "Removing ent " + ent.GetClassName() + " with " + gamemodeKey + " = \"" + ent.kv[gamemodeKey] + "\" at " + ent.GetOrigin() )
+			ent.Destroy()
+			return true
+		}
+		// printt( "keeping ent", ent.GetClassName() )
+
+		return false
+	#endif
 }
 
 void function AT_CollisionCleanup( entity spawnPoint )
