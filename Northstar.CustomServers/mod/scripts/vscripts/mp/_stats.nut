@@ -232,7 +232,7 @@ void function Stats_IncrementStat( entity player, string statCategory, string st
 {
 	if ( !IsValidStat( statCategory, statAlias, statSubAlias ) )
 	{
-		printt( "invalid stat: " + statCategory + " : " + statAlias + " : " + statSubAlias )
+		// printt( "invalid stat: " + statCategory + " : " + statAlias + " : " + statSubAlias )
 		return
 	}
 
@@ -251,24 +251,23 @@ void function Stats_IncrementStat( entity player, string statCategory, string st
 	if ( difficulty >= 5 )
 		return
 
-	string saveVar = Stats_GetFixedSaveVar( str, GetMapName(), mode, difficulty.tostring() )
+	str = Stats_GetFixedSaveVar( str, GetMapName(), mode, difficulty.tostring() )
+
 	// check if the map and mode exist in persistence
 	try
 	{
 		PersistenceGetEnumIndexForItemName( "gamemodes", mode )
 		PersistenceGetEnumIndexForItemName( "maps", GetMapName() )
+
+		player.GetPersistentVar( str )
 	}
 	catch ( ex )
 	{
 		// if we have an invalid mode or map for persistence, and it is used in the
 		// persistence string, we can't save the persistence so we have to just return
-		if ( str != saveVar )
-		{
-			// printt( ex, str, GetMapName(), mode ) // Commented out due to spamming logs on invalid modes (e.g. Gun Game, Infection, ...)
-			return
-		}
+		// printt( ex, str, GetMapName(), mode ) // Commented out due to spamming logs on invalid modes (e.g. Gun Game, Infection, ...)
+		return
 	}
-	str = saveVar
 
 	switch ( type )
 	{
@@ -814,24 +813,21 @@ void function OnPlayerRespawned( entity player )
 
 void function RegisterMatchStats_OnMatchComplete()
 {
-	if ( IsValidGamemodeString( GAMETYPE ) )
+	foreach ( entity player in GetPlayerArray() )
 	{
-		foreach ( entity player in GetPlayerArray() )
-		{
-			// award players for match completed, wins, and losses
-			Stats_IncrementStat( player, "game_stats", "game_completed", "", 1.0 )
+		// award players for match completed, wins, and losses
+		Stats_IncrementStat( player, "game_stats", "game_completed", "", 1.0 )
 
-			if ( player.GetTeam() == GetWinningTeam() )
-				Stats_IncrementStat( player, "game_stats", "game_won", "", 1.0 )
-			else
-				Stats_IncrementStat( player, "game_stats", "game_lost", "", 1.0 )
+		if ( player.GetTeam() == GetWinningTeam() )
+			Stats_IncrementStat( player, "game_stats", "game_won", "", 1.0 )
+		else
+			Stats_IncrementStat( player, "game_stats", "game_lost", "", 1.0 )
 
-			// award players with matches played on the mode
-			Stats_IncrementStat( player, "game_stats", "mode_played", GAMETYPE, 1.0 )
+		// award players with matches played on the mode
+		Stats_IncrementStat( player, "game_stats", "mode_played", GAMETYPE, 1.0 )
 
-			if ( player.GetTeam() == GetWinningTeam() )
-				Stats_IncrementStat( player, "game_stats", "mode_won", GAMETYPE, 1.0 )
-		}
+		if ( player.GetTeam() == GetWinningTeam() )
+			Stats_IncrementStat( player, "game_stats", "mode_won", GAMETYPE, 1.0 )
 	}
 
 	// update player's KD
@@ -1051,20 +1047,6 @@ void function SaveStatsPeriodically_Threaded()
 		}
 		wait 5
 	}
-}
-
-bool function IsValidGamemodeString( string mode )
-{
-	int gameModeCount = PersistenceGetEnumCount( "gameModes" )
-	for ( int modeIndex = 0; modeIndex < gameModeCount; modeIndex++ )
-	{
-		string gameModeName = PersistenceGetEnumItemNameForIndex( "gameModes", modeIndex )
-
-		if ( gameModeName == mode )
-			return true
-	}
-
-	return false
 }
 
 bool function IsValidStatItemString( string item )
