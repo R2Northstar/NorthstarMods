@@ -46,7 +46,7 @@ void function SelectFirstHiddenDelayed()
 
 	if ( !players.len() )
 	{
-		printt( "Couldn't select hidden: player array was empty" )
+		printt( "Couldn't select first hidden: player array was empty" )
 		SetWinner( TEAM_MILITIA )
 		return
 	}
