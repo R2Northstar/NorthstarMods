@@ -815,6 +815,9 @@ void function RegisterMatchStats_OnMatchComplete()
 {
 	foreach ( entity player in GetPlayerArray() )
 	{
+		if ( !IsValidPlayer( player ) )
+			return
+
 		// award players for match completed, wins, and losses
 		Stats_IncrementStat( player, "game_stats", "game_completed", "", 1.0 )
 
@@ -833,6 +836,9 @@ void function RegisterMatchStats_OnMatchComplete()
 	// update player's KD
 	foreach ( entity player in GetPlayerArray() )
 	{
+		if ( !IsValidPlayer( player ) )
+			return
+
 		// kd stats
 		// index 0 is most recent game
 		// index 9 is least recent game
@@ -881,6 +887,13 @@ void function RegisterMatchStats_OnMatchComplete()
 	}
 
 	array<entity> players = GetPlayerArray()
+
+	for ( int i = players.len() - 1; i >= 0; i-- )
+	{
+		if ( !IsValidPlayer( players[ i ] ) )
+			players.remove( i )
+	}
+
 	players.sort( GetScoreboardCompareFunc() )
 	int playerCount = players.len()
 	int currentPlace = 1
