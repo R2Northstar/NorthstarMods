@@ -183,7 +183,7 @@ void function PutPlayerInDropship( entity player )
 		if ( !availableShipSlots.len() )
 			continue
 
-		int slotPick = availableShipSlots.getrandom()
+		int slotPick = availableShipSlots[ 0 ]
 		playerslot[ slotPick ] = player
 		playerDropship = dropship
 		playerDropshipIndex = slotPick
