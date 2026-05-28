@@ -814,22 +814,19 @@ void function OnPlayerRespawned( entity player )
 
 void function RegisterMatchStats_OnMatchComplete()
 {
-	// award players for match completed, wins, and losses
-	foreach ( entity player in GetPlayerArray() )
-	{
-		Stats_IncrementStat( player, "game_stats", "game_completed", "", 1.0 )
-
-		if ( player.GetTeam() == GetWinningTeam() )
-			Stats_IncrementStat( player, "game_stats", "game_won", "", 1.0 )
-		else
-			Stats_IncrementStat( player, "game_stats", "game_lost", "", 1.0 )
-	}
-
 	if ( IsValidGamemodeString( GAMETYPE ) )
 	{
-		// award players with matches played on the mode
 		foreach ( entity player in GetPlayerArray() )
 		{
+			// award players for match completed, wins, and losses
+			Stats_IncrementStat( player, "game_stats", "game_completed", "", 1.0 )
+
+			if ( player.GetTeam() == GetWinningTeam() )
+				Stats_IncrementStat( player, "game_stats", "game_won", "", 1.0 )
+			else
+				Stats_IncrementStat( player, "game_stats", "game_lost", "", 1.0 )
+
+			// award players with matches played on the mode
 			Stats_IncrementStat( player, "game_stats", "mode_played", GAMETYPE, 1.0 )
 
 			if ( player.GetTeam() == GetWinningTeam() )
