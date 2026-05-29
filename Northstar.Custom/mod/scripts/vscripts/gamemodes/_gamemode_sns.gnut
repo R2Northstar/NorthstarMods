@@ -76,7 +76,7 @@ void function OnPlayerKilled( entity victim, entity attacker, var damageInfo )
 			}
 			if ( file.reset_pulse_blade_cooldown_on_pulse_blade_kill )
 			{
-				attacker.TakeWeaponNow( "mp_weapon_grenade_sonar" ) // resets cooldown if you kill with it
+				attacker.TakeOffhandWeapon( OFFHAND_LEFT ) // resets cooldown if you kill with it
 				attacker.GiveOffhandWeapon( "mp_weapon_grenade_sonar", OFFHAND_LEFT )
 			}
 
@@ -133,11 +133,8 @@ void function OnWinnerDetermined()
 
 void function OnPlayerRespawned( entity player )
 {
-	foreach ( entity weapon in player.GetMainWeapons() )
-		player.TakeWeaponNow( weapon.GetWeaponClassName() )
-
-	foreach ( entity weapon in player.GetOffhandWeapons() )
-		player.TakeWeaponNow( weapon.GetWeaponClassName() )
+	TakeWeaponsForArray( player, player.GetMainWeapons() )
+	TakeWeaponsForArray( player, player.GetOffhandWeapons() )
 
 	array<string> mods = [ "sns", "pas_fast_ads", "tactical_cdr_on_kill", "pas_run_and_gun", "pas_fast_swap" ]
 	player.GiveWeapon( "mp_weapon_wingman_n", mods )
