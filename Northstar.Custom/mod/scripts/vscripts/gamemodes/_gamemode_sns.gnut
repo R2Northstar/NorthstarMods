@@ -133,6 +133,17 @@ void function OnWinnerDetermined()
 
 void function OnPlayerRespawned( entity player )
 {
+	if ( !IsNewThread() )
+	{
+		thread OnPlayerRespawned( player )
+		return
+	}
+	else if ( GetGameState() == eGameState.Prematch )
+		WaitEndFrame()
+
+	if ( !IsValidPlayer( player ) )
+		return
+
 	TakeWeaponsForArray( player, player.GetMainWeapons() )
 	TakeWeaponsForArray( player, player.GetOffhandWeapons() )
 
