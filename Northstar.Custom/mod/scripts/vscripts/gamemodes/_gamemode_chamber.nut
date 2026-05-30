@@ -82,7 +82,7 @@ void function UpdateLoadout( entity player )
 	else if ( GetGameState() == eGameState.Prematch )
 		WaitEndFrame()
 
-	if ( IsAlive( player ) && player != null )
+	if ( IsValidPlayer( player ) && IsAlive( player ) )
 	{
 		// set loadout
 		foreach ( entity weapon in player.GetMainWeapons() )

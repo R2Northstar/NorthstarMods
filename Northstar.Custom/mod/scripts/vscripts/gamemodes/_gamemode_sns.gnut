@@ -161,15 +161,11 @@ void function OnPlayerRespawned( entity player )
 	if ( player == GetWinningPlayer() )
 		SetHighlight( player )
 
-	thread OnPlayerRespawned_Threaded( player )
-}
-
-void function OnPlayerRespawned_Threaded( entity player )
-{
 	// bit of a hack, need to rework earnmeter code to have better support for completely disabling it
 	// rn though this just waits for earnmeter code to set the mode before we set it back
 	WaitFrame()
-	if ( IsValid( player ) )
+
+	if ( IsValidPlayer( player ) )
 		PlayerEarnMeter_SetMode( player, eEarnMeterMode.DISABLED )
 }
 
