@@ -18,6 +18,12 @@ float function ClassicMP_DefaultNoIntro_GetLength()
 
 void function ClassicMP_DefaultNoIntro_Start()
 {
+	if ( !IsNewThread() )
+	{
+		thread ClassicMP_DefaultNoIntro_Start()
+		return
+	}
+
 	ClassicMP_OnIntroStarted()
 
 	array<entity> nonspectators

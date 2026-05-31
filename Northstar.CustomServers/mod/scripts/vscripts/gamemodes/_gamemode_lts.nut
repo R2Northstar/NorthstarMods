@@ -19,7 +19,7 @@ void function GamemodeLts_Init()
 	SetSwitchSidesBased( true )
 	SetGamemodeAllowsTeamSwitch( false )
 	SetRoundBased( true )
-	Riff_ForceSetEliminationMode( eEliminationMode.Titans )
+	Riff_ForceSetEliminationMode( eEliminationMode.PilotsTitans )
 	Riff_ForceSetSpawnAsTitan( eSpawnAsTitan.Always )
 	SetShouldUseRoundWinningKillReplay( true )
 	SetRoundWinningKillReplayKillClasses( true, true ) // both titan and pilot kills are tracked

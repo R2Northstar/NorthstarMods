@@ -165,7 +165,7 @@ int function TimeoutCheckFlagHolder()
 {
 	if ( IsValidPlayer( file.flagCarrier ) )
 	{
-		AddTeamRoundScoreNoStateChange( file.flagCarrier.GetTeam() )
+		AddTeamScore( file.flagCarrier.GetTeam(), 1 )
 		file.flagCarrier.AddToPlayerGameStat( PGS_ASSAULT_SCORE, 1 )
 		return file.flagCarrier.GetTeam()
 	}

@@ -85,7 +85,7 @@ void function OnPrematchStart()
 	// Spawn the Dropships
 	foreach ( entity dropshipSpawn in validDropshipSpawns )
 	{
-		int createTeam = HasSwitchedSides() ? GetOtherTeam( dropshipSpawn.GetTeam() ) : dropshipSpawn.GetTeam()
+		int createTeam = IsSwitchSidesBased() && HasSwitchedSides() ? GetOtherTeam( dropshipSpawn.GetTeam() ) : dropshipSpawn.GetTeam()
 		table<entity, array<entity> > teamDropships = createTeam == TEAM_MILITIA ? file.militiaDropships : file.imcDropships
 
 		if ( teamDropships.len() >= 2 )

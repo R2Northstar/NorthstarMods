@@ -120,6 +120,11 @@ bool function IsTitanAvailable( entity player )
 
 bool function IsRespawnAvailable( entity player )
 {
+	#if SERVER
+		if ( GetGameState() == eGameState.WinnerDetermined )
+			return false
+	#endif
+
 	var shiftIndex = player.GetEntIndex() - 1
 	var elimMask = ( 1 << shiftIndex )
 

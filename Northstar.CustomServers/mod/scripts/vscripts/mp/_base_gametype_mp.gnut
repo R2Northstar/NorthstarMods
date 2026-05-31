@@ -540,7 +540,7 @@ void function ForceRespawnMeSignalAfterDelay( entity player, int delay = 5 )
 
 	wait delay
 
-	if ( GetRespawnEnabled() && IsRespawnAvailable( player ) )
+	if ( IsRespawnAvailable( player ) )
 	{
 		#if DEV
 			printt( format( "Forcing player respawn for player %s (took >%d seconds to respawn)", player.GetPlayerName(), delay ) )
@@ -896,8 +896,8 @@ bool function CheckForEmptyTeamVictory()
 	if ( GetCurrentPlaylistVarInt( "max_teams", 2 ) != 2 )
 		return false
 
-	if ( GameTime_PlayingTime() < START_SPAWN_GRACE_PERIOD )
-		return false
+	// if ( Time() - expect float( GetServerVar( "gameStartTime" ) ) >= START_SPAWN_GRACE_PERIOD )
+	// return false
 
 	int defaultWinner = TEAM_UNASSIGNED
 
@@ -908,7 +908,7 @@ bool function CheckForEmptyTeamVictory()
 
 	if ( defaultWinner != TEAM_UNASSIGNED )
 	{
-		AddTeamRoundScoreNoStateChange( defaultWinner )
+		AddTeamScore( defaultWinner, 1 )
 		SetWinner( defaultWinner )
 		return true
 	}

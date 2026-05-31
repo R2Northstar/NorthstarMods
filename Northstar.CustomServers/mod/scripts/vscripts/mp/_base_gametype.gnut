@@ -1060,11 +1060,6 @@ bool function ClientCommand_RespawnPlayer( entity player, array<string> args )
 		return true
 	}
 
-	#if MP
-		if ( !GetRespawnEnabled() )
-			return true
-	#endif
-
 	if ( args.len() != 1 )
 		return true
 
@@ -2036,9 +2031,6 @@ bool function PlayerCanSpawn( entity player )
 		return false
 
 	#if MP
-		if ( !GetRespawnEnabled() )
-			return false
-
 		if ( IsPrivateMatchSpectator( player ) )
 			return false
 	#endif
@@ -2264,15 +2256,5 @@ void function EntityFireDelayed( entity ent, string fire, string parm, float del
 	void function OnOOBTriggerLeave( entity trigger, entity ent )
 	{
 		EntityLeaveOutOfBoundsTrig( trigger, ent, null, 0 )
-	}
-
-	void function SetRespawnEnabled( bool enabled )
-	{
-		file.respawnEnabled = enabled
-	}
-
-	bool function GetRespawnEnabled()
-	{
-		return file.respawnEnabled
 	}
 #endif

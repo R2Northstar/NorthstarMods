@@ -883,7 +883,7 @@ bool function runWave( int waveIndex, bool shouldDoBuyTime )
 		else
 		{
 			SetRoundBased( false )
-			AddTeamRoundScoreNoStateChange( TEAM_IMC )
+			AddTeamScore( TEAM_IMC, 1 )
 			SetWinner( TEAM_IMC, "#FD_TOTAL_DEFEAT_HINT", "#FD_TOTAL_DEFEAT_HINT" )
 			print( "Finishing match, no more retries left" )
 			PlayFactionDialogueToTeam( "fd_matchDefeat", TEAM_MILITIA, true )
@@ -932,7 +932,7 @@ bool function runWave( int waveIndex, bool shouldDoBuyTime )
 		else
 		{
 			SetRoundBased( false )
-			AddTeamRoundScoreNoStateChange( TEAM_MILITIA )
+			AddTeamScore( TEAM_MILITIA, 1 )
 			SetWinner( TEAM_MILITIA, "#FD_TOTAL_VICTORY_HINT", "#FD_TOTAL_VICTORY_HINT" )
 			return true
 		}
@@ -949,7 +949,7 @@ bool function runWave( int waveIndex, bool shouldDoBuyTime )
 		}
 
 		SetRoundBased( false )
-		AddTeamRoundScoreNoStateChange( TEAM_MILITIA )
+		AddTeamScore( TEAM_MILITIA, 1 )
 		SetWinner( TEAM_MILITIA, "#FD_TOTAL_VICTORY_HINT", "#FD_TOTAL_VICTORY_HINT" )
 		PlayFactionDialogueToTeam( "fd_matchVictory", TEAM_MILITIA, true )
 

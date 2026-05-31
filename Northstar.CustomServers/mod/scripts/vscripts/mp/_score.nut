@@ -352,9 +352,10 @@ void function ScoreEvent_RoundComplete( int winningTeam )
 {
 	foreach ( entity player in GetPlayerArray() )
 	{
-		AddPlayerScore( player, "RoundComplete" )
 		if ( player.GetTeam() == winningTeam )
 			AddPlayerScore( player, "RoundVictory" )
+
+		AddPlayerScore( player, "RoundComplete" )
 	}
 }
 

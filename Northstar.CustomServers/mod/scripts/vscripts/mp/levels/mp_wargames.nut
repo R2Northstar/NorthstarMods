@@ -122,6 +122,12 @@ void function WargamesIntro_AddPlayer( entity player )
 
 void function OnPrematchStart()
 {
+	if ( !IsNewThread() )
+	{
+		thread OnPrematchStart()
+		return
+	}
+
 	ClassicMP_OnIntroStarted()
 	file.introStartTime = Time()
 
@@ -255,6 +261,9 @@ void function OnPrematchStart()
 
 	// 8 seconds of nothing until we start the pod sequence
 	wait 8.0
+
+	while ( Time() < file.introStartTime + 8.0 )
+		WaitFrame()
 
 	FirstPersonSequenceStruct podCloseSequence
 	podCloseSequence.thirdPersonAnim = "trainingpod_doors_close"
