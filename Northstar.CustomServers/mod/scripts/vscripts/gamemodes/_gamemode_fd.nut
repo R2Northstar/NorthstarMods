@@ -541,7 +541,7 @@ void function FD_createHarvester()
 	}
 
 	UpdateTeamReserve( file.moneyInBank )
-	WaveRestart_ResetPlayersInventory() // Call it in here to not misinform players about items they had in previous wave restarts
+	thread WaveRestart_ResetPlayersInventory() // Call it in here to not misinform players about items they had in previous wave restarts
 }
 
 void function StartFDMatch()

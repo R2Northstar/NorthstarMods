@@ -285,7 +285,7 @@ void function PlayerJumpsFromDropship( entity player )
 	while ( !player.IsOnGround() && !player.IsWallRunning() && !player.IsWallHanging() )
 		wait 0
 
-	if ( !GetRoundsPlayed() || HasSwitchedSides() ) // Intro is announced only for the first round in Vanilla as certain gamemodes have different announcements for rounds restarts
+	if ( !GetRoundsPlayed() || ( IsSwitchSidesBased() && HasSwitchedSides() ) ) // Intro is announced only for the first round in Vanilla as certain gamemodes have different announcements for rounds restarts
 		TryGameModeAnnouncement( player )
 }
 

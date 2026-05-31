@@ -664,7 +664,7 @@ void function SetFrontlineSides( table frontline, int winningTeam )
 
 	foreach ( entity player in playerArray )
 	{
-		if ( GetDoomedState( player ) )
+		if ( HasSoul( player ) && player.GetTitanSoul().IsDoomed() )
 			continue
 
 		if ( IsPointInFrontofLine( player.GetOrigin(), center, combatDir ) )

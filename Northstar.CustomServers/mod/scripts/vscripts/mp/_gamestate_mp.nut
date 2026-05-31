@@ -754,7 +754,7 @@ void function GameRulesThink_SuddenDeath()
 	if ( EliminationMode_Complete() )
 		return
 
-	if ( ScoreLimit_Complete() )
+	if ( !IsRoundBased() && ScoreLimit_Complete() )
 		return
 
 	if ( TimeLimit_Complete() )
@@ -861,14 +861,6 @@ void function GameRulesThink_WinnerDetermined()
 
 		return
 	}
-
-	// maybe no players left on enemy team
-	int defaultWinner = TEAM_UNASSIGNED
-
-	if ( !GetTeamPlayerCount( TEAM_MILITIA ) )
-		defaultWinner = TEAM_IMC
-	else if ( !GetTeamPlayerCount( TEAM_IMC ) )
-		defaultWinner = TEAM_MILITIA
 
 	if ( IsRoundBasedGameOver() )
 	{
@@ -1177,15 +1169,34 @@ float function GameState_GetTimeLimitOverride()
 
 bool function IsRoundBasedGameOver()
 {
-	// maybe no players left on enemy team
 	int defaultWinner = TEAM_UNASSIGNED
 
-	if ( !GetTeamPlayerCount( TEAM_MILITIA ) )
-		defaultWinner = TEAM_IMC
-	else if ( !GetTeamPlayerCount( TEAM_IMC ) )
-		defaultWinner = TEAM_MILITIA
+	if ( !IsFFAGame() )
+	{
+		if ( !GetTeamPlayerCount( TEAM_MILITIA ) )
+			defaultWinner = TEAM_IMC
+		else if ( !GetTeamPlayerCount( TEAM_IMC ) && GetCurrentPlaylistVarInt( "max_teams", 2 ) != 1 )
+			defaultWinner = TEAM_MILITIA
+	}
+	else
+	{
+		int team = TEAM_UNASSIGNED
 
-	if ( HasRoundScoreLimitBeenReached() || ( defaultWinner != TEAM_UNASSIGNED && GetRoundsPlayed() > 1 ) )
+		foreach ( entity player in GetPlayerArray() )
+		{
+			if ( team != TEAM_UNASSIGNED )
+			{
+				team = TEAM_UNASSIGNED
+				break
+			}
+
+			team = player.GetTeam()
+		}
+
+		defaultWinner = team
+	}
+
+	if ( RoundScoreLimit_Complete() || ( defaultWinner != TEAM_UNASSIGNED && GetRoundsPlayed() > 1 ) )
 		return true
 
 	return false
@@ -1451,6 +1462,7 @@ int function CheckEliminationPilotWinner( bool setWinner = false )
 
 	level.lastTeamPilots[ TEAM_MILITIA ] = MilitiaPlayersAlive.len()
 	level.lastTeamPilots[ TEAM_IMC ] = IMCPlayersAlive.len()
+
 	return winningTeam
 }
 
@@ -1651,6 +1663,7 @@ int function CheckEliminationTitanWinner( bool setWinner = false )
 
 	level.lastTeamTitans[ TEAM_MILITIA ] = teamTitans[ TEAM_MILITIA ].len()
 	level.lastTeamTitans[ TEAM_IMC ] = teamTitans[ TEAM_IMC ].len()
+
 	return winningTeam
 }
 
@@ -1659,26 +1672,14 @@ bool function ScoreLimit_Complete()
 	if ( !GameRules_AllowMatchEnd() )
 		return false
 
+	if ( Flag( "DisableScoreLimit" ) )
+		return false
+
 	int scoreLimit = GetScoreLimit_FromPlaylist()
 	int militiaScore = GameRules_GetTeamScore( TEAM_MILITIA )
 	int imcScore = GameRules_GetTeamScore( TEAM_IMC )
 
-	if ( GamePlaying() )
-	{
-		if ( ( militiaScore >= scoreLimit ) || ( imcScore >= scoreLimit ) )
-		{
-			int winningTeam = TEAM_UNASSIGNED
-
-			if ( imcScore > militiaScore )
-				winningTeam = TEAM_IMC
-			else if ( imcScore < militiaScore )
-				winningTeam = TEAM_MILITIA
-
-			SetWinner( winningTeam, "#GAMEMODE_SCORE_LIMIT_REACHED", "#GAMEMODE_SCORE_LIMIT_REACHED" )
-			return true
-		}
-	}
-	else if ( imcScore != militiaScore )
+	if ( ( GetGameState() == eGameState.SuddenDeath && militiaScore != imcScore ) || ( ( militiaScore >= scoreLimit ) || ( imcScore >= scoreLimit ) ) )
 	{
 		int winningTeam = TEAM_UNASSIGNED
 
@@ -1703,6 +1704,9 @@ bool function ScoreLimit_Complete()
 bool function RoundScoreLimit_Complete()
 {
 	if ( !GameRules_AllowMatchEnd() )
+		return false
+
+	if ( Flag( "DisableScoreLimit" ) )
 		return false
 
 	int roundLimit = GetRoundScoreLimit_FromPlaylist()
@@ -1862,7 +1866,7 @@ bool function ShouldEnterSuddenDeath( int winningTeam )
 	if ( !IsSuddenDeathGameMode() )
 		return false
 
-	if ( GetTeamPlayerCount( TEAM_MILITIA ) || GetTeamPlayerCount( TEAM_IMC ) )
+	if ( !GetTeamPlayerCount( TEAM_MILITIA ) || !GetTeamPlayerCount( TEAM_IMC ) )
 		return false
 
 	return true
@@ -1893,21 +1897,21 @@ float function GetWinnerDeterminedWait()
 	{
 		if ( WillShowRoundWinningKillReplay() )
 		{
-			if ( GameRules_GetTeamScore2( GetWinningTeam() ) == GameMode_GetRoundScoreLimit( GAMETYPE ) )
-				return ROUND_WINNING_KILL_REPLAY_STARTUP_WAIT + GAME_WINNER_DETERMINED_FINAL_ROUND_WITH_ROUND_WINNING_KILL_REPLAY_WAIT
+			if ( RoundScoreLimit_Complete() )
+				return ROUND_WINNING_KILL_REPLAY_STARTUP_WAIT + GAME_WINNER_DETERMINED_FINAL_ROUND_WITH_ROUND_WINNING_KILL_REPLAY_WAIT + CLEAR_PLAYERS_BUFFER
 			else
-				return ROUND_WINNING_KILL_REPLAY_STARTUP_WAIT + GAME_WINNER_DETERMINED_ROUND_WAIT_WITH_ROUND_WINNING_KILL_REPLAY_WAIT
+				return ROUND_WINNING_KILL_REPLAY_STARTUP_WAIT + GAME_WINNER_DETERMINED_ROUND_WAIT_WITH_ROUND_WINNING_KILL_REPLAY_WAIT + CLEAR_PLAYERS_BUFFER
 		}
-		else if ( GameRules_GetTeamScore2( GetWinningTeam() ) == GameMode_GetRoundScoreLimit( GAMETYPE ) )
-			return GAME_WINNER_DETERMINED_FINAL_ROUND_WAIT
+		else if ( RoundScoreLimit_Complete() )
+			return GAME_WINNER_DETERMINED_FINAL_ROUND_WAIT + CLEAR_PLAYERS_BUFFER
 		else
-			return GAME_WINNER_DETERMINED_ROUND_WAIT
+			return GAME_WINNER_DETERMINED_ROUND_WAIT + CLEAR_PLAYERS_BUFFER
 	}
 
 	if ( WillShowRoundWinningKillReplay() )
-		return ROUND_WINNING_KILL_REPLAY_STARTUP_WAIT + GAME_WINNER_DETERMINED_FINAL_ROUND_WITH_ROUND_WINNING_KILL_REPLAY_WAIT
+		return GAME_WINNER_DETERMINED_FINAL_ROUND_WITH_ROUND_WINNING_KILL_REPLAY_WAIT + CLEAR_PLAYERS_BUFFER
 
-	return GAME_WINNER_DETERMINED_WAIT
+	return GAME_WINNER_DETERMINED_WAIT + CLEAR_PLAYERS_BUFFER
 }
 
 bool function WillShowRoundWinningKillReplay()
@@ -2013,10 +2017,10 @@ void function RoundWinningKillReplay() // Only Tested in MFD Pro for now! SHould
 
 float function GetSwitchingSidesWait()
 {
-	float waitTime = SWITCHING_SIDES_DELAY
+	float waitTime = SWITCHING_SIDES_DELAY + CLEAR_PLAYERS_BUFFER
 
 	if ( IsSwitchSidesBased() || WillShowRoundWinningKillReplay() )
-		waitTime = ROUND_WINNING_KILL_REPLAY_STARTUP_WAIT + SWITCHING_SIDES_DELAY + ROUND_WINNING_KILL_REPLAY_TOTAL_LENGTH
+		waitTime = SWITCHING_SIDES_DELAY + ROUND_WINNING_KILL_REPLAY_TOTAL_LENGTH + CLEAR_PLAYERS_BUFFER
 
 	return waitTime
 }
