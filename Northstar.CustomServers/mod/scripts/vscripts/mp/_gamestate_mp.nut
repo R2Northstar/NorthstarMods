@@ -863,9 +863,9 @@ void function GameRulesThink_WinnerDetermined()
 	// maybe no players left on enemy team
 	int defaultWinner = TEAM_UNASSIGNED
 
-	if ( GetTeamPlayerCount( TEAM_MILITIA ) )
+	if ( !GetTeamPlayerCount( TEAM_MILITIA ) )
 		defaultWinner = TEAM_IMC
-	else if ( GetTeamPlayerCount( TEAM_IMC ) )
+	else if ( !GetTeamPlayerCount( TEAM_IMC ) )
 		defaultWinner = TEAM_MILITIA
 
 	if ( IsRoundBasedGameOver() )
@@ -1178,10 +1178,10 @@ bool function IsRoundBasedGameOver()
 	// maybe no players left on enemy team
 	int defaultWinner = TEAM_UNASSIGNED
 
-	// if ( !GetTeamPlayerCount( TEAM_MILITIA ) )
-	// 	defaultWinner = TEAM_IMC
-	// else if ( !GetTeamPlayerCount( TEAM_IMC ) )
-	// 	defaultWinner = TEAM_MILITIA
+	if ( !GetTeamPlayerCount( TEAM_MILITIA ) )
+		defaultWinner = TEAM_IMC
+	else if ( !GetTeamPlayerCount( TEAM_IMC ) )
+		defaultWinner = TEAM_MILITIA
 
 	if ( HasRoundScoreLimitBeenReached() || ( defaultWinner != TEAM_UNASSIGNED && GetRoundsPlayed() > 1 ) )
 		return true
@@ -1860,8 +1860,8 @@ bool function ShouldEnterSuddenDeath( int winningTeam )
 	if ( !IsSuddenDeathGameMode() )
 		return false
 
-	// if ( GetTeamPlayerCount( TEAM_MILITIA ) || GetTeamPlayerCount( TEAM_IMC ) )
-	// return false
+	if ( GetTeamPlayerCount( TEAM_MILITIA ) || GetTeamPlayerCount( TEAM_IMC ) )
+		return false
 
 	return true
 }
