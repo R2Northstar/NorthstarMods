@@ -27,6 +27,8 @@ global function GetTimeLimit_ForGameMode
 global function CodeCallback_GamerulesThink
 global function GetWinnerDeterminedWait
 global function WillShowRoundWinningKillReplay
+global function ProtectTeamFromElimination
+global function ClearTeamEliminationProtection
 
 struct
 {
@@ -1390,7 +1392,7 @@ int function CheckEliminationPilotWinner( bool setWinner = false )
 		teams[ player.GetTeam() ]++
 	}
 
-	foreach ( int team, protected in file.teamProtectedFromElimination )
+	foreach ( int team, bool protected in file.teamProtectedFromElimination )
 		if ( protected ) // this team can't be eliminated now
 			teams[ team ]++
 
@@ -1508,7 +1510,7 @@ int function CheckEliminationTitanWinner( bool setWinner = false )
 		}
 	}
 
-	foreach ( team, protected in file.teamProtectedFromElimination )
+	foreach ( int team, bool protected in file.teamProtectedFromElimination )
 		if ( protected ) // this team can't be eliminated now
 			teamPlayers[ team ]++
 
@@ -2017,4 +2019,15 @@ float function GetSwitchingSidesWait()
 		waitTime = ROUND_WINNING_KILL_REPLAY_STARTUP_WAIT + SWITCHING_SIDES_DELAY + ROUND_WINNING_KILL_REPLAY_TOTAL_LENGTH
 
 	return waitTime
+}
+
+void function ProtectTeamFromElimination( int team )
+{
+	file.teamProtectedFromElimination[ team ] = true
+}
+
+void function ClearTeamEliminationProtection()
+{
+	foreach ( team, protected in file.teamProtectedFromElimination )
+		file.teamProtectedFromElimination[ team ] = false
 }
