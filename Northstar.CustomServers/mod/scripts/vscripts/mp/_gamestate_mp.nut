@@ -1805,6 +1805,9 @@ bool function TimeLimit_Complete()
 		}
 		else if ( file.playinglastminutemusic || file.playingthreeminutemusic )
 		{
+			file.playinglastminutemusic = false
+			file.playingthreeminutemusic = false
+
 			foreach ( int team in [ TEAM_IMC, TEAM_MILITIA ] )
 				CreateTeamMusicEvent( team, eMusicPieceID.LEVEL_INTRO, -99999999 )
 
