@@ -55,6 +55,7 @@ struct
 	float gameEndTimeChangedTime
 	bool playinglastminutemusic = false
 	bool playingthreeminutemusic = false
+	float timeWithPlayers = -1
 	bool endingMatch = false
 } file
 
@@ -662,6 +663,7 @@ void function GameStateEnter_Prematch()
 	level.firstTitanfall = false
 	file.playinglastminutemusic = false
 	file.playingthreeminutemusic = false
+	file.timeWithPlayers = -1
 
 	int timeLimit = GameMode_GetTimeLimit( GAMETYPE ) * 60
 
@@ -722,6 +724,19 @@ void function GameRulesThink_Playing()
 {
 	if ( CheckForEmptyTeamVictory() )
 		return
+
+	if ( GetConVarBool( "ns_match_end_if_no_players" ) )
+	{
+		if ( GetPlayerArray().len() )
+		{
+			file.timeWithPlayers = Time()
+		}
+		else if ( file.timeWithPlayers == -1 || file.timeWithPlayers + 15.0 < Time() )
+		{
+			GameRules_EndMatch()
+			return
+		}
+	}
 
 	if ( EliminationMode_Complete() )
 		return
