@@ -573,7 +573,7 @@ bool function DoneWaitingForPlayers()
 
 	// start failsafe timer
 	if ( !level.doneWaitingForPlayersTimeout )
-		level.doneWaitingForPlayersTimeout = Time() + GetCurrentPlaylistVarInt( "waiting_for_players_timeout_seconds", 120 )
+		level.doneWaitingForPlayersTimeout = Time() + GetCurrentPlaylistVarInt( "waiting_for_players_timeout_seconds", 45 )
 
 	int minPlayers = 0 // GetCurrentPlaylistVarInt( "min_players", 0 )
 	int knownPlayersCount = GetConnectingAndConnectedPlayerArray().len() + GetPendingClientsCount()
@@ -963,7 +963,7 @@ void function GameRulesThink_SwitchingSides()
 
 	level.clearedPlayers = false
 
-	if ( file.usePickLoadoutScreen && GetCurrentPlaylistVarInt( "pick_loadout_every_round", 1 ) ) // Playlist var needs to be enabled as well
+	if ( file.usePickLoadoutScreen && GetCurrentPlaylistVarInt( "pick_loadout_every_round", 0 ) )
 		SetGameState( eGameState.PickLoadout )
 	else
 		SetGameState( eGameState.Prematch )
