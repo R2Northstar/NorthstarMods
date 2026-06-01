@@ -710,8 +710,8 @@ void function TriggerEnterCallback( entity trigger, bool functionref( entity, en
 		void function( entity trigger, entity player ) : ( canBoardCallback, dropship )
 		{
 			if (
-				!player.IsPlayer() || !IsAlive( player ) || player.IsTitan() || player.ContextAction_IsBusy() || !canBoardCallback( dropship, player ) ||
-				PlayerInDropship( player, dropship )
+				!player.IsPlayer() || !IsAlive( player ) || player.IsTitan() || player.ContextAction_IsBusy() || IsValid( player.GetParent() ) ||
+				!canBoardCallback( dropship, player ) || PlayerInDropship( player, dropship )
 			)
 				return
 
