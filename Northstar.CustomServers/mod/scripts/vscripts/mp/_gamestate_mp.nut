@@ -1803,9 +1803,7 @@ bool function TimeLimit_Complete()
 					PlayCurrentTeamMusicEventsOnPlayer( player )
 			}
 		}
-		else if (
-			!IsRoundBased() && timeLeftSeconds <= 180 && timeLeftSeconds <= ( expect float( GetServerVar( "gameEndTime" ) ) - file.gameEndTimeChangedTime ) / 2.65
-		)
+		else if ( !IsRoundBased() && timeLeftSeconds <= ( expect float( GetServerVar( "gameEndTime" ) ) - file.gameEndTimeChangedTime ) / 2.65 )
 		{
 			if ( !file.playingthreeminutemusic )
 			{
