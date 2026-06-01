@@ -587,6 +587,7 @@ bool function DoneWaitingForPlayers()
 			minPlayers,
 			( expectedPlayers * GetCurrentPlaylistVarInt( "waiting_for_players_percentage_desired", 70 ) * 0.01 ).tointeger()
 		)
+
 		if ( connectedPlayersCount < playersDesiredForCountdownStart )
 			return false
 	}
