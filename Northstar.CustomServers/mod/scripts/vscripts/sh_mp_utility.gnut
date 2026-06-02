@@ -121,7 +121,7 @@ bool function IsTitanAvailable( entity player )
 bool function IsRespawnAvailable( entity player )
 {
 	#if SERVER
-		if ( GetGameState() == eGameState.WinnerDetermined )
+		if ( GetGameState() == eGameState.WinnerDetermined || GetGameState() == eGameState.SwitchingSides )
 			return false
 	#endif
 
