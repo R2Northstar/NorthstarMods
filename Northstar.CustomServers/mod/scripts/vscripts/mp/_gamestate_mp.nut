@@ -1167,9 +1167,6 @@ void function CleanUpEntitiesForRoundEnd()
 
 	foreach ( entity npc in GetNPCArray() )
 	{
-		if ( !IsAlive( npc ) )
-			continue
-
 		if ( npc.e.fd_roundDeployed != -1 || npc.ai.buddhaMode ) // FD uses this var to cleanup stuff placed in current wave restart, buddha is for offline Turrets
 			continue
 
