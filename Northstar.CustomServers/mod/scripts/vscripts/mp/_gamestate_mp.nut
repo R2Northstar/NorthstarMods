@@ -1173,21 +1173,16 @@ void function CleanUpEntitiesForRoundEnd()
 		if ( npc.e.fd_roundDeployed != -1 || npc.ai.buddhaMode ) // FD uses this var to cleanup stuff placed in current wave restart, buddha is for offline Turrets
 			continue
 
-		if ( npc.IsTitan() )
+		if ( npc.IsTitan() && IsValid( npc.GetTitanSoul() ) )
 		{
-			npc.e.forceRagdollDeath = true
-			if ( !( "silentDeath" in npc.s ) ) // Ensure no background explosions will be heard from titans dying to round cleanup
-				npc.s.silentDeath <- true
-		}
-		else
-			npc.EnableNPCFlag( NPC_NO_WEAPON_DROP )
+			ClearChildren( npc.GetTitanSoul() )
 
-		// Kill rather than destroy, as destroying will cause issues with children which is an issue especially for dropships and titans
-		npc.Die(
-			svGlobal.worldspawn,
-			svGlobal.worldspawn,
-			{ scriptType = DF_SKIP_DAMAGE_PROT | DF_SKIPS_DOOMED_STATE | DF_GIB, damageSourceId = eDamageSourceId.round_end }
-		)
+			npc.GetTitanSoul().Destroy()
+		}
+
+		ClearChildren( npc )
+
+		npc.Destroy()
 	}
 
 	foreach ( entity battery in GetEntArrayByClass_Expensive( "item_titan_battery" ) )
