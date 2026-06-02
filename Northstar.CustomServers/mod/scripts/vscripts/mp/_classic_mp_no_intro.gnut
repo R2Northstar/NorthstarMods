@@ -48,6 +48,7 @@ void function ClassicMP_DefaultNoIntro_Start()
 		if ( IsValidPlayer( player ) )
 		{
 			player.UnfreezeControlsOnServer()
+
 			RemoveCinematicFlag( player, CE_FLAG_CLASSIC_MP_SPAWNING )
 		}
 	}
@@ -88,8 +89,6 @@ void function ClassicMP_DefaultNoIntro_PilotSpawnPlayer( entity player )
 
 	while ( Time() < expect float( level.nv.gameStartTime ) )
 		WaitFrame()
-
-	TryGameModeAnnouncement( player )
 }
 
 // spawn as titan for intro
@@ -97,25 +96,27 @@ void function ClassicMP_DefaultNoIntro_TitanSpawnPlayer( entity player )
 {
 	player.EndSignal( "OnDestroy" )
 
-	WaitFrame()
-
-	ScreenFadeFromBlack( player, 1, 1 )
-
 	entity intermissionCam = GetEntArrayByClass_Expensive( "info_intermission" )[ 0 ]
 
 	player.SetObserverModeStaticPosition( intermissionCam.GetOrigin() )
 	player.SetObserverModeStaticAngles( intermissionCam.GetAngles() )
 	player.StartObserverMode( OBS_MODE_STATIC_LOCKED )
 
+	WaitFrame()
+
+	ScreenFadeFromBlack( player, 1, 1 )
+
 	while ( Time() < expect float( level.nv.gameStartTime ) ) // Wait until match actually starts to spawn them
 		WaitFrame()
 
 	if ( PlayerCanSpawn( player ) )
 	{
-		player.StopObserverMode()
+		delaythread( 0.0001 ) function() : ( player )
+		{
+			if ( IsValidPlayer( player ) )
+				player.StopObserverMode()
+		}()
 
 		RespawnAsTitan( player )
 	}
-
-	TryGameModeAnnouncement( player )
 }

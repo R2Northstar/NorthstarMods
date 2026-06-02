@@ -345,6 +345,7 @@ void function CodeCallback_OnPlayerRespawned( entity player )
 		callback( player )
 
 	Remote_CallFunction_NonReplay( player, "ServerCallback_YouRespawned" )
+	thread TryGameModeAnnouncement( player )
 	ClearLastAttacker( player ) // so dying to anything doesn't credit the same attacker after respawning
 	ClearPlayerEliminated( player )
 }
@@ -726,8 +727,16 @@ void function OnReplacementTitanSecondStage( entity player )
 
 void function TryGameModeAnnouncement( entity player )
 {
-	Remote_CallFunction_NonReplay( player, "ServerCallback_GameModeAnnouncement" )
+	player.EndSignal( "OnDestroy" )
+
+	while ( GetGameState() == eGameState.Prematch )
+		WaitFrame()
+
+	while ( HasCinematicFlag( player, CE_FLAG_INTRO ) || HasCinematicFlag( player, CE_FLAG_CLASSIC_MP_SPAWNING ) )
+		player.WaitSignal( "CE_FLAGS_CHANGED" )
+
 	PlayFactionDialogueToPlayer( GameMode_GetGameModeAnnouncement( GAMETYPE ), player )
+	Remote_CallFunction_NonReplay( player, "ServerCallback_GameModeAnnouncement" )
 }
 
 void function SetPlayerDeathsHidden( bool hidden )

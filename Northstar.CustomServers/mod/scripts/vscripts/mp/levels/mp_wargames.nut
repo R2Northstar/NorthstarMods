@@ -498,19 +498,6 @@ void function PlayerWatchesWargamesIntro( entity player )
 
 	while ( Time() < file.introStartTime + 21.4 )
 		WaitFrame()
-
-	thread DelayedGamemodeAnnouncement( player )
-}
-
-void function DelayedGamemodeAnnouncement( entity player )
-{
-	player.EndSignal( "OnDestroy" )
-
-	while ( Time() < expect float( level.nv.gameStartTime ) )
-		WaitFrame()
-
-	if ( IsAlive( player ) )
-		TryGameModeAnnouncement( player )
 }
 
 void function PlaySound_SimPod_DoorShut( entity playerFirstPersonProxy ) // stolen from sp_training

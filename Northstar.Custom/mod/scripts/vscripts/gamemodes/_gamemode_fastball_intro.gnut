@@ -243,6 +243,4 @@ void function FastballPlayer( entity player )
 	// have to correct this manually here since due to no 3p animation our position isn't set right during this sequence
 	player.SetOrigin( buddy.GetAttachmentOrigin( buddy.LookupAttachment( "FASTBALL_R" ) ) )
 	player.SetVelocity( throwVel )
-
-	TryGameModeAnnouncement( player )
 }
