@@ -740,6 +740,15 @@ void function GameRulesThink_Playing()
 	if ( CheckForEmptyTeamVictory() )
 		return
 
+	if ( EliminationMode_Complete() )
+		return
+
+	if ( !IsRoundBased() && ScoreLimit_Complete() )
+		return
+
+	if ( TimeLimit_Complete() )
+		return
+
 	if ( GetConVarBool( "ns_match_end_if_no_players" ) )
 	{
 		if ( GetPlayerArray().len() )
@@ -753,14 +762,7 @@ void function GameRulesThink_Playing()
 		}
 	}
 
-	if ( EliminationMode_Complete() )
-		return
-
-	if ( !IsRoundBased() && ScoreLimit_Complete() )
-		return
-
-	if ( TimeLimit_Complete() )
-		return
+	UpdateMatchProgress()
 }
 
 /*
@@ -1176,19 +1178,21 @@ void function CleanUpEntitiesForRoundEnd()
 		player.SetObserverTarget( null )
 	}
 
-	foreach ( entity npc in GetNPCArray() )
+	array<entity> npcs = GetNPCArray()
+
+	foreach ( entity npc in npcs )
 	{
 		if ( npc.e.fd_roundDeployed != -1 || npc.ai.buddhaMode ) // FD uses this var to cleanup stuff placed in current wave restart, buddha is for offline Turrets
 			continue
 
 		if ( npc.IsTitan() && IsValid( npc.GetTitanSoul() ) )
 		{
-			ClearChildren( npc.GetTitanSoul() )
+			ClearAndKillChildren( npc.GetTitanSoul(), npcs )
 
 			npc.GetTitanSoul().Destroy()
 		}
 
-		ClearChildren( npc )
+		ClearAndKillChildren( npc, npcs )
 
 		npc.Destroy()
 	}
@@ -1200,6 +1204,36 @@ void function CleanUpEntitiesForRoundEnd()
 		callback()
 
 	delaythread( 0.0001 ) SetPlayerDeathsHidden( false )
+}
+
+void function ClearAndKillChildren( entity parentEnt, array<entity> excludedEntities )
+{
+	entity childEnt = parentEnt.FirstMoveChild()
+	entity nextChildEnt
+
+	while ( childEnt != null )
+	{
+		nextChildEnt = childEnt.NextMovePeer()
+
+		childEnt.ClearParent()
+
+		if ( !excludedEntities.contains( childEnt ) )
+		{
+			if ( childEnt.IsPlayer() )
+			{
+				if ( IsAlive( childEnt ) )
+					childEnt.Die( svGlobal.worldspawn, svGlobal.worldspawn, { damageSourceId = eDamageSourceId.round_end } )
+			}
+			else
+			{
+				ClearAndKillChildren( childEnt, excludedEntities )
+
+				childEnt.Destroy()
+			}
+		}
+
+		childEnt = nextChildEnt
+	}
 }
 
 float function GameState_GetTimeLimitOverride()
@@ -2075,4 +2109,87 @@ void function ClearTeamEliminationProtection()
 {
 	foreach ( team, protected in file.teamProtectedFromElimination )
 		file.teamProtectedFromElimination[ team ] = false
+}
+
+void function UpdateMatchProgress()
+{
+	float progress_score = GetMatchProgress_Score()
+	float progress_time = GetMatchProgress_Time()
+
+	if ( IsSwitchSidesBased() && !IsRoundBased() )
+	{
+		progress_time *= 0.5
+
+		if ( HasSwitchedSides() )
+			progress_time += 50.0
+	}
+
+	float progress = max( progress_score, progress_time )
+	int progressInt = floor( progress ).tointeger()
+
+	if ( level.nv.matchProgress != progressInt )
+	{
+		level.nv.matchProgress = progressInt
+		// printt( "Match Progress: " + progressInt + "%" )
+	}
+}
+
+float function GetMatchProgress_Score( int team = TEAM_UNASSIGNED )
+{
+	// Returns a percent of progress for score 0.0 - 100.0%
+	// Uses the team with higher score as returned progress
+
+	int scoreLimit
+	int militiaScore
+	int imcScore
+
+	if ( IsRoundBased() )
+	{
+		scoreLimit = GetRoundScoreLimit_FromPlaylist()
+		militiaScore = GameRules_GetTeamScore2( TEAM_MILITIA )
+		imcScore = GameRules_GetTeamScore2( TEAM_IMC )
+	}
+	else
+	{
+		scoreLimit = GetScoreLimit_FromPlaylist()
+		militiaScore = GameRules_GetTeamScore( TEAM_MILITIA )
+		imcScore = GameRules_GetTeamScore( TEAM_IMC )
+	}
+
+	if ( !scoreLimit )
+		return 0.0
+
+	float militiaProgress = ( militiaScore.tofloat() / scoreLimit.tofloat() ) * 100.0
+	float imcProgress = ( imcScore.tofloat() / scoreLimit.tofloat() ) * 100.0
+
+	if ( team == TEAM_MILITIA )
+		return militiaProgress
+	else if ( team == TEAM_IMC )
+		return imcProgress
+
+	return max( militiaProgress, imcProgress )
+}
+
+float function GetMatchProgress_Time()
+{
+	// Returns a percent of progress for time limit 0.0 - 100.0%
+
+	if ( !GameRules_TimeLimitEnabled() )
+		return 0.0
+
+	if ( IsRoundBased() )
+		return 0.0
+
+	if ( !GetTimeLimit_ForGameMode() )
+		return 0.0
+
+	if ( Flag( "DisableTimeLimit" ) )
+		return 0.0
+
+	int timeLimit = ( GetTimeLimit_ForGameMode() * 60.0 ).tointeger()
+
+	if ( !timeLimit )
+		return 0.0
+
+	return ( GameTime_PlayingTime() / timeLimit ) * 100.0
 }

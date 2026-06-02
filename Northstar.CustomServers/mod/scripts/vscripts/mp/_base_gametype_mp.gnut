@@ -10,6 +10,7 @@ global function RespawnAsPilot
 global function RespawnAsTitan
 global function TryGameModeAnnouncement
 
+global function GameModeAnnouncementOnlyPlaysOnceForPlayer
 global function SetPlayerDeathsHidden
 global function TrackTitanDamageInPlayerGameStat
 global function CheckGameStateForPlayerMovement
@@ -34,6 +35,7 @@ struct
 
 	table<entity, bool> playerRespawnPlayerIntoTitan
 	table<entity, int> hasRunGamemodeAnnouncementForPlayer
+	bool gameModeAnnouncementOnlyPlaysOnceForPlayer = false
 } file
 
 void function BaseGametype_Init_MPSP()
@@ -728,7 +730,13 @@ void function OnReplacementTitanSecondStage( entity player )
 
 void function TryGameModeAnnouncement( entity player )
 {
-	if ( player in file.hasRunGamemodeAnnouncementForPlayer && file.hasRunGamemodeAnnouncementForPlayer[ player ] >= level.nv.roundsPlayed )
+	if (
+		player in file.hasRunGamemodeAnnouncementForPlayer &&
+		(
+			file.hasRunGamemodeAnnouncementForPlayer[ player ] >= level.nv.roundsPlayed ||
+				( file.hasRunGamemodeAnnouncementForPlayer[ player ] && file.gameModeAnnouncementOnlyPlaysOnceForPlayer )
+		)
+	)
 		return
 
 	player.EndSignal( "OnDestroy" )
@@ -747,6 +755,11 @@ void function TryGameModeAnnouncement( entity player )
 
 	PlayFactionDialogueToPlayer( GameMode_GetGameModeAnnouncement( GAMETYPE ), player )
 	Remote_CallFunction_NonReplay( player, "ServerCallback_GameModeAnnouncement" )
+}
+
+void function GameModeAnnouncementOnlyPlaysOnceForPlayer( bool playsOnce )
+{
+	file.gameModeAnnouncementOnlyPlaysOnceForPlayer = playsOnce
 }
 
 void function SetPlayerDeathsHidden( bool hidden )

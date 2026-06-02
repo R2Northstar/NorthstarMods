@@ -3313,8 +3313,12 @@ void function ShowCrit( entity ent )
 void function ClearPlayerAnimViewEntity( entity player, float time = 0.3 )
 {
 	entity viewEnt = player.GetFirstPersonProxy()
-	viewEnt.HideFirstPersonProxy()
-	viewEnt.Anim_Stop()
+
+	if ( IsValid( viewEnt ) )
+	{
+		viewEnt.HideFirstPersonProxy()
+		viewEnt.Anim_Stop()
+	}
 
 	player.AnimViewEntity_SetLerpOutTime( time )
 	player.AnimViewEntity_Clear()
