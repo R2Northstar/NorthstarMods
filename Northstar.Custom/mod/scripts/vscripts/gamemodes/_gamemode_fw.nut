@@ -168,7 +168,7 @@ void function RateSpawnpointsTitan_FW( int checkClass, array<entity> spawnpoints
 
 void function RateSpawnpoints_FW( array<entity> startSpawns, int checkClass, array<entity> spawnpoints, int team, entity player )
 {
-	if ( HasSwitchedSides() )
+	if ( IsSwitchSidesBased() && HasSwitchedSides() )
 		team = GetOtherTeam( team )
 
 	// average out startspawn positions

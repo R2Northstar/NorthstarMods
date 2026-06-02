@@ -33,7 +33,7 @@ void function GamemodeCP_Init()
 
 void function RateSpawnpoints_CP( int checkClass, array<entity> spawnpoints, int team, entity player )
 {
-	if ( HasSwitchedSides() )
+	if ( IsSwitchSidesBased() && HasSwitchedSides() )
 		team = GetOtherTeam( team )
 
 	// check hardpoints, determine which ones we own

@@ -79,7 +79,7 @@ void function OnPrematchStart()
 
 	file.militiaBuddy = CreatePropDynamic( $"models/titans/buddy/titan_buddy.mdl" )
 
-	if ( HasSwitchedSides() )
+	if ( IsSwitchSidesBased() && HasSwitchedSides() )
 	{
 		file.militiaBuddy.SetOrigin( imcBuddySpawn.origin )
 		file.militiaBuddy.SetAngles( imcBuddySpawn.angles )
@@ -94,7 +94,7 @@ void function OnPrematchStart()
 
 	file.imcBuddy = CreatePropDynamic( $"models/titans/buddy/titan_buddy.mdl" )
 
-	if ( HasSwitchedSides() )
+	if ( IsSwitchSidesBased() && HasSwitchedSides() )
 	{
 		file.imcBuddy.SetOrigin( militiaBuddySpawn.origin )
 		file.imcBuddy.SetAngles( militiaBuddySpawn.angles )

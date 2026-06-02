@@ -84,6 +84,12 @@ void function AddPlayerToHideAndSeekIntro( entity player )
 
 void function HideAndSeekIntroPrematch()
 {
+	if ( !IsNewThread() )
+	{
+		thread HideAndSeekIntroPrematch()
+		return
+	}
+
 	ClassicMP_OnIntroStarted()
 
 	file.hidingStartTime = Time()

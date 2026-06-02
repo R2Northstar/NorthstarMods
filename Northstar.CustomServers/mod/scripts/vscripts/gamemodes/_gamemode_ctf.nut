@@ -103,7 +103,7 @@ void function CreateFlags()
 
 	foreach ( entity spawn in GetEntArrayByClass_Expensive( "info_spawnpoint_flag" ) )
 	{
-		bool switchedSides = HasSwitchedSides() == 1
+		bool switchedSides = IsSwitchSidesBased() && HasSwitchedSides() != 0
 
 		bool shouldSwap = switchedSides
 		if ( !shouldSwap && SWAP_FLAG_MAPS.contains( GetMapName() ) )
