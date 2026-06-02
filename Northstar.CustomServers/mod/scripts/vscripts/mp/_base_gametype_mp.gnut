@@ -33,7 +33,7 @@ struct
 	bool gamemodeTeamSwitchEnabled = true
 
 	table<entity, bool> playerRespawnPlayerIntoTitan
-	table<entity, bool> hasRunGamemodeAnnouncementForPlayer
+	table<entity, int> hasRunGamemodeAnnouncementForPlayer
 } file
 
 void function BaseGametype_Init_MPSP()
@@ -728,7 +728,7 @@ void function OnReplacementTitanSecondStage( entity player )
 
 void function TryGameModeAnnouncement( entity player )
 {
-	if ( player in file.hasRunGamemodeAnnouncementForPlayer && file.hasRunGamemodeAnnouncementForPlayer[ player ] )
+	if ( player in file.hasRunGamemodeAnnouncementForPlayer && file.hasRunGamemodeAnnouncementForPlayer[ player ] >= level.nv.roundsPlayed )
 		return
 
 	player.EndSignal( "OnDestroy" )
@@ -743,7 +743,7 @@ void function TryGameModeAnnouncement( entity player )
 	if ( !IsAlive( player ) || GetGameState() > eGameState.Playing )
 		return
 
-	file.hasRunGamemodeAnnouncementForPlayer[ player ] <- true
+	file.hasRunGamemodeAnnouncementForPlayer[ player ] <- expect int( level.nv.roundsPlayed )
 
 	PlayFactionDialogueToPlayer( GameMode_GetGameModeAnnouncement( GAMETYPE ), player )
 	Remote_CallFunction_NonReplay( player, "ServerCallback_GameModeAnnouncement" )
