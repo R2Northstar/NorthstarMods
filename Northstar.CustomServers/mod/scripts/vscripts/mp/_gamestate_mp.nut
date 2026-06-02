@@ -672,7 +672,19 @@ void function GameStateEnter_Prematch()
 		timeLimit /= 2 // endtime is half of total per side
 
 	if ( IsRoundBased() ) // Override with roundtimelimits even if it have switching sides enabled
+	{
 		timeLimit = int( GameMode_GetRoundTimeLimit( GAMETYPE ) * 60 )
+
+		level.nv.roundScoreLimitComplete = false
+
+		if ( IsRoundWinningKillReplayEnabled() )
+		{
+			file.roundWinningKillReplayAttacker = null
+			file.roundWinningKillReplayInflictorEHandle = -1
+			// ClearRoundWinningKillReplayEntities() // Clear here as opposed to at the end of
+			// roundwinningkillreplay to not change the time spent in WinnerDetermined state.
+		}
+	}
 
 	if ( !GetClassicMPMode() && !ClassicMP_ShouldTryIntroAndEpilogueWithoutClassicMP() )
 	{
@@ -867,6 +879,8 @@ void function GameRulesThink_WinnerDetermined()
 
 	if ( !IsRoundBased() )
 	{
+		RegisterChallenges_OnMatchEnd()
+
 		if ( ShouldRunEvac() )
 		{
 			ClassicMP_SetupEpilogue()
@@ -880,6 +894,8 @@ void function GameRulesThink_WinnerDetermined()
 
 	if ( IsRoundBasedGameOver() )
 	{
+		RegisterChallenges_OnMatchEnd()
+
 		if ( ShouldRunEvac() )
 		{
 			ClassicMP_SetupEpilogue()
@@ -955,6 +971,7 @@ void function GameRulesThink_SwitchingSides()
 		if ( GameTime_TimeSpentInCurrentState() > GetSwitchingSidesWait() - CLEAR_PLAYERS_BUFFER && !level.clearedPlayers )
 		{
 			CleanUpEntitiesForRoundEnd()
+
 			level.clearedPlayers = true
 		}
 
@@ -1064,6 +1081,8 @@ void function OnPlayerKilled( entity victim, entity attacker, var damageInfo )
 		return
 	}
 
+	CheckEliminationModeWinner()
+
 	entity inflictor = DamageInfo_GetInflictor( damageInfo )
 	bool shouldUseInflictor = IsValid( inflictor ) && ShouldTryUseProjectileReplay( victim, attacker, damageInfo, true )
 	if ( victim.IsPlayer() )
@@ -1127,21 +1146,23 @@ void function CleanUpEntitiesForRoundEnd()
 
 	foreach ( entity player in GetPlayerArray() )
 	{
-		if ( IsPrivateMatchSpectator( player ) )
-			continue
+		// Depend on SwitchingSides etc to screenfade correctly
+		PROTO_CleanupTrackedProjectiles( player )
+
+		player.ClearInvulnerable()
+		player.ClearParent()
+		player.SetPlayerNetInt( "batteryCount", 0 )
 
 		PlayerEarnMeter_Reset( player )
 		ClearTitanAvailable( player )
-		PROTO_CleanupTrackedProjectiles( player )
 		SetPlayerEliminated( player )
 
-		player.SetPlayerNetInt( "batteryCount", 0 )
-		player.ClearInvulnerable()
-		player.SetNoTarget( false )
-		player.ClearParent() // Dropship parenting causes observer mode crash
-
 		if ( IsAlive( player ) )
-			KillPlayer( player, eDamageSourceId.round_end )
+			player.Die( svGlobal.worldspawn, svGlobal.worldspawn, { damageSourceId = eDamageSourceId.round_end } )
+
+		Assert( !IsAlive( player ), player.GetHealth() + " " + player.IsInvulnerable() + " " + player.IsBuddhaMode() + " " + player.IsGodMode() )
+
+		player.SetPlayerSettingsWithMods( "spectator", [] )
 	}
 
 	foreach ( entity npc in GetNPCArray() )

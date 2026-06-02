@@ -125,6 +125,8 @@ void function PlayerBecomesSpectator( entity player )
 {
 	player.EndSignal( "OnDestroy" )
 
+	player.SetPlayerSettingsWithMods( "spectator", [] )
+
 	SetTeam( player, player.GetTeam() )
 
 	WaittillGameStateOrHigher( eGameState.Prematch )
