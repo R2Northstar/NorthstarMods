@@ -983,6 +983,8 @@ void function GameRulesThink_SwitchingSides()
 
 	level.clearedPlayers = false
 
+	AllPlayersUnMuteAll()
+
 	if ( file.usePickLoadoutScreen && GetCurrentPlaylistVarInt( "pick_loadout_every_round", 0 ) )
 		SetGameState( eGameState.PickLoadout )
 	else
@@ -1160,12 +1162,16 @@ void function CleanUpEntitiesForRoundEnd()
 		ClearTitanAvailable( player )
 		SetPlayerEliminated( player )
 
+		player.SetOrigin( < 10000, 10000, 10000 > )
+
 		if ( IsAlive( player ) )
 			player.Die( svGlobal.worldspawn, svGlobal.worldspawn, { damageSourceId = eDamageSourceId.round_end } )
 
-		Assert( !IsAlive( player ), player.GetHealth() + " " + player.IsInvulnerable() + " " + player.IsBuddhaMode() + " " + player.IsGodMode() )
-
 		player.SetPlayerSettingsWithMods( "spectator", [] )
+		player.SetObserverModeStaticPosition( < 0, 0, 0 > )
+		player.SetObserverModeStaticAngles( < 0, 0, 0 > )
+		player.StartObserverMode( OBS_MODE_STATIC_LOCKED )
+		player.SetObserverTarget( null )
 	}
 
 	foreach ( entity npc in GetNPCArray() )
@@ -1807,7 +1813,7 @@ bool function TimeLimit_Complete()
 
 	if ( GamePlaying() )
 	{
-		if ( timeLeftSeconds <= 60 )
+		if ( timeLimit <= 60.0 )
 		{
 			if ( !file.playinglastminutemusic )
 			{
@@ -1820,7 +1826,7 @@ bool function TimeLimit_Complete()
 					PlayCurrentTeamMusicEventsOnPlayer( player )
 			}
 		}
-		else if ( !IsRoundBased() && timeLeftSeconds <= ( expect float( GetServerVar( "gameEndTime" ) ) - file.gameEndTimeChangedTime ) / 2.65 )
+		else if ( !IsRoundBased() && timeLimit <= ( timeLimit + Time() - file.gameEndTimeChangedTime ) / 2.65 )
 		{
 			if ( !file.playingthreeminutemusic )
 			{
@@ -1931,9 +1937,9 @@ float function GetWinnerDeterminedWait()
 		if ( WillShowRoundWinningKillReplay() )
 		{
 			if ( RoundScoreLimit_Complete() )
-				return ROUND_WINNING_KILL_REPLAY_STARTUP_WAIT + GAME_WINNER_DETERMINED_FINAL_ROUND_WITH_ROUND_WINNING_KILL_REPLAY_WAIT + CLEAR_PLAYERS_BUFFER
+				return GAME_WINNER_DETERMINED_FINAL_ROUND_WITH_ROUND_WINNING_KILL_REPLAY_WAIT + CLEAR_PLAYERS_BUFFER
 			else
-				return ROUND_WINNING_KILL_REPLAY_STARTUP_WAIT + GAME_WINNER_DETERMINED_ROUND_WAIT_WITH_ROUND_WINNING_KILL_REPLAY_WAIT + CLEAR_PLAYERS_BUFFER
+				return GAME_WINNER_DETERMINED_ROUND_WAIT_WITH_ROUND_WINNING_KILL_REPLAY_WAIT + CLEAR_PLAYERS_BUFFER
 		}
 		else if ( RoundScoreLimit_Complete() )
 			return GAME_WINNER_DETERMINED_FINAL_ROUND_WAIT + CLEAR_PLAYERS_BUFFER
@@ -2050,9 +2056,9 @@ void function RoundWinningKillReplay() // Only Tested in MFD Pro for now! SHould
 
 float function GetSwitchingSidesWait()
 {
-	float waitTime = SWITCHING_SIDES_DELAY
+	float waitTime = SWITCHING_SIDES_DELAY + CLEAR_PLAYERS_BUFFER
 
-	if ( IsSwitchSidesBased() || WillShowRoundWinningKillReplay() )
+	if ( !IsRoundBased() || WillShowRoundWinningKillReplay() )
 		waitTime = SWITCHING_SIDES_DELAY + ROUND_WINNING_KILL_REPLAY_TOTAL_LENGTH + CLEAR_PLAYERS_BUFFER
 
 	return waitTime

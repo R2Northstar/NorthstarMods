@@ -372,6 +372,21 @@ void function PlayerAssistedKill( entity attacker, entity victim )
 void function CodeCallback_OnPlayerKilled( entity player, var damageInfo )
 {
 	bool gamePlayingOrSuddenDeath = GamePlayingOrSuddenDeath() // PlayerOrNPCKilled can result in the gamestate changing, so store it before that happens
+
+	if ( gamePlayingOrSuddenDeath && !file.playerDeathsHidden )
+		player.AddToPlayerGameStat( PGS_DEATHS, 1 )
+
+	entity attacker = DamageInfo_GetAttacker( damageInfo )
+
+	if ( !file.playerDeathsHidden && IsValid( attacker ) )
+		Remote_CallFunction_NonReplay(
+			player,
+			"ServerCallback_YouDied",
+			attacker.GetEncodedEHandle(),
+			GetHealthFrac( attacker ),
+			DamageInfo_GetDamageSourceIdentifier( damageInfo )
+		)
+
 	PlayerOrNPCKilled( player, damageInfo )
 	HandleDeathPackage( player, damageInfo )
 	thread PostDeathThread_MP( player, damageInfo, gamePlayingOrSuddenDeath )
@@ -445,12 +460,6 @@ void function PostDeathThread_MP( entity player, var damageInfo, bool gamePlayin
 	else
 		player.SetObserverTarget( null )
 
-	if ( gamePlayingOrSuddenDeath && !file.playerDeathsHidden )
-		player.AddToPlayerGameStat( PGS_DEATHS, 1 )
-
-	if ( !file.playerDeathsHidden && IsValid( attacker ) )
-		Remote_CallFunction_NonReplay( player, "ServerCallback_YouDied", attacker.GetEncodedEHandle(), GetHealthFrac( attacker ), methodOfDeath )
-
 	float deathcamLength = GetDeathCamLength( player )
 	wait deathcamLength
 
@@ -514,7 +523,7 @@ void function PostDeathThread_MP( entity player, var damageInfo, bool gamePlayin
 		else
 			RespawnAsPilot( player )
 	}
-	else if ( !IsRespawnAvailable( player ) )
+	else
 	{
 		if ( shouldDoReplay && player.IsWatchingKillReplay() )
 			player.WaitSignal( "KillCamOver" )
