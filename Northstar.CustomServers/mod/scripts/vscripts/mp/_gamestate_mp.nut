@@ -731,6 +731,8 @@ void function GameStateEnter_Playing()
 
 	if ( Flag( "AnnounceProgressEnabled" ) )
 		thread DialoguePlayNormal()
+
+	file.gameEndTimeChangedTime = Time()
 }
 
 void function GameRulesThink_Playing()
@@ -1813,7 +1815,7 @@ bool function TimeLimit_Complete()
 
 	if ( GamePlaying() )
 	{
-		if ( timeLimit <= 60.0 )
+		if ( timeLeftSeconds <= 60 )
 		{
 			if ( !file.playinglastminutemusic )
 			{
@@ -1826,7 +1828,7 @@ bool function TimeLimit_Complete()
 					PlayCurrentTeamMusicEventsOnPlayer( player )
 			}
 		}
-		else if ( !IsRoundBased() && timeLimit <= ( timeLimit + Time() - file.gameEndTimeChangedTime ) / 2.65 )
+		else if ( !IsRoundBased() && timeLeftSeconds <= ( expect float( GetServerVar( "gameEndTime" ) ).tointeger() - file.gameEndTimeChangedTime ) / 3.314 )
 		{
 			if ( !file.playingthreeminutemusic )
 			{
