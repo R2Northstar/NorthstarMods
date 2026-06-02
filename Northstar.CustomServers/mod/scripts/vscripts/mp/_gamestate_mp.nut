@@ -936,6 +936,9 @@ void function GameStateEnter_SwitchingSides()
 {
 	svGlobal.levelEnt.Signal( "RoundEnd" )
 
+	if ( WillShowRoundWinningKillReplay() )
+		thread RoundWinningKillReplay()
+
 	if ( IsRoundBased() )
 		level.nv.switchedSides = GetRoundsPlayed()
 	else
@@ -1081,8 +1084,6 @@ void function OnPlayerKilled( entity victim, entity attacker, var damageInfo )
 		return
 	}
 
-	CheckEliminationModeWinner()
-
 	entity inflictor = DamageInfo_GetInflictor( damageInfo )
 	bool shouldUseInflictor = IsValid( inflictor ) && ShouldTryUseProjectileReplay( victim, attacker, damageInfo, true )
 	if ( victim.IsPlayer() )
@@ -1103,14 +1104,14 @@ void function OnPlayerKilled( entity victim, entity attacker, var damageInfo )
 		file.roundWinningKillReplayTimeOfDeath = Time()
 		file.roundWinningKillReplayHealthFrac = GetHealthFrac( attacker )
 	}
+
+	CheckEliminationModeWinner()
 }
 
 void function OnTitanKilled( entity victim, var damageInfo )
 {
 	if ( !GamePlayingOrSuddenDeath() || ( victim.IsNPC() && !IsValid( victim.GetBossPlayer() ) ) )
 		return
-
-	CheckEliminationModeWinner()
 
 	entity attacker = DamageInfo_GetAttacker( damageInfo )
 	entity inflictor = DamageInfo_GetInflictor( damageInfo )
@@ -1128,6 +1129,8 @@ void function OnTitanKilled( entity victim, var damageInfo )
 		file.roundWinningKillReplayTimeOfDeath = Time()
 		file.roundWinningKillReplayHealthFrac = GetHealthFrac( attacker )
 	}
+
+	CheckEliminationModeWinner()
 }
 
 /*
@@ -2047,7 +2050,7 @@ void function RoundWinningKillReplay() // Only Tested in MFD Pro for now! SHould
 
 float function GetSwitchingSidesWait()
 {
-	float waitTime = SWITCHING_SIDES_DELAY + CLEAR_PLAYERS_BUFFER
+	float waitTime = SWITCHING_SIDES_DELAY
 
 	if ( IsSwitchSidesBased() || WillShowRoundWinningKillReplay() )
 		waitTime = SWITCHING_SIDES_DELAY + ROUND_WINNING_KILL_REPLAY_TOTAL_LENGTH + CLEAR_PLAYERS_BUFFER
