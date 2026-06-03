@@ -1427,7 +1427,7 @@ bool function EliminationMode_Complete()
 				SetPlayerEliminated( player )
 	}
 
-	return ( CheckEliminationModeWinner() != -1 )
+	return ( CheckEliminationModeWinner() != TEAM_UNASSIGNED )
 }
 
 int function CheckEliminationModeWinner()
@@ -1612,7 +1612,7 @@ int function CheckEliminationTitanWinner( bool setWinner = false )
 		!setWinner && Time() - expect float( GetServerVar( "gameStartTime" ) ) < ELIM_TITAN_SPAWN_GRACE_PERIOD &&
 		( teamTitansAvailable[ TEAM_IMC ] || teamTitans[ TEAM_IMC ].len() ) && ( teamTitansAvailable[ TEAM_MILITIA ] || teamTitans[ TEAM_MILITIA ].len() )
 	)
-		return -1
+		return TEAM_UNASSIGNED
 
 	if ( !teamTitans[ TEAM_IMC ].len() && teamTitans[ TEAM_MILITIA ].len() )
 	{
@@ -1631,7 +1631,7 @@ int function CheckEliminationTitanWinner( bool setWinner = false )
 	else if ( !teamTitans[ TEAM_IMC ].len() && !teamTitans[ TEAM_MILITIA ].len() )
 	{
 		if ( isPilotEliminationBased && CheckEliminationPilotWinner() != TEAM_UNASSIGNED )
-			return -1
+			return TEAM_UNASSIGNED
 
 		winReason = "#GAMEMODE_NO_TITANS_REMAINING"
 		lossReason = "#GAMEMODE_NO_TITANS_REMAINING"
@@ -1912,7 +1912,7 @@ bool function TimeLimit_Complete()
 			SetGameState( eGameState.SwitchingSides )
 			return true
 		}
-		else if ( IsEliminationBased() && ForceEliminationModeWinner() != -1 )
+		else if ( IsEliminationBased() && ForceEliminationModeWinner() != TEAM_UNASSIGNED )
 			return true
 
 		int winningTeam = TEAM_UNASSIGNED
