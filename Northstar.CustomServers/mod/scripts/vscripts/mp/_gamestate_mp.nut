@@ -2191,5 +2191,5 @@ float function GetMatchProgress_Time()
 	if ( !timeLimit )
 		return 0.0
 
-	return ( GameTime_PlayingTime() / timeLimit ) * 100.0
+	return 100.0 - ( ( GameTime_PlayingTime() / timeLimit ) * 100.0 )
 }
