@@ -1427,7 +1427,7 @@ bool function EliminationMode_Complete()
 				SetPlayerEliminated( player )
 	}
 
-	return ( CheckEliminationModeWinner() != 1 )
+	return ( CheckEliminationModeWinner() != -1 )
 }
 
 int function CheckEliminationModeWinner()
@@ -1449,19 +1449,23 @@ int function CheckEliminationModeWinner()
 	return isComplete
 }
 
-function ForceEliminationModeWinner()
+int function ForceEliminationModeWinner()
 {
+	int isComplete
+
 	switch ( Riff_EliminationMode() )
 	{
 		case eEliminationMode.Pilots:
-			CheckEliminationPilotWinner( true )
+			isComplete = CheckEliminationPilotWinner( true )
 			break
 
 		case eEliminationMode.PilotsTitans:
 		case eEliminationMode.Titans:
-			CheckEliminationTitanWinner( true )
+			isComplete = CheckEliminationTitanWinner( true )
 			break
 	}
+
+	return isComplete
 }
 
 int function CheckEliminationPilotWinner( bool setWinner = false )
@@ -1608,7 +1612,7 @@ int function CheckEliminationTitanWinner( bool setWinner = false )
 		!setWinner && Time() - expect float( GetServerVar( "gameStartTime" ) ) < ELIM_TITAN_SPAWN_GRACE_PERIOD &&
 		( teamTitansAvailable[ TEAM_IMC ] || teamTitans[ TEAM_IMC ].len() ) && ( teamTitansAvailable[ TEAM_MILITIA ] || teamTitans[ TEAM_MILITIA ].len() )
 	)
-		return 1
+		return -1
 
 	if ( !teamTitans[ TEAM_IMC ].len() && teamTitans[ TEAM_MILITIA ].len() )
 	{
@@ -1627,7 +1631,7 @@ int function CheckEliminationTitanWinner( bool setWinner = false )
 	else if ( !teamTitans[ TEAM_IMC ].len() && !teamTitans[ TEAM_MILITIA ].len() )
 	{
 		if ( isPilotEliminationBased && CheckEliminationPilotWinner() != TEAM_UNASSIGNED )
-			return 1
+			return -1
 
 		winReason = "#GAMEMODE_NO_TITANS_REMAINING"
 		lossReason = "#GAMEMODE_NO_TITANS_REMAINING"
@@ -1908,11 +1912,8 @@ bool function TimeLimit_Complete()
 			SetGameState( eGameState.SwitchingSides )
 			return true
 		}
-		else if ( IsEliminationBased() )
-		{
-			ForceEliminationModeWinner()
+		else if ( IsEliminationBased() && ForceEliminationModeWinner() != -1 )
 			return true
-		}
 
 		int winningTeam = TEAM_UNASSIGNED
 		int militiaScore = GameRules_GetTeamScore( TEAM_MILITIA )
@@ -2186,10 +2187,13 @@ float function GetMatchProgress_Time()
 	if ( Flag( "DisableTimeLimit" ) )
 		return 0.0
 
-	int timeLimit = ( GetTimeLimit_ForGameMode() * 60.0 ).tointeger()
+	float timeLimit = GetTimeLimit_ForGameMode() * 60.0
 
 	if ( !timeLimit )
 		return 0.0
+
+	if ( IsSwitchSidesBased() && !IsRoundBased() )
+		timeLimit *= 0.5
 
 	return 100.0 - ( ( GameTime_PlayingTime() / timeLimit ) * 100.0 )
 }
