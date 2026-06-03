@@ -732,10 +732,7 @@ void function TryGameModeAnnouncement( entity player )
 {
 	if (
 		player in file.hasRunGamemodeAnnouncementForPlayer &&
-		(
-			file.hasRunGamemodeAnnouncementForPlayer[ player ] >= level.nv.roundsPlayed ||
-				( file.hasRunGamemodeAnnouncementForPlayer[ player ] && file.gameModeAnnouncementOnlyPlaysOnceForPlayer )
-		)
+		( file.hasRunGamemodeAnnouncementForPlayer[ player ] >= level.nv.roundsPlayed || file.gameModeAnnouncementOnlyPlaysOnceForPlayer )
 	)
 		return
 
