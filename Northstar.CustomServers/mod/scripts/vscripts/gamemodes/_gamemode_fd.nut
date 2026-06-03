@@ -2356,8 +2356,11 @@ void function OnTickSpawn( entity tick )
 void function TickSpawnThreaded( entity tick )
 {
 	WaitFrame()
-	if ( IsValid( tick.GetParent() ) ) // Parented Ticks are Drop Pod ones, and those are handled by the function there itself
+
+	if ( !IsValid( tick ) || IsValid( tick.GetParent() ) ) // Parented Ticks are Drop Pod ones, and those are handled by the function there itself
+	{
 		return
+	}
 	else if ( GetGlobalNetInt( "FD_waveState" ) == WAVE_STATE_IN_PROGRESS && IsHarvesterAlive( fd_harvester.harvester ) )
 	{
 		tick.kv.alwaysalert = 1
