@@ -27,12 +27,9 @@ global function GetTimeLimit_ForGameMode
 global function CodeCallback_GamerulesThink
 global function GetWinnerDeterminedWait
 global function WillShowRoundWinningKillReplay
-global function ProtectTeamFromElimination
-global function ClearTeamEliminationProtection
 
 struct
 {
-	table<int, bool> teamProtectedFromElimination = { [TEAM_MILITIA] = false, [TEAM_IMC] = false }
 	bool usePickLoadoutScreen
 	bool spectateInPickLoadoutScreen = false // This is so joining players stay absent from distracting others with invulnerability given by the Titan Selection Screen
 	int functionref() timeoutWinnerDecisionFunc
@@ -943,10 +940,13 @@ void function GameStateEnter_SwitchingSides()
 	if ( WillShowRoundWinningKillReplay() )
 		thread RoundWinningKillReplay()
 
-	if ( IsRoundBased() )
-		level.nv.switchedSides = GetRoundsPlayed()
-	else
+	if ( !IsRoundBased() )
+	{
 		level.nv.switchedSides = 1
+		level.nv.roundsPlayed = 1
+	}
+	else
+		level.nv.switchedSides = GetRoundsPlayed()
 
 	array<entity> players = GetPlayerArray()
 
@@ -1471,7 +1471,10 @@ int function ForceEliminationModeWinner()
 int function CheckEliminationPilotWinner( bool setWinner = false )
 {
 	array<entity> players = GetPlayerArray()
-	table<int, int> teams = { [TEAM_IMC] = 0, [TEAM_MILITIA] = 0 }
+	table<int, int> teams
+
+	foreach ( entity player in players )
+		teams[ player.GetTeam() ] <- 0
 
 	foreach ( entity player in players )
 	{
@@ -1481,29 +1484,40 @@ int function CheckEliminationPilotWinner( bool setWinner = false )
 		teams[ player.GetTeam() ]++
 	}
 
-	foreach ( int team, bool protected in file.teamProtectedFromElimination )
-		if ( protected ) // this team can't be eliminated now
-			teams[ team ]++
+	int teamsWithPlayers = 0
+	int lastTeamWithPlayers = -1
+	int teamHighestPlayers = -1
+	array<int> teamsWithHighestPlayers = []
+
+	foreach ( int team, int playerCount in teams )
+	{
+		if ( playerCount )
+		{
+			teamsWithPlayers++
+			lastTeamWithPlayers = team
+		}
+
+		if ( playerCount > teamHighestPlayers )
+		{
+			teamHighestPlayers = playerCount
+			teamsWithHighestPlayers = [ team ]
+		}
+		else if ( playerCount == teamHighestPlayers )
+			teamsWithHighestPlayers.append( team )
+	}
 
 	int winningTeam
 	string winReason
 	string lossReason
 
-	if ( !teams[ TEAM_IMC ] && teams[ TEAM_MILITIA ] )
+	if ( teamsWithPlayers == 1 )
 	{
 		winReason = "#GAMEMODE_ENEMY_PILOTS_ELIMINATED"
 		lossReason = "#GAMEMODE_FRIENDLY_PILOTS_ELIMINATED"
-		winningTeam = TEAM_MILITIA
+		winningTeam = lastTeamWithPlayers
 		setWinner = true
 	}
-	else if ( teams[ TEAM_IMC ] && !teams[ TEAM_MILITIA ] )
-	{
-		winReason = "#GAMEMODE_ENEMY_PILOTS_ELIMINATED"
-		lossReason = "#GAMEMODE_FRIENDLY_PILOTS_ELIMINATED"
-		winningTeam = TEAM_IMC
-		setWinner = true
-	}
-	else if ( !teams[ TEAM_IMC ] && !teams[ TEAM_MILITIA ] )
+	else if ( !teamsWithPlayers )
 	{
 		if ( level.nv.attackingTeam && level.nv.attackingTeam != TEAM_UNASSIGNED )
 		{
@@ -1518,28 +1532,30 @@ int function CheckEliminationPilotWinner( bool setWinner = false )
 	}
 	else if ( setWinner )
 	{
-		if ( level.nv.attackingTeam && level.nv.attackingTeam != TEAM_UNASSIGNED )
+		if ( teamsWithHighestPlayers.len() == 1 && teamHighestPlayers )
 		{
-			winReason = "#GAMEMODE_ATTACKERS_WIN"
-			lossReason = "#GAMEMODE_ATTACKERS_WIN"
-			winningTeam = expect int( level.nv.attackingTeam )
+			winReason = "#GAMEMODE_ENEMY_PILOTS_ELIMINATED"
+			lossReason = "#GAMEMODE_FRIENDLY_PILOTS_ELIMINATED"
+			winningTeam = teamsWithHighestPlayers[ 0 ]
 		}
 		else
-			winningTeam = TEAM_UNASSIGNED
+		{
+			if ( level.nv.attackingTeam && level.nv.attackingTeam != TEAM_UNASSIGNED )
+			{
+				winReason = "#GAMEMODE_ATTACKERS_WIN"
+				lossReason = "#GAMEMODE_ATTACKERS_WIN"
+				winningTeam = expect int( level.nv.attackingTeam )
+			}
+			else
+				winningTeam = TEAM_UNASSIGNED
+		}
 	}
 
 	if ( setWinner && level.nv.winningTeam == null )
 	{
 		AddTeamScore( winningTeam, 1 )
 		SetWinner( winningTeam, winReason, lossReason )
-		return winningTeam
 	}
-
-	array<entity> IMCPlayersAlive = GetPlayerArrayOfTeam_Alive( TEAM_IMC )
-	array<entity> MilitiaPlayersAlive = GetPlayerArrayOfTeam_Alive( TEAM_MILITIA )
-
-	level.lastTeamPilots[ TEAM_MILITIA ] = MilitiaPlayersAlive.len()
-	level.lastTeamPilots[ TEAM_IMC ] = IMCPlayersAlive.len()
 
 	return winningTeam
 }
@@ -1547,11 +1563,21 @@ int function CheckEliminationPilotWinner( bool setWinner = false )
 int function CheckEliminationTitanWinner( bool setWinner = false )
 {
 	array<entity> players = GetPlayerArray()
-	table<int, int> teamPlayers = { [TEAM_IMC] = 0, [TEAM_MILITIA] = 0 }
-	table<int, array> teamTitans = { [TEAM_IMC] = [], [TEAM_MILITIA] = [] }
-	table<int, int> teamTitansAvailable = { [TEAM_IMC] = 0, [TEAM_MILITIA] = 0 }
-	table<int, int> teamPlayerTitans = { [TEAM_IMC] = 0, [TEAM_MILITIA] = 0 }
+	table<int, int> teamPlayers
+	table<int, array> teamTitans
+	table<int, int> teamTitansAvailable
+	table<int, int> teamPlayerTitans
 	bool isPilotEliminationBased = IsPilotEliminationBased()
+
+	foreach ( entity player in players )
+	{
+		int team = player.GetTeam()
+
+		teamPlayers[ team ] <- 0
+		teamTitans[ team ] <- []
+		teamTitansAvailable[ team ] <- 0
+		teamPlayerTitans[ team ] <- 0
+	}
 
 	if ( isPilotEliminationBased )
 	{
@@ -1600,9 +1626,55 @@ int function CheckEliminationTitanWinner( bool setWinner = false )
 		}
 	}
 
-	foreach ( int team, bool protected in file.teamProtectedFromElimination )
-		if ( protected ) // this team can't be eliminated now
-			teamPlayers[ team ]++
+	int teamsWithTitans = 0
+	int lastTeamWithTitans = -1
+	int teamHighestTitans = -1
+	array<int> teamsWithHighestTitans = []
+	int teamsWithAvailableTitans = 0
+
+	foreach ( int team, array titans in teamTitans )
+	{
+		int titanCount = titans.len()
+
+		if ( teamTitansAvailable[ team ] )
+			teamsWithAvailableTitans++
+
+		if ( titanCount )
+		{
+			teamsWithTitans++
+			lastTeamWithTitans = team
+		}
+
+		if ( titanCount > teamHighestTitans )
+		{
+			teamHighestTitans = titanCount
+			teamsWithHighestTitans = [ team ]
+		}
+		else if ( titanCount == teamHighestTitans )
+			teamsWithHighestTitans.append( team )
+	}
+
+	int teamsWithPlayers = 0
+	int lastTeamWithPlayers = -1
+	int teamHighestPlayers = -1
+	array<int> teamsWithHighestPlayers = []
+
+	foreach ( int team, int playerCount in teamPlayers )
+	{
+		if ( playerCount )
+		{
+			teamsWithPlayers++
+			lastTeamWithPlayers = team
+		}
+
+		if ( playerCount > teamHighestPlayers )
+		{
+			teamHighestPlayers = playerCount
+			teamsWithHighestPlayers = [ team ]
+		}
+		else if ( playerCount == teamHighestPlayers )
+			teamsWithHighestPlayers.append( team )
+	}
 
 	int winningTeam
 	string winReason
@@ -1610,25 +1682,18 @@ int function CheckEliminationTitanWinner( bool setWinner = false )
 
 	if (
 		!setWinner && Time() - expect float( GetServerVar( "gameStartTime" ) ) < ELIM_TITAN_SPAWN_GRACE_PERIOD &&
-		( teamTitansAvailable[ TEAM_IMC ] || teamTitans[ TEAM_IMC ].len() ) && ( teamTitansAvailable[ TEAM_MILITIA ] || teamTitans[ TEAM_MILITIA ].len() )
+		( teamsWithTitans > 1 || teamsWithAvailableTitans > 1 )
 	)
 		return TEAM_UNASSIGNED
 
-	if ( !teamTitans[ TEAM_IMC ].len() && teamTitans[ TEAM_MILITIA ].len() )
+	if ( teamsWithTitans == 1 && teamHighestTitans )
 	{
 		winReason = "#GAMEMODE_ENEMY_TITANS_DESTROYED"
 		lossReason = "#GAMEMODE_FRIENDLY_TITANS_DESTROYED"
-		winningTeam = TEAM_MILITIA
+		winningTeam = lastTeamWithTitans
 		setWinner = true
 	}
-	else if ( !teamTitans[ TEAM_MILITIA ].len() && teamTitans[ TEAM_IMC ].len() )
-	{
-		winReason = "#GAMEMODE_ENEMY_TITANS_DESTROYED"
-		lossReason = "#GAMEMODE_FRIENDLY_TITANS_DESTROYED"
-		winningTeam = TEAM_IMC
-		setWinner = true
-	}
-	else if ( !teamTitans[ TEAM_IMC ].len() && !teamTitans[ TEAM_MILITIA ].len() )
+	else if ( !teamsWithTitans )
 	{
 		if ( isPilotEliminationBased && CheckEliminationPilotWinner() != TEAM_UNASSIGNED )
 			return TEAM_UNASSIGNED
@@ -1638,90 +1703,57 @@ int function CheckEliminationTitanWinner( bool setWinner = false )
 		winningTeam = TEAM_UNASSIGNED
 		setWinner = true
 	}
-	else if ( isPilotEliminationBased && !teamPlayers[ TEAM_IMC ] && teamPlayers[ TEAM_MILITIA ] )
+	else if ( isPilotEliminationBased && teamsWithPlayers == 1 )
 	{
 		winReason = "#GAMEMODE_ENEMY_PILOTS_ELIMINATED"
 		lossReason = "#GAMEMODE_FRIENDLY_PILOTS_ELIMINATED"
-		winningTeam = TEAM_MILITIA
+		winningTeam = lastTeamWithPlayers
 		setWinner = true
 	}
-	else if ( isPilotEliminationBased && !teamPlayers[ TEAM_MILITIA ] && teamPlayers[ TEAM_IMC ] )
+	else if ( isPilotEliminationBased && !teamsWithPlayers )
 	{
 		winReason = "#GAMEMODE_ENEMY_PILOTS_ELIMINATED"
 		lossReason = "#GAMEMODE_FRIENDLY_PILOTS_ELIMINATED"
-		winningTeam = TEAM_IMC
+		winningTeam = TEAM_UNASSIGNED
 		setWinner = true
-	}
-	else if ( isPilotEliminationBased && !teamPlayerTitans[ TEAM_IMC ] && !teamPlayerTitans[ TEAM_MILITIA ] && !setWinner )
-	{
-		array<entity> players = GetPlayerArray()
-		table<int, int> teams = { [TEAM_IMC] = 0, [TEAM_MILITIA] = 0 }
-
-		foreach ( player in players )
-		{
-			if ( !IsAlive( player ) )
-				continue
-
-			teams[ player.GetTeam() ]++
-		}
-
-		if ( !teams[ TEAM_IMC ] && !teams[ TEAM_MILITIA ] )
-		{
-			winReason = "#GAMEMODE_NO_TITANS_REMAINING"
-			lossReason = "#GAMEMODE_NO_TITANS_REMAINING"
-			winningTeam = TEAM_UNASSIGNED
-			setWinner = true
-		}
 	}
 	else if ( setWinner )
 	{
-		if ( teamTitans[ TEAM_IMC ].len() > teamTitans[ TEAM_MILITIA ].len() )
+		if ( teamsWithHighestTitans.len() == 1 && teamHighestTitans )
 		{
 			winReason = "#GAMEMODE_TITAN_TITAN_ADVANTAGE"
 			lossReason = "#GAMEMODE_TITAN_TITAN_DISADVANTAGE"
-			winningTeam = TEAM_IMC
-		}
-		else if ( teamTitans[ TEAM_MILITIA ].len() > teamTitans[ TEAM_IMC ].len() )
-		{
-			winReason = "#GAMEMODE_TITAN_TITAN_ADVANTAGE"
-			lossReason = "#GAMEMODE_TITAN_TITAN_DISADVANTAGE"
-			winningTeam = TEAM_MILITIA
+			winningTeam = teamsWithHighestTitans[ 0 ]
 		}
 		else
 		{
-			table<int, float> teamTitanHealth = { [TEAM_IMC] = 0.0, [TEAM_MILITIA] = 0.0 }
+			int winnerByHealth = TEAM_UNASSIGNED
+			float winnerByHealthHealth = -1.0
+			bool winnerByHealthTie = false
 
-			foreach ( entity titan in teamTitans[ TEAM_IMC ] )
+			foreach ( int team in teamsWithHighestTitans )
 			{
-				if ( GetDoomedState( titan ) )
-					continue
+				float healthFrac = 0.0
 
-				float titanTime = expect float( Time() - titan.GetTitanSoul().createTime )
+				foreach ( entity titan in teamTitans[ team ] )
+					if ( !GetDoomedState( titan ) )
+						healthFrac += GetHealthFrac( titan )
 
-				teamTitanHealth[ TEAM_IMC ] += GetHealthFrac( titan )
+				if ( healthFrac > winnerByHealthHealth )
+				{
+					winnerByHealthHealth = healthFrac
+					winnerByHealth = team
+					winnerByHealthTie = false
+				}
+				else if ( healthFrac == winnerByHealthHealth )
+					winnerByHealthTie = true
 			}
 
-			foreach ( entity titan in teamTitans[ TEAM_MILITIA ] )
-			{
-				if ( GetDoomedState( titan ) )
-					continue
-
-				float titanTime = expect float( Time() - titan.GetTitanSoul().createTime )
-
-				teamTitanHealth[ TEAM_MILITIA ] += GetHealthFrac( titan )
-			}
-
-			if ( teamTitanHealth[ TEAM_IMC ] > teamTitanHealth[ TEAM_MILITIA ] )
+			if ( !winnerByHealthTie && winnerByHealth != TEAM_UNASSIGNED )
 			{
 				winReason = "#GAMEMODE_TITAN_DAMAGE_ADVANTAGE"
 				lossReason = "#GAMEMODE_TITAN_DAMAGE_DISADVANTAGE"
-				winningTeam = TEAM_IMC
-			}
-			else if ( teamTitanHealth[ TEAM_MILITIA ] > teamTitanHealth[ TEAM_IMC ] )
-			{
-				winReason = "#GAMEMODE_TITAN_DAMAGE_ADVANTAGE"
-				lossReason = "#GAMEMODE_TITAN_DAMAGE_DISADVANTAGE"
-				winningTeam = TEAM_MILITIA
+				winningTeam = winnerByHealth
 			}
 			else
 			{
@@ -1736,11 +1768,7 @@ int function CheckEliminationTitanWinner( bool setWinner = false )
 	{
 		AddTeamScore( winningTeam, 1 )
 		SetWinner( winningTeam, winReason, lossReason )
-		return winningTeam
 	}
-
-	level.lastTeamTitans[ TEAM_MILITIA ] = teamTitans[ TEAM_MILITIA ].len()
-	level.lastTeamTitans[ TEAM_IMC ] = teamTitans[ TEAM_IMC ].len()
 
 	return winningTeam
 }
@@ -1915,14 +1943,7 @@ bool function TimeLimit_Complete()
 		else if ( IsEliminationBased() && ForceEliminationModeWinner() != TEAM_UNASSIGNED )
 			return true
 
-		int winningTeam = TEAM_UNASSIGNED
-		int militiaScore = GameRules_GetTeamScore( TEAM_MILITIA )
-		int imcScore = GameRules_GetTeamScore( TEAM_IMC )
-
-		if ( imcScore > militiaScore )
-			winningTeam = TEAM_IMC
-		else if ( imcScore < militiaScore )
-			winningTeam = TEAM_MILITIA
+		int winningTeam = GetMatchWinnerFromScore()
 
 		SetWinner( winningTeam, "#GAMEMODE_TIME_LIMIT_REACHED", "#GAMEMODE_TIME_LIMIT_REACHED" )
 		return true
@@ -2101,17 +2122,6 @@ float function GetSwitchingSidesWait()
 	return waitTime
 }
 
-void function ProtectTeamFromElimination( int team )
-{
-	file.teamProtectedFromElimination[ team ] = true
-}
-
-void function ClearTeamEliminationProtection()
-{
-	foreach ( team, protected in file.teamProtectedFromElimination )
-		file.teamProtectedFromElimination[ team ] = false
-}
-
 void function UpdateMatchProgress()
 {
 	float progress_score = GetMatchProgress_Score()
@@ -2196,4 +2206,35 @@ float function GetMatchProgress_Time()
 		timeLimit *= 0.5
 
 	return 100.0 - ( ( GameTime_PlayingTime() / timeLimit ) * 100.0 )
+}
+
+int function GetMatchWinnerFromScore()
+{
+	int bestTeam = TEAM_UNASSIGNED
+	int bestScore = 0
+
+	array<entity> players = GetPlayerArray()
+
+	foreach ( entity player in players )
+	{
+		int playerTeam = player.GetTeam()
+
+		if ( playerTeam == bestTeam )
+			continue
+
+		int score = IsRoundBased() ? GameRules_GetTeamScore2( playerTeam ) : GameRules_GetTeamScore( playerTeam )
+
+		if ( score > bestScore )
+		{
+			bestTeam = playerTeam
+			bestScore = score
+		}
+		else if ( ( score == bestScore ) && ( bestTeam != TEAM_UNASSIGNED ) )
+		{
+			// tie game:
+			return TEAM_UNASSIGNED
+		}
+	}
+
+	return bestTeam
 }
