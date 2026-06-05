@@ -86,9 +86,6 @@ void function ClassicMP_DefaultNoIntro_PilotSpawnPlayer( entity player )
 
 	AddCinematicFlag( player, CE_FLAG_CLASSIC_MP_SPAWNING )
 	ScreenFadeFromBlack( player, 1, 1 )
-
-	while ( Time() < expect float( level.nv.gameStartTime ) )
-		WaitFrame()
 }
 
 // spawn as titan for intro
@@ -106,8 +103,11 @@ void function ClassicMP_DefaultNoIntro_TitanSpawnPlayer( entity player )
 
 	ScreenFadeFromBlack( player, 1, 1 )
 
-	while ( Time() < expect float( level.nv.gameStartTime ) ) // Wait until match actually starts to spawn them
+	if ( Time() >= expect float( level.nv.gameStartTime ) ) // LTS instantly spawns players
 		WaitFrame()
+	else
+		while ( Time() < expect float( level.nv.gameStartTime ) ) // Wait until match actually starts to spawn them
+			WaitFrame()
 
 	if ( PlayerCanSpawn( player ) )
 	{

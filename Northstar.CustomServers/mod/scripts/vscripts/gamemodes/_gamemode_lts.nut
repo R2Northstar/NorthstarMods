@@ -33,7 +33,7 @@ void function GamemodeLts_Init()
 	SetTimeoutWinnerDecisionFunc( CheckTitanHealthForDraw )
 	TrackTitanDamageInPlayerGameStat( PGS_ASSAULT_SCORE )
 
-	ClassicMP_SetCustomIntro( ClassicMP_DefaultNoIntro_Setup, ClassicMP_DefaultNoIntro_GetLength() )
+	ClassicMP_SetCustomIntro( ClassicMP_DefaultNoIntro_Setup, 0 )
 	ClassicMP_ForceDisableEpilogue( true )
 	AddCallback_GameStateEnter( eGameState.Playing, WaitForThirtySecondsLeft )
 
