@@ -11,7 +11,7 @@ void function GamemodeTFFA_Init()
 	ScoreEvent_SetupEarnMeterValuesForMixedModes()
 	SetLoadoutGracePeriodEnabled( false )
 
-	ClassicMP_SetCustomIntro( ClassicMP_DefaultNoIntro_Setup, 15.0 )
+	ClassicMP_SetCustomIntro( ClassicMP_DefaultNoIntro_Setup, ClassicMP_DefaultNoIntro_GetLength() )
 
 	AddCallback_OnPlayerKilled( AddTeamScoreForPlayerKilled ) // dont have to track autotitan kills since you cant leave your titan in this mode
 }

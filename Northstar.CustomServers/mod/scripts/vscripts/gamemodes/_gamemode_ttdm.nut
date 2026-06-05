@@ -13,7 +13,7 @@ void function GamemodeTTDM_Init()
 	ScoreEvent_SetupEarnMeterValuesForMixedModes()
 	SetLoadoutGracePeriodEnabled( false )
 
-	ClassicMP_SetCustomIntro( ClassicMP_DefaultNoIntro_Setup, 15.0 )
+	ClassicMP_SetCustomIntro( ClassicMP_DefaultNoIntro_Setup, ClassicMP_DefaultNoIntro_GetLength() )
 	ClassicMP_ForceDisableEpilogue( true )
 	SetTimeoutWinnerDecisionFunc( CheckScoreForDraw )
 
