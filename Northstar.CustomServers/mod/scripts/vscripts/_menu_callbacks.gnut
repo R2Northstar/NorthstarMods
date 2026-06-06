@@ -39,8 +39,13 @@ bool function ClientCommandCallback_LeaveMatch( entity player, array<string> arg
 void function WritePersistenceAndLeaveForLocalPlayerOnly( entity player )
 {
 	float time = Time()
+
 	while ( GetPlayerArray().len() != 1 && Time() < time + 5.0 )
 		WaitFrame()
+
+	foreach ( entity otherPlayer in GetPlayerArray() )
+		if ( otherPlayer != player )
+			NSDisconnectPlayer( player, "Took too long to reauth and leave." )
 
 	if ( IsValid( player ) )
 		WritePersistenceAndLeave( player )
@@ -61,12 +66,12 @@ void function WritePersistenceAndLeave( entity player )
 	player.ClearReplayDelay()
 	player.ClearViewEntity()
 
-	WaitEndFrame()
+	WaitFrame()
 
 	// this is a custom concommand which can be called on clients, it causes them to leave and doesn't have issues if they're host
 	ClientCommand( player, "ns_start_reauth_and_leave_to_lobby" )
 
-	wait 5
+	wait 5.0
 
 	NSDisconnectPlayer( player, "Took too long to reauth and leave." )
 }
