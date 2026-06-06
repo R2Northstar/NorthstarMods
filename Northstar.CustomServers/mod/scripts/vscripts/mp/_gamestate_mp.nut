@@ -226,6 +226,7 @@ void function UpdateMatchStateToCode()
 	int scoreLimit
 	int scoreIMC
 	int scoreMilitia
+
 	if ( IsRoundBased() )
 	{
 		maxRounds = GetRoundScoreLimit_FromPlaylist()
@@ -247,15 +248,22 @@ void function UpdateMatchStateToCode()
 
 	int timeLimit
 	int timePassed
+	float playingTime
+
+	if ( IsRoundBased() )
+		playingTime = Time() - expect float( GetServerVar( "roundEndTime" ) )
+	else
+		playingTime = Time() - expect float( GetServerVar( "gameEndTime" ) )
+
 	if ( GameRules_TimeLimitEnabled() )
 	{
 		timeLimit = int( GetTimeLimit_ForGameMode() * 60.0 )
-		timePassed = int( GameTime_PlayingTime() )
+		timePassed = int( playingTime )
 	}
 	else
 	{
 		timeLimit = 0
-		timePassed = int( GameTime_PlayingTime() )
+		timePassed = int( playingTime )
 	}
 
 	int phase = GetCodeMatchPhaseForGameState()
@@ -2207,7 +2215,14 @@ float function GetMatchProgress_Time()
 	if ( IsSwitchSidesBased() && !IsRoundBased() )
 		timeLimit *= 0.5
 
-	return 100.0 - ( ( GameTime_PlayingTime() / timeLimit ) * 100.0 )
+	float playingTime
+
+	if ( IsRoundBased() )
+		playingTime = Time() - expect float( GetServerVar( "roundEndTime" ) )
+	else
+		playingTime = Time() - expect float( GetServerVar( "gameEndTime" ) )
+
+	return ( playingTime / timeLimit ) * 100.0
 }
 
 int function GetMatchWinnerFromScore()

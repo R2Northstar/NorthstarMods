@@ -434,11 +434,13 @@ void function TryGivePilotLoadoutForGracePeriod( entity player, string args0, st
 		return
 
 	float gracePeriodDuration = GetCurrentPlaylistVarFloat( "loadout_grace_period", 20.0 )
+
 	if ( !file.loadoutGracePeriodEnabled )
 		gracePeriodDuration = 0.0
 
 	// for intros
-	float respawnTime = expect float( player.s.respawnTime )
+	float respawnTime = expect float( player.s.respawnTime.tofloat() )
+
 	respawnTime += gracePeriodDuration
 
 	if (
@@ -458,7 +460,7 @@ void function TryGivePilotLoadoutForGracePeriod( entity player, string args0, st
 	{
 		if ( args0 == "1" && IsAlive( player ) )
 			SendHudMessage( player, "#LOADOUT_CHANGE_NEXT_PILOT", -1, 0.4, 255, 255, 255, 255, 0.15, 3.0, 0.5 )
-		else if ( args1 == "1" && IsValid( GetPlayerTitanInMap( player ) ) )
+		else if ( args1 == "1" && IsAlive( GetPlayerTitanInMap( player ) ) )
 			SendHudMessage( player, "#LOADOUT_CHANGE_NEXT_TITAN", -1, 0.4, 255, 255, 255, 255, 0.15, 3.0, 0.5 )
 	}
 }
