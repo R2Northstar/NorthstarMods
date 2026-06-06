@@ -202,7 +202,6 @@ void function CodeCallback_OnClientConnectionCompleted( entity player )
 	UpdateMinimapStatus( player )
 	UpdateMinimapStatusToOtherPlayers( player )
 	MinimapPlayerConnected( player )
-	CheckForEmptyTeamVictory()
 	NotifyClientsOfConnection( player, 1 )
 	PlayCurrentTeamMusicEventsOnPlayer( player )
 	SetCurrentTeamObjectiveForPlayer( player )
@@ -296,8 +295,6 @@ void function CodeCallback_OnClientDisconnected( entity player, string reason )
 	{
 		callbackFunc( player )
 	}
-
-	CheckForEmptyTeamVictory()
 
 	player.Disconnected()
 	player.p.isDisconnected = true
