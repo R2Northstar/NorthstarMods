@@ -68,7 +68,7 @@ void function PIN_GameStart()
 {
 	RegisterServerVarChangeCallback( "gameEndTime", GameEndTimeVarChanged )
 
-	AddCallback_OnClientConnected( WaitingForPlayers_ClientConnected )
+	AddCallback_OnClientConnected( GameState_OnClientConnected )
 	AddCallback_OnPlayerKilled( OnPlayerKilled )
 	AddDeathCallback( "npc_titan", OnTitanKilled )
 	AddCallback_EntityChangedTeam( "player", OnPlayerChangedTeam )
@@ -606,10 +606,12 @@ bool function DoneWaitingForPlayers()
 	return Time() >= level.nv.connectionTimeout
 }
 
-void function WaitingForPlayers_ClientConnected( entity player )
+void function GameState_OnClientConnected( entity player )
 {
-	if ( GetGameState() == eGameState.WaitingForPlayers )
-		ScreenFadeToBlackForever( player, 0.0 )
+	if ( GetGameState() != eGameState.WaitingForPlayers && ( GetGameState() != eGameState.PickLoadout || DoPrematchWarpSound() ) )
+		return
+
+	ScreenFadeToBlackForever( player, 0.0 )
 }
 
 /*

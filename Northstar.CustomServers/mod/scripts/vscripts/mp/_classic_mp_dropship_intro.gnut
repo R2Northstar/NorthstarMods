@@ -304,7 +304,6 @@ void function DelayedFrameFadeout( entity player )
 	player.EndSignal( "OnDestroy" )
 
 	WaitFrame()
+
 	ScreenFadeFromBlack( player, 1, 1 )
-	UnMuteAll( player )
-	StopSoundOnEntity( player, "Duck_For_FrontierDefenseTitanSelectScreen" )
 }
