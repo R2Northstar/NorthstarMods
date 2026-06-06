@@ -600,7 +600,7 @@ bool function DoneWaitingForPlayers()
 		return true
 
 	// start X second countdown
-	if ( level.nv.connectionTimeout == null || level.nv.connectionTimeout == 0 )
+	if ( level.nv.connectionTimeout == null || !level.nv.connectionTimeout )
 		level.nv.connectionTimeout = Time() + countdownSeconds
 
 	return Time() >= level.nv.connectionTimeout
