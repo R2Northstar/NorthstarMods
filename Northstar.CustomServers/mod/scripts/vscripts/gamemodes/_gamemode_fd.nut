@@ -3001,9 +3001,6 @@ void function FD_DropshipDropPlayer( entity player, int playerDropshipIndex )
 	// check the player
 	if ( IsValid( player ) && !player.IsTitan() )
 	{
-		if ( player.s.loadoutDirty )
-			Loadouts_OnUsedLoadoutCrate( player )
-
 		EnableOffhandWeapons( player )
 
 		FirstPersonSequenceStruct jumpSequence

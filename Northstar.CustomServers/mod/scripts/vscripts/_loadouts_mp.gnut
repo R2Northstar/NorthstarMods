@@ -139,7 +139,6 @@ TitanLoadoutDef function GetTitanLoadoutForPlayer( entity player )
 
 void function LoadoutsMPInitPlayer( entity player )
 {
-	player.s.loadoutDirty <- false
 	player.s.noFiredWeapon <- true
 
 	// these netints are required for callsigns and such to display correctly on other clients
@@ -177,8 +176,6 @@ bool function ClientCommandCallback_RequestPilotLoadout( entity player, array<st
 
 	SetPersistentSpawnLoadoutIndex( player, "pilot", index )
 
-	SetPlayerLoadoutDirty( player )
-
 	return true
 }
 
@@ -212,7 +209,7 @@ bool function ClientCommandCallback_RequestTitanLoadout( entity player, array<st
 
 bool function ClientCommandCallback_SetPersistentLoadoutValue( entity player, array<string> args )
 {
-	string args0 = args.len() >= 1 ? args[ 0 ] : ""
+	string args0 = args.len() ? args[ 0 ] : ""
 	string args1 = args.len() >= 2 ? args[ 1 ] : ""
 	string args2 = args.len() >= 3 ? args[ 2 ] : ""
 	string args3 = args.len() >= 4 ? args[ 3 ] : ""
@@ -250,9 +247,6 @@ bool function ClientCommandCallback_SetPersistentLoadoutValue( entity player, ar
 		return false
 
 	SetPersistentLoadoutValue( player, args0, args1int, args2, val )
-
-	if ( args[ 0 ] == "pilot" )
-		SetPlayerLoadoutDirty( player )
 
 	UnlockAchievement( player, achievements.CUSTOMIZE_LOADOUT )
 
@@ -295,8 +289,6 @@ bool function ClientCommandCallback_SwapSecondaryAndWeapon3PersistentLoadoutData
 	SetPlayerPersistentVarWithoutValidation( player, "pilot", index, "weapon3Mod3", loadout.secondaryMod3 )
 	SetPlayerPersistentVarWithoutValidation( player, "pilot", index, "weapon3SkinIndex", loadout.secondarySkinIndex.tostring() )
 	SetPlayerPersistentVarWithoutValidation( player, "pilot", index, "weapon3CamoIndex", loadout.secondaryCamoIndex.tostring() )
-
-	SetPlayerLoadoutDirty( player )
 
 	return true
 }
@@ -419,8 +411,10 @@ bool function ClientCommandCallback_SetFactionChoicePersistenceSlot( entity play
 
 bool function ClientCommandCallback_LoadoutMenuClosed( entity player, array<string> args )
 {
-	if ( !args.len() || args[ 0 ] == "1" || ( args.len() > 1 && args[ 1 ] == "1" ) )
-		TryGivePilotLoadoutForGracePeriod( player )
+	string args0 = args.len() ? args[ 0 ] : ""
+	string args1 = args.len() >= 2 ? args[ 1 ] : ""
+
+	TryGivePilotLoadoutForGracePeriod( player, args0, args1 )
 
 	return true
 }
@@ -430,66 +424,42 @@ bool function IsRefValidAndOfType( string ref, int itemType )
 	return IsRefValid( ref ) && GetItemType( ref ) == itemType
 }
 
-void function SetPlayerLoadoutDirty( entity player )
+void function TryGivePilotLoadoutForGracePeriod( entity player, string args0, string args1 )
 {
-	if ( !IsLobby() )
-		player.s.loadoutDirty = true
-}
+	printt( args0 + " " + args1 )
+	if ( args0 == "0" && args1 == "0" )
+		return
 
-void function TryGivePilotLoadoutForGracePeriod( entity player )
-{
 	if ( IsLobby() || player.ContextAction_IsActive() )
 		return
 
-	if ( IsAlive( player ) && player.s.loadoutDirty )
+	float gracePeriodDuration = GetCurrentPlaylistVarFloat( "loadout_grace_period", 20.0 )
+	if ( !file.loadoutGracePeriodEnabled )
+		gracePeriodDuration = 0.0
+
+	// for intros
+	float respawnTime = expect float( player.s.respawnTime )
+	respawnTime += gracePeriodDuration
+
+	if (
+		( args0 == "1" && respawnTime >= Time() && player.s.noFiredWeapon ) || svGlobal.isInPilotGracePeriod || GetGameState() < eGameState.Playing ||
+		player.s.usedLoadoutCrate || player.p.usingLoadoutCrate || ( file.allowChangeLoadoutFunc != null && file.allowChangeLoadoutFunc( player ) )
+	)
 	{
-		float gracePeriodDuration = GetCurrentPlaylistVarFloat( "loadout_grace_period", 20.0 )
-		if ( !file.loadoutGracePeriodEnabled )
-			gracePeriodDuration = 0.0
-
-		// for intros
-		float respawnTime = expect float( player.s.respawnTime )
-		respawnTime += gracePeriodDuration
-
-		if (
-			respawnTime >= Time() && player.s.noFiredWeapon || svGlobal.isInPilotGracePeriod || GetGameState() < eGameState.Playing || player.s.usedLoadoutCrate ||
-			player.p.usingLoadoutCrate || file.allowChangeLoadoutFunc != null && file.allowChangeLoadoutFunc( player )
-		)
-		{
-			if ( player.IsTitan() && !GetDoomedState( player ) )
-			{
-				player.s.loadoutDirty = false
-				entity soul = player.GetTitanSoul()
-				if ( IsValid( soul ) )
-				{
-					// Store current health and shield because loadout swapping resets both
-					int currentHealth = player.GetHealth()
-					int currentShield = soul.GetShieldHealth()
-
-					Loadouts_TryGiveTitanLoadout( player )
-
-					player.SetHealth( minint( currentHealth, player.GetMaxHealth() ) )
-					soul.SetShieldHealth( minint( currentShield, soul.GetShieldHealthMax() ) )
-				}
-			}
-			else
-			{
-				if ( !Loadouts_CanGivePilotLoadout( player ) && GetGameState() < eGameState.Playing )
-					thread GiveLoadoutWhenIntroOver( player )
-				else if ( Loadouts_TryGivePilotLoadout( player ) )
-					player.s.loadoutDirty = false
-			}
-
-			player.p.usingLoadoutCrate = false
-			player.s.usedLoadoutCrate = false
-		}
+		if ( !Loadouts_CanGivePilotLoadout( player ) && GetGameState() < eGameState.Playing )
+			thread GiveLoadoutWhenIntroOver( player )
 		else
-		{
-			if ( player.IsTitan() )
-				SendHudMessage( player, "#LOADOUT_CHANGE_NEXT_TITAN", -1, 0.4, 255, 255, 255, 255, 0.15, 3.0, 0.5 )
-			else
-				SendHudMessage( player, "#LOADOUT_CHANGE_NEXT_PILOT", -1, 0.4, 255, 255, 255, 255, 0.15, 3.0, 0.5 )
-		}
+			Loadouts_TryGivePilotLoadout( player )
+
+		player.p.usingLoadoutCrate = false
+		player.s.usedLoadoutCrate = false
+	}
+	else
+	{
+		if ( args0 == "1" && IsAlive( player ) )
+			SendHudMessage( player, "#LOADOUT_CHANGE_NEXT_PILOT", -1, 0.4, 255, 255, 255, 255, 0.15, 3.0, 0.5 )
+		else if ( args1 == "1" && IsValid( GetPlayerTitanInMap( player ) ) )
+			SendHudMessage( player, "#LOADOUT_CHANGE_NEXT_TITAN", -1, 0.4, 255, 255, 255, 255, 0.15, 3.0, 0.5 )
 	}
 }
 
@@ -502,7 +472,6 @@ void function GiveLoadoutWhenIntroOver( entity player )
 		WaitFrame()
 
 	Loadouts_TryGivePilotLoadout( player )
-	player.s.loadoutDirty = false
 }
 
 void function LoadoutSwitch_Player( entity player, PilotLoadoutDef loadout )
