@@ -237,7 +237,7 @@ bool function ClientCommandCallback_SetPersistentLoadoutValue( entity player, ar
 
 	int args1int = args1.tointeger()
 
-	// names need custom validation
+	// these need custom validation
 	if ( args2 == "name" || ( ( args2 == "primaryAttachment" || args2 == "primaryMod3" || args2 == "secondaryMod3" || args2 == "weapon3Mod3" ) && val == "none" ) )
 	{
 		if ( args0 == "titan" || ( args1int < 0 || args1int >= PersistenceGetArrayCount( "pilotLoadouts" ) ) )
