@@ -6,7 +6,6 @@ global function GameState_EntitiesDidLoad
 global function WaittillGameStateOrHigher
 global function AddCallback_OnRoundEndCleanup
 
-global function SetShouldUsePickLoadoutScreen
 global function SetShouldSpectateInPickLoadoutScreen
 global function SetSwitchSidesBased
 global function SetShouldUseRoundWinningKillReplay
@@ -27,10 +26,15 @@ global function GetTimeLimit_ForGameMode
 global function CodeCallback_GamerulesThink
 global function GetWinnerDeterminedWait
 global function WillShowRoundWinningKillReplay
+global function ForceEliminationModeWinner
+global function ShouldClearPlayersInWinnerDetermined
+global function PerfInitLabels
+global function GetConnectedPlayers
+global function CleanUpEntitiesForRoundEnd
+global function GetMatchWinnerFromScore
 
 struct
 {
-	bool usePickLoadoutScreen
 	bool spectateInPickLoadoutScreen = false // This is so joining players stay absent from distracting others with invulnerability given by the Titan Selection Screen
 	int functionref() timeoutWinnerDecisionFunc
 
@@ -452,11 +456,6 @@ void function AddCallback_OnRoundEndCleanup( void functionref() callback )
 	file.roundEndCleanupCallbacks.append( callback )
 }
 
-void function SetShouldUsePickLoadoutScreen( bool shouldUse )
-{
-	file.usePickLoadoutScreen = shouldUse
-}
-
 void function SetShouldSpectateInPickLoadoutScreen( bool shouldSpec )
 {
 	file.spectateInPickLoadoutScreen = shouldSpec
@@ -464,7 +463,7 @@ void function SetShouldSpectateInPickLoadoutScreen( bool shouldSpec )
 
 bool function SpectatePlayerDuringPickLoadout()
 {
-	return ( file.usePickLoadoutScreen && file.spectateInPickLoadoutScreen )
+	return ( !DoPrematchWarpSound() && file.spectateInPickLoadoutScreen )
 }
 
 void function SetSwitchSidesBased( bool switchSides )
@@ -929,7 +928,7 @@ void function GameRulesThink_WinnerDetermined()
 		return
 	}
 
-	if ( file.usePickLoadoutScreen && GetCurrentPlaylistVarInt( "pick_loadout_every_round", 0 ) )
+	if ( !DoPrematchWarpSound() && GetCurrentPlaylistVarInt( "pick_loadout_every_round", 0 ) )
 		SetGameState( eGameState.PickLoadout )
 	else
 		SetGameState( eGameState.Prematch )
@@ -999,7 +998,7 @@ void function GameRulesThink_SwitchingSides()
 
 	AllPlayersUnMuteAll()
 
-	if ( file.usePickLoadoutScreen && GetCurrentPlaylistVarInt( "pick_loadout_every_round", 0 ) )
+	if ( !DoPrematchWarpSound() && GetCurrentPlaylistVarInt( "pick_loadout_every_round", 0 ) )
 		SetGameState( eGameState.PickLoadout )
 	else
 		SetGameState( eGameState.Prematch )

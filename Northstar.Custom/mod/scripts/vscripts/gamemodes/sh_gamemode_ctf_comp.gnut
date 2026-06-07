@@ -80,7 +80,6 @@ void function ShGamemodeCTFComp_Init()
 	void function InitCTFCompSpecificSettings()
 	{
 		#if SERVER
-			SetShouldUsePickLoadoutScreen( true )
 			TrackTitanDamageInPlayerGameStat( PGS_DISTANCE_SCORE )
 			SetSpawnpointGamemodeOverride( CAPTURE_THE_FLAG )
 			TeamTitanSelectMenu_Init()
