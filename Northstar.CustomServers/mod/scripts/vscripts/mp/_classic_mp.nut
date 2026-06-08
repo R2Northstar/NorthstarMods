@@ -157,7 +157,7 @@ bool function ClassicMP_ShouldRunEpilogue()
 
 		foreach ( entity player in GetPlayerArray() )
 		{
-			if ( !IsValidPlayer( player ) && !IsPrivateMatchSpectator( player ) )
+			if ( IsValidPlayer( player ) && !IsPrivateMatchSpectator( player ) )
 			{
 				if ( player.GetTeam() == winningTeam )
 					winningPlayers++
