@@ -426,9 +426,9 @@ function TryETATitanReadyAnnouncement( entity player )
 	float playingTime
 
 	if ( IsRoundBased() )
-		playingTime = Time() - expect float( GetServerVar( "roundEndTime" ) )
+		playingTime = Time() - expect float( GetServerVar( "roundStartTime" ) )
 	else
-		playingTime = Time() - expect float( GetServerVar( "gameEndTime" ) )
+		playingTime = Time() - expect float( GetServerVar( "gameStartTime" ) )
 
 	if ( playingTime < 5.0 )
 		return

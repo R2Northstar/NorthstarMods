@@ -255,9 +255,9 @@ void function UpdateMatchStateToCode()
 	float playingTime
 
 	if ( IsRoundBased() )
-		playingTime = Time() - expect float( GetServerVar( "roundEndTime" ) )
+		playingTime = Time() - expect float( GetServerVar( "roundStartTime" ) )
 	else
-		playingTime = Time() - expect float( GetServerVar( "gameEndTime" ) )
+		playingTime = Time() - expect float( GetServerVar( "gameStartTime" ) )
 
 	if ( GameRules_TimeLimitEnabled() )
 	{
@@ -2217,9 +2217,9 @@ float function GetMatchProgress_Time()
 	float playingTime
 
 	if ( IsRoundBased() )
-		playingTime = Time() - expect float( GetServerVar( "roundEndTime" ) )
+		playingTime = Time() - expect float( GetServerVar( "roundStartTime" ) )
 	else
-		playingTime = Time() - expect float( GetServerVar( "gameEndTime" ) )
+		playingTime = Time() - expect float( GetServerVar( "gameStartTime" ) )
 
 	return ( playingTime / timeLimit ) * 100.0
 }
