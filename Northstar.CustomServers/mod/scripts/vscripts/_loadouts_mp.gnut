@@ -235,9 +235,21 @@ bool function ClientCommandCallback_SetPersistentLoadoutValue( entity player, ar
 	int args1int = args1.tointeger()
 
 	// these need custom validation
-	if ( args2 == "name" || ( ( args2 == "primaryAttachment" || args2 == "primaryMod3" || args2 == "secondaryMod3" || args2 == "weapon3Mod3" ) && val == "none" ) )
+	if (
+		args2 == "name" || args2 == "showArmBadge" || ( args0 == "titan" && ( args2 == "secondarySkinIndex" || args2 == "weapon3SkinIndex" ) ) ||
+		( ( args2 == "primaryAttachment" || args2 == "primaryMod3" || args2 == "secondaryMod3" || args2 == "weapon3Mod3" ) && val == "none" )
+	)
 	{
-		if ( args0 == "titan" || ( args1int < 0 || args1int >= PersistenceGetArrayCount( "pilotLoadouts" ) ) )
+		if ( args0 == "pilot" && args2 == "showArmBadge" )
+		{
+			return false
+		}
+		else if ( args0 == "titan" && args2 == "showArmBadge" )
+		{
+			if ( val.tointeger() < 0 || val.tointeger() > 1 )
+				return false
+		}
+		else if ( args0 == "titan" || ( args1int < 0 || args1int >= PersistenceGetArrayCount( "pilotLoadouts" ) ) )
 			return false
 	}
 	else if ( FailsLoadoutValidationCheck( player, args0, args1int, args2, val ) )
