@@ -465,6 +465,9 @@ void function SpectreSpawnedHandler( entity spectre )
 // Award for hacking
 void function OnSpectreLeeched( entity spectre, entity player )
 {
+	if ( !IsSpectre( spectre ) )
+		return
+
 	// Set Owner so we can filter in HandleScore
 	spectre.SetOwner( player )
 

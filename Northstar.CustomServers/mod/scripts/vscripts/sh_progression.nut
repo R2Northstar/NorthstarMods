@@ -52,7 +52,7 @@ global function ProgressionEnabledForPlayer
 			AddCallback_OnClientDisconnected( OnClientDisconnected )
 			AddClientCommandCallback( "ns_progression", ClientCommand_SetProgression )
 			AddClientCommandCallback( "ns_resettitanaegis", ClientCommand_ResetTitanAegis )
-			delaythread( 0.0001 ) SetUIVar( level, "penalizeDisconnect", false ) // dont show the "you will lose merits thing"
+			delaythread( 0.0001 ) SetUIVar( level, "penalizeDisconnect", false ) // don't show "you will lose merits" thing
 		#elseif CLIENT
 			AddCallback_OnClientScriptInit( OnClientScriptInit )
 		#endif

@@ -179,12 +179,20 @@ void function CodeCallback_OnClientConnectionCompleted( entity player )
 {
 	InitPersistentData( player )
 
-	if ( IsLobby() )
+	player.SetPersistentVar( "lastTimeLoggedIn", GetUnixTimestamp() )
+
+	if ( !IsLobby() )
+	{
+		player.SetPersistentVar( "lastTimePlayed", GetUnixTimestamp() )
+		player.SetPersistentVar( "lastPlaylist", GAMETYPE )
+	}
+	else
 	{
 		Lobby_OnClientConnectionCompleted( player )
 		return
 	}
-	else if ( !IsFDMode( GAMETYPE ) )
+
+	if ( !IsFDMode( GAMETYPE ) )
 	{
 		// reset this for non-fd modes
 		// for some reason the postgame scoreboard uses this to
@@ -280,7 +288,29 @@ void function SpectateTTSMenuPlayer( entity player )
 
 void function CodeCallback_OnClientDisconnected( entity player, string reason )
 {
-	if ( IsLobby() )
+	if ( !IsLobby() )
+	{
+		player.SetPersistentVar( "lastTimePlayed", GetUnixTimestamp() )
+		player.SetPersistentVar( "lastPlaylist", GAMETYPE )
+		/*
+		if ( level.ui.penalizeDisconnect )
+		{
+			int highestWinStreak = player.GetPersistentVarAsInt( "highestWinStreakEver" )
+
+			if ( highestWinStreak < player.GetPersistentVarAsInt( "winStreak" ) )
+				player.SetPersistentVar( "highestWinStreakEver", player.GetPersistentVarAsInt( "winStreak" ) )
+
+			player.SetPersistentVar( "winStreak", 0 )
+			player.SetPersistentVar( "lastAbandonedMode", GAMETYPE )
+			player.SetPersistentVar( "lastAbandonTime", GetUnixTimestamp() )
+
+			string abandonCountForMode = Stats_GetFixedSaveVar( "abandonCountForMode", GetMapName(), GAMETYPE, GetDifficultyLevel().tostring() )
+
+			player.SetPersistentVar( abandonCountForMode, player.GetPersistentVarAsInt( abandonCountForMode ) + 1 )
+		}
+*/
+	}
+	else
 	{
 		player.Signal( "_disconnectedInternal" )
 		UpdateBadRepPresent()

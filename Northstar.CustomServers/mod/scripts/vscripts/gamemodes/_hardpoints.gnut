@@ -560,6 +560,7 @@ void function SetCaptureHardpoint( entity hardpoint, int team )
 			// TODO: figure when assists happen
 			AddPlayerScore( player, "ControlPointCapture" )
 			player.AddToPlayerGameStat( PGS_ASSAULT_SCORE, POINTVALUE_HARDPOINT_CAPTURE )
+			UpdatePlayerStat( player, "misc_stats", "hardpointsCaptured" )
 			CheckPlayerChallenges( player )
 		}
 	}

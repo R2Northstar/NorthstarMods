@@ -421,6 +421,7 @@ void function CaptureFlag( entity player, entity flag )
 	AddTeamScore( team, 1 )
 	AddPlayerScore( player, "FlagCapture", player )
 	player.AddToPlayerGameStat( PGS_ASSAULT_SCORE, 1 ) // add 1 to captures on scoreboard
+	UpdatePlayerStat( player, "misc_stats", "flagsCaptured" )
 	SetRoundWinningKillReplayAttacker( player ) // set attacker for last cap replay
 
 	array<entity> assistList
@@ -626,6 +627,7 @@ void function TryReturnFlag( entity player, entity flag )
 	MessageToPlayer( player, eEventNotifications.YouReturnedFriendlyFlag )
 	AddPlayerScore( player, "FlagReturn", player )
 	player.AddToPlayerGameStat( PGS_DEFENSE_SCORE, 1 )
+	UpdatePlayerStat( player, "misc_stats", "flagsReturned" )
 
 	if ( !HasPlayerCompletedMeritScore( player ) )
 	{

@@ -38,6 +38,8 @@ void function Stats_Init()
 	AddCallback_OnPlayerRespawned( OnPlayerRespawned )
 	AddCallback_OnClientConnected( OnClientConnected )
 	AddCallback_OnClientDisconnected( OnClientDisconnected )
+	AddCallback_NPCLeeched( OnSpectreLeeched )
+	// AddCallback_OnWeaponAttack( OnPlayerFiredWeapon )
 
 	thread HandleDistanceAndTimeStats_Threaded()
 	thread SaveStatsPeriodically_Threaded()
@@ -192,6 +194,8 @@ void function PostScoreEventUpdateStats( entity attacker, entity ent )
 	// used to track kill streaks starting maybe
 	if ( attacker.s.currentKillstreak == KILLINGSPREE_KILL_REQUIREMENT )
 	{
+		UpdatePlayerStat( attacker, "misc_stats", "killingSprees" )
+
 		// killingSpressAs_<chassis>
 		if ( attacker.IsTitan() )
 			Stats_IncrementStat( attacker, "kills_stats", "killingSpressAs_" + GetTitanCharacterName( attacker ), "", 1.0 )
@@ -327,6 +331,21 @@ void function OnClientDisconnected( entity player )
 
 	if ( player in file.cachedFloatStatChanges )
 		delete file.cachedFloatStatChanges[ player ]
+}
+
+void function OnSpectreLeeched( entity spectre, entity player )
+{
+	if ( !IsSpectre( spectre ) )
+		return
+
+	Stats_IncrementStat( player, "misc_stats", "spectreLeeches", "", 1.0 )
+	Stats_IncrementStat( player, "misc_stats", "spectreLeechesByMap", "", 1.0 )
+}
+
+void function OnPlayerFiredWeapon( entity player, entity weapon, string weaponName, int shotsFired )
+{
+	// Enable when thunderbolt works correctly
+	// Stats_IncrementStat( player, "weapon_stats", "shotsFired", "", shotsFired.tofloat() )
 }
 
 void function OnPlayerOrNPCKilled( entity victim, entity attacker, var damageInfo )

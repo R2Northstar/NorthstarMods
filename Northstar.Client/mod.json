@@ -162,7 +162,7 @@
 		{
 			"Path": "ui/ns_client_mod_settings.gnut",
 			"RunOn": "UI",
-			"UICallback":{
+			"UICallback": {
 				"Before": "NSClientModSettings"
 			}
 		}

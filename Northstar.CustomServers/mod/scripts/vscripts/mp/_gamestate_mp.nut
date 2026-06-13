@@ -199,6 +199,7 @@ void function CodeCallback_GamerulesThink()
 int function GetCodeMatchPhaseForGameState()
 {
 	int gameState = GetGameState()
+
 	switch ( gameState )
 	{
 		case eGameState.WaitingForPlayers:
@@ -219,6 +220,7 @@ int function GetCodeMatchPhaseForGameState()
 		default:
 			printt( " ** Warning: GetCodeMatchPhaseForGameState() - Unhandeled eGameState", gameState )
 	}
+
 	return MATCHPHASE_UNSPECIFIED
 }
 
@@ -860,6 +862,7 @@ void function GameStateEnter_WinnerDetermined()
 	}
 	else if ( ShouldRunEvac() ) // RoundWinningKillReplay doesn't work with Evac!
 	{
+		PlayerWinStreak()
 		ClassicMP_SetupEpilogue()
 		SetGameState( eGameState.Epilogue )
 		// thread EvacMain( level.nv.winningTeam )
@@ -889,6 +892,7 @@ void function GameRulesThink_WinnerDetermined()
 
 	if ( !IsRoundBased() )
 	{
+		PlayerWinStreak()
 		RegisterChallenges_OnMatchEnd()
 
 		if ( ShouldRunEvac() )
@@ -904,6 +908,7 @@ void function GameRulesThink_WinnerDetermined()
 
 	if ( IsRoundBasedGameOver() )
 	{
+		PlayerWinStreak()
 		RegisterChallenges_OnMatchEnd()
 
 		if ( ShouldRunEvac() )
@@ -2253,4 +2258,37 @@ int function GetMatchWinnerFromScore()
 	}
 
 	return bestTeam
+}
+
+void function PlayerWinStreak()
+{
+	foreach ( entity player in GetPlayerArray() )
+	{
+		if ( GetWinningTeam() != TEAM_UNASSIGNED )
+		{
+			player.SetPersistentVar( "winStreakIsDraws", false )
+
+			if ( GetWinningTeam() == player.GetTeam() )
+			{
+				int highestWinStreak = player.GetPersistentVarAsInt( "highestWinStreakEver" )
+
+				if ( highestWinStreak < player.GetPersistentVarAsInt( "winStreak" ) + 1 )
+					player.SetPersistentVar( "highestWinStreakEver", player.GetPersistentVarAsInt( "winStreak" ) + 1 )
+
+				player.SetPersistentVar( "lastDailyMatchVictory", GetUnixTimestamp() )
+				player.SetPersistentVar( "winStreak", player.GetPersistentVarAsInt( "winStreak" ) + 1 )
+			}
+			else
+			{
+				int highestWinStreak = player.GetPersistentVarAsInt( "highestWinStreakEver" )
+
+				if ( highestWinStreak < player.GetPersistentVarAsInt( "winStreak" ) )
+					player.SetPersistentVar( "highestWinStreakEver", player.GetPersistentVarAsInt( "winStreak" ) )
+
+				player.SetPersistentVar( "winStreak", 0 )
+			}
+		}
+		else
+			player.SetPersistentVar( "winStreakIsDraws", true )
+	}
 }
