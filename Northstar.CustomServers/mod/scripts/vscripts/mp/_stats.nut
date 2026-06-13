@@ -39,6 +39,7 @@ void function Stats_Init()
 	AddCallback_OnClientConnected( OnClientConnected )
 	AddCallback_OnClientDisconnected( OnClientDisconnected )
 	AddCallback_NPCLeeched( OnSpectreLeeched )
+	// Enable when thunderbolt works correctly
 	// AddCallback_OnWeaponAttack( OnPlayerFiredWeapon )
 
 	thread HandleDistanceAndTimeStats_Threaded()
@@ -344,8 +345,7 @@ void function OnSpectreLeeched( entity spectre, entity player )
 
 void function OnPlayerFiredWeapon( entity player, entity weapon, string weaponName, int shotsFired )
 {
-	// Enable when thunderbolt works correctly
-	// Stats_IncrementStat( player, "weapon_stats", "shotsFired", "", shotsFired.tofloat() )
+	Stats_IncrementStat( player, "weapon_stats", "shotsFired", "", shotsFired.tofloat() )
 }
 
 void function OnPlayerOrNPCKilled( entity victim, entity attacker, var damageInfo )
