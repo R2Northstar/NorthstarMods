@@ -114,6 +114,7 @@ void function EvacEpilogueSetup()
 {
 	// don't do much here because other scripts should be able to call evac stuff themselves
 	AddCallback_GameStateEnter( eGameState.Epilogue, EvacEpilogue )
+	AddCallback_OnPlayerKilled( OnPlayerDeath )
 }
 
 void function EvacEpilogue()
@@ -489,15 +490,12 @@ void function Evac( int evacTeam, float initialWait, float arrivalTime, float wa
 		AddPlayerScore( player, "HotZoneExtract" )
 		UpdatePlayerStat( player, "misc_stats", "evacsSurvived" )
 
+		// sole survivor
+		if ( evacCount == 1 )
+			AddPlayerScore( player, "SoleSurvivor" )
+
 		if ( allEvac )
 			AddPlayerScore( player, "TeamBonusFullEvac" )
-	}
-
-	// sole survivor (but not the only one on the team)
-	if ( evacCount == 1 && !allEvac )
-	{
-		// we can assume there is one player in the array because otherwise evacCount wouldn't be 1
-		AddPlayerScore( evacingPlayers[ 0 ], "SoleSurvivor" )
 	}
 }
 
@@ -520,6 +518,7 @@ void function AddPlayerToEvacDropship( entity dropship, entity player )
 		return
 
 	UpdatePlayerStat( player, "misc_stats", "evacsAttempted" )
+	AddPlayerScore( player, "GetToChopper" )
 
 	// need to cancel if the dropship dies
 	dropship.EndSignal( "OnDeath", "OnDestroy" )
@@ -574,10 +573,19 @@ bool function PlayerInDropship( entity player, entity dropship )
 
 void function EvacDropshipKilled( entity dropship, var damageInfo )
 {
+	entity attacker = DamageInfo_GetAttacker( damageInfo )
+
+	if ( IsValidPlayer( attacker ) && attacker.GetTeam() != dropship.GetTeam() )
+		AddPlayerScore( attacker, "KillRescueShip" )
+
+	int aliveEnemyPlayers = GetPlayerArrayOfTeam_Alive( dropship.GetTeam() ).len()
+
 	foreach ( entity player in dropship.s.evacSlots )
 	{
 		if ( IsAlive( player ) )
 		{
+			aliveEnemyPlayers--
+
 			player.ClearParent()
 			player.Die(
 				DamageInfo_GetAttacker( damageInfo ),
@@ -586,6 +594,9 @@ void function EvacDropshipKilled( entity dropship, var damageInfo )
 			)
 		}
 	}
+
+	if ( IsValidPlayer( attacker ) && attacker.GetTeam() != dropship.GetTeam() && !aliveEnemyPlayers )
+		AddPlayerScore( attacker, "FishInBarrel" )
 }
 
 // if there's no player left in evacing team, we end this match
@@ -710,8 +721,8 @@ void function TriggerEnterCallback( entity trigger, bool functionref( entity, en
 		void function( entity trigger, entity player ) : ( canBoardCallback, dropship )
 		{
 			if (
-				!player.IsPlayer() || !IsAlive( player ) || player.IsTitan() || player.ContextAction_IsBusy() || IsValid( player.GetParent() ) ||
-				!canBoardCallback( dropship, player ) || PlayerInDropship( player, dropship )
+				!player.IsPlayer() || !IsAlive( player ) || player.IsTitan() || IsPlayerEmbarking( player ) || IsPlayerDisembarking( player ) ||
+				player.ContextAction_IsActive() || !canBoardCallback( dropship, player ) || PlayerInDropship( player, dropship )
 			)
 				return
 
@@ -723,4 +734,56 @@ void function TriggerEnterCallback( entity trigger, bool functionref( entity, en
 int function GetEvacNodeNumber()
 {
 	return file.currentEvacNode
+}
+
+void function OnPlayerDeath( entity victim, entity attacker, var damageInfo )
+{
+	if ( !IsPlayerEliminated( victim ) )
+		return
+
+	entity killer = null
+
+	if ( "lastAttacker" in victim.s )
+		if ( victim.s.lastAttacker )
+			killer = expect entity( victim.s.lastAttacker )
+
+	if ( IsValidPlayer( killer ) && victim.GetTeam() == killer.GetTeam() )
+		return
+
+	// Give Pursuit team extra points for killing off escapees
+	if ( !GetPlayerArrayOfTeam_Alive( victim.GetTeam() ).len() )
+	{
+		foreach ( entity player in GetPlayerArrayOfTeam( GetOtherTeam( victim.GetTeam() ) ) )
+			AddPlayerScore( player, "TeamBonusKilledAll" )
+
+		array<entity> evacPlayers = GetPlayerArrayOfTeam( victim.GetTeam() )
+		bool lastAttackerIsKiller = true
+
+		foreach ( entity player in evacPlayers )
+		{
+			if ( !( "lastAttacker" in player.s ) )
+			{
+				lastAttackerIsKiller = false
+				break
+			}
+
+			if ( !player.s.lastAttacker )
+			{
+				lastAttackerIsKiller = false
+				break
+			}
+
+			if ( expect entity( player.s.lastAttacker ) != killer )
+			{
+				lastAttackerIsKiller = false
+				break
+			}
+		}
+
+		if ( IsValidPlayer( killer ) && lastAttackerIsKiller )
+			AddPlayerScore( killer, "SelfBonusKilledAll" )
+	}
+
+	if ( IsValidPlayer( killer ) && victim != killer )
+		AddPlayerScore( killer, "KilledEscapee" )
 }
