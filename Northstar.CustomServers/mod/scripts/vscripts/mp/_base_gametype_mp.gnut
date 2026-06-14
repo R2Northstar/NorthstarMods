@@ -290,29 +290,7 @@ void function SpectateTTSMenuPlayer( entity player )
 
 void function CodeCallback_OnClientDisconnected( entity player, string reason )
 {
-	if ( !IsLobby() )
-	{
-		player.SetPersistentVar( "lastTimePlayed", GetUnixTimestamp() )
-		player.SetPersistentVar( "lastPlaylist", GAMETYPE )
-		/*
-		if ( level.ui.penalizeDisconnect )
-		{
-			int highestWinStreak = player.GetPersistentVarAsInt( "highestWinStreakEver" )
-
-			if ( highestWinStreak < player.GetPersistentVarAsInt( "winStreak" ) )
-				player.SetPersistentVar( "highestWinStreakEver", player.GetPersistentVarAsInt( "winStreak" ) )
-
-			player.SetPersistentVar( "winStreak", 0 )
-			player.SetPersistentVar( "lastAbandonedMode", GAMETYPE )
-			player.SetPersistentVar( "lastAbandonTime", GetUnixTimestamp() )
-
-			string abandonCountForMode = Stats_GetFixedSaveVar( "abandonCountForMode", GetMapName(), GAMETYPE, GetDifficultyLevel().tostring() )
-
-			player.SetPersistentVar( abandonCountForMode, player.GetPersistentVarAsInt( abandonCountForMode ) + 1 )
-		}
-*/
-	}
-	else
+	if ( IsLobby() )
 	{
 		player.Signal( "_disconnectedInternal" )
 		UpdateBadRepPresent()
