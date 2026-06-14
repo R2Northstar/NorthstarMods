@@ -686,11 +686,11 @@ void function HandleKillStats( entity victim, entity attacker, var damageInfo )
 		Stats_IncrementStat( player, "kills_stats", "pilotExecutePilotUsing_" + player.p.lastExecutionUsed, "", 1.0 )
 
 	// pilotKickMelee
-	if ( damageSource == eDamageSourceId.human_melee )
+	if ( DamageIsPilotMelee( damageSource ) )
 		Stats_IncrementStat( player, "kills_stats", "pilotKickMelee", "", 1.0 )
 
 	// pilotKickMeleePilot
-	if ( victimIsPilot && damageSource == eDamageSourceId.human_melee )
+	if ( victimIsPilot && DamageIsPilotMelee( damageSource ) )
 		Stats_IncrementStat( player, "kills_stats", "pilotKickMeleePilot", "", 1.0 )
 
 	// titanMelee
@@ -1103,6 +1103,22 @@ string function GetPersistenceRefFromDamageInfo( var damageInfo )
 	}
 
 	return ""
+}
+
+bool function DamageIsPilotMelee( int damageSourceId )
+{
+	switch ( damageSourceId )
+	{
+		case melee_pilot_emptyhanded:
+		case melee_pilot_arena:
+		case melee_pilot_sword:
+			return true
+
+		default:
+			return false
+	}
+
+	unreachable
 }
 
 bool function DamageIsTitanMelee( int damageSourceId )
