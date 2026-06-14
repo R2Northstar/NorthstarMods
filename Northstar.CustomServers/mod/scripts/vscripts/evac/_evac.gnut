@@ -741,11 +741,7 @@ void function OnPlayerDeath( entity victim, entity attacker, var damageInfo )
 	if ( !IsPlayerEliminated( victim ) )
 		return
 
-	entity killer = null
-
-	if ( "lastAttacker" in victim.s )
-		if ( victim.s.lastAttacker )
-			killer = expect entity( victim.s.lastAttacker )
+	entity killer = GetLastAttacker( victim )
 
 	if ( IsValidPlayer( killer ) && victim.GetTeam() == killer.GetTeam() )
 		return
@@ -761,19 +757,7 @@ void function OnPlayerDeath( entity victim, entity attacker, var damageInfo )
 
 		foreach ( entity player in evacPlayers )
 		{
-			if ( !( "lastAttacker" in player.s ) )
-			{
-				lastAttackerIsKiller = false
-				break
-			}
-
-			if ( !player.s.lastAttacker )
-			{
-				lastAttackerIsKiller = false
-				break
-			}
-
-			if ( expect entity( player.s.lastAttacker ) != killer )
+			if ( IsValid( GetLastAttacker( player ) ) && GetLastAttacker( player ) != killer )
 			{
 				lastAttackerIsKiller = false
 				break
