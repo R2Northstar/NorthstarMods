@@ -6,7 +6,6 @@ global function GameState_EntitiesDidLoad
 global function WaittillGameStateOrHigher
 global function AddCallback_OnRoundEndCleanup
 
-global function SetShouldSpectateInPickLoadoutScreen
 global function SetSwitchSidesBased
 global function SetShouldUseRoundWinningKillReplay
 global function SetRoundWinningKillReplayKillClasses
@@ -19,7 +18,6 @@ global function AddTeamScore
 
 global function GameState_GetTimeLimitOverride
 global function IsRoundBasedGameOver
-global function SpectatePlayerDuringPickLoadout
 global function ShouldRunEvac
 global function GiveTitanToPlayer
 global function GetTimeLimit_ForGameMode
@@ -35,7 +33,6 @@ global function GetMatchWinnerFromScore
 
 struct
 {
-	bool spectateInPickLoadoutScreen = false // This is so joining players stay absent from distracting others with invulnerability given by the Titan Selection Screen
 	int functionref() timeoutWinnerDecisionFunc
 
 	bool roundWinningKillReplayTrackPilotKills = true
@@ -467,16 +464,6 @@ void function SetCallback_TryUseProjectileReplay( bool functionref( entity victi
 void function AddCallback_OnRoundEndCleanup( void functionref() callback )
 {
 	file.roundEndCleanupCallbacks.append( callback )
-}
-
-void function SetShouldSpectateInPickLoadoutScreen( bool shouldSpec )
-{
-	file.spectateInPickLoadoutScreen = shouldSpec
-}
-
-bool function SpectatePlayerDuringPickLoadout()
-{
-	return ( !DoPrematchWarpSound() && file.spectateInPickLoadoutScreen )
 }
 
 void function SetSwitchSidesBased( bool switchSides )

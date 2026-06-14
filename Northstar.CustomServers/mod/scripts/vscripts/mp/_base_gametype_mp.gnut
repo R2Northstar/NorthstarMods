@@ -242,8 +242,10 @@ void function CodeCallback_OnClientConnectionCompleted( entity player )
 	// handle spawning late joiners
 	if ( GetGameState() >= eGameState.Playing )
 	{
-		if ( SpectatePlayerDuringPickLoadout() )
+		if ( GetCurrentPlaylistVarInt( "tts_menu_join_in_progress", 0 ) == 1 )
+		{
 			thread SpectateTTSMenuPlayer( player )
+		}
 		else if ( !IsEliminationBased() )
 		{
 			if ( Riff_IsTitanAvailable( player ) || ShouldIntroSpawnAsTitan() || svGlobal.forceSpawnAsTitan ) // Handles the conditions to spawn player as Titan right away or not
