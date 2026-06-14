@@ -617,7 +617,10 @@ bool function DoneWaitingForPlayers()
 
 void function GameState_OnClientConnected( entity player )
 {
-	if ( GetGameState() != eGameState.WaitingForPlayers && ( GetGameState() != eGameState.PickLoadout || DoPrematchWarpSound() ) )
+	if (
+		GetGameState() != eGameState.WaitingForPlayers && ( GetGameState() != eGameState.PickLoadout || DoPrematchWarpSound() ) &&
+		GetGameState() != eGameState.Postmatch
+	)
 		return
 
 	ScreenFadeToBlackForever( player, 0.0 )
