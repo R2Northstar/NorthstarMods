@@ -1109,9 +1109,9 @@ bool function DamageIsPilotMelee( int damageSourceId )
 {
 	switch ( damageSourceId )
 	{
-		case melee_pilot_emptyhanded:
-		case melee_pilot_arena:
-		case melee_pilot_sword:
+		case eDamageSourceId.melee_pilot_emptyhanded:
+		case eDamageSourceId.melee_pilot_arena:
+		case eDamageSourceId.melee_pilot_sword:
 			return true
 
 		default:
