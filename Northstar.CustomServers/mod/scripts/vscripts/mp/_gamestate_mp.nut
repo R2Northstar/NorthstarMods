@@ -105,6 +105,17 @@ bool function ShouldTryUseProjectileReplay( entity victim, entity attacker, var 
 	return true
 }
 
+void function GameState_OnClientConnected( entity player )
+{
+	if (
+		GetGameState() != eGameState.WaitingForPlayers && ( GetGameState() != eGameState.PickLoadout || DoPrematchWarpSound() ) &&
+		GetGameState() != eGameState.Postmatch
+	)
+		return
+
+	ScreenFadeToBlackForever( player, 0.0 )
+}
+
 // / This is to move all NPCs that a player owns from one team to the other during a match
 // / Auto-Titans, Turrets, Ticks and Hacked Spectres will all move along together with the player to the new Team
 // / Also possibly prevents mods that spawns other types of NPCs that players can own from breaking when switching (i.e Drones, Hacked Reapers)
@@ -613,17 +624,6 @@ bool function DoneWaitingForPlayers()
 		level.nv.connectionTimeout = Time() + countdownSeconds
 
 	return Time() >= level.nv.connectionTimeout
-}
-
-void function GameState_OnClientConnected( entity player )
-{
-	if (
-		GetGameState() != eGameState.WaitingForPlayers && ( GetGameState() != eGameState.PickLoadout || DoPrematchWarpSound() ) &&
-		GetGameState() != eGameState.Postmatch
-	)
-		return
-
-	ScreenFadeToBlackForever( player, 0.0 )
 }
 
 /*
