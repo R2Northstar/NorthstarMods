@@ -14,7 +14,7 @@ global function TimeIsBeforeJumpSound
 
 global const TEAM_TITAN_SELECT_DURATION_MIDGAME = 20.0
 
-const float PICK_LOADOUT_TIME_MAX = 40.0
+const float PICK_LOADOUT_TIME_EXTEND_MAX = 30.0
 
 struct
 {
@@ -92,7 +92,11 @@ struct
 
 		printt( "OLD END TIME : " + endTime )
 
-		level.nv.minPickLoadOutTime = min( max( endTime, Time() + 20.0 + soundTime ), file.pick_loadout_start_time + PICK_LOADOUT_TIME_MAX )
+		level.nv.minPickLoadOutTime =
+			min(
+				max( endTime, Time() + 20.0 + soundTime ),
+				file.pick_loadout_start_time + GameMode_GetLoadoutSelectTime() + GetCurrentPlaylistVarFloat( "pick_loadout_extension", 0.0 ) + PICK_LOADOUT_TIME_EXTEND_MAX
+			)
 		endTime = expect float( level.nv.minPickLoadOutTime )
 
 		printt( "NEW END TIME : " + endTime )
