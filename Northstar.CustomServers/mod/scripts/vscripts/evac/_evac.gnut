@@ -575,7 +575,7 @@ void function EvacDropshipKilled( entity dropship, var damageInfo )
 {
 	entity attacker = DamageInfo_GetAttacker( damageInfo )
 
-	if ( IsValidPlayer( attacker ) && attacker.GetTeam() != dropship.GetTeam() )
+	if ( IsValidPlayer( attacker ) && attacker.GetTeam() == GetWinningTeam() )
 		AddPlayerScore( attacker, "KillRescueShip" )
 
 	int aliveEnemyPlayers = GetPlayerArrayOfTeam_Alive( dropship.GetTeam() ).len()
@@ -595,7 +595,7 @@ void function EvacDropshipKilled( entity dropship, var damageInfo )
 		}
 	}
 
-	if ( IsValidPlayer( attacker ) && attacker.GetTeam() != dropship.GetTeam() && !aliveEnemyPlayers )
+	if ( IsValidPlayer( attacker ) && attacker.GetTeam() == GetWinningTeam() && !aliveEnemyPlayers )
 		AddPlayerScore( attacker, "FishInBarrel" )
 }
 
@@ -743,16 +743,16 @@ void function OnPlayerDeath( entity victim, entity attacker, var damageInfo )
 
 	entity killer = GetLastAttacker( victim )
 
-	if ( IsValidPlayer( killer ) && victim.GetTeam() == killer.GetTeam() )
+	if ( IsValidPlayer( killer ) && ( victim.GetTeam() == GetWinningTeam() || killer.GetTeam() != GetWinningTeam() ) )
 		return
 
 	// Give Pursuit team extra points for killing off escapees
-	if ( !GetPlayerArrayOfTeam_Alive( victim.GetTeam() ).len() )
+	if ( !GetPlayerArrayOfTeam_Alive( GetOtherTeam( GetWinningTeam() ) ).len() )
 	{
-		foreach ( entity player in GetPlayerArrayOfTeam( GetOtherTeam( victim.GetTeam() ) ) )
+		foreach ( entity player in GetPlayerArrayOfTeam( GetWinningTeam() ) )
 			AddPlayerScore( player, "TeamBonusKilledAll" )
 
-		array<entity> evacPlayers = GetPlayerArrayOfTeam( victim.GetTeam() )
+		array<entity> evacPlayers = GetPlayerArrayOfTeam( GetOtherTeam( GetWinningTeam() ) )
 		bool lastAttackerIsKiller = true
 
 		foreach ( entity player in evacPlayers )
