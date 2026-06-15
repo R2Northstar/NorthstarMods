@@ -939,7 +939,7 @@ bool function CheckForEmptyTeamVictory()
 	if ( GetCurrentPlaylistVarInt( "max_teams", 2 ) != 2 )
 		return false
 
-	if ( Time() - expect float( GetServerVar( "gameStartTime" ) ) >= START_SPAWN_GRACE_PERIOD )
+	if ( Time() - expect float( GetServerVar( "gameStartTime" ) ) < START_SPAWN_GRACE_PERIOD )
 		return false
 
 	int defaultWinner = TEAM_UNASSIGNED
