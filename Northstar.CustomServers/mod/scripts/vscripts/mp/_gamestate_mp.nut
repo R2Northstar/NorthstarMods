@@ -1916,8 +1916,15 @@ bool function TimeLimit_Complete()
 			file.playinglastminutemusic = false
 			file.playingthreeminutemusic = false
 
+			float playingTime
+
+			if ( IsRoundBased() )
+				playingTime = Time() - expect float( GetServerVar( "roundStartTime" ) )
+			else
+				playingTime = Time() - expect float( GetServerVar( "gameStartTime" ) )
+
 			foreach ( int team in [ TEAM_IMC, TEAM_MILITIA ] )
-				CreateTeamMusicEvent( team, eMusicPieceID.LEVEL_INTRO, -99999999 )
+				CreateTeamMusicEvent( team, eMusicPieceID.LEVEL_INTRO, playingTime )
 
 			StopPlayingLastMinuteMusicToAll()
 
