@@ -87,12 +87,9 @@ void function InitMainMenuPanel()
 		file.fdButton = AddComboButton( comboStruct, headerIndex, buttonIndex++, "#GAMEMODE_COOP" )
 		Hud_AddEventHandler( file.fdButton, UIE_CLICK, OnPlayFDButton_Activate )
 	#else
-		// "Launch Multiplayer" button removed because we don't support vanilla yet :clueless:
-		// file.mpButton = AddComboButton( comboStruct, headerIndex, buttonIndex++, "#MULTIPLAYER_LAUNCH" )
-		// Hud_AddEventHandler( file.mpButton, UIE_CLICK, OnPlayMPButton_Activate )
-		file.fdButton = AddComboButton( comboStruct, headerIndex, buttonIndex++, "#MENU_LAUNCH_NORTHSTAR" )
-		Hud_AddEventHandler( file.fdButton, UIE_CLICK, OnPlayNSButton_Activate )
-		Hud_SetLocked( file.fdButton, true )
+		file.mpButton = AddComboButton( comboStruct, headerIndex, buttonIndex++, "#MENU_LAUNCH_NORTHSTAR" )
+		Hud_AddEventHandler( file.mpButton, UIE_CLICK, OnPlayNSButton_Activate )
+		Hud_SetLocked( file.mpButton, true )
 	#endif
 
 	headerIndex++
@@ -176,11 +173,7 @@ void function OnShowMainMenuPanel()
 	#endif // PS4_PROG
 
 	UpdateSPButtons()
-	#if VANILLA
-		thread UpdatePlayButton( file.mpButton )
-	#else
-		thread UpdatePlayButton( file.fdButton )
-	#endif
+	thread UpdatePlayButton( file.mpButton )
 	thread MonitorTrialVersionChange()
 
 	#if DURANGO_PROG
@@ -474,11 +467,7 @@ void function UpdatePlayButton( var button )
 				Hud_SetEnabled( file.fdButton, true )
 			}
 		#else
-			// dont try and update the launch multiplayer button, because it doesn't exist
-			// ComboButton_SetText( file.mpButton, buttonText )
-
-			ComboButton_SetText( file.fdButton, "#MENU_LAUNCH_NORTHSTAR" )
-			// Hud_SetEnabled( file.fdButton, false )
+			ComboButton_SetText( file.mpButton, "#MENU_LAUNCH_NORTHSTAR" )
 		#endif
 
 		if ( file.installing )
@@ -541,7 +530,7 @@ void function TryUnlockNorthstarButton()
 		WaitFrame()
 	}
 
-	Hud_SetLocked( file.fdButton, false )
+	Hud_SetLocked( file.mpButton, false )
 }
 
 void function OnPlayFDButton_Activate( var button )
