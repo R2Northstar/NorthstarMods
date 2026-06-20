@@ -4046,27 +4046,7 @@ int function GameTime_TimeLeftMinutes()
 	if ( GetGameState() == eGameState.Prematch )
 		return int( ( expect float( GetServerVar( "gameStartTime" ) ) - Time() ) / 60.0 )
 
-	if ( GetGameState() < eGameState.Playing )
-		return 0
-
-	float playingTime = 0.0
-
-	if ( IsRoundBased() )
-	{
-		if ( GetGameState() > eGameState.SuddenDeath )
-			playingTime = expect float( GetServerVar( "roundEndTime" ) ) - expect float( GetServerVar( "roundStartTime" ) )
-		else
-			playingTime = expect float( GetServerVar( "roundEndTime" ) ) - Time()
-	}
-	else
-	{
-		if ( GetGameState() > eGameState.SuddenDeath )
-			playingTime = expect float( GetServerVar( "gameEndTime" ) ) - expect float( GetServerVar( "gameStartTime" ) )
-		else
-			playingTime = expect float( GetServerVar( "gameEndTime" ) ) - Time()
-	}
-
-	return floor( playingTime / 60 ).tointeger()
+	return floor( GameTime_TimeLimitMinutes() - GameTime_PlayingTime() / 60 ).tointeger()
 }
 
 int function GameTime_TimeLeftSeconds()
@@ -4074,21 +4054,7 @@ int function GameTime_TimeLeftSeconds()
 	if ( GetGameState() == eGameState.Prematch )
 		return int( expect float( GetServerVar( "gameStartTime" ) ) - Time() )
 
-	if ( GetGameState() < eGameState.Playing )
-		return 0
-
-	if ( IsRoundBased() )
-	{
-		if ( GetGameState() > eGameState.SuddenDeath )
-			return floor( expect float( GetServerVar( "roundEndTime" ) ) - expect float( GetServerVar( "roundStartTime" ) ) ).tointeger()
-
-		return floor( expect float( GetServerVar( "roundEndTime" ) ) - Time() ).tointeger()
-	}
-
-	if ( GetGameState() > eGameState.SuddenDeath )
-		return floor( expect float( GetServerVar( "gameEndTime" ) ) - expect float( GetServerVar( "gameStartTime" ) ) ).tointeger()
-
-	return floor( expect float( GetServerVar( "gameEndTime" ) ) - Time() ).tointeger()
+	return floor( GameTime_TimeLimitSeconds() - GameTime_PlayingTime() ).tointeger()
 }
 
 // WARN: this function includes WaitingForPlayers and Prematch duration!
