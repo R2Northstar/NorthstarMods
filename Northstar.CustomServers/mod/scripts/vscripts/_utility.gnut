@@ -4043,11 +4043,11 @@ int function GameTime_TimeLimitMinutes()
 
 int function GameTime_TimeLeftMinutes()
 {
-	if ( GetGameState() == eGameState.WaitingForPlayers )
-		return 0
-
 	if ( GetGameState() == eGameState.Prematch )
 		return int( ( expect float( GetServerVar( "gameStartTime" ) ) - Time() ) / 60.0 )
+
+	if ( GetGameState() < eGameState.Playing )
+		return 0
 
 	float playingTime = 0.0
 
@@ -4066,13 +4066,16 @@ int function GameTime_TimeLeftMinutes()
 			playingTime = expect float( GetServerVar( "gameEndTime" ) ) - Time()
 	}
 
-	return floor( ( playingTime - Time() ) / 60 ).tointeger()
+	return floor( playingTime / 60 ).tointeger()
 }
 
 int function GameTime_TimeLeftSeconds()
 {
 	if ( GetGameState() == eGameState.Prematch )
 		return int( expect float( GetServerVar( "gameStartTime" ) ) - Time() )
+
+	if ( GetGameState() < eGameState.Playing )
+		return 0
 
 	if ( IsRoundBased() )
 	{
