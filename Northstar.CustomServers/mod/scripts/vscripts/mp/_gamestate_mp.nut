@@ -21,6 +21,7 @@ global function AddTeamScore
 global function GetWinningTeamWithFFASupport
 
 global function GameState_GetTimeLimitOverride
+global function GameState_SetTimeLimitOverride
 global function IsRoundBasedGameOver
 global function ShouldRunEvac
 global function GiveTitanToPlayer
@@ -58,6 +59,7 @@ struct
 
 	array<void functionref()> roundEndCleanupCallbacks
 	bool functionref( entity victim, entity attacker, var damageInfo, bool isRoundEnd ) shouldTryUseProjectileReplayCallback
+	float timeLimitOverride = -1
 } file
 
 /*
@@ -70,6 +72,7 @@ struct
 
 void function PIN_GameStart()
 {
+	RegisterServerVarChangeCallback( "gameEndTime", GameEndTimeVarChanged )
 	// todo: using the pin telemetry function here, weird and was done veeery early on before i knew how this all worked, should use a different one
 
 	// called from InitGameState
@@ -95,6 +98,11 @@ void function PIN_GameStart()
 	AddCallback_EntityChangedTeam( "player", OnPlayerChangedTeam )
 
 	RegisterSignal( "CleanUpEntitiesForRoundEnd" )
+}
+
+void function GameEndTimeVarChanged()
+{
+	file.timeLimitOverride = ( ( expect float( GetServerVar( "gameEndTime" ) ) - Time() ) - ( expect float( GetServerVar( "gameStartTime" ) ) - Time() ) ) / 60.0
 }
 
 void function GameState_EntitiesDidLoad()
@@ -1013,7 +1021,12 @@ int function GetWinningTeamWithFFASupport()
 
 float function GameState_GetTimeLimitOverride()
 {
-	return 100
+	return file.timeLimitOverride
+}
+
+void function GameState_SetTimeLimitOverride( float timeLimitOverride )
+{
+	file.timeLimitOverride = timeLimitOverride
 }
 
 bool function IsRoundBasedGameOver()
@@ -1032,11 +1045,22 @@ void function GiveTitanToPlayer( entity player )
 
 float function GetTimeLimit_ForGameMode()
 {
-	string mode = GameRules_GetGameMode()
-	string playlistString = "timelimit"
+	#if DEV
+		if ( level.devForcedTimeLimit )
+		{
+			// Make it needed to be called multiple times for RoundBasedGameModes
+			level.devForcedTimeLimit = 0
+			return 0.1
+		}
+	#endif
 
-	// default to 10 mins, because that seems reasonable
-	return GetCurrentPlaylistVarFloat( playlistString, 10 )
+	if ( GameState_GetTimeLimitOverride() >= 0 )
+		return GameState_GetTimeLimitOverride()
+
+	if ( !GameMode_IsDefined( GAMETYPE ) )
+		return GetCurrentPlaylistVarFloat( "timelimit", 10 )
+
+	return GameMode_GetRoundTimeLimit( GAMETYPE )
 }
 
 void function DialoguePlayNormal()
