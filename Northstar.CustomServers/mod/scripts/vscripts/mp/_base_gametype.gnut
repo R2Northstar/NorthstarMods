@@ -1193,14 +1193,7 @@ bool function ShouldStartSpawn( entity player )
 	if ( player.s.respawnCount )
 		return false
 
-	float playingTime
-
-	if ( IsRoundBased() )
-		playingTime = Time() - expect float( GetServerVar( "roundStartTime" ) )
-	else
-		playingTime = Time() - expect float( GetServerVar( "gameStartTime" ) )
-
-	return playingTime < START_SPAWN_GRACE_PERIOD
+	return GameTime_PlayingTime() < START_SPAWN_GRACE_PERIOD
 }
 
 void function PlayerSpawnsIntoPetTitan( entity player )

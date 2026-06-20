@@ -262,22 +262,16 @@ void function UpdateMatchStateToCode()
 
 	int timeLimit
 	int timePassed
-	float playingTime
-
-	if ( IsRoundBased() )
-		playingTime = Time() - expect float( GetServerVar( "roundStartTime" ) != null ? GetServerVar( "roundStartTime" ) : 0.0 )
-	else
-		playingTime = Time() - expect float( GetServerVar( "gameStartTime" ) != null ? GetServerVar( "gameStartTime" ) : 0.0 )
 
 	if ( GameRules_TimeLimitEnabled() )
 	{
 		timeLimit = int( GetTimeLimit_ForGameMode() * 60.0 )
-		timePassed = int( playingTime )
+		timePassed = int( GameTime_PlayingTime() )
 	}
 	else
 	{
 		timeLimit = 0
-		timePassed = int( playingTime )
+		timePassed = int( GameTime_PlayingTime() )
 	}
 
 	int phase = GetCodeMatchPhaseForGameState()
@@ -1918,15 +1912,8 @@ bool function TimeLimit_Complete()
 			file.playinglastminutemusic = false
 			file.playingthreeminutemusic = false
 
-			float playingTime
-
-			if ( IsRoundBased() )
-				playingTime = Time() - expect float( GetServerVar( "roundStartTime" ) )
-			else
-				playingTime = Time() - expect float( GetServerVar( "gameStartTime" ) )
-
 			foreach ( int team in [ TEAM_IMC, TEAM_MILITIA ] )
-				CreateTeamMusicEvent( team, eMusicPieceID.LEVEL_INTRO, playingTime )
+				CreateTeamMusicEvent( team, eMusicPieceID.LEVEL_INTRO, GameTime_PlayingTime() )
 
 			StopPlayingLastMinuteMusicToAll()
 
@@ -2218,14 +2205,7 @@ float function GetMatchProgress_Time()
 	if ( IsSwitchSidesBased() && !IsRoundBased() )
 		timeLimit *= 0.5
 
-	float playingTime
-
-	if ( IsRoundBased() )
-		playingTime = Time() - expect float( GetServerVar( "roundStartTime" ) )
-	else
-		playingTime = Time() - expect float( GetServerVar( "gameStartTime" ) )
-
-	return ( playingTime / timeLimit ) * 100.0
+	return ( GameTime_PlayingTime() / timeLimit ) * 100.0
 }
 
 int function GetMatchWinnerFromScore()

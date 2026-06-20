@@ -423,14 +423,7 @@ function TryETATitanReadyAnnouncement( entity player )
 	if ( GetGameState() > eGameState.SuddenDeath )
 		return
 
-	float playingTime
-
-	if ( IsRoundBased() )
-		playingTime = Time() - expect float( GetServerVar( "roundStartTime" ) )
-	else
-		playingTime = Time() - expect float( GetServerVar( "gameStartTime" ) )
-
-	if ( playingTime < 5.0 )
+	if ( GameTime_PlayingTime() < 5.0 )
 		return
 
 	local timeTillNextTitan = player.GetNextTitanRespawnAvailable() - Time()
