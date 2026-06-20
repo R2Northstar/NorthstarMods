@@ -73,6 +73,7 @@ struct
 void function PIN_GameStart()
 {
 	RegisterServerVarChangeCallback( "gameEndTime", GameEndTimeVarChanged )
+	RegisterServerVarChangeCallback( "roundEndTime", RoundEndTimeVarChanged )
 	// todo: using the pin telemetry function here, weird and was done veeery early on before i knew how this all worked, should use a different one
 
 	// called from InitGameState
@@ -102,7 +103,15 @@ void function PIN_GameStart()
 
 void function GameEndTimeVarChanged()
 {
-	file.timeLimitOverride = ( ( expect float( GetServerVar( "gameEndTime" ) ) - Time() ) - ( expect float( GetServerVar( "gameStartTime" ) ) - Time() ) ) / 60.0
+	if ( GetGameState() != eGameState.WinnerDetermined ) // WinnerDetermined always sets it to Time()
+		file.timeLimitOverride = ( ( expect float( GetServerVar( "gameEndTime" ) ) - Time() ) - ( expect float( GetServerVar( "gameStartTime" ) ) - Time() ) ) / 60.0
+}
+
+void function RoundEndTimeVarChanged()
+{
+	if ( GetGameState() != eGameState.WinnerDetermined ) // WinnerDetermined always sets it to Time()
+		file.timeLimitOverride =
+			( ( expect float( GetServerVar( "roundEndTime" ) ) - Time() ) - ( expect float( GetServerVar( "roundStartTime" ) ) - Time() ) ) / 60.0
 }
 
 void function GameState_EntitiesDidLoad()
