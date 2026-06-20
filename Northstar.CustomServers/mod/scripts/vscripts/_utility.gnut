@@ -4080,15 +4080,15 @@ int function GameTime_TimeLeftSeconds()
 	if ( IsRoundBased() )
 	{
 		if ( GetGameState() > eGameState.SuddenDeath )
-			return int( expect float( GetServerVar( "roundEndTime" ) ) - expect float( GetServerVar( "roundStartTime" ) ) )
+			return floor( expect float( GetServerVar( "roundEndTime" ) ) - expect float( GetServerVar( "roundStartTime" ) ) ).tointeger()
 
-		return int( expect float( GetServerVar( "roundEndTime" ) ) - Time() )
+		return floor( expect float( GetServerVar( "roundEndTime" ) ) - Time() ).tointeger()
 	}
 
 	if ( GetGameState() > eGameState.SuddenDeath )
-		return int( expect float( GetServerVar( "gameEndTime" ) ) - expect float( GetServerVar( "gameStartTime" ) ) )
+		return floor( expect float( GetServerVar( "gameEndTime" ) ) - expect float( GetServerVar( "gameStartTime" ) ) ).tointeger()
 
-	return int( expect float( GetServerVar( "gameEndTime" ) ) - Time() )
+	return floor( expect float( GetServerVar( "gameEndTime" ) ) - Time() ).tointeger()
 }
 
 // WARN: this function includes WaitingForPlayers and Prematch duration!
