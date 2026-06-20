@@ -1413,7 +1413,7 @@ bool function EliminationMode_Complete()
 	if ( !IsEliminationBased() )
 		return false
 
-	if ( Time() - expect float( GetServerVar( "gameStartTime" ) ) < ELIM_FIRST_SPAWN_GRACE_PERIOD )
+	if ( GameTime_PlayingTime() < ELIM_FIRST_SPAWN_GRACE_PERIOD )
 		return false
 
 	if ( IsPilotEliminationBased() )
@@ -1679,10 +1679,7 @@ int function CheckEliminationTitanWinner( bool setWinner = false )
 	string winReason
 	string lossReason
 
-	if (
-		!setWinner && Time() - expect float( GetServerVar( "gameStartTime" ) ) < ELIM_TITAN_SPAWN_GRACE_PERIOD &&
-		( teamsWithTitans > 1 || teamsWithAvailableTitans > 1 )
-	)
+	if ( !setWinner && GameTime_PlayingTime() < ELIM_TITAN_SPAWN_GRACE_PERIOD && ( teamsWithTitans > 1 || teamsWithAvailableTitans > 1 ) )
 		return TEAM_UNASSIGNED
 
 	if ( teamsWithTitans == 1 && teamHighestTitans && ( setWinner || !IsSingleTeamMode() ) )
