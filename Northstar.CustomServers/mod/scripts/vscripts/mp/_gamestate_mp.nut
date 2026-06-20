@@ -103,13 +103,13 @@ void function PIN_GameStart()
 
 void function GameEndTimeVarChanged()
 {
-	if ( GetGameState() != eGameState.WinnerDetermined ) // WinnerDetermined always sets it to Time()
+	if ( GetGameState() > eGameState.SuddenDeath )
 		file.timeLimitOverride = ( ( expect float( GetServerVar( "gameEndTime" ) ) - Time() ) - ( expect float( GetServerVar( "gameStartTime" ) ) - Time() ) ) / 60.0
 }
 
 void function RoundEndTimeVarChanged()
 {
-	if ( GetGameState() != eGameState.WinnerDetermined ) // WinnerDetermined always sets it to Time()
+	if ( GetGameState() > eGameState.SuddenDeath )
 		file.timeLimitOverride =
 			( ( expect float( GetServerVar( "roundEndTime" ) ) - Time() ) - ( expect float( GetServerVar( "roundStartTime" ) ) - Time() ) ) / 60.0
 }
