@@ -70,6 +70,7 @@ struct
 void function PIN_GameStart()
 {
 	RegisterServerVarChangeCallback( "gameEndTime", GameEndTimeVarChanged )
+	RegisterServerVarChangeCallback( "roundEndTime", RoundEndTimeVarChanged )
 
 	AddCallback_OnClientConnected( GameState_OnClientConnected )
 	AddCallback_OnPlayerKilled( OnPlayerKilled )
@@ -83,7 +84,16 @@ void function PIN_GameStart()
 void function GameEndTimeVarChanged()
 {
 	file.gameEndTimeChangedTime = Time()
-	file.timeLimitOverride = ( ( expect float( GetServerVar( "gameEndTime" ) ) - Time() ) - ( expect float( GetServerVar( "gameStartTime" ) ) - Time() ) ) / 60.0
+
+	if ( GetGameState() != eGameState.WinnerDetermined ) // WinnerDetermined always sets it to Time()
+		file.timeLimitOverride = ( ( expect float( GetServerVar( "gameEndTime" ) ) - Time() ) - ( expect float( GetServerVar( "gameStartTime" ) ) - Time() ) ) / 60.0
+}
+
+void function RoundEndTimeVarChanged()
+{
+	if ( GetGameState() != eGameState.WinnerDetermined ) // WinnerDetermined always sets it to Time()
+		file.timeLimitOverride =
+			( ( expect float( GetServerVar( "roundEndTime" ) ) - Time() ) - ( expect float( GetServerVar( "roundStartTime" ) ) - Time() ) ) / 60.0
 }
 
 void function GameState_EntitiesDidLoad()
