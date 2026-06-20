@@ -1514,7 +1514,7 @@ int function CheckEliminationPilotWinner( bool setWinner = false )
 	string winReason
 	string lossReason
 
-	if ( teamsWithPlayers == 1 )
+	if ( teamsWithPlayers == 1 && ( setWinner || !IsSingleTeamMode() ) )
 	{
 		winReason = "#GAMEMODE_ENEMY_PILOTS_ELIMINATED"
 		lossReason = "#GAMEMODE_FRIENDLY_PILOTS_ELIMINATED"
@@ -1536,7 +1536,7 @@ int function CheckEliminationPilotWinner( bool setWinner = false )
 	}
 	else if ( setWinner )
 	{
-		if ( teamsWithHighestPlayers.len() == 1 && teamHighestPlayers )
+		if ( teamsWithHighestPlayers.len() == 1 && teamHighestPlayers && ( setWinner || !IsSingleTeamMode() ) )
 		{
 			winReason = "#GAMEMODE_ENEMY_PILOTS_ELIMINATED"
 			lossReason = "#GAMEMODE_FRIENDLY_PILOTS_ELIMINATED"
@@ -1559,9 +1559,10 @@ int function CheckEliminationPilotWinner( bool setWinner = false )
 	{
 		AddTeamScore( winningTeam, 1 )
 		SetWinner( winningTeam, winReason, lossReason )
+		return winningTeam
 	}
 
-	return winningTeam
+	return TEAM_UNASSIGNED
 }
 
 int function CheckEliminationTitanWinner( bool setWinner = false )
@@ -1690,7 +1691,7 @@ int function CheckEliminationTitanWinner( bool setWinner = false )
 	)
 		return TEAM_UNASSIGNED
 
-	if ( teamsWithTitans == 1 && teamHighestTitans )
+	if ( teamsWithTitans == 1 && teamHighestTitans && ( setWinner || !IsSingleTeamMode() ) )
 	{
 		winReason = "#GAMEMODE_ENEMY_TITANS_DESTROYED"
 		lossReason = "#GAMEMODE_FRIENDLY_TITANS_DESTROYED"
@@ -1707,7 +1708,7 @@ int function CheckEliminationTitanWinner( bool setWinner = false )
 		winningTeam = TEAM_UNASSIGNED
 		setWinner = true
 	}
-	else if ( isPilotEliminationBased && teamsWithPlayers == 1 )
+	else if ( isPilotEliminationBased && teamsWithPlayers == 1 && ( setWinner || !IsSingleTeamMode() ) )
 	{
 		winReason = "#GAMEMODE_ENEMY_PILOTS_ELIMINATED"
 		lossReason = "#GAMEMODE_FRIENDLY_PILOTS_ELIMINATED"
@@ -1772,9 +1773,10 @@ int function CheckEliminationTitanWinner( bool setWinner = false )
 	{
 		AddTeamScore( winningTeam, 1 )
 		SetWinner( winningTeam, winReason, lossReason )
+		return winningTeam
 	}
 
-	return winningTeam
+	return TEAM_UNASSIGNED
 }
 
 bool function ScoreLimit_Complete()
