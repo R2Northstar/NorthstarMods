@@ -82,8 +82,6 @@ void function PIN_GameStart()
 	SetServerVar( "switchedSides", 0 )
 	SetServerVar( "winningTeam", -1 )
 
-	AddCallback_GameStateEnter( eGameState.WaitingForCustomStart, GameStateEnter_WaitingForCustomStart )
-	AddCallback_GameStateEnter( eGameState.WaitingForPlayers, GameStateEnter_WaitingForPlayers )
 	AddCallback_OnClientConnected( WaitingForPlayers_ClientConnected )
 
 	AddCallback_OnPlayerKilled( OnPlayerKilled )
@@ -96,14 +94,13 @@ void function PIN_GameStart()
 void function GameEndTimeVarChanged()
 {
 	if ( GetGameState() <= eGameState.SuddenDeath )
-		file.timeLimitOverride = ( ( expect float( GetServerVar( "gameEndTime" ) ) - Time() ) - ( expect float( GetServerVar( "gameStartTime" ) ) - Time() ) ) / 60.0
+		file.timeLimitOverride = ( expect float( GetServerVar( "gameEndTime" ) ) - Time() ) / 60.0
 }
 
 void function RoundEndTimeVarChanged()
 {
 	if ( GetGameState() <= eGameState.SuddenDeath )
-		file.timeLimitOverride =
-			( ( expect float( GetServerVar( "roundEndTime" ) ) - Time() ) - ( expect float( GetServerVar( "roundStartTime" ) ) - Time() ) ) / 60.0
+		file.timeLimitOverride = ( expect float( GetServerVar( "gameEndTime" ) ) - Time() ) / 60.0
 }
 
 void function GameState_EntitiesDidLoad()
@@ -414,8 +411,11 @@ void function GameStateEnter_Prematch()
 	if ( file.switchSidesBased )
 		timeLimit /= 2 // endtime is half of total per side
 
+	if ( IsRoundBased() )
+		timeLimit = int( GameMode_GetRoundTimeLimit( GAMETYPE ) * 60 )
+
 	SetServerVar( "gameEndTime", Time() + timeLimit + ClassicMP_GetIntroLength() )
-	SetServerVar( "roundEndTime", Time() + ClassicMP_GetIntroLength() + GameMode_GetRoundTimeLimit( GAMETYPE ) * 60 )
+	SetServerVar( "roundEndTime", Time() + timeLimit + ClassicMP_GetIntroLength() )
 
 	if ( !GetClassicMPMode() && !ClassicMP_ShouldTryIntroAndEpilogueWithoutClassicMP() )
 		thread StartGameWithoutClassicMP()
