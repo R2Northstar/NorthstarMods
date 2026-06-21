@@ -407,13 +407,6 @@ void function SetWinner( int team, string winningReason = "", string losingReaso
 	else
 		announceRoundWinnerLosingSubstr = GetStringID( losingReason )
 
-	float endTime
-
-	if ( IsRoundBased() )
-		endTime = expect float( GetServerVar( "roundEndTime" ) )
-	else
-		endTime = expect float( GetServerVar( "gameEndTime" ) )
-
 	foreach ( entity player in GetPlayerArray() )
 	{
 		int announcementSubstr = announceRoundWinnerLosingSubstr
@@ -781,7 +774,9 @@ void function GameRulesThink_Playing()
 void function GameStateEnter_SuddenDeath()
 {
 	level.nv.gameEndTime += ( GetSuddenDeathTimeLimit_ForGameMode() * 60.0 ).tointeger()
-	level.nv.roundEndTime += ( GetSuddenDeathTimeLimit_ForGameMode() * 60.0 ).tointeger()
+
+	if ( IsRoundBased() )
+		level.nv.roundEndTime += ( GetSuddenDeathTimeLimit_ForGameMode() * 60.0 ).tointeger()
 
 	Riff_ForceSetEliminationMode( eEliminationMode.Pilots )
 }
@@ -1882,12 +1877,14 @@ bool function TimeLimit_Complete()
 
 	float timeLimit
 
+	// if ( GetGameState() == eGameState.SuddenDeath )
+	// timeLimit = GetSuddenDeathTimeLimit_ForGameMode() * 60.0
 	if ( IsRoundBased() )
-		timeLimit = expect float( GetServerVar( "roundEndTime" ) ) - Time()
+		timeLimit = GetRoundTimeLimit_ForGameMode() * 60.0
 	else
-		timeLimit = expect float( GetServerVar( "gameEndTime" ) ) - Time()
+		timeLimit = GetTimeLimit_ForGameMode() * 60.0
 
-	int timeLeftSeconds = timeLimit.tointeger()
+	int timeLeftSeconds = GameTime_TimeLeftSeconds()
 
 	if ( timeLeftSeconds < 15 && timeLeftSeconds != level.lastTimeLeftSeconds )
 	{
@@ -1956,7 +1953,7 @@ bool function TimeLimit_Complete()
 
 	level.lastTimeLeftSeconds = timeLeftSeconds
 
-	if ( timeLimit <= 0.0 )
+	if ( GameTime_PlayingTime() > timeLimit )
 	{
 		if ( IsSwitchSidesBased() && !HasSwitchedSides() && !IsRoundBased() )
 		{
