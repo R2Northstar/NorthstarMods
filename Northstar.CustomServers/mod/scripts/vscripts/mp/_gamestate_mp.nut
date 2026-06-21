@@ -1311,7 +1311,6 @@ float function GetTimeLimit_ForGameMode()
 	#if DEV
 		if ( level.devForcedTimeLimit )
 		{
-			// Make it needed to be called multiple times for RoundBasedGameModes
 			level.devForcedTimeLimit = 0
 			return 0.1
 		}
@@ -1323,7 +1322,7 @@ float function GetTimeLimit_ForGameMode()
 	if ( !GameMode_IsDefined( GAMETYPE ) )
 		return GetCurrentPlaylistVarFloat( "timelimit", 10 )
 
-	return GameMode_GetRoundTimeLimit( GAMETYPE )
+	return GameMode_GetTimeLimit( GAMETYPE ).tofloat() // not a float for some reason?
 }
 
 void function DialoguePlayNormal()

@@ -93,7 +93,7 @@ playlists
 
 				max_players 16
 				max_teams 16
-				timelimit 7.5
+				timelimit 7
 				scorelimit 99999 // arbitrarily high number
 
 				gamemode_score_hint #GAMEMODE_SCORE_HINT_TDM
@@ -382,7 +382,7 @@ playlists
 				image ctf
 				max_players 16
 				max_teams 16
-				timelimit 7.5
+				timelimit 7
 				scorelimit 99999 // arbitrarily high number
 				mixtape_slot 5
 				visible 1
