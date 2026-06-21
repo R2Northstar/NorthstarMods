@@ -86,14 +86,6 @@ void function PIN_GameStart()
 	AddCallback_GameStateEnter( eGameState.WaitingForPlayers, GameStateEnter_WaitingForPlayers )
 	AddCallback_OnClientConnected( WaitingForPlayers_ClientConnected )
 
-	AddCallback_GameStateEnter( eGameState.PickLoadout, GameStateEnter_PickLoadout )
-	AddCallback_GameStateEnter( eGameState.Prematch, GameStateEnter_Prematch )
-	AddCallback_GameStateEnter( eGameState.Playing, GameStateEnter_Playing )
-	AddCallback_GameStateEnter( eGameState.WinnerDetermined, GameStateEnter_WinnerDetermined )
-	AddCallback_GameStateEnter( eGameState.SwitchingSides, GameStateEnter_SwitchingSides )
-	AddCallback_GameStateEnter( eGameState.SuddenDeath, GameStateEnter_SuddenDeath )
-	AddCallback_GameStateEnter( eGameState.Postmatch, GameStateEnter_Postmatch )
-
 	AddCallback_OnPlayerKilled( OnPlayerKilled )
 	AddDeathCallback( "npc_titan", OnTitanKilled )
 	AddCallback_EntityChangedTeam( "player", OnPlayerChangedTeam )
@@ -173,6 +165,48 @@ void function SetGameState( int newState )
 	// added in AddCallback_GameStateEnter
 	foreach ( callbackFunc in svGlobal.gameStateEnterCallbacks[ newState ] )
 		callbackFunc()
+
+	switch ( newState )
+	{
+		case eGameState.WaitingForCustomStart:
+			GameStateEnter_WaitingForCustomStart()
+			break
+
+		case eGameState.WaitingForPlayers:
+			GameStateEnter_WaitingForPlayers()
+			break
+
+		case eGameState.PickLoadout:
+			GameStateEnter_PickLoadout()
+			break
+
+		case eGameState.Prematch:
+			GameStateEnter_Prematch()
+			break
+
+		case eGameState.Playing:
+			GameStateEnter_Playing()
+			break
+
+		case eGameState.SuddenDeath:
+			GameStateEnter_SuddenDeath()
+			break
+
+		case eGameState.WinnerDetermined:
+			GameStateEnter_WinnerDetermined()
+			break
+
+		case eGameState.SwitchingSides:
+			GameStateEnter_SwitchingSides()
+			break
+
+		case eGameState.Epilogue:
+			break
+
+		case eGameState.Postmatch:
+			GameStateEnter_Postmatch()
+			break
+	}
 }
 
 void function AddTeamScore( int team, int amount )
