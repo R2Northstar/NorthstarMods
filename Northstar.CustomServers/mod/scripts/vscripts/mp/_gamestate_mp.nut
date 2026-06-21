@@ -100,7 +100,7 @@ void function GameEndTimeVarChanged()
 void function RoundEndTimeVarChanged()
 {
 	if ( GetGameState() <= eGameState.SuddenDeath )
-		file.timeLimitOverride = ( expect float( GetServerVar( "gameEndTime" ) ) - Time() ) / 60.0
+		file.timeLimitOverride = ( expect float( GetServerVar( "roundEndTime" ) ) - Time() ) / 60.0
 }
 
 void function GameState_EntitiesDidLoad()
