@@ -94,13 +94,14 @@ void function PIN_GameStart()
 void function GameEndTimeVarChanged()
 {
 	if ( GetGameState() <= eGameState.SuddenDeath )
-		file.timeLimitOverride = ( expect float( GetServerVar( "gameEndTime" ) ) - Time() ) / 60.0
+		file.timeLimitOverride = ( ( expect float( GetServerVar( "gameEndTime" ) ) - Time() ) - ( expect float( GetServerVar( "gameStartTime" ) ) - Time() ) ) / 60.0
 }
 
 void function RoundEndTimeVarChanged()
 {
 	if ( GetGameState() <= eGameState.SuddenDeath )
-		file.timeLimitOverride = ( expect float( GetServerVar( "roundEndTime" ) ) - Time() ) / 60.0
+		file.timeLimitOverride =
+			( ( expect float( GetServerVar( "roundEndTime" ) ) - Time() ) - ( expect float( GetServerVar( "roundStartTime" ) ) - Time() ) ) / 60.0
 }
 
 void function GameState_EntitiesDidLoad()
@@ -414,11 +415,11 @@ void function GameStateEnter_Prematch()
 	if ( IsRoundBased() )
 		timeLimit = int( GameMode_GetRoundTimeLimit( GAMETYPE ) * 60 )
 
-	SetServerVar( "gameEndTime", Time() + timeLimit + ClassicMP_GetIntroLength() )
-	SetServerVar( "roundEndTime", Time() + timeLimit + ClassicMP_GetIntroLength() )
-
 	if ( !GetClassicMPMode() && !ClassicMP_ShouldTryIntroAndEpilogueWithoutClassicMP() )
 		thread StartGameWithoutClassicMP()
+
+	SetServerVar( "gameEndTime", Time() + timeLimit + ClassicMP_GetIntroLength() )
+	SetServerVar( "roundEndTime", Time() + timeLimit + ClassicMP_GetIntroLength() )
 
 	// Initialise any spectators. Hopefully they are all initialised already in CodeCallback_OnClientConnectionCompleted
 	// (_base_gametype_mp.gnut) but for modes like LTS this doesn't seem to happen late enough to work properly.
@@ -435,11 +436,11 @@ void function StartGameWithoutClassicMP()
 		if ( IsAlive( player ) )
 			player.Die()
 
-	WaitFrame() // wait for callbacks to finish
-
 	// need these otherwise game will complain
 	SetServerVar( "gameStartTime", Time() )
 	SetServerVar( "roundStartTime", Time() )
+
+	WaitFrame() // wait for callbacks to finish
 
 	foreach ( entity player in GetPlayerArray() )
 	{
