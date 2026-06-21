@@ -4016,10 +4016,11 @@ int function GameTime_TimeLimitSeconds()
 	}
 	else
 	{
-		if ( IsSuddenDeathGameMode() && GetGameState() == eGameState.SuddenDeath )
-			return ( GetTimeLimit_ForGameMode() * 60.0 ).tointeger() + ( GetSuddenDeathTimeLimit_ForGameMode() * 60.0 ).tointeger()
-		else
-			return ( GetTimeLimit_ForGameMode() * 60.0 ).tointeger()
+		// handled by GetTimeLimit_ForGameMode()
+		// if ( IsSuddenDeathGameMode() && GetGameState() == eGameState.SuddenDeath )
+		// 	return ( GetTimeLimit_ForGameMode() * 60.0 ).tointeger() + ( GetSuddenDeathTimeLimit_ForGameMode() * 60.0 ).tointeger()
+		// else
+		return ( GetTimeLimit_ForGameMode() * 60.0 ).tointeger()
 	}
 	unreachable
 }
