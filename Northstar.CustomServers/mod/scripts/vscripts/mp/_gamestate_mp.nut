@@ -1909,7 +1909,7 @@ bool function TimeLimit_Complete()
 					PlayCurrentTeamMusicEventsOnPlayer( player )
 			}
 		}
-		else if ( !IsRoundBased() && timeLeftSeconds <= ( timeLimit * 0.4 - 60 ) )
+		else if ( !IsRoundBased() && timeLeftSeconds < ( timeLimit * 0.4 - 60 ) )
 		{
 			if ( !file.playingThreeMinuteMusic )
 			{
