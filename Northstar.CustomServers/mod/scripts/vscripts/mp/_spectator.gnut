@@ -235,6 +235,8 @@ void function SpectatorFunc_Default( entity player )
 			player.ClearReplayDelay()
 			player.StopObserverMode()
 
+			HACKCleanupStaticObserverStuff( player )
+
 			if ( player.IsWatchingSpecReplay() )
 				player.SetSpecReplayDelay( 0.0 ) // clear spectator replay
 
