@@ -119,11 +119,7 @@ void function NS_PreSendMessage( string message, bool isIngame, bool isTeam )
 
 	foreach ( callbackFunc in NsCustomCallbacksClient.OnPreSendMessageCallbacks )
 	{
-		ClClient_PreMessageStruct returnStruct = callbackFunc( messageStruct )
-		messageStruct.message = returnStruct.message
-		messageStruct.isIngame = returnStruct.isIngame
-		messageStruct.isTeam = returnStruct.isTeam
-		messageStruct.sendMessage = returnStruct.sendMessage
+		callbackFunc( messageStruct )
 	}
 
 	if ( messageStruct.sendMessage )
