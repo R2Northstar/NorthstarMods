@@ -6,7 +6,7 @@ void function NorthstarUtils_Before_Init()
 		#if SERVER
 			AddCallback_EntitiesDidLoad( ValidateTitanDropNodes )
 		#elseif CLIENT
-			AddServerToClientStringCommandCallback( "StopPlayingLastMinuteMusic", ServerCallback_StopPlayingLastMinuteMusic )
+			AddServerToClientStringCommandCallback( "StopPlayingMinuteMusic", ServerCallback_StopPlayingMinuteMusic )
 		#endif
 	#endif
 }
@@ -187,13 +187,13 @@ void function ReloadMods( bool reloadorretry = false )
 			return spawnpoints
 		}
 
-		void function StopPlayingLastMinuteMusicToAll()
+		void function StopPlayingMinuteMusicToAll()
 		{
 			foreach ( entity player in GetPlayerArray() )
-				ServerToClientStringCommand( player, "StopPlayingLastMinuteMusic" )
+				ServerToClientStringCommand( player, "StopPlayingMinuteMusic" )
 		}
 	#elseif CLIENT
-		void function ServerCallback_StopPlayingLastMinuteMusic( array<string> args )
+		void function ServerCallback_StopPlayingMinuteMusic( array<string> args )
 		{
 			if ( IsMusicTrackPlaying( eMusicPieceID.LEVEL_THREE_MINUTE ) || IsMusicTrackPlaying( eMusicPieceID.LEVEL_LAST_MINUTE ) )
 				StopMusic()

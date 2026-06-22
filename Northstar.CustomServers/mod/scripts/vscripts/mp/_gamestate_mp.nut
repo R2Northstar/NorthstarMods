@@ -51,9 +51,8 @@ struct
 
 	array<void functionref()> roundEndCleanupCallbacks
 	bool functionref( entity victim, entity attacker, var damageInfo, bool isRoundEnd ) shouldTryUseProjectileReplayCallback
-	float gameEndTimeChangedTime = 0.0
-	bool playinglastminutemusic = false
-	bool playingthreeminutemusic = false
+	bool playingLastMinuteMusic = false
+	bool playingThreeMinuteMusic = false
 	float timeWithPlayers = -1
 	bool endingMatch = false
 	float timeLimitOverride = -1
@@ -83,8 +82,6 @@ void function PIN_GameStart()
 
 void function GameEndTimeVarChanged()
 {
-	file.gameEndTimeChangedTime = Time()
-
 	if ( GetGameState() <= eGameState.SuddenDeath )
 		file.timeLimitOverride = ( ( expect float( GetServerVar( "gameEndTime" ) ) - Time() ) - ( expect float( GetServerVar( "gameStartTime" ) ) - Time() ) ) / 60.0
 }
@@ -660,8 +657,8 @@ void function GameStateEnter_Prematch()
 	level.clearedPlayers = false
 	level.lastTimeLeftSeconds = 0
 	level.firstTitanfall = false
-	file.playinglastminutemusic = false
-	file.playingthreeminutemusic = false
+	file.playingLastMinuteMusic = false
+	file.playingThreeMinuteMusic = false
 	file.timeWithPlayers = -1
 
 	int timeLimit = GameMode_GetTimeLimit( GAMETYPE ) * 60
@@ -729,8 +726,6 @@ void function GameStateEnter_Playing()
 
 	if ( Flag( "AnnounceProgressEnabled" ) )
 		thread DialoguePlayNormal()
-
-	file.gameEndTimeChangedTime = Time()
 }
 
 void function GameRulesThink_Playing()
@@ -1903,9 +1898,9 @@ bool function TimeLimit_Complete()
 	{
 		if ( timeLeftSeconds <= 60 )
 		{
-			if ( !file.playinglastminutemusic )
+			if ( !file.playingLastMinuteMusic )
 			{
-				file.playinglastminutemusic = true
+				file.playingLastMinuteMusic = true
 
 				foreach ( int team in [ TEAM_IMC, TEAM_MILITIA ] )
 					CreateTeamMusicEvent( team, eMusicPieceID.LEVEL_LAST_MINUTE, Time() )
@@ -1914,11 +1909,11 @@ bool function TimeLimit_Complete()
 					PlayCurrentTeamMusicEventsOnPlayer( player )
 			}
 		}
-		else if ( !IsRoundBased() && timeLeftSeconds <= ( expect float( GetServerVar( "gameEndTime" ) ).tointeger() - file.gameEndTimeChangedTime ) / 3.314 )
+		else if ( !IsRoundBased() && timeLeftSeconds <= ( timeLimit * 0.4 - 60 ) )
 		{
-			if ( !file.playingthreeminutemusic )
+			if ( !file.playingThreeMinuteMusic )
 			{
-				file.playingthreeminutemusic = true
+				file.playingThreeMinuteMusic = true
 
 				foreach ( int team in [ TEAM_IMC, TEAM_MILITIA ] )
 					CreateTeamMusicEvent( team, eMusicPieceID.LEVEL_THREE_MINUTE, Time() )
@@ -1927,15 +1922,15 @@ bool function TimeLimit_Complete()
 					PlayCurrentTeamMusicEventsOnPlayer( player )
 			}
 		}
-		else if ( file.playinglastminutemusic || file.playingthreeminutemusic )
+		else if ( file.playingLastMinuteMusic || file.playingThreeMinuteMusic )
 		{
-			file.playinglastminutemusic = false
-			file.playingthreeminutemusic = false
+			file.playingLastMinuteMusic = false
+			file.playingThreeMinuteMusic = false
 
 			foreach ( int team in [ TEAM_IMC, TEAM_MILITIA ] )
 				CreateTeamMusicEvent( team, eMusicPieceID.LEVEL_INTRO, GameTime_PlayingTime() )
 
-			StopPlayingLastMinuteMusicToAll()
+			StopPlayingMinuteMusicToAll()
 
 			foreach ( entity player in GetPlayerArray() )
 				PlayCurrentTeamMusicEventsOnPlayer( player )
