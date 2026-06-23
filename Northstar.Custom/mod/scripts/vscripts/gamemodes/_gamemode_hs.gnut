@@ -54,6 +54,12 @@ void function AddPlayerToHideAndSeekIntro( entity player )
 	if ( GetGameState() < eGameState.Prematch || Time() - file.hidingStartTime > file.hidingTime )
 		return
 
+	if ( IsPrivateMatchSpectator( player ) )
+	{
+		RespawnPrivateMatchSpectator( player )
+		return
+	}
+
 	// seeker/hider autobalance
 	// try to have 1/6 of players be seekers
 	if ( file.autobalance )

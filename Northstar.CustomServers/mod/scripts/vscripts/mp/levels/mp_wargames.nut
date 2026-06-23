@@ -117,7 +117,10 @@ void function WargamesIntro_AddPlayer( entity player )
 	if ( GetGameState() != eGameState.Prematch )
 		return
 
-	thread PlayerWatchesWargamesIntro( player )
+	if ( !IsPrivateMatchSpectator( player ) )
+		thread PlayerWatchesWargamesIntro( player )
+	else
+		RespawnPrivateMatchSpectator( player )
 }
 
 void function OnPrematchStart()
@@ -386,7 +389,7 @@ void function PlayerWatchesWargamesIntro( entity player )
 		{
 			if ( IsValid( player ) )
 			{
-				RemoveCinematicFlag( player, CE_FLAG_CLASSIC_MP_SPAWNING )
+				RemoveCinematicFlag( player, CE_FLAG_INTRO )
 
 				player.kv.VisibilityFlags = ENTITY_VISIBLE_TO_EVERYONE
 
@@ -409,6 +412,8 @@ void function PlayerWatchesWargamesIntro( entity player )
 	else
 		playerPod = file.militiaPod
 
+	AddCinematicFlag( player, CE_FLAG_INTRO )
+
 	// setup player
 	if ( PlayerCanSpawn( player ) )
 		DoRespawnPlayer( player, null )
@@ -425,7 +430,6 @@ void function PlayerWatchesWargamesIntro( entity player )
 	if ( !HasAnimEvent( player.GetFirstPersonProxy(), "PlaySound_SimPod_DoorShut" ) )
 		AddAnimEvent( player.GetFirstPersonProxy(), "PlaySound_SimPod_DoorShut", PlaySound_SimPod_DoorShut )
 
-	AddCinematicFlag( player, CE_FLAG_CLASSIC_MP_SPAWNING )
 	player.kv.VisibilityFlags = ENTITY_VISIBLE_TO_OWNER
 	TrainingPod_ViewConeLock_PodClosed( player )
 	HolsterViewModelAndDisableWeapons( player )

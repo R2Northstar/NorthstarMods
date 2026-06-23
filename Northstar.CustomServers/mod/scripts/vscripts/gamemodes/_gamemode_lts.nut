@@ -29,12 +29,11 @@ void function GamemodeLts_Init()
 	AddCallback_OnPilotBecomesTitan( RefreshThirtySecondWallhackHighlight )
 	AddCallback_OnTitanBecomesPilot( RefreshThirtySecondWallhackHighlight )
 
-	SetTimeoutWinnerDecisionFunc( CheckTitanHealthForDraw )
 	TrackTitanDamageInPlayerGameStat( PGS_ASSAULT_SCORE )
 
 	ClassicMP_SetCustomIntro( ClassicMP_DefaultNoIntro_Setup, 0 )
 	ClassicMP_ForceDisableEpilogue( true )
-	AddCallback_GameStateEnter( eGameState.Playing, WaitForThirtySecondsLeft )
+	GM_AddThirtySecondsLeftFunc( ThirtySecondsLeft )
 
 	AddCallback_OnClientConnected( SetupPlayerLTSChallenges ) // Just to make up the Match Goals tracking
 	AddCallback_OnClientDisconnected( RemovePlayerLTSChallenges ) // Safety removal of data to prevent crashes
@@ -68,72 +67,26 @@ void function LTSChallengeForPlayerKilled( entity victim, entity attacker, var d
 	}
 }
 
-void function WaitForThirtySecondsLeft()
+void function ThirtySecondsLeft()
 {
-	thread WaitForThirtySecondsLeftThreaded()
-}
-
-void function WaitForThirtySecondsLeftThreaded()
-{
-	svGlobal.levelEnt.EndSignal( "RoundEnd" ) // end this on round end
-
-	float endTime = expect float( GetServerVar( "roundEndTime" ) )
-
-	// wait until 30sec left
-	wait ( endTime - 30 ) - Time()
-
 	foreach ( entity player in GetPlayerArray() )
 	{
 		// warn there's 30 seconds left
 		Remote_CallFunction_NonReplay( player, "ServerCallback_LTSThirtySecondWarning" )
 
-		// do initial highlight
-		RefreshThirtySecondWallhackHighlight( player, null )
+		// do inital highlight
+		RefreshThirtySecondWallhackHighlight( player, player.GetPetTitan() )
 	}
 }
 
 void function RefreshThirtySecondWallhackHighlight( entity player, entity titan )
 {
-	if ( TimeSpentInCurrentState() < expect float( GetServerVar( "roundEndTime" ) ) - 30.0 )
+	if ( GameTime_TimeLeftSeconds() > 30 )
 		return
 
-	Highlight_SetEnemyHighlight( player, "enemy_sonar" ) // i think this needs a different effect, this works for now tho
+	if ( !Hightlight_HasEnemyHighlight( player, "enemy_sonar" ) )
+		Highlight_SetEnemyHighlight( player, "enemy_sonar" ) // i think this needs a different effect, this works for now tho
 
-	if ( player.GetPetTitan() != null )
-		Highlight_SetEnemyHighlight( player.GetPetTitan(), "enemy_sonar" )
-}
-
-int function CheckTitanHealthForDraw()
-{
-	int militiaTitans
-	int imcTitans
-
-	float militiaHealth
-	float imcHealth
-
-	foreach ( entity titan in GetTitanArray() )
-	{
-		if ( titan.GetTeam() == TEAM_MILITIA )
-		{
-			// doomed is counted as 0 health
-			militiaHealth += titan.GetTitanSoul().IsDoomed() ? 0.0 : GetHealthFrac( titan )
-			militiaTitans++
-		}
-		else
-		{
-			// doomed is counted as 0 health in this
-			imcHealth += titan.GetTitanSoul().IsDoomed() ? 0.0 : GetHealthFrac( titan )
-			imcTitans++
-		}
-	}
-
-	// note: due to how stuff is set up rn, there's actually no way to do win/loss reasons outside of a SetWinner call, i.e. not in timeout winner decision
-	// as soon as there is, strings in question are "#GAMEMODE_TITAN_TITAN_ADVANTAGE" and "#GAMEMODE_TITAN_TITAN_DISADVANTAGE"
-
-	if ( militiaTitans != imcTitans )
-		return militiaTitans > imcTitans ? TEAM_MILITIA : TEAM_IMC
-	else if ( militiaHealth != imcHealth )
-		return militiaHealth > imcHealth ? TEAM_MILITIA : TEAM_IMC
-
-	return TEAM_UNASSIGNED
+	if ( IsValid( titan ) && !Hightlight_HasEnemyHighlight( titan, "enemy_sonar" ) )
+		Highlight_SetEnemyHighlight( titan, "enemy_sonar" )
 }

@@ -1,8 +1,6 @@
 untyped
 global function ClassicMp_Init
 global function ClassicMP_TryDefaultIntroSetup
-global function ClassicMP_SetShouldTryIntroAndEpilogueWithoutClassicMP
-global function ClassicMP_ShouldTryIntroAndEpilogueWithoutClassicMP
 
 // intro setups
 global function ClassicMP_SetLevelIntro
@@ -27,8 +25,6 @@ global function GetClassicMPMode
 
 struct
 {
-	bool shouldTryIntroAndEpilogueWithoutClassicMP = false
-
 	// level intros have a lower priority than custom intros
 	// level intros are used only if a custom intro was not specified
 	void functionref() levelIntroSetupFunc
@@ -59,18 +55,6 @@ void function ClassicMP_TryDefaultIntroSetup()
 {
 }
 
-// this is for custom intros that might not want to use the preexisting classic_mp logic on client
-// in particular, tf1 campaign intros don't do this
-void function ClassicMP_SetShouldTryIntroAndEpilogueWithoutClassicMP( bool shouldTryIntroAndEpilogueWithoutClassicMP )
-{
-	file.shouldTryIntroAndEpilogueWithoutClassicMP = shouldTryIntroAndEpilogueWithoutClassicMP
-}
-
-bool function ClassicMP_ShouldTryIntroAndEpilogueWithoutClassicMP()
-{
-	return file.shouldTryIntroAndEpilogueWithoutClassicMP
-}
-
 void function ClassicMP_SetLevelIntro( void functionref() setupFunc, float introLength )
 {
 	file.levelIntroSetupFunc = setupFunc
@@ -85,6 +69,9 @@ void function ClassicMP_SetCustomIntro( void functionref() setupFunc, float intr
 
 void function ClassicMP_SetupIntro()
 {
+	if ( !GetCurrentPlaylistVarInt( "classic_mp", 1 ) )
+		return
+
 	if ( file.customIntroSetupFunc != null )
 		file.customIntroSetupFunc()
 	else
@@ -94,10 +81,6 @@ void function ClassicMP_SetupIntro()
 void function ClassicMP_OnIntroStarted()
 {
 	printt( "started intro!" )
-
-	float introLength = ClassicMP_GetIntroLength()
-	SetServerVar( "gameStartTime", Time() + introLength )
-	SetServerVar( "roundStartTime", Time() + introLength )
 }
 
 void function ClassicMP_OnIntroFinished()

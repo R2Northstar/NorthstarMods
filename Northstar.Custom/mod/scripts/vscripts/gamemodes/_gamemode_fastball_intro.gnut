@@ -171,7 +171,7 @@ void function FastballPlayer( entity player )
 		{
 			if ( IsValid( player ) )
 			{
-				RemoveCinematicFlag( player, CE_FLAG_CLASSIC_MP_SPAWNING )
+				RemoveCinematicFlag( player, CE_FLAG_INTRO )
 
 				player.ClearParent()
 
@@ -207,6 +207,8 @@ void function FastballPlayer( entity player )
 	else
 		buddy = file.imcBuddy
 
+	AddCinematicFlag( player, CE_FLAG_INTRO )
+
 	// respawn the player
 	player.SetOrigin( buddy.GetOrigin() )
 	player.RespawnPlayer( null )
@@ -214,8 +216,7 @@ void function FastballPlayer( entity player )
 	player.SetInvulnerable() // in deadly ground we die without this lol
 	player.HolsterWeapon()
 
-	// hide hud, fade screen out from black
-	AddCinematicFlag( player, CE_FLAG_CLASSIC_MP_SPAWNING )
+	// fade screen out from black
 	ScreenFadeFromBlack( player, 0.5, 0.5 )
 
 	// start fp sequence

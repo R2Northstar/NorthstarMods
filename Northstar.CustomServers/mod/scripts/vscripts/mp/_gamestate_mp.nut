@@ -522,10 +522,10 @@ void function GameRulesThink_WaitingForPlayers()
 	if ( !DoneWaitingForPlayers() )
 		return
 
-	if ( !IsFFAGame() )
-		SetGameState( eGameState.PickLoadout ) // Even if the game mode don't use it, vanilla still cast this game state to make the dropship jump sound when match starts
+	if ( GetCurrentPlaylistVarInt( "classic_mp", 1 ) && !IsFFAGame() )
+		SetGameState( eGameState.PickLoadout )
 	else
-		SetGameState( eGameState.Prematch ) // FFA has no Dropships and logic crash clients if casted into PickLoadout
+		SetGameState( eGameState.Prematch )
 }
 
 array<entity> function GetConnectedPlayers()
@@ -618,8 +618,7 @@ bool function DoneWaitingForPlayers()
 
 void function GameStateEnter_PickLoadout()
 {
-	foreach ( entity weapon in GetWeaponArray( true ) )
-		weapon.Destroy()
+	ClearWeapons()
 
 	level.nv.minPickLoadOutTime = Time() + GameMode_GetLoadoutSelectTime() + GetCurrentPlaylistVarFloat( "pick_loadout_extension", 0 )
 }
@@ -647,10 +646,11 @@ void function GameRulesThink_PickLoadout()
 
 void function GameStateEnter_Prematch()
 {
-	foreach ( entity weapon in GetWeaponArray( true ) )
-		weapon.Destroy()
-
 	PerfInitLabels()
+
+	SetPrematchStartTime()
+
+	ClearWeapons()
 
 	level.clearedPlayers = false
 	level.lastTimeLeftSeconds = 0
@@ -658,37 +658,22 @@ void function GameStateEnter_Prematch()
 	file.playingLastMinuteMusic = false
 	file.playingThreeMinuteMusic = false
 	file.timeWithPlayers = -1
-
-	int timeLimit = GameMode_GetTimeLimit( GAMETYPE ) * 60
-
-	if ( IsSwitchSidesBased() )
-		timeLimit /= 2 // endtime is half of total per side
+	file.timeLimitOverride = -1
 
 	if ( IsRoundBased() ) // Override with roundtimelimits even if it have switching sides enabled
 	{
-		timeLimit = int( GameMode_GetRoundTimeLimit( GAMETYPE ) * 60 )
-
 		level.nv.roundScoreLimitComplete = false
 
 		if ( IsRoundWinningKillReplayEnabled() )
 		{
+			// Clear here as opposed to at the end of roundwinningkillreplay to not change the time spent in WinnerDetermined state.
 			file.roundWinningKillReplayAttacker = null
 			file.roundWinningKillReplayInflictorEHandle = -1
-			// ClearRoundWinningKillReplayEntities() // Clear here as opposed to at the end of
-			// roundwinningkillreplay to not change the time spent in WinnerDetermined state.
 		}
 	}
 
-	if ( !GetClassicMPMode() && !ClassicMP_ShouldTryIntroAndEpilogueWithoutClassicMP() )
-	{
-		SetGameEndTime( timeLimit + ClassicMP_DefaultNoIntro_GetLength() )
-		SetRoundEndTime( timeLimit + ClassicMP_DefaultNoIntro_GetLength() )
-	}
-	else
-	{
-		SetGameEndTime( timeLimit + ClassicMP_GetIntroLength() )
-		SetRoundEndTime( timeLimit + ClassicMP_GetIntroLength() )
-	}
+	if ( !GetCurrentPlaylistVarInt( "classic_mp", 1 ) )
+		thread StartGameWithoutClassicMP()
 }
 
 void function GameRulesThink_Prematch()
@@ -696,11 +681,52 @@ void function GameRulesThink_Prematch()
 	if ( Time() < level.nv.gameStartTime )
 		return
 
+	if ( !GetCurrentPlaylistVarInt( "classic_mp", 1 ) )
+		foreach ( entity player in GetPlayerArray() )
+			if ( IsValidPlayer( player ) )
+				player.UnfreezeControlsOnServer()
+
 	SetGameState( eGameState.Playing )
 
 	level.nv.winningTeam = null
 
 	GameRules_MarkGameStatePrematchEnding()
+}
+
+void function SetPrematchStartTime()
+{
+	if ( GetCurrentPlaylistVarInt( "classic_mp", 1 ) && GetClassicMPMode() )
+	{
+		SetServerVar( "roundStartTime", Time() + ClassicMP_GetIntroLength() )
+		SetServerVar( "gameStartTime", Time() + ClassicMP_GetIntroLength() )
+	}
+	else
+	{
+		SetServerVar( "roundStartTime", Time() + 3.0 )
+		SetServerVar( "gameStartTime", Time() + 3.0 )
+	}
+}
+
+void function StartGameWithoutClassicMP()
+{
+	foreach ( entity player in GetPlayerArray() )
+	{
+		if ( IsPrivateMatchSpectator( player ) )
+			return
+
+		AddCinematicFlag( player, CE_FLAG_INTRO )
+		RespawnAsPilot( player )
+		HolsterViewModelAndDisableWeapons( player )
+		ScreenFadeFromBlack( player, 0.0 )
+		DeployViewModelAndEnableWeapons( player )
+
+		player.FreezeControlsOnServer()
+	}
+
+	wait 2.0
+
+	foreach ( entity player in GetPlayerArray() )
+		RemoveCinematicFlag( player, CE_FLAG_INTRO )
 }
 
 /*
@@ -720,6 +746,31 @@ void function GameStateEnter_Playing()
 		player.UnfreezeControlsOnServer()
 
 		UnMuteAll( player )
+	}
+
+	if ( IsRoundBased() )
+	{
+		SetServerVar( "roundStartTime", Time() )
+
+		if ( GetRoundTimeLimit_ForGameMode() > 0.0 )
+		{
+			float timeLimit = GetRoundTimeLimit_ForGameMode() * 60.0
+
+			if ( timeLimit > 0.0 )
+				SetRoundEndTime( timeLimit )
+		}
+	}
+	else
+	{
+		if ( GetTimeLimit_ForGameMode() > 0.0 )
+		{
+			float timeLimit = GetTimeLimit_ForGameMode() * 60.0
+
+			if ( timeLimit > 0.0 )
+				SetGameEndTime( timeLimit )
+			else
+				Assert( false, "TimeLimit is enabled but TimeLimitFromPlaylist is 0" )
+		}
 	}
 
 	if ( Flag( "AnnounceProgressEnabled" ) )
@@ -754,6 +805,9 @@ void function GameRulesThink_Playing()
 	}
 
 	UpdateMatchProgress()
+
+	foreach ( callbackFunc in svGlobal.playingThinkFuncTable )
+		callbackFunc()
 }
 
 /*
@@ -1482,6 +1536,9 @@ int function ForceEliminationModeWinner()
 
 int function CheckEliminationPilotWinner( bool setWinner = false )
 {
+	if ( !GameRules_AllowMatchEnd() )
+		return TEAM_UNASSIGNED
+
 	array<entity> players = GetPlayerArray()
 	table<int, int> teams
 
@@ -1575,6 +1632,9 @@ int function CheckEliminationPilotWinner( bool setWinner = false )
 
 int function CheckEliminationTitanWinner( bool setWinner = false )
 {
+	if ( !GameRules_AllowMatchEnd() )
+		return TEAM_UNASSIGNED
+
 	array<entity> players = GetPlayerArray()
 	table<int, int> teamPlayers
 	table<int, array> teamTitans
@@ -1935,6 +1995,10 @@ bool function TimeLimit_Complete()
 		}
 	}
 
+	if ( timeLeftSeconds == 30 && timeLeftSeconds != level.lastTimeLeftSeconds )
+		foreach ( callbackFunc in svGlobal.thirtySecondsLeftFuncTable )
+			callbackFunc()
+
 	if ( IsSwitchSidesBased() && !HasSwitchedSides() && !IsRoundBased() ) // TODO: fix LTS switching sides announcement
 	{
 		if ( timeLeftSeconds == 30 && timeLeftSeconds != level.lastTimeLeftSeconds )
@@ -2283,4 +2347,10 @@ void function PlayerWinStreak()
 		else
 			player.SetPersistentVar( "winStreakIsDraws", true )
 	}
+}
+
+void function ClearWeapons()
+{
+	foreach ( entity weapon in GetWeaponArray( true ) )
+		weapon.Destroy()
 }

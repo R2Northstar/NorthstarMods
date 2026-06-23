@@ -58,6 +58,12 @@ void function DropshipIntro_OnClientConnected( entity player )
 {
 	if ( GetGameState() == eGameState.Prematch )
 	{
+		if ( IsPrivateMatchSpectator( player ) )
+		{
+			RespawnPrivateMatchSpectator( player )
+			return
+		}
+
 		if ( PlayerCanSpawn( player ) )
 			DoRespawnPlayer( player, null )
 
@@ -124,10 +130,11 @@ void function OnPrematchStart()
 	{
 		if ( !IsPrivateMatchSpectator( player ) )
 		{
+			AddCinematicFlag( player, CE_FLAG_INTRO )
+			AddCinematicFlag( player, CE_FLAG_CLASSIC_MP_SPAWNING )
+
 			if ( PlayerCanSpawn( player ) )
 				DoRespawnPlayer( player, null )
-
-			player.s.hasPermanantAmpedWeapons <- false
 
 			Loadouts_TryGivePilotLoadout( player )
 			PutPlayerInDropship( player )
@@ -204,7 +211,6 @@ void function SpawnPlayerIntoDropship( entity player, int playerDropshipIndex, e
 	player.MovementDisable()
 
 	HolsterViewModelAndDisableWeapons( player )
-	AddCinematicFlag( player, CE_FLAG_CLASSIC_MP_SPAWNING )
 	thread DelayedFrameFadeout( player )
 	Remote_CallFunction_NonReplay( player, "ServerCallback_SpawnFactionCommanderInDropship", playerDropship.GetEncodedEHandle(), playerDropship.ai.spawnTime )
 	Remote_CallFunction_NonReplay( player, "ServerCallback_CreateDropShipIntLighting", playerDropship.GetEncodedEHandle(), playerDropship.GetTeam() )
@@ -269,6 +275,7 @@ void function PlayerJumpsFromDropship( entity player )
 				player.MovementEnable()
 
 				DeployViewModelAndEnableWeapons( player )
+				RemoveCinematicFlag( player, CE_FLAG_INTRO )
 				RemoveCinematicFlag( player, CE_FLAG_CLASSIC_MP_SPAWNING )
 				Loadouts_TryGivePilotLoadout( player )
 			}

@@ -47,8 +47,6 @@ void function GamemodeColiseum_Init()
 
 	AddCallback_GameStateEnter( eGameState.Playing, IncreaseColiseumRoundsPlayed )
 	AddCallback_OnClientDisconnected( Coliseum_OnClientDisconnected )
-
-	SetTimeoutWinnerDecisionFunc( TimeoutCheckPlayers )
 }
 
 // stub function referenced in sh_gamemodes_mp
@@ -262,17 +260,4 @@ void function Coliseum_OnClientDisconnected( entity player )
 			player.SetPersistentVar( "coliseumWinStreak", 0 )
 		}
 	}
-}
-
-int function TimeoutCheckPlayers()
-{
-	array<entity> imcPlayers = GetPlayerArrayOfTeam_Alive( TEAM_IMC )
-	array<entity> militiaPlayers = GetPlayerArrayOfTeam_Alive( TEAM_MILITIA )
-
-	if ( imcPlayers.len() > militiaPlayers.len() )
-		return TEAM_IMC
-	else if ( imcPlayers.len() < militiaPlayers.len() )
-		return TEAM_MILITIA
-
-	return TEAM_UNASSIGNED
 }

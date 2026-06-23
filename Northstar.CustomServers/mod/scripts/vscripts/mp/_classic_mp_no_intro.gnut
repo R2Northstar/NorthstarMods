@@ -26,30 +26,22 @@ void function ClassicMP_DefaultNoIntro_Start()
 
 	ClassicMP_OnIntroStarted()
 
-	array<entity> nonspectators
-
 	foreach ( entity player in GetPlayerArray() )
-	{
 		if ( !IsPrivateMatchSpectator( player ) )
-		{
 			ClassicMP_DefaultNoIntro_SpawnPlayer( player )
-
-			nonspectators.append( player )
-		}
 		else
 			RespawnPrivateMatchSpectator( player )
-	}
 
 	while ( Time() < expect float( level.nv.gameStartTime ) )
 		WaitFrame()
 
-	foreach ( entity player in nonspectators )
+	foreach ( entity player in GetPlayerArray() )
 	{
-		if ( IsValidPlayer( player ) )
+		if ( IsValidPlayer( player ) && !IsPrivateMatchSpectator( player ) )
 		{
 			player.UnfreezeControlsOnServer()
 
-			RemoveCinematicFlag( player, CE_FLAG_CLASSIC_MP_SPAWNING )
+			RemoveCinematicFlag( player, CE_FLAG_INTRO )
 		}
 	}
 
@@ -61,7 +53,11 @@ void function ClassicMP_DefaultNoIntro_SpawnPlayer( entity player )
 	if ( GetGameState() != eGameState.Prematch )
 		return
 
-	player.s.hasPermanantAmpedWeapons <- false
+	if ( IsPrivateMatchSpectator( player ) )
+	{
+		RespawnPrivateMatchSpectator( player )
+		return
+	}
 
 	if ( ShouldIntroSpawnAsTitan() )
 		thread ClassicMP_DefaultNoIntro_TitanSpawnPlayer( player )
@@ -74,6 +70,8 @@ void function ClassicMP_DefaultNoIntro_PilotSpawnPlayer( entity player )
 {
 	player.EndSignal( "OnDestroy" )
 
+	AddCinematicFlag( player, CE_FLAG_INTRO )
+
 	if ( PlayerCanSpawn( player ) )
 		RespawnAsPilot( player )
 
@@ -84,7 +82,6 @@ void function ClassicMP_DefaultNoIntro_PilotSpawnPlayer( entity player )
 
 	WaitFrame()
 
-	AddCinematicFlag( player, CE_FLAG_CLASSIC_MP_SPAWNING )
 	ScreenFadeFromBlack( player, 1, 1 )
 }
 

@@ -15,7 +15,6 @@ void function GamemodeTTDM_Init()
 
 	ClassicMP_SetCustomIntro( ClassicMP_DefaultNoIntro_Setup, ClassicMP_DefaultNoIntro_GetLength() )
 	ClassicMP_ForceDisableEpilogue( true )
-	SetTimeoutWinnerDecisionFunc( CheckScoreForDraw )
 
 	AddCallback_OnClientConnected( SetupPlayerTTDMChallenges ) // Just to make up the Match Goals tracking
 	AddCallback_OnClientDisconnected( RemovePlayerTTDMChallenges ) // Safety removal of data to prevent crashes
@@ -53,14 +52,4 @@ void function AddTeamScoreForPlayerKilled( entity victim, entity attacker, var d
 	}
 
 	AddTeamScore( GetOtherTeam( victim.GetTeam() ), 1 )
-}
-
-int function CheckScoreForDraw()
-{
-	if ( GameRules_GetTeamScore( TEAM_IMC ) > GameRules_GetTeamScore( TEAM_MILITIA ) )
-		return TEAM_IMC
-	else if ( GameRules_GetTeamScore( TEAM_MILITIA ) > GameRules_GetTeamScore( TEAM_IMC ) )
-		return TEAM_MILITIA
-
-	return TEAM_UNASSIGNED
 }

@@ -2427,13 +2427,14 @@ void function GamemodeFD_OnPlayerKilled( entity victim, entity attacker, var dam
 		file.playersInShip--
 	}
 
+	victim.s.hasPermanantAmpedWeapons = false
+
 	if ( !IsHarvesterAlive( fd_harvester.harvester ) || GetGameState() != eGameState.Playing )
 		return
 
 	victim.s.currentKillstreak = 0
 	victim.s.lastKillTime = 0.0
 	victim.s.currentTimedKillstreak = 0
-	victim.s.hasPermanantAmpedWeapons = false
 
 	if ( victim.GetTeam() == TEAM_IMC && attacker.IsPlayer() && attacker.GetTeam() == TEAM_MILITIA && GetGlobalNetBool( "FD_waveActive" ) ) // Give money to Militia players killing IMC players
 	{
