@@ -926,7 +926,7 @@ bool function ShouldEntTakeDamage_SPMP( entity ent, var damageInfo )
 		case eGameState.WinnerDetermined:
 			// this currently is to accomodate last titan standing
 			// we should probably split WinnerDetermined into round and match versions.
-			return IsRoundBased()
+			return !IsRoundBased()
 
 		default:
 			Assert( 0, "Unknown gamestate " + GetGameState() )
