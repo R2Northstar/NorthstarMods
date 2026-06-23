@@ -41,7 +41,7 @@ void function ClassicMP_DefaultNoIntro_Start()
 		{
 			player.UnfreezeControlsOnServer()
 
-			RemoveCinematicFlag( player, CE_FLAG_INTRO )
+			RemoveCinematicFlag( player, CE_FLAG_CLASSIC_MP_SPAWNING )
 		}
 	}
 
@@ -70,7 +70,7 @@ void function ClassicMP_DefaultNoIntro_PilotSpawnPlayer( entity player )
 {
 	player.EndSignal( "OnDestroy" )
 
-	AddCinematicFlag( player, CE_FLAG_INTRO )
+	AddCinematicFlag( player, CE_FLAG_CLASSIC_MP_SPAWNING )
 
 	if ( PlayerCanSpawn( player ) )
 		RespawnAsPilot( player )

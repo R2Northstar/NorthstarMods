@@ -714,7 +714,7 @@ void function StartGameWithoutClassicMP()
 		if ( IsPrivateMatchSpectator( player ) )
 			return
 
-		AddCinematicFlag( player, CE_FLAG_INTRO )
+		AddCinematicFlag( player, CE_FLAG_CLASSIC_MP_SPAWNING )
 		RespawnAsPilot( player )
 		HolsterViewModelAndDisableWeapons( player )
 		ScreenFadeFromBlack( player, 0.0 )
@@ -726,7 +726,7 @@ void function StartGameWithoutClassicMP()
 	wait 2.0
 
 	foreach ( entity player in GetPlayerArray() )
-		RemoveCinematicFlag( player, CE_FLAG_INTRO )
+		RemoveCinematicFlag( player, CE_FLAG_CLASSIC_MP_SPAWNING )
 }
 
 /*

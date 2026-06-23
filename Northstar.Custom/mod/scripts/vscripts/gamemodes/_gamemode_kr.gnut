@@ -99,6 +99,7 @@ void function PlayerKillrace( entity player, float raceTime )
 
 void function StartKillraceSpawnThink()
 {
+	GameState_SetTimeLimitOverride( 7.5 ) // doesn't work as playlistvar because it gets convert to a integer
 	thread KillraceSpawnThink()
 }
 
