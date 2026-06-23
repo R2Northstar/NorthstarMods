@@ -901,6 +901,37 @@ bool function ClientCommandCallbackChangeTeam( entity player, array<string> args
 
 bool function ShouldEntTakeDamage_SPMP( entity ent, var damageInfo )
 {
+	switch ( GetGameState() )
+	{
+		case eGameState.WaitingForCustomStart:
+		case eGameState.WaitingForPlayers:
+		case eGameState.PickLoadout:
+		case eGameState.Playing:
+		case eGameState.SuddenDeath:
+		case eGameState.Epilogue:
+			// can die
+			break
+
+		case eGameState.Prematch:
+			if ( "canDieInPrematch" in ent.s )
+				break // some ents could die in Prematch
+
+			return false // most ents doesn't die in Prematch
+
+		case eGameState.SwitchingSides:
+		case eGameState.Postmatch:
+			// nothing dies
+			return false
+
+		case eGameState.WinnerDetermined:
+			// this currently is to accomodate last titan standing
+			// we should probably split WinnerDetermined into round and match versions.
+			return IsRoundBased()
+
+		default:
+			Assert( 0, "Unknown gamestate " + GetGameState() )
+	}
+
 	if ( ( IsDropship( ent ) || IsEvacDropship( ent ) ) && IsTitanCrushDamage( damageInfo ) )
 		return false
 

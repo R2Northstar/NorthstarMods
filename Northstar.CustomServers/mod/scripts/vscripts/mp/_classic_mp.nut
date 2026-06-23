@@ -124,36 +124,38 @@ bool function ClassicMP_ShouldRunEpilogue()
 	if ( IsFFAGame() )
 		return false
 
-	int winningTeam = GetWinningTeam()
-
-	if ( !IsIMCOrMilitiaTeam( winningTeam ) )
-		return false
-
-	if ( !file.runEpilogueWithDeadPlayers && IsEliminationBased() && IsTeamEliminated( GetOtherTeam( winningTeam ) ) )
-		return false
-
-	// there needs to be atleast 1 player on each team before running epilogue
-	if ( GetCurrentPlaylistVarInt( "max_teams", 2 ) != 1 )
+	if ( !GetCurrentPlaylistVarInt( "run_evac", 0 ) )
 	{
-		int winningPlayers = 0
-		int losingPlayers = 0
+		int winningTeam = GetWinningTeam()
 
-		foreach ( entity player in GetPlayerArray() )
-		{
-			if ( IsValidPlayer( player ) && !IsPrivateMatchSpectator( player ) )
-			{
-				if ( player.GetTeam() == winningTeam )
-					winningPlayers++
-				else
-					losingPlayers++
-			}
-		}
-
-		if ( !winningPlayers || !losingPlayers )
+		if ( !IsIMCOrMilitiaTeam( winningTeam ) )
 			return false
+
+		if ( !file.runEpilogueWithDeadPlayers && IsEliminationBased() && IsTeamEliminated( GetOtherTeam( winningTeam ) ) )
+			return false
+
+		// there needs to be atleast 1 player on each team before running epilogue
+		if ( GetCurrentPlaylistVarInt( "max_teams", 2 ) != 1 )
+		{
+			int winningPlayers = 0
+			int losingPlayers = 0
+
+			foreach ( entity player in GetPlayerArray() )
+			{
+				if ( IsValidPlayer( player ) && !IsPrivateMatchSpectator( player ) )
+				{
+					if ( player.GetTeam() == winningTeam )
+						winningPlayers++
+					else
+						losingPlayers++
+				}
+			}
+
+			if ( !winningPlayers || !losingPlayers )
+				return false
+		}
 	}
 
-	// note: there is a run_evac playlist var, but it's unused, and default 0, so use a new one
 	return !file.epilogueForceDisabled && GetCurrentPlaylistVarInt( "classic_mp", 1 ) != 0 && GetCurrentPlaylistVarInt( "run_epilogue", 1 ) != 0
 }
 

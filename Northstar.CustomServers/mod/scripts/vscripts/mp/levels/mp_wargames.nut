@@ -369,7 +369,6 @@ entity function SpawnSkitGuy( string entityclass, vector origin, vector angles, 
 		PlayFXOnEntity( $"xo_cockpit_dlight", guy, "HIJACK" )
 	}
 
-	AddEntityCallback_OnDamaged( guy, WargamesEntityDamaged )
 	guy.SetEfficientMode( true )
 	guy.SetTitle( "" )
 
@@ -397,7 +396,6 @@ void function PlayerWatchesWargamesIntro( entity player )
 
 				player.UnforceStand()
 				player.MovementEnable()
-				RemoveEntityCallback_OnDamaged( player, WargamesEntityDamaged )
 
 				Remote_CallFunction_NonReplay( player, "ServerCallback_ClearFactionLeaderIntro" )
 			}
@@ -417,8 +415,6 @@ void function PlayerWatchesWargamesIntro( entity player )
 	// setup player
 	if ( PlayerCanSpawn( player ) )
 		DoRespawnPlayer( player, null )
-
-	AddEntityCallback_OnDamaged( player, WargamesEntityDamaged )
 
 	int podAttachId = playerPod.LookupAttachment( "REF" )
 
@@ -710,12 +706,4 @@ void function PodFXCleanup( entity pod )
 
 		rightEmitter.Destroy()
 	}
-}
-
-void function WargamesEntityDamaged( entity guy, var damageInfo )
-{
-	if ( !IsDamageFromDamageTrigger( damageInfo ) && ( DamageInfo_GetForceKill( damageInfo ) || IsInstantDeath( damageInfo ) ) )
-		return
-
-	DamageInfo_SetDamage( damageInfo, 0 )
 }
