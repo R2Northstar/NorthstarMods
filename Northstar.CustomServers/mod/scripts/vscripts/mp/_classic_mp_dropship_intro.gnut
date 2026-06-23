@@ -240,6 +240,7 @@ void function SpawnPlayerIntoDropship( entity player, int playerDropshipIndex, e
 	jumpSequence.firstPersonAnim = DROPSHIP_JUMP_ANIMS_POV[ playerDropshipIndex ]
 	jumpSequence.thirdPersonAnim = DROPSHIP_JUMP_ANIMS[ playerDropshipIndex ]
 	jumpSequence.attachment = "ORIGIN"
+	jumpSequence.teleport = true
 	jumpSequence.viewConeFunction = ViewConeRampFree
 	jumpSequence.setInitialTime = max( 0.0, Time() - playerDropship.s.deployedTime )
 	jumpSequence.hideProxy = true

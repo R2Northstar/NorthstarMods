@@ -115,12 +115,10 @@ bool function ShouldTryUseProjectileReplay( entity victim, entity attacker, var 
 void function GameState_OnClientConnected( entity player )
 {
 	if (
-		GetGameState() != eGameState.WaitingForPlayers && ( GetGameState() != eGameState.PickLoadout || DoPrematchWarpSound() ) &&
-		GetGameState() != eGameState.Postmatch
+		GetGameState() == eGameState.WaitingForPlayers || ( GetGameState() == eGameState.PickLoadout && DoPrematchWarpSound() ) ||
+		GetGameState() == eGameState.Postmatch
 	)
-		return
-
-	ScreenFadeToBlackForever( player, 0.0 )
+		ScreenFadeToBlackForever( player, 0.0 )
 }
 
 // / This is to move all NPCs that a player owns from one team to the other during a match
