@@ -25,7 +25,7 @@ void function GamemodeInfection_Init()
 	AddCallback_OnPlayerRespawned( RespawnInfected )
 	AddCallback_GameStateEnter( eGameState.Playing, SelectFirstInfected )
 
-	SetTimeoutWinnerDecisionFunc( TimeoutCheckSurvivors )
+	SetTimelimitCompleteFunc( TimelimitCheckSurvivors )
 
 	AddCallback_GameStateEnter( eGameState.WinnerDetermined, OnWinnerDetermined )
 }
@@ -214,12 +214,14 @@ void function SetLastSurvivor( entity player )
 	file.hasHadLastInfection = true
 }
 
-int function TimeoutCheckSurvivors()
+bool function TimelimitCheckSurvivors()
 {
-	if ( GetPlayerArrayOfTeam( INFECTION_TEAM_SURVIVOR ).len() > 0 )
-		return INFECTION_TEAM_SURVIVOR
+	if ( GetPlayerArrayOfTeam( INFECTION_TEAM_SURVIVOR ).len() )
+		SetWinner( INFECTION_TEAM_SURVIVOR, "#GAMEMODE_TIME_LIMIT_REACHED", "#GAMEMODE_TIME_LIMIT_REACHED" )
+	else
+		SetWinner( INFECTION_TEAM_INFECTED, "#GAMEMODE_TIME_LIMIT_REACHED", "#GAMEMODE_TIME_LIMIT_REACHED" )
 
-	return INFECTION_TEAM_INFECTED
+	return true
 }
 
 bool function InfectionShouldPlayerStartBleedout( entity player, var damageInfo )

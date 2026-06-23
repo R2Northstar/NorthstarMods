@@ -20,7 +20,7 @@ void function GamemodeHideAndSeek_Init()
 	Riff_ForceSetEliminationMode( eEliminationMode.Pilots )
 	SetLoadoutGracePeriodEnabled( false )
 
-	SetTimeoutWinnerDecisionFunc( HideAndSeekDecideWinner )
+	SetTimelimitCompleteFunc( HideAndSeekDecideWinner )
 	ClassicMP_SetCustomIntro( GamemodeHideAndSeekIntroSetup, 0.0 )
 	ClassicMP_ForceDisableEpilogue( true )
 
@@ -222,7 +222,9 @@ void function TryNotifyLastPlayerAlive( entity victim, entity attacker, var dama
 	}
 }
 
-int function HideAndSeekDecideWinner()
+bool function HideAndSeekDecideWinner()
 {
-	return HIDEANDSEEK_TEAM_HIDER // on timeout, hiders always win
+	SetWinner( HIDEANDSEEK_TEAM_HIDER, "#GAMEMODE_TIME_LIMIT_REACHED", "#GAMEMODE_TIME_LIMIT_REACHED" )
+
+	return true
 }

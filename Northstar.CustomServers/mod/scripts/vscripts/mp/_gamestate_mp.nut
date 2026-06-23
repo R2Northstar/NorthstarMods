@@ -6,6 +6,7 @@ global function GameState_EntitiesDidLoad
 global function WaittillGameStateOrHigher
 global function AddCallback_OnRoundEndCleanup
 
+global function SetTimelimitCompleteFunc
 global function SetSwitchSidesBased
 global function SetShouldUseRoundWinningKillReplay
 global function SetRoundWinningKillReplayKillClasses
@@ -13,7 +14,6 @@ global function SetRoundWinningKillReplayAttacker
 global function SetCallback_TryUseProjectileReplay
 global function ShouldTryUseProjectileReplay
 global function SetWinner
-global function SetTimeoutWinnerDecisionFunc
 global function AddTeamScore
 
 global function GameState_GetTimeLimitOverride
@@ -34,8 +34,6 @@ global function GetMatchWinnerFromScore
 
 struct
 {
-	int functionref() timeoutWinnerDecisionFunc
-
 	bool roundWinningKillReplayTrackPilotKills = true
 	bool roundWinningKillReplayTrackTitanKills = false
 
@@ -358,28 +356,40 @@ void function SetGameState( int newState )
 
 void function AddTeamScore( int team, int amount )
 {
+	if ( GameScore_GetFirstToScoreLimit() )
+		return
+
+	if ( !GamePlayingOrSuddenDeath() )
+		return
+
 	int scoreLimit = GameMode_GetScoreLimit( GAMETYPE )
-	int score = GameRules_GetTeamScore( team )
-
-	if ( IsRoundBased() )
-	{
-		scoreLimit = GameMode_GetRoundScoreLimit( GAMETYPE )
-		score = GameRules_GetTeamScore2( team )
-	}
-
-	int newScore = score + amount
+	int newScore = GameRules_GetTeamScore( team ) + amount
 
 	if ( newScore > scoreLimit && !GameScore_AllowPointsOverLimit() ) // Don't allow over the limit if not enabled
 		newScore = scoreLimit
 
 	GameRules_SetTeamScore( team, newScore )
-	GameRules_SetTeamScore2( team, newScore )
+
+	if ( newScore == scoreLimit && !GameScore_GetFirstToScoreLimit() )
+		level.firstToScoreLimit = team
 }
 
 void function SetWinner( int team, string winningReason = "", string losingReason = "" )
 {
-	if ( !GamePlayingOrSuddenDeath() ) // SetWinner should not be used outside the gamestates that can decide a winner
+	if ( !GamePlayingOrSuddenDeath() )
 		return
+
+	if ( IsRoundBased() )
+	{
+		if ( team != TEAM_UNASSIGNED )
+		{
+			int roundWins = GameRules_GetTeamScore2( team )
+			int newRoundWins = roundWins + 1
+
+			GameRules_SetTeamScore2( team, newRoundWins )
+			GameRules_SetTeamScore( team, newRoundWins ) // HACK; client scorebars don't know how to display TeamScore2
+		}
+	}
 
 	if ( ShouldEnterSuddenDeath( team ) )
 	{
@@ -446,11 +456,6 @@ void function SetWinner( int team, string winningReason = "", string losingReaso
 	}
 }
 
-void function SetTimeoutWinnerDecisionFunc( int functionref() callback )
-{
-	file.timeoutWinnerDecisionFunc = callback
-}
-
 void function SetCallback_TryUseProjectileReplay( bool functionref( entity victim, entity attacker, var damageInfo, bool isRoundEnd ) callback )
 {
 	file.shouldTryUseProjectileReplayCallback = callback
@@ -459,6 +464,11 @@ void function SetCallback_TryUseProjectileReplay( bool functionref( entity victi
 void function AddCallback_OnRoundEndCleanup( void functionref() callback )
 {
 	file.roundEndCleanupCallbacks.append( callback )
+}
+
+void function SetTimelimitCompleteFunc( bool functionref() timeLimitCompleteFunc )
+{
+	svGlobal.timelimitCompleteFunc = timeLimitCompleteFunc
 }
 
 void function SetSwitchSidesBased( bool switchSides )
@@ -1622,7 +1632,6 @@ int function CheckEliminationPilotWinner( bool setWinner = false )
 
 	if ( setWinner && level.nv.winningTeam == null )
 	{
-		AddTeamScore( winningTeam, 1 )
 		SetWinner( winningTeam, winReason, lossReason )
 		return winningTeam
 	}
@@ -1836,7 +1845,6 @@ int function CheckEliminationTitanWinner( bool setWinner = false )
 
 	if ( setWinner && level.nv.winningTeam == null )
 	{
-		AddTeamScore( winningTeam, 1 )
 		SetWinner( winningTeam, winReason, lossReason )
 		return winningTeam
 	}
@@ -2012,6 +2020,9 @@ bool function TimeLimit_Complete()
 
 	if ( GameTime_PlayingTime() > timeLimit )
 	{
+		if ( svGlobal.timelimitCompleteFunc != null )
+			return svGlobal.timelimitCompleteFunc()
+
 		if ( IsSwitchSidesBased() && !HasSwitchedSides() && !IsRoundBased() )
 		{
 			SetGameState( eGameState.SwitchingSides )

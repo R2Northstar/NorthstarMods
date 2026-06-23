@@ -30,7 +30,7 @@ void function GamemodeFastball_Init()
 	ClassicMP_ForceDisableEpilogue( true )
 	AddCallback_EntitiesDidLoad( SpawnPanelsForLevel )
 	AddCallback_GameStateEnter( eGameState.Prematch, ResetPanels )
-	SetTimeoutWinnerDecisionFunc( FastballDecideWinner )
+	SetTimelimitCompleteFunc( FastballDecideWinner )
 
 	AddCallback_OnClientConnected( FastballInitPlayer )
 
@@ -306,23 +306,23 @@ function FastballOnPanelHacked( panel, player )
 	}
 }
 
-int function FastballDecideWinner()
+bool function FastballDecideWinner()
 {
 	int militiaPanels
 	int imcPanels
 
 	foreach ( entity panel in GetAllControlPanels() )
-	{
 		if ( panel.GetTeam() == TEAM_MILITIA )
 			militiaPanels++
 		else if ( panel.GetTeam() == TEAM_IMC )
 			imcPanels++
-	}
 
 	if ( militiaPanels > imcPanels )
-		return TEAM_MILITIA
+		SetWinner( TEAM_MILITIA, "#GAMEMODE_TIME_LIMIT_REACHED", "#GAMEMODE_TIME_LIMIT_REACHED" )
 	else if ( imcPanels > militiaPanels )
-		return TEAM_IMC
+		SetWinner( TEAM_IMC, "#GAMEMODE_TIME_LIMIT_REACHED", "#GAMEMODE_TIME_LIMIT_REACHED" )
+	else
+		SetWinner( TEAM_UNASSIGNED, "#GAMEMODE_TIME_LIMIT_REACHED", "#GAMEMODE_TIME_LIMIT_REACHED" )
 
-	return TEAM_UNASSIGNED
+	return true
 }

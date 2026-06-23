@@ -23,7 +23,7 @@ void function GamemodeHidden_Init()
 	AddCallback_OnPlayerKilled( HiddenOnPlayerKilled )
 	AddCallback_GameStateEnter( eGameState.Playing, SelectFirstHidden )
 	AddCallback_GameStateEnter( eGameState.Postmatch, RemoveHidden )
-	SetTimeoutWinnerDecisionFunc( TimeoutCheckSurvivors )
+	SetTimelimitCompleteFunc( TimelimitCheckSurvivors )
 
 	RegisterSignal( "VisibleNotification" )
 }
@@ -231,10 +231,12 @@ void function VisibleNotification( entity player )
 	}
 }
 
-int function TimeoutCheckSurvivors()
+bool function TimelimitCheckSurvivors()
 {
-	if ( GetPlayerArrayOfTeam( TEAM_MILITIA ).len() > 0 )
-		return TEAM_IMC
+	if ( GetPlayerArrayOfTeam( TEAM_MILITIA ).len() )
+		SetWinner( TEAM_IMC, "#GAMEMODE_TIME_LIMIT_REACHED", "#GAMEMODE_TIME_LIMIT_REACHED" )
+	else
+		SetWinner( TEAM_MILITIA, "#GAMEMODE_TIME_LIMIT_REACHED", "#GAMEMODE_TIME_LIMIT_REACHED" )
 
-	return TEAM_MILITIA
+	return true
 }

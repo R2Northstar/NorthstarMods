@@ -28,7 +28,7 @@ void function GamemodeSpeedball_Init()
 	AddCallback_GameStateEnter( eGameState.Playing, ResetFlag )
 	AddCallback_OnTouchHealthKit( "item_flag", OnFlagCollected )
 	AddCallback_OnPlayerKilled( OnPlayerKilled )
-	SetTimeoutWinnerDecisionFunc( TimeoutCheckFlagHolder )
+	SetTimelimitCompleteFunc( TimelimitCheckFlagHolder )
 	AddCallback_OnRoundEndCleanup( ResetFlag )
 
 	ClassicMP_SetCustomIntro( ClassicMP_DefaultNoIntro_Setup, ClassicMP_DefaultNoIntro_GetLength() )
@@ -161,16 +161,18 @@ void function ResetFlag()
 	SetGlobalNetEnt( "flagCarrier", file.flag )
 }
 
-int function TimeoutCheckFlagHolder()
+bool function TimelimitCheckFlagHolder()
 {
 	if ( IsValidPlayer( file.flagCarrier ) )
 	{
-		AddTeamScore( file.flagCarrier.GetTeam(), 1 )
 		file.flagCarrier.AddToPlayerGameStat( PGS_ASSAULT_SCORE, 1 )
-		return file.flagCarrier.GetTeam()
-	}
 
-	return TEAM_UNASSIGNED
+		SetWinner( file.flagCarrier.GetTeam(), "#GAMEMODE_TIME_LIMIT_REACHED", "#GAMEMODE_TIME_LIMIT_REACHED" )
+	}
+	else
+		SetWinner( TEAM_UNASSIGNED, "#GAMEMODE_TIME_LIMIT_REACHED", "#GAMEMODE_TIME_LIMIT_REACHED" )
+
+	return true
 }
 
 string function GetHardpointGroup( entity hardpoint ) // Hardpoint Entity B on Homestead is missing the Hardpoint Group KeyValue

@@ -972,7 +972,6 @@ bool function CheckForEmptyTeamVictory()
 
 	if ( defaultWinner != TEAM_UNASSIGNED )
 	{
-		AddTeamScore( defaultWinner, 1 )
 		SetWinner( defaultWinner )
 		return true
 	}
