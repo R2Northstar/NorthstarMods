@@ -2596,7 +2596,7 @@ void function NPCStuckTracker( entity npc ) // Track if AI is properly pathing, 
 		if ( result.signal == "OnFailedToPath" )
 		{
 			if ( FailCount == 10 )
-				npc.Die()
+				npc.Die( svGlobal.worldspawn, svGlobal.worldspawn, { scriptType = DF_INSTANT, damageSourceId = eDamageSourceId.stuck } )
 			FailCount++
 		}
 		else
