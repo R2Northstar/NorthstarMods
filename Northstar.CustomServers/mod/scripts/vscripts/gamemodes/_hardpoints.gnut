@@ -224,13 +224,6 @@ void function Hardpoint_Think( HardpointState hardpoint )
 				cappers = militiaCappers
 
 			if (
-				cappers != -1 && CapturePoint_GetCaptureProgress( hardpoint.ent ) < 1.0 &&
-				CapturePoint_GetCaptureProgress( hardpoint.ent ) >
-					( CapturePoint_GetCaptureProgress( hardpoint.ent ) + ( ( Time() - hardpoint.lastTime ) / CAPTURE_DURATION_CAPTURE * cappers ) )
-			)
-				return
-
-			if (
 				cappers != -1 && expect int( hardpoint.ent.s.state ) >= CAPTURE_POINT_STATE_AMPING &&
 				CapturePoint_GetCaptureProgress( hardpoint.ent ) >
 					( CapturePoint_GetCaptureProgress( hardpoint.ent ) + ( ( Time() - hardpoint.lastTime ) / HARDPOINT_AMPED_DELAY * cappers ) - 0.001 )
