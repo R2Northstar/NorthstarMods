@@ -217,13 +217,13 @@ void function SpawnPlayerIntoDropship( entity player, int playerDropshipIndex, e
 
 		void functionref( entity ) viewfunc = ViewConeRampFree
 
-		if ( DROPSHIP_IDLE_ANIMS[ playerDropshipIndex ] == "Classic_MP_flyin_exit_povD_idle" )
+		if ( DROPSHIP_IDLE_ANIMS[ playerDropshipIndex ] == "Classic_MP_flyin_exit_playerC_idle" )
 			viewfunc = ViewConeRampFrontRight
-		else if ( DROPSHIP_IDLE_ANIMS[ playerDropshipIndex ] == "Classic_MP_flyin_exit_povA_idle" )
+		else if ( DROPSHIP_IDLE_ANIMS[ playerDropshipIndex ] == "Classic_MP_flyin_exit_playerB_idle" )
 			viewfunc = ViewConeRampBackRight
-		else if ( DROPSHIP_IDLE_ANIMS[ playerDropshipIndex ] == "Classic_MP_flyin_exit_povC_idle" )
+		else if ( DROPSHIP_IDLE_ANIMS[ playerDropshipIndex ] == "Classic_MP_flyin_exit_playerD_idle" )
 			viewfunc = ViewConeRampBackLeft
-		else if ( DROPSHIP_IDLE_ANIMS[ playerDropshipIndex ] == "Classic_MP_flyin_exit_povB_idle" )
+		else if ( DROPSHIP_IDLE_ANIMS[ playerDropshipIndex ] == "Classic_MP_flyin_exit_playerA_idle" )
 			viewfunc = ViewConeRampFrontLeft
 
 		idleSequence.firstPersonAnim = DROPSHIP_IDLE_ANIMS_POV[ playerDropshipIndex ]
