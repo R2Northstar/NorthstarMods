@@ -180,21 +180,62 @@ void function Hardpoint_Think( HardpointState hardpoint )
 	GM_AddPlayingThinkFunc(
 		void function() : ( hardpoint )
 		{
-			// they will be recounted in the next "scope"
-			hardpoint.ent.SetHardpointPlayerCount( TEAM_IMC, 0 )
-			hardpoint.ent.SetHardpointPlayerCount( TEAM_MILITIA, 0 )
-			hardpoint.ent.SetHardpointPlayerTitanCount( TEAM_IMC, 0 )
-			hardpoint.ent.SetHardpointPlayerTitanCount( TEAM_MILITIA, 0 )
+			int team_IMC_Pilot_Count = 0
+			int team_IMC_Titan_Count = 0
+			int team_Militia_Pilot_Count = 0
+			int team_Militia_Titan_Count = 0
 
 			// update counts based on capPlayers
 			ArrayRemoveInvalid( hardpoint.capPlayers )
 			foreach ( entity player in hardpoint.capPlayers )
 			{
-				if ( player.IsTitan() )
-					hardpoint.ent.SetHardpointPlayerTitanCount( player.GetTeam(), hardpoint.ent.GetHardpointPlayerTitanCount( player.GetTeam() ) + 1 )
-				else
-					hardpoint.ent.SetHardpointPlayerCount( player.GetTeam(), hardpoint.ent.GetHardpointPlayerCount( player.GetTeam() ) + 1 )
+				if ( player.GetTeam() == TEAM_IMC )
+				{
+					if ( player.IsTitan() )
+						team_IMC_Titan_Count++
+					else
+						team_IMC_Pilot_Count++
+				}
+				else if ( player.GetTeam() == TEAM_MILITIA )
+				{
+					if ( player.IsTitan() )
+						team_Militia_Titan_Count++
+					else
+						team_Militia_Pilot_Count++
+				}
 			}
+
+			hardpoint.ent.SetHardpointPlayerTitanCount( TEAM_IMC, team_IMC_Titan_Count )
+			hardpoint.ent.SetHardpointPlayerCount( TEAM_IMC, team_IMC_Pilot_Count )
+			hardpoint.ent.SetHardpointPlayerTitanCount( TEAM_MILITIA, team_Militia_Titan_Count )
+			hardpoint.ent.SetHardpointPlayerCount( TEAM_MILITIA, team_Militia_Pilot_Count )
+
+			int imcCappers = hardpoint.ent.GetHardpointPlayerCount( TEAM_IMC ) + hardpoint.ent.GetHardpointPlayerTitanCount( TEAM_IMC )
+			int militiaCappers = hardpoint.ent.GetHardpointPlayerCount( TEAM_MILITIA ) + hardpoint.ent.GetHardpointPlayerTitanCount( TEAM_MILITIA )
+			int cappers = -1
+			int occupation = min( abs( hardpoint.ent.GetHardpointPlayerCount( TEAM_IMC ) ), 1 ).tointeger() |
+				min( abs( hardpoint.ent.GetHardpointPlayerCount( TEAM_MILITIA ) ), 1 ).tointeger() << 1 |
+				min( abs( hardpoint.ent.GetHardpointPlayerTitanCount( TEAM_IMC ) ), 1 ).tointeger() << 2 |
+				min( abs( hardpoint.ent.GetHardpointPlayerTitanCount( TEAM_MILITIA ) ), 1 ).tointeger() << 3
+
+			if ( ( occupation & IMC_HOLD ) && !( occupation & HAS_MILITIA_TITAN ) )
+				cappers = imcCappers
+			else if ( occupation & MILITIA_HOLD )
+				cappers = militiaCappers
+
+			if (
+				cappers != -1 && CapturePoint_GetCaptureProgress( hardpoint.ent ) < 1.0 &&
+				CapturePoint_GetCaptureProgress( hardpoint.ent ) >
+					( CapturePoint_GetCaptureProgress( hardpoint.ent ) + ( ( Time() - hardpoint.lastTime ) / CAPTURE_DURATION_CAPTURE * cappers ) )
+			)
+				return
+
+			if (
+				cappers != -1 && expect int( hardpoint.ent.s.state ) >= CAPTURE_POINT_STATE_CAPTURED &&
+				CapturePoint_GetCaptureProgress( hardpoint.ent ) >
+					( CapturePoint_GetCaptureProgress( hardpoint.ent ) + ( ( Time() - hardpoint.lastTime ) / HARDPOINT_AMPED_DELAY * cappers ) - 0.001 )
+			)
+				return
 
 			Hardpoint_ThinkTick( hardpoint )
 
@@ -234,7 +275,6 @@ void function Hardpoint_ThinkTick( HardpointState hardpoint )
 	float deltaTime = Time() - hardpoint.lastTime
 	int imcCappers = hardpoint.ent.GetHardpointPlayerCount( TEAM_IMC ) + hardpoint.ent.GetHardpointPlayerTitanCount( TEAM_IMC )
 	int militiaCappers = hardpoint.ent.GetHardpointPlayerCount( TEAM_MILITIA ) + hardpoint.ent.GetHardpointPlayerTitanCount( TEAM_MILITIA )
-
 	int occupation = min( abs( hardpoint.ent.GetHardpointPlayerCount( TEAM_IMC ) ), 1 ).tointeger() |
 		min( abs( hardpoint.ent.GetHardpointPlayerCount( TEAM_MILITIA ) ), 1 ).tointeger() << 1 |
 		min( abs( hardpoint.ent.GetHardpointPlayerTitanCount( TEAM_IMC ) ), 1 ).tointeger() << 2 |
