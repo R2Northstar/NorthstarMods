@@ -340,7 +340,7 @@ void function Hardpoint_ThinkTick( HardpointState hardpoint )
 				max( 1.0, min( 2.0, CapturePoint_GetCaptureProgress( hardpoint.ent ) - ( deltaTime / HARDPOINT_AMPED_DELAY ) ) )
 			)
 
-			if ( currentState >= CAPTURE_POINT_STATE_AMPING ) // idk the old code does this
+			if ( currentState != CAPTURE_POINT_STATE_SELF_UNAMPING )
 				hardpoint.ent.s.state = CAPTURE_POINT_STATE_SELF_UNAMPING
 		}
 	}

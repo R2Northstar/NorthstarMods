@@ -1994,7 +1994,7 @@ bool function TimeLimit_Complete()
 			file.playingThreeMinuteMusic = false
 
 			foreach ( int team in [ TEAM_IMC, TEAM_MILITIA ] )
-				CreateTeamMusicEvent( team, eMusicPieceID.LEVEL_INTRO, GameTime_PlayingTime() )
+				CreateTeamMusicEvent( team, eMusicPieceID.LEVEL_INTRO, expect float( level.nv.gameStartTime ) )
 
 			StopPlayingMinuteMusicToAll()
 
