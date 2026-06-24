@@ -183,73 +183,47 @@ void function Hardpoint_Think( HardpointState hardpoint )
 	GM_AddPlayingThinkFunc(
 		void function() : ( hardpoint )
 		{
-			int team_IMC_Pilot_Count = 0
-			int team_IMC_Titan_Count = 0
-			int team_Militia_Pilot_Count = 0
-			int team_Militia_Titan_Count = 0
-
-			// update counts based on capPlayers
-			ArrayRemoveInvalid( hardpoint.capPlayers )
-			foreach ( entity player in hardpoint.capPlayers )
+			thread void function() : ( hardpoint )
 			{
-				if ( player.GetTeam() == TEAM_IMC )
+				WaitEndFrame() // mostly fixes the timing
+
+				if ( !GamePlayingOrSuddenDeath() )
+					return
+
+				int team_IMC_Pilot_Count = 0
+				int team_IMC_Titan_Count = 0
+				int team_Militia_Pilot_Count = 0
+				int team_Militia_Titan_Count = 0
+
+				// update counts based on capPlayers
+				ArrayRemoveInvalid( hardpoint.capPlayers )
+				foreach ( entity player in hardpoint.capPlayers )
 				{
-					if ( player.IsTitan() )
-						team_IMC_Titan_Count++
-					else
-						team_IMC_Pilot_Count++
+					if ( player.GetTeam() == TEAM_IMC )
+					{
+						if ( player.IsTitan() )
+							team_IMC_Titan_Count++
+						else
+							team_IMC_Pilot_Count++
+					}
+					else if ( player.GetTeam() == TEAM_MILITIA )
+					{
+						if ( player.IsTitan() )
+							team_Militia_Titan_Count++
+						else
+							team_Militia_Pilot_Count++
+					}
 				}
-				else if ( player.GetTeam() == TEAM_MILITIA )
-				{
-					if ( player.IsTitan() )
-						team_Militia_Titan_Count++
-					else
-						team_Militia_Pilot_Count++
-				}
-			}
 
-			hardpoint.ent.SetHardpointPlayerTitanCount( TEAM_IMC, team_IMC_Titan_Count )
-			hardpoint.ent.SetHardpointPlayerCount( TEAM_IMC, team_IMC_Pilot_Count )
-			hardpoint.ent.SetHardpointPlayerTitanCount( TEAM_MILITIA, team_Militia_Titan_Count )
-			hardpoint.ent.SetHardpointPlayerCount( TEAM_MILITIA, team_Militia_Pilot_Count )
+				hardpoint.ent.SetHardpointPlayerTitanCount( TEAM_IMC, team_IMC_Titan_Count )
+				hardpoint.ent.SetHardpointPlayerCount( TEAM_IMC, team_IMC_Pilot_Count )
+				hardpoint.ent.SetHardpointPlayerTitanCount( TEAM_MILITIA, team_Militia_Titan_Count )
+				hardpoint.ent.SetHardpointPlayerCount( TEAM_MILITIA, team_Militia_Pilot_Count )
 
-			int imcCappers = hardpoint.ent.GetHardpointPlayerCount( TEAM_IMC ) + hardpoint.ent.GetHardpointPlayerTitanCount( TEAM_IMC )
-			int militiaCappers = hardpoint.ent.GetHardpointPlayerCount( TEAM_MILITIA ) + hardpoint.ent.GetHardpointPlayerTitanCount( TEAM_MILITIA )
-			int cappers = -1
-			int occupation = min( abs( hardpoint.ent.GetHardpointPlayerCount( TEAM_IMC ) ), 1 ).tointeger() |
-				min( abs( hardpoint.ent.GetHardpointPlayerCount( TEAM_MILITIA ) ), 1 ).tointeger() << 1 |
-				min( abs( hardpoint.ent.GetHardpointPlayerTitanCount( TEAM_IMC ) ), 1 ).tointeger() << 2 |
-				min( abs( hardpoint.ent.GetHardpointPlayerTitanCount( TEAM_MILITIA ) ), 1 ).tointeger() << 3
+				Hardpoint_ThinkTick( hardpoint )
 
-			if ( ( occupation & IMC_HOLD ) && !( occupation & HAS_MILITIA_TITAN ) )
-				cappers = imcCappers
-			else if ( occupation & MILITIA_HOLD )
-				cappers = militiaCappers
-
-			if (
-				cappers != -1 && CapturePoint_GetCaptureProgress( hardpoint.ent ) < 1.0 &&
-				CapturePoint_GetCaptureProgress( hardpoint.ent ) >
-					( CapturePoint_GetCaptureProgress( hardpoint.ent ) + ( ( Time() - hardpoint.lastTime ) / ( CAPTURE_DURATION_CAPTURE / cappers ) ) - 0.001 )
-			)
-				return
-
-			if (
-				cappers != -1 && expect int( hardpoint.ent.s.state ) >= CAPTURE_POINT_STATE_AMPING &&
-				CapturePoint_GetCaptureProgress( hardpoint.ent ) >
-					( CapturePoint_GetCaptureProgress( hardpoint.ent ) + ( ( Time() - hardpoint.lastTime ) / ( HARDPOINT_AMPED_DELAY / cappers ) ) - 0.001 )
-			)
-				return
-
-			if (
-				cappers == -1 && expect int( hardpoint.ent.s.state ) == CAPTURE_POINT_STATE_SELF_UNAMPING &&
-				CapturePoint_GetCaptureProgress( hardpoint.ent ) >
-					CapturePoint_GetCaptureProgress( hardpoint.ent ) + ( ( Time() - hardpoint.lastTime ) / HARDPOINT_AMPED_DELAY ) - 0.001
-			)
-				return
-
-			Hardpoint_ThinkTick( hardpoint )
-
-			SetTeam( hardpoint.prop, hardpoint.ent.GetTeam() ) // hardpoint has to have the correct color
+				SetTeam( hardpoint.prop, hardpoint.ent.GetTeam() ) // hardpoint has to have the correct color
+			}()
 		}
 	)
 
