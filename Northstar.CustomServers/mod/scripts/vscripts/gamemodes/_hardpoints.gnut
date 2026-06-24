@@ -39,6 +39,7 @@ void function Hardpoints_Init()
 	RegisterSignal( "CapturePointStateChange" )
 	RegisterSignal( "CapturePointStateChangeSend" )
 	RegisterSignal( "CapturePointPlayerLeft" )
+	RegisterSignal( "CP_AWARD_TEAM_OWNED_POINTS_SIGNAL" )
 
 	CPstate.ampingEnabled = GetCurrentPlaylistVarInt( "capture_point_amping", 1 ) != 0
 }
@@ -127,13 +128,13 @@ void function OnHardpointEnter( entity trigger, entity player )
 		hpState.capPlayers.append( player )
 
 	if (
-		"isplayingcapturingsound" in hpState.ent.s && hpState.ent.s.isplayingcapturingsound &&
-		( !( "isplayingcapturingsound" in player.s ) || !player.s.isplayingcapturingsound )
+		"isPlayingCapturingSound" in hpState.ent.s && hpState.ent.s.isPlayingCapturingSound &&
+		( !( "isPlayingCapturingSound" in player.s ) || !player.s.isPlayingCapturingSound )
 	)
 	{
 		EmitSoundOnEntityOnlyToPlayer( hp, player, "Hardpoint_ProgressBar" )
 
-		player.s.isplayingcapturingsound <- true
+		player.s.isPlayingCapturingSound <- true
 	}
 
 	player.SetPlayerNetInt( "playerHardpointID", hp.GetHardpointID() )
@@ -157,11 +158,11 @@ void function OnHardpointLeave( entity trigger, entity player )
 	if ( index != -1 )
 		hpState.capPlayers.fastremove( index )
 
-	if ( "isplayingcapturingsound" in player.s && player.s.isplayingcapturingsound )
+	if ( "isPlayingCapturingSound" in player.s && player.s.isPlayingCapturingSound )
 	{
 		EmitSoundOnEntityOnlyToPlayer( hp, player, "Hardpoint_StopProgressBar_Event" )
 
-		player.s.isplayingcapturingsound <- false
+		player.s.isPlayingCapturingSound <- false
 	}
 
 	player.SetPlayerNetInt( "playerHardpointID", INVALID_HARDPOINT_ID )
@@ -176,6 +177,8 @@ void function Hardpoint_Think( HardpointState hardpoint )
 
 	thread GamemodeCP_VO_Think( hardpoint.ent )
 	// there is also a thing called GamemodeCP_VO_Approaching but respawn never used?
+
+	hardpoint.lastTime = Time()
 
 	GM_AddPlayingThinkFunc(
 		void function() : ( hardpoint )
@@ -224,9 +227,16 @@ void function Hardpoint_Think( HardpointState hardpoint )
 				cappers = militiaCappers
 
 			if (
+				cappers != -1 && CapturePoint_GetCaptureProgress( hardpoint.ent ) < 1.0 &&
+				CapturePoint_GetCaptureProgress( hardpoint.ent ) >
+					( CapturePoint_GetCaptureProgress( hardpoint.ent ) + ( ( Time() - hardpoint.lastTime ) / ( CAPTURE_DURATION_CAPTURE / cappers ) ) - 0.001 )
+			)
+				return
+
+			if (
 				cappers != -1 && expect int( hardpoint.ent.s.state ) >= CAPTURE_POINT_STATE_AMPING &&
 				CapturePoint_GetCaptureProgress( hardpoint.ent ) >
-					( CapturePoint_GetCaptureProgress( hardpoint.ent ) + ( ( Time() - hardpoint.lastTime ) / HARDPOINT_AMPED_DELAY * cappers ) - 0.001 )
+					( CapturePoint_GetCaptureProgress( hardpoint.ent ) + ( ( Time() - hardpoint.lastTime ) / ( HARDPOINT_AMPED_DELAY / cappers ) ) - 0.001 )
 			)
 				return
 
@@ -248,15 +258,15 @@ void function Hardpoint_Think( HardpointState hardpoint )
 
 	foreach ( entity player in hardpoint.capPlayers )
 	{
-		if ( "isplayingcapturingsound" in player.s && player.s.isplayingcapturingsound )
+		if ( "isPlayingCapturingSound" in player.s && player.s.isPlayingCapturingSound )
 		{
 			EmitSoundOnEntityOnlyToPlayer( hardpoint.ent, player, "Hardpoint_StopProgressBar_Event" )
 
-			player.s.isplayingcapturingsound <- false
+			player.s.isPlayingCapturingSound <- false
 		}
 	}
 
-	hardpoint.ent.s.isplayingcapturingsound <- false
+	hardpoint.ent.s.isPlayingCapturingSound <- false
 }
 
 const HAS_IMC = 1
@@ -290,15 +300,15 @@ void function Hardpoint_ThinkTick( HardpointState hardpoint )
 		hardpoint.ent.s.state = CAPTURE_POINT_STATE_HALTED
 		hardpoint.ent.s.wasJustCapping = false
 
-		if ( "isplayingcapturingsound" in hardpoint.ent.s && hardpoint.ent.s.isplayingcapturingsound )
+		if ( "isPlayingCapturingSound" in hardpoint.ent.s && hardpoint.ent.s.isPlayingCapturingSound )
 		{
 			foreach ( entity player in hardpoint.capPlayers )
 			{
-				if ( "isplayingcapturingsound" in player.s && player.s.isplayingcapturingsound )
+				if ( "isPlayingCapturingSound" in player.s && player.s.isPlayingCapturingSound )
 				{
 					EmitSoundOnEntityOnlyToPlayer( hardpoint.ent, player, "Hardpoint_StopProgressBar_Event" )
 
-					player.s.isplayingcapturingsound <- false
+					player.s.isPlayingCapturingSound <- false
 				}
 			}
 		}
@@ -411,7 +421,7 @@ void function CaptureHardPointAllied( entity hardpoint, int team, float deltaTim
 
 		CapturePoint_SetCaptureProgress(
 			hardpoint,
-			max( 0.0, min( 1.0, CapturePoint_GetCaptureProgress( hardpoint ) + ( deltaTime / CAPTURE_DURATION_CAPTURE * cappers ) ) )
+			max( 0.0, min( 1.0, CapturePoint_GetCaptureProgress( hardpoint ) + ( deltaTime / ( CAPTURE_DURATION_CAPTURE / cappers ) ) ) )
 		)
 	}
 	else if ( CapturePoint_GetCaptureProgress( hardpoint ) >= 1.0 && expect int( hardpoint.s.state ) < CAPTURE_POINT_STATE_CAPTURED )
@@ -442,11 +452,11 @@ void function CaptureHardPointAllied( entity hardpoint, int team, float deltaTim
 
 		CapturePoint_SetCaptureProgress(
 			hardpoint,
-			max( 1.0, min( 2.0, CapturePoint_GetCaptureProgress( hardpoint ) + ( deltaTime / HARDPOINT_AMPED_DELAY * cappers ) ) )
+			max( 1.0, min( 2.0, CapturePoint_GetCaptureProgress( hardpoint ) + ( deltaTime / ( HARDPOINT_AMPED_DELAY / cappers ) ) ) )
 		)
 	}
 
-	if ( playCapturingSound && ( !( "isplayingcapturingsound" in hardpoint.s ) || !hardpoint.s.isplayingcapturingsound ) )
+	if ( playCapturingSound && ( !( "isPlayingCapturingSound" in hardpoint.s ) || !hardpoint.s.isPlayingCapturingSound ) )
 	{
 		HardpointState hpState = GetHardpointState( hardpoint )
 
@@ -454,17 +464,17 @@ void function CaptureHardPointAllied( entity hardpoint, int team, float deltaTim
 
 		foreach ( entity player in hpState.capPlayers )
 		{
-			if ( !( "isplayingcapturingsound" in player.s ) || !player.s.isplayingcapturingsound )
+			if ( !( "isPlayingCapturingSound" in player.s ) || !player.s.isPlayingCapturingSound )
 			{
 				EmitSoundOnEntityOnlyToPlayer( hardpoint, player, "Hardpoint_ProgressBar" )
 
-				player.s.isplayingcapturingsound <- true
+				player.s.isPlayingCapturingSound <- true
 			}
 		}
 
-		hardpoint.s.isplayingcapturingsound <- true
+		hardpoint.s.isPlayingCapturingSound <- true
 	}
-	else if ( !playCapturingSound && "isplayingcapturingsound" in hardpoint.s && hardpoint.s.isplayingcapturingsound )
+	else if ( !playCapturingSound && "isPlayingCapturingSound" in hardpoint.s && hardpoint.s.isPlayingCapturingSound )
 	{
 		HardpointState hpState = GetHardpointState( hardpoint )
 
@@ -472,15 +482,15 @@ void function CaptureHardPointAllied( entity hardpoint, int team, float deltaTim
 
 		foreach ( entity player in hpState.capPlayers )
 		{
-			if ( "isplayingcapturingsound" in player.s && player.s.isplayingcapturingsound )
+			if ( "isPlayingCapturingSound" in player.s && player.s.isPlayingCapturingSound )
 			{
 				EmitSoundOnEntityOnlyToPlayer( hardpoint, player, "Hardpoint_StopProgressBar_Event" )
 
-				player.s.isplayingcapturingsound <- false
+				player.s.isPlayingCapturingSound <- false
 			}
 		}
 
-		hardpoint.s.isplayingcapturingsound <- false
+		hardpoint.s.isPlayingCapturingSound <- false
 	}
 }
 
@@ -493,7 +503,7 @@ void function CaptureHardPointEnemy( entity hardpoint, int team, float deltaTime
 	{
 		CapturePoint_SetCaptureProgress(
 			hardpoint,
-			max( 0.0, min( 2.0, CapturePoint_GetCaptureProgress( hardpoint ) - ( deltaTime / CAPTURE_DURATION_CAPTURE * cappers ) ) )
+			max( 0.0, min( 2.0, CapturePoint_GetCaptureProgress( hardpoint ) - ( deltaTime / ( CAPTURE_DURATION_CAPTURE / cappers ) ) ) )
 		)
 
 		hardpoint.s.state = CAPTURE_POINT_STATE_CAPPING
@@ -521,7 +531,7 @@ void function CaptureHardPointEnemy( entity hardpoint, int team, float deltaTime
 
 	ArrayRemoveInvalid( hpState.capPlayers )
 
-	if ( !( "isplayingcapturingsound" in hardpoint.s ) || !hardpoint.s.isplayingcapturingsound )
+	if ( !( "isPlayingCapturingSound" in hardpoint.s ) || !hardpoint.s.isPlayingCapturingSound )
 	{
 		HardpointState hpState = GetHardpointState( hardpoint )
 
@@ -529,15 +539,15 @@ void function CaptureHardPointEnemy( entity hardpoint, int team, float deltaTime
 
 		foreach ( entity player in hpState.capPlayers )
 		{
-			if ( !( "isplayingcapturingsound" in player.s ) || !player.s.isplayingcapturingsound )
+			if ( !( "isPlayingCapturingSound" in player.s ) || !player.s.isPlayingCapturingSound )
 			{
 				EmitSoundOnEntityOnlyToPlayer( hardpoint, player, "Hardpoint_ProgressBar" )
 
-				player.s.isplayingcapturingsound <- true
+				player.s.isPlayingCapturingSound <- true
 			}
 		}
 
-		hardpoint.s.isplayingcapturingsound <- true
+		hardpoint.s.isPlayingCapturingSound <- true
 	}
 }
 
@@ -550,13 +560,13 @@ void function CaptureHardPointUnassigned( entity hardpoint, int team, float delt
 		if ( CapturePoint_GetCaptureProgress( hardpoint ) <= 1.0 )
 			CapturePoint_SetCaptureProgress(
 				hardpoint,
-				max( 0.0, min( 2.0, CapturePoint_GetCaptureProgress( hardpoint ) - ( deltaTime / CAPTURE_DURATION_CAPTURE * cappers ) ) )
+				max( 0.0, min( 2.0, CapturePoint_GetCaptureProgress( hardpoint ) - ( deltaTime / ( CAPTURE_DURATION_CAPTURE / cappers ) ) ) )
 			)
 		else
 			// not possible but whatever
 			CapturePoint_SetCaptureProgress(
 				hardpoint,
-				max( 0.0, min( 2.0, CapturePoint_GetCaptureProgress( hardpoint ) - ( deltaTime / HARDPOINT_AMPED_DELAY * cappers ) ) )
+				max( 0.0, min( 2.0, CapturePoint_GetCaptureProgress( hardpoint ) - ( deltaTime / ( HARDPOINT_AMPED_DELAY / cappers ) ) ) )
 			)
 
 		hardpoint.s.state = CAPTURE_POINT_STATE_CAPPING
@@ -583,6 +593,7 @@ void function SetCaptureHardpoint( entity hardpoint, int team )
 
 	hardpoint.s.state = CAPTURE_POINT_STATE_CAPTURED
 	CapturePoint_SetOwningTeam( hardpoint, team )
+	thread AwardTeamOwnedPoints( hardpoint )
 
 	EmitSoundOnEntityToTeamExceptPlayer( hardpoint, "hardpoint_console_captured", team, null )
 	GamemodeCP_VO_Captured( hardpoint )
@@ -637,6 +648,22 @@ void function SetAmpedHardpoint( entity hardpoint, int team )
 	CapturePoint_SetState( hardpoint, CapturePoint_GetState( hardpoint ) | CAPTURE_POINT_FLAGS_AMPED ) // add amped flag
 }
 
+entity function AwardTeamOwnedPoints( entity hardpoint )
+{
+	hardpoint.s.trigger.Signal( "CP_AWARD_TEAM_OWNED_POINTS_SIGNAL" )
+	EndSignal( hardpoint.s.trigger, "CP_AWARD_TEAM_OWNED_POINTS_SIGNAL" )
+
+	if ( hardpoint.GetTeam() == TEAM_UNASSIGNED )
+		return
+
+	while ( GetGameState() == eGameState.Playing )
+	{
+		Wait( TEAM_OWNED_SCORE_FREQ )
+
+		AddTeamScore( hardpoint.GetTeam(), TEAMPOINTVALUE_HARDPOINT_OWNED )
+	}
+}
+
 void function TrackChevronStates()
 {
 	while ( GetGameState() <= eGameState.Playing )
@@ -661,11 +688,7 @@ void function TrackChevronStates()
 		SetGlobalNetInt( "imcChevronState", chevrons[ TEAM_IMC ] )
 		SetGlobalNetInt( "milChevronState", chevrons[ TEAM_MILITIA ] )
 
-		AddTeamScore( TEAM_IMC, chevrons[ TEAM_IMC ] % 4 + chevrons[ TEAM_IMC ] / 4 )
-		AddTeamScore( TEAM_MILITIA, chevrons[ TEAM_MILITIA ] % 4 + chevrons[ TEAM_MILITIA ] / 4 )
-
-		// the cheverons get updated at the same rigth it seams
-		wait TEAM_OWNED_SCORE_FREQ
+		WaitFrame()
 	}
 
 	// reset chevrons after the match

@@ -229,6 +229,7 @@ void function SpawnPlayerIntoDropship( entity player, int playerDropshipIndex, e
 		idleSequence.firstPersonAnim = DROPSHIP_IDLE_ANIMS_POV[ playerDropshipIndex ]
 		idleSequence.thirdPersonAnim = DROPSHIP_IDLE_ANIMS[ playerDropshipIndex ]
 		idleSequence.attachment = "ORIGIN"
+		idleSequence.blendTime = 0
 		idleSequence.teleport = true
 		idleSequence.viewConeFunction = viewfunc
 		idleSequence.setInitialTime = Time() - file.introStartTime
@@ -242,6 +243,7 @@ void function SpawnPlayerIntoDropship( entity player, int playerDropshipIndex, e
 	jumpSequence.firstPersonAnim = DROPSHIP_JUMP_ANIMS_POV[ playerDropshipIndex ]
 	jumpSequence.thirdPersonAnim = DROPSHIP_JUMP_ANIMS[ playerDropshipIndex ]
 	jumpSequence.attachment = "ORIGIN"
+	jumpSequence.blendTime = 0
 	jumpSequence.teleport = true
 	jumpSequence.viewConeFunction = ViewConeRampFree
 	jumpSequence.setInitialTime = max( 0.0, Time() - playerDropship.s.deployedTime )
