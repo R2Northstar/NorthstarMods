@@ -231,9 +231,16 @@ void function Hardpoint_Think( HardpointState hardpoint )
 				return
 
 			if (
-				cappers != -1 && expect int( hardpoint.ent.s.state ) >= CAPTURE_POINT_STATE_CAPTURED &&
+				cappers != -1 && expect int( hardpoint.ent.s.state ) >= CAPTURE_POINT_STATE_AMPING &&
 				CapturePoint_GetCaptureProgress( hardpoint.ent ) >
 					( CapturePoint_GetCaptureProgress( hardpoint.ent ) + ( ( Time() - hardpoint.lastTime ) / HARDPOINT_AMPED_DELAY * cappers ) - 0.001 )
+			)
+				return
+
+			if (
+				cappers == -1 && expect int( hardpoint.ent.s.state ) == CAPTURE_POINT_STATE_SELF_UNAMPING &&
+				CapturePoint_GetCaptureProgress( hardpoint.ent ) >
+					CapturePoint_GetCaptureProgress( hardpoint.ent ) + ( ( Time() - hardpoint.lastTime ) / HARDPOINT_AMPED_DELAY ) - 0.001
 			)
 				return
 
@@ -333,7 +340,7 @@ void function Hardpoint_ThinkTick( HardpointState hardpoint )
 				max( 1.0, min( 2.0, CapturePoint_GetCaptureProgress( hardpoint.ent ) - ( deltaTime / HARDPOINT_AMPED_DELAY ) ) )
 			)
 
-			if ( currentState == CAPTURE_POINT_STATE_AMPING ) // idk the old code does this
+			if ( currentState >= CAPTURE_POINT_STATE_AMPING ) // idk the old code does this
 				hardpoint.ent.s.state = CAPTURE_POINT_STATE_SELF_UNAMPING
 		}
 	}
@@ -586,10 +593,6 @@ void function SetCaptureHardpoint( entity hardpoint, int team )
 
 	EmitSoundOnEntityToTeamExceptPlayer( hardpoint, "hardpoint_console_captured", team, null )
 	GamemodeCP_VO_Captured( hardpoint )
-
-	hardpoint.s.state = CAPTURE_POINT_STATE_CAPTURED
-
-	CapturePoint_SetOwningTeam( hardpoint, team )
 
 	if ( !hardpoint.s.wasJustCapping )
 		return
