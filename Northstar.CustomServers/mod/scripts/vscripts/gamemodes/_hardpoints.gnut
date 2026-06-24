@@ -172,35 +172,38 @@ void function Hardpoint_Think( HardpointState hardpoint )
 {
 	// wait for game state playing otherwise vo might not correctly start
 	while ( GetGameState() != eGameState.Playing )
-		WaitFrame()
+		svGlobal.levelEnt.WaitSignal( "GameStateChanged" )
 
 	thread GamemodeCP_VO_Think( hardpoint.ent )
 	// there is also a thing called GamemodeCP_VO_Approaching but respawn never used?
 
-	while ( GetGameState() <= eGameState.Playing )
-	{
-		// they will be recounted in the next "scope"
-		hardpoint.ent.SetHardpointPlayerCount( TEAM_IMC, 0 )
-		hardpoint.ent.SetHardpointPlayerCount( TEAM_MILITIA, 0 )
-		hardpoint.ent.SetHardpointPlayerTitanCount( TEAM_IMC, 0 )
-		hardpoint.ent.SetHardpointPlayerTitanCount( TEAM_MILITIA, 0 )
-
-		// update counts based on capPlayers
-		ArrayRemoveInvalid( hardpoint.capPlayers )
-		foreach ( entity player in hardpoint.capPlayers )
+	GM_AddPlayingThinkFunc(
+		void function() : ( hardpoint )
 		{
-			if ( player.IsTitan() )
-				hardpoint.ent.SetHardpointPlayerTitanCount( player.GetTeam(), hardpoint.ent.GetHardpointPlayerTitanCount( player.GetTeam() ) + 1 )
-			else
-				hardpoint.ent.SetHardpointPlayerCount( player.GetTeam(), hardpoint.ent.GetHardpointPlayerCount( player.GetTeam() ) + 1 )
+			// they will be recounted in the next "scope"
+			hardpoint.ent.SetHardpointPlayerCount( TEAM_IMC, 0 )
+			hardpoint.ent.SetHardpointPlayerCount( TEAM_MILITIA, 0 )
+			hardpoint.ent.SetHardpointPlayerTitanCount( TEAM_IMC, 0 )
+			hardpoint.ent.SetHardpointPlayerTitanCount( TEAM_MILITIA, 0 )
+
+			// update counts based on capPlayers
+			ArrayRemoveInvalid( hardpoint.capPlayers )
+			foreach ( entity player in hardpoint.capPlayers )
+			{
+				if ( player.IsTitan() )
+					hardpoint.ent.SetHardpointPlayerTitanCount( player.GetTeam(), hardpoint.ent.GetHardpointPlayerTitanCount( player.GetTeam() ) + 1 )
+				else
+					hardpoint.ent.SetHardpointPlayerCount( player.GetTeam(), hardpoint.ent.GetHardpointPlayerCount( player.GetTeam() ) + 1 )
+			}
+
+			Hardpoint_ThinkTick( hardpoint )
+
+			SetTeam( hardpoint.prop, hardpoint.ent.GetTeam() ) // hardpoint has to have the correct color
 		}
+	)
 
-		Hardpoint_ThinkTick( hardpoint )
-
-		SetTeam( hardpoint.prop, hardpoint.ent.GetTeam() ) // hardpoint has to have the correct color
-
-		WaitFrame()
-	}
+	while ( GetGameState() <= eGameState.Playing )
+		svGlobal.levelEnt.WaitSignal( "GameStateChanged" )
 
 	foreach ( entity player in hardpoint.capPlayers )
 	{
