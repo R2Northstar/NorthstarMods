@@ -201,7 +201,7 @@ void function SpectatorFunc_Default( entity player )
 
 			if ( IsValid( escapeNode ) && escapeNode.HasKey( "target" ) && IsValid( GetEnt( expect string( escapeNode.kv.target ) ) ) )
 				targets.append( GetEnt( expect string( escapeNode.kv.target ) ) )
-			else if ( IsValid( specCam ) && specCam.HasKey( "target" ) && GetEnt( expect string( specCam.kv.target ) ) == escapeNode )
+			else if ( IsValid( specCam ) )
 				targets.append( specCam )
 			else
 				targets.extend( file.staticSpecCams )
