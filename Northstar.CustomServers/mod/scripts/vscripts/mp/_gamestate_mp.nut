@@ -116,6 +116,25 @@ void function GameState_OnClientConnected( entity player )
 		GetGameState() == eGameState.Postmatch
 	)
 		ScreenFadeToBlackForever( player, 0.0 )
+
+	if ( !GetClassicMPMode() && GetGameState() == eGameState.Prematch )
+	{
+		if ( IsPrivateMatchSpectator( player ) )
+		{
+			RespawnPrivateMatchSpectator( player )
+			return
+		}
+
+		if ( GameTime_TimeLeftSeconds() > 1.0 )
+			AddCinematicFlag( player, CE_FLAG_CLASSIC_MP_SPAWNING )
+
+		RespawnAsPilot( player )
+		HolsterViewModelAndDisableWeapons( player )
+		ScreenFadeFromBlack( player, 0.0 )
+		DeployViewModelAndEnableWeapons( player )
+
+		player.FreezeControlsOnServer()
+	}
 }
 
 // / This is to move all NPCs that a player owns from one team to the other during a match
@@ -681,7 +700,7 @@ void function GameStateEnter_Prematch()
 		}
 	}
 
-	if ( !GetCurrentPlaylistVarInt( "classic_mp", 1 ) )
+	if ( !GetClassicMPMode() )
 		thread StartGameWithoutClassicMP()
 }
 
@@ -690,10 +709,9 @@ void function GameRulesThink_Prematch()
 	if ( Time() < level.nv.gameStartTime )
 		return
 
-	if ( !GetCurrentPlaylistVarInt( "classic_mp", 1 ) )
+	if ( !GetClassicMPMode() )
 		foreach ( entity player in GetPlayerArray() )
-			if ( IsValidPlayer( player ) )
-				player.UnfreezeControlsOnServer()
+			player.UnfreezeControlsOnServer()
 
 	SetGameState( eGameState.Playing )
 
@@ -721,7 +739,10 @@ void function StartGameWithoutClassicMP()
 	foreach ( entity player in GetPlayerArray() )
 	{
 		if ( IsPrivateMatchSpectator( player ) )
+		{
+			RespawnPrivateMatchSpectator( player )
 			return
+		}
 
 		AddCinematicFlag( player, CE_FLAG_CLASSIC_MP_SPAWNING )
 		RespawnAsPilot( player )
@@ -732,7 +753,7 @@ void function StartGameWithoutClassicMP()
 		player.FreezeControlsOnServer()
 	}
 
-	wait 2.0
+	wait GameTime_TimeLeftSeconds() - 1.0
 
 	foreach ( entity player in GetPlayerArray() )
 		RemoveCinematicFlag( player, CE_FLAG_CLASSIC_MP_SPAWNING )
@@ -1350,7 +1371,7 @@ bool function ShouldRunEvac()
 
 void function GiveTitanToPlayer( entity player )
 {
-	if ( !IsValidPlayer( player ) || IsPrivateMatchSpectator( player ) )
+	if ( IsPrivateMatchSpectator( player ) )
 		return
 
 	PlayerEarnMeter_SetMode( player, eEarnMeterMode.DEFAULT )
@@ -2122,9 +2143,6 @@ bool function WillShowRoundWinningKillReplay()
 
 void function ClearPlayerFromReplay( entity player )
 {
-	if ( !IsValidPlayer( player ) )
-		return
-
 	player.Signal( "KillCamOver" )
 	player.ClearReplayDelay()
 	player.ClearViewEntity()
@@ -2137,11 +2155,8 @@ void function RoundWinningKillReplay() // Only Tested in MFD Pro for now! SHould
 		{
 			foreach ( entity player in GetPlayerArray() )
 			{
-				if ( IsValidPlayer( player ) )
-				{
-					ClearPlayerFromReplay( player )
-					ScreenFade( player, 0, 0, 1, 255, 1.5, 1.5, FFADE_STAYOUT | FFADE_PURGE | FFADE_NOT_IN_REPLAY )
-				}
+				ClearPlayerFromReplay( player )
+				ScreenFade( player, 0, 0, 1, 255, 1.5, 1.5, FFADE_STAYOUT | FFADE_PURGE | FFADE_NOT_IN_REPLAY )
 			}
 
 			level.nv.replayDisabled = false
