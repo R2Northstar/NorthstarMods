@@ -446,6 +446,7 @@ void function CaptureHardPointAllied( entity hardpoint, int team, float deltaTim
 		if ( progressHasBeenSet )
 			progress = 1 - progress
 
+		hardpoint.SetHardpointEstimatedCaptureTime( time - ( progress * ( CAPTURE_DURATION_CAPTURE / cappers ) ) )
 		hardpoint.SetHardpointProgressRefPoint( time + deltaTime )
 
 		if ( progressHasBeenSet )
