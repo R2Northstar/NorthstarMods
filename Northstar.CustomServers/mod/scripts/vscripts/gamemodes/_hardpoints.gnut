@@ -240,6 +240,9 @@ void function Hardpoint_Think( HardpointState hardpoint )
 	while ( GetGameState() <= eGameState.Playing )
 		svGlobal.levelEnt.WaitSignal( "GameStateChanged" )
 
+	hardpoint.ent.Minimap_Hide( TEAM_MILITIA, null )
+	hardpoint.ent.Minimap_Hide( TEAM_IMC, null )
+
 	foreach ( entity player in hardpoint.capPlayers )
 	{
 		if ( "isPlayingCapturingSound" in player.s && player.s.isPlayingCapturingSound )
