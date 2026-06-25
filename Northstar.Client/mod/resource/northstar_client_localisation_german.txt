@@ -49,6 +49,7 @@ Drücke Ja, um zuzustimmen. Du kannst diese Entscheidung jederzeit im Modmenü �
 		"MODE_SETTING_CATEGORY_RIFF" "Extras"
 		"MODE_SETTING_CATEGORY_MATCH" "Match"
 
+		"classic_mp" "Klassischer Multiplayer"
 		"run_epilogue" "Epilog"
 		"scorelimit" "Höchstpunktzahl"
 		"roundscorelimit" "Höchstpunktzahl (rundenbasiert)"

@@ -49,6 +49,7 @@ Clique em Sim se você concorda. Esta escolha pode ser alterada a qualquer momen
 		"MODE_SETTING_CATEGORY_RIFF" "Riffs"
 		"MODE_SETTING_CATEGORY_MATCH" "Partida"
 
+		"classic_mp" "MP Clássico"
 		"run_epilogue" "Executar epílogo"
 		"scorelimit" "Limite de pontos"
 		"roundscorelimit" "Limite de pontos (por rodada)"

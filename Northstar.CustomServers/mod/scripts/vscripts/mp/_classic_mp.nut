@@ -44,7 +44,7 @@ struct
 void function ClassicMp_Init()
 {
 	// default level intros
-	if ( IsFFAGame() || !GetClassicMPMode() )
+	if ( IsFFAGame() || !GetCurrentPlaylistVarInt( "run_intro", 1 ) )
 		ClassicMP_SetLevelIntro( ClassicMP_DefaultNoIntro_Setup, ClassicMP_DefaultNoIntro_GetLength() )
 	else
 		ClassicMP_SetLevelIntro( ClassicMP_DefaultDropshipIntro_Setup, DROPSHIP_INTRO_LENGTH )
@@ -116,7 +116,7 @@ void function ClassicMP_SetupEpilogue()
 
 bool function GetClassicMPMode()
 {
-	return GetCurrentPlaylistVarInt( "run_intro", 1 ) != 0
+	return GetCurrentPlaylistVarInt( "classic_mp", 1 ) != 0
 }
 
 bool function ClassicMP_ShouldRunEpilogue()
@@ -156,7 +156,7 @@ bool function ClassicMP_ShouldRunEpilogue()
 		}
 	}
 
-	return !file.epilogueForceDisabled && GetCurrentPlaylistVarInt( "classic_mp", 1 ) != 0 && GetCurrentPlaylistVarInt( "run_epilogue", 1 ) != 0
+	return !file.epilogueForceDisabled && GetClassicMPMode() && GetCurrentPlaylistVarInt( "run_epilogue", 1 ) != 0
 }
 
 void function ClassicMP_RunEpilogueWithDeadPlayers( bool enabled )

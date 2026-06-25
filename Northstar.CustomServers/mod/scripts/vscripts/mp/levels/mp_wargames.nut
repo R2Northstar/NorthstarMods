@@ -30,7 +30,7 @@ void function CodeCallback_MapInit()
 	// Load Frontier Defense Data
 	if ( GameRules_GetGameMode() == FD )
 		initFrontierDefenseData()
-	else if ( !IsFFAGame() && GetClassicMPMode() )
+	else if ( !IsFFAGame() && GetCurrentPlaylistVarInt( "run_intro", 1 ) )
 		ClassicMP_SetLevelIntro( WargamesIntroSetup, 21.6 )
 }
 

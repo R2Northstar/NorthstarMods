@@ -49,6 +49,7 @@ Choisissez Oui si vous êtes d'accord. Ce choix peut être modifié à tout inst
 		"MODE_SETTING_CATEGORY_RIFF" "Riffs"
 		"MODE_SETTING_CATEGORY_MATCH" "Match"
 
+		"classic_mp" "Multijoueurs classique"
 		"run_epilogue" "Epilogue"
 		"scorelimit" "Limite de score"
 		"roundscorelimit" "Limite de score (manche)"

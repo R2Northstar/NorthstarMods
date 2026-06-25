@@ -704,7 +704,7 @@ void function GameRulesThink_Prematch()
 
 void function SetPrematchStartTime()
 {
-	if ( GetCurrentPlaylistVarInt( "classic_mp", 1 ) && GetClassicMPMode() )
+	if ( GetClassicMPMode() )
 	{
 		SetServerVar( "roundStartTime", Time() + ClassicMP_GetIntroLength() )
 		SetServerVar( "gameStartTime", Time() + ClassicMP_GetIntroLength() )

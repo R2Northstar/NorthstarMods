@@ -49,6 +49,7 @@
 		"MODE_SETTING_CATEGORY_RIFF" "規則"
 		"MODE_SETTING_CATEGORY_MATCH" "比賽"
 
+		"classic_mp" "經典多人"
 		"run_epilogue" "最終作戰"
 		"scorelimit" "分數限制"
 		"roundscorelimit" "分數限制（回合制）"

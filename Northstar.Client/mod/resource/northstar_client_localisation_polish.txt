@@ -49,6 +49,7 @@ Naciśnij Tak jeżeli wyrażasz zgodę. Wybór może zostać zmieniony w menu Mo
 		"MODE_SETTING_CATEGORY_RIFF" "Modyfikatory rozgrywki"
 		"MODE_SETTING_CATEGORY_MATCH" "Mecz"
 
+		"classic_mp" "Klasyczny tryb wieloosobowy"
 		"run_epilogue" "Epilog"
 		"scorelimit" "Limit wyniku"
 		"roundscorelimit" "Limit wyniku (na rundę)"

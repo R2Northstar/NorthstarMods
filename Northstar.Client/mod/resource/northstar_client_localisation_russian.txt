@@ -40,6 +40,7 @@
 		"MODE_SETTING_CATEGORY_RIFF" "Рифф"
 		"MODE_SETTING_CATEGORY_MATCH" "Матч"
 
+		"classic_mp" "Классический мультиплеер"
 		"run_epilogue" "Запустить эпилог"
 		"scorelimit" "Лимит очков"
 		"roundscorelimit" "Лимит очков (по раундам)"

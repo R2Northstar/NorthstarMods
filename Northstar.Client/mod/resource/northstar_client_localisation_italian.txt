@@ -47,6 +47,7 @@ Premi Sì se sei d'accordo. Questa scelta può essere modificata in qualsiasi mo
 		"MODE_SETTING_CATEGORY_RIFF" "Extra"
 		"MODE_SETTING_CATEGORY_MATCH" "Partita"
 
+		"classic_mp" "Multiplayer classico"
 		"run_epilogue" "Epilogo fine partita"
 		"scorelimit" "Limite Punteggio"
 		"roundscorelimit" "Limite Punteggio (per round)"
