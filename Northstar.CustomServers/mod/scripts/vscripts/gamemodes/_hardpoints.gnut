@@ -308,43 +308,42 @@ void function Hardpoint_ThinkTick( HardpointState hardpoint )
 		CaptureHardPoint( hardpoint.ent, TEAM_IMC, deltaTime, imcCappers )
 
 		if (
+			(
 			( !CPstate.ampingEnabled && CapturePoint_GetCaptureProgress( hardpoint.ent ) < 1.0 ) ||
-			( CPstate.ampingEnabled && CapturePoint_GetCaptureProgress( hardpoint.ent ) < 2.0 )
+				( CPstate.ampingEnabled && CapturePoint_GetCaptureProgress( hardpoint.ent ) < 2.0 )
+			) && !hardpoint.ent.s.isPlayingCapturingSound
 		)
 		{
-			if ( !hardpoint.ent.s.isPlayingCapturingSound )
+			foreach ( entity player in hardpoint.capPlayers )
 			{
-				foreach ( entity player in hardpoint.capPlayers )
+				if ( CapturePoint_GetCappingTeam( hardpoint.ent ) == player.GetTeam() && !( "isPlayingCapturingSound" in player.s && player.s.isPlayingCapturingSound ) )
 				{
-					if ( CapturePoint_GetCappingTeam( hardpoint.ent ) == player.GetTeam() && !( "isPlayingCapturingSound" in player.s && player.s.isPlayingCapturingSound ) )
-					{
-						EmitSoundOnEntityOnlyToPlayer( hardpoint.ent, player, "Hardpoint_ProgressBar" )
+					EmitSoundOnEntityOnlyToPlayer( hardpoint.ent, player, "Hardpoint_ProgressBar" )
 
-						player.s.isPlayingCapturingSound <- true
-					}
+					player.s.isPlayingCapturingSound <- true
 				}
-
-				hardpoint.ent.s.isPlayingCapturingSound = true
 			}
-			else if (
-				!(
-				( !CPstate.ampingEnabled && CapturePoint_GetCaptureProgress( hardpoint.ent ) < 1.0 ) ||
-					( CPstate.ampingEnabled && CapturePoint_GetCaptureProgress( hardpoint.ent ) < 2.0 )
-				) && hardpoint.ent.s.isPlayingCapturingSound
-			)
+
+			hardpoint.ent.s.isPlayingCapturingSound = true
+		}
+		else if (
+			!(
+			( !CPstate.ampingEnabled && CapturePoint_GetCaptureProgress( hardpoint.ent ) < 1.0 ) ||
+				( CPstate.ampingEnabled && CapturePoint_GetCaptureProgress( hardpoint.ent ) < 2.0 )
+			) && hardpoint.ent.s.isPlayingCapturingSound
+		)
+		{
+			foreach ( entity player in hardpoint.capPlayers )
 			{
-				foreach ( entity player in hardpoint.capPlayers )
+				if ( "isPlayingCapturingSound" in player.s && player.s.isPlayingCapturingSound )
 				{
-					if ( "isPlayingCapturingSound" in player.s && player.s.isPlayingCapturingSound )
-					{
-						EmitSoundOnEntityOnlyToPlayer( hardpoint.ent, player, "Hardpoint_StopProgressBar_Event" )
+					EmitSoundOnEntityOnlyToPlayer( hardpoint.ent, player, "Hardpoint_StopProgressBar_Event" )
 
-						player.s.isPlayingCapturingSound <- false
-					}
+					player.s.isPlayingCapturingSound <- false
 				}
-
-				hardpoint.ent.s.isPlayingCapturingSound = false
 			}
+
+			hardpoint.ent.s.isPlayingCapturingSound = false
 		}
 	}
 	else if ( occupation & MILITIA_HOLD )
@@ -615,26 +614,28 @@ void function CaptureHardPointEnemy( entity hardpoint, int team, float deltaTime
 
 		hardpoint.s.lastPower = cappers
 
-		if ( ( CapturePoint_GetState( hardpoint ) & CAPTURE_POINT_FLAGS_AMPED ) && CapturePoint_GetCaptureProgress( hardpoint ) <= 1.001 )
+		if ( CapturePoint_GetCaptureProgress( hardpoint ) <= 1.001 )
 		{
-			if ( !IsValid( hardpoint.s.prop.GetParent() ) )
-				thread PlayAnim( hardpoint.s.prop, "mh_active_2_inactive" )
+			hardpoint.SetHardpointEstimatedCaptureTime( 0 )
 
-			CapturePoint_SetState( hardpoint, CapturePoint_GetState( hardpoint ) & ~CAPTURE_POINT_FLAGS_AMPED ) // remove apmed flag
+			if ( ( CapturePoint_GetState( hardpoint ) & CAPTURE_POINT_FLAGS_AMPED ) )
+			{
+				if ( !IsValid( hardpoint.s.prop.GetParent() ) )
+					thread PlayAnim( hardpoint.s.prop, "mh_active_2_inactive" )
 
-			hardpoint.SetHardpointEstimatedCaptureTime(
-				CAPTURE_DURATION_CAPTURE -
-					( GraphCapped( ( ( CAPTURE_DURATION_CAPTURE - -1 ) * cappers ), 0, CAPTURE_DURATION_CAPTURE, 1, 0 ) * ( CAPTURE_DURATION_CAPTURE / cappers ) )
-			)
-			hardpoint.SetHardpointProgressRefPoint( CAPTURE_DURATION_CAPTURE )
+				CapturePoint_SetState( hardpoint, CapturePoint_GetState( hardpoint ) & ~CAPTURE_POINT_FLAGS_AMPED ) // remove apmed flag
+			}
 		}
 	}
 	else if ( CapturePoint_GetCaptureProgress( hardpoint ) > 0.0 )
 	{
+		if ( !hardpoint.s.wasJustCapping )
+			hardpoint.SetHardpointEstimatedCaptureTime( 0 )
+
 		hardpoint.s.state = CAPTURE_POINT_STATE_CAPPING
 		hardpoint.s.wasJustCapping = true
 
-		float time = hardpoint.GetHardpointProgressRefPoint() + deltaTime
+		float time = hardpoint.GetHardpointProgressRefPoint() - deltaTime
 		float progress = GraphCapped( ( ( hardpoint.GetHardpointEstimatedCaptureTime() - time ) * hardpoint.s.lastPower ), 0, CAPTURE_DURATION_CAPTURE, 1, 0 )
 
 		progress = Graph( progress, 0, 1, 1, 0 )
@@ -642,7 +643,7 @@ void function CaptureHardPointEnemy( entity hardpoint, int team, float deltaTime
 		hardpoint.SetHardpointEstimatedCaptureTime( time + ( progress * ( CAPTURE_DURATION_CAPTURE / cappers ) ) )
 		hardpoint.SetHardpointProgressRefPoint( time )
 
-		CapturePoint_SetCaptureProgress( hardpoint, max( 0.0, min( 1.0, progress ) ) )
+		CapturePoint_SetCaptureProgress( hardpoint, max( 0.0, min( 1.0, 1.0 - progress ) ) )
 
 		hardpoint.s.lastPower = cappers
 
