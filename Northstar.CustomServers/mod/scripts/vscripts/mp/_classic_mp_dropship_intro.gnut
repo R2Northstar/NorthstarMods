@@ -210,32 +210,43 @@ void function SpawnPlayerIntoDropship( entity player, int playerDropshipIndex, e
 	thread DelayedFrameFadeout( player )
 	Remote_CallFunction_NonReplay( player, "ServerCallback_SpawnFactionCommanderInDropship", playerDropship.GetEncodedEHandle(), playerDropship.ai.spawnTime )
 	Remote_CallFunction_NonReplay( player, "ServerCallback_CreateDropShipIntLighting", playerDropship.GetEncodedEHandle(), playerDropship.GetTeam() )
+	Remote_CallFunction_NonReplay( player, "ServerCallback_SetClassicSkyScale", playerDropship.GetEncodedEHandle(), 0.7 )
+	AddAnimEvent(
+		player,
+		"SkyScaleDefault",
+		void function( entity player ) : ( playerDropship )
+		{
+			SkyScaleDefault( player )
+
+			if ( !IsValid( playerDropship ) )
+				return
+
+			Remote_CallFunction_Replay( player, "ServerCallback_ResetClassicSkyScale", playerDropship.GetEncodedEHandle() )
+		}
+	)
 
 	if ( !playerDropship.s.deployedPilots )
 	{
 		FirstPersonSequenceStruct idleSequence
-
-		void functionref( entity ) viewfunc = ViewConeRampFree
-
-		if ( DROPSHIP_IDLE_ANIMS[ playerDropshipIndex ] == "Classic_MP_flyin_exit_playerC_idle" )
-			viewfunc = ViewConeRampFrontRight
-		else if ( DROPSHIP_IDLE_ANIMS[ playerDropshipIndex ] == "Classic_MP_flyin_exit_playerB_idle" )
-			viewfunc = ViewConeRampBackRight
-		else if ( DROPSHIP_IDLE_ANIMS[ playerDropshipIndex ] == "Classic_MP_flyin_exit_playerD_idle" )
-			viewfunc = ViewConeRampBackLeft
-		else if ( DROPSHIP_IDLE_ANIMS[ playerDropshipIndex ] == "Classic_MP_flyin_exit_playerA_idle" )
-			viewfunc = ViewConeRampFrontLeft
 
 		idleSequence.firstPersonAnim = DROPSHIP_IDLE_ANIMS_POV[ playerDropshipIndex ]
 		idleSequence.thirdPersonAnim = DROPSHIP_IDLE_ANIMS[ playerDropshipIndex ]
 		idleSequence.attachment = "ORIGIN"
 		idleSequence.blendTime = 0
 		idleSequence.teleport = true
-		idleSequence.viewConeFunction = viewfunc
+		idleSequence.viewConeFunction = ViewConeRampFree
 		idleSequence.setInitialTime = Time() - file.introStartTime
 		idleSequence.hideProxy = true
 
-		waitthread FirstPersonSequence( idleSequence, player, playerDropship )
+		thread FirstPersonSequence( idleSequence, player, playerDropship )
+
+		if ( IsValidPlayer( player ) )
+		{
+			player.PlayerCone_SetLerpTime( 0 )
+			player.SetLocalAngles( player.GetLocalAngles().AnglesCompose( Vector( 12, player.GetLocalAngles().y, 0 ) ) )
+		}
+
+		WaittillAnimDone( player )
 	}
 
 	FirstPersonSequenceStruct jumpSequence
@@ -255,6 +266,13 @@ void function SpawnPlayerIntoDropship( entity player, int playerDropshipIndex, e
 	#endif
 
 	waitthread FirstPersonSequence( jumpSequence, player, playerDropship )
+
+	// So if the player connects after SkyScaleDefault it still resets
+
+	SkyScaleDefault( player )
+
+	if ( IsValid( playerDropship ) )
+		Remote_CallFunction_Replay( player, "ServerCallback_ResetClassicSkyScale", playerDropship.GetEncodedEHandle() )
 
 	thread PlayerJumpsFromDropship( player )
 }
@@ -276,6 +294,7 @@ void function PlayerJumpsFromDropship( entity player )
 				RemoveCinematicFlag( player, CE_FLAG_INTRO )
 				RemoveCinematicFlag( player, CE_FLAG_CLASSIC_MP_SPAWNING )
 				Loadouts_TryGivePilotLoadout( player )
+				DeleteAnimEvent( player, "SkyScaleDefault" )
 			}
 		}
 	)
@@ -302,6 +321,7 @@ string function GetDropshipIntroAnimation()
 		case "mp_complex3":
 			return "dropship_classic_mp_flyin_timeshift"
 	}
+
 	return "dropship_classic_mp_flyin"
 }
 
@@ -309,7 +329,7 @@ void function DelayedFrameFadeout( entity player )
 {
 	player.EndSignal( "OnDestroy" )
 
-	WaitFrame()
+	WaitEndFrame()
 
-	ScreenFadeFromBlack( player, 1, 1 )
+	ScreenFadeFromBlack( player, 1.0, 1.0 )
 }
