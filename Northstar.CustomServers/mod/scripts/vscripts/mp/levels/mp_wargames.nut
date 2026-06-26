@@ -139,10 +139,6 @@ void function OnPrematchStart()
 	// file.imcPod.RenderWithViewModels( true )
 	// file.militiaPod.RenderWithViewModels( true )
 
-	EmitSoundOnEntity( file.imcPod, "Wargames_Emit_IMC_Intro_HighPass" )
-	EmitSoundOnEntity( file.imcPod, "Wargames_Emit_IMC_Intro_LowPass" )
-	EmitSoundOnEntity( file.militiaPod, "Wargames_Emit_MCOR_Intro_HighPass" )
-	EmitSoundOnEntity( file.militiaPod, "Wargames_Emit_MCOR_Intro_LowPass" )
 	PodFXLights( file.imcPod )
 	PodFXLights( file.militiaPod )
 
@@ -393,6 +389,9 @@ void function PlayerWatchesWargamesIntro( entity player )
 
 				player.kv.VisibilityFlags = ENTITY_VISIBLE_TO_EVERYONE
 
+				// don't play weapon's first pull out animation
+				DeployViewModelAndEnableWeapons( player )
+				HolsterViewModelAndDisableWeapons( player )
 				DeployViewModelAndEnableWeapons( player )
 
 				player.UnforceStand()
@@ -438,6 +437,15 @@ void function PlayerWatchesWargamesIntro( entity player )
 	else
 		Remote_CallFunction_NonReplay( player, "ServerCallback_SpawnIMCFactionLeaderForIntro", file.introStartTime + 4.5, playerPod.GetEncodedEHandle() )
 
+	if ( ( file.introStartTime + 14.2 ) - Time() > 0 )
+	{
+		EmitSoundOnEntityOnlyToPlayerWithSeek( file.imcPod, player, "Wargames_Emit_IMC_Intro_HighPass", Time() - file.introStartTime )
+		EmitSoundOnEntityOnlyToPlayerWithSeek( file.militiaPod, player, "Wargames_Emit_MCOR_Intro_HighPass", Time() - file.introStartTime )
+	}
+
+	EmitSoundOnEntityOnlyToPlayerWithSeek( file.imcPod, player, "Wargames_Emit_IMC_Intro_LowPass", Time() - file.introStartTime )
+	EmitSoundOnEntityOnlyToPlayerWithSeek( file.militiaPod, player, "Wargames_Emit_MCOR_Intro_LowPass", Time() - file.introStartTime )
+
 	// idle pod sequence
 	FirstPersonSequenceStruct podIdleSequence
 	podIdleSequence.firstPersonAnimIdle = "ptpov_trainingpod_idle"
@@ -472,7 +480,7 @@ void function PlayerWatchesWargamesIntro( entity player )
 
 	// wait 0.6 seconds then start boot sequence
 	wait ( file.introStartTime + 14.2 ) - Time()
-	EmitSoundOnEntityOnlyToPlayer( player, player, "NPE_Scr_SimPod_PowerUp" )
+	EmitSoundOnEntityOnlyToPlayerWithSeek( player, player, "NPE_Scr_SimPod_PowerUp", Time() - ( file.introStartTime + 14.2 ) )
 	TrainingPod_ViewConeLock_PodClosed( player )
 
 	// 10 seconds of starting pod before we run effects and spawn players
@@ -480,8 +488,7 @@ void function PlayerWatchesWargamesIntro( entity player )
 	wait ( file.introStartTime + 16.8 ) - Time()
 	Remote_CallFunction_NonReplay( player, "ServerCallback_PlayPodTransitionScreenFX" )
 
-	// need to wait no matter what the delay is here so fx will sync up
-	wait 3.4
+	wait ( file.introStartTime + 20.2 ) - Time()
 
 	ClearPlayerAnimViewEntity( player )
 
@@ -494,10 +501,8 @@ void function PlayerWatchesWargamesIntro( entity player )
 
 	float currentTime = Time()
 
-	while ( Time() < currentTime + 0.4 )
-		WaitFrame()
-
-	EmitSoundOnEntityOnlyToPlayer( player, player, "Wargames_Materialize" )
+	wait ( file.introStartTime + 20.6 ) - Time()
+	EmitSoundOnEntityOnlyToPlayerWithSeek( player, player, "Wargames_Materialize", Time() - ( file.introStartTime + 20.6 ) )
 
 	while ( Time() < file.introStartTime + 21.4 )
 		WaitFrame()
@@ -509,7 +514,7 @@ void function PlaySound_SimPod_DoorShut( entity playerFirstPersonProxy ) // stol
 	if ( !IsValid( player ) )
 		return
 
-	EmitSoundOnEntityOnlyToPlayer( player, player, "NPE_Scr_SimPod_DoorShut" )
+	EmitSoundOnEntityOnlyToPlayerWithSeek( player, player, "NPE_Scr_SimPod_DoorShut", Time() - ( file.introStartTime + 8.4 ) )
 }
 
 // intro viewcones
