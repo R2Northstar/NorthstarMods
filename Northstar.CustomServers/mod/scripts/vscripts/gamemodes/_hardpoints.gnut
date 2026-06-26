@@ -775,14 +775,19 @@ entity function AwardTeamOwnedPoints( entity hardpoint )
 	hardpoint.s.trigger.Signal( "CP_AWARD_TEAM_OWNED_POINTS_SIGNAL" )
 	EndSignal( hardpoint.s.trigger, "CP_AWARD_TEAM_OWNED_POINTS_SIGNAL" )
 
-	if ( hardpoint.GetTeam() == TEAM_UNASSIGNED )
+	int team = hardpoint.GetTeam()
+
+	if ( team == TEAM_UNASSIGNED )
 		return
 
 	while ( GetGameState() == eGameState.Playing )
 	{
 		Wait( TEAM_OWNED_SCORE_FREQ )
 
-		AddTeamScore( hardpoint.GetTeam(), TEAMPOINTVALUE_HARDPOINT_OWNED )
+		if ( CapturePoint_GetCappingTeam( hardpoint ) == GetOtherTeam( team ) || CapturePoint_GetState( hardpoint ) & CAPTURE_POINT_FLAGS_CONTESTED )
+			return
+
+		AddTeamScore( team, CapturePoint_GetState( hardpoint ) & CAPTURE_POINT_FLAGS_AMPED ? TEAMPOINTVALUE_AMPED_HARDPOINT_OWNED : TEAMPOINTVALUE_HARDPOINT_OWNED )
 	}
 }
 
@@ -796,7 +801,7 @@ void function TrackChevronStates()
 		{
 			foreach ( team, chevronsCount in chevrons )
 			{
-				if ( team == CapturePoint_GetOwningTeam( hardpoint.ent ) )
+				if ( team == CapturePoint_GetOwningTeam( hardpoint.ent ) && CapturePoint_GetCappingTeam( hardpoint.ent ) != GetOtherTeam( team ) )
 				{
 					// 4 is the value for a amped chevron
 					chevrons[ team ] +=
