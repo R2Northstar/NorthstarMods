@@ -389,6 +389,7 @@ void function PlayerWatchesWargamesIntro( entity player )
 			if ( IsValid( player ) )
 			{
 				RemoveCinematicFlag( player, CE_FLAG_INTRO )
+				DeleteAnimEvent( player.GetFirstPersonProxy(), "PlaySound_SimPod_DoorShut" )
 
 				player.kv.VisibilityFlags = ENTITY_VISIBLE_TO_EVERYONE
 
@@ -398,6 +399,7 @@ void function PlayerWatchesWargamesIntro( entity player )
 				player.MovementEnable()
 
 				Remote_CallFunction_NonReplay( player, "ServerCallback_ClearFactionLeaderIntro" )
+				Remote_CallFunction_NonReplay( player, "ServerCallback_StopWargamesPodAmbienceSound" )
 			}
 		}
 	)
@@ -410,9 +412,9 @@ void function PlayerWatchesWargamesIntro( entity player )
 	else
 		playerPod = file.militiaPod
 
+	// setup player
 	AddCinematicFlag( player, CE_FLAG_INTRO )
 
-	// setup player
 	if ( PlayerCanSpawn( player ) )
 		DoRespawnPlayer( player, null )
 
@@ -423,9 +425,7 @@ void function PlayerWatchesWargamesIntro( entity player )
 	player.SetParent( playerPod, "REF" )
 	player.ForceStand()
 
-	if ( !HasAnimEvent( player.GetFirstPersonProxy(), "PlaySound_SimPod_DoorShut" ) )
-		AddAnimEvent( player.GetFirstPersonProxy(), "PlaySound_SimPod_DoorShut", PlaySound_SimPod_DoorShut )
-
+	AddAnimEvent( player.GetFirstPersonProxy(), "PlaySound_SimPod_DoorShut", PlaySound_SimPod_DoorShut )
 	player.kv.VisibilityFlags = ENTITY_VISIBLE_TO_OWNER
 	TrainingPod_ViewConeLock_PodClosed( player )
 	HolsterViewModelAndDisableWeapons( player )
@@ -444,6 +444,9 @@ void function PlayerWatchesWargamesIntro( entity player )
 	podIdleSequence.renderWithViewModels = true
 	podIdleSequence.attachment = "REF"
 	thread FirstPersonSequence( podIdleSequence, player, playerPod )
+
+	player.PlayerCone_SetLerpTime( 0 )
+	player.SetAngles( playerPod.GetAttachmentAngles( podAttachId ) )
 
 	ScreenFadeFromBlack( player, max( 0.0, ( file.introStartTime + 0.5 ) - Time() ), max( 0.0, ( file.introStartTime + 0.5 ) - Time() ) )
 

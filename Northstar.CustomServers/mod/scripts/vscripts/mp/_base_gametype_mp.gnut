@@ -172,6 +172,14 @@ void function CodeCallback_OnClientConnectionStarted( entity player )
 	InitPassives( player )
 
 	CheckServerIdlingState()
+
+	entity viewPoint = GetRandomIntermissionCamera()
+
+	player.SetOrigin( viewPoint.GetOrigin() )
+	player.SetObserverModeStaticPosition( viewPoint.GetOrigin() )
+	player.SetObserverModeStaticAngles( viewPoint.GetAngles() )
+	player.StartObserverMode( OBS_MODE_STATIC_LOCKED )
+	player.SetObserverTarget( null )
 }
 
 // playerconnected
@@ -468,11 +476,22 @@ void function PostDeathThread_MP( entity player, var damageInfo, bool gamePlayin
 	if ( shouldDoReplay )
 		thread TrackDestroyTimeForReplay( attacker, replayTracker )
 
-	player.StartObserverMode( OBS_MODE_DEATHCAM )
-	if ( ShouldSetObserverTarget( attacker ) )
-		player.SetObserverTarget( attacker )
-	else
+	if ( methodOfDeath == eDamageSourceId.fall )
+	{
+		player.SetObserverModeStaticPosition( player.GetOrigin() )
+		player.SetObserverModeStaticAngles( VectorToAngles( player.GetVelocity() * -1 ) )
+		player.StartObserverMode( OBS_MODE_STATIC_LOCKED )
 		player.SetObserverTarget( null )
+	}
+	else
+	{
+		player.StartObserverMode( OBS_MODE_DEATHCAM )
+
+		if ( ShouldSetObserverTarget( attacker ) )
+			player.SetObserverTarget( attacker )
+		else
+			player.SetObserverTarget( null )
+	}
 
 	float deathcamLength = GetDeathCamLength( player )
 	wait deathcamLength
