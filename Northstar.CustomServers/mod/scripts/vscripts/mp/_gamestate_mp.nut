@@ -1982,7 +1982,7 @@ bool function TimeLimit_Complete()
 
 	if ( GamePlaying() )
 	{
-		if ( timeLeftSeconds <= 60 )
+		if ( GetCurrentPlaylistVarInt( "last_minute_music_enabled", 1 ) && timeLeftSeconds <= 60 )
 		{
 			if ( !file.playingLastMinuteMusic )
 			{
@@ -1995,7 +1995,7 @@ bool function TimeLimit_Complete()
 					PlayCurrentTeamMusicEventsOnPlayer( player )
 			}
 		}
-		else if ( !IsRoundBased() && timeLeftSeconds < ( timeLimit * 0.4 - 60 ) )
+		else if ( GetCurrentPlaylistVarInt( "three_minute_music_enabled", 1 ) && !IsRoundBased() && timeLeftSeconds < ( timeLimit * 0.4 - 60 ) )
 		{
 			if ( !file.playingThreeMinuteMusic )
 			{
