@@ -8,9 +8,6 @@ struct
 	float introStartTime
 	entity militiaPod
 	entity imcPod
-
-	vector militiaPodFXEyePos
-	vector imcPodFXEyePos
 } file
 
 void function CodeCallback_MapInit()
@@ -458,12 +455,6 @@ void function PlayerWatchesWargamesIntro( entity player )
 
 	ScreenFadeFromBlack( player, max( 0.0, ( file.introStartTime + 0.5 ) - Time() ), max( 0.0, ( file.introStartTime + 0.5 ) - Time() ) )
 
-	// also get eye positions for fx here
-	if ( file.imcPodFXEyePos == < 0, 0, 0 > && factionTeam == TEAM_IMC )
-		file.imcPodFXEyePos = player.EyePosition()
-	else if ( file.militiaPodFXEyePos == < 0, 0, 0 > && factionTeam == TEAM_MILITIA )
-		file.militiaPodFXEyePos = player.EyePosition()
-
 	// 8 seconds of nothing before we start the pod sequence
 	wait ( file.introStartTime + 8.0 ) - Time()
 
@@ -563,16 +554,16 @@ void function PodFXLasers( entity pod )
 	pod.s.leftLaserEmitter <- leftEmitter
 	pod.s.rightLaserEmitter <- rightEmitter
 
-	thread PodFXLaserSweep( leftEmitter, pod, pod == file.imcPod ? file.imcPodFXEyePos : file.militiaPodFXEyePos, "fx_laser_L" )
-	thread PodFXLaserSweep( rightEmitter, pod, pod == file.imcPod ? file.imcPodFXEyePos : file.militiaPodFXEyePos, "fx_laser_R" )
+	thread PodFXLaserSweep( leftEmitter, pod, "fx_laser_L" )
+	thread PodFXLaserSweep( rightEmitter, pod, "fx_laser_R" )
 }
 
-void function PodFXLaserSweep( entity emitter, entity pod, vector eyePos, string attachment )
+void function PodFXLaserSweep( entity emitter, entity pod, string attachment )
 {
 	emitter.SetOrigin( Vector( 5, 5, 5 ) )
 	emitter.SetParent( pod, attachment )
 
-	var vecToPlayerEye = ( eyePos + Vector( 0, 0, 7 ) ) - emitter.GetOrigin()
+	var vecToPlayerEye = ( pod.GetOrigin() + Vector( 0.000488, 0.000488, 70.0 ) ) - emitter.GetOrigin()
 	vector centerAng = VectorToAngles( vecToPlayerEye )
 	vector topAng = centerAng + Vector( -270, 0, 0 )
 	vector bottomAng = centerAng + Vector( -90, 0, 0 )
