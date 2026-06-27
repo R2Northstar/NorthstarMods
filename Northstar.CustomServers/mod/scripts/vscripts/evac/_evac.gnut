@@ -156,12 +156,7 @@ void function WaitAndDisableRespawn()
 
 	// clear any respawn availablity, or players are able to save there respawn for whenever they want
 	foreach ( entity player in GetPlayerArray() )
-	{
 		ClearRespawnAvailable( player )
-
-		if ( !IsAlive( player ) )
-			InitialisePrivateMatchSpectatorPlayer( player )
-	}
 }
 
 bool function EvacEpiloguePlayerCanBoard( entity dropship, entity player )
