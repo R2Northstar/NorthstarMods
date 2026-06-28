@@ -399,23 +399,13 @@ void function PlayerWatchesWargamesIntro( entity player )
 	OnThreadEnd(
 		function() : ( player )
 		{
-			if ( IsValid( player ) )
+			if ( IsValidPlayer( player ) )
 			{
 				RemoveCinematicFlag( player, CE_FLAG_INTRO )
-				DeleteAnimEvent( player.GetFirstPersonProxy(), "PlaySound_SimPod_DoorShut" )
 
 				player.kv.VisibilityFlags = ENTITY_VISIBLE_TO_EVERYONE
-
-				// don't play weapon's first pull out animation
-				DeployViewModelAndEnableWeapons( player )
-				HolsterViewModelAndDisableWeapons( player )
-				DeployViewModelAndEnableWeapons( player )
-
 				player.UnforceStand()
 				player.MovementEnable()
-
-				Remote_CallFunction_NonReplay( player, "ServerCallback_ClearFactionLeaderIntro" )
-				Remote_CallFunction_NonReplay( player, "ServerCallback_StopWargamesPodAmbienceSound" )
 			}
 		}
 	)
@@ -473,7 +463,7 @@ void function PlayerWatchesWargamesIntro( entity player )
 	player.PlayerCone_SetLerpTime( 0 )
 	player.SetAngles( playerPod.GetAttachmentAngles( podAttachId ) )
 
-	ScreenFadeFromBlack( player, max( 0.0, ( file.introStartTime + 0.5 ) - Time() ), max( 0.0, ( file.introStartTime + 0.5 ) - Time() ) )
+	ScreenFadeFromBlack( player, max( 0.0, ( file.introStartTime + 1.0 ) - Time() ), max( 0.0, ( file.introStartTime + 1.0 ) - Time() ) )
 
 	// 8 seconds of nothing before we start the pod sequence
 	wait ( file.introStartTime + 8.0 ) - Time()
@@ -511,6 +501,15 @@ void function PlayerWatchesWargamesIntro( entity player )
 	player.SetAngles( spawnpoint.GetAngles() )
 
 	float currentTime = Time()
+
+	wait ( file.introStartTime + 20.2 ) - Time()
+
+	DeleteAnimEvent( player.GetFirstPersonProxy(), "PlaySound_SimPod_DoorShut" )
+
+	DeployViewModelAndEnableWeapons( player )
+	Loadouts_TryGivePilotLoadout( player )
+	Remote_CallFunction_NonReplay( player, "ServerCallback_ClearFactionLeaderIntro" )
+	Remote_CallFunction_NonReplay( player, "ServerCallback_StopWargamesPodAmbienceSound" )
 
 	wait ( file.introStartTime + 20.6 ) - Time()
 	EmitSoundOnEntityOnlyToPlayerWithSeek( player, player, "Wargames_Materialize", Time() - ( file.introStartTime + 20.6 ) )

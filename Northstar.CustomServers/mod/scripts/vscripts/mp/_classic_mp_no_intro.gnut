@@ -82,7 +82,7 @@ void function ClassicMP_DefaultNoIntro_PilotSpawnPlayer( entity player )
 
 	WaitEndFrame()
 
-	ScreenFadeFromBlack( player, 1, 1 )
+	ScreenFadeFromBlack( player, 1.0, 1.0 )
 }
 
 // spawn as titan for intro
@@ -98,7 +98,7 @@ void function ClassicMP_DefaultNoIntro_TitanSpawnPlayer( entity player )
 
 	WaitEndFrame()
 
-	ScreenFadeFromBlack( player, 1, 1 )
+	ScreenFadeFromBlack( player, 1.0, 1.0 )
 
 	if ( Time() >= expect float( level.nv.gameStartTime ) ) // LTS instantly spawns players
 		WaitFrame()
