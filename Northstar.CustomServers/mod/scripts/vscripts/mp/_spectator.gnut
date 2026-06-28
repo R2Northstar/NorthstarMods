@@ -357,7 +357,7 @@ bool function ClientCommandCallback_spec_mode( entity player, array<string> args
 
 bool function CanRunSpectatorCommand( entity player )
 {
-	if ( GetGameState() <= eGameState.Prematch || GetGameState() >= eGameState.Postmatch )
+	if ( GetGameState() < eGameState.Prematch || GetGameState() > eGameState.Epilogue )
 		return false
 
 	if ( !( SpectatorEnabled() || ( IsPrivateMatchSpectator( player ) && PrivateMatchSpectatorEnabled() ) ) )
