@@ -401,6 +401,7 @@ void function Hardpoint_ThinkTick( HardpointState hardpoint )
 
 			CapturePoint_SetState( hardpoint.ent, CapturePoint_GetState( hardpoint.ent ) & ~CAPTURE_POINT_FLAGS_AMPED ) // remove amped flag
 			hardpoint.ent.s.state = CAPTURE_POINT_STATE_CAPTURED
+			hardpoint.ent.SetHardpointEstimatedCaptureTime( -1 )
 		}
 		else
 		{
