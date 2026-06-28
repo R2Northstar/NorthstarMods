@@ -113,9 +113,7 @@ void function OnPrematchStart()
 
 void function AnimateBuddy( entity buddy )
 {
-	#if DEV
-		print( "buddy spawn at " + buddy.GetOrigin() + " " + buddy.GetAngles() )
-	#endif
+	print( "buddy spawn at " + buddy.GetOrigin() + " " + buddy.GetAngles() )
 
 	thread PlayAnim( buddy, "bt_beacon_fastball_throw_end" )
 

@@ -160,9 +160,7 @@ void function MoveToMortarPosition( entity titan, vector origin, entity target )
 		if ( dist <= goalRadius * 2 )
 			break
 
-		#if DEV
-			printt( "Mortar titan moving toward his goal", dist, tries++ )
-		#endif
+		printt( "Mortar titan moving toward his goal", dist, tries++ )
 
 		titan.AssaultPoint( origin )
 		titan.AssaultSetGoalRadius( goalRadius )

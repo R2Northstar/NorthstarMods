@@ -464,36 +464,28 @@ void function Hardpoint_ThinkTick( HardpointState hardpoint )
 	if ( oldState == CAPTURE_POINT_STATE_UNASSIGNED && newState == CAPTURE_POINT_STATE_CAPPING )
 	{
 		// starting capture of uncaptured point
-		#if DEV
-			printt( "starting capture of uncaptured point" )
-		#endif
+		printt( "starting capture of uncaptured point" )
 
 		GamemodeCP_VO_StartCapping( hardpoint.ent )
 	}
 	else if ( oldState == CAPTURE_POINT_STATE_SELF_UNAMPING && newState == CAPTURE_POINT_STATE_CAPPING )
 	{
 		// Started capping a point that was naturally unamping
-		#if DEV
-			printt( "Started capping a point that was naturally unamping" )
-		#endif
+		printt( "Started capping a point that was naturally unamping" )
 
 		GamemodeCP_VO_StartCapping( hardpoint.ent )
 	}
 	else if ( oldState >= CAPTURE_POINT_STATE_CAPTURED && newState == CAPTURE_POINT_STATE_CAPPING )
 	{
 		// started capturing an unoccupied hardpoint
-		#if DEV
-			printt( "started capturing an unoccupied hardpoint" )
-		#endif
+		printt( "started capturing an unoccupied hardpoint" )
 
 		GamemodeCP_VO_StartCapping( hardpoint.ent )
 	}
 	else if ( oldState == CAPTURE_POINT_STATE_HALTED && newState == CAPTURE_POINT_STATE_CAPPING )
 	{
 		// cleared hardpoint OR exited and re-entered hardpoint
-		#if DEV
-			printt( "cleared hardpoint OR exited and re-entered hardpoint. Hardpoint was previously unowned" )
-		#endif
+		printt( "cleared hardpoint OR exited and re-entered hardpoint. Hardpoint was previously unowned" )
 
 		GamemodeCP_VO_StartCapping( hardpoint.ent )
 	}
