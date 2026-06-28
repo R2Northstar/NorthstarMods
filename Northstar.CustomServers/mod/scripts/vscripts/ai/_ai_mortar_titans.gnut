@@ -161,7 +161,6 @@ void function MoveToMortarPosition( entity titan, vector origin, entity target )
 			break
 
 		printt( "Mortar titan moving toward his goal", dist, tries++ )
-
 		titan.AssaultPoint( origin )
 		titan.AssaultSetGoalRadius( goalRadius )
 

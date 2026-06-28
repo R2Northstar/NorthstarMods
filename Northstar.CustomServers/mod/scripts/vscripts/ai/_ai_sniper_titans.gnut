@@ -37,12 +37,10 @@ void function MoveToSniperPosition( entity titan, vector origin, entity target )
 			break
 
 		printt( "Sniper titan moving toward his goal", dist, tries++ )
-
 		titan.AssaultPoint( origin )
 		titan.AssaultSetGoalRadius( goalRadius )
 		titan.AssaultSetFightRadius( 0 )
 		local result = WaitSignal( titan, "OnFinishedAssault", "OnEnterGoalRadius" )
-
 		printt( "Sniper titan done moving into position" )
 	}
 }
