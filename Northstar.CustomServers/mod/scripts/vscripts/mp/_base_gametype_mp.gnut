@@ -21,6 +21,7 @@ global function SetGamemodeAllowsTeamSwitch
 
 global function SetRecalculateRespawnAsTitanStartPointCallback
 global function CheckForEmptyTeamVictory
+global function GetRandomIntermissionCamera
 
 struct
 {

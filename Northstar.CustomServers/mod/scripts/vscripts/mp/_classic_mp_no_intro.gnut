@@ -80,7 +80,7 @@ void function ClassicMP_DefaultNoIntro_PilotSpawnPlayer( entity player )
 	Loadouts_TryGivePilotLoadout( player )
 	ResetPlayerCooldowns( player ) // Prevention of case they used abilities or grenades near round end
 
-	WaitFrame()
+	WaitEndFrame()
 
 	ScreenFadeFromBlack( player, 1, 1 )
 }
@@ -96,7 +96,7 @@ void function ClassicMP_DefaultNoIntro_TitanSpawnPlayer( entity player )
 	player.SetObserverModeStaticAngles( intermissionCam.GetAngles() )
 	player.StartObserverMode( OBS_MODE_STATIC_LOCKED )
 
-	WaitFrame()
+	WaitEndFrame()
 
 	ScreenFadeFromBlack( player, 1, 1 )
 

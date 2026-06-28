@@ -1255,8 +1255,11 @@ void function CleanUpEntitiesForRoundEnd()
 			player.Die( svGlobal.worldspawn, svGlobal.worldspawn, { damageSourceId = eDamageSourceId.round_end } )
 
 		player.SetPlayerSettingsWithMods( "spectator", [] )
-		player.SetObserverModeStaticPosition( < 0, 0, 0 > )
-		player.SetObserverModeStaticAngles( < 0, 0, 0 > )
+
+		entity mapCamera = GetRandomIntermissionCamera()
+
+		player.SetObserverModeStaticPosition( mapCamera.GetOrigin() )
+		player.SetObserverModeStaticAngles( mapCamera.GetAngles() )
 		player.StartObserverMode( OBS_MODE_STATIC_LOCKED )
 		player.SetObserverTarget( null )
 	}

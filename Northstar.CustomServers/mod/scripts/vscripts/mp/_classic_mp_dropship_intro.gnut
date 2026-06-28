@@ -234,16 +234,19 @@ void function SpawnPlayerIntoDropship( entity player, int playerDropshipIndex, e
 		idleSequence.attachment = "ORIGIN"
 		idleSequence.blendTime = 0
 		idleSequence.teleport = true
-		idleSequence.viewConeFunction = ViewConeRampFree
 		idleSequence.setInitialTime = Time() - file.introStartTime
 		idleSequence.hideProxy = true
 
 		thread FirstPersonSequence( idleSequence, player, playerDropship )
 
-		player.PlayerCone_SetLerpTime( 0 )
-		player.SetAngles( player.GetLocalAngles().AnglesCompose( Vector( 12, player.GetLocalAngles().y, 0 ) ) )
+		vector angles = player.GetAngles()
 
-		WaittillAnimDone( player )
+		ViewConeRampFree( player )
+
+		player.PlayerCone_SetLerpTime( 0 )
+		player.SetAngles( angles )
+
+		playerDropship.WaitSignal( "deploy" )
 	}
 
 	FirstPersonSequenceStruct jumpSequence
