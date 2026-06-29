@@ -1998,7 +1998,10 @@ bool function TimeLimit_Complete()
 					PlayCurrentTeamMusicEventsOnPlayer( player )
 			}
 		}
-		else if ( GetCurrentPlaylistVarInt( "three_minute_music_enabled", 1 ) && !IsRoundBased() && timeLeftSeconds < ( timeLimit * 0.4 - 60 ) )
+		else if (
+			GetCurrentPlaylistVarInt( "three_minute_music_enabled", 1 ) && !IsRoundBased() &&
+			( level.nv.matchProgress >= 70 || timeLeftSeconds < ( timeLimit * 0.4 - 60 ) )
+		)
 		{
 			if ( !file.playingThreeMinuteMusic )
 			{
@@ -2229,6 +2232,9 @@ float function GetSwitchingSidesWait()
 
 void function UpdateMatchProgress()
 {
+	if ( !GetCurrentPlaylistVarInt( "enable_match_progress_update", 1 ) )
+		return
+
 	float progress_score = GetMatchProgress_Score()
 	float progress_time = GetMatchProgress_Time()
 
