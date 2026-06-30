@@ -167,9 +167,9 @@ void function GameState_OnClientConnected( entity player )
 	}
 }
 
-// / This is to move all NPCs that a player owns from one team to the other during a match
-// / Auto-Titans, Turrets, Ticks and Hacked Spectres will all move along together with the player to the new Team
-// / Also possibly prevents mods that spawns other types of NPCs that players can own from breaking when switching (i.e Drones, Hacked Reapers)
+//  This is to move all NPCs that a player owns from one team to the other during a match
+//  Auto-Titans, Turrets, Ticks and Hacked Spectres will all move along together with the player to the new Team
+//  Also possibly prevents mods that spawns other types of NPCs that players can own from breaking when switching (i.e Drones, Hacked Reapers)
 void function OnPlayerChangedTeam( entity player )
 {
 	if ( !player.hasConnected ) // Prevents players who just joined to trigger below code, as server always pre setups their teams
@@ -244,8 +244,6 @@ void function CodeCallback_GamerulesThink()
 
 		case eGameState.Epilogue:
 			// printt( "STATE: Epilogue" )
-			// if ( EvacEnabled() && level.dropship )
-			// EvacShipTriggerCheck( level.dropship )
 			// GameRulesThink_Epilogue()
 			break
 
@@ -489,19 +487,6 @@ void function SetWinner( int team, string winningReason = "", string losingReaso
 
 	SetServerVar( "winningTeam", GetWinningTeam() ) // This is to make GetWinningTeam return TEAM_UNASSIGNED for clients so they don't crash due to music logic upon entering WinnerDetermined state
 	SetGameState( eGameState.WinnerDetermined )
-
-	if ( IsRoundBased() && !HasRoundScoreLimitBeenReached() )
-	{
-		if ( team != TEAM_UNASSIGNED )
-			ScoreEvent_RoundComplete( team )
-	}
-	else
-	{
-		if ( team != TEAM_UNASSIGNED )
-			ScoreEvent_MatchComplete( team )
-
-		RegisterMatchStats_OnMatchComplete()
-	}
 }
 
 void function SetCallback_TryUseProjectileReplay( bool functionref( entity victim, entity attacker, var damageInfo, bool isRoundEnd ) callback )
@@ -977,15 +962,13 @@ void function GameStateEnter_WinnerDetermined()
 		{
 			array<entity> players = GetPlayerArray()
 
+			ScoreEvent_RoundComplete( GetWinningTeam() )
+
 			foreach ( entity player in players )
 			{
-				// if ( player.GetTeam() == GetWinningTeam() )
-				// AddPlayerScore( player, "RoundVictory" )
-
-				// AddPlayerScore( player, "RoundComplete" )
 				ScreenFade( player, 0, 0, 0, 255, GetWinnerDeterminedWait() - CLEAR_PLAYERS_BUFFER, 0, FFADE_OUT | FFADE_STAYOUT )
 				SetPlayerEliminated( player )
-				CheckGameStateForPlayerMovement( player ) // PlayerEnterEndRoundState( player )
+				CheckGameStateForPlayerMovement( player )
 			}
 
 			if ( WillShowRoundWinningKillReplay() )
@@ -1001,6 +984,8 @@ void function GameStateEnter_WinnerDetermined()
 
 	DialoguePlayWinnerDetermined()
 	CreateLevelWinnerDeterminedMusicEvent()
+	thread ScoreEvent_MatchComplete( GetWinningTeam() )
+	RegisterMatchStats_OnMatchComplete()
 
 	level.ui.penalizeDisconnect = false
 
@@ -1122,7 +1107,7 @@ void function GameStateEnter_SwitchingSides()
 
 		SetPlayerEliminated( player )
 		ScreenFade( player, 0, 0, 0, 255, SWITCHING_SIDES_DELAY - CLEAR_PLAYERS_BUFFER, 0, FFADE_OUT | FFADE_STAYOUT )
-		CheckGameStateForPlayerMovement( player ) // PlayerEnterEndRoundState( player )
+		CheckGameStateForPlayerMovement( player )
 		UnMuteAll( player )
 
 		// Only mute halftime if we've already shown our kill replay or we aren't going to show it.
@@ -1134,7 +1119,6 @@ void function GameStateEnter_SwitchingSides()
 	MoveFrontline( TEAM_IMC )
 
 	thread DialogueAnnounceSwitchingSides()
-	// thread GameStateEnter_SwitchingSides_Threaded()
 }
 
 void function GameRulesThink_SwitchingSides()
@@ -2053,8 +2037,6 @@ bool function TimeLimit_Complete()
 
 	float timeLimit
 
-	// if ( GetGameState() == eGameState.SuddenDeath )
-	// timeLimit = GetSuddenDeathTimeLimit_ForGameMode() * 60.0
 	if ( IsRoundBased() )
 		timeLimit = GetRoundTimeLimit_ForGameMode() * 60.0
 	else
