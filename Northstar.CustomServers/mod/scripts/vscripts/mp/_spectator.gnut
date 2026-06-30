@@ -118,7 +118,7 @@ void function InitialisePrivateMatchSpectatorPlayer( entity player )
 // this should be called when intros respawn players normally to handle fades and stuff
 void function RespawnPrivateMatchSpectator( entity player )
 {
-	ScreenFadeFromBlack( player, 0.5, 0.5 )
+	ScreenFadeFromBlack( player, 0.0, 0.0 )
 }
 
 void function PlayerBecomesSpectator( entity player )
@@ -149,8 +149,6 @@ void function PlayerBecomesSpectator( entity player )
 	// keeps track of the most recent func this player has completed
 	// this is to ensure that custom spectator funcs are only run once per player even before being cleared
 	int funcIndex = 0
-
-	WaitFrame()
 
 	while ( CanRunSpectatorCommand( player ) )
 	{

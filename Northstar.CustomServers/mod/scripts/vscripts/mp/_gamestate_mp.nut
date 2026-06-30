@@ -778,7 +778,7 @@ void function StartGameWithoutClassicMP()
 			entity intermissionCamView
 
 			if ( intermissionCam.HasKey( "target" ) )
-				entity intermissionCamView = GetEnt( expect string( intermissionCam.kv.target ) )
+				intermissionCamView = GetEnt( expect string( intermissionCam.kv.target ) )
 
 			player.SetOrigin( intermissionCam.GetOrigin() )
 			player.SetObserverModeStaticPosition( intermissionCam.GetOrigin() )
@@ -1344,7 +1344,7 @@ void function CleanUpEntitiesForRoundEnd()
 		entity intermissionCamView
 
 		if ( intermissionCam.HasKey( "target" ) )
-			entity intermissionCamView = GetEnt( expect string( intermissionCam.kv.target ) )
+			intermissionCamView = GetEnt( expect string( intermissionCam.kv.target ) )
 
 		player.SetObserverModeStaticPosition( intermissionCam.GetOrigin() )
 
