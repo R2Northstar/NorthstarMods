@@ -172,7 +172,7 @@ bool function ClientCommandCallback_RequestPilotLoadout( entity player, array<st
 
 	int index = args[ 0 ].tointeger()
 
-	if ( index < 0 || index >= NUM_PERSISTENT_PILOT_LOADOUTS )
+	if ( !IsValidPilotLoadoutIndex( index ) )
 		return false
 
 	SetPersistentSpawnLoadoutIndex( player, "pilot", index )
@@ -194,7 +194,7 @@ bool function ClientCommandCallback_RequestTitanLoadout( entity player, array<st
 
 	int index = args[ 0 ].tointeger()
 
-	if ( index < 0 || index >= NUM_PERSISTENT_TITAN_LOADOUTS )
+	if ( !IsValidTitanLoadoutIndex( index ) )
 		return false
 
 	if ( !IsTitanLoadoutAvailable( player, PersistenceGetEnumItemNameForIndex( "titanClasses", index ) ) )
@@ -237,26 +237,19 @@ bool function ClientCommandCallback_SetPersistentLoadoutValue( entity player, ar
 
 	// these need custom validation
 	if (
-		args2 == "name" || args2 == "showArmBadge" || ( args0 == "titan" && ( args2 == "secondarySkinIndex" || args2 == "weapon3SkinIndex" ) ) ||
-		( ( args2 == "primaryAttachment" || args2 == "primaryMod3" || args2 == "secondaryMod3" || args2 == "weapon3Mod3" ) && val == "none" )
+		( args0 == "pilot" && ( !IsValidPilotLoadoutIndex( args1int ) || !IsValidPilotLoadoutProperty( args2 ) ) ) ||
+		(
+			args0 == "titan" && ( !IsValidTitanLoadoutIndex( args1int ) || !IsValidTitanLoadoutProperty( args2 ) ) ||
+				!IsTitanLoadoutAvailable( player, PersistenceGetEnumItemNameForIndex( "titanClasses", args1int ) ) || args2 == "name"
+		)
 	)
 	{
-		if ( args0 == "pilot" && args2 == "showArmBadge" )
-		{
-			return false
-		}
-		else if ( args0 == "titan" && args2 == "showArmBadge" )
-		{
-			if ( val.tointeger() < 0 || val.tointeger() > 1 )
-				return false
-		}
-		else if ( args0 == "titan" || ( args1int < 0 || args1int >= PersistenceGetArrayCount( "pilotLoadouts" ) ) )
-			return false
-	}
-	else if ( FailsLoadoutValidationCheck( player, args0, args1int, args2, val ) )
 		return false
-
-	if ( args0 == "titan" && !IsTitanLoadoutAvailable( player, PersistenceGetEnumItemNameForIndex( "titanClasses", args1int ) ) )
+	}
+	else if (
+		!( args0 == "pilot" && ( ( args2 == "primaryAttachment" || args2 == "primaryMod3" || args2 == "secondaryMod3" || args2 == "weapon3Mod3" ) && val == "none" ) )
+		&& !( args0 == "titan" && args2 == "showArmBadge" && ( val >= "0" && val <= "1" ) ) && FailsLoadoutValidationCheck( player, args0, args1int, args2, val )
+	)
 		return false
 
 	SetPersistentLoadoutValue( player, args0, args1int, args2, val )
@@ -281,7 +274,7 @@ bool function ClientCommandCallback_SwapSecondaryAndWeapon3PersistentLoadoutData
 	// get loadout
 	int index = args[ 0 ].tointeger()
 
-	if ( index < 0 || index >= PersistenceGetArrayCount( "pilotLoadouts" ) )
+	if ( !IsValidPilotLoadoutIndex( index ) )
 		return false
 
 	PilotLoadoutDef loadout = GetPilotLoadoutFromPersistentData( player, index )
