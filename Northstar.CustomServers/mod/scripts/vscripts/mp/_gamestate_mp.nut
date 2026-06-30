@@ -1018,7 +1018,6 @@ void function GameStateEnter_WinnerDetermined()
 		PlayerWinStreak()
 		ClassicMP_SetupEpilogue()
 		SetGameState( eGameState.Epilogue )
-		// thread EvacMain( level.nv.winningTeam )
 	}
 
 	if ( GetClassicMPMode() )

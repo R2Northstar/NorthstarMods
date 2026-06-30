@@ -330,6 +330,8 @@ void function ScoreEvent_NPCKilled( entity victim, entity attacker, var damageIn
 
 void function ScoreEvent_MatchComplete( int winningTeam )
 {
+	wait GetWinnerDeterminedWait() / 2
+
 	foreach ( entity player in GetPlayerArray() )
 	{
 		if ( !IsValidPlayer( player ) )
