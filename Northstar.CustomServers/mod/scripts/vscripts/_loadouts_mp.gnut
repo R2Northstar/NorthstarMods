@@ -248,7 +248,7 @@ bool function ClientCommandCallback_SetPersistentLoadoutValue( entity player, ar
 	}
 	else if (
 		!( args0 == "pilot" && ( ( args2 == "primaryAttachment" || args2 == "primaryMod3" || args2 == "secondaryMod3" || args2 == "weapon3Mod3" ) && val == "none" ) )
-		&& !( args0 == "titan" && args2 == "showArmBadge" && ( val >= "0" && val <= "1" ) ) && FailsLoadoutValidationCheck( player, args0, args1int, args2, val )
+		&& LoadoutPropertyRequiresItemValidation( args2 ) && FailsLoadoutValidationCheck( player, args0, args1int, args2, val )
 	)
 		return false
 
