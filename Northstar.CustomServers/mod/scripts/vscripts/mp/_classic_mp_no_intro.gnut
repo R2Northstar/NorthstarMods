@@ -2,7 +2,6 @@ untyped
 
 global function ClassicMP_DefaultNoIntro_Setup
 global function ClassicMP_DefaultNoIntro_GetLength
-global function ClassicMP_DefaultNoIntro_TitanSpawnPlayer
 
 global const float NOINTRO_LENGTH = 15.0
 
