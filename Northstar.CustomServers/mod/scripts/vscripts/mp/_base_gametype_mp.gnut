@@ -21,14 +21,11 @@ global function SetGamemodeAllowsTeamSwitch
 
 global function SetRecalculateRespawnAsTitanStartPointCallback
 global function CheckForEmptyTeamVictory
-global function GetRandomIntermissionCamera
 
 struct
 {
 	bool playerDeathsHidden = false
 	int titanDamageGameStat = -1
-
-	array<entity> intermissionCameras
 
 	entity functionref( entity player, entity basePoint ) recalculateRespawnAsTitanStartPointCallback
 	table<entity, float> playerChangeTeamTimeBuffer
@@ -42,7 +39,6 @@ struct
 void function BaseGametype_Init_MPSP()
 {
 	AddClientCommandCallback( "changeteam", ClientCommandCallbackChangeTeam )
-	AddSpawnCallback( "info_intermission", AddIntermissionCamera )
 
 	AddPostDamageCallback( "player", AddToTitanDamageStat )
 	AddPostDamageCallback( "npc_titan", AddToTitanDamageStat )
@@ -56,19 +52,6 @@ void function BaseGametype_Init_MPSP()
 	RegisterSignal( "PlayerRespawnStarted" )
 	RegisterSignal( "KillCamOver" )
 	FlagInit( "WeaponDropsAllowed", true )
-}
-
-void function AddIntermissionCamera( entity camera )
-{
-	file.intermissionCameras.append( camera )
-}
-
-entity function GetRandomIntermissionCamera()
-{
-	if ( !file.intermissionCameras.len() )
-		return null
-
-	return file.intermissionCameras.getrandom()
 }
 
 void function CheckServerIdlingState()
@@ -174,11 +157,20 @@ void function CodeCallback_OnClientConnectionStarted( entity player )
 
 	CheckServerIdlingState()
 
-	entity viewPoint = GetRandomIntermissionCamera()
+	entity intermissionCam = GetEntArrayByClass_Expensive( "info_intermission" )[ 0 ]
+	entity intermissionCamView
 
-	player.SetOrigin( viewPoint.GetOrigin() )
-	player.SetObserverModeStaticPosition( viewPoint.GetOrigin() )
-	player.SetObserverModeStaticAngles( viewPoint.GetAngles() )
+	if ( intermissionCam.HasKey( "target" ) )
+		entity intermissionCamView = GetEnt( expect string( intermissionCam.kv.target ) )
+
+	player.SetOrigin( intermissionCam.GetOrigin() )
+	player.SetObserverModeStaticPosition( intermissionCam.GetOrigin() )
+
+	if ( IsValid( intermissionCamView ) )
+		player.SetObserverModeStaticAngles( VectorToAngles( intermissionCamView.GetOrigin() - intermissionCam.GetOrigin() ) )
+	else
+		player.SetObserverModeStaticAngles( intermissionCam.GetAngles() )
+
 	player.StartObserverMode( OBS_MODE_STATIC_LOCKED )
 	player.SetObserverTarget( null )
 }
@@ -238,7 +230,6 @@ void function CodeCallback_OnClientConnectionCompleted( entity player )
 
 	svGlobal.levelEnt.Signal( "PlayerDidSpawn", { player = player } )
 
-	player.SetPersistentVar( "spawnAsTitan", false ) // Reset this to avoid players spawning directly as titans on join
 	if ( IsPrivateMatchSpectator( player ) )
 	{
 		SetPlayerEliminated( player )
@@ -502,8 +493,8 @@ void function PostDeathThread_MP( entity player, var damageInfo, bool gamePlayin
 	player.SetPhysics( MOVETYPE_NONE ) // so they don't move around while dead, resets to default automatically on respawn
 
 	// use info_intermission camera after deathcam, if it exists
-	entity mapCamera = GetRandomIntermissionCamera()
-	if ( mapCamera != null && !player.GetParent() )
+	entity mapCamera = GetEntArrayByClass_Expensive( "info_intermission" )[ 0 ]
+	if ( !player.GetParent() )
 	{
 		player.SetObserverModeStaticPosition( mapCamera.GetOrigin() )
 		player.SetObserverModeStaticAngles( mapCamera.GetAngles() )

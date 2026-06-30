@@ -125,6 +125,36 @@ void function GameState_OnClientConnected( entity player )
 			return
 		}
 
+		if ( ShouldIntroSpawnAsTitan() )
+		{
+			entity intermissionCam = GetEntArrayByClass_Expensive( "info_intermission" )[ 0 ]
+			entity intermissionCamView
+
+			if ( intermissionCam.HasKey( "target" ) )
+				entity intermissionCamView = GetEnt( expect string( intermissionCam.kv.target ) )
+
+			player.SetOrigin( intermissionCam.GetOrigin() )
+			player.SetObserverModeStaticPosition( intermissionCam.GetOrigin() )
+
+			if ( IsValid( intermissionCamView ) )
+				player.SetObserverModeStaticAngles( VectorToAngles( intermissionCamView.GetOrigin() - intermissionCam.GetOrigin() ) )
+			else
+				player.SetObserverModeStaticAngles( intermissionCam.GetAngles() )
+
+			player.StartObserverMode( OBS_MODE_STATIC_LOCKED )
+			player.SetObserverTarget( null )
+
+			thread void function() : ( player )
+			{
+				WaitEndFrame()
+
+				if ( IsValidPlayer( player ) )
+					ScreenFadeFromBlack( player, 0.0 )
+			}()
+
+			return
+		}
+
 		if ( GameTime_TimeLeftSeconds() > 1.0 )
 			AddCinematicFlag( player, CE_FLAG_CLASSIC_MP_SPAWNING )
 
@@ -550,7 +580,7 @@ void function GameRulesThink_WaitingForPlayers()
 	if ( !DoneWaitingForPlayers() )
 		return
 
-	if ( GetCurrentPlaylistVarInt( "classic_mp", 1 ) && !IsFFAGame() )
+	if ( GetClassicMPMode() && !IsFFAGame() )
 		SetGameState( eGameState.PickLoadout )
 	else
 		SetGameState( eGameState.Prematch )
@@ -709,10 +739,6 @@ void function GameRulesThink_Prematch()
 	if ( Time() < level.nv.gameStartTime )
 		return
 
-	if ( !GetClassicMPMode() )
-		foreach ( entity player in GetPlayerArray() )
-			player.UnfreezeControlsOnServer()
-
 	SetGameState( eGameState.Playing )
 
 	level.nv.winningTeam = null
@@ -736,12 +762,67 @@ void function SetPrematchStartTime()
 
 void function StartGameWithoutClassicMP()
 {
+	bool respawnAsTitan = expect bool( ShouldIntroSpawnAsTitan() )
+
+	if ( respawnAsTitan )
+	{
+		foreach ( entity player in GetPlayerArray() )
+		{
+			if ( IsPrivateMatchSpectator( player ) )
+			{
+				RespawnPrivateMatchSpectator( player )
+				continue
+			}
+
+			entity intermissionCam = GetEntArrayByClass_Expensive( "info_intermission" )[ 0 ]
+			entity intermissionCamView
+
+			if ( intermissionCam.HasKey( "target" ) )
+				entity intermissionCamView = GetEnt( expect string( intermissionCam.kv.target ) )
+
+			player.SetOrigin( intermissionCam.GetOrigin() )
+			player.SetObserverModeStaticPosition( intermissionCam.GetOrigin() )
+
+			if ( IsValid( intermissionCamView ) )
+				player.SetObserverModeStaticAngles( VectorToAngles( intermissionCamView.GetOrigin() - intermissionCam.GetOrigin() ) )
+			else
+				player.SetObserverModeStaticAngles( intermissionCam.GetAngles() )
+
+			player.StartObserverMode( OBS_MODE_STATIC_LOCKED )
+			player.SetObserverTarget( null )
+
+			thread void function() : ( player )
+			{
+				WaitEndFrame()
+
+				if ( IsValidPlayer( player ) )
+					ScreenFadeFromBlack( player, 0.0 )
+			}()
+		}
+
+		WaittillGameStateOrHigher( eGameState.Playing )
+	}
+
 	foreach ( entity player in GetPlayerArray() )
 	{
 		if ( IsPrivateMatchSpectator( player ) )
 		{
-			RespawnPrivateMatchSpectator( player )
-			return
+			if ( !respawnAsTitan )
+				RespawnPrivateMatchSpectator( player )
+
+			continue
+		}
+
+		if ( respawnAsTitan )
+		{
+			delaythread( 0.0001 ) function() : ( player )
+			{
+				if ( IsValidPlayer( player ) )
+					player.StopObserverMode()
+			}()
+
+			thread RespawnAsTitan( player )
+			continue
 		}
 
 		AddCinematicFlag( player, CE_FLAG_CLASSIC_MP_SPAWNING )
@@ -752,6 +833,9 @@ void function StartGameWithoutClassicMP()
 
 		player.FreezeControlsOnServer()
 	}
+
+	if ( respawnAsTitan )
+		return
 
 	wait GameTime_TimeLeftSeconds() - 1.0
 
@@ -1002,7 +1086,7 @@ void function GameRulesThink_WinnerDetermined()
 		return
 	}
 
-	if ( !DoPrematchWarpSound() && GetCurrentPlaylistVarInt( "pick_loadout_every_round", 0 ) )
+	if ( GetClassicMPMode() && !DoPrematchWarpSound() && GetCurrentPlaylistVarInt( "pick_loadout_every_round", 0 ) )
 		SetGameState( eGameState.PickLoadout )
 	else
 		SetGameState( eGameState.Prematch )
@@ -1072,7 +1156,7 @@ void function GameRulesThink_SwitchingSides()
 
 	AllPlayersUnMuteAll()
 
-	if ( !DoPrematchWarpSound() && GetCurrentPlaylistVarInt( "pick_loadout_every_round", 0 ) )
+	if ( GetClassicMPMode() && !DoPrematchWarpSound() && GetCurrentPlaylistVarInt( "pick_loadout_every_round", 0 ) )
 		SetGameState( eGameState.PickLoadout )
 	else
 		SetGameState( eGameState.Prematch )
@@ -1249,17 +1333,26 @@ void function CleanUpEntitiesForRoundEnd()
 		ClearTitanAvailable( player )
 		SetPlayerEliminated( player )
 
-		player.SetOrigin( < 10000, 10000, 10000 > )
+		player.SetOrigin( Vector( 10000, 10000, 10000 ) )
 
 		if ( IsAlive( player ) )
 			player.Die( svGlobal.worldspawn, svGlobal.worldspawn, { damageSourceId = eDamageSourceId.round_end } )
 
 		player.SetPlayerSettingsWithMods( "spectator", [] )
 
-		entity mapCamera = GetRandomIntermissionCamera()
+		entity intermissionCam = GetEntArrayByClass_Expensive( "info_intermission" )[ 0 ]
+		entity intermissionCamView
 
-		player.SetObserverModeStaticPosition( mapCamera.GetOrigin() )
-		player.SetObserverModeStaticAngles( mapCamera.GetAngles() )
+		if ( intermissionCam.HasKey( "target" ) )
+			entity intermissionCamView = GetEnt( expect string( intermissionCam.kv.target ) )
+
+		player.SetObserverModeStaticPosition( intermissionCam.GetOrigin() )
+
+		if ( IsValid( intermissionCamView ) )
+			player.SetObserverModeStaticAngles( VectorToAngles( intermissionCamView.GetOrigin() - intermissionCam.GetOrigin() ) )
+		else
+			player.SetObserverModeStaticAngles( intermissionCam.GetAngles() )
+
 		player.StartObserverMode( OBS_MODE_STATIC_LOCKED )
 		player.SetObserverTarget( null )
 	}

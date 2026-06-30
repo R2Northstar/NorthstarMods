@@ -2,6 +2,7 @@ untyped
 
 global function ClassicMP_DefaultNoIntro_Setup
 global function ClassicMP_DefaultNoIntro_GetLength
+global function ClassicMP_DefaultNoIntro_TitanSpawnPlayer
 
 global const float NOINTRO_LENGTH = 15.0
 
@@ -91,10 +92,21 @@ void function ClassicMP_DefaultNoIntro_TitanSpawnPlayer( entity player )
 	player.EndSignal( "OnDestroy" )
 
 	entity intermissionCam = GetEntArrayByClass_Expensive( "info_intermission" )[ 0 ]
+	entity intermissionCamView
 
+	if ( intermissionCam.HasKey( "target" ) )
+		entity intermissionCamView = GetEnt( expect string( intermissionCam.kv.target ) )
+
+	player.SetOrigin( intermissionCam.GetOrigin() )
 	player.SetObserverModeStaticPosition( intermissionCam.GetOrigin() )
-	player.SetObserverModeStaticAngles( intermissionCam.GetAngles() )
+
+	if ( IsValid( intermissionCamView ) )
+		player.SetObserverModeStaticAngles( VectorToAngles( intermissionCamView.GetOrigin() - intermissionCam.GetOrigin() ) )
+	else
+		player.SetObserverModeStaticAngles( intermissionCam.GetAngles() )
+
 	player.StartObserverMode( OBS_MODE_STATIC_LOCKED )
+	player.SetObserverTarget( null )
 
 	WaitEndFrame()
 
