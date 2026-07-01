@@ -27,7 +27,8 @@ void function SpawnPowerupBase()
 	{
 		PowerUp powerupDef = GetPowerUpFromItemRef( expect string( spawnpoint.kv.powerUpType ) )
 
-		CreatePropDynamic( powerupDef.baseModel, spawnpoint.GetOrigin(), spawnpoint.GetAngles(), 2 )
+		if ( powerupDef.spawnFunc() )
+			CreatePropDynamic( powerupDef.baseModel, spawnpoint.GetOrigin(), spawnpoint.GetAngles(), 2 )
 	}
 }
 
