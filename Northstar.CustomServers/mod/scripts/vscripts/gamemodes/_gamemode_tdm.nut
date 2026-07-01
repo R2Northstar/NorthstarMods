@@ -5,6 +5,7 @@ void function GamemodeTdm_Init()
 	AddCallback_OnPlayerKilled( GiveScoreForPlayerKill )
 	ScoreEvent_SetupEarnMeterValuesForMixedModes()
 	SetupGenericTDMChallenge()
+	SetPlayThreeMinuteMusic( true )
 }
 
 void function GiveScoreForPlayerKill( entity victim, entity attacker, var damageInfo )

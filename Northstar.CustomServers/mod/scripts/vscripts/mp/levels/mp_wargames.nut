@@ -463,7 +463,7 @@ void function PlayerWatchesWargamesIntro( entity player )
 	player.PlayerCone_SetLerpTime( 0 )
 	player.SetAngles( playerPod.GetAttachmentAngles( podAttachId ) )
 
-	ScreenFadeFromBlack( player, max( 0.0, ( file.introStartTime + 1.0 ) - Time() ), max( 0.0, ( file.introStartTime + 1.0 ) - Time() ) )
+	ScreenFadeFromBlack( player, max( 0.0, ( file.introStartTime + 2.0 ) - Time() ), max( 0.0, ( file.introStartTime + 0.5 ) - Time() ) )
 
 	// 8 seconds of nothing before we start the pod sequence
 	wait ( file.introStartTime + 8.0 ) - Time()

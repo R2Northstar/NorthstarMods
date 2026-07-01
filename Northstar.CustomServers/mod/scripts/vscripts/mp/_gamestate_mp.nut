@@ -7,6 +7,7 @@ global function WaittillGameStateOrHigher
 global function AddCallback_OnRoundEndCleanup
 
 global function SetTimelimitCompleteFunc
+global function SetPlayThreeMinuteMusic
 global function SetSwitchSidesBased
 global function SetShouldUseRoundWinningKillReplay
 global function SetRoundWinningKillReplayKillClasses
@@ -54,6 +55,7 @@ struct
 	float timeWithPlayers = -1
 	bool endingMatch = false
 	float timeLimitOverride = -1
+	bool shouldPlayThreeMinuteMusic = false
 } file
 
 /*
@@ -502,6 +504,11 @@ void function AddCallback_OnRoundEndCleanup( void functionref() callback )
 void function SetTimelimitCompleteFunc( bool functionref() timeLimitCompleteFunc )
 {
 	svGlobal.timelimitCompleteFunc = timeLimitCompleteFunc
+}
+
+void function SetPlayThreeMinuteMusic( bool value )
+{
+	file.shouldPlayThreeMinuteMusic = value
 }
 
 void function SetSwitchSidesBased( bool switchSides )
@@ -2073,7 +2080,7 @@ bool function TimeLimit_Complete()
 			}
 		}
 		else if (
-			GetCurrentPlaylistVarInt( "three_minute_music_enabled", 1 ) && !IsRoundBased() &&
+			GetCurrentPlaylistVarInt( "three_minute_music_enabled", 1 ) && file.shouldPlayThreeMinuteMusic &&
 			( level.nv.matchProgress >= 70 || timeLeftSeconds < ( timeLimit * 0.4 - 60 ) )
 		)
 		{

@@ -70,6 +70,7 @@ void function GamemodeAITdm_Init()
 	ScoreEvent_SetupEarnMeterValuesForMixedModes()
 	SetupGenericTDMChallenge()
 	SetAILethality( eAILethality.High )
+	SetPlayThreeMinuteMusic( true )
 
 	level.endOfRoundPlayerState = ENDROUND_FREE
 }

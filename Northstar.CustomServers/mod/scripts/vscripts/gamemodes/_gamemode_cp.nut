@@ -8,6 +8,7 @@ void function GamemodeCP_Init()
 	Hardpoints_Init()
 
 	ScoreEvent_SetupEarnMeterValuesForMixedModes()
+	SetPlayThreeMinuteMusic( true )
 
 	AddCallback_EntitiesDidLoad( EntitiesDidLoad_SpawnHardpoints )
 	AddCallback_OnPlayerKilled( Hardpoints_OnPlayerKilled_UpdateMedals )

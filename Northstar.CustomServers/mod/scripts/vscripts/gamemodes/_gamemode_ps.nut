@@ -18,6 +18,7 @@ void function GamemodePs_Init()
 	AddCallback_OnPlayerKilled( GiveScoreForPlayerKill )
 	ScoreEvent_SetupEarnMeterValuesForMixedModes()
 	SetupGenericFFAChallenge()
+	SetPlayThreeMinuteMusic( true )
 
 	file.militiaPreviousSpawnZones = [ null, null, null ]
 	file.imcPreviousSpawnZones = [ null, null, null ]

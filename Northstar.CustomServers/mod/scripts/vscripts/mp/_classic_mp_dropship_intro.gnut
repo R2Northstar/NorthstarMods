@@ -324,5 +324,5 @@ void function DelayedFrameFadeout( entity player )
 
 	WaitEndFrame()
 
-	ScreenFadeFromBlack( player, 1.0, 1.0 )
+	ScreenFadeFromBlack( player, 2.0, 0.5 )
 }

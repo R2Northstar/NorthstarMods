@@ -12,6 +12,7 @@ void function GamemodeTTDM_Init()
 	TrackTitanDamageInPlayerGameStat( PGS_ASSAULT_SCORE )
 	ScoreEvent_SetupEarnMeterValuesForMixedModes()
 	SetLoadoutGracePeriodEnabled( false )
+	SetPlayThreeMinuteMusic( true )
 
 	ClassicMP_SetCustomIntro( ClassicMP_DefaultNoIntro_Setup, ClassicMP_DefaultNoIntro_GetLength() )
 	ClassicMP_ForceDisableEpilogue( true )

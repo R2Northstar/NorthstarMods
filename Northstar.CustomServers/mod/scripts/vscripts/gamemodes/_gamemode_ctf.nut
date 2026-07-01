@@ -40,6 +40,7 @@ void function CaptureTheFlag_Init()
 
 	SetSwitchSidesBased( true )
 	SetGamemodeAllowsTeamSwitch( false )
+	SetPlayThreeMinuteMusic( true )
 
 	SetShouldUseRoundWinningKillReplay( true )
 	SetRoundWinningKillReplayKillClasses( false, false )
