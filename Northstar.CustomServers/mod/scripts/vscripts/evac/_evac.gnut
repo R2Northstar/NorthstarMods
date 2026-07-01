@@ -9,7 +9,6 @@ global function Evac
 global function EvacEpiloguePlayerCanBoard
 global function EvacEpilogueShouldLeaveEarly
 global function EvacEpilogueCompleted
-global function WaitAndDisableRespawn
 global function GetEvacNodeNumber
 
 const float EVAC_INITIAL_WAIT = 5.0
@@ -127,8 +126,6 @@ void function EvacEpilogue()
 
 	if ( canRunEvac )
 	{
-		thread WaitAndDisableRespawn()
-
 		// no players can evac? end match
 		thread CheckIfAnyPlayerLeft( GetOtherTeam( winner ) )
 
@@ -143,20 +140,7 @@ void function EvacEpilogue()
 		)
 	}
 	else
-	{
-		thread WaitAndDisableRespawn() // prevent respawns during the fade to black, should only be an issue if the match is a draw
 		thread EvacEpilogueCompleted( null ) // this is hacky but like, this also shouldn't really be hit in normal gameplay
-	}
-}
-
-void function WaitAndDisableRespawn()
-{
-	wait GAME_EPILOGUE_PLAYER_RESPAWN_LEEWAY
-	Riff_ForceSetEliminationMode( eEliminationMode.Pilots )
-
-	// clear any respawn availablity, or players are able to save there respawn for whenever they want
-	foreach ( entity player in GetPlayerArray() )
-		ClearRespawnAvailable( player )
 }
 
 bool function EvacEpiloguePlayerCanBoard( entity dropship, entity player )

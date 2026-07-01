@@ -214,16 +214,11 @@ void function SpectatorFunc_Default( entity player )
 		if ( targets.len() )
 		{
 			if ( result.next )
-			{
 				targetIndex = ( targetIndex + 1 ) % targets.len()
-			}
+			else if ( !targetIndex )
+				targetIndex = ( targets.len() - 1 )
 			else
-			{
-				if ( !targetIndex )
-					targetIndex = ( targets.len() - 1 )
-				else
-					targetIndex--
-			}
+				targetIndex--
 
 			if ( targetIndex >= targets.len() )
 				targetIndex = 0

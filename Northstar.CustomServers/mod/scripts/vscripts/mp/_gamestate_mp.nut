@@ -83,13 +83,14 @@ void function PIN_GameStart()
 void function GameEndTimeVarChanged()
 {
 	if ( GetGameState() <= eGameState.SuddenDeath )
-		file.timeLimitOverride = ( expect float( GetServerVar( "gameEndTime" ) ) - Time() ) / 60.0
+		file.timeLimitOverride = ( ( expect float( GetServerVar( "gameEndTime" ) ) - Time() ) - ( expect float( GetServerVar( "gameStartTime" ) ) - Time() ) ) / 60.0
 }
 
 void function RoundEndTimeVarChanged()
 {
 	if ( GetGameState() <= eGameState.SuddenDeath )
-		file.timeLimitOverride = ( expect float( GetServerVar( "roundEndTime" ) ) - Time() ) / 60.0
+		file.timeLimitOverride =
+			( ( expect float( GetServerVar( "roundEndTime" ) ) - Time() ) - ( expect float( GetServerVar( "roundStartTime" ) ) - Time() ) ) / 60.0
 }
 
 void function GameState_EntitiesDidLoad()
@@ -246,7 +247,7 @@ void function CodeCallback_GamerulesThink()
 
 		case eGameState.Epilogue:
 			// printt( "STATE: Epilogue" )
-			// GameRulesThink_Epilogue()
+			GameRulesThink_Epilogue()
 			break
 
 		case eGameState.Postmatch:
@@ -1166,6 +1167,36 @@ void function DialogueAnnounceSwitchingSides()
 }
 
 /*
+███████ ██████  ██ ██       ██████   ██████  ██    ██ ███████
+██      ██   ██ ██ ██      ██    ██ ██       ██    ██ ██
+█████   ██████  ██ ██      ██    ██ ██   ███ ██    ██ █████
+██      ██      ██ ██      ██    ██ ██    ██ ██    ██ ██
+███████ ██      ██ ███████  ██████   ██████   ██████  ███████
+*/
+
+function GameRulesThink_Epilogue()
+{
+	float epilogueRespawnTimeLimit = expect float( level.nv.gameEndTime ) + GAME_EPILOGUE_PLAYER_RESPAWN_LEEWAY
+
+	if ( Time() > epilogueRespawnTimeLimit )
+	{
+		array<entity> players = GetPlayerArray()
+
+		foreach ( entity player in players )
+		{
+			// allow players who died before the game ended and may still be watching kill replay a chance to respawn
+			if ( !IsAlive( player ) && player.p.postDeathThreadStartTime < epilogueRespawnTimeLimit )
+				continue
+
+			if ( !IsPlayerEliminated( player ) )
+				SetPlayerEliminated( player )
+		}
+	}
+	// if ( GameTime_TimeSpentInCurrentState() > GetEpilogueDuration() )
+	// 	SetGameState( eGameState.Postmatch )
+}
+
+/*
 ██████   ██████  ███████ ████████ ███    ███  █████  ████████  ██████ ██   ██
 ██   ██ ██    ██ ██         ██    ████  ████ ██   ██    ██    ██      ██   ██
 ██████  ██    ██ ███████    ██    ██ ████ ██ ███████    ██    ██      ███████
@@ -1480,7 +1511,7 @@ float function GetTimeLimit_ForGameMode()
 	if ( !GameMode_IsDefined( GAMETYPE ) )
 		return GetCurrentPlaylistVarFloat( "timelimit", 10 )
 
-	return GameMode_GetTimeLimit( GAMETYPE ).tofloat() // not a float for some reason?
+	return float( GameMode_GetTimeLimit( GAMETYPE ) ) // not a float for some reason?
 }
 
 void function DialoguePlayNormal()
@@ -2404,31 +2435,32 @@ int function GetMatchWinnerFromScore()
 {
 	int bestTeam = TEAM_UNASSIGNED
 	int bestScore = 0
-
+	array<int> teams = IsFFAGame() ? [ TEAM_UNASSIGNED ] : [ TEAM_IMC, TEAM_MILITIA ]
 	array<entity> players = GetPlayerArray()
+	bool matchingScores = false
 
 	foreach ( entity player in players )
+		if ( !teams.contains( player.GetTeam() ) )
+			teams.append( player.GetTeam() )
+
+	foreach ( int team in teams )
 	{
-		int playerTeam = player.GetTeam()
-
-		if ( playerTeam == bestTeam )
-			continue
-
-		int score = IsRoundBased() ? GameRules_GetTeamScore2( playerTeam ) : GameRules_GetTeamScore( playerTeam )
+		int score = IsRoundBased() ? GameRules_GetTeamScore2( team ) : GameRules_GetTeamScore( team )
 
 		if ( score > bestScore )
 		{
-			bestTeam = playerTeam
+			bestTeam = team
 			bestScore = score
+			matchingScores = false
 		}
 		else if ( ( score == bestScore ) && ( bestTeam != TEAM_UNASSIGNED ) )
 		{
 			// tie game:
-			return TEAM_UNASSIGNED
+			matchingScores = true
 		}
 	}
 
-	return bestTeam
+	return matchingScores ? TEAM_UNASSIGNED : bestTeam
 }
 
 void function PlayerWinStreak()
