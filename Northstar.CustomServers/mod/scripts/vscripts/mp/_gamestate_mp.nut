@@ -124,7 +124,7 @@ void function GameState_OnClientConnected( entity player )
 	{
 		if ( IsPrivateMatchSpectator( player ) )
 		{
-			RespawnPrivateMatchSpectator( player )
+			ScreenFadeFromBlack( player, 0.0, 0.0 )
 			return
 		}
 
@@ -723,6 +723,10 @@ void function GameStateEnter_Prematch()
 		}
 	}
 
+	foreach ( entity player in GetPlayerArray() )
+		if ( IsPrivateMatchSpectator( player ) )
+			ObserverEntities( player )
+
 	if ( !GetClassicMPMode() )
 		thread StartGameWithoutClassicMP()
 }
@@ -763,7 +767,7 @@ void function StartGameWithoutClassicMP()
 		{
 			if ( IsPrivateMatchSpectator( player ) )
 			{
-				RespawnPrivateMatchSpectator( player )
+				ScreenFadeFromBlack( player, 0.0, 0.0 )
 				continue
 			}
 
@@ -801,7 +805,7 @@ void function StartGameWithoutClassicMP()
 		if ( IsPrivateMatchSpectator( player ) )
 		{
 			if ( !respawnAsTitan )
-				RespawnPrivateMatchSpectator( player )
+				ScreenFadeFromBlack( player, 0.0, 0.0 )
 
 			continue
 		}
@@ -1180,6 +1184,8 @@ function GameRulesThink_Epilogue()
 
 	if ( Time() > epilogueRespawnTimeLimit )
 	{
+		Riff_ForceSetEliminationMode( eEliminationMode.Pilots )
+
 		array<entity> players = GetPlayerArray()
 
 		foreach ( entity player in players )
@@ -2307,8 +2313,6 @@ void function RoundWinningKillReplay() // Only Tested in MFD Pro for now! SHould
 	{
 		player.StopObserverMode()
 
-		HACKCleanupStaticObserverStuff( player )
-
 		player.Signal( "KillCamOver" )
 		player.SetPredictionEnabled( false ) // Disable prediction to prevent issues with replays, respawning code restores it automatically
 		player.ClearReplayDelay()
@@ -2437,7 +2441,6 @@ int function GetMatchWinnerFromScore()
 	int bestScore = 0
 	array<int> teams = IsFFAGame() ? [ TEAM_UNASSIGNED ] : [ TEAM_IMC, TEAM_MILITIA ]
 	array<entity> players = GetPlayerArray()
-	bool matchingScores = false
 
 	foreach ( entity player in players )
 		if ( !teams.contains( player.GetTeam() ) )
@@ -2451,16 +2454,15 @@ int function GetMatchWinnerFromScore()
 		{
 			bestTeam = team
 			bestScore = score
-			matchingScores = false
 		}
 		else if ( ( score == bestScore ) && ( bestTeam != TEAM_UNASSIGNED ) )
 		{
 			// tie game:
-			matchingScores = true
+			bestTeam = TEAM_UNASSIGNED
 		}
 	}
 
-	return matchingScores ? TEAM_UNASSIGNED : bestTeam
+	return bestTeam
 }
 
 void function PlayerWinStreak()

@@ -33,16 +33,6 @@ struct
 
 	void function TeamTitan_OnPickLoadout()
 	{
-		if ( !IsNewThread() )
-		{
-			thread TeamTitan_OnPickLoadout()
-			return
-		}
-
-		svGlobal.levelEnt.Signal( "SpectatorFuncChanged" )
-
-		WaitEndFrame()
-
 		StartUpdatingTeamTitanSelection()
 
 		foreach ( player in GetPlayerArray() )

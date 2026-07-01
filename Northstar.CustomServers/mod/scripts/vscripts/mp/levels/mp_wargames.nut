@@ -137,7 +137,7 @@ void function WargamesIntro_AddPlayer( entity player )
 	if ( !IsPrivateMatchSpectator( player ) )
 		thread PlayerWatchesWargamesIntro( player )
 	else
-		RespawnPrivateMatchSpectator( player )
+		ScreenFadeFromBlack( player, 0.0, 0.0 )
 }
 
 void function OnPrematchStart()
@@ -273,7 +273,7 @@ void function OnPrematchStart()
 		if ( !IsPrivateMatchSpectator( player ) )
 			thread PlayerWatchesWargamesIntro( player )
 		else
-			RespawnPrivateMatchSpectator( player )
+			ScreenFadeFromBlack( player, 0.0, 0.0 )
 
 	// 8 seconds of nothing until we start the pod sequence
 	wait 8.0

@@ -130,7 +130,7 @@ bool function IsPrivateMatchSpectator( entity player )
 {
 	// JFS
 	#if SERVER
-		if ( !player.p.clientScriptInitialized || !PrivateMatchSpectatorEnabled() )
+		if ( !player.p.clientScriptInitialized )
 			return false
 	#endif
 

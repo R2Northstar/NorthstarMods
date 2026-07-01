@@ -160,13 +160,6 @@
 			"RunOn": "SERVER && MP"
 		},
 		{
-			"Path": "mp/_spectator.gnut",
-			"RunOn": "SERVER && MP",
-			"ServerCallback": {
-				"After": "Spectator_Init"
-			}
-		},
-		{
 			"Path": "_loadouts_mp.gnut",
 			"RunOn": "SERVER && MP",
 			"ServerCallback": {

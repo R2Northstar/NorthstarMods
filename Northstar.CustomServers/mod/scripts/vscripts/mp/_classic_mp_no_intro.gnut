@@ -30,7 +30,7 @@ void function ClassicMP_DefaultNoIntro_Start()
 		if ( !IsPrivateMatchSpectator( player ) )
 			ClassicMP_DefaultNoIntro_SpawnPlayer( player )
 		else
-			RespawnPrivateMatchSpectator( player )
+			ScreenFadeFromBlack( player, 0.0, 0.0 )
 
 	while ( Time() < expect float( level.nv.gameStartTime ) )
 		WaitFrame()
@@ -55,7 +55,7 @@ void function ClassicMP_DefaultNoIntro_SpawnPlayer( entity player )
 
 	if ( IsPrivateMatchSpectator( player ) )
 	{
-		RespawnPrivateMatchSpectator( player )
+		ScreenFadeFromBlack( player, 0.0, 0.0 )
 		return
 	}
 

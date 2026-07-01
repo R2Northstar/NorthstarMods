@@ -35,7 +35,6 @@ void function GamemodeColiseum_Init()
 	Riff_ForceBoostAvailability( eBoostAvailability.Disabled )
 	Riff_ForceSetEliminationMode( eEliminationMode.Pilots )
 	SetLoadoutGracePeriodEnabled( false ) // prevent modifying loadouts with grace period
-	SetPrivateMatchSpectatorEnabled( false ) // private match spectator doesn't work well
 	SetWeaponDropsEnabled( false ) // removes all dropped weapons
 	SetGamemodeAllowsTeamSwitch( false )
 

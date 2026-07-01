@@ -21,6 +21,7 @@ global function SetGamemodeAllowsTeamSwitch
 
 global function SetRecalculateRespawnAsTitanStartPointCallback
 global function CheckForEmptyTeamVictory
+global function ObserverEntities
 
 struct
 {
@@ -39,6 +40,32 @@ struct
 void function BaseGametype_Init_MPSP()
 {
 	AddClientCommandCallback( "changeteam", ClientCommandCallbackChangeTeam )
+
+	// done in code
+	AddClientCommandCallback(
+		"spec_next",
+		bool function( entity player, array<string> args )
+		{
+			player.SetSpecReplayDelay( 0.1 )
+			return false
+		}
+	)
+	AddClientCommandCallback(
+		"spec_prev",
+		bool function( entity player, array<string> args )
+		{
+			player.SetSpecReplayDelay( 0.1 )
+			return false
+		}
+	)
+	AddClientCommandCallback(
+		"spec_mode",
+		bool function( entity player, array<string> args )
+		{
+			player.SetSpecReplayDelay( 0.1 )
+			return false
+		}
+	)
 
 	AddPostDamageCallback( "player", AddToTitanDamageStat )
 	AddPostDamageCallback( "npc_titan", AddToTitanDamageStat )
@@ -233,7 +260,7 @@ void function CodeCallback_OnClientConnectionCompleted( entity player )
 	if ( IsPrivateMatchSpectator( player ) )
 	{
 		SetPlayerEliminated( player )
-		InitialisePrivateMatchSpectatorPlayer( player )
+		ObserverEntities( player )
 		return
 	}
 	else
@@ -256,7 +283,7 @@ void function CodeCallback_OnClientConnectionCompleted( entity player )
 		else
 		{
 			SetPlayerEliminated( player )
-			InitialisePrivateMatchSpectatorPlayer( player )
+			ObserverEntities( player )
 		}
 	}
 }
@@ -279,7 +306,7 @@ void function SpectateTTSMenuPlayer( entity player )
 				else
 				{
 					SetPlayerEliminated( player )
-					InitialisePrivateMatchSpectatorPlayer( player )
+					ObserverEntities( player )
 				}
 			}
 		}
@@ -541,9 +568,7 @@ void function PostDeathThread_MP( entity player, var damageInfo, bool gamePlayin
 		TitanLoadoutDef loadout = GetTitanLoadoutForPlayer( player )
 		bool spawnAsTitan = expect bool( player.GetPersistentVar( "spawnAsTitan" ) )
 
-		if ( IsPrivateMatchSpectator( player ) ) // Spectators can still die from kill triggers
-			InitialisePrivateMatchSpectatorPlayer( player )
-		else if ( spawnAsTitan && IsReplacementTitanAvailable( player ) || Riff_SpawnAsTitan() == eSpawnAsTitan.Always || svGlobal.forceSpawnAsTitan )
+		if ( spawnAsTitan && IsReplacementTitanAvailable( player ) || Riff_SpawnAsTitan() == eSpawnAsTitan.Always || svGlobal.forceSpawnAsTitan )
 			thread RespawnAsTitan( player )
 		else
 			RespawnAsPilot( player )
@@ -553,8 +578,52 @@ void function PostDeathThread_MP( entity player, var damageInfo, bool gamePlayin
 		if ( shouldDoReplay && player.IsWatchingKillReplay() )
 			player.WaitSignal( "KillCamOver" )
 
-		InitialisePrivateMatchSpectatorPlayer( player )
+		ObserverEntities( player )
 	}
+}
+
+void function ObserverEntities( entity player )
+{
+	if ( player.GetObserverMode() == OBS_MODE_CHASE )
+		return
+
+	int evacNodeNumber = GetEvacNodeNumber()
+	entity escapeNode = GetEnt( "escape_node" + evacNodeNumber )
+	entity specCam = GetEnt( "spec_cam" + evacNodeNumber )
+	entity target
+	entity targetView
+
+	if ( !IsValid( escapeNode ) )
+		escapeNode = GetEnt( "evac_location" + evacNodeNumber )
+
+	if ( IsValid( escapeNode ) && escapeNode.HasKey( "target" ) && IsValid( GetEnt( expect string( escapeNode.kv.target ) ) ) )
+	{
+		target = GetEnt( expect string( escapeNode.kv.target ) )
+	}
+	else if ( IsValid( specCam ) )
+	{
+		target = specCam
+	}
+	else
+	{
+		target = GetEntArrayByClass_Expensive( "info_intermission" )[ 0 ]
+
+		if ( target.HasKey( "target" ) )
+			target = GetEnt( expect string( target.kv.target ) )
+	}
+
+	if ( IsValid( target ) )
+	{
+		player.SetObserverModeStaticPosition( target.GetOrigin() )
+
+		if ( IsValid( targetView ) )
+			player.SetObserverModeStaticAngles( VectorToAngles( targetView.GetOrigin() - target.GetOrigin() ) )
+		else
+			player.SetObserverModeStaticAngles( target.GetAngles() )
+	}
+
+	player.StartObserverMode( OBS_MODE_CHASE )
+	player.SetObserverTarget( null ) // makes code look for a player to chase
 }
 
 // idk if this is a good delay or if it matches vanilla

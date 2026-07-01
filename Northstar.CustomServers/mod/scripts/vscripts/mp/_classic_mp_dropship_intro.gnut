@@ -60,7 +60,7 @@ void function DropshipIntro_OnClientConnected( entity player )
 	{
 		if ( IsPrivateMatchSpectator( player ) )
 		{
-			RespawnPrivateMatchSpectator( player )
+			ScreenFadeFromBlack( player, 0.0, 0.0 )
 			return
 		}
 
@@ -137,7 +137,7 @@ void function OnPrematchStart()
 			ResetPlayerCooldowns( player ) // Prevention of case they used abilities or grenades near round end
 		}
 		else
-			RespawnPrivateMatchSpectator( player )
+			ScreenFadeFromBlack( player, 0.0, 0.0 )
 	}
 
 	thread EndIntroWhenFinished()
@@ -205,6 +205,7 @@ void function SpawnPlayerIntoDropship( entity player, int playerDropshipIndex, e
 	player.EndSignal( "OnDeath" )
 
 	player.MovementDisable()
+	player.SetIsValidChaseObserverTarget( false )
 
 	HolsterViewModelAndDisableWeapons( player )
 	thread DelayedFrameFadeout( player )
@@ -282,6 +283,7 @@ void function PlayerJumpsFromDropship( entity player )
 			{
 				// show weapon viewmodel and hud and let them move again
 				player.MovementEnable()
+				player.SetIsValidChaseObserverTarget( true )
 
 				DeployViewModelAndEnableWeapons( player )
 				RemoveCinematicFlag( player, CE_FLAG_INTRO )

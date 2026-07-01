@@ -215,8 +215,6 @@ void function Evac( int evacTeam, float initialWait, float arrivalTime, float wa
 		file.currentEvacNode = evacNodeNumber + 1
 	}
 
-	svGlobal.levelEnt.Signal( "SpectatorFuncChanged" )
-
 	// setup client evac position
 	file.evacIcon = CreateEntity( "info_target" )
 	file.evacIcon.SetOrigin( evacNode.GetOrigin() )
@@ -506,6 +504,7 @@ void function AddPlayerToEvacDropship( entity dropship, entity player )
 	player.ClearInvulnerable() // being invulnerable will make EvacPlayerDamaged not get called
 	player.UnforceCrouch()
 	player.ForceStand()
+	player.SetIsValidChaseObserverTarget( false )
 
 	AddEntityCallback_OnDamaged( player, EvacPlayerDamaged ) // prevents all damage while attached to dropship
 	Remote_CallFunction_NonReplay( player, "ServerCallback_CreateDropShipIntLighting", dropship.GetEncodedEHandle(), dropship.GetTeam() )
