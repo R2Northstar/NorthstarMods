@@ -239,8 +239,11 @@ bool function ClientCommandCallback_SetPersistentLoadoutValue( entity player, ar
 	if (
 		( args0 == "pilot" && ( !IsValidPilotLoadoutIndex( args1int ) || !IsValidPilotLoadoutProperty( args2 ) ) ) ||
 		(
-			args0 == "titan" && ( !IsValidTitanLoadoutIndex( args1int ) || !IsValidTitanLoadoutProperty( args2 ) ) ||
-				!IsTitanLoadoutAvailable( player, PersistenceGetEnumItemNameForIndex( "titanClasses", args1int ) ) || args2 == "name"
+			args0 == "titan" &&
+				(
+					( !IsValidTitanLoadoutIndex( args1int ) || !IsValidTitanLoadoutProperty( args2 ) ) ||
+						!IsTitanLoadoutAvailable( player, PersistenceGetEnumItemNameForIndex( "titanClasses", args1int ) ) || args2 == "name"
+				)
 		)
 	)
 	{
