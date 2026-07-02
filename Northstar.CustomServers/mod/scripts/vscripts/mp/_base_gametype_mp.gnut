@@ -220,7 +220,7 @@ void function CodeCallback_OnClientConnectionCompleted( entity player )
 		return
 	}
 
-	if ( !IsFDMode( GAMETYPE ) )
+	if ( !IsFDMode( GetConVarString( "mp_gamemode" ) ) )
 	{
 		// reset this for non-fd modes
 		// for some reason the postgame scoreboard uses this to
