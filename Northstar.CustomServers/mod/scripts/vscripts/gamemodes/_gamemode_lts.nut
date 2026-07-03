@@ -59,11 +59,15 @@ void function LTSChallengeForPlayerKilled( entity victim, entity attacker, var d
 	if ( victim.IsPlayer() && attacker in file.pilotstreak )
 	{
 		file.pilotstreak[ attacker ]++
+
 		if ( file.pilotstreak[ attacker ] >= 2 && !HasPlayerCompletedMeritScore( attacker ) )
 		{
 			AddPlayerScore( attacker, "ChallengeLTS" )
 			SetPlayerChallengeMeritScore( attacker )
 		}
+
+		if ( GetPlayerArrayOfTeam_Alive( victim.GetTeam() ).len() == 1 ) // last titan on team
+			PlayFactionDialogueToPlayer( "lts_playerLastTitanOnTeam", GetPlayerArrayOfTeam_Alive( victim.GetTeam() )[ 0 ] )
 	}
 }
 

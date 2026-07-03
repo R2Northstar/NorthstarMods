@@ -283,6 +283,7 @@ void function CodeCallback_OnClientConnectionCompleted( entity player )
 		else
 		{
 			SetPlayerEliminated( player )
+			SendHudMessage( player, "#GAMEMODE_RESPAWN_NEXT_ROUND", -1, 0.4, 255, 255, 255, 255, 1.0, 6.0, 1.0 )
 			ObserverEntities( player )
 		}
 	}
@@ -306,6 +307,7 @@ void function SpectateTTSMenuPlayer( entity player )
 				else
 				{
 					SetPlayerEliminated( player )
+					SendHudMessage( player, "#GAMEMODE_RESPAWN_NEXT_ROUND", -1, 0.4, 255, 255, 255, 255, 1.0, 6.0, 1.0 )
 					ObserverEntities( player )
 				}
 			}
@@ -568,7 +570,9 @@ void function PostDeathThread_MP( entity player, var damageInfo, bool gamePlayin
 		TitanLoadoutDef loadout = GetTitanLoadoutForPlayer( player )
 		bool spawnAsTitan = expect bool( player.GetPersistentVar( "spawnAsTitan" ) )
 
-		if ( spawnAsTitan && IsReplacementTitanAvailable( player ) || Riff_SpawnAsTitan() == eSpawnAsTitan.Always || svGlobal.forceSpawnAsTitan )
+		if ( IsPlayerEliminated( player ) && GetGameState() == eGameState.Playing )
+			SendHudMessage( player, "#GAMEMODE_RESPAWN_NEXT_ROUND", -1, 0.4, 255, 255, 255, 255, 1.0, 6.0, 1.0 )
+		else if ( spawnAsTitan && IsReplacementTitanAvailable( player ) || Riff_SpawnAsTitan() == eSpawnAsTitan.Always || svGlobal.forceSpawnAsTitan )
 			thread RespawnAsTitan( player )
 		else
 			RespawnAsPilot( player )
