@@ -288,7 +288,11 @@ void function CheckFrontlineOverrun( int losingTeam )
 		return
 
 	int otherTeam = GetOtherTeam( losingTeam )
-	array<float> teamScore = [ 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0 ]
+	array<float> teamScore = []
+
+	for ( int i = 0; i < TEAM_COUNT; ++i )
+		teamScore.append( 0.0 )
+
 	table frontline = file.currentFrontline
 	vector center = expect vector( frontline.frontlineCenter )
 	vector combatDir = GetTeamCombatDir( frontline, otherTeam )
