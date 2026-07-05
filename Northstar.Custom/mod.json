@@ -59,7 +59,7 @@
 		},
 		{
 			"Path": "gamemodes/sh_gamemode_chamber.nut",
-			"RunOn": "UI || MP",
+			"RunOn": "MP || UI",
 			"ClientCallback": {
 				"Before": "Sh_GamemodeChamber_Init"
 			},
@@ -80,7 +80,7 @@
 		},
 		{
 			"Path": "gamemodes/sh_gamemode_hidden.nut",
-			"RunOn": "UI || MP",
+			"RunOn": "MP || UI",
 			"ClientCallback": {
 				"Before": "Sh_GamemodeHidden_Init"
 			},
@@ -101,7 +101,7 @@
 		},
 		{
 			"Path": "gamemodes/sh_gamemode_sns.gnut",
-			"RunOn": "UI || MP",
+			"RunOn": "MP || UI",
 			"ServerCallback": {
 				"Before": "SNSMode_Init"
 			},
@@ -126,7 +126,7 @@
 		},
 		{
 			"Path": "gamemodes/sh_gamemode_fw_custom.nut",
-			"RunOn": "UI || MP",
+			"RunOn": "MP || UI",
 			"ClientCallback": {
 				"Before": "SHCreateGamemodeFW_Init"
 			},
@@ -163,7 +163,7 @@
 		},
 		{
 			"Path": "gamemodes/sh_gamemode_gg.gnut",
-			"RunOn": "UI || MP",
+			"RunOn": "MP || UI",
 			"ClientCallback": {
 				"Before": "Sh_GamemodeGG_Init"
 			},
@@ -184,7 +184,7 @@
 		},
 		{
 			"Path": "gamemodes/sh_gamemode_tt.gnut",
-			"RunOn": "UI || MP",
+			"RunOn": "MP || UI",
 			"ClientCallback": {
 				"Before": "Sh_GamemodeTT_Init"
 			},
@@ -205,7 +205,7 @@
 		},
 		{
 			"Path": "gamemodes/sh_gamemode_inf.gnut",
-			"RunOn": "UI || MP",
+			"RunOn": "MP || UI",
 			"ClientCallback": {
 				"Before": "Sh_GamemodeInfection_Init"
 			},
@@ -233,7 +233,7 @@
 		},
 		{
 			"Path": "gamemodes/sh_gamemode_kr.gnut",
-			"RunOn": "UI || MP",
+			"RunOn": "MP || UI",
 			"ClientCallback": {
 				"Before": "Sh_GamemodeKR_Init"
 			},
@@ -254,7 +254,7 @@
 		},
 		{
 			"Path": "gamemodes/sh_gamemode_fastball.gnut",
-			"RunOn": "UI || MP",
+			"RunOn": "MP || UI",
 			"ClientCallback": {
 				"Before": "Sh_GamemodeFastball_Init"
 			},
@@ -279,7 +279,7 @@
 		},
 		{
 			"Path": "gamemodes/sh_gamemode_hs.gnut",
-			"RunOn": "UI || MP",
+			"RunOn": "MP || UI",
 			"ClientCallback": {
 				"Before": "Sh_GamemodeHideAndSeek_Init"
 			},
@@ -300,7 +300,7 @@
 		},
 		{
 			"Path": "gamemodes/sh_gamemode_ctf_comp.gnut",
-			"RunOn": "UI || MP",
+			"RunOn": "MP || UI",
 			"ClientCallback": {
 				"Before": "ShGamemodeCTFComp_Init"
 			},
@@ -313,7 +313,7 @@
 		},
 		{
 			"Path": "gamemodes/sh_gamemode_tffa.gnut",
-			"RunOn": "UI || MP",
+			"RunOn": "MP || UI",
 			"ClientCallback": {
 				"Before": "Sh_GamemodeTFFA_Init"
 			},
