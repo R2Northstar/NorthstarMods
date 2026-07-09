@@ -628,6 +628,9 @@ void function ObserverEntities( entity player )
 
 	player.StartObserverMode( OBS_MODE_CHASE )
 	player.SetObserverTarget( null ) // makes code look for a player to chase
+
+	if ( player.spawnTime != 0 ) // if a client just connected setting the replay delay will cause it to reconnect
+		player.SetSpecReplayDelay( 0.1 )
 }
 
 // idk if this is a good delay or if it matches vanilla
