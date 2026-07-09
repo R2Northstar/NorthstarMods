@@ -141,11 +141,8 @@ void function AnimateBuddy( entity buddy )
 
 void function AddPlayerToFastballIntro( entity player )
 {
-	if ( GetGameState() == eGameState.Prematch )
-		if ( !IsPrivateMatchSpectator( player ) )
-			thread FastballPlayer( player )
-		else
-			ScreenFadeFromBlack( player, 0.0, 0.0 )
+	if ( GetGameState() == eGameState.Prematch && !IsPrivateMatchSpectator( player ) )
+		thread FastballPlayer( player )
 }
 
 void function FastballPlayer( entity player )

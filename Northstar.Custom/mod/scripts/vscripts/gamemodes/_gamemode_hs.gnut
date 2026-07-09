@@ -51,14 +51,8 @@ void function AddDroppodSpawn( entity spawn )
 
 void function AddPlayerToHideAndSeekIntro( entity player )
 {
-	if ( GetGameState() < eGameState.Prematch || Time() - file.hidingStartTime > file.hidingTime )
+	if ( GetGameState() < eGameState.Prematch || Time() - file.hidingStartTime > file.hidingTime || IsPrivateMatchSpectator( player ) )
 		return
-
-	if ( IsPrivateMatchSpectator( player ) )
-	{
-		ScreenFadeFromBlack( player, 0.0, 0.0 )
-		return
-	}
 
 	// seeker/hider autobalance
 	// try to have 1/6 of players be seekers

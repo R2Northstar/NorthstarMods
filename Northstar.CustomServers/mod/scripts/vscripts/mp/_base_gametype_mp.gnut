@@ -46,7 +46,6 @@ void function BaseGametype_Init_MPSP()
 		"spec_next",
 		bool function( entity player, array<string> args )
 		{
-			player.SetSpecReplayDelay( 0.1 )
 			return false
 		}
 	)
@@ -54,7 +53,6 @@ void function BaseGametype_Init_MPSP()
 		"spec_prev",
 		bool function( entity player, array<string> args )
 		{
-			player.SetSpecReplayDelay( 0.1 )
 			return false
 		}
 	)
@@ -62,7 +60,6 @@ void function BaseGametype_Init_MPSP()
 		"spec_mode",
 		bool function( entity player, array<string> args )
 		{
-			player.SetSpecReplayDelay( 0.1 )
 			return false
 		}
 	)
@@ -260,7 +257,10 @@ void function CodeCallback_OnClientConnectionCompleted( entity player )
 	if ( IsPrivateMatchSpectator( player ) )
 	{
 		SetPlayerEliminated( player )
-		ObserverEntities( player )
+
+		if ( GetGameState() >= eGameState.Prematch )
+			thread ObserverEntities( player )
+
 		return
 	}
 	else
@@ -284,7 +284,7 @@ void function CodeCallback_OnClientConnectionCompleted( entity player )
 		{
 			SetPlayerEliminated( player )
 			SendHudMessage( player, "#GAMEMODE_RESPAWN_NEXT_ROUND", -1, 0.4, 255, 255, 255, 255, 1.0, 6.0, 1.0 )
-			ObserverEntities( player )
+			thread ObserverEntities( player )
 		}
 	}
 }
@@ -308,7 +308,7 @@ void function SpectateTTSMenuPlayer( entity player )
 				{
 					SetPlayerEliminated( player )
 					SendHudMessage( player, "#GAMEMODE_RESPAWN_NEXT_ROUND", -1, 0.4, 255, 255, 255, 255, 1.0, 6.0, 1.0 )
-					ObserverEntities( player )
+					thread ObserverEntities( player )
 				}
 			}
 		}
@@ -582,14 +582,19 @@ void function PostDeathThread_MP( entity player, var damageInfo, bool gamePlayin
 		if ( shouldDoReplay && player.IsWatchingKillReplay() )
 			player.WaitSignal( "KillCamOver" )
 
-		ObserverEntities( player )
+		thread ObserverEntities( player )
 	}
 }
 
 void function ObserverEntities( entity player )
 {
-	if ( player.GetObserverMode() == OBS_MODE_CHASE )
-		return
+	if ( Time() - player.p.connectTime <= FIRST_PERSON_SPECTATOR_DELAY + 0.1 ) // client needs 0.1 extra time
+		WaitFrame() // wait FIRST_PERSON_SPECTATOR_DELAY + 0.1
+
+	if ( DoPrematchWarpSound() )
+		wait 0.15 // need to wait or else the client's warp sound dropship doesn't get destroyed
+
+	ScreenFadeFromBlack( player, 0.0, 0.0 )
 
 	int evacNodeNumber = GetEvacNodeNumber()
 	entity escapeNode = GetEnt( "escape_node" + evacNodeNumber )
@@ -616,6 +621,8 @@ void function ObserverEntities( entity player )
 			target = GetEnt( expect string( target.kv.target ) )
 	}
 
+	player.SetObserverTarget( null ) // makes code look for a player to chase
+
 	if ( IsValid( target ) )
 	{
 		player.SetObserverModeStaticPosition( target.GetOrigin() )
@@ -626,11 +633,8 @@ void function ObserverEntities( entity player )
 			player.SetObserverModeStaticAngles( target.GetAngles() )
 	}
 
+	player.SetSpecReplayDelay( FIRST_PERSON_SPECTATOR_DELAY )
 	player.StartObserverMode( OBS_MODE_CHASE )
-	player.SetObserverTarget( null ) // makes code look for a player to chase
-
-	if ( player.spawnTime != 0 ) // if a client just connected setting the replay delay will cause it to reconnect
-		player.SetSpecReplayDelay( 0.1 )
 }
 
 // idk if this is a good delay or if it matches vanilla

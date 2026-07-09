@@ -123,10 +123,7 @@ void function GameState_OnClientConnected( entity player )
 	if ( !GetClassicMPMode() && GetGameState() == eGameState.Prematch )
 	{
 		if ( IsPrivateMatchSpectator( player ) )
-		{
-			ScreenFadeFromBlack( player, 0.0, 0.0 )
 			return
-		}
 
 		if ( ShouldIntroSpawnAsTitan() )
 		{
@@ -725,7 +722,7 @@ void function GameStateEnter_Prematch()
 
 	foreach ( entity player in GetPlayerArray() )
 		if ( IsPrivateMatchSpectator( player ) )
-			ObserverEntities( player )
+			thread ObserverEntities( player )
 
 	if ( !GetClassicMPMode() )
 		thread StartGameWithoutClassicMP()
@@ -766,10 +763,7 @@ void function StartGameWithoutClassicMP()
 		foreach ( entity player in GetPlayerArray() )
 		{
 			if ( IsPrivateMatchSpectator( player ) )
-			{
-				ScreenFadeFromBlack( player, 0.0, 0.0 )
 				continue
-			}
 
 			entity intermissionCam = GetEntArrayByClass_Expensive( "info_intermission" )[ 0 ]
 			entity intermissionCamView
@@ -803,12 +797,7 @@ void function StartGameWithoutClassicMP()
 	foreach ( entity player in GetPlayerArray() )
 	{
 		if ( IsPrivateMatchSpectator( player ) )
-		{
-			if ( !respawnAsTitan )
-				ScreenFadeFromBlack( player, 0.0, 0.0 )
-
 			continue
-		}
 
 		if ( respawnAsTitan )
 		{

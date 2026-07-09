@@ -59,10 +59,7 @@ void function DropshipIntro_OnClientConnected( entity player )
 	if ( GetGameState() == eGameState.Prematch )
 	{
 		if ( IsPrivateMatchSpectator( player ) )
-		{
-			ScreenFadeFromBlack( player, 0.0, 0.0 )
 			return
-		}
 
 		if ( PlayerCanSpawn( player ) )
 			DoRespawnPlayer( player, null )
@@ -136,8 +133,6 @@ void function OnPrematchStart()
 			PutPlayerInDropship( player )
 			ResetPlayerCooldowns( player ) // Prevention of case they used abilities or grenades near round end
 		}
-		else
-			ScreenFadeFromBlack( player, 0.0, 0.0 )
 	}
 
 	thread EndIntroWhenFinished()
