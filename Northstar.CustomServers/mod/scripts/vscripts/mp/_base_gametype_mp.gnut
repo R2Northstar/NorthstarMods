@@ -155,8 +155,6 @@ void function CodeCallback_OnClientConnectionStarted( entity player )
 
 	player.s.meleeSlowMoEndTime <- 0.0
 
-	player.p.connectTime = Time()
-
 	Assert( !player._entityVars )
 	InitEntityVars( player )
 
@@ -227,6 +225,7 @@ void function CodeCallback_OnClientConnectionCompleted( entity player )
 		player.SetPersistentVar( "lastFDTitanRef", "" )
 	}
 
+	player.p.connectTime = Time()
 	player.hasConnected = true
 
 	InitMeleeAnimEventCallbacks( player )
@@ -588,10 +587,14 @@ void function PostDeathThread_MP( entity player, var damageInfo, bool gamePlayin
 
 void function ObserverEntities( entity player )
 {
-	if ( Time() - player.p.connectTime <= FIRST_PERSON_SPECTATOR_DELAY + 0.1 ) // client needs 0.1 extra time
-		WaitFrame() // wait FIRST_PERSON_SPECTATOR_DELAY + 0.1
+	player.EndSignal( "OnDestroy" )
 
-	if ( DoPrematchWarpSound() )
+	bool warpSoundWait = DoPrematchWarpSound() && GetGameState() == eGameState.Prematch && player.p.connectTime != Time()
+
+	while ( Time() - player.p.connectTime <= FIRST_PERSON_SPECTATOR_DELAY )
+		WaitFrame() // wait FIRST_PERSON_SPECTATOR_DELAY
+
+	if ( warpSoundWait )
 		wait 0.15 // need to wait or else the client's warp sound dropship doesn't get destroyed
 
 	ScreenFadeFromBlack( player, 0.0, 0.0 )
