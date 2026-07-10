@@ -108,7 +108,8 @@ void function HiderIntroThread( entity player )
 	player.EndSignal( "OnDestroy" )
 	// need to wait a frame in case we're joining after eGameState.Playing, in which case we'll be turned into a spectator on first frame
 	WaitFrame()
-	RespawnAsPilot( player )
+
+	DecideRespawnPlayer( player )
 
 	wait ( file.hidingStartTime + file.hidingTime ) - Time()
 

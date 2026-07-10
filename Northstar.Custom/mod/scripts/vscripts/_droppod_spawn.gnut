@@ -29,7 +29,7 @@ void function SpawnPlayersInDropPod( array<entity> players, vector targetOrigin,
 	pod.EndSignal( "OnDestroy" )
 
 	file.droppods.append( pod )
-	svGlobal.levelEnt.EndSignal( "CleanUpEntitiesForRoundEnd" )
+	svGlobal.levelEnt.EndSignal( "ClearPlayers" )
 
 	// TODO: we need to make a door for this, CreateDropPodDoor in _droppod_fireteam is just busted for some reason tho
 

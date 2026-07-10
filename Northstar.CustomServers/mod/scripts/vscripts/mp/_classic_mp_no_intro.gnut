@@ -68,7 +68,7 @@ void function ClassicMP_DefaultNoIntro_PilotSpawnPlayer( entity player )
 	AddCinematicFlag( player, CE_FLAG_CLASSIC_MP_SPAWNING )
 
 	if ( PlayerCanSpawn( player ) )
-		RespawnAsPilot( player )
+		DecideRespawnPlayer( player )
 
 	player.FreezeControlsOnServer()
 
@@ -85,22 +85,7 @@ void function ClassicMP_DefaultNoIntro_TitanSpawnPlayer( entity player )
 {
 	player.EndSignal( "OnDestroy" )
 
-	entity intermissionCam = GetEntArrayByClass_Expensive( "info_intermission" )[ 0 ]
-	entity intermissionCamView
-
-	if ( intermissionCam.HasKey( "target" ) )
-		intermissionCamView = GetEnt( expect string( intermissionCam.kv.target ) )
-
-	player.SetOrigin( intermissionCam.GetOrigin() )
-	player.SetObserverModeStaticPosition( intermissionCam.GetOrigin() )
-
-	if ( IsValid( intermissionCamView ) )
-		player.SetObserverModeStaticAngles( VectorToAngles( intermissionCamView.GetOrigin() - intermissionCam.GetOrigin() ) )
-	else
-		player.SetObserverModeStaticAngles( intermissionCam.GetAngles() )
-
-	player.StartObserverMode( OBS_MODE_STATIC_LOCKED )
-	player.SetObserverTarget( null )
+	PutPlayerInObserverMode( player, OBS_MODE_STATIC_LOCKED )
 
 	WaitEndFrame()
 
@@ -112,14 +97,5 @@ void function ClassicMP_DefaultNoIntro_TitanSpawnPlayer( entity player )
 		while ( Time() < expect float( level.nv.gameStartTime ) ) // Wait until match actually starts to spawn them
 			WaitFrame()
 
-	if ( PlayerCanSpawn( player ) )
-	{
-		delaythread( 0.0001 ) function() : ( player )
-		{
-			if ( IsValidPlayer( player ) )
-				player.StopObserverMode()
-		}()
-
-		RespawnAsTitan( player )
-	}
+	DecideRespawnPlayer( player )
 }

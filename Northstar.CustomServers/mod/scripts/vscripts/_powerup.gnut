@@ -43,7 +43,7 @@ void function RespawnPowerups()
 
 void function PowerupSpawnerThink( entity spawnpoint, PowerUp powerupDef )
 {
-	svGlobal.levelEnt.EndSignal( "CleanUpEntitiesForRoundEnd" )
+	svGlobal.levelEnt.EndSignal( "ClearPlayers" )
 
 	while ( true )
 	{

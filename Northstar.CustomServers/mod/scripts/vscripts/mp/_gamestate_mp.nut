@@ -30,8 +30,9 @@ global function ForceEliminationModeWinner
 global function ShouldClearPlayersInWinnerDetermined
 global function PerfInitLabels
 global function GetConnectedPlayers
-global function CleanUpEntitiesForRoundEnd
+global function ClearPlayers
 global function GetMatchWinnerFromScore
+global function RoundScoreLimit_Complete
 
 struct
 {
@@ -77,7 +78,7 @@ void function PIN_GameStart()
 	AddCallback_EntityChangedTeam( "player", OnPlayerChangedTeam )
 	PilotBattery_SetMaxCount( GetCurrentPlaylistVarInt( "pilot_battery_inventory_size", 1 ) ) // Game unironically supports players carrying more than one battery
 
-	RegisterSignal( "CleanUpEntitiesForRoundEnd" )
+	RegisterSignal( "ClearPlayers" )
 }
 
 void function GameEndTimeVarChanged()
@@ -127,22 +128,7 @@ void function GameState_OnClientConnected( entity player )
 
 		if ( ShouldIntroSpawnAsTitan() )
 		{
-			entity intermissionCam = GetEntArrayByClass_Expensive( "info_intermission" )[ 0 ]
-			entity intermissionCamView
-
-			if ( intermissionCam.HasKey( "target" ) )
-				intermissionCamView = GetEnt( expect string( intermissionCam.kv.target ) )
-
-			player.SetOrigin( intermissionCam.GetOrigin() )
-			player.SetObserverModeStaticPosition( intermissionCam.GetOrigin() )
-
-			if ( IsValid( intermissionCamView ) )
-				player.SetObserverModeStaticAngles( VectorToAngles( intermissionCamView.GetOrigin() - intermissionCam.GetOrigin() ) )
-			else
-				player.SetObserverModeStaticAngles( intermissionCam.GetAngles() )
-
-			player.StartObserverMode( OBS_MODE_STATIC_LOCKED )
-			player.SetObserverTarget( null )
+			PutPlayerInObserverMode( player, OBS_MODE_STATIC_LOCKED )
 
 			thread void function() : ( player )
 			{
@@ -158,7 +144,7 @@ void function GameState_OnClientConnected( entity player )
 		if ( GameTime_TimeLeftSeconds() > 1.0 )
 			AddCinematicFlag( player, CE_FLAG_CLASSIC_MP_SPAWNING )
 
-		RespawnAsPilot( player )
+		DecideRespawnPlayer( player )
 		HolsterViewModelAndDisableWeapons( player )
 		ScreenFadeFromBlack( player, 0.0 )
 		DeployViewModelAndEnableWeapons( player )
@@ -720,9 +706,15 @@ void function GameStateEnter_Prematch()
 		}
 	}
 
-	foreach ( entity player in GetPlayerArray() )
+	array<entity> players = GetPlayerArray()
+
+	foreach ( entity player in players )
+	{
 		if ( IsPrivateMatchSpectator( player ) )
-			thread ObserverEntities( player )
+			thread ObserverThread( player )
+		else
+			ClearPlayerEliminated( player )
+	}
 
 	if ( !GetClassicMPMode() )
 		thread StartGameWithoutClassicMP()
@@ -765,22 +757,7 @@ void function StartGameWithoutClassicMP()
 			if ( IsPrivateMatchSpectator( player ) )
 				continue
 
-			entity intermissionCam = GetEntArrayByClass_Expensive( "info_intermission" )[ 0 ]
-			entity intermissionCamView
-
-			if ( intermissionCam.HasKey( "target" ) )
-				intermissionCamView = GetEnt( expect string( intermissionCam.kv.target ) )
-
-			player.SetOrigin( intermissionCam.GetOrigin() )
-			player.SetObserverModeStaticPosition( intermissionCam.GetOrigin() )
-
-			if ( IsValid( intermissionCamView ) )
-				player.SetObserverModeStaticAngles( VectorToAngles( intermissionCamView.GetOrigin() - intermissionCam.GetOrigin() ) )
-			else
-				player.SetObserverModeStaticAngles( intermissionCam.GetAngles() )
-
-			player.StartObserverMode( OBS_MODE_STATIC_LOCKED )
-			player.SetObserverTarget( null )
+			PutPlayerInObserverMode( player, OBS_MODE_STATIC_LOCKED )
 
 			thread void function() : ( player )
 			{
@@ -799,20 +776,10 @@ void function StartGameWithoutClassicMP()
 		if ( IsPrivateMatchSpectator( player ) )
 			continue
 
-		if ( respawnAsTitan )
-		{
-			delaythread( 0.0001 ) function() : ( player )
-			{
-				if ( IsValidPlayer( player ) )
-					player.StopObserverMode()
-			}()
+		if ( !respawnAsTitan )
+			AddCinematicFlag( player, CE_FLAG_CLASSIC_MP_SPAWNING )
 
-			thread RespawnAsTitan( player )
-			continue
-		}
-
-		AddCinematicFlag( player, CE_FLAG_CLASSIC_MP_SPAWNING )
-		RespawnAsPilot( player )
+		DecideRespawnPlayer( player )
 		HolsterViewModelAndDisableWeapons( player )
 		ScreenFadeFromBlack( player, 0.0 )
 		DeployViewModelAndEnableWeapons( player )
@@ -843,6 +810,7 @@ void function GameStateEnter_Playing()
 
 	foreach ( entity player in players )
 	{
+		player.StopObserverMode()
 		player.UnfreezeControlsOnServer()
 
 		UnMuteAll( player )
@@ -1018,7 +986,7 @@ void function GameRulesThink_WinnerDetermined()
 	{
 		if ( ShouldClearPlayersInWinnerDetermined() && GameTime_TimeSpentInCurrentState() > GetWinnerDeterminedWait() - CLEAR_PLAYERS_BUFFER && !level.clearedPlayers )
 		{
-			CleanUpEntitiesForRoundEnd()
+			ClearPlayers()
 
 			level.clearedPlayers = true
 		}
@@ -1128,7 +1096,7 @@ void function GameRulesThink_SwitchingSides()
 	{
 		if ( GameTime_TimeSpentInCurrentState() > GetSwitchingSidesWait() - CLEAR_PLAYERS_BUFFER && !level.clearedPlayers )
 		{
-			CleanUpEntitiesForRoundEnd()
+			ClearPlayers()
 
 			level.clearedPlayers = true
 		}
@@ -1330,9 +1298,9 @@ void function OnTitanKilled( entity victim, var damageInfo )
    ██     ██████   ██████  ███████     ██       ██████  ██   ████  ██████    ██    ██  ██████  ██   ████ ███████
 */
 
-void function CleanUpEntitiesForRoundEnd()
+void function ClearPlayers()
 {
-	svGlobal.levelEnt.Signal( "CleanUpEntitiesForRoundEnd" )
+	svGlobal.levelEnt.Signal( "ClearPlayers" )
 
 	SetPlayerDeathsHidden( true )
 
@@ -1355,22 +1323,6 @@ void function CleanUpEntitiesForRoundEnd()
 			player.Die( svGlobal.worldspawn, svGlobal.worldspawn, { damageSourceId = eDamageSourceId.round_end } )
 
 		player.SetPlayerSettingsWithMods( "spectator", [] )
-
-		entity intermissionCam = GetEntArrayByClass_Expensive( "info_intermission" )[ 0 ]
-		entity intermissionCamView
-
-		if ( intermissionCam.HasKey( "target" ) )
-			intermissionCamView = GetEnt( expect string( intermissionCam.kv.target ) )
-
-		player.SetObserverModeStaticPosition( intermissionCam.GetOrigin() )
-
-		if ( IsValid( intermissionCamView ) )
-			player.SetObserverModeStaticAngles( VectorToAngles( intermissionCamView.GetOrigin() - intermissionCam.GetOrigin() ) )
-		else
-			player.SetObserverModeStaticAngles( intermissionCam.GetAngles() )
-
-		player.StartObserverMode( OBS_MODE_STATIC_LOCKED )
-		player.SetObserverTarget( null )
 	}
 
 	array<entity> npcs = GetNPCArray()
@@ -2308,6 +2260,7 @@ void function RoundWinningKillReplay() // Only Tested in MFD Pro for now! SHould
 		player.ClearViewEntity()
 
 		player.watchingKillreplayEndTime = Time() + ROUND_WINNING_KILL_REPLAY_LENGTH_OF_REPLAY
+
 		player.SetKillReplayDelay( Time() - ROUND_WINNING_KILL_REPLAY_LENGTH_OF_REPLAY, THIRD_PERSON_KILL_REPLAY_ALWAYS )
 		player.SetKillReplayInflictorEHandle( file.roundWinningKillReplayInflictorEHandle )
 		player.SetKillReplayVictim( file.roundWinningKillReplayVictim )
