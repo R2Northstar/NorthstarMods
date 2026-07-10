@@ -61,6 +61,9 @@ void function DropshipIntro_OnClientConnected( entity player )
 		if ( IsPrivateMatchSpectator( player ) )
 			return
 
+		AddCinematicFlag( player, CE_FLAG_INTRO )
+		AddCinematicFlag( player, CE_FLAG_CLASSIC_MP_SPAWNING )
+
 		if ( PlayerCanSpawn( player ) )
 			DoRespawnPlayer( player, null )
 
