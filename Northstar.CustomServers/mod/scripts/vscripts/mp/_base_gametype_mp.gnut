@@ -740,10 +740,6 @@ bool function RespawnTitanPilot( entity player )
 
 	if ( ShouldSpawnAsTitan( player ) )
 	{
-		// clear respawn countdown message
-		if ( GetWaveSpawnType() != eWaveSpawnType.DISABLED && level.waveSpawnByDropship == true )
-			MessageToPlayer( player, eEventNotifications.Clear, player )
-
 		PerfStart( PerfIndexServer.RespawnTitanPilot )
 
 		entity spawnPoint = FindSpawnPoint( player, true, ShouldStartSpawn( player ) )
