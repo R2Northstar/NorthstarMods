@@ -8,6 +8,7 @@ global function AddCallback_OnRoundEndCleanup
 
 global function SetTimelimitCompleteFunc
 global function SetPlayThreeMinuteMusic
+global function SetEpilogueEliminationBased
 global function SetSwitchSidesBased
 global function SetShouldUseRoundWinningKillReplay
 global function SetRoundWinningKillReplayKillClasses
@@ -57,6 +58,7 @@ struct
 	bool endingMatch = false
 	float timeLimitOverride = -1
 	bool shouldPlayThreeMinuteMusic = false
+	bool epilogueEliminationBased = true
 } file
 
 /*
@@ -493,6 +495,11 @@ void function SetTimelimitCompleteFunc( bool functionref() timeLimitCompleteFunc
 void function SetPlayThreeMinuteMusic( bool value )
 {
 	file.shouldPlayThreeMinuteMusic = value
+}
+
+void function SetEpilogueEliminationBased( bool value )
+{
+	file.epilogueEliminationBased = value
 }
 
 void function SetSwitchSidesBased( bool switchSides )
@@ -1135,8 +1142,11 @@ void function DialogueAnnounceSwitchingSides()
 ███████ ██      ██ ███████  ██████   ██████   ██████  ███████
 */
 
-function GameRulesThink_Epilogue()
+void function GameRulesThink_Epilogue()
 {
+	if ( !file.epilogueEliminationBased )
+		return
+
 	float epilogueRespawnTimeLimit = expect float( level.nv.gameEndTime ) + GAME_EPILOGUE_PLAYER_RESPAWN_LEEWAY
 
 	if ( Time() > epilogueRespawnTimeLimit )
@@ -1155,8 +1165,6 @@ function GameRulesThink_Epilogue()
 				SetPlayerEliminated( player )
 		}
 	}
-	// if ( GameTime_TimeSpentInCurrentState() > GetEpilogueDuration() )
-	// 	SetGameState( eGameState.Postmatch )
 }
 
 /*
