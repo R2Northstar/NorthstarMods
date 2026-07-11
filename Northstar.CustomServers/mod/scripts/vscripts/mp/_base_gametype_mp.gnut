@@ -711,6 +711,12 @@ bool function DecideRespawnPlayer( entity player )
 		return false
 	}
 
+	if ( IsValid( player.isSpawning ) )
+	{
+		printt( "DecideRespawnPlayer() - IsValid( player.isSpawning ) was true: ", string( player ) )
+		return false
+	}
+
 	printt( "DecideRespawnPlayer() - Attempting to spawn: ", string( player ) )
 
 	bool didSpawn = RespawnTitanPilot( player )
@@ -803,9 +809,6 @@ void function RespawnAsPilot( entity player, entity spawnPoint = null )
 
 	DoRespawnPlayer( player, spawnPoint )
 
-	player.isSpawning = false
-	player.isSpawningHotDroppingAsTitan = false
-
 	// Dying as Titan and respawning as Pilot keeps the Titan Icon over the player's name instead of reverting to the normal patch such player uses
 	CallsignIcon callsignIcon = PlayerCallsignIcon_GetActive( player )
 
@@ -819,14 +822,14 @@ void function RespawnAsTitan( entity player, entity spawnPoint = null )
 
 	player.Signal( "PlayerRespawnStarted" )
 
-	player.isSpawning = true
-	player.isSpawningHotDroppingAsTitan = true
-
 	if ( spawnPoint == null )
 		spawnPoint = FindSpawnPoint( player, true, ( ShouldStartSpawn( player ) || Flag( "ForceStartSpawn" ) ) )
 
 	if ( file.recalculateRespawnAsTitanStartPointCallback != null )
 		spawnPoint = file.recalculateRespawnAsTitanStartPointCallback( player, spawnPoint )
+
+	player.isSpawning = spawnPoint
+	player.isSpawningHotDroppingAsTitan = true
 
 	ToggleSpawnNodeInUse( spawnPoint, true )
 
@@ -871,6 +874,8 @@ void function RespawnAsTitan( entity player, entity spawnPoint = null )
 		camera.SetParent( titan )
 	}
 
+	player.isSpawning = titan
+
 	titan.EndSignal( "OnDeath" )
 	titan.EndSignal( "OnDestroy" )
 
@@ -881,7 +886,7 @@ void function RespawnAsTitan( entity player, entity spawnPoint = null )
 		{
 			if ( IsValid( player ) )
 			{
-				player.isSpawning = false
+				player.isSpawning = null
 				player.isSpawningHotDroppingAsTitan = false
 
 				GiveTitanfallScoreMedal( player ) // In case of classic Warpfall animation, give the Titanfall Score Medal at this moment, so player can actually see it
