@@ -234,7 +234,12 @@ void function CodeCallback_OnClientConnectionCompleted( entity player )
 
 	// handle spawning late joiners
 	if ( GetGameState() >= eGameState.Playing )
-		DecideRespawnPlayer( player )
+	{
+		if ( GetCurrentPlaylistVarInt( "tts_menu_join_in_progress", 0 ) == 1 )
+			thread SpectateTTSMenuPlayer( player )
+		else
+			DecideRespawnPlayer( player )
+	}
 }
 
 bool function ShouldPlayerBeEliminated( player )
