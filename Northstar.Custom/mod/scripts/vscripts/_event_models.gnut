@@ -5,7 +5,7 @@ void function EventModelsInit()
 	if ( !GetConVarBool( "ns_show_event_models" ) )
 		return
 
-	table timeParts = GetUnixTimeParts()
+	table timeParts = GetUnixTimeParts( GetUnixTimestamp() )
 	int month = expect int( timeParts[ "month" ] )
 	int day = expect int( timeParts[ "day" ] )
 
