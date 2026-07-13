@@ -94,24 +94,22 @@ bool function ClientCommandCallback_GenUp( entity player, array<string> args )
 	return true
 }
 
-#if DEV
-	bool function ClientCommand_ToggleHUD( entity player, array<string> args )
-	{
-		if ( HasCinematicFlag( player, CE_FLAG_INTRO ) )
-			RemoveCinematicFlag( player, CE_FLAG_INTRO )
-		else
-			AddCinematicFlag( player, CE_FLAG_INTRO )
+bool function ClientCommand_ToggleHUD( entity player, array<string> args )
+{
+	if ( HasCinematicFlag( player, CE_FLAG_INTRO ) )
+		RemoveCinematicFlag( player, CE_FLAG_INTRO )
+	else
+		AddCinematicFlag( player, CE_FLAG_INTRO )
 
-		return true
-	}
+	return true
+}
 
-	bool function ClientCommand_ToggleOffhandLowRecharge( entity player, array<string> args )
-	{
-		if ( player.HasExtraWeaponMod( "dev_mod_low_recharge" ) )
-			player.TakeExtraWeaponMod( "dev_mod_low_recharge" )
-		else
-			player.GiveExtraWeaponMod( "dev_mod_low_recharge" )
+bool function ClientCommand_ToggleOffhandLowRecharge( entity player, array<string> args )
+{
+	if ( player.HasExtraWeaponMod( "dev_mod_low_recharge" ) )
+		player.TakeExtraWeaponMod( "dev_mod_low_recharge" )
+	else
+		player.GiveExtraWeaponMod( "dev_mod_low_recharge" )
 
-		return true
-	}
-#endif
+	return true
+}

@@ -20,82 +20,80 @@ bool function SafeForTitanFall( vector dropPoint )
 	return true
 }
 
-#if DEV
-	bool function ForceMyTeamWin( entity player, array<string> args )
+bool function ForceMyTeamWin( entity player, array<string> args )
+{
+	if ( IsFFAGame() )
+		return false
+
+	ForceTeamWin( player.GetTeam() )
+
+	return true
+}
+
+bool function ForceMyTeamLose( entity player, array<string> args )
+{
+	if ( IsFFAGame() )
+		return false
+
+	ForceTeamWin( GetOtherTeam( player.GetTeam() ) )
+
+	return true
+}
+
+void function ForceMatchEnd()
+{
+	printt( "Match ended with ForceMatchEnd()" )
+
+	int winningTeam = GetWinningTeam()
+
+	if ( winningTeam == TEAM_UNASSIGNED )
+		winningTeam = GetPlayerArray().getrandom().GetTeam()
+
+	ForceTeamWin( winningTeam )
+}
+
+void function ForceTeamWin( int team )
+{
+	level.devForcedWin = true
+
+	svGlobal.levelEnt.Signal( "devForcedWin" )
+
+	SetWinner( team, "#DEV_COMMAND_FORCED_WIN_ANNOUNCEMENT", "#DEV_COMMAND_FORCED_LOSS_ANNOUNCEMENT" ) // ignore the fact that only r1_english doesn't have localisation for this
+}
+
+void function ForceDraw()
+{
+	ForceTeamWin( TEAM_UNASSIGNED )
+}
+
+void function teamswap() // for debug
+{
+	if ( IsFFAGame() )
+		return
+
+	array<entity> players = GetPlayerArray()
+
+	foreach ( entity player in players )
+		if ( player.GetTeam() == TEAM_IMC )
+			SetTeam( player, TEAM_MILITIA )
+		else
+			SetTeam( player, TEAM_IMC )
+}
+
+void function summonplayers()
+{
+	entity guy = GetPlayerArray()[ 0 ]
+	array<entity> players = GetPlayerArray_Alive()
+
+	foreach ( player in players )
 	{
-		if ( IsFFAGame() )
-			return false
+		if ( player == guy )
+			continue
 
-		ForceTeamWin( player.GetTeam() )
-
-		return true
+		player.SetOrigin( guy.GetOrigin() )
+		player.SetVelocity( RandomVec( 250 ) )
 	}
-
-	bool function ForceMyTeamLose( entity player, array<string> args )
-	{
-		if ( IsFFAGame() )
-			return false
-
-		ForceTeamWin( GetOtherTeam( player.GetTeam() ) )
-
-		return true
-	}
-
-	void function ForceMatchEnd()
-	{
-		printt( "Match ended with ForceMatchEnd()" )
-
-		int winningTeam = GetWinningTeam()
-
-		if ( winningTeam == TEAM_UNASSIGNED )
-			winningTeam = GetPlayerArray().getrandom().GetTeam()
-
-		ForceTeamWin( winningTeam )
-	}
-
-	void function ForceTeamWin( int team )
-	{
-		level.devForcedWin = true
-
-		svGlobal.levelEnt.Signal( "devForcedWin" )
-
-		SetWinner( team, "#DEV_COMMAND_FORCED_WIN_ANNOUNCEMENT", "#DEV_COMMAND_FORCED_LOSS_ANNOUNCEMENT" ) // ignore the fact that only r1_english doesn't have localisation for this
-	}
-
-	void function ForceDraw()
-	{
-		ForceTeamWin( TEAM_UNASSIGNED )
-	}
-
-	void function teamswap() // for debug
-	{
-		if ( IsFFAGame() )
-			return
-
-		array<entity> players = GetPlayerArray()
-
-		foreach ( entity player in players )
-			if ( player.GetTeam() == TEAM_IMC )
-				SetTeam( player, TEAM_MILITIA )
-			else
-				SetTeam( player, TEAM_IMC )
-	}
-
-	void function summonplayers()
-	{
-		entity guy = GetPlayerArray()[ 0 ]
-		array<entity> players = GetPlayerArray_Alive()
-
-		foreach ( player in players )
-		{
-			if ( player == guy )
-				continue
-
-			player.SetOrigin( guy.GetOrigin() )
-			player.SetVelocity( RandomVec( 250 ) )
-		}
-	}
-#endif
+}
 
 bool function HasGameStateProtection( entity ent )
 {

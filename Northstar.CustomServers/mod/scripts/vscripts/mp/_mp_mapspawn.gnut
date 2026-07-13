@@ -32,6 +32,10 @@ void function SPMP_MapSpawn_Init()
 	FlagInit( "IgnoreStartSpawn" )
 	FlagInit( "ReadyToStartMatch" ) // past waiting for players, in prematch
 
+	#if DEV
+		FlagInit( "ShowExplosionRadius" ) // temp HACK
+	#endif
+
 	RegisterSignal( "OnChangedPlayerClass" )
 	RegisterSignal( "Disconnected" )
 	RegisterSignal( "_disconnectedInternal" )

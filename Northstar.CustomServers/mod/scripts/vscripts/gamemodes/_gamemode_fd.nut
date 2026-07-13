@@ -16,13 +16,10 @@ global function PlaceFDShop
 global function OverrideFDHarvesterLocation
 global function AddWaveAnnouncement
 global function FD_Win
-
-#if DEV
-	global function DEV_FD_ToggleHarvesterGodMode
-	global function DEV_FD_NextStage
-	global function DEV_FD_KillAllEnemies
-	global function DEV_FD_KillHarvester
-#endif
+global function DEV_FD_ToggleHarvesterGodMode
+global function DEV_FD_NextStage
+global function DEV_FD_KillAllEnemies
+global function DEV_FD_KillHarvester
 
 enum eDropshipState
 {
@@ -621,18 +618,17 @@ void function executeWave()
 	while ( !file.devForceAdvanceToNextWave && IsHarvesterAlive( fd_harvester.harvester ) && !allEventsExecuted( GetGlobalNetInt( "FD_currentWave" ) ) )
 		WaitFrame()
 
-	#if DEV
-		if ( file.devForceAdvanceToNextWave )
-		{
-			printt( "Dev forced advance to next wave" )
+	if ( file.devForceAdvanceToNextWave )
+	{
+		printt( "Dev forced advance to next wave" )
 
-			svGlobal.levelEnt.EndSignal( "StopWaveSpawner" )
-			file.devForceAdvanceToNextWave = false
+		svGlobal.levelEnt.EndSignal( "StopWaveSpawner" )
 
-			DEV_FD_KillAllEnemies()
-			return
-		}
-	#endif
+		file.devForceAdvanceToNextWave = false
+
+		DEV_FD_KillAllEnemies()
+		return
+	}
 
 	printt( "All Events executed, waiting on players to finish the wave" )
 
@@ -694,17 +690,15 @@ void function executeWave()
 	}
 }
 
-#if DEV
-	void function DEV_FD_NextStage()
-	{
-		file.devForceAdvanceToNextWave = true
-	}
+void function DEV_FD_NextStage()
+{
+	file.devForceAdvanceToNextWave = true
+}
 
-	void function DEV_FD_KillAllEnemies()
-	{
-		KillIMC()
-	}
-#endif
+void function DEV_FD_KillAllEnemies()
+{
+	KillIMC()
+}
 
 bool function runWave( int waveIndex, bool shouldDoBuyTime )
 {
@@ -2960,24 +2954,22 @@ void function MonitorHarvesterProximity( entity harvester )
 	}
 }
 
-#if DEV
-	void function DEV_FD_ToggleHarvesterGodMode()
-	{
-		if ( !IsValid( fd_harvester.harvester ) )
-			return
+void function DEV_FD_ToggleHarvesterGodMode()
+{
+	if ( !IsValid( fd_harvester.harvester ) )
+		return
 
-		if ( fd_harvester.harvester.IsInvulnerable() )
-			fd_harvester.harvester.ClearInvulnerable()
-		else
-			fd_harvester.harvester.SetInvulnerable()
-	}
+	if ( fd_harvester.harvester.IsInvulnerable() )
+		fd_harvester.harvester.ClearInvulnerable()
+	else
+		fd_harvester.harvester.SetInvulnerable()
+}
 
-	void function DEV_FD_KillHarvester()
-	{
-		if ( IsValid( fd_harvester.harvester ) )
-			fd_harvester.harvester.SetHealth( 1 )
-	}
-#endif
+void function DEV_FD_KillHarvester()
+{
+	if ( IsValid( fd_harvester.harvester ) )
+		fd_harvester.harvester.SetHealth( 1 )
+}
 
 /* Dropship Functions
 ██████  ██████   ██████  ██████  ███████ ██   ██ ██ ██████      ███████ ██    ██ ███    ██  ██████ ████████ ██  ██████  ███    ██ ███████
