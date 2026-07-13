@@ -1,11 +1,19 @@
+untyped
+
 globalize_all_functions
 
 void function NorthstarUtils_Before_Init()
 {
+	#if DEV && SERVER
+		level.SaveRecordedAnimation <- null // So mods can use this function without needing to replace this file
+
+		FlagInit( "ShowExplosionRadius" )
+	#endif
+
 	#if MP
 		#if SERVER
 			AddCallback_EntitiesDidLoad( ValidateTitanDropNodes )
-		#elseif CLIENT
+		#else
 			AddServerToClientStringCommandCallback( "StopPlayingMinuteMusic", ServerCallback_StopPlayingMinuteMusic )
 		#endif
 	#endif
@@ -59,6 +67,14 @@ void function ReloadMods( bool reloadorretry = false )
 		}
 	#endif
 }
+
+#if DEV
+	void function SaveRecordedAnimation( var recording, string fileName )
+	{
+		if ( level.SaveRecordedAnimation != null )
+			level.SaveRecordedAnimation( recording, fileName )
+	}
+#endif
 
 #if MP
 	#if SERVER

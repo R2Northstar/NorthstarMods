@@ -1101,36 +1101,8 @@ bool function ClientCommandCallbackChangeTeam( entity player, array<string> args
 
 bool function ShouldEntTakeDamage_SPMP( entity ent, var damageInfo )
 {
-	switch ( GetGameState() )
-	{
-		case eGameState.WaitingForCustomStart:
-		case eGameState.WaitingForPlayers:
-		case eGameState.PickLoadout:
-		case eGameState.Playing:
-		case eGameState.SuddenDeath:
-		case eGameState.Epilogue:
-			// can die
-			break
-
-		case eGameState.Prematch:
-			if ( "canDieInPrematch" in ent.s )
-				break // some ents could die in Prematch
-
-			return false // most ents doesn't die in Prematch
-
-		case eGameState.SwitchingSides:
-		case eGameState.Postmatch:
-			// nothing dies
-			return false
-
-		case eGameState.WinnerDetermined:
-			// this currently is to accomodate last titan standing
-			// we should probably split WinnerDetermined into round and match versions.
-			return !IsRoundBased()
-
-		default:
-			Assert( 0, "Unknown gamestate " + GetGameState() )
-	}
+	if ( HasGameStateProtection( ent ) )
+		return false
 
 	if ( ( IsDropship( ent ) || IsEvacDropship( ent ) ) && IsTitanCrushDamage( damageInfo ) )
 		return false
@@ -1177,4 +1149,50 @@ bool function CheckForEmptyTeamVictory()
 	}
 
 	return false
+}
+
+void function SimulateGameScore( int speedMultiplier = 2 )
+{
+	svGlobal.levelEnt.Signal( "SimulateGameScore" )
+	svGlobal.levelEnt.EndSignal( "SimulateGameScore" )
+
+	if ( !speedMultiplier )
+	{
+		printl( "Simulated Game Scoring disabled" )
+		return
+	}
+
+	while ( GetGameState() != eGameState.Playing )
+		wait 1
+
+	printl( "Simulated Game Scoring x" + speedMultiplier + " started" )
+
+	int scoreLimit = GetScoreLimit_FromPlaylist()
+	float matchTimeLimitSeconds = ( GetTimeLimit_ForGameMode() * 60.0 ).tofloat()
+	float averageToUse = ( scoreLimit / matchTimeLimitSeconds ) * speedMultiplier
+	float tickRate = 10.0
+
+	while ( GetGameState() == eGameState.Playing )
+	{
+		// random team
+		int scoringTeam = CoinFlip() ? TEAM_MILITIA : TEAM_IMC
+		float scoreToAdd = floor( ( averageToUse * tickRate ) + 0.5 )
+
+		// maybe there's a multikill event
+		if ( scoreToAdd )
+		{
+			if ( RandomInt( 100 ) < 10 )
+			{
+				int multiplier = RandomIntRange( 1, 5 )
+
+				Assert( multiplier != 0 )
+
+				scoreToAdd *= multiplier
+			}
+
+			AddTeamScore( scoringTeam, int( scoreToAdd ) )
+		}
+
+		wait tickRate
+	}
 }

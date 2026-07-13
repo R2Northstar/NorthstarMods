@@ -1,16 +1,16 @@
+untyped
+
 global function MenuCallbacks_Init
 
 void function MenuCallbacks_Init()
 {
 	AddClientCommandCallback( "LeaveMatch", ClientCommandCallback_LeaveMatch )
 	AddClientCommandCallback( "GenUp", ClientCommandCallback_GenUp )
-	AddClientCommandCallback(
-		"PrivateMatchEndMatch",
-		bool function( entity player, array<string> args )
-		{
-			return true
-		}
-	)
+
+	#if DEV
+		AddClientCommandCallback( "ToggleHUD", ClientCommand_ToggleHUD )
+		AddClientCommandCallback( "ToggleOffhandLowRecharge", ClientCommand_ToggleOffhandLowRecharge )
+	#endif
 }
 
 bool function ClientCommandCallback_LeaveMatch( entity player, array<string> args )
@@ -93,3 +93,25 @@ bool function ClientCommandCallback_GenUp( entity player, array<string> args )
 
 	return true
 }
+
+#if DEV
+	bool function ClientCommand_ToggleHUD( entity player, array<string> args )
+	{
+		if ( HasCinematicFlag( player, CE_FLAG_INTRO ) )
+			RemoveCinematicFlag( player, CE_FLAG_INTRO )
+		else
+			AddCinematicFlag( player, CE_FLAG_INTRO )
+
+		return true
+	}
+
+	bool function ClientCommand_ToggleOffhandLowRecharge( entity player, array<string> args )
+	{
+		if ( player.HasExtraWeaponMod( "dev_mod_low_recharge" ) )
+			player.TakeExtraWeaponMod( "dev_mod_low_recharge" )
+		else
+			player.GiveExtraWeaponMod( "dev_mod_low_recharge" )
+
+		return true
+	}
+#endif

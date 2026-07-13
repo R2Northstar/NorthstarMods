@@ -15,6 +15,14 @@ global function SetFDDropshipSpawn
 global function PlaceFDShop
 global function OverrideFDHarvesterLocation
 global function AddWaveAnnouncement
+global function FD_Win
+
+#if DEV
+	global function DEV_FD_ToggleHarvesterGodMode
+	global function DEV_FD_NextStage
+	global function DEV_FD_KillAllEnemies
+	global function DEV_FD_KillHarvester
+#endif
 
 enum eDropshipState
 {
@@ -91,6 +99,7 @@ struct
 
 	array<void functionref()> CustomFDContent
 	bool disableTitanSelectionForNewJoiners = false
+	bool devForceAdvanceToNextWave = false
 } file
 
 const array<string> DROPSHIP_IDLE_ANIMS_POV = [
@@ -605,13 +614,27 @@ void function executeWave()
 {
 	int currentWave = GetGlobalNetInt( "FD_currentWave" ) + 1
 	int enemyCount
-	print( "WAVE START: " + currentWave )
+	printt( "WAVE START: " + currentWave )
 	thread eventIterator_FrontierDefense()
 
 	// Wait for all events to execute
-	while ( IsHarvesterAlive( fd_harvester.harvester ) && !allEventsExecuted( GetGlobalNetInt( "FD_currentWave" ) ) )
+	while ( !file.devForceAdvanceToNextWave && IsHarvesterAlive( fd_harvester.harvester ) && !allEventsExecuted( GetGlobalNetInt( "FD_currentWave" ) ) )
 		WaitFrame()
-	print( "All Events executed, waiting on players to finish the wave" )
+
+	#if DEV
+		if ( file.devForceAdvanceToNextWave )
+		{
+			printt( "Dev forced advance to next wave" )
+
+			svGlobal.levelEnt.EndSignal( "StopWaveSpawner" )
+			file.devForceAdvanceToNextWave = false
+
+			DEV_FD_KillAllEnemies()
+			return
+		}
+	#endif
+
+	printt( "All Events executed, waiting on players to finish the wave" )
 
 	// Do a secondary wait for alive enemies after all events executed
 	while ( IsHarvesterAlive( fd_harvester.harvester ) && GetGlobalNetInt( "FD_AICount_Current" ) > 0 )
@@ -651,7 +674,7 @@ void function executeWave()
 	}
 
 	wait 0.5
-	print( "All enemies from wave eliminated" )
+	printt( "All enemies from wave eliminated" )
 	if ( GetGlobalNetInt( "FD_AICount_Drone_Cloak" ) > 0 ) // Kill Cloak Drones when a wave ends to avoid them just wandering off their original wave
 	{
 		foreach ( entity cloakedDrone in GetNPCCloakedDrones() )
@@ -670,6 +693,18 @@ void function executeWave()
 			tick.Destroy()
 	}
 }
+
+#if DEV
+	void function DEV_FD_NextStage()
+	{
+		file.devForceAdvanceToNextWave = true
+	}
+
+	void function DEV_FD_KillAllEnemies()
+	{
+		KillIMC()
+	}
+#endif
 
 bool function runWave( int waveIndex, bool shouldDoBuyTime )
 {
@@ -724,7 +759,7 @@ bool function runWave( int waveIndex, bool shouldDoBuyTime )
 
 	if ( shouldDoBuyTime )
 	{
-		print( "Opening Shop" )
+		printt( "Opening Shop" )
 		SetGlobalNetInt( "FD_waveState", WAVE_STATE_BREAK )
 		OpenBoostStores()
 		entity parentCrate = GetBoostStores()[ 0 ].GetParent()
@@ -747,7 +782,7 @@ bool function runWave( int waveIndex, bool shouldDoBuyTime )
 		}
 		wait 0.6
 		MessageToTeam( TEAM_MILITIA, eEventNotifications.FD_StoreClosing )
-		print( "Closing Shop" )
+		printt( "Closing Shop" )
 		wait 4
 		parentCrate.Minimap_Hide( TEAM_MILITIA, null )
 		CloseBoostStores()
@@ -759,7 +794,7 @@ bool function runWave( int waveIndex, bool shouldDoBuyTime )
 		wait 15
 	}
 
-	print( "STARTING WAVE" )
+	printt( "STARTING WAVE" )
 	SetGlobalNetInt( "FD_waveState", WAVE_STATE_INCOMING )
 	EarnMeterMP_SetPassiveMeterGainEnabled( true )
 	foreach ( entity player in GetPlayerArray() )
@@ -822,7 +857,7 @@ bool function runWave( int waveIndex, bool shouldDoBuyTime )
 
 	if ( !IsHarvesterAlive( fd_harvester.harvester ) )
 	{
-		print( "Stopping Wave, Harvester Died" )
+		printt( "Stopping Wave, Harvester Died" )
 		SetGlobalNetBool( "FD_waveActive", false )
 		float totalDamage = 0.0
 		array<float> highestDamage = [ 0.0, 0.0, 0.0 ]
@@ -884,7 +919,7 @@ bool function runWave( int waveIndex, bool shouldDoBuyTime )
 		{
 			SetRoundBased( false )
 			SetWinner( TEAM_IMC, "#FD_TOTAL_DEFEAT_HINT", "#FD_TOTAL_DEFEAT_HINT" )
-			print( "Finishing match, no more retries left" )
+			printt( "Finishing match, no more retries left" )
 			PlayFactionDialogueToTeam( "fd_matchDefeat", TEAM_MILITIA, true )
 		}
 
@@ -921,80 +956,9 @@ bool function runWave( int waveIndex, bool shouldDoBuyTime )
 	if ( isFinalWave() )
 	{
 		// Game won code
-		print( "No more pending Waves, match won" )
+		printt( "No more pending Waves, match won" )
 
-		if ( GetPlayerArrayOfTeam( TEAM_MILITIA ).len() )
-		{
-			highestScore = 0
-			highestScore_player = GetPlayerArrayOfTeam( TEAM_MILITIA )[ 0 ]
-		}
-		else
-		{
-			SetRoundBased( false )
-			SetWinner( TEAM_MILITIA, "#FD_TOTAL_VICTORY_HINT", "#FD_TOTAL_VICTORY_HINT" )
-			return true
-		}
-
-		foreach ( entity player in GetPlayerArrayOfTeam( TEAM_MILITIA ) )
-		{
-			if ( !file.players[ player ].diedThisRound )
-				AddPlayerScore( player, "FDDidntDie" )
-			if ( player in file.players && player in file.playerAwardStats )
-			{
-				if ( file.players[ player ].lastRespawnLifespan > file.playerAwardStats[ player ][ "longestLife" ] )
-					file.playerAwardStats[ player ][ "longestLife" ] = file.players[ player ].lastRespawnLifespan
-			}
-		}
-
-		SetRoundBased( false )
-		SetWinner( TEAM_MILITIA, "#FD_TOTAL_VICTORY_HINT", "#FD_TOTAL_VICTORY_HINT" )
-		PlayFactionDialogueToTeam( "fd_matchVictory", TEAM_MILITIA, true )
-
-		wait 2
-
-		foreach ( entity player in GetPlayerArrayOfTeam( TEAM_MILITIA ) )
-			AddPlayerScore( player, "FDTeamWave" )
-
-		wait 1
-
-		foreach ( entity player in GetPlayerArrayOfTeam( TEAM_MILITIA ) )
-		{
-			if ( highestScore < ( file.players[ player ].assaultScoreThisRound + file.players[ player ].defenseScoreThisRound ) )
-			{
-				highestScore = file.players[ player ].assaultScoreThisRound + file.players[ player ].defenseScoreThisRound
-				highestScore_player = player
-			}
-		}
-		if ( highestScore_player in file.playerAwardStats )
-			file.playerAwardStats[ highestScore_player ][ "mvp" ] += 1.0
-		AddPlayerScore( highestScore_player, "FDWaveMVP" )
-
-		wait 1
-
-		if ( !file.harvesterWasDamaged )
-		{
-			foreach ( entity player in GetPlayerArrayOfTeam( TEAM_MILITIA ) )
-				AddPlayerScore( player, "FDTeamFlawlessWave" )
-		}
-
-		wait 1
-
-		foreach ( entity player in GetPlayerArrayOfTeam( TEAM_MILITIA ) )
-			AddPlayerScore( player, "FDTeamFinalWave" )
-
-		wait 1
-
-		foreach ( entity player in GetPlayerArrayOfTeam( TEAM_MILITIA ) ) // Repeat this one here because the block below is never reached due to return, and late joiners might not get the reward
-		{
-			UpdatePlayerStat( player, "fd_stats", "wavesComplete" )
-			if ( file.players[ player ].wavesCompleted == 3 )
-			{
-				AddPlayerScore( player, "ChallengeFD" )
-				SetPlayerChallengeMeritScore( player )
-			}
-		}
-
-		RegisterPostSummaryScreenForMatch( true )
+		FD_Win()
 
 		return false // False so it breaks the loop in the main function that handles the waves
 	}
@@ -1017,7 +981,7 @@ bool function runWave( int waveIndex, bool shouldDoBuyTime )
 
 	wait 5
 
-	print( "Repairing turrets in wave break" )
+	printt( "Repairing turrets in wave break" )
 	thread FD_AttemptToRepairTurrets()
 
 	if ( waveIndex == 0 )
@@ -1030,11 +994,98 @@ bool function runWave( int waveIndex, bool shouldDoBuyTime )
 	// Player scoring
 	WaveBreak_ShowPlayerBonus()
 
-	print( "Waiting buy time" )
+	printt( "Waiting buy time" )
 	if ( waveIndex < WaveSpawnEvents.len() )
 		SetGlobalNetTime( "FD_nextWaveStartTime", Time() + GetCurrentPlaylistVarFloat( "fd_wave_buy_time", 60 ) + 15.0 ) // Vanilla has built-in extra 15s
 
 	return true
+}
+
+void function FD_Win()
+{
+	if ( !IsNewThread() )
+	{
+		thread FD_Win()
+		return
+	}
+	else if ( GAMETYPE != FD )
+		return
+
+	int highestScore = 0
+	entity highestScore_player
+
+	if ( GetPlayerArrayOfTeam( TEAM_MILITIA ).len() )
+	{
+		highestScore_player = GetPlayerArrayOfTeam( TEAM_MILITIA )[ 0 ]
+	}
+	else
+	{
+		SetRoundBased( false )
+		SetWinner( TEAM_MILITIA, "#FD_TOTAL_VICTORY_HINT", "#FD_TOTAL_VICTORY_HINT" )
+		return
+	}
+
+	foreach ( entity player in GetPlayerArrayOfTeam( TEAM_MILITIA ) )
+	{
+		if ( !file.players[ player ].diedThisRound )
+			AddPlayerScore( player, "FDDidntDie" )
+		if ( player in file.players && player in file.playerAwardStats )
+		{
+			if ( file.players[ player ].lastRespawnLifespan > file.playerAwardStats[ player ][ "longestLife" ] )
+				file.playerAwardStats[ player ][ "longestLife" ] = file.players[ player ].lastRespawnLifespan
+		}
+	}
+
+	SetRoundBased( false )
+	SetWinner( TEAM_MILITIA, "#FD_TOTAL_VICTORY_HINT", "#FD_TOTAL_VICTORY_HINT" )
+	PlayFactionDialogueToTeam( "fd_matchVictory", TEAM_MILITIA, true )
+
+	wait 2
+
+	foreach ( entity player in GetPlayerArrayOfTeam( TEAM_MILITIA ) )
+		AddPlayerScore( player, "FDTeamWave" )
+
+	wait 1
+
+	foreach ( entity player in GetPlayerArrayOfTeam( TEAM_MILITIA ) )
+	{
+		if ( highestScore < ( file.players[ player ].assaultScoreThisRound + file.players[ player ].defenseScoreThisRound ) )
+		{
+			highestScore = file.players[ player ].assaultScoreThisRound + file.players[ player ].defenseScoreThisRound
+			highestScore_player = player
+		}
+	}
+	if ( highestScore_player in file.playerAwardStats )
+		file.playerAwardStats[ highestScore_player ][ "mvp" ] += 1.0
+
+	AddPlayerScore( highestScore_player, "FDWaveMVP" )
+
+	wait 1
+
+	if ( !file.harvesterWasDamaged )
+	{
+		foreach ( entity player in GetPlayerArrayOfTeam( TEAM_MILITIA ) )
+			AddPlayerScore( player, "FDTeamFlawlessWave" )
+	}
+
+	wait 1
+
+	foreach ( entity player in GetPlayerArrayOfTeam( TEAM_MILITIA ) )
+		AddPlayerScore( player, "FDTeamFinalWave" )
+
+	wait 1
+
+	foreach ( entity player in GetPlayerArrayOfTeam( TEAM_MILITIA ) ) // Repeat this one here because the block below is never reached due to return, and late joiners might not get the reward
+	{
+		UpdatePlayerStat( player, "fd_stats", "wavesComplete" )
+		if ( file.players[ player ].wavesCompleted == 3 )
+		{
+			AddPlayerScore( player, "ChallengeFD" )
+			SetPlayerChallengeMeritScore( player )
+		}
+	}
+
+	RegisterPostSummaryScreenForMatch( true )
 }
 
 void function WaveBreak_RegisterAttackOrSupportScore( int scoretype )
@@ -1103,7 +1154,7 @@ void function WaveBreak_ShowPlayerBonus()
 	MessageToTeam( TEAM_MILITIA, eEventNotifications.FD_NotifyWaveBonusIncoming )
 	wait 3
 
-	print( "Showing Player Stats: Wave Complete" )
+	printt( "Showing Player Stats: Wave Complete" )
 	SetJoinInProgressBonus( GetCurrentPlaylistVarInt( "fd_money_per_round", FD_MONEY_PER_ROUND ) )
 	foreach ( entity player in GetPlayerArrayOfTeam( TEAM_MILITIA ) )
 	{
@@ -1119,7 +1170,7 @@ void function WaveBreak_ShowPlayerBonus()
 		FD_EmitSoundOnEntityOnlyToPlayer( player, player, "HUD_MP_BountyHunt_BankBonusPts_Ticker_Loop_1P" )
 	}
 	wait 2
-	print( "Showing Player Stats: No Deaths This Wave" )
+	printt( "Showing Player Stats: No Deaths This Wave" )
 	SetJoinInProgressBonus( 100 )
 	foreach ( entity player in GetPlayerArrayOfTeam( TEAM_MILITIA ) )
 	{
@@ -1133,7 +1184,7 @@ void function WaveBreak_ShowPlayerBonus()
 		}
 	}
 	wait 2
-	print( "Showing Player Stats: Wave MVP" )
+	printt( "Showing Player Stats: Wave MVP" )
 	SetJoinInProgressBonus( 100 )
 	if ( GetPlayerArrayOfTeam( TEAM_MILITIA ).len() )
 	{
@@ -1165,7 +1216,7 @@ void function WaveBreak_ShowPlayerBonus()
 	}
 
 	wait 2
-	print( "Showing Player Stats: Flawless Defense" )
+	printt( "Showing Player Stats: Flawless Defense" )
 	SetJoinInProgressBonus( 100 )
 	foreach ( entity player in GetPlayerArrayOfTeam( TEAM_MILITIA ) )
 	{
@@ -1692,7 +1743,7 @@ void function DisableTitanSelectionForPlayer( entity player )
 	int suitIndex = GetPersistentSpawnLoadoutIndex( player, "titan" )
 	if ( suitIndex > enumCount )
 	{
-		print( "Not locking Titans for " + player + " because selected titan is outside vanilla range, server is using custom Titans" )
+		printt( "Not locking Titans for " + player + " because selected titan is outside vanilla range, server is using custom Titans" )
 		return
 	}
 
@@ -2909,6 +2960,25 @@ void function MonitorHarvesterProximity( entity harvester )
 	}
 }
 
+#if DEV
+	void function DEV_FD_ToggleHarvesterGodMode()
+	{
+		if ( !IsValid( fd_harvester.harvester ) )
+			return
+
+		if ( fd_harvester.harvester.IsInvulnerable() )
+			fd_harvester.harvester.ClearInvulnerable()
+		else
+			fd_harvester.harvester.SetInvulnerable()
+	}
+
+	void function DEV_FD_KillHarvester()
+	{
+		if ( IsValid( fd_harvester.harvester ) )
+			fd_harvester.harvester.SetHealth( 1 )
+	}
+#endif
+
 /* Dropship Functions
 ██████  ██████   ██████  ██████  ███████ ██   ██ ██ ██████      ███████ ██    ██ ███    ██  ██████ ████████ ██  ██████  ███    ██ ███████
 ██   ██ ██   ██ ██    ██ ██   ██ ██      ██   ██ ██ ██   ██     ██      ██    ██ ████   ██ ██         ██    ██ ██    ██ ████   ██ ██
@@ -3701,7 +3771,7 @@ void function SetEnemyAmountNetVars( int waveIndex )
 	SetGlobalNetInt( "FD_AICount_Current", total )
 	SetGlobalNetInt( "FD_AICount_Total", total )
 
-	print( "ENEMIES ON THIS WAVE:" )
+	printt( "ENEMIES ON THIS WAVE:" )
 	if ( GetGlobalNetInt( "FD_AICount_Titan_Nuke" ) > 0 )
 		printt( "Nuke Titans:", GetGlobalNetInt( "FD_AICount_Titan_Nuke" ) )
 	if ( GetGlobalNetInt( "FD_AICount_Titan_Arc" ) > 0 )
