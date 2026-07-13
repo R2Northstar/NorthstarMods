@@ -7825,42 +7825,44 @@ bool function IsItemNew( entity player, string ref, string parentRef = "" )
 		SetItemOwnedStatus( player, ref, parentRef, false )
 	}
 
-	bool function ClientCommand_DEV_GiveFDUnlockPoint( entity player, array<string> args )
-	{
-		if ( args.len() == 0 )
-			return false
-
-		if ( !IsValid( player ) )
-			return false
-
-		string parentRef = args[ 0 ]
-		printt( "GIVE PLAYER UNLOCK POINT ", parentRef )
-		Player_GiveFDUnlockPoints( player, 1 )
-		return true
-	}
-
-	bool function ClientCommand_DEV_ResetTitanProgression( entity player, array<string> args )
-	{
-		if ( args.len() == 0 )
-			return false
-
-		if ( !IsValid( player ) )
-			return false
-
-		string titanRef = args[ 0 ]
-		printt( "RESET PLAYER TITAN PROGRESSION ", titanRef )
-		SetAvailableFDUnlockPoints( player, titanRef, 0 )
-
-		array<ItemData> fdUpgrades = GetAllItemsOfType( eItemTypes.TITAN_FD_UPGRADE )
-		foreach ( upgrade in fdUpgrades )
+	#if DEV
+		bool function ClientCommand_DEV_GiveFDUnlockPoint( entity player, array<string> args )
 		{
-			if ( upgrade.parentRef == titanRef )
-			{
-				ClearItemOwned( player, upgrade.ref, upgrade.parentRef )
-			}
+			if ( args.len() == 0 )
+				return false
+
+			if ( !IsValid( player ) )
+				return false
+
+			string parentRef = args[ 0 ]
+			printt( "GIVE PLAYER UNLOCK POINT ", parentRef )
+			Player_GiveFDUnlockPoints( player, 1 )
+			return true
 		}
-		return true
-	}
+
+		bool function ClientCommand_DEV_ResetTitanProgression( entity player, array<string> args )
+		{
+			if ( args.len() == 0 )
+				return false
+
+			if ( !IsValid( player ) )
+				return false
+
+			string titanRef = args[ 0 ]
+			printt( "RESET PLAYER TITAN PROGRESSION ", titanRef )
+			SetAvailableFDUnlockPoints( player, titanRef, 0 )
+
+			array<ItemData> fdUpgrades = GetAllItemsOfType( eItemTypes.TITAN_FD_UPGRADE )
+			foreach ( upgrade in fdUpgrades )
+			{
+				if ( upgrade.parentRef == titanRef )
+				{
+					ClearItemOwned( player, upgrade.ref, upgrade.parentRef )
+				}
+			}
+			return true
+		}
+	#endif
 
 	bool function ClientCommand_BuyItem( entity player, array<string> args )
 	{
