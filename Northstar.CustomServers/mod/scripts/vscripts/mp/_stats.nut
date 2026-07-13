@@ -68,11 +68,11 @@ void function AddStatCallback( string statCategory, string statAlias, string sta
 // a lot of this file seems to be doing caching of stats in some way
 void function Stats_SaveStatDelayed( entity player, string statCategory, string statAlias, string statSubAlias )
 {
+	player.EndSignal( "OnDestroy" )
+	player.EndSignal( "_disconnectedInternal" )
+
 	// idk how long the delay is meant to be but whatever
 	WaitEndFrame()
-
-	if ( GetGameState() == eGameState.Postmatch || !IsValidPlayer( player ) )
-		return
 
 	Stats_SaveStat( player, statCategory, statAlias, statSubAlias )
 }
@@ -326,12 +326,6 @@ void function OnClientConnected( entity player )
 void function OnClientDisconnected( entity player )
 {
 	Stats_SaveAllStats( player )
-	// maybe we can save this stuff, but idk if we can access persistence in this callback
-	if ( player in file.cachedIntStatChanges )
-		delete file.cachedIntStatChanges[ player ]
-
-	if ( player in file.cachedFloatStatChanges )
-		delete file.cachedFloatStatChanges[ player ]
 }
 
 void function OnSpectreLeeched( entity spectre, entity player )
@@ -1073,11 +1067,10 @@ void function SaveStatsPeriodically_Threaded()
 	while ( true )
 	{
 		foreach ( entity player in GetPlayerArray() )
-		{
-			if ( IsValid( player ) )
+			if ( IsValidPlayer( player ) )
 				Stats_SaveAllStats( player )
-		}
-		wait 5
+
+		WaitFrame()
 	}
 }
 

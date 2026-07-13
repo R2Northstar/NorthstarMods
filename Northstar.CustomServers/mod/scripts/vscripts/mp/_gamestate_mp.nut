@@ -23,7 +23,6 @@ global function GameState_SetTimeLimitOverride
 global function IsRoundBasedGameOver
 global function ShouldRunEvac
 global function GiveTitanToPlayer
-global function GetTimeLimit_ForGameMode
 global function CodeCallback_GamerulesThink
 global function GetWinnerDeterminedWait
 global function WillShowRoundWinningKillReplay
@@ -1448,25 +1447,6 @@ void function GiveTitanToPlayer( entity player )
 
 	PlayerEarnMeter_SetMode( player, eEarnMeterMode.DEFAULT )
 	PlayerEarnMeter_AddEarnedAndOwned( player, 1.0, 1.0 )
-}
-
-float function GetTimeLimit_ForGameMode()
-{
-	#if DEV
-		if ( level.devForcedTimeLimit )
-		{
-			level.devForcedTimeLimit = 0
-			return 0.1
-		}
-	#endif
-
-	if ( GameState_GetTimeLimitOverride() >= 0 )
-		return GameState_GetTimeLimitOverride()
-
-	if ( !GameMode_IsDefined( GAMETYPE ) )
-		return GetCurrentPlaylistVarFloat( "timelimit", 10 )
-
-	return float( GameMode_GetTimeLimit( GAMETYPE ) ) // not a float for some reason?
 }
 
 void function DialoguePlayNormal()

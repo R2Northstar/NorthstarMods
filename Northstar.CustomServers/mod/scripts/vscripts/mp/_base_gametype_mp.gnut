@@ -166,18 +166,14 @@ void function CodeCallback_OnClientConnectionCompleted( entity player )
 {
 	InitPersistentData( player )
 
-	player.SetPersistentVar( "lastTimeLoggedIn", GetUnixTimestamp() )
-
-	if ( !IsLobby() )
-	{
-		player.SetPersistentVar( "lastTimePlayed", GetUnixTimestamp() )
-		player.SetPersistentVar( "lastPlaylist", GAMETYPE )
-	}
-	else
+	if ( IsLobby() )
 	{
 		Lobby_OnClientConnectionCompleted( player )
 		return
 	}
+
+	if ( player.GetTeam() != TEAM_SPECTATOR && !IsPrivateMatchSpectator( player ) )
+		player.SetPersistentVar( "lastPlaylist", GAMETYPE )
 
 	if ( !IsFDMode( GetConVarString( "mp_gamemode" ) ) )
 	{
@@ -282,6 +278,8 @@ void function CodeCallback_OnClientDisconnected( entity player, string reason )
 		return
 	}
 
+	thread WaitForDisconnectCompleted( player )
+
 	if ( !player.hasConnected )
 		return
 
@@ -291,9 +289,22 @@ void function CodeCallback_OnClientDisconnected( entity player, string reason )
 		callbackFunc( player )
 	}
 
+	UpdatePersistenceOnDisconnect( player )
+
 	player.Disconnected()
 	player.p.isDisconnected = true
 	player.CleanupMPClasses()
+}
+
+void function WaitForDisconnectCompleted( entity player )
+{
+	if ( IsValid( player ) )
+		player.WaitSignal( "_disconnectedInternal" )
+
+	while ( IsValid( player ) )
+		WaitFrame()
+
+	UpdateBadRepPresent()
 }
 
 /*

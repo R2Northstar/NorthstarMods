@@ -1,3 +1,5 @@
+untyped
+
 globalize_all_functions
 
 void function Utility_MP_Init()
@@ -128,4 +130,53 @@ bool function HasGameStateProtection( entity ent )
 	}
 
 	return false
+}
+
+float function GetTimeLimit_ForGameMode()
+{
+	#if DEV
+		if ( level.devForcedTimeLimit )
+			return 0.1
+	#endif
+
+	if ( GameState_GetTimeLimitOverride() >= 0 )
+		return GameState_GetTimeLimitOverride()
+
+	float timeLimit = GetCurrentPlaylistVarFloat( "timelimit", -1 )
+
+	if ( timeLimit == -1 )
+		timeLimit = float( GameMode_GetTimeLimit( GAMETYPE ) ) // not a float for some reason?
+
+	return timeLimit
+}
+
+void function SaveDatePlayed( entity player )
+{
+	Assert( IsServer() )
+	Assert( IsValid( player ) )
+	Assert( player.IsPlayer() )
+
+	player.SetPersistentVar( "lastTimePlayed", Daily_GetCurrentTime() )
+}
+
+void function SaveDateLoggedIn( entity player )
+{
+	Assert( IsServer() )
+	Assert( IsValid( player ) )
+	Assert( player.IsPlayer() )
+
+	player.SetPersistentVar( "lastTimeLoggedIn", Daily_GetCurrentTime() )
+}
+
+void function UpdatePersistenceOnDisconnect( entity player )
+{
+	if ( player.s.updatedPersistenceOnDisconnect )
+		return
+
+	if ( player.GetTeam() != TEAM_SPECTATOR && !IsPrivateMatchSpectator( player ) )
+		SaveDatePlayed( player )
+
+	SaveDateLoggedIn( player )
+
+	player.s.updatedPersistenceOnDisconnect = true
 }
