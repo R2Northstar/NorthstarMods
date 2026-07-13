@@ -5,7 +5,7 @@ globalize_all_functions
 void function NorthstarUtils_Before_Init()
 {
 	#if DEV && SERVER
-		level.SaveRecordedAnimation <- null // So mods can use this function without needing to replace this file
+		level.SaveRecordedAnimation <- null // so mods can use this function without needing to replace this file
 
 		FlagInit( "ShowExplosionRadius" )
 	#endif
