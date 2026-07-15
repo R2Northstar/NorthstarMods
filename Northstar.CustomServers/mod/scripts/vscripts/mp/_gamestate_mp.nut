@@ -81,7 +81,17 @@ void function PIN_GameStart()
 	SetServerVar( "switchedSides", 0 )
 	SetServerVar( "winningTeam", -1 )
 
+	AddCallback_GameStateEnter( eGameState.WaitingForCustomStart, GameStateEnter_WaitingForCustomStart )
+	AddCallback_GameStateEnter( eGameState.WaitingForPlayers, GameStateEnter_WaitingForPlayers )
 	AddCallback_OnClientConnected( WaitingForPlayers_ClientConnected )
+
+	AddCallback_GameStateEnter( eGameState.PickLoadout, GameStateEnter_PickLoadout )
+	AddCallback_GameStateEnter( eGameState.Prematch, GameStateEnter_Prematch )
+	AddCallback_GameStateEnter( eGameState.Playing, GameStateEnter_Playing )
+	AddCallback_GameStateEnter( eGameState.WinnerDetermined, GameStateEnter_WinnerDetermined )
+	AddCallback_GameStateEnter( eGameState.SwitchingSides, GameStateEnter_SwitchingSides )
+	AddCallback_GameStateEnter( eGameState.SuddenDeath, GameStateEnter_SuddenDeath )
+	AddCallback_GameStateEnter( eGameState.Postmatch, GameStateEnter_Postmatch )
 
 	AddCallback_OnPlayerKilled( OnPlayerKilled )
 	AddDeathCallback( "npc_titan", OnTitanKilled )
@@ -92,15 +102,22 @@ void function PIN_GameStart()
 
 void function GameEndTimeVarChanged()
 {
-	if ( GetGameState() <= eGameState.SuddenDeath )
-		file.timeLimitOverride = ( ( expect float( GetServerVar( "gameEndTime" ) ) - Time() ) - ( expect float( GetServerVar( "gameStartTime" ) ) - Time() ) ) / 60.0
+	if ( GetGameState() > eGameState.SuddenDeath )
+		return
+
+	float startTime = GetServerVar( "gameStartTime" ) != null ? ( expect float( GetServerVar( "gameStartTime" ) ) - Time() ) : 0.0
+
+	file.timeLimitOverride = ( ( expect float( GetServerVar( "gameEndTime" ) ) - Time() ) - startTime ) / 60.0
 }
 
 void function RoundEndTimeVarChanged()
 {
-	if ( GetGameState() <= eGameState.SuddenDeath )
-		file.timeLimitOverride =
-			( ( expect float( GetServerVar( "roundEndTime" ) ) - Time() ) - ( expect float( GetServerVar( "roundStartTime" ) ) - Time() ) ) / 60.0
+	if ( GetGameState() > eGameState.SuddenDeath )
+		return
+
+	float startTime = GetServerVar( "roundStartTime" ) != null ? ( expect float( GetServerVar( "roundStartTime" ) ) - Time() ) : 0.0
+
+	file.timeLimitOverride = ( ( expect float( GetServerVar( "roundEndTime" ) ) - Time() ) - startTime ) / 60.0
 }
 
 void function GameState_EntitiesDidLoad()
@@ -162,48 +179,6 @@ void function SetGameState( int newState )
 	// added in AddCallback_GameStateEnter
 	foreach ( callbackFunc in svGlobal.gameStateEnterCallbacks[ newState ] )
 		callbackFunc()
-
-	switch ( newState )
-	{
-		case eGameState.WaitingForCustomStart:
-			GameStateEnter_WaitingForCustomStart()
-			break
-
-		case eGameState.WaitingForPlayers:
-			GameStateEnter_WaitingForPlayers()
-			break
-
-		case eGameState.PickLoadout:
-			GameStateEnter_PickLoadout()
-			break
-
-		case eGameState.Prematch:
-			GameStateEnter_Prematch()
-			break
-
-		case eGameState.Playing:
-			GameStateEnter_Playing()
-			break
-
-		case eGameState.SuddenDeath:
-			GameStateEnter_SuddenDeath()
-			break
-
-		case eGameState.WinnerDetermined:
-			GameStateEnter_WinnerDetermined()
-			break
-
-		case eGameState.SwitchingSides:
-			GameStateEnter_SwitchingSides()
-			break
-
-		case eGameState.Epilogue:
-			break
-
-		case eGameState.Postmatch:
-			GameStateEnter_Postmatch()
-			break
-	}
 }
 
 void function AddTeamScore( int team, int amount )
@@ -414,11 +389,11 @@ void function GameStateEnter_Prematch()
 	if ( IsRoundBased() )
 		timeLimit = int( GameMode_GetRoundTimeLimit( GAMETYPE ) * 60 )
 
-	if ( !GetClassicMPMode() && !ClassicMP_ShouldTryIntroAndEpilogueWithoutClassicMP() )
-		thread StartGameWithoutClassicMP()
-
 	SetServerVar( "gameEndTime", Time() + timeLimit + ClassicMP_GetIntroLength() )
 	SetServerVar( "roundEndTime", Time() + timeLimit + ClassicMP_GetIntroLength() )
+
+	if ( !GetClassicMPMode() && !ClassicMP_ShouldTryIntroAndEpilogueWithoutClassicMP() )
+		thread StartGameWithoutClassicMP()
 
 	// Initialise any spectators. Hopefully they are all initialised already in CodeCallback_OnClientConnectionCompleted
 	// (_base_gametype_mp.gnut) but for modes like LTS this doesn't seem to happen late enough to work properly.
