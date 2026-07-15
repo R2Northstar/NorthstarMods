@@ -1,4 +1,7 @@
-globalize_all_functions
+global function Utility_MP_Init
+global function ClientCommand_OnDevnetBugScreenshot
+global function SafeForTitanFall
+global function GetTimeLimit_ForGameMode
 
 void function Utility_MP_Init()
 {
