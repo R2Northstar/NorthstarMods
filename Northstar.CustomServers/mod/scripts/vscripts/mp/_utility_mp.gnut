@@ -1,4 +1,4 @@
-globalize_all_funcitons
+globalize_all_functions
 
 void function Utility_MP_Init()
 {
