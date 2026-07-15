@@ -515,10 +515,10 @@ void function TryGivePilotLoadoutForGracePeriod( entity player, string args0, st
 	respawnTime += gracePeriodDuration
 
 	if (
-		args0 == "1" && ( file.allowChangeLoadoutFunc == null || file.allowChangeLoadoutFunc( player ) ) &&
+		args0 == "1" &&
 		(
 			( respawnTime >= Time() && player.s.noFiredWeapon ) || svGlobal.isInPilotGracePeriod || GetGameState() < eGameState.Playing || player.s.usedLoadoutCrate ||
-				player.p.usingLoadoutCrate
+				player.p.usingLoadoutCrate || ( file.allowChangeLoadoutFunc != null && file.allowChangeLoadoutFunc( player ) )
 		)
 	)
 	{

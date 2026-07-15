@@ -1,6 +1,6 @@
 untyped
 
-global function PIN_GameStart
+global function GameState_Init_MP
 global function SetGameState
 global function GameState_EntitiesDidLoad
 global function WaittillGameStateOrHigher
@@ -68,7 +68,7 @@ struct
  ██████  ██   ██ ██      ██ ███████ ███████    ██    ██   ██    ██    ███████ ███████
 */
 
-void function PIN_GameStart()
+void function GameState_Init_MP()
 {
 	RegisterServerVarChangeCallback( "gameEndTime", GameEndTimeVarChanged )
 	RegisterServerVarChangeCallback( "roundEndTime", RoundEndTimeVarChanged )
