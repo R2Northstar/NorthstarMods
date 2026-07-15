@@ -410,11 +410,11 @@ void function StartGameWithoutClassicMP()
 		if ( IsAlive( player ) )
 			player.Die()
 
+	WaitFrame() // wait for callbacks to finish
+
 	// need these otherwise game will complain
 	SetServerVar( "gameStartTime", Time() )
 	SetServerVar( "roundStartTime", Time() )
-
-	WaitFrame() // wait for callbacks to finish
 
 	foreach ( entity player in GetPlayerArray() )
 	{
