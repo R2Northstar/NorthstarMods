@@ -97,10 +97,6 @@
 			}
 		},
 		{
-			"Path": "_store.gnut",
-			"RunOn": "SERVER && MP"
-		},
-		{
 			"Path": "_script_movers.gnut",
 			"RunOn": "SERVER && MP"
 		},
