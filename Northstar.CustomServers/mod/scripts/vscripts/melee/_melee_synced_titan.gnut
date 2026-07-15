@@ -264,7 +264,9 @@ void functionref( SyncedMelee action, entity attacker, entity target ) function 
 	if ( target.IsNPC() )
 	{
 		#if HAS_BOSS_AI
-			if ( !IsBossTitan( target ) && !target.GetTitanSoul().soul.seatedNpcPilot.isValid )
+			entity bossPlayer = target.GetBossPlayer()
+
+			if ( ( IsValid( bossPlayer ) || !IsVDUTitan( target ) ) && !target.GetTitanSoul().soul.seatedNpcPilot.isValid )
 				return MeleeThread_AtlasVsTitanShort
 		#else
 			if ( !target.GetTitanSoul().soul.seatedNpcPilot.isValid )

@@ -97,14 +97,6 @@
 			}
 		},
 		{
-			"Path": "_chat.gnut",
-			"RunOn": "SERVER"
-		},
-		{
-			"Path": "_misc_stubs.gnut",
-			"RunOn": "SERVER && MP"
-		},
-		{
 			"Path": "_store.gnut",
 			"RunOn": "SERVER && MP"
 		},
@@ -129,10 +121,6 @@
 			}
 		},
 		{
-			"Path": "mp/levels/_lf_maps_shared.gnut",
-			"RunOn": "SERVER && MP"
-		},
-		{
 			"Path": "gamemodes/sh_gamemodes_custom.gnut",
 			"RunOn": "MP"
 		},
@@ -145,26 +133,12 @@
 			"RunOn": "CLIENT || SERVER"
 		},
 		{
-			"Path": "gamemodes/_gamemode_fra.nut",
-			"RunOn": "SERVER && MP",
-			"ServerCallback": {
-				"Before": "GamemodeFRA_AddAdditionalInitCallback"
-			}
-		},
-		{
 			"Path": "mp/_classic_mp_dropship_intro.gnut",
 			"RunOn": "SERVER && MP"
 		},
 		{
 			"Path": "mp/_classic_mp_no_intro.gnut",
 			"RunOn": "SERVER && MP"
-		},
-		{
-			"Path": "_loadouts_mp.gnut",
-			"RunOn": "SERVER && MP",
-			"ServerCallback": {
-				"After": "SvLoadoutsMP_Init"
-			}
 		},
 		{
 			"Path": "lobby/sh_private_lobby_modes_init.gnut",

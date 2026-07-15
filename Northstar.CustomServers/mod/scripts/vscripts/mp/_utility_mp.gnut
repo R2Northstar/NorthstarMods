@@ -178,3 +178,32 @@ void function UpdatePersistenceOnDisconnect( entity player )
 
 	player.s.updatedPersistenceOnDisconnect = true
 }
+
+void function FW_Border_GlobalInit()
+{
+	AddSpawnCallbackEditorClass( "func_brush", "func_brush_fw_territory_border", RemoveFWBorder )
+}
+
+void function RemoveFWBorder( entity border )
+{
+	if ( GameModeRemove( border ) )
+		return
+
+	if ( !border.HasKey( "gamemode_" + GAMETYPE ) )
+		border.Destroy()
+}
+
+void function SetupLiveFireMaps()
+{
+	FlagSet( "LevelHasRoof" )
+	Riff_ForceTitanAvailability( eTitanAvailability.Never )
+	ClassicMP_SetLevelIntro( ClassicMP_DefaultNoIntro_Setup, ClassicMP_DefaultNoIntro_GetLength() )
+}
+
+void function SetWeaponDropsEnabled( bool enabled )
+{
+	if ( enabled )
+		FlagSet( "WeaponDropsAllowed" )
+	else
+		FlagClear( "WeaponDropsAllowed" )
+}
