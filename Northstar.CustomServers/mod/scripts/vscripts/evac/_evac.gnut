@@ -497,6 +497,7 @@ void function AddPlayerToEvacDropship( entity dropship, entity player )
 
 	UpdatePlayerStat( player, "misc_stats", "evacsAttempted" )
 	AddPlayerScore( player, "GetToChopper" )
+	SetPlayerForcedDialogueOnly( player, true ) // No more misc dialogue
 
 	// need to cancel if the dropship dies
 	dropship.EndSignal( "OnDeath", "OnDestroy" )
@@ -662,7 +663,9 @@ void function EvacPlayerDamaged( entity player, var damageInfo )
 	)
 		return
 
-	if ( !IsDamageFromDamageTrigger( damageInfo ) && ( DamageInfo_GetForceKill( damageInfo ) || IsInstantDeath( damageInfo ) ) )
+	if (
+		!IsDamageFromDamageTrigger( damageInfo ) && ( ( DamageInfo_GetForceKill( damageInfo ) || IsInstantDeath( damageInfo ) ) || !EVAL_PASSENGER_INVULNERABILITY )
+	)
 		return
 
 	DamageInfo_SetDamage( damageInfo, 0 )
@@ -719,6 +722,8 @@ void function OnPlayerDeath( entity victim, entity attacker, var damageInfo )
 {
 	if ( !IsPlayerEliminated( victim ) )
 		return
+
+	SetPlayerForcedDialogueOnly( victim, true )
 
 	entity killer = GetLastAttacker( victim )
 
