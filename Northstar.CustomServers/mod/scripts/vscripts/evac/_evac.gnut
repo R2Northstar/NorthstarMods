@@ -259,6 +259,7 @@ void function Evac( int evacTeam, float initialWait, float arrivalTime, float wa
 	dropship.SetShieldHealth( EVAC_SHIP_SHIELDS )
 
 	dropship.kv.solid = SOLID_VPHYSICS
+	dropship.kv.CollisionGroup = TRACE_COLLISION_GROUP_BLOCK_WEAPONS
 
 	SetTargetName( dropship, "#NPC_EVAC_DROPSHIP" )
 	DispatchSpawn( dropship )

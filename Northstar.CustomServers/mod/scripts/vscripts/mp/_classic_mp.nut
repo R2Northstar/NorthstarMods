@@ -131,7 +131,7 @@ bool function ClassicMP_ShouldRunEpilogue()
 		if ( !IsIMCOrMilitiaTeam( winningTeam ) )
 			return false
 
-		if ( !file.runEpilogueWithDeadPlayers && IsEliminationBased() && IsTeamEliminated( GetOtherTeam( winningTeam ) ) )
+		if ( !file.runEpilogueWithDeadPlayers && IsPilotEliminationBased() && IsTeamEliminated( GetOtherTeam( winningTeam ) ) )
 			return false
 
 		// there needs to be atleast 1 player on each team before running epilogue
@@ -156,7 +156,7 @@ bool function ClassicMP_ShouldRunEpilogue()
 		}
 	}
 
-	return !file.epilogueForceDisabled && GetClassicMPMode() && GetCurrentPlaylistVarInt( "run_epilogue", 1 ) != 0
+	return !file.epilogueForceDisabled && GetCurrentPlaylistVarInt( "run_epilogue", 1 ) != 0
 }
 
 void function ClassicMP_RunEpilogueWithDeadPlayers( bool enabled )

@@ -207,3 +207,8 @@ void function SetWeaponDropsEnabled( bool enabled )
 	else
 		FlagClear( "WeaponDropsAllowed" )
 }
+
+bool function ShouldRunEvac()
+{
+	return GameMode_GetEvacEnabled( GAMETYPE ) && ClassicMP_ShouldRunEpilogue()
+}

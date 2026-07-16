@@ -21,7 +21,6 @@ global function AddTeamScore
 global function GameState_GetTimeLimitOverride
 global function GameState_SetTimeLimitOverride
 global function IsRoundBasedGameOver
-global function ShouldRunEvac
 global function GiveTitanToPlayer
 global function CodeCallback_GamerulesThink
 global function GetWinnerDeterminedWait
@@ -1433,11 +1432,6 @@ bool function IsRoundBasedGameOver()
 		return true
 
 	return false
-}
-
-bool function ShouldRunEvac()
-{
-	return GameMode_GetEvacEnabled( GAMETYPE ) && ClassicMP_ShouldRunEpilogue()
 }
 
 void function GiveTitanToPlayer( entity player )
