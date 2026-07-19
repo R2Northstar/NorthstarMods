@@ -815,7 +815,9 @@ void function GameStateEnter_Playing()
 
 	foreach ( entity player in players )
 	{
-		player.StopObserverMode()
+		if ( !IsPrivateMatchSpectator( player ) )
+			player.StopObserverMode()
+
 		player.UnfreezeControlsOnServer()
 
 		UnMuteAll( player )
