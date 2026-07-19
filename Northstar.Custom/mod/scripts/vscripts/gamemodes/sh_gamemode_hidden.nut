@@ -31,6 +31,7 @@ void function Sh_GamemodeHidden_Init()
 			GameMode_AddServerInit( GAMEMODE_HIDDEN, GamemodeHidden_Init )
 			GameMode_SetPilotSpawnpointsRatingFunc( GAMEMODE_HIDDEN, RateSpawnpoints_Generic )
 			GameMode_SetTitanSpawnpointsRatingFunc( GAMEMODE_HIDDEN, RateSpawnpoints_Generic )
+			GameMode_SetEvacEnabled( GAMEMODE_HIDDEN, false )
 		#elseif CLIENT
 			GameMode_AddClientInit( GAMEMODE_HIDDEN, ClGamemodeHidden_Init )
 		#endif

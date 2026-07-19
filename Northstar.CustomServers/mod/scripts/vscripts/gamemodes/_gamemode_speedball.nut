@@ -32,7 +32,6 @@ void function GamemodeSpeedball_Init()
 	AddCallback_OnRoundEndCleanup( ResetFlag )
 
 	ClassicMP_SetCustomIntro( ClassicMP_DefaultNoIntro_Setup, ClassicMP_DefaultNoIntro_GetLength() )
-	ClassicMP_ForceDisableEpilogue( true )
 
 	level.endOfRoundPlayerState = ENDROUND_MOVEONLY
 }

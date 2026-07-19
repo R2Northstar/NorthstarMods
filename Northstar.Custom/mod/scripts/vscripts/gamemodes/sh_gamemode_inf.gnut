@@ -29,9 +29,11 @@ void function Sh_GamemodeInfection_Init()
 		AddPrivateMatchMode( GAMEMODE_INFECTION ) // add to private lobby modes
 
 		#if SERVER
+
 			GameMode_AddServerInit( GAMEMODE_INFECTION, GamemodeInfection_Init )
 			GameMode_SetPilotSpawnpointsRatingFunc( GAMEMODE_INFECTION, RateSpawnpoints_Generic )
 			GameMode_SetTitanSpawnpointsRatingFunc( GAMEMODE_INFECTION, RateSpawnpoints_Generic )
+			GameMode_SetEvacEnabled( GAMEMODE_INFECTION, false )
 		#elseif CLIENT
 			GameMode_AddClientInit( GAMEMODE_INFECTION, ClGamemodeInfection_Init )
 		#endif

@@ -19,7 +19,7 @@ void function SNS_Init()
 {
 	SetSpawnpointGamemodeOverride( FFA )
 	SetShouldUseRoundWinningKillReplay( true )
-	ClassicMP_ForceDisableEpilogue( true )
+
 	SetLoadoutGracePeriodEnabled( false ) // prevent modifying loadouts with grace period
 	SetWeaponDropsEnabled( false )
 	Riff_ForceTitanAvailability( eTitanAvailability.Never )

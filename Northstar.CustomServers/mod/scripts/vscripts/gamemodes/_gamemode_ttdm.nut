@@ -15,7 +15,6 @@ void function GamemodeTTDM_Init()
 	SetPlayThreeMinuteMusic( true )
 
 	ClassicMP_SetCustomIntro( ClassicMP_DefaultNoIntro_Setup, ClassicMP_DefaultNoIntro_GetLength() )
-	ClassicMP_ForceDisableEpilogue( true )
 
 	AddCallback_OnClientConnected( SetupPlayerTTDMChallenges ) // Just to make up the Match Goals tracking
 	AddCallback_OnClientDisconnected( RemovePlayerTTDMChallenges ) // Safety removal of data to prevent crashes

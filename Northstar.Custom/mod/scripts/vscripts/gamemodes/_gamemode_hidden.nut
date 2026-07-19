@@ -17,7 +17,6 @@ void function GamemodeHidden_Init()
 	Riff_ForceSetEliminationMode( eEliminationMode.Pilots )
 
 	ClassicMP_SetCustomIntro( ClassicMP_DefaultNoIntro_Setup, ClassicMP_DefaultNoIntro_GetLength() )
-	ClassicMP_ForceDisableEpilogue( true )
 
 	AddCallback_OnClientConnected( HiddenInitPlayer )
 	AddCallback_OnPlayerKilled( HiddenOnPlayerKilled )

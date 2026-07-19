@@ -33,6 +33,7 @@ void function Sh_GamemodeFastball_Init()
 			GameMode_AddServerInit( GAMEMODE_FASTBALL, GamemodeFastball_Init )
 			GameMode_SetPilotSpawnpointsRatingFunc( GAMEMODE_FASTBALL, RateSpawnpoints_Generic )
 			GameMode_SetTitanSpawnpointsRatingFunc( GAMEMODE_FASTBALL, RateSpawnpoints_Generic )
+			GameMode_SetEvacEnabled( GAMEMODE_FASTBALL, false )
 		#elseif CLIENT
 			GameMode_AddClientInit( GAMEMODE_FASTBALL, ClGamemodeFastball_Init )
 		#endif

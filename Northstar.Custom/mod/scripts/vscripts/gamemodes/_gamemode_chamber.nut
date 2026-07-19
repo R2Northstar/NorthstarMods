@@ -9,7 +9,6 @@ void function GamemodeChamber_Init()
 	SetWeaponDropsEnabled( false )
 	Riff_ForceTitanAvailability( eTitanAvailability.Never )
 	Riff_ForceBoostAvailability( eBoostAvailability.Disabled )
-	ClassicMP_ForceDisableEpilogue( true )
 
 	AddCallback_OnClientConnected( UpdateLoadout )
 	AddCallback_OnPlayerKilled( ChamberOnPlayerKilled )

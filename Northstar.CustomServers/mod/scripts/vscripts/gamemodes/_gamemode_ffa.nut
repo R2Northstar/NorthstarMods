@@ -20,7 +20,6 @@ void function FFA_Init()
 		return
 	}
 
-	ClassicMP_ForceDisableEpilogue( true )
 	ScoreEvent_SetupEarnMeterValuesForMixedModes()
 
 	AddCallback_OnPlayerKilled( OnPlayerKilled )

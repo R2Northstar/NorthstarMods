@@ -27,7 +27,7 @@ void function GamemodeFastball_Init()
 
 	// implementing intro in a different file because it'll likely be big
 	ClassicMP_SetCustomIntro( GamemodeFastballIntroSetup, 14.7 )
-	ClassicMP_ForceDisableEpilogue( true )
+
 	AddCallback_EntitiesDidLoad( SpawnPanelsForLevel )
 	AddCallback_GameStateEnter( eGameState.Prematch, ResetPanels )
 	SetTimelimitCompleteFunc( FastballDecideWinner )

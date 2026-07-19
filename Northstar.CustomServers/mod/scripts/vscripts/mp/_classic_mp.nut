@@ -124,13 +124,13 @@ bool function ClassicMP_ShouldRunEpilogue()
 	if ( IsFFAGame() )
 		return false
 
+	int winningTeam = GetWinningTeam()
+
+	if ( !IsIMCOrMilitiaTeam( winningTeam ) )
+		return false
+
 	if ( !GetCurrentPlaylistVarInt( "run_evac", 0 ) )
 	{
-		int winningTeam = GetWinningTeam()
-
-		if ( !IsIMCOrMilitiaTeam( winningTeam ) )
-			return false
-
 		if ( !file.runEpilogueWithDeadPlayers && IsPilotEliminationBased() && IsTeamEliminated( GetOtherTeam( winningTeam ) ) )
 			return false
 

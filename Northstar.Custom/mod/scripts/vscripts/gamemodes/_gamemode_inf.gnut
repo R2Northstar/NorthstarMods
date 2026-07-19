@@ -16,7 +16,7 @@ void function GamemodeInfection_Init()
 	SetShouldUseRoundWinningKillReplay( true )
 	Riff_ForceTitanAvailability( eTitanAvailability.Never )
 	Riff_ForceBoostAvailability( eBoostAvailability.Disabled )
-	ClassicMP_ForceDisableEpilogue( true )
+
 	ClassicMP_SetCustomIntro( ClassicMP_DefaultNoIntro_Setup, ClassicMP_DefaultNoIntro_GetLength() )
 
 	SetShouldPlayerStartBleedoutFunc( InfectionShouldPlayerStartBleedout )
