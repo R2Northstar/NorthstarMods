@@ -60,7 +60,10 @@ void function InitDefaultLoadouts()
 
 		try
 		{
-			if ( !IsRefValidAndOfType( CallsignIcon_GetRef( PlayerCallsignIcon_GetActive( player ) ), eItemTypes.CALLSIGN_ICON ) )
+			if (
+				!IsRefValidAndOfType( CallsignIcon_GetRef( PlayerCallsignIcon_GetActive( player ) ), eItemTypes.CALLSIGN_ICON ) ||
+				IsItemLocked( player, CallsignIcon_GetRef( PlayerCallsignIcon_GetActive( player ) ) )
+			)
 			{
 				PlayerCallsignIcon_SetActiveByRef( player, "gc_icon_titanfall" )
 
@@ -76,7 +79,10 @@ void function InitDefaultLoadouts()
 
 		try
 		{
-			if ( !IsRefValidAndOfType( CallingCard_GetRef( PlayerCallingCard_GetActive( player ) ), eItemTypes.CALLING_CARD ) )
+			if (
+				!IsRefValidAndOfType( CallingCard_GetRef( PlayerCallingCard_GetActive( player ) ), eItemTypes.CALLING_CARD ) ||
+				IsItemLocked( player, CallingCard_GetRef( PlayerCallingCard_GetActive( player ) ) )
+			)
 			{
 				PlayerCallingCard_SetActiveByRef( player, "callsign_16_col" )
 
@@ -86,6 +92,16 @@ void function InitDefaultLoadouts()
 		catch ( callingCardError )
 		{
 			PlayerCallingCard_SetActiveByRef( player, "callsign_16_col" )
+
+			file.playerhasinvalidloadout[ player ] <- true
+		}
+
+		if (
+			!IsRefValidAndOfType( expect string( player.GetPersistentVar( "factionChoice" ) ), eItemTypes.FACTION ) ||
+			IsItemLocked( player, expect string( player.GetPersistentVar( "factionChoice" ) ) )
+		)
+		{
+			player.SetPersistentVar( "factionChoice", "faction_marauder" )
 
 			file.playerhasinvalidloadout[ player ] <- true
 		}
