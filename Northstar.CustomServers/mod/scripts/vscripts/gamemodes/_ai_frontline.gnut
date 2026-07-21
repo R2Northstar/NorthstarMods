@@ -1,9 +1,8 @@
 untyped
 
-global function InitializeFrontline
+global function InitFrontLine
 
 global function AllowFrontlineMove
-global function FrontlineInitiated
 
 global function WaitTillFrontlineMoved
 global function GetFrontlineSpawnPoint
@@ -24,32 +23,31 @@ struct
 	table<table> frontlineGroupTable
 	table currentFrontline
 	table<int, int> frontlineTeamSide = { [TEAM_IMC] = 0, [TEAM_MILITIA] = 1 }
-	int timesfrontlinemoved = 0
-
-	bool allowfrontlinemove = true
-	bool frontlineinitiated = false
+	int timesFrontlineMoved = 0
+	bool allowFrontlineMove = true
 	table<int, table<int, array<entity> > > frontlineAssaultPoint
 } file
 
-void function InitializeFrontline()
+bool function InitFrontLine()
 {
+	if ( Flag( "FrontlineInitiated" ) )
+		throw "InitFrontLine() was called when already initiated"
+
 	if ( Flag( "EntitiesDidLoad" ) )
-		throw "InitializeFrontline() was called after EntitiesDidLoad"
+		throw "InitFrontLine() was called after EntitiesDidLoad"
 
 	if ( !IsNewThread() )
 	{
-		thread InitializeFrontline()
-		return
+		thread InitFrontLine()
+		return true
 	}
 
 	FlagWait( "EntitiesDidLoad" )
 
-	file.frontlineinitiated = true
-
 	InitFrontlineGroups()
 
 	if ( !file.frontlineGroupTable.len() )
-		return
+		return false
 
 	AddDeathCallback( "npc_soldier", FrontlineDeath )
 	AddDeathCallback( "npc_spectre", FrontlineDeath )
@@ -83,33 +81,32 @@ void function InitializeFrontline()
 	}
 
 	SetFrontlineSides( file.currentFrontline, TEAM_MILITIA )
+
+	FlagSet( "FrontlineInitiated" )
+
+	return true
 }
 
 void function AllowFrontlineMove( bool enable )
 {
-	if ( !FrontlineInitiated() )
-		file.allowfrontlinemove = enable
-}
-
-bool function FrontlineInitiated()
-{
-	return file.frontlineinitiated
+	if ( !Flag( "EntitiesDidLoad" ) )
+		file.allowFrontlineMove = enable
 }
 
 void function WaitTillFrontlineMoved()
 {
-	while ( !FrontlineInitiated() )
+	while ( !Flag( "EntitiesDidLoad" ) )
 		WaitFrame()
 
-	int moved = file.timesfrontlinemoved
+	int moved = file.timesFrontlineMoved
 
-	while ( moved == file.timesfrontlinemoved )
+	while ( moved == file.timesFrontlineMoved )
 		WaitFrame()
 }
 
 entity function GetFrontlineSpawnPoint( array<entity> spawnPointArray, int team )
 {
-	if ( !FrontlineInitiated() || !IsIMCOrMilitiaTeam( team ) )
+	if ( !Flag( "EntitiesDidLoad" ) || !IsIMCOrMilitiaTeam( team ) )
 		return spawnPointArray.getrandom()
 
 	int goalNum = -1
@@ -319,7 +316,7 @@ void function CheckFrontlineOverrun( int losingTeam )
 
 void function MoveFrontline( int winningTeam )
 {
-	if ( !FrontlineInitiated() || !file.allowfrontlinemove )
+	if ( !Flag( "EntitiesDidLoad" ) || !file.allowFrontlineMove )
 		return
 
 	string prevFrontlineName = expect string( file.currentFrontline.name )
@@ -333,12 +330,12 @@ void function MoveFrontline( int winningTeam )
 	SetFrontlineSides( file.currentFrontline, winningTeam )
 
 	// tell all squads and to assault the new fronline
-	file.timesfrontlinemoved++
+	file.timesFrontlineMoved++
 }
 
 vector function GetTeamCombatDir( table frontline, int team )
 {
-	if ( !FrontlineInitiated() )
+	if ( !Flag( "EntitiesDidLoad" ) )
 		return Vector( 0, 0, 0 )
 
 	// combatDir points towards side 1 by default
@@ -623,7 +620,7 @@ vector function GetMapDirection( vector centerPos, array<entity> startSpawnPoint
 
 void function FrontlineDeath( entity ent, var damageInfo )
 {
-	if ( !FrontlineInitiated() )
+	if ( !Flag( "EntitiesDidLoad" ) )
 		return
 
 	if ( ent.IsTitan() && !IsValid( ent.GetBossPlayer() ) )
@@ -650,7 +647,7 @@ void function FrontlineDeath( entity ent, var damageInfo )
 
 void function SetFrontlineSides( table frontline, int winningTeam )
 {
-	if ( !FrontlineInitiated() || !IsIMCOrMilitiaTeam( winningTeam ) )
+	if ( !Flag( "EntitiesDidLoad" ) || !IsIMCOrMilitiaTeam( winningTeam ) )
 		return
 
 	int otherTeam = GetOtherTeam( winningTeam )
@@ -713,7 +710,7 @@ entity function GetFrontlineGoal( int index, int team, bool spectre = false )
 
 void function SquadAssaultFrontline( array<entity> squad )
 {
-	if ( !FrontlineInitiated() )
+	if ( !Flag( "EntitiesDidLoad" ) )
 		return
 
 	// Guys in squad can die at any time - it seems bad that this can be the case, squad should be clean earlier if at all

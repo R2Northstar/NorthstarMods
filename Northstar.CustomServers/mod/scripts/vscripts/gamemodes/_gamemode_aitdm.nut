@@ -39,7 +39,7 @@ struct
 
 void function GamemodeAITdm_Init()
 {
-	InitializeFrontline()
+	InitFrontLine()
 
 	AddCallback_GameStateEnter( eGameState.Prematch, OnPrematchStart )
 	AddCallback_GameStateEnter( eGameState.Playing, OnPlaying )

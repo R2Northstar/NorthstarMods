@@ -18,6 +18,7 @@ struct
 
 void function AiGameModes_Init()
 {
+	FlagInit( "FrontlineInitiated" )
 }
 
 // ------------------------------------------------------
