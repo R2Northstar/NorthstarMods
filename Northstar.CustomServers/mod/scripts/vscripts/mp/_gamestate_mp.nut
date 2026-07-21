@@ -2406,7 +2406,7 @@ void function PlayerWinStreak()
 				if ( highestWinStreak < player.GetPersistentVarAsInt( "winStreak" ) + 1 )
 					player.SetPersistentVar( "highestWinStreakEver", player.GetPersistentVarAsInt( "winStreak" ) + 1 )
 
-				player.SetPersistentVar( "lastDailyMatchVictory", GetUnixTimestamp() )
+				player.SetPersistentVar( "lastDailyMatchVictory", Daily_GetCurrentTime() )
 				player.SetPersistentVar( "winStreak", player.GetPersistentVarAsInt( "winStreak" ) + 1 )
 			}
 			else
