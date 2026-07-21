@@ -47,13 +47,45 @@ void function InitDefaultLoadouts()
 		{
 			ref = BurnReward_GetById( burnCardID ).ref
 		}
-		catch ( error )
+		catch ( burnmeterError )
 		{
 		}
 
 		if ( !ItemDefined( ref ) || IsItemLocked( player, ref ) || GetItemDisplayData( ref ).hidden )
 		{
 			player.SetPersistentVar( "burnmeterSlot", 1 )
+
+			file.playerhasinvalidloadout[ player ] <- true
+		}
+
+		try
+		{
+			if ( !IsRefValidAndOfType( CallsignIcon_GetRef( PlayerCallsignIcon_GetActive( player ) ), eItemTypes.CALLSIGN_ICON ) )
+			{
+				PlayerCallsignIcon_SetActiveByRef( player, "gc_icon_titanfall" )
+
+				file.playerhasinvalidloadout[ player ] <- true
+			}
+		}
+		catch ( callsignIconError )
+		{
+			PlayerCallsignIcon_SetActiveByRef( player, "gc_icon_titanfall" )
+
+			file.playerhasinvalidloadout[ player ] <- true
+		}
+
+		try
+		{
+			if ( !IsRefValidAndOfType( CallingCard_GetRef( PlayerCallingCard_GetActive( player ) ), eItemTypes.CALLING_CARD ) )
+			{
+				PlayerCallingCard_SetActiveByRef( player, "callsign_16_col" )
+
+				file.playerhasinvalidloadout[ player ] <- true
+			}
+		}
+		catch ( callingCardError )
+		{
+			PlayerCallingCard_SetActiveByRef( player, "callsign_16_col" )
 
 			file.playerhasinvalidloadout[ player ] <- true
 		}

@@ -491,11 +491,6 @@ bool function ClientCommandCallback_LoadoutMenuClosed( entity player, array<stri
 	return true
 }
 
-bool function IsRefValidAndOfType( string ref, int itemType )
-{
-	return IsRefValid( ref ) && GetItemType( ref ) == itemType
-}
-
 void function TryGivePilotLoadoutForGracePeriod( entity player, string args0, string args1 )
 {
 	if ( args0 == "0" && args1 == "0" )
