@@ -49,6 +49,7 @@ Naciśnij Tak jeżeli wyrażasz zgodę. Wybór może zostać zmieniony w menu Mo
 		"MODE_SETTING_CATEGORY_RIFF" "Modyfikatory rozgrywki"
 		"MODE_SETTING_CATEGORY_MATCH" "Mecz"
 
+		"classic_mp" "Klasyczny tryb wieloosobowy"
 		"run_epilogue" "Epilog"
 		"scorelimit" "Limit wyniku"
 		"roundscorelimit" "Limit wyniku (na rundę)"
@@ -78,8 +79,7 @@ Naciśnij Tak jeżeli wyrażasz zgodę. Wybór może zostać zmieniony w menu Mo
 		"featured_mode_shotguns_snipers" "Armed and Dangerous"
 		"iron_rules" "Iron Titan Rules"
 
-		"cp_amped_capture_points" "Obrona umocnień"
-		"coliseum_loadouts_enabled" "Uzbrojenie Koloseum"
+		"capture_point_amping" "Obrona umocnień"
     
 		"aitdm_archer_grunts" "Piechurzy z łucznikami"
     
@@ -220,7 +220,7 @@ Naciśnij Tak jeżeli wyrażasz zgodę. Wybór może zostać zmieniony w menu Mo
 		"MODE_SETTING_CATEGORY_BLEEDOUT" "Krwawienie Pilotów"
 
 		"custom_air_accel_pilot" "Air Acceleration"
-		"no_pilot_collision" "Kolidowanie Pilotów"
+		"pilot_collision" "Kolidowanie Pilotów"
 		"promode_enable" "Bronie trybu pro"
 		"classic_rodeo" "Klasyczne Rodeo"
 		"oob_timer_enabled" "Licznik czasu poza granicami mapy"
@@ -402,8 +402,6 @@ Naciśnij Tak jeżeli wyrażasz zgodę. Wybór może zostać zmieniony w menu Mo
 		"TEAMSWITCH_GAMEMODE"		"Obecny tryb gry nie zezwala na Zmienianie Drużyn"
 		"TEAMSWITCH_BUFFER"		"Odczekaj chwilę zanim znowu Zmienisz Drużynę"
 		"MODE_MENU_SWITCH"		"Filtruj"
-		"HAS_NON_VANILLA_MODS"		"Są obecnie włączone mody (oznaczone znakiem \"!\"), które nie są kompatybilne z vanillą. Możesz wyłączyć je w menu modów."
 		"BLEEDOUT_CALL_HELP"		"Krwawisz!"
-		"PROGRESSION_TOGGLE_VANILLA"		"Progresja nie może być wyłączona na standardowych serwerach."
 	}
 }

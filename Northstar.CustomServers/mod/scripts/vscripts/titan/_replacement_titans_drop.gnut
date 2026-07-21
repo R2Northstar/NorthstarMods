@@ -421,6 +421,8 @@ bool function TitanFindDropNodes( FlightPath flightPath, vector baseOrigin, floa
 	// }
 	// function TitanFindDropNodesReloadable( flightPath, baseOrigin, yaw )
 	// {
+	return true // ValidateTitanDropNodes overwrites this
+
 	if ( NearTitanfallBlocker( baseOrigin ) )
 		return false
 
@@ -461,6 +463,12 @@ bool function TitanFindDropNodes( FlightPath flightPath, vector baseOrigin, floa
 		return false
 
 	if ( !EdgeTraceDropPoint( origin ) )
+		return false
+
+	if ( EntityInSolid( titan ) )
+		return false
+
+	if ( !NavMesh_IsPosReachableForAI( titan, origin ) )
 		return false
 
 	return true

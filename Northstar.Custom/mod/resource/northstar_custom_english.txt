@@ -95,5 +95,6 @@
 		"WPN_SHOTGUN_DBLBARREL_LONGDESC" "Short Double Barreled Shotgun"
 
 		"pilot_battery_inventory_size" "Pilot Battery Inventory Size"
+		"drop_battery_command" "Drop Battery Command"
 	}
 }

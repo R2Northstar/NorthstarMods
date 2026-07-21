@@ -49,6 +49,7 @@ Drücke Ja, um zuzustimmen. Du kannst diese Entscheidung jederzeit im Modmenü �
 		"MODE_SETTING_CATEGORY_RIFF" "Extras"
 		"MODE_SETTING_CATEGORY_MATCH" "Match"
 
+		"classic_mp" "Klassischer Multiplayer"
 		"run_epilogue" "Epilog"
 		"scorelimit" "Höchstpunktzahl"
 		"roundscorelimit" "Höchstpunktzahl (rundenbasiert)"
@@ -77,8 +78,7 @@ Drücke Ja, um zuzustimmen. Du kannst diese Entscheidung jederzeit im Modmenü �
 		"featured_mode_shotguns_snipers" "Bewaffnet und gefährlich"
 		"iron_rules" "Iron Titan Regeln"
 
-		"cp_amped_capture_points" "Verstärkte Hardpoints"
-		"coliseum_loadouts_enabled" "Coliseum Loadouts"
+		"capture_point_amping" "Verstärkte Hardpoints"
 
 		"aitdm_archer_grunts" "Archer Frontsoldaten"
 
@@ -211,7 +211,7 @@ Drücke Ja, um zuzustimmen. Du kannst diese Entscheidung jederzeit im Modmenü �
 		"MODE_SETTING_CATEGORY_BLEEDOUT" "Pilot Bleedout"
 
 		"custom_air_accel_pilot" "Luftbeschleunigung"
-		"no_pilot_collision" "Inter-Pilot Kollision"
+		"pilot_collision" "Inter-Pilot Kollision"
 		"promode_enable" "Pro-mode Waffen"
 		"classic_rodeo" "Klassisches Rodeo"
 		"oob_timer_enabled" "Out of Bounds Timer"

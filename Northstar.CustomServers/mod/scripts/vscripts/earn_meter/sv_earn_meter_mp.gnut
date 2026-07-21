@@ -95,7 +95,7 @@ void function EarnMeterMP_ReplaceReward( entity player, EarnObject reward, float
 
 void function EarnMeterMP_PlayerLifeThink( entity player )
 {
-	svGlobal.levelEnt.EndSignal( "CleanUpEntitiesForRoundEnd" )
+	svGlobal.levelEnt.EndSignal( "ClearPlayers" )
 	player.EndSignal( "OnDeath" )
 	player.EndSignal( "OnDestroy" )
 

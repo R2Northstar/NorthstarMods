@@ -134,8 +134,7 @@ bool function IsPrivateMatchSpectator( entity player )
 			return false
 	#endif
 
-	// NS: allow spectators on non-private_match playlists
-	if ( ( IsPrivateMatch() || GetConVarBool( "ns_allow_spectators" ) ) && player.GetPersistentVarAsInt( "privateMatchState" ) == 1 )
+	if ( !IsFFAGame() && GetConVarBool( "ns_allow_spectators" ) && player.GetPersistentVarAsInt( "privateMatchState" ) == 1 )
 		return true
 
 	return false

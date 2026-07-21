@@ -78,7 +78,8 @@ void function OnPrematchStart()
 	}
 
 	file.militiaBuddy = CreatePropDynamic( $"models/titans/buddy/titan_buddy.mdl" )
-	if ( HasSwitchedSides() )
+
+	if ( IsSwitchSidesBased() && HasSwitchedSides() )
 	{
 		file.militiaBuddy.SetOrigin( imcBuddySpawn.origin )
 		file.militiaBuddy.SetAngles( imcBuddySpawn.angles )
@@ -88,10 +89,12 @@ void function OnPrematchStart()
 		file.militiaBuddy.SetOrigin( militiaBuddySpawn.origin )
 		file.militiaBuddy.SetAngles( militiaBuddySpawn.angles )
 	}
+
 	thread AnimateBuddy( file.militiaBuddy )
 
 	file.imcBuddy = CreatePropDynamic( $"models/titans/buddy/titan_buddy.mdl" )
-	if ( HasSwitchedSides() )
+
+	if ( IsSwitchSidesBased() && HasSwitchedSides() )
 	{
 		file.imcBuddy.SetOrigin( militiaBuddySpawn.origin )
 		file.imcBuddy.SetAngles( militiaBuddySpawn.angles )
@@ -101,6 +104,7 @@ void function OnPrematchStart()
 		file.imcBuddy.SetOrigin( imcBuddySpawn.origin )
 		file.imcBuddy.SetAngles( imcBuddySpawn.angles )
 	}
+
 	thread AnimateBuddy( file.imcBuddy )
 
 	foreach ( entity player in GetPlayerArray() )
@@ -115,33 +119,30 @@ void function AnimateBuddy( entity buddy )
 
 	// play dialogue at the right time
 	buddy.WaitSignal( "fastball_start_throw" )
-	float diagDuration = EmitSoundOnEntity( buddy, "diag_sp_spoke1_BE117_04_01_mcor_bt" ) // trust me
+
+	float diagDuration = EmitSoundOnEntityToTeam( buddy, "diag_sp_spoke1_BE117_04_01_mcor_bt", buddy == file.imcBuddy ? TEAM_IMC : TEAM_MILITIA ) // trust me
+
 	StartParticleEffectOnEntity( buddy, GetParticleSystemIndex( $"P_BT_eye_SM" ), FX_PATTACH_POINT_FOLLOW, buddy.LookupAttachment( "EYEGLOW" ) )
 
 	wait diagDuration
+
 	if ( GetGameState() != eGameState.Playing )
 		ClassicMP_OnIntroFinished()
 
 	buddy.WaitSignal( "fastball_release" )
+
 	wait 5.0
 
 	// clear any players off bt to avoid potential crash which can supposedly happen even though i've never seen it happen
-	foreach ( entity player in GetPlayerArray() )
-		if ( player.GetParent() == buddy )
-			player.ClearParent()
+	ClearChildren( buddy )
 
 	buddy.Destroy()
 }
 
 void function AddPlayerToFastballIntro( entity player )
 {
-	if ( GetGameState() == eGameState.Prematch )
-	{
-		if ( !IsPrivateMatchSpectator( player ) )
-			thread FastballPlayer( player )
-		else
-			RespawnPrivateMatchSpectator( player )
-	}
+	if ( GetGameState() == eGameState.Prematch && !IsPrivateMatchSpectator( player ) )
+		thread FastballPlayer( player )
 }
 
 void function FastballPlayer( entity player )
@@ -153,6 +154,9 @@ void function FastballPlayer( entity player )
 
 	WaitFrame()
 
+	player.SetNameVisibleToEnemy( false )
+	player.SetNameVisibleToFriendly( false )
+
 	player.EndSignal( "OnDeath" )
 
 	OnThreadEnd(
@@ -160,18 +164,24 @@ void function FastballPlayer( entity player )
 		{
 			if ( IsValid( player ) )
 			{
-				RemoveCinematicFlag( player, CE_FLAG_CLASSIC_MP_SPAWNING )
+				RemoveCinematicFlag( player, CE_FLAG_INTRO )
+
 				player.ClearParent()
+
 				ClearPlayerAnimViewEntity( player )
+
 				player.DeployWeapon()
 				player.PlayerCone_Disable()
 				player.ClearInvulnerable()
 				player.kv.VisibilityFlags = ENTITY_VISIBLE_TO_EVERYONE // restore visibility
+				player.SetNameVisibleToEnemy( true )
+				player.SetNameVisibleToFriendly( true )
 			}
 		}
 	)
 
 	FirstPersonSequenceStruct throwSequence
+
 	throwSequence.attachment = "REF"
 	throwSequence.useAnimatedRefAttachment = true
 	throwSequence.hideProxy = true
@@ -184,10 +194,13 @@ void function FastballPlayer( entity player )
 
 	// get our buddy
 	entity buddy
+
 	if ( player.GetTeam() == TEAM_MILITIA )
 		buddy = file.militiaBuddy
 	else
 		buddy = file.imcBuddy
+
+	AddCinematicFlag( player, CE_FLAG_INTRO )
 
 	// respawn the player
 	player.SetOrigin( buddy.GetOrigin() )
@@ -196,8 +209,7 @@ void function FastballPlayer( entity player )
 	player.SetInvulnerable() // in deadly ground we die without this lol
 	player.HolsterWeapon()
 
-	// hide hud, fade screen out from black
-	AddCinematicFlag( player, CE_FLAG_CLASSIC_MP_SPAWNING )
+	// fade screen out from black
 	ScreenFadeFromBlack( player, 0.5, 0.5 )
 
 	// start fp sequence
@@ -213,6 +225,7 @@ void function FastballPlayer( entity player )
 	buddy.WaitSignal( "fastball_start_throw" )
 	// lock in their final angles at this point
 	vector throwVel = AnglesToForward( player.EyeAngles() ) * 950
+
 	throwVel.z = 675.0
 
 	// wait for it to finish
@@ -224,6 +237,4 @@ void function FastballPlayer( entity player )
 	// have to correct this manually here since due to no 3p animation our position isn't set right during this sequence
 	player.SetOrigin( buddy.GetAttachmentOrigin( buddy.LookupAttachment( "FASTBALL_R" ) ) )
 	player.SetVelocity( throwVel )
-
-	TryGameModeAnnouncement( player )
 }

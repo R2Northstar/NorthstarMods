@@ -8,6 +8,7 @@ void function GamemodeCP_Init()
 	Hardpoints_Init()
 
 	ScoreEvent_SetupEarnMeterValuesForMixedModes()
+	SetPlayThreeMinuteMusic( true )
 
 	AddCallback_EntitiesDidLoad( EntitiesDidLoad_SpawnHardpoints )
 	AddCallback_OnPlayerKilled( Hardpoints_OnPlayerKilled_UpdateMedals )
@@ -33,7 +34,7 @@ void function GamemodeCP_Init()
 
 void function RateSpawnpoints_CP( int checkClass, array<entity> spawnpoints, int team, entity player )
 {
-	if ( HasSwitchedSides() )
+	if ( IsSwitchSidesBased() && HasSwitchedSides() )
 		team = GetOtherTeam( team )
 
 	// check hardpoints, determine which ones we own
@@ -114,6 +115,8 @@ void function EntitiesDidLoad_SpawnHardpoints()
 		hpState.trigger.SetLeaveCallback( OnHardpointLeave )
 		hpState.trigger.SetOwner( hp )
 
+		hpState.ent.SetHardpointEstimatedCaptureTime( -1 )
+		hpState.ent.SetHardpointProgressRefPoint( 0 )
 		hpState.ent.Minimap_SetCustomState( hpState.ent.GetHardpointID() + 1 )
 		hpState.ent.Minimap_AlwaysShow( TEAM_MILITIA, null )
 		hpState.ent.Minimap_AlwaysShow( TEAM_IMC, null )
@@ -123,6 +126,8 @@ void function EntitiesDidLoad_SpawnHardpoints()
 		hpState.ent.s.state <- CAPTURE_POINT_STATE_UNASSIGNED
 		hpState.ent.s.lastCappedBy <- TEAM_UNASSIGNED
 		hpState.ent.s.wasJustCapping <- false
+		hpState.ent.s.lastPower <- 0
+		hpState.ent.s.isPlayingCapturingSound <- false
 
 		HARDPOINTS.append( hpState.ent ) // for vo script
 		hpState.ent.s.trigger <- hpState.trigger // also for vo script

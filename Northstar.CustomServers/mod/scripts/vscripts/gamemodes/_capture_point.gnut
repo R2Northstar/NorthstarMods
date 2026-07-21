@@ -51,7 +51,6 @@ string function CapturePoint_GetGroup( entity hardpoint ) // hardpoint Entity B 
 void function CapturePoint_SetState( entity hardpoint, int state )
 {
 	SetGlobalNetInt( "objective" + CapturePoint_GetGroup( hardpoint ) + "State", state )
-	hardpoint.SetHardpointState( state )
 }
 
 int function CapturePoint_GetState( entity hardpoint )

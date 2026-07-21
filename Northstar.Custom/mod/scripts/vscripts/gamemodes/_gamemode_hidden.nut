@@ -17,13 +17,12 @@ void function GamemodeHidden_Init()
 	Riff_ForceSetEliminationMode( eEliminationMode.Pilots )
 
 	ClassicMP_SetCustomIntro( ClassicMP_DefaultNoIntro_Setup, ClassicMP_DefaultNoIntro_GetLength() )
-	ClassicMP_ForceDisableEpilogue( true )
 
 	AddCallback_OnClientConnected( HiddenInitPlayer )
 	AddCallback_OnPlayerKilled( HiddenOnPlayerKilled )
 	AddCallback_GameStateEnter( eGameState.Playing, SelectFirstHidden )
 	AddCallback_GameStateEnter( eGameState.Postmatch, RemoveHidden )
-	SetTimeoutWinnerDecisionFunc( TimeoutCheckSurvivors )
+	SetTimelimitCompleteFunc( TimelimitCheckSurvivors )
 
 	RegisterSignal( "VisibleNotification" )
 }
@@ -42,11 +41,18 @@ void function SelectFirstHiddenDelayed()
 {
 	wait 10.0 + RandomFloat( 5.0 )
 
-	array<entity> players = GetPlayerArray()
-	entity hidden = players[ RandomInt( players.len() ) ]
+	array<entity> players = GetPlayerArray_Alive()
 
-	if ( hidden != null || IsAlive( hidden ) )
-		MakePlayerHidden( hidden ) // randomly selected player becomes hidden
+	if ( !players.len() )
+	{
+		printt( "Couldn't select first hidden: player array was empty" )
+		SetWinner( TEAM_MILITIA )
+		return
+	}
+
+	entity hidden = players.getrandom()
+
+	MakePlayerHidden( hidden ) // randomly selected player becomes hidden
 
 	foreach ( entity otherPlayer in GetPlayerArray() )
 		if ( hidden != otherPlayer )
@@ -81,9 +87,6 @@ void function UpdateSurvivorsLoadout()
 
 void function MakePlayerHidden( entity player )
 {
-	if ( player == null )
-		return
-
 	SetTeam( player, TEAM_IMC )
 	player.SetPlayerGameStat( PGS_ASSAULT_SCORE, 0 ) // reset kills
 	file.hiddens.append( player )
@@ -227,10 +230,12 @@ void function VisibleNotification( entity player )
 	}
 }
 
-int function TimeoutCheckSurvivors()
+bool function TimelimitCheckSurvivors()
 {
-	if ( GetPlayerArrayOfTeam( TEAM_MILITIA ).len() > 0 )
-		return TEAM_IMC
+	if ( GetPlayerArrayOfTeam( TEAM_MILITIA ).len() )
+		SetWinner( TEAM_IMC, "#GAMEMODE_TIME_LIMIT_REACHED", "#GAMEMODE_TIME_LIMIT_REACHED" )
+	else
+		SetWinner( TEAM_MILITIA, "#GAMEMODE_TIME_LIMIT_REACHED", "#GAMEMODE_TIME_LIMIT_REACHED" )
 
-	return TEAM_MILITIA
+	return true
 }

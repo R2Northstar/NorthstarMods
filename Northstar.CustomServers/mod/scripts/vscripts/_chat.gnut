@@ -1,4 +1,3 @@
-untyped
 globalize_all_functions
 
 enum eChatMessageType

@@ -443,8 +443,11 @@ void function InitItems()
 		AddClientCommandCallback( "BuyTicket", ClientCommand_BuyTicket )
 		AddClientCommandCallback( "ClearNewStatus", ClientCommand_ClearNewStatus )
 		AddClientCommandCallback( "UseDoubleXP", ClientCommand_UseDoubleXP )
-		AddClientCommandCallback( "DEV_GiveFDUnlockPoint", ClientCommand_DEV_GiveFDUnlockPoint )
-		AddClientCommandCallback( "DEV_ResetTitanProgression", ClientCommand_DEV_ResetTitanProgression )
+
+		#if DEV
+			AddClientCommandCallback( "DEV_GiveFDUnlockPoint", ClientCommand_DEV_GiveFDUnlockPoint )
+			AddClientCommandCallback( "DEV_ResetTitanProgression", ClientCommand_DEV_ResetTitanProgression )
+		#endif
 	#endif
 
 	#if UI
@@ -1298,7 +1301,8 @@ void function InitItems()
 		#endif
 
 		#if DEV && ( SERVER || CLIENT )
-			PrecacheWeapon( "weapon_cubemap" )
+			if ( GetDeveloperLevel() == 1 ) // can't fully connect to servers if the server has weapon_cubemap precached and client doesn't or client has weapon_cubemap and the server doesn't so only precache it with developer 1
+				PrecacheWeapon( "weapon_cubemap" )
 		#endif
 
 		#if CLIENT
@@ -5879,6 +5883,10 @@ bool function IsItemLocked( entity player, string ref )
 
 bool function IsItemLockedForEntitlement( entity player, string ref, string parentRef = "" )
 {
+	#if !VANILLA
+		return false
+	#endif
+
 	string fullRef = GetFullRef( ref, parentRef )
 
 	foreach ( int entitlementId in file.entitlementUnlocks[ fullRef ].entitlementIds )
@@ -7817,42 +7825,44 @@ bool function IsItemNew( entity player, string ref, string parentRef = "" )
 		SetItemOwnedStatus( player, ref, parentRef, false )
 	}
 
-	bool function ClientCommand_DEV_GiveFDUnlockPoint( entity player, array<string> args )
-	{
-		if ( args.len() == 0 )
-			return false
-
-		if ( !IsValid( player ) )
-			return false
-
-		string parentRef = args[ 0 ]
-		printt( "GIVE PLAYER UNLOCK POINT ", parentRef )
-		Player_GiveFDUnlockPoints( player, 1 )
-		return true
-	}
-
-	bool function ClientCommand_DEV_ResetTitanProgression( entity player, array<string> args )
-	{
-		if ( args.len() == 0 )
-			return false
-
-		if ( !IsValid( player ) )
-			return false
-
-		string titanRef = args[ 0 ]
-		printt( "RESET PLAYER TITAN PROGRESSION ", titanRef )
-		SetAvailableFDUnlockPoints( player, titanRef, 0 )
-
-		array<ItemData> fdUpgrades = GetAllItemsOfType( eItemTypes.TITAN_FD_UPGRADE )
-		foreach ( upgrade in fdUpgrades )
+	#if DEV
+		bool function ClientCommand_DEV_GiveFDUnlockPoint( entity player, array<string> args )
 		{
-			if ( upgrade.parentRef == titanRef )
-			{
-				ClearItemOwned( player, upgrade.ref, upgrade.parentRef )
-			}
+			if ( args.len() == 0 )
+				return false
+
+			if ( !IsValid( player ) )
+				return false
+
+			string parentRef = args[ 0 ]
+			printt( "GIVE PLAYER UNLOCK POINT ", parentRef )
+			Player_GiveFDUnlockPoints( player, 1 )
+			return true
 		}
-		return true
-	}
+
+		bool function ClientCommand_DEV_ResetTitanProgression( entity player, array<string> args )
+		{
+			if ( args.len() == 0 )
+				return false
+
+			if ( !IsValid( player ) )
+				return false
+
+			string titanRef = args[ 0 ]
+			printt( "RESET PLAYER TITAN PROGRESSION ", titanRef )
+			SetAvailableFDUnlockPoints( player, titanRef, 0 )
+
+			array<ItemData> fdUpgrades = GetAllItemsOfType( eItemTypes.TITAN_FD_UPGRADE )
+			foreach ( upgrade in fdUpgrades )
+			{
+				if ( upgrade.parentRef == titanRef )
+				{
+					ClearItemOwned( player, upgrade.ref, upgrade.parentRef )
+				}
+			}
+			return true
+		}
+	#endif
 
 	bool function ClientCommand_BuyItem( entity player, array<string> args )
 	{
@@ -8246,8 +8256,8 @@ void function Player_SetColiseumTicketCount( entity player, int newCount )
 
 	bool function ClientCommand_UseDoubleXP( entity player, array<string> args )
 	{
-		// if ( IsPrivateMatch() ) Northstar servers are always considered private matches
-		// 	return true
+		if ( IsLobby() )
+			return true
 
 		if ( GetGameState() > eGameState.Prematch )
 			return true
@@ -10044,11 +10054,7 @@ void function InitUnlockAsEntitlement( string itemRef, string parentRef, int ent
 		unlock = file.entitlementUnlocks[ fullRef ]
 	}
 
-	#if VANILLA
-		unlock.entitlementIds.append( entitlementId )
-	#else
-		unlock.entitlementIds.append( 1 ) // Using `1` here instead of the huge DLC check I did previously. Having the `1` seems to keep all paid cosmetics unlocked with progression enabled.
-	#endif
+	unlock.entitlementIds.append( entitlementId )
 }
 
 array<int> function GetEntitlementIds( string itemRef, string parentRef = "" )

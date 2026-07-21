@@ -1,5 +1,3 @@
-untyped
-
 global function AddCallback_OnReceivedSayTextMessage
 
 // this is global due to squirrel bridge v3 making native not be able to find non-global funcs properly
@@ -25,37 +23,31 @@ struct
 
 void function OnReceivedMessage( ClClient_MessageStruct localMessage )
 {
-	if ( IsWatchingReplay() && localMessage.player == null )
+	if ( IsWatchingReplay() && !IsValid( localMessage.player ) )
 		return
 
-	if ( localMessage.player != null )
+	foreach ( callbackFunc in NsCustomCallbacksClient.OnReceivedSayTextMessageCallbacks )
 	{
-		foreach ( callbackFunc in NsCustomCallbacksClient.OnReceivedSayTextMessageCallbacks )
-		{
-			ClClient_MessageStruct returnStruct = callbackFunc( localMessage )
-			localMessage.message = returnStruct.message
-			localMessage.playerName = returnStruct.playerName
-			localMessage.isTeam = returnStruct.isTeam
-			localMessage.isDead = returnStruct.isDead
-			localMessage.isWhisper = returnStruct.isWhisper
-			localMessage.shouldBlock = localMessage.shouldBlock || returnStruct.shouldBlock
-			localMessage.noServerTag = returnStruct.noServerTag
-		}
+		ClClient_MessageStruct returnStruct = callbackFunc( localMessage )
+
+		localMessage.message = returnStruct.message
+		localMessage.playerName = returnStruct.playerName
+		localMessage.isTeam = returnStruct.isTeam
+		localMessage.isDead = returnStruct.isDead
+		localMessage.isWhisper = returnStruct.isWhisper
+		localMessage.shouldBlock = localMessage.shouldBlock || returnStruct.shouldBlock
+		localMessage.noServerTag = returnStruct.noServerTag
 	}
 
 	if ( localMessage.shouldBlock )
-	{
 		return
-	}
 
 	NSChatWriteRaw( 1, "\n" )
 
-	if ( localMessage.player == null )
+	if ( !IsValid( localMessage.player ) )
 	{
 		if ( !localMessage.noServerTag || localMessage.isWhisper )
-		{
 			NSChatWrite( 1, "\x1b[95m" )
-		}
 	}
 	else
 	{
@@ -69,17 +61,17 @@ void function OnReceivedMessage( ClClient_MessageStruct localMessage )
 
 	if ( localMessage.isWhisper )
 		NSChatWriteRaw( 1, Localize( "#HUD_CHAT_WHISPER_PREFIX" ) )
+
 	if ( localMessage.isDead )
 		NSChatWriteRaw( 1, Localize( "#HUD_CHAT_DEAD_PREFIX" ) )
+
 	if ( localMessage.isTeam )
 		NSChatWriteRaw( 1, Localize( "#HUD_CHAT_TEAM_PREFIX" ) )
 
-	if ( localMessage.player == null )
+	if ( !IsValid( localMessage.player ) )
 	{
 		if ( !localMessage.noServerTag )
-		{
 			NSChatWriteRaw( 1, Localize( "#HUD_CHAT_SERVER_PREFIX" ) + " " )
-		}
 	}
 	else
 	{
@@ -87,8 +79,9 @@ void function OnReceivedMessage( ClClient_MessageStruct localMessage )
 		NSChatWriteRaw( 1, ": " )
 	}
 
-	if ( localMessage.player != null || !localMessage.noServerTag || localMessage.isWhisper )
+	if ( IsValid( localMessage.player ) || !localMessage.noServerTag || localMessage.isWhisper )
 		NSChatWrite( 1, "\x1b[0m" )
+
 	NSChatWrite( 1, localMessage.message )
 }
 
@@ -105,45 +98,29 @@ void function CHudChat_OnReceivedSayTextMessageCallback( int fromPlayerIndex, st
 	if ( fromPlayerIndex >= 0 && fromPlayerIndex <= 128 )
 	{
 		fromPlayer = GetEntByIndex( fromPlayerIndex + 1 )
-		if ( fromPlayer == null )
-		{
-			print( "Ignored chat message from invalid player index " + fromPlayerIndex + ": " + message )
-			return
-		}
 
-		fromPlayerName = fromPlayer.GetPlayerNameWithClanTag()
+		if ( !IsValid( fromPlayer ) )
+			fromPlayer = null
+		else
+			fromPlayerName = fromPlayer.GetPlayerNameWithClanTag()
 	}
 
 	// Null player + isTeam == true: Server with no tag.
 
-	if ( messageType == 0 || messageType == 1 )
+	if ( messageType >= 0 && messageType <= 2 )
 	{
 		ClClient_MessageStruct localMessage
-		localMessage.message = message
-		localMessage.player = fromPlayer
-		localMessage.playerName = fromPlayerName
-		localMessage.isTeam = fromPlayer != null && isTeam
-		localMessage.isDead = isDead
-		localMessage.isWhisper = false
-		localMessage.shouldBlock = false
-		localMessage.noServerTag = fromPlayer == null && isTeam
-		OnReceivedMessage( localMessage )
-		return
-	}
 
-	if ( messageType == 2 )
-	{
-		ClClient_MessageStruct localMessage
 		localMessage.message = message
 		localMessage.player = fromPlayer
 		localMessage.playerName = fromPlayerName
-		localMessage.isTeam = fromPlayer != null && isTeam
+		localMessage.isTeam = IsValid( fromPlayer ) && isTeam
 		localMessage.isDead = isDead
-		localMessage.isWhisper = true
+		localMessage.isWhisper = messageType == 2 ? true : false
 		localMessage.shouldBlock = false
-		localMessage.noServerTag = fromPlayer == null && isTeam
+		localMessage.noServerTag = !IsValid( fromPlayer ) && isTeam
+
 		OnReceivedMessage( localMessage )
-		return
 	}
 }
 

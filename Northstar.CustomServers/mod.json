@@ -10,12 +10,12 @@
 		},
 		{
 			"Name": "ns_allow_spectators",
-			"DefaultValue": "0",
+			"DefaultValue": "1",
 			"Flags": "REPLICATED"
 		},
 		{
 			"Name": "ns_private_match_last_mode",
-			"DefaultValue": "tdm"
+			"DefaultValue": "aitdm"
 		},
 		{
 			"Name": "ns_private_match_last_map",
@@ -74,6 +74,14 @@
 		{
 			"Name": "ns_server_idle_time_refresh_max_time",
 			"DefaultValue": "240"
+		},
+		{
+			"Name": "ns_match_end_if_no_players",
+			"DefaultValue": "1"
+		},
+		{
+			"Name": "ns_skip_empty_team_victory_check",
+			"DefaultValue": "0"
 		}
 	],
 	"Scripts": [
@@ -89,47 +97,36 @@
 			}
 		},
 		{
-			"Path": "_chat.gnut",
-			"RunOn": "SERVER"
-		},
-		{
-			"Path": "_misc_stubs.gnut",
-			"RunOn": "SERVER && MP"
-		},
-		{
-			"Path": "_store.gnut",
-			"RunOn": "SERVER && MP"
-		},
-		{
 			"Path": "_script_movers.gnut",
 			"RunOn": "SERVER && MP"
 		},
 		{
 			"Path": "sh_northstar_utils.gnut",
-			"RunOn": "CLIENT || SERVER || UI"
-		},
-		{
-			"Path": "mp/levels/_lf_maps_shared.gnut",
-			"RunOn": "SERVER && MP"
+			"RunOn": "CLIENT || SERVER || UI",
+			"ClientCallback": {
+				"Before": "NorthstarUtils_Before_Init",
+				"After": "NorthstarUtils_After_Init"
+			},
+			"ServerCallback": {
+				"Before": "NorthstarUtils_Before_Init",
+				"After": "NorthstarUtils_After_Init"
+			},
+			"UICallback": {
+				"Before": "NorthstarUtils_Before_Init",
+				"After": "NorthstarUtils_After_Init"
+			}
 		},
 		{
 			"Path": "gamemodes/sh_gamemodes_custom.gnut",
-			"RunOn": "(CLIENT || SERVER) && MP"
+			"RunOn": "MP"
 		},
 		{
 			"Path": "sh_remote_functions_mp_custom.gnut",
-			"RunOn": "(CLIENT || SERVER) && MP"
+			"RunOn": "MP"
 		},
 		{
 			"Path": "sh_server_to_client_stringcommands.gnut",
 			"RunOn": "CLIENT || SERVER"
-		},
-		{
-			"Path": "gamemodes/_gamemode_fra.nut",
-			"RunOn": "SERVER && MP",
-			"ServerCallback": {
-				"Before": "GamemodeFRA_AddAdditionalInitCallback"
-			}
 		},
 		{
 			"Path": "mp/_classic_mp_dropship_intro.gnut",
@@ -140,24 +137,9 @@
 			"RunOn": "SERVER && MP"
 		},
 		{
-			"Path": "mp/_spectator.gnut",
-			"RunOn": "SERVER && MP",
-			"ServerCallback": {
-				"After": "Spectator_Init"
-			}
-		},
-		{
-			"Path": "_loadouts_mp.gnut",
-			"RunOn": "SERVER && MP",
-			"ServerCallback": {
-				"After": "SvLoadoutsMP_Init"
-			}
-		},
-		{
 			"Path": "lobby/sh_private_lobby_modes_init.gnut",
-			"RunOn": "( SERVER || CLIENT ) && MP"
+			"RunOn": "MP"
 		},
-
 		{
 			"Path": "_respawn_protection.gnut",
 			"RunOn": "SERVER && MP",
@@ -183,16 +165,6 @@
 			},
 			"UICallback": {
 				"Before": "Progression_Init"
-			}
-		},
-		{
-			"Path": "drop_battery_command.nut",
-			"RunOn": "( CLIENT || SERVER ) && MP",
-			"ClientCallback": {
-				"After": "DropBatteryCommand_Init"
-			},
-			"ServerCallback": {
-				"After": "DropBatteryCommand_Init"
 			}
 		},
 		{

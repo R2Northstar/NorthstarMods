@@ -9,16 +9,10 @@ void function GamemodeChamber_Init()
 	SetWeaponDropsEnabled( false )
 	Riff_ForceTitanAvailability( eTitanAvailability.Never )
 	Riff_ForceBoostAvailability( eBoostAvailability.Disabled )
-	ClassicMP_ForceDisableEpilogue( true )
 
-	AddCallback_OnClientConnected( ChamberInitPlayer )
+	AddCallback_OnClientConnected( UpdateLoadout )
 	AddCallback_OnPlayerKilled( ChamberOnPlayerKilled )
 	AddCallback_OnPlayerRespawned( UpdateLoadout )
-}
-
-void function ChamberInitPlayer( entity player )
-{
-	UpdateLoadout( player )
 }
 
 int function GetChamberWingmanN()
@@ -79,7 +73,15 @@ void function ChamberOnPlayerKilled( entity victim, entity attacker, var damageI
 
 void function UpdateLoadout( entity player )
 {
-	if ( IsAlive( player ) && player != null )
+	if ( !IsNewThread() )
+	{
+		thread UpdateLoadout( player )
+		return
+	}
+	else if ( GetGameState() == eGameState.Prematch )
+		WaitEndFrame()
+
+	if ( IsValidPlayer( player ) && IsAlive( player ) )
 	{
 		// set loadout
 		foreach ( entity weapon in player.GetMainWeapons() )

@@ -6,11 +6,115 @@ globalize_all_functions
 
 global string INVALID_REF = "INVALID_REF"
 
+struct
+{
+	table<entity, bool> playerhasinvalidloadout
+} file
+
 void function InitDefaultLoadouts()
 {
 	PopulateDefaultPilotLoadouts( shGlobal.defaultPilotLoadouts )
 	PopulateDefaultTitanLoadouts( shGlobal.defaultTitanLoadouts )
 }
+
+#if SERVER
+	void function ValidateLoadout_OnClientConnecting( entity player, bool disconnect = true )
+	{
+		if ( !IsValidPilotLoadoutIndex( GetPersistentSpawnLoadoutIndex( player, "pilot" ) ) )
+		{
+			SetPersistentSpawnLoadoutIndex( player, "pilot", 0 )
+
+			file.playerhasinvalidloadout[ player ] <- true
+		}
+
+		if ( !IsValidTitanLoadoutIndex( GetPersistentSpawnLoadoutIndex( player, "titan" ) ) )
+		{
+			SetPersistentSpawnLoadoutIndex( player, "titan", 0 )
+
+			file.playerhasinvalidloadout[ player ] <- true
+		}
+
+		for ( int i = 0; i < NUM_PERSISTENT_PILOT_LOADOUTS; i++ )
+			GetPilotLoadoutFromPersistentData( player, i )
+
+		for ( int i = 0; i < NUM_PERSISTENT_TITAN_LOADOUTS; i++ )
+			GetTitanLoadoutFromPersistentData( player, i )
+
+		int burnCardID = int( player.GetPersistentVar( "burnmeterSlot" ).tostring() )
+		string ref = ""
+
+		try
+		{
+			ref = BurnReward_GetById( burnCardID ).ref
+		}
+		catch ( burnmeterError )
+		{
+		}
+
+		if ( !ItemDefined( ref ) || IsItemLocked( player, ref ) || GetItemDisplayData( ref ).hidden )
+		{
+			player.SetPersistentVar( "burnmeterSlot", 1 )
+
+			file.playerhasinvalidloadout[ player ] <- true
+		}
+
+		try
+		{
+			if (
+				!IsRefValidAndOfType( CallsignIcon_GetRef( PlayerCallsignIcon_GetActive( player ) ), eItemTypes.CALLSIGN_ICON ) ||
+				IsItemLocked( player, CallsignIcon_GetRef( PlayerCallsignIcon_GetActive( player ) ) )
+			)
+			{
+				PlayerCallsignIcon_SetActiveByRef( player, "gc_icon_titanfall" )
+
+				file.playerhasinvalidloadout[ player ] <- true
+			}
+		}
+		catch ( callsignIconError )
+		{
+			PlayerCallsignIcon_SetActiveByRef( player, "gc_icon_titanfall" )
+
+			file.playerhasinvalidloadout[ player ] <- true
+		}
+
+		try
+		{
+			if (
+				!IsRefValidAndOfType( CallingCard_GetRef( PlayerCallingCard_GetActive( player ) ), eItemTypes.CALLING_CARD ) ||
+				IsItemLocked( player, CallingCard_GetRef( PlayerCallingCard_GetActive( player ) ) )
+			)
+			{
+				PlayerCallingCard_SetActiveByRef( player, "callsign_16_col" )
+
+				file.playerhasinvalidloadout[ player ] <- true
+			}
+		}
+		catch ( callingCardError )
+		{
+			PlayerCallingCard_SetActiveByRef( player, "callsign_16_col" )
+
+			file.playerhasinvalidloadout[ player ] <- true
+		}
+
+		if (
+			!IsRefValidAndOfType( expect string( player.GetPersistentVar( "factionChoice" ) ), eItemTypes.FACTION ) ||
+			IsItemLocked( player, expect string( player.GetPersistentVar( "factionChoice" ) ) )
+		)
+		{
+			player.SetPersistentVar( "factionChoice", "faction_marauder" )
+
+			file.playerhasinvalidloadout[ player ] <- true
+		}
+
+		if ( player in file.playerhasinvalidloadout && file.playerhasinvalidloadout[ player ] )
+		{
+			delete file.playerhasinvalidloadout[ player ]
+
+			if ( disconnect )
+				NSDisconnectPlayer( player, "#RESETTING_LOADOUT" )
+		}
+	}
+#endif
 
 PilotLoadoutDef function GetDefaultPilotLoadout( int index )
 {
@@ -695,10 +799,13 @@ string function GetPersistentLoadoutPropertyType( string loadoutProperty )
 		string ref = GetRefFromLoadoutTypeIndexPropertyAndValue( player, loadoutType, loadoutIndex, loadoutProperty, value )
 		if ( !IsRefValid( ref ) )
 		{
-			printt(
-				"!IsRefValid( " + ref + " ), generated from loadoutType: " + loadoutType + ", loadoutIndex: " + loadoutIndex + ". loadoutProperty: " + loadoutProperty +
-					", value: " + value
-			)
+			#if DEV
+				printt(
+					"!IsRefValid( " + ref + " ), generated from loadoutType: " + loadoutType + ", loadoutIndex: " + loadoutIndex + ". loadoutProperty: " + loadoutProperty +
+						", value: " + value
+				)
+			#endif
+
 			return true
 		}
 
@@ -710,7 +817,10 @@ string function GetPersistentLoadoutPropertyType( string loadoutProperty )
 
 		if ( FailsItemLockedValidationCheck( player, loadoutType, loadoutIndex, loadoutProperty, ref ) )
 		{
-			printt( "FailsItemLockedValidationCheck, player: " + player + ", ref: " + ref )
+			#if DEV
+				printt( "FailsItemLockedValidationCheck, player: " + player + ", ref: " + ref )
+			#endif
+
 			return true
 		}
 
@@ -1543,7 +1653,8 @@ string function GetValidatedPersistentLoadoutValue( entity player, string loadou
 			{
 				printt( "Invalid Loadout Property: ", loadoutType, loadoutIndex, loadoutProperty, value )
 				value = ResetLoadoutPropertyToDefault( player, loadoutType, loadoutIndex, loadoutProperty ) // TODO: This will call player.SetPersistentVar() directly. Awkward to do this in a getter function
-				NSDisconnectPlayer( player, "#RESETTING_LOADOUT" ) // Kick player out with a "Resetting Invalid Loadout" message. Mainly necessary so UI/Client script don't crash out later with known, bad data from persistence
+				file.playerhasinvalidloadout[ player ] <- true
+				return ""
 			}
 		}
 
@@ -1553,7 +1664,8 @@ string function GetValidatedPersistentLoadoutValue( entity player, string loadou
 			{
 				printt( "Invalid Loadout Property: ", loadoutType, loadoutIndex, loadoutProperty, value )
 				value = ResetLoadoutPropertyToDefault( player, loadoutType, loadoutIndex, loadoutProperty ) // TODO: This will call player.SetPersistentVar() directly. Awkward to do this in a getter function
-				NSDisconnectPlayer( player, "#RESETTING_LOADOUT" ) // Kick player out with a "Resetting Invalid Loadout" message. Mainly necessary so UI/Client script don't crash out later with known, bad data from persistence
+				file.playerhasinvalidloadout[ player ] <- true
+				return ""
 			}
 
 			ValidateSkinAndCamoIndexesAsAPair( player, loadoutType, loadoutIndex, loadoutProperty, value ) // TODO: This is awkward, has the potential to call a SetPersistentLoadoutValue() if skinIndex and camoIndex are not correct as a pair
@@ -3335,6 +3447,46 @@ string function Loadouts_GetSetFileForRequestedClass( entity player )
 		if ( player.IsBot() && !player.IsPlayback() )
 			OverrideBotPilotLoadout( loadout )
 
+		if ( GetCurrentPlaylistVarInt( "custom_pilot_loadout", 0 ) )
+		{
+			loadout = clone loadout
+
+			loadout.primary = GetCurrentPlaylistVarString( "pilot_loadout_primary", "" )
+			loadout.primaryMods =
+				[
+					GetCurrentPlaylistVarString( "pilot_loadout_primary_attachment", "" ),
+					GetCurrentPlaylistVarString( "pilot_loadout_primary_mod1", "" ),
+					GetCurrentPlaylistVarString( "pilot_loadout_primary_mod2", "" ),
+					GetCurrentPlaylistVarString( "pilot_loadout_primary_mod3", "" )
+				]
+			loadout.primaryAttachments = []
+
+			loadout.secondary = GetCurrentPlaylistVarString( "pilot_loadout_secondary", "" )
+			loadout.secondaryMods =
+				[
+					GetCurrentPlaylistVarString( "pilot_loadout_secondary_mod1", "" ),
+					GetCurrentPlaylistVarString( "pilot_loadout_secondary_mod2", "" ),
+					GetCurrentPlaylistVarString( "pilot_loadout_secondary_mod3", "" )
+				]
+
+			loadout.weapon3 = GetCurrentPlaylistVarString( "pilot_loadout_weapon3", "" )
+			loadout.weapon3Mods =
+				[
+					GetCurrentPlaylistVarString( "pilot_loadout_weapon3_mod1", "" ),
+					GetCurrentPlaylistVarString( "pilot_loadout_weapon3_mod2", "" ),
+					GetCurrentPlaylistVarString( "pilot_loadout_weapon3_mod3", "" )
+				]
+
+			loadout.melee = GetCurrentPlaylistVarString( "pilot_loadout_melee", "" )
+			loadout.special = GetCurrentPlaylistVarString( "pilot_loadout_special", "" )
+			loadout.ordnance = GetCurrentPlaylistVarString( "pilot_loadout_ordnance", "" )
+			loadout.passive1 = GetCurrentPlaylistVarString( "pilot_loadout_passive1", "" )
+			loadout.passive2 = GetCurrentPlaylistVarString( "pilot_loadout_passive2", "" )
+
+			if ( GetConVarString( "mp_gamemode" ) == "coliseum" )
+				loadout.setFile = GetSuitAndGenderBasedSetFile( "coliseum", loadout.race == RACE_HUMAN_FEMALE ? "female" : "male" )
+		}
+
 		GivePilotLoadout( player, loadout )
 		SetActivePilotLoadout( player )
 		SetActivePilotLoadoutIndex( player, loadoutIndex )
@@ -3886,6 +4038,7 @@ void function PrintTitanLoadout( TitanLoadoutDef loadout )
 	printt( "        decalIndex           " + loadout.decalIndex )
 	printt( "        primarySkinIndex     " + loadout.primarySkinIndex )
 	printt( "        primaryCamoIndex     " + loadout.primaryCamoIndex )
+	printt( "        titanExecution       \"" + loadout.titanExecution + "\"" )
 	printt( "        isPrime              \"" + loadout.isPrime + "\"" )
 	printt( "        primeSkinIndex       " + loadout.primeSkinIndex )
 	printt( "        primeCamoIndex       " + loadout.primeCamoIndex )

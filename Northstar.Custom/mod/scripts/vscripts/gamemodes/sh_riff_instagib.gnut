@@ -13,7 +13,7 @@ void function RiffInstagib_Init()
 	AddPrivateMatchModeSettingEnum( "#MODE_SETTING_CATEGORY_RIFF", "riff_instagib", [ "#SETTING_DISABLED", "#SETTING_ENABLED" ], "0" )
 
 	#if SERVER
-		if ( GetCurrentPlaylistVarInt( "riff_instagib", 0 ) == 0 )
+		if ( !GetCurrentPlaylistVarInt( "riff_instagib", 0 ) )
 			return
 
 		SetLoadoutGracePeriodEnabled( false )
@@ -40,10 +40,11 @@ void function RiffInstagib_Init()
 
 	void function InstagibUpdateWeapons( entity player )
 	{
-		foreach ( entity weapon in player.GetMainWeapons() )
-			player.TakeWeaponNow( weapon.GetWeaponClassName() )
+		TakeWeaponsForArray( player, player.GetMainWeapons() )
 
-		player.TakeWeaponNow( player.GetOffhandWeapon( OFFHAND_RIGHT ).GetWeaponClassName() )
+		if ( IsValid( player.GetOffhandWeapon( OFFHAND_RIGHT ) ) )
+			player.TakeWeaponNow( player.GetOffhandWeapon( OFFHAND_RIGHT ).GetWeaponClassName() )
+
 		if ( !HasOffhandWeapon( player, "mp_weapon_grenade_sonar" ) )
 			player.GiveOffhandWeapon( "mp_weapon_grenade_sonar", OFFHAND_RIGHT )
 

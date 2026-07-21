@@ -226,4 +226,3 @@ var function CodeCallback_ClientCommand( entity player, array<string> args )
 		return false
 	}
 }
-

@@ -6,7 +6,7 @@ jobs:
   format:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - name: Download sqformat
         run: |
           curl -sSL https://github.com/Bobbyperson/sqformat/releases/download/v1.2.0/sqformat-linux-x86_64 -o sqformat

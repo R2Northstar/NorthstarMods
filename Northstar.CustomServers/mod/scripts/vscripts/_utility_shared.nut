@@ -3268,6 +3268,10 @@ float function LimitAxisToMapExtents( float axisVal )
 
 bool function PlayerCanSpawnIntoTitan( entity player )
 {
+	#if VANILLA
+		return false // always disabled in vanilla
+	#endif
+
 	entity titan = player.GetPetTitan()
 
 	if ( !IsAlive( titan ) || GetDoomedState( titan ) )
@@ -3276,7 +3280,15 @@ bool function PlayerCanSpawnIntoTitan( entity player )
 	if ( titan.ContextAction_IsBusy() || titan.ContextAction_IsMeleeExecution() )
 		return false
 
-	return GetCurrentPlaylistVarInt( "titan_spawn_deploy_enabled", 0 ) == 1
+	#if SERVER
+		if ( titan.e.isHotDropping )
+			return false
+	#else
+		if ( player.GetHotDropImpactTime() )
+			return false
+	#endif
+
+	return GetCurrentPlaylistVarInt( "titan_spawn_deploy_enabled", 0 ) != 0
 }
 
 array<vector> function EntitiesToOrigins( array<entity> ents )

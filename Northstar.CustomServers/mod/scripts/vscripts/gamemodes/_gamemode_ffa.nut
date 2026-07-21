@@ -2,7 +2,24 @@ global function FFA_Init
 
 void function FFA_Init()
 {
-	ClassicMP_ForceDisableEpilogue( true )
+	SetupGenericFFAChallenge()
+
+	if ( GAMETYPE == FREE_AGENCY )
+	{
+		// need a way to disable passive earnmeter gain
+		ScoreEvent_SetEarnMeterValues( "PilotBatteryPickup", 0.0, 0.34 )
+		EarnMeterMP_SetPassiveMeterGainEnabled( false )
+		PilotBattery_SetMaxCount( 3 )
+
+		AddCallback_OnPlayerKilled(
+			void function( entity victim, entity attacker, var damageInfo ) : ()
+			{
+				PlayerEarnMeter_Reset( victim )
+			}
+		)
+		return
+	}
+
 	ScoreEvent_SetupEarnMeterValuesForMixedModes()
 
 	AddCallback_OnPlayerKilled( OnPlayerKilled )

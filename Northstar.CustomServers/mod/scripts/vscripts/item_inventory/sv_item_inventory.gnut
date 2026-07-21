@@ -38,6 +38,9 @@ void function PrematchClearInventory() // vanilla behavior
 
 void function Sv_ItemInventory_OnPlayerGetsNewPilotLoadout( entity player, PilotLoadoutDef newPilotLoadout )
 {
+	if ( !( player in file.playerInventoryStacks ) )
+		return
+
 	array<InventoryItem> playerInventoryStack = file.playerInventoryStacks[ player ]
 
 	if ( playerInventoryStack.len() > 0 )

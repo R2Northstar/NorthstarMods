@@ -63,6 +63,7 @@
 		//要議論: "コンソールの表示/非表示"のままか、"コンソール表示のトグル"、それ以外への差し替え
 		"TOGGLE_CONSOLE" "コンソールの表示/非表示"
 
+		"classic_mp" "クラシックマルチ"
 		"run_epilogue" "エピローグの有効化"
 		"scorelimit" "スコア上限"
 		"roundscorelimit" "スコア上限 (ラウンドベース)"
@@ -96,8 +97,7 @@
 		"featured_mode_shotguns_snipers" "危険武装"
 		"iron_rules" "アイロンルール"
 
-		"cp_amped_capture_points" "拠点増幅"
-		"coliseum_loadouts_enabled" "コロシアムロードアウト"
+		"capture_point_amping" "拠点増幅"
 
 		// そのまま「グラント」よりも、Respawn翻訳で使われている
 		//「ミニオン」のほうが伝わりやすいかもしれないのでこっちにする
@@ -246,7 +246,7 @@
 		"MODE_SETTING_CATEGORY_BLEEDOUT" "パイロットのダウン"
 
 		"custom_air_accel_pilot" "空中加速度"
-		"no_pilot_collision" "パイロット同士の当たり判定"
+		"pilot_collision" "パイロット同士の当たり判定"
 		"promode_enable" "Proモードの武器"
 		"classic_rodeo" "クラシックロデオ"
 		"oob_timer_enabled" "アウトオブバウンドタイマー"

@@ -38,6 +38,9 @@ void function Stats_Init()
 	AddCallback_OnPlayerRespawned( OnPlayerRespawned )
 	AddCallback_OnClientConnected( OnClientConnected )
 	AddCallback_OnClientDisconnected( OnClientDisconnected )
+	AddCallback_NPCLeeched( OnSpectreLeeched )
+	// Enable when thunderbolt works correctly
+	// AddCallback_OnWeaponAttack( OnPlayerFiredWeapon )
 
 	thread HandleDistanceAndTimeStats_Threaded()
 	thread SaveStatsPeriodically_Threaded()
@@ -63,13 +66,13 @@ void function AddStatCallback( string statCategory, string statAlias, string sta
 }
 
 // a lot of this file seems to be doing caching of stats in some way
-void function Stats_SaveStatDelayed( entity player, string statCategory, string statAlias, string statSubAlias, float delay = 0.1 )
+void function Stats_SaveStatDelayed( entity player, string statCategory, string statAlias, string statSubAlias )
 {
-	// idk how long the delay is meant to be but whatever
-	wait delay
+	player.EndSignal( "OnDestroy" )
+	player.EndSignal( "_disconnectedInternal" )
 
-	if ( !IsValid( player ) )
-		return
+	// idk how long the delay is meant to be but whatever
+	WaitEndFrame()
 
 	Stats_SaveStat( player, statCategory, statAlias, statSubAlias )
 }
@@ -192,6 +195,8 @@ void function PostScoreEventUpdateStats( entity attacker, entity ent )
 	// used to track kill streaks starting maybe
 	if ( attacker.s.currentKillstreak == KILLINGSPREE_KILL_REQUIREMENT )
 	{
+		UpdatePlayerStat( attacker, "misc_stats", "killingSprees" )
+
 		// killingSpressAs_<chassis>
 		if ( attacker.IsTitan() )
 			Stats_IncrementStat( attacker, "kills_stats", "killingSpressAs_" + GetTitanCharacterName( attacker ), "", 1.0 )
@@ -232,7 +237,7 @@ void function Stats_IncrementStat( entity player, string statCategory, string st
 {
 	if ( !IsValidStat( statCategory, statAlias, statSubAlias ) )
 	{
-		printt( "invalid stat: " + statCategory + " : " + statAlias + " : " + statSubAlias )
+		// printt( "invalid stat: " + statCategory + " : " + statAlias + " : " + statSubAlias )
 		return
 	}
 
@@ -251,24 +256,23 @@ void function Stats_IncrementStat( entity player, string statCategory, string st
 	if ( difficulty >= 5 )
 		return
 
-	string saveVar = Stats_GetFixedSaveVar( str, GetMapName(), mode, difficulty.tostring() )
+	str = Stats_GetFixedSaveVar( str, GetMapName(), mode, difficulty.tostring() )
+
 	// check if the map and mode exist in persistence
 	try
 	{
 		PersistenceGetEnumIndexForItemName( "gamemodes", mode )
 		PersistenceGetEnumIndexForItemName( "maps", GetMapName() )
+
+		player.GetPersistentVar( str )
 	}
 	catch ( ex )
 	{
 		// if we have an invalid mode or map for persistence, and it is used in the
 		// persistence string, we can't save the persistence so we have to just return
-		if ( str != saveVar )
-		{
-			// printt( ex, str, GetMapName(), mode ) // Commented out due to spamming logs on invalid modes (e.g. Gun Game, Infection, ...)
-			return
-		}
+		// printt( ex, str, GetMapName(), mode ) // Commented out due to spamming logs on invalid modes (e.g. Gun Game, Infection, ...)
+		return
 	}
-	str = saveVar
 
 	switch ( type )
 	{
@@ -322,12 +326,20 @@ void function OnClientConnected( entity player )
 void function OnClientDisconnected( entity player )
 {
 	Stats_SaveAllStats( player )
-	// maybe we can save this stuff, but idk if we can access persistence in this callback
-	if ( player in file.cachedIntStatChanges )
-		delete file.cachedIntStatChanges[ player ]
+}
 
-	if ( player in file.cachedFloatStatChanges )
-		delete file.cachedFloatStatChanges[ player ]
+void function OnSpectreLeeched( entity spectre, entity player )
+{
+	if ( !IsSpectre( spectre ) )
+		return
+
+	Stats_IncrementStat( player, "misc_stats", "spectreLeeches", "", 1.0 )
+	Stats_IncrementStat( player, "misc_stats", "spectreLeechesByMap", "", 1.0 )
+}
+
+void function OnPlayerFiredWeapon( entity player, entity weapon, string weaponName, int shotsFired )
+{
+	Stats_IncrementStat( player, "weapon_stats", "shotsFired", "", shotsFired.tofloat() )
 }
 
 void function OnPlayerOrNPCKilled( entity victim, entity attacker, var damageInfo )
@@ -668,11 +680,11 @@ void function HandleKillStats( entity victim, entity attacker, var damageInfo )
 		Stats_IncrementStat( player, "kills_stats", "pilotExecutePilotUsing_" + player.p.lastExecutionUsed, "", 1.0 )
 
 	// pilotKickMelee
-	if ( damageSource == eDamageSourceId.human_melee )
+	if ( DamageIsPilotMelee( damageSource ) )
 		Stats_IncrementStat( player, "kills_stats", "pilotKickMelee", "", 1.0 )
 
 	// pilotKickMeleePilot
-	if ( victimIsPilot && damageSource == eDamageSourceId.human_melee )
+	if ( victimIsPilot && DamageIsPilotMelee( damageSource ) )
 		Stats_IncrementStat( player, "kills_stats", "pilotKickMeleePilot", "", 1.0 )
 
 	// titanMelee
@@ -814,32 +826,32 @@ void function OnPlayerRespawned( entity player )
 
 void function RegisterMatchStats_OnMatchComplete()
 {
-	// award players for match completed, wins, and losses
 	foreach ( entity player in GetPlayerArray() )
 	{
+		if ( !IsValidPlayer( player ) )
+			return
+
+		// award players for match completed, wins, and losses
 		Stats_IncrementStat( player, "game_stats", "game_completed", "", 1.0 )
 
 		if ( player.GetTeam() == GetWinningTeam() )
 			Stats_IncrementStat( player, "game_stats", "game_won", "", 1.0 )
 		else
 			Stats_IncrementStat( player, "game_stats", "game_lost", "", 1.0 )
-	}
 
-	if ( IsValidGamemodeString( GAMETYPE ) )
-	{
 		// award players with matches played on the mode
-		foreach ( entity player in GetPlayerArray() )
-		{
-			Stats_IncrementStat( player, "game_stats", "mode_played", GAMETYPE, 1.0 )
+		Stats_IncrementStat( player, "game_stats", "mode_played", GAMETYPE, 1.0 )
 
-			if ( player.GetTeam() == GetWinningTeam() )
-				Stats_IncrementStat( player, "game_stats", "mode_won", GAMETYPE, 1.0 )
-		}
+		if ( player.GetTeam() == GetWinningTeam() )
+			Stats_IncrementStat( player, "game_stats", "mode_won", GAMETYPE, 1.0 )
 	}
 
 	// update player's KD
 	foreach ( entity player in GetPlayerArray() )
 	{
+		if ( !IsValidPlayer( player ) )
+			return
+
 		// kd stats
 		// index 0 is most recent game
 		// index 9 is least recent game
@@ -888,6 +900,13 @@ void function RegisterMatchStats_OnMatchComplete()
 	}
 
 	array<entity> players = GetPlayerArray()
+
+	for ( int i = players.len() - 1; i >= 0; i-- )
+	{
+		if ( !IsValidPlayer( players[ i ] ) )
+			players.remove( i )
+	}
+
 	players.sort( GetScoreboardCompareFunc() )
 	int playerCount = players.len()
 	int currentPlace = 1
@@ -1048,26 +1067,11 @@ void function SaveStatsPeriodically_Threaded()
 	while ( true )
 	{
 		foreach ( entity player in GetPlayerArray() )
-		{
-			if ( IsValid( player ) )
+			if ( IsValidPlayer( player ) )
 				Stats_SaveAllStats( player )
-		}
-		wait 5
+
+		WaitFrame()
 	}
-}
-
-bool function IsValidGamemodeString( string mode )
-{
-	int gameModeCount = PersistenceGetEnumCount( "gameModes" )
-	for ( int modeIndex = 0; modeIndex < gameModeCount; modeIndex++ )
-	{
-		string gameModeName = PersistenceGetEnumItemNameForIndex( "gameModes", modeIndex )
-
-		if ( gameModeName == mode )
-			return true
-	}
-
-	return false
 }
 
 bool function IsValidStatItemString( string item )
@@ -1092,6 +1096,22 @@ string function GetPersistenceRefFromDamageInfo( var damageInfo )
 	}
 
 	return ""
+}
+
+bool function DamageIsPilotMelee( int damageSourceId )
+{
+	switch ( damageSourceId )
+	{
+		case eDamageSourceId.melee_pilot_emptyhanded:
+		case eDamageSourceId.melee_pilot_arena:
+		case eDamageSourceId.melee_pilot_sword:
+			return true
+
+		default:
+			return false
+	}
+
+	unreachable
 }
 
 bool function DamageIsTitanMelee( int damageSourceId )

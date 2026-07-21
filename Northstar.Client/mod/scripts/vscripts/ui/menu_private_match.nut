@@ -90,29 +90,6 @@ const table<asset> mapImages = {
 	mp_rise = $"loadscreens/mp_rise_lobby",
 	mp_lf_township = $"loadscreens/mp_lf_township_lobby",
 	mp_lf_uma = $"loadscreens/mp_lf_uma_lobby",
-
-	// not really sure if this should be here, whatever
-	// might be good to make this modular in the future?
-	sp_training = $"rui/menu/level_select/level_image1",
-	sp_crashsite = $"rui/menu/level_select/level_image2",
-	sp_sewers1 = $"rui/menu/level_select/level_image3",
-	sp_boomtown_start = $"rui/menu/level_select/level_image4",
-	sp_hub_timeshift = $"rui/menu/level_select/level_image5",
-	sp_beacon = $"rui/menu/level_select/level_image6",
-	sp_tday = $"rui/menu/level_select/level_image7",
-	sp_s2s = $"rui/menu/level_select/level_image8",
-	sp_skyway_v1 = $"rui/menu/level_select/level_image9",
-
-	// mp converted variants
-	mp_training = $"rui/menu/level_select/level_image1",
-	mp_crashsite = $"rui/menu/level_select/level_image2",
-	mp_sewers1 = $"rui/menu/level_select/level_image3",
-	mp_boomtown_start = $"rui/menu/level_select/level_image4",
-	mp_hub_timeshift = $"rui/menu/level_select/level_image5",
-	mp_beacon = $"rui/menu/level_select/level_image6",
-	mp_tday = $"rui/menu/level_select/level_image7",
-	mp_s2s = $"rui/menu/level_select/level_image8",
-	mp_skyway_v1 = $"rui/menu/level_select/level_image9",
 }
 
 void function MenuPrivateMatch_Init()
@@ -144,9 +121,7 @@ asset function GetMapImageForMapName( string mapName )
 	if ( mapName in mapImages )
 		return mapImages[ mapName ]
 
-	// no way to convert string => asset for dynamic stuff so
-	// pain
-	return expect asset( compilestring( "return $\"loadscreens/" + mapName + "_lobby\"" )() )
+	return StringToAsset( "loadscreens/" + mapName + "_lobby" )
 }
 
 void function InitPrivateMatchMenu()
@@ -244,7 +219,11 @@ void function OnSelectMatchSettings_Activate( var button )
 	if ( Hud_IsLocked( button ) )
 		return
 
-	AdvanceMenu( GetMenu( "CustomMatchSettingsCategoryMenu" ) )
+	#if VANILLA
+		AdvanceMenu( GetMenu( "MatchSettingsMenu" ) )
+	#else
+		AdvanceMenu( GetMenu( "CustomMatchSettingsCategoryMenu" ) )
+	#endif
 }
 
 void function SetupComboButtons( var menu, var navUpButton, var navDownButton )
@@ -328,8 +307,9 @@ void function SetupComboButtons( var menu, var navUpButton, var navDownButton )
 		var soundButton = AddComboButton( comboStruct, headerIndex, buttonIndex++, "#VIDEO" )
 		Hud_AddEventHandler( soundButton, UIE_CLICK, AdvanceMenuEventHandler( GetMenu( "VideoMenu" ) ) )
 	#endif
-	var knbButton = AddComboButton( comboStruct, headerIndex, buttonIndex++, "#KNB_MENU_HEADER" )
-	Hud_AddEventHandler( knbButton, UIE_CLICK, AdvanceMenuEventHandler( GetMenu( "KnowledgeBaseMenu" ) ) )
+	// MOD SETTINGS
+	var modSettingsButton = AddComboButton( comboStruct, headerIndex, buttonIndex++, "#MOD_SETTINGS" )
+	Hud_AddEventHandler( modSettingsButton, UIE_CLICK, AdvanceMenuEventHandler( GetMenu( "ModSettings" ) ) )
 
 	ComboButtons_Finalize( comboStruct )
 }
@@ -661,9 +641,17 @@ function UpdateLobby()
 							if ( setting.isEnumSetting )
 								playlistOverridesDesc +=
 									Localize( setting.localizedName ) + ": `2" +
-										Localize( setting.enumNames[ setting.enumValues.find( expect string( GetCurrentPlaylistVar( varName ) ) ) ] ) + "`0\n"
+										Localize(
+											setting.enumNames[
+												(
+													setting.enumValues.find( GetCurrentPlaylistVarString( varName, "" ) ) != -1
+														? setting.enumValues.find( GetCurrentPlaylistVarString( varName, "" ) )
+														: 0
+												)
+											]
+										) + "`0\n"
 							else
-								playlistOverridesDesc += Localize( setting.localizedName ) + ": `2" + GetCurrentPlaylistVar( varName ) + "`0\n"
+								playlistOverridesDesc += Localize( setting.localizedName ) + ": `2" + GetCurrentPlaylistVarString( varName, "" ) + "`0\n"
 
 							shouldBreak = true
 							break
