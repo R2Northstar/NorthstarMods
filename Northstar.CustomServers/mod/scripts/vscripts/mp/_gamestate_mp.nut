@@ -406,30 +406,54 @@ void function AddTeamScore( int team, int amount )
 		level.firstToScoreLimit = team
 }
 
-void function SetWinner( int team, string winningReason = "", string losingReason = "" )
+void function SetWinner( int winningTeam, string winningReason = "", string losingReason = "", bool overrideWinLossReasonForLastRound = true )
 {
-	if ( !GamePlayingOrSuddenDeath() )
+	if ( !GamePlayingOrSuddenDeath() && !level.devForcedWin )
 		return
 
-	if ( IsRoundBased() )
-	{
-		if ( team != TEAM_UNASSIGNED )
-		{
-			int roundWins = GameRules_GetTeamScore2( team )
-			int newRoundWins = roundWins + 1
-
-			GameRules_SetTeamScore2( team, newRoundWins )
-			GameRules_SetTeamScore( team, newRoundWins ) // HACK; client scorebars don't know how to display TeamScore2
-		}
-	}
-
-	if ( ShouldEnterSuddenDeath( team ) )
+	if ( ShouldEnterSuddenDeath( winningTeam ) )
 	{
 		SetGameState( eGameState.SuddenDeath )
 		return
 	}
 
-	SetServerVar( "winningTeam", team )
+	if ( IsRoundBased() )
+	{
+		if ( winningTeam != TEAM_UNASSIGNED )
+		{
+			int roundWins = GameRules_GetTeamScore2( winningTeam )
+			int newRoundWins = roundWins + 1
+
+			GameRules_SetTeamScore2( winningTeam, newRoundWins )
+			GameRules_SetTeamScore( winningTeam, newRoundWins ) // HACK; client scorebars don't know how to display TeamScore2
+		}
+
+		if ( ShouldStopPlayingRounds() ) // No more rounds to play, set the winning team to the team that won the match, not the team that won the round
+		{
+			if ( overrideWinLossReasonForLastRound )
+			{
+				winningTeam = GetMatchWinnerFromScore()
+
+				if ( GameRules_GetTeamScore2( GetMatchWinnerFromScore() ) >= GetRoundScoreLimit_FromPlaylist() )
+				{
+					winningReason = "#GAMEMODE_SCORE_LIMIT_REACHED"
+					losingReason = "#GAMEMODE_SCORE_LIMIT_REACHED"
+				}
+				else if ( winningTeam == TEAM_UNASSIGNED )
+				{
+					winningReason = "#GAMEMODE_ROUND_LIMIT_REACHED_ROUND_SCORE_DRAW"
+					losingReason = "#GAMEMODE_ROUND_LIMIT_REACHED_ROUND_SCORE_DRAW"
+				}
+				else
+				{
+					winningReason = "#GAMEMODE_ROUND_LIMIT_REACHED_WON_MORE_ROUNDS"
+					losingReason = "#GAMEMODE_ROUND_LIMIT_REACHED_LOSS_MORE_ROUNDS"
+				}
+			}
+		}
+	}
+
+	SetServerVar( "winningTeam", winningTeam )
 
 	int announceRoundWinnerWinningSubstr
 	int announceRoundWinnerLosingSubstr
@@ -448,7 +472,7 @@ void function SetWinner( int team, string winningReason = "", string losingReaso
 	{
 		int announcementSubstr = announceRoundWinnerLosingSubstr
 
-		if ( player.GetTeam() == team )
+		if ( player.GetTeam() == winningTeam )
 			announcementSubstr = announceRoundWinnerWinningSubstr
 
 		if ( Flag( "AnnounceWinnerEnabled" ) )
@@ -467,11 +491,12 @@ void function SetWinner( int team, string winningReason = "", string losingReaso
 				Remote_CallFunction_NonReplay( player, "ServerCallback_AnnounceWinner", 0, announcementSubstr, GetWinnerDeterminedWait() )
 		}
 
-		if ( player.GetTeam() == team )
+		if ( player.GetTeam() == winningTeam )
 			UnlockAchievement( player, achievements.MP_WIN )
 	}
 
 	SetServerVar( "winningTeam", GetWinningTeam() ) // This is to make GetWinningTeam return TEAM_UNASSIGNED for clients so they don't crash due to music logic upon entering WinnerDetermined state
+
 	SetGameState( eGameState.WinnerDetermined )
 }
 
@@ -1962,20 +1987,9 @@ bool function RoundScoreLimit_Complete()
 	if ( Flag( "DisableScoreLimit" ) )
 		return false
 
-	int roundLimit = GetRoundScoreLimit_FromPlaylist()
-
-	// TODO: Reexamine this next game? RoundScoreLimit_Complete shouldn't have side effect of setting winner sometimes
-	int militiaScore = GameRules_GetTeamScore2( TEAM_MILITIA )
-	int imcScore = GameRules_GetTeamScore2( TEAM_IMC )
-
-	if ( ( militiaScore >= roundLimit ) || ( imcScore >= roundLimit ) || level.nv.roundsPlayed >= ( roundLimit * 2 ) )
+	if ( ShouldStopPlayingRounds() )
 	{
-		int winningTeam = TEAM_UNASSIGNED
-
-		if ( imcScore > militiaScore )
-			winningTeam = TEAM_IMC
-		else if ( imcScore < militiaScore )
-			winningTeam = TEAM_MILITIA
+		int winningTeam = GetMatchWinnerFromScore()
 
 		if ( level.nv.winningTeam == null )
 		{
@@ -2428,4 +2442,29 @@ void function ClearWeapons()
 {
 	foreach ( entity weapon in GetWeaponArray( true ) )
 		weapon.Destroy()
+}
+
+bool function ShouldStopPlayingRounds()
+{
+	if ( GameRules_GetTeamScore2( GetMatchWinnerFromScore() ) >= GetRoundScoreLimit_FromPlaylist() )
+		return true
+
+	if ( level.forceNoMoreRounds == true )
+		return true
+
+	int roundsPlayed = GetRoundsPlayed()
+
+	if ( GetGameState() < eGameState.WinnerDetermined ) // Somewhat Hacky. Need to do this as level.nv.roundsPlayed is only incremented in winner determined, but we should be able to call this function before that to see if we'll play more rounds after this
+		roundsPlayed++
+
+	int maxExtraRounds = GetCurrentPlaylistVarInt( "maxExtraRounds", -1 )
+	int extraRoundsPlayed = roundsPlayed - ( GetRoundScoreLimit_FromPlaylist() * 2 )
+
+	if ( svGlobal.forceNoFinalRoundDraws == true && ( maxExtraRounds < 0 || extraRoundsPlayed <= maxExtraRounds ) ) // If true the mode will keep going until a clear winner is determined. It will not end in a draw.
+		return false
+
+	if ( roundsPlayed >= ( GetRoundScoreLimit_FromPlaylist() * 2 ) )
+		return true
+
+	return false
 }

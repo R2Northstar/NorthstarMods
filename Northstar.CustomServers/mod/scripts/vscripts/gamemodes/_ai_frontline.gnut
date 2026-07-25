@@ -89,13 +89,13 @@ bool function InitFrontLine()
 
 void function AllowFrontlineMove( bool enable )
 {
-	if ( !Flag( "EntitiesDidLoad" ) )
+	if ( !Flag( "FrontlineInitiated" ) )
 		file.allowFrontlineMove = enable
 }
 
 void function WaitTillFrontlineMoved()
 {
-	while ( !Flag( "EntitiesDidLoad" ) )
+	while ( !Flag( "FrontlineInitiated" ) )
 		WaitFrame()
 
 	int moved = file.timesFrontlineMoved
@@ -106,7 +106,7 @@ void function WaitTillFrontlineMoved()
 
 entity function GetFrontlineSpawnPoint( array<entity> spawnPointArray, int team )
 {
-	if ( !Flag( "EntitiesDidLoad" ) || !IsIMCOrMilitiaTeam( team ) )
+	if ( !Flag( "FrontlineInitiated" ) || !IsIMCOrMilitiaTeam( team ) )
 		return spawnPointArray.getrandom()
 
 	int goalNum = -1
@@ -316,7 +316,7 @@ void function CheckFrontlineOverrun( int losingTeam )
 
 void function MoveFrontline( int winningTeam )
 {
-	if ( !Flag( "EntitiesDidLoad" ) || !file.allowFrontlineMove )
+	if ( !Flag( "FrontlineInitiated" ) || !file.allowFrontlineMove )
 		return
 
 	string prevFrontlineName = expect string( file.currentFrontline.name )
@@ -335,7 +335,7 @@ void function MoveFrontline( int winningTeam )
 
 vector function GetTeamCombatDir( table frontline, int team )
 {
-	if ( !Flag( "EntitiesDidLoad" ) )
+	if ( !Flag( "FrontlineInitiated" ) )
 		return Vector( 0, 0, 0 )
 
 	// combatDir points towards side 1 by default
@@ -620,7 +620,7 @@ vector function GetMapDirection( vector centerPos, array<entity> startSpawnPoint
 
 void function FrontlineDeath( entity ent, var damageInfo )
 {
-	if ( !Flag( "EntitiesDidLoad" ) )
+	if ( !Flag( "FrontlineInitiated" ) )
 		return
 
 	if ( ent.IsTitan() && !IsValid( ent.GetBossPlayer() ) )
@@ -647,7 +647,7 @@ void function FrontlineDeath( entity ent, var damageInfo )
 
 void function SetFrontlineSides( table frontline, int winningTeam )
 {
-	if ( !Flag( "EntitiesDidLoad" ) || !IsIMCOrMilitiaTeam( winningTeam ) )
+	if ( !Flag( "FrontlineInitiated" ) || !IsIMCOrMilitiaTeam( winningTeam ) )
 		return
 
 	int otherTeam = GetOtherTeam( winningTeam )
@@ -710,7 +710,7 @@ entity function GetFrontlineGoal( int index, int team, bool spectre = false )
 
 void function SquadAssaultFrontline( array<entity> squad )
 {
-	if ( !Flag( "EntitiesDidLoad" ) )
+	if ( !Flag( "FrontlineInitiated" ) )
 		return
 
 	// Guys in squad can die at any time - it seems bad that this can be the case, squad should be clean earlier if at all
