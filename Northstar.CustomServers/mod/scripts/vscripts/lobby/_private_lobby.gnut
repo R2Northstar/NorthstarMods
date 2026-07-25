@@ -307,23 +307,35 @@ bool function ClientCommandCallback_PrivateMatchSetPlaylistVarOverride( entity p
 		if ( !NSIsPlayerLocalPlayer( player ) )
 			return true
 
-	LogPrivateMatchChange( player, " override the setting ", args )
-
 	bool found = false
+
 	foreach ( string category in GetPrivateMatchSettingCategories() )
 	{
 		foreach ( CustomMatchSettingContainer setting in GetPrivateMatchCustomSettingsForCategory( category ) )
 		{
 			if ( args[ 0 ] == setting.playlistVar )
 			{
+				if ( setting.isEnumSetting && setting.enumValues.find( args[ 1 ] ) == -1 ) // prevent making enums invalid
+				{
+					LogPrivateMatchChange( player, " attempted to override an enum setting to a invalid value: ", args )
+					return true
+				}
+
 				found = true
 				break
 			}
 		}
 	}
 
-	if ( found )
-		SetPlaylistVarOverride( args[ 0 ], args[ 1 ] )
+	if ( !found )
+	{
+		LogPrivateMatchChange( player, " attempted to override an unknown setting ", args )
+		return true
+	}
+
+	LogPrivateMatchChange( player, " override the setting ", args )
+
+	SetPlaylistVarOverride( args[ 0 ], args[ 1 ] )
 
 	return true
 }
