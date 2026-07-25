@@ -850,11 +850,6 @@ bool function runWave( int waveIndex, bool shouldDoBuyTime )
 
 	SetGlobalNetInt( "FD_waveState", WAVE_STATE_COMPLETE )
 	EarnMeterMP_SetPassiveMeterGainEnabled( false )
-	foreach ( entity player in GetPlayerArray() )
-	{
-		player.s.didthepvpglitch = false // Clear the pvp flag after wave completion
-		player.s.isbeingmonitored = false
-	}
 
 	if ( !IsHarvesterAlive( fd_harvester.harvester ) )
 	{
@@ -1282,8 +1277,6 @@ void function GamemodeFD_InitPlayer( entity player )
 	file.playerAwardStats[ player ] <- awardStats
 
 	player.s.extracashnag <- Time()
-	player.s.didthepvpglitch <- false
-	player.s.isbeingmonitored <- false
 	player.s.scoredamage <- 0.0
 	thread SetTurretSettings_threaded( player )
 
@@ -1815,37 +1808,6 @@ void function FD_PlayerRespawnCallback( entity player )
 	{
 		if ( !GetGlobalNetInt( "FD_currentWave" ) )
 			PlayerEarnMeter_SetMode( player, eEarnMeterMode.DISABLED )
-
-		if ( player.GetTeam() == TEAM_IMC )
-		{
-			player.Minimap_AlwaysShow( TEAM_MILITIA, null )
-
-			array<entity> spawnpoints = SpawnPoints_GetPilotStart( TEAM_IMC )
-
-			if ( spawnpoints.len() && !player.IsTitan() )
-			{
-				entity imcspawn = spawnpoints.getrandom()
-
-				player.SetOrigin( imcspawn.GetOrigin() )
-				player.SetAngles( imcspawn.GetAngles() )
-			}
-		}
-		else if ( player.GetTeam() == TEAM_MILITIA && player.s.didthepvpglitch )
-		{
-			SetTeam( player, TEAM_IMC )
-
-			player.Minimap_AlwaysShow( TEAM_MILITIA, null )
-
-			array<entity> spawnpoints = SpawnPoints_GetPilotStart( TEAM_IMC )
-
-			if ( spawnpoints.len() && !player.IsTitan() )
-			{
-				entity imcspawn = spawnpoints.getrandom()
-
-				player.SetOrigin( imcspawn.GetOrigin() )
-				player.SetAngles( imcspawn.GetAngles() )
-			}
-		}
 	}
 	else
 		return
@@ -1855,7 +1817,7 @@ void function FD_PlayerRespawnCallback( entity player )
 	// Also more than 4 players, additionals will spawn directly on ground
 	// Respawning as Titan just will apply the Protection time
 
-	if ( !FD_ShouldUseRespawnDropship() && !player.IsTitan() && !GamePlaying() && player.GetTeam() != TEAM_IMC && !player.s.didthepvpglitch )
+	if ( !FD_ShouldUseRespawnDropship() && !player.IsTitan() && !GamePlaying() && player.GetTeam() != TEAM_IMC )
 	{
 		// Teleport player to a more reliable location if they spawn on ground, some maps picks
 		// too far away spawns from the Harvester and Shop (i.e Colony, Homestead, Drydock)
@@ -2490,9 +2452,6 @@ void function GamemodeFD_OnPlayerKilled( entity victim, entity attacker, var dam
 	{
 		PlayerEarnMeter_AddEarnedFrac( attacker, 0.15 )
 		AddMoneyToPlayer( attacker, 25 )
-		victim.s.didthepvpglitch = true // Flag the player to force it to stay on IMC side for the whole wave as punishment
-		if ( !victim.s.isbeingmonitored )
-			thread PvPGlitchMonitor( victim )
 		return
 	}
 
@@ -4021,25 +3980,6 @@ function FD_AttemptToRepairTurrets()
 	// Repair turret on here rather than in the executeWave(), softlocking reasons
 	foreach ( entity turret in GetEntArrayByClass_Expensive( "npc_turret_sentry" ) )
 		RepairTurret_WaveBreak( turret )
-}
-
-void function PvPGlitchMonitor( entity player )
-{
-	player.EndSignal( "OnDestroy" )
-
-	player.s.isbeingmonitored = true
-	while ( IsValidPlayer( player ) && player.s.didthepvpglitch && player.s.isbeingmonitored && GetGlobalNetBool( "FD_waveActive" ) )
-	{
-		if ( IsAlive( player ) )
-		{
-			if ( player.GetTeam() == TEAM_MILITIA ) // Ensure this player who tried to be "funny" and went into the IMC side stays there for the whole wave
-				SetTeam( player, TEAM_IMC )
-
-			PlayerEarnMeter_AddOwnedFrac( player, 0.02 ) // At least make them buildup titan meter faster since they gain nothing for killing the defending players
-		}
-
-		wait 1
-	}
 }
 
 function FD_UpdateTitanBehavior()
