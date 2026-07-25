@@ -15,9 +15,10 @@ struct
 void function GamemodeLts_Init()
 {
 	// gamemode settings
-	SetSwitchSidesBased( true )
-	SetGamemodeAllowsTeamSwitch( false )
 	SetRoundBased( true )
+	SetSwitchSidesBased( true )
+	SetForceNoFinalRoundDraws( true )
+	SetGamemodeAllowsTeamSwitch( false )
 	Riff_ForceSetEliminationMode( eEliminationMode.PilotsTitans )
 	Riff_ForceSetSpawnAsTitan( eSpawnAsTitan.Always )
 	SetShouldUseRoundWinningKillReplay( true )

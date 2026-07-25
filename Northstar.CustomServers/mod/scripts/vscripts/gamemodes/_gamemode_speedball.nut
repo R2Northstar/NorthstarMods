@@ -15,6 +15,7 @@ void function GamemodeSpeedball_Init()
 	// gamemode settings
 	SetRoundBased( true )
 	SetSwitchSidesBased( true )
+	SetForceNoFinalRoundDraws( true )
 	SetGamemodeAllowsTeamSwitch( false )
 	SetShouldUseRoundWinningKillReplay( true )
 	Riff_ForceTitanAvailability( eTitanAvailability.Never )

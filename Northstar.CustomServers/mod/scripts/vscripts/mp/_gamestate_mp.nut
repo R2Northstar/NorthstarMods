@@ -10,6 +10,8 @@ global function SetTimelimitCompleteFunc
 global function SetPlayThreeMinuteMusic
 global function SetEpilogueEliminationBased
 global function SetSwitchSidesBased
+global function SetForceNoMoreRounds
+global function SetForceNoFinalRoundDraws
 global function SetShouldUseRoundWinningKillReplay
 global function SetRoundWinningKillReplayKillClasses
 global function SetRoundWinningKillReplayAttacker
@@ -17,6 +19,7 @@ global function SetCallback_TryUseProjectileReplay
 global function ShouldTryUseProjectileReplay
 global function SetWinner
 global function AddTeamScore
+global function PerfInitLabels
 
 global function GameState_GetTimeLimitOverride
 global function GameState_SetTimeLimitOverride
@@ -26,10 +29,11 @@ global function CodeCallback_GamerulesThink
 global function GetWinnerDeterminedWait
 global function WillShowRoundWinningKillReplay
 global function ForceEliminationModeWinner
-global function ShouldClearPlayersInWinnerDetermined
-global function PerfInitLabels
-global function GetConnectedPlayers
 global function ClearPlayers
+global function ClearWeapons
+global function ShouldClearPlayersInWinnerDetermined
+global function IsWinnerDeterminedPlayable
+global function GetConnectedPlayers
 global function GetMatchWinnerFromScore
 global function RoundScoreLimit_Complete
 
@@ -383,6 +387,9 @@ void function SetGameState( int newState )
 		case eGameState.Postmatch:
 			GameStateEnter_Postmatch()
 			break
+
+		default:
+			Assert( false, "Unknown game state" )
 	}
 }
 
@@ -528,6 +535,20 @@ void function SetEpilogueEliminationBased( bool value )
 void function SetSwitchSidesBased( bool switchSides )
 {
 	level.nv.switchedSides = switchSides ? 0 : null
+}
+
+void function SetForceNoMoreRounds( bool state )
+{
+	Assert( IsRoundBased() )
+
+	level.forceNoMoreRounds = state
+}
+
+void function SetForceNoFinalRoundDraws( bool state )
+{
+	Assert( IsRoundBased() )
+
+	svGlobal.forceNoFinalRoundDraws = state
 }
 
 void function SetShouldUseRoundWinningKillReplay( bool shouldUse )
@@ -2449,7 +2470,7 @@ bool function ShouldStopPlayingRounds()
 	if ( GameRules_GetTeamScore2( GetMatchWinnerFromScore() ) >= GetRoundScoreLimit_FromPlaylist() )
 		return true
 
-	if ( level.forceNoMoreRounds == true )
+	if ( level.forceNoMoreRounds )
 		return true
 
 	int roundsPlayed = GetRoundsPlayed()
@@ -2458,13 +2479,21 @@ bool function ShouldStopPlayingRounds()
 		roundsPlayed++
 
 	int maxExtraRounds = GetCurrentPlaylistVarInt( "maxExtraRounds", -1 )
-	int extraRoundsPlayed = roundsPlayed - ( GetRoundScoreLimit_FromPlaylist() * 2 )
+	int extraRoundsPlayed = roundsPlayed - ( GetRoundScoreLimit_FromPlaylist() * 2 - 1 )
 
-	if ( svGlobal.forceNoFinalRoundDraws == true && ( maxExtraRounds < 0 || extraRoundsPlayed <= maxExtraRounds ) ) // If true the mode will keep going until a clear winner is determined. It will not end in a draw.
+	if ( svGlobal.forceNoFinalRoundDraws && ( maxExtraRounds < 0 || extraRoundsPlayed <= maxExtraRounds ) ) // If true the mode will keep going until a clear winner is determined. It will not end in a draw.
 		return false
 
-	if ( roundsPlayed >= ( GetRoundScoreLimit_FromPlaylist() * 2 ) )
+	if ( roundsPlayed >= ( GetRoundScoreLimit_FromPlaylist() * 2 - 1 ) )
 		return true
 
 	return false
+}
+
+bool function IsWinnerDeterminedPlayable()
+{
+	if ( IsRoundBased() )
+		return ShouldStopPlayingRounds()
+
+	return true
 }

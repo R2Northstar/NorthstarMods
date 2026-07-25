@@ -121,7 +121,7 @@ bool function HasGameStateProtection( entity ent )
 			return true
 
 		case eGameState.WinnerDetermined:
-			return IsRoundBased()
+			return !IsWinnerDeterminedPlayable()
 
 		default:
 			Assert( false, "Unknown gamestate " + GetGameState() )
