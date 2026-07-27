@@ -184,6 +184,7 @@ void function RateFrontLineNPCSpawnpoint( entity spawnpoint, int team, vector ed
 	if ( !infront )
 	{
 		float distSqr = Distance2DSqr( testPoint, edgeOrigin )
+
 		frontlineRating = GraphCapped( distSqr, FRONTLINE_MIN_DIST_SQR, FRONTLINE_MAX_DIST_SQR, 1.0, 0.0 )
 	}
 	else
@@ -515,7 +516,6 @@ array function CreateTempFrontline()
 	Warning( "Map doesn't have info_frontline ents" )
 
 	array<vector> originArray = []
-
 	array<entity> spawnpoints = SpawnPoints_GetDropPodStart( TEAM_ANY )
 
 	spawnpoints.extend( NSSpawnPoints_GetTitanStart( TEAM_ANY ) )
@@ -621,6 +621,7 @@ vector function GetMapDirection( vector centerPos, array<entity> startSpawnPoint
 	}
 
 	vector mapDir = ( dirFromMilitia + dirToIMC ) * 0.5
+
 	return mapDir // vector points away from the IMC side
 }
 

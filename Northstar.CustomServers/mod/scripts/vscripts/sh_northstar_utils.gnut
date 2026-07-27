@@ -19,6 +19,9 @@ void function NorthstarUtils_Before_Init()
 
 void function NorthstarUtils_After_Init()
 {
+	#if CLIENT
+		// delaythread( 1 ) AttritionDefconAndSpawnTracker()
+	#endif
 }
 
 #if SERVER
@@ -50,6 +53,139 @@ void function NorthstarUtils_After_Init()
 	void function Chat_ServerPrivateMessage( entity toPlayer, string text, bool whisper, bool withServerTag = true )
 	{
 		NSBroadcastMessage( -1, toPlayer.GetPlayerIndex(), text, !withServerTag, false, whisper ? eChatMessageType.WHISPER : eChatMessageType.CHAT )
+	}
+#endif
+
+#if CLIENT
+	void function AttritionDefconAndSpawnTracker()
+	{
+		if ( GAMETYPE != AI_TDM || IsLobby() )
+			return
+
+		int highestIMCNPCs = 0
+		int highestIMCGrunts = 0
+		int highestIMCSpectres = 0
+		int highestIMCStalkers = 0
+		int highestIMCReapers = 0
+
+		int highestMILNPCs = 0
+		int highestMILGrunts = 0
+		int highestMILSpectres = 0
+		int highestMILStalkers = 0
+		int highestMILReapers = 0
+
+		while ( true )
+		{
+			int currentIMCDefCon = 0
+			int currentIMCNPCs = 0
+			int currentIMCGrunts = 0
+			int currentIMCSpectres = 0
+			int currentIMCStalkers = 0
+			int currentIMCReapers = 0
+
+			int currentMILDefCon = 0
+			int currentMILNPCs = 0
+			int currentMILGrunts = 0
+			int currentMILSpectres = 0
+			int currentMILStalkers = 0
+			int currentMILReapers = 0
+
+			currentIMCDefCon = GetGlobalNetInt( "IMCdefcon" )
+
+			foreach ( entity npc in GetNPCArrayOfTeam( TEAM_IMC ) )
+			{
+				if ( !IsGrunt( npc ) && !IsSpectre( npc ) && !IsStalker( npc ) && !IsSuperSpectre( npc ) )
+					continue
+
+				currentIMCNPCs++
+
+				if ( highestIMCNPCs < currentIMCNPCs )
+					highestIMCNPCs = currentIMCNPCs
+
+				if ( IsGrunt( npc ) )
+				{
+					currentIMCGrunts++
+
+					if ( highestIMCGrunts < currentIMCGrunts )
+						highestIMCGrunts = currentIMCGrunts
+				}
+				else if ( IsSpectre( npc ) )
+				{
+					currentIMCSpectres++
+
+					if ( highestIMCSpectres < currentIMCSpectres )
+						highestIMCSpectres = currentIMCSpectres
+				}
+				else if ( IsStalker( npc ) )
+				{
+					currentIMCStalkers++
+
+					if ( highestIMCStalkers < currentIMCStalkers )
+						highestIMCStalkers = currentIMCStalkers
+				}
+				else if ( IsSuperSpectre( npc ) )
+				{
+					currentIMCReapers++
+
+					if ( highestIMCReapers < currentIMCReapers )
+						highestIMCReapers = currentIMCReapers
+				}
+			}
+
+			currentMILDefCon = GetGlobalNetInt( "MILdefcon" )
+
+			foreach ( entity npc in GetNPCArrayOfTeam( TEAM_MILITIA ) )
+			{
+				if ( !IsGrunt( npc ) && !IsSpectre( npc ) && !IsStalker( npc ) && !IsSuperSpectre( npc ) )
+					continue
+
+				currentMILNPCs++
+
+				if ( highestMILNPCs < currentMILNPCs )
+					highestMILNPCs = currentMILNPCs
+
+				if ( IsGrunt( npc ) )
+				{
+					currentMILGrunts++
+
+					if ( highestMILGrunts < currentMILGrunts )
+						highestMILGrunts = currentMILGrunts
+				}
+				else if ( IsSpectre( npc ) )
+				{
+					currentMILSpectres++
+
+					if ( highestMILSpectres < currentMILSpectres )
+						highestMILSpectres = currentMILSpectres
+				}
+				else if ( IsStalker( npc ) )
+				{
+					currentMILStalkers++
+
+					if ( highestMILStalkers < currentMILStalkers )
+						highestMILStalkers = currentMILStalkers
+				}
+				else if ( IsSuperSpectre( npc ) )
+				{
+					currentMILReapers++
+
+					if ( highestMILReapers < currentMILReapers )
+						highestMILReapers = currentMILReapers
+				}
+			}
+
+			printt(
+				"IMC NPCs: " + highestIMCNPCs + " Highest Grunts: " + highestIMCGrunts + " Highest Spectres: " + highestIMCSpectres + " Highest Stalkers: " +
+					highestIMCStalkers + " Highest Reapers: " + highestIMCReapers + " DefCon: " + currentIMCDefCon + " Score: " + GameRules_GetTeamScore( TEAM_IMC )
+			)
+
+			printt(
+				"Militia NPCs: " + highestMILNPCs + " Highest Grunts: " + highestMILGrunts + " Highest Spectres: " + highestMILSpectres + " Highest Stalkers: " +
+					highestMILStalkers + " Highest Reapers: " + highestMILReapers + " DefCon: " + currentMILDefCon + " Score: " + GameRules_GetTeamScore( TEAM_MILITIA )
+			)
+
+			WaitFrame()
+		}
 	}
 #endif
 

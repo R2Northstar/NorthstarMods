@@ -2,14 +2,10 @@ untyped
 
 global function CreateNPCSForDroppod
 global function NPCSpawnFuncWrapper
-// global function ShouldSpawnCaptain
 
 // a unified function for spawning npc's in the droppod ( like the dropship has )
 array function CreateNPCSForDroppod( int team, int count, vector spawnOrigin, vector spawnAngles, string squadName, bool force, entity functionref( int, vector, vector ) spawnFunc )
 {
-	if ( !ShouldSpawn( team, force ) ) // if ( IsAutoPopulateEnabled( team ) && !force ) // if ( !IsNPCSpawningEnabled( team ) && !force )
-		return []
-
 	array<entity> soldierEntities = []
 
 	if ( !squadName.len() )
@@ -51,33 +47,21 @@ array function CreateNPCSForDroppod( int team, int count, vector spawnOrigin, ve
 entity function NPCSpawnFuncWrapper( int count, int index, entity functionref( int, vector, vector ) spawnFunc, int team, string squadName, vector origin, vector angles )
 {
 	Assert( type( spawnFunc ) == "function" )
+
 	entity guy
 
-	// if ( ShouldSpawnCaptain( count, index, spawnFunc ) )
-	// 	guy = SpawnGruntCaptain( team, squadName, origin, angles )
-	// else
 	guy = spawnFunc( team, origin, angles )
 
-	guy.kv.squadname = squadName
+	SetSpawnOption_Alert( guy )
+
+	SetUpNPCWeapons( guy )
 
 	DispatchSpawn( guy )
 
+	SetSquad( guy, squadName )
+
+	guy.Minimap_AlwaysShow( TEAM_MILITIA, null )
+	guy.Minimap_AlwaysShow( TEAM_IMC, null )
+
 	return guy
 }
-
-// function ShouldSpawnCaptain( int count, int index, entity functionref( int, vector, vector ) spawnFunc )
-// {
-// 	if ( spawnFunc != SpawnGrunt )
-// 		return false
-
-// 	if ( count < 4 )
-// 		return false
-
-// 	if ( index != 3 )
-// 		return false
-
-// 	if ( RandomFloat( 0, 1 ) >= CAPTAIN_NAME_FREQUENCY )
-// 		return false
-
-// 	return true
-// }

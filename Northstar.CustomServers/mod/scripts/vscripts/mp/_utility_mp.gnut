@@ -240,29 +240,6 @@ array<entity> function GetAllTitans()
 	return titans
 }
 
-int function CompareTitanTeamCount( int myTeam )
-{
-	int enemyTeam = GetOtherTeam( myTeam )
-	array<entity> titans = GetAllTitans()
-	array<entity> myTitans = []
-	array<entity> enemyTitans = []
-
-	foreach ( titan in titans )
-	{
-		int team = titan.GetTeam()
-
-		if ( team < 2 )
-			continue
-
-		if ( team == myTeam )
-			myTitans.append( titan )
-		else
-			enemyTitans.append( titan )
-	}
-
-	return myTitans.len() - enemyTitans.len()
-}
-
 int function GetSpectreCount( int team )
 {
 	string aiClass = "npc_spectre"
@@ -270,7 +247,7 @@ int function GetSpectreCount( int team )
 	int count = 0
 
 	foreach ( spectre in spectres )
-		if ( spectre.GetTeam() == team )
+		if ( IsAlive( spectre ) && spectre.GetTeam() == team )
 			count++
 
 	// to account for spectres that are dropping into the map
@@ -286,7 +263,7 @@ int function GetStalkerCount( int team )
 	int count = 0
 
 	foreach ( stalker in stalkers )
-		if ( stalker.GetTeam() == team )
+		if ( IsAlive( stalker ) && stalker.GetTeam() == team )
 			count++
 
 	// to account for stalkers that are dropping into the map
@@ -302,11 +279,8 @@ int function GetReaperCount( int team )
 	int count = 0
 
 	foreach ( reaper in reapers )
-		if ( reaper.GetTeam() == team )
+		if ( IsAlive( reaper ) && reaper.GetTeam() == team )
 			count++
-
-	// to account for reapers that are dropping into the map
-	count += GetReservedAISquadSlotsOfClassForTeam( aiClass, team )
 
 	return count
 }
@@ -340,16 +314,16 @@ bool function ShouldSpawnSpectre( int team )
 	if ( ( team == TEAM_MILITIA ) && ( Flag( "NoSpectreMilitia" ) ) )
 		return false
 
+	if ( GetCurrentPlaylistVarInt( "no_spectres", 0 ) )
+		return false
+
 	if ( ( Flag( "AllSpectre" ) ) )
 		return true
 
-	if ( GetGlobalNetInt( team == TEAM_IMC ? "IMCdefcon" : "MILdefcon" ) < 2 )
-		return false
-
 	int spectreCount = GetSpectreCount( team )
-	float maxAI = GetMaxAICount( team )
+	int maxAI = GetMaxAICount( team )
 
-	return spectreCount <= 0
+	return spectreCount <= level.maxSpectrePerSide[ team ]
 	// level.spectreSpawnStyle was probably forgotten in R2
 	// switch ( level.spectreSpawnStyle )
 	// {
@@ -379,13 +353,10 @@ bool function ShouldSpawnStalker( int team )
 	if ( Riff_AllowNPCs() != eAllowNPCs.Default )
 		return false
 
-	if ( GetGlobalNetInt( team == TEAM_IMC ? "IMCdefcon" : "MILdefcon" ) < 3 )
-		return false
-
 	int stalkerCount = GetStalkerCount( team )
-	float maxAI = GetMaxAICount( team )
+	int maxAI = GetMaxAICount( team )
 
-	return stalkerCount <= 0
+	return stalkerCount <= level.maxStalkersPerSide[ team ]
 }
 
 bool function ShouldSpawnReaper( int team )
@@ -393,11 +364,19 @@ bool function ShouldSpawnReaper( int team )
 	if ( Riff_AllowNPCs() != eAllowNPCs.Default )
 		return false
 
-	if ( GetGlobalNetInt( team == TEAM_IMC ? "IMCdefcon" : "MILdefcon" ) < 4 )
+	int reaperCount = GetReaperCount( team )
+	int maxAI = GetMaxAICount( team )
+
+	return reaperCount <= level.maxReapersPerSide[ team ]
+}
+
+bool function ShouldSpawnTitan( int team )
+{
+	if ( Riff_AllowNPCs() != eAllowNPCs.Default )
 		return false
 
-	int reaperCount = GetReaperCount( team )
-	float maxAI = GetMaxAICount( team )
+	int titanCount = GetTitanCount( team )
+	int maxAI = GetMaxAICount( team )
 
-	return reaperCount <= 1
+	return titanCount <= level.maxTitansPerSide[ team ]
 }
