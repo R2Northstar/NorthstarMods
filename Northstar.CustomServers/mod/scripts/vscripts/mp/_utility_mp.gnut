@@ -217,3 +217,187 @@ bool function IsRefValidAndOfType( string ref, int itemType )
 {
 	return IsRefValid( ref ) && GetItemType( ref ) == itemType
 }
+
+array<entity> function GetAllTitans()
+{
+	array<entity> titans = []
+	// returns the first owned titan found
+	array<entity> souls = GetTitanSoulArray()
+
+	foreach ( soul in souls )
+	{
+		if ( !IsValid( soul ) )
+			continue
+
+		entity titan = soul.GetTitan()
+
+		if ( !IsAlive( titan ) )
+			continue
+
+		titans.append( titan )
+	}
+
+	return titans
+}
+
+int function CompareTitanTeamCount( int myTeam )
+{
+	int enemyTeam = GetOtherTeam( myTeam )
+	array<entity> titans = GetAllTitans()
+	array<entity> myTitans = []
+	array<entity> enemyTitans = []
+
+	foreach ( titan in titans )
+	{
+		int team = titan.GetTeam()
+
+		if ( team < 2 )
+			continue
+
+		if ( team == myTeam )
+			myTitans.append( titan )
+		else
+			enemyTitans.append( titan )
+	}
+
+	return myTitans.len() - enemyTitans.len()
+}
+
+int function GetSpectreCount( int team )
+{
+	string aiClass = "npc_spectre"
+	array<entity> spectres = GetNPCArrayByClass( aiClass )
+	int count = 0
+
+	foreach ( spectre in spectres )
+		if ( spectre.GetTeam() == team )
+			count++
+
+	// to account for spectres that are dropping into the map
+	count += GetReservedAISquadSlotsOfClassForTeam( aiClass, team )
+
+	return count
+}
+
+int function GetStalkerCount( int team )
+{
+	string aiClass = "npc_stalker"
+	array<entity> stalkers = GetNPCArrayByClass( aiClass )
+	int count = 0
+
+	foreach ( stalker in stalkers )
+		if ( stalker.GetTeam() == team )
+			count++
+
+	// to account for stalkers that are dropping into the map
+	count += GetReservedAISquadSlotsOfClassForTeam( aiClass, team )
+
+	return count
+}
+
+int function GetReaperCount( int team )
+{
+	string aiClass = "npc_super_spectre"
+	array<entity> reapers = GetNPCArrayByClass( aiClass )
+	int count = 0
+
+	foreach ( reaper in reapers )
+		if ( reaper.GetTeam() == team )
+			count++
+
+	// to account for reapers that are dropping into the map
+	count += GetReservedAISquadSlotsOfClassForTeam( aiClass, team )
+
+	return count
+}
+
+int function GetTitanCount( int team )
+{
+	array<entity> titans = GetAllTitans()
+	array<entity> teamTitans = []
+
+	foreach ( titan in titans )
+		if ( titan.GetTeam() == team )
+			teamTitans.append( titan )
+
+	return teamTitans.len()
+}
+
+bool function ShouldSpawnSpectre( int team )
+{
+	if ( Riff_AllowNPCs() != eAllowNPCs.Default )
+		return ( Riff_AllowNPCs() == eAllowNPCs.SpectreOnly )
+
+	if ( ( team == TEAM_IMC ) && ( Flag( "AllSpectreIMC" ) ) )
+		return true
+
+	if ( ( team == TEAM_MILITIA ) && ( Flag( "AllSpectreMilitia" ) ) )
+		return true
+
+	if ( ( team == TEAM_IMC ) && ( Flag( "NoSpectreIMC" ) ) )
+		return false
+
+	if ( ( team == TEAM_MILITIA ) && ( Flag( "NoSpectreMilitia" ) ) )
+		return false
+
+	if ( ( Flag( "AllSpectre" ) ) )
+		return true
+
+	if ( GetGlobalNetInt( team == TEAM_IMC ? "IMCdefcon" : "MILdefcon" ) < 2 )
+		return false
+
+	int spectreCount = GetSpectreCount( team )
+	float maxAI = GetMaxAICount( team )
+
+	return spectreCount <= 0
+	// level.spectreSpawnStyle was probably forgotten in R2
+	// switch ( level.spectreSpawnStyle )
+	// {
+	// 	case eSpectreSpawnStyle.MORE_FOR_ENEMY_TITANS:
+	// 		int enemyTeam = GetOtherTeam( team )
+	// 		int titanCount = GetTitanCount( enemyTeam )
+	// 		int spectreCount = GetSpectreCount( team )
+	// 		float desiredSpectreCount = GraphCapped( titanCount, 1, 5, -2.0, 10.0 )
+	// 		return spectreCount < desiredSpectreCount
+	// 	case eSpectreSpawnStyle.MAP_PROGRESSION:
+	// 		int spectreCount = GetSpectreCount( team )
+	// 		int progress = expect int( level.nv.matchProgress ) // GetMatchProgress()
+	// 		if ( progress < 25 )
+	// 			return spectreCount <= 0
+	// 		float maxAI = GetMaxAICount( team )
+	// 		if ( progress < 50 )
+	// 			return spectreCount <= 5
+	// 		float maxSpectres = max( maxAI * 0.3, 5 )
+	// 		return spectreCount <= maxSpectres
+	// }
+	// Assert( 0, "What?" )
+	// unreachable
+}
+
+bool function ShouldSpawnStalker( int team )
+{
+	if ( Riff_AllowNPCs() != eAllowNPCs.Default )
+		return false
+
+	if ( GetGlobalNetInt( team == TEAM_IMC ? "IMCdefcon" : "MILdefcon" ) < 3 )
+		return false
+
+	int stalkerCount = GetStalkerCount( team )
+	float maxAI = GetMaxAICount( team )
+
+	return stalkerCount <= 0
+}
+
+bool function ShouldSpawnReaper( int team )
+{
+	if ( Riff_AllowNPCs() != eAllowNPCs.Default )
+		return false
+
+	if ( GetGlobalNetInt( team == TEAM_IMC ? "IMCdefcon" : "MILdefcon" ) < 4 )
+		return false
+
+	int reaperCount = GetReaperCount( team )
+	float maxAI = GetMaxAICount( team )
+
+	return reaperCount <= 1
+}

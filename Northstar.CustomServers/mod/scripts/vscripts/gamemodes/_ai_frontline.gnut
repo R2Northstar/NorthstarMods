@@ -6,6 +6,7 @@ global function AllowFrontlineMove
 
 global function WaitTillFrontlineMoved
 global function GetFrontlineSpawnPoint
+global function SquadAssaultFrontline_Continuous
 global function SquadAssaultFrontline
 
 global function MoveFrontline
@@ -32,9 +33,6 @@ bool function InitFrontLine()
 {
 	if ( Flag( "FrontlineInitiated" ) )
 		throw "InitFrontLine() was called when already initiated"
-
-	if ( Flag( "EntitiesDidLoad" ) )
-		throw "InitFrontLine() was called after EntitiesDidLoad"
 
 	if ( !IsNewThread() )
 	{
@@ -81,8 +79,6 @@ bool function InitFrontLine()
 	}
 
 	SetFrontlineSides( file.currentFrontline, TEAM_MILITIA )
-
-	FlagSet( "FrontlineInitiated" )
 
 	return true
 }
@@ -167,6 +163,16 @@ entity function GetFrontlineSpawnPoint( array<entity> spawnPointArray, int team 
 
 	// we will always return a spawnpoint even if it's a bad one.
 	return spawnPointArray.getrandom()
+}
+
+void function SquadAssaultFrontline_Continuous( array<entity> guys )
+{
+	while ( true )
+	{
+		SquadAssaultFrontline( guys )
+
+		WaitTillFrontlineMoved()
+	}
 }
 
 void function RateFrontLineNPCSpawnpoint( entity spawnpoint, int team, vector edgeOrigin, vector combatDir )

@@ -1,13 +1,29 @@
-global function AiGameModes_Init
+untyped // remove later?
 
-global function AiGameModes_SetNPCWeapons
+globalize_all_functions // remove later
 
-global function AiGameModes_SpawnDropShip
-global function AiGameModes_SpawnDropPod
-global function AiGameModes_SpawnReaper
-global function AiGameModes_SpawnTitan
+// TODO:
+// don't globalize all functions
+// give npcs weapons instead of default
+// make gamemodes using stubbed functions use new ones
+// remove some useless comments
+// make typed?
+// add function to spawn tracked titans
+// be able to change defcon increase scores
+// be able to change spectres, stalkers, and reapers per team
+// script GameRules_SetTeamScore( 2, 500 )
+// script GameRules_SetTeamScore( 3, 500 )
 
-global function GetValidIntroDropShipSpawn
+// global function AiGameModes_Init
+
+// global function AiGameModes_SetNPCWeapons
+
+// global function AiGameModes_SpawnDropShip
+// global function AiGameModes_SpawnDropPod
+// global function AiGameModes_SpawnReaper
+// global function AiGameModes_SpawnTitan
+
+// global function GetValidIntroDropShipSpawn
 
 const INTRO_DROPSHIP_CUTOFF = 2000
 
@@ -16,15 +32,854 @@ struct
 	table<string, array<string> > npcWeaponsTable // npcs have their default weapon in aisettings file
 } file
 
+// remove this and stubbed functions after all the gamemodes are using the new ones
+void function UseNewFunctionThrow( string calledBy )
+{
+	#if DEV
+		throw "Use New Function " + calledBy
+	#endif
+}
+
 void function AiGameModes_Init()
 {
+	// Globalize( SetupTeamDeathmatchNPCs )
+	//  Globalize( SquadAssaultFrontline )
+	//  Globalize( SquadAssault )
+	// Globalize( SpawnFrontlineSquad )
+
+	// Globalize( GetCurrentFrontline )
+	// Globalize( GetTeamCombatDir )
+	// Globalize( MoveFrontline )
+
+	// Globalize( GetFreeAISlots )
+	// Globalize( GetReservedAISquadSlots )
+	// Globalize( ReserveAISlots )
+	// Globalize( ReleaseAISlots )
+	// Globalize( FreeAISlotOnDeath )
+	// Globalize( ReserveSquadSlots )
+	// Globalize( ReleaseSquadSlots )
+
+	// Globalize( Spawn_TrackedGrunt )
+	// Globalize( Spawn_TrackedSpectre )
+	// Globalize( GetIndexSmallestSquad )
+	// Globalize( TryGetSmallestValidSquad )
+	// Globalize( SquadValidForClass )
+	// Globalize( GetReservedSquadSize )
+
+	// Globalize( SetFrontlineSides )
+	// Globalize( GetMaxAICount )
+	// Globalize( GetSpawnSquadSize )
+	// Globalize( SetLevelAICount )
+
 	FlagInit( "FrontlineInitiated" )
+	RegisterSignal( "FreeAISlotsUpdated" )
+
+	level.max_npc_per_side <- 16 // 12
+
+	level.occupiedAISlots <- {}
+	level.occupiedAISlots[ TEAM_IMC ] <- 0
+	level.occupiedAISlots[ TEAM_MILITIA ] <- 0
+	// level.occupiedAISlots[ TEAM_SPECTRE ] <- 0
+	// for ( local i = TEAM_SURVIVAL0; i < TEAM_COUNT; ++i )
+	// {
+	// 	level.occupiedAISlots[ i ] <- 0
+	// }
+
+	level.levelAICount <- {}
+	level.levelAICount[ TEAM_IMC ] <- level.max_npc_per_side
+	level.levelAICount[ TEAM_MILITIA ] <- level.max_npc_per_side
+	// level.levelAICount[ TEAM_SPECTRE ] <- level.max_npc_per_side
+	// for ( local i = TEAM_SURVIVAL0; i < TEAM_COUNT; ++i )
+	// {
+	// 	level.levelAICount[ i ] <- level.max_npc_per_side
+	// }
+
+	level.gameModeAICount <- {}
+	level.gameModeAICount[ TEAM_IMC ] <- level.max_npc_per_side
+	level.gameModeAICount[ TEAM_MILITIA ] <- level.max_npc_per_side
+	// level.gameModeAICount[ TEAM_SPECTRE ] <- level.max_npc_per_side
+	// for ( local i = TEAM_SURVIVAL0; i < TEAM_COUNT; ++i )
+	// {
+	// 	level.gameModeAICount[ i ] <- level.max_npc_per_side
+	// }
+
+	level.midSpecAICount <- {}
+	level.midSpecAICount[ TEAM_IMC ] <- level.max_npc_per_side
+	level.midSpecAICount[ TEAM_MILITIA ] <- level.max_npc_per_side
+	// level.midSpecAICount[ TEAM_SPECTRE ] <- level.max_npc_per_side
+	// for ( local i = TEAM_SURVIVAL0; i < TEAM_COUNT; ++i )
+	// {
+	// 	level.midSpecAICount[ i ] <- level.max_npc_per_side
+	// }
+
+	level.npcRespawnWait <- 5
+
+	local npcPerSide = level.max_npc_per_side
+	switch ( GameRules_GetGameMode() )
+	{
+		case TEAM_DEATHMATCH:
+			level.npcRespawnWait = 5
+			break
+
+		case ATTRITION:
+			level.npcRespawnWait = 5
+			break
+
+		case LAST_TITAN_STANDING:
+		case WINGMAN_LAST_TITAN_STANDING:
+			level.npcRespawnWait = 5
+			npcPerSide = /* GetCPULevelWrapper() == CPU_LEVEL_HIGHEND ? level.max_npc_per_side : */ 9
+			break
+
+		case CAPTURE_THE_FLAG:
+			level.npcRespawnWait = 10
+			npcPerSide = 9
+			break
+	}
+
+	SetGameModeAICount( npcPerSide, TEAM_IMC )
+	SetGameModeAICount( npcPerSide, TEAM_MILITIA )
+	// SetGameModeAICount( npcPerSide, TEAM_SPECTRE )
+	// for ( local i = TEAM_SURVIVAL0; i < TEAM_COUNT; ++i )
+	// {
+	// 	SetGameModeAICount( npcPerSide, i )
+	// }
+
+	SetMidSpecAICount( MID_SPEC_MAX_AI_COUNT, TEAM_IMC )
+	SetMidSpecAICount( MID_SPEC_MAX_AI_COUNT, TEAM_MILITIA )
+	// SetMidSpecAICount( MID_SPEC_MAX_AI_COUNT, TEAM_SPECTRE )
+	// for ( local i = TEAM_SURVIVAL0; i < TEAM_COUNT; ++i )
+	// {
+	// 	SetMidSpecAICount( MID_SPEC_MAX_AI_COUNT, i )
+	// }
+
+	SetupLevelAICount()
+
+	level.modifyAISlots <- {}
+	level.modifyAISlots[ TEAM_IMC ] <- 0
+	level.modifyAISlots[ TEAM_MILITIA ] <- 0
+	// level.modifyAISlots[ TEAM_SPECTRE ] <- 0
+	// for ( local i = TEAM_SURVIVAL0; i < TEAM_COUNT; ++i )
+	// {
+	// 	level.modifyAISlots[ i ] <- 0
+	// }
+
+	level.reservedAISquadSlots <- {}
+	level.dropship_team <- 0
+	level.aiSquadCount <- 3
+	level.aiSpawnCounter <- {}
+	level.aiSpawnCounter[ TEAM_IMC ] <- 0
+	level.aiSpawnCounter[ TEAM_MILITIA ] <- 0
+	// level.aiSpawnCounter[ TEAM_SPECTRE ] <- 0
+	// for ( local i = TEAM_SURVIVAL0; i < TEAM_COUNT; ++i )
+	// {
+	// 	level.aiSpawnCounter[ i ] <- 0
+	// }
+
+	// debug stuff
+	// Globalize( DebugSendClientFrontline )
+	// Globalize( DebugSendClientFrontlineAllPlayers )
+	// Globalize( DebugSquad )
+	// Globalize( DebugNextFrontline )
+	// Globalize( DrawCurrentFrontline )
+	// Globalize( DebugDrawFrontLine )
+	// Globalize( DebugDrawFrontLineSpawn )
+	// Globalize( DrawMapCenter )
+	// Globalize( MoveBot )
+
+	// file.botIndex <-
+	// 	{
+	// 		[TEAM_IMC] = 0,
+	// 		[TEAM_MILITIA] = 0,
+	// 		[TEAM_SPECTRE] = 0,
+	// 		[TEAM_SURVIVAL0] = 0,
+	// 		[TEAM_SURVIVAL1] = 0,
+	// 		[TEAM_SURVIVAL2] = 0,
+	// 		[TEAM_SURVIVAL3] = 0,
+	// 		[TEAM_SURVIVAL4] = 0,
+	// 		[TEAM_SURVIVAL5] = 0,
+	// 		[TEAM_SURVIVAL6] = 0,
+	// 		[TEAM_SURVIVAL7] = 0,
+	// 		[TEAM_SURVIVAL8] = 0,
+	// 		[TEAM_SURVIVAL9] = 0,
+	// 		[TEAM_SURVIVAL10] = 0,
+	// 		[TEAM_SURVIVAL11] = 0,
+	// 		[TEAM_SURVIVAL12] = 0,
+	// 		[TEAM_SURVIVAL13] = 0,
+	// 		[TEAM_SURVIVAL14] = 0,
+	// 		[TEAM_SURVIVAL15] = 0
+	// 	}
+
+	RegisterSignal( "EndDebugSquadIndex" )
+
+	const DEBUG_NPC_SPAWN = 1
+	const DEBUG_NPC_FRONTLINE = 2
+	const DEBUG_FRONTLINE_ENTS = 4
+	const DEBUG_KPS = 8
+	const DEBUG_ASSAULTPOINT = 16
+	const DEBUG_FRONTLINE_SELECTED = 32
+	const DEBUG_FRONTLINE_SWITCHED = 64
+
+	level.AssaultFunc <- null
+	// Globalize( ScriptedSquadAssault )
+
+	// file.debug <- 0
+	// 	file.debug = DEBUG_FRONTLINE_SWITCHED
+	// 	file.debug = DEBUG_NPC_SPAWN // + DEBUG_ASSAULTPOINT // + DEBUG_KPS // + DEBUG_FRONTLINE_SELECTED
+	// end debug stuff
+
+	level.EnableAIWeaponDrop <- true
+
+	SpawnPoints_SetRatingMultipliers_Enemy( TD_AI, -2.0, -0.25, 0.0 )
+	SpawnPoints_SetRatingMultipliers_Friendly( TD_AI, 0.5, 0.25, 0.0 )
 }
+
+// void function AiGameModes_Init()
+// {
+// 	FlagInit( "FrontlineInitiated" )
+
+// 	// not used in R2?
+// 	SetupLevelAICount()
+// }
+
+void function SetupLevelAICount()
+{
+	// int aiCount = level.max_npc_per_side // 12
+	// switch ( GetMapName() )
+	// {
+	// 	case "mp_airbase":
+	// 	case "mp_boneyard":
+	// 	case "mp_corporate":
+	// 	case "mp_nexus":
+	// 	case "mp_rise":
+	// 	case "mp_outpost_207":
+	// 	case "mp_fracture":
+	// 	case "mp_relic":
+	// 	case "mp_o2":
+	// 	case "mp_training_ground":
+	// 		// leave at 12
+	// 		break
+	// 	case "mp_angel_city":
+	// 	case "mp_lagoon":
+	// 	case "mp_colony":
+	// 	case "mp_overlook":
+	// 	case "mp_smugglers_cove":
+	// 		aiCount = 9
+	// 		break
+	// 		// aiCount = 6
+	// 		// break
+	// }
+	// SetLevelAICount( aiCount, TEAM_MILITIA )
+	// SetLevelAICount( aiCount, TEAM_IMC )
+}
+
+/*
+ █████  ██     ██   ██  █████  ███    ██ ██████  ██      ██ ███    ██  ██████
+██   ██ ██     ██   ██ ██   ██ ████   ██ ██   ██ ██      ██ ████   ██ ██
+███████ ██     ███████ ███████ ██ ██  ██ ██   ██ ██      ██ ██ ██  ██ ██   ███
+██   ██ ██     ██   ██ ██   ██ ██  ██ ██ ██   ██ ██      ██ ██  ██ ██ ██    ██
+██   ██ ██     ██   ██ ██   ██ ██   ████ ██████  ███████ ██ ██   ████  ██████
+*/
+
+function SetupTeamDeathmatchNPCs()
+{
+	FlagWait( "ReadyToStartMatch" )
+
+	if ( InitFrontLine() )
+	{
+		FlagSet( "FrontlineInitiated" )
+
+		local waitTime = GameTime_TimeLeftSeconds() - GetDropPodAnimDuration() + 3
+		if ( GetGameState() <= eGameState.Prematch && waitTime > 0 )
+			wait waitTime
+
+		thread TeamDeathmatchSpawnNPCsThink()
+	}
+}
+
+function TeamDeathmatchSpawnNPCsThink()
+{
+	local teams = [ TEAM_IMC, TEAM_MILITIA ]
+
+	while ( IsNPCSpawningEnabled() )
+	{
+		Escalate( TEAM_IMC )
+		Escalate( TEAM_MILITIA )
+
+		if ( !Flag( "Disable_IMC" ) )
+			thread TeamDeathmatchSpawnNPCs( TEAM_IMC )
+
+		if ( !Flag( "Disable_MILITIA" ) )
+			thread TeamDeathmatchSpawnNPCs( TEAM_MILITIA )
+
+		// if ( !Flag( "Disable_SPECTRE" ) )
+		// 	thread TeamDeathmatchSpawnNPCs( TEAM_SPECTRE )
+
+		wait level.npcRespawnWait
+	}
+}
+
+function TeamDeathmatchSpawnNPCs( int team )
+{
+	local numFreeSlots = GetFreeAISlots( team )
+
+	printt( numFreeSlots )
+	printt( GetSpawnSquadSize( team ) )
+	printt( ShouldSpawnReaper( team ) )
+
+	while ( numFreeSlots >= GetSpawnSquadSize( team ) || ( ShouldSpawnReaper( team ) && numFreeSlots >= 1 ) )
+	{
+		// this will do all the heavy lifting of where and how many to spawn and what they should do once they are in the match.
+		thread SpawnFrontlineSquad( team, numFreeSlots )
+
+		// add a little wait so that we don't spawn squads at the exact same time.
+		wait RandomFloatRange( 0.8, 2.0 )
+
+		// the function above will have used up some free slots, lets see how many remain
+		numFreeSlots = GetFreeAISlots( team )
+	}
+}
+
+function SpawnFrontlineSquad( int team, numFreeSlots )
+{
+	if ( !IsNPCSpawningEnabled() )
+		return
+
+	bool shouldSpawnReaper = ShouldSpawnReaper( team )
+	bool shouldSpawnStalker = ShouldSpawnStalker( team )
+	bool shouldSpawnSpectre = ShouldSpawnSpectre( team )
+
+	string squadName = MakeSquadName( team, UniqueString( "" ) )
+	int squadSize = int( min( numFreeSlots, GetSpawnSquadSize( team ) ) )
+
+	if ( shouldSpawnReaper )
+		squadSize = 1
+
+	Assert( squadSize <= GetFreeAISlots( team ), "Squadsize " + squadSize + " is greater than remaining ai slots " + GetFreeAISlots( team ) )
+
+	bool inGracePeriod = GameTime_PlayingTime() < START_SPAWN_GRACE_PERIOD
+	bool inGameState = GetGameState() <= eGameState.Prematch || GetGameState() == eGameState.SwitchingSides
+	bool useStartSpawn = inGameState || inGracePeriod
+	array<entity> spawnPointArray
+
+	if ( useStartSpawn )
+	{
+		spawnPointArray = SpawnPoints_GetDropPodStart( team )
+
+		// Assert( /*level.isTestmap ||*/ spawnPointArray.len(), "level didn't have any info_spawnpoint_droppod_start for team " + team )
+
+		if ( !spawnPointArray.len() )
+		{
+			spawnPointArray = SpawnPoints_GetDropPod()
+			useStartSpawn = false
+		}
+	}
+	else
+	{
+		spawnPointArray = SpawnPoints_GetDropPod()
+	}
+
+	// ! 스폰포인트가 없으면 스킵
+	if ( spawnPointArray.len() < 1 )
+	{
+		// printl( "_ai_game_modes.nut : 스폰 포인트가 없음" )
+		return
+	}
+	// if something got this far and we don't have any spawnpoints then something is wrong.
+	Assert( spawnPointArray.len() )
+
+	entity spawnPoint = GetFrontlineSpawnPoint( spawnPointArray, team ) // , squadIndex, shouldSpawnSpectre, useStartSpawn )
+	Assert( spawnPoint )
+	++level.aiSpawnCounter[ team ]
+
+	array npcArray
+
+	if ( shouldSpawnReaper )
+	{
+		npcArray = Spawn_TrackedReaper( team, squadSize, spawnPoint, squadName )
+		return // reapers don't use frontline
+	}
+	if ( shouldSpawnStalker )
+	{
+		npcArray = Spawn_TrackedDropPodStalkerSquad( team, squadSize, spawnPoint, squadName )
+		return // stalkers don't use frontline
+	}
+	else if ( shouldSpawnSpectre )
+	{
+		npcArray = Spawn_TrackedDropPodSpectreSquad( team, squadSize, spawnPoint, squadName )
+	}
+	else
+	{
+		if ( Flag( "DisableDropships" ) )
+		{
+			Assert( squadSize <= GetFreeAISlots( team ) )
+			npcArray = Spawn_TrackedDropPodGruntSquad( team, squadSize, spawnPoint, squadName )
+		}
+		else
+		{
+			Assert( squadSize <= GetFreeAISlots( team ) )
+			if ( level.aiSpawnCounter[ team ] % 3 == 0 ) // 1 in every 3 grunt squad comes in via ship
+				npcArray = Spawn_TrackedZipLineGruntSquad( team, squadSize, spawnPoint, squadName )
+			else
+				npcArray = Spawn_TrackedDropPodGruntSquad( team, squadSize, spawnPoint, squadName )
+		}
+	}
+
+	array<entity> npcArrayEntity
+
+	foreach ( npc in npcArray )
+		npcArrayEntity.append( expect entity( npc ) )
+
+	// make the squad assault the correct frontline
+	SquadAssaultFrontline_Continuous( npcArrayEntity ) // , squadIndex )
+	// 생존 모드에서만 사용하므로 false일때 체크함
+	// printt("[digm] NPC Array Size = " + npcArray.len() + " EnableAIWeaponDrop = " + level.EnableAIWeaponDrop)
+	// if ( level.EnableAIWeaponDrop == false )
+	// {
+	// 	foreach ( npc in npcArray )
+	// 	{
+	// 		npc.SetWeaponDrop( level.EnableAIWeaponDrop )
+	// 	}
+	// }
+}
+
+function SquadValidForClass( squadName, classnameToMatch )
+{
+	if ( GetReservedAISquadSlots( squadName ) )
+	{
+		// if we have reserved squad slots they must be reserved by the correct class.
+		if ( !IsClassInReservedAISquadSlots_ForSquadName( squadName, classnameToMatch ) )
+			return false
+	}
+
+	local squadSize = GetNPCSquadSize( squadName )
+
+	// empty squads are legit for any class;
+	//  also, can't GetNPCArrayBySquad if there are no NPCs with that squad set
+	if ( !squadSize )
+	{
+		// printt( "squad is empty", squadName )
+		return true
+	}
+
+	local checkSquad = GetNPCArrayBySquad( squadName )
+
+	foreach ( guy in checkSquad )
+	{
+		if ( IsValid( guy ) && guy.GetClassname() != classnameToMatch )
+			return false
+	}
+
+	// printt( "all guys are valid in", squadName )
+	// Dump( checkSquad )
+	return true
+}
+
+// Based on points tries to balance match
+void function Escalate( int team )
+{
+	int score = GameRules_GetTeamScore( team )
+	int index = team == TEAM_MILITIA ? 1 : 0
+	// This does the "Enemy x incoming" text
+	string defcon = team == TEAM_MILITIA ? "IMCdefcon" : "MILdefcon"
+
+	while ( true )
+	{
+		int currentDefCon = GetGlobalNetInt( defcon )
+
+		if ( !( currentDefCon == 0 && score >= 125 ) && !( currentDefCon == 2 && score >= 380 ) && !( currentDefCon == 3 && score >= 500 ) )
+			return
+
+		// Based on score escalate a team
+		switch ( currentDefCon )
+		{
+			case 0:
+				SetGlobalNetInt( defcon, 2 )
+
+			case 2:
+				SetGlobalNetInt( defcon, 3 )
+
+			case 3:
+				level.modifyAISlots[ team ] += 2 // need 2 more max npcs so reapers can spawn without messing with normal npcs
+				SetGlobalNetInt( defcon, 4 )
+		}
+	}
+}
+
+/*
+ █████  ██     ████████ ██████   █████   ██████ ██   ██ ██ ███    ██  ██████
+██   ██ ██        ██    ██   ██ ██   ██ ██      ██  ██  ██ ████   ██ ██
+███████ ██        ██    ██████  ███████ ██      █████   ██ ██ ██  ██ ██   ███
+██   ██ ██        ██    ██   ██ ██   ██ ██      ██  ██  ██ ██  ██ ██ ██    ██
+██   ██ ██        ██    ██   ██ ██   ██  ██████ ██   ██ ██ ██   ████  ██████
+*/
+
+float function GetMaxAICount( team )
+{
+	float AICount = min( level.levelAICount[ team ], level.gameModeAICount[ team ] )
+	// if ( GetCPULevelWrapper() != CPU_LEVEL_HIGHEND && !IsTrainingLevel() )
+	{
+		if ( Flag( "GamePlaying" ) && GameTime_PlayingTime() > START_SPAWN_GRACE_PERIOD )
+		{
+			// if we have fewer player lets use more AI
+			if ( GetPlayerArray().len() > MID_SPEC_PLAYER_CUTOFF ) // fancy lerp action here
+				AICount = min( AICount, level.midSpecAICount[ team ] )
+		}
+	}
+
+	return AICount
+}
+
+function SetGameModeAICount( count, team )
+{
+	Assert( count <= level.max_npc_per_side, "Trying to set the AI count to more then max allowed (" + count + " vs 12)" )
+	level.gameModeAICount[ team ] = count
+}
+// Globalize( SetGameModeAICount )
+
+function SetLevelAICount( count, team )
+{
+	Assert( count <= level.max_npc_per_side, "Trying to set the AI count to more then max allowed (" + count + " vs 12)" )
+	level.levelAICount[ team ] = count
+}
+
+function SetMidSpecAICount( count, team )
+{
+	Assert( count <= level.max_npc_per_side, "Trying to set the AI count to more then max allowed (" + count + " vs 12)" )
+	level.midSpecAICount[ team ] = count
+}
+
+function GetSpawnSquadSize( team )
+{
+	local maxAICount = GetMaxAICount( team )
+	local squadSize = max( 1, floor( maxAICount / 3 ) ) // 3 is the number of squads we have per side.
+	return min( squadSize, SQUAD_SIZE ) // never higher then SQUAD_SIZE, it's the max we can spawn with droppods
+}
+
+function ReleaseAISlots( team, count = 1 )
+{
+	level.occupiedAISlots[ team ] -= count
+	svGlobal.levelEnt.Signal( "FreeAISlotsUpdated" )
+}
+
+function ReserveAISlots( team, count = 1 )
+{
+	level.occupiedAISlots[ team ] += count
+	svGlobal.levelEnt.Signal( "FreeAISlotsUpdated" )
+}
+
+function GetFreeAISlots( team )
+{
+	local maxAICount = GetMaxAICount( team )
+	local freeAISlots = maxAICount - level.occupiedAISlots[ team ]
+
+	local modifyAISlots = 0
+
+	if ( level.modifyAISlots[ team ] < 0 )
+		modifyAISlots = min( abs( level.modifyAISlots[ team ] ), freeAISlots ) * -1
+	else if ( level.modifyAISlots[ team ] > 0 )
+		modifyAISlots = min( abs( level.modifyAISlots[ team ] ), freeAISlots )
+
+	return freeAISlots + modifyAISlots
+}
+
+function ReleaseSquadSlots( squadName, count, npcClass )
+{
+	Assert( squadName in level.reservedAISquadSlots )
+	Assert( count >= 1 )
+	Assert( level.reservedAISquadSlots[ squadName ].npcClass == npcClass )
+
+	level.reservedAISquadSlots[ squadName ].count -= count
+	Assert( level.reservedAISquadSlots[ squadName ].count >= 0 )
+
+	// remove classname when reserved slots are zero
+	if ( level.reservedAISquadSlots[ squadName ].count == 0 )
+		level.reservedAISquadSlots[ squadName ].npcClass = null
+}
+
+function ReserveSquadSlots( squadName, count, npcClass, team )
+{
+	if ( squadName == null )
+		return
+
+	if ( !( squadName in level.reservedAISquadSlots ) )
+		level.reservedAISquadSlots[ squadName ] <- { count = 0, npcClass = null, team = team }
+
+	local currentClass = level.reservedAISquadSlots[ squadName ].npcClass
+	Assert(
+		currentClass == null || currentClass == npcClass,
+		"Can't reserve slot for npc of class " + npcClass + " in squad " + squadName + " because the NPC's classname doesn't match existing squad classname: " +
+			currentClass
+	)
+
+	level.reservedAISquadSlots[ squadName ].count += count
+	level.reservedAISquadSlots[ squadName ].npcClass = npcClass
+}
+
+function GetReservedAISquadSlots( squadName )
+{
+	if ( squadName in level.reservedAISquadSlots )
+		return level.reservedAISquadSlots[ squadName ].count
+
+	return 0
+}
+
+int function GetReservedAISquadSlotsOfClassForTeam( string npcClass, int team )
+{
+	int count = 0
+	foreach ( Table in level.reservedAISquadSlots )
+	{
+		if ( Table.team != team )
+			continue
+
+		if ( Table.npcClass == npcClass )
+			count += expect int( Table.count )
+	}
+
+	return count
+}
+// Globalize( GetReservedAISquadSlotsOfClassForTeam )
+
+function CommonTrackingInit( ai_type, team, count, squadName )
+{
+	Assert( ai_type != null )
+	ReserveAISlots( team, count )
+	ReserveSquadSlots( squadName, count, ai_type, team )
+}
+// Globalize( CommonTrackingInit )
+
+function CommonTrackingCleanup( array guys, string ai_type, int team, int count, string squadName )
+{
+	Assert( ai_type != null )
+	if ( count != guys.len() )
+		ReleaseAISlots( team, count - guys.len() )
+	ReleaseSquadSlots( squadName, count, ai_type )
+
+	foreach ( npc in guys )
+		FreeAISlotOnDeath( npc )
+}
+// Globalize( CommonTrackingCleanup )
+
+array function Spawn_TrackedZipLineSquad( string ai_type, entity spawnPoint, CallinData dropTable, bool force = false )
+{
+	if ( !spawnPoint )
+		return []
+
+	int team = dropTable.team
+	int count = 4 // dropTable.count
+	string squadname = dropTable.squadname
+	Assert( team != null )
+	Assert( squadname != null )
+
+	if ( !ShouldSpawn( team, force ) ) // if ( IsAutoPopulateEnabled( team ) && !force ) // if ( !IsNPCSpawningEnabled( team ) && !force )
+		return []
+
+	if ( !force )
+		Assert( count <= GetFreeAISlots( team ), "wanted to spawn: " + count + " AI but only " + GetFreeAISlots( team ) + " slots where free" )
+
+	CommonTrackingInit( ai_type, team, count, squadname )
+	ToggleSpawnNodeInUse( spawnPoint, true ) // spawnPoint.s.inUse = true
+
+	thread RunDropshipDropoff( dropTable )
+
+	array soldierEntities = []
+	if ( dropTable.success )
+	{
+		// get the guys that spawned
+		local results = WaitSignal( dropTable, "OnDropoff" )
+		Assert( "guys" in results )
+
+		if ( results.guys )
+			soldierEntities = expect array( results.guys )
+	}
+
+	CommonTrackingCleanup( soldierEntities, ai_type, team, count, squadname )
+	ToggleSpawnNodeInUse( spawnPoint, false ) // spawnPoint.s.inUse = false
+
+	return soldierEntities
+}
+// Globalize( Spawn_TrackedZipLineSquad )
+
+array function Spawn_TrackedDropPodSquad( string ai_type, int team, int count, entity spawnPoint, string squadName = "", bool force = false, entity functionref( int, vector, vector ) spawnFunc = null )
+{
+	if ( !ShouldSpawn( team, force ) ) // if ( IsAutoPopulateEnabled( team ) && !force ) // if ( !IsNPCSpawningEnabled( team ) && !force )
+		return []
+
+	if ( !force )
+		Assert( count <= GetFreeAISlots( team ), "wanted to spawn: " + count + " AI but only " + GetFreeAISlots( team ) + " slots where free" )
+
+	if ( !spawnPoint ) // 데이터가 없을 경우에는 리턴
+		return []
+
+	CommonTrackingInit( ai_type, team, count, squadName )
+	ToggleSpawnNodeInUse( spawnPoint, true ) // spawnPoint.s.inUse = true
+
+	entity dropPod = CreatePropDynamic( $"models/vehicle/droppod_fireteam/droppod_fireteam.mdl" ) // model is set in InitFireteamDropPod()
+	InitFireteamDropPod( dropPod )
+
+	waitthread LaunchAnimDropPod( dropPod, "pod_testpath", spawnPoint.GetOrigin(), spawnPoint.GetAngles() )
+	if ( force )
+		PlayFX( $"droppod_impact", spawnPoint.GetOrigin(), spawnPoint.GetAngles() )
+
+	if ( spawnFunc == null )
+	{
+		if ( ai_type == "npc_stalker" )
+			spawnFunc = CreateStalker
+		else if ( ai_type == "npc_spectre" )
+			spawnFunc = CreateSpectre
+		else
+			spawnFunc = CreateSoldier
+	}
+
+	array soldierEntities = CreateNPCSForDroppod( team, count, spawnPoint.GetOrigin(), spawnPoint.GetAngles(), squadName, force, spawnFunc )
+
+	array<entity> soldierEntitiesEntity
+
+	foreach ( npc in soldierEntities )
+		soldierEntitiesEntity.append( expect entity( npc ) )
+
+	ActivateFireteamDropPod( dropPod, soldierEntitiesEntity )
+
+	CommonTrackingCleanup( soldierEntities, ai_type, team, count, squadName )
+	ToggleSpawnNodeInUse( spawnPoint, false ) // spawnPoint.s.inUse = false
+
+	return soldierEntities
+}
+// Globalize( Spawn_TrackedDropPodSquad )
+
+function FreeAISlotOnDeath( soldier )
+{
+	Assert( IsAlive( soldier ), soldier + " is not alive!" )
+	thread FreeAISlotOnDeathThread( soldier )
+}
+
+function FreeAISlotOnDeathThread( soldier )
+{
+	soldier.EndSignal( "OnDestroy" )
+
+	local team = soldier.GetTeam() // wouldn't leeched spectres break team AI slot counts?
+	OnThreadEnd(
+		function() : ( team )
+		{
+			ReleaseAISlots( team )
+		}
+	)
+
+	soldier.WaitSignal( "OnDeath" )
+}
+
+function GetReservedSquadSize( squadName )
+{
+	local squadSize = GetNPCSquadSize( squadName )
+	squadSize += GetReservedAISquadSlots( squadName ) // add on any reserved AI squad slots
+	return squadSize
+}
+
+function IsClassInReservedAISquadSlots_ForSquadName( squadName, npcClass )
+{
+	if ( squadName in level.reservedAISquadSlots )
+	{
+		if ( level.reservedAISquadSlots[ squadName ].npcClass == npcClass )
+			return true
+	}
+
+	return false
+}
+
+array function Spawn_TrackedZipLineGruntSquad( int team, int count, entity spawnPoint, string squadName )
+{
+	string ai_type = "npc_soldier"
+	CallinData dropTable = CreateZipLineSquadDropTable( team, count, spawnPoint.GetOrigin(), spawnPoint.GetAngles(), squadName )
+	return Spawn_TrackedZipLineSquad( ai_type, spawnPoint, dropTable )
+}
+// Globalize( Spawn_TrackedZipLineGruntSquad )
+
+array function Spawn_TrackedDropPodGruntSquad( int team, int count, entity spawnPoint, string squadName )
+{
+	string ai_type = "npc_soldier"
+	return Spawn_TrackedDropPodSquad( ai_type, team, count, spawnPoint, squadName )
+}
+// Globalize( Spawn_TrackedDropPodGruntSquad )
+
+array function Spawn_TrackedDropPodSpectreSquad( int team, int count, entity spawnPoint, string squadName )
+{
+	string ai_type = "npc_spectre"
+	return Spawn_TrackedDropPodSquad( ai_type, team, count, spawnPoint, squadName )
+}
+// Globalize( Spawn_TrackedDropPodSpectreSquad )
+
+array function Spawn_TrackedDropPodStalkerSquad( int team, int count, entity spawnPoint, string squadName )
+{
+	string ai_type = "npc_stalker"
+	return Spawn_TrackedDropPodSquad( ai_type, team, count, spawnPoint, squadName )
+}
+// Globalize( Spawn_TrackedDropPodSpectreSquad )
+
+array function Spawn_TrackedReaper( int team, int count, entity spawnPoint, string squadName )
+{
+	ToggleSpawnNodeInUse( spawnPoint, true )
+
+	array<entity> reaperEntities = []
+
+	for ( int idx = 0; idx < count; idx++ )
+	{
+		entity ent = CreateSuperSpectre( team, spawnPoint.GetOrigin(), spawnPoint.GetAngles() )
+
+		if ( !ent )
+			continue
+
+		ent.kv.squadname = squadName
+
+		SetSpawnOption_Titanfall( ent )
+		SetSpawnOption_Warpfall( ent )
+		SetSpawnOption_AISettings( ent, "npc_super_spectre_aitdm" )
+
+		HideName( ent )
+
+		DispatchSpawn( ent )
+
+		thread void function() : ( ent )
+		{
+			WaitSignal( ent, "OnDestroy", "OnDeath", "WarpfallComplete" )
+
+			if ( IsValid( ent ) )
+				ShowName( ent )
+		}()
+
+		wait 0
+	}
+
+	// because of wait 0 above, entities could die before returning
+	array finalReapers = []
+
+	foreach ( reaper in reaperEntities )
+	{
+		if ( IsAlive( reaper ) )
+			finalReapers.append( reaper )
+	}
+
+	CommonTrackingInit( "npc_super_spectre", team, count, squadName )
+	CommonTrackingCleanup( finalReapers, "npc_super_spectre", team, count, squadName )
+	ToggleSpawnNodeInUse( spawnPoint, false ) // spawnPoint.s.inUse = false
+
+	return finalReapers
+}
+// Globalize( Spawn_TrackedReaper )
+
+/*
+███████ ████████ ██    ██ ██████  ██████  ███████ ██████      ███████ ████████ ██    ██ ███████ ███████
+██         ██    ██    ██ ██   ██ ██   ██ ██      ██   ██     ██         ██    ██    ██ ██      ██
+███████    ██    ██    ██ ██████  ██████  █████   ██   ██     ███████    ██    ██    ██ █████   █████
+     ██    ██    ██    ██ ██   ██ ██   ██ ██      ██   ██          ██    ██    ██    ██ ██      ██
+███████    ██     ██████  ██████  ██████  ███████ ██████      ███████    ██     ██████  ██      ██
+*/
 
 // ------------------------------------------------------
 
 void function AiGameModes_SetNPCWeapons( string npcClass, array<string> weapons )
 {
+	UseNewFunctionThrow( ThisFunc() )
+
 	if ( !( npcClass in file.npcWeaponsTable ) )
 		file.npcWeaponsTable[ npcClass ] <- []
 	file.npcWeaponsTable[ npcClass ] = weapons
@@ -34,6 +889,8 @@ void function AiGameModes_SetNPCWeapons( string npcClass, array<string> weapons 
 
 void function AiGameModes_SpawnDropShip( entity node, int team, int count, void functionref( array<entity> guys ) squadHandler = null )
 {
+	UseNewFunctionThrow( ThisFunc() )
+
 	ToggleSpawnNodeInUse( node, true )
 
 	OnThreadEnd(
@@ -62,6 +919,8 @@ void function AiGameModes_SpawnDropShip( entity node, int team, int count, void 
 
 void function AiGameModes_SpawnDropPod( entity node, int team, string content /* ( ͡° ͜ʖ ͡°) */ , void functionref( array<entity> guys ) squadHandler = null, int flags = 0 )
 {
+	UseNewFunctionThrow( ThisFunc() )
+
 	ToggleSpawnNodeInUse( node, true )
 	vector pos = node.GetOrigin()
 	vector rot = node.GetAngles()
@@ -125,6 +984,8 @@ void function AiGameModes_SpawnDropPod( entity node, int team, string content /*
 const float REAPER_WARPFALL_DELAY = 4.7 // same as fd does
 void function AiGameModes_SpawnReaper( entity node, int team, string aiSettings = "", void functionref( entity reaper ) reaperHandler = null )
 {
+	UseNewFunctionThrow( ThisFunc() )
+
 	ToggleSpawnNodeInUse( node, true )
 	vector pos = node.GetOrigin()
 	vector rot = node.GetAngles()
@@ -210,6 +1071,8 @@ void function HotDrop_Spawnpoint( vector origin, int team, float impactTime, boo
 const float TITANFALL_WARNING_DURATION = 5.0
 void function AiGameModes_SpawnTitan( entity node, int team, string setFile, string aiSettings = "", void functionref( entity titan ) titanHandler = null )
 {
+	UseNewFunctionThrow( ThisFunc() )
+
 	ToggleSpawnNodeInUse( node, true )
 	vector pos = node.GetOrigin()
 	vector rot = node.GetAngles()
@@ -262,6 +1125,8 @@ void function SetUpNPCWeapons( entity guy )
 // Checks if we can spawn a dropship at a node, this should guarantee dropship ziplines
 array<entity> function GetValidIntroDropShipSpawn( array<entity> introNodes )
 {
+	UseNewFunctionThrow( ThisFunc() )
+
 	array<entity> introShipSpawns
 
 	if ( GetZiplineDropshipSpawns().len() == 0 )

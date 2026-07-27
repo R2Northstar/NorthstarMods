@@ -39,10 +39,10 @@ struct
 
 void function GamemodeAITdm_Init()
 {
-	InitFrontLine()
+	// InitFrontLine()
 
 	AddCallback_GameStateEnter( eGameState.Prematch, OnPrematchStart )
-	AddCallback_GameStateEnter( eGameState.Playing, OnPlaying )
+	thread SetupTeamDeathmatchNPCs() // AddCallback_GameStateEnter( eGameState.Playing, OnPlaying )
 
 	AddCallback_OnNPCKilled( HandleScoreEvent )
 	AddCallback_OnPlayerKilled( HandleScoreEvent )
@@ -51,21 +51,21 @@ void function GamemodeAITdm_Init()
 
 	AddCallback_NPCLeeched( OnSpectreLeeched )
 
-	if ( !GetCurrentPlaylistVarInt( "aitdm_archer_grunts", 0 ) )
-	{
-		AiGameModes_SetNPCWeapons(
-			"npc_soldier",
-			[ "mp_weapon_rspn101", "mp_weapon_dmr", "mp_weapon_vinson", "mp_weapon_hemlok_smg", "mp_weapon_mastiff", "mp_weapon_shotgun_pistol" ]
-		)
-		AiGameModes_SetNPCWeapons( "npc_spectre", [ "mp_weapon_g2", "mp_weapon_doubletake", "mp_weapon_hemlok", "mp_weapon_rspn101_og", "mp_weapon_r97" ] )
-		AiGameModes_SetNPCWeapons( "npc_stalker", [ "mp_weapon_esaw", "mp_weapon_lstar", "mp_weapon_shotgun", "mp_weapon_lmg", "mp_weapon_smr", "mp_weapon_epg" ] )
-	}
-	else
-	{
-		AiGameModes_SetNPCWeapons( "npc_soldier", [ "mp_weapon_rocket_launcher" ] )
-		AiGameModes_SetNPCWeapons( "npc_spectre", [ "mp_weapon_rocket_launcher" ] )
-		AiGameModes_SetNPCWeapons( "npc_stalker", [ "mp_weapon_rocket_launcher" ] )
-	}
+	// if ( !GetCurrentPlaylistVarInt( "aitdm_archer_grunts", 0 ) )
+	// {
+	// 	AiGameModes_SetNPCWeapons(
+	// 		"npc_soldier",
+	// 		[ "mp_weapon_rspn101", "mp_weapon_dmr", "mp_weapon_vinson", "mp_weapon_hemlok_smg", "mp_weapon_mastiff", "mp_weapon_shotgun_pistol" ]
+	// 	)
+	// 	AiGameModes_SetNPCWeapons( "npc_spectre", [ "mp_weapon_g2", "mp_weapon_doubletake", "mp_weapon_hemlok", "mp_weapon_rspn101_og", "mp_weapon_r97" ] )
+	// 	AiGameModes_SetNPCWeapons( "npc_stalker", [ "mp_weapon_esaw", "mp_weapon_lstar", "mp_weapon_shotgun", "mp_weapon_lmg", "mp_weapon_smr", "mp_weapon_epg" ] )
+	// }
+	// else
+	// {
+	// 	AiGameModes_SetNPCWeapons( "npc_soldier", [ "mp_weapon_rocket_launcher" ] )
+	// 	AiGameModes_SetNPCWeapons( "npc_spectre", [ "mp_weapon_rocket_launcher" ] )
+	// 	AiGameModes_SetNPCWeapons( "npc_stalker", [ "mp_weapon_rocket_launcher" ] )
+	// }
 
 	ScoreEvent_SetupEarnMeterValuesForMixedModes()
 	SetupGenericTDMChallenge()
@@ -336,40 +336,40 @@ void function Spawner_Threaded( int team )
 }
 
 // Based on points tries to balance match
-void function Escalate( int team )
-{
-	int score = GameRules_GetTeamScore( team )
-	int index = team == TEAM_MILITIA ? 1 : 0
-	// This does the "Enemy x incoming" text
-	string defcon = team == TEAM_MILITIA ? "IMCdefcon" : "MILdefcon"
+// void function Escalate( int team )
+// {
+// 	int score = GameRules_GetTeamScore( team )
+// 	int index = team == TEAM_MILITIA ? 1 : 0
+// 	// This does the "Enemy x incoming" text
+// 	string defcon = team == TEAM_MILITIA ? "IMCdefcon" : "MILdefcon"
 
-	// Return if the team is under score threshold to escalate
-	if ( score < file.levels[ index ] || file.reapers[ index ] )
-		return
+// 	// Return if the team is under score threshold to escalate
+// 	if ( score < file.levels[ index ] || file.reapers[ index ] )
+// 		return
 
-	// Based on score escalate a team
-	switch ( GetGlobalNetInt( defcon ) )
-	{
-		case 0:
-			file.levels[ index ] = file.levelStalkers
-			file.podEntities[ index ].append( "npc_spectre" )
-			SetGlobalNetInt( defcon, 2 )
-			return
+// 	// Based on score escalate a team
+// 	switch ( GetGlobalNetInt( defcon ) )
+// 	{
+// 		case 0:
+// 			file.levels[ index ] = file.levelStalkers
+// 			file.podEntities[ index ].append( "npc_spectre" )
+// 			SetGlobalNetInt( defcon, 2 )
+// 			return
 
-		case 2:
-			file.levels[ index ] = file.levelReapers
-			file.podEntities[ index ].append( "npc_stalker" )
-			SetGlobalNetInt( defcon, 3 )
-			return
+// 		case 2:
+// 			file.levels[ index ] = file.levelReapers
+// 			file.podEntities[ index ].append( "npc_stalker" )
+// 			SetGlobalNetInt( defcon, 3 )
+// 			return
 
-		case 3:
-			file.reapers[ index ] = true
-			SetGlobalNetInt( defcon, 4 )
-			return
-	}
+// 		case 3:
+// 			file.reapers[ index ] = true
+// 			SetGlobalNetInt( defcon, 4 )
+// 			return
+// 	}
 
-	unreachable // hopefully
-}
+// 	unreachable // hopefully
+// }
 
 // Decides where to spawn ai
 // Each team has their "zone" where they and their ai spawns
