@@ -11,6 +11,17 @@ untyped
 // defcon 5: 575
 // defcon 5: + 1 reaper?
 
+// no idea if this is vanilla but
+// defcon 1: 10% chance for spectres to spawn
+// defcon 2: 20% chance for spectres to spawn
+// defcon 3: 15% chance for stalkers to spawn
+// defcon 4: 2 reapers
+// defcon 5: 3 reapers
+
+// in vanilla reapers have a blue glow
+
+// line 264(Spawn_TrackedZipLineGruntSquad) same as vanilla?
+
 // TODO:
 // make gamemodes using stubbed functions use new ones
 // get vanilla defcon scores, weapons, slots, and should spawns amount
@@ -95,9 +106,17 @@ void function AiGameModes_Init()
 	level.modifyAISlots <- { [TEAM_IMC] = 0, [TEAM_MILITIA] = 0 }
 	level.reservedAISquadSlots <- {}
 	level.aiSpawnCounter <- { [TEAM_IMC] = 0, [TEAM_MILITIA] = 0 }
+
+	level.spectreSpawnChance <- { [TEAM_IMC] = 0, [TEAM_MILITIA] = 0 }
 	level.maxSpectrePerSide <- { [TEAM_IMC] = -1, [TEAM_MILITIA] = -1 }
+
+	level.stalkerSpawnChance <- { [TEAM_IMC] = 0, [TEAM_MILITIA] = 0 }
 	level.maxStalkersPerSide <- { [TEAM_IMC] = -1, [TEAM_MILITIA] = -1 }
+
+	level.reaperSpawnChance <- { [TEAM_IMC] = 0, [TEAM_MILITIA] = 0 }
 	level.maxReapersPerSide <- { [TEAM_IMC] = -1, [TEAM_MILITIA] = -1 }
+
+	level.titanSpawnChance <- { [TEAM_IMC] = 0, [TEAM_MILITIA] = 0 }
 	level.maxTitansPerSide <- { [TEAM_IMC] = -1, [TEAM_MILITIA] = -1 }
 }
 
@@ -117,10 +136,12 @@ void function SetupTeamDeathmatchNPCs()
 	{
 		FlagSet( "FrontlineInitiated" )
 
-		float waitTime = GameTime_TimeLeftSeconds() - expect float( GetDropPodAnimDuration() ) + 3
+		// float waitTime = GameTime_TimeLeftSeconds() - expect float( GetDropPodAnimDuration() ) + 3
 
-		if ( GetGameState() <= eGameState.Prematch && waitTime > 0 )
-			wait waitTime
+		// if ( GetGameState() <= eGameState.Prematch && waitTime > 0 )
+		// 	wait waitTime
+
+		WaittillGameStateOrHigher( eGameState.Playing )
 
 		thread TeamDeathmatchSpawnNPCsThink()
 	}
@@ -174,13 +195,6 @@ void function SpawnFrontlineSquad( int team, int numFreeSlots )
 
 	if ( shouldSpawnReaper )
 		squadSize = 1
-
-	#if DEV
-		printt( numFreeSlots )
-		printt( squadSize )
-		printt( ShouldSpawnStalker( team ) )
-		printt( ShouldSpawnSpectre( team ) )
-	#endif
 
 	Assert( squadSize <= GetFreeAISlots( team ), "Squadsize " + squadSize + " is greater than remaining ai slots " + GetFreeAISlots( team ) )
 
@@ -242,7 +256,7 @@ void function SpawnFrontlineSquad( int team, int numFreeSlots )
 		{
 			Assert( squadSize <= GetFreeAISlots( team ) )
 
-			if ( expect int( expect table( level.aiSpawnCounter )[ team ] ) % 3 == 0 ) // 1 in every 3 grunt squad comes in via ship
+			if ( ( useStartSpawn && expect int( expect table( level.aiSpawnCounter )[ team ] ) % 3 == 0 ) || GetZiplineDropshipSpawns().contains( spawnPoint ) ) // always spawn them if the droppod spot supports dropship spawns unless its using start spawns then 1 in every 3 grunt squad comes in via ship
 				npcArray = Spawn_TrackedZipLineGruntSquad( team, squadSize, spawnPoint, squadName )
 			else
 				npcArray = Spawn_TrackedDropPodGruntSquad( team, squadSize, spawnPoint, squadName )

@@ -323,7 +323,10 @@ bool function ShouldSpawnSpectre( int team )
 	int spectreCount = GetSpectreCount( team )
 	int maxAI = GetMaxAICount( team )
 
-	return spectreCount <= level.maxSpectrePerSide[ team ]
+	if ( spectreCount >= expect int( expect table( level.maxSpectrePerSide )[ team ] ) )
+		return false
+
+	return RandomInt( 100 ) <= expect int( expect table( level.spectreSpawnChance )[ team ] )
 	// level.spectreSpawnStyle was probably forgotten in R2
 	// switch ( level.spectreSpawnStyle )
 	// {
@@ -356,7 +359,10 @@ bool function ShouldSpawnStalker( int team )
 	int stalkerCount = GetStalkerCount( team )
 	int maxAI = GetMaxAICount( team )
 
-	return stalkerCount <= level.maxStalkersPerSide[ team ]
+	if ( stalkerCount >= expect int( expect table( level.maxStalkersPerSide )[ team ] ) )
+		return false
+
+	return RandomInt( 100 ) <= expect int( expect table( level.stalkerSpawnChance )[ team ] )
 }
 
 bool function ShouldSpawnReaper( int team )
@@ -367,7 +373,10 @@ bool function ShouldSpawnReaper( int team )
 	int reaperCount = GetReaperCount( team )
 	int maxAI = GetMaxAICount( team )
 
-	return reaperCount <= level.maxReapersPerSide[ team ]
+	if ( reaperCount >= expect int( expect table( level.maxReapersPerSide )[ team ] ) )
+		return false
+
+	return RandomInt( 100 ) <= expect int( expect table( level.reaperSpawnChance )[ team ] )
 }
 
 bool function ShouldSpawnTitan( int team )
@@ -378,5 +387,8 @@ bool function ShouldSpawnTitan( int team )
 	int titanCount = GetTitanCount( team )
 	int maxAI = GetMaxAICount( team )
 
-	return titanCount <= level.maxTitansPerSide[ team ]
+	if ( titanCount >= expect int( expect table( level.maxTitansPerSide )[ team ] ) )
+		return false
+
+	return RandomInt( 100 ) <= expect int( expect table( level.titanSpawnChance )[ team ] )
 }
