@@ -581,6 +581,8 @@ void function SetRoundWinningKillReplayAttacker( entity attacker, int inflictorE
 
 void function GameStateEnter_WaitingForCustomStart()
 {
+	FlagClear( "GamePlaying" )
+
 	level.nv.gameStartTime = Time() + 980
 }
 
@@ -599,6 +601,8 @@ void function GameRulesThink_WaitingForCustomStart()
 
 void function GameStateEnter_WaitingForPlayers()
 {
+	FlagClear( "GamePlaying" )
+
 	level.nv.gameStartTime = Time() + 980
 }
 
@@ -731,6 +735,9 @@ void function GameRulesThink_PickLoadout()
 
 void function GameStateEnter_Prematch()
 {
+	FlagSet( "ReadyToStartMatch" )
+	FlagClear( "GamePlaying" )
+
 	PerfInitLabels()
 
 	SetPrematchStartTime()
@@ -896,6 +903,8 @@ void function GameStateEnter_Playing()
 
 	if ( Flag( "AnnounceProgressEnabled" ) )
 		thread DialoguePlayNormal()
+
+	FlagSet( "GamePlaying" )
 }
 
 void function GameRulesThink_Playing()
@@ -1081,6 +1090,8 @@ void function GameRulesThink_WinnerDetermined()
 		return
 	}
 
+	FlagClear( "GamePlaying" )
+
 	int roundLimit = GetRoundScoreLimit_FromPlaylist()
 	float idealMinSwitchSides = roundLimit * 0.5
 	float idealMaxSwitchSides = ( ( roundLimit * 2 ) - 1 ) * 0.5
@@ -1223,6 +1234,8 @@ void function GameRulesThink_Epilogue()
 
 void function GameStateEnter_Postmatch()
 {
+	FlagClear( "GamePlaying" )
+
 	array<entity> players = GetPlayerArray()
 
 	foreach ( entity player in players )
