@@ -21,7 +21,6 @@ struct
 	array<entity> hurtTriggers = []
 	bool functionref( entity, entity, var ) isProtectedFromFriendlyFire
 	table<entity, OutOfBoundsDataStruct> outOfBoundsTable
-	bool respawnEnabled = true
 } file
 
 function BaseGametype_Init()
@@ -2023,11 +2022,6 @@ bool function PlayerCanSpawn( entity player )
 
 	if ( player.isSpawning )
 		return false
-
-	#if MP
-		if ( IsPrivateMatchSpectator( player ) )
-			return false
-	#endif
 
 	return true
 }
