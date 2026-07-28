@@ -1,21 +1,5 @@
 untyped
 
-// no idea if this is vanilla but
-// defcon 1: 10% chance for spectres to spawn
-// defcon 2: 15% chance for spectres to spawn
-// defcon 3: 10% chance for stalkers to spawn
-// defcon 4: 2 reapers
-// defcon 5: 3 reapers
-
-// TODO:
-// get vanilla weapons
-
-// GameRules_SetTeamScore( 2, 125 )
-// GameRules_SetTeamScore( 2, 250 )
-// GameRules_SetTeamScore( 2, 330 )
-// GameRules_SetTeamScore( 2, 500 )
-// GameRules_SetTeamScore( 2, 575 )
-
 global function AiGameModes_Init
 global function SetNPCWeapons
 global function SetUpNPCWeapons

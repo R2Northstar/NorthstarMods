@@ -58,12 +58,9 @@ void function GamemodeAITdm_Init()
 
 	if ( !GetCurrentPlaylistVarInt( "aitdm_archer_grunts", 0 ) )
 	{
-		SetNPCWeapons(
-			"npc_soldier",
-			[ "mp_weapon_rspn101", "mp_weapon_dmr", "mp_weapon_vinson", "mp_weapon_hemlok_smg", "mp_weapon_mastiff", "mp_weapon_shotgun_pistol" ]
-		)
-		SetNPCWeapons( "npc_spectre", [ "mp_weapon_g2", "mp_weapon_doubletake", "mp_weapon_hemlok", "mp_weapon_rspn101_og", "mp_weapon_r97" ] )
-		SetNPCWeapons( "npc_stalker", [ "mp_weapon_esaw", "mp_weapon_lstar", "mp_weapon_shotgun", "mp_weapon_lmg", "mp_weapon_smr", "mp_weapon_epg" ] )
+		SetNPCWeapons( "npc_soldier", [ "mp_weapon_rspn101", "mp_weapon_dmr", "mp_weapon_r97", "mp_weapon_lmg" ] )
+		SetNPCWeapons( "npc_spectre", [ "mp_weapon_hemlok_smg", "mp_weapon_doubletake", "mp_weapon_mastiff" ] )
+		SetNPCWeapons( "npc_stalker", [ "mp_weapon_hemlok_smg", "mp_weapon_lstar", "mp_weapon_mastiff" ] )
 	}
 	else
 	{
@@ -222,9 +219,9 @@ void function Escalate()
 			int currentDefCon = GetGlobalNetInt( defcon )
 
 			if (
-				!( !currentDefCon && score >= file.levelSpectres ) && !( currentDefCon == 1 && score >= file.levelSpectres_2 ) &&
-				!( currentDefCon == 2 && score >= file.levelStalkers ) && !( currentDefCon == 3 && score >= file.levelReapers ) &&
-				!( currentDefCon == 4 && score >= file.levelReapers_2 )
+				( !currentDefCon && score < file.levelSpectres ) || ( currentDefCon == 1 && score < file.levelSpectres_2 ) ||
+				( currentDefCon == 2 && score < file.levelStalkers ) || ( currentDefCon == 3 && score < file.levelReapers ) ||
+				( currentDefCon == 4 && score < file.levelReapers_2 ) || currentDefCon == 5
 			)
 				return
 
@@ -236,18 +233,21 @@ void function Escalate()
 					level.maxSpectrePerSide[ team ] += 4
 
 					SetGlobalNetInt( defcon, 1 )
+					break
 
 				case 1:
 					level.spectreSpawnChance[ team ] = 15
 					level.maxSpectrePerSide[ team ] += 8
 
 					SetGlobalNetInt( defcon, 2 )
+					break
 
 				case 2:
 					level.stalkerSpawnChance[ team ] = 10
 					level.maxStalkersPerSide[ team ] += 4
 
 					SetGlobalNetInt( defcon, 3 )
+					break
 
 				case 3:
 					level.reaperSpawnChance[ team ] = 100
@@ -255,12 +255,14 @@ void function Escalate()
 					level.modifyAISlots[ team ] += 2
 
 					SetGlobalNetInt( defcon, 4 )
+					break
 
 				case 4:
 					level.maxReapersPerSide[ team ] += 1
 					level.modifyAISlots[ team ] += 1
 
 					SetGlobalNetInt( defcon, 5 )
+					break
 			}
 		}
 	}
