@@ -159,6 +159,10 @@ entity function GetFrontlineSpawnPoint( array<entity> spawnPointArray, int team 
 
 void function SquadAssaultFrontline_Continuous( array<entity> guys )
 {
+	foreach ( entity guy in guys )
+		if ( IsSpectre( guy ) )
+			thread RemoveFromArrayOnLeeched( guy, guys )
+
 	while ( guys.len() )
 	{
 		ArrayRemoveDead( guys )
@@ -166,14 +170,24 @@ void function SquadAssaultFrontline_Continuous( array<entity> guys )
 		if ( !guys.len() )
 			return
 
-		foreach ( entity guy in guys )
-			if ( IsSpectre( guy ) && IsValid( guy.GetOwner() ) && IsValid( guy.GetBossPlayer() ) )
-				guys.removebyvalue( guy )
-
 		SquadAssaultFrontline( guys )
 
 		WaitTillFrontlineMoved()
 	}
+}
+
+void function RemoveFromArrayOnLeeched( entity spectre, array<entity> guys )
+{
+	spectre.EndSignal( "OnDestroy" )
+	spectre.EndSignal( "OnDeath" )
+
+	spectre.WaitSignal( "OnLeeched" )
+
+	ArrayRemoveDead( guys )
+
+	foreach ( entity guy in guys )
+		if ( spectre == guy )
+			guys.removebyvalue( guy )
 }
 
 void function RateFrontLineNPCSpawnpoint( entity spawnpoint, int team, vector edgeOrigin, vector combatDir )
