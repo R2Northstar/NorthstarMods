@@ -2,44 +2,26 @@ untyped
 
 global function GamemodeAITdm_Init
 
-// these are now default settings
-const int SQUADS_PER_TEAM = 4
-const int SPECTRES_PER_TEAM = 12
-const int REAPERS_PER_TEAM = 2
-
-const int LEVEL_SPECTRES = 125
-const int LEVEL_SPECTRES_2 = 350
-const int LEVEL_STALKERS = 380
-const int LEVEL_REAPERS = 500
-const int LEVEL_REAPERS_2 = 575
+const int DEFCON_1 = 125
+const int DEFCON_2 = 250
+const int DEFCON_3 = 380
+const int DEFCON_4 = 500
+const int DEFCON_5 = 575
 
 // add settings
-global function AITdm_SetSquadsPerTeam
-global function AITdm_SetSpectresPerTeam
-global function AITdm_SetReapersPerTeam
-global function AITdm_SetLevelSpectres
-global function AITdm_SetLevelSpectres_2
-global function AITdm_SetLevelStalkers
-global function AITdm_SetLevelReapers
-global function AITdm_SetLevelReapers_2
+global function AITdm_SetDefcon_1
+global function AITdm_SetDefcon_2
+global function AITdm_SetDefcon_3
+global function AITdm_SetDefcon_4
+global function AITdm_SetDefcon_5
 
 struct
 {
-	// Due to team based escalation everything is an array
-
-	// default settings
-	int squadsPerTeam = SQUADS_PER_TEAM
-	int spectresPerTeam = SPECTRES_PER_TEAM
-	int reapersPerTeam = REAPERS_PER_TEAM
-	int levelSpectres = LEVEL_SPECTRES
-	int levelSpectres_2 = LEVEL_SPECTRES_2
-	int levelStalkers = LEVEL_STALKERS
-	int levelReapers = LEVEL_REAPERS
-	int levelReapers_2 = LEVEL_REAPERS_2
-
-	table<int, array<entity> > spawnedMinions
-	table<int, array<entity> > spawnedSpectres
-	table<int, array<entity> > spawnedReapers
+	int defcon_1 = DEFCON_1
+	int defcon_2 = DEFCON_2
+	int defcon_3 = DEFCON_3
+	int defcon_4 = DEFCON_4
+	int defcon_5 = DEFCON_5
 } file
 
 void function GamemodeAITdm_Init()
@@ -47,6 +29,7 @@ void function GamemodeAITdm_Init()
 	GM_AddPlayingThinkFunc( Escalate )
 
 	AddCallback_GameStateEnter( eGameState.Prematch, OnPrematchStart )
+
 	thread SetupTeamDeathmatchNPCs()
 
 	AddCallback_OnNPCKilled( HandleScoreEvent )
@@ -78,44 +61,29 @@ void function GamemodeAITdm_Init()
 }
 
 // add settings
-void function AITdm_SetSquadsPerTeam( int squads )
+void function AITdm_SetDefcon_1( int score )
 {
-	file.squadsPerTeam = squads
+	file.defcon_1 = score
 }
 
-void function AITdm_SetSpectresPerTeam( int spectres )
+void function AITdm_SetDefcon_2( int score )
 {
-	file.spectresPerTeam = spectres
+	file.defcon_2 = score
 }
 
-void function AITdm_SetReapersPerTeam( int reapers )
+void function AITdm_SetDefcon_3( int score )
 {
-	file.reapersPerTeam = reapers
+	file.defcon_3 = score
 }
 
-void function AITdm_SetLevelSpectres( int level )
+void function AITdm_SetDefcon_4( int score )
 {
-	file.levelSpectres = level
+	file.defcon_4 = score
 }
 
-void function AITdm_SetLevelSpectres_2( int level )
+void function AITdm_SetDefcon_5( int score )
 {
-	file.levelSpectres_2 = level
-}
-
-void function AITdm_SetLevelStalkers( int level )
-{
-	file.levelStalkers = level
-}
-
-void function AITdm_SetLevelReapers( int level )
-{
-	file.levelReapers = level
-}
-
-void function AITdm_SetLevelReapers_2( int level )
-{
-	file.levelReapers_2 = level
+	file.defcon_5 = score
 }
 
 // Starts skyshow, this also requiers AINs but doesn't crash if they're missing
@@ -209,22 +177,18 @@ void function Escalate()
 	{
 		int score = GameRules_GetTeamScore( team )
 		int index = team == TEAM_MILITIA ? 1 : 0
+
 		// This does the "Enemy x incoming" text
 		string defcon = team == TEAM_MILITIA ? "IMCdefcon" : "MILdefcon"
+		int currentDefCon = GetGlobalNetInt( defcon )
 
 		team = GetOtherTeam( team )
 
-		while ( true )
+		while (
+			( !currentDefCon && score >= file.defcon_1 ) || ( currentDefCon == 1 && score >= file.defcon_2 ) || ( currentDefCon == 2 && score >= file.defcon_3 ) ||
+			( currentDefCon == 3 && score >= file.defcon_4 ) || ( currentDefCon == 4 && score >= file.defcon_5 )
+		)
 		{
-			int currentDefCon = GetGlobalNetInt( defcon )
-
-			if (
-				( !currentDefCon && score < file.levelSpectres ) || ( currentDefCon == 1 && score < file.levelSpectres_2 ) ||
-				( currentDefCon == 2 && score < file.levelStalkers ) || ( currentDefCon == 3 && score < file.levelReapers ) ||
-				( currentDefCon == 4 && score < file.levelReapers_2 ) || currentDefCon == 5
-			)
-				return
-
 			// Based on score escalate a team
 			switch ( currentDefCon )
 			{
@@ -264,6 +228,8 @@ void function Escalate()
 					SetGlobalNetInt( defcon, 5 )
 					break
 			}
+
+			currentDefCon = GetGlobalNetInt( defcon )
 		}
 	}
 }
