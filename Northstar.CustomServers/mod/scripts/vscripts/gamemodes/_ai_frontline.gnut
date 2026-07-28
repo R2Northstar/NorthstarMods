@@ -159,8 +159,17 @@ entity function GetFrontlineSpawnPoint( array<entity> spawnPointArray, int team 
 
 void function SquadAssaultFrontline_Continuous( array<entity> guys )
 {
-	while ( true )
+	while ( guys.len() )
 	{
+		ArrayRemoveDead( guys )
+
+		if ( !guys.len() )
+			return
+
+		foreach ( entity guy in guys )
+			if ( IsSpectre( guy ) && IsValid( guy.GetOwner() ) && IsValid( guy.GetBossPlayer() ) )
+				guys.removebyvalue( guy )
+
 		SquadAssaultFrontline( guys )
 
 		WaitTillFrontlineMoved()
