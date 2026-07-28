@@ -238,16 +238,16 @@ void function Escalate()
 					SetGlobalNetInt( defcon, 1 )
 
 				case 1:
-					level.spectreSpawnChance[ team ] = 20
+					level.spectreSpawnChance[ team ] = 15
 					level.maxSpectrePerSide[ team ] += 8
 
 					SetGlobalNetInt( defcon, 2 )
 
 				case 2:
-					level.stalkerSpawnChance[ team ] = 15
+					level.stalkerSpawnChance[ team ] = 10
 					level.maxStalkersPerSide[ team ] += 4
 
-					SetGlobalNetInt( defcon, 2 )
+					SetGlobalNetInt( defcon, 3 )
 
 				case 3:
 					level.reaperSpawnChance[ team ] = 100

@@ -4,7 +4,7 @@ global function CreateNPCSForDroppod
 global function NPCSpawnFuncWrapper
 
 // a unified function for spawning npc's in the droppod ( like the dropship has )
-array function CreateNPCSForDroppod( int team, int count, vector spawnOrigin, vector spawnAngles, string squadName, bool force, entity functionref( int, vector, vector ) spawnFunc )
+array<entity> function CreateNPCSForDroppod( int team, int count, vector spawnOrigin, vector spawnAngles, string squadName, entity functionref( int, vector, vector ) spawnFunc )
 {
 	array<entity> soldierEntities = []
 
@@ -32,15 +32,9 @@ array function CreateNPCSForDroppod( int team, int count, vector spawnOrigin, ve
 	}
 
 	// because of wait 0 above, entities could die before returning
-	array finalSoldiers = []
+	ArrayRemoveDead( soldierEntities )
 
-	foreach ( soldier in soldierEntities )
-	{
-		if ( IsAlive( soldier ) )
-			finalSoldiers.append( soldier )
-	}
-
-	return finalSoldiers
+	return soldierEntities
 }
 
 // this function allows you to pass a single spawnFunc or an array. That way you can spawn different kinds of AI in the same vehicle
@@ -59,9 +53,6 @@ entity function NPCSpawnFuncWrapper( int count, int index, entity functionref( i
 	DispatchSpawn( guy )
 
 	SetSquad( guy, squadName )
-
-	guy.Minimap_AlwaysShow( TEAM_MILITIA, null )
-	guy.Minimap_AlwaysShow( TEAM_IMC, null )
 
 	return guy
 }

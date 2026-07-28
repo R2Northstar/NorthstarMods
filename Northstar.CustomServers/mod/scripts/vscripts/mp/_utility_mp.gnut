@@ -218,28 +218,6 @@ bool function IsRefValidAndOfType( string ref, int itemType )
 	return IsRefValid( ref ) && GetItemType( ref ) == itemType
 }
 
-array<entity> function GetAllTitans()
-{
-	array<entity> titans = []
-	// returns the first owned titan found
-	array<entity> souls = GetTitanSoulArray()
-
-	foreach ( soul in souls )
-	{
-		if ( !IsValid( soul ) )
-			continue
-
-		entity titan = soul.GetTitan()
-
-		if ( !IsAlive( titan ) )
-			continue
-
-		titans.append( titan )
-	}
-
-	return titans
-}
-
 int function GetSpectreCount( int team )
 {
 	string aiClass = "npc_spectre"
@@ -282,19 +260,10 @@ int function GetReaperCount( int team )
 		if ( IsAlive( reaper ) && reaper.GetTeam() == team )
 			count++
 
+	// to account for reapers that are dropping into the map
+	count += GetReservedAISquadSlotsOfClassForTeam( aiClass, team )
+
 	return count
-}
-
-int function GetTitanCount( int team )
-{
-	array<entity> titans = GetAllTitans()
-	array<entity> teamTitans = []
-
-	foreach ( titan in titans )
-		if ( titan.GetTeam() == team )
-			teamTitans.append( titan )
-
-	return teamTitans.len()
 }
 
 bool function ShouldSpawnSpectre( int team )
@@ -327,28 +296,6 @@ bool function ShouldSpawnSpectre( int team )
 		return false
 
 	return RandomInt( 100 ) <= expect int( expect table( level.spectreSpawnChance )[ team ] )
-	// level.spectreSpawnStyle was probably forgotten in R2
-	// switch ( level.spectreSpawnStyle )
-	// {
-	// 	case eSpectreSpawnStyle.MORE_FOR_ENEMY_TITANS:
-	// 		int enemyTeam = GetOtherTeam( team )
-	// 		int titanCount = GetTitanCount( enemyTeam )
-	// 		int spectreCount = GetSpectreCount( team )
-	// 		float desiredSpectreCount = GraphCapped( titanCount, 1, 5, -2.0, 10.0 )
-	// 		return spectreCount < desiredSpectreCount
-	// 	case eSpectreSpawnStyle.MAP_PROGRESSION:
-	// 		int spectreCount = GetSpectreCount( team )
-	// 		int progress = expect int( level.nv.matchProgress ) // GetMatchProgress()
-	// 		if ( progress < 25 )
-	// 			return spectreCount <= 0
-	// 		float maxAI = GetMaxAICount( team )
-	// 		if ( progress < 50 )
-	// 			return spectreCount <= 5
-	// 		float maxSpectres = max( maxAI * 0.3, 5 )
-	// 		return spectreCount <= maxSpectres
-	// }
-	// Assert( 0, "What?" )
-	// unreachable
 }
 
 bool function ShouldSpawnStalker( int team )
@@ -377,18 +324,4 @@ bool function ShouldSpawnReaper( int team )
 		return false
 
 	return RandomInt( 100 ) <= expect int( expect table( level.reaperSpawnChance )[ team ] )
-}
-
-bool function ShouldSpawnTitan( int team )
-{
-	if ( Riff_AllowNPCs() != eAllowNPCs.Default )
-		return false
-
-	int titanCount = GetTitanCount( team )
-	int maxAI = GetMaxAICount( team )
-
-	if ( titanCount >= expect int( expect table( level.maxTitansPerSide )[ team ] ) )
-		return false
-
-	return RandomInt( 100 ) <= expect int( expect table( level.titanSpawnChance )[ team ] )
 }

@@ -34,14 +34,6 @@ bool function InitFrontLine()
 	if ( Flag( "FrontlineInitiated" ) )
 		throw "InitFrontLine() was called when already initiated"
 
-	if ( !IsNewThread() )
-	{
-		thread InitFrontLine()
-		return true
-	}
-
-	FlagWait( "EntitiesDidLoad" )
-
 	InitFrontlineGroups()
 
 	if ( !file.frontlineGroupTable.len() )

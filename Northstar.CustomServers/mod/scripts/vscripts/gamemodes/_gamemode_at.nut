@@ -107,9 +107,9 @@ void function GamemodeAt_Init()
 	AddCallback_OnNPCKilled( AT_PlayerOrNPCKilledScoreEvent )
 
 	// Set npc weapons
-	AiGameModes_SetNPCWeapons( "npc_soldier", [ "mp_weapon_rspn101", "mp_weapon_dmr", "mp_weapon_r97", "mp_weapon_lmg" ] )
-	AiGameModes_SetNPCWeapons( "npc_spectre", [ "mp_weapon_hemlok_smg", "mp_weapon_doubletake", "mp_weapon_mastiff" ] )
-	AiGameModes_SetNPCWeapons( "npc_stalker", [ "mp_weapon_hemlok_smg", "mp_weapon_lstar", "mp_weapon_mastiff" ] )
+	SetNPCWeapons( "npc_soldier", [ "mp_weapon_rspn101", "mp_weapon_dmr", "mp_weapon_r97", "mp_weapon_lmg" ] )
+	SetNPCWeapons( "npc_spectre", [ "mp_weapon_hemlok_smg", "mp_weapon_doubletake", "mp_weapon_mastiff" ] )
+	SetNPCWeapons( "npc_stalker", [ "mp_weapon_hemlok_smg", "mp_weapon_lstar", "mp_weapon_mastiff" ] )
 
 	// Gamestate callbacks
 	AddCallback_GameStateEnter( eGameState.Prematch, OnATGamePrematch )
@@ -120,6 +120,8 @@ void function GamemodeAt_Init()
 
 	// Initilaze gamemode entities
 	AddCallback_EntitiesDidLoad( OnEntitiesDidLoad )
+
+	level.modifyAISlots[ AT_AI_TEAM ] = AI_HARD_LIMIT - expect int( level.max_npc_per_side )
 }
 
 void function RateSpawnpoints_AT( int checkclass, array<entity> spawnpoints, int team, entity player )
@@ -1423,16 +1425,12 @@ void function AT_SpawnDroppodSquad( AT_WaveOrigin campData, int spawnId, string 
 	// add variation to spawns
 	wait RandomFloat( 1.0 )
 
-	AiGameModes_SpawnDropPod(
-		spawnpoint,
-		AT_AI_TEAM,
+	thread AT_HandleSquadSpawn(
+		Spawn_TrackedDropPodSquad( aiType, AT_AI_TEAM, 4, spawnpoint, "", eDropPodFlag.DISSOLVE_AFTER_DISEMBARKS ),
+		campData,
+		spawnId,
 		aiType,
-		// squad handler
-		void function( array<entity> guys ) : ( campData, spawnId, aiType, scriptManagerId )
-		{
-			AT_HandleSquadSpawn( guys, campData, spawnId, aiType, scriptManagerId )
-		},
-		eDropPodFlag.DISSOLVE_AFTER_DISEMBARKS
+		scriptManagerId
 	)
 }
 
@@ -1523,16 +1521,7 @@ void function AT_SpawnReaper( AT_WaveOrigin campData, int spawnId, int scriptMan
 	// add variation to spawns
 	wait RandomFloat( 1.0 )
 
-	AiGameModes_SpawnReaper(
-		spawnpoint,
-		AT_AI_TEAM,
-		"npc_super_spectre_aitdm",
-		// reaper handler
-		void function( entity reaper ) : ( campData, spawnId, scriptManagerId )
-		{
-			AT_HandleReaperSpawn( reaper, campData, spawnId, scriptManagerId )
-		}
-	)
+	thread AT_HandleReaperSpawn( Spawn_TrackedWarpfallReaper( AT_AI_TEAM, 1, spawnpoint )[ 0 ], campData, spawnId, scriptManagerId )
 }
 
 void function AT_HandleReaperSpawn( entity reaper, AT_WaveOrigin campData, int spawnId, int scriptManagerId )
@@ -1655,16 +1644,12 @@ void function AT_SpawnBountyTitan( AT_WaveOrigin campData, int spawnId, int scri
 	string aisettings = GetTypeFromBossID( bountyID )
 	string titanClass = expect string( Dev_GetAISettingByKeyField_Global( aisettings, "npc_titan_player_settings" ) )
 
-	AiGameModes_SpawnTitan(
-		spawnpoint,
-		AT_AI_TEAM,
-		titanClass,
-		aisettings,
-		// titan handler
-		void function( entity titan ) : ( campData, spawnId, bountyID, scriptManagerId )
-		{
-			AT_HandleBossTitanSpawn( titan, campData, spawnId, bountyID, scriptManagerId )
-		}
+	thread AT_HandleBossTitanSpawn(
+		Spawn_TrackedTitanfallTitan( AT_AI_TEAM, 1, spawnpoint, "", titanClass, aisettings )[ 0 ],
+		campData,
+		spawnId,
+		bountyID,
+		scriptManagerId
 	)
 }
 
