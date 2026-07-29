@@ -146,13 +146,17 @@ void function SpawnFrontlineSquad( int team, int numFreeSlots )
 	if ( !IsAutoPopulateEnabled( team ) )
 		return
 
+	if ( GetSpawnSquadSize( team ) > GetFreeAISlots( team ) && ( !ShouldSpawnReaper( team ) || 1 > numFreeSlots ) )
+		return
+
 	bool shouldSpawnReaper = ShouldSpawnReaper( team )
 	bool shouldSpawnStalker = ShouldSpawnStalker( team )
 	bool shouldSpawnSpectre = ShouldSpawnSpectre( team )
 	string squadName = MakeSquadName( team, UniqueString( "" ) )
-	int squadSize = int( min( numFreeSlots, GetSpawnSquadSize( team ) ) )
+	int squadSize = GetSpawnSquadSize( team )
 
-	Assert( squadSize <= GetFreeAISlots( team ), "Squadsize " + squadSize + " is greater than remaining ai slots " + GetFreeAISlots( team ) )
+	if ( shouldSpawnReaper )
+		squadSize = 1
 
 	bool inGracePeriod = GameTime_PlayingTime() < START_SPAWN_GRACE_PERIOD
 	bool inGameState = GetGameState() <= eGameState.Prematch || GetGameState() == eGameState.SwitchingSides
@@ -185,7 +189,7 @@ void function SpawnFrontlineSquad( int team, int numFreeSlots )
 
 	if ( shouldSpawnReaper )
 	{
-		npcArray = Spawn_TrackedWarpfallReaper( team, 1, spawnPoint, squadName )
+		npcArray = Spawn_TrackedWarpfallReaper( team, squadSize, spawnPoint, squadName )
 	}
 	if ( shouldSpawnStalker )
 	{

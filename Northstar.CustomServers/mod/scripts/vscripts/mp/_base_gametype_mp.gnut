@@ -815,7 +815,7 @@ void function RespawnAsPilot( entity player, entity spawnPoint = null )
 	if ( !PlayerCanSpawn( player ) )
 		return
 
-	if ( spawnPoint == null )
+	if ( !IsValid( spawnPoint ) )
 		spawnPoint = FindSpawnPoint( player, false, ( ShouldStartSpawn( player ) || Flag( "ForceStartSpawn" ) ) )
 
 	DoRespawnPlayer( player, spawnPoint )
@@ -833,7 +833,7 @@ void function RespawnAsTitan( entity player, entity spawnPoint = null )
 
 	player.Signal( "PlayerRespawnStarted" )
 
-	if ( spawnPoint == null )
+	if ( !IsValid( spawnPoint ) )
 		spawnPoint = FindSpawnPoint( player, true, ( ShouldStartSpawn( player ) || Flag( "ForceStartSpawn" ) ) )
 
 	if ( file.recalculateRespawnAsTitanStartPointCallback != null )
@@ -847,7 +847,9 @@ void function RespawnAsTitan( entity player, entity spawnPoint = null )
 	TitanLoadoutDef titanLoadout = GetTitanLoadoutForPlayer( player )
 
 	asset model = GetPlayerSettingsAssetForClassName( titanLoadout.setFile, "bodymodel" )
+
 	Attachment warpAttach = GetAttachmentAtTimeFromModel( model, "at_hotdrop_01", "offset", spawnPoint.GetOrigin(), spawnPoint.GetAngles(), 0 )
+
 	entity warpFX = PlayFX( TURBO_WARP_FX, warpAttach.position, warpAttach.angle )
 
 	warpFX.FXEnableRenderAlways()
@@ -857,12 +859,9 @@ void function RespawnAsTitan( entity player, entity spawnPoint = null )
 	player.EndSignal( "OnDestroy" )
 
 	vector camOffset = Vector( 44, -64, 520 )
-
-	entity camera = CreateTitanDropCamera( warpAttach.position + camOffset, Vector( 90, spawnPoint.GetAngles().y, 0 ) )
+	entity camera = CreateTitanDropCamera( warpAttach.position + camOffset, Vector( 90, ( spawnPoint.GetAngles().y + 10 ) % 360, 0 ) )
 
 	camera.Fire( "Enable", "!activator", 0, player )
-
-	player.SetViewEntity( camera, false )
 
 	wait 0.1
 

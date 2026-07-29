@@ -421,10 +421,11 @@ void function RateSpawnpoints_Directional( int checkClass, array<entity> spawnPo
 
 	// Under normal circumstances just get the friendly and enemy team of players
 	int otherTeamId = GetOtherTeam( teamId )
+
 	friendlyPlayers = GetPlayerArrayOfTeam_Alive( teamId )
 	enemyPlayers = GetPlayerArrayOfTeam_Alive( otherTeamId )
 
-	if ( enemyPlayers.len() == 0 || friendlyPlayers.len() == 0 )
+	if ( !enemyPlayers.len() || !friendlyPlayers.len() )
 	{
 		RateSpawnpoints_Generic( checkClass, spawnPoints, teamId, player )
 		return
@@ -432,7 +433,6 @@ void function RateSpawnpoints_Directional( int checkClass, array<entity> spawnPo
 
 	vector friendlyOrigin = GetMedianOriginOfEntities( friendlyPlayers )
 	vector enemyOrigin = GetMedianOriginOfEntities( enemyPlayers )
-
 	float distToEnemies = Distance( enemyOrigin, friendlyOrigin )
 
 	foreach ( spawnPoint in spawnPoints )
@@ -442,8 +442,8 @@ void function RateSpawnpoints_Directional( int checkClass, array<entity> spawnPo
 
 		float additionalRating = 0.0
 		vector vecToEnemies = Normalize( enemyOrigin - spawnPoint.GetOrigin() )
+
 		additionalRating = vecToEnemies.Dot( spawnPoint.GetForwardVector() ) * distMultiplier
-		// printt( additionalRating )
 
 		float rating = spawnPoint.CalculateRating( checkClass, teamId, additionalRating, 0.0 )
 	}
@@ -452,11 +452,7 @@ void function RateSpawnpoints_Directional( int checkClass, array<entity> spawnPo
 void function RateSpawnpoints_Generic( int checkclass, array<entity> spawnpoints, int team, entity player )
 {
 	foreach ( spawnpoint in spawnpoints )
-	{
 		float rating = spawnpoint.CalculateRating( checkclass, team, 0.0, 0.0 )
-		// if ( IsHighPerfDevServer() )
-		// 	AddSpawnPointDebugRatingData( spawnpoint, team, rating )
-	}
 }
 
 void function RateSpawnpoints_Frontline( int checkclass, array<entity> spawnpoints, int team, entity player )
@@ -471,6 +467,7 @@ void function RateSpawnpoints_Frontline( int checkclass, array<entity> spawnpoin
 
 		// Magic math: This rates the best spawn area 1.0, at 90 degrees the rating is close to 0.0, and at 180 degrees it's -4.0
 		float frontlineRating = GraphCapped( dot, -1.0, 1.0, 1.0, 0.0 )
+
 		frontlineRating *= frontlineRating
 		frontlineRating = GraphCapped( frontlineRating, 0.0, 1.0, 1.0, -4.0 )
 
@@ -481,10 +478,7 @@ void function RateSpawnpoints_Frontline( int checkclass, array<entity> spawnpoin
 				Graph( distanceFromFrontline, svSpawnGlobals.frontlineDistanceFalloffStart, svSpawnGlobals.frontlineDistanceFalloffEnd, 0.0, FRONTLINE_DISTANCE_MULTIPLIER )
 
 		float facing = DotProduct( spawnpoint.GetForwardVector(), spawnpointToFrontline )
-
 		float rating = spawnpoint.CalculateRating( checkclass, team, frontlineRating + facing, 0.0 )
-		// if ( IsHighPerfDevServer() )
-		// 	AddSpawnPointDebugRatingData( spawnpoint, team, rating )
 	}
 }
 
