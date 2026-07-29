@@ -226,17 +226,20 @@ void function SpawnPlayerIntoDropship( entity player, int playerDropshipIndex, e
 
 	if ( !playerDropship.s.deployedPilots )
 	{
-		FirstPersonSequenceStruct idleSequence
+		FirstPersonSequenceStruct sequence
 
-		idleSequence.firstPersonAnim = DROPSHIP_IDLE_ANIMS_POV[ playerDropshipIndex ]
-		idleSequence.thirdPersonAnim = DROPSHIP_IDLE_ANIMS[ playerDropshipIndex ]
-		idleSequence.attachment = "ORIGIN"
-		idleSequence.blendTime = 0
-		idleSequence.teleport = true
-		idleSequence.setInitialTime = Time() - file.introStartTime
-		idleSequence.hideProxy = true
+		sequence.firstPersonAnim = DROPSHIP_IDLE_ANIMS_POV[ playerDropshipIndex ]
+		sequence.thirdPersonAnim = DROPSHIP_IDLE_ANIMS[ playerDropshipIndex ]
+		sequence.firstPersonAnimIdle = DROPSHIP_JUMP_ANIMS_POV[ playerDropshipIndex ]
+		sequence.thirdPersonAnimIdle = DROPSHIP_JUMP_ANIMS[ playerDropshipIndex ]
+		sequence.attachment = "ORIGIN"
+		sequence.blendTime = 0
+		sequence.teleport = true
+		sequence.viewConeFunction = ViewConeRampFree
+		sequence.setInitialTime = Time() - file.introStartTime
+		sequence.hideProxy = true
 
-		thread FirstPersonSequence( idleSequence, player, playerDropship )
+		thread FirstPersonSequence( sequence, player, playerDropship )
 
 		vector angles = player.GetAngles()
 
@@ -245,26 +248,48 @@ void function SpawnPlayerIntoDropship( entity player, int playerDropshipIndex, e
 		player.PlayerCone_SetLerpTime( 0 )
 		player.SetAngles( angles )
 
-		playerDropship.WaitSignal( "deploy" )
+		WaittillAnimDone( player )
+
+		// randomly pick a player to play intro chat sound on only to this player
+		#if BATTLECHATTER_ENABLED
+			array<entity> otherPlayers = []
+
+			table<entity, array<entity> > teamDropships = file.imcDropships
+
+			if ( playerDropship.GetTeam() == TEAM_MILITIA )
+				teamDropships = file.militiaDropships
+
+			foreach ( dropship, playerslot in teamDropships )
+				if ( dropship == playerDropship )
+					for ( int i = 0; i < MAX_DROPSHIP_PLAYERS; i++ )
+						if ( playerslot[ i ] != player && IsValidPlayer( playerslot[ i ] ) )
+							otherPlayers.append( playerslot[ i ] )
+
+			if ( otherPlayers.len() )
+			{
+				entity otherPlayer = otherPlayers.getrandom()
+
+				PlayBattleChatterLineOnlyToPlayer( otherPlayer, player, "bc_pIntroChat" )
+			}
+		#endif
+
+		WaittillAnimDone( player )
 	}
+	else
+	{
+		FirstPersonSequenceStruct sequence
 
-	FirstPersonSequenceStruct jumpSequence
+		sequence.firstPersonAnim = DROPSHIP_JUMP_ANIMS_POV[ playerDropshipIndex ]
+		sequence.thirdPersonAnim = DROPSHIP_JUMP_ANIMS[ playerDropshipIndex ]
+		sequence.attachment = "ORIGIN"
+		sequence.blendTime = 0
+		sequence.teleport = true
+		sequence.viewConeFunction = ViewConeWide
+		sequence.setInitialTime = max( 0.0, Time() - playerDropship.s.deployedTime )
+		sequence.hideProxy = true
 
-	jumpSequence.firstPersonAnim = DROPSHIP_JUMP_ANIMS_POV[ playerDropshipIndex ]
-	jumpSequence.thirdPersonAnim = DROPSHIP_JUMP_ANIMS[ playerDropshipIndex ]
-	jumpSequence.attachment = "ORIGIN"
-	jumpSequence.blendTime = 0
-	jumpSequence.teleport = true
-	jumpSequence.viewConeFunction = ViewConeRampFree
-	jumpSequence.setInitialTime = max( 0.0, Time() - playerDropship.s.deployedTime )
-	jumpSequence.hideProxy = true
-
-	#if BATTLECHATTER_ENABLED
-		if ( !playerDropshipIndex )
-			PlayBattleChatterLine( player, "bc_pIntroChat" )
-	#endif
-
-	waitthread FirstPersonSequence( jumpSequence, player, playerDropship )
+		waitthread FirstPersonSequence( sequence, player, playerDropship )
+	}
 
 	thread PlayerJumpsFromDropship( player )
 }
