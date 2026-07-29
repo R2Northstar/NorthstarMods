@@ -207,7 +207,7 @@ void function SpawnFrontlineSquad( int team, int numFreeSlots )
 		{
 			Assert( squadSize <= GetFreeAISlots( team ) )
 
-			if ( ( useStartSpawn && expect int( expect table( level.aiSpawnCounter )[ team ] ) % 3 == 0 ) || GetZiplineDropshipSpawns().contains( spawnPoint ) ) // always spawn them if the droppod spot supports dropship spawns unless its using start spawns then 1 in every 3 grunt squad comes in via ship
+			if ( RandomInt( 100 ) > 15 )
 				npcArray = Spawn_TrackedZipLineGruntSquad( team, squadSize, spawnPoint, squadName )
 			else
 				npcArray = Spawn_TrackedDropPodGruntSquad( team, squadSize, spawnPoint, squadName )

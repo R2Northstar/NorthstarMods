@@ -124,34 +124,37 @@ entity function GetFrontlineSpawnPoint( array<entity> spawnPointArray, int team 
 	vector combatDir = GetTeamCombatDir( file.currentFrontline, team )
 	vector edgeOrigin = frontlinePoint.GetOrigin() - combatDir
 
-	foreach ( entity spawnpoint in spawnPointArray )
-		RateFrontLineNPCSpawnpoint( spawnpoint, team, edgeOrigin, combatDir )
+	foreach ( entity spawnPoint in spawnPointArray )
+		RateFrontLineNPCSpawnpoint( spawnPoint, team, edgeOrigin, combatDir )
 
-	array<entity> ratedspawnpoints
+	array<entity> ratedSpawnPoints
 
-	foreach ( entity spawnpoint in spawnPointArray )
+	foreach ( entity spawnPoint in spawnPointArray )
 	{
-		if ( spawnpoint.s.frontlineRating == -100 )
+		if ( spawnPoint.s.frontlineRating == -100 )
 			continue
 
-		if ( ratedspawnpoints.len() )
+		if ( ratedSpawnPoints.len() )
 		{
-			for ( int i = 0; i < ratedspawnpoints.len(); i++ )
+			for ( int i = 0; i < ratedSpawnPoints.len(); i++ )
 			{
-				if ( spawnpoint.s.frontlineRating >= ratedspawnpoints[ i ].s.frontlineRating )
+				if ( spawnPoint.s.frontlineRating >= ratedSpawnPoints[ i ].s.frontlineRating )
 				{
-					ratedspawnpoints.insert( i, spawnpoint )
+					ratedSpawnPoints.insert( i, spawnPoint )
 					break
 				}
 			}
 		}
 		else
-			ratedspawnpoints.append( spawnpoint )
+			ratedSpawnPoints.append( spawnPoint )
 	}
 
-	foreach ( spawnpoint in spawnPointArray )
-		if ( IsSpawnpointValid( spawnpoint, team ) )
-			return spawnpoint
+	foreach ( spawnPoint in ratedSpawnPoints )
+		if ( IsSpawnpointValid( spawnPoint, team ) )
+			return spawnPoint
+
+	if ( ratedSpawnPoints.len() )
+		return ratedSpawnPoints.getrandom()
 
 	// we will always return a spawnpoint even if it's a bad one.
 	return spawnPointArray.getrandom()

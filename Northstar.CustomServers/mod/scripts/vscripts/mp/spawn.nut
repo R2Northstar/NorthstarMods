@@ -709,6 +709,17 @@ int function SortPossibleZones( entity a, entity b )
 #if DEV
 	void function ShowSpawnPoints()
 	{
+		// big red = titan imc start spawns
+		// medium red = droppod imc start spawns
+		// small red = pilot imc start spawns
+		// big blue = titan militia start spawns
+		// medium blue = droppod militia start spawns
+		// small blue = pilot militia start spawns
+		// big yellow = titan spawns
+		// small yellow = pilot spawns
+		// black = droppod/reaper spawns
+		// green = droppod/reaper/dropship spawns
+
 		array<entity> spawnPoints = SpawnPoints_GetTitan()
 		foreach ( sPoint in spawnPoints )
 			DebugDrawSpawnpoint( sPoint, 255, 255, 0, false, 600 )
@@ -719,29 +730,29 @@ int function SortPossibleZones( entity a, entity b )
 
 		spawnPoints = SpawnPoints_GetDropPod()
 		foreach ( sPoint in spawnPoints )
-			DebugDrawSpawnpoint( sPoint, 255, 255, 0, false, 600 )
-
-		spawnPoints = NSSpawnPoints_GetTitanStart( TEAM_MILITIA )
-		foreach ( sPoint in spawnPoints )
-			DebugDrawSpawnpoint( sPoint, 255, 0, 0, false, 600 )
-
-		spawnPoints = SpawnPoints_GetPilotStart( TEAM_MILITIA )
-		foreach ( sPoint in spawnPoints )
-			DebugDrawSpawnpoint( sPoint, 255, 0, 0, false, 600 )
-
-		spawnPoints = SpawnPoints_GetDropPodStart( TEAM_MILITIA )
-		foreach ( sPoint in spawnPoints )
-			DebugDrawSpawnpoint( sPoint, 255, 0, 0, false, 600 )
+			DebugDrawSpawnpoint( sPoint, 0, ( GetZiplineDropshipSpawns().contains( sPoint ) ? 255 : 0 ), 0, false, 600 )
 
 		spawnPoints = NSSpawnPoints_GetTitanStart( TEAM_IMC )
 		foreach ( sPoint in spawnPoints )
-			DebugDrawSpawnpoint( sPoint, 0, 0, 255, false, 600 )
+			DebugDrawSpawnpoint( sPoint, 255, 0, 0, false, 600 )
 
 		spawnPoints = SpawnPoints_GetPilotStart( TEAM_IMC )
 		foreach ( sPoint in spawnPoints )
-			DebugDrawSpawnpoint( sPoint, 0, 0, 255, false, 600 )
+			DebugDrawSpawnpoint( sPoint, 255, 0, 0, false, 600 )
 
 		spawnPoints = SpawnPoints_GetDropPodStart( TEAM_IMC )
+		foreach ( sPoint in spawnPoints )
+			DebugDrawSpawnpoint( sPoint, 255, 0, 0, false, 600 )
+
+		spawnPoints = NSSpawnPoints_GetTitanStart( TEAM_MILITIA )
+		foreach ( sPoint in spawnPoints )
+			DebugDrawSpawnpoint( sPoint, 0, 0, 255, false, 600 )
+
+		spawnPoints = SpawnPoints_GetPilotStart( TEAM_MILITIA )
+		foreach ( sPoint in spawnPoints )
+			DebugDrawSpawnpoint( sPoint, 0, 0, 255, false, 600 )
+
+		spawnPoints = SpawnPoints_GetDropPodStart( TEAM_MILITIA )
 		foreach ( sPoint in spawnPoints )
 			DebugDrawSpawnpoint( sPoint, 0, 0, 255, false, 600 )
 	}
