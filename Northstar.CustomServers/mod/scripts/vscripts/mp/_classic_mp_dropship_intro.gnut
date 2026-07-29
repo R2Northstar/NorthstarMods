@@ -250,27 +250,32 @@ void function SpawnPlayerIntoDropship( entity player, int playerDropshipIndex, e
 
 		WaittillAnimDone( player )
 
-		// randomly pick a player to play intro chat sound on only to this player
 		#if BATTLECHATTER_ENABLED
-			array<entity> otherPlayers = []
-
+			entity otherPlayer
 			table<entity, array<entity> > teamDropships = file.imcDropships
 
 			if ( playerDropship.GetTeam() == TEAM_MILITIA )
 				teamDropships = file.militiaDropships
 
 			foreach ( dropship, playerslot in teamDropships )
-				if ( dropship == playerDropship )
-					for ( int i = 0; i < MAX_DROPSHIP_PLAYERS; i++ )
-						if ( playerslot[ i ] != player && IsValidPlayer( playerslot[ i ] ) )
-							otherPlayers.append( playerslot[ i ] )
-
-			if ( otherPlayers.len() )
 			{
-				entity otherPlayer = otherPlayers.getrandom()
+				if ( dropship == playerDropship )
+				{
+					for ( int i = 0; i < MAX_DROPSHIP_PLAYERS; i++ )
+					{
+						if ( playerslot[ i ] != player && IsValidPlayer( playerslot[ i ] ) )
+						{
+							otherPlayer = playerslot[ i ]
+							break
+						}
+					}
 
-				PlayBattleChatterLineOnlyToPlayer( otherPlayer, player, "bc_pIntroChat" )
+					break
+				}
 			}
+
+			if ( IsValidPlayer( otherPlayer ) )
+				PlayBattleChatterLineOnlyToPlayer( otherPlayer, player, "bc_pIntroChat" )
 		#endif
 
 		WaittillAnimDone( player )

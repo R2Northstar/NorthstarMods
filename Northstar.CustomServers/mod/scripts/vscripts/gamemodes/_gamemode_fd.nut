@@ -3041,8 +3041,14 @@ void function FD_DropshipDropPlayer( entity player, int playerDropshipIndex )
 		player.s.fd_dropshipanimtime <- Time()
 
 		#if BATTLECHATTER_ENABLED
-			if ( playerDropshipIndex == 0 )
-				PlayBattleChatterLine( player, "bc_pIntroChat" )
+			entity otherPlayer
+
+			foreach ( entity dropshipPlayer in file.playersInDropship )
+				if ( dropshipPlayer != player && IsValidPlayer( dropshipPlayer ) )
+					otherPlayer = dropshipPlayer
+
+			if ( IsValidPlayer( otherPlayer ) )
+				PlayBattleChatterLineOnlyToPlayer( otherPlayer, player, "bc_pIntroChat" )
 		#endif
 
 		waitthread FirstPersonSequence( jumpSequence, player, file.dropship )
