@@ -27,8 +27,7 @@ void function ClassicMP_DefaultNoIntro_Start()
 	ClassicMP_OnIntroStarted()
 
 	foreach ( entity player in GetPlayerArray() )
-		if ( !IsPrivateMatchSpectator( player ) )
-			ClassicMP_DefaultNoIntro_SpawnPlayer( player )
+		ClassicMP_DefaultNoIntro_SpawnPlayer( player )
 
 	while ( Time() < expect float( level.nv.gameStartTime ) )
 		WaitFrame()
@@ -54,6 +53,8 @@ void function ClassicMP_DefaultNoIntro_SpawnPlayer( entity player )
 	if ( IsPrivateMatchSpectator( player ) )
 		return
 
+	AddCinematicFlag( player, CE_FLAG_CLASSIC_MP_SPAWNING )
+
 	if ( ShouldIntroSpawnAsTitan() )
 		thread ClassicMP_DefaultNoIntro_TitanSpawnPlayer( player )
 	else
@@ -64,8 +65,6 @@ void function ClassicMP_DefaultNoIntro_SpawnPlayer( entity player )
 void function ClassicMP_DefaultNoIntro_PilotSpawnPlayer( entity player )
 {
 	player.EndSignal( "OnDestroy" )
-
-	AddCinematicFlag( player, CE_FLAG_CLASSIC_MP_SPAWNING )
 
 	if ( PlayerCanSpawn( player ) )
 		DecideRespawnPlayer( player )

@@ -229,13 +229,10 @@ void function CodeCallback_OnClientConnectionCompleted( entity player )
 		player.SetPersistentVar( "privateMatchState", 0 )
 
 	// handle spawning late joiners
-	if ( GetGameState() >= eGameState.Playing )
-	{
-		if ( GetCurrentPlaylistVarInt( "tts_menu_join_in_progress", 0 ) == 1 )
-			thread SpectateTTSMenuPlayer( player )
-		else
-			DecideRespawnPlayer( player )
-	}
+	if ( GetGameState() >= eGameState.Playing && GetCurrentPlaylistVarInt( "tts_menu_join_in_progress", 0 ) == 1 )
+		thread SpectateTTSMenuPlayer( player )
+	else if ( GetGameState() >= eGameState.Prematch )
+		DecideRespawnPlayer( player )
 }
 
 bool function ShouldPlayerBeEliminated( player )
@@ -525,8 +522,6 @@ void function PostDeathThread_MP( entity player, var damageInfo, bool gamePlayin
 		if ( !player.s.respawnSelectionDone && GetGameState() != eGameState.SuddenDeath ) // Only wait outside Sudden Death since players gets inputs blocked to respawn if they die before Sudden Death starts
 			player.WaitSignal( "RespawnMe" )
 
-		ClearRespawnAvailable( player ) // need so the respawn icon doesn't show for like a frame on next death
-
 		DecideRespawnPlayer( player )
 	}
 	else
@@ -815,6 +810,10 @@ void function RespawnAsPilot( entity player, entity spawnPoint = null )
 	if ( !PlayerCanSpawn( player ) )
 		return
 
+	player.StopObserverMode()
+
+	ClearRespawnAvailable( player )
+
 	if ( !IsValid( spawnPoint ) )
 		spawnPoint = FindSpawnPoint( player, false, ( ShouldStartSpawn( player ) || Flag( "ForceStartSpawn" ) ) )
 
@@ -832,6 +831,10 @@ void function RespawnAsTitan( entity player, entity spawnPoint = null )
 		return
 
 	player.Signal( "PlayerRespawnStarted" )
+
+	player.StopObserverMode()
+
+	ClearRespawnAvailable( player )
 
 	if ( !IsValid( spawnPoint ) )
 		spawnPoint = FindSpawnPoint( player, true, ( ShouldStartSpawn( player ) || Flag( "ForceStartSpawn" ) ) )
@@ -957,6 +960,8 @@ void function TryGameModeAnnouncement( entity player )
 
 	while ( HasCinematicFlag( player, CE_FLAG_INTRO ) || HasCinematicFlag( player, CE_FLAG_CLASSIC_MP_SPAWNING ) )
 		player.WaitSignal( "CE_FLAGS_CHANGED" )
+
+	wait player.p.connectTime - Time() + 2.0
 
 	file.hasRunGamemodeAnnouncementForPlayer[ player ] <- expect int( level.nv.roundsPlayed )
 

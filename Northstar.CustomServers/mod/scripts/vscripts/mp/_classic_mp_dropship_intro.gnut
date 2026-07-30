@@ -31,7 +31,7 @@ const array<string> DROPSHIP_JUMP_ANIMS_POV = [
 
 const int MAX_DROPSHIP_PLAYERS = 4
 
-global const float DROPSHIP_INTRO_LENGTH = 15.0 // TODO tweak this
+global const float DROPSHIP_INTRO_LENGTH = 15.0
 
 struct
 {
@@ -250,6 +250,13 @@ void function SpawnPlayerIntoDropship( entity player, int playerDropshipIndex, e
 
 		WaittillAnimDone( player )
 
+		player.Anim_SetInitialTime( max( 0.0, Time() - playerDropship.s.deployedTime ) )
+
+		entity firstPersonProxy = player.GetFirstPersonProxy()
+
+		if ( IsValid( firstPersonProxy ) && EntHasModelSet( firstPersonProxy ) )
+			firstPersonProxy.Anim_SetInitialTime( max( 0.0, Time() - playerDropship.s.deployedTime ) )
+
 		#if BATTLECHATTER_ENABLED
 			entity otherPlayer
 			table<entity, array<entity> > teamDropships = file.imcDropships
@@ -289,7 +296,6 @@ void function SpawnPlayerIntoDropship( entity player, int playerDropshipIndex, e
 		sequence.attachment = "ORIGIN"
 		sequence.blendTime = 0
 		sequence.teleport = true
-		sequence.viewConeFunction = ViewConeWide
 		sequence.setInitialTime = max( 0.0, Time() - playerDropship.s.deployedTime )
 		sequence.hideProxy = true
 

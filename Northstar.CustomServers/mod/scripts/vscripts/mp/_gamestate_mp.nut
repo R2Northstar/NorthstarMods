@@ -145,9 +145,6 @@ void function GameState_OnClientConnected( entity player )
 			return
 		}
 
-		if ( GameTime_TimeLeftSeconds() > 1.0 )
-			AddCinematicFlag( player, CE_FLAG_CLASSIC_MP_SPAWNING )
-
 		DecideRespawnPlayer( player )
 		HolsterViewModelAndDisableWeapons( player )
 		ScreenFadeFromBlack( player, 0.0 )
@@ -834,9 +831,6 @@ void function StartGameWithoutClassicMP()
 		if ( IsPrivateMatchSpectator( player ) )
 			continue
 
-		if ( !respawnAsTitan )
-			AddCinematicFlag( player, CE_FLAG_CLASSIC_MP_SPAWNING )
-
 		DecideRespawnPlayer( player )
 		HolsterViewModelAndDisableWeapons( player )
 		ScreenFadeFromBlack( player, 0.0 )
@@ -844,14 +838,6 @@ void function StartGameWithoutClassicMP()
 
 		player.FreezeControlsOnServer()
 	}
-
-	if ( respawnAsTitan )
-		return
-
-	wait GameTime_TimeLeftSeconds() - 1.0
-
-	foreach ( entity player in GetPlayerArray() )
-		RemoveCinematicFlag( player, CE_FLAG_CLASSIC_MP_SPAWNING )
 }
 
 /*
