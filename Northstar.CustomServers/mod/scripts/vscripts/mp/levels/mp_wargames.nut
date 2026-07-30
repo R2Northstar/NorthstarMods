@@ -308,11 +308,18 @@ void function OnPrematchStart()
 	{
 		if ( IsValid( ent ) )
 		{
-			ent.ClearParent()
-			ent.SetOrigin( < 10000, 10000, 10000 > )
+			if ( ent.IsTitan() && IsValid( ent.GetTitanSoul() ) )
+			{
+				ClearAndKillChildren( ent.GetTitanSoul(), trackedEntitiesEarlyRemove )
 
-			if ( IsAlive( ent ) )
-				ent.Die( null, null, { forceKill = true, scriptType = DF_EXPLOSION, damageType = DMG_REMOVENORAGDOLL } )
+				ent.GetTitanSoul().Destroy()
+			}
+
+			ClearAndKillChildren( ent, trackedEntitiesEarlyRemove )
+
+			SetTeam( ent, TEAM_UNASSIGNED )
+
+			ent.Destroy()
 		}
 	}
 
@@ -325,11 +332,18 @@ void function OnPrematchStart()
 	{
 		if ( IsValid( ent ) )
 		{
-			ent.ClearParent()
-			ent.SetOrigin( < 10000, 10000, 10000 > )
+			if ( ent.IsTitan() && IsValid( ent.GetTitanSoul() ) )
+			{
+				ClearAndKillChildren( ent.GetTitanSoul(), trackedEntities )
 
-			if ( IsAlive( ent ) )
-				ent.Die( null, null, { forceKill = true, scriptType = DF_EXPLOSION, damageType = DMG_REMOVENORAGDOLL } )
+				ent.GetTitanSoul().Destroy()
+			}
+
+			ClearAndKillChildren( ent, trackedEntities )
+
+			SetTeam( ent, TEAM_UNASSIGNED )
+
+			ent.Destroy()
 		}
 	}
 
