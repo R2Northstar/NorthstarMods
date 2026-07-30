@@ -227,24 +227,30 @@ void function CleanupForced1PSequence( Forced1PSequenceData cleanupData )
 
 	if ( IsValid( cleanupData.ownerProxy ) )
 	{
-		cleanupData.ownerProxy.kv.VisibilityFlags = ~ENTITY_VISIBLE_TO_EVERYONE
-		cleanupData.ownerProxy.ClearParent()
-		cleanupData.ownerProxy.ClearBossPlayer()
-		cleanupData.ownerProxy.SetOrigin( < 10000, 10000, 10000 > )
+		SetTeam( cleanupData.ownerProxy, TEAM_UNASSIGNED )
 
-		if ( IsAlive( cleanupData.ownerProxy ) )
-			cleanupData.ownerProxy.Die( null, null, { forceKill = true, scriptType = DF_EXPLOSION, damageType = DMG_REMOVENORAGDOLL } )
+		if ( cleanupData.ownerProxy.IsTitan() && IsValid( cleanupData.ownerProxy.GetTitanSoul() ) )
+		{
+			ClearAndKillChildren( cleanupData.ownerProxy.GetTitanSoul(), [] )
+
+			cleanupData.ownerProxy.GetTitanSoul().Destroy()
+		}
+
+		cleanupData.ownerProxy.Destroy()
 	}
 
 	if ( IsValid( cleanupData.thirdPersonProxy ) )
 	{
-		cleanupData.thirdPersonProxy.kv.VisibilityFlags = ~ENTITY_VISIBLE_TO_EVERYONE
-		cleanupData.thirdPersonProxy.ClearParent()
-		cleanupData.thirdPersonProxy.ClearBossPlayer()
-		cleanupData.thirdPersonProxy.SetOrigin( < 10000, 10000, 10000 > )
+		SetTeam( cleanupData.thirdPersonProxy, TEAM_UNASSIGNED )
 
-		if ( IsAlive( cleanupData.thirdPersonProxy ) )
-			cleanupData.thirdPersonProxy.Die( null, null, { forceKill = true, scriptType = DF_EXPLOSION, damageType = DMG_REMOVENORAGDOLL } )
+		if ( cleanupData.thirdPersonProxy.IsTitan() && IsValid( cleanupData.thirdPersonProxy.GetTitanSoul() ) )
+		{
+			ClearAndKillChildren( cleanupData.thirdPersonProxy.GetTitanSoul(), [] )
+
+			cleanupData.thirdPersonProxy.GetTitanSoul().Destroy()
+		}
+
+		cleanupData.thirdPersonProxy.Destroy()
 	}
 }
 
@@ -345,6 +351,7 @@ void function ModdedPhaseExecutionPhaseCleanup( entity player )
 void function ModdedPhaseEmbarkPhaseStop( entity player )
 {
 	Signal( player, "PhaseEmbarkPhaseStop" )
+
 	PlayPhaseShiftDisappearFX( player )
 	EmitSoundOnEntity( player, "pilot_phaseembark_end_3p" )
 

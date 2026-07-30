@@ -325,3 +325,38 @@ bool function ShouldSpawnReaper( int team )
 
 	return RandomInt( 100 ) <= expect int( expect table( level.reaperSpawnChance )[ team ] )
 }
+
+void function ClearAndKillChildren( entity parentEnt, array<entity> excludedEntities )
+{
+	entity childEnt = parentEnt.FirstMoveChild()
+	entity nextChildEnt
+
+	while ( childEnt != null )
+	{
+		nextChildEnt = childEnt.NextMovePeer()
+
+		childEnt.ClearParent()
+
+		if ( !excludedEntities.contains( childEnt ) )
+		{
+			if ( childEnt.IsPlayer() )
+			{
+				if ( IsAlive( childEnt ) )
+				{
+					childEnt.SetOrigin( Vector( 10000, 10000, 10000 ) )
+					childEnt.Die( svGlobal.worldspawn, svGlobal.worldspawn, { damageSourceId = eDamageSourceId.round_end } )
+				}
+			}
+			else
+			{
+				ClearAndKillChildren( childEnt, excludedEntities )
+
+				SetTeam( childEnt, TEAM_UNASSIGNED )
+
+				childEnt.Destroy()
+			}
+		}
+
+		childEnt = nextChildEnt
+	}
+}

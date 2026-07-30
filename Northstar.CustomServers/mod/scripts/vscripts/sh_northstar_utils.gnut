@@ -181,24 +181,23 @@ void function ReloadMods( bool reloadorretry = false )
 
 			FlightPath flightpath = GetAnalysisForModel( titan.GetModelName(), HOTDROP_TURBO_ANIM )
 
-			int dataindex = GetAnalysisDataIndex( flightpath )
+			int dataIndex = GetAnalysisDataIndex( flightpath )
 			bool debug = false // green = valid, red = not valid
-			int startTime = Daily_GetCurrentTime()
 
 			for ( int i = 0; i < positions.len(); i++ )
 			{
 				vector origin = positions[ i ]
 
 				if ( !TitanValidateDropNode( flightpath, titan, origin ) )
-					for ( int j = dataindex; j < dataindex + ANALYSIS_STEPS; j++ )
+					for ( int j = dataIndex; j < dataIndex + ANALYSIS_STEPS; j++ )
 						SetNodeScriptData_Boolean( i, j, false )
 				else
-					for ( int j = dataindex; j < dataindex + ANALYSIS_STEPS; j++ )
+					for ( int j = dataIndex; j < dataIndex + ANALYSIS_STEPS; j++ )
 						SetNodeScriptData_Boolean( i, j, true )
 
 				if ( debug )
 				{
-					for ( int j = dataindex; j < dataindex + ANALYSIS_STEPS; j++ )
+					for ( int j = dataIndex; j < dataIndex + ANALYSIS_STEPS; j++ )
 					{
 						if ( GetNodeScriptData_Boolean( i, j ) )
 							DebugDrawLine( origin, origin + AnglesToForward( Vector( 0, j * ANALYSIS_YAW_STEP, 0 ) ) * 20, 0, 255, 0, false, 10000.0 )
@@ -208,17 +207,7 @@ void function ReloadMods( bool reloadorretry = false )
 				}
 			}
 
-			if ( debug )
-			{
-				DisplayTime endTime = SecondsToDHMS( Daily_GetCurrentTime() - startTime )
-
-				printt( "Toke " + endTime.s + " Second(s) " + endTime.m + " Minute(s) " + endTime.h + " Hour(s) " + endTime.d + " Day(s) to validate titan drop nodes" )
-			}
-
-			titan.SetOrigin( < 10000, 10000, 10000 > )
-
-			if ( IsAlive( titan ) )
-				titan.Die( null, null, { forceKill = true, scriptType = DF_EXPLOSION, damageType = DMG_REMOVENORAGDOLL } )
+			titan.Destroy()
 		}
 
 		// does the samething as SpawnPoints_GetTitanStart but doesn't have a chance to crash the server

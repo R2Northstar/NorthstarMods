@@ -1394,6 +1394,8 @@ void function ClearPlayers()
 
 		ClearAndKillChildren( npc, npcs )
 
+		SetTeam( npc, TEAM_UNASSIGNED )
+
 		npc.Destroy()
 	}
 
@@ -1404,36 +1406,6 @@ void function ClearPlayers()
 		callback()
 
 	delaythread( 0.0001 ) SetPlayerDeathsHidden( false )
-}
-
-void function ClearAndKillChildren( entity parentEnt, array<entity> excludedEntities )
-{
-	entity childEnt = parentEnt.FirstMoveChild()
-	entity nextChildEnt
-
-	while ( childEnt != null )
-	{
-		nextChildEnt = childEnt.NextMovePeer()
-
-		childEnt.ClearParent()
-
-		if ( !excludedEntities.contains( childEnt ) )
-		{
-			if ( childEnt.IsPlayer() )
-			{
-				if ( IsAlive( childEnt ) )
-					childEnt.Die( svGlobal.worldspawn, svGlobal.worldspawn, { damageSourceId = eDamageSourceId.round_end } )
-			}
-			else
-			{
-				ClearAndKillChildren( childEnt, excludedEntities )
-
-				childEnt.Destroy()
-			}
-		}
-
-		childEnt = nextChildEnt
-	}
 }
 
 float function GameState_GetTimeLimitOverride()

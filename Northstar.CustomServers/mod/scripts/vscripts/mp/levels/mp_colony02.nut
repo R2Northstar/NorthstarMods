@@ -51,6 +51,7 @@ void function CreateEvacNodes()
 		spec_cam.kv.spawnFlags = SF_INFOTARGET_ALWAYS_TRANSMIT_TO_CLIENT
 
 		DispatchSpawn( spec_cam )
+
 		SetTargetName( spec_cam, "spec_cam" + ( i + 1 ) )
 
 		spec_cam.DisableHibernation()
