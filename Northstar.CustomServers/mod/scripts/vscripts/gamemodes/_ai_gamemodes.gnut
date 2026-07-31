@@ -152,7 +152,7 @@ void function SpawnFrontlineSquad( int team, int numFreeSlots )
 	bool shouldSpawnReaper = ShouldSpawnReaper( team )
 	bool shouldSpawnStalker = ShouldSpawnStalker( team )
 	bool shouldSpawnSpectre = ShouldSpawnSpectre( team )
-	string squadName = MakeSquadName( team, UniqueString( "" ) )
+	string squadName = MakeSquadName( team, UniqueString() )
 	int squadSize = GetSpawnSquadSize( team )
 
 	if ( shouldSpawnReaper )
@@ -561,7 +561,7 @@ array<entity> function Spawn_TrackedDropPodSquad( string ai_type, int team, int 
 		return []
 
 	if ( !squadName.len() )
-		squadName = MakeSquadName( team, UniqueString( "" ) )
+		squadName = MakeSquadName( team, UniqueString() )
 
 	CommonTrackingInit( ai_type, team, count, squadName )
 
@@ -643,7 +643,7 @@ array<entity> function Spawn_TrackedZipLineGruntSquad( int team, int count, enti
 	string ai_type = "npc_soldier"
 
 	if ( !squadName.len() )
-		squadName = MakeSquadName( team, UniqueString( "" ) )
+		squadName = MakeSquadName( team, UniqueString() )
 
 	CallinData dropTable = CreateZipLineSquadDropTable( team, count, spawnPoint.GetOrigin(), spawnPoint.GetAngles(), squadName )
 
@@ -655,7 +655,7 @@ array<entity> function Spawn_TrackedDropPodGruntSquad( int team, int count, enti
 	string ai_type = "npc_soldier"
 
 	if ( !squadName.len() )
-		squadName = MakeSquadName( team, UniqueString( "" ) )
+		squadName = MakeSquadName( team, UniqueString() )
 
 	return Spawn_TrackedDropPodSquad( ai_type, team, count, spawnPoint, squadName )
 }
@@ -665,7 +665,7 @@ array<entity> function Spawn_TrackedDropPodSpectreSquad( int team, int count, en
 	string ai_type = "npc_spectre"
 
 	if ( !squadName.len() )
-		squadName = MakeSquadName( team, UniqueString( "" ) )
+		squadName = MakeSquadName( team, UniqueString() )
 
 	return Spawn_TrackedDropPodSquad( ai_type, team, count, spawnPoint, squadName )
 }
@@ -675,7 +675,7 @@ array<entity> function Spawn_TrackedDropPodStalkerSquad( int team, int count, en
 	string ai_type = "npc_stalker"
 
 	if ( !squadName.len() )
-		squadName = MakeSquadName( team, UniqueString( "" ) )
+		squadName = MakeSquadName( team, UniqueString() )
 
 	return Spawn_TrackedDropPodSquad( ai_type, team, count, spawnPoint, squadName )
 }
@@ -690,7 +690,7 @@ array<entity> function Spawn_TrackedWarpfallReaper( int team, int count, entity 
 	ToggleSpawnNodeInUse( spawnPoint, true )
 
 	if ( !squadName.len() )
-		squadName = MakeSquadName( team, UniqueString( "" ) )
+		squadName = MakeSquadName( team, UniqueString() )
 
 	CommonTrackingInit( "npc_super_spectre", team, count, squadName )
 
@@ -753,7 +753,7 @@ array<entity> function Spawn_TrackedTitanfallTitan( int team, int count, entity 
 	ToggleSpawnNodeInUse( spawnPoint, true )
 
 	if ( !squadName.len() )
-		squadName = MakeSquadName( team, UniqueString( "" ) )
+		squadName = MakeSquadName( team, UniqueString() )
 
 	CommonTrackingInit( "npc_titan", team, count, squadName )
 

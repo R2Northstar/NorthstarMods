@@ -9,7 +9,7 @@ array<entity> function CreateNPCSForDroppod( int team, int count, vector spawnOr
 	array<entity> soldierEntities = []
 
 	if ( !squadName.len() )
-		squadName = MakeSquadName( team, UniqueString( "" ) )
+		squadName = MakeSquadName( team, UniqueString() )
 
 	for ( int idx = 0; idx < count; idx++ )
 	{
