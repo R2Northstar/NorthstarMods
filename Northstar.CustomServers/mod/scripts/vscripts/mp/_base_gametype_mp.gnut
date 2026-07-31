@@ -229,9 +229,10 @@ void function CodeCallback_OnClientConnectionCompleted( entity player )
 		player.SetPersistentVar( "privateMatchState", 0 )
 
 	// handle spawning late joiners
-	if ( GetGameState() >= eGameState.Playing && GetCurrentPlaylistVarInt( "tts_menu_join_in_progress", 0 ) == 1 )
+
+	if ( GetClassicMPMode() && GetGameState() >= eGameState.Playing && GetCurrentPlaylistVarInt( "tts_menu_join_in_progress", 0 ) == 1 )
 		thread SpectateTTSMenuPlayer( player )
-	else if ( GetGameState() >= eGameState.Prematch )
+	else if ( GetGameState() >= eGameState.Playing || ( GetClassicMPMode() && ShouldSpawnAsTitan( player ) && GetGameState() == eGameState.Prematch ) )
 		DecideRespawnPlayer( player )
 }
 
@@ -591,7 +592,6 @@ void function PutPlayerInObserverMode_( entity player, int observerMode, bool do
 
 			player.SetSpecReplayDelay( FIRST_PERSON_SPECTATOR_DELAY )
 			player.StartObserverMode( observerMode )
-
 			break
 
 		case OBS_MODE_STATIC:
@@ -601,7 +601,6 @@ void function PutPlayerInObserverMode_( entity player, int observerMode, bool do
 			player.SetSpecReplayDelay( 0.0 )
 			player.StartObserverMode( observerMode )
 			player.SetObserverTarget( null )
-
 			break
 
 		default:
@@ -716,6 +715,8 @@ bool function DecideRespawnPlayer( entity player )
 
 		return false
 	}
+	else
+		player.StopObserverMode()
 
 	if ( IsValid( player.isSpawning ) )
 	{
@@ -728,6 +729,9 @@ bool function DecideRespawnPlayer( entity player )
 	bool didSpawn = RespawnTitanPilot( player )
 
 	printt( "DecideRespawnPlayer() - Spawn ", ( didSpawn ? "success: " : "failed: " ), string( player ) )
+
+	if ( GetGameState() <= eGameState.Prematch ) // Once we've gotten to here, any special spawning logic like cinematic spawn and classic MP spawn have already completed if applicable. Freeze controls if in prematch because we don't want players running around in prematch. Controls will be unfrozen when gamestate switches to playing
+		player.FreezeControlsOnServer()
 
 	return didSpawn
 }
@@ -810,8 +814,6 @@ void function RespawnAsPilot( entity player, entity spawnPoint = null )
 	if ( !PlayerCanSpawn( player ) )
 		return
 
-	player.StopObserverMode()
-
 	ClearRespawnAvailable( player )
 
 	if ( !IsValid( spawnPoint ) )
@@ -831,8 +833,6 @@ void function RespawnAsTitan( entity player, entity spawnPoint = null )
 		return
 
 	player.Signal( "PlayerRespawnStarted" )
-
-	player.StopObserverMode()
 
 	ClearRespawnAvailable( player )
 

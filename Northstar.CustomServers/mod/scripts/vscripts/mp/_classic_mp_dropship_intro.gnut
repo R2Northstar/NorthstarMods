@@ -291,13 +291,24 @@ void function SpawnPlayerIntoDropship( entity player, int playerDropshipIndex, e
 	{
 		FirstPersonSequenceStruct sequence
 
-		sequence.firstPersonAnim = DROPSHIP_JUMP_ANIMS_POV[ playerDropshipIndex ]
-		sequence.thirdPersonAnim = DROPSHIP_JUMP_ANIMS[ playerDropshipIndex ]
+		sequence.firstPersonAnim = DROPSHIP_IDLE_ANIMS_POV[ playerDropshipIndex ]
+		sequence.thirdPersonAnim = DROPSHIP_IDLE_ANIMS[ playerDropshipIndex ]
 		sequence.attachment = "ORIGIN"
 		sequence.blendTime = 0
 		sequence.teleport = true
-		sequence.setInitialTime = max( 0.0, Time() - playerDropship.s.deployedTime )
+		sequence.setInitialTime = min( player.GetSequenceDuration( sequence.thirdPersonAnim ) - 0.0001, Time() - file.introStartTime )
 		sequence.hideProxy = true
+
+		vector angles = player.GetAngles()
+
+		player.PlayerCone_SetLerpTime( 0 )
+		player.SetAngles( angles )
+
+		waitthread FirstPersonSequence( sequence, player, playerDropship )
+
+		sequence.firstPersonAnim = DROPSHIP_JUMP_ANIMS_POV[ playerDropshipIndex ]
+		sequence.thirdPersonAnim = DROPSHIP_JUMP_ANIMS[ playerDropshipIndex ]
+		sequence.setInitialTime = max( 0.0, Time() - playerDropship.s.deployedTime )
 
 		waitthread FirstPersonSequence( sequence, player, playerDropship )
 	}

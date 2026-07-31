@@ -121,36 +121,44 @@ void function GameState_OnClientConnected( entity player )
 {
 	if (
 		GetGameState() == eGameState.WaitingForPlayers || ( GetGameState() == eGameState.PickLoadout && DoPrematchWarpSound() ) ||
-		GetGameState() == eGameState.Postmatch
+		GetGameState() == eGameState.Prematch || GetGameState() == eGameState.Postmatch
 	)
 		ScreenFadeToBlackForever( player, 0.0 )
 
-	if ( !GetClassicMPMode() && GetGameState() == eGameState.Prematch )
+	if ( !GetClassicMPMode() && GetGameState() == eGameState.Prematch && !IsPrivateMatchSpectator( player ) )
+		thread NoClassicMPSpawn( player )
+}
+
+void function NoClassicMPSpawn( entity player )
+{
+	if ( ShouldSpawnAsTitan( player ) )
 	{
-		if ( IsPrivateMatchSpectator( player ) )
-			return
+		PutPlayerInObserverMode( player, OBS_MODE_STATIC_LOCKED )
 
-		if ( ShouldIntroSpawnAsTitan() )
+		thread void function() : ( player )
 		{
-			PutPlayerInObserverMode( player, OBS_MODE_STATIC_LOCKED )
+			WaitEndFrame()
 
-			thread void function() : ( player )
-			{
-				WaitEndFrame()
+			if ( IsValidPlayer( player ) )
+				ScreenFadeFromBlack( player, 0.0 )
+		}()
 
-				if ( IsValidPlayer( player ) )
-					ScreenFadeFromBlack( player, 0.0 )
-			}()
+		WaittillGameStateOrHigher( eGameState.Playing )
 
+		if ( !IsValidPlayer( player ) )
 			return
-		}
+	}
 
-		DecideRespawnPlayer( player )
-		HolsterViewModelAndDisableWeapons( player )
-		ScreenFadeFromBlack( player, 0.0 )
-		DeployViewModelAndEnableWeapons( player )
+	DecideRespawnPlayer( player )
 
-		player.FreezeControlsOnServer()
+	if ( IsAlive( player ) )
+	{
+		Loadouts_TryGivePilotLoadout( player )
+
+		WaitEndFrame()
+
+		if ( IsValidPlayer( player ) )
+			ScreenFadeFromBlack( player, 0.0 )
 	}
 }
 
@@ -803,41 +811,9 @@ void function SetPrematchStartTime()
 
 void function StartGameWithoutClassicMP()
 {
-	bool respawnAsTitan = expect bool( ShouldIntroSpawnAsTitan() )
-
-	if ( respawnAsTitan )
-	{
-		foreach ( entity player in GetPlayerArray() )
-		{
-			if ( IsPrivateMatchSpectator( player ) )
-				continue
-
-			PutPlayerInObserverMode( player, OBS_MODE_STATIC_LOCKED )
-
-			thread void function() : ( player )
-			{
-				WaitEndFrame()
-
-				if ( IsValidPlayer( player ) )
-					ScreenFadeFromBlack( player, 0.0 )
-			}()
-		}
-
-		WaittillGameStateOrHigher( eGameState.Playing )
-	}
-
 	foreach ( entity player in GetPlayerArray() )
-	{
-		if ( IsPrivateMatchSpectator( player ) )
-			continue
-
-		DecideRespawnPlayer( player )
-		HolsterViewModelAndDisableWeapons( player )
-		ScreenFadeFromBlack( player, 0.0 )
-		DeployViewModelAndEnableWeapons( player )
-
-		player.FreezeControlsOnServer()
-	}
+		if ( !IsPrivateMatchSpectator( player ) )
+			thread NoClassicMPSpawn( player )
 }
 
 /*
@@ -854,9 +830,6 @@ void function GameStateEnter_Playing()
 
 	foreach ( entity player in players )
 	{
-		if ( !IsPrivateMatchSpectator( player ) )
-			player.StopObserverMode()
-
 		player.UnfreezeControlsOnServer()
 
 		UnMuteAll( player )

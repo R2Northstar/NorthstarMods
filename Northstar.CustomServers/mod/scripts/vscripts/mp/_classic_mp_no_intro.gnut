@@ -33,14 +33,8 @@ void function ClassicMP_DefaultNoIntro_Start()
 		WaitFrame()
 
 	foreach ( entity player in GetPlayerArray() )
-	{
 		if ( IsValidPlayer( player ) && !IsPrivateMatchSpectator( player ) )
-		{
-			player.UnfreezeControlsOnServer()
-
 			RemoveCinematicFlag( player, CE_FLAG_CLASSIC_MP_SPAWNING )
-		}
-	}
 
 	ClassicMP_OnIntroFinished()
 }
@@ -55,7 +49,7 @@ void function ClassicMP_DefaultNoIntro_SpawnPlayer( entity player )
 
 	AddCinematicFlag( player, CE_FLAG_CLASSIC_MP_SPAWNING )
 
-	if ( ShouldIntroSpawnAsTitan() )
+	if ( ShouldSpawnAsTitan( player ) )
 		thread ClassicMP_DefaultNoIntro_TitanSpawnPlayer( player )
 	else
 		thread ClassicMP_DefaultNoIntro_PilotSpawnPlayer( player )
@@ -68,8 +62,6 @@ void function ClassicMP_DefaultNoIntro_PilotSpawnPlayer( entity player )
 
 	if ( PlayerCanSpawn( player ) )
 		DecideRespawnPlayer( player )
-
-	player.FreezeControlsOnServer()
 
 	Loadouts_TryGivePilotLoadout( player )
 	ResetPlayerCooldowns( player ) // Prevention of case they used abilities or grenades near round end
