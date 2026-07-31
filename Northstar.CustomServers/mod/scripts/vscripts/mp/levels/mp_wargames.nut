@@ -443,6 +443,10 @@ void function PlayerWatchesWargamesIntro( entity player )
 
 	AddAnimEvent( player.GetFirstPersonProxy(), "PlaySound_SimPod_DoorShut", PlaySound_SimPod_DoorShut )
 	player.kv.VisibilityFlags = ENTITY_VISIBLE_TO_OWNER
+
+	if ( ( file.introStartTime + 8.0 ) - Time() > 0.5 )
+		TrainingPod_ViewConeLock_PodOpen( player )
+
 	HolsterViewModelAndDisableWeapons( player )
 	player.MovementDisable()
 
@@ -462,49 +466,42 @@ void function PlayerWatchesWargamesIntro( entity player )
 	EmitSoundOnEntityOnlyToPlayerWithSeek( file.imcPod, player, "Wargames_Emit_IMC_Intro_LowPass", Time() - file.introStartTime )
 	EmitSoundOnEntityOnlyToPlayerWithSeek( file.militiaPod, player, "Wargames_Emit_MCOR_Intro_LowPass", Time() - file.introStartTime )
 
-	// idle pod sequence
-	FirstPersonSequenceStruct podIdleSequence
-	podIdleSequence.firstPersonAnim = "ptpov_trainingpod_idle"
-	podIdleSequence.renderWithViewModels = true
-	podIdleSequence.attachment = "REF"
-	podIdleSequence.blendTime = 0
-	podIdleSequence.teleport = true
-	podIdleSequence.viewConeFunction = TrainingPod_ViewConeLock_PodOpen
+	FirstPersonSequenceStruct sequence
 
-	thread FirstPersonSequence( podIdleSequence, player, playerPod )
+	sequence.firstPersonAnim = "ptpov_trainingpod_idle"
+	sequence.renderWithViewModels = true
+	sequence.attachment = "REF"
+	sequence.blendTime = 0
+	sequence.teleport = true
+
+	thread FirstPersonSequence( sequence, player, playerPod )
 
 	DelayedFrameFadeout( player )
 
 	// 8 seconds of nothing before we start the pod sequence
 	wait ( file.introStartTime + 8.0 ) - Time()
 
-	FirstPersonSequenceStruct podCloseSequence
-	podCloseSequence.firstPersonAnim = "ptpov_trainingpod_doors_close"
-	podCloseSequence.firstPersonAnimIdle = "ptpov_trainingpod_idle"
-	podCloseSequence.renderWithViewModels = true
-	podCloseSequence.attachment = "REF"
-	podCloseSequence.blendTime = 0
-	podCloseSequence.teleport = true
-	podCloseSequence.setInitialTime = max( 0.0, Time() - ( file.introStartTime + 8.0 ) )
+	sequence.firstPersonAnim = "ptpov_trainingpod_doors_close"
+	sequence.setInitialTime = max( 0.0, Time() - ( file.introStartTime + 8.0 ) )
 
-	thread void function() : ( player )
+	if ( ( file.introStartTime + 14.2 ) - Time() > 0.5 )
 	{
-		player.EndSignal( "OnDestroy" )
-		player.EndSignal( "OnAnimationInterrupted" )
-		player.EndSignal( "OnAnimationDone" )
+		thread void function() : ( player )
+		{
+			player.EndSignal( "OnDestroy" )
 
-		wait 0.5
+			wait 0.5
 
-		TrainingPod_ViewConeLock_SemiStrict( player )
-	}()
+			TrainingPod_ViewConeLock_SemiStrict( player )
+		}()
+	}
 
-	waitthread FirstPersonSequence( podCloseSequence, player, playerPod )
-
-	TrainingPod_ViewConeLock_PodClosed( player )
+	waitthread FirstPersonSequence( sequence, player, playerPod )
 
 	// wait 0.6 seconds then start boot sequence
 	wait ( file.introStartTime + 14.2 ) - Time()
 	EmitSoundOnEntityOnlyToPlayerWithSeek( player, player, "NPE_Scr_SimPod_PowerUp", Time() - ( file.introStartTime + 14.2 ) )
+	TrainingPod_ViewConeLock_PodClosed( player )
 
 	// 10 seconds of starting pod before we run effects and spawn players
 	// note, this is cool because it waits for a specific time, so we can have a blocking call directly before it just fine
