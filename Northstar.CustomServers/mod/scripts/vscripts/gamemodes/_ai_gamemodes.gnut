@@ -56,7 +56,6 @@ void function AiGameModes_Init()
 
 	level.modifyAISlots <- {}
 	level.reservedAISquadSlots <- {}
-	level.aiSpawnCounter <- {}
 
 	level.spectreSpawnChance <- {}
 	level.maxSpectrePerSide <- {}
@@ -73,7 +72,6 @@ void function AiGameModes_Init()
 		level.gameModeAICount[ i ] <- npcPerSide
 
 		level.modifyAISlots[ i ] <- 0
-		level.aiSpawnCounter[ i ] <- 0
 
 		level.spectreSpawnChance[ i ] <- 0
 		level.maxSpectrePerSide[ i ] <- 0
@@ -182,8 +180,6 @@ void function SpawnFrontlineSquad( int team, int numFreeSlots )
 	entity spawnPoint = GetFrontlineSpawnPoint( spawnPointArray, team )
 
 	Assert( IsValid( spawnPoint ) )
-
-	++level.aiSpawnCounter[ team ]
 
 	array<entity> npcArray
 

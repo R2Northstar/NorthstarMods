@@ -518,6 +518,8 @@ void function AddPlayerToEvacDropship( entity dropship, entity player )
 
 	// fp.firstPersonAnim = EVAC_EMBARK_ANIMS_1P[ slot ]
 	fp.thirdPersonAnim = EVAC_EMBARK_ANIMS_3P[ slot ]
+	fp.firstPersonAnimIdle = EVAC_IDLE_ANIMS_1P[ slot ]
+	fp.thirdPersonAnimIdle = EVAC_IDLE_ANIMS_3P[ slot ]
 	fp.attachment = "RESCUE"
 	fp.teleport = true
 	fp.thirdPersonCameraAttachments = [ "VDU" ] // this seems wrong, firstperson anim has better angles, but no head
@@ -526,19 +528,16 @@ void function AddPlayerToEvacDropship( entity dropship, entity player )
 	EmitSoundOnEntityOnlyToPlayer( player, player, SHIFTER_START_SOUND_3P )
 	// should play SHIFTER_START_SOUND_1P when they actually arrive in the ship i think, unsure how this is supposed to be done
 	PlayPhaseShiftDisappearFX( player )
-	FirstPersonSequence( fp, player, dropship )
+
+	waitthread FirstPersonSequence( fp, player, dropship )
+
 	RemoveCinematicFlag( player, CE_FLAG_HIDE_MAIN_HUD )
+	ViewConeFree( player )
 
-	FirstPersonSequenceStruct idleFp
+	entity playerViewModel = player.GetFirstPersonProxy()
 
-	idleFp.firstPersonAnim = EVAC_IDLE_ANIMS_1P[ slot ]
-	idleFp.thirdPersonAnim = EVAC_IDLE_ANIMS_3P[ slot ]
-	idleFp.attachment = "RESCUE"
-	idleFp.teleport = true
-	idleFp.hideProxy = true
-	idleFp.viewConeFunction = ViewConeFree
-
-	thread FirstPersonSequence( idleFp, player, dropship )
+	if ( IsValid( playerViewModel ) && EntHasModelSet( playerViewModel ) )
+		playerViewModel.Hide()
 }
 
 bool function PlayerInDropship( entity player, entity dropship )
