@@ -20,7 +20,6 @@ global function Spawn_TrackedTitan
 global function SquadValidForClass
 global function GetReservedSquadSize
 global function GetMaxAICount
-global function GetSpawnSquadSize
 global function SetGameModeAICount
 global function GetReservedAISquadSlotsOfClassForTeam
 global function CommonTrackingInit
@@ -126,7 +125,7 @@ void function TeamDeathmatchSpawnNPCs( int team )
 {
 	int numFreeSlots = GetFreeAISlots( team )
 
-	while ( numFreeSlots >= GetSpawnSquadSize( team ) || ( ShouldSpawnReaper( team ) && numFreeSlots >= 1 ) )
+	while ( numFreeSlots >= SQUAD_SIZE || ( ShouldSpawnReaper( team ) && numFreeSlots >= 1 ) )
 	{
 		// this will do all the heavy lifting of where and how many to spawn and what they should do once they are in the match.
 		thread SpawnFrontlineSquad( team, numFreeSlots )
@@ -144,14 +143,14 @@ void function SpawnFrontlineSquad( int team, int numFreeSlots )
 	if ( !IsAutoPopulateEnabled( team ) )
 		return
 
-	if ( GetSpawnSquadSize( team ) > GetFreeAISlots( team ) && ( !ShouldSpawnReaper( team ) || 1 > numFreeSlots ) )
+	if ( SQUAD_SIZE > GetFreeAISlots( team ) && ( !ShouldSpawnReaper( team ) || 1 > numFreeSlots ) )
 		return
 
 	bool shouldSpawnReaper = ShouldSpawnReaper( team )
 	bool shouldSpawnStalker = ShouldSpawnStalker( team )
 	bool shouldSpawnSpectre = ShouldSpawnSpectre( team )
 	string squadName = MakeSquadName( team, UniqueString() )
-	int squadSize = GetSpawnSquadSize( team )
+	int squadSize = SQUAD_SIZE
 
 	if ( shouldSpawnReaper )
 		squadSize = 1
@@ -292,14 +291,6 @@ void function SetGameModeAICount( int count, int team )
 	Assert( count <= level.max_npc_per_side, "Trying to set the AI count to more then max allowed (" + count + " vs 12)" )
 
 	level.gameModeAICount[ team ] = count
-}
-
-int function GetSpawnSquadSize( int team )
-{
-	int maxAICount = GetMaxAICount( team )
-	int squadSize = int( max( 1, floor( maxAICount / 3 ) ) ) // 3 is the number of squads we have per side.
-
-	return int( min( squadSize, SQUAD_SIZE ) ) // never higher then SQUAD_SIZE, it's the max we can spawn with droppods
 }
 
 void function ReleaseAISlots( int team, int count = 1 )
