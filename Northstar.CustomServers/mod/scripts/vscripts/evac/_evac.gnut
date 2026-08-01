@@ -593,13 +593,6 @@ void function CheckIfAnyPlayerLeft( int evacTeam )
 			SetTeamActiveObjective( evacTeam, "EG_DropshipExtractEvacPlayersKilled" )
 			SetTeamActiveObjective( GetOtherTeam( evacTeam ), "EG_StopExtractEvacPlayersKilled" )
 			thread EvacEpilogueCompleted( null )
-
-			if ( !GetPlayerArrayOfTeam( evacTeam ).len() )
-				return
-
-			// score for killing the entire evacing team
-			foreach ( entity player in GetPlayerArrayOfTeam( GetOtherTeam( evacTeam ) ) )
-				AddPlayerScore( player, "TeamBonusKilledAll" )
 		}
 	)
 
@@ -726,7 +719,7 @@ void function OnPlayerDeath( entity victim, entity attacker, var damageInfo )
 
 	entity killer = GetLastAttacker( victim )
 
-	if ( IsValidPlayer( killer ) && ( victim.GetTeam() == GetWinningTeam() || killer.GetTeam() != GetWinningTeam() ) )
+	if ( !IsValidPlayer( killer ) || victim.GetTeam() == GetWinningTeam() || killer.GetTeam() != GetWinningTeam() )
 		return
 
 	// Give Pursuit team extra points for killing off escapees

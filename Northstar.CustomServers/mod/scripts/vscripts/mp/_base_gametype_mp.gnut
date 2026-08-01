@@ -609,10 +609,27 @@ void function PutPlayerInObserverMode_( entity player, int observerMode, bool do
 	}
 }
 
-void function SetPlayerToDefaultViewPoint( player )
+void function SetPlayerToDefaultViewPoint( entity player )
 {
 	int evacNodeNumber = GetEvacNodeNumber()
+	entity specCam
 	entity escapeNode = GetEnt( "escape_node" + evacNodeNumber )
+
+	if ( !IsValid( escapeNode ) )
+		escapeNode = GetEnt( "evac_location" + evacNodeNumber )
+
+	if ( IsValid( escapeNode ) && escapeNode.HasKey( "target" ) && IsValid( GetEnt( expect string( escapeNode.kv.target ) ) ) )
+		specCam = GetEnt( expect string( escapeNode.kv.target ) )
+	else
+		specCam = GetEnt( "spec_cam" + evacNodeNumber )
+
+	if ( IsValid( specCam ) )
+	{
+		player.SetObserverModeStaticPosition( specCam.GetOrigin() )
+		player.SetObserverModeStaticAngles( specCam.GetAngles() )
+		return
+	}
+
 	entity target = GetEntArrayByClass_Expensive( "info_intermission" )[ 0 ]
 	entity targetView = null
 
