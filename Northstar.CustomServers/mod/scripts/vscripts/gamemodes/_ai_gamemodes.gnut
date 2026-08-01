@@ -143,18 +143,10 @@ void function SpawnFrontlineSquad( int team, int numFreeSlots )
 	if ( !IsAutoPopulateEnabled( team ) )
 		return
 
-	if ( SQUAD_SIZE > GetFreeAISlots( team ) && ( !ShouldSpawnReaper( team ) || 1 > numFreeSlots ) )
-		return
-
 	bool shouldSpawnReaper = ShouldSpawnReaper( team )
 	bool shouldSpawnStalker = ShouldSpawnStalker( team )
 	bool shouldSpawnSpectre = ShouldSpawnSpectre( team )
 	string squadName = MakeSquadName( team, UniqueString() )
-	int squadSize = SQUAD_SIZE
-
-	if ( shouldSpawnReaper )
-		squadSize = 1
-
 	bool inGracePeriod = GameTime_PlayingTime() < START_SPAWN_GRACE_PERIOD
 	bool inGameState = GetGameState() <= eGameState.Prematch || GetGameState() == eGameState.SwitchingSides
 	bool useStartSpawn = inGameState || inGracePeriod
@@ -184,34 +176,28 @@ void function SpawnFrontlineSquad( int team, int numFreeSlots )
 
 	if ( shouldSpawnReaper )
 	{
-		npcArray = Spawn_TrackedWarpfallReaper( team, squadSize, spawnPoint, squadName )
+		npcArray = Spawn_TrackedWarpfallReaper( team, 1, spawnPoint, squadName )
 	}
 	if ( shouldSpawnStalker )
 	{
-		npcArray = Spawn_TrackedDropPodStalkerSquad( team, squadSize, spawnPoint, squadName )
+		npcArray = Spawn_TrackedDropPodStalkerSquad( team, SQUAD_SIZE, spawnPoint, squadName )
 	}
 	else if ( shouldSpawnSpectre )
 	{
-		npcArray = Spawn_TrackedDropPodSpectreSquad( team, squadSize, spawnPoint, squadName )
+		npcArray = Spawn_TrackedDropPodSpectreSquad( team, SQUAD_SIZE, spawnPoint, squadName )
 	}
 	else
 	{
-		if ( Flag( "DisableDropships" ) )
+		if ( !Flag( "DisableDropships" ) )
 		{
-			Assert( squadSize <= GetFreeAISlots( team ) )
-
-			npcArray = Spawn_TrackedDropPodGruntSquad( team, squadSize, spawnPoint, squadName )
-		}
-		else
-		{
-			Assert( squadSize <= GetFreeAISlots( team ) )
-
 			if ( RandomInt( 100 ) > 15 )
-				npcArray = Spawn_TrackedZipLineGruntSquad( team, squadSize, spawnPoint, squadName )
+				npcArray = Spawn_TrackedZipLineGruntSquad( team, SQUAD_SIZE, spawnPoint, squadName )
 
 			if ( !npcArray.len() ) // so it actually spawns a squad
-				npcArray = Spawn_TrackedDropPodGruntSquad( team, squadSize, spawnPoint, squadName )
+				npcArray = Spawn_TrackedDropPodGruntSquad( team, SQUAD_SIZE, spawnPoint, squadName )
 		}
+		else
+			npcArray = Spawn_TrackedDropPodGruntSquad( team, SQUAD_SIZE, spawnPoint, squadName )
 	}
 
 	foreach ( entity npc in npcArray )

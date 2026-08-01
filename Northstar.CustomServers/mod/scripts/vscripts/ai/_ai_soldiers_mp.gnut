@@ -13,7 +13,7 @@ array<entity> function CreateNPCSForDroppod( int team, int count, vector spawnOr
 
 	for ( int idx = 0; idx < count; idx++ )
 	{
-		entity ent = NPCSpawnFuncWrapper( count, idx, spawnFunc, team, squadName, spawnOrigin, spawnAngles )
+		entity ent = NPCSpawnFuncWrapper( spawnFunc, team, squadName, spawnOrigin, spawnAngles )
 
 		if ( !ent )
 			continue
@@ -38,7 +38,7 @@ array<entity> function CreateNPCSForDroppod( int team, int count, vector spawnOr
 }
 
 // this function allows you to pass a single spawnFunc or an array. That way you can spawn different kinds of AI in the same vehicle
-entity function NPCSpawnFuncWrapper( int count, int index, entity functionref( int, vector, vector ) spawnFunc, int team, string squadName, vector origin, vector angles )
+entity function NPCSpawnFuncWrapper( entity functionref( int, vector, vector ) spawnFunc, int team, string squadName, vector origin, vector angles )
 {
 	Assert( type( spawnFunc ) == "function" )
 
