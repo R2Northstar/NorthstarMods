@@ -153,9 +153,10 @@ void function NoClassicMPSpawn( entity player )
 
 	if ( IsAlive( player ) )
 	{
-		Loadouts_TryGivePilotLoadout( player )
-
 		WaitEndFrame()
+
+		HolsterViewModelAndDisableWeapons( player )
+		DeployViewModelAndEnableWeapons( player )
 
 		if ( IsValidPlayer( player ) )
 			ScreenFadeFromBlack( player, 0.0 )
