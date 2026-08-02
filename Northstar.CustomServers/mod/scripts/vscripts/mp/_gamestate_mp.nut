@@ -159,9 +159,6 @@ void function NoClassicMPSpawn( entity player )
 	{
 		WaitEndFrame()
 
-		HolsterViewModelAndDisableWeapons( player )
-		DeployViewModelAndEnableWeapons( player )
-
 		if ( IsValidPlayer( player ) )
 			ScreenFadeFromBlack( player, 0.0 )
 	}
