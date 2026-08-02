@@ -922,6 +922,9 @@ void function RespawnAsTitan( entity player, entity spawnPoint = null )
 				GiveTitanfallScoreMedal( player ) // In case of classic Warpfall animation, give the Titanfall Score Medal at this moment, so player can actually see it
 
 				PutEntityInSafeSpot( player, null, null, spawnPoint.GetOrigin(), player.GetOrigin() ) // Just to Ensure player is not clipping in any geometry
+
+				if ( GetGameState() <= eGameState.Prematch ) // Once we've gotten to here, any special spawning logic like cinematic spawn and classic MP spawn have already completed if applicable. Freeze controls if in prematch because we don't want players running around in prematch. Controls will be unfrozen when gamestate switches to playing
+					player.FreezeControlsOnServer()
 			}
 
 			if ( IsValid( titan ) )

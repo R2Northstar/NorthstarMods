@@ -80,9 +80,12 @@ void function ClassicMP_DefaultNoIntro_TitanSpawnPlayer( entity player )
 
 	AddCinematicFlag( player, CE_FLAG_CLASSIC_MP_SPAWNING )
 
-	PutPlayerInObserverMode( player, OBS_MODE_STATIC_LOCKED )
-
 	ScreenFadeFromBlack( player, 1.0, 1.0 )
+
+	if ( player.isSpawning )
+		return
+
+	PutPlayerInObserverMode( player, OBS_MODE_STATIC_LOCKED )
 
 	if ( Time() >= expect float( level.nv.gameStartTime ) ) // LTS instantly spawns players
 		WaitFrame()

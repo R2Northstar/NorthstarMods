@@ -205,8 +205,7 @@ void function SpawnPlayerIntoDropship( entity player, int playerDropshipIndex, e
 	player.MovementDisable()
 	player.SetIsValidChaseObserverTarget( false )
 
-	HolsterViewModelAndDisableWeapons( player )
-	thread DelayedFrameFadeout( player )
+	thread DelayedFrame( player )
 	Remote_CallFunction_NonReplay( player, "ServerCallback_SpawnFactionCommanderInDropship", playerDropship.GetEncodedEHandle(), playerDropship.ai.spawnTime )
 	Remote_CallFunction_NonReplay( player, "ServerCallback_CreateDropShipIntLighting", playerDropship.GetEncodedEHandle(), playerDropship.GetTeam() )
 	Remote_CallFunction_NonReplay( player, "ServerCallback_SetClassicSkyScale", playerDropship.GetEncodedEHandle(), 0.7 )
@@ -365,11 +364,13 @@ string function GetDropshipIntroAnimation()
 	return "dropship_classic_mp_flyin"
 }
 
-void function DelayedFrameFadeout( entity player )
+void function DelayedFrame( entity player )
 {
 	player.EndSignal( "OnDestroy" )
 
 	WaitEndFrame()
+
+	HolsterViewModelAndDisableWeapons( player )
 
 	ScreenFadeFromBlack( player, 2.0, 0.5 )
 }
