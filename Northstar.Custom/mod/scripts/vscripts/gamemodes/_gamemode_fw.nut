@@ -151,7 +151,7 @@ void function GamemodeFW_Init()
 	SetRecalculateTitanReplacementPointCallback( FW_ReCalculateTitanReplacementPoint )
 	SetRequestTitanAllowedCallback( FW_RequestTitanAllowed )
 
-	level.modifyAISlots[ FW_AI_TEAM ] = AI_HARD_LIMIT - expect int( level.max_npc_per_side )
+	level.modifyAISlots[ FW_AI_TEAM ] = AI_HARD_LIMIT
 }
 
 // //////////////////////////////

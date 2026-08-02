@@ -121,7 +121,7 @@ void function GamemodeAt_Init()
 	// Initilaze gamemode entities
 	AddCallback_EntitiesDidLoad( OnEntitiesDidLoad )
 
-	level.modifyAISlots[ AT_AI_TEAM ] = AI_HARD_LIMIT - expect int( level.max_npc_per_side )
+	level.modifyAISlots[ AT_AI_TEAM ] = AI_HARD_LIMIT
 }
 
 void function RateSpawnpoints_AT( int checkclass, array<entity> spawnpoints, int team, entity player )

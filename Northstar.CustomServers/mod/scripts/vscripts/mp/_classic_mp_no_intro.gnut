@@ -47,8 +47,6 @@ void function ClassicMP_DefaultNoIntro_SpawnPlayer( entity player )
 	if ( IsPrivateMatchSpectator( player ) )
 		return
 
-	AddCinematicFlag( player, CE_FLAG_CLASSIC_MP_SPAWNING )
-
 	if ( ShouldSpawnAsTitan( player ) )
 		thread ClassicMP_DefaultNoIntro_TitanSpawnPlayer( player )
 	else
@@ -60,13 +58,15 @@ void function ClassicMP_DefaultNoIntro_PilotSpawnPlayer( entity player )
 {
 	player.EndSignal( "OnDestroy" )
 
+	WaitEndFrame()
+
+	AddCinematicFlag( player, CE_FLAG_CLASSIC_MP_SPAWNING )
+
 	if ( PlayerCanSpawn( player ) )
 		DecideRespawnPlayer( player )
 
 	Loadouts_TryGivePilotLoadout( player )
 	ResetPlayerCooldowns( player ) // Prevention of case they used abilities or grenades near round end
-
-	WaitEndFrame()
 
 	ScreenFadeFromBlack( player, 1.0, 1.0 )
 }
@@ -76,9 +76,11 @@ void function ClassicMP_DefaultNoIntro_TitanSpawnPlayer( entity player )
 {
 	player.EndSignal( "OnDestroy" )
 
-	PutPlayerInObserverMode( player, OBS_MODE_STATIC_LOCKED )
-
 	WaitEndFrame()
+
+	AddCinematicFlag( player, CE_FLAG_CLASSIC_MP_SPAWNING )
+
+	PutPlayerInObserverMode( player, OBS_MODE_STATIC_LOCKED )
 
 	ScreenFadeFromBlack( player, 1.0, 1.0 )
 

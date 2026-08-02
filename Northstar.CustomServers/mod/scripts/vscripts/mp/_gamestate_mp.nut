@@ -1185,11 +1185,11 @@ void function GameRulesThink_Epilogue()
 
 		foreach ( entity player in players )
 		{
-			// allow players who died before the game ended and may still be watching kill replay a chance to respawn
-			if ( !IsAlive( player ) && player.p.postDeathThreadStartTime < epilogueRespawnTimeLimit )
+			if ( IsAlive( player ) )
 				continue
 
-			if ( !IsPlayerEliminated( player ) )
+			// allow players who died before the game ended and may still be watching kill replay a chance to respawn
+			if ( player.p.postDeathThreadStartTime >= epilogueRespawnTimeLimit && !IsPlayerEliminated( player ) )
 				SetPlayerEliminated( player )
 		}
 	}
