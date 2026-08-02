@@ -2,18 +2,9 @@ global function CodeCallback_MapInit
 
 void function CodeCallback_MapInit()
 {
-	// titan start spawnpoints are on the wrong side of the map or team for some reason
-	AddSpawnCallback( "info_spawnpoint_titan_start", InvertTitanStartSpawnsTeams )
-
 	// Load Frontier Defense Data
 	if ( GameRules_GetGameMode() == FD )
 		initFrontierDefenseData()
 
 	FlagSet( "LevelHasRoof" ) // So it forces Warpfall on all Titans like vanilla
-}
-
-void function InvertTitanStartSpawnsTeams( entity spawn )
-{
-	if ( IsIMCOrMilitiaTeam( spawn.GetTeam() ) )
-		SetTeam( spawn, GetOtherTeam( spawn.GetTeam() ) )
 }
