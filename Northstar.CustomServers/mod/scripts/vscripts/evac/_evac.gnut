@@ -501,24 +501,25 @@ void function AddPlayerToEvacDropship( entity dropship, entity player )
 	if ( !PlayerInDropship( player, dropship ) )
 		return
 
-	player.ContextAction_SetBusy()
+	// need to cancel if the dropship dies
+	dropship.EndSignal( "OnDeath", "OnDestroy" )
+	player.EndSignal( "OnDestroy" )
 
-	WaitFrame()
+	player.ContextAction_SetBusy()
+	player.ClearInvulnerable() // being invulnerable will make EvacPlayerDamaged not get called
+
+	AddEntityCallback_OnDamaged( player, EvacPlayerDamaged ) // prevents all damage while attached to dropship
+
+	WaitEndFrame()
 
 	UpdatePlayerStat( player, "misc_stats", "evacsAttempted" )
 	AddPlayerScore( player, "GetToChopper" )
 	SetPlayerForcedDialogueOnly( player, true ) // No more misc dialogue
 
-	// need to cancel if the dropship dies
-	dropship.EndSignal( "OnDeath", "OnDestroy" )
-	player.EndSignal( "OnDestroy" )
-
-	player.ClearInvulnerable() // being invulnerable will make EvacPlayerDamaged not get called
 	player.UnforceCrouch()
 	player.ForceStand()
 	player.SetIsValidChaseObserverTarget( false )
 
-	AddEntityCallback_OnDamaged( player, EvacPlayerDamaged ) // prevents all damage while attached to dropship
 	Remote_CallFunction_NonReplay( player, "ServerCallback_CreateDropShipIntLighting", dropship.GetEncodedEHandle(), dropship.GetTeam() )
 
 	if ( dropship in file.shouldholsterweapons && file.shouldholsterweapons[ dropship ] ) // don't let people have their weapons in the dropship after it leaves
@@ -660,10 +661,7 @@ void function EvacDropshipDamaged( entity evacShip, var damageInfo )
 
 void function EvacPlayerDamaged( entity player, var damageInfo )
 {
-	if (
-		!IsValid( player.GetParent() ) || !IsAlive( player.GetParent() ) || !( "evacSlots" in player.GetParent().s ) ||
-		!PlayerInDropship( player, player.GetParent() )
-	)
+	if ( !PlayerInDropship( player, player.GetParent() ) )
 		return
 
 	if (
