@@ -325,6 +325,9 @@ void function Evac( int evacTeam, float initialWait, float arrivalTime, float wa
 	trigger.SetParent( dropship, "ORIGIN" )
 
 	DispatchSpawn( trigger )
+
+	trigger.s.players <- []
+
 	TriggerEnterCallback( trigger, canBoardCallback, dropship )
 
 	dropship.s.evacTrigger <- trigger
@@ -482,6 +485,7 @@ void function Evac( int evacTeam, float initialWait, float arrivalTime, float wa
 void function AddPlayerToEvacDropship( entity dropship, entity player )
 {
 	int slot = RandomInt( dropship.s.evacSlots.len() )
+
 	for ( int i = 0; i < dropship.s.evacSlots.len(); i++ )
 	{
 		if ( !IsValid( dropship.s.evacSlots[ slot ] ) )
@@ -496,6 +500,10 @@ void function AddPlayerToEvacDropship( entity dropship, entity player )
 	// no slots available
 	if ( !PlayerInDropship( player, dropship ) )
 		return
+
+	player.ContextAction_SetBusy()
+
+	WaitFrame()
 
 	UpdatePlayerStat( player, "misc_stats", "evacsAttempted" )
 	AddPlayerScore( player, "GetToChopper" )
@@ -697,15 +705,41 @@ void function TriggerEnterCallback( entity trigger, bool functionref( entity, en
 	trigger.SetEnterCallback(
 		void function( entity trigger, entity player ) : ( canBoardCallback, dropship )
 		{
-			if (
-				!player.IsPlayer() || !IsAlive( player ) || player.IsTitan() || IsPlayerEmbarking( player ) || IsPlayerDisembarking( player ) ||
-				player.ContextAction_IsActive() || !canBoardCallback( dropship, player ) || PlayerInDropship( player, dropship )
-			)
-				return
-
-			thread AddPlayerToEvacDropship( dropship, player )
+			trigger.s.players.append( player )
 		}
 	)
+
+	trigger.SetLeaveCallback(
+		void function( entity trigger, entity player ) : ( canBoardCallback, dropship )
+		{
+			trigger.s.players.removebyvalue( player )
+		}
+	)
+
+	thread void function() : ( trigger, canBoardCallback, dropship )
+	{
+		while ( "players" in trigger.s )
+		{
+			foreach ( player in trigger.s.players )
+			{
+				if ( !IsValid( player ) )
+				{
+					trigger.s.players.removebyvalue( player )
+					return
+				}
+
+				expect entity( player )
+
+				if (
+					player.IsPlayer() && IsAlive( player ) && !player.IsTitan() && !IsPlayerEmbarking( player ) && !IsPlayerDisembarking( player ) &&
+					!player.ContextAction_IsActive() && !IsValid( player.GetParent() ) && canBoardCallback( dropship, player ) && !PlayerInDropship( player, dropship )
+				)
+					thread AddPlayerToEvacDropship( dropship, player )
+			}
+
+			WaitFrame()
+		}
+	}()
 }
 
 int function GetEvacNodeNumber()
