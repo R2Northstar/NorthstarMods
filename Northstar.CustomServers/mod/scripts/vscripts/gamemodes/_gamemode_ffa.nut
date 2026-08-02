@@ -4,6 +4,9 @@ void function FFA_Init()
 {
 	SetupGenericFFAChallenge()
 
+	SetPlayThreeMinuteMusic( true )
+	SetThreeMinuteMusicID( eMusicPieceID.LEVEL_THREE_MINUTE )
+
 	if ( GAMETYPE == FREE_AGENCY )
 	{
 		// need a way to disable passive earnmeter gain

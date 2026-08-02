@@ -230,7 +230,10 @@ void function ReloadMods( bool reloadorretry = false )
 	#elseif CLIENT
 		void function ServerCallback_StopPlayingMinuteMusic( array<string> args )
 		{
-			if ( IsMusicTrackPlaying( eMusicPieceID.LEVEL_THREE_MINUTE ) || IsMusicTrackPlaying( eMusicPieceID.LEVEL_LAST_MINUTE ) )
+			if (
+				IsMusicTrackPlaying( eMusicPieceID.LEVEL_THREE_MINUTE ) || IsMusicTrackPlaying( eMusicPieceID.GAMEMODE_1 ) ||
+				IsMusicTrackPlaying( eMusicPieceID.LEVEL_LAST_MINUTE )
+			)
 				StopMusic()
 		}
 	#endif

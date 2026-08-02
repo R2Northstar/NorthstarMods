@@ -9,6 +9,7 @@ void function GamemodeCP_Init()
 
 	ScoreEvent_SetupEarnMeterValuesForMixedModes()
 	SetPlayThreeMinuteMusic( true )
+	SetPlayThreeMinuteMusicCheck( ThreeMinuteMusicCheck )
 
 	AddCallback_EntitiesDidLoad( EntitiesDidLoad_SpawnHardpoints )
 	AddCallback_OnPlayerKilled( Hardpoints_OnPlayerKilled_UpdateMedals )
@@ -138,4 +139,9 @@ void function EntitiesDidLoad_SpawnHardpoints()
 	}
 
 	thread TrackChevronStates()
+}
+
+bool function ThreeMinuteMusicCheck( int timeLeftSeconds, float timeLimit )
+{
+	return level.nv.matchProgress >= 70 || timeLeftSeconds < ( timeLimit * 0.4 - 60 )
 }

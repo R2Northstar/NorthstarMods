@@ -56,6 +56,7 @@ void function GamemodeAITdm_Init()
 	SetupGenericTDMChallenge()
 	SetAILethality( eAILethality.High )
 	SetPlayThreeMinuteMusic( true )
+	SetPlayThreeMinuteMusicCheck( ThreeMinuteMusicCheck )
 
 	level.endOfRoundPlayerState = ENDROUND_FREE
 }
@@ -253,4 +254,9 @@ void function OnSpectreLeeched( entity spectre, entity player )
 
 	player.SetPlayerNetInt( "AT_bonusPoints", assaultscore - assaultscore256 * 256 )
 	player.SetPlayerNetInt( "AT_bonusPoints256", assaultscore256 )
+}
+
+bool function ThreeMinuteMusicCheck( int timeLeftSeconds, float timeLimit )
+{
+	return level.nv.matchProgress >= 75 || timeLeftSeconds < ( timeLimit * 0.4 - 60 )
 }

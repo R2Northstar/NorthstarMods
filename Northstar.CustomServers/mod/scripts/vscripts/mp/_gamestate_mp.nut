@@ -8,6 +8,8 @@ global function AddCallback_OnRoundEndCleanup
 
 global function SetTimelimitCompleteFunc
 global function SetPlayThreeMinuteMusic
+global function SetThreeMinuteMusicID
+global function SetPlayThreeMinuteMusicCheck
 global function SetEpilogueEliminationBased
 global function SetSwitchSidesBased
 global function SetForceNoMoreRounds
@@ -60,6 +62,8 @@ struct
 	bool endingMatch = false
 	float timeLimitOverride = -1
 	bool shouldPlayThreeMinuteMusic = false
+	int threeMinuteMusicID = eMusicPieceID.GAMEMODE_1
+	bool functionref( int, float ) shouldPlayThreeMinuteMusicCheck = null
 	bool epilogueEliminationBased = true
 } file
 
@@ -531,6 +535,16 @@ void function SetTimelimitCompleteFunc( bool functionref() timeLimitCompleteFunc
 void function SetPlayThreeMinuteMusic( bool value )
 {
 	file.shouldPlayThreeMinuteMusic = value
+}
+
+void function SetThreeMinuteMusicID( int value )
+{
+	file.threeMinuteMusicID = value
+}
+
+void function SetPlayThreeMinuteMusicCheck( bool functionref( int, float ) value )
+{
+	file.shouldPlayThreeMinuteMusicCheck = value
 }
 
 void function SetEpilogueEliminationBased( bool value )
@@ -1997,7 +2011,7 @@ bool function TimeLimit_Complete()
 	{
 		array<entity> players = GetPlayerArray()
 
-		foreach ( player in players )
+		foreach ( entity player in players )
 		{
 			EmitSoundOnEntity( player, "Menu_Match_Countdown" )
 
@@ -2008,8 +2022,13 @@ bool function TimeLimit_Complete()
 
 	if ( GamePlaying() )
 	{
+		bool playLastMinuteMusic = false
+		bool playThreeMinuteMusic = false
+
 		if ( GetCurrentPlaylistVarInt( "last_minute_music_enabled", 1 ) && timeLeftSeconds <= 60 )
 		{
+			playLastMinuteMusic = true
+
 			if ( !file.playingLastMinuteMusic )
 			{
 				file.playingLastMinuteMusic = true
@@ -2021,23 +2040,31 @@ bool function TimeLimit_Complete()
 					PlayCurrentTeamMusicEventsOnPlayer( player )
 			}
 		}
-		else if (
+
+		if (
 			GetCurrentPlaylistVarInt( "three_minute_music_enabled", 1 ) && file.shouldPlayThreeMinuteMusic &&
-			( level.nv.matchProgress >= 70 || timeLeftSeconds < ( timeLimit * 0.4 - 60 ) )
+			(
+				file.shouldPlayThreeMinuteMusicCheck != null
+					? file.shouldPlayThreeMinuteMusicCheck( timeLeftSeconds, timeLimit )
+					: ( level.nv.matchProgress >= 70 || timeLeftSeconds < ( timeLimit * 0.4 ) )
+			)
 		)
 		{
+			playThreeMinuteMusic = true
+
 			if ( !file.playingThreeMinuteMusic )
 			{
 				file.playingThreeMinuteMusic = true
 
 				foreach ( int team in [ TEAM_IMC, TEAM_MILITIA ] )
-					CreateTeamMusicEvent( team, eMusicPieceID.LEVEL_THREE_MINUTE, Time() )
+					CreateTeamMusicEvent( team, file.threeMinuteMusicID, Time() )
 
 				foreach ( entity player in GetPlayerArray() )
 					PlayCurrentTeamMusicEventsOnPlayer( player )
 			}
 		}
-		else if ( file.playingLastMinuteMusic || file.playingThreeMinuteMusic )
+
+		if ( !playLastMinuteMusic && !playThreeMinuteMusic && ( file.playingLastMinuteMusic || file.playingThreeMinuteMusic ) )
 		{
 			file.playingLastMinuteMusic = false
 			file.playingThreeMinuteMusic = false
