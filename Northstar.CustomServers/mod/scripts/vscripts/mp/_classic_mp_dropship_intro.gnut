@@ -372,5 +372,5 @@ void function DelayedFrame( entity player )
 
 	HolsterViewModelAndDisableWeapons( player )
 
-	ScreenFadeFromBlack( player, 2.0, 0.5 )
+	ScreenFadeFromBlack( player, 0.5, 0.5 )
 }

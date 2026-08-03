@@ -447,7 +447,6 @@ void function PlayerWatchesWargamesIntro( entity player )
 	if ( ( file.introStartTime + 8.0 ) - Time() > 0.5 )
 		TrainingPod_ViewConeLock_PodOpen( player )
 
-	HolsterViewModelAndDisableWeapons( player )
 	player.MovementDisable()
 
 	if ( factionTeam == TEAM_MILITIA && GetFactionChoice( player ) == "faction_marvin" )
@@ -476,7 +475,7 @@ void function PlayerWatchesWargamesIntro( entity player )
 
 	thread FirstPersonSequence( sequence, player, playerPod )
 
-	DelayedFrameFadeout( player )
+	DelayedFrame( player )
 
 	// 8 seconds of nothing before we start the pod sequence
 	wait ( file.introStartTime + 8.0 ) - Time()
@@ -745,11 +744,13 @@ void function PodFXCleanup( entity pod )
 	}
 }
 
-void function DelayedFrameFadeout( entity player )
+void function DelayedFrame( entity player )
 {
 	player.EndSignal( "OnDestroy" )
 
 	WaitEndFrame()
 
-	ScreenFadeFromBlack( player, 2.0, 0.5 )
+	HolsterViewModelAndDisableWeapons( player )
+
+	ScreenFadeFromBlack( player, 0.5, 0.5 )
 }
