@@ -1116,7 +1116,7 @@ void function WaveBreak_AnnounceHarvesterDamaged()
 {
 	if ( !file.harvesterWasDamaged )
 		PlayFactionDialogueToTeam( "fd_waveRecapPerfect", TEAM_MILITIA, true )
-	else
+	else if ( IsHarvesterAlive( fd_harvester.harvester ) )
 	{
 		float damagepercent = ( ( file.harvesterDamageTaken / fd_harvester.harvester.GetMaxHealth().tofloat() ) * 100 )
 		float healthpercent = ( ( fd_harvester.harvester.GetHealth().tofloat() / fd_harvester.harvester.GetMaxHealth() ) * 100 )
@@ -1553,7 +1553,9 @@ bool function ClientCommandCallbackUseShieldBoost( entity player, array<string> 
 	)
 		return false
 
-	if ( GetGlobalNetTime( "FD_harvesterInvulTime" ) < Time() && player.GetPlayerNetInt( "numHarvesterShieldBoost" ) > 0 )
+	if (
+		IsHarvesterAlive( fd_harvester.harvester ) && GetGlobalNetTime( "FD_harvesterInvulTime" ) < Time() && player.GetPlayerNetInt( "numHarvesterShieldBoost" ) > 0
+	)
 	{
 		fd_harvester.harvester.SetShieldHealth( fd_harvester.harvester.GetShieldHealthMax() )
 
@@ -2787,12 +2789,20 @@ void function HarvesterThink()
 	entity harvester = fd_harvester.harvester
 	float lastTime = Time()
 	wait 2
+
+	if ( !IsHarvesterAlive( harvester ) )
+		return
+
 	EmitSoundOnEntity( harvester, HARVESTER_SND_STARTUP )
 	fd_harvester.rings.Anim_Play( HARVESTER_ANIM_ACTIVATING )
 	entity mainBeamStart = PlayLoopFXOnEntity( $"P_harvester_beam", harvester )
 	mainBeamStart.DisableHibernation()
 	fd_harvester.particleFXArray.append( mainBeamStart )
 	wait 4
+
+	if ( !IsHarvesterAlive( harvester ) )
+		return
+
 	harvester.SetNoTarget( false )
 	fd_harvester.rings.Anim_Play( HARVESTER_ANIM_ACTIVE )
 	int lastShieldHealth = harvester.GetShieldHealth()
@@ -2923,7 +2933,7 @@ void function MonitorHarvesterProximity( entity harvester )
 #if DEV
 	void function DEV_FD_ToggleHarvesterGodMode()
 	{
-		if ( !IsValid( fd_harvester.harvester ) )
+		if ( !IsHarvesterAlive( fd_harvester.harvester ) )
 			return
 
 		if ( fd_harvester.harvester.IsInvulnerable() )
@@ -2934,7 +2944,7 @@ void function MonitorHarvesterProximity( entity harvester )
 
 	void function DEV_FD_KillHarvester()
 	{
-		if ( IsValid( fd_harvester.harvester ) )
+		if ( IsHarvesterAlive( fd_harvester.harvester ) )
 			fd_harvester.harvester.SetHealth( 1 )
 	}
 #endif
