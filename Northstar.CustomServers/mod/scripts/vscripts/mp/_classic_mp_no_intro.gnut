@@ -80,7 +80,7 @@ void function ClassicMP_DefaultNoIntro_TitanSpawnPlayer( entity player )
 
 	AddCinematicFlag( player, CE_FLAG_CLASSIC_MP_SPAWNING )
 
-	ScreenFadeFromBlack( player, 0.5, 0.5 )
+	ScreenFadeFromBlack( player, 0.0, 0.0 )
 
 	if ( player.isSpawning )
 		return
