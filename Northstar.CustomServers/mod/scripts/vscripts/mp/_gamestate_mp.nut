@@ -792,7 +792,9 @@ void function GameStateEnter_Prematch()
 	}
 
 	if ( !GetClassicMPMode() )
-		thread StartGameWithoutClassicMP()
+		foreach ( entity player in GetPlayerArray() )
+			if ( !IsPrivateMatchSpectator( player ) )
+				thread NoClassicMPSpawn( player )
 }
 
 void function GameRulesThink_Prematch()
@@ -819,13 +821,6 @@ void function SetPrematchStartTime()
 		SetServerVar( "roundStartTime", Time() + 3.0 )
 		SetServerVar( "gameStartTime", Time() + 3.0 )
 	}
-}
-
-void function StartGameWithoutClassicMP()
-{
-	foreach ( entity player in GetPlayerArray() )
-		if ( !IsPrivateMatchSpectator( player ) )
-			thread NoClassicMPSpawn( player )
 }
 
 /*
