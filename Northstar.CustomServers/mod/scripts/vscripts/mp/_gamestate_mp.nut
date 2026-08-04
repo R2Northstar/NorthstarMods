@@ -1340,8 +1340,6 @@ void function ClearPlayers()
 {
 	svGlobal.levelEnt.Signal( "ClearPlayers" )
 
-	SetPlayerDeathsHidden( true )
-
 	foreach ( entity player in GetPlayerArray() )
 	{
 		// Depend on SwitchingSides etc to screenfade correctly
@@ -1389,8 +1387,6 @@ void function ClearPlayers()
 
 	foreach ( void functionref() callback in file.roundEndCleanupCallbacks )
 		callback()
-
-	delaythread( 0.0001 ) SetPlayerDeathsHidden( false )
 }
 
 float function GameState_GetTimeLimitOverride()

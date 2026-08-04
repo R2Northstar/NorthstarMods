@@ -4,7 +4,6 @@ globalize_all_functions
 
 struct
 {
-	bool playerDeathsHidden = false
 	int titanDamageGameStat = -1
 
 	entity functionref( entity player, entity basePoint ) recalculateRespawnAsTitanStartPointCallback
@@ -380,20 +379,31 @@ void function PlayerAssistedKill( entity attacker, entity victim )
 void function CodeCallback_OnPlayerKilled( entity player, var damageInfo )
 {
 	bool gamePlayingOrSuddenDeath = GamePlayingOrSuddenDeath() // PlayerOrNPCKilled can result in the gamestate changing, so store it before that happens
-
-	if ( gamePlayingOrSuddenDeath && !file.playerDeathsHidden )
-		player.AddToPlayerGameStat( PGS_DEATHS, 1 )
-
 	entity attacker = DamageInfo_GetAttacker( damageInfo )
+	int damageSourceId = DamageInfo_GetDamageSourceIdentifier( damageInfo )
 
-	if ( !file.playerDeathsHidden && IsValid( attacker ) )
-		Remote_CallFunction_NonReplay(
-			player,
-			"ServerCallback_YouDied",
-			attacker.GetEncodedEHandle(),
-			GetHealthFrac( attacker ),
-			DamageInfo_GetDamageSourceIdentifier( damageInfo )
-		)
+	if ( damageSourceId != eDamageSourceId.round_end )
+	{
+		CreateNoSpawnArea( GetOtherTeam( player.GetTeam() ), GetOtherTeam( player.GetTeam() ), player.GetOrigin(), DEATHCAM_TIME + 0.5, 256 )
+
+		if ( gamePlayingOrSuddenDeath )
+			player.AddToPlayerGameStat( PGS_DEATHS, 1 )
+
+		if ( IsValid( attacker ) )
+			Remote_CallFunction_NonReplay( player, "ServerCallback_YouDied", attacker.GetEncodedEHandle(), GetHealthFrac( attacker ), damageSourceId )
+	}
+
+	if ( ShouldPlayerBeEliminated( player ) )
+		SetPlayerEliminated( player )
+
+	if ( player.IsTitan() )
+		SoulDies( player.GetTitanSoul(), damageInfo ) // cleanup some titan stuff, no idea where else to put this
+
+	if ( PlayerHasPassive( player, ePassives.PAS_DEAD_MANS_TRIGGER ) )
+		DetonateAllPlantedExplosives( player )
+
+	if ( damageSourceId == eDamageSourceId.damagedef_titan_fall )
+		PlayDeathFromTitanFallSounds( player )
 
 	PlayerOrNPCKilled( player, damageInfo )
 	HandleDeathPackage( player, damageInfo )
@@ -427,16 +437,16 @@ void function PostDeathThread_MP( entity player, var damageInfo, bool gamePlayin
 	// disable prediction to prevent it messing with ragdoll in some places, as well as killreplay and such
 	player.SetPredictionEnabled( false )
 
-	if ( player.IsTitan() )
-		SoulDies( player.GetTitanSoul(), damageInfo ) // cleanup some titan stuff, no idea where else to put this
-
 	ClearRespawnAvailable( player )
 
 	OnThreadEnd(
 		function() : ( player )
 		{
-			if ( IsValid( player ) )
-				player.s.inPostDeath = false
+			if ( !IsValid( player ) )
+				return
+
+			player.s.inPostDeath = false
+			player.SetPredictionEnabled( true )
 		}
 	)
 
@@ -454,6 +464,12 @@ void function PostDeathThread_MP( entity player, var damageInfo, bool gamePlayin
 
 	player.Signal( "RodeoOver" )
 	player.ClearParent()
+	player.StartObserverMode( OBS_MODE_DEATHCAM )
+
+	if ( ShouldSetObserverTarget( attacker ) )
+		player.SetObserverTarget( attacker )
+	else
+		player.SetObserverTarget( null )
 
 	// do some pre-replay stuff if we're gonna do a replay
 	float replayLength = CalculateLengthOfKillReplay( player, methodOfDeath )
@@ -469,25 +485,16 @@ void function PostDeathThread_MP( entity player, var damageInfo, bool gamePlayin
 		player.StartObserverMode( OBS_MODE_STATIC_LOCKED )
 		player.SetObserverTarget( null )
 	}
-	else
-	{
-		player.StartObserverMode( OBS_MODE_DEATHCAM )
 
-		if ( ShouldSetObserverTarget( attacker ) )
-			player.SetObserverTarget( attacker )
-		else
-			player.SetObserverTarget( null )
-	}
+	wait 0.1 // give the gamestate a chance to change if it's going to
 
-	float deathcamLength = GetDeathCamLength( player )
+	float deathcamLength = GetDeathCamLength( player ) - 0.4
+
+	wait 0.3 // button press debounce
+
 	wait deathcamLength
 
-	player.SetPlayerSettings( "spectator" ) // prevent a crash with going from titan => pilot on respawn
-	player.StopPhysics() // need to set this after SetPlayerSettings
-	player.SetPhysics( MOVETYPE_NONE ) // so they don't move around while dead, resets to default automatically on respawn
-
-	if ( !player.GetParent() )
-		PutPlayerInObserverMode( player, OBS_MODE_STATIC_LOCKED )
+	float deathScreenWaitTime = deathcamLength + 0.4
 
 	// hack: double check if killcams are enabled and valid here in case gamestate has changed this
 	shouldDoReplay = shouldDoReplay && Replay_IsEnabled() && IsValid( attacker ) && !IsRoundWinningKillReplayPlaying()
@@ -503,21 +510,27 @@ void function PostDeathThread_MP( entity player, var damageInfo, bool gamePlayin
 
 	if ( !IsEliminationBased() || ( !IsPlayerEliminated( player ) && GetGameState() > eGameState.Prematch && GetGameState() <= eGameState.SuddenDeath ) )
 	{
-		// is it a good idea to do respawn code in postdeaththread? fuck if i know lol
-		float respawnDelay = max( 0, GetCurrentPlaylistVarFloat( "respawn_delay", 0.0 ) - deathcamLength )
-
-		print( "respawn delay " + respawnDelay )
+		float respawnDelay = max( 0, GetCurrentPlaylistVarFloat( "respawn_delay", 0.0 ) )
 
 		UpdateNextRespawnTime( player, Time() + respawnDelay )
 		SetRespawnAvailable( player )
 
-		wait respawnDelay
+		printt( "respawn delay " + respawnDelay )
 
-		int forceRespawn = GetCurrentPlaylistVarInt( "player_force_respawn", 5 )
+		if ( GetKillReplayAfterTime( player ) + GetRespawnButtonCamTime( player ) < respawnDelay )
+		{
+			wait GetKillReplayAfterTime( player ) + GetRespawnButtonCamTime( player )
+
+			PutPlayerInObserverMode( player, OBS_MODE_STATIC_LOCKED )
+		}
+
+		wait respawnDelay - ( GetKillReplayAfterTime( player ) + GetRespawnButtonCamTime( player ) )
+
+		float forceRespawn = GetCurrentPlaylistVarFloat( "player_force_respawn", 0.0 )
 
 		// -1 is disabled, anything over is the time we wait in seconds
 		// before respawning the player
-		if ( forceRespawn >= 0 )
+		if ( forceRespawn >= 0.0 )
 			thread ForceRespawnMeSignalAfterDelay( player, forceRespawn )
 
 		if ( !player.s.respawnSelectionDone && GetGameState() != eGameState.SuddenDeath ) // Only wait outside Sudden Death since players gets inputs blocked to respawn if they die before Sudden Death starts
@@ -654,10 +667,8 @@ void function PutPlayerInObserverModeWithOriginAngles( entity player, int observ
 	PutPlayerInObserverMode_( player, observerMode, true, origin, angles )
 }
 
-// idk if this is a good delay or if it matches vanilla
-void function ForceRespawnMeSignalAfterDelay( entity player, int delay = 5 )
+void function ForceRespawnMeSignalAfterDelay( entity player, float delay = 0.0 )
 {
-	svGlobal.levelEnt.EndSignal( "GameStateChanged" )
 	player.EndSignal( "RespawnMe" )
 	player.EndSignal( "OnDestroy" )
 
@@ -671,6 +682,7 @@ void function ForceRespawnMeSignalAfterDelay( entity player, int delay = 5 )
 		#if DEV
 			printt( format( "Forcing player respawn for player %s (took >%d seconds to respawn)", player.GetPlayerName(), delay ) )
 		#endif
+
 		player.Signal( "RespawnMe" )
 	}
 }
@@ -722,7 +734,10 @@ bool function DecideRespawnPlayer( entity player )
 	{
 		printt( "DecideRespawnPlayer() - PlayerShouldObserve() was true: ", string( player ) )
 
-		if ( !( GetGameState() == eGameState.WinnerDetermined && IsRoundBased() && !RoundScoreLimit_Complete() ) && GetGameState() != eGameState.SwitchingSides ) // turning into a observer at this time will remove screen fade
+		if (
+			!( GetGameState() == eGameState.WinnerDetermined && IsRoundBased() && !RoundScoreLimit_Complete() ) && GetGameState() != eGameState.SwitchingSides &&
+			GetGameState() != eGameState.Postmatch
+		) // turning into a observer at this time will remove screen fade
 		{
 			if ( IsPlayerEliminated( player ) && GamePlaying() && IsRoundBased() )
 				SendHudMessage( player, "#GAMEMODE_RESPAWN_NEXT_ROUND", -1, 0.4, 255, 255, 255, 255, 1.0, 6.0, 1.0 )
@@ -755,6 +770,11 @@ bool function DecideRespawnPlayer( entity player )
 
 bool function PlayerShouldObserve( entity player )
 {
+	float respawn_delay = GetCurrentPlaylistVarFloat( "respawn_delay", 0.0 )
+
+	if ( player.s.respawnCount && ( Time() - player.p.postDeathThreadStartTime ) < respawn_delay )
+		return true
+
 	if ( player.GetTeam() == TEAM_SPECTATOR )
 		return true
 
@@ -992,11 +1012,6 @@ void function TryGameModeAnnouncement( entity player )
 void function GameModeAnnouncementOnlyPlaysOnceForPlayer( bool playsOnce )
 {
 	file.gameModeAnnouncementOnlyPlaysOnceForPlayer = playsOnce
-}
-
-void function SetPlayerDeathsHidden( bool hidden )
-{
-	file.playerDeathsHidden = hidden
 }
 
 void function TrackTitanDamageInPlayerGameStat( int playerGameStat )

@@ -529,7 +529,6 @@ void function FD_createHarvester()
 	thread MonitorHarvesterProximity( fd_harvester.harvester )
 	SetGlobalNetInt( "FD_waveState", WAVE_STATE_NONE )
 
-	SetPlayerDeathsHidden( false )
 	if ( !file.waveRestart )
 		EnableTitanSelection()
 	else
@@ -887,7 +886,6 @@ bool function runWave( int waveIndex, bool shouldDoBuyTime )
 		file.waveRestart = true
 		spawnedNPCs.clear()
 		resetWaveEvents()
-		SetPlayerDeathsHidden( true )
 
 		if ( FD_PlayersHaveRestartsLeft() )
 		{
