@@ -488,7 +488,7 @@ void function PostDeathThread_MP( entity player, var damageInfo, bool gamePlayin
 
 	wait 0.1 // give the gamestate a chance to change if it's going to
 
-	float deathcamLength = GetDeathCamLength( player ) - 0.4
+	float deathcamLength = GetDeathCamLength( player )
 
 	wait 0.3 // button press debounce
 
