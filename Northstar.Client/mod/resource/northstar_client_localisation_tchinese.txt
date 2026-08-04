@@ -342,7 +342,6 @@
 		"REPLACEMENT_WEAPON"             "替换的武器"
 		"WILL_RESET_ALL_SETTINGS"             "這將會重置所有屬於改條目的設置.\n\n此操作不可復原."
 		"NO_MODS"             "無可用模組! 前往 ^5588FF00northstar.thunderstore.io^0 下載更多."
-		"player_force_respawn"             "強制重生"
 		"PROGRESSION_TOGGLE_DISABLED_HEADER"             "啟用個人進度？"
 		"PROGRESSION_ENABLED_HEADER"             "個人進度已開啟！"
 		"PROGRESSION_TOGGLE_DISABLED_BODY"             "泰坦，武器， 陣營，皮膚以及其他一切需要解鎖的物品將通過升級或是使用點數購買來進行解鎖。.\n\n您可以隨時在多人大廳中更改此項。\n\n^CC000000警告：如果您已經裝備了尚未解鎖的物品，它們將會被重置！"

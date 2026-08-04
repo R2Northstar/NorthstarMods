@@ -314,7 +314,6 @@ Drücke Ja, um zuzustimmen. Du kannst diese Entscheidung jederzeit im Modmenü �
 		"SNS_BANKRUPT"             "Bankrott!"
 		"SNS_LEADER_BANKRUPT"             "Punktzahlführer Bankrott!"
 		"sns_reset_pulse_blade_cooldown_on_pulse_blade_kill"             "Kill Cooldown Zurücksetzungen"
-		"player_force_respawn"             "Erzwungener Respawn"
 		"SHOW_ONLY_NOT_REQUIRED"             "Nur optionale Mods"
 		"SHOW_ONLY_REQUIRED"             "Nur notwendige Mods"
 		"PROGRESSION_TOGGLE_DISABLED_HEADER"             "Fortschritt aktivieren?"

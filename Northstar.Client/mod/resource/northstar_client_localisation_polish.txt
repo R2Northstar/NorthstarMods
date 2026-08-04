@@ -225,7 +225,6 @@ Naciśnij Tak jeżeli wyrażasz zgodę. Wybór może zostać zmieniony w menu Mo
 		"classic_rodeo" "Klasyczne Rodeo"
 		"oob_timer_enabled" "Licznik czasu poza granicami mapy"
 		"riff_instagib" "Instagib Mode"
-		"player_force_respawn" "Wymuszone odrodzenie"
 
 		"riff_player_bleedout" "Krwawienie Pilotów"
 		"player_bleedout_forceHolster" "Schowaj bronie gdy powalonym"

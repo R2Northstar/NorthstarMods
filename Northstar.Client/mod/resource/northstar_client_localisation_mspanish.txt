@@ -318,7 +318,6 @@ Si estas de acuerdo con esto, presiona SI. Esta decision puede ser cambiada en e
 		"JSON_PARSE_ERROR"                "Error procesando respuesta json"
 		"UNSUPPORTED_VERSION"             "La versión que estas usando ya no esta soportada" 
 		"SHOW_ONLY_REQUIRED"             "Solo Mods requeridos" 
-		"player_force_respawn"             "Reaparición Forzada" 
 		"TOGGLE_PROGRESSION"             "Alternar Progreso" 
 		"PROGRESSION_TOGGLE_ENABLED_HEADER"             "Desactivar Progreso?" 
 		"NO_RESULTS"             "No hay resultados." 

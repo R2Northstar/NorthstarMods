@@ -492,9 +492,7 @@ void function PostDeathThread_MP( entity player, var damageInfo, bool gamePlayin
 
 	wait 0.3 // button press debounce
 
-	wait deathcamLength
-
-	float deathScreenWaitTime = deathcamLength + 0.4
+	wait deathcamLength - 0.4
 
 	// hack: double check if killcams are enabled and valid here in case gamestate has changed this
 	shouldDoReplay = shouldDoReplay && Replay_IsEnabled() && IsValid( attacker ) && !IsRoundWinningKillReplayPlaying()
@@ -510,12 +508,21 @@ void function PostDeathThread_MP( entity player, var damageInfo, bool gamePlayin
 
 	if ( !IsEliminationBased() || ( !IsPlayerEliminated( player ) && GetGameState() > eGameState.Prematch && GetGameState() <= eGameState.SuddenDeath ) )
 	{
-		float respawnDelay = max( 0, GetCurrentPlaylistVarFloat( "respawn_delay", 0.0 ) )
+		float respawnDelay = max( 0, GetCurrentPlaylistVarFloat( "respawn_delay", 0.0 ) - deathcamLength )
 
 		UpdateNextRespawnTime( player, Time() + respawnDelay )
 		SetRespawnAvailable( player )
 
-		printt( "respawn delay " + respawnDelay )
+		#if DEV
+			printt( "respawn delay " + respawnDelay )
+		#endif
+
+		thread ForceRespawnMeSignalAfterDelay(
+			player,
+			GetKillReplayAfterTime( player ) + GetRespawnButtonCamTime( player ) < respawnDelay
+				? respawnDelay + 0.1
+				: GetKillReplayAfterTime( player ) + GetRespawnButtonCamTime( player )
+		)
 
 		if ( GetKillReplayAfterTime( player ) + GetRespawnButtonCamTime( player ) < respawnDelay )
 		{
@@ -525,13 +532,6 @@ void function PostDeathThread_MP( entity player, var damageInfo, bool gamePlayin
 		}
 
 		wait respawnDelay - ( GetKillReplayAfterTime( player ) + GetRespawnButtonCamTime( player ) )
-
-		float forceRespawn = GetCurrentPlaylistVarFloat( "player_force_respawn", 0.0 )
-
-		// -1 is disabled, anything over is the time we wait in seconds
-		// before respawning the player
-		if ( forceRespawn >= 0.0 )
-			thread ForceRespawnMeSignalAfterDelay( player, forceRespawn )
 
 		if ( !player.s.respawnSelectionDone && GetGameState() != eGameState.SuddenDeath ) // Only wait outside Sudden Death since players gets inputs blocked to respawn if they die before Sudden Death starts
 			player.WaitSignal( "RespawnMe" )
@@ -587,6 +587,7 @@ void function ObserverThread( entity player )
 void function PutPlayerInObserverMode_( entity player, int observerMode, bool doSpecifyOriginAngles, vector specificOrigin, vector specificAngles )
 {
 	// clearing weapons or particles attached here can cause other errors
+	player.SetPlayerSettingsWithMods( "spectator", [] )
 	player.ClearHitboxAttachedChildren()
 
 	if ( doSpecifyOriginAngles )
@@ -672,19 +673,10 @@ void function ForceRespawnMeSignalAfterDelay( entity player, float delay = 0.0 )
 	player.EndSignal( "RespawnMe" )
 	player.EndSignal( "OnDestroy" )
 
-	if ( player.IsWatchingKillReplay() )
-		player.WaitSignal( "KillCamOver" )
-
 	wait delay
 
 	if ( IsRespawnAvailable( player ) )
-	{
-		#if DEV
-			printt( format( "Forcing player respawn for player %s (took >%d seconds to respawn)", player.GetPlayerName(), delay ) )
-		#endif
-
 		player.Signal( "RespawnMe" )
-	}
 }
 
 void function PlayerWatchesKillReplayWrapper( entity player, entity attacker, float timeSinceAttackerSpawned, float timeOfDeath, float beforeTime, table replayTracker )
@@ -770,11 +762,6 @@ bool function DecideRespawnPlayer( entity player )
 
 bool function PlayerShouldObserve( entity player )
 {
-	float respawn_delay = GetCurrentPlaylistVarFloat( "respawn_delay", 0.0 )
-
-	if ( player.s.respawnCount && ( Time() - player.p.postDeathThreadStartTime ) < respawn_delay )
-		return true
-
 	if ( player.GetTeam() == TEAM_SPECTATOR )
 		return true
 

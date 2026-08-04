@@ -378,7 +378,6 @@ Premi Sì se sei d'accordo. Questa scelta può essere modificata in qualsiasi mo
 		"sns_wme_kill_value"		"Valore per uccisione Wingman d'Elite"
 		"sns_reset_kill_value"		"Valore per uccisione Lama Impulsi/Esecuzione"
 		"PL_tffa_desc"		"Ogni pilota per sè, distruggi tutti i titan nemici."
-		"player_force_respawn"		"Respawn Forzato"
 		"PROGRESSION_TOGGLE_DISABLED_HEADER"		"Attivare Progressione?"
 		"TOGGLE_PROGRESSION"		"Attiva/Disattiva Progressione"
 		"Y_BUTTON_TOGGLE_PROGRESSION"		"%[Y_BUTTON|]% Attiva/Disattiva Progressione"
