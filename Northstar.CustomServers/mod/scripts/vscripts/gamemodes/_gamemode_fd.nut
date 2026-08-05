@@ -614,9 +614,7 @@ void function executeWave()
 	int currentWave = GetGlobalNetInt( "FD_currentWave" ) + 1
 	int enemyCount
 	printt( "WAVE START: " + currentWave )
-
-	if ( !file.devForceAdvanceToNextWave )
-		thread eventIterator_FrontierDefense()
+	thread eventIterator_FrontierDefense()
 
 	// Wait for all events to execute
 	while ( !file.devForceAdvanceToNextWave && IsHarvesterAlive( fd_harvester.harvester ) && !allEventsExecuted( GetGlobalNetInt( "FD_currentWave" ) ) )
@@ -728,7 +726,6 @@ bool function runWave( int waveIndex, bool shouldDoBuyTime )
 		file.players[ player ].defenseScoreThisRound = 0
 		file.players[ player ].moneyThisRound = GetPlayerMoney( player )
 	}
-
 	array<int> enemys = getHighestEnemyAmountsForWave( waveIndex )
 
 	if ( waveIndex > 0 )
