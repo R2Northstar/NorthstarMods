@@ -1,35 +1,7 @@
 untyped
+
 global function ClassicMP_DefaultDropshipIntro_Setup
-
-const array<string> DROPSHIP_IDLE_ANIMS = [
-	"Classic_MP_flyin_exit_playerA_idle",
-	"Classic_MP_flyin_exit_playerB_idle",
-	"Classic_MP_flyin_exit_playerC_idle",
-	"Classic_MP_flyin_exit_playerD_idle"
-]
-
-const array<string> DROPSHIP_IDLE_ANIMS_POV = [
-	"Classic_MP_flyin_exit_povA_idle",
-	"Classic_MP_flyin_exit_povB_idle",
-	"Classic_MP_flyin_exit_povC_idle",
-	"Classic_MP_flyin_exit_povD_idle"
-]
-
-const array<string> DROPSHIP_JUMP_ANIMS = [
-	"Classic_MP_flyin_exit_playerA_jump",
-	"Classic_MP_flyin_exit_playerB_jump",
-	"Classic_MP_flyin_exit_playerC_jump",
-	"Classic_MP_flyin_exit_playerD_jump"
-]
-
-const array<string> DROPSHIP_JUMP_ANIMS_POV = [
-	"Classic_MP_flyin_exit_povA_jump",
-	"Classic_MP_flyin_exit_povB_jump",
-	"Classic_MP_flyin_exit_povC_jump",
-	"Classic_MP_flyin_exit_povD_jump"
-]
-
-const int MAX_DROPSHIP_PLAYERS = 4
+global function PlayerJumpsFromDropship
 
 global const float DROPSHIP_INTRO_LENGTH = 15.0
 
@@ -98,7 +70,6 @@ void function OnPrematchStart()
 			continue
 
 		entity dropship = CreateDropship( createTeam, dropshipSpawn.GetOrigin(), dropshipSpawn.GetAngles() )
-		AddAnimEvent( dropship, "dropship_warpout", WarpoutEffect )
 
 		dropship.SetValueForModelKey( $"models/vehicle/crow_dropship/crow_dropship_hero.mdl" )
 
@@ -171,11 +142,11 @@ void function PutPlayerInDropship( entity player )
 	entity playerDropship
 	array<int> availableShipSlots
 	array<entity> introDropships
-	int playerDropshipIndex = RandomInt( MAX_DROPSHIP_PLAYERS )
+	int playerDropshipIndex = RandomInt( SQUAD_SIZE )
 	foreach ( dropship, playerslot in teamDropships )
 	{
 		introDropships.append( dropship )
-		for ( int i = 0; i < MAX_DROPSHIP_PLAYERS; i++ )
+		for ( int i = 0; i < SQUAD_SIZE; i++ )
 		{
 			if ( !IsValidPlayer( playerslot[ i ] ) )
 				availableShipSlots.append( i )
@@ -229,8 +200,8 @@ void function SpawnPlayerIntoDropship( entity player, int playerDropshipIndex, e
 
 		sequence.firstPersonAnim = DROPSHIP_IDLE_ANIMS_POV[ playerDropshipIndex ]
 		sequence.thirdPersonAnim = DROPSHIP_IDLE_ANIMS[ playerDropshipIndex ]
-		sequence.firstPersonAnimIdle = DROPSHIP_JUMP_ANIMS_POV[ playerDropshipIndex ]
-		sequence.thirdPersonAnimIdle = DROPSHIP_JUMP_ANIMS[ playerDropshipIndex ]
+		sequence.firstPersonAnimIdle = DROPSHIP_EXIT_ANIMS_POV[ playerDropshipIndex ]
+		sequence.thirdPersonAnimIdle = DROPSHIP_EXIT_ANIMS[ playerDropshipIndex ]
 		sequence.attachment = "ORIGIN"
 		sequence.blendTime = 0
 		sequence.teleport = true
@@ -267,7 +238,7 @@ void function SpawnPlayerIntoDropship( entity player, int playerDropshipIndex, e
 			{
 				if ( dropship == playerDropship )
 				{
-					for ( int i = 0; i < MAX_DROPSHIP_PLAYERS; i++ )
+					for ( int i = 0; i < SQUAD_SIZE; i++ )
 					{
 						if ( playerslot[ i ] != player && IsValidPlayer( playerslot[ i ] ) )
 						{
@@ -305,8 +276,8 @@ void function SpawnPlayerIntoDropship( entity player, int playerDropshipIndex, e
 
 		waitthread FirstPersonSequence( sequence, player, playerDropship )
 
-		sequence.firstPersonAnim = DROPSHIP_JUMP_ANIMS_POV[ playerDropshipIndex ]
-		sequence.thirdPersonAnim = DROPSHIP_JUMP_ANIMS[ playerDropshipIndex ]
+		sequence.firstPersonAnim = DROPSHIP_EXIT_ANIMS_POV[ playerDropshipIndex ]
+		sequence.thirdPersonAnim = DROPSHIP_EXIT_ANIMS[ playerDropshipIndex ]
 		sequence.setInitialTime = max( 0.0, Time() - playerDropship.s.deployedTime )
 
 		waitthread FirstPersonSequence( sequence, player, playerDropship )
@@ -332,7 +303,8 @@ void function PlayerJumpsFromDropship( entity player )
 				DeployViewModelAndEnableWeapons( player )
 				RemoveCinematicFlag( player, CE_FLAG_INTRO )
 				RemoveCinematicFlag( player, CE_FLAG_CLASSIC_MP_SPAWNING )
-				Loadouts_TryGivePilotLoadout( player )
+				RemoveCinematicFlag( player, CE_FLAG_WAVE_SPAWNING )
+
 				DeleteAnimEvent( player, "SkyScaleDefault" )
 			}
 		}
@@ -345,6 +317,8 @@ void function PlayerJumpsFromDropship( entity player )
 	player.ConsumeDoubleJump() // MovementDisable doesn't prevent double jumps
 
 	wait 0.3
+
+	Loadouts_TryGivePilotLoadout( player )
 
 	while ( !player.IsOnGround() && !player.IsWallRunning() && !player.IsWallHanging() )
 		wait 0

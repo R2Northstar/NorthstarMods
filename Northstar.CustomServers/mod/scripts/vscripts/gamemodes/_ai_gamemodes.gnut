@@ -20,7 +20,6 @@ global function Spawn_TrackedTitan
 global function SquadValidForClass
 global function GetReservedSquadSize
 global function GetMaxAICount
-global function SetGameModeAICount
 global function GetReservedAISquadSlotsOfClassForTeam
 global function CommonTrackingInit
 global function CommonTrackingCleanup
@@ -270,13 +269,6 @@ int function GetMaxAICount( int team )
 	int AICount = expect int( expect table( level.gameModeAICount )[ team ] )
 
 	return AICount
-}
-
-void function SetGameModeAICount( int count, int team )
-{
-	Assert( count <= level.max_npc_per_side, "Trying to set the AI count to more then max allowed (" + count + " vs 12)" )
-
-	level.gameModeAICount[ team ] = count
 }
 
 void function ReleaseAISlots( int team, int count = 1 )

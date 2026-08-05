@@ -1,4 +1,5 @@
 untyped
+
 global function ClassicMp_Init
 global function ClassicMP_TryDefaultIntroSetup
 
@@ -22,6 +23,34 @@ global function ClassicMP_ShouldRunEpilogue
 global function ClassicMP_RunEpilogueWithDeadPlayers
 
 global function GetClassicMPMode
+
+global const array<string> DROPSHIP_IDLE_ANIMS = [
+	"Classic_MP_flyin_exit_playerA_idle",
+	"Classic_MP_flyin_exit_playerB_idle",
+	"Classic_MP_flyin_exit_playerC_idle",
+	"Classic_MP_flyin_exit_playerD_idle"
+]
+
+global const array<string> DROPSHIP_IDLE_ANIMS_POV = [
+	"Classic_MP_flyin_exit_povA_idle",
+	"Classic_MP_flyin_exit_povB_idle",
+	"Classic_MP_flyin_exit_povC_idle",
+	"Classic_MP_flyin_exit_povD_idle"
+]
+
+global const array<string> DROPSHIP_EXIT_ANIMS = [
+	"Classic_MP_flyin_exit_playerA_jump",
+	"Classic_MP_flyin_exit_playerB_jump",
+	"Classic_MP_flyin_exit_playerC_jump",
+	"Classic_MP_flyin_exit_playerD_jump"
+]
+
+global const array<string> DROPSHIP_EXIT_ANIMS_POV = [
+	"Classic_MP_flyin_exit_povA_jump",
+	"Classic_MP_flyin_exit_povB_jump",
+	"Classic_MP_flyin_exit_povC_jump",
+	"Classic_MP_flyin_exit_povD_jump"
+]
 
 struct
 {

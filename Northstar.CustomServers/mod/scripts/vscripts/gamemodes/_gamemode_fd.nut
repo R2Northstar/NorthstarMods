@@ -102,28 +102,28 @@ struct
 	bool devForceAdvanceToNextWave = false
 } file
 
-const array<string> DROPSHIP_IDLE_ANIMS_POV = [
+const array<string> FD_DROPSHIP_IDLE_ANIMS_POV = [
 	"ptpov_ds_coop_side_intro_gen_idle_B",
 	"ptpov_ds_coop_side_intro_gen_idle_A",
 	"ptpov_ds_coop_side_intro_gen_idle_C",
 	"ptpov_ds_coop_side_intro_gen_idle_D"
 ]
 
-const array<string> DROPSHIP_IDLE_ANIMS = [
+const array<string> FD_DROPSHIP_IDLE_ANIMS = [
 	"pt_ds_coop_side_intro_gen_idle_B",
 	"pt_ds_coop_side_intro_gen_idle_A",
 	"pt_ds_coop_side_intro_gen_idle_C",
 	"pt_ds_coop_side_intro_gen_idle_D"
 ]
 
-const array<string> DROPSHIP_EXIT_ANIMS_POV = [
+const array<string> FD_DROPSHIP_EXIT_ANIMS_POV = [
 	"ptpov_ds_coop_side_intro_gen_exit_B",
 	"ptpov_ds_coop_side_intro_gen_exit_A",
 	"ptpov_ds_coop_side_intro_gen_exit_C",
 	"ptpov_ds_coop_side_intro_gen_exit_D"
 ]
 
-const array<string> DROPSHIP_EXIT_ANIMS = [
+const array<string> FD_DROPSHIP_EXIT_ANIMS = [
 	"pt_ds_coop_side_intro_gen_exit_B",
 	"pt_ds_coop_side_intro_gen_exit_A",
 	"pt_ds_coop_side_intro_gen_exit_C",
@@ -1455,8 +1455,8 @@ void function FD_OnPlayerGetsNewPilotLoadout( entity player, PilotLoadoutDef loa
 	{
 		FirstPersonSequenceStruct jumpSequence
 
-		jumpSequence.firstPersonAnim = DROPSHIP_EXIT_ANIMS_POV[ dropshipSlot ]
-		jumpSequence.thirdPersonAnim = DROPSHIP_EXIT_ANIMS[ dropshipSlot ]
+		jumpSequence.firstPersonAnim = FD_DROPSHIP_EXIT_ANIMS_POV[ dropshipSlot ]
+		jumpSequence.thirdPersonAnim = FD_DROPSHIP_EXIT_ANIMS[ dropshipSlot ]
 		jumpSequence.attachment = "ORIGIN"
 		jumpSequence.blendTime = 0.0
 		jumpSequence.hideProxy = true
@@ -1471,8 +1471,8 @@ void function FD_OnPlayerGetsNewPilotLoadout( entity player, PilotLoadoutDef loa
 	{
 		FirstPersonSequenceStruct idleSequence
 
-		idleSequence.firstPersonAnim = DROPSHIP_IDLE_ANIMS_POV[ dropshipSlot ]
-		idleSequence.thirdPersonAnim = DROPSHIP_IDLE_ANIMS[ dropshipSlot ]
+		idleSequence.firstPersonAnim = FD_DROPSHIP_IDLE_ANIMS_POV[ dropshipSlot ]
+		idleSequence.thirdPersonAnim = FD_DROPSHIP_IDLE_ANIMS[ dropshipSlot ]
 		idleSequence.attachment = "ORIGIN"
 		idleSequence.blendTime = 0.0
 		idleSequence.hideProxy = true
@@ -1871,8 +1871,8 @@ void function FD_PlayerRespawnCallback( entity player )
 		// Attach player
 		FirstPersonSequenceStruct idleSequence
 
-		idleSequence.firstPersonAnim = DROPSHIP_IDLE_ANIMS_POV[ file.playersInShip ]
-		idleSequence.thirdPersonAnim = DROPSHIP_IDLE_ANIMS[ file.playersInShip ]
+		idleSequence.firstPersonAnim = FD_DROPSHIP_IDLE_ANIMS_POV[ file.playersInShip ]
+		idleSequence.thirdPersonAnim = FD_DROPSHIP_IDLE_ANIMS[ file.playersInShip ]
 		idleSequence.attachment = "ORIGIN"
 		idleSequence.teleport = true
 		idleSequence.viewConeFunction = ViewConeNarrow
@@ -3055,8 +3055,8 @@ void function FD_DropshipDropPlayer( entity player, int playerDropshipIndex )
 		EnableOffhandWeapons( player )
 
 		FirstPersonSequenceStruct jumpSequence
-		jumpSequence.firstPersonAnim = DROPSHIP_EXIT_ANIMS_POV[ playerDropshipIndex ]
-		jumpSequence.thirdPersonAnim = DROPSHIP_EXIT_ANIMS[ playerDropshipIndex ]
+		jumpSequence.firstPersonAnim = FD_DROPSHIP_EXIT_ANIMS_POV[ playerDropshipIndex ]
+		jumpSequence.thirdPersonAnim = FD_DROPSHIP_EXIT_ANIMS[ playerDropshipIndex ]
 		jumpSequence.attachment = "ORIGIN"
 		jumpSequence.blendTime = 0.0
 		jumpSequence.hideProxy = true
@@ -3149,6 +3149,7 @@ string function FD_DropshipGetAnimation()
 		case "mp_digsite":
 			return "dropship_coop_respawn_digsite"*/
 	}
+
 	return "dropship_coop_respawn"
 }
 
