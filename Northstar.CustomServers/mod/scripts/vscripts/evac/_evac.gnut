@@ -248,7 +248,7 @@ void function Evac( int evacTeam, float initialWait, float arrivalTime, float wa
 	// would've liked to use cd_dropship_rescue_side_start length here, but can't since this is done before dropship spawn, can't
 	wait arrivalTime - 4.33333
 
-	entity dropship = CreateDropship( evacTeam, Vector( 10000, 10000, 10000 ), evacNode.GetAngles() )
+	entity dropship = CreateDropship( evacTeam, HIDDEN_AREA, evacNode.GetAngles() )
 
 	thread DropShipTempHide( dropship ) // prevent showing model and health bar on spawn
 	dropship.SetModel( evacShip.shipModel )

@@ -2,6 +2,8 @@ untyped
 
 globalize_all_functions
 
+global const vector HIDDEN_AREA = < 9999, 9999, 0 >
+
 void function Utility_MP_Init()
 {
 	#if DEV
@@ -343,7 +345,7 @@ void function ClearAndKillChildren( entity parentEnt, array<entity> excludedEnti
 			{
 				if ( IsAlive( childEnt ) )
 				{
-					childEnt.SetOrigin( Vector( 10000, 10000, 10000 ) )
+					childEnt.SetOrigin( HIDDEN_AREA )
 					childEnt.Die( svGlobal.worldspawn, svGlobal.worldspawn, { damageSourceId = eDamageSourceId.round_end } )
 				}
 			}

@@ -16,11 +16,11 @@ global function PlaceFDShop
 global function OverrideFDHarvesterLocation
 global function AddWaveAnnouncement
 global function FD_Win
+global function FD_KillAllEnemies
 
 #if DEV
 	global function DEV_FD_ToggleHarvesterGodMode
 	global function DEV_FD_NextStage
-	global function DEV_FD_KillAllEnemies
 	global function DEV_FD_KillHarvester
 #endif
 
@@ -614,25 +614,25 @@ void function executeWave()
 	int currentWave = GetGlobalNetInt( "FD_currentWave" ) + 1
 	int enemyCount
 	printt( "WAVE START: " + currentWave )
-	thread eventIterator_FrontierDefense()
+
+	if ( !file.devForceAdvanceToNextWave )
+		thread eventIterator_FrontierDefense()
 
 	// Wait for all events to execute
 	while ( !file.devForceAdvanceToNextWave && IsHarvesterAlive( fd_harvester.harvester ) && !allEventsExecuted( GetGlobalNetInt( "FD_currentWave" ) ) )
 		WaitFrame()
 
-	#if DEV
-		if ( file.devForceAdvanceToNextWave )
-		{
-			printt( "Dev forced advance to next wave" )
+	if ( file.devForceAdvanceToNextWave )
+	{
+		printt( "Dev forced advance to next wave" )
 
-			svGlobal.levelEnt.EndSignal( "StopWaveSpawner" )
+		svGlobal.levelEnt.Signal( "StopWaveSpawner" )
 
-			file.devForceAdvanceToNextWave = false
+		file.devForceAdvanceToNextWave = false
 
-			DEV_FD_KillAllEnemies()
-			return
-		}
-	#endif
+		FD_KillAllEnemies()
+		return
+	}
 
 	printt( "All Events executed, waiting on players to finish the wave" )
 
@@ -694,15 +694,18 @@ void function executeWave()
 	}
 }
 
+void function FD_KillAllEnemies()
+{
+	array<entity> enemies = GetNPCArrayOfTeam( TEAM_IMC )
+
+	foreach ( entity enemy in enemies )
+		enemy.Die()
+}
+
 #if DEV
 	void function DEV_FD_NextStage()
 	{
 		file.devForceAdvanceToNextWave = true
-	}
-
-	void function DEV_FD_KillAllEnemies()
-	{
-		KillIMC()
 	}
 #endif
 
@@ -725,24 +728,37 @@ bool function runWave( int waveIndex, bool shouldDoBuyTime )
 		file.players[ player ].defenseScoreThisRound = 0
 		file.players[ player ].moneyThisRound = GetPlayerMoney( player )
 	}
+
 	array<int> enemys = getHighestEnemyAmountsForWave( waveIndex )
 
 	if ( waveIndex > 0 )
 	{
-		foreach ( entity player in GetPlayerArray() )
-			Remote_CallFunction_NonReplay(
-				player,
-				"ServerCallback_FD_AnnouncePreParty",
-				enemys[ 0 ],
-				enemys[ 1 ],
-				enemys[ 2 ],
-				enemys[ 3 ],
-				enemys[ 4 ],
-				enemys[ 5 ],
-				enemys[ 6 ],
-				enemys[ 7 ],
-				enemys[ 8 ]
-			)
+		delaythread( 5 ) void function() : ( enemys )
+		{
+			foreach ( entity player in GetPlayerArray() )
+			{
+				Remote_CallFunction_NonReplay( player, "ServerCallback_FD_ClearPreParty" )
+				Remote_CallFunction_NonReplay(
+					player,
+					"ServerCallback_FD_AnnouncePreParty",
+					enemys[ 0 ],
+					enemys[ 1 ],
+					enemys[ 2 ],
+					enemys[ 3 ],
+					enemys[ 4 ],
+					enemys[ 5 ],
+					enemys[ 6 ],
+					enemys[ 7 ],
+					enemys[ 8 ]
+				)
+
+				delaythread( 7 ) void function() : ( player )
+				{
+					if ( IsValidPlayer( player ) )
+						Remote_CallFunction_NonReplay( player, "ServerCallback_FD_ClearPreParty" )
+				}()
+			}
+		}()
 	}
 
 	if ( waveIndex < file.waveAnnouncement.len() && file.waveAnnouncement[ waveIndex ] != "" && !file.waveRestart )
@@ -761,6 +777,8 @@ bool function runWave( int waveIndex, bool shouldDoBuyTime )
 	{
 		printt( "Opening Shop" )
 		SetGlobalNetInt( "FD_waveState", WAVE_STATE_BREAK )
+		printt( "Repairing turrets in wave break" )
+		thread FD_AttemptToRepairTurrets()
 		OpenBoostStores()
 		entity parentCrate = GetBoostStores()[ 0 ].GetParent()
 		parentCrate.Minimap_AlwaysShow( TEAM_MILITIA, null )
@@ -776,22 +794,20 @@ bool function runWave( int waveIndex, bool shouldDoBuyTime )
 
 		while ( Time() < GetGlobalNetTime( "FD_nextWaveStartTime" ) )
 		{
-			if ( FD_CheckPlayersReady() )
+			if ( GetGlobalNetTime( "FD_nextWaveStartTime" ) - Time() > 1.0 && FD_CheckPlayersReady() )
 				SetGlobalNetTime( "FD_nextWaveStartTime", Time() )
+			else if ( GetGlobalNetTime( "FD_nextWaveStartTime" ) - Time() <= 1.0 )
+				foreach ( entity player in GetPlayerArrayOfTeam( TEAM_MILITIA ) )
+					player.SetPlayerNetBool( "FD_readyForNextWave", true )
+
 			WaitFrame()
 		}
 		wait 0.6
 		MessageToTeam( TEAM_MILITIA, eEventNotifications.FD_StoreClosing )
 		printt( "Closing Shop" )
-		wait 4
+		wait 4.5
 		parentCrate.Minimap_Hide( TEAM_MILITIA, null )
 		CloseBoostStores()
-	}
-	else if ( waveIndex > 0 )
-	{
-		SetGlobalNetInt( "FD_waveState", WAVE_STATE_BREAK )
-		SetGlobalNetTime( "FD_nextWaveStartTime", Time() + 15.0 )
-		wait 15
 	}
 
 	printt( "STARTING WAVE" )
@@ -832,12 +848,15 @@ bool function runWave( int waveIndex, bool shouldDoBuyTime )
 
 	MessageToTeam( TEAM_MILITIA, eEventNotifications.FD_AnnounceWaveStart )
 
-	wait 10
+	wait 7
 
 	if ( waveIndex == 0 )
 	{
-		foreach ( entity player in GetPlayerArray() )
-			Remote_CallFunction_NonReplay( player, "ServerCallback_FD_ClearPreParty" )
+		delaythread( 3 ) void function() : ()
+		{
+			foreach ( entity player in GetPlayerArray() )
+				Remote_CallFunction_NonReplay( player, "ServerCallback_FD_ClearPreParty" )
+		}()
 	}
 
 	file.disableTitanSelectionForNewJoiners = true
@@ -975,14 +994,11 @@ bool function runWave( int waveIndex, bool shouldDoBuyTime )
 
 	wait 5
 
-	printt( "Repairing turrets in wave break" )
-	thread FD_AttemptToRepairTurrets()
-
 	if ( waveIndex == 0 )
 	{
-		wait 5
+		wait 3
 		WaveBreak_GiveTitan()
-		wait 5
+		wait 8
 	}
 
 	// Player scoring
@@ -1232,7 +1248,7 @@ void function WaveBreak_ShowPlayerBonus()
 		StopSoundOnEntity( player, "HUD_MP_BountyHunt_BankBonusPts_Ticker_Loop_1P" )
 	}
 
-	wait 2
+	wait 0.5
 }
 
 void function FD_AlivePlayersMonitor()
@@ -1834,7 +1850,7 @@ void function FD_PlayerRespawnCallback( entity player )
 		player.SetInvulnerable()
 		player.SetNoTarget( true )
 
-		ScreenFadeFromBlack( player, 1.5, 0.5 )
+		ScreenFadeFromBlack( player )
 	}
 	else
 	{
@@ -2499,6 +2515,9 @@ void function GamemodeFD_OnPlayerKilled( entity victim, entity attacker, var dam
 		else if ( deaths == militiaplayers.len() - 1 ) // ur shit out of luck ur the only survivor
 			PlayFactionDialogueToPlayer( "fd_onlyPlayerIsAlive", player )
 	}
+
+	if ( FD_ShouldUseRespawnDropship() && file.dropshipState == eDropshipState.Idle )
+		thread FD_DropshipSpawnDropship()
 }
 
 void function FD_OnNPCDeath( entity victim, entity attacker, var damageInfo )
@@ -3792,8 +3811,25 @@ void function FD_WaveCleanup()
 			npc.Destroy()
 	}
 
+	// Destroy harvester after match over
+	if ( IsValid( fd_harvester.rings ) )
+		fd_harvester.rings.Destroy()
+
+	if ( IsValid( fd_harvester.particleShield ) )
+		fd_harvester.particleShield.Destroy()
+
+	if ( IsValid( fd_harvester.particleBeam ) )
+		fd_harvester.particleBeam.Destroy()
+
+	if ( IsValid( fd_harvester.particleSparks ) )
+		fd_harvester.particleSparks.Destroy()
+
+	foreach ( entity pFX in fd_harvester.particleFXArray )
+		if ( IsValid( pFX ) )
+			pFX.Destroy()
+
 	if ( IsValid( fd_harvester.harvester ) )
-		fd_harvester.harvester.Destroy() // Destroy harvester after match over
+		fd_harvester.harvester.Destroy()
 
 	thread FD_AttemptToRepairTurrets() // Repair turrets during black screen that remained from previous waves
 }

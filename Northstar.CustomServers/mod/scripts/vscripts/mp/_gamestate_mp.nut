@@ -1348,7 +1348,7 @@ void function ClearPlayers()
 		ClearTitanAvailable( player )
 		SetPlayerEliminated( player )
 
-		player.SetOrigin( Vector( 10000, 10000, 10000 ) )
+		player.SetOrigin( HIDDEN_AREA )
 
 		if ( IsAlive( player ) )
 			player.Die( svGlobal.worldspawn, svGlobal.worldspawn, { damageSourceId = eDamageSourceId.round_end } )
