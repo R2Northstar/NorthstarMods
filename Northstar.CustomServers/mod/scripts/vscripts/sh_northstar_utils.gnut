@@ -170,7 +170,7 @@ void function ReloadMods( bool reloadorretry = false )
 
 			titan.SetModel( GetFlightPathModel( "fp_titan_model" ) )
 			titan.SetInvulnerable()
-			titan.kv.VisibilityFlags = ~ENTITY_VISIBLE_TO_EVERYONE
+			titan.kv.VisibilityFlags = ENTITY_VISIBLE_TO_NOBODY
 
 			titan.EndSignal( "OnDestroy" )
 

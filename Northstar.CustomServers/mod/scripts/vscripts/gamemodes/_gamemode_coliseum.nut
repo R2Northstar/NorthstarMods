@@ -155,7 +155,7 @@ void function RunColiseumOutro()
 			player.SetNameVisibleToFriendly( false )
 
 			if ( player != winningPlayer && player != losingPlayer )
-				player.kv.VisibilityFlags = ~ENTITY_VISIBLE_TO_EVERYONE
+				player.kv.VisibilityFlags = ENTITY_VISIBLE_TO_NOBODY
 		}
 
 		delaythread( 0.0001 ) RunColiseumOutroThreaded( winningPlayer, losingPlayer )

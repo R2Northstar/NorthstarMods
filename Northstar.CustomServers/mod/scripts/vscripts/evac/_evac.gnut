@@ -391,7 +391,7 @@ void function Evac( int evacTeam, float initialWait, float arrivalTime, float wa
 
 	wait WARPINFXTIME
 
-	dropship.kv.VisibilityFlags = 0 // prevent jetpack trails being like "dive" into ground
+	dropship.kv.VisibilityFlags = ENTITY_VISIBLE_TO_NOBODY // prevent jetpack trails being like "dive" into ground
 	WaitFrame() // better wait because we are server
 
 	thread __WarpOutEffectShared( dropship )
@@ -588,7 +588,7 @@ void function CheckIfAnyPlayerLeft( int evacTeam )
 
 void function DropShipTempHide( entity dropship )
 {
-	dropship.kv.VisibilityFlags = ~ENTITY_VISIBLE_TO_EVERYONE // or it will still shows the jetpack fxs
+	dropship.kv.VisibilityFlags = ENTITY_VISIBLE_TO_NOBODY // or it will still shows the jetpack fxs
 	HideName( dropship )
 	wait 0.46
 	if ( IsValid( dropship ) )

@@ -186,7 +186,7 @@ void function PredatorMain( entity player )
 			if ( playerVel / 300 < 1.3 )
 			{
 				player.SetCloakFlicker( 0, 0 )
-				player.kv.VisibilityFlags = 0
+				player.kv.VisibilityFlags = ENTITY_VISIBLE_TO_NOBODY
 				wait 0.5
 				if ( file.isVisible )
 				{
@@ -197,7 +197,7 @@ void function PredatorMain( entity player )
 			else
 			{
 				player.SetCloakFlicker( 0.2, 1 )
-				player.kv.VisibilityFlags = 0
+				player.kv.VisibilityFlags = ENTITY_VISIBLE_TO_NOBODY
 				float waittime = RandomFloat( 0.5 )
 				wait waittime
 				player.kv.VisibilityFlags = ENTITY_VISIBLE_TO_EVERYONE

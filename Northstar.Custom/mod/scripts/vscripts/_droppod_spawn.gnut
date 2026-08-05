@@ -43,7 +43,7 @@ void function SpawnPlayersInDropPod( array<entity> players, vector targetOrigin,
 		if ( !IsValid( player ) )
 			continue
 		if ( !IsAlive( player ) )
-			player.RespawnPlayer( null )
+			DoRespawnPlayer( player, null )
 
 		player.SetOrigin( pod.GetOrigin() )
 		player.SetAngles( pod.GetAngles() )
