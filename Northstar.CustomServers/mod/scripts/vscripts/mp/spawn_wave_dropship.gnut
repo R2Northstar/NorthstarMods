@@ -1,7 +1,5 @@
 untyped
 
-// globalize_all_functions
-
 global function DoWaveSpawnByDropship
 global function WaveDropshipSpawnIsJoinable
 global function CanSpawnIntoWaveSpawnDropship
@@ -16,8 +14,6 @@ global function GetWaveSpawnTime
 global function SetWaveSpawnTime
 global function IsFirstToDieAfterWaveSpawn
 global function ShouldWaitForNextWaveSpawn
-
-// this is frontier defense's wave spawn dropship
 
 struct
 {
