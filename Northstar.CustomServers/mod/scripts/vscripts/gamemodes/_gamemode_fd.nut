@@ -69,8 +69,6 @@ struct
 	array<string> waveAnnouncement = []
 	vector shopPosition
 	vector shopAngles = < 0, 0, 0 >
-	vector dropshipSpawnPosition = < 0, 0, 0 >
-	vector dropshipSpawnAngles = < 0, 0, 0 >
 	vector groundSpawnPosition
 	vector groundSpawnAngles = < 0, 0, 0 >
 	vector harvesterLocation = < 0, 0, 0 >
@@ -1839,12 +1837,6 @@ void function FD_PlayerRespawnCallback( entity player )
 
 	if ( player.IsTitan() )
 		player.Highlight_SetParam( 1, 0, HIGHLIGHT_COLOR_FRIENDLY )
-}
-
-bool function FD_ShouldUseRespawnDropship()
-{
-	return file.dropshipState != eDropshipState.Returning && file.playersInShip < 4 && GetGameState() == eGameState.Playing && GetGlobalNetBool( "FD_waveActive" )
-		&& GetCurrentPlaylistVarInt( "fd_respawn_dropship", 1 ) != 0 && file.dropshipSpawnPosition != < 0, 0, 0 >
 }
 
 /* Damage Logic
