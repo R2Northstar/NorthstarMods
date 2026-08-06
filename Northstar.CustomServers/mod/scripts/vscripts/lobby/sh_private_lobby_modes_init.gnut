@@ -43,6 +43,12 @@ void function PrivateMatchModesInit()
 	AddPrivateMatchModeSettingArbitrary( "#MODE_SETTING_CATEGORY_RIFF", "riff_titan_queue", "0" )
 	AddPrivateMatchModeSettingEnum( "#MODE_SETTING_CATEGORY_RIFF", "classic_executions", [ "#SETTING_DISABLED", "#SETTING_ENABLED" ], "0" )
 	AddPrivateMatchModeSettingEnum( "#MODE_SETTING_CATEGORY_RIFF", "pingspot_enabled", [ "#SETTING_DISABLED", "#SETTING_ENABLED" ], "0" )
+	AddPrivateMatchModeSettingEnum(
+		"#MODE_SETTING_CATEGORY_RIFF",
+		"riff_wave_spawn",
+		[ "#SETTING_DISABLED", "#WAVE_SPAWN_FIXED_INTERVAL", "#WAVE_SPAWN_PLAYER_DEATH", "#WAVE_SPAWN_MANUAL", "#WAVE_SPAWN_DROPSHIP" ],
+		"0"
+	)
 
 	// gamemode settings
 	AddPrivateMatchModeSettingEnum( "#GAMEMODE_cp", "capture_point_amping", [ "#SETTING_DISABLED", "#SETTING_ENABLED" ], "1" )

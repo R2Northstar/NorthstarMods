@@ -638,7 +638,7 @@ function UpdateLobby()
 					{
 						if ( setting.playlistVar == varName )
 						{
-							if ( GetCurrentPlaylistVarString( varName, "" ) != setting.defaultValue )
+							if ( GetCurrentPlaylistVarString( varName, "" ) != GetGamemodeVarOrUseValue( PrivateMatch_GetSelectedMode(), varName, setting.defaultValue ) )
 							{
 								if ( setting.isEnumSetting )
 								{

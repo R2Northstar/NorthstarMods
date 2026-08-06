@@ -84,6 +84,12 @@ Press Yes if you agree to this. This choice can be changed in the mods menu at a
 		"riff_titan_queue" "Max Active Titans per Team"
 		"classic_executions" "Classic Executions"
 		"pingspot_enabled" "Ping Spot Command"
+		"riff_wave_spawn" "Wave Spawn"
+
+		"WAVE_SPAWN_FIXED_INTERVAL" "Fixed Interval"
+		"WAVE_SPAWN_PLAYER_DEATH" "Player Death"
+		"WAVE_SPAWN_MANUAL" "Manual"
+		"WAVE_SPAWN_DROPSHIP" "Dropship"
 
 		"capture_point_amping" "Amped Hardpoints"
 
@@ -424,7 +430,6 @@ Press Yes if you agree to this. This choice can be changed in the mods menu at a
 		"fd_player_damage_scalar"			"Player Damage Multiplier"
 		"fd_at_unlimited_ammo"				"Unlimited Anti-Titan Ammo"
 		"fd_pro_titan_shields"				"Enemies Spawns with Shields"
-		"fd_respawn_dropship"				"Respawn In Dropship"
 		"fd_money_per_round"				"Money Per Round"
 		"fd_money_flyouts"					"Money Flyouts"
 		"riff_minimap_state" 				"Hide Minimap"
