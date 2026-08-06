@@ -3,6 +3,7 @@ untyped
 global function MenuCallbacks_Init
 global function SetLoadoutGracePeriodEnabled
 global function SetAllowLoadoutChangeFunc
+global function AllowLoadoutChangeFunc
 global function GetTitanLoadoutForPlayer
 
 struct
@@ -187,6 +188,14 @@ void function SetLoadoutGracePeriodEnabled( bool enabled )
 void function SetAllowLoadoutChangeFunc( bool functionref( entity ) func )
 {
 	file.allowChangeLoadoutFunc = func
+}
+
+bool function AllowLoadoutChangeFunc( entity player )
+{
+	if ( file.allowChangeLoadoutFunc != null )
+		return file.allowChangeLoadoutFunc( player )
+
+	return true
 }
 
 TitanLoadoutDef function GetTitanLoadoutForPlayer( entity player )

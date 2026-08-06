@@ -1,1 +1,515 @@
+untyped
+
+// globalize_all_functions
+
+global function DoWaveSpawnByDropship
+global function WaveDropshipSpawnIsJoinable
+global function CanSpawnIntoWaveSpawnDropship
+global function CreateWaveSpawnDropship
+global function AddCallback_OnWaveSpawnDropshipSpawned
+global function AddPlayerToDropshipSpawnPlayerList
+global function SetWaveSpawnCustomDropshipAnim
+global function AddWaveSpawnCustomPlayerRideAnimIdle
+global function AddWaveSpawnCustomPlayerRideAnimJump
+global function AddWaveSpawnCustomSpawnPoint
+global function GetWaveSpawnTime
+global function SetWaveSpawnTime
+global function IsFirstToDieAfterWaveSpawn
+global function ShouldWaitForNextWaveSpawn
+
 // this is frontier defense's wave spawn dropship
+
+struct
+{
+	table<int, array<entity> > dropshipSpawnPlayerList = {}
+	array<void functionref( entity, string )> onWaveSpawnDropshipSpawned = []
+	table<int, array<entity> > waveSpawnCustomSpawnPoints = {}
+	string waveSpawnCustomDropshipAnim = "dropship_classic_mp_flyin"
+	table<int, array<entity> > classicMPDropships = {}
+	float dropshipSpawnTime = -1
+	table<int, float> waveSpawnTime = {}
+	array<FirstPersonSequenceStruct> waveSpawnCustomPlayerIdleAnim = []
+	array<FirstPersonSequenceStruct> waveSpawnCustomPlayerJumpAnim = []
+} file
+
+void function DoWaveSpawnByDropship( entity player )
+{
+	int team = player.GetTeam()
+
+	Assert( WaveDropshipSpawnIsJoinable( team ) )
+
+	player.UnfreezeControlsOnServer()
+
+	SpawnPlayerIntoSlotInWaveDropship( player )
+}
+
+// if a joinable dropship wave spawn is happening right now return true
+bool function WaveDropshipSpawnIsJoinable( int team )
+{
+	if ( GetGameState() != eGameState.Playing )
+		return false
+
+	if ( !( team in file.classicMPDropships ) )
+		return false
+
+	if ( !file.classicMPDropships[ team ].len() )
+		return false
+
+	float deployTime = GetAnimEventTime( DROPSHIP_MODEL, GetWaveSpawnCustomDropshipAnim(), "dropship_deploy" )
+	float animTime = deployTime - GetWaveSpawnWindowTimeDropshipGone()
+
+	if ( Time() > file.dropshipSpawnTime + animTime )
+		return false
+
+	return true
+}
+
+bool function CanSpawnIntoWaveSpawnDropship( entity player )
+{
+	if ( GetGameState() < eGameState.Playing )
+		return false
+
+	bool spawnAsTitan = expect bool( player.GetPersistentVar( "spawnAsTitan" ) )
+
+	if ( ( spawnAsTitan || svGlobal.forceSpawnIntoTitan ) && PlayerCanSpawnIntoTitan( player ) )
+		return false
+
+	if ( ShouldSpawnAsTitan( player ) )
+		return false
+
+	int team = player.GetTeam()
+
+	if ( !WaveDropshipSpawnIsJoinable( team ) )
+		return false
+
+	return true
+}
+
+// this just spawns the dropship - players will be added to this later
+void function CreateWaveSpawnDropship( int team )
+{
+	// wait the proper ammount of time
+	string anim = GetWaveSpawnCustomDropshipAnim()
+	float deployTime = GetAnimEventTime( DROPSHIP_MODEL, anim, "dropship_deploy" )
+	float totalDeployTime = deployTime + WARPINFXTIME
+	float waveSpawnTime = GetWaveSpawnTime( team )
+	float timeFromNow = waveSpawnTime - Time()
+
+	Assert( totalDeployTime <= timeFromNow, "The deploy time for the wavespawn dropship is longer than the amount of time available in the wavespawn" )
+
+	float waitTime = timeFromNow - totalDeployTime - 0.1 // the 0.1 is just to make sure it is on the field when the players try to get on it
+
+	if ( waitTime > 0 )
+		wait waitTime
+
+	// find a spawnpoint
+	array<entity> spawnpoints = GetEntArrayByClass_Expensive( "info_spawnpoint_dropship_start" )
+
+	spawnpoints.reverse()
+
+	if ( GetWaveSpawnCustomSpawnPoints( team ).len() )
+		spawnpoints = GetWaveSpawnCustomSpawnPoints( team )
+
+	vector origin = spawnpoints[ 0 ].GetOrigin()
+	vector angles = spawnpoints[ 0 ].GetAngles()
+
+	// warp in the ship
+	asset model = $""
+
+	if ( team == TEAM_IMC )
+		model = $"models/vehicle/goblin_dropship/goblin_dropship_hero.mdl"
+	else if ( team == TEAM_MILITIA )
+		model = $"models/vehicle/crow_dropship/crow_dropship_hero.mdl"
+
+	Assert( model.len() )
+
+	waitthread WarpinEffect( model, anim, origin, angles )
+
+	// spawn and animation the dropship
+	entity ship = CreateDropship( team, origin, angles )
+
+	ship.SetValueForModelKey( model )
+
+	DispatchSpawn( ship )
+
+	ship.SetModel( model )
+
+	if ( !( team in file.classicMPDropships ) )
+		file.classicMPDropships[ team ] <- []
+
+	ArrayRemoveInvalid( file.classicMPDropships[ team ] )
+
+	file.classicMPDropships[ team ].append( ship )
+	ship.s.animStartTime <- Time()
+	file.dropshipSpawnTime = Time()
+	ship.SetInvulnerable()
+	ship.SetNoTarget( true )
+
+	AddAnimEvent( ship, "dropship_deploy", CleanupWaveSpawnDropship )
+
+	PlayerSpawnDropship_RunSpawnCallbacks( ship, anim )
+
+	waitthread PlayAnimTeleport( ship, anim, origin, angles )
+}
+
+void function CleanupWaveSpawnDropship( entity ship )
+{
+	int team = ship.GetTeam()
+
+	file.classicMPDropships[ team ].removebyvalue( ship )
+
+	ClearDropshipSpawnPlayerList( team )
+}
+
+void function ClearDropshipSpawnPlayerList( int team = TEAM_UNASSIGNED )
+{
+	Assert( team == TEAM_IMC || team == TEAM_MILITIA, "team must be IMC or Militia" )
+
+	if ( team in file.dropshipSpawnPlayerList )
+		file.dropshipSpawnPlayerList[ team ].clear()
+}
+
+void function SetWaveSpawnProtection( entity player )
+{
+	Assert( IsAlive( player ) && player.s.waveSpawnProtection == false )
+
+	player.s.waveSpawnProtection = true
+	player.SetNoTarget( true )
+	player.SetInvulnerable()
+}
+
+void function ClearWaveSpawnProtectionOnPrimaryAttackOrDelay( entity player, float delay )
+{
+	if ( player.s.waveSpawnProtection == false )
+		return
+
+	OnThreadEnd(
+		function() : ( player )
+		{
+			if ( IsValid( player ) )
+			{
+				player.s.waveSpawnProtection = false
+				player.SetNoTarget( false )
+				player.ClearInvulnerable()
+			}
+		}
+	)
+
+	player.EndSignal( "OnDestroy" )
+	player.EndSignal( "OnPrimaryAttack" )
+
+	wait delay
+}
+
+void function SpawnPlayerIntoSlotInWaveDropship( entity player )
+{
+	int team = player.GetTeam()
+
+	Assert( file.classicMPDropships[ team ].len(), "Tried to spawn player into dropship in progress but no dropship is active!" )
+
+	if ( !( team in file.dropshipSpawnPlayerList ) )
+		file.dropshipSpawnPlayerList[ team ] <- []
+
+	int numOfDropshipSpawningTeammates = file.dropshipSpawnPlayerList[ team ].len()
+
+	DoRespawnPlayer( player, null )
+
+	AddPlayerToDropshipSpawnPlayerList( player )
+
+	entity shipToSpawnIn
+	int index = file.classicMPDropships[ team ].len() - 1
+	shipToSpawnIn = file.classicMPDropships[ team ][ index ]
+	int seatNumber = numOfDropshipSpawningTeammates % SQUAD_SIZE
+	float initialTime = expect float( shipToSpawnIn.s.animStartTime )
+
+	FirstPersonSequenceStruct idleSequence
+
+	idleSequence.firstPersonAnim = DROPSHIP_IDLE_ANIMS_POV[ seatNumber ]
+	idleSequence.thirdPersonAnim = DROPSHIP_IDLE_ANIMS[ seatNumber ]
+	idleSequence.attachment = "ORIGIN"
+	idleSequence.blendTime = 0.0
+	idleSequence.hideProxy = true
+	idleSequence.viewConeFunction = ViewConeRampFree
+	idleSequence.setInitialTime = idleSequence.setInitialTime + ( Time() - initialTime )
+
+	idleSequence = clone GetWaveSpawnCustomPlayerRideAnimIdle( seatNumber, idleSequence )
+
+	FirstPersonSequenceStruct jumpSequence
+
+	jumpSequence.firstPersonAnim = DROPSHIP_JUMP_ANIMS_POV[ seatNumber ]
+	jumpSequence.thirdPersonAnim = DROPSHIP_JUMP_ANIMS[ seatNumber ]
+	jumpSequence.attachment = "ORIGIN"
+	jumpSequence.blendTime = 0.0
+	jumpSequence.hideProxy = true
+	jumpSequence.viewConeFunction = ViewConeRampFree
+
+	jumpSequence = clone GetWaveSpawnCustomPlayerRideAnimJump( seatNumber, jumpSequence )
+
+	thread SpawnPlayerIntoWaveDropship( shipToSpawnIn, player, idleSequence, jumpSequence )
+}
+
+void function SpawnPlayerIntoWaveDropship( entity ship, entity player, FirstPersonSequenceStruct idleSequence, FirstPersonSequenceStruct jumpSequence )
+{
+	// spawns player into a ride, and plays a sequence
+	// dont show hud during intro
+	AddCinematicFlag( player, CE_FLAG_WAVE_SPAWNING )
+
+	player.EndSignal( "OnDeath" )
+	player.EndSignal( "OnDestroy" )
+	player.EndSignal( "Disconnected" )
+
+	SetWaveSpawnProtection( player )
+	thread DelayedFrame( player )
+
+	player.SetIsValidChaseObserverTarget( false )
+	player.LerpSkyScale( 0.9, 0.1 )
+
+	Remote_CallFunction_Replay( player, "ServerCallback_SetClassicSkyScale", ship.GetEncodedEHandle(), 0.7 )
+
+	AddAnimEvent(
+		player,
+		"SkyScaleDefault",
+		void function( entity player ) : ( ship )
+		{
+			SkyScaleDefault( player )
+
+			if ( !IsValid( ship ) )
+				return
+
+			Remote_CallFunction_Replay( player, "ServerCallback_ResetClassicSkyScale", ship.GetEncodedEHandle() )
+		}
+	)
+
+	OnThreadEnd(
+		function() : ( player )
+		{
+			if ( IsValid( player ) )
+			{
+				player.SetIsValidChaseObserverTarget( true )
+
+				DeleteAnimEvent( player, "SkyScaleDefault" )
+
+				thread ClearWaveSpawnProtectionOnPrimaryAttackOrDelay( player, WAVESPAWN_PROTECTION_TIME )
+			}
+		}
+	)
+
+	// we're about to start our animation logic - bring out the gun on a delayed beat
+	thread DelayedWeaponDeploy( player )
+
+	thread FirstPersonSequence( idleSequence, player, ship )
+
+	ViewConeZeroInstant( player )
+
+	WaitFrame()
+
+	idleSequence.viewConeFunction( player )
+
+	ship.WaitSignal( "deploy" )
+
+	#if BATTLECHATTER_ENABLED
+		entity otherPlayer
+		int team = player.GetTeam()
+
+		foreach ( entity dropshipPlayer in file.dropshipSpawnPlayerList[ team ] )
+			if ( dropshipPlayer != player && IsValidPlayer( dropshipPlayer ) )
+				otherPlayer = dropshipPlayer
+
+		if ( IsValidPlayer( otherPlayer ) )
+			PlayBattleChatterLineOnlyToPlayer( otherPlayer, player, "bc_pIntroChat" )
+	#endif
+
+	waitthread FirstPersonSequence( jumpSequence, player, ship )
+
+	thread PlayerJumpsFromDropship( player )
+}
+
+void function DelayedWeaponDeploy( entity player )
+{
+	player.EndSignal( "OnDeath" )
+	player.EndSignal( "OnDestroy" )
+
+	wait 1.0
+
+	DeployViewModelAndEnableWeapons( player )
+}
+
+void function DelayedFrame( entity player )
+{
+	player.EndSignal( "OnDestroy" )
+
+	WaitEndFrame()
+
+	HolsterViewModelAndDisableWeapons( player )
+
+	ScreenFadeFromBlack( player )
+}
+
+void function PlayerSpawnDropship_RunSpawnCallbacks( entity dropship, string anim )
+{
+	// Added via AddCallback_OnWaveSpawnDropshipSpawned
+	foreach ( callbackFunc in file.onWaveSpawnDropshipSpawned )
+		callbackFunc( dropship, anim )
+}
+
+void function AddCallback_OnWaveSpawnDropshipSpawned( void functionref( entity, string ) callbackFunc )
+{
+	Assert( !( callbackFunc in file.onWaveSpawnDropshipSpawned ), "Already added " + callbackFunc + " with AddCallback_OnWaveSpawnDropshipSpawned" )
+
+	file.onWaveSpawnDropshipSpawned.append( callbackFunc )
+}
+
+void function AddPlayerToDropshipSpawnPlayerList( entity player )
+{
+	int team = player.GetTeam()
+
+	file.dropshipSpawnPlayerList[ team ].append( player )
+}
+
+float function GetWaveSpawnWindowTimeDropshipSpawn()
+{
+	string customAnim = GetWaveSpawnCustomDropshipAnim()
+
+	return GetAnimEventTime( DROPSHIP_MODEL, customAnim, "dropship_deploy" ) // basically as long as your before the deploying notetrack - it's still a good time respawn
+}
+
+float function GetWaveSpawnWindowTimeDropshipGone()
+{
+	return 3.0 // if there is more then 3 seconds left before the wavespawn is over it's still not too late to get added to the dropship
+}
+
+string function GetWaveSpawnCustomDropshipAnim()
+{
+	return file.waveSpawnCustomDropshipAnim
+}
+
+void function SetWaveSpawnCustomDropshipAnim( string anim )
+{
+	file.waveSpawnCustomDropshipAnim = anim
+}
+
+FirstPersonSequenceStruct function GetWaveSpawnCustomPlayerRideAnimIdle( int index, FirstPersonSequenceStruct sequence )
+{
+	if ( index <= file.waveSpawnCustomPlayerIdleAnim.len() )
+		return file.waveSpawnCustomPlayerIdleAnim[ index ]
+
+	return sequence
+}
+
+void function AddWaveSpawnCustomPlayerRideAnimIdle( FirstPersonSequenceStruct idleAnims )
+{
+	file.waveSpawnCustomPlayerIdleAnim.append( clone idleAnims )
+}
+
+FirstPersonSequenceStruct function GetWaveSpawnCustomPlayerRideAnimJump( int index, FirstPersonSequenceStruct sequence )
+{
+	if ( index <= file.waveSpawnCustomPlayerJumpAnim.len() )
+		return file.waveSpawnCustomPlayerJumpAnim[ index ]
+
+	return sequence
+}
+
+void function AddWaveSpawnCustomPlayerRideAnimJump( FirstPersonSequenceStruct jumpAnims )
+{
+	file.waveSpawnCustomPlayerJumpAnim.append( clone jumpAnims )
+}
+
+array<entity> function GetWaveSpawnCustomSpawnPoints( int team )
+{
+	if ( team in file.waveSpawnCustomSpawnPoints )
+		return file.waveSpawnCustomSpawnPoints[ team ]
+
+	return []
+}
+
+void function AddWaveSpawnCustomSpawnPoint( int team, vector origin, vector angles )
+{
+	entity spawnPoint = CreateScriptRef( origin, angles )
+
+	if ( !( team in file.waveSpawnCustomSpawnPoints ) )
+		file.waveSpawnCustomSpawnPoints[ team ] <- []
+
+	file.waveSpawnCustomSpawnPoints[ team ].append( spawnPoint )
+}
+
+float function GetWaveSpawnTime( int team )
+{
+	Assert( team == TEAM_IMC || team == TEAM_MILITIA )
+
+	if ( team in file.waveSpawnTime )
+		return file.waveSpawnTime[ team ]
+
+	return 0.0
+}
+
+void function SetWaveSpawnTime( int team, float spawnTime )
+{
+	Assert( team == TEAM_IMC || team == TEAM_MILITIA )
+
+	file.waveSpawnTime[ team ] <- spawnTime
+}
+
+bool function IsFirstToDieAfterWaveSpawn( entity player, float timeOfDeath )
+{
+	int team = player.GetTeam()
+	float waveSpawnTime = GetWaveSpawnTime( team )
+
+	if ( GetWaveSpawnType() == eWaveSpawnType.DISABLED )
+		return false
+
+	// don't do wave spawning if we are not playing
+	if ( !GamePlayingOrSuddenDeath() )
+		return false
+
+	// are we within the grace period of a last wave spawn
+	if ( Time() < waveSpawnTime + WAVE_SPAWN_GRACE_PERIOD )
+		return false
+
+	if ( timeOfDeath > waveSpawnTime )
+		return true
+
+	return false
+}
+
+bool function ShouldWaitForNextWaveSpawn( entity player )
+{
+	Assert( player.IsPlayer() )
+
+	if ( GetWaveSpawnType() == eWaveSpawnType.DISABLED )
+		return false
+
+	// don't do wave spawning if we are not playing
+	if ( !GamePlayingOrSuddenDeath() )
+		return false
+
+	// don't do wave spawn at the start of the match
+	if ( GameTime_PlayingTime() < START_SPAWN_GRACE_PERIOD )
+		return false
+
+	int team = player.GetTeam()
+	float waveSpawnTime = GetWaveSpawnTime( team )
+
+	// if time is past the end of the wave spawn there is nothing to wait for.
+	if ( Time() > waveSpawnTime )
+		return false
+
+	if ( !ShouldSpawnAsTitan( player ) )
+	{
+		if ( player.s.respawnSelectionDone == true )
+		{
+			float dropshipSpawnTime = waveSpawnTime - GetWaveSpawnWindowTimeDropshipSpawn()
+			float dropshipGoneTime = waveSpawnTime - GetWaveSpawnWindowTimeDropshipGone()
+
+			// if we are within the window where the player can enter a dropship return false
+			if ( Time() > dropshipSpawnTime && Time() < dropshipGoneTime && WaveDropshipSpawnIsJoinable( team ) )
+				return false
+		}
+	}
+	else if ( player.s.respawnSelectionDone == true )
+	{
+		// if we selected to spawn as a titan stop observing and spawn immediately.
+		return false
+	}
+
+	return true
+}

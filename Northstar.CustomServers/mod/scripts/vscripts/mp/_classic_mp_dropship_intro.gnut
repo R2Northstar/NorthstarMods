@@ -103,7 +103,6 @@ void function OnPrematchStart()
 			if ( PlayerCanSpawn( player ) )
 				DoRespawnPlayer( player, null )
 
-			Loadouts_TryGivePilotLoadout( player )
 			PutPlayerInDropship( player )
 			ResetPlayerCooldowns( player ) // Prevention of case they used abilities or grenades near round end
 		}
@@ -200,8 +199,8 @@ void function SpawnPlayerIntoDropship( entity player, int playerDropshipIndex, e
 
 		sequence.firstPersonAnim = DROPSHIP_IDLE_ANIMS_POV[ playerDropshipIndex ]
 		sequence.thirdPersonAnim = DROPSHIP_IDLE_ANIMS[ playerDropshipIndex ]
-		sequence.firstPersonAnimIdle = DROPSHIP_EXIT_ANIMS_POV[ playerDropshipIndex ]
-		sequence.thirdPersonAnimIdle = DROPSHIP_EXIT_ANIMS[ playerDropshipIndex ]
+		sequence.firstPersonAnimIdle = DROPSHIP_JUMP_ANIMS_POV[ playerDropshipIndex ]
+		sequence.thirdPersonAnimIdle = DROPSHIP_JUMP_ANIMS[ playerDropshipIndex ]
 		sequence.attachment = "ORIGIN"
 		sequence.blendTime = 0
 		sequence.teleport = true
@@ -276,8 +275,8 @@ void function SpawnPlayerIntoDropship( entity player, int playerDropshipIndex, e
 
 		waitthread FirstPersonSequence( sequence, player, playerDropship )
 
-		sequence.firstPersonAnim = DROPSHIP_EXIT_ANIMS_POV[ playerDropshipIndex ]
-		sequence.thirdPersonAnim = DROPSHIP_EXIT_ANIMS[ playerDropshipIndex ]
+		sequence.firstPersonAnim = DROPSHIP_JUMP_ANIMS_POV[ playerDropshipIndex ]
+		sequence.thirdPersonAnim = DROPSHIP_JUMP_ANIMS[ playerDropshipIndex ]
 		sequence.setInitialTime = max( 0.0, Time() - playerDropship.s.deployedTime )
 
 		waitthread FirstPersonSequence( sequence, player, playerDropship )
@@ -318,7 +317,8 @@ void function PlayerJumpsFromDropship( entity player )
 
 	wait 0.3
 
-	Loadouts_TryGivePilotLoadout( player )
+	if ( AllowLoadoutChangeFunc( player ) )
+		Loadouts_TryGivePilotLoadout( player )
 
 	while ( !player.IsOnGround() && !player.IsWallRunning() && !player.IsWallHanging() )
 		wait 0

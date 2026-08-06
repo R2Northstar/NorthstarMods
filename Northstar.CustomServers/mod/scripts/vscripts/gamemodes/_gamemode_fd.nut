@@ -5,13 +5,11 @@ global function RateSpawnpoints_FD
 global function IsHarvesterAlive
 global function GetTargetNameForID
 
-global function FD_DropshipSetAnimationOverride
 global function AddCallback_RegisterCustomFDContent
 global function AddFDCustomProp
 global function AddFDCustomShipStart
 global function AddFDCustomTitanStart
 global function SetFDGroundSpawn
-global function SetFDDropshipSpawn
 global function PlaceFDShop
 global function OverrideFDHarvesterLocation
 global function AddWaveAnnouncement
@@ -33,7 +31,6 @@ enum eDropshipState
 
 struct player_struct_fd
 {
-	bool diedThisRound = false
 	int assaultScoreThisRound = 0
 	int defenseScoreThisRound = 0
 	int moneyThisRound = 0
@@ -91,7 +88,6 @@ struct
 	bool isLiveFireMap = false
 	int moneyInBank = 0
 
-	string animationOverride = ""
 	int dropshipState
 	int playersInShip
 	entity dropship
@@ -100,6 +96,7 @@ struct
 	array<void functionref()> CustomFDContent
 	bool disableTitanSelectionForNewJoiners = false
 	bool devForceAdvanceToNextWave = false
+	bool noDeaths = true
 } file
 
 const array<string> FD_DROPSHIP_IDLE_ANIMS_POV = [
@@ -116,14 +113,14 @@ const array<string> FD_DROPSHIP_IDLE_ANIMS = [
 	"pt_ds_coop_side_intro_gen_idle_D"
 ]
 
-const array<string> FD_DROPSHIP_EXIT_ANIMS_POV = [
+const array<string> FD_DROPSHIP_JUMP_ANIMS_POV = [
 	"ptpov_ds_coop_side_intro_gen_exit_B",
 	"ptpov_ds_coop_side_intro_gen_exit_A",
 	"ptpov_ds_coop_side_intro_gen_exit_C",
 	"ptpov_ds_coop_side_intro_gen_exit_D"
 ]
 
-const array<string> FD_DROPSHIP_EXIT_ANIMS = [
+const array<string> FD_DROPSHIP_JUMP_ANIMS = [
 	"pt_ds_coop_side_intro_gen_exit_B",
 	"pt_ds_coop_side_intro_gen_exit_A",
 	"pt_ds_coop_side_intro_gen_exit_C",
@@ -249,6 +246,55 @@ void function GamemodeFD_Init()
 			SetAILethality( eAILethality.High )
 			break
 	}
+
+	// Wave spawn
+	SetWaveSpawnCustomDropshipAnim( FD_DropshipGetAnimation() )
+
+	FirstPersonSequenceStruct sequence
+
+	sequence.firstPersonAnim = FD_DROPSHIP_IDLE_ANIMS_POV[ 0 ]
+	sequence.thirdPersonAnim = FD_DROPSHIP_IDLE_ANIMS[ 0 ]
+	sequence.attachment = "ORIGIN"
+	sequence.blendTime = 0
+	sequence.viewConeFunction = ViewConeNarrow
+	sequence.hideProxy = true
+
+	AddWaveSpawnCustomPlayerRideAnimIdle( sequence )
+
+	sequence.firstPersonAnim = FD_DROPSHIP_IDLE_ANIMS_POV[ 1 ]
+	sequence.thirdPersonAnim = FD_DROPSHIP_IDLE_ANIMS[ 1 ]
+
+	AddWaveSpawnCustomPlayerRideAnimIdle( sequence )
+
+	sequence.firstPersonAnim = FD_DROPSHIP_IDLE_ANIMS_POV[ 2 ]
+	sequence.thirdPersonAnim = FD_DROPSHIP_IDLE_ANIMS[ 2 ]
+
+	AddWaveSpawnCustomPlayerRideAnimIdle( sequence )
+
+	sequence.firstPersonAnim = FD_DROPSHIP_IDLE_ANIMS_POV[ 3 ]
+	sequence.thirdPersonAnim = FD_DROPSHIP_IDLE_ANIMS[ 3 ]
+
+	AddWaveSpawnCustomPlayerRideAnimIdle( sequence )
+
+	sequence.firstPersonAnim = FD_DROPSHIP_JUMP_ANIMS_POV[ 0 ]
+	sequence.thirdPersonAnim = FD_DROPSHIP_JUMP_ANIMS[ 0 ]
+
+	AddWaveSpawnCustomPlayerRideAnimJump( sequence )
+
+	sequence.firstPersonAnim = FD_DROPSHIP_JUMP_ANIMS_POV[ 1 ]
+	sequence.thirdPersonAnim = FD_DROPSHIP_JUMP_ANIMS[ 1 ]
+
+	AddWaveSpawnCustomPlayerRideAnimJump( sequence )
+
+	sequence.firstPersonAnim = FD_DROPSHIP_JUMP_ANIMS_POV[ 2 ]
+	sequence.thirdPersonAnim = FD_DROPSHIP_JUMP_ANIMS[ 2 ]
+
+	AddWaveSpawnCustomPlayerRideAnimJump( sequence )
+
+	sequence.firstPersonAnim = FD_DROPSHIP_JUMP_ANIMS_POV[ 3 ]
+	sequence.thirdPersonAnim = FD_DROPSHIP_JUMP_ANIMS[ 3 ]
+
+	AddWaveSpawnCustomPlayerRideAnimJump( sequence )
 }
 
 void function ScoreEvent_SetupScoreValuesForFrontierDefense()
@@ -392,12 +438,6 @@ void function SetFDGroundSpawn( vector origin, vector angles = < 0, 0, 0 > )
 {
 	file.groundSpawnPosition = origin
 	file.groundSpawnAngles = angles
-}
-
-void function SetFDDropshipSpawn( vector origin, vector angles = < 0, 0, 0 > )
-{
-	file.dropshipSpawnPosition = origin
-	file.dropshipSpawnAngles = angles
 }
 
 void function PlaceFDShop( vector origin, vector angles = < 0, 0, 0 > )
@@ -590,8 +630,6 @@ void function mainGameLoop()
 				SetGlobalNetTime( "FD_nextWaveStartTime", Time() + GetCurrentPlaylistVarFloat( "fd_wave_buy_time", 60 ) )
 			}
 
-			WaveRestart_ResetDropshipState()
-
 			wait 1
 
 			if ( currentWave > 0 )
@@ -719,9 +757,10 @@ bool function runWave( int waveIndex, bool shouldDoBuyTime )
 	for ( int i = 0; i < 20; i++ ) // Number of npc type ids
 		file.harvesterDamageSource[ i ] = 0
 
+	file.noDeaths = true
+
 	foreach ( entity player in GetPlayerArray() )
 	{
-		file.players[ player ].diedThisRound = false
 		file.players[ player ].assaultScoreThisRound = 0
 		file.players[ player ].defenseScoreThisRound = 0
 		file.players[ player ].moneyThisRound = GetPlayerMoney( player )
@@ -1034,7 +1073,7 @@ void function FD_Win()
 
 	foreach ( entity player in GetPlayerArrayOfTeam( TEAM_MILITIA ) )
 	{
-		if ( !file.players[ player ].diedThisRound )
+		if ( file.noDeaths )
 			AddPlayerScore( player, "FDDidntDie" )
 		if ( player in file.players && player in file.playerAwardStats )
 		{
@@ -1179,9 +1218,10 @@ void function WaveBreak_ShowPlayerBonus()
 	wait 2
 	printt( "Showing Player Stats: No Deaths This Wave" )
 	SetJoinInProgressBonus( 100 )
+
 	foreach ( entity player in GetPlayerArrayOfTeam( TEAM_MILITIA ) )
 	{
-		if ( !file.players[ player ].diedThisRound )
+		if ( file.noDeaths )
 		{
 			AddPlayerScore( player, "FDDidntDie" )
 			player.AddToPlayerGameStat( PGS_ASSAULT_SCORE, FD_SCORE_DIDNT_DIE )
@@ -1438,50 +1478,6 @@ void function FD_OnPlayerGetsNewPilotLoadout( entity player, PilotLoadoutDef loa
 
 			weapon.SetScriptFlags0( weapon.GetScriptFlags0() | WEAPONFLAG_AMPED )
 		}
-	}
-
-	if ( !IsAlive( player ) || !file.playersInDropship.contains( player ) )
-		return
-
-	int dropshipSlot = 0
-
-	foreach ( entity dropshipplayer in file.playersInDropship )
-		if ( dropshipplayer != player )
-			dropshipSlot++
-		else
-			break
-
-	if ( file.dropshipState == eDropshipState.Returning )
-	{
-		FirstPersonSequenceStruct jumpSequence
-
-		jumpSequence.firstPersonAnim = FD_DROPSHIP_EXIT_ANIMS_POV[ dropshipSlot ]
-		jumpSequence.thirdPersonAnim = FD_DROPSHIP_EXIT_ANIMS[ dropshipSlot ]
-		jumpSequence.attachment = "ORIGIN"
-		jumpSequence.blendTime = 0.0
-		jumpSequence.hideProxy = true
-		jumpSequence.viewConeFunction = ViewConeNarrow
-
-		if ( "fd_dropshipanimtime" in player.s )
-			jumpSequence.setInitialTime = Time() - expect float( player.s.fd_dropshipanimtime )
-
-		thread FirstPersonSequence( jumpSequence, player, file.dropship )
-	}
-	else if ( file.dropshipState == eDropshipState.InProgress )
-	{
-		FirstPersonSequenceStruct idleSequence
-
-		idleSequence.firstPersonAnim = FD_DROPSHIP_IDLE_ANIMS_POV[ dropshipSlot ]
-		idleSequence.thirdPersonAnim = FD_DROPSHIP_IDLE_ANIMS[ dropshipSlot ]
-		idleSequence.attachment = "ORIGIN"
-		idleSequence.blendTime = 0.0
-		idleSequence.hideProxy = true
-		idleSequence.viewConeFunction = ViewConeNarrow
-
-		if ( "fd_dropshipanimtime" in player.s )
-			idleSequence.setInitialTime = Time() - expect float( player.s.fd_dropshipanimtime )
-
-		thread FirstPersonSequence( idleSequence, player, file.dropship )
 	}
 }
 
@@ -1830,7 +1826,7 @@ void function FD_PlayerRespawnCallback( entity player )
 	// Also more than 4 players, additionals will spawn directly on ground
 	// Respawning as Titan just will apply the Protection time
 
-	if ( !FD_ShouldUseRespawnDropship() && !player.IsTitan() && !GamePlaying() && player.GetTeam() != TEAM_IMC )
+	if ( !CanSpawnIntoWaveSpawnDropship( player ) && !player.IsTitan() && !GamePlaying() && player.GetTeam() != TEAM_IMC )
 	{
 		// Teleport player to a more reliable location if they spawn on ground, some maps picks
 		// too far away spawns from the Harvester and Shop (i.e Colony, Homestead, Drydock)
@@ -1841,50 +1837,8 @@ void function FD_PlayerRespawnCallback( entity player )
 	if ( !IsHarvesterAlive( fd_harvester.harvester ) || player.GetTeam() == TEAM_IMC || GetGameState() == eGameState.Prematch )
 		return
 
-	if ( !player.IsTitan() )
-	{
-		player.Highlight_SetParam( 1, 0, < 0, 0, 0 > )
-		player.SetInvulnerable()
-		player.SetNoTarget( true )
-
-		ScreenFadeFromBlack( player )
-	}
-	else
-	{
+	if ( player.IsTitan() )
 		player.Highlight_SetParam( 1, 0, HIGHLIGHT_COLOR_FRIENDLY )
-		return
-	}
-
-	if ( !FD_ShouldUseRespawnDropship() )
-	{
-		if ( !player.IsTitan() )
-			thread FD_PlayerRespawnProtection( player )
-
-		return
-	}
-
-	if ( file.dropshipState == eDropshipState.Idle )
-		thread FD_DropshipSpawnDropship()
-
-	if ( IsValid( file.dropship ) )
-	{
-		// Attach player
-		FirstPersonSequenceStruct idleSequence
-
-		idleSequence.firstPersonAnim = FD_DROPSHIP_IDLE_ANIMS_POV[ file.playersInShip ]
-		idleSequence.thirdPersonAnim = FD_DROPSHIP_IDLE_ANIMS[ file.playersInShip ]
-		idleSequence.attachment = "ORIGIN"
-		idleSequence.teleport = true
-		idleSequence.viewConeFunction = ViewConeNarrow
-		idleSequence.hideProxy = true
-
-		player.s.fd_dropshipanimtime <- Time()
-
-		thread FirstPersonSequence( idleSequence, player, file.dropship )
-
-		file.playersInDropship.append( player )
-		file.playersInShip++
-	}
 }
 
 bool function FD_ShouldUseRespawnDropship()
@@ -2468,13 +2422,6 @@ void function GamemodeFD_OnPlayerKilled( entity victim, entity attacker, var dam
 		return
 	}
 
-	if ( FD_PlayerInDropship( victim ) )
-	{
-		victim.ClearParent()
-		ClearPlayerAnimViewEntity( victim )
-		victim.ClearInvulnerable()
-	}
-
 	// set longest Time alive for end awards
 	if ( victim in file.players && victim in file.playerAwardStats )
 	{
@@ -2487,7 +2434,7 @@ void function GamemodeFD_OnPlayerKilled( entity victim, entity attacker, var dam
 	file.players[ victim ].pilotPerfectWin = false // Remove perfect win for this player
 
 	if ( GetGlobalNetInt( "FD_waveState" ) != WAVE_STATE_BREAK )
-		file.players[ victim ].diedThisRound = true
+		file.noDeaths = false
 
 	// play voicelines for amount of players alive
 	array<entity> militiaplayers = GetPlayerArrayOfTeam( TEAM_MILITIA )
@@ -2512,9 +2459,6 @@ void function GamemodeFD_OnPlayerKilled( entity victim, entity attacker, var dam
 		else if ( deaths == militiaplayers.len() - 1 ) // ur shit out of luck ur the only survivor
 			PlayFactionDialogueToPlayer( "fd_onlyPlayerIsAlive", player )
 	}
-
-	if ( FD_ShouldUseRespawnDropship() && file.dropshipState == eDropshipState.Idle )
-		thread FD_DropshipSpawnDropship()
 }
 
 void function FD_OnNPCDeath( entity victim, entity attacker, var damageInfo )
@@ -2971,164 +2915,8 @@ void function MonitorHarvesterProximity( entity harvester )
 ██████  ██   ██  ██████  ██      ███████ ██   ██ ██ ██          ██       ██████  ██   ████  ██████    ██    ██  ██████  ██   ████ ███████
 */
 
-bool function FD_PlayerInDropship( entity player )
-{
-	if ( !IsValid( file.dropship ) )
-		return false
-
-	if ( !IsValidPlayer( player ) )
-		return false
-
-	foreach ( entity dropshipPlayer in file.playersInDropship )
-		if ( dropshipPlayer == player )
-			return true
-
-	return false
-}
-
-void function FD_DropshipSpawnDropship()
-{
-	svGlobal.levelEnt.EndSignal( "RoundEnd" )
-
-	OnThreadEnd(
-		function() : ()
-		{
-			file.playersInDropship.clear()
-			file.playersInShip = 0 // Do it again in here to avoid dropship not appearing anymore after a while if theres too many players in a match
-			file.dropshipState = eDropshipState.Idle
-		}
-	)
-
-	asset model = GetFlightPathModel( "fp_crow_model" )
-
-	Point start = GetWarpinPosition( model, FD_DropshipGetAnimation(), file.dropshipSpawnPosition, file.dropshipSpawnAngles )
-	entity fx = PlayFX( FX_GUNSHIP_CRASH_EXPLOSION_ENTRANCE, start.origin, start.angles )
-	fx.FXEnableRenderAlways()
-	fx.DisableHibernation()
-
-	file.playersInShip = 0
-	file.dropshipState = eDropshipState.InProgress
-	file.dropship = CreateDropship( TEAM_MILITIA, file.dropshipSpawnPosition, file.dropshipSpawnAngles )
-	file.dropship.SetValueForModelKey( $"models/vehicle/crow_dropship/crow_dropship_hero.mdl" )
-
-	file.dropship.Hide()
-	DispatchSpawn( file.dropship )
-	file.dropship.SetModel( $"models/vehicle/crow_dropship/crow_dropship_hero.mdl" )
-	file.dropship.SetInvulnerable()
-	file.dropship.NotSolid()
-	NPC_NoTarget( file.dropship )
-
-	thread PlayAnim( file.dropship, FD_DropshipGetAnimation() )
-	file.dropship.Show()
-
-	file.dropship.Anim_ScriptedAddGestureSequence( "dropship_coop_respawn", true )
-	file.dropship.WaitSignal( "deploy" )
-	file.dropshipState = eDropshipState.Returning
-
-	foreach ( int i, entity player in file.playersInDropship )
-	{
-		if ( IsValid( player ) )
-			thread FD_DropshipDropPlayer( player, i )
-	}
-
-	if ( file.playersInDropship.len() > 0 && GamePlaying() ) // Only one player in dropship is needed to warn about them respawning
-	{
-		foreach ( entity player in GetPlayerArrayOfTeam( TEAM_MILITIA ) )
-		{
-			if ( file.playersInDropship.contains( player ) )
-				continue
-
-			PlayFactionDialogueToPlayer( "fd_pilotRespawn", player )
-		}
-	}
-
-	wait 8
-}
-
-void function FD_DropshipDropPlayer( entity player, int playerDropshipIndex )
-{
-	player.EndSignal( "OnDestroy" )
-	player.EndSignal( "OnDeath" )
-	// check the player
-	if ( IsValid( player ) && !player.IsTitan() )
-	{
-		EnableOffhandWeapons( player )
-
-		FirstPersonSequenceStruct jumpSequence
-		jumpSequence.firstPersonAnim = FD_DROPSHIP_EXIT_ANIMS_POV[ playerDropshipIndex ]
-		jumpSequence.thirdPersonAnim = FD_DROPSHIP_EXIT_ANIMS[ playerDropshipIndex ]
-		jumpSequence.attachment = "ORIGIN"
-		jumpSequence.blendTime = 0.0
-		jumpSequence.hideProxy = true
-		jumpSequence.viewConeFunction = ViewConeNarrow
-
-		player.s.fd_dropshipanimtime <- Time()
-
-		#if BATTLECHATTER_ENABLED
-			entity otherPlayer
-
-			foreach ( entity dropshipPlayer in file.playersInDropship )
-				if ( dropshipPlayer != player && IsValidPlayer( dropshipPlayer ) )
-					otherPlayer = dropshipPlayer
-
-			if ( IsValidPlayer( otherPlayer ) )
-				PlayBattleChatterLineOnlyToPlayer( otherPlayer, player, "bc_pIntroChat" )
-		#endif
-
-		waitthread FirstPersonSequence( jumpSequence, player, file.dropship )
-
-		if ( IsValidPlayer( player ) ) // Check again because the delay
-		{
-			player.ClearParent()
-
-			ClearPlayerAnimViewEntity( player )
-			thread FD_PlayerRespawnProtection( player )
-		}
-	}
-}
-
-void function FD_PlayerRespawnProtection( entity player )
-{
-	player.EndSignal( "OnDeath" )
-	player.EndSignal( "OnDestroy" )
-
-	OnThreadEnd(
-		function() : ( player )
-		{
-			if ( IsValidPlayer( player ) )
-			{
-				player.Highlight_SetParam( 1, 0, HIGHLIGHT_COLOR_FRIENDLY )
-				player.ClearInvulnerable()
-				player.SetNoTarget( false )
-			}
-		}
-	)
-
-	wait 0.1
-	if ( !player.IsTitan() )
-		player.ConsumeDoubleJump() // Dropship case scenario
-	wait 5.0
-}
-
-void function WaveRestart_ResetDropshipState()
-{
-	file.dropshipState = eDropshipState.Idle
-	file.playersInShip = 0
-	file.playersInDropship.clear()
-	file.harvesterHalfHealth = false
-	file.harvesterShieldDown = false
-}
-
-void function FD_DropshipSetAnimationOverride( string animation )
-{
-	file.animationOverride = animation
-}
-
 string function FD_DropshipGetAnimation()
 {
-	if ( file.animationOverride != "" )
-		return file.animationOverride
-
 	switch ( GetMapName() )
 	{
 		case "mp_homestead": // Homestead flight path has a very very jank coordinate where the drop point actually is

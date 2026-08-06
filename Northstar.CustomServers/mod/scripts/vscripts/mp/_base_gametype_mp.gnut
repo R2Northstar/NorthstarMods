@@ -418,6 +418,30 @@ void function PostDeathThread_MP( entity player, var damageInfo, bool gamePlayin
 	float timeOfDeath = Time()
 	player.p.postDeathThreadStartTime = timeOfDeath
 
+	if ( IsFirstToDieAfterWaveSpawn( player, timeOfDeath ) )
+	{
+		switch ( GetWaveSpawnType() )
+		{
+			case eWaveSpawnType.FIXED_INTERVAL:
+				float cycles = Time() / GetWaveSpawnInterval()
+				float nextWaveSpawnTime = ( cycles.tointeger() + 1 ) * GetWaveSpawnInterval()
+
+				SetWaveSpawnTime( player.GetTeam(), nextWaveSpawnTime )
+				thread CreateWaveSpawnDropship( player.GetTeam() )
+				break
+
+			case eWaveSpawnType.DROPSHIP:
+			case eWaveSpawnType.PLAYER_DEATH:
+				SetWaveSpawnTime( player.GetTeam(), timeOfDeath + GetWaveSpawnInterval() )
+				thread CreateWaveSpawnDropship( player.GetTeam() )
+				break
+
+			case eWaveSpawnType.MANUAL:
+			default:
+				break
+		}
+	}
+
 	Assert( IsValid( player ), "Not a valid player" )
 	player.EndSignal( "OnDestroy" )
 	player.EndSignal( "OnRespawned" )
@@ -509,8 +533,12 @@ void function PostDeathThread_MP( entity player, var damageInfo, bool gamePlayin
 	if ( !IsEliminationBased() || ( !IsPlayerEliminated( player ) && GetGameState() > eGameState.Prematch && GetGameState() <= eGameState.SuddenDeath ) )
 	{
 		float respawnDelay = max( 0, GetCurrentPlaylistVarFloat( "respawn_delay", 0.0 ) - deathcamLength )
+		float respawnTime = respawnDelay
 
-		UpdateNextRespawnTime( player, Time() + respawnDelay )
+		if ( GetWaveSpawnTime( player.GetTeam() ) - Time() > 0.0 )
+			respawnTime = GetWaveSpawnTime( player.GetTeam() ) - Time()
+
+		UpdateNextRespawnTime( player, Time() + respawnTime )
 		SetRespawnAvailable( player )
 
 		#if DEV
@@ -524,7 +552,16 @@ void function PostDeathThread_MP( entity player, var damageInfo, bool gamePlayin
 				: GetKillReplayAfterTime( player ) + GetRespawnButtonCamTime( player )
 		)
 
-		if ( GetKillReplayAfterTime( player ) + GetRespawnButtonCamTime( player ) < respawnDelay )
+		if ( ShouldWaitForNextWaveSpawn( player ) )
+		{
+			PutPlayerInObserverMode( player, OBS_MODE_STATIC_LOCKED )
+
+			while ( ShouldWaitForNextWaveSpawn( player ) )
+				WaitFrame()
+
+			player.s.respawnSelectionDone = true
+		}
+		else if ( GetKillReplayAfterTime( player ) + GetRespawnButtonCamTime( player ) < respawnDelay )
 		{
 			wait GetKillReplayAfterTime( player ) + GetRespawnButtonCamTime( player )
 
@@ -741,6 +778,12 @@ bool function DecideRespawnPlayer( entity player )
 	}
 	else
 		player.StopObserverMode()
+
+	if ( CanSpawnIntoWaveSpawnDropship( player ) )
+	{
+		thread DoWaveSpawnByDropship( player )
+		return true
+	}
 
 	if ( IsValid( player.isSpawning ) )
 	{

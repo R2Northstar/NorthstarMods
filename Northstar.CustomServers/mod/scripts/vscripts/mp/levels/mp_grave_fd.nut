@@ -4,7 +4,7 @@ void function initFrontierDefenseData()
 	useCustomFDLoad = true // Respawn Routes for this map are quite bad ngl
 	AddCallback_RegisterCustomFDContent( RegisterCustomFDContent )
 	PlaceFDShop( < 1767, -4959, 2244 > )
-	SetFDDropshipSpawn( < 3820, -4181, 2242 > )
+	AddWaveSpawnCustomSpawnPoint( TEAM_MILITIA, < 3820, -4181, 2242 > )
 	SetFDGroundSpawn( < 3184, -3844, 2377 >, < 0, -45, 0 > )
 
 	AddWaveAnnouncement( "fd_introEasy" )

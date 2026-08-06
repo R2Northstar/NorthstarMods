@@ -38,14 +38,14 @@ global const array<string> DROPSHIP_IDLE_ANIMS_POV = [
 	"Classic_MP_flyin_exit_povD_idle"
 ]
 
-global const array<string> DROPSHIP_EXIT_ANIMS = [
+global const array<string> DROPSHIP_JUMP_ANIMS = [
 	"Classic_MP_flyin_exit_playerA_jump",
 	"Classic_MP_flyin_exit_playerB_jump",
 	"Classic_MP_flyin_exit_playerC_jump",
 	"Classic_MP_flyin_exit_playerD_jump"
 ]
 
-global const array<string> DROPSHIP_EXIT_ANIMS_POV = [
+global const array<string> DROPSHIP_JUMP_ANIMS_POV = [
 	"Classic_MP_flyin_exit_povA_jump",
 	"Classic_MP_flyin_exit_povB_jump",
 	"Classic_MP_flyin_exit_povC_jump",
