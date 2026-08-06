@@ -386,7 +386,7 @@ void function SetWaveSpawnCustomDropshipAnim( string anim )
 
 FirstPersonSequenceStruct function GetWaveSpawnCustomPlayerRideAnimIdle( int index, FirstPersonSequenceStruct sequence )
 {
-	if ( index <= file.waveSpawnCustomPlayerIdleAnim.len() )
+	if ( index < file.waveSpawnCustomPlayerIdleAnim.len() )
 		return file.waveSpawnCustomPlayerIdleAnim[ index ]
 
 	return sequence
@@ -399,7 +399,7 @@ void function AddWaveSpawnCustomPlayerRideAnimIdle( FirstPersonSequenceStruct id
 
 FirstPersonSequenceStruct function GetWaveSpawnCustomPlayerRideAnimJump( int index, FirstPersonSequenceStruct sequence )
 {
-	if ( index <= file.waveSpawnCustomPlayerJumpAnim.len() )
+	if ( index < file.waveSpawnCustomPlayerJumpAnim.len() )
 		return file.waveSpawnCustomPlayerJumpAnim[ index ]
 
 	return sequence
