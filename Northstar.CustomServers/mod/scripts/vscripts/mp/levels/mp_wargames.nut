@@ -471,7 +471,6 @@ void function PlayerWatchesWargamesIntro( entity player )
 	sequence.renderWithViewModels = true
 	sequence.attachment = "REF"
 	sequence.blendTime = 0
-	sequence.teleport = true
 
 	thread FirstPersonSequence( sequence, player, playerPod )
 
@@ -488,6 +487,7 @@ void function PlayerWatchesWargamesIntro( entity player )
 		thread void function() : ( player )
 		{
 			player.EndSignal( "OnDestroy" )
+			player.EndSignal( "OnDeath" )
 
 			wait 0.5
 
