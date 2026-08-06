@@ -154,7 +154,7 @@ void function CleanupWaveSpawnDropship( entity ship )
 
 	file.classicMPDropships[ team ].removebyvalue( ship )
 
-	ClearDropshipSpawnPlayerList( team )
+	delaythread( 0.0001 ) ClearDropshipSpawnPlayerList( team )
 }
 
 void function ClearDropshipSpawnPlayerList( int team = TEAM_UNASSIGNED )
