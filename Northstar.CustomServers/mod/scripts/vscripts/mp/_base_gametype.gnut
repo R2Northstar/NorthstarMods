@@ -1122,10 +1122,13 @@ function DoRespawnPlayer( entity player, entity spawnPoint )
 {
 	player.p.lastSpawnPoint = spawnPoint
 
-	string pilotSettings = Loadouts_GetSetFileForRequestedClass( player )
+	#if MP
+		string pilotSettings = Loadouts_GetSetFileForRequestedClass( player )
 
-	player.SetPlayerSettings( pilotSettings )
-	player.SetPlayerPilotSettings( pilotSettings )
+		player.SetPlayerSettings( pilotSettings )
+		player.SetPlayerPilotSettings( pilotSettings )
+	#endif
+
 	player.RespawnPlayer( spawnPoint ) // This will send "OnRespawned" signal, killing the thread if started from PostDeathThread
 }
 
