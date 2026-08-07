@@ -1207,22 +1207,17 @@ void function PlayerSpawnsIntoPetTitan( entity player )
 	vector angles = titan.GetAngles()
 
 	entity camera = CreateTitanDropCamera( origin, Vector( 90, angles.y, 0 ) )
-	player.SetViewEntity( camera, false )
+
+	camera.Fire( "Enable", "!activator", 0, player )
 
 	player.isSpawning = true // set this to prevent .isSpawning checks from returning false
-
-	angles.x = 70
-
-	player.SetOrigin( origin )
-	player.SnapEyeAngles( angles )
-	player.SetVelocity( Vector( 0.0, 0.0, 0.0 ) )
+	player.SetInvulnerable()
 
 	OnThreadEnd(
 		function() : ( player )
 		{
 			if ( IsValid( player ) )
 			{
-				player.ClearViewEntity()
 				player.ClearSpawnPoint()
 				player.isSpawning = null
 			}
@@ -1232,24 +1227,30 @@ void function PlayerSpawnsIntoPetTitan( entity player )
 	wait 0.2
 
 	local criteria = { embark = "above_close", titanCanStandRequired = true }
+	local embarkAction = FindEmbarkActionForCriteria( criteria )
 
-	local embarkAction
-	embarkAction = FindEmbarkActionForCriteria( criteria )
 	if ( embarkAction == null )
 		embarkAction = GetRandomEmbarkAction()
 
 	if ( IsValid( camera ) )
 	{
 		// camera can be invalid for a moment when server shuts down
-		// camera.FireNow( "Disable", "!activator", null, player )
+		camera.FireNow( "Disable", "!activator", null, player )
 		camera.Destroy()
 	}
 
-	DoRespawnPlayer( player, null )
+	player.ClearInvulnerable()
 
 	if ( PlayerCanSpawnIntoTitan( player ) )
 	{
+		angles.x = 70
+
+		player.SetOrigin( origin )
+		player.SnapEyeAngles( angles )
+		player.SetVelocity( Vector( 0.0, 0.0, 0.0 ) )
+
 		table action = expect table( GenerateEmbarkActionTable( player, titan, embarkAction ) )
+
 		PlayerEmbarksTitan( player, titan, action )
 	}
 }

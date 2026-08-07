@@ -325,26 +325,30 @@ void function CodeCallback_OnPlayerRespawned( entity player )
 
 	ClearPlayerAnimViewEntity( player )
 	player.Signal( "OnRespawned" ) // kill any postdeaththreads that could be running
-	Loadouts_TryGivePilotLoadout( player )
 
 	foreach ( entity weapon in player.GetMainWeapons() )
 		weapon.SetProScreenOwner( player )
 
 	bool spawnAsTitan = expect bool( player.GetPersistentVar( "spawnAsTitan" ) )
+
 	if (
 		( player in file.playerRespawnPlayerIntoTitan && file.playerRespawnPlayerIntoTitan[ player ] ) ||
 		( ( spawnAsTitan || svGlobal.forceSpawnIntoTitan ) && PlayerCanSpawnIntoTitan( player ) )
 	)
 	{
 		if ( player in file.playerRespawnPlayerIntoTitan && file.playerRespawnPlayerIntoTitan[ player ] )
+		{
 			file.playerRespawnPlayerIntoTitan[ player ] = false
 
-		entity titan = player.GetPetTitan()
+			entity titan = player.GetPetTitan()
 
-		TeleportToEnt( player, titan )
-		PilotBecomesTitan( player, titan )
+			TeleportToEnt( player, titan )
+			PilotBecomesTitan( player, titan )
 
-		titan.Destroy()
+			titan.Destroy()
+		}
+		else
+			thread PlayerSpawnsIntoPetTitan( player )
 	}
 
 	foreach ( void functionref( entity ) callback in svGlobal.onPlayerRespawnedCallbacks )
@@ -354,6 +358,8 @@ void function CodeCallback_OnPlayerRespawned( entity player )
 	thread TryGameModeAnnouncement( player )
 	ClearLastAttacker( player ) // so dying to anything doesn't credit the same attacker after respawning
 	ClearPlayerEliminated( player )
+	thread LoadoutChangeGracePeriodThink( player )
+	Loadouts_TryGivePilotLoadout( player )
 }
 
 /*
