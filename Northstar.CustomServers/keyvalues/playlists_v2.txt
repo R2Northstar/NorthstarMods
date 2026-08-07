@@ -103,7 +103,7 @@ playlists
 				titan_rebuild_time 180
 				titan_shield_decay 0
 				titan_shield_regen 0
-				titan_spawn_deploy_enabled 1
+				titan_spawn_deploy_enabled 0
 				vortex_blocks_melee 0
 				waiting_for_players_countdown_seconds 0
 				waiting_for_players_percentage_desired 70
