@@ -712,7 +712,7 @@ void function SpawnArcTitan( WaveSpawnEvent ornull spawnEvent )
 	npc.EndSignal( "OnDeath" )
 	npc.EndSignal( "OnDestroy" )
 
-	wait 5.0
+	wait 4.6
 
 	npc.GetTitanSoul().SetTitanSoulNetBool( "showOverheadIcon", true )
 
@@ -777,7 +777,7 @@ void function SpawnNukeTitan( WaveSpawnEvent ornull spawnEvent )
 	npc.EndSignal( "OnDeath" )
 	npc.EndSignal( "OnDestroy" )
 
-	wait 5.0
+	wait 4.6
 
 	npc.GetTitanSoul().SetTitanSoulNetBool( "showOverheadIcon", true )
 
@@ -825,7 +825,7 @@ void function SpawnMortarTitan( WaveSpawnEvent ornull spawnEvent )
 	npc.EndSignal( "OnDeath" )
 	npc.EndSignal( "OnDestroy" )
 
-	wait 5.0
+	wait 4.6
 
 	npc.GetTitanSoul().SetTitanSoulNetBool( "showOverheadIcon", true )
 
@@ -873,7 +873,7 @@ void function SpawnSniperTitan( WaveSpawnEvent ornull spawnEvent )
 	npc.EndSignal( "OnDeath" )
 	npc.EndSignal( "OnDestroy" )
 
-	wait 5.0
+	wait 4.6
 
 	npc.GetTitanSoul().SetTitanSoulNetBool( "showOverheadIcon", true )
 
@@ -922,7 +922,7 @@ void function SpawnToneSniperTitan( WaveSpawnEvent ornull spawnEvent )
 	npc.EndSignal( "OnDeath" )
 	npc.EndSignal( "OnDestroy" )
 
-	wait 5.0
+	wait 4.6
 
 	npc.GetTitanSoul().SetTitanSoulNetBool( "showOverheadIcon", true )
 
@@ -969,7 +969,7 @@ void function SpawnIonTitan( WaveSpawnEvent ornull spawnEvent )
 	npc.EndSignal( "OnDeath" )
 	npc.EndSignal( "OnDestroy" )
 
-	wait 5.0
+	wait 4.6
 
 	npc.GetTitanSoul().SetTitanSoulNetBool( "showOverheadIcon", true )
 
@@ -1018,7 +1018,7 @@ void function SpawnScorchTitan( WaveSpawnEvent ornull spawnEvent )
 	npc.EndSignal( "OnDeath" )
 	npc.EndSignal( "OnDestroy" )
 
-	wait 5.0
+	wait 4.6
 
 	npc.GetTitanSoul().SetTitanSoulNetBool( "showOverheadIcon", true )
 
@@ -1066,7 +1066,7 @@ void function SpawnRoninTitan( WaveSpawnEvent ornull spawnEvent )
 	npc.EndSignal( "OnDeath" )
 	npc.EndSignal( "OnDestroy" )
 
-	wait 5.0
+	wait 4.6
 
 	npc.GetTitanSoul().SetTitanSoulNetBool( "showOverheadIcon", true )
 
@@ -1113,7 +1113,7 @@ void function SpawnToneTitan( WaveSpawnEvent ornull spawnEvent )
 	npc.EndSignal( "OnDeath" )
 	npc.EndSignal( "OnDestroy" )
 
-	wait 5.0
+	wait 4.6
 
 	npc.GetTitanSoul().SetTitanSoulNetBool( "showOverheadIcon", true )
 
@@ -1160,7 +1160,7 @@ void function SpawnLegionTitan( WaveSpawnEvent ornull spawnEvent )
 	npc.EndSignal( "OnDeath" )
 	npc.EndSignal( "OnDestroy" )
 
-	wait 5.0
+	wait 4.6
 
 	npc.GetTitanSoul().SetTitanSoulNetBool( "showOverheadIcon", true )
 
@@ -1207,7 +1207,7 @@ void function SpawnMonarchTitan( WaveSpawnEvent ornull spawnEvent )
 	npc.EndSignal( "OnDeath" )
 	npc.EndSignal( "OnDestroy" )
 
-	wait 5.0
+	wait 4.6
 
 	npc.GetTitanSoul().SetTitanSoulNetBool( "showOverheadIcon", true )
 

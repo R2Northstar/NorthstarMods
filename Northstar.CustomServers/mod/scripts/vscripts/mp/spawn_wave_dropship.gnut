@@ -86,17 +86,6 @@ void function CreateWaveSpawnDropship( int team )
 {
 	// wait the proper ammount of time
 	string anim = GetWaveSpawnCustomDropshipAnim()
-	float deployTime = GetAnimEventTime( DROPSHIP_MODEL, anim, "dropship_deploy" )
-	float totalDeployTime = deployTime + WARPINFXTIME
-	float waveSpawnTime = GetWaveSpawnTime( team )
-	float timeFromNow = waveSpawnTime - Time()
-
-	Assert( totalDeployTime <= timeFromNow, "The deploy time for the wavespawn dropship is longer than the amount of time available in the wavespawn" )
-
-	float waitTime = timeFromNow - totalDeployTime - 0.1 // the 0.1 is just to make sure it is on the field when the players try to get on it
-
-	if ( waitTime > 0 )
-		wait waitTime
 
 	// find a spawnpoint
 	array<entity> spawnpoints = GetEntArrayByClass_Expensive( "info_spawnpoint_dropship_start" )
@@ -493,11 +482,10 @@ bool function ShouldWaitForNextWaveSpawn( entity player )
 	{
 		if ( player.s.respawnSelectionDone == true )
 		{
-			float dropshipSpawnTime = waveSpawnTime - GetWaveSpawnWindowTimeDropshipSpawn()
 			float dropshipGoneTime = waveSpawnTime - GetWaveSpawnWindowTimeDropshipGone()
 
 			// if we are within the window where the player can enter a dropship return false
-			if ( Time() > dropshipSpawnTime && Time() < dropshipGoneTime && WaveDropshipSpawnIsJoinable( team ) )
+			if ( Time() < dropshipGoneTime && WaveDropshipSpawnIsJoinable( team ) )
 				return false
 		}
 	}

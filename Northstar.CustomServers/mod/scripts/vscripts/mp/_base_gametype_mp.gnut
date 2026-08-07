@@ -560,6 +560,8 @@ void function PostDeathThread_MP( entity player, var damageInfo, bool gamePlayin
 
 		if ( ShouldWaitForNextWaveSpawn( player ) )
 		{
+			wait respawnDelay
+
 			PutPlayerInObserverMode( player, OBS_MODE_STATIC_LOCKED )
 
 			while ( ShouldWaitForNextWaveSpawn( player ) )
@@ -572,9 +574,11 @@ void function PostDeathThread_MP( entity player, var damageInfo, bool gamePlayin
 			wait GetKillReplayAfterTime( player ) + GetRespawnButtonCamTime( player )
 
 			PutPlayerInObserverMode( player, OBS_MODE_STATIC_LOCKED )
-		}
 
-		wait respawnDelay - ( GetKillReplayAfterTime( player ) + GetRespawnButtonCamTime( player ) )
+			wait respawnDelay - ( GetKillReplayAfterTime( player ) + GetRespawnButtonCamTime( player ) )
+		}
+		else
+			wait respawnDelay
 
 		if ( !player.s.respawnSelectionDone && GetGameState() != eGameState.SuddenDeath ) // Only wait outside Sudden Death since players gets inputs blocked to respawn if they die before Sudden Death starts
 			player.WaitSignal( "RespawnMe" )

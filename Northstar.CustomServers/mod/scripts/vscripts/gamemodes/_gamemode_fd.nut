@@ -786,7 +786,7 @@ bool function runWave( int waveIndex, bool shouldDoBuyTime )
 					enemys[ 8 ]
 				)
 
-				delaythread( 7 ) void function() : ( player )
+				delaythread( 5 ) void function() : ( player )
 				{
 					if ( IsValidPlayer( player ) )
 						Remote_CallFunction_NonReplay( player, "ServerCallback_FD_ClearPreParty" )
@@ -858,20 +858,23 @@ bool function runWave( int waveIndex, bool shouldDoBuyTime )
 	// Droz & Dravis should be mentioning when waves are starting
 	if ( waveIndex == 0 )
 	{
-		foreach ( entity player in GetPlayerArray() )
-			Remote_CallFunction_NonReplay(
-				player,
-				"ServerCallback_FD_AnnouncePreParty",
-				enemys[ 0 ],
-				enemys[ 1 ],
-				enemys[ 2 ],
-				enemys[ 3 ],
-				enemys[ 4 ],
-				enemys[ 5 ],
-				enemys[ 6 ],
-				enemys[ 7 ],
-				enemys[ 8 ]
-			)
+		delaythread( 3 ) void function() : ( enemys )
+		{
+			foreach ( entity player in GetPlayerArray() )
+				Remote_CallFunction_NonReplay(
+					player,
+					"ServerCallback_FD_AnnouncePreParty",
+					enemys[ 0 ],
+					enemys[ 1 ],
+					enemys[ 2 ],
+					enemys[ 3 ],
+					enemys[ 4 ],
+					enemys[ 5 ],
+					enemys[ 6 ],
+					enemys[ 7 ],
+					enemys[ 8 ]
+				)
+		}()
 
 		PlayFactionDialogueToTeam( "fd_firstWaveStartPrefix", TEAM_MILITIA )
 	}
@@ -883,15 +886,6 @@ bool function runWave( int waveIndex, bool shouldDoBuyTime )
 	MessageToTeam( TEAM_MILITIA, eEventNotifications.FD_AnnounceWaveStart )
 
 	wait 7
-
-	if ( waveIndex == 0 )
-	{
-		delaythread( 3 ) void function() : ()
-		{
-			foreach ( entity player in GetPlayerArray() )
-				Remote_CallFunction_NonReplay( player, "ServerCallback_FD_ClearPreParty" )
-		}()
-	}
 
 	file.disableTitanSelectionForNewJoiners = true
 
@@ -2046,7 +2040,7 @@ void function OnHarvesterDamaged( entity harvester, var damageInfo )
 	if ( IsValid( weapon ) && HeavyArmorCriticalHitRequired( damageInfo ) && IsValid( attacker ) && !attacker.IsTitan() ) // Small change since Grunts will do 0 damage with normal guns because Harvester uses heavy armor
 		damageAmount = float( weapon.GetWeaponSettingInt( eWeaponVar.damage_near_value ) )
 
-	int PlayersInMatch = minint( 4, GetPlayerArrayOfTeam( TEAM_MILITIA ).len() + 1 ) // Additional players should not be considered
+	int PlayersInMatch = minint( 4, GetPlayerArrayOfTeam( TEAM_MILITIA ).len() ) // Additional players should not be considered
 	float MultiplierPerPlayer = 0.25
 
 	if ( !damageSourceID || !damageAmount || !IsValid( attacker ) )
@@ -2056,14 +2050,6 @@ void function OnHarvesterDamaged( entity harvester, var damageInfo )
 	}
 
 	fd_harvester.lastDamage = Time()
-
-	if ( difficultyLevel == eFDDifficultyLevel.EASY ) // Not sure if its a check vanilla does, but stuff does a bit less damage on Easy
-		damageAmount *= 0.8
-
-	/* Looks like Respawn stepped back with damage multipliers affecting the Harvester because a Charge Rifle grunt takes 15% of Harvester's health on Master
-	with the 2.5x multiplier, but doesn't do the same on vanilla.
-	damageAmount *= GetCurrentPlaylistVarFloat( "fd_player_damage_scalar", 1.0 )
-*/
 
 	damageAmount *= MultiplierPerPlayer * PlayersInMatch
 
@@ -2425,7 +2411,7 @@ void function GamemodeFD_OnPlayerKilled( entity victim, entity attacker, var dam
 
 	file.players[ victim ].pilotPerfectWin = false // Remove perfect win for this player
 
-	if ( GetGlobalNetInt( "FD_waveState" ) != WAVE_STATE_BREAK )
+	if ( GetGlobalNetInt( "FD_waveState" ) < WAVE_STATE_COMPLETE )
 		file.noDeaths = false
 
 	// play voicelines for amount of players alive
