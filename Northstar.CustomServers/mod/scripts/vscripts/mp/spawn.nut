@@ -260,7 +260,7 @@ entity function FindSpawnPoint( entity player, bool isTitan, bool useStartSpawnp
 
 	array<entity> spawnpoints
 	if ( useStartSpawnpoint )
-		spawnpoints = isTitan ? NSSpawnPoints_GetTitanStart( team ) : SpawnPoints_GetPilotStart( team )
+		spawnpoints = isTitan ? SpawnPoints_GetTitanStart( team ) : SpawnPoints_GetPilotStart( team )
 	else
 		spawnpoints = isTitan ? SpawnPoints_GetTitan() : SpawnPoints_GetPilot()
 
@@ -279,7 +279,7 @@ entity function FindSpawnPoint( entity player, bool isTitan, bool useStartSpawnp
 		if ( !useStartSpawnpoint )
 			SpawnPoints_SortTitan()
 
-		spawnpoints = useStartSpawnpoint ? NSSpawnPoints_GetTitanStart( team ) : SpawnPoints_GetTitan()
+		spawnpoints = useStartSpawnpoint ? SpawnPoints_GetTitanStart( team ) : SpawnPoints_GetTitan()
 	}
 	else
 	{
@@ -726,7 +726,7 @@ int function SortPossibleZones( entity a, entity b )
 		foreach ( sPoint in spawnPoints )
 			DebugDrawSpawnpoint( sPoint, 0, ( GetZiplineDropshipSpawns().contains( sPoint ) ? 255 : 0 ), 0, false, 600 )
 
-		spawnPoints = NSSpawnPoints_GetTitanStart( TEAM_IMC )
+		spawnPoints = SpawnPoints_GetTitanStart( TEAM_IMC )
 		foreach ( sPoint in spawnPoints )
 			DebugDrawSpawnpoint( sPoint, 255, 0, 0, false, 600 )
 
@@ -738,7 +738,7 @@ int function SortPossibleZones( entity a, entity b )
 		foreach ( sPoint in spawnPoints )
 			DebugDrawSpawnpoint( sPoint, 255, 0, 0, false, 600 )
 
-		spawnPoints = NSSpawnPoints_GetTitanStart( TEAM_MILITIA )
+		spawnPoints = SpawnPoints_GetTitanStart( TEAM_MILITIA )
 		foreach ( sPoint in spawnPoints )
 			DebugDrawSpawnpoint( sPoint, 0, 0, 255, false, 600 )
 

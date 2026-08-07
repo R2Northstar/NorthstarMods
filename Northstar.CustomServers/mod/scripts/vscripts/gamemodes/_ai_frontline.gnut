@@ -50,7 +50,7 @@ bool function InitFrontLine()
 	// this will most likely be the one closest to the center of the map
 	array<entity> spawnpoints = SpawnPoints_GetDropPodStart( TEAM_ANY )
 
-	spawnpoints.extend( NSSpawnPoints_GetTitanStart( TEAM_ANY ) )
+	spawnpoints.extend( SpawnPoints_GetTitanStart( TEAM_ANY ) )
 	spawnpoints.extend( SpawnPoints_GetPilotStart( TEAM_ANY ) )
 
 	vector mapCenter = GetMapCenter( spawnpoints )
@@ -536,7 +536,7 @@ array function CreateTempFrontline()
 	array<vector> originArray = []
 	array<entity> spawnpoints = SpawnPoints_GetDropPodStart( TEAM_ANY )
 
-	spawnpoints.extend( NSSpawnPoints_GetTitanStart( TEAM_ANY ) )
+	spawnpoints.extend( SpawnPoints_GetTitanStart( TEAM_ANY ) )
 	spawnpoints.extend( SpawnPoints_GetPilotStart( TEAM_ANY ) )
 
 	vector mapCenter = GetMapCenter( spawnpoints )

@@ -210,18 +210,6 @@ void function ReloadMods( bool reloadorretry = false )
 			titan.Destroy()
 		}
 
-		// does the samething as SpawnPoints_GetTitanStart but doesn't have a chance to crash the server
-		array<entity> function NSSpawnPoints_GetTitanStart( int team )
-		{
-			array<entity> spawnpoints = []
-
-			foreach ( entity spawnpoint in GetEntArrayByClass_Expensive( "info_spawnpoint_titan_start" ) )
-				if ( spawnpoint.GetTeam() == team )
-					spawnpoints.append( spawnpoint )
-
-			return spawnpoints
-		}
-
 		void function StopPlayingMinuteMusicToAll()
 		{
 			foreach ( entity player in GetPlayerArray() )
