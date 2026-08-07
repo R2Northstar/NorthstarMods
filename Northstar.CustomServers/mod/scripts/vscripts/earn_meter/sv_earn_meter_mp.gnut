@@ -104,7 +104,7 @@ void function EarnMeterMP_PlayerLifeThink( entity player )
 	int lastEarnMeterMode = PlayerEarnMeter_GetMode( player )
 	bool saidTitanSoon = false
 	bool titanReadyMsg = false
-	float lastPassiveGainTime = Time()
+	float lastPassiveGainTime = -1
 
 	OnThreadEnd(
 		function() : ( player, pilotReward, pilotRewardFrac )
@@ -136,15 +136,27 @@ void function EarnMeterMP_PlayerLifeThink( entity player )
 				desiredEarnMeterMode = eEarnMeterMode.CORE
 		}
 		else if ( IsValid( player.GetPetTitan() ) )
+		{
 			desiredEarnMeterMode = eEarnMeterMode.PET
+		}
 		else if ( maxActiveTitansReached ) // Hides Meter when max active Titan limit is reached
 		{
 			desiredEarnMeterMode = eEarnMeterMode.DISABLED
 			if ( titanReadyMsg ) // Resets so next time people can drop titans because a slot opened, they will be greeted with the message right away
 				titanReadyMsg = false
 		}
+		else if ( GetGameState() < eGameState.Playing )
+		{
+			desiredEarnMeterMode = eEarnMeterMode.DISABLED
+		}
+		else if ( !PlayerEarnMeter_Enabled() ) // for fd
+		{
+			desiredEarnMeterMode = eEarnMeterMode.DISABLED
+		}
 		else
+		{
 			desiredEarnMeterMode = eEarnMeterMode.DEFAULT
+		}
 
 		if ( desiredEarnMeterMode != lastEarnMeterMode )
 		{
@@ -203,8 +215,16 @@ void function EarnMeterMP_PlayerLifeThink( entity player )
 
 			if ( Time() >= lastPassiveGainTime && file.passiveMeterGainEnabled && GetGameState() != eGameState.Prematch )
 			{
-				lastPassiveGainTime = Time() + 4.0
-				PlayerEarnMeter_AddOwnedFrac( player, 0.01 )
+				if ( lastPassiveGainTime == -1 )
+				{
+					lastPassiveGainTime = Time() + 4.0
+				}
+				else
+				{
+					lastPassiveGainTime = Time() + 4.0
+
+					PlayerEarnMeter_AddOwnedFrac( player, 0.01 )
+				}
 			}
 		}
 		// Allow players to do a "shadow buildup" while meter is hidden for them in case Max Active Titans Riff is enabled

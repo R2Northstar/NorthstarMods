@@ -1805,12 +1805,7 @@ void function RateSpawnpoints_FD( int checkClass, array<entity> spawnpoints, int
 
 void function FD_PlayerRespawnCallback( entity player )
 {
-	if ( IsValidPlayer( player ) )
-	{
-		if ( !GetGlobalNetInt( "FD_currentWave" ) )
-			PlayerEarnMeter_SetMode( player, eEarnMeterMode.DISABLED )
-	}
-	else
+	if ( player.GetTeam() == TEAM_IMC )
 		return
 
 	// Players spawn directly on ground if Dropship already passed the point where players drops from it
@@ -1818,18 +1813,14 @@ void function FD_PlayerRespawnCallback( entity player )
 	// Also more than 4 players, additionals will spawn directly on ground
 	// Respawning as Titan just will apply the Protection time
 
-	if ( !CanSpawnIntoWaveSpawnDropship( player ) && !player.IsTitan() && !GamePlaying() && player.GetTeam() != TEAM_IMC )
+	if ( !CanSpawnIntoWaveSpawnDropship( player ) && !player.IsTitan() && !GamePlaying() )
 	{
 		// Teleport player to a more reliable location if they spawn on ground, some maps picks
 		// too far away spawns from the Harvester and Shop (i.e Colony, Homestead, Drydock)
 		player.SetOrigin( file.groundSpawnPosition )
 		player.SetAngles( file.groundSpawnAngles )
 	}
-
-	if ( !IsHarvesterAlive( fd_harvester.harvester ) || player.GetTeam() == TEAM_IMC || GetGameState() == eGameState.Prematch )
-		return
-
-	if ( player.IsTitan() )
+	else if ( player.IsTitan() )
 		player.Highlight_SetParam( 1, 0, HIGHLIGHT_COLOR_FRIENDLY )
 }
 
