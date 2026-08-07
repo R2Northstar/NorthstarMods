@@ -304,15 +304,15 @@ void function SpawnPlayerIntoWaveDropship( entity ship, entity player, FirstPers
 	ship.WaitSignal( "deploy" )
 
 	#if BATTLECHATTER_ENABLED
-		entity otherPlayer
+		array<entity> otherPlayers
 		int team = player.GetTeam()
 
 		foreach ( entity dropshipPlayer in file.dropshipSpawnPlayerList[ team ] )
 			if ( dropshipPlayer != player && IsValidPlayer( dropshipPlayer ) )
-				otherPlayer = dropshipPlayer
+				otherPlayers.append( dropshipPlayer )
 
-		if ( IsValidPlayer( otherPlayer ) )
-			PlayBattleChatterLineOnlyToPlayer( otherPlayer, player, "bc_pIntroChat" )
+		if ( otherPlayers.len() )
+			PlayBattleChatterLineOnlyToPlayer( otherPlayers.getrandom(), player, "bc_pIntroChat" )
 	#endif
 
 	waitthread FirstPersonSequence( jumpSequence, player, ship )

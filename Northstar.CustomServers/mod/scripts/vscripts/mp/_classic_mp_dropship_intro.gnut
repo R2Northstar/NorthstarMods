@@ -227,7 +227,7 @@ void function SpawnPlayerIntoDropship( entity player, int playerDropshipIndex, e
 			firstPersonProxy.Anim_SetInitialTime( max( 0.0, Time() - playerDropship.s.deployedTime ) )
 
 		#if BATTLECHATTER_ENABLED
-			entity otherPlayer
+			array<entity> otherPlayers
 			table<entity, array<entity> > teamDropships = file.imcDropships
 
 			if ( playerDropship.GetTeam() == TEAM_MILITIA )
@@ -238,20 +238,15 @@ void function SpawnPlayerIntoDropship( entity player, int playerDropshipIndex, e
 				if ( dropship == playerDropship )
 				{
 					for ( int i = 0; i < SQUAD_SIZE; i++ )
-					{
 						if ( playerslot[ i ] != player && IsValidPlayer( playerslot[ i ] ) )
-						{
-							otherPlayer = playerslot[ i ]
-							break
-						}
-					}
+							otherPlayers.append( playerslot[ i ] )
 
 					break
 				}
 			}
 
-			if ( IsValidPlayer( otherPlayer ) )
-				PlayBattleChatterLineOnlyToPlayer( otherPlayer, player, "bc_pIntroChat" )
+			if ( otherPlayers.len() )
+				PlayBattleChatterLineOnlyToPlayer( otherPlayers.getrandom(), player, "bc_pIntroChat" )
 		#endif
 
 		WaittillAnimDone( player )
