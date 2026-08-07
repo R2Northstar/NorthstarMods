@@ -3270,7 +3270,6 @@ bool function PilotSpawnOntoTitanIsEnabledInPlaylist( entity player )
 {
 	if ( GetCurrentPlaylistVarInt( "titan_spawn_deploy_enabled", 0 ) )
 		return true
-
 	return false
 }
 
@@ -3281,7 +3280,7 @@ bool function PlayerCanSpawnIntoTitan( entity player )
 	#endif
 
 	if ( !PilotSpawnOntoTitanIsEnabledInPlaylist( player ) )
-		return
+		return false
 
 	entity titan = player.GetPetTitan()
 
