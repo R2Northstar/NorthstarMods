@@ -3270,6 +3270,7 @@ bool function PilotSpawnOntoTitanIsEnabledInPlaylist( entity player )
 {
 	if ( GetCurrentPlaylistVarInt( "titan_spawn_deploy_enabled", 0 ) )
 		return true
+
 	return false
 }
 
