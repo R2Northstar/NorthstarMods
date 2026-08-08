@@ -326,6 +326,9 @@ void function CodeCallback_OnPlayerRespawned( entity player )
 	ClearPlayerAnimViewEntity( player )
 	player.Signal( "OnRespawned" ) // kill any postdeaththreads that could be running
 
+	thread LoadoutChangeGracePeriodThink( player )
+	Loadouts_TryGivePilotLoadout( player )
+
 	foreach ( entity weapon in player.GetMainWeapons() )
 		weapon.SetProScreenOwner( player )
 
@@ -341,6 +344,8 @@ void function CodeCallback_OnPlayerRespawned( entity player )
 			file.playerRespawnPlayerIntoTitan[ player ] = false
 
 			entity titan = player.GetPetTitan()
+
+			player.Signal( "player_embarks_titan" )
 
 			TeleportToEnt( player, titan )
 			PilotBecomesTitan( player, titan )
@@ -358,8 +363,6 @@ void function CodeCallback_OnPlayerRespawned( entity player )
 	thread TryGameModeAnnouncement( player )
 	ClearLastAttacker( player ) // so dying to anything doesn't credit the same attacker after respawning
 	ClearPlayerEliminated( player )
-	thread LoadoutChangeGracePeriodThink( player )
-	Loadouts_TryGivePilotLoadout( player )
 }
 
 /*
@@ -481,6 +484,9 @@ void function PostDeathThread_MP( entity player, var damageInfo, bool gamePlayin
 	)
 
 	entity attacker = DamageInfo_GetAttacker( damageInfo )
+	entity inflictor = DamageInfo_GetInflictor( damageInfo )
+	bool shouldUseInflictor = IsValid( inflictor ) && ShouldTryUseProjectileReplay( player, attacker, damageInfo, true )
+	int inflictorEHandle = ( shouldUseInflictor ? inflictor : attacker ).GetEncodedEHandle()
 	int methodOfDeath = DamageInfo_GetDamageSourceIdentifier( damageInfo )
 	float attackerTimeSinceSpawning = attacker.GetTimeSinceSpawning()
 
@@ -533,7 +539,7 @@ void function PostDeathThread_MP( entity player, var damageInfo, bool gamePlayin
 
 		float beforeTime = GetKillReplayBeforeTime( player, methodOfDeath )
 
-		thread PlayerWatchesKillReplayWrapper( player, attacker, attackerTimeSinceSpawning, timeOfDeath, beforeTime, replayTracker )
+		thread PlayerWatchesKillReplayWrapper( player, inflictorEHandle, attacker, attackerTimeSinceSpawning, timeOfDeath, beforeTime, replayTracker )
 	}
 
 	if ( !IsEliminationBased() || ( !IsPlayerEliminated( player ) && GetGameState() > eGameState.Prematch && GetGameState() <= eGameState.SuddenDeath ) )
@@ -726,7 +732,7 @@ void function ForceRespawnMeSignalAfterDelay( entity player, float delay = 0.0 )
 		player.Signal( "RespawnMe" )
 }
 
-void function PlayerWatchesKillReplayWrapper( entity player, entity attacker, float timeSinceAttackerSpawned, float timeOfDeath, float beforeTime, table replayTracker )
+void function PlayerWatchesKillReplayWrapper( entity player, int inflictorEHandle, entity attacker, float timeSinceAttackerSpawned, float timeOfDeath, float beforeTime, table replayTracker )
 {
 	player.EndSignal( "RespawnMe" )
 	player.EndSignal( "OnRespawned" )
@@ -747,7 +753,7 @@ void function PlayerWatchesKillReplayWrapper( entity player, entity attacker, fl
 		}
 	)
 
-	PlayerWatchesKillReplay( player, attacker.GetEncodedEHandle(), attacker.GetIndexForEntity(), timeSinceAttackerSpawned, timeOfDeath, beforeTime, replayTracker )
+	PlayerWatchesKillReplay( player, inflictorEHandle, attacker.GetIndexForEntity(), timeSinceAttackerSpawned, timeOfDeath, beforeTime, replayTracker )
 }
 
 /*
