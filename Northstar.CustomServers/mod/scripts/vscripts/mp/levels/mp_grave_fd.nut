@@ -4,7 +4,7 @@ void function initFrontierDefenseData()
 	useCustomFDLoad = true // Respawn Routes for this map are quite bad ngl
 	AddCallback_RegisterCustomFDContent( RegisterCustomFDContent )
 	PlaceFDShop( < 1767, -4959, 2244 > )
-	SetFDDropshipSpawn( < 3820, -4181, 2242 > )
+	AddWaveSpawnCustomSpawnPoint( TEAM_MILITIA, < 3820, -4181, 2242 >, < 0, 0, 0 > )
 	SetFDGroundSpawn( < 3184, -3844, 2377 >, < 0, -45, 0 > )
 
 	AddWaveAnnouncement( "fd_introEasy" )
@@ -586,8 +586,6 @@ void function RegisterCustomFDContent()
 	AddStationaryAIPosition( < 4114, -1651, 2468 >, eStationaryAIPositionTypes.LAUNCHER_REAPER )
 	AddStationaryAIPosition( < 6800, -4578, 2505 >, eStationaryAIPositionTypes.LAUNCHER_REAPER )
 	AddStationaryAIPosition( < 5925, -4451, 2623 >, eStationaryAIPositionTypes.LAUNCHER_REAPER )
-
-	AddOutOfBoundsTriggerWithParams( < 5584, -4354, 3053 >, 200, 256 )
 
 	routes[ "townInfantryCrossroad" ] <- []
 	routes[ "townInfantryCrossroad" ].append( < 6756, -3414, 2236 > )

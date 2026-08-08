@@ -1,15 +1,36 @@
+untyped
+
 global function AiGameModes_Init
-
-global function AiGameModes_SetNPCWeapons
-
-global function AiGameModes_SpawnDropShip
-global function AiGameModes_SpawnDropPod
-global function AiGameModes_SpawnReaper
-global function AiGameModes_SpawnTitan
-
-global function GetValidIntroDropShipSpawn
-
-const INTRO_DROPSHIP_CUTOFF = 2000
+global function SetNPCWeapons
+global function SetUpNPCWeapons
+global function SetupTeamDeathmatchNPCs
+global function SpawnFrontlineSquad
+global function GetFreeAISlots
+global function GetReservedAISquadSlots
+global function ReserveAISlots
+global function ReleaseAISlots
+global function FreeAISlotOnDeath
+global function ReserveSquadSlots
+global function ReleaseSquadSlots
+global function Spawn_TrackedGrunt
+global function Spawn_TrackedSpectre
+global function Spawn_TrackedStalker
+global function Spawn_TrackedReaper
+global function Spawn_TrackedTitan
+global function SquadValidForClass
+global function GetReservedSquadSize
+global function GetMaxAICount
+global function GetReservedAISquadSlotsOfClassForTeam
+global function CommonTrackingInit
+global function CommonTrackingCleanup
+global function Spawn_TrackedZipLineSquad
+global function Spawn_TrackedDropPodSquad
+global function Spawn_TrackedZipLineGruntSquad
+global function Spawn_TrackedDropPodGruntSquad
+global function Spawn_TrackedDropPodSpectreSquad
+global function Spawn_TrackedDropPodStalkerSquad
+global function Spawn_TrackedWarpfallReaper
+global function Spawn_TrackedTitanfallTitan
 
 struct
 {
@@ -18,146 +39,720 @@ struct
 
 void function AiGameModes_Init()
 {
+	FlagInit( "FrontlineInitiated" )
+
+	RegisterSignal( "FreeAISlotsUpdated" )
+
+	int npcPerSide = 12
+
+	level.max_npc_per_side <- npcPerSide
+
+	level.occupiedAISlots <- {}
+	level.gameModeAICount <- {}
+
+	level.npcRespawnWait <- 5
+
+	level.modifyAISlots <- {}
+	level.reservedAISquadSlots <- {}
+
+	level.spectreSpawnChance <- {}
+	level.maxSpectrePerSide <- {}
+	level.stalkerSpawnChance <- {}
+	level.maxStalkersPerSide <- {}
+	level.reaperSpawnChance <- {}
+	level.maxReapersPerSide <- {}
+	level.titanSpawnChance <- {}
+	level.maxTitansPerSide <- {}
+
+	for ( int i = 0; i < TEAM_COUNT; ++i )
+	{
+		level.occupiedAISlots[ i ] <- 0
+		level.gameModeAICount[ i ] <- npcPerSide
+
+		level.modifyAISlots[ i ] <- 0
+
+		level.spectreSpawnChance[ i ] <- 0
+		level.maxSpectrePerSide[ i ] <- 0
+		level.stalkerSpawnChance[ i ] <- 0
+		level.maxStalkersPerSide[ i ] <- 0
+		level.reaperSpawnChance[ i ] <- 0
+		level.maxReapersPerSide[ i ] <- 0
+		level.titanSpawnChance[ i ] <- 0
+		level.maxTitansPerSide[ i ] <- 0
+	}
 }
 
-// ------------------------------------------------------
+/*
+ █████  ██     ██   ██  █████  ███    ██ ██████  ██      ██ ███    ██  ██████
+██   ██ ██     ██   ██ ██   ██ ████   ██ ██   ██ ██      ██ ████   ██ ██
+███████ ██     ███████ ███████ ██ ██  ██ ██   ██ ██      ██ ██ ██  ██ ██   ███
+██   ██ ██     ██   ██ ██   ██ ██  ██ ██ ██   ██ ██      ██ ██  ██ ██ ██    ██
+██   ██ ██     ██   ██ ██   ██ ██   ████ ██████  ███████ ██ ██   ████  ██████
+*/
 
-void function AiGameModes_SetNPCWeapons( string npcClass, array<string> weapons )
+void function SetupTeamDeathmatchNPCs()
+{
+	FlagWait( "ReadyToStartMatch" )
+
+	if ( InitFrontLine() )
+	{
+		FlagSet( "FrontlineInitiated" )
+
+		WaittillGameStateOrHigher( eGameState.Playing )
+
+		thread TeamDeathmatchSpawnNPCsThink()
+	}
+}
+
+void function TeamDeathmatchSpawnNPCsThink()
+{
+	array<int> teams = [ TEAM_IMC, TEAM_MILITIA ]
+
+	while ( IsNPCSpawningEnabled() )
+	{
+		if ( IsAutoPopulateEnabled( TEAM_IMC ) )
+			thread TeamDeathmatchSpawnNPCs( TEAM_IMC )
+
+		if ( IsAutoPopulateEnabled( TEAM_MILITIA ) )
+			thread TeamDeathmatchSpawnNPCs( TEAM_MILITIA )
+
+		wait level.npcRespawnWait
+	}
+}
+
+void function TeamDeathmatchSpawnNPCs( int team )
+{
+	int numFreeSlots = GetFreeAISlots( team )
+
+	while ( numFreeSlots >= SQUAD_SIZE || ( ShouldSpawnReaper( team ) && numFreeSlots >= 1 ) )
+	{
+		// this will do all the heavy lifting of where and how many to spawn and what they should do once they are in the match.
+		thread SpawnFrontlineSquad( team, numFreeSlots )
+
+		// add a little wait so that we don't spawn squads at the exact same time.
+		wait RandomFloatRange( 0.8, 2.0 )
+
+		// the function above will have used up some free slots, lets see how many remain
+		numFreeSlots = GetFreeAISlots( team )
+	}
+}
+
+void function SpawnFrontlineSquad( int team, int numFreeSlots )
+{
+	if ( !IsAutoPopulateEnabled( team ) )
+		return
+
+	bool shouldSpawnReaper = ShouldSpawnReaper( team )
+	bool shouldSpawnStalker = ShouldSpawnStalker( team )
+	bool shouldSpawnSpectre = ShouldSpawnSpectre( team )
+	string squadName = MakeSquadName( team, UniqueString() )
+	bool inGracePeriod = GameTime_PlayingTime() < START_SPAWN_GRACE_PERIOD
+	bool inGameState = GetGameState() <= eGameState.Prematch || GetGameState() == eGameState.SwitchingSides
+	bool useStartSpawn = inGameState || inGracePeriod
+	array<entity> spawnPointArray
+
+	if ( useStartSpawn )
+	{
+		spawnPointArray = SpawnPoints_GetDropPodStart( team )
+
+		if ( !spawnPointArray.len() )
+		{
+			spawnPointArray = SpawnPoints_GetDropPod()
+			useStartSpawn = false
+		}
+	}
+	else
+		spawnPointArray = SpawnPoints_GetDropPod()
+
+	if ( !spawnPointArray.len() )
+		return
+
+	entity spawnPoint = GetFrontlineSpawnPoint( spawnPointArray, team )
+
+	Assert( IsValid( spawnPoint ) )
+
+	array<entity> npcArray
+
+	if ( shouldSpawnReaper )
+	{
+		npcArray = Spawn_TrackedWarpfallReaper( team, 1, spawnPoint, squadName )
+	}
+	if ( shouldSpawnStalker )
+	{
+		npcArray = Spawn_TrackedDropPodStalkerSquad( team, SQUAD_SIZE, spawnPoint, squadName )
+	}
+	else if ( shouldSpawnSpectre )
+	{
+		npcArray = Spawn_TrackedDropPodSpectreSquad( team, SQUAD_SIZE, spawnPoint, squadName )
+	}
+	else
+	{
+		if ( !Flag( "DisableDropships" ) )
+		{
+			if ( RandomInt( 100 ) > 15 )
+				npcArray = Spawn_TrackedZipLineGruntSquad( team, SQUAD_SIZE, spawnPoint, squadName )
+
+			if ( !npcArray.len() ) // so it actually spawns a squad
+				npcArray = Spawn_TrackedDropPodGruntSquad( team, SQUAD_SIZE, spawnPoint, squadName )
+		}
+		else
+			npcArray = Spawn_TrackedDropPodGruntSquad( team, SQUAD_SIZE, spawnPoint, squadName )
+	}
+
+	foreach ( entity npc in npcArray )
+	{
+		npc.Minimap_AlwaysShow( TEAM_MILITIA, null )
+		npc.Minimap_AlwaysShow( TEAM_IMC, null )
+	}
+
+	// make the squad assault the correct frontline
+	if ( !shouldSpawnReaper && !shouldSpawnStalker ) // they don't use frontline
+		SquadAssaultFrontline_Continuous( npcArray )
+}
+
+bool function SquadValidForClass( string squadName, string classnameToMatch )
+{
+	// if we have reserved squad slots they must be reserved by the correct class.
+	if ( GetReservedAISquadSlots( squadName ) && !IsClassInReservedAISquadSlots_ForSquadName( squadName, classnameToMatch ) )
+		return false
+
+	int squadSize = GetNPCSquadSize( squadName )
+
+	// empty squads are legit for any class;
+	// also, can't GetNPCArrayBySquad if there are no NPCs with that squad set
+	if ( !squadSize )
+		return true
+
+	array<entity> checkSquad = GetNPCArrayBySquad( squadName )
+
+	foreach ( guy in checkSquad )
+		if ( IsValid( guy ) && guy.GetClassName() != classnameToMatch )
+			return false
+
+	return true
+}
+
+void function SetNPCWeapons( string npcClass, array<string> weapons )
 {
 	if ( !( npcClass in file.npcWeaponsTable ) )
 		file.npcWeaponsTable[ npcClass ] <- []
+
 	file.npcWeaponsTable[ npcClass ] = weapons
 }
 
-// ------------------------------------------------------
-
-void function AiGameModes_SpawnDropShip( entity node, int team, int count, void functionref( array<entity> guys ) squadHandler = null )
+void function SetUpNPCWeapons( entity guy )
 {
-	ToggleSpawnNodeInUse( node, true )
-	string squadName = MakeSquadName( team, UniqueString( "" ) )
-	vector pos = node.GetOrigin()
-	vector rot = node.GetAngles()
+	string className = guy.GetClassName()
+	array<string> mainWeapons
 
-	CallinData drop
-	drop.origin = pos
-	drop.yaw = rot.y
-	drop.dist = 768
-	drop.team = team
-	drop.squadname = squadName
-	SetDropTableSpawnFuncs( drop, CreateDropshipSoldier, count )
-	SetCallinStyle( drop, eDropStyle.ZIPLINE_NPC )
+	if ( className in file.npcWeaponsTable )
+		mainWeapons = file.npcWeaponsTable[ className ]
 
-	thread RunDropshipDropoff( drop )
+	if ( !mainWeapons.len() ) // no valid weapons
+		return
 
-	WaitSignal( drop, "OnDropoff" )
+	string weaponName = mainWeapons[ RandomInt( mainWeapons.len() ) ]
 
-	array<entity> guys = GetNPCArrayBySquad( squadName )
-
-	foreach ( guy in guys )
-	{
-		foreach ( entity weapon in guy.GetMainWeapons() )
-		{
-			if ( weapon.GetWeaponClassName() == "mp_weapon_rocket_launcher" && GetCurrentPlaylistVarInt( "aitdm_archer_grunts", 0 ) == 0 )
-				guy.TakeWeapon( weapon.GetWeaponClassName() )
-		}
-		guy.SetBehaviorSelector( "behavior_sp_soldier" )
-		// guy.GiveWeapon( "mp_weapon_defender", ["longNPCCharge"] )
-		guy.AssaultSetFightRadius( 800 )
-		guy.EnableNPCFlag( NPC_ALLOW_PATROL | NPC_ALLOW_INVESTIGATE | NPC_ALLOW_HAND_SIGNALS | NPC_ALLOW_FLEE | NPC_NEW_ENEMY_FROM_SOUND | NPC_STAY_CLOSE_TO_SQUAD )
-	}
-
-	if ( squadHandler != null )
-		thread squadHandler( guys )
-
-	ToggleSpawnNodeInUse( node, false )
+	SetSpawnOption_Weapon( guy, weaponName )
 }
 
-void function AiGameModes_SpawnDropPod( entity node, int team, string content /* ( ͡° ͜ʖ ͡°) */ , void functionref( array<entity> guys ) squadHandler = null, int flags = 0 )
+/*
+ █████  ██     ████████ ██████   █████   ██████ ██   ██ ██ ███    ██  ██████
+██   ██ ██        ██    ██   ██ ██   ██ ██      ██  ██  ██ ████   ██ ██
+███████ ██        ██    ██████  ███████ ██      █████   ██ ██ ██  ██ ██   ███
+██   ██ ██        ██    ██   ██ ██   ██ ██      ██  ██  ██ ██  ██ ██ ██    ██
+██   ██ ██        ██    ██   ██ ██   ██  ██████ ██   ██ ██ ██   ████  ██████
+*/
+
+int function GetMaxAICount( int team )
 {
-	ToggleSpawnNodeInUse( node, true )
-	vector pos = node.GetOrigin()
-	vector rot = node.GetAngles()
+	int AICount = expect int( expect table( level.gameModeAICount )[ team ] )
 
-	entity pod = CreateDropPod( pos, < 0, 0, 0 > )
-
-	InitFireteamDropPod( pod, flags )
-
-	string squadName = MakeSquadName( team, UniqueString( "" ) )
-	array<entity> guys
-	for ( int i = 0; i < 4; i++ )
-	{
-		entity npc = CreateNPC( content, team, pos, < 0, 0, 0 > )
-		SetSpawnOption_Alert( npc )
-		SetUpNPCWeapons( npc )
-		DispatchSpawn( npc )
-		SetSquad( npc, squadName )
-
-		npc.SetParent( pod, "ATTACH", true )
-
-		if ( content == "npc_soldier" || content == "npc_spectre" )
-		{
-			npc.SetBehaviorSelector( "behavior_sp_soldier" )
-			// npc.GiveWeapon( "mp_weapon_defender", ["longNPCCharge"] )
-		}
-
-		foreach ( entity weapon in npc.GetMainWeapons() )
-		{
-			if ( weapon.GetWeaponClassName() == "mp_weapon_rocket_launcher" && GetCurrentPlaylistVarInt( "aitdm_archer_grunts", 0 ) == 0 )
-				npc.TakeWeapon( weapon.GetWeaponClassName() )
-		}
-
-		npc.MakeInvisible()
-		npc.AssaultSetFightRadius( 800 )
-		npc.EnableNPCFlag( NPC_ALLOW_PATROL | NPC_ALLOW_INVESTIGATE | NPC_ALLOW_HAND_SIGNALS | NPC_ALLOW_FLEE | NPC_NEW_ENEMY_FROM_SOUND | NPC_STAY_CLOSE_TO_SQUAD )
-		guys.append( npc )
-	}
-
-	waitthread LaunchAnimDropPod( pod, "pod_testpath", pos, rot )
-
-	ActivateFireteamDropPod( pod, guys )
-	// start searching for enemies
-	if ( squadHandler != null )
-		thread squadHandler( guys )
-
-	ToggleSpawnNodeInUse( node, false )
+	return AICount
 }
 
-const float REAPER_WARPFALL_DELAY = 4.7 // same as fd does
-void function AiGameModes_SpawnReaper( entity node, int team, string aiSettings = "", void functionref( entity reaper ) reaperHandler = null )
+void function ReleaseAISlots( int team, int count = 1 )
 {
-	ToggleSpawnNodeInUse( node, true )
-	vector pos = node.GetOrigin()
-	vector rot = node.GetAngles()
+	level.occupiedAISlots[ team ] -= count
 
-	float reaperLandTime = REAPER_WARPFALL_DELAY + 1.2 // reaper takes ~1.2s to warpfall
-	thread HotDrop_Spawnpoint( pos, team, reaperLandTime, false, damagedef_reaper_fall )
+	svGlobal.levelEnt.Signal( "FreeAISlotsUpdated" )
+}
 
-	wait REAPER_WARPFALL_DELAY
-	entity reaper = CreateSuperSpectre( team, pos, rot )
-	reaper.EndSignal( "OnDestroy" )
-	// reaper highlight
-	Highlight_SetFriendlyHighlight( reaper, "sp_enemy_pilot" )
-	reaper.Highlight_SetParam( 1, 0, < 1, 1, 1 > )
-	SetDefaultMPEnemyHighlight( reaper )
-	Highlight_SetEnemyHighlight( reaper, "enemy_titan" )
+void function ReserveAISlots( int team, int count = 1 )
+{
+	level.occupiedAISlots[ team ] += count
 
-	SetSpawnOption_Titanfall( reaper )
-	SetSpawnOption_Warpfall( reaper )
+	svGlobal.levelEnt.Signal( "FreeAISlotsUpdated" )
+}
 
-	if ( aiSettings != "" )
-		SetSpawnOption_AISettings( reaper, aiSettings )
+int function GetFreeAISlots( int team )
+{
+	int maxAICount = GetMaxAICount( team )
+	int freeAISlots = maxAICount - expect int( expect table( level.occupiedAISlots )[ team ] )
+	int modifyAISlots = expect int( expect table( level.modifyAISlots )[ team ] )
 
-	HideName( reaper ) // prevent flash a name onto it
+	return freeAISlots + modifyAISlots
+}
+
+void function ReleaseSquadSlots( string squadName, int count, string npcClass )
+{
+	Assert( squadName in level.reservedAISquadSlots )
+	Assert( count >= 1 )
+	Assert( level.reservedAISquadSlots[ squadName ].npcClass == npcClass )
+
+	level.reservedAISquadSlots[ squadName ].count -= count
+
+	Assert( level.reservedAISquadSlots[ squadName ].count >= 0 )
+
+	// remove classname when reserved slots are zero
+	if ( expect int( expect table( expect table( level.reservedAISquadSlots )[ squadName ] ).count ) == 0 )
+		level.reservedAISquadSlots[ squadName ].npcClass = ""
+}
+
+void function ReserveSquadSlots( string squadName, int count, string npcClass, int team )
+{
+	if ( !squadName.len() )
+		return
+
+	if ( !( squadName in expect table( level.reservedAISquadSlots ) ) )
+		level.reservedAISquadSlots[ squadName ] <- { count = 0, npcClass = "", team = team }
+
+	string currentClass = expect string( expect table( expect table( level.reservedAISquadSlots )[ squadName ] ).npcClass )
+
+	Assert(
+		!currentClass.len() || currentClass == npcClass,
+		"Can't reserve slot for npc of class " + npcClass + " in squad " + squadName + " because the NPC's classname doesn't match existing squad classname: " +
+			currentClass
+	)
+
+	level.reservedAISquadSlots[ squadName ].count += count
+	level.reservedAISquadSlots[ squadName ].npcClass = npcClass
+}
+
+int function GetReservedAISquadSlots( string squadName )
+{
+	if ( squadName in expect table( level.reservedAISquadSlots ) )
+		return expect int( expect table( expect table( level.reservedAISquadSlots )[ squadName ] ).count )
+
+	return 0
+}
+
+int function GetReservedAISquadSlotsOfClassForTeam( string npcClass, int team )
+{
+	int count = 0
+
+	foreach ( Table in expect table( level.reservedAISquadSlots ) )
+	{
+		expect table( Table )
+
+		if ( Table.team != team )
+			continue
+
+		if ( Table.npcClass == npcClass )
+			count += expect int( Table.count )
+	}
+
+	return count
+}
+
+void function CommonTrackingInit( string ai_type, int team, int count, string squadName )
+{
+	Assert( ai_type.len() )
+
+	ReserveAISlots( team, count )
+	ReserveSquadSlots( squadName, count, ai_type, team )
+}
+
+void function CommonTrackingCleanup( array<entity> guys, string ai_type, int team, int count, string squadName )
+{
+	Assert( ai_type.len() )
+
+	if ( count != guys.len() )
+		ReleaseAISlots( team, count - guys.len() )
+
+	ReleaseSquadSlots( squadName, count, ai_type )
+
+	foreach ( entity npc in guys )
+		FreeAISlotOnDeath( npc )
+}
+
+entity function Spawn_TrackedGrunt( int team, string squadName, vector origin, vector angles )
+{
+	entity soldier = CreateSoldier( team, origin, angles )
+
+	SetSpawnOption_Alert( soldier )
+
+	DispatchSpawn( soldier )
+
+	SetSquad( soldier, squadName )
+
+	Assert( IsAlive( soldier ) )
+
+	ReserveAISlots( team )
+	FreeAISlotOnDeath( soldier )
+
+	return soldier
+}
+
+entity function Spawn_TrackedSpectre( int team, string squadName, vector origin, vector angles )
+{
+	entity spectre = CreateSpectre( team, origin, angles )
+
+	SetSpawnOption_Alert( spectre )
+
+	DispatchSpawn( spectre )
+
+	SetSquad( spectre, squadName )
+
+	Assert( IsAlive( spectre ) )
+
+	ReserveAISlots( team )
+	FreeAISlotOnDeath( spectre )
+
+	return spectre
+}
+
+entity function Spawn_TrackedStalker( int team, string squadName, vector origin, vector angles )
+{
+	entity stalker = CreateStalker( team, origin, angles )
+
+	SetSpawnOption_Alert( stalker )
+
+	DispatchSpawn( stalker )
+
+	SetSquad( stalker, squadName )
+
+	Assert( IsAlive( stalker ) )
+
+	ReserveAISlots( team )
+	FreeAISlotOnDeath( stalker )
+
+	return stalker
+}
+
+entity function Spawn_TrackedReaper( int team, string squadName, vector origin, vector angles )
+{
+	entity reaper = CreateSuperSpectre( team, origin, angles )
+
+	SetSpawnOption_Alert( reaper )
+
 	DispatchSpawn( reaper )
 
-	reaper.WaitSignal( "WarpfallComplete" )
-	ShowName( reaper ) // show name again after drop
-	reaper.EnableNPCFlag( NPC_ALLOW_PATROL | NPC_ALLOW_INVESTIGATE | NPC_NEW_ENEMY_FROM_SOUND | NPCMF_WALK_NONCOMBAT )
+	SetSquad( reaper, squadName )
 
-	if ( reaperHandler != null )
-		thread reaperHandler( reaper )
+	Assert( IsAlive( reaper ) )
 
-	ToggleSpawnNodeInUse( node, false )
+	ReserveAISlots( team )
+	FreeAISlotOnDeath( reaper )
+
+	return reaper
+}
+
+entity function Spawn_TrackedTitan( int team, string squadName, vector origin, vector angles, string aiSettings )
+{
+	entity titan = CreateNPCTitan( aiSettings, team, origin, angles )
+
+	SetSpawnOption_Alert( titan )
+
+	DispatchSpawn( titan )
+
+	SetSquad( titan, squadName )
+
+	Assert( IsAlive( titan ) )
+
+	ReserveAISlots( team )
+	FreeAISlotOnDeath( titan )
+
+	return titan
+}
+
+array<entity> function Spawn_TrackedZipLineSquad( string ai_type, int count, entity spawnPoint, CallinData dropTable )
+{
+	int team = dropTable.team
+
+	if ( count > GetFreeAISlots( team ) )
+		return []
+
+	if ( !IsValid( spawnPoint ) )
+		return []
+
+	string squadName = dropTable.squadname
+
+	Assert( squadName.len() )
+
+	CommonTrackingInit( ai_type, team, count, squadName )
+
+	spawnPoint.e.spawnTime = Time()
+
+	ToggleSpawnNodeInUse( spawnPoint, true )
+
+	thread RunDropshipDropoff( dropTable )
+
+	array soldierEntities = []
+
+	if ( dropTable.success )
+	{
+		// get the guys that spawned
+		table results = WaitSignal( dropTable, "OnDropoff" )
+
+		Assert( "guys" in results )
+
+		if ( results.guys )
+			soldierEntities = expect array( results.guys )
+	}
+
+	array<entity> soldierEntitiesEntity = []
+
+	foreach ( guy in soldierEntities )
+	{
+		soldierEntitiesEntity.append( expect entity( guy ) )
+
+		guy.Minimap_AlwaysShow( TEAM_MILITIA, null )
+		guy.Minimap_AlwaysShow( TEAM_IMC, null )
+	}
+
+	CommonTrackingCleanup( soldierEntitiesEntity, ai_type, team, count, squadName )
+	ToggleSpawnNodeInUse( spawnPoint, false )
+
+	return soldierEntitiesEntity
+}
+
+array<entity> function Spawn_TrackedDropPodSquad( string ai_type, int team, int count, entity spawnPoint, string squadName = "", int flags = 0, entity functionref( int, vector, vector ) spawnFunc = null )
+{
+	if ( count > GetFreeAISlots( team ) )
+		return []
+
+	if ( !IsValid( spawnPoint ) )
+		return []
+
+	if ( !squadName.len() )
+		squadName = MakeSquadName( team, UniqueString() )
+
+	CommonTrackingInit( ai_type, team, count, squadName )
+
+	spawnPoint.e.spawnTime = Time()
+
+	ToggleSpawnNodeInUse( spawnPoint, true )
+
+	entity dropPod = CreatePropDynamic( $"models/vehicle/droppod_fireteam/droppod_fireteam.mdl" ) // model is set in InitFireteamDropPod()
+
+	InitFireteamDropPod( dropPod, flags )
+
+	waitthread LaunchAnimDropPod( dropPod, "pod_testpath", spawnPoint.GetOrigin(), spawnPoint.GetAngles() )
+
+	if ( spawnFunc == null )
+	{
+		if ( ai_type == "npc_stalker" )
+			spawnFunc = CreateStalker
+		else if ( ai_type == "npc_spectre" )
+			spawnFunc = CreateSpectre
+		else
+			spawnFunc = CreateSoldier
+	}
+
+	array<entity> soldierEntities = CreateNPCSForDroppod( team, count, spawnPoint.GetOrigin(), spawnPoint.GetAngles(), squadName, spawnFunc )
+
+	ActivateFireteamDropPod( dropPod, soldierEntities )
+
+	CommonTrackingCleanup( soldierEntities, ai_type, team, count, squadName )
+	ToggleSpawnNodeInUse( spawnPoint, false )
+
+	return soldierEntities
+}
+
+void function FreeAISlotOnDeath( entity soldier )
+{
+	Assert( IsAlive( soldier ), soldier + " is not alive!" )
+
+	thread FreeAISlotOnDeathThread( soldier )
+}
+
+void function FreeAISlotOnDeathThread( entity soldier )
+{
+	soldier.EndSignal( "OnDestroy" )
+
+	int team = soldier.GetTeam() // wouldn't leeched spectres break team AI slot counts?
+
+	OnThreadEnd(
+		function() : ( team )
+		{
+			ReleaseAISlots( team )
+		}
+	)
+
+	soldier.WaitSignal( "OnDeath" )
+}
+
+int function GetReservedSquadSize( string squadName )
+{
+	int squadSize = GetNPCSquadSize( squadName )
+
+	squadSize += GetReservedAISquadSlots( squadName ) // add on any reserved AI squad slots
+
+	return squadSize
+}
+
+bool function IsClassInReservedAISquadSlots_ForSquadName( string squadName, string npcClass )
+{
+	if (
+		squadName in expect table( level.reservedAISquadSlots ) &&
+		expect string( expect table( expect table( level.reservedAISquadSlots )[ squadName ] ).npcClass ) == npcClass
+	)
+		return true
+
+	return false
+}
+
+array<entity> function Spawn_TrackedZipLineGruntSquad( int team, int count, entity spawnPoint, string squadName = "" )
+{
+	string ai_type = "npc_soldier"
+
+	if ( !squadName.len() )
+		squadName = MakeSquadName( team, UniqueString() )
+
+	CallinData dropTable = CreateZipLineSquadDropTable( team, count, spawnPoint.GetOrigin(), spawnPoint.GetAngles(), squadName )
+
+	return Spawn_TrackedZipLineSquad( ai_type, count, spawnPoint, dropTable )
+}
+
+array<entity> function Spawn_TrackedDropPodGruntSquad( int team, int count, entity spawnPoint, string squadName = "" )
+{
+	string ai_type = "npc_soldier"
+
+	if ( !squadName.len() )
+		squadName = MakeSquadName( team, UniqueString() )
+
+	return Spawn_TrackedDropPodSquad( ai_type, team, count, spawnPoint, squadName )
+}
+
+array<entity> function Spawn_TrackedDropPodSpectreSquad( int team, int count, entity spawnPoint, string squadName = "" )
+{
+	string ai_type = "npc_spectre"
+
+	if ( !squadName.len() )
+		squadName = MakeSquadName( team, UniqueString() )
+
+	return Spawn_TrackedDropPodSquad( ai_type, team, count, spawnPoint, squadName )
+}
+
+array<entity> function Spawn_TrackedDropPodStalkerSquad( int team, int count, entity spawnPoint, string squadName = "" )
+{
+	string ai_type = "npc_stalker"
+
+	if ( !squadName.len() )
+		squadName = MakeSquadName( team, UniqueString() )
+
+	return Spawn_TrackedDropPodSquad( ai_type, team, count, spawnPoint, squadName )
+}
+
+array<entity> function Spawn_TrackedWarpfallReaper( int team, int count, entity spawnPoint, string squadName = "", string aiSettings = "npc_super_spectre_aitdm" )
+{
+	if ( count > GetFreeAISlots( team ) )
+		return []
+
+	spawnPoint.e.spawnTime = Time()
+
+	ToggleSpawnNodeInUse( spawnPoint, true )
+
+	if ( !squadName.len() )
+		squadName = MakeSquadName( team, UniqueString() )
+
+	CommonTrackingInit( "npc_super_spectre", team, count, squadName )
+
+	array<entity> reaperEntities = []
+
+	thread HotDrop_Spawnpoint( spawnPoint.GetOrigin(), team, 4.7 + 1.2, false, damagedef_reaper_fall )
+
+	wait 4.7
+
+	for ( int idx = 0; idx < count; idx++ )
+	{
+		entity ent = CreateSuperSpectre( team, spawnPoint.GetOrigin(), spawnPoint.GetAngles() )
+
+		if ( !ent )
+			continue
+
+		reaperEntities.append( ent )
+
+		Highlight_SetFriendlyHighlight( ent, "sp_friendly_pilot" )
+		Highlight_SetEnemyHighlight( ent, "enemy_titan" )
+
+		SetSpawnOption_Alert( ent )
+		SetSpawnOption_Titanfall( ent )
+		SetSpawnOption_Warpfall( ent )
+		SetSpawnOption_AISettings( ent, aiSettings )
+
+		HideName( ent )
+
+		DispatchSpawn( ent )
+
+		SetSquad( ent, squadName )
+
+		thread void function() : ( ent )
+		{
+			WaitSignal( ent, "OnDestroy", "OnDeath", "WarpfallComplete" )
+
+			if ( IsValid( ent ) )
+				ShowName( ent )
+		}()
+
+		wait 0
+	}
+
+	// because of wait 0 above, entities could die before returning
+	ArrayRemoveDead( reaperEntities )
+
+	CommonTrackingCleanup( reaperEntities, "npc_super_spectre", team, count, squadName )
+	ToggleSpawnNodeInUse( spawnPoint, false )
+
+	return reaperEntities
+}
+
+array<entity> function Spawn_TrackedTitanfallTitan( int team, int count, entity spawnPoint, string squadName = "", string setFile = "titan_atlas", string aiSettings = "" )
+{
+	if ( count > GetFreeAISlots( team ) )
+		return []
+
+	spawnPoint.e.spawnTime = Time()
+
+	ToggleSpawnNodeInUse( spawnPoint, true )
+
+	if ( !squadName.len() )
+		squadName = MakeSquadName( team, UniqueString() )
+
+	CommonTrackingInit( "npc_titan", team, count, squadName )
+
+	array<entity> titanEntities = []
+
+	thread HotDrop_Spawnpoint( spawnPoint.GetOrigin(), team, 5.0, false, damagedef_titan_fall )
+
+	for ( int idx = 0; idx < count; idx++ )
+	{
+		entity ent = CreateNPCTitan( setFile, team, spawnPoint.GetOrigin(), spawnPoint.GetAngles() )
+
+		if ( !ent )
+			continue
+
+		titanEntities.append( ent )
+
+		SetSpawnOption_Alert( ent )
+		SetSpawnOption_Titanfall( ent )
+		SetSpawnOption_AISettings( ent, aiSettings )
+
+		DispatchSpawn( ent )
+
+		SetSquad( ent, squadName )
+
+		wait 0
+	}
+
+	// because of wait 0 above, entities could die before returning
+	ArrayRemoveDead( titanEntities )
+
+	CommonTrackingCleanup( titanEntities, "npc_titan", team, count, squadName )
+	ToggleSpawnNodeInUse( spawnPoint, false )
+
+	return titanEntities
 }
 
 // copied from cl_replacement_titan_hud.gnut
@@ -165,32 +760,38 @@ void function HotDrop_Spawnpoint( vector origin, int team, float impactTime, boo
 {
 	array<entity> targetEffects = []
 	vector surfaceNormal = < 0, 0, 1 >
-
 	int index = GetParticleSystemIndex( $"P_ar_titan_droppoint" )
 
 	if ( hasFriendlyWarning )
 	{
 		entity effectFriendly = StartParticleEffectInWorld_ReturnEntity( index, origin, surfaceNormal )
+
 		SetTeam( effectFriendly, team )
 		EffectSetControlPointVector( effectFriendly, 1, FRIENDLY_COLOR_FX )
+
 		effectFriendly.kv.VisibilityFlags = ENTITY_VISIBLE_TO_FRIENDLY
 		effectFriendly.DisableHibernation() // prevent it from fading out
 		targetEffects.append( effectFriendly )
 	}
 
 	entity effectEnemy = StartParticleEffectInWorld_ReturnEntity( index, origin, surfaceNormal )
+
 	SetTeam( effectEnemy, team )
 	EffectSetControlPointVector( effectEnemy, 1, ENEMY_COLOR_FX )
+
 	effectEnemy.kv.VisibilityFlags = ENTITY_VISIBLE_TO_ENEMY
 	effectEnemy.DisableHibernation() // prevent it from fading out
 	targetEffects.append( effectEnemy )
 
 	// so enemy npcs will mostly avoid them
 	entity damageAreaInfo
+
 	if ( damageDef > -1 )
 	{
 		damageAreaInfo = CreateEntity( "info_target" )
+
 		DispatchSpawn( damageAreaInfo )
+
 		AI_CreateDangerousArea_DamageDef( damageDef, damageAreaInfo, team, true, true )
 	}
 
@@ -202,77 +803,7 @@ void function HotDrop_Spawnpoint( vector origin, int team, float impactTime, boo
 		if ( IsValid( targetEffect ) )
 			EffectStop( targetEffect )
 	}
+
 	if ( IsValid( damageAreaInfo ) )
 		damageAreaInfo.Destroy()
-}
-
-// including aisettings stuff specifically for at bounty titans
-const float TITANFALL_WARNING_DURATION = 5.0
-void function AiGameModes_SpawnTitan( entity node, int team, string setFile, string aiSettings = "", void functionref( entity titan ) titanHandler = null )
-{
-	ToggleSpawnNodeInUse( node, true )
-	vector pos = node.GetOrigin()
-	vector rot = node.GetAngles()
-
-	entity titan = CreateNPCTitan( setFile, TEAM_BOTH, pos, rot )
-	SetSpawnOption_Titanfall( titan )
-	SetSpawnOption_Warpfall( titan )
-
-	// modified: do a hotdrop spawnpoint warning
-	thread HotDrop_Spawnpoint( pos, team, TITANFALL_WARNING_DURATION, false, damagedef_titan_fall )
-
-	if ( aiSettings != "" )
-		SetSpawnOption_AISettings( titan, aiSettings )
-
-	DispatchSpawn( titan )
-	WaitTillHotDropComplete( titan )
-	if ( titanHandler != null )
-		thread titanHandler( titan )
-
-	ToggleSpawnNodeInUse( node, false )
-}
-
-entity function CreateDropshipSoldier( int team, vector origin, vector angles )
-{
-	entity gruntToSpawn = CreateNPC( "npc_soldier", team, origin, angles )
-	SetUpNPCWeapons( gruntToSpawn )
-	return gruntToSpawn
-}
-
-void function SetUpNPCWeapons( entity guy )
-{
-	string className = guy.GetClassName()
-
-	array<string> mainWeapons
-	if ( className in file.npcWeaponsTable )
-		mainWeapons = file.npcWeaponsTable[ className ]
-
-	if ( !mainWeapons.len() ) // no valid weapons
-		return
-
-	if ( mainWeapons.len() > 0 )
-	{
-		string weaponName = mainWeapons[ RandomInt( mainWeapons.len() ) ]
-		SetSpawnOption_Weapon( guy, weaponName )
-	}
-}
-
-// Checks if we can spawn a dropship at a node, this should guarantee dropship ziplines
-array<entity> function GetValidIntroDropShipSpawn( array<entity> introNodes )
-{
-	array<entity> introShipSpawns
-
-	if ( GetZiplineDropshipSpawns().len() == 0 )
-		return []
-
-	foreach ( node in introNodes )
-	{
-		entity closestNode = GetClosest( GetZiplineDropshipSpawns(), node.GetOrigin() )
-		SetTeam( closestNode, node.GetTeam() )
-
-		if ( Distance( closestNode.GetOrigin(), node.GetOrigin() ) < INTRO_DROPSHIP_CUTOFF )
-			introShipSpawns.append( closestNode )
-	}
-
-	return introShipSpawns
 }

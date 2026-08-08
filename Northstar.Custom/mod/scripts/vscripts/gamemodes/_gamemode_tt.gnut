@@ -7,6 +7,7 @@ struct
 
 void function GamemodeTT_Init()
 {
+	SetGamemodeAllowsTeamSwitch( false )
 	SetSpawnpointGamemodeOverride( TEAM_DEATHMATCH )
 	Riff_ForceTitanAvailability( eTitanAvailability.Never )
 

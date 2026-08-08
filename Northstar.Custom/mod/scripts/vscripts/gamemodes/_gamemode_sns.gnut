@@ -19,7 +19,7 @@ void function SNS_Init()
 {
 	SetSpawnpointGamemodeOverride( FFA )
 	SetShouldUseRoundWinningKillReplay( true )
-	ClassicMP_ForceDisableEpilogue( true )
+
 	SetLoadoutGracePeriodEnabled( false ) // prevent modifying loadouts with grace period
 	SetWeaponDropsEnabled( false )
 	Riff_ForceTitanAvailability( eTitanAvailability.Never )
@@ -76,7 +76,7 @@ void function OnPlayerKilled( entity victim, entity attacker, var damageInfo )
 			}
 			if ( file.reset_pulse_blade_cooldown_on_pulse_blade_kill )
 			{
-				attacker.TakeWeaponNow( "mp_weapon_grenade_sonar" ) // resets cooldown if you kill with it
+				attacker.TakeOffhandWeapon( OFFHAND_LEFT ) // resets cooldown if you kill with it
 				attacker.GiveOffhandWeapon( "mp_weapon_grenade_sonar", OFFHAND_LEFT )
 			}
 
@@ -133,11 +133,19 @@ void function OnWinnerDetermined()
 
 void function OnPlayerRespawned( entity player )
 {
-	foreach ( entity weapon in player.GetMainWeapons() )
-		player.TakeWeaponNow( weapon.GetWeaponClassName() )
+	if ( !IsNewThread() )
+	{
+		thread OnPlayerRespawned( player )
+		return
+	}
+	else if ( GetGameState() == eGameState.Prematch )
+		WaitEndFrame()
 
-	foreach ( entity weapon in player.GetOffhandWeapons() )
-		player.TakeWeaponNow( weapon.GetWeaponClassName() )
+	if ( !IsValidPlayer( player ) )
+		return
+
+	TakeWeaponsForArray( player, player.GetMainWeapons() )
+	TakeWeaponsForArray( player, player.GetOffhandWeapons() )
 
 	array<string> mods = [ "sns", "pas_fast_ads", "tactical_cdr_on_kill", "pas_run_and_gun", "pas_fast_swap" ]
 	player.GiveWeapon( "mp_weapon_wingman_n", mods )
@@ -153,15 +161,11 @@ void function OnPlayerRespawned( entity player )
 	if ( player == GetWinningPlayer() )
 		SetHighlight( player )
 
-	thread OnPlayerRespawned_Threaded( player )
-}
-
-void function OnPlayerRespawned_Threaded( entity player )
-{
 	// bit of a hack, need to rework earnmeter code to have better support for completely disabling it
 	// rn though this just waits for earnmeter code to set the mode before we set it back
 	WaitFrame()
-	if ( IsValid( player ) )
+
+	if ( IsValidPlayer( player ) )
 		PlayerEarnMeter_SetMode( player, eEarnMeterMode.DISABLED )
 }
 

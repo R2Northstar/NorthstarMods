@@ -1,8 +1,7 @@
 untyped
 
 global function AddNorthstarModMenu
-global function AddNorthstarModMenu_MainMenuFooter
-global function ReloadMods
+global function IsImportantCoreMod
 
 struct panelContent
 {
@@ -38,22 +37,11 @@ struct
 } file
 
 const int PANELS_LEN = 15
-const string[ 3 ] CORE_MODS = [ "Northstar.Client", "Northstar.Coop", "Northstar.CustomServers" ] // Shows a warning if you try to disable these
+const array<string> IMPORTANT_CORE_MODS = [ "Northstar.Client", "Northstar.CustomServers" ] // Shows a warning if you try to disable these
 
 void function AddNorthstarModMenu()
 {
 	AddMenu( "ModListMenu", $"resource/ui/menus/modlist.menu", InitModMenu )
-}
-
-void function AddNorthstarModMenu_MainMenuFooter()
-{
-	string controllerStr = PrependControllerPrompts( BUTTON_Y, "#MENU_TITLE_MODS" )
-	AddMenuFooterOption( GetMenu( "MainMenu" ), BUTTON_Y, controllerStr, "#MENU_TITLE_MODS", AdvanceToModListMenu )
-}
-
-void function AdvanceToModListMenu( var button )
-{
-	AdvanceMenu( GetMenu( "ModListMenu" ) )
 }
 
 void function InitModMenu()
@@ -99,15 +87,20 @@ void function InitModMenu()
 	AddButtonEventHandler( Hud_GetChild( file.menu, "HideCVButton" ), UIE_CHANGE, OnHideConVarsChange )
 
 	// Footers
+	AddMenuFooterOption( file.menu, BUTTON_A, "#A_BUTTON_SELECT" )
 	AddMenuFooterOption( file.menu, BUTTON_B, "#B_BUTTON_BACK", "#BACK" )
+
 	AddMenuFooterOption( file.menu, BUTTON_X, PrependControllerPrompts( BUTTON_X, "#RELOAD_MODS" ), "#RELOAD_MODS", OnReloadModsButtonPressed )
+
 	AddMenuFooterOption(
 		file.menu,
-		BUTTON_BACK,
+		BUTTON_Y,
 		PrependControllerPrompts( BUTTON_Y, "#AUTHENTICATION_AGREEMENT" ),
 		"#AUTHENTICATION_AGREEMENT",
 		OnAuthenticationAgreementButtonPressed
 	)
+
+	AddMenuFooterOption( file.menu, BUTTON_BACK, "%[BACK|]%" + " " + Localize( "#MOD_SETTINGS" ), "#MOD_SETTINGS", OnModSettingsButtonPressed )
 
 	// Nuke weird rui on filter switch
 	RuiSetString( Hud_GetRui( Hud_GetChild( file.menu, "SwtBtnShowFilter" ) ), "buttonText", "" )
@@ -125,12 +118,6 @@ void function OnModMenuOpened()
 	UpdateListSliderHeight()
 	UpdateListSliderPosition()
 
-	RegisterButtonPressedCallback( MOUSE_WHEEL_UP, OnScrollUp )
-	RegisterButtonPressedCallback( MOUSE_WHEEL_DOWN, OnScrollDown )
-}
-
-void function OnModMenuClosed()
-{
 	try
 	{
 		DeregisterButtonPressedCallback( MOUSE_WHEEL_UP, OnScrollUp )
@@ -139,6 +126,15 @@ void function OnModMenuClosed()
 	catch ( ex )
 	{
 	}
+
+	RegisterButtonPressedCallback( MOUSE_WHEEL_UP, OnScrollUp )
+	RegisterButtonPressedCallback( MOUSE_WHEEL_DOWN, OnScrollDown )
+}
+
+void function OnModMenuClosed()
+{
+	DeregisterButtonPressedCallback( MOUSE_WHEEL_UP, OnScrollUp )
+	DeregisterButtonPressedCallback( MOUSE_WHEEL_DOWN, OnScrollDown )
 
 	array<ModInfo> current = GetEnabledModsArray()
 	bool reload
@@ -162,7 +158,7 @@ void function OnModMenuClosed()
 		}
 	}
 	if ( current.len() != file.enabledMods.len() || reload ) // Only reload if we have to
-		ReloadMods()
+		ReloadMods( true )
 }
 
 void function OnModButtonFocused( var button )
@@ -205,8 +201,10 @@ void function OnModButtonPressed( var button )
 {
 	ModInfo mod = file.mods[ int( Hud_GetScriptID( Hud_GetParent( button ) ) ) + file.scrollOffset - 1 ].mod
 	string modName = mod.name
-	if ( StaticFind( modName ) && mod.enabled )
+	if ( IsImportantCoreMod( modName ) && mod.enabled )
+	{
 		CoreModToggleDialog( modName )
+	}
 	else
 	{
 		NSSetModEnabled( modName, mod.version, !mod.enabled )
@@ -237,12 +235,17 @@ void function OnModButtonPressed( var button )
 
 void function OnReloadModsButtonPressed( var button )
 {
-	ReloadMods()
+	ReloadMods( true )
 }
 
 void function OnAuthenticationAgreementButtonPressed( var button )
 {
 	NorthstarMasterServerAuthDialog()
+}
+
+void function OnModSettingsButtonPressed( var button )
+{
+	AdvanceMenu( GetMenu( "ModSettings" ) )
 }
 
 void function OnModLinkButtonPressed( var button )
@@ -696,26 +699,7 @@ void function ValidateScrollOffset()
 	UpdateListSliderPosition()
 }
 
-// Static arrays don't have the .find method for some reason
-bool function StaticFind( string mod )
+bool function IsImportantCoreMod( string mod )
 {
-	foreach ( string smod in CORE_MODS )
-		if ( mod == smod )
-			return true
-	return false
+	return IMPORTANT_CORE_MODS.find( mod ) != -1
 }
-
-void function ReloadMods()
-{
-	NSReloadMods()
-	ClientCommand( "reload_localization" )
-	ClientCommand( "loadPlaylists" )
-
-	int svCheatsOriginal = GetConVarInt( "sv_cheats" )
-	ClientCommand( "sv_cheats 1;weapon_reparse;sv_cheats " + svCheatsOriginal ) // weapon_reparse only works if a server is running and sv_cheats is 1, gotta figure this out eventually
-
-	// note: the logic for this seems really odd, unsure why it doesn't seem to update, since
-	// the same code seems to get run irregardless of whether we've read weapon data before
-	ClientCommand( "uiscript_reset" )
-}
-

@@ -47,6 +47,7 @@ Premi Sì se sei d'accordo. Questa scelta può essere modificata in qualsiasi mo
 		"MODE_SETTING_CATEGORY_RIFF" "Extra"
 		"MODE_SETTING_CATEGORY_MATCH" "Partita"
 
+		"classic_mp" "Multiplayer classico"
 		"run_epilogue" "Epilogo fine partita"
 		"scorelimit" "Limite Punteggio"
 		"roundscorelimit" "Limite Punteggio (per round)"
@@ -76,8 +77,7 @@ Premi Sì se sei d'accordo. Questa scelta può essere modificata in qualsiasi mo
 		"featured_mode_shotguns_snipers" "Armato e Pericoloso"
 		"iron_rules" "Titani di Ferro"
 
-		"cp_amped_capture_points" "Hardpoints Amplificati"
-		"coliseum_loadouts_enabled" "Equipaggiamento Colosseo"
+		"capture_point_amping" "Hardpoints Amplificati"
 
 		"aitdm_archer_grunts", "Scagnozzi Archer"
 
@@ -219,7 +219,7 @@ Premi Sì se sei d'accordo. Questa scelta può essere modificata in qualsiasi mo
 		"MODE_SETTING_CATEGORY_BLEEDOUT" "Sanguinamento pilota"
 
 		"custom_air_accel_pilot" "Accelerazione Aerea"
-		"no_pilot_collision" "Collisione tra Piloti"
+		"pilot_collision" "Collisione tra Piloti"
 		"promode_enable" "Armi Modalità Competitiva"
 		"classic_rodeo" "Rodeo classico"
 		"oob_timer_enabled" "Timer Fuori dai Limiti"
@@ -378,7 +378,6 @@ Premi Sì se sei d'accordo. Questa scelta può essere modificata in qualsiasi mo
 		"sns_wme_kill_value"		"Valore per uccisione Wingman d'Elite"
 		"sns_reset_kill_value"		"Valore per uccisione Lama Impulsi/Esecuzione"
 		"PL_tffa_desc"		"Ogni pilota per sè, distruggi tutti i titan nemici."
-		"player_force_respawn"		"Respawn Forzato"
 		"PROGRESSION_TOGGLE_DISABLED_HEADER"		"Attivare Progressione?"
 		"TOGGLE_PROGRESSION"		"Attiva/Disattiva Progressione"
 		"Y_BUTTON_TOGGLE_PROGRESSION"		"%[Y_BUTTON|]% Attiva/Disattiva Progressione"

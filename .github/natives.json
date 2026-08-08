@@ -45,6 +45,12 @@
 			"argTypes":"string modName, string modVersion, bool enabled"
 		},
 		{
+			"name":"NSReloadMods",
+			"helpText":"",
+			"returnTypeString":"void",
+			"argTypes":""
+		},
+		{
 			"name":"DecodeJSON",
 			"helpText":"converts a json string to a squirrel table",
 			"returnTypeString":"table",
@@ -249,6 +255,12 @@
 			"helpText":"",
 			"returnTypeString":"void",
 			"argTypes":"string modName, string modVersion, bool enabled"
+		},
+		{
+			"name":"NSReloadMods",
+			"helpText":"",
+			"returnTypeString":"void",
+			"argTypes":""
 		},
 		{
 			"name":"DecodeJSON",

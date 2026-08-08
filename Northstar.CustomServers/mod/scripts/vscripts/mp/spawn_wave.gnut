@@ -711,10 +711,14 @@ void function SpawnArcTitan( WaveSpawnEvent ornull spawnEvent )
 	AddMinimapForTitans( npc )
 	npc.EndSignal( "OnDeath" )
 	npc.EndSignal( "OnDestroy" )
+
+	wait 4.6
+
+	npc.GetTitanSoul().SetTitanSoulNetBool( "showOverheadIcon", true )
+
 	WaitTillHotDropComplete( npc )
 
 	thread EMPTitanThinkConstant( npc )
-	npc.GetTitanSoul().SetTitanSoulNetBool( "showOverheadIcon", true )
 	thread NPCNav_FD( npc, spawnEvent.route )
 	if ( GetMapName().find( "mp_lf_" ) == null )
 	{
@@ -772,9 +776,15 @@ void function SpawnNukeTitan( WaveSpawnEvent ornull spawnEvent )
 	AddMinimapForTitans( npc )
 	npc.EndSignal( "OnDeath" )
 	npc.EndSignal( "OnDestroy" )
-	NukeTitanThink( npc, fd_harvester.harvester )
+
+	wait 4.6
 
 	npc.GetTitanSoul().SetTitanSoulNetBool( "showOverheadIcon", true )
+
+	WaitTillHotDropComplete( npc )
+
+	NukeTitanThink( npc, fd_harvester.harvester )
+
 	GiveShieldByDifficulty( npc, true )
 	thread NPCNav_FD( npc, spawnEvent.route )
 }
@@ -814,10 +824,14 @@ void function SpawnMortarTitan( WaveSpawnEvent ornull spawnEvent )
 	AddMinimapForTitans( npc )
 	npc.EndSignal( "OnDeath" )
 	npc.EndSignal( "OnDestroy" )
+
+	wait 4.6
+
+	npc.GetTitanSoul().SetTitanSoulNetBool( "showOverheadIcon", true )
+
 	WaitTillHotDropComplete( npc )
 
 	thread MortarTitanThink( npc, fd_harvester.harvester )
-	npc.GetTitanSoul().SetTitanSoulNetBool( "showOverheadIcon", true )
 	GiveShieldByDifficulty( npc )
 }
 
@@ -858,10 +872,14 @@ void function SpawnSniperTitan( WaveSpawnEvent ornull spawnEvent )
 	AddMinimapForTitans( npc )
 	npc.EndSignal( "OnDeath" )
 	npc.EndSignal( "OnDestroy" )
+
+	wait 4.6
+
+	npc.GetTitanSoul().SetTitanSoulNetBool( "showOverheadIcon", true )
+
 	WaitTillHotDropComplete( npc )
 
 	thread SniperTitanThink( npc, fd_harvester.harvester )
-	npc.GetTitanSoul().SetTitanSoulNetBool( "showOverheadIcon", true )
 	GiveShieldByDifficulty( npc )
 }
 
@@ -903,10 +921,14 @@ void function SpawnToneSniperTitan( WaveSpawnEvent ornull spawnEvent )
 	AddMinimapForTitans( npc )
 	npc.EndSignal( "OnDeath" )
 	npc.EndSignal( "OnDestroy" )
+
+	wait 4.6
+
+	npc.GetTitanSoul().SetTitanSoulNetBool( "showOverheadIcon", true )
+
 	WaitTillHotDropComplete( npc )
 
 	thread SniperTitanThink( npc, fd_harvester.harvester )
-	npc.GetTitanSoul().SetTitanSoulNetBool( "showOverheadIcon", true )
 	GiveShieldByDifficulty( npc )
 }
 
@@ -946,9 +968,13 @@ void function SpawnIonTitan( WaveSpawnEvent ornull spawnEvent )
 	AddMinimapForTitans( npc )
 	npc.EndSignal( "OnDeath" )
 	npc.EndSignal( "OnDestroy" )
-	WaitTillHotDropComplete( npc )
+
+	wait 4.6
 
 	npc.GetTitanSoul().SetTitanSoulNetBool( "showOverheadIcon", true )
+
+	WaitTillHotDropComplete( npc )
+
 	GiveShieldByDifficulty( npc )
 	thread NPCNav_FD( npc, spawnEvent.route )
 }
@@ -991,9 +1017,13 @@ void function SpawnScorchTitan( WaveSpawnEvent ornull spawnEvent )
 	AddMinimapForTitans( npc )
 	npc.EndSignal( "OnDeath" )
 	npc.EndSignal( "OnDestroy" )
-	WaitTillHotDropComplete( npc )
+
+	wait 4.6
 
 	npc.GetTitanSoul().SetTitanSoulNetBool( "showOverheadIcon", true )
+
+	WaitTillHotDropComplete( npc )
+
 	GiveShieldByDifficulty( npc )
 	thread NPCNav_FD( npc, spawnEvent.route )
 }
@@ -1035,9 +1065,13 @@ void function SpawnRoninTitan( WaveSpawnEvent ornull spawnEvent )
 	AddMinimapForTitans( npc )
 	npc.EndSignal( "OnDeath" )
 	npc.EndSignal( "OnDestroy" )
-	WaitTillHotDropComplete( npc )
+
+	wait 4.6
 
 	npc.GetTitanSoul().SetTitanSoulNetBool( "showOverheadIcon", true )
+
+	WaitTillHotDropComplete( npc )
+
 	GiveShieldByDifficulty( npc )
 	thread NPCNav_FD( npc, spawnEvent.route )
 }
@@ -1078,9 +1112,13 @@ void function SpawnToneTitan( WaveSpawnEvent ornull spawnEvent )
 	AddMinimapForTitans( npc )
 	npc.EndSignal( "OnDeath" )
 	npc.EndSignal( "OnDestroy" )
-	WaitTillHotDropComplete( npc )
+
+	wait 4.6
 
 	npc.GetTitanSoul().SetTitanSoulNetBool( "showOverheadIcon", true )
+
+	WaitTillHotDropComplete( npc )
+
 	GiveShieldByDifficulty( npc )
 	thread NPCNav_FD( npc, spawnEvent.route )
 }
@@ -1121,9 +1159,13 @@ void function SpawnLegionTitan( WaveSpawnEvent ornull spawnEvent )
 	AddMinimapForTitans( npc )
 	npc.EndSignal( "OnDeath" )
 	npc.EndSignal( "OnDestroy" )
-	WaitTillHotDropComplete( npc )
+
+	wait 4.6
 
 	npc.GetTitanSoul().SetTitanSoulNetBool( "showOverheadIcon", true )
+
+	WaitTillHotDropComplete( npc )
+
 	GiveShieldByDifficulty( npc )
 	thread NPCNav_FD( npc, spawnEvent.route )
 }
@@ -1164,9 +1206,13 @@ void function SpawnMonarchTitan( WaveSpawnEvent ornull spawnEvent )
 	AddMinimapForTitans( npc )
 	npc.EndSignal( "OnDeath" )
 	npc.EndSignal( "OnDestroy" )
-	WaitTillHotDropComplete( npc )
+
+	wait 4.6
 
 	npc.GetTitanSoul().SetTitanSoulNetBool( "showOverheadIcon", true )
+
+	WaitTillHotDropComplete( npc )
+
 	GiveShieldByDifficulty( npc )
 	thread NPCNav_FD( npc, spawnEvent.route )
 }
@@ -1333,7 +1379,6 @@ void function SpawnGruntDropship( WaveSpawnEvent ornull spawnEvent )
 	origin.z += 640 // Expected to people make coordinates in the ground so we add this up for the hover height
 	float yaw = spawnEvent.angles.y
 	int health = 10000
-	int shield = 5000
 
 	CallinData drop
 	InitCallinData( drop )
@@ -1362,8 +1407,6 @@ void function SpawnGruntDropship( WaveSpawnEvent ornull spawnEvent )
 	DispatchSpawn( dropship )
 	dropship.SetMaxHealth( health )
 	dropship.SetHealth( dropship.GetMaxHealth() )
-	dropship.SetShieldHealthMax( shield )
-	dropship.SetShieldHealth( dropship.GetShieldHealthMax() )
 	dropship.SetHealthPerSegment( 2500 )
 	dropship.EndSignal( "OnDeath" )
 	dropship.Signal( "WarpedIn" )
@@ -2242,10 +2285,14 @@ void function NPCNav_FD( entity npc, string routeName, int nodesToSkip = 1, floa
 		{
 			if ( !IsHarvesterAlive( fd_harvester.harvester ) )
 				return
+
 			npc.AssaultPointClamped( targetNode.GetOrigin() )
 			npc.AssaultSetGoalRadius( nextDistance )
 
 			table result = npc.WaitSignal( "OnFinishedAssault", "OnEnterGoalRadius", "OnFailedToPath" )
+
+			if ( !IsHarvesterAlive( fd_harvester.harvester ) )
+				return
 
 			/*
 			if ( result.signal == "OnFailedToPath" && !npc.IsTitan() && !IsSuperSpectre( npc ) )
@@ -2271,10 +2318,15 @@ void function NPCNav_FD( entity npc, string routeName, int nodesToSkip = 1, floa
 		{
 			if ( !IsHarvesterAlive( fd_harvester.harvester ) )
 				return
+
 			npc.AssaultPointClamped( routepoint )
 			npc.AssaultSetGoalRadius( nextDistance )
 
 			table result = npc.WaitSignal( "OnFinishedAssault", "OnEnterGoalRadius", "OnFailedToPath" )
+
+			if ( !IsHarvesterAlive( fd_harvester.harvester ) )
+				return
+
 			/*
 			if ( result.signal == "OnFailedToPath" && !npc.IsTitan() && !IsSuperSpectre( npc ) )
 			{
@@ -2293,7 +2345,9 @@ void function NPCNav_FD( entity npc, string routeName, int nodesToSkip = 1, floa
 				}
 			}
 */
+
 			routeindex++
+
 			if ( routeindex < routes[ routetaken ].len() )
 				routepoint = routes[ routetaken ][ routeindex ]
 			else
@@ -2588,7 +2642,7 @@ void function NPCStuckTracker( entity npc ) // Track if AI is properly pathing, 
 		if ( result.signal == "OnFailedToPath" )
 		{
 			if ( FailCount == 10 )
-				npc.Die()
+				npc.Die( svGlobal.worldspawn, svGlobal.worldspawn, { scriptType = DF_INSTANT, damageSourceId = eDamageSourceId.stuck } )
 			FailCount++
 		}
 		else

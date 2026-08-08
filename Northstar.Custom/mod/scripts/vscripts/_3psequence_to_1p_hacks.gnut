@@ -2,7 +2,7 @@ global function FirstPersonSequenceForce1P
 global function ShouldRunFirstPersonSequence
 
 global const string FORCE1P_PILOT_1P_ATTACHMENT = "HEADFOCUS"
-global const string FORCE1P_TITAN_1P_ATTACHMENT = "HATCH_HEAD"
+global const string FORCE1P_TITAN_1P_ATTACHMENT = "HEADFOCUS"
 
 global const string FORCE1P_PILOT_1P_HIDDEN_BODYGROUP = "head"
 global const string FORCE1P_TITAN_1P_HIDDEN_BODYGROUP = "torso"
@@ -227,18 +227,30 @@ void function CleanupForced1PSequence( Forced1PSequenceData cleanupData )
 
 	if ( IsValid( cleanupData.ownerProxy ) )
 	{
-		cleanupData.ownerProxy.kv.VisibilityFlags = ~ENTITY_VISIBLE_TO_EVERYONE
+		SetTeam( cleanupData.ownerProxy, TEAM_UNASSIGNED )
 
-		if ( IsAlive( cleanupData.ownerProxy ) )
-			cleanupData.ownerProxy.Die( null, null, { forceKill = true, scriptType = DF_EXPLOSION, damageType = DMG_REMOVENORAGDOLL } )
+		if ( cleanupData.ownerProxy.IsTitan() && IsValid( cleanupData.ownerProxy.GetTitanSoul() ) )
+		{
+			ClearAndKillChildren( cleanupData.ownerProxy.GetTitanSoul(), [] )
+
+			cleanupData.ownerProxy.GetTitanSoul().Destroy()
+		}
+
+		cleanupData.ownerProxy.Destroy()
 	}
 
 	if ( IsValid( cleanupData.thirdPersonProxy ) )
 	{
-		cleanupData.thirdPersonProxy.kv.VisibilityFlags = ~ENTITY_VISIBLE_TO_EVERYONE
+		SetTeam( cleanupData.thirdPersonProxy, TEAM_UNASSIGNED )
 
-		if ( IsAlive( cleanupData.thirdPersonProxy ) )
-			cleanupData.thirdPersonProxy.Die( null, null, { forceKill = true, scriptType = DF_EXPLOSION, damageType = DMG_REMOVENORAGDOLL } )
+		if ( cleanupData.thirdPersonProxy.IsTitan() && IsValid( cleanupData.thirdPersonProxy.GetTitanSoul() ) )
+		{
+			ClearAndKillChildren( cleanupData.thirdPersonProxy.GetTitanSoul(), [] )
+
+			cleanupData.thirdPersonProxy.GetTitanSoul().Destroy()
+		}
+
+		cleanupData.thirdPersonProxy.Destroy()
 	}
 }
 
@@ -260,12 +272,10 @@ void function SetBodyGroups( entity player, entity proxy )
 
 void function FirstPersonPlayAnim( FirstPersonSequenceStruct sequence, entity proxy, entity player, entity other )
 {
-	bool savednoparent = sequence.noParent
-	string savedattachment = sequence.attachment
-	bool saveduseanimatedrefattachment = sequence.useAnimatedRefAttachment
-
 	if ( !IsPlayerEmbarking( player ) )
 	{
+		sequence = clone sequence
+
 		sequence.noParent = false
 		sequence.attachment = "REF"
 		sequence.useAnimatedRefAttachment = true
@@ -274,10 +284,6 @@ void function FirstPersonPlayAnim( FirstPersonSequenceStruct sequence, entity pr
 	}
 	else
 		thread FirstPersonSequence( sequence, proxy, other )
-
-	sequence.noParent = savednoparent
-	sequence.attachment = savedattachment
-	sequence.useAnimatedRefAttachment = saveduseanimatedrefattachment
 }
 
 bool function ShouldRunFirstPersonSequence( entity player, bool isEmbark, bool isExecution )
@@ -345,6 +351,7 @@ void function ModdedPhaseExecutionPhaseCleanup( entity player )
 void function ModdedPhaseEmbarkPhaseStop( entity player )
 {
 	Signal( player, "PhaseEmbarkPhaseStop" )
+
 	PlayPhaseShiftDisappearFX( player )
 	EmitSoundOnEntity( player, "pilot_phaseembark_end_3p" )
 

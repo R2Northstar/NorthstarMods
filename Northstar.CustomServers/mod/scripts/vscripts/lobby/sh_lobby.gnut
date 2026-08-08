@@ -17,8 +17,8 @@ global struct CustomMatchSettingContainer
 struct
 {
 	array<string> modes = [ // default modes in vanilla
-		"tdm",
 		"aitdm",
+		"tdm",
 		"cp",
 		"at",
 		"ctf",
@@ -63,6 +63,10 @@ struct
 
 void function AddPrivateMatchMode( string mode )
 {
+	#if VANILLA
+		return
+	#endif
+
 	if ( !file.modes.contains( mode ) )
 		file.modes.append( mode )
 
@@ -74,6 +78,10 @@ void function AddPrivateMatchMode( string mode )
 
 void function AddPrivateMatchMap( string map )
 {
+	#if VANILLA
+		return
+	#endif
+
 	if ( !file.maps.contains( map ) )
 		file.maps.append( map )
 
@@ -261,12 +269,6 @@ array<string> function GetPrivateMatchMapsForMode( string modeName )
 	// return mapsArray
 
 	array<string> maps
-
-	#if !VANILLA
-		// playlists file that we are working with is old, and doens't have these maps added to FD private match
-		if ( IsFDMode( modeName ) )
-			maps.extend( [ "mp_relic02", "mp_glitch", "mp_colony02" ] )
-	#endif
 
 	// use the private match playlist for this if the gamemode is in it already
 	int privatePlaylistModeIndex = GetPrivateMatchModeIndex( modeName )

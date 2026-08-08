@@ -264,10 +264,13 @@ void functionref( SyncedMelee action, entity attacker, entity target ) function 
 	if ( target.IsNPC() )
 	{
 		#if HAS_BOSS_AI
-			if ( !IsBossTitan( target ) )
+			entity bossPlayer = target.GetBossPlayer()
+
+			if ( ( IsValid( bossPlayer ) || !IsVDUTitan( target ) ) && !target.GetTitanSoul().soul.seatedNpcPilot.isValid )
 				return MeleeThread_AtlasVsTitanShort
 		#else
-			return MeleeThread_AtlasVsTitanShort
+			if ( !target.GetTitanSoul().soul.seatedNpcPilot.isValid )
+				return MeleeThread_AtlasVsTitanShort
 		#endif
 	}
 
@@ -385,13 +388,13 @@ void function MeleeThread_AtlasVsTitanShort( SyncedMelee action, entity attacker
 						printt( "PutEntityInSafeSpot failed, putting him back at the start origin" )
 						attacker.SetOrigin( expect vector( e.attackerStartOrg ) )
 					}
+
+					vector noRollAngle = attacker.GetAngles()
+
+					noRollAngle.x = 0
+
+					attacker.SetAngles( noRollAngle )
 				}
-
-				vector noRollAngle = attacker.GetAngles()
-
-				noRollAngle.x = 0
-
-				attacker.SetAngles( noRollAngle )
 			}
 
 			if ( IsValid( target ) )
@@ -562,7 +565,6 @@ function MeleeThread_TitanRipsPilot( table e, SyncedMelee action, entity attacke
 		DispatchSpawn( targetTitan )
 
 		TitanBecomesPilot( target, targetTitan )
-		DisableTitanRodeo( targetTitan )
 		targetTitan.SetOwner( target )
 		targetTitan.kv.VisibilityFlags = ( ENTITY_VISIBLE_TO_FRIENDLY | ENTITY_VISIBLE_TO_ENEMY ) // owner cant see
 		targetTitan.PlayerMelee_ExecutionStartTarget( attacker )
@@ -615,13 +617,13 @@ function MeleeThread_TitanRipsPilot( table e, SyncedMelee action, entity attacke
 				{
 					PutEntityInSafeSpot( attacker, null, null, expect vector( e.attackerStartOrg ), attacker.GetOrigin() )
 					attacker.SetActiveWeaponBySlot( 0 )
+
+					vector noRollAngle = attacker.GetAngles()
+
+					noRollAngle.x = 0
+
+					attacker.SetAngles( noRollAngle )
 				}
-
-				vector noRollAngle = attacker.GetAngles()
-
-				noRollAngle.x = 0
-
-				attacker.SetAngles( noRollAngle )
 			}
 
 			if ( IsValid( target ) )
@@ -708,7 +710,10 @@ entity function CreateNpcTitanPilotModel( entity titan, bool createEntity = fals
 
 asset function GetNpcTitanPilotModel( entity titan )
 {
-	asset modelName = TEAM_IMC_GRUNT_MODEL
+	asset modelName = $""
+
+	if ( titan.GetTitanSoul().soul.seatedNpcPilot.isValid )
+		modelName = titan.GetTitanSoul().soul.seatedNpcPilot.modelAsset
 
 	#if HAS_BOSS_AI
 		if ( IsBossTitan( titan ) )
@@ -990,6 +995,8 @@ void function MeleeThread_OgreVsTitan( SyncedMelee action, entity attacker, enti
 	entity soul = target.GetTitanSoul()
 	soul.SetInvalidHealthBarEnt( true )
 
+	ForceTitanRodeoToEnd( target ) // anim event for this doesn't exist
+
 	OnThreadEnd(
 		function() : ( ref, attacker, target, e )
 		{
@@ -1023,6 +1030,12 @@ void function MeleeThread_OgreVsTitan( SyncedMelee action, entity attacker, enti
 				{
 					// if we got into solid, teleport back to safe place
 					PutEntityInSafeSpot( attacker, null, null, expect vector( e.attackerStartOrg ), attacker.GetOrigin() )
+
+					vector noRollAngle = attacker.GetAngles()
+
+					noRollAngle.x = 0
+
+					attacker.SetAngles( noRollAngle )
 				}
 			}
 
@@ -1170,30 +1183,14 @@ void function TitanVsTitan_3p( SyncedMelee action, entity attacker, entity targe
 	// END HACK FOR SP!!!
 
 	if ( !target.IsNPC() )
-	{
 		HolsterViewModelAndDisableWeapons( target ) // Melee anims need to use this to stop players from firing weapons but for the weapon to still show up in the 3p anims
-		if ( attacker.IsNPC() ) // Defensive fix for the anim events not happening when the attacker is a NPC
-		{
-			ForceTitanRodeoToEnd( target )
-			DisableTitanRodeo( target )
-		}
-	}
 	else
-	{
-		target.EnableNPCFlag( NPC_IGNORE_ALL | NPC_DISABLE_SENSING )
 		DisableWeapons( target, [] )
-	}
 
 	if ( attacker.IsPlayer() )
 	{
 		HolsterViewModelAndDisableWeapons( attacker ) // Melee anims need to use this to stop players from firing weapons but for the weapon to still show up in the 3p anims
 		attacker.Anim_StopGesture( DEFAULT_SCRIPTED_ANIMATION_BLEND_TIME )
-	}
-	else
-	{
-		attacker.EnableNPCFlag( NPC_IGNORE_ALL | NPC_DISABLE_SENSING )
-		ForceTitanRodeoToEnd( attacker ) // Anim event of disabling Rodeos on attacker like players does, does not happen to NPCs
-		DisableTitanRodeo( attacker )
 	}
 
 	// 	attacker.SetInvulnerable()
@@ -1204,9 +1201,11 @@ void function TitanVsTitan_3p( SyncedMelee action, entity attacker, entity targe
 	entity attackerViewBody
 	FirstPersonSequenceStruct attackerBodySequence
 
-	bool titanHasPilot = target.IsPlayer()
+	bool attackerHasPilot = attacker.IsPlayer() || attacker.GetTitanSoul().soul.seatedNpcPilot.isValid
+	bool targetHasPilot = target.IsPlayer() || target.GetTitanSoul().soul.seatedNpcPilot.isValid
+
 	#if HAS_BOSS_AI
-		titanHasPilot = titanHasPilot || ( IsBossTitan( target ) )
+		targetHasPilot = targetHasPilot || ( IsBossTitan( target ) )
 	#endif
 
 	if ( attacker.IsPlayer() )
@@ -1219,35 +1218,44 @@ void function TitanVsTitan_3p( SyncedMelee action, entity attacker, entity targe
 		Remote_CallFunction_Replay( target, "SCB_StopTitanCockpitSounds" )
 	}
 
-	if ( data.targetAnimation3pPilot[ victimType ] != "" && titanHasPilot )
+	if ( data.targetAnimation3pPilot[ victimType ] != "" && targetHasPilot )
 	{
 		if ( target.IsNPC() )
 			targetViewBody = CreateNpcTitanPilotModel( target )
 		else
 			targetViewBody = Wallrun_CreateCopyOfPilotModel( target )
 
-		targetViewBody.SetOrigin( target.GetOrigin() )
-		targetViewBody.SetRagdollImpactFX( RAGDOLL_IMPACT_TABLE_IDX )
-		targetViewBody.SetContinueAnimatingAfterRagdoll( true )
+		if ( IsValid( targetViewBody ) )
+		{
+			targetViewBody.SetOrigin( target.GetOrigin() )
+			targetViewBody.SetRagdollImpactFX( RAGDOLL_IMPACT_TABLE_IDX )
+			targetViewBody.SetContinueAnimatingAfterRagdoll( true )
 
-		targetBodySequence.attachment = "ref"
-		targetBodySequence.teleport = true
-		targetBodySequence.thirdPersonAnim = data.targetAnimation3pPilot[ victimType ]
+			targetBodySequence.attachment = "ref"
+			targetBodySequence.teleport = true
+			targetBodySequence.thirdPersonAnim = data.targetAnimation3pPilot[ victimType ]
 
-		AddAnimEvent( targetViewBody, "pink_mist", MeleePinkMistFakeBody )
+			AddAnimEvent( targetViewBody, "pink_mist", MeleePinkMistFakeBody )
+		}
 	}
 
-	if ( data.attackerAnimation3pPilot[ victimType ] != "" && attacker.IsPlayer() )
+	if ( data.attackerAnimation3pPilot[ victimType ] != "" && attackerHasPilot )
 	{
-		attackerViewBody = Wallrun_CreateCopyOfPilotModel( attacker )
+		if ( attacker.IsNPC() )
+			attackerViewBody = CreateNpcTitanPilotModel( attacker )
+		else
+			attackerViewBody = Wallrun_CreateCopyOfPilotModel( attacker )
 
-		attackerViewBody.SetOrigin( attacker.GetOrigin() )
-		attackerViewBody.SetRagdollImpactFX( RAGDOLL_IMPACT_TABLE_IDX )
-		attackerViewBody.SetContinueAnimatingAfterRagdoll( true )
+		if ( IsValid( attackerViewBody ) )
+		{
+			attackerViewBody.SetOrigin( attacker.GetOrigin() )
+			attackerViewBody.SetRagdollImpactFX( RAGDOLL_IMPACT_TABLE_IDX )
+			attackerViewBody.SetContinueAnimatingAfterRagdoll( true )
 
-		attackerBodySequence.attachment = "ref"
-		attackerBodySequence.teleport = true
-		attackerBodySequence.thirdPersonAnim = data.attackerAnimation3pPilot[ victimType ]
+			attackerBodySequence.attachment = "ref"
+			attackerBodySequence.teleport = true
+			attackerBodySequence.thirdPersonAnim = data.attackerAnimation3pPilot[ victimType ]
+		}
 	}
 
 	if ( !IsValid( targetViewBody ) )
@@ -1284,10 +1292,8 @@ void function TitanVsTitan_3p( SyncedMelee action, entity attacker, entity targe
 				}
 				else
 				{
-					attacker.DisableNPCFlag( NPC_IGNORE_ALL | NPC_DISABLE_SENSING )
 					EnableWeapons( attacker, [] )
 					attacker.SetActiveWeaponBySlot( 0 )
-					EnableTitanRodeo( attacker ) // Assuming everything went alright, re-enable rodeos on NPC Titans
 				}
 
 				if ( IsAlive( attacker ) )

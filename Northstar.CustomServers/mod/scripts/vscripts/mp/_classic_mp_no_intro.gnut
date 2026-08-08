@@ -3,7 +3,7 @@ untyped
 global function ClassicMP_DefaultNoIntro_Setup
 global function ClassicMP_DefaultNoIntro_GetLength
 
-global const float NOINTRO_LENGTH = 5.0
+global const float NOINTRO_LENGTH = 15.0
 
 void function ClassicMP_DefaultNoIntro_Setup()
 {
@@ -18,6 +18,12 @@ float function ClassicMP_DefaultNoIntro_GetLength()
 
 void function ClassicMP_DefaultNoIntro_Start()
 {
+	if ( !IsNewThread() )
+	{
+		thread ClassicMP_DefaultNoIntro_Start()
+		return
+	}
+
 	ClassicMP_OnIntroStarted()
 
 	foreach ( entity player in GetPlayerArray() )
@@ -27,13 +33,8 @@ void function ClassicMP_DefaultNoIntro_Start()
 		WaitFrame()
 
 	foreach ( entity player in GetPlayerArray() )
-	{
-		if ( !IsPrivateMatchSpectator( player ) )
-		{
-			player.UnfreezeControlsOnServer()
+		if ( IsValidPlayer( player ) && !IsPrivateMatchSpectator( player ) )
 			RemoveCinematicFlag( player, CE_FLAG_CLASSIC_MP_SPAWNING )
-		}
-	}
 
 	ClassicMP_OnIntroFinished()
 }
@@ -43,7 +44,10 @@ void function ClassicMP_DefaultNoIntro_SpawnPlayer( entity player )
 	if ( GetGameState() != eGameState.Prematch )
 		return
 
-	if ( ShouldIntroSpawnAsTitan() )
+	if ( IsPrivateMatchSpectator( player ) )
+		return
+
+	if ( ShouldSpawnAsTitan( player ) )
 		thread ClassicMP_DefaultNoIntro_TitanSpawnPlayer( player )
 	else
 		thread ClassicMP_DefaultNoIntro_PilotSpawnPlayer( player )
@@ -53,43 +57,41 @@ void function ClassicMP_DefaultNoIntro_SpawnPlayer( entity player )
 void function ClassicMP_DefaultNoIntro_PilotSpawnPlayer( entity player )
 {
 	player.EndSignal( "OnDestroy" )
-	if ( PlayerCanSpawn( player ) )
-		RespawnAsPilot( player )
 
-	player.FreezeControlsOnServer()
-	HolsterAndDisableWeapons( player )
-	ResetPlayerCooldowns( player ) // Prevention of case they used abilities or grenades near round end
-	WaitFrame()
+	WaitEndFrame()
+
 	AddCinematicFlag( player, CE_FLAG_CLASSIC_MP_SPAWNING )
-	ScreenFadeFromBlack( player, 1, 1 )
 
-	while ( Time() < expect float( level.nv.gameStartTime ) )
-		WaitFrame()
+	if ( PlayerCanSpawn( player ) )
+		DecideRespawnPlayer( player )
 
-	TryGameModeAnnouncement( player )
-	DeployAndEnableWeapons( player )
+	Loadouts_TryGivePilotLoadout( player )
+	ResetPlayerCooldowns( player ) // Prevention of case they used abilities or grenades near round end
+
+	ScreenFadeFromBlack( player, 0.5, 0.5 )
 }
 
 // spawn as titan for intro
 void function ClassicMP_DefaultNoIntro_TitanSpawnPlayer( entity player )
 {
 	player.EndSignal( "OnDestroy" )
-	WaitFrame()
-	ScreenFadeFromBlack( player, 1, 1 )
 
-	entity intermissionCam = GetEntArrayByClass_Expensive( "info_intermission" )[ 0 ]
-	player.SetObserverModeStaticPosition( intermissionCam.GetOrigin() )
-	player.SetObserverModeStaticAngles( intermissionCam.GetAngles() )
-	player.StartObserverMode( OBS_MODE_STATIC_LOCKED )
+	WaitEndFrame()
 
-	while ( Time() < expect float( level.nv.gameStartTime ) ) // Wait until match actually starts to spawn them
+	AddCinematicFlag( player, CE_FLAG_CLASSIC_MP_SPAWNING )
+
+	ScreenFadeFromBlack( player, 0.0, 0.0 )
+
+	if ( player.isSpawning )
+		return
+
+	PutPlayerInObserverMode( player, OBS_MODE_STATIC_LOCKED )
+
+	if ( Time() >= expect float( level.nv.gameStartTime ) ) // LTS instantly spawns players
 		WaitFrame()
+	else
+		while ( Time() < expect float( level.nv.gameStartTime ) ) // Wait until match actually starts to spawn them
+			WaitFrame()
 
-	if ( PlayerCanSpawn( player ) )
-	{
-		player.StopObserverMode()
-		RespawnAsTitan( player )
-	}
-
-	TryGameModeAnnouncement( player )
+	DecideRespawnPlayer( player )
 }

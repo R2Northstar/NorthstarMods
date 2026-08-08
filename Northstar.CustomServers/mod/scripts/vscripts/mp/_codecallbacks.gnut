@@ -1094,13 +1094,13 @@ int function NPCShieldHealthUpdate( entity npc, damageInfo, bool critHit )
 			callback( weapon )
 	}
 
-	void function AddCallback_OnWeaponAttack( void functionref( entity player, entity weapon, string weaponName, int attackIndex ) callbackFunc )
+	void function AddCallback_OnWeaponAttack( void functionref( entity player, entity weapon, string weaponName, int shotsFired ) callbackFunc )
 	{
 		Assert( !file.weaponAttackCallbacks.contains( callbackFunc ), "Already added " + string( callbackFunc ) + " with AddCallback_OnWeaponAttackCallback" )
 		file.weaponAttackCallbacks.append( callbackFunc )
 	}
 
-	void function RemoveCallback_OnWeaponAttack( void functionref( entity player, entity weapon, string weaponName, int attackIndex ) callbackFunc )
+	void function RemoveCallback_OnWeaponAttack( void functionref( entity player, entity weapon, string weaponName, int shotsFired ) callbackFunc )
 	{
 		Assert(
 			file.weaponAttackCallbacks.contains( callbackFunc ),
@@ -1113,10 +1113,7 @@ int function NPCShieldHealthUpdate( entity npc, damageInfo, bool critHit )
 	{
 		foreach ( callbackFunc in file.weaponAttackCallbacks )
 		{
-			foreach ( callbackFunc in file.weaponAttackCallbacks )
-			{
-				callbackFunc( player, weapon, weaponName, shotsFired )
-			}
+			callbackFunc( player, weapon, weaponName, shotsFired )
 		}
 	}
 #endif // #if MP

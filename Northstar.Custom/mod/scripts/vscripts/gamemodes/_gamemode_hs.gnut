@@ -13,15 +13,15 @@ struct
 
 void function GamemodeHideAndSeek_Init()
 {
+	SetGamemodeAllowsTeamSwitch( false )
 	SetSpawnpointGamemodeOverride( FFA )
 	Riff_ForceTitanAvailability( eTitanAvailability.Never )
 	Riff_ForceBoostAvailability( eBoostAvailability.Disabled )
 	Riff_ForceSetEliminationMode( eEliminationMode.Pilots )
 	SetLoadoutGracePeriodEnabled( false )
 
-	SetTimeoutWinnerDecisionFunc( HideAndSeekDecideWinner )
+	SetTimelimitCompleteFunc( HideAndSeekDecideWinner )
 	ClassicMP_SetCustomIntro( GamemodeHideAndSeekIntroSetup, 0.0 )
-	ClassicMP_ForceDisableEpilogue( true )
 
 	AddCallback_OnPlayerRespawned( SetupHideAndSeekPlayer )
 	AddCallback_OnPlayerKilled( TryNotifyLastPlayerAlive )
@@ -50,7 +50,7 @@ void function AddDroppodSpawn( entity spawn )
 
 void function AddPlayerToHideAndSeekIntro( entity player )
 {
-	if ( GetGameState() < eGameState.Prematch || Time() - file.hidingStartTime > file.hidingTime )
+	if ( GetGameState() < eGameState.Prematch || Time() - file.hidingStartTime > file.hidingTime || IsPrivateMatchSpectator( player ) )
 		return
 
 	// seeker/hider autobalance
@@ -83,6 +83,12 @@ void function AddPlayerToHideAndSeekIntro( entity player )
 
 void function HideAndSeekIntroPrematch()
 {
+	if ( !IsNewThread() )
+	{
+		thread HideAndSeekIntroPrematch()
+		return
+	}
+
 	ClassicMP_OnIntroStarted()
 
 	file.hidingStartTime = Time()
@@ -101,7 +107,8 @@ void function HiderIntroThread( entity player )
 	player.EndSignal( "OnDestroy" )
 	// need to wait a frame in case we're joining after eGameState.Playing, in which case we'll be turned into a spectator on first frame
 	WaitFrame()
-	RespawnAsPilot( player )
+
+	DecideRespawnPlayer( player )
 
 	wait ( file.hidingStartTime + file.hidingTime ) - Time()
 
@@ -209,7 +216,9 @@ void function TryNotifyLastPlayerAlive( entity victim, entity attacker, var dama
 	}
 }
 
-int function HideAndSeekDecideWinner()
+bool function HideAndSeekDecideWinner()
 {
-	return HIDEANDSEEK_TEAM_HIDER // on timeout, hiders always win
+	SetWinner( HIDEANDSEEK_TEAM_HIDER, "#GAMEMODE_TIME_LIMIT_REACHED", "#GAMEMODE_TIME_LIMIT_REACHED" )
+
+	return true
 }

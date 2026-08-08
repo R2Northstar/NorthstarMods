@@ -16,7 +16,8 @@ void function GamemodeInfection_Init()
 	SetShouldUseRoundWinningKillReplay( true )
 	Riff_ForceTitanAvailability( eTitanAvailability.Never )
 	Riff_ForceBoostAvailability( eBoostAvailability.Disabled )
-	ClassicMP_ForceDisableEpilogue( true )
+
+	ClassicMP_SetCustomIntro( ClassicMP_DefaultNoIntro_Setup, ClassicMP_DefaultNoIntro_GetLength() )
 
 	SetShouldPlayerStartBleedoutFunc( InfectionShouldPlayerStartBleedout )
 	AddCallback_OnClientConnected( InfectionInitPlayer )
@@ -24,7 +25,7 @@ void function GamemodeInfection_Init()
 	AddCallback_OnPlayerRespawned( RespawnInfected )
 	AddCallback_GameStateEnter( eGameState.Playing, SelectFirstInfected )
 
-	SetTimeoutWinnerDecisionFunc( TimeoutCheckSurvivors )
+	SetTimelimitCompleteFunc( TimelimitCheckSurvivors )
 
 	AddCallback_GameStateEnter( eGameState.WinnerDetermined, OnWinnerDetermined )
 }
@@ -56,10 +57,15 @@ void function SelectFirstInfectedDelayed()
 		return
 	}
 
+	if ( file.hasHadFirstInfection )
+		return
+
 	entity infected = players.getrandom()
 
 	InfectPlayer( infected )
-	RespawnInfected( infected )
+
+	if ( IsAlive( infected ) )
+		RespawnInfected( infected )
 }
 
 void function InfectionOnPlayerKilled( entity victim, entity attacker, var damageInfo )
@@ -208,12 +214,14 @@ void function SetLastSurvivor( entity player )
 	file.hasHadLastInfection = true
 }
 
-int function TimeoutCheckSurvivors()
+bool function TimelimitCheckSurvivors()
 {
-	if ( GetPlayerArrayOfTeam( INFECTION_TEAM_SURVIVOR ).len() > 0 )
-		return INFECTION_TEAM_SURVIVOR
+	if ( GetPlayerArrayOfTeam( INFECTION_TEAM_SURVIVOR ).len() )
+		SetWinner( INFECTION_TEAM_SURVIVOR, "#GAMEMODE_TIME_LIMIT_REACHED", "#GAMEMODE_TIME_LIMIT_REACHED" )
+	else
+		SetWinner( INFECTION_TEAM_INFECTED, "#GAMEMODE_TIME_LIMIT_REACHED", "#GAMEMODE_TIME_LIMIT_REACHED" )
 
-	return INFECTION_TEAM_INFECTED
+	return true
 }
 
 bool function InfectionShouldPlayerStartBleedout( entity player, var damageInfo )

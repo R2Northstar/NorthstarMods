@@ -63,6 +63,7 @@
 		//要議論: "コンソールの表示/非表示"のままか、"コンソール表示のトグル"、それ以外への差し替え
 		"TOGGLE_CONSOLE" "コンソールの表示/非表示"
 
+		"classic_mp" "クラシックマルチ"
 		"run_epilogue" "エピローグの有効化"
 		"scorelimit" "スコア上限"
 		"roundscorelimit" "スコア上限 (ラウンドベース)"
@@ -96,8 +97,7 @@
 		"featured_mode_shotguns_snipers" "危険武装"
 		"iron_rules" "アイロンルール"
 
-		"cp_amped_capture_points" "拠点増幅"
-		"coliseum_loadouts_enabled" "コロシアムロードアウト"
+		"capture_point_amping" "拠点増幅"
 
 		// そのまま「グラント」よりも、Respawn翻訳で使われている
 		//「ミニオン」のほうが伝わりやすいかもしれないのでこっちにする
@@ -246,7 +246,7 @@
 		"MODE_SETTING_CATEGORY_BLEEDOUT" "パイロットのダウン"
 
 		"custom_air_accel_pilot" "空中加速度"
-		"no_pilot_collision" "パイロット同士の当たり判定"
+		"pilot_collision" "パイロット同士の当たり判定"
 		"promode_enable" "Proモードの武器"
 		"classic_rodeo" "クラシックロデオ"
 		"oob_timer_enabled" "アウトオブバウンドタイマー"
@@ -345,7 +345,6 @@
 		"INVALID_MASTERSERVER_TOKEN" 	"マスターサーバーのトークンが不明か期限切れです。EAアプリの再起動をお試しください。\n(Invalid or expired masterserver token, try restarting EA App.)"
 		"JSON_PARSE_ERROR" 				"JSONレスポンスの処理に失敗しました\n(Error parsing json response)"
 		"UNSUPPORTED_VERSION" 			"現在使用しているバージョンはサポートされていません\n(The version you are using is no longer supported)"
-		"player_force_respawn" 			"強制リスポーン"
 		"SHOW_ONLY_REQUIRED" 			"必須のModのみ"
 		"Y_BUTTON_TOGGLE_PROGRESSION" 			"%[Y_BUTTON|]% 進行システム切り替え"
 		"TOGGLE_PROGRESSION" 			"進行システム切り替え"

@@ -70,8 +70,7 @@
 			"Path": "ui/menu_ns_modmenu.nut",
 			"RunOn": "UI",
 			"UICallback": {
-				"Before": "AddNorthstarModMenu",
-				"After": "AddNorthstarModMenu_MainMenuFooter"
+				"Before": "AddNorthstarModMenu"
 			}
 		},
 		{
@@ -145,7 +144,7 @@
 		{
 			"Path": "ui/menu_mod_settings.nut",
 			"RunOn": "UI",
-			"UICallback":{
+			"UICallback": {
 				"Before": "AddModSettingsMenu"
 			}
 		},
@@ -163,7 +162,7 @@
 		{
 			"Path": "ui/ns_client_mod_settings.gnut",
 			"RunOn": "UI",
-			"UICallback":{
+			"UICallback": {
 				"Before": "NSClientModSettings"
 			}
 		}
