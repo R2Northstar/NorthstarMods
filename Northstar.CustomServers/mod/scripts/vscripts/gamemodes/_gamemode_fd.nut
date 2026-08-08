@@ -631,11 +631,7 @@ void function mainGameLoop()
 			wait 1
 
 			if ( currentWave > 0 )
-			{
-				PlayerEarnMeter_SetEnabled( true )
-				foreach ( entity player in GetPlayerArray() )
-					GiveTitanToPlayer( player )
-			}
+				thread FD_GiveTitan( true )
 		}
 
 		if ( !runWave( currentWave, showShop ) )
@@ -650,7 +646,9 @@ void function executeWave()
 	int currentWave = GetGlobalNetInt( "FD_currentWave" ) + 1
 	int enemyCount
 	printt( "WAVE START: " + currentWave )
-	thread eventIterator_FrontierDefense()
+
+	if ( !file.devForceAdvanceToNextWave )
+		thread eventIterator_FrontierDefense()
 
 	// Wait for all events to execute
 	while ( !file.devForceAdvanceToNextWave && IsHarvesterAlive( fd_harvester.harvester ) && !allEventsExecuted( GetGlobalNetInt( "FD_currentWave" ) ) )
@@ -661,17 +659,12 @@ void function executeWave()
 		printt( "Dev forced advance to next wave" )
 
 		svGlobal.levelEnt.Signal( "StopWaveSpawner" )
-
-		file.devForceAdvanceToNextWave = false
-
-		FD_KillAllEnemies()
-		return
 	}
 
 	printt( "All Events executed, waiting on players to finish the wave" )
 
 	// Do a secondary wait for alive enemies after all events executed
-	while ( IsHarvesterAlive( fd_harvester.harvester ) && GetGlobalNetInt( "FD_AICount_Current" ) > 0 )
+	while ( !file.devForceAdvanceToNextWave && IsHarvesterAlive( fd_harvester.harvester ) && GetGlobalNetInt( "FD_AICount_Current" ) > 0 )
 	{
 		if ( enemyCount != GetGlobalNetInt( "FD_AICount_Current" ) )
 		{
@@ -707,25 +700,12 @@ void function executeWave()
 		WaitFrame()
 	}
 
+	file.devForceAdvanceToNextWave = false
+
 	wait 0.5
 	printt( "All enemies from wave eliminated" )
-	if ( GetGlobalNetInt( "FD_AICount_Drone_Cloak" ) > 0 ) // Kill Cloak Drones when a wave ends to avoid them just wandering off their original wave
-	{
-		foreach ( entity cloakedDrone in GetNPCCloakedDrones() )
-		{
-			if ( IsAlive( cloakedDrone ) )
-			{
-				cloakedDrone.Show()
-				cloakedDrone.Solid()
-				cloakedDrone.Die()
-			}
-		}
-	}
-	foreach ( entity tick in GetEntArrayByClass_Expensive( "npc_frag_drone" ) )
-	{
-		if ( IsAlive( tick ) )
-			tick.Destroy()
-	}
+
+	FD_KillAllEnemies()
 }
 
 void function FD_KillAllEnemies()
@@ -1025,7 +1005,9 @@ bool function runWave( int waveIndex, bool shouldDoBuyTime )
 	if ( waveIndex == 0 )
 	{
 		wait 3
-		WaveBreak_GiveTitan()
+
+		thread FD_GiveTitan( false )
+
 		wait 8
 	}
 
@@ -1171,17 +1153,27 @@ void function WaveBreak_AnnounceHarvesterDamaged()
 	}
 }
 
-void function WaveBreak_GiveTitan()
+void function FD_GiveTitan( bool waveRestart )
 {
 	PlayerEarnMeter_SetEnabled( true )
+
+	// fixes players not getting titans
+	WaitFrame()
+	WaitEndFrame()
+
 	foreach ( entity player in GetPlayerArray() )
 	{
 		GiveTitanToPlayer( player )
-		EmitSoundOnEntityOnlyToPlayer( player, player, "UI_InGame_FD_TitanSelected" )
-		EmitSoundOnEntityOnlyToPlayer( player, player, "UI_InGame_FD_TitanSelected" )
+
+		if ( !waveRestart )
+		{
+			EmitSoundOnEntityOnlyToPlayer( player, player, "UI_InGame_FD_TitanSelected" )
+			EmitSoundOnEntityOnlyToPlayer( player, player, "UI_InGame_FD_TitanSelected" )
+		}
 	}
 
-	PlayFactionDialogueToTeam( "fd_titanReadyNag", TEAM_MILITIA )
+	if ( !waveRestart )
+		PlayFactionDialogueToTeam( "fd_titanReadyNag", TEAM_MILITIA )
 }
 
 void function WaveBreak_ShowPlayerBonus()
