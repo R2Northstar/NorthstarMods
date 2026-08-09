@@ -2360,7 +2360,7 @@ int function GetMatchWinnerFromScore()
 {
 	int bestTeam = TEAM_UNASSIGNED
 	int bestScore = 0
-	array<int> teams = IsFFAGame() ? [] : [ TEAM_IMC, TEAM_MILITIA ]
+	array<int> teams = IsFFAGame() ? [ TEAM_UNASSIGNED ] : [ TEAM_IMC, TEAM_MILITIA ]
 	array<entity> players = GetPlayerArray()
 
 	foreach ( entity player in players )
