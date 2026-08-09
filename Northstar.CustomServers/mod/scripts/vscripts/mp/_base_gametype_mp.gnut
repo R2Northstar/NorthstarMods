@@ -221,18 +221,17 @@ void function CodeCallback_OnClientConnectionCompleted( entity player )
 	{
 		if ( GetGameState() >= eGameState.Prematch )
 			DecideRespawnPlayer( player )
-
-		return
 	}
 	else
+	{
 		player.SetPersistentVar( "privateMatchState", 0 )
 
-	// handle spawning late joiners
-
-	if ( GetClassicMPMode() && GetGameState() >= eGameState.Playing && GetCurrentPlaylistVarInt( "tts_menu_join_in_progress", 0 ) == 1 )
-		thread SpectateTTSMenuPlayer( player )
-	else if ( GetGameState() >= eGameState.Playing || ( GetClassicMPMode() && ShouldSpawnAsTitan( player ) && GetGameState() == eGameState.Prematch ) )
-		DecideRespawnPlayer( player )
+		// handle spawning late joiners
+		if ( GetClassicMPMode() && GetGameState() >= eGameState.Playing && GetCurrentPlaylistVarInt( "tts_menu_join_in_progress", 0 ) == 1 )
+			thread SpectateTTSMenuPlayer( player )
+		else if ( GetGameState() >= eGameState.Playing || ( GetClassicMPMode() && ShouldSpawnAsTitan( player ) && GetGameState() == eGameState.Prematch ) )
+			DecideRespawnPlayer( player )
+	}
 }
 
 bool function ShouldPlayerBeEliminated( player )
