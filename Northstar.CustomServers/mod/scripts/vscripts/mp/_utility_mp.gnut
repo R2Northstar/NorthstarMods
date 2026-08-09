@@ -170,6 +170,12 @@ void function SaveDateLoggedIn( entity player )
 
 void function UpdatePersistenceOnDisconnect( entity player )
 {
+	if ( !player.hasConnected )
+		return
+
+	if ( !( "updatedPersistenceOnDisconnect" in player.s ) )
+		return
+
 	if ( player.s.updatedPersistenceOnDisconnect )
 		return
 
@@ -179,6 +185,14 @@ void function UpdatePersistenceOnDisconnect( entity player )
 	SaveDateLoggedIn( player )
 
 	player.s.updatedPersistenceOnDisconnect = true
+}
+
+void function CodeCallback_UpdatePersistenceOnDisconnect( int playerIndex )
+{
+	entity player = GetPlayerByIndex( playerIndex )
+
+	if ( IsValid( player ) )
+		UpdatePersistenceOnDisconnect( player )
 }
 
 void function FW_Border_GlobalInit()

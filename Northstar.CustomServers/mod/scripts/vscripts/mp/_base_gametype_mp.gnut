@@ -285,8 +285,6 @@ void function CodeCallback_OnClientDisconnected( entity player, string reason )
 		callbackFunc( player )
 	}
 
-	UpdatePersistenceOnDisconnect( player )
-
 	player.Disconnected()
 	player.p.isDisconnected = true
 	player.CleanupMPClasses()
