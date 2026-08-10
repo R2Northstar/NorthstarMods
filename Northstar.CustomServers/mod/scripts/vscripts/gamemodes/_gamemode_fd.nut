@@ -705,7 +705,8 @@ void function executeWave()
 	wait 0.5
 	printt( "All enemies from wave eliminated" )
 
-	FD_KillAllEnemies()
+	if ( IsHarvesterAlive( fd_harvester.harvester ) )
+		FD_KillAllEnemies()
 }
 
 void function FD_KillAllEnemies()
