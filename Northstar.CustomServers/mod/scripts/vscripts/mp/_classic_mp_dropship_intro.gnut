@@ -207,7 +207,11 @@ void function SpawnPlayerIntoDropship( entity player, int playerDropshipIndex, e
 		sequence.setInitialTime = Time() - file.introStartTime
 		sequence.hideProxy = true
 
-		waitthread FirstPersonSequence( sequence, player, playerDropship )
+		thread FirstPersonSequence( sequence, player, playerDropship )
+
+		player.PlayerCone_SetLerpTime( 0 )
+
+		WaittillAnimDone( player )
 
 		player.Anim_SetInitialTime( max( 0.0, Time() - playerDropship.s.deployedTime ) )
 
@@ -252,7 +256,11 @@ void function SpawnPlayerIntoDropship( entity player, int playerDropshipIndex, e
 		sequence.setInitialTime = min( player.GetSequenceDuration( sequence.thirdPersonAnim ) - 0.0001, Time() - file.introStartTime )
 		sequence.hideProxy = true
 
-		waitthread FirstPersonSequence( sequence, player, playerDropship )
+		thread FirstPersonSequence( sequence, player, playerDropship )
+
+		player.PlayerCone_SetLerpTime( 0 )
+
+		WaittillAnimDone( player )
 
 		sequence.firstPersonAnim = DROPSHIP_JUMP_ANIMS_POV[ playerDropshipIndex ]
 		sequence.thirdPersonAnim = DROPSHIP_JUMP_ANIMS[ playerDropshipIndex ]
