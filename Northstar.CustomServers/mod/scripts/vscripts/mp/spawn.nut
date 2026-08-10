@@ -264,26 +264,27 @@ entity function FindSpawnPoint( entity player, bool isTitan, bool useStartSpawnp
 	else
 		spawnpoints = isTitan ? SpawnPoints_GetTitan() : SpawnPoints_GetPilot()
 
-	if ( !useStartSpawnpoint )
-	{
-		SpawnPoints_InitRatings( player, team )
+	SpawnPoints_InitRatings( player, team )
 
-		void functionref( int, array<entity>, int, entity ) ratingFunc = isTitan
-			? GameMode_GetTitanSpawnpointsRatingFunc( GAMETYPE )
-			: GameMode_GetPilotSpawnpointsRatingFunc( GAMETYPE )
-		ratingFunc( isTitan ? TD_TITAN : TD_PILOT, spawnpoints, team, player )
-	}
+	void functionref( int, array<entity>, int, entity ) ratingFunc = isTitan
+		? GameMode_GetTitanSpawnpointsRatingFunc( GAMETYPE )
+		: GameMode_GetPilotSpawnpointsRatingFunc( GAMETYPE )
+	ratingFunc( isTitan ? TD_TITAN : TD_PILOT, spawnpoints, team, player )
 
 	if ( isTitan )
 	{
-		if ( !useStartSpawnpoint )
+		if ( useStartSpawnpoint )
+			SpawnPoints_SortTitanStart()
+		else
 			SpawnPoints_SortTitan()
 
 		spawnpoints = useStartSpawnpoint ? SpawnPoints_GetTitanStart( team ) : SpawnPoints_GetTitan()
 	}
 	else
 	{
-		if ( !useStartSpawnpoint )
+		if ( useStartSpawnpoint )
+			SpawnPoints_SortPilotStart()
+		else
 			SpawnPoints_SortPilot()
 
 		spawnpoints = useStartSpawnpoint ? SpawnPoints_GetPilotStart( team ) : SpawnPoints_GetPilot()

@@ -39,7 +39,6 @@ void function CaptureTheFlag_Init()
 	CaptureTheFlagShared_Init()
 
 	SetSwitchSidesBased( true )
-	SetGamemodeAllowsTeamSwitch( false )
 
 	SetShouldUseRoundWinningKillReplay( true )
 	SetRoundWinningKillReplayKillClasses( false, false )
@@ -312,9 +311,6 @@ void function CTFPlayerDisconnected( entity player )
 
 void function OnPlayerKilled( entity victim, entity attacker, var damageInfo )
 {
-	if ( !IsValid( GetFlagForTeam( GetOtherTeam( victim.GetTeam() ) ) ) ) // getting a crash idk
-		return
-
 	if ( PlayerHasEnemyFlag( victim ) )
 	{
 		if ( victim != attacker && attacker.IsPlayer() )

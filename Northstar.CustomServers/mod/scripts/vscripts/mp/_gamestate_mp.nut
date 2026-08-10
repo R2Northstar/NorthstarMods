@@ -1235,7 +1235,7 @@ void function GameRulesThink_Postmatch()
 
 void function DelayedTakeAllWeapons( entity player )
 {
-	player.EndSignal( "Disconnected" )
+	player.EndSignal( "OnDestroy" )
 	player.EndSignal( "OnDeath" )
 
 	wait 1.25

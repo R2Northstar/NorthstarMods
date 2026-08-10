@@ -14,8 +14,6 @@ void function GamemodeMfd_Init()
 	RegisterSignal( "MarkKilled" )
 	ScoreEvent_SetupEarnMeterValuesForMixedModes()
 
-	SetGamemodeAllowsTeamSwitch( false )
-
 	if ( IsTitanMarkedForDeathMode() )
 	{
 		Riff_ForceSetSpawnAsTitan( eSpawnAsTitan.Always )
@@ -98,15 +96,15 @@ void function MFDThink()
 		// reset if mark leaves
 		bool shouldReset
 		float endTime = Time() + MFD_COUNTDOWN_TIME
-		while ( endTime > Time() || ( !IsAlive( imcMark ) || !IsAlive( militiaMark ) ) )
+		while ( endTime > Time() || !IsAlive( imcMark ) || !IsAlive( militiaMark ) )
 		{
-			if ( !IsValid( imcMark ) || !IsValid( militiaMark ) )
+			WaitFrame()
+
+			if ( !IsValid( imcMark ) || !IsValid( militiaMark ) || imcMark.GetTeam() != TEAM_IMC || militiaMark.GetTeam() != TEAM_MILITIA )
 			{
 				shouldReset = true
 				break
 			}
-
-			WaitFrame()
 		}
 
 		if ( shouldReset )
@@ -143,10 +141,8 @@ entity function PickTeamMark( int team )
 void function MarkPlayers( entity imcMark, entity militiaMark )
 {
 	imcMark.EndSignal( "OnDestroy" )
-	imcMark.EndSignal( "Disconnected" )
 
 	militiaMark.EndSignal( "OnDestroy" )
-	militiaMark.EndSignal( "Disconnected" )
 
 	OnThreadEnd(
 		function() : ( imcMark, militiaMark )

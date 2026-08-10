@@ -241,7 +241,6 @@ void function SpawnPlayerIntoWaveDropship( entity ship, entity player, FirstPers
 
 	player.EndSignal( "OnDeath" )
 	player.EndSignal( "OnDestroy" )
-	player.EndSignal( "Disconnected" )
 
 	SetWaveSpawnProtection( player )
 	thread DelayedFrame( player )

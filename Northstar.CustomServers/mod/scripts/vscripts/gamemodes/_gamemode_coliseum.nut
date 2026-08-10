@@ -36,7 +36,6 @@ void function GamemodeColiseum_Init()
 	Riff_ForceSetEliminationMode( eEliminationMode.Pilots )
 	SetLoadoutGracePeriodEnabled( false ) // prevent modifying loadouts with grace period
 	SetWeaponDropsEnabled( false ) // removes all dropped weapons
-	SetGamemodeAllowsTeamSwitch( false )
 
 	ClassicMP_SetCustomIntro( ClassicMP_DefaultNoIntro_Setup, 8.5 )
 	AddCallback_GameStateEnter( eGameState.Prematch, ShowColiseumIntroScreen )
