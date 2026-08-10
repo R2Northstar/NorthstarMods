@@ -1524,6 +1524,9 @@ bool function ClientCommandCallbackToggleReady( entity player, array<string> arg
 	if ( !args.len() || GetGlobalNetInt( "FD_waveState" ) != WAVE_STATE_BREAK || player.GetTeam() == TEAM_IMC )
 		return true
 
+	if ( GetGlobalNetTime( "FD_nextWaveStartTime" ) - Time() <= 1.0 )
+		return true
+
 	if ( args[ 0 ] == "true" && !player.GetPlayerNetBool( "FD_readyForNextWave" ) )
 	{
 		player.SetPlayerNetBool( "FD_readyForNextWave", true )
