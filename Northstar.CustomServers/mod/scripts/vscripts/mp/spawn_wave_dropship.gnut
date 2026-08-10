@@ -283,11 +283,16 @@ void function SpawnPlayerIntoWaveDropship( entity ship, entity player, FirstPers
 
 	thread FirstPersonSequence( idleSequence, player, ship )
 
-	ViewConeZeroInstant( player )
+	if ( idleSequence.viewConeFunction != ViewConeRampFree && idleSequence.viewConeFunction != ViewConeFree )
+	{
+		ViewConeZeroInstant( player )
 
-	WaitFrame()
+		WaitFrame()
 
-	idleSequence.viewConeFunction( player )
+		idleSequence.viewConeFunction( player )
+	}
+	else
+		player.PlayerCone_SetLerpTime( 0 )
 
 	ship.WaitSignal( "deploy" )
 
