@@ -7,8 +7,6 @@ struct
 	int titanDamageGameStat = -1
 
 	entity functionref( entity player, entity basePoint ) recalculateRespawnAsTitanStartPointCallback
-	table<entity, float> playerChangeTeamTimeBuffer
-	bool gamemodeTeamSwitchEnabled = true
 
 	table<entity, bool> playerRespawnPlayerIntoTitan
 	table<entity, int> hasRunGamemodeAnnouncementForPlayer
@@ -17,8 +15,6 @@ struct
 
 void function BaseGametype_Init_MPSP()
 {
-	AddClientCommandCallback( "changeteam", ClientCommandCallbackChangeTeam )
-
 	// done in code
 	AddClientCommandCallback(
 		"spec_next",
@@ -1147,61 +1143,6 @@ void function CheckPlayerGetsNewLoadout( entity player, PilotLoadoutDef loadout 
 		if ( weapon.GetWeaponClassName() == "mp_weapon_epg" && !weapon.HasMod( "jump_kit" ) && GetCurrentPlaylistVarInt( "epg_splash_push", 0 ) == 1 )
 			weapon.AddMod( "jump_kit" )
 	}
-}
-
-void function SetGamemodeAllowsTeamSwitch( bool enabled )
-{
-	file.gamemodeTeamSwitchEnabled = enabled
-}
-
-bool function ClientCommandCallbackChangeTeam( entity player, array<string> args )
-{
-	if ( !GetConVarBool( "ns_allow_team_change" ) || IsPrivateMatchSpectator( player ) )
-		return true
-
-	if ( !file.gamemodeTeamSwitchEnabled )
-	{
-		SendHudMessage( player, "#TEAMSWITCH_GAMEMODE", -1, 0.4, 255, 255, 255, 255, 0.15, 3.0, 0.5 )
-		return true
-	}
-
-	if ( GetCurrentPlaylistVarInt( "max_teams", 0 ) != 2 || IsEliminationBased() )
-	{
-		SendHudMessage( player, "#TEAMSWITCH_DISABLED", -1, 0.4, 255, 255, 255, 255, 0.15, 3.0, 0.5 )
-		return true
-	}
-
-	if ( !GamePlaying() )
-	{
-		SendHudMessage( player, "#TEAMSWITCH_GAMEPLAY", -1, 0.4, 255, 255, 255, 255, 0.15, 3.0, 0.5 )
-		return true
-	}
-
-	if ( !IsAlive( player ) || player.IsInvulnerable() || IsDemigod( player ) )
-	{
-		SendHudMessage( player, "#TEAMSWITCH_BUFFER", -1, 0.4, 255, 255, 255, 255, 0.15, 3.0, 0.5 )
-		return true
-	}
-
-	if ( !( player in file.playerChangeTeamTimeBuffer ) )
-	{
-		file.playerChangeTeamTimeBuffer[ player ] <- Time() + 5.0
-	}
-	else if ( file.playerChangeTeamTimeBuffer[ player ] > Time() )
-	{
-		SendHudMessage( player, "#TEAMSWITCH_BUFFER", -1, 0.4, 255, 255, 255, 255, 0.15, 3.0, 0.5 )
-		return true
-	}
-
-	if ( player in file.playerChangeTeamTimeBuffer && file.playerChangeTeamTimeBuffer[ player ] < Time() )
-		file.playerChangeTeamTimeBuffer[ player ] = Time() + 5.0
-
-	player.Signal( "TeamChange" )
-	player.Die( null, null, { forceKill = true, damageSourceId = eDamageSourceId.team_switch } )
-
-	SetTeam( player, GetOtherTeam( player.GetTeam() ) )
-
-	return true
 }
 
 bool function ShouldEntTakeDamage_SPMP( entity ent, var damageInfo )

@@ -2,6 +2,12 @@ untyped
 
 globalize_all_functions
 
+struct
+{
+	table<entity, float> playerChangeTeamTimeBuffer
+	bool gamemodeTeamSwitchEnabled = true
+} file
+
 void function NorthstarUtils_Before_Init()
 {
 	#if SERVER
@@ -10,6 +16,7 @@ void function NorthstarUtils_Before_Init()
 
 	#if MP
 		#if SERVER
+			AddClientCommandCallback( "changeteam", ClientCommandCallbackChangeTeam )
 			AddCallback_EntitiesDidLoad( ValidateTitanDropNodes )
 		#else
 			AddServerToClientStringCommandCallback( "StopPlayingMinuteMusic", ServerCallback_StopPlayingMinuteMusic )
@@ -106,6 +113,61 @@ void function ReloadMods( bool reloadorretry = false )
 
 #if MP
 	#if SERVER
+		void function SetGamemodeAllowsTeamSwitch( bool enabled )
+		{
+			file.gamemodeTeamSwitchEnabled = enabled
+		}
+
+		bool function ClientCommandCallbackChangeTeam( entity player, array<string> args )
+		{
+			if ( !GetConVarBool( "ns_allow_team_change" ) || IsPrivateMatchSpectator( player ) )
+				return true
+
+			if ( !file.gamemodeTeamSwitchEnabled )
+			{
+				SendHudMessage( player, "#TEAMSWITCH_GAMEMODE", -1, 0.4, 255, 255, 255, 255, 0.15, 3.0, 0.5 )
+				return true
+			}
+
+			if ( GetCurrentPlaylistVarInt( "max_teams", 0 ) != 2 || IsEliminationBased() )
+			{
+				SendHudMessage( player, "#TEAMSWITCH_DISABLED", -1, 0.4, 255, 255, 255, 255, 0.15, 3.0, 0.5 )
+				return true
+			}
+
+			if ( !GamePlaying() )
+			{
+				SendHudMessage( player, "#TEAMSWITCH_GAMEPLAY", -1, 0.4, 255, 255, 255, 255, 0.15, 3.0, 0.5 )
+				return true
+			}
+
+			if ( !IsAlive( player ) || player.IsInvulnerable() || IsDemigod( player ) )
+			{
+				SendHudMessage( player, "#TEAMSWITCH_BUFFER", -1, 0.4, 255, 255, 255, 255, 0.15, 3.0, 0.5 )
+				return true
+			}
+
+			if ( !( player in file.playerChangeTeamTimeBuffer ) )
+			{
+				file.playerChangeTeamTimeBuffer[ player ] <- Time() + 5.0
+			}
+			else if ( file.playerChangeTeamTimeBuffer[ player ] > Time() )
+			{
+				SendHudMessage( player, "#TEAMSWITCH_BUFFER", -1, 0.4, 255, 255, 255, 255, 0.15, 3.0, 0.5 )
+				return true
+			}
+
+			if ( player in file.playerChangeTeamTimeBuffer && file.playerChangeTeamTimeBuffer[ player ] < Time() )
+				file.playerChangeTeamTimeBuffer[ player ] = Time() + 5.0
+
+			player.Signal( "TeamChange" )
+			player.Die( null, null, { forceKill = true, damageSourceId = eDamageSourceId.team_switch } )
+
+			SetTeam( player, GetOtherTeam( player.GetTeam() ) )
+
+			return true
+		}
+
 		// for ValidateTitanDropNodes()
 		bool function TitanValidateDropNode( FlightPath flightpath, entity titan, vector origin )
 		{
