@@ -714,7 +714,15 @@ void function FD_KillAllEnemies()
 	array<entity> enemies = GetNPCArrayOfTeam( TEAM_IMC )
 
 	foreach ( entity enemy in enemies )
-		enemy.Die()
+	{
+		if ( IsAlive( enemy ) )
+		{
+			if ( IsTick( enemy ) )
+				enemy.Destroy()
+			else
+				enemy.Die()
+		}
+	}
 }
 
 #if DEV
