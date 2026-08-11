@@ -139,7 +139,6 @@ void function GamemodeFD_Init()
 	GameModeAnnouncementOnlyPlaysOnceForPlayer( true )
 	Riff_ForceBoostAvailability( eBoostAvailability.Disabled )
 	PlayerEarnMeter_SetEnabled( false )
-	SetAllowLoadoutChangeFunc( FD_ShouldAllowChangeLoadout )
 	SetGetDifficultyFunc( FD_GetDifficultyLevel )
 	LaserMesh_Init()
 	TeamTitanSelectMenu_Init()
@@ -775,7 +774,36 @@ bool function runWave( int waveIndex, bool shouldDoBuyTime )
 					enemys[ 8 ]
 				)
 
-				delaythread( 5 ) void function() : ( player )
+				int waitTime = 0
+
+				if ( enemys[ 0 ] )
+					waitTime++
+
+				if ( enemys[ 1 ] )
+					waitTime++
+
+				if ( enemys[ 2 ] )
+					waitTime++
+
+				if ( enemys[ 3 ] )
+					waitTime++
+
+				if ( enemys[ 4 ] )
+					waitTime++
+
+				if ( enemys[ 5 ] )
+					waitTime++
+
+				if ( enemys[ 6 ] )
+					waitTime++
+
+				if ( enemys[ 7 ] )
+					waitTime++
+
+				if ( enemys[ 8 ] )
+					waitTime++
+
+				delaythread( waitTime ) void function() : ( player )
 				{
 					if ( IsValidPlayer( player ) )
 						Remote_CallFunction_NonReplay( player, "ServerCallback_FD_ClearPreParty" )
@@ -841,6 +869,7 @@ bool function runWave( int waveIndex, bool shouldDoBuyTime )
 		Remote_CallFunction_NonReplay( player, "ServerCallback_FD_ClearPreParty" )
 		player.SetPlayerNetBool( "FD_readyForNextWave", false )
 	}
+	svGlobal.isInPilotGracePeriod = false
 	SetGlobalNetBool( "FD_waveActive", true )
 	FD_UpdateTitanBehavior()
 
@@ -979,6 +1008,7 @@ bool function runWave( int waveIndex, bool shouldDoBuyTime )
 	// wave end
 
 	SetGlobalNetBool( "FD_waveActive", false )
+	svGlobal.isInPilotGracePeriod = true
 	FD_UpdateTitanBehavior()
 	foreach ( entity player in GetPlayerArrayOfTeam( TEAM_MILITIA ) )
 		file.players[ player ].wavesCompleted++
@@ -1435,11 +1465,6 @@ void function OnPlayerDisconnectedOrDestroyed( entity player )
 		if ( IsValidPlayer( BossPlayer ) && IsAlive( npc ) && BossPlayer == player && npc.GetTeam() == TEAM_MILITIA && ( IsMinion( npc ) || IsFragDrone( npc ) ) )
 			npc.Die()
 	}
-}
-
-bool function FD_ShouldAllowChangeLoadout( entity player )
-{
-	return ( !GetGlobalNetBool( "FD_waveActive" ) || player.GetTeam() == TEAM_IMC )
 }
 
 void function FD_OnPlayerGetsNewPilotLoadout( entity player, PilotLoadoutDef loadout )

@@ -511,7 +511,7 @@ void function TryGivePilotLoadoutForGracePeriod( entity player, string args0, st
 	if ( IsLobby() || player.ContextAction_IsActive() )
 		return
 
-	if ( args0 == "1" && Loadouts_CanGivePilotLoadout( player ) && ( file.allowChangeLoadoutFunc == null || file.allowChangeLoadoutFunc( player ) ) )
+	if ( args0 == "1" && Loadouts_CanGivePilotLoadout( player ) && AllowLoadoutChangeFunc( player ) )
 	{
 		Loadouts_TryGivePilotLoadout( player )
 
