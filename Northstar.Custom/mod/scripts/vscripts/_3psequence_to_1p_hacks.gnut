@@ -37,8 +37,6 @@ Forced1PSequenceData function FirstPersonSequenceForce1P( FirstPersonSequenceStr
 
 	vector angles = player.GetAngles()
 
-	angles.y = player.EyeAngles().y
-
 	entity ownerProxy
 
 	if ( entityclass == FORCE1P_TITAN_ENTITYCLASS )
@@ -47,22 +45,15 @@ Forced1PSequenceData function FirstPersonSequenceForce1P( FirstPersonSequenceStr
 		ownerProxy = CreateEntity( entityclass )
 
 	ownerProxy.SetOrigin( player.GetOrigin() )
-
-	if ( Distance( angles, angles ) < 359 )
-		ownerProxy.SetAngles( angles )
-
+	ownerProxy.SetAngles( angles )
 	ownerProxy.kv.VisibilityFlags = ENTITY_VISIBLE_TO_OWNER
 	ownerProxy.kv.solid = 0
 	ownerProxy.SetOwner( player )
 
 	DispatchSpawn( ownerProxy )
 
-	if ( ownerProxy.GetModelName() != player.GetModelName() )
-	{
-		ownerProxy.SetModel( player.GetModelName() )
-		ownerProxy.SetValueForModelKey( player.GetModelName() )
-	}
-
+	ownerProxy.SetModel( player.GetModelName() )
+	ownerProxy.SetValueForModelKey( player.GetModelName() )
 	ownerProxy.EnableNPCFlag( NPC_IGNORE_ALL )
 	ownerProxy.SetBossPlayer( player )
 
@@ -120,22 +111,15 @@ Forced1PSequenceData function FirstPersonSequenceForce1P( FirstPersonSequenceStr
 		thirdPersonProxy = CreateEntity( entityclass )
 
 	thirdPersonProxy.SetOrigin( player.GetOrigin() )
-
-	if ( Distance( angles, angles ) < 359 )
-		thirdPersonProxy.SetAngles( angles )
-
+	thirdPersonProxy.SetAngles( angles )
 	thirdPersonProxy.kv.VisibilityFlags = ENTITY_VISIBLE_TO_EVERYONE & ~ENTITY_VISIBLE_TO_OWNER
 	thirdPersonProxy.kv.solid = 0
 	thirdPersonProxy.SetOwner( player )
 
 	DispatchSpawn( thirdPersonProxy )
 
-	if ( thirdPersonProxy.GetModelName() != player.GetModelName() )
-	{
-		thirdPersonProxy.SetModel( player.GetModelName() )
-		thirdPersonProxy.SetValueForModelKey( player.GetModelName() )
-	}
-
+	thirdPersonProxy.SetModel( player.GetModelName() )
+	thirdPersonProxy.SetValueForModelKey( player.GetModelName() )
 	thirdPersonProxy.EnableNPCFlag( NPC_IGNORE_ALL )
 	thirdPersonProxy.SetBossPlayer( player )
 
@@ -278,6 +262,7 @@ void function FirstPersonPlayAnim( FirstPersonSequenceStruct sequence, entity pr
 
 		sequence.noParent = false
 		sequence.attachment = "REF"
+		sequence.blendTime = 0
 		sequence.useAnimatedRefAttachment = true
 
 		thread FirstPersonSequence( sequence, proxy, player )
@@ -302,16 +287,12 @@ bool function ShouldRunFirstPersonSequence( entity player, bool isEmbark, bool i
 
 void function ModdedPhaseEmbarkPhaseStart( entity player )
 {
-	PlayPhaseShiftDisappearFX( player )
-	EmitSoundOnEntity( player, "pilot_phaseembark_activate_3p" )
-
 	player.PhaseShiftBegin( 0.0, 0.2 )
 
 	if ( !IsPlayerEmbarking( player.GetOwner() ) )
 	{
 		player.GetOwner().PhaseShiftBegin( 0.0, 1.5 )
 
-		AddAnimEvent( player.GetOwner(), "phase_shift_stop", ModdedPhaseEmbarkPhaseStop )
 		thread ModdedPhaseExecutionPhaseCleanup( player.GetOwner() )
 	}
 
@@ -351,9 +332,6 @@ void function ModdedPhaseExecutionPhaseCleanup( entity player )
 void function ModdedPhaseEmbarkPhaseStop( entity player )
 {
 	Signal( player, "PhaseEmbarkPhaseStop" )
-
-	PlayPhaseShiftDisappearFX( player )
-	EmitSoundOnEntity( player, "pilot_phaseembark_end_3p" )
 
 	player.PhaseShiftCancel()
 }
