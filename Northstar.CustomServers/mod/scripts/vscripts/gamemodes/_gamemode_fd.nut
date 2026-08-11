@@ -774,33 +774,33 @@ bool function runWave( int waveIndex, bool shouldDoBuyTime )
 					enemys[ 8 ]
 				)
 
-				int waitTime = 0
+				int waitTime = 1
 
-				if ( enemys[ 0 ] )
+				if ( enemys[ 0 ] != -1 )
 					waitTime++
 
-				if ( enemys[ 1 ] )
+				if ( enemys[ 1 ] != -1 )
 					waitTime++
 
-				if ( enemys[ 2 ] )
+				if ( enemys[ 2 ] != -1 )
 					waitTime++
 
-				if ( enemys[ 3 ] )
+				if ( enemys[ 3 ] != -1 )
 					waitTime++
 
-				if ( enemys[ 4 ] )
+				if ( enemys[ 4 ] != -1 )
 					waitTime++
 
-				if ( enemys[ 5 ] )
+				if ( enemys[ 5 ] != -1 )
 					waitTime++
 
-				if ( enemys[ 6 ] )
+				if ( enemys[ 6 ] != -1 )
 					waitTime++
 
-				if ( enemys[ 7 ] )
+				if ( enemys[ 7 ] != -1 )
 					waitTime++
 
-				if ( enemys[ 8 ] )
+				if ( enemys[ 8 ] != -1 )
 					waitTime++
 
 				delaythread( waitTime ) void function() : ( player )
