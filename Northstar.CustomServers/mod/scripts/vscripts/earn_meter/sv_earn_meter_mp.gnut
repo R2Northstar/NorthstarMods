@@ -15,7 +15,6 @@ void function Sv_EarnMeterMP_Init()
 	if ( !EARNMETER_ENABLED )
 		return
 
-	AddCallback_OnClientConnected( SetupPlayerEarnMeter )
 	AddCallback_GameStateEnter( eGameState.Playing, OnPlaying ) // can't change boost after prematch
 	AddCallback_OnPlayerRespawned( OnPlayerRespawned )
 }
@@ -33,23 +32,9 @@ void function EarnMeterMP_SetPassiveMeterGainEnabled( bool enabled )
 	file.passiveMeterGainEnabled = enabled
 }
 
-void function SetupPlayerEarnMeter( entity player )
-{
-	PlayerEarnMeter_Reset( player )
-
-	string burncardRef = GetSelectedBurnCardRef( player )
-	EarnMeterMP_SetBoostByRef( player, burncardRef )
-
-	// catchup bonus for late joiners
-	// todo: maths on this is fine but for some reason it won't set correctly, could be getting reset somewhere?
-	PlayerEarnMeter_AddOwnedFrac( player, ( ( Time() - file.playingStartTime ) / 4.0 ) * 0.01 )
-}
-
 void function OnPlaying()
 {
 	file.playingStartTime = Time()
-	foreach ( entity player in GetPlayerArray() )
-		SetupPlayerEarnMeter( player )
 
 	if ( BurnMeterEnabled() )
 		SetCallback_EarnMeterRewardEarned( EarnMeterMP_BoostEarned )
@@ -158,6 +143,10 @@ void function EarnMeterMP_PlayerLifeThink( entity player )
 			desiredEarnMeterMode = eEarnMeterMode.DEFAULT
 		}
 
+		string burncardRef = GetSelectedBurnCardRef( player )
+
+		EarnMeterMP_SetBoostByRef( player, burncardRef )
+
 		if ( desiredEarnMeterMode != lastEarnMeterMode )
 		{
 			PlayerEarnMeter_SetMode( player, desiredEarnMeterMode )
@@ -183,6 +172,13 @@ void function EarnMeterMP_PlayerLifeThink( entity player )
 
 		if ( lastEarnMeterMode == eEarnMeterMode.DEFAULT )
 		{
+			if ( !( "claimedPlayingBurnMeter" in player.s ) || !player.s.claimedPlayingBurnMeter )
+			{
+				player.s.claimedPlayingBurnMeter <- true
+
+				PlayerEarnMeter_AddOwnedFrac( player, ( ( Time() - file.playingStartTime ) / 4.0 ) * 0.01 )
+			}
+
 			if ( Riff_TitanAvailability() != eTitanAvailability.Never && IsTitanDropAvailableForPlayerTeam( player ) )
 			{
 				if ( PlayerEarnMeter_GetOwnedFrac( player ) >= 0.75 && PlayerEarnMeter_GetOwnedFrac( player ) < 0.95 && !saidTitanSoon )

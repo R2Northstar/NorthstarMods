@@ -2,15 +2,12 @@ untyped
 
 global function MenuCallbacks_Init
 global function SetLoadoutGracePeriodEnabled
-global function SetAllowLoadoutChangeFunc
-global function AllowLoadoutChangeFunc
 global function GetTitanLoadoutForPlayer
 global function LoadoutChangeGracePeriodThink
 
 struct
 {
 	bool loadoutGracePeriodEnabled = true
-	bool functionref( entity ) allowChangeLoadoutFunc = null
 	array<entity> disconnectingPlayers
 } file
 
@@ -192,19 +189,6 @@ bool function ClientCommand_ToggleOffhandLowRecharge( entity player, array<strin
 void function SetLoadoutGracePeriodEnabled( bool enabled )
 {
 	file.loadoutGracePeriodEnabled = enabled
-}
-
-void function SetAllowLoadoutChangeFunc( bool functionref( entity ) func )
-{
-	file.allowChangeLoadoutFunc = func
-}
-
-bool function AllowLoadoutChangeFunc( entity player )
-{
-	if ( file.allowChangeLoadoutFunc != null )
-		return file.allowChangeLoadoutFunc( player )
-
-	return true
 }
 
 TitanLoadoutDef function GetTitanLoadoutForPlayer( entity player )
@@ -391,8 +375,13 @@ bool function ClientCommandCallback_SetBurnCardPersistenceSlot( entity player, a
 
 	if ( IsRefValidAndOfType( args[ 0 ], eItemTypes.BURN_METER_REWARD ) )
 	{
-		if ( !IsItemLocked( player, args[ 0 ] ) && GetGameState() < eGameState.Playing )
-			player.SetPersistentVar( "burnmeterSlot", BurnReward_GetByRef( args[ 0 ] ).id )
+		if ( !IsItemLocked( player, args[ 0 ] ) )
+		{
+			if ( GetGameState() < eGameState.Playing )
+				player.SetPersistentVar( "burnmeterSlot", BurnReward_GetByRef( args[ 0 ] ).id )
+			else
+				SendHudMessage( player, "#LOADOUT_CHANGE_NEXT_MATCH", -1, 0.4, 255, 255, 255, 255, 1.0, 3.0, 0.5 )
+		}
 		else
 			return false
 	}
@@ -505,26 +494,18 @@ bool function ClientCommandCallback_LoadoutMenuClosed( entity player, array<stri
 
 void function TryGivePilotLoadoutForGracePeriod( entity player, string args0, string args1 )
 {
-	if ( args0 == "0" && args1 == "0" )
-		return
-
-	if ( IsLobby() || player.ContextAction_IsActive() )
-		return
-
-	if ( args0 == "1" && Loadouts_CanGivePilotLoadout( player ) && AllowLoadoutChangeFunc( player ) )
-	{
+	if ( args0 == "1" && Loadouts_CanGivePilotLoadout( player ) )
 		Loadouts_TryGivePilotLoadout( player )
 
-		player.p.usingLoadoutCrate = false
-		player.s.usedLoadoutCrate = false
-	}
-	else if ( GamePlayingOrSuddenDeath() )
-	{
-		if ( args0 == "1" && IsAlive( player ) )
-			SendHudMessage( player, "#LOADOUT_CHANGE_NEXT_PILOT", -1, 0.4, 255, 255, 255, 255, 1.0, 3.0, 0.5 )
-		else if ( args1 == "1" && IsAlive( GetPlayerTitanInMap( player ) ) )
-			SendHudMessage( player, "#LOADOUT_CHANGE_NEXT_TITAN", -1, 0.4, 255, 255, 255, 255, 1.0, 3.0, 0.5 )
-	}
+	if ( args0 == "1" && !Loadouts_CanGivePilotLoadout( player ) && args1 == "1" && IsAlive( GetPlayerTitanInMap( player ) ) )
+		SendHudMessage( player, "#LOADOUT_CHANGE_NEXT_BOTH", -1, 0.4, 255, 255, 255, 255, 1.0, 3.0, 0.5 ) // this will never happen normally in menus
+	else if ( args0 == "1" && !Loadouts_CanGivePilotLoadout( player ) )
+		SendHudMessage( player, "#LOADOUT_CHANGE_NEXT_PILOT", -1, 0.4, 255, 255, 255, 255, 1.0, 3.0, 0.5 )
+	else if ( args1 == "1" && IsAlive( GetPlayerTitanInMap( player ) ) )
+		SendHudMessage( player, "#LOADOUT_CHANGE_NEXT_TITAN", -1, 0.4, 255, 255, 255, 255, 1.0, 3.0, 0.5 )
+
+	player.p.usingLoadoutCrate = false
+	player.s.usedLoadoutCrate = false
 }
 
 void function LoadoutChangeGracePeriodThink( entity player )

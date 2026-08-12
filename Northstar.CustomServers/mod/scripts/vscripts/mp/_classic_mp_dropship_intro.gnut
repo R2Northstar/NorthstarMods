@@ -304,8 +304,7 @@ void function PlayerJumpsFromDropship( entity player )
 
 	wait 0.3
 
-	if ( AllowLoadoutChangeFunc( player ) )
-		Loadouts_TryGivePilotLoadout( player )
+	Loadouts_TryGivePilotLoadout( player )
 
 	while ( !player.IsOnGround() && !player.IsWallRunning() && !player.IsWallHanging() )
 		wait 0
