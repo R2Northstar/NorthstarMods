@@ -7,7 +7,7 @@ global function RateSpawnpoints_CTF
 	global function ShowCTFInfluenceSphere
 #endif
 
-const array<string> SWAP_FLAG_MAPS = [ "mp_forwardbase_kodai", "mp_lf_meadow" ]
+const array<string> SWAP_DROPSHIP_MAPS = [ "mp_forwardbase_kodai", "mp_lf_meadow" ]
 
 struct
 {
@@ -57,6 +57,7 @@ void function CaptureTheFlag_Init()
 	AddCallback_OnTitanBecomesPilot( TransferFlagFromTitan )
 
 	AddSpawnCallback( "npc_titan", PlayerTitanSpawning )
+	AddSpawnCallback( "info_spawnpoint_dropship_start", SwapDropshipTeam )
 
 	AddSpawnpointValidationRule( VerifyCTFSpawnpoint )
 
@@ -87,6 +88,12 @@ void function CaptureTheFlag_Init()
 ███████ ██      ██   ██  ███ ███  ██   ████     ███████  ██████   ██████  ██  ██████
 */
 
+void function SwapDropshipTeam( entity spawnPoint )
+{
+	if ( SWAP_DROPSHIP_MAPS.contains( GetMapName() ) )
+		SetTeam( spawnPoint, GetOtherTeam( spawnPoint.GetTeam() ) )
+}
+
 void function CreateFlags()
 {
 	if ( IsValid( file.imcFlagSpawn ) )
@@ -105,8 +112,6 @@ void function CreateFlags()
 		bool switchedSides = IsSwitchSidesBased() && HasSwitchedSides() != 0
 
 		bool shouldSwap = switchedSides
-		if ( !shouldSwap && SWAP_FLAG_MAPS.contains( GetMapName() ) )
-			shouldSwap = !shouldSwap
 
 		int flagTeam = spawn.GetTeam()
 		if ( shouldSwap )
