@@ -147,6 +147,9 @@ float function GetTimeLimit_ForGameMode()
 	if ( timeLimit == -1 )
 		timeLimit = float( GameMode_GetTimeLimit( GAMETYPE ) ) // not a float for some reason?
 
+	if ( IsSwitchSidesBased() )
+		timeLimit /= 2
+
 	return timeLimit
 }
 

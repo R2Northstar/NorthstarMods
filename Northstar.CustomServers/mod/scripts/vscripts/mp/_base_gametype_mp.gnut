@@ -319,8 +319,10 @@ void function CodeCallback_OnPlayerRespawned( entity player )
 	ClearPlayerAnimViewEntity( player )
 	player.Signal( "OnRespawned" ) // kill any postdeaththreads that could be running
 
-	thread LoadoutChangeGracePeriodThink( player )
+	player.s.inGracePeriod = true
+
 	Loadouts_TryGivePilotLoadout( player )
+	thread LoadoutChangeGracePeriodThink( player )
 
 	foreach ( entity weapon in player.GetMainWeapons() )
 		weapon.SetProScreenOwner( player )

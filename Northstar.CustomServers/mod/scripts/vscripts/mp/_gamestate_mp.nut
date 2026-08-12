@@ -867,6 +867,9 @@ void function GameStateEnter_Playing()
 		}
 	}
 
+	if ( IsTitanEliminationBased() )
+		level.nv.secondsTitanCheckTime = Time() + ELIM_TITAN_SPAWN_GRACE_PERIOD
+
 	if ( Flag( "AnnounceProgressEnabled" ) )
 		thread DialoguePlayNormal()
 
@@ -1097,6 +1100,9 @@ void function GameStateEnter_SwitchingSides()
 	}
 	else
 		level.nv.switchedSides = GetRoundsPlayed()
+
+	if ( level.nv.attackingTeam )
+		level.nv.attackingTeam = GetOtherTeam( expect int( level.nv.attackingTeam ) )
 
 	array<entity> players = GetPlayerArray()
 
@@ -1661,9 +1667,18 @@ int function CheckEliminationPilotWinner( bool setWinner = false )
 	{
 		if ( level.nv.attackingTeam && level.nv.attackingTeam != TEAM_UNASSIGNED )
 		{
-			winReason = "#GAMEMODE_ATTACKERS_WIN"
-			lossReason = "#GAMEMODE_ATTACKERS_WIN"
-			winningTeam = expect int( level.nv.attackingTeam )
+			if ( Flag( "DefendersWinDraw" ) )
+			{
+				winReason = "#GAMEMODE_DEFENDERS_WIN"
+				lossReason = "#GAMEMODE_DEFENDERS_WIN"
+				winningTeam = GetOtherTeam( expect int( level.nv.attackingTeam ) )
+			}
+			else
+			{
+				winReason = "#GAMEMODE_ATTACKERS_WIN"
+				lossReason = "#GAMEMODE_ATTACKERS_WIN"
+				winningTeam = expect int( level.nv.attackingTeam )
+			}
 		}
 		else
 			winningTeam = TEAM_UNASSIGNED
@@ -1682,9 +1697,18 @@ int function CheckEliminationPilotWinner( bool setWinner = false )
 		{
 			if ( level.nv.attackingTeam && level.nv.attackingTeam != TEAM_UNASSIGNED )
 			{
-				winReason = "#GAMEMODE_ATTACKERS_WIN"
-				lossReason = "#GAMEMODE_ATTACKERS_WIN"
-				winningTeam = expect int( level.nv.attackingTeam )
+				if ( Flag( "DefendersWinDraw" ) )
+				{
+					winReason = "#GAMEMODE_DEFENDERS_WIN"
+					lossReason = "#GAMEMODE_DEFENDERS_WIN"
+					winningTeam = GetOtherTeam( expect int( level.nv.attackingTeam ) )
+				}
+				else
+				{
+					winReason = "#GAMEMODE_ATTACKERS_WIN"
+					lossReason = "#GAMEMODE_ATTACKERS_WIN"
+					winningTeam = expect int( level.nv.attackingTeam )
+				}
 			}
 			else
 				winningTeam = TEAM_UNASSIGNED
