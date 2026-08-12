@@ -143,10 +143,6 @@ void function EarnMeterMP_PlayerLifeThink( entity player )
 			desiredEarnMeterMode = eEarnMeterMode.DEFAULT
 		}
 
-		string burncardRef = GetSelectedBurnCardRef( player )
-
-		EarnMeterMP_SetBoostByRef( player, burncardRef )
-
 		if ( desiredEarnMeterMode != lastEarnMeterMode )
 		{
 			PlayerEarnMeter_SetMode( player, desiredEarnMeterMode )
@@ -166,6 +162,10 @@ void function EarnMeterMP_PlayerLifeThink( entity player )
 			}
 			else if ( desiredEarnMeterMode == eEarnMeterMode.CORE_ACTIVE ) // Enables smoke after core use (doesn't show up during active, so looks fine)
 				PlayerEarnMeter_EnableReward( player )
+
+			string burncardRef = GetSelectedBurnCardRef( player )
+
+			EarnMeterMP_SetBoostByRef( player, burncardRef )
 
 			lastEarnMeterMode = desiredEarnMeterMode
 		}

@@ -1198,7 +1198,7 @@ void function FD_GiveTitan( bool waveRestart )
 
 	// fixes players not getting titans
 	WaitFrame()
-	WaitEndFrame()
+	WaitFrame()
 
 	foreach ( entity player in GetPlayerArray() )
 	{

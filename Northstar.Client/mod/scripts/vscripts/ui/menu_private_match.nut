@@ -617,55 +617,41 @@ function UpdateLobby()
 			// temp fix for playlistoverrides that aren't handled by private match
 			string varName = GetPlaylistVarOverrideNameByIndex( varIdx )
 
-			if ( varName in MatchSettings_PlaylistVarLabels )
-			{
-				float varOrigVal = float( GetCurrentPlaylistGamemodeByIndexVar( gamemodeIdx, varName, false ) )
-				float varOverrideVal = float( GetCurrentPlaylistGamemodeByIndexVar( gamemodeIdx, varName, true ) )
-				if ( varOrigVal == varOverrideVal ) // stuff seems to break outside of northstar servers since we dont always use private_match playlist
-					continue
+			bool shouldBreak = false
 
-				string label = Localize( MatchSettings_PlaylistVarLabels[ varName ] ) + ": "
-				string value = MatchSettings_FormatPlaylistVarValue( varName, varOverrideVal )
-				playlistOverridesDesc = playlistOverridesDesc + label + "`2" + value + " `0\n"
-			}
-			else
+			foreach ( string category in GetPrivateMatchSettingCategories( true ) )
 			{
-				bool shouldBreak = false
-
-				foreach ( string category in GetPrivateMatchSettingCategories( true ) )
+				foreach ( CustomMatchSettingContainer setting in GetPrivateMatchCustomSettingsForCategory( category ) )
 				{
-					foreach ( CustomMatchSettingContainer setting in GetPrivateMatchCustomSettingsForCategory( category ) )
+					if ( setting.playlistVar == varName )
 					{
-						if ( setting.playlistVar == varName )
+						if ( GetCurrentPlaylistVarString( varName, "" ) != GetGamemodeVarOrUseValue( PrivateMatch_GetSelectedMode(), varName, setting.defaultValue ) )
 						{
-							if ( GetCurrentPlaylistVarString( varName, "" ) != GetGamemodeVarOrUseValue( PrivateMatch_GetSelectedMode(), varName, setting.defaultValue ) )
+							if ( setting.isEnumSetting )
 							{
-								if ( setting.isEnumSetting )
-								{
-									playlistOverridesDesc +=
-										Localize( setting.localizedName ) + ": `2" +
-											Localize(
-												setting.enumNames[
-													(
-														setting.enumValues.find( GetCurrentPlaylistVarString( varName, "" ) ) != -1
-															? setting.enumValues.find( GetCurrentPlaylistVarString( varName, "" ) )
-															: 0
-													)
-												]
-											) + "`0\n"
-								}
-								else
-									playlistOverridesDesc += Localize( setting.localizedName ) + ": `2" + GetCurrentPlaylistVarString( varName, "" ) + "`0\n"
+								playlistOverridesDesc +=
+									Localize( setting.localizedName ) + ": `2" +
+										Localize(
+											setting.enumNames[
+												(
+													setting.enumValues.find( GetCurrentPlaylistVarString( varName, "" ) ) != -1
+														? setting.enumValues.find( GetCurrentPlaylistVarString( varName, "" ) )
+														: 0
+												)
+											]
+										) + "`0\n"
 							}
-
-							shouldBreak = true
-							break
+							else
+								playlistOverridesDesc += Localize( setting.localizedName ) + ": `2" + GetCurrentPlaylistVarString( varName, "" ) + "`0\n"
 						}
-					}
 
-					if ( shouldBreak )
+						shouldBreak = true
 						break
+					}
 				}
+
+				if ( shouldBreak )
+					break
 			}
 		}
 
