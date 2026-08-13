@@ -204,7 +204,7 @@ void function StartMatch( bool isAutostart = false )
 
 	SetUIVar( level, "gameStartTime", countdownEndTime )
 	// can't use start here because we need to check stuff
-	float lastCountdownSeconds = -1
+	float lastCountDown = -1
 
 	while ( Time() < countdownEndTime )
 	{
@@ -215,7 +215,7 @@ void function StartMatch( bool isAutostart = false )
 			return
 		}
 
-		if ( countdownEndTime - Time() < 10 && int( countdownEndTime - Time() ) != int( lastCountdownSeconds ) )
+		if ( countdownEndTime - Time() < 10 && int( countdownEndTime - Time() ) != int( lastCountDown ) )
 		{
 			if ( countdownEndTime - Time() <= 2.0 )
 				AllPlayersMuteAll()
@@ -223,7 +223,7 @@ void function StartMatch( bool isAutostart = false )
 			foreach ( player in GetPlayerArray() )
 				EmitSoundAtPositionOnlyToPlayer( TEAM_UNASSIGNED, Vector( 0, 0, 0 ), player, PREMATCH_COUNTDOWN_SOUND )
 
-			lastCountdownSeconds = countdownEndTime - Time()
+			lastCountDown = countdownEndTime - Time()
 		}
 
 		WaitFrame()
