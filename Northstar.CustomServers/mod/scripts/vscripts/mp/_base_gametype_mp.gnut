@@ -168,7 +168,7 @@ void function CodeCallback_OnClientConnectionCompleted( entity player )
 	}
 
 	if ( player.GetTeam() != TEAM_SPECTATOR && !IsPrivateMatchSpectator( player ) )
-		player.SetPersistentVar( "lastPlaylist", GAMETYPE )
+		player.SetPersistentVar( "lastPlaylist", GetCurrentPlaylistName() )
 
 	if ( !IsFDMode( GetConVarString( "mp_gamemode" ) ) )
 	{
