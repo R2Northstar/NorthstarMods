@@ -355,5 +355,5 @@ void function LogPrivateMatchChange( entity player, string step, array<string> a
 
 bool function ServerIsPrivateMatch()
 {
-	return GetConVarInt( "ns_is_private_match" ) == 0 || ( GetConVarInt( "ns_is_private_match" ) == -1 && NSIsDedicated() )
+	return GetConVarInt( "ns_is_private_match" ) == 1 || ( GetConVarInt( "ns_is_private_match" ) == -1 && !NSIsDedicated() )
 }
