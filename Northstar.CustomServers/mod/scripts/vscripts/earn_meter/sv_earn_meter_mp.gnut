@@ -59,6 +59,13 @@ void function OnPlayerRespawned( entity player )
 	else
 		thread EarnMeterMP_PlayerLifeThink( player )
 
+	if ( !( "claimedPlayingBurnMeter" in player.s ) || !player.s.claimedPlayingBurnMeter )
+	{
+		player.s.claimedPlayingBurnMeter <- true
+
+		PlayerEarnMeter_AddOwnedFrac( player, ( ( Time() - file.playingStartTime ) / 4.0 ) * 0.01 )
+	}
+
 	if ( PlayerEarnMeter_IsRewardAvailable( player ) )
 		EarnMeterMP_BoostEarned( player )
 }
@@ -166,13 +173,6 @@ void function EarnMeterMP_PlayerLifeThink( entity player )
 			string burncardRef = GetSelectedBurnCardRef( player )
 
 			EarnMeterMP_SetBoostByRef( player, burncardRef )
-
-			if ( !( "claimedPlayingBurnMeter" in player.s ) || !player.s.claimedPlayingBurnMeter )
-			{
-				player.s.claimedPlayingBurnMeter <- true
-
-				PlayerEarnMeter_AddOwnedFrac( player, ( ( Time() - file.playingStartTime ) / 4.0 ) * 0.01 )
-			}
 
 			lastEarnMeterMode = desiredEarnMeterMode
 		}
