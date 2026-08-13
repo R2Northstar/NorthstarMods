@@ -399,8 +399,8 @@ void function PopulatePostgameData()
 	SetUIVar( level, "showGameSummary", true )
 
 	int playerPerTeam = GetCurrentPlaylistVarInt( "max_players", 16 )
-	bool teamBased = !IsFFAGame()
-	bool isListenServer = !NSIsDedicated()
+	bool teamBased = GetCurrentPlaylistVarInt( "max_teams", 2 ) == 2
+	bool isPrivateMatch = IsPrivateMatch()
 	array<int> scoreTypes = GameMode_GetScoreboardColumnScoreTypes( GAMETYPE )
 	int persistenceArrayCount = PersistenceGetArrayCount( "postGameData.players" )
 
@@ -424,10 +424,9 @@ void function PopulatePostgameData()
 		player.SetPersistentVar( "postGameData.map", enumMapIndex )
 		player.SetPersistentVar( "postGameData.teams", teamBased )
 		player.SetPersistentVar( "postGameData.maxTeamSize", playerPerTeam )
-		player.SetPersistentVar( "postGameData.privateMatch", isListenServer )
+		player.SetPersistentVar( "postGameData.privateMatch", isPrivateMatch )
 		player.SetPersistentVar( "postGameData.ranked", true )
 		player.SetPersistentVar( "postGameData.hadMatchLossProtection", false )
-
 		player.SetPersistentVar( "isFDPostGameScoreboardValid", GAMETYPE == FD )
 
 		if ( teamBased && MAX_TEAMS > 1 )

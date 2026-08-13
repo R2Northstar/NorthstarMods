@@ -8256,7 +8256,7 @@ void function Player_SetColiseumTicketCount( entity player, int newCount )
 
 	bool function ClientCommand_UseDoubleXP( entity player, array<string> args )
 	{
-		if ( IsLobby() )
+		if ( IsPrivateMatch() )
 			return true
 
 		if ( GetGameState() > eGameState.Prematch )

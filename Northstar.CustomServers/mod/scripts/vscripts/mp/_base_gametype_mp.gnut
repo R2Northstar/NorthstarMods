@@ -766,13 +766,13 @@ bool function DecideRespawnPlayer( entity player )
 
 	if ( !player.hasConnected || player.GetTeam() == TEAM_SPECTATOR )
 	{
-		printt( "DecideRespawnPlayer() - player.hasConnected was false: ", string( player ) )
+		printt( "DecideRespawnPlayer() - player.hasConnected was false:", string( player ) )
 		return false
 	}
 
 	if ( PlayerShouldObserve( player ) )
 	{
-		printt( "DecideRespawnPlayer() - PlayerShouldObserve() was true: ", string( player ) )
+		printt( "DecideRespawnPlayer() - PlayerShouldObserve() was true:", string( player ) )
 
 		if (
 			!( GetGameState() == eGameState.WinnerDetermined && IsRoundBased() && !RoundScoreLimit_Complete() ) && GetGameState() != eGameState.SwitchingSides &&
@@ -798,15 +798,15 @@ bool function DecideRespawnPlayer( entity player )
 
 	if ( IsValid( player.isSpawning ) )
 	{
-		printt( "DecideRespawnPlayer() - IsValid( player.isSpawning ) was true: ", string( player ) )
+		printt( "DecideRespawnPlayer() - IsValid( player.isSpawning ) was true:", string( player ) )
 		return false
 	}
 
-	printt( "DecideRespawnPlayer() - Attempting to spawn: ", string( player ) )
+	printt( "DecideRespawnPlayer() - Attempting to spawn:", string( player ) )
 
 	bool didSpawn = RespawnTitanPilot( player )
 
-	printt( "DecideRespawnPlayer() - Spawn ", ( didSpawn ? "success: " : "failed: " ), string( player ) )
+	printt( "DecideRespawnPlayer() - Spawn", ( didSpawn ? "success:" : "failed:" ), string( player ) )
 
 	if ( GetGameState() <= eGameState.Prematch ) // Once we've gotten to here, any special spawning logic like cinematic spawn and classic MP spawn have already completed if applicable. Freeze controls if in prematch because we don't want players running around in prematch. Controls will be unfrozen when gamestate switches to playing
 		player.FreezeControlsOnServer()

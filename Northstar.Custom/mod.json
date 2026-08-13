@@ -7,37 +7,45 @@
 	"ConVars": [
 		{
 			"Name": "ns_disallowed_tacticals",
-			"DefaultValue": ""
+			"DefaultValue": "",
+			"HelpString": "Disallowed tacticals"
 		},
 		{
 			"Name": "ns_disallowed_tactical_replacement",
-			"DefaultValue": ""
+			"DefaultValue": "",
+			"HelpString": "Replacements for disallowed tacticals"
 		},
 		{
 			"Name": "ns_disallowed_weapons",
-			"DefaultValue": ""
+			"DefaultValue": "",
+			"HelpString": "Disallowed weapons"
 		},
 		{
 			"Name": "ns_disallowed_weapon_primary_replacement",
-			"DefaultValue": "mp_weapon_rspn101"
+			"DefaultValue": "mp_weapon_rspn101",
+			"HelpString": "Replacements for disallowed weapons"
 		},
 		{
 			"Name": "ns_force_melee",
-			"DefaultValue": ""
+			"DefaultValue": "",
+			"HelpString": "Forces players melee to be this"
 		},
 		{
 			"Name": "ns_show_event_models",
 			"DefaultValue": "1",
+			"HelpString": "Whether event models should be shown",
 			"Flags": "ARCHIVE_PLAYERPROFILE"
 		},
 		{
 			"Name": "ns_embark_style",
 			"DefaultValue": "0",
+			"HelpString": "Whether a player embarks in first person",
 			"Flags": "ARCHIVE_PLAYERPROFILE|USERINFO"
 		},
 		{
 			"Name": "ns_execution_style",
 			"DefaultValue": "0",
+			"HelpString": "Whether a player executes in first person",
 			"Flags": "ARCHIVE_PLAYERPROFILE|USERINFO"
 		}
 	],

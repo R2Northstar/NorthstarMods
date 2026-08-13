@@ -134,7 +134,7 @@ bool function IsPrivateMatchSpectator( entity player )
 			return false
 	#endif
 
-	if ( !IsFFAGame() && GetConVarBool( "ns_allow_spectators" ) && player.GetPersistentVarAsInt( "privateMatchState" ) == 1 )
+	if ( IsPrivateMatch() && !IsFFAGame() && GetConVarBool( "ns_allow_spectators" ) && player.GetPersistentVarAsInt( "privateMatchState" ) == 1 )
 		return true
 
 	return false

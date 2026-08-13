@@ -64,9 +64,6 @@ void function SetupPrivateMatchUIVarsWhenReady()
 	SetUIVar( level, "privatematch_map", GetPrivateMatchMapIndex( file.map ) )
 	SetUIVar( level, "privatematch_mode", GetPrivateMatchModeIndex( file.mode ) )
 
-	if ( GetConVarInt( "ns_maxplayers_override" ) > 0 )
-		SetPlaylistVarOverride( "max_players", GetConVarString( "ns_maxplayers_override" ) )
-
 	if ( GetConVarBool( "ns_private_match_auto_rotation_start" ) )
 	{
 		wait 1
@@ -185,7 +182,7 @@ bool function ClientCommandCallback_PrivateMatchSwitchTeams( entity player, arra
 
 bool function ClientCommandCallback_PrivateMatchToggleSpectate( entity player, array<string> args )
 {
-	if ( GetGamemodeVarOrUseValue( file.mode, "max_teams", "2" ).tointeger() != 2 || !GetConVarBool( "ns_allow_spectators" ) )
+	if ( GetGamemodeVarOrUseValue( file.mode, "max_teams", "2" ).tointeger() != 2 || !GetConVarBool( "ns_allow_spectators" ) || !ServerIsPrivateMatch() )
 		return true
 
 	player.SetPersistentVar( "privateMatchState", player.GetPersistentVarAsInt( "privateMatchState" ) == 0 ? 1 : 0 )
@@ -229,22 +226,13 @@ void function StartMatch( bool isAutostart = false )
 		WaitFrame()
 	}
 
-	if ( GetConVarInt( "ns_maxplayers_override" ) > 0 )
-		SetPlaylistVarOverride( "max_players", GetConVarString( "ns_maxplayers_override" ) )
-
-	try
+	// if the playlist isn't private_match, IsPrivateMatch() will return false
+	if ( ServerIsPrivateMatch() )
 	{
-		// todo: not every gamemode uses the same playlist as their name! need some code to resolve these manually
-		// would be nice if the gamemode api got some tweaks to allow for registering private match gamemodes maybe
-		SetCurrentPlaylist( file.mode )
-	}
-	catch ( exception )
-	{
-		// temp
 		if ( file.mode == "speedball" )
 			SetCurrentPlaylist( "lf" )
-
-		print( "couldn't find playlist for gamemode " + file.mode )
+		else
+			SetCurrentPlaylist( file.mode )
 	}
 
 	RefreshPlayerTeams( isAutostart )
@@ -363,4 +351,9 @@ void function LogPrivateMatchChange( entity player, string step, array<string> a
 		print( player.GetPlayerName() + step + args[ 0 ] + " to " + args[ 1 ] + ".---" + "UID:" + player.GetUID() )
 	else
 		print( player.GetPlayerName() + step + ".---" + "UID:" + player.GetUID() )
+}
+
+bool function ServerIsPrivateMatch()
+{
+	return GetConVarInt( "ns_is_private_match" ) == 1 || ( GetConVarInt( "ns_is_private_match" ) == -1 && !NSIsDedicated() )
 }

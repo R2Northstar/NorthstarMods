@@ -650,19 +650,6 @@ array<entity> function GetConnectedPlayers()
 	return guys
 }
 
-bool function IsAnyPlayerMMDebug()
-{
-	array<entity> players = GetPlayerArray()
-
-	foreach ( entity player in players )
-	{
-		if ( player.GetMMDbgFlags() > 0 )
-			return true
-	}
-
-	return false
-}
-
 bool function DoneWaitingForPlayers()
 {
 	array<entity> connectedPlayers = GetConnectedPlayers()
@@ -673,7 +660,7 @@ bool function DoneWaitingForPlayers()
 		return false
 
 	// developer 1 skips the remaining script, we can test the rest in developer mode with developer > 1
-	if ( GetDeveloperLevel() == 1 || ( IsPrivateMatch() && IsAnyPlayerMMDebug() ) )
+	if ( GetDeveloperLevel() == 1 )
 		return true
 
 	// start failsafe timer
@@ -986,6 +973,7 @@ void function GameStateEnter_WinnerDetermined()
 	CreateLevelWinnerDeterminedMusicEvent()
 	thread ScoreEvent_MatchComplete( GetWinningTeam() )
 	RegisterMatchStats_OnMatchComplete()
+	PlayerWinStreak()
 
 	level.ui.penalizeDisconnect = false
 
@@ -1000,7 +988,6 @@ void function GameStateEnter_WinnerDetermined()
 	}
 	else if ( ShouldRunEvac() ) // RoundWinningKillReplay doesn't work with Evac!
 	{
-		PlayerWinStreak()
 		ClassicMP_SetupEpilogue()
 		SetGameState( eGameState.Epilogue )
 	}
@@ -1029,7 +1016,6 @@ void function GameRulesThink_WinnerDetermined()
 
 	if ( !IsRoundBased() )
 	{
-		PlayerWinStreak()
 		RegisterChallenges_OnMatchEnd()
 
 		if ( ShouldRunEvac() )
@@ -1045,7 +1031,6 @@ void function GameRulesThink_WinnerDetermined()
 
 	if ( IsRoundBasedGameOver() )
 	{
-		PlayerWinStreak()
 		RegisterChallenges_OnMatchEnd()
 
 		if ( ShouldRunEvac() )

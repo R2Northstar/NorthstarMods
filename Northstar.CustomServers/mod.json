@@ -6,82 +6,101 @@
 	"ConVars": [
 		{
 			"Name": "ns_should_return_to_lobby",
-			"DefaultValue": "1"
+			"DefaultValue": "1",
+			"HelpString": "Whether the server should return to lobby on match end"
 		},
 		{
 			"Name": "ns_allow_spectators",
 			"DefaultValue": "1",
+			"HelpString": "Whether players can become private match spectators, server must be private match",
 			"Flags": "REPLICATED"
 		},
 		{
 			"Name": "ns_private_match_last_mode",
-			"DefaultValue": "aitdm"
+			"DefaultValue": "aitdm",
+			"HelpString": "Last private match mode"
 		},
 		{
 			"Name": "ns_private_match_last_map",
-			"DefaultValue": "mp_forwardbase_kodai"
+			"DefaultValue": "mp_forwardbase_kodai",
+			"HelpString": "Last private match map"
 		},
 		{
 			"Name": "ns_private_match_auto_rotation_start",
-			"DefaultValue": "0"
+			"DefaultValue": "0",
+			"HelpString": "Whether the server should auto rotate in private match"
 		},
 		{
 			"Name": "ns_private_match_map_rotation",
-			"DefaultValue": ""
+			"DefaultValue": "",
+			"HelpString": "Map rotation for auto rotation"
 		},
 		{
 			"Name": "ns_private_match_only_host_can_change_settings",
-			"DefaultValue": "0"
+			"DefaultValue": "0",
+			"HelpString": "Whether players can change private match settings, modes, and maps doesn't apply to host, 0 = settings, modes, and maps 1 = modes and maps, 2 = none"
 		},
 		{
 			"Name": "ns_private_match_only_host_can_start",
-			"DefaultValue": "0"
+			"DefaultValue": "0",
+			"HelpString": "Whether players can trigger private match countdown doesn't apply to host"
 		},
 		{
 			"Name": "ns_private_match_countdown_length",
-			"DefaultValue": "15"
-		},
-		{
-			"Name": "ns_maxplayers_override",
-			"DefaultValue": "0"
+			"DefaultValue": "15",
+			"HelpString": "Length of private match countdown"
 		},
 		{
 			"Name": "ns_should_log_unknown_clientcommands",
-			"DefaultValue": "1"
+			"DefaultValue": "1",
+			"HelpString": "Whether unknown client commands should be logged"
 		},
 		{
 			"Name": "ns_allow_kill_commands",
-			"DefaultValue": "0"
+			"DefaultValue": "0",
+			"HelpString": "Whether kill and explode can be used without cheats"
 		},
 		{
 			"Name": "ns_progression_enabled",
 			"DefaultValue": "0",
+			"HelpString": "Whether a player has progression",
 			"Flags": "ARCHIVE_PLAYERPROFILE"
 		},
 		{
 			"Name": "ns_allow_team_change",
 			"DefaultValue": "1",
+			"HelpString": "Whether players can use in game switch teams",
 			"Flags": "REPLICATED"
 		},
 		{
 			"Name": "ns_autobalance_teams_on_player_join",
-			"DefaultValue": "0"
+			"DefaultValue": "0",
+			"HelpString": "Whether players should be set to the lowest team on connect"
 		},
 		{
 			"Name": "ns_use_phase_fix",
-			"DefaultValue": "1"
+			"DefaultValue": "1",
+			"HelpString": "Whether players can use no target(invisibility) bug"
 		},
 		{
 			"Name": "ns_server_idle_time_refresh_max_time",
-			"DefaultValue": "240"
+			"DefaultValue": "240",
+			"HelpString": "Idle time until server needs to reload, happens when a player starts to connect"
 		},
 		{
 			"Name": "ns_match_end_if_no_players",
-			"DefaultValue": "1"
+			"DefaultValue": "1",
+			"HelpString": "Ends match if no players are connected"
 		},
 		{
 			"Name": "ns_skip_empty_team_victory_check",
-			"DefaultValue": "0"
+			"DefaultValue": "0",
+			"HelpString": "Skips empty team victory check"
+		},
+		{
+			"Name": "ns_is_private_match",
+			"DefaultValue": "-1",
+			"HelpString": "Whether this server is a private match, must be in private match to change -1 = isn't dedicated server, 0 = not private match, 1 = private match"
 		}
 	],
 	"Scripts": [

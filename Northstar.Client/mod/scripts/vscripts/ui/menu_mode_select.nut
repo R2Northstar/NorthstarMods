@@ -141,6 +141,9 @@ void function OnOpenModesMenu()
 	file.searchString = ""
 	file.searchEnum = -1
 
+	SetConVarInt( "modemenu_mode_filter", -1 )
+	Hud_SetText( Hud_GetChild( file.menu, "BtnModeSearch" ), "" )
+
 	// We rebuild the modes array on open menu to make sure
 	// all modes get listed
 	BuildModesArray()
