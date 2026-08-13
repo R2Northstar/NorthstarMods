@@ -22,13 +22,6 @@ global function FD_KillAllEnemies
 	global function DEV_FD_KillHarvester
 #endif
 
-enum eDropshipState
-{
-	Idle,
-	InProgress,
-	Returning
-}
-
 struct player_struct_fd
 {
 	int assaultScoreThisRound = 0
@@ -85,11 +78,6 @@ struct
 	bool harvesterPerfectWin = true
 	bool isLiveFireMap = false
 	int moneyInBank = 0
-
-	int dropshipState
-	int playersInShip
-	entity dropship
-	array<entity> playersInDropship
 
 	array<void functionref()> CustomFDContent
 	bool disableTitanSelectionForNewJoiners = false
@@ -1435,12 +1423,6 @@ void function GamemodeFD_InitPlayer( entity player )
 
 void function OnPlayerDisconnectedOrDestroyed( entity player )
 {
-	if ( file.playersInDropship.contains( player ) )
-	{
-		file.playersInDropship.removebyvalue( player )
-		file.playersInShip--
-	}
-
 	if ( player in file.playerAwardStats ) // Clear out disconnecting players so the postcards don't show less than 4 when server has more than 4 slots
 		delete file.playerAwardStats[ player ]
 
@@ -2398,12 +2380,6 @@ void function AddTurretSentry( entity turret )
 
 void function GamemodeFD_OnPlayerKilled( entity victim, entity attacker, var damageInfo )
 {
-	if ( file.playersInDropship.contains( victim ) )
-	{
-		file.playersInDropship.removebyvalue( victim )
-		file.playersInShip--
-	}
-
 	victim.s.hasPermanantAmpedWeapons = false
 
 	if ( !IsHarvesterAlive( fd_harvester.harvester ) || GetGameState() != eGameState.Playing )

@@ -2423,13 +2423,13 @@ void function PlayerWinStreak()
 
 			if ( GetWinningTeam() == player.GetTeam() )
 			{
-				int highestWinStreak = player.GetPersistentVarAsInt( "highestWinStreakEver" )
-
-				if ( highestWinStreak < player.GetPersistentVarAsInt( "winStreak" ) + 1 )
-					player.SetPersistentVar( "highestWinStreakEver", player.GetPersistentVarAsInt( "winStreak" ) + 1 )
-
 				player.SetPersistentVar( "lastDailyMatchVictory", Daily_GetCurrentTime() )
 				player.SetPersistentVar( "winStreak", player.GetPersistentVarAsInt( "winStreak" ) + 1 )
+
+				int highestWinStreak = player.GetPersistentVarAsInt( "highestWinStreakEver" )
+
+				if ( highestWinStreak < player.GetPersistentVarAsInt( "winStreak" ) )
+					player.SetPersistentVar( "highestWinStreakEver", player.GetPersistentVarAsInt( "winStreak" ) )
 			}
 			else
 			{

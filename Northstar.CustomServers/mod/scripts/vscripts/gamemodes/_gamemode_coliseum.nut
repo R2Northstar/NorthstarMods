@@ -104,13 +104,13 @@ void function RunColiseumOutro()
 	{
 		if ( GetWinningTeam() == player.GetTeam() )
 		{
-			int bestStreak = player.GetPersistentVarAsInt( "coliseumBestStreak" )
-
-			if ( bestStreak < player.GetPersistentVarAsInt( "coliseumWinStreak" ) + 1 )
-				player.SetPersistentVar( "coliseumBestStreak", player.GetPersistentVarAsInt( "coliseumWinStreak" ) + 1 )
-
 			player.SetPersistentVar( "coliseumTotalWins", player.GetPersistentVarAsInt( "coliseumTotalWins" ) + 1 )
 			player.SetPersistentVar( "coliseumWinStreak", player.GetPersistentVarAsInt( "coliseumWinStreak" ) + 1 )
+
+			int bestStreak = player.GetPersistentVarAsInt( "coliseumBestStreak" )
+
+			if ( bestStreak < player.GetPersistentVarAsInt( "coliseumWinStreak" ) )
+				player.SetPersistentVar( "coliseumBestStreak", player.GetPersistentVarAsInt( "coliseumWinStreak" ) )
 		}
 		else
 		{

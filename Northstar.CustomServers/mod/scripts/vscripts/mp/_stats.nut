@@ -37,13 +37,12 @@ void function Stats_Init()
 	AddCallback_OnNPCKilled( OnPlayerOrNPCKilled )
 	AddCallback_OnPlayerRespawned( OnPlayerRespawned )
 	AddCallback_OnClientConnected( OnClientConnected )
-	AddCallback_OnClientDisconnected( OnClientDisconnected )
+	AddCallback_UpdatePersistenceOnDisconnect( UpdatePersistence )
 	AddCallback_NPCLeeched( OnSpectreLeeched )
 	// Enable when thunderbolt works correctly
 	// AddCallback_OnWeaponAttack( OnPlayerFiredWeapon )
 
 	thread HandleDistanceAndTimeStats_Threaded()
-	thread SaveStatsPeriodically_Threaded()
 }
 
 void function AddStatCallback( string statCategory, string statAlias, string statSubAlias, void functionref( entity, float, string ) callback, string subRef )
@@ -323,7 +322,7 @@ void function OnClientConnected( entity player )
 	Stats_IncrementStat( player, "game_stats", "game_joined", "", 1.0 )
 }
 
-void function OnClientDisconnected( entity player )
+void function UpdatePersistence( entity player )
 {
 	Stats_SaveAllStats( player )
 }
@@ -1058,19 +1057,6 @@ void function HandleDistanceAndTimeStats_Threaded()
 		lastTickTime = Time()
 		// not rly worth doing this every frame, just a couple of times per second should be fine
 		wait 0.25
-	}
-}
-
-// this is kinda shit
-void function SaveStatsPeriodically_Threaded()
-{
-	while ( true )
-	{
-		foreach ( entity player in GetPlayerArray() )
-			if ( IsValidPlayer( player ) )
-				Stats_SaveAllStats( player )
-
-		WaitFrame()
 	}
 }
 

@@ -88,7 +88,7 @@ struct
 	table<string, table<string, SyncedMeleeChooser> > syncedMeleeChoosers
 	table<SyncedMeleeChooser, array<void functionref( SyncedMeleeChooser actions, SyncedMelee action, entity player, entity target )> > syncedMeleeServerCallbacks
 	table<SyncedMeleeChooser, bool functionref( SyncedMelee action, entity player, entity target )> syncedMeleeServerThink
-	array<bool functionref( entity attacker, entity target )> isValidMeleeExecutionTargetCallBacks
+	array<bool functionref( entity attacker, entity target )> isValidMeleeExecutionTargetCallbacks
 	string lastExecutionUsed = ""
 } file
 
@@ -184,7 +184,7 @@ vector function GetEyeOrigin( entity ent )
 
 void function AddCallback_IsValidMeleeExecutionTarget( bool functionref( entity attacker, entity target ) callbackFunc )
 {
-	file.isValidMeleeExecutionTargetCallBacks.append( callbackFunc )
+	file.isValidMeleeExecutionTargetCallbacks.append( callbackFunc )
 }
 
 // Called after pressing the melee button to recheck for targets
@@ -319,7 +319,7 @@ bool function CodeCallback_IsValidMeleeExecutionTarget( entity attacker, entity 
 	}
 
 	// modified callback from northstar
-	foreach ( callbackFunc in file.isValidMeleeExecutionTargetCallBacks )
+	foreach ( callbackFunc in file.isValidMeleeExecutionTargetCallbacks )
 	{
 		if ( !callbackFunc( attacker, target ) )
 		{
