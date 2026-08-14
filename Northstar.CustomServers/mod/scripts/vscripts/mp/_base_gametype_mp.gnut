@@ -230,7 +230,7 @@ void function CodeCallback_OnClientConnectionCompleted( entity player )
 	}
 }
 
-bool function ShouldPlayerBeEliminated( player )
+bool function ShouldPlayerBeEliminated( entity player )
 {
 	if ( IsPilotEliminationBased() )
 	{
