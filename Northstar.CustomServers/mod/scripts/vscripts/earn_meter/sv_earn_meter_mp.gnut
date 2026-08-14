@@ -63,7 +63,8 @@ void function OnPlayerRespawned( entity player )
 	{
 		player.s.claimedPlayingBurnMeter <- true
 
-		PlayerEarnMeter_AddOwnedFrac( player, ( ( Time() - file.playingStartTime ) / 4.0 ) * 0.01 )
+		if ( !player.IsTitan() && !IsRoundBased() && GetGameState() >= eGameState.Playing )
+			PlayerEarnMeter_AddOwnedFrac( player, ( ( Time() - file.playingStartTime ) / 4.0 ) * 0.01 )
 	}
 
 	if ( PlayerEarnMeter_IsRewardAvailable( player ) )
