@@ -1629,8 +1629,6 @@ void function TryDisableTitanSelectionForPlayerAfterDelay( entity player )
 			{
 				int waveNumber = GetGlobalNetInt( "FD_currentWave" )
 
-				UnMuteAll( player ) // I've got reports of people having problems with muted audio when joining midgame
-
 				if ( GetGlobalNetInt( "FD_waveState" ) == WAVE_STATE_BREAK )
 					Remote_CallFunction_NonReplay( player, "ServerCallback_FD_NotifyStoreOpen" )
 				else if ( GetGlobalNetInt( "FD_waveState" ) == WAVE_STATE_IN_PROGRESS || GetGlobalNetInt( "FD_waveState" ) == WAVE_STATE_INCOMING ) // Announces which wave players are in right after they leave the Titan Selection Menu, this is to prevent the whole wave not having music for them
@@ -1657,11 +1655,7 @@ void function TryDisableTitanSelectionForPlayerAfterDelay( entity player )
 				}
 
 				if ( file.disableTitanSelectionForNewJoiners )
-				{
 					DisableTitanSelectionForPlayer( player )
-					if ( GetGlobalNetInt( "FD_waveState" ) == WAVE_STATE_BREAK ) // On wave break, let joiners have their Titan instantly
-						GiveTitanToPlayer( player )
-				}
 			}
 		}
 	)
