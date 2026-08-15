@@ -92,14 +92,6 @@ void function InitModMenu()
 
 	AddMenuFooterOption( file.menu, BUTTON_X, PrependControllerPrompts( BUTTON_X, "#RELOAD_MODS" ), "#RELOAD_MODS", OnReloadModsButtonPressed )
 
-	AddMenuFooterOption(
-		file.menu,
-		BUTTON_Y,
-		PrependControllerPrompts( BUTTON_Y, "#AUTHENTICATION_AGREEMENT" ),
-		"#AUTHENTICATION_AGREEMENT",
-		OnAuthenticationAgreementButtonPressed
-	)
-
 	AddMenuFooterOption( file.menu, BUTTON_BACK, "%[BACK|]%" + " " + Localize( "#MOD_SETTINGS" ), "#MOD_SETTINGS", OnModSettingsButtonPressed )
 
 	// Nuke weird rui on filter switch
@@ -236,11 +228,6 @@ void function OnModButtonPressed( var button )
 void function OnReloadModsButtonPressed( var button )
 {
 	ReloadMods( true )
-}
-
-void function OnAuthenticationAgreementButtonPressed( var button )
-{
-	NorthstarMasterServerAuthDialog()
 }
 
 void function OnModSettingsButtonPressed( var button )
