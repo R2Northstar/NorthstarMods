@@ -77,10 +77,7 @@ void function InfectionOnPlayerKilled( entity victim, entity attacker, var damag
 		InfectPlayer( victim )
 
 	if ( attacker.IsPlayer() )
-	{
 		attacker.SetPlayerGameStat( PGS_ASSAULT_SCORE, attacker.GetPlayerGameStat( PGS_ASSAULT_SCORE ) + 1 )
-		SetRoundWinningKillReplayAttacker( attacker )
-	}
 }
 
 void function InfectPlayer( entity player )

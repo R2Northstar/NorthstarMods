@@ -891,7 +891,7 @@ bool function runWave( int waveIndex, bool shouldDoBuyTime )
 
 	MessageToTeam( TEAM_MILITIA, eEventNotifications.FD_AnnounceWaveStart )
 
-	wait 7
+	wait 10
 
 	file.disableTitanSelectionForNewJoiners = true
 

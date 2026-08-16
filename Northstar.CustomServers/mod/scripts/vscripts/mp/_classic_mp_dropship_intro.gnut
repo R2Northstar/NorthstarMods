@@ -113,6 +113,8 @@ void function OnPrematchStart()
 
 void function EndIntroWhenFinished()
 {
+	WaitEndFrame()
+
 	while ( Time() < expect float( level.nv.gameStartTime ) )
 		WaitFrame()
 

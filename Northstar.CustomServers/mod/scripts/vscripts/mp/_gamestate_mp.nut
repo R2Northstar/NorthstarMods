@@ -16,7 +16,8 @@ global function SetForceNoMoreRounds
 global function SetForceNoFinalRoundDraws
 global function SetShouldUseRoundWinningKillReplay
 global function SetRoundWinningKillReplayKillClasses
-global function SetRoundWinningKillReplayAttacker
+global function SetRoundWinningKillReplayEntities
+global function ClearRoundWinningKillReplayEntities
 global function SetCallback_TryUseProjectileReplay
 global function ShouldTryUseProjectileReplay
 global function SetWinner
@@ -46,13 +47,10 @@ struct
 
 	int gameState = -1
 
-	float roundWinningKillReplayTime
-	entity roundWinningKillReplayVictim
-	entity roundWinningKillReplayAttacker
-	int roundWinningKillReplayInflictorEHandle // this is either the inflictor or the attacker
-	int roundWinningKillReplayMethodOfDeath
-	float roundWinningKillReplayTimeOfDeath
-	float roundWinningKillReplayHealthFrac
+	entity roundWinningKillReplayViewEnt = null
+	float roundWinningKillReplayHealthFrac = -1
+	entity roundWinningKillReplayVictim = null
+	int roundWinningKillReplayInflictorEHandle = -1
 
 	array<void functionref()> roundEndCleanupCallbacks
 	bool functionref( entity victim, entity attacker, var damageInfo, bool isRoundEnd ) shouldTryUseProjectileReplayCallback
@@ -579,13 +577,20 @@ void function SetRoundWinningKillReplayKillClasses( bool pilot, bool titan )
 	file.roundWinningKillReplayTrackTitanKills = titan // player kills in titans should get tracked anyway, might be worth renaming this
 }
 
-void function SetRoundWinningKillReplayAttacker( entity attacker, int inflictorEHandle = -1 )
+void function SetRoundWinningKillReplayEntities( entity viewEnt, entity victim, int inflictorEHandle )
 {
-	file.roundWinningKillReplayTime = Time()
-	file.roundWinningKillReplayHealthFrac = GetHealthFrac( attacker )
-	file.roundWinningKillReplayAttacker = attacker
-	file.roundWinningKillReplayInflictorEHandle = inflictorEHandle == -1 ? attacker.GetEncodedEHandle() : inflictorEHandle
-	file.roundWinningKillReplayTimeOfDeath = Time()
+	file.roundWinningKillReplayViewEnt = viewEnt
+	file.roundWinningKillReplayHealthFrac = GetHealthFrac( viewEnt )
+	file.roundWinningKillReplayVictim = victim
+	file.roundWinningKillReplayInflictorEHandle = inflictorEHandle
+}
+
+void function ClearRoundWinningKillReplayEntities()
+{
+	file.roundWinningKillReplayViewEnt = null
+	file.roundWinningKillReplayHealthFrac = -1
+	file.roundWinningKillReplayVictim = null
+	file.roundWinningKillReplayInflictorEHandle = -1
 }
 
 /*
@@ -763,8 +768,7 @@ void function GameStateEnter_Prematch()
 		if ( IsRoundWinningKillReplayEnabled() )
 		{
 			// Clear here as opposed to at the end of roundwinningkillreplay to not change the time spent in WinnerDetermined state.
-			file.roundWinningKillReplayAttacker = null
-			file.roundWinningKillReplayInflictorEHandle = -1
+			ClearRoundWinningKillReplayEntities()
 		}
 	}
 
@@ -1274,16 +1278,12 @@ void function OnPlayerKilled( entity victim, entity attacker, var damageInfo )
 	}
 
 	// set round winning killreplay info here if we're tracking pilot kills
-	// todo: make this not count environmental deaths like falls, unsure how to prevent this
-	if ( file.roundWinningKillReplayTrackPilotKills && victim != attacker && attacker != svGlobal.worldspawn && IsValid( attacker ) )
+	if ( file.roundWinningKillReplayTrackPilotKills && victim != attacker && IsValid( attacker ) && ( attacker.IsPlayer() || attacker.IsNPC() ) )
 	{
-		file.roundWinningKillReplayTime = Time()
-		file.roundWinningKillReplayVictim = victim
-		file.roundWinningKillReplayAttacker = attacker
-		file.roundWinningKillReplayInflictorEHandle = ( shouldUseInflictor ? inflictor : attacker ).GetEncodedEHandle()
-		file.roundWinningKillReplayMethodOfDeath = DamageInfo_GetDamageSourceIdentifier( damageInfo )
-		file.roundWinningKillReplayTimeOfDeath = Time()
+		file.roundWinningKillReplayViewEnt = attacker
 		file.roundWinningKillReplayHealthFrac = GetHealthFrac( attacker )
+		file.roundWinningKillReplayVictim = victim
+		file.roundWinningKillReplayInflictorEHandle = ( shouldUseInflictor ? inflictor.GetEncodedEHandle() : -1 )
 	}
 
 	CheckEliminationModeWinner()
@@ -1299,16 +1299,12 @@ void function OnTitanKilled( entity victim, var damageInfo )
 	bool shouldUseInflictor = IsValid( inflictor ) && ShouldTryUseProjectileReplay( victim, DamageInfo_GetAttacker( damageInfo ), damageInfo, true )
 
 	// set round winning killreplay info here if we're tracking titan kills
-	// todo: make this not count environmental deaths like falls, unsure how to prevent this
-	if ( file.roundWinningKillReplayTrackTitanKills && victim != attacker && attacker != svGlobal.worldspawn && IsValid( attacker ) )
+	if ( file.roundWinningKillReplayTrackTitanKills && victim != attacker && IsValid( attacker ) && ( attacker.IsPlayer() || attacker.IsNPC() ) )
 	{
-		file.roundWinningKillReplayTime = Time()
-		file.roundWinningKillReplayVictim = victim
-		file.roundWinningKillReplayAttacker = attacker
-		file.roundWinningKillReplayInflictorEHandle = ( shouldUseInflictor ? inflictor : attacker ).GetEncodedEHandle()
-		file.roundWinningKillReplayMethodOfDeath = DamageInfo_GetDamageSourceIdentifier( damageInfo )
-		file.roundWinningKillReplayTimeOfDeath = Time()
+		file.roundWinningKillReplayViewEnt = attacker
 		file.roundWinningKillReplayHealthFrac = GetHealthFrac( attacker )
+		file.roundWinningKillReplayVictim = victim
+		file.roundWinningKillReplayInflictorEHandle = ( shouldUseInflictor ? inflictor.GetEncodedEHandle() : -1 )
 	}
 
 	CheckEliminationModeWinner()
@@ -2179,17 +2175,17 @@ bool function WillShowRoundWinningKillReplay()
 
 	int currentGameState = GetGameState()
 
-	if ( ( currentGameState != eGameState.WinnerDetermined ) && ( currentGameState != eGameState.SwitchingSides ) )
+	if ( currentGameState != eGameState.WinnerDetermined && currentGameState != eGameState.SwitchingSides )
 		return false
 
-	if ( file.roundWinningKillReplayAttacker == null ) // Check for null specifically instead of IsValid because players can disconnect and become invalid, and we only want this to be false because we set it to null explicitly. ( Want to tell people that round winning kill replay was cancelled if a player disconnected)
+	if ( file.roundWinningKillReplayViewEnt == null ) // Check for null specifically instead of IsValid because players can disconnect and become invalid, and we only want this to be false because we set it to null explicitly. ( Want to tell people that round winning kill replay was cancelled if a player disconnected)
 		return false
 
 	if ( IsRoundBased() ) // Note the order of the checks: RoundBasedModes that are also SwitchSidesBased will show in WinnerDetermined.
-		return ( currentGameState == eGameState.WinnerDetermined )
+		return currentGameState == eGameState.WinnerDetermined
 
 	if ( IsSwitchSidesBased() )
-		return ( currentGameState == eGameState.SwitchingSides )
+		return currentGameState == eGameState.SwitchingSides
 
 	return true
 }
@@ -2203,6 +2199,15 @@ void function ClearPlayerFromReplay( entity player )
 
 void function RoundWinningKillReplay() // Only Tested in MFD Pro for now! SHould be minimal work to make sure it works for other game modes too though
 {
+	entity viewEntity = file.roundWinningKillReplayViewEnt
+
+	if ( !IsValid( viewEntity ) )
+		return
+
+	int viewEntIdx = viewEntity.GetIndexForEntity()
+	entity victim = file.roundWinningKillReplayVictim
+	int inflictorEHandle = file.roundWinningKillReplayInflictorEHandle
+
 	OnThreadEnd(
 		function() : ()
 		{
@@ -2230,32 +2235,25 @@ void function RoundWinningKillReplay() // Only Tested in MFD Pro for now! SHould
 
 	wait ROUND_WINNING_KILL_REPLAY_STARTUP_WAIT // Delay before we start kill replay proper
 
-	entity attacker = file.roundWinningKillReplayAttacker
-
-	if ( !IsValid( attacker ) )
-	{
-		MessageToAll( eEventNotifications.RoundWinningKillReplayCancelled )
-		return
-	}
-
 	foreach ( entity player in GetPlayerArray() )
 	{
+		// Bad things happen if we try to do a kill replay that lasts longer than the player entity existing on the server
+		if ( Time() - player.p.connectTime <= ROUND_WINNING_KILL_REPLAY_LENGTH_OF_REPLAY )
+			continue
+
 		player.StopObserverMode()
 
-		player.Signal( "KillCamOver" )
-		player.SetPredictionEnabled( false ) // Disable prediction to prevent issues with replays, respawning code restores it automatically
-		player.ClearReplayDelay()
-		player.ClearViewEntity()
+		ClearPlayerFromReplay( player )
 
 		player.watchingKillreplayEndTime = Time() + ROUND_WINNING_KILL_REPLAY_LENGTH_OF_REPLAY
 
 		player.SetKillReplayDelay( Time() - ROUND_WINNING_KILL_REPLAY_LENGTH_OF_REPLAY, THIRD_PERSON_KILL_REPLAY_ALWAYS )
-		player.SetKillReplayInflictorEHandle( file.roundWinningKillReplayInflictorEHandle )
-		player.SetKillReplayVictim( file.roundWinningKillReplayVictim )
-		player.SetViewIndex( attacker.GetIndexForEntity() )
+		player.SetKillReplayInflictorEHandle( inflictorEHandle )
+		player.SetViewIndex( viewEntIdx )
+		player.SetIsReplayRoundWinning( true )
 
-		if ( !HasRoundScoreLimitBeenReached() )
-			player.SetIsReplayRoundWinning( true )
+		if ( IsValid( victim ) )
+			player.SetKillReplayVictim( victim )
 	}
 
 	wait ROUND_WINNING_KILL_REPLAY_LENGTH_OF_REPLAY

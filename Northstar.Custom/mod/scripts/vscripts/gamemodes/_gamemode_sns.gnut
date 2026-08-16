@@ -59,7 +59,6 @@ void function OnPlayerKilled( entity victim, entity attacker, var damageInfo )
 {
 	if ( victim != attacker && victim.IsPlayer() && attacker.IsPlayer() && GetGameState() == eGameState.Playing )
 	{
-		SetRoundWinningKillReplayAttacker( attacker )
 		if (
 			DamageInfo_GetDamageSourceIdentifier( damageInfo ) == eDamageSourceId.mp_weapon_grenade_sonar ||
 			DamageInfo_GetDamageSourceIdentifier( damageInfo ) == eDamageSourceId.human_execution

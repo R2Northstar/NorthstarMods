@@ -29,6 +29,8 @@ void function ClassicMP_DefaultNoIntro_Start()
 	foreach ( entity player in GetPlayerArray() )
 		ClassicMP_DefaultNoIntro_SpawnPlayer( player )
 
+	WaitEndFrame()
+
 	while ( Time() < expect float( level.nv.gameStartTime ) )
 		WaitFrame()
 
