@@ -73,6 +73,18 @@ void function ReloadMods( bool reloadorretry = false )
 	#endif
 }
 
+#if !UI
+	entity function gwep( entity ent )
+	{
+		return ent.GetActiveWeapon()
+	}
+
+	array<entity> function gweps( entity ent )
+	{
+		return ent.GetMainWeapons()
+	}
+#endif
+
 #if SERVER
 	void function SaveRecordedAnimation( var recording, string fileName )
 	{
@@ -108,6 +120,29 @@ void function ReloadMods( bool reloadorretry = false )
 	void function Chat_ServerPrivateMessage( entity toPlayer, string text, bool whisper, bool withServerTag = true )
 	{
 		NSBroadcastMessage( -1, toPlayer.GetPlayerIndex(), text, !withServerTag, false, whisper ? eChatMessageType.WHISPER : eChatMessageType.CHAT )
+	}
+
+	array<entity> function gn()
+	{
+		return GetNPCArray()
+	}
+#else
+	entity function glc()
+	{
+		#if UI
+			return GetUIPlayer()
+		#else
+			return GetLocalClientPlayer()
+		#endif
+	}
+
+	entity function glv()
+	{
+		#if UI
+			return GetUIPlayer()
+		#else
+			return GetLocalViewPlayer()
+		#endif
 	}
 #endif
 
