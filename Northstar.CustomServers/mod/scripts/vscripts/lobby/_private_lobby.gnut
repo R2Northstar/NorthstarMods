@@ -346,11 +346,11 @@ bool function ClientCommandCallback_ResetMatchSettingsToDefault( entity player, 
 void function LogPrivateMatchChange( entity player, string step, array<string> args )
 {
 	if ( step.find( "mode" ) || step.find( "map" ) )
-		print( player.GetPlayerName() + step + args[ 0 ] + ".---" + "UID:" + player.GetUID() )
+		printt( player.GetPlayerName() + step + args[ 0 ] + ".---" + "UID:" + player.GetUID() )
 	else if ( step.find( "setting" ) )
-		print( player.GetPlayerName() + step + args[ 0 ] + " to " + args[ 1 ] + ".---" + "UID:" + player.GetUID() )
+		printt( player.GetPlayerName() + step + args[ 0 ] + " to " + args[ 1 ] + ".---" + "UID:" + player.GetUID() )
 	else
-		print( player.GetPlayerName() + step + ".---" + "UID:" + player.GetUID() )
+		printt( player.GetPlayerName() + step + ".---" + "UID:" + player.GetUID() )
 }
 
 bool function ServerIsPrivateMatch()
