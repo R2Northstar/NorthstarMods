@@ -1535,6 +1535,24 @@ array<string> function GetModVersions( string modName )
 	return versions
 }
 
+bool function IsModInstalled( string modName, string modVersion )
+{
+	array<string> versions = GetModVersions( modName )
+	if ( versions.len() == 0 ) {
+		return false
+	}
+
+	foreach( string version in versions )
+	{
+		if ( version == modVersion )
+		{
+			return true
+		}
+	}
+
+	return false
+}
+
 // escapes localisation by replacing # with ^FFFFFFFF#
 string function EscapeLocalisation( string input )
 {
