@@ -1100,15 +1100,14 @@ string function FillInServerModsLabel( array<RequiredModInfo> mods )
 		string template = ""
 
 		// Display nothing if the mod is installed locally
-		if ( IsCoreMod(mod.name) || IsModInstalled(mod.name, mod.version))
+		if ( IsCoreMod( mod.name ) || IsModInstalled( mod.name, mod.version ) )
 		{
 			template = "  %s v%s\n"
 		}
-
 		// Display a green checkmark if it can be downloaded, a red cross if not
 		else
 		{
-			template = NSIsModDownloadable(mod.name, mod.version) ? "  %s v%s ^00ff0000(↓)^FFFFFFFF\n" : "  %s v%s ^ff000000(x)^FFFFFFFF\n"
+			template = NSIsModDownloadable( mod.name, mod.version ) ? "  %s v%s ^00ff0000(↓)^FFFFFFFF\n" : "  %s v%s ^ff000000(x)^FFFFFFFF\n"
 		}
 
 		ret += format( template, mod.name, mod.version )
@@ -1551,11 +1550,12 @@ array<string> function GetModVersions( string modName )
 bool function IsModInstalled( string modName, string modVersion )
 {
 	array<string> versions = GetModVersions( modName )
-	if ( versions.len() == 0 ) {
+	if ( versions.len() == 0 )
+	{
 		return false
 	}
 
-	foreach( string version in versions )
+	foreach ( string version in versions )
 	{
 		if ( version == modVersion )
 		{
