@@ -1094,7 +1094,8 @@ string function FillInServerModsLabel( array<RequiredModInfo> mods )
 
 	foreach ( RequiredModInfo mod in mods )
 	{
-		ret += format( "  %s v%s\n", mod.name, mod.version )
+		string template = NSIsModDownloadable(mod.name, mod.version) ? "  %s v%s ^00ff0000(↓)^FFFFFFFF\n" : "  %s v%s\n"
+		ret += format( template, mod.name, mod.version )
 	}
 
 	return ret
