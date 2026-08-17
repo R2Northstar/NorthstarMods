@@ -293,6 +293,9 @@ void function InitServerBrowserMenu()
 
 	// UI was cut off on some aspect ratios; not perfect
 	UpdateServerInfoBasedOnRes()
+
+	// Retrieve list of verified mods
+	thread NSFetchVerifiedModsManifesto()
 }
 
 // //////////////////////////
