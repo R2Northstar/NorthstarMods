@@ -869,8 +869,13 @@ void function GameStateEnter_Playing()
 
 void function GameRulesThink_Playing()
 {
-	if ( CheckForEmptyTeamVictory() )
-		return
+	if ( Time() - level.lastPlayingEmptyTeamCheck > 1.0 )
+	{
+		level.lastPlayingEmptyTeamCheck = Time()
+
+		if ( CheckForEmptyTeamVictory() )
+			return
+	}
 
 	if ( EliminationMode_Complete() )
 		return
@@ -910,10 +915,10 @@ void function GameRulesThink_Playing()
 
 void function GameStateEnter_SuddenDeath()
 {
-	level.nv.gameEndTime += ( GetSuddenDeathTimeLimit_ForGameMode() * 60.0 ).tointeger()
-
 	if ( IsRoundBased() )
 		level.nv.roundEndTime += ( GetSuddenDeathTimeLimit_ForGameMode() * 60.0 ).tointeger()
+	else
+		level.nv.gameEndTime += ( GetSuddenDeathTimeLimit_ForGameMode() * 60.0 ).tointeger()
 
 	Riff_ForceSetEliminationMode( eEliminationMode.Pilots )
 }
@@ -1551,7 +1556,7 @@ bool function EliminationMode_Complete()
 				SetPlayerEliminated( player )
 	}
 
-	return ( CheckEliminationModeWinner() != TEAM_UNASSIGNED )
+	return CheckEliminationModeWinner() != TEAM_UNASSIGNED
 }
 
 int function CheckEliminationModeWinner()

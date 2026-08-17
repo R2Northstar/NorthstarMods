@@ -189,6 +189,7 @@ void function CodeCallback_OnClientConnectionCompleted( entity player )
 	UpdateMinimapStatus( player )
 	UpdateMinimapStatusToOtherPlayers( player )
 	MinimapPlayerConnected( player )
+	CheckForEmptyTeamVictory()
 	NotifyClientsOfConnection( player, 1 )
 	PlayCurrentTeamMusicEventsOnPlayer( player )
 	SetCurrentTeamObjectiveForPlayer( player )
@@ -294,6 +295,7 @@ void function WaitForDisconnectCompleted( entity player )
 		WaitFrame()
 
 	UpdateBadRepPresent()
+	CheckForEmptyTeamVictory()
 }
 
 /*
@@ -1184,29 +1186,44 @@ bool function CheckForEmptyTeamVictory()
 	if ( GetConVarBool( "ns_skip_empty_team_victory_check" ) )
 		return false
 
+	if ( expect int( level.nv.allowNPCs ) == 1 )
+		return false
+
+	if ( !GameRules_AllowMatchEnd() )
+		return false
+
 	if ( GetDeveloperLevel() )
 		return false
 
-	if ( GetCurrentPlaylistVarInt( "riff_allow_npcs", 2 ) == 1 )
+	if ( IsPrivateMatch() )
 		return false
 
-	if ( GetCurrentPlaylistVarInt( "max_teams", 2 ) != 2 )
+	if ( IsSingleTeamMode() )
+		return false
+
+	if ( !IsRoundBased() && GetGameState() >= eGameState.WinnerDetermined )
+		return false
+
+	if ( IsRoundBased() && expect float( level.nv.gameEndTime ) >= 0.0 )
+		return false
+
+	if ( !GamePlayingOrSuddenDeath() )
 		return false
 
 	if ( GameTime_PlayingTime() < START_SPAWN_GRACE_PERIOD )
 		return false
 
-	int defaultWinner = TEAM_UNASSIGNED
+	array<entity> players = GetPlayerArray()
 
-	if ( !GetTeamPlayerCount( TEAM_MILITIA ) )
-		defaultWinner = TEAM_IMC
-	else if ( !GetTeamPlayerCount( TEAM_IMC ) )
-		defaultWinner = TEAM_MILITIA
-
-	if ( defaultWinner != TEAM_UNASSIGNED )
+	foreach ( entity player in players )
 	{
-		SetWinner( defaultWinner )
-		return true
+		array<entity> enemies = GetPlayerArrayOfEnemies( player.GetTeam() )
+
+		if ( !enemies.len() ) // if i have no enemies, then i win
+		{
+			SetWinner( player.GetTeam(), "#ENEMY_TEAM_DISCONNECTED_WIN_ANNOUNCEMENT", "#ENEMY_TEAM_DISCONNECTED_LOSS_ANNOUNCEMENT" )
+			return true
+		}
 	}
 
 	return false
