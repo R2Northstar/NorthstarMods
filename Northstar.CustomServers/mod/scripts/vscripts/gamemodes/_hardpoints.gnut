@@ -41,7 +41,15 @@ void function Hardpoints_Init()
 	RegisterSignal( "CapturePointPlayerLeft" )
 	RegisterSignal( "CP_AWARD_TEAM_OWNED_POINTS_SIGNAL" )
 
+	AddCallback_OnClientConnected( Hardpoint_OnClientConnected )
+
 	CPstate.ampingEnabled = GetCurrentPlaylistVarInt( "capture_point_amping", 1 ) != 0
+}
+
+void function Hardpoint_OnClientConnected( entity player )
+{
+	player.s.isPlayingCapturingSound <- false
+	player.s.isPlayingAmpingCapturingSound <- false
 }
 
 void function Hardpoints_OnPlayerKilled_UpdateMedals( entity victim, entity attacker, var damageInfo )
@@ -129,14 +137,18 @@ void function OnHardpointEnter( entity trigger, entity player )
 	if ( hpState.capPlayers.find( player ) == -1 )
 		hpState.capPlayers.append( player )
 
-	if (
-		hpState.ent.s.isPlayingCapturingSound && CapturePoint_GetCappingTeam( hpState.ent ) == player.GetTeam() &&
-		!( "isPlayingCapturingSound" in player.s && player.s.isPlayingCapturingSound )
-	)
+	if ( hp.s.isPlayingCapturingSound && CapturePoint_GetCappingTeam( hp ) == player.GetTeam() && !player.s.isPlayingCapturingSound )
 	{
-		EmitSoundOnEntityOnlyToPlayer( hp, player, "Hardpoint_ProgressBar" )
+		if ( CapturePoint_GetCaptureProgress( hp ) > 1.001 )
+		{
+			EmitSoundOnEntityOnlyToPlayer( hp, player, "Hardpoint_Amped_ProgressBar" )
 
-		player.s.isPlayingCapturingSound <- true
+			player.s.isPlayingAmpingCapturingSound = true
+		}
+		else
+			EmitSoundOnEntityOnlyToPlayer( hp, player, "Hardpoint_ProgressBar" )
+
+		player.s.isPlayingCapturingSound = true
 	}
 
 	player.SetPlayerNetInt( "playerHardpointID", hp.GetHardpointID() )
@@ -162,11 +174,12 @@ void function OnHardpointLeave( entity trigger, entity player )
 	if ( index != -1 )
 		hpState.capPlayers.fastremove( index )
 
-	if ( "isPlayingCapturingSound" in player.s && player.s.isPlayingCapturingSound )
+	if ( player.s.isPlayingCapturingSound )
 	{
 		EmitSoundOnEntityOnlyToPlayer( hp, player, "Hardpoint_StopProgressBar_Event" )
 
-		player.s.isPlayingCapturingSound <- false
+		player.s.isPlayingCapturingSound = false
+		player.s.isPlayingAmpingCapturingSound = false
 	}
 
 	player.SetPlayerNetInt( "playerHardpointID", INVALID_HARDPOINT_ID )
@@ -245,15 +258,17 @@ void function Hardpoint_Think( HardpointState hardpoint )
 
 	foreach ( entity player in hardpoint.capPlayers )
 	{
-		if ( "isPlayingCapturingSound" in player.s && player.s.isPlayingCapturingSound )
+		if ( player.s.isPlayingCapturingSound )
 		{
 			EmitSoundOnEntityOnlyToPlayer( hardpoint.ent, player, "Hardpoint_StopProgressBar_Event" )
 
-			player.s.isPlayingCapturingSound <- false
+			player.s.isPlayingCapturingSound = false
+			player.s.isPlayingAmpingCapturingSound = false
 		}
 	}
 
 	hardpoint.ent.s.isPlayingCapturingSound = false
+	hardpoint.ent.s.isPlayingAmpingCapturingSound = false
 }
 
 const HAS_IMC = 1
@@ -291,11 +306,11 @@ void function Hardpoint_ThinkTick( HardpointState hardpoint )
 		{
 			foreach ( entity player in hardpoint.capPlayers )
 			{
-				if ( "isPlayingCapturingSound" in player.s && player.s.isPlayingCapturingSound )
+				if ( player.s.isPlayingCapturingSound )
 				{
 					EmitSoundOnEntityOnlyToPlayer( hardpoint.ent, player, "Hardpoint_StopProgressBar_Event" )
 
-					player.s.isPlayingCapturingSound <- false
+					player.s.isPlayingCapturingSound = false
 				}
 			}
 
@@ -311,16 +326,31 @@ void function Hardpoint_ThinkTick( HardpointState hardpoint )
 			(
 			( !CPstate.ampingEnabled && CapturePoint_GetCaptureProgress( hardpoint.ent ) < 1.0 ) ||
 				( CPstate.ampingEnabled && CapturePoint_GetCaptureProgress( hardpoint.ent ) < 2.0 )
-			) && !hardpoint.ent.s.isPlayingCapturingSound
+			) &&
+			(
+				!hardpoint.ent.s.isPlayingCapturingSound || ( CapturePoint_GetCaptureProgress( hardpoint.ent ) > 1.001 ) && !hardpoint.ent.s.isPlayingAmpingCapturingSound
+			)
 		)
 		{
 			foreach ( entity player in hardpoint.capPlayers )
 			{
-				if ( !( "isPlayingCapturingSound" in player.s && player.s.isPlayingCapturingSound ) )
+				if (
+					!player.s.isPlayingCapturingSound ||
+					( CapturePoint_GetCaptureProgress( hardpoint.ent ) > 1.001 ) && !( "isPlayingAmpingCapturingSound" in player.s && player.s.isPlayingAmpingCapturingSound )
+				)
 				{
-					EmitSoundOnEntityOnlyToPlayer( hardpoint.ent, player, "Hardpoint_ProgressBar" )
+					if ( CapturePoint_GetCaptureProgress( hardpoint.ent ) > 1.001 )
+					{
+						EmitSoundOnEntityOnlyToPlayer( hardpoint.ent, player, "Hardpoint_StopProgressBar_Event" )
+						EmitSoundOnEntityOnlyToPlayer( hardpoint.ent, player, "Hardpoint_Amped_ProgressBar" )
 
-					player.s.isPlayingCapturingSound <- true
+						player.s.isPlayingAmpingCapturingSound = true
+						hardpoint.ent.s.isPlayingAmpingCapturingSound = true
+					}
+					else
+						EmitSoundOnEntityOnlyToPlayer( hardpoint.ent, player, "Hardpoint_ProgressBar" )
+
+					player.s.isPlayingCapturingSound = true
 				}
 			}
 
@@ -335,15 +365,17 @@ void function Hardpoint_ThinkTick( HardpointState hardpoint )
 		{
 			foreach ( entity player in hardpoint.capPlayers )
 			{
-				if ( "isPlayingCapturingSound" in player.s && player.s.isPlayingCapturingSound )
+				if ( player.s.isPlayingCapturingSound )
 				{
 					EmitSoundOnEntityOnlyToPlayer( hardpoint.ent, player, "Hardpoint_StopProgressBar_Event" )
 
-					player.s.isPlayingCapturingSound <- false
+					player.s.isPlayingAmpingCapturingSound = false
+					player.s.isPlayingCapturingSound = false
 				}
 			}
 
 			hardpoint.ent.s.isPlayingCapturingSound = false
+			hardpoint.ent.s.isPlayingAmpingCapturingSound = false
 		}
 	}
 	else if ( occupation & MILITIA_HOLD )
@@ -355,16 +387,31 @@ void function Hardpoint_ThinkTick( HardpointState hardpoint )
 			(
 			( !CPstate.ampingEnabled && CapturePoint_GetCaptureProgress( hardpoint.ent ) < 1.0 ) ||
 				( CPstate.ampingEnabled && CapturePoint_GetCaptureProgress( hardpoint.ent ) < 2.0 )
-			) && !hardpoint.ent.s.isPlayingCapturingSound
+			) &&
+			(
+				!hardpoint.ent.s.isPlayingCapturingSound || ( CapturePoint_GetCaptureProgress( hardpoint.ent ) > 1.001 ) && !hardpoint.ent.s.isPlayingAmpingCapturingSound
+			)
 		)
 		{
 			foreach ( entity player in hardpoint.capPlayers )
 			{
-				if ( !( "isPlayingCapturingSound" in player.s && player.s.isPlayingCapturingSound ) )
+				if (
+					!player.s.isPlayingCapturingSound ||
+					( CapturePoint_GetCaptureProgress( hardpoint.ent ) > 1.001 ) && !( "isPlayingAmpingCapturingSound" in player.s && player.s.isPlayingAmpingCapturingSound )
+				)
 				{
-					EmitSoundOnEntityOnlyToPlayer( hardpoint.ent, player, "Hardpoint_ProgressBar" )
+					if ( CapturePoint_GetCaptureProgress( hardpoint.ent ) > 1.001 )
+					{
+						EmitSoundOnEntityOnlyToPlayer( hardpoint.ent, player, "Hardpoint_StopProgressBar_Event" )
+						EmitSoundOnEntityOnlyToPlayer( hardpoint.ent, player, "Hardpoint_Amped_ProgressBar" )
 
-					player.s.isPlayingCapturingSound <- true
+						player.s.isPlayingAmpingCapturingSound = true
+						hardpoint.ent.s.isPlayingAmpingCapturingSound = true
+					}
+					else
+						EmitSoundOnEntityOnlyToPlayer( hardpoint.ent, player, "Hardpoint_ProgressBar" )
+
+					player.s.isPlayingCapturingSound = true
 				}
 			}
 
@@ -379,15 +426,17 @@ void function Hardpoint_ThinkTick( HardpointState hardpoint )
 		{
 			foreach ( entity player in hardpoint.capPlayers )
 			{
-				if ( "isPlayingCapturingSound" in player.s && player.s.isPlayingCapturingSound )
+				if ( player.s.isPlayingCapturingSound )
 				{
 					EmitSoundOnEntityOnlyToPlayer( hardpoint.ent, player, "Hardpoint_StopProgressBar_Event" )
 
-					player.s.isPlayingCapturingSound <- false
+					player.s.isPlayingAmpingCapturingSound = false
+					player.s.isPlayingCapturingSound = false
 				}
 			}
 
 			hardpoint.ent.s.isPlayingCapturingSound = false
+			hardpoint.ent.s.isPlayingAmpingCapturingSound = false
 		}
 	}
 	else
@@ -450,15 +499,17 @@ void function Hardpoint_ThinkTick( HardpointState hardpoint )
 		{
 			foreach ( entity player in hardpoint.capPlayers )
 			{
-				if ( "isPlayingCapturingSound" in player.s && player.s.isPlayingCapturingSound )
+				if ( player.s.isPlayingCapturingSound )
 				{
 					EmitSoundOnEntityOnlyToPlayer( hardpoint.ent, player, "Hardpoint_StopProgressBar_Event" )
 
-					player.s.isPlayingCapturingSound <- false
+					player.s.isPlayingAmpingCapturingSound = false
+					player.s.isPlayingCapturingSound = false
 				}
 			}
 
 			hardpoint.ent.s.isPlayingCapturingSound = false
+			hardpoint.ent.s.isPlayingAmpingCapturingSound = false
 		}
 	}
 
@@ -789,7 +840,7 @@ void function TrackChevronStates()
 {
 	while ( GetGameState() <= eGameState.Playing )
 	{
-		table<int, int> chevrons = { [TEAM_IMC] = 0, [TEAM_MILITIA] = 0, }
+		table<int, int> chevrons = { [TEAM_IMC] = 0, [TEAM_MILITIA] = 0 }
 
 		foreach ( HardpointState hardpoint in CPstate.hardpoints )
 		{

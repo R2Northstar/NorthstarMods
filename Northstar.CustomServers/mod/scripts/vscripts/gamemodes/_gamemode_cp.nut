@@ -129,6 +129,7 @@ void function EntitiesDidLoad_SpawnHardpoints()
 		hpState.ent.s.wasJustCapping <- false
 		hpState.ent.s.lastPower <- 0
 		hpState.ent.s.isPlayingCapturingSound <- false
+		hpState.ent.s.isPlayingAmpingCapturingSound <- false
 
 		HARDPOINTS.append( hpState.ent ) // for vo script
 		hpState.ent.s.trigger <- hpState.trigger // also for vo script
