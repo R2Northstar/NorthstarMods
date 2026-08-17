@@ -204,6 +204,10 @@ void function UpdatePersistenceOnDisconnect( entity player )
 		SaveDatePlayed( player )
 
 	SaveDateLoggedIn( player )
+	AddXPCredits( player )
+
+	if ( !player.GetPersistentVar( "isPostGameScoreboardValid" ) )
+		PopulatePostgameData( player )
 
 	foreach ( callbackFunc in file.persistenceDisconnectCallbacks )
 		callbackFunc( player )
@@ -303,22 +307,22 @@ bool function ShouldSpawnSpectre( int team )
 	if ( Riff_AllowNPCs() != eAllowNPCs.Default )
 		return ( Riff_AllowNPCs() == eAllowNPCs.SpectreOnly )
 
-	if ( ( team == TEAM_IMC ) && ( Flag( "AllSpectreIMC" ) ) )
+	if ( team == TEAM_IMC && Flag( "AllSpectreIMC" ) )
 		return true
 
-	if ( ( team == TEAM_MILITIA ) && ( Flag( "AllSpectreMilitia" ) ) )
+	if ( team == TEAM_MILITIA && Flag( "AllSpectreMilitia" ) )
 		return true
 
-	if ( ( team == TEAM_IMC ) && ( Flag( "NoSpectreIMC" ) ) )
+	if ( team == TEAM_IMC && Flag( "NoSpectreIMC" ) )
 		return false
 
-	if ( ( team == TEAM_MILITIA ) && ( Flag( "NoSpectreMilitia" ) ) )
+	if ( team == TEAM_MILITIA && Flag( "NoSpectreMilitia" ) )
 		return false
 
 	if ( GetCurrentPlaylistVarInt( "no_spectres", 0 ) )
 		return false
 
-	if ( ( Flag( "AllSpectre" ) ) )
+	if ( Flag( "AllSpectre" ) )
 		return true
 
 	int spectreCount = GetSpectreCount( team )
@@ -393,95 +397,128 @@ void function ClearAndKillChildren( entity parentEnt, array<entity> excludedEnti
 	}
 }
 
-void function PopulatePostgameData()
+void function PopulatePostgameData( entity player )
 {
-	// show the postgame scoreboard summary
-	SetUIVar( level, "showGameSummary", true )
-
 	int playerPerTeam = GetCurrentPlaylistVarInt( "max_players", 16 )
 	bool teamBased = GetCurrentPlaylistVarInt( "max_teams", 2 ) == 2
 	bool isPrivateMatch = IsPrivateMatch()
 	array<int> scoreTypes = GameMode_GetScoreboardColumnScoreTypes( GAMETYPE )
 	int persistenceArrayCount = PersistenceGetArrayCount( "postGameData.players" )
+	int enumModeIndex = 0
+	int enumMapIndex = 0
 
-	foreach ( entity player in GetPlayerArray() )
+	try
 	{
-		int enumModeIndex = 0
-		int enumMapIndex = 0
+		enumModeIndex = PersistenceGetEnumIndexForItemName( "gamemodes", GAMETYPE )
+		enumMapIndex = PersistenceGetEnumIndexForItemName( "maps", GetMapName() )
+	}
+	catch ( ex )
+	{
+	}
 
-		try
+	player.SetPersistentVar( "postGameData.myTeam", player.GetTeam() )
+	player.SetPersistentVar( "postGameData.myXuid", player.GetUID() )
+	player.SetPersistentVar( "postGameData.gameMode", enumModeIndex )
+	player.SetPersistentVar( "postGameData.map", enumMapIndex )
+	player.SetPersistentVar( "postGameData.teams", teamBased )
+	player.SetPersistentVar( "postGameData.maxTeamSize", playerPerTeam )
+	player.SetPersistentVar( "postGameData.privateMatch", isPrivateMatch )
+	player.SetPersistentVar( "postGameData.ranked", true )
+	player.SetPersistentVar( "postGameData.hadMatchLossProtection", false )
+	player.SetPersistentVar( "isFDPostGameScoreboardValid", GAMETYPE == FD )
+
+	if ( teamBased && MAX_TEAMS > 1 )
+	{
+		if ( player.GetTeam() == TEAM_MILITIA )
 		{
-			enumModeIndex = PersistenceGetEnumIndexForItemName( "gamemodes", GAMETYPE )
-			enumMapIndex = PersistenceGetEnumIndexForItemName( "maps", GetMapName() )
-		}
-		catch ( ex )
-		{
-		}
-
-		player.SetPersistentVar( "postGameData.myTeam", player.GetTeam() )
-		player.SetPersistentVar( "postGameData.myXuid", player.GetUID() )
-		player.SetPersistentVar( "postGameData.gameMode", enumModeIndex )
-		player.SetPersistentVar( "postGameData.map", enumMapIndex )
-		player.SetPersistentVar( "postGameData.teams", teamBased )
-		player.SetPersistentVar( "postGameData.maxTeamSize", playerPerTeam )
-		player.SetPersistentVar( "postGameData.privateMatch", isPrivateMatch )
-		player.SetPersistentVar( "postGameData.ranked", true )
-		player.SetPersistentVar( "postGameData.hadMatchLossProtection", false )
-		player.SetPersistentVar( "isFDPostGameScoreboardValid", GAMETYPE == FD )
-
-		if ( teamBased && MAX_TEAMS > 1 )
-		{
-			if ( player.GetTeam() == TEAM_MILITIA )
-			{
-				player.SetPersistentVar( "postGameData.factionMCOR", GetFactionChoice( player ) )
-				player.SetPersistentVar( "postGameData.factionIMC", GetEnemyFaction( player ) )
-			}
-			else
-			{
-				player.SetPersistentVar( "postGameData.factionIMC", GetFactionChoice( player ) )
-				player.SetPersistentVar( "postGameData.factionMCOR", GetEnemyFaction( player ) )
-			}
-
-			player.SetPersistentVar( "postGameData.scoreMCOR", GameRules_GetTeamScore( TEAM_MILITIA ) )
-			player.SetPersistentVar( "postGameData.scoreIMC", GameRules_GetTeamScore( TEAM_IMC ) )
+			player.SetPersistentVar( "postGameData.factionMCOR", GetFactionChoice( player ) )
+			player.SetPersistentVar( "postGameData.factionIMC", GetEnemyFaction( player ) )
 		}
 		else
 		{
-			player.SetPersistentVar( "postGameData.factionMCOR", GetFactionChoice( player ) )
-			player.SetPersistentVar( "postGameData.scoreMCOR", GameRules_GetTeamScore( player.GetTeam() ) )
-			player.SetPersistentVar( "postGameData.factionIMC", GetEnemyFaction( player ) )
-			player.SetPersistentVar( "postGameData.scoreIMC", 0 )
+			player.SetPersistentVar( "postGameData.factionIMC", GetFactionChoice( player ) )
+			player.SetPersistentVar( "postGameData.factionMCOR", GetEnemyFaction( player ) )
 		}
 
-		// Clear scoreboard first in case current match finished with less players than previous
-		// The reason for this is that the post-scoreboard would mix playersets from both matches resulting in a confusing scoreboard
-		for ( int i = 0; i < persistenceArrayCount; i++ )
-		{
-			player.SetPersistentVar( "postGameData.players[" + i + "].team", TEAM_UNASSIGNED )
-			player.SetPersistentVar( "postGameData.players[" + i + "].name", "" )
-			player.SetPersistentVar( "postGameData.players[" + i + "].xuid", "" )
-			player.SetPersistentVar( "postGameData.players[" + i + "].level", -1 )
-			player.SetPersistentVar( "postGameData.players[" + i + "].gen", -1 )
-			player.SetPersistentVar( "postGameData.players[" + i + "].callsignIconIndex", -1 )
-
-			for ( int j = 0; j < scoreTypes.len(); j++ )
-				player.SetPersistentVar( "postGameData.players[" + i + "].scores[" + j + "]", -1 )
-		}
-
-		array<entity> otherPlayers = GetPlayerArray()
-		for ( int i = 0; i < min( otherPlayers.len(), persistenceArrayCount ); i++ )
-		{
-			player.SetPersistentVar( "postGameData.players[" + i + "].team", otherPlayers[ i ].GetTeam() )
-			player.SetPersistentVar( "postGameData.players[" + i + "].name", otherPlayers[ i ].GetPlayerName() )
-			player.SetPersistentVar( "postGameData.players[" + i + "].xuid", otherPlayers[ i ].GetUID() )
-			player.SetPersistentVar( "postGameData.players[" + i + "].level", otherPlayers[ i ].GetLevel() )
-			player.SetPersistentVar( "postGameData.players[" + i + "].gen", otherPlayers[ i ].GetGen() )
-			player.SetPersistentVar( "postGameData.players[" + i + "].callsignIconIndex", otherPlayers[ i ].GetPersistentVarAsInt( "activeCallsignIconIndex" ) )
-
-			for ( int j = 0; j < scoreTypes.len(); j++ )
-				player.SetPersistentVar( "postGameData.players[" + i + "].scores[" + j + "]", otherPlayers[ i ].GetPlayerGameStat( scoreTypes[ j ] ) )
-		}
-
-		player.SetPersistentVar( "isPostGameScoreboardValid", true )
+		player.SetPersistentVar( "postGameData.scoreMCOR", GameRules_GetTeamScore( TEAM_MILITIA ) )
+		player.SetPersistentVar( "postGameData.scoreIMC", GameRules_GetTeamScore( TEAM_IMC ) )
 	}
+	else
+	{
+		player.SetPersistentVar( "postGameData.factionMCOR", GetFactionChoice( player ) )
+		player.SetPersistentVar( "postGameData.scoreMCOR", GameRules_GetTeamScore( player.GetTeam() ) )
+		player.SetPersistentVar( "postGameData.factionIMC", GetEnemyFaction( player ) )
+		player.SetPersistentVar( "postGameData.scoreIMC", 0 )
+	}
+
+	// Clear scoreboard first in case current match finished with less players than previous
+	// The reason for this is that the post-scoreboard would mix playersets from both matches resulting in a confusing scoreboard
+	for ( int i = 0; i < persistenceArrayCount; i++ )
+	{
+		player.SetPersistentVar( "postGameData.players[" + i + "].team", TEAM_UNASSIGNED )
+		player.SetPersistentVar( "postGameData.players[" + i + "].name", "" )
+		player.SetPersistentVar( "postGameData.players[" + i + "].xuid", "" )
+		player.SetPersistentVar( "postGameData.players[" + i + "].level", -1 )
+		player.SetPersistentVar( "postGameData.players[" + i + "].gen", -1 )
+		player.SetPersistentVar( "postGameData.players[" + i + "].callsignIconIndex", -1 )
+
+		for ( int j = 0; j < scoreTypes.len(); j++ )
+			player.SetPersistentVar( "postGameData.players[" + i + "].scores[" + j + "]", -1 )
+	}
+
+	array<entity> otherPlayers = GetPlayerArray()
+
+	for ( int i = 0; i < min( otherPlayers.len(), persistenceArrayCount ); i++ )
+	{
+		player.SetPersistentVar( "postGameData.players[" + i + "].team", otherPlayers[ i ].GetTeam() )
+		player.SetPersistentVar( "postGameData.players[" + i + "].name", otherPlayers[ i ].GetPlayerName() )
+		player.SetPersistentVar( "postGameData.players[" + i + "].xuid", otherPlayers[ i ].GetUID() )
+		player.SetPersistentVar( "postGameData.players[" + i + "].level", otherPlayers[ i ].GetLevel() )
+		player.SetPersistentVar( "postGameData.players[" + i + "].gen", otherPlayers[ i ].GetGen() )
+		player.SetPersistentVar( "postGameData.players[" + i + "].callsignIconIndex", otherPlayers[ i ].GetPersistentVarAsInt( "activeCallsignIconIndex" ) )
+
+		for ( int j = 0; j < scoreTypes.len(); j++ )
+			player.SetPersistentVar( "postGameData.players[" + i + "].scores[" + j + "]", otherPlayers[ i ].GetPlayerGameStat( scoreTypes[ j ] ) )
+	}
+
+	player.SetPersistentVar( "isPostGameScoreboardValid", true )
+}
+
+void function AddXPCredits( entity player )
+{
+	int creditsGained = 0
+	int playerXPGained = 0
+	int weaponXPGained = 0
+	int titanXPGained = 0
+
+	playerXPGained += player.GetPersistentVarAsInt( "xp" ) - player.GetPersistentVarAsInt( "previousXP" )
+
+	int numPilotWeapons = PersistenceGetArrayCount( "pilotWeapons" )
+
+	for ( int i = 0; i < numPilotWeapons; i++ )
+		weaponXPGained +=
+			player.GetPersistentVarAsInt( "pilotWeapons[" + i + "].weaponXP" ) - player.GetPersistentVarAsInt( "pilotWeapons[" + i + "].previousWeaponXP" )
+
+	int numTitanClasses = PersistenceGetEnumCount( "titanClasses" )
+
+	for ( int i = 0; i < numTitanClasses; i++ )
+		titanXPGained += player.GetPersistentVarAsInt( "titanXP[" + i + "]" ) - player.GetPersistentVarAsInt( "previousTitanXP[" + i + "]" )
+
+	creditsGained = playerXPGained + weaponXPGained + titanXPGained
+
+	Player_GiveCredits( player, creditsGained )
+
+	InitXP( player )
+
+	foreach ( string xpFaction in GetAllFactionRefs() )
+		player.SetPersistentVar( "previousFactionXP[" + xpFaction + "]", FactionGetXP( player, xpFaction ) )
+
+	foreach ( string xpTitan in shTitanXP.titanClasses )
+	{
+		player.SetPersistentVar( "previousTitanXP[" + xpTitan + "]", TitanGetXP( player, xpTitan ) )
+		player.SetPersistentVar( "fdPreviousTitanXP[" + xpTitan + "]", FD_TitanGetXP( player, xpTitan ) )
+	}
+
+	foreach ( string xpWeapon in shWeaponXP.weaponClassNames )
+		player.SetPersistentVar( GetItemPersistenceStruct( xpWeapon ) + ".previousWeaponXP", WeaponGetXP( player, xpWeapon ) )
 }

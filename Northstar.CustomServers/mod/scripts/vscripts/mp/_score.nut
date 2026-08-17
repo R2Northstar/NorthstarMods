@@ -21,7 +21,6 @@ struct
 
 void function Score_Init()
 {
-	SvXP_Init()
 	AddCallback_OnClientConnected( InitPlayerForScoreEvents )
 
 	AddCallback_OnPlayerAssist( TitanAssistedKill )

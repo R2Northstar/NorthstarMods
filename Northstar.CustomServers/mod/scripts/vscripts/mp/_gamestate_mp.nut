@@ -824,6 +824,10 @@ void function SetPrematchStartTime()
 
 void function GameStateEnter_Playing()
 {
+	FlagClear( "APlayerHasSpawned" )
+
+	level.ui.showGameSummary = false
+
 	array<entity> players = GetPlayerArray()
 
 	foreach ( entity player in players )
@@ -984,12 +988,15 @@ void function GameStateEnter_WinnerDetermined()
 	RegisterMatchStats_OnMatchComplete()
 	PlayerWinStreak()
 
+	array<entity> players = GetPlayerArray()
+
+	foreach ( entity player in players )
+		PopulatePostgameData( player )
+
 	level.ui.penalizeDisconnect = false
 
 	if ( WillShowRoundWinningKillReplay() )
 	{
-		array<entity> players = GetPlayerArray()
-
 		foreach ( entity player in players )
 			SetPlayerEliminated( player )
 
@@ -1202,6 +1209,8 @@ void function GameStateEnter_Postmatch()
 {
 	FlagClear( "GamePlaying" )
 
+	svGlobal.levelEnt.Signal( "GameEnd" )
+
 	array<entity> players = GetPlayerArray()
 
 	foreach ( entity player in players )
@@ -1214,6 +1223,8 @@ void function GameStateEnter_Postmatch()
 
 		player.SetInvulnerable() // Don't let the player get killed when controls are frozen
 	}
+
+	level.ui.showGameSummary = true
 
 	float delay = GAME_POSTMATCH_LENGTH - 1.0 - MUTEALLFADEIN
 
