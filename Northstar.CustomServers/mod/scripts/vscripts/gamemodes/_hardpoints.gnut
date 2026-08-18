@@ -294,7 +294,7 @@ void function Hardpoint_ThinkTick( HardpointState hardpoint )
 
 				if ( CapturePoint_GetOwningTeam( hardpoint.ent ) == player.GetTeam() && CapturePoint_GetCaptureProgress( hardpoint.ent ) >= 1.001 )
 				{
-					if ( player.s.isPlayingAmpingCapturingSound )
+					if ( !player.s.isPlayingAmpingCapturingSound )
 					{
 						EmitSoundOnEntityOnlyToPlayer( hardpoint.ent, player, "Hardpoint_StopProgressBar_Event" )
 						EmitSoundOnEntityOnlyToPlayer( hardpoint.ent, player, "Hardpoint_Amped_ProgressBar" )
