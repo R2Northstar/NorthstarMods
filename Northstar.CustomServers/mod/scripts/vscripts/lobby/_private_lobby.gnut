@@ -185,7 +185,7 @@ bool function ClientCommandCallback_PrivateMatchToggleSpectate( entity player, a
 	if ( GetGamemodeVarOrUseValue( file.mode, "max_teams", "2" ).tointeger() != 2 || !GetConVarBool( "ns_allow_spectators" ) || !ServerIsPrivateMatch() )
 		return true
 
-	player.SetPersistentVar( "privateMatchState", player.GetPersistentVarAsInt( "privateMatchState" ) == 0 ? 1 : 0 )
+	player.SetPersistentVar( "privateMatchState", !player.GetPersistentVarAsInt( "privateMatchState" ) ? 1 : 0 )
 	return true
 }
 
@@ -205,13 +205,6 @@ void function StartMatch( bool isAutostart = false )
 
 	while ( Time() < countdownEndTime )
 	{
-		// stop if the countdown's been cancelled
-		if ( file.startState != ePrivateMatchStartState.STARTING )
-		{
-			AllPlayersUnMuteAll()
-			return
-		}
-
 		if ( countdownEndTime - Time() < 10 && int( countdownEndTime - Time() ) != int( lastCountDown ) )
 		{
 			if ( countdownEndTime - Time() <= 2.0 )
@@ -224,6 +217,13 @@ void function StartMatch( bool isAutostart = false )
 		}
 
 		WaitFrame()
+
+		// stop if the countdown's been cancelled
+		if ( file.startState != ePrivateMatchStartState.STARTING )
+		{
+			AllPlayersUnMuteAll()
+			return
+		}
 	}
 
 	// if the playlist isn't private_match, IsPrivateMatch() will return false
@@ -252,6 +252,10 @@ void function RefreshPlayerTeams( bool rerandomize = false )
 {
 	int maxTeams = GetGamemodeVarOrUseValue( file.mode, "max_teams", "2" ).tointeger()
 	int maxPlayers = GetGamemodeVarOrUseValue( file.mode, "max_players", "12" ).tointeger()
+
+	if ( maxTeams != 2 )
+		foreach ( entity player in GetPlayerArray() )
+			player.SetPersistentVar( "privateMatchState", 0 )
 
 	// special case for situations where we wrongly assume ffa teams because there's 2 teams/2 players
 	if ( maxPlayers == maxTeams && maxTeams > 2 )

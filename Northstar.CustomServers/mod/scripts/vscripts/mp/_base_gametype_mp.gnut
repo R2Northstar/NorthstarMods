@@ -878,7 +878,7 @@ bool function RespawnTitanPilot( entity player )
 		return false
 	}
 
-	RespawnAsPilot( player )
+	RespawnAsPilot( player, spawnPoint )
 
 	return true
 }
