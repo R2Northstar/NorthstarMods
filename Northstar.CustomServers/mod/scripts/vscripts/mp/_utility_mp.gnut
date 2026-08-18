@@ -4,6 +4,13 @@ globalize_all_functions
 
 global const vector HIDDEN_AREA = < 9999, 9999, 0 >
 
+global enum WINLOSS_HISTORY
+{
+	LOSS,
+	WIN,
+	DRAW
+}
+
 struct
 {
 	array<void functionref( entity )> persistenceDisconnectCallbacks
@@ -521,4 +528,46 @@ void function AddXPCredits( entity player )
 
 	foreach ( string xpWeapon in shWeaponXP.weaponClassNames )
 		player.SetPersistentVar( GetItemPersistenceStruct( xpWeapon ) + ".previousWeaponXP", WeaponGetXP( player, xpWeapon ) )
+}
+
+void function UpdatePlayerWins( entity player )
+{
+	if ( IsPrivateMatch() )
+		return
+
+	int winLoss = WINLOSS_HISTORY.DRAW
+
+	if ( GetWinningTeam() != TEAM_UNASSIGNED )
+	{
+		if ( GetWinningTeam() == player.GetTeam() )
+		{
+			winLoss = WINLOSS_HISTORY.WIN
+
+			player.SetPersistentVar( "lastDailyMatchVictory", Daily_GetCurrentTime() )
+			player.SetPersistentVar( "winStreak", player.GetPersistentVarAsInt( "winStreak" ) + 1 )
+
+			int highestWinStreak = player.GetPersistentVarAsInt( "highestWinStreakEver" )
+
+			if ( highestWinStreak < player.GetPersistentVarAsInt( "winStreak" ) )
+				player.SetPersistentVar( "highestWinStreakEver", player.GetPersistentVarAsInt( "winStreak" ) )
+		}
+		else
+		{
+			winLoss = WINLOSS_HISTORY.LOSS
+
+			int highestWinStreak = player.GetPersistentVarAsInt( "highestWinStreakEver" )
+
+			if ( highestWinStreak < player.GetPersistentVarAsInt( "winStreak" ) )
+				player.SetPersistentVar( "highestWinStreakEver", player.GetPersistentVarAsInt( "winStreak" ) )
+
+			player.SetPersistentVar( "winStreak", 0 )
+		}
+	}
+
+	// shift stats by 1 to make room for new history
+	for ( int i = NUM_GAMES_TRACK_WINLOSS_HISTORY - 2; i >= 0; --i )
+		player.SetPersistentVar( format( "winLossHistory[%i]", ( i + 1 ) ), player.GetPersistentVar( format( "winLossHistory[%i]", i ) ) )
+
+	player.SetPersistentVar( "winLossHistory[0]", winLoss )
+	player.SetPersistentVar( "winLossHistorySize", min( NUM_GAMES_TRACK_WINLOSS_HISTORY, player.GetPersistentVar( "winLossHistorySize" ) + 1 ) )
 }

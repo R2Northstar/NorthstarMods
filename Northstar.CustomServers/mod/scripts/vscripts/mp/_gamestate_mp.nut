@@ -986,12 +986,14 @@ void function GameStateEnter_WinnerDetermined()
 	CreateLevelWinnerDeterminedMusicEvent()
 	thread ScoreEvent_MatchComplete( GetWinningTeam() )
 	RegisterMatchStats_OnMatchComplete()
-	PlayerWinStreak()
 
 	array<entity> players = GetPlayerArray()
 
 	foreach ( entity player in players )
+	{
+		UpdatePlayerWins( player )
 		PopulatePostgameData( player )
+	}
 
 	level.ui.penalizeDisconnect = false
 
@@ -2407,42 +2409,6 @@ int function GetMatchWinnerFromScore()
 	}
 
 	return bestTeam
-}
-
-void function PlayerWinStreak()
-{
-	if ( IsPrivateMatch() )
-		return
-
-	foreach ( entity player in GetPlayerArray() )
-	{
-		if ( GetWinningTeam() != TEAM_UNASSIGNED )
-		{
-			player.SetPersistentVar( "winStreakIsDraws", false )
-
-			if ( GetWinningTeam() == player.GetTeam() )
-			{
-				player.SetPersistentVar( "lastDailyMatchVictory", Daily_GetCurrentTime() )
-				player.SetPersistentVar( "winStreak", player.GetPersistentVarAsInt( "winStreak" ) + 1 )
-
-				int highestWinStreak = player.GetPersistentVarAsInt( "highestWinStreakEver" )
-
-				if ( highestWinStreak < player.GetPersistentVarAsInt( "winStreak" ) )
-					player.SetPersistentVar( "highestWinStreakEver", player.GetPersistentVarAsInt( "winStreak" ) )
-			}
-			else
-			{
-				int highestWinStreak = player.GetPersistentVarAsInt( "highestWinStreakEver" )
-
-				if ( highestWinStreak < player.GetPersistentVarAsInt( "winStreak" ) )
-					player.SetPersistentVar( "highestWinStreakEver", player.GetPersistentVarAsInt( "winStreak" ) )
-
-				player.SetPersistentVar( "winStreak", 0 )
-			}
-		}
-		else
-			player.SetPersistentVar( "winStreakIsDraws", true )
-	}
 }
 
 void function ClearWeapons()
