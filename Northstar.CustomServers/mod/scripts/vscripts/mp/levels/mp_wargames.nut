@@ -216,9 +216,9 @@ void function OnPrematchStart()
 			)
 		)
 
-		trackedEntities.append( SpawnSkitGuy( "npc_marvin", Vector( 2040, 2788, -1412 ), Vector( 0, 20, 0 ), "mv_idle_weld", -1.0, team ) )
+		trackedEntities.append( SpawnSkitGuy( "npc_marvin", Vector( -2113, 2911, -1412 ), Vector( 0, -20, 0 ), "mv_idle_weld", -1.0, team ) )
 
-		trackedEntities.append( SpawnSkitGuy( "npc_marvin", Vector( -2113, 2911, -1412 ), Vector( 0, 140, 0 ), "mv_idle_weld", 3.0, team ) )
+		trackedEntities.append( SpawnSkitGuy( "npc_marvin", Vector( -2040, 2788, -1412 ), Vector( 0, 140, 0 ), "mv_idle_weld", 3.0, team ) )
 
 		trackedEntities.append( SpawnSkitGuy( "npc_marvin", Vector( -2116, 2868, -1458 ), Vector( 0, 127, 0 ), "mv_turret_repair_A_idle", -1.0, team ) )
 
