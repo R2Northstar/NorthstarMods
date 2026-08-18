@@ -113,6 +113,40 @@ bool function ClientCommandCallback_PrivateMatchSetMode( entity player, array<st
 		if ( !NSIsPlayerLocalPlayer( player ) )
 			return true
 
+	// these modes are playlists and if the server is a private match and tries to use a playlist the playlist vars won't be set
+	array<string> nonPrivateMatchModes = [
+		"angelcity_247",
+		"amped_tacticals_aitdm",
+		"tactikill_aitdm",
+		"grapple_aitdm",
+		"phase_aitdm",
+		"spicy_aitdm",
+		"alts",
+		"turbo_lts",
+		"turbo_ttdm",
+		"attdm",
+		"tdm_arena_hardcore",
+		"tdm_arena_smr",
+		"ffa_arena_energy",
+		"hardpoint_twist",
+		"nitro_mixtape",
+		"nitro_ffa",
+		"ctf_lf",
+		"rocket_lf",
+		"holopilot_lf",
+		"titan_mfd",
+		// "anniversary_7th", gamemode vars aren't set
+		"fnf"
+	// "variety_pack" always aitdm
+	]
+
+	if ( nonPrivateMatchModes.contains( args[ 0 ] ) && ServerIsPrivateMatch() )
+	{
+		LogPrivateMatchChange( player, " attempted to set an non private match mode: ", args )
+		SendHudMessage( player, "Server is not a private match, set ns_is_private_match to false", -1, 0.4, 255, 255, 255, 255, 1.0, 3.0, 0.5 )
+		return true
+	}
+
 	if ( GetPrivateMatchModes().contains( args[ 0 ] ) )
 	{
 		LogPrivateMatchChange( player, " changed the mode to ", args )
