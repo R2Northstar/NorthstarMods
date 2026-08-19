@@ -213,9 +213,6 @@ void function UpdatePersistenceOnDisconnect( entity player )
 	SaveDateLoggedIn( player )
 	AddXPCredits( player )
 
-	if ( !player.GetPersistentVar( "isPostGameScoreboardValid" ) )
-		PopulatePostgameData( player )
-
 	foreach ( callbackFunc in file.persistenceDisconnectCallbacks )
 		callbackFunc( player )
 
@@ -231,9 +228,6 @@ void function RemoveFWBorder( entity border )
 {
 	if ( GameModeRemove( border ) )
 		return
-
-	if ( !border.HasKey( "gamemode_" + GAMETYPE ) )
-		border.Destroy()
 }
 
 void function SetupLiveFireMaps()

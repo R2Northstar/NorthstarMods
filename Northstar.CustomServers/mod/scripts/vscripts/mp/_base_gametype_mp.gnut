@@ -44,8 +44,6 @@ void function BaseGametype_Init_MPSP()
 	AddCallback_OnNPCKilled( CheckForAutoTitanDeath )
 	AddCallback_OnPlayerKilled( CheckForAutoTitanDeath )
 	AddCallback_OnPlayerAssist( PlayerAssistedKill )
-	AddCallback_OnTitanBecomesPilot( CheckGameStateForTitanEjection )
-	AddCallback_OnPlayerGetsNewPilotLoadout( CheckPlayerGetsNewLoadout )
 
 	RegisterSignal( "PlayerRespawnStarted" )
 	RegisterSignal( "KillCamOver" )
@@ -1119,48 +1117,6 @@ void function CheckForAutoTitanDeath( entity victim, entity attacker, var damage
 void function SetRecalculateRespawnAsTitanStartPointCallback( entity functionref( entity player, entity basePoint ) callbackFunc )
 {
 	file.recalculateRespawnAsTitanStartPointCallback = callbackFunc
-}
-
-void function CheckGameStateForPlayerMovement( entity player )
-{
-	if ( !IsAlive( player ) )
-		return
-
-	if ( GetGameState() == eGameState.WinnerDetermined || GetGameState() == eGameState.SwitchingSides || GetGameState() == eGameState.Postmatch )
-	{
-		if ( level.endOfRoundPlayerState == ENDROUND_FREEZE )
-			player.FreezeControlsOnServer()
-		else if ( level.endOfRoundPlayerState == ENDROUND_MOVEONLY )
-		{
-			player.DisableWeapon()
-			player.Server_TurnOffhandWeaponsDisabledOn()
-		}
-	}
-}
-
-void function CheckGameStateAfterSpawn_Threaded( entity player, float waitTime = 0.1 )
-{
-	player.EndSignal( "OnDestroy" )
-	wait waitTime
-	CheckGameStateForPlayerMovement( player )
-}
-
-void function CheckGameStateForTitanEjection( entity pilot, entity titan )
-{
-	thread CheckGameStateAfterSpawn_Threaded( pilot, 0.5 )
-}
-
-void function CheckPlayerGetsNewLoadout( entity player, PilotLoadoutDef loadout )
-{
-	thread CheckGameStateAfterSpawn_Threaded( player )
-
-	foreach ( entity weapon in player.GetMainWeapons() )
-	{
-		if ( weapon.GetWeaponClassName() == "mp_weapon_rocket_launcher" && !weapon.HasMod( "fast_lock" ) && GetCurrentPlaylistVarInt( "archer_fast_lock", 0 ) == 1 )
-			weapon.AddMod( "fast_lock" )
-		if ( weapon.GetWeaponClassName() == "mp_weapon_epg" && !weapon.HasMod( "jump_kit" ) && GetCurrentPlaylistVarInt( "epg_splash_push", 0 ) == 1 )
-			weapon.AddMod( "jump_kit" )
-	}
 }
 
 bool function ShouldEntTakeDamage_SPMP( entity ent, var damageInfo )

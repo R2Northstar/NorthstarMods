@@ -46,9 +46,9 @@ void function CaptureTheFlag_Init()
 	AddCallback_OnClientConnected( CTFInitPlayer )
 	AddCallback_OnClientDisconnected( CTFPlayerDisconnected )
 
-	AddCallback_GameStateEnter( eGameState.Prematch, CreateFlags )
 	AddCallback_GameStateEnter( eGameState.Epilogue, RemoveFlags )
 	AddCallback_GameStateEnter( eGameState.Playing, OnPlaying )
+	AddCallback_OnRoundEndCleanup( RemoveFlags )
 
 	AddCallback_OnTouchHealthKit( "item_flag", OnFlagCollected )
 
@@ -98,17 +98,6 @@ void function SwapTeam( entity spawnPoint )
 
 void function CreateFlags()
 {
-	if ( IsValid( file.imcFlagSpawn ) )
-	{
-		file.imcFlagSpawn.Destroy()
-		file.imcFlag.Destroy()
-	}
-	if ( IsValid( file.militiaFlagSpawn ) )
-	{
-		file.militiaFlagSpawn.Destroy()
-		file.militiaFlag.Destroy()
-	}
-
 	foreach ( entity spawn in GetEntArrayByClass_Expensive( "info_spawnpoint_flag" ) )
 	{
 		bool switchedSides = IsSwitchSidesBased() && HasSwitchedSides() != 0
@@ -195,6 +184,12 @@ void function RemoveFlags()
 
 void function RateSpawnpoints_CTF( int checkClass, array<entity> spawnpoints, int team, entity player )
 {
+	if ( GetGameState() < eGameState.Playing )
+	{
+		RateSpawnpoints_Generic( checkClass, spawnpoints, team, player )
+		return
+	}
+
 	vector allyFlagSpot
 	vector enemyFlagSpot
 	vector flagsMedianPosition
@@ -281,13 +276,15 @@ void function OnFriendlyNPCTitanSpawnThreaded( entity npc )
 
 void function OnPlaying()
 {
+	CreateFlags()
+
 	foreach ( entity player in GetPlayerArray() )
 		CTFInitPlayer( player )
 }
 
 void function CTFInitPlayer( entity player )
 {
-	if ( ( GetGameState() >= eGameState.Playing || GetGameState() == eGameState.SuddenDeath ) && GetCurrentPlaylistVarInt( "ctf_friendly_hightlights", 0 ) )
+	if ( GetGameState() >= eGameState.Playing && GetCurrentPlaylistVarInt( "ctf_friendly_hightlights", 0 ) )
 		Highlight_SetFriendlyHighlight( player, "sp_friendly_hero" )
 
 	if ( !GamePlayingOrSuddenDeath() )

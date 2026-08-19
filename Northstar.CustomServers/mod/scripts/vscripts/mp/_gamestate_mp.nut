@@ -968,7 +968,7 @@ void function GameStateEnter_WinnerDetermined()
 			{
 				ScreenFade( player, 0, 0, 0, 255, GetWinnerDeterminedWait() - CLEAR_PLAYERS_BUFFER, 0, FFADE_OUT | FFADE_STAYOUT )
 				SetPlayerEliminated( player )
-				CheckGameStateForPlayerMovement( player )
+				PlayerEnterEndRoundState( player )
 			}
 
 			if ( WillShowRoundWinningKillReplay() )
@@ -1115,7 +1115,7 @@ void function GameStateEnter_SwitchingSides()
 
 		SetPlayerEliminated( player )
 		ScreenFade( player, 0, 0, 0, 255, SWITCHING_SIDES_DELAY - CLEAR_PLAYERS_BUFFER, 0, FFADE_OUT | FFADE_STAYOUT )
-		CheckGameStateForPlayerMovement( player )
+		PlayerEnterEndRoundState( player )
 		UnMuteAll( player )
 
 		// Only mute halftime if we've already shown our kill replay or we aren't going to show it.
@@ -2286,7 +2286,7 @@ float function GetSwitchingSidesWait()
 {
 	float waitTime = SWITCHING_SIDES_DELAY + CLEAR_PLAYERS_BUFFER
 
-	if ( !IsRoundBased() || WillShowRoundWinningKillReplay() )
+	if ( WillShowRoundWinningKillReplay() )
 		waitTime = SWITCHING_SIDES_DELAY + ROUND_WINNING_KILL_REPLAY_TOTAL_LENGTH + CLEAR_PLAYERS_BUFFER
 
 	return waitTime
@@ -2448,4 +2448,25 @@ bool function IsWinnerDeterminedPlayable()
 		return ShouldStopPlayingRounds()
 
 	return true
+}
+
+void function PlayerEnterEndRoundState( entity player )
+{
+	switch ( level.endOfRoundPlayerState )
+	{
+		case ENDROUND_MOVEONLY:
+			TakeAmmoFromPlayer( player )
+			break
+
+		case ENDROUND_FREE:
+			break
+
+		case ENDROUND_FREEZE:
+			player.FreezeControlsOnServer()
+			break
+
+		default:
+			player.FreezeControlsOnServer()
+			break
+	}
 }
