@@ -316,8 +316,6 @@ bool function ClientCommandCallback_SetPersistentLoadoutValue( entity player, ar
 
 	SetPersistentLoadoutValue( player, args0, args1int, args2, val )
 
-	UnlockAchievement( player, achievements.CUSTOMIZE_LOADOUT )
-
 	return true
 }
 
