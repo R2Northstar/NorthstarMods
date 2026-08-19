@@ -130,6 +130,8 @@ void function CreateWaveSpawnDropship( int team )
 	ship.SetInvulnerable()
 	ship.SetNoTarget( true )
 
+	HideName( ship )
+
 	AddAnimEvent( ship, "dropship_deploy", CleanupWaveSpawnDropship )
 
 	PlayerSpawnDropship_RunSpawnCallbacks( ship, anim )

@@ -228,6 +228,11 @@ void function RemoveFWBorder( entity border )
 {
 	if ( GameModeRemove( border ) )
 		return
+
+	string gameMode = GetSpawnpointGamemodeOverride()
+
+	if ( !border.HasKey( "gamemode_" + gameMode ) )
+		border.Destroy()
 }
 
 void function SetupLiveFireMaps()
