@@ -143,8 +143,7 @@ void function OnPlayerRespawned( entity player )
 	if ( !IsValidPlayer( player ) )
 		return
 
-	TakeWeaponsForArray( player, player.GetMainWeapons() )
-	TakeWeaponsForArray( player, player.GetOffhandWeapons() )
+	TakeAllWeapons( player )
 
 	array<string> mods = [ "sns", "pas_fast_ads", "tactical_cdr_on_kill", "pas_run_and_gun", "pas_fast_swap" ]
 	player.GiveWeapon( "mp_weapon_wingman_n", mods )

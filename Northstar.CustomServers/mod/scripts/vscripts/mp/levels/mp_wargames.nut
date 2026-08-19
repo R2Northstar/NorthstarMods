@@ -378,7 +378,7 @@ entity function SpawnSkitGuy( string entityclass, vector origin, vector angles, 
 		guy.SetValueForModelKey( model )
 		guy.SetModel( model )
 
-		TakeWeaponsForArray( guy, guy.GetMainWeapons() )
+		TakeAllWeapons( guy )
 
 		if ( weapon.len() )
 			guy.GiveWeapon( weapon )
@@ -388,7 +388,8 @@ entity function SpawnSkitGuy( string entityclass, vector origin, vector angles, 
 		guy = CreateNPCTitan( entityclass, team, origin, angles )
 
 		DispatchSpawn( guy )
-		TakeWeaponsForArray( guy, guy.GetMainWeapons() )
+
+		TakeAllWeapons( guy )
 		PlayFXOnEntity( $"xo_cockpit_dlight", guy, "HIJACK" )
 	}
 

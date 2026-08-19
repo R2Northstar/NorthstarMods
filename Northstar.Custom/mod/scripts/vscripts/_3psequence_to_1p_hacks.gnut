@@ -59,7 +59,7 @@ Forced1PSequenceData function FirstPersonSequenceForce1P( FirstPersonSequenceStr
 
 	NPC_NoTarget( ownerProxy )
 	SetTeam( ownerProxy, player.GetTeam() )
-	TakeWeaponsForArray( ownerProxy, ownerProxy.GetMainWeapons() )
+	TakeAllWeapons( ownerProxy )
 
 	ownerProxy.SetSkin( player.GetSkin() )
 	ownerProxy.SetCamo( player.GetCamo() )
@@ -125,7 +125,7 @@ Forced1PSequenceData function FirstPersonSequenceForce1P( FirstPersonSequenceStr
 
 	NPC_NoTarget( thirdPersonProxy )
 	SetTeam( thirdPersonProxy, player.GetTeam() )
-	TakeWeaponsForArray( thirdPersonProxy, thirdPersonProxy.GetMainWeapons() )
+	TakeAllWeapons( thirdPersonProxy )
 
 	thirdPersonProxy.SetSkin( player.GetSkin() )
 	thirdPersonProxy.SetCamo( player.GetCamo() )
