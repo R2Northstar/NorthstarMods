@@ -1413,7 +1413,7 @@ bool function IsRoundBasedGameOver()
 	{
 		if ( !GetTeamPlayerCount( TEAM_MILITIA ) )
 			defaultWinner = TEAM_IMC
-		else if ( !GetTeamPlayerCount( TEAM_IMC ) && GetCurrentPlaylistVarInt( "max_teams", 2 ) != 1 )
+		else if ( !GetTeamPlayerCount( TEAM_IMC ) && !IsSingleTeamMode() )
 			defaultWinner = TEAM_MILITIA
 	}
 	else
