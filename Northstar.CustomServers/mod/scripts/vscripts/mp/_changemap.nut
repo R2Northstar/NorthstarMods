@@ -7,10 +7,12 @@ void function CodeCallback_MatchIsOver()
 	else
 		SetUIVar( level, "putPlayerInMatchmakingAfterDelay", false )
 
-	array<entity> players = GetPlayerArray()
+	#if MP
+		array<entity> players = GetPlayerArray()
 
-	foreach ( entity player in players )
-		AddXPCredits( player )
+		foreach ( entity player in players )
+			AddXPCredits( player )
+	#endif
 
 	if ( ShouldReturnToLobby() )
 	{
