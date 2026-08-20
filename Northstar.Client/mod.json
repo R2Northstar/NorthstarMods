@@ -161,6 +161,10 @@
 			}
 		},
 		{
+			"Path": "ui/_atlas_announcements.nut",
+			"RunOn": "UI"
+    },
+    {
 			"Path": "ui/ns_client_mod_settings.gnut",
 			"RunOn": "UI",
 			"UICallback":{
