@@ -850,8 +850,7 @@ void function FW_SpawnDroppodSquad( CampSiteStruct campsite, string aiType )
 	wait RandomFloat( 1.0 )
 
 	AiGameModes_SpawnDropPod(
-		spawnpoint.GetOrigin(),
-		spawnpoint.GetAngles(),
+		spawnpoint,
 		FW_AI_TEAM,
 		aiType,
 		void function( array<entity> guys ) : ( campsite, aiType )
@@ -891,8 +890,7 @@ void function FW_SpawnReaper( CampSiteStruct campsite )
 	wait RandomFloat( 1.0 )
 
 	AiGameModes_SpawnReaper(
-		spawnpoint.GetOrigin(),
-		spawnpoint.GetAngles(),
+		spawnpoint,
 		FW_AI_TEAM,
 		"npc_super_spectre_aitdm",
 		void function( entity reaper ) : ( campsite )

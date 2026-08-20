@@ -49,7 +49,6 @@ Naciśnij Tak jeżeli wyrażasz zgodę. Wybór może zostać zmieniony w menu Mo
 		"MODE_SETTING_CATEGORY_RIFF" "Modyfikatory rozgrywki"
 		"MODE_SETTING_CATEGORY_MATCH" "Mecz"
 
-		"classic_mp" "Klasyczny tryb wieloosobowy"
 		"run_epilogue" "Epilog"
 		"scorelimit" "Limit wyniku"
 		"roundscorelimit" "Limit wyniku (na rundę)"
@@ -223,7 +222,6 @@ Naciśnij Tak jeżeli wyrażasz zgodę. Wybór może zostać zmieniony w menu Mo
 		"custom_air_accel_pilot" "Air Acceleration"
 		"no_pilot_collision" "Kolidowanie Pilotów"
 		"promode_enable" "Bronie trybu pro"
-		"fp_embark_enabled" "Pierwszoosobowe wsiadanie/egzekucje"
 		"classic_rodeo" "Klasyczne Rodeo"
 		"oob_timer_enabled" "Licznik czasu poza granicami mapy"
 		"riff_instagib" "Instagib Mode"

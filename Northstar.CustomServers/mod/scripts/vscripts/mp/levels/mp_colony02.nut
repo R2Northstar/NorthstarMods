@@ -3,6 +3,11 @@ global function CodeCallback_MapInit
 void function CodeCallback_MapInit()
 {
 	AddCallback_EntitiesDidLoad( CreateEvacNodes )
+	AddSpawnCallback( "sky_camera", FixSkycamFog )
+
+	// Load Frontier Defense Data
+	if ( GameRules_GetGameMode() == FD )
+		initFrontierDefenseData()
 }
 
 void function CreateEvacNodes()
@@ -51,4 +56,10 @@ void function CreateEvacNodes()
 
 		spec_cam.DisableHibernation()
 	}
+}
+
+void function FixSkycamFog( entity skycam )
+{
+	if ( skycam.GetTargetName() == "skybox_cam_level" )
+		skycam.kv.useworldfog = 1
 }

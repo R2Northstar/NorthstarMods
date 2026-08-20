@@ -19,7 +19,6 @@ global function CodeCallback_CheckPassThroughAddsMods
 global function SetTitanMeterGainScale
 
 #if MP
-	global function CodeCallback_OnServerAnimEvent
 	global function CodeCallback_WeaponDropped
 	global function AddCallback_OnWeaponDropped
 #endif

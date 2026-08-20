@@ -1,4 +1,4 @@
-﻿"lang"
+"lang"
 {
 	"Language" "english"
 	"Tokens"
@@ -93,5 +93,7 @@
 		"WPN_SHOTGUN_DBLBARREL_SHORT" "TWIN-B"
 		"WPN_SHOTGUN_DBLBARREL_DESC" "Short-barreled Shotgun"
 		"WPN_SHOTGUN_DBLBARREL_LONGDESC" "Short Double Barreled Shotgun"
+
+		"pilot_battery_inventory_size" "Pilot Battery Inventory Size"
 	}
 }
