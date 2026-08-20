@@ -121,7 +121,7 @@ void function GamemodeAt_Init()
 	// Initilaze gamemode entities
 	AddCallback_EntitiesDidLoad( OnEntitiesDidLoad )
 
-	level.modifyAISlots[ AT_AI_TEAM ] = AI_HARD_LIMIT
+	level.modifyAISlots[ AT_AI_TEAM ] = 99
 }
 
 void function RateSpawnpoints_AT( int checkclass, array<entity> spawnpoints, int team, entity player )
@@ -1426,7 +1426,7 @@ void function AT_SpawnDroppodSquad( AT_WaveOrigin campData, int spawnId, string 
 	wait RandomFloat( 1.0 )
 
 	thread AT_HandleSquadSpawn(
-		Spawn_TrackedDropPodSquad( aiType, AT_AI_TEAM, 4, spawnpoint, "", eDropPodFlag.DISSOLVE_AFTER_DISEMBARKS ),
+		Spawn_TrackedDropPodSquad( aiType, AT_AI_TEAM, SQUAD_SIZE, spawnpoint, "", eDropPodFlag.DISSOLVE_AFTER_DISEMBARKS ),
 		campData,
 		spawnId,
 		aiType,

@@ -188,20 +188,18 @@ void function AddPrivateMatchModeSettingEnumUIHack( string category, string play
 	AddPrivateMatchModeSettingEnum( category, playlistVar, enums, defaultValue, localizedName )
 }
 
-// Sorts specific gamemode settings to the end of the list
-int function SortMatchSettings( string categoryA, string categoryB )
-{
-	if ( StartsWith( categoryA, "#PL_" ) || StartsWith( categoryA, "#GAMEMODE_" ) )
-		return -1
-	else if ( StartsWith( categoryB, "#PL_" ) || StartsWith( categoryB, "#GAMEMODE_" ) )
-		return 1
+#if !SERVER
+	// Sorts specific gamemode settings to the end of the list
+	int function SortMatchSettings( string categoryA, string categoryB )
+	{
+		if ( StartsWith( categoryA, "#PL_" ) || StartsWith( categoryA, "#GAMEMODE_" ) )
+			return -1
+		else if ( StartsWith( categoryB, "#PL_" ) || StartsWith( categoryB, "#GAMEMODE_" ) )
+			return 1
 
-	#if !SERVER
 		return SortStringAlphabetize( Localize( categoryA ), Localize( categoryB ) )
-	#endif
-
-	return 1
-}
+	}
+#endif
 
 array<string> function GetPrivateMatchSettingCategories( bool uiAllowAllModeCategories = false )
 {
@@ -217,7 +215,10 @@ array<string> function GetPrivateMatchSettingCategories( bool uiAllowAllModeCate
 		categories.append( k )
 	}
 
-	categories.sort( SortMatchSettings )
+	#if !SERVER
+		categories.sort( SortMatchSettings )
+	#endif
+
 	return categories
 }
 
