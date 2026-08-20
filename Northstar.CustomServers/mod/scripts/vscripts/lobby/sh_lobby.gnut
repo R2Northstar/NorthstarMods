@@ -192,10 +192,15 @@ void function AddPrivateMatchModeSettingEnumUIHack( string category, string play
 int function SortMatchSettings( string categoryA, string categoryB )
 {
 	if ( StartsWith( categoryA, "#PL_" ) || StartsWith( categoryA, "#GAMEMODE_" ) )
-		return 1
+		return -1
 	else if ( StartsWith( categoryB, "#PL_" ) || StartsWith( categoryB, "#GAMEMODE_" ) )
-		return 0
-	return 0
+		return 1
+
+	#if !SERVER
+		return SortStringAlphabetize( Localize( categoryA ), Localize( categoryB ) )
+	#endif
+
+	return 1
 }
 
 array<string> function GetPrivateMatchSettingCategories( bool uiAllowAllModeCategories = false )
@@ -203,9 +208,9 @@ array<string> function GetPrivateMatchSettingCategories( bool uiAllowAllModeCate
 	array<string> categories
 	foreach ( string k, v in file.customMatchSettingsByCategory )
 	{
-		#if UI
-			bool differentPlaylist = StartsWith( k, "#PL_" ) && k.slice( 4 ) != PrivateMatch_GetSelectedMode()
-			bool differentGamemode = StartsWith( k, "#GAMEMODE_" ) && k.slice( 10 ) != PrivateMatch_GetSelectedMode()
+		#if !CLIENT
+			bool differentPlaylist = StartsWith( k, "#PL_" ) && k.slice( "#PL_".len() ) != PrivateMatch_GetSelectedMode()
+			bool differentGamemode = StartsWith( k, "#GAMEMODE_" ) && k.slice( "#GAMEMODE_".len() ) != PrivateMatch_GetSelectedMode()
 			if ( differentPlaylist || differentGamemode )
 				continue
 		#endif

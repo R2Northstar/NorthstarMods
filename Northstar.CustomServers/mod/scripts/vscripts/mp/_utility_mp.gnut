@@ -2,8 +2,6 @@ untyped
 
 globalize_all_functions
 
-global const vector HIDDEN_AREA = < 9999, 9999, 0 >
-
 global enum WINLOSS_HISTORY
 {
 	LOSS,
@@ -384,10 +382,7 @@ void function ClearAndKillChildren( entity parentEnt, array<entity> excludedEnti
 			if ( childEnt.IsPlayer() )
 			{
 				if ( IsAlive( childEnt ) )
-				{
-					childEnt.SetOrigin( HIDDEN_AREA )
 					childEnt.Die( svGlobal.worldspawn, svGlobal.worldspawn, { damageSourceId = eDamageSourceId.round_end } )
-				}
 			}
 			else
 			{

@@ -136,6 +136,8 @@ void function GamemodeFD_Init()
 	AddCallback_GameStateEnter( eGameState.PickLoadout, FD_PickLoadout )
 	AddCallback_GameStateEnter( eGameState.Prematch, FD_createHarvester )
 	AddCallback_GameStateEnter( eGameState.Playing, StartFDMatch )
+	AddCallback_GameStateEnter( eGameState.WinnerDetermined, FD_OnWinnerDetermined )
+	AddGamemodeGetWinnerDeterminedWait( FD_WinnerDeterminedWait )
 	AddCallback_OnRoundEndCleanup( FD_WaveCleanup )
 	AddCallback_OnClientConnected( GamemodeFD_InitPlayer )
 	AddCallback_OnClientDisconnected( OnPlayerDisconnectedOrDestroyed )
@@ -586,6 +588,29 @@ void function StartFDMatch()
 	thread mainGameLoop()
 }
 
+void function FD_OnWinnerDetermined()
+{
+	if ( !RoundScoreLimit_Complete() )
+		foreach ( entity player in GetPlayerArray() )
+			thread Coop_DelayedWinnerDetermined( player )
+}
+
+float function FD_WinnerDeterminedWait()
+{
+	return FD_DEFEAT_ANNOUNCEMENT_LENGTH
+}
+
+void function Coop_DelayedWinnerDetermined( entity player )
+{
+	player.EndSignal( "OnDestroy" )
+
+	float fadeTime = 0.35
+
+	wait GetWinnerDeterminedWait() - fadeTime - CLEAR_PLAYERS_BUFFER
+
+	ScreenFade( player, 0, 2, 0, 255, fadeTime, GetWinnerDeterminedWait(), FFADE_OUT | FFADE_STAYOUT ) // the next fade up will cancel the long hold time
+}
+
 void function mainGameLoop()
 {
 	startHarvester()
@@ -970,7 +995,7 @@ bool function runWave( int waveIndex, bool shouldDoBuyTime )
 			PlayFactionDialogueToTeam( "fd_matchDefeat", TEAM_MILITIA, true )
 		}
 
-		wait 8
+		wait GetWinnerDeterminedWait()
 
 		if ( FD_PlayersHaveRestartsLeft() )
 		{

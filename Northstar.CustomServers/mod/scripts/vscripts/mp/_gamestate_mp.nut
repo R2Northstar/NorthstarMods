@@ -12,6 +12,7 @@ global function SetThreeMinuteMusicID
 global function SetPlayThreeMinuteMusicCheck
 global function SetEpilogueEliminationBased
 global function SetSwitchSidesBased
+global function AddGamemodeGetWinnerDeterminedWait
 global function SetForceNoMoreRounds
 global function SetForceNoFinalRoundDraws
 global function SetShouldUseRoundWinningKillReplay
@@ -60,6 +61,7 @@ struct
 	bool endingMatch = false
 	float timeLimitOverride = -1
 	bool shouldPlayThreeMinuteMusic = false
+	float functionref() gamemodeWinnerDeterminedWait
 	int threeMinuteMusicID = eMusicPieceID.GAMEMODE_1
 	bool functionref( int, float ) shouldPlayThreeMinuteMusicCheck = null
 	bool epilogueEliminationBased = true
@@ -552,6 +554,11 @@ void function SetSwitchSidesBased( bool switchSides )
 	level.nv.switchedSides = switchSides ? 0 : null
 }
 
+void function AddGamemodeGetWinnerDeterminedWait( float functionref() value )
+{
+	file.gamemodeWinnerDeterminedWait = value
+}
+
 void function SetForceNoMoreRounds( bool state )
 {
 	Assert( IsRoundBased() )
@@ -780,6 +787,8 @@ void function GameStateEnter_Prematch()
 			thread ObserverThread( player )
 		else
 			ClearPlayerEliminated( player )
+
+		UnMuteAll( player )
 	}
 
 	if ( !GetClassicMPMode() )
@@ -970,6 +979,9 @@ void function GameStateEnter_WinnerDetermined()
 				SetPlayerEliminated( player )
 				PlayerEnterEndRoundState( player )
 			}
+
+			if ( ShouldClearPlayersInWinnerDetermined() )
+				delaythread( GetWinnerDeterminedWait() - CLEAR_PLAYERS_BUFFER ) AllPlayersMuteAll()
 
 			if ( WillShowRoundWinningKillReplay() )
 				thread RoundWinningKillReplay()
@@ -1352,8 +1364,6 @@ void function ClearPlayers()
 		PlayerEarnMeter_Reset( player )
 		ClearTitanAvailable( player )
 		SetPlayerEliminated( player )
-
-		player.SetOrigin( HIDDEN_AREA )
 
 		if ( IsAlive( player ) )
 			player.Die( svGlobal.worldspawn, svGlobal.worldspawn, { damageSourceId = eDamageSourceId.round_end } )
@@ -2165,25 +2175,28 @@ bool function ShouldClearPlayersInWinnerDetermined()
 
 float function GetWinnerDeterminedWait()
 {
+	if ( file.gamemodeWinnerDeterminedWait != null )
+		return file.gamemodeWinnerDeterminedWait()
+
 	if ( IsRoundBased() )
 	{
 		if ( WillShowRoundWinningKillReplay() )
 		{
 			if ( RoundScoreLimit_Complete() )
-				return GAME_WINNER_DETERMINED_FINAL_ROUND_WITH_ROUND_WINNING_KILL_REPLAY_WAIT + CLEAR_PLAYERS_BUFFER
+				return GAME_WINNER_DETERMINED_FINAL_ROUND_WITH_ROUND_WINNING_KILL_REPLAY_WAIT
 			else
-				return GAME_WINNER_DETERMINED_ROUND_WAIT_WITH_ROUND_WINNING_KILL_REPLAY_WAIT + CLEAR_PLAYERS_BUFFER
+				return GAME_WINNER_DETERMINED_ROUND_WAIT_WITH_ROUND_WINNING_KILL_REPLAY_WAIT
 		}
 		else if ( RoundScoreLimit_Complete() )
-			return GAME_WINNER_DETERMINED_FINAL_ROUND_WAIT + CLEAR_PLAYERS_BUFFER
+			return GAME_WINNER_DETERMINED_FINAL_ROUND_WAIT
 		else
-			return GAME_WINNER_DETERMINED_ROUND_WAIT + CLEAR_PLAYERS_BUFFER
+			return GAME_WINNER_DETERMINED_ROUND_WAIT
 	}
 
 	if ( WillShowRoundWinningKillReplay() )
-		return GAME_WINNER_DETERMINED_FINAL_ROUND_WITH_ROUND_WINNING_KILL_REPLAY_WAIT + CLEAR_PLAYERS_BUFFER
+		return GAME_WINNER_DETERMINED_FINAL_ROUND_WITH_ROUND_WINNING_KILL_REPLAY_WAIT
 
-	return GAME_WINNER_DETERMINED_WAIT + CLEAR_PLAYERS_BUFFER
+	return GAME_WINNER_DETERMINED_WAIT
 }
 
 bool function WillShowRoundWinningKillReplay()
@@ -2284,10 +2297,10 @@ void function RoundWinningKillReplay() // Only Tested in MFD Pro for now! SHould
 
 float function GetSwitchingSidesWait()
 {
-	float waitTime = SWITCHING_SIDES_DELAY + CLEAR_PLAYERS_BUFFER
+	float waitTime = SWITCHING_SIDES_DELAY
 
 	if ( WillShowRoundWinningKillReplay() )
-		waitTime = SWITCHING_SIDES_DELAY + ROUND_WINNING_KILL_REPLAY_TOTAL_LENGTH + CLEAR_PLAYERS_BUFFER
+		waitTime = SWITCHING_SIDES_DELAY + ROUND_WINNING_KILL_REPLAY_TOTAL_LENGTH
 
 	return waitTime
 }

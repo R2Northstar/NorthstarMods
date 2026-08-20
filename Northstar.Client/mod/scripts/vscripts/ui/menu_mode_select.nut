@@ -16,9 +16,6 @@ global enum eModeMenuModeCategory
 	SIZE
 }
 
-// List of blocked modes due to them being unfinished
-const array<string> blockedModes = []
-
 struct ListEntry_t
 {
 	string mode
@@ -702,9 +699,6 @@ void function UpdateVisibleModes()
 		{
 			Hud_SetEnabled( button, true )
 			SetButtonRuiText( button, mode )
-
-			if ( blockedModes.contains( file.sortedModes[ modeIndex ] ) )
-				Hud_SetLocked( button, true )
 
 			Buttons.append( button )
 		}

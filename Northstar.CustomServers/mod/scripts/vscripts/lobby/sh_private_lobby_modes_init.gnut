@@ -2,13 +2,23 @@ global function PrivateMatchModesInit
 
 void function PrivateMatchModesInit()
 {
+	#if VANILLA
+		AddPrivateMatchModeSettingEnum(
+			"#MODE_SETTING_CATEGORY_MATCH",
+			"match_visibility",
+			[ "#MATCH_VISIBILITY_LOCKED", "#MATCH_VISIBILITY_LOCKED", "#MATCH_VISIBILITY_PRIVATE" ],
+			"2",
+			"#PM_MATCH_VISIBILITY"
+		)
+	#endif
+
 	// match settings
 	AddPrivateMatchModeSettingEnum( "#MODE_SETTING_CATEGORY_MATCH", "classic_mp", [ "#SETTING_DISABLED", "#SETTING_ENABLED" ], "1" )
 	AddPrivateMatchModeSettingEnum( "#MODE_SETTING_CATEGORY_MATCH", "run_intro", [ "#SETTING_DISABLED", "#SETTING_ENABLED" ], "1" )
 	AddPrivateMatchModeSettingEnum( "#MODE_SETTING_CATEGORY_MATCH", "run_epilogue", [ "#SETTING_DISABLED", "#SETTING_ENABLED" ], "1" )
-	AddPrivateMatchModeSettingArbitrary( "#MODE_SETTING_CATEGORY_MATCH", "scorelimit", "5" )
+	AddPrivateMatchModeSettingArbitrary( "#MODE_SETTING_CATEGORY_MATCH", "scorelimit", "650" )
 	AddPrivateMatchModeSettingArbitrary( "#MODE_SETTING_CATEGORY_MATCH", "roundscorelimit", "0" )
-	AddPrivateMatchModeSettingArbitrary( "#MODE_SETTING_CATEGORY_MATCH", "timelimit", "12" )
+	AddPrivateMatchModeSettingArbitrary( "#MODE_SETTING_CATEGORY_MATCH", "timelimit", "15" )
 	AddPrivateMatchModeSettingArbitrary( "#MODE_SETTING_CATEGORY_MATCH", "roundtimelimit", "0" )
 	AddPrivateMatchModeSettingArbitrary( "#MODE_SETTING_CATEGORY_MATCH", "respawnprotection", "0.0" )
 	AddPrivateMatchModeSettingEnum( "#MODE_SETTING_CATEGORY_MATCH", "pick_loadout_every_round", [ "#SETTING_DISABLED", "#SETTING_ENABLED" ], "1" )

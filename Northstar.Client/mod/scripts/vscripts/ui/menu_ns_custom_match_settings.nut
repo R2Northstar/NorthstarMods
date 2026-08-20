@@ -72,23 +72,16 @@ void function OnNorthstarCustomMatchSettingsMenuOpened()
 		Hud_SetEnabled( textPanels[ i ], true )
 		Hud_SetVisible( textPanels[ i ], true )
 
-		// manually resolve default gamemode/playlist vars since game won't do it for us if we aren't using GetCurrentPlaylistVar
-		string gamemode = PrivateMatch_GetSelectedMode()
+		string playlistVar = GetGamemodeVarOrUseValue( PrivateMatch_GetSelectedMode(), setting.playlistVar, setting.defaultValue )
+		int numPlaylistOverrides = GetPlaylistVarOverridesCount()
 
-		try
+		for ( int varIdx = 0; varIdx < numPlaylistOverrides; ++varIdx )
 		{
-			if ( gamemode != "speedball" ) // hack since lf is weird
-				gamemode = GetPlaylistGamemodeByIndex( gamemode, 0 )
-		}
-		catch ( error )
-		{
-		}
+			string varName = GetPlaylistVarOverrideNameByIndex( varIdx )
 
-		string gamemodeVar = GetGamemodeVarOrUseValue( PrivateMatch_GetSelectedMode(), setting.playlistVar, setting.defaultValue )
-		string playlistVar = GetPlaylistVarOrUseValue( PrivateMatch_GetSelectedMode(), setting.playlistVar, setting.defaultValue )
-
-		if ( playlistVar != gamemodeVar && playlistVar == setting.defaultValue )
-			playlistVar = gamemodeVar
+			if ( setting.playlistVar == varName )
+				playlistVar = GetCurrentPlaylistVarString( setting.playlistVar, playlistVar )
+		}
 
 		if ( setting.isEnumSetting )
 		{

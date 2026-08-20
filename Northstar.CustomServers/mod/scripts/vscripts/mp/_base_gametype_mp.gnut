@@ -358,6 +358,7 @@ void function CodeCallback_OnPlayerRespawned( entity player )
 	thread TryGameModeAnnouncement( player )
 	ClearLastAttacker( player ) // so dying to anything doesn't credit the same attacker after respawning
 	ClearPlayerEliminated( player )
+	UnMuteAll( player )
 }
 
 /*
