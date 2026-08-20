@@ -438,6 +438,12 @@ void function MeleeThread_AtlasVsTitanShort( SyncedMelee action, entity attacker
 
 void function MeleeThread_StryderVsTitan( SyncedMelee action, entity attacker, entity target )
 {
+	if ( !IsAlive( attacker ) )
+		return
+
+	if ( !IsAlive( target ) )
+		return
+
 	table e
 	e.gib <- true
 	e.attackerAnimation1p <- "strypov_melee_sync_frontkill"
@@ -454,6 +460,12 @@ void function MeleeThread_StryderVsTitan( SyncedMelee action, entity attacker, e
 
 void function MeleeThread_AtlasVsTitan( SyncedMelee action, entity attacker, entity target )
 {
+	if ( !IsAlive( attacker ) )
+		return
+
+	if ( !IsAlive( target ) )
+		return
+
 	table e
 	e.gib <- false
 	e.attackerAnimation1p <- "atpov_melee_sync_frontkill"
@@ -952,6 +964,12 @@ function MeleeAnimThrow( attacker, target, throwDuration )
 // /////////////////////////////////////
 void function MeleeThread_OgreVsTitan( SyncedMelee action, entity attacker, entity target )
 {
+	if ( !IsAlive( attacker ) )
+		return
+
+	if ( !IsAlive( target ) )
+		return
+
 	string attackerAnimation1p = "ogpov_melee_armrip_attacker"
 	string attackerAnimation3p = "og_melee_armrip_attacker"
 	string targetAnimation1p = "ogpov_melee_armrip_victim"
