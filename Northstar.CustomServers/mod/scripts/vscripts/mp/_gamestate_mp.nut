@@ -91,13 +91,13 @@ void function GameState_Init_MP()
 
 void function GameEndTimeVarChanged()
 {
-	if ( GetGameState() <= eGameState.SuddenDeath )
+	if ( GamePlayingOrSuddenDeath() )
 		file.timeLimitOverride = ( ( expect float( GetServerVar( "gameEndTime" ) ) - Time() ) - ( expect float( GetServerVar( "gameStartTime" ) ) - Time() ) ) / 60.0
 }
 
 void function RoundEndTimeVarChanged()
 {
-	if ( GetGameState() <= eGameState.SuddenDeath )
+	if ( GamePlayingOrSuddenDeath() )
 		file.timeLimitOverride =
 			( ( expect float( GetServerVar( "roundEndTime" ) ) - Time() ) - ( expect float( GetServerVar( "roundStartTime" ) ) - Time() ) ) / 60.0
 }
@@ -854,8 +854,7 @@ void function GameStateEnter_Playing()
 		{
 			float timeLimit = GetRoundTimeLimit_ForGameMode() * 60.0
 
-			if ( timeLimit > 0.0 )
-				SetRoundEndTime( timeLimit )
+			SetRoundEndTime( timeLimit )
 		}
 	}
 	else
@@ -864,10 +863,7 @@ void function GameStateEnter_Playing()
 		{
 			float timeLimit = GetTimeLimit_ForGameMode() * 60.0
 
-			if ( timeLimit > 0.0 )
-				SetGameEndTime( timeLimit )
-			else
-				Assert( false, "TimeLimit is enabled but TimeLimitFromPlaylist is 0" )
+			SetGameEndTime( timeLimit )
 		}
 	}
 
