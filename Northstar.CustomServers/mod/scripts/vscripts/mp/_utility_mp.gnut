@@ -1,9 +1,25 @@
-global function Utility_MP_Init
-global function ClientCommand_OnDevnetBugScreenshot
-global function SafeForTitanFall
+untyped
+
+globalize_all_functions
+
+global enum WINLOSS_HISTORY
+{
+	LOSS,
+	WIN,
+	DRAW
+}
+
+struct
+{
+	array<void functionref( entity )> persistenceDisconnectCallbacks
+} file
 
 void function Utility_MP_Init()
 {
+	#if DEV
+		AddClientCommandCallback( "ForceMyTeamWin", ForceMyTeamWin )
+		AddClientCommandCallback( "ForceMyTeamLose", ForceMyTeamLose )
+	#endif
 }
 
 bool function ClientCommand_OnDevnetBugScreenshot( entity player, array<string> args )
@@ -14,4 +30,538 @@ bool function ClientCommand_OnDevnetBugScreenshot( entity player, array<string> 
 bool function SafeForTitanFall( vector dropPoint )
 {
 	return true
+}
+
+bool function ForceMyTeamWin( entity player, array<string> args )
+{
+	if ( IsFFAGame() )
+		return false
+
+	ForceTeamWin( player.GetTeam() )
+
+	return true
+}
+
+bool function ForceMyTeamLose( entity player, array<string> args )
+{
+	if ( IsFFAGame() )
+		return false
+
+	ForceTeamWin( GetOtherTeam( player.GetTeam() ) )
+
+	return true
+}
+
+void function ForceMatchEnd()
+{
+	printt( "Match ended with ForceMatchEnd()" )
+
+	int winningTeam = GetWinningTeam()
+
+	if ( winningTeam == TEAM_UNASSIGNED )
+		winningTeam = GetPlayerArray().getrandom().GetTeam()
+
+	ForceTeamWin( winningTeam )
+}
+
+void function ForceTeamWin( int team )
+{
+	level.devForcedWin = true
+
+	svGlobal.levelEnt.Signal( "devForcedWin" )
+
+	SetWinner( team, "#DEV_COMMAND_FORCED_WIN_ANNOUNCEMENT", "#DEV_COMMAND_FORCED_LOSS_ANNOUNCEMENT" ) // ignore the fact that only r1_english doesn't have localisation for this
+}
+
+void function ForceDraw()
+{
+	ForceTeamWin( TEAM_UNASSIGNED )
+}
+
+void function teamswap() // for debug
+{
+	if ( IsFFAGame() )
+		return
+
+	array<entity> players = GetPlayerArray()
+
+	foreach ( entity player in players )
+		if ( player.GetTeam() == TEAM_IMC )
+			SetTeam( player, TEAM_MILITIA )
+		else
+			SetTeam( player, TEAM_IMC )
+}
+
+void function summonplayers()
+{
+	entity guy = GetPlayerArray()[ 0 ]
+	array<entity> players = GetPlayerArray_Alive()
+
+	foreach ( player in players )
+	{
+		if ( player == guy )
+			continue
+
+		player.SetOrigin( guy.GetOrigin() )
+		player.SetVelocity( RandomVec( 250 ) )
+	}
+}
+
+bool function HasGameStateProtection( entity ent )
+{
+	// return true if the ent CAN'T die in the current gamestate
+	switch ( GetGameState() )
+	{
+		case eGameState.WaitingForCustomStart:
+		case eGameState.WaitingForPlayers:
+		case eGameState.PickLoadout:
+		case eGameState.Playing:
+		case eGameState.SuddenDeath:
+		case eGameState.Epilogue:
+			// can die
+			return false
+
+		case eGameState.Prematch:
+			if ( "canDieInPrematch" in ent.s )
+				return false // some ents could die in Prematch
+
+			return true // most ents doesn't die in Prematch
+
+		case eGameState.SwitchingSides:
+		case eGameState.Postmatch:
+			// nothing dies
+			return true
+
+		case eGameState.WinnerDetermined:
+			return !IsWinnerDeterminedPlayable()
+
+		default:
+			Assert( false, "Unknown gamestate " + GetGameState() )
+	}
+
+	return false
+}
+
+float function GetTimeLimit_ForGameMode()
+{
+	#if DEV
+		if ( level.devForcedTimeLimit )
+			return 0.1
+	#endif
+
+	if ( GameState_GetTimeLimitOverride() >= 0 )
+		return GameState_GetTimeLimitOverride()
+
+	float timeLimit = GetCurrentPlaylistVarFloat( "timelimit", -1 )
+
+	if ( timeLimit == -1 )
+		timeLimit = float( GameMode_GetTimeLimit( GAMETYPE ) ) // not a float for some reason?
+
+	if ( IsSwitchSidesBased() )
+		timeLimit /= 2
+
+	return timeLimit
+}
+
+void function SaveDatePlayed( entity player )
+{
+	Assert( IsServer() )
+	Assert( IsValid( player ) )
+	Assert( player.IsPlayer() )
+
+	player.SetPersistentVar( "lastTimePlayed", Daily_GetCurrentTime() )
+}
+
+void function SaveDateLoggedIn( entity player )
+{
+	Assert( IsServer() )
+	Assert( IsValid( player ) )
+	Assert( player.IsPlayer() )
+
+	player.SetPersistentVar( "lastTimeLoggedIn", Daily_GetCurrentTime() )
+}
+
+void function AddCallback_UpdatePersistenceOnDisconnect( void functionref( entity ) callbackFunc )
+{
+	file.persistenceDisconnectCallbacks.append( callbackFunc )
+}
+
+void function CodeCallback_UpdatePersistenceOnDisconnect( int playerIndex )
+{
+	entity player = GetPlayerByIndex( playerIndex )
+
+	if ( IsValid( player ) )
+		UpdatePersistenceOnDisconnect( player )
+}
+
+void function UpdatePersistenceOnDisconnect( entity player )
+{
+	if ( !player.hasConnected )
+		return
+
+	if ( !( "updatedPersistenceOnDisconnect" in player.s ) )
+		return
+
+	if ( player.s.updatedPersistenceOnDisconnect )
+		return
+
+	if ( player.GetTeam() != TEAM_SPECTATOR && !IsPrivateMatchSpectator( player ) )
+		SaveDatePlayed( player )
+
+	SaveDateLoggedIn( player )
+	AddXPCredits( player )
+
+	foreach ( callbackFunc in file.persistenceDisconnectCallbacks )
+		callbackFunc( player )
+
+	player.s.updatedPersistenceOnDisconnect = true
+}
+
+void function FW_Border_GlobalInit()
+{
+	AddSpawnCallbackEditorClass( "func_brush", "func_brush_fw_territory_border", RemoveFWBorder )
+}
+
+void function RemoveFWBorder( entity border )
+{
+	if ( GameModeRemove( border ) )
+		return
+
+	string gameMode = GetSpawnpointGamemodeOverride()
+
+	if ( !border.HasKey( "gamemode_" + gameMode ) )
+		border.Destroy()
+}
+
+void function SetupLiveFireMaps()
+{
+	FlagSet( "LevelHasRoof" )
+	Riff_ForceTitanAvailability( eTitanAvailability.Never )
+	ClassicMP_SetLevelIntro( ClassicMP_DefaultNoIntro_Setup, ClassicMP_DefaultNoIntro_GetLength() )
+}
+
+void function SetWeaponDropsEnabled( bool enabled )
+{
+	if ( enabled )
+		FlagSet( "WeaponDropsAllowed" )
+	else
+		FlagClear( "WeaponDropsAllowed" )
+}
+
+bool function ShouldRunEvac()
+{
+	return GameMode_GetEvacEnabled( GAMETYPE ) && ClassicMP_ShouldRunEpilogue()
+}
+
+bool function IsRefValidAndOfType( string ref, int itemType )
+{
+	return IsRefValid( ref ) && GetItemType( ref ) == itemType
+}
+
+int function GetSpectreCount( int team )
+{
+	string aiClass = "npc_spectre"
+	array<entity> spectres = GetNPCArrayByClass( aiClass )
+	int count = 0
+
+	foreach ( spectre in spectres )
+		if ( IsAlive( spectre ) && spectre.GetTeam() == team )
+			count++
+
+	// to account for spectres that are dropping into the map
+	count += GetReservedAISquadSlotsOfClassForTeam( aiClass, team )
+
+	return count
+}
+
+int function GetStalkerCount( int team )
+{
+	string aiClass = "npc_stalker"
+	array<entity> stalkers = GetNPCArrayByClass( aiClass )
+	int count = 0
+
+	foreach ( stalker in stalkers )
+		if ( IsAlive( stalker ) && stalker.GetTeam() == team )
+			count++
+
+	// to account for stalkers that are dropping into the map
+	count += GetReservedAISquadSlotsOfClassForTeam( aiClass, team )
+
+	return count
+}
+
+int function GetReaperCount( int team )
+{
+	string aiClass = "npc_super_spectre"
+	array<entity> reapers = GetNPCArrayByClass( aiClass )
+	int count = 0
+
+	foreach ( reaper in reapers )
+		if ( IsAlive( reaper ) && reaper.GetTeam() == team )
+			count++
+
+	// to account for reapers that are dropping into the map
+	count += GetReservedAISquadSlotsOfClassForTeam( aiClass, team )
+
+	return count
+}
+
+bool function ShouldSpawnSpectre( int team )
+{
+	if ( Riff_AllowNPCs() != eAllowNPCs.Default )
+		return ( Riff_AllowNPCs() == eAllowNPCs.SpectreOnly )
+
+	if ( team == TEAM_IMC && Flag( "AllSpectreIMC" ) )
+		return true
+
+	if ( team == TEAM_MILITIA && Flag( "AllSpectreMilitia" ) )
+		return true
+
+	if ( team == TEAM_IMC && Flag( "NoSpectreIMC" ) )
+		return false
+
+	if ( team == TEAM_MILITIA && Flag( "NoSpectreMilitia" ) )
+		return false
+
+	if ( GetCurrentPlaylistVarInt( "no_spectres", 0 ) )
+		return false
+
+	if ( Flag( "AllSpectre" ) )
+		return true
+
+	int spectreCount = GetSpectreCount( team )
+	int maxAI = GetMaxAICount( team )
+
+	if ( spectreCount >= expect int( expect table( level.maxSpectrePerSide )[ team ] ) )
+		return false
+
+	return RandomInt( 100 ) <= expect int( expect table( level.spectreSpawnChance )[ team ] )
+}
+
+bool function ShouldSpawnStalker( int team )
+{
+	if ( Riff_AllowNPCs() != eAllowNPCs.Default )
+		return false
+
+	int stalkerCount = GetStalkerCount( team )
+	int maxAI = GetMaxAICount( team )
+
+	if ( stalkerCount >= expect int( expect table( level.maxStalkersPerSide )[ team ] ) )
+		return false
+
+	return RandomInt( 100 ) <= expect int( expect table( level.stalkerSpawnChance )[ team ] )
+}
+
+bool function ShouldSpawnReaper( int team )
+{
+	if ( Riff_AllowNPCs() != eAllowNPCs.Default )
+		return false
+
+	int reaperCount = GetReaperCount( team )
+	int maxAI = GetMaxAICount( team )
+
+	if ( reaperCount >= expect int( expect table( level.maxReapersPerSide )[ team ] ) )
+		return false
+
+	return RandomInt( 100 ) <= expect int( expect table( level.reaperSpawnChance )[ team ] )
+}
+
+void function ClearAndKillChildren( entity parentEnt, array<entity> excludedEntities )
+{
+	entity childEnt = parentEnt.FirstMoveChild()
+	entity nextChildEnt
+
+	while ( childEnt != null )
+	{
+		nextChildEnt = childEnt.NextMovePeer()
+
+		childEnt.ClearParent()
+
+		if ( !excludedEntities.contains( childEnt ) )
+		{
+			if ( childEnt.IsPlayer() )
+			{
+				if ( IsAlive( childEnt ) )
+					childEnt.Die( svGlobal.worldspawn, svGlobal.worldspawn, { damageSourceId = eDamageSourceId.round_end } )
+			}
+			else
+			{
+				ClearAndKillChildren( childEnt, excludedEntities )
+
+				SetTeam( childEnt, TEAM_UNASSIGNED )
+
+				childEnt.Destroy()
+			}
+		}
+
+		childEnt = nextChildEnt
+	}
+}
+
+void function PopulatePostgameData( entity player )
+{
+	int playerPerTeam = GetCurrentPlaylistVarInt( "max_players", 16 )
+	bool teamBased = GetCurrentPlaylistVarInt( "max_teams", 2 ) == 2
+	bool isPrivateMatch = IsPrivateMatch()
+	array<int> scoreTypes = GameMode_GetScoreboardColumnScoreTypes( GAMETYPE )
+	int persistenceArrayCount = PersistenceGetArrayCount( "postGameData.players" )
+	int enumModeIndex = 0
+	int enumMapIndex = 0
+
+	try
+	{
+		enumModeIndex = PersistenceGetEnumIndexForItemName( "gamemodes", GAMETYPE )
+		enumMapIndex = PersistenceGetEnumIndexForItemName( "maps", GetMapName() )
+	}
+	catch ( ex )
+	{
+	}
+
+	player.SetPersistentVar( "postGameData.myTeam", player.GetTeam() )
+	player.SetPersistentVar( "postGameData.myXuid", player.GetUID() )
+	player.SetPersistentVar( "postGameData.gameMode", enumModeIndex )
+	player.SetPersistentVar( "postGameData.map", enumMapIndex )
+	player.SetPersistentVar( "postGameData.teams", teamBased )
+	player.SetPersistentVar( "postGameData.maxTeamSize", playerPerTeam )
+	player.SetPersistentVar( "postGameData.privateMatch", isPrivateMatch )
+	player.SetPersistentVar( "postGameData.ranked", true )
+	player.SetPersistentVar( "postGameData.hadMatchLossProtection", false )
+	player.SetPersistentVar( "isFDPostGameScoreboardValid", GAMETYPE == FD )
+
+	if ( teamBased && MAX_TEAMS > 1 )
+	{
+		if ( player.GetTeam() == TEAM_MILITIA )
+		{
+			player.SetPersistentVar( "postGameData.factionMCOR", GetFactionChoice( player ) )
+			player.SetPersistentVar( "postGameData.factionIMC", GetEnemyFaction( player ) )
+		}
+		else
+		{
+			player.SetPersistentVar( "postGameData.factionIMC", GetFactionChoice( player ) )
+			player.SetPersistentVar( "postGameData.factionMCOR", GetEnemyFaction( player ) )
+		}
+
+		player.SetPersistentVar( "postGameData.scoreMCOR", GameRules_GetTeamScore( TEAM_MILITIA ) )
+		player.SetPersistentVar( "postGameData.scoreIMC", GameRules_GetTeamScore( TEAM_IMC ) )
+	}
+	else
+	{
+		player.SetPersistentVar( "postGameData.factionMCOR", GetFactionChoice( player ) )
+		player.SetPersistentVar( "postGameData.scoreMCOR", GameRules_GetTeamScore( player.GetTeam() ) )
+		player.SetPersistentVar( "postGameData.factionIMC", GetEnemyFaction( player ) )
+		player.SetPersistentVar( "postGameData.scoreIMC", 0 )
+	}
+
+	// Clear scoreboard first in case current match finished with less players than previous
+	// The reason for this is that the post-scoreboard would mix playersets from both matches resulting in a confusing scoreboard
+	for ( int i = 0; i < persistenceArrayCount; i++ )
+	{
+		player.SetPersistentVar( "postGameData.players[" + i + "].team", TEAM_UNASSIGNED )
+		player.SetPersistentVar( "postGameData.players[" + i + "].name", "" )
+		player.SetPersistentVar( "postGameData.players[" + i + "].xuid", "" )
+		player.SetPersistentVar( "postGameData.players[" + i + "].level", -1 )
+		player.SetPersistentVar( "postGameData.players[" + i + "].gen", -1 )
+		player.SetPersistentVar( "postGameData.players[" + i + "].callsignIconIndex", -1 )
+
+		for ( int j = 0; j < scoreTypes.len(); j++ )
+			player.SetPersistentVar( "postGameData.players[" + i + "].scores[" + j + "]", -1 )
+	}
+
+	array<entity> otherPlayers = GetPlayerArray()
+
+	for ( int i = 0; i < min( otherPlayers.len(), persistenceArrayCount ); i++ )
+	{
+		player.SetPersistentVar( "postGameData.players[" + i + "].team", otherPlayers[ i ].GetTeam() )
+		player.SetPersistentVar( "postGameData.players[" + i + "].name", otherPlayers[ i ].GetPlayerName() )
+		player.SetPersistentVar( "postGameData.players[" + i + "].xuid", otherPlayers[ i ].GetUID() )
+		player.SetPersistentVar( "postGameData.players[" + i + "].level", otherPlayers[ i ].GetLevel() )
+		player.SetPersistentVar( "postGameData.players[" + i + "].gen", otherPlayers[ i ].GetGen() )
+		player.SetPersistentVar( "postGameData.players[" + i + "].callsignIconIndex", otherPlayers[ i ].GetPersistentVarAsInt( "activeCallsignIconIndex" ) )
+
+		for ( int j = 0; j < scoreTypes.len(); j++ )
+			player.SetPersistentVar( "postGameData.players[" + i + "].scores[" + j + "]", otherPlayers[ i ].GetPlayerGameStat( scoreTypes[ j ] ) )
+	}
+
+	player.SetPersistentVar( "isPostGameScoreboardValid", true )
+}
+
+void function AddXPCredits( entity player )
+{
+	int creditsGained = 0
+	int playerXPGained = 0
+	int weaponXPGained = 0
+	int titanXPGained = 0
+
+	playerXPGained += player.GetPersistentVarAsInt( "xp" ) - player.GetPersistentVarAsInt( "previousXP" )
+
+	int numPilotWeapons = PersistenceGetArrayCount( "pilotWeapons" )
+
+	for ( int i = 0; i < numPilotWeapons; i++ )
+		weaponXPGained +=
+			player.GetPersistentVarAsInt( "pilotWeapons[" + i + "].weaponXP" ) - player.GetPersistentVarAsInt( "pilotWeapons[" + i + "].previousWeaponXP" )
+
+	int numTitanClasses = PersistenceGetEnumCount( "titanClasses" )
+
+	for ( int i = 0; i < numTitanClasses; i++ )
+		titanXPGained += player.GetPersistentVarAsInt( "titanXP[" + i + "]" ) - player.GetPersistentVarAsInt( "previousTitanXP[" + i + "]" )
+
+	creditsGained = playerXPGained + weaponXPGained + titanXPGained
+
+	Player_GiveCredits( player, creditsGained )
+
+	InitXP( player )
+
+	foreach ( string xpFaction in GetAllFactionRefs() )
+		player.SetPersistentVar( "previousFactionXP[" + xpFaction + "]", FactionGetXP( player, xpFaction ) )
+
+	foreach ( string xpTitan in shTitanXP.titanClasses )
+	{
+		player.SetPersistentVar( "previousTitanXP[" + xpTitan + "]", TitanGetXP( player, xpTitan ) )
+		player.SetPersistentVar( "fdPreviousTitanXP[" + xpTitan + "]", FD_TitanGetXP( player, xpTitan ) )
+	}
+
+	foreach ( string xpWeapon in shWeaponXP.weaponClassNames )
+		player.SetPersistentVar( GetItemPersistenceStruct( xpWeapon ) + ".previousWeaponXP", WeaponGetXP( player, xpWeapon ) )
+}
+
+void function UpdatePlayerWins( entity player )
+{
+	if ( IsPrivateMatch() )
+		return
+
+	int winLoss = WINLOSS_HISTORY.DRAW
+
+	if ( GetWinningTeam() != TEAM_UNASSIGNED )
+	{
+		if ( GetWinningTeam() == player.GetTeam() )
+		{
+			winLoss = WINLOSS_HISTORY.WIN
+
+			player.SetPersistentVar( "lastDailyMatchVictory", Daily_GetCurrentTime() )
+			player.SetPersistentVar( "winStreak", player.GetPersistentVarAsInt( "winStreak" ) + 1 )
+
+			int highestWinStreak = player.GetPersistentVarAsInt( "highestWinStreakEver" )
+
+			if ( highestWinStreak < player.GetPersistentVarAsInt( "winStreak" ) )
+				player.SetPersistentVar( "highestWinStreakEver", player.GetPersistentVarAsInt( "winStreak" ) )
+		}
+		else
+		{
+			winLoss = WINLOSS_HISTORY.LOSS
+
+			int highestWinStreak = player.GetPersistentVarAsInt( "highestWinStreakEver" )
+
+			if ( highestWinStreak < player.GetPersistentVarAsInt( "winStreak" ) )
+				player.SetPersistentVar( "highestWinStreakEver", player.GetPersistentVarAsInt( "winStreak" ) )
+
+			player.SetPersistentVar( "winStreak", 0 )
+		}
+	}
+
+	// shift stats by 1 to make room for new history
+	for ( int i = NUM_GAMES_TRACK_WINLOSS_HISTORY - 2; i >= 0; --i )
+		player.SetPersistentVar( format( "winLossHistory[%i]", ( i + 1 ) ), player.GetPersistentVar( format( "winLossHistory[%i]", i ) ) )
+
+	player.SetPersistentVar( "winLossHistory[0]", winLoss )
+	player.SetPersistentVar( "winLossHistorySize", min( NUM_GAMES_TRACK_WINLOSS_HISTORY, player.GetPersistentVar( "winLossHistorySize" ) + 1 ) )
 }

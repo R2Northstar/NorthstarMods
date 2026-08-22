@@ -2,7 +2,7 @@ global function initFrontierDefenseData
 void function initFrontierDefenseData()
 {
 	PlaceFDShop( < -800.156, -4250, -63 >, < 9, 60, 0 > )
-	SetFDDropshipSpawn( < -1827, -4105, -64 >, < 0, 60, 0 > )
+	AddWaveSpawnCustomSpawnPoint( TEAM_MILITIA, < -1827, -4105, -64 >, < 0, 60, 0 > )
 	SetFDGroundSpawn( < -1507, -3346, -128 >, < 0, 45, 0 > )
 
 	AddWaveAnnouncement( "fd_introEasy" )

@@ -331,7 +331,7 @@ WeaponData
 				"stationary"			"1"
 				"default_color"			"246 134 40 255"
 				"type"						"static"
-				"material"					$"vgui/hud/arc_cannon_charge/arc_cannon_charge"
+				"material"					"vgui/hud/arc_cannon_charge/arc_cannon_charge"
 				"size_x"					"80"
 				"size_y"					"80"
 				"scale_ads"					"1.5"

@@ -17,8 +17,8 @@ global struct CustomMatchSettingContainer
 struct
 {
 	array<string> modes = [ // default modes in vanilla
-		"tdm",
 		"aitdm",
+		"tdm",
 		"cp",
 		"at",
 		"ctf",
@@ -63,6 +63,10 @@ struct
 
 void function AddPrivateMatchMode( string mode )
 {
+	#if VANILLA
+		return
+	#endif
+
 	if ( !file.modes.contains( mode ) )
 		file.modes.append( mode )
 
@@ -74,6 +78,10 @@ void function AddPrivateMatchMode( string mode )
 
 void function AddPrivateMatchMap( string map )
 {
+	#if VANILLA
+		return
+	#endif
+
 	if ( !file.maps.contains( map ) )
 		file.maps.append( map )
 
@@ -180,31 +188,37 @@ void function AddPrivateMatchModeSettingEnumUIHack( string category, string play
 	AddPrivateMatchModeSettingEnum( category, playlistVar, enums, defaultValue, localizedName )
 }
 
-// Sorts specific gamemode settings to the end of the list
-int function SortMatchSettings( string categoryA, string categoryB )
-{
-	if ( StartsWith( categoryA, "#PL_" ) || StartsWith( categoryA, "#GAMEMODE_" ) )
-		return 1
-	else if ( StartsWith( categoryB, "#PL_" ) || StartsWith( categoryB, "#GAMEMODE_" ) )
-		return 0
-	return 0
-}
+#if !SERVER
+	// Sorts specific gamemode settings to the end of the list
+	int function SortMatchSettings( string categoryA, string categoryB )
+	{
+		if ( StartsWith( categoryA, "#PL_" ) || StartsWith( categoryA, "#GAMEMODE_" ) )
+			return -1
+		else if ( StartsWith( categoryB, "#PL_" ) || StartsWith( categoryB, "#GAMEMODE_" ) )
+			return 1
+
+		return SortStringAlphabetize( Localize( categoryA ), Localize( categoryB ) )
+	}
+#endif
 
 array<string> function GetPrivateMatchSettingCategories( bool uiAllowAllModeCategories = false )
 {
 	array<string> categories
 	foreach ( string k, v in file.customMatchSettingsByCategory )
 	{
-		#if UI
-			bool differentPlaylist = StartsWith( k, "#PL_" ) && k.slice( 4 ) != PrivateMatch_GetSelectedMode()
-			bool differentGamemode = StartsWith( k, "#GAMEMODE_" ) && k.slice( 10 ) != PrivateMatch_GetSelectedMode()
+		#if !CLIENT
+			bool differentPlaylist = StartsWith( k, "#PL_" ) && k.slice( "#PL_".len() ) != PrivateMatch_GetSelectedMode()
+			bool differentGamemode = StartsWith( k, "#GAMEMODE_" ) && k.slice( "#GAMEMODE_".len() ) != PrivateMatch_GetSelectedMode()
 			if ( differentPlaylist || differentGamemode )
 				continue
 		#endif
 		categories.append( k )
 	}
 
-	categories.sort( SortMatchSettings )
+	#if !SERVER
+		categories.sort( SortMatchSettings )
+	#endif
+
 	return categories
 }
 
@@ -261,12 +275,6 @@ array<string> function GetPrivateMatchMapsForMode( string modeName )
 	// return mapsArray
 
 	array<string> maps
-
-	#if !VANILLA
-		// playlists file that we are working with is old, and doens't have these maps added to FD private match
-		if ( IsFDMode( modeName ) )
-			maps.extend( [ "mp_relic02", "mp_glitch", "mp_colony02" ] )
-	#endif
 
 	// use the private match playlist for this if the gamemode is in it already
 	int privatePlaylistModeIndex = GetPrivateMatchModeIndex( modeName )

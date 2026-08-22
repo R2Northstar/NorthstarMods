@@ -121,15 +121,13 @@ struct
 
 void function GamemodeFW_Init()
 {
+	FlagSet( "DisableScoreLimit" )
+
 	// _battery_port.gnut needs this
 	RegisterSignal( "BatteryActivate" )
 
-	// mp_thaw's intro spawnpoint have some problem, player can be stucked on the sky, so override it
-	if ( GetMapName() == "mp_thaw" )
-		SetSpawnpointGamemodeOverride( TEAM_DEATHMATCH )
-
-	AiGameModes_SetNPCWeapons( "npc_soldier", [ "mp_weapon_rspn101", "mp_weapon_dmr", "mp_weapon_r97", "mp_weapon_lmg" ] )
-	AiGameModes_SetNPCWeapons( "npc_spectre", [ "mp_weapon_hemlok_smg", "mp_weapon_doubletake", "mp_weapon_mastiff" ] )
+	SetNPCWeapons( "npc_soldier", [ "mp_weapon_rspn101", "mp_weapon_dmr", "mp_weapon_r97", "mp_weapon_lmg" ] )
+	SetNPCWeapons( "npc_spectre", [ "mp_weapon_hemlok_smg", "mp_weapon_doubletake", "mp_weapon_mastiff" ] )
 
 	AddCallback_EntitiesDidLoad( LoadEntities )
 	AddCallback_GameStateEnter( eGameState.Prematch, OnFWGamePrematch )
@@ -148,6 +146,8 @@ void function GamemodeFW_Init()
 	SetRecalculateRespawnAsTitanStartPointCallback( FW_ForcedTitanStartPoint )
 	SetRecalculateTitanReplacementPointCallback( FW_ReCalculateTitanReplacementPoint )
 	SetRequestTitanAllowedCallback( FW_RequestTitanAllowed )
+
+	level.modifyAISlots[ FW_AI_TEAM ] = 99
 }
 
 // //////////////////////////////
@@ -168,7 +168,7 @@ void function RateSpawnpointsTitan_FW( int checkClass, array<entity> spawnpoints
 
 void function RateSpawnpoints_FW( array<entity> startSpawns, int checkClass, array<entity> spawnpoints, int team, entity player )
 {
-	if ( HasSwitchedSides() )
+	if ( IsSwitchSidesBased() && HasSwitchedSides() )
 		team = GetOtherTeam( team )
 
 	// average out startspawn positions
@@ -849,15 +849,7 @@ void function FW_SpawnDroppodSquad( CampSiteStruct campsite, string aiType )
 	// add variation to spawns
 	wait RandomFloat( 1.0 )
 
-	AiGameModes_SpawnDropPod(
-		spawnpoint,
-		FW_AI_TEAM,
-		aiType,
-		void function( array<entity> guys ) : ( campsite, aiType )
-		{
-			FW_HandleSquadSpawn( guys, campsite, aiType )
-		}
-	)
+	thread FW_HandleSquadSpawn( Spawn_TrackedDropPodSquad( aiType, FW_AI_TEAM, 4, spawnpoint ), campsite, aiType )
 }
 
 void function FW_HandleSquadSpawn( array<entity> guys, CampSiteStruct campsite, string aiType )
@@ -889,23 +881,19 @@ void function FW_SpawnReaper( CampSiteStruct campsite )
 	// add variation to spawns
 	wait RandomFloat( 1.0 )
 
-	AiGameModes_SpawnReaper(
-		spawnpoint,
-		FW_AI_TEAM,
-		"npc_super_spectre_aitdm",
-		void function( entity reaper ) : ( campsite )
-		{
-			reaper.SetScriptName( FW_NPC_SCRIPTNAME ) // no neet rn
-			// show on minimap to let players kill them
-			reaper.Minimap_AlwaysShow( TEAM_MILITIA, null )
-			reaper.Minimap_AlwaysShow( TEAM_IMC, null )
+	entity reaper = Spawn_TrackedWarpfallReaper( FW_AI_TEAM, 1, spawnpoint )[ 0 ]
 
-			// at least don't let them running around
-			thread FW_ForceAssaultInCamp( [ reaper ], campsite.camp )
-			// untrack them on death
-			thread FW_WaitToUntrackNPC( reaper, campsite.campId, "npc_super_spectre" )
-		}
-	)
+	reaper.SetScriptName( FW_NPC_SCRIPTNAME ) // no neet rn
+
+	// show on minimap to let players kill them
+	reaper.Minimap_AlwaysShow( TEAM_MILITIA, null )
+	reaper.Minimap_AlwaysShow( TEAM_IMC, null )
+
+	// at least don't let them running around
+	thread FW_ForceAssaultInCamp( [ reaper ], campsite.camp )
+
+	// untrack them on death
+	thread FW_WaitToUntrackNPC( reaper, campsite.campId, "npc_super_spectre" )
 }
 
 // maybe this will make them stay around the camp
@@ -941,11 +929,13 @@ void function FW_WaitToUntrackNPC( entity guy, string campId, string aiType )
 void function OnNPCEnemyChange( entity guy )
 {
 	entity enemy = guy.GetEnemy()
+
 	if ( !IsAlive( guy ) || guy.IsFrozen() || !IsAlive( enemy ) || !IsValid( guy.GetActiveWeapon() ) )
 		return
 
 	string archer = "mp_weapon_rocket_launcher"
 	array<string> weapons = []
+
 	foreach ( entity weapon in guy.GetMainWeapons() )
 		weapons.append( weapon.GetWeaponClassName() )
 
@@ -953,6 +943,7 @@ void function OnNPCEnemyChange( entity guy )
 	{
 		if ( !weapons.contains( archer ) )
 			guy.GiveWeapon( archer )
+
 		guy.SetActiveWeaponByName( archer )
 	}
 	else
@@ -960,9 +951,12 @@ void function OnNPCEnemyChange( entity guy )
 		foreach ( string weapon in weapons )
 			if ( weapon == archer )
 				guy.TakeWeaponNow( archer )
+
 		array<string> newweapons = []
+
 		foreach ( entity newweapon in guy.GetMainWeapons() )
 			newweapons.append( newweapon.GetWeaponClassName() )
+
 		if ( newweapons.len() )
 			guy.SetActiveWeaponByName( newweapons.getrandom() )
 	}
@@ -1517,7 +1511,7 @@ void function TurretStateWatcher( TurretSiteStruct turretSite )
 	overlayState.kv.solid = SOLID_VPHYSICS
 	DispatchSpawn( overlayState )
 
-	svGlobal.levelEnt.EndSignal( "CleanUpEntitiesForRoundEnd" ) // end dialogues is good
+	svGlobal.levelEnt.EndSignal( "ClearPlayers" ) // end dialogues is good
 	mapIcon.EndSignal( "OnDestroy" ) // mapIcon should be valid all time, tracking it
 	batteryPort.EndSignal( "OnDestroy" ) // also track this
 	overlayState.EndSignal( "OnDestroy" )

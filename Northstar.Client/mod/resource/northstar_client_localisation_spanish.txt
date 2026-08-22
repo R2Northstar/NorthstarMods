@@ -49,6 +49,7 @@ Presiona Sí al estar de acuerdo. Esta opcion se puede cambiar en el menú de mo
 		"MODE_SETTING_CATEGORY_RIFF" "Fragmento"
 		"MODE_SETTING_CATEGORY_MATCH" "Partida"
 
+		"classic_mp" "Multijugador Clasico"
 		"run_epilogue" "Habilitar Epílogo"
 		"scorelimit" "Limite de puntuación"
 		"roundscorelimit" "Límite de punataje (rondas)"
@@ -78,8 +79,7 @@ Presiona Sí al estar de acuerdo. Esta opcion se puede cambiar en el menú de mo
 		"featured_mode_shotguns_snipers" "Armado y peligroso"
 		"iron_rules" "Reglas de último titan en pie"
 
-		"cp_amped_capture_points" "Fortines cargados"
-		"coliseum_loadouts_enabled" "Arsenales de coliseo"
+		"capture_point_amping" "Fortines cargados"
 
 		"aitdm_archer_grunts" "Soldado Archer"
 
@@ -220,7 +220,7 @@ Presiona Sí al estar de acuerdo. Esta opcion se puede cambiar en el menú de mo
 		"MODE_SETTING_CATEGORY_BLEEDOUT" "Desangre de piloto"
 
 		"custom_air_accel_pilot" "Aceleración aerea"
-		"no_pilot_collision" "Colisión de piloto"
+		"pilot_collision" "Colisión de piloto"
 		"promode_enable" "Armas del Modo Pro"
 		"classic_rodeo" "Abordaje Clasico"
 		"oob_timer_enabled" "Temporizador del limite de mapa"
@@ -349,7 +349,6 @@ Presiona Sí al estar de acuerdo. Esta opcion se puede cambiar en el menú de mo
 		"PROGRESSION_DISABLED_BODY"             "^CCCC0000El modo de progreso ha sido deshabilitado.^\n\nLos Titanes, Armas, Facciones, Aspectos y otros están desbloqueados y puedes utilizarlos cuando quieras.\n\nPuedes cambiar ésta opción cuando quieras desde la sala de espera." 
 		"WILL_RESET_SETTING"             "Ésta acción reiniciará %s1 a su valor por defecto.\n\nNo se podrá revertir el proceso." 
 		"PROGRESSION_ANNOUNCEMENT_BODY"             "^CCCC0000El progreso puede ser habilitado desde ahora^\n\nNorthstar ahora es compatible con el progreso normal del juego, esto significa que puedes elegir desbloquear Armas, Aspectos, Titanes y otros a través de desafíos y subiendo de nivel.\n\nPuedes habilitar el progreso normal del juego en la opción ubicada al final de la pantalla de la sala de espera.\n\nÉsta opción puede ser cambiada en cualquier momento." 
-		"player_force_respawn"             "Reaparición Forzada" 
 		"MOD_REQUIRED_WARNING"             " : Esta modificacion puede ser desactivada al entrar a un servidor" 
 	}
 }

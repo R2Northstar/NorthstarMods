@@ -4,7 +4,7 @@ void function initFrontierDefenseData()
 	useCustomFDLoad = true
 	AddCallback_RegisterCustomFDContent( RegisterCustomFDContent )
 	PlaceFDShop( < 1179, 561, 60 > )
-	SetFDDropshipSpawn( < 830, -194, 112 >, < 0, 180, 0 > )
+	AddWaveSpawnCustomSpawnPoint( TEAM_MILITIA, < 830, -194, 112 >, < 0, 180, 0 > )
 	SetFDGroundSpawn( < 1334, -273, 201 >, < 0, 90, 0 > )
 
 	AddWaveAnnouncement( "fd_introEasy" )

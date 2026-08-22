@@ -837,6 +837,8 @@ void function OnModMenuOpened()
 		file.scrollOffset = 0
 		file.filterText = ""
 
+		Hud_SetText( Hud_GetChild( file.menu, "BtnModsSearch" ), "" )
+
 		RegisterButtonPressedCallback( MOUSE_WHEEL_UP, OnScrollUp )
 		RegisterButtonPressedCallback( MOUSE_WHEEL_DOWN, OnScrollDown )
 		RegisterButtonPressedCallback( MOUSE_LEFT, OnClick )

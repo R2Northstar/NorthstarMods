@@ -7,7 +7,7 @@ struct
 	int startState
 	string map = "mp_forwardbase_kodai"
 	array<string> maplist
-	string mode = "tdm"
+	string mode = "aitdm"
 } file
 
 void function PrivateLobby_Init()
@@ -40,13 +40,16 @@ void function SetupPrivateMatchUIVarsWhenReady()
 {
 	// have to wait until end of first frame for SetUIVar to work
 	WaitEndFrame()
-	if ( GetConVarBool( "ns_private_match_auto_rotation_start" ) )
+
+	if ( GetConVarBool( "ns_private_match_auto_rotation_start" ) && file.maplist.len() )
 	{
 		int i = 0
+
 		foreach ( map in file.maplist )
 		{
 			if ( map == file.map )
 				break
+
 			i++
 		}
 
@@ -57,11 +60,9 @@ void function SetupPrivateMatchUIVarsWhenReady()
 		else
 			file.map = file.maplist[ i ]
 	}
+
 	SetUIVar( level, "privatematch_map", GetPrivateMatchMapIndex( file.map ) )
 	SetUIVar( level, "privatematch_mode", GetPrivateMatchModeIndex( file.mode ) )
-
-	if ( GetConVarInt( "ns_maxplayers_override" ) > 0 )
-		SetPlaylistVarOverride( "max_players", GetConVarString( "ns_maxplayers_override" ) )
 
 	if ( GetConVarBool( "ns_private_match_auto_rotation_start" ) )
 	{
@@ -111,6 +112,40 @@ bool function ClientCommandCallback_PrivateMatchSetMode( entity player, array<st
 	if ( GetConVarInt( "ns_private_match_only_host_can_change_settings" ) == 2 )
 		if ( !NSIsPlayerLocalPlayer( player ) )
 			return true
+
+	// these modes are playlists and if the server is a private match and tries to use a playlist the playlist vars won't be set
+	array<string> nonPrivateMatchModes = [
+		"angelcity_247",
+		"amped_tacticals_aitdm",
+		"tactikill_aitdm",
+		"grapple_aitdm",
+		"phase_aitdm",
+		"spicy_aitdm",
+		"alts",
+		"turbo_lts",
+		"turbo_ttdm",
+		"attdm",
+		"tdm_arena_hardcore",
+		"tdm_arena_smr",
+		"ffa_arena_energy",
+		"hardpoint_twist",
+		"nitro_mixtape",
+		"nitro_ffa",
+		"ctf_lf",
+		"rocket_lf",
+		"holopilot_lf",
+		"titan_mfd",
+		// "anniversary_7th", gamemode vars aren't set
+		"fnf"
+	// "variety_pack" always aitdm
+	]
+
+	if ( nonPrivateMatchModes.contains( args[ 0 ] ) && ServerIsPrivateMatch() )
+	{
+		LogPrivateMatchChange( player, " attempted to set an non private match mode: ", args )
+		SendHudMessage( player, "Server is not a private match, set ns_is_private_match to false", -1, 0.4, 255, 255, 255, 255, 1.0, 3.0, 0.5 )
+		return true
+	}
 
 	if ( GetPrivateMatchModes().contains( args[ 0 ] ) )
 	{
@@ -181,10 +216,10 @@ bool function ClientCommandCallback_PrivateMatchSwitchTeams( entity player, arra
 
 bool function ClientCommandCallback_PrivateMatchToggleSpectate( entity player, array<string> args )
 {
-	if ( !GetConVarBool( "ns_allow_spectators" ) )
+	if ( GetGamemodeVarOrUseValue( file.mode, "max_teams", "2" ).tointeger() != 2 || !GetConVarBool( "ns_allow_spectators" ) || !ServerIsPrivateMatch() )
 		return true
 
-	player.SetPersistentVar( "privateMatchState", player.GetPersistentVarAsInt( "privateMatchState" ) == 0 ? 1 : 0 )
+	player.SetPersistentVar( "privateMatchState", !player.GetPersistentVarAsInt( "privateMatchState" ) ? 1 : 0 )
 	return true
 }
 
@@ -200,31 +235,38 @@ void function StartMatch( bool isAutostart = false )
 
 	SetUIVar( level, "gameStartTime", countdownEndTime )
 	// can't use start here because we need to check stuff
+	float lastCountDown = -1
+
 	while ( Time() < countdownEndTime )
 	{
-		// stop if the countdown's been cancelled
-		if ( file.startState != ePrivateMatchStartState.STARTING )
-			return
+		if ( countdownEndTime - Time() < 10 && int( countdownEndTime - Time() ) != int( lastCountDown ) )
+		{
+			if ( countdownEndTime - Time() <= 2.0 )
+				AllPlayersMuteAll()
+
+			foreach ( player in GetPlayerArray() )
+				EmitSoundAtPositionOnlyToPlayer( TEAM_UNASSIGNED, Vector( 0, 0, 0 ), player, PREMATCH_COUNTDOWN_SOUND )
+
+			lastCountDown = countdownEndTime - Time()
+		}
 
 		WaitFrame()
+
+		// stop if the countdown's been cancelled
+		if ( file.startState != ePrivateMatchStartState.STARTING )
+		{
+			AllPlayersUnMuteAll()
+			return
+		}
 	}
 
-	if ( GetConVarInt( "ns_maxplayers_override" ) > 0 )
-		SetPlaylistVarOverride( "max_players", GetConVarString( "ns_maxplayers_override" ) )
-
-	try
+	// if the playlist isn't private_match, IsPrivateMatch() will return false
+	if ( !ServerIsPrivateMatch() )
 	{
-		// todo: not every gamemode uses the same playlist as their name! need some code to resolve these manually
-		// would be nice if the gamemode api got some tweaks to allow for registering private match gamemodes maybe
-		SetCurrentPlaylist( file.mode )
-	}
-	catch ( exception )
-	{
-		// temp
 		if ( file.mode == "speedball" )
 			SetCurrentPlaylist( "lf" )
-
-		print( "couldn't find playlist for gamemode " + file.mode )
+		else
+			SetCurrentPlaylist( file.mode )
 	}
 
 	RefreshPlayerTeams( isAutostart )
@@ -244,6 +286,10 @@ void function RefreshPlayerTeams( bool rerandomize = false )
 {
 	int maxTeams = GetGamemodeVarOrUseValue( file.mode, "max_teams", "2" ).tointeger()
 	int maxPlayers = GetGamemodeVarOrUseValue( file.mode, "max_players", "12" ).tointeger()
+
+	if ( maxTeams != 2 )
+		foreach ( entity player in GetPlayerArray() )
+			player.SetPersistentVar( "privateMatchState", 0 )
 
 	// special case for situations where we wrongly assume ffa teams because there's 2 teams/2 players
 	if ( maxPlayers == maxTeams && maxTeams > 2 )
@@ -287,23 +333,35 @@ bool function ClientCommandCallback_PrivateMatchSetPlaylistVarOverride( entity p
 		if ( !NSIsPlayerLocalPlayer( player ) )
 			return true
 
-	LogPrivateMatchChange( player, " override the setting ", args )
-
 	bool found = false
+
 	foreach ( string category in GetPrivateMatchSettingCategories() )
 	{
 		foreach ( CustomMatchSettingContainer setting in GetPrivateMatchCustomSettingsForCategory( category ) )
 		{
 			if ( args[ 0 ] == setting.playlistVar )
 			{
+				if ( setting.isEnumSetting && setting.enumValues.find( args[ 1 ] ) == -1 ) // prevent making enums invalid
+				{
+					LogPrivateMatchChange( player, " attempted to override an enum setting to a invalid value: ", args )
+					return true
+				}
+
 				found = true
 				break
 			}
 		}
 	}
 
-	if ( found )
-		SetPlaylistVarOverride( args[ 0 ], args[ 1 ] )
+	if ( !found )
+	{
+		LogPrivateMatchChange( player, " attempted to override an unknown setting ", args )
+		return true
+	}
+
+	LogPrivateMatchChange( player, " override the setting ", args )
+
+	SetPlaylistVarOverride( args[ 0 ], args[ 1 ] )
 
 	return true
 }
@@ -326,9 +384,14 @@ bool function ClientCommandCallback_ResetMatchSettingsToDefault( entity player, 
 void function LogPrivateMatchChange( entity player, string step, array<string> args )
 {
 	if ( step.find( "mode" ) || step.find( "map" ) )
-		print( player.GetPlayerName() + step + args[ 0 ] + ".---" + "UID:" + player.GetUID() )
+		printt( player.GetPlayerName() + step + args[ 0 ] + ".---" + "UID:" + player.GetUID() )
 	else if ( step.find( "setting" ) )
-		print( player.GetPlayerName() + step + args[ 0 ] + " to " + args[ 1 ] + ".---" + "UID:" + player.GetUID() )
+		printt( player.GetPlayerName() + step + args[ 0 ] + " to " + args[ 1 ] + ".---" + "UID:" + player.GetUID() )
 	else
-		print( player.GetPlayerName() + step + ".---" + "UID:" + player.GetUID() )
+		printt( player.GetPlayerName() + step + ".---" + "UID:" + player.GetUID() )
+}
+
+bool function ServerIsPrivateMatch()
+{
+	return GetConVarInt( "ns_is_private_match" ) == 1 || ( GetConVarInt( "ns_is_private_match" ) == -1 && !NSIsDedicated() )
 }

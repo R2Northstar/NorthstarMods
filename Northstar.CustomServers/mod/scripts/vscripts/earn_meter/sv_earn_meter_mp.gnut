@@ -15,7 +15,6 @@ void function Sv_EarnMeterMP_Init()
 	if ( !EARNMETER_ENABLED )
 		return
 
-	AddCallback_OnClientConnected( SetupPlayerEarnMeter )
 	AddCallback_GameStateEnter( eGameState.Playing, OnPlaying ) // can't change boost after prematch
 	AddCallback_OnPlayerRespawned( OnPlayerRespawned )
 }
@@ -33,23 +32,9 @@ void function EarnMeterMP_SetPassiveMeterGainEnabled( bool enabled )
 	file.passiveMeterGainEnabled = enabled
 }
 
-void function SetupPlayerEarnMeter( entity player )
-{
-	PlayerEarnMeter_Reset( player )
-
-	string burncardRef = GetSelectedBurnCardRef( player )
-	EarnMeterMP_SetBoostByRef( player, burncardRef )
-
-	// catchup bonus for late joiners
-	// todo: maths on this is fine but for some reason it won't set correctly, could be getting reset somewhere?
-	PlayerEarnMeter_AddOwnedFrac( player, ( ( Time() - file.playingStartTime ) / 4.0 ) * 0.01 )
-}
-
 void function OnPlaying()
 {
 	file.playingStartTime = Time()
-	foreach ( entity player in GetPlayerArray() )
-		SetupPlayerEarnMeter( player )
 
 	if ( BurnMeterEnabled() )
 		SetCallback_EarnMeterRewardEarned( EarnMeterMP_BoostEarned )
@@ -74,6 +59,14 @@ void function OnPlayerRespawned( entity player )
 	else
 		thread EarnMeterMP_PlayerLifeThink( player )
 
+	if ( !( "claimedPlayingBurnMeter" in player.s ) || !player.s.claimedPlayingBurnMeter )
+	{
+		player.s.claimedPlayingBurnMeter <- true
+
+		if ( !player.IsTitan() && !IsRoundBased() && GetGameState() >= eGameState.Playing )
+			PlayerEarnMeter_AddOwnedFrac( player, ( ( Time() - file.playingStartTime ) / 4.0 ) * 0.01 )
+	}
+
 	if ( PlayerEarnMeter_IsRewardAvailable( player ) )
 		EarnMeterMP_BoostEarned( player )
 }
@@ -95,7 +88,7 @@ void function EarnMeterMP_ReplaceReward( entity player, EarnObject reward, float
 
 void function EarnMeterMP_PlayerLifeThink( entity player )
 {
-	svGlobal.levelEnt.EndSignal( "CleanUpEntitiesForRoundEnd" )
+	svGlobal.levelEnt.EndSignal( "ClearPlayers" )
 	player.EndSignal( "OnDeath" )
 	player.EndSignal( "OnDestroy" )
 
@@ -104,7 +97,7 @@ void function EarnMeterMP_PlayerLifeThink( entity player )
 	int lastEarnMeterMode = PlayerEarnMeter_GetMode( player )
 	bool saidTitanSoon = false
 	bool titanReadyMsg = false
-	float lastPassiveGainTime = Time()
+	float lastPassiveGainTime = -1
 
 	OnThreadEnd(
 		function() : ( player, pilotReward, pilotRewardFrac )
@@ -136,15 +129,27 @@ void function EarnMeterMP_PlayerLifeThink( entity player )
 				desiredEarnMeterMode = eEarnMeterMode.CORE
 		}
 		else if ( IsValid( player.GetPetTitan() ) )
+		{
 			desiredEarnMeterMode = eEarnMeterMode.PET
+		}
 		else if ( maxActiveTitansReached ) // Hides Meter when max active Titan limit is reached
 		{
 			desiredEarnMeterMode = eEarnMeterMode.DISABLED
 			if ( titanReadyMsg ) // Resets so next time people can drop titans because a slot opened, they will be greeted with the message right away
 				titanReadyMsg = false
 		}
+		else if ( GetGameState() < eGameState.Playing )
+		{
+			desiredEarnMeterMode = eEarnMeterMode.DISABLED
+		}
+		else if ( !PlayerEarnMeter_Enabled() ) // for fd
+		{
+			desiredEarnMeterMode = eEarnMeterMode.DISABLED
+		}
 		else
+		{
 			desiredEarnMeterMode = eEarnMeterMode.DEFAULT
+		}
 
 		if ( desiredEarnMeterMode != lastEarnMeterMode )
 		{
@@ -165,6 +170,10 @@ void function EarnMeterMP_PlayerLifeThink( entity player )
 			}
 			else if ( desiredEarnMeterMode == eEarnMeterMode.CORE_ACTIVE ) // Enables smoke after core use (doesn't show up during active, so looks fine)
 				PlayerEarnMeter_EnableReward( player )
+
+			string burncardRef = GetSelectedBurnCardRef( player )
+
+			EarnMeterMP_SetBoostByRef( player, burncardRef )
 
 			lastEarnMeterMode = desiredEarnMeterMode
 		}
@@ -203,8 +212,16 @@ void function EarnMeterMP_PlayerLifeThink( entity player )
 
 			if ( Time() >= lastPassiveGainTime && file.passiveMeterGainEnabled && GetGameState() != eGameState.Prematch )
 			{
-				lastPassiveGainTime = Time() + 4.0
-				PlayerEarnMeter_AddOwnedFrac( player, 0.01 )
+				if ( lastPassiveGainTime == -1 )
+				{
+					lastPassiveGainTime = Time() + 4.0
+				}
+				else
+				{
+					lastPassiveGainTime = Time() + 4.0
+
+					PlayerEarnMeter_AddOwnedFrac( player, 0.01 )
+				}
 			}
 		}
 		// Allow players to do a "shadow buildup" while meter is hidden for them in case Max Active Titans Riff is enabled

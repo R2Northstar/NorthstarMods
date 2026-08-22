@@ -5,7 +5,6 @@ struct
 {
 	entity imcLastMark
 	entity militiaLastMark
-	bool isMfdPro
 } file
 
 void function GamemodeMfd_Init()
@@ -15,13 +14,12 @@ void function GamemodeMfd_Init()
 	RegisterSignal( "MarkKilled" )
 	ScoreEvent_SetupEarnMeterValuesForMixedModes()
 
-	// todo
-	if ( GAMETYPE == MARKED_FOR_DEATH_PRO )
+	if ( IsTitanMarkedForDeathMode() )
 	{
-		file.isMfdPro = true
-		SetRoundBased( true )
-		SetShouldUseRoundWinningKillReplay( true )
-		Riff_ForceSetEliminationMode( eEliminationMode.Pilots )
+		Riff_ForceSetSpawnAsTitan( eSpawnAsTitan.Always )
+		Riff_ForceTitanExitEnabled( eTitanExitEnabled.Never )
+		ClassicMP_SetCustomIntro( ClassicMP_DefaultNoIntro_Setup, ClassicMP_DefaultNoIntro_GetLength() )
+		ClassicMP_ForceDisableEpilogue( true )
 	}
 
 	AddCallback_OnClientConnected( SetupMFDPlayer )
@@ -98,15 +96,15 @@ void function MFDThink()
 		// reset if mark leaves
 		bool shouldReset
 		float endTime = Time() + MFD_COUNTDOWN_TIME
-		while ( endTime > Time() || ( !IsAlive( imcMark ) || !IsAlive( militiaMark ) ) )
+		while ( endTime > Time() || !IsAlive( imcMark ) || !IsAlive( militiaMark ) )
 		{
-			if ( !IsValid( imcMark ) || !IsValid( militiaMark ) )
+			WaitFrame()
+
+			if ( !IsValid( imcMark ) || !IsValid( militiaMark ) || imcMark.GetTeam() != TEAM_IMC || militiaMark.GetTeam() != TEAM_MILITIA )
 			{
 				shouldReset = true
 				break
 			}
-
-			WaitFrame()
 		}
 
 		if ( shouldReset )
@@ -143,10 +141,8 @@ entity function PickTeamMark( int team )
 void function MarkPlayers( entity imcMark, entity militiaMark )
 {
 	imcMark.EndSignal( "OnDestroy" )
-	imcMark.EndSignal( "Disconnected" )
 
 	militiaMark.EndSignal( "OnDestroy" )
-	militiaMark.EndSignal( "Disconnected" )
 
 	OnThreadEnd(
 		function() : ( imcMark, militiaMark )

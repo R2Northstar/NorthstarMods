@@ -12,12 +12,24 @@ void function PowerUps_Init()
 
 	AddSpawnCallbackEditorClass( "script_ref", "script_power_up_other", AddPowerupSpawn )
 	AddCallback_OnTouchHealthKit( "item_powerup", OnPowerupCollected )
-	AddCallback_GameStateEnter( eGameState.Prematch, RespawnPowerups )
+	AddCallback_EntitiesDidLoad( SpawnPowerupBase )
+	AddCallback_GameStateEnter( eGameState.Playing, RespawnPowerups )
 }
 
 void function AddPowerupSpawn( entity spawnpoint )
 {
 	file.powerupSpawns.append( spawnpoint )
+}
+
+void function SpawnPowerupBase()
+{
+	foreach ( entity spawnpoint in file.powerupSpawns )
+	{
+		PowerUp powerupDef = GetPowerUpFromItemRef( expect string( spawnpoint.kv.powerUpType ) )
+
+		if ( powerupDef.spawnFunc() )
+			CreatePropDynamic( powerupDef.baseModel, spawnpoint.GetOrigin(), spawnpoint.GetAngles(), 2 )
+	}
 }
 
 void function RespawnPowerups()
@@ -31,15 +43,7 @@ void function RespawnPowerups()
 
 void function PowerupSpawnerThink( entity spawnpoint, PowerUp powerupDef )
 {
-	svGlobal.levelEnt.EndSignal( "CleanUpEntitiesForRoundEnd" )
-
-	entity base = CreatePropDynamic( powerupDef.baseModel, spawnpoint.GetOrigin(), spawnpoint.GetAngles(), 2 )
-	OnThreadEnd(
-		function() : ( base )
-		{
-			base.Destroy()
-		}
-	)
+	svGlobal.levelEnt.EndSignal( "ClearPlayers" )
 
 	while ( true )
 	{
@@ -48,8 +52,8 @@ void function PowerupSpawnerThink( entity spawnpoint, PowerUp powerupDef )
 
 		entity powerup = CreateEntity( "item_powerup" )
 
-		powerup.SetOrigin( base.GetOrigin() + powerupDef.modelOffset )
-		powerup.SetAngles( base.GetAngles() + powerupDef.modelAngles )
+		powerup.SetOrigin( spawnpoint.GetOrigin() + powerupDef.modelOffset )
+		powerup.SetAngles( spawnpoint.GetAngles() + powerupDef.modelAngles )
 		powerup.SetValueForModelKey( powerupDef.model )
 		powerup.s.powerupRef <- powerupDef.itemRef // this needs to be done before dispatchspawn since OnPowerupCollected will run as soon as we call dispatchspawn if there's a player on battery as it spawns
 
@@ -57,8 +61,8 @@ void function PowerupSpawnerThink( entity spawnpoint, PowerUp powerupDef )
 
 		// unless i'm doing something really dumb, this all has to be done after dispatchspawn to get the powerup to not have gravity
 		powerup.StopPhysics()
-		powerup.SetOrigin( base.GetOrigin() + powerupDef.modelOffset )
-		powerup.SetAngles( base.GetAngles() + powerupDef.modelAngles )
+		powerup.SetOrigin( spawnpoint.GetOrigin() + powerupDef.modelOffset )
+		powerup.SetAngles( spawnpoint.GetAngles() + powerupDef.modelAngles )
 
 		powerup.SetModel( powerupDef.model )
 

@@ -55,6 +55,14 @@ void function InitMainMenu()
 
 	#if VANILLA
 		AddMenuFooterOption( menu, BUTTON_X, "#X_BUTTON_INBOX_ACCEPT", "#INBOX_ACCEPT", OpenDataCenterDialog, IsDataCenterFooterValid, UpdateDataCenterFooter )
+	#else
+		AddMenuFooterOption(
+			file.menu,
+			BUTTON_X,
+			PrependControllerPrompts( BUTTON_X, "#AUTHENTICATION_AGREEMENT" ),
+			"#AUTHENTICATION_AGREEMENT",
+			OnAuthenticationAgreementButtonPressed
+		)
 	#endif
 
 	#if DEV
@@ -98,9 +106,11 @@ void function OnMainMenu_Open()
 		Dev_CommandLineRemoveParm( "+map" )
 	}
 
-	// do agree to ns remote auth dialog
-	if ( !GetConVarBool( "ns_has_agreed_to_send_token" ) )
-		NorthstarMasterServerAuthDialog()
+	#if !VANILLA
+		// do agree to ns remote auth dialog
+		if ( !GetConVarBool( "ns_has_agreed_to_send_token" ) )
+			NorthstarMasterServerAuthDialog()
+	#endif
 
 	#if PC_PROG
 		ActivatePanel( GetPanel( "MainMenuPanel" ) )
@@ -178,6 +188,11 @@ void function NorthstarMasterServerAuthDialogDisagree()
 		AddDialogButton( dialogData, "#OK" )
 		OpenDialog( dialogData )
 	}
+}
+
+void function OnAuthenticationAgreementButtonPressed( var button )
+{
+	NorthstarMasterServerAuthDialog()
 }
 
 void function ActivatePanel( var panel )

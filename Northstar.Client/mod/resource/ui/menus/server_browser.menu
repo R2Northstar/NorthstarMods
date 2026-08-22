@@ -2574,8 +2574,8 @@ resource/ui/menus/mods_browse.menu
 			auto_wide_tocontents 1
 			tall 40
 			labelText "#INGAME_PLAYERS"
-			xpos -250
-			ypos 30
+			xpos -13
+			ypos -5
 			visible 1
 			zpos 101
 

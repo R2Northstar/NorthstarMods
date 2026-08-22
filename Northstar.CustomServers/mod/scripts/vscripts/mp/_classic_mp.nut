@@ -1,8 +1,7 @@
 untyped
+
 global function ClassicMp_Init
 global function ClassicMP_TryDefaultIntroSetup
-global function ClassicMP_SetShouldTryIntroAndEpilogueWithoutClassicMP
-global function ClassicMP_ShouldTryIntroAndEpilogueWithoutClassicMP
 
 // intro setups
 global function ClassicMP_SetLevelIntro
@@ -18,14 +17,43 @@ global function ClassicMP_GetIntroLength
 global function ClassicMP_ForceDisableEpilogue
 global function ClassicMP_SetEpilogue
 global function ClassicMP_SetupEpilogue
+
+// epilogue checks
 global function ClassicMP_ShouldRunEpilogue
+global function ClassicMP_RunEpilogueWithDeadPlayers
 
 global function GetClassicMPMode
 
+global const array<string> DROPSHIP_IDLE_ANIMS = [
+	"Classic_MP_flyin_exit_playerA_idle",
+	"Classic_MP_flyin_exit_playerB_idle",
+	"Classic_MP_flyin_exit_playerC_idle",
+	"Classic_MP_flyin_exit_playerD_idle"
+]
+
+global const array<string> DROPSHIP_IDLE_ANIMS_POV = [
+	"Classic_MP_flyin_exit_povA_idle",
+	"Classic_MP_flyin_exit_povB_idle",
+	"Classic_MP_flyin_exit_povC_idle",
+	"Classic_MP_flyin_exit_povD_idle"
+]
+
+global const array<string> DROPSHIP_JUMP_ANIMS = [
+	"Classic_MP_flyin_exit_playerA_jump",
+	"Classic_MP_flyin_exit_playerB_jump",
+	"Classic_MP_flyin_exit_playerC_jump",
+	"Classic_MP_flyin_exit_playerD_jump"
+]
+
+global const array<string> DROPSHIP_JUMP_ANIMS_POV = [
+	"Classic_MP_flyin_exit_povA_jump",
+	"Classic_MP_flyin_exit_povB_jump",
+	"Classic_MP_flyin_exit_povC_jump",
+	"Classic_MP_flyin_exit_povD_jump"
+]
+
 struct
 {
-	bool shouldTryIntroAndEpilogueWithoutClassicMP = false
-
 	// level intros have a lower priority than custom intros
 	// level intros are used only if a custom intro was not specified
 	void functionref() levelIntroSetupFunc
@@ -37,12 +65,15 @@ struct
 	bool epilogueForceDisabled = false
 	bool shouldRunEpilogueInRoundBasedMode = false
 	void functionref() epilogueSetupFunc
+
+	// epilogue checks
+	bool runEpilogueWithDeadPlayers = false
 } file
 
 void function ClassicMp_Init()
 {
 	// default level intros
-	if ( IsFFAGame() || !GetClassicMPMode() )
+	if ( IsFFAGame() || !GetCurrentPlaylistVarInt( "run_intro", 1 ) )
 		ClassicMP_SetLevelIntro( ClassicMP_DefaultNoIntro_Setup, ClassicMP_DefaultNoIntro_GetLength() )
 	else
 		ClassicMP_SetLevelIntro( ClassicMP_DefaultDropshipIntro_Setup, DROPSHIP_INTRO_LENGTH )
@@ -51,18 +82,6 @@ void function ClassicMp_Init()
 // stub func, called in mp_sh_init
 void function ClassicMP_TryDefaultIntroSetup()
 {
-}
-
-// this is for custom intros that might not want to use the preexisting classic_mp logic on client
-// in particular, tf1 campaign intros don't do this
-void function ClassicMP_SetShouldTryIntroAndEpilogueWithoutClassicMP( bool shouldTryIntroAndEpilogueWithoutClassicMP )
-{
-	file.shouldTryIntroAndEpilogueWithoutClassicMP = shouldTryIntroAndEpilogueWithoutClassicMP
-}
-
-bool function ClassicMP_ShouldTryIntroAndEpilogueWithoutClassicMP()
-{
-	return file.shouldTryIntroAndEpilogueWithoutClassicMP
 }
 
 void function ClassicMP_SetLevelIntro( void functionref() setupFunc, float introLength )
@@ -79,6 +98,9 @@ void function ClassicMP_SetCustomIntro( void functionref() setupFunc, float intr
 
 void function ClassicMP_SetupIntro()
 {
+	if ( !GetCurrentPlaylistVarInt( "classic_mp", 1 ) )
+		return
+
 	if ( file.customIntroSetupFunc != null )
 		file.customIntroSetupFunc()
 	else
@@ -87,17 +109,12 @@ void function ClassicMP_SetupIntro()
 
 void function ClassicMP_OnIntroStarted()
 {
-	print( "started intro!" )
-
-	float introLength = ClassicMP_GetIntroLength()
-	SetServerVar( "gameStartTime", Time() + introLength )
-	SetServerVar( "roundStartTime", Time() + introLength )
+	printt( "started intro!" )
 }
 
 void function ClassicMP_OnIntroFinished()
 {
-	print( "intro finished!" )
-	SetGameState( eGameState.Playing )
+	printt( "intro finished!" )
 }
 
 float function ClassicMP_GetIntroLength()
@@ -128,11 +145,50 @@ void function ClassicMP_SetupEpilogue()
 
 bool function GetClassicMPMode()
 {
-	return GetCurrentPlaylistVarInt( "run_intro", 1 ) == 1
+	return GetCurrentPlaylistVarInt( "classic_mp", 1 ) != 0
 }
 
 bool function ClassicMP_ShouldRunEpilogue()
 {
-	// note: there is a run_evac playlist var, but it's unused, and default 0, so use a new one
-	return !file.epilogueForceDisabled && GetClassicMPMode() && GetCurrentPlaylistVarInt( "run_epilogue", 1 ) == 1
+	if ( IsFFAGame() )
+		return false
+
+	int winningTeam = GetWinningTeam()
+
+	if ( !IsIMCOrMilitiaTeam( winningTeam ) )
+		return false
+
+	if ( !GetCurrentPlaylistVarInt( "run_evac", 0 ) )
+	{
+		if ( !file.runEpilogueWithDeadPlayers && IsPilotEliminationBased() && IsTeamEliminated( GetOtherTeam( winningTeam ) ) )
+			return false
+
+		// there needs to be atleast 1 player on each team before running epilogue
+		if ( GetCurrentPlaylistVarInt( "max_teams", 2 ) != 1 )
+		{
+			int winningPlayers = 0
+			int losingPlayers = 0
+
+			foreach ( entity player in GetPlayerArray() )
+			{
+				if ( IsValidPlayer( player ) && !IsPrivateMatchSpectator( player ) )
+				{
+					if ( player.GetTeam() == winningTeam )
+						winningPlayers++
+					else
+						losingPlayers++
+				}
+			}
+
+			if ( !winningPlayers || !losingPlayers )
+				return false
+		}
+	}
+
+	return !file.epilogueForceDisabled && GetCurrentPlaylistVarInt( "run_epilogue", 1 ) != 0
+}
+
+void function ClassicMP_RunEpilogueWithDeadPlayers( bool enabled )
+{
+	file.runEpilogueWithDeadPlayers = enabled
 }

@@ -20,13 +20,20 @@ void function Lobby_Init()
 
 void function Lobby_OnClientConnectionStarted( entity player )
 {
-	if ( !( IsPrivateMatch() || GetCurrentPlaylistName() == "private_match" ) || !GetConVarBool( "ns_allow_spectators" ) )
-		player.SetPersistentVar( "privateMatchState", 0 ) // disable spectator
+	svGlobal.levelEnt.Signal( "PlayerDidSpawn", { player = player } )
 }
 
 void function Lobby_OnClientConnectionCompleted( entity player )
 {
+	SaveDateLoggedIn( player )
+
+	player.FreezeControlsOnServer()
 	player.hasConnected = true
+
+	UpdateBadRepPresent()
+
+	player.SetPersistentVar( "privateMatchState", 0 )
+
 	FinishClientScriptInitialization( player )
 }
 

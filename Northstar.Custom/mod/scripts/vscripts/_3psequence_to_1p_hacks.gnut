@@ -2,7 +2,7 @@ global function FirstPersonSequenceForce1P
 global function ShouldRunFirstPersonSequence
 
 global const string FORCE1P_PILOT_1P_ATTACHMENT = "HEADFOCUS"
-global const string FORCE1P_TITAN_1P_ATTACHMENT = "HATCH_HEAD"
+global const string FORCE1P_TITAN_1P_ATTACHMENT = "HEADFOCUS"
 
 global const string FORCE1P_PILOT_1P_HIDDEN_BODYGROUP = "head"
 global const string FORCE1P_TITAN_1P_HIDDEN_BODYGROUP = "torso"
@@ -37,8 +37,6 @@ Forced1PSequenceData function FirstPersonSequenceForce1P( FirstPersonSequenceStr
 
 	vector angles = player.GetAngles()
 
-	angles.y = player.EyeAngles().y
-
 	entity ownerProxy
 
 	if ( entityclass == FORCE1P_TITAN_ENTITYCLASS )
@@ -47,28 +45,21 @@ Forced1PSequenceData function FirstPersonSequenceForce1P( FirstPersonSequenceStr
 		ownerProxy = CreateEntity( entityclass )
 
 	ownerProxy.SetOrigin( player.GetOrigin() )
-
-	if ( Distance( angles, angles ) < 359 )
-		ownerProxy.SetAngles( angles )
-
+	ownerProxy.SetAngles( angles )
 	ownerProxy.kv.VisibilityFlags = ENTITY_VISIBLE_TO_OWNER
 	ownerProxy.kv.solid = 0
 	ownerProxy.SetOwner( player )
 
 	DispatchSpawn( ownerProxy )
 
-	if ( ownerProxy.GetModelName() != player.GetModelName() )
-	{
-		ownerProxy.SetModel( player.GetModelName() )
-		ownerProxy.SetValueForModelKey( player.GetModelName() )
-	}
-
+	ownerProxy.SetModel( player.GetModelName() )
+	ownerProxy.SetValueForModelKey( player.GetModelName() )
 	ownerProxy.EnableNPCFlag( NPC_IGNORE_ALL )
 	ownerProxy.SetBossPlayer( player )
 
 	NPC_NoTarget( ownerProxy )
 	SetTeam( ownerProxy, player.GetTeam() )
-	TakeWeaponsForArray( ownerProxy, ownerProxy.GetMainWeapons() )
+	TakeAllWeapons( ownerProxy )
 
 	ownerProxy.SetSkin( player.GetSkin() )
 	ownerProxy.SetCamo( player.GetCamo() )
@@ -120,28 +111,21 @@ Forced1PSequenceData function FirstPersonSequenceForce1P( FirstPersonSequenceStr
 		thirdPersonProxy = CreateEntity( entityclass )
 
 	thirdPersonProxy.SetOrigin( player.GetOrigin() )
-
-	if ( Distance( angles, angles ) < 359 )
-		thirdPersonProxy.SetAngles( angles )
-
+	thirdPersonProxy.SetAngles( angles )
 	thirdPersonProxy.kv.VisibilityFlags = ENTITY_VISIBLE_TO_EVERYONE & ~ENTITY_VISIBLE_TO_OWNER
 	thirdPersonProxy.kv.solid = 0
 	thirdPersonProxy.SetOwner( player )
 
 	DispatchSpawn( thirdPersonProxy )
 
-	if ( thirdPersonProxy.GetModelName() != player.GetModelName() )
-	{
-		thirdPersonProxy.SetModel( player.GetModelName() )
-		thirdPersonProxy.SetValueForModelKey( player.GetModelName() )
-	}
-
+	thirdPersonProxy.SetModel( player.GetModelName() )
+	thirdPersonProxy.SetValueForModelKey( player.GetModelName() )
 	thirdPersonProxy.EnableNPCFlag( NPC_IGNORE_ALL )
 	thirdPersonProxy.SetBossPlayer( player )
 
 	NPC_NoTarget( thirdPersonProxy )
 	SetTeam( thirdPersonProxy, player.GetTeam() )
-	TakeWeaponsForArray( thirdPersonProxy, thirdPersonProxy.GetMainWeapons() )
+	TakeAllWeapons( thirdPersonProxy )
 
 	thirdPersonProxy.SetSkin( player.GetSkin() )
 	thirdPersonProxy.SetCamo( player.GetCamo() )
@@ -227,18 +211,30 @@ void function CleanupForced1PSequence( Forced1PSequenceData cleanupData )
 
 	if ( IsValid( cleanupData.ownerProxy ) )
 	{
-		cleanupData.ownerProxy.kv.VisibilityFlags = ~ENTITY_VISIBLE_TO_EVERYONE
+		SetTeam( cleanupData.ownerProxy, TEAM_UNASSIGNED )
 
-		if ( IsAlive( cleanupData.ownerProxy ) )
-			cleanupData.ownerProxy.Die( null, null, { forceKill = true, scriptType = DF_EXPLOSION, damageType = DMG_REMOVENORAGDOLL } )
+		if ( cleanupData.ownerProxy.IsTitan() && IsValid( cleanupData.ownerProxy.GetTitanSoul() ) )
+		{
+			ClearAndKillChildren( cleanupData.ownerProxy.GetTitanSoul(), [] )
+
+			cleanupData.ownerProxy.GetTitanSoul().Destroy()
+		}
+
+		cleanupData.ownerProxy.Destroy()
 	}
 
 	if ( IsValid( cleanupData.thirdPersonProxy ) )
 	{
-		cleanupData.thirdPersonProxy.kv.VisibilityFlags = ~ENTITY_VISIBLE_TO_EVERYONE
+		SetTeam( cleanupData.thirdPersonProxy, TEAM_UNASSIGNED )
 
-		if ( IsAlive( cleanupData.thirdPersonProxy ) )
-			cleanupData.thirdPersonProxy.Die( null, null, { forceKill = true, scriptType = DF_EXPLOSION, damageType = DMG_REMOVENORAGDOLL } )
+		if ( cleanupData.thirdPersonProxy.IsTitan() && IsValid( cleanupData.thirdPersonProxy.GetTitanSoul() ) )
+		{
+			ClearAndKillChildren( cleanupData.thirdPersonProxy.GetTitanSoul(), [] )
+
+			cleanupData.thirdPersonProxy.GetTitanSoul().Destroy()
+		}
+
+		cleanupData.thirdPersonProxy.Destroy()
 	}
 }
 
@@ -260,24 +256,19 @@ void function SetBodyGroups( entity player, entity proxy )
 
 void function FirstPersonPlayAnim( FirstPersonSequenceStruct sequence, entity proxy, entity player, entity other )
 {
-	bool savednoparent = sequence.noParent
-	string savedattachment = sequence.attachment
-	bool saveduseanimatedrefattachment = sequence.useAnimatedRefAttachment
-
 	if ( !IsPlayerEmbarking( player ) )
 	{
+		sequence = clone sequence
+
 		sequence.noParent = false
 		sequence.attachment = "REF"
+		sequence.blendTime = 0
 		sequence.useAnimatedRefAttachment = true
 
 		thread FirstPersonSequence( sequence, proxy, player )
 	}
 	else
 		thread FirstPersonSequence( sequence, proxy, other )
-
-	sequence.noParent = savednoparent
-	sequence.attachment = savedattachment
-	sequence.useAnimatedRefAttachment = saveduseanimatedrefattachment
 }
 
 bool function ShouldRunFirstPersonSequence( entity player, bool isEmbark, bool isExecution )
@@ -296,16 +287,12 @@ bool function ShouldRunFirstPersonSequence( entity player, bool isEmbark, bool i
 
 void function ModdedPhaseEmbarkPhaseStart( entity player )
 {
-	PlayPhaseShiftDisappearFX( player )
-	EmitSoundOnEntity( player, "pilot_phaseembark_activate_3p" )
-
 	player.PhaseShiftBegin( 0.0, 0.2 )
 
 	if ( !IsPlayerEmbarking( player.GetOwner() ) )
 	{
 		player.GetOwner().PhaseShiftBegin( 0.0, 1.5 )
 
-		AddAnimEvent( player.GetOwner(), "phase_shift_stop", ModdedPhaseEmbarkPhaseStop )
 		thread ModdedPhaseExecutionPhaseCleanup( player.GetOwner() )
 	}
 
@@ -345,8 +332,6 @@ void function ModdedPhaseExecutionPhaseCleanup( entity player )
 void function ModdedPhaseEmbarkPhaseStop( entity player )
 {
 	Signal( player, "PhaseEmbarkPhaseStop" )
-	PlayPhaseShiftDisappearFX( player )
-	EmitSoundOnEntity( player, "pilot_phaseembark_end_3p" )
 
 	player.PhaseShiftCancel()
 }

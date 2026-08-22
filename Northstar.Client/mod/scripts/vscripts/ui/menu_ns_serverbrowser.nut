@@ -806,7 +806,12 @@ void function WaitForServerListRequest()
 
 	// wait for request to complete
 	while ( NSIsRequestingServerList() )
+	{
 		WaitFrame()
+
+		if ( !IsConnected() )
+			return
+	}
 
 	file.serverListRequestFailed = !NSMasterServerConnectionSuccessful()
 	if ( file.serverListRequestFailed )
@@ -906,10 +911,10 @@ void function FilterServerList()
 		serverCount++
 
 		// Filters
-		if ( filterArguments.hideEmpty && server.playerCount == 0 )
+		if ( filterArguments.hideEmpty && server.playerCount <= 0 )
 			continue
 
-		if ( filterArguments.hideFull && server.playerCount == server.maxPlayerCount )
+		if ( filterArguments.hideFull && server.playerCount >= server.maxPlayerCount )
 			continue
 
 		if ( filterArguments.hideProtected && server.requiresPassword )
@@ -1357,7 +1362,10 @@ void function ConnectToServer( bool modsChanged = false )
 
 	// only actually reload if we need to since the uiscript reset on reload lags hard
 	if ( modsChanged )
+	{
 		ReloadMods()
+		ClientCommand( "uiscript_reset" )
+	}
 
 	NSConnectToAuthedServer()
 }
@@ -1378,17 +1386,6 @@ int function ServerSortLogic( ServerInfo a, ServerInfo b )
 		case sortingBy.DEFAULT:
 			aTemp = a.playerCount
 			bTemp = b.playerCount
-
-			// `1000` is assumed to always be higher than `serverPlayersMax`
-			if ( aTemp + 1 < a.maxPlayerCount )
-				aTemp = aTemp + 2000
-			if ( bTemp + 1 < b.maxPlayerCount )
-				bTemp = bTemp + 2000
-			if ( aTemp + 1 == a.maxPlayerCount )
-				aTemp = aTemp + 1000
-			if ( bTemp + 1 == b.maxPlayerCount )
-				bTemp = bTemp + 1000
-
 			direction = filterDirection.serverName
 			break
 
@@ -1533,7 +1530,7 @@ void function TriggerConnectToServerCallbacks( ServerInfo ornull targetServer = 
 	}
 }
 
-const array<string> CORE_MODS = [ "Northstar.Client", "Northstar.Coop", "Northstar.CustomServers", "Northstar.Custom" ]
+const array<string> CORE_MODS = [ "Northstar.Client", "Northstar.CustomServers", "Northstar.Custom" ]
 bool function IsCoreMod( string modName )
 {
 	return CORE_MODS.find( modName ) != -1

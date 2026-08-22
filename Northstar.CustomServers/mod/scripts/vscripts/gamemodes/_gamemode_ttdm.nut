@@ -1,7 +1,5 @@
 global function GamemodeTTDM_Init
 
-const float TTDMIntroLength = 15.0
-
 struct
 {
 	table<entity, int> challengeCount
@@ -14,52 +12,14 @@ void function GamemodeTTDM_Init()
 	TrackTitanDamageInPlayerGameStat( PGS_ASSAULT_SCORE )
 	ScoreEvent_SetupEarnMeterValuesForMixedModes()
 	SetLoadoutGracePeriodEnabled( false )
+	SetPlayThreeMinuteMusic( true )
 
-	ClassicMP_SetCustomIntro( TTDMIntroSetup, TTDMIntroLength )
-	ClassicMP_ForceDisableEpilogue( true )
-	SetTimeoutWinnerDecisionFunc( CheckScoreForDraw )
+	ClassicMP_SetCustomIntro( ClassicMP_DefaultNoIntro_Setup, ClassicMP_DefaultNoIntro_GetLength() )
 
 	AddCallback_OnClientConnected( SetupPlayerTTDMChallenges ) // Just to make up the Match Goals tracking
 	AddCallback_OnClientDisconnected( RemovePlayerTTDMChallenges ) // Safety removal of data to prevent crashes
 	AddCallback_OnPlayerKilled( AddTeamScoreForPlayerKilled ) // dont have to track autotitan kills since you cant leave your titan in this mode
 	// probably needs scoreevent earnmeter values
-}
-
-void function TTDMIntroSetup()
-{
-	// this should show intermission cam for 15 sec in prematch, before spawning players as titans
-	AddCallback_GameStateEnter( eGameState.Prematch, TTDMIntroStart )
-	AddCallback_OnClientConnected( TTDMIntroShowIntermissionCam )
-}
-
-void function TTDMIntroStart()
-{
-	thread TTDMIntroStartThreaded()
-}
-
-void function TTDMIntroStartThreaded()
-{
-	ClassicMP_OnIntroStarted()
-
-	foreach ( entity player in GetPlayerArray() )
-	{
-		if ( !IsPrivateMatchSpectator( player ) )
-			TTDMIntroShowIntermissionCam( player )
-		else
-			RespawnPrivateMatchSpectator( player )
-	}
-
-	wait TTDMIntroLength
-
-	ClassicMP_OnIntroFinished()
-}
-
-void function TTDMIntroShowIntermissionCam( entity player )
-{
-	if ( GetGameState() != eGameState.Prematch )
-		return
-
-	thread PlayerWatchesTTDMIntroIntermissionCam( player )
 }
 
 void function SetupPlayerTTDMChallenges( entity player )
@@ -71,24 +31,6 @@ void function RemovePlayerTTDMChallenges( entity player )
 {
 	if ( player in file.challengeCount )
 		delete file.challengeCount[ player ]
-}
-
-void function PlayerWatchesTTDMIntroIntermissionCam( entity player )
-{
-	player.EndSignal( "OnDestroy" )
-	ScreenFadeFromBlack( player )
-
-	entity intermissionCam = GetEntArrayByClass_Expensive( "info_intermission" )[ 0 ]
-
-	// the angle set here seems sorta inconsistent as to whether it actually works or just stays at 0 for some reason
-	player.SetObserverModeStaticPosition( intermissionCam.GetOrigin() )
-	player.SetObserverModeStaticAngles( intermissionCam.GetAngles() )
-	player.StartObserverMode( OBS_MODE_STATIC_LOCKED )
-
-	wait TTDMIntroLength
-
-	RespawnAsTitan( player )
-	TryGameModeAnnouncement( player )
 }
 
 void function AddTeamScoreForPlayerKilled( entity victim, entity attacker, var damageInfo )
@@ -110,14 +52,4 @@ void function AddTeamScoreForPlayerKilled( entity victim, entity attacker, var d
 	}
 
 	AddTeamScore( GetOtherTeam( victim.GetTeam() ), 1 )
-}
-
-int function CheckScoreForDraw()
-{
-	if ( GameRules_GetTeamScore( TEAM_IMC ) > GameRules_GetTeamScore( TEAM_MILITIA ) )
-		return TEAM_IMC
-	else if ( GameRules_GetTeamScore( TEAM_MILITIA ) > GameRules_GetTeamScore( TEAM_IMC ) )
-		return TEAM_MILITIA
-
-	return TEAM_UNASSIGNED
 }
