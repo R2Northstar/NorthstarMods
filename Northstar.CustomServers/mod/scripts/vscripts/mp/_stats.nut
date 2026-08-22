@@ -33,13 +33,16 @@ struct
 
 void function Stats_Init()
 {
+	if ( IsPrivateMatch() )
+		return
+
 	AddCallback_OnPlayerKilled( OnPlayerOrNPCKilled )
 	AddCallback_OnNPCKilled( OnPlayerOrNPCKilled )
 	AddCallback_OnPlayerRespawned( OnPlayerRespawned )
 	AddCallback_OnClientConnected( OnClientConnected )
 	AddCallback_UpdatePersistenceOnDisconnect( UpdatePersistence )
 	AddCallback_NPCLeeched( OnSpectreLeeched )
-	// Enable when thunderbolt works correctly
+	// enable when thunderbolt works correctly
 	// AddCallback_OnWeaponAttack( OnPlayerFiredWeapon )
 
 	thread HandleDistanceAndTimeStats_Threaded()
@@ -234,6 +237,9 @@ void function Stats_OnPlayerDidDamage( entity victim, var damageInfo )
 
 void function Stats_IncrementStat( entity player, string statCategory, string statAlias, string statSubAlias, float amount )
 {
+	if ( IsPrivateMatch() )
+		return
+
 	if ( !IsValidStat( statCategory, statAlias, statSubAlias ) )
 	{
 		// printt( "invalid stat: " + statCategory + " : " + statAlias + " : " + statSubAlias )
@@ -338,7 +344,7 @@ void function OnSpectreLeeched( entity spectre, entity player )
 
 void function OnPlayerFiredWeapon( entity player, entity weapon, string weaponName, int shotsFired )
 {
-	Stats_IncrementStat( player, "weapon_stats", "shotsFired", "", shotsFired.tofloat() )
+	Stats_IncrementStat( player, "weapon_stats", "shotsFired", "", float( shotsFired ) )
 }
 
 void function OnPlayerOrNPCKilled( entity victim, entity attacker, var damageInfo )
@@ -941,7 +947,7 @@ void function SetLastPosForDistanceStatValid_Threaded( entity player, bool val )
 
 // Respawn did this through stuff found in _entitystructs.gnut (stuff like stats_wallrunTime)
 // but their implementation seems kinda bad. The advantage it has over this method is not polling
-// every 0.25 seconds, and using movement callbacks and stuff instead. However, since i can't find
+// every 0.01 seconds, and using movement callbacks and stuff instead. However, since i can't find
 // callbacks for things like changing weapon, i would have to poll for that *anyway* and thus,
 // there is no point in doing things Respawn's way here
 void function HandleDistanceAndTimeStats_Threaded()
@@ -1055,8 +1061,8 @@ void function HandleDistanceAndTimeStats_Threaded()
 		}
 
 		lastTickTime = Time()
-		// not rly worth doing this every frame, just a couple of times per second should be fine
-		wait 0.25
+
+		WaitFrame()
 	}
 }
 

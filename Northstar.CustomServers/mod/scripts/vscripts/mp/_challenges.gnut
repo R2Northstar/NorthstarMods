@@ -31,6 +31,9 @@ struct
 
 void function InitChallenges()
 {
+	if ( IsPrivateMatch() )
+		return
+
 	AddCallback_OnClientConnected( SetupPlayerMenuChallenges )
 	AddCallback_OnClientDisconnected( RemovePlayerFromChallengePool )
 }
@@ -81,6 +84,9 @@ void function RemovePlayerFromChallengePool( entity player )
 
 void function RegisterChallenges_OnMatchEnd()
 {
+	if ( IsPrivateMatch() )
+		return
+
 	bool eliteWarpaintRNG = false
 
 	if ( RandomIntRange( 0, 100 ) <= 30 ) // 30% Chance to trigger akin to vanilla, apply always since all players have paid cosmetics unlocked
@@ -141,7 +147,7 @@ bool function HasPlayerCompletedMeritScore( entity player )
 	if ( player in file.playerChallenge )
 		return file.playerChallenge[ player ]
 
-	return false
+	return true
 }
 
 /*=============================================================================================================
@@ -155,6 +161,9 @@ bool function HasPlayerCompletedMeritScore( entity player )
 
 void function SetPlayerChallengeEvacState( entity player, int successEvac = 0 )
 {
+	if ( IsPrivateMatch() )
+		return
+
 	if ( successEvac == 0 ) // Evac Ship destroyed
 		Remote_CallFunction_UI( player, "SCB_SetEvacMeritState", 2 )
 	else if ( successEvac == 1 ) // Player itself managed to evac
@@ -178,6 +187,9 @@ void function SetPlayerChallengeEvacState( entity player, int successEvac = 0 )
 
 void function SetPlayerChallengeMatchWon( entity player, bool playerWon )
 {
+	if ( IsPrivateMatch() )
+		return
+
 	if ( playerWon )
 	{
 		int meritCount = 0
@@ -200,6 +212,9 @@ void function SetPlayerChallengeMatchWon( entity player, bool playerWon )
 
 void function SetPlayerChallengeMatchComplete( entity player )
 {
+	if ( IsPrivateMatch() )
+		return
+
 	int meritCount = 0
 
 	if ( player in file.playerTotalMeritCount )
@@ -217,6 +232,9 @@ void function SetPlayerChallengeMatchComplete( entity player )
 
 void function SetPlayerChallengeSquadLeader( entity player )
 {
+	if ( IsPrivateMatch() )
+		return
+
 	if ( !ProgressionEnabledForPlayer( player ) )
 		return
 

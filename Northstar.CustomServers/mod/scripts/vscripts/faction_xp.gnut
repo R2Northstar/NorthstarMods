@@ -2,6 +2,9 @@ global function AddFactionXP
 
 void function AddFactionXP( entity player, int amount )
 {
+	if ( IsPrivateMatch() )
+		return
+
 	string faction = GetFactionChoice( player )
 	int oldLevel = FactionGetLevel( player, faction )
 	int FactionXPMatch = player.GetPersistentVarAsInt( "xp_match[" + XP_TYPE.FACTION_LEVELED + "]" )

@@ -3,6 +3,9 @@ global function AddWeaponXP
 
 void function AddWeaponXP( entity player, int amount )
 {
+	if ( IsPrivateMatch() )
+		return
+
 	entity activeWeapon = player.GetActiveWeapon()
 	string weaponClassname = activeWeapon.GetWeaponClassName()
 	int oldLevel = WeaponGetLevel( player, weaponClassname )
