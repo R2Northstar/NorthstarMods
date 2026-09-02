@@ -49,7 +49,6 @@ Clique em Sim se você concorda. Esta escolha pode ser alterada a qualquer momen
 		"MODE_SETTING_CATEGORY_RIFF" "Riffs"
 		"MODE_SETTING_CATEGORY_MATCH" "Partida"
 
-		"classic_mp" "MP Clássico"
 		"run_epilogue" "Executar epílogo"
 		"scorelimit" "Limite de pontos"
 		"roundscorelimit" "Limite de pontos (por rodada)"
@@ -221,7 +220,6 @@ Clique em Sim se você concorda. Esta escolha pode ser alterada a qualquer momen
 		"custom_air_accel_pilot" "Aceleração aérea"
 		"no_pilot_collision" "Colisão entre pilotos"
 		"promode_enable" "Armas de Modo PRO"
-		"fp_embark_enabled" "Execuções/embarque em 1a pessoa"
 		"classic_rodeo" "Rodeio clássico"
 		"oob_timer_enabled" "Temporizador fora do mapa"
 		"riff_instagib" "Modo Instagib"

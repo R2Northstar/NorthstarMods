@@ -583,7 +583,6 @@ void function HandleKillStats( entity victim, entity attacker, var damageInfo )
 
 	// totalAssists
 	// assistsTotal ( weapon_kill_stats )
-	// note: eww
 	table<int, bool> alreadyAssisted
 	// titans store their recentDamageHistory in the soul
 	entity assistVictim = ( victim.IsTitan() && IsValid( victim.GetTitanSoul() ) ) ? victim.GetTitanSoul() : victim

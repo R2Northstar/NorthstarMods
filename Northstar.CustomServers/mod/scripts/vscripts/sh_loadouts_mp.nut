@@ -6,6 +6,13 @@
 global function GetNPCDefaultWeaponForLevel
 global function GetTitanLoadoutForCurrentMap
 
+global struct sTryGetTitanLoadoutCallbackReturn
+{
+	bool wasChanged = false
+	bool runMoreCallbacks = true
+	TitanLoadoutDef& loadout
+}
+
 TitanLoadoutDef function GetTitanLoadoutForCurrentMap()
 {
 	TitanLoadoutDef loadout

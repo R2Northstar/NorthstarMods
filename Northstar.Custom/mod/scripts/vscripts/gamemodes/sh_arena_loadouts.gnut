@@ -38,9 +38,8 @@ void function InitialiseArenaLoadouts()
 
 	BoostStoreData respawnData = { itemRef = "droppodRespawn", modesAllowed = "arena", cost = 50, ... }
 	file.tier0Weapons.append( respawnData )
-
 	#if SERVER
-		SetBoostPurchaseCallback( GivePlayerArenaLoadoutItem )
+		// SetBoostPurchaseCallback( GivePlayerArenaLoadoutItem )
 	#endif
 }
 

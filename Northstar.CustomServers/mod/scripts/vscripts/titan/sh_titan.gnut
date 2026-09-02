@@ -166,13 +166,6 @@ function CodeCallback_PlayerInTitanCockpit( titan, player )
 
 		entity rodeoPanel = CreatePropDynamic( model )
 
-		bool classicRodeo = MP && GetCurrentPlaylistVarInt( "classic_rodeo", 0 ) == 1
-		if ( classicRodeo )
-		{
-			Highlight_SetEnemyHighlight( rodeoPanel, "titan_weakpoint" )
-			Highlight_ClearEnemyHighlight( rodeoPanel )
-		}
-
 		string titanType = GetSoulTitanSubClass( soul )
 
 		rodeoPanel.NotSolid()
@@ -1151,7 +1144,7 @@ function EjectFlightTracker( entity player )
 		wait 3.5
 
 		player.kv.airSpeed = player.GetPlayerSettingsField( "airSpeed" )
-		player.kv.airAcceleration = GetCurrentPlaylistVarInt( "custom_air_accel_pilot", int( player.GetPlayerSettingsField( "airAcceleration" ) ) )
+		player.kv.airAcceleration = player.GetPlayerSettingsField( "airAcceleration" )
 	}
 
 	function TempLossOfAirControl( entity player, float time )

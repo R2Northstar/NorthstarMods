@@ -49,7 +49,6 @@ Choisissez Oui si vous êtes d'accord. Ce choix peut être modifié à tout inst
 		"MODE_SETTING_CATEGORY_RIFF" "Riffs"
 		"MODE_SETTING_CATEGORY_MATCH" "Match"
 
-		"classic_mp" "Multijoueurs classique"
 		"run_epilogue" "Epilogue"
 		"scorelimit" "Limite de score"
 		"roundscorelimit" "Limite de score (manche)"
@@ -223,7 +222,6 @@ Choisissez Oui si vous êtes d'accord. Ce choix peut être modifié à tout inst
 		"custom_air_accel_pilot" "Accélération aérienne"
 		"no_pilot_collision" "Collisions entre pilotes"
 		"promode_enable" "Armes du mode pro"
-		"fp_embark_enabled" "Animations 1e personne"
 		"classic_rodeo" "Rodéo classique"
 		"oob_timer_enabled" "Timer hors-limites"
 		"riff_instagib" "Mode Instagib"
