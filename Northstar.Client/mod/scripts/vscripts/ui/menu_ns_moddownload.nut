@@ -1,6 +1,7 @@
 global function DownloadMod
 global function DisplayModDownloadErrorDialog
 global function FetchVerifiedModsManifesto
+global function IsModDownloadable
 
 global enum eModInstallStatus
 {
@@ -18,6 +19,11 @@ global enum eModInstallStatus
 	NO_DISK_SPACE_AVAILABLE,
 	NOT_FOUND
 }
+
+struct
+{
+	bool abortDownload = false
+} file
 
 const int MB = 1024 * 1000
 
@@ -49,8 +55,61 @@ void function FetchVerifiedModsManifesto()
 	CloseActiveMenu()
 }
 
+void function ApproveDownload()
+{
+	file.abortDownload = false
+}
+
+void function AbortDownload()
+{
+	file.abortDownload = true
+}
+
 bool function DownloadMod( RequiredModInfo mod )
 {
+	// Prompt user to authorize downloading non-approved mods
+	if ( !NSIsModDownloadable( mod.name, mod.version ) && IsModDownloadable( mod ) )
+	{
+		DialogData dialogData
+		dialogData.header = "Download mod?"
+		dialogData.image = $"rui/menu/common/unlock_random"
+
+		string link = mod.downloadLink.len() > 0 ? mod.downloadLink : "https://example.org/"
+		string message = "This mod was not approved by the community, and thus might contain malicious content.\n\n"
+		message += format( "^FFFFFF00Mod:^0 %s v%s\n", mod.name, mod.version )
+		message += "^FFFFFF00Download link:^0 ^5588FF00"
+		message += link
+		message += "^0\n\nDo you want to download this mod?"
+		dialogData.message = message
+		// dialogData.inputDisableTime = 5
+		AddDialogButton(
+			dialogData,
+			"Manually check the mod",
+			void function() : ( dialogData, link )
+			{
+				LaunchExternalWebBrowser( link, WEBBROWSER_FLAG_FORCEEXTERNAL )
+				// Keep the dialog open
+				OpenDialog( dialogData )
+			}
+		)
+		AddDialogButton( dialogData, "#OK", ApproveDownload )
+		AddDialogButton( dialogData, "#CANCEL", AbortDownload )
+		dialogData.forceChoice = true
+		OpenDialog( dialogData )
+
+		// Wait for user selection
+		while ( IsDialogActive( dialogData ) )
+		{
+			WaitFrame()
+		}
+
+		if ( file.abortDownload )
+		{
+			print( format( "User refused downloading unapproved mod \"%s\".", mod.name ) )
+			return false
+		}
+	}
+
 	// Downloading mod UI
 	DialogData dialogData
 	dialogData.header = Localize( "#DOWNLOADING_MOD_TITLE" )
@@ -182,4 +241,15 @@ void function DisplayModDownloadErrorDialog( string modName )
 	AddDialogFooter( dialogData, "#B_BUTTON_DISMISS_RUI" )
 
 	OpenDialog( dialogData )
+}
+
+/**
+ * Returns whether {mod} can be downloaded, using information from its manifesto.
+ *
+ * This is different from native {NSIsModDownloadable}, which returns whether a
+ * mod has been approved by the community (= appears in the verified mods list).
+*/
+bool function IsModDownloadable( RequiredModInfo mod )
+{
+	return mod.downloadLink.len() > 0
 }
