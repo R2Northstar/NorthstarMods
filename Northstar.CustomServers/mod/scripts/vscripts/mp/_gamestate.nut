@@ -98,6 +98,7 @@ function GameState_Init()
 	file.difficultyFunc = DefaultDifficultyFunc
 
 	#if MP
+		GameState_Init_MP()
 		AddCallback_EntitiesDidLoad( GameState_EntitiesDidLoad )
 	#endif
 }
@@ -137,4 +138,3 @@ int function GetDifficultyLevel()
 {
 	return file.difficultyFunc()
 }
-

@@ -1,0 +1,357 @@
+#if CLIENT
+	global function CLTeamTitanSelection_Init
+	global function Menu_CreateTeamTitanSelectionScreen_NoScore
+	global function Menu_CreateTeamTitanSelectionScreen
+	global function LTS_CreateTeamTitanSelectionScreen
+	global function DestroyTeamTitanSelectionScreen
+	global function ServerCallback_UpdateTeamTitanSelection
+	global function TTS_UpdateLocalPlayerTitan
+
+	global function ShowTTSPanel
+	global function HideTTSPanel
+	const LTS_MAX_PLAYERS = 5
+#endif
+
+#if SERVER
+	global function TeamTitanSelection_Init
+	global function StartUpdatingTeamTitanSelection
+	global function StopUpdatingTeamTitanSelection
+	global function PlayerUpdateTeamTitanSelectionThink
+
+#endif
+
+#if CLIENT
+	struct TitanSelectionInfo
+	{
+		entity player
+		string playerName
+		string titanName
+		asset weaponImage // Titan Image Placeholder
+		string kitName
+		asset kitImage
+		string kit2Name
+		asset kit2Image
+	}
+
+	const array<array<float> > XOFFSETS = [ [ 0.0 ], [ -0.6, 0.6 ], [ -1.2, 0.0, 1.2 ], [ -1.8, -0.6, 0.6, 1.8 ], [ -2.4, -1.2, 0, 1.2, 2.4 ] ]
+
+	struct
+	{
+		table<entity, TitanSelectionInfo> teamInfo
+		array<var> TTSruis
+	} file
+
+	void function CLTeamTitanSelection_Init()
+	{
+		RegisterSignal( "DestroyTTS" )
+	}
+
+	void function Menu_CreateTeamTitanSelectionScreen_NoScore()
+	{
+		thread CreateTTSRui( true, false )
+	}
+
+	void function Menu_CreateTeamTitanSelectionScreen()
+	{
+		thread CreateTTSRui( true )
+	}
+
+	void function LTS_CreateTeamTitanSelectionScreen()
+	{
+		thread CreateTTSRui( false )
+	}
+
+	void function DestroyTeamTitanSelectionScreen()
+	{
+		entity player = GetLocalClientPlayer()
+		player.Signal( "DestroyTTS" )
+	}
+
+	void function ShowTTSPanel( entity player )
+	{
+		foreach ( rui in file.TTSruis )
+		{
+			RuiSetBool( rui, "isVisible", true )
+		}
+	}
+
+	void function HideTTSPanel( entity player )
+	{
+		foreach ( rui in file.TTSruis )
+		{
+			RuiSetBool( rui, "isVisible", false )
+		}
+	}
+
+	void function CreateTTSRui( bool showOverMenu, bool showScore = true )
+	{
+		entity player = GetLocalClientPlayer()
+		player.EndSignal( "OnDeath" )
+		player.EndSignal( "OnDestroy" )
+		player.EndSignal( "DestroyTTS" )
+
+		array<var> teammateTemplates
+		for ( int i = 0; i < LTS_MAX_PLAYERS; i++ )
+		{
+			var rui = CreateFullscreenRui( $"ui/team_titan_template.rpak", 1 )
+			teammateTemplates.append( rui )
+			file.TTSruis.append( rui )
+		}
+		var background = CreateFullscreenRui( $"ui/team_titan_selection.rpak", 0 )
+
+		int friendlyTeam = player.GetTeam()
+		RuiSetFloat( background, "leftTeamScore", float( GameRules_GetTeamScore( friendlyTeam ) ) )
+		RuiSetFloat( background, "rightTeamScore", float( GameRules_GetTeamScore( GetOtherTeam( friendlyTeam ) ) ) )
+		RuiSetBool( background, "showOverMenu", showOverMenu )
+		RuiSetBool( background, "showScore", showScore )
+		file.TTSruis.append( background )
+
+		OnThreadEnd(
+			function() : ( teammateTemplates, background )
+			{
+				file.TTSruis.clear()
+
+				foreach ( rui in teammateTemplates )
+					RuiDestroy( rui )
+
+				RuiDestroy( background )
+			}
+		)
+
+		while ( true )
+		{
+			int count = 1
+			foreach ( teamMember, memberInfo in clone file.teamInfo )
+			{
+				if ( !IsValid( teamMember ) )
+				{
+					delete file.teamInfo[ teamMember ]
+					continue
+				}
+
+				var rui
+				if ( player == teamMember )
+				{
+					rui = teammateTemplates[ 0 ]
+					count -= 1
+					RuiSetFloat3( rui, "textColor", SCOREBOARD_LOCAL_PLAYER_COLOR )
+				}
+				else if ( IsPartyMember( teamMember ) )
+				{
+					if ( count > 4 ) // JFS; 8v8 LTS in private match
+						continue
+
+					rui = teammateTemplates[ count ]
+					RuiSetFloat3( rui, "textColor", SCOREBOARD_PARTY_COLOR )
+				}
+				else
+				{
+					if ( count > 4 ) // JFS; 8v8 LTS in private match
+						continue
+
+					rui = teammateTemplates[ count ]
+					RuiSetFloat3( rui, "textColor", < 1.0, 1.0, 1.0 > )
+				}
+
+				RuiSetBool( rui, "showOverMenu", showOverMenu )
+				RuiSetString( rui, "playerName", memberInfo.playerName )
+				RuiSetString( rui, "titanName", GetLocalizedTitanName( memberInfo.titanName ) )
+				RuiSetImage( rui, "kitImage", memberInfo.kitImage )
+				RuiSetImage( rui, "kit2Image", memberInfo.kit2Image )
+				RuiSetImage( rui, "titanImage", GetTitanImageFromName( memberInfo.titanName ) )
+				RuiSetBool( rui, "hidden", false )
+				count++
+			}
+			for ( int i = 0; i < LTS_MAX_PLAYERS; i++ )
+			{
+				if ( i < count )
+				{
+					var rui = teammateTemplates[ i ]
+					RuiSetFloat( rui, "xOffset", XOFFSETS[ count - 1 ][ i ] )
+				}
+				else
+				{
+					var rui = teammateTemplates[ i ]
+					RuiSetBool( rui, "hidden", true )
+				}
+			}
+
+			WaitFrame()
+		}
+		WaitForever()
+	}
+
+	asset function GetTitanImageFromName( string name )
+	{
+		switch ( name )
+		{
+			case "RONIN":
+				return $"rui/menu/postgame/ronin_icon"
+
+			case "NORTHSTAR":
+				return $"rui/menu/postgame/northstar_icon"
+
+			case "TONE":
+				return $"rui/menu/postgame/tone_icon"
+
+			case "ION":
+				return $"rui/menu/postgame/ion_icon"
+
+			case "SCORCH":
+				return $"rui/menu/postgame/scorch_icon"
+
+			case "LEGION":
+				return $"rui/menu/postgame/legion_icon"
+
+			case "VANGUARD":
+				return $"rui/menu/postgame/vanguard_icon"
+
+			default:
+				printt( "Warning, titan is not supported for Team Selection Display" )
+				return $"rui/hud/titanImages/placeholder_ronin"
+		}
+		unreachable
+	}
+
+	string function GetLocalizedTitanName( string name )
+	{
+		switch ( name )
+		{
+			case "RONIN":
+				return Localize( "#TITAN_RONIN" )
+
+			case "NORTHSTAR":
+				return Localize( "#TITAN_NORTHSTAR" )
+
+			case "TONE":
+				return Localize( "#TITAN_TONE" )
+
+			case "ION":
+				return Localize( "#TITAN_ION" )
+
+			case "SCORCH":
+				return Localize( "#TITAN_SCORCH" )
+
+			case "LEGION":
+				return Localize( "#TITAN_LEGION" )
+
+			case "VANGUARD":
+				return Localize( "#TITAN_VANGUARD" )
+
+			default:
+				printt( "Warning, titan is not supported for Team Selection Display" )
+				return "#TITAN_ION"
+		}
+		unreachable
+	}
+
+	void function ServerCallback_UpdateTeamTitanSelection( int playerEntIndex, int suitIndex, int weaponIndex, int kitIndex, int kitIndex2 )
+	{
+		entity teamMate = GetEntityFromEncodedEHandle( playerEntIndex )
+
+		if ( !IsValid( teamMate ) )
+			return
+
+		string titanRef = GetItemRefOfTypeByIndex( eItemTypes.TITAN, suitIndex )
+
+		var dataTable = GetDataTable( $"datatable/titan_properties.rpak" )
+		int row = GetDataTableRowMatchingStringValue( dataTable, GetDataTableColumnByName( dataTable, "titanRef" ), titanRef )
+		string setFile = GetDataTableString( dataTable, row, GetDataTableColumnByName( dataTable, "setFile" ) )
+
+		string weaponRef = GetItemRefOfTypeByIndex( eItemTypes.TITAN_PRIMARY, weaponIndex )
+		string kitRef = GetItemRefOfTypeByIndex( GetTitanLoadoutPropertyPassiveType( setFile, "passive1" ), kitIndex )
+		string kit2Ref = GetItemRefOfTypeByIndex( GetTitanLoadoutPropertyPassiveType( setFile, "passive2" ), kitIndex2 )
+
+		if ( !( teamMate in file.teamInfo ) )
+		{
+			TitanSelectionInfo info
+			file.teamInfo[ teamMate ] <- info
+		}
+		file.teamInfo[ teamMate ].player = teamMate
+		file.teamInfo[ teamMate ].playerName = teamMate.GetPlayerName()
+		file.teamInfo[ teamMate ].titanName = GetTitanCharacterNameFromSetFile( setFile ).toupper()
+		file.teamInfo[ teamMate ].weaponImage = GetItemImage( weaponRef )
+		file.teamInfo[ teamMate ].kitName = GetItemName( kitRef )
+		file.teamInfo[ teamMate ].kitImage = GetItemImage( kitRef )
+		file.teamInfo[ teamMate ].kit2Name = GetItemName( kit2Ref )
+		file.teamInfo[ teamMate ].kit2Image = GetItemImage( kit2Ref )
+	}
+
+	void function TTS_UpdateLocalPlayerTitan( string setFile, string weaponRef, string kitRef, string kit2Ref )
+	{
+		entity teamMate = GetLocalClientPlayer()
+
+		if ( !( teamMate in file.teamInfo ) )
+		{
+			TitanSelectionInfo info
+			file.teamInfo[ teamMate ] <- info
+		}
+		file.teamInfo[ teamMate ].player = teamMate
+		file.teamInfo[ teamMate ].playerName = teamMate.GetPlayerName()
+		file.teamInfo[ teamMate ].titanName = GetTitanCharacterNameFromSetFile( setFile ).toupper()
+		file.teamInfo[ teamMate ].weaponImage = GetItemImage( weaponRef )
+		file.teamInfo[ teamMate ].kitName = GetItemName( kitRef )
+		file.teamInfo[ teamMate ].kitImage = GetItemImage( kitRef )
+		file.teamInfo[ teamMate ].kit2Name = GetItemName( kit2Ref )
+		file.teamInfo[ teamMate ].kit2Image = GetItemImage( kit2Ref )
+	}
+#endif
+
+#if SERVER
+	void function TeamTitanSelection_Init()
+	{
+		RegisterSignal( "StopTTS" )
+	}
+
+	void function StartUpdatingTeamTitanSelection()
+	{
+		array<entity> players = GetPlayerArray()
+		foreach ( player in players )
+			thread PlayerUpdateTeamTitanSelectionThink( player )
+		// TitanLoadoutDef loadout = GetTitanLoadoutForPlayer( player )
+		// Remote_CallFunction_NonReplay( player, "ServerCallback_TeamTitanSelection", evacPlayerHandle )
+	}
+
+	void function PlayerUpdateTeamTitanSelectionThink( entity player )
+	{
+		player.EndSignal( "StopTTS" )
+		player.EndSignal( "OnDestroy" )
+
+		while ( true )
+		{
+			array<entity> team = GetPlayerArrayOfTeam( player.GetTeam() )
+			foreach ( teamMember in team )
+			{
+				if ( !IsValidPlayer( teamMember ) )
+					continue
+
+				if ( IsPrivateMatchSpectator( player ) )
+					continue
+
+				if ( teamMember == player )
+					continue
+
+				TitanLoadoutDef loadout = GetTitanLoadoutForPlayer( teamMember )
+				int entityHandle = teamMember.GetEncodedEHandle()
+				int suitIndex = GetItemIndexOfTypeByRef( GetItemType( loadout.titanClass ), loadout.titanClass )
+				int weaponIndex = GetItemIndexOfTypeByRef( GetItemType( loadout.primary ), loadout.primary )
+				int kitIndex = GetItemIndexOfTypeByRef( GetItemType( loadout.passive1 ), loadout.passive1 )
+				int kitIndex2 = GetItemIndexOfTypeByRef( GetItemType( loadout.passive2 ), loadout.passive2 )
+				Remote_CallFunction_NonReplay( player, "ServerCallback_UpdateTeamTitanSelection", entityHandle, suitIndex, weaponIndex, kitIndex, kitIndex2 )
+			}
+
+			wait 0.1
+		}
+	}
+	void function StopUpdatingTeamTitanSelection()
+	{
+		array<entity> players = GetPlayerArray()
+		foreach ( player in players )
+			player.Signal( "StopTTS" )
+	}
+#endif
+
+// NOTES
+/*
+JOIN IN PROGRESS MIGHT NOT WORK WITH THIS
+*/

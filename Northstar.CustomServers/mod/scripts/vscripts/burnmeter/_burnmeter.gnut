@@ -94,7 +94,7 @@ int function BurnMeter_GetLimitedRewardCount( entity player, string burnRef = ""
 		burnRef = earnObject.ref
 	}
 
-	int limit = -1
+	int limit = 511 // max itemInventoryCount can be set to
 	int rewardCount = 1
 
 	if ( burnRef in file.boostLimits )
@@ -103,8 +103,8 @@ int function BurnMeter_GetLimitedRewardCount( entity player, string burnRef = ""
 	if ( burnRef in file.boostRewardCount )
 		rewardCount = file.boostRewardCount[ burnRef ]
 
-	if ( limit < 0 )
-		return rewardCount
+	Assert( limit <= 511, "Limit is greater than 511" )
+	Assert( limit > 0, "Limit is lower than 1" )
 
 	int current = PlayerInventory_CountBurnRef( player, burnRef )
 	int delta = limit - current
@@ -643,15 +643,4 @@ void function PlayerUsesHarvesterShieldBurncard( entity player )
 void function PlayerUsesRodeoGrenadeBurncard( entity player )
 {
 	player.SetPlayerNetInt( "numSuperRodeoGrenades", player.GetPlayerNetInt( "numSuperRodeoGrenades" ) + 1 )
-}
-
-// unused burncard that's mentioned in a few areas and has a validiation function
-// in sh_burnmeter ( BurnMeter_SummonReaperCanUse ), thought it'd be neat to add it
-void function PlayerUsesReaperfallBurncard( entity player )
-{
-	Point spawnpoint = GetTitanReplacementPoint( player, false )
-	entity reaper = CreateSuperSpectre( player.GetTeam(), spawnpoint.origin, spawnpoint.angles )
-	DispatchSpawn( reaper )
-
-	thread SuperSpectre_WarpFall( reaper )
 }

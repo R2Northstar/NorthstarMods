@@ -163,9 +163,15 @@ void function PlayerDying( entity player )
 void function MakePlayerStand( entity player )
 {
 	Assert( IsNewThread(), "Must be threaded off." )
+
 	player.UnforceCrouch()
 	player.ForceStand()
+
 	WaitFrame() // waiting for player to stand before allowing them to crouch again
+
+	if ( !IsValidPlayer( player ) )
+		return
+
 	player.UnforceStand()
 }
 

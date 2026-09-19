@@ -1,5 +1,56 @@
 global function SpawnDebug_Init
+global function ShowSpawnPoints
 
 void function SpawnDebug_Init()
 {
+}
+
+void function ShowSpawnPoints()
+{
+	// big red = titan imc start spawns
+	// medium red = droppod/reaper imc start spawns
+	// small red = pilot imc start spawns
+	// big blue = titan militia start spawns
+	// medium blue = droppod/reaper militia start spawns
+	// small blue = pilot militia start spawns
+	// big yellow = titan spawns
+	// small yellow = pilot spawns
+	// black = droppod/reaper spawns
+	// green = droppod/reaper/dropship spawns
+
+	array<entity> spawnPoints = SpawnPoints_GetTitan()
+	foreach ( sPoint in spawnPoints )
+		DebugDrawSpawnpoint( sPoint, 255, 255, 0, false, 600 )
+
+	spawnPoints = SpawnPoints_GetPilot()
+	foreach ( sPoint in spawnPoints )
+		DebugDrawSpawnpoint( sPoint, 255, 255, 0, false, 600 )
+
+	spawnPoints = SpawnPoints_GetDropPod()
+	foreach ( sPoint in spawnPoints )
+		DebugDrawSpawnpoint( sPoint, 0, ( GetZiplineDropshipSpawns().contains( sPoint ) ? 255 : 0 ), 0, false, 600 )
+
+	spawnPoints = SpawnPoints_GetTitanStart( TEAM_IMC )
+	foreach ( sPoint in spawnPoints )
+		DebugDrawSpawnpoint( sPoint, 255, 0, 0, false, 600 )
+
+	spawnPoints = SpawnPoints_GetPilotStart( TEAM_IMC )
+	foreach ( sPoint in spawnPoints )
+		DebugDrawSpawnpoint( sPoint, 255, 0, 0, false, 600 )
+
+	spawnPoints = SpawnPoints_GetDropPodStart( TEAM_IMC )
+	foreach ( sPoint in spawnPoints )
+		DebugDrawSpawnpoint( sPoint, 255, 0, 0, false, 600 )
+
+	spawnPoints = SpawnPoints_GetTitanStart( TEAM_MILITIA )
+	foreach ( sPoint in spawnPoints )
+		DebugDrawSpawnpoint( sPoint, 0, 0, 255, false, 600 )
+
+	spawnPoints = SpawnPoints_GetPilotStart( TEAM_MILITIA )
+	foreach ( sPoint in spawnPoints )
+		DebugDrawSpawnpoint( sPoint, 0, 0, 255, false, 600 )
+
+	spawnPoints = SpawnPoints_GetDropPodStart( TEAM_MILITIA )
+	foreach ( sPoint in spawnPoints )
+		DebugDrawSpawnpoint( sPoint, 0, 0, 255, false, 600 )
 }

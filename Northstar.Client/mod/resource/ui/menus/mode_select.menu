@@ -586,6 +586,22 @@ resource/ui/menus/mode_select.menu
 				pin_to_sibling_corner TOP_LEFT
 		}
 
+		DummyTop
+		{
+			ControlName				RuiButton
+			InheritProperties		RuiSmallButton
+			wide					0
+			tall					0
+		}
+
+		DummyBottom
+		{
+			ControlName				RuiButton
+			InheritProperties		RuiSmallButton
+			wide					0
+			tall					0
+		}
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 		ButtonTooltip

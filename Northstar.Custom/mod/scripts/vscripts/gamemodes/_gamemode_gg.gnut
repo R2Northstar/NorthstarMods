@@ -5,7 +5,7 @@ void function GamemodeGG_Init()
 	SetSpawnpointGamemodeOverride( FFA )
 
 	SetShouldUseRoundWinningKillReplay( true )
-	ClassicMP_ForceDisableEpilogue( true )
+
 	SetLoadoutGracePeriodEnabled( false ) // prevent modifying loadouts with grace period
 	SetWeaponDropsEnabled( false )
 	Riff_ForceTitanAvailability( eTitanAvailability.Never )
@@ -28,16 +28,24 @@ void function OnPlayerDisconnected( entity player )
 
 void function OnPlayerRespawned( entity player )
 {
-	UpdateLoadout( player )
-	thread OnPlayerRespawned_Threaded( player )
-}
+	if ( !IsNewThread() )
+	{
+		thread OnPlayerRespawned( player )
+		return
+	}
+	else if ( GetGameState() == eGameState.Prematch )
+		WaitEndFrame()
 
-void function OnPlayerRespawned_Threaded( entity player )
-{
+	if ( !IsValidPlayer( player ) )
+		return
+
+	UpdateLoadout( player )
+
 	// bit of a hack, need to rework earnmeter code to have better support for completely disabling it
 	// rn though this just waits for earnmeter code to set the mode before we set it back
 	WaitFrame()
-	if ( IsValid( player ) )
+
+	if ( IsValidPlayer( player ) )
 		PlayerEarnMeter_SetMode( player, eEarnMeterMode.DISABLED )
 }
 
@@ -144,9 +152,6 @@ void function UpdateLoadout( entity player )
 
 	if ( currentWeaponIndex >= weapons.len() )
 		currentWeaponIndex = weapons.len() - 1
-
-	if ( currentWeaponIndex > weapons.len() - 3 ) // play end of game music for special or last few weapons
-		PlayMusicToAll( eMusicPieceID.LEVEL_LAST_MINUTE ) // this *shouldn't* overlap if done multiple times
 
 	GunGameWeapon weapon = weapons[ currentWeaponIndex ]
 

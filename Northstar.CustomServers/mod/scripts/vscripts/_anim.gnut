@@ -1348,31 +1348,35 @@ void function FirstPersonSequence( FirstPersonSequenceStruct sequence, entity pl
 	if ( sequence.firstPersonAnimIdle != "" )
 	{
 		firstPersonProxy = player.GetFirstPersonProxy()
-		firstPersonProxy.ShowFirstPersonProxy()
 
-		if ( IsValid( firstPersonProxy ) && EntHasModelSet( firstPersonProxy ) ) // JFS: Defensive fix for player not having view models sometimes
+		if ( IsValid( firstPersonProxy ) )
 		{
-			if ( sequence.renderWithViewModels )
-				firstPersonProxy.RenderWithViewModels( true )
-			else
-				firstPersonProxy.RenderWithViewModels( false )
+			firstPersonProxy.ShowFirstPersonProxy()
 
-			SetPlayerAnimViewEntity( player, firstPersonProxy )
-			firstPersonProxy.SetNextThinkNow()
-
-			firstPersonProxy.SetAbsOrigin( player.GetOrigin() )
-			firstPersonProxy.SetAbsAngles( player.GetAngles() )
-
-			firstPersonProxy.Anim_Play( sequence.firstPersonAnimIdle )
-
-			if ( sequence.playerPushable )
+			if ( EntHasModelSet( firstPersonProxy ) ) // JFS: Defensive fix for player not having view models sometimes
 			{
-				firstPersonProxy.SetParent( player, "", false )
-				firstPersonProxy.Anim_DisableUpdatePosition()
-			}
-			else
-			{
-				firstPersonProxy.SetToSameParentAs( player )
+				if ( sequence.renderWithViewModels )
+					firstPersonProxy.RenderWithViewModels( true )
+				else
+					firstPersonProxy.RenderWithViewModels( false )
+
+				SetPlayerAnimViewEntity( player, firstPersonProxy )
+				firstPersonProxy.SetNextThinkNow()
+
+				firstPersonProxy.SetAbsOrigin( player.GetOrigin() )
+				firstPersonProxy.SetAbsAngles( player.GetAngles() )
+
+				firstPersonProxy.Anim_Play( sequence.firstPersonAnimIdle )
+
+				if ( sequence.playerPushable )
+				{
+					firstPersonProxy.SetParent( player, "", false )
+					firstPersonProxy.Anim_DisableUpdatePosition()
+				}
+				else
+				{
+					firstPersonProxy.SetToSameParentAs( player )
+				}
 			}
 		}
 	}

@@ -46,7 +46,7 @@ void function ReplacePlayerWeapons( entity player )
 	}
 
 	if ( hadDisallowedWeapon )
-		SendHudMessage( player, "Restricted weapons were removed", -1, 0.4, 255, 255, 255, 255, 0.15, 3.0, 0.5 )
+		SendHudMessage( player, "Restricted weapons were removed", -1, 0.4, 255, 255, 255, 255, 1.0, 3.0, 0.5 )
 }
 
 void function ReplacePlayerWeaponsForLoadoutChange( entity player, PilotLoadoutDef loadout )

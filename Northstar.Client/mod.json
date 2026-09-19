@@ -7,53 +7,65 @@
 	"ConVars": [
 		{
 			"Name": "allow_mod_auto_download",
-			"DefaultValue": "1"
+			"DefaultValue": "1",
+			"HelpString": "Whether verified mods should be automatically downloaded on connect"
 		},
 		{
 			"Name": "filter_hide_empty",
-			"DefaultValue": "0"
+			"DefaultValue": "0",
+			"HelpString": "Whether empty servers should be hidden"
 		},
 		{
 			"Name": "filter_hide_full",
-			"DefaultValue": "0"
+			"DefaultValue": "0",
+			"HelpString": "Whether full servers should be hidden"
 		},
 		{
 			"Name": "filter_hide_protected",
-			"DefaultValue": "0"
+			"DefaultValue": "0",
+			"HelpString": "Whether password protected servers should be hidden"
 		},
 		{
 			"Name": "filter_map",
-			"DefaultValue": "0"
+			"DefaultValue": "0",
+			"HelpString": "Filter servers by map"
 		},
 		{
 			"Name": "filter_gamemode",
-			"DefaultValue": "0"
+			"DefaultValue": "0",
+			"HelpString": "Filter servers by gamemode"
 		},
 		{
 			"Name": "filter_mods",
-			"DefaultValue": "0"
+			"DefaultValue": "0",
+			"HelpString": "Filter mods in mods"
 		},
 		{
 			"Name": "filter_map_hide_locked",
-			"DefaultValue": "0"
+			"DefaultValue": "0",
+			"HelpString": "Whether locked maps should be hidden"
 		},
 		{
 			"Name": "modlist_show_convars",
 			"DefaultValue": "0",
+			"HelpString": "Whether mod list should show mod convars",
 			"Flags": "ARCHIVE_PLAYERPROFILE"
 		},
 		{
 			"Name": "modlist_reverse",
 			"DefaultValue": "0",
+			"HelpString": "Whether mod list should be in reverse order",
 			"Flags": "ARCHIVE_PLAYERPROFILE"
 		},
 		{
 			"Name": "modemenu_mode_filter",
-			"DefaultValue": "-1"
+			"DefaultValue": "-1",
+			"HelpString": "Mode menu filter"
 		},
 		{
 			"Name": "serverlist_remove_colors",
 			"DefaultValue": "0",
+			"HelpString": "Whether server can have colors in server browser",
 			"Flags": "ARCHIVE_PLAYERPROFILE"
 		}
 	],
@@ -70,8 +82,7 @@
 			"Path": "ui/menu_ns_modmenu.nut",
 			"RunOn": "UI",
 			"UICallback": {
-				"Before": "AddNorthstarModMenu",
-				"After": "AddNorthstarModMenu_MainMenuFooter"
+				"Before": "AddNorthstarModMenu"
 			}
 		},
 		{
@@ -145,7 +156,7 @@
 		{
 			"Path": "ui/menu_mod_settings.nut",
 			"RunOn": "UI",
-			"UICallback":{
+			"UICallback": {
 				"Before": "AddModSettingsMenu"
 			}
 		},
@@ -163,7 +174,7 @@
 		{
 			"Path": "ui/ns_client_mod_settings.gnut",
 			"RunOn": "UI",
-			"UICallback":{
+			"UICallback": {
 				"Before": "NSClientModSettings"
 			}
 		}

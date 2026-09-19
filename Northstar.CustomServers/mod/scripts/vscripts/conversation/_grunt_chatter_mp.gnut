@@ -8,10 +8,10 @@ const float CHATTER_NEARBY_GRUNT_TRACEFRAC_MIN = 0.95 // for when we need "LOS" 
 
 void function GruntChatter_MP_Init()
 {
-	Assert( IsMultiplayer(), "MP Grunt chatter is restricted to Multiplayer only." )
-
-	AddCallback_OnPlayerKilled( GruntChatter_OnPlayerOrNPCKilled )
-	AddCallback_OnNPCKilled( GruntChatter_OnPlayerOrNPCKilled )
+	#if GRUNT_CHATTER_MP_ENABLED
+		AddCallback_OnPlayerKilled( GruntChatter_OnPlayerOrNPCKilled )
+		AddCallback_OnNPCKilled( GruntChatter_OnPlayerOrNPCKilled )
+	#endif
 }
 
 /*=====================================================================================================================================================
@@ -25,15 +25,15 @@ void function GruntChatter_MP_Init()
                                                                                                          |_|               |___/
 /*===================================================================================================================================================*/
 
-void function PlayGruntChatterMPLine( entity grunt, string conversationType )
+void function PlayGruntChatterMPLine( entity grunt, string conversationType, bool forced = false )
 {
-	#if !GRUNT_CHATTER_MP_ENABLED
-		return
-	#endif
+	array<entity> players = GetPlayerArray()
+	int conversationIndex = GetConversationIndex( conversationType )
+	int gruntEHandle = grunt.GetEncodedEHandle()
 
-	foreach ( entity player in GetPlayerArray() )
-		if ( ShouldPlayGruntChatterMPLine( conversationType, player, grunt ) )
-			Remote_CallFunction_Replay( player, "ServerCallback_PlayGruntChatterMP", GetConversationIndex( conversationType ), grunt.GetEncodedEHandle() )
+	foreach ( entity player in players )
+		if ( forced || ShouldPlayGruntChatterMPLine( conversationType, player, grunt ) )
+			Remote_CallFunction_Replay( player, "ServerCallback_PlayGruntChatterMP", conversationIndex, gruntEHandle )
 }
 
 void function GruntChatter_OnPlayerOrNPCKilled( entity deadGuy, entity attacker, var damageInfo )

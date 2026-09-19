@@ -1,5 +1,6 @@
 global function BattleChatter_Init
 global function PlayBattleChatterLine
+global function PlayBattleChatterLineOnlyToPlayer
 global function TryPlayWeaponBattleChatterLine
 
 void function BattleChatter_Init()
@@ -14,6 +15,13 @@ void function PlayBattleChatterLine( entity player, string conversationType )
 	foreach ( entity otherPlayer in GetPlayerArrayOfTeam( player.GetTeam() ) )
 		if ( ShouldPlayBattleChatter( conversationType, otherPlayer, player ) && player != otherPlayer )
 			Remote_CallFunction_Replay( otherPlayer, "ServerCallback_PlayBattleChatter", conversationIndex, player.GetEncodedEHandle() )
+}
+
+void function PlayBattleChatterLineOnlyToPlayer( entity player, entity otherPlayer, string conversationType )
+{
+	int conversationIndex = GetConversationIndex( conversationType )
+
+	Remote_CallFunction_Replay( otherPlayer, "ServerCallback_PlayBattleChatter", conversationIndex, player.GetEncodedEHandle() )
 }
 
 void function TryPlayWeaponBattleChatterLine( entity player, entity weapon )

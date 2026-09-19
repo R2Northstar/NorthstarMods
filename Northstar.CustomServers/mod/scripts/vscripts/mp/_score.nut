@@ -12,7 +12,6 @@ global function ScoreEvent_RoundComplete
 
 global function ScoreEvent_SetEarnMeterValues
 global function ScoreEvent_SetupEarnMeterValuesForMixedModes
-global function ScoreEvent_SetupEarnMeterValuesForTitanModes
 
 struct
 {
@@ -21,7 +20,6 @@ struct
 
 void function Score_Init()
 {
-	SvXP_Init()
 	AddCallback_OnClientConnected( InitPlayerForScoreEvents )
 
 	AddCallback_OnPlayerAssist( TitanAssistedKill )
@@ -98,16 +96,17 @@ void function AddPlayerScore( entity targetPlayer, string scoreEventName, entity
 		ownValue *= pilotScaleVar
 	}
 
-	Remote_CallFunction_NonReplay(
-		targetPlayer,
-		"ServerCallback_ScoreEvent",
-		event.eventId,
-		event.pointValue,
-		event.displayType,
-		associatedHandle,
-		earnValue,
-		ownValue
-	)
+	if ( !IsPrivateMatch() || event.displayType & eEventDisplayType.MEDAL_FORCED ) // fd medals always need to be send to client so they show up in wave bonuses
+		Remote_CallFunction_NonReplay(
+			targetPlayer,
+			"ServerCallback_ScoreEvent",
+			event.eventId,
+			event.pointValue,
+			event.displayType,
+			associatedHandle,
+			earnValue,
+			ownValue
+		)
 
 	if ( event.displayType & eEventDisplayType.CALLINGCARD ) // callingcardevents are shown to all players
 	{
@@ -120,8 +119,10 @@ void function AddPlayerScore( entity targetPlayer, string scoreEventName, entity
 		}
 	}
 
-	if ( ScoreEvent_HasConversation( event ) )
-		PlayFactionDialogueToPlayer( event.conversation, targetPlayer )
+	#if FACTION_DIALOGUE_ENABLED
+		if ( ScoreEvent_HasConversation( event ) )
+			PlayFactionDialogueToPlayer( event.conversation, targetPlayer )
+	#endif
 
 	HandleXPGainForScoreEvent( targetPlayer, event )
 }
@@ -153,7 +154,10 @@ void function ScoreEvent_PlayerKilled( entity victim, entity attacker, var damag
 
 	attacker.p.numberOfDeathsSinceLastKill = 0 // since they got a kill, remove the comeback trigger
 	// pilot kill
-	AddPlayerScore( attacker, "KillPilot", victim )
+	if ( IsRoundBased() && IsEliminationBased() )
+		AddPlayerScore( attacker, "EliminatePilot", victim )
+	else
+		AddPlayerScore( attacker, "KillPilot", victim )
 
 	// headshot
 	if ( DamageInfo_GetCustomDamageType( damageInfo ) & DF_HEADSHOT )
@@ -237,20 +241,36 @@ void function ScoreEvent_TitanKilled( entity victim, entity attacker, var damage
 	if ( !attacker.IsPlayer() )
 		return
 
-	if ( attacker.IsTitan() )
+	if ( IsRoundBased() && IsEliminationBased() )
 	{
-		if ( victim.GetBossPlayer() || victim.IsPlayer() ) // to confirm this is a pet titan or player titan
-			AddPlayerScore( attacker, "TitanKillTitan", attacker ) // this will show the "Titan Kill" callsign event
+		if ( victim.IsPlayer() )
+			AddPlayerScore( attacker, "EliminateTitan", attacker )
+		else if ( IsValid( victim.GetBossPlayer() ) && victim.GetBossPlayer().GetPetTitan() == victim )
+			AddPlayerScore( attacker, "EliminateAutoTitan", attacker )
 		else
-			AddPlayerScore( attacker, "TitanKillTitan" )
+			AddPlayerScore( attacker, "EliminateAutoTitan" )
+	}
+	else if ( attacker.IsTitan() )
+	{
+		if ( victim.IsPlayer() )
+			AddPlayerScore( attacker, "TitanKillTitan", attacker )
+		else if ( IsValid( victim.GetBossPlayer() ) && victim.GetBossPlayer().GetPetTitan() == victim )
+			AddPlayerScore( attacker, "KillAutoTitan", attacker )
+		else
+			AddPlayerScore( attacker, "KillAutoTitan" )
 	}
 	else
 	{
-		KilledPlayerTitanDialogue( attacker, victim )
-		if ( victim.GetBossPlayer() || victim.IsPlayer() )
+		#if FACTION_DIALOGUE_ENABLED
+			KilledPlayerTitanDialogue( attacker, victim )
+		#endif
+
+		if ( victim.IsPlayer() )
 			AddPlayerScore( attacker, "KillTitan", attacker )
+		else if ( IsValid( victim.GetBossPlayer() ) && victim.GetBossPlayer().GetPetTitan() == victim )
+			AddPlayerScore( attacker, "KillAutoTitan", attacker )
 		else
-			AddPlayerScore( attacker, "KillTitan" )
+			AddPlayerScore( attacker, "KillAutoTitan" )
 	}
 }
 
@@ -268,17 +288,21 @@ void function ScoreEvent_NPCKilled( entity victim, entity attacker, var damageIn
 	if ( !attacker.IsPlayer() )
 		return
 
+	if ( IsMarvin( victim ) )
+		return
+
+	if ( IsGunship( victim ) )
+		return
+
+	string scoreEvent = ScoreEventForNPCKilled( victim, damageInfo )
+
+	if ( !scoreEvent.len() )
+		return
+
 	if ( DamageInfo_GetCustomDamageType( damageInfo ) & DF_HEADSHOT )
 		AddPlayerScore( attacker, "NPCHeadshot" )
 
-	try
-	{
-		// have to trycatch this because marvins will crash on kill if we dont
-		AddPlayerScore( attacker, ScoreEventForNPCKilled( victim, damageInfo ), victim )
-	}
-	catch ( ex )
-	{
-	}
+	AddPlayerScore( attacker, ScoreEventForNPCKilled( victim, damageInfo ), victim )
 
 	// mayhem/onslaught (timed killstreaks vs AI)
 
@@ -313,8 +337,13 @@ void function ScoreEvent_NPCKilled( entity victim, entity attacker, var damageIn
 
 void function ScoreEvent_MatchComplete( int winningTeam )
 {
+	wait GetWinnerDeterminedWait() / 2
+
 	foreach ( entity player in GetPlayerArray() )
 	{
+		if ( !IsValidPlayer( player ) )
+			return
+
 		AddPlayerScore( player, "MatchComplete" )
 		SetPlayerChallengeMatchComplete( player )
 
@@ -332,9 +361,10 @@ void function ScoreEvent_RoundComplete( int winningTeam )
 {
 	foreach ( entity player in GetPlayerArray() )
 	{
-		AddPlayerScore( player, "RoundComplete" )
 		if ( player.GetTeam() == winningTeam )
 			AddPlayerScore( player, "RoundVictory" )
+
+		AddPlayerScore( player, "RoundComplete" )
 	}
 }
 
@@ -366,11 +396,6 @@ void function ScoreEvent_SetupEarnMeterValuesForMixedModes() // mixed modes in t
 	ScoreEvent_SetEarnMeterValues( "KillSuperSpectre", 0.0, 0.1, 0.5 )
 }
 
-void function ScoreEvent_SetupEarnMeterValuesForTitanModes()
-{
-	// relatively sure we don't have to do anything here but leaving this function for consistency
-}
-
 // faction dialogue
 void function KilledPlayerTitanDialogue( entity attacker, entity victim )
 {
@@ -384,30 +409,30 @@ void function KilledPlayerTitanDialogue( entity attacker, entity victim )
 	{
 		case "ion":
 			PlayFactionDialogueToPlayer( "kc_pilotkillIon", attacker )
-			return
+			break
 
 		case "tone":
 			PlayFactionDialogueToPlayer( "kc_pilotkillTone", attacker )
-			return
+			break
 
 		case "legion":
 			PlayFactionDialogueToPlayer( "kc_pilotkillLegion", attacker )
-			return
+			break
 
 		case "scorch":
 			PlayFactionDialogueToPlayer( "kc_pilotkillScorch", attacker )
-			return
+			break
 
 		case "ronin":
 			PlayFactionDialogueToPlayer( "kc_pilotkillRonin", attacker )
-			return
+			break
 
 		case "northstar":
 			PlayFactionDialogueToPlayer( "kc_pilotkillNorthstar", attacker )
-			return
+			break
 
 		default:
 			PlayFactionDialogueToPlayer( "kc_pilotkilltitan", attacker )
-			return
+			break
 	}
 }

@@ -2,6 +2,9 @@ global function AddFactionXP
 
 void function AddFactionXP( entity player, int amount )
 {
+	if ( IsPrivateMatch() )
+		return
+
 	string faction = GetFactionChoice( player )
 	int oldLevel = FactionGetLevel( player, faction )
 	int FactionXPMatch = player.GetPersistentVarAsInt( "xp_match[" + XP_TYPE.FACTION_LEVELED + "]" )
@@ -18,7 +21,10 @@ void function AddFactionXP( entity player, int amount )
 
 		if ( ProgressionEnabledForPlayer( player ) )
 		{
-			PlayFactionDialogueToPlayer( "scoring_gotMailAlert", player )
+			#if FACTION_DIALOGUE_ENABLED
+				PlayFactionDialogueToPlayer( "scoring_gotMailAlert", player )
+			#endif
+
 			AwardRandomItemsForFactionLevels( player, faction, oldLevel, FactionGetLevel( player, faction ) )
 		}
 	}

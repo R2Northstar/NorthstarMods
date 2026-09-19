@@ -421,6 +421,8 @@ bool function TitanFindDropNodes( FlightPath flightPath, vector baseOrigin, floa
 	// }
 	// function TitanFindDropNodesReloadable( flightPath, baseOrigin, yaw )
 	// {
+	return true // ValidateTitanDropNodes overwrites this
+
 	if ( NearTitanfallBlocker( baseOrigin ) )
 		return false
 
@@ -470,4 +472,3 @@ var function TitanHulldropSpawnpoint( FlightPath flightPath, vector origin, floa
 {
 	return HullTraceDropPoint( flightPath, origin, 20 )
 }
-

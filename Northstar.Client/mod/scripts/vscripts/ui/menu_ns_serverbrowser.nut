@@ -806,7 +806,12 @@ void function WaitForServerListRequest()
 
 	// wait for request to complete
 	while ( NSIsRequestingServerList() )
+	{
 		WaitFrame()
+
+		if ( !IsConnected() )
+			return
+	}
 
 	file.serverListRequestFailed = !NSMasterServerConnectionSuccessful()
 	if ( file.serverListRequestFailed )
@@ -906,10 +911,10 @@ void function FilterServerList()
 		serverCount++
 
 		// Filters
-		if ( filterArguments.hideEmpty && server.playerCount == 0 )
+		if ( filterArguments.hideEmpty && server.playerCount <= 0 )
 			continue
 
-		if ( filterArguments.hideFull && server.playerCount == server.maxPlayerCount )
+		if ( filterArguments.hideFull && server.playerCount >= server.maxPlayerCount )
 			continue
 
 		if ( filterArguments.hideProtected && server.requiresPassword )
@@ -1197,7 +1202,7 @@ void function OnServerSelected_Threaded( string password = "" )
 
 		if ( !modNames.contains( requiredModInfo.name ) )
 		{
-			print( format( "\"%s\" was not found locally" + ( autoDownloadAllowed ? ", triggering manifesto fetching." : "." ), requiredModInfo.name ) )
+			printt( format( "\"%s\" was not found locally" + ( autoDownloadAllowed ? ", triggering manifesto fetching." : "." ), requiredModInfo.name ) )
 			uninstalledModFound = true
 			break
 		}
@@ -1207,12 +1212,12 @@ void function OnServerSelected_Threaded( string password = "" )
 
 			if ( !modVersions.contains( requiredModInfo.version ) )
 			{
-				print( format( "\"%s\" was found locally but has versions:", requiredModInfo.name ) )
+				printt( format( "\"%s\" was found locally but has versions:", requiredModInfo.name ) )
 				foreach ( string version in modVersions )
 				{
-					print( "    - " + version )
+					printt( "    - " + version )
 				}
-				print( format( "while server requires \"%s\"" + ( autoDownloadAllowed ? ", triggering manifesto fetching." : "." ), requiredModInfo.version ) )
+				printt( format( "while server requires \"%s\"" + ( autoDownloadAllowed ? ", triggering manifesto fetching." : "." ), requiredModInfo.version ) )
 				uninstalledModFound = true
 				break
 			}
@@ -1309,7 +1314,7 @@ void function ConnectToServer( bool modsChanged = false )
 				if ( mod.name == modName && ( IsCoreMod( modName ) || mod.version == modVersion ) )
 				{
 					found = true
-					print( format( "\"%s\" (v%s) is required and already enabled.", modName, modVersion ) )
+					printt( format( "\"%s\" (v%s) is required and already enabled.", modName, modVersion ) )
 					break
 				}
 			}
@@ -1317,8 +1322,8 @@ void function ConnectToServer( bool modsChanged = false )
 			if ( !found )
 			{
 				modsChanged = true
-				NSSetModEnabled( modName, modVersion, false )
-				print( format( "Disabled \"%s\" (v%s) since it's not required on server.", modName, modVersion ) )
+				NSSetModEnabled( modName, modVersion, false, true )
+				printt( format( "Disabled \"%s\" (v%s) since it's not required on server.", modName, modVersion ) )
 			}
 		}
 	}
@@ -1336,8 +1341,8 @@ void function ConnectToServer( bool modsChanged = false )
 			if ( !localModInfos[ 0 ].enabled )
 			{
 				modsChanged = true
-				NSSetModEnabled( modName, localModInfos[ 0 ].version, true )
-				print( format( "Enabled \"%s\" (v%s) to join server.", modName, localModInfos[ 0 ].version ) )
+				NSSetModEnabled( modName, localModInfos[ 0 ].version, true, true )
+				printt( format( "Enabled \"%s\" (v%s) to join server.", modName, localModInfos[ 0 ].version ) )
 			}
 		}
 		else
@@ -1347,8 +1352,8 @@ void function ConnectToServer( bool modsChanged = false )
 				if ( localMod.version == mod.version )
 				{
 					modsChanged = true
-					NSSetModEnabled( mod.name, mod.version, true )
-					print( format( "Enabled \"%s\" (v%s) to join server.", modName, modVersion ) )
+					NSSetModEnabled( mod.name, mod.version, true, true )
+					printt( format( "Enabled \"%s\" (v%s) to join server.", modName, modVersion ) )
 					break
 				}
 			}
@@ -1357,7 +1362,10 @@ void function ConnectToServer( bool modsChanged = false )
 
 	// only actually reload if we need to since the uiscript reset on reload lags hard
 	if ( modsChanged )
+	{
 		ReloadMods()
+		ClientCommand( "uiscript_reset" )
+	}
 
 	NSConnectToAuthedServer()
 }
@@ -1378,17 +1386,6 @@ int function ServerSortLogic( ServerInfo a, ServerInfo b )
 		case sortingBy.DEFAULT:
 			aTemp = a.playerCount
 			bTemp = b.playerCount
-
-			// `1000` is assumed to always be higher than `serverPlayersMax`
-			if ( aTemp + 1 < a.maxPlayerCount )
-				aTemp = aTemp + 2000
-			if ( bTemp + 1 < b.maxPlayerCount )
-				bTemp = bTemp + 2000
-			if ( aTemp + 1 == a.maxPlayerCount )
-				aTemp = aTemp + 1000
-			if ( bTemp + 1 == b.maxPlayerCount )
-				bTemp = bTemp + 1000
-
 			direction = filterDirection.serverName
 			break
 
@@ -1533,7 +1530,7 @@ void function TriggerConnectToServerCallbacks( ServerInfo ornull targetServer = 
 	}
 }
 
-const array<string> CORE_MODS = [ "Northstar.Client", "Northstar.Coop", "Northstar.CustomServers", "Northstar.Custom" ]
+const array<string> CORE_MODS = [ "Northstar.Client", "Northstar.CustomServers", "Northstar.Custom" ]
 bool function IsCoreMod( string modName )
 {
 	return CORE_MODS.find( modName ) != -1

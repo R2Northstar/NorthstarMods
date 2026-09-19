@@ -1,6 +1,9 @@
 untyped
-global function GamemodeFastballIntroSetup
+
 global function FastballAddBuddySpawnForLevel
+global function FastballCanRunIntro
+global function FastballIntroPlayerSpawn
+global function FastballIntroPrematchSpawnPlayers
 
 struct
 {
@@ -11,31 +14,48 @@ struct
 	entity imcBuddy
 } file
 
-void function GamemodeFastballIntroSetup()
-{
-	RegisterSignal( "fastball_start_throw" )
-	RegisterSignal( "fastball_release" )
-
-	AddCallback_GameStateEnter( eGameState.Prematch, OnPrematchStart )
-	AddCallback_OnClientConnected( AddPlayerToFastballIntro )
-}
-
 void function FastballAddBuddySpawnForLevel( string level, int team, vector origin, vector angles )
 {
 	if ( GetMapName() != level )
 		return
 
 	Point spawnPoint
+
 	spawnPoint.origin = origin
 	spawnPoint.angles = angles
 
 	file.buddySpawns[ team ] <- spawnPoint
 }
 
-void function OnPrematchStart()
+bool function FastballCanRunIntro()
 {
-	ClassicMP_OnIntroStarted()
+	if ( ShouldIntroSpawnAsTitan() )
+		return false
 
+	SetCustomIntroLength( 14.7 )
+
+	return true
+}
+
+bool function FastballIntroPlayerSpawn( entity player )
+{
+	AddPlayerToFastballIntro( player )
+
+	return true
+}
+
+bool function FastballIntroPrematchSpawnPlayers( array<entity> players )
+{
+	SpawnBuddyTitans()
+
+	foreach ( entity player in players )
+		player.UnfreezeControlsOnServer()
+
+	return true
+}
+
+void function SpawnBuddyTitans()
+{
 	file.introStartTime = Time()
 
 	Point militiaBuddySpawn
@@ -64,10 +84,12 @@ void function OnPrematchStart()
 		}
 
 		entity milititaSpawnEnt = militiaSpawns[ RandomInt( militiaSpawns.len() ) ]
+
 		militiaBuddySpawn.origin = milititaSpawnEnt.GetOrigin()
 		militiaBuddySpawn.angles = milititaSpawnEnt.GetAngles()
 
 		entity imcSpawnEnt = imcSpawns[ RandomInt( imcSpawns.len() ) ]
+
 		imcBuddySpawn.origin = imcSpawnEnt.GetOrigin()
 		imcBuddySpawn.angles = imcSpawnEnt.GetAngles()
 	}
@@ -78,7 +100,8 @@ void function OnPrematchStart()
 	}
 
 	file.militiaBuddy = CreatePropDynamic( $"models/titans/buddy/titan_buddy.mdl" )
-	if ( HasSwitchedSides() )
+
+	if ( IsSwitchSidesBased() && HasSwitchedSides() )
 	{
 		file.militiaBuddy.SetOrigin( imcBuddySpawn.origin )
 		file.militiaBuddy.SetAngles( imcBuddySpawn.angles )
@@ -88,10 +111,12 @@ void function OnPrematchStart()
 		file.militiaBuddy.SetOrigin( militiaBuddySpawn.origin )
 		file.militiaBuddy.SetAngles( militiaBuddySpawn.angles )
 	}
+
 	thread AnimateBuddy( file.militiaBuddy )
 
 	file.imcBuddy = CreatePropDynamic( $"models/titans/buddy/titan_buddy.mdl" )
-	if ( HasSwitchedSides() )
+
+	if ( IsSwitchSidesBased() && HasSwitchedSides() )
 	{
 		file.imcBuddy.SetOrigin( militiaBuddySpawn.origin )
 		file.imcBuddy.SetAngles( militiaBuddySpawn.angles )
@@ -101,57 +126,48 @@ void function OnPrematchStart()
 		file.imcBuddy.SetOrigin( imcBuddySpawn.origin )
 		file.imcBuddy.SetAngles( imcBuddySpawn.angles )
 	}
-	thread AnimateBuddy( file.imcBuddy )
 
-	foreach ( entity player in GetPlayerArray() )
-		AddPlayerToFastballIntro( player )
+	thread AnimateBuddy( file.imcBuddy )
 }
 
 void function AnimateBuddy( entity buddy )
 {
-	print( "buddy spawn at " + buddy.GetOrigin() + " " + buddy.GetAngles() )
+	printt( "buddy spawn at " + buddy.GetOrigin() + " " + buddy.GetAngles() )
 
 	thread PlayAnim( buddy, "bt_beacon_fastball_throw_end" )
 
 	// play dialogue at the right time
 	buddy.WaitSignal( "fastball_start_throw" )
-	float diagDuration = EmitSoundOnEntity( buddy, "diag_sp_spoke1_BE117_04_01_mcor_bt" ) // trust me
+
+	float diagDuration = EmitSoundOnEntityToTeam( buddy, "diag_sp_spoke1_BE117_04_01_mcor_bt", buddy == file.imcBuddy ? TEAM_IMC : TEAM_MILITIA ) // trust me
+
 	StartParticleEffectOnEntity( buddy, GetParticleSystemIndex( $"P_BT_eye_SM" ), FX_PATTACH_POINT_FOLLOW, buddy.LookupAttachment( "EYEGLOW" ) )
 
-	wait diagDuration
-	if ( GetGameState() != eGameState.Playing )
-		ClassicMP_OnIntroFinished()
+	// wait diagDuration
 
 	buddy.WaitSignal( "fastball_release" )
+
 	wait 5.0
 
 	// clear any players off bt to avoid potential crash which can supposedly happen even though i've never seen it happen
-	foreach ( entity player in GetPlayerArray() )
-		if ( player.GetParent() == buddy )
-			player.ClearParent()
+	ClearChildren( buddy )
 
 	buddy.Destroy()
 }
 
 void function AddPlayerToFastballIntro( entity player )
 {
-	if ( GetGameState() == eGameState.Prematch )
-	{
-		if ( !IsPrivateMatchSpectator( player ) )
-			thread FastballPlayer( player )
-		else
-			RespawnPrivateMatchSpectator( player )
-	}
+	thread FastballPlayer( player )
 }
 
 void function FastballPlayer( entity player )
 {
 	player.EndSignal( "OnDestroy" )
 
-	if ( IsAlive( player ) )
-		player.Die() // kill player if they're alive so there's no issues with that
-
 	WaitFrame()
+
+	player.SetNameVisibleToEnemy( false )
+	player.SetNameVisibleToFriendly( false )
 
 	player.EndSignal( "OnDeath" )
 
@@ -161,17 +177,23 @@ void function FastballPlayer( entity player )
 			if ( IsValid( player ) )
 			{
 				RemoveCinematicFlag( player, CE_FLAG_CLASSIC_MP_SPAWNING )
+
 				player.ClearParent()
+
 				ClearPlayerAnimViewEntity( player )
-				player.DeployWeapon()
+				DeployViewModelAndEnableWeapons( player )
+
 				player.PlayerCone_Disable()
 				player.ClearInvulnerable()
 				player.kv.VisibilityFlags = ENTITY_VISIBLE_TO_EVERYONE // restore visibility
+				player.SetNameVisibleToEnemy( true )
+				player.SetNameVisibleToFriendly( true )
 			}
 		}
 	)
 
 	FirstPersonSequenceStruct throwSequence
+
 	throwSequence.attachment = "REF"
 	throwSequence.useAnimatedRefAttachment = true
 	throwSequence.hideProxy = true
@@ -184,20 +206,25 @@ void function FastballPlayer( entity player )
 
 	// get our buddy
 	entity buddy
+
 	if ( player.GetTeam() == TEAM_MILITIA )
 		buddy = file.militiaBuddy
 	else
 		buddy = file.imcBuddy
 
+	AddCinematicFlag( player, CE_FLAG_CLASSIC_MP_SPAWNING )
+
 	// respawn the player
 	player.SetOrigin( buddy.GetOrigin() )
-	player.RespawnPlayer( null )
-	player.kv.VisibilityFlags = 0 // better than .Hide(), hides weapons and such
-	player.SetInvulnerable() // in deadly ground we die without this lol
-	player.HolsterWeapon()
 
-	// hide hud, fade screen out from black
-	AddCinematicFlag( player, CE_FLAG_CLASSIC_MP_SPAWNING )
+	DoRespawnPlayer( player, null )
+
+	player.kv.VisibilityFlags = ENTITY_VISIBLE_TO_NOBODY // better than .Hide(), hides weapons and such
+	player.SetInvulnerable() // in deadly ground we die without this lol
+
+	HolsterViewModelAndDisableWeapons( player )
+
+	// fade screen out from black
 	ScreenFadeFromBlack( player, 0.5, 0.5 )
 
 	// start fp sequence
@@ -213,6 +240,7 @@ void function FastballPlayer( entity player )
 	buddy.WaitSignal( "fastball_start_throw" )
 	// lock in their final angles at this point
 	vector throwVel = AnglesToForward( player.EyeAngles() ) * 950
+
 	throwVel.z = 675.0
 
 	// wait for it to finish
@@ -224,6 +252,4 @@ void function FastballPlayer( entity player )
 	// have to correct this manually here since due to no 3p animation our position isn't set right during this sequence
 	player.SetOrigin( buddy.GetAttachmentOrigin( buddy.LookupAttachment( "FASTBALL_R" ) ) )
 	player.SetVelocity( throwVel )
-
-	TryGameModeAnnouncement( player )
 }

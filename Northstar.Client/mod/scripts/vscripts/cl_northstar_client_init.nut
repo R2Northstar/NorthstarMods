@@ -32,15 +32,16 @@ global struct UIPresenceStruct
 
 global struct ModInfo
 {
-	string name = ""
-	string description = ""
-	string version = ""
-	string downloadLink = ""
-	int loadPriority = 0
-	bool enabled = false
-	bool requiredOnClient = false
+	string name
+	string description
+	string version
+	string downloadLink
+	int loadPriority
+	bool enabled = true
+	bool enabledOld = true
+	bool requiredOnClient
 	bool isRemote
-	array<string> conVars = []
+	array<string> conVars
 }
 
 global struct RequiredModInfo

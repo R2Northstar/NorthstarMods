@@ -21,6 +21,7 @@ global function SetTitanMeterGainScale
 #if MP
 	global function CodeCallback_WeaponDropped
 	global function AddCallback_OnWeaponDropped
+	global function CodeCallback_OnServerAnimEvent
 #endif
 
 struct AccumulatedDamageData

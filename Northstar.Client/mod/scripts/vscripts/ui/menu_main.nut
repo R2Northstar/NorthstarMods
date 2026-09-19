@@ -55,12 +55,30 @@ void function InitMainMenu()
 
 	#if VANILLA
 		AddMenuFooterOption( menu, BUTTON_X, "#X_BUTTON_INBOX_ACCEPT", "#INBOX_ACCEPT", OpenDataCenterDialog, IsDataCenterFooterValid, UpdateDataCenterFooter )
+	#else
+		AddMenuFooterOption(
+			file.menu,
+			BUTTON_X,
+			PrependControllerPrompts( BUTTON_X, "#AUTHENTICATION_AGREEMENT" ),
+			"#AUTHENTICATION_AGREEMENT",
+			OnAuthenticationAgreementButtonPressed
+		)
 	#endif
 
 	#if DEV
 		if ( DevStartPoints() )
 			AddMenuFooterOption( menu, BUTTON_SHOULDER_LEFT, "#Y_BUTTON_DEV_MENU", "#DEV_MENU", OpenSinglePlayerDevMenu )
 	#endif // DEV
+
+	// fixes no main menu after ui compile error :D
+	if ( !IsConnected() )
+	{
+		delaythread( 0.0001 ) void function() : ()
+		{
+			if ( !IsConnected() && !uiGlobal.menuStack.len() )
+				UICodeCallback_ActivateMenus()
+		}()
+	}
 }
 
 #if CONSOLE_PROG
@@ -74,6 +92,8 @@ void function OnMainMenu_Open()
 {
 	Signal( uiGlobal.signalDummy, "EndOnMainMenu_Open" )
 	EndSignal( uiGlobal.signalDummy, "EndOnMainMenu_Open" )
+
+	DisableTempMods()
 
 	#if !VANILLA
 		SetConVarString( "communities_hostname", "" ) // disable communities due to crash exploits that are still possible through it
@@ -98,9 +118,11 @@ void function OnMainMenu_Open()
 		Dev_CommandLineRemoveParm( "+map" )
 	}
 
-	// do agree to ns remote auth dialog
-	if ( !GetConVarBool( "ns_has_agreed_to_send_token" ) )
-		NorthstarMasterServerAuthDialog()
+	#if !VANILLA
+		// do agree to ns remote auth dialog
+		if ( !GetConVarBool( "ns_has_agreed_to_send_token" ) )
+			NorthstarMasterServerAuthDialog()
+	#endif
 
 	#if PC_PROG
 		ActivatePanel( GetPanel( "MainMenuPanel" ) )
@@ -178,6 +200,11 @@ void function NorthstarMasterServerAuthDialogDisagree()
 		AddDialogButton( dialogData, "#OK" )
 		OpenDialog( dialogData )
 	}
+}
+
+void function OnAuthenticationAgreementButtonPressed( var button )
+{
+	NorthstarMasterServerAuthDialog()
 }
 
 void function ActivatePanel( var panel )

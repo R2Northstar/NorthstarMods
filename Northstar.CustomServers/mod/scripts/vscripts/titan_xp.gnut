@@ -3,6 +3,9 @@ global function AddFDTitanXP
 
 void function AddTitanXP( entity player, int amount )
 {
+	if ( IsPrivateMatch() )
+		return
+
 	string titan = GetActiveTitanLoadout( player ).titanClass
 	int oldLevel = TitanGetLevel( player, titan )
 	int TitanXPMatch = player.GetPersistentVarAsInt( "xp_match[" + XP_TYPE.TITAN_LEVELED + "]" )
@@ -32,6 +35,10 @@ void function AddTitanXP( entity player, int amount )
 
 void function AddFDTitanXP( entity player, int fdXPamount )
 {
+	// respawn allows earning fd titan xp in private match
+	// if ( IsPrivateMatch() )
+	// 	return
+
 	string titanRef = GetActiveTitanLoadout( player ).titanClass
 
 	player.SetPersistentVar( "fdTitanXP[" + titanRef + "]", FD_TitanGetPreviousXP( player, titanRef ) + fdXPamount )

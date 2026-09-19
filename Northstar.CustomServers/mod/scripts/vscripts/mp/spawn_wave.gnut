@@ -72,11 +72,22 @@ global struct WaveSpawnEvent
 
 struct
 {
-	int difficultyLevel = 0
 	table<string, array<WaveSpawnEvent> > waveSubGroups
 	array<string> waveActiveSubGroups
 	int gruntAmountWithATWeapons = 0
 	int gruntAmountWithShields = 0
+	table<string, array<string> > NPCWeapons = {
+		["npc_soldier"] = [ "mp_weapon_rspn101", "mp_weapon_car", "mp_weapon_alternator_smg", "mp_weapon_hemlok_smg", "mp_weapon_r97" ],
+		["npc_spectre"] = [
+			"mp_weapon_hemlok",
+			"mp_weapon_vinson",
+			"mp_weapon_g2",
+			"mp_weapon_mastiff",
+			"mp_weapon_shotgun",
+			"mp_weapon_doubletake",
+			"mp_weapon_dmr"
+		]
+	}
 } file
 
 global array<array<WaveSpawnEvent> > WaveSpawnEvents
@@ -95,7 +106,6 @@ void function SpawnWave_Init()
 {
 	RegisterSignal( "StopWaveSpawner" )
 
-	file.difficultyLevel = FD_GetDifficultyLevel() // Refresh this only on map load, to avoid midgame commands messing up with difficulties (i.e setting mp_gamemode fd_hard midgame in a regular match through console on local host would immediately make Stalkers spawns with EPG)
 	file.gruntAmountWithShields = GetCurrentPlaylistVarInt( "fd_grunt_shield_captains", 0 )
 	file.gruntAmountWithATWeapons = GetCurrentPlaylistVarInt( "fd_grunt_at_weapon_users", 0 )
 }
@@ -711,14 +721,18 @@ void function SpawnArcTitan( WaveSpawnEvent ornull spawnEvent )
 	AddMinimapForTitans( npc )
 	npc.EndSignal( "OnDeath" )
 	npc.EndSignal( "OnDestroy" )
+
+	wait 4.8
+
+	npc.GetTitanSoul().SetTitanSoulNetBool( "showOverheadIcon", true )
+
 	WaitTillHotDropComplete( npc )
 
 	thread EMPTitanThinkConstant( npc )
-	npc.GetTitanSoul().SetTitanSoulNetBool( "showOverheadIcon", true )
 	thread NPCNav_FD( npc, spawnEvent.route )
 	if ( GetMapName().find( "mp_lf_" ) == null )
 	{
-		switch ( file.difficultyLevel )
+		switch ( difficultyLevel )
 		{
 			case eFDDifficultyLevel.EASY:
 			case eFDDifficultyLevel.NORMAL:
@@ -772,9 +786,15 @@ void function SpawnNukeTitan( WaveSpawnEvent ornull spawnEvent )
 	AddMinimapForTitans( npc )
 	npc.EndSignal( "OnDeath" )
 	npc.EndSignal( "OnDestroy" )
-	NukeTitanThink( npc, fd_harvester.harvester )
+
+	wait 4.8
 
 	npc.GetTitanSoul().SetTitanSoulNetBool( "showOverheadIcon", true )
+
+	WaitTillHotDropComplete( npc )
+
+	NukeTitanThink( npc, fd_harvester.harvester )
+
 	GiveShieldByDifficulty( npc, true )
 	thread NPCNav_FD( npc, spawnEvent.route )
 }
@@ -814,10 +834,14 @@ void function SpawnMortarTitan( WaveSpawnEvent ornull spawnEvent )
 	AddMinimapForTitans( npc )
 	npc.EndSignal( "OnDeath" )
 	npc.EndSignal( "OnDestroy" )
+
+	wait 4.8
+
+	npc.GetTitanSoul().SetTitanSoulNetBool( "showOverheadIcon", true )
+
 	WaitTillHotDropComplete( npc )
 
 	thread MortarTitanThink( npc, fd_harvester.harvester )
-	npc.GetTitanSoul().SetTitanSoulNetBool( "showOverheadIcon", true )
 	GiveShieldByDifficulty( npc )
 }
 
@@ -858,10 +882,14 @@ void function SpawnSniperTitan( WaveSpawnEvent ornull spawnEvent )
 	AddMinimapForTitans( npc )
 	npc.EndSignal( "OnDeath" )
 	npc.EndSignal( "OnDestroy" )
+
+	wait 4.8
+
+	npc.GetTitanSoul().SetTitanSoulNetBool( "showOverheadIcon", true )
+
 	WaitTillHotDropComplete( npc )
 
 	thread SniperTitanThink( npc, fd_harvester.harvester )
-	npc.GetTitanSoul().SetTitanSoulNetBool( "showOverheadIcon", true )
 	GiveShieldByDifficulty( npc )
 }
 
@@ -903,10 +931,14 @@ void function SpawnToneSniperTitan( WaveSpawnEvent ornull spawnEvent )
 	AddMinimapForTitans( npc )
 	npc.EndSignal( "OnDeath" )
 	npc.EndSignal( "OnDestroy" )
+
+	wait 4.8
+
+	npc.GetTitanSoul().SetTitanSoulNetBool( "showOverheadIcon", true )
+
 	WaitTillHotDropComplete( npc )
 
 	thread SniperTitanThink( npc, fd_harvester.harvester )
-	npc.GetTitanSoul().SetTitanSoulNetBool( "showOverheadIcon", true )
 	GiveShieldByDifficulty( npc )
 }
 
@@ -934,7 +966,7 @@ void function SpawnIonTitan( WaveSpawnEvent ornull spawnEvent )
 	entity npc = CreateNPCTitan( "titan_atlas", TEAM_IMC, spawnorigin, spawnEvent.angles )
 	SetSpawnOption_Titanfall( npc )
 	npc.kv.reactChance = 60
-	if ( file.difficultyLevel == eFDDifficultyLevel.EASY || difficultyLevel == eFDDifficultyLevel.NORMAL )
+	if ( difficultyLevel == eFDDifficultyLevel.EASY || difficultyLevel == eFDDifficultyLevel.NORMAL )
 		SetSpawnOption_AISettings( npc, "npc_titan_atlas_stickybomb" )
 	else
 		SetSpawnOption_AISettings( npc, "npc_titan_atlas_stickybomb_boss_fd" )
@@ -946,9 +978,13 @@ void function SpawnIonTitan( WaveSpawnEvent ornull spawnEvent )
 	AddMinimapForTitans( npc )
 	npc.EndSignal( "OnDeath" )
 	npc.EndSignal( "OnDestroy" )
-	WaitTillHotDropComplete( npc )
+
+	wait 4.8
 
 	npc.GetTitanSoul().SetTitanSoulNetBool( "showOverheadIcon", true )
+
+	WaitTillHotDropComplete( npc )
+
 	GiveShieldByDifficulty( npc )
 	thread NPCNav_FD( npc, spawnEvent.route )
 }
@@ -976,7 +1012,7 @@ void function SpawnScorchTitan( WaveSpawnEvent ornull spawnEvent )
 
 	entity npc = CreateNPCTitan( "titan_ogre", TEAM_IMC, spawnorigin, spawnEvent.angles )
 	SetSpawnOption_Titanfall( npc )
-	if ( file.difficultyLevel == eFDDifficultyLevel.EASY || difficultyLevel == eFDDifficultyLevel.NORMAL )
+	if ( difficultyLevel == eFDDifficultyLevel.EASY || difficultyLevel == eFDDifficultyLevel.NORMAL )
 		SetSpawnOption_AISettings( npc, "npc_titan_ogre_meteor" )
 	else
 		SetSpawnOption_AISettings( npc, "npc_titan_ogre_meteor_boss_fd" )
@@ -991,9 +1027,13 @@ void function SpawnScorchTitan( WaveSpawnEvent ornull spawnEvent )
 	AddMinimapForTitans( npc )
 	npc.EndSignal( "OnDeath" )
 	npc.EndSignal( "OnDestroy" )
-	WaitTillHotDropComplete( npc )
+
+	wait 4.8
 
 	npc.GetTitanSoul().SetTitanSoulNetBool( "showOverheadIcon", true )
+
+	WaitTillHotDropComplete( npc )
+
 	GiveShieldByDifficulty( npc )
 	thread NPCNav_FD( npc, spawnEvent.route )
 }
@@ -1022,7 +1062,7 @@ void function SpawnRoninTitan( WaveSpawnEvent ornull spawnEvent )
 	entity npc = CreateNPCTitan( "titan_stryder", TEAM_IMC, spawnorigin, spawnEvent.angles )
 	SetSpawnOption_Titanfall( npc )
 	npc.kv.reactChance = 60
-	if ( file.difficultyLevel == eFDDifficultyLevel.EASY || difficultyLevel == eFDDifficultyLevel.NORMAL )
+	if ( difficultyLevel == eFDDifficultyLevel.EASY || difficultyLevel == eFDDifficultyLevel.NORMAL )
 		SetSpawnOption_AISettings( npc, "npc_titan_stryder_leadwall" )
 	else
 		SetSpawnOption_AISettings( npc, "npc_titan_stryder_leadwall_boss_fd" )
@@ -1035,9 +1075,13 @@ void function SpawnRoninTitan( WaveSpawnEvent ornull spawnEvent )
 	AddMinimapForTitans( npc )
 	npc.EndSignal( "OnDeath" )
 	npc.EndSignal( "OnDestroy" )
-	WaitTillHotDropComplete( npc )
+
+	wait 4.8
 
 	npc.GetTitanSoul().SetTitanSoulNetBool( "showOverheadIcon", true )
+
+	WaitTillHotDropComplete( npc )
+
 	GiveShieldByDifficulty( npc )
 	thread NPCNav_FD( npc, spawnEvent.route )
 }
@@ -1066,7 +1110,7 @@ void function SpawnToneTitan( WaveSpawnEvent ornull spawnEvent )
 	entity npc = CreateNPCTitan( "titan_atlas", TEAM_IMC, spawnorigin, spawnEvent.angles )
 	SetSpawnOption_Titanfall( npc )
 	npc.kv.reactChance = 60
-	if ( file.difficultyLevel == eFDDifficultyLevel.EASY || difficultyLevel == eFDDifficultyLevel.NORMAL )
+	if ( difficultyLevel == eFDDifficultyLevel.EASY || difficultyLevel == eFDDifficultyLevel.NORMAL )
 		SetSpawnOption_AISettings( npc, "npc_titan_atlas_tracker" )
 	else
 		SetSpawnOption_AISettings( npc, "npc_titan_atlas_tracker_boss_fd" )
@@ -1078,9 +1122,13 @@ void function SpawnToneTitan( WaveSpawnEvent ornull spawnEvent )
 	AddMinimapForTitans( npc )
 	npc.EndSignal( "OnDeath" )
 	npc.EndSignal( "OnDestroy" )
-	WaitTillHotDropComplete( npc )
+
+	wait 4.8
 
 	npc.GetTitanSoul().SetTitanSoulNetBool( "showOverheadIcon", true )
+
+	WaitTillHotDropComplete( npc )
+
 	GiveShieldByDifficulty( npc )
 	thread NPCNav_FD( npc, spawnEvent.route )
 }
@@ -1109,7 +1157,7 @@ void function SpawnLegionTitan( WaveSpawnEvent ornull spawnEvent )
 	entity npc = CreateNPCTitan( "titan_ogre", TEAM_IMC, spawnorigin, spawnEvent.angles )
 	SetSpawnOption_Titanfall( npc )
 	npc.kv.reactChance = 60
-	if ( file.difficultyLevel == eFDDifficultyLevel.EASY || difficultyLevel == eFDDifficultyLevel.NORMAL )
+	if ( difficultyLevel == eFDDifficultyLevel.EASY || difficultyLevel == eFDDifficultyLevel.NORMAL )
 		SetSpawnOption_AISettings( npc, "npc_titan_ogre_minigun" )
 	else
 		SetSpawnOption_AISettings( npc, "npc_titan_ogre_minigun_boss_fd" )
@@ -1121,9 +1169,13 @@ void function SpawnLegionTitan( WaveSpawnEvent ornull spawnEvent )
 	AddMinimapForTitans( npc )
 	npc.EndSignal( "OnDeath" )
 	npc.EndSignal( "OnDestroy" )
-	WaitTillHotDropComplete( npc )
+
+	wait 4.8
 
 	npc.GetTitanSoul().SetTitanSoulNetBool( "showOverheadIcon", true )
+
+	WaitTillHotDropComplete( npc )
+
 	GiveShieldByDifficulty( npc )
 	thread NPCNav_FD( npc, spawnEvent.route )
 }
@@ -1152,7 +1204,7 @@ void function SpawnMonarchTitan( WaveSpawnEvent ornull spawnEvent )
 	entity npc = CreateNPCTitan( "titan_atlas", TEAM_IMC, spawnorigin, spawnEvent.angles )
 	SetSpawnOption_Titanfall( npc )
 	npc.kv.reactChance = 60
-	if ( file.difficultyLevel == eFDDifficultyLevel.EASY || difficultyLevel == eFDDifficultyLevel.NORMAL )
+	if ( difficultyLevel == eFDDifficultyLevel.EASY || difficultyLevel == eFDDifficultyLevel.NORMAL )
 		SetSpawnOption_AISettings( npc, "npc_titan_atlas_vanguard" )
 	else
 		SetSpawnOption_AISettings( npc, "npc_titan_atlas_vanguard_boss_fd" )
@@ -1164,9 +1216,13 @@ void function SpawnMonarchTitan( WaveSpawnEvent ornull spawnEvent )
 	AddMinimapForTitans( npc )
 	npc.EndSignal( "OnDeath" )
 	npc.EndSignal( "OnDestroy" )
-	WaitTillHotDropComplete( npc )
+
+	wait 4.8
 
 	npc.GetTitanSoul().SetTitanSoulNetBool( "showOverheadIcon", true )
+
+	WaitTillHotDropComplete( npc )
+
 	GiveShieldByDifficulty( npc )
 	thread NPCNav_FD( npc, spawnEvent.route )
 }
@@ -1286,7 +1342,7 @@ void function SpawnDroppodGrunts( WaveSpawnEvent ornull spawnEvent )
 		}
 
 		if ( i < file.gruntAmountWithATWeapons )
-			guy.GiveWeapon( AILoadout_GetRandomATWeaponForClass( guy ) )
+			guy.GiveWeapon( "mp_weapon_defender" )
 
 		SetTargetName( guy, GetTargetNameForID( eFD_AITypeIDs.GRUNT ) )
 		guy.MakeInvisible()
@@ -1333,7 +1389,6 @@ void function SpawnGruntDropship( WaveSpawnEvent ornull spawnEvent )
 	origin.z += 640 // Expected to people make coordinates in the ground so we add this up for the hover height
 	float yaw = spawnEvent.angles.y
 	int health = 10000
-	int shield = 5000
 
 	CallinData drop
 	InitCallinData( drop )
@@ -1362,8 +1417,6 @@ void function SpawnGruntDropship( WaveSpawnEvent ornull spawnEvent )
 	DispatchSpawn( dropship )
 	dropship.SetMaxHealth( health )
 	dropship.SetHealth( dropship.GetMaxHealth() )
-	dropship.SetShieldHealthMax( shield )
-	dropship.SetShieldHealth( dropship.GetShieldHealthMax() )
 	dropship.SetHealthPerSegment( 2500 )
 	dropship.EndSignal( "OnDeath" )
 	dropship.Signal( "WarpedIn" )
@@ -1414,7 +1467,7 @@ void function SpawnGruntDropship( WaveSpawnEvent ornull spawnEvent )
 		}
 
 		if ( i < file.gruntAmountWithATWeapons )
-			guy.GiveWeapon( AILoadout_GetRandomATWeaponForClass( guy ) )
+			guy.GiveWeapon( "mp_weapon_defender" )
 
 		SetTargetName( guy, GetTargetNameForID( eFD_AITypeIDs.GRUNT ) )
 		AddMinimapForHumans( guy )
@@ -1481,7 +1534,7 @@ void function SpawnDroppodStalker( WaveSpawnEvent ornull spawnEvent )
 		guys.append( guy )
 	}
 
-	switch ( file.difficultyLevel )
+	switch ( difficultyLevel )
 	{
 		case eFDDifficultyLevel.EASY:
 		case eFDDifficultyLevel.NORMAL:
@@ -1801,13 +1854,16 @@ void function SpawnSmoke( WaveSpawnEvent ornull spawnEvent )
 
 void function PlayWarning( WaveSpawnEvent ornull spawnEvent )
 {
-	if ( !spawnEvent )
-		return
+	#if FACTION_DIALOGUE_ENABLED
 
-	expect WaveSpawnEvent( spawnEvent )
+		if ( !spawnEvent )
+			return
 
-	if ( spawnEvent.soundEventName != "" ) // Sanity check just to prevent crashes from typos since the fallback is to return empty string
-		PlayFactionDialogueToTeam( spawnEvent.soundEventName, TEAM_MILITIA )
+		expect WaveSpawnEvent( spawnEvent )
+
+		if ( spawnEvent.soundEventName != "" ) // Sanity check just to prevent crashes from typos since the fallback is to return empty string
+			PlayFactionDialogueToTeam( spawnEvent.soundEventName, TEAM_MILITIA )
+	#endif
 }
 
 void function waitUntilLessThanAmountAliveEvent( WaveSpawnEvent ornull spawnEvent )
@@ -1887,7 +1943,7 @@ void function waitWaveSubGroup( WaveSpawnEvent ornull spawnEvent )
 
 void function PingMinimap( float x, float y, float duration, float spreadRadius, float ringRadius, int colorIndex )
 {
-	if ( GetCurrentPlaylistVarFloat( "riff_minimap_state", 0 ) == 0 )
+	if ( !Riff_MinimapState() )
 	{
 		foreach ( entity player in GetPlayerArrayOfTeam( TEAM_MILITIA ) )
 			Remote_CallFunction_NonReplay( player, "ServerCallback_FD_PingMinimap", x, y, duration, spreadRadius, ringRadius, colorIndex )
@@ -1923,11 +1979,11 @@ void function AddMinimapForHumans( entity human )
 void function GiveMinionFDLoadout( entity npc )
 {
 	Assert( IsValid( npc ) && IsMinion( npc ), "Entity is not a spectre or grunt: " + npc )
-	string className = npc.GetClassName()
 
-	string weaponName = AILoadout_GetRandomWeaponForClass( npc )
-	if ( weaponName != "" )
-		SetSpawnOption_Weapon( npc, weaponName )
+	string className = npc.GetClassName()
+	string weaponName = file.NPCWeapons[ className ].getrandom()
+
+	SetSpawnOption_Weapon( npc, weaponName )
 }
 
 void function SlowEnemyMovementBasedOnDifficulty( entity npc )
@@ -1935,7 +1991,7 @@ void function SlowEnemyMovementBasedOnDifficulty( entity npc )
 	// This is not exact vanilla behavior i think, but enemies definetely moves slower on Frontier Defense than player autotitans
 	Assert( IsValid( npc ) && npc.IsNPC(), "Tried to set up movespeed scale in non-NPC entity: " + npc )
 
-	switch ( file.difficultyLevel )
+	switch ( difficultyLevel )
 	{
 		case eFDDifficultyLevel.EASY:
 		case eFDDifficultyLevel.NORMAL:
@@ -1955,7 +2011,7 @@ void function SetupGruntBehaviorFlags( entity npc )
 	Assert( IsValid( npc ) && IsGrunt( npc ), "Entity is not a Grunt: " + npc )
 
 	npc.EnableNPCFlag( NPC_ALLOW_HAND_SIGNALS )
-	switch ( file.difficultyLevel )
+	switch ( difficultyLevel )
 	{
 		case eFDDifficultyLevel.EASY:
 		case eFDDifficultyLevel.NORMAL:
@@ -1980,7 +2036,7 @@ void function GruntTargetsTitan( entity npc )
 		return
 
 	OnEnemyChanged_MinionSwitchToHeavyArmorWeapon( npc )
-	switch ( file.difficultyLevel )
+	switch ( difficultyLevel )
 	{
 		case eFDDifficultyLevel.EASY:
 		case eFDDifficultyLevel.NORMAL:
@@ -2073,7 +2129,7 @@ bool function ShouldSkipEventForDifficulty( WaveSpawnEvent event )
 
 	if ( !allDifficulties )
 	{
-		switch ( file.difficultyLevel )
+		switch ( difficultyLevel )
 		{
 			case ( eFDDifficultyLevel.EASY ):
 				return invertedFilter ? easySpawn : !easySpawn
@@ -2242,10 +2298,14 @@ void function NPCNav_FD( entity npc, string routeName, int nodesToSkip = 1, floa
 		{
 			if ( !IsHarvesterAlive( fd_harvester.harvester ) )
 				return
+
 			npc.AssaultPointClamped( targetNode.GetOrigin() )
 			npc.AssaultSetGoalRadius( nextDistance )
 
 			table result = npc.WaitSignal( "OnFinishedAssault", "OnEnterGoalRadius", "OnFailedToPath" )
+
+			if ( !IsHarvesterAlive( fd_harvester.harvester ) )
+				return
 
 			/*
 			if ( result.signal == "OnFailedToPath" && !npc.IsTitan() && !IsSuperSpectre( npc ) )
@@ -2271,10 +2331,15 @@ void function NPCNav_FD( entity npc, string routeName, int nodesToSkip = 1, floa
 		{
 			if ( !IsHarvesterAlive( fd_harvester.harvester ) )
 				return
+
 			npc.AssaultPointClamped( routepoint )
 			npc.AssaultSetGoalRadius( nextDistance )
 
 			table result = npc.WaitSignal( "OnFinishedAssault", "OnEnterGoalRadius", "OnFailedToPath" )
+
+			if ( !IsHarvesterAlive( fd_harvester.harvester ) )
+				return
+
 			/*
 			if ( result.signal == "OnFailedToPath" && !npc.IsTitan() && !IsSuperSpectre( npc ) )
 			{
@@ -2293,7 +2358,9 @@ void function NPCNav_FD( entity npc, string routeName, int nodesToSkip = 1, floa
 				}
 			}
 */
+
 			routeindex++
+
 			if ( routeindex < routes[ routetaken ].len() )
 				routepoint = routes[ routetaken ][ routeindex ]
 			else
@@ -2508,7 +2575,7 @@ void function Dev_ShowRoute( bool includedrones = false )
 			else if ( routename.tolower().find( "drone" ) || routename.tolower().find( "reaper" ) )
 				continue
 			else
-				thread GruntTracksPathing( routename )
+				thread SpectreTracksPathing( routename )
 		}
 	}
 	else
@@ -2519,12 +2586,12 @@ void function Dev_ShowRoute( bool includedrones = false )
 			if ( includedrones && routename.tolower().find( "drone" ) )
 				thread DroneTracksPathing( routename )
 			else
-				thread GruntTracksPathing( routename )
+				thread SpectreTracksPathing( routename )
 		}
 	}
 }
 
-void function GruntTracksPathing( string route )
+void function SpectreTracksPathing( string route )
 {
 	vector routeorigin = < 0, 0, 0 >
 	if ( useCustomFDLoad )
@@ -2532,7 +2599,7 @@ void function GruntTracksPathing( string route )
 	else
 		routeorigin = GetRouteStart( route ).GetOrigin()
 
-	entity guy = CreateSoldier( TEAM_MILITIA, routeorigin, < 0, 0, 0 > )
+	entity guy = CreateSpectre( TEAM_MILITIA, routeorigin, < 0, 0, 0 > )
 	DispatchSpawn( guy )
 	PlayLoopFXOnEntity( $"P_ar_holopilot_trail", guy, "CHESTFOCUS" )
 
@@ -2547,9 +2614,8 @@ void function GruntTracksPathing( string route )
 	{
 		thread NPCNav_FD( guy, route )
 		table result = guy.WaitSignal( "FD_ReachedHarvester" )
-		wait 5.0
 		if ( IsValid( guy ) )
-			guy.SetOrigin( routeorigin )
+			guy.Destroy() // guy.SetOrigin( routeorigin )
 	}
 }
 
@@ -2588,7 +2654,7 @@ void function NPCStuckTracker( entity npc ) // Track if AI is properly pathing, 
 		if ( result.signal == "OnFailedToPath" )
 		{
 			if ( FailCount == 10 )
-				npc.Die()
+				npc.Die( svGlobal.worldspawn, svGlobal.worldspawn, { scriptType = DF_INSTANT, damageSourceId = eDamageSourceId.stuck } )
 			FailCount++
 		}
 		else

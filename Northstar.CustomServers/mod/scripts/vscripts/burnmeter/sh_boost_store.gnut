@@ -320,9 +320,6 @@ bool function CanPurchaseBoost( entity player, BoostStoreData data, bool checkMo
 		if ( !BoostStoreOpen() )
 			return true
 
-		if ( !BoostStoreOpen() )
-			return true
-
 		if ( !IsAlive( player ) )
 			return true
 

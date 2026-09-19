@@ -919,11 +919,6 @@ function EmbarkLine( player, titan )
 
 		// thread DelayedDisableEmbarkPlayerHud( player, sequence )
 
-		#if MP
-			if ( !doFirstPersonAnim && ShouldRunFirstPersonSequence( player, true, false ) )
-				FirstPersonSequenceForce1P( sequence, player, titan )
-		#endif
-
 		AddAnimEvent( player, "phase_shift_start", PhaseEmbarkPhaseStart )
 		AddAnimEvent( player, "phase_shift_stop", PhaseEmbarkPhaseStop )
 		AddAnimEvent( titan, "cockpit_light_start", CockpitLightStart )
@@ -1003,24 +998,8 @@ function EmbarkLine( player, titan )
 
 		wait delay - EMBARK_FADE_TIME
 
-		bool firstPerson = false
-
-		#if MP
-			firstPerson = ShouldRunFirstPersonSequence( player, true, false )
-		#endif
-
-		if ( firstPerson )
-		{
-			ScreenFadeToBlack( player, EMBARK_FADE_TIME, EMBARK_FADE_TIME + 0.2 ) // a little extra so we stay black
-			wait EMBARK_FADE_TIME
-		}
-		else
-		{
-			wait EMBARK_FADE_TIME - 0.2
-			ScreenFadeToBlack( player, 0.2, 0.4 )
-			wait 0.2
-		}
-
+		ScreenFadeToBlack( player, EMBARK_FADE_TIME, EMBARK_FADE_TIME + 0.2 ) // a little extra so we stay black
+		wait EMBARK_FADE_TIME
 		ScreenFadeFromBlack( player, EMBARK_FADE_TIME, EMBARK_FADE_TIME )
 	}
 

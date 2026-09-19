@@ -40,11 +40,11 @@ void function ReplacePlayerTactical( entity player )
 		if ( file.disallowedTacticalReplacement != "" )
 		{
 			player.GiveOffhandWeapon( file.disallowedTacticalReplacement, OFFHAND_SPECIAL )
-			SendHudMessage( player, "Restricted tactical was replaced", -1, 0.4, 255, 255, 255, 255, 0.15, 3.0, 0.5 )
+			SendHudMessage( player, "Restricted tactical was replaced", -1, 0.4, 255, 255, 255, 255, 1.0, 3.0, 0.5 )
 		}
 		else
 		{
-			SendHudMessage( player, "Restricted tactical was removed", -1, 0.4, 255, 255, 255, 255, 0.15, 3.0, 0.5 )
+			SendHudMessage( player, "Restricted tactical was removed", -1, 0.4, 255, 255, 255, 255, 1.0, 3.0, 0.5 )
 		}
 	}
 }

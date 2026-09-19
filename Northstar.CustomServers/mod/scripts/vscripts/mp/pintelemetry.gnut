@@ -1,7 +1,10 @@
-// all stubs because we don't really need this
-// if we actually ever want to mess with stats stuff, code already calls all this
+// respawn uses this to track a bunch of server stuff like player connections, player disconnects,
+// game start, game end, round start, round end, game errors, etc to a pin telemetry host `pin_telemetry_hostname`
+// `pin_telemetry_debug` `pin_telemetry_debug_script`
+// script AddPINTelemetryEvent( "game_action", PIN_StandardServerHeader(), { errid = "Error string", type = "Error type" } )
 
 global function PIN_Init
+global function PIN_GameStart
 global function PIN_BuyItemWithRealMoney
 global function PIN_BuyItem
 global function PIN_GiveItem
@@ -12,9 +15,15 @@ global function PIN_PlayerAbility
 global function PIN_PlayerAbilityReady
 global function PIN_DamageDone
 global function PIN_PlayerRodeoedEnemyTitanToCompletion
+global function PIN_StandardServerHeader
 
 void function PIN_Init()
 {
+}
+
+void function PIN_GameStart()
+{
+	CreatePINTelemetryHeader( 1, 0, {} )
 }
 
 void function PIN_BuyItemWithRealMoney( entity player, bool _0, string name, int cost )
@@ -55,4 +64,18 @@ void function PIN_DamageDone( entity player, entity victim, var damageInfo )
 
 void function PIN_PlayerRodeoedEnemyTitanToCompletion( entity player, entity titan, bool playerHadBattery )
 {
+}
+
+table function PIN_StandardServerHeader()
+{
+	string matchid = lstrip( rstrip( GameRules_GetUniqueMatchID() ) )
+
+	return {
+		game_type = "online",
+		game_mode = GAMETYPE,
+		mode_type = "multiplayer",
+		map = GetMapName(),
+		platform_name = GetPINPlatformName(),
+		custom = { mid = matchid, players = GetPlayerArray().len(), server_id = GetConVarString( "serverFilter" ) },
+	}
 }

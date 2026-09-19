@@ -7,7 +7,7 @@ global function RateSpawnpoints_CTF
 	global function ShowCTFInfluenceSphere
 #endif
 
-const array<string> SWAP_FLAG_MAPS = [ "mp_forwardbase_kodai", "mp_lf_meadow" ]
+const array<string> SWAP_MAPS = [ "mp_forwardbase_kodai", "mp_lf_meadow" ]
 
 struct
 {
@@ -46,9 +46,9 @@ void function CaptureTheFlag_Init()
 	AddCallback_OnClientConnected( CTFInitPlayer )
 	AddCallback_OnClientDisconnected( CTFPlayerDisconnected )
 
-	AddCallback_GameStateEnter( eGameState.Prematch, CreateFlags )
 	AddCallback_GameStateEnter( eGameState.Epilogue, RemoveFlags )
 	AddCallback_GameStateEnter( eGameState.Playing, OnPlaying )
+	AddCallback_OnRoundEndCleanup( RemoveFlags )
 
 	AddCallback_OnTouchHealthKit( "item_flag", OnFlagCollected )
 
@@ -57,6 +57,9 @@ void function CaptureTheFlag_Init()
 	AddCallback_OnTitanBecomesPilot( TransferFlagFromTitan )
 
 	AddSpawnCallback( "npc_titan", PlayerTitanSpawning )
+	AddSpawnCallback( "info_spawnpoint_dropship_start", SwapTeam )
+	AddSpawnCallback( "info_spawnpoint_titan_start", SwapTeam )
+	AddSpawnCallback( "info_spawnpoint_human_start", SwapTeam )
 
 	AddSpawnpointValidationRule( VerifyCTFSpawnpoint )
 
@@ -87,26 +90,19 @@ void function CaptureTheFlag_Init()
 ███████ ██      ██   ██  ███ ███  ██   ████     ███████  ██████   ██████  ██  ██████
 */
 
+void function SwapTeam( entity spawnPoint )
+{
+	if ( SWAP_MAPS.contains( GetMapName() ) )
+		SetTeam( spawnPoint, GetOtherTeam( spawnPoint.GetTeam() ) )
+}
+
 void function CreateFlags()
 {
-	if ( IsValid( file.imcFlagSpawn ) )
-	{
-		file.imcFlagSpawn.Destroy()
-		file.imcFlag.Destroy()
-	}
-	if ( IsValid( file.militiaFlagSpawn ) )
-	{
-		file.militiaFlagSpawn.Destroy()
-		file.militiaFlag.Destroy()
-	}
-
 	foreach ( entity spawn in GetEntArrayByClass_Expensive( "info_spawnpoint_flag" ) )
 	{
-		bool switchedSides = HasSwitchedSides() == 1
+		bool switchedSides = IsSwitchSidesBased() && HasSwitchedSides() != 0
 
 		bool shouldSwap = switchedSides
-		if ( !shouldSwap && SWAP_FLAG_MAPS.contains( GetMapName() ) )
-			shouldSwap = !shouldSwap
 
 		int flagTeam = spawn.GetTeam()
 		if ( shouldSwap )
@@ -188,6 +184,12 @@ void function RemoveFlags()
 
 void function RateSpawnpoints_CTF( int checkClass, array<entity> spawnpoints, int team, entity player )
 {
+	if ( GetGameState() < eGameState.Playing )
+	{
+		RateSpawnpoints_Generic( checkClass, spawnpoints, team, player )
+		return
+	}
+
 	vector allyFlagSpot
 	vector enemyFlagSpot
 	vector flagsMedianPosition
@@ -274,16 +276,18 @@ void function OnFriendlyNPCTitanSpawnThreaded( entity npc )
 
 void function OnPlaying()
 {
+	CreateFlags()
+
 	foreach ( entity player in GetPlayerArray() )
 		CTFInitPlayer( player )
 }
 
 void function CTFInitPlayer( entity player )
 {
-	if ( GetGameState() >= eGameState.Playing && GetCurrentPlaylistVarInt( "ctf_friendly_hightlights", 0 ) != 0 )
+	if ( GetGameState() >= eGameState.Playing && GetCurrentPlaylistVarInt( "ctf_friendly_hightlights", 0 ) )
 		Highlight_SetFriendlyHighlight( player, "sp_friendly_hero" )
 
-	if ( !GamePlaying() )
+	if ( !GamePlayingOrSuddenDeath() )
 		return
 
 	if ( IsValid( file.imcFlagSpawn ) )
@@ -302,7 +306,7 @@ void function CTFInitPlayer( entity player )
 void function CTFPlayerDisconnected( entity player )
 {
 	// This has no validity checks on the player because the disconnection callback happens in the exact last frame the player entity still exists
-	if ( !GamePlaying() )
+	if ( !GamePlayingOrSuddenDeath() )
 		return
 
 	if ( PlayerHasEnemyFlag( player ) )
@@ -311,9 +315,6 @@ void function CTFPlayerDisconnected( entity player )
 
 void function OnPlayerKilled( entity victim, entity attacker, var damageInfo )
 {
-	if ( !IsValid( GetFlagForTeam( GetOtherTeam( victim.GetTeam() ) ) ) ) // getting a crash idk
-		return
-
 	if ( PlayerHasEnemyFlag( victim ) )
 	{
 		if ( victim != attacker && attacker.IsPlayer() )
@@ -355,7 +356,7 @@ bool function OnFlagCollected( entity player, entity flag )
 	)
 		return false
 
-	if ( player.GetTeam() != flag.GetTeam() && flag.s.canTake )
+	if ( player.GetTeam() != flag.GetTeam() && "canTake" in flag.s && flag.s.canTake )
 		GiveFlag( player, flag )
 	else if ( player.GetTeam() == flag.GetTeam() && IsFlagHome( flag ) && PlayerHasEnemyFlag( player ) )
 		CaptureFlag( player, GetFlagForTeam( GetOtherTeam( flag.GetTeam() ) ) )
@@ -365,7 +366,10 @@ bool function OnFlagCollected( entity player, entity flag )
 
 void function GiveFlag( entity player, entity flag )
 {
-	print( player + " picked up the flag!" )
+	#if DEV
+		print( player + " picked up the flag!" )
+	#endif
+
 	thread FlagSignalGrab_Threaded( flag ) // Delay this signal so it prevents race conditions when flag drops and gets picked up in the same frame
 
 	flag.SetParent( player, "FLAG" )
@@ -376,11 +380,14 @@ void function GiveFlag( entity player, entity flag )
 	MessageToPlayer( player, eEventNotifications.YouHaveTheEnemyFlag )
 	EmitSoundOnEntityOnlyToPlayer( player, player, "UI_CTF_1P_GrabFlag" )
 	AddPlayerScore( player, "FlagTaken", player )
-	PlayFactionDialogueToPlayer( "ctf_flagPickupYou", player )
+
+	#if FACTION_DIALOGUE_ENABLED
+		PlayFactionDialogueToPlayer( "ctf_flagPickupYou", player )
+		PlayFactionDialogueToTeamExceptPlayer( "ctf_flagPickupFriendly", player.GetTeam(), player )
+	#endif
 
 	MessageToTeam( player.GetTeam(), eEventNotifications.PlayerHasEnemyFlag, player, player )
 	EmitSoundOnEntityToTeamExceptPlayer( flag, "UI_CTF_3P_TeamGrabFlag", player.GetTeam(), player )
-	PlayFactionDialogueToTeamExceptPlayer( "ctf_flagPickupFriendly", player.GetTeam(), player )
 
 	MessageToTeam( flag.GetTeam(), eEventNotifications.PlayerHasFriendlyFlag, player, player )
 	EmitSoundOnEntityToTeam( flag, "UI_CTF_3P_EnemyGrabFlag", flag.GetTeam() )
@@ -398,22 +405,27 @@ void function FlagSignalGrab_Threaded( entity flag )
 void function CaptureFlag( entity player, entity flag )
 {
 	// can only capture flags during normal play or sudden death
-	if ( !GamePlaying() && GetGameState() != eGameState.SuddenDeath )
+	if ( !GamePlayingOrSuddenDeath() )
 	{
-		printt( player + " tried to capture the flag, but the game state was " + GetGameState() + " not " + eGameState.Playing + " or " + eGameState.SuddenDeath )
+		CodeWarning(
+			player + " tried to capture the flag, but the game state was " + GetGameState() + " not " + eGameState.Playing + " or " + eGameState.SuddenDeath
+		)
 		return
 	}
 	// reset flag
 	ResetFlag( flag )
 
-	print( player + " captured the flag!" )
+	#if DEV
+		print( player + " captured the flag!" )
+	#endif
 
 	// score
 	int team = player.GetTeam()
 	AddTeamScore( team, 1 )
 	AddPlayerScore( player, "FlagCapture", player )
 	player.AddToPlayerGameStat( PGS_ASSAULT_SCORE, 1 ) // add 1 to captures on scoreboard
-	SetRoundWinningKillReplayAttacker( player ) // set attacker for last cap replay
+	UpdatePlayerStat( player, "misc_stats", "flagsCaptured" )
+	SetRoundWinningKillReplayEntities( player, null, -1 ) // set attacker for last cap replay
 
 	array<entity> assistList
 	if ( team == TEAM_IMC )
@@ -453,9 +465,14 @@ void function CaptureFlag( entity player, entity flag )
 
 	if ( GameRules_GetTeamScore( team ) == GetScoreLimit_FromPlaylist() - 1 )
 	{
-		PlayFactionDialogueToTeam( "ctf_notifyWin1more", team )
-		PlayFactionDialogueToTeam( "ctf_notifyLose1more", GetOtherTeam( team ) )
-		foreach ( entity otherPlayer in GetPlayerArray() )
+		#if FACTION_DIALOGUE_ENABLED
+			PlayFactionDialogueToTeam( "ctf_notifyWin1more", team )
+			PlayFactionDialogueToTeam( "ctf_notifyLose1more", GetOtherTeam( team ) )
+		#endif
+
+		array<entity> players = GetPlayerArray()
+
+		foreach ( entity otherPlayer in players )
 			Remote_CallFunction_NonReplay( otherPlayer, "ServerCallback_CTF_PlayMatchNearEndMusic" )
 	}
 }
@@ -467,7 +484,9 @@ void function DropFlag( entity player, bool realDrop = true )
 	if ( !IsValid( flag ) || flag.GetParent() != player )
 		return
 
-	print( player + " dropped the flag!" )
+	#if DEV
+		print( player + " dropped the flag!" )
+	#endif
 
 	flag.ClearParent()
 	flag.SetOrigin( player.GetOrigin() + < 0, 0, 8 > ) // Offset a bit from the ground so it doesn't clip below
@@ -492,13 +511,14 @@ void function DropFlag( entity player, bool realDrop = true )
 		MessageToTeam( GetOtherTeam( player.GetTeam() ), eEventNotifications.PlayerDroppedFriendlyFlag, player, player )
 	}
 
-	if ( IsFlagHome( flag ) )
+	if ( IsFlagHome( flag ) || EntityIsOutOfBounds( player ) )
 	{
 		ResetFlag( flag )
 		return
 	}
 	else
 		thread TrackFlagDropTimeout( flag )
+
 	SetFlagStateForTeam( flag.GetTeam(), eFlagState.Home )
 }
 
@@ -615,6 +635,7 @@ void function TryReturnFlag( entity player, entity flag )
 	MessageToPlayer( player, eEventNotifications.YouReturnedFriendlyFlag )
 	AddPlayerScore( player, "FlagReturn", player )
 	player.AddToPlayerGameStat( PGS_DEFENSE_SCORE, 1 )
+	UpdatePlayerStat( player, "misc_stats", "flagsReturned" )
 
 	if ( !HasPlayerCompletedMeritScore( player ) )
 	{
@@ -625,7 +646,11 @@ void function TryReturnFlag( entity player, entity flag )
 	MessageToTeam( GetOtherTeam( flag.GetTeam() ), eEventNotifications.PlayerReturnedEnemyFlag, null, player )
 	EmitSoundOnEntityToTeam( flag, "UI_CTF_3P_EnemyReturnsFlag", GetOtherTeam( flag.GetTeam() ) )
 	EmitSoundOnEntityOnlyToPlayer( player, player, "UI_CTF_1P_ReturnsFlag" )
-	PlayFactionDialogueToTeam( "ctf_flagReturnedEnemy", GetOtherTeam( flag.GetTeam() ) )
+
+	#if FACTION_DIALOGUE_ENABLED
+		PlayFactionDialogueToTeam( "ctf_flagReturnedEnemy", GetOtherTeam( flag.GetTeam() ) )
+	#endif
+
 	AddPlayerToAssistList( player )
 
 	ResetFlag( flag )

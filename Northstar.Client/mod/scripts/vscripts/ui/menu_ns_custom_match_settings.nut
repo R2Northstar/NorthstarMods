@@ -1,12 +1,7 @@
 global function AddNorthstarCustomMatchSettingsMenu
 global function SetNextMatchSettingsCategory
 
-#if VANILLA
-	const string OVERRIDE_COMMAND = "setplaylistvaroverrides"
-#else
-	const string OVERRIDE_COMMAND = "PrivateMatchSetPlaylistVarOverride"
-#endif
-
+const string OVERRIDE_COMMAND = "PrivateMatchSetPlaylistVarOverride"
 const string SETTING_ITEM_TEXT = "                           " // this is long enough to be the same size as the textentry field
 
 struct
@@ -77,16 +72,16 @@ void function OnNorthstarCustomMatchSettingsMenuOpened()
 		Hud_SetEnabled( textPanels[ i ], true )
 		Hud_SetVisible( textPanels[ i ], true )
 
-		// manually resolve default gamemode/playlist vars since game won't do it for us if we aren't using GetCurrentPlaylistVar
-		string gamemode = PrivateMatch_GetSelectedMode()
-		if ( gamemode != "speedball" ) // hack since lf is weird
-			gamemode = GetPlaylistGamemodeByIndex( gamemode, 0 )
+		string playlistVar = GetGamemodeVarOrUseValue( PrivateMatch_GetSelectedMode(), setting.playlistVar, setting.defaultValue )
+		int numPlaylistOverrides = GetPlaylistVarOverridesCount()
 
-		string gamemodeVar = GetGamemodeVarOrUseValue( PrivateMatch_GetSelectedMode(), setting.playlistVar, setting.defaultValue )
-		string playlistVar = GetPlaylistVarOrUseValue( PrivateMatch_GetSelectedMode(), setting.playlistVar, setting.defaultValue )
+		for ( int varIdx = 0; varIdx < numPlaylistOverrides; ++varIdx )
+		{
+			string varName = GetPlaylistVarOverrideNameByIndex( varIdx )
 
-		if ( playlistVar != gamemodeVar && playlistVar == setting.defaultValue )
-			playlistVar = gamemodeVar
+			if ( setting.playlistVar == varName )
+				playlistVar = GetCurrentPlaylistVarString( setting.playlistVar, playlistVar )
+		}
 
 		if ( setting.isEnumSetting )
 		{
